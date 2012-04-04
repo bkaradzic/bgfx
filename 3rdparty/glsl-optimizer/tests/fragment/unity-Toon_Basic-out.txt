@@ -1,0 +1,13 @@
+uniform samplerCube _ToonShade;
+uniform sampler2D _MainTex;
+uniform vec4 _Color;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
+  vec4 tmpvar_2;
+  tmpvar_2.xyz = ((2.0 * textureCube (_ToonShade, gl_TexCoord[1].xyz).xyz) * tmpvar_1.xyz);
+  tmpvar_2.w = tmpvar_1.w;
+  gl_FragData[0] = tmpvar_2;
+}
+

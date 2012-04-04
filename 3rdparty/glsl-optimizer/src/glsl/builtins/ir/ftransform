@@ -1,0 +1,9 @@
+((declare (uniform) mat4 gl_ModelViewProjectionMatrix)
+ (declare (in) vec4 gl_Vertex)
+ (function ftransform
+   (signature vec4
+     (parameters)
+    ((return (expression vec4 *
+	      (var_ref gl_ModelViewProjectionMatrix)
+	      (var_ref gl_Vertex)))))
+))

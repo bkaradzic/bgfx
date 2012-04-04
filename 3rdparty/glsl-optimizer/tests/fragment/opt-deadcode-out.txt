@@ -1,0 +1,7 @@
+void main ()
+{
+  float arrused[3];
+  arrused[0] = (gl_FragCoord.x * 4.0);
+  gl_FragColor = vec4((((gl_FragCoord.x * 2.0) + gl_FragCoord.x) + arrused[0]));
+}
+

@@ -1,0 +1,59 @@
+struct v2f {
+  vec4 pos;
+  vec2 texcoord;
+  vec3 cubenormal;
+};
+uniform samplerCube _ToonShade;
+uniform sampler2D _MainTex;
+uniform vec4 _Color;
+vec4 frag (
+  in v2f i
+)
+{
+  vec4 cube;
+  vec4 col;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, i.texcoord);
+  vec4 tmpvar_2;
+  tmpvar_2 = (_Color * tmpvar_1);
+  col = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = textureCube (_ToonShade, i.cubenormal);
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  cube = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.xyz = ((2.0 * cube.xyz) * col.xyz).xyz;
+  tmpvar_5.w = col.w;
+  return tmpvar_5;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.texcoord = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.cubenormal = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = frag (xlt_i);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

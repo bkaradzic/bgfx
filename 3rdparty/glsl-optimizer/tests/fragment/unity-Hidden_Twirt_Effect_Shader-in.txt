@@ -1,0 +1,49 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    vec2 uv;
+};
+uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
+uniform mat4 _RotationMatrix;
+vec2 MultiplyUV( in mat4 mat, in vec2 inUV );
+vec4 frag( in v2f i );
+vec2 MultiplyUV( in mat4 mat, in vec2 inUV ) {
+    vec4 temp;
+    temp = vec4( inUV.x , inUV.y , 0.000000, 0.000000);
+    temp = ( mat * temp );
+    return temp.xy ;
+}
+vec4 frag( in v2f i ) {
+    vec2 offset;
+    vec2 distortedOffset;
+    vec2 tmp;
+    float t;
+    offset = i.uv;
+    distortedOffset = MultiplyUV( _RotationMatrix, offset.xy );
+    tmp = (offset / _CenterRadius.zw );
+    t = min( 1.00000, length( tmp ));
+    offset = mix( distortedOffset, offset, vec2( t));
+    offset += _CenterRadius.xy ;
+    return texture2D( _MainTex, offset);
+}
+void main() {
+    vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2( gl_TexCoord[0]);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

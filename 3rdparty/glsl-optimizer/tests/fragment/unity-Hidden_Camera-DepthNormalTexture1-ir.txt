@@ -1,0 +1,128 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec4 nz;
+};
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
+void xll_clip (
+  in float x
+)
+{
+  if ((x < 0.0)) {
+    discard;
+  };
+}
+
+vec2 EncodeViewNormalStereo (
+  in vec3 n
+)
+{
+  vec2 enc;
+  float kScale;
+  float tmpvar_1;
+  tmpvar_1 = 1.7777;
+  kScale = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = (n.xy / (n.z + 1.0));
+  enc = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = (enc / kScale);
+  enc = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = ((enc * 0.5) + 0.5);
+  enc = tmpvar_4;
+  return enc;
+}
+
+vec2 EncodeFloatRG (
+  in float v
+)
+{
+  vec2 enc;
+  float kEncodeBit;
+  vec2 kEncodeMul;
+  vec2 tmpvar_1;
+  tmpvar_1 = vec2(1.0, 255.0);
+  kEncodeMul = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = 0.00392157;
+  kEncodeBit = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = (kEncodeMul * v);
+  enc = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = fract (enc);
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  enc = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = (enc.x - (enc.y * kEncodeBit));
+  enc.x = tmpvar_6;
+  return enc;
+}
+
+vec4 EncodeDepthNormal (
+  in float depth,
+  in vec3 normal
+)
+{
+  vec4 enc;
+  vec2 tmpvar_1;
+  tmpvar_1 = EncodeViewNormalStereo (normal);
+  vec2 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  enc.xy = tmpvar_2.xy.xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = EncodeFloatRG (depth);
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  enc.zw = tmpvar_4.xxxy.zw;
+  return enc;
+}
+
+vec4 frag (
+  in v2f i
+)
+{
+  vec4 texcol;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, i.uv);
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  texcol = tmpvar_2;
+  xll_clip ((texcol.w - _Cutoff));
+  vec4 tmpvar_3;
+  tmpvar_3 = EncodeDepthNormal (i.nz.w, i.nz.xyz);
+  return tmpvar_3;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.nz = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = frag (xlt_i);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

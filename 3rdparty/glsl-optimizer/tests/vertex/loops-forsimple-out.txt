@@ -1,0 +1,13 @@
+varying vec4 varColor;
+uniform vec4 uniColors[4];
+void main ()
+{
+  vec4 col;
+  gl_Position = gl_Vertex;
+  col = uniColors[0];
+  col = (col + uniColors[1]);
+  col = (col + uniColors[2]);
+  col = (col + uniColors[3]);
+  varColor = col;
+}
+

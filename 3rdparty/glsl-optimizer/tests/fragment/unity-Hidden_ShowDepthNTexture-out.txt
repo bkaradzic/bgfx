@@ -1,0 +1,23 @@
+uniform sampler2D _MainTex;
+uniform sampler2D _CameraDepthNormalsTexture;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xy;
+  vec4 col;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_CameraDepthNormalsTexture, tmpvar_1);
+  vec3 n_i0;
+  vec3 tmpvar_3;
+  tmpvar_3 = ((tmpvar_2.xyz * vec3(3.5554, 3.5554, 0.0)) + vec3(-1.7777, -1.7777, 1.0));
+  float tmpvar_4;
+  tmpvar_4 = (2.0 / dot (tmpvar_3, tmpvar_3));
+  n_i0.xy = (tmpvar_4 * tmpvar_3.xy);
+  n_i0.z = (tmpvar_4 - 1.0);
+  col.x = dot (tmpvar_2.zw, vec2(1.0, 0.00392157));
+  col.y = ((n_i0.x * 0.5) + 0.5);
+  col.z = ((n_i0.y * 0.5) + 0.5);
+  col.w = texture2D (_MainTex, tmpvar_1).w;
+  gl_FragData[0] = col;
+}
+

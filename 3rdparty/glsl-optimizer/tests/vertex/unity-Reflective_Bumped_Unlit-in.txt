@@ -1,0 +1,79 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    float fog;
+    vec2 uv;
+    vec2 uv2;
+    vec3 I;
+    vec3 TtoW0;
+    vec3 TtoW1;
+    vec3 TtoW2;
+};
+struct appdata_tan {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+};
+uniform vec4 _BumpMap_ST;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec3 _WorldSpaceCameraPos;
+
+uniform vec4 unity_Scale;
+vec3 WorldSpaceViewDir( in vec4 v );
+void PositionFog( in vec4 v, out vec4 pos, out float fog );
+v2f vert( in appdata_tan v );
+vec3 WorldSpaceViewDir( in vec4 v ) {
+    return (_WorldSpaceCameraPos.xyz  - ( _Object2World * v ).xyz );
+}
+void PositionFog( in vec4 v, out vec4 pos, out float fog ) {
+    pos = ( gl_ModelViewProjectionMatrix * v );
+    fog = pos.z ;
+}
+v2f vert( in appdata_tan v ) {
+    v2f o;
+    vec3 binormal;
+    mat3 rotation;
+    PositionFog( v.vertex, o.pos, o.fog);
+    o.uv = ((v.texcoord.xy  * _MainTex_ST.xy ) + _MainTex_ST.zw );
+    o.uv2 = ((v.texcoord.xy  * _BumpMap_ST.xy ) + _BumpMap_ST.zw );
+    o.I = ( -WorldSpaceViewDir( v.vertex) );
+    binormal = (cross( v.normal, v.tangent.xyz ) * v.tangent.w );
+    rotation = mat3( v.tangent.x , binormal.x , v.normal.x , v.tangent.y , binormal.y , v.normal.y , v.tangent.z , binormal.z , v.normal.z );
+    o.TtoW0 = ( rotation * (_Object2World[ 0 ].xyz  * unity_Scale.w ) );
+    o.TtoW1 = ( rotation * (_Object2World[ 1 ].xyz  * unity_Scale.w ) );
+    o.TtoW2 = ( rotation * (_Object2World[ 2 ].xyz  * unity_Scale.w ) );
+    return o;
+}
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
+void main() {
+    v2f xl_retval;
+    appdata_tan xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.tangent = vec4( TANGENT);
+    xlt_v.normal = vec3( gl_Normal);
+    xlt_v.texcoord = vec4( gl_MultiTexCoord0);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    xlv_FOG = vec4( xl_retval.fog, 0.0, 0.0, 0.0);
+    gl_TexCoord[0] = vec4( xl_retval.uv, 0.0, 0.0);
+    gl_TexCoord[1] = vec4( xl_retval.uv2, 0.0, 0.0);
+    gl_TexCoord[2] = vec4( xl_retval.I, 0.0);
+    gl_TexCoord[3] = vec4( xl_retval.TtoW0, 0.0);
+    gl_TexCoord[4] = vec4( xl_retval.TtoW1, 0.0);
+    gl_TexCoord[5] = vec4( xl_retval.TtoW2, 0.0);
+}

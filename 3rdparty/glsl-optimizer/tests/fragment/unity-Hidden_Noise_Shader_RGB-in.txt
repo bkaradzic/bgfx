@@ -1,0 +1,45 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    vec2 uv;
+    vec2 uvg;
+    vec2 uvs;
+};
+uniform sampler2D _GrainTex;
+uniform vec4 _Intensity;
+uniform sampler2D _MainTex;
+uniform sampler2D _ScratchTex;
+vec4 frag( in v2f i );
+vec4 frag( in v2f i ) {
+    vec4 col;
+    vec3 grain;
+    vec3 scratch;
+    col = texture2D( _MainTex, i.uv);
+    grain = ((texture2D( _GrainTex, i.uvg).xyz  * 2.00000) - 1.00000);
+    col.xyz  += (grain * _Intensity.x );
+    scratch = ((texture2D( _ScratchTex, i.uvs).xyz  * 2.00000) - 1.00000);
+    col.xyz  += (scratch * _Intensity.y );
+    return col;
+}
+void main() {
+    vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2( gl_TexCoord[0]);
+    xlt_i.uvg = vec2( gl_TexCoord[1]);
+    xlt_i.uvs = vec2( gl_TexCoord[2]);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

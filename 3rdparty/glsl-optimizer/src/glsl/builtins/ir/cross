@@ -1,0 +1,9 @@
+((function cross
+   (signature vec3
+     (parameters
+       (declare (in) vec3 a)
+       (declare (in) vec3 b))
+     ((return (expression vec3 -
+        (expression vec3 * (swiz yzx (var_ref a)) (swiz zxy (var_ref b)))
+        (expression vec3 * (swiz zxy (var_ref a)) (swiz yzx (var_ref b)))))))
+))

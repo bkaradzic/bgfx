@@ -1,0 +1,96 @@
+struct v2f {
+  vec4 pos;
+  vec4 uv;
+  vec3 ray;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 normal;
+};
+varying vec3 xlv_TEXCOORD1;
+varying vec4 xlv_TEXCOORD0;
+uniform mat4 glstate_matrix_mvp;
+uniform mat4 glstate_matrix_modelview0;
+uniform vec4 _ProjectionParams;
+vec4 ComputeScreenPos (
+  in vec4 pos
+)
+{
+  vec4 o;
+  vec4 tmpvar_1;
+  tmpvar_1 = (pos * 0.5);
+  o = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2.x = o.x;
+  tmpvar_2.y = (o.y * _ProjectionParams.x);
+  vec2 tmpvar_3;
+  tmpvar_3 = (tmpvar_2 + o.w);
+  o.xy = tmpvar_3.xy.xy;
+  vec2 tmpvar_4;
+  tmpvar_4 = pos.zw;
+  o.zw = tmpvar_4.xxxy.zw;
+  return o;
+}
+
+v2f xlat_main (
+  in appdata v
+)
+{
+  v2f o;
+  vec4 tmpvar_1;
+  tmpvar_1 = (glstate_matrix_mvp * v.vertex);
+  o.pos = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = ComputeScreenPos (o.pos);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  o.uv = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = ((glstate_matrix_modelview0 * v.vertex).xyz * vec3(-1.0, -1.0, 1.0));
+  o.ray = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = vec3(float((v.normal.z != 0.0)));
+  vec3 tmpvar_6;
+  tmpvar_6 = mix (o.ray, v.normal, tmpvar_5);
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  o.ray = tmpvar_7;
+  return o;
+}
+
+void main ()
+{
+  appdata xlt_v;
+  v2f xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = gl_Normal.xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.normal = tmpvar_4;
+  v2f tmpvar_5;
+  tmpvar_5 = xlat_main (xlt_v);
+  v2f tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xl_retval = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = xl_retval.pos.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_Position = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = xl_retval.uv.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlv_TEXCOORD0 = tmpvar_10;
+  vec3 tmpvar_11;
+  tmpvar_11 = xl_retval.ray.xyz;
+  vec3 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlv_TEXCOORD1 = tmpvar_12;
+}
+

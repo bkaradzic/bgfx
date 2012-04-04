@@ -1,0 +1,23 @@
+struct v2f {
+  float f;
+};
+varying float var;
+void main ()
+{
+  v2f i2;
+  v2f i;
+  float tmpvar_1;
+  tmpvar_1 = var;
+  i.f = tmpvar_1;
+  v2f tmpvar_2;
+  tmpvar_2 = i;
+  i2 = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = abs (i2.f);
+  vec4 tmpvar_4;
+  tmpvar_4 = vec4(tmpvar_3);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  gl_FragColor = tmpvar_5;
+}
+

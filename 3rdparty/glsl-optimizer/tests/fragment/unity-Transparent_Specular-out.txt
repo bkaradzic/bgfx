@@ -1,0 +1,29 @@
+uniform vec4 _SpecColor;
+uniform float _Shininess;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightTexture0;
+uniform vec4 _LightColor0;
+uniform vec4 _Color;
+void main ()
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[2].xyz;
+  vec4 c;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  float tmpvar_4;
+  tmpvar_4 = (tmpvar_3.w * _Color.w);
+  float atten;
+  atten = texture2D (_LightTexture0, gl_TexCoord[4].xy).w;
+  vec4 c_i0;
+  float tmpvar_5;
+  tmpvar_5 = (pow (max (0.0, dot (tmpvar_1, normalize ((tmpvar_2 + normalize (gl_TexCoord[3].xyz))))), (_Shininess * 128.0)) * tmpvar_3.w);
+  c_i0.xyz = (((((tmpvar_3.xyz * _Color.xyz) * _LightColor0.xyz) * max (0.0, dot (tmpvar_1, tmpvar_2))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_5)) * (atten * 2.0));
+  c_i0.w = (tmpvar_4 + (((_LightColor0.w * _SpecColor.w) * tmpvar_5) * atten));
+  c = c_i0;
+  c.w = tmpvar_4;
+  gl_FragData[0] = c;
+}
+

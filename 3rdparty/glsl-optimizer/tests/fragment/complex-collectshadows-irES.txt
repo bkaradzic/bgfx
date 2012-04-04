@@ -1,0 +1,193 @@
+struct v2f {
+  highp vec4 pos;
+  highp vec2 uv;
+  highp vec3 ray;
+};
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+uniform highp vec4 _ZBufferParams;
+uniform highp mat4 _View2Shadow3;
+uniform highp mat4 _View2Shadow2;
+uniform highp mat4 _View2Shadow1;
+uniform highp mat4 _View2Shadow;
+uniform sampler2D _ShadowMapTexture;
+uniform highp vec4 _LightSplitsNear;
+uniform highp vec4 _LightSplitsFar;
+uniform highp vec4 _LightShadowData;
+uniform sampler2D _CameraDepthTexture;
+mediump float unitySampleShadow (
+  in highp vec4 eyePos
+)
+{
+  mediump float shadow;
+  highp vec4 coord;
+  highp vec4 weights;
+  highp vec4 far;
+  highp vec4 near;
+  highp float z;
+  highp vec3 sc3;
+  highp vec3 sc2;
+  highp vec3 sc1;
+  highp vec3 sc0;
+  highp vec3 tmpvar_1;
+  tmpvar_1 = (_View2Shadow * eyePos).xyz;
+  sc0 = tmpvar_1;
+  highp vec3 tmpvar_2;
+  tmpvar_2 = (_View2Shadow1 * eyePos).xyz;
+  sc1 = tmpvar_2;
+  highp vec3 tmpvar_3;
+  tmpvar_3 = (_View2Shadow2 * eyePos).xyz;
+  sc2 = tmpvar_3;
+  highp vec3 tmpvar_4;
+  tmpvar_4 = (_View2Shadow3 * eyePos).xyz;
+  sc3 = tmpvar_4;
+  highp float tmpvar_5;
+  tmpvar_5 = eyePos.z;
+  z = tmpvar_5;
+  highp vec4 tmpvar_6;
+  tmpvar_6 = vec4(z);
+  bvec4 tmpvar_7;
+  tmpvar_7 = greaterThanEqual (tmpvar_6, _LightSplitsNear);
+  lowp vec4 tmpvar_8;
+  tmpvar_8 = vec4(tmpvar_7).xyzw;
+  lowp vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  near = tmpvar_9;
+  highp vec4 tmpvar_10;
+  tmpvar_10 = vec4(z);
+  bvec4 tmpvar_11;
+  tmpvar_11 = lessThan (tmpvar_10, _LightSplitsFar);
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = vec4(tmpvar_11).xyzw;
+  lowp vec4 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  far = tmpvar_13;
+  highp vec4 tmpvar_14;
+  tmpvar_14 = (near * far);
+  weights = tmpvar_14;
+  highp vec4 tmpvar_15;
+  tmpvar_15.w = 1.0;
+  tmpvar_15.xyz = ((((sc0 * weights.x) + (sc1 * weights.y)) + (sc2 * weights.z)) + (sc3 * weights.w)).xyz;
+  highp vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  coord = tmpvar_16;
+  lowp vec4 tmpvar_17;
+  tmpvar_17 = texture2D (_ShadowMapTexture, coord.xy);
+  highp float tmpvar_18;
+  if ((tmpvar_17.x < coord.z)) {
+    tmpvar_18 = _LightShadowData.x;
+  } else {
+    tmpvar_18 = 1.0;
+  };
+  highp float tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  shadow = tmpvar_19;
+  return shadow;
+}
+
+float Linear01Depth (
+  in highp float z
+)
+{
+  return (1.0 / ((_ZBufferParams.x * z) + _ZBufferParams.y));
+}
+
+vec2 EncodeFloatRG (
+  in highp float v
+)
+{
+  highp vec2 enc;
+  highp float kEncodeBit;
+  highp vec2 kEncodeMul;
+  vec2 tmpvar_1;
+  tmpvar_1 = vec2(1.0, 255.0);
+  kEncodeMul = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = 0.00392157;
+  kEncodeBit = tmpvar_2;
+  highp vec2 tmpvar_3;
+  tmpvar_3 = (kEncodeMul * v);
+  enc = tmpvar_3;
+  highp vec2 tmpvar_4;
+  tmpvar_4 = fract (enc);
+  highp vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  enc = tmpvar_5;
+  highp float tmpvar_6;
+  tmpvar_6 = (enc.x - (enc.y * kEncodeBit));
+  enc.x = tmpvar_6;
+  return enc;
+}
+
+mediump vec4 xlat_main (
+  in v2f i
+)
+{
+  highp vec4 res;
+  mediump float shadow;
+  highp vec4 vpos;
+  highp float depth;
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_CameraDepthTexture, i.uv);
+  lowp float tmpvar_2;
+  tmpvar_2 = tmpvar_1.x;
+  depth = tmpvar_2;
+  highp float tmpvar_3;
+  tmpvar_3 = Linear01Depth (depth);
+  highp float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  depth = tmpvar_4;
+  highp vec4 tmpvar_5;
+  tmpvar_5.w = 1.0;
+  tmpvar_5.xyz = (i.ray * depth).xyz;
+  highp vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  vpos = tmpvar_6;
+  mediump float tmpvar_7;
+  tmpvar_7 = unitySampleShadow (vpos);
+  mediump float tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  shadow = tmpvar_8;
+  mediump float tmpvar_9;
+  tmpvar_9 = shadow;
+  res.x = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = 1.0;
+  res.y = vec2(tmpvar_10).y;
+  highp vec2 tmpvar_11;
+  tmpvar_11 = EncodeFloatRG ((1.0 - depth));
+  highp vec2 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  res.zw = tmpvar_12.xxxy.zw;
+  return res;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  mediump vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  highp vec2 tmpvar_2;
+  tmpvar_2 = xlv_TEXCOORD0.xy;
+  highp vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  highp vec3 tmpvar_4;
+  tmpvar_4 = xlv_TEXCOORD1.xyz;
+  highp vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.ray = tmpvar_5;
+  mediump vec4 tmpvar_6;
+  tmpvar_6 = xlat_main (xlt_i);
+  mediump vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  mediump vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  mediump vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

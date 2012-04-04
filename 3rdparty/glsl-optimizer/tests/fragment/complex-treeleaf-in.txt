@@ -1,0 +1,137 @@
+void xll_clip(float x) {
+  if ( x<0.0 ) discard;
+}
+float xll_saturate( float x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec2 xll_saturate( vec2 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec3 xll_saturate( vec3 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec4 xll_saturate( vec4 x) {
+  return clamp( x, 0.0, 1.0);
+}
+mat2 xll_saturate(mat2 m) {
+  return mat2( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0));
+}
+mat3 xll_saturate(mat3 m) {
+  return mat3( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0));
+}
+mat4 xll_saturate(mat4 m) {
+  return mat4( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0), clamp(m[3], 0.0, 1.0));
+}
+struct LeafSurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Translucency;
+    float ShadowOffset;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec4 color;
+};
+struct v2f_surf {
+    vec4 pos;
+    vec2 hip_pack0;
+    vec4 lop_color;
+    vec3 lightDir;
+    vec3 viewDir;
+    vec2 _LightCoord;
+};
+uniform sampler2D _BumpSpecMap;
+uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform float _ShadowStrength;
+uniform vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
+uniform float _TranslucencyViewDependency;
+vec4 UnpackNormal( in vec4 packednormal );
+void surf( in Input IN, inout LeafSurfaceOutput o );
+vec4 LightingTreeLeaf( in LeafSurfaceOutput s, in vec3 lightDir, in vec3 viewDir, in float atten );
+vec4 xlat_main( in v2f_surf IN );
+vec4 UnpackNormal( in vec4 packednormal ) {
+    vec4 normal;
+    normal.xy  = ((packednormal.wy  * 2.00000) - 1.00000);
+    normal.z  = sqrt( ((1.00000 - (normal.x  * normal.x )) - (normal.y  * normal.y )) );
+    return normal;
+}
+void surf( in Input IN, inout LeafSurfaceOutput o ) {
+    vec4 c;
+    vec4 trngls;
+    vec4 norspc;
+    c = texture2D( _MainTex, IN.uv_MainTex);
+    o.Albedo = ((c.xyz  * _Color.xyz ) * IN.color.w );
+    trngls = texture2D( _TranslucencyMap, IN.uv_MainTex);
+    o.Translucency = trngls.z ;
+    o.Gloss = (trngls.w  * _Color.x );
+    o.Alpha = c.w ;
+    norspc = texture2D( _BumpSpecMap, IN.uv_MainTex);
+    o.Specular = norspc.x ;
+    o.ShadowOffset = norspc.z ;
+    o.Normal = vec3( UnpackNormal( norspc));
+}
+vec4 LightingTreeLeaf( in LeafSurfaceOutput s, in vec3 lightDir, in vec3 viewDir, in float atten ) {
+    vec3 h;
+    float nl;
+    float nh;
+    float spec;
+    float backContrib;
+    vec3 translucencyColor;
+    vec4 c;
+    h = normalize( (lightDir + viewDir) );
+    nl = dot( s.Normal, lightDir);
+    nh = max( 0.000000, dot( s.Normal, h));
+    spec = (pow( nh, (s.Specular * 128.000)) * s.Gloss);
+    backContrib = xll_saturate( dot( viewDir, ( -lightDir )) );
+    backContrib = mix( xll_saturate( ( -nl ) ), backContrib, _TranslucencyViewDependency);
+    translucencyColor = ((backContrib * s.Translucency) * _TranslucencyColor);
+    nl = max( 0.000000, ((nl * 0.600000) + 0.400000));
+    c.xyz  = (s.Albedo * ((translucencyColor * 2.00000) + nl));
+    c.xyz  = ((c.xyz  * _LightColor0.xyz ) + spec);
+    c.xyz  *= mix( 2.00000, (atten * 2.00000), _ShadowStrength);
+    return c;
+}
+vec4 xlat_main( in v2f_surf IN ) {
+    Input surfIN;
+    LeafSurfaceOutput o;
+    vec3 lightDir;
+    vec4 c;
+    surfIN.uv_MainTex = IN.hip_pack0.xy ;
+    surfIN.color = IN.lop_color;
+    o.Albedo = vec3( 0.000000);
+    o.Emission = vec3( 0.000000);
+    o.Specular = 0.000000;
+    o.Alpha = 0.000000;
+    surf( surfIN, o);
+    xll_clip( (o.Alpha - _Cutoff) );
+    lightDir = IN.lightDir;
+    c = LightingTreeLeaf( o, lightDir, normalize( vec3( IN.viewDir) ), (texture2D( _LightTexture0, IN._LightCoord).w  * 1.00000));
+    c.w  = o.Alpha;
+    return c;
+}
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR0;
+varying vec3 xlv_TEXCOORD1;
+varying vec3 xlv_TEXCOORD2;
+varying vec2 xlv_TEXCOORD3;
+void main() {
+    vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.hip_pack0 = vec2( xlv_TEXCOORD0);
+    xlt_IN.lop_color = vec4( xlv_COLOR0);
+    xlt_IN.lightDir = vec3( xlv_TEXCOORD1);
+    xlt_IN.viewDir = vec3( xlv_TEXCOORD2);
+    xlt_IN._LightCoord = vec2( xlv_TEXCOORD3);
+    xl_retval = xlat_main( xlt_IN);
+    gl_FragData[0] = vec4( xl_retval);
+}

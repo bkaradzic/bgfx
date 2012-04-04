@@ -1,0 +1,4 @@
+*.dsp -crlf
+*.dsw -crlf
+*.sln -crlf
+*.vcproj -crlf

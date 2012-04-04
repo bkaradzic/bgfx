@@ -1,0 +1,30 @@
+((function sinh
+   (signature float
+     (parameters
+       (declare (in) float x))
+     ((return (expression float * (constant float (0.5))
+                (expression float -
+		  (expression float exp (var_ref x))
+		  (expression float exp (expression float neg (var_ref x))))))))
+   (signature vec2
+     (parameters
+       (declare (in) vec2 x))
+     ((return (expression vec2 * (constant vec2 (0.5))
+                (expression vec2 -
+		  (expression vec2 exp (var_ref x))
+		  (expression vec2 exp (expression vec2 neg (var_ref x))))))))
+   (signature vec3
+     (parameters
+       (declare (in) vec3 x))
+     ((return (expression vec3 * (constant vec3 (0.5))
+                (expression vec3 -
+		  (expression vec3 exp (var_ref x))
+		  (expression vec3 exp (expression vec3 neg (var_ref x))))))))
+   (signature vec4
+     (parameters
+       (declare (in) vec4 x))
+     ((return (expression vec4 * (constant vec4 (0.5))
+                (expression vec4 -
+		  (expression vec4 exp (var_ref x))
+		  (expression vec4 exp (expression vec4 neg (var_ref x))))))))
+))

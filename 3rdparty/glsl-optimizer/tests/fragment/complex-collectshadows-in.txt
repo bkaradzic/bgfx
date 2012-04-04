@@ -1,0 +1,77 @@
+struct v2f {
+    vec4 pos;
+    vec2 uv;
+    vec3 ray;
+};
+uniform sampler2D _CameraDepthTexture;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightSplitsNear;
+uniform sampler2D _ShadowMapTexture;
+uniform mat4 _View2Shadow;
+uniform mat4 _View2Shadow1;
+uniform mat4 _View2Shadow2;
+uniform mat4 _View2Shadow3;
+uniform vec4 _ZBufferParams;
+float unitySampleShadow( in vec4 eyePos );
+float Linear01Depth( in float z );
+vec2 EncodeFloatRG( in float v );
+vec4 xlat_main( in v2f i );
+float unitySampleShadow( in vec4 eyePos ) {
+    vec3 sc0;
+    vec3 sc1;
+    vec3 sc2;
+    vec3 sc3;
+    float z;
+    vec4 near;
+    vec4 far;
+    vec4 weights;
+    vec4 coord;
+    float shadow;
+    sc0 = ( _View2Shadow * eyePos ).xyz ;
+    sc1 = ( _View2Shadow1 * eyePos ).xyz ;
+    sc2 = ( _View2Shadow2 * eyePos ).xyz ;
+    sc3 = ( _View2Shadow3 * eyePos ).xyz ;
+    z = eyePos.z ;
+    near = vec4( greaterThanEqual( vec4( z ), _LightSplitsNear) );
+    far = vec4( lessThan( vec4( z ), _LightSplitsFar) );
+    weights = (near * far);
+    coord = vec4( ((((sc0 * weights.x ) + (sc1 * weights.y )) + (sc2 * weights.z )) + (sc3 * weights.w )), 1.00000);
+    shadow = ( (texture2D( _ShadowMapTexture, coord.xy ).x  < coord.z ) ) ? ( _LightShadowData.x  ) : ( 1.00000 );
+    return shadow;
+}
+float Linear01Depth( in float z ) {
+    return (1.00000 / ((_ZBufferParams.x  * z) + _ZBufferParams.y ));
+}
+vec2 EncodeFloatRG( in float v ) {
+    vec2 kEncodeMul = vec2( 1.00000, 255.000);
+    float kEncodeBit = 0.00392157;
+    vec2 enc;
+    enc = (kEncodeMul * v);
+    enc = fract( enc );
+    enc.x  -= (enc.y  * kEncodeBit);
+    return enc;
+}
+vec4 xlat_main( in v2f i ) {
+    float depth;
+    vec4 vpos;
+    float shadow;
+    vec4 res;
+    depth = texture2D( _CameraDepthTexture, i.uv).x ;
+    depth = Linear01Depth( depth);
+    vpos = vec4( (i.ray * depth), 1.00000);
+    shadow = unitySampleShadow( vpos);
+    res.x  = shadow;
+    res.y  = 1.00000;
+    res.zw  = EncodeFloatRG( (1.00000 - depth));
+    return res;
+}
+void main() {
+    vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2( gl_TexCoord[0]);
+    xlt_i.ray = vec3( gl_TexCoord[1]);
+    xl_retval = xlat_main( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

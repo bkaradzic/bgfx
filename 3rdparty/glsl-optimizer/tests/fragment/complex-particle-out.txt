@@ -1,0 +1,8 @@
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR;
+uniform sampler2D _MainTex;
+void main ()
+{
+  gl_FragData[0] = (xlv_COLOR * texture2D (_MainTex, xlv_TEXCOORD0));
+}
+

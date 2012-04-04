@@ -1,0 +1,33 @@
+void main ()
+{
+  int j;
+  vec2 c;
+  vec2 tmpvar_1;
+  tmpvar_1 = vec2(0.0, 0.0);
+  c = tmpvar_1;
+  int tmpvar_2;
+  tmpvar_2 = 0;
+  j = tmpvar_2;
+  while (true) {
+    if (!((j < 2))) {
+      break;
+    };
+    vec2 tmpvar_3;
+    tmpvar_3 = vec2(vec2(0.0, 0.0)[j]);
+    vec2 tmpvar_4;
+    tmpvar_4 = abs (tmpvar_3);
+    vec2 tmpvar_5;
+    tmpvar_5 = (c + tmpvar_4);
+    c = tmpvar_5;
+    int tmpvar_6;
+    tmpvar_6 = (j + 1);
+    j = tmpvar_6;
+  };
+  vec4 tmpvar_7;
+  tmpvar_7.zw = vec2(0.0, 0.0);
+  tmpvar_7.xy = c.xy;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_FragColor = tmpvar_8;
+}
+

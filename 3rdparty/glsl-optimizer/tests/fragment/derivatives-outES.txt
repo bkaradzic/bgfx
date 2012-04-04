@@ -1,0 +1,20 @@
+#extension GL_OES_standard_derivatives : enable
+varying highp vec4 xlv_TEXCOORD0;
+void main ()
+{
+  mediump vec4 tmpvar_1;
+  lowp vec4 res;
+  highp float tmpvar_2;
+  tmpvar_2 = dFdx (xlv_TEXCOORD0.x);
+  res.x = tmpvar_2;
+  highp float tmpvar_3;
+  tmpvar_3 = dFdx (xlv_TEXCOORD0.y);
+  res.y = tmpvar_3;
+  highp float tmpvar_4;
+  tmpvar_4 = fwidth (xlv_TEXCOORD0.z);
+  res.z = tmpvar_4;
+  res.w = 1.0;
+  tmpvar_1 = res;
+  gl_FragData[0] = tmpvar_1;
+}
+

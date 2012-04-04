@@ -1,0 +1,287 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec2 uvOrig;
+};
+uniform sampler2D _MainTex;
+uniform vec4 _CenterRadius;
+uniform float _Angle;
+void xll_sincos (
+  in float x,
+  out float s,
+  out float c
+)
+{
+  float tmpvar_1;
+  tmpvar_1 = sin (x);
+  float tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  s = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = cos (x);
+  float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  c = tmpvar_4;
+}
+
+void xll_sincos (
+  in vec2 x,
+  out vec2 s,
+  out vec2 c
+)
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = sin (x);
+  vec2 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  s = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = cos (x);
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  c = tmpvar_4;
+}
+
+void xll_sincos (
+  in vec3 x,
+  out vec3 s,
+  out vec3 c
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = sin (x);
+  vec3 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  s = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = cos (x);
+  vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  c = tmpvar_4;
+}
+
+void xll_sincos (
+  in vec4 x,
+  out vec4 s,
+  out vec4 c
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = sin (x);
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  s = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = cos (x);
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  c = tmpvar_4;
+}
+
+void xll_sincos (
+  in mat2 x,
+  out mat2 s,
+  out mat2 c
+)
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = sin (x[0]);
+  vec2 tmpvar_2;
+  tmpvar_2 = sin (x[1]);
+  mat2 tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_1;
+  tmpvar_3[0] = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_2;
+  tmpvar_3[1] = tmpvar_5;
+  mat2 tmpvar_6;
+  tmpvar_6 = (tmpvar_3);
+  s = (tmpvar_6);
+  vec2 tmpvar_7;
+  tmpvar_7 = cos (x[0]);
+  vec2 tmpvar_8;
+  tmpvar_8 = cos (x[1]);
+  mat2 tmpvar_9;
+  vec2 tmpvar_10;
+  tmpvar_10 = tmpvar_7;
+  tmpvar_9[0] = tmpvar_10;
+  vec2 tmpvar_11;
+  tmpvar_11 = tmpvar_8;
+  tmpvar_9[1] = tmpvar_11;
+  mat2 tmpvar_12;
+  tmpvar_12 = (tmpvar_9);
+  c = (tmpvar_12);
+}
+
+void xll_sincos (
+  in mat3 x,
+  out mat3 s,
+  out mat3 c
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = sin (x[0]);
+  vec3 tmpvar_2;
+  tmpvar_2 = sin (x[1]);
+  vec3 tmpvar_3;
+  tmpvar_3 = sin (x[2]);
+  mat3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_1;
+  tmpvar_4[0] = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_2;
+  tmpvar_4[1] = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_3;
+  tmpvar_4[2] = tmpvar_7;
+  mat3 tmpvar_8;
+  tmpvar_8 = (tmpvar_4);
+  s = (tmpvar_8);
+  vec3 tmpvar_9;
+  tmpvar_9 = cos (x[0]);
+  vec3 tmpvar_10;
+  tmpvar_10 = cos (x[1]);
+  vec3 tmpvar_11;
+  tmpvar_11 = cos (x[2]);
+  mat3 tmpvar_12;
+  vec3 tmpvar_13;
+  tmpvar_13 = tmpvar_9;
+  tmpvar_12[0] = tmpvar_13;
+  vec3 tmpvar_14;
+  tmpvar_14 = tmpvar_10;
+  tmpvar_12[1] = tmpvar_14;
+  vec3 tmpvar_15;
+  tmpvar_15 = tmpvar_11;
+  tmpvar_12[2] = tmpvar_15;
+  mat3 tmpvar_16;
+  tmpvar_16 = (tmpvar_12);
+  c = (tmpvar_16);
+}
+
+void xll_sincos (
+  in mat4 x,
+  out mat4 s,
+  out mat4 c
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = sin (x[0]);
+  vec4 tmpvar_2;
+  tmpvar_2 = sin (x[1]);
+  vec4 tmpvar_3;
+  tmpvar_3 = sin (x[2]);
+  vec4 tmpvar_4;
+  tmpvar_4 = sin (x[3]);
+  mat4 tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_1;
+  tmpvar_5[0] = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_2;
+  tmpvar_5[1] = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_3;
+  tmpvar_5[2] = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_4;
+  tmpvar_5[3] = tmpvar_9;
+  mat4 tmpvar_10;
+  tmpvar_10 = (tmpvar_5);
+  s = (tmpvar_10);
+  vec4 tmpvar_11;
+  tmpvar_11 = cos (x[0]);
+  vec4 tmpvar_12;
+  tmpvar_12 = cos (x[1]);
+  vec4 tmpvar_13;
+  tmpvar_13 = cos (x[2]);
+  vec4 tmpvar_14;
+  tmpvar_14 = cos (x[3]);
+  mat4 tmpvar_15;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_11;
+  tmpvar_15[0] = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17 = tmpvar_12;
+  tmpvar_15[1] = tmpvar_17;
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_13;
+  tmpvar_15[2] = tmpvar_18;
+  vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_14;
+  tmpvar_15[3] = tmpvar_19;
+  mat4 tmpvar_20;
+  tmpvar_20 = (tmpvar_15);
+  c = (tmpvar_20);
+}
+
+vec4 frag (
+  in v2f i
+)
+{
+  vec2 uv;
+  float cosLength;
+  float sinLength;
+  float angle;
+  vec2 offset;
+  vec2 tmpvar_1;
+  tmpvar_1 = i.uvOrig;
+  offset = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = length ((offset / _CenterRadius.zw));
+  float tmpvar_3;
+  tmpvar_3 = (1.0 - tmpvar_2);
+  angle = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = max (0.0, angle);
+  float tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  angle = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = ((angle * angle) * _Angle);
+  angle = tmpvar_6;
+  xll_sincos (angle, sinLength, cosLength);
+  float tmpvar_7;
+  tmpvar_7 = ((cosLength * offset.x) - (sinLength * offset.y));
+  uv.x = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = ((sinLength * offset.x) + (cosLength * offset.y));
+  uv.y = vec2(tmpvar_8).y;
+  vec2 tmpvar_9;
+  tmpvar_9 = (uv + _CenterRadius.xy);
+  uv = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = texture2D (_MainTex, uv);
+  return tmpvar_10;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xy;
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.uvOrig = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = frag (xlt_i);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

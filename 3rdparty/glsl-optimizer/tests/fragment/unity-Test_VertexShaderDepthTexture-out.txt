@@ -1,0 +1,7 @@
+uniform vec4 _ZBufferParams;
+uniform sampler2D _CameraDepthTexture;
+void main ()
+{
+  gl_FragData[0] = vec4((1.0 - (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y)))));
+}
+

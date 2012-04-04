@@ -1,0 +1,74 @@
+void xll_clip(float x) {
+  if ( x<0.0 ) discard;
+}
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec4 color;
+};
+struct v2f_surf {
+    vec4 pos;
+    vec2 hip_pack0;
+    vec4 lop_color;
+};
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
+void surf( in Input IN, inout SurfaceOutput o );
+vec4 frag_surf( in v2f_surf IN );
+void surf( in Input IN, inout SurfaceOutput o ) {
+    vec4 c;
+    c = (texture2D( _MainTex, IN.uv_MainTex) * IN.color);
+    o.Albedo = c.xyz ;
+    o.Alpha = c.w ;
+}
+vec4 frag_surf( in v2f_surf IN ) {
+    Input surfIN;
+    SurfaceOutput o;
+    surfIN.uv_MainTex = IN.hip_pack0.xy ;
+    surfIN.color = IN.lop_color;
+    o.Albedo = vec3( 0.000000);
+    o.Emission = vec3( 0.000000);
+    o.Specular = 0.000000;
+    o.Alpha = 0.000000;
+    o.Gloss = 0.000000;
+    surf( surfIN, o);
+    xll_clip( (o.Alpha - _Cutoff) );
+    return vec4( 0.000000);
+}
+void main() {
+    vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.hip_pack0 = vec2( gl_TexCoord[1]);
+    xlt_IN.lop_color = vec4( gl_Color);
+    xl_retval = frag_surf( xlt_IN);
+    gl_FragData[0] = vec4( xl_retval);
+}

@@ -1,0 +1,158 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec3 color;
+  vec3 backContrib;
+  vec3 nl;
+  vec3 nh;
+};
+uniform sampler2D _TranslucencyMap;
+uniform vec3 _TranslucencyColor;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec4 _SpecColor;
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
+uniform sampler2D _BumpSpecMap;
+void xll_clip (
+  in float x
+)
+{
+  if ((x < 0.0)) {
+    discard;
+  };
+}
+
+vec4 frag (
+  in v2f i
+)
+{
+  vec4 c;
+  float spec;
+  float nh;
+  float nl;
+  vec3 translucencyColor;
+  vec3 lightColor;
+  int j;
+  vec3 backContribs;
+  vec3 light;
+  float gloss;
+  vec4 trngls;
+  float specular;
+  vec3 albedo;
+  vec4 col;
+  int tmpvar_1;
+  tmpvar_1 = 0;
+  j = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, i.uv);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  col = tmpvar_3;
+  xll_clip ((col.w - _Cutoff));
+  vec3 tmpvar_4;
+  tmpvar_4 = (col.xyz * i.color);
+  albedo = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = texture2D (_BumpSpecMap, i.uv);
+  float tmpvar_6;
+  tmpvar_6 = (tmpvar_5.x * 128.0);
+  specular = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = texture2D (_TranslucencyMap, i.uv);
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  trngls = tmpvar_8;
+  float tmpvar_9;
+  tmpvar_9 = trngls.w;
+  gloss = tmpvar_9;
+  vec3 tmpvar_10;
+  tmpvar_10 = gl_LightModel.ambient.xyz;
+  vec3 tmpvar_11;
+  tmpvar_11 = (tmpvar_10 * albedo);
+  light = tmpvar_11;
+  vec3 tmpvar_12;
+  tmpvar_12 = (i.backContrib * trngls.z);
+  backContribs = tmpvar_12;
+  while (true) {
+    if (!((j < 3))) {
+      break;
+    };
+    vec3 tmpvar_13;
+    tmpvar_13 = _TerrainTreeLightColors[j].xyz;
+    lightColor = tmpvar_13;
+    vec3 tmpvar_14;
+    tmpvar_14 = (backContribs[j] * _TranslucencyColor);
+    translucencyColor = tmpvar_14;
+    float tmpvar_15;
+    tmpvar_15 = i.nl[j];
+    nl = tmpvar_15;
+    float tmpvar_16;
+    tmpvar_16 = i.nh[j];
+    nh = tmpvar_16;
+    float tmpvar_17;
+    tmpvar_17 = pow (nh, specular);
+    float tmpvar_18;
+    tmpvar_18 = (tmpvar_17 * gloss);
+    spec = tmpvar_18;
+    vec3 tmpvar_19;
+    tmpvar_19 = (light + (((albedo * (translucencyColor + nl)) + (_SpecColor.xyz * spec)) * lightColor));
+    light = tmpvar_19;
+    int _post_incdec_tmp;
+    _post_incdec_tmp = j;
+    int tmpvar_20;
+    tmpvar_20 = (j + 1);
+    j = tmpvar_20;
+  };
+  vec3 tmpvar_21;
+  tmpvar_21 = (light * 2.0);
+  c.xyz = tmpvar_21.xyz.xyz;
+  float tmpvar_22;
+  tmpvar_22 = 1.0;
+  c.w = vec4(tmpvar_22).w;
+  return c;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.color = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xlt_i.backContrib = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = gl_TexCoord[3].xyz;
+  vec3 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  xlt_i.nl = tmpvar_9;
+  vec3 tmpvar_10;
+  tmpvar_10 = gl_TexCoord[4].xyz;
+  vec3 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  xlt_i.nh = tmpvar_11;
+  vec4 tmpvar_12;
+  tmpvar_12 = frag (xlt_i);
+  vec4 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  xl_retval = tmpvar_13;
+  vec4 tmpvar_14;
+  tmpvar_14 = xl_retval.xyzw;
+  vec4 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  gl_FragData[0] = tmpvar_15;
+}
+

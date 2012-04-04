@@ -1,0 +1,207 @@
+struct v2f_surf {
+  highp vec4 pos;
+  lowp vec3 lightDir;
+  lowp vec3 viewDir;
+  lowp vec3 worldN;
+};
+struct appdata {
+  highp vec4 vertex;
+  highp vec4 tangent;
+  highp vec3 normal;
+};
+varying lowp vec3 varViewDir;
+varying lowp vec3 varLightDir;
+varying lowp vec3 varWorldN;
+uniform highp vec4 unity_Scale;
+uniform lowp vec4 _WorldSpaceLightPos0;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp mat4 _World2Object;
+uniform highp mat4 _Object2World;
+attribute vec4 attrTangent;
+attribute vec3 attrNormal;
+attribute vec4 attrVertex;
+uniform mat4 glstate_matrix_mvp;
+attribute lowp vec4 _glesColor;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+mat3 xll_transpose (
+  in mat3 m
+)
+{
+  mat3 tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = m[0][0];
+  tmpvar_1[0].x = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = m[1][0];
+  tmpvar_1[0].y = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = m[2][0];
+  tmpvar_1[0].z = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = m[0][1];
+  tmpvar_1[1].x = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = m[1][1];
+  tmpvar_1[1].y = tmpvar_6;
+  float tmpvar_7;
+  tmpvar_7 = m[2][1];
+  tmpvar_1[1].z = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = m[0][2];
+  tmpvar_1[2].x = tmpvar_8;
+  float tmpvar_9;
+  tmpvar_9 = m[1][2];
+  tmpvar_1[2].y = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = m[2][2];
+  tmpvar_1[2].z = tmpvar_10;
+  return tmpvar_1;
+}
+
+mat3 xll_constructMat3 (
+  in mat4 m
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = m[0].xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = m[1].xyz;
+  vec3 tmpvar_3;
+  tmpvar_3 = m[2].xyz;
+  mat3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_1;
+  tmpvar_4[0] = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_2;
+  tmpvar_4[1] = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_3;
+  tmpvar_4[2] = tmpvar_7;
+  return tmpvar_4;
+}
+
+vec3 ObjSpaceViewDir (
+  in highp vec4 v
+)
+{
+  highp vec3 objSpaceCameraPos;
+  highp vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _WorldSpaceCameraPos.xyz.xyz;
+  highp vec3 tmpvar_2;
+  tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
+  objSpaceCameraPos = tmpvar_2;
+  return (objSpaceCameraPos - v.xyz);
+}
+
+vec3 ObjSpaceLightDir (
+  in highp vec4 v
+)
+{
+  highp vec3 objSpaceLightPos;
+  highp vec3 tmpvar_1;
+  tmpvar_1 = (_World2Object * _WorldSpaceLightPos0).xyz;
+  objSpaceLightPos = tmpvar_1;
+  return objSpaceLightPos.xyz;
+}
+
+v2f_surf vert_surf (
+  in appdata v
+)
+{
+  highp vec3 viewDirForLight;
+  highp vec3 lightDir;
+  highp mat3 rotation;
+  highp vec3 binormal;
+  highp vec3 worldN;
+  v2f_surf o;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = (glstate_matrix_mvp * v.vertex);
+  o.pos = tmpvar_1;
+  mat3 tmpvar_2;
+  tmpvar_2 = (xll_constructMat3 (_Object2World));
+  highp vec3 tmpvar_3;
+  tmpvar_3 = (tmpvar_2 * v.normal);
+  worldN = tmpvar_3;
+  highp vec3 tmpvar_4;
+  tmpvar_4 = worldN;
+  o.worldN = tmpvar_4;
+  highp vec3 tmpvar_5;
+  tmpvar_5 = cross (v.normal, v.tangent.xyz);
+  highp vec3 tmpvar_6;
+  tmpvar_6 = (tmpvar_5 * v.tangent.w);
+  binormal = tmpvar_6;
+  mat3 tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = v.tangent.xyz;
+  tmpvar_7[0] = tmpvar_8;
+  vec3 tmpvar_9;
+  tmpvar_9 = binormal;
+  tmpvar_7[1] = tmpvar_9;
+  vec3 tmpvar_10;
+  tmpvar_10 = v.normal;
+  tmpvar_7[2] = tmpvar_10;
+  mat3 tmpvar_11;
+  tmpvar_11 = (xll_transpose (tmpvar_7));
+  mat3 tmpvar_12;
+  tmpvar_12 = (tmpvar_11);
+  rotation = (tmpvar_12);
+  highp vec3 tmpvar_13;
+  tmpvar_13 = ObjSpaceLightDir (v.vertex);
+  highp vec3 tmpvar_14;
+  tmpvar_14 = (rotation * tmpvar_13);
+  lightDir = tmpvar_14;
+  highp vec3 tmpvar_15;
+  tmpvar_15 = lightDir;
+  o.lightDir = tmpvar_15;
+  highp vec3 tmpvar_16;
+  tmpvar_16 = ObjSpaceViewDir (v.vertex);
+  highp vec3 tmpvar_17;
+  tmpvar_17 = (rotation * tmpvar_16);
+  viewDirForLight = tmpvar_17;
+  highp vec3 tmpvar_18;
+  tmpvar_18 = normalize (viewDirForLight);
+  highp vec3 tmpvar_19;
+  tmpvar_19 = normalize ((lightDir + tmpvar_18));
+  highp vec3 tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  o.viewDir = tmpvar_20;
+  return o;
+}
+
+void main ()
+{
+  v2f_surf rv;
+  appdata v;
+  vec4 tmpvar_1;
+  tmpvar_1 = attrVertex;
+  v.vertex = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = attrTangent;
+  v.tangent = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = attrNormal;
+  v.normal = tmpvar_3;
+  v2f_surf tmpvar_4;
+  tmpvar_4 = vert_surf (v);
+  v2f_surf tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  rv = tmpvar_5;
+  highp vec4 tmpvar_6;
+  tmpvar_6 = rv.pos;
+  gl_Position = tmpvar_6;
+  lowp vec3 tmpvar_7;
+  tmpvar_7 = rv.worldN;
+  varWorldN = tmpvar_7;
+  lowp vec3 tmpvar_8;
+  tmpvar_8 = rv.lightDir;
+  varLightDir = tmpvar_8;
+  lowp vec3 tmpvar_9;
+  tmpvar_9 = rv.viewDir;
+  varViewDir = tmpvar_9;
+}
+

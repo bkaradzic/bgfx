@@ -1,0 +1,16 @@
+((function any
+   (signature bool
+     (parameters
+       (declare (in) bvec2 arg0))
+     ((return (expression bool any (var_ref arg0)))))
+
+   (signature bool
+     (parameters
+       (declare (in) bvec3 arg0))
+     ((return (expression bool any (var_ref arg0)))))
+
+   (signature bool
+     (parameters
+       (declare (in) bvec4 arg0))
+     ((return (expression bool any (var_ref arg0)))))
+))

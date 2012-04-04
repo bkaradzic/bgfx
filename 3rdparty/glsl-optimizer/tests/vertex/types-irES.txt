@@ -1,0 +1,97 @@
+struct v2f {
+  highp vec4 pos;
+  mediump vec2 uv;
+  lowp vec4 color;
+};
+struct a2v {
+  highp vec4 pos;
+  highp vec2 uv;
+  mediump vec3 normal;
+  lowp vec4 color;
+};
+varying lowp vec4 xlv_COLOR;
+varying mediump vec2 xlv_TEXCOORD0;
+uniform highp mat4 mvp;
+attribute lowp vec4 _glesColor;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+v2f xlat_main (
+  in a2v v
+)
+{
+  lowp float dz;
+  mediump float dy;
+  highp float dx;
+  v2f o;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = (mvp * v.pos);
+  o.pos = tmpvar_1;
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = v.color;
+  o.color = tmpvar_2;
+  mediump vec3 tmpvar_3;
+  tmpvar_3 = (o.color.xyz + v.normal);
+  o.color.xyz = tmpvar_3.xyz.xyz;
+  highp vec2 tmpvar_4;
+  tmpvar_4 = v.uv;
+  o.uv = tmpvar_4;
+  highp float tmpvar_5;
+  tmpvar_5 = v.pos.x;
+  dx = tmpvar_5;
+  highp float tmpvar_6;
+  tmpvar_6 = v.pos.y;
+  dy = tmpvar_6;
+  highp float tmpvar_7;
+  tmpvar_7 = v.pos.z;
+  dz = tmpvar_7;
+  return o;
+}
+
+void main ()
+{
+  a2v xlt_v;
+  v2f xl_retval;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = _glesVertex.xyzw;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.pos = tmpvar_2;
+  highp vec2 tmpvar_3;
+  tmpvar_3 = _glesMultiTexCoord0.xy;
+  highp vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.uv = tmpvar_4;
+  mediump vec3 tmpvar_5;
+  tmpvar_5 = _glesNormal.xyz;
+  mediump vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.normal = tmpvar_6;
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = _glesColor.xyzw;
+  lowp vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.color = tmpvar_8;
+  v2f tmpvar_9;
+  tmpvar_9 = xlat_main (xlt_v);
+  v2f tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xl_retval = tmpvar_10;
+  highp vec4 tmpvar_11;
+  tmpvar_11 = xl_retval.pos.xyzw;
+  highp vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  gl_Position = tmpvar_12;
+  mediump vec2 tmpvar_13;
+  tmpvar_13 = xl_retval.uv.xy;
+  mediump vec2 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xlv_TEXCOORD0 = tmpvar_14;
+  lowp vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.color.xyzw;
+  lowp vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  xlv_COLOR = tmpvar_16;
+}
+

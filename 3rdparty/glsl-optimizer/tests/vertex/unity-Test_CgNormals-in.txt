@@ -1,0 +1,46 @@
+mat3 xll_constructMat3( mat4 m) {
+  return mat3( vec3( m[0]), vec3( m[1]), vec3( m[2]));
+}
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    vec4 color;
+};
+struct appdata_base {
+    vec4 vertex;
+    vec3 normal;
+    vec4 texcoord;
+};
+
+
+v2f vert( in appdata_base v );
+v2f vert( in appdata_base v ) {
+    v2f o;
+    vec3 normal;
+    o.pos = ( gl_ModelViewProjectionMatrix * v.vertex );
+    normal = ( xll_constructMat3( gl_ModelViewMatrixInverseTranspose) * v.normal );
+    o.color = vec4( ((normal * 0.500000) + 0.500000), 1.00000);
+    return o;
+}
+void main() {
+    v2f xl_retval;
+    appdata_base xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.normal = vec3( gl_Normal);
+    xlt_v.texcoord = vec4( gl_MultiTexCoord0);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    gl_FrontColor = vec4( xl_retval.color);
+}

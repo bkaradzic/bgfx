@@ -1,0 +1,21 @@
+void main ()
+{
+  vec3 n;
+  mat3 m;
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  gl_Position = tmpvar_1;
+  mat3 tmpvar_2;
+  tmpvar_2 = (mat3(0.1, 0.8, 0.1, 0.3, 0.3, 0.5, 0.9, 0.0, 0.1));
+  m = (tmpvar_2);
+  vec3 tmpvar_3;
+  tmpvar_3 = (m * gl_Normal);
+  n = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = ((n * 0.5) + 0.5).xyz;
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  gl_FrontColor = tmpvar_5;
+}
+

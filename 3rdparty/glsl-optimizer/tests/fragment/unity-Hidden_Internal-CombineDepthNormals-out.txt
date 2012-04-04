@@ -1,0 +1,32 @@
+uniform vec4 _ZBufferParams;
+uniform sampler2D _CameraNormalsTexture;
+uniform sampler2D _CameraDepthTexture;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xy;
+  vec4 n;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_CameraNormalsTexture, tmpvar_1);
+  n = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_1).x) + _ZBufferParams.y)));
+  n.xyz = ((tmpvar_2.xyz * 2.0) - 1.0);
+  n.z = -(n.z);
+  vec4 tmpvar_4;
+  if ((tmpvar_3 < 0.999985)) {
+    vec4 enc;
+    enc.xy = ((((n.xy / (n.z + 1.0)) / 1.7777) * 0.5) + 0.5);
+    vec2 enc_i0_i1;
+    vec2 tmpvar_5;
+    tmpvar_5 = fract ((vec2(1.0, 255.0) * tmpvar_3));
+    enc_i0_i1 = tmpvar_5;
+    enc_i0_i1.x = (tmpvar_5.x - (tmpvar_5.y * 0.00392157));
+    enc.zw = enc_i0_i1;
+    tmpvar_4 = enc;
+  } else {
+    tmpvar_4 = vec4(0.5, 0.5, 1.0, 1.0);
+  };
+  gl_FragData[0] = tmpvar_4;
+}
+

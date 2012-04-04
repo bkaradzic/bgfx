@@ -1,0 +1,73 @@
+float xll_saturate( float x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec2 xll_saturate( vec2 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec3 xll_saturate( vec3 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec4 xll_saturate( vec4 x) {
+  return clamp( x, 0.0, 1.0);
+}
+mat2 xll_saturate(mat2 m) {
+  return mat2( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0));
+}
+mat3 xll_saturate(mat3 m) {
+  return mat3( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0));
+}
+mat4 xll_saturate(mat4 m) {
+  return mat4( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0), clamp(m[3], 0.0, 1.0));
+}
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+uniform vec4 _BlurOffsets[8];
+uniform sampler2D _MainTex;
+uniform vec4 unity_ShadowBlurParams;
+vec4 frag( in v2f_img i );
+vec4 frag( in v2f_img i ) {
+    vec4 coord;
+    vec4 mask;
+    float dist;
+    float radius;
+    float diffTolerance;
+    int i_1 = 0;
+    vec4 sample;
+    float sampleDist;
+    float diff;
+    float shadow;
+    coord = vec4( i.uv, 0.000000, 0.000000);
+    mask = texture2D( _MainTex, coord.xy );
+    dist = (mask.z  + (mask.w  / 255.000));
+    radius = xll_saturate( (unity_ShadowBlurParams.y  / (1.00000 - dist)) );
+    diffTolerance = unity_ShadowBlurParams.x ;
+    mask.xy  *= diffTolerance;
+    for ( ; (i_1 < 8); ( i_1++ )) {
+        sample = texture2D( _MainTex, (coord + (radius * _BlurOffsets[ i_1 ])).xy );
+        sampleDist = (sample.z  + (sample.w  / 255.000));
+        diff = (dist - sampleDist);
+        diff = xll_saturate( (diffTolerance - abs( diff )) );
+        mask.xy  += (diff * sample.xy );
+    }
+    shadow = (mask.x  / mask.y );
+    return vec4( shadow);
+}
+void main() {
+    vec4 xl_retval;
+    v2f_img xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2( gl_TexCoord[0]);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

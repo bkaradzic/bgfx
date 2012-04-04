@@ -1,0 +1,32 @@
+uniform sampler2D _ParallaxMap;
+uniform float _Parallax;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightTexture0;
+uniform vec4 _LightColor0;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0];
+  vec4 c;
+  vec2 tmpvar_2;
+  vec3 v;
+  vec3 tmpvar_3;
+  tmpvar_3 = normalize (gl_TexCoord[1].xyz);
+  v = tmpvar_3;
+  v.z = (tmpvar_3.z + 0.42);
+  tmpvar_2 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_3.xy / v.z));
+  vec4 tmpvar_4;
+  tmpvar_4 = (texture2D (_MainTex, (tmpvar_1.xy + tmpvar_2)) * _Color);
+  vec4 normal;
+  normal.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_2)).wy * 2.0) - 1.0);
+  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
+  vec4 c_i0_i1;
+  c_i0_i1.xyz = ((tmpvar_4.xyz * _LightColor0.xyz) * ((max (0.0, dot (normal.xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
+  c_i0_i1.w = tmpvar_4.w;
+  c = c_i0_i1;
+  c.w = 0.0;
+  gl_FragData[0] = c;
+}
+

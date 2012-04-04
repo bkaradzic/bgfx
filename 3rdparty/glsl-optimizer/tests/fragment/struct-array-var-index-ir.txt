@@ -1,0 +1,26 @@
+struct str {
+  float params[3];
+};
+void main ()
+{
+  int i;
+  str s;
+  int tmpvar_1;
+  tmpvar_1 = 0;
+  i = tmpvar_1;
+  while (true) {
+    if (!((i < 3))) {
+      break;
+    };
+    float tmpvar_2;
+    tmpvar_2 = 1.0;
+    s.params[i] = tmpvar_2;
+    int tmpvar_3;
+    tmpvar_3 = (i + 1);
+    i = tmpvar_3;
+  };
+  vec4 tmpvar_4;
+  tmpvar_4 = vec4(0.0, 0.0, 0.0, 0.0);
+  gl_FragColor = tmpvar_4;
+}
+

@@ -1,0 +1,13 @@
+void main ()
+{
+  mat3 tmpvar_1;
+  tmpvar_1[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
+  tmpvar_1[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
+  tmpvar_1[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
+  vec4 tmpvar_2;
+  tmpvar_2.w = 1.0;
+  tmpvar_2.xyz = (((tmpvar_1 * gl_Normal) * 0.5) + 0.5);
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  gl_FrontColor = tmpvar_2;
+}
+

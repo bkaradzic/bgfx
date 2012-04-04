@@ -1,0 +1,21 @@
+((function length
+   (signature float
+     (parameters
+       (declare (in) float arg0))
+     ((return (expression float abs (var_ref arg0)))))
+
+   (signature float
+     (parameters
+       (declare (in) vec2 arg0))
+     ((return (expression float sqrt (expression float dot (var_ref arg0) (var_ref arg0))))))
+
+   (signature float
+     (parameters
+       (declare (in) vec3 arg0))
+     ((return (expression float sqrt (expression float dot (var_ref arg0) (var_ref arg0))))))
+
+   (signature float
+     (parameters
+       (declare (in) vec4 arg0))
+     ((return (expression float sqrt (expression float dot (var_ref arg0) (var_ref arg0))))))
+))

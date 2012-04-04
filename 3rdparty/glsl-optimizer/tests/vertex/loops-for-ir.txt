@@ -1,0 +1,151 @@
+struct v2f {
+  vec4 pos;
+  vec4 color;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 normal;
+};
+varying vec4 xlv_TEXCOORD0;
+uniform vec4 unity_LightPosition[4];
+uniform vec4 unity_LightColor[4];
+uniform vec4 unity_LightAtten[4];
+uniform mat4 UNITY_MATRIX_MVP;
+uniform mat4 UNITY_MATRIX_MV;
+uniform mat4 UNITY_MATRIX_IT_MV;
+mat3 xll_constructMat3 (
+  in mat4 m
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = m[0].xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = m[1].xyz;
+  vec3 tmpvar_3;
+  tmpvar_3 = m[2].xyz;
+  mat3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_1;
+  tmpvar_4[0] = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_2;
+  tmpvar_4[1] = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_3;
+  tmpvar_4[2] = tmpvar_7;
+  return tmpvar_4;
+}
+
+vec3 ShadeMyVertexLights (
+  in vec4 vertex,
+  in vec3 normal
+)
+{
+  float diff;
+  float atten;
+  float lengthSq;
+  vec3 toLight;
+  int i;
+  vec3 lightColor;
+  vec3 viewN;
+  vec3 viewpos;
+  vec3 tmpvar_1;
+  tmpvar_1 = vec3(0.0, 0.0, 0.0);
+  lightColor = tmpvar_1;
+  int tmpvar_2;
+  tmpvar_2 = 0;
+  i = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = (UNITY_MATRIX_MV * vertex).xyz;
+  viewpos = tmpvar_3;
+  mat3 tmpvar_4;
+  tmpvar_4 = (xll_constructMat3 (UNITY_MATRIX_IT_MV));
+  vec3 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 * normal);
+  viewN = tmpvar_5;
+  while (true) {
+    if (!((i < 2))) {
+      break;
+    };
+    vec3 tmpvar_6;
+    tmpvar_6 = (unity_LightPosition[i].xyz - viewpos.xyz);
+    toLight = tmpvar_6;
+    float tmpvar_7;
+    tmpvar_7 = dot (toLight, toLight);
+    float tmpvar_8;
+    tmpvar_8 = tmpvar_7;
+    lengthSq = tmpvar_8;
+    float tmpvar_9;
+    tmpvar_9 = (1.0 / (1.0 + (lengthSq * unity_LightAtten[i].z)));
+    atten = tmpvar_9;
+    vec3 tmpvar_10;
+    tmpvar_10 = normalize (toLight);
+    float tmpvar_11;
+    tmpvar_11 = dot (viewN, tmpvar_10);
+    float tmpvar_12;
+    tmpvar_12 = max (0.0, tmpvar_11);
+    float tmpvar_13;
+    tmpvar_13 = tmpvar_12;
+    diff = tmpvar_13;
+    vec3 tmpvar_14;
+    tmpvar_14 = (lightColor + (unity_LightColor[i].xyz * (diff * atten)));
+    lightColor = tmpvar_14;
+    int _post_incdec_tmp;
+    _post_incdec_tmp = i;
+    int tmpvar_15;
+    tmpvar_15 = (i + 1);
+    i = tmpvar_15;
+  };
+  return (lightColor * 2.0);
+}
+
+v2f xlat_main (
+  in appdata v
+)
+{
+  v2f o;
+  vec4 tmpvar_1;
+  tmpvar_1 = (UNITY_MATRIX_MVP * v.vertex);
+  o.pos = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = ShadeMyVertexLights (v.vertex, v.normal);
+  vec4 tmpvar_3;
+  tmpvar_3.w = 1.0;
+  tmpvar_3.xyz = tmpvar_2.xyz;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  o.color = tmpvar_4;
+  return o;
+}
+
+void main ()
+{
+  appdata xlt_v;
+  v2f xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = gl_Normal.xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.normal = tmpvar_4;
+  v2f tmpvar_5;
+  tmpvar_5 = xlat_main (xlt_v);
+  v2f tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xl_retval = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = xl_retval.pos.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_Position = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = xl_retval.color.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlv_TEXCOORD0 = tmpvar_10;
+}
+

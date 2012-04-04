@@ -1,0 +1,56 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 vertex;
+    vec4 color;
+    vec3 texcoord;
+};
+struct appdata_t {
+    vec4 vertex;
+    vec4 color;
+    vec3 normal;
+};
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+
+
+uniform vec4 unity_Scale;
+vec3 ObjSpaceViewDir( in vec4 v );
+v2f vert( in appdata_t v );
+vec3 ObjSpaceViewDir( in vec4 v ) {
+    vec3 objSpaceCameraPos;
+    objSpaceCameraPos = (( _World2Object * vec4( _WorldSpaceCameraPos.xyz , 1.00000) ).xyz  * unity_Scale.w );
+    return (objSpaceCameraPos - v.xyz );
+}
+v2f vert( in appdata_t v ) {
+    v2f o;
+    vec3 viewDir;
+    o.vertex = ( gl_ModelViewProjectionMatrix * v.vertex );
+    viewDir = ( -normalize( ObjSpaceViewDir( v.vertex) ) );
+    o.texcoord = reflect( viewDir, v.normal);
+    o.texcoord = vec3( ( gl_ModelViewMatrix * vec4( o.texcoord, 0.000000) ));
+    o.color = v.color;
+    return o;
+}
+void main() {
+    v2f xl_retval;
+    appdata_t xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.color = vec4( gl_Color);
+    xlt_v.normal = vec3( gl_Normal);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.vertex);
+    gl_FrontColor = vec4( xl_retval.color);
+    gl_TexCoord[0] = vec4( xl_retval.texcoord, 0.0);
+}

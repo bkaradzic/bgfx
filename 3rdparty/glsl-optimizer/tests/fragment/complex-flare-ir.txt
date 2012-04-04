@@ -1,0 +1,30 @@
+uniform sampler2D _FlareTexture;
+vec4 xlat_main (
+  in vec4 color,
+  in vec2 texcoord
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_FlareTexture, texcoord);
+  return (tmpvar_1 * color);
+}
+
+void main ()
+{
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Color.xyzw;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = xlat_main (tmpvar_1, tmpvar_2);
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xl_retval = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = xl_retval.xyzw;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  gl_FragData[0] = tmpvar_6;
+}
+

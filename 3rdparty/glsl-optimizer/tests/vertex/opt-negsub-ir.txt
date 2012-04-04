@@ -1,0 +1,40 @@
+uniform vec4 v3c;
+uniform vec4 v3b;
+uniform vec4 v3a;
+uniform mat3 m3c;
+uniform mat3 m3b;
+uniform mat3 m3a;
+uniform mat4 mvp;
+void main ()
+{
+  vec3 rc;
+  vec3 rb;
+  vec3 tb;
+  vec3 ra;
+  vec3 ta;
+  vec4 tmpvar_1;
+  tmpvar_1 = (mvp * gl_Vertex);
+  gl_Position = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = -((v3a.xyz - gl_Vertex.xyz));
+  ta = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = (m3a * ta);
+  ra = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = -(((mvp * v3b).xyz - gl_Vertex.xyz));
+  tb = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = (m3b * tb);
+  rb = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = (m3c * -((v3c.xyz - gl_Vertex.xyz)));
+  rc = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 1.0;
+  tmpvar_7.xyz = ((ra + rb) + rc).xyz;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_FrontColor = tmpvar_8;
+}
+

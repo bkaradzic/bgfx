@@ -1,0 +1,52 @@
+varying vec4 xlv_FOG;
+uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _Color;
+uniform float _AO;
+void main ()
+{
+  vec4 lightColor;
+  vec4 lightDir;
+  vec4 tmpvar_1;
+  vec4 pos;
+  pos = gl_Vertex;
+  pos.xyz = (gl_Vertex.xyz * _Scale.xyz);
+  vec4 tmpvar_2;
+  tmpvar_2.w = 0.0;
+  tmpvar_2.xyz = pos.xyz;
+  pos.xyz = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_2).xyz, gl_Color.www);
+  vec3 tmpvar_3;
+  tmpvar_3.xz = vec2(0.0, 0.0);
+  tmpvar_3.y = _SquashPlaneNormal.w;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = mix ((pos.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_3 - pos.xyz)) * _SquashPlaneNormal.xyz)), pos.xyz, vec3(_SquashAmount));
+  pos = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
+  lightDir.w = _AO;
+  lightColor = gl_LightModel.ambient;
+  lightDir.xyz = _TerrainTreeLightDirections[0];
+  lightColor = (lightColor + (_TerrainTreeLightColors[0] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightDir.xyz = _TerrainTreeLightDirections[1];
+  lightColor = (lightColor + (_TerrainTreeLightColors[1] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightDir.xyz = _TerrainTreeLightDirections[2];
+  lightColor = (lightColor + (_TerrainTreeLightColors[2] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightDir.xyz = _TerrainTreeLightDirections[3];
+  lightColor = (lightColor + (_TerrainTreeLightColors[3] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightColor.w = 1.0;
+  tmpvar_1 = (lightColor * _Color);
+  tmpvar_1.w = 1.0;
+  gl_Position = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_6.x = tmpvar_5.z;
+  xlv_FOG = tmpvar_6;
+  gl_TexCoord[0] = gl_MultiTexCoord0;
+  gl_FrontColor = tmpvar_1;
+}
+

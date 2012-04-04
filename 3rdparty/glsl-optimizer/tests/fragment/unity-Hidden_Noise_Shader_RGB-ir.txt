@@ -1,0 +1,75 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec2 uvg;
+  vec2 uvs;
+};
+uniform sampler2D _ScratchTex;
+uniform sampler2D _MainTex;
+uniform vec4 _Intensity;
+uniform sampler2D _GrainTex;
+vec4 frag (
+  in v2f i
+)
+{
+  vec3 scratch;
+  vec3 grain;
+  vec4 col;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, i.uv);
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  col = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_GrainTex, i.uvg);
+  vec3 tmpvar_4;
+  tmpvar_4 = ((tmpvar_3.xyz * 2.0) - 1.0);
+  grain = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = (col.xyz + (grain * _Intensity.x));
+  col.xyz = tmpvar_5.xyz.xyz;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_ScratchTex, i.uvs);
+  vec3 tmpvar_7;
+  tmpvar_7 = ((tmpvar_6.xyz * 2.0) - 1.0);
+  scratch = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = (col.xyz + (scratch * _Intensity.y));
+  col.xyz = tmpvar_8.xyz.xyz;
+  return col;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xy;
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.uvg = tmpvar_5;
+  vec2 tmpvar_6;
+  tmpvar_6 = gl_TexCoord[2].xy;
+  vec2 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xlt_i.uvs = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = frag (xlt_i);
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  xl_retval = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = xl_retval.xyzw;
+  vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  gl_FragData[0] = tmpvar_11;
+}
+

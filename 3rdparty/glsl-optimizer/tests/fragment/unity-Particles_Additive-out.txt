@@ -1,0 +1,7 @@
+uniform vec4 _TintColor;
+uniform sampler2D _MainTex;
+void main ()
+{
+  gl_FragData[0] = (((2.0 * gl_Color) * _TintColor) * texture2D (_MainTex, gl_TexCoord[0].xy));
+}
+

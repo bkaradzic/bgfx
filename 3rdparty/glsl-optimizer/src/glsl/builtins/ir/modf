@@ -1,0 +1,37 @@
+((function modf
+   (signature float
+     (parameters
+       (declare (in)  float x)
+       (declare (out) float i))
+     ((declare () float t)
+      (assign (x) (var_ref t) (expression float trunc (var_ref x)))
+      (assign (x) (var_ref i) (var_ref t))
+      (return (expression float - (var_ref x) (var_ref t)))))
+
+   (signature vec2
+     (parameters
+       (declare (in)  vec2 x)
+       (declare (out) vec2 i))
+     ((declare () vec2 t)
+      (assign (xy) (var_ref t) (expression vec2 trunc (var_ref x)))
+      (assign (xy) (var_ref i) (var_ref t))
+      (return (expression vec2 - (var_ref x) (var_ref t)))))
+
+   (signature vec3
+     (parameters
+       (declare (in)  vec3 x)
+       (declare (out) vec3 i))
+     ((declare () vec3 t)
+      (assign (xyz) (var_ref t) (expression vec3 trunc (var_ref x)))
+      (assign (xyz) (var_ref i) (var_ref t))
+      (return (expression vec3 - (var_ref x) (var_ref t)))))
+
+   (signature vec4
+     (parameters
+       (declare (in)  vec4 x)
+       (declare (out) vec4 i))
+     ((declare () vec4 t)
+      (assign (xyzw) (var_ref t) (expression vec4 trunc (var_ref x)))
+      (assign (xyzw) (var_ref i) (var_ref t))
+      (return (expression vec4 - (var_ref x) (var_ref t)))))
+))

@@ -1,0 +1,9 @@
+varying vec4 texcoord;
+void main()
+{
+	gl_Position.zw = gl_Vertex.xy*2.0;
+	gl_Position.xy = gl_Vertex.xy;
+	texcoord.x = gl_Vertex.z;
+	texcoord.yz = gl_Vertex.zw;
+	texcoord.w = gl_Vertex.x;
+}

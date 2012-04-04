@@ -1,0 +1,10 @@
+uniform mat4 mvp;
+uniform mat4 unusedMatrix;
+uniform float unusedFloat;
+attribute vec4 myColor;
+attribute vec3 myUnused;
+
+void main() {
+	gl_Position = mvp * gl_Vertex;
+	gl_FrontColor = myColor;
+}

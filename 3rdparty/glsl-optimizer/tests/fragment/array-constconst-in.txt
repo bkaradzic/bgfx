@@ -1,0 +1,24 @@
+vec4 xlat_main(  );
+vec4 xlat_main(  ) {
+    vec2 poisson[8];
+    poisson[0] = vec2( 0.000000, 0.000000);
+    poisson[1] = vec2( 0.527837, -0.0858680);
+    poisson[2] = vec2( -0.0400880, 0.536087);
+    poisson[3] = vec2( -0.670445, -0.179949);
+    poisson[4] = vec2( -0.419418, -0.616039);
+    poisson[5] = vec2( 0.440453, -0.639399);
+    poisson[6] = vec2( -0.757088, 0.349334);
+    poisson[7] = vec2( 0.574619, 0.685879);
+    vec4 c;
+    int i = 0;
+    c = vec4( 0.000000);
+    for ( ; (i < 8); ( ++i )) {
+        c.xy  += poisson[ i ];
+    }
+    return c;
+}
+void main() {
+    vec4 xl_retval;
+    xl_retval = xlat_main( );
+    gl_FragData[0] = vec4( xl_retval);
+}

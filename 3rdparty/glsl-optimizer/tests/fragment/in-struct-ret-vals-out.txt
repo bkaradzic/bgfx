@@ -1,0 +1,8 @@
+void main ()
+{
+  vec4 c;
+  c = gl_Color;
+  c.xy = (gl_Color.xy + gl_TexCoord[0].xy);
+  gl_FragData[0] = c;
+}
+

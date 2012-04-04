@@ -1,0 +1,73 @@
+((function noise3
+  (signature vec3
+    (parameters (declare (in) vec4 p))
+    (
+      (declare () float a)
+      (declare () float b)
+      (declare () float c)
+      (declare () vec3 t)
+
+      (assign (x) (var_ref a) (expression float noise (var_ref p)))
+      (assign (x) (var_ref b) (expression float noise (expression vec4 + (var_ref p) (constant vec4 (601.0 313.0 29.0 277.0)))))
+      (assign (x) (var_ref c) (expression float noise (expression vec4 + (var_ref p) (constant vec4 (1559.0 113.0 1861.0 797.0)))))
+
+      (assign (x) (var_ref t) (var_ref a))
+      (assign (y) (var_ref t) (var_ref b))
+      (assign (z) (var_ref t) (var_ref c))
+      (return (var_ref t))
+    ))
+
+  (signature vec3
+    (parameters (declare (in) vec3 p))
+    (
+      (declare () float a)
+      (declare () float b)
+      (declare () float c)
+      (declare () vec3 t)
+
+      (assign (x) (var_ref a) (expression float noise (var_ref p)))
+      (assign (x) (var_ref b) (expression float noise (expression vec3 + (var_ref p) (constant vec3 (601.0 313.0 29.0)))))
+      (assign (x) (var_ref c) (expression float noise (expression vec3 + (var_ref p) (constant vec3 (1559.0 113.0 1861.0)))))
+
+      (assign (x) (var_ref t) (var_ref a))
+      (assign (y) (var_ref t) (var_ref b))
+      (assign (z) (var_ref t) (var_ref c))
+      (return (var_ref t))
+    ))
+
+  (signature vec3
+    (parameters (declare (in) vec2 p))
+    (
+      (declare () float a)
+      (declare () float b)
+      (declare () float c)
+      (declare () vec3 t)
+
+      (assign (x) (var_ref a) (expression float noise (var_ref p)))
+      (assign (x) (var_ref b) (expression float noise (expression vec2 + (var_ref p) (constant vec2 (601.0 313.0)))))
+      (assign (x) (var_ref c) (expression float noise (expression vec2 + (var_ref p) (constant vec2 (1559.0 113.0)))))
+
+      (assign (x) (var_ref t) (var_ref a))
+      (assign (y) (var_ref t) (var_ref b))
+      (assign (z) (var_ref t) (var_ref c))
+      (return (var_ref t))
+    ))
+
+  (signature vec3
+    (parameters (declare (in) float p))
+    (
+      (declare () float a)
+      (declare () float b)
+      (declare () float c)
+      (declare () vec3 t)
+
+      (assign (x) (var_ref a) (expression float noise (var_ref p)))
+      (assign (x) (var_ref b) (expression float noise (expression float + (var_ref p) (constant float (601.0)))))
+      (assign (x) (var_ref c) (expression float noise (expression float + (var_ref p) (constant float (1559.0)))))
+
+      (assign (x) (var_ref t) (var_ref a))
+      (assign (y) (var_ref t) (var_ref b))
+      (assign (z) (var_ref t) (var_ref c))
+      (return (var_ref t))
+    ))
+))

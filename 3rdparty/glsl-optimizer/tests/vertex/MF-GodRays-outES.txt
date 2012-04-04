@@ -1,0 +1,110 @@
+varying lowp vec4 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_SV_POSITION;
+uniform highp mat4 glstate_matrix_mvp;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp mat4 _World2Object;
+uniform highp float _VerticalBillboarding;
+uniform highp float _TimeOnDuration;
+uniform highp float _TimeOffDuration;
+uniform highp vec4 _Time;
+uniform highp float _SizeGrowStartDist;
+uniform highp float _SizeGrowEndDist;
+uniform highp float _NoiseAmount;
+uniform highp float _Multiplier;
+uniform highp float _MaxGrowSize;
+uniform highp float _FadeOutDistNear;
+uniform highp float _FadeOutDistFar;
+uniform highp vec4 _Color;
+uniform highp float _BlinkingTimeOffsScale;
+uniform highp float _Bias;
+attribute lowp vec4 _glesColor;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+void main ()
+{
+  highp vec3 tmpvar_1;
+  highp vec4 tmpvar_2;
+  tmpvar_1 = _glesNormal;
+  tmpvar_2 = _glesColor;
+  lowp vec4 tmpvar_3;
+  highp vec3 localDir;
+  highp vec3 tmpvar_4;
+  tmpvar_4.z = 0.0;
+  tmpvar_4.xy = (vec2(0.5, 0.5) - tmpvar_2.xy);
+  highp vec3 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 * _glesMultiTexCoord1.xyy);
+  highp vec3 tmpvar_6;
+  tmpvar_6 = (_glesVertex.xyz + tmpvar_5);
+  highp vec4 tmpvar_7;
+  tmpvar_7.w = 1.0;
+  tmpvar_7.xyz = _WorldSpaceCameraPos;
+  highp vec3 tmpvar_8;
+  tmpvar_8 = ((_World2Object * tmpvar_7).xyz - tmpvar_6);
+  localDir = tmpvar_8;
+  localDir.y = mix (0.0, tmpvar_8.y, _VerticalBillboarding);
+  highp float tmpvar_9;
+  tmpvar_9 = length (localDir);
+  highp vec3 dir;
+  dir = (localDir / tmpvar_9);
+  highp float tmpvar_10;
+  tmpvar_10 = abs (dir.y);
+  vec3 tmpvar_11;
+  if ((tmpvar_10 > 0.999)) {
+    tmpvar_11 = vec3(0.0, 0.0, 1.0);
+  } else {
+    tmpvar_11 = vec3(0.0, 1.0, 0.0);
+  };
+  highp vec3 tmpvar_12;
+  tmpvar_12 = normalize (cross (tmpvar_11, dir));
+  highp vec3 tmpvar_13;
+  tmpvar_13 = cross (dir, tmpvar_12);
+  highp float tmpvar_14;
+  tmpvar_14 = min ((max ((tmpvar_9 - _SizeGrowStartDist), 0.0) / _SizeGrowEndDist), 1.0);
+  highp vec3 tmpvar_15;
+  tmpvar_15 = ((tmpvar_6 - ((tmpvar_12 * tmpvar_5.x) + (tmpvar_13 * tmpvar_5.y))) + (((tmpvar_12 * tmpvar_1.x) + (tmpvar_13 * tmpvar_1.y)) * (((tmpvar_14 * tmpvar_14) * _MaxGrowSize) * tmpvar_2.w)));
+  highp float tmpvar_16;
+  tmpvar_16 = (_Time.y + (_BlinkingTimeOffsScale * tmpvar_2.z));
+  highp float y;
+  y = (_TimeOnDuration + _TimeOffDuration);
+  float tmpvar_17;
+  tmpvar_17 = (tmpvar_16 / y);
+  float tmpvar_18;
+  tmpvar_18 = (fract (abs (tmpvar_17)) * y);
+  float tmpvar_19;
+  if ((tmpvar_17 >= 0.0)) {
+    tmpvar_19 = tmpvar_18;
+  } else {
+    tmpvar_19 = -(tmpvar_18);
+  };
+  highp float tmpvar_20;
+  tmpvar_20 = (smoothstep (0.0, (_TimeOnDuration * 0.25), tmpvar_19) * (1.0 - smoothstep ((_TimeOnDuration * 0.75), _TimeOnDuration, tmpvar_19)));
+  highp float tmpvar_21;
+  tmpvar_21 = (tmpvar_16 * (6.28319 / _TimeOnDuration));
+  highp float tmpvar_22;
+  tmpvar_22 = ((_NoiseAmount * (sin (tmpvar_21) * ((0.5 * cos (((tmpvar_21 * 0.6366) + 56.7272))) + 0.5))) + (1.0 - _NoiseAmount));
+  highp float tmpvar_23;
+  if ((_NoiseAmount < 0.01)) {
+    tmpvar_23 = tmpvar_20;
+  } else {
+    tmpvar_23 = tmpvar_22;
+  };
+  highp vec4 tmpvar_24;
+  tmpvar_24.w = 1.0;
+  tmpvar_24.xyz = tmpvar_15;
+  highp float tmpvar_25;
+  tmpvar_25 = clamp ((tmpvar_9 / _FadeOutDistNear), 0.0, 1.0);
+  float tmpvar_26;
+  tmpvar_26 = (1.0 - clamp ((max ((tmpvar_9 - _FadeOutDistFar), 0.0) * 0.2), 0.0, 1.0));
+  highp float tmpvar_27;
+  tmpvar_27 = (tmpvar_25 * tmpvar_25);
+  highp vec4 tmpvar_28;
+  tmpvar_28 = (((((tmpvar_27 * tmpvar_27) * (tmpvar_26 * tmpvar_26)) * _Color) * _Multiplier) * (tmpvar_23 + _Bias));
+  tmpvar_3 = tmpvar_28;
+  xlv_SV_POSITION = (glstate_matrix_mvp * tmpvar_24);
+  xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;
+  xlv_TEXCOORD1 = tmpvar_3;
+}
+

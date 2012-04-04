@@ -1,0 +1,108 @@
+void xll_clip(float x) {
+  if ( x<0.0 ) discard;
+}
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec4 color;
+};
+struct v2f_surf {
+    vec4 pos;
+    float fog;
+    vec2 hip_pack0;
+    vec4 lop_color;
+    vec3 normal;
+    vec3 vlight;
+    vec4 _ShadowCoord;
+};
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _WorldSpaceLightPos0;
+float unitySampleShadow( in vec4 shadowCoord );
+void surf( in Input IN, inout SurfaceOutput o );
+vec4 LightingLambert( in SurfaceOutput s, in vec3 lightDir, in float atten );
+vec4 frag_surf( in v2f_surf IN );
+float unitySampleShadow( in vec4 shadowCoord ) {
+    float shadow;
+    shadow = texture2DProj( _ShadowMapTexture, shadowCoord).x ;
+    return shadow;
+}
+void surf( in Input IN, inout SurfaceOutput o ) {
+    vec4 c;
+    c = (texture2D( _MainTex, IN.uv_MainTex) * IN.color);
+    o.Albedo = c.xyz ;
+    o.Alpha = c.w ;
+}
+vec4 LightingLambert( in SurfaceOutput s, in vec3 lightDir, in float atten ) {
+    float diff;
+    vec4 c;
+    diff = max( 0.000000, dot( s.Normal, lightDir));
+    c.xyz  = ((s.Albedo * _LightColor0.xyz ) * ((diff * atten) * 2.00000));
+    c.w  = s.Alpha;
+    return c;
+}
+vec4 frag_surf( in v2f_surf IN ) {
+    Input surfIN;
+    SurfaceOutput o;
+    float atten;
+    vec4 c;
+    surfIN.uv_MainTex = IN.hip_pack0.xy ;
+    surfIN.color = IN.lop_color;
+    o.Albedo = vec3( 0.000000);
+    o.Emission = vec3( 0.000000);
+    o.Specular = 0.000000;
+    o.Alpha = 0.000000;
+    o.Gloss = 0.000000;
+    o.Normal = IN.normal;
+    surf( surfIN, o);
+    xll_clip( (o.Alpha - _Cutoff) );
+    atten = unitySampleShadow( IN._ShadowCoord);
+    c = LightingLambert( o, _WorldSpaceLightPos0.xyz , atten);
+    c.xyz  += (o.Albedo * IN.vlight);
+    c.w  = o.Alpha;
+    return c;
+}
+varying vec4 xlv_FOG;
+void main() {
+    vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.fog = float( xlv_FOG);
+    xlt_IN.hip_pack0 = vec2( gl_TexCoord[0]);
+    xlt_IN.lop_color = vec4( gl_Color);
+    xlt_IN.normal = vec3( gl_TexCoord[1]);
+    xlt_IN.vlight = vec3( gl_TexCoord[2]);
+    xlt_IN._ShadowCoord = vec4( gl_TexCoord[3]);
+    xl_retval = frag_surf( xlt_IN);
+    gl_FragData[0] = vec4( xl_retval);
+}

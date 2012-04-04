@@ -1,0 +1,8 @@
+uniform vec4 _LightPositionRange;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = fract ((vec4(1.0, 255.0, 65025.0, 160580992.0) * (length (gl_TexCoord[0].xyz) * _LightPositionRange.w)));
+  gl_FragData[0] = (tmpvar_1 - (tmpvar_1.yzww * 0.00392157));
+}
+

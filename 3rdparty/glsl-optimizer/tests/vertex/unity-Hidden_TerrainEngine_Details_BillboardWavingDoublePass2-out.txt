@@ -1,0 +1,67 @@
+attribute vec4 TANGENT;
+uniform vec4 unity_LightShadowBias;
+uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _MainTex_ST;
+uniform vec3 _CameraUp;
+uniform vec3 _CameraRight;
+uniform vec4 _CameraPosition;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec2 tmpvar_2;
+  vec4 pos;
+  pos = gl_Vertex;
+  vec2 offset;
+  offset = TANGENT.xy;
+  vec3 tmpvar_3;
+  tmpvar_3 = (gl_Vertex.xyz - _CameraPosition.xyz);
+  float tmpvar_4;
+  tmpvar_4 = dot (tmpvar_3, tmpvar_3);
+  if ((tmpvar_4 > _WaveAndDistance.w)) {
+    offset = vec2(0.0, 0.0);
+  };
+  pos.xyz = (gl_Vertex.xyz + (offset.x * _CameraRight));
+  pos.xyz = (pos.xyz + (offset.y * _CameraUp));
+  vec4 vertex;
+  vertex = pos;
+  vec4 outColor;
+  vec3 waveMove;
+  waveMove = vec3(0.0, 0.0, 0.0);
+  vec4 tmpvar_5;
+  tmpvar_5 = ((fract ((((pos.x * (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y)) + (pos.z * (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.2, 2.0, 1.6, 4.8)))) * 6.40885) - 3.14159);
+  vec4 tmpvar_6;
+  tmpvar_6 = (tmpvar_5 * tmpvar_5);
+  vec4 tmpvar_7;
+  tmpvar_7 = (tmpvar_6 * tmpvar_5);
+  vec4 tmpvar_8;
+  tmpvar_8 = (tmpvar_7 * tmpvar_6);
+  vec4 tmpvar_9;
+  tmpvar_9 = (((tmpvar_5 + (tmpvar_7 * -0.161616)) + (tmpvar_8 * 0.0083333)) + ((tmpvar_8 * tmpvar_6) * -0.00019841));
+  vec4 tmpvar_10;
+  tmpvar_10 = (tmpvar_9 * tmpvar_9);
+  vec4 tmpvar_11;
+  tmpvar_11 = (tmpvar_10 * tmpvar_10);
+  vec4 tmpvar_12;
+  tmpvar_12 = (tmpvar_11 * TANGENT.y);
+  waveMove.x = dot (tmpvar_12, vec4(0.024, 0.04, -0.12, 0.096));
+  waveMove.z = dot (tmpvar_12, vec4(0.006, 0.02, -0.02, 0.1));
+  vertex.xz = (pos.xz - (waveMove.xz * _WaveAndDistance.z));
+  outColor.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3((dot (tmpvar_11, vec4(0.6742, 0.6742, 0.26968, 0.13484)) * 0.7)))) * 2.0);
+  outColor.w = 1.0;
+  tmpvar_2 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  vec4 tmpvar_13;
+  tmpvar_13 = (gl_ModelViewProjectionMatrix * vertex);
+  tmpvar_1 = tmpvar_13;
+  tmpvar_1.z = (tmpvar_13.z + unity_LightShadowBias.x);
+  if ((tmpvar_1.z < -(tmpvar_13.w))) {
+    tmpvar_1.z = -(tmpvar_13.w);
+  };
+  gl_Position = tmpvar_1;
+  vec4 tmpvar_14;
+  tmpvar_14.zw = vec2(0.0, 0.0);
+  tmpvar_14.xy = tmpvar_2;
+  gl_TexCoord[1] = tmpvar_14;
+  gl_FrontColor = outColor;
+}
+

@@ -1,0 +1,54 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv0;
+  vec2 uv1;
+};
+varying vec4 xlv_TEXCOORD1;
+varying vec4 xlv_TEXCOORD0;
+uniform sampler2D _MainTex;
+uniform sampler2D _Detail;
+uniform vec4 _Color;
+vec4 frag (
+  in v2f i
+)
+{
+  vec4 c;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, i.uv0);
+  vec4 tmpvar_2;
+  tmpvar_2 = (_Color * tmpvar_1);
+  c = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_Detail, i.uv1);
+  vec4 tmpvar_4;
+  tmpvar_4 = ((c * tmpvar_3) * 2.0);
+  c = tmpvar_4;
+  return c;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec2 tmpvar_1;
+  tmpvar_1 = xlv_TEXCOORD0.xy;
+  vec2 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_i.uv0 = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = xlv_TEXCOORD1.xy;
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_i.uv1 = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = frag (xlt_i);
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xl_retval = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = xl_retval.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_FragData[0] = tmpvar_8;
+}
+

@@ -1,0 +1,16 @@
+((function not
+   (signature bvec2
+     (parameters
+       (declare (in) bvec2 arg0))
+     ((return (expression bvec2 ! (var_ref arg0)))))
+
+   (signature bvec3
+     (parameters
+       (declare (in) bvec3 arg0))
+     ((return (expression bvec3 ! (var_ref arg0)))))
+
+   (signature bvec4
+     (parameters
+       (declare (in) bvec4 arg0))
+     ((return (expression bvec4 ! (var_ref arg0)))))
+))

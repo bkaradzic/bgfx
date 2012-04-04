@@ -1,0 +1,21 @@
+((function inversesqrt
+   (signature float
+     (parameters
+       (declare (in) float arg0))
+     ((return (expression float rsq (var_ref arg0)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 arg0))
+     ((return (expression vec2 rsq (var_ref arg0)))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 arg0))
+     ((return (expression vec3 rsq (var_ref arg0)))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 arg0))
+     ((return (expression vec4 rsq (var_ref arg0)))))
+))

@@ -1,0 +1,23 @@
+varying lowp vec4 xlv_COLOR;
+varying mediump vec2 xlv_TEXCOORD0;
+uniform highp mat4 mvp;
+attribute lowp vec4 _glesColor;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+void main ()
+{
+  highp vec2 tmpvar_1;
+  tmpvar_1 = _glesMultiTexCoord0.xy;
+  mediump vec2 tmpvar_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = _glesColor;
+  mediump vec3 tmpvar_4;
+  tmpvar_4 = (_glesColor.xyz + _glesNormal);
+  tmpvar_3.xyz = tmpvar_4;
+  tmpvar_2 = tmpvar_1;
+  gl_Position = (mvp * _glesVertex);
+  xlv_TEXCOORD0 = tmpvar_2;
+  xlv_COLOR = tmpvar_3;
+}
+

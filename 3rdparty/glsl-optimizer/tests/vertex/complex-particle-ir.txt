@@ -1,0 +1,72 @@
+struct v2f {
+  vec4 vertex;
+  vec4 color;
+  vec2 texcoord;
+};
+struct appdata_t {
+  vec4 vertex;
+  vec4 color;
+  vec2 texcoord;
+};
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR;
+uniform mat4 glstate_matrix_mvp;
+uniform vec4 _MainTex_ST;
+v2f xlat_main (
+  in appdata_t v
+)
+{
+  v2f o;
+  vec4 tmpvar_1;
+  tmpvar_1 = (glstate_matrix_mvp * v.vertex);
+  o.vertex = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = v.color;
+  o.color = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o.texcoord = tmpvar_3;
+  return o;
+}
+
+void main ()
+{
+  appdata_t xlt_v;
+  v2f xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = gl_Color.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.color = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = gl_MultiTexCoord0.xy;
+  vec2 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.texcoord = tmpvar_6;
+  v2f tmpvar_7;
+  tmpvar_7 = xlat_main (xlt_v);
+  v2f tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xl_retval = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = xl_retval.vertex.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  gl_Position = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = xl_retval.color.xyzw;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlv_COLOR = tmpvar_12;
+  vec2 tmpvar_13;
+  tmpvar_13 = xl_retval.texcoord.xy;
+  vec2 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xlv_TEXCOORD0 = tmpvar_14;
+}
+

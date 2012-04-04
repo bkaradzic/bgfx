@@ -1,0 +1,188 @@
+#extension GL_ARB_shader_texture_lod : require
+vec4 xll_tex2Dlod(sampler2D s, vec4 coord) {
+   return texture2DLod( s, coord.xy, coord.w);
+}
+vec4 xll_tex2Dgrad(sampler2D s, vec2 coord, vec2 ddx, vec2 ddy) {
+   return texture2DGradARB( s, coord, ddx, ddy);
+}
+uniform sampler2D _MainTex;
+uniform vec4 _MainTex_TexelSize;
+vec4 FxaaTexOff( in sampler2D tex, in vec2 pos, in vec2 off, in vec2 rcpFrame );
+vec4 FxaaTexLod0( in sampler2D tex, in vec2 pos );
+vec4 FxaaTexGrad( in sampler2D tex, in vec2 pos, in vec2 grad );
+float FxaaLuma( in vec3 rgb );
+vec3 FxaaLerp3( in vec3 a, in vec3 b, in float amountOfA );
+vec3 FxaaFilterReturn( in vec3 rgb );
+vec3 FxaaPixelShader( in vec2 pos, in sampler2D tex, in vec2 rcpFrame );
+vec4 xlat_main( in vec2 uv );
+vec4 FxaaTexOff( in sampler2D tex, in vec2 pos, in vec2 off, in vec2 rcpFrame ) {
+    return xll_tex2Dlod( tex, vec4( (pos.xy  + (off * rcpFrame)), 0.00000, 0.00000));
+}
+vec4 FxaaTexLod0( in sampler2D tex, in vec2 pos ) {
+    return xll_tex2Dlod( tex, vec4( pos.xy , 0.00000, 0.00000));
+}
+vec4 FxaaTexGrad( in sampler2D tex, in vec2 pos, in vec2 grad ) {
+    return xll_tex2Dgrad( tex, pos.xy , grad, grad);
+}
+float FxaaLuma( in vec3 rgb ) {
+    return ((rgb.y  * 1.96321) + rgb.x );
+}
+vec3 FxaaLerp3( in vec3 a, in vec3 b, in float amountOfA ) {
+    return ((vec3( ( -amountOfA ), ( -amountOfA ), ( -amountOfA )) * b) + ((a * vec3( amountOfA, amountOfA, amountOfA)) + b));
+}
+vec3 FxaaFilterReturn( in vec3 rgb ) {
+    return rgb;
+}
+vec3 FxaaPixelShader( in vec2 pos, in sampler2D tex, in vec2 rcpFrame ) {
+    vec3 rgbN;
+    vec3 rgbW;
+    vec3 rgbM;
+    vec3 rgbE;
+    vec3 rgbS;
+    float lumaN;
+    float lumaW;
+    float lumaM;
+    float lumaE;
+    float lumaS;
+    float rangeMin;
+    float rangeMax;
+    float range;
+    vec3 rgbL;
+    float lumaL;
+    float rangeL;
+    float blendL;
+    vec3 rgbNW;
+    vec3 rgbNE;
+    vec3 rgbSW;
+    vec3 rgbSE;
+    float lumaNW;
+    float lumaNE;
+    float lumaSW;
+    float lumaSE;
+    float edgeVert;
+    float edgeHorz;
+    bool horzSpan;
+    float lengthSign;
+    float gradientN;
+    float gradientS;
+    bool pairN;
+    vec2 posN;
+    vec2 posP;
+    vec2 offNP;
+    float lumaEndN;
+    float lumaEndP;
+    bool doneN = false;
+    bool doneP = false;
+    int i = 0;
+    float dstN;
+    float dstP;
+    bool directionN;
+    float spanLength;
+    float subPixelOffset;
+    vec3 rgbF;
+    rgbN = FxaaTexOff( tex, pos.xy , vec2( 0.00000, -1.00000), rcpFrame).xyz ;
+    rgbW = FxaaTexOff( tex, pos.xy , vec2( -1.00000, 0.00000), rcpFrame).xyz ;
+    rgbM = FxaaTexOff( tex, pos.xy , vec2( 0.00000, 0.00000), rcpFrame).xyz ;
+    rgbE = FxaaTexOff( tex, pos.xy , vec2( 1.00000, 0.00000), rcpFrame).xyz ;
+    rgbS = FxaaTexOff( tex, pos.xy , vec2( 0.00000, 1.00000), rcpFrame).xyz ;
+    lumaN = FxaaLuma( rgbN);
+    lumaW = FxaaLuma( rgbW);
+    lumaM = FxaaLuma( rgbM);
+    lumaE = FxaaLuma( rgbE);
+    lumaS = FxaaLuma( rgbS);
+    rangeMin = min( lumaM, min( min( lumaN, lumaW), min( lumaS, lumaE)));
+    rangeMax = max( lumaM, max( max( lumaN, lumaW), max( lumaS, lumaE)));
+    range = (rangeMax - rangeMin);
+    if ( (range < max( 0.0625000, (rangeMax * 0.125000))) ){
+        return FxaaFilterReturn( rgbM);
+    }
+    rgbL = ((((rgbN + rgbW) + rgbM) + rgbE) + rgbS);
+    lumaL = ((((lumaN + lumaW) + lumaE) + lumaS) * 0.250000);
+    rangeL = abs( (lumaL - lumaM) );
+    blendL = (max( 0.00000, ((rangeL / range) - 0.250000)) * 1.33333);
+    blendL = min( 0.750000, blendL);
+    rgbNW = FxaaTexOff( tex, pos.xy , vec2( -1.00000, -1.00000), rcpFrame).xyz ;
+    rgbNE = FxaaTexOff( tex, pos.xy , vec2( 1.00000, -1.00000), rcpFrame).xyz ;
+    rgbSW = FxaaTexOff( tex, pos.xy , vec2( -1.00000, 1.00000), rcpFrame).xyz ;
+    rgbSE = FxaaTexOff( tex, pos.xy , vec2( 1.00000, 1.00000), rcpFrame).xyz ;
+    rgbL += (((rgbNW + rgbNE) + rgbSW) + rgbSE);
+    rgbL *= vec3( 0.111111, 0.111111, 0.111111);
+    lumaNW = FxaaLuma( rgbNW);
+    lumaNE = FxaaLuma( rgbNE);
+    lumaSW = FxaaLuma( rgbSW);
+    lumaSE = FxaaLuma( rgbSE);
+    edgeVert = ((abs( (((0.250000 * lumaNW) + (-0.500000 * lumaN)) + (0.250000 * lumaNE)) ) + abs( (((0.500000 * lumaW) + (-1.00000 * lumaM)) + (0.500000 * lumaE)) )) + abs( (((0.250000 * lumaSW) + (-0.500000 * lumaS)) + (0.250000 * lumaSE)) ));
+    edgeHorz = ((abs( (((0.250000 * lumaNW) + (-0.500000 * lumaW)) + (0.250000 * lumaSW)) ) + abs( (((0.500000 * lumaN) + (-1.00000 * lumaM)) + (0.500000 * lumaS)) )) + abs( (((0.250000 * lumaNE) + (-0.500000 * lumaE)) + (0.250000 * lumaSE)) ));
+    horzSpan = (edgeHorz >= edgeVert);
+    lengthSign = (( horzSpan ) ? ( ( -rcpFrame.y  ) ) : ( ( -rcpFrame.x  ) ));
+    if ( ( !horzSpan ) ){
+        lumaN = lumaW;
+    }
+    if ( ( !horzSpan ) ){
+        lumaS = lumaE;
+    }
+    gradientN = abs( (lumaN - lumaM) );
+    gradientS = abs( (lumaS - lumaM) );
+    lumaN = ((lumaN + lumaM) * 0.500000);
+    lumaS = ((lumaS + lumaM) * 0.500000);
+    pairN = (gradientN >= gradientS);
+    if ( ( !pairN ) ){
+        lumaN = lumaS;
+    }
+    if ( ( !pairN ) ){
+        gradientN = gradientS;
+    }
+    if ( ( !pairN ) ){
+        lengthSign *= -1.00000;
+    }
+    posN.x  = (pos.x  + (( horzSpan ) ? ( 0.00000 ) : ( (lengthSign * 0.500000) )));
+    posN.y  = (pos.y  + (( horzSpan ) ? ( (lengthSign * 0.500000) ) : ( 0.00000 )));
+    gradientN *= 0.250000;
+    posP = posN;
+    offNP = (( horzSpan ) ? ( vec2( rcpFrame.x , 0.00000) ) : ( vec2( 0.00000, rcpFrame.y ) ));
+    lumaEndN = lumaN;
+    lumaEndP = lumaN;
+    posN += (offNP * vec2( -2.00000, -2.00000));
+    posP += (offNP * vec2( 2.00000, 2.00000));
+    offNP *= vec2( 3.00000, 3.00000);
+    for ( ; (i < 4); ( i++ )) {
+        if ( ( !doneN ) ){
+            lumaEndN = FxaaLuma( FxaaTexGrad( tex, posN.xy , offNP).xyz );
+        }
+        if ( ( !doneP ) ){
+            lumaEndP = FxaaLuma( FxaaTexGrad( tex, posP.xy , offNP).xyz );
+        }
+        doneN = (doneN || (abs( (lumaEndN - lumaN) ) >= gradientN));
+        doneP = (doneP || (abs( (lumaEndP - lumaN) ) >= gradientN));
+        if ( (doneN && doneP) ){
+            break;
+        }
+        if ( ( !doneN ) ){
+            posN -= offNP;
+        }
+        if ( ( !doneP ) ){
+            posP += offNP;
+        }
+    }
+    dstN = (( horzSpan ) ? ( (pos.x  - posN.x ) ) : ( (pos.y  - posN.y ) ));
+    dstP = (( horzSpan ) ? ( (posP.x  - pos.x ) ) : ( (posP.y  - pos.y ) ));
+    directionN = (dstN < dstP);
+    lumaEndN = (( directionN ) ? ( lumaEndN ) : ( lumaEndP ));
+    if ( (((lumaM - lumaN) < 0.00000) == ((lumaEndN - lumaN) < 0.00000)) ){
+        lengthSign = 0.00000;
+    }
+    spanLength = (dstP + dstN);
+    dstN = (( directionN ) ? ( dstN ) : ( dstP ));
+    subPixelOffset = ((0.500000 + (dstN * (-1.00000 / spanLength))) * lengthSign);
+    rgbF = FxaaTexLod0( tex, vec2( (pos.x  + (( horzSpan ) ? ( 0.00000 ) : ( subPixelOffset ))), (pos.y  + (( horzSpan ) ? ( subPixelOffset ) : ( 0.00000 ))))).xyz ;
+    return FxaaFilterReturn( FxaaLerp3( rgbL, rgbF, blendL));
+}
+vec4 xlat_main( in vec2 uv ) {
+    return vec4( FxaaPixelShader( uv.xy , _MainTex, _MainTex_TexelSize.xy ).xyz , 0.00000);
+}
+varying vec2 xlv_TEXCOORD0;
+void main() {
+    vec4 xl_retval;
+    xl_retval = xlat_main( vec2(xlv_TEXCOORD0));
+    gl_FragData[0] = vec4( xl_retval);
+}

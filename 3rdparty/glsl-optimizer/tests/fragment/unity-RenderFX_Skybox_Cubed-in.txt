@@ -1,0 +1,40 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 vertex;
+    vec3 texcoord;
+};
+struct appdata_t {
+    vec4 vertex;
+    vec3 texcoord;
+};
+uniform samplerCube _Tex;
+uniform vec4 _Tint;
+vec4 frag( in v2f i );
+vec4 frag( in v2f i ) {
+    vec4 tex;
+    vec4 col;
+    tex = textureCube( _Tex, i.texcoord);
+    col.xyz  = ((tex.xyz  + _Tint.xyz ) - 0.500000);
+    col.w  = (tex.w  * _Tint.w );
+    return col;
+}
+void main() {
+    vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.vertex = vec4(0.0);
+    xlt_i.texcoord = vec3( gl_TexCoord[0]);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

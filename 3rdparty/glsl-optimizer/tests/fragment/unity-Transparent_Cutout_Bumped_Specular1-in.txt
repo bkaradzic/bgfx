@@ -1,0 +1,107 @@
+void xll_clip(float x) {
+  if ( x<0.0 ) discard;
+}
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec2 uv_BumpMap;
+};
+struct v2f_surf {
+    vec4 pos;
+    float fog;
+    vec2 hip_pack0;
+    vec4 hip_screen;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+uniform vec4 unity_Ambient;
+vec4 UnpackNormal( in vec4 packednormal );
+void surf( in Input IN, inout SurfaceOutput o );
+vec4 LightingBlinnPhong_PrePass( in SurfaceOutput s, in vec4 light );
+vec4 frag_surf( in v2f_surf IN );
+vec4 UnpackNormal( in vec4 packednormal ) {
+    vec4 normal;
+    normal.xy  = ((packednormal.wy  * 2.00000) - 1.00000);
+    normal.z  = sqrt( ((1.00000 - (normal.x  * normal.x )) - (normal.y  * normal.y )) );
+    return normal;
+}
+void surf( in Input IN, inout SurfaceOutput o ) {
+    vec4 tex;
+    tex = texture2D( _MainTex, IN.uv_MainTex);
+    o.Albedo = (tex.xyz  * _Color.xyz );
+    o.Gloss = tex.w ;
+    o.Alpha = (tex.w  * _Color.w );
+    o.Specular = _Shininess;
+    o.Normal = vec3( UnpackNormal( texture2D( _BumpMap, IN.uv_BumpMap)));
+}
+vec4 LightingBlinnPhong_PrePass( in SurfaceOutput s, in vec4 light ) {
+    float spec;
+    vec4 c;
+    spec = (light.w  * s.Gloss);
+    c.xyz  = ((s.Albedo * light.xyz ) + ((light.xyz  * _SpecColor.xyz ) * spec));
+    c.w  = (s.Alpha + (spec * _SpecColor.w ));
+    return c;
+}
+vec4 frag_surf( in v2f_surf IN ) {
+    Input surfIN;
+    SurfaceOutput o;
+    vec4 light;
+    vec4 col;
+    surfIN.uv_MainTex = IN.hip_pack0.xy ;
+    o.Albedo = vec3( 0.000000);
+    o.Emission = vec3( 0.000000);
+    o.Specular = 0.000000;
+    o.Alpha = 0.000000;
+    o.Gloss = 0.000000;
+    surf( surfIN, o);
+    xll_clip( (o.Alpha - _Cutoff) );
+    light = texture2DProj( _LightBuffer, IN.hip_screen);
+    light = ( -log2( light ) );
+    light.xyz  += unity_Ambient.xyz ;
+    col = LightingBlinnPhong_PrePass( o, light);
+    return col;
+}
+varying vec4 xlv_FOG;
+void main() {
+    vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.fog = float( xlv_FOG);
+    xlt_IN.hip_pack0 = vec2( gl_TexCoord[0]);
+    xlt_IN.hip_screen = vec4( gl_TexCoord[1]);
+    xl_retval = frag_surf( xlt_IN);
+    gl_FragData[0] = vec4( xl_retval);
+}

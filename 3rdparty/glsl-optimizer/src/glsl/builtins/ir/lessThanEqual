@@ -1,0 +1,55 @@
+((function lessThanEqual
+   (signature bvec2
+     (parameters
+       (declare (in) vec2 arg0)
+       (declare (in) vec2 arg1))
+     ((return (expression bvec2 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec3
+     (parameters
+       (declare (in) vec3 arg0)
+       (declare (in) vec3 arg1))
+     ((return (expression bvec3 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec4
+     (parameters
+       (declare (in) vec4 arg0)
+       (declare (in) vec4 arg1))
+     ((return (expression bvec4 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec2
+     (parameters
+       (declare (in) ivec2 arg0)
+       (declare (in) ivec2 arg1))
+     ((return (expression bvec2 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec3
+     (parameters
+       (declare (in) ivec3 arg0)
+       (declare (in) ivec3 arg1))
+     ((return (expression bvec3 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec4
+     (parameters
+       (declare (in) ivec4 arg0)
+       (declare (in) ivec4 arg1))
+     ((return (expression bvec4 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec2
+     (parameters
+       (declare (in) uvec2 arg0)
+       (declare (in) uvec2 arg1))
+     ((return (expression bvec2 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec3
+     (parameters
+       (declare (in) uvec3 arg0)
+       (declare (in) uvec3 arg1))
+     ((return (expression bvec3 <= (var_ref arg0) (var_ref arg1)))))
+
+   (signature bvec4
+     (parameters
+       (declare (in) uvec4 arg0)
+       (declare (in) uvec4 arg1))
+     ((return (expression bvec4 <= (var_ref arg0) (var_ref arg1)))))
+))

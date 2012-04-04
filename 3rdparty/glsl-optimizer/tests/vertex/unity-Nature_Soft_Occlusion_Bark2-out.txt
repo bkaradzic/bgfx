@@ -1,0 +1,29 @@
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _LightPositionRange;
+void main ()
+{
+  vec4 pos;
+  pos = gl_Vertex;
+  pos.xyz = (gl_Vertex.xyz * _Scale.xyz);
+  vec4 tmpvar_1;
+  tmpvar_1.w = 0.0;
+  tmpvar_1.xyz = pos.xyz;
+  pos.xyz = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_1).xyz, gl_Color.www);
+  vec3 tmpvar_2;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
+  vec4 tmpvar_3;
+  tmpvar_3.w = 1.0;
+  tmpvar_3.xyz = mix ((pos.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_2 - pos.xyz)) * _SquashPlaneNormal.xyz)), pos.xyz, vec3(_SquashAmount));
+  pos = tmpvar_3;
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_3);
+  vec4 tmpvar_4;
+  tmpvar_4.w = 0.0;
+  tmpvar_4.xyz = ((_Object2World * tmpvar_3).xyz - _LightPositionRange.xyz);
+  gl_TexCoord[0] = tmpvar_4;
+}
+

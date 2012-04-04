@@ -1,0 +1,127 @@
+((function max
+   (signature float
+     (parameters
+       (declare (in) float arg0)
+       (declare (in) float arg1))
+     ((return (expression float max (var_ref arg0) (var_ref arg1)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 arg0)
+       (declare (in) vec2 arg1))
+     ((return (expression vec2 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 arg0)
+       (declare (in) vec3 arg1))
+     ((return (expression vec3 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 arg0)
+       (declare (in) vec4 arg1))
+     ((return (expression vec4 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2  arg0)
+       (declare (in) float arg1))
+     ((return (expression vec2 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3  arg0)
+       (declare (in) float arg1))
+     ((return (expression vec3 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4  arg0)
+       (declare (in) float arg1))
+     ((return (expression vec4 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature int
+     (parameters
+       (declare (in) int arg0)
+       (declare (in) int arg1))
+     ((return (expression int max (var_ref arg0) (var_ref arg1)))))
+
+   (signature ivec2
+     (parameters
+       (declare (in) ivec2 arg0)
+       (declare (in) ivec2 arg1))
+     ((return (expression ivec2 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature ivec3
+     (parameters
+       (declare (in) ivec3 arg0)
+       (declare (in) ivec3 arg1))
+     ((return (expression ivec3 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) ivec4 arg0)
+       (declare (in) ivec4 arg1))
+     ((return (expression ivec4 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature ivec2
+     (parameters
+       (declare (in) ivec2  arg0)
+       (declare (in) int arg1))
+     ((return (expression ivec2 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature ivec3
+     (parameters
+       (declare (in) ivec3  arg0)
+       (declare (in) int arg1))
+     ((return (expression ivec3 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) ivec4  arg0)
+       (declare (in) int arg1))
+     ((return (expression ivec4 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uint
+     (parameters
+       (declare (in) uint arg0)
+       (declare (in) uint arg1))
+     ((return (expression uint max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uvec2
+     (parameters
+       (declare (in) uvec2 arg0)
+       (declare (in) uvec2 arg1))
+     ((return (expression uvec2 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uvec3
+     (parameters
+       (declare (in) uvec3 arg0)
+       (declare (in) uvec3 arg1))
+     ((return (expression uvec3 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) uvec4 arg0)
+       (declare (in) uvec4 arg1))
+     ((return (expression uvec4 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uvec2
+     (parameters
+       (declare (in) uvec2  arg0)
+       (declare (in) uint arg1))
+     ((return (expression uvec2 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uvec3
+     (parameters
+       (declare (in) uvec3  arg0)
+       (declare (in) uint arg1))
+     ((return (expression uvec3 max (var_ref arg0) (var_ref arg1)))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) uvec4  arg0)
+       (declare (in) uint arg1))
+     ((return (expression uvec4 max (var_ref arg0) (var_ref arg1)))))
+))

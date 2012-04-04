@@ -1,0 +1,26 @@
+uniform vec4 unity_Ambient;
+uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform samplerCube _Cube;
+uniform vec4 _Color;
+void main ()
+{
+  vec4 col;
+  vec4 light;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  vec4 tmpvar_2;
+  tmpvar_2 = (textureCube (_Cube, gl_TexCoord[1].xyz) * tmpvar_1.w);
+  vec4 tmpvar_3;
+  tmpvar_3 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2])));
+  light = tmpvar_3;
+  light.xyz = (tmpvar_3.xyz + unity_Ambient.xyz);
+  vec4 c_i0;
+  c_i0.xyz = ((tmpvar_1 * _Color).xyz * light.xyz);
+  c_i0.w = (tmpvar_2.w * _ReflectColor.w);
+  col = c_i0;
+  col.xyz = (c_i0.xyz + (tmpvar_2.xyz * _ReflectColor.xyz));
+  gl_FragData[0] = col;
+}
+

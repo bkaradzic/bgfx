@@ -1,0 +1,28 @@
+uniform mediump float specPower;
+varying lowp vec3 halfDir;
+varying lowp vec3 normal;
+void main ()
+{
+  lowp vec4 c;
+  mediump float spec;
+  lowp float nh;
+  lowp float tmpvar_1;
+  tmpvar_1 = dot (normal, halfDir);
+  lowp float tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  nh = tmpvar_2;
+  mediump float tmpvar_3;
+  tmpvar_3 = pow (nh, specPower);
+  mediump float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  spec = tmpvar_4;
+  mediump vec4 tmpvar_5;
+  tmpvar_5 = vec4(spec);
+  mediump vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  c = tmpvar_6;
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = c;
+  gl_FragColor = tmpvar_7;
+}
+

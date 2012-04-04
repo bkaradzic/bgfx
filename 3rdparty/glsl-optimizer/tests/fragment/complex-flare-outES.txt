@@ -1,0 +1,8 @@
+varying highp vec2 xlv_TEXCOORD0;
+varying lowp vec4 xlv_COLOR;
+uniform sampler2D _FlareTexture;
+void main ()
+{
+  gl_FragData[0] = (texture2D (_FlareTexture, xlv_TEXCOORD0) * xlv_COLOR);
+}
+

@@ -1,0 +1,27 @@
+uniform vec4 _horizonColor;
+uniform sampler2D _ColorControl;
+uniform sampler2D _BumpMap;
+void main ()
+{
+  vec2 tmpvar_1[2];
+  tmpvar_1[0] = gl_TexCoord[0].xy;
+  tmpvar_1[1] = gl_TexCoord[1].xy;
+  vec4 col;
+  vec4 normal;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_1[0]).wy * 2.0) - 1.0);
+  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
+  vec4 normal_i0;
+  normal_i0.xy = ((texture2D (_BumpMap, tmpvar_1[1]).wy * 2.0) - 1.0);
+  normal_i0.z = sqrt (((1.0 - (normal_i0.x * normal_i0.x)) - (normal_i0.y * normal_i0.y)));
+  float tmpvar_2;
+  tmpvar_2 = dot (gl_TexCoord[2].xyz, ((normal.xyz + normal_i0.xyz) * 0.5));
+  vec2 tmpvar_3;
+  tmpvar_3.x = tmpvar_2;
+  tmpvar_3.y = tmpvar_2;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_ColorControl, tmpvar_3);
+  col.xyz = mix (tmpvar_4.xyz, _horizonColor.xyz, tmpvar_4.www);
+  col.w = _horizonColor.w;
+  gl_FragData[0] = col;
+}
+

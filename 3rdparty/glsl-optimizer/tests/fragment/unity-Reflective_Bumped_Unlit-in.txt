@@ -1,0 +1,75 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    float fog;
+    vec2 uv;
+    vec2 uv2;
+    vec3 I;
+    vec3 TtoW0;
+    vec3 TtoW1;
+    vec3 TtoW2;
+};
+struct appdata_tan {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+};
+uniform sampler2D _BumpMap;
+uniform samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform vec4 _ReflectColor;
+
+vec4 UnpackNormal( in vec4 packednormal );
+vec4 frag( in v2f i );
+vec4 UnpackNormal( in vec4 packednormal ) {
+    vec4 normal;
+    normal.xy  = ((packednormal.wy  * 2.00000) - 1.00000);
+    normal.z  = sqrt( ((1.00000 - (normal.x  * normal.x )) - (normal.y  * normal.y )) );
+    return normal;
+}
+vec4 frag( in v2f i ) {
+    vec4 normal;
+    vec4 texcol;
+    vec3 wn;
+    vec3 r;
+    vec4 c;
+    vec4 reflcolor;
+    normal = UnpackNormal( texture2D( _BumpMap, i.uv2));
+    texcol = texture2D( _MainTex, i.uv);
+    wn.x  = dot( i.TtoW0, normal.xyz );
+    wn.y  = dot( i.TtoW1, normal.xyz );
+    wn.z  = dot( i.TtoW2, normal.xyz );
+    r = reflect( i.I, wn);
+    c = (gl_LightModel.ambient * texcol);
+    c.xyz  *= 2.00000;
+    reflcolor = ((textureCube( _Cube, r) * _ReflectColor) * texcol.w );
+    return (c + reflcolor);
+}
+varying vec4 xlv_FOG;
+void main() {
+    vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.fog = float( xlv_FOG);
+    xlt_i.uv = vec2( gl_TexCoord[0]);
+    xlt_i.uv2 = vec2( gl_TexCoord[1]);
+    xlt_i.I = vec3( gl_TexCoord[2]);
+    xlt_i.TtoW0 = vec3( gl_TexCoord[3]);
+    xlt_i.TtoW1 = vec3( gl_TexCoord[4]);
+    xlt_i.TtoW2 = vec3( gl_TexCoord[5]);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

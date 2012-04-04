@@ -1,0 +1,11 @@
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  tmpvar_1.xy = ((tmpvar_2.xy + tmpvar_2.w) * 0.5);
+  tmpvar_1.zw = tmpvar_2.zw;
+  gl_Position = tmpvar_2;
+  gl_TexCoord[0] = tmpvar_1;
+}
+

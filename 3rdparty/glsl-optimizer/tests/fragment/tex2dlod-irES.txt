@@ -1,0 +1,42 @@
+#extension GL_ARB_shader_texture_lod : enable
+varying highp vec4 xlv_TEXCOORD0;
+uniform sampler2D tex;
+vec4 xll_tex2Dlod (
+  in sampler2D s,
+  in vec4 coord
+)
+{
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2DLod (s, coord.xy, coord.w);
+  return tmpvar_1;
+}
+
+mediump vec4 xlat_main (
+  in highp vec4 uv
+)
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1.zw = vec2(0.0, 0.0);
+  tmpvar_1.xy = uv.xy.xy;
+  vec4 tmpvar_2;
+  tmpvar_2 = xll_tex2Dlod (tex, tmpvar_1);
+  return tmpvar_2;
+}
+
+void main ()
+{
+  mediump vec4 xl_retval;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = xlv_TEXCOORD0.xyzw;
+  mediump vec4 tmpvar_2;
+  tmpvar_2 = xlat_main (tmpvar_1);
+  mediump vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xl_retval = tmpvar_3;
+  mediump vec4 tmpvar_4;
+  tmpvar_4 = xl_retval.xyzw;
+  mediump vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  gl_FragData[0] = tmpvar_5;
+}
+

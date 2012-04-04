@@ -1,0 +1,23 @@
+varying vec4 xlv_FOG;
+uniform vec4 unity_LightmapST;
+uniform vec4 _Decal_ST;
+uniform vec4 _DecalBump_ST;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _Decal_ST.xy) + _Decal_ST.zw);
+  tmpvar_1.zw = ((gl_MultiTexCoord0.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw);
+  gl_Position = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_3.x = tmpvar_2.z;
+  xlv_FOG = tmpvar_3;
+  gl_TexCoord[0] = tmpvar_1;
+  vec4 tmpvar_4;
+  tmpvar_4.zw = vec2(0.0, 0.0);
+  tmpvar_4.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
+  gl_TexCoord[1] = tmpvar_4;
+}
+

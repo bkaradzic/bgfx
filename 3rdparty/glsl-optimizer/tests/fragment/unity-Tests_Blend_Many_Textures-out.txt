@@ -1,0 +1,23 @@
+uniform sampler2D _MainTex9;
+uniform sampler2D _MainTex8;
+uniform sampler2D _MainTex7;
+uniform sampler2D _MainTex6;
+uniform sampler2D _MainTex5;
+uniform sampler2D _MainTex4;
+uniform sampler2D _MainTex3;
+uniform sampler2D _MainTex2;
+uniform sampler2D _MainTex15;
+uniform sampler2D _MainTex14;
+uniform sampler2D _MainTex13;
+uniform sampler2D _MainTex12;
+uniform sampler2D _MainTex11;
+uniform sampler2D _MainTex10;
+uniform sampler2D _MainTex1;
+uniform sampler2D _MainTex0;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xy;
+  gl_FragData[0] = (((((((((((((((texture2D (_MainTex0, tmpvar_1) + texture2D (_MainTex1, tmpvar_1)) + texture2D (_MainTex2, tmpvar_1)) + texture2D (_MainTex3, tmpvar_1)) + texture2D (_MainTex4, tmpvar_1)) + texture2D (_MainTex5, tmpvar_1)) + texture2D (_MainTex6, tmpvar_1)) + texture2D (_MainTex7, tmpvar_1)) + texture2D (_MainTex8, tmpvar_1)) + texture2D (_MainTex9, tmpvar_1)) + texture2D (_MainTex10, tmpvar_1)) + texture2D (_MainTex11, tmpvar_1)) + texture2D (_MainTex12, tmpvar_1)) + texture2D (_MainTex13, tmpvar_1)) + texture2D (_MainTex14, tmpvar_1)) + texture2D (_MainTex15, tmpvar_1));
+}
+

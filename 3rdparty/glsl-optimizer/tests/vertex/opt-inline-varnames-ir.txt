@@ -1,0 +1,55 @@
+float foo (
+  in float a,
+  in float b,
+  in float c
+)
+{
+  return ((a + b) + c);
+}
+
+float bar (
+  in float a,
+  in float b
+)
+{
+  float c;
+  float tmpvar_1;
+  tmpvar_1 = (a * b);
+  c = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = foo (a, b, c);
+  return tmpvar_2;
+}
+
+float har (
+  in float a
+)
+{
+  float c;
+  float b;
+  float tmpvar_1;
+  tmpvar_1 = sqrt (a);
+  float tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  b = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = sqrt (b);
+  float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  c = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = bar (a, b);
+  return (tmpvar_5 + c);
+}
+
+void main ()
+{
+  float tmpvar_1;
+  tmpvar_1 = har (gl_Vertex.x);
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(tmpvar_1);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  gl_Position = tmpvar_3;
+}
+

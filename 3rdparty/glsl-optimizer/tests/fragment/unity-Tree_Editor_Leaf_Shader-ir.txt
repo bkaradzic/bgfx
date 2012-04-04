@@ -1,0 +1,383 @@
+struct LeafSurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  vec3 Translucency;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+  vec4 color;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec2 hip_pack0;
+  vec4 lop_color;
+  vec3 lightDir;
+  vec3 viewDir;
+  vec3 _LightCoord;
+};
+varying vec4 xlv_FOG;
+uniform sampler2D _TranslucencyMap;
+uniform vec4 _TranslucencyColor;
+uniform float _Shininess;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightTextureB0;
+uniform samplerCube _LightTexture0;
+uniform vec4 _LightColor0;
+uniform sampler2D _GlossMap;
+uniform float _Cutoff;
+uniform sampler2D _BumpMap;
+void xll_clip (
+  in float x
+)
+{
+  if ((x < 0.0)) {
+    discard;
+  };
+}
+
+float xll_saturate (
+  in float x
+)
+{
+  float tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec2 xll_saturate (
+  in vec2 x
+)
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec3 xll_saturate (
+  in vec3 x
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec4 xll_saturate (
+  in vec4 x
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+mat2 xll_saturate (
+  in mat2 m
+)
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
+  vec2 tmpvar_2;
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
+  mat2 tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_1;
+  tmpvar_3[0] = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_2;
+  tmpvar_3[1] = tmpvar_5;
+  return tmpvar_3;
+}
+
+mat3 xll_saturate (
+  in mat3 m
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
+  vec3 tmpvar_2;
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
+  vec3 tmpvar_3;
+  tmpvar_3 = clamp (m[2], 0.0, 1.0);
+  mat3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_1;
+  tmpvar_4[0] = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_2;
+  tmpvar_4[1] = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_3;
+  tmpvar_4[2] = tmpvar_7;
+  return tmpvar_4;
+}
+
+mat4 xll_saturate (
+  in mat4 m
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
+  vec4 tmpvar_2;
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
+  vec4 tmpvar_3;
+  tmpvar_3 = clamp (m[2], 0.0, 1.0);
+  vec4 tmpvar_4;
+  tmpvar_4 = clamp (m[3], 0.0, 1.0);
+  mat4 tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_1;
+  tmpvar_5[0] = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_2;
+  tmpvar_5[1] = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_3;
+  tmpvar_5[2] = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_4;
+  tmpvar_5[3] = tmpvar_9;
+  return tmpvar_5;
+}
+
+vec4 UnpackNormal (
+  in vec4 packednormal
+)
+{
+  vec4 normal;
+  vec2 tmpvar_1;
+  tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
+  normal.xy = tmpvar_1.xy.xy;
+  float tmpvar_2;
+  tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
+  float tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  normal.z = vec3(tmpvar_3).z;
+  return normal;
+}
+
+void surf (
+  in Input IN,
+  inout LeafSurfaceOutput o
+)
+{
+  vec4 c;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  c = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = (c.xyz * IN.color.xyz);
+  o.Albedo = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_TranslucencyMap, IN.uv_MainTex);
+  vec3 tmpvar_5;
+  tmpvar_5 = _TranslucencyColor.xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = (tmpvar_4.xyz * tmpvar_5);
+  o.Translucency = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = texture2D (_GlossMap, IN.uv_MainTex);
+  float tmpvar_8;
+  tmpvar_8 = tmpvar_7.w;
+  o.Gloss = tmpvar_8;
+  float tmpvar_9;
+  tmpvar_9 = (c.w * IN.color.w);
+  o.Alpha = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = _Shininess;
+  o.Specular = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_BumpMap, IN.uv_MainTex);
+  vec4 tmpvar_12;
+  tmpvar_12 = UnpackNormal (tmpvar_11);
+  vec3 tmpvar_13;
+  tmpvar_13 = tmpvar_12.xyz;
+  vec3 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  o.Normal = tmpvar_14;
+}
+
+vec4 LightingTreeLeaf (
+  in LeafSurfaceOutput s,
+  in vec3 lightDir,
+  in vec3 viewDir,
+  in float atten
+)
+{
+  vec4 c;
+  vec3 col;
+  vec3 translucencyColor;
+  float trans;
+  float spec;
+  float nh;
+  float diff;
+  vec3 h;
+  vec3 tmpvar_1;
+  tmpvar_1 = normalize ((lightDir + viewDir));
+  vec3 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  h = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = dot (s.Normal, lightDir);
+  float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  diff = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = dot (s.Normal, h);
+  float tmpvar_6;
+  tmpvar_6 = max (0.0, tmpvar_5);
+  float tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  nh = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = pow (nh, (s.Specular * 128.0));
+  float tmpvar_9;
+  tmpvar_9 = (tmpvar_8 * s.Gloss);
+  spec = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = max (0.0, -(diff));
+  float tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  trans = tmpvar_11;
+  vec3 tmpvar_12;
+  tmpvar_12 = ((s.Translucency * trans) * 2.0);
+  translucencyColor = tmpvar_12;
+  float tmpvar_13;
+  tmpvar_13 = max (0.0, ((diff * 0.5) + 0.5));
+  float tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  diff = tmpvar_14;
+  vec3 tmpvar_15;
+  tmpvar_15 = (s.Albedo * (diff + translucencyColor));
+  col = tmpvar_15;
+  float tmpvar_16;
+  tmpvar_16 = ceil (trans);
+  float tmpvar_17;
+  tmpvar_17 = xll_saturate (tmpvar_16);
+  vec3 tmpvar_18;
+  tmpvar_18 = (col + (spec * (1.0 - tmpvar_17)));
+  col = tmpvar_18;
+  vec3 tmpvar_19;
+  tmpvar_19 = (col * _LightColor0.xyz);
+  col = tmpvar_19;
+  vec3 tmpvar_20;
+  tmpvar_20 = (col * (atten * 2.0));
+  c.xyz = tmpvar_20.xyz.xyz;
+  return c;
+}
+
+vec4 frag_surf (
+  in v2f_surf IN
+)
+{
+  vec4 c;
+  vec3 lightDir;
+  LeafSurfaceOutput o;
+  Input surfIN;
+  vec2 tmpvar_1;
+  tmpvar_1 = IN.hip_pack0.xy;
+  surfIN.uv_MainTex = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = IN.lop_color;
+  surfIN.color = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = vec3(0.0, 0.0, 0.0);
+  o.Albedo = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = vec3(0.0, 0.0, 0.0);
+  o.Emission = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = 0.0;
+  o.Specular = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = 0.0;
+  o.Alpha = tmpvar_6;
+  surf (surfIN, o);
+  xll_clip ((o.Alpha - _Cutoff));
+  vec3 tmpvar_7;
+  tmpvar_7 = IN.lightDir;
+  lightDir = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = normalize (lightDir);
+  vec3 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  lightDir = tmpvar_9;
+  vec3 tmpvar_10;
+  tmpvar_10 = IN.viewDir.xyz;
+  vec3 tmpvar_11;
+  tmpvar_11 = normalize (tmpvar_10);
+  float tmpvar_12;
+  tmpvar_12 = dot (IN._LightCoord, IN._LightCoord);
+  vec2 tmpvar_13;
+  tmpvar_13 = vec2(tmpvar_12);
+  vec2 tmpvar_14;
+  tmpvar_14 = tmpvar_13.xy;
+  vec4 tmpvar_15;
+  tmpvar_15 = texture2D (_LightTextureB0, tmpvar_14);
+  vec4 tmpvar_16;
+  tmpvar_16 = textureCube (_LightTexture0, IN._LightCoord);
+  vec4 tmpvar_17;
+  tmpvar_17 = LightingTreeLeaf (o, lightDir, tmpvar_11, (tmpvar_15.w * tmpvar_16.w));
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  c = tmpvar_18;
+  float tmpvar_19;
+  tmpvar_19 = o.Alpha;
+  c.w = vec4(tmpvar_19).w;
+  return c;
+}
+
+void main ()
+{
+  v2f_surf xlt_IN;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_IN.pos = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = xlv_FOG.x;
+  xlt_IN.fog = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[0].xy;
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_IN.hip_pack0 = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_Color.xyzw;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_IN.lop_color = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_IN.lightDir = tmpvar_8;
+  vec3 tmpvar_9;
+  tmpvar_9 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_IN.viewDir = tmpvar_10;
+  vec3 tmpvar_11;
+  tmpvar_11 = gl_TexCoord[3].xyz;
+  vec3 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_IN._LightCoord = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13 = frag_surf (xlt_IN);
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.xyzw;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_FragData[0] = tmpvar_16;
+}
+

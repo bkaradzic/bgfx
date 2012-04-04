@@ -1,0 +1,10 @@
+;; -*- emacs-lisp -*-
+;;
+;; This file is processed by the dirvars emacs package.  Each variable
+;; setting below is performed when this dirvars file is loaded.
+;;
+indent-tabs-mode: nil
+tab-width: 8
+c-basic-offset: 3
+kde-emacs-after-parent-string: ""
+evaluate: (c-set-offset 'inline-open '0)

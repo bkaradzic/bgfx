@@ -1,0 +1,55 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 vertex;
+    vec4 uvgrab;
+    vec2 uvbump;
+    vec2 uvmain;
+};
+struct appdata_t {
+    vec4 vertex;
+    vec2 texcoord;
+};
+
+
+
+vec2 MultiplyUV( in mat4 mat, in vec2 inUV );
+v2f vert( in appdata_t v );
+vec2 MultiplyUV( in mat4 mat, in vec2 inUV ) {
+    vec4 temp;
+    temp = vec4( inUV.x , inUV.y , 0.000000, 0.000000);
+    temp = ( mat * temp );
+    return temp.xy ;
+}
+v2f vert( in appdata_t v ) {
+    v2f o;
+    float scale = 1.00000;
+    o.vertex = ( gl_ModelViewProjectionMatrix * v.vertex );
+    o.uvgrab.xy  = ((vec2( o.vertex.x , (o.vertex.y  * scale)) + o.vertex.w ) * 0.500000);
+    o.uvgrab.zw  = o.vertex.zw ;
+    o.uvbump = MultiplyUV( gl_TextureMatrix[1], v.texcoord);
+    o.uvmain = MultiplyUV( gl_TextureMatrix[2], v.texcoord);
+    return o;
+}
+void main() {
+    v2f xl_retval;
+    appdata_t xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.texcoord = vec2( gl_MultiTexCoord0);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.vertex);
+    gl_TexCoord[0] = vec4( xl_retval.uvgrab);
+    gl_TexCoord[1] = vec4( xl_retval.uvbump, 0.0, 0.0);
+    gl_TexCoord[2] = vec4( xl_retval.uvmain, 0.0, 0.0);
+}

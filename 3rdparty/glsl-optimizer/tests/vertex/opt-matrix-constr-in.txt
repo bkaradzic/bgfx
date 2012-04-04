@@ -1,0 +1,6 @@
+void main() {
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    mat3 m = mat3 (0.1, 0.8, 0.1, 0.3, 0.3, 0.5, 0.9, 0.0, 0.1);
+    vec3 n = m * gl_Normal;
+    gl_FrontColor = vec4(n*0.5+0.5, 1.0);
+}

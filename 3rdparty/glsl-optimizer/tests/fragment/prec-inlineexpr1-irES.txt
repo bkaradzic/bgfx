@@ -1,0 +1,64 @@
+varying mediump vec2 xlv_TEXCOORD0;
+uniform mediump float _EmberFadeStart;
+uniform mediump float _EmberFadeEnd;
+uniform sampler2D _BurntTex;
+uniform sampler2D _MainTex;
+float xll_saturate (
+  in float x
+)
+{
+  float tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec3 xll_saturate (
+  in vec3 x
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+lowp vec4 frag (
+  in mediump vec2 uv
+)
+{
+  lowp float t;
+  lowp vec3 burn;
+  lowp vec3 base;
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, uv);
+  lowp vec3 tmpvar_2;
+  tmpvar_2 = tmpvar_1.xyz;
+  base = tmpvar_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_BurntTex, uv);
+  lowp vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3.xyz;
+  burn = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = xll_saturate (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)));
+  float tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  t = tmpvar_6;
+  lowp vec3 tmpvar_7;
+  tmpvar_7 = vec3(t);
+  lowp vec3 tmpvar_8;
+  tmpvar_8 = mix (base, burn, tmpvar_7);
+  lowp vec4 tmpvar_9;
+  tmpvar_9.w = 1.0;
+  tmpvar_9.xyz = tmpvar_8.xyz;
+  return tmpvar_9;
+}
+
+void main ()
+{
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = frag (xlv_TEXCOORD0);
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  gl_FragColor = tmpvar_2;
+}
+

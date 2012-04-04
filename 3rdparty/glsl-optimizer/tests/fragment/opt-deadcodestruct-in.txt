@@ -1,0 +1,11 @@
+struct foo {
+    float used;
+    float unused;
+};
+void main() {
+	float f = 1.0;
+    foo s;
+	s.used = f;
+	s.unused = f;
+    gl_FragColor = vec4(s.used);
+}

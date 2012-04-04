@@ -1,0 +1,76 @@
+varying vec4 xlv_TEXCOORD0;
+vec4 xlat_main (
+  in vec4 uv
+)
+{
+  vec4 c;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  c = tmpvar_1;
+  float tmpvar_2;
+  if ((uv.x > 0.5)) {
+    tmpvar_2 = 0.9;
+  } else {
+    tmpvar_2 = 0.1;
+  };
+  vec4 tmpvar_3;
+  tmpvar_3 = (c + tmpvar_2);
+  c = tmpvar_3;
+  vec4 tmpvar_4;
+  if ((uv.x > 0.5)) {
+    tmpvar_4 = vec4(0.9, 0.9, 0.9, 0.9);
+  } else {
+    tmpvar_4 = vec4(0.1, 0.1, 0.1, 0.1);
+  };
+  vec4 tmpvar_5;
+  tmpvar_5 = (c + tmpvar_4);
+  c = tmpvar_5;
+  vec3 tmpvar_6;
+  if ((uv.x > 0.5)) {
+    tmpvar_6 = vec3(0.9, 0.9, 0.9);
+  } else {
+    tmpvar_6 = vec3(0.1, 0.1, 0.1);
+  };
+  vec3 tmpvar_7;
+  tmpvar_7 = (c.xyz + tmpvar_6);
+  c.xyz = tmpvar_7.xyz.xyz;
+  vec2 tmpvar_8;
+  if ((uv.x > 0.5)) {
+    tmpvar_8 = vec2(0.9, 0.9);
+  } else {
+    tmpvar_8 = vec2(0.1, 0.1);
+  };
+  vec2 tmpvar_9;
+  tmpvar_9 = (c.xy + tmpvar_8);
+  c.xy = tmpvar_9.xy.xy;
+  float tmpvar_10;
+  tmpvar_10 = fract (uv.x);
+  float tmpvar_11;
+  if (bool(tmpvar_10)) {
+    tmpvar_11 = 0.9;
+  } else {
+    tmpvar_11 = 0.1;
+  };
+  float tmpvar_12;
+  tmpvar_12 = (c.x + tmpvar_11);
+  c.x = tmpvar_12;
+  return c;
+}
+
+void main ()
+{
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = xlv_TEXCOORD0.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = xlat_main (tmpvar_1);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xl_retval = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = xl_retval.xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  gl_FragData[0] = tmpvar_5;
+}
+

@@ -1,0 +1,64 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    float fog;
+    vec2 bumpuv[2];
+    vec3 viewDir;
+};
+struct appdata {
+    vec4 vertex;
+    vec3 normal;
+};
+uniform vec4 _WaveOffset;
+uniform float _WaveScale;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+
+uniform vec4 unity_Scale;
+void PositionFog( in vec4 v, out vec4 pos, out float fog );
+vec3 ObjSpaceViewDir( in vec4 v );
+v2f vert( in appdata v );
+void PositionFog( in vec4 v, out vec4 pos, out float fog ) {
+    pos = ( gl_ModelViewProjectionMatrix * v );
+    fog = pos.z ;
+}
+vec3 ObjSpaceViewDir( in vec4 v ) {
+    vec3 objSpaceCameraPos;
+    objSpaceCameraPos = (( _World2Object * vec4( _WorldSpaceCameraPos.xyz , 1.00000) ).xyz  * unity_Scale.w );
+    return (objSpaceCameraPos - v.xyz );
+}
+v2f vert( in appdata v ) {
+    v2f o;
+    vec4 temp;
+    PositionFog( v.vertex, o.pos, o.fog);
+    temp.xyzw  = ((v.vertex.xzxz  * _WaveScale) + _WaveOffset);
+    o.bumpuv[ 0 ] = (temp.xy  * vec2( 0.400000, 0.450000));
+    o.bumpuv[ 1 ] = temp.wz ;
+    o.viewDir.xzy  = normalize( ObjSpaceViewDir( v.vertex) );
+    return o;
+}
+varying vec4 xlv_FOG;
+void main() {
+    v2f xl_retval;
+    appdata xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.normal = vec3( gl_Normal);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    xlv_FOG = vec4( xl_retval.fog, 0.0, 0.0, 0.0);
+    gl_TexCoord[0] = vec4( xl_retval.bumpuv[0], 0.0, 0.0);
+    gl_TexCoord[1] = vec4( xl_retval.bumpuv[1], 0.0, 0.0);
+    gl_TexCoord[2] = vec4( xl_retval.viewDir, 0.0);
+}

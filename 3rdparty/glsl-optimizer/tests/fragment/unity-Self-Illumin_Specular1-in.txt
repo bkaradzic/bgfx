@@ -1,0 +1,77 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec2 uv_Illum;
+};
+struct v2f_surf {
+    vec4 pos;
+    vec3 normal;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+uniform vec4 _Color;
+uniform sampler2D _Illum;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+void surf( in Input IN, inout SurfaceOutput o );
+vec4 frag_surf( in v2f_surf IN );
+void surf( in Input IN, inout SurfaceOutput o ) {
+    vec4 tex;
+    vec4 c;
+    tex = texture2D( _MainTex, IN.uv_MainTex);
+    c = (tex * _Color);
+    o.Albedo = c.xyz ;
+    o.Emission = (c.xyz  * texture2D( _Illum, IN.uv_Illum).w );
+    o.Gloss = tex.w ;
+    o.Alpha = c.w ;
+    o.Specular = _Shininess;
+}
+vec4 frag_surf( in v2f_surf IN ) {
+    SurfaceOutput o;
+    Input surfIN;
+    vec4 res;
+    o.Albedo = vec3( 0.000000);
+    o.Emission = vec3( 0.000000);
+    o.Specular = 0.000000;
+    o.Alpha = 0.000000;
+    o.Gloss = 0.000000;
+    o.Normal = IN.normal;
+    surf( surfIN, o);
+    res.xyz  = ((o.Normal * vec3( 0.500000, 0.500000, -0.500000)) + 0.500000);
+    res.w  = o.Specular;
+    return res;
+}
+void main() {
+    vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.normal = vec3( gl_TexCoord[0]);
+    xl_retval = frag_surf( xlt_IN);
+    gl_FragData[0] = vec4( xl_retval);
+}

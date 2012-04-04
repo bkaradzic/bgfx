@@ -1,0 +1,43 @@
+void main ()
+{
+  int i;
+  int k;
+  float a;
+  float tmpvar_1;
+  tmpvar_1 = 0.0;
+  a = tmpvar_1;
+  int tmpvar_2;
+  tmpvar_2 = 0;
+  k = tmpvar_2;
+  int tmpvar_3;
+  tmpvar_3 = 0;
+  i = tmpvar_3;
+  while (true) {
+    if (!((i < 3))) {
+      break;
+    };
+    float tmpvar_4;
+    tmpvar_4 = (a + 1.0);
+    a = tmpvar_4;
+    int tmpvar_5;
+    tmpvar_5 = (i + 1);
+    i = tmpvar_5;
+  };
+  while (true) {
+    if (!((k < 3))) {
+      break;
+    };
+    float tmpvar_6;
+    tmpvar_6 = (a + 3.0);
+    a = tmpvar_6;
+    int tmpvar_7;
+    tmpvar_7 = (k + 1);
+    k = tmpvar_7;
+  };
+  vec4 tmpvar_8;
+  tmpvar_8 = vec4(a);
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragColor = tmpvar_9;
+}
+

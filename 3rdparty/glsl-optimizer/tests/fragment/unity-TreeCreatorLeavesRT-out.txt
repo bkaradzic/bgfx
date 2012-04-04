@@ -1,0 +1,55 @@
+uniform sampler2D _TranslucencyMap;
+uniform vec3 _TranslucencyColor;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec4 _SpecColor;
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
+uniform sampler2D _BumpSpecMap;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xy;
+  vec3 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_4 = gl_TexCoord[3].xyz;
+  tmpvar_5 = gl_TexCoord[4].xyz;
+  vec4 c;
+  int j;
+  vec3 backContribs;
+  vec3 light;
+  float gloss;
+  float specular;
+  vec3 albedo;
+  j = 0;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_MainTex, tmpvar_1);
+  float x;
+  x = (tmpvar_6.w - _Cutoff);
+  if ((x < 0.0)) {
+    discard;
+  };
+  vec3 tmpvar_7;
+  tmpvar_7 = (tmpvar_6.xyz * tmpvar_2);
+  albedo = tmpvar_7;
+  specular = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.0);
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2D (_TranslucencyMap, tmpvar_1);
+  gloss = tmpvar_8.w;
+  light = (gl_LightModel.ambient.xyz * tmpvar_7);
+  backContribs = (tmpvar_3 * tmpvar_8.z);
+  while (true) {
+    if ((j >= 3)) {
+      break;
+    };
+    light = (light + (((albedo * ((backContribs[j] * _TranslucencyColor) + tmpvar_4[j])) + (_SpecColor.xyz * (pow (tmpvar_5[j], specular) * gloss))) * _TerrainTreeLightColors[j].xyz));
+    j = (j + 1);
+  };
+  c.xyz = (light * 2.0);
+  c.w = 1.0;
+  gl_FragData[0] = c;
+}
+

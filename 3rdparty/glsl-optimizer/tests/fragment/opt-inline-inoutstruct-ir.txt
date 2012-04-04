@@ -1,0 +1,21 @@
+struct SurfaceOutput {
+  vec4 color;
+};
+void surf (
+  inout SurfaceOutput o
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(1.0, 1.0, 1.0, 1.0);
+  o.color = tmpvar_1;
+}
+
+void main ()
+{
+  SurfaceOutput o;
+  surf (o);
+  vec4 tmpvar_1;
+  tmpvar_1 = o.color;
+  gl_FragColor = tmpvar_1;
+}
+

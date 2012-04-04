@@ -1,0 +1,42 @@
+struct v2f_surf {
+    highp vec4 pos;
+    lowp vec2 pack0;
+    lowp vec3 halfDir;
+    lowp vec3 lightDir;
+    lowp vec3 vlight;
+};
+uniform sampler2D _BumpMap;
+uniform lowp vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform lowp float _Shininess;
+lowp vec4 frag_surf (in v2f_surf IN) {
+    lowp vec4 tex;
+    lowp vec3 Normal;
+    lowp float diff;
+    lowp float nh;
+    lowp float spec;
+    lowp vec4 c;
+    tex = texture2D (_MainTex, IN.pack0);
+    Normal = (texture2D( _BumpMap, IN.pack0).xyz  * 2.0) - 1.0;
+    diff = max (0.0, dot(Normal, IN.lightDir));
+    nh = max (0.0, dot(Normal, IN.halfDir));
+    spec = pow(nh, _Shininess) * tex.w;
+    c.xyz  = ((vec3(tex) * ((_LightColor0.xyz  * diff) + IN.vlight)) + (_LightColor0.xyz  * spec));
+    c.w  = 0.00000;
+    return c;
+}
+varying lowp vec2 xlv_TEXCOORD0;
+varying lowp vec3 xlv_TEXCOORD1;
+varying lowp vec3 xlv_TEXCOORD2;
+varying lowp vec3 xlv_TEXCOORD3;
+void main() {
+    lowp vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.pack0 = vec2(xlv_TEXCOORD0);
+    xlt_IN.halfDir = vec3(xlv_TEXCOORD1);
+    xlt_IN.lightDir = vec3(xlv_TEXCOORD2);
+    xlt_IN.vlight = vec3(xlv_TEXCOORD3);
+    xl_retval = frag_surf(xlt_IN);
+    gl_FragData[0] = vec4(xl_retval);
+}

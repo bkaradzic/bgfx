@@ -1,0 +1,10 @@
+varying highp float xlv_VFACE;
+void main ()
+{
+  mediump vec4 tmpvar_1;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = vec4(xlv_VFACE);
+  tmpvar_1 = tmpvar_2;
+  gl_FragData[0] = tmpvar_1;
+}
+

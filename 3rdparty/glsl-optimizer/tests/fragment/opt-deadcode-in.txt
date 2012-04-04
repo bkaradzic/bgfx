@@ -1,0 +1,24 @@
+struct v2f {
+    vec4 pos;
+    float unusedmember;
+};
+void main() {
+	float f = gl_FragCoord.x;
+	
+    v2f sused;
+	sused.pos = vec4(f);
+	sused.unusedmember = f*6.0;
+    v2f sunused;
+	sunused.pos = vec4(f);
+	sunused.unusedmember = f*7.0;
+	
+	float fused = f*2.0;
+	float funused = f*3.0;
+	
+	float arrused[3];
+	arrused[0] = f*4.0;
+	float arrunused[3];
+	arrunused[0] = f*5.0;
+	
+    gl_FragColor = vec4(fused+sused.pos.x+arrused[0]);
+}

@@ -1,0 +1,11 @@
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR;
+uniform mat4 glstate_matrix_mvp;
+uniform vec4 _MainTex_ST;
+void main ()
+{
+  gl_Position = (glstate_matrix_mvp * gl_Vertex);
+  xlv_COLOR = gl_Color;
+  xlv_TEXCOORD0 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+}
+

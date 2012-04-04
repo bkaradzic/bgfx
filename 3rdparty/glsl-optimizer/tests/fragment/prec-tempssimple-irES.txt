@@ -1,0 +1,42 @@
+varying mediump vec2 var_mediump;
+varying lowp vec2 var_lowp;
+uniform sampler2D tex_highp;
+uniform sampler2D tex_lowp;
+uniform sampler2D tex_def;
+void main ()
+{
+  lowp vec4 a1;
+  lowp vec4 c4;
+  lowp vec4 c3;
+  lowp vec4 c2;
+  lowp vec4 c1;
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2D (tex_def, var_lowp);
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = (tmpvar_1 * 2.0);
+  c1 = tmpvar_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture2D (tex_def, var_mediump);
+  lowp vec4 tmpvar_4;
+  tmpvar_4 = (tmpvar_3 * 2.0);
+  c2 = tmpvar_4;
+  highp vec4 tmpvar_5;
+  tmpvar_5 = texture2D (tex_highp, var_mediump);
+  highp vec4 tmpvar_6;
+  tmpvar_6 = (tmpvar_5 * 2.0);
+  c3 = tmpvar_6;
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = texture2D (tex_lowp, var_mediump);
+  lowp vec4 tmpvar_8;
+  tmpvar_8 = (tmpvar_7 * 2.0);
+  c4 = tmpvar_8;
+  lowp vec4 tmpvar_9;
+  tmpvar_9 = abs (var_lowp.xxxx);
+  lowp vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  a1 = tmpvar_10;
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = ((((c1 + c2) + c3) + c4) + a1);
+  gl_FragColor = tmpvar_11;
+}
+

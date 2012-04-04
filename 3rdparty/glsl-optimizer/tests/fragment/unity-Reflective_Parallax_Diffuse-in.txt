@@ -1,0 +1,141 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec2 uv_BumpMap;
+    vec3 worldRefl;
+    vec3 viewDir;
+};
+struct v2f_surf {
+    vec4 pos;
+    float fog;
+    vec4 hip_pack0;
+    vec3 viewDir;
+    vec3 lightDir;
+    vec4 _LightCoord;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform samplerCube _Cube;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+uniform float _Parallax;
+uniform sampler2D _ParallaxMap;
+uniform vec4 _ReflectColor;
+vec4 UnpackNormal( in vec4 packednormal );
+vec2 ParallaxOffset( in float h, in float height, in vec3 viewDir );
+void surf( in Input IN, inout SurfaceOutput o );
+float UnitySpotCookie( in vec4 LightCoord );
+float UnitySpotAttenuate( in vec3 LightCoord );
+vec4 LightingLambert( in SurfaceOutput s, in vec3 lightDir, in float atten );
+vec4 frag_surf( in v2f_surf IN );
+vec4 UnpackNormal( in vec4 packednormal ) {
+    vec4 normal;
+    normal.xy  = ((packednormal.wy  * 2.00000) - 1.00000);
+    normal.z  = sqrt( ((1.00000 - (normal.x  * normal.x )) - (normal.y  * normal.y )) );
+    return normal;
+}
+vec2 ParallaxOffset( in float h, in float height, in vec3 viewDir ) {
+    vec3 v;
+    h = ((h * height) - (height / 2.00000));
+    v = normalize( viewDir );
+    v.z  += 0.420000;
+    return (h * (v.xy  / v.z ));
+}
+void surf( in Input IN, inout SurfaceOutput o ) {
+    float h;
+    vec2 offset;
+    vec4 tex;
+    vec4 c;
+    vec3 worldRefl;
+    vec4 reflcol;
+    h = texture2D( _ParallaxMap, IN.uv_BumpMap).w ;
+    offset = ParallaxOffset( h, _Parallax, IN.viewDir);
+    IN.uv_MainTex += offset;
+    IN.uv_BumpMap += offset;
+    tex = texture2D( _MainTex, IN.uv_MainTex);
+    c = (tex * _Color);
+    o.Albedo = c.xyz ;
+    o.Normal = vec3( UnpackNormal( texture2D( _BumpMap, IN.uv_BumpMap)));
+    worldRefl = IN.worldRefl;
+    reflcol = textureCube( _Cube, worldRefl);
+    reflcol *= tex.w ;
+    o.Emission = (reflcol.xyz  * _ReflectColor.xyz );
+    o.Alpha = (reflcol.w  * _ReflectColor.w );
+}
+float UnitySpotCookie( in vec4 LightCoord ) {
+    return texture2D( _LightTexture0, ((LightCoord.xy  / LightCoord.w ) + 0.500000)).w ;
+}
+float UnitySpotAttenuate( in vec3 LightCoord ) {
+    return texture2D( _LightTextureB0, vec2( vec2( dot( LightCoord, LightCoord)))).w ;
+}
+vec4 LightingLambert( in SurfaceOutput s, in vec3 lightDir, in float atten ) {
+    float diff;
+    vec4 c;
+    diff = max( 0.000000, dot( s.Normal, lightDir));
+    c.xyz  = ((s.Albedo * _LightColor0.xyz ) * ((diff * atten) * 2.00000));
+    c.w  = s.Alpha;
+    return c;
+}
+vec4 frag_surf( in v2f_surf IN ) {
+    Input surfIN;
+    SurfaceOutput o;
+    vec3 lightDir;
+    vec4 c;
+    surfIN.uv_MainTex = IN.hip_pack0.xy ;
+    surfIN.uv_BumpMap = IN.hip_pack0.zw ;
+    surfIN.viewDir = IN.viewDir;
+    o.Albedo = vec3( 0.000000);
+    o.Emission = vec3( 0.000000);
+    o.Specular = 0.000000;
+    o.Alpha = 0.000000;
+    o.Gloss = 0.000000;
+    surf( surfIN, o);
+    lightDir = IN.lightDir;
+    lightDir = normalize( lightDir );
+    c = LightingLambert( o, lightDir, ((float( (IN._LightCoord.z  > 0.000000) ) * UnitySpotCookie( IN._LightCoord)) * UnitySpotAttenuate( IN._LightCoord.xyz )));
+    c.w  = 0.000000;
+    return c;
+}
+varying vec4 xlv_FOG;
+void main() {
+    vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xlt_IN.fog = float( xlv_FOG);
+    xlt_IN.hip_pack0 = vec4( gl_TexCoord[0]);
+    xlt_IN.viewDir = vec3( gl_TexCoord[1]);
+    xlt_IN.lightDir = vec3( gl_TexCoord[2]);
+    xlt_IN._LightCoord = vec4( gl_TexCoord[3]);
+    xl_retval = frag_surf( xlt_IN);
+    gl_FragData[0] = vec4( xl_retval);
+}

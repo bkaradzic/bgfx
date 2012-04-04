@@ -1,0 +1,104 @@
+struct v2f_surf {
+  highp vec4 pos;
+  lowp vec2 pack0;
+  lowp vec3 halfDir;
+  lowp vec3 lightDir;
+  lowp vec3 vlight;
+};
+varying lowp vec3 xlv_TEXCOORD3;
+varying lowp vec3 xlv_TEXCOORD2;
+varying lowp vec3 xlv_TEXCOORD1;
+varying lowp vec2 xlv_TEXCOORD0;
+uniform lowp float _Shininess;
+uniform sampler2D _MainTex;
+uniform lowp vec4 _LightColor0;
+uniform sampler2D _BumpMap;
+lowp vec4 frag_surf (
+  in v2f_surf IN
+)
+{
+  lowp vec4 c;
+  lowp float spec;
+  lowp float nh;
+  lowp float diff;
+  lowp vec3 Normal;
+  lowp vec4 tex;
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, IN.pack0);
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  tex = tmpvar_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_BumpMap, IN.pack0);
+  lowp vec3 tmpvar_4;
+  tmpvar_4 = ((tmpvar_3.xyz * 2.0) - 1.0);
+  Normal = tmpvar_4;
+  lowp float tmpvar_5;
+  tmpvar_5 = dot (Normal, IN.lightDir);
+  lowp float tmpvar_6;
+  tmpvar_6 = max (0.0, tmpvar_5);
+  lowp float tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  diff = tmpvar_7;
+  lowp float tmpvar_8;
+  tmpvar_8 = dot (Normal, IN.halfDir);
+  lowp float tmpvar_9;
+  tmpvar_9 = max (0.0, tmpvar_8);
+  lowp float tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  nh = tmpvar_10;
+  lowp float tmpvar_11;
+  tmpvar_11 = pow (nh, _Shininess);
+  lowp float tmpvar_12;
+  tmpvar_12 = (tmpvar_11 * tex.w);
+  spec = tmpvar_12;
+  lowp vec3 tmpvar_13;
+  tmpvar_13 = tex.xyz;
+  lowp vec3 tmpvar_14;
+  tmpvar_14 = ((tmpvar_13 * ((_LightColor0.xyz * diff) + IN.vlight)) + (_LightColor0.xyz * spec));
+  c.xyz = tmpvar_14.xyz.xyz;
+  float tmpvar_15;
+  tmpvar_15 = 0.0;
+  c.w = vec4(tmpvar_15).w;
+  return c;
+}
+
+void main ()
+{
+  v2f_surf xlt_IN;
+  lowp vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_IN.pos = tmpvar_1;
+  lowp vec2 tmpvar_2;
+  tmpvar_2 = xlv_TEXCOORD0.xy;
+  lowp vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_IN.pack0 = tmpvar_3;
+  lowp vec3 tmpvar_4;
+  tmpvar_4 = xlv_TEXCOORD1.xyz;
+  lowp vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_IN.halfDir = tmpvar_5;
+  lowp vec3 tmpvar_6;
+  tmpvar_6 = xlv_TEXCOORD2.xyz;
+  lowp vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xlt_IN.lightDir = tmpvar_7;
+  lowp vec3 tmpvar_8;
+  tmpvar_8 = xlv_TEXCOORD3.xyz;
+  lowp vec3 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  xlt_IN.vlight = tmpvar_9;
+  lowp vec4 tmpvar_10;
+  tmpvar_10 = frag_surf (xlt_IN);
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  xl_retval = tmpvar_11;
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = xl_retval.xyzw;
+  lowp vec4 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  gl_FragData[0] = tmpvar_13;
+}
+

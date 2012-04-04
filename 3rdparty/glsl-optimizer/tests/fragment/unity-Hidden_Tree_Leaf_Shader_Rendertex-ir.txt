@@ -1,0 +1,65 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec3 color;
+};
+uniform sampler2D _MainTex;
+uniform float _HalfOverCutoff;
+void xll_clip (
+  in float x
+)
+{
+  if ((x < 0.0)) {
+    discard;
+  };
+}
+
+vec4 frag (
+  in v2f i
+)
+{
+  vec4 col;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, i.uv);
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  col = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = (col.xyz * (i.color * 2.0));
+  col.xyz = tmpvar_3.xyz.xyz;
+  float tmpvar_4;
+  tmpvar_4 = (col.w * (2.0 * _HalfOverCutoff));
+  col.w = vec4(tmpvar_4).w;
+  xll_clip ((col.w - 1.0));
+  return col;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.color = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = frag (xlt_i);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

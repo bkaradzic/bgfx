@@ -1,0 +1,551 @@
+struct v2f {
+  highp vec4 pos;
+  highp vec2 uv;
+  lowp vec4 color;
+};
+struct appdata_full {
+  highp vec4 vertex;
+  highp vec4 tangent;
+  highp vec3 normal;
+  highp vec4 texcoord;
+  highp vec4 texcoord1;
+  highp vec4 color;
+};
+varying lowp vec4 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_SV_POSITION;
+attribute vec4 TANGENT;
+uniform highp mat4 glstate_matrix_mvp;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp mat4 _World2Object;
+uniform highp float _VerticalBillboarding;
+uniform highp float _TimeOnDuration;
+uniform highp float _TimeOffDuration;
+uniform highp vec4 _Time;
+uniform highp float _SizeGrowStartDist;
+uniform highp float _SizeGrowEndDist;
+uniform highp float _NoiseAmount;
+uniform highp float _Multiplier;
+uniform highp float _MaxGrowSize;
+uniform highp float _FadeOutDistNear;
+uniform highp float _FadeOutDistFar;
+uniform highp vec4 _Color;
+uniform highp float _BlinkingTimeOffsScale;
+uniform highp float _Bias;
+attribute lowp vec4 _glesColor;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+float xll_mod (
+  in float x,
+  in float y
+)
+{
+  float f;
+  float d;
+  float tmpvar_1;
+  tmpvar_1 = (x / y);
+  d = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = abs (d);
+  float tmpvar_3;
+  tmpvar_3 = fract (tmpvar_2);
+  float tmpvar_4;
+  tmpvar_4 = (tmpvar_3 * y);
+  f = tmpvar_4;
+  float tmpvar_5;
+  if ((d >= 0.0)) {
+    tmpvar_5 = f;
+  } else {
+    tmpvar_5 = -(f);
+  };
+  return tmpvar_5;
+}
+
+vec2 xll_mod (
+  in vec2 x,
+  in vec2 y
+)
+{
+  vec2 f;
+  vec2 d;
+  vec2 tmpvar_1;
+  tmpvar_1 = (x / y);
+  d = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = abs (d);
+  vec2 tmpvar_3;
+  tmpvar_3 = fract (tmpvar_2);
+  vec2 tmpvar_4;
+  tmpvar_4 = (tmpvar_3 * y);
+  f = tmpvar_4;
+  float tmpvar_5;
+  if ((d.x >= 0.0)) {
+    tmpvar_5 = f.x;
+  } else {
+    tmpvar_5 = -(f.x);
+  };
+  float tmpvar_6;
+  if ((d.y >= 0.0)) {
+    tmpvar_6 = f.y;
+  } else {
+    tmpvar_6 = -(f.y);
+  };
+  vec2 tmpvar_7;
+  tmpvar_7.x = tmpvar_5;
+  tmpvar_7.y = tmpvar_6;
+  return tmpvar_7;
+}
+
+vec3 xll_mod (
+  in vec3 x,
+  in vec3 y
+)
+{
+  vec3 f;
+  vec3 d;
+  vec3 tmpvar_1;
+  tmpvar_1 = (x / y);
+  d = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = abs (d);
+  vec3 tmpvar_3;
+  tmpvar_3 = fract (tmpvar_2);
+  vec3 tmpvar_4;
+  tmpvar_4 = (tmpvar_3 * y);
+  f = tmpvar_4;
+  float tmpvar_5;
+  if ((d.x >= 0.0)) {
+    tmpvar_5 = f.x;
+  } else {
+    tmpvar_5 = -(f.x);
+  };
+  float tmpvar_6;
+  if ((d.y >= 0.0)) {
+    tmpvar_6 = f.y;
+  } else {
+    tmpvar_6 = -(f.y);
+  };
+  float tmpvar_7;
+  if ((d.z >= 0.0)) {
+    tmpvar_7 = f.z;
+  } else {
+    tmpvar_7 = -(f.z);
+  };
+  vec3 tmpvar_8;
+  tmpvar_8.x = tmpvar_5;
+  tmpvar_8.y = tmpvar_6;
+  tmpvar_8.z = tmpvar_7;
+  return tmpvar_8;
+}
+
+vec4 xll_mod (
+  in vec4 x,
+  in vec4 y
+)
+{
+  vec4 f;
+  vec4 d;
+  vec4 tmpvar_1;
+  tmpvar_1 = (x / y);
+  d = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = abs (d);
+  vec4 tmpvar_3;
+  tmpvar_3 = fract (tmpvar_2);
+  vec4 tmpvar_4;
+  tmpvar_4 = (tmpvar_3 * y);
+  f = tmpvar_4;
+  float tmpvar_5;
+  if ((d.x >= 0.0)) {
+    tmpvar_5 = f.x;
+  } else {
+    tmpvar_5 = -(f.x);
+  };
+  float tmpvar_6;
+  if ((d.y >= 0.0)) {
+    tmpvar_6 = f.y;
+  } else {
+    tmpvar_6 = -(f.y);
+  };
+  float tmpvar_7;
+  if ((d.z >= 0.0)) {
+    tmpvar_7 = f.z;
+  } else {
+    tmpvar_7 = -(f.z);
+  };
+  float tmpvar_8;
+  if ((d.w >= 0.0)) {
+    tmpvar_8 = f.w;
+  } else {
+    tmpvar_8 = -(f.w);
+  };
+  vec4 tmpvar_9;
+  tmpvar_9.x = tmpvar_5;
+  tmpvar_9.y = tmpvar_6;
+  tmpvar_9.z = tmpvar_7;
+  tmpvar_9.w = tmpvar_8;
+  return tmpvar_9;
+}
+
+float xll_saturate (
+  in float x
+)
+{
+  float tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec2 xll_saturate (
+  in vec2 x
+)
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec3 xll_saturate (
+  in vec3 x
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec4 xll_saturate (
+  in vec4 x
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+mat2 xll_saturate (
+  in mat2 m
+)
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
+  vec2 tmpvar_2;
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
+  mat2 tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_1;
+  tmpvar_3[0] = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_2;
+  tmpvar_3[1] = tmpvar_5;
+  return tmpvar_3;
+}
+
+mat3 xll_saturate (
+  in mat3 m
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
+  vec3 tmpvar_2;
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
+  vec3 tmpvar_3;
+  tmpvar_3 = clamp (m[2], 0.0, 1.0);
+  mat3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_1;
+  tmpvar_4[0] = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_2;
+  tmpvar_4[1] = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_3;
+  tmpvar_4[2] = tmpvar_7;
+  return tmpvar_4;
+}
+
+mat4 xll_saturate (
+  in mat4 m
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
+  vec4 tmpvar_2;
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
+  vec4 tmpvar_3;
+  tmpvar_3 = clamp (m[2], 0.0, 1.0);
+  vec4 tmpvar_4;
+  tmpvar_4 = clamp (m[3], 0.0, 1.0);
+  mat4 tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_1;
+  tmpvar_5[0] = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_2;
+  tmpvar_5[1] = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_3;
+  tmpvar_5[2] = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_4;
+  tmpvar_5[3] = tmpvar_9;
+  return tmpvar_5;
+}
+
+void CalcOrthonormalBasis (
+  in highp vec3 dir,
+  out highp vec3 right,
+  out highp vec3 up
+)
+{
+  highp float tmpvar_1;
+  tmpvar_1 = abs (dir.y);
+  vec3 tmpvar_2;
+  if ((tmpvar_1 > 0.999)) {
+    tmpvar_2 = vec3(0.0, 0.0, 1.0);
+  } else {
+    tmpvar_2 = vec3(0.0, 1.0, 0.0);
+  };
+  vec3 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  up = tmpvar_3;
+  highp vec3 tmpvar_4;
+  tmpvar_4 = cross (up, dir);
+  highp vec3 tmpvar_5;
+  tmpvar_5 = normalize (tmpvar_4);
+  highp vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  right = tmpvar_6;
+  highp vec3 tmpvar_7;
+  tmpvar_7 = cross (dir, right);
+  highp vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  up = tmpvar_8;
+}
+
+float CalcFadeOutFactor (
+  in highp float dist
+)
+{
+  highp float ffadeout;
+  highp float nfadeout;
+  float tmpvar_1;
+  tmpvar_1 = xll_saturate ((dist / _FadeOutDistNear));
+  float tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  nfadeout = tmpvar_2;
+  highp float tmpvar_3;
+  tmpvar_3 = max ((dist - _FadeOutDistFar), 0.0);
+  float tmpvar_4;
+  tmpvar_4 = xll_saturate ((tmpvar_3 * 0.2));
+  float tmpvar_5;
+  tmpvar_5 = (1.0 - tmpvar_4);
+  ffadeout = tmpvar_5;
+  highp float tmpvar_6;
+  tmpvar_6 = (ffadeout * ffadeout);
+  ffadeout = tmpvar_6;
+  highp float tmpvar_7;
+  tmpvar_7 = (nfadeout * nfadeout);
+  nfadeout = tmpvar_7;
+  highp float tmpvar_8;
+  tmpvar_8 = (nfadeout * nfadeout);
+  nfadeout = tmpvar_8;
+  highp float tmpvar_9;
+  tmpvar_9 = (nfadeout * ffadeout);
+  nfadeout = tmpvar_9;
+  return nfadeout;
+}
+
+float CalcDistScale (
+  in highp float dist
+)
+{
+  highp float distScale;
+  highp float tmpvar_1;
+  tmpvar_1 = max ((dist - _SizeGrowStartDist), 0.0);
+  highp float tmpvar_2;
+  tmpvar_2 = min ((tmpvar_1 / _SizeGrowEndDist), 1.0);
+  highp float tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  distScale = tmpvar_3;
+  return ((distScale * distScale) * _MaxGrowSize);
+}
+
+v2f xlat_main (
+  in appdata_full v
+)
+{
+  v2f o;
+  highp float noiseWave;
+  highp float noise;
+  highp float noiseTime;
+  highp float wave;
+  highp float fracTime;
+  highp float time;
+  highp vec3 BBLocalPos;
+  highp vec3 BBNormal;
+  highp float distScale;
+  highp vec3 upLocal;
+  highp vec3 rightLocal;
+  highp float localDirLength;
+  highp vec3 localDir;
+  highp vec3 viewerLocal;
+  highp vec3 centerLocal;
+  highp vec3 centerOffs;
+  highp vec3 tmpvar_1;
+  tmpvar_1.z = 0.0;
+  tmpvar_1.xy = (vec2(0.5, 0.5) - v.color.xy).xy;
+  highp vec3 tmpvar_2;
+  tmpvar_2 = (tmpvar_1 * v.texcoord1.xyy);
+  centerOffs = tmpvar_2;
+  highp vec3 tmpvar_3;
+  tmpvar_3 = (v.vertex.xyz + centerOffs.xyz);
+  centerLocal = tmpvar_3;
+  highp vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = _WorldSpaceCameraPos.xyz;
+  highp vec3 tmpvar_5;
+  tmpvar_5 = (_World2Object * tmpvar_4).xyz;
+  highp vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  viewerLocal = tmpvar_6;
+  highp vec3 tmpvar_7;
+  tmpvar_7 = (viewerLocal - centerLocal);
+  localDir = tmpvar_7;
+  highp float tmpvar_8;
+  tmpvar_8 = mix (0.0, localDir.y, _VerticalBillboarding);
+  highp float tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  localDir.y = vec2(tmpvar_9).y;
+  highp float tmpvar_10;
+  tmpvar_10 = length (localDir);
+  highp float tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  localDirLength = tmpvar_11;
+  CalcOrthonormalBasis ((localDir / localDirLength), rightLocal, upLocal);
+  highp float tmpvar_12;
+  tmpvar_12 = CalcDistScale (localDirLength);
+  highp float tmpvar_13;
+  tmpvar_13 = (tmpvar_12 * v.color.w);
+  distScale = tmpvar_13;
+  highp vec3 tmpvar_14;
+  tmpvar_14 = ((rightLocal * v.normal.x) + (upLocal * v.normal.y));
+  BBNormal = tmpvar_14;
+  highp vec3 tmpvar_15;
+  tmpvar_15 = ((centerLocal - ((rightLocal * centerOffs.x) + (upLocal * centerOffs.y))) + (BBNormal * distScale));
+  BBLocalPos = tmpvar_15;
+  highp float tmpvar_16;
+  tmpvar_16 = (_Time.y + (_BlinkingTimeOffsScale * v.color.z));
+  time = tmpvar_16;
+  float tmpvar_17;
+  tmpvar_17 = xll_mod (time, (_TimeOnDuration + _TimeOffDuration));
+  float tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  fracTime = tmpvar_18;
+  highp float tmpvar_19;
+  tmpvar_19 = smoothstep (0.0, (_TimeOnDuration * 0.25), fracTime);
+  highp float tmpvar_20;
+  tmpvar_20 = smoothstep ((_TimeOnDuration * 0.75), _TimeOnDuration, fracTime);
+  highp float tmpvar_21;
+  tmpvar_21 = (tmpvar_19 * (1.0 - tmpvar_20));
+  wave = tmpvar_21;
+  highp float tmpvar_22;
+  tmpvar_22 = (time * (6.28319 / _TimeOnDuration));
+  noiseTime = tmpvar_22;
+  highp float tmpvar_23;
+  tmpvar_23 = sin (noiseTime);
+  highp float tmpvar_24;
+  tmpvar_24 = cos (((noiseTime * 0.6366) + 56.7272));
+  highp float tmpvar_25;
+  tmpvar_25 = (tmpvar_23 * ((0.5 * tmpvar_24) + 0.5));
+  noise = tmpvar_25;
+  highp float tmpvar_26;
+  tmpvar_26 = ((_NoiseAmount * noise) + (1.0 - _NoiseAmount));
+  noiseWave = tmpvar_26;
+  highp float tmpvar_27;
+  if ((_NoiseAmount < 0.01)) {
+    tmpvar_27 = wave;
+  } else {
+    tmpvar_27 = noiseWave;
+  };
+  highp float tmpvar_28;
+  tmpvar_28 = tmpvar_27;
+  wave = tmpvar_28;
+  highp float tmpvar_29;
+  tmpvar_29 = (wave + _Bias);
+  wave = tmpvar_29;
+  highp vec2 tmpvar_30;
+  tmpvar_30 = v.texcoord.xy;
+  o.uv = tmpvar_30;
+  highp vec4 tmpvar_31;
+  tmpvar_31.w = 1.0;
+  tmpvar_31.xyz = BBLocalPos.xyz;
+  highp vec4 tmpvar_32;
+  tmpvar_32 = (glstate_matrix_mvp * tmpvar_31);
+  o.pos = tmpvar_32;
+  highp float tmpvar_33;
+  tmpvar_33 = CalcFadeOutFactor (localDirLength);
+  highp vec4 tmpvar_34;
+  tmpvar_34 = (((tmpvar_33 * _Color) * _Multiplier) * wave);
+  o.color = tmpvar_34;
+  return o;
+}
+
+void main ()
+{
+  appdata_full xlt_v;
+  v2f xl_retval;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = _glesVertex.xyzw;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = TANGENT.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.tangent = tmpvar_4;
+  mediump vec3 tmpvar_5;
+  tmpvar_5 = _glesNormal.xyz;
+  mediump vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.normal = tmpvar_6;
+  highp vec4 tmpvar_7;
+  tmpvar_7 = _glesMultiTexCoord0.xyzw;
+  highp vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  highp vec4 tmpvar_9;
+  tmpvar_9 = _glesMultiTexCoord1.xyzw;
+  highp vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_v.texcoord1 = tmpvar_10;
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = _glesColor.xyzw;
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_v.color = tmpvar_12;
+  v2f tmpvar_13;
+  tmpvar_13 = xlat_main (xlt_v);
+  v2f tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval = tmpvar_14;
+  highp vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.pos.xyzw;
+  highp vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  xlv_SV_POSITION = tmpvar_16;
+  highp vec2 tmpvar_17;
+  tmpvar_17 = xl_retval.uv.xy;
+  highp vec2 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  xlv_TEXCOORD0 = tmpvar_18;
+  lowp vec4 tmpvar_19;
+  tmpvar_19 = xl_retval.color.xyzw;
+  lowp vec4 tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  xlv_TEXCOORD1 = tmpvar_20;
+}
+

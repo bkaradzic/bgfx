@@ -1,0 +1,262 @@
+struct appdata_full {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 texcoord1;
+  vec4 color;
+};
+struct v2f_surf {
+  vec4 pos;
+};
+attribute vec4 TANGENT;
+uniform vec4 unity_LightShadowBias;
+uniform vec4 _Wind;
+uniform float _TimeX;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _Color;
+vec4 Squash (
+  in vec4 pos
+)
+{
+  vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
+  vec3 tmpvar_1;
+  tmpvar_1 = pos.xyz;
+  projectedVertex = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
+  vec3 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  planePoint = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = _SquashPlaneNormal.xyz;
+  planeNormal = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = pos.xyz;
+  float tmpvar_6;
+  tmpvar_6 = dot (planeNormal, (planePoint - tmpvar_5));
+  vec3 tmpvar_7;
+  tmpvar_7 = (projectedVertex + (tmpvar_6 * planeNormal));
+  projectedVertex = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = vec3(_SquashAmount);
+  vec3 tmpvar_9;
+  tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
+  vec4 tmpvar_10;
+  tmpvar_10.w = 1.0;
+  tmpvar_10.xyz = tmpvar_9.xyz;
+  vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  pos = tmpvar_11;
+  return pos;
+}
+
+vec4 TriangleWave (
+  in vec4 x
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = fract ((x + 0.5));
+  vec4 tmpvar_2;
+  tmpvar_2 = abs (((tmpvar_1 * 2.0) - 1.0));
+  return tmpvar_2;
+}
+
+vec4 SmoothCurve (
+  in vec4 x
+)
+{
+  return ((x * x) * (3.0 - (2.0 * x)));
+}
+
+vec4 SmoothTriangleWave (
+  in vec4 x
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = TriangleWave (x);
+  vec4 tmpvar_2;
+  tmpvar_2 = SmoothCurve (tmpvar_1);
+  return tmpvar_2;
+}
+
+vec4 AnimateVertex (
+  in vec4 pos,
+  in vec3 normal,
+  in vec4 animParams
+)
+{
+  vec3 bend;
+  vec2 vWavesSum;
+  vec4 vWaves;
+  vec2 vWavesIn;
+  float fVtxPhase;
+  float fBranchPhase;
+  float fObjPhase;
+  float fBranchAmp;
+  float fDetailAmp;
+  float tmpvar_1;
+  tmpvar_1 = 0.1;
+  fDetailAmp = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = 0.3;
+  fBranchAmp = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
+  float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  fObjPhase = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = (fObjPhase + animParams.x);
+  fBranchPhase = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = vec3((animParams.y + fBranchPhase));
+  float tmpvar_7;
+  tmpvar_7 = dot (pos.xyz, tmpvar_6);
+  float tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  fVtxPhase = tmpvar_8;
+  vec2 tmpvar_9;
+  tmpvar_9.x = fVtxPhase;
+  tmpvar_9.y = fBranchPhase;
+  vec2 tmpvar_10;
+  tmpvar_10 = (_TimeX + tmpvar_9);
+  vWavesIn = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
+  vec4 tmpvar_12;
+  tmpvar_12 = ((tmpvar_11 * 2.0) - 1.0);
+  vWaves = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13 = SmoothTriangleWave (vWaves);
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  vWaves = tmpvar_14;
+  vec2 tmpvar_15;
+  tmpvar_15 = (vWaves.xz + vWaves.yw);
+  vWavesSum = tmpvar_15;
+  vec3 tmpvar_16;
+  tmpvar_16 = ((animParams.y * fDetailAmp) * normal.xyz);
+  bend = tmpvar_16;
+  float tmpvar_17;
+  tmpvar_17 = (animParams.w * fBranchAmp);
+  bend.y = vec2(tmpvar_17).y;
+  vec3 tmpvar_18;
+  tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
+  pos.xyz = tmpvar_18.xyz.xyz;
+  vec3 tmpvar_19;
+  tmpvar_19 = (pos.xyz + (animParams.z * _Wind.xyz));
+  pos.xyz = tmpvar_19.xyz.xyz;
+  return pos;
+}
+
+void TreeVertBark (
+  inout appdata_full v
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
+  v.vertex.xyz = tmpvar_1.xyz.xyz;
+  vec4 tmpvar_2;
+  tmpvar_2.xy = v.color.xy.xy;
+  tmpvar_2.zw = v.texcoord1.xy.xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = AnimateVertex (v.vertex, v.normal, tmpvar_2);
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  v.vertex = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = Squash (v.vertex);
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  v.vertex = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.xyz = (v.color.w * _Color.xyz).xyz;
+  tmpvar_7.w = _Color.w;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  v.color = tmpvar_8;
+  vec3 tmpvar_9;
+  tmpvar_9 = normalize (v.normal);
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  v.normal = tmpvar_10;
+  vec3 tmpvar_11;
+  tmpvar_11 = normalize (v.tangent.xyz);
+  vec3 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  v.tangent.xyz = tmpvar_12.xyz.xyz;
+}
+
+v2f_surf vert_surf (
+  in appdata_full v
+)
+{
+  v2f_surf o;
+  TreeVertBark (v);
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * v.vertex);
+  o.pos = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = (o.pos.z + unity_LightShadowBias.x);
+  o.pos.z = vec3(tmpvar_2).z;
+  if ((o.pos.z < -(o.pos.w))) {
+    float tmpvar_3;
+    tmpvar_3 = -(o.pos.w);
+    o.pos.z = vec3(tmpvar_3).z;
+  };
+  return o;
+}
+
+void main ()
+{
+  appdata_full xlt_v;
+  v2f_surf xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = TANGENT.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.tangent = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = gl_Normal.xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.normal = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = gl_MultiTexCoord1.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_v.texcoord1 = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_v.color = tmpvar_12;
+  v2f_surf tmpvar_13;
+  tmpvar_13 = vert_surf (xlt_v);
+  v2f_surf tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.pos.xyzw;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_Position = tmpvar_16;
+}
+

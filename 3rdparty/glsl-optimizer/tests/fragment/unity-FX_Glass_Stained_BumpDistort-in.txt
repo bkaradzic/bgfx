@@ -1,0 +1,58 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 vertex;
+    vec4 uvgrab;
+    vec2 uvbump;
+    vec2 uvmain;
+};
+struct appdata_t {
+    vec4 vertex;
+    vec2 texcoord;
+};
+uniform float _BumpAmt;
+uniform sampler2D _BumpMap;
+uniform sampler2D _GrabTexture;
+uniform vec4 _GrabTexture_TexelSize;
+uniform sampler2D _MainTex;
+vec4 UnpackNormal( in vec4 packednormal );
+vec4 frag( in v2f i );
+vec4 UnpackNormal( in vec4 packednormal ) {
+    vec4 normal;
+    normal.xy  = ((packednormal.wy  * 2.00000) - 1.00000);
+    normal.z  = sqrt( ((1.00000 - (normal.x  * normal.x )) - (normal.y  * normal.y )) );
+    return normal;
+}
+vec4 frag( in v2f i ) {
+    vec2 bump;
+    vec2 offset;
+    vec4 col;
+    vec4 tint;
+    bump = UnpackNormal( texture2D( _BumpMap, i.uvbump)).xy ;
+    offset = ((bump * _BumpAmt) * _GrabTexture_TexelSize.xy );
+    i.uvgrab.xy  = ((offset * i.uvgrab.z ) + i.uvgrab.xy );
+    col = texture2DProj( _GrabTexture, i.uvgrab);
+    tint = texture2D( _MainTex, i.uvmain);
+    return (col * tint);
+}
+void main() {
+    vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.vertex = vec4(0.0);
+    xlt_i.uvgrab = vec4( gl_TexCoord[0]);
+    xlt_i.uvbump = vec2( gl_TexCoord[1]);
+    xlt_i.uvmain = vec2( gl_TexCoord[2]);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4( xl_retval);
+}

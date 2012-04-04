@@ -1,0 +1,4 @@
+glsl_compiler
+glsl_parser.output
+builtin_compiler
+glsl_test

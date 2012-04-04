@@ -1,0 +1,428 @@
+struct appdata_full {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 texcoord1;
+  vec4 color;
+};
+struct v2f_surf {
+  vec4 pos;
+  vec2 hip_pack0;
+  vec4 lop_color;
+  vec3 lightDir;
+  vec3 viewDir;
+  vec2 _LightCoord;
+};
+varying vec2 xlv_TEXCOORD3;
+varying vec3 xlv_TEXCOORD2;
+varying vec3 xlv_TEXCOORD1;
+varying vec4 xlv_COLOR0;
+varying vec2 xlv_TEXCOORD0;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform mat4 glstate_matrix_mvp;
+uniform mat4 glstate_matrix_invtrans_modelview0;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform vec4 _Wind;
+uniform vec4 _Time;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform mat4 _LightMatrix0;
+vec4 Squash (
+  in vec4 pos
+)
+{
+  vec3 projectedVertex;
+  vec3 planeNormal;
+  vec3 tmpvar_1;
+  tmpvar_1 = _SquashPlaneNormal.xyz;
+  planeNormal = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = pos.xyz;
+  float tmpvar_3;
+  tmpvar_3 = dot (planeNormal, tmpvar_2);
+  vec3 tmpvar_4;
+  tmpvar_4 = (pos.xyz - ((tmpvar_3 + _SquashPlaneNormal.w) * planeNormal));
+  projectedVertex = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = vec3(_SquashAmount);
+  vec3 tmpvar_6;
+  tmpvar_6 = mix (projectedVertex, pos.xyz, tmpvar_5);
+  vec4 tmpvar_7;
+  tmpvar_7.w = 1.0;
+  tmpvar_7.xyz = tmpvar_6.xyz;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  pos = tmpvar_8;
+  return pos;
+}
+
+void ExpandBillboard (
+  in mat4 mat,
+  inout vec4 pos,
+  inout vec3 normal,
+  inout vec4 tangent
+)
+{
+  vec3 tanb;
+  vec3 norb;
+  float isBillboard;
+  float tmpvar_1;
+  tmpvar_1 = abs (tangent.w);
+  float tmpvar_2;
+  tmpvar_2 = (1.0 - tmpvar_1);
+  isBillboard = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
+  tmpvar_3.xyz = normal.xyz;
+  vec4 tmpvar_4;
+  tmpvar_4 = normalize ((tmpvar_3 * mat));
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4.xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  norb = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 0.0;
+  tmpvar_7.xyz = tangent.xyz.xyz;
+  vec4 tmpvar_8;
+  tmpvar_8 = normalize ((tmpvar_7 * mat));
+  vec3 tmpvar_9;
+  tmpvar_9 = tmpvar_8.xyz;
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  tanb = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
+  tmpvar_11.xy = normal.xy.xy;
+  vec4 tmpvar_12;
+  tmpvar_12 = (pos + ((tmpvar_11 * mat) * isBillboard));
+  pos = tmpvar_12;
+  vec3 tmpvar_13;
+  tmpvar_13 = vec3(isBillboard);
+  vec3 tmpvar_14;
+  tmpvar_14 = mix (normal, norb, tmpvar_13);
+  vec3 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  normal = tmpvar_15;
+  vec4 tmpvar_16;
+  tmpvar_16.w = -1.0;
+  tmpvar_16.xyz = tanb.xyz;
+  vec4 tmpvar_17;
+  tmpvar_17 = vec4(isBillboard);
+  vec4 tmpvar_18;
+  tmpvar_18 = mix (tangent, tmpvar_16, tmpvar_17);
+  vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  tangent = tmpvar_19;
+}
+
+vec4 TriangleWave (
+  in vec4 x
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = fract ((x + 0.5));
+  vec4 tmpvar_2;
+  tmpvar_2 = abs (((tmpvar_1 * 2.0) - 1.0));
+  return tmpvar_2;
+}
+
+vec4 SmoothCurve (
+  in vec4 x
+)
+{
+  return ((x * x) * (3.0 - (2.0 * x)));
+}
+
+vec4 SmoothTriangleWave (
+  in vec4 x
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = TriangleWave (x);
+  vec4 tmpvar_2;
+  tmpvar_2 = SmoothCurve (tmpvar_1);
+  return tmpvar_2;
+}
+
+vec4 AnimateVertex (
+  in vec4 pos,
+  in vec3 normal,
+  in vec4 animParams
+)
+{
+  vec3 bend;
+  vec2 vWavesSum;
+  vec4 vWaves;
+  vec2 vWavesIn;
+  float fVtxPhase;
+  float fBranchPhase;
+  float fObjPhase;
+  float fBranchAmp;
+  float fDetailAmp;
+  float tmpvar_1;
+  tmpvar_1 = 0.1;
+  fDetailAmp = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = 0.3;
+  fBranchAmp = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
+  float tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  fObjPhase = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = (fObjPhase + animParams.x);
+  fBranchPhase = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = vec3((animParams.y + fBranchPhase));
+  float tmpvar_7;
+  tmpvar_7 = dot (pos.xyz, tmpvar_6);
+  float tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  fVtxPhase = tmpvar_8;
+  vec2 tmpvar_9;
+  tmpvar_9.x = fVtxPhase;
+  tmpvar_9.y = fBranchPhase;
+  vec2 tmpvar_10;
+  tmpvar_10 = (_Time.yy + tmpvar_9);
+  vWavesIn = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
+  vec4 tmpvar_12;
+  tmpvar_12 = ((tmpvar_11 * 2.0) - 1.0);
+  vWaves = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13 = SmoothTriangleWave (vWaves);
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  vWaves = tmpvar_14;
+  vec2 tmpvar_15;
+  tmpvar_15 = (vWaves.xz + vWaves.yw);
+  vWavesSum = tmpvar_15;
+  vec3 tmpvar_16;
+  tmpvar_16 = ((animParams.y * fDetailAmp) * normal.xyz);
+  bend = tmpvar_16;
+  float tmpvar_17;
+  tmpvar_17 = (animParams.w * fBranchAmp);
+  bend.y = vec2(tmpvar_17).y;
+  vec3 tmpvar_18;
+  tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
+  pos.xyz = tmpvar_18.xyz.xyz;
+  vec3 tmpvar_19;
+  tmpvar_19 = (pos.xyz + (animParams.z * _Wind.xyz));
+  pos.xyz = tmpvar_19.xyz.xyz;
+  return pos;
+}
+
+void TreeVertLeaf (
+  inout appdata_full v
+)
+{
+  ExpandBillboard (glstate_matrix_invtrans_modelview0, v.vertex, v.normal, v.tangent);
+  vec3 tmpvar_1;
+  tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
+  v.vertex.xyz = tmpvar_1.xyz.xyz;
+  vec4 tmpvar_2;
+  tmpvar_2.xy = v.color.xy.xy;
+  tmpvar_2.zw = v.texcoord1.xy.xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = AnimateVertex (v.vertex, v.normal, tmpvar_2);
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  v.vertex = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = Squash (v.vertex);
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  v.vertex = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.xyz = vec3(1.0, 1.0, 1.0);
+  tmpvar_7.w = v.color.w;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  v.color = tmpvar_8;
+  vec3 tmpvar_9;
+  tmpvar_9 = normalize (v.normal);
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  v.normal = tmpvar_10;
+  vec3 tmpvar_11;
+  tmpvar_11 = normalize (v.tangent.xyz);
+  vec3 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  v.tangent.xyz = tmpvar_12.xyz.xyz;
+}
+
+vec3 ObjSpaceViewDir (
+  in vec4 v
+)
+{
+  vec3 objSpaceCameraPos;
+  vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _WorldSpaceCameraPos.xyz.xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
+  objSpaceCameraPos = tmpvar_2;
+  return (objSpaceCameraPos - v.xyz);
+}
+
+vec3 ObjSpaceLightDir (
+  in vec4 v
+)
+{
+  vec3 objSpaceLightPos;
+  vec3 tmpvar_1;
+  tmpvar_1 = (_World2Object * _WorldSpaceLightPos0).xyz;
+  objSpaceLightPos = tmpvar_1;
+  return objSpaceLightPos.xyz;
+}
+
+v2f_surf xlat_main (
+  in appdata_full v
+)
+{
+  mat3 rotation;
+  vec3 binormal;
+  v2f_surf o;
+  TreeVertLeaf (v);
+  vec4 tmpvar_1;
+  tmpvar_1 = (glstate_matrix_mvp * v.vertex);
+  o.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o.hip_pack0 = tmpvar_2.xy.xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = v.color;
+  o.lop_color = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = cross (v.normal, v.tangent.xyz);
+  vec3 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 * v.tangent.w);
+  binormal = tmpvar_5;
+  mat3 tmpvar_6;
+  float tmpvar_7;
+  tmpvar_7 = v.tangent.x;
+  tmpvar_6[0].x = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = binormal.x;
+  tmpvar_6[0].y = tmpvar_8;
+  float tmpvar_9;
+  tmpvar_9 = v.normal.x;
+  tmpvar_6[0].z = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = v.tangent.y;
+  tmpvar_6[1].x = tmpvar_10;
+  float tmpvar_11;
+  tmpvar_11 = binormal.y;
+  tmpvar_6[1].y = tmpvar_11;
+  float tmpvar_12;
+  tmpvar_12 = v.normal.y;
+  tmpvar_6[1].z = tmpvar_12;
+  float tmpvar_13;
+  tmpvar_13 = v.tangent.z;
+  tmpvar_6[2].x = tmpvar_13;
+  float tmpvar_14;
+  tmpvar_14 = binormal.z;
+  tmpvar_6[2].y = tmpvar_14;
+  float tmpvar_15;
+  tmpvar_15 = v.normal.z;
+  tmpvar_6[2].z = tmpvar_15;
+  mat3 tmpvar_16;
+  tmpvar_16 = (tmpvar_6);
+  rotation = (tmpvar_16);
+  vec3 tmpvar_17;
+  tmpvar_17 = ObjSpaceLightDir (v.vertex);
+  vec3 tmpvar_18;
+  tmpvar_18 = (rotation * tmpvar_17);
+  o.lightDir = tmpvar_18;
+  vec3 tmpvar_19;
+  tmpvar_19 = ObjSpaceViewDir (v.vertex);
+  vec3 tmpvar_20;
+  tmpvar_20 = (rotation * tmpvar_19);
+  o.viewDir = tmpvar_20;
+  vec2 tmpvar_21;
+  tmpvar_21 = (_LightMatrix0 * (_Object2World * v.vertex)).xy;
+  o._LightCoord = tmpvar_21;
+  return o;
+}
+
+void main ()
+{
+  appdata_full xlt_v;
+  v2f_surf xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = TANGENT.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.tangent = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = gl_Normal.xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.normal = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = gl_MultiTexCoord1.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_v.texcoord1 = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_v.color = tmpvar_12;
+  v2f_surf tmpvar_13;
+  tmpvar_13 = xlat_main (xlt_v);
+  v2f_surf tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.pos.xyzw;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_Position = tmpvar_16;
+  vec2 tmpvar_17;
+  tmpvar_17 = xl_retval.hip_pack0.xy;
+  vec2 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  xlv_TEXCOORD0 = tmpvar_18;
+  vec4 tmpvar_19;
+  tmpvar_19 = xl_retval.lop_color.xyzw;
+  vec4 tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  xlv_COLOR0 = tmpvar_20;
+  vec3 tmpvar_21;
+  tmpvar_21 = xl_retval.lightDir.xyz;
+  vec3 tmpvar_22;
+  tmpvar_22 = tmpvar_21;
+  xlv_TEXCOORD1 = tmpvar_22;
+  vec3 tmpvar_23;
+  tmpvar_23 = xl_retval.viewDir.xyz;
+  vec3 tmpvar_24;
+  tmpvar_24 = tmpvar_23;
+  xlv_TEXCOORD2 = tmpvar_24;
+  vec2 tmpvar_25;
+  tmpvar_25 = xl_retval._LightCoord.xy;
+  vec2 tmpvar_26;
+  tmpvar_26 = tmpvar_25;
+  xlv_TEXCOORD3 = tmpvar_26;
+}
+

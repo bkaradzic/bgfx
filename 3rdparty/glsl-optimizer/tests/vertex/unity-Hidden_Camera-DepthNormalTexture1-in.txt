@@ -1,0 +1,111 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 pos;
+    vec2 uv;
+    vec4 nz;
+};
+struct appdata_grass {
+    vec4 vertex;
+    vec4 tangent;
+    vec4 color;
+    vec4 texcoord;
+    vec4 texcoord1;
+};
+uniform vec4 _ProjectionParams;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+
+
+void FastSinCos( in vec4 val, out vec4 s, out vec4 c );
+void TerrainWaveGrass( inout vec4 vertex, in float waveAmount, in vec3 color, out vec4 outColor );
+v2f vert( in appdata_grass v );
+void FastSinCos( in vec4 val, out vec4 s, out vec4 c ) {
+    vec4 r5;
+    vec4 r6;
+    vec4 r7;
+    vec4 r8;
+    vec4 r1;
+    vec4 r2;
+    vec4 r3;
+    vec4 sin7 = vec4( 1.00000, -0.161616, 0.00833330, -0.000198410);
+    vec4 cos8 = vec4( -0.500000, 0.0416667, -0.00138889, 2.48016e-005);
+    val = ((val * 6.40885) - 3.14159);
+    r5 = (val * val);
+    r6 = (r5 * r5);
+    r7 = (r6 * r5);
+    r8 = (r6 * r5);
+    r1 = (r5 * val);
+    r2 = (r1 * r5);
+    r3 = (r2 * r5);
+    s = (((val + (r1 * sin7.y )) + (r2 * sin7.z )) + (r3 * sin7.w ));
+    c = ((((1.00000 + (r5 * cos8.x )) + (r6 * cos8.y )) + (r7 * cos8.z )) + (r8 * cos8.w ));
+}
+void TerrainWaveGrass( inout vec4 vertex, in float waveAmount, in vec3 color, out vec4 outColor ) {
+    vec4 _waveXSize;
+    vec4 _waveZSize;
+    vec4 waveSpeed = vec4( 1.20000, 2.00000, 1.60000, 4.80000);
+    vec4 _waveXmove = vec4( 0.0240000, 0.0400000, -0.120000, 0.0960000);
+    vec4 _waveZmove = vec4( 0.00600000, 0.0200000, -0.0200000, 0.100000);
+    vec4 waves;
+    vec4 s;
+    vec4 c;
+    float lighting;
+    vec3 waveMove = vec3( 0.000000, 0.000000, 0.000000);
+    vec3 waveColor;
+    _waveXSize = (vec4( 0.0120000, 0.0200000, 0.0600000, 0.0240000) * _WaveAndDistance.y );
+    _waveZSize = (vec4( 0.00600000, 0.0200000, 0.0200000, 0.0500000) * _WaveAndDistance.y );
+    waves = (vertex.x  * _waveXSize);
+    waves += (vertex.z  * _waveZSize);
+    waves += (_WaveAndDistance.x  * waveSpeed);
+    waves = fract( waves );
+    FastSinCos( waves, s, c);
+    s = (s * s);
+    s = (s * s);
+    lighting = (dot( s, normalize( vec4( 1.00000, 1.00000, 0.400000, 0.200000) )) * 0.700000);
+    s = (s * waveAmount);
+    waveMove.x  = dot( s, _waveXmove);
+    waveMove.z  = dot( s, _waveZmove);
+    vertex.xz  -= (waveMove.xz  * _WaveAndDistance.z );
+    waveColor = mix( vec3( 0.500000, 0.500000, 0.500000), _WavingTint.xyz , vec3( lighting));
+    outColor.xyz  = ((color * waveColor) * 2.00000);
+    outColor.w  = 1.00000;
+}
+v2f vert( in appdata_grass v ) {
+    float waveAmount;
+    vec4 dummyColor;
+    v2f o;
+    waveAmount = (v.color.w  * _WaveAndDistance.z );
+    dummyColor = vec4( 0.000000);
+    TerrainWaveGrass( v.vertex, waveAmount, vec3( dummyColor), dummyColor);
+    o.pos = ( gl_ModelViewProjectionMatrix * v.vertex );
+    o.uv = vec2( v.texcoord);
+    o.nz.xyz  = vec3( 0.000000, 0.000000, 1.00000);
+    o.nz.w  = ( -(( gl_ModelViewMatrix * v.vertex ).z  * _ProjectionParams.w ) );
+    return o;
+}
+attribute vec4 TANGENT;
+void main() {
+    v2f xl_retval;
+    appdata_grass xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.tangent = vec4( TANGENT);
+    xlt_v.color = vec4( gl_Color);
+    xlt_v.texcoord = vec4( gl_MultiTexCoord0);
+    xlt_v.texcoord1 = vec4( gl_MultiTexCoord1);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    gl_TexCoord[0] = vec4( xl_retval.uv, 0.0, 0.0);
+    gl_TexCoord[1] = vec4( xl_retval.nz);
+}

@@ -1,0 +1,249 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec4 nz;
+};
+struct appdata_grass {
+  vec4 vertex;
+  vec4 tangent;
+  vec4 color;
+  vec4 texcoord;
+  vec4 texcoord1;
+};
+attribute vec4 TANGENT;
+uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _ProjectionParams;
+void FastSinCos (
+  in vec4 val,
+  out vec4 s,
+  out vec4 c
+)
+{
+  vec4 cos8;
+  vec4 sin7;
+  vec4 r3;
+  vec4 r2;
+  vec4 r1;
+  vec4 r8;
+  vec4 r7;
+  vec4 r6;
+  vec4 r5;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(1.0, -0.161616, 0.0083333, -0.00019841);
+  sin7 = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(-0.5, 0.0416667, -0.00138889, 2.48016e-05);
+  cos8 = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = ((val * 6.40885) - 3.14159);
+  val = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = (val * val);
+  r5 = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = (r5 * r5);
+  r6 = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = (r6 * r5);
+  r7 = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = (r6 * r5);
+  r8 = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = (r5 * val);
+  r1 = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = (r1 * r5);
+  r2 = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = (r2 * r5);
+  r3 = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = (((val + (r1 * sin7.y)) + (r2 * sin7.z)) + (r3 * sin7.w));
+  s = tmpvar_11;
+  vec4 tmpvar_12;
+  tmpvar_12 = ((((1.0 + (r5 * cos8.x)) + (r6 * cos8.y)) + (r7 * cos8.z)) + (r8 * cos8.w));
+  c = tmpvar_12;
+}
+
+void TerrainWaveGrass (
+  inout vec4 vertex,
+  in float waveAmount,
+  in vec3 color,
+  out vec4 outColor
+)
+{
+  vec3 waveColor;
+  vec3 waveMove;
+  float lighting;
+  vec4 c;
+  vec4 s;
+  vec4 waves;
+  vec4 _waveZmove;
+  vec4 _waveXmove;
+  vec4 waveSpeed;
+  vec4 _waveZSize;
+  vec4 _waveXSize;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(1.2, 2.0, 1.6, 4.8);
+  waveSpeed = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(0.024, 0.04, -0.12, 0.096);
+  _waveXmove = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = vec4(0.006, 0.02, -0.02, 0.1);
+  _waveZmove = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = vec3(0.0, 0.0, 0.0);
+  waveMove = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y);
+  _waveXSize = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y);
+  _waveZSize = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = (vertex.x * _waveXSize);
+  waves = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = (waves + (vertex.z * _waveZSize));
+  waves = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = (waves + (_WaveAndDistance.x * waveSpeed));
+  waves = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = fract (waves);
+  vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  waves = tmpvar_11;
+  FastSinCos (waves, s, c);
+  vec4 tmpvar_12;
+  tmpvar_12 = (s * s);
+  s = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13 = (s * s);
+  s = tmpvar_13;
+  vec4 tmpvar_14;
+  tmpvar_14 = normalize (vec4(1.0, 1.0, 0.4, 0.2));
+  float tmpvar_15;
+  tmpvar_15 = dot (s, tmpvar_14);
+  float tmpvar_16;
+  tmpvar_16 = (tmpvar_15 * 0.7);
+  lighting = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17 = (s * waveAmount);
+  s = tmpvar_17;
+  float tmpvar_18;
+  tmpvar_18 = dot (s, _waveXmove);
+  float tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  waveMove.x = tmpvar_19;
+  float tmpvar_20;
+  tmpvar_20 = dot (s, _waveZmove);
+  float tmpvar_21;
+  tmpvar_21 = tmpvar_20;
+  waveMove.z = vec3(tmpvar_21).z;
+  vec2 tmpvar_22;
+  tmpvar_22 = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
+  vertex.xz = tmpvar_22.xxy.xz;
+  vec3 tmpvar_23;
+  tmpvar_23 = vec3(lighting);
+  vec3 tmpvar_24;
+  tmpvar_24 = mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, tmpvar_23);
+  vec3 tmpvar_25;
+  tmpvar_25 = tmpvar_24;
+  waveColor = tmpvar_25;
+  vec3 tmpvar_26;
+  tmpvar_26 = ((color * waveColor) * 2.0);
+  outColor.xyz = tmpvar_26.xyz.xyz;
+  float tmpvar_27;
+  tmpvar_27 = 1.0;
+  outColor.w = vec4(tmpvar_27).w;
+}
+
+v2f vert (
+  in appdata_grass v
+)
+{
+  v2f o;
+  vec4 dummyColor;
+  float waveAmount;
+  float tmpvar_1;
+  tmpvar_1 = (v.color.w * _WaveAndDistance.z);
+  waveAmount = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(0.0, 0.0, 0.0, 0.0);
+  dummyColor = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = dummyColor.xyz;
+  TerrainWaveGrass (v.vertex, waveAmount, tmpvar_3, dummyColor);
+  vec4 tmpvar_4;
+  tmpvar_4 = (gl_ModelViewProjectionMatrix * v.vertex);
+  o.pos = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = v.texcoord.xy;
+  vec2 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  o.uv = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = vec3(0.0, 0.0, 1.0);
+  o.nz.xyz = tmpvar_7.xyz.xyz;
+  float tmpvar_8;
+  tmpvar_8 = -(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w));
+  o.nz.w = vec4(tmpvar_8).w;
+  return o;
+}
+
+void main ()
+{
+  appdata_grass xlt_v;
+  v2f xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = TANGENT.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.tangent = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_Color.xyzw;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.color = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = gl_MultiTexCoord1.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_v.texcoord1 = tmpvar_10;
+  v2f tmpvar_11;
+  tmpvar_11 = vert (xlt_v);
+  v2f tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xl_retval = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13 = xl_retval.pos.xyzw;
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  gl_Position = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15.zw = vec2(0.0, 0.0);
+  tmpvar_15.xy = xl_retval.uv.xy;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_TexCoord[0] = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17 = xl_retval.nz.xyzw;
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  gl_TexCoord[1] = tmpvar_18;
+}
+

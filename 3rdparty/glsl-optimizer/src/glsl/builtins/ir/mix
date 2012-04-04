@@ -1,0 +1,88 @@
+((function mix
+   (signature float
+     (parameters
+       (declare (in) float arg0)
+       (declare (in) float arg1)
+       (declare (in) float arg2))
+     ((return (expression float + (expression float * (var_ref arg0) (expression float - (constant float (1.000000)) (var_ref arg2))) (expression float * (var_ref arg1) (var_ref arg2))))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 arg0)
+       (declare (in) vec2 arg1)
+       (declare (in) vec2 arg2))
+     ((return (expression vec2 + (expression vec2 * (var_ref arg0) (expression vec2 - (constant float (1.000000)) (var_ref arg2))) (expression vec2 * (var_ref arg1) (var_ref arg2))))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 arg0)
+       (declare (in) vec3 arg1)
+       (declare (in) vec3 arg2))
+     ((return (expression vec3 + (expression vec3 * (var_ref arg0) (expression vec3 - (constant float (1.000000)) (var_ref arg2))) (expression vec3 * (var_ref arg1) (var_ref arg2))))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 arg0)
+       (declare (in) vec4 arg1)
+       (declare (in) vec4 arg2))
+     ((return (expression vec4 + (expression vec4 * (var_ref arg0) (expression vec4 - (constant float (1.000000)) (var_ref arg2))) (expression vec4 * (var_ref arg1) (var_ref arg2))))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 arg0)
+       (declare (in) vec2 arg1)
+       (declare (in) float arg2))
+     ((return (expression vec2 + (expression vec2 * (var_ref arg0) (expression float - (constant float (1.000000)) (var_ref arg2))) (expression vec2 * (var_ref arg1) (var_ref arg2))))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 arg0)
+       (declare (in) vec3 arg1)
+       (declare (in) float arg2))
+     ((return (expression vec3 + (expression vec3 * (var_ref arg0) (expression float - (constant float (1.000000)) (var_ref arg2))) (expression vec3 * (var_ref arg1) (var_ref arg2))))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 arg0)
+       (declare (in) vec4 arg1)
+       (declare (in) float arg2))
+     ((return (expression vec4 + (expression vec4 * (var_ref arg0) (expression float - (constant float (1.000000)) (var_ref arg2))) (expression vec4 * (var_ref arg1) (var_ref arg2))))))
+
+   (signature float
+     (parameters
+       (declare (in) float v1)
+       (declare (in) float v2)
+       (declare (in) bool  a))
+     ((assign (var_ref a) (var_ref v1) (var_ref v2))
+      (return (var_ref v1))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 v1)
+       (declare (in) vec2 v2)
+       (declare (in) bvec2 a))
+     ((assign (swiz x (var_ref a)) (x) (var_ref v1) (swiz x (var_ref v2)))
+      (assign (swiz y (var_ref a)) (y) (var_ref v1) (swiz y (var_ref v2)))
+      (return (var_ref v1))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 v1)
+       (declare (in) vec3 v2)
+       (declare (in) bvec3 a))
+     ((assign (swiz x (var_ref a)) (x) (var_ref v1) (swiz x (var_ref v2)))
+      (assign (swiz y (var_ref a)) (y) (var_ref v1) (swiz y (var_ref v2)))
+      (assign (swiz z (var_ref a)) (z) (var_ref v1) (swiz z (var_ref v2)))
+      (return (var_ref v1))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 v1)
+       (declare (in) vec4 v2)
+       (declare (in) bvec4 a))
+     ((assign (swiz x (var_ref a)) (x) (var_ref v1) (swiz x (var_ref v2)))
+      (assign (swiz y (var_ref a)) (y) (var_ref v1) (swiz y (var_ref v2)))
+      (assign (swiz z (var_ref a)) (z) (var_ref v1) (swiz z (var_ref v2)))
+      (assign (swiz w (var_ref a)) (w) (var_ref v1) (swiz w (var_ref v2)))
+      (return (var_ref v1))))
+))

@@ -1,0 +1,17 @@
+#define FRAGMENT
+
+#ifdef VERTEX
+foo bar baz
+#endif
+
+#ifdef FRAGMENT
+vec4 xlat_main () {
+    return vec4(1.0);
+}
+#endif
+
+void main() {
+    vec4 xl_retval;
+    xl_retval = xlat_main();
+    gl_FragData[0] = vec4(xl_retval);
+}

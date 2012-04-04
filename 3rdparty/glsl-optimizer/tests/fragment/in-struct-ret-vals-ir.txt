@@ -1,0 +1,48 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec4 color;
+};
+vec4 xlat_main (
+  in v2f i
+)
+{
+  vec4 c;
+  vec4 tmpvar_1;
+  tmpvar_1 = i.color;
+  c = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = (c.xy + i.uv);
+  c.xy = tmpvar_2.xy.xy;
+  return c;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = gl_Color.xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.color = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = xlat_main (xlt_i);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

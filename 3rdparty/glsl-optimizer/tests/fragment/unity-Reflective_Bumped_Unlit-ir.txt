@@ -1,0 +1,139 @@
+struct v2f {
+  vec4 pos;
+  float fog;
+  vec2 uv;
+  vec2 uv2;
+  vec3 I;
+  vec3 TtoW0;
+  vec3 TtoW1;
+  vec3 TtoW2;
+};
+varying vec4 xlv_FOG;
+uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform samplerCube _Cube;
+uniform sampler2D _BumpMap;
+vec4 UnpackNormal (
+  in vec4 packednormal
+)
+{
+  vec4 normal;
+  vec2 tmpvar_1;
+  tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
+  normal.xy = tmpvar_1.xy.xy;
+  float tmpvar_2;
+  tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
+  float tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  normal.z = vec3(tmpvar_3).z;
+  return normal;
+}
+
+vec4 frag (
+  in v2f i
+)
+{
+  vec4 reflcolor;
+  vec4 c;
+  vec3 r;
+  vec3 wn;
+  vec4 texcol;
+  vec4 normal;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_BumpMap, i.uv2);
+  vec4 tmpvar_2;
+  tmpvar_2 = UnpackNormal (tmpvar_1);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  normal = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, i.uv);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  texcol = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = dot (i.TtoW0, normal.xyz);
+  float tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  wn.x = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = dot (i.TtoW1, normal.xyz);
+  float tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  wn.y = vec2(tmpvar_9).y;
+  float tmpvar_10;
+  tmpvar_10 = dot (i.TtoW2, normal.xyz);
+  float tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  wn.z = vec3(tmpvar_11).z;
+  vec3 tmpvar_12;
+  tmpvar_12 = reflect (i.I, wn);
+  vec3 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  r = tmpvar_13;
+  vec4 tmpvar_14;
+  tmpvar_14 = (gl_LightModel.ambient * texcol);
+  c = tmpvar_14;
+  vec3 tmpvar_15;
+  tmpvar_15 = (c.xyz * 2.0);
+  c.xyz = tmpvar_15.xyz.xyz;
+  vec4 tmpvar_16;
+  tmpvar_16 = textureCube (_Cube, r);
+  vec4 tmpvar_17;
+  tmpvar_17 = ((tmpvar_16 * _ReflectColor) * texcol.w);
+  reflcolor = tmpvar_17;
+  return (c + reflcolor);
+}
+
+void main ()
+{
+  v2f xlt_i;
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = xlv_FOG.x;
+  xlt_i.fog = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[0].xy;
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_i.uv = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = gl_TexCoord[1].xy;
+  vec2 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_i.uv2 = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_i.I = tmpvar_8;
+  vec3 tmpvar_9;
+  tmpvar_9 = gl_TexCoord[3].xyz;
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_i.TtoW0 = tmpvar_10;
+  vec3 tmpvar_11;
+  tmpvar_11 = gl_TexCoord[4].xyz;
+  vec3 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_i.TtoW1 = tmpvar_12;
+  vec3 tmpvar_13;
+  tmpvar_13 = gl_TexCoord[5].xyz;
+  vec3 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xlt_i.TtoW2 = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = frag (xlt_i);
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  xl_retval = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17 = xl_retval.xyzw;
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  gl_FragData[0] = tmpvar_18;
+}
+

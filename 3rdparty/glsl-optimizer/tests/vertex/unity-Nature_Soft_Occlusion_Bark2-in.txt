@@ -1,0 +1,89 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+struct Input {
+    vec2 uv_MainTex;
+};
+struct v2f_surf {
+    vec4 pos;
+    vec3 vec;
+};
+uniform vec4 _LightPositionRange;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+
+vec4 Squash( in vec4 pos );
+void TerrainAnimateTree( inout vec4 pos, in float alpha );
+void treevertex( inout appdata_full v );
+v2f_surf vert_surf( in appdata_full v );
+vec4 Squash( in vec4 pos ) {
+    vec3 projectedVertex;
+    vec3 planePoint;
+    vec3 planeNormal;
+    projectedVertex = pos.xyz ;
+    planePoint = vec3( 0.000000, _SquashPlaneNormal.w , 0.000000);
+    planeNormal = _SquashPlaneNormal.xyz ;
+    projectedVertex += (dot( planeNormal, (planePoint - vec3( pos))) * planeNormal);
+    pos = vec4( mix( projectedVertex, pos.xyz , vec3( _SquashAmount)), 1.00000);
+    return pos;
+}
+void TerrainAnimateTree( inout vec4 pos, in float alpha ) {
+    vec3 bent;
+    pos.xyz  *= _Scale.xyz ;
+    bent = ( _TerrainEngineBendTree * vec4( pos.xyz , 0.000000) ).xyz ;
+    pos.xyz  = mix( pos.xyz , bent, vec3( alpha));
+    pos = Squash( pos);
+}
+void treevertex( inout appdata_full v ) {
+    TerrainAnimateTree( v.vertex, v.color.w );
+}
+v2f_surf vert_surf( in appdata_full v ) {
+    v2f_surf o;
+    treevertex( v);
+    o.vec = (( _Object2World * v.vertex ).xyz  - _LightPositionRange.xyz );
+    o.pos = ( gl_ModelViewProjectionMatrix * v.vertex );
+    return o;
+}
+attribute vec4 TANGENT;
+void main() {
+    v2f_surf xl_retval;
+    appdata_full xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.tangent = vec4( TANGENT);
+    xlt_v.normal = vec3( gl_Normal);
+    xlt_v.texcoord = vec4( gl_MultiTexCoord0);
+    xlt_v.texcoord1 = vec4( gl_MultiTexCoord1);
+    xlt_v.color = vec4( gl_Color);
+    xl_retval = vert_surf( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    gl_TexCoord[0] = vec4( xl_retval.vec, 0.0);
+}

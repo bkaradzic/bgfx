@@ -1,0 +1,8 @@
+attribute vec4 myColor;
+uniform mat4 mvp;
+void main ()
+{
+  gl_Position = (mvp * gl_Vertex);
+  gl_FrontColor = myColor;
+}
+

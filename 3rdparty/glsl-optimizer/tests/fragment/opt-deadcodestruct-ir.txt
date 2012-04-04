@@ -1,0 +1,24 @@
+struct foo {
+  float used;
+  float unused;
+};
+void main ()
+{
+  foo s;
+  float f;
+  float tmpvar_1;
+  tmpvar_1 = 1.0;
+  f = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = f;
+  s.used = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = f;
+  s.unused = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = vec4(s.used);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  gl_FragColor = tmpvar_5;
+}
+

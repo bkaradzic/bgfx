@@ -1,0 +1,25 @@
+void main ()
+{
+  int i;
+  float a;
+  if ((gl_FragCoord.x == 1.0)) {
+    discard;
+  };
+  a = 4.0;
+  i = 0;
+  for (int i = 0; i < 10; ) {
+    a = (a + 1.0);
+    i = (i + 1);
+  };
+  while (true) {
+    a = (a + 2.0);
+    break;
+  };
+  float tmpvar_1;
+  tmpvar_1 = (a + 1.0);
+  float tmpvar_2;
+  tmpvar_2 = (1.0/(sqrt ((-((tmpvar_1 * tmpvar_1)) - 1.0))));
+  a = tmpvar_2;
+  gl_FragColor = vec4(tmpvar_2);
+}
+

@@ -1,0 +1,167 @@
+varying vec4 xlv_TEXCOORD0;
+void main ()
+{
+  bvec4 tmpvar_1;
+  tmpvar_1 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  float tmpvar_2;
+  if (tmpvar_1.x) {
+    tmpvar_2 = 1.0;
+  } else {
+    tmpvar_2 = 5.0;
+  };
+  float tmpvar_3;
+  if (tmpvar_1.y) {
+    tmpvar_3 = 2.0;
+  } else {
+    tmpvar_3 = 6.0;
+  };
+  float tmpvar_4;
+  if (tmpvar_1.z) {
+    tmpvar_4 = 3.0;
+  } else {
+    tmpvar_4 = 7.0;
+  };
+  float tmpvar_5;
+  if (tmpvar_1.w) {
+    tmpvar_5 = 4.0;
+  } else {
+    tmpvar_5 = 8.0;
+  };
+  vec4 tmpvar_6;
+  tmpvar_6.x = tmpvar_2;
+  tmpvar_6.y = tmpvar_3;
+  tmpvar_6.z = tmpvar_4;
+  tmpvar_6.w = tmpvar_5;
+  bvec4 tmpvar_7;
+  tmpvar_7 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  float tmpvar_8;
+  if (tmpvar_7.x) {
+    tmpvar_8 = 1.0;
+  } else {
+    tmpvar_8 = 5.0;
+  };
+  float tmpvar_9;
+  if (tmpvar_7.y) {
+    tmpvar_9 = 2.0;
+  } else {
+    tmpvar_9 = 6.0;
+  };
+  float tmpvar_10;
+  if (tmpvar_7.z) {
+    tmpvar_10 = 3.0;
+  } else {
+    tmpvar_10 = 7.0;
+  };
+  float tmpvar_11;
+  if (tmpvar_7.w) {
+    tmpvar_11 = 4.0;
+  } else {
+    tmpvar_11 = 8.0;
+  };
+  vec4 tmpvar_12;
+  tmpvar_12.x = tmpvar_8;
+  tmpvar_12.y = tmpvar_9;
+  tmpvar_12.z = tmpvar_10;
+  tmpvar_12.w = tmpvar_11;
+  vec4 tmpvar_13;
+  tmpvar_13 = (tmpvar_6 + tmpvar_12);
+  bvec4 tmpvar_14;
+  tmpvar_14 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  float tmpvar_15;
+  if (tmpvar_14.x) {
+    tmpvar_15 = 1.0;
+  } else {
+    tmpvar_15 = 2.0;
+  };
+  float tmpvar_16;
+  if (tmpvar_14.y) {
+    tmpvar_16 = 1.0;
+  } else {
+    tmpvar_16 = 2.0;
+  };
+  float tmpvar_17;
+  if (tmpvar_14.z) {
+    tmpvar_17 = 1.0;
+  } else {
+    tmpvar_17 = 2.0;
+  };
+  float tmpvar_18;
+  if (tmpvar_14.w) {
+    tmpvar_18 = 1.0;
+  } else {
+    tmpvar_18 = 2.0;
+  };
+  vec4 tmpvar_19;
+  tmpvar_19.x = tmpvar_15;
+  tmpvar_19.y = tmpvar_16;
+  tmpvar_19.z = tmpvar_17;
+  tmpvar_19.w = tmpvar_18;
+  vec4 tmpvar_20;
+  tmpvar_20 = (tmpvar_13 + tmpvar_19);
+  bvec4 tmpvar_21;
+  tmpvar_21 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  float tmpvar_22;
+  if (tmpvar_21.x) {
+    tmpvar_22 = 1.0;
+  } else {
+    tmpvar_22 = 2.0;
+  };
+  float tmpvar_23;
+  if (tmpvar_21.y) {
+    tmpvar_23 = 1.0;
+  } else {
+    tmpvar_23 = 2.0;
+  };
+  float tmpvar_24;
+  if (tmpvar_21.z) {
+    tmpvar_24 = 1.0;
+  } else {
+    tmpvar_24 = 2.0;
+  };
+  float tmpvar_25;
+  if (tmpvar_21.w) {
+    tmpvar_25 = 1.0;
+  } else {
+    tmpvar_25 = 2.0;
+  };
+  vec4 tmpvar_26;
+  tmpvar_26.x = tmpvar_22;
+  tmpvar_26.y = tmpvar_23;
+  tmpvar_26.z = tmpvar_24;
+  tmpvar_26.w = tmpvar_25;
+  vec4 tmpvar_27;
+  tmpvar_27 = (tmpvar_20 + tmpvar_26);
+  bvec4 tmpvar_28;
+  tmpvar_28 = bvec4(fract (xlv_TEXCOORD0));
+  float tmpvar_29;
+  if (tmpvar_28.x) {
+    tmpvar_29 = 1.0;
+  } else {
+    tmpvar_29 = 2.0;
+  };
+  float tmpvar_30;
+  if (tmpvar_28.y) {
+    tmpvar_30 = 1.0;
+  } else {
+    tmpvar_30 = 2.0;
+  };
+  float tmpvar_31;
+  if (tmpvar_28.z) {
+    tmpvar_31 = 1.0;
+  } else {
+    tmpvar_31 = 2.0;
+  };
+  float tmpvar_32;
+  if (tmpvar_28.w) {
+    tmpvar_32 = 1.0;
+  } else {
+    tmpvar_32 = 2.0;
+  };
+  vec4 tmpvar_33;
+  tmpvar_33.x = tmpvar_29;
+  tmpvar_33.y = tmpvar_30;
+  tmpvar_33.z = tmpvar_31;
+  tmpvar_33.w = tmpvar_32;
+  gl_FragData[0] = (tmpvar_27 + tmpvar_33);
+}
+

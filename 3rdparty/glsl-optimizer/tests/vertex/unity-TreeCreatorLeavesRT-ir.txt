@@ -1,0 +1,276 @@
+struct appdata_full {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 texcoord1;
+  vec4 color;
+};
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec3 color;
+  vec3 backContrib;
+  vec3 nl;
+  vec3 nh;
+};
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform float _TranslucencyViewDependency;
+uniform vec3 _TerrainTreeLightDirections[4];
+float xll_saturate (
+  in float x
+)
+{
+  float tmpvar_1;
+  tmpvar_1 = clamp (x, 0.0, 1.0);
+  return tmpvar_1;
+}
+
+vec3 ObjSpaceViewDir (
+  in vec4 v
+)
+{
+  vec3 objSpaceCameraPos;
+  vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _WorldSpaceCameraPos.xyz.xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
+  objSpaceCameraPos = tmpvar_2;
+  return (objSpaceCameraPos - v.xyz);
+}
+
+void ExpandBillboard (
+  in mat4 mat,
+  inout vec4 pos,
+  inout vec3 normal,
+  inout vec4 tangent
+)
+{
+  vec3 tanb;
+  vec3 norb;
+  float isBillboard;
+  float tmpvar_1;
+  tmpvar_1 = abs (tangent.w);
+  float tmpvar_2;
+  tmpvar_2 = (1.0 - tmpvar_1);
+  isBillboard = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
+  tmpvar_3.xyz = normal.xyz;
+  vec4 tmpvar_4;
+  tmpvar_4 = normalize ((tmpvar_3 * mat));
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4.xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  norb = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 0.0;
+  tmpvar_7.xyz = tangent.xyz.xyz;
+  vec4 tmpvar_8;
+  tmpvar_8 = normalize ((tmpvar_7 * mat));
+  vec3 tmpvar_9;
+  tmpvar_9 = tmpvar_8.xyz;
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  tanb = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
+  tmpvar_11.xy = normal.xy.xy;
+  vec4 tmpvar_12;
+  tmpvar_12 = (pos + ((tmpvar_11 * mat) * isBillboard));
+  pos = tmpvar_12;
+  vec3 tmpvar_13;
+  tmpvar_13 = vec3(isBillboard);
+  vec3 tmpvar_14;
+  tmpvar_14 = mix (normal, norb, tmpvar_13);
+  vec3 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  normal = tmpvar_15;
+  vec4 tmpvar_16;
+  tmpvar_16.w = -1.0;
+  tmpvar_16.xyz = tanb.xyz;
+  vec4 tmpvar_17;
+  tmpvar_17 = vec4(isBillboard);
+  vec4 tmpvar_18;
+  tmpvar_18 = mix (tangent, tmpvar_16, tmpvar_17);
+  vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  tangent = tmpvar_19;
+}
+
+v2f vert (
+  in appdata_full v
+)
+{
+  float nh;
+  vec3 h;
+  float backContrib;
+  float nl;
+  vec3 lightDir;
+  int j;
+  vec3 viewDir;
+  v2f o;
+  int tmpvar_1;
+  tmpvar_1 = 0;
+  j = tmpvar_1;
+  ExpandBillboard (gl_ModelViewMatrixInverseTranspose, v.vertex, v.normal, v.tangent);
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * v.vertex);
+  o.pos = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = v.texcoord.xy;
+  o.uv = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = ObjSpaceViewDir (v.vertex);
+  vec3 tmpvar_5;
+  tmpvar_5 = normalize (tmpvar_4);
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  viewDir = tmpvar_6;
+  while (true) {
+    if (!((j < 3))) {
+      break;
+    };
+    vec3 tmpvar_7;
+    tmpvar_7 = _TerrainTreeLightDirections[j];
+    lightDir = tmpvar_7;
+    float tmpvar_8;
+    tmpvar_8 = dot (v.normal, lightDir);
+    float tmpvar_9;
+    tmpvar_9 = tmpvar_8;
+    nl = tmpvar_9;
+    float tmpvar_10;
+    tmpvar_10 = dot (viewDir, -(lightDir));
+    float tmpvar_11;
+    tmpvar_11 = xll_saturate (tmpvar_10);
+    float tmpvar_12;
+    tmpvar_12 = tmpvar_11;
+    backContrib = tmpvar_12;
+    float tmpvar_13;
+    tmpvar_13 = xll_saturate (-(nl));
+    float tmpvar_14;
+    tmpvar_14 = mix (tmpvar_13, backContrib, _TranslucencyViewDependency);
+    float tmpvar_15;
+    tmpvar_15 = tmpvar_14;
+    backContrib = tmpvar_15;
+    float tmpvar_16;
+    tmpvar_16 = (backContrib * 2.0);
+    o.backContrib[j] = tmpvar_16;
+    float tmpvar_17;
+    tmpvar_17 = max (0.0, ((nl * 0.6) + 0.4));
+    float tmpvar_18;
+    tmpvar_18 = tmpvar_17;
+    nl = tmpvar_18;
+    float tmpvar_19;
+    tmpvar_19 = nl;
+    o.nl[j] = tmpvar_19;
+    vec3 tmpvar_20;
+    tmpvar_20 = normalize ((lightDir + viewDir));
+    vec3 tmpvar_21;
+    tmpvar_21 = tmpvar_20;
+    h = tmpvar_21;
+    float tmpvar_22;
+    tmpvar_22 = dot (v.normal, h);
+    float tmpvar_23;
+    tmpvar_23 = max (0.0, tmpvar_22);
+    float tmpvar_24;
+    tmpvar_24 = tmpvar_23;
+    nh = tmpvar_24;
+    float tmpvar_25;
+    tmpvar_25 = nh;
+    o.nh[j] = tmpvar_25;
+    int _post_incdec_tmp;
+    _post_incdec_tmp = j;
+    int tmpvar_26;
+    tmpvar_26 = (j + 1);
+    j = tmpvar_26;
+  };
+  vec3 tmpvar_27;
+  tmpvar_27 = vec3(v.color.w);
+  vec3 tmpvar_28;
+  tmpvar_28 = tmpvar_27;
+  o.color = tmpvar_28;
+  return o;
+}
+
+void main ()
+{
+  appdata_full xlt_v;
+  v2f xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = TANGENT.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.tangent = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = gl_Normal.xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.normal = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = gl_MultiTexCoord1.xyzw;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_v.texcoord1 = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_v.color = tmpvar_12;
+  v2f tmpvar_13;
+  tmpvar_13 = vert (xlt_v);
+  v2f tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.pos.xyzw;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_Position = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17.zw = vec2(0.0, 0.0);
+  tmpvar_17.xy = xl_retval.uv.xy;
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  gl_TexCoord[0] = tmpvar_18;
+  vec4 tmpvar_19;
+  tmpvar_19.w = 0.0;
+  tmpvar_19.xyz = xl_retval.color.xyz;
+  vec4 tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  gl_TexCoord[1] = tmpvar_20;
+  vec4 tmpvar_21;
+  tmpvar_21.w = 0.0;
+  tmpvar_21.xyz = xl_retval.backContrib.xyz;
+  vec4 tmpvar_22;
+  tmpvar_22 = tmpvar_21;
+  gl_TexCoord[2] = tmpvar_22;
+  vec4 tmpvar_23;
+  tmpvar_23.w = 0.0;
+  tmpvar_23.xyz = xl_retval.nl.xyz;
+  vec4 tmpvar_24;
+  tmpvar_24 = tmpvar_23;
+  gl_TexCoord[3] = tmpvar_24;
+  vec4 tmpvar_25;
+  tmpvar_25.w = 0.0;
+  tmpvar_25.xyz = xl_retval.nh.xyz;
+  vec4 tmpvar_26;
+  tmpvar_26 = tmpvar_25;
+  gl_TexCoord[4] = tmpvar_26;
+}
+

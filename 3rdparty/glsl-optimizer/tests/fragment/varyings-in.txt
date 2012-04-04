@@ -1,0 +1,13 @@
+vec4 xlat_main( in vec4 uv, in vec4 foobar_xlv_foo );
+vec4 xlat_main( in vec4 uv, in vec4 foobar_xlv_foo ) {
+    vec4 c;
+    c = vec4( 0.000000);
+    return c;
+}
+varying vec4 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
+void main() {
+    vec4 xl_retval;
+    xl_retval = xlat_main( vec4(xlv_TEXCOORD0), vec4(xlv_TEXCOORD1));
+    gl_FragData[0] = vec4( xl_retval);
+}

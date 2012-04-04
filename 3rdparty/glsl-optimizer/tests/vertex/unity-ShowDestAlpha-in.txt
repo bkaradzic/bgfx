@@ -1,0 +1,33 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct v2f {
+    vec4 vertex;
+};
+struct appdata_t {
+    vec4 vertex;
+};
+
+v2f vert( in appdata_t v );
+v2f vert( in appdata_t v ) {
+    v2f o;
+    o.vertex = ( gl_ModelViewProjectionMatrix * v.vertex );
+    return o;
+}
+void main() {
+    v2f xl_retval;
+    appdata_t xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4( xl_retval.vertex);
+}

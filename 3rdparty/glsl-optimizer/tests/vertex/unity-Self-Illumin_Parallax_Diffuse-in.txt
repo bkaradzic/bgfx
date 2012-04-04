@@ -1,0 +1,103 @@
+struct v2f_vertex_lit {
+    vec2 uv;
+    vec4 diff;
+    vec4 spec;
+};
+struct v2f_img {
+    vec4 pos;
+    vec2 uv;
+};
+struct appdata_img {
+    vec4 vertex;
+    vec2 texcoord;
+};
+struct SurfaceOutput {
+    vec3 Albedo;
+    vec3 Normal;
+    vec3 Emission;
+    float Specular;
+    float Gloss;
+    float Alpha;
+};
+struct Input {
+    vec2 uv_MainTex;
+    vec2 uv_BumpMap;
+    vec2 uv_Illum;
+    vec3 viewDir;
+};
+struct v2f_surf {
+    vec4 pos;
+    float fog;
+    vec4 hip_pack0;
+    vec3 viewDir;
+    vec3 lightDir;
+    vec4 _LightCoord;
+};
+struct appdata_full {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 color;
+};
+uniform vec4 _BumpMap_ST;
+uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+
+uniform vec4 unity_Scale;
+void PositionFog( in vec4 v, out vec4 pos, out float fog );
+vec3 ObjSpaceViewDir( in vec4 v );
+vec3 ObjSpaceLightDir( in vec4 v );
+v2f_surf vert_surf( in appdata_full v );
+void PositionFog( in vec4 v, out vec4 pos, out float fog ) {
+    pos = ( gl_ModelViewProjectionMatrix * v );
+    fog = pos.z ;
+}
+vec3 ObjSpaceViewDir( in vec4 v ) {
+    vec3 objSpaceCameraPos;
+    objSpaceCameraPos = (( _World2Object * vec4( _WorldSpaceCameraPos.xyz , 1.00000) ).xyz  * unity_Scale.w );
+    return (objSpaceCameraPos - v.xyz );
+}
+vec3 ObjSpaceLightDir( in vec4 v ) {
+    vec3 objSpaceLightPos;
+    objSpaceLightPos = ( _World2Object * _WorldSpaceLightPos0 ).xyz ;
+    return ((objSpaceLightPos.xyz  * unity_Scale.w ) - v.xyz );
+}
+v2f_surf vert_surf( in appdata_full v ) {
+    v2f_surf o;
+    vec3 binormal;
+    mat3 rotation;
+    PositionFog( v.vertex, o.pos, o.fog);
+    o.hip_pack0.xy  = ((v.texcoord.xy  * _MainTex_ST.xy ) + _MainTex_ST.zw );
+    o.hip_pack0.zw  = ((v.texcoord.xy  * _BumpMap_ST.xy ) + _BumpMap_ST.zw );
+    binormal = (cross( v.normal, v.tangent.xyz ) * v.tangent.w );
+    rotation = mat3( v.tangent.x , binormal.x , v.normal.x , v.tangent.y , binormal.y , v.normal.y , v.tangent.z , binormal.z , v.normal.z );
+    o.lightDir = ( rotation * ObjSpaceLightDir( v.vertex) );
+    o.viewDir = ( rotation * ObjSpaceViewDir( v.vertex) );
+    o._LightCoord = ( _LightMatrix0 * ( _Object2World * v.vertex ) );
+    return o;
+}
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
+void main() {
+    v2f_surf xl_retval;
+    appdata_full xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.tangent = vec4( TANGENT);
+    xlt_v.normal = vec3( gl_Normal);
+    xlt_v.texcoord = vec4( gl_MultiTexCoord0);
+    xlt_v.texcoord1 = vec4( gl_MultiTexCoord1);
+    xlt_v.color = vec4( gl_Color);
+    xl_retval = vert_surf( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    xlv_FOG = vec4( xl_retval.fog, 0.0, 0.0, 0.0);
+    gl_TexCoord[0] = vec4( xl_retval.hip_pack0);
+    gl_TexCoord[1] = vec4( xl_retval.viewDir, 0.0);
+    gl_TexCoord[2] = vec4( xl_retval.lightDir, 0.0);
+    gl_TexCoord[3] = vec4( xl_retval._LightCoord);
+}

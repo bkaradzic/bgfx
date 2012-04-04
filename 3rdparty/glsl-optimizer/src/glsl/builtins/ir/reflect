@@ -1,0 +1,58 @@
+((function reflect
+   (signature float
+     (parameters
+       (declare (in) float i)
+       (declare (in) float n))
+     ((return (expression float -
+	       (var_ref i)
+	       (expression float *
+		(constant float (2.0))
+		(expression float *
+		 (expression float *
+		  (var_ref n)
+		  (var_ref i))
+		 (var_ref n)))))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 i)
+       (declare (in) vec2 n))
+     ((return (expression vec2 -
+	       (var_ref i)
+	       (expression vec2 *
+		(constant float (2.0))
+		(expression vec2 *
+		 (expression float dot
+		  (var_ref n)
+		  (var_ref i))
+		 (var_ref n)))))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 i)
+       (declare (in) vec3 n))
+     ((return (expression vec3 -
+	       (var_ref i)
+	       (expression vec3 *
+		(constant float (2.0))
+		(expression vec3 *
+		 (expression float dot
+		  (var_ref n)
+		  (var_ref i))
+		 (var_ref n)))))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 i)
+       (declare (in) vec4 n))
+     ((return (expression vec4 -
+	       (var_ref i)
+	       (expression vec4 *
+		(constant float (2.0))
+		(expression vec4 *
+		 (expression float dot
+		  (var_ref n)
+		  (var_ref i))
+		 (var_ref n)))))))
+
+))

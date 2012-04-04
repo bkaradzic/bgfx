@@ -1,0 +1,68 @@
+((function step
+   (signature float
+     (parameters
+       (declare (in) float edge)
+       (declare (in) float x))
+     ((return (expression float b2f (expression bool >= (var_ref x) (var_ref edge))))))
+
+   (signature vec2
+     (parameters
+       (declare (in) float edge)
+       (declare (in) vec2 x))
+     ((declare () vec2 t)
+      (assign (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(var_ref edge))))
+      (assign (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(var_ref edge))))
+      (return (var_ref t))))
+
+   (signature vec3
+     (parameters
+       (declare (in) float edge)
+       (declare (in) vec3 x))
+     ((declare () vec3 t)
+      (assign (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(var_ref edge))))
+      (assign (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(var_ref edge))))
+      (assign (z) (var_ref t) (expression float b2f (expression bool >= (swiz z (var_ref x))(var_ref edge))))
+      (return (var_ref t))))
+
+   (signature vec4
+     (parameters
+       (declare (in) float edge)
+       (declare (in) vec4 x))
+     ((declare () vec4 t)
+      (assign (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(var_ref edge))))
+      (assign (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(var_ref edge))))
+      (assign (z) (var_ref t) (expression float b2f (expression bool >= (swiz z (var_ref x))(var_ref edge))))
+      (assign (w) (var_ref t) (expression float b2f (expression bool >= (swiz w (var_ref x))(var_ref edge))))
+      (return (var_ref t))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 edge)
+       (declare (in) vec2 x))
+     ((declare () vec2 t)
+      (assign (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(swiz x (var_ref edge)))))
+      (assign (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(swiz y (var_ref edge)))))
+      (return (var_ref t))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 edge)
+       (declare (in) vec3 x))
+     ((declare () vec3 t)
+      (assign (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(swiz x (var_ref edge)))))
+      (assign (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(swiz y (var_ref edge)))))
+      (assign (z) (var_ref t) (expression float b2f (expression bool >= (swiz z (var_ref x))(swiz z (var_ref edge)))))
+      (return (var_ref t))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 edge)
+       (declare (in) vec4 x))
+     ((declare () vec4 t)
+      (assign (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(swiz x (var_ref edge)))))
+      (assign (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(swiz y (var_ref edge)))))
+      (assign (z) (var_ref t) (expression float b2f (expression bool >= (swiz z (var_ref x))(swiz z (var_ref edge)))))
+      (assign (w) (var_ref t) (expression float b2f (expression bool >= (swiz w (var_ref x))(swiz w (var_ref edge)))))
+      (return (var_ref t))))
+))
+

@@ -1,0 +1,6 @@
+uniform sampler2D _FlareTexture;
+void main ()
+{
+  gl_FragData[0] = (texture2D (_FlareTexture, gl_TexCoord[0].xy) * gl_Color);
+}
+

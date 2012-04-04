@@ -1,0 +1,64 @@
+vec4 xlat_main ()
+{
+  int i;
+  vec4 c;
+  vec2 poisson[8];
+  vec2 tmpvar_1;
+  tmpvar_1 = vec2(0.0, 0.0);
+  poisson[0] = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = vec2(0.527837, -0.085868);
+  poisson[1] = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = vec2(-0.040088, 0.536087);
+  poisson[2] = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = vec2(-0.670445, -0.179949);
+  poisson[3] = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = vec2(-0.419418, -0.616039);
+  poisson[4] = tmpvar_5;
+  vec2 tmpvar_6;
+  tmpvar_6 = vec2(0.440453, -0.639399);
+  poisson[5] = tmpvar_6;
+  vec2 tmpvar_7;
+  tmpvar_7 = vec2(-0.757088, 0.349334);
+  poisson[6] = tmpvar_7;
+  vec2 tmpvar_8;
+  tmpvar_8 = vec2(0.574619, 0.685879);
+  poisson[7] = tmpvar_8;
+  int tmpvar_9;
+  tmpvar_9 = 0;
+  i = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = vec4(0.0, 0.0, 0.0, 0.0);
+  c = tmpvar_10;
+  while (true) {
+    if (!((i < 8))) {
+      break;
+    };
+    vec2 tmpvar_11;
+    tmpvar_11 = (c.xy + poisson[i]);
+    c.xy = tmpvar_11.xy.xy;
+    int tmpvar_12;
+    tmpvar_12 = (i + 1);
+    i = tmpvar_12;
+  };
+  return c;
+}
+
+void main ()
+{
+  vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = xlat_main ();
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xl_retval = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = xl_retval.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  gl_FragData[0] = tmpvar_4;
+}
+

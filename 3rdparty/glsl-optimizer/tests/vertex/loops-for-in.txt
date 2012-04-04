@@ -1,0 +1,55 @@
+mat3 xll_constructMat3( mat4 m) {
+  return mat3( vec3( m[0]), vec3( m[1]), vec3( m[2]));
+}
+struct v2f {
+    vec4 pos;
+    vec4 color;
+};
+struct appdata {
+    vec4 vertex;
+    vec3 normal;
+};
+uniform mat4 UNITY_MATRIX_IT_MV;
+uniform mat4 UNITY_MATRIX_MV;
+uniform mat4 UNITY_MATRIX_MVP;
+uniform vec4 unity_LightAtten[4];
+uniform vec4 unity_LightColor[4];
+uniform vec4 unity_LightPosition[4];
+vec3 ShadeMyVertexLights( in vec4 vertex, in vec3 normal );
+v2f xlat_main( in appdata v );
+vec3 ShadeMyVertexLights( in vec4 vertex, in vec3 normal ) {
+    vec3 viewpos;
+    vec3 viewN;
+    vec3 lightColor = vec3( 0.00000, 0.00000, 0.00000);
+    int i = 0;
+    vec3 toLight;
+    float lengthSq;
+    float atten;
+    float diff;
+    viewpos = ( UNITY_MATRIX_MV * vertex ).xyz ;
+    viewN = ( xll_constructMat3( UNITY_MATRIX_IT_MV) * normal );
+    for ( ; (i < 2); ( i++ )) {
+        toLight = (unity_LightPosition[ i ].xyz  - viewpos.xyz );
+        lengthSq = dot( toLight, toLight);
+        atten = (1.00000 / (1.00000 + (lengthSq * unity_LightAtten[ i ].z )));
+        diff = max( 0.00000, dot( viewN, normalize( toLight )));
+        lightColor += (unity_LightColor[ i ].xyz  * (diff * atten));
+    }
+    return (lightColor * 2.00000);
+}
+v2f xlat_main( in appdata v ) {
+    v2f o;
+    o.pos = ( UNITY_MATRIX_MVP * v.vertex );
+    o.color = vec4( ShadeMyVertexLights( v.vertex, v.normal), 1.00000);
+    return o;
+}
+varying vec4 xlv_TEXCOORD0;
+void main() {
+    v2f xl_retval;
+    appdata xlt_v;
+    xlt_v.vertex = vec4( gl_Vertex);
+    xlt_v.normal = vec3( gl_Normal);
+    xl_retval = xlat_main( xlt_v);
+    gl_Position = vec4( xl_retval.pos);
+    xlv_TEXCOORD0 = vec4( xl_retval.color);
+}

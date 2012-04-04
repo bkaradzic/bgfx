@@ -1,0 +1,177 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec4 nz;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 normal;
+  vec4 color;
+  vec4 texcoord;
+};
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _ProjectionParams;
+mat3 xll_constructMat3 (
+  in mat4 m
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = m[0].xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = m[1].xyz;
+  vec3 tmpvar_3;
+  tmpvar_3 = m[2].xyz;
+  mat3 tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_1;
+  tmpvar_4[0] = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_2;
+  tmpvar_4[1] = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = tmpvar_3;
+  tmpvar_4[2] = tmpvar_7;
+  return tmpvar_4;
+}
+
+vec4 Squash (
+  in vec4 pos
+)
+{
+  vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
+  vec3 tmpvar_1;
+  tmpvar_1 = pos.xyz;
+  projectedVertex = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
+  vec3 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  planePoint = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = _SquashPlaneNormal.xyz;
+  planeNormal = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = pos.xyz;
+  float tmpvar_6;
+  tmpvar_6 = dot (planeNormal, (planePoint - tmpvar_5));
+  vec3 tmpvar_7;
+  tmpvar_7 = (projectedVertex + (tmpvar_6 * planeNormal));
+  projectedVertex = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = vec3(_SquashAmount);
+  vec3 tmpvar_9;
+  tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
+  vec4 tmpvar_10;
+  tmpvar_10.w = 1.0;
+  tmpvar_10.xyz = tmpvar_9.xyz;
+  vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  pos = tmpvar_11;
+  return pos;
+}
+
+void TerrainAnimateTree (
+  inout vec4 pos,
+  in float alpha
+)
+{
+  vec3 bent;
+  vec3 tmpvar_1;
+  tmpvar_1 = (pos.xyz * _Scale.xyz);
+  pos.xyz = tmpvar_1.xyz.xyz;
+  vec4 tmpvar_2;
+  tmpvar_2.w = 0.0;
+  tmpvar_2.xyz = pos.xyz.xyz;
+  vec3 tmpvar_3;
+  tmpvar_3 = (_TerrainEngineBendTree * tmpvar_2).xyz;
+  bent = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = vec3(alpha);
+  vec3 tmpvar_5;
+  tmpvar_5 = mix (pos.xyz, bent, tmpvar_4);
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  pos.xyz = tmpvar_6.xyz.xyz;
+  vec4 tmpvar_7;
+  tmpvar_7 = Squash (pos);
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  pos = tmpvar_8;
+}
+
+v2f vert (
+  in appdata v
+)
+{
+  v2f o;
+  TerrainAnimateTree (v.vertex, v.color.w);
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * v.vertex);
+  o.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = v.texcoord.xy;
+  o.uv = tmpvar_2;
+  mat3 tmpvar_3;
+  tmpvar_3 = (xll_constructMat3 (gl_ModelViewMatrixInverseTranspose));
+  vec3 tmpvar_4;
+  tmpvar_4 = (tmpvar_3 * v.normal);
+  o.nz.xyz = tmpvar_4.xyz.xyz;
+  float tmpvar_5;
+  tmpvar_5 = -(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w));
+  o.nz.w = vec4(tmpvar_5).w;
+  return o;
+}
+
+void main ()
+{
+  appdata xlt_v;
+  v2f xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = gl_Normal.xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.normal = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_Color.xyzw;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.color = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  v2f tmpvar_9;
+  tmpvar_9 = vert (xlt_v);
+  v2f tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xl_retval = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = xl_retval.pos.xyzw;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  gl_Position = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13.zw = vec2(0.0, 0.0);
+  tmpvar_13.xy = xl_retval.uv.xy;
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  gl_TexCoord[0] = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.nz.xyzw;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_TexCoord[1] = tmpvar_16;
+}
+

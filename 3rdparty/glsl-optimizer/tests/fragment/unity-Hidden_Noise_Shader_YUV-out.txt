@@ -1,0 +1,22 @@
+uniform sampler2D _ScratchTex;
+uniform sampler2D _MainTex;
+uniform vec4 _Intensity;
+uniform sampler2D _GrainTex;
+void main ()
+{
+  vec3 yuv;
+  vec4 col;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  col = tmpvar_1;
+  yuv.x = dot (tmpvar_1.xyz, vec3(0.299, 0.587, 0.114));
+  yuv.y = ((tmpvar_1.z - yuv.x) * 0.492);
+  yuv.z = ((tmpvar_1.x - yuv.x) * 0.877);
+  yuv = (yuv + (((texture2D (_GrainTex, gl_TexCoord[1].xy).xyz * 2.0) - 1.0) * _Intensity.x));
+  col.x = ((yuv.z * 1.14) + yuv.x);
+  col.y = (((yuv.z * -0.581) + (yuv.y * -0.395)) + yuv.x);
+  col.z = ((yuv.y * 2.032) + yuv.x);
+  col.xyz = (col.xyz + (((texture2D (_ScratchTex, gl_TexCoord[2].xy).xyz * 2.0) - 1.0) * _Intensity.y));
+  gl_FragData[0] = col;
+}
+

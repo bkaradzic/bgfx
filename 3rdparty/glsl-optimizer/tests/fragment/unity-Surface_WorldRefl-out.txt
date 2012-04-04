@@ -1,0 +1,13 @@
+uniform vec4 _LightColor0;
+uniform samplerCube _Cube;
+void main ()
+{
+  vec4 c;
+  vec4 c_i0;
+  c_i0.xyz = ((textureCube (_Cube, gl_TexCoord[0].xyz).xyz * _LightColor0.xyz) * (max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * 2.0));
+  c_i0.w = 0.0;
+  c = c_i0;
+  c.w = 0.0;
+  gl_FragData[0] = c;
+}
+
