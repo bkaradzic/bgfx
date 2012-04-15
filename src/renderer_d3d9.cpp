@@ -124,11 +124,11 @@ namespace bgfx
 			m_params.FullScreen_RefreshRateInHz = 0;
 			m_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 			m_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-			m_params.hDeviceWindow = bgfxHwnd;
+			m_params.hDeviceWindow = g_bgfxHwnd;
 			m_params.Windowed = true;
 
 			RECT rect;
-			GetWindowRect(bgfxHwnd, &rect);
+			GetWindowRect(g_bgfxHwnd, &rect);
 			m_params.BackBufferWidth = rect.right-rect.left;
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
@@ -149,6 +149,8 @@ namespace bgfx
 			m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
 #endif // defined(D3D_DISABLE_9EX)
 
+			BGFX_FATAL(m_d3d9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
+
 			uint32_t behaviorFlags[] =
 			{
 				D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_PUREDEVICE,
@@ -161,7 +163,7 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_DIRECT3D_EX
 				DX_CHECK(m_d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT
 						, D3DDEVTYPE_HAL
-						, bgfxHwnd
+						, g_bgfxHwnd
 						, behaviorFlags[ii]
 						, &m_params
 						, NULL
@@ -170,13 +172,15 @@ namespace bgfx
 #else
 				DX_CHECK(m_d3d9->CreateDevice(D3DADAPTER_DEFAULT
 					, D3DDEVTYPE_HAL
-					, bgfxHwnd
+					, g_bgfxHwnd
 					, behaviorFlags[ii]
 					, &m_params
 					, &m_device
 					) );
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D_EX
 			}
+
+			BGFX_FATAL(m_device, bgfx::Fatal::D3D9_UnableToCreateDevice, "Unable to create Direct3D9 device.");
 
 			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
 			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
@@ -224,12 +228,16 @@ namespace bgfx
 
 		void shutdown()
 		{
+			preReset();
+
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_d3d9, 0);
 
 #if BX_PLATFORM_WINDOWS
 			FreeLibrary(m_d3d9dll);
 #endif // BX_PLATFORM_WINDOWS
+
+			m_initialized = false;
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -241,6 +249,7 @@ namespace bgfx
 				m_flags = _resolution.m_flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
+				m_textVideoMem.clear();
 
 #if BX_PLATFORM_WINDOWS
 				D3DDEVICE_CREATION_PARAMETERS dcp;
@@ -439,11 +448,11 @@ namespace bgfx
 				) );
 
 			RECT rc;
-			GetClientRect(bgfxHwnd, &rc);
+			GetClientRect(g_bgfxHwnd, &rc);
 			POINT point;
 			point.x = rc.left;
 			point.y = rc.top;
-			ClientToScreen(bgfxHwnd, &point);
+			ClientToScreen(g_bgfxHwnd, &point);
 			uint8_t* data = (uint8_t*)rect.pBits;
 			uint32_t bpp = rect.Pitch/dm.Width;
 			saveTga( (const char*)_mem->data, m_params.BackBufferWidth, m_params.BackBufferHeight, rect.Pitch, &data[point.y*rect.Pitch+point.x*bpp]);
@@ -1825,7 +1834,7 @@ namespace bgfx
 
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debug");
+			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugstats");
 
 			TextVideoMem& tvm = s_renderCtx.m_textVideoMem;
 
@@ -1854,6 +1863,14 @@ namespace bgfx
 			}
 
 			g_textVideoMemBlitter.blit(tvm);
+
+			PIX_ENDEVENT();
+		}
+		else if (m_render->m_debug & BGFX_DEBUG_TEXT)
+		{
+			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugtext");
+
+			g_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 
 			PIX_ENDEVENT();
 		}

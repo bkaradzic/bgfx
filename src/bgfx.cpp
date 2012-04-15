@@ -5,6 +5,11 @@
 
 #include "bgfx_p.h"
 
+BX_NO_INLINE void bgfxFatalStub(bgfx::Fatal::Enum _code, const char* _str)
+{
+	BX_TRACE("0x%08x: %s", _code, _str);
+}
+
 BX_NO_INLINE void* bgfxReallocStub(void* _ptr, size_t _size)
 {
 	void* ptr = ::realloc(_ptr, _size);
@@ -15,9 +20,13 @@ BX_NO_INLINE void* bgfxReallocStub(void* _ptr, size_t _size)
 
 BX_NO_INLINE void bgfxFreeStub(void* _ptr)
 {
-// 	BX_TRACE("free %p", _ptr);
+//	BX_TRACE("free %p", _ptr);
 	::free(_ptr);
 }
+
+#if BX_PLATFORM_WINDOWS
+HWND g_bgfxHwnd = NULL;
+#endif // BX_PLATFORM_WINDOWS
 
 namespace bgfx
 {
@@ -31,6 +40,7 @@ namespace bgfx
 #	define BGFX_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
+	fatalFn g_fatal = bgfxFatalStub;
 	reallocFn g_realloc = bgfxReallocStub;
 	freeFn g_free = bgfxFreeStub;
 
@@ -285,7 +295,7 @@ namespace bgfx
 
 		setup();
 
-		for (;xx < _mem.m_width && yy < _mem.m_height;)
+		for (;yy < _mem.m_height;)
 		{
 			FontVertex* vertex = (FontVertex*)m_vb->data;
 			uint16_t* indices = (uint16_t*)m_ib->data;
@@ -444,8 +454,13 @@ namespace bgfx
 		radixSort(m_sortKeys, s_ctx.m_tempKeys, m_sortValues, s_ctx.m_tempValues, m_num);
 	}
 
-	void init(bool _createRenderThread, reallocFn _realloc, freeFn _free)
+	void init(bool _createRenderThread, fatalFn _fatal, reallocFn _realloc, freeFn _free)
 	{
+		if (NULL != _fatal)
+		{
+			g_fatal = _fatal;
+		}
+
 		if (NULL != _realloc
 		&&  NULL != _free)
 		{
@@ -609,15 +624,20 @@ namespace bgfx
 	{
 		BX_TRACE("init");
 
+		m_submit->create();
+		m_render->create();
+
 #if BX_PLATFORM_WINDOWS
 		m_window.init();
 #endif // BX_PLATFORM_WINDOWS
 
 #if BGFX_CONFIG_MULTITHREADED
+		m_renderThread = NULL;
+
 		if (_createRenderThread)
 		{
 #	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
-			CreateThread(NULL, 16<<10, renderThread, NULL, 0, NULL);
+			m_renderThread = CreateThread(NULL, 16<<10, renderThread, NULL, 0, NULL);
 #	endif // BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
@@ -650,6 +670,19 @@ namespace bgfx
 		getCommandBuffer(CommandBuffer::RendererShutdown);
 		frame();
 		m_initialized = false;
+
+#if BGFX_CONFIG_MULTITHREADED
+		if (NULL != m_renderThread)
+		{
+#	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
+			WaitForSingleObject(m_renderThread, INFINITE);
+			m_renderThread = NULL;
+#	endif // BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
+		}
+#endif // BGFX_CONFIG_MULTITHREADED
+
+		m_submit->destroy();
+		m_render->destroy();
 	}
 
 	const Memory* alloc(uint32_t _size)

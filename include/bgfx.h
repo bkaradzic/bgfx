@@ -133,6 +133,15 @@ namespace bgfx
 
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
+	struct Fatal
+	{
+		enum Enum
+		{
+			D3D9_UnableToCreateInterface = 1,
+			D3D9_UnableToCreateDevice
+		};
+	};
+
 	struct Attrib
 	{
 		enum Enum
@@ -224,6 +233,7 @@ namespace bgfx
 		};
 	};
 
+	typedef void (*fatalFn)(Fatal::Enum _code, const char* _str);
 	typedef void* (*reallocFn)(void* _ptr, size_t _size);
 	typedef void (*freeFn)(void* _ptr);
 
@@ -241,7 +251,7 @@ namespace bgfx
 	};
 
 	///
-	void init(bool _createRenderThread = true, reallocFn _realloc = NULL, freeFn _free = NULL);
+	void init(bool _createRenderThread = true, fatalFn _fatal = NULL, reallocFn _realloc = NULL, freeFn _free = NULL);
 
 	///
 	void shutdown();

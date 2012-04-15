@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <alloca.h>
 
 extern void dbgPrintf(const char* _format, ...);
 extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
@@ -35,6 +34,14 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 				} while(0)
 #endif // 0
 
+#define BGFX_FATAL(_condition, _err, _str) \
+			do { \
+				if (!(_condition) ) \
+				{ \
+					g_fatal(_err, _str); \
+				} \
+			} while(0)
+
 #define BX_NAMESPACE 1
 #include <bx/bx.h>
 #include <bx/countof.h>
@@ -47,18 +54,18 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 
 #if BX_PLATFORM_WINDOWS
 #	include <windows.h>
-extern HWND bgfxHwnd;
+extern HWND g_bgfxHwnd;
 #elif BX_PLATFORM_XBOX360
 #	include <xtl.h>
 #endif // BX_PLATFORM_WINDOWS
 
 #ifndef MAKEFOURCC
 #	define MAKEFOURCC(_a, _b, _c, _d) (0 \
-	| ( (uint32_t)(_a) \
-	| ( (uint32_t)(_b) << 8) \
-	| ( (uint32_t)(_c) << 16) \
-	| ( (uint32_t)(_d) << 24) \
-	) )
+				| ( (uint32_t)(_a) \
+				| ( (uint32_t)(_b) << 8) \
+				| ( (uint32_t)(_c) << 16) \
+				| ( (uint32_t)(_d) << 24) \
+				) )
 #endif // MAKEFOURCC
 
 #include "dds.h"
@@ -193,6 +200,7 @@ namespace std
 namespace bgfx
 {
 	extern const uint32_t g_constantTypeSize[ConstantType::Count];
+	extern fatalFn g_fatal;
 	extern reallocFn g_realloc;
 	extern freeFn g_free;
 	extern void free(Memory* _mem);
@@ -258,8 +266,14 @@ namespace bgfx
 	struct TextVideoMem
 	{
 		TextVideoMem()
+			: m_mem(NULL)
+			, m_size(0)
+			, m_width(0)
+			, m_height(0)
+			, m_small(false)
 		{
 			resize();
+			clear();
 		}
 
 		~TextVideoMem()
@@ -269,19 +283,32 @@ namespace bgfx
 
 		void resize(bool _small = false, uint16_t _width = BGFX_DEFAULT_WIDTH, uint16_t _height = BGFX_DEFAULT_HEIGHT)
 		{
-			m_small = _small;
-			m_width = uint32_max(1, _width/8);
-			m_height = uint32_max(1, _height/(_small ? 8 : 16) );
-			m_size = m_width * m_height * 2;
+			uint32_t width = uint32_max(1, _width/8);
+			uint32_t height = uint32_max(1, _height/(_small ? 8 : 16) );
 
-			m_mem = (uint8_t*)g_realloc(m_mem, m_size);
+			if (NULL == m_mem
+			||  m_width != width
+			||  m_height != height
+			||  m_small != _small)
+			{
+				m_small = _small;
+				m_width = width;
+				m_height = height;
+				m_size = m_width * m_height * 2;
 
-			clear();
+				m_mem = (uint8_t*)g_realloc(m_mem, m_size);
+			}
 		}
 
-		void clear()
+		void clear(uint8_t _attr = 0)
 		{
-			memset(m_mem, 0, m_size);
+			uint8_t* mem = m_mem;
+			for (uint32_t ii = 0, num = m_size/2; ii < num; ++ii)
+			{
+				mem[0] = 0;
+				mem[1] = _attr;
+				mem += 2;
+			}
 		}
 
 		void printfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList)
@@ -320,6 +347,12 @@ namespace bgfx
 	struct TextVideoMemBlitter
 	{
 		void init();
+
+		void blit(const TextVideoMem* _mem)
+		{
+			blit(*_mem);
+		}
+
 		void blit(const TextVideoMem& _mem);
 		void setup();
 		void render(uint32_t _numIndices);
@@ -924,13 +957,23 @@ namespace bgfx
 
 		Frame()
 		{
-			m_constantBuffer = ConstantBuffer::create(BGFX_CONFIG_MAX_CONSTANT_BUFFER_SIZE);
-			reset();
 		}
 
 		~Frame()
 		{
+		}
+
+		void create()
+		{
+			m_constantBuffer = ConstantBuffer::create(BGFX_CONFIG_MAX_CONSTANT_BUFFER_SIZE);
+			reset();
+			m_textVideoMem = new TextVideoMem;
+		}
+
+		void destroy()
+		{
 			ConstantBuffer::destroy(m_constantBuffer);
+			delete m_textVideoMem;
 		}
 
 		void reset()
@@ -1257,6 +1300,7 @@ namespace bgfx
 		TextureHandle m_freeTextureHandle[BGFX_CONFIG_MAX_TEXTURES];
 		RenderTargetHandle m_freeRenderTargetHandle[BGFX_CONFIG_MAX_RENDER_TARGETS];
 		UniformHandle m_freeUniformHandle[BGFX_CONFIG_MAX_UNIFORMS];
+		TextVideoMem* m_textVideoMem;
 
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
@@ -1373,6 +1417,10 @@ namespace bgfx
 
 		void frame()
 		{
+#if BX_PLATFORM_WINDOWS
+			m_window.update();
+#endif // BX_PLATFORM_WINDOWS
+
 			// wait for render thread to finish
 			renderSemWait();
 
@@ -1410,10 +1458,13 @@ namespace bgfx
 
 		void dbgTextClear(uint8_t _attr, bool _small)
 		{
+			m_submit->m_textVideoMem->resize(_small, m_resolution.m_width, m_resolution.m_height);
+			m_submit->m_textVideoMem->clear(_attr);
 		}
 
 		void dbgTextPrintfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList)
 		{
+			m_submit->m_textVideoMem->printfVargs(_x, _y, _attr, _format, _argList);
 		}
 
 		IndexBufferHandle createIndexBuffer(const Memory* _mem)
@@ -1902,6 +1953,8 @@ namespace bgfx
 			m_submit = temp;
 			m_frames++;
 			m_submit->reset();
+
+			m_submit->m_textVideoMem->resize(m_render->m_textVideoMem->m_small, m_resolution.m_width, m_resolution.m_height);
 		}
 
 		void flip();
@@ -2330,6 +2383,13 @@ namespace bgfx
 
 		Semaphore m_renderSem;
 		Semaphore m_gameSem;
+
+#	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
+		HANDLE m_renderThread;
+#	else
+		void* m_renderThread;
+#	endif // BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
+
 #else
 		void gameSemPost()
 		{
@@ -2384,14 +2444,15 @@ namespace bgfx
 		{
 			Window()
 				: m_frame(true)
+				, m_update(false)
 			{
 			}
 
 			void init()
 			{
-				if (NULL == bgfxHwnd)
-				{
-					bgfxHwnd = CreateWindow( "EDIT"
+				if (NULL == g_bgfxHwnd)
+				{					
+					g_bgfxHwnd = CreateWindow( "EDIT"
 						, NULL
 						, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 						, 0
@@ -2403,21 +2464,35 @@ namespace bgfx
 						, 0
 						, 0
 						);
+
+					m_update = true;
+				}
+			}
+
+			void update()
+			{
+				if (m_update)
+				{
+					MSG msg;
+					msg.message = WM_NULL;
+					PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE);
+					TranslateMessage( &msg );
+					DispatchMessage( &msg );
 				}
 			}
 
 			void adjust(uint32_t _width, uint32_t _height, bool _windowFrame)
 			{
 
-				ShowWindow(bgfxHwnd, SW_SHOWNORMAL);
+				ShowWindow(g_bgfxHwnd, SW_SHOWNORMAL);
 				RECT rect;
 				RECT newrect = {0, 0, (LONG)_width, (LONG)_height};
 				DWORD style = WS_POPUP|WS_SYSMENU;
 
 				if (m_frame)
 				{
-					GetWindowRect(bgfxHwnd, &m_rect);
-					m_style = GetWindowLong(bgfxHwnd, GWL_STYLE);
+					GetWindowRect(g_bgfxHwnd, &m_rect);
+					m_style = GetWindowLong(g_bgfxHwnd, GWL_STYLE);
 				}
 
 				if (_windowFrame)
@@ -2431,7 +2506,7 @@ namespace bgfx
 					rect = m_rect;
 					style = m_style;
 #else
-					HMONITOR monitor = MonitorFromWindow(bgfxHwnd, MONITOR_DEFAULTTONEAREST);
+					HMONITOR monitor = MonitorFromWindow(g_bgfxHwnd, MONITOR_DEFAULTTONEAREST);
 					MONITORINFO mi;
 					mi.cbSize = sizeof(mi);
 					GetMonitorInfo(monitor, &mi);
@@ -2440,9 +2515,9 @@ namespace bgfx
 #endif // !defined(__MINGW__)
 				}
 
-				SetWindowLong(bgfxHwnd, GWL_STYLE, style);
+				SetWindowLong(g_bgfxHwnd, GWL_STYLE, style);
 				AdjustWindowRect(&newrect, style, FALSE);
-				UpdateWindow(bgfxHwnd);
+				UpdateWindow(g_bgfxHwnd);
 
 				if (rect.left == -32000
 				||  rect.top == -32000)
@@ -2451,7 +2526,7 @@ namespace bgfx
 					rect.top = 0;
 				}
 
-				SetWindowPos(bgfxHwnd
+				SetWindowPos(g_bgfxHwnd
 					, HWND_TOP
 					, rect.left
 					, rect.top
@@ -2460,7 +2535,7 @@ namespace bgfx
 					, SWP_SHOWWINDOW
 					);
 
-				ShowWindow(bgfxHwnd, SW_RESTORE);
+				ShowWindow(g_bgfxHwnd, SW_RESTORE);
 
 				m_frame = _windowFrame;
 			}
@@ -2468,6 +2543,7 @@ namespace bgfx
 			RECT m_rect;
 			DWORD m_style;
 			bool m_frame;
+			bool m_update;
 		};
 
 		Window m_window;

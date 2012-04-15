@@ -31,6 +31,7 @@ namespace bgfx
 			||  m_resolution.m_flags != _resolution.m_flags)
 			{
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
+				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
 #if BX_PLATFORM_NACL
@@ -1721,6 +1722,10 @@ namespace bgfx
 			}
 
 			g_textVideoMemBlitter.blit(tvm);
+		}
+		else if (m_render->m_debug & BGFX_DEBUG_TEXT)
+		{
+			g_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 		}
 
 		GL_CHECK(glFlush() );
