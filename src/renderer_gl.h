@@ -6,7 +6,13 @@
 #ifndef __RENDERER_GL_H__
 #define __RENDERER_GL_H__
 
-#if BX_PLATFORM_NACL || BX_PLATFORM_ANDROID
+#if BX_PLATFORM_NACL
+#	include <GLES2/gl2.h>
+#	include <ppapi/gles2/gl2ext_ppapi.h>
+#	include <ppapi/c/pp_completion_callback.h>
+#	include <ppapi/c/ppb_instance.h>
+#	include <ppapi/c/ppb_graphics_3d.h>
+#elif BX_PLATFORM_ANDROID
 #	include <GLES2/gl2.h>
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>

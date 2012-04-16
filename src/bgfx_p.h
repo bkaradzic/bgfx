@@ -56,6 +56,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 #	include <windows.h>
 extern HWND g_bgfxHwnd;
 #elif BX_PLATFORM_XBOX360
+#	include <alloca.h>
 #	include <xtl.h>
 #endif // BX_PLATFORM_WINDOWS
 
@@ -1402,7 +1403,6 @@ namespace bgfx
 			, m_uniformHandle(BGFX_CONFIG_MAX_UNIFORMS)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
-			, m_initialized(false)
 			, m_rendererInitialized(false)
 		{
 		}
@@ -1962,14 +1962,7 @@ namespace bgfx
 		// render thread
 		void renderFrame()
 		{
-#if BX_PLATFORM_NACL
-// on NaCl swap buffers generates callback and this is handled inside callback
-#else
-			if (m_rendererInitialized)
-			{
-				flip();
-			}
-#endif // BX_PLATFORM_
+			flip();
 
 			gameSemWait();
 			
@@ -2549,7 +2542,6 @@ namespace bgfx
 		Window m_window;
 #endif // BX_PLATFORM_WINDOWS
 
-		bool m_initialized;
 		bool m_rendererInitialized;
 	};
 

@@ -16,10 +16,33 @@
 
 namespace bgfx
 {
+	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
+
+#if BX_PLATFORM_NACL
+	void naclSwapCompleteCb(void* _data, int32_t _result);
+
+	PP_CompletionCallback naclSwapComplete = 
+	{
+		naclSwapCompleteCb,
+		NULL,
+		PP_COMPLETIONCALLBACK_FLAG_NONE
+	};
+#endif // BX_PLATFORM_NACL
+
 	struct RendererContext
 	{
 		RendererContext()
 			: m_dxtSupport(false)
+			, m_postSwapBuffers(NULL)
+#if BX_PLATFORM_NACL
+			, m_context(0)
+			, m_instance(0)
+			, m_instInterface(NULL)
+			, m_graphicsInterface(NULL)
+#elif BX_PLATFORM_WINDOWS
+			, m_hdc(NULL)
+			, m_hglrc(NULL)
+#endif // BX_PLATFORM_
 		{
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 		}
@@ -35,10 +58,97 @@ namespace bgfx
 
 				m_resolution = _resolution;
 #if BX_PLATFORM_NACL
-				extern void naclSetRenderContextSize(uint32_t _width, uint32_t _height);
-				naclSetRenderContextSize(_resolution.m_width, _resolution.m_height);
+				setRenderContextSize(_resolution.m_width, _resolution.m_height);
 #endif // BX_PLATFORM_NACL
 			}
+		}
+
+		void setRenderContextSize(uint32_t _width, uint32_t _height)
+		{
+			BX_TRACE("1");
+			if (_width != 0
+			||  _height != 0)
+			{
+#if BX_PLATFORM_NACL
+				if (0 == m_context)
+				{
+					BX_TRACE("create context");
+
+					int32_t attribs[] =
+					{
+						PP_GRAPHICS3DATTRIB_ALPHA_SIZE, 8,
+						PP_GRAPHICS3DATTRIB_DEPTH_SIZE, 24,
+						PP_GRAPHICS3DATTRIB_STENCIL_SIZE, 8,
+						PP_GRAPHICS3DATTRIB_SAMPLES, 0,
+						PP_GRAPHICS3DATTRIB_SAMPLE_BUFFERS, 0,
+						PP_GRAPHICS3DATTRIB_WIDTH, _width,
+						PP_GRAPHICS3DATTRIB_HEIGHT, _height,
+						PP_GRAPHICS3DATTRIB_NONE
+					};
+
+					m_context = m_graphicsInterface->Create(m_instance, 0, attribs);
+					m_instInterface->BindGraphics(m_instance, m_context);
+					glSetCurrentContextPPAPI(m_context);
+					m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
+				}
+				else
+				{
+					m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
+				}
+
+#elif BX_PLATFORM_WINDOWS
+				if (NULL == m_hdc)
+				{
+					PIXELFORMATDESCRIPTOR pfd =
+					{
+						sizeof(PIXELFORMATDESCRIPTOR),
+						1,
+						PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
+						PFD_TYPE_RGBA,
+						32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						16, 0, 0,
+						PFD_MAIN_PLANE,
+						0, 0, 0, 0
+					};
+
+					m_hdc = GetDC(g_bgfxHwnd);
+
+					int pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
+					BX_CHECK(0 != pixelFormat, "ChoosePixelFormat failed!");
+
+					int result;
+					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
+					BX_CHECK(0 != result, "SetPixelFormat failed!");
+
+					m_hglrc = wglCreateContext(m_hdc);
+					BX_CHECK(NULL != g_hglrc, "wglCreateContext failed!");
+
+					result = wglMakeCurrent(m_hdc, m_hglrc);
+					BX_CHECK(0 != result, "wglMakeCurrent failed!");
+				}
+#endif // BX_PLATFORM_
+			}
+		}
+
+		void flip()
+		{
+#if BX_PLATFORM_NACL
+			glSetCurrentContextPPAPI(m_context);
+			m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
+#elif BX_PLATFORM_WINDOWS
+			wglMakeCurrent(m_hdc, m_hglrc);
+			SwapBuffers(m_hdc);
+#endif // BX_PLATFORM_
+
+			if (NULL != m_postSwapBuffers)
+			{
+				m_postSwapBuffers(m_resolution.m_width, m_resolution.m_height);
+			}
+		}
+
+		void init()
+		{
+			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
 		}
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -56,9 +166,37 @@ namespace bgfx
 
 		Resolution m_resolution;
 		bool m_dxtSupport;
+
+		PostSwapBuffersFn m_postSwapBuffers;
+
+#if BX_PLATFORM_NACL
+		PP_Resource m_context;
+		PP_Instance m_instance;
+		const PPB_Instance* m_instInterface;
+		const PPB_Graphics3D* m_graphicsInterface;
+#elif BX_PLATFORM_WINDOWS
+		HDC m_hdc;
+		HGLRC m_hglrc;
+#endif // BX_PLATFORM_NACL
 	};
 
 	RendererContext s_renderCtx;
+
+#if BX_PLATFORM_NACL
+	void naclSetIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
+	{
+		s_renderCtx.m_instance = _instance;
+		s_renderCtx.m_instInterface = _instInterface;
+		s_renderCtx.m_graphicsInterface = _graphicsInterface;
+		s_renderCtx.m_postSwapBuffers = _postSwapBuffers;
+		s_renderCtx.setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+	}
+
+	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/)
+	{
+		renderFrame();
+	}
+#endif // BX_PLATFORM_NACL
 
 	struct Extension
 	{
@@ -775,6 +913,8 @@ namespace bgfx
 		m_depth.destroy();
 	}
 
+	static bool s_exit = false;
+
 	void ConstantBuffer::commit(bool _force)
 	{
 		reset();
@@ -855,63 +995,6 @@ namespace bgfx
 		} while (true);
 	}
 
-#if BX_PLATFORM_WINDOWS
-	HDC g_hdc;
-	HGLRC g_hglrc;
-#endif // BX_PLATFORM_WINDOWS
-
-	void initGl(uint32_t _width, uint32_t _height)
-	{
-#if BX_PLATFORM_WINDOWS
-		static PIXELFORMATDESCRIPTOR pfd =
-		{
-			sizeof(PIXELFORMATDESCRIPTOR),
-			1,
-			PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
-			PFD_TYPE_RGBA,
-			32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			16, 0, 0,
-			PFD_MAIN_PLANE,
-			0, 0, 0, 0
-		};
-
-		g_hdc = GetDC(hwnd);
-
-		int pixelFormat = ChoosePixelFormat(g_hdc, &pfd);
-		BX_CHECK(0 != pixelFormat, "ChoosePixelFormat failed!");
-
-		int result;
-		result = SetPixelFormat(g_hdc, pixelFormat, &pfd);
-		BX_CHECK(0 != result, "SetPixelFormat failed!");
-
-		g_hglrc = wglCreateContext(g_hdc);
-		BX_CHECK(NULL != g_hglrc, "wglCreateContext failed!");
-
-		result = wglMakeCurrent(g_hdc, g_hglrc);
-		BX_CHECK(0 != result, "wglMakeCurrent failed!");
-
-		glewInit();
-#endif // BX_PLATFORM_WINDOWS
-	}
-
-	static bool s_exit = false;
-
-#if BX_PLATFORM_WINDOWS
-	DWORD WINAPI renderThread(LPVOID _arg)
-	{
-		wglMakeCurrent(g_hdc, g_hglrc);
-
-		while (!s_exit)
-		{			
-			renderFrame();
-		}
-
-		s_exit = false;
-
-		return EXIT_SUCCESS;
-	}
-#endif // BX_PLATFORM_WINDOWS
-
 	void TextVideoMemBlitter::setup()
 	{
 		uint32_t width = s_renderCtx.m_resolution.m_width;
@@ -967,10 +1050,7 @@ namespace bgfx
 
 	void Context::flip()
 	{
-#if BX_PLATFORM_WINDOWS
-		wglMakeCurrent(g_hdc, g_hglrc);
-		SwapBuffers(g_hdc);
-#endif // BX_PLATFORM_WINDOWS
+		s_renderCtx.flip();
 	}
 
 	GLint glGet(GLenum _pname)
@@ -982,6 +1062,8 @@ namespace bgfx
 
 	void Context::rendererInit()
 	{
+		s_renderCtx.init();
+
 #if BGFX_DEBUG
 		GLint numCmpFormats;
 		GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );

@@ -289,8 +289,8 @@ namespace bgfx
 		const float texelWidthHalf = texelWidth*0.5f;
 		const float texelHeight = 1.0f/24.0f;
 		const float texelHeightHalf = texelHeight*0.5f;
-		const float utop = (_mem.m_small ? 0.0f : 8.0f)*texelHeight - texelHeightHalf;
-		const float ubottom = (_mem.m_small ? 8.0f : 24.0f)*texelHeight - texelHeightHalf;
+		const float utop = (_mem.m_small ? 0.0f : 8.0f)*texelHeight + texelHeightHalf;
+		const float ubottom = (_mem.m_small ? 8.0f : 24.0f)*texelHeight + texelHeightHalf;
 		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f);
 
 		setup();
@@ -313,7 +313,7 @@ namespace bgfx
 					uint8_t attr = line[1];
 
 					if (0 != (ch|attr)
-						&& (' ' != ch || 0 != (attr&0xf0) ) )
+					&& (' ' != ch || 0 != (attr&0xf0) ) )
 					{
 						uint32_t fg = palette[attr&0xf];
 						uint32_t bg = palette[(attr>>4)&0xf];
@@ -492,11 +492,8 @@ namespace bgfx
 
 	void renderFrame()
 	{
-		if (s_ctx.m_initialized)
-		{
-			BGFX_RENDER_THREAD();
-			s_ctx.renderFrame();
-		}
+		BGFX_RENDER_THREAD();
+		s_ctx.renderFrame();
 	}
 
 	static const uint32_t s_attribTypeSize[AttribType::Count] =
@@ -649,7 +646,6 @@ namespace bgfx
 		memset(m_seqMask, 0, sizeof(m_seqMask) );
 
 		gameSemPost();
-		m_initialized = true;
 
 		getCommandBuffer(CommandBuffer::RendererInit);
 
@@ -669,7 +665,6 @@ namespace bgfx
 
 		getCommandBuffer(CommandBuffer::RendererShutdown);
 		frame();
-		m_initialized = false;
 
 #if BGFX_CONFIG_MULTITHREADED
 		if (NULL != m_renderThread)

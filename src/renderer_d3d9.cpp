@@ -337,34 +337,37 @@ namespace bgfx
 
 		void flip()
 		{
+			if (NULL != m_device)
+			{
 #if BGFX_CONFIG_RENDERER_DIRECT3D_EX
-			DX_CHECK(m_device->WaitForVBlank(0) );
+				DX_CHECK(m_device->WaitForVBlank(0) );
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D_EX
 
-			HRESULT hr;
-			hr = m_device->Present(NULL, NULL, NULL, NULL);
+				HRESULT hr;
+				hr = m_device->Present(NULL, NULL, NULL, NULL);
 
 #if BX_PLATFORM_WINDOWS
-			if (isLost(hr) )
-			{
-				do
+				if (isLost(hr) )
 				{
-					do 
+					do
 					{
+						do 
+						{
+							hr = m_device->TestCooperativeLevel();
+						}
+						while (D3DERR_DEVICENOTRESET != hr);
+
+						reset();
 						hr = m_device->TestCooperativeLevel();
 					}
-					while (D3DERR_DEVICENOTRESET != hr);
-
-					reset();
-					hr = m_device->TestCooperativeLevel();
+					while (FAILED(hr) );
 				}
-				while (FAILED(hr) );
-			}
-			else if (FAILED(hr) )
-			{
-				BX_TRACE("Present failed with err 0x%08x.", hr);
-			}
+				else if (FAILED(hr) )
+				{
+					BX_TRACE("Present failed with err 0x%08x.", hr);
+				}
 #endif // BX_PLATFORM_
+			}
 		}
 
 		void preReset()
