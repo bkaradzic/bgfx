@@ -1,5 +1,6 @@
 /*
  * Copyright 2011-2012 Branimir Karadzic. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
 #include <stdio.h>
@@ -19,8 +20,6 @@ using namespace bgfx;
 #include <bx/bx.h>
 #include <bx/commandline.h>
 #include <bx/uint32_t.h>
-
-HWND bgfxHwnd;
 
 long int fsize(FILE* _file)
 {
@@ -119,5 +118,5 @@ int main(int _argc, const char* _argv[])
 		}
 	}
 
-	return EXIT_FAILURE;
+	return EXIT_SUCCESS;
 }

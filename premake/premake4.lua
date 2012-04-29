@@ -200,23 +200,6 @@ project "shaderc"
 		"d3dx9",
 	}
 
---project "shadows"
---	uuid "ff2c8450-ebf4-11e0-9572-0800200c9a66"
---	kind "ConsoleApp"
-
---	includedirs {
---		ROOT_DIR .. "include",
---	}
-
---	files {
---		ROOT_DIR .. "examples/common/**",
---		ROOT_DIR .. "examples/shadows/shadows.**"
---	}
-
---	links {
---		"bgfx",
---	}
-
 project "ddsdump"
 	uuid "838801ee-7bc3-11e1-9f19-eae7d36e7d26"
 	kind "ConsoleApp"
@@ -230,6 +213,37 @@ project "ddsdump"
 	files {
 		ROOT_DIR .. "src/dds.*",
 		ROOT_DIR .. "tools/ddsdump.cpp",
+	}
+
+	links {
+		"bgfx",
+	}
+
+project "makedisttex"
+	uuid "b0561b30-91bb-11e1-b06e-023ad46e7d26"
+	kind "ConsoleApp"
+
+	includedirs {
+		ROOT_DIR .. "../bx/include",
+		THIRD_PARTY_DIR .. "edtaa3",
+		THIRD_PARTY_DIR .. "stb_image",
+	}
+
+	files {
+		THIRD_PARTY_DIR .. "edtaa3/**",
+		ROOT_DIR .. "tools/makedisttex.cpp",
+	}
+
+project "helloworld"
+	uuid "ff2c8450-ebf4-11e0-9572-0800200c9a66"
+	kind "ConsoleApp"
+
+	includedirs {
+		ROOT_DIR .. "include",
+	}
+
+	files {
+		ROOT_DIR .. "examples/helloworld/**",
 	}
 
 	links {

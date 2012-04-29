@@ -1,5 +1,6 @@
 /*
  * Copyright 2011-2012 Branimir Karadzic. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
 #include <stdio.h>
@@ -541,28 +542,28 @@ int main(int _argc, const char* _argv[])
 	if (NULL == filePath)
 	{
 		fprintf(stderr, "Shader file name must be specified.\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	const char* outFilePath = cmdLine.findOption('o');
 	if (NULL == outFilePath)
 	{
 		fprintf(stderr, "Output file name must be specified.\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	const char* type = cmdLine.findOption('\0', "type");
 	if (NULL == type)
 	{
 		fprintf(stderr, "Must specify shader type.");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	const char* platform = cmdLine.findOption('\0', "platform");
 	if (NULL == platform)
 	{
 		fprintf(stderr, "Must specify platform.\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	bool preprocessOnly = cmdLine.hasArg("preprocess");
@@ -605,7 +606,7 @@ int main(int _argc, const char* _argv[])
 	else
 	{
 		fprintf(stderr, "Unknown platform %s?!", platform);
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	if (0 == _stricmp(type, "fragment") )

@@ -1025,6 +1025,8 @@ namespace bgfx
 					, NULL
 					) );
 
+				BGFX_FATAL(m_colorTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create color render target.");
+
 				DX_CHECK(m_colorTexture->GetSurfaceLevel(0, &m_color) );
 			}
 
@@ -1039,6 +1041,8 @@ namespace bgfx
 					, &m_depthTexture
 					, NULL
 					) );
+
+				BGFX_FATAL(m_depthTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth render target.");
 
 				DX_CHECK(m_depthTexture->GetSurfaceLevel(0, &m_depth)) ;
 			}
