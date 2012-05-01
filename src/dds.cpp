@@ -286,24 +286,16 @@ void Mip::decode(uint8_t* _dst)
 	{
 		uint32_t width = m_width;
 		uint32_t height = m_height;
-		uint32_t pitch = m_width*4;
 
-		if (m_hasAlpha)
+		if (m_bpp == 1
+		||  m_bpp == 4)
 		{
-			for (uint32_t yy = 0; yy < height; ++yy)
-			{
-				uint8_t* dst = &_dst[yy*pitch];
-
-				for (uint32_t xx = 0; xx < width; ++xx)
-				{
-					memcpy(dst, src, 4);
-					dst += 4;
-					src += 4;
-				}
-			}
+			uint32_t pitch = m_width*m_bpp;
+			memcpy(_dst, src, pitch*height);
 		}
 		else
 		{
+			uint32_t pitch = m_width*4;
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				uint8_t* dst = &_dst[yy*pitch];
@@ -398,6 +390,7 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 
 	stream.skip(4); // reserved
 
+	uint8_t bpp = 1;
 	uint8_t blockSize = 1;
 	uint8_t type = 0;
 	bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
@@ -426,7 +419,26 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 	}
 	else
 	{
-		blockSize *= hasAlpha ? 4 : 3;
+		switch (pixelFlags)
+		{
+		case DDPF_RGB:
+			blockSize *= 3;
+			break;
+
+		case DDPF_RGB|DDPF_ALPHAPIXELS:
+			blockSize *= 4;
+			break;
+
+		case DDPF_LUMINANCE:
+		case DDPF_INDEXED:
+		case DDPF_ALPHA:
+			bpp = 1;
+			break;
+
+		default:
+			bpp = 0;
+			break;
+		}
 	}
 
 	_dds.m_width = width;
@@ -434,6 +446,7 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 	_dds.m_depth = depth;
 	_dds.m_blockSize = blockSize;
 	_dds.m_numMips = (caps[0] & DDSCAPS_MIPMAP) ? mips : 1;
+	_dds.m_bpp = bpp;
 	_dds.m_type = type;
 	_dds.m_hasAlpha = hasAlpha;
 
@@ -446,6 +459,7 @@ bool getRawImageData(const Dds& _dds, uint8_t _index, const Memory* _mem, Mip& _
 	uint32_t height = _dds.m_height;
 	uint32_t blockSize = _dds.m_blockSize;
 	uint32_t offset = DDS_IMAGE_DATA_OFFSET;
+	uint8_t bpp = _dds.m_bpp;
 	uint8_t type = _dds.m_type;
 	bool hasAlpha = _dds.m_hasAlpha;
 
@@ -472,6 +486,7 @@ bool getRawImageData(const Dds& _dds, uint8_t _index, const Memory* _mem, Mip& _
 			_mip.m_blockSize = blockSize;
 			_mip.m_size = size;
 			_mip.m_data = _mem->data + offset;
+			_mip.m_bpp = bpp;
 			_mip.m_type = type;
 			_mip.m_hasAlpha = hasAlpha;
 			return true;

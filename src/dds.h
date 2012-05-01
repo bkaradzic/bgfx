@@ -17,6 +17,7 @@ namespace bgfx
 		uint32_t m_depth;
 		uint8_t m_blockSize;
 		uint8_t m_numMips;
+		uint8_t m_bpp;
 		uint8_t m_type;
 		bool m_hasAlpha;
 	};
@@ -27,6 +28,7 @@ namespace bgfx
 		uint32_t m_height;
 		uint32_t m_blockSize;
 		uint32_t m_size;
+		uint8_t m_bpp;
 		uint8_t m_type;
 		bool m_hasAlpha;
 		const uint8_t* m_data;

@@ -631,6 +631,11 @@ namespace bgfx
 			{
 				fmt = s_extension[Extension::GL_EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 
+				if (dds.m_bpp == 1)
+				{
+					fmt = GL_LUMINANCE;
+				}
+
 				for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 				{
 					width = uint32_max(1, width);
@@ -639,13 +644,14 @@ namespace bgfx
 					Mip mip;
 					if (getRawImageData(dds, lod, _mem, mip) )
 					{
-						uint8_t* bits = (uint8_t*)g_realloc(NULL, mip.m_width*mip.m_height*4);
+						uint32_t srcpitch = mip.m_width*mip.m_bpp;
+						uint8_t* bits = (uint8_t*)g_realloc(NULL, srcpitch*mip.m_height);
 
 						mip.decode(bits);
-						uint32_t dstpitch = width*4;
 
 						if (GL_RGBA == fmt)
 						{
+							uint32_t dstpitch = width*4;
 							for (uint32_t yy = 0; yy < height; ++yy)
 							{
 								uint8_t* dst = &bits[yy*dstpitch];

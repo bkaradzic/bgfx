@@ -848,9 +848,22 @@ namespace bgfx
 			bool decompress = false;
 
 			if (decompress
-			|| (0 == dds.m_type	&&  dds.m_hasAlpha) )
+			|| (0 == dds.m_type) )
 			{
-				fmt = D3DFMT_A8R8G8B8;
+				switch (dds.m_bpp)
+				{
+				case 1:
+					fmt = D3DFMT_L8;
+					break;
+
+				case 4:
+					fmt = D3DFMT_A8R8G8B8;
+					break;
+
+				default:
+					fmt = D3DFMT_X8R8G8B8;
+					break;
+				}
 			}
 
 			DX_CHECK(s_renderCtx.m_device->CreateTexture(dds.m_width
@@ -884,22 +897,17 @@ namespace bgfx
 						if (width != mip.m_width
 						||  height != mip.m_height)
 						{
-							uint8_t* temp = (uint8_t*)g_realloc(NULL, mip.m_width*mip.m_height*4);
-							mip.decode(temp);
-							uint32_t srcpitch = mip.m_width*4;
-							uint32_t dstpitch = rect.Pitch;
+							uint32_t srcpitch = mip.m_width*mip.m_bpp;
 
+							uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*mip.m_height);
+							mip.decode(temp);
+
+							uint32_t dstpitch = rect.Pitch;
 							for (uint32_t yy = 0; yy < height; ++yy)
 							{
 								uint8_t* src = &temp[yy*srcpitch];
 								uint8_t* dst = &bits[yy*dstpitch];
-
-								for (uint32_t xx = 0; xx < width; ++xx)
-								{
-									memcpy(dst, src, 4);
-									dst += 4;
-									src += 4;
-								}
+								memcpy(dst, src, srcpitch);
 							}
 
 							g_free(temp);
