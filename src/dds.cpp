@@ -423,10 +423,12 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		{
 		case DDPF_RGB:
 			blockSize *= 3;
+			bpp = 3;
 			break;
 
 		case DDPF_RGB|DDPF_ALPHAPIXELS:
 			blockSize *= 4;
+			bpp = 4;
 			break;
 
 		case DDPF_LUMINANCE:

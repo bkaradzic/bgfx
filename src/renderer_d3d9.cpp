@@ -182,6 +182,8 @@ namespace bgfx
 
 			BGFX_FATAL(m_device, bgfx::Fatal::D3D9_UnableToCreateDevice, "Unable to create Direct3D9 device.");
 
+			DX_CHECK(m_device->GetDeviceCaps(&m_caps) );
+
 			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
 			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
 			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF24) );
@@ -466,6 +468,8 @@ namespace bgfx
 		}
 
 #if BX_PLATFORM_WINDOWS
+		D3DCAPS9 m_caps;
+
 		D3DPERF_SetMarkerFunc m_D3DPERF_SetMarker;
 		D3DPERF_BeginEventFunc  m_D3DPERF_BeginEvent;
 		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
@@ -846,9 +850,9 @@ namespace bgfx
 			D3DFORMAT fmt = typefmt[dds.m_type];
 
 			bool decompress = false;
+			uint8_t bpp = dds.m_bpp;
 
-			if (decompress
-			|| (0 == dds.m_type) )
+			if (0 == dds.m_type)
 			{
 				switch (dds.m_bpp)
 				{
@@ -864,6 +868,11 @@ namespace bgfx
 					fmt = D3DFMT_X8R8G8B8;
 					break;
 				}
+			}
+			else if (decompress)
+			{
+				fmt = D3DFMT_A8R8G8B8;
+				bpp = 4;
 			}
 
 			DX_CHECK(s_renderCtx.m_device->CreateTexture(dds.m_width
@@ -897,7 +906,7 @@ namespace bgfx
 						if (width != mip.m_width
 						||  height != mip.m_height)
 						{
-							uint32_t srcpitch = mip.m_width*mip.m_bpp;
+							uint32_t srcpitch = mip.m_width*bpp;
 
 							uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*mip.m_height);
 							mip.decode(temp);

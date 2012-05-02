@@ -631,10 +631,15 @@ namespace bgfx
 			{
 				fmt = s_extension[Extension::GL_EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 
-				if (dds.m_bpp == 1)
+				uint8_t bpp = 4;
+				if (dds.m_type == 0
+				&&  dds.m_bpp == 1)
 				{
 					fmt = GL_LUMINANCE;
+					bpp = 1;
 				}
+
+				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*bpp);
 
 				for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 				{
@@ -644,9 +649,6 @@ namespace bgfx
 					Mip mip;
 					if (getRawImageData(dds, lod, _mem, mip) )
 					{
-						uint32_t srcpitch = mip.m_width*mip.m_bpp;
-						uint8_t* bits = (uint8_t*)g_realloc(NULL, srcpitch*mip.m_height);
-
 						mip.decode(bits);
 
 						if (GL_RGBA == fmt)
@@ -676,13 +678,13 @@ namespace bgfx
 							, GL_UNSIGNED_BYTE
 							, bits
 						) );
-
-						g_free(bits);
 					}
 
 					width >>= 1;
 					height >>= 1;
 				}
+
+				g_free(bits);
 			}
 			else
 			{
@@ -1139,7 +1141,7 @@ namespace bgfx
  			pos += len+1;
  		}
 
-		s_renderCtx.m_dxtSupport = false //true
+		s_renderCtx.m_dxtSupport = true
 			&& s_extension[Extension::GL_EXT_texture_compression_dxt1].m_supported
 			&& s_extension[Extension::GL_CHROMIUM_texture_compression_dxt3].m_supported
 			&& s_extension[Extension::GL_CHROMIUM_texture_compression_dxt5].m_supported
