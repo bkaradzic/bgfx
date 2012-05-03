@@ -137,7 +137,8 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			D3D9_UnableToCreateInterface = 1,
+			MinimumRequiredSpecs = 1,
+			D3D9_UnableToCreateInterface,
 			D3D9_UnableToCreateDevice,
 			D3D9_UnableToCreateRenderTarget,
 		};
