@@ -293,8 +293,8 @@ namespace bgfx
 			||  m_small != _small)
 			{
 				m_small = _small;
-				m_width = width;
-				m_height = height;
+				m_width = (uint16_t)width;
+				m_height = (uint16_t)height;
 				m_size = m_width * m_height * 2;
 
 				m_mem = (uint8_t*)g_realloc(m_mem, m_size);
@@ -2445,8 +2445,22 @@ namespace bgfx
 			{
 				if (NULL == g_bgfxHwnd)
 				{					
-					g_bgfxHwnd = CreateWindow( "EDIT"
-						, NULL
+					HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
+
+					WNDCLASSEX wnd;
+					memset(&wnd, 0, sizeof(wnd) );
+					wnd.cbSize = sizeof(wnd);
+					wnd.style = CS_HREDRAW | CS_VREDRAW;
+					wnd.lpfnWndProc = wndProc;
+					wnd.hInstance = instance;
+					wnd.hIcon = LoadIcon(instance, IDI_APPLICATION);
+					wnd.hCursor = LoadCursor(instance, IDC_ARROW);
+					wnd.lpszClassName = "bgfx";
+					wnd.hIconSm = LoadIcon(instance, IDI_APPLICATION);	
+					RegisterClassExA(&wnd);
+
+					g_bgfxHwnd = CreateWindowA("bgfx"
+						, "BGFX"
 						, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 						, 0
 						, 0
@@ -2462,15 +2476,32 @@ namespace bgfx
 				}
 			}
 
+			static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
+			{
+				switch (_id)
+				{
+				case WM_CLOSE:
+					TerminateProcess(GetCurrentProcess(), 0);
+					break;
+
+				default:
+					break;
+				}
+
+				return DefWindowProc(_hwnd, _id, _wparam, _lparam);
+			}
+
 			void update()
 			{
 				if (m_update)
 				{
 					MSG msg;
 					msg.message = WM_NULL;
-					PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE);
-					TranslateMessage( &msg );
-					DispatchMessage( &msg );
+					if (0 != PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE) )
+					{
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
 				}
 			}
 

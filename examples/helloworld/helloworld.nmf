@@ -1,0 +1,6 @@
+{
+	"program": {
+		"x86-32": {"url": "nacl-x86/helloworldRelease.nexe"},
+		"x86-64": {"url": "nacl-x64/helloworldRelease.nexe"}
+	}
+}

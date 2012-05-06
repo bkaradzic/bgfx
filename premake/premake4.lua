@@ -23,6 +23,7 @@ newoption {
 	description = "Choose GCC flavor",
 	allowed = {
 		{ "mingw", "MinGW" },
+		{ "nacl", "Google Native Client" },
 	}
 }
 
@@ -40,6 +41,10 @@ location (BUILD_DIR .. "projects/" .. _ACTION)
 
 if _ACTION == "gmake" then
 
+	flags {
+		"ExtraWarnings",
+	}
+
 	if "linux" ~= os.get() and nil == _OPTIONS["gcc"] then
 		print("GCC flavor must be specified!")
 		os.exit(1)
@@ -50,6 +55,18 @@ if _ACTION == "gmake" then
 		premake.gcc.cxx = "$(MINGW)/bin/mingw32-g++"
 		premake.gcc.ar = "$(MINGW)/bin/ar"
 	end
+
+	if "nacl" == _OPTIONS["gcc"] then
+
+		if not os.getenv("NACL") then 
+			print("Set NACL enviroment variables.")
+		end
+
+		premake.gcc.cc = "$(NACL)/bin/x86_64-nacl-gcc"
+		premake.gcc.cxx = "$(NACL)/bin/x86_64-nacl-g++"
+		premake.gcc.ar = "$(NACL)/bin/x86_64-nacl-ar"
+		location (BUILD_DIR .. "projects/" .. _ACTION .. "-nacl")
+	end
 end
 
 flags {
@@ -57,25 +74,22 @@ flags {
 	"NoMinimalRebuild",
 	"NoPCH",
 	"NativeWChar",
---	"ExtraWarnings",
 	"NoRTTI",
 	"NoExceptions",
+	"NoEditAndContinue",
 	"Symbols",
 }
 
 includedirs {
-	ROOT_DIR .. "../_bx/include",
+	ROOT_DIR .. "../bx/include",
 }
 
 configuration "Debug"
-	defines {
-		"BGFX_BUILD_DEBUG=1",
-	}
 	targetsuffix "Debug"
 
 configuration "Release"
-	defines {
-		"BGFX_BUILD_RELEASE=1",
+	flags {
+		"OptimizeSpeed",
 	}
 	targetsuffix "Release"
 
@@ -114,6 +128,46 @@ configuration { "x64", "mingw" }
 	targetdir (BUILD_DIR .. "win64_mingw" .. "/bin")
 	objdir (BUILD_DIR .. "win64_mingw" .. "/obj")
 	includedirs { THIRD_PARTY_DIR .. "compiler/mingw" }
+
+configuration { "nacl" }
+	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600" }
+	links {
+		"ppapi",
+		"ppapi_gles2",
+	}
+	includedirs { THIRD_PARTY_DIR .. "compiler/nacl" }
+	buildoptions {
+		"-std=c++0x",
+		"-U__STRICT_ANSI__",
+		"-pthread",
+		"-fno-stack-protector",
+		"-fdiagnostics-show-option",
+		"-Wunused-value",
+		"-fdata-sections",
+		"-ffunction-sections",
+		"-mfpmath=sse", -- force SSE to get 32-bit and 64-bit builds deterministic.
+		"-msse2",
+--		"-fmerge-all-constants",
+	}
+	linkoptions {
+		"-Wl,--gc-sections",
+	}
+
+configuration { "x32", "nacl" }
+	targetdir (BUILD_DIR .. "nacl-x86" .. "/bin")
+	objdir (BUILD_DIR .. "nacl-x86" .. "/obj")
+	libdirs { THIRD_PARTY_DIR .. "lib/nacl-x86" }
+	linkoptions {
+		"-melf32_nacl",
+	}
+
+configuration { "x64", "nacl" }
+	targetdir (BUILD_DIR .. "nacl-x64" .. "/bin")
+	objdir (BUILD_DIR .. "nacl-x64" .. "/obj")
+	libdirs { THIRD_PARTY_DIR .. "lib/nacl-x64" }
+	linkoptions {
+		"-melf64_nacl",
+	}
 
 configuration { "x32", "linux" }
 	targetdir (BUILD_DIR .. "linux32" .. "/bin")
@@ -236,16 +290,29 @@ project "makedisttex"
 
 project "helloworld"
 	uuid "ff2c8450-ebf4-11e0-9572-0800200c9a66"
-	kind "ConsoleApp"
+	kind "WindowedApp"
 
 	includedirs {
 		ROOT_DIR .. "include",
 	}
 
 	files {
-		ROOT_DIR .. "examples/helloworld/**",
+		ROOT_DIR .. "examples/common/**.cpp",
+		ROOT_DIR .. "examples/common/**.h",
+		ROOT_DIR .. "examples/helloworld/**.cpp",
+		ROOT_DIR .. "examples/helloworld/**.h",
 	}
 
 	links {
 		"bgfx",
 	}
+
+	configuration { "nacl" }
+		targetextension ".nexe"
+
+	configuration { "nacl", "Release" }
+		postbuildcommands {
+			"@echo Stripping symbols.",
+			"@$(NACL)/bin/x86_64-nacl-strip -s \"$(TARGET)\""
+		}
+

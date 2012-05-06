@@ -65,7 +65,6 @@ namespace bgfx
 
 		void setRenderContextSize(uint32_t _width, uint32_t _height)
 		{
-			BX_TRACE("1");
 			if (_width != 0
 			||  _height != 0)
 			{
@@ -1019,18 +1018,18 @@ namespace bgfx
 
 		Material& material = s_renderCtx.m_materials[m_material.idx];
 		GL_CHECK(glUseProgram(material.m_id) );
+		GL_CHECK(glUniform1i(material.m_sampler[0], 0) );
 
 		float proj[16];
 		matrix_ortho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
-		PredefinedUniform& predefined = material.m_predefined[0];
-
-		GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+		GL_CHECK(glUniformMatrix4fv(material.m_predefined[0].m_loc
 			, 1
 			, GL_FALSE
 			, proj
 			) );
 
+		GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx.m_textures[m_texture.idx].m_id) );
 	}
 
