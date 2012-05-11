@@ -34,11 +34,11 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 				} while(0)
 #endif // 0
 
-#define BGFX_FATAL(_condition, _err, _str) \
+#define BGFX_FATAL(_condition, _err, _format, ...) \
 			do { \
 				if (!(_condition) ) \
 				{ \
-					g_fatal(_err, _str); \
+					fatal(_err, _format, ##__VA_ARGS__); \
 				} \
 			} while(0)
 
@@ -204,7 +204,8 @@ namespace bgfx
 	extern fatalFn g_fatal;
 	extern reallocFn g_realloc;
 	extern freeFn g_free;
-	extern void free(Memory* _mem);
+	extern void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
+	extern void release(Memory* _mem);
 	extern void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
 	extern const char* getAttribName(Attrib::Enum _attr);
 
@@ -2065,7 +2066,7 @@ namespace bgfx
 
 						rendererCreateIndexBuffer(handle, mem);
 
-						free(mem);
+						release(mem);
 					}
 					break;
 
@@ -2133,7 +2134,7 @@ namespace bgfx
 
 						rendererCreateVertexBuffer(handle, mem, declHandle);
 
-						free(mem);
+						release(mem);
 					}
 					break;
 
@@ -2177,7 +2178,7 @@ namespace bgfx
 
 						rendererCreateVertexShader(handle, mem);
 
-						free(mem);
+						release(mem);
 					}
 					break;
 
@@ -2200,7 +2201,7 @@ namespace bgfx
 
 						rendererCreateFragmentShader(handle, mem);
 
-						free(mem);
+						release(mem);
 					}
 					break;
 
@@ -2250,7 +2251,7 @@ namespace bgfx
 
 						rendererCreateTexture(handle, mem, flags);
 
-						free(mem);
+						release(mem);
 					}
 					break;
 
@@ -2328,7 +2329,7 @@ namespace bgfx
 
 						rendererSaveScreenShot(mem);
 
-						free(mem);
+						release(mem);
 					}
 					break;
 

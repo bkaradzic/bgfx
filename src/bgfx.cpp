@@ -47,6 +47,20 @@ namespace bgfx
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context s_ctx;
 
+	void fatal(bgfx::Fatal::Enum _code, const char* _format, ...)
+	{
+		char temp[8192];
+
+		va_list argList;
+		va_start(argList, _format);
+		vsnprintf(temp, sizeof(temp), _format, argList);
+		va_end(argList);
+
+		temp[sizeof(temp)-1] = '\0';
+
+		g_fatal(_code, temp);
+	}
+
 	inline void vec_mul_mtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
 	{
 		_result[0] = _vec[0] * _mat[ 0] + _vec[1] * _mat[4] + _vec[2] * _mat[ 8] + _vec[3] * _mat[12];
@@ -696,7 +710,7 @@ namespace bgfx
 		return mem;
 	}
 
-	void free(Memory* _mem)
+	void release(Memory* _mem)
 	{
 		g_free(_mem);
 	}

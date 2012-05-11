@@ -188,8 +188,18 @@ namespace bgfx
 			BGFX_FATAL( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) == 0, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_SQUAREONLY");
 			BGFX_FATAL( (D3DPTEXTURECAPS_MIPMAP & m_caps.TextureCaps) == D3DPTEXTURECAPS_MIPMAP, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_MIPMAP");
 			BGFX_FATAL( (D3DPTEXTURECAPS_ALPHA & m_caps.TextureCaps) == D3DPTEXTURECAPS_ALPHA, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_ALPHA");
-			BGFX_FATAL( (m_caps.VertexShaderVersion&0x300) == 0x300 &&  (m_caps.PixelShaderVersion&0x300) == 0x300, bgfx::Fatal::MinimumRequiredSpecs, "Shader Version is not 3.0.");
-			BGFX_FATAL(m_caps.MaxTextureWidth >= 2048 && m_caps.MaxTextureHeight >= 2048, bgfx::Fatal::MinimumRequiredSpecs, "Maximum texture size is below 2048.");
+			BGFX_FATAL(m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(3, 0)
+					  , bgfx::Fatal::MinimumRequiredSpecs
+					  , "Shader Version is not 3.0 (vs: %x, ps: %x)."
+					  , m_caps.VertexShaderVersion
+					  , m_caps.PixelShaderVersion
+					  );
+			BGFX_FATAL(m_caps.MaxTextureWidth >= 2048 && m_caps.MaxTextureHeight >= 2048
+					  , bgfx::Fatal::MinimumRequiredSpecs
+					  , "Maximum texture size is below 2048 (w: %d, h: %d)."
+					  , m_caps.MaxTextureWidth
+					  , m_caps.MaxTextureHeight
+					  );
 
 			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
 			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
