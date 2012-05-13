@@ -14,12 +14,14 @@ namespace bgfx
 	{
 		D3DPT_TRIANGLELIST,
 		D3DPT_LINELIST,
+		D3DPT_POINTLIST,
 	};
 
 	static const uint32_t s_primNumVerts[] =
 	{
 		3,
 		2,
+		1,
 	};
 
 	static const D3DMULTISAMPLE_TYPE s_msaa[] =
@@ -1534,7 +1536,8 @@ namespace bgfx
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
 					 |BGFX_STATE_ALPHA_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE
-					 |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK) & changedFlags)
+					 |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK
+					 |BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -1564,6 +1567,12 @@ namespace bgfx
 						alphaRef = ref/255.0f;
 						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHAREF, ref) );
 						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHATESTENABLE, !!(BGFX_STATE_ALPHA_TEST & newFlags) ) );
+					}
+
+					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
+					{
+						float pointSize = (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT);
+						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_POINTSIZE, *( (DWORD*)&pointSize) ) );
 					}
 
 					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)

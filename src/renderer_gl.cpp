@@ -227,12 +227,14 @@ namespace bgfx
 	{
 		GL_TRIANGLES,
 		GL_LINES,
+		GL_POINTS,
 	};
 
 	static const uint32_t s_primNumVerts[] =
 	{
 		3,
 		2,
+		1,
 	};
 
 	static const char* s_attribName[Attrib::Count] =
@@ -1411,8 +1413,9 @@ namespace bgfx
 				}
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
-					|BGFX_STATE_ALPHA_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE
-					|BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK) & changedFlags)
+				     |BGFX_STATE_ALPHA_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE
+				     |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK
+				     |BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -1465,6 +1468,12 @@ namespace bgfx
 						else
 						{
 							GL_CHECK(glDisable(GL_ALPHA_TEST) );
+						}
+
+						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
+						{
+							float pointSize = (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT);
+							GL_CHECK(glPointSize(pointSize) );
 						}
 #endif // BGFX_CONFIG_RENDERER_OPENGLES
 						}
