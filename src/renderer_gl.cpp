@@ -480,6 +480,7 @@ namespace bgfx
 			{
 				m_predefined[m_numPredefined].m_loc = loc;
 				m_predefined[m_numPredefined].m_type = predefined;
+				m_predefined[m_numPredefined].m_count = num;
 				m_numPredefined++;
 			}
 			else
@@ -1587,7 +1588,7 @@ namespace bgfx
 								{
 									const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, state.m_num
+										, uint32_min(predefined.m_count, state.m_num)
 										, GL_FALSE
 										, model.val
 										) );

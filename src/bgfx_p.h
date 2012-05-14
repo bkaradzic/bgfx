@@ -386,6 +386,7 @@ namespace bgfx
 
 		uint8_t m_type;
 		uint16_t m_loc;
+		uint16_t m_count;
 	};
 
 	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name);

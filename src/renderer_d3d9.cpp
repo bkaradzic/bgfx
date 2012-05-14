@@ -203,6 +203,10 @@ namespace bgfx
 					  , m_caps.MaxTextureHeight
 					  );
 
+			BX_TRACE("Max vertex shader instr. slots: %d", m_caps.MaxVertexShader30InstructionSlots);
+			BX_TRACE("Max vertex shader constants: %d", m_caps.MaxVertexShaderConst);
+			BX_TRACE("Max fragment shader instr slots: %d", m_caps.MaxPixelShader30InstructionSlots);
+
 			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
 			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
 			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF24) );
@@ -801,32 +805,38 @@ namespace bgfx
 			uint16_t regCount;
 			stream.read(regCount);
 
-			BX_TRACE("\t%s, type %2d, num %2d, r.index %3d, r.count %2d"
-				, name
-				, type
-				, num
-				, regIndex
-				, regCount
-				);
+			const char* kind = "invalid";
 
 			const void* data = NULL;
 			PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 			if (PredefinedUniform::Count != predefined)
 			{
+				kind = "predefined";
 				m_predefined[m_numPredefined].m_loc = regIndex;
+				m_predefined[m_numPredefined].m_count = regCount;
 				m_predefined[m_numPredefined].m_type = predefined|fragmentBit;
 				m_numPredefined++;
 			}
 			else
 			{
 				const UniformInfo* info = s_renderCtx.m_uniformReg.find(name);
+				BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 				if (NULL != info)
 				{
+					kind = "user";
 					data = info->m_data;
 					m_constantBuffer->writeUniformRef( (ConstantType::Enum)(type|fragmentBit), regIndex, data, regCount);
-					BX_TRACE("store %s %p", name, data);
 				}
 			}
+
+			BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
+				, kind
+				, name
+				, type
+				, num
+				, regIndex
+				, regCount
+				);
 		}
 
 		uint16_t shaderSize;
@@ -1671,20 +1681,20 @@ namespace bgfx
 
 						case PredefinedUniform::View:
 							{
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, m_render->m_view[view].val, 4);
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, m_render->m_view[view].val, uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProj:
 							{
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProj[view].val, 4);
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProj[view].val, uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::Model:
 							{
  								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, model.val, state.m_num*4);
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, model.val, uint32_min(state.m_num*4, predefined.m_count) );
 							}
 							break;
 
@@ -1693,7 +1703,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								matrix_mul(modelViewProj.val, model.val, viewProj[view].val);
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, 4);
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -1716,7 +1726,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								matrix_mul(modelViewProj.val, model.val, viewProjBias.val);
 
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, 4);
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -1734,7 +1744,7 @@ namespace bgfx
 								Matrix4 viewProjBias;
 								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
 
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProjBias.val, 4);
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProjBias.val, uint32_min(4, predefined.m_count) );
 							}
 							break;
 
