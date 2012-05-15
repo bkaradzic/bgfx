@@ -190,9 +190,9 @@ namespace bgfx
 			BGFX_FATAL( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) == 0, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_SQUAREONLY");
 			BGFX_FATAL( (D3DPTEXTURECAPS_MIPMAP & m_caps.TextureCaps) == D3DPTEXTURECAPS_MIPMAP, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_MIPMAP");
 			BGFX_FATAL( (D3DPTEXTURECAPS_ALPHA & m_caps.TextureCaps) == D3DPTEXTURECAPS_ALPHA, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_ALPHA");
-			BGFX_FATAL(m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(3, 0)
+			BGFX_FATAL(m_caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(2, 1)
 					  , bgfx::Fatal::MinimumRequiredSpecs
-					  , "Shader Version is not 3.0 (vs: %x, ps: %x)."
+					  , "Shader Model Version (vs: %x, ps: %x)."
 					  , m_caps.VertexShaderVersion
 					  , m_caps.PixelShaderVersion
 					  );
@@ -203,9 +203,10 @@ namespace bgfx
 					  , m_caps.MaxTextureHeight
 					  );
 
-			BX_TRACE("Max vertex shader instr. slots: %d", m_caps.MaxVertexShader30InstructionSlots);
+			BX_TRACE("Max vertex shader 3.0 instr. slots: %d", m_caps.MaxVertexShader30InstructionSlots);
 			BX_TRACE("Max vertex shader constants: %d", m_caps.MaxVertexShaderConst);
-			BX_TRACE("Max fragment shader instr slots: %d", m_caps.MaxPixelShader30InstructionSlots);
+			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
+			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
 			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
 			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );

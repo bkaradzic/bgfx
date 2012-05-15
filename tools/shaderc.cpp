@@ -195,7 +195,8 @@ bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 
 	if( !glslopt_get_status(shader) )
 	{
-		fprintf(stderr, "Error %s\n%s\n", _code.c_str(), glslopt_get_log(shader) );
+		fprintf(stderr, "Code:\n---\n%s\n---\n", _code.c_str() );
+		fprintf(stderr, "Error: %s\n", glslopt_get_log(shader) );
 		glslopt_cleanup(ctx);
 		return false;
 	}
@@ -274,7 +275,8 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 		);
 	if (FAILED(hr) )
 	{
-		fprintf(stderr, "0x%08x: %s\n", hr, errorMsg->GetBufferPointer() );
+		fprintf(stderr, "Code:\n---\n%s\n---\n", _code.c_str() );
+		fprintf(stderr, "Error: 0x%08x %s\n", hr, errorMsg->GetBufferPointer() );
 		return false;
 	}
 
@@ -457,15 +459,13 @@ struct Preprocessor
 
 		FILE* file = fopen(m_filePath, "r");
 		long int size = fsize(file);
-
 		char* input = new char[size+1];
-		fread(input, size, 1, file);
+		size = fread(input, 1, size, file);
 		input[size] = '\0';
+		fclose(file);
 
 		m_input = m_default;
 		m_input += input;
-
-		fclose(file);
 
 		fppTag* tagptr = m_tagptr;
 
@@ -609,13 +609,19 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (0 == _stricmp(type, "fragment") )
+	switch (tolower(type[0]) )
 	{
+	case 'f':
 		preprocessor.setDefine("BGFX_SHADER_TYPE_FRAGMENT=1");
-	}
-	else
-	{
+		break;
+
+	case 'v':
 		preprocessor.setDefine("BGFX_SHADER_TYPE_VERTEX=1");
+		break;
+
+	default:
+		fprintf(stderr, "Unknown type: %s?!", type);
+		return EXIT_FAILURE;
 	}
 
 	if (preprocessor.run() )
