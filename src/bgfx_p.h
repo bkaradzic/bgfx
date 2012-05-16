@@ -56,7 +56,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 #	include <windows.h>
 extern HWND g_bgfxHwnd;
 #elif BX_PLATFORM_XBOX360
-#	include <alloca.h>
+#	include <malloc.h>
 #	include <xtl.h>
 #endif // BX_PLATFORM_WINDOWS
 
@@ -2478,13 +2478,53 @@ namespace bgfx
 				}
 			}
 
-			static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
+			LRESULT process(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
 			{
 				switch (_id)
 				{
 				case WM_CLOSE:
 					TerminateProcess(GetCurrentProcess(), 0);
 					break;
+
+				case WM_SIZING:
+					{
+						RECT& rect = *(RECT*)_lparam;
+						uint32_t width = rect.right-rect.left;
+						uint32_t height = rect.bottom-rect.top;
+
+						switch (_wparam)
+						{
+						case WMSZ_LEFT:
+						case WMSZ_RIGHT:
+							{
+								float aspectRatio = 1.0f/m_aspectRatio;
+								width = bx::uint32_max(BGFX_DEFAULT_WIDTH/4, width);
+								height = uint32_t(float(width)*aspectRatio);
+							}
+							break;
+
+						default:
+							{
+								float aspectRatio = m_aspectRatio;
+								height = bx::uint32_max(BGFX_DEFAULT_HEIGHT/4, height);
+								width = uint32_t(float(height)*aspectRatio);
+							}
+							break;
+						}
+
+						rect.right = rect.left + width;
+						rect.bottom = rect.top + height;
+
+						SetWindowPos(_hwnd
+							, HWND_TOP
+							, rect.left
+							, rect.top
+							, (rect.right-rect.left)
+							, (rect.bottom-rect.top)
+							, SWP_SHOWWINDOW
+							);
+					}
+					return 0;
 
 				default:
 					break;
@@ -2509,7 +2549,6 @@ namespace bgfx
 
 			void adjust(uint32_t _width, uint32_t _height, bool _windowFrame)
 			{
-
 				ShowWindow(g_bgfxHwnd, SW_SHOWNORMAL);
 				RECT rect;
 				RECT newrect = {0, 0, (LONG)_width, (LONG)_height};
@@ -2563,11 +2602,17 @@ namespace bgfx
 
 				ShowWindow(g_bgfxHwnd, SW_RESTORE);
 
+				m_aspectRatio = float(_width)/float(_height);
+
 				m_frame = _windowFrame;
 			}
 
+		private:
+			static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
+
 			RECT m_rect;
 			DWORD m_style;
+			float m_aspectRatio;
 			bool m_frame;
 			bool m_update;
 		};

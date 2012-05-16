@@ -631,6 +631,13 @@ namespace bgfx
 		write(&_value, sizeof(void*) );
 	}
 
+#if BX_PLATFORM_WINDOWS
+	LRESULT CALLBACK Context::Window::wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
+	{
+		return s_ctx.m_window.process(_hwnd, _id, _wparam, _lparam);
+	}
+#endif // BX_PLATFORM_WINDOWS
+
 	void Context::init(bool _createRenderThread)
 	{
 		BX_TRACE("init");
