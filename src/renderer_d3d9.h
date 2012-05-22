@@ -74,7 +74,7 @@ namespace bgfx
 					BX_CHECK(SUCCEEDED(__hr__), #_call " FAILED 0x%08x\n", (uint32_t)__hr__); \
 				} while (0)
 
-#if BGFX_DEBUG
+#if BGFX_CONFIG_DEBUG
 #	define DX_CHECK(_call) _DX_CHECK(_call)
 #	define PIX_SETMARKER(_col, _name) _PIX_SETMARKER(_col, _name)
 #	define PIX_BEGINEVENT(_col, _name) _PIX_BEGINEVENT(_col, _name)
@@ -84,7 +84,7 @@ namespace bgfx
 #	define PIX_SETMARKER(_col, _name)
 #	define PIX_BEGINEVENT(_col, _name)
 #	define PIX_ENDEVENT()
-#endif // BGFX_DEBUG
+#endif // BGFX_CONFIG_DEBUG
 
 #define DX_RELEASE(_ptr, _expected) \
 				do { \

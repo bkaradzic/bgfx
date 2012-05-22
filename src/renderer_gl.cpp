@@ -1074,7 +1074,7 @@ namespace bgfx
 	{
 		s_renderCtx.init();
 
-#if BGFX_DEBUG
+#if BGFX_CONFIG_DEBUG
 		GLint numCmpFormats;
 		GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
 
@@ -1100,7 +1100,7 @@ namespace bgfx
 		GL_GET(GL_MAX_TEXTURE_SIZE, 64);
 		GL_GET(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, 0);
 		GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
-#endif // BGFX_DEBUG
+#endif // BGFX_CONFIG_DEBUG
 
 		const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 

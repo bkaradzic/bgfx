@@ -418,9 +418,6 @@ namespace bgfx
 	///
 	void saveScreenShot(const char* _filePath);
 
-	///
-	void renderFrame();
-
 } // namespace bgfx
 
 #endif // __BGFX_H__

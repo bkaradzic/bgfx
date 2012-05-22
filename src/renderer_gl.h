@@ -57,11 +57,11 @@ namespace bgfx
 					BX_CHECK(0 == err, #_call "; glError 0x%x %d", err, err); \
 				} while (0)
 
-#if BGFX_DEBUG
+#if BGFX_CONFIG_DEBUG
 #	define GL_CHECK(_call) _call // _GL_CHECK(_call)
 #else
 #	define GL_CHECK(_call) _call
-#endif // BGFX_DEBUG
+#endif // BGFX_CONFIG_DEBUG
 	
 	struct ConstantBuffer;
 	

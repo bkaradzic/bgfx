@@ -16,9 +16,11 @@
 extern void dbgPrintf(const char* _format, ...);
 extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
 
-#define BGFX_DEBUG 0
+#ifndef BGFX_CONFIG_DEBUG
+#	define BGFX_CONFIG_DEBUG 0
+#endif // BGFX_CONFIG_DEBUG
 
-#if BGFX_DEBUG
+#if BGFX_CONFIG_DEBUG
 #	define BX_TRACE(_format, ...) \
 				do { \
 					dbgPrintf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
@@ -208,6 +210,7 @@ namespace bgfx
 	extern void release(Memory* _mem);
 	extern void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
 	extern const char* getAttribName(Attrib::Enum _attr);
+	extern void renderFrame();
 
 	inline uint32_t uint16_min(uint16_t _a, uint16_t _b)
 	{
@@ -1877,7 +1880,7 @@ namespace bgfx
 
 		void dumpViewStats()
 		{
-#if 0 // BGFX_DEBUG
+#if 0 // BGFX_CONFIG_DEBUG
 			for (uint8_t view = 0; view < BGFX_CONFIG_MAX_VIEWS; ++view)
 			{
 				if (0 < m_seq[view])
@@ -1885,7 +1888,7 @@ namespace bgfx
 					BX_TRACE("%d: %d", view, m_seq[view]);
 				}
 			}
-#endif // BGFX_DEBUG
+#endif // BGFX_CONFIG_DEBUG
 		}
 
 		void freeAllHandles(Frame* _frame)
@@ -2488,9 +2491,14 @@ namespace bgfx
 
 				case WM_SIZING:
 					{
+						RECT clientRect;
+						GetClientRect(_hwnd, &clientRect);
+						uint32_t width = clientRect.right-clientRect.left;
+						uint32_t height = clientRect.bottom-clientRect.top;
+
 						RECT& rect = *(RECT*)_lparam;
-						uint32_t width = rect.right-rect.left;
-						uint32_t height = rect.bottom-rect.top;
+						uint32_t frameWidth = rect.right-rect.left - width;
+						uint32_t frameHeight = rect.bottom-rect.top - height;
 
 						switch (_wparam)
 						{
@@ -2512,8 +2520,8 @@ namespace bgfx
 							break;
 						}
 
-						rect.right = rect.left + width;
-						rect.bottom = rect.top + height;
+						rect.right = rect.left + width + frameWidth;
+						rect.bottom = rect.top + height + frameHeight;
 
 						SetWindowPos(_hwnd
 							, HWND_TOP

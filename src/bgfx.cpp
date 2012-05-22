@@ -574,7 +574,7 @@ namespace bgfx
 
 	void dump(const VertexDecl& _decl)
 	{
-#if BGFX_DEBUG
+#if BGFX_CONFIG_DEBUG
 		BX_TRACE("vertexdecl %08x (%08x), stride %d"
 			, _decl.m_hash
 			, hash(_decl.m_attributes, sizeof(_decl.m_attributes) )
@@ -600,7 +600,7 @@ namespace bgfx
 				);
 			}
 		}
-#endif // BGFX_DEBUG
+#endif // BGFX_CONFIG_DEBUG
 	}
 
 	const uint32_t g_constantTypeSize[ConstantType::Count] =
