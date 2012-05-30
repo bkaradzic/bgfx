@@ -360,11 +360,6 @@ namespace bgfx
 	}
 
 #elif BX_PLATFORM_LINUX
-	static void linuxInitDisplay()
-	{
-		s_renderCtx.setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
-	}
-
 	bool linuxGetDisplay(Display** _display, Window* _window)
 	{
 		if (!s_renderCtx.m_display)
@@ -635,9 +630,10 @@ namespace bgfx
 			GL_CHECK(glGetProgramiv(m_id, GL_PROGRAM_BINARY_LENGTH, &length) );
 			void* data = g_realloc(NULL, length);
 			GL_CHECK(glGetProgramBinary(m_id, length, NULL, &format, data) );
-			g_free(data);
 
 			dbgPrintfData(data, length, "Binary 0x%08x", format);
+
+			g_free(data);
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
@@ -2091,10 +2087,6 @@ namespace bgfx
 	void* renderThread(void*)
 #endif // BX_PLATFORM_WINDOWS
 	{
-#if BX_PLATFORM_LINUX
-		linuxInitDisplay();
-#endif // BX_PLATFORM_LINUX
-
 		while (!s_exit)
 		{
 			renderFrame();
