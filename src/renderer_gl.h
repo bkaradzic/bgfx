@@ -6,20 +6,21 @@
 #ifndef __RENDERER_GL_H__
 #define __RENDERER_GL_H__
 
-#if BX_PLATFORM_NACL
+#if BGFX_CONFIG_RENDERER_OPENGL
+#	include <gl/GL.h>
+#	include <gl/glext.h>
+#elif BGFX_CONFIG_RENDERER_OPENGLES
 #	include <GLES2/gl2.h>
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
+#if BX_PLATFORM_NACL
 #	include <ppapi/gles2/gl2ext_ppapi.h>
 #	include <ppapi/c/pp_completion_callback.h>
 #	include <ppapi/c/ppb_instance.h>
 #	include <ppapi/c/ppb_graphics_3d.h>
-#elif BX_PLATFORM_ANDROID
-#	include <GLES2/gl2.h>
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
-#	include <gl/GL.h>
-#	include <gl/glext.h>
 #elif BX_PLATFORM_LINUX
-#	include <GL3/gl3.h>
 #	include <GL/glx.h>
 #	include <X11/Xlib.h>
 #endif // BX_PLATFORM_
@@ -65,7 +66,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 
 #if BX_PLATFORM_WINDOWS
-#define GL_IMPORT(_proto, _func) extern _proto _func
+#define GL_IMPORT(_optional, _proto, _func) extern _proto _func
 #include "glimports.h"
 #undef GL_IMPORT
 #endif // BX_PLATFORM_WINDOWS
@@ -218,37 +219,8 @@ namespace bgfx
 
 	struct Material
 	{
-		void create(const Shader& _vsh, const Shader& _fsh)
-		{
-			m_id = glCreateProgram();
-			BX_TRACE("material create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
-
-			GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
-			GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
-			GL_CHECK(glLinkProgram(m_id) );
-
-			GLint linked = 0;
-			GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
-
-			if (0 == linked)
-			{
-				char log[1024];
-				GL_CHECK(glGetProgramInfoLog(m_id, sizeof(log), NULL, log) );
-				BX_TRACE("%d: %s", linked, log);
-
-				GL_CHECK(glDeleteProgram(m_id) );
-				return;
-			}
-
- 			init();
-		}
-
-		void destroy()
-		{
-			GL_CHECK(glUseProgram(0) );
-			GL_CHECK(glDeleteProgram(m_id) );
-		}
-
+		void create(const Shader& _vsh, const Shader& _fsh);
+		void destroy();
  		void init();
  		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
  

@@ -17,7 +17,7 @@
 namespace bgfx
 {
 #if BX_PLATFORM_WINDOWS
-#define GL_IMPORT(_proto, _func) _proto _func
+#define GL_IMPORT(_optional, _proto, _func) _proto _func
 #include "glimports.h"
 #undef GL_IMPORT
 #endif // BX_PLATFORM_WINDOWS
@@ -136,10 +136,10 @@ namespace bgfx
 					result = wglMakeCurrent(m_hdc, m_context);
 					BX_CHECK(0 != result, "wglMakeCurrent failed!");
 
-#	define GL_IMPORT(_proto, _func) \
+#	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)wglGetProcAddress(#_func); \
-					BGFX_FATAL(NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress %s", #_func); \
+					BGFX_FATAL(!_optional && NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress %s", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -254,7 +254,7 @@ namespace bgfx
 
 					glXMakeCurrent(display, window, m_context);
 
-					glClearColor(0, 0.5, 1, 1);
+					glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 					glClear(GL_COLOR_BUFFER_BIT);
 					glXSwapBuffers(display, window);
 
@@ -382,11 +382,12 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			GL_EXT_texture_format_BGRA8888,
-			GL_EXT_texture_compression_dxt1,
-			GL_CHROMIUM_texture_compression_dxt3,
-			GL_CHROMIUM_texture_compression_dxt5,
-			GL_OES_standard_derivatives,
+			EXT_texture_format_BGRA8888,
+			EXT_texture_compression_dxt1,
+			CHROMIUM_texture_compression_dxt3,
+			CHROMIUM_texture_compression_dxt5,
+			OES_standard_derivatives,
+			ARB_get_program_binary,
 
 			Count
 		};
@@ -405,6 +406,7 @@ namespace bgfx
 		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
 		{ "GL_OES_standard_derivatives",          false, true },
+		{ "GL_ARB_get_program_binary",            false, false },
 	};
 
 	static const GLenum s_primType[] =
@@ -594,6 +596,54 @@ namespace bgfx
 		};
 
 		return ConstantType::End;
+	}
+
+	void Material::create(const Shader& _vsh, const Shader& _fsh)
+	{
+		m_id = glCreateProgram();
+		BX_TRACE("material create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
+
+		GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
+		GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
+		GL_CHECK(glLinkProgram(m_id) );
+
+		if (s_extension[Extension::ARB_get_program_binary].m_supported)
+		{
+			GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
+		}
+
+		GLint linked = 0;
+		GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
+
+		if (0 == linked)
+		{
+			char log[1024];
+			GL_CHECK(glGetProgramInfoLog(m_id, sizeof(log), NULL, log) );
+			BX_TRACE("%d: %s", linked, log);
+
+			GL_CHECK(glDeleteProgram(m_id) );
+			return;
+		}
+
+		if (s_extension[Extension::ARB_get_program_binary].m_supported)
+		{
+			GLint length;
+			GLenum format;
+			GL_CHECK(glGetProgramiv(m_id, GL_PROGRAM_BINARY_LENGTH, &length) );
+			void* data = g_realloc(NULL, length);
+			GL_CHECK(glGetProgramBinary(m_id, length, NULL, &format, data) );
+			g_free(data);
+
+			dbgPrintfData(data, length, "Binary 0x%08x", format);
+		}
+
+		init();
+	}
+
+	void Material::destroy()
+	{
+		GL_CHECK(glUseProgram(0) );
+		GL_CHECK(glDeleteProgram(m_id) );
 	}
 
 	void Material::init()
@@ -815,7 +865,7 @@ namespace bgfx
 			if (!s_renderCtx.m_dxtSupport
 			||  0 == dds.m_type)
 			{
-				fmt = s_extension[Extension::GL_EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
+				fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 
 				uint8_t bpp = 4;
 				if (dds.m_type == 0
@@ -1329,9 +1379,9 @@ namespace bgfx
  		}
 
 		s_renderCtx.m_dxtSupport = true
-			&& s_extension[Extension::GL_EXT_texture_compression_dxt1].m_supported
-			&& s_extension[Extension::GL_CHROMIUM_texture_compression_dxt3].m_supported
-			&& s_extension[Extension::GL_CHROMIUM_texture_compression_dxt5].m_supported
+			&& s_extension[Extension::EXT_texture_compression_dxt1].m_supported
+			&& s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
+			&& s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
 			;
 	}
 
@@ -1659,7 +1709,7 @@ namespace bgfx
 
 						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 						{
-							float pointSize = (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT);
+							float pointSize = (float)(uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
 							GL_CHECK(glPointSize(pointSize) );
 						}
 #endif // BGFX_CONFIG_RENDERER_OPENGLES
