@@ -157,6 +157,21 @@ public:
 		m_file = NULL;
 	}
 
+	void writef(const char* _format, ...)
+	{
+		if (NULL != m_file)
+		{
+			va_list argList;
+			va_start(argList, _format);
+
+			char temp[2048];
+			int len = vsnprintf(temp, sizeof(temp), _format, argList);
+			fwrite(temp, len, 1, m_file);
+
+			va_end(argList);
+		}
+	}
+
 	void write(const char* _str)
 	{
 		if (NULL != m_file)
@@ -212,7 +227,19 @@ bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 	}
 
 	Stream stream(out);
-	stream.write("precision highp float;\n\n");
+
+	const char* profile = _cmdLine.findOption('p');
+	if (NULL == profile)
+	{
+		stream.write("#ifdef GL_ES\n");
+		stream.write("precision highp float;\n");
+		stream.write("#endif // GL_ES\n\n");
+	}
+	else
+	{
+		stream.writef("#version %s\n\n", profile);
+	}
+
 	stream.write(optimizedShader, strlen(optimizedShader) );
 	uint8_t nul = 0;
 	stream.write(nul);
@@ -534,6 +561,16 @@ struct Preprocessor
 	uint32_t m_fgetsPos;
 };
 
+// OpenGL #version Features Direct3D Features Shader Model
+// 2.1    120      vf       9.0      vf       2.0
+// 3.0    130
+// 3.1    140
+// 3.2    150      vgf
+// 3.3    330               10.0     vgf      4.0
+// 4.0    400      vhdgf
+// 4.1    410
+// 4.2    420               11.0     vhdgf    5.0
+
 int main(int _argc, const char* _argv[])
 {
 	CommandLine cmdLine(_argc, _argv);
@@ -574,6 +611,7 @@ int main(int _argc, const char* _argv[])
 	preprocessor.setDefaultDefine("BX_PLATFORM_NACL");
 	preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
 	preprocessor.setDefaultDefine("BX_PLATFORM_XBOX360");
+	preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
@@ -590,6 +628,12 @@ int main(int _argc, const char* _argv[])
 	else if (0 == _stricmp(platform, "nacl") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_NACL=1");
+		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+		glsl = true;
+	}
+	else if (0 == _stricmp(platform, "linux"))
+	{
+		preprocessor.setDefine("BX_PLATFORM_LINUX=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		glsl = true;
 	}
@@ -641,7 +685,17 @@ int main(int _argc, const char* _argv[])
 			Stream stream(out);
 			if (glsl)
 			{
-				stream.write("precision highp float;\n\n");
+				const char* profile = cmdLine.findOption('p');
+				if (NULL == profile)
+				{
+					stream.write("#ifdef GL_ES\n");
+					stream.write("precision highp float;\n");
+					stream.write("#endif // GL_ES\n\n");
+				}
+				else
+				{
+					stream.writef("#version %s\n\n", profile);
+				}
 			}
 			stream.write(preprocessor.m_preprocessed.c_str(), preprocessor.m_preprocessed.size() );
 			stream.close();

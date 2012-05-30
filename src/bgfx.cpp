@@ -468,6 +468,19 @@ namespace bgfx
 		radixSort(m_sortKeys, s_ctx.m_tempKeys, m_sortValues, s_ctx.m_tempValues, m_num);
 	}
 
+	RendererType::Enum getRendererType()
+	{
+#if BGFX_CONFIG_RENDERER_DIRECT3D
+		return RendererType::Direct3D9;
+#elif BGFX_CONFIG_RENDERER_OPENGL
+		return RendererType::OpenGL;
+#elif BGFX_CONFIG_RENDERER_OPENGLES
+		return RendererType::OpenGLES;
+#else
+		return RendererType::Null;
+#endif // BGFX_CONFIG_RENDERER_
+	}
+
 	void init(bool _createRenderThread, fatalFn _fatal, reallocFn _realloc, freeFn _free)
 	{
 		if (NULL != _fatal)
@@ -647,16 +660,18 @@ namespace bgfx
 
 #if BX_PLATFORM_WINDOWS
 		m_window.init();
-#endif // BX_PLATFORM_WINDOWS
+#endif // BX_PLATFORM_
 
 #if BGFX_CONFIG_MULTITHREADED
-		m_renderThread = NULL;
+		m_renderThread = 0;
 
 		if (_createRenderThread)
 		{
 #	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
 			m_renderThread = CreateThread(NULL, 16<<10, renderThread, NULL, 0, NULL);
-#	endif // BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
+#	elif BX_PLATFORM_LINUX
+			pthread_create(&m_renderThread, NULL, renderThread, NULL);
+#	endif // BX_PLATFORM_
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
@@ -688,12 +703,15 @@ namespace bgfx
 		frame();
 
 #if BGFX_CONFIG_MULTITHREADED
-		if (NULL != m_renderThread)
+		if (0 != m_renderThread)
 		{
 #	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
 			WaitForSingleObject(m_renderThread, INFINITE);
 			m_renderThread = NULL;
-#	endif // BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
+#	elif BX_PLATFORM_LINUX
+			pthread_join(m_renderThread, NULL);
+			m_renderThread = 0;
+#	endif // BX_PLATFORM_*
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 

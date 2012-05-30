@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 
-#if BGFX_CONFIG_RENDERER_OPENGLES
+#if (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
@@ -16,6 +16,12 @@
 
 namespace bgfx
 {
+#if BX_PLATFORM_WINDOWS
+#define GL_IMPORT(_proto, _func) _proto _func
+#include "glimports.h"
+#undef GL_IMPORT
+#endif // BX_PLATFORM_WINDOWS
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 #if BX_PLATFORM_NACL
@@ -33,6 +39,7 @@ namespace bgfx
 	{
 		RendererContext()
 			: m_dxtSupport(false)
+			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 #if BX_PLATFORM_NACL
 			, m_context(0)
@@ -40,8 +47,12 @@ namespace bgfx
 			, m_instInterface(NULL)
 			, m_graphicsInterface(NULL)
 #elif BX_PLATFORM_WINDOWS
+			, m_context(NULL)
 			, m_hdc(NULL)
-			, m_hglrc(NULL)
+#elif BX_PLATFORM_LINUX
+			, m_context(0)
+			, m_window(0)
+			, m_display(NULL)
 #endif // BX_PLATFORM_
 		{
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -57,9 +68,9 @@ namespace bgfx
 				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
-#if BX_PLATFORM_NACL
+#if BX_PLATFORM_NACL || BX_PLATFORM_LINUX
 				setRenderContextSize(_resolution.m_width, _resolution.m_height);
-#endif // BX_PLATFORM_NACL
+#endif // BX_PLATFORM_
 			}
 		}
 
@@ -105,7 +116,7 @@ namespace bgfx
 						PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
 						PFD_TYPE_RGBA,
 						32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-						16, 0, 0,
+						24, 0, 0,
 						PFD_MAIN_PLANE,
 						0, 0, 0, 0
 					};
@@ -119,25 +130,162 @@ namespace bgfx
 					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
 					BX_CHECK(0 != result, "SetPixelFormat failed!");
 
-					m_hglrc = wglCreateContext(m_hdc);
-					BX_CHECK(NULL != g_hglrc, "wglCreateContext failed!");
-
-					result = wglMakeCurrent(m_hdc, m_hglrc);
+					m_context = wglCreateContext(m_hdc);
+					BX_CHECK(NULL != m_context, "wglCreateContext failed!");
+					
+					result = wglMakeCurrent(m_hdc, m_context);
 					BX_CHECK(0 != result, "wglMakeCurrent failed!");
+
+#	define GL_IMPORT(_proto, _func) \
+				{ \
+					_func = (_proto)wglGetProcAddress(#_func); \
+					BGFX_FATAL(NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress %s", #_func); \
+				}
+#	include "glimports.h"
+#	undef GL_IMPORT
+				}
+#elif BX_PLATFORM_LINUX
+
+				if (0 == m_display)
+				{
+					Display* display = XOpenDisplay(0);
+					XLockDisplay(display);
+					BGFX_FATAL(display, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to open X display (0).");
+
+					int glxMajor, glxMinor;
+					if (!glXQueryVersion(display, &glxMajor, &glxMinor))
+					{
+						BGFX_FATAL(false, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to query GLX version");
+					}
+					BGFX_FATAL((glxMajor == 1 && glxMinor >= 3) || glxMajor > 1, bgfx::Fatal::OPENGL_UnableToCreateContext, "GLX version is not >=1.3 (%d.%d).", glxMajor, glxMinor);
+
+					const int glxAttribs[] =
+					{
+						GLX_X_RENDERABLE, True,
+						GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+						GLX_RENDER_TYPE, GLX_RGBA_BIT,
+						GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+						GLX_RED_SIZE, 8,
+						GLX_BLUE_SIZE, 8,
+						GLX_GREEN_SIZE, 8,
+						GLX_ALPHA_SIZE, 8,
+						GLX_DEPTH_SIZE, 24,
+						GLX_STENCIL_SIZE, 8,
+						GLX_DOUBLEBUFFER, True,
+						None,
+					};
+
+					// Find suitable config
+					GLXFBConfig	bestconfig;
+
+					int nconfigs;
+					GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), glxAttribs, &nconfigs);
+
+					XVisualInfo* visualInfo = 0;
+					for (int ii = 0; ii < nconfigs; ++ii)
+					{
+						visualInfo = glXGetVisualFromFBConfig(display, configs[ii]);
+						if (visualInfo)
+						{
+							// Check if meets min spec
+							bool validconfig = true;
+							for (int attridx = 0; attridx < countof(glxAttribs) && glxAttribs[attridx] != None; attridx += 2)
+							{
+								int value;
+								glXGetFBConfigAttrib(display, configs[ii], glxAttribs[attridx], &value);
+								if (value < glxAttribs[attridx + 1])
+								{
+									validconfig = false;
+									break;
+								}
+							}
+
+							if (validconfig)
+							{
+								bestconfig = configs[ii];
+								break;
+							}
+						}
+
+						XFree(visualInfo);
+						visualInfo = 0;
+					}
+
+					XFree(configs);
+					BGFX_FATAL(visualInfo, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to find a suitable X11 display configuration.");
+
+					// Generate colormaps
+					XSetWindowAttributes windowAttrs;
+					windowAttrs.colormap = XCreateColormap(display, RootWindow(display, visualInfo->screen), visualInfo->visual, AllocNone);
+					windowAttrs.background_pixmap = None;
+					windowAttrs.border_pixel = 0;
+
+					Window window = XCreateWindow(
+											  display
+											, RootWindow(display, visualInfo->screen)
+											, 0, 0
+											, _width, _height, 0, visualInfo->depth
+											, InputOutput
+											, visualInfo->visual
+											, CWBorderPixel|CWColormap
+											, &windowAttrs
+											);
+					BGFX_FATAL(window, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create X11 window.");
+
+					XMapRaised(display, window);
+					XFlush(display);
+					XFree(visualInfo);
+
+					BX_TRACE("create context");
+
+					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
+					BGFX_FATAL(glXCreateContextAttribsARB, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to get glXCreateContextAttribsARB.");
+
+					const int contextArrib[] =
+					{
+						GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+						GLX_CONTEXT_MINOR_VERSION_ARB, 0,
+						None,
+					};
+
+					m_context = glXCreateContextAttribsARB(display, bestconfig, 0, True, contextArrib);
+					BGFX_FATAL(m_context, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create GLX context.");
+
+					glXMakeCurrent(display, window, m_context);
+
+					glClearColor(0, 0.5, 1, 1);
+					glClear(GL_COLOR_BUFFER_BIT);
+					glXSwapBuffers(display, window);
+
+					m_display = display;
+					m_window = window;
+					XUnlockDisplay(display);
+				}
+				else
+				{
+					XResizeWindow(m_display, m_window, _width, _height);
 				}
 #endif // BX_PLATFORM_
 			}
+
+			m_flip = true;
 		}
 
 		void flip()
 		{
+			if (m_flip)
+			{
 #if BX_PLATFORM_NACL
-			glSetCurrentContextPPAPI(m_context);
-			m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
+				glSetCurrentContextPPAPI(m_context);
+				m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
 #elif BX_PLATFORM_WINDOWS
-			wglMakeCurrent(m_hdc, m_hglrc);
-			SwapBuffers(m_hdc);
+				wglMakeCurrent(m_hdc, m_context);
+				SwapBuffers(m_hdc);
+#elif BX_PLATFORM_LINUX
+				glXSwapBuffers(m_display, m_window);
 #endif // BX_PLATFORM_
+			}
 
 			if (NULL != m_postSwapBuffers)
 			{
@@ -148,6 +296,16 @@ namespace bgfx
 		void init()
 		{
 			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+		}
+
+		void saveScreenShot(Memory* _mem)
+		{
+#if BGFX_CONFIG_RENDERER_OPENGL
+			void* data = g_realloc(NULL, m_resolution.m_width*m_resolution.m_height*4);
+			glReadPixels(0, 0, m_resolution.m_width, m_resolution.m_height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			saveTga( (const char*)_mem->data, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, data);
+			g_free(data);
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 		}
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -165,6 +323,7 @@ namespace bgfx
 
 		Resolution m_resolution;
 		bool m_dxtSupport;
+		bool m_flip;
 
 		PostSwapBuffersFn m_postSwapBuffers;
 
@@ -174,8 +333,12 @@ namespace bgfx
 		const PPB_Instance* m_instInterface;
 		const PPB_Graphics3D* m_graphicsInterface;
 #elif BX_PLATFORM_WINDOWS
+		HGLRC m_context;
 		HDC m_hdc;
-		HGLRC m_hglrc;
+#elif BX_PLATFORM_LINUX
+		GLXContext m_context;
+		Window m_window;
+		Display* m_display;
 #endif // BX_PLATFORM_NACL
 	};
 
@@ -195,7 +358,25 @@ namespace bgfx
 	{
 		renderFrame();
 	}
-#endif // BX_PLATFORM_NACL
+
+#elif BX_PLATFORM_LINUX
+	static void linuxInitDisplay()
+	{
+		s_renderCtx.setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+	}
+
+	bool linuxGetDisplay(Display** _display, Window* _window)
+	{
+		if (!s_renderCtx.m_display)
+		{
+			return false;
+		}
+
+		*_display = s_renderCtx.m_display;
+		*_window = s_renderCtx.m_window;
+		return true;
+	}
+#endif // BX_PLATFORM_
 
 	struct Extension
 	{
@@ -212,15 +393,18 @@ namespace bgfx
 
 		const char* m_name;
 		bool m_supported;
+		bool m_initialize;
 	};
 
 	static Extension s_extension[Extension::Count] =
 	{
-		{ "GL_EXT_texture_format_BGRA8888", false },
-		{ "GL_EXT_texture_compression_dxt1", false },
-		{ "GL_CHROMIUM_texture_compression_dxt3", false },
-		{ "GL_CHROMIUM_texture_compression_dxt5", false },
-		{ "GL_OES_standard_derivatives", false },
+		// Nvidia BGRA on Linux bug:
+		// https://groups.google.com/a/chromium.org/forum/?fromgroups#!topic/chromium-reviews/yFfbUdyeUCQ
+		{ "GL_EXT_texture_format_BGRA8888",       false, !BX_PLATFORM_LINUX },
+		{ "GL_EXT_texture_compression_dxt1",      false, true },
+		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
+		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
+		{ "GL_OES_standard_derivatives",          false, true },
 	};
 
 	static const GLenum s_primType[] =
@@ -1117,7 +1301,7 @@ namespace bgfx
 			}
 			else
 			{
-				len = uint32_min(sizeof(name), strlen(pos) );
+				len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
 			}
 			
 			strncpy(name, pos, len);
@@ -1127,7 +1311,8 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 			{
 				Extension& extension = s_extension[ii];
-				if (!extension.m_supported)
+				if (!extension.m_supported
+				&&  extension.m_initialize)
 				{
 					if (0 == strcmp(name, extension.m_name) )
 					{
@@ -1272,7 +1457,7 @@ namespace bgfx
 
 	void Context::rendererSaveScreenShot(Memory* _mem)
 	{
-//		glReadPixels(0, 0, m_render->m_width, m_render->m_height, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+		s_renderCtx.saveScreenShot(_mem);
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
@@ -1466,6 +1651,7 @@ namespace bgfx
 						if (BGFX_STATE_ALPHA_TEST & newFlags)
 						{
 							GL_CHECK(glEnable(GL_ALPHA_TEST) );
+						}
 						else
 						{
 							GL_CHECK(glDisable(GL_ALPHA_TEST) );
@@ -1744,7 +1930,7 @@ namespace bgfx
 							}
 						}
 
-						if (bgfx::invalidHandle != state.m_indexBuffer.idx)
+						if (bgfx::invalidHandle != currentState.m_vertexBuffer.idx)
 						{
 							if (baseVertex != state.m_startVertex
 							||  bindAttribs)
@@ -1755,26 +1941,41 @@ namespace bgfx
 								s_renderCtx.m_materials[materialIdx].bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
 							}
 
-							uint32_t numIndices = state.m_numIndices;
+							uint32_t numIndices = 0;
 							uint32_t numPrims = 0;
 
-							if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+							if (bgfx::invalidHandle != state.m_indexBuffer.idx)
 							{
-								numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-								numPrims = numIndices/primNumVerts;
+								if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+								{
+									numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+									numPrims = numIndices/primNumVerts;
 
-								GL_CHECK(glDrawElements(primType
-									, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
-									, GL_UNSIGNED_SHORT
-									, (void*)0
-									) );
+									GL_CHECK(glDrawElements(primType
+										, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
+										, GL_UNSIGNED_SHORT
+										, (void*)0
+										) );
+								}
+								else if (primNumVerts <= state.m_numIndices)
+								{
+									numIndices = state.m_numIndices;
+									numPrims = numIndices/primNumVerts;
+
+									GL_CHECK(glDrawElements(primType
+										, numIndices
+										, GL_UNSIGNED_SHORT
+										, (void*)(uintptr_t)(state.m_startIndex*2)
+										) );
+								}
 							}
-							else if (primNumVerts <= state.m_numIndices)
+							else
 							{
-								GL_CHECK(glDrawElements(primType
-									, numIndices
-									, GL_UNSIGNED_SHORT
-									, (void*)(uintptr_t)(state.m_startIndex*2)
+								numPrims = state.m_numVertices/primNumVerts;
+
+								GL_CHECK(glDrawArrays(primType
+									, 0
+									, state.m_numVertices
 									) );
 							}
 
@@ -1789,7 +1990,7 @@ namespace bgfx
 		elapsed += now;
 
 		static int64_t last = now;
-		double frameTime = now - last;
+		int64_t frameTime = now - last;
 		last = now;
 
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
@@ -1829,6 +2030,26 @@ namespace bgfx
 
 		GL_CHECK(glFlush() );
 	}
+
+#if BX_PLATFORM_WINDOWS
+	DWORD WINAPI renderThread(LPVOID)
+#else
+	void* renderThread(void*)
+#endif // BX_PLATFORM_WINDOWS
+	{
+#if BX_PLATFORM_LINUX
+		linuxInitDisplay();
+#endif // BX_PLATFORM_LINUX
+
+		while (!s_exit)
+		{
+			renderFrame();
+		}
+
+		s_exit = false;
+		return 0;
+	}
+
 }
 
-#endif // BGFX_CONFIG_RENDERER_OPENGLES
+#endif // (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)

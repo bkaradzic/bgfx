@@ -16,7 +16,7 @@
 #	define snprintf _snprintf
 #endif // BX_COMPILER_MSVC
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_XBOX360
 extern "C"
 {
 	__declspec(dllimport) void __stdcall OutputDebugStringA(const char* _str);
@@ -59,7 +59,7 @@ void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...)
 
 	va_list argList;
 	va_start(argList, _format);
-	dbgPrintf(_format, argList);
+	dbgPrintfVargs(_format, argList);
 	va_end(argList);
 
 	dbgPrintf("\ndata: " DBG_ADDRESS ", size: %d\n", _data, _size);

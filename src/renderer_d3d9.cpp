@@ -1391,7 +1391,7 @@ namespace bgfx
 
 	void Context::rendererCreateUniform(UniformHandle _handle, ConstantType::Enum _type, uint16_t _num, const char* _name)
 	{
-		uint32_t size = g_constantTypeSize[_type]*_num;
+		uint32_t size = BX_ALIGN_16(g_constantTypeSize[_type]*_num);
 		void* data = g_realloc(NULL, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
 		s_renderCtx.m_uniformReg.reg(_name, s_renderCtx.m_uniforms[_handle.idx]);
@@ -1837,7 +1837,7 @@ namespace bgfx
 					}
 				}
 
-				if (bgfx::invalidHandle != state.m_indexBuffer.idx)
+				if (bgfx::invalidHandle != currentState.m_vertexBuffer.idx)
 				{
 					uint32_t numVertices = state.m_numVertices;
 					if (UINT32_C(0xffffffff) == numVertices)
@@ -1848,34 +1848,45 @@ namespace bgfx
 						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
 					}
 
-					uint32_t numIndices;
+					uint32_t numIndices = 0;
 					uint32_t numPrims = 0;
 
-					if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+					if (bgfx::invalidHandle != state.m_indexBuffer.idx)
 					{
-						numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-						numPrims = numIndices/primNumVerts;
+						if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+						{
+							numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+							numPrims = numIndices/primNumVerts;
 
-						DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
+							DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
 								, state.m_startVertex
 								, 0
 								, numVertices
 								, 0
 								, numPrims
 								) );
-					}
-					else if (primNumVerts <= state.m_numIndices)
-					{
-						numIndices = state.m_numIndices;
-						numPrims = numIndices/primNumVerts;
+						}
+						else if (primNumVerts <= state.m_numIndices)
+						{
+							numIndices = state.m_numIndices;
+							numPrims = numIndices/primNumVerts;
 
-						DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
+							DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
 								, state.m_startVertex
 								, 0
 								, numVertices
 								, state.m_startIndex
 								, numPrims
 								) );
+						}
+					}
+					else
+					{
+						numPrims = numVertices/primNumVerts;
+						DX_CHECK(s_renderCtx.m_device->DrawPrimitive(primType
+							, state.m_startVertex
+							, numPrims
+							) );
 					}
 
 					statsNumPrims += numPrims;

@@ -145,6 +145,18 @@ namespace bgfx
 			D3D9_UnableToCreateInterface,
 			D3D9_UnableToCreateDevice,
 			D3D9_UnableToCreateRenderTarget,
+			OPENGL_UnableToCreateContext,
+		};
+	};
+
+	struct RendererType
+	{
+		enum Enum
+		{
+			Null = 0,
+			Direct3D9,
+			OpenGLES,
+			OpenGL,
 		};
 	};
 
@@ -255,6 +267,9 @@ namespace bgfx
 		uint16_t m_offset[Attrib::Count];
 		uint8_t m_attributes[Attrib::Count];
 	};
+
+	///
+	RendererType::Enum getRendererType();
 
 	///
 	void init(bool _createRenderThread = true, fatalFn _fatal = NULL, reallocFn _realloc = NULL, freeFn _free = NULL);

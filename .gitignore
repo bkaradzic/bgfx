@@ -1,2 +1,4 @@
-.build
-
+.build/
+.debug/
+.svn/
+tags

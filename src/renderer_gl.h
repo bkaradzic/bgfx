@@ -16,11 +16,12 @@
 #	include <GLES2/gl2.h>
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
-
-#	define GLEW_STATIC
-#	include <GL/glew.h>
+#	include <gl/GL.h>
+#	include <gl/glext.h>
 #elif BX_PLATFORM_LINUX
 #	include <GL3/gl3.h>
+#	include <GL/glx.h>
+#	include <X11/Xlib.h>
 #endif // BX_PLATFORM_
 
 #ifndef GL_BGRA_EXT
@@ -62,8 +63,14 @@ namespace bgfx
 #else
 #	define GL_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
+
+#if BX_PLATFORM_WINDOWS
+#define GL_IMPORT(_proto, _func) extern _proto _func
+#include "glimports.h"
+#undef GL_IMPORT
+#endif // BX_PLATFORM_WINDOWS
 	
-	struct ConstantBuffer;
+	class ConstantBuffer;
 	
 	struct IndexBuffer
 	{
