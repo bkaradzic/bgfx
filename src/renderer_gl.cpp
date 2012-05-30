@@ -603,14 +603,16 @@ namespace bgfx
 		m_id = glCreateProgram();
 		BX_TRACE("material create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
 
-		GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
-		GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
-		GL_CHECK(glLinkProgram(m_id) );
-
+#if BGFX_CONFIG_RENDERER_OPENGL
 		if (s_extension[Extension::ARB_get_program_binary].m_supported)
 		{
 			GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
 		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
+		GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
+		GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
+		GL_CHECK(glLinkProgram(m_id) );
 
 		GLint linked = 0;
 		GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
@@ -625,6 +627,7 @@ namespace bgfx
 			return;
 		}
 
+#if BGFX_CONFIG_RENDERER_OPENGL
 		if (s_extension[Extension::ARB_get_program_binary].m_supported)
 		{
 			GLint length;
@@ -636,6 +639,7 @@ namespace bgfx
 
 			dbgPrintfData(data, length, "Binary 0x%08x", format);
 		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		init();
 	}
