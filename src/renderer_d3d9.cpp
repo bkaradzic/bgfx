@@ -153,8 +153,8 @@ namespace bgfx
 
 			BGFX_FATAL(m_d3d9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
 
-			uint32_t adapter = D3DADAPTER_DEFAULT;
-			D3DDEVTYPE deviceType = D3DDEVTYPE_HAL;
+			m_adapter = D3DADAPTER_DEFAULT;
+			m_deviceType = D3DDEVTYPE_HAL;
 
 			uint32_t adapterCount = m_d3d9->GetAdapterCount();
 			for (uint32_t ii = 0; ii < adapterCount; ++ii)
@@ -176,8 +176,8 @@ namespace bgfx
 #if BGFX_CONFIG_DEBUG_PERFHUD
 				if (0 != strstr(identifier.Description, "PerfHUD") )
 				{
-					adapter = ii;
-					deviceType = D3DDEVTYPE_REF;
+					m_adapter = ii;
+					m_deviceType = D3DDEVTYPE_REF;
 				}
 #endif // BGFX_CONFIG_DEBUG_PERFHUD
 			}
@@ -192,8 +192,8 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < countof(behaviorFlags) && NULL == m_device; ++ii)
 			{
 #if BGFX_CONFIG_RENDERER_DIRECT3D_EX
-				DX_CHECK(m_d3d9->CreateDeviceEx(adapter
-						, deviceType
+				DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
+						, m_deviceType
 						, g_bgfxHwnd
 						, behaviorFlags[ii]
 						, &m_params
@@ -201,8 +201,8 @@ namespace bgfx
 						, &m_device
 						) );
 #else
-				DX_CHECK(m_d3d9->CreateDevice(adapter
-					, deviceType
+				DX_CHECK(m_d3d9->CreateDevice(m_adapter
+					, m_deviceType
 					, g_bgfxHwnd
 					, behaviorFlags[ii]
 					, &m_params
@@ -237,11 +237,11 @@ namespace bgfx
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
-			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
-			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
-			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF24) );
-			m_fmtINTZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_INTZ) );
-			m_fmtRAWZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_RAWZ) );
+			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
+			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
+			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF24) );
+			m_fmtINTZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_INTZ) );
+			m_fmtRAWZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_RAWZ) );
 
 			m_fmtDepth = D3DFMT_D24S8;
 
@@ -263,8 +263,8 @@ namespace bgfx
 			}
 
 			BX_TRACE("Creating device");
-			DX_CHECK(m_d3d9->CreateDevice(D3DADAPTER_DEFAULT
-					, D3DDEVTYPE_HAL
+			DX_CHECK(m_d3d9->CreateDevice(m_adapter
+					, m_deviceType
 					, NULL
 					, D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_BUFFER_2_FRAMES
 					, &m_params
@@ -322,8 +322,8 @@ namespace bgfx
 				m_params.PresentationInterval = !!(m_flags&BGFX_RESET_VSYNC) ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 
 				D3DMULTISAMPLE_TYPE msaa = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
-				HRESULT hr = m_d3d9->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT
-								, D3DDEVTYPE_HAL
+				HRESULT hr = m_d3d9->CheckDeviceMultiSampleType(m_adapter
+								, m_deviceType
 								, m_params.BackBufferFormat
 								, m_params.Windowed
 								, msaa
@@ -540,6 +540,8 @@ namespace bgfx
 		IDirect3DSurface9* m_backBufferDepthStencil;
 
 		HMODULE m_d3d9dll;
+		uint32_t m_adapter;
+		D3DDEVTYPE m_deviceType;
 		D3DPRESENT_PARAMETERS m_params;
 		uint32_t m_flags;
 
