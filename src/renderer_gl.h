@@ -7,7 +7,7 @@
 #define __RENDERER_GL_H__
 
 #if BGFX_CONFIG_RENDERER_OPENGL
-#	include <gl/GL.h>
+#	include <GL/gl.h>
 #	include <gl/glext.h>
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 #	include <GLES2/gl2.h>
@@ -65,11 +65,11 @@ namespace bgfx
 #	define GL_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
-#if BX_PLATFORM_WINDOWS
-#define GL_IMPORT(_optional, _proto, _func) extern _proto _func
-#include "glimports.h"
-#undef GL_IMPORT
-#endif // BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_RENDERER_OPENGL
+#	define GL_IMPORT(_optional, _proto, _func) extern _proto _func
+#	include "glimports.h"
+#	undef GL_IMPORT
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 	
 	class ConstantBuffer;
 	

@@ -153,6 +153,24 @@ namespace bgfx
 
 			BGFX_FATAL(m_d3d9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
 
+			uint32_t adapterCount = m_d3d9->GetAdapterCount();
+			for (uint32_t ii = 0; ii < adapterCount; ++ii)
+			{
+				D3DADAPTER_IDENTIFIER9 identifier;
+				DX_CHECK(m_d3d9->GetAdapterIdentifier(ii, 0, &identifier) );
+
+				BX_TRACE("Adapter #%d", ii);
+				BX_TRACE("\tDriver: %s", identifier.Driver);
+				BX_TRACE("\tDescription: %s", identifier.Description);
+				BX_TRACE("\tDeviceName: %s", identifier.DeviceName);
+				BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+						, identifier.VendorId
+						, identifier.DeviceId
+						, identifier.SubSysId
+						, identifier.Revision
+						);
+			}
+
 			uint32_t behaviorFlags[] =
 			{
 				D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_PUREDEVICE,

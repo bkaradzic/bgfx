@@ -10,17 +10,17 @@
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
 
-#if BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_RENDERER_OPENGL
 #	define glClearDepthf(_depth) glClearDepth(_depth)
-#endif // BX_PLATFROM_WINDOWS
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 namespace bgfx
 {
-#if BX_PLATFORM_WINDOWS
-#define GL_IMPORT(_optional, _proto, _func) _proto _func
-#include "glimports.h"
-#undef GL_IMPORT
-#endif // BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_RENDERER_OPENGL
+#	define GL_IMPORT(_optional, _proto, _func) _proto _func
+#	include "glimports.h"
+#	undef GL_IMPORT
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
@@ -254,6 +254,13 @@ namespace bgfx
 
 					glXMakeCurrent(display, window, m_context);
 
+#	define GL_IMPORT(_optional, _proto, _func) \
+				{ \
+					_func = (_proto)glXGetProcAddress((const GLubyte*)#_func); \
+					BGFX_FATAL(!_optional && NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
+				}
+#	include "glimports.h"
+#	undef GL_IMPORT
 					glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 					glClear(GL_COLOR_BUFFER_BIT);
 					glXSwapBuffers(display, window);
@@ -1573,8 +1580,6 @@ namespace bgfx
 
 				if (key.m_view != view)
 				{
-					GL_CHECK(glFlush() );
-
 					currentState.clear();
 					changedFlags = BGFX_STATE_MASK;
 					currentState.m_flags = newFlags;
