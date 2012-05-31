@@ -153,6 +153,9 @@ namespace bgfx
 
 			BGFX_FATAL(m_d3d9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
 
+			uint32_t adapter = D3DADAPTER_DEFAULT;
+			D3DDEVTYPE deviceType = D3DDEVTYPE_HAL;
+
 			uint32_t adapterCount = m_d3d9->GetAdapterCount();
 			for (uint32_t ii = 0; ii < adapterCount; ++ii)
 			{
@@ -169,6 +172,14 @@ namespace bgfx
 						, identifier.SubSysId
 						, identifier.Revision
 						);
+
+#if BGFX_CONFIG_DEBUG_PERFHUD
+				if (0 != strstr(identifier.Description, "PerfHUD") )
+				{
+					adapter = ii;
+					deviceType = D3DDEVTYPE_REF;
+				}
+#endif // BGFX_CONFIG_DEBUG_PERFHUD
 			}
 
 			uint32_t behaviorFlags[] =
@@ -181,8 +192,8 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < countof(behaviorFlags) && NULL == m_device; ++ii)
 			{
 #if BGFX_CONFIG_RENDERER_DIRECT3D_EX
-				DX_CHECK(m_d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT
-						, D3DDEVTYPE_HAL
+				DX_CHECK(m_d3d9->CreateDeviceEx(adapter
+						, deviceType
 						, g_bgfxHwnd
 						, behaviorFlags[ii]
 						, &m_params
@@ -190,8 +201,8 @@ namespace bgfx
 						, &m_device
 						) );
 #else
-				DX_CHECK(m_d3d9->CreateDevice(D3DADAPTER_DEFAULT
-					, D3DDEVTYPE_HAL
+				DX_CHECK(m_d3d9->CreateDevice(adapter
+					, deviceType
 					, g_bgfxHwnd
 					, behaviorFlags[ii]
 					, &m_params
