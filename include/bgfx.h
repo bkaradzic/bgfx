@@ -254,6 +254,7 @@ namespace bgfx
 	typedef void (*fatalFn)(Fatal::Enum _code, const char* _str);
 	typedef void* (*reallocFn)(void* _ptr, size_t _size);
 	typedef void (*freeFn)(void* _ptr);
+	typedef void (*cacheFn)(uint64_t _id, bool _store, void* _data, uint32_t& _length);
 
 	struct VertexDecl
 	{
@@ -272,7 +273,7 @@ namespace bgfx
 	RendererType::Enum getRendererType();
 
 	///
-	void init(bool _createRenderThread = true, fatalFn _fatal = NULL, reallocFn _realloc = NULL, freeFn _free = NULL);
+	void init(bool _createRenderThread = true, fatalFn _fatal = NULL, reallocFn _realloc = NULL, freeFn _free = NULL, cacheFn _cache = NULL);
 
 	///
 	void shutdown();

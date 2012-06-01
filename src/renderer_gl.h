@@ -11,6 +11,30 @@
 #	include <gl/glext.h>
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 #	include <GLES2/gl2.h>
+
+#	ifndef GL_BGRA_EXT
+#		define GL_BGRA_EXT 0x80E1
+#	endif // GL_BGRA_EXT
+
+#	ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#		define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+#	endif // GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+
+#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+#		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+#	endif // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+
+#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+#		define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#	endif // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+
+#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#		define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#	endif // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+
+#	ifndef GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
+#		define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES 0x8B8B
+#	endif // GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #if BX_PLATFORM_NACL
@@ -25,29 +49,9 @@
 #	include <X11/Xlib.h>
 #endif // BX_PLATFORM_
 
-#ifndef GL_BGRA_EXT
-#	define GL_BGRA_EXT 0x80E1
-#endif // GL_BGRA_EXT
-
-#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
-#	define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
-#endif // GL_COMPRESSED_RGB_S3TC_DXT1_EXT
-
-#ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-#	define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
-#endif // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-
-#ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-#	define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
-#endif // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-
-#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
-#	define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
-#endif // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
-
-#ifndef GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
-#	define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES 0x8B8B
-#endif // GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
+#if BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
+#	include <gl/GRemedyGLExtensions.h>
+#endif // BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
 namespace bgfx
 {
@@ -64,6 +68,31 @@ namespace bgfx
 #else
 #	define GL_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
+
+#if BGFX_CONFIG_DEBUG_GREMEDY
+#	define _GREMEDY_SETMARKER(_string) \
+					do \
+					{ \
+						if (NULL != glStringMarkerGREMEDY) \
+						{ \
+							glStringMarkerGREMEDY( (GLsizei)strlen(_string), _string); \
+						} \
+					} while(0)
+#	define _GREMEDY_FRAMETERMINATOR() \
+					do \
+					{ \
+						if (NULL != glStringMarkerGREMEDY) \
+						{ \
+							glFrameTerminatorGREMEDY(); \
+						} \
+					} while(0)
+#else
+#	define _GREMEDY_SETMARKER(_string) do {} while(0)
+#	define _GREMEDY_FRAMETERMINATOR() do {} while(0)
+#endif // BGFX_CONFIG_DEBUG_GREMEDY
+
+#define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
+#define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	define GL_IMPORT(_optional, _proto, _func) extern _proto _func
@@ -177,6 +206,7 @@ namespace bgfx
 
 			if (0 != m_id)
 			{
+				m_hash = hash(_code, (uint32_t)strlen( (const char*)_code) );
 				GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&_code, NULL) );
 				GL_CHECK(glCompileShader(m_id) );
 
@@ -202,6 +232,7 @@ namespace bgfx
 
 		GLuint m_id;
 		GLenum m_type;
+		uint32_t m_hash;
 	};
 
 	struct RenderTarget

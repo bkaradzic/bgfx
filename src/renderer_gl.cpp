@@ -41,6 +41,7 @@ namespace bgfx
 			: m_dxtSupport(false)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
+			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 #if BX_PLATFORM_NACL
 			, m_context(0)
 			, m_instance(0)
@@ -109,37 +110,39 @@ namespace bgfx
 #elif BX_PLATFORM_WINDOWS
 				if (NULL == m_hdc)
 				{
-					PIXELFORMATDESCRIPTOR pfd =
-					{
-						sizeof(PIXELFORMATDESCRIPTOR),
-						1,
-						PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
-						PFD_TYPE_RGBA,
-						32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-						24, 0, 0,
-						PFD_MAIN_PLANE,
-						0, 0, 0, 0
-					};
-
 					m_hdc = GetDC(g_bgfxHwnd);
+					BGFX_FATAL(NULL != m_hdc, bgfx::Fatal::OPENGL_UnableToCreateContext, "GetDC failed!");
+
+					PIXELFORMATDESCRIPTOR pfd;
+					memset(&pfd, 0, sizeof(pfd) );
+					pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+					pfd.nVersion = 1;
+					pfd.iPixelType = PFD_TYPE_RGBA;
+					pfd.cColorBits = 32;
+					pfd.cAlphaBits = 8;
+					pfd.cDepthBits = 24;
+					pfd.cStencilBits = 8;
+					pfd.iLayerType = PFD_MAIN_PLANE;
 
 					int pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-					BX_CHECK(0 != pixelFormat, "ChoosePixelFormat failed!");
+					BGFX_FATAL(0 != pixelFormat, bgfx::Fatal::OPENGL_UnableToCreateContext, "ChoosePixelFormat failed!");
+
+					DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
 
 					int result;
 					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
-					BX_CHECK(0 != result, "SetPixelFormat failed!");
+					BGFX_FATAL(0 != result, bgfx::Fatal::OPENGL_UnableToCreateContext, "SetPixelFormat failed!");
 
 					m_context = wglCreateContext(m_hdc);
-					BX_CHECK(NULL != m_context, "wglCreateContext failed!");
+					BGFX_FATAL(NULL != m_context, bgfx::Fatal::OPENGL_UnableToCreateContext, "wglCreateContext failed!");
 					
 					result = wglMakeCurrent(m_hdc, m_context);
-					BX_CHECK(0 != result, "wglMakeCurrent failed!");
+					BGFX_FATAL(0 != result, bgfx::Fatal::OPENGL_UnableToCreateContext, "wglMakeCurrent failed!");
 
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)wglGetProcAddress(#_func); \
-					BGFX_FATAL(!_optional && NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress %s", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -257,7 +260,7 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)glXGetProcAddress((const GLubyte*)#_func); \
-					BGFX_FATAL(!_optional && NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -333,6 +336,7 @@ namespace bgfx
 		bool m_flip;
 
 		PostSwapBuffersFn m_postSwapBuffers;
+		uint64_t m_hash;
 
 #if BX_PLATFORM_NACL
 		PP_Resource m_context;
@@ -385,11 +389,13 @@ namespace bgfx
 		enum Enum
 		{
 			EXT_texture_format_BGRA8888,
+			EXT_texture_compression_s3tc,
 			EXT_texture_compression_dxt1,
 			CHROMIUM_texture_compression_dxt3,
 			CHROMIUM_texture_compression_dxt5,
 			OES_standard_derivatives,
 			ARB_get_program_binary,
+			OES_get_program_binary,
 
 			Count
 		};
@@ -404,11 +410,13 @@ namespace bgfx
 		// Nvidia BGRA on Linux bug:
 		// https://groups.google.com/a/chromium.org/forum/?fromgroups#!topic/chromium-reviews/yFfbUdyeUCQ
 		{ "GL_EXT_texture_format_BGRA8888",       false, !BX_PLATFORM_LINUX },
+		{ "GL_EXT_texture_compression_s3tc",      false, true },
 		{ "GL_EXT_texture_compression_dxt1",      false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
 		{ "GL_OES_standard_derivatives",          false, true },
-		{ "GL_ARB_get_program_binary",            false, false },
+		{ "GL_ARB_get_program_binary",            false, true },
+		{ "GL_OES_get_program_binary",            false, false },
 	};
 
 	static const GLenum s_primType[] =
@@ -605,44 +613,76 @@ namespace bgfx
 		m_id = glCreateProgram();
 		BX_TRACE("material create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
 
+		bool cached = false;
+
 #if BGFX_CONFIG_RENDERER_OPENGL
+		uint64_t id = (uint64_t(_vsh.m_hash)<<32) | _fsh.m_hash;
+		id ^= s_renderCtx.m_hash;
+
 		if (s_extension[Extension::ARB_get_program_binary].m_supported)
 		{
-			GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
+			uint32_t length;
+			g_cache(id, false, NULL, length);
+			cached = length > 0;
+
+			if (cached)
+			{
+				void* data = g_realloc(NULL, length);
+				g_cache(id, false, data, length);
+
+				StreamRead stream(data, length);
+
+				GLenum format;
+				stream.read(format);
+
+				GL_CHECK(glProgramBinary(m_id, format, stream.getDataPtr(), stream.remaining() ) );
+
+				g_free(data);
+			}
+			else
+			{
+				GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
+			}
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-		GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
-		GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
-		GL_CHECK(glLinkProgram(m_id) );
-
-		GLint linked = 0;
-		GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
-
-		if (0 == linked)
+		if (!cached)
 		{
-			char log[1024];
-			GL_CHECK(glGetProgramInfoLog(m_id, sizeof(log), NULL, log) );
-			BX_TRACE("%d: %s", linked, log);
+			GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
+			GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
+			GL_CHECK(glLinkProgram(m_id) );
 
-			GL_CHECK(glDeleteProgram(m_id) );
-			return;
-		}
+			GLint linked = 0;
+			GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
+
+			if (0 == linked)
+			{
+				char log[1024];
+				GL_CHECK(glGetProgramInfoLog(m_id, sizeof(log), NULL, log) );
+				BX_TRACE("%d: %s", linked, log);
+
+				GL_CHECK(glDeleteProgram(m_id) );
+				return;
+			}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
-		if (s_extension[Extension::ARB_get_program_binary].m_supported)
-		{
-			GLint length;
-			GLenum format;
-			GL_CHECK(glGetProgramiv(m_id, GL_PROGRAM_BINARY_LENGTH, &length) );
-			void* data = g_realloc(NULL, length);
-			GL_CHECK(glGetProgramBinary(m_id, length, NULL, &format, data) );
+			if (s_extension[Extension::ARB_get_program_binary].m_supported)
+			{
+				GLint programLength;
+				GLenum format;
+				GL_CHECK(glGetProgramiv(m_id, GL_PROGRAM_BINARY_LENGTH, &programLength) );
 
-			dbgPrintfData(data, length, "Binary 0x%08x", format);
+				uint32_t length = programLength + 4;
+				uint8_t* data = (uint8_t*)g_realloc(NULL, length);
+				GL_CHECK(glGetProgramBinary(m_id, programLength, NULL, &format, &data[4]) );
+				*(uint32_t*)data = format;
 
-			g_free(data);
-		}
+				g_cache(id, true, data, length);
+
+				g_free(data);
+			}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+		}
 
 		init();
 	}
@@ -1120,10 +1160,16 @@ namespace bgfx
 		{
 			if (0 < colorFormat)
 			{
+#if BGFX_CONFIG_RENDERER_OPENGL
+				GLenum depthComponent = GL_DEPTH_COMPONENT32;
+#else
+				GLenum depthComponent = GL_DEPTH_COMPONENT16;
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 				GL_CHECK(glGenRenderbuffers(1, &m_rbo) );
 				BX_CHECK(0 != m_rbo, "Failed to generate renderbuffer id.");
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_rbo) );
-				GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, _width, _height) );
+				GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, depthComponent, _width, _height) );
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
@@ -1390,6 +1436,10 @@ namespace bgfx
 			&& s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
 			&& s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
 			;
+
+		s_renderCtx.m_dxtSupport |=
+			s_extension[Extension::EXT_texture_compression_s3tc].m_supported
+			;
 	}
 
 	void Context::rendererShutdown()
@@ -1583,6 +1633,8 @@ namespace bgfx
 					currentState.clear();
 					changedFlags = BGFX_STATE_MASK;
 					currentState.m_flags = newFlags;
+
+					GREMEDY_SETMARKER("view");
 
 					view = key.m_view;
 					materialIdx = bgfx::invalidHandle;
@@ -2083,7 +2135,7 @@ namespace bgfx
 			g_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 		}
 
-		GL_CHECK(glFlush() );
+		GREMEDY_FRAMETERMINATOR();
 	}
 
 #if BX_PLATFORM_WINDOWS

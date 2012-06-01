@@ -5,25 +5,6 @@
 
 #include "bgfx_p.h"
 
-BX_NO_INLINE void bgfxFatalStub(bgfx::Fatal::Enum _code, const char* _str)
-{
-	BX_TRACE("0x%08x: %s", _code, _str);
-}
-
-BX_NO_INLINE void* bgfxReallocStub(void* _ptr, size_t _size)
-{
-	void* ptr = ::realloc(_ptr, _size);
-	BX_CHECK(NULL != ptr, "Out of memory!");
-//	BX_TRACE("alloc %d, %p", _size, ptr);
-	return ptr;
-}
-
-BX_NO_INLINE void bgfxFreeStub(void* _ptr)
-{
-//	BX_TRACE("free %p", _ptr);
-	::free(_ptr);
-}
-
 #if BX_PLATFORM_WINDOWS
 HWND g_bgfxHwnd = NULL;
 #endif // BX_PLATFORM_WINDOWS
@@ -40,9 +21,34 @@ namespace bgfx
 #	define BGFX_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
-	fatalFn g_fatal = bgfxFatalStub;
-	reallocFn g_realloc = bgfxReallocStub;
-	freeFn g_free = bgfxFreeStub;
+	void fatalStub(bgfx::Fatal::Enum _code, const char* _str)
+	{
+		BX_TRACE("0x%08x: %s", _code, _str);
+	}
+
+	void* reallocStub(void* _ptr, size_t _size)
+	{
+		void* ptr = ::realloc(_ptr, _size);
+		BX_CHECK(NULL != ptr, "Out of memory!");
+		//	BX_TRACE("alloc %d, %p", _size, ptr);
+		return ptr;
+	}
+
+	void freeStub(void* _ptr)
+	{
+		//	BX_TRACE("free %p", _ptr);
+		::free(_ptr);
+	}
+
+	void cacheStub(uint64_t _id, bool _store, void* _data, uint32_t& _length)
+	{
+		_length = 0;
+	}
+
+	fatalFn g_fatal = fatalStub;
+	reallocFn g_realloc = reallocStub;
+	freeFn g_free = freeStub;
+	cacheFn g_cache = cacheStub;
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context s_ctx;
@@ -481,7 +487,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
-	void init(bool _createRenderThread, fatalFn _fatal, reallocFn _realloc, freeFn _free)
+	void init(bool _createRenderThread, fatalFn _fatal, reallocFn _realloc, freeFn _free, cacheFn _cache)
 	{
 		if (NULL != _fatal)
 		{
@@ -493,6 +499,11 @@ namespace bgfx
 		{
 			g_realloc = _realloc;
 			g_free = _free;
+		}
+
+		if (NULL != _cache)
+		{
+			g_cache = _cache;
 		}
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;

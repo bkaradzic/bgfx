@@ -112,6 +112,8 @@ namespace bgfx
 	extern fatalFn g_fatal;
 	extern reallocFn g_realloc;
 	extern freeFn g_free;
+	extern cacheFn g_cache;
+
 	extern void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
 	extern void release(Memory* _mem);
 	extern void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
@@ -346,6 +348,11 @@ namespace bgfx
 		void align(uint16_t _align)
 		{
 			m_pos = strideAlign(m_pos, _align);
+		}
+
+		uint32_t remaining() const
+		{
+			return m_size-m_pos;
 		}
 
 	private:

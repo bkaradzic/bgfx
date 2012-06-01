@@ -135,7 +135,7 @@ namespace bgfx
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
 			m_d3d9dll = LoadLibrary("d3d9.dll");
-			BX_CHECK(m_d3d9dll, "Module d3d9.dll not found.");
+			BGFX_FATAL(NULL != m_d3d9dll, bgfx::Fatal::D3D9_UnableToCreateInterface, "Failed to load d3d9.dll.");
 
 			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
 			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
@@ -143,11 +143,11 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D_EX
 			Direct3DCreate9ExFunc direct3DCreate9Ex = (Direct3DCreate9ExFunc)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
-			BX_CHECK(direct3DCreate9Ex, "Function Direct3DCreate9Ex not found.");
-			DX_CHECK(direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9) );
+			BGFX_FATAL(NULL != direct3DCreate9Ex, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9Ex not found.");
+			direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9);
 #else
 			Direct3DCreate9Func direct3DCreate9 = (Direct3DCreate9Func)GetProcAddress(m_d3d9dll, "Direct3DCreate9");
-			BX_CHECK(direct3DCreate9, "Function Direct3DCreate9 not found.");
+			BGFX_FATAL(NULL != direct3DCreate9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9 not found.");
 			m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
 #endif // defined(D3D_DISABLE_9EX)
 
