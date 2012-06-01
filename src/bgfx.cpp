@@ -528,10 +528,10 @@ namespace bgfx
 		s_ctx.frame();
 	}
 
-	void renderFrame()
+	bool renderFrame()
 	{
 		BGFX_RENDER_THREAD();
-		s_ctx.renderFrame();
+		return s_ctx.renderFrame();
 	}
 
 	static const uint32_t s_attribTypeSize[AttribType::Count] =
@@ -728,6 +728,16 @@ namespace bgfx
 
 		m_submit->destroy();
 		m_render->destroy();
+	}
+
+#if BX_PLATFORM_WINDOWS
+	DWORD WINAPI renderThread(LPVOID)
+#else
+	void* renderThread(void*)
+#endif // BX_PLATFORM_WINDOWS
+	{
+		while (!renderFrame() );
+		return EXIT_SUCCESS;
 	}
 
 	const Memory* alloc(uint32_t _size)

@@ -1158,20 +1158,6 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_colorTexture) );
 	}
 	
-	static bool s_exit = false;
-
-	DWORD WINAPI renderThread(LPVOID _arg)
-	{
-		while (!s_exit)
-		{			
-			renderFrame();
-		}
-
-		s_exit = false;
-
-		return EXIT_SUCCESS;
-	}
-
 	void ConstantBuffer::commit(bool _force)
 	{
 		reset();
@@ -1316,7 +1302,6 @@ namespace bgfx
 	void Context::rendererShutdown()
 	{
 		s_renderCtx.shutdown();
-		s_exit = true;
 	}
 
 	void Context::rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem)

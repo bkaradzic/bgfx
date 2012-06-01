@@ -1210,8 +1210,6 @@ namespace bgfx
 		m_depth.destroy();
 	}
 
-	static bool s_exit = false;
-
 	void ConstantBuffer::commit(bool _force)
 	{
 		reset();
@@ -1444,7 +1442,6 @@ namespace bgfx
 
 	void Context::rendererShutdown()
 	{
-		s_exit = true;
 	}
 
 	void Context::rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem)
@@ -2137,22 +2134,6 @@ namespace bgfx
 
 		GREMEDY_FRAMETERMINATOR();
 	}
-
-#if BX_PLATFORM_WINDOWS
-	DWORD WINAPI renderThread(LPVOID)
-#else
-	void* renderThread(void*)
-#endif // BX_PLATFORM_WINDOWS
-	{
-		while (!s_exit)
-		{
-			renderFrame();
-		}
-
-		s_exit = false;
-		return 0;
-	}
-
 }
 
 #endif // (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)

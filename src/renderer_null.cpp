@@ -9,8 +9,6 @@
 
 namespace bgfx
 {
-	static bool s_exit = false;
-
 	void ConstantBuffer::commit(bool _force)
 	{
 	}
@@ -33,7 +31,6 @@ namespace bgfx
 
 	void Context::rendererShutdown()
 	{
-		s_exit = true;
 	}
 
 	void Context::rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem)

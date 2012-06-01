@@ -114,11 +114,10 @@ namespace bgfx
 	extern freeFn g_free;
 	extern cacheFn g_cache;
 
-	extern void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
-	extern void release(Memory* _mem);
-	extern void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
-	extern const char* getAttribName(Attrib::Enum _attr);
-	extern void renderFrame();
+	void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
+	void release(Memory* _mem);
+	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
+	const char* getAttribName(Attrib::Enum _attr);
 
 	inline uint32_t uint16_min(uint16_t _a, uint16_t _b)
 	{
@@ -1324,6 +1323,7 @@ namespace bgfx
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
 			, m_rendererInitialized(false)
+			, m_exit(false)
 		{
 		}
 
@@ -1880,7 +1880,7 @@ namespace bgfx
 		void flip();
 
 		// render thread
-		void renderFrame()
+		bool renderFrame()
 		{
 			flip();
 
@@ -1894,6 +1894,8 @@ namespace bgfx
 			rendererExecCommands(m_render->m_cmdPost);
 
 			renderSemPost();
+
+			return m_exit;
 		}
 
 		void rendererInit();
@@ -1972,6 +1974,7 @@ namespace bgfx
 					{
 						rendererShutdown();
 						m_rendererInitialized = false;
+						m_exit = true;
 					}
 					break;
 
@@ -2544,6 +2547,7 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS
 
 		bool m_rendererInitialized;
+		bool m_exit;
 	};
 
 } // namespace bgfx
