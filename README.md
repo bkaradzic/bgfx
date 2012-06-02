@@ -3,10 +3,10 @@ bgfx
 
 Rendering library.
 
-Supports:
+Supports:  
 OpenGL 2.1, OpenGL ES 2.0, and Direct3D 9.0.
 
-Platforms:
+Platforms:  
 Windows, Linux, Android, and Native Client.
 
 Contact
