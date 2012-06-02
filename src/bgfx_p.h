@@ -118,6 +118,7 @@ namespace bgfx
 	void release(Memory* _mem);
 	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
 	const char* getAttribName(Attrib::Enum _attr);
+	bool renderFrame();
 
 	inline uint32_t uint16_min(uint16_t _a, uint16_t _b)
 	{

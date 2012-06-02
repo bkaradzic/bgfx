@@ -730,7 +730,7 @@ namespace bgfx
 		m_render->destroy();
 	}
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
 	DWORD WINAPI renderThread(LPVOID)
 #else
 	void* renderThread(void*)

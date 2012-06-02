@@ -61,9 +61,9 @@ typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
 #	define D3DMULTISAMPLE_8_SAMPLES D3DMULTISAMPLE_4_SAMPLES
 #	define D3DMULTISAMPLE_16_SAMPLES D3DMULTISAMPLE_4_SAMPLES
 
-#	define _PIX_SETMARKER(_col, _name)
-#	define _PIX_BEGINEVENT(_col, _name)
-#	define _PIX_ENDEVENT()
+#	define _PIX_SETMARKER(_col, _name) do {} while(0)
+#	define _PIX_BEGINEVENT(_col, _name) do {} while(0)
+#	define _PIX_ENDEVENT() do {} while(0)
 #endif // BX_PLATFORM_
 
 namespace bgfx
@@ -99,6 +99,12 @@ namespace bgfx
 						_ptr = NULL; \
 					} \
 				} while (0)
+
+	struct Msaa
+	{
+		D3DMULTISAMPLE_TYPE m_type;
+		DWORD m_quality;
+	};
 
 	struct IndexBuffer
 	{
@@ -270,14 +276,15 @@ namespace bgfx
 		D3DTEXTUREFILTERTYPE m_mipFilter;
 		D3DTEXTUREADDRESS m_tau;
 		D3DTEXTUREADDRESS m_tav;
+		bool m_srgb;
 	};
 
 	struct RenderTarget
 	{
 		RenderTarget()
-			: m_colorTexture(NULL)
+			: m_rt(NULL)
+			, m_colorTexture(NULL)
 			, m_color(NULL)
-			, m_depthTexture(NULL)
 			, m_depth(NULL)
 			, m_width(0)
 			, m_height(0)
@@ -306,10 +313,12 @@ namespace bgfx
 		}
 
 		void commit(uint8_t _stage);
+		void resolve();
 
+		Msaa m_msaa;
+		IDirect3DSurface9* m_rt;
 		IDirect3DTexture9* m_colorTexture;
 		IDirect3DSurface9* m_color;
-		IDirect3DTexture9* m_depthTexture;
 		IDirect3DSurface9* m_depth;
 		uint16_t m_width;
 		uint16_t m_height;

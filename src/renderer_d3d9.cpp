@@ -24,13 +24,22 @@ namespace bgfx
 		1,
 	};
 
-	static const D3DMULTISAMPLE_TYPE s_msaa[] =
+	static const D3DMULTISAMPLE_TYPE s_checkMsaa[] =
 	{
 		D3DMULTISAMPLE_NONE,
 		D3DMULTISAMPLE_2_SAMPLES,
 		D3DMULTISAMPLE_4_SAMPLES,
 		D3DMULTISAMPLE_8_SAMPLES,
 		D3DMULTISAMPLE_16_SAMPLES,
+	};
+
+	static Msaa s_msaa[] =
+	{
+		{ D3DMULTISAMPLE_NONE,       0 },
+		{ D3DMULTISAMPLE_2_SAMPLES,  0 },
+		{ D3DMULTISAMPLE_4_SAMPLES,  0 },
+		{ D3DMULTISAMPLE_8_SAMPLES,  0 },
+		{ D3DMULTISAMPLE_16_SAMPLES, 0 },
 	};
 
 	static const D3DBLEND s_blendFactor[] =
@@ -106,7 +115,9 @@ namespace bgfx
 			, m_fmtINTZ(false)
 			, m_fmtRAWZ(false)
 			, m_flags(BGFX_RESET_NONE)
+			, m_rtMsaa(false)
 		{
+			m_rt.idx = invalidHandle;
 		}
 
 		void init()
@@ -117,7 +128,7 @@ namespace bgfx
 			m_params.BackBufferHeight = BGFX_DEFAULT_HEIGHT;
 			m_params.BackBufferFormat = D3DFMT_X8R8G8B8;
 			m_params.BackBufferCount = 1;
-			m_params.MultiSampleType = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+			m_params.MultiSampleType = D3DMULTISAMPLE_NONE;
 			m_params.MultiSampleQuality = 0;
 			m_params.EnableAutoDepthStencil = TRUE;
 			m_params.AutoDepthStencilFormat = D3DFMT_D24S8;
@@ -295,6 +306,34 @@ namespace bgfx
 			m_initialized = false;
 		}
 
+		void updateMsaa()
+		{
+			for (uint32_t ii = 1; ii < countof(s_checkMsaa); ++ii)
+			{
+				D3DMULTISAMPLE_TYPE msaa = s_checkMsaa[ii];
+				DWORD quality;
+
+				HRESULT hr = m_d3d9->CheckDeviceMultiSampleType(m_adapter
+					, m_deviceType
+					, m_params.BackBufferFormat
+					, m_params.Windowed
+					, msaa
+					, &quality
+					);
+
+				if (SUCCEEDED(hr) )
+				{
+					s_msaa[ii].m_type = msaa;
+					s_msaa[ii].m_quality = uint32_imax(0, quality-1);
+				}
+				else
+				{
+					s_msaa[ii].m_type = D3DMULTISAMPLE_NONE;
+					s_msaa[ii].m_quality = 0;
+				}
+			}
+		}
+
 		void updateResolution(const Resolution& _resolution)
 		{
 			if (m_params.BackBufferWidth != _resolution.m_width
@@ -321,16 +360,11 @@ namespace bgfx
 				m_params.FullScreen_RefreshRateInHz = BGFX_RESET_FULLSCREEN == (m_flags&BGFX_RESET_FULLSCREEN_MASK) ? 60 : 0;
 				m_params.PresentationInterval = !!(m_flags&BGFX_RESET_VSYNC) ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 
-				D3DMULTISAMPLE_TYPE msaa = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
-				HRESULT hr = m_d3d9->CheckDeviceMultiSampleType(m_adapter
-								, m_deviceType
-								, m_params.BackBufferFormat
-								, m_params.Windowed
-								, msaa
-								, NULL
-								);
+				updateMsaa();
 
-				m_params.MultiSampleType = SUCCEEDED(hr) ? msaa : D3DMULTISAMPLE_NONE;		
+				Msaa& msaa = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+				m_params.MultiSampleType = msaa.m_type;
+				m_params.MultiSampleQuality = msaa.m_quality;
 
 				preReset();
 				DX_CHECK(m_device->Reset(&m_params) );
@@ -338,9 +372,9 @@ namespace bgfx
 			}
 		}
 
-		void setRenderTarget(RenderTargetHandle _rt)
+		void setRenderTarget(RenderTargetHandle _rt, bool _msaa = true)
 		{
-			if (_rt.idx == bgfx::invalidHandle)
+			if (_rt.idx == invalidHandle)
 			{
 				DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
 				DX_CHECK(m_device->SetDepthStencilSurface(m_backBufferDepthStencil) );
@@ -348,9 +382,31 @@ namespace bgfx
 			else
 			{
 				RenderTarget& renderTarget = m_renderTargets[_rt.idx];
-				DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_color) );
+				if (_msaa
+				&&  renderTarget.m_rt != NULL)
+				{
+					DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_rt) );
+				}
+				else
+				{
+					DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_color) );
+				}
 				DX_CHECK(m_device->SetDepthStencilSurface(NULL != renderTarget.m_depth ? renderTarget.m_depth : m_backBufferDepthStencil) );
 			}
+
+			if (m_rt.idx != invalidHandle
+			&&  m_rt.idx != _rt.idx
+			&&  m_rtMsaa)
+			{
+				RenderTarget& renderTarget = m_renderTargets[m_rt.idx];
+				if (renderTarget.m_rt != NULL)
+				{
+					renderTarget.resolve();
+				}
+			}
+
+			m_rt = _rt;
+			m_rtMsaa = _msaa;
 		}
 
 		void setShaderConstantF(uint8_t _flags, uint16_t _regIndex, const float* _val, uint16_t _numRegs)
@@ -566,6 +622,8 @@ namespace bgfx
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
 		TextVideoMem m_textVideoMem;
+		RenderTargetHandle m_rt;
+		bool m_rtMsaa;
 	};
 
 	static RendererContext s_renderCtx;
@@ -895,6 +953,7 @@ namespace bgfx
 		m_minFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
 		m_magFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
 		m_mipFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+		m_srgb = (_flags&BGFX_TEXTURE_SRGB) == BGFX_TEXTURE_SRGB;
 
 		Dds dds;
 
@@ -1072,6 +1131,7 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, m_mipFilter) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, m_tau) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, m_tav) );
+		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, m_srgb) );
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_ptr) );
 	}
 
@@ -1088,8 +1148,26 @@ namespace bgfx
 	{
 		if (0 != m_flags)
 		{
+			m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
 			uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 			uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
+
+			// CheckDeviceFormat D3DUSAGE_SRGBWRITE
+
+			if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
+			{
+				DX_CHECK(s_renderCtx.m_device->CreateRenderTarget(m_width
+					, m_height
+					, s_colorFormat[colorFormat]
+					, m_msaa.m_type
+					, m_msaa.m_quality
+					, false
+					, &m_rt
+					, NULL
+					) );
+
+				BGFX_FATAL(m_rt, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create MSAA render target.");
+			}
 
 			if (0 < colorFormat)
 			{
@@ -1110,19 +1188,15 @@ namespace bgfx
 
 			if (0 < depthFormat)
 			{
-				DX_CHECK(s_renderCtx.m_device->CreateTexture(m_width
-					, m_height
-					, 1
-					, D3DUSAGE_DEPTHSTENCIL
-					, s_depthFormat[depthFormat] // s_renderCtx.m_fmtDepth
-					, D3DPOOL_DEFAULT
-					, &m_depthTexture
-					, NULL
-					) );
-
-				BGFX_FATAL(m_depthTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth render target.");
-
-				DX_CHECK(m_depthTexture->GetSurfaceLevel(0, &m_depth)) ;
+				DX_CHECK(s_renderCtx.m_device->CreateDepthStencilSurface(m_width
+						, m_height
+						, s_depthFormat[depthFormat] // s_renderCtx.m_fmtDepth
+						, m_msaa.m_type
+						, m_msaa.m_quality
+						, FALSE
+						, &m_depth
+						, NULL
+						) );
 			}
 		}
 	}
@@ -1134,6 +1208,11 @@ namespace bgfx
 			uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 			uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
 
+			if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
+			{
+				DX_RELEASE(m_rt, 0);
+			}
+
 			if (0 < colorFormat)
 			{
 				DX_RELEASE(m_color, 1);
@@ -1142,8 +1221,7 @@ namespace bgfx
 
 			if (0 < depthFormat)
 			{
-				DX_RELEASE(m_depth, 1);
-				DX_RELEASE(m_depthTexture, 0);
+				DX_RELEASE(m_depth, 0);
 			}
 		}
 	}
@@ -1155,7 +1233,18 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, D3DTEXF_POINT) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP) );
+		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, (m_flags&BGFX_RENDER_TARGET_SRGBWRITE) == BGFX_RENDER_TARGET_SRGBWRITE) );
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_colorTexture) );
+	}
+
+	void RenderTarget::resolve()
+	{
+		DX_CHECK(s_renderCtx.m_device->StretchRect(m_rt
+				, NULL
+				, m_color
+				, NULL
+				, D3DTEXF_LINEAR
+				) );
 	}
 	
 	void ConstantBuffer::commit(bool _force)
@@ -1233,7 +1322,7 @@ namespace bgfx
 		uint32_t height = s_renderCtx.m_params.BackBufferHeight;
 
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
-		s_renderCtx.setRenderTarget(rt);
+		s_renderCtx.setRenderTarget(rt, false);
 
 		D3DVIEWPORT9 vp;
 		vp.X = 0;
@@ -1564,7 +1653,7 @@ namespace bgfx
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
 					 |BGFX_STATE_ALPHA_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE
 					 |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK
-					 |BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
+					 |BGFX_STATE_POINT_SIZE_MASK|BGFX_STATE_SRGBWRITE) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -1600,6 +1689,11 @@ namespace bgfx
 					{
 						float pointSize = (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT);
 						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_POINTSIZE, *( (DWORD*)&pointSize) ) );
+					}
+
+					if (BGFX_STATE_SRGBWRITE & changedFlags)
+					{
+						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, (newFlags&BGFX_STATE_SRGBWRITE) == BGFX_STATE_SRGBWRITE) );
 					}
 
 					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
