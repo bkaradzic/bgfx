@@ -1446,7 +1446,10 @@ namespace bgfx
 		BX_TRACE("Supported extensions:");
 		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 		{
-			BX_TRACE("\t%2d: %s", ii, s_extension[ii].m_name);
+			if (s_extension[ii].m_supported)
+			{
+				BX_TRACE("\t%2d: %s", ii, s_extension[ii].m_name);
+			}
 		}
 
 		s_renderCtx.m_dxtSupport = true
