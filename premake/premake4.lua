@@ -181,6 +181,9 @@ configuration { "Xbox360" }
 
 configuration {} -- reset configuration
 
+function copyLib()
+end
+
 dofile "bgfx.lua"
 dofile "ddsdump.lua"
 dofile "helloworld.lua"

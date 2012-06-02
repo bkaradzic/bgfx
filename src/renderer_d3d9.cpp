@@ -1131,7 +1131,9 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, m_mipFilter) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, m_tau) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, m_tav) );
+#if BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, m_srgb) );
+#endif // BX_PLATFORM_XBOX360
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_ptr) );
 	}
 
@@ -1233,18 +1235,22 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, D3DTEXF_POINT) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP) );
+#if BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, (m_flags&BGFX_RENDER_TARGET_SRGBWRITE) == BGFX_RENDER_TARGET_SRGBWRITE) );
+#endif // BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_colorTexture) );
 	}
 
 	void RenderTarget::resolve()
 	{
+#if BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->StretchRect(m_rt
 				, NULL
 				, m_color
 				, NULL
-				, D3DTEXF_LINEAR
+				, D3DTEXF_NONE
 				) );
+#endif // BX_PLATFORM_WINDOWS
 	}
 	
 	void ConstantBuffer::commit(bool _force)
@@ -1691,10 +1697,12 @@ namespace bgfx
 						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_POINTSIZE, *( (DWORD*)&pointSize) ) );
 					}
 
+#if BX_PLATFORM_WINDOWS
 					if (BGFX_STATE_SRGBWRITE & changedFlags)
 					{
 						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, (newFlags&BGFX_STATE_SRGBWRITE) == BGFX_STATE_SRGBWRITE) );
 					}
+#endif // BX_PLATFORM_WINDOWS
 
 					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
