@@ -396,6 +396,13 @@ namespace bgfx
 			OES_standard_derivatives,
 			ARB_get_program_binary,
 			OES_get_program_binary,
+			EXT_framebuffer_blit,
+			ARB_timer_query,
+			EXT_timer_query,
+			EXT_texture_sRGB,
+			ARB_framebuffer_sRGB,
+			EXT_framebuffer_sRGB,
+			ARB_multisample,
 
 			Count
 		};
@@ -417,6 +424,13 @@ namespace bgfx
 		{ "GL_OES_standard_derivatives",          false, true },
 		{ "GL_ARB_get_program_binary",            false, true },
 		{ "GL_OES_get_program_binary",            false, false },
+		{ "GL_EXT_framebuffer_blit",              false, true },
+		{ "GL_ARB_timer_query",                   false, true },
+		{ "GL_EXT_timer_query",                   false, true },
+		{ "GL_EXT_texture_sRGB",                  false, true },
+		{ "GL_ARB_framebuffer_sRGB",              false, true },
+		{ "GL_EXT_framebuffer_sRGB",              false, true },
+		{ "GL_ARB_multisample",                   false, true },
 	};
 
 	static const GLenum s_primType[] =
@@ -1428,6 +1442,12 @@ namespace bgfx
 
  			pos += len+1;
  		}
+
+		BX_TRACE("Supported extensions:");
+		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
+		{
+			BX_TRACE("\t%2d: %s", ii, s_extension[ii].m_name);
+		}
 
 		s_renderCtx.m_dxtSupport = true
 			&& s_extension[Extension::EXT_texture_compression_dxt1].m_supported

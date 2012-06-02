@@ -58,9 +58,27 @@ GL_IMPORT(false, PFNGLUNIFORM4FVPROC,               glUniform4fv);
 GL_IMPORT(false, PFNGLUNIFORMMATRIX3FVPROC,         glUniformMatrix3fv);
 GL_IMPORT(false, PFNGLUNIFORMMATRIX4FVPROC,         glUniformMatrix4fv);
 
+GL_IMPORT(false, PFNGLGENQUERIESPROC,               glGenQueries);
+GL_IMPORT(false, PFNGLDELETEQUERIESPROC,            glDeleteQueries);
+GL_IMPORT(false, PFNGLBEGINQUERYPROC,               glBeginQuery);
+GL_IMPORT(false, PFNGLENDQUERYPROC,                 glEndQuery);
+GL_IMPORT(false, PFNGLGETQUERYIVPROC,               glGetQueryiv);
+GL_IMPORT(false, PFNGLGETQUERYOBJECTIVPROC,         glGetQueryObjectiv);
+GL_IMPORT(false, PFNGLGETQUERYOBJECTUIVPROC,        glGetQueryObjectuiv);
+
 GL_IMPORT(true,  PFNGLGETPROGRAMBINARYPROC,         glGetProgramBinary);
 GL_IMPORT(true,  PFNGLPROGRAMBINARYPROC,            glProgramBinary);
 GL_IMPORT(true,  PFNGLPROGRAMPARAMETERIPROC,        glProgramParameteri);
+
+GL_IMPORT(true,  PFNGLBLITFRAMEBUFFEREXTPROC,       glBlitFramebufferEXT);
+
+GL_IMPORT(true,  PFNGLQUERYCOUNTERPROC,             glQueryCounter);
+GL_IMPORT(true,  PFNGLGETQUERYOBJECTI64VPROC,       glGetQueryObjecti64v);
+GL_IMPORT(true,  PFNGLGETQUERYOBJECTUI64VPROC,      glGetQueryObjectui64v);
+GL_IMPORT(true,  PFNGLGETQUERYOBJECTI64VEXTPROC,    glGetQueryObjecti64vEXT);
+GL_IMPORT(true,  PFNGLGETQUERYOBJECTUI64VEXTPROC,   glGetQueryObjectui64vEXT);
+
+GL_IMPORT(true,  PFNGLSAMPLECOVERAGEARBPROC,        glSampleCoverageARB);
 
 #if BGFX_CONFIG_DEBUG_GREMEDY
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,      glStringMarkerGREMEDY);
