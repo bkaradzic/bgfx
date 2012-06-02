@@ -4,21 +4,16 @@ project "bgfx"
 
 	includedirs {
 		BGFX_DIR .. "../bx/include",
+		BGFX_DIR .. "3rdparty/glext",
 	}
 
-	configuration { "nacl" }
-		buildoptions {
-			"-Wall",
-		}
-	
-	configuration { "windows" }
-		includedirs {
-			BGFX_DIR .. "3rdparty/glext",
-		}
+	buildoptions {
+		"-Wall",
+	}
 
-		defines {
---			"BGFX_CONFIG_RENDERER_OPENGL=1",
-		}
+	defines {
+--		"BGFX_CONFIG_RENDERER_OPENGL=1",
+	}
 
 	configuration "Debug"
 		defines {

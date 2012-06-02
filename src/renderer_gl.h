@@ -7,7 +7,15 @@
 #define __RENDERER_GL_H__
 
 #if BGFX_CONFIG_RENDERER_OPENGL
-#	include <GL/gl.h>
+#	if BX_PLATFORM_LINUX
+#		define GL_PROTOTYPES
+#		define GL_GLEXT_LEGACY
+#		include <GL/gl.h>
+#		include <GL/glx.h>
+#		undef GL_PROTOTYPES
+#	else
+#		include <GL/gl.h>
+#	endif // BX_PLATFORM_
 
 // remove deprecated from glext.h
 #	define GL_VERSION_1_2_DEPRECATED
@@ -63,7 +71,6 @@
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
 #elif BX_PLATFORM_LINUX
-#	include <GL/glx.h>
 #	include <X11/Xlib.h>
 #endif // BX_PLATFORM_
 

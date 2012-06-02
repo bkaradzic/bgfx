@@ -22,6 +22,7 @@ newoption {
 	value = "GCC",
 	description = "Choose GCC flavor",
 	allowed = {
+		{ "linux", "Linux" },
 		{ "mingw", "MinGW" },
 		{ "nacl", "Google Native Client" },
 	}
@@ -39,21 +40,30 @@ if not XEDK then XEDK = "<you must install XBOX SDK>" end
 
 location (BGFX_BUILD_DIR .. "projects/" .. _ACTION)
 
+if _ACTION == "clean" then
+	os.rmdir(BUILD_DIR)
+end
+
 if _ACTION == "gmake" then
+
+	if nil == _OPTIONS["gcc"] then
+		print("GCC flavor must be specified!")
+		os.exit(1)
+	end
 
 	flags {
 		"ExtraWarnings",
 	}
 
-	if "linux" ~= os.get() and nil == _OPTIONS["gcc"] then
-		print("GCC flavor must be specified!")
-		os.exit(1)
+	if "linux" == _OPTIONS["gcc"] then
+		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-linux")
 	end
 
 	if "mingw" == _OPTIONS["gcc"] then
 		premake.gcc.cc = "$(MINGW)/bin/mingw32-gcc"
 		premake.gcc.cxx = "$(MINGW)/bin/mingw32-g++"
 		premake.gcc.ar = "$(MINGW)/bin/ar"
+		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-mingw")
 	end
 
 	if "nacl" == _OPTIONS["gcc"] then
@@ -80,6 +90,12 @@ flags {
 	"Symbols",
 }
 
+defines {
+	"__STDC_LIMIT_MACROS",
+	"__STDC_FORMAT_MACROS",
+	"__STDC_CONSTANT_MACROS",
+}
+
 configuration "Debug"
 	targetsuffix "Debug"
 
@@ -90,47 +106,91 @@ configuration "Release"
 	targetsuffix "Release"
 
 configuration { "vs*" }
+	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/msvc" }
 	defines {
+		"WIN32",
+		"_WIN32",
 		"_HAS_EXCEPTIONS=0",
 		"_HAS_ITERATOR_DEBUGGING=0",
 		"_SCL_SECURE=0",
+		"_SECURE_SCL=0",
+		"_SCL_SECURE_NO_WARNINGS",
 		"_CRT_SECURE_NO_WARNINGS",
 		"_CRT_SECURE_NO_DEPRECATE",
-		"__STDC_LIMIT_MACROS",
-		"__STDC_FORMAT_MACROS",
-		"__STDC_CONSTANT_MACROS",
+	}
+	buildoptions {
+		"/Oy-", -- Suppresses creation of frame pointers on the call stack.
+		"/Ob2", -- The Inline Function Expansion
 	}
 
 configuration { "x32", "vs*" }
-	defines { "WIN32" }
 	targetdir (BGFX_BUILD_DIR .. "win32_" .. _ACTION .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win32_" .. _ACTION .. "/obj")
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/msvc" }
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win32_" .. _ACTION }
 
 configuration { "x64", "vs*" }
-	defines { "WIN32" }
+	defines { "_WIN64" }
 	targetdir (BGFX_BUILD_DIR .. "win64_" .. _ACTION .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win64_" .. _ACTION .. "/obj")
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/msvc" }
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win64_" .. _ACTION }
+
+configuration { "mingw" }
+	defines { "WIN32" }
+	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/mingw" }
+	buildoptions {
+		"-std=c++0x",
+		"-U__STRICT_ANSI__",
+		"-Wunused-value",
+		"-fdata-sections",
+		"-ffunction-sections",
+--		"-fmerge-all-constants"
+	}
+	linkoptions {
+		"-Wl,--gc-sections",
+	}
 
 configuration { "x32", "mingw" }
-	defines { "WIN32" }
 	targetdir (BGFX_BUILD_DIR .. "win32_mingw" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win32_mingw" .. "/obj")
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/mingw" }
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win32_mingw" }
+	buildoptions { "-m32" }
 
 configuration { "x64", "mingw" }
-	defines { "WIN32" }
 	targetdir (BGFX_BUILD_DIR .. "win64_mingw" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win64_mingw" .. "/obj")
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/mingw" }
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win64_mingw" }
+	buildoptions { "-m64" }
+
+configuration { "linux" }
+	buildoptions {
+		"-std=c++0x",
+		"-U__STRICT_ANSI__",
+		"-Wunused-value",
+		"-mfpmath=sse", -- force SSE to get 32-bit and 64-bit builds deterministic.
+		"-msse2",
+	}
+	linkoptions {
+		"-Wl,--gc-sections",
+	}
+
+configuration { "linux", "x32" }
+	targetdir (BGFX_BUILD_DIR .. "linux32_gcc" .. "/bin")
+	objdir (BGFX_BUILD_DIR .. "linux32_gcc" .. "/obj")
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/linux32_gcc" }
+	buildoptions {
+		"-m32",
+	}
+
+configuration { "linux", "x64" }
+	targetdir (BGFX_BUILD_DIR .. "linux64_gcc" .. "/bin")
+	objdir (BGFX_BUILD_DIR .. "linux64_gcc" .. "/obj")
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/linux64_gcc" }
+	buildoptions {
+		"-m64",
+	}
 
 configuration { "nacl" }
 	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600" }
-	links {
-		"ppapi",
-		"ppapi_gles2",
-	}
 	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/nacl" }
 	buildoptions {
 		"-std=c++0x",
@@ -153,31 +213,23 @@ configuration { "x32", "nacl" }
 	targetdir (BGFX_BUILD_DIR .. "nacl-x86" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "nacl-x86" .. "/obj")
 	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/nacl-x86" }
-	linkoptions {
-		"-melf32_nacl",
-	}
+	linkoptions { "-melf32_nacl" }
 
 configuration { "x64", "nacl" }
 	targetdir (BGFX_BUILD_DIR .. "nacl-x64" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "nacl-x64" .. "/obj")
 	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/nacl-x64" }
-	linkoptions {
-		"-melf64_nacl",
-	}
-
-configuration { "x32", "linux" }
-	targetdir (BGFX_BUILD_DIR .. "linux32" .. "/bin")
-	objdir (BGFX_BUILD_DIR .. "linux32" .. "/obj")
-
-configuration { "x64", "linux" }
-	targetdir (BGFX_BUILD_DIR .. "linux64" .. "/bin")
-	objdir (BGFX_BUILD_DIR .. "linux64" .. "/obj")
+	linkoptions { "-melf64_nacl" }
 
 configuration { "Xbox360" }
-	defines { "_XBOX", "NOMINMAX" }
 	targetdir (BGFX_BUILD_DIR .. "xbox360" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "xbox360" .. "/obj")
 	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/msvc" }
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/xbox360" }
+	defines {
+		"NOMINMAX",
+		"_XBOX",
+	}
 
 configuration {} -- reset configuration
 

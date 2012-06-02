@@ -179,7 +179,7 @@ namespace bgfx
 					};
 
 					// Find suitable config
-					GLXFBConfig	bestconfig;
+					GLXFBConfig	bestconfig = NULL;
 
 					int nconfigs;
 					GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), glxAttribs, &nconfigs);
@@ -192,7 +192,7 @@ namespace bgfx
 						{
 							// Check if meets min spec
 							bool validconfig = true;
-							for (int attridx = 0; attridx < countof(glxAttribs) && glxAttribs[attridx] != None; attridx += 2)
+							for (uint32_t attridx = 0; attridx < countof(glxAttribs)-1 && glxAttribs[attridx] != None; attridx += 2)
 							{
 								int value;
 								glXGetFBConfigAttrib(display, configs[ii], glxAttribs[attridx], &value);

@@ -26,3 +26,9 @@ project "helloworld"
 			"@echo Stripping symbols.",
 			"@$(NACL)/bin/x86_64-nacl-strip -s \"$(TARGET)\""
 		}
+
+	configuration { "linux" }
+		links {
+			"GL",
+			"pthread",
+		}
