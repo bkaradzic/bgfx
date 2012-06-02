@@ -1,14 +1,22 @@
 bgfx
 ====
 
-Rendering library. Supports OpenGL/ES 2.0 and Direct3D 9.0.
+Rendering library.
+
+Supports:
+OpenGL 2.1, OpenGL ES 2.0, and Direct3D 9.0.
+
+Platforms:
+Windows, Linux, Android, and Native Client.
 
 Contact
 -------
 
-Twitter @bkaradzic
+[@bkaradzic](https://twitter.com/bkaradzic)  
+http://www.stuckingeometry.com
 
-Web http://www.stuckingeometry.com
+Project page  
+https://github.com/bkaradzic/bgfx
 
 License
 -------
