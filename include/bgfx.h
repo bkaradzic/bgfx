@@ -72,6 +72,7 @@ namespace bgfx
 #define BGFX_STATE_POINT_SIZE_MASK      UINT64_C(0x000ff00000000000)
 
 #define BGFX_STATE_SRGBWRITE            UINT64_C(0x0010000000000000)
+#define BGFX_STATE_MSAA                 UINT64_C(0x0020000000000000)
 
 #define BGFX_STATE_NONE                 UINT64_C(0x0000000000000000)
 #define BGFX_STATE_MASK                 UINT64_C(0xffffffffffffffff)
@@ -81,6 +82,7 @@ namespace bgfx
 			| BGFX_STATE_DEPTH_TEST_LESS \
 			| BGFX_STATE_DEPTH_WRITE \
 			| BGFX_STATE_CULL_CW \
+			| BGFX_STATE_MSAA \
 			)
 
 #define BGFX_CLEAR_NONE                 UINT8_C(0x00)
