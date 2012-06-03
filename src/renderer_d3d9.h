@@ -90,15 +90,26 @@ namespace bgfx
 #	define PIX_ENDEVENT()
 #endif // BGFX_CONFIG_DEBUG_PIX
 
-#define DX_RELEASE(_ptr, _expected) \
-				do { \
-					if (NULL != _ptr) \
-					{ \
-						ULONG count = _ptr->Release(); \
-						BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
-						_ptr = NULL; \
-					} \
-				} while (0)
+#if BGFX_CONFIG_DEBUG
+#	define DX_RELEASE(_ptr, _expected) \
+					do { \
+						if (NULL != _ptr) \
+						{ \
+							ULONG count = _ptr->Release(); \
+							BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
+							_ptr = NULL; \
+						} \
+					} while (0)
+#else
+#	define DX_RELEASE(_ptr, _expected) \
+					do { \
+						if (NULL != _ptr) \
+						{ \
+							_ptr->Release(); \
+							_ptr = NULL; \
+						} \
+					} while (0)
+#endif // BGFX_CONFIG_DEBUG
 
 	struct Msaa
 	{

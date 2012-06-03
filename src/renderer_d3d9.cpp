@@ -108,13 +108,13 @@ namespace bgfx
 	struct RendererContext
 	{
 		RendererContext()
-			: m_initialized(false)
+			: m_flags(BGFX_RESET_NONE)
+			, m_initialized(false)
 			, m_fmtNULL(false)
 			, m_fmtDF16(false)
 			, m_fmtDF24(false)
 			, m_fmtINTZ(false)
 			, m_fmtRAWZ(false)
-			, m_flags(BGFX_RESET_NONE)
 			, m_rtMsaa(false)
 		{
 			m_rt.idx = invalidHandle;
@@ -1693,8 +1693,7 @@ namespace bgfx
 
 					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 					{
-						float pointSize = (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT);
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_POINTSIZE, *( (DWORD*)&pointSize) ) );
+						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_POINTSIZE, castfi( (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) ) ) );
 					}
 
 #if BX_PLATFORM_WINDOWS

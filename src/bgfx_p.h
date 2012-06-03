@@ -174,6 +174,13 @@ namespace bgfx
 		return _offset+align-(_offset%align);
 	}
 
+	BX_FORCE_INLINE uint32_t castfi(float _value)
+	{
+		union {	float fl; uint32_t ui; } un;
+		un.fl = _value;
+		return un.ui;
+	}
+
 	void dump(const VertexDecl& _decl);
 
 	struct TextVideoMem

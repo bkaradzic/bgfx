@@ -8,7 +8,7 @@ project "bgfx"
 	}
 
 	buildoptions {
-		"-Wall",
+--		"-Wall",
 	}
 
 	defines {
