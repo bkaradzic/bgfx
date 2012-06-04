@@ -296,10 +296,12 @@ namespace bgfx
 			: m_rt(NULL)
 			, m_colorTexture(NULL)
 			, m_color(NULL)
+			, m_depthTexture(NULL)
 			, m_depth(NULL)
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
+			, m_depthOnly(false)
 		{
 		}
 
@@ -330,10 +332,12 @@ namespace bgfx
 		IDirect3DSurface9* m_rt;
 		IDirect3DTexture9* m_colorTexture;
 		IDirect3DSurface9* m_color;
+		IDirect3DTexture9* m_depthTexture;
 		IDirect3DSurface9* m_depth;
 		uint16_t m_width;
 		uint16_t m_height;
 		uint32_t m_flags;
+		bool m_depthOnly;
 	};
 
 } // namespace bgfx

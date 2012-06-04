@@ -78,7 +78,16 @@ namespace bgfx
 		D3DCULL_CCW,
 	};
 
-	static const D3DFORMAT s_colorFormat[] =
+	static const D3DFORMAT s_checkColorFormats[] =
+	{
+		D3DFMT_UNKNOWN,
+		D3DFMT_A8R8G8B8, D3DFMT_UNKNOWN,
+		D3DFMT_R32F, D3DFMT_R16F, D3DFMT_G16R16, D3DFMT_A8R8G8B8, D3DFMT_UNKNOWN,
+
+		D3DFMT_UNKNOWN, // terminator
+	};
+
+	static D3DFORMAT s_colorFormat[] =
 	{
 		D3DFMT_UNKNOWN, // ignored
 		D3DFMT_A8R8G8B8,
@@ -122,11 +131,13 @@ namespace bgfx
 
 		void init()
 		{
+			D3DFORMAT adapterFormat = D3DFMT_X8R8G8B8;
+
 			// http://msdn.microsoft.com/en-us/library/windows/desktop/bb172588%28v=vs.85%29.aspx
 			memset(&m_params, 0, sizeof(m_params) );
 			m_params.BackBufferWidth = BGFX_DEFAULT_WIDTH;
 			m_params.BackBufferHeight = BGFX_DEFAULT_HEIGHT;
-			m_params.BackBufferFormat = D3DFMT_X8R8G8B8;
+			m_params.BackBufferFormat = adapterFormat;
 			m_params.BackBufferCount = 1;
 			m_params.MultiSampleType = D3DMULTISAMPLE_NONE;
 			m_params.MultiSampleQuality = 0;
@@ -248,11 +259,26 @@ namespace bgfx
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
-			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
-			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
-			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF24) );
-			m_fmtINTZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_INTZ) );
-			m_fmtRAWZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_RAWZ) );
+			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_NULL) );
+			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF16) );
+			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_DF24) );
+			m_fmtINTZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_INTZ) );
+			m_fmtRAWZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_RAWZ) );
+
+			uint32_t index = 1;
+			for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)
+			{
+				for (; *fmt != D3DFMT_UNKNOWN; ++fmt)
+				{
+					if (SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, *fmt) ) )
+					{
+						s_colorFormat[index] = *fmt;
+						break;
+					}
+				}
+
+				for (; *fmt != D3DFMT_UNKNOWN; ++fmt);
+			}
 
 			m_fmtDepth = D3DFMT_D24S8;
 
@@ -382,8 +408,7 @@ namespace bgfx
 			else
 			{
 				RenderTarget& renderTarget = m_renderTargets[_rt.idx];
-				if (_msaa
-				&&  renderTarget.m_rt != NULL)
+				if (NULL != renderTarget.m_rt)
 				{
 					DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_rt) );
 				}
@@ -391,6 +416,7 @@ namespace bgfx
 				{
 					DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_color) );
 				}
+
 				DX_CHECK(m_device->SetDepthStencilSurface(NULL != renderTarget.m_depth ? renderTarget.m_depth : m_backBufferDepthStencil) );
 			}
 
@@ -399,7 +425,8 @@ namespace bgfx
 			&&  m_rtMsaa)
 			{
 				RenderTarget& renderTarget = m_renderTargets[m_rt.idx];
-				if (renderTarget.m_rt != NULL)
+				if (!renderTarget.m_depthOnly
+				&&  renderTarget.m_rt != NULL)
 				{
 					renderTarget.resolve();
 				}
@@ -1133,7 +1160,7 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, m_tav) );
 #if BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, m_srgb) );
-#endif // BX_PLATFORM_XBOX360
+#endif // BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_ptr) );
 	}
 
@@ -1153,52 +1180,86 @@ namespace bgfx
 			m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
 			uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 			uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
+			m_depthOnly = (0 == colorFormat && 0 < depthFormat);
 
 			// CheckDeviceFormat D3DUSAGE_SRGBWRITE
 
-			if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
+			if (m_depthOnly)
 			{
-				DX_CHECK(s_renderCtx.m_device->CreateRenderTarget(m_width
-					, m_height
-					, s_colorFormat[colorFormat]
-					, m_msaa.m_type
-					, m_msaa.m_quality
+				DX_CHECK(s_renderCtx.m_device->CreateRenderTarget(1
+					, 1
+					, D3DFMT_R5G6B5
+					, D3DMULTISAMPLE_NONE
+					, 0
 					, false
 					, &m_rt
 					, NULL
 					) );
 
-				BGFX_FATAL(m_rt, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create MSAA render target.");
-			}
+				BGFX_FATAL(m_rt, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create 1x1 render target.");
 
-			if (0 < colorFormat)
-			{
 				DX_CHECK(s_renderCtx.m_device->CreateTexture(m_width
 					, m_height
 					, 1
-					, D3DUSAGE_RENDERTARGET
-					, s_colorFormat[colorFormat]
+					, D3DUSAGE_DEPTHSTENCIL
+					, D3DFMT_DF24 //s_depthFormat[depthFormat]
 					, D3DPOOL_DEFAULT
-					, &m_colorTexture
+					, &m_depthTexture
 					, NULL
 					) );
 
-				BGFX_FATAL(m_colorTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create color render target.");
+				BGFX_FATAL(m_depthTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth texture.");
 
-				DX_CHECK(m_colorTexture->GetSurfaceLevel(0, &m_color) );
+				DX_CHECK(m_depthTexture->GetSurfaceLevel(0, &m_depth) );
 			}
-
-			if (0 < depthFormat)
+			else
 			{
-				DX_CHECK(s_renderCtx.m_device->CreateDepthStencilSurface(m_width
+				if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
+				{
+					DX_CHECK(s_renderCtx.m_device->CreateRenderTarget(m_width
 						, m_height
-						, s_depthFormat[depthFormat] // s_renderCtx.m_fmtDepth
+						, s_colorFormat[colorFormat]
 						, m_msaa.m_type
 						, m_msaa.m_quality
-						, FALSE
-						, &m_depth
+						, false
+						, &m_rt
 						, NULL
 						) );
+
+					BGFX_FATAL(m_rt, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create MSAA render target.");
+				}
+
+				if (0 < colorFormat)
+				{
+					DX_CHECK(s_renderCtx.m_device->CreateTexture(m_width
+						, m_height
+						, 1
+						, D3DUSAGE_RENDERTARGET
+						, s_colorFormat[colorFormat]
+						, D3DPOOL_DEFAULT
+						, &m_colorTexture
+						, NULL
+						) );
+
+					BGFX_FATAL(m_colorTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create color render target.");
+
+					DX_CHECK(m_colorTexture->GetSurfaceLevel(0, &m_color) );
+				}
+
+				if (0 < depthFormat)
+				{
+					DX_CHECK(s_renderCtx.m_device->CreateDepthStencilSurface(m_width
+							, m_height
+							, s_depthFormat[depthFormat] // s_renderCtx.m_fmtDepth
+							, m_msaa.m_type
+							, m_msaa.m_quality
+							, FALSE
+							, &m_depth
+							, NULL
+							) );
+
+					BGFX_FATAL(m_depth, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth stencil surface.");
+				}
 			}
 		}
 	}
@@ -1207,23 +1268,33 @@ namespace bgfx
 	{
 		if (0 != m_flags)
 		{
-			uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
-			uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
-
-			if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
+			if (m_depthOnly)
 			{
 				DX_RELEASE(m_rt, 0);
-			}
 
-			if (0 < colorFormat)
-			{
-				DX_RELEASE(m_color, 1);
-				DX_RELEASE(m_colorTexture, 0);
+				DX_RELEASE(m_depth, 1);
+				DX_RELEASE(m_depthTexture, 0);
 			}
-
-			if (0 < depthFormat)
+			else
 			{
-				DX_RELEASE(m_depth, 0);
+				uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
+				uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
+
+				if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
+				{
+					DX_RELEASE(m_rt, 0);
+				}
+
+				if (0 < colorFormat)
+				{
+					DX_RELEASE(m_color, 1);
+					DX_RELEASE(m_colorTexture, 0);
+				}
+
+				if (0 < depthFormat)
+				{
+					DX_RELEASE(m_depth, 0);
+				}
 			}
 		}
 	}
@@ -1238,7 +1309,7 @@ namespace bgfx
 #if BX_PLATFORM_WINDOWS
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, (m_flags&BGFX_RENDER_TARGET_SRGBWRITE) == BGFX_RENDER_TARGET_SRGBWRITE) );
 #endif // BX_PLATFORM_WINDOWS
-		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_colorTexture) );
+		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_depthOnly ? m_depthTexture : m_colorTexture) );
 	}
 
 	void RenderTarget::resolve()

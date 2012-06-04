@@ -1317,6 +1317,9 @@ namespace bgfx
 		GL_CHECK(glDisable(GL_CULL_FACE) );
 		GL_CHECK(glDisable(GL_BLEND) );
 		GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
+#if BGFX_CONFIG_RENDERER_OPENGL
+		GL_CHECK(glDisable(GL_ALPHA_TEST) );
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		Material& material = s_renderCtx.m_materials[m_material.idx];
 		GL_CHECK(glUseProgram(material.m_id) );
