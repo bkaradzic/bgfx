@@ -61,6 +61,8 @@ typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
 #	define D3DMULTISAMPLE_8_SAMPLES D3DMULTISAMPLE_4_SAMPLES
 #	define D3DMULTISAMPLE_16_SAMPLES D3DMULTISAMPLE_4_SAMPLES
 
+#	define D3DFMT_DF24 D3DFMT_D24FS8
+
 #	define _PIX_SETMARKER(_col, _name) do {} while(0)
 #	define _PIX_BEGINEVENT(_col, _name) do {} while(0)
 #	define _PIX_ENDEVENT() do {} while(0)

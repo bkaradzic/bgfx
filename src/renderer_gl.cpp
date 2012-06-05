@@ -16,11 +16,9 @@
 
 namespace bgfx
 {
-#if BGFX_CONFIG_RENDERER_OPENGL
-#	define GL_IMPORT(_optional, _proto, _func) _proto _func
-#	include "glimports.h"
-#	undef GL_IMPORT
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#define GL_IMPORT(_optional, _proto, _func) _proto _func
+#include "glimports.h"
+#undef GL_IMPORT
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
@@ -101,6 +99,14 @@ namespace bgfx
 					m_instInterface->BindGraphics(m_instance, m_context);
 					glSetCurrentContextPPAPI(m_context);
 					m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
+
+// #	define GL_IMPORT(_optional, _proto, _func) \
+// 				{ \
+// 					_func = (_proto)eglGetProcAddress(#_func); \
+// 					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
+// 				}
+// #	include "glimports.h"
+// #	undef GL_IMPORT
 				}
 				else
 				{
@@ -403,6 +409,14 @@ namespace bgfx
 			ARB_framebuffer_sRGB,
 			EXT_framebuffer_sRGB,
 			ARB_multisample,
+			CHROMIUM_framebuffer_multisample,
+			ANGLE_translated_shader_source,
+			ANGLE_instanced_arrays,
+			OES_texture_float,
+			OES_texture_float_linear,
+			OES_texture_half_float,
+			OES_texture_half_float_linear,
+			EXT_occlusion_query_boolean,
 
 			Count
 		};
@@ -431,6 +445,14 @@ namespace bgfx
 		{ "GL_ARB_framebuffer_sRGB",              false, true },
 		{ "GL_EXT_framebuffer_sRGB",              false, true },
 		{ "GL_ARB_multisample",                   false, true },
+		{ "GL_CHROMIUM_framebuffer_multisample",  false, true },
+		{ "GL_ANGLE_translated_shader_source",    false, true },
+		{ "GL_ANGLE_instanced_arrays",            false, true },
+		{ "GL_OES_texture_float",                 false, true },
+		{ "GL_OES_texture_float_linear",          false, true },
+		{ "GL_OES_texture_half_float",            false, true },
+		{ "GL_OES_texture_half_float_linear",     false, true },
+		{ "GL_EXT_occlusion_query_boolean",       false, true },
 	};
 
 	static const GLenum s_primType[] =

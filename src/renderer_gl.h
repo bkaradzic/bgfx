@@ -37,30 +37,15 @@
 #	include <gl/glext.h>
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 #	include <GLES2/gl2.h>
+#	include <GLES2/gl2ext.h>
+//#	include <EGL/egl.h>
 
-#	ifndef GL_BGRA_EXT
-#		define GL_BGRA_EXT 0x80E1
-#	endif // GL_BGRA_EXT
+#	ifndef GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE
+#		define GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE 0x93A0
+#	endif // GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE
 
-#	ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
-#		define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
-#	endif // GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
 
-#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-#		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
-#	endif // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-
-#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-#		define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
-#	endif // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-
-#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
-#		define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
-#	endif // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
-
-#	ifndef GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
-#		define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES 0x8B8B
-#	endif // GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #if BX_PLATFORM_NACL
@@ -119,11 +104,9 @@ namespace bgfx
 #define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
 #define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-#	define GL_IMPORT(_optional, _proto, _func) extern _proto _func
-#	include "glimports.h"
-#	undef GL_IMPORT
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#define GL_IMPORT(_optional, _proto, _func) extern _proto _func
+#include "glimports.h"
+#undef GL_IMPORT
 	
 	class ConstantBuffer;
 	

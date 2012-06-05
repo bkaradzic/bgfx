@@ -7,11 +7,9 @@
 #	error GL_IMPORT(_optional, _proto, _func) must be defined!
 #endif // GL_IMPORT
 
+#if BGFX_CONFIG_RENDERER_OPENGL
 // OpenGL 2.1 Reference Pages
 // http://www.opengl.org/sdk/docs/man/
-//
-// OpenGL ES 2.0 Reference Pages
-// http://www.khronos.org/opengles/sdk/docs/man/
 
 GL_IMPORT(false, PFNGLACTIVETEXTUREPROC,            glActiveTexture);
 GL_IMPORT(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,     glCompressedTexImage2D);
@@ -90,3 +88,12 @@ GL_IMPORT(true,  PFNGLSAMPLECOVERAGEARBPROC,        glSampleCoverageARB);
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,      glStringMarkerGREMEDY);
 GL_IMPORT(true,  PFNGLFRAMETERMINATORGREMEDYPROC,   glFrameTerminatorGREMEDY);
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
+
+#else
+
+// OpenGL ES 2.0 Reference Pages
+// http://www.khronos.org/opengles/sdk/docs/man/
+
+GL_IMPORT(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC, glGetTranslatedShaderSourceANGLE);
+
+#endif // BGFX_CONFIG_RENDERER_
