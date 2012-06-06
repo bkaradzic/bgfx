@@ -334,7 +334,7 @@ namespace bgfx
 
 		void updateMsaa()
 		{
-			for (uint32_t ii = 1; ii < countof(s_checkMsaa); ++ii)
+			for (uint32_t ii = 1, last = 0; ii < countof(s_checkMsaa); ++ii)
 			{
 				D3DMULTISAMPLE_TYPE msaa = s_checkMsaa[ii];
 				DWORD quality;
@@ -351,11 +351,11 @@ namespace bgfx
 				{
 					s_msaa[ii].m_type = msaa;
 					s_msaa[ii].m_quality = uint32_imax(0, quality-1);
+					last = ii;
 				}
 				else
 				{
-					s_msaa[ii].m_type = D3DMULTISAMPLE_NONE;
-					s_msaa[ii].m_quality = 0;
+					s_msaa[ii] = s_msaa[last];
 				}
 			}
 		}
