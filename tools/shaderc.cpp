@@ -231,14 +231,7 @@ private:
 	void skipLine()
 	{
 		const char* str = &m_str[m_pos];
-		const char* eol = strstr(str, "\r\n");
-		if (NULL != eol)
-		{
-			m_pos += eol-str+2;
-			return;
-		}
-
-		eol = strstr(str, "\n\r");
+		const char* eol = strstr(str, "\n\r");
 		if (NULL != eol)
 		{
 			m_pos += eol-str+2;
@@ -343,6 +336,8 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 	flags |= _cmdLine.hasArg('\0', "partial-precision") ? D3DXSHADER_PARTIALPRECISION : 0;
 	flags |= _cmdLine.hasArg('\0', "prefer-flow-control") ? D3DXSHADER_PREFER_FLOW_CONTROL : 0;
 	flags |= _cmdLine.hasArg('\0', "backwards-compatibility") ? D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY : 0;
+	
+	bool werror = _cmdLine.hasArg('\0', "Werror");
 
 	uint32_t optimization = 3;
 	if (_cmdLine.hasArg(optimization, 'O') )
@@ -374,7 +369,8 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 		, &errorMsg
 		, &constantTable
 		);
-	if (FAILED(hr) )
+	if (FAILED(hr)
+	||  werror && NULL != errorMsg)
 	{
 		printCode(_code.c_str() );
 		fprintf(stderr, "Error: 0x%08x %s\n", hr, errorMsg->GetBufferPointer() );
