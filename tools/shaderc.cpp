@@ -200,6 +200,79 @@ private:
 	bool m_bigEndian;
 };
 
+class LineReader
+{
+public:
+	LineReader(const char* _str)
+		: m_str(_str)
+		, m_pos(0)
+		, m_size( (uint32_t)strlen(_str) )
+	{
+	}
+
+	std::string getLine()
+	{
+		const char* str = &m_str[m_pos];
+		skipLine();
+
+		const char* eol = &m_str[m_pos];
+
+		std::string tmp;
+		tmp.assign(str, eol-str);
+		return tmp;
+	}
+
+	bool isEof() const
+	{
+		return m_str[m_pos] == '\0';
+	}
+
+private:
+	void skipLine()
+	{
+		const char* str = &m_str[m_pos];
+		const char* eol = strstr(str, "\r\n");
+		if (NULL != eol)
+		{
+			m_pos += eol-str+2;
+			return;
+		}
+
+		eol = strstr(str, "\n\r");
+		if (NULL != eol)
+		{
+			m_pos += eol-str+2;
+			return;
+		}
+
+		eol = strstr(str, "\n");
+		if (NULL != eol)
+		{
+			m_pos += eol-str+1;
+			return;
+		}
+
+		m_pos += (uint32_t)strlen(str);
+	}
+
+	const char* m_str;
+	uint32_t m_pos;
+	uint32_t m_size;
+};
+
+void printCode(const char* _code)
+{
+	fprintf(stderr, "Code:\n---\n");
+
+	LineReader lr(_code);
+	for (uint32_t line =  1; !lr.isEof(); ++line)
+	{
+		fprintf(stderr, "%3d: %s", line, lr.getLine().c_str() );
+	}
+
+	fprintf(stderr, "---\n");
+}
+
 bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const char* _outFilePath)
 {
 	const glslopt_shader_type type = (0 == _stricmp(_cmdLine.findOption('\0', "type"), "fragment") ) ? kGlslOptShaderFragment : kGlslOptShaderVertex;
@@ -210,7 +283,7 @@ bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 
 	if( !glslopt_get_status(shader) )
 	{
-		fprintf(stderr, "Code:\n---\n%s\n---\n", _code.c_str() );
+		printCode(_code.c_str() );
 		fprintf(stderr, "Error: %s\n", glslopt_get_log(shader) );
 		glslopt_cleanup(ctx);
 		return false;
@@ -269,6 +342,7 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 	flags |= _cmdLine.hasArg('\0', "no-preshader") ? D3DXSHADER_NO_PRESHADER : 0;
 	flags |= _cmdLine.hasArg('\0', "partial-precision") ? D3DXSHADER_PARTIALPRECISION : 0;
 	flags |= _cmdLine.hasArg('\0', "prefer-flow-control") ? D3DXSHADER_PREFER_FLOW_CONTROL : 0;
+	flags |= _cmdLine.hasArg('\0', "backwards-compatibility") ? D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY : 0;
 
 	uint32_t optimization = 3;
 	if (_cmdLine.hasArg(optimization, 'O') )
@@ -302,7 +376,7 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 		);
 	if (FAILED(hr) )
 	{
-		fprintf(stderr, "Code:\n---\n%s\n---\n", _code.c_str() );
+		printCode(_code.c_str() );
 		fprintf(stderr, "Error: 0x%08x %s\n", hr, errorMsg->GetBufferPointer() );
 		return false;
 	}

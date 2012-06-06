@@ -3,6 +3,7 @@ project "shaderc"
 	kind "ConsoleApp"
 
 	local GLSL_OPTIMIZER = (BGFX_DIR .. "3rdparty/glsl-optimizer/")
+	local FCPP_DIR = (BGFX_DIR .. "3rdparty/fcpp/")
 
 	configuration { "vs*" }
 		includedirs {
@@ -14,7 +15,7 @@ project "shaderc"
 	includedirs {
 		BGFX_DIR .. "../bx/include",
 
-		BGFX_DIR .. "3rdparty/fcpp",
+		FCPP_DIR,
 
 		GLSL_OPTIMIZER .. "include",
 		GLSL_OPTIMIZER .. "include/c99",
@@ -24,15 +25,15 @@ project "shaderc"
 	}
 
 	files {
-		BGFX_DIR .. "3rdparty/tools/shaderc.cpp",
-		BGFX_DIR .. "3rdparty/fcpp/**.h",
-		BGFX_DIR .. "3rdparty/fcpp/cpp1.c",
-		BGFX_DIR .. "3rdparty/fcpp/cpp2.c",
-		BGFX_DIR .. "3rdparty/fcpp/cpp3.c",
-		BGFX_DIR .. "3rdparty/fcpp/cpp4.c",
-		BGFX_DIR .. "3rdparty/fcpp/cpp5.c",
-		BGFX_DIR .. "3rdparty/fcpp/cpp6.c",
-		BGFX_DIR .. "3rdparty/fcpp/cpp6.c",
+		BGFX_DIR .. "tools/shaderc.cpp",
+		FCPP_DIR .. "**.h",
+		FCPP_DIR .. "cpp1.c",
+		FCPP_DIR .. "cpp2.c",
+		FCPP_DIR .. "cpp3.c",
+		FCPP_DIR .. "cpp4.c",
+		FCPP_DIR .. "cpp5.c",
+		FCPP_DIR .. "cpp6.c",
+		FCPP_DIR .. "cpp6.c",
 
 		GLSL_OPTIMIZER .. "src/mesa/**.c",
 		GLSL_OPTIMIZER .. "src/glsl/**.cpp",
