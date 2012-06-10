@@ -41,6 +41,7 @@ GL_IMPORT(false, PFNGLCLEARCOLORPROC,               glClearColor);
 
 GL_IMPORT(false, PFNGLACTIVETEXTUREPROC,            glActiveTexture);
 GL_IMPORT(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,     glCompressedTexImage2D);
+GL_IMPORT(false, PFNGLCOMPRESSEDTEXIMAGE3DPROC,     glCompressedTexImage3D);
 GL_IMPORT(false, PFNGLBINDBUFFERPROC,               glBindBuffer);
 GL_IMPORT(false, PFNGLDELETEBUFFERSPROC,            glDeleteBuffers);
 GL_IMPORT(false, PFNGLGENBUFFERSPROC,               glGenBuffers);

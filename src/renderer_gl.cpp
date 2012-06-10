@@ -970,9 +970,12 @@ namespace bgfx
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
 		Dds dds;
+		uint8_t numMips = 0;
 
 		if (parseDds(dds, _mem) )
 		{
+			numMips = dds.m_numMips;
+
 			if (dds.m_cubeMap)
 			{
 				m_target = GL_TEXTURE_CUBE_MAP;
@@ -992,26 +995,26 @@ namespace bgfx
 			BX_CHECK(0 != m_id, "Failed to generate texture id.");
 			GL_CHECK(glBindTexture(m_target, m_id) );
 
-			GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < dds.m_numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
-
 			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 			GLenum internalFmt = tfi.m_internalFmt;
+			GLenum fmt = tfi.m_format;
+
+			GLenum target = m_target;
+			if (dds.m_cubeMap)
+			{
+				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+			}
 
 			if (!s_renderCtx.m_dxtSupport
 			||  TextureFormat::Unknown < dds.m_type)
 			{
-				if (internalFmt == GL_RGBA)
+				if (GL_RGBA == internalFmt)
 				{
 					internalFmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
+					fmt = internalFmt;
 				}
 
 				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp);
-
-				GLenum target = m_target;
-				if (dds.m_cubeMap)
-				{
-					target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-				}
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
@@ -1050,7 +1053,6 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_OPENGL
 							if (target == GL_TEXTURE_3D)
 							{
-								
 								GL_CHECK(glTexImage3D(target
 									, lod
 									, internalFmt
@@ -1058,7 +1060,7 @@ namespace bgfx
 									, height
 									, depth
 									, 0
-									, tfi.m_format
+									, fmt
 									, tfi.m_type
 									, bits
 									) );
@@ -1072,7 +1074,7 @@ namespace bgfx
 									, width
 									, height
 									, 0
-									, tfi.m_format
+									, fmt
 									, tfi.m_type
 									, bits
 									) );
@@ -1104,15 +1106,33 @@ namespace bgfx
 						Mip mip;
 						if (getRawImageData(dds, 0, ii, _mem, mip) )
 						{
-							GL_CHECK(glCompressedTexImage2D(m_target
-								, ii
-								, internalFmt
-								, width
-								, height
-								, 0
-								, mip.m_size
-								, mip.m_data
-								) );
+#if BGFX_CONFIG_RENDERER_OPENGL
+							if (m_target == GL_TEXTURE_3D)
+							{
+								GL_CHECK(glCompressedTexImage3D(target
+									, ii
+									, internalFmt
+									, width
+									, height
+									, depth
+									, 0
+									, mip.m_size
+									, mip.m_data
+									) );
+							}
+							else
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+							{
+								GL_CHECK(glCompressedTexImage2D(target+side
+									, ii
+									, internalFmt
+									, width
+									, height
+									, 0
+									, mip.m_size
+									, mip.m_data
+									) );
+							}
 						}
 
 						width >>= 1;
@@ -1146,12 +1166,9 @@ namespace bgfx
 				uint8_t bpp;
 				stream.read(bpp);
 
-				uint8_t numMips;
 				stream.read(numMips);
 
 				stream.align(16);
-
-				GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
 
 				for (uint8_t mip = 0; mip < numMips; ++mip)
 				{
@@ -1194,6 +1211,7 @@ namespace bgfx
 
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT]) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT]) );
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
 
 		GL_CHECK(glBindTexture(m_target, 0) );
 	}
