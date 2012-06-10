@@ -19,6 +19,8 @@ namespace bgfx
 #define DDS_DXT4 MAKEFOURCC('D', 'X', 'T', '4')
 #define DDS_DXT5 MAKEFOURCC('D', 'X', 'T', '5')
 
+#define D3DFMT_A16B16G16R16F 113
+
 #define DDSD_CAPS                   0x00000001
 #define DDSD_HEIGHT                 0x00000002
 #define DDSD_WIDTH                  0x00000004
@@ -47,6 +49,11 @@ namespace bgfx
 #define DDSCAPS2_CUBEMAP_NEGATIVEY  0x00002000
 #define DDSCAPS2_CUBEMAP_POSITIVEZ  0x00004000
 #define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
+
+#define DDS_CUBEMAP_ALLFACES (DDSCAPS2_CUBEMAP_POSITIVEX|DDSCAPS2_CUBEMAP_NEGATIVEX \
+							 |DDSCAPS2_CUBEMAP_POSITIVEY|DDSCAPS2_CUBEMAP_NEGATIVEY \
+							 |DDSCAPS2_CUBEMAP_POSITIVEZ|DDSCAPS2_CUBEMAP_NEGATIVEZ)
+
 #define DDSCAPS2_VOLUME             0x00200000
 
 bool isDds(const Memory* _mem)
@@ -216,7 +223,7 @@ void Mip::decode(uint8_t* _dst)
 {
 	const uint8_t* src = m_data;
 
-	if (0 != m_type)
+	if (TextureFormat::Unknown > m_type)
 	{
 		uint32_t width = m_width/4;
 		uint32_t height = m_height/4;
@@ -226,7 +233,7 @@ void Mip::decode(uint8_t* _dst)
 
 		switch (m_type)
 		{
-		case 1:
+		case TextureFormat::Dxt1:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
@@ -243,7 +250,7 @@ void Mip::decode(uint8_t* _dst)
 			}
 			break;
 
-		case 2:
+		case TextureFormat::Dxt3:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
@@ -262,7 +269,7 @@ void Mip::decode(uint8_t* _dst)
 			}
 			break;
 
-		case 3:
+		case TextureFormat::Dxt5:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
@@ -288,7 +295,8 @@ void Mip::decode(uint8_t* _dst)
 		uint32_t height = m_height;
 
 		if (m_bpp == 1
-		||  m_bpp == 4)
+		||  m_bpp == 4
+		||  m_bpp == 8)
 		{
 			uint32_t pitch = m_width*m_bpp;
 			memcpy(_dst, src, pitch*height);
@@ -388,11 +396,21 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		return false;
 	}
 
+	bool cubeMap = 0 != (caps[1] & DDSCAPS2_CUBEMAP);
+	if (cubeMap)
+	{
+		if ( (caps[1] & DDS_CUBEMAP_ALLFACES) != DDS_CUBEMAP_ALLFACES)
+		{
+			// parital cube map is not supported.
+			return false;
+		}
+	}
+
 	stream.skip(4); // reserved
 
 	uint8_t bpp = 1;
 	uint8_t blockSize = 1;
-	uint8_t type = 0;
+	TextureFormat::Enum type = TextureFormat::Unknown;
 	bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
 
 	if (pixelFlags & DDPF_FOURCC)
@@ -400,20 +418,26 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		switch (fourcc)
 		{
 		case DDS_DXT1:
-			type = 1;
+			type = TextureFormat::Dxt1;
 			blockSize = 8;
 			break;
 
 		case DDS_DXT2:
 		case DDS_DXT3:
-			type = 2;
+			type = TextureFormat::Dxt3;
 			blockSize = 16;
 			break;
 
 		case DDS_DXT4:
 		case DDS_DXT5:
-			type = 3;
+			type = TextureFormat::Dxt5;
 			blockSize = 16;
+			break;
+
+		case D3DFMT_A16B16G16R16F:
+			type = TextureFormat::ABGR16;
+			blockSize = 8;
+			bpp = 8;
 			break;
 		}
 	}
@@ -422,20 +446,27 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		switch (pixelFlags)
 		{
 		case DDPF_RGB:
-			blockSize *= 3;
+			type = TextureFormat::XRGB8;
+			blockSize = 3;
 			bpp = 3;
 			break;
 
 		case DDPF_RGB|DDPF_ALPHAPIXELS:
-			blockSize *= 4;
+			type = TextureFormat::ARGB8;
+			blockSize = 4;
 			bpp = 4;
 			break;
 
-		case DDPF_LUMINANCE:
 		case DDPF_INDEXED:
+		case DDPF_LUMINANCE:
 		case DDPF_ALPHA:
+			type = TextureFormat::L8;
 			bpp = 1;
 			break;
+
+// 			type = TextureFormat::A8;
+// 			bpp = 1;
+// 			break;
 
 		default:
 			bpp = 0;
@@ -443,61 +474,70 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		}
 	}
 
+	_dds.m_type = type;
 	_dds.m_width = width;
 	_dds.m_height = height;
 	_dds.m_depth = depth;
 	_dds.m_blockSize = blockSize;
 	_dds.m_numMips = (caps[0] & DDSCAPS_MIPMAP) ? mips : 1;
 	_dds.m_bpp = bpp;
-	_dds.m_type = type;
 	_dds.m_hasAlpha = hasAlpha;
+	_dds.m_cubeMap = cubeMap;
 
 	return true;
 }
 
-bool getRawImageData(const Dds& _dds, uint8_t _index, const Memory* _mem, Mip& _mip)
+bool getRawImageData(const Dds& _dds, uint8_t _side, uint8_t _lod, const Memory* _mem, Mip& _mip)
 {
-	uint32_t width = _dds.m_width;
-	uint32_t height = _dds.m_height;
 	uint32_t blockSize = _dds.m_blockSize;
 	uint32_t offset = DDS_IMAGE_DATA_OFFSET;
 	uint8_t bpp = _dds.m_bpp;
-	uint8_t type = _dds.m_type;
+	TextureFormat::Enum type = _dds.m_type;
 	bool hasAlpha = _dds.m_hasAlpha;
 
-	for (uint8_t ii = 0, num = _dds.m_numMips; ii < num; ++ii)
+	for (uint8_t side = 0, numSides = _dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 	{
-		width = uint32_max(1, width);
-		height = uint32_max(1, height);
+		uint32_t width = _dds.m_width;
+		uint32_t height = _dds.m_height;
+		uint32_t depth = _dds.m_depth;
 
-		uint32_t size = width*height*blockSize;
-		if (0 != type)
+		for (uint8_t lod = 0, num = _dds.m_numMips; lod < num; ++lod)
 		{
-			width = uint32_max(1, (width + 3)>>2);
-			height = uint32_max(1, (height + 3)>>2);
-			size = width*height*blockSize;
+			width = uint32_max(1, width);
+			height = uint32_max(1, height);
+			depth = uint32_max(1, depth);
 
-			width <<= 2;
-			height <<= 2;
+			uint32_t size = width*height*depth*blockSize;
+			if (TextureFormat::Unknown > type)
+			{
+				width = uint32_max(1, (width + 3)>>2);
+				height = uint32_max(1, (height + 3)>>2);
+				size = width*height*depth*blockSize;
+
+				width <<= 2;
+				height <<= 2;
+			}
+
+			if (side == _side
+			&&  lod == _lod)
+			{
+				_mip.m_width = width;
+				_mip.m_height = height;
+				_mip.m_blockSize = blockSize;
+				_mip.m_size = size;
+				_mip.m_data = _mem->data + offset;
+				_mip.m_bpp = bpp;
+				_mip.m_type = type;
+				_mip.m_hasAlpha = hasAlpha;
+				return true;
+			}
+
+			offset += size;
+
+			width >>= 1;
+			height >>= 1;
+			depth >>= 1;
 		}
-
-		if (ii == _index)
-		{
-			_mip.m_width = width;
-			_mip.m_height = height;
-			_mip.m_blockSize = blockSize;
-			_mip.m_size = size;
-			_mip.m_data = _mem->data + offset;
-			_mip.m_bpp = bpp;
-			_mip.m_type = type;
-			_mip.m_hasAlpha = hasAlpha;
-			return true;
-		}
-
-		offset += size;
-
-		width >>= 1;
-		height >>= 1;
 	}
 
 	return false;

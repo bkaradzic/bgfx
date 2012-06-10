@@ -269,10 +269,24 @@ namespace bgfx
 
 	struct Texture
 	{
+		enum Enum
+		{
+			Texture2D,
+			Texture3D,
+			TextureCube,
+		};
+
 		Texture()
 			: m_ptr(NULL)
 		{
 		}
+
+		void createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips, D3DFORMAT _fmt);
+		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips, D3DFORMAT _fmt);
+		void createCubeTexture(uint32_t _edge, uint32_t _numMips, D3DFORMAT _fmt);
+
+		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch);
+		void unlock(uint8_t _side, uint8_t _lod);
 
 		void create(const Memory* _mem, uint32_t _flags);
 
@@ -283,12 +297,14 @@ namespace bgfx
 
 		void commit(uint8_t _stage);
 	
-		IDirect3DTexture9* m_ptr;
+		IDirect3DBaseTexture9* m_ptr;
 		D3DTEXTUREFILTERTYPE m_minFilter;
 		D3DTEXTUREFILTERTYPE m_magFilter;
 		D3DTEXTUREFILTERTYPE m_mipFilter;
 		D3DTEXTUREADDRESS m_tau;
 		D3DTEXTUREADDRESS m_tav;
+		D3DTEXTUREADDRESS m_taw;
+		Enum m_type;
 		bool m_srgb;
 	};
 

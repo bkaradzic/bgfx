@@ -98,10 +98,13 @@ namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 #define BGFX_STATE_TEX2      UINT64_C(0x0400000000000000)
 #define BGFX_STATE_TEX3      UINT64_C(0x0800000000000000)
 #define BGFX_STATE_TEX4      UINT64_C(0x1000000000000000)
-#define BGFX_STATE_TEX_MASK  UINT64_C(0x1f00000000000000)
-#define BGFX_STATE_TEX_COUNT 5
+#define BGFX_STATE_TEX5      UINT64_C(0x2000000000000000)
+#define BGFX_STATE_TEX6      UINT64_C(0x4000000000000000)
+#define BGFX_STATE_TEX7      UINT64_C(0x8000000000000000)
+#define BGFX_STATE_TEX_MASK  UINT64_C(0xff00000000000000)
+#define BGFX_STATE_TEX_COUNT 8
 
-#define BGFX_SAMPLER_NONE               UINT16_C(0x0000)
+#define BGFX_SAMPLER_TEXTURE            UINT16_C(0x0000)
 #define BGFX_SAMPLER_RENDERTARGET_COLOR UINT16_C(0x0001)
 #define BGFX_SAMPLER_RENDERTARGET_DEPTH UINT16_C(0x0002)
 #define BGFX_SAMPLER_TYPE_MASK          UINT16_C(0x0003)
@@ -843,7 +846,7 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < BGFX_STATE_TEX_COUNT; ++ii)
 			{
 				m_sampler[ii].m_idx = bgfx::invalidHandle;
-				m_sampler[ii].m_flags = BGFX_SAMPLER_NONE;
+				m_sampler[ii].m_flags = BGFX_SAMPLER_TEXTURE;
 			}
 		}
 
@@ -1037,7 +1040,7 @@ namespace bgfx
 			m_flags |= BGFX_STATE_TEX0<<_stage;
 			Sampler& sampler = m_state.m_sampler[_stage];
 			sampler.m_idx = _handle.idx;
-			sampler.m_flags = BGFX_SAMPLER_NONE;
+			sampler.m_flags = BGFX_SAMPLER_TEXTURE;
 
 			if (bgfx::invalidHandle != _sampler.idx)
 			{

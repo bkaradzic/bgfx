@@ -63,6 +63,38 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	include <gl/GRemedyGLExtensions.h>
 #endif // BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
+#if BX_PLATFORM_WINDOWS
+typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
+typedef BOOL (APIENTRYP PFNWGLMAKECURRENTPROC) (HDC hDc, HGLRC newContext);
+typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTPROC) (HDC hDc);
+//
+typedef GLenum (APIENTRYP PFNGLGETERRORPROC) (void);
+typedef void (APIENTRYP PFNGLREADPIXELSPROC) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
+typedef void (APIENTRYP PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+typedef void (APIENTRYP PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
+typedef void (APIENTRYP PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
+typedef void (APIENTRYP PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
+typedef void (APIENTRYP PFNGLDELETETEXTURESPROC) (GLsizei n, const GLuint *textures);
+typedef void (APIENTRYP PFNGLCOLORMASKPROC) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
+typedef void (APIENTRYP PFNGLDEPTHFUNCPROC) (GLenum func);
+typedef void (APIENTRYP PFNGLDISABLEPROC) (GLenum cap);
+typedef void (APIENTRYP PFNGLVIEWPORTPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
+typedef void (APIENTRYP PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+typedef void (APIENTRYP PFNGLGETINTEGERVPROC) (GLenum pname, GLint *params);
+typedef const GLubyte * (APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
+typedef void (APIENTRYP PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
+typedef void (APIENTRYP PFNGLBLENDFUNCPROC) (GLenum sfactor, GLenum dfactor);
+typedef void (APIENTRYP PFNGLPOINTSIZEPROC) (GLfloat size);
+typedef void (APIENTRYP PFNGLCULLFACEPROC) (GLenum mode);
+typedef void (APIENTRYP PFNGLCLEARPROC) (GLbitfield mask);
+typedef void (APIENTRYP PFNGLSCISSORPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
+typedef void (APIENTRYP PFNGLENABLEPROC) (GLenum cap);
+typedef void (APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
+typedef void (APIENTRYP PFNGLDEPTHMASKPROC) (GLboolean flag);
+typedef void (APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble depth);
+typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+#endif // BX_PLATFORM_WINDOWS
+
 namespace bgfx
 {
 #	define _GL_CHECK(_call) \
@@ -103,6 +135,12 @@ namespace bgfx
 
 #define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
 #define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
+
+#if BX_PLATFORM_WINDOWS
+	extern PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
+	extern PFNWGLMAKECURRENTPROC wglMakeCurrent;
+	extern PFNWGLCREATECONTEXTPROC wglCreateContext;
+#endif // BX_PLATFORM_WINDOWS
 
 #define GL_IMPORT(_optional, _proto, _func) extern _proto _func
 #include "glimports.h"

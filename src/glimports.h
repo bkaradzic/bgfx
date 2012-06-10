@@ -11,6 +11,34 @@
 // OpenGL 2.1 Reference Pages
 // http://www.opengl.org/sdk/docs/man/
 
+#if BX_PLATFORM_WINDOWS
+GL_IMPORT(false, PFNGLGETERRORPROC,                 glGetError);
+GL_IMPORT(false, PFNGLREADPIXELSPROC,               glReadPixels);
+GL_IMPORT(false, PFNGLTEXIMAGE2DPROC,               glTexImage2D);
+GL_IMPORT(false, PFNGLTEXPARAMETERIPROC,            glTexParameteri);
+GL_IMPORT(false, PFNGLBINDTEXTUREPROC,              glBindTexture);
+GL_IMPORT(false, PFNGLGENTEXTURESPROC,              glGenTextures);
+GL_IMPORT(false, PFNGLDELETETEXTURESPROC,           glDeleteTextures);
+GL_IMPORT(false, PFNGLCOLORMASKPROC,                glColorMask);
+GL_IMPORT(false, PFNGLDEPTHFUNCPROC,                glDepthFunc);
+GL_IMPORT(false, PFNGLDISABLEPROC,                  glDisable);
+GL_IMPORT(false, PFNGLVIEWPORTPROC,                 glViewport);
+GL_IMPORT(false, PFNGLDRAWELEMENTSPROC,             glDrawElements);
+GL_IMPORT(false, PFNGLGETINTEGERVPROC,              glGetIntegerv);
+GL_IMPORT(false, PFNGLGETSTRINGPROC,                glGetString);
+GL_IMPORT(false, PFNGLDRAWARRAYSPROC,               glDrawArrays);
+GL_IMPORT(false, PFNGLBLENDFUNCPROC,                glBlendFunc);
+GL_IMPORT(false, PFNGLPOINTSIZEPROC,                glPointSize);
+GL_IMPORT(false, PFNGLCULLFACEPROC,                 glCullFace);
+GL_IMPORT(false, PFNGLCLEARPROC,                    glClear);
+GL_IMPORT(false, PFNGLSCISSORPROC,                  glScissor);
+GL_IMPORT(false, PFNGLENABLEPROC,                   glEnable);
+GL_IMPORT(false, PFNGLCLEARSTENCILPROC,             glClearStencil);
+GL_IMPORT(false, PFNGLDEPTHMASKPROC,                glDepthMask);
+GL_IMPORT(false, PFNGLCLEARDEPTHPROC,               glClearDepth);
+GL_IMPORT(false, PFNGLCLEARCOLORPROC,               glClearColor);
+#endif // BX_PLATFORM_WINDOWS
+
 GL_IMPORT(false, PFNGLACTIVETEXTUREPROC,            glActiveTexture);
 GL_IMPORT(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,     glCompressedTexImage2D);
 GL_IMPORT(false, PFNGLBINDBUFFERPROC,               glBindBuffer);
@@ -61,6 +89,9 @@ GL_IMPORT(false, PFNGLUNIFORM3FVPROC,               glUniform3fv);
 GL_IMPORT(false, PFNGLUNIFORM4FVPROC,               glUniform4fv);
 GL_IMPORT(false, PFNGLUNIFORMMATRIX3FVPROC,         glUniformMatrix3fv);
 GL_IMPORT(false, PFNGLUNIFORMMATRIX4FVPROC,         glUniformMatrix4fv);
+GL_IMPORT(false, PFNGLTEXIMAGE3DPROC,               glTexImage3D);
+GL_IMPORT(false, PFNGLTEXSUBIMAGE3DPROC,            glTexSubImage3D);
+GL_IMPORT(false, PFNGLCOPYTEXSUBIMAGE3DPROC,        glCopyTexSubImage3D);
 
 GL_IMPORT(false, PFNGLGENQUERIESPROC,               glGenQueries);
 GL_IMPORT(false, PFNGLDELETEQUERIESPROC,            glDeleteQueries);

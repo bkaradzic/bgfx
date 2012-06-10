@@ -16,6 +16,12 @@
 
 namespace bgfx
 {
+#if BX_PLATFORM_WINDOWS
+	PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
+	PFNWGLMAKECURRENTPROC wglMakeCurrent;
+	PFNWGLCREATECONTEXTPROC wglCreateContext;
+#endif // BX_PLATFORM_WINDOWS
+
 #define GL_IMPORT(_optional, _proto, _func) _proto _func
 #include "glimports.h"
 #undef GL_IMPORT
@@ -116,6 +122,18 @@ namespace bgfx
 #elif BX_PLATFORM_WINDOWS
 				if (NULL == m_hdc)
 				{
+					m_opengl32dll = LoadLibrary("opengl32.dll");
+					BGFX_FATAL(NULL != m_opengl32dll, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to load opengl32.dll.");
+
+					wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(m_opengl32dll, "wglGetProcAddress");
+					BGFX_FATAL(NULL != wglGetProcAddress, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglGetProcAddress.");
+
+					wglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(m_opengl32dll, "wglMakeCurrent");
+					BGFX_FATAL(NULL != wglMakeCurrent, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglMakeCurrent.");
+
+					wglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglCreateContext");
+					BGFX_FATAL(NULL != wglCreateContext, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglCreateContext.");
+
 					m_hdc = GetDC(g_bgfxHwnd);
 					BGFX_FATAL(NULL != m_hdc, bgfx::Fatal::OPENGL_UnableToCreateContext, "GetDC failed!");
 
@@ -148,6 +166,10 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)wglGetProcAddress(#_func); \
+					if (_func == NULL) \
+					{ \
+						_func = (_proto)GetProcAddress(m_opengl32dll, #_func); \
+					} \
 					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
 				}
 #	include "glimports.h"
@@ -309,11 +331,6 @@ namespace bgfx
 			}
 		}
 
-		void init()
-		{
-			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
-		}
-
 		void saveScreenShot(Memory* _mem)
 		{
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -322,6 +339,18 @@ namespace bgfx
 			saveTga( (const char*)_mem->data, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, data);
 			g_free(data);
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+		}
+
+		void init()
+		{
+			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+		}
+
+		void shutdown()
+		{
+#if BX_PLATFORM_WINDOWS
+			FreeLibrary(m_opengl32dll);
+#endif // BX_PLATFORM_WINDOWS
 		}
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -350,6 +379,7 @@ namespace bgfx
 		const PPB_Instance* m_instInterface;
 		const PPB_Graphics3D* m_graphicsInterface;
 #elif BX_PLATFORM_WINDOWS
+		HMODULE m_opengl32dll;
 		HGLRC m_context;
 		HDC m_hdc;
 #elif BX_PLATFORM_LINUX
@@ -550,6 +580,30 @@ namespace bgfx
 	{
 		GL_LINEAR,
 		GL_NEAREST,
+	};
+
+	struct TextureFormatInfo
+	{
+		GLenum m_internalFmt;
+		GLenum m_format;
+		GLenum m_type;
+		uint8_t m_bpp;
+	};
+
+	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
+	{
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,      GL_ZERO,           1 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,      GL_ZERO,           1 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_ZERO,      GL_ZERO,           1 },
+		{ GL_ZERO,                          GL_ZERO,      GL_ZERO,           0 },
+		{ GL_LUMINANCE,                     GL_LUMINANCE, GL_UNSIGNED_BYTE,  1 },
+		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  4 },
+		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  4 },
+#if BGFX_CONFIG_RENDERER_OPENGL
+		{ GL_RGBA16,                        GL_RGBA,      GL_UNSIGNED_SHORT, 8 },
+#else
+		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  8 },
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 	};
 
 	const char* glslTypeName(GLuint _type)
@@ -915,125 +969,167 @@ namespace bgfx
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
-		m_target = GL_TEXTURE_2D;
-
-		GL_CHECK(glGenTextures(1, &m_id) );
-		BX_CHECK(0 != m_id, "Failed to generate texture id.");
-		GL_CHECK(glBindTexture(m_target, m_id) );
-
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT]) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT]) );
-
 		Dds dds;
 
 		if (parseDds(dds, _mem) )
 		{
-			GLenum typefmt[4] =
+			if (dds.m_cubeMap)
 			{
-				GL_RGBA,
-				GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
- 				GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
- 				GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
-			};
+				m_target = GL_TEXTURE_CUBE_MAP;
+			}
+#if BGFX_CONFIG_RENDERER_OPENGL
+			else if (dds.m_depth > 1)
+			{
+				m_target = GL_TEXTURE_3D;
+			}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+			else
+			{
+				m_target = GL_TEXTURE_2D;
+			}
+
+			GL_CHECK(glGenTextures(1, &m_id) );
+			BX_CHECK(0 != m_id, "Failed to generate texture id.");
+			GL_CHECK(glBindTexture(m_target, m_id) );
 
 			GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < dds.m_numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
 
-			GLenum fmt = typefmt[dds.m_type];
-
-			uint32_t width = dds.m_width;
-			uint32_t height = dds.m_height;
+			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
+			GLenum internalFmt = tfi.m_internalFmt;
 
 			if (!s_renderCtx.m_dxtSupport
-			||  0 == dds.m_type)
+			||  TextureFormat::Unknown < dds.m_type)
 			{
-				fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
-
-				uint8_t bpp = 4;
-				if (dds.m_type == 0
-				&&  dds.m_bpp == 1)
+				if (internalFmt == GL_RGBA)
 				{
-					fmt = GL_LUMINANCE;
-					bpp = 1;
+					internalFmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 				}
 
-				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*bpp);
+				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp);
 
-				for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+				GLenum target = m_target;
+				if (dds.m_cubeMap)
 				{
-					width = uint32_max(1, width);
-					height = uint32_max(1, height);
+					target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+				}
 
-					Mip mip;
-					if (getRawImageData(dds, lod, _mem, mip) )
+				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				{
+					uint32_t width = dds.m_width;
+					uint32_t height = dds.m_height;
+					uint32_t depth = dds.m_depth;
+
+					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 					{
-						mip.decode(bits);
+						width = uint32_max(1, width);
+						height = uint32_max(1, height);
+						depth = uint32_max(1, depth);
 
-						if (GL_RGBA == fmt)
+						Mip mip;
+						if (getRawImageData(dds, 0, lod, _mem, mip) )
 						{
-							uint32_t dstpitch = width*4;
-							for (uint32_t yy = 0; yy < height; ++yy)
-							{
-								uint8_t* dst = &bits[yy*dstpitch];
+							mip.decode(bits);
 
-								for (uint32_t xx = 0; xx < width; ++xx)
+							if (GL_RGBA == internalFmt)
+							{
+								uint32_t dstpitch = width*4;
+								for (uint32_t yy = 0; yy < height; ++yy)
 								{
-									uint8_t tmp = dst[0];
-									dst[0] = dst[2];
-									dst[2] = tmp;
-									dst += 4;
+									uint8_t* dst = &bits[yy*dstpitch];
+
+									for (uint32_t xx = 0; xx < width; ++xx)
+									{
+										uint8_t tmp = dst[0];
+										dst[0] = dst[2];
+										dst[2] = tmp;
+										dst += 4;
+									}
 								}
+							}
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+							if (target == GL_TEXTURE_3D)
+							{
+								
+								GL_CHECK(glTexImage3D(target
+									, lod
+									, internalFmt
+									, width
+									, height
+									, depth
+									, 0
+									, tfi.m_format
+									, tfi.m_type
+									, bits
+									) );
+							}
+							else
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+							{
+								GL_CHECK(glTexImage2D(target+side
+									, lod
+									, internalFmt
+									, width
+									, height
+									, 0
+									, tfi.m_format
+									, tfi.m_type
+									, bits
+									) );
 							}
 						}
 
-						GL_CHECK(glTexImage2D(m_target
-							, lod
-							, fmt
-							, width
-							, height
-							, 0
-							, fmt
-							, GL_UNSIGNED_BYTE
-							, bits
-						) );
+						width >>= 1;
+						height >>= 1;
+						depth >>= 1;
 					}
-
-					width >>= 1;
-					height >>= 1;
 				}
 
 				g_free(bits);
 			}
 			else
 			{
-				for (uint32_t ii = 0, num = dds.m_numMips; ii < num; ++ii)
+				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					width = uint32_max(1, width);
-					height = uint32_max(1, height);
+					uint32_t width = dds.m_width;
+					uint32_t height = dds.m_height;
+					uint32_t depth = dds.m_depth;
 
-					Mip mip;
-					if (getRawImageData(dds, ii, _mem, mip) )
+					for (uint32_t ii = 0, num = dds.m_numMips; ii < num; ++ii)
 					{
-						GL_CHECK(glCompressedTexImage2D(m_target
-							, ii
-							, fmt
-							, width
-							, height
-							, 0
-							, mip.m_size
-							, mip.m_data
-							) );
-					}
+						width = uint32_max(1, width);
+						height = uint32_max(1, height);
+						depth = uint32_max(1, depth);
 
-					width >>= 1;
-					height >>= 1;
+						Mip mip;
+						if (getRawImageData(dds, 0, ii, _mem, mip) )
+						{
+							GL_CHECK(glCompressedTexImage2D(m_target
+								, ii
+								, internalFmt
+								, width
+								, height
+								, 0
+								, mip.m_size
+								, mip.m_data
+								) );
+						}
+
+						width >>= 1;
+						height >>= 1;
+						depth >>= 1;
+					}
 				}
 			}
 
 		}
 		else
 		{
+			m_target = GL_TEXTURE_2D;
+			GL_CHECK(glGenTextures(1, &m_id) );
+			BX_CHECK(0 != m_id, "Failed to generate texture id.");
+			GL_CHECK(glBindTexture(m_target, m_id) );
+
 			StreamRead stream(_mem->data, _mem->size);
 
 			uint32_t magic;
@@ -1055,7 +1151,7 @@ namespace bgfx
 
 				stream.align(16);
 
-				GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < dds.m_numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
+				GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
 
 				for (uint8_t mip = 0; mip < numMips; ++mip)
 				{
@@ -1085,6 +1181,19 @@ namespace bgfx
 				//
 			}
 		}
+
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+		if (m_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
+		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT]) );
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT]) );
 
 		GL_CHECK(glBindTexture(m_target, 0) );
 	}
@@ -1490,6 +1599,7 @@ namespace bgfx
 
 	void Context::rendererShutdown()
 	{
+		s_renderCtx.shutdown();
 	}
 
 	void Context::rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem)
@@ -2015,30 +2125,29 @@ namespace bgfx
 								const Sampler& sampler = state.m_sampler[stage];
 								Sampler& current = currentState.m_sampler[stage];
 								if (current.m_idx != sampler.m_idx
-									||  current.m_flags != sampler.m_flags
-									||  materialChanged)
+								||  current.m_flags != sampler.m_flags
+								||  materialChanged)
 								{
 									GL_CHECK(glActiveTexture(GL_TEXTURE0+stage) );
 									if (bgfx::invalidHandle != sampler.m_idx)
 									{
-										GLuint id = 0;
 										switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 										{
-										case 0:
-											id = s_renderCtx.m_textures[sampler.m_idx].m_id;
+										case BGFX_SAMPLER_TEXTURE:
+											{
+												const Texture& texture = s_renderCtx.m_textures[sampler.m_idx];
+												GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
+											}
 											break;
 
-										case 1:
-											id = s_renderCtx.m_renderTargets[sampler.m_idx].m_color.m_id;
+										case BGFX_SAMPLER_RENDERTARGET_COLOR:
+											GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx.m_renderTargets[sampler.m_idx].m_color.m_id) );
 											break;
 
-										case 2:
-											id = s_renderCtx.m_renderTargets[sampler.m_idx].m_depth.m_id;
+										case BGFX_SAMPLER_RENDERTARGET_DEPTH:
+											GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx.m_renderTargets[sampler.m_idx].m_depth.m_id) );
 											break;
 										}
-
-										GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
-										//								GL_CHECK(glUniform1i(material.m_sampler[stage], stage) );
 									}
 								}
 

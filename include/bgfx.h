@@ -74,6 +74,8 @@ namespace bgfx
 #define BGFX_STATE_SRGBWRITE            UINT64_C(0x0010000000000000)
 #define BGFX_STATE_MSAA                 UINT64_C(0x0020000000000000)
 
+#define BGFX_STATE_RESERVED             UINT64_C(0xff00000000000000)
+
 #define BGFX_STATE_NONE                 UINT64_C(0x0000000000000000)
 #define BGFX_STATE_MASK                 UINT64_C(0xffffffffffffffff)
 #define BGFX_STATE_DEFAULT (0 \
@@ -107,16 +109,21 @@ namespace bgfx
 #define BGFX_TEXTURE_V_CLAMP            UINT32_C(0x00000020)
 #define BGFX_TEXTURE_V_SHIFT            4
 #define BGFX_TEXTURE_V_MASK             UINT32_C(0x00000030)
-#define BGFX_TEXTURE_MIN_POINT          UINT32_C(0x00000100)
+#define BGFX_TEXTURE_W_REPEAT           UINT32_C(0x00000000)
+#define BGFX_TEXTURE_W_MIRROR           UINT32_C(0x00000100)
+#define BGFX_TEXTURE_W_CLAMP            UINT32_C(0x00000200)
+#define BGFX_TEXTURE_W_SHIFT            4
+#define BGFX_TEXTURE_W_MASK             UINT32_C(0x00000300)
+#define BGFX_TEXTURE_MIN_POINT          UINT32_C(0x00001000)
 #define BGFX_TEXTURE_MIN_SHIFT          8
-#define BGFX_TEXTURE_MIN_MASK           UINT32_C(0x00000100)
-#define BGFX_TEXTURE_MAG_POINT          UINT32_C(0x00001000)
+#define BGFX_TEXTURE_MIN_MASK           UINT32_C(0x00001000)
+#define BGFX_TEXTURE_MAG_POINT          UINT32_C(0x00010000)
 #define BGFX_TEXTURE_MAG_SHIFT          12
-#define BGFX_TEXTURE_MAG_MASK           UINT32_C(0x00001000)
-#define BGFX_TEXTURE_MIP_POINT          UINT32_C(0x00010000)
+#define BGFX_TEXTURE_MAG_MASK           UINT32_C(0x00010000)
+#define BGFX_TEXTURE_MIP_POINT          UINT32_C(0x00100000)
 #define BGFX_TEXTURE_MIP_SHIFT          16
-#define BGFX_TEXTURE_MIP_MASK           UINT32_C(0x00010000)
-#define BGFX_TEXTURE_SRGB               UINT32_C(0x00020000)
+#define BGFX_TEXTURE_MIP_MASK           UINT32_C(0x00100000)
+#define BGFX_TEXTURE_SRGB               UINT32_C(0x00200000)
 
 #define BGFX_RENDER_TARGET_NONE         UINT32_C(0x00000000)
 #define BGFX_RENDER_TARGET_COLOR_RGBA   UINT32_C(0x00000001)
@@ -157,6 +164,7 @@ namespace bgfx
 			D3D9_UnableToCreateInterface,
 			D3D9_UnableToCreateDevice,
 			D3D9_UnableToCreateRenderTarget,
+			D3D9_UnableToCreateTexture,
 			OPENGL_UnableToCreateContext,
 		};
 	};

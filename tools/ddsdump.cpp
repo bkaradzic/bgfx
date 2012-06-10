@@ -49,56 +49,59 @@ int main(int _argc, const char* _argv[])
 		if (decompress
 		||  0 == dds.m_type)
 		{
-			uint32_t width = dds.m_width;
-			uint32_t height = dds.m_height;
-
-			for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+			for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				width = uint32_max(1, width);
-				height = uint32_max(1, height);
+				uint32_t width = dds.m_width;
+				uint32_t height = dds.m_height;
 
-				Mip mip;
-				if (getRawImageData(dds, lod, mem, mip) )
+				for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 				{
-					uint32_t dstpitch = width*4;
-					uint8_t* bits = (uint8_t*)malloc(dstpitch*height);
+					width = uint32_max(1, width);
+					height = uint32_max(1, height);
 
-					if (width != mip.m_width
-					||  height != mip.m_height)
+					Mip mip;
+					if (getRawImageData(dds, side, lod, mem, mip) )
 					{
-						uint8_t* temp = (uint8_t*)realloc(NULL, mip.m_width*mip.m_height*4);
-						mip.decode(temp);
-						uint32_t srcpitch = mip.m_width*4;
+						uint32_t dstpitch = width*4;
+						uint8_t* bits = (uint8_t*)malloc(dstpitch*height);
 
-						for (uint32_t yy = 0; yy < height; ++yy)
+						if (width != mip.m_width
+						||  height != mip.m_height)
 						{
-							uint8_t* src = &temp[yy*srcpitch];
-							uint8_t* dst = &bits[yy*dstpitch];
+							uint8_t* temp = (uint8_t*)realloc(NULL, mip.m_width*mip.m_height*4);
+							mip.decode(temp);
+							uint32_t srcpitch = mip.m_width*4;
 
-							for (uint32_t xx = 0; xx < width; ++xx)
+							for (uint32_t yy = 0; yy < height; ++yy)
 							{
-								memcpy(dst, src, 4);
-								dst += 4;
-								src += 4;
+								uint8_t* src = &temp[yy*srcpitch];
+								uint8_t* dst = &bits[yy*dstpitch];
+
+								for (uint32_t xx = 0; xx < width; ++xx)
+								{
+									memcpy(dst, src, 4);
+									dst += 4;
+									src += 4;
+								}
 							}
+
+							free(temp);
+						}
+						else
+						{
+							mip.decode(bits);
 						}
 
-						free(temp);
-					}
-					else
-					{
-						mip.decode(bits);
+						char filePath[256];
+						_snprintf(filePath, sizeof(filePath), "mip%d_%d.tga", side, lod);
+
+						bgfx::saveTga(filePath, width, height, dstpitch, bits);
+						free(bits);
 					}
 
-					char filePath[256];
-					_snprintf(filePath, sizeof(filePath), "mip%d.tga", lod);
-
-					bgfx::saveTga(filePath, width, height, dstpitch, bits);
-					free(bits);
+					width >>= 1;
+					height >>= 1;
 				}
-
-				width >>= 1;
-				height >>= 1;
 			}
 		}
 		else
@@ -106,7 +109,7 @@ int main(int _argc, const char* _argv[])
 			for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 			{
 				Mip mip;
-				if (getRawImageData(dds, lod, mem, mip) )
+				if (getRawImageData(dds, 0, lod, mem, mip) )
 				{
 					char filePath[256];
 					_snprintf(filePath, sizeof(filePath), "mip%d.bin", lod);

@@ -10,16 +10,34 @@
 
 namespace bgfx
 {
+	struct TextureFormat
+	{
+		enum Enum
+		{
+			Dxt1,
+			Dxt3,
+			Dxt5,
+			Unknown, // compressed formats are above
+			L8,
+			XRGB8,
+			ARGB8,
+			ABGR16,
+
+			Count
+		};
+	};
+
 	struct Dds
 	{
+		TextureFormat::Enum m_type;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
 		uint8_t m_blockSize;
 		uint8_t m_numMips;
 		uint8_t m_bpp;
-		uint8_t m_type;
 		bool m_hasAlpha;
+		bool m_cubeMap;
 	};
 
 	struct Mip
@@ -39,7 +57,7 @@ namespace bgfx
 
 	bool isDds(const Memory* _mem);
 	bool parseDds(Dds& _dds, const Memory* _mem);
-	bool getRawImageData(const Dds& _dds, uint8_t _index, const Memory* _mem, Mip& _mip);
+	bool getRawImageData(const Dds& _dds, uint8_t _side, uint8_t _index, const Memory* _mem, Mip& _mip);
 
 } // namespace bgfx
 
