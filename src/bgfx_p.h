@@ -2384,14 +2384,38 @@ namespace bgfx
 					WNDCLASSEX wnd;
 					memset(&wnd, 0, sizeof(wnd) );
 					wnd.cbSize = sizeof(wnd);
+					wnd.lpfnWndProc = DefWindowProc;
+					wnd.hInstance = instance;
+					wnd.hIcon = LoadIcon(instance, IDI_APPLICATION);
+					wnd.hCursor = LoadCursor(instance, IDC_ARROW);
+					wnd.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+					wnd.lpszClassName = "bgfx_letterbox";
+					wnd.hIconSm = LoadIcon(instance, IDI_APPLICATION);
+					RegisterClassExA(&wnd);
+
+					memset(&wnd, 0, sizeof(wnd) );
+					wnd.cbSize = sizeof(wnd);
 					wnd.style = CS_HREDRAW | CS_VREDRAW;
 					wnd.lpfnWndProc = wndProc;
 					wnd.hInstance = instance;
 					wnd.hIcon = LoadIcon(instance, IDI_APPLICATION);
 					wnd.hCursor = LoadCursor(instance, IDC_ARROW);
 					wnd.lpszClassName = "bgfx";
-					wnd.hIconSm = LoadIcon(instance, IDI_APPLICATION);	
+					wnd.hIconSm = LoadIcon(instance, IDI_APPLICATION);
 					RegisterClassExA(&wnd);
+
+					HWND hwnd = CreateWindowA("bgfx_letterbox"
+						, "BGFX"
+						, WS_POPUP|WS_SYSMENU
+						, -32000
+						, -32000
+						, 0
+						, 0
+						, NULL
+						, NULL
+						, instance
+						, 0
+						);
 
 					g_bgfxHwnd = CreateWindowA("bgfx"
 						, "BGFX"
@@ -2400,9 +2424,9 @@ namespace bgfx
 						, 0
 						, BGFX_DEFAULT_WIDTH
 						, BGFX_DEFAULT_HEIGHT
-						, 0
-						, 0
-						, 0
+						, hwnd
+						, NULL
+						, instance
 						, 0
 						);
 
@@ -2486,6 +2510,8 @@ namespace bgfx
 
 			void adjust(uint32_t _width, uint32_t _height, bool _windowFrame)
 			{
+				m_aspectRatio = float(_width)/float(_height);
+
 				ShowWindow(g_bgfxHwnd, SW_SHOWNORMAL);
 				RECT rect;
 				RECT newrect = {0, 0, (LONG)_width, (LONG)_height};
@@ -2528,18 +2554,58 @@ namespace bgfx
 					rect.top = 0;
 				}
 
+				int32_t left = rect.left;
+				int32_t top = rect.top;
+				int32_t width = (newrect.right-newrect.left);
+				int32_t height = (newrect.bottom-newrect.top);
+
+				if (!_windowFrame)
+				{
+					float aspectRatio = 1.0f/m_aspectRatio;
+					width = bx::uint32_max(BGFX_DEFAULT_WIDTH/4, width);
+					height = uint32_t(float(width)*aspectRatio);
+
+					left = newrect.left+(newrect.right-newrect.left-width)/2;
+					top = newrect.top+(newrect.bottom-newrect.top-height)/2;
+				}
+
+				HWND parent = GetWindow(g_bgfxHwnd, GW_OWNER);
+				if (NULL != parent)
+				{
+					if (_windowFrame)
+					{
+						SetWindowPos(parent
+							, HWND_TOP
+							, -32000
+							, -32000
+							, 0
+							, 0
+							, SWP_SHOWWINDOW
+							);
+					}
+					else
+					{
+						SetWindowPos(parent
+							, HWND_TOP
+							, newrect.left
+							, newrect.top
+							, newrect.right-newrect.left
+							, newrect.bottom-newrect.top
+							, SWP_SHOWWINDOW
+							);
+					}
+				}
+
 				SetWindowPos(g_bgfxHwnd
 					, HWND_TOP
-					, rect.left
-					, rect.top
-					, (newrect.right-newrect.left)
-					, (newrect.bottom-newrect.top)
+					, left
+					, top
+					, width
+					, height
 					, SWP_SHOWWINDOW
 					);
 
 				ShowWindow(g_bgfxHwnd, SW_RESTORE);
-
-				m_aspectRatio = float(_width)/float(_height);
 
 				m_frame = _windowFrame;
 			}

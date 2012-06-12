@@ -73,9 +73,7 @@ namespace bgfx
 				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
-#if BX_PLATFORM_NACL || BX_PLATFORM_LINUX
 				setRenderContextSize(_resolution.m_width, _resolution.m_height);
-#endif // BX_PLATFORM_
 			}
 		}
 
