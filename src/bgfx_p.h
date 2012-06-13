@@ -2487,6 +2487,21 @@ namespace bgfx
 					}
 					return 0;
 
+				case WM_SYSCOMMAND:
+					switch (_wparam)
+					{
+					case SC_MINIMIZE:
+					case SC_RESTORE:
+						{
+							HWND parent = GetWindow(_hwnd, GW_OWNER);
+							if (NULL != parent)
+							{
+								PostMessage(parent, _id, _wparam, _lparam);
+							}
+						}
+					}
+					break;
+
 				default:
 					break;
 				}

@@ -20,6 +20,7 @@ namespace bgfx
 	PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
 	PFNWGLMAKECURRENTPROC wglMakeCurrent;
 	PFNWGLCREATECONTEXTPROC wglCreateContext;
+	PFNWGLDELETECONTEXTPROC wglDeleteContext;
 #endif // BX_PLATFORM_WINDOWS
 
 #define GL_IMPORT(_optional, _proto, _func) _proto _func
@@ -131,6 +132,9 @@ namespace bgfx
 
 					wglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglCreateContext");
 					BGFX_FATAL(NULL != wglCreateContext, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglCreateContext.");
+
+					wglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglDeleteContext");
+					BGFX_FATAL(NULL != wglDeleteContext, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglDeleteContext.");
 
 					m_hdc = GetDC(g_bgfxHwnd);
 					BGFX_FATAL(NULL != m_hdc, bgfx::Fatal::OPENGL_UnableToCreateContext, "GetDC failed!");
@@ -347,6 +351,12 @@ namespace bgfx
 		void shutdown()
 		{
 #if BX_PLATFORM_WINDOWS
+			if (NULL != m_hdc)
+			{
+				wglMakeCurrent(NULL, NULL);
+				wglDeleteContext(m_context);
+			}
+
 			FreeLibrary(m_opengl32dll);
 #endif // BX_PLATFORM_WINDOWS
 		}
@@ -1288,6 +1298,7 @@ namespace bgfx
 		m_width = _width;
 		m_height = _height;
 
+//		m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
 		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
 
@@ -1311,7 +1322,7 @@ namespace bgfx
 		{
 			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
 							, GL_COLOR_ATTACHMENT0
-							, GL_TEXTURE_2D
+							, m_color.m_target
 							, m_color.m_id
 							, 0
 							) );
@@ -1343,7 +1354,7 @@ namespace bgfx
 			{
 				GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
 					, GL_DEPTH_ATTACHMENT
-					, GL_TEXTURE_2D
+					, m_depth.m_target
 					, m_depth.m_id
 					, 0
 					) );
@@ -2157,11 +2168,17 @@ namespace bgfx
 											break;
 
 										case BGFX_SAMPLER_RENDERTARGET_COLOR:
-											GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx.m_renderTargets[sampler.m_idx].m_color.m_id) );
+											{
+												const RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+												GL_CHECK(glBindTexture(rt.m_color.m_target, rt.m_color.m_id) );
+											}
 											break;
 
 										case BGFX_SAMPLER_RENDERTARGET_DEPTH:
-											GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx.m_renderTargets[sampler.m_idx].m_depth.m_id) );
+											{
+												const RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+												GL_CHECK(glBindTexture(rt.m_depth.m_target, rt.m_depth.m_id) );
+											}
 											break;
 										}
 									}
