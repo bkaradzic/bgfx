@@ -6,6 +6,9 @@
 #ifndef __RENDERER_GL_H__
 #define __RENDERER_GL_H__
 
+#define BGFX_USE_EGL 0
+#define BGFX_USE_WGL 0
+
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BX_PLATFORM_LINUX
 #		define GL_PROTOTYPES
@@ -15,6 +18,11 @@
 #		undef GL_PROTOTYPES
 #	else
 #		include <GL/gl.h>
+#	endif // BX_PLATFORM_
+
+#	if BX_PLATFORM_WINDOWS
+#		undef BGFX_USE_WGL
+#		define BGFX_USE_WGL 1
 #	endif // BX_PLATFORM_
 
 // remove deprecated from glext.h
@@ -38,7 +46,20 @@
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 #	include <GLES2/gl2.h>
 #	include <GLES2/gl2ext.h>
-//#	include <EGL/egl.h>
+
+#	if BX_PLATFORM_WINDOWS
+#		include <EGL/egl.h>
+#		undef BGFX_USE_EGL
+#		define BGFX_USE_EGL 1
+#	endif // BX_PLATFORM_
+
+#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+#		define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#	endif // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+
+#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#		define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#	endif // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
 
 #	ifndef GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE
 #		define GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE 0x93A0
@@ -63,7 +84,7 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	include <gl/GRemedyGLExtensions.h>
 #endif // BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
-#if BX_PLATFORM_WINDOWS
+#if BGFX_USE_WGL
 typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
 typedef BOOL (APIENTRYP PFNWGLMAKECURRENTPROC) (HDC hdc, HGLRC hglrc);
 typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTPROC) (HDC hdc);
@@ -94,7 +115,7 @@ typedef void (APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
 typedef void (APIENTRYP PFNGLDEPTHMASKPROC) (GLboolean flag);
 typedef void (APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble depth);
 typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_USE_WGL
 
 namespace bgfx
 {
@@ -137,11 +158,11 @@ namespace bgfx
 #define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
 #define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
 
-#if BX_PLATFORM_WINDOWS
+#if BGFX_USE_WGL
 	extern PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
 	extern PFNWGLMAKECURRENTPROC wglMakeCurrent;
 	extern PFNWGLCREATECONTEXTPROC wglCreateContext;
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_USE_WGL
 
 #define GL_IMPORT(_optional, _proto, _func) extern _proto _func
 #include "glimports.h"

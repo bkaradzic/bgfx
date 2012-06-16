@@ -16,12 +16,12 @@
 
 namespace bgfx
 {
-#if BX_PLATFORM_WINDOWS
+#if BGFX_USE_WGL
 	PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
 	PFNWGLMAKECURRENTPROC wglMakeCurrent;
 	PFNWGLCREATECONTEXTPROC wglCreateContext;
 	PFNWGLDELETECONTEXTPROC wglDeleteContext;
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_USE_WGL
 
 #define GL_IMPORT(_optional, _proto, _func) _proto _func
 #include "glimports.h"
@@ -52,9 +52,13 @@ namespace bgfx
 			, m_instance(0)
 			, m_instInterface(NULL)
 			, m_graphicsInterface(NULL)
-#elif BX_PLATFORM_WINDOWS
+#elif BGFX_USE_WGL
 			, m_context(NULL)
 			, m_hdc(NULL)
+#elif BGFX_USE_EGL
+			, m_context(NULL)
+			, m_display(NULL)
+			, m_surface(NULL)
 #elif BX_PLATFORM_LINUX
 			, m_context(0)
 			, m_window(0)
@@ -118,7 +122,7 @@ namespace bgfx
 					m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
 				}
 
-#elif BX_PLATFORM_WINDOWS
+#elif BGFX_USE_WGL
 				if (NULL == m_hdc)
 				{
 					m_opengl32dll = LoadLibrary("opengl32.dll");
@@ -306,6 +310,41 @@ namespace bgfx
 				{
 					XResizeWindow(m_display, m_window, _width, _height);
 				}
+#elif BGFX_USE_EGL
+				if (NULL == m_context)
+				{
+					m_display = eglGetDisplay(NULL);
+					BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::OPENGL_UnableToCreateContext, "Failed to create display 0x%08x", m_display);
+
+					EGLint major = 0;
+					EGLint minor = 0;
+					EGLBoolean success = eglInitialize(m_display, &major, &minor);
+					BGFX_FATAL(success && major >= 1 && minor >= 4, Fatal::OPENGL_UnableToCreateContext, "Failed to initialize %d.%d", major, minor);
+
+					EGLint attrs[] =
+					{
+#	if BX_PLATFORM_ANDROID
+						EGL_DEPTH_SIZE, 16,
+#	else
+						EGL_DEPTH_SIZE, 24,
+#	endif // BX_PLATFORM_
+
+						EGL_NONE 
+					};
+					EGLint numConfig = 0;
+					EGLConfig config = 0;
+					success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
+					BGFX_FATAL(success, Fatal::OPENGL_UnableToCreateContext, "eglChooseConfig");
+
+					m_surface = eglCreateWindowSurface(m_display, config, (EGLNativeWindowType)g_bgfxHwnd, NULL);
+					BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::OPENGL_UnableToCreateContext, "Failed to create surface.");
+
+					m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, NULL);
+					BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::OPENGL_UnableToCreateContext, "Failed to create context.");
+
+					success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+					BGFX_FATAL(success, Fatal::OPENGL_UnableToCreateContext, "Failed to set context.");
+				}
 #endif // BX_PLATFORM_
 			}
 
@@ -319,9 +358,12 @@ namespace bgfx
 #if BX_PLATFORM_NACL
 				glSetCurrentContextPPAPI(m_context);
 				m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
-#elif BX_PLATFORM_WINDOWS
+#elif BGFX_USE_WGL
 				wglMakeCurrent(m_hdc, m_context);
 				SwapBuffers(m_hdc);
+#elif BGFX_USE_EGL
+				eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+				eglSwapBuffers(m_display, m_surface);
 #elif BX_PLATFORM_LINUX
 				glXSwapBuffers(m_display, m_window);
 #endif // BX_PLATFORM_
@@ -350,15 +392,22 @@ namespace bgfx
 
 		void shutdown()
 		{
-#if BX_PLATFORM_WINDOWS
+#if BGFX_USE_WGL
 			if (NULL != m_hdc)
 			{
 				wglMakeCurrent(NULL, NULL);
 				wglDeleteContext(m_context);
+				m_context = NULL;
 			}
 
 			FreeLibrary(m_opengl32dll);
-#endif // BX_PLATFORM_WINDOWS
+#elif BGFX_USE_EGL
+			eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglDestroyContext(m_display, m_context);
+			eglDestroySurface(m_display, m_surface);
+			eglTerminate(m_display);
+			m_context = NULL;
+#endif // BGFX_USE_
 		}
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -386,10 +435,14 @@ namespace bgfx
 		PP_Instance m_instance;
 		const PPB_Instance* m_instInterface;
 		const PPB_Graphics3D* m_graphicsInterface;
-#elif BX_PLATFORM_WINDOWS
+#elif BGFX_USE_WGL
 		HMODULE m_opengl32dll;
 		HGLRC m_context;
 		HDC m_hdc;
+#elif BGFX_USE_EGL
+		EGLContext m_context;
+		EGLDisplay m_display;
+		EGLSurface m_surface;
 #elif BX_PLATFORM_LINUX
 		GLXContext m_context;
 		Window m_window;
