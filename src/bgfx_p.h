@@ -53,6 +53,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 #include <bx/hash.h>
 #include <bx/ringbuffer.h>
 #include <bx/uint32_t.h>
+#include <bx/radixsort.h>
 
 #if BX_PLATFORM_WINDOWS
 #	include <windows.h>

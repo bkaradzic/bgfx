@@ -102,56 +102,6 @@ namespace bgfx
 		_result[15] = 1.0f;
 	}
 
-#define RADIX_BITS 11
-#define RADIX_PASSES 6
-#define RADIX_HISTOGRAM_SIZE (1<<RADIX_BITS)
-#define RADIX_BIT_MASK (RADIX_HISTOGRAM_SIZE-1)
-
-	void radixSort(uint64_t* _keys, uint64_t* _tempKeys, uint16_t* _values, uint16_t* _tempValues, uint32_t _size)
-	{
-		uint16_t histogram[RADIX_HISTOGRAM_SIZE];
-		uint16_t shift = 0;
-		for (uint32_t pass = 0; pass < RADIX_PASSES; ++pass)
-		{
-			memset(histogram, 0, sizeof(uint16_t)*RADIX_HISTOGRAM_SIZE);
-			for (uint32_t ii = 0; ii < _size; ++ii)
-			{
-				uint64_t key = _keys[ii];
-				uint16_t index = (key>>shift)&RADIX_BIT_MASK;
-				++histogram[index];
-			}
-
-			uint16_t offset = 0;
-			for (uint32_t ii = 0; ii < RADIX_HISTOGRAM_SIZE; ++ii)
-			{
-				uint16_t count = histogram[ii];
-				histogram[ii] = offset;
-				offset += count;
-			}
-
-			for (uint32_t ii = 0; ii < _size; ++ii)
-			{
-				uint64_t key = _keys[ii];
-				uint16_t index = (key>>shift)&RADIX_BIT_MASK;
-				uint16_t dest = histogram[index]++;
-				_tempKeys[dest] = key;
-
-				uint16_t value = _values[ii];
-				_tempValues[dest] = value;
-			}
-
-			uint64_t* swapKeys = _tempKeys;
-			_tempKeys = _keys;
-			_keys = swapKeys;
-
-			uint16_t* swapValues = _tempValues;
-			_tempValues = _values;
-			_values = swapValues;
-
-			shift += RADIX_BITS;
-		}
-	}
-
 	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data)
 	{
 		FILE* file = fopen(_filePath, "wb");
@@ -471,7 +421,7 @@ namespace bgfx
 
 	void Frame::sort()
 	{
-		radixSort(m_sortKeys, s_ctx.m_tempKeys, m_sortValues, s_ctx.m_tempValues, m_num);
+		bx::radixSort64(m_sortKeys, s_ctx.m_tempKeys, m_sortValues, s_ctx.m_tempValues, m_num);
 	}
 
 	RendererType::Enum getRendererType()
