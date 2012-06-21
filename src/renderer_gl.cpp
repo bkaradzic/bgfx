@@ -1700,12 +1700,12 @@ namespace bgfx
 		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
+	void Context::rendererCreateTransientIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
 	{
 		s_renderCtx.m_indexBuffers[_handle.idx].create(_size, NULL);
 	}
 
-	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
+	void Context::rendererDestroyTransientIndexBuffer(IndexBufferHandle _handle)
 	{
 		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
 	}
@@ -1731,13 +1731,13 @@ namespace bgfx
 		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
+	void Context::rendererCreateTransientVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
 	{
 		VertexDeclHandle decl = BGFX_INVALID_HANDLE;
 		s_renderCtx.m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
 	}
 
-	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
+	void Context::rendererDestroyTransientVertexBuffer(VertexBufferHandle _handle)
 	{
 		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
 	}
@@ -1821,13 +1821,13 @@ namespace bgfx
 
 		if (0 < m_render->m_iboffset)
 		{
-			DynamicIndexBuffer* ib = m_render->m_dynamicIb;
+			TransientIndexBuffer* ib = m_render->m_transientIb;
 			s_renderCtx.m_indexBuffers[ib->handle.idx].update(m_render->m_iboffset, ib->data);
 		}
 
 		if (0 < m_render->m_vboffset)
 		{
-			DynamicVertexBuffer* vb = m_render->m_dynamicVb;
+			TransientVertexBuffer* vb = m_render->m_transientVb;
 			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(m_render->m_vboffset, vb->data);
 		}
 

@@ -41,11 +41,11 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
+	void Context::rendererCreateTransientIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
 	{
 	}
 
-	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
+	void Context::rendererDestroyTransientIndexBuffer(IndexBufferHandle _handle)
 	{
 	}
 
@@ -65,11 +65,11 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
+	void Context::rendererCreateTransientVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
 	{
 	}
 
-	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
+	void Context::rendererDestroyTransientVertexBuffer(VertexBufferHandle _handle)
 	{
 	}
 

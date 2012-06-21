@@ -215,8 +215,8 @@ namespace bgfx
 
 		m_material = bgfx::createMaterial(vsh, fsh);
 
-		m_vb = s_ctx.createDynamicVertexBuffer(numBatchVertices*m_decl.m_stride, &m_decl);
-		m_ib = s_ctx.createDynamicIndexBuffer(numBatchIndices*2);
+		m_vb = s_ctx.createTransientVertexBuffer(numBatchVertices*m_decl.m_stride, &m_decl);
+		m_ib = s_ctx.createTransientIndexBuffer(numBatchIndices*2);
 	}
 
 	void TextVideoMemBlitter::blit(const TextVideoMem& _mem)
@@ -648,11 +648,11 @@ namespace bgfx
 
 		g_textVideoMemBlitter.init();
 
-		m_submit->m_dynamicVb = createDynamicVertexBuffer(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
-		m_submit->m_dynamicIb = createDynamicIndexBuffer(BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE);
+		m_submit->m_transientVb = createTransientVertexBuffer(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
+		m_submit->m_transientIb = createTransientIndexBuffer(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 		frame();
-		m_submit->m_dynamicVb = createDynamicVertexBuffer(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
-		m_submit->m_dynamicIb = createDynamicIndexBuffer(BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE);
+		m_submit->m_transientVb = createTransientVertexBuffer(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
+		m_submit->m_transientIb = createTransientIndexBuffer(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 		frame();
 	}
 
@@ -739,14 +739,14 @@ namespace bgfx
 		s_ctx.destroyIndexBuffer(_handle);
 	}
 
-	bool checkAvailDynamicIndexBuffer(uint16_t _num)
+	bool checkAvailTransientIndexBuffer(uint16_t _num)
 	{
-		return s_ctx.m_submit->checkAvailDynamicIndexBuffer(_num);
+		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
 	}
 
-	const DynamicIndexBuffer* allocDynamicIndexBuffer(uint16_t _num)
+	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num)
 	{
-		return s_ctx.allocDynamicIndexBuffer(_num);
+		return s_ctx.allocTransientIndexBuffer(_num);
 	}
 
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
@@ -759,14 +759,14 @@ namespace bgfx
 		s_ctx.destroyVertexBuffer(_handle);
 	}
 
-	bool checkAvailDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
 	{
-		return s_ctx.m_submit->checkAvailDynamicVertexBuffer(_num, _decl.m_stride);
+		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
-	const DynamicVertexBuffer* allocDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+	const TransientVertexBuffer* allocTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
 	{
-		return s_ctx.allocDynamicVertexBuffer(_num, _decl);
+		return s_ctx.allocTransientVertexBuffer(_num, _decl);
 	}
 
 	VertexShaderHandle createVertexShader(const Memory* _mem)
@@ -914,7 +914,7 @@ namespace bgfx
 		s_ctx.m_submit->setIndexBuffer(_handle, BGFX_DRAW_WHOLE_INDEX_BUFFER, 0);
 	}
 
-	void setIndexBuffer(const DynamicIndexBuffer* _ib, uint32_t _numIndices)
+	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices)
 	{
 		uint32_t numIndices = uint32_min(_numIndices, _ib->size/2);
 		s_ctx.m_submit->setIndexBuffer(_ib, numIndices);
@@ -925,7 +925,7 @@ namespace bgfx
 		s_ctx.m_submit->setVertexBuffer(_handle);
 	}
 
-	void setVertexBuffer(const DynamicVertexBuffer* _vb)
+	void setVertexBuffer(const TransientVertexBuffer* _vb)
 	{
 		s_ctx.m_submit->setVertexBuffer(_vb);
 	}

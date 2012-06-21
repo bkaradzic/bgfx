@@ -233,7 +233,7 @@ namespace bgfx
 		uint32_t size;
 	};
 
-	struct DynamicIndexBuffer
+	struct TransientIndexBuffer
 	{
 		uint8_t* data;
 		uint32_t size;
@@ -241,7 +241,7 @@ namespace bgfx
 		uint32_t startIndex;
 	};
 
-	struct DynamicVertexBuffer
+	struct TransientVertexBuffer
 	{
 		uint8_t* data;
 		uint32_t size;
@@ -326,10 +326,10 @@ namespace bgfx
 	void destroyIndexBuffer(IndexBufferHandle _handle);
 
 	///
-	bool checkAvailDynamicIndexBuffer(uint16_t _num);
+	bool checkAvailTransientIndexBuffer(uint16_t _num);
 
 	///
-	const DynamicIndexBuffer* allocDynamicIndexBuffer(uint16_t _num);
+	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num);
 
 	///
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
@@ -338,10 +338,10 @@ namespace bgfx
 	void destroyVertexBuffer(VertexBufferHandle _handle);
 
 	///
-	bool checkAvailDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl);
+	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
 	///
-	const DynamicVertexBuffer* allocDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl);
+	const TransientVertexBuffer* allocTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
 	///
 	VertexShaderHandle createVertexShader(const Memory* _mem);
@@ -428,13 +428,13 @@ namespace bgfx
 	void setIndexBuffer(IndexBufferHandle _handle);
 
 	///
-	void setIndexBuffer(const DynamicIndexBuffer* _ib, uint32_t _numIndices = 0xffffffff);
+	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices = 0xffffffff);
 
 	///
 	void setVertexBuffer(VertexBufferHandle _handle);
 
 	///
-	void setVertexBuffer(const DynamicVertexBuffer* _vb);
+	void setVertexBuffer(const TransientVertexBuffer* _vb);
 
 	///
 	void setMaterial(MaterialHandle _handle);
