@@ -2008,8 +2008,7 @@ namespace bgfx
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						alphaRef = ref/255.0f;
 
-#if BGFX_CONFIG_RENDERER_OPENGLES
-#else
+#if BGFX_CONFIG_RENDERER_OPENGL
 						if (BGFX_STATE_ALPHA_TEST & newFlags)
 						{
 							GL_CHECK(glEnable(GL_ALPHA_TEST) );
@@ -2018,339 +2017,341 @@ namespace bgfx
 						{
 							GL_CHECK(glDisable(GL_ALPHA_TEST) );
 						}
-
-						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
-						{
-							float pointSize = (float)(uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
-							GL_CHECK(glPointSize(pointSize) );
-						}
-#endif // BGFX_CONFIG_RENDERER_OPENGLES
-						}
-
-						if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
-						{
-							GLboolean alpha = !!(newFlags&BGFX_STATE_ALPHA_WRITE);
-							GLboolean rgb = !!(newFlags&BGFX_STATE_RGB_WRITE);
-							GL_CHECK(glColorMask(rgb, rgb, rgb, alpha) );
-						}
-
-						if (BGFX_STATE_BLEND_MASK & changedFlags)
-						{
-							if (BGFX_STATE_BLEND_MASK & newFlags)
-							{
-								uint32_t blend = (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
-								uint32_t src = blend&0xf;
-								uint32_t dst = (blend>>4)&0xf;
-								GL_CHECK(glEnable(GL_BLEND) );
-								GL_CHECK(glBlendFunc(s_blendFactor[src], s_blendFactor[dst]) );
-							}
-							else
-							{
-								GL_CHECK(glDisable(GL_BLEND) );
-							}
-						}
-
-						uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-						primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : s_primType[primIndex];
-						primNumVerts = s_primNumVerts[primIndex];
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 					}
 
-					bool materialChanged = false;
-					bool constantsChanged = state.m_constBegin < state.m_constEnd;
-					bool bindAttribs = false;
-					rendererUpdateUniforms(m_render->m_constantBuffer, state.m_constBegin, state.m_constEnd);
-
-					if (key.m_material != materialIdx)
+#if BGFX_CONFIG_RENDERER_OPENGL
+					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 					{
-						materialIdx = key.m_material;
-						GLuint id = bgfx::invalidHandle == materialIdx ? 0 : s_renderCtx.m_materials[materialIdx].m_id;
-						GL_CHECK(glUseProgram(id) );
-						materialChanged = 
-							constantsChanged = 
-							bindAttribs = true;
+						float pointSize = (float)(uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
+						GL_CHECK(glPointSize(pointSize) );
+					}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
+					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
+					{
+						GLboolean alpha = !!(newFlags&BGFX_STATE_ALPHA_WRITE);
+						GLboolean rgb = !!(newFlags&BGFX_STATE_RGB_WRITE);
+						GL_CHECK(glColorMask(rgb, rgb, rgb, alpha) );
 					}
 
-					if (bgfx::invalidHandle != materialIdx)
+					if (BGFX_STATE_BLEND_MASK & changedFlags)
 					{
-						Material& material = s_renderCtx.m_materials[materialIdx];
-
-						if (constantsChanged)
+						if (BGFX_STATE_BLEND_MASK & newFlags)
 						{
-							material.m_constantBuffer->commit(materialChanged);
+							uint32_t blend = (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
+							uint32_t src = blend&0xf;
+							uint32_t dst = (blend>>4)&0xf;
+							GL_CHECK(glEnable(GL_BLEND) );
+							GL_CHECK(glBlendFunc(s_blendFactor[src], s_blendFactor[dst]) );
 						}
-
-						for (uint32_t ii = 0, num = material.m_numPredefined; ii < num; ++ii)
+						else
 						{
-							PredefinedUniform& predefined = material.m_predefined[ii];
-							switch (predefined.m_type)
+							GL_CHECK(glDisable(GL_BLEND) );
+						}
+					}
+
+					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+					primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : s_primType[primIndex];
+					primNumVerts = s_primNumVerts[primIndex];
+				}
+
+				bool materialChanged = false;
+				bool constantsChanged = state.m_constBegin < state.m_constEnd;
+				bool bindAttribs = false;
+				rendererUpdateUniforms(m_render->m_constantBuffer, state.m_constBegin, state.m_constEnd);
+
+				if (key.m_material != materialIdx)
+				{
+					materialIdx = key.m_material;
+					GLuint id = bgfx::invalidHandle == materialIdx ? 0 : s_renderCtx.m_materials[materialIdx].m_id;
+					GL_CHECK(glUseProgram(id) );
+					materialChanged = 
+						constantsChanged = 
+						bindAttribs = true;
+				}
+
+				if (bgfx::invalidHandle != materialIdx)
+				{
+					Material& material = s_renderCtx.m_materials[materialIdx];
+
+					if (constantsChanged)
+					{
+						material.m_constantBuffer->commit(materialChanged);
+					}
+
+					for (uint32_t ii = 0, num = material.m_numPredefined; ii < num; ++ii)
+					{
+						PredefinedUniform& predefined = material.m_predefined[ii];
+						switch (predefined.m_type)
+						{
+						case PredefinedUniform::ViewRect:
 							{
-							case PredefinedUniform::ViewRect:
-								{
-									float rect[4];
-									rect[0] = m_render->m_rect[view].m_x;
-									rect[1] = m_render->m_rect[view].m_y;
-									rect[2] = m_render->m_rect[view].m_width;
-									rect[3] = m_render->m_rect[view].m_height;
+								float rect[4];
+								rect[0] = m_render->m_rect[view].m_x;
+								rect[1] = m_render->m_rect[view].m_y;
+								rect[2] = m_render->m_rect[view].m_width;
+								rect[3] = m_render->m_rect[view].m_height;
 
-									GL_CHECK(glUniform4fv(predefined.m_loc
-										, 1
-										, &rect[0]
-									) );
-								}
-								break;
-
-							case PredefinedUniform::ViewTexel:
-								{
-									float rect[4];
-									rect[0] = 1.0f/float(m_render->m_rect[view].m_width);
-									rect[1] = 1.0f/float(m_render->m_rect[view].m_height);
-
-									GL_CHECK(glUniform4fv(predefined.m_loc
-										, 1
-										, &rect[0]
-									) );
-								}
-								break;
-
-							case PredefinedUniform::View:
-								{
-									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, 1
-										, GL_FALSE
-										, m_render->m_view[view].val
-										) );
-								}
-								break;
-
-							case PredefinedUniform::ViewProj:
-								{
-									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, 1
-										, GL_FALSE
-										, viewProj[view].val
-										) );
-								}
-								break;
-
-							case PredefinedUniform::Model:
-								{
-									const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, uint32_min(predefined.m_count, state.m_num)
-										, GL_FALSE
-										, model.val
-										) );
-								}
-								break;
-
-							case PredefinedUniform::ModelViewProj:
-								{
-									Matrix4 modelViewProj;
-									const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-									matrix_mul(modelViewProj.val, model.val, viewProj[view].val);
-
-									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, 1
-										, GL_FALSE
-										, modelViewProj.val
-										) );
-								}
-								break;
-
-							case PredefinedUniform::ModelViewProjX:
-								{
-									const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-
-									static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
-									{
-										0.5f, 0.0f, 0.0f, 0.0f,
-										0.0f, 0.5f, 0.0f, 0.0f,
-										0.0f, 0.0f, 0.5f, 0.0f,
-										0.5f, 0.5f, 0.5f, 1.0f,
-									};
-
-									uint8_t other = m_render->m_other[view];
-									Matrix4 viewProjBias;
-									matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
-
-									Matrix4 modelViewProj;
-									matrix_mul(modelViewProj.val, model.val, viewProjBias.val);
-
-									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, 1
-										, GL_FALSE
-										, modelViewProj.val
-										) );
-								}
-								break;
-
-							case PredefinedUniform::ViewProjX:
-								{
-									static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
-									{
-										0.5f, 0.0f, 0.0f, 0.0f,
-										0.0f, 0.5f, 0.0f, 0.0f,
-										0.0f, 0.0f, 0.5f, 0.0f,
-										0.5f, 0.5f, 0.5f, 1.0f,
-									};
-
-									uint8_t other = m_render->m_other[view];
-									Matrix4 viewProjBias;
-									matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
-
-									GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-										, 1
-										, GL_FALSE
-										, viewProjBias.val
-										) );
-								}
-								break;
-
-							case PredefinedUniform::AlphaRef:
-								{
-									GL_CHECK(glUniform1f(predefined.m_loc, alphaRef) );
-								}
-								break;
-
-							case PredefinedUniform::Count:
-								break;
+								GL_CHECK(glUniform4fv(predefined.m_loc
+									, 1
+									, &rect[0]
+								) );
 							}
+							break;
+
+						case PredefinedUniform::ViewTexel:
+							{
+								float rect[4];
+								rect[0] = 1.0f/float(m_render->m_rect[view].m_width);
+								rect[1] = 1.0f/float(m_render->m_rect[view].m_height);
+
+								GL_CHECK(glUniform4fv(predefined.m_loc
+									, 1
+									, &rect[0]
+								) );
+							}
+							break;
+
+						case PredefinedUniform::View:
+							{
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, m_render->m_view[view].val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::ViewProj:
+							{
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, viewProj[view].val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::Model:
+							{
+								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, uint32_min(predefined.m_count, state.m_num)
+									, GL_FALSE
+									, model.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::ModelViewProj:
+							{
+								Matrix4 modelViewProj;
+								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
+								matrix_mul(modelViewProj.val, model.val, viewProj[view].val);
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, modelViewProj.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::ModelViewProjX:
+							{
+								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
+
+								static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
+								{
+									0.5f, 0.0f, 0.0f, 0.0f,
+									0.0f, 0.5f, 0.0f, 0.0f,
+									0.0f, 0.0f, 0.5f, 0.0f,
+									0.5f, 0.5f, 0.5f, 1.0f,
+								};
+
+								uint8_t other = m_render->m_other[view];
+								Matrix4 viewProjBias;
+								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
+
+								Matrix4 modelViewProj;
+								matrix_mul(modelViewProj.val, model.val, viewProjBias.val);
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, modelViewProj.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::ViewProjX:
+							{
+								static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
+								{
+									0.5f, 0.0f, 0.0f, 0.0f,
+									0.0f, 0.5f, 0.0f, 0.0f,
+									0.0f, 0.0f, 0.5f, 0.0f,
+									0.5f, 0.5f, 0.5f, 1.0f,
+								};
+
+								uint8_t other = m_render->m_other[view];
+								Matrix4 viewProjBias;
+								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, viewProjBias.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::AlphaRef:
+							{
+								GL_CHECK(glUniform1f(predefined.m_loc, alphaRef) );
+							}
+							break;
+
+						case PredefinedUniform::Count:
+							break;
 						}
+					}
 
 //						if (BGFX_STATE_TEX_MASK & changedFlags)
+					{
+						uint64_t flag = BGFX_STATE_TEX0;
+						for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
 						{
-							uint64_t flag = BGFX_STATE_TEX0;
-							for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+							const Sampler& sampler = state.m_sampler[stage];
+							Sampler& current = currentState.m_sampler[stage];
+							if (current.m_idx != sampler.m_idx
+							||  current.m_flags != sampler.m_flags
+							||  materialChanged)
 							{
-								const Sampler& sampler = state.m_sampler[stage];
-								Sampler& current = currentState.m_sampler[stage];
-								if (current.m_idx != sampler.m_idx
-								||  current.m_flags != sampler.m_flags
-								||  materialChanged)
+								GL_CHECK(glActiveTexture(GL_TEXTURE0+stage) );
+								if (bgfx::invalidHandle != sampler.m_idx)
 								{
-									GL_CHECK(glActiveTexture(GL_TEXTURE0+stage) );
-									if (bgfx::invalidHandle != sampler.m_idx)
+									switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 									{
-										switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
+									case BGFX_SAMPLER_TEXTURE:
 										{
-										case BGFX_SAMPLER_TEXTURE:
-											{
-												const Texture& texture = s_renderCtx.m_textures[sampler.m_idx];
-												GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
-											}
-											break;
-
-										case BGFX_SAMPLER_RENDERTARGET_COLOR:
-											{
-												const RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
-												GL_CHECK(glBindTexture(rt.m_color.m_target, rt.m_color.m_id) );
-											}
-											break;
-
-										case BGFX_SAMPLER_RENDERTARGET_DEPTH:
-											{
-												const RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
-												GL_CHECK(glBindTexture(rt.m_depth.m_target, rt.m_depth.m_id) );
-											}
-											break;
+											const Texture& texture = s_renderCtx.m_textures[sampler.m_idx];
+											GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
 										}
+										break;
+
+									case BGFX_SAMPLER_RENDERTARGET_COLOR:
+										{
+											const RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+											GL_CHECK(glBindTexture(rt.m_color.m_target, rt.m_color.m_id) );
+										}
+										break;
+
+									case BGFX_SAMPLER_RENDERTARGET_DEPTH:
+										{
+											const RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+											GL_CHECK(glBindTexture(rt.m_depth.m_target, rt.m_depth.m_id) );
+										}
+										break;
 									}
 								}
-
-								current = sampler;
-								flag <<= 1;
 							}
 
-							GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+							current = sampler;
+							flag <<= 1;
 						}
 
-						if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || materialChanged)
-						{
-							currentState.m_vertexBuffer = state.m_vertexBuffer;
+						GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+					}
 
-							uint16_t handle = state.m_vertexBuffer.idx;
-							if (bgfx::invalidHandle != handle)
-							{
-								VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
-								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-								bindAttribs = true;
-							}
-							else
-							{
-								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
-							}
+					if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || materialChanged)
+					{
+						currentState.m_vertexBuffer = state.m_vertexBuffer;
+
+						uint16_t handle = state.m_vertexBuffer.idx;
+						if (bgfx::invalidHandle != handle)
+						{
+							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
+							GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+							bindAttribs = true;
 						}
-
-						if (currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+						else
 						{
-							currentState.m_indexBuffer = state.m_indexBuffer;
-
-							uint16_t handle = state.m_indexBuffer.idx;
-							if (bgfx::invalidHandle != handle)
-							{
-								IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
-								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
-							}
-							else
-							{
-								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
-							}
-						}
-
-						if (bgfx::invalidHandle != currentState.m_vertexBuffer.idx)
-						{
-							if (baseVertex != state.m_startVertex
-							||  bindAttribs)
-							{
-								baseVertex = state.m_startVertex;
-								VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
-								uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-								s_renderCtx.m_materials[materialIdx].bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
-							}
-
-							uint32_t numIndices = 0;
-							uint32_t numPrims = 0;
-
-							if (bgfx::invalidHandle != state.m_indexBuffer.idx)
-							{
-								if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
-								{
-									numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-									numPrims = numIndices/primNumVerts;
-
-									GL_CHECK(glDrawElements(primType
-										, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
-										, GL_UNSIGNED_SHORT
-										, (void*)0
-										) );
-								}
-								else if (primNumVerts <= state.m_numIndices)
-								{
-									numIndices = state.m_numIndices;
-									numPrims = numIndices/primNumVerts;
-
-									GL_CHECK(glDrawElements(primType
-										, numIndices
-										, GL_UNSIGNED_SHORT
-										, (void*)(uintptr_t)(state.m_startIndex*2)
-										) );
-								}
-							}
-							else
-							{
-								numPrims = state.m_numVertices/primNumVerts;
-
-								GL_CHECK(glDrawArrays(primType
-									, 0
-									, state.m_numVertices
-									) );
-							}
-
-							statsNumPrims += numPrims;
-							statsNumIndices += numIndices;
+							GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 						}
 					}
+
+					if (currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+					{
+						currentState.m_indexBuffer = state.m_indexBuffer;
+
+						uint16_t handle = state.m_indexBuffer.idx;
+						if (bgfx::invalidHandle != handle)
+						{
+							IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
+							GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
+						}
+						else
+						{
+							GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+						}
+					}
+
+					if (bgfx::invalidHandle != currentState.m_vertexBuffer.idx)
+					{
+						if (baseVertex != state.m_startVertex
+						||  bindAttribs)
+						{
+							baseVertex = state.m_startVertex;
+							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+							uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+							s_renderCtx.m_materials[materialIdx].bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+						}
+
+						uint32_t numIndices = 0;
+						uint32_t numPrims = 0;
+
+						if (bgfx::invalidHandle != state.m_indexBuffer.idx)
+						{
+							if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+							{
+								numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+								numPrims = numIndices/primNumVerts;
+
+								GL_CHECK(glDrawElements(primType
+									, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
+									, GL_UNSIGNED_SHORT
+									, (void*)0
+									) );
+							}
+							else if (primNumVerts <= state.m_numIndices)
+							{
+								numIndices = state.m_numIndices;
+								numPrims = numIndices/primNumVerts;
+
+								GL_CHECK(glDrawElements(primType
+									, numIndices
+									, GL_UNSIGNED_SHORT
+									, (void*)(uintptr_t)(state.m_startIndex*2)
+									) );
+							}
+						}
+						else
+						{
+							numPrims = state.m_numVertices/primNumVerts;
+
+							GL_CHECK(glDrawArrays(primType
+								, 0
+								, state.m_numVertices
+								) );
+						}
+
+						statsNumPrims += numPrims;
+						statsNumIndices += numIndices;
+					}
 				}
+			}
 		}
 
 		int64_t now = bx::getHPCounter();
