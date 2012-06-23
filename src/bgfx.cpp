@@ -739,16 +739,6 @@ namespace bgfx
 		s_ctx.destroyIndexBuffer(_handle);
 	}
 
-	bool checkAvailTransientIndexBuffer(uint16_t _num)
-	{
-		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
-	}
-
-	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num)
-	{
-		return s_ctx.allocTransientIndexBuffer(_num);
-	}
-
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
 	{
 		return s_ctx.createVertexBuffer(_mem, _decl);
@@ -757,6 +747,46 @@ namespace bgfx
 	void destroyVertexBuffer(VertexBufferHandle _handle)
 	{
 		s_ctx.destroyVertexBuffer(_handle);
+	}
+
+	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
+	{
+		return s_ctx.createDynamicIndexBuffer(_mem);
+	}
+
+	void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem)
+	{
+		s_ctx.updateDynamicIndexBuffer(_handle, _mem);
+	}
+
+	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle)
+	{
+		s_ctx.destroyDynamicIndexBuffer(_handle);
+	}
+
+	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
+	{
+		return s_ctx.createDynamicVertexBuffer(_mem, _decl);
+	}
+
+	void updateDynamicVertexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem)
+	{
+		s_ctx.updateDynamicVertexBuffer(_handle, _mem);
+	}
+
+	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle)
+	{
+		s_ctx.destroyDynamicVertexBuffer(_handle);
+	}
+
+	bool checkAvailTransientIndexBuffer(uint16_t _num)
+	{
+		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
+	}
+
+	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num)
+	{
+		return s_ctx.allocTransientIndexBuffer(_num);
 	}
 
 	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
@@ -914,6 +944,16 @@ namespace bgfx
 		s_ctx.m_submit->setIndexBuffer(_handle, BGFX_DRAW_WHOLE_INDEX_BUFFER, 0);
 	}
 
+	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
+	{
+		s_ctx.m_submit->setIndexBuffer(s_ctx.m_dynamicIndexBuffers[_handle.idx].m_handle, _firstIndex, _numIndices);
+	}
+
+	void setIndexBuffer(DynamicIndexBufferHandle _handle)
+	{
+		s_ctx.m_submit->setIndexBuffer(s_ctx.m_dynamicIndexBuffers[_handle.idx].m_handle, BGFX_DRAW_WHOLE_INDEX_BUFFER, 0);
+	}
+
 	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices)
 	{
 		uint32_t numIndices = uint32_min(_numIndices, _ib->size/2);
@@ -923,6 +963,11 @@ namespace bgfx
 	void setVertexBuffer(VertexBufferHandle _handle)
 	{
 		s_ctx.m_submit->setVertexBuffer(_handle);
+	}
+
+	void setVertexBuffer(DynamicVertexBufferHandle _handle)
+	{
+		s_ctx.m_submit->setVertexBuffer(s_ctx.m_dynamicVertexBuffers[_handle.idx]);
 	}
 
 	void setVertexBuffer(const TransientVertexBuffer* _vb)

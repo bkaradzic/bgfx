@@ -187,11 +187,11 @@ namespace bgfx
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 		}
 
-		void update(uint32_t _size, void* _data)
+		void update(uint32_t _offset, uint32_t _size, void* _data)
 		{
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER
-				, 0
+				, _offset
 				, _size
 				, _data
 				) );
@@ -226,11 +226,11 @@ namespace bgfx
 			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 		}
 
-		void update(uint32_t _size, void* _data)
+		void update(uint32_t _offset, uint32_t _size, void* _data)
 		{
 			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER
-				, 0
+				, _offset
 				, _size
 				, _data
 				) );

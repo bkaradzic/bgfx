@@ -217,6 +217,8 @@ namespace bgfx
 
 	static const uint16_t invalidHandle = 0xffff;
 
+	typedef struct { uint16_t idx; } DynamicIndexBufferHandle;
+	typedef struct { uint16_t idx; } DynamicVertexBufferHandle;
 	typedef struct { uint16_t idx; } FragmentShaderHandle;
 	typedef struct { uint16_t idx; } IndexBufferHandle;
 	typedef struct { uint16_t idx; } MaterialHandle;
@@ -326,16 +328,34 @@ namespace bgfx
 	void destroyIndexBuffer(IndexBufferHandle _handle);
 
 	///
-	bool checkAvailTransientIndexBuffer(uint16_t _num);
-
-	///
-	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num);
-
-	///
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
 
 	///
 	void destroyVertexBuffer(VertexBufferHandle _handle);
+
+	///
+	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem);
+
+	///
+	void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem);
+
+	///
+	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle);
+
+	///
+	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
+
+	///
+	void updateDynamicVertexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem);
+
+	///
+	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
+
+	///
+	bool checkAvailTransientIndexBuffer(uint16_t _num);
+
+	///
+	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num);
 
 	///
 	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
@@ -428,10 +448,19 @@ namespace bgfx
 	void setIndexBuffer(IndexBufferHandle _handle);
 
 	///
+	void setIndexBuffer(DynamicVertexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
+
+	///
+	void setIndexBuffer(DynamicVertexBufferHandle _handle);
+
+	///
 	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices = 0xffffffff);
 
 	///
 	void setVertexBuffer(VertexBufferHandle _handle);
+
+	///
+	void setVertexBuffer(DynamicVertexBufferHandle _handle);
 
 	///
 	void setVertexBuffer(const TransientVertexBuffer* _vb);

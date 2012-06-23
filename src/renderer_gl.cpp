@@ -1562,8 +1562,8 @@ namespace bgfx
 	void TextVideoMemBlitter::render(uint32_t _numIndices)
 	{
 		uint32_t numVertices = _numIndices*4/6;
-		s_renderCtx.m_indexBuffers[m_ib->handle.idx].update(_numIndices*2, m_ib->data);
-		s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(numVertices*m_decl.m_stride, m_vb->data);
+		s_renderCtx.m_indexBuffers[m_ib->handle.idx].update(0, _numIndices*2, m_ib->data);
+		s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data);
 
 		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
@@ -1702,16 +1702,6 @@ namespace bgfx
 		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateTransientIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
-	{
-		s_renderCtx.m_indexBuffers[_handle.idx].create(_size, NULL);
-	}
-
-	void Context::rendererDestroyTransientIndexBuffer(IndexBufferHandle _handle)
-	{
-		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
-	}
-
 	void Context::rendererCreateVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl)
 	{
 		VertexDecl& decl = s_renderCtx.m_vertexDecls[_handle.idx];
@@ -1733,13 +1723,33 @@ namespace bgfx
 		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateTransientVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
+	void Context::rendererCreateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
+	{
+		s_renderCtx.m_indexBuffers[_handle.idx].create(_size, NULL);
+	}
+
+	void Context::rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
+	{
+		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+	}
+
+	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
+	{
+		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
+	}
+
+	void Context::rendererCreateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
 	{
 		VertexDeclHandle decl = BGFX_INVALID_HANDLE;
 		s_renderCtx.m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
 	}
 
-	void Context::rendererDestroyTransientVertexBuffer(VertexBufferHandle _handle)
+	void Context::rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
+	{
+		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+	}
+
+	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
 	{
 		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
 	}
@@ -1824,13 +1834,13 @@ namespace bgfx
 		if (0 < m_render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = m_render->m_transientIb;
-			s_renderCtx.m_indexBuffers[ib->handle.idx].update(m_render->m_iboffset, ib->data);
+			s_renderCtx.m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data);
 		}
 
 		if (0 < m_render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = m_render->m_transientVb;
-			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(m_render->m_vboffset, vb->data);
+			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data);
 		}
 
 		m_render->sort();

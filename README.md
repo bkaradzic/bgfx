@@ -9,6 +9,12 @@ OpenGL 2.1, OpenGL ES 2.0, and Direct3D 9.0.
 Platforms:  
 Windows, Linux, Android, and Native Client.
 
+Notice
+------
+
+This is alpha software, and it lacks documentation and examples. If you're
+interested to use it in your project, please let me know.
+
 Contact
 -------
 
