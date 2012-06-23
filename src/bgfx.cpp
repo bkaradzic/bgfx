@@ -102,35 +102,51 @@ namespace bgfx
 		_result[15] = 1.0f;
 	}
 
-	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data)
+	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
 	{
 		FILE* file = fopen(_filePath, "wb");
 		if ( NULL != file )
 		{
+			uint8_t type = _grayscale ? 3 : 2;
+			uint8_t bpp = _grayscale ? 8 : 32;
+
 			putc(0, file);
 			putc(0, file);
-			putc(2, file); // uncompressed RGBA
+			putc(type, file);
 			putc(0, file); 
 			putc(0, file);
 			putc(0, file); 
 			putc(0, file);
 			putc(0, file);
 			putc(0, file); 
-			putc(0, file); // x origin
+			putc(0, file);
 			putc(0, file); 
-			putc(0, file); // y origin
-			putc( _width&0xff, file);
+			putc(0, file);
+			putc(_width&0xff, file);
 			putc( (_width>>8)&0xff, file);
-			putc( _height&0xff, file);
+			putc(_height&0xff, file);
 			putc( (_height>>8)&0xff, file);
-			putc(32, file);
+			putc(bpp, file);
 			putc(32, file);
 
-			uint8_t* data = (uint8_t*)_data;
-			for (uint32_t yy = 0; yy < _height; ++yy)
+			uint32_t dstPitch = _width*bpp/8;
+			if (_yflip)
 			{
-				fwrite(data, _width*4, 1, file);
-				data += _pitch;
+				uint8_t* data = (uint8_t*)_src + dstPitch*_height - _srcPitch;
+				for (uint32_t yy = 0; yy < _height; ++yy)
+				{
+					fwrite(data, dstPitch, 1, file);
+					data -= _srcPitch;
+				}
+			}
+			else
+			{
+				uint8_t* data = (uint8_t*)_src;
+				for (uint32_t yy = 0; yy < _height; ++yy)
+				{
+					fwrite(data, dstPitch, 1, file);
+					data += _srcPitch;
+				}
 			}
 
 			fclose(file);

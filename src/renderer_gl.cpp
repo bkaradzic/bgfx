@@ -388,7 +388,17 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_OPENGL
 			void* data = g_realloc(NULL, m_resolution.m_width*m_resolution.m_height*4);
 			glReadPixels(0, 0, m_resolution.m_width, m_resolution.m_height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-			saveTga( (const char*)_mem->data, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, data);
+
+			uint8_t* rgba = (uint8_t*)data;
+			for (uint32_t ii = 0, num = m_resolution.m_width*m_resolution.m_height; ii < num; ++ii)
+			{
+				uint8_t temp = rgba[0];
+				rgba[0] = rgba[2];
+				rgba[2] = temp;
+				rgba += 4;
+			}
+
+			saveTga( (const char*)_mem->data, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, data, false, true);
 			g_free(data);
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 		}

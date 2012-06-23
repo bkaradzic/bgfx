@@ -122,7 +122,7 @@ namespace bgfx
 
 	void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
 	void release(Memory* _mem);
-	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data);
+	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
 
