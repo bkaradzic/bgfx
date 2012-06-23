@@ -346,7 +346,7 @@ namespace bgfx
 	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
 
 	///
-	void updateDynamicVertexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem);
+	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem);
 
 	///
 	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
@@ -448,10 +448,10 @@ namespace bgfx
 	void setIndexBuffer(IndexBufferHandle _handle);
 
 	///
-	void setIndexBuffer(DynamicVertexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
+	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
 
 	///
-	void setIndexBuffer(DynamicVertexBufferHandle _handle);
+	void setIndexBuffer(DynamicIndexBufferHandle _handle);
 
 	///
 	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices = 0xffffffff);

@@ -785,7 +785,7 @@ namespace bgfx
 		return s_ctx.createDynamicVertexBuffer(_mem, _decl);
 	}
 
-	void updateDynamicVertexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem)
+	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem)
 	{
 		s_ctx.updateDynamicVertexBuffer(_handle, _mem);
 	}

@@ -1694,7 +1694,7 @@ namespace bgfx
 			return handle;
 		}
 
-		void updateDynamicVertexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem)
+		void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem)
 		{
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateDynamicVertexBuffer);
