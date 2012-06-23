@@ -368,7 +368,7 @@ namespace bgfx
 	void destroyTexture(TextureHandle _handle);
 
 	///
-	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags = BGFX_RENDER_TARGET_COLOR_RGBA);
+	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags = BGFX_RENDER_TARGET_COLOR_RGBA, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
 
 	///
 	void destroyRenderTarget(RenderTargetHandle _handle);

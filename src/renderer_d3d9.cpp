@@ -1297,11 +1297,13 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_ptr) );
 	}
 
-	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags)
+	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
 		m_width = _width;
 		m_height = _height;
 		m_flags = _flags;
+		m_minFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+		m_magFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
 
 		createTextures();
 	}
@@ -1434,8 +1436,8 @@ namespace bgfx
 
 	void RenderTarget::commit(uint8_t _stage)
 	{
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MINFILTER, D3DTEXF_LINEAR) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR) );
+		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MINFILTER, m_minFilter) );
+		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, m_magFilter) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, D3DTEXF_POINT) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP) );
 		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP) );
@@ -1694,9 +1696,9 @@ namespace bgfx
 		s_renderCtx.m_textures[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags)
+	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
-		s_renderCtx.m_renderTargets[_handle.idx].create(_width, _height, _flags);
+		s_renderCtx.m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
 	}
 
 	void Context::rendererDestroyRenderTarget(RenderTargetHandle _handle)

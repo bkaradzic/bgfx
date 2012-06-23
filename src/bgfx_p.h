@@ -1668,7 +1668,7 @@ namespace bgfx
 			m_submit->free(_handle);
 		}
 
-		RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags)
+		RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 		{
 			RenderTargetHandle handle = { m_renderTargetHandle.alloc() };
 
@@ -1677,6 +1677,7 @@ namespace bgfx
 			cmdbuf.write(_width);
 			cmdbuf.write(_height);
 			cmdbuf.write(_flags);
+			cmdbuf.write(_textureFlags);
 			return handle;
 		}
 
@@ -1930,7 +1931,7 @@ namespace bgfx
 		void rendererDestroyMaterial(FragmentShaderHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
 		void rendererDestroyTexture(TextureHandle _handle);
-		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags);
+		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void rendererDestroyRenderTarget(RenderTargetHandle _handle);
 		void rendererCreateUniform(UniformHandle _handle, ConstantType::Enum _type, uint16_t _num, const char* _name);
 		void rendererDestroyUniform(UniformHandle _handle);
@@ -2212,7 +2213,10 @@ namespace bgfx
 						uint32_t flags;
 						_cmdbuf.read(flags);
 
-						rendererCreateRenderTarget(handle, width, height, flags);
+						uint32_t textureFlags;
+						_cmdbuf.read(textureFlags);
+
+						rendererCreateRenderTarget(handle, width, height, flags, textureFlags);
 					}
 					break;
 

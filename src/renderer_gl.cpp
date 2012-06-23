@@ -1285,7 +1285,7 @@ namespace bgfx
 		GL_CHECK(glBindTexture(m_target, 0) );
 	}
 
-	void Texture::createColor(uint32_t _width, uint32_t _height)
+	void Texture::createColor(uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag)
 	{
 		GLenum internalFormat = /*_fp ? GL_RGBA16F_ARB :*/ GL_RGBA;
 		GLenum type = /*_fp ? GL_HALF_FLOAT_ARB :*/ GL_UNSIGNED_BYTE;
@@ -1294,8 +1294,8 @@ namespace bgfx
 		GL_CHECK(glGenTextures(1, &m_id) );
 		BX_CHECK(0 != m_id, "Failed to generate texture id.");
 		GL_CHECK(glBindTexture(m_target, m_id) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, _min) );
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, _mag) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE) );
 
@@ -1352,7 +1352,7 @@ namespace bgfx
 		}
 	}
 
-	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags)
+	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
 		BX_TRACE("Create render target %dx%d 0x%02x", _width, _height, _flags);
 
@@ -1362,10 +1362,12 @@ namespace bgfx
 //		m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
 		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
+		GLenum minFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+		GLenum magFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
 
 		if (0 < colorFormat)
 		{
-			m_color.createColor(_width, _height);
+			m_color.createColor(_width, _height, minFilter, magFilter);
 		}
 		
 #if 0 // GLES can't create texture with depth texture format...
@@ -1782,9 +1784,9 @@ namespace bgfx
 		s_renderCtx.m_textures[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags)
+	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
-		s_renderCtx.m_renderTargets[_handle.idx].create(_width, _height, _flags);
+		s_renderCtx.m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
 	}
 
 	void Context::rendererDestroyRenderTarget(RenderTargetHandle _handle)

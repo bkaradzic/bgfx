@@ -809,9 +809,9 @@ namespace bgfx
 		s_ctx.destroyTexture(_handle);
 	}
 
-	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags)
+	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
-		return s_ctx.createRenderTarget(_width, _height, _flags);
+		return s_ctx.createRenderTarget(_width, _height, _flags, _textureFlags);
 	}
 
 	void destroyRenderTarget(RenderTargetHandle _handle)

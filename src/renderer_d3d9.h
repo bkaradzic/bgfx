@@ -316,6 +316,8 @@ namespace bgfx
 			, m_color(NULL)
 			, m_depthTexture(NULL)
 			, m_depth(NULL)
+			, m_minFilter(D3DTEXF_LINEAR)
+			, m_magFilter(D3DTEXF_LINEAR)
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
@@ -323,7 +325,7 @@ namespace bgfx
 		{
 		}
 
-		void create(uint16_t _width, uint16_t _height, uint32_t _flags);
+		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void createTextures();
 		void destroyTextures();
 
@@ -352,6 +354,8 @@ namespace bgfx
 		IDirect3DSurface9* m_color;
 		IDirect3DTexture9* m_depthTexture;
 		IDirect3DSurface9* m_depth;
+		D3DTEXTUREFILTERTYPE m_minFilter;
+		D3DTEXTUREFILTERTYPE m_magFilter;
 		uint16_t m_width;
 		uint16_t m_height;
 		uint32_t m_flags;

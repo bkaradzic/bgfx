@@ -257,7 +257,7 @@ namespace bgfx
 		}
 
 		void create(const Memory* _mem, uint32_t _flags);
-		void createColor(uint32_t _width, uint32_t _height);
+		void createColor(uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
 		void createDepth(uint32_t _width, uint32_t _height);
 		void destroy();
 
@@ -305,7 +305,7 @@ namespace bgfx
 
 	struct RenderTarget
 	{
-		void create(uint16_t _width, uint16_t _height, uint32_t _flags);
+		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void destroy();
 
 		GLsizei m_width;
