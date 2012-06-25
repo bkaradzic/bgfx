@@ -765,6 +765,11 @@ namespace bgfx
 		s_ctx.destroyVertexBuffer(_handle);
 	}
 
+	DynamicIndexBufferHandle createDynamicIndexBuffer(uint16_t _num)
+	{
+		return s_ctx.createDynamicIndexBuffer(_num);
+	}
+
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
 	{
 		return s_ctx.createDynamicIndexBuffer(_mem);
@@ -778,6 +783,11 @@ namespace bgfx
 	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle)
 	{
 		s_ctx.destroyDynamicIndexBuffer(_handle);
+	}
+
+	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+	{
+		return s_ctx.createDynamicVertexBuffer(_num, _decl);
 	}
 
 	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
