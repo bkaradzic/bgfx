@@ -16,6 +16,19 @@
 #		include <GL/gl.h>
 #		include <GL/glx.h>
 #		undef GL_PROTOTYPES
+#	elif BX_PLATFORM_OSX
+#		define GL_PROTOTYPES
+#		define GL_GLEXT_LEGACY
+#		define GL_VERSION_1_2
+#		define GL_VERSION_1_3
+#		define GL_VERSION_1_5
+#		define GL_VERSION_2_0
+#		include <OpenGL/gl.h>
+#		undef GL_VERSION_2_0
+#		undef GL_VERSION_1_5
+#		undef GL_VERSION_1_3
+#		undef GL_VERSION_1_2
+#		undef GL_PROTOTYPES
 #	else
 #		include <GL/gl.h>
 #	endif // BX_PLATFORM_

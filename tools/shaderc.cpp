@@ -678,10 +678,12 @@ int main(int _argc, const char* _argv[])
 	Preprocessor preprocessor(filePath);
 
 	preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
+	preprocessor.setDefaultDefine("BX_PLATFORM_IOS");
+	preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
 	preprocessor.setDefaultDefine("BX_PLATFORM_NACL");
+	preprocessor.setDefaultDefine("BX_PLATFORM_OSX");
 	preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
 	preprocessor.setDefaultDefine("BX_PLATFORM_XBOX360");
-	preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
@@ -695,15 +697,27 @@ int main(int _argc, const char* _argv[])
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		glsl = true;
 	}
+	else if (0 == _stricmp(platform, "ios") )
+	{
+		preprocessor.setDefine("BX_PLATFORM_IOS=1");
+		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+		glsl = true;
+	}
+	else if (0 == _stricmp(platform, "linux") )
+	{
+		preprocessor.setDefine("BX_PLATFORM_IOS=1");
+		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+		glsl = true;
+	}
 	else if (0 == _stricmp(platform, "nacl") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_NACL=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		glsl = true;
 	}
-	else if (0 == _stricmp(platform, "linux"))
+	else if (0 == _stricmp(platform, "osx") )
 	{
-		preprocessor.setDefine("BX_PLATFORM_LINUX=1");
+		preprocessor.setDefine("BX_PLATFORM_OSX=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		glsl = true;
 	}
