@@ -406,10 +406,17 @@ namespace bgfx
 		void init()
 		{
 			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+#if BGFX_CONFIG_RENDERER_OPENGL
+			m_queries.create();
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 		}
 
 		void shutdown()
 		{
+#if BGFX_CONFIG_RENDERER_OPENGL
+			m_queries.destroy();
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 #if BGFX_USE_WGL
 			if (NULL != m_hdc)
 			{
@@ -438,6 +445,9 @@ namespace bgfx
 		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+#if BGFX_CONFIG_RENDERER_OPENGL
+		Queries m_queries;
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		TextVideoMem m_textVideoMem;
 
@@ -1841,6 +1851,14 @@ namespace bgfx
 	{
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
+		int64_t elapsed = -bx::getHPCounter();
+#if BGFX_CONFIG_RENDERER_OPENGL
+		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
+		{
+			s_renderCtx.m_queries.begin(0, GL_TIME_ELAPSED);
+		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 		if (0 < m_render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = m_render->m_transientIb;
@@ -1879,8 +1897,6 @@ namespace bgfx
 
 		uint32_t statsNumPrims = 0;
 		uint32_t statsNumIndices = 0;
-
-		int64_t elapsed = -bx::getHPCounter();
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -2373,6 +2389,13 @@ namespace bgfx
 
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
+			double elapsedGpuMs = 0.0;
+#if BGFX_CONFIG_RENDERER_OPENGL
+			s_renderCtx.m_queries.end(GL_TIME_ELAPSED);
+			uint64_t elapsedGl = s_renderCtx.m_queries.getResult(0);
+			elapsedGpuMs = double(elapsedGl)/1e6;
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 			TextVideoMem& tvm = s_renderCtx.m_textVideoMem;
 
 			static int64_t next = now;
@@ -2382,11 +2405,17 @@ namespace bgfx
 				next = now + bx::getHPFrequency();
 				double freq = double(bx::getHPFrequency() );
 				double toMs = 1000.0/freq;
+				double elapsedCpuMs = double(elapsed)*toMs;
 
 				tvm.clear();
 				uint16_t pos = 10;
-				tvm.printf(10, pos++, 0x8e, "      Frame: %3.4f [ms] / %3.2f", double(frameTime)*toMs, freq/frameTime);
-				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / %3.4f [ms]", m_render->m_num, double(elapsed)*toMs);
+				tvm.printf(10, pos++, 0x8e, "  Frame CPU: %3.4f [ms] / %3.2f", double(frameTime)*toMs, freq/frameTime);
+				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms] %c GPU %3.4f [ms]"
+					, m_render->m_num
+					, elapsedCpuMs
+					, elapsedCpuMs > elapsedGpuMs ? '>' : '<'
+					, elapsedGpuMs
+					);
 				tvm.printf(10, pos++, 0x8e, "      Prims: %7d", statsNumPrims);
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);

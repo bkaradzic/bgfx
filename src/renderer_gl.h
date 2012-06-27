@@ -350,6 +350,40 @@ namespace bgfx
 		uint8_t m_numPredefined;
 	};
 
+#if BGFX_CONFIG_RENDERER_OPENGL
+	struct Queries
+	{
+		void create()
+		{
+			glGenQueries(countof(m_queries), m_queries);
+		}
+
+		void destroy()
+		{
+			glDeleteQueries(countof(m_queries), m_queries);
+		}
+
+		void begin(uint16_t _id, GLenum _target) const
+		{
+			glBeginQuery(_target, m_queries[_id]);
+		}
+
+		void end(GLenum _target) const
+		{
+			glEndQuery(_target);
+		}
+
+		uint64_t getResult(uint16_t _id) const
+		{
+			uint64_t result;
+			glGetQueryObjectui64v(m_queries[_id], GL_QUERY_RESULT, &result);
+			return result;
+		}
+
+		GLuint m_queries[64];
+	};
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 } // namespace bgfx
 
 #endif // __RENDERER_GL_H__
