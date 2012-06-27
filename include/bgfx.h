@@ -345,7 +345,7 @@ namespace bgfx
 	///
 	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle);
 
-	//
+	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
 	///

@@ -290,8 +290,6 @@ namespace bgfx
 		bgfx::MaterialHandle m_material;
 	};
 
-	extern TextVideoMemBlitter g_textVideoMemBlitter;
-
 	struct PredefinedUniform
 	{
 		enum Enum
@@ -2713,6 +2711,8 @@ namespace bgfx
 		Resolution m_resolution;
 		uint32_t m_frames;
 		uint32_t m_debug;
+
+		TextVideoMemBlitter m_textVideoMemBlitter;
 
 #if BX_PLATFORM_WINDOWS
 		struct Window

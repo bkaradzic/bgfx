@@ -341,8 +341,6 @@ namespace bgfx
 		}
 	}
 
-	TextVideoMemBlitter g_textVideoMemBlitter;
-
 	static const char* s_predefinedName[PredefinedUniform::Count] =
 	{
 		"u_viewRect",
@@ -662,7 +660,7 @@ namespace bgfx
 
 		getCommandBuffer(CommandBuffer::RendererInit);
 
-		g_textVideoMemBlitter.init();
+		m_textVideoMemBlitter.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 		m_submit->m_transientIb = createTransientIndexBuffer(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);

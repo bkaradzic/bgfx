@@ -2255,11 +2255,15 @@ namespace bgfx
 				next = now + bx::getHPFrequency();
 				double freq = double(bx::getHPFrequency() );
 				double toMs = 1000.0/freq;
+				double elapsedCpuMs = double(elapsed)*toMs;
 
 				tvm.clear();
 				uint16_t pos = 10;
 				tvm.printf(10, pos++, 0x8e, "      Frame: %3.4f [ms] / %3.2f", frameTime*toMs, freq/frameTime);
-				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / %3.4f [ms]", m_render->m_num, elapsed*toMs);
+				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms]"
+					, m_render->m_num
+					, elapsedCpuMs
+					);
 				tvm.printf(10, pos++, 0x8e, "      Prims: %7d", statsNumPrims);
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
@@ -2272,7 +2276,7 @@ namespace bgfx
 				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", m_render->m_waitRender*toMs);
 			}
 
-			g_textVideoMemBlitter.blit(tvm);
+			m_textVideoMemBlitter.blit(tvm);
 
 			PIX_ENDEVENT();
 		}
@@ -2280,7 +2284,7 @@ namespace bgfx
 		{
 			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugtext");
 
-			g_textVideoMemBlitter.blit(m_render->m_textVideoMem);
+			m_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 
 			PIX_ENDEVENT();
 		}

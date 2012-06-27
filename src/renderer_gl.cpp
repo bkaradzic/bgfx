@@ -2428,11 +2428,11 @@ namespace bgfx
 				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", double(m_render->m_waitRender)*toMs);
 			}
 
-			g_textVideoMemBlitter.blit(tvm);
+			m_textVideoMemBlitter.blit(tvm);
 		}
 		else if (m_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			g_textVideoMemBlitter.blit(m_render->m_textVideoMem);
+			m_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 		}
 
 		GREMEDY_FRAMETERMINATOR();
