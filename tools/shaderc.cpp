@@ -268,7 +268,7 @@ void printCode(const char* _code)
 
 bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const char* _outFilePath)
 {
-	const glslopt_shader_type type = (0 == _stricmp(_cmdLine.findOption('\0', "type"), "fragment") ) ? kGlslOptShaderFragment : kGlslOptShaderVertex;
+	const glslopt_shader_type type = tolower(_cmdLine.findOption('\0', "type")[0]) == 'f' ? kGlslOptShaderFragment : kGlslOptShaderVertex;
 
 	glslopt_ctx* ctx = glslopt_initialize(false);
 
@@ -500,6 +500,10 @@ struct Preprocessor
 		m_tagptr->data = this;
 		m_tagptr++;
 
+		m_tagptr->tag = FPPTAG_DEPENDS;
+		m_tagptr->data = (void*)fppDepends;
+		m_tagptr++; 
+
 		m_tagptr->tag = FPPTAG_INPUT;
 		m_tagptr->data = (void*)fppInput;
 		m_tagptr++; 
@@ -550,11 +554,22 @@ struct Preprocessor
 		m_default += temp;
 	}
 
+	void addDependency(const char* _fileName)
+	{
+		m_depends += " \\\n ";
+		m_depends += _fileName;
+	}
+
 	bool run()
 	{
 		m_fgetsPos = 0;
 
 		FILE* file = fopen(m_filePath, "r");
+		if (NULL == file)
+		{
+			return false;
+		}
+
 		long int size = fsize(file);
 		char* input = new char[size+1];
 		size = fread(input, 1, size, file);
@@ -593,6 +608,12 @@ struct Preprocessor
 		return NULL;
 	}
 
+	static void fppDepends(char* _fileName, void* _userData)
+	{
+		Preprocessor* thisClass = (Preprocessor*)_userData;
+		thisClass->addDependency(_fileName);
+	}
+
 	static char* fppInput(char* _buffer, int _size, void* _userData)
 	{
 		Preprocessor* thisClass = (Preprocessor*)_userData;
@@ -623,6 +644,7 @@ struct Preprocessor
 	fppTag* m_tagptr;
 
 	char* m_filePath;
+	std::string m_depends;
 	std::string m_default;
 	std::string m_input;
 	std::string m_preprocessed;
@@ -673,6 +695,7 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
+	bool depends = cmdLine.hasArg("depends");
 	bool preprocessOnly = cmdLine.hasArg("preprocess");
 
 	Preprocessor preprocessor(filePath);
@@ -788,19 +811,34 @@ int main(int _argc, const char* _argv[])
 			return EXIT_SUCCESS;
 		}
 
+		bool compiled = false;
+
 		if (glsl)
 		{
-			if (compileGLSLShader(cmdLine, preprocessor.m_preprocessed, outFilePath) )
-			{
-				return EXIT_SUCCESS;
-			}
+			compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, outFilePath);
 		}
 		else
 		{
-			if (compileHLSLShader(cmdLine, preprocessor.m_preprocessed, outFilePath) )
+			compiled = compileHLSLShader(cmdLine, preprocessor.m_preprocessed, outFilePath);
+		}
+
+		if (compiled
+		&&  depends)
+		{
+			std::string ofp = outFilePath;
+			ofp += ".d";
+			FILE* out = fopen(ofp.c_str(), "wb");
+			if (NULL != out)
 			{
-				return EXIT_SUCCESS;
+				Stream stream(out);
+				stream.write(outFilePath);
+				stream.write(":");
+				stream.write(preprocessor.m_depends.c_str() );
+				stream.write("\n");
+				stream.close();
+				fclose(out);
 			}
+			return EXIT_SUCCESS;
 		}
 	}
 

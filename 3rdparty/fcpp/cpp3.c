@@ -40,6 +40,10 @@ ReturnCode openfile(struct Global *global, char *filename)
   else
     ret=addfile(global, fp, filename);
 
+  if(!ret && global->depends) {
+	global->depends(filename, global->userdata);
+  }
+
   if(!ret && global->showincluded) {
           /* no error occured! */
           Error(global, "cpp: included \"");
@@ -237,6 +241,9 @@ int dooptions(struct Global *global, struct fppTag *tags)
       strcpy(global->work, tags->data);    /* Remember input filename */
       global->first_file=tags->data;
       break;
+	case FPPTAG_DEPENDS:
+      global->depends=(void (*)(char *, void *))tags->data;
+	  break;
     case FPPTAG_INPUT:
       global->input=(char *(*)(char *, int, void *))tags->data;
       break;

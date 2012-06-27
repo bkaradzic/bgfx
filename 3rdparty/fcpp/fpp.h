@@ -156,4 +156,7 @@ struct fppTag {
 /* Switch on WWW-mode */
 #define FPPTAG_WEBMODE 33
 
+/* Depends function: */
+#define FPPTAG_DEPENDS 34 /* data is an depends funtion */
+
 int fppPreProcess(struct fppTag *);

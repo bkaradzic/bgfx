@@ -99,6 +99,7 @@ int fppPreProcess(struct fppTag *tags)
   global->macro=NULL;
   global->evalue=0;
 
+  global->depends=NULL;
   global->input=NULL;
   global->output=NULL;
   global->error=NULL;

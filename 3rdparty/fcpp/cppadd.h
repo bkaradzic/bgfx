@@ -199,6 +199,8 @@ struct Global {
 
   int evalue;                   /* Current value from evallex() */
 
+  void (*depends)(char *filename, void *); /* depends function */
+
   char *(*input)(char *, int, void *);  /* Input function */
 
   char *first_file;             /* Preprocessed file. */
