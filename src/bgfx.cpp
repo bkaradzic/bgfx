@@ -9,6 +9,22 @@
 HWND g_bgfxHwnd = NULL;
 #endif // BX_PLATFORM_WINDOWS
 
+#if BGFX_CONFIG_USE_TINYSTL
+namespace tinystl
+{
+	void* allocator::static_allocate(size_t _bytes)
+	{
+		return bgfx::g_realloc(NULL, _bytes);
+	}
+
+	void allocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
+	{
+		bgfx::g_free(_ptr);
+	}
+
+} // namespace tinystl
+#endif // BGFX_CONFIG_USE_TINYSTL
+
 namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC 0x78666762

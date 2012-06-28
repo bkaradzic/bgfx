@@ -61,7 +61,9 @@ extern HWND g_bgfxHwnd;
 #elif BX_PLATFORM_XBOX360
 #	include <malloc.h>
 #	include <xtl.h>
-#endif // BX_PLATFORM_WINDOWS
+#elif BX_PLATFORM_POSIX
+#	include <pthread.h>
+#endif // BX_PLATFORM_*
 
 #ifndef MAKEFOURCC
 #	define MAKEFOURCC(_a, _b, _c, _d) (0 \
@@ -76,10 +78,27 @@ extern HWND g_bgfxHwnd;
 
 #define BGFX_MAGIC MAKEFOURCC('B','G','F','X')
 
+#if BGFX_CONFIG_USE_TINYSTL
+namespace tinystl
+{
+	struct allocator
+	{
+		static void* static_allocate(size_t _bytes);
+		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
+	};
+} // namespace tinystl
+#	define TINYSTL_ALLOCATOR_H
+
+#	include <TINYSTL/string.h>
+#	include <TINYSTL/unordered_map.h>
+namespace stl = tinystl;
+#else
 namespace std { namespace tr1 {} using namespace tr1; } // namespace std
-#include <string>
+#	include <string>
+#	include <unordered_map>
+namespace stl = std;
+#endif // BGFX_CONFIG_USE_TINYSTL
 #include <list>
-#include <unordered_map>
 #include <algorithm>
 
 #include "config.h"
@@ -812,7 +831,7 @@ namespace bgfx
 				info.m_data = _data;
 				info.m_func = _func;
 
-				std::pair<UniformHashMap::iterator, bool> result = m_uniforms.insert(UniformHashMap::value_type(_name, info) );
+				stl::pair<UniformHashMap::iterator, bool> result = m_uniforms.insert(UniformHashMap::value_type(_name, info) );
 				return result.first->second;	
 			}
 
@@ -820,7 +839,7 @@ namespace bgfx
 		}
 
  	private:
- 		typedef std::unordered_map<std::string, UniformInfo> UniformHashMap;
+ 		typedef stl::unordered_map<stl::string, UniformInfo> UniformHashMap;
  		UniformHashMap m_uniforms;
  	};
 
@@ -1286,10 +1305,10 @@ namespace bgfx
 
 		void add(MaterialHandle _handle, uint32_t _hash)
 		{
-			m_materialMap.insert(std::make_pair(_hash, _handle) );
+			m_materialMap.insert(stl::make_pair(_hash, _handle) );
 		}
 
-		typedef std::unordered_map<uint32_t, MaterialHandle> MaterialMap;
+		typedef stl::unordered_map<uint32_t, MaterialHandle> MaterialMap;
 		MaterialMap m_materialMap;
 	};
 
@@ -1317,7 +1336,7 @@ namespace bgfx
 		{
 			m_vertexBufferRef[_handle.idx] = _declHandle;
 			m_vertexDeclRef[_declHandle.idx]++;
-			m_vertexDeclMap.insert(std::make_pair(_hash, _declHandle) );
+			m_vertexDeclMap.insert(stl::make_pair(_hash, _declHandle) );
 		}
 
 		VertexDeclHandle release(VertexBufferHandle _handle)
@@ -1334,7 +1353,7 @@ namespace bgfx
 			return declHandle;
 		}
 
-		typedef std::unordered_map<uint32_t, VertexDeclHandle> VertexDeclMap;
+		typedef stl::unordered_map<uint32_t, VertexDeclHandle> VertexDeclMap;
 		VertexDeclMap m_vertexDeclMap;
 		uint16_t m_vertexDeclRef[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		VertexDeclHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -1373,7 +1392,7 @@ namespace bgfx
 				{
 					uint64_t ptr = it->m_ptr;
 
-					m_used.insert(std::make_pair(ptr, _size) );
+					m_used.insert(stl::make_pair(ptr, _size) );
 
 					if (it->m_size != _size)
 					{
@@ -1443,7 +1462,7 @@ namespace bgfx
 		typedef std::list<Free> FreeList;
 		FreeList m_free;
 
-		typedef std::unordered_map<uint64_t, uint32_t> UsedList;
+		typedef stl::unordered_map<uint64_t, uint32_t> UsedList;
 		UsedList m_used;
 	};
 

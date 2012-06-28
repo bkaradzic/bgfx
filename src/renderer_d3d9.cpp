@@ -964,6 +964,7 @@ namespace bgfx
 				}
 			}
 
+			(void)kind; // explicitly ignore unused variable kind in non-debug builds
 			BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
 				, kind
 				, name
@@ -1829,7 +1830,7 @@ namespace bgfx
 
 					if (BGFX_CLEAR_NONE != clear.m_flags)
 					{
-						D3DCOLOR color;
+						D3DCOLOR color = 0;
 						DWORD flags = 0;
 
 						if (BGFX_CLEAR_COLOR_BIT & clear.m_flags)

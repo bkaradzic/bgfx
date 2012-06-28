@@ -109,13 +109,15 @@ namespace bgfx
 					glSetCurrentContextPPAPI(m_context);
 					m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
 
-// #	define GL_IMPORT(_optional, _proto, _func) \
-// 				{ \
-// 					_func = (_proto)eglGetProcAddress(#_func); \
-// 					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
-// 				}
-// #	include "glimports.h"
-// #	undef GL_IMPORT
+#if 0
+ #	define GL_IMPORT(_optional, _proto, _func) \
+ 				{ \
+ 					_func = (_proto)eglGetProcAddress(#_func); \
+ 					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
+ 				}
+ #	include "glimports.h"
+ #	undef GL_IMPORT
+#endif
 				}
 				else
 				{

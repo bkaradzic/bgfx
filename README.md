@@ -1,13 +1,21 @@
 bgfx
 ====
 
-Rendering library.
+Cross-platform rendering library.
 
 Supports:  
 OpenGL 2.1, OpenGL ES 2.0, and Direct3D 9.0.
 
 Platforms:  
 Windows, Linux, Android, and Native Client.
+
+Dependencies
+------------
+
+[https://github.com/bkaradzic/bx](https://github.com/bkaradzic/bx)
+
+Optional:  
+[https://github.com/mendsley/tinystl](https://github.com/mendsley/tinystl)
 
 Notice
 ------
