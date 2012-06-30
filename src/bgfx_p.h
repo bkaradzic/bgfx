@@ -2870,6 +2870,15 @@ namespace bgfx
 					}
 					break;
 
+				case WM_KEYDOWN:
+				case WM_SYSKEYDOWN:
+					if (WM_KEYDOWN == _id && VK_F11 == _wparam
+					||  WM_SYSKEYDOWN == _id && VK_RETURN == _wparam)
+					{
+						toggleWindowFrame();
+					}
+					break;
+
 				default:
 					break;
 				}
@@ -2893,6 +2902,8 @@ namespace bgfx
 
 			void adjust(uint32_t _width, uint32_t _height, bool _windowFrame)
 			{
+				m_width = _width;
+				m_height = _height;
 				m_aspectRatio = float(_width)/float(_height);
 
 				ShowWindow(g_bgfxHwnd, SW_SHOWNORMAL);
@@ -2996,8 +3007,15 @@ namespace bgfx
 		private:
 			static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
+			void toggleWindowFrame()
+			{
+				adjust(m_width, m_height, !m_frame);
+			}
+
 			RECT m_rect;
 			DWORD m_style;
+			uint32_t m_width;
+			uint32_t m_height;
 			float m_aspectRatio;
 			bool m_frame;
 			bool m_update;
