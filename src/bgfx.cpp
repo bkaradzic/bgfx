@@ -12,12 +12,12 @@ HWND g_bgfxHwnd = NULL;
 #if BGFX_CONFIG_USE_TINYSTL
 namespace tinystl
 {
-	void* allocator::static_allocate(size_t _bytes)
+	void* bgfx_allocator::static_allocate(size_t _bytes)
 	{
 		return bgfx::g_realloc(NULL, _bytes);
 	}
 
-	void allocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
+	void bgfx_allocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
 		bgfx::g_free(_ptr);
 	}
