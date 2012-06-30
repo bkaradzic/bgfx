@@ -79,15 +79,16 @@ extern HWND g_bgfxHwnd;
 #define BGFX_MAGIC MAKEFOURCC('B','G','F','X')
 
 #if BGFX_CONFIG_USE_TINYSTL
+
 namespace tinystl
 {
-	struct allocator
+	struct bgfx_allocator
 	{
 		static void* static_allocate(size_t _bytes);
 		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
 	};
 } // namespace tinystl
-#	define TINYSTL_ALLOCATOR_H
+#	define TINYSTL_ALLOCATOR tinystl::bgfx_allocator
 
 #	include <TINYSTL/string.h>
 #	include <TINYSTL/unordered_map.h>
