@@ -2872,8 +2872,8 @@ namespace bgfx
 
 				case WM_KEYDOWN:
 				case WM_SYSKEYDOWN:
-					if (WM_KEYDOWN == _id && VK_F11 == _wparam
-					||  WM_SYSKEYDOWN == _id && VK_RETURN == _wparam)
+					if ((WM_KEYDOWN == _id && VK_F11 == _wparam)
+					||  (WM_SYSKEYDOWN == _id && VK_RETURN == _wparam))
 					{
 						toggleWindowFrame();
 					}
