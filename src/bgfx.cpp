@@ -40,6 +40,8 @@ namespace bgfx
 	void fatalStub(bgfx::Fatal::Enum _code, const char* _str)
 	{
 		BX_TRACE("0x%08x: %s", _code, _str);
+		BX_UNUSED(_code);
+		BX_UNUSED(_str);
 	}
 
 	void* reallocStub(void* _ptr, size_t _size)
@@ -56,7 +58,7 @@ namespace bgfx
 		::free(_ptr);
 	}
 
-	void cacheStub(uint64_t _id, bool _store, void* _data, uint32_t& _length)
+	void cacheStub(uint64_t /*_id*/, bool /*_store*/, void* /*_data*/, uint32_t& _length)
 	{
 		_length = 0;
 	}
@@ -604,6 +606,8 @@ namespace bgfx
 				);
 			}
 		}
+#else
+		BX_UNUSED(_decl);
 #endif // BGFX_CONFIG_DEBUG
 	}
 
@@ -664,6 +668,8 @@ namespace bgfx
 			pthread_create(&m_renderThread, NULL, renderThread, NULL);
 #	endif // BX_PLATFORM_
 		}
+#else
+		BX_UNUSED(_createRenderThread);
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		memset(m_rt, 0xff, sizeof(m_rt) );

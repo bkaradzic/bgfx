@@ -964,7 +964,6 @@ namespace bgfx
 				}
 			}
 
-			(void)kind; // explicitly ignore unused variable kind in non-debug builds
 			BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
 				, kind
 				, name
@@ -973,6 +972,7 @@ namespace bgfx
 				, regIndex
 				, regCount
 				);
+			BX_UNUSED(kind);
 		}
 
 		uint16_t shaderSize;
@@ -1460,7 +1460,7 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS
 	}
 	
-	void ConstantBuffer::commit(bool _force)
+	void ConstantBuffer::commit()
 	{
 		reset();
 
@@ -1987,8 +1987,8 @@ namespace bgfx
 					if (constantsChanged)
 					{
 						Material& material = s_renderCtx.m_materials[materialIdx];
-						material.m_vsh->m_constantBuffer->commit(materialChanged);
-						material.m_fsh->m_constantBuffer->commit(materialChanged);
+						material.m_vsh->m_constantBuffer->commit();
+						material.m_fsh->m_constantBuffer->commit();
 					}
 
 					for (uint32_t ii = 0, num = material.m_numPredefined; ii < num; ++ii)

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 extern void dbgPrintf(const char* _format, ...);
 extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
@@ -773,7 +774,7 @@ namespace bgfx
 
 		void writeUniform(ConstantType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
 		void writeUniformRef(ConstantType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
-		void commit(bool _force);
+		void commit();
 
 	private:
 		ConstantBuffer(uint32_t _size)
@@ -2018,7 +2019,7 @@ namespace bgfx
 			m_submit->writeConstant(constant.m_type, _handle, _value, uint16_min(constant.m_num, _num) );
 		}
 
-		void setUniform(MaterialHandle _material, UniformHandle _handle, const void* _value)
+		void setUniform(MaterialHandle /*_material*/, UniformHandle /*_handle*/, const void* /*_value*/)
 		{
 			BX_CHECK(false, "NOT IMPLEMENTED!");
 		}

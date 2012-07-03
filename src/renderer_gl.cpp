@@ -966,7 +966,7 @@ namespace bgfx
 				, data
 				, offset
 				);
-			(void)offset;
+			BX_UNUSED(offset);
 		}
 
 		m_constantBuffer->finish();
@@ -1468,7 +1468,7 @@ namespace bgfx
 		m_depth.destroy();
 	}
 
-	void ConstantBuffer::commit(bool _force)
+	void ConstantBuffer::commit()
 	{
 		reset();
 
@@ -1686,7 +1686,7 @@ namespace bgfx
 			}
 
 			BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
-			(void)supported;
+			BX_UNUSED(supported);
 
  			pos += len+1;
  		}
@@ -1733,7 +1733,7 @@ namespace bgfx
 		dump(decl);
 	}
 
-	void Context::rendererDestroyVertexDecl(VertexDeclHandle _handle)
+	void Context::rendererDestroyVertexDecl(VertexDeclHandle /*_handle*/)
 	{
 	}
 
@@ -2107,7 +2107,7 @@ namespace bgfx
 
 					if (constantsChanged)
 					{
-						material.m_constantBuffer->commit(materialChanged);
+						material.m_constantBuffer->commit();
 					}
 
 					for (uint32_t ii = 0, num = material.m_numPredefined; ii < num; ++ii)
