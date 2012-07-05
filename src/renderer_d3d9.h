@@ -48,8 +48,8 @@ typedef BOOL (WINAPI *D3DPERF_QueryRepeatFrameFunc)();
 typedef void (WINAPI *D3DPERF_SetOptionsFunc)(DWORD dwOptions);
 typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
 
-#	define _PIX_SETMARKER(_col, _name) s_renderCtx.m_D3DPERF_SetMarker(_col, L#_name)
-#	define _PIX_BEGINEVENT(_col, _name) s_renderCtx.m_D3DPERF_BeginEvent(_col, L#_name)
+#	define _PIX_SETMARKER(_col, _name) s_renderCtx.m_D3DPERF_SetMarker(_col, KeyL#_name)
+#	define _PIX_BEGINEVENT(_col, _name) s_renderCtx.m_D3DPERF_BeginEvent(_col, KeyL#_name)
 #	define _PIX_ENDEVENT() s_renderCtx.m_D3DPERF_EndEvent()
 
 #elif BX_PLATFORM_XBOX360
