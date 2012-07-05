@@ -340,6 +340,41 @@ namespace bgfx
 		{
 			preReset();
 
+			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
+			{
+				m_indexBuffers[ii].destroy();
+			}
+
+			for (uint32_t ii = 0; ii < countof(m_vertexBuffers); ++ii)
+			{
+				m_vertexBuffers[ii].destroy();
+			}
+
+			for (uint32_t ii = 0; ii < countof(m_vertexShaders); ++ii)
+			{
+				m_vertexShaders[ii].destroy();
+			}
+
+			for (uint32_t ii = 0; ii < countof(m_fragmentShaders); ++ii)
+			{
+				m_fragmentShaders[ii].destroy();
+			}
+
+			for (uint32_t ii = 0; ii < countof(m_textures); ++ii)
+			{
+				m_textures[ii].destroy();
+			}
+
+			for (uint32_t ii = 0; ii < countof(m_vertexDecls); ++ii)
+			{
+				m_vertexDecls[ii].destroy();
+			}
+
+			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
+			{
+				m_renderTargets[ii].destroy();
+			}
+
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_d3d9, 0);
 
