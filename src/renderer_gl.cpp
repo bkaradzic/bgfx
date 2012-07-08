@@ -27,6 +27,24 @@ namespace bgfx
 #include "glimports.h"
 #undef GL_IMPORT
 
+	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
+	{
+	}
+
+	static void GL_APIENTRY stubDrawArraysInstanced(GLenum _mode, GLint _first, GLsizei _count, GLsizei /*_primcount*/)
+	{
+		glDrawArrays(_mode, _first, _count);
+	}
+
+	static void GL_APIENTRY stubDrawElementsInstanced(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei /*_primcount*/)
+	{
+		glDrawElements(_mode, _count, _type, _indices);
+	}
+
+	static PFNGLVERTEXATTRIBDIVISORBGFXPROC s_vertexAttribDivisor = stubVertexAttribDivisor;
+	static PFNGLDRAWARRAYSINSTANCEDBGFXPROC s_drawArraysInstanced = stubDrawArraysInstanced;
+	static PFNGLDRAWELEMENTSINSTANCEDBGFXPROC s_drawElementsInstanced = stubDrawElementsInstanced;
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 #if BX_PLATFORM_NACL
@@ -356,6 +374,21 @@ namespace bgfx
 #	undef GL_IMPORT
 				}
 #endif // BX_PLATFORM_
+			}
+
+			if (NULL != glVertexAttribDivisor
+			&&  NULL != glDrawArraysInstanced
+			&&  NULL != glDrawElementsInstanced)
+			{
+				s_vertexAttribDivisor = glVertexAttribDivisor;
+				s_drawArraysInstanced = glDrawArraysInstanced;
+				s_drawElementsInstanced = glDrawElementsInstanced;
+			}
+			else
+			{
+				s_vertexAttribDivisor = stubVertexAttribDivisor;
+				s_drawArraysInstanced = stubDrawArraysInstanced;
+				s_drawElementsInstanced = stubDrawElementsInstanced;
 			}
 
 			m_flip = true;
@@ -1030,7 +1063,7 @@ namespace bgfx
 				GL_CHECK(glEnableVertexAttribArray(loc) );
 				enabled |= 1<<attr;
 
-				GL_CHECK(glVertexAttribDivisor(loc, 0) );
+				GL_CHECK(s_vertexAttribDivisor(loc, 0) );
 
 				uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
 				GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
@@ -1073,7 +1106,7 @@ namespace bgfx
 			GLuint loc = m_instanceData[ii];
 			GL_CHECK(glEnableVertexAttribArray(loc) );
 			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
-			GL_CHECK(glVertexAttribDivisor(loc, 1) );
+			GL_CHECK(s_vertexAttribDivisor(loc, 1) );
 			baseVertex += 16;
 		}
 	}
@@ -2381,7 +2414,7 @@ namespace bgfx
 								numInstances = state.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-								GL_CHECK(glDrawElementsInstanced(primType
+								GL_CHECK(s_drawElementsInstanced(primType
 									, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
 									, GL_UNSIGNED_SHORT
 									, (void*)0
@@ -2395,7 +2428,7 @@ namespace bgfx
 								numInstances = state.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-								GL_CHECK(glDrawElementsInstanced(primType
+								GL_CHECK(s_drawElementsInstanced(primType
 									, numIndices
 									, GL_UNSIGNED_SHORT
 									, (void*)(uintptr_t)(state.m_startIndex*2)
@@ -2409,7 +2442,7 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							GL_CHECK(glDrawArraysInstanced(primType
+							GL_CHECK(s_drawArraysInstanced(primType
 								, 0
 								, state.m_numVertices
 								, state.m_numInstances

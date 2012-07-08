@@ -130,8 +130,20 @@ typedef void (APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble depth);
 typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 #endif // BGFX_USE_WGL
 
+#ifndef GL_APIENTRY
+#	define GL_APIENTRY APIENTRY
+#endif // GL_APIENTRY
+
+#ifndef GL_APIENTRYP
+#	define GL_APIENTRYP APIENTRYP
+#endif // GL_APIENTRYP
+
 namespace bgfx
 {
+	typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISORBGFXPROC)(GLuint _index, GLuint _divisor);
+	typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDBGFXPROC)(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount);
+	typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDBGFXPROC)(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount);
+
 #	define _GL_CHECK(_call) \
 				do { \
 					/*BX_TRACE(#_call);*/ \
