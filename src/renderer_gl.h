@@ -140,7 +140,7 @@ namespace bgfx
 					BX_CHECK(0 == err, #_call "; glError 0x%x %d", err, err); \
 				} while (0)
 
-#if 0 // BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_DEBUG
 #	define GL_CHECK(_call) _GL_CHECK(_call)
 #else
 #	define GL_CHECK(_call) _call
@@ -334,12 +334,14 @@ namespace bgfx
 		void create(const Shader& _vsh, const Shader& _fsh);
 		void destroy();
  		void init();
- 		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
+ 		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
+		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
  
 		GLuint m_id;
 
 		uint8_t m_used[Attrib::Count+1]; // dense
 		uint16_t m_attributes[Attrib::Count]; // sparse
+		uint16_t m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 		uint32_t m_enabled;
 
  		GLuint m_sampler[BGFX_CONFIG_MAX_TEXTURES];

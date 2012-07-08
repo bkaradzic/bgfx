@@ -253,6 +253,16 @@ namespace bgfx
 		VertexDeclHandle decl;
 	};
 
+	struct InstanceDataBuffer
+	{
+		uint8_t* data;
+		uint32_t size;
+		uint32_t offset;
+		uint16_t stride;
+		uint16_t num;
+		VertexBufferHandle handle;
+	};
+
 	struct ConstantType
 	{
 		enum Enum
@@ -370,6 +380,9 @@ namespace bgfx
 	const TransientVertexBuffer* allocTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
 	///
+	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride);
+
+	///
 	VertexShaderHandle createVertexShader(const Memory* _mem);
 
 	///
@@ -470,6 +483,9 @@ namespace bgfx
 
 	///
 	void setVertexBuffer(const TransientVertexBuffer* _vb);
+
+	///
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb);
 
 	///
 	void setMaterial(MaterialHandle _handle);

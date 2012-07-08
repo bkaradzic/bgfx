@@ -845,6 +845,11 @@ namespace bgfx
 		return s_ctx.allocTransientVertexBuffer(_num, _decl);
 	}
 
+	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
+	{
+		return s_ctx.allocInstanceDataBuffer(_num, _stride);
+	}
+
 	VertexShaderHandle createVertexShader(const Memory* _mem)
 	{
 		return s_ctx.createVertexShader(_mem);
@@ -1019,6 +1024,11 @@ namespace bgfx
 	void setVertexBuffer(const TransientVertexBuffer* _vb)
 	{
 		s_ctx.m_submit->setVertexBuffer(_vb);
+	}
+
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
+	{
+		s_ctx.m_submit->setInstanceDataBuffer(_idb);
 	}
 
 	void setMaterial(MaterialHandle _handle)

@@ -532,6 +532,7 @@ namespace bgfx
 			ARB_multisample,
 			CHROMIUM_framebuffer_multisample,
 			ANGLE_translated_shader_source,
+			ARB_instanced_arrays,
 			ANGLE_instanced_arrays,
 			OES_texture_float,
 			OES_texture_float_linear,
@@ -568,6 +569,7 @@ namespace bgfx
 		{ "GL_ARB_multisample",                   false, true },
 		{ "GL_CHROMIUM_framebuffer_multisample",  false, true },
 		{ "GL_ANGLE_translated_shader_source",    false, true },
+		{ "GL_ARB_instanced_arrays",              false, true },
 		{ "GL_ANGLE_instanced_arrays",            false, true },
 		{ "GL_OES_texture_float",                 false, true },
 		{ "GL_OES_texture_float_linear",          false, true },
@@ -606,6 +608,15 @@ namespace bgfx
 		"a_texcoord5",
 		"a_texcoord6",
 		"a_texcoord7",
+	};
+
+	static const char* s_instanceDataName[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT] =
+	{
+		"i_data0",
+		"i_data1",
+		"i_data2",
+		"i_data3",
+		"i_data4",
 	};
 
 	static const GLenum s_attribType[AttribType::Count] =
@@ -978,7 +989,7 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 		{
 			GLuint loc = glGetAttribLocation(m_id, s_attribName[ii]);
-			if ( GLuint(-1) != loc )
+			if (GLuint(-1) != loc )
 			{
 				BX_TRACE("attr %s: %d", s_attribName[ii], loc);
 				m_attributes[ii] = loc;
@@ -986,9 +997,21 @@ namespace bgfx
 			}
 		}
 		m_used[used] = Attrib::Count;
+
+		used = 0;
+		for (uint32_t ii = 0; ii < countof(s_instanceDataName); ++ii)
+		{
+			GLuint loc = glGetAttribLocation(m_id, s_instanceDataName[ii]);
+			if (GLuint(-1) != loc )
+			{
+				BX_TRACE("instance data %s: %d", s_instanceDataName[ii], loc);
+				m_instanceData[used++] = loc;
+			}
+		}
+		m_instanceData[used] = 0xffff;
 	}
 
-	void Material::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex)
+	void Material::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex) const
 	{
 		uint32_t enabled = 0;
 		for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
@@ -1006,6 +1029,8 @@ namespace bgfx
 			{
 				GL_CHECK(glEnableVertexAttribArray(loc) );
 				enabled |= 1<<attr;
+
+				GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 				uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
 				GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
@@ -1038,25 +1063,19 @@ namespace bgfx
 				}
 			}
 		}
-// 
-// 		uint32_t changed = enabled^m_enabled;
-// 		m_enabled = enabled;
-// 
-// 		if (0 != changed)
-// 		{
-// 			uint32_t test = 1;
-// 			for (uint32_t attr = 0; attr != Attrib::Count; ++attr)
-// 			{
-// 				if ( (changed & test)
-// 				&&   !(enabled & test) )
-// 				{
-// 					GLuint loc = m_attributes[attr];
-// 					GL_CHECK(glDisableVertexAttribArray(loc) );
-// 				}
-// 
-// 				test <<= 1;
-// 			}
-// 		}
+	}
+
+	void Material::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
+	{
+		uint32_t baseVertex = _baseVertex;
+		for (uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
+		{
+			GLuint loc = m_instanceData[ii];
+			GL_CHECK(glEnableVertexAttribArray(loc) );
+			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
+			GL_CHECK(glVertexAttribDivisor(loc, 1) );
+			baseVertex += 16;
+		}
 	}
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
@@ -1899,8 +1918,10 @@ namespace bgfx
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 
-		uint32_t statsNumPrims = 0;
+		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;
+		uint32_t statsNumInstances = 0;
+		uint32_t statsNumPrimsRendered = 0;
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -2336,49 +2357,69 @@ namespace bgfx
 							baseVertex = state.m_startVertex;
 							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
 							uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-							s_renderCtx.m_materials[materialIdx].bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+							const Material& material = s_renderCtx.m_materials[materialIdx];
+							material.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+							
+							if (invalidHandle != state.m_instanceDataBuffer.idx)
+							{
+								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
+								material.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
+							}
 						}
 
 						uint32_t numIndices = 0;
-						uint32_t numPrims = 0;
+						uint32_t numPrimsSubmitted = 0;
+						uint32_t numInstances = 0;
+						uint32_t numPrimsRendered = 0;
 
 						if (bgfx::invalidHandle != state.m_indexBuffer.idx)
 						{
 							if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
 							{
 								numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-								numPrims = numIndices/primNumVerts;
+								numPrimsSubmitted = numIndices/primNumVerts;
+								numInstances = state.m_numInstances;
+								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-								GL_CHECK(glDrawElements(primType
+								GL_CHECK(glDrawElementsInstanced(primType
 									, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
 									, GL_UNSIGNED_SHORT
 									, (void*)0
+									, state.m_numInstances
 									) );
 							}
 							else if (primNumVerts <= state.m_numIndices)
 							{
 								numIndices = state.m_numIndices;
-								numPrims = numIndices/primNumVerts;
+								numPrimsSubmitted = numIndices/primNumVerts;
+								numInstances = state.m_numInstances;
+								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-								GL_CHECK(glDrawElements(primType
+								GL_CHECK(glDrawElementsInstanced(primType
 									, numIndices
 									, GL_UNSIGNED_SHORT
 									, (void*)(uintptr_t)(state.m_startIndex*2)
+									, state.m_numInstances
 									) );
 							}
 						}
 						else
 						{
-							numPrims = state.m_numVertices/primNumVerts;
+							numPrimsSubmitted = state.m_numVertices/primNumVerts;
+							numInstances = state.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							GL_CHECK(glDrawArrays(primType
+							GL_CHECK(glDrawArraysInstanced(primType
 								, 0
 								, state.m_numVertices
+								, state.m_numInstances
 								) );
 						}
 
-						statsNumPrims += numPrims;
+						statsNumPrimsSubmitted += numPrimsSubmitted;
 						statsNumIndices += numIndices;
+						statsNumInstances += numInstances;
+						statsNumPrimsRendered += numPrimsRendered;
 					}
 				}
 			}
@@ -2420,7 +2461,11 @@ namespace bgfx
 					, elapsedCpuMs > elapsedGpuMs ? '>' : '<'
 					, elapsedGpuMs
 					);
-				tvm.printf(10, pos++, 0x8e, "      Prims: %7d", statsNumPrims);
+				tvm.printf(10, pos++, 0x8e, "      Prims: %7d (#inst: %5d), submitted: %7d"
+					, statsNumPrimsRendered
+					, statsNumInstances
+					, statsNumPrimsSubmitted
+					);
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);

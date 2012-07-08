@@ -117,6 +117,10 @@ GL_IMPORT(true,  PFNGLGETQUERYOBJECTI64VEXTPROC,          glGetQueryObjecti64vEX
 GL_IMPORT(true,  PFNGLGETQUERYOBJECTUI64VEXTPROC,         glGetQueryObjectui64vEXT);
 													
 GL_IMPORT(true,  PFNGLSAMPLECOVERAGEARBPROC,              glSampleCoverageARB);
+
+GL_IMPORT(true,  PFNGLDRAWARRAYSINSTANCEDARBPROC,         glDrawArraysInstanced);
+GL_IMPORT(true,  PFNGLDRAWELEMENTSINSTANCEDARBPROC,       glDrawElementsInstanced);
+GL_IMPORT(true,  PFNGLVERTEXATTRIBDIVISORARBPROC,         glVertexAttribDivisor);
 													
 #if BGFX_CONFIG_DEBUG_GREMEDY						
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY);

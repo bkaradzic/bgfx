@@ -132,16 +132,27 @@ namespace bgfx
 		{ D3DFMT_A16B16G16R16, 8 },
 	};
 
+	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =
+	{
+		{ D3DFMT_ATI1, 0,                     D3DRTYPE_TEXTURE, false },
+		{ D3DFMT_ATI2, 0,                     D3DRTYPE_TEXTURE, false },
+		{ D3DFMT_DF16, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, false },
+		{ D3DFMT_DF24, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, false },
+		{ D3DFMT_INST, 0,                     D3DRTYPE_SURFACE, false },
+		{ D3DFMT_INTZ, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, false },
+		{ D3DFMT_NULL, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, false },
+		{ D3DFMT_RESZ, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, false },
+		{ D3DFMT_RAWZ, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, false },
+	};
+
 	struct RendererContext
 	{
 		RendererContext()
 			: m_flags(BGFX_RESET_NONE)
 			, m_initialized(false)
-			, m_fmtNULL(false)
-			, m_fmtDF16(false)
-			, m_fmtDF24(false)
-			, m_fmtINTZ(false)
-			, m_fmtRAWZ(false)
+			, m_amd(false)
+			, m_nvidia(false)
+			, m_instancing(false)
 			, m_rtMsaa(false)
 		{
 			m_rt.idx = invalidHandle;
@@ -222,6 +233,11 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG_PERFHUD
 			}
 
+			D3DADAPTER_IDENTIFIER9 identifier;
+			DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &identifier) );
+			m_amd = identifier.VendorId == 0x1002;
+			m_nvidia = identifier.VendorId == 0x10de;
+
 			uint32_t behaviorFlags[] =
 			{
 				D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_PUREDEVICE,
@@ -277,11 +293,24 @@ namespace bgfx
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
-			m_fmtNULL = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_NULL) );
-			m_fmtDF16 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_DF16) );
-			m_fmtDF24 = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_DF24) );
-			m_fmtINTZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_INTZ) );
-			m_fmtRAWZ = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_RAWZ) );
+			BX_TRACE("Extended formats:");
+			for (uint32_t ii = 0; ii < ExtendedFormat::Count; ++ii)
+			{
+				ExtendedFormat& fmt = s_extendedFormats[ii];
+				fmt.m_supported = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, fmt.m_usage, fmt.m_type, fmt.m_fmt) );
+				const char* fourcc = (const char*)&fmt.m_fmt;
+				BX_TRACE("\t%2d: %c%c%c%c %s", ii, fourcc[0], fourcc[1], fourcc[2], fourcc[3], fmt.m_supported ? "supported" : "");
+			}
+
+			m_instancing = false
+				|| s_extendedFormats[ExtendedFormat::Inst].m_supported
+				|| (m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) )
+				;
+
+			if (m_instancing)
+			{
+				m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
+			}
 
 			uint32_t index = 1;
 			for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)
@@ -674,6 +703,7 @@ namespace bgfx
 
 		IDirect3DSurface9* m_backBufferColor;
 		IDirect3DSurface9* m_backBufferDepthStencil;
+		IDirect3DVertexDeclaration9* m_instanceDataDecls[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		HMODULE m_d3d9dll;
 		uint32_t m_adapter;
@@ -682,11 +712,9 @@ namespace bgfx
 		uint32_t m_flags;
 
 		bool m_initialized;
-		bool m_fmtNULL;
-		bool m_fmtDF16;
-		bool m_fmtDF24;
-		bool m_fmtINTZ;
-		bool m_fmtRAWZ;
+		bool m_amd;
+		bool m_nvidia;
+		bool m_instancing;
 
 		D3DFORMAT m_fmtDepth;
 
@@ -811,30 +839,26 @@ namespace bgfx
 
 	static const D3DVERTEXELEMENT9 s_attrib[Attrib::Count+1] =
 	{
-		{0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0},
-		{0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,       0},
-		{0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        0},
-		{0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        1},
-		{0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0},
-		{0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT,  0},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     0},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     1},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     2},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     3},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     4},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     5},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     6},
-		{0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     7},
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,       0 },
+		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        0 },
+		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        1 },
+		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT,  0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     1 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     2 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     3 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     4 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     5 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     6 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     7 },
 		D3DDECL_END()
 	};
 
-	void VertexDeclaration::create(const VertexDecl& _decl)
+	static D3DVERTEXELEMENT9* fillVertexDecl(D3DVERTEXELEMENT9* _out, uint32_t _count, const VertexDecl& _decl)
 	{
-		memcpy(&m_decl, &_decl, sizeof(VertexDecl) );
-		dump(m_decl);
-
-		D3DVERTEXELEMENT9 vertexElements[Attrib::Count+1];
-		D3DVERTEXELEMENT9* elem = vertexElements;
+		D3DVERTEXELEMENT9* elem = _out;
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
@@ -903,7 +927,7 @@ namespace bgfx
 					case 2:
 						declType = D3DDECLTYPE_FLOAT2;
 						break;
-						
+
 					default:
 					case 3:
 						declType = D3DDECLTYPE_FLOAT3;
@@ -925,19 +949,46 @@ namespace bgfx
 				elem->Offset = _decl.m_offset[attr];
 				++elem;
 
-				BX_TRACE("\tattr %d, num %d, type %d, norm %d, offset %d"
-					, attr
-					, num
-					, type
-					, normalized
-					, _decl.m_offset[attr]
-				);
+// 				BX_TRACE("\tattr %d, num %d, type %d, norm %d, offset %d"
+// 					, attr
+// 					, num
+// 					, type
+// 					, normalized
+// 					, _decl.m_offset[attr]
+// 				);
 			}
+		}
+
+		return elem;
+	}
+
+	static IDirect3DVertexDeclaration9* createVertexDecl(const VertexDecl& _decl, uint8_t _numInstanceData)
+	{
+		D3DVERTEXELEMENT9 vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
+		D3DVERTEXELEMENT9* elem = fillVertexDecl(vertexElements, Attrib::Count, _decl);
+
+		const D3DVERTEXELEMENT9 inst = { 1, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 };
+
+		for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
+		{
+			memcpy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
+			elem->UsageIndex = 8-_numInstanceData+ii;
+			elem->Offset = ii*16;
+			++elem;
 		}
 
 		memcpy(elem, &s_attrib[Attrib::Count], sizeof(D3DVERTEXELEMENT9) );
 
-		DX_CHECK(s_renderCtx.m_device->CreateVertexDeclaration(vertexElements, &m_ptr) );
+		IDirect3DVertexDeclaration9* ptr;
+		DX_CHECK(s_renderCtx.m_device->CreateVertexDeclaration(vertexElements, &ptr) );
+		return ptr;
+	}
+
+	void VertexDeclaration::create(const VertexDecl& _decl)
+	{
+		memcpy(&m_decl, &_decl, sizeof(VertexDecl) );
+		dump(m_decl);
+		m_ptr = createVertexDecl(_decl, 0);
 	}
 
 	void Shader::create(bool _fragment, const Memory* _mem)
@@ -1816,8 +1867,10 @@ namespace bgfx
 		D3DPRIMITIVETYPE primType = D3DPT_TRIANGLELIST;
 		uint32_t primNumVerts = 3;
 
-		uint32_t statsNumPrims = 0;
+		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;
+		uint32_t statsNumInstances = 0;
+		uint32_t statsNumPrimsRendered = 0;
 
 		int64_t elapsed = -bx::getHPCounter();
 
@@ -2182,16 +2235,34 @@ namespace bgfx
 					uint16_t handle = state.m_vertexBuffer.idx;
 					if (bgfx::invalidHandle != handle)
 					{
-						VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
+						const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
 
 						uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-						VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
+						const VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
 						DX_CHECK(s_renderCtx.m_device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
-						DX_CHECK(s_renderCtx.m_device->SetVertexDeclaration(vertexDecl.m_ptr) );
+
+						if (invalidHandle != state.m_instanceDataBuffer.idx)
+						{
+							const VertexBuffer& inst = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
+							DX_CHECK(s_renderCtx.m_device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|state.m_numInstances) );
+							DX_CHECK(s_renderCtx.m_device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA|1) );
+							DX_CHECK(s_renderCtx.m_device->SetStreamSource(1, inst.m_ptr, state.m_instanceDataOffset, state.m_instanceDataStride) );
+
+							IDirect3DVertexDeclaration9* ptr = createVertexDecl(vertexDecl.m_decl, state.m_instanceDataStride/16);
+							DX_CHECK(s_renderCtx.m_device->SetVertexDeclaration(ptr) );
+							DX_RELEASE(ptr, 0);
+						}
+						else
+						{
+							DX_CHECK(s_renderCtx.m_device->SetStreamSourceFreq(0, 1) );
+							DX_CHECK(s_renderCtx.m_device->SetStreamSource(1, NULL, 0, 0) );
+							DX_CHECK(s_renderCtx.m_device->SetVertexDeclaration(vertexDecl.m_ptr) );
+						}
 					}
 					else
 					{
 						DX_CHECK(s_renderCtx.m_device->SetStreamSource(0, NULL, 0, 0) );
+						DX_CHECK(s_renderCtx.m_device->SetStreamSource(1, NULL, 0, 0) );
 					}
 				}
 
@@ -2223,48 +2294,58 @@ namespace bgfx
 					}
 
 					uint32_t numIndices = 0;
-					uint32_t numPrims = 0;
+					uint32_t numPrimsSubmitted = 0;
+					uint32_t numInstances = 0;
+					uint32_t numPrimsRendered = 0;
 
 					if (bgfx::invalidHandle != state.m_indexBuffer.idx)
 					{
 						if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
 						{
 							numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-							numPrims = numIndices/primNumVerts;
+							numPrimsSubmitted = numIndices/primNumVerts;
+							numInstances = state.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
 							DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
 								, state.m_startVertex
 								, 0
 								, numVertices
 								, 0
-								, numPrims
+								, numPrimsSubmitted
 								) );
 						}
 						else if (primNumVerts <= state.m_numIndices)
 						{
 							numIndices = state.m_numIndices;
-							numPrims = numIndices/primNumVerts;
+							numPrimsSubmitted = numIndices/primNumVerts;
+							numInstances = state.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
 							DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
 								, state.m_startVertex
 								, 0
 								, numVertices
 								, state.m_startIndex
-								, numPrims
+								, numPrimsSubmitted
 								) );
 						}
 					}
 					else
 					{
-						numPrims = numVertices/primNumVerts;
+						numPrimsSubmitted = numVertices/primNumVerts;
+						numInstances = state.m_numInstances;
+						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 						DX_CHECK(s_renderCtx.m_device->DrawPrimitive(primType
 							, state.m_startVertex
-							, numPrims
+							, numPrimsSubmitted
 							) );
 					}
 
-					statsNumPrims += numPrims;
+					statsNumPrimsSubmitted += numPrimsSubmitted;
 					statsNumIndices += numIndices;
+					statsNumInstances += numInstances;
+					statsNumPrimsRendered += numPrimsRendered;
 				}
 			}
 
@@ -2300,7 +2381,11 @@ namespace bgfx
 					, m_render->m_num
 					, elapsedCpuMs
 					);
-				tvm.printf(10, pos++, 0x8e, "      Prims: %7d", statsNumPrims);
+				tvm.printf(10, pos++, 0x8e, "      Prims: %7d (#inst: %5d), submitted: %7d"
+					, statsNumPrimsRendered
+					, statsNumInstances
+					, statsNumPrimsSubmitted
+					);
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);

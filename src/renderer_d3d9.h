@@ -14,26 +14,6 @@
 #	endif // !BGFX_CONFIG_RENDERER_DIRECT3D_EX
 #	include <d3d9.h>
 
-#	ifndef D3DFMT_NULL
-#		define D3DFMT_NULL ( (D3DFORMAT)MAKEFOURCC('N','U','L','L') )
-#	endif // D3DFMT_NULL
-
-#	ifndef D3DFMT_DF16
-#		define D3DFMT_DF16 ( (D3DFORMAT)MAKEFOURCC('D','F','1','6') )
-#	endif // D3DFMT_DF16
-
-#	ifndef D3DFMT_DF24
-#		define D3DFMT_DF24 ( (D3DFORMAT)MAKEFOURCC('D','F','2','4') )
-#	endif // D3DFMT_DF24
-
-#	ifndef D3DFMT_INTZ
-#		define D3DFMT_INTZ ( (D3DFORMAT)MAKEFOURCC('I','N','T','Z') )
-#	endif // D3DFMT_INTZ
-
-#	ifndef D3DFMT_RAWZ
-#		define D3DFMT_RAWZ ( (D3DFORMAT)MAKEFOURCC('R','A','W','Z') )
-#	endif // D3DFMT_RAWZ
-
 #	if BGFX_CONFIG_RENDERER_DIRECT3D_EX
 typedef HRESULT (WINAPI *Direct3DCreate9ExFunc)(UINT SDKVersion, IDirect3D9Ex**);
 #	else
@@ -112,6 +92,69 @@ namespace bgfx
 						} \
 					} while (0)
 #endif // BGFX_CONFIG_DEBUG
+
+#	ifndef D3DFMT_ATI1
+#		define D3DFMT_ATI1 ( (D3DFORMAT)MAKEFOURCC('A','T','I','1') )
+#	endif // D3DFMT_ATI1
+
+#	ifndef D3DFMT_ATI2
+#		define D3DFMT_ATI2 ( (D3DFORMAT)MAKEFOURCC('A','T','I','2') )
+#	endif // D3DFMT_ATI2
+
+#	ifndef D3DFMT_ATOC
+#		define D3DFMT_ATOC ( (D3DFORMAT)MAKEFOURCC('A','T','O','C') )
+#	endif // D3DFMT_ATOC
+
+#	ifndef D3DFMT_DF16
+#		define D3DFMT_DF16 ( (D3DFORMAT)MAKEFOURCC('D','F','1','6') )
+#	endif // D3DFMT_DF16
+
+#	ifndef D3DFMT_DF24
+#		define D3DFMT_DF24 ( (D3DFORMAT)MAKEFOURCC('D','F','2','4') )
+#	endif // D3DFMT_DF24
+
+#	ifndef D3DFMT_INST
+#		define D3DFMT_INST ( (D3DFORMAT)MAKEFOURCC('I','N','S','T') )
+#	endif // D3DFMT_INST
+
+#	ifndef D3DFMT_INTZ
+#		define D3DFMT_INTZ ( (D3DFORMAT)MAKEFOURCC('I','N','T','Z') )
+#	endif // D3DFMT_INTZ
+
+#	ifndef D3DFMT_NULL
+#		define D3DFMT_NULL ( (D3DFORMAT)MAKEFOURCC('N','U','L','L') )
+#	endif // D3DFMT_NULL
+
+#	ifndef D3DFMT_RESZ
+#		define D3DFMT_RESZ ( (D3DFORMAT)MAKEFOURCC('R','E','S','Z') )
+#	endif // D3DFMT_RESZ
+
+#	ifndef D3DFMT_RAWZ
+#		define D3DFMT_RAWZ ( (D3DFORMAT)MAKEFOURCC('R','A','W','Z') )
+#	endif // D3DFMT_RAWZ
+
+	struct ExtendedFormat
+	{
+		enum Enum
+		{
+			Ati1,
+			Ati2,
+			Df16,
+			Df24,
+			Inst,
+			Intz,
+			Null,
+			Resz,
+			Rawz,
+
+			Count,
+		};
+
+		D3DFORMAT m_fmt;
+		DWORD m_usage;
+		D3DRESOURCETYPE m_type;
+		bool m_supported;
+	};
 
 	struct Msaa
 	{

@@ -862,10 +862,14 @@ namespace bgfx
 			m_numIndices = 0;
 			m_startVertex = 0;
 			m_numVertices = UINT32_C(0xffffffff);
+			m_instanceDataOffset = 0;
+			m_instanceDataStride = 0;
+			m_numInstances = 1;
 			m_num = 1;
 			m_vertexBuffer.idx = bgfx::invalidHandle;
 			m_vertexDecl.idx = bgfx::invalidHandle;
 			m_indexBuffer.idx = bgfx::invalidHandle;
+			m_instanceDataBuffer.idx = bgfx::invalidHandle;
 			
 			for (uint32_t ii = 0; ii < BGFX_STATE_TEX_COUNT; ++ii)
 			{
@@ -882,11 +886,15 @@ namespace bgfx
 		uint32_t m_numIndices;
 		uint32_t m_startVertex;
 		uint32_t m_numVertices;
+		uint32_t m_instanceDataOffset;
+		uint16_t m_instanceDataStride;
+		uint16_t m_numInstances;
 		uint16_t m_num;
 
 		VertexBufferHandle m_vertexBuffer;
 		VertexDeclHandle m_vertexDecl;
 		IndexBufferHandle m_indexBuffer;
+		VertexBufferHandle m_instanceDataBuffer;
 		Sampler m_sampler[BGFX_STATE_TEX_COUNT];
 	};
 
@@ -1077,6 +1085,18 @@ namespace bgfx
 			m_state.m_vertexBuffer = _vb->handle;
 			m_state.m_vertexDecl = _vb->decl;
 			g_free(const_cast<TransientVertexBuffer*>(_vb) );
+		}
+
+		void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
+		{
+#if BGFX_CONFIG_RENDERER_OPENGLES
+#else
+ 			m_state.m_instanceDataOffset = _idb->offset;
+			m_state.m_instanceDataStride = _idb->stride;
+			m_state.m_numInstances = _idb->num;
+			m_state.m_instanceDataBuffer = _idb->handle;
+			g_free(const_cast<InstanceDataBuffer*>(_idb) );
+#endif // BGFX_CONFIG_RENDERER_OPENGLES
 		}
 
 		void setMaterial(MaterialHandle _handle)
@@ -1855,6 +1875,27 @@ namespace bgfx
 			vb->decl = declHandle;
 
 			return vb;
+		}
+
+		const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
+		{
+#if BGFX_CONFIG_RENDERER_OPENGLES
+			return NULL;
+#else
+			uint16_t stride = BX_ALIGN_16(_stride);
+			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
+
+			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
+			InstanceDataBuffer* idb = (InstanceDataBuffer*)g_realloc(NULL, sizeof(InstanceDataBuffer) );
+			idb->data = &dvb.data[offset];
+			idb->size = _num * stride;
+			idb->offset = offset;
+			idb->stride = stride;
+			idb->num = _num;
+			idb->handle = dvb.handle;
+
+			return idb;
+#endif // BGFX_CONFIG_RENDERER_OPENGLES
 		}
 
 		VertexShaderHandle createVertexShader(const Memory* _mem)
