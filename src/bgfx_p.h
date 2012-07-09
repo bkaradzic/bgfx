@@ -101,7 +101,6 @@ namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 namespace stl = std;
 #endif // BGFX_CONFIG_USE_TINYSTL
 #include <list>
-#include <algorithm>
 
 #include "config.h"
 
