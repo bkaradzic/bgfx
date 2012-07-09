@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
 #	include "renderer_d3d9.h"
 
 namespace bgfx
@@ -192,7 +192,7 @@ namespace bgfx
 			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
 			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_EndEvent");
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			Direct3DCreate9ExFunc direct3DCreate9Ex = (Direct3DCreate9ExFunc)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
 			BGFX_FATAL(NULL != direct3DCreate9Ex, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9Ex not found.");
 			direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9);
@@ -247,7 +247,7 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < countof(behaviorFlags) && NULL == m_device; ++ii)
 			{
-#if BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
 						, m_deviceType
 						, g_bgfxHwnd
@@ -264,7 +264,7 @@ namespace bgfx
 					, &m_params
 					, &m_device
 					) );
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			}
 
 			BGFX_FATAL(m_device, bgfx::Fatal::D3D9_UnableToCreateDevice, "Unable to create Direct3D9 device.");
@@ -560,9 +560,9 @@ namespace bgfx
 		{
 			if (NULL != m_device)
 			{
-#if BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				DX_CHECK(m_device->WaitForVBlank(0) );
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
 				HRESULT hr;
 				hr = m_device->Present(NULL, NULL, NULL, NULL);
@@ -694,13 +694,13 @@ namespace bgfx
 		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
 #endif // BX_PLATFORM_WINDOWS
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 		IDirect3D9Ex* m_d3d9;
 		IDirect3DDevice9Ex* m_device;
 #else
 		IDirect3D9* m_d3d9;
 		IDirect3DDevice9* m_device;
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D_EX
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
 		IDirect3DSurface9* m_backBufferColor;
 		IDirect3DSurface9* m_backBufferDepthStencil;
@@ -2377,6 +2377,7 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 10;
+				tvm.printf(0, 0, 0x8f, " " BGFX_RENDERER_NAME " ");
 				tvm.printf(10, pos++, 0x8e, "      Frame: %3.4f [ms] / %3.2f", frameTime*toMs, freq/frameTime);
 				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms]"
 					, m_render->m_num
@@ -2415,4 +2416,4 @@ namespace bgfx
 	}
 }
 
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9

@@ -56,7 +56,7 @@
 #	define GL_VERSION_4_1
 #	define GL_VERSION_4_2
 #	include <gl/glext.h>
-#elif BGFX_CONFIG_RENDERER_OPENGLES
+#elif BGFX_CONFIG_RENDERER_OPENGLES2
 #	include <GLES2/gl2.h>
 #	include <GLES2/gl2ext.h>
 

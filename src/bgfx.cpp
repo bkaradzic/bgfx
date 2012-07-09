@@ -227,7 +227,7 @@ namespace bgfx
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
 		m_texture = s_ctx.createTexture(mem, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT, NULL, NULL);
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
 		mem = bgfx::alloc(sizeof(vs_debugfont_hlsl)+1);
 		memcpy(mem->data, vs_debugfont_hlsl, mem->size-1);
 #else
@@ -237,7 +237,7 @@ namespace bgfx
 		mem->data[mem->size-1] = '\0';
 		bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
 		mem = bgfx::alloc(sizeof(fs_debugfont_hlsl)+1);
 		memcpy(mem->data, fs_debugfont_hlsl, mem->size-1);
 #else
@@ -458,11 +458,11 @@ namespace bgfx
 
 	RendererType::Enum getRendererType()
 	{
-#if BGFX_CONFIG_RENDERER_DIRECT3D
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
 		return RendererType::Direct3D9;
 #elif BGFX_CONFIG_RENDERER_OPENGL
 		return RendererType::OpenGL;
-#elif BGFX_CONFIG_RENDERER_OPENGLES
+#elif BGFX_CONFIG_RENDERER_OPENGLES2
 		return RendererType::OpenGLES;
 #else
 		return RendererType::Null;

@@ -132,6 +132,14 @@ namespace stl = std;
 #define BGFX_SAMPLER_RENDERTARGET_DEPTH UINT16_C(0x0002)
 #define BGFX_SAMPLER_TYPE_MASK          UINT16_C(0x0003)
 
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
+#	define BGFX_RENDERER_NAME "Direct3D 9"
+#elif BGFX_CONFIG_RENDERER_OPENGL
+#	define BGFX_RENDERER_NAME "OpenGL"
+#elif BGFX_CONFIG_RENDERER_OPENGLES2
+#	define BGFX_RENDERER_NAME "OpenGL ES 2"
+#endif // BGFX_CONFIG_RENDERER_
+
 namespace bgfx
 {
 	extern const uint32_t g_constantTypeSize[ConstantType::Count];
@@ -1088,7 +1096,7 @@ namespace bgfx
 
 		void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGLES
+#if BGFX_CONFIG_RENDERER_OPENGLES2
 #else
  			m_state.m_instanceDataOffset = _idb->offset;
 			m_state.m_instanceDataStride = _idb->stride;
@@ -1878,7 +1886,7 @@ namespace bgfx
 
 		const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGLES
+#if BGFX_CONFIG_RENDERER_OPENGLES2
 			return NULL;
 #else
 			uint16_t stride = BX_ALIGN_16(_stride);

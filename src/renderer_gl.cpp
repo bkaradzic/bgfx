@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 
-#if (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
+#if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
@@ -2487,6 +2487,7 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 10;
+				tvm.printf(0, 0, 0x8f, " " BGFX_RENDERER_NAME " ");
 				tvm.printf(10, pos++, 0x8e, "  Frame CPU: %3.4f [ms] / %3.2f", double(frameTime)*toMs, freq/frameTime);
 				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms] %c GPU %3.4f [ms]"
 					, m_render->m_num
