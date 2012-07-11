@@ -1,0 +1,7 @@
+0:1(10): preprocessor error: Macro names starting with "__" are reserved.
+
+0:2(9): preprocessor error: Macro names starting with "GL_" are reserved.
+
+
+
+
