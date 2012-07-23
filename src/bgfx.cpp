@@ -63,10 +63,10 @@ namespace bgfx
 		_length = 0;
 	}
 
-	fatalFn g_fatal = fatalStub;
-	reallocFn g_realloc = reallocStub;
-	freeFn g_free = freeStub;
-	cacheFn g_cache = cacheStub;
+	FatalFn g_fatal = fatalStub;
+	ReallocFn g_realloc = reallocStub;
+	FreeFn g_free = freeStub;
+	CacheFn g_cache = cacheStub;
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context s_ctx;
@@ -199,8 +199,8 @@ namespace bgfx
 	{
 		m_decl.begin();
 		m_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		m_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8);
-		m_decl.add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8);
+		m_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		m_decl.add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8, true);
 		m_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
 		m_decl.end();
 
@@ -228,8 +228,11 @@ namespace bgfx
 		m_texture = s_ctx.createTexture(mem, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT, NULL, NULL);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = bgfx::alloc(sizeof(vs_debugfont_hlsl)+1);
-		memcpy(mem->data, vs_debugfont_hlsl, mem->size-1);
+		mem = bgfx::alloc(sizeof(vs_debugfont_dx9)+1);
+		memcpy(mem->data, vs_debugfont_dx9, mem->size-1);
+#elif BGFX_CONFIG_RENDERER_DIRECT3D11
+		mem = bgfx::alloc(sizeof(vs_debugfont_dx11)+1);
+		memcpy(mem->data, vs_debugfont_dx11, mem->size-1);
 #else
 		mem = bgfx::alloc(sizeof(vs_debugfont_glsl)+1);
 		memcpy(mem->data, vs_debugfont_glsl, mem->size-1);
@@ -238,8 +241,11 @@ namespace bgfx
 		bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = bgfx::alloc(sizeof(fs_debugfont_hlsl)+1);
-		memcpy(mem->data, fs_debugfont_hlsl, mem->size-1);
+		mem = bgfx::alloc(sizeof(fs_debugfont_dx9)+1);
+		memcpy(mem->data, fs_debugfont_dx9, mem->size-1);
+#elif BGFX_CONFIG_RENDERER_DIRECT3D11
+		mem = bgfx::alloc(sizeof(fs_debugfont_dx11)+1);
+		memcpy(mem->data, fs_debugfont_dx11, mem->size-1);
 #else
 		mem = bgfx::alloc(sizeof(fs_debugfont_glsl)+1);
 		memcpy(mem->data, fs_debugfont_glsl, mem->size-1);
@@ -372,6 +378,11 @@ namespace bgfx
 		"u_alphaRef",
 	};
 
+	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum)
+	{
+		return s_predefinedName[_enum];
+	}
+
 	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name)
 	{
 		for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
@@ -460,16 +471,18 @@ namespace bgfx
 	{
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 		return RendererType::Direct3D9;
+#elif BGFX_CONFIG_RENDERER_DIRECT3D11
+		return RendererType::Direct3D11;
 #elif BGFX_CONFIG_RENDERER_OPENGL
 		return RendererType::OpenGL;
 #elif BGFX_CONFIG_RENDERER_OPENGLES2
-		return RendererType::OpenGLES;
+		return RendererType::OpenGLES2;
 #else
 		return RendererType::Null;
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
-	void init(bool _createRenderThread, fatalFn _fatal, reallocFn _realloc, freeFn _free, cacheFn _cache)
+	void init(bool _createRenderThread, FatalFn _fatal, ReallocFn _realloc, FreeFn _free, CacheFn _cache)
 	{
 		if (NULL != _fatal)
 		{
@@ -742,9 +755,9 @@ namespace bgfx
 		return mem;
 	}
 
-	void release(Memory* _mem)
+	void release(const Memory* _mem)
 	{
-		g_free(_mem);
+		g_free(const_cast<Memory*>(_mem) );
 	}
 
 	void setDebug(uint32_t _debug)

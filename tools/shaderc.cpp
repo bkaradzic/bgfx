@@ -3,6 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#define NOMINMAX
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -17,7 +18,7 @@ extern "C" {
 #	include <fpp.h>
 } // extern "C"
 
-#if 0
+#if 1
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
 #endif // DEBUG
 
@@ -35,6 +36,7 @@ extern "C" {
 
 #if BX_PLATFORM_WINDOWS
 #	include <d3dx9.h>
+#	include <d3dcompiler.h>
 #endif // BX_PLATFORM_WINDOWS
 
 long int fsize(FILE* _file)
@@ -93,7 +95,7 @@ struct Uniform
 typedef std::vector<Uniform> UniformArray;
 
 #if BX_PLATFORM_WINDOWS
-struct ConstRemap
+struct ConstRemapDx9
 {
 	ConstantType::Enum id;
 	D3DXPARAMETER_CLASS paramClass;
@@ -101,23 +103,23 @@ struct ConstRemap
 	uint32_t paramBytes;
 };
 
-static const ConstRemap s_constRemap[7] =
+static const ConstRemapDx9 s_constRemapDx9[7] =
 {
-	{ ConstantType::Uniform1iv, D3DXPC_SCALAR, D3DXPT_INT, 4 },
-	{ ConstantType::Uniform1fv, D3DXPC_SCALAR, D3DXPT_FLOAT, 4 },
-	{ ConstantType::Uniform2fv, D3DXPC_VECTOR, D3DXPT_FLOAT, 8 },
-	{ ConstantType::Uniform3fv, D3DXPC_VECTOR, D3DXPT_FLOAT, 12 },
-	{ ConstantType::Uniform4fv, D3DXPC_VECTOR, D3DXPT_FLOAT, 16 },
+	{ ConstantType::Uniform1iv,   D3DXPC_SCALAR,         D3DXPT_INT,    4 },
+	{ ConstantType::Uniform1fv,   D3DXPC_SCALAR,         D3DXPT_FLOAT,  4 },
+	{ ConstantType::Uniform2fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT,  8 },
+	{ ConstantType::Uniform3fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 12 },
+	{ ConstantType::Uniform4fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 16 },
 	{ ConstantType::Uniform3x3fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 36 },
 	{ ConstantType::Uniform4x4fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 64 },
 };
 
-ConstantType::Enum findConstantType(const D3DXCONSTANT_DESC& constDesc)
+ConstantType::Enum findConstantTypeDx9(const D3DXCONSTANT_DESC& constDesc)
 {
-	uint32_t count = sizeof(s_constRemap)/sizeof(ConstRemap);
+	uint32_t count = sizeof(s_constRemapDx9)/sizeof(ConstRemapDx9);
 	for (uint32_t ii = 0; ii < count; ++ii)
 	{
-		const ConstRemap& remap = s_constRemap[ii];
+		const ConstRemapDx9& remap = s_constRemapDx9[ii];
 
 		if (remap.paramClass == constDesc.Class
 		&&  remap.paramType == constDesc.Type
@@ -130,31 +132,117 @@ ConstantType::Enum findConstantType(const D3DXCONSTANT_DESC& constDesc)
 	return ConstantType::Count;
 }
 
-static uint32_t s_optimizationLevel[4] =
+static uint32_t s_optimizationLevelDx9[4] =
 {
 	D3DXSHADER_OPTIMIZATION_LEVEL0,
 	D3DXSHADER_OPTIMIZATION_LEVEL1,
 	D3DXSHADER_OPTIMIZATION_LEVEL2,
 	D3DXSHADER_OPTIMIZATION_LEVEL3,
 };
+
+struct ConstRemapDx11
+{
+	ConstantType::Enum id;
+	D3D_SHADER_VARIABLE_CLASS paramClass;
+	D3D_SHADER_VARIABLE_TYPE paramType;
+	uint32_t paramBytes;
+};
+
+static const ConstRemapDx11 s_constRemapDx11[7] =
+{
+	{ ConstantType::Uniform1iv,   D3D_SVC_SCALAR,         D3D_SVT_INT,    4 },
+	{ ConstantType::Uniform1fv,   D3D_SVC_SCALAR,         D3D_SVT_FLOAT,  4 },
+	{ ConstantType::Uniform2fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT,  8 },
+	{ ConstantType::Uniform3fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 12 },
+	{ ConstantType::Uniform4fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 16 },
+	{ ConstantType::Uniform3x3fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 36 },
+	{ ConstantType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 64 },
+};
+
+ConstantType::Enum findConstantTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc, uint32_t _size)
+{
+	uint32_t count = sizeof(s_constRemapDx11)/sizeof(ConstRemapDx9);
+	for (uint32_t ii = 0; ii < count; ++ii)
+	{
+		const ConstRemapDx11& remap = s_constRemapDx11[ii];
+
+		if (remap.paramClass == constDesc.Class
+		&&  remap.paramType == constDesc.Type
+		&&  remap.paramBytes == _size)
+		{
+			return remap.id;
+		}
+	}
+
+	return ConstantType::Count;
+}
+
+static uint32_t s_optimizationLevelDx11[4] =
+{
+	D3DCOMPILE_OPTIMIZATION_LEVEL0,
+	D3DCOMPILE_OPTIMIZATION_LEVEL1,
+	D3DCOMPILE_OPTIMIZATION_LEVEL2,
+	D3DCOMPILE_OPTIMIZATION_LEVEL3,
+};
 #endif // BX_PLATFORM_WINDOWS
 
-class Stream
+class IStreamWriter
 {
 public:
-	Stream(FILE* _file, bool _bigEndian = false)
-		: m_file(_file)
+	virtual ~IStreamWriter() = 0;
+	virtual bool open() = 0;
+	virtual void close() = 0;
+	virtual void writef(const char* _format, ...) = 0;
+	virtual void write(const char* _str) = 0;
+	virtual void write(const void* _data, size_t _size) = 0;
+
+	template<typename Ty>
+	void write(Ty _value)
+	{
+		write(&_value, sizeof(Ty) );
+	}
+
+// 	template<typename Ty>
+// 	void write(Ty _value)
+// 	{
+// 		Ty temp = m_bigEndian ? bx::bigEndian<Ty>(_value) : _value;
+// 		write(&temp, sizeof(Ty) );
+// 	}
+};
+
+IStreamWriter::~IStreamWriter()
+{
+}
+
+class FileWriter : public IStreamWriter
+{
+public:
+	FileWriter(const char* _filePath, bool _bigEndian = false)
+		: m_filePath(_filePath)
+		, m_file(NULL)
 		, m_bigEndian(_bigEndian)
 	{
 	}
 
-	~Stream()
+	~FileWriter()
 	{
+	}
+
+	bool open()
+	{
+		BX_CHECK(NULL == m_file, "Still open!");
+
+		m_file = fopen(m_filePath.c_str(), "wb");
+		return NULL != m_file;
 	}
 
 	void close()
 	{
-		m_file = NULL;
+		if (NULL != m_file)
+		{
+			fclose(m_file);
+			m_file = NULL;
+		}
 	}
 
 	void writef(const char* _format, ...)
@@ -188,16 +276,116 @@ public:
 		}
 	}
 
-	template<typename Ty>
-	void write(Ty _value)
+private:
+	std::string m_filePath;
+	FILE* m_file;
+	bool m_bigEndian;
+};
+
+class Bin2cStream : public IStreamWriter
+{
+public:
+	Bin2cStream(const char* _filePath, const char* _name)
+		: m_filePath(_filePath)
+		, m_name(_name)
+		, m_file(NULL)
 	{
-		Ty temp = m_bigEndian ? bx::bigEndian<Ty>(_value) : _value;
-		write(&temp, sizeof(Ty) );
+	}
+
+	~Bin2cStream()
+	{
+	}
+
+	bool open()
+	{
+		BX_CHECK(NULL == m_file, "Still open!");
+
+		m_file = fopen(m_filePath.c_str(), "wb");
+		return NULL != m_file;
+	}
+
+	void close()
+	{
+		if (NULL != m_file)
+		{
+#define HEX_DUMP_WIDTH 16
+#define HEX_DUMP_SPACE_WIDTH 96
+#define HEX_DUMP_FORMAT "%-" BX_STRINGIZE(HEX_DUMP_SPACE_WIDTH) "." BX_STRINGIZE(HEX_DUMP_SPACE_WIDTH) "s"
+			const uint8_t* data = &m_buffer[0];
+			uint32_t size = m_buffer.size();
+
+			fprintf(m_file, "static const uint8_t %s[%d] =\n{\n", m_name.c_str(), size);
+
+			if (NULL != data)
+			{
+				char hex[HEX_DUMP_SPACE_WIDTH+1];
+				char ascii[HEX_DUMP_WIDTH+1];
+				uint32_t hexPos = 0;
+				uint32_t asciiPos = 0;
+				for (uint32_t ii = 0; ii < size; ++ii)
+				{
+					_snprintf(&hex[hexPos], sizeof(hex)-hexPos, "0x%02x, ", data[asciiPos]);
+					hexPos += 6;
+
+					ascii[asciiPos] = isprint(data[asciiPos]) && data[asciiPos] != '\\' ? data[asciiPos] : '.';
+					asciiPos++;
+
+					if (HEX_DUMP_WIDTH == asciiPos)
+					{
+						ascii[asciiPos] = '\0';
+						fprintf(m_file, "\t" HEX_DUMP_FORMAT "// %s\n", hex, ascii);
+						data += asciiPos;
+						hexPos = 0;
+						asciiPos = 0;
+					}
+				}
+
+				if (0 != asciiPos)
+				{
+					ascii[asciiPos] = '\0';
+					fprintf(m_file, "\t" HEX_DUMP_FORMAT "// %s\n", hex, ascii);
+				}
+			}
+
+			fprintf(m_file, "};\n");
+#undef HEX_DUMP_WIDTH
+#undef HEX_DUMP_SPACE_WIDTH
+#undef HEX_DUMP_FORMAT
+
+			fclose(m_file);
+			m_file = NULL;
+		}
+	}
+
+	void writef(const char* _format, ...)
+	{
+		va_list argList;
+		va_start(argList, _format);
+
+		char temp[2048];
+		int len = vsnprintf(temp, sizeof(temp), _format, argList);
+		m_buffer.insert(m_buffer.end(), temp, temp+len);
+
+		va_end(argList);
+	}
+
+	void write(const char* _str)
+	{
+		m_buffer.insert(m_buffer.end(), _str, _str+strlen(_str) );
+	}
+
+	void write(const void* _data, size_t _size)
+	{
+		const char* data = (const char*)_data;
+		m_buffer.insert(m_buffer.end(), data, data+_size);
 	}
 
 private:
+	std::string m_filePath;
+	std::string m_name;
+	typedef std::vector<uint8_t> Buffer;
+	Buffer m_buffer;
 	FILE* m_file;
-	bool m_bigEndian;
 };
 
 class LineReader
@@ -266,7 +454,7 @@ void printCode(const char* _code)
 	fprintf(stderr, "---\n");
 }
 
-bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const char* _outFilePath)
+bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, IStreamWriter& _stream)
 {
 	const glslopt_shader_type type = tolower(_cmdLine.findOption('\0', "type")[0]) == 'f' ? kGlslOptShaderFragment : kGlslOptShaderVertex;
 
@@ -284,40 +472,28 @@ bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 
 	const char* optimizedShader = glslopt_get_output(shader);
 
-	FILE* out = fopen(_outFilePath, "wb");
-	if (NULL == out)
-	{
-		fprintf(stderr, "Unable to open output file '%s'.", _outFilePath);
-		glslopt_cleanup(ctx);
-		return false;
-	}
-
-	Stream stream(out);
-
 	const char* profile = _cmdLine.findOption('p');
 	if (NULL == profile)
 	{
-		stream.write("#ifdef GL_ES\n");
-		stream.write("precision highp float;\n");
-		stream.write("#endif // GL_ES\n\n");
+		_stream.write("#ifdef GL_ES\n");
+		_stream.write("precision highp float;\n");
+		_stream.write("#endif // GL_ES\n\n");
 	}
 	else
 	{
-		stream.writef("#version %s\n\n", profile);
+		_stream.writef("#version %s\n\n", profile);
 	}
 
-	stream.write(optimizedShader, strlen(optimizedShader) );
+	_stream.write(optimizedShader, strlen(optimizedShader) );
 	uint8_t nul = 0;
-	stream.write(nul);
-	stream.close();
-	fclose(out);
+	_stream.write(nul);
 
 	glslopt_cleanup(ctx);
 
 	return true;
 }
 
-bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const char* _outFilePath)
+bool compileHLSLShaderDx9(CommandLine& _cmdLine, const std::string& _code, IStreamWriter& _stream)
 {
 #if BX_PLATFORM_WINDOWS
 	const char* profile = _cmdLine.findOption('p');
@@ -342,8 +518,8 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 	uint32_t optimization = 3;
 	if (_cmdLine.hasArg(optimization, 'O') )
 	{
-		optimization = bx::uint32_min(optimization, countof(s_optimizationLevel)-1);
-		flags |= s_optimizationLevel[optimization];
+		optimization = bx::uint32_min(optimization, countof(s_optimizationLevelDx9)-1);
+		flags |= s_optimizationLevelDx9[optimization];
 	}
 	else
 	{
@@ -411,7 +587,7 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 			, constDesc.RegisterCount
 			);
 
-		ConstantType::Enum type = findConstantType(constDesc);
+		ConstantType::Enum type = findConstantTypeDx9(constDesc);
 		if (ConstantType::Count != type)
 		{
 			Uniform un;
@@ -424,29 +600,20 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 		}
 	}
 
-	FILE* out = fopen(_outFilePath, "wb");
-	if (NULL == out)
-	{
-		fprintf(stderr, "Unable to open output file '%s'.", _outFilePath);
-		return false;
-	}
-
-	Stream stream(out, bigEndian);
-
 	uint16_t count = (uint16_t)uniforms.size();
-	stream.write(count);
+	_stream.write(count);
 
 	uint32_t fragmentBit = profile[0] == 'p' ? ConstantType::FragmentBit : 0;
 	for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 	{
 		const Uniform& un = *it;
 		uint8_t nameSize = (uint8_t)un.name.size();
-		stream.write(nameSize);
-		stream.write(un.name.c_str(), nameSize);
-		stream.write<uint8_t>(un.type|fragmentBit);
-		stream.write(un.num);
-		stream.write(un.regIndex);
-		stream.write(un.regCount);
+		_stream.write(nameSize);
+		_stream.write(un.name.c_str(), nameSize);
+		_stream.write<uint8_t>(un.type|fragmentBit);
+		_stream.write(un.num);
+		_stream.write(un.regIndex);
+		_stream.write(un.regCount);
 
 		BX_TRACE("%s, %s, %d, %d, %d"
 			, un.name.c_str()
@@ -458,12 +625,10 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 	}
 
 	uint16_t shaderSize = (uint16_t)code->GetBufferSize();
-	stream.write(shaderSize);
-	stream.write(code->GetBufferPointer(), shaderSize);
+	_stream.write(shaderSize);
+	_stream.write(code->GetBufferPointer(), shaderSize);
 	uint8_t nul = 0;
-	stream.write(nul);
-	stream.close();
-	fclose(out);
+	_stream.write(nul);
 
 	if (NULL != code)
 	{
@@ -478,6 +643,231 @@ bool compileHLSLShader(CommandLine& _cmdLine, const std::string& _code, const ch
 	if (NULL != constantTable)
 	{
 		constantTable->Release();
+	}
+
+	return true;
+#else
+	fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
+	return false;
+#endif // BX_PLATFORM_WINDOWS
+}
+
+bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStreamWriter& _stream)
+{
+#if BX_PLATFORM_WINDOWS
+	const char* profile = _cmdLine.findOption('p');
+	if (NULL == profile)
+	{
+		printf("Shader profile must be specified.\n");
+		return false;
+	}
+
+	bool bigEndian = _cmdLine.hasArg('\0', "xbox360");
+
+	uint32_t flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
+	flags |= _cmdLine.hasArg('\0', "debug") ? D3DCOMPILE_DEBUG : 0;
+	flags |= _cmdLine.hasArg('\0', "avoid-flow-control") ? D3DCOMPILE_AVOID_FLOW_CONTROL : 0;
+	flags |= _cmdLine.hasArg('\0', "no-preshader") ? D3DCOMPILE_NO_PRESHADER : 0;
+	flags |= _cmdLine.hasArg('\0', "partial-precision") ? D3DCOMPILE_PARTIAL_PRECISION : 0;
+	flags |= _cmdLine.hasArg('\0', "prefer-flow-control") ? D3DCOMPILE_PREFER_FLOW_CONTROL : 0;
+	flags |= _cmdLine.hasArg('\0', "backwards-compatibility") ? D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY : 0;
+
+	bool werror = _cmdLine.hasArg('\0', "Werror");
+
+	if (werror)
+	{
+		flags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+	}
+
+	uint32_t optimization = 3;
+	if (_cmdLine.hasArg(optimization, 'O') )
+	{
+		optimization = bx::uint32_min(optimization, countof(s_optimizationLevelDx11)-1);
+		flags |= s_optimizationLevelDx11[optimization];
+	}
+	else
+	{
+		flags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+	}
+
+	BX_TRACE("Profile: %s", profile);
+	BX_TRACE("Flags: 0x%08x", flags);
+	BX_TRACE("Big Endian: %s", bigEndian?"true":"false");
+
+	ID3DBlob* code;
+	ID3DBlob* errorMsg;
+
+	HRESULT hr = D3DCompile(_code.c_str()
+		, _code.size()
+		, NULL
+		, NULL
+		, NULL
+		, "main"
+		, profile
+		, flags
+		, 0
+		, &code
+		, &errorMsg
+		);
+	if (FAILED(hr)
+	||  werror && NULL != errorMsg)
+	{
+		printCode(_code.c_str() );
+		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x %s\n", hr, errorMsg->GetBufferPointer() );
+		return false;
+	}
+
+	UniformArray uniforms;
+
+	ID3D11ShaderReflection* reflect = NULL;
+	hr = D3DReflect(code->GetBufferPointer()
+		, code->GetBufferSize()
+		, IID_ID3D11ShaderReflection
+		, (void**)&reflect
+		);
+	if (FAILED(hr) )
+	{
+		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x\n", hr);
+		return false;
+	}
+
+	D3D11_SHADER_DESC desc;
+	hr = reflect->GetDesc(&desc);
+	if (FAILED(hr) )
+	{
+		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x\n", hr);
+		return false;
+	}
+
+	BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
+	BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
+	BX_TRACE("#   cl ty RxC   S  By Name");
+
+// 	bx::HashMurmur2A hash;
+// 	hash.begin();
+
+	BX_TRACE("Input:");
+	for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
+	{
+		D3D11_SIGNATURE_PARAMETER_DESC spd;
+		reflect->GetInputParameterDesc(ii, &spd);
+		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
+//		hash.add(inputSignature->GetBufferPointer(), inputSignature->GetBufferSize() );
+	}
+
+	BX_TRACE("Output:");
+	for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
+	{
+		D3D11_SIGNATURE_PARAMETER_DESC spd;
+		reflect->GetOutputParameterDesc(ii, &spd);
+		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
+//		hash.add(inputSignature->GetBufferPointer(), inputSignature->GetBufferSize() );
+	}
+//	uint32_t inputSignatureHash = hash.end();
+
+	uint16_t size = 0;
+
+	for (uint32_t ii = 0; ii < bx::uint32_min(1, desc.ConstantBuffers); ++ii)
+	{
+		ID3D11ShaderReflectionConstantBuffer* cbuffer = reflect->GetConstantBufferByIndex(ii);
+		D3D11_SHADER_BUFFER_DESC bufferDesc;
+		hr = cbuffer->GetDesc(&bufferDesc);
+
+		size = (uint16_t)bufferDesc.Size;
+
+		if (SUCCEEDED(hr) )
+		{
+			BX_TRACE("%s, %d, vars %d, size %d"
+				, bufferDesc.Name
+				, bufferDesc.Type
+				, bufferDesc.Variables
+				, bufferDesc.Size
+				);
+
+			for (uint32_t jj = 0; jj < bufferDesc.Variables; ++jj)
+			{
+				ID3D11ShaderReflectionVariable* var = cbuffer->GetVariableByIndex(jj);
+				ID3D11ShaderReflectionType* type = var->GetType();
+				D3D11_SHADER_VARIABLE_DESC varDesc;
+				hr = var->GetDesc(&varDesc);
+				if (SUCCEEDED(hr) )
+				{
+					D3D11_SHADER_TYPE_DESC constDesc;
+					hr = type->GetDesc(&constDesc);
+					if (SUCCEEDED(hr) )
+					{
+						ConstantType::Enum type = findConstantTypeDx11(constDesc, varDesc.Size);
+
+						if (ConstantType::Count != type
+						&&  0 != (varDesc.uFlags & D3D10_SVF_USED) )
+						{
+							Uniform un;
+							un.name = varDesc.Name;
+							un.type = type;
+							un.num = constDesc.Elements;
+							un.regIndex = varDesc.StartOffset;
+							un.regCount = varDesc.Size;
+							uniforms.push_back(un);
+
+							BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d"
+								, varDesc.Name
+								, varDesc.StartOffset
+								, varDesc.Size
+								, varDesc.uFlags
+								, type
+								);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	uint16_t count = (uint16_t)uniforms.size();
+	_stream.write(count);
+
+	_stream.write(size);
+
+	uint32_t fragmentBit = profile[0] == 'p' ? ConstantType::FragmentBit : 0;
+	for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
+	{
+		const Uniform& un = *it;
+		uint8_t nameSize = (uint8_t)un.name.size();
+		_stream.write(nameSize);
+		_stream.write(un.name.c_str(), nameSize);
+		_stream.write<uint8_t>(un.type|fragmentBit);
+		_stream.write(un.num);
+		_stream.write(un.regIndex);
+		_stream.write(un.regCount);
+
+		BX_TRACE("%s, %s, %d, %d, %d"
+			, un.name.c_str()
+			, s_constantTypeName[un.type]
+		, un.num
+			, un.regIndex
+			, un.regCount
+			);
+	}
+
+	uint16_t shaderSize = (uint16_t)code->GetBufferSize();
+	_stream.write(shaderSize);
+	_stream.write(code->GetBufferPointer(), shaderSize);
+	uint8_t nul = 0;
+	_stream.write(nul);
+
+	if (NULL != reflect)
+	{
+		reflect->Release();
+	}
+
+	if (NULL != code)
+	{
+		code->Release();
+	}
+
+	if (NULL != errorMsg)
+	{
+		errorMsg->Release();
 	}
 
 	return true;
@@ -653,6 +1043,20 @@ struct Preprocessor
 	uint32_t m_fgetsPos;
 };
 
+const char* baseName(const char* _filePath)
+{
+	const char* bs = strrchr(_filePath, '\\');
+	const char* fs = strrchr(_filePath, '/');
+	const char* column = strrchr(_filePath, ':');
+	const char* basename = std::max(std::max(bs, fs), column);
+	if (NULL != basename)
+	{
+		return basename+1;
+	}
+
+	return _filePath;
+}
+
 // OpenGL #version Features Direct3D Features Shader Model
 // 2.1    120      vf       9.0      vf       2.0
 // 3.0    130
@@ -693,6 +1097,33 @@ int main(int _argc, const char* _argv[])
 	{
 		fprintf(stderr, "Must specify platform.\n");
 		return EXIT_FAILURE;
+	}
+
+	const char* bin2c = NULL;
+	if (cmdLine.hasArg("bin2c") )
+	{
+		bin2c = cmdLine.findOption("bin2c");
+		if (NULL == bin2c)
+		{
+			bin2c = baseName(outFilePath);
+			uint32_t len = strlen(bin2c);
+			char* temp = (char*)alloca(len+1);
+			for (char *out = temp; *bin2c != '\0';)
+			{
+				char ch = *bin2c++;
+				if (isalnum(ch) )
+				{
+					*out++ = ch;
+				}
+				else
+				{
+					*out++ = '_';
+				}
+			}
+			temp[len] = '\0';
+
+			bin2c = temp;
+		}
 	}
 
 	bool depends = cmdLine.hasArg("depends");
@@ -782,14 +1213,14 @@ int main(int _argc, const char* _argv[])
 
 		if (preprocessOnly)
 		{
-			FILE* out = fopen(outFilePath, "wb");
-			if (NULL == out)
+			FileWriter stream(outFilePath);
+
+			if (!stream.open() )
 			{
 				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
 				return false;
 			}
 
-			Stream stream(out);
 			if (glsl)
 			{
 				const char* profile = cmdLine.findOption('p');
@@ -806,20 +1237,50 @@ int main(int _argc, const char* _argv[])
 			}
 			stream.write(preprocessor.m_preprocessed.c_str(), preprocessor.m_preprocessed.size() );
 			stream.close();
-			fclose(out);
 
 			return EXIT_SUCCESS;
 		}
 
 		bool compiled = false;
 
-		if (glsl)
 		{
-			compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, outFilePath);
-		}
-		else
-		{
-			compiled = compileHLSLShader(cmdLine, preprocessor.m_preprocessed, outFilePath);
+			IStreamWriter* stream = NULL;
+
+			if (NULL != bin2c)
+			{
+				stream = new Bin2cStream(outFilePath, bin2c);
+			}
+			else
+			{
+				stream = new FileWriter(outFilePath);
+			}
+
+			if (!stream->open() )
+			{
+				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+				return false;
+			}
+
+			if (glsl)
+			{
+				compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, *stream);
+			}
+			else
+			{
+				const char* profile = cmdLine.findOption('p');
+				if (0 == strncmp(&profile[1], "s_4", 3)
+				||  0 == strncmp(&profile[1], "s_5", 3) )
+				{
+					compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, *stream);
+				}
+				else
+				{
+					compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, *stream);
+				}
+			}
+
+			stream->close();
+			delete stream;
 		}
 
 		if (compiled
@@ -827,19 +1288,18 @@ int main(int _argc, const char* _argv[])
 		{
 			std::string ofp = outFilePath;
 			ofp += ".d";
-			FILE* out = fopen(ofp.c_str(), "wb");
-			if (NULL != out)
+			FileWriter stream(ofp.c_str() );
+			if (stream.open() )
 			{
-				Stream stream(out);
 				stream.write(outFilePath);
 				stream.write(":");
 				stream.write(preprocessor.m_depends.c_str() );
 				stream.write("\n");
 				stream.close();
-				fclose(out);
 			}
-			return EXIT_SUCCESS;
 		}
+
+		return EXIT_SUCCESS;
 	}
 
 	fprintf(stderr, "Failed to build shader.\n");

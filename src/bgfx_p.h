@@ -134,6 +134,8 @@ namespace stl = std;
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 #	define BGFX_RENDERER_NAME "Direct3D 9"
+#elif BGFX_CONFIG_RENDERER_DIRECT3D11
+#	define BGFX_RENDERER_NAME "Direct3D 11"
 #elif BGFX_CONFIG_RENDERER_OPENGL
 #	define BGFX_RENDERER_NAME "OpenGL"
 #elif BGFX_CONFIG_RENDERER_OPENGLES2
@@ -143,13 +145,13 @@ namespace stl = std;
 namespace bgfx
 {
 	extern const uint32_t g_constantTypeSize[ConstantType::Count];
-	extern fatalFn g_fatal;
-	extern reallocFn g_realloc;
-	extern freeFn g_free;
-	extern cacheFn g_cache;
+	extern FatalFn g_fatal;
+	extern ReallocFn g_realloc;
+	extern FreeFn g_free;
+	extern CacheFn g_cache;
 
 	void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
-	void release(Memory* _mem);
+	void release(const Memory* _mem);
 	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
@@ -339,6 +341,7 @@ namespace bgfx
 		uint16_t m_count;
 	};
 
+	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum);
 	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name);
 
 	class StreamRead

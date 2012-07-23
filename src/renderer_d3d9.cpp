@@ -193,11 +193,11 @@ namespace bgfx
 			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_EndEvent");
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
-			Direct3DCreate9ExFunc direct3DCreate9Ex = (Direct3DCreate9ExFunc)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
+			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
 			BGFX_FATAL(NULL != direct3DCreate9Ex, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9Ex not found.");
 			direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9);
 #else
-			Direct3DCreate9Func direct3DCreate9 = (Direct3DCreate9Func)GetProcAddress(m_d3d9dll, "Direct3DCreate9");
+			Direct3DCreate9Fn direct3DCreate9 = (Direct3DCreate9Fn)GetProcAddress(m_d3d9dll, "Direct3DCreate9");
 			BGFX_FATAL(NULL != direct3DCreate9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9 not found.");
 			m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
 #endif // defined(D3D_DISABLE_9EX)
@@ -308,8 +308,10 @@ namespace bgfx
 				|| (m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) )
 				;
 
-			if (m_instancing)
+			if (m_amd
+			&&  s_extendedFormats[ExtendedFormat::Inst].m_supported)
 			{
+				// ATi only
 				m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
 			}
 
@@ -949,14 +951,6 @@ namespace bgfx
 				elem->Type = declType;
 				elem->Offset = _decl.m_offset[attr];
 				++elem;
-
-// 				BX_TRACE("\tattr %d, num %d, type %d, norm %d, offset %d"
-// 					, attr
-// 					, num
-// 					, type
-// 					, normalized
-// 					, _decl.m_offset[attr]
-// 				);
 			}
 		}
 
@@ -1657,7 +1651,7 @@ namespace bgfx
 		matrix_ortho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
 		PredefinedUniform& predefined = material.m_predefined[0];
-		uint8_t flags = predefined.m_type&BGFX_UNIFORM_FRAGMENTBIT;
+		uint8_t flags = predefined.m_type;
 		s_renderCtx.setShaderConstantF(flags, predefined.m_loc, proj, 4);
 
 		s_renderCtx.m_textures[m_texture.idx].commit(0);
@@ -1829,11 +1823,13 @@ namespace bgfx
 
 	void Context::rendererSubmit()
 	{
+		IDirect3DDevice9* device = s_renderCtx.m_device;
+
 		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), "rendererSubmit");
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
-		s_renderCtx.m_device->BeginScene();
+		device->BeginScene();
 
 		if (0 < m_render->m_iboffset)
 		{
@@ -1859,7 +1855,7 @@ namespace bgfx
 			matrix_mul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
 		}
 
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_FILLMODE, m_render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
+		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, m_render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
 		uint16_t materialIdx = bgfx::invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
@@ -1913,7 +1909,7 @@ namespace bgfx
 					vp.Height = rect.m_height;
 					vp.MinZ = 0.0f;
 					vp.MaxZ = 1.0f;
-					DX_CHECK(s_renderCtx.m_device->SetViewport(&vp) );
+					DX_CHECK(device->SetViewport(&vp) );
 
 					Clear& clear = m_render->m_clear[view];
 
@@ -1927,13 +1923,13 @@ namespace bgfx
 							flags |= D3DCLEAR_TARGET;
 							uint32_t rgba = clear.m_rgba;
 							color = D3DCOLOR_RGBA(rgba>>24, (rgba>>16)&0xff, (rgba>>8)&0xff, rgba&0xff);
-							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED|D3DCOLORWRITEENABLE_GREEN|D3DCOLORWRITEENABLE_BLUE|D3DCOLORWRITEENABLE_ALPHA) );
+							DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED|D3DCOLORWRITEENABLE_GREEN|D3DCOLORWRITEENABLE_BLUE|D3DCOLORWRITEENABLE_ALPHA) );
 						}
 
 						if (BGFX_CLEAR_DEPTH_BIT & clear.m_flags)
 						{
 							flags |= D3DCLEAR_ZBUFFER;
-							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
+							DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 						}
 
 						if (BGFX_CLEAR_STENCIL_BIT & clear.m_flags)
@@ -1948,18 +1944,18 @@ namespace bgfx
 							rc.top = rect.m_y;
 							rc.right = rect.m_x + rect.m_width;
 							rc.bottom = rect.m_y + rect.m_height;
-							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE) );
-							DX_CHECK(s_renderCtx.m_device->SetScissorRect(&rc) );
-							DX_CHECK(s_renderCtx.m_device->Clear(0, NULL, flags, color, clear.m_depth, clear.m_stencil) );
-							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE) );
+							DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE) );
+							DX_CHECK(device->SetScissorRect(&rc) );
+							DX_CHECK(device->Clear(0, NULL, flags, color, clear.m_depth, clear.m_stencil) );
+							DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE) );
 						}
 					}
 
- 					DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZENABLE, TRUE) );
-					DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS) );
-					DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
-					DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
-					DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
+ 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS) );
+					DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
 				}
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
@@ -1970,22 +1966,22 @@ namespace bgfx
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
 						uint32_t cull = (newFlags&BGFX_STATE_CULL_MASK)>>BGFX_STATE_CULL_SHIFT;
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_CULLMODE, s_cullMode[cull]) );
+						DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, s_cullMode[cull]) );
 					}
 
 					if (BGFX_STATE_DEPTH_WRITE & changedFlags)
 					{ 
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZWRITEENABLE, !!(BGFX_STATE_DEPTH_WRITE & newFlags) ) );
+						DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, !!(BGFX_STATE_DEPTH_WRITE & newFlags) ) );
 					}
 
 					if (BGFX_STATE_DEPTH_TEST_MASK & changedFlags)
 					{
 						uint32_t func = (newFlags&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZENABLE, 0 != func) );
+						DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, 0 != func) );
 
 						if (0 != func)
 						{
-							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZFUNC, s_depthFunc[func]) );
+							DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, s_depthFunc[func]) );
 						}
 					}
 
@@ -1993,39 +1989,39 @@ namespace bgfx
 					{
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						alphaRef = ref/255.0f;
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHAREF, ref) );
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHATESTENABLE, !!(BGFX_STATE_ALPHA_TEST & newFlags) ) );
+						DX_CHECK(device->SetRenderState(D3DRS_ALPHAREF, ref) );
+						DX_CHECK(device->SetRenderState(D3DRS_ALPHATESTENABLE, !!(BGFX_STATE_ALPHA_TEST & newFlags) ) );
 					}
 
 					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 					{
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_POINTSIZE, castfu( (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) ) ) );
+						DX_CHECK(device->SetRenderState(D3DRS_POINTSIZE, castfu( (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) ) ) );
 					}
 
 #if BX_PLATFORM_WINDOWS
 					if (BGFX_STATE_SRGBWRITE & changedFlags)
 					{
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, (newFlags&BGFX_STATE_SRGBWRITE) == BGFX_STATE_SRGBWRITE) );
+						DX_CHECK(device->SetRenderState(D3DRS_SRGBWRITEENABLE, (newFlags&BGFX_STATE_SRGBWRITE) == BGFX_STATE_SRGBWRITE) );
 					}
 #endif // BX_PLATFORM_WINDOWS
 
 					if (BGFX_STATE_MSAA & changedFlags)
 					{
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, (newFlags&BGFX_STATE_MSAA) == BGFX_STATE_MSAA) );
+						DX_CHECK(device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, (newFlags&BGFX_STATE_MSAA) == BGFX_STATE_MSAA) );
 					}
 
 					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
 						uint32_t writeEnable = (newFlags&BGFX_STATE_ALPHA_WRITE) ? D3DCOLORWRITEENABLE_ALPHA : 0;
  						writeEnable |= (newFlags&BGFX_STATE_RGB_WRITE) ? D3DCOLORWRITEENABLE_RED|D3DCOLORWRITEENABLE_GREEN|D3DCOLORWRITEENABLE_BLUE : 0;
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_COLORWRITEENABLE, writeEnable) );
+						DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, writeEnable) );
 					}
 
 					if (BGFX_STATE_BLEND_MASK & changedFlags)
 					{
 						bool alphaBlendEnabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
-						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, alphaBlendEnabled) );
-//						DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, alphaBlendEnabled) );
+						DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, alphaBlendEnabled) );
+//						DX_CHECK(device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, alphaBlendEnabled) );
 
 						if (alphaBlendEnabled)
 						{
@@ -2033,10 +2029,10 @@ namespace bgfx
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 
- 							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src]) );
-							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst]) );
-//							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
-//							DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
+ 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src]) );
+							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst]) );
+//							DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
+//							DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
 						}
 					}
 
@@ -2055,14 +2051,14 @@ namespace bgfx
 
 					if (bgfx::invalidHandle == materialIdx)
 					{
-						s_renderCtx.m_device->SetVertexShader(NULL);
-						s_renderCtx.m_device->SetPixelShader(NULL);
+						device->SetVertexShader(NULL);
+						device->SetPixelShader(NULL);
 					}
 					else
 					{
 						Material& material = s_renderCtx.m_materials[materialIdx];
-						s_renderCtx.m_device->SetVertexShader( (IDirect3DVertexShader9*)material.m_vsh->m_ptr);
-						s_renderCtx.m_device->SetPixelShader( (IDirect3DPixelShader9*)material.m_fsh->m_ptr);
+						device->SetVertexShader( (IDirect3DVertexShader9*)material.m_vsh->m_ptr);
+						device->SetPixelShader( (IDirect3DPixelShader9*)material.m_fsh->m_ptr);
 					}
 
 					materialChanged = 
@@ -2220,7 +2216,7 @@ namespace bgfx
 							}
 							else
 							{
-								DX_CHECK(s_renderCtx.m_device->SetTexture(stage, NULL) );
+								DX_CHECK(device->SetTexture(stage, NULL) );
 							}
 						}
 
@@ -2240,30 +2236,31 @@ namespace bgfx
 
 						uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
-						DX_CHECK(s_renderCtx.m_device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
+						DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
 
-						if (invalidHandle != state.m_instanceDataBuffer.idx)
+						if (invalidHandle != state.m_instanceDataBuffer.idx
+						&&  s_renderCtx.m_instancing)
 						{
 							const VertexBuffer& inst = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
-							DX_CHECK(s_renderCtx.m_device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|state.m_numInstances) );
-							DX_CHECK(s_renderCtx.m_device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA|1) );
-							DX_CHECK(s_renderCtx.m_device->SetStreamSource(1, inst.m_ptr, state.m_instanceDataOffset, state.m_instanceDataStride) );
+							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|state.m_numInstances) );
+							DX_CHECK(device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA|1) );
+							DX_CHECK(device->SetStreamSource(1, inst.m_ptr, state.m_instanceDataOffset, state.m_instanceDataStride) );
 
 							IDirect3DVertexDeclaration9* ptr = createVertexDecl(vertexDecl.m_decl, state.m_instanceDataStride/16);
-							DX_CHECK(s_renderCtx.m_device->SetVertexDeclaration(ptr) );
+							DX_CHECK(device->SetVertexDeclaration(ptr) );
 							DX_RELEASE(ptr, 0);
 						}
 						else
 						{
-							DX_CHECK(s_renderCtx.m_device->SetStreamSourceFreq(0, 1) );
-							DX_CHECK(s_renderCtx.m_device->SetStreamSource(1, NULL, 0, 0) );
-							DX_CHECK(s_renderCtx.m_device->SetVertexDeclaration(vertexDecl.m_ptr) );
+							DX_CHECK(device->SetStreamSourceFreq(0, 1) );
+							DX_CHECK(device->SetStreamSource(1, NULL, 0, 0) );
+							DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
 						}
 					}
 					else
 					{
-						DX_CHECK(s_renderCtx.m_device->SetStreamSource(0, NULL, 0, 0) );
-						DX_CHECK(s_renderCtx.m_device->SetStreamSource(1, NULL, 0, 0) );
+						DX_CHECK(device->SetStreamSource(0, NULL, 0, 0) );
+						DX_CHECK(device->SetStreamSource(1, NULL, 0, 0) );
 					}
 				}
 
@@ -2275,11 +2272,11 @@ namespace bgfx
 					if (bgfx::invalidHandle != handle)
 					{
 						IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
-						DX_CHECK(s_renderCtx.m_device->SetIndices(ib.m_ptr) );
+						DX_CHECK(device->SetIndices(ib.m_ptr) );
 					}
 					else
 					{
-						DX_CHECK(s_renderCtx.m_device->SetIndices(NULL) );
+						DX_CHECK(device->SetIndices(NULL) );
 					}
 				}
 
@@ -2308,7 +2305,7 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
+							DX_CHECK(device->DrawIndexedPrimitive(primType
 								, state.m_startVertex
 								, 0
 								, numVertices
@@ -2323,7 +2320,7 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(primType
+							DX_CHECK(device->DrawIndexedPrimitive(primType
 								, state.m_startVertex
 								, 0
 								, numVertices
@@ -2337,7 +2334,7 @@ namespace bgfx
 						numPrimsSubmitted = numVertices/primNumVerts;
 						numInstances = state.m_numInstances;
 						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
-						DX_CHECK(s_renderCtx.m_device->DrawPrimitive(primType
+						DX_CHECK(device->DrawPrimitive(primType
 							, state.m_startVertex
 							, numPrimsSubmitted
 							) );
@@ -2412,7 +2409,7 @@ namespace bgfx
 			PIX_ENDEVENT();
 		}
 
-		s_renderCtx.m_device->EndScene();
+		device->EndScene();
 	}
 }
 

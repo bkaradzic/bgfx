@@ -23,9 +23,9 @@
 #	include <d3d9.h>
 
 #	if BGFX_CONFIG_RENDERER_DIRECT3D9EX
-typedef HRESULT (WINAPI *Direct3DCreate9ExFunc)(UINT SDKVersion, IDirect3D9Ex**);
+typedef HRESULT (WINAPI *Direct3DCreate9ExFn)(UINT SDKVersion, IDirect3D9Ex**);
 #	else
-typedef IDirect3D9* (WINAPI *Direct3DCreate9Func)(UINT SDKVersion);
+typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
 typedef int (WINAPI *D3DPERF_BeginEventFunc)(D3DCOLOR col, LPCWSTR wszName);
@@ -56,20 +56,10 @@ typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
 #	define _PIX_ENDEVENT() do {} while(0)
 #endif // BX_PLATFORM_
 
+#include "renderer_d3d.h"
+
 namespace bgfx
 {
-#	define _DX_CHECK(_call) \
-				do { \
-					HRESULT __hr__ = _call; \
-					BX_CHECK(SUCCEEDED(__hr__), #_call " FAILED 0x%08x\n", (uint32_t)__hr__); \
-				} while (0)
-
-#if BGFX_CONFIG_DEBUG
-#	define DX_CHECK(_call) _DX_CHECK(_call)
-#else
-#	define DX_CHECK(_call) _call
-#endif // BGFX_CONFIG_DEBUG
-
 #if BGFX_CONFIG_DEBUG_PIX
 #	define PIX_SETMARKER(_col, _name) _PIX_SETMARKER(_col, _name)
 #	define PIX_BEGINEVENT(_col, _name) _PIX_BEGINEVENT(_col, _name)
@@ -79,27 +69,6 @@ namespace bgfx
 #	define PIX_BEGINEVENT(_col, _name)
 #	define PIX_ENDEVENT()
 #endif // BGFX_CONFIG_DEBUG_PIX
-
-#if BGFX_CONFIG_DEBUG
-#	define DX_RELEASE(_ptr, _expected) \
-					do { \
-						if (NULL != _ptr) \
-						{ \
-							ULONG count = _ptr->Release(); \
-							BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
-							_ptr = NULL; \
-						} \
-					} while (0)
-#else
-#	define DX_RELEASE(_ptr, _expected) \
-					do { \
-						if (NULL != _ptr) \
-						{ \
-							_ptr->Release(); \
-							_ptr = NULL; \
-						} \
-					} while (0)
-#endif // BGFX_CONFIG_DEBUG
 
 #	ifndef D3DFMT_ATI1
 #		define D3DFMT_ATI1 ( (D3DFORMAT)MAKEFOURCC('A','T','I','1') )

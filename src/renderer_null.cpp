@@ -133,6 +133,10 @@ namespace bgfx
 	{
 	}
 
+	void Context::rendererUpdateUniform(uint16_t /*_loc*/, const void* /*_data*/, uint32_t /*_size*/)
+	{
+	}
+
 	void Context::rendererSubmit()
 	{
 	}

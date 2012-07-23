@@ -52,4 +52,6 @@ project "shaderc"
 
 	links {
 		"d3dx9",
+		"d3dcompiler",
+		"dxguid",
 	}

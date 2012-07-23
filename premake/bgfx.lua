@@ -25,6 +25,7 @@ project "bgfx"
 
 	includedirs {
 		BGFX_DIR .. "include",
+		"$(DXSDK_DIR)/include",
 	}
 
 	files {

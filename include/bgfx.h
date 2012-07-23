@@ -165,6 +165,7 @@ namespace bgfx
 			D3D9_UnableToCreateDevice,
 			D3D9_UnableToCreateRenderTarget,
 			D3D9_UnableToCreateTexture,
+			D3D11_UnableToInitialize,
 			OPENGL_UnableToCreateContext,
 		};
 	};
@@ -175,7 +176,8 @@ namespace bgfx
 		{
 			Null = 0,
 			Direct3D9,
-			OpenGLES,
+			Direct3D11,
+			OpenGLES2,
 			OpenGL,
 		};
 	};
@@ -283,10 +285,10 @@ namespace bgfx
 		};
 	};
 
-	typedef void (*fatalFn)(Fatal::Enum _code, const char* _str);
-	typedef void* (*reallocFn)(void* _ptr, size_t _size);
-	typedef void (*freeFn)(void* _ptr);
-	typedef void (*cacheFn)(uint64_t _id, bool _store, void* _data, uint32_t& _length);
+	typedef void (*FatalFn)(Fatal::Enum _code, const char* _str);
+	typedef void* (*ReallocFn)(void* _ptr, size_t _size);
+	typedef void (*FreeFn)(void* _ptr);
+	typedef void (*CacheFn)(uint64_t _id, bool _store, void* _data, uint32_t& _length);
 
 	struct VertexDecl
 	{
@@ -305,7 +307,7 @@ namespace bgfx
 	RendererType::Enum getRendererType();
 
 	///
-	void init(bool _createRenderThread = true, fatalFn _fatal = NULL, reallocFn _realloc = NULL, freeFn _free = NULL, cacheFn _cache = NULL);
+	void init(bool _createRenderThread = true, FatalFn _fatal = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL, CacheFn _cache = NULL);
 
 	///
 	void shutdown();
