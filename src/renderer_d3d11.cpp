@@ -24,20 +24,20 @@ namespace bgfx
 		1,
 	};
 
-	static const D3D11_BLEND s_blendFactor[] =
+	static const D3D11_BLEND s_blendFactor[][2] =
 	{
-		(D3D11_BLEND)0, // ignored
-		D3D11_BLEND_ZERO,
-		D3D11_BLEND_ONE,
-		D3D11_BLEND_SRC_COLOR,
-		D3D11_BLEND_INV_SRC_COLOR,
-		D3D11_BLEND_SRC_ALPHA,
-		D3D11_BLEND_INV_SRC_ALPHA,
-		D3D11_BLEND_DEST_ALPHA,
-		D3D11_BLEND_INV_DEST_ALPHA,
-		D3D11_BLEND_DEST_COLOR,
-		D3D11_BLEND_INV_DEST_COLOR,
-		D3D11_BLEND_SRC_ALPHA_SAT,
+		{ (D3D11_BLEND)0,             (D3D11_BLEND)0 }, // ignored
+		{ D3D11_BLEND_ZERO,           D3D11_BLEND_ZERO },
+		{ D3D11_BLEND_ONE,            D3D11_BLEND_ONE },
+		{ D3D11_BLEND_SRC_COLOR,      D3D11_BLEND_SRC_ALPHA },
+		{ D3D11_BLEND_INV_SRC_COLOR,  D3D11_BLEND_INV_SRC_ALPHA },
+		{ D3D11_BLEND_SRC_ALPHA,      D3D11_BLEND_SRC_ALPHA },
+		{ D3D11_BLEND_INV_SRC_ALPHA,  D3D11_BLEND_INV_SRC_ALPHA },
+		{ D3D11_BLEND_DEST_ALPHA,     D3D11_BLEND_DEST_ALPHA },
+		{ D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_DEST_ALPHA },
+		{ D3D11_BLEND_DEST_COLOR,     D3D11_BLEND_DEST_ALPHA },
+		{ D3D11_BLEND_INV_DEST_COLOR, D3D11_BLEND_INV_DEST_ALPHA },
+		{ D3D11_BLEND_SRC_ALPHA_SAT,  D3D11_BLEND_SRC_ALPHA_SAT },
 	};
 
 	static const D3D11_COMPARISON_FUNC s_depthFunc[] =
@@ -531,16 +531,14 @@ namespace bgfx
 				uint32_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0;
 				writeMask |= (_state&BGFX_STATE_RGB_WRITE) ? D3D11_COLOR_WRITE_ENABLE_RED|D3D11_COLOR_WRITE_ENABLE_GREEN|D3D11_COLOR_WRITE_ENABLE_BLUE : 0;
 
-				drt.SrcBlend =
-					drt.SrcBlendAlpha = s_blendFactor[src];
-				drt.DestBlend = 
-					drt.DestBlendAlpha = s_blendFactor[dst];
-				drt.BlendOp =
-					drt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-
-				drt.SrcBlend = s_blendFactor[src];
-				drt.DestBlend = s_blendFactor[dst];
+				drt.SrcBlend = s_blendFactor[src][0];
+				drt.DestBlend = s_blendFactor[dst][0];
 				drt.BlendOp = D3D11_BLEND_OP_ADD;
+
+				drt.SrcBlendAlpha = s_blendFactor[src][1];
+				drt.DestBlendAlpha = s_blendFactor[dst][1];
+				drt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
 				drt.RenderTargetWriteMask = writeMask;
 
 				DX_CHECK(m_device->CreateBlendState(&desc, &bs) );
