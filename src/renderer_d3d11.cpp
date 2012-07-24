@@ -1050,11 +1050,11 @@ namespace bgfx
 			desc.MipLODBias = 0.0f;
 			desc.MaxAnisotropy = 1;
 			desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
- 			desc.BorderColor[0] = 0.0f;
+			desc.BorderColor[0] = 0.0f;
 			desc.BorderColor[1] = 0.0f;
 			desc.BorderColor[2] = 0.0f;
 			desc.BorderColor[3] = 0.0f;
- 			desc.MinLOD = 0;
+			desc.MinLOD = 0;
 			desc.MaxLOD = D3D11_FLOAT32_MAX;
 			s_renderCtx.m_device->CreateSamplerState(&desc, &m_sampler);
 
