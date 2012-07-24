@@ -311,6 +311,8 @@ namespace bgfx
 
 		void shutdown()
 		{
+			m_deviceCtx->ClearState();
+
 			invalidateCache();
 
 			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
@@ -373,15 +375,6 @@ namespace bgfx
 
 		void invalidateCache()
 		{
-			m_deviceCtx->IASetInputLayout(NULL);
-			m_deviceCtx->OMSetBlendState(NULL, NULL, 0);
-			m_deviceCtx->OMSetDepthStencilState(NULL, 0);
-			m_deviceCtx->RSSetState(NULL);
-			m_deviceCtx->VSSetShader(NULL, 0, 0);
-			m_deviceCtx->PSSetSamplers(0, 0, NULL);
-			m_deviceCtx->PSSetShaderResources(0, 0, NULL);
-			m_deviceCtx->PSSetShader(NULL, 0, 0);
-
 			m_inputLayoutCache.invalidate();
 			m_blendStateCache.invalidate();
 			m_depthStencilStateCache.invalidate();
@@ -1039,6 +1032,8 @@ namespace bgfx
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
+		_flags &= BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK;
+
 		m_sampler = s_renderCtx.m_samplerStateCache.find(_flags);
 		if (NULL == m_sampler)
 		{
@@ -1203,9 +1198,9 @@ namespace bgfx
 		{
 			g_free(m_data);
 			m_data = NULL;
-
-			DX_RELEASE(m_ptr, 0);
 		}
+
+		DX_RELEASE(m_ptr, 0);
 	}
 
 	void Context::flip()
