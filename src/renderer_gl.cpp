@@ -572,6 +572,8 @@ namespace bgfx
 			OES_texture_half_float,
 			OES_texture_half_float_linear,
 			EXT_occlusion_query_boolean,
+			ATI_meminfo,
+			NVX_gpu_memory_info,
 
 			Count
 		};
@@ -609,6 +611,8 @@ namespace bgfx
 		{ "GL_OES_texture_half_float",            false, true },
 		{ "GL_OES_texture_half_float_linear",     false, true },
 		{ "GL_EXT_occlusion_query_boolean",       false, true },
+		{ "GL_ATI_meminfo",                       false, true },
+		{ "GL_NVX_gpu_memory_info",               false, true },
 	};
 
 	static const GLenum s_primType[] =
@@ -2504,9 +2508,31 @@ namespace bgfx
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);
 
+#if BGFX_CONFIG_RENDERER_OPENGL
+				if (s_extension[Extension::ATI_meminfo].m_supported)
+				{
+					GLint vboFree[4];
+					GLint texFree[4];
+					GLint rbfFree[4];
+					glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, vboFree);
+					glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texFree);
+					glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, rbfFree);
+
+					pos++;
+					tvm.printf(10, pos++, 0x8c, " -------------|    free|  free b|     aux|  aux fb");
+					tvm.printf(10, pos++, 0x8e, "           VBO: %7d, %7d, %7d, %7d", vboFree[0], vboFree[1], vboFree[2], vboFree[3]);
+					tvm.printf(10, pos++, 0x8e, "       Texture: %7d, %7d, %7d, %7d", texFree[0], texFree[1], texFree[2], texFree[3]);
+					tvm.printf(10, pos++, 0x8e, " Render Buffer: %7d, %7d, %7d, %7d", rbfFree[0], rbfFree[1], rbfFree[2], rbfFree[3]);
+				}
+				else if (s_extension[Extension::NVX_gpu_memory_info].m_supported)
+				{
+				}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = m_render->m_waitSubmit < m_render->m_waitRender;
 
+				pos++;
 				tvm.printf(10, pos++, attr[attrIndex&1], "Submit wait: %3.4f [ms]", double(m_render->m_waitSubmit)*toMs);
 				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", double(m_render->m_waitRender)*toMs);
 			}
