@@ -2512,11 +2512,13 @@ namespace bgfx
 				if (s_extension[Extension::ATI_meminfo].m_supported)
 				{
 					GLint vboFree[4];
+					GL_CHECK(glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, vboFree) );
+
 					GLint texFree[4];
+					GL_CHECK(glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texFree) );
+
 					GLint rbfFree[4];
-					glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, vboFree);
-					glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texFree);
-					glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, rbfFree);
+					GL_CHECK(glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, rbfFree) );
 
 					pos++;
 					tvm.printf(10, pos++, 0x8c, " -------------|    free|  free b|     aux|  aux fb");
@@ -2526,6 +2528,26 @@ namespace bgfx
 				}
 				else if (s_extension[Extension::NVX_gpu_memory_info].m_supported)
 				{
+					GLint dedicated;
+					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &dedicated) );
+
+					GLint totalAvail;
+					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &totalAvail) );
+
+					GLint currAvail;
+					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &currAvail) );
+
+					GLint evictedCount;
+					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX, &evictedCount) );
+
+					GLint evictedMemory;
+					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evictedMemory) );
+
+					pos++;
+					tvm.printf(10, pos++, 0x8c, "----------|");
+					tvm.printf(10, pos++, 0x8e, " Dedicated: %7d", dedicated);
+					tvm.printf(10, pos++, 0x8e, " Available: %7d (%7d)", currAvail, totalAvail);
+					tvm.printf(10, pos++, 0x8e, "  Eviction: %7d / %7d", evictedCount, evictedMemory);
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
