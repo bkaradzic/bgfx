@@ -21,17 +21,25 @@ project "bgfx"
 			"BGFX_CONFIG_DEBUG=1",
 		}
 
+	configuration { "windows" }
+		includedirs {
+			"$(DXSDK_DIR)/include",
+		}
+
 	configuration {}
 
 	includedirs {
 		BGFX_DIR .. "include",
-		"$(DXSDK_DIR)/include",
 	}
 
 	files {
 		BGFX_DIR .. "include/**.h",
 		BGFX_DIR .. "src/**.cpp",
 		BGFX_DIR .. "src/**.h",
+	}
+
+	excludes {
+		BGFX_DIR .. "src/**.bin.h",
 	}
 
 --	copyLib()
