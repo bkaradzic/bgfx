@@ -47,14 +47,15 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 
 #define BX_NAMESPACE 1
 #include <bx/bx.h>
-#include <bx/countof.h>
 #include <bx/debug.h>
 #include <bx/blockalloc.h>
+#include <bx/countof.h>
+#include <bx/endian.h>
 #include <bx/handlealloc.h>
 #include <bx/hash.h>
+#include <bx/radixsort.h>
 #include <bx/ringbuffer.h>
 #include <bx/uint32_t.h>
-#include <bx/radixsort.h>
 
 #if BX_PLATFORM_WINDOWS
 #	include <windows.h>
@@ -144,13 +145,29 @@ namespace stl = std;
 
 namespace bgfx
 {
+	struct Clear
+	{
+		uint32_t m_rgba;
+		float m_depth;
+		uint8_t m_stencil;
+		uint8_t m_flags;
+	};
+
+	struct Rect
+	{
+		uint16_t m_x;
+		uint16_t m_y;
+		uint16_t m_width;
+		uint16_t m_height;
+	};
+
 	extern const uint32_t g_constantTypeSize[ConstantType::Count];
 	extern FatalFn g_fatal;
 	extern ReallocFn g_realloc;
 	extern FreeFn g_free;
 	extern CacheFn g_cache;
 
-	void fatal(bgfx::Fatal::Enum _code, const char* _format, ...);
+	void fatal(Fatal::Enum _code, const char* _format, ...);
 	void release(const Memory* _mem);
 	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
 	const char* getAttribName(Attrib::Enum _attr);
@@ -159,6 +176,11 @@ namespace bgfx
 	inline uint32_t uint16_min(uint16_t _a, uint16_t _b)
 	{
 		return _a > _b ? _b : _a;
+	}
+
+	inline uint32_t uint16_max(uint16_t _a, uint16_t _b)
+	{
+		return _a < _b ? _b : _a;
 	}
 
 	inline uint32_t hash(const void* _data, uint32_t _size)
@@ -313,11 +335,22 @@ namespace bgfx
 		void setup();
 		void render(uint32_t _numIndices);
 
-		bgfx::TextureHandle m_texture;
+		TextureHandle m_texture;
 		TransientVertexBuffer* m_vb;
 		TransientIndexBuffer* m_ib;
-		bgfx::VertexDecl m_decl;
-		bgfx::MaterialHandle m_material;
+		VertexDecl m_decl;
+		MaterialHandle m_material;
+	};
+
+	struct ClearQuad
+	{
+		void init();
+		void clear(const Rect& _rect, const Clear& _clear);
+
+		TransientVertexBuffer* m_vb;
+		IndexBufferHandle m_ib;
+		VertexDecl m_decl;
+		MaterialHandle m_material;
 	};
 
 	struct PredefinedUniform
@@ -581,22 +614,6 @@ namespace bgfx
 		uint16_t m_seq;
 		uint8_t m_view;
 		uint8_t m_trans;
-	};
-
-	struct Clear
-	{
-		uint32_t m_rgba;
-		float m_depth;
-		uint8_t m_stencil;
-		uint8_t m_flags;
-	};
-
-	struct Rect
-	{
-		uint16_t m_x;
-		uint16_t m_y;
-		uint16_t m_width;
-		uint16_t m_height;
 	};
 
 	BX_ALIGN_STRUCT_16(struct) Matrix4
@@ -876,14 +893,14 @@ namespace bgfx
 			m_instanceDataStride = 0;
 			m_numInstances = 1;
 			m_num = 1;
-			m_vertexBuffer.idx = bgfx::invalidHandle;
-			m_vertexDecl.idx = bgfx::invalidHandle;
-			m_indexBuffer.idx = bgfx::invalidHandle;
-			m_instanceDataBuffer.idx = bgfx::invalidHandle;
+			m_vertexBuffer.idx = invalidHandle;
+			m_vertexDecl.idx = invalidHandle;
+			m_indexBuffer.idx = invalidHandle;
+			m_instanceDataBuffer.idx = invalidHandle;
 			
 			for (uint32_t ii = 0; ii < BGFX_STATE_TEX_COUNT; ++ii)
 			{
-				m_sampler[ii].m_idx = bgfx::invalidHandle;
+				m_sampler[ii].m_idx = invalidHandle;
 				m_sampler[ii].m_flags = BGFX_SAMPLER_TEXTURE;
 			}
 		}
@@ -1122,7 +1139,7 @@ namespace bgfx
 			sampler.m_idx = _handle.idx;
 			sampler.m_flags = BGFX_SAMPLER_TEXTURE;
 
-			if (bgfx::invalidHandle != _sampler.idx)
+			if (invalidHandle != _sampler.idx)
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
@@ -1136,7 +1153,7 @@ namespace bgfx
 			sampler.m_idx = _handle.idx;
 			sampler.m_flags = _depth ? BGFX_SAMPLER_RENDERTARGET_DEPTH : BGFX_SAMPLER_RENDERTARGET_COLOR;
 
-			if (bgfx::invalidHandle != _sampler.idx)
+			if (invalidHandle != _sampler.idx)
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
@@ -1607,7 +1624,7 @@ namespace bgfx
 		{
 			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
 
-			if (bgfx::invalidHandle == declHandle.idx)
+			if (invalidHandle == declHandle.idx)
 			{
 				VertexDeclHandle temp = { m_vertexDeclHandle.alloc() };
 				declHandle = temp;
@@ -1636,7 +1653,7 @@ namespace bgfx
 		void destroyVertexBuffer(VertexBufferHandle _handle)
 		{
 			VertexDeclHandle declHandle = m_declRef.release(_handle);
-			if (bgfx::invalidHandle != declHandle.idx)
+			if (invalidHandle != declHandle.idx)
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
@@ -1770,7 +1787,7 @@ namespace bgfx
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 
 			VertexDeclHandle declHandle = m_declRef.release(dvb.m_handle);
-			if (bgfx::invalidHandle != declHandle.idx)
+			if (invalidHandle != declHandle.idx)
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
@@ -1864,7 +1881,7 @@ namespace bgfx
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 
-			if (bgfx::invalidHandle == declHandle.idx)
+			if (invalidHandle == declHandle.idx)
 			{
 				VertexDeclHandle temp = { m_vertexDeclHandle.alloc() };
 				declHandle = temp;
@@ -1947,7 +1964,7 @@ namespace bgfx
 // 
 // 			MaterialHandle handle = m_materialRef.find(hash);
 // 
-// 			if (bgfx::invalidHandle != handle.idx)
+// 			if (invalidHandle != handle.idx)
 // 			{
 // 				return handle;
 // 			}
@@ -2080,8 +2097,8 @@ namespace bgfx
 			Rect& rect = m_rect[_id];
 			rect.m_x = _x;
 			rect.m_y = _y;
-			rect.m_width = _width;
-			rect.m_height = _height;
+			rect.m_width = uint16_max(_width, 1);
+			rect.m_height = uint16_max(_height, 1);
 		}
 
 		void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -2785,6 +2802,7 @@ namespace bgfx
 		uint32_t m_debug;
 
 		TextVideoMemBlitter m_textVideoMemBlitter;
+		ClearQuad m_clearQuad;
 
 #if BX_PLATFORM_WINDOWS
 		struct Window

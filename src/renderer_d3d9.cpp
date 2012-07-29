@@ -186,7 +186,7 @@ namespace bgfx
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
 			m_d3d9dll = LoadLibrary("d3d9.dll");
-			BGFX_FATAL(NULL != m_d3d9dll, bgfx::Fatal::D3D9_UnableToCreateInterface, "Failed to load d3d9.dll.");
+			BGFX_FATAL(NULL != m_d3d9dll, Fatal::D3D9_UnableToCreateInterface, "Failed to load d3d9.dll.");
 
 			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
 			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
@@ -194,15 +194,15 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
-			BGFX_FATAL(NULL != direct3DCreate9Ex, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9Ex not found.");
+			BGFX_FATAL(NULL != direct3DCreate9Ex, Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9Ex not found.");
 			direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9);
 #else
 			Direct3DCreate9Fn direct3DCreate9 = (Direct3DCreate9Fn)GetProcAddress(m_d3d9dll, "Direct3DCreate9");
-			BGFX_FATAL(NULL != direct3DCreate9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9 not found.");
+			BGFX_FATAL(NULL != direct3DCreate9, Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9 not found.");
 			m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
 #endif // defined(D3D_DISABLE_9EX)
 
-			BGFX_FATAL(m_d3d9, bgfx::Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
+			BGFX_FATAL(m_d3d9, Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
 
 			m_adapter = D3DADAPTER_DEFAULT;
 			m_deviceType = D3DDEVTYPE_HAL;
@@ -267,22 +267,22 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			}
 
-			BGFX_FATAL(m_device, bgfx::Fatal::D3D9_UnableToCreateDevice, "Unable to create Direct3D9 device.");
+			BGFX_FATAL(m_device, Fatal::D3D9_UnableToCreateDevice, "Unable to create Direct3D9 device.");
 
 			DX_CHECK(m_device->GetDeviceCaps(&m_caps) );
 
 			// For shit GPUs that can create DX9 device but can't do simple stuff. GTFO!
-			BGFX_FATAL( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) == 0, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_SQUAREONLY");
-			BGFX_FATAL( (D3DPTEXTURECAPS_MIPMAP & m_caps.TextureCaps) == D3DPTEXTURECAPS_MIPMAP, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_MIPMAP");
-			BGFX_FATAL( (D3DPTEXTURECAPS_ALPHA & m_caps.TextureCaps) == D3DPTEXTURECAPS_ALPHA, bgfx::Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_ALPHA");
+			BGFX_FATAL( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) == 0, Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_SQUAREONLY");
+			BGFX_FATAL( (D3DPTEXTURECAPS_MIPMAP & m_caps.TextureCaps) == D3DPTEXTURECAPS_MIPMAP, Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_MIPMAP");
+			BGFX_FATAL( (D3DPTEXTURECAPS_ALPHA & m_caps.TextureCaps) == D3DPTEXTURECAPS_ALPHA, Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_ALPHA");
 			BGFX_FATAL(m_caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(2, 1)
-					  , bgfx::Fatal::MinimumRequiredSpecs
+					  , Fatal::MinimumRequiredSpecs
 					  , "Shader Model Version (vs: %x, ps: %x)."
 					  , m_caps.VertexShaderVersion
 					  , m_caps.PixelShaderVersion
 					  );
 			BGFX_FATAL(m_caps.MaxTextureWidth >= 2048 && m_caps.MaxTextureHeight >= 2048
-					  , bgfx::Fatal::MinimumRequiredSpecs
+					  , Fatal::MinimumRequiredSpecs
 					  , "Maximum texture size is below 2048 (w: %d, h: %d)."
 					  , m_caps.MaxTextureWidth
 					  , m_caps.MaxTextureHeight
@@ -723,12 +723,12 @@ namespace bgfx
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
- 		Shader m_vertexShaders[BGFX_CONFIG_MAX_VERTEX_SHADERS];
- 		Shader m_fragmentShaders[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
- 		Material m_materials[BGFX_CONFIG_MAX_MATERIALS];
- 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		Shader m_vertexShaders[BGFX_CONFIG_MAX_VERTEX_SHADERS];
+		Shader m_fragmentShaders[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		Material m_materials[BGFX_CONFIG_MAX_MATERIALS];
+		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDeclaration m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
- 		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
+		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
@@ -1413,7 +1413,7 @@ namespace bgfx
 					, NULL
 					) );
 
-				BGFX_FATAL(m_rt, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create 1x1 render target.");
+				BGFX_FATAL(m_rt, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create 1x1 render target.");
 
 				DX_CHECK(s_renderCtx.m_device->CreateTexture(m_width
 					, m_height
@@ -1425,7 +1425,7 @@ namespace bgfx
 					, NULL
 					) );
 
-				BGFX_FATAL(m_depthTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth texture.");
+				BGFX_FATAL(m_depthTexture, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth texture.");
 
 				DX_CHECK(m_depthTexture->GetSurfaceLevel(0, &m_depth) );
 			}
@@ -1443,7 +1443,7 @@ namespace bgfx
 						, NULL
 						) );
 
-					BGFX_FATAL(m_rt, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create MSAA render target.");
+					BGFX_FATAL(m_rt, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create MSAA render target.");
 				}
 
 				if (0 < colorFormat)
@@ -1458,7 +1458,7 @@ namespace bgfx
 						, NULL
 						) );
 
-					BGFX_FATAL(m_colorTexture, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create color render target.");
+					BGFX_FATAL(m_colorTexture, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create color render target.");
 
 					DX_CHECK(m_colorTexture->GetSurfaceLevel(0, &m_color) );
 				}
@@ -1475,7 +1475,7 @@ namespace bgfx
 							, NULL
 							) );
 
-					BGFX_FATAL(m_depth, bgfx::Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth stencil surface.");
+					BGFX_FATAL(m_depth, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth stencil surface.");
 				}
 			}
 		}
@@ -1540,7 +1540,7 @@ namespace bgfx
 				) );
 #endif // BX_PLATFORM_WINDOWS
 	}
-	
+
 	void ConstantBuffer::commit()
 	{
 		reset();
@@ -1856,7 +1856,7 @@ namespace bgfx
 		}
 
 		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, m_render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
-		uint16_t materialIdx = bgfx::invalidHandle;
+		uint16_t materialIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
@@ -1892,7 +1892,8 @@ namespace bgfx
 					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), "view");
 
 					view = key.m_view;
-					materialIdx = bgfx::invalidHandle;
+
+					materialIdx = invalidHandle;
 
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
@@ -2049,7 +2050,7 @@ namespace bgfx
 				{
 					materialIdx = key.m_material;
 
-					if (bgfx::invalidHandle == materialIdx)
+					if (invalidHandle == materialIdx)
 					{
 						device->SetVertexShader(NULL);
 						device->SetPixelShader(NULL);
@@ -2065,7 +2066,7 @@ namespace bgfx
 						constantsChanged = true;
 				}
 
-				if (bgfx::invalidHandle != materialIdx)
+				if (invalidHandle != materialIdx)
 				{
 					Material& material = s_renderCtx.m_materials[materialIdx];
 
@@ -2197,7 +2198,7 @@ namespace bgfx
 						||  current.m_flags != sampler.m_flags
 						||  materialChanged)
 						{
-							if (bgfx::invalidHandle != sampler.m_idx)
+							if (invalidHandle != sampler.m_idx)
 							{
 								switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 								{
@@ -2230,11 +2231,11 @@ namespace bgfx
 					currentState.m_vertexBuffer = state.m_vertexBuffer;
 
 					uint16_t handle = state.m_vertexBuffer.idx;
-					if (bgfx::invalidHandle != handle)
+					if (invalidHandle != handle)
 					{
 						const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
 
-						uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
 						DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
 
@@ -2269,7 +2270,7 @@ namespace bgfx
 					currentState.m_indexBuffer = state.m_indexBuffer;
 
 					uint16_t handle = state.m_indexBuffer.idx;
-					if (bgfx::invalidHandle != handle)
+					if (invalidHandle != handle)
 					{
 						IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
 						DX_CHECK(device->SetIndices(ib.m_ptr) );
@@ -2280,13 +2281,13 @@ namespace bgfx
 					}
 				}
 
-				if (bgfx::invalidHandle != currentState.m_vertexBuffer.idx)
+				if (invalidHandle != currentState.m_vertexBuffer.idx)
 				{
 					uint32_t numVertices = state.m_numVertices;
 					if (UINT32_C(0xffffffff) == numVertices)
 					{
 						VertexBuffer& vb = s_renderCtx.m_vertexBuffers[currentState.m_vertexBuffer.idx];
-						uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
 					}
@@ -2296,7 +2297,7 @@ namespace bgfx
 					uint32_t numInstances = 0;
 					uint32_t numPrimsRendered = 0;
 
-					if (bgfx::invalidHandle != state.m_indexBuffer.idx)
+					if (invalidHandle != state.m_indexBuffer.idx)
 					{
 						if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
 						{

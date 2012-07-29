@@ -531,3 +531,6 @@ static const uint8_t vga8x16[256*16] =
 
 #include "vs_debugfont_dx11.bin.h"
 #include "fs_debugfont_dx11.bin.h"
+
+#include "vs_clear_dx11.bin.h"
+#include "fs_clear_dx11.bin.h"

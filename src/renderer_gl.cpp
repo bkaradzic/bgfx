@@ -131,7 +131,7 @@ namespace bgfx
  #	define GL_IMPORT(_optional, _proto, _func) \
  				{ \
  					_func = (_proto)eglGetProcAddress(#_func); \
- 					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
+ 					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
  				}
  #	include "glimports.h"
  #	undef GL_IMPORT
@@ -146,22 +146,22 @@ namespace bgfx
 				if (NULL == m_hdc)
 				{
 					m_opengl32dll = LoadLibrary("opengl32.dll");
-					BGFX_FATAL(NULL != m_opengl32dll, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to load opengl32.dll.");
+					BGFX_FATAL(NULL != m_opengl32dll, Fatal::OPENGL_UnableToCreateContext, "Failed to load opengl32.dll.");
 
 					wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(m_opengl32dll, "wglGetProcAddress");
-					BGFX_FATAL(NULL != wglGetProcAddress, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglGetProcAddress.");
+					BGFX_FATAL(NULL != wglGetProcAddress, Fatal::OPENGL_UnableToCreateContext, "Failed get wglGetProcAddress.");
 
 					wglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(m_opengl32dll, "wglMakeCurrent");
-					BGFX_FATAL(NULL != wglMakeCurrent, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglMakeCurrent.");
+					BGFX_FATAL(NULL != wglMakeCurrent, Fatal::OPENGL_UnableToCreateContext, "Failed get wglMakeCurrent.");
 
 					wglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglCreateContext");
-					BGFX_FATAL(NULL != wglCreateContext, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglCreateContext.");
+					BGFX_FATAL(NULL != wglCreateContext, Fatal::OPENGL_UnableToCreateContext, "Failed get wglCreateContext.");
 
 					wglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglDeleteContext");
-					BGFX_FATAL(NULL != wglDeleteContext, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed get wglDeleteContext.");
+					BGFX_FATAL(NULL != wglDeleteContext, Fatal::OPENGL_UnableToCreateContext, "Failed get wglDeleteContext.");
 
 					m_hdc = GetDC(g_bgfxHwnd);
-					BGFX_FATAL(NULL != m_hdc, bgfx::Fatal::OPENGL_UnableToCreateContext, "GetDC failed!");
+					BGFX_FATAL(NULL != m_hdc, Fatal::OPENGL_UnableToCreateContext, "GetDC failed!");
 
 					PIXELFORMATDESCRIPTOR pfd;
 					memset(&pfd, 0, sizeof(pfd) );
@@ -175,19 +175,19 @@ namespace bgfx
 					pfd.iLayerType = PFD_MAIN_PLANE;
 
 					int pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-					BGFX_FATAL(0 != pixelFormat, bgfx::Fatal::OPENGL_UnableToCreateContext, "ChoosePixelFormat failed!");
+					BGFX_FATAL(0 != pixelFormat, Fatal::OPENGL_UnableToCreateContext, "ChoosePixelFormat failed!");
 
 					DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
 
 					int result;
 					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
-					BGFX_FATAL(0 != result, bgfx::Fatal::OPENGL_UnableToCreateContext, "SetPixelFormat failed!");
+					BGFX_FATAL(0 != result, Fatal::OPENGL_UnableToCreateContext, "SetPixelFormat failed!");
 
 					m_context = wglCreateContext(m_hdc);
-					BGFX_FATAL(NULL != m_context, bgfx::Fatal::OPENGL_UnableToCreateContext, "wglCreateContext failed!");
+					BGFX_FATAL(NULL != m_context, Fatal::OPENGL_UnableToCreateContext, "wglCreateContext failed!");
 					
 					result = wglMakeCurrent(m_hdc, m_context);
-					BGFX_FATAL(0 != result, bgfx::Fatal::OPENGL_UnableToCreateContext, "wglMakeCurrent failed!");
+					BGFX_FATAL(0 != result, Fatal::OPENGL_UnableToCreateContext, "wglMakeCurrent failed!");
 
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
@@ -196,7 +196,7 @@ namespace bgfx
 					{ \
 						_func = (_proto)GetProcAddress(m_opengl32dll, #_func); \
 					} \
-					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -207,14 +207,14 @@ namespace bgfx
 				{
 					Display* display = XOpenDisplay(0);
 					XLockDisplay(display);
-					BGFX_FATAL(display, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to open X display (0).");
+					BGFX_FATAL(display, Fatal::OPENGL_UnableToCreateContext, "Failed to open X display (0).");
 
 					int glxMajor, glxMinor;
 					if (!glXQueryVersion(display, &glxMajor, &glxMinor))
 					{
-						BGFX_FATAL(false, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to query GLX version");
+						BGFX_FATAL(false, Fatal::OPENGL_UnableToCreateContext, "Failed to query GLX version");
 					}
-					BGFX_FATAL((glxMajor == 1 && glxMinor >= 3) || glxMajor > 1, bgfx::Fatal::OPENGL_UnableToCreateContext, "GLX version is not >=1.3 (%d.%d).", glxMajor, glxMinor);
+					BGFX_FATAL((glxMajor == 1 && glxMinor >= 3) || glxMajor > 1, Fatal::OPENGL_UnableToCreateContext, "GLX version is not >=1.3 (%d.%d).", glxMajor, glxMinor);
 
 					const int glxAttribs[] =
 					{
@@ -269,7 +269,7 @@ namespace bgfx
 					}
 
 					XFree(configs);
-					BGFX_FATAL(visualInfo, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to find a suitable X11 display configuration.");
+					BGFX_FATAL(visualInfo, Fatal::OPENGL_UnableToCreateContext, "Failed to find a suitable X11 display configuration.");
 
 					// Generate colormaps
 					XSetWindowAttributes windowAttrs;
@@ -287,7 +287,7 @@ namespace bgfx
 											, CWBorderPixel|CWColormap
 											, &windowAttrs
 											);
-					BGFX_FATAL(window, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create X11 window.");
+					BGFX_FATAL(window, Fatal::OPENGL_UnableToCreateContext, "Failed to create X11 window.");
 
 					XMapRaised(display, window);
 					XFlush(display);
@@ -297,7 +297,7 @@ namespace bgfx
 
 					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
-					BGFX_FATAL(glXCreateContextAttribsARB, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to get glXCreateContextAttribsARB.");
+					BGFX_FATAL(glXCreateContextAttribsARB, Fatal::OPENGL_UnableToCreateContext, "Failed to get glXCreateContextAttribsARB.");
 
 					const int contextArrib[] =
 					{
@@ -307,14 +307,14 @@ namespace bgfx
 					};
 
 					m_context = glXCreateContextAttribsARB(display, bestconfig, 0, True, contextArrib);
-					BGFX_FATAL(m_context, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create GLX context.");
+					BGFX_FATAL(m_context, Fatal::OPENGL_UnableToCreateContext, "Failed to create GLX context.");
 
 					glXMakeCurrent(display, window, m_context);
 
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)glXGetProcAddress((const GLubyte*)#_func); \
-					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -368,7 +368,7 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)eglGetProcAddress(#_func); \
-					BGFX_FATAL(_optional || NULL != _func, bgfx::Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -1943,7 +1943,7 @@ namespace bgfx
 			matrix_mul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
 		}
 
-		uint16_t materialIdx = bgfx::invalidHandle;
+		uint16_t materialIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
@@ -1980,13 +1980,13 @@ namespace bgfx
 					GREMEDY_SETMARKER("view");
 
 					view = key.m_view;
-					materialIdx = bgfx::invalidHandle;
+					materialIdx = invalidHandle;
 
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
 						rt = m_render->m_rt[view];
 
-						if (rt.idx == bgfx::invalidHandle)
+						if (rt.idx == invalidHandle)
 						{
 							GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 							height = m_render->m_resolution.m_height;
@@ -2152,14 +2152,14 @@ namespace bgfx
 				if (key.m_material != materialIdx)
 				{
 					materialIdx = key.m_material;
-					GLuint id = bgfx::invalidHandle == materialIdx ? 0 : s_renderCtx.m_materials[materialIdx].m_id;
+					GLuint id = invalidHandle == materialIdx ? 0 : s_renderCtx.m_materials[materialIdx].m_id;
 					GL_CHECK(glUseProgram(id) );
 					materialChanged = 
 						constantsChanged = 
 						bindAttribs = true;
 				}
 
-				if (bgfx::invalidHandle != materialIdx)
+				if (invalidHandle != materialIdx)
 				{
 					Material& material = s_renderCtx.m_materials[materialIdx];
 
@@ -2318,7 +2318,7 @@ namespace bgfx
 							||  materialChanged)
 							{
 								GL_CHECK(glActiveTexture(GL_TEXTURE0+stage) );
-								if (bgfx::invalidHandle != sampler.m_idx)
+								if (invalidHandle != sampler.m_idx)
 								{
 									switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 									{
@@ -2358,7 +2358,7 @@ namespace bgfx
 						currentState.m_vertexBuffer = state.m_vertexBuffer;
 
 						uint16_t handle = state.m_vertexBuffer.idx;
-						if (bgfx::invalidHandle != handle)
+						if (invalidHandle != handle)
 						{
 							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
 							GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
@@ -2375,7 +2375,7 @@ namespace bgfx
 						currentState.m_indexBuffer = state.m_indexBuffer;
 
 						uint16_t handle = state.m_indexBuffer.idx;
-						if (bgfx::invalidHandle != handle)
+						if (invalidHandle != handle)
 						{
 							IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
 							GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
@@ -2386,14 +2386,14 @@ namespace bgfx
 						}
 					}
 
-					if (bgfx::invalidHandle != currentState.m_vertexBuffer.idx)
+					if (invalidHandle != currentState.m_vertexBuffer.idx)
 					{
 						if (baseVertex != state.m_startVertex
 						||  bindAttribs)
 						{
 							baseVertex = state.m_startVertex;
 							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
-							uint16_t decl = vb.m_decl.idx == bgfx::invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
 							const Material& material = s_renderCtx.m_materials[materialIdx];
 							material.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
 							
@@ -2409,7 +2409,7 @@ namespace bgfx
 						uint32_t numInstances = 0;
 						uint32_t numPrimsRendered = 0;
 
-						if (bgfx::invalidHandle != state.m_indexBuffer.idx)
+						if (invalidHandle != state.m_indexBuffer.idx)
 						{
 							if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
 							{

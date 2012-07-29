@@ -37,7 +37,7 @@ namespace bgfx
 #	define BGFX_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
-	void fatalStub(bgfx::Fatal::Enum _code, const char* _str)
+	void fatalStub(Fatal::Enum _code, const char* _str)
 	{
 		BX_TRACE("0x%08x: %s", _code, _str);
 		BX_UNUSED(_code);
@@ -71,7 +71,7 @@ namespace bgfx
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context s_ctx;
 
-	void fatal(bgfx::Fatal::Enum _code, const char* _format, ...)
+	void fatal(Fatal::Enum _code, const char* _format, ...)
 	{
 		char temp[8192];
 
@@ -198,10 +198,10 @@ namespace bgfx
 	void TextVideoMemBlitter::init()
 	{
 		m_decl.begin();
-		m_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		m_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-		m_decl.add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8, true);
-		m_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
+		m_decl.add(Attrib::Position, 3, AttribType::Float);
+		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
+		m_decl.add(Attrib::Color1, 4, AttribType::Uint8, true);
+		m_decl.add(Attrib::TexCoord0, 2, AttribType::Float);
 		m_decl.end();
 
 		uint16_t width = 2048;
@@ -209,7 +209,7 @@ namespace bgfx
 		uint8_t bpp = 1;
 		uint32_t pitch = width*bpp;
 
-		const bgfx::Memory* mem;
+		const Memory* mem;
 
 		mem = alloc(pitch*height+16);
 
@@ -228,32 +228,32 @@ namespace bgfx
 		m_texture = s_ctx.createTexture(mem, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT, NULL, NULL);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = bgfx::alloc(sizeof(vs_debugfont_dx9)+1);
+		mem = alloc(sizeof(vs_debugfont_dx9)+1);
 		memcpy(mem->data, vs_debugfont_dx9, mem->size-1);
 #elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = bgfx::alloc(sizeof(vs_debugfont_dx11)+1);
+		mem = alloc(sizeof(vs_debugfont_dx11)+1);
 		memcpy(mem->data, vs_debugfont_dx11, mem->size-1);
 #else
-		mem = bgfx::alloc(sizeof(vs_debugfont_glsl)+1);
+		mem = alloc(sizeof(vs_debugfont_glsl)+1);
 		memcpy(mem->data, vs_debugfont_glsl, mem->size-1);
 #endif // BGFX_CONFIG_RENDERER_
 		mem->data[mem->size-1] = '\0';
-		bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+		VertexShaderHandle vsh = createVertexShader(mem);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = bgfx::alloc(sizeof(fs_debugfont_dx9)+1);
+		mem = alloc(sizeof(fs_debugfont_dx9)+1);
 		memcpy(mem->data, fs_debugfont_dx9, mem->size-1);
 #elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = bgfx::alloc(sizeof(fs_debugfont_dx11)+1);
+		mem = alloc(sizeof(fs_debugfont_dx11)+1);
 		memcpy(mem->data, fs_debugfont_dx11, mem->size-1);
 #else
-		mem = bgfx::alloc(sizeof(fs_debugfont_glsl)+1);
+		mem = alloc(sizeof(fs_debugfont_glsl)+1);
 		memcpy(mem->data, fs_debugfont_glsl, mem->size-1);
 #endif // BGFX_CONFIG_RENDERER_
 		mem->data[mem->size-1] = '\0';
-		bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+		FragmentShaderHandle fsh = createFragmentShader(mem);
 
-		m_material = bgfx::createMaterial(vsh, fsh);
+		m_material = createMaterial(vsh, fsh);
 
 		m_vb = s_ctx.createTransientVertexBuffer(numBatchVertices*m_decl.m_stride, &m_decl);
 		m_ib = s_ctx.createTransientIndexBuffer(numBatchIndices*2);
@@ -261,7 +261,7 @@ namespace bgfx
 
 	void TextVideoMemBlitter::blit(const TextVideoMem& _mem)
 	{
-		struct FontVertex
+		struct Vertex
 		{
 			float m_x;
 			float m_y;
@@ -307,7 +307,7 @@ namespace bgfx
 
 		for (;yy < _mem.m_height;)
 		{
-			FontVertex* vertex = (FontVertex*)m_vb->data;
+			Vertex* vertex = (Vertex*)m_vb->data;
 			uint16_t* indices = (uint16_t*)m_ib->data;
 			uint32_t startVertex = 0;
 			uint32_t numIndices = 0;
@@ -328,7 +328,7 @@ namespace bgfx
 						uint32_t fg = palette[attr&0xf];
 						uint32_t bg = palette[(attr>>4)&0xf];
 
-						FontVertex vert[4] = 
+						Vertex vert[4] = 
 						{
 							{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
 							{ (xx+1)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
@@ -363,6 +363,41 @@ namespace bgfx
 
 			render(numIndices);
 		}
+	}
+
+	void ClearQuad::init()
+	{
+#if BGFX_CONFIG_RENDERER_DIRECT3D11
+		m_decl.begin();
+		m_decl.add(Attrib::Position, 3, AttribType::Float);
+		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
+		m_decl.end();
+
+		const Memory* mem;
+
+		mem = alloc(sizeof(vs_clear_dx11)+1);
+		memcpy(mem->data, vs_clear_dx11, mem->size-1);
+		VertexShaderHandle vsh = createVertexShader(mem);
+
+		mem = alloc(sizeof(fs_clear_dx11)+1);
+		memcpy(mem->data, fs_clear_dx11, mem->size-1);
+		FragmentShaderHandle fsh = createFragmentShader(mem);
+
+		m_material = createMaterial(vsh, fsh);
+
+		m_vb = s_ctx.createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
+
+		mem = alloc(6*sizeof(uint16_t) );
+		uint16_t* indices = (uint16_t*)mem->data;
+		indices[0] = 0;
+		indices[1] = 1;
+		indices[2] = 2;
+		indices[3] = 2;
+		indices[4] = 3;
+		indices[5] = 0;
+		m_ib = s_ctx.createIndexBuffer(mem);
+
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11
 	}
 
 	static const char* s_predefinedName[PredefinedUniform::Count] =
@@ -691,11 +726,18 @@ namespace bgfx
 		memset(m_seq, 0, sizeof(m_seq) );
 		memset(m_seqMask, 0, sizeof(m_seqMask) );
 
+		for (uint32_t ii = 0; ii < countof(m_rect); ++ii)
+		{
+			m_rect[ii].m_width = 1;
+			m_rect[ii].m_height = 1;
+		}
+
 		gameSemPost();
 
 		getCommandBuffer(CommandBuffer::RendererInit);
 
 		m_textVideoMemBlitter.init();
+		m_clearQuad.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 		m_submit->m_transientIb = createTransientIndexBuffer(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
