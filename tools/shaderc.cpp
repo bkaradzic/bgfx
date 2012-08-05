@@ -14,8 +14,9 @@
 #include "glsl_optimizer.h"
 
 #define MAX_TAGS 256
-extern "C" {
-#	include <fpp.h>
+extern "C"
+{
+#include <fpp.h>
 } // extern "C"
 
 #if 1
@@ -47,6 +48,54 @@ long int fsize(FILE* _file)
 	fseek(_file, pos, SEEK_SET);
 	return size;
 }
+
+struct Attrib
+{
+	enum Enum
+	{
+		Position = 0,
+		Normal,
+		Color0,
+		Color1,
+		Indices,
+		Weight,
+		TexCoord0,
+		TexCoord1,
+		TexCoord2,
+		TexCoord3,
+		TexCoord4,
+		TexCoord5,
+		TexCoord6,
+		TexCoord7,
+
+		Count,
+	};
+};
+
+struct RemapInputSemantic
+{
+	Attrib::Enum m_attr;
+	const char* m_name;
+	uint8_t m_index;
+};
+
+static const RemapInputSemantic s_remapInputSemantic[Attrib::Count] =
+{
+	{ Attrib::Position,  "POSITION",     0 },
+	{ Attrib::Normal,    "NORMAL",       0 },
+	{ Attrib::Color0,    "COLOR",        0 },
+	{ Attrib::Color1,    "COLOR",        1 },
+	{ Attrib::Indices,   "BLENDINDICES", 0 },
+	{ Attrib::Weight,    "BLENDWEIGHT",  0 },
+	{ Attrib::TexCoord0, "TEXCOORD",     0 },
+	{ Attrib::TexCoord1, "TEXCOORD",     1 },
+	{ Attrib::TexCoord2, "TEXCOORD",     2 },
+	{ Attrib::TexCoord3, "TEXCOORD",     3 },
+	{ Attrib::TexCoord4, "TEXCOORD",     4 },
+	{ Attrib::TexCoord5, "TEXCOORD",     5 },
+	{ Attrib::TexCoord6, "TEXCOORD",     6 },
+	{ Attrib::TexCoord7, "TEXCOORD",     7 },
+};
 
 struct ConstantType
 {
@@ -741,18 +790,31 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 
 	BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
 	BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
-	BX_TRACE("#   cl ty RxC   S  By Name");
-
-// 	bx::HashMurmur2A hash;
-// 	hash.begin();
 
 	BX_TRACE("Input:");
-	for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
+	uint8_t numAttr = (uint8_t)desc.InputParameters;
+	_stream.write(numAttr);
+
+	for (uint32_t ii = 0; ii < numAttr; ++ii)
 	{
 		D3D11_SIGNATURE_PARAMETER_DESC spd;
 		reflect->GetInputParameterDesc(ii, &spd);
-		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
-//		hash.add(inputSignature->GetBufferPointer(), inputSignature->GetBufferSize() );
+		BX_TRACE("\t%2d: %s%d, %d, %d, %x, %d"
+			, ii
+			, spd.SemanticName
+			, spd.SemanticIndex
+			, spd.SystemValueType
+			, spd.ComponentType
+			, spd.Mask
+			, spd.Register
+			);
+
+		uint8_t semanticIndex = spd.SemanticIndex;
+		_stream.write(semanticIndex);
+
+		uint8_t len = (uint8_t)strlen(spd.SemanticName);
+		_stream.write(len);
+		_stream.write(spd.SemanticName);
 	}
 
 	BX_TRACE("Output:");
@@ -761,9 +823,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 		D3D11_SIGNATURE_PARAMETER_DESC spd;
 		reflect->GetOutputParameterDesc(ii, &spd);
 		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
-//		hash.add(inputSignature->GetBufferPointer(), inputSignature->GetBufferSize() );
 	}
-//	uint32_t inputSignatureHash = hash.end();
 
 	uint16_t size = 0;
 

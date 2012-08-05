@@ -9,8 +9,6 @@
 #include <d3d11.h>
 #include "renderer_d3d.h"
 
-typedef HRESULT (WINAPI *CreateDXGIFactoryFn)(REFIID, void**);
-
 namespace bgfx
 {
 	template <typename Ty>
@@ -258,14 +256,7 @@ namespace bgfx
 		}
 
 		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
-// 		void createTextures();
-// 		void destroyTextures();
-
-		void destroy()
-		{
-//			destroyTextures();
-			m_flags = 0;
-		}
+		void destroy();
 
  		void commit(uint8_t _stage);
 // 		void resolve();
@@ -278,6 +269,11 @@ namespace bgfx
 // 		IDirect3DSurface9* m_depth;
 // 		D3DTEXTUREFILTERTYPE m_minFilter;
 // 		D3DTEXTUREFILTERTYPE m_magFilter;
+
+		ID3D11Texture2D* m_colorTexture;
+		ID3D11RenderTargetView* m_rtv;
+		ID3D11ShaderResourceView* m_srv;
+		ID3D11SamplerState* m_sampler;
 		uint16_t m_width;
 		uint16_t m_height;
 		uint32_t m_flags;

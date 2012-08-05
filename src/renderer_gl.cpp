@@ -2469,6 +2469,11 @@ namespace bgfx
 		int64_t frameTime = now - last;
 		last = now;
 
+		static int64_t min = frameTime;
+		static int64_t max = frameTime;
+		min = min > frameTime ? frameTime : min;
+		max = max < frameTime ? frameTime : max;
+
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 			double elapsedGpuMs = 0.0;
@@ -2492,7 +2497,12 @@ namespace bgfx
 				tvm.clear();
 				uint16_t pos = 10;
 				tvm.printf(0, 0, 0x8f, " " BGFX_RENDERER_NAME " ");
-				tvm.printf(10, pos++, 0x8e, "  Frame CPU: %3.4f [ms] / %3.2f", double(frameTime)*toMs, freq/frameTime);
+				tvm.printf(10, pos++, 0x8e, "  Frame CPU: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
+					, double(frameTime)*toMs
+					, double(min)*toMs
+					, double(max)*toMs
+					, freq/frameTime
+					);
 				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms] %c GPU %3.4f [ms]"
 					, m_render->m_num
 					, elapsedCpuMs
@@ -2557,6 +2567,9 @@ namespace bgfx
 				pos++;
 				tvm.printf(10, pos++, attr[attrIndex&1], "Submit wait: %3.4f [ms]", double(m_render->m_waitSubmit)*toMs);
 				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", double(m_render->m_waitRender)*toMs);
+
+				min = frameTime;
+				max = frameTime;
 			}
 
 			m_textVideoMemBlitter.blit(tvm);
