@@ -1334,33 +1334,6 @@ namespace bgfx
 		bool m_discard;
 	};
 
-	struct MaterialRef
-	{
-		MaterialRef()
-		{
-		}
-
-		MaterialHandle find(uint32_t _hash)
-		{
-			MaterialMap::const_iterator it = m_materialMap.find(_hash);
-			if (it != m_materialMap.end() )
-			{
-				return it->second;
-			}
-
-			MaterialHandle result = BGFX_INVALID_HANDLE;
-			return result;
-		}
-
-		void add(MaterialHandle _handle, uint32_t _hash)
-		{
-			m_materialMap.insert(stl::make_pair(_hash, _handle) );
-		}
-
-		typedef stl::unordered_map<uint32_t, MaterialHandle> MaterialMap;
-		MaterialMap m_materialMap;
-	};
-
 	struct VertexDeclRef
 	{
 		VertexDeclRef()
@@ -1928,6 +1901,7 @@ namespace bgfx
 		VertexShaderHandle createVertexShader(const Memory* _mem)
 		{
 			VertexShaderHandle handle = { m_vertexShaderHandle.alloc() };
+			m_vertexShaderRef[handle.idx] = 1;
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexShader);
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
@@ -1936,14 +1910,29 @@ namespace bgfx
 
 		void destroyVertexShader(VertexShaderHandle _handle)
 		{
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexShader);
-			cmdbuf.write(_handle);
-			m_submit->free(_handle);
+			vertexShaderDecRef(_handle);
+		}
+
+		void vertexShaderIncRef(VertexShaderHandle _handle)
+		{
+			++m_vertexShaderRef[_handle.idx];
+		}
+
+		void vertexShaderDecRef(VertexShaderHandle _handle)
+		{
+			int32_t refs = --m_vertexShaderRef[_handle.idx];
+			if (0 == refs)
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexShader);
+				cmdbuf.write(_handle);
+				m_submit->free(_handle);
+			}
 		}
 
 		FragmentShaderHandle createFragmentShader(const Memory* _mem)
 		{
 			FragmentShaderHandle handle = { m_fragmentShaderHandle.alloc() };
+			m_fragmentShaderRef[handle.idx] = 1;
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFragmentShader);
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
@@ -1952,25 +1941,34 @@ namespace bgfx
 
 		void destroyFragmentShader(FragmentShaderHandle _handle)
 		{
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyFragmentShader);
-			cmdbuf.write(_handle);
-			m_submit->free(_handle);
+			fragmentShaderDecRef(_handle);
+		}
+
+		void fragmentShaderIncRef(FragmentShaderHandle _handle)
+		{
+			++m_fragmentShaderRef[_handle.idx];
+		}
+
+		void fragmentShaderDecRef(FragmentShaderHandle _handle)
+		{
+			int32_t refs = --m_fragmentShaderRef[_handle.idx];
+			if (0 == refs)
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyFragmentShader);
+				cmdbuf.write(_handle);
+				m_submit->free(_handle);
+			}
 		}
 
 		MaterialHandle createMaterial(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 		{
 			MaterialHandle handle;
-// 			uint32_t hash = _vsh.idx<<16 | _fsh.idx;
-// 
-// 			MaterialHandle handle = m_materialRef.find(hash);
-// 
-// 			if (invalidHandle != handle.idx)
-// 			{
-// 				return handle;
-// 			}
-// 
  			handle.idx = m_materialHandle.alloc();
-// 			m_materialRef.add(handle, hash);
+
+			vertexShaderIncRef(_vsh);
+			fragmentShaderIncRef(_fsh);
+			m_materialRef[handle.idx].m_vsh = _vsh;
+			m_materialRef[handle.idx].m_fsh = _fsh;
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateMaterial);
 			cmdbuf.write(handle);
@@ -1984,6 +1982,9 @@ namespace bgfx
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyMaterial);
 			cmdbuf.write(_handle);
 			m_submit->free(_handle);
+
+			vertexShaderDecRef(m_materialRef[_handle.idx].m_vsh);
+			fragmentShaderDecRef(m_materialRef[_handle.idx].m_fsh);
 		}
 
 		TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint16_t* _width, uint16_t* _height)
@@ -2787,7 +2788,14 @@ namespace bgfx
 		HandleAlloc m_renderTargetHandle;
 		HandleAlloc m_uniformHandle;
 
-		MaterialRef m_materialRef;
+		int32_t m_vertexShaderRef[BGFX_CONFIG_MAX_VERTEX_SHADERS];
+		int32_t m_fragmentShaderRef[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		struct MaterialRef
+		{
+			VertexShaderHandle m_vsh;
+			FragmentShaderHandle m_fsh;
+		};
+		MaterialRef m_materialRef[BGFX_CONFIG_MAX_MATERIALS];
 		VertexDeclRef m_declRef;
 
 		RenderTargetHandle m_rt[BGFX_CONFIG_MAX_VIEWS];

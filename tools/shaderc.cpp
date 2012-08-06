@@ -3,6 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#define SHADERC_DEBUG 0
+
 #define NOMINMAX
 #include <stdio.h>
 #include <stdint.h>
@@ -19,7 +21,7 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#if 1
+#if SHADERC_DEBUG
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
 #endif // DEBUG
 
@@ -249,6 +251,15 @@ public:
 	void write(Ty _value)
 	{
 		write(&_value, sizeof(Ty) );
+	}
+
+	void writeString(const char* _str)
+	{
+		uint16_t len = (uint16_t)strlen(_str);
+		write(len);
+		write(_str);
+		char term = '\0';
+		write(term);
 	}
 
 // 	template<typename Ty>
@@ -1339,27 +1350,33 @@ int main(int _argc, const char* _argv[])
 				}
 			}
 
+#if SHADERC_DEBUG
+			stream->writeString(filePath);
+#endif // SHADERC_DEBUG
+
 			stream->close();
 			delete stream;
 		}
 
-		if (compiled
-		&&  depends)
+		if (compiled)
 		{
-			std::string ofp = outFilePath;
-			ofp += ".d";
-			FileWriter stream(ofp.c_str() );
-			if (stream.open() )
+			if (depends)
 			{
-				stream.write(outFilePath);
-				stream.write(":");
-				stream.write(preprocessor.m_depends.c_str() );
-				stream.write("\n");
-				stream.close();
+				std::string ofp = outFilePath;
+				ofp += ".d";
+				FileWriter stream(ofp.c_str() );
+				if (stream.open() )
+				{
+					stream.write(outFilePath);
+					stream.write(":");
+					stream.write(preprocessor.m_depends.c_str() );
+					stream.write("\n");
+					stream.close();
+				}
 			}
-		}
 
-		return EXIT_SUCCESS;
+			return EXIT_SUCCESS;
+		}
 	}
 
 	fprintf(stderr, "Failed to build shader.\n");

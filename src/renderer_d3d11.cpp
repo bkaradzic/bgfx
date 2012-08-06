@@ -541,8 +541,9 @@ namespace bgfx
 			{
 				D3D11_INPUT_ELEMENT_DESC vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, Attrib::Count, _vertexDecl);
-				/*DX_CHECK*/(m_device->CreateInputLayout(vertexElements
-					, uint32_t(elem-vertexElements)
+				ptrdiff_t num = elem-vertexElements;
+				DX_CHECK(m_device->CreateInputLayout(vertexElements
+					, uint32_t(num)
 					, _material.m_vsh->m_code->data
 					, _material.m_vsh->m_code->size
 					, &layout
@@ -1162,6 +1163,7 @@ namespace bgfx
 		m_constantBuffer->finish();
 
 		const DWORD* code = (const DWORD*)stream.getDataPtr();
+		stream.skip(shaderSize);
 
 		if (_fragment)
 		{
