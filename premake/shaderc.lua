@@ -10,6 +10,17 @@ project "shaderc"
 			GLSL_OPTIMIZER .. "src/glsl/msvc",
 		}
 
+	configuration { "windows" }
+		includedirs {
+			GLSL_OPTIMIZER .. "include/c99",
+		}
+
+		links {
+			"d3dx9",
+			"d3dcompiler",
+			"dxguid",
+		}
+
 	configuration {}
 
 	includedirs {
@@ -18,7 +29,6 @@ project "shaderc"
 		FCPP_DIR,
 
 		GLSL_OPTIMIZER .. "include",
-		GLSL_OPTIMIZER .. "include/c99",
 		GLSL_OPTIMIZER .. "src/mesa",
 		GLSL_OPTIMIZER .. "src/mapi",
 		GLSL_OPTIMIZER .. "src/glsl",
@@ -50,8 +60,3 @@ project "shaderc"
 		GLSL_OPTIMIZER .. "src/glsl/builtin_stubs.cpp",
 	}
 
-	links {
-		"d3dx9",
-		"d3dcompiler",
-		"dxguid",
-	}

@@ -29,7 +29,10 @@ extern "C"
 #include <bx/bx.h>
 
 #if BX_PLATFORM_LINUX
+#	include <stdarg.h>
+
 #	define _stricmp strcasecmp
+#	define _snprintf snprintf
 #endif // BX_PLATFORM_LINUX
 
 #include <bx/commandline.h>
