@@ -663,20 +663,20 @@ namespace bgfx
 		GL_FLOAT,
 	};
 
-	static const GLenum s_blendFactor[] =
+	static const GLenum s_blendFactor[][2] =
 	{
-		0, // ignored
-		GL_ZERO,
-		GL_ONE,
-		GL_SRC_COLOR,
-		GL_ONE_MINUS_SRC_COLOR,
-		GL_SRC_ALPHA,
-		GL_ONE_MINUS_SRC_ALPHA,
-		GL_DST_ALPHA,
-		GL_ONE_MINUS_DST_ALPHA,
-		GL_DST_COLOR,
-		GL_ONE_MINUS_DST_COLOR,
-		GL_SRC_ALPHA_SATURATE,
+		{ 0,                      0 }, // ignored
+		{ GL_ZERO,                GL_ZERO },
+		{ GL_ONE,                 GL_ONE },
+		{ GL_SRC_COLOR,           GL_SRC_COLOR },
+		{ GL_ONE_MINUS_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR },
+		{ GL_SRC_ALPHA,           GL_SRC_ALPHA },
+		{ GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA },
+		{ GL_DST_ALPHA,           GL_DST_ALPHA },
+		{ GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA },
+		{ GL_DST_COLOR,           GL_DST_COLOR },
+		{ GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_DST_COLOR },
+		{ GL_SRC_ALPHA_SATURATE,  GL_ONE },
 	};
 
 	static const GLenum s_depthFunc[] =
@@ -2131,7 +2131,7 @@ namespace bgfx
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 							GL_CHECK(glEnable(GL_BLEND) );
-							GL_CHECK(glBlendFunc(s_blendFactor[src], s_blendFactor[dst]) );
+							GL_CHECK(glBlendFunc(s_blendFactor[src][0], s_blendFactor[dst][1]) );
 						}
 						else
 						{

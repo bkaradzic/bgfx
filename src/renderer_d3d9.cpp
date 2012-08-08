@@ -42,20 +42,20 @@ namespace bgfx
 		{ D3DMULTISAMPLE_16_SAMPLES, 0 },
 	};
 
-	static const D3DBLEND s_blendFactor[] =
+	static const D3DBLEND s_blendFactor[][2] =
 	{
-		(D3DBLEND)0, // ignored
-		D3DBLEND_ZERO,
-		D3DBLEND_ONE,
-		D3DBLEND_SRCCOLOR,
-		D3DBLEND_INVSRCCOLOR,
-		D3DBLEND_SRCALPHA,
-		D3DBLEND_INVSRCALPHA,
-		D3DBLEND_DESTALPHA,
-		D3DBLEND_INVDESTALPHA,
-		D3DBLEND_DESTCOLOR,
-		D3DBLEND_INVDESTCOLOR,
-		D3DBLEND_SRCALPHASAT,
+		{ (D3DBLEND)0,           (D3DBLEND)0 }, // ignored
+		{ D3DBLEND_ZERO,         D3DBLEND_ZERO },
+		{ D3DBLEND_ONE,          D3DBLEND_ONE },
+		{ D3DBLEND_SRCCOLOR,     D3DBLEND_SRCCOLOR },
+		{ D3DBLEND_INVSRCCOLOR,  D3DBLEND_INVSRCCOLOR },
+		{ D3DBLEND_SRCALPHA,     D3DBLEND_SRCALPHA },
+		{ D3DBLEND_INVSRCALPHA,  D3DBLEND_INVSRCALPHA },
+		{ D3DBLEND_DESTALPHA,    D3DBLEND_DESTALPHA },
+		{ D3DBLEND_INVDESTALPHA, D3DBLEND_INVDESTALPHA },
+		{ D3DBLEND_DESTCOLOR,    D3DBLEND_DESTCOLOR },
+		{ D3DBLEND_INVDESTCOLOR, D3DBLEND_INVDESTCOLOR },
+		{ D3DBLEND_SRCALPHASAT,  D3DBLEND_ONE },
 	};
 
 	static const D3DCMPFUNC s_depthFunc[] =
@@ -2030,8 +2030,8 @@ namespace bgfx
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 
- 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src]) );
-							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst]) );
+ 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src][0]) );
+							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst][1]) );
 //							DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
 //							DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
 						}
