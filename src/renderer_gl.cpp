@@ -128,13 +128,13 @@ namespace bgfx
 					m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
 
 #if 0
- #	define GL_IMPORT(_optional, _proto, _func) \
- 				{ \
- 					_func = (_proto)eglGetProcAddress(#_func); \
- 					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
- 				}
- #	include "glimports.h"
- #	undef GL_IMPORT
+#	define GL_IMPORT(_optional, _proto, _func) \
+			{ \
+				_func = (_proto)eglGetProcAddress(#_func); \
+				BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
+			}
+#	include "glimports.h"
+#	undef GL_IMPORT
 #endif
 				}
 				else
@@ -731,9 +731,9 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,      GL_ZERO,           1 },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,      GL_ZERO,           1 },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_ZERO,      GL_ZERO,           1 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,      GL_ZERO,           4 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,      GL_ZERO,           4 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_ZERO,      GL_ZERO,           4 },
 		{ GL_ZERO,                          GL_ZERO,      GL_ZERO,           0 },
 		{ GL_LUMINANCE,                     GL_LUMINANCE, GL_UNSIGNED_BYTE,  1 },
 		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  4 },
@@ -1156,10 +1156,19 @@ namespace bgfx
 			if (!s_renderCtx.m_dxtSupport
 			||  TextureFormat::Unknown < dds.m_type)
 			{
-				if (GL_RGBA == internalFmt)
+				bool decompress = TextureFormat::Unknown > dds.m_type;
+
+				if (GL_RGBA == internalFmt
+				||  decompress)
 				{
 					internalFmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 					fmt = internalFmt;
+				}
+
+				GLenum type = tfi.m_type;
+				if (decompress)
+				{
+					type = GL_UNSIGNED_BYTE;
 				}
 
 				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp);
@@ -1209,7 +1218,7 @@ namespace bgfx
 									, depth
 									, 0
 									, fmt
-									, tfi.m_type
+									, type
 									, bits
 									) );
 							}
@@ -1223,7 +1232,7 @@ namespace bgfx
 									, height
 									, 0
 									, fmt
-									, tfi.m_type
+									, type
 									, bits
 									) );
 							}
@@ -1578,7 +1587,6 @@ namespace bgfx
 // 					GL_CHECK(glUniform1iv(loc, num, value) );
 // 				}
 // 				break;
-// 
 
 			CASE_IMPLEMENT_UNIFORM(Uniform1i, 1iv, I, int);
 			CASE_IMPLEMENT_UNIFORM(Uniform1f, 1fv, F, float);
@@ -1888,6 +1896,7 @@ namespace bgfx
 	{
 		uint32_t size = g_constantTypeSize[_type]*_num;
 		void* data = g_realloc(NULL, size);
+		memset(data, 0, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
 		s_renderCtx.m_uniformReg.reg(_name, s_renderCtx.m_uniforms[_handle.idx]);
 	}
@@ -2317,9 +2326,9 @@ namespace bgfx
 							||  current.m_flags != sampler.m_flags
 							||  materialChanged)
 							{
-								GL_CHECK(glActiveTexture(GL_TEXTURE0+stage) );
 								if (invalidHandle != sampler.m_idx)
 								{
+									GL_CHECK(glActiveTexture(GL_TEXTURE0+stage) );
 									switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 									{
 									case BGFX_SAMPLER_TEXTURE:
@@ -2349,8 +2358,6 @@ namespace bgfx
 							current = sampler;
 							flag <<= 1;
 						}
-
-						GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 					}
 
 					if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || materialChanged)
@@ -2419,7 +2426,7 @@ namespace bgfx
 								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
 								GL_CHECK(s_drawElementsInstanced(primType
-									, s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2
+									, numIndices
 									, GL_UNSIGNED_SHORT
 									, (void*)0
 									, state.m_numInstances

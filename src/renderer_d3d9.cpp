@@ -1802,6 +1802,7 @@ namespace bgfx
 	{
 		uint32_t size = BX_ALIGN_16(g_constantTypeSize[_type]*_num);
 		void* data = g_realloc(NULL, size);
+		memset(data, 0, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
 		s_renderCtx.m_uniformReg.reg(_name, s_renderCtx.m_uniforms[_handle.idx]);
 	}

@@ -93,8 +93,8 @@ namespace bgfx
 		{ DXGI_FORMAT_BC3_UNORM,          1 },
 		{ DXGI_FORMAT_UNKNOWN,            0 },
 		{ DXGI_FORMAT_R8_UNORM,           1 },
-		{ DXGI_FORMAT_R8G8B8A8_UNORM,     4 },
-		{ DXGI_FORMAT_R8G8B8A8_UNORM,     4 },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,     4 },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,     4 },
 		{ DXGI_FORMAT_R16G16B16A16_FLOAT, 8 },
 	};
 
@@ -1254,10 +1254,13 @@ namespace bgfx
 			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
+			bool convert = TextureFormat::XRGB8 == dds.m_type;
 
 			if (decompress
 			||  TextureFormat::Unknown < dds.m_type)
 			{
+				uint32_t bpp = s_textureFormat[dds.m_type].m_bpp;
+
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
 					uint32_t width = dds.m_width;
@@ -1273,10 +1276,23 @@ namespace bgfx
 						Mip mip;
 						if (getRawImageData(dds, side, lod, _mem, mip) )
 						{
-							srd[kk].pSysMem = mip.m_data;
-							srd[kk].SysMemPitch = mip.m_width*mip.m_bpp;
-							srd[kk].SysMemSlicePitch = 0;
-							++kk;
+							if (convert)
+							{
+								uint8_t* temp = (uint8_t*)g_realloc(NULL, mip.m_width*bpp*mip.m_height);
+								mip.decode(temp);
+
+								srd[kk].pSysMem = temp;
+								srd[kk].SysMemPitch = mip.m_width*bpp;
+								srd[kk].SysMemSlicePitch = 0;
+								++kk;
+							}
+							else
+							{
+								srd[kk].pSysMem = mip.m_data;
+								srd[kk].SysMemPitch = mip.m_width*mip.m_bpp;
+								srd[kk].SysMemSlicePitch = 0;
+								++kk;
+							}
 						}
 
 						width >>= 1;
@@ -1322,6 +1338,19 @@ namespace bgfx
 			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(texture, &srv, &m_ptr) );
 
 			DX_RELEASE(texture, 0);
+
+			if (convert)
+			{
+				kk = 0;
+				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				{
+					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+					{
+						g_free(const_cast<void*>(srd[kk].pSysMem) );
+						++kk;
+					}
+				}
+			}
 		}
 		else
 		{
@@ -1471,6 +1500,7 @@ namespace bgfx
 		if (_alloc)
 		{
 			m_data = g_realloc(NULL, size);
+			memset(m_data, 0, size);
 		}
 
 		D3D11_BUFFER_DESC desc;

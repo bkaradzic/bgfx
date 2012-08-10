@@ -298,7 +298,11 @@ namespace bgfx
 		const float texelWidth = 1.0f/2048.0f;
 		const float texelWidthHalf = texelWidth*0.5f;
 		const float texelHeight = 1.0f/24.0f;
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
 		const float texelHeightHalf = texelHeight*0.5f;
+#else
+		const float texelHeightHalf = 0.0f;
+#endif // BGFX_CONFIG_RENDERER_
 		const float utop = (_mem.m_small ? 0.0f : 8.0f)*texelHeight + texelHeightHalf;
 		const float ubottom = (_mem.m_small ? 8.0f : 24.0f)*texelHeight + texelHeightHalf;
 		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f);
@@ -396,7 +400,6 @@ namespace bgfx
 		indices[4] = 3;
 		indices[5] = 0;
 		m_ib = s_ctx.createIndexBuffer(mem);
-
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11
 	}
 
