@@ -217,6 +217,23 @@ namespace bgfx
 		};
 	};
 
+	struct TextureFormat
+	{
+		enum Enum
+		{
+			Dxt1,
+			Dxt3,
+			Dxt5,
+			Unknown,
+			L8,
+			XRGB8,
+			ARGB8,
+			ABGR16,
+
+			Count
+		};
+	};
+
 	static const uint16_t invalidHandle = 0xffff;
 
 	typedef struct { uint16_t idx; } DynamicIndexBufferHandle;
@@ -406,7 +423,19 @@ namespace bgfx
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, uint16_t* _width = NULL, uint16_t* _height = NULL);
 
 	///
+	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
+
+	///
+	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
+
+	///
+	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
+
+	///
 	void destroyTexture(TextureHandle _handle);
+
+	///
+	void updateTexture(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
 	///
 	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags = BGFX_RENDER_TARGET_COLOR_RGBA, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);

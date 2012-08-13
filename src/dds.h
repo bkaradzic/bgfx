@@ -10,23 +10,6 @@
 
 namespace bgfx
 {
-	struct TextureFormat
-	{
-		enum Enum
-		{
-			Dxt1,
-			Dxt3,
-			Dxt5,
-			Unknown, // compressed formats are above
-			L8,
-			XRGB8,
-			ARGB8,
-			ABGR16,
-
-			Count
-		};
-	};
-
 	struct Dds
 	{
 		TextureFormat::Enum m_type;

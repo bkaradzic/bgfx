@@ -161,6 +161,22 @@ namespace bgfx
 		uint16_t m_height;
 	};
 
+	struct TextureInfo
+	{
+		uint32_t m_flags;
+		uint16_t m_width;
+		union
+		{
+			uint16_t m_height;
+			uint16_t m_sides;
+		};
+		uint16_t m_depth;
+		uint8_t m_numMips;
+		uint8_t m_type;
+		bool m_cubeMap;
+		const Memory* m_mem;
+	};
+
 	extern const uint32_t g_constantTypeSize[ConstantType::Count];
 	extern FatalFn g_fatal;
 	extern ReallocFn g_realloc;
@@ -272,9 +288,16 @@ namespace bgfx
 				m_small = _small;
 				m_width = (uint16_t)width;
 				m_height = (uint16_t)height;
+
+				uint32_t size = m_size;
 				m_size = m_width * m_height * 2;
 
 				m_mem = (uint8_t*)g_realloc(m_mem, m_size);
+
+				if (size < m_size)
+				{
+					memset(&m_mem[size], 0, m_size-size);
+				}
 			}
 		}
 
@@ -507,6 +530,7 @@ namespace bgfx
 			CreateFragmentShader,
 			CreateMaterial,
 			CreateTexture,
+			UpdateTexture,
 			CreateRenderTarget,
 			CreateUniform,
 			End,
@@ -2028,6 +2052,21 @@ namespace bgfx
 			m_submit->free(_handle);
 		}
 
+		void updateTexture(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
+		{
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateTexture);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_mip);
+
+			Rect rect;
+			rect.m_x = _x;
+			rect.m_y = _y;
+			rect.m_width = _width;
+			rect.m_height = _height;
+			cmdbuf.write(rect);
+			cmdbuf.write(_mem);
+		}
+
 		RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 		{
 			RenderTargetHandle handle = { m_renderTargetHandle.alloc() };
@@ -2308,6 +2347,7 @@ namespace bgfx
 		void rendererCreateMaterial(MaterialHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 		void rendererDestroyMaterial(FragmentShaderHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
+		void rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem);
 		void rendererDestroyTexture(TextureHandle _handle);
 		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void rendererDestroyRenderTarget(RenderTargetHandle _handle);
@@ -2603,6 +2643,26 @@ namespace bgfx
 						_cmdbuf.read(flags);
 
 						rendererCreateTexture(handle, mem, flags);
+
+						release(mem);
+					}
+					break;
+
+				case CommandBuffer::UpdateTexture:
+					{
+						TextureHandle handle;
+						_cmdbuf.read(handle);
+
+						uint8_t mip;
+						_cmdbuf.read(mip);
+
+						Rect rect;
+						_cmdbuf.read(rect);
+
+						Memory* mem;
+						_cmdbuf.read(mem);
+
+						rendererUpdateTexture(handle, mip, rect, mem);
 
 						release(mem);
 					}

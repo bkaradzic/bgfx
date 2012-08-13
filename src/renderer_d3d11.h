@@ -214,7 +214,7 @@ namespace bgfx
 		};
 
 		Texture()
-			: m_ptr(NULL)
+			: m_srv(NULL)
 		{
 		}
 
@@ -226,12 +226,15 @@ namespace bgfx
 
 		void destroy()
 		{
-			DX_RELEASE(m_ptr, 0);
+			DX_RELEASE(m_srv, 0);
+			DX_RELEASE(m_ptr, 1);
 		}
 
 		void commit(uint8_t _stage);
+		void update(uint8_t _mip, const Rect& _rect, const Memory* _mem);
 
-		ID3D11ShaderResourceView* m_ptr;
+		ID3D11Texture2D* m_ptr;
+		ID3D11ShaderResourceView* m_srv;
 		ID3D11SamplerState* m_sampler;
 		Enum m_type;
 		bool m_srgb;

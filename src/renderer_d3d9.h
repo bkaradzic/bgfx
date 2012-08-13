@@ -305,7 +305,7 @@ namespace bgfx
 		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips, D3DFORMAT _fmt);
 		void createCubeTexture(uint32_t _edge, uint32_t _numMips, D3DFORMAT _fmt);
 
-		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch);
+		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
 
 		void create(const Memory* _mem, uint32_t _flags);
@@ -315,9 +315,17 @@ namespace bgfx
 			DX_RELEASE(m_ptr, 0);
 		}
 
+		void update(uint8_t _mip, const Rect& _rect, const Memory* _mem);
 		void commit(uint8_t _stage);
 	
-		IDirect3DBaseTexture9* m_ptr;
+		union
+		{
+			IDirect3DBaseTexture9* m_ptr;
+			IDirect3DTexture9* m_texture2d;
+			IDirect3DVolumeTexture9* m_texture3d;
+			IDirect3DCubeTexture9* m_textureCube;
+		};
+
 		D3DTEXTUREFILTERTYPE m_minFilter;
 		D3DTEXTUREFILTERTYPE m_magFilter;
 		D3DTEXTUREFILTERTYPE m_mipFilter;

@@ -989,7 +989,7 @@ namespace bgfx
 
 			uint64_t state = 0;
 			state |= _clear.m_flags & BGFX_CLEAR_COLOR_BIT ? BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE : 0;
-			state |= _clear.m_flags & BGFX_CLEAR_DEPTH_BIT ? BGFX_STATE_DEPTH_WRITE : 0;
+			state |= _clear.m_flags & BGFX_CLEAR_DEPTH_BIT ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_DEPTH_WRITE : 0;
 
 			s_renderCtx.setBlendState(state);
 			s_renderCtx.setDepthStencilState(state);
@@ -1327,17 +1327,14 @@ namespace bgfx
 				}
 			}
 
-			ID3D11Texture2D* texture;
-			DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, srd, &texture) );
+			DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, srd, &m_ptr) );
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srv;
 			memset(&srv, 0, sizeof(srv) );
 			srv.Format = s_textureFormat[dds.m_type].m_fmt;
 			srv.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srv.Texture2D.MipLevels = dds.m_numMips;
-			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(texture, &srv, &m_ptr) );
-
-			DX_RELEASE(texture, 0);
+			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_ptr, &srv, &m_srv) );
 
 			if (convert)
 			{
@@ -1361,28 +1358,15 @@ namespace bgfx
 
 			if (BGFX_MAGIC == magic)
 			{
-				uint16_t width;
-				stream.read(width);
-
-				uint16_t height;
-				stream.read(height);
-
-				uint8_t bpp;
-				stream.read(bpp);
-
-				uint8_t numMips;
-				stream.read(numMips);
-
-				stream.align(16);
-
-				DXGI_FORMAT fmt = 1 == bpp ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
+				TextureInfo ti;
+				stream.read(ti);
 
 				D3D11_TEXTURE2D_DESC desc;
-				desc.Width = width;
-				desc.Height = height;
-				desc.MipLevels = numMips;
+				desc.Width = ti.m_width;
+				desc.Height = ti.m_height;
+				desc.MipLevels = ti.m_numMips;
 				desc.ArraySize = 1;
-				desc.Format = fmt;
+				desc.Format = s_textureFormat[ti.m_type].m_fmt;
 				desc.SampleDesc.Count = 1;
 				desc.SampleDesc.Quality = 0;
 				desc.Usage = D3D11_USAGE_DEFAULT;
@@ -1390,33 +1374,47 @@ namespace bgfx
 				desc.CPUAccessFlags = 0;
 				desc.MiscFlags = 0;
 
-				D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numMips*sizeof(D3D11_SUBRESOURCE_DATA) );
-
-				for (uint8_t mip = 0; mip < numMips; ++mip)
+				if (NULL != ti.m_mem)
 				{
-					width = uint32_max(width, 1);
-					height = uint32_max(height, 1);
+					D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(ti.m_numMips*sizeof(D3D11_SUBRESOURCE_DATA) );
+					uint32_t bpp = s_textureFormat[ti.m_type].m_bpp;
+					uint8_t* data = ti.m_mem->data;
 
-					srd[mip].pSysMem = stream.getDataPtr();
-					srd[mip].SysMemPitch = width*bpp;
-					srd[mip].SysMemSlicePitch = 0;
+					for (uint8_t side = 0, numSides = ti.m_cubeMap ? 6 : 1; side < numSides; ++side)
+					{
+						uint32_t width = ti.m_width;
+						uint32_t height = ti.m_height;
 
-					stream.skip(width*height*bpp);
+						for (uint32_t lod = 0, num = ti.m_numMips; lod < num; ++lod)
+						{
+							width = uint32_max(width, 1);
+							height = uint32_max(height, 1);
 
-					width >>= 1;
-					height >>= 1;
+							srd[lod].pSysMem = data;
+							srd[lod].SysMemPitch = width*bpp;
+							srd[lod].SysMemSlicePitch = 0;
+
+							data += width*height*bpp;
+
+							width >>= 1;
+							height >>= 1;
+						}
+					}
+
+					DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, srd, &m_ptr) );
+
+					release(ti.m_mem);
 				}
-
-				ID3D11Texture2D* texture;
-				DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, srd, &texture) );
+				else
+				{
+					DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, NULL, &m_ptr) );
+				}
 
 				D3D11_SHADER_RESOURCE_VIEW_DESC srv;
 				memset(&srv, 0, sizeof(srv) );
 				srv.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-				srv.Texture2D.MipLevels = numMips;
-				DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(texture, &srv, &m_ptr) );
-
-				DX_RELEASE(texture, 0);
+				srv.Texture2D.MipLevels = ti.m_numMips;
+				DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_ptr, &srv, &m_srv) );
 			}
 			else
 			{
@@ -1427,8 +1425,22 @@ namespace bgfx
 
 	void Texture::commit(uint8_t _stage)
 	{
-		s_renderCtx.m_textureStage.m_srv[_stage] = m_ptr;
+		s_renderCtx.m_textureStage.m_srv[_stage] = m_srv;
 		s_renderCtx.m_textureStage.m_sampler[_stage] = m_sampler;
+	}
+
+	void Texture::update(uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+
+		D3D11_BOX box;
+		box.left = _rect.m_x;
+		box.top = _rect.m_y;
+		box.right = box.left + _rect.m_width;
+		box.bottom = box.top + _rect.m_height;
+		box.front = 0;
+		box.back = 1;
+		deviceCtx->UpdateSubresource(m_ptr, 0, &box, _mem->data, _rect.m_width, 0); 
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -1634,6 +1646,11 @@ namespace bgfx
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
 	{
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
+	}
+
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	{
+		s_renderCtx.m_textures[_handle.idx].update(_mip, _rect, _mem);
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)

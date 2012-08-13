@@ -1083,11 +1083,11 @@ namespace bgfx
 			, 0
 			, _fmt
 			, D3DPOOL_MANAGED
-			, (IDirect3DTexture9**)&m_ptr
+			, &m_texture2d
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_ptr, Fatal::D3D9_UnableToCreateTexture, "Failed to create texture (size: %dx%d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_texture2d, Fatal::D3D9_UnableToCreateTexture, "Failed to create texture (size: %dx%d, mips: %d, fmt: 0x%08x)."
 			, _width
 			, _height
 			, _numMips
@@ -1106,11 +1106,11 @@ namespace bgfx
 			, 0
 			, _fmt
 			, D3DPOOL_MANAGED
-			, (IDirect3DVolumeTexture9**)&m_ptr
+			, &m_texture3d
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_ptr, Fatal::D3D9_UnableToCreateTexture, "Failed to create volume texture (size: %dx%dx%d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_texture3d, Fatal::D3D9_UnableToCreateTexture, "Failed to create volume texture (size: %dx%dx%d, mips: %d, fmt: 0x%08x)."
 			, _width
 			, _height
 			, _depth
@@ -1128,36 +1128,48 @@ namespace bgfx
 			, 0
 			, _fmt
 			, D3DPOOL_MANAGED
-			, (IDirect3DCubeTexture9**)&m_ptr
+			, &m_textureCube
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_ptr, Fatal::D3D9_UnableToCreateTexture, "Failed to create cube texture (edge: %d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_textureCube, Fatal::D3D9_UnableToCreateTexture, "Failed to create cube texture (edge: %d, mips: %d, fmt: 0x%08x)."
 			, _edge
 			, _numMips
 			, _fmt
 			);
 	}
 
-	uint8_t* Texture::lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch)
+	uint8_t* Texture::lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect)
 	{
 		switch (m_type)
 		{
 		case Texture2D:
 			{
-				IDirect3DTexture9* texture = (IDirect3DTexture9*)m_ptr;
-				D3DLOCKED_RECT rect;
-				DX_CHECK(texture->LockRect(_lod, &rect, NULL, 0) );
-				_pitch = rect.Pitch;
+				D3DLOCKED_RECT lockedRect;
+
+				if (NULL != _rect)
+				{
+					RECT rect;
+					rect.left = _rect->m_x;
+					rect.top = _rect->m_y;
+					rect.right = rect.left + _rect->m_width;
+					rect.bottom = rect.top + _rect->m_height;
+					DX_CHECK(m_texture2d->LockRect(_lod, &lockedRect, &rect, 0) );
+				}
+				else
+				{
+					DX_CHECK(m_texture2d->LockRect(_lod, &lockedRect, NULL, 0) );
+				}
+
+				_pitch = lockedRect.Pitch;
 				_slicePitch = 0;
-				return (uint8_t*)rect.pBits;
+				return (uint8_t*)lockedRect.pBits;
 			}
 
 		case Texture3D:
 			{
-				IDirect3DVolumeTexture9* texture = (IDirect3DVolumeTexture9*)m_ptr;
 				D3DLOCKED_BOX box;
-				DX_CHECK(texture->LockBox(_lod, &box, NULL, 0) );
+				DX_CHECK(m_texture3d->LockBox(_lod, &box, NULL, 0) );
 				_pitch = box.RowPitch;
 				_slicePitch = box.SlicePitch;
 				return (uint8_t*)box.pBits;
@@ -1165,9 +1177,8 @@ namespace bgfx
 
 		case TextureCube:
 			{
-				IDirect3DCubeTexture9* texture = (IDirect3DCubeTexture9*)m_ptr;
 				D3DLOCKED_RECT rect;
-				DX_CHECK(texture->LockRect(D3DCUBEMAP_FACES(_side), _lod, &rect, NULL, 0) );
+				DX_CHECK(m_textureCube->LockRect(D3DCUBEMAP_FACES(_side), _lod, &rect, NULL, 0) );
 				_pitch = rect.Pitch;
 				_slicePitch = 0;
 				return (uint8_t*)rect.pBits;
@@ -1184,22 +1195,19 @@ namespace bgfx
 		{
 		case Texture2D:
 			{
-				IDirect3DTexture9* texture = (IDirect3DTexture9*)m_ptr;
-				DX_CHECK(texture->UnlockRect(_lod) );
+				DX_CHECK(m_texture2d->UnlockRect(_lod) );
 			}
 			return;
 
 		case Texture3D:
 			{
-				IDirect3DVolumeTexture9* texture = (IDirect3DVolumeTexture9*)m_ptr;
-				DX_CHECK(texture->UnlockBox(_lod) );
+				DX_CHECK(m_texture3d->UnlockBox(_lod) );
 			}
 			return;
 
 		case TextureCube:
 			{
-				IDirect3DCubeTexture9* texture = (IDirect3DCubeTexture9*)m_ptr;
-				DX_CHECK(texture->UnlockRect(D3DCUBEMAP_FACES(_side), _lod) );
+				DX_CHECK(m_textureCube->UnlockRect(D3DCUBEMAP_FACES(_side), _lod) );
 			}
 			return;
 		}
@@ -1322,37 +1330,51 @@ namespace bgfx
 
 			if (BGFX_MAGIC == magic)
 			{
-				uint16_t width;
-				stream.read(width);
+				TextureInfo ti;
+				stream.read(ti);
 
-				uint16_t height;
-				stream.read(height);
-
-				uint8_t bpp;
-				stream.read(bpp);
-
-				uint8_t numMips;
-				stream.read(numMips);
-
-				stream.align(16);
-
-				D3DFORMAT fmt = 1 == bpp ? D3DFMT_L8 : D3DFMT_A8R8G8B8;
-
-				createTexture(width, height, numMips, fmt);
-
-				for (uint8_t mip = 0; mip < numMips; ++mip)
+				if (ti.m_cubeMap)
 				{
-					width = uint32_max(width, 1);
-					height = uint32_max(height, 1);
+					createCubeTexture(ti.m_width, ti.m_numMips, s_textureFormat[ti.m_type].m_fmt);
+				}
+				else if (ti.m_depth > 1)
+				{
+					createVolumeTexture(ti.m_width, ti.m_height, ti.m_depth, ti.m_numMips, s_textureFormat[ti.m_type].m_fmt);
+				}
+				else
+				{
+					createTexture(ti.m_width, ti.m_height, ti.m_numMips, s_textureFormat[ti.m_type].m_fmt);
+				}
 
-					uint32_t pitch;
-					uint32_t slicePitch;
-					uint8_t* dst = lock(0, mip, pitch, slicePitch);
-					stream.read(dst, width*height*bpp);
-					unlock(0, mip);
+				if (NULL != ti.m_mem)
+				{
+					uint32_t bpp = s_textureFormat[ti.m_type].m_bpp;
+					uint8_t* data = ti.m_mem->data;
 
-					width >>= 1;
-					height >>= 1;
+					for (uint8_t side = 0, numSides = ti.m_cubeMap ? 6 : 1; side < numSides; ++side)
+					{
+						uint32_t width = ti.m_width;
+						uint32_t height = ti.m_height;
+
+						for (uint32_t lod = 0, num = ti.m_numMips; lod < num; ++lod)
+						{
+							width = uint32_max(width, 1);
+							height = uint32_max(height, 1);
+
+							uint32_t pitch;
+							uint32_t slicePitch;
+							uint8_t* dst = lock(side, lod, pitch, slicePitch);
+							uint32_t len = width*height*bpp;
+							memcpy(dst, data, len);
+							data += len;
+							unlock(side, lod);
+
+							width >>= 1;
+							height >>= 1;
+						}
+					}
+
+					release(ti.m_mem);
 				}
 			}
 			else
@@ -1360,6 +1382,24 @@ namespace bgfx
 				//
 			}
 		}
+	}
+
+	void Texture::update(uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	{
+		uint32_t pitch;
+		uint32_t slicePitch;
+		uint8_t* bits = lock(0, _mip, pitch, slicePitch, &_rect);
+
+		uint32_t srcpitch = _rect.m_width;
+		uint32_t dstpitch = pitch;
+		for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
+		{
+			uint8_t* src = &_mem->data[yy*srcpitch];
+			uint8_t* dst = &bits[yy*dstpitch];
+			memcpy(dst, src, srcpitch);
+		}
+
+		unlock(0, _mip);
 	}
 
 	void Texture::commit(uint8_t _stage)
@@ -1781,6 +1821,11 @@ namespace bgfx
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
 	{
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
+	}
+
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	{
+		s_renderCtx.m_textures[_handle.idx].update(_mip, _rect, _mem);
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)

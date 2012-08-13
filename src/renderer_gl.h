@@ -129,7 +129,9 @@ typedef BOOL (APIENTRYP PFNWGLDELETECONTEXTPROC) (HGLRC hglrc);
 typedef GLenum (APIENTRYP PFNGLGETERRORPROC) (void);
 typedef void (APIENTRYP PFNGLREADPIXELSPROC) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
 typedef void (APIENTRYP PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+typedef void (APIENTRYP PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
 typedef void (APIENTRYP PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
+typedef void (APIENTRYP PFNGLPIXELSTOREI) (GLenum pname, GLint param);
 typedef void (APIENTRYP PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
 typedef void (APIENTRYP PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
 typedef void (APIENTRYP PFNGLDELETETEXTURESPROC) (GLsizei n, const GLuint *textures);
@@ -308,9 +310,12 @@ namespace bgfx
 		void createColor(uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
 		void createDepth(uint32_t _width, uint32_t _height);
 		void destroy();
+		void update(uint8_t _mip, const Rect& _rect, const Memory* _mem);
 
 		GLuint m_id;
 		GLenum m_target;
+		GLenum m_fmt;
+		GLenum m_type;
 	};
 
 	struct Shader

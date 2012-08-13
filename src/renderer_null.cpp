@@ -109,6 +109,10 @@ namespace bgfx
 	{
 	}
 
+	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t /*_mip*/, const Rect& /*_rect*/, const Memory* /*_mem*/)
+	{
+	}
+
 	void Context::rendererDestroyTexture(TextureHandle /*_handle*/)
 	{
 	}

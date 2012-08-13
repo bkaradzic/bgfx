@@ -724,7 +724,7 @@ namespace bgfx
 	struct TextureFormatInfo
 	{
 		GLenum m_internalFmt;
-		GLenum m_format;
+		GLenum m_fmt;
 		GLenum m_type;
 		uint8_t m_bpp;
 	};
@@ -1145,7 +1145,7 @@ namespace bgfx
 
 			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 			GLenum internalFmt = tfi.m_internalFmt;
-			GLenum fmt = tfi.m_format;
+			m_fmt = tfi.m_fmt;
 
 			GLenum target = m_target;
 			if (dds.m_cubeMap)
@@ -1162,13 +1162,13 @@ namespace bgfx
 				||  decompress)
 				{
 					internalFmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
-					fmt = internalFmt;
+					m_fmt = internalFmt;
 				}
 
-				GLenum type = tfi.m_type;
+				m_type = tfi.m_type;
 				if (decompress)
 				{
-					type = GL_UNSIGNED_BYTE;
+					m_type = GL_UNSIGNED_BYTE;
 				}
 
 				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp);
@@ -1217,8 +1217,8 @@ namespace bgfx
 									, height
 									, depth
 									, 0
-									, fmt
-									, type
+									, m_fmt
+									, m_type
 									, bits
 									) );
 							}
@@ -1231,8 +1231,8 @@ namespace bgfx
 									, width
 									, height
 									, 0
-									, fmt
-									, type
+									, m_fmt
+									, m_type
 									, bits
 									) );
 							}
@@ -1314,40 +1314,51 @@ namespace bgfx
 
 			if (BGFX_MAGIC == magic)
 			{
-				uint16_t width;
-				stream.read(width);
+				TextureInfo ti;
+				stream.read(ti);
 
-				uint16_t height;
-				stream.read(height);
+				const TextureFormatInfo& tfi = s_textureFormat[ti.m_type];
+				GLenum internalFmt = tfi.m_internalFmt;
+				m_fmt = tfi.m_fmt;
+				m_type = tfi.m_type;
 
-				uint8_t bpp;
-				stream.read(bpp);
+				uint32_t bpp = s_textureFormat[ti.m_type].m_bpp;
+				uint8_t* data = NULL != ti.m_mem ? ti.m_mem->data : NULL;
 
-				stream.read(numMips);
-
-				stream.align(16);
-
-				for (uint8_t mip = 0; mip < numMips; ++mip)
+				for (uint8_t side = 0, numSides = ti.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					width = uint32_max(width, 1);
-					height = uint32_max(height, 1);
+					uint32_t width = ti.m_width;
+					uint32_t height = ti.m_height;
 
-					const uint8_t* data = stream.getDataPtr();
-					stream.skip(width*height*bpp);
+					for (uint32_t lod = 0, num = ti.m_numMips; lod < num; ++lod)
+					{
+						width = uint32_max(width, 1);
+						height = uint32_max(height, 1);
 
-					GL_CHECK(glTexImage2D(m_target
-						, mip
-						, 1 == bpp ? GL_LUMINANCE : GL_RGBA
-						, width
-						, height
-						, 0
-						, 1 == bpp ? GL_LUMINANCE : GL_RGBA
-						, GL_UNSIGNED_BYTE
-						, data
-						) );
+						GL_CHECK(glTexImage2D(m_target
+							, lod
+							, internalFmt
+							, width
+							, height
+							, 0
+							, m_fmt
+							, m_type
+							, data
+							) );
 
-					width >>= 1;
-					height >>= 1;
+						if (NULL != data)
+						{
+							data += width*height*bpp;
+						}
+
+						width >>= 1;
+						height >>= 1;
+					}
+				}
+
+				if (NULL != ti.m_mem)
+				{
+					release(ti.m_mem);
 				}
 			}
 			else
@@ -1438,6 +1449,22 @@ namespace bgfx
 			GL_CHECK(glDeleteTextures(1, &m_id) );
 			m_id = 0;
 		}
+	}
+
+	void Texture::update(uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	{
+		GL_CHECK(glBindTexture(m_target, m_id) );
+		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
+		GL_CHECK(glTexSubImage2D(m_target
+			, _mip
+			, _rect.m_x
+			, _rect.m_y
+			, _rect.m_width
+			, _rect.m_height
+			, m_fmt
+			, m_type
+			, _mem->data
+			) );
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -1875,6 +1902,11 @@ namespace bgfx
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
 	{
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
+	}
+
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	{
+		s_renderCtx.m_textures[_handle.idx].update(_mip, _rect, _mem);
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)
