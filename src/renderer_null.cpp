@@ -105,8 +105,23 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* /*_mem*/, uint32_t /*_flags*/)
+	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* _mem, uint32_t /*_flags*/)
 	{
+		StreamRead stream(_mem->data, _mem->size);
+
+		uint32_t magic;
+		stream.read(magic);
+
+		if (BGFX_MAGIC == magic)
+		{
+			TextureInfo ti;
+			stream.read(ti);
+
+			if (NULL != ti.m_mem)
+			{
+				release(ti.m_mem);
+			}
+		}
 	}
 
 	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t /*_mip*/, const Rect& /*_rect*/, const Memory* /*_mem*/)
