@@ -873,7 +873,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 						ConstantType::Enum type = findConstantTypeDx11(constDesc, varDesc.Size);
 
 						if (ConstantType::Count != type
-						&&  0 != (varDesc.uFlags & D3D10_SVF_USED) )
+						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 						{
 							Uniform un;
 							un.name = varDesc.Name;
@@ -893,6 +893,26 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 						}
 					}
 				}
+			}
+		}
+	}
+
+	BX_TRACE("Bound:");
+	for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
+	{
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+
+		hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
+		if (SUCCEEDED(hr) )
+		{
+//			if (bindDesc.Type == D3D_SIT_SAMPLER)
+			{
+				BX_TRACE("\t%s, %d, %d, %d"
+					, bindDesc.Name
+					, bindDesc.Type
+					, bindDesc.BindPoint
+					, bindDesc.BindCount
+					);
 			}
 		}
 	}
@@ -917,7 +937,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 		BX_TRACE("%s, %s, %d, %d, %d"
 			, un.name.c_str()
 			, s_constantTypeName[un.type]
-		, un.num
+			, un.num
 			, un.regIndex
 			, un.regCount
 			);
@@ -1173,6 +1193,24 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
+	uint32_t hlsl = 2;
+	const char* profile = cmdLine.findOption('p');
+	if (NULL != profile)
+	{
+		if (0 == strncmp(&profile[1], "s_3", 3) )
+		{
+			hlsl = 3;
+		}
+		else if (0 == strncmp(&profile[1], "s_4", 3) )
+		{
+			hlsl = 4;
+		}
+		else if (0 == strncmp(&profile[1], "s_5", 3) )
+		{
+			hlsl = 5;
+		}
+	}
+
 	const char* bin2c = NULL;
 	if (cmdLine.hasArg("bin2c") )
 	{
@@ -1252,12 +1290,14 @@ int main(int _argc, const char* _argv[])
 	else if (0 == _stricmp(platform, "windows") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_WINDOWS=1");
-		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_HLSL=1");
+		char temp[256];
+		_snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_HLSL=%d", hlsl);
+		preprocessor.setDefine(temp);
 	}
 	else if (0 == _stricmp(platform, "xbox360") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_XBOX360=1");
-		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_HLSL=1");
+		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_HLSL=3");
 	}
 	else
 	{
@@ -1341,9 +1381,7 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				const char* profile = cmdLine.findOption('p');
-				if (0 == strncmp(&profile[1], "s_4", 3)
-				||  0 == strncmp(&profile[1], "s_5", 3) )
+				if (hlsl > 3)
 				{
 					compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, *stream);
 				}

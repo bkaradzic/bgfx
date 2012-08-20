@@ -44,18 +44,18 @@ namespace bgfx
 
 	static const D3DBLEND s_blendFactor[][2] =
 	{
-		{ (D3DBLEND)0,           (D3DBLEND)0 }, // ignored
-		{ D3DBLEND_ZERO,         D3DBLEND_ZERO },
-		{ D3DBLEND_ONE,          D3DBLEND_ONE },
-		{ D3DBLEND_SRCCOLOR,     D3DBLEND_SRCCOLOR },
-		{ D3DBLEND_INVSRCCOLOR,  D3DBLEND_INVSRCCOLOR },
-		{ D3DBLEND_SRCALPHA,     D3DBLEND_SRCALPHA },
-		{ D3DBLEND_INVSRCALPHA,  D3DBLEND_INVSRCALPHA },
-		{ D3DBLEND_DESTALPHA,    D3DBLEND_DESTALPHA },
+		{ (D3DBLEND)0,           (D3DBLEND)0           }, // ignored
+		{ D3DBLEND_ZERO,         D3DBLEND_ZERO         },
+		{ D3DBLEND_ONE,          D3DBLEND_ONE          },
+		{ D3DBLEND_SRCCOLOR,     D3DBLEND_SRCCOLOR     },
+		{ D3DBLEND_INVSRCCOLOR,  D3DBLEND_INVSRCCOLOR  },
+		{ D3DBLEND_SRCALPHA,     D3DBLEND_SRCALPHA     },
+		{ D3DBLEND_INVSRCALPHA,  D3DBLEND_INVSRCALPHA  },
+		{ D3DBLEND_DESTALPHA,    D3DBLEND_DESTALPHA    },
 		{ D3DBLEND_INVDESTALPHA, D3DBLEND_INVDESTALPHA },
-		{ D3DBLEND_DESTCOLOR,    D3DBLEND_DESTCOLOR },
+		{ D3DBLEND_DESTCOLOR,    D3DBLEND_DESTCOLOR    },
 		{ D3DBLEND_INVDESTCOLOR, D3DBLEND_INVDESTCOLOR },
-		{ D3DBLEND_SRCALPHASAT,  D3DBLEND_ONE },
+		{ D3DBLEND_SRCALPHASAT,  D3DBLEND_ONE          },
 	};
 
 	static const D3DCMPFUNC s_depthFunc[] =
@@ -1384,7 +1384,7 @@ namespace bgfx
 		}
 	}
 
-	void Texture::update(uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
 		uint32_t pitch;
 		uint32_t slicePitch;
@@ -1623,7 +1623,7 @@ namespace bgfx
 			_type* value = (_type*)data; \
 			s_renderCtx.m_device->SetPixelShaderConstant##_dxsuffix(loc, value, num); \
 		} \
-		break;
+		break
 
 			switch ((int32_t)type)
 			{
@@ -1823,9 +1823,9 @@ namespace bgfx
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		s_renderCtx.m_textures[_handle.idx].update(_mip, _rect, _mem);
+		s_renderCtx.m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)

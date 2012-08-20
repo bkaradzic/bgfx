@@ -310,7 +310,7 @@ namespace bgfx
 		void createColor(uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
 		void createDepth(uint32_t _width, uint32_t _height);
 		void destroy();
-		void update(uint8_t _mip, const Rect& _rect, const Memory* _mem);
+		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
 
 		GLuint m_id;
 		GLenum m_target;

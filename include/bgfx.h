@@ -9,8 +9,6 @@
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // size_t
 
-namespace bgfx
-{
 #define BGFX_STATE_DEPTH_WRITE          UINT64_C(0x0000000000000001)
 
 #define BGFX_STATE_ALPHA_TEST           UINT64_C(0x0000000000000004)
@@ -79,13 +77,13 @@ namespace bgfx
 #define BGFX_STATE_NONE                 UINT64_C(0x0000000000000000)
 #define BGFX_STATE_MASK                 UINT64_C(0xffffffffffffffff)
 #define BGFX_STATE_DEFAULT (0 \
-			| BGFX_STATE_RGB_WRITE \
-			| BGFX_STATE_ALPHA_WRITE \
-			| BGFX_STATE_DEPTH_TEST_LESS \
-			| BGFX_STATE_DEPTH_WRITE \
-			| BGFX_STATE_CULL_CW \
-			| BGFX_STATE_MSAA \
-			)
+					| BGFX_STATE_RGB_WRITE \
+					| BGFX_STATE_ALPHA_WRITE \
+					| BGFX_STATE_DEPTH_TEST_LESS \
+					| BGFX_STATE_DEPTH_WRITE \
+					| BGFX_STATE_CULL_CW \
+					| BGFX_STATE_MSAA \
+					)
 
 #define BGFX_CLEAR_NONE                 UINT8_C(0x00)
 #define BGFX_CLEAR_COLOR_BIT            UINT8_C(0x01)
@@ -156,6 +154,8 @@ namespace bgfx
 
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
+namespace bgfx
+{
 	struct Fatal
 	{
 		enum Enum
@@ -432,10 +432,16 @@ namespace bgfx
 	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
 	///
-	void destroyTexture(TextureHandle _handle);
+	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
 	///
-	void updateTexture(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
+	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem);
+
+	///
+	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
+
+	///
+	void destroyTexture(TextureHandle _handle);
 
 	///
 	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags = BGFX_RENDER_TARGET_COLOR_RGBA, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);

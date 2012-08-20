@@ -2052,18 +2052,20 @@ namespace bgfx
 			m_submit->free(_handle);
 		}
 
-		void updateTexture(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
+		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem)
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateTexture);
 			cmdbuf.write(_handle);
+			cmdbuf.write(_side);
 			cmdbuf.write(_mip);
-
 			Rect rect;
 			rect.m_x = _x;
 			rect.m_y = _y;
 			rect.m_width = _width;
 			rect.m_height = _height;
 			cmdbuf.write(rect);
+			cmdbuf.write(_z);
+			cmdbuf.write(_depth);
 			cmdbuf.write(_mem);
 		}
 
@@ -2347,7 +2349,7 @@ namespace bgfx
 		void rendererCreateMaterial(MaterialHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 		void rendererDestroyMaterial(FragmentShaderHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
-		void rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem);
+		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
 		void rendererDestroyTexture(TextureHandle _handle);
 		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void rendererDestroyRenderTarget(RenderTargetHandle _handle);
@@ -2653,16 +2655,25 @@ namespace bgfx
 						TextureHandle handle;
 						_cmdbuf.read(handle);
 
+						uint8_t side;
+						_cmdbuf.read(side);
+
 						uint8_t mip;
 						_cmdbuf.read(mip);
 
 						Rect rect;
 						_cmdbuf.read(rect);
 
+						uint16_t zz;
+						_cmdbuf.read(zz);
+
+						uint16_t depth;
+						_cmdbuf.read(depth);
+
 						Memory* mem;
 						_cmdbuf.read(mem);
 
-						rendererUpdateTexture(handle, mip, rect, mem);
+						rendererUpdateTexture(handle, side, mip, rect, zz, depth, mem);
 
 						release(mem);
 					}

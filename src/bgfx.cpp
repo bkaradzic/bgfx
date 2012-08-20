@@ -1007,7 +1007,7 @@ namespace bgfx
 		s_ctx.destroyTexture(_handle);
 	}
 
-	void updateTexture(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
+	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
 	{
 		if (_width == 0
 		||  _height == 0)
@@ -1016,7 +1016,34 @@ namespace bgfx
 		}
 		else
 		{
-			s_ctx.updateTexture(_handle, _mip, _x, _y, _width, _height, _mem);
+			s_ctx.updateTexture(_handle, 0, _mip, _x, _y, 0, _width, _height, 1, _mem);
+		}
+	}
+
+	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem)
+	{
+		if (_width == 0
+		||  _height == 0
+		||  _depth == 0)
+		{
+			release(_mem);
+		}
+		else
+		{
+			s_ctx.updateTexture(_handle, 0, _mip, _x, _y, _z, _width, _height, _depth, _mem);
+		}
+	}
+
+	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
+	{
+		if (_width == 0
+		||  _height == 0)
+		{
+			release(_mem);
+		}
+		else
+		{
+			s_ctx.updateTexture(_handle, _side, _mip, _x, _y, 0, _width, _height, 1, _mem);
 		}
 	}
 

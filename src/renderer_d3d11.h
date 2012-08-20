@@ -6,6 +6,7 @@
 #ifndef __RENDERER_D3D11_H__
 #define __RENDERER_D3D11_H__
 
+#define D3D11_NO_HELPERS
 #include <d3d11.h>
 #include "renderer_d3d.h"
 
@@ -214,7 +215,11 @@ namespace bgfx
 		};
 
 		Texture()
-			: m_srv(NULL)
+			: m_ptr(NULL)
+			, m_srv(NULL)
+			, m_sampler(NULL)
+			, m_srgb(false)
+			, m_numMips(0)
 		{
 		}
 
@@ -230,14 +235,21 @@ namespace bgfx
 			DX_RELEASE(m_ptr, 1);
 		}
 
+		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
 		void commit(uint8_t _stage);
-		void update(uint8_t _mip, const Rect& _rect, const Memory* _mem);
 
-		ID3D11Texture2D* m_ptr;
+		union
+		{
+			ID3D11Resource* m_ptr;
+			ID3D11Texture2D* m_texture2d;
+			ID3D11Texture3D* m_texture3d;
+		};
+
 		ID3D11ShaderResourceView* m_srv;
 		ID3D11SamplerState* m_sampler;
 		Enum m_type;
 		bool m_srgb;
+		uint8_t m_numMips;
 	};
 
 	struct RenderTarget

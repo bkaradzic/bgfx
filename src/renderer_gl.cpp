@@ -665,18 +665,18 @@ namespace bgfx
 
 	static const GLenum s_blendFactor[][2] =
 	{
-		{ 0,                      0 }, // ignored
-		{ GL_ZERO,                GL_ZERO },
-		{ GL_ONE,                 GL_ONE },
-		{ GL_SRC_COLOR,           GL_SRC_COLOR },
+		{ 0,                      0                      }, // ignored
+		{ GL_ZERO,                GL_ZERO                },
+		{ GL_ONE,                 GL_ONE                 },
+		{ GL_SRC_COLOR,           GL_SRC_COLOR           },
 		{ GL_ONE_MINUS_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR },
-		{ GL_SRC_ALPHA,           GL_SRC_ALPHA },
+		{ GL_SRC_ALPHA,           GL_SRC_ALPHA           },
 		{ GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA },
-		{ GL_DST_ALPHA,           GL_DST_ALPHA },
+		{ GL_DST_ALPHA,           GL_DST_ALPHA           },
 		{ GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA },
-		{ GL_DST_COLOR,           GL_DST_COLOR },
+		{ GL_DST_COLOR,           GL_DST_COLOR           },
 		{ GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_DST_COLOR },
-		{ GL_SRC_ALPHA_SATURATE,  GL_ONE },
+		{ GL_SRC_ALPHA_SATURATE,  GL_ONE                 },
 	};
 
 	static const GLenum s_depthFunc[] =
@@ -1186,7 +1186,7 @@ namespace bgfx
 						depth = uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, 0, lod, _mem, mip) )
+						if (getRawImageData(dds, side, lod, _mem, mip) )
 						{
 							mip.decode(bits);
 
@@ -1261,7 +1261,7 @@ namespace bgfx
 						depth = uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, 0, ii, _mem, mip) )
+						if (getRawImageData(dds, side, ii, _mem, mip) )
 						{
 #if BGFX_CONFIG_RENDERER_OPENGL
 							if (m_target == GL_TEXTURE_3D)
@@ -1451,20 +1451,62 @@ namespace bgfx
 		}
 	}
 
-	void Texture::update(uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
-		GL_CHECK(glTexSubImage2D(m_target
-			, _mip
-			, _rect.m_x
-			, _rect.m_y
-			, _rect.m_width
-			, _rect.m_height
-			, m_fmt
-			, m_type
-			, _mem->data
-			) );
+
+		switch (m_target)
+		{
+		case GL_TEXTURE_2D:
+			{
+				GL_CHECK(glTexSubImage2D(m_target
+					, _mip
+					, _rect.m_x
+					, _rect.m_y
+					, _rect.m_width
+					, _rect.m_height
+					, m_fmt
+					, m_type
+					, _mem->data
+					) );
+			}
+			break;
+
+		case GL_TEXTURE_CUBE_MAP:
+			{
+				GL_CHECK(glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+_side
+					, _mip
+					, _rect.m_x
+					, _rect.m_y
+					, _rect.m_width
+					, _rect.m_height
+					, m_fmt
+					, m_type
+					, _mem->data
+					) );
+			}
+			break;
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+		case GL_TEXTURE_3D:
+			{
+				GL_CHECK(glTexSubImage3D(m_target
+					, _mip
+					, _rect.m_x
+					, _rect.m_y
+					, _z
+					, _rect.m_width
+					, _rect.m_height
+					, _depth
+					, m_fmt
+					, m_type
+					, _mem->data
+					) );
+			}
+			break;
+		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -1904,9 +1946,9 @@ namespace bgfx
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _mip, const Rect& _rect, const Memory* _mem)
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		s_renderCtx.m_textures[_handle.idx].update(_mip, _rect, _mem);
+		s_renderCtx.m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)
