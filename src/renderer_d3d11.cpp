@@ -124,117 +124,125 @@ namespace bgfx
 		{
 			if (0xff != _decl.m_attributes[attr])
 			{
-				uint8_t num;
-				AttribType::Enum type;
-				bool normalized;
-				_decl.decode(Attrib::Enum(attr), num, type, normalized);
-
 				memcpy(elem, &s_attrib[attr], sizeof(D3D11_INPUT_ELEMENT_DESC) );
 
-				DXGI_FORMAT format = elem->Format;
-
-				switch (type)
+				if (0 == _decl.m_attributes[attr])
 				{
-				case AttribType::Uint8:
-					if (normalized)
+					elem->AlignedByteOffset = 0;
+				}
+				else
+				{
+					uint8_t num;
+					AttribType::Enum type;
+					bool normalized;
+					_decl.decode(Attrib::Enum(attr), num, type, normalized);
+
+					DXGI_FORMAT format = elem->Format;
+
+					switch (type)
 					{
-						switch (num)
+					case AttribType::Uint8:
+						if (normalized)
 						{
-						case 1:
-							format = DXGI_FORMAT_R8_UNORM;
-							break;
+							switch (num)
+							{
+							case 1:
+								format = DXGI_FORMAT_R8_UNORM;
+								break;
 
-						case 2:
-							format = DXGI_FORMAT_R8G8_UNORM;
-							break;
+							case 2:
+								format = DXGI_FORMAT_R8G8_UNORM;
+								break;
 
-						default:
-						case 4:
-							format = DXGI_FORMAT_R8G8B8A8_UNORM;
-							break;
+							default:
+							case 4:
+								format = DXGI_FORMAT_R8G8B8A8_UNORM;
+								break;
+							}
 						}
-					}
-					else
-					{
-						switch (num)
+						else
 						{
-						case 1:
-							format = DXGI_FORMAT_R8_UINT;
-							break;
+							switch (num)
+							{
+							case 1:
+								format = DXGI_FORMAT_R8_UINT;
+								break;
 
-						case 2:
-							format = DXGI_FORMAT_R8G8_UINT;
-							break;
+							case 2:
+								format = DXGI_FORMAT_R8G8_UINT;
+								break;
 
-						default:
-						case 4:
-							format = DXGI_FORMAT_R8G8B8A8_UINT;
-							break;
+							default:
+							case 4:
+								format = DXGI_FORMAT_R8G8B8A8_UINT;
+								break;
+							}
 						}
-					}
-					break;
-
-				case AttribType::Uint16:
-					if (normalized)
-					{
-						switch (num)
-						{
-						default:
-						case 2:
-							format = DXGI_FORMAT_R16G16_UNORM;
-							break;
-
-						case 4:
-							format = DXGI_FORMAT_R16G16B16A16_UNORM;
-							break;
-						}
-					}
-					else
-					{
-						switch (num)
-						{
-						default:
-						case 2:
-							format = DXGI_FORMAT_R16G16_UINT;
-							break;
-
-						case 4:
-							format = DXGI_FORMAT_R16G16B16A16_UINT;
-							break;
-						}
-					}
-					break;
-
-				case AttribType::Float:
-					switch (num)
-					{
-					case 1:
-						format = DXGI_FORMAT_R32_FLOAT;
 						break;
 
-					case 2:
-						format = DXGI_FORMAT_R32G32_FLOAT;
+					case AttribType::Uint16:
+						if (normalized)
+						{
+							switch (num)
+							{
+							default:
+							case 2:
+								format = DXGI_FORMAT_R16G16_UNORM;
+								break;
+
+							case 4:
+								format = DXGI_FORMAT_R16G16B16A16_UNORM;
+								break;
+							}
+						}
+						else
+						{
+							switch (num)
+							{
+							default:
+							case 2:
+								format = DXGI_FORMAT_R16G16_UINT;
+								break;
+
+							case 4:
+								format = DXGI_FORMAT_R16G16B16A16_UINT;
+								break;
+							}
+						}
+						break;
+
+					case AttribType::Float:
+						switch (num)
+						{
+						case 1:
+							format = DXGI_FORMAT_R32_FLOAT;
+							break;
+
+						case 2:
+							format = DXGI_FORMAT_R32G32_FLOAT;
+							break;
+
+						default:
+						case 3:
+							format = DXGI_FORMAT_R32G32B32_FLOAT;
+							break;
+
+						case 4:
+							format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+							break;
+						}
+
 						break;
 
 					default:
-					case 3:
-						format = DXGI_FORMAT_R32G32B32_FLOAT;
-						break;
-
-					case 4:
-						format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+						BX_CHECK(false, "Invalid attrib type.");
 						break;
 					}
 
-					break;
-
-				default:
-					BX_CHECK(false, "Invalid attrib type.");
-					break;
+					elem->Format = format;
+					elem->AlignedByteOffset = _decl.m_offset[attr];
 				}
 
-				elem->Format = format;
-				elem->AlignedByteOffset = _decl.m_offset[attr];
 				++elem;
 			}
 		}
@@ -540,7 +548,19 @@ namespace bgfx
 			if (NULL == layout)
 			{
 				D3D11_INPUT_ELEMENT_DESC vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
-				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, Attrib::Count, _vertexDecl);
+
+				VertexDecl decl;
+				memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
+				const uint8_t* attrMask = _material.m_vsh->m_attrMask;
+
+				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+				{
+					uint8_t mask = attrMask[ii];
+					uint8_t attr = (decl.m_attributes[ii] & mask);
+					decl.m_attributes[ii] = attr == 0 ? 0xff : attr == 0xff ? 0 : attr;
+				}
+
+				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, Attrib::Count, decl);
 				ptrdiff_t num = elem-vertexElements;
 				DX_CHECK(m_device->CreateInputLayout(vertexElements
 					, uint32_t(num)
@@ -1066,25 +1086,7 @@ namespace bgfx
 
 		StreamRead stream(_mem->data, _mem->size);
 
-		uint8_t numAttr;
-		stream.read(numAttr);
-
-		for (uint8_t ii = 0; ii < numAttr; ++ii)
-		{
-			uint8_t semanticIndex;
-			stream.read(semanticIndex);
-
-			uint8_t len;
-			stream.read(len);
-
-			char temp[256];
-			memcpy(temp, stream.getDataPtr(), len);
-			temp[len] = '\0';
-
-			BX_TRACE("\t: %s %d", temp, semanticIndex);
-
-			stream.skip(len);
-		}
+		stream.read(m_attrMask, sizeof(m_attrMask) );
 
 		uint16_t count;
 		stream.read(count);

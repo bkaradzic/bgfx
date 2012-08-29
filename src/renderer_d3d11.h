@@ -163,6 +163,7 @@ namespace bgfx
 		ConstantBuffer* m_constantBuffer;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
+		uint8_t m_attrMask[Attrib::Count];
 
 		uint32_t m_hash;
 

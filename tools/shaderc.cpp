@@ -12,6 +12,9 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
+
+namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 
 #include "glsl_optimizer.h"
 
@@ -84,7 +87,7 @@ struct RemapInputSemantic
 	uint8_t m_index;
 };
 
-static const RemapInputSemantic s_remapInputSemantic[Attrib::Count] =
+static const RemapInputSemantic s_remapInputSemantic[Attrib::Count+1] =
 {
 	{ Attrib::Position,  "POSITION",     0 },
 	{ Attrib::Normal,    "NORMAL",       0 },
@@ -100,7 +103,23 @@ static const RemapInputSemantic s_remapInputSemantic[Attrib::Count] =
 	{ Attrib::TexCoord5, "TEXCOORD",     5 },
 	{ Attrib::TexCoord6, "TEXCOORD",     6 },
 	{ Attrib::TexCoord7, "TEXCOORD",     7 },
+	{ Attrib::Count,     "",             0 },
 };
+
+const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
+{
+	for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+	{
+		const RemapInputSemantic& ris = s_remapInputSemantic[ii];
+		if (0 == strcmp(ris.m_name, _name)
+		&&  ris.m_index == _index)
+		{
+			return ris;
+		}
+	}
+
+	return s_remapInputSemantic[Attrib::Count];
+}
 
 struct ConstantType
 {
@@ -264,13 +283,6 @@ public:
 		char term = '\0';
 		write(term);
 	}
-
-// 	template<typename Ty>
-// 	void write(Ty _value)
-// 	{
-// 		Ty temp = m_bigEndian ? bx::bigEndian<Ty>(_value) : _value;
-// 		write(&temp, sizeof(Ty) );
-// 	}
 };
 
 IStreamWriter::~IStreamWriter()
@@ -451,6 +463,134 @@ private:
 	FILE* m_file;
 };
 
+struct Varying
+{
+	std::string m_name;
+	std::string m_type;
+	std::string m_init;
+	std::string m_semantics;
+};
+
+typedef std::unordered_map<std::string, Varying> VaryingMap;
+
+class File 
+{
+public:
+	File(const char* _filePath)
+		: m_data(NULL)
+	{
+		FILE* file = fopen(_filePath, "r");
+		if (NULL != file)
+		{
+			m_size = fsize(file);
+			m_data = new char[m_size+1];
+			m_size = fread(m_data, 1, m_size, file);
+			m_data[m_size] = '\0';
+			fclose(file);
+		}
+	}
+
+	~File()
+	{
+		delete [] m_data;
+	}
+
+	const char* getData() const
+	{
+		return m_data;
+	}
+
+	long int getSize() const
+	{
+		return m_size;
+	}
+
+private:
+	char* m_data;
+	long int m_size;
+};
+
+const char* strnl(const char* _str)
+{
+	const char* eol = strstr(_str, "\n\r");
+	if (NULL != eol)
+	{
+		return eol + 2;
+	}
+
+	eol = strstr(_str, "\n");
+	if (NULL != eol)
+	{
+		return eol + 1;
+	}
+
+	return eol + strlen(_str);
+}
+
+const char* streol(const char* _str)
+{
+	const char* eol = strstr(_str, "\n\r");
+	if (NULL != eol)
+	{
+		return eol;
+	}
+
+	eol = strstr(_str, "\n");
+	if (NULL != eol)
+	{
+		return eol;
+	}
+
+	return eol + strlen(_str);
+}
+
+const char* strws(const char* _str)
+{
+	for (; isspace(*_str); ++_str);
+	return _str;
+}
+
+const char* strnws(const char* _str)
+{
+	for (; !isspace(*_str); ++_str);
+	return _str;
+}
+
+const char* strword(const char* _str)
+{
+	for (char ch = *_str++; isalnum(ch) || '_' == ch; ch = *_str++);
+	return _str-1;
+}
+
+const char* strmb(const char* _str, char _open, char _close)
+{
+	int count = 0;
+	for (char ch = *_str++; ch != '\0' && count >= 0; ch = *_str++)
+	{
+		if (ch == _open)
+		{
+			count++;
+		}
+		else if (ch == _close)
+		{
+			count--;
+			if (0 == count)
+			{
+				return _str-1;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+void strins(char* _str, const char* _insert)
+{
+	size_t len = strlen(_insert);
+	memmove(&_str[len], _str, strlen(_str) );
+	memcpy(_str, _insert, len);
+}
+
 class LineReader
 {
 public:
@@ -482,21 +622,8 @@ private:
 	void skipLine()
 	{
 		const char* str = &m_str[m_pos];
-		const char* eol = strstr(str, "\n\r");
-		if (NULL != eol)
-		{
-			m_pos += eol-str+2;
-			return;
-		}
-
-		eol = strstr(str, "\n");
-		if (NULL != eol)
-		{
-			m_pos += eol-str+1;
-			return;
-		}
-
-		m_pos += (uint32_t)strlen(str);
+		const char* nl = strnl(str);
+		m_pos += (uint32_t)(nl - str);
 	}
 
 	const char* m_str;
@@ -806,10 +933,10 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 	BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
 
 	BX_TRACE("Input:");
-	uint8_t numAttr = (uint8_t)desc.InputParameters;
-	_stream.write(numAttr);
+	uint8_t attrMask[Attrib::Count];
+	memset(attrMask, 0, sizeof(attrMask) );
 
-	for (uint32_t ii = 0; ii < numAttr; ++ii)
+	for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
 	{
 		D3D11_SIGNATURE_PARAMETER_DESC spd;
 		reflect->GetInputParameterDesc(ii, &spd);
@@ -823,13 +950,14 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 			, spd.Register
 			);
 
-		uint8_t semanticIndex = spd.SemanticIndex;
-		_stream.write(semanticIndex);
-
-		uint8_t len = (uint8_t)strlen(spd.SemanticName);
-		_stream.write(len);
-		_stream.write(spd.SemanticName);
+		const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, spd.SemanticIndex);
+		if (ris.m_attr != Attrib::Count)
+		{
+			attrMask[ris.m_attr] = 0xff;
+		}
 	}
+
+	_stream.write(attrMask, sizeof(attrMask) );
 
 	BX_TRACE("Output:");
 	for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
@@ -978,8 +1106,6 @@ struct Preprocessor
 		, m_scratchPos(0)
 		, m_fgetsPos(0)
 	{
-		m_filePath = scratch(_filePath);
-
 		m_tagptr->tag = FPPTAG_USERDATA;
 		m_tagptr->data = this;
 		m_tagptr++;
@@ -1009,7 +1135,7 @@ struct Preprocessor
 		m_tagptr++;
 
 		m_tagptr->tag = FPPTAG_INPUT_NAME;
-		m_tagptr->data = m_filePath;
+		m_tagptr->data = scratch(_filePath);
 		m_tagptr++;
 
 		m_default = "#define lowp\n#define mediump\n#define highp\n";
@@ -1038,30 +1164,30 @@ struct Preprocessor
 		m_default += temp;
 	}
 
+	void writef(const char* _format, ...)
+	{
+		va_list argList;
+		va_start(argList, _format);
+
+		char temp[2048];
+		int len = vsnprintf(temp, sizeof(temp), _format, argList);
+		m_default += temp;
+
+		va_end(argList);
+	}
+
 	void addDependency(const char* _fileName)
 	{
 		m_depends += " \\\n ";
 		m_depends += _fileName;
 	}
 
-	bool run()
+	bool run(const char* _input)
 	{
 		m_fgetsPos = 0;
 
-		FILE* file = fopen(m_filePath, "r");
-		if (NULL == file)
-		{
-			return false;
-		}
-
-		long int size = fsize(file);
-		char* input = new char[size+1];
-		size = fread(input, 1, size, file);
-		input[size] = '\0';
-		fclose(file);
-
 		m_input = m_default;
-		m_input += input;
+		m_input += _input;
 
 		fppTag* tagptr = m_tagptr;
 
@@ -1127,7 +1253,6 @@ struct Preprocessor
 	fppTag m_tags[MAX_TAGS];
 	fppTag* m_tagptr;
 
-	char* m_filePath;
 	std::string m_depends;
 	std::string m_default;
 	std::string m_input;
@@ -1305,10 +1430,14 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
+	preprocessor.setDefine("M_PI=3.1415926535897932384626433832795");
+
+	bool fragment = false;
 	switch (tolower(type[0]) )
 	{
 	case 'f':
 		preprocessor.setDefine("BGFX_SHADER_TYPE_FRAGMENT=1");
+		fragment = true;
 		break;
 
 	case 'v':
@@ -1320,104 +1449,361 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (preprocessor.run() )
+	FILE* file = fopen(filePath, "r");
+	if (NULL != file)
 	{
-		BX_TRACE("Input file: %s", filePath);
-		BX_TRACE("Output file: %s", outFilePath);
+		VaryingMap varyingMap;
 
-		if (preprocessOnly)
+		File attribdef("varying.def.sc");
+		const char* parse = attribdef.getData();
+		while (NULL != parse
+		   &&  *parse != '\0')
 		{
-			FileWriter stream(outFilePath);
-
-			if (!stream.open() )
+			parse = strws(parse);
+			const char* eol = strchr(parse, ';');
+			if (NULL != eol)
 			{
-				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-				return false;
-			}
+				const char* type = parse;
+				const char* name = parse = strws(strword(parse) );
+				const char* column = parse = strws(strword(parse) );
+				const char* semantics = parse = strws(strnws(parse) );
+				const char* assign = parse = strws(strword(parse) );
+				const char* init = parse = strws(strnws(parse) );
 
-			if (glsl)
-			{
-				const char* profile = cmdLine.findOption('p');
-				if (NULL == profile)
+				if (type < eol
+				&&  name < eol
+				&&  column < eol
+				&&  ':' == *column
+				&&  semantics < eol)
 				{
-					stream.write("#ifdef GL_ES\n");
-					stream.write("precision highp float;\n");
-					stream.write("#endif // GL_ES\n\n");
-				}
-				else
-				{
-					stream.writef("#version %s\n\n", profile);
-				}
-			}
-			stream.write(preprocessor.m_preprocessed.c_str(), preprocessor.m_preprocessed.size() );
-			stream.close();
+					Varying var;
+					var.m_type.assign(type, strword(type)-type);
+					var.m_name.assign(name, strword(name)-name);
+					var.m_semantics.assign(semantics, strword(semantics)-semantics);
 
-			return EXIT_SUCCESS;
+					if (assign < eol
+					&&  '=' == *assign
+					&&  init < eol)
+					{
+						var.m_init.assign(init, eol-init);
+					}
+
+					varyingMap.insert(std::make_pair(var.m_name, var) );
+				}
+
+				parse = eol + 1;
+			}
 		}
 
-		bool compiled = false;
+		const size_t padding = 16;
+		long int size = fsize(file);
+ 		char* data = new char[size+padding];
+ 		size = fread(data, 1, size, file);
+		memset(&data[size], 0, padding);
+		fclose(file);
 
+		typedef std::vector<std::string> InOut;
+		InOut shaderInputs;
+		InOut shaderOutputs;
+
+		const char* input = data;
+		while (input[0] == '$')
 		{
-			IStreamWriter* stream = NULL;
+			const char* str = input+1;
+			const char* eol = streol(str);
+			const char* nl = strnl(eol);
+			input = nl;
 
-			if (NULL != bin2c)
+			if (0 == strncmp(str, "input", 5) )
 			{
-				stream = new Bin2cStream(outFilePath, bin2c);
-			}
-			else
-			{
-				stream = new FileWriter(outFilePath);
-			}
+				str += 5;
+				str = strws(str);
 
-			if (!stream->open() )
-			{
-				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-				return false;
-			}
-
-			if (glsl)
-			{
-				compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, *stream);
-			}
-			else
-			{
-				if (hlsl > 3)
+				if (str < eol)
 				{
-					compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, *stream);
+					const char* delim;
+					do
+					{
+						delim = strpbrk(str, " ,");
+						if (NULL != delim)
+						{
+							delim = delim > eol ? eol : delim;
+							std::string token;
+							token.assign(str, delim-str);
+							shaderInputs.push_back(token);
+							str = strws(delim + 1);
+						}
+					}
+					while (delim < eol && NULL != delim);
+				}
+			}
+			else if (0 == strncmp(str, "output", 6) )
+			{
+				str += 6;
+				str = strws(str);
+
+				if (str < eol)
+				{
+					const char* delim;
+					do
+					{
+						delim = strpbrk(str, " ,");
+						if (NULL != delim)
+						{
+							delim = delim > eol ? eol : delim;
+							std::string token;
+							token.assign(str, delim-str);
+							shaderOutputs.push_back(token);
+							str = strws(delim + 1);
+						}
+					}
+					while (delim < eol && NULL != delim);
+				}
+			}
+		}
+
+		if (glsl)
+		{
+			for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
+			{
+				VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+				if (varyingIt != varyingMap.end() )
+				{
+					const Varying& var = varyingIt->second;
+					const char* name = var.m_name.c_str();
+					if (0 == strncmp(name, "a_", 2) )
+					{
+						preprocessor.writef("attribute %s %s;\n", var.m_type.c_str(), name);
+					}
+					else
+					{
+						preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), name);
+					}
+				}
+			}
+
+			for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+			{
+				VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+				if (varyingIt != varyingMap.end() )
+				{
+					const Varying& var = varyingIt->second;
+					preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), var.m_name.c_str() );
+				}
+			}
+		}
+		else
+		{
+			preprocessor.writef(
+					"#define lowp\n"
+					"#define mediump\n"
+					"#define highp\n"
+					"#define vec2 float2\n"
+					"#define vec3 float3\n"
+					"#define vec4 float4\n"
+					"#define mat2 float2x2\n"
+					"#define mat3 float3x3\n"
+					"#define mat4 float4x4\n"
+				);
+
+			char* entry = strstr(data, "void main()");
+			if (NULL != entry)
+			{
+				entry[4] = '_';
+
+				const char* brace = strstr(entry, "{");
+				if (NULL != brace)
+				{
+					const char* end = strmb(brace, '{', '}');
+					if (NULL != end)
+					{
+						strins(const_cast<char*>(end), "__RETURN__;\n");
+					}
+				}
+			}
+
+			if (fragment)
+			{
+				preprocessor.writef("#define void_main() \\\n");
+				preprocessor.writef("\tvec4 main(vec4 gl_FragCoord : SV_POSITION \\\n");
+				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
+				{
+					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+					if (varyingIt != varyingMap.end() )
+					{
+						const Varying& var = varyingIt->second;
+						preprocessor.writef("\t, %s %s : %s \\\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+					}
+				}
+				preprocessor.writef(
+					") : SV_TARGET \\\n"
+					"{ \\\n"
+					"\tvec4 gl_FragColor;\n"
+					"#define __RETURN__ \\\n"
+					"\t} \\\n"
+					"\treturn gl_FragColor"
+					);
+			}
+			else
+			{
+				preprocessor.writef(
+					"struct Output\n"
+					"{\n"
+					"\tvec4 gl_Position : SV_POSITION;\n"
+					"#define gl_Position _varying_.gl_Position\n"
+					);
+				for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+				{
+					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+					if (varyingIt != varyingMap.end() )
+					{
+						const Varying& var = varyingIt->second;
+						preprocessor.writef("\t%s %s : %s;\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+						preprocessor.writef("#define %s _varying_.%s\n", var.m_name.c_str(), var.m_name.c_str() );
+					}
+				}
+				preprocessor.writef(
+					"};\n"
+					);
+
+				preprocessor.writef("#define void_main() \\\n");
+				preprocessor.writef("Output main(");
+				bool first = true;
+				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
+				{
+					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+					if (varyingIt != varyingMap.end() )
+					{
+						const Varying& var = varyingIt->second;
+						preprocessor.writef("%s%s %s : %s\\\n", first ? "" : "\t, ", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+						first = false;
+					}
+				}
+				preprocessor.writef(
+					") \\\n"
+					"{ \\\n"
+					"\tOutput _varying_;"
+					);
+
+				for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+				{
+					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+					if (varyingIt != varyingMap.end() )
+					{
+						const Varying& var = varyingIt->second;
+						preprocessor.writef(" \\\n\t%s = %s;", var.m_name.c_str(), var.m_init.c_str() );
+					}
+				}
+
+				preprocessor.writef(
+					"\n#define __RETURN__ \\\n"
+					"\t} \\\n"
+					"\treturn _varying_"
+					);
+			}
+		}
+
+		if (preprocessor.run(input) )
+		{
+			BX_TRACE("Input file: %s", filePath);
+			BX_TRACE("Output file: %s", outFilePath);
+
+			if (preprocessOnly)
+			{
+				FileWriter stream(outFilePath);
+
+				if (!stream.open() )
+				{
+					fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+					return false;
+				}
+
+				if (glsl)
+				{
+					const char* profile = cmdLine.findOption('p');
+					if (NULL == profile)
+					{
+						stream.write("#ifdef GL_ES\n");
+						stream.write("precision highp float;\n");
+						stream.write("#endif // GL_ES\n\n");
+					}
+					else
+					{
+						stream.writef("#version %s\n\n", profile);
+					}
+				}
+				stream.write(preprocessor.m_preprocessed.c_str(), preprocessor.m_preprocessed.size() );
+				stream.close();
+
+				return EXIT_SUCCESS;
+			}
+
+			bool compiled = false;
+
+			{
+				IStreamWriter* stream = NULL;
+
+				if (NULL != bin2c)
+				{
+					stream = new Bin2cStream(outFilePath, bin2c);
 				}
 				else
 				{
-					compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, *stream);
+					stream = new FileWriter(outFilePath);
 				}
-			}
+
+				if (!stream->open() )
+				{
+					fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+					return false;
+				}
+
+				if (glsl)
+				{
+					compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, *stream);
+				}
+				else
+				{
+					if (hlsl > 3)
+					{
+						compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, *stream);
+					}
+					else
+					{
+						compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, *stream);
+					}
+				}
 
 #if SHADERC_DEBUG
-			stream->writeString(filePath);
+				stream->writeString(filePath);
 #endif // SHADERC_DEBUG
 
-			stream->close();
-			delete stream;
-		}
-
-		if (compiled)
-		{
-			if (depends)
-			{
-				std::string ofp = outFilePath;
-				ofp += ".d";
-				FileWriter stream(ofp.c_str() );
-				if (stream.open() )
-				{
-					stream.write(outFilePath);
-					stream.write(":");
-					stream.write(preprocessor.m_depends.c_str() );
-					stream.write("\n");
-					stream.close();
-				}
+				stream->close();
+				delete stream;
 			}
 
-			return EXIT_SUCCESS;
+			if (compiled)
+			{
+				if (depends)
+				{
+					std::string ofp = outFilePath;
+					ofp += ".d";
+					FileWriter stream(ofp.c_str() );
+					if (stream.open() )
+					{
+						stream.write(outFilePath);
+						stream.write(":");
+						stream.write(preprocessor.m_depends.c_str() );
+						stream.write("\n");
+						stream.close();
+					}
+				}
+
+				return EXIT_SUCCESS;
+			}
 		}
+
+		delete [] data;
 	}
 
 	fprintf(stderr, "Failed to build shader.\n");
