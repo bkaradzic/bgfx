@@ -89,7 +89,7 @@ static const bgfx::Memory* load(const char* _filePath)
 
 static const bgfx::Memory* loadShader(const char* _name, const char* _default = NULL)
 {
-	char filePath[_MAX_PATH];
+	char filePath[512];
 	shaderFilePath(filePath, _name);
 	BX_UNUSED(_default);
 	return load(filePath);

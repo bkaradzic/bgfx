@@ -8,6 +8,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <string.h>
 
 inline void vec3Add(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
 {

@@ -76,7 +76,7 @@ static const bgfx::Memory* load(const char* _filePath)
 
 static const bgfx::Memory* loadShader(const char* _name, const char* _default = NULL)
 {
-	char filePath[_MAX_PATH];
+	char filePath[512];
 	shaderFilePath(filePath, _name);
 	BX_UNUSED(_default);
 	return load(filePath);
@@ -605,9 +605,9 @@ int _main_(int _argc, char** _argv)
 
 		// Stats.
 		uint32_t numVertices = 0;
-		int64_t profUpdate;
-		int64_t profNormal;
-		int64_t profTriangulate;
+		int64_t profUpdate = 0;
+		int64_t profNormal = 0;
+		int64_t profTriangulate = 0;
 
 		// Allocate 32K vertices in transient vertex buffer.
 		uint32_t maxVertices = (32<<10);
