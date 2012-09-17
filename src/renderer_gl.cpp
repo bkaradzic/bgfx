@@ -210,7 +210,7 @@ namespace bgfx
 					BGFX_FATAL(display, Fatal::OPENGL_UnableToCreateContext, "Failed to open X display (0).");
 
 					int glxMajor, glxMinor;
-					if (!glXQueryVersion(display, &glxMajor, &glxMinor))
+					if (!glXQueryVersion(display, &glxMajor, &glxMinor) )
 					{
 						BGFX_FATAL(false, Fatal::OPENGL_UnableToCreateContext, "Failed to query GLX version");
 					}
@@ -474,7 +474,7 @@ namespace bgfx
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		Shader m_vertexShaders[BGFX_CONFIG_MAX_VERTEX_SHADERS];
 		Shader m_fragmentShaders[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
-		Material m_materials[BGFX_CONFIG_MAX_MATERIALS];
+		Program m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
@@ -837,10 +837,10 @@ namespace bgfx
 		return ConstantType::End;
 	}
 
-	void Material::create(const Shader& _vsh, const Shader& _fsh)
+	void Program::create(const Shader& _vsh, const Shader& _fsh)
 	{
 		m_id = glCreateProgram();
-		BX_TRACE("material create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
+		BX_TRACE("program create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
 
 		bool cached = false;
 
@@ -916,13 +916,13 @@ namespace bgfx
 		init();
 	}
 
-	void Material::destroy()
+	void Program::destroy()
 	{
 		GL_CHECK(glUseProgram(0) );
 		GL_CHECK(glDeleteProgram(m_id) );
 	}
 
-	void Material::init()
+	void Program::init()
 	{
 		GLint activeAttribs;
 		GLint activeUniforms;
@@ -1048,7 +1048,7 @@ namespace bgfx
 		m_instanceData[used] = 0xffff;
 	}
 
-	void Material::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex) const
+	void Program::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex) const
 	{
 		uint32_t enabled = 0;
 		for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
@@ -1102,7 +1102,7 @@ namespace bgfx
 		}
 	}
 
-	void Material::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
+	void Program::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
 	{
 		uint32_t baseVertex = _baseVertex;
 		for (uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
@@ -1698,14 +1698,14 @@ namespace bgfx
 		GL_CHECK(glDisable(GL_ALPHA_TEST) );
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-		Material& material = s_renderCtx.m_materials[m_material.idx];
-		GL_CHECK(glUseProgram(material.m_id) );
-		GL_CHECK(glUniform1i(material.m_sampler[0], 0) );
+		Program& program = s_renderCtx.m_program[m_program.idx];
+		GL_CHECK(glUseProgram(program.m_id) );
+		GL_CHECK(glUniform1i(program.m_sampler[0], 0) );
 
 		float proj[16];
 		matrix_ortho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
-		GL_CHECK(glUniformMatrix4fv(material.m_predefined[0].m_loc
+		GL_CHECK(glUniformMatrix4fv(program.m_predefined[0].m_loc
 			, 1
 			, GL_FALSE
 			, proj
@@ -1727,8 +1727,8 @@ namespace bgfx
 		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
 		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 
-		Material& material = s_renderCtx.m_materials[m_material.idx];
-		material.bindAttributes(m_decl, 0);
+		Program& program = s_renderCtx.m_program[m_program.idx];
+		program.bindAttributes(m_decl, 0);
 
 		GL_CHECK(glDrawElements(GL_TRIANGLES
 			, _numIndices
@@ -1931,14 +1931,14 @@ namespace bgfx
 		s_renderCtx.m_fragmentShaders[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateMaterial(MaterialHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
+	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 	{
-		s_renderCtx.m_materials[_handle.idx].create(s_renderCtx.m_vertexShaders[_vsh.idx], s_renderCtx.m_fragmentShaders[_fsh.idx]);
+		s_renderCtx.m_program[_handle.idx].create(s_renderCtx.m_vertexShaders[_vsh.idx], s_renderCtx.m_fragmentShaders[_fsh.idx]);
 	}
 
-	void Context::rendererDestroyMaterial(FragmentShaderHandle _handle)
+	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)
 	{
-		s_renderCtx.m_materials[_handle.idx].destroy();
+		s_renderCtx.m_program[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
@@ -2026,7 +2026,7 @@ namespace bgfx
 			matrix_mul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
 		}
 
-		uint16_t materialIdx = invalidHandle;
+		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
@@ -2063,7 +2063,7 @@ namespace bgfx
 					GREMEDY_SETMARKER("view");
 
 					view = key.m_view;
-					materialIdx = invalidHandle;
+					programIdx = invalidHandle;
 
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
@@ -2227,33 +2227,33 @@ namespace bgfx
 					primNumVerts = s_primNumVerts[primIndex];
 				}
 
-				bool materialChanged = false;
+				bool programChanged = false;
 				bool constantsChanged = state.m_constBegin < state.m_constEnd;
 				bool bindAttribs = false;
 				rendererUpdateUniforms(m_render->m_constantBuffer, state.m_constBegin, state.m_constEnd);
 
-				if (key.m_material != materialIdx)
+				if (key.m_program != programIdx)
 				{
-					materialIdx = key.m_material;
-					GLuint id = invalidHandle == materialIdx ? 0 : s_renderCtx.m_materials[materialIdx].m_id;
+					programIdx = key.m_program;
+					GLuint id = invalidHandle == programIdx ? 0 : s_renderCtx.m_program[programIdx].m_id;
 					GL_CHECK(glUseProgram(id) );
-					materialChanged = 
+					programChanged = 
 						constantsChanged = 
 						bindAttribs = true;
 				}
 
-				if (invalidHandle != materialIdx)
+				if (invalidHandle != programIdx)
 				{
-					Material& material = s_renderCtx.m_materials[materialIdx];
+					Program& program = s_renderCtx.m_program[programIdx];
 
 					if (constantsChanged)
 					{
-						material.m_constantBuffer->commit();
+						program.m_constantBuffer->commit();
 					}
 
-					for (uint32_t ii = 0, num = material.m_numPredefined; ii < num; ++ii)
+					for (uint32_t ii = 0, num = program.m_numPredefined; ii < num; ++ii)
 					{
-						PredefinedUniform& predefined = material.m_predefined[ii];
+						PredefinedUniform& predefined = program.m_predefined[ii];
 						switch (predefined.m_type)
 						{
 						case PredefinedUniform::ViewRect:
@@ -2398,7 +2398,7 @@ namespace bgfx
 							Sampler& current = currentState.m_sampler[stage];
 							if (current.m_idx != sampler.m_idx
 							||  current.m_flags != sampler.m_flags
-							||  materialChanged)
+							||  programChanged)
 							{
 								if (invalidHandle != sampler.m_idx)
 								{
@@ -2434,7 +2434,7 @@ namespace bgfx
 						}
 					}
 
-					if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || materialChanged)
+					if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || programChanged)
 					{
 						currentState.m_vertexBuffer = state.m_vertexBuffer;
 
@@ -2475,13 +2475,13 @@ namespace bgfx
 							baseVertex = state.m_startVertex;
 							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
 							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-							const Material& material = s_renderCtx.m_materials[materialIdx];
-							material.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+							const Program& program = s_renderCtx.m_program[programIdx];
+							program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
 							
 							if (invalidHandle != state.m_instanceDataBuffer.idx)
 							{
 								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
-								material.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
+								program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
 							}
 						}
 

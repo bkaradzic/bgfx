@@ -369,7 +369,7 @@ namespace bgfx
 		GLuint m_rbo;
 	};
 
-	struct Material
+	struct Program
 	{
 		void create(const Shader& _vsh, const Shader& _fsh);
 		void destroy();

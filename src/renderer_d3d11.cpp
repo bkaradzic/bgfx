@@ -484,9 +484,9 @@ namespace bgfx
 		{
 			if (0 < m_vsChanges)
 			{
-				if (NULL != m_currentMaterial->m_vsh->m_buffer)
+				if (NULL != m_currentProgram->m_vsh->m_buffer)
 				{
-					m_deviceCtx->UpdateSubresource(m_currentMaterial->m_vsh->m_buffer, 0, 0, m_vsScratch, 0, 0);
+					m_deviceCtx->UpdateSubresource(m_currentProgram->m_vsh->m_buffer, 0, 0, m_vsScratch, 0, 0);
 				}
 
 				m_vsChanges = 0;
@@ -494,9 +494,9 @@ namespace bgfx
 
 			if (0 < m_fsChanges)
 			{
-				if (NULL != m_currentMaterial->m_fsh->m_buffer)
+				if (NULL != m_currentProgram->m_fsh->m_buffer)
 				{
-					m_deviceCtx->UpdateSubresource(m_currentMaterial->m_fsh->m_buffer, 0, 0, m_fsScratch, 0, 0);
+					m_deviceCtx->UpdateSubresource(m_currentProgram->m_fsh->m_buffer, 0, 0, m_fsScratch, 0, 0);
 				}
 
 				m_fsChanges = 0;
@@ -541,9 +541,9 @@ namespace bgfx
 //			DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE) );
 		}
 
-		void setInputLayout(const VertexDecl& _vertexDecl, const Material& _material)
+		void setInputLayout(const VertexDecl& _vertexDecl, const Program& _program)
 		{
-			uint64_t layoutHash = (uint64_t(_vertexDecl.m_hash)<<32) | _material.m_vsh->m_hash;
+			uint64_t layoutHash = (uint64_t(_vertexDecl.m_hash)<<32) | _program.m_vsh->m_hash;
 			ID3D11InputLayout* layout = m_inputLayoutCache.find(layoutHash);
 			if (NULL == layout)
 			{
@@ -551,7 +551,7 @@ namespace bgfx
 
 				VertexDecl decl;
 				memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
-				const uint8_t* attrMask = _material.m_vsh->m_attrMask;
+				const uint8_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
@@ -564,8 +564,8 @@ namespace bgfx
 				ptrdiff_t num = elem-vertexElements;
 				DX_CHECK(m_device->CreateInputLayout(vertexElements
 					, uint32_t(num)
-					, _material.m_vsh->m_code->data
-					, _material.m_vsh->m_code->size
+					, _program.m_vsh->m_code->data
+					, _program.m_vsh->m_code->size
 					, &layout
 					) );
 				m_inputLayoutCache.add(layoutHash, layout);
@@ -735,7 +735,7 @@ namespace bgfx
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		Shader m_vertexShaders[BGFX_CONFIG_MAX_VERTEX_SHADERS];
 		Shader m_fragmentShaders[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
-		Material m_materials[BGFX_CONFIG_MAX_MATERIALS];
+		Program m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
@@ -754,7 +754,7 @@ namespace bgfx
 
 		TextureStage m_textureStage;
 
-		Material* m_currentMaterial;
+		Program* m_currentProgram;
 
 		uint8_t m_vsScratch[64<<10];
 		uint8_t m_fsScratch[64<<10];
@@ -959,19 +959,19 @@ namespace bgfx
  		s_renderCtx.setDepthStencilState(state);
  		s_renderCtx.setRasterizerState(state, false);
 
-		Material& material = s_renderCtx.m_materials[m_material.idx];
-		s_renderCtx.m_currentMaterial = &material;
-		deviceCtx->VSSetShader( (ID3D11VertexShader*)material.m_vsh->m_ptr, NULL, 0);
-		deviceCtx->VSSetConstantBuffers(0, 1, &material.m_vsh->m_buffer);
-		deviceCtx->PSSetShader( (ID3D11PixelShader*)material.m_fsh->m_ptr, NULL, 0);
-		deviceCtx->PSSetConstantBuffers(0, 1, &material.m_fsh->m_buffer);
+		Program& program = s_renderCtx.m_program[m_program.idx];
+		s_renderCtx.m_currentProgram = &program;
+		deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
+		deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
+		deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
+		deviceCtx->PSSetConstantBuffers(0, 1, &program.m_fsh->m_buffer);
 
 		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 		VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
 		uint32_t stride = vertexDecl.m_stride;
 		uint32_t offset = 0;
 		deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-		s_renderCtx.setInputLayout(vertexDecl, material);
+		s_renderCtx.setInputLayout(vertexDecl, program);
 
 		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
 		deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
@@ -979,7 +979,7 @@ namespace bgfx
 		float proj[16];
 		matrix_ortho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
-		PredefinedUniform& predefined = material.m_predefined[0];
+		PredefinedUniform& predefined = program.m_predefined[0];
 		uint8_t flags = predefined.m_type;
 		s_renderCtx.setShaderConstant(flags, predefined.m_loc, proj, 4);
 
@@ -1026,11 +1026,11 @@ namespace bgfx
 			s_renderCtx.setDepthStencilState(state);
 			s_renderCtx.setRasterizerState(state, false);
 
-			Material& material = s_renderCtx.m_materials[m_material.idx];
-			s_renderCtx.m_currentMaterial = &material;
-			deviceCtx->VSSetShader( (ID3D11VertexShader*)material.m_vsh->m_ptr, NULL, 0);
+			Program& program = s_renderCtx.m_program[m_program.idx];
+			s_renderCtx.m_currentProgram = &program;
+			deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 			deviceCtx->VSSetConstantBuffers(0, 0, NULL);
-			deviceCtx->PSSetShader( (ID3D11PixelShader*)material.m_fsh->m_ptr, NULL, 0);
+			deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
 			deviceCtx->PSSetConstantBuffers(0, 0, NULL);
 
 			VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
@@ -1070,7 +1070,7 @@ namespace bgfx
 
 			s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
 			deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-			s_renderCtx.setInputLayout(vertexDecl, material);
+			s_renderCtx.setInputLayout(vertexDecl, program);
 
 			IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib.idx];
 			deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
@@ -1700,14 +1700,14 @@ namespace bgfx
 		s_renderCtx.m_fragmentShaders[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateMaterial(MaterialHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
+	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 	{
-		s_renderCtx.m_materials[_handle.idx].create(s_renderCtx.m_vertexShaders[_vsh.idx], s_renderCtx.m_fragmentShaders[_fsh.idx]);
+		s_renderCtx.m_program[_handle.idx].create(s_renderCtx.m_vertexShaders[_vsh.idx], s_renderCtx.m_fragmentShaders[_fsh.idx]);
 	}
 
-	void Context::rendererDestroyMaterial(FragmentShaderHandle _handle)
+	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)
 	{
-		s_renderCtx.m_materials[_handle.idx].destroy();
+		s_renderCtx.m_program[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
@@ -1789,7 +1789,7 @@ namespace bgfx
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		s_renderCtx.setDebugWireframe(wireframe);
 
-		uint16_t materialIdx = invalidHandle;
+		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
@@ -1823,7 +1823,7 @@ namespace bgfx
 					currentState.m_flags = newFlags;
 
 					view = key.m_view;
-					materialIdx = invalidHandle;
+					programIdx = invalidHandle;
 
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
@@ -1882,51 +1882,50 @@ namespace bgfx
 					}
 				}
 
-				bool materialChanged = false;
+				bool programChanged = false;
 				bool constantsChanged = state.m_constBegin < state.m_constEnd;
 				rendererUpdateUniforms(m_render->m_constantBuffer, state.m_constBegin, state.m_constEnd);
 
-				if (key.m_material != materialIdx)
+				if (key.m_program != programIdx)
 				{
-					materialIdx = key.m_material;
+					programIdx = key.m_program;
 
-					if (invalidHandle == materialIdx)
+					if (invalidHandle == programIdx)
 					{
-						s_renderCtx.m_currentMaterial = NULL;
+						s_renderCtx.m_currentProgram = NULL;
 
 						deviceCtx->VSSetShader(NULL, 0, 0);
 						deviceCtx->PSSetShader(NULL, 0, 0);
 					}
 					else
 					{
-						Material& material = s_renderCtx.m_materials[materialIdx];
-						s_renderCtx.m_currentMaterial = &material;
+						Program& program = s_renderCtx.m_program[programIdx];
+						s_renderCtx.m_currentProgram = &program;
 
-						deviceCtx->VSSetShader( (ID3D11VertexShader*)material.m_vsh->m_ptr, NULL, 0);
-						deviceCtx->VSSetConstantBuffers(0, 1, &material.m_vsh->m_buffer);
+						deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
+						deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
 
-						deviceCtx->PSSetShader( (ID3D11PixelShader*)material.m_fsh->m_ptr, NULL, 0);
-						deviceCtx->PSSetConstantBuffers(0, 1, &material.m_fsh->m_buffer);
+						deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
+						deviceCtx->PSSetConstantBuffers(0, 1, &program.m_fsh->m_buffer);
 					}
 
-					materialChanged = 
+					programChanged = 
 						constantsChanged = true;
 				}
 
-				if (invalidHandle != materialIdx)
+				if (invalidHandle != programIdx)
 				{
-					Material& material = s_renderCtx.m_materials[materialIdx];
+					Program& program = s_renderCtx.m_program[programIdx];
 
 					if (constantsChanged)
 					{
-						Material& material = s_renderCtx.m_materials[materialIdx];
-						material.m_vsh->m_constantBuffer->commit();
-						material.m_fsh->m_constantBuffer->commit();
+						program.m_vsh->m_constantBuffer->commit();
+						program.m_fsh->m_constantBuffer->commit();
 					}
 
-					for (uint32_t ii = 0, num = material.m_numPredefined; ii < num; ++ii)
+					for (uint32_t ii = 0, num = program.m_numPredefined; ii < num; ++ii)
 					{
-						PredefinedUniform& predefined = material.m_predefined[ii];
+						PredefinedUniform& predefined = program.m_predefined[ii];
 						uint8_t flags = predefined.m_type&BGFX_UNIFORM_FRAGMENTBIT;
 						switch (predefined.m_type&(~BGFX_UNIFORM_FRAGMENTBIT) )
 						{
@@ -2049,7 +2048,7 @@ namespace bgfx
 						Sampler& current = currentState.m_sampler[stage];
 						if (current.m_idx != sampler.m_idx
 						||  current.m_flags != sampler.m_flags
-						||  materialChanged)
+						||  programChanged)
 						{
 							if (invalidHandle != sampler.m_idx)
 							{
@@ -2087,7 +2086,7 @@ namespace bgfx
 					}
 				}
 
-				if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || materialChanged)
+				if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || programChanged)
 				{
 					currentState.m_vertexBuffer = state.m_vertexBuffer;
 
@@ -2101,7 +2100,7 @@ namespace bgfx
 						uint32_t stride = vertexDecl.m_stride;
 						uint32_t offset = 0;
 						deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-						s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_materials[materialIdx]);
+						s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_program[programIdx]);
 
 						if (invalidHandle != state.m_instanceDataBuffer.idx)
 						{

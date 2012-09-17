@@ -362,7 +362,7 @@ namespace bgfx
 		TransientVertexBuffer* m_vb;
 		TransientIndexBuffer* m_ib;
 		VertexDecl m_decl;
-		MaterialHandle m_material;
+		ProgramHandle m_program;
 	};
 
 	struct ClearQuad
@@ -373,7 +373,7 @@ namespace bgfx
 		TransientVertexBuffer* m_vb;
 		IndexBufferHandle m_ib;
 		VertexDecl m_decl;
-		MaterialHandle m_material;
+		ProgramHandle m_program;
 	};
 
 	struct PredefinedUniform
@@ -528,7 +528,7 @@ namespace bgfx
 			UpdateDynamicVertexBuffer,
 			CreateVertexShader,
 			CreateFragmentShader,
-			CreateMaterial,
+			CreateProgram,
 			CreateTexture,
 			UpdateTexture,
 			CreateRenderTarget,
@@ -542,7 +542,7 @@ namespace bgfx
 			DestroyDynamicVertexBuffer,
 			DestroyVertexShader,
 			DestroyFragmentShader,
-			DestroyMaterial,
+			DestroyProgram,
 			DestroyTexture,
 			DestroyRenderTarget,
 			DestroyUniform,
@@ -607,7 +607,7 @@ namespace bgfx
 			// |                 |          | |        |                       ||
 
 			uint64_t tmp0 = m_depth;
-			uint64_t tmp1 = uint64_t(m_material)<<0x18;
+			uint64_t tmp1 = uint64_t(m_program)<<0x18;
 			uint64_t tmp2 = uint64_t(m_trans)<<0x21;
 			uint64_t tmp3 = uint64_t(m_seq)<<0x23;
 			uint64_t tmp4 = uint64_t(m_view)<<0x2e;
@@ -618,7 +618,7 @@ namespace bgfx
 		void decode(uint64_t _key)
 		{
 			m_depth = _key&0xffffffff;
-			m_material = (_key>>0x18)&(BGFX_CONFIG_MAX_MATERIALS-1);
+			m_program = (_key>>0x18)&(BGFX_CONFIG_MAX_PROGRAMS-1);
 			m_trans = (_key>>0x21)&0x3;
 			m_seq = (_key>>0x23)&0x7ff;
 			m_view = (_key>>0x2e)&(BGFX_CONFIG_MAX_VIEWS-1);
@@ -627,14 +627,14 @@ namespace bgfx
 		void reset()
 		{
 			m_depth = 0;
-			m_material = 0;
+			m_program = 0;
 			m_seq = 0;
 			m_view = 0;
 			m_trans = 0;
 		}
 
 		int32_t m_depth;
-		uint16_t m_material;
+		uint16_t m_program;
 		uint16_t m_seq;
 		uint8_t m_view;
 		uint8_t m_trans;
@@ -1113,26 +1113,26 @@ namespace bgfx
 			g_free(const_cast<TransientIndexBuffer*>(_ib) );
 		}
 
-		void setVertexBuffer(VertexBufferHandle _handle)
+		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
 		{
 			BX_CHECK(_handle.idx < BGFX_CONFIG_MAX_VERTEX_BUFFERS, "Invalid vertex buffer handle. %d (< %d)", _handle.idx, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 			m_state.m_startVertex = 0;
-			m_state.m_numVertices = UINT32_C(0xffffffff);
+			m_state.m_numVertices = _numVertices;
 			m_state.m_vertexBuffer = _handle;
 		}
 
-		void setVertexBuffer(const DynamicVertexBuffer& dvb)
+		void setVertexBuffer(const DynamicVertexBuffer& dvb, uint32_t _numVertices)
 		{
 			m_state.m_startVertex = dvb.m_startVertex;
-			m_state.m_numVertices = dvb.m_numVertices;
+			m_state.m_numVertices = uint32_min(dvb.m_numVertices, _numVertices);
 			m_state.m_vertexBuffer = dvb.m_handle;
 			m_state.m_vertexDecl = dvb.m_decl;
 		}
 
-		void setVertexBuffer(const TransientVertexBuffer* _vb)
+		void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices)
 		{
 			m_state.m_startVertex = _vb->startVertex;
-			m_state.m_numVertices = _vb->size/_vb->stride;
+			m_state.m_numVertices = uint32_min(_vb->size/_vb->stride, _numVertices);
 			m_state.m_vertexBuffer = _vb->handle;
 			m_state.m_vertexDecl = _vb->decl;
 			g_free(const_cast<TransientVertexBuffer*>(_vb) );
@@ -1150,10 +1150,10 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_OPENGLES
 		}
 
-		void setMaterial(MaterialHandle _handle)
+		void setProgram(ProgramHandle _handle)
 		{
-			BX_CHECK(invalidHandle != _handle.idx, "Can't set material with invalid handle.");
-			m_key.m_material = _handle.idx;
+			BX_CHECK(invalidHandle != _handle.idx, "Can't set program with invalid handle.");
+			m_key.m_program = _handle.idx;
 		}
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle)
@@ -1259,10 +1259,10 @@ namespace bgfx
 			++m_numFreeFragmentShaderHandles;
 		}
 
-		void free(MaterialHandle _handle)
+		void free(ProgramHandle _handle)
 		{
-			m_freeMaterialHandle[m_numFreeMaterialHandles] = _handle;
-			++m_numFreeMaterialHandles;
+			m_freeProgramHandle[m_numFreeProgramHandles] = _handle;
+			++m_numFreeProgramHandles;
 		}
 
 		void free(TextureHandle _handle)
@@ -1291,7 +1291,7 @@ namespace bgfx
 			m_numFreeVertexShaderHandles = 0;
 			m_numFreeFragmentShaderHandles = 0;
 			m_numFreeFragmentShaderHandles = 0;
-			m_numFreeMaterialHandles = 0;
+			m_numFreeProgramHandles = 0;
 			m_numFreeTextureHandles = 0;
 			m_numFreeRenderTargetHandles = 0;
 			m_numFreeUniformHandles = 0;
@@ -1336,7 +1336,7 @@ namespace bgfx
 		uint16_t m_numFreeVertexBufferHandles;
 		uint16_t m_numFreeVertexShaderHandles;
 		uint16_t m_numFreeFragmentShaderHandles;
-		uint16_t m_numFreeMaterialHandles;
+		uint16_t m_numFreeProgramHandles;
 		uint16_t m_numFreeTextureHandles;
 		uint16_t m_numFreeRenderTargetHandles;
 		uint16_t m_numFreeUniformHandles;
@@ -1346,7 +1346,7 @@ namespace bgfx
 		VertexBufferHandle m_freeVertexBufferHandle[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		VertexShaderHandle m_freeVertexShaderHandle[BGFX_CONFIG_MAX_VERTEX_SHADERS];
 		FragmentShaderHandle m_freeFragmentShaderHandle[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
-		MaterialHandle m_freeMaterialHandle[BGFX_CONFIG_MAX_MATERIALS];
+		ProgramHandle m_freeProgramHandle[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureHandle m_freeTextureHandle[BGFX_CONFIG_MAX_TEXTURES];
 		RenderTargetHandle m_freeRenderTargetHandle[BGFX_CONFIG_MAX_RENDER_TARGETS];
 		UniformHandle m_freeUniformHandle[BGFX_CONFIG_MAX_UNIFORMS];
@@ -1530,7 +1530,7 @@ namespace bgfx
 			, m_vertexBufferHandle(BGFX_CONFIG_MAX_VERTEX_BUFFERS)
 			, m_vertexShaderHandle(BGFX_CONFIG_MAX_VERTEX_SHADERS)
 			, m_fragmentShaderHandle(BGFX_CONFIG_MAX_FRAGMENT_SHADERS)
-			, m_materialHandle(BGFX_CONFIG_MAX_MATERIALS)
+			, m_programHandle(BGFX_CONFIG_MAX_PROGRAMS)
 			, m_textureHandle(BGFX_CONFIG_MAX_TEXTURES)
 			, m_renderTargetHandle(BGFX_CONFIG_MAX_RENDER_TARGETS)
 			, m_uniformHandle(BGFX_CONFIG_MAX_UNIFORMS)
@@ -1984,31 +1984,31 @@ namespace bgfx
 			}
 		}
 
-		MaterialHandle createMaterial(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
+		ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 		{
-			MaterialHandle handle;
- 			handle.idx = m_materialHandle.alloc();
+			ProgramHandle handle;
+ 			handle.idx = m_programHandle.alloc();
 
 			vertexShaderIncRef(_vsh);
 			fragmentShaderIncRef(_fsh);
-			m_materialRef[handle.idx].m_vsh = _vsh;
-			m_materialRef[handle.idx].m_fsh = _fsh;
+			m_programRef[handle.idx].m_vsh = _vsh;
+			m_programRef[handle.idx].m_fsh = _fsh;
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateMaterial);
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 			cmdbuf.write(handle);
 			cmdbuf.write(_vsh);
 			cmdbuf.write(_fsh);
 			return handle;
 		}
 
-		void destroyMaterial(MaterialHandle _handle)
+		void destroyProgram(ProgramHandle _handle)
 		{
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyMaterial);
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyProgram);
 			cmdbuf.write(_handle);
 			m_submit->free(_handle);
 
-			vertexShaderDecRef(m_materialRef[_handle.idx].m_vsh);
-			fragmentShaderDecRef(m_materialRef[_handle.idx].m_fsh);
+			vertexShaderDecRef(m_programRef[_handle.idx].m_vsh);
+			fragmentShaderDecRef(m_programRef[_handle.idx].m_fsh);
 		}
 
 		TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint16_t* _width, uint16_t* _height)
@@ -2129,7 +2129,7 @@ namespace bgfx
 			m_submit->writeConstant(constant.m_type, _handle, _value, uint16_min(constant.m_num, _num) );
 		}
 
-		void setUniform(MaterialHandle /*_material*/, UniformHandle /*_handle*/, const void* /*_value*/)
+		void setUniform(ProgramHandle /*_program*/, UniformHandle /*_handle*/, const void* /*_value*/)
 		{
 			BX_CHECK(false, "NOT IMPLEMENTED!");
 		}
@@ -2262,9 +2262,9 @@ namespace bgfx
 				m_fragmentShaderHandle.free(_frame->m_freeFragmentShaderHandle[ii].idx);
 			}
 
-			for (uint16_t ii = 0, num = _frame->m_numFreeMaterialHandles; ii < num; ++ii)
+			for (uint16_t ii = 0, num = _frame->m_numFreeProgramHandles; ii < num; ++ii)
 			{
-				m_materialHandle.free(_frame->m_freeMaterialHandle[ii].idx);
+				m_programHandle.free(_frame->m_freeProgramHandle[ii].idx);
 			}
 
 			for (uint16_t ii = 0, num = _frame->m_numFreeTextureHandles; ii < num; ++ii)
@@ -2346,8 +2346,8 @@ namespace bgfx
 		void rendererDestroyVertexShader(VertexShaderHandle _handle);
 		void rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem);
 		void rendererDestroyFragmentShader(FragmentShaderHandle _handle);
-		void rendererCreateMaterial(MaterialHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
-		void rendererDestroyMaterial(FragmentShaderHandle _handle);
+		void rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
+		void rendererDestroyProgram(FragmentShaderHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
 		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
 		void rendererDestroyTexture(TextureHandle _handle);
@@ -2609,9 +2609,9 @@ namespace bgfx
 					}
 					break;
 
-				case CommandBuffer::CreateMaterial:
+				case CommandBuffer::CreateProgram:
 					{
-						MaterialHandle handle;
+						ProgramHandle handle;
 						_cmdbuf.read(handle);
 
 						VertexShaderHandle vsh;
@@ -2620,16 +2620,16 @@ namespace bgfx
 						FragmentShaderHandle fsh;
 						_cmdbuf.read(fsh);
 
-						rendererCreateMaterial(handle, vsh, fsh);
+						rendererCreateProgram(handle, vsh, fsh);
 					}
 					break;
 
-				case CommandBuffer::DestroyMaterial:
+				case CommandBuffer::DestroyProgram:
 					{
 						FragmentShaderHandle handle;
 						_cmdbuf.read(handle);
 
-						rendererDestroyMaterial(handle);
+						rendererDestroyProgram(handle);
 					}
 					break;
 
@@ -2854,19 +2854,19 @@ namespace bgfx
 		HandleAlloc m_vertexBufferHandle;
 		HandleAlloc m_vertexShaderHandle;
 		HandleAlloc m_fragmentShaderHandle;
-		HandleAlloc m_materialHandle;
+		HandleAlloc m_programHandle;
 		HandleAlloc m_textureHandle;
 		HandleAlloc m_renderTargetHandle;
 		HandleAlloc m_uniformHandle;
 
 		int32_t m_vertexShaderRef[BGFX_CONFIG_MAX_VERTEX_SHADERS];
 		int32_t m_fragmentShaderRef[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
-		struct MaterialRef
+		struct ProgramRef
 		{
 			VertexShaderHandle m_vsh;
 			FragmentShaderHandle m_fsh;
 		};
-		MaterialRef m_materialRef[BGFX_CONFIG_MAX_MATERIALS];
+		ProgramRef m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
 		VertexDeclRef m_declRef;
 
 		RenderTargetHandle m_rt[BGFX_CONFIG_MAX_VIEWS];
@@ -3022,7 +3022,7 @@ namespace bgfx
 				case WM_KEYDOWN:
 				case WM_SYSKEYDOWN:
 					if ((WM_KEYDOWN == _id && VK_F11 == _wparam)
-					||  (WM_SYSKEYDOWN == _id && VK_RETURN == _wparam))
+					||  (WM_SYSKEYDOWN == _id && VK_RETURN == _wparam) )
 					{
 						toggleWindowFrame();
 					}

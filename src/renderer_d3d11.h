@@ -171,9 +171,9 @@ namespace bgfx
 		uint8_t m_numPredefined;
 	};
 
-	struct Material
+	struct Program
 	{
-		Material()
+		Program()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
 		{

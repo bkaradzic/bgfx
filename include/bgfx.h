@@ -240,7 +240,7 @@ namespace bgfx
 	typedef struct { uint16_t idx; } DynamicVertexBufferHandle;
 	typedef struct { uint16_t idx; } FragmentShaderHandle;
 	typedef struct { uint16_t idx; } IndexBufferHandle;
-	typedef struct { uint16_t idx; } MaterialHandle;
+	typedef struct { uint16_t idx; } ProgramHandle;
 	typedef struct { uint16_t idx; } RenderTargetHandle;
 	typedef struct { uint16_t idx; } TextureHandle;
 	typedef struct { uint16_t idx; } UniformHandle;
@@ -339,7 +339,7 @@ namespace bgfx
 	const Memory* alloc(uint32_t _size);
 
 	///
-	const Memory* makeRef(void* _data, uint32_t _size);
+	const Memory* makeRef(const void* _data, uint32_t _size);
 
 	///
 	void setDebug(uint32_t _debug);
@@ -414,10 +414,10 @@ namespace bgfx
 	void destroyFragmentShader(FragmentShaderHandle _handle);
 
 	///
-	MaterialHandle createMaterial(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
+	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 
 	///
-	void destroyMaterial(MaterialHandle _handle);
+	void destroyProgram(ProgramHandle _handle);
 
 	///
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, uint16_t* _width = NULL, uint16_t* _height = NULL);
@@ -510,22 +510,22 @@ namespace bgfx
 	void setIndexBuffer(DynamicIndexBufferHandle _handle);
 
 	///
-	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices = 0xffffffff);
+	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices = UINT32_MAX);
 
 	///
-	void setVertexBuffer(VertexBufferHandle _handle);
+	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
 
 	///
-	void setVertexBuffer(DynamicVertexBufferHandle _handle);
+	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
 
 	///
-	void setVertexBuffer(const TransientVertexBuffer* _vb);
+	void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices = UINT32_MAX);
 
 	///
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb);
 
 	///
-	void setMaterial(MaterialHandle _handle);
+	void setProgram(ProgramHandle _handle);
 
 	///
 	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle);

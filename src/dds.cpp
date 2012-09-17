@@ -105,7 +105,7 @@ void decodeBlockDxt(uint8_t _dst[16*4], const uint8_t _src[8])
 
 	for (uint32_t ii = 0, next = 8*4; ii < 16*4; ii += 4, next += 2)
 	{
-		int idx = ( (_src[next>>3] >> (next & 7)) & 3) * 3;
+		int idx = ( (_src[next>>3] >> (next & 7) ) & 3) * 3;
 		_dst[ii+0] = colors[idx+0];
 		_dst[ii+1] = colors[idx+1];
 		_dst[ii+2] = colors[idx+2];
@@ -155,7 +155,7 @@ void decodeBlockDxt1(uint8_t _dst[16*4], const uint8_t _src[8])
 
 	for (uint32_t ii = 0, next = 8*4; ii < 16*4; ii += 4, next += 2)
 	{
-		int idx = ( (_src[next>>3] >> (next & 7)) & 3) * 4;
+		int idx = ( (_src[next>>3] >> (next & 7) ) & 3) * 4;
 		_dst[ii+0] = colors[idx+0];
 		_dst[ii+1] = colors[idx+1];
 		_dst[ii+2] = colors[idx+2];

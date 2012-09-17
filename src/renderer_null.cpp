@@ -97,11 +97,11 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateMaterial(MaterialHandle /*_handle*/, VertexShaderHandle /*_vsh*/, FragmentShaderHandle /*_fsh*/)
+	void Context::rendererCreateProgram(ProgramHandle /*_handle*/, VertexShaderHandle /*_vsh*/, FragmentShaderHandle /*_fsh*/)
 	{
 	}
 
-	void Context::rendererDestroyMaterial(FragmentShaderHandle /*_handle*/)
+	void Context::rendererDestroyProgram(FragmentShaderHandle /*_handle*/)
 	{
 	}
 

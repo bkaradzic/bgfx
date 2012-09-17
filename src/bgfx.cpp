@@ -218,32 +218,24 @@ namespace bgfx
 		m_texture = createTexture2D(2048, 24, 1, TextureFormat::L8, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT, mem);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = alloc(sizeof(vs_debugfont_dx9)+1);
-		memcpy(mem->data, vs_debugfont_dx9, mem->size-1);
+		mem = makeRef(vs_debugfont_dx9, sizeof(vs_debugfont_dx9) );
 #elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = alloc(sizeof(vs_debugfont_dx11)+1);
-		memcpy(mem->data, vs_debugfont_dx11, mem->size-1);
+		mem = makeRef(vs_debugfont_dx11, sizeof(vs_debugfont_dx11) );
 #else
-		mem = alloc(sizeof(vs_debugfont_glsl)+1);
-		memcpy(mem->data, vs_debugfont_glsl, mem->size-1);
+		mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
 #endif // BGFX_CONFIG_RENDERER_
-		mem->data[mem->size-1] = '\0';
 		VertexShaderHandle vsh = createVertexShader(mem);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = alloc(sizeof(fs_debugfont_dx9)+1);
-		memcpy(mem->data, fs_debugfont_dx9, mem->size-1);
+		mem = makeRef(fs_debugfont_dx9, sizeof(fs_debugfont_dx9) );
 #elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = alloc(sizeof(fs_debugfont_dx11)+1);
-		memcpy(mem->data, fs_debugfont_dx11, mem->size-1);
+		mem = makeRef(fs_debugfont_dx11, sizeof(fs_debugfont_dx11) );
 #else
-		mem = alloc(sizeof(fs_debugfont_glsl)+1);
-		memcpy(mem->data, fs_debugfont_glsl, mem->size-1);
+		mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
 #endif // BGFX_CONFIG_RENDERER_
-		mem->data[mem->size-1] = '\0';
 		FragmentShaderHandle fsh = createFragmentShader(mem);
 
-		m_material = createMaterial(vsh, fsh);
+		m_program = createProgram(vsh, fsh);
 
 		m_vb = s_ctx.createTransientVertexBuffer(numBatchVertices*m_decl.m_stride, &m_decl);
 		m_ib = s_ctx.createTransientIndexBuffer(numBatchIndices*2);
@@ -377,7 +369,7 @@ namespace bgfx
 		memcpy(mem->data, fs_clear_dx11, mem->size-1);
 		FragmentShaderHandle fsh = createFragmentShader(mem);
 
-		m_material = createMaterial(vsh, fsh);
+		m_program = createProgram(vsh, fsh);
 
 		m_vb = s_ctx.createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
 
@@ -432,7 +424,8 @@ namespace bgfx
 			return;
 		}
 
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num)
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
+		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
 		{
 			++m_numDropped;
 			return;
@@ -462,7 +455,8 @@ namespace bgfx
 			return;
 		}
 
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num)
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
+		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
 		{
 			m_numDropped += uint32_cntbits(_viewMask);
 			return;
@@ -782,7 +776,7 @@ namespace bgfx
 		return mem;
 	}
 
-	const Memory* makeRef(void* _data, uint32_t _size)
+	const Memory* makeRef(const void* _data, uint32_t _size)
 	{
 		Memory* mem = (Memory*)g_realloc(NULL, sizeof(Memory) );
 		mem->size = _size;
@@ -918,14 +912,14 @@ namespace bgfx
 		s_ctx.destroyFragmentShader(_handle);
 	}
 
-	MaterialHandle createMaterial(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
+	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 	{
-		return s_ctx.createMaterial(_vsh, _fsh);
+		return s_ctx.createProgram(_vsh, _fsh);
 	}
 
-	void destroyMaterial(MaterialHandle _handle)
+	void destroyProgram(ProgramHandle _handle)
 	{
-		s_ctx.destroyMaterial(_handle);
+		s_ctx.destroyProgram(_handle);
 	}
 
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint16_t* _width, uint16_t* _height)
@@ -1137,9 +1131,9 @@ namespace bgfx
 		s_ctx.setUniform(_handle, _value, _num);
 	}
 
-	void setUniform(MaterialHandle _material, UniformHandle _handle, const void* _value)
+	void setUniform(ProgramHandle _program, UniformHandle _handle, const void* _value)
 	{
-		s_ctx.setUniform(_material, _handle, _value);
+		s_ctx.setUniform(_program, _handle, _value);
 	}
 
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
@@ -1168,19 +1162,19 @@ namespace bgfx
 		s_ctx.m_submit->setIndexBuffer(_ib, numIndices);
 	}
 
-	void setVertexBuffer(VertexBufferHandle _handle)
+	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
 	{
-		s_ctx.m_submit->setVertexBuffer(_handle);
+		s_ctx.m_submit->setVertexBuffer(_handle, _numVertices);
 	}
 
-	void setVertexBuffer(DynamicVertexBufferHandle _handle)
+	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices)
 	{
-		s_ctx.m_submit->setVertexBuffer(s_ctx.m_dynamicVertexBuffers[_handle.idx]);
+		s_ctx.m_submit->setVertexBuffer(s_ctx.m_dynamicVertexBuffers[_handle.idx], _numVertices);
 	}
 
-	void setVertexBuffer(const TransientVertexBuffer* _vb)
+	void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices)
 	{
-		s_ctx.m_submit->setVertexBuffer(_vb);
+		s_ctx.m_submit->setVertexBuffer(_vb, _numVertices);
 	}
 
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
@@ -1188,9 +1182,9 @@ namespace bgfx
 		s_ctx.m_submit->setInstanceDataBuffer(_idb);
 	}
 
-	void setMaterial(MaterialHandle _handle)
+	void setProgram(ProgramHandle _handle)
 	{
-		s_ctx.m_submit->setMaterial(_handle);
+		s_ctx.m_submit->setProgram(_handle);
 	}
 
 	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle)

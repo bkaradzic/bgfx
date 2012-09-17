@@ -258,7 +258,7 @@ namespace bgfx
 		uint8_t m_numPredefined;
 	};
 
-	struct Material
+	struct Program
 	{
 		void create(const Shader& _vsh, const Shader& _fsh)
 		{

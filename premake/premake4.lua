@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2011 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2012 Branimir Karadzic. All rights reserved.
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
@@ -34,6 +34,8 @@ if (_ACTION == nil) then return end
 BGFX_DIR = (path.getabsolute("..") .. "/")
 local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
 local BGFX_THIRD_PARTY_DIR = (BGFX_DIR .. "3rdparty/")
+
+BX_DIR = (BGFX_DIR .. "/../../bx/")
 
 local XEDK = os.getenv("XEDK")
 if not XEDK then XEDK = "<you must install XBOX SDK>" end
@@ -106,7 +108,7 @@ configuration "Release"
 	targetsuffix "Release"
 
 configuration { "vs*" }
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/msvc" }
+	includedirs { BX_DIR .. "include/compat/msvc" }
 	defines {
 		"WIN32",
 		"_WIN32",
@@ -136,7 +138,7 @@ configuration { "x64", "vs*" }
 
 configuration { "mingw" }
 	defines { "WIN32" }
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/mingw" }
+	includedirs { BX_DIR .. "include/compat/mingw" }
 	buildoptions {
 		"-std=c++0x",
 		"-U__STRICT_ANSI__",
@@ -191,7 +193,7 @@ configuration { "linux", "x64" }
 
 configuration { "nacl" }
 	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600" }
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/nacl" }
+	includedirs { BX_DIR .. "include/compat/nacl" }
 	buildoptions {
 		"-std=c++0x",
 		"-U__STRICT_ANSI__",
@@ -224,7 +226,7 @@ configuration { "x64", "nacl" }
 configuration { "Xbox360" }
 	targetdir (BGFX_BUILD_DIR .. "xbox360" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "xbox360" .. "/obj")
-	includedirs { BGFX_THIRD_PARTY_DIR .. "compiler/msvc" }
+	includedirs { BX_DIR .. "include/compat/msvc" }
 	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/xbox360" }
 	defines {
 		"NOMINMAX",
@@ -238,6 +240,8 @@ end
 
 dofile "bgfx.lua"
 dofile "ddsdump.lua"
-dofile "helloworld.lua"
 dofile "makedisttex.lua"
 dofile "shaderc.lua"
+dofile "example-00-helloworld.lua"
+dofile "example-01-cubes.lua"
+dofile "example-02-metaballs.lua"

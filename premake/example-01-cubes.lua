@@ -1,6 +1,8 @@
-project "helloworld"
-	uuid "ff2c8450-ebf4-11e0-9572-0800200c9a66"
+project "example-01-cubes"
+	uuid "fec3bc94-e1e5-11e1-9c59-c7eeec2c1c51"
 	kind "WindowedApp"
+
+	debugdir (BGFX_DIR .. "examples/01-cubes/")
 
 	includedirs {
 		BGFX_DIR .. "../bx/include",
@@ -10,8 +12,8 @@ project "helloworld"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
-		BGFX_DIR .. "examples/helloworld/**.cpp",
-		BGFX_DIR .. "examples/helloworld/**.h",
+		BGFX_DIR .. "examples/01-cubes/**.cpp",
+		BGFX_DIR .. "examples/01-cubes/**.h",
 	}
 
 	links {
