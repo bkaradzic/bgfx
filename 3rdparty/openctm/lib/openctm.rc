@@ -1,0 +1,26 @@
+
+1 VERSIONINFO
+	FILEVERSION 1,0,3,0
+	PRODUCTVERSION 1,0,3,0
+	FILEOS 0x4
+	FILETYPE 0x2
+	BEGIN
+		BLOCK "StringFileInfo"
+		BEGIN
+			BLOCK "040904e4"
+			BEGIN
+				VALUE "ProductVersion", "1.0.3.0"
+				VALUE "FileVersion", "1.0.3.0"
+				VALUE "FileDescription", "OpenCTM API shared library"
+				VALUE "ProductName", "OpenCTM"
+				VALUE "OriginalFilename", "openctm.dll"
+				VALUE "LegalCopyright", "© 2009-2010 Marcus Geelnard"
+				VALUE "License", "This software is released under the zlib/libpng license."
+			END
+		END
+
+		BLOCK "VarFileInfo"
+		BEGIN
+			VALUE "Translation", 0x0409, 1252
+		END
+	END

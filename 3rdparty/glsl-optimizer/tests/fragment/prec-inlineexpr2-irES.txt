@@ -4,61 +4,61 @@ uniform mediump float _EmberFadeEnd;
 uniform sampler2D _BurntTex;
 uniform sampler2D _MainTex;
 float xll_saturate (
-  in float x
+  in float x_1
 )
 {
-  float tmpvar_1;
-  tmpvar_1 = clamp (x, 0.0, 1.0);
-  return tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  return tmpvar_2;
 }
 
 vec3 xll_saturate (
-  in vec3 x
+  in vec3 x_3
 )
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = clamp (x, 0.0, 1.0);
-  return tmpvar_1;
+  vec3 tmpvar_4;
+  tmpvar_4 = clamp (x_3, 0.0, 1.0);
+  return tmpvar_4;
 }
 
 lowp vec4 frag (
-  in mediump vec2 uv
+  in mediump vec2 uv_5
 )
 {
-  lowp vec3 t;
-  lowp vec3 burn;
-  lowp vec3 base;
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, uv);
-  lowp vec3 tmpvar_2;
-  tmpvar_2 = tmpvar_1.xyz;
-  base = tmpvar_2;
-  lowp vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_BurntTex, uv);
-  lowp vec3 tmpvar_4;
-  tmpvar_4 = tmpvar_3.xyz;
-  burn = tmpvar_4;
-  float tmpvar_5;
-  tmpvar_5 = xll_saturate (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)));
-  vec3 tmpvar_6;
-  tmpvar_6 = vec3(tmpvar_5);
-  vec3 tmpvar_7;
-  tmpvar_7 = tmpvar_6;
-  t = tmpvar_7;
-  lowp vec3 tmpvar_8;
-  tmpvar_8 = mix (base, burn, t);
+  lowp vec3 t_6;
+  lowp vec3 burn_7;
+  lowp vec3 base_8;
   lowp vec4 tmpvar_9;
-  tmpvar_9.w = 1.0;
-  tmpvar_9.xyz = tmpvar_8.xyz;
-  return tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, uv_5);
+  lowp vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9.xyz;
+  base_8 = tmpvar_10;
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_BurntTex, uv_5);
+  lowp vec3 tmpvar_12;
+  tmpvar_12 = tmpvar_11.xyz;
+  burn_7 = tmpvar_12;
+  float tmpvar_13;
+  tmpvar_13 = xll_saturate (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)));
+  vec3 tmpvar_14;
+  tmpvar_14 = vec3(tmpvar_13);
+  vec3 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  t_6 = tmpvar_15;
+  lowp vec3 tmpvar_16;
+  tmpvar_16 = mix (base_8, burn_7, t_6);
+  lowp vec4 tmpvar_17;
+  tmpvar_17.w = 1.0;
+  tmpvar_17.xyz = tmpvar_16.xyz;
+  return tmpvar_17;
 }
 
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = frag (xlv_TEXCOORD0);
-  lowp vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  gl_FragColor = tmpvar_2;
+  lowp vec4 tmpvar_18;
+  tmpvar_18 = frag (xlv_TEXCOORD0);
+  lowp vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  gl_FragColor = tmpvar_19;
 }
 

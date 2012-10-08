@@ -1,0 +1,45 @@
+varying vec4 xlv_FOG;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _ProjectionParams;
+uniform vec4 _MainTex_ST;
+void main ()
+{
+  vec4 pos_1;
+  pos_1.w = gl_Vertex.w;
+  pos_1.xyz = (gl_Vertex.xyz * _Scale.xyz);
+  vec4 tmpvar_2;
+  tmpvar_2.w = 0.0;
+  tmpvar_2.xyz = pos_1.xyz;
+  pos_1.xyz = mix (pos_1.xyz, (_TerrainEngineBendTree * tmpvar_2).xyz, gl_Color.www);
+  vec3 tmpvar_3;
+  tmpvar_3.xz = vec2(0.0, 0.0);
+  tmpvar_3.y = _SquashPlaneNormal.w;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = mix ((pos_1.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_3 - pos_1.xyz)) * _SquashPlaneNormal.xyz)), pos_1.xyz, vec3(_SquashAmount));
+  pos_1 = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
+  vec4 o_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = (tmpvar_5 * 0.5);
+  vec2 tmpvar_8;
+  tmpvar_8.x = tmpvar_7.x;
+  tmpvar_8.y = (tmpvar_7.y * _ProjectionParams.x);
+  o_6.xy = (tmpvar_8 + tmpvar_7.w);
+  o_6.zw = tmpvar_5.zw;
+  gl_Position = tmpvar_5;
+  vec4 tmpvar_9;
+  tmpvar_9.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_9.x = tmpvar_5.z;
+  xlv_FOG = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10.zw = vec2(0.0, 0.0);
+  tmpvar_10.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  gl_TexCoord[0] = tmpvar_10;
+  gl_TexCoord[1] = o_6;
+}
+

@@ -1,6 +1,6 @@
 varying float var;
 void main ()
 {
-  gl_FragColor = vec4(abs (var));
+  gl_FragColor = vec4(abs(var));
 }
 

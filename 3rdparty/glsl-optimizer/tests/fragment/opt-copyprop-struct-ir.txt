@@ -4,20 +4,20 @@ struct v2f {
 varying float var;
 void main ()
 {
-  v2f i2;
-  v2f i;
-  float tmpvar_1;
-  tmpvar_1 = var;
-  i.f = tmpvar_1;
-  v2f tmpvar_2;
-  tmpvar_2 = i;
-  i2 = tmpvar_2;
+  v2f i2_1;
+  v2f i_2;
   float tmpvar_3;
-  tmpvar_3 = abs (i2.f);
-  vec4 tmpvar_4;
-  tmpvar_4 = vec4(tmpvar_3);
-  vec4 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  gl_FragColor = tmpvar_5;
+  tmpvar_3 = var;
+  i_2.f = tmpvar_3;
+  v2f tmpvar_4;
+  tmpvar_4 = i_2;
+  i2_1 = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = abs (i2_1.f);
+  vec4 tmpvar_6;
+  tmpvar_6 = vec4(tmpvar_5);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  gl_FragColor = tmpvar_7;
 }
 

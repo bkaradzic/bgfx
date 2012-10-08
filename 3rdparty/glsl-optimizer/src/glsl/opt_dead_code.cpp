@@ -42,7 +42,7 @@ static bool debug = false;
  * for usage on an unlinked instruction stream.
  */
 bool
-do_dead_code(exec_list *instructions)
+do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 {
    ir_variable_refcount_visitor v;
    bool progress = false;
@@ -50,7 +50,7 @@ do_dead_code(exec_list *instructions)
    v.run(instructions);
 
    foreach_iter(exec_list_iterator, iter, v.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+      ir_variable_refcount_entry *entry = (ir_variable_refcount_entry *)iter.get();
 
       /* Since each assignment is a reference, the refereneced count must be
        * greater than or equal to the assignment count.  If they are equal,
@@ -78,8 +78,7 @@ do_dead_code(exec_list *instructions)
 	  * Don't do so if it's a shader output, though.
 	  */
 	 if (entry->var->mode != ir_var_out &&
-	     entry->var->mode != ir_var_inout &&
-	     !ir_has_call_skip_builtins(entry->assign)) {
+	     entry->var->mode != ir_var_inout) {
 	    entry->assign->remove();
 	    progress = true;
 
@@ -94,10 +93,17 @@ do_dead_code(exec_list *instructions)
 	  */
 
 	 /* uniform initializers are precious, and could get used by another
-	  * stage.
+	  * stage.  Also, once uniform locations have been assigned, the
+	  * declaration cannot be deleted.
+	  *
+	  * Also, GL_ARB_uniform_buffer_object says that std140
+	  * uniforms will not be eliminated.  Since we always do
+	  * std140, just don't eliminate uniforms in UBOs.
 	  */
 	 if (entry->var->mode == ir_var_uniform &&
-	     entry->var->constant_value)
+	     (uniform_locations_assigned ||
+	      entry->var->constant_value ||
+	      entry->var->uniform_block != -1))
 	    continue;
 
 	 entry->var->remove();
@@ -132,7 +138,12 @@ do_dead_code_unlinked(exec_list *instructions)
 	 foreach_iter(exec_list_iterator, sigiter, *f) {
 	    ir_function_signature *sig =
 	       (ir_function_signature *) sigiter.get();
-	    if (do_dead_code(&sig->body))
+	    /* The setting of the uniform_locations_assigned flag here is
+	     * irrelevent.  If there is a uniform declaration encountered
+	     * inside the body of the function, something has already gone
+	     * terribly, terribly wrong.
+	     */
+	    if (do_dead_code(&sig->body, false))
 	       progress = true;
 	 }
       }

@@ -54,6 +54,7 @@ public:
     * the hierarchy should not have \c visit methods.
     */
    /*@{*/
+   virtual void visit(ir_rvalue *);
    virtual void visit(ir_variable *);
    virtual void visit(ir_function_signature *);
    virtual void visit(ir_function *);

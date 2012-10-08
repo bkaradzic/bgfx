@@ -1,0 +1,6 @@
+uniform float inFloat;
+
+void main()
+{
+    gl_FragColor = vec4(inFloat * 4.36e-6);
+}

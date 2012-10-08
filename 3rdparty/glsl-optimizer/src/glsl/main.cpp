@@ -22,9 +22,17 @@
  */
 #include <getopt.h>
 
+/** @file main.cpp
+ *
+ * This file is the main() routine and scaffolding for producing
+ * builtin_compiler (which doesn't include builtins itself and is used
+ * to generate the profile information for builtin_function.cpp), and
+ * for glsl_compiler (which does include builtins and can be used to
+ * offline compile GLSL code and examine the resulting GLSL IR.
+ */
+
 #include "ast.h"
 #include "glsl_parser_extras.h"
-#include "glsl_parser.h"
 #include "ir_optimization.h"
 #include "ir_print_visitor.h"
 #include "program.h"
@@ -36,10 +44,10 @@ initialize_context(struct gl_context *ctx, gl_api api)
 {
    initialize_context_to_defaults(ctx, api);
 
-   /* GLSL 1.30 isn't fully supported, but we need to advertise 1.30 so that
-    * the built-in functions for 1.30 can be built.
+   /* The standalone compiler needs to claim support for almost
+    * everything in order to compile the built-in functions.
     */
-   ctx->Const.GLSLVersion = 130;
+   ctx->Const.GLSLVersion = 140;
 
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxDrawBuffers = 2;
@@ -136,7 +144,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
       new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
 
    const char *source = shader->Source;
-   state->error = preprocess(state, &source, &state->info_log,
+   state->error = glcpp_preprocess(state, &source, &state->info_log,
 			     state->extensions, ctx->API) != 0;
 
    if (!state->error) {
@@ -167,7 +175,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    if (!state->error && !shader->ir->is_empty()) {
       bool progress;
       do {
-	 progress = do_common_optimization(shader->ir, false, 32);
+	 progress = do_common_optimization(shader->ir, false, false, 32);
       } while (progress);
 
       validate_ir_tree(shader->ir);
@@ -239,7 +247,7 @@ main(int argc, char **argv)
 	 usage_fail(argv[0]);
 
       const char *const ext = & argv[optind][len - 5];
-      if (strncmp(".vert", ext, 5) == 0)
+      if (strncmp(".vert", ext, 5) == 0 || strncmp(".glsl", ext, 5) == 0)
 	 shader->Type = GL_VERTEX_SHADER;
       else if (strncmp(".geom", ext, 5) == 0)
 	 shader->Type = GL_GEOMETRY_SHADER;

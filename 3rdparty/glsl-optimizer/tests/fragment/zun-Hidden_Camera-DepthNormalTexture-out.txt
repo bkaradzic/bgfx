@@ -1,0 +1,22 @@
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[1];
+  float x_2;
+  x_2 = (texture2D (_MainTex, gl_TexCoord[0].xy).w - _Cutoff);
+  if ((x_2 < 0.0)) {
+    discard;
+  };
+  vec4 enc_3;
+  enc_3.xy = ((((tmpvar_1.xy / (tmpvar_1.z + 1.0)) / 1.7777) * 0.5) + 0.5);
+  vec2 enc_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = fract((vec2(1.0, 255.0) * tmpvar_1.w));
+  enc_4.y = tmpvar_5.y;
+  enc_4.x = (tmpvar_5.x - (tmpvar_5.y * 0.00392157));
+  enc_3.zw = enc_4;
+  gl_FragData[0] = enc_3;
+}
+

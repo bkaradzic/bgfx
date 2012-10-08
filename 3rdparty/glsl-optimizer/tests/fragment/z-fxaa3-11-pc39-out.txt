@@ -1,0 +1,553 @@
+#extension GL_ARB_shader_texture_lod : enable
+varying vec2 xlv_TEXCOORD0;
+uniform vec4 _MainTex_TexelSize;
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec2 fxaaQualityRcpFrame_1;
+  fxaaQualityRcpFrame_1 = _MainTex_TexelSize.xy;
+  vec4 tmpvar_2;
+  float dstP_3;
+  float dstN_4;
+  float lumaEndP_5;
+  float lumaEndN_6;
+  vec2 posP_7;
+  vec2 posN_8;
+  vec2 posB_9;
+  float lumaNN_10;
+  float lengthSign_11;
+  float lumaN_12;
+  float lumaS_13;
+  vec2 posM_14;
+  posM_14.x = xlv_TEXCOORD0.x;
+  posM_14.y = xlv_TEXCOORD0.y;
+  vec4 tmpvar_15;
+  tmpvar_15 = texture2DLod (_MainTex, xlv_TEXCOORD0, 0.0);
+  vec4 tmpvar_16;
+  tmpvar_16.zw = vec2(0.0, 0.0);
+  tmpvar_16.xy = (xlv_TEXCOORD0 + (vec2(0.0, 1.0) * _MainTex_TexelSize.xy));
+  vec4 tmpvar_17;
+  tmpvar_17 = texture2DLod (_MainTex, tmpvar_16.xy, 0.0);
+  lumaS_13 = tmpvar_17.w;
+  vec4 tmpvar_18;
+  tmpvar_18.zw = vec2(0.0, 0.0);
+  tmpvar_18.xy = (xlv_TEXCOORD0 + (vec2(1.0, 0.0) * _MainTex_TexelSize.xy));
+  vec4 tmpvar_19;
+  tmpvar_19 = texture2DLod (_MainTex, tmpvar_18.xy, 0.0);
+  float tmpvar_20;
+  tmpvar_20 = tmpvar_19.w;
+  vec4 tmpvar_21;
+  tmpvar_21.zw = vec2(0.0, 0.0);
+  tmpvar_21.xy = (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy));
+  vec4 tmpvar_22;
+  tmpvar_22 = texture2DLod (_MainTex, tmpvar_21.xy, 0.0);
+  lumaN_12 = tmpvar_22.w;
+  vec4 tmpvar_23;
+  tmpvar_23.zw = vec2(0.0, 0.0);
+  tmpvar_23.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 0.0) * _MainTex_TexelSize.xy));
+  vec4 tmpvar_24;
+  tmpvar_24 = texture2DLod (_MainTex, tmpvar_23.xy, 0.0);
+  float tmpvar_25;
+  tmpvar_25 = tmpvar_24.w;
+  float tmpvar_26;
+  tmpvar_26 = max (max (tmpvar_22.w, tmpvar_24.w), max (tmpvar_19.w, max (tmpvar_17.w, tmpvar_15.w)));
+  float tmpvar_27;
+  tmpvar_27 = (tmpvar_26 - min (min (tmpvar_22.w, tmpvar_24.w), min (tmpvar_19.w, min (tmpvar_17.w, tmpvar_15.w))));
+  if ((tmpvar_27 < max (0.0833, (tmpvar_26 * 0.166)))) {
+    tmpvar_2 = tmpvar_15;
+  } else {
+    vec4 tmpvar_28;
+    tmpvar_28.zw = vec2(0.0, 0.0);
+    tmpvar_28.xy = (xlv_TEXCOORD0 + (vec2(-1.0, -1.0) * _MainTex_TexelSize.xy));
+    vec4 tmpvar_29;
+    tmpvar_29 = texture2DLod (_MainTex, tmpvar_28.xy, 0.0);
+    vec4 tmpvar_30;
+    tmpvar_30.zw = vec2(0.0, 0.0);
+    tmpvar_30.xy = (xlv_TEXCOORD0 + _MainTex_TexelSize.xy);
+    vec4 tmpvar_31;
+    tmpvar_31 = texture2DLod (_MainTex, tmpvar_30.xy, 0.0);
+    vec4 tmpvar_32;
+    tmpvar_32.zw = vec2(0.0, 0.0);
+    tmpvar_32.xy = (xlv_TEXCOORD0 + (vec2(1.0, -1.0) * _MainTex_TexelSize.xy));
+    vec4 tmpvar_33;
+    tmpvar_33 = texture2DLod (_MainTex, tmpvar_32.xy, 0.0);
+    vec4 tmpvar_34;
+    tmpvar_34.zw = vec2(0.0, 0.0);
+    tmpvar_34.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 1.0) * _MainTex_TexelSize.xy));
+    vec4 tmpvar_35;
+    tmpvar_35 = texture2DLod (_MainTex, tmpvar_34.xy, 0.0);
+    float tmpvar_36;
+    tmpvar_36 = (tmpvar_22.w + tmpvar_17.w);
+    float tmpvar_37;
+    tmpvar_37 = (tmpvar_24.w + tmpvar_19.w);
+    float tmpvar_38;
+    tmpvar_38 = (1.0/(tmpvar_27));
+    float tmpvar_39;
+    tmpvar_39 = (tmpvar_33.w + tmpvar_31.w);
+    float tmpvar_40;
+    tmpvar_40 = (tmpvar_29.w + tmpvar_35.w);
+    lengthSign_11 = fxaaQualityRcpFrame_1.x;
+    bool tmpvar_41;
+    tmpvar_41 = ((abs(((-2.0 * tmpvar_24.w) + tmpvar_40)) + ((abs(((-2.0 * tmpvar_15.w) + tmpvar_36)) * 2.0) + abs(((-2.0 * tmpvar_19.w) + tmpvar_39)))) >= (abs(((-2.0 * tmpvar_17.w) + (tmpvar_35.w + tmpvar_31.w))) + ((abs(((-2.0 * tmpvar_15.w) + tmpvar_37)) * 2.0) + abs(((-2.0 * tmpvar_22.w) + (tmpvar_29.w + tmpvar_33.w))))));
+    float tmpvar_42;
+    tmpvar_42 = (((tmpvar_36 + tmpvar_37) * 2.0) + (tmpvar_40 + tmpvar_39));
+    if (!(tmpvar_41)) {
+      lumaN_12 = tmpvar_25;
+    };
+    if (!(tmpvar_41)) {
+      lumaS_13 = tmpvar_20;
+    };
+    if (tmpvar_41) {
+      lengthSign_11 = fxaaQualityRcpFrame_1.y;
+    };
+    float tmpvar_43;
+    tmpvar_43 = ((tmpvar_42 * 0.0833333) - tmpvar_15.w);
+    float tmpvar_44;
+    tmpvar_44 = (lumaN_12 - tmpvar_15.w);
+    float tmpvar_45;
+    tmpvar_45 = (lumaS_13 - tmpvar_15.w);
+    lumaNN_10 = (lumaN_12 + tmpvar_15.w);
+    float tmpvar_46;
+    tmpvar_46 = (lumaS_13 + tmpvar_15.w);
+    bool tmpvar_47;
+    tmpvar_47 = (abs(tmpvar_44) >= abs(tmpvar_45));
+    float tmpvar_48;
+    tmpvar_48 = max (abs(tmpvar_44), abs(tmpvar_45));
+    if (tmpvar_47) {
+      lengthSign_11 = -(lengthSign_11);
+    };
+    float tmpvar_49;
+    tmpvar_49 = clamp ((abs(tmpvar_43) * tmpvar_38), 0.0, 1.0);
+    posB_9.x = posM_14.x;
+    posB_9.y = posM_14.y;
+    float tmpvar_50;
+    if (!(tmpvar_41)) {
+      tmpvar_50 = 0.0;
+    } else {
+      tmpvar_50 = fxaaQualityRcpFrame_1.x;
+    };
+    float tmpvar_51;
+    if (tmpvar_41) {
+      tmpvar_51 = 0.0;
+    } else {
+      tmpvar_51 = fxaaQualityRcpFrame_1.y;
+    };
+    if (!(tmpvar_41)) {
+      posB_9.x = (xlv_TEXCOORD0.x + (lengthSign_11 * 0.5));
+    };
+    if (tmpvar_41) {
+      posB_9.y = (xlv_TEXCOORD0.y + (lengthSign_11 * 0.5));
+    };
+    posN_8.x = (posB_9.x - tmpvar_50);
+    posN_8.y = (posB_9.y - tmpvar_51);
+    posP_7.x = (posB_9.x + tmpvar_50);
+    posP_7.y = (posB_9.y + tmpvar_51);
+    float tmpvar_52;
+    tmpvar_52 = ((-2.0 * tmpvar_49) + 3.0);
+    vec4 tmpvar_53;
+    tmpvar_53 = texture2DLod (_MainTex, posN_8, 0.0);
+    lumaEndN_6 = tmpvar_53.w;
+    float tmpvar_54;
+    tmpvar_54 = (tmpvar_49 * tmpvar_49);
+    vec4 tmpvar_55;
+    tmpvar_55 = texture2DLod (_MainTex, posP_7, 0.0);
+    lumaEndP_5 = tmpvar_55.w;
+    if (!(tmpvar_47)) {
+      lumaNN_10 = tmpvar_46;
+    };
+    float tmpvar_56;
+    tmpvar_56 = (tmpvar_48 / 4.0);
+    float tmpvar_57;
+    tmpvar_57 = (tmpvar_52 * tmpvar_54);
+    bool tmpvar_58;
+    tmpvar_58 = ((tmpvar_15.w - (lumaNN_10 * 0.5)) < 0.0);
+    float tmpvar_59;
+    tmpvar_59 = (tmpvar_53.w - (lumaNN_10 * 0.5));
+    lumaEndN_6 = tmpvar_59;
+    float tmpvar_60;
+    tmpvar_60 = (tmpvar_55.w - (lumaNN_10 * 0.5));
+    lumaEndP_5 = tmpvar_60;
+    bool tmpvar_61;
+    tmpvar_61 = (abs(tmpvar_59) >= tmpvar_56);
+    bool tmpvar_62;
+    tmpvar_62 = (abs(tmpvar_60) >= tmpvar_56);
+    if (!(tmpvar_61)) {
+      posN_8.x = (posN_8.x - tmpvar_50);
+    };
+    if (!(tmpvar_61)) {
+      posN_8.y = (posN_8.y - tmpvar_51);
+    };
+    bool tmpvar_63;
+    tmpvar_63 = (!(tmpvar_61) || !(tmpvar_62));
+    if (!(tmpvar_62)) {
+      posP_7.x = (posP_7.x + tmpvar_50);
+    };
+    if (!(tmpvar_62)) {
+      posP_7.y = (posP_7.y + tmpvar_51);
+    };
+    if (tmpvar_63) {
+      if (!(tmpvar_61)) {
+        lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+      };
+      if (!(tmpvar_62)) {
+        lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+      };
+      if (!(tmpvar_61)) {
+        lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+      };
+      if (!(tmpvar_62)) {
+        lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+      };
+      bool tmpvar_64;
+      tmpvar_64 = (abs(lumaEndN_6) >= tmpvar_56);
+      bool tmpvar_65;
+      tmpvar_65 = (abs(lumaEndP_5) >= tmpvar_56);
+      if (!(tmpvar_64)) {
+        posN_8.x = (posN_8.x - tmpvar_50);
+      };
+      if (!(tmpvar_64)) {
+        posN_8.y = (posN_8.y - tmpvar_51);
+      };
+      bool tmpvar_66;
+      tmpvar_66 = (!(tmpvar_64) || !(tmpvar_65));
+      if (!(tmpvar_65)) {
+        posP_7.x = (posP_7.x + tmpvar_50);
+      };
+      if (!(tmpvar_65)) {
+        posP_7.y = (posP_7.y + tmpvar_51);
+      };
+      if (tmpvar_66) {
+        if (!(tmpvar_64)) {
+          lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+        };
+        if (!(tmpvar_65)) {
+          lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+        };
+        if (!(tmpvar_64)) {
+          lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+        };
+        if (!(tmpvar_65)) {
+          lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+        };
+        bool tmpvar_67;
+        tmpvar_67 = (abs(lumaEndN_6) >= tmpvar_56);
+        bool tmpvar_68;
+        tmpvar_68 = (abs(lumaEndP_5) >= tmpvar_56);
+        if (!(tmpvar_67)) {
+          posN_8.x = (posN_8.x - tmpvar_50);
+        };
+        if (!(tmpvar_67)) {
+          posN_8.y = (posN_8.y - tmpvar_51);
+        };
+        bool tmpvar_69;
+        tmpvar_69 = (!(tmpvar_67) || !(tmpvar_68));
+        if (!(tmpvar_68)) {
+          posP_7.x = (posP_7.x + tmpvar_50);
+        };
+        if (!(tmpvar_68)) {
+          posP_7.y = (posP_7.y + tmpvar_51);
+        };
+        if (tmpvar_69) {
+          if (!(tmpvar_67)) {
+            lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+          };
+          if (!(tmpvar_68)) {
+            lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+          };
+          if (!(tmpvar_67)) {
+            lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+          };
+          if (!(tmpvar_68)) {
+            lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+          };
+          bool tmpvar_70;
+          tmpvar_70 = (abs(lumaEndN_6) >= tmpvar_56);
+          bool tmpvar_71;
+          tmpvar_71 = (abs(lumaEndP_5) >= tmpvar_56);
+          if (!(tmpvar_70)) {
+            posN_8.x = (posN_8.x - tmpvar_50);
+          };
+          if (!(tmpvar_70)) {
+            posN_8.y = (posN_8.y - tmpvar_51);
+          };
+          bool tmpvar_72;
+          tmpvar_72 = (!(tmpvar_70) || !(tmpvar_71));
+          if (!(tmpvar_71)) {
+            posP_7.x = (posP_7.x + tmpvar_50);
+          };
+          if (!(tmpvar_71)) {
+            posP_7.y = (posP_7.y + tmpvar_51);
+          };
+          if (tmpvar_72) {
+            if (!(tmpvar_70)) {
+              lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+            };
+            if (!(tmpvar_71)) {
+              lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+            };
+            if (!(tmpvar_70)) {
+              lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+            };
+            if (!(tmpvar_71)) {
+              lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+            };
+            bool tmpvar_73;
+            tmpvar_73 = (abs(lumaEndN_6) >= tmpvar_56);
+            bool tmpvar_74;
+            tmpvar_74 = (abs(lumaEndP_5) >= tmpvar_56);
+            if (!(tmpvar_73)) {
+              posN_8.x = (posN_8.x - (tmpvar_50 * 1.5));
+            };
+            if (!(tmpvar_73)) {
+              posN_8.y = (posN_8.y - (tmpvar_51 * 1.5));
+            };
+            bool tmpvar_75;
+            tmpvar_75 = (!(tmpvar_73) || !(tmpvar_74));
+            if (!(tmpvar_74)) {
+              posP_7.x = (posP_7.x + (tmpvar_50 * 1.5));
+            };
+            if (!(tmpvar_74)) {
+              posP_7.y = (posP_7.y + (tmpvar_51 * 1.5));
+            };
+            if (tmpvar_75) {
+              if (!(tmpvar_73)) {
+                lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+              };
+              if (!(tmpvar_74)) {
+                lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+              };
+              if (!(tmpvar_73)) {
+                lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+              };
+              if (!(tmpvar_74)) {
+                lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+              };
+              bool tmpvar_76;
+              tmpvar_76 = (abs(lumaEndN_6) >= tmpvar_56);
+              bool tmpvar_77;
+              tmpvar_77 = (abs(lumaEndP_5) >= tmpvar_56);
+              if (!(tmpvar_76)) {
+                posN_8.x = (posN_8.x - (tmpvar_50 * 2.0));
+              };
+              if (!(tmpvar_76)) {
+                posN_8.y = (posN_8.y - (tmpvar_51 * 2.0));
+              };
+              bool tmpvar_78;
+              tmpvar_78 = (!(tmpvar_76) || !(tmpvar_77));
+              if (!(tmpvar_77)) {
+                posP_7.x = (posP_7.x + (tmpvar_50 * 2.0));
+              };
+              if (!(tmpvar_77)) {
+                posP_7.y = (posP_7.y + (tmpvar_51 * 2.0));
+              };
+              if (tmpvar_78) {
+                if (!(tmpvar_76)) {
+                  lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+                };
+                if (!(tmpvar_77)) {
+                  lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+                };
+                if (!(tmpvar_76)) {
+                  lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+                };
+                if (!(tmpvar_77)) {
+                  lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+                };
+                bool tmpvar_79;
+                tmpvar_79 = (abs(lumaEndN_6) >= tmpvar_56);
+                bool tmpvar_80;
+                tmpvar_80 = (abs(lumaEndP_5) >= tmpvar_56);
+                if (!(tmpvar_79)) {
+                  posN_8.x = (posN_8.x - (tmpvar_50 * 2.0));
+                };
+                if (!(tmpvar_79)) {
+                  posN_8.y = (posN_8.y - (tmpvar_51 * 2.0));
+                };
+                bool tmpvar_81;
+                tmpvar_81 = (!(tmpvar_79) || !(tmpvar_80));
+                if (!(tmpvar_80)) {
+                  posP_7.x = (posP_7.x + (tmpvar_50 * 2.0));
+                };
+                if (!(tmpvar_80)) {
+                  posP_7.y = (posP_7.y + (tmpvar_51 * 2.0));
+                };
+                if (tmpvar_81) {
+                  if (!(tmpvar_79)) {
+                    lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+                  };
+                  if (!(tmpvar_80)) {
+                    lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+                  };
+                  if (!(tmpvar_79)) {
+                    lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+                  };
+                  if (!(tmpvar_80)) {
+                    lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+                  };
+                  bool tmpvar_82;
+                  tmpvar_82 = (abs(lumaEndN_6) >= tmpvar_56);
+                  bool tmpvar_83;
+                  tmpvar_83 = (abs(lumaEndP_5) >= tmpvar_56);
+                  if (!(tmpvar_82)) {
+                    posN_8.x = (posN_8.x - (tmpvar_50 * 2.0));
+                  };
+                  if (!(tmpvar_82)) {
+                    posN_8.y = (posN_8.y - (tmpvar_51 * 2.0));
+                  };
+                  bool tmpvar_84;
+                  tmpvar_84 = (!(tmpvar_82) || !(tmpvar_83));
+                  if (!(tmpvar_83)) {
+                    posP_7.x = (posP_7.x + (tmpvar_50 * 2.0));
+                  };
+                  if (!(tmpvar_83)) {
+                    posP_7.y = (posP_7.y + (tmpvar_51 * 2.0));
+                  };
+                  if (tmpvar_84) {
+                    if (!(tmpvar_82)) {
+                      lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+                    };
+                    if (!(tmpvar_83)) {
+                      lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+                    };
+                    if (!(tmpvar_82)) {
+                      lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+                    };
+                    if (!(tmpvar_83)) {
+                      lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+                    };
+                    bool tmpvar_85;
+                    tmpvar_85 = (abs(lumaEndN_6) >= tmpvar_56);
+                    bool tmpvar_86;
+                    tmpvar_86 = (abs(lumaEndP_5) >= tmpvar_56);
+                    if (!(tmpvar_85)) {
+                      posN_8.x = (posN_8.x - (tmpvar_50 * 2.0));
+                    };
+                    if (!(tmpvar_85)) {
+                      posN_8.y = (posN_8.y - (tmpvar_51 * 2.0));
+                    };
+                    bool tmpvar_87;
+                    tmpvar_87 = (!(tmpvar_85) || !(tmpvar_86));
+                    if (!(tmpvar_86)) {
+                      posP_7.x = (posP_7.x + (tmpvar_50 * 2.0));
+                    };
+                    if (!(tmpvar_86)) {
+                      posP_7.y = (posP_7.y + (tmpvar_51 * 2.0));
+                    };
+                    if (tmpvar_87) {
+                      if (!(tmpvar_85)) {
+                        lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+                      };
+                      if (!(tmpvar_86)) {
+                        lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+                      };
+                      if (!(tmpvar_85)) {
+                        lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+                      };
+                      if (!(tmpvar_86)) {
+                        lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+                      };
+                      bool tmpvar_88;
+                      tmpvar_88 = (abs(lumaEndN_6) >= tmpvar_56);
+                      bool tmpvar_89;
+                      tmpvar_89 = (abs(lumaEndP_5) >= tmpvar_56);
+                      if (!(tmpvar_88)) {
+                        posN_8.x = (posN_8.x - (tmpvar_50 * 4.0));
+                      };
+                      if (!(tmpvar_88)) {
+                        posN_8.y = (posN_8.y - (tmpvar_51 * 4.0));
+                      };
+                      bool tmpvar_90;
+                      tmpvar_90 = (!(tmpvar_88) || !(tmpvar_89));
+                      if (!(tmpvar_89)) {
+                        posP_7.x = (posP_7.x + (tmpvar_50 * 4.0));
+                      };
+                      if (!(tmpvar_89)) {
+                        posP_7.y = (posP_7.y + (tmpvar_51 * 4.0));
+                      };
+                      if (tmpvar_90) {
+                        if (!(tmpvar_88)) {
+                          lumaEndN_6 = texture2DLod (_MainTex, posN_8, 0.0).w;
+                        };
+                        if (!(tmpvar_89)) {
+                          lumaEndP_5 = texture2DLod (_MainTex, posP_7, 0.0).w;
+                        };
+                        if (!(tmpvar_88)) {
+                          lumaEndN_6 = (lumaEndN_6 - (lumaNN_10 * 0.5));
+                        };
+                        if (!(tmpvar_89)) {
+                          lumaEndP_5 = (lumaEndP_5 - (lumaNN_10 * 0.5));
+                        };
+                        bool tmpvar_91;
+                        tmpvar_91 = (abs(lumaEndN_6) >= tmpvar_56);
+                        bool tmpvar_92;
+                        tmpvar_92 = (abs(lumaEndP_5) >= tmpvar_56);
+                        if (!(tmpvar_91)) {
+                          posN_8.x = (posN_8.x - (tmpvar_50 * 8.0));
+                        };
+                        if (!(tmpvar_91)) {
+                          posN_8.y = (posN_8.y - (tmpvar_51 * 8.0));
+                        };
+                        if (!(tmpvar_92)) {
+                          posP_7.x = (posP_7.x + (tmpvar_50 * 8.0));
+                        };
+                        if (!(tmpvar_92)) {
+                          posP_7.y = (posP_7.y + (tmpvar_51 * 8.0));
+                        };
+                      };
+                    };
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
+    };
+    dstN_4 = (xlv_TEXCOORD0.x - posN_8.x);
+    dstP_3 = (posP_7.x - xlv_TEXCOORD0.x);
+    if (!(tmpvar_41)) {
+      dstN_4 = (xlv_TEXCOORD0.y - posN_8.y);
+    };
+    if (!(tmpvar_41)) {
+      dstP_3 = (posP_7.y - xlv_TEXCOORD0.y);
+    };
+    bool tmpvar_93;
+    tmpvar_93 = ((lumaEndN_6 < 0.0) != tmpvar_58);
+    bool tmpvar_94;
+    tmpvar_94 = ((lumaEndP_5 < 0.0) != tmpvar_58);
+    float tmpvar_95;
+    tmpvar_95 = (1.0/((dstP_3 + dstN_4)));
+    float tmpvar_96;
+    tmpvar_96 = min (dstN_4, dstP_3);
+    bool tmpvar_97;
+    if ((dstN_4 < dstP_3)) {
+      tmpvar_97 = tmpvar_93;
+    } else {
+      tmpvar_97 = tmpvar_94;
+    };
+    float tmpvar_98;
+    tmpvar_98 = ((tmpvar_96 * -(tmpvar_95)) + 0.5);
+    float tmpvar_99;
+    tmpvar_99 = ((tmpvar_57 * tmpvar_57) * 0.75);
+    float tmpvar_100;
+    if (tmpvar_97) {
+      tmpvar_100 = tmpvar_98;
+    } else {
+      tmpvar_100 = 0.0;
+    };
+    float tmpvar_101;
+    tmpvar_101 = max (tmpvar_100, tmpvar_99);
+    if (!(tmpvar_41)) {
+      posM_14.x = (xlv_TEXCOORD0.x + (tmpvar_101 * lengthSign_11));
+    };
+    if (tmpvar_41) {
+      posM_14.y = (xlv_TEXCOORD0.y + (tmpvar_101 * lengthSign_11));
+    };
+    vec4 tmpvar_102;
+    tmpvar_102.xyz = texture2DLod (_MainTex, posM_14, 0.0).xyz;
+    tmpvar_102.w = tmpvar_15.w;
+    tmpvar_2 = tmpvar_102;
+  };
+  gl_FragData[0] = tmpvar_2;
+}
+

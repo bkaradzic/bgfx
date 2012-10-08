@@ -1,0 +1,65 @@
+###############################################################################
+# Product:     OpenCTM
+# File:        Makefile.linux
+# Description: Top level makefile for Linux systems (should work on most
+#              Un*x-like systems with gcc, e.g. OpenSolaris).
+###############################################################################
+# Copyright (c) 2009 Marcus Geelnard
+#
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the authors be held liable for any damages
+# arising from the use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+#
+#     1. The origin of this software must not be misrepresented; you must not
+#     claim that you wrote the original software. If you use this software
+#     in a product, an acknowledgment in the product documentation would be
+#     appreciated but is not required.
+#
+#     2. Altered source versions must be plainly marked as such, and must not
+#     be misrepresented as being the original software.
+#
+#     3. This notice may not be removed or altered from any source
+#     distribution.
+###############################################################################
+
+.phony: default all openctm toolset documentation install clean
+
+default: openctm toolset
+all: openctm toolset documentation
+
+clean:
+	cd lib && $(MAKE) -f Makefile.linux clean && cd ..
+	cd tools && $(MAKE) -f Makefile.linux clean && cd ..
+	cd doc && $(MAKE) -f Makefile.linux clean && cd ..
+
+openctm:
+	cd lib && $(MAKE) -f Makefile.linux -j2 && cd ..
+
+toolset:
+	cd tools && $(MAKE) -f Makefile.linux -j2 && cd ..
+
+documentation:
+	cd doc && $(MAKE) -f Makefile.linux -j2 && cd ..
+
+
+# Installation settings
+LIBDIR  = /usr/lib/
+INCDIR  = /usr/local/include/
+BINDIR  = /usr/local/bin/
+MAN1DIR = /usr/local/share/man/man1/
+CP = cp
+MKDIR = mkdir -p
+
+install:
+	$(CP) lib/libopenctm.so $(LIBDIR)
+	$(CP) lib/openctm.h $(INCDIR)
+	$(CP) lib/openctmpp.h $(INCDIR)
+	$(CP) tools/ctmconv $(BINDIR)
+	$(CP) tools/ctmviewer $(BINDIR)
+	$(MKDIR) $(MAN1DIR)
+	$(CP) doc/ctmconv.1 $(MAN1DIR)
+	$(CP) doc/ctmviewer.1 $(MAN1DIR)

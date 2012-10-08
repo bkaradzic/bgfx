@@ -1,0 +1,32 @@
+varying lowp float xx;
+void main ()
+{
+  lowp float c_1;
+  int i_2;
+  int tmpvar_3;
+  tmpvar_3 = 0;
+  i_2 = tmpvar_3;
+  if ((xx < 0.0)) {
+    discard;
+  };
+  float tmpvar_4;
+  tmpvar_4 = 0.0;
+  c_1 = tmpvar_4;
+  while (true) {
+    if (!((i_2 < 4))) {
+      break;
+    };
+    lowp float tmpvar_5;
+    tmpvar_5 = (c_1 + xx);
+    c_1 = tmpvar_5;
+    int tmpvar_6;
+    tmpvar_6 = (i_2 + 1);
+    i_2 = tmpvar_6;
+  };
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = vec4(c_1);
+  lowp vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_FragColor = tmpvar_8;
+}
+

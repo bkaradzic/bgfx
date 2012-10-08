@@ -29,9 +29,16 @@
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
+#include "main/context.h"
 
 #define YYLEX_PARAM state->scanner
 
+#undef yyerror
+
+static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
+{
+   _mesa_glsl_error(loc, st, "%s", msg);
+}
 %}
 
 %pure-parser
@@ -52,7 +59,7 @@
 %union {
    int n;
    float real;
-   char *identifier;
+   const char *identifier;
 
    struct ast_type_qualifier type_qualifier;
 
@@ -67,6 +74,11 @@
    ast_declarator_list *declarator_list;
    ast_struct_specifier *struct_specifier;
    ast_declaration *declaration;
+   ast_switch_body *switch_body;
+   ast_case_label *case_label;
+   ast_case_label_list *case_label_list;
+   ast_case_statement *case_statement;
+   ast_case_statement_list *case_statement_list;
 
    struct {
       ast_node *cond;
@@ -92,6 +104,9 @@
 %token SAMPLER2DARRAYSHADOW ISAMPLER1D ISAMPLER2D ISAMPLER3D ISAMPLERCUBE
 %token ISAMPLER1DARRAY ISAMPLER2DARRAY USAMPLER1D USAMPLER2D USAMPLER3D
 %token USAMPLERCUBE USAMPLER1DARRAY USAMPLER2DARRAY
+%token SAMPLER2DRECT ISAMPLER2DRECT USAMPLER2DRECT SAMPLER2DRECTSHADOW
+%token SAMPLERBUFFER ISAMPLERBUFFER USAMPLERBUFFER
+%token SAMPLEREXTERNALOES
 %token STRUCT VOID_TOK WHILE
 %token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %type <identifier> any_identifier
@@ -106,7 +121,7 @@
 %token INVARIANT
 %token LOWP MEDIUMP HIGHP SUPERP PRECISION
 
-%token VERSION EXTENSION LINE COLON EOL INTERFACE OUTPUT
+%token VERSION_TOK EXTENSION LINE COLON EOL INTERFACE OUTPUT
 %token PRAGMA_DEBUG_ON PRAGMA_DEBUG_OFF
 %token PRAGMA_OPTIMIZE_ON PRAGMA_OPTIMIZE_OFF
 %token PRAGMA_INVARIANT_ALL
@@ -118,12 +133,12 @@
 %token INLINE_TOK NOINLINE VOLATILE PUBLIC_TOK STATIC EXTERN EXTERNAL
 %token LONG_TOK SHORT_TOK DOUBLE_TOK HALF FIXED_TOK UNSIGNED INPUT_TOK OUPTUT
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
-%token SAMPLER2DRECT SAMPLER3DRECT SAMPLER2DRECTSHADOW
+%token SAMPLER3DRECT
 %token SIZEOF CAST NAMESPACE USING
 
 %token ERROR_TOK
 
-%token COMMON PARTITION ACTIVE SAMPLERBUFFER FILTER
+%token COMMON PARTITION ACTIVE FILTER
 %token  IMAGE1D  IMAGE2D  IMAGE3D  IMAGECUBE  IMAGE1DARRAY  IMAGE2DARRAY
 %token IIMAGE1D IIMAGE2D IIMAGE3D IIMAGECUBE IIMAGE1DARRAY IIMAGE2DARRAY
 %token UIMAGE1D UIMAGE2D UIMAGE3D UIMAGECUBE UIMAGE1DARRAY UIMAGE2DARRAY
@@ -141,10 +156,11 @@
 %type <type_qualifier> interpolation_qualifier
 %type <type_qualifier> layout_qualifier
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
+%type <type_qualifier> uniform_block_layout_qualifier
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_no_prec
 %type <type_specifier> type_specifier_nonarray
-%type <n> basic_type_specifier_nonarray
+%type <identifier> basic_type_specifier_nonarray
 %type <fully_specified_type> fully_specified_type
 %type <function> function_prototype
 %type <function> function_header
@@ -199,13 +215,22 @@
 %type <node> declaration
 %type <node> declaration_statement
 %type <node> jump_statement
+%type <node> uniform_block
 %type <struct_specifier> struct_specifier
-%type <node> struct_declaration_list
+%type <declarator_list> struct_declaration_list
 %type <declarator_list> struct_declaration
 %type <declaration> struct_declarator
 %type <declaration> struct_declarator_list
+%type <declarator_list> member_list
+%type <declarator_list> member_declaration
 %type <node> selection_statement
 %type <selection_rest_statement> selection_rest_statement
+%type <node> switch_statement
+%type <switch_body> switch_body
+%type <case_label_list> case_label_list
+%type <case_label> case_label
+%type <case_statement> case_statement
+%type <case_statement_list> case_statement_list
 %type <node> iteration_statement
 %type <node> condition
 %type <node> conditionopt
@@ -228,23 +253,32 @@ translation_unit:
 
 version_statement:
 	/* blank - no #version specified: defaults are already set */
-	| VERSION INTCONSTANT EOL
+	| VERSION_TOK INTCONSTANT EOL
 	{
 	   bool supported = false;
 
 	   switch ($2) {
 	   case 100:
 	      state->es_shader = true;
-	      supported = state->Const.GLSL_100ES;
+	      supported = state->ctx->API == API_OPENGLES2 ||
+		          state->ctx->Extensions.ARB_ES2_compatibility;
 	      break;
 	   case 110:
-	      supported = state->Const.GLSL_110;
-	      break;
 	   case 120:
-	      supported = state->Const.GLSL_120;
-	      break;
+	      /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
+	       * the OpenGL 3.2 Core context is supported, this logic will need
+	       * change.  Older versions of GLSL are no longer supported
+	       * outside the compatibility contexts of 3.x.
+	       */
 	   case 130:
-	      supported = state->Const.GLSL_130;
+	   case 140:
+	   case 150:
+	   case 330:
+	   case 400:
+	   case 410:
+	   case 420:
+	      supported = _mesa_is_desktop_gl(state->ctx) &&
+			  ((unsigned) $2) <= state->ctx->Const.GLSLVersion;
 	      break;
 	   default:
 	      supported = false;
@@ -264,6 +298,10 @@ version_statement:
 			       state->version_string,
 			       state->supported_version_string);
 	   }
+
+	   if (state->language_version >= 140) {
+	      state->ARB_uniform_buffer_object_enable = true;
+	   }
 	}
 	;
 
@@ -274,7 +312,7 @@ pragma_statement:
 	| PRAGMA_OPTIMIZE_OFF EOL
 	| PRAGMA_INVARIANT_ALL EOL
 	{
-	   if (state->language_version < 120) {
+	   if (state->language_version == 110) {
 	      _mesa_glsl_warning(& @1, state,
 				 "pragma `invariant(all)' not supported in %s",
 				 state->version_string);
@@ -777,6 +815,10 @@ declaration:
 	   $3->is_precision_statement = true;
 	   $$ = $3;
 	}
+	| uniform_block
+	{
+	   $$ = $1;
+	}
 	;
 
 function_prototype:
@@ -1071,70 +1113,77 @@ layout_qualifier_id_list:
 	layout_qualifier_id
 	| layout_qualifier_id_list ',' layout_qualifier_id
 	{
-	   if (($1.flags.i & $3.flags.i) != 0) {
-	      _mesa_glsl_error(& @3, state,
-			       "duplicate layout qualifiers used\n");
+	   $$ = $1;
+	   if (!$$.merge_qualifier(& @3, state, $3)) {
 	      YYERROR;
 	   }
-
-	   $$.flags.i = $1.flags.i | $3.flags.i;
-
-	   if ($1.flags.q.explicit_location)
-	      $$.location = $1.location;
-
-	   if ($3.flags.q.explicit_location)
-	      $$.location = $3.location;
 	}
 	;
 
 layout_qualifier_id:
 	any_identifier
 	{
-	   bool got_one = false;
-
 	   memset(& $$, 0, sizeof($$));
 
 	   /* Layout qualifiers for ARB_fragment_coord_conventions. */
-	   if (!got_one && state->ARB_fragment_coord_conventions_enable) {
+	   if (!$$.flags.i && state->ARB_fragment_coord_conventions_enable) {
 	      if (strcmp($1, "origin_upper_left") == 0) {
-		 got_one = true;
 		 $$.flags.q.origin_upper_left = 1;
 	      } else if (strcmp($1, "pixel_center_integer") == 0) {
-		 got_one = true;
 		 $$.flags.q.pixel_center_integer = 1;
 	      }
 
-	      if (got_one && state->ARB_fragment_coord_conventions_warn) {
+	      if ($$.flags.i && state->ARB_fragment_coord_conventions_warn) {
 		 _mesa_glsl_warning(& @1, state,
 				    "GL_ARB_fragment_coord_conventions layout "
 				    "identifier `%s' used\n", $1);
 	      }
 	   }
 
-	   /* Layout qualifiers for AMD_conservative_depth. */
-	   if (!got_one && state->AMD_conservative_depth_enable) {
+	   /* Layout qualifiers for AMD/ARB_conservative_depth. */
+	   if (!$$.flags.i &&
+	       (state->AMD_conservative_depth_enable ||
+	        state->ARB_conservative_depth_enable)) {
 	      if (strcmp($1, "depth_any") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_any = 1;
 	      } else if (strcmp($1, "depth_greater") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_greater = 1;
 	      } else if (strcmp($1, "depth_less") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_less = 1;
 	      } else if (strcmp($1, "depth_unchanged") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_unchanged = 1;
 	      }
 	
-	      if (got_one && state->AMD_conservative_depth_warn) {
+	      if ($$.flags.i && state->AMD_conservative_depth_warn) {
 	         _mesa_glsl_warning(& @1, state,
 	                            "GL_AMD_conservative_depth "
 	                            "layout qualifier `%s' is used\n", $1);
 	      }
+	      if ($$.flags.i && state->ARB_conservative_depth_warn) {
+	         _mesa_glsl_warning(& @1, state,
+	                            "GL_ARB_conservative_depth "
+	                            "layout qualifier `%s' is used\n", $1);
+	      }
 	   }
 
-	   if (!got_one) {
+	   /* See also uniform_block_layout_qualifier. */
+	   if (!$$.flags.i && state->ARB_uniform_buffer_object_enable) {
+	      if (strcmp($1, "std140") == 0) {
+	         $$.flags.q.std140 = 1;
+	      } else if (strcmp($1, "shared") == 0) {
+	         $$.flags.q.shared = 1;
+	      } else if (strcmp($1, "column_major") == 0) {
+	         $$.flags.q.column_major = 1;
+	      }
+
+	      if ($$.flags.i && state->ARB_uniform_buffer_object_warn) {
+	         _mesa_glsl_warning(& @1, state,
+	                            "#version 140 / GL_ARB_uniform_buffer_object "
+	                            "layout qualifier `%s' is used\n", $1);
+	      }
+	   }
+
+	   if (!$$.flags.i) {
 	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
 			       "`%s'\n", $1);
 	      YYERROR;
@@ -1142,8 +1191,6 @@ layout_qualifier_id:
 	}
 	| any_identifier '=' INTCONSTANT
 	{
-	   bool got_one = false;
-
 	   memset(& $$, 0, sizeof($$));
 
 	   if (state->ARB_explicit_attrib_location_enable) {
@@ -1151,8 +1198,6 @@ layout_qualifier_id:
 	       * FINISHME: GLSL 1.30 (or later) are supported.
 	       */
 	      if (strcmp("location", $1) == 0) {
-		 got_one = true;
-
 		 $$.flags.q.explicit_location = 1;
 
 		 if ($3 >= 0) {
@@ -1163,12 +1208,24 @@ layout_qualifier_id:
 		    YYERROR;
 		 }
 	      }
+
+	      if (strcmp("index", $1) == 0) {
+		 $$.flags.q.explicit_index = 1;
+
+		 if ($3 >= 0) {
+		    $$.index = $3;
+		 } else {
+		    _mesa_glsl_error(& @3, state,
+		                     "invalid index %d specified\n", $3);
+                    YYERROR;
+                 }
+              }
 	   }
 
 	   /* If the identifier didn't match any known layout identifiers,
 	    * emit an error.
 	    */
-	   if (!got_one) {
+	   if (!$$.flags.i) {
 	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
 			       "`%s'\n", $1);
 	      YYERROR;
@@ -1177,6 +1234,38 @@ layout_qualifier_id:
 				 "GL_ARB_explicit_attrib_location layout "
 				 "identifier `%s' used\n", $1);
 	   }
+	}
+	| uniform_block_layout_qualifier
+	{
+	   $$ = $1;
+	   /* Layout qualifiers for ARB_uniform_buffer_object. */
+	   if (!state->ARB_uniform_buffer_object_enable) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 140 / GL_ARB_uniform_buffer_object "
+			       "layout qualifier `%s' is used\n", $1);
+	   } else if (state->ARB_uniform_buffer_object_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "#version 140 / GL_ARB_uniform_buffer_object "
+				 "layout qualifier `%s' is used\n", $1);
+	   }
+	}
+	;
+
+/* This is a separate language rule because we parse these as tokens
+ * (due to them being reserved keywords) instead of identifiers like
+ * most qualifiers.  See the any_identifier path of
+ * layout_qualifier_id for the others.
+ */
+uniform_block_layout_qualifier:
+	ROW_MAJOR
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.row_major = 1;
+	}
+	| PACKED_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.packed = 1;
 	}
 	;
 
@@ -1337,57 +1426,63 @@ type_specifier_nonarray:
 	;
 
 basic_type_specifier_nonarray:
-	VOID_TOK		{ $$ = ast_void; }
-	| FLOAT_TOK		{ $$ = ast_float; }
-	| INT_TOK		{ $$ = ast_int; }
-	| UINT_TOK		{ $$ = ast_uint; }
-	| BOOL_TOK		{ $$ = ast_bool; }
-	| VEC2			{ $$ = ast_vec2; }
-	| VEC3			{ $$ = ast_vec3; }
-	| VEC4			{ $$ = ast_vec4; }
-	| BVEC2			{ $$ = ast_bvec2; }
-	| BVEC3			{ $$ = ast_bvec3; }
-	| BVEC4			{ $$ = ast_bvec4; }
-	| IVEC2			{ $$ = ast_ivec2; }
-	| IVEC3			{ $$ = ast_ivec3; }
-	| IVEC4			{ $$ = ast_ivec4; }
-	| UVEC2			{ $$ = ast_uvec2; }
-	| UVEC3			{ $$ = ast_uvec3; }
-	| UVEC4			{ $$ = ast_uvec4; }
-	| MAT2X2		{ $$ = ast_mat2; }
-	| MAT2X3		{ $$ = ast_mat2x3; }
-	| MAT2X4		{ $$ = ast_mat2x4; }
-	| MAT3X2		{ $$ = ast_mat3x2; }
-	| MAT3X3		{ $$ = ast_mat3; }
-	| MAT3X4		{ $$ = ast_mat3x4; }
-	| MAT4X2		{ $$ = ast_mat4x2; }
-	| MAT4X3		{ $$ = ast_mat4x3; }
-	| MAT4X4		{ $$ = ast_mat4; }
-	| SAMPLER1D		{ $$ = ast_sampler1d; }
-	| SAMPLER2D		{ $$ = ast_sampler2d; }
-	| SAMPLER2DRECT		{ $$ = ast_sampler2drect; }
-	| SAMPLER3D		{ $$ = ast_sampler3d; }
-	| SAMPLERCUBE		{ $$ = ast_samplercube; }
-	| SAMPLER1DSHADOW	{ $$ = ast_sampler1dshadow; }
-	| SAMPLER2DSHADOW	{ $$ = ast_sampler2dshadow; }
-	| SAMPLER2DRECTSHADOW	{ $$ = ast_sampler2drectshadow; }
-	| SAMPLERCUBESHADOW	{ $$ = ast_samplercubeshadow; }
-	| SAMPLER1DARRAY	{ $$ = ast_sampler1darray; }
-	| SAMPLER2DARRAY	{ $$ = ast_sampler2darray; }
-	| SAMPLER1DARRAYSHADOW	{ $$ = ast_sampler1darrayshadow; }
-	| SAMPLER2DARRAYSHADOW	{ $$ = ast_sampler2darrayshadow; }
-	| ISAMPLER1D		{ $$ = ast_isampler1d; }
-	| ISAMPLER2D		{ $$ = ast_isampler2d; }
-	| ISAMPLER3D		{ $$ = ast_isampler3d; }
-	| ISAMPLERCUBE		{ $$ = ast_isamplercube; }
-	| ISAMPLER1DARRAY	{ $$ = ast_isampler1darray; }
-	| ISAMPLER2DARRAY	{ $$ = ast_isampler2darray; }
-	| USAMPLER1D		{ $$ = ast_usampler1d; }
-	| USAMPLER2D		{ $$ = ast_usampler2d; }
-	| USAMPLER3D		{ $$ = ast_usampler3d; }
-	| USAMPLERCUBE		{ $$ = ast_usamplercube; }
-	| USAMPLER1DARRAY	{ $$ = ast_usampler1darray; }
-	| USAMPLER2DARRAY	{ $$ = ast_usampler2darray; }
+	VOID_TOK		{ $$ = "void"; }
+	| FLOAT_TOK		{ $$ = "float"; }
+	| INT_TOK		{ $$ = "int"; }
+	| UINT_TOK		{ $$ = "uint"; }
+	| BOOL_TOK		{ $$ = "bool"; }
+	| VEC2			{ $$ = "vec2"; }
+	| VEC3			{ $$ = "vec3"; }
+	| VEC4			{ $$ = "vec4"; }
+	| BVEC2			{ $$ = "bvec2"; }
+	| BVEC3			{ $$ = "bvec3"; }
+	| BVEC4			{ $$ = "bvec4"; }
+	| IVEC2			{ $$ = "ivec2"; }
+	| IVEC3			{ $$ = "ivec3"; }
+	| IVEC4			{ $$ = "ivec4"; }
+	| UVEC2			{ $$ = "uvec2"; }
+	| UVEC3			{ $$ = "uvec3"; }
+	| UVEC4			{ $$ = "uvec4"; }
+	| MAT2X2		{ $$ = "mat2"; }
+	| MAT2X3		{ $$ = "mat2x3"; }
+	| MAT2X4		{ $$ = "mat2x4"; }
+	| MAT3X2		{ $$ = "mat3x2"; }
+	| MAT3X3		{ $$ = "mat3"; }
+	| MAT3X4		{ $$ = "mat3x4"; }
+	| MAT4X2		{ $$ = "mat4x2"; }
+	| MAT4X3		{ $$ = "mat4x3"; }
+	| MAT4X4		{ $$ = "mat4"; }
+	| SAMPLER1D		{ $$ = "sampler1D"; }
+	| SAMPLER2D		{ $$ = "sampler2D"; }
+	| SAMPLER2DRECT		{ $$ = "sampler2DRect"; }
+	| SAMPLER3D		{ $$ = "sampler3D"; }
+	| SAMPLERCUBE		{ $$ = "samplerCube"; }
+	| SAMPLEREXTERNALOES	{ $$ = "samplerExternalOES"; }
+	| SAMPLER1DSHADOW	{ $$ = "sampler1DShadow"; }
+	| SAMPLER2DSHADOW	{ $$ = "sampler2DShadow"; }
+	| SAMPLER2DRECTSHADOW	{ $$ = "sampler2DRectShadow"; }
+	| SAMPLERCUBESHADOW	{ $$ = "samplerCubeShadow"; }
+	| SAMPLER1DARRAY	{ $$ = "sampler1DArray"; }
+	| SAMPLER2DARRAY	{ $$ = "sampler2DArray"; }
+	| SAMPLER1DARRAYSHADOW	{ $$ = "sampler1DArrayShadow"; }
+	| SAMPLER2DARRAYSHADOW	{ $$ = "sampler2DArrayShadow"; }
+	| SAMPLERBUFFER		{ $$ = "samplerBuffer"; }
+	| ISAMPLER1D		{ $$ = "isampler1D"; }
+	| ISAMPLER2D		{ $$ = "isampler2D"; }
+	| ISAMPLER2DRECT	{ $$ = "isampler2DRect"; }
+	| ISAMPLER3D		{ $$ = "isampler3D"; }
+	| ISAMPLERCUBE		{ $$ = "isamplerCube"; }
+	| ISAMPLER1DARRAY	{ $$ = "isampler1DArray"; }
+	| ISAMPLER2DARRAY	{ $$ = "isampler2DArray"; }
+	| ISAMPLERBUFFER	{ $$ = "isamplerBuffer"; }
+	| USAMPLER1D		{ $$ = "usampler1D"; }
+	| USAMPLER2D		{ $$ = "usampler2D"; }
+	| USAMPLER2DRECT	{ $$ = "usampler2DRect"; }
+	| USAMPLER3D		{ $$ = "usampler3D"; }
+	| USAMPLERCUBE		{ $$ = "usamplerCube"; }
+	| USAMPLER1DARRAY	{ $$ = "usampler1DArray"; }
+	| USAMPLER2DARRAY	{ $$ = "usampler2DArray"; }
+	| USAMPLERBUFFER	{ $$ = "usamplerBuffer"; }
 	;
 
 precision_qualifier:
@@ -1442,12 +1537,12 @@ struct_specifier:
 struct_declaration_list:
 	struct_declaration
 	{
-	   $$ = (ast_node *) $1;
+	   $$ = $1;
 	   $1->link.self_link();
 	}
 	| struct_declaration_list struct_declaration
 	{
-	   $$ = (ast_node *) $1;
+	   $$ = $1;
 	   $$->link.insert_before(& $2->link);
 	}
 	;
@@ -1515,8 +1610,7 @@ simple_statement:
 	declaration_statement
 	| expression_statement
 	| selection_statement
-	| switch_statement		{ $$ = NULL; }
-	| case_label			{ $$ = NULL; }
+	| switch_statement
 	| iteration_statement
 	| jump_statement
 	;
@@ -1638,13 +1732,90 @@ condition:
 	}
 	;
 
+/*
+ * siwtch_statement grammar is based on the syntax described in the body
+ * of the GLSL spec, not in it's appendix!!!
+ */
 switch_statement:
-	SWITCH '(' expression ')' compound_statement
+	SWITCH '(' expression ')' switch_body
+	{
+	   $$ = new(state) ast_switch_statement($3, $5);
+	   $$->set_location(yylloc);
+	}
+	;
+
+switch_body:
+	'{' '}'
+	{
+	   $$ = new(state) ast_switch_body(NULL);
+	   $$->set_location(yylloc);
+	}
+	| '{' case_statement_list '}'
+	{
+	   $$ = new(state) ast_switch_body($2);
+	   $$->set_location(yylloc);
+	}
 	;
 
 case_label:
 	CASE expression ':'
+	{
+	   $$ = new(state) ast_case_label($2);
+	   $$->set_location(yylloc);
+	}
 	| DEFAULT ':'
+	{
+	   $$ = new(state) ast_case_label(NULL);
+	   $$->set_location(yylloc);
+	}
+	;
+
+case_label_list:
+	case_label
+	{
+	   ast_case_label_list *labels = new(state) ast_case_label_list();
+
+	   labels->labels.push_tail(& $1->link);
+	   $$ = labels;
+	   $$->set_location(yylloc);
+	}
+	| case_label_list case_label
+	{
+	   $$ = $1;
+	   $$->labels.push_tail(& $2->link);
+	}
+	;
+
+case_statement:
+	case_label_list statement
+	{
+	   ast_case_statement *stmts = new(state) ast_case_statement($1);
+	   stmts->set_location(yylloc);
+
+	   stmts->stmts.push_tail(& $2->link);
+	   $$ = stmts;
+	}
+	| case_statement statement
+	{
+	   $$ = $1;
+	   $$->stmts.push_tail(& $2->link);
+	}
+	;
+
+case_statement_list:
+	case_statement
+	{
+	   ast_case_statement_list *cases= new(state) ast_case_statement_list();
+	   cases->set_location(yylloc);
+
+	   cases->cases.push_tail(& $1->link);
+	   $$ = cases;
+	}
+	| case_statement_list case_statement
+	{
+	   $$ = $1;
+	   $$->cases.push_tail(& $2->link);
+	}
 	;
 
 iteration_statement:
@@ -1735,6 +1906,7 @@ external_declaration:
 	function_definition	{ $$ = $1; }
 	| declaration		{ $$ = $1; }
 	| pragma_statement	{ $$ = NULL; }
+	| layout_defaults	{ $$ = NULL; }
 	;
 
 function_definition:
@@ -1749,3 +1921,103 @@ function_definition:
 	   state->symbols->pop_scope();
 	}
 	;
+
+/* layout_qualifieropt is packed into this rule */
+uniform_block:
+	UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	{
+	   void *ctx = state;
+	   $$ = new(ctx) ast_uniform_block(*state->default_uniform_qualifier,
+					   $2, $4);
+
+	   if (!state->ARB_uniform_buffer_object_enable) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 140 / GL_ARB_uniform_buffer_object "
+			       "required for defining uniform blocks\n");
+	   } else if (state->ARB_uniform_buffer_object_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "#version 140 / GL_ARB_uniform_buffer_object "
+				 "required for defining uniform blocks\n");
+	   }
+	}
+	| layout_qualifier UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	{
+	   void *ctx = state;
+
+	   ast_type_qualifier qual = *state->default_uniform_qualifier;
+	   if (!qual.merge_qualifier(& @1, state, $1)) {
+	      YYERROR;
+	   }
+	   $$ = new(ctx) ast_uniform_block(qual, $3, $5);
+
+	   if (!state->ARB_uniform_buffer_object_enable) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 140 / GL_ARB_uniform_buffer_object "
+			       "required for defining uniform blocks\n");
+	   } else if (state->ARB_uniform_buffer_object_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "#version 140 / GL_ARB_uniform_buffer_object "
+				 "required for defining uniform blocks\n");
+	   }
+	}
+	;
+
+member_list:
+	member_declaration
+	{
+	   $$ = $1;
+	   $1->link.self_link();
+	}
+	| member_declaration member_list
+	{
+	   $$ = $1;
+	   $2->link.insert_before(& $$->link);
+	}
+	;
+
+/* Specifying "uniform" inside of a uniform block is redundant. */
+uniformopt:
+	/* nothing */
+	| UNIFORM
+	;
+
+member_declaration:
+	layout_qualifier uniformopt type_specifier struct_declarator_list ';'
+	{
+	   void *ctx = state;
+	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
+	   type->set_location(yylloc);
+
+	   type->qualifier = $1;
+	   type->qualifier.flags.q.uniform = true;
+	   type->specifier = $3;
+	   $$ = new(ctx) ast_declarator_list(type);
+	   $$->set_location(yylloc);
+	   $$->ubo_qualifiers_valid = true;
+
+	   $$->declarations.push_degenerate_list_at_head(& $4->link);
+	}
+	| uniformopt type_specifier struct_declarator_list ';'
+	{
+	   void *ctx = state;
+	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
+	   type->set_location(yylloc);
+
+	   type->qualifier.flags.q.uniform = true;
+	   type->specifier = $2;
+	   $$ = new(ctx) ast_declarator_list(type);
+	   $$->set_location(yylloc);
+	   $$->ubo_qualifiers_valid = true;
+
+	   $$->declarations.push_degenerate_list_at_head(& $3->link);
+	}
+	;
+
+layout_defaults:
+	layout_qualifier UNIFORM ';'
+	{
+	   if (!state->default_uniform_qualifier->merge_qualifier(& @1, state,
+								  $1)) {
+	      YYERROR;
+	   }
+	}

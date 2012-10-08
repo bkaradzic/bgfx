@@ -1,0 +1,29 @@
+GLUT_ICON ICON "icons\\openctm.ico"
+
+1 VERSIONINFO
+	FILEVERSION 1,0,3,0
+	PRODUCTVERSION 1,0,3,0
+	FILEOS 0x04
+	FILETYPE 0x01
+	BEGIN
+		BLOCK "StringFileInfo"
+		BEGIN
+			BLOCK "040904e4"
+			BEGIN
+				VALUE "ProductVersion", "1.0.3.0"
+				VALUE "FileVersion", "1.0.3.0"
+				VALUE "FileDescription", "OpenCTM 3D file viewer"
+				VALUE "ProductName", "ctmviewer"
+				VALUE "OriginalFilename", "ctmviewer.exe"
+				VALUE "LegalCopyright", "© 2009-2010 Marcus Geelnard"
+				VALUE "License", "This software is released under the zlib/libpng license."
+			END
+		END
+
+		BLOCK "VarFileInfo"
+		BEGIN
+			VALUE "Translation", 0x0409, 1252
+		END
+	END
+
+1 24 "ctmviewer.exe.manifest"

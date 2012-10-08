@@ -59,7 +59,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
 
       const ir_variable *const param = (ir_variable *) node_a;
-      const ir_instruction *const actual = (ir_instruction *) node_b;
+      const ir_rvalue *const actual = (ir_rvalue *) node_b;
 
       if (param->type == actual->type)
 	 continue;
@@ -118,6 +118,14 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 ir_function_signature *
 ir_function::matching_signature(const exec_list *actual_parameters)
 {
+   bool is_exact;
+   return matching_signature(actual_parameters, &is_exact);
+}
+
+ir_function_signature *
+ir_function::matching_signature(const exec_list *actual_parameters,
+			        bool *is_exact)
+{
    ir_function_signature *match = NULL;
    bool multiple_inexact_matches = false;
 
@@ -137,6 +145,7 @@ ir_function::matching_signature(const exec_list *actual_parameters)
 
       switch (parameter_lists_match(& sig->parameters, actual_parameters)) {
       case PARAMETER_LIST_EXACT_MATCH:
+	 *is_exact = true;
 	 return sig;
       case PARAMETER_LIST_INEXACT_MATCH:
 	 if (match == NULL)
@@ -159,6 +168,8 @@ ir_function::matching_signature(const exec_list *actual_parameters)
     * FINISHME: a "no matching signature" error; it should report that the
     * FINISHME: call is ambiguous.  But reporting errors from here is hard.
     */
+   *is_exact = false;
+
    if (multiple_inexact_matches)
       return NULL;
 

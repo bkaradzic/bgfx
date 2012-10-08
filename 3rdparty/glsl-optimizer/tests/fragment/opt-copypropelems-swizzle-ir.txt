@@ -2,20 +2,20 @@ uniform sampler2D tex;
 varying vec2 uv;
 void main ()
 {
-  vec4 v;
-  vec4 tmpvar_1;
-  tmpvar_1 = texture2D (tex, uv);
+  vec4 v_1;
   vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  v = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3 = v.yx;
-  v.xy = tmpvar_3.xy.xy;
-  float tmpvar_4;
-  tmpvar_4 = -(v.x);
-  v.x = tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = v;
-  gl_FragColor = tmpvar_5;
+  tmpvar_2 = texture2D (tex, uv);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  v_1 = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = v_1.yx;
+  v_1.xy = tmpvar_4.xy.xy;
+  float tmpvar_5;
+  tmpvar_5 = -(v_1.x);
+  v_1.x = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = v_1;
+  gl_FragColor = tmpvar_6;
 }
 

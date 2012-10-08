@@ -82,6 +82,7 @@ public:
     * \name Visit methods for leaf-node classes
     */
    /*@{*/
+   virtual ir_visitor_status visit(class ir_rvalue *);
    virtual ir_visitor_status visit(class ir_variable *);
    virtual ir_visitor_status visit(class ir_constant *);
    virtual ir_visitor_status visit(class ir_loop_jump *);

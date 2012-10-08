@@ -1,0 +1,187 @@
+struct SurfaceOutput {
+  lowp vec3 Albedo;
+  lowp vec3 Normal;
+  lowp vec3 Emission;
+  mediump float Specular;
+  lowp float Gloss;
+  lowp float Alpha;
+};
+struct Input {
+  mediump vec2 uv_MainTex;
+};
+struct v2f_surf {
+  highp vec4 pos;
+  mediump vec2 pack0;
+  mediump vec3 viewDir;
+  lowp vec3 lightDir;
+  lowp vec3 vlight;
+};
+varying lowp vec3 xlv_TEXCOORD3;
+varying lowp vec3 xlv_TEXCOORD2;
+varying mediump vec3 xlv_TEXCOORD1;
+varying mediump vec2 xlv_TEXCOORD0;
+uniform mediump float _Shininess;
+uniform sampler2D _MainTex;
+uniform lowp vec4 _LightColor0;
+uniform sampler2D _BumpMap;
+lowp vec3 UnpackNormal (
+  in lowp vec4 packednormal_1
+)
+{
+  return ((packednormal_1.xyz * 2.0) - 1.0);
+}
+
+void surf (
+  in Input IN_2,
+  inout SurfaceOutput o_3
+)
+{
+  lowp vec4 tex_4;
+  lowp vec4 tmpvar_5;
+  tmpvar_5 = texture2D (_MainTex, IN_2.uv_MainTex);
+  lowp vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  tex_4 = tmpvar_6;
+  lowp vec3 tmpvar_7;
+  tmpvar_7 = tex_4.xyz;
+  o_3.Albedo = tmpvar_7;
+  lowp float tmpvar_8;
+  tmpvar_8 = tex_4.w;
+  o_3.Gloss = tmpvar_8;
+  lowp float tmpvar_9;
+  tmpvar_9 = tex_4.w;
+  o_3.Alpha = tmpvar_9;
+  mediump float tmpvar_10;
+  tmpvar_10 = _Shininess;
+  o_3.Specular = tmpvar_10;
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_BumpMap, IN_2.uv_MainTex);
+  lowp vec3 tmpvar_12;
+  tmpvar_12 = UnpackNormal (tmpvar_11);
+  lowp vec3 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  o_3.Normal = tmpvar_13;
+}
+
+lowp vec4 LightingMobileBlinnPhong (
+  in SurfaceOutput s_14,
+  in lowp vec3 lightDir_15,
+  in lowp vec3 halfDir_16,
+  in lowp float atten_17
+)
+{
+  lowp vec4 c_18;
+  lowp float spec_19;
+  lowp float nh_20;
+  lowp float diff_21;
+  lowp float tmpvar_22;
+  tmpvar_22 = dot (s_14.Normal, lightDir_15);
+  lowp float tmpvar_23;
+  tmpvar_23 = max (0.0, tmpvar_22);
+  lowp float tmpvar_24;
+  tmpvar_24 = tmpvar_23;
+  diff_21 = tmpvar_24;
+  lowp float tmpvar_25;
+  tmpvar_25 = dot (s_14.Normal, halfDir_16);
+  lowp float tmpvar_26;
+  tmpvar_26 = max (0.0, tmpvar_25);
+  lowp float tmpvar_27;
+  tmpvar_27 = tmpvar_26;
+  nh_20 = tmpvar_27;
+  mediump float tmpvar_28;
+  tmpvar_28 = pow (nh_20, (s_14.Specular * 128.0));
+  mediump float tmpvar_29;
+  tmpvar_29 = (tmpvar_28 * s_14.Gloss);
+  spec_19 = tmpvar_29;
+  lowp vec3 tmpvar_30;
+  tmpvar_30 = ((((s_14.Albedo * diff_21) + spec_19) * _LightColor0.xyz) * (atten_17 * 2.0));
+  c_18.xyz = tmpvar_30.xyz.xyz;
+  float tmpvar_31;
+  tmpvar_31 = 0.0;
+  c_18.w = vec4(tmpvar_31).w;
+  return c_18;
+}
+
+lowp vec4 frag_surf (
+  in v2f_surf IN_32
+)
+{
+  lowp vec4 c_33;
+  lowp float atten_34;
+  SurfaceOutput o_35;
+  Input surfIN_36;
+  mediump vec2 tmpvar_37;
+  tmpvar_37 = IN_32.pack0.xy;
+  surfIN_36.uv_MainTex = tmpvar_37;
+  vec3 tmpvar_38;
+  tmpvar_38 = vec3(0.0, 0.0, 0.0);
+  o_35.Albedo = tmpvar_38;
+  vec3 tmpvar_39;
+  tmpvar_39 = vec3(0.0, 0.0, 0.0);
+  o_35.Emission = tmpvar_39;
+  float tmpvar_40;
+  tmpvar_40 = 0.0;
+  o_35.Specular = tmpvar_40;
+  float tmpvar_41;
+  tmpvar_41 = 0.0;
+  o_35.Alpha = tmpvar_41;
+  float tmpvar_42;
+  tmpvar_42 = 0.0;
+  o_35.Gloss = tmpvar_42;
+  surf (surfIN_36, o_35);
+  float tmpvar_43;
+  tmpvar_43 = 1.0;
+  atten_34 = tmpvar_43;
+  vec4 tmpvar_44;
+  tmpvar_44 = vec4(0.0, 0.0, 0.0, 0.0);
+  c_33 = tmpvar_44;
+  lowp vec4 tmpvar_45;
+  tmpvar_45 = LightingMobileBlinnPhong (o_35, IN_32.lightDir, IN_32.viewDir, atten_34);
+  lowp vec4 tmpvar_46;
+  tmpvar_46 = tmpvar_45;
+  c_33 = tmpvar_46;
+  lowp vec3 tmpvar_47;
+  tmpvar_47 = (c_33.xyz + (o_35.Albedo * IN_32.vlight));
+  c_33.xyz = tmpvar_47.xyz.xyz;
+  return c_33;
+}
+
+void main ()
+{
+  v2f_surf xlt_IN_48;
+  lowp vec4 xl_retval_49;
+  vec4 tmpvar_50;
+  tmpvar_50 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_IN_48.pos = tmpvar_50;
+  mediump vec2 tmpvar_51;
+  tmpvar_51 = xlv_TEXCOORD0.xy;
+  mediump vec2 tmpvar_52;
+  tmpvar_52 = tmpvar_51;
+  xlt_IN_48.pack0 = tmpvar_52;
+  mediump vec3 tmpvar_53;
+  tmpvar_53 = xlv_TEXCOORD1.xyz;
+  mediump vec3 tmpvar_54;
+  tmpvar_54 = tmpvar_53;
+  xlt_IN_48.viewDir = tmpvar_54;
+  lowp vec3 tmpvar_55;
+  tmpvar_55 = xlv_TEXCOORD2.xyz;
+  lowp vec3 tmpvar_56;
+  tmpvar_56 = tmpvar_55;
+  xlt_IN_48.lightDir = tmpvar_56;
+  lowp vec3 tmpvar_57;
+  tmpvar_57 = xlv_TEXCOORD3.xyz;
+  lowp vec3 tmpvar_58;
+  tmpvar_58 = tmpvar_57;
+  xlt_IN_48.vlight = tmpvar_58;
+  lowp vec4 tmpvar_59;
+  tmpvar_59 = frag_surf (xlt_IN_48);
+  lowp vec4 tmpvar_60;
+  tmpvar_60 = tmpvar_59;
+  xl_retval_49 = tmpvar_60;
+  lowp vec4 tmpvar_61;
+  tmpvar_61 = xl_retval_49.xyzw;
+  lowp vec4 tmpvar_62;
+  tmpvar_62 = tmpvar_61;
+  gl_FragData[0] = tmpvar_62;
+}
+

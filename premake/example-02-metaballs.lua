@@ -2,7 +2,7 @@ project "example-02-metaballs"
 	uuid "413b2cb4-f7db-11e1-bf5f-a716de6a022f"
 	kind "WindowedApp"
 
-	debugdir (BGFX_DIR .. "examples/02-metaballs/")
+	debugdir (BGFX_DIR .. "examples/runtime/")
 
 	includedirs {
 		BGFX_DIR .. "../bx/include",

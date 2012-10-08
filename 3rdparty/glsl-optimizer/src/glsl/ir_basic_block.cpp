@@ -32,40 +32,31 @@
 #include "ir_basic_block.h"
 #include "glsl_types.h"
 
-class ir_has_call_visitor : public ir_hierarchical_visitor {
-public:
-   ir_has_call_visitor(bool skipBuiltins)
-   {
-      has_call = false;
-	  skip_builtins = skipBuiltins;
-   }
 
-   virtual ir_visitor_status visit_enter(ir_call *ir)
-   {
-      (void) ir;
-	  if (!skip_builtins || !ir->get_callee() || !ir->get_callee()->is_builtin)
-		has_call = true;
-      return visit_stop;
-   }
-
-   bool has_call;
-   bool skip_builtins;
-};
-
-bool
-ir_has_call(ir_instruction *ir)
+static ir_if* as_if_skip_discard (ir_instruction* ir)
 {
-   ir_has_call_visitor v(false);
-   ir->accept(&v);
-   return v.has_call;
-}
-
-bool
-ir_has_call_skip_builtins(ir_instruction *ir)
-{
-	ir_has_call_visitor v(true);
-	ir->accept(&v);
-	return v.has_call;
+	ir_if* irif = ir->as_if();
+	if (!irif)
+		return NULL;
+	if (!irif->else_instructions.is_empty())
+		return irif;
+	
+	bool only_discards = true;
+	int count = 0;
+	foreach_iter(exec_list_iterator, iter, irif->then_instructions) {
+		ir_instruction *iir = (ir_instruction *)iter.get();
+		if (!iir->as_discard())
+		{
+			only_discards = false;
+			break;
+		}
+		++count;
+	}
+	
+	if (count == 1 && only_discards)
+		return NULL;
+	
+	return irif;
 }
 
 /**
@@ -103,7 +94,7 @@ void call_for_basic_blocks(exec_list *instructions,
       if (!leader)
 	 leader = ir;
 
-      if ((ir_if = ir->as_if())) {
+      if ((ir_if = as_if_skip_discard(ir))) {
 	 callback(leader, ir, data);
 	 leader = NULL;
 
@@ -132,24 +123,6 @@ void call_for_basic_blocks(exec_list *instructions,
 	    ir_sig = (ir_function_signature *)fun_iter.get();
 
 	    call_for_basic_blocks(&ir_sig->body, callback, data);
-	 }
-      } else if (ir->as_assignment()) {
-	 /* If there's a call in the expression tree being assigned,
-	  * then that ends the BB too.
-	  *
-	  * The assumption is that any consumer of the basic block
-	  * walker is fine with the fact that the call is somewhere in
-	  * the tree even if portions of the tree may be evaluated
-	  * after the call.
-	  *
-	  * A consumer that has an issue with this could not process
-	  * the last instruction of the basic block.  If doing so,
-	  * expression flattener may be useful before using the basic
-	  * block finder to get more maximal basic blocks out.
-	  */
-	 if (ir_has_call_skip_builtins(ir)) {
-	    callback(leader, ir, data);
-	    leader = NULL;
 	 }
       }
       last = ir;

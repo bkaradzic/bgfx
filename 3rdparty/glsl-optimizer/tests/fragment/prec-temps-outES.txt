@@ -8,13 +8,13 @@ uniform lowp vec4 _LightColor0;
 uniform sampler2D _BumpMap;
 void main ()
 {
-  lowp vec4 c;
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, xlv_TEXCOORD0);
-  lowp vec3 tmpvar_2;
-  tmpvar_2 = ((texture2D (_BumpMap, xlv_TEXCOORD0).xyz * 2.0) - 1.0);
-  c.xyz = ((tmpvar_1.xyz * ((_LightColor0.xyz * max (0.0, dot (tmpvar_2, xlv_TEXCOORD2))) + xlv_TEXCOORD3)) + (_LightColor0.xyz * (pow (max (0.0, dot (tmpvar_2, xlv_TEXCOORD1)), _Shininess) * tmpvar_1.w)));
-  c.w = 0.0;
-  gl_FragData[0] = c;
+  lowp vec4 c_1;
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, xlv_TEXCOORD0);
+  lowp vec3 tmpvar_3;
+  tmpvar_3 = ((texture2D (_BumpMap, xlv_TEXCOORD0).xyz * 2.0) - 1.0);
+  c_1.xyz = ((tmpvar_2.xyz * ((_LightColor0.xyz * max (0.0, dot (tmpvar_3, xlv_TEXCOORD2))) + xlv_TEXCOORD3)) + (_LightColor0.xyz * (pow (max (0.0, dot (tmpvar_3, xlv_TEXCOORD1)), _Shininess) * tmpvar_2.w)));
+  c_1.w = 0.0;
+  gl_FragData[0] = c_1;
 }
 

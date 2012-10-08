@@ -1,0 +1,19 @@
+float xll_shadow2D(sampler2DShadow s, vec3 coord) { return shadow2D (s, coord).r; }
+float xll_shadow2Dproj(sampler2DShadow s, vec4 coord) { return shadow2DProj (s, coord).r; }
+uniform sampler2DShadow shadowmap;
+vec4 xlat_main( in vec4 uv );
+#line 4
+vec4 xlat_main( in vec4 uv ) {
+    float s1;
+    float s2;
+    s1 = xll_shadow2D( shadowmap, uv.xyz);
+    s2 = xll_shadow2Dproj( shadowmap, uv);
+    #line 8
+    return vec4( (s1 + s2));
+}
+varying vec4 xlv_TEXCOORD0;
+void main() {
+    vec4 xl_retval;
+    xl_retval = xlat_main( vec4(xlv_TEXCOORD0));
+    gl_FragData[0] = vec4( xl_retval);
+}

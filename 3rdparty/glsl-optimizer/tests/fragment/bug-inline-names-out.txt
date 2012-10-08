@@ -1,0 +1,6 @@
+varying float vv;
+void main ()
+{
+  gl_FragColor = vec4((vv + sin(vv)));
+}
+

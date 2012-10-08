@@ -1,0 +1,13 @@
+uniform sampler2D _CameraDepthTexture;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1.xzw = gl_Vertex.xzw;
+  tmpvar_1.y = (gl_Vertex.y + ((1.0 - texture2DLod (_CameraDepthTexture, gl_MultiTexCoord0.xy, 0.0).x) * 3.0));
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1);
+  vec4 tmpvar_2;
+  tmpvar_2.zw = vec2(0.0, 0.0);
+  tmpvar_2.xy = gl_MultiTexCoord0.xy;
+  gl_TexCoord[0] = tmpvar_2;
+}
+

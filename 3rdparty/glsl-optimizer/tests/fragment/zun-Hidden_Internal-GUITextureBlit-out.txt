@@ -1,0 +1,10 @@
+uniform sampler2D _MainTex;
+uniform sampler2D _GUIClipTexture;
+void main ()
+{
+  vec4 col_1;
+  col_1.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * gl_Color.xyz);
+  col_1.w = (gl_Color.w * texture2D (_GUIClipTexture, gl_TexCoord[1].xy).w);
+  gl_FragData[0] = col_1;
+}
+

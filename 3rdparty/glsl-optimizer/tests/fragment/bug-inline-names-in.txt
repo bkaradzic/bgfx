@@ -1,0 +1,19 @@
+float foo (float v)
+{
+	float a, b;
+	a = v;
+	{
+		float a;
+		a = sin(v);
+		b = a;
+	}
+	a += b;
+	return a;
+}
+
+varying float vv;
+
+void main()
+{
+	gl_FragColor = vec4(foo(vv));
+}

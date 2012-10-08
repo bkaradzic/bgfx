@@ -29,7 +29,7 @@ extern "C" {
 void
 ast_type_specifier::print(void) const
 {
-   if (type_specifier == ast_struct) {
+   if (structure) {
       structure->print();
    } else {
       printf("%s ", type_name);
@@ -44,71 +44,6 @@ ast_type_specifier::print(void) const
 
       printf("] ");
    }
-}
-
-ast_type_specifier::ast_type_specifier(int specifier)
-      : type_specifier(ast_types(specifier)), type_name(NULL), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
-	is_precision_statement(false)
-{
-   static const char *const names[] = {
-      "void",
-      "float",
-      "int",
-      "uint",
-      "bool",
-      "vec2",
-      "vec3",
-      "vec4",
-      "bvec2",
-      "bvec3",
-      "bvec4",
-      "ivec2",
-      "ivec3",
-      "ivec4",
-      "uvec2",
-      "uvec3",
-      "uvec4",
-      "mat2",
-      "mat2x3",
-      "mat2x4",
-      "mat3x2",
-      "mat3",
-      "mat3x4",
-      "mat4x2",
-      "mat4x3",
-      "mat4",
-      "sampler1D",
-      "sampler2D",
-      "sampler2DRect",
-      "sampler3D",
-      "samplerCube",
-      "sampler1DShadow",
-      "sampler2DShadow",
-      "sampler2DRectShadow",
-      "samplerCubeShadow",
-      "sampler1DArray",
-      "sampler2DArray",
-      "sampler1DArrayShadow",
-      "sampler2DArrayShadow",
-      "isampler1D",
-      "isampler2D",
-      "isampler3D",
-      "isamplerCube",
-      "isampler1DArray",
-      "isampler2DArray",
-      "usampler1D",
-      "usampler2D",
-      "usampler3D",
-      "usamplerCube",
-      "usampler1DArray",
-      "usampler2DArray",
-
-      NULL, /* ast_struct */
-      NULL  /* ast_type_name */
-   };
-
-   type_name = names[specifier];
 }
 
 bool
@@ -136,3 +71,48 @@ ast_type_qualifier::interpolation_string() const
    else
       return NULL;
 }
+
+bool
+ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
+				    _mesa_glsl_parse_state *state,
+				    ast_type_qualifier q)
+{
+   ast_type_qualifier ubo_mat_mask;
+   ubo_mat_mask.flags.i = 0;
+   ubo_mat_mask.flags.q.row_major = 1;
+   ubo_mat_mask.flags.q.column_major = 1;
+
+   ast_type_qualifier ubo_layout_mask;
+   ubo_layout_mask.flags.i = 0;
+   ubo_layout_mask.flags.q.std140 = 1;
+   ubo_layout_mask.flags.q.packed = 1;
+   ubo_layout_mask.flags.q.shared = 1;
+
+   /* Uniform block layout qualifiers get to overwrite each
+    * other (rightmost having priority), while all other
+    * qualifiers currently don't allow duplicates.
+    */
+
+   if ((this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
+				      ubo_layout_mask.flags.i)) != 0) {
+      _mesa_glsl_error(loc, state,
+		       "duplicate layout qualifiers used\n");
+      return false;
+   }
+
+   if ((q.flags.i & ubo_mat_mask.flags.i) != 0)
+      this->flags.i &= ~ubo_mat_mask.flags.i;
+   if ((q.flags.i & ubo_layout_mask.flags.i) != 0)
+      this->flags.i &= ~ubo_layout_mask.flags.i;
+
+   this->flags.i |= q.flags.i;
+
+   if (q.flags.q.explicit_location)
+      this->location = q.location;
+
+   if (q.flags.q.explicit_index)
+      this->index = q.index;
+
+   return true;
+}
+

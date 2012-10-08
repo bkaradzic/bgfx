@@ -31,14 +31,23 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
-struct hash_table;
+#include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <limits.h>
+#include <assert.h>
 
-typedef unsigned (*hash_func_t)(const void *key);
-typedef int (*hash_compare_func_t)(const void *key1, const void *key2);
+struct string_to_uint_map;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct hash_table;
+
+typedef unsigned (*hash_func_t)(const void *key);
+typedef int (*hash_compare_func_t)(const void *key1, const void *key2);
 
 /**
  * Hash table constructor
@@ -88,8 +97,36 @@ extern void *hash_table_find(struct hash_table *ht, const void *key);
 
 /**
  * Add an element to a hash table
+ *
+ * \warning
+ * If \c key is already in the hash table, it will be added again.  Future
+ * calls to \c hash_table_find and \c hash_table_remove will return or remove,
+ * repsectively, the most recently added instance of \c key.
+ *
+ * \warning
+ * The value passed by \c key is kept in the hash table and is used by later
+ * calls to \c hash_table_find.
+ *
+ * \sa hash_table_replace
  */
 extern void hash_table_insert(struct hash_table *ht, void *data,
+    const void *key);
+
+/**
+ * Add an element to a hash table with replacement
+ *
+ * \return
+ * 1 if it did replace the the value (in which case the old key is kept), 0 if
+ * it did not replace the value (in which case the new key is kept).
+ *
+ * \warning
+ * If \c key is already in the hash table, \c data will \b replace the most
+ * recently inserted \c data (see the warning in \c hash_table_insert) for
+ * that key.
+ *
+ * \sa hash_table_insert
+ */
+extern bool hash_table_replace(struct hash_table *ht, void *data,
     const void *key);
 
 /**
@@ -151,7 +188,101 @@ hash_table_call_foreach(struct hash_table *ht,
 					 void *closure),
 			void *closure);
 
+struct string_to_uint_map *
+string_to_uint_map_ctor();
+
+void
+string_to_uint_map_dtor(struct string_to_uint_map *);
+
+
 #ifdef __cplusplus
 }
-#endif
+
+/**
+ * Map from a string (name) to an unsigned integer value
+ *
+ * \note
+ * Because of the way this class interacts with the \c hash_table
+ * implementation, values of \c UINT_MAX cannot be stored in the map.
+ */
+struct string_to_uint_map {
+public:
+   string_to_uint_map()
+   {
+      this->ht = hash_table_ctor(0, hash_table_string_hash,
+				 hash_table_string_compare);
+   }
+
+   ~string_to_uint_map()
+   {
+      hash_table_call_foreach(this->ht, delete_key, NULL);
+      hash_table_dtor(this->ht);
+   }
+
+   /**
+    * Remove all mappings from this map.
+    */
+   void clear()
+   {
+      hash_table_call_foreach(this->ht, delete_key, NULL);
+      hash_table_clear(this->ht);
+   }
+
+   /**
+    * Get the value associated with a particular key
+    *
+    * \return
+    * If \c key is found in the map, \c true is returned.  Otherwise \c false
+    * is returned.
+    *
+    * \note
+    * If \c key is not found in the table, \c value is not modified.
+    */
+   bool get(unsigned &value, const char *key)
+   {
+      const intptr_t v =
+	 (intptr_t) hash_table_find(this->ht, (const void *) key);
+
+      if (v == 0)
+	 return false;
+
+      value = (unsigned)(v - 1);
+      return true;
+   }
+
+   void put(unsigned value, const char *key)
+   {
+      /* The low-level hash table structure returns NULL if key is not in the
+       * hash table.  However, users of this map might want to store zero as a
+       * valid value in the table.  Bias the value by +1 so that a
+       * user-specified zero is stored as 1.  This enables ::get to tell the
+       * difference between a user-specified zero (returned as 1 by
+       * hash_table_find) and the key not in the table (returned as 0 by
+       * hash_table_find).
+       *
+       * The net effect is that we can't store UINT_MAX in the table.  This is
+       * because UINT_MAX+1 = 0.
+       */
+      assert(value != UINT_MAX);
+      char *dup_key = strdup(key);
+      bool result = hash_table_replace(this->ht,
+				       (void *) (intptr_t) (value + 1),
+				       dup_key);
+      if (result)
+	 free(dup_key);
+   }
+
+private:
+   static void delete_key(const void *key, void *data, void *closure)
+   {
+      (void) data;
+      (void) closure;
+
+      free((char *)key);
+   }
+
+   struct hash_table *ht;
+};
+
+#endif /* __cplusplus */
 #endif /* HASH_TABLE_H */

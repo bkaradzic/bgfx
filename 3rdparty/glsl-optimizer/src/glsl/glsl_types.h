@@ -28,21 +28,24 @@
 
 #include <string.h>
 #include <assert.h>
+#include "main/mtypes.h" /* for gl_texture_index, C++'s enum rules are broken */
 
+#ifdef __cplusplus
 extern "C" {
-#include "GL/gl.h"
-}
-
-#include "ralloc.h"
+#endif
 
 struct _mesa_glsl_parse_state;
 struct glsl_symbol_table;
 
-extern "C" void
+extern void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
-extern "C" void
+extern void
 _mesa_glsl_release_types(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 enum glsl_base_type {
    GLSL_TYPE_UINT = 0,
@@ -62,7 +65,8 @@ enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_3D,
    GLSL_SAMPLER_DIM_CUBE,
    GLSL_SAMPLER_DIM_RECT,
-   GLSL_SAMPLER_DIM_BUF
+   GLSL_SAMPLER_DIM_BUF,
+   GLSL_SAMPLER_DIM_EXTERNAL
 };
 
 enum glsl_precision {
@@ -71,6 +75,10 @@ enum glsl_precision {
 	glsl_precision_low,
 	glsl_precision_undefined,
 };
+
+#ifdef __cplusplus
+#include "../mesa/main/glminimal.h"
+#include "ralloc.h"
 
 struct glsl_type {
    GLenum gl_type;
@@ -151,6 +159,8 @@ struct glsl_type {
    static const glsl_type *const error_type;
    static const glsl_type *const void_type;
    static const glsl_type *const int_type;
+   static const glsl_type *const ivec2_type;
+   static const glsl_type *const ivec3_type;
    static const glsl_type *const ivec4_type;
    static const glsl_type *const uint_type;
    static const glsl_type *const uvec2_type;
@@ -161,6 +171,9 @@ struct glsl_type {
    static const glsl_type *const vec3_type;
    static const glsl_type *const vec4_type;
    static const glsl_type *const bool_type;
+   static const glsl_type *const bvec2_type;
+   static const glsl_type *const bvec3_type;
+   static const glsl_type *const bvec4_type;
    static const glsl_type *const mat2_type;
    static const glsl_type *const mat2x3_type;
    static const glsl_type *const mat2x4_type;
@@ -182,6 +195,17 @@ struct glsl_type {
     * error type is returned.
     */
    const glsl_type *get_base_type() const;
+
+   /**
+    * Get the basic scalar type which this type aggregates.
+    *
+    * If the type is a numeric or boolean scalar, vector, or matrix, or an
+    * array of any of those, this function gets the scalar type of the
+    * individual components.  For structs and arrays of structs, this function
+    * returns the struct type.  For samplers and arrays of samplers, this
+    * function returns the sampler type.
+    */
+   const glsl_type *get_scalar_type() const;
 
    /**
     * Query the type of elements in an array
@@ -229,6 +253,19 @@ struct glsl_type {
     * might occupy.
     */
    unsigned component_slots() const;
+
+   /**
+    * Alignment in bytes of the start of this type in a std140 uniform
+    * block.
+    */
+   unsigned std140_base_alignment(bool row_major) const;
+
+   /** Size in bytes of this type in a std140 uniform block.
+    *
+    * Note that this is not GL_UNIFORM_SIZE (which is the number of
+    * elements in the array)
+    */
+   unsigned std140_size(bool row_major) const;
 
    /**
     * \brief Can this type be implicitly converted to another?
@@ -341,6 +378,11 @@ struct glsl_type {
     * types, contains a sampler.
     */
    bool contains_sampler() const;
+
+   /**
+    * Get the Mesa texture target index for a sampler type.
+    */
+   gl_texture_index sampler_index() const;
 
    /**
     * Query whether or not a type is an array
@@ -483,9 +525,11 @@ private:
    static const glsl_type builtin_110_types[];
    static const glsl_type builtin_120_types[];
    static const glsl_type builtin_130_types[];
+   static const glsl_type builtin_140_types[];
    static const glsl_type builtin_ARB_texture_rectangle_types[];
    static const glsl_type builtin_EXT_texture_array_types[];
    static const glsl_type builtin_EXT_texture_buffer_object_types[];
+   static const glsl_type builtin_OES_EGL_image_external_types[];
    /*@}*/
 
    /**
@@ -498,12 +542,15 @@ private:
     */
    /*@{*/
    static void generate_100ES_types(glsl_symbol_table *);
-   static void generate_110_types(glsl_symbol_table *);
-   static void generate_120_types(glsl_symbol_table *);
-   static void generate_130_types(glsl_symbol_table *);
+   static void generate_110_types(glsl_symbol_table *, bool add_deprecated);
+   static void generate_120_types(glsl_symbol_table *, bool add_deprecated);
+   static void generate_130_types(glsl_symbol_table *, bool add_deprecated);
+   static void generate_140_types(glsl_symbol_table *);
    static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
    static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
    static void generate_OES_texture_3D_types(glsl_symbol_table *, bool);
+   static void generate_EXT_shadow_samplers_types(glsl_symbol_table *, bool);
+   static void generate_OES_EGL_image_external_types(glsl_symbol_table *, bool);
    /*@}*/
 
    /**
@@ -524,5 +571,7 @@ struct glsl_struct_field {
    const char *name;
    glsl_precision precision;
 };
+
+#endif /* __cplusplus */
 
 #endif /* GLSL_TYPES_H */

@@ -4,21 +4,21 @@ struct foo {
 };
 void main ()
 {
-  foo s;
-  float f;
-  float tmpvar_1;
-  tmpvar_1 = 1.0;
-  f = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = f;
-  s.used = tmpvar_2;
+  foo s_1;
+  float f_2;
   float tmpvar_3;
-  tmpvar_3 = f;
-  s.unused = tmpvar_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = vec4(s.used);
-  vec4 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  gl_FragColor = tmpvar_5;
+  tmpvar_3 = 1.0;
+  f_2 = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = f_2;
+  s_1.used = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = f_2;
+  s_1.unused = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = vec4(s_1.used);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  gl_FragColor = tmpvar_7;
 }
 

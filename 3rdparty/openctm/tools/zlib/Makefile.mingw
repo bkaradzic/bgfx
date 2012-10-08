@@ -1,0 +1,39 @@
+# Makefile for zlib - for MinGW for Windows
+# Copyright (C) 1995-2005 Jean-loup Gailly.
+# For conditions of distribution and use, see copyright notice in zlib.h
+
+CC=gcc
+CFLAGS=-c -O3 -W
+
+AR=ar rcs
+RM=del /Q
+
+OBJS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
+       zutil.o inflate.o infback.o inftrees.o inffast.o
+
+
+all: libz.a
+
+libz.a: $(OBJS)
+	$(AR) $@ $(OBJS)
+
+clean:
+	$(RM) *.o libz.a
+
+%.o: %.c
+	$(CC) $(CFLAGS) $<
+
+adler32.o: zlib.h zconf.h
+compress.o: zlib.h zconf.h
+crc32.o: crc32.h zlib.h zconf.h
+deflate.o: deflate.h zutil.h zlib.h zconf.h
+example.o: zlib.h zconf.h
+gzio.o: zutil.h zlib.h zconf.h
+inffast.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+inflate.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+infback.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+inftrees.o: zutil.h zlib.h zconf.h inftrees.h
+minigzip.o: zlib.h zconf.h
+trees.o: deflate.h zutil.h zlib.h zconf.h trees.h
+uncompr.o: zlib.h zconf.h
+zutil.o: zutil.h zlib.h zconf.h

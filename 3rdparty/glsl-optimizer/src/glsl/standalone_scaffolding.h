@@ -40,6 +40,10 @@ _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
 extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
+extern "C" void
+_mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint id,
+                   const char *msg, int len);
+
 /**
  * Initialize the given gl_context structure to a reasonable set of
  * defaults representing the minimum capabilities required by the

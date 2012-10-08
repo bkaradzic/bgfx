@@ -2,6 +2,8 @@
 *.dll
 *.exe
 *.ilk
+*.la
+*.lo
 *.o
 *.obj
 *.os
@@ -10,6 +12,7 @@
 *.pyc
 *.pyo
 *.so
+*.so.*
 *.sw[a-z]
 *.tar
 *.tar.bz2
@@ -18,9 +21,11 @@
 *~
 depend
 depend.bak
+bin/ltmain.sh
 lib
 lib64
 configure
+configure.lineno
 autom4te.cache
 aclocal.m4
 config.log
@@ -29,8 +34,14 @@ cscope*
 .scon*
 config.py
 build
+libtool
 manifest.txt
+Makefile.in
 .dir-locals.el
+.deps/
+.libs/
+/Makefile
+
 *.pbxuser
 *.perspectivev3
 *.mode1v3
@@ -50,7 +61,6 @@ CMakeCache.txt
 .cproject
 glsl_main
 glsl_test
-glcpp
 glslopt
 glsl_compiler
 .settings/

@@ -1,0 +1,12 @@
+uniform vec4 _Tint;
+uniform samplerCube _Tex;
+void main ()
+{
+  vec4 col_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = textureCube (_Tex, gl_TexCoord[0].xyz);
+  col_1.xyz = ((tmpvar_2.xyz + _Tint.xyz) - 0.5);
+  col_1.w = (tmpvar_2.w * _Tint.w);
+  gl_FragData[0] = col_1;
+}
+

@@ -51,26 +51,28 @@
      HASH_IF = 267,
      HASH_IFDEF = 268,
      HASH_IFNDEF = 269,
-     HASH_UNDEF = 270,
-     HASH_VERSION = 271,
-     IDENTIFIER = 272,
-     IF_EXPANDED = 273,
-     INTEGER = 274,
-     INTEGER_STRING = 275,
-     NEWLINE = 276,
-     OTHER = 277,
-     PLACEHOLDER = 278,
-     SPACE = 279,
-     PASTE = 280,
-     OR = 281,
-     AND = 282,
-     NOT_EQUAL = 283,
-     EQUAL = 284,
-     GREATER_OR_EQUAL = 285,
-     LESS_OR_EQUAL = 286,
-     RIGHT_SHIFT = 287,
-     LEFT_SHIFT = 288,
-     UNARY = 289
+     HASH_LINE = 270,
+     HASH_UNDEF = 271,
+     HASH_VERSION = 272,
+     IDENTIFIER = 273,
+     IF_EXPANDED = 274,
+     INTEGER = 275,
+     INTEGER_STRING = 276,
+     LINE_EXPANDED = 277,
+     NEWLINE = 278,
+     OTHER = 279,
+     PLACEHOLDER = 280,
+     SPACE = 281,
+     PASTE = 282,
+     OR = 283,
+     AND = 284,
+     NOT_EQUAL = 285,
+     EQUAL = 286,
+     GREATER_OR_EQUAL = 287,
+     LESS_OR_EQUAL = 288,
+     RIGHT_SHIFT = 289,
+     LEFT_SHIFT = 290,
+     UNARY = 291
    };
 #endif
 /* Tokens.  */
@@ -86,26 +88,28 @@
 #define HASH_IF 267
 #define HASH_IFDEF 268
 #define HASH_IFNDEF 269
-#define HASH_UNDEF 270
-#define HASH_VERSION 271
-#define IDENTIFIER 272
-#define IF_EXPANDED 273
-#define INTEGER 274
-#define INTEGER_STRING 275
-#define NEWLINE 276
-#define OTHER 277
-#define PLACEHOLDER 278
-#define SPACE 279
-#define PASTE 280
-#define OR 281
-#define AND 282
-#define NOT_EQUAL 283
-#define EQUAL 284
-#define GREATER_OR_EQUAL 285
-#define LESS_OR_EQUAL 286
-#define RIGHT_SHIFT 287
-#define LEFT_SHIFT 288
-#define UNARY 289
+#define HASH_LINE 270
+#define HASH_UNDEF 271
+#define HASH_VERSION 272
+#define IDENTIFIER 273
+#define IF_EXPANDED 274
+#define INTEGER 275
+#define INTEGER_STRING 276
+#define LINE_EXPANDED 277
+#define NEWLINE 278
+#define OTHER 279
+#define PLACEHOLDER 280
+#define SPACE 281
+#define PASTE 282
+#define OR 283
+#define AND 284
+#define NOT_EQUAL 285
+#define EQUAL 286
+#define GREATER_OR_EQUAL 287
+#define LESS_OR_EQUAL 288
+#define RIGHT_SHIFT 289
+#define LEFT_SHIFT 290
+#define UNARY 291
 
 
 

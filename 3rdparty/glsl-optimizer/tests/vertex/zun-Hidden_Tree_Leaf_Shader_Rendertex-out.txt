@@ -1,0 +1,29 @@
+attribute vec4 TANGENT;
+uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
+void main ()
+{
+  vec3 lightColor_1;
+  float tmpvar_2;
+  tmpvar_2 = (1.0 - abs(TANGENT.w));
+  vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
+  tmpvar_3.xyz = gl_Normal;
+  vec3 tmpvar_4;
+  tmpvar_4 = mix (gl_Normal, normalize((tmpvar_3 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_2));
+  lightColor_1 = gl_LightModel.ambient.xyz;
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[0] * max (0.0, ((dot (_TerrainTreeLightDirections[0], tmpvar_4) * 0.5) + 0.5))).xyz);
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[1] * max (0.0, ((dot (_TerrainTreeLightDirections[1], tmpvar_4) * 0.5) + 0.5))).xyz);
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[2] * max (0.0, ((dot (_TerrainTreeLightDirections[2], tmpvar_4) * 0.5) + 0.5))).xyz);
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[3] * max (0.0, ((dot (_TerrainTreeLightDirections[3], tmpvar_4) * 0.5) + 0.5))).xyz);
+  gl_Position = (gl_ModelViewProjectionMatrix * (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * tmpvar_2)));
+  vec4 tmpvar_5;
+  tmpvar_5.zw = vec2(0.0, 0.0);
+  tmpvar_5.xy = gl_MultiTexCoord0.xy;
+  gl_TexCoord[0] = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6.w = 0.0;
+  tmpvar_6.xyz = (lightColor_1 * gl_Color.w);
+  gl_TexCoord[1] = tmpvar_6;
+}
+

@@ -110,6 +110,8 @@ public:
    virtual ir_visitor_status visit(ir_loop_jump *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
+   virtual ir_visitor_status visit_enter(ir_call *);
+
    virtual ir_visitor_status visit_enter(ir_loop *);
    virtual ir_visitor_status visit_leave(ir_loop *);
    virtual ir_visitor_status visit_enter(ir_assignment *);
@@ -149,6 +151,21 @@ loop_analysis::visit(ir_loop_jump *ir)
    ls->num_loop_jumps++;
 
    return visit_continue;
+}
+
+
+ir_visitor_status
+loop_analysis::visit_enter(ir_call *ir)
+{
+   /* If we're not somewhere inside a loop, there's nothing to do. */
+   if (this->state.is_empty())
+      return visit_continue;
+
+   loop_variable_state *const ls =
+      (loop_variable_state *) this->state.get_head();
+
+   ls->contains_calls = true;
+   return visit_continue_with_parent;
 }
 
 
@@ -209,6 +226,17 @@ loop_analysis::visit_leave(ir_loop *ir)
    loop_variable_state *const ls =
       (loop_variable_state *) this->state.pop_head();
 
+   /* Function calls may contain side effects.  These could alter any of our
+    * variables in ways that cannot be known, and may even terminate shader
+    * execution (say, calling discard in the fragment shader).  So we can't
+    * rely on any of our analysis about assignments to variables.
+    *
+    * We could perform some conservative analysis (prove there's no statically
+    * possible assignment, etc.) but it isn't worth it for now; function
+    * inlining will allow us to unroll loops anyway.
+    */
+   if (ls->contains_calls)
+      return visit_continue;
 
    foreach_list(node, &ir->body_instructions) {
       /* Skip over declarations at the start of a loop.

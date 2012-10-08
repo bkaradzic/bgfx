@@ -50,6 +50,38 @@ is_break(ir_instruction *ir)
 		     && ((ir_loop_jump *) ir)->is_break();
 }
 
+class loop_unroll_count : public ir_hierarchical_visitor {
+public:
+   int nodes;
+   bool fail;
+
+   loop_unroll_count(exec_list *list)
+   {
+      nodes = 0;
+      fail = false;
+
+      run(list);
+   }
+
+   virtual ir_visitor_status visit_enter(ir_assignment *ir)
+   {
+      nodes++;
+      return visit_continue;
+   }
+
+   virtual ir_visitor_status visit_enter(ir_expression *ir)
+   {
+      nodes++;
+      return visit_continue;
+   }
+
+   virtual ir_visitor_status visit_enter(ir_loop *ir)
+   {
+      fail = true;
+      return visit_continue;
+   }
+};
+
 
 ir_visitor_status
 loop_unroll_visitor::visit_leave(ir_loop *ir)
@@ -76,6 +108,13 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    /* Don't try to unroll loops that have zillions of iterations either.
     */
    if (iterations > (int) max_iterations)
+      return visit_continue;
+
+   /* Don't try to unroll nested loops and loops with a huge body.
+    */
+   loop_unroll_count count(&ir->body_instructions);
+
+   if (count.fail || count.nodes * iterations > (int)max_iterations * 15)
       return visit_continue;
 
    if (ls->num_loop_jumps > 1)

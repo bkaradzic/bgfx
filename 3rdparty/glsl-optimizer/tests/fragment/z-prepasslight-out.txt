@@ -1,0 +1,89 @@
+varying vec3 xlv_TEXCOORD1;
+varying vec4 xlv_TEXCOORD0;
+uniform vec4 unity_LightmapFade;
+uniform vec4 _ZBufferParams;
+uniform vec3 _WorldSpaceCameraPos;
+uniform samplerCube _ShadowMapTexture;
+uniform vec4 _ProjectionParams;
+uniform sampler2D _LightTextureB0;
+uniform samplerCube _LightTexture0;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightPositionRange;
+uniform vec4 _LightPos;
+uniform mat4 _LightMatrix0;
+uniform vec4 _LightColor;
+uniform mat4 _CameraToWorld;
+uniform sampler2D _CameraNormalsTexture;
+uniform sampler2D _CameraDepthTexture;
+void main ()
+{
+  vec4 res_1;
+  float atten_2;
+  vec3 lightDir_3;
+  vec3 normal_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = (xlv_TEXCOORD0.xy / xlv_TEXCOORD0.w);
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_CameraNormalsTexture, tmpvar_5);
+  normal_4 = normalize(((tmpvar_6.xyz * 2.0) - 1.0));
+  vec4 tmpvar_7;
+  tmpvar_7.w = 1.0;
+  tmpvar_7.xyz = ((xlv_TEXCOORD1 * (_ProjectionParams.z / xlv_TEXCOORD1.z)) * (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_5).x) + _ZBufferParams.y))));
+  vec3 tmpvar_8;
+  tmpvar_8 = (_CameraToWorld * tmpvar_7).xyz;
+  vec3 tmpvar_9;
+  tmpvar_9 = (tmpvar_8 - _LightPos.xyz);
+  lightDir_3 = -(normalize(tmpvar_9));
+  atten_2 = texture2D (_LightTextureB0, vec2((dot (tmpvar_9, tmpvar_9) * _LightPos.w))).w;
+  vec4 shadowVals_10;
+  shadowVals_10.x = dot (textureCube (_ShadowMapTexture, (tmpvar_9 + vec3(0.0078125, 0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  shadowVals_10.y = dot (textureCube (_ShadowMapTexture, (tmpvar_9 + vec3(-0.0078125, -0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  shadowVals_10.z = dot (textureCube (_ShadowMapTexture, (tmpvar_9 + vec3(-0.0078125, 0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  shadowVals_10.w = dot (textureCube (_ShadowMapTexture, (tmpvar_9 + vec3(0.0078125, -0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  bvec4 tmpvar_11;
+  tmpvar_11 = lessThan (shadowVals_10, vec4(((sqrt(dot (tmpvar_9, tmpvar_9)) * _LightPositionRange.w) * 0.97)));
+  vec4 tmpvar_12;
+  tmpvar_12 = _LightShadowData.xxxx;
+  float tmpvar_13;
+  if (tmpvar_11.x) {
+    tmpvar_13 = tmpvar_12.x;
+  } else {
+    tmpvar_13 = 1.0;
+  };
+  float tmpvar_14;
+  if (tmpvar_11.y) {
+    tmpvar_14 = tmpvar_12.y;
+  } else {
+    tmpvar_14 = 1.0;
+  };
+  float tmpvar_15;
+  if (tmpvar_11.z) {
+    tmpvar_15 = tmpvar_12.z;
+  } else {
+    tmpvar_15 = 1.0;
+  };
+  float tmpvar_16;
+  if (tmpvar_11.w) {
+    tmpvar_16 = tmpvar_12.w;
+  } else {
+    tmpvar_16 = 1.0;
+  };
+  vec4 tmpvar_17;
+  tmpvar_17.x = tmpvar_13;
+  tmpvar_17.y = tmpvar_14;
+  tmpvar_17.z = tmpvar_15;
+  tmpvar_17.w = tmpvar_16;
+  vec4 tmpvar_18;
+  tmpvar_18.w = 1.0;
+  tmpvar_18.xyz = tmpvar_8;
+  float tmpvar_19;
+  tmpvar_19 = ((atten_2 * dot (tmpvar_17, vec4(0.25, 0.25, 0.25, 0.25))) * textureCube (_LightTexture0, (_LightMatrix0 * tmpvar_18).xyz).w);
+  atten_2 = tmpvar_19;
+  res_1.xyz = (_LightColor.xyz * (max (0.0, dot (lightDir_3, normal_4)) * tmpvar_19));
+  res_1.w = ((pow (max (0.0, dot (normalize((lightDir_3 - normalize((tmpvar_8 - _WorldSpaceCameraPos)))), normal_4)), (tmpvar_6.w * 128.0)) * clamp (tmpvar_19, 0.0, 1.0)) * dot (_LightColor.xyz, vec3(0.22, 0.707, 0.071)));
+  vec4 tmpvar_20;
+  tmpvar_20 = (res_1 * clamp ((1.0 - ((tmpvar_7.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
+  res_1 = tmpvar_20;
+  gl_FragData[0] = exp2(-(tmpvar_20));
+}
+

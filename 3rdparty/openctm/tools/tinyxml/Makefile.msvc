@@ -1,0 +1,35 @@
+#****************************************************************************
+# Makefile for TinyXml for Microsoft Visual C++ / nmake
+#****************************************************************************
+
+# Compiler configuration
+CPP = cl
+AR = lib /nologo
+CPPFLAGS = /nologo /O2 /Gs /W3 /EHsc /D_CRT_SECURE_NO_WARNINGS
+
+# Target files
+STATICLIB = tinyxml.lib
+
+all: $(STATICLIB)
+
+# Object files
+OBJS = tinyxml.obj \
+       tinyxmlparser.obj \
+       tinyxmlerror.obj \
+       tinystr.obj
+
+# Rule for static library
+$(STATICLIB): $(OBJS)
+	$(AR) /OUT:$@ $(OBJS)
+
+# Compile rules
+.cpp.obj:
+	$(CPP) /c $(CPPFLAGS) /Fo$@ $<
+
+clean:
+	del /Q $(OBJS) $(STATICLIB)
+
+tinyxml.obj: tinyxml.cpp tinyxml.h tinystr.h
+tinyxmlparser.obj: tinyxmlparser.cpp tinyxml.h tinystr.h
+tinyxmlerror.obj: tinyxmlerror.cpp tinyxml.h tinystr.h
+tinystr.obj: tinystr.cpp tinystr.h

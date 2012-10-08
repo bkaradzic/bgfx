@@ -33,6 +33,7 @@
 #include "ir_visitor.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
+#include "main/macros.h"
 
 /**
  * Visitor class for replacing expressions with ir_constant values.
@@ -76,8 +77,25 @@ ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
 
    void *ctx = ralloc_parent(ir);
    this->progress = true;
-   return new(ctx) ir_swizzle(deref->array,
-			      ir_constant->value.i[0], 0, 0, 0, 1);
+
+   /* Page 40 of the GLSL 1.20 spec says:
+    *
+    *     "When indexing with non-constant expressions, behavior is undefined
+    *     if the index is negative, or greater than or equal to the size of
+    *     the vector."
+    *
+    * The quoted spec text mentions non-constant expressions, but this code
+    * operates on constants.  These constants are the result of non-constant
+    * expressions that have been optimized to constants.  The common case here
+    * is a loop counter from an unrolled loop that is used to index a vector.
+    *
+    * The ir_swizzle constructor gets angry if the index is negative or too
+    * large.  For simplicity sake, just clamp the index to [0, size-1].
+    */
+   const int i = MIN2(MAX2(ir_constant->value.i[0], 0),
+		      (deref->array->type->vector_elements - 1));
+
+   return new(ctx) ir_swizzle(deref->array, i, 0, 0, 0, 1);
 }
 
 ir_visitor_status

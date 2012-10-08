@@ -1,0 +1,44 @@
+uniform vec4 unity_ShadowBlurParams;
+uniform sampler2D _MainTex;
+uniform vec4 _BlurOffsets[8];
+void main ()
+{
+  float radius_1;
+  vec4 mask_2;
+  vec4 tmpvar_3;
+  tmpvar_3.zw = vec2(0.0, 0.0);
+  tmpvar_3.xy = gl_TexCoord[0].xy;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, tmpvar_3.xy);
+  mask_2.zw = tmpvar_4.zw;
+  float tmpvar_5;
+  tmpvar_5 = (tmpvar_4.z + (tmpvar_4.w / 255.0));
+  radius_1 = clamp ((unity_ShadowBlurParams.y / (1.0 - tmpvar_5)), 0.0, 1.0);
+  mask_2.xy = (tmpvar_4.xy * unity_ShadowBlurParams.x);
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[0])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_6.z + (tmpvar_6.w / 255.0))))), 0.0, 1.0) * tmpvar_6.xy));
+  vec4 tmpvar_7;
+  tmpvar_7 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[1])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_7.z + (tmpvar_7.w / 255.0))))), 0.0, 1.0) * tmpvar_7.xy));
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[2])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_8.z + (tmpvar_8.w / 255.0))))), 0.0, 1.0) * tmpvar_8.xy));
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[3])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_9.z + (tmpvar_9.w / 255.0))))), 0.0, 1.0) * tmpvar_9.xy));
+  vec4 tmpvar_10;
+  tmpvar_10 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[4])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_10.z + (tmpvar_10.w / 255.0))))), 0.0, 1.0) * tmpvar_10.xy));
+  vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[5])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_11.z + (tmpvar_11.w / 255.0))))), 0.0, 1.0) * tmpvar_11.xy));
+  vec4 tmpvar_12;
+  tmpvar_12 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[6])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_12.z + (tmpvar_12.w / 255.0))))), 0.0, 1.0) * tmpvar_12.xy));
+  vec4 tmpvar_13;
+  tmpvar_13 = texture2D (_MainTex, (tmpvar_3 + (radius_1 * _BlurOffsets[7])).xy);
+  mask_2.xy = (mask_2.xy + (clamp ((unity_ShadowBlurParams.x - abs((tmpvar_5 - (tmpvar_13.z + (tmpvar_13.w / 255.0))))), 0.0, 1.0) * tmpvar_13.xy));
+  gl_FragData[0] = vec4((mask_2.x / mask_2.y));
+}
+

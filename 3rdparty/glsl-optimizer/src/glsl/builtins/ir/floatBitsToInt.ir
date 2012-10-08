@@ -1,0 +1,21 @@
+((function floatBitsToInt
+   (signature int
+     (parameters
+       (declare (in) float arg))
+     ((return (expression int bitcast_f2i (var_ref arg)))))
+
+   (signature ivec2
+     (parameters
+       (declare (in) vec2 arg))
+     ((return (expression ivec2 bitcast_f2i (var_ref arg)))))
+
+   (signature ivec3
+     (parameters
+       (declare (in) vec3 arg))
+     ((return (expression ivec3 bitcast_f2i (var_ref arg)))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) vec4 arg))
+     ((return (expression ivec4 bitcast_f2i (var_ref arg)))))
+))

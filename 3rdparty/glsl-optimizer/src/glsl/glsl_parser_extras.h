@@ -42,8 +42,22 @@ enum _mesa_glsl_parser_targets {
 
 struct gl_context;
 
+struct glsl_switch_state {
+   /** Temporary variables needed for switch statement. */
+   ir_variable *test_var;
+   ir_variable *is_fallthru_var;
+   ir_variable *is_break_var;
+   class ast_switch_statement *switch_nesting_ast;
+
+   /** Table of constant values already used in case labels */
+   struct hash_table *labels_ht;
+   class ast_case_label *previous_default;
+
+   bool is_switch_innermost; // if switch stmt is closest to break, ...
+};
+
 struct _mesa_glsl_parse_state {
-   _mesa_glsl_parse_state(struct gl_context *ctx, GLenum target,
+   _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
 			  void *mem_ctx);
 
    /* Callers of this ralloc-based new need not call delete. It's
@@ -63,14 +77,26 @@ struct _mesa_glsl_parse_state {
       ralloc_free(mem);
    }
 
+   struct gl_context *const ctx;
    void *scanner;
    exec_list translation_unit;
    glsl_symbol_table *symbols;
+
+   unsigned num_uniform_blocks;
+   unsigned uniform_block_array_size;
+   struct gl_uniform_block *uniform_blocks;
 
    bool es_shader;
    unsigned language_version;
    const char *version_string;
    enum _mesa_glsl_parser_targets target;
+
+   /**
+    * Default uniform layout qualifiers tracked during parsing.
+    * Currently affects uniform blocks and uniform buffer variables in
+    * those blocks.
+    */
+   struct ast_type_qualifier *default_uniform_qualifier;
 
    /**
     * Printable list of GLSL versions supported by the current context
@@ -103,22 +129,6 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_draw_buffers */
       unsigned MaxDrawBuffers;
-
-      /**
-       * Set of GLSL versions supported by the current context
-       *
-       * Knowing that version X is supported doesn't mean that versions before
-       * X are also supported.  Version 1.00 is only supported in an ES2
-       * context or when GL_ARB_ES2_compatibility is supported.  In an OpenGL
-       * 3.0 "forward compatible" context, GLSL 1.10 and 1.20 are \b not
-       * supported.
-       */
-      /*@{*/
-      unsigned GLSL_100ES:1;
-      unsigned GLSL_110:1;
-      unsigned GLSL_120:1;
-      unsigned GLSL_130:1;
-      /*@}*/
    } Const;
 
    /**
@@ -149,8 +159,9 @@ struct _mesa_glsl_parse_state {
    bool all_invariant;
 
    /** Loop or switch statement containing the current instructions. */
-   class ir_instruction *loop_or_switch_nesting;
-   class ast_iteration_statement *loop_or_switch_nesting_ast;
+   class ast_iteration_statement *loop_nesting_ast;
+
+   struct glsl_switch_state switch_state;
 
    /** List of structures defined in user code. */
    const glsl_type **user_structures;
@@ -178,14 +189,24 @@ struct _mesa_glsl_parse_state {
    bool ARB_shader_texture_lod_warn;
    bool EXT_shader_texture_lod_enable;
    bool EXT_shader_texture_lod_warn;
+   bool EXT_shadow_samplers_enable;
+   bool EXT_shadow_samplers_warn;
    bool ARB_shader_stencil_export_enable;
    bool ARB_shader_stencil_export_warn;
    bool AMD_conservative_depth_enable;
    bool AMD_conservative_depth_warn;
+   bool ARB_conservative_depth_enable;
+   bool ARB_conservative_depth_warn;
    bool AMD_shader_stencil_export_enable;
    bool AMD_shader_stencil_export_warn;
    bool OES_texture_3D_enable;
    bool OES_texture_3D_warn;
+   bool OES_EGL_image_external_enable;
+   bool OES_EGL_image_external_warn;
+   bool ARB_shader_bit_encoding_enable;
+   bool ARB_shader_bit_encoding_warn;
+   bool ARB_uniform_buffer_object_enable;
+   bool ARB_uniform_buffer_object_warn;
    bool OES_standard_derivatives_enable;
    bool OES_standard_derivatives_warn;
    /*@}*/
@@ -279,7 +300,7 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
 extern "C" {
 #endif
 
-extern int preprocess(void *ctx, const char **shader, char **info_log,
+extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, int api);
 
 extern void _mesa_destroy_shader_compiler(void);

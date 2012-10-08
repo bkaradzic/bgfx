@@ -33,7 +33,6 @@
  * a dereference chain.
  */
 
-#include <inttypes.h>
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
 #include "program/hash_table.h"
@@ -59,7 +58,8 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *v);
    virtual ir_visitor_status visit(ir_dereference_variable *ir);
-   virtual ir_visitor_status visit(ir_if *ir);
+
+   virtual ir_visitor_status visit_enter(ir_if *ir);
 
    virtual ir_visitor_status visit_leave(ir_loop *ir);
    virtual ir_visitor_status visit_enter(ir_function *ir);
@@ -102,7 +102,7 @@ ir_validate::visit(ir_dereference_variable *ir)
 }
 
 ir_visitor_status
-ir_validate::visit(ir_if *ir)
+ir_validate::visit_enter(ir_if *ir)
 {
    if (ir->condition->type != glsl_type::bool_type) {
       printf("ir_if condition %s type instead of bool.\n",
@@ -241,6 +241,7 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_rcp:
    case ir_unop_rsq:
    case ir_unop_sqrt:
+   case ir_unop_normalize:
       assert(ir->type == ir->operands[0]->type);
       break;
 
@@ -255,6 +256,10 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_f2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->type->base_type == GLSL_TYPE_INT);
+      break;
+   case ir_unop_f2u:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->type->base_type == GLSL_TYPE_UINT);
       break;
    case ir_unop_i2f:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
@@ -287,6 +292,22 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_u2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
       assert(ir->type->base_type == GLSL_TYPE_INT);
+      break;
+   case ir_unop_bitcast_i2f:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+      break;
+   case ir_unop_bitcast_f2i:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->type->base_type == GLSL_TYPE_INT);
+      break;
+   case ir_unop_bitcast_u2f:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
+      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+      break;
+   case ir_unop_bitcast_f2u:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->type->base_type == GLSL_TYPE_UINT);
       break;
 
    case ir_unop_any:
@@ -403,6 +424,13 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
+   case ir_binop_ubo_load:
+      assert(ir->operands[0]->as_constant());
+      assert(ir->operands[0]->type == glsl_type::uint_type);
+
+      assert(ir->operands[1]->type == glsl_type::uint_type);
+      break;
+
    case ir_quadop_vector:
       /* The vector operator collects some number of scalars and generates a
        * vector from them.
@@ -455,7 +483,7 @@ ir_validate::visit_leave(ir_expression *ir)
 ir_visitor_status
 ir_validate::visit_leave(ir_swizzle *ir)
 {
-   int chans[4] = {ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w};
+   unsigned int chans[4] = {ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w};
 
    for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
       if (chans[i] >= ir->val->type->vector_elements) {
@@ -496,6 +524,13 @@ ir_validate::visit(ir_variable *ir)
       }
    }
 
+   if (ir->constant_initializer != NULL && !ir->has_initializer) {
+      printf("ir_variable didn't have an initializer, but has a constant "
+	     "initializer value.\n");
+      ir->print();
+      abort();
+   }
+
    return visit_continue;
 }
 
@@ -534,10 +569,21 @@ ir_validate::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_validate::visit_enter(ir_call *ir)
 {
-   ir_function_signature *const callee = ir->get_callee();
+   ir_function_signature *const callee = ir->callee;
 
    if (callee->ir_type != ir_type_function_signature) {
       printf("IR called by ir_call is not ir_function_signature!\n");
+      abort();
+   }
+
+   if (ir->return_deref) {
+      if (ir->return_deref->type != callee->return_type) {
+	 printf("callee type %s does not match return storage type %s\n",
+	        callee->return_type->name, ir->return_deref->type->name);
+	 abort();
+      }
+   } else if (callee->return_type != glsl_type::void_type) {
+      printf("ir_call has non-void callee but no return storage\n");
       abort();
    }
 
@@ -578,6 +624,7 @@ dump_ir:
    printf("callee:\n");
    callee->print();
    abort();
+   return visit_stop;
 }
 
 void
@@ -603,7 +650,9 @@ check_node_type(ir_instruction *ir, void *data)
       printf("Instruction node with unset type\n");
       ir->print(); printf("\n");
    }
-   assert(ir->type != glsl_type::error_type);
+   ir_rvalue *value = ir->as_rvalue();
+   if (value != NULL)
+      assert(value->type != glsl_type::error_type);
 }
 
 void

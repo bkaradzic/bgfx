@@ -1,0 +1,70 @@
+#extension GL_ARB_shader_texture_lod : enable
+varying vec4 xlv_TEXCOORD1;
+varying vec2 xlv_TEXCOORD0;
+uniform vec4 _MainTex_TexelSize;
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec4 fxaaConsoleRcpFrameOpt_1;
+  fxaaConsoleRcpFrameOpt_1 = (_MainTex_TexelSize.xyxy * vec4(-0.5, -0.5, 0.5, 0.5));
+  vec4 fxaaConsoleRcpFrameOpt2_2;
+  fxaaConsoleRcpFrameOpt2_2 = (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0));
+  vec4 tmpvar_3;
+  vec4 rgbyB_4;
+  vec2 dir_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2DLod (_MainTex, xlv_TEXCOORD1.xy, 0.0);
+  vec4 tmpvar_7;
+  tmpvar_7 = texture2DLod (_MainTex, xlv_TEXCOORD1.xw, 0.0);
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2DLod (_MainTex, xlv_TEXCOORD1.zw, 0.0);
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2DLod (_MainTex, xlv_TEXCOORD0, 0.0);
+  float tmpvar_10;
+  tmpvar_10 = (texture2DLod (_MainTex, xlv_TEXCOORD1.zy, 0.0).y + 0.00260417);
+  float tmpvar_11;
+  tmpvar_11 = max (max (tmpvar_10, tmpvar_8.y), max (tmpvar_6.y, tmpvar_7.y));
+  float tmpvar_12;
+  tmpvar_12 = min (min (tmpvar_10, tmpvar_8.y), min (tmpvar_6.y, tmpvar_7.y));
+  float tmpvar_13;
+  tmpvar_13 = max (0.05, (tmpvar_11 * 0.125));
+  float tmpvar_14;
+  tmpvar_14 = (tmpvar_7.y - tmpvar_10);
+  float tmpvar_15;
+  tmpvar_15 = (max (tmpvar_11, tmpvar_9.y) - min (tmpvar_12, tmpvar_9.y));
+  float tmpvar_16;
+  tmpvar_16 = (tmpvar_8.y - tmpvar_6.y);
+  if ((tmpvar_15 < tmpvar_13)) {
+    tmpvar_3 = tmpvar_9;
+  } else {
+    dir_5.x = (tmpvar_14 + tmpvar_16);
+    dir_5.y = (tmpvar_14 - tmpvar_16);
+    vec2 tmpvar_17;
+    tmpvar_17 = normalize(dir_5);
+    vec4 tmpvar_18;
+    tmpvar_18.zw = vec2(0.0, 0.0);
+    tmpvar_18.xy = (xlv_TEXCOORD0 - (tmpvar_17 * fxaaConsoleRcpFrameOpt_1.zw));
+    vec4 tmpvar_19;
+    tmpvar_19.zw = vec2(0.0, 0.0);
+    tmpvar_19.xy = (xlv_TEXCOORD0 + (tmpvar_17 * fxaaConsoleRcpFrameOpt_1.zw));
+    vec2 tmpvar_20;
+    tmpvar_20 = clamp ((tmpvar_17 / (min (abs(tmpvar_17.x), abs(tmpvar_17.y)) * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
+    vec4 tmpvar_21;
+    tmpvar_21.zw = vec2(0.0, 0.0);
+    tmpvar_21.xy = (xlv_TEXCOORD0 - (tmpvar_20 * fxaaConsoleRcpFrameOpt2_2.zw));
+    vec4 tmpvar_22;
+    tmpvar_22.zw = vec2(0.0, 0.0);
+    tmpvar_22.xy = (xlv_TEXCOORD0 + (tmpvar_20 * fxaaConsoleRcpFrameOpt2_2.zw));
+    vec4 tmpvar_23;
+    tmpvar_23 = (texture2DLod (_MainTex, tmpvar_18.xy, 0.0) + texture2DLod (_MainTex, tmpvar_19.xy, 0.0));
+    vec4 tmpvar_24;
+    tmpvar_24 = (((texture2DLod (_MainTex, tmpvar_21.xy, 0.0) + texture2DLod (_MainTex, tmpvar_22.xy, 0.0)) * 0.25) + (tmpvar_23 * 0.25));
+    rgbyB_4 = tmpvar_24;
+    if (((tmpvar_24.y < tmpvar_12) || (tmpvar_24.y > tmpvar_11))) {
+      rgbyB_4.xyz = (tmpvar_23.xyz * 0.5);
+    };
+    tmpvar_3 = rgbyB_4;
+  };
+  gl_FragData[0] = tmpvar_3;
+}
+

@@ -133,7 +133,7 @@ void main ()
   highp vec4 tmpvar_28;
   tmpvar_28 = (tmpvar_21 + tmpvar_27);
   bvec4 tmpvar_29;
-  tmpvar_29 = bvec4(fract (xlv_TEXCOORD0));
+  tmpvar_29 = bvec4(fract(xlv_TEXCOORD0));
   float tmpvar_30;
   if (tmpvar_29.x) {
     tmpvar_30 = 1.0;

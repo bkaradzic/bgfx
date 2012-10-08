@@ -1,0 +1,43 @@
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 _WorldSpaceLightPos0;
+uniform mat4 _World2Object;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform mat4 _LightMatrix0;
+uniform vec4 _BumpMap_ST;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  tmpvar_1.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
+  vec3 tmpvar_3;
+  tmpvar_3 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
+  mat3 tmpvar_4;
+  tmpvar_4[0].x = TANGENT.x;
+  tmpvar_4[0].y = tmpvar_3.x;
+  tmpvar_4[0].z = gl_Normal.x;
+  tmpvar_4[1].x = TANGENT.y;
+  tmpvar_4[1].y = tmpvar_3.y;
+  tmpvar_4[1].z = gl_Normal.y;
+  tmpvar_4[2].x = TANGENT.z;
+  tmpvar_4[2].y = tmpvar_3.z;
+  tmpvar_4[2].z = gl_Normal.z;
+  gl_Position = tmpvar_2;
+  vec4 tmpvar_5;
+  tmpvar_5.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_5.x = tmpvar_2.z;
+  xlv_FOG = tmpvar_5;
+  gl_TexCoord[0] = tmpvar_1;
+  vec4 tmpvar_6;
+  tmpvar_6.w = 0.0;
+  tmpvar_6.xyz = (tmpvar_4 * (_World2Object * _WorldSpaceLightPos0).xyz);
+  gl_TexCoord[1] = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.zw = vec2(0.0, 0.0);
+  tmpvar_7.xy = (_LightMatrix0 * (_Object2World * gl_Vertex)).xy;
+  gl_TexCoord[2] = tmpvar_7;
+}
+

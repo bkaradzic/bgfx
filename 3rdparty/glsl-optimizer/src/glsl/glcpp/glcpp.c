@@ -26,7 +26,7 @@
 #include <errno.h>
 #include "glcpp.h"
 #include "main/mtypes.h"
-#include "main/shaderobj.h"
+#include "../standalone_scaffolding.h"
 
 extern int yydebug;
 
@@ -34,6 +34,7 @@ void
 _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh)
 {
+   (void) ctx;
    *ptr = sh;
 }
 
@@ -110,7 +111,7 @@ main (int argc, char *argv[])
 	if (shader == NULL)
 	   return 1;
 
-	ret = preprocess(ctx, &shader, &info_log, NULL, API_OPENGL);
+	ret = glcpp_preprocess(ctx, &shader, &info_log, NULL, API_OPENGL);
 
 	printf("%s", shader);
 	fprintf(stderr, "%s", info_log);

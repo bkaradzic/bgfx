@@ -386,6 +386,7 @@ namespace bgfx
 			ViewProj,
 			ViewProjX,
 			Model,
+			ModelView,
 			ModelViewProj,
 			ModelViewProjX,
 			AlphaRef,
@@ -651,8 +652,8 @@ namespace bgfx
 		}
 	};
 
-	void matrix_mul(float* __restrict _result, const float* __restrict _a, const float* __restrict _b);
-	void matrix_ortho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far);
+	void mtxMul(float* __restrict _result, const float* __restrict _a, const float* __restrict _b);
+	void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far);
 
 	struct MatrixCache
 	{

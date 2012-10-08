@@ -25,7 +25,7 @@
 
 /**
  * \file glheader.h
- * Wrapper for GL/gl.h and GL/glext.h
+ * Wrapper for GL/gl.h
  */
 
 
@@ -33,36 +33,109 @@
 #define GLHEADER_H
 
 
-#ifdef WGLAPI
-#undef WGLAPI
-#endif
-
-
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
-#  if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
-#    define WGLAPI __declspec(dllexport)
-#  elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
-#    define WGLAPI __declspec(dllimport)
-#  else /* for use with static link lib build of Win32 edition only */
-#    define WGLAPI __declspec(dllimport)
-#  endif /* _STATIC_MESA support */
-#endif /* WIN32 / CYGWIN bracket */
 
 
 #define GL_GLEXT_PROTOTYPES
-#include "GL/gl.h"
-#include "GL/glext.h"
+#include "glminimal.h"
 
 
-/**
- * GL_FIXED is defined in glext.h version 64 but these typedefs aren't (yet).
- */
+// just the set of constants needed from glext.h
+#define GL_FRAGMENT_SHADER                0x8B30
+#define GL_VERTEX_SHADER                  0x8B31
+#define GL_GEOMETRY_SHADER                0x8DD9
+
+#define GL_DEBUG_TYPE_ERROR_ARB           0x824C
+#define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB 0x824D
+#define GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB 0x824E
+#define GL_DEBUG_TYPE_PORTABILITY_ARB     0x824F
+#define GL_DEBUG_TYPE_PERFORMANCE_ARB     0x8250
+#define GL_DEBUG_TYPE_OTHER_ARB           0x8251
+
+#define GL_FLOAT_VEC2                     0x8B50
+#define GL_FLOAT_VEC3                     0x8B51
+#define GL_FLOAT_VEC4                     0x8B52
+#define GL_INT_VEC2                       0x8B53
+#define GL_INT_VEC3                       0x8B54
+#define GL_INT_VEC4                       0x8B55
+#define GL_BOOL                           0x8B56
+#define GL_BOOL_VEC2                      0x8B57
+#define GL_BOOL_VEC3                      0x8B58
+#define GL_BOOL_VEC4                      0x8B59
+#define GL_FLOAT_MAT2                     0x8B5A
+#define GL_FLOAT_MAT3                     0x8B5B
+#define GL_FLOAT_MAT4                     0x8B5C
+#define GL_SAMPLER_1D                     0x8B5D
+#define GL_SAMPLER_2D                     0x8B5E
+#define GL_SAMPLER_3D                     0x8B5F
+#define GL_SAMPLER_CUBE                   0x8B60
+#define GL_SAMPLER_1D_SHADOW              0x8B61
+#define GL_SAMPLER_2D_SHADOW              0x8B62
+
+#define GL_FLOAT_MAT2x3                   0x8B65
+#define GL_FLOAT_MAT2x4                   0x8B66
+#define GL_FLOAT_MAT3x2                   0x8B67
+#define GL_FLOAT_MAT3x4                   0x8B68
+#define GL_FLOAT_MAT4x2                   0x8B69
+#define GL_FLOAT_MAT4x3                   0x8B6A
+
+#define GL_SAMPLER_1D_ARRAY               0x8DC0
+#define GL_SAMPLER_2D_ARRAY               0x8DC1
+#define GL_SAMPLER_1D_ARRAY_SHADOW        0x8DC3
+#define GL_SAMPLER_2D_ARRAY_SHADOW        0x8DC4
+#define GL_SAMPLER_CUBE_SHADOW            0x8DC5
+#define GL_UNSIGNED_INT_VEC2              0x8DC6
+#define GL_UNSIGNED_INT_VEC3              0x8DC7
+#define GL_UNSIGNED_INT_VEC4              0x8DC8
+#define GL_INT_SAMPLER_1D                 0x8DC9
+#define GL_INT_SAMPLER_2D                 0x8DCA
+#define GL_INT_SAMPLER_3D                 0x8DCB
+#define GL_INT_SAMPLER_CUBE               0x8DCC
+#define GL_INT_SAMPLER_1D_ARRAY           0x8DCE
+#define GL_INT_SAMPLER_2D_ARRAY           0x8DCF
+#define GL_UNSIGNED_INT_SAMPLER_1D        0x8DD1
+#define GL_UNSIGNED_INT_SAMPLER_2D        0x8DD2
+#define GL_UNSIGNED_INT_SAMPLER_3D        0x8DD3
+#define GL_UNSIGNED_INT_SAMPLER_CUBE      0x8DD4
+#define GL_UNSIGNED_INT_SAMPLER_1D_ARRAY  0x8DD6
+#define GL_UNSIGNED_INT_SAMPLER_2D_ARRAY  0x8DD7
+
+#define GL_SAMPLER_2D_RECT                0x8B63
+#define GL_SAMPLER_2D_RECT_SHADOW         0x8B64
+#define GL_SAMPLER_BUFFER                 0x8DC2
+#define GL_INT_SAMPLER_2D_RECT            0x8DCD
+#define GL_INT_SAMPLER_BUFFER             0x8DD0
+#define GL_UNSIGNED_INT_SAMPLER_2D_RECT   0x8DD5
+#define GL_UNSIGNED_INT_SAMPLER_BUFFER    0x8DD8
+#define GL_TEXTURE_BUFFER                 0x8C2A
+#define GL_MAX_TEXTURE_BUFFER_SIZE        0x8C2B
+#define GL_TEXTURE_BINDING_BUFFER         0x8C2C
+#define GL_TEXTURE_BUFFER_DATA_STORE_BINDING 0x8C2D
+#define GL_TEXTURE_RECTANGLE              0x84F5
+#define GL_TEXTURE_BINDING_RECTANGLE      0x84F6
+
+#define GL_INTERLEAVED_ATTRIBS            0x8C8C
+#define GL_SEPARATE_ATTRIBS               0x8C8D
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 typedef int GLfixed;
 typedef int GLclampx;
 
 
 #ifndef GL_OES_EGL_image
 typedef void *GLeglImageOES;
+#endif
+
+
+#ifndef GL_OES_EGL_image_external
+#define GL_TEXTURE_EXTERNAL_OES                                 0x8D65
+#define GL_SAMPLER_EXTERNAL_OES                                 0x8D66
+#define GL_TEXTURE_BINDING_EXTERNAL_OES                         0x8D67
+#define GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES                     0x8D68
 #endif
 
 
@@ -82,11 +155,6 @@ typedef void *GLeglImageOES;
 
 #ifndef GL_PROGRAM_BINARY_LENGTH_OES
 #define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
-#endif
-
-/* GLES 2.0 tokens */
-#ifndef GL_RGB565
-#define GL_RGB565 0x8D62
 #endif
 
 #ifndef GL_TEXTURE_GEN_STR_OES
@@ -126,6 +194,17 @@ typedef void *GLeglImageOES;
 #define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837
 #endif
 
+#ifndef GL_OES_compressed_ETC1_RGB8_texture
+#define GL_ETC1_RGB8_OES                                        0x8D64
+#endif
+
+
+/* Inexplicably, GL_HALF_FLOAT_OES has a different value than GL_HALF_FLOAT.
+ */
+#ifndef GL_HALF_FLOAT_OES
+#define GL_HALF_FLOAT_OES 0x8D61
+#endif
+
 
 /**
  * Internal token to represent a GLSL shader program (a collection of
@@ -143,25 +222,9 @@ typedef void *GLeglImageOES;
  */
 #define MESA_GEOMETRY_PROGRAM 0x8c26
 
-/* Several fields of struct gl_config can take these as values.  Since
- * GLX header files may not be available everywhere they need to be used,
- * redefine them here.
- */
-#define GLX_NONE                           0x8000
-#define GLX_SLOW_CONFIG                    0x8001
-#define GLX_TRUE_COLOR                     0x8002
-#define GLX_DIRECT_COLOR                   0x8003
-#define GLX_PSEUDO_COLOR                   0x8004
-#define GLX_STATIC_COLOR                   0x8005
-#define GLX_GRAY_SCALE                     0x8006
-#define GLX_STATIC_GRAY                    0x8007
-#define GLX_TRANSPARENT_RGB                0x8008
-#define GLX_TRANSPARENT_INDEX              0x8009
-#define GLX_NON_CONFORMANT_CONFIG          0x800D
-#define GLX_SWAP_EXCHANGE_OML              0x8061
-#define GLX_SWAP_COPY_OML                  0x8062
-#define GLX_SWAP_UNDEFINED_OML             0x8063
 
-#define GLX_DONT_CARE                      0xFFFFFFFF
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GLHEADER_H */

@@ -1,0 +1,17 @@
+uniform sampler2D _MainTex;
+uniform sampler2D _LightTexture0;
+uniform vec4 _LightColor0;
+uniform vec4 _Color;
+void main ()
+{
+  vec4 c_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  vec4 c_3;
+  c_3.xyz = ((tmpvar_2.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
+  c_3.w = tmpvar_2.w;
+  c_1.xyz = c_3.xyz;
+  c_1.w = 0.0;
+  gl_FragData[0] = c_1;
+}
+

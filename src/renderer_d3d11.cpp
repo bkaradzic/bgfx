@@ -977,7 +977,7 @@ namespace bgfx
 		deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
 
 		float proj[16];
-		matrix_ortho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
+		mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
 		PredefinedUniform& predefined = program.m_predefined[0];
 		uint8_t flags = predefined.m_type;
@@ -1783,7 +1783,7 @@ namespace bgfx
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			matrix_mul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
+			mtxMul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
 		}
 
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
@@ -1970,11 +1970,20 @@ namespace bgfx
 							}
 							break;
 
+						case PredefinedUniform::ModelView:
+							{
+								Matrix4 modelView;
+								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
+								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelView.val, uint32_min(4, predefined.m_count) );
+							}
+							break;
+
 						case PredefinedUniform::ModelViewProj:
 							{
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								matrix_mul(modelViewProj.val, model.val, viewProj[view].val);
+								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
 								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
 							}
 							break;
@@ -1993,10 +2002,10 @@ namespace bgfx
 
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
+								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
 								Matrix4 modelViewProj;
-								matrix_mul(modelViewProj.val, model.val, viewProjBias.val);
+								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
 
 								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
 							}
@@ -2014,7 +2023,7 @@ namespace bgfx
 
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
+								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
 								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProjBias.val, uint32_min(4, predefined.m_count) );
 							}
@@ -2032,7 +2041,8 @@ namespace bgfx
 						}
 					}
 
-					if (constantsChanged)
+					if (constantsChanged
+					||  program.m_numPredefined > 0)
 					{
 						s_renderCtx.commitShaderConstants();
 					}

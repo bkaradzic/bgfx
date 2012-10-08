@@ -4,12 +4,9 @@ uniform sampler2D tex;
 void main ()
 {
   mediump vec4 tmpvar_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2.zw = vec2(0.0, 0.0);
-  tmpvar_2.xy = xlv_TEXCOORD0.xy;
-  lowp vec4 tmpvar_3;
-  tmpvar_3 = texture2DLod (tex, tmpvar_2.xy, 0.0);
-  tmpvar_1 = tmpvar_3;
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = texture2DLod (tex, xlv_TEXCOORD0.xy, 0.0);
+  tmpvar_1 = tmpvar_2;
   gl_FragData[0] = tmpvar_1;
 }
 

@@ -1,0 +1,21 @@
+uniform vec4 unity_Scale;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _WorldSpaceCameraPos;
+  vec3 tmpvar_2;
+  tmpvar_2 = -(normalize((((_World2Object * tmpvar_1).xyz * unity_Scale.w) - gl_Vertex.xyz)));
+  vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
+  tmpvar_3.xyz = (tmpvar_2 - (2.0 * (dot (gl_Normal, tmpvar_2) * gl_Normal)));
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  gl_FrontColor = gl_Color;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 0.0;
+  tmpvar_4.xyz = (gl_ModelViewMatrix * tmpvar_3).xyz;
+  gl_TexCoord[0] = tmpvar_4;
+}
+

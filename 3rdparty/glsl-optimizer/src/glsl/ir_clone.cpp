@@ -25,8 +25,13 @@
 #include "main/compiler.h"
 #include "ir.h"
 #include "glsl_types.h"
-extern "C" {
 #include "program/hash_table.h"
+
+ir_rvalue *
+ir_rvalue::clone(void *mem_ctx, struct hash_table *ht) const
+{
+   /* The only possible instantiation is the generic error value. */
+   return error_value(mem_ctx);
 }
 
 /**
@@ -47,12 +52,16 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->centroid = this->centroid;
    var->invariant = this->invariant;
    var->interpolation = this->interpolation;
-   var->array_lvalue = this->array_lvalue;
    var->location = this->location;
+   var->index = this->index;
+   var->uniform_block = this->uniform_block;
    var->warn_extension = this->warn_extension;
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
    var->explicit_location = this->explicit_location;
+   var->explicit_index = this->explicit_index;
+   var->has_initializer = this->has_initializer;
+   var->depth_layout = this->depth_layout;
 
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
@@ -65,11 +74,12 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 	     sizeof(this->state_slots[0]) * var->num_state_slots);
    }
 
-   if (this->explicit_location)
-      var->location = this->location;
-
    if (this->constant_value)
       var->constant_value = this->constant_value->clone(mem_ctx, ht);
+
+   if (this->constant_initializer)
+      var->constant_initializer =
+	 this->constant_initializer->clone(mem_ctx, ht);
 
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
@@ -159,8 +169,9 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 ir_call *
 ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   if (this->type == glsl_type::error_type)
-      return ir_call::get_error_instruction(mem_ctx);
+   ir_dereference_variable *new_return_ref = NULL;
+   if (this->return_deref != NULL)
+      new_return_ref = this->return_deref->clone(mem_ctx, ht);
 
    exec_list new_parameters;
 
@@ -169,8 +180,7 @@ ir_call::clone(void *mem_ctx, struct hash_table *ht) const
       new_parameters.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   ir_call* rv = new(mem_ctx) ir_call(this->callee, &new_parameters);
-   rv->set_precision (this->get_precision());
+   ir_call* rv = new(mem_ctx) ir_call(this->callee, new_return_ref, &new_parameters);
    return rv;
 }
 
@@ -230,12 +240,8 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
    new_tex->type = this->type;
 
    new_tex->sampler = this->sampler->clone(mem_ctx, ht);
-   new_tex->coordinate = this->coordinate->clone(mem_ctx, ht);
-   if (this->projector)
-      new_tex->projector = this->projector->clone(mem_ctx, ht);
-   if (this->shadow_comparitor) {
-      new_tex->shadow_comparitor = this->shadow_comparitor->clone(mem_ctx, ht);
-   }
+   if (this->coordinate)
+      new_tex->coordinate = this->coordinate->clone(mem_ctx, ht);
 
    if (this->offset != NULL)
       new_tex->offset = this->offset->clone(mem_ctx, ht);
@@ -248,6 +254,7 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
       break;
    case ir_txl:
    case ir_txf:
+   case ir_txs:
       new_tex->lod_info.lod = this->lod_info.lod->clone(mem_ctx, ht);
       break;
    case ir_txd:
@@ -320,6 +327,7 @@ ir_function_signature::clone_prototype(void *mem_ctx, struct hash_table *ht) con
 
    copy->is_defined = false;
    copy->is_builtin = this->is_builtin;
+   copy->origin = this;
 
    /* Clone the parameter list, but NOT the body.
     */
@@ -393,9 +401,9 @@ public:
        * table.  If it is found, replace it with the value from the table.
        */
       ir_function_signature *sig =
-	 (ir_function_signature *) hash_table_find(this->ht, ir->get_callee());
+	 (ir_function_signature *) hash_table_find(this->ht, ir->callee);
       if (sig != NULL)
-	 ir->set_callee(sig);
+	 ir->callee = sig;
 
       /* Since this may be used before function call parameters are flattened,
        * the children also need to be processed.

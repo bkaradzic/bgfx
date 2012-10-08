@@ -1,0 +1,21 @@
+uniform vec4 unity_Ambient;
+uniform float _RimPower;
+uniform vec4 _RimColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+void main ()
+{
+  vec4 col_1;
+  vec4 light_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
+  light_2.w = tmpvar_3.w;
+  light_2.xyz = (tmpvar_3.xyz + unity_Ambient.xyz);
+  vec4 c_4;
+  c_4.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_2.xyz);
+  c_4.w = 0.0;
+  col_1.w = c_4.w;
+  col_1.xyz = (c_4.xyz + (_RimColor.xyz * pow ((1.0 - clamp (dot (normalize(gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0)), _RimPower)));
+  gl_FragData[0] = col_1;
+}
+

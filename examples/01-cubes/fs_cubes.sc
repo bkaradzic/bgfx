@@ -5,6 +5,8 @@ $input v_color0
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include "../common/common.sh"
+
 void main()
 {
 	gl_FragColor = v_color0;

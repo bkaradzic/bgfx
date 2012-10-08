@@ -117,7 +117,7 @@ compare_index_block(exec_list *instructions, ir_variable *index,
 }
 
 static inline bool
-is_array_or_matrix(const ir_instruction *ir)
+is_array_or_matrix(const ir_rvalue *ir)
 {
    return (ir->type->is_array() || ir->type->is_matrix());
 }

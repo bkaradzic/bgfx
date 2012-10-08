@@ -37,6 +37,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 struct assignment_entry {
    exec_node link;
    int assignment_count;
@@ -54,6 +56,8 @@ public:
 
    exec_list list;
 };
+
+} /* unnamed namespace */
 
 static struct assignment_entry *
 get_assignment_entry(ir_variable *var, exec_list *list)
@@ -127,7 +131,8 @@ ir_constant_variable_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_constant_variable_visitor::visit_enter(ir_call *ir)
 {
-   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
+   /* Mark any out parameters as assigned to */
+   exec_list_iterator sig_iter = ir->callee->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_rvalue *param_rval = (ir_rvalue *)iter.get();
       ir_variable *param = (ir_variable *)sig_iter.get();
@@ -143,6 +148,17 @@ ir_constant_variable_visitor::visit_enter(ir_call *ir)
       }
       sig_iter.next();
    }
+
+   /* Mark the return storage as having been assigned to */
+   if (ir->return_deref != NULL) {
+      ir_variable *var = ir->return_deref->variable_referenced();
+      struct assignment_entry *entry;
+
+      assert(var);
+      entry = get_assignment_entry(var, &this->list);
+      entry->assignment_count++;
+   }
+
    return visit_continue;
 }
 

@@ -79,6 +79,9 @@ public:
 bool
 lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth)
 {
+   if (max_depth == UINT_MAX)
+      return false;
+
    ir_if_to_cond_assign_visitor v(max_depth);
 
    visit_list_elements(&v, instructions);

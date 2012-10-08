@@ -3,9 +3,9 @@ struct SurfaceOutput {
 };
 void main ()
 {
-  SurfaceOutput o;
-  vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  gl_FragColor = tmpvar_1;
+  SurfaceOutput o_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(0.0, 0.0, 0.0, 0.0);
+  gl_FragColor = tmpvar_2;
 }
 

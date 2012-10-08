@@ -1,0 +1,21 @@
+((function floatBitsToUint
+   (signature uint
+     (parameters
+       (declare (in) float arg))
+     ((return (expression uint bitcast_f2u (var_ref arg)))))
+
+   (signature uvec2
+     (parameters
+       (declare (in) vec2 arg))
+     ((return (expression uvec2 bitcast_f2u (var_ref arg)))))
+
+   (signature uvec3
+     (parameters
+       (declare (in) vec3 arg))
+     ((return (expression uvec3 bitcast_f2u (var_ref arg)))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) vec4 arg))
+     ((return (expression uvec4 bitcast_f2u (var_ref arg)))))
+))

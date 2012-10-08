@@ -1,0 +1,16 @@
+uniform sampler2D _RampTex;
+uniform float _RampOffset;
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec4 xlat_var_output_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  vec2 tmpvar_3;
+  tmpvar_3.y = 0.5;
+  tmpvar_3.x = (dot (tmpvar_2.xyz, vec3(0.22, 0.707, 0.071)) + _RampOffset);
+  xlat_var_output_1.xyz = texture2D (_RampTex, tmpvar_3).xyz;
+  xlat_var_output_1.w = tmpvar_2.w;
+  gl_FragData[0] = xlat_var_output_1;
+}
+

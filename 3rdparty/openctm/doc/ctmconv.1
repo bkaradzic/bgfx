@@ -1,0 +1,92 @@
+.TH ctmconv 1
+.SH NAME
+.B ctmconv
+- file format converter for 3D models
+.SH SYNOPSIS
+.B ctmconv
+.I infile outfile [options]
+.SH DESCRIPTION
+.B ctmconv
+is a 3D file converter that can convert 3D model files to and from several
+different formats.
+.PP
+The file
+.I infile
+is loaded, and then saved as
+.I outfile
+in the target file format.
+.PP
+The input and output file formats are determined from the file endings. 
+.SH OPTIONS
+The following options are available:
+.TP 16
+.B --scale arg
+Scale the mesh by a scalar factor.
+.TP
+.B --upaxis arg
+Set up axis (X, Y, Z, -X, -Y, -Z). If != Z, the mesh will be flipped.
+.TP
+.B --flip
+Flip triangle orientation.
+.TP
+.B --calc-normals
+If the source file does not contain any normals, calculate them.
+.TP
+.B --no-normals
+Do not export normals.
+.TP
+.B --no-texcoords
+Do not export texture coordinates.
+.TP
+.B --no-colors
+Do not export vertex colors.
+.TP
+.B --comment arg
+Set the file comment (default is to use the comment from the input file, if
+any).
+.TP
+.B --texfile arg
+Set the texture file name reference for the texture (default is to use the
+texture file name reference from the input file, if any).
+.PP
+When exporting an OpenCTM file, the following options are also
+available:
+.TP 16
+.B --method arg
+Select compression method (RAW, MG1, MG2).
+.TP
+.B --level arg
+Set the compression level (0 - 9).
+.TP
+.B --vprec arg
+Set vertex precision (only for MG2).
+.TP
+.B --vprecrel arg
+Set vertex precision, relative method (only for MG2).
+.TP
+.B --nprec arg
+Set normal precision (only for MG2).
+.TP
+.B --tprec arg
+Set texture map precision (only for MG2).
+.TP
+.B --cprec arg
+Set color precision (only for MG2).
+.SH FILE FORMATS
+The following 3D model file formats are supported:
+OpenCTM (.ctm),
+Stanford triangle format (.ply),
+Stereolitography (.stl),
+3D Studio (.3ds),
+COLLADA 1.4/1.5 (.dae),
+Wavefront geometry file (.obj),
+LightWave object (.lwo),
+Geomview object file format (.off),
+VRML 2.0 - export only (.wrl).
+.SH AVAILABILITY
+.B ctmconv
+is designed to be portable, and is available for several different systems,
+including (but not limited to): Windows, Mac OS X (10.3+), Linux and
+OpenSolaris.
+.SH SEE ALSO
+ctmviewer(1)

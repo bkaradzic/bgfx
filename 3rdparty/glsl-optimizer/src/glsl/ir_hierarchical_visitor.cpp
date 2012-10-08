@@ -33,6 +33,15 @@ ir_hierarchical_visitor::ir_hierarchical_visitor()
 }
 
 ir_visitor_status
+ir_hierarchical_visitor::visit(ir_rvalue *ir)
+{
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_hierarchical_visitor::visit(ir_variable *ir)
 {
    if (this->callback != NULL)

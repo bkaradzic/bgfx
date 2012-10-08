@@ -1,0 +1,65 @@
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+uniform highp vec4 _ZBufferParams;
+uniform highp mat4 _View2Shadow3;
+uniform highp mat4 _View2Shadow2;
+uniform highp mat4 _View2Shadow1;
+uniform highp mat4 _View2Shadow;
+uniform sampler2D _ShadowMapTexture;
+uniform highp vec4 _LightSplitsNear;
+uniform highp vec4 _LightSplitsFar;
+uniform highp vec4 _LightShadowData;
+uniform sampler2D _CameraDepthTexture;
+void main ()
+{
+  mediump vec4 tmpvar_1;
+  highp vec4 res_2;
+  highp float depth_3;
+  lowp float tmpvar_4;
+  tmpvar_4 = texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x;
+  depth_3 = tmpvar_4;
+  highp float tmpvar_5;
+  tmpvar_5 = (1.0/(((_ZBufferParams.x * depth_3) + _ZBufferParams.y)));
+  depth_3 = tmpvar_5;
+  highp vec4 tmpvar_6;
+  tmpvar_6.w = 1.0;
+  tmpvar_6.xyz = (xlv_TEXCOORD1 * tmpvar_5);
+  mediump float shadow_7;
+  highp vec4 far_8;
+  highp vec4 near_9;
+  bvec4 tmpvar_10;
+  tmpvar_10 = greaterThanEqual (tmpvar_6.zzzz, _LightSplitsNear);
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = vec4(tmpvar_10);
+  near_9 = tmpvar_11;
+  bvec4 tmpvar_12;
+  tmpvar_12 = lessThan (tmpvar_6.zzzz, _LightSplitsFar);
+  lowp vec4 tmpvar_13;
+  tmpvar_13 = vec4(tmpvar_12);
+  far_8 = tmpvar_13;
+  highp vec4 tmpvar_14;
+  tmpvar_14 = (near_9 * far_8);
+  highp vec4 tmpvar_15;
+  tmpvar_15.w = 1.0;
+  tmpvar_15.xyz = (((((_View2Shadow * tmpvar_6).xyz * tmpvar_14.x) + ((_View2Shadow1 * tmpvar_6).xyz * tmpvar_14.y)) + ((_View2Shadow2 * tmpvar_6).xyz * tmpvar_14.z)) + ((_View2Shadow3 * tmpvar_6).xyz * tmpvar_14.w));
+  lowp vec4 tmpvar_16;
+  tmpvar_16 = texture2D (_ShadowMapTexture, tmpvar_15.xy);
+  highp float tmpvar_17;
+  if ((tmpvar_16.x < tmpvar_15.z)) {
+    tmpvar_17 = _LightShadowData.x;
+  } else {
+    tmpvar_17 = 1.0;
+  };
+  shadow_7 = tmpvar_17;
+  res_2.x = shadow_7;
+  res_2.y = 1.0;
+  highp vec2 enc_18;
+  highp vec2 tmpvar_19;
+  tmpvar_19 = fract((vec2(1.0, 255.0) * (1.0 - tmpvar_5)));
+  enc_18.y = tmpvar_19.y;
+  enc_18.x = (tmpvar_19.x - (tmpvar_19.y * 0.00392157));
+  res_2.zw = enc_18;
+  tmpvar_1 = res_2;
+  gl_FragData[0] = tmpvar_1;
+}
+

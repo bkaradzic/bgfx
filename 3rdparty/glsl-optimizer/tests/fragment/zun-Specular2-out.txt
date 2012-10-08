@@ -1,0 +1,25 @@
+uniform sampler2D unity_LightmapInd;
+uniform sampler2D unity_Lightmap;
+uniform vec4 _SpecColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform vec4 _Color;
+void main ()
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[2].xyz;
+  vec4 light_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  vec4 tmpvar_4;
+  tmpvar_4 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_2.w = tmpvar_4.w;
+  light_2.xyz = (tmpvar_4.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
+  vec4 c_5;
+  float tmpvar_6;
+  tmpvar_6 = (tmpvar_4.w * tmpvar_3.w);
+  c_5.xyz = (((tmpvar_3.xyz * _Color.xyz) * light_2.xyz) + ((light_2.xyz * _SpecColor.xyz) * tmpvar_6));
+  c_5.w = ((tmpvar_3.w * _Color.w) + (tmpvar_6 * _SpecColor.w));
+  gl_FragData[0] = c_5;
+}
+

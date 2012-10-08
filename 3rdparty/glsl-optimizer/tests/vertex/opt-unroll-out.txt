@@ -1,0 +1,35 @@
+uniform float _TranslucencyViewDependency;
+uniform vec3 _TerrainTreeLightDirections[4];
+void main ()
+{
+  vec3 tmpvar_1;
+  vec3 tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = _TerrainTreeLightDirections[0];
+  float tmpvar_4;
+  tmpvar_4 = dot (gl_Normal, tmpvar_3);
+  tmpvar_1.x = mix (-(tmpvar_4), dot (gl_Vertex.xyz, -(tmpvar_3)), _TranslucencyViewDependency);
+  tmpvar_2.x = max (0.0, ((tmpvar_4 * 0.6) + 0.4));
+  vec3 tmpvar_5;
+  tmpvar_5 = _TerrainTreeLightDirections[1];
+  float tmpvar_6;
+  tmpvar_6 = dot (gl_Normal, tmpvar_5);
+  tmpvar_1.y = mix (-(tmpvar_6), dot (gl_Vertex.xyz, -(tmpvar_5)), _TranslucencyViewDependency);
+  tmpvar_2.y = max (0.0, ((tmpvar_6 * 0.6) + 0.4));
+  vec3 tmpvar_7;
+  tmpvar_7 = _TerrainTreeLightDirections[2];
+  float tmpvar_8;
+  tmpvar_8 = dot (gl_Normal, tmpvar_7);
+  tmpvar_1.z = mix (-(tmpvar_8), dot (gl_Vertex.xyz, -(tmpvar_7)), _TranslucencyViewDependency);
+  tmpvar_2.z = max (0.0, ((tmpvar_8 * 0.6) + 0.4));
+  gl_Position = gl_Vertex;
+  vec4 tmpvar_9;
+  tmpvar_9.w = 0.0;
+  tmpvar_9.xyz = tmpvar_1;
+  gl_TexCoord[2] = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10.w = 0.0;
+  tmpvar_10.xyz = tmpvar_2;
+  gl_TexCoord[3] = tmpvar_10;
+}
+

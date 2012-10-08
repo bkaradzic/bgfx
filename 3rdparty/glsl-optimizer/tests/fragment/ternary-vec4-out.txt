@@ -132,7 +132,7 @@ void main ()
   vec4 tmpvar_27;
   tmpvar_27 = (tmpvar_20 + tmpvar_26);
   bvec4 tmpvar_28;
-  tmpvar_28 = bvec4(fract (xlv_TEXCOORD0));
+  tmpvar_28 = bvec4(fract(xlv_TEXCOORD0));
   float tmpvar_29;
   if (tmpvar_28.x) {
     tmpvar_29 = 1.0;

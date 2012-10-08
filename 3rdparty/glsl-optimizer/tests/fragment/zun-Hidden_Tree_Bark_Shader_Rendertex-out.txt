@@ -1,0 +1,9 @@
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec4 col_1;
+  col_1.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * (gl_TexCoord[1].xyz * 2.0));
+  col_1.w = 1.0;
+  gl_FragData[0] = col_1;
+}
+

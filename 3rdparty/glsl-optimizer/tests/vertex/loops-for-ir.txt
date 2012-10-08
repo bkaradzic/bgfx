@@ -14,138 +14,138 @@ uniform mat4 UNITY_MATRIX_MVP;
 uniform mat4 UNITY_MATRIX_MV;
 uniform mat4 UNITY_MATRIX_IT_MV;
 mat3 xll_constructMat3 (
-  in mat4 m
+  in mat4 m_1
 )
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = m[0].xyz;
   vec3 tmpvar_2;
-  tmpvar_2 = m[1].xyz;
+  tmpvar_2 = m_1[0].xyz;
   vec3 tmpvar_3;
-  tmpvar_3 = m[2].xyz;
-  mat3 tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = tmpvar_1;
-  tmpvar_4[0] = tmpvar_5;
+  tmpvar_3 = m_1[1].xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = m_1[2].xyz;
+  mat3 tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1] = tmpvar_6;
+  tmpvar_5[0] = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2] = tmpvar_7;
-  return tmpvar_4;
+  tmpvar_5[1] = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_4;
+  tmpvar_5[2] = tmpvar_8;
+  return tmpvar_5;
 }
 
 vec3 ShadeMyVertexLights (
-  in vec4 vertex,
-  in vec3 normal
+  in vec4 vertex_9,
+  in vec3 normal_10
 )
 {
-  float diff;
-  float atten;
-  float lengthSq;
-  vec3 toLight;
-  int i;
-  vec3 lightColor;
-  vec3 viewN;
-  vec3 viewpos;
-  vec3 tmpvar_1;
-  tmpvar_1 = vec3(0.0, 0.0, 0.0);
-  lightColor = tmpvar_1;
-  int tmpvar_2;
-  tmpvar_2 = 0;
-  i = tmpvar_2;
-  vec3 tmpvar_3;
-  tmpvar_3 = (UNITY_MATRIX_MV * vertex).xyz;
-  viewpos = tmpvar_3;
-  mat3 tmpvar_4;
-  tmpvar_4 = (xll_constructMat3 (UNITY_MATRIX_IT_MV));
-  vec3 tmpvar_5;
-  tmpvar_5 = (tmpvar_4 * normal);
-  viewN = tmpvar_5;
+  float diff_11;
+  float atten_12;
+  float lengthSq_13;
+  vec3 toLight_14;
+  int i_15;
+  vec3 lightColor_16;
+  vec3 viewN_17;
+  vec3 viewpos_18;
+  vec3 tmpvar_19;
+  tmpvar_19 = vec3(0.0, 0.0, 0.0);
+  lightColor_16 = tmpvar_19;
+  int tmpvar_20;
+  tmpvar_20 = 0;
+  i_15 = tmpvar_20;
+  vec3 tmpvar_21;
+  tmpvar_21 = (UNITY_MATRIX_MV * vertex_9).xyz;
+  viewpos_18 = tmpvar_21;
+  mat3 tmpvar_22;
+  tmpvar_22 = xll_constructMat3 (UNITY_MATRIX_IT_MV);
+  vec3 tmpvar_23;
+  tmpvar_23 = (tmpvar_22 * normal_10);
+  viewN_17 = tmpvar_23;
   while (true) {
-    if (!((i < 2))) {
+    if (!((i_15 < 2))) {
       break;
     };
-    vec3 tmpvar_6;
-    tmpvar_6 = (unity_LightPosition[i].xyz - viewpos.xyz);
-    toLight = tmpvar_6;
-    float tmpvar_7;
-    tmpvar_7 = dot (toLight, toLight);
-    float tmpvar_8;
-    tmpvar_8 = tmpvar_7;
-    lengthSq = tmpvar_8;
-    float tmpvar_9;
-    tmpvar_9 = (1.0 / (1.0 + (lengthSq * unity_LightAtten[i].z)));
-    atten = tmpvar_9;
-    vec3 tmpvar_10;
-    tmpvar_10 = normalize (toLight);
-    float tmpvar_11;
-    tmpvar_11 = dot (viewN, tmpvar_10);
-    float tmpvar_12;
-    tmpvar_12 = max (0.0, tmpvar_11);
-    float tmpvar_13;
-    tmpvar_13 = tmpvar_12;
-    diff = tmpvar_13;
-    vec3 tmpvar_14;
-    tmpvar_14 = (lightColor + (unity_LightColor[i].xyz * (diff * atten)));
-    lightColor = tmpvar_14;
-    int _post_incdec_tmp;
-    _post_incdec_tmp = i;
-    int tmpvar_15;
-    tmpvar_15 = (i + 1);
-    i = tmpvar_15;
+    vec3 tmpvar_24;
+    tmpvar_24 = (unity_LightPosition[i_15].xyz - viewpos_18.xyz);
+    toLight_14 = tmpvar_24;
+    float tmpvar_25;
+    tmpvar_25 = dot (toLight_14, toLight_14);
+    float tmpvar_26;
+    tmpvar_26 = tmpvar_25;
+    lengthSq_13 = tmpvar_26;
+    float tmpvar_27;
+    tmpvar_27 = (1.0 / (1.0 + (lengthSq_13 * unity_LightAtten[i_15].z)));
+    atten_12 = tmpvar_27;
+    vec3 tmpvar_28;
+    tmpvar_28 = normalize (toLight_14);
+    float tmpvar_29;
+    tmpvar_29 = dot (viewN_17, tmpvar_28);
+    float tmpvar_30;
+    tmpvar_30 = max (0.0, tmpvar_29);
+    float tmpvar_31;
+    tmpvar_31 = tmpvar_30;
+    diff_11 = tmpvar_31;
+    vec3 tmpvar_32;
+    tmpvar_32 = (lightColor_16 + (unity_LightColor[i_15].xyz * (diff_11 * atten_12)));
+    lightColor_16 = tmpvar_32;
+    int _post_incdec_tmp_33;
+    _post_incdec_tmp_33 = i_15;
+    int tmpvar_34;
+    tmpvar_34 = (i_15 + 1);
+    i_15 = tmpvar_34;
   };
-  return (lightColor * 2.0);
+  return (lightColor_16 * 2.0);
 }
 
 v2f xlat_main (
-  in appdata v
+  in appdata v_35
 )
 {
-  v2f o;
-  vec4 tmpvar_1;
-  tmpvar_1 = (UNITY_MATRIX_MVP * v.vertex);
-  o.pos = tmpvar_1;
-  vec3 tmpvar_2;
-  tmpvar_2 = ShadeMyVertexLights (v.vertex, v.normal);
-  vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = tmpvar_2.xyz;
-  vec4 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  o.color = tmpvar_4;
-  return o;
+  v2f o_36;
+  vec4 tmpvar_37;
+  tmpvar_37 = (UNITY_MATRIX_MVP * v_35.vertex);
+  o_36.pos = tmpvar_37;
+  vec3 tmpvar_38;
+  tmpvar_38 = ShadeMyVertexLights (v_35.vertex, v_35.normal);
+  vec4 tmpvar_39;
+  tmpvar_39.w = 1.0;
+  tmpvar_39.xyz = tmpvar_38.xyz;
+  vec4 tmpvar_40;
+  tmpvar_40 = tmpvar_39;
+  o_36.color = tmpvar_40;
+  return o_36;
 }
 
 void main ()
 {
-  appdata xlt_v;
-  v2f xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_v.vertex = tmpvar_2;
-  vec3 tmpvar_3;
-  tmpvar_3 = gl_Normal.xyz;
-  vec3 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_v.normal = tmpvar_4;
-  v2f tmpvar_5;
-  tmpvar_5 = xlat_main (xlt_v);
-  v2f tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xl_retval = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = xl_retval.pos.xyzw;
-  vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  gl_Position = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = xl_retval.color.xyzw;
-  vec4 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  xlv_TEXCOORD0 = tmpvar_10;
+  appdata xlt_v_41;
+  v2f xl_retval_42;
+  vec4 tmpvar_43;
+  tmpvar_43 = gl_Vertex.xyzw;
+  vec4 tmpvar_44;
+  tmpvar_44 = tmpvar_43;
+  xlt_v_41.vertex = tmpvar_44;
+  vec3 tmpvar_45;
+  tmpvar_45 = gl_Normal.xyz;
+  vec3 tmpvar_46;
+  tmpvar_46 = tmpvar_45;
+  xlt_v_41.normal = tmpvar_46;
+  v2f tmpvar_47;
+  tmpvar_47 = xlat_main (xlt_v_41);
+  v2f tmpvar_48;
+  tmpvar_48 = tmpvar_47;
+  xl_retval_42 = tmpvar_48;
+  vec4 tmpvar_49;
+  tmpvar_49 = xl_retval_42.pos.xyzw;
+  vec4 tmpvar_50;
+  tmpvar_50 = tmpvar_49;
+  gl_Position = tmpvar_50;
+  vec4 tmpvar_51;
+  tmpvar_51 = xl_retval_42.color.xyzw;
+  vec4 tmpvar_52;
+  tmpvar_52 = tmpvar_51;
+  xlv_TEXCOORD0 = tmpvar_52;
 }
 

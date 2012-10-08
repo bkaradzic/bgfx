@@ -1,0 +1,22 @@
+varying lowp float xx;
+
+int func(inout float x)
+{
+	x = x*2.0;
+	return 0;
+}
+
+void main()
+{
+	lowp float x = xx;
+
+    int i = func(x); // side effects!
+    
+    if (x < 0.0)
+        discard;
+
+    lowp float c = 0.0;
+    for (; i < 4; ++i)
+        c += xx;
+    gl_FragColor = vec4(c);
+}

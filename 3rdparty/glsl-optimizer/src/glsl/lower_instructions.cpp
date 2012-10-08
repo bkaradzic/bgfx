@@ -32,6 +32,7 @@
  * Currently supported transformations:
  * - SUB_TO_ADD_NEG
  * - DIV_TO_MUL_RCP
+ * - INT_DIV_TO_MUL_RCP
  * - EXP_TO_EXP2
  * - POW_TO_EXP2
  * - LOG_TO_LOG2
@@ -47,14 +48,18 @@
  * want to recognize add(op0, neg(op1)) or the other way around to
  * produce a subtract anyway.
  *
- * DIV_TO_MUL_RCP:
- * ---------------
- * Breaks an ir_unop_div expression down to op0 * (rcp(op1)).
+ * DIV_TO_MUL_RCP and INT_DIV_TO_MUL_RCP:
+ * --------------------------------------
+ * Breaks an ir_binop_div expression down to op0 * (rcp(op1)).
  *
  * Many GPUs don't have a divide instruction (945 and 965 included),
  * but they do have an RCP instruction to compute an approximate
  * reciprocal.  By breaking the operation down, constant reciprocals
  * can get constant folded.
+ *
+ * DIV_TO_MUL_RCP only lowers floating point division; INT_DIV_TO_MUL_RCP
+ * handles the integer case, converting to and from floating point so that
+ * RCP is possible.
  *
  * EXP_TO_EXP2 and LOG_TO_LOG2:
  * ----------------------------
@@ -69,7 +74,7 @@
  *
  * MOD_TO_FRACT:
  * -------------
- * Breaks an ir_unop_mod expression down to (op1 * fract(op0 / op1))
+ * Breaks an ir_binop_mod expression down to (op1 * fract(op0 / op1))
  *
  * Many GPUs don't have a MOD instruction (945 and 965 included), and
  * if we have to break it down like this anyway, it gives an
@@ -95,6 +100,7 @@ private:
 
    void sub_to_add_neg(ir_expression *);
    void div_to_mul_rcp(ir_expression *);
+   void int_div_to_mul_rcp(ir_expression *);
    void mod_to_fract(ir_expression *);
    void exp_to_exp2(ir_expression *);
    void pow_to_exp2(ir_expression *);
@@ -127,60 +133,67 @@ lower_instructions_visitor::sub_to_add_neg(ir_expression *ir)
 void
 lower_instructions_visitor::div_to_mul_rcp(ir_expression *ir)
 {
-   if (!ir->operands[1]->type->is_integer()) {
-      /* New expression for the 1.0 / op1 */
-      ir_rvalue *expr;
-      expr = new(ir) ir_expression(ir_unop_rcp,
-				   ir->operands[1]->type,
-				   ir->operands[1],
-				   NULL);
+   assert(ir->operands[1]->type->is_float());
 
-      /* op0 / op1 -> op0 * (1.0 / op1) */
-      ir->operation = ir_binop_mul;
-      ir->operands[1] = expr;
+   /* New expression for the 1.0 / op1 */
+   ir_rvalue *expr;
+   expr = new(ir) ir_expression(ir_unop_rcp,
+				ir->operands[1]->type,
+				ir->operands[1]);
+
+   /* op0 / op1 -> op0 * (1.0 / op1) */
+   ir->operation = ir_binop_mul;
+   ir->operands[1] = expr;
+
+   this->progress = true;
+}
+
+void
+lower_instructions_visitor::int_div_to_mul_rcp(ir_expression *ir)
+{
+   assert(ir->operands[1]->type->is_integer());
+
+   /* Be careful with integer division -- we need to do it as a
+    * float and re-truncate, since rcp(n > 1) of an integer would
+    * just be 0.
+    */
+   ir_rvalue *op0, *op1;
+   const struct glsl_type *vec_type;
+
+   vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+				      ir->operands[1]->type->vector_elements,
+				      ir->operands[1]->type->matrix_columns);
+
+   if (ir->operands[1]->type->base_type == GLSL_TYPE_INT)
+      op1 = new(ir) ir_expression(ir_unop_i2f, vec_type, ir->operands[1], NULL);
+   else
+      op1 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[1], NULL);
+
+   op1 = new(ir) ir_expression(ir_unop_rcp, op1->type, op1, NULL);
+
+   vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+				      ir->operands[0]->type->vector_elements,
+				      ir->operands[0]->type->matrix_columns);
+
+   if (ir->operands[0]->type->base_type == GLSL_TYPE_INT)
+      op0 = new(ir) ir_expression(ir_unop_i2f, vec_type, ir->operands[0], NULL);
+   else
+      op0 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[0], NULL);
+
+   vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+				      ir->type->vector_elements,
+				      ir->type->matrix_columns);
+
+   op0 = new(ir) ir_expression(ir_binop_mul, vec_type, op0, op1);
+
+   if (ir->operands[1]->type->base_type == GLSL_TYPE_INT) {
+      ir->operation = ir_unop_f2i;
+      ir->operands[0] = op0;
    } else {
-      /* Be careful with integer division -- we need to do it as a
-       * float and re-truncate, since rcp(n > 1) of an integer would
-       * just be 0.
-       */
-      ir_rvalue *op0, *op1;
-      const struct glsl_type *vec_type;
-
-      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-					 ir->operands[1]->type->vector_elements,
-					 ir->operands[1]->type->matrix_columns);
-
-      if (ir->operands[1]->type->base_type == GLSL_TYPE_INT)
-	 op1 = new(ir) ir_expression(ir_unop_i2f, vec_type, ir->operands[1], NULL);
-      else
-	 op1 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[1], NULL);
-
-      op1 = new(ir) ir_expression(ir_unop_rcp, op1->type, op1, NULL);
-
-      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-					 ir->operands[0]->type->vector_elements,
-					 ir->operands[0]->type->matrix_columns);
-
-      if (ir->operands[0]->type->base_type == GLSL_TYPE_INT)
-	 op0 = new(ir) ir_expression(ir_unop_i2f, vec_type, ir->operands[0], NULL);
-      else
-	 op0 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[0], NULL);
-
-      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-					 ir->type->vector_elements,
-					 ir->type->matrix_columns);
-
-      op0 = new(ir) ir_expression(ir_binop_mul, vec_type, op0, op1);
-
-      if (ir->operands[1]->type->base_type == GLSL_TYPE_INT) {
-	 ir->operation = ir_unop_f2i;
-	 ir->operands[0] = op0;
-      } else {
-	 ir->operation = ir_unop_i2u;
-	 ir->operands[0] = new(ir) ir_expression(ir_unop_f2i, op0);
-      }
-      ir->operands[1] = NULL;
+      ir->operation = ir_unop_i2u;
+      ir->operands[0] = new(ir) ir_expression(ir_unop_f2i, op0);
    }
+   ir->operands[1] = NULL;
 
    this->progress = true;
 }
@@ -265,7 +278,9 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
       break;
 
    case ir_binop_div:
-      if (lowering(DIV_TO_MUL_RCP))
+      if (ir->operands[1]->type->is_integer() && lowering(INT_DIV_TO_MUL_RCP))
+	 int_div_to_mul_rcp(ir);
+      else if (ir->operands[1]->type->is_float() && lowering(DIV_TO_MUL_RCP))
 	 div_to_mul_rcp(ir);
       break;
 

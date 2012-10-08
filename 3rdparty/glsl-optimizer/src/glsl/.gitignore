@@ -1,4 +1,8 @@
 glsl_compiler
+glsl_lexer.cc
+glsl_parser.cc
+glsl_parser.h
 glsl_parser.output
 builtin_compiler
 glsl_test
+

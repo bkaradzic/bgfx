@@ -36,7 +36,7 @@
 
 
 // constructor
-variable_entry::variable_entry(ir_variable *var)
+ir_variable_refcount_entry::ir_variable_refcount_entry(ir_variable *var)
 {
    this->var = var;
    assign = NULL;
@@ -46,27 +46,40 @@ variable_entry::variable_entry(ir_variable *var)
 }
 
 
-variable_entry *
+ir_variable_refcount_entry *
 ir_variable_refcount_visitor::get_variable_entry(ir_variable *var)
 {
    assert(var);
    foreach_iter(exec_list_iterator, iter, this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+      ir_variable_refcount_entry *entry = (ir_variable_refcount_entry *)iter.get();
       if (entry->var == var)
 	 return entry;
    }
 
-   variable_entry *entry = new(mem_ctx) variable_entry(var);
+   ir_variable_refcount_entry *entry = new(mem_ctx) ir_variable_refcount_entry(var);
    assert(entry->referenced_count == 0);
    this->variable_list.push_tail(entry);
    return entry;
 }
 
+ir_variable_refcount_entry *
+ir_variable_refcount_visitor::find_variable_entry(ir_variable *var)
+{
+	assert(var);
+	foreach_iter(exec_list_iterator, iter, this->variable_list) {
+		ir_variable_refcount_entry *entry = (ir_variable_refcount_entry *)iter.get();
+		if (entry->var == var)
+			return entry;
+	}
+	return NULL;
+}
+
+
 
 ir_visitor_status
 ir_variable_refcount_visitor::visit(ir_variable *ir)
 {
-   variable_entry *entry = this->get_variable_entry(ir);
+   ir_variable_refcount_entry *entry = this->get_variable_entry(ir);
    if (entry)
       entry->declaration = true;
 
@@ -78,7 +91,7 @@ ir_visitor_status
 ir_variable_refcount_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *const var = ir->variable_referenced();
-   variable_entry *entry = this->get_variable_entry(var);
+   ir_variable_refcount_entry *entry = this->get_variable_entry(var);
 
    if (entry)
       entry->referenced_count++;
@@ -101,7 +114,7 @@ ir_variable_refcount_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
 {
-   variable_entry *entry;
+   ir_variable_refcount_entry *entry;
    entry = this->get_variable_entry(ir->lhs->variable_referenced());
    if (entry) {
       entry->assigned_count++;

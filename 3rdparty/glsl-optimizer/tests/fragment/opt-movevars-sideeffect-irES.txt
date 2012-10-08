@@ -1,0 +1,48 @@
+varying lowp float xx;
+int func (
+  inout float x_1
+)
+{
+  float tmpvar_2;
+  tmpvar_2 = (x_1 * 2.0);
+  x_1 = tmpvar_2;
+  return 0;
+}
+
+void main ()
+{
+  lowp float c_3;
+  int i_4;
+  lowp float x_5;
+  lowp float tmpvar_6;
+  tmpvar_6 = xx;
+  x_5 = tmpvar_6;
+  int tmpvar_7;
+  tmpvar_7 = func (x_5);
+  int tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  i_4 = tmpvar_8;
+  if ((x_5 < 0.0)) {
+    discard;
+  };
+  float tmpvar_9;
+  tmpvar_9 = 0.0;
+  c_3 = tmpvar_9;
+  while (true) {
+    if (!((i_4 < 4))) {
+      break;
+    };
+    lowp float tmpvar_10;
+    tmpvar_10 = (c_3 + xx);
+    c_3 = tmpvar_10;
+    int tmpvar_11;
+    tmpvar_11 = (i_4 + 1);
+    i_4 = tmpvar_11;
+  };
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = vec4(c_3);
+  lowp vec4 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  gl_FragColor = tmpvar_13;
+}
+

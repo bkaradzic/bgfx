@@ -108,8 +108,8 @@ hash_table_clear(struct hash_table *ht)
 }
 
 
-void *
-hash_table_find(struct hash_table *ht, const void *key)
+static struct hash_node *
+get_node(struct hash_table *ht, const void *key)
 {
     const unsigned hash_value = (*ht->hash)(key);
     const unsigned bucket = hash_value % ht->num_buckets;
@@ -119,13 +119,20 @@ hash_table_find(struct hash_table *ht, const void *key)
        struct hash_node *hn = (struct hash_node *) node;
 
        if ((*ht->compare)(hn->key, key) == 0) {
-	  return hn->data;
+	  return hn;
        }
     }
 
     return NULL;
 }
 
+void *
+hash_table_find(struct hash_table *ht, const void *key)
+{
+   struct hash_node *hn = get_node(ht, key);
+
+   return (hn == NULL) ? NULL : hn->data;
+}
 
 void
 hash_table_insert(struct hash_table *ht, void *data, const void *key)
@@ -142,22 +149,41 @@ hash_table_insert(struct hash_table *ht, void *data, const void *key)
     insert_at_head(& ht->buckets[bucket], & node->link);
 }
 
-void
-hash_table_remove(struct hash_table *ht, const void *key)
+bool
+hash_table_replace(struct hash_table *ht, void *data, const void *key)
 {
     const unsigned hash_value = (*ht->hash)(key);
     const unsigned bucket = hash_value % ht->num_buckets;
     struct node *node;
+    struct hash_node *hn;
 
     foreach(node, & ht->buckets[bucket]) {
-       struct hash_node *hn = (struct hash_node *) node;
+       hn = (struct hash_node *) node;
 
        if ((*ht->compare)(hn->key, key) == 0) {
-	  remove_from_list(node);
-	  free(node);
-	  return;
+	  hn->data = data;
+	  return true;
        }
     }
+
+    hn = calloc(1, sizeof(*hn));
+
+    hn->data = data;
+    hn->key = key;
+
+    insert_at_head(& ht->buckets[bucket], & hn->link);
+    return false;
+}
+
+void
+hash_table_remove(struct hash_table *ht, const void *key)
+{
+   struct node *node = (struct node *) get_node(ht, key);
+   if (node != NULL) {
+      remove_from_list(node);
+      free(node);
+      return;
+   }
 }
 
 void

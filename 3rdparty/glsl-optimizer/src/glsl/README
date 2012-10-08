@@ -177,7 +177,6 @@ ir_unop_fract was added.  The following areas need updating to add a
 new expression type:
 
 ir.h (new enum)
-ir.cpp:get_num_operands() (used for ir_reader)
 ir.cpp:operator_strs (used for ir_reader)
 ir_constant_expression.cpp (you probably want to be able to constant fold)
 ir_validate.cpp (check users have the right types)

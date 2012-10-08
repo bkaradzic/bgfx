@@ -1,0 +1,13 @@
+#version 120
+uniform mat4x3 nonSqMat;
+uniform float inInit = 13.0;
+void main ()
+{
+  vec4 v_1;
+  v_1.w = -1.0;
+  v_1.x = (1.2 + nonSqMat[0].x);
+  v_1.y = 6.0;
+  v_1.z = (inInit + 4.0);
+  gl_FragColor = v_1;
+}
+

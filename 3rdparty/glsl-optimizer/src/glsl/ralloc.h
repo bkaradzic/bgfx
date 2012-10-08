@@ -314,9 +314,62 @@ char *ralloc_asprintf (const void *ctx, const char *fmt, ...);
 char *ralloc_vasprintf(const void *ctx, const char *fmt, va_list args);
 
 /**
+ * Rewrite the tail of an existing string, starting at a given index.
+ *
+ * Overwrites the contents of *str starting at \p start with newly formatted
+ * text, including a new null-terminator.  Allocates more memory as necessary.
+ *
+ * This can be used to append formatted text when the length of the existing
+ * string is already known, saving a strlen() call.
+ *
+ * \sa ralloc_asprintf_append
+ *
+ * \param str   The string to be updated.
+ * \param start The index to start appending new data at.
+ * \param fmt   A printf-style formatting string
+ *
+ * \p str will be updated to the new pointer unless allocation fails.
+ * \p start will be increased by the length of the newly formatted text.
+ *
+ * \return True unless allocation failed.
+ */
+bool ralloc_asprintf_rewrite_tail(char **str, size_t *start,
+				  const char *fmt, ...);
+
+/**
+ * Rewrite the tail of an existing string, starting at a given index.
+ *
+ * Overwrites the contents of *str starting at \p start with newly formatted
+ * text, including a new null-terminator.  Allocates more memory as necessary.
+ *
+ * This can be used to append formatted text when the length of the existing
+ * string is already known, saving a strlen() call.
+ *
+ * \sa ralloc_vasprintf_append
+ *
+ * \param str   The string to be updated.
+ * \param start The index to start appending new data at.
+ * \param fmt   A printf-style formatting string
+ * \param args  A va_list containing the data to be formatted
+ *
+ * \p str will be updated to the new pointer unless allocation fails.
+ * \p start will be increased by the length of the newly formatted text.
+ *
+ * \return True unless allocation failed.
+ */
+bool ralloc_vasprintf_rewrite_tail(char **str, size_t *start, const char *fmt,
+				   va_list args);
+
+/**
  * Append formatted text to the supplied string.
  *
+ * This is equivalent to
+ * \code
+ * ralloc_asprintf_rewrite_tail(str, strlen(*str), fmt, ...)
+ * \endcode
+ *
  * \sa ralloc_asprintf
+ * \sa ralloc_asprintf_rewrite_tail
  * \sa ralloc_strcat
  *
  * \p str will be updated to the new pointer unless allocation fails.
@@ -328,7 +381,13 @@ bool ralloc_asprintf_append (char **str, const char *fmt, ...);
 /**
  * Append formatted text to the supplied string, given a va_list.
  *
+ * This is equivalent to
+ * \code
+ * ralloc_vasprintf_rewrite_tail(str, strlen(*str), fmt, args)
+ * \endcode
+ *
  * \sa ralloc_vasprintf
+ * \sa ralloc_vasprintf_rewrite_tail
  * \sa ralloc_strcat
  *
  * \p str will be updated to the new pointer unless allocation fails.

@@ -11,7 +11,7 @@ void main ()
   tmpvar_1 = _glesMultiTexCoord0.xy;
   mediump vec2 tmpvar_2;
   lowp vec4 tmpvar_3;
-  tmpvar_3 = _glesColor;
+  tmpvar_3.w = _glesColor.w;
   mediump vec3 tmpvar_4;
   tmpvar_4 = (_glesColor.xyz + _glesNormal);
   tmpvar_3.xyz = tmpvar_4;

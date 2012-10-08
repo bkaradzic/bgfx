@@ -2,7 +2,7 @@ project "example-01-cubes"
 	uuid "fec3bc94-e1e5-11e1-9c59-c7eeec2c1c51"
 	kind "WindowedApp"
 
-	debugdir (BGFX_DIR .. "examples/01-cubes/")
+	debugdir (BGFX_DIR .. "examples/runtime/")
 
 	includedirs {
 		BGFX_DIR .. "../bx/include",

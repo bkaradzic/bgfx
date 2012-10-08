@@ -1,0 +1,28 @@
+varying vec4 xlv_FOG;
+uniform vec4 _ProjectionParams;
+uniform vec4 _MainTex_ST;
+uniform vec4 _Detail_ST;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  tmpvar_1.zw = ((gl_MultiTexCoord1.xy * _Detail_ST.xy) + _Detail_ST.zw);
+  vec4 o_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = (tmpvar_2 * 0.5);
+  vec2 tmpvar_5;
+  tmpvar_5.x = tmpvar_4.x;
+  tmpvar_5.y = (tmpvar_4.y * _ProjectionParams.x);
+  o_3.xy = (tmpvar_5 + tmpvar_4.w);
+  o_3.zw = tmpvar_2.zw;
+  gl_Position = tmpvar_2;
+  vec4 tmpvar_6;
+  tmpvar_6.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_6.x = tmpvar_2.z;
+  xlv_FOG = tmpvar_6;
+  gl_TexCoord[0] = tmpvar_1;
+  gl_TexCoord[1] = o_3;
+}
+

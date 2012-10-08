@@ -1,0 +1,24 @@
+struct v2f {
+    highp vec2 uv;
+    highp vec3 nl;
+};
+uniform sampler2D _MainTex;
+uniform highp vec4 _TerrainTreeLightColors[4];
+lowp vec4 xlat_main (in v2f i) {
+    lowp vec4 col = texture2D( _MainTex, i.uv);
+    if (col.w < 0.5)
+        discard;
+    mediump vec3 light = vec3(0.0);
+    for (int j = 0; j < 3; ++j) {
+        light += col.xyz * i.nl[j] * _TerrainTreeLightColors[j].xyz;
+    }
+    return vec4(light, 1.0);
+}
+varying highp vec2 xlv_uv;
+varying highp vec3 xlv_nl;
+void main() {
+    v2f i;
+    i.uv = xlv_uv;
+    i.nl = xlv_nl;
+    gl_FragData[0] = xlat_main(i);
+}

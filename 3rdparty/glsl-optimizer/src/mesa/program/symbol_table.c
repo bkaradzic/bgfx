@@ -255,6 +255,7 @@ _mesa_symbol_table_iterator_next(struct _mesa_symbol_table_iterator *iter)
 
     while (iter->curr != NULL) {
         assert(iter->curr->hdr == hdr);
+        (void)hdr;
 
         if ((iter->name_space == -1)
             || (iter->curr->name_space == iter->name_space)) {

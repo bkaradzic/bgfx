@@ -1,0 +1,20 @@
+uniform vec3 uniVal;
+void main ()
+{
+  if ((uniVal.x > 1.0)) {
+    gl_FragData[0] = vec4(0.0, 0.0, 0.0, 0.0);
+  } else {
+    float x_1;
+    x_1 = (0.001 - uniVal.x);
+    if ((x_1 < 0.0)) {
+      discard;
+    };
+    float x_2;
+    x_2 = (0.001 - uniVal.y);
+    if ((x_2 < 0.0)) {
+      discard;
+    };
+    gl_FragData[0] = vec4(1.0, 1.0, 1.0, 1.0);
+  };
+}
+

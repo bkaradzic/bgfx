@@ -1,0 +1,18 @@
+#version 140
+out vec4 col;
+in vec4 icol;
+in vec4 position;
+uniform vec2 p;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = icol;
+  col = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2.zw = vec2(0.0, 0.0);
+  tmpvar_2.xy = p.xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = (tmpvar_2 + position);
+  gl_Position = tmpvar_3;
+}
+

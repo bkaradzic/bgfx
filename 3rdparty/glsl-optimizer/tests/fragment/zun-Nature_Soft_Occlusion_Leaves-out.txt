@@ -1,0 +1,26 @@
+uniform vec4 _WorldSpaceLightPos0;
+uniform sampler2D _ShadowMapTexture;
+uniform sampler2D _MainTex;
+uniform vec4 _LightColor0;
+uniform float _Cutoff;
+uniform vec4 _Color;
+void main ()
+{
+  vec4 c_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  float tmpvar_3;
+  tmpvar_3 = tmpvar_2.w;
+  float x_4;
+  x_4 = (tmpvar_2.w - _Cutoff);
+  if ((x_4 < 0.0)) {
+    discard;
+  };
+  vec4 c_5;
+  c_5.xyz = ((tmpvar_2.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, _WorldSpaceLightPos0.xyz)) * texture2DProj (_ShadowMapTexture, gl_TexCoord[3]).x) * 2.0));
+  c_5.w = tmpvar_3;
+  c_1.xyz = (c_5.xyz + (tmpvar_2.xyz * gl_TexCoord[2].xyz));
+  c_1.w = tmpvar_3;
+  gl_FragData[0] = c_1;
+}
+

@@ -33,15 +33,20 @@ glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 	va_list ap;
 
 	parser->error = 1;
-	ralloc_asprintf_append(&parser->info_log, "%u:%u(%u): "
-						  "preprocessor error: ",
-						  locp->source,
-						  locp->first_line,
-						  locp->first_column);
+	ralloc_asprintf_rewrite_tail(&parser->info_log,
+				     &parser->info_log_length,
+				     "%u:%u(%u): "
+				     "preprocessor error: ",
+				     locp->source,
+				     locp->first_line,
+				     locp->first_column);
 	va_start(ap, fmt);
-	ralloc_vasprintf_append(&parser->info_log, fmt, ap);
+	ralloc_vasprintf_rewrite_tail(&parser->info_log,
+				      &parser->info_log_length,
+				      fmt, ap);
 	va_end(ap);
-	ralloc_strcat(&parser->info_log, "\n");
+	ralloc_asprintf_rewrite_tail(&parser->info_log,
+				     &parser->info_log_length, "\n");
 }
 
 void
@@ -49,15 +54,20 @@ glcpp_warning (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 {
 	va_list ap;
 
-	ralloc_asprintf_append(&parser->info_log, "%u:%u(%u): "
-						  "preprocessor warning: ",
-						  locp->source,
-						  locp->first_line,
-						  locp->first_column);
+	ralloc_asprintf_rewrite_tail(&parser->info_log,
+				     &parser->info_log_length,
+				     "%u:%u(%u): "
+				     "preprocessor warning: ",
+				     locp->source,
+				     locp->first_line,
+				     locp->first_column);
 	va_start(ap, fmt);
-	ralloc_vasprintf_append(&parser->info_log, fmt, ap);
+	ralloc_vasprintf_rewrite_tail(&parser->info_log,
+				      &parser->info_log_length,
+				      fmt, ap);
 	va_end(ap);
-	ralloc_strcat(&parser->info_log, "\n");
+	ralloc_asprintf_rewrite_tail(&parser->info_log,
+				     &parser->info_log_length, "\n");
 }
 
 /* Searches backwards for '^ *#' from a given starting point. */
@@ -140,7 +150,7 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 }
 
 int
-preprocess(void *ralloc_ctx, const char **shader, char **info_log,
+glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
 	   const struct gl_extensions *extensions, int api)
 {
 	int errors;

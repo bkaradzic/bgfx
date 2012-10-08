@@ -35,4 +35,5 @@ _mesa_glsl_release_functions(void)
 void
 _mesa_glsl_initialize_functions(_mesa_glsl_parse_state *state)
 {
+   (void) state;
 }

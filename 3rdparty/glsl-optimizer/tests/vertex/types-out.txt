@@ -4,7 +4,7 @@ uniform mat4 mvp;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_Color;
+  tmpvar_1.w = gl_Color.w;
   tmpvar_1.xyz = (gl_Color.xyz + gl_Normal);
   gl_Position = (mvp * gl_Vertex);
   xlv_TEXCOORD0 = gl_MultiTexCoord0.xy;

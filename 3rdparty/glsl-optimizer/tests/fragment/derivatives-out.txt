@@ -1,10 +1,10 @@
 varying vec4 xlv_TEXCOORD0;
 void main ()
 {
-  vec4 res;
-  res.x = dFdx (xlv_TEXCOORD0.x);
-  res.y = dFdx (xlv_TEXCOORD0.y);
-  res.zw = fwidth (xlv_TEXCOORD0.xy);
-  gl_FragData[0] = res;
+  vec4 res_1;
+  res_1.x = dFdx(xlv_TEXCOORD0.x);
+  res_1.y = dFdx(xlv_TEXCOORD0.y);
+  res_1.zw = (abs(dFdx(xlv_TEXCOORD0.xy)) + abs(dFdy(xlv_TEXCOORD0.xy)));
+  gl_FragData[0] = res_1;
 }
 

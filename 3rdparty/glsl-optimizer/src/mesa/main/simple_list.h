@@ -37,10 +37,9 @@
 #ifndef _SIMPLE_LIST_H
 #define _SIMPLE_LIST_H
 
-struct simple_node {
-   struct simple_node *next;
-   struct simple_node *prev;
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Remove an element from list.
@@ -198,5 +197,9 @@ do {						\
  */
 #define foreach_s(ptr, t, list)   \
         for(ptr=(list)->next,t=(ptr)->next; list != ptr; ptr=t, t=(t)->next)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

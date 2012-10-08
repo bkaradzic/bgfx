@@ -1,0 +1,23 @@
+uniform sampler2D _MainTex;
+uniform sampler2D _CurTex;
+uniform vec4 _AdaptParams;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xy;
+  vec4 valNew_2;
+  vec2 delta_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, tmpvar_1);
+  vec2 tmpvar_5;
+  tmpvar_5 = ((texture2D (_CurTex, tmpvar_1).xy - tmpvar_4.xy) * _AdaptParams.x);
+  delta_3.x = (sign(tmpvar_5.x) * max (0.00392157, abs(tmpvar_5.x)));
+  delta_3.y = (sign(tmpvar_5.y) * max (0.00392157, abs(tmpvar_5.y)));
+  valNew_2.xy = (tmpvar_4.xy + delta_3);
+  valNew_2.x = max (valNew_2.x, _AdaptParams.z);
+  valNew_2.y = min (valNew_2.y, _AdaptParams.y);
+  valNew_2.z = ((valNew_2.x - valNew_2.y) + 0.01);
+  valNew_2.w = (valNew_2.y / valNew_2.z);
+  gl_FragData[0] = valNew_2;
+}
+

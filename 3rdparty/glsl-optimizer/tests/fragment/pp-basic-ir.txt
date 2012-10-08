@@ -5,16 +5,16 @@ vec4 xlat_main ()
 
 void main ()
 {
-  vec4 xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = xlat_main ();
+  vec4 xl_retval_1;
   vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xl_retval = tmpvar_2;
+  tmpvar_2 = xlat_main ();
   vec4 tmpvar_3;
-  tmpvar_3 = xl_retval.xyzw;
+  tmpvar_3 = tmpvar_2;
+  xl_retval_1 = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  gl_FragData[0] = tmpvar_4;
+  tmpvar_4 = xl_retval_1.xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  gl_FragData[0] = tmpvar_5;
 }
 

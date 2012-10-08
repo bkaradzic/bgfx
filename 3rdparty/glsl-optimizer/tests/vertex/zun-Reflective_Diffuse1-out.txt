@@ -1,0 +1,44 @@
+varying vec4 xlv_FOG;
+uniform vec4 unity_Scale;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform vec4 _ProjectionParams;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec4 tmpvar_2;
+  tmpvar_2.w = 1.0;
+  tmpvar_2.xyz = _WorldSpaceCameraPos;
+  vec3 tmpvar_3;
+  tmpvar_3 = (gl_Vertex.xyz - ((_World2Object * tmpvar_2).xyz * unity_Scale.w));
+  mat3 tmpvar_4;
+  tmpvar_4[0] = _Object2World[0].xyz;
+  tmpvar_4[1] = _Object2World[1].xyz;
+  tmpvar_4[2] = _Object2World[2].xyz;
+  vec4 o_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = (tmpvar_1 * 0.5);
+  vec2 tmpvar_7;
+  tmpvar_7.x = tmpvar_6.x;
+  tmpvar_7.y = (tmpvar_6.y * _ProjectionParams.x);
+  o_5.xy = (tmpvar_7 + tmpvar_6.w);
+  o_5.zw = tmpvar_1.zw;
+  gl_Position = tmpvar_1;
+  vec4 tmpvar_8;
+  tmpvar_8.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_8.x = tmpvar_1.z;
+  xlv_FOG = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9.zw = vec2(0.0, 0.0);
+  tmpvar_9.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10.w = 0.0;
+  tmpvar_10.xyz = (tmpvar_4 * (tmpvar_3 - (2.0 * (dot (gl_Normal, tmpvar_3) * gl_Normal))));
+  gl_TexCoord[1] = tmpvar_10;
+  gl_TexCoord[2] = o_5;
+}
+

@@ -1,0 +1,29 @@
+((function acos
+   (signature float
+     (parameters
+       (declare (in) float x))
+     ((declare () float s)
+      (call asin (var_ref s) ((var_ref x)))
+      (return (expression float - (constant float (1.5707964)) (var_ref s)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 x))
+     ((declare () vec2 s)
+      (call asin (var_ref s) ((var_ref x)))
+      (return (expression vec2 - (constant float (1.5707964)) (var_ref s)))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 x))
+     ((declare () vec3 s)
+      (call asin (var_ref s) ((var_ref x)))
+      (return (expression vec3 - (constant float (1.5707964)) (var_ref s)))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 x))
+     ((declare () vec4 s)
+      (call asin (var_ref s) ((var_ref x)))
+      (return (expression vec4 - (constant float (1.5707964)) (var_ref s)))))
+))

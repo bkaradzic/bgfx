@@ -1,0 +1,15 @@
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
+uniform vec4 _Color;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
+  float x_2;
+  x_2 = (tmpvar_1.w - _Cutoff);
+  if ((x_2 < 0.0)) {
+    discard;
+  };
+  gl_FragData[0] = tmpvar_1;
+}
+

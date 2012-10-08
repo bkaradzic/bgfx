@@ -2,11 +2,11 @@ varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;
 void main ()
 {
-  mediump vec4 c;
-  c = xlv_COLOR;
-  highp vec2 tmpvar_1;
-  tmpvar_1 = (c.xy + xlv_TEXCOORD0);
-  c.xy = tmpvar_1;
-  gl_FragData[0] = c;
+  mediump vec4 c_1;
+  c_1 = xlv_COLOR;
+  highp vec2 tmpvar_2;
+  tmpvar_2 = (c_1.xy + xlv_TEXCOORD0);
+  c_1.xy = tmpvar_2;
+  gl_FragData[0] = c_1;
 }
 

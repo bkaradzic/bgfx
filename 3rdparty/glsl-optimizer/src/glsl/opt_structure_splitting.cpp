@@ -38,16 +38,14 @@
 #include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
 
+namespace {
+
 static bool debug = false;
 
-// XXX using variable_entry2 here to avoid collision (MSVC multiply-defined
-// function) with the variable_entry class seen in ir_variable_refcount.h
-// Perhaps we can use the one in ir_variable_refcount.h and make this class
-// here go away?
-class variable_entry2 : public exec_node
+class variable_entry : public exec_node
 {
 public:
-   variable_entry2(ir_variable *var)
+   variable_entry(ir_variable *var)
    {
       this->var = var;
       this->whole_structure_access = 0;
@@ -61,7 +59,11 @@ public:
    /** Number of times the variable is referenced, including assignments. */
    unsigned whole_structure_access;
 
-   bool declaration; /* If the variable had a decl in the instruction stream */
+   /* If the variable had a decl we can work with in the instruction
+    * stream.  We can't do splitting on function arguments, which
+    * don't get this variable set.
+    */
+   bool declaration;
 
    ir_variable **components;
 
@@ -89,7 +91,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_function_signature *);
 
-   variable_entry2 *get_variable_entry2(ir_variable *var);
+   variable_entry *get_variable_entry(ir_variable *var);
 
    /* List of split_var_entry */
    exec_list variable_list;
@@ -97,8 +99,8 @@ public:
    void *mem_ctx;
 };
 
-variable_entry2 *
-ir_structure_reference_visitor::get_variable_entry2(ir_variable *var)
+variable_entry *
+ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
 {
    assert(var);
 
@@ -106,12 +108,12 @@ ir_structure_reference_visitor::get_variable_entry2(ir_variable *var)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, this->variable_list) {
-      variable_entry2 *entry = (variable_entry2 *)iter.get();
+      variable_entry *entry = (variable_entry *)iter.get();
       if (entry->var == var)
 	 return entry;
    }
 
-   variable_entry2 *entry = new(mem_ctx) variable_entry2(var);
+   variable_entry *entry = new(mem_ctx) variable_entry(var);
    this->variable_list.push_tail(entry);
    return entry;
 }
@@ -120,7 +122,7 @@ ir_structure_reference_visitor::get_variable_entry2(ir_variable *var)
 ir_visitor_status
 ir_structure_reference_visitor::visit(ir_variable *ir)
 {
-   variable_entry2 *entry = this->get_variable_entry2(ir);
+   variable_entry *entry = this->get_variable_entry(ir);
 
    if (entry)
       entry->declaration = true;
@@ -132,7 +134,7 @@ ir_visitor_status
 ir_structure_reference_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *const var = ir->variable_referenced();
-   variable_entry2 *entry = this->get_variable_entry2(var);
+   variable_entry *entry = this->get_variable_entry(var);
 
    if (entry)
       entry->whole_structure_access++;
@@ -171,8 +173,9 @@ ir_structure_reference_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_structure_reference_visitor::visit_enter(ir_function_signature *ir)
 {
-   /* We don't want to descend into the function parameters and
-    * dead-code eliminate them, so just accept the body here.
+   /* We don't have logic for structure-splitting function arguments,
+    * so just look at the body instructions and not the parameter
+    * declarations.
     */
    visit_list_elements(this, &ir->body);
    return visit_continue_with_parent;
@@ -193,13 +196,12 @@ public:
 
    void split_deref(ir_dereference **deref);
    void handle_rvalue(ir_rvalue **rvalue);
-   variable_entry2 *get_splitting_entry(ir_variable *var);
+   variable_entry *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
-   void *mem_ctx;
 };
 
-variable_entry2 *
+variable_entry *
 ir_structure_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
@@ -208,7 +210,7 @@ ir_structure_splitting_visitor::get_splitting_entry(ir_variable *var)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, *this->variable_list) {
-      variable_entry2 *entry = (variable_entry2 *)iter.get();
+      variable_entry *entry = (variable_entry *)iter.get();
       if (entry->var == var) {
 	 return entry;
       }
@@ -228,7 +230,7 @@ ir_structure_splitting_visitor::split_deref(ir_dereference **deref)
    if (!deref_var)
       return;
 
-   variable_entry2 *entry = get_splitting_entry(deref_var->var);
+   variable_entry *entry = get_splitting_entry(deref_var->var);
    if (!entry)
       return;
 
@@ -263,8 +265,8 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 {
    ir_dereference_variable *lhs_deref = ir->lhs->as_dereference_variable();
    ir_dereference_variable *rhs_deref = ir->rhs->as_dereference_variable();
-   variable_entry2 *lhs_entry = lhs_deref ? get_splitting_entry(lhs_deref->var) : NULL;
-   variable_entry2 *rhs_entry = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
+   variable_entry *lhs_entry = lhs_deref ? get_splitting_entry(lhs_deref->var) : NULL;
+   variable_entry *rhs_entry = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
    const glsl_type *type = ir->rhs->type;
 
    if ((lhs_entry || rhs_entry) && !ir->condition) {
@@ -303,6 +305,8 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
    return visit_continue;
 }
 
+} /* unnamed namespace */
+
 bool
 do_structure_splitting(exec_list *instructions)
 {
@@ -312,7 +316,7 @@ do_structure_splitting(exec_list *instructions)
 
    /* Trim out variables we can't split. */
    foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry2 *entry = (variable_entry2 *)iter.get();
+      variable_entry *entry = (variable_entry *)iter.get();
 
       if (debug) {
 	 printf("structure %s@%p: decl %d, whole_access %d\n",
@@ -334,7 +338,7 @@ do_structure_splitting(exec_list *instructions)
     * components.
     */
    foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry2 *entry = (variable_entry2 *)iter.get();
+      variable_entry *entry = (variable_entry *)iter.get();
       const struct glsl_type *type = entry->var->type;
 
       entry->mem_ctx = ralloc_parent(entry->var);

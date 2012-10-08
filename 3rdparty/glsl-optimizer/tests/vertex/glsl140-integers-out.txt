@@ -1,0 +1,21 @@
+#version 140
+flat out ivec4 colint;
+out vec4 col;
+in vec4 position;
+uniform vec2 p;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1.zw = vec2(0.0, 0.0);
+  tmpvar_1.xy = p;
+  gl_Position = (tmpvar_1 + position);
+  colint.x = gl_VertexID;
+  colint.y = (gl_InstanceID ^ gl_InstanceID);
+  colint.z = (gl_InstanceID << 2);
+  colint.w = (gl_VertexID + colint.y);
+  col.x = trunc(position.x);
+  col.y = roundEven(position.y);
+  col.z = roundEven(position.y);
+  col.w = (0.5 * (exp(position.w) + exp(-(position.w))));
+}
+

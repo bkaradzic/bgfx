@@ -32,6 +32,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 class ir_swizzle_swizzle_visitor : public ir_hierarchical_visitor {
 public:
    ir_swizzle_swizzle_visitor()
@@ -43,6 +45,8 @@ public:
 
    bool progress;
 };
+
+} /* unnamed namespace */
 
 ir_visitor_status
 ir_swizzle_swizzle_visitor::visit_enter(ir_swizzle *ir)

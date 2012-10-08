@@ -1,0 +1,10 @@
+uniform sampler2D _BumpSpecMap;
+void main ()
+{
+  vec2 tmpvar_1;
+  vec4 normal_2;
+  normal_2.xy = ((texture2D (_BumpSpecMap, tmpvar_1).wy * 2.0) - 1.0);
+  normal_2.z = sqrt(((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  gl_FragData[0] = vec4(0.0, 0.0, 0.0, 0.0);
+}
+

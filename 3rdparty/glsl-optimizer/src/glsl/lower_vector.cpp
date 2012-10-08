@@ -183,7 +183,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
    if (assigned > 0) {
       ir_constant *const c =
 	 new(mem_ctx) ir_constant(glsl_type::get_instance(expr->type->base_type,
-							  assigned, 0),
+							  assigned, 1),
 				  &d);
       ir_dereference *const lhs = new(mem_ctx) ir_dereference_variable(temp);
       ir_assignment *const assign =

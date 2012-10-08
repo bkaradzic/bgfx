@@ -56,6 +56,9 @@ project "shaderc"
 	excludes {
 		GLSL_OPTIMIZER .. "src/glsl/glcpp/glcpp.c",
 		GLSL_OPTIMIZER .. "src/glsl/glcpp/tests/**",
+		GLSL_OPTIMIZER .. "src/glsl/glcpp/**.l",
+		GLSL_OPTIMIZER .. "src/glsl/glcpp/**.y",
+		GLSL_OPTIMIZER .. "src/glsl/ir_set_program_inouts.cpp",
 		GLSL_OPTIMIZER .. "src/glsl/main.cpp",
 		GLSL_OPTIMIZER .. "src/glsl/builtin_stubs.cpp",
 	}

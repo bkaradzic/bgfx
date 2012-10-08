@@ -1,0 +1,34 @@
+varying vec4 xlv_FOG;
+uniform vec4 unity_Scale;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform float _WaveScale;
+uniform vec4 _WaveOffset;
+void main ()
+{
+  vec4 temp_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  temp_1 = ((gl_Vertex.xzxz * _WaveScale) + _WaveOffset);
+  vec4 tmpvar_3;
+  tmpvar_3.w = 1.0;
+  tmpvar_3.xyz = _WorldSpaceCameraPos;
+  gl_Position = tmpvar_2;
+  vec4 tmpvar_4;
+  tmpvar_4.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_4.x = tmpvar_2.z;
+  xlv_FOG = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.zw = vec2(0.0, 0.0);
+  tmpvar_5.xy = (temp_1.xy * vec2(0.4, 0.45));
+  gl_TexCoord[0] = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6.zw = vec2(0.0, 0.0);
+  tmpvar_6.xy = temp_1.wz;
+  gl_TexCoord[1] = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 0.0;
+  tmpvar_7.xyz = normalize((((_World2Object * tmpvar_3).xyz * unity_Scale.w) - gl_Vertex.xyz)).xzy;
+  gl_TexCoord[2] = tmpvar_7;
+}
+

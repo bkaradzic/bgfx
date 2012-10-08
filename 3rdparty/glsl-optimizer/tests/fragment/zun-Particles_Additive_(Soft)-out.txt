@@ -1,0 +1,11 @@
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec4 prev_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
+  prev_1.w = tmpvar_2.w;
+  prev_1.xyz = (tmpvar_2.xyz * tmpvar_2.w);
+  gl_FragData[0] = prev_1;
+}
+

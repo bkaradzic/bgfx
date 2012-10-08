@@ -313,6 +313,8 @@ namespace bgfx
 		void end();
 		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false);
 		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized) const;
+		bool has(Attrib::Enum _attrib) const;
+		uint16_t getOffset(Attrib::Enum _attrib) const;
 
 		uint32_t m_hash;
 		uint16_t m_stride;
@@ -320,7 +322,7 @@ namespace bgfx
 		uint8_t m_attributes[Attrib::Count];
 	};
 
-	///
+	/// Returns renderer backend API type.
 	RendererType::Enum getRendererType();
 
 	///
@@ -332,15 +334,33 @@ namespace bgfx
 	///
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags = BGFX_RESET_NONE);
 
-	///
+	/// Advance to next frame. When using multithreaded renderer, this call
+	/// just swaps internal buffers, kicks render thread, and returns. In
+	/// singlethreaded renderer this call does frame rendering.
 	void frame();
 
-	///
+	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 	const Memory* alloc(uint32_t _size);
 
-	///
+	/// Make reference to data to pass to bgfx. Unlike bgfx::alloc this call
+	/// doesn't allocate memory for data. It just copies pointer to data.
+	/// You must make sure data is available for at least 2 bgfx::frame calls.
 	const Memory* makeRef(const void* _data, uint32_t _size);
 
+	/// Set debug flags.
+	///
+	/// Available flags:
+	///
+	///   BGFX_DEBUG_IFH - Infinitely fast hardware. When this flag is set
+	///     all rendering calls will be skipped. It's useful for quickly
+	///     assessing bottleneck between CPU and GPU.
+	///
+	///   BGFX_DEBUG_STATS - Display internal statistics.
+	///
+	///   BGFX_DEBUG_TEXT - Display debug text.
+	///
+	///   BGFX_DEBUG_WIREFRAME - Wireframe rendering. All rendering
+	///     primitives will be rendered as lines.
 	///
 	void setDebug(uint32_t _debug);
 

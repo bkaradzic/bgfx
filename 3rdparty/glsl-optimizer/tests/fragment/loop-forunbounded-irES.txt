@@ -1,0 +1,63 @@
+struct v2f {
+  highp vec2 uv;
+  highp vec3 nl;
+};
+varying highp vec3 xlv_nl;
+varying highp vec2 xlv_uv;
+uniform highp vec4 _TerrainTreeLightColors[4];
+uniform sampler2D _MainTex;
+lowp vec4 xlat_main (
+  in v2f i_1
+)
+{
+  int j_2;
+  int loopCount_3;
+  mediump vec3 light_4;
+  lowp vec4 col_5;
+  lowp vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_MainTex, i_1.uv);
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  col_5 = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = vec3(0.0, 0.0, 0.0);
+  light_4 = tmpvar_8;
+  int tmpvar_9;
+  tmpvar_9 = int((col_5.w * 10.0));
+  loopCount_3 = tmpvar_9;
+  int tmpvar_10;
+  tmpvar_10 = 0;
+  j_2 = tmpvar_10;
+  while (true) {
+    if (!((j_2 < loopCount_3))) {
+      break;
+    };
+    highp vec3 tmpvar_11;
+    tmpvar_11 = (light_4 + ((col_5.xyz * i_1.nl[j_2]) * _TerrainTreeLightColors[j_2].xyz));
+    light_4 = tmpvar_11;
+    int tmpvar_12;
+    tmpvar_12 = (j_2 + 1);
+    j_2 = tmpvar_12;
+  };
+  mediump vec4 tmpvar_13;
+  tmpvar_13.w = 1.0;
+  tmpvar_13.xyz = light_4.xyz;
+  return tmpvar_13;
+}
+
+void main ()
+{
+  v2f i_14;
+  highp vec2 tmpvar_15;
+  tmpvar_15 = xlv_uv;
+  i_14.uv = tmpvar_15;
+  highp vec3 tmpvar_16;
+  tmpvar_16 = xlv_nl;
+  i_14.nl = tmpvar_16;
+  lowp vec4 tmpvar_17;
+  tmpvar_17 = xlat_main (i_14);
+  lowp vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  gl_FragData[0] = tmpvar_18;
+}
+

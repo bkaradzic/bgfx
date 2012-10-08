@@ -1,0 +1,10 @@
+#version 140
+
+in vec4 col;
+
+out vec4 fragCol;
+
+void main(void)
+{
+    fragCol = col;
+}

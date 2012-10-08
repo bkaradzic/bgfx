@@ -1,0 +1,36 @@
+uniform vec4 _WaveAndDistance;
+uniform vec4 _ProjectionParams;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 vertex_2;
+  vertex_2.yw = gl_Vertex.yw;
+  vec3 waveMove_3;
+  waveMove_3.y = 0.0;
+  vec4 tmpvar_4;
+  tmpvar_4 = ((fract((((gl_Vertex.x * (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y)) + (gl_Vertex.z * (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.2, 2.0, 1.6, 4.8)))) * 6.40885) - 3.14159);
+  vec4 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 * tmpvar_4);
+  vec4 tmpvar_6;
+  tmpvar_6 = (tmpvar_5 * tmpvar_4);
+  vec4 tmpvar_7;
+  tmpvar_7 = (tmpvar_6 * tmpvar_5);
+  vec4 tmpvar_8;
+  tmpvar_8 = (((tmpvar_4 + (tmpvar_6 * -0.161616)) + (tmpvar_7 * 0.0083333)) + ((tmpvar_7 * tmpvar_5) * -0.00019841));
+  vec4 tmpvar_9;
+  tmpvar_9 = (tmpvar_8 * tmpvar_8);
+  vec4 tmpvar_10;
+  tmpvar_10 = ((tmpvar_9 * tmpvar_9) * (gl_Color.w * _WaveAndDistance.z));
+  waveMove_3.x = dot (tmpvar_10, vec4(0.024, 0.04, -0.12, 0.096));
+  waveMove_3.z = dot (tmpvar_10, vec4(0.006, 0.02, -0.02, 0.1));
+  vertex_2.xz = (gl_Vertex.xz - (waveMove_3.xz * _WaveAndDistance.z));
+  tmpvar_1.xyz = vec3(0.0, 0.0, 1.0);
+  tmpvar_1.w = -(((gl_ModelViewMatrix * vertex_2).z * _ProjectionParams.w));
+  gl_Position = (gl_ModelViewProjectionMatrix * vertex_2);
+  vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
+  tmpvar_11.xy = gl_MultiTexCoord0.xy;
+  gl_TexCoord[0] = tmpvar_11;
+  gl_TexCoord[1] = tmpvar_1;
+}
+

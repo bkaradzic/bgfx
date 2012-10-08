@@ -1,0 +1,167 @@
+struct v2f {
+  highp vec4 pos;
+  highp vec2 uv;
+  highp vec3 color;
+  highp vec3 backContrib;
+  highp vec3 nl;
+  highp vec3 nh;
+};
+varying highp vec3 xlv_TEXCOORD4;
+varying highp vec3 xlv_TEXCOORD3;
+varying highp vec3 xlv_TEXCOORD2;
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_SV_POSITION;
+uniform sampler2D _TranslucencyMap;
+uniform lowp vec3 _TranslucencyColor;
+uniform highp vec4 _TerrainTreeLightColors[4];
+uniform lowp vec4 _SpecColor;
+uniform sampler2D _MainTex;
+uniform lowp float _Cutoff;
+uniform sampler2D _BumpSpecMap;
+uniform lowp vec4 UNITY_LIGHTMODEL_AMBIENT;
+void xll_clip (
+  in float x_1
+)
+{
+  if ((x_1 < 0.0)) {
+    discard;
+  };
+}
+
+lowp vec4 xlat_main (
+  in v2f i_2
+)
+{
+  lowp vec4 c_3;
+  mediump float spec_4;
+  mediump float nh_5;
+  mediump float nl_6;
+  mediump vec3 translucencyColor_7;
+  mediump vec3 lightColor_8;
+  int j_9;
+  mediump vec3 backContribs_10;
+  mediump vec3 light_11;
+  mediump float gloss_12;
+  lowp vec4 trngls_13;
+  mediump float specular_14;
+  lowp vec3 albedo_15;
+  lowp vec4 col_16;
+  int tmpvar_17;
+  tmpvar_17 = 0;
+  j_9 = tmpvar_17;
+  lowp vec4 tmpvar_18;
+  tmpvar_18 = texture2D (_MainTex, i_2.uv);
+  lowp vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  col_16 = tmpvar_19;
+  xll_clip ((col_16.w - _Cutoff));
+  highp vec3 tmpvar_20;
+  tmpvar_20 = (col_16.xyz * i_2.color);
+  albedo_15 = tmpvar_20;
+  lowp vec4 tmpvar_21;
+  tmpvar_21 = texture2D (_BumpSpecMap, i_2.uv);
+  lowp float tmpvar_22;
+  tmpvar_22 = (tmpvar_21.x * 128.0);
+  specular_14 = tmpvar_22;
+  lowp vec4 tmpvar_23;
+  tmpvar_23 = texture2D (_TranslucencyMap, i_2.uv);
+  lowp vec4 tmpvar_24;
+  tmpvar_24 = tmpvar_23;
+  trngls_13 = tmpvar_24;
+  lowp float tmpvar_25;
+  tmpvar_25 = trngls_13.w;
+  gloss_12 = tmpvar_25;
+  lowp vec3 tmpvar_26;
+  tmpvar_26 = UNITY_LIGHTMODEL_AMBIENT.xyz;
+  lowp vec3 tmpvar_27;
+  tmpvar_27 = (tmpvar_26 * albedo_15);
+  light_11 = tmpvar_27;
+  highp vec3 tmpvar_28;
+  tmpvar_28 = (i_2.backContrib * trngls_13.z);
+  backContribs_10 = tmpvar_28;
+  while (true) {
+    if (!((j_9 < 3))) {
+      break;
+    };
+    highp vec3 tmpvar_29;
+    tmpvar_29 = _TerrainTreeLightColors[j_9].xyz;
+    lightColor_8 = tmpvar_29;
+    mediump vec3 tmpvar_30;
+    tmpvar_30 = (backContribs_10[j_9] * _TranslucencyColor);
+    translucencyColor_7 = tmpvar_30;
+    highp float tmpvar_31;
+    tmpvar_31 = i_2.nl[j_9];
+    nl_6 = tmpvar_31;
+    highp float tmpvar_32;
+    tmpvar_32 = i_2.nh[j_9];
+    nh_5 = tmpvar_32;
+    mediump float tmpvar_33;
+    tmpvar_33 = pow (nh_5, specular_14);
+    mediump float tmpvar_34;
+    tmpvar_34 = (tmpvar_33 * gloss_12);
+    spec_4 = tmpvar_34;
+    mediump vec3 tmpvar_35;
+    tmpvar_35 = (light_11 + (((albedo_15 * (translucencyColor_7 + nl_6)) + (_SpecColor.xyz * spec_4)) * lightColor_8));
+    light_11 = tmpvar_35;
+    int _post_incdec_tmp_36;
+    _post_incdec_tmp_36 = j_9;
+    int tmpvar_37;
+    tmpvar_37 = (j_9 + 1);
+    j_9 = tmpvar_37;
+  };
+  mediump vec3 tmpvar_38;
+  tmpvar_38 = (light_11 * 2.0);
+  c_3.xyz = tmpvar_38.xyz.xyz;
+  float tmpvar_39;
+  tmpvar_39 = 1.0;
+  c_3.w = vec4(tmpvar_39).w;
+  return c_3;
+}
+
+void main ()
+{
+  v2f xlt_i_40;
+  lowp vec4 xl_retval_41;
+  highp vec4 tmpvar_42;
+  tmpvar_42 = xlv_SV_POSITION.xyzw;
+  highp vec4 tmpvar_43;
+  tmpvar_43 = tmpvar_42;
+  xlt_i_40.pos = tmpvar_43;
+  highp vec2 tmpvar_44;
+  tmpvar_44 = xlv_TEXCOORD0.xy;
+  highp vec2 tmpvar_45;
+  tmpvar_45 = tmpvar_44;
+  xlt_i_40.uv = tmpvar_45;
+  highp vec3 tmpvar_46;
+  tmpvar_46 = xlv_TEXCOORD1.xyz;
+  highp vec3 tmpvar_47;
+  tmpvar_47 = tmpvar_46;
+  xlt_i_40.color = tmpvar_47;
+  highp vec3 tmpvar_48;
+  tmpvar_48 = xlv_TEXCOORD2.xyz;
+  highp vec3 tmpvar_49;
+  tmpvar_49 = tmpvar_48;
+  xlt_i_40.backContrib = tmpvar_49;
+  highp vec3 tmpvar_50;
+  tmpvar_50 = xlv_TEXCOORD3.xyz;
+  highp vec3 tmpvar_51;
+  tmpvar_51 = tmpvar_50;
+  xlt_i_40.nl = tmpvar_51;
+  highp vec3 tmpvar_52;
+  tmpvar_52 = xlv_TEXCOORD4.xyz;
+  highp vec3 tmpvar_53;
+  tmpvar_53 = tmpvar_52;
+  xlt_i_40.nh = tmpvar_53;
+  lowp vec4 tmpvar_54;
+  tmpvar_54 = xlat_main (xlt_i_40);
+  lowp vec4 tmpvar_55;
+  tmpvar_55 = tmpvar_54;
+  xl_retval_41 = tmpvar_55;
+  lowp vec4 tmpvar_56;
+  tmpvar_56 = xl_retval_41.xyzw;
+  lowp vec4 tmpvar_57;
+  tmpvar_57 = tmpvar_56;
+  gl_FragData[0] = tmpvar_57;
+}
+

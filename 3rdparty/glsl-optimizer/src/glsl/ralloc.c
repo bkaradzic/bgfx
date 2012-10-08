@@ -28,6 +28,17 @@
 #include <string.h>
 #include <stdint.h>
 
+/* Android defines SIZE_MAX in limits.h, instead of the standard stdint.h */
+#ifdef ANDROID
+#include <limits.h>
+#endif
+
+/* Some versions of MinGW are missing _vscprintf's declaration, although they
+ * still provide the symbol in the import library. */
+#ifdef __MINGW32__
+_CRTIMP int _vscprintf(const char *format, va_list argptr);
+#endif
+
 #include "ralloc.h"
 
 #ifdef __GNUC__
@@ -267,7 +278,7 @@ ralloc_parent(const void *ptr)
       return NULL;
 
    info = get_header(ptr);
-   return PTR_FROM_HEADER(info->parent);
+   return info->parent ? PTR_FROM_HEADER(info->parent) : NULL;
 }
 
 static void *autofree_context = NULL;
@@ -392,7 +403,7 @@ printf_length(const char *fmt, va_list untouched_args)
    va_list args;
    va_copy(args, untouched_args);
 
-#ifdef _MSC_VER
+#ifdef _WIN32
    /* We need to use _vcsprintf to calculate the size as vsnprintf returns -1
     * if the number of characters to write is greater than count.
     */
@@ -434,7 +445,28 @@ ralloc_asprintf_append(char **str, const char *fmt, ...)
 bool
 ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
 {
-   size_t existing_length, new_length;
+   size_t existing_length;
+   assert(str != NULL);
+   existing_length = *str ? strlen(*str) : 0;
+   return ralloc_vasprintf_rewrite_tail(str, &existing_length, fmt, args);
+}
+
+bool
+ralloc_asprintf_rewrite_tail(char **str, size_t *start, const char *fmt, ...)
+{
+   bool success;
+   va_list args;
+   va_start(args, fmt);
+   success = ralloc_vasprintf_rewrite_tail(str, start, fmt, args);
+   va_end(args);
+   return success;
+}
+
+bool
+ralloc_vasprintf_rewrite_tail(char **str, size_t *start, const char *fmt,
+			      va_list args)
+{
+   size_t new_length;
    char *ptr;
 
    assert(str != NULL);
@@ -445,14 +477,14 @@ ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
       return true;
    }
 
-   existing_length = strlen(*str);
    new_length = printf_length(fmt, args);
 
-   ptr = resize(*str, existing_length + new_length + 1);
+   ptr = resize(*str, *start + new_length + 1);
    if (unlikely(ptr == NULL))
       return false;
 
-   vsnprintf(ptr + existing_length, new_length + 1, fmt, args);
+   vsnprintf(ptr + *start, new_length + 1, fmt, args);
    *str = ptr;
+   *start += new_length;
    return true;
 }

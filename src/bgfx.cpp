@@ -85,7 +85,7 @@ namespace bgfx
 		g_fatal(_code, temp);
 	}
 
-	inline void vec_mul_mtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
+	inline void vec4MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
 	{
 		_result[0] = _vec[0] * _mat[ 0] + _vec[1] * _mat[4] + _vec[2] * _mat[ 8] + _vec[3] * _mat[12];
 		_result[1] = _vec[0] * _mat[ 1] + _vec[1] * _mat[5] + _vec[2] * _mat[ 9] + _vec[3] * _mat[13];
@@ -93,15 +93,15 @@ namespace bgfx
 		_result[3] = _vec[0] * _mat[ 3] + _vec[1] * _mat[7] + _vec[2] * _mat[11] + _vec[3] * _mat[15];
 	}
 
-	void matrix_mul(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
+	void mtxMul(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
 	{
-		vec_mul_mtx(&_result[ 0], &_a[ 0], _b);
-		vec_mul_mtx(&_result[ 4], &_a[ 4], _b);
-		vec_mul_mtx(&_result[ 8], &_a[ 8], _b);
-		vec_mul_mtx(&_result[12], &_a[12], _b);
+		vec4MulMtx(&_result[ 0], &_a[ 0], _b);
+		vec4MulMtx(&_result[ 4], &_a[ 4], _b);
+		vec4MulMtx(&_result[ 8], &_a[ 8], _b);
+		vec4MulMtx(&_result[12], &_a[12], _b);
 	}
 
-	void matrix_ortho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far)
+	void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far)
 	{
 		const float aa = 2.0f/(_right - _left);
 		const float bb = 2.0f/(_top - _bottom);
@@ -393,6 +393,7 @@ namespace bgfx
 		"u_viewProj",
 		"u_viewProjX",
 		"u_model",
+		"u_modelView",
 		"u_modelViewProj",
 		"u_modelViewProjX",
 		"u_alphaRef",
@@ -588,6 +589,16 @@ namespace bgfx
 		_num = (val&3)+1;
 		_type = AttribType::Enum((val>>3)&3);
 		_normalized = !!(val&(1<<6) );
+	}
+
+	bool VertexDecl::has(Attrib::Enum _attrib) const
+	{
+		return 0xff != m_attributes[_attrib];
+	}
+
+	uint16_t VertexDecl::getOffset(Attrib::Enum _attrib) const
+	{
+		return m_offset[_attrib];
 	}
 
 	const char* getAttribName(Attrib::Enum _attr)
@@ -786,6 +797,7 @@ namespace bgfx
 
 	void release(const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		g_free(const_cast<Memory*>(_mem) );
 	}
 
@@ -834,11 +846,13 @@ namespace bgfx
 
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx.createDynamicIndexBuffer(_mem);
 	}
 
 	void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		s_ctx.updateDynamicIndexBuffer(_handle, _mem);
 	}
 
@@ -854,11 +868,13 @@ namespace bgfx
 
 	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx.createDynamicVertexBuffer(_mem, _decl);
 	}
 
 	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		s_ctx.updateDynamicVertexBuffer(_handle, _mem);
 	}
 
@@ -894,6 +910,7 @@ namespace bgfx
 
 	VertexShaderHandle createVertexShader(const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx.createVertexShader(_mem);
 	}
 
@@ -904,6 +921,7 @@ namespace bgfx
 
 	FragmentShaderHandle createFragmentShader(const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx.createFragmentShader(_mem);
 	}
 
@@ -924,6 +942,7 @@ namespace bgfx
 
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint16_t* _width, uint16_t* _height)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx.createTexture(_mem, _flags, _width, _height);
 	}
 
@@ -1003,6 +1022,7 @@ namespace bgfx
 
 	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		if (_width == 0
 		||  _height == 0)
 		{
@@ -1016,6 +1036,7 @@ namespace bgfx
 
 	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		if (_width == 0
 		||  _height == 0
 		||  _depth == 0)
@@ -1030,6 +1051,7 @@ namespace bgfx
 
 	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
 	{
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		if (_width == 0
 		||  _height == 0)
 		{

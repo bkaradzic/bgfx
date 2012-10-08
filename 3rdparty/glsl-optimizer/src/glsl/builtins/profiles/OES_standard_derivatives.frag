@@ -1,6 +1,9 @@
 #version 100
 #extension GL_OES_standard_derivatives : enable
 
+/*
+ * 8.8 - Fragment Processing Functions
+ */
 float dFdx(float p);
 vec2  dFdx(vec2  p);
 vec3  dFdx(vec3  p);

@@ -217,7 +217,7 @@ public:
       if (this->current == NULL)
 	 return visit_continue;
 
-      function *const target = this->get_function(call->get_callee());
+      function *const target = this->get_function(call->callee);
 
       /* Create a link from the caller to the callee.
        */
@@ -289,6 +289,8 @@ emit_errors_unlinked(const void *key, void *data, void *closure)
    function *f = (function *) data;
    YYLTYPE loc;
 
+   (void) key;
+
    char *proto = prototype_string(f->sig->return_type,
 				  f->sig->function_name(),
 				  &f->sig->parameters);
@@ -307,6 +309,8 @@ emit_errors_linked(const void *key, void *data, void *closure)
    struct gl_shader_program *prog =
       (struct gl_shader_program *) closure;
    function *f = (function *) data;
+
+   (void) key;
 
    char *proto = prototype_string(f->sig->return_type,
 				  f->sig->function_name(),

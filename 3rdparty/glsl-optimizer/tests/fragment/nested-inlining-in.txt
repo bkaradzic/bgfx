@@ -1,0 +1,20 @@
+
+void xll_clip(float x) {
+  if ( x<0.0 ) discard;
+}
+
+uniform vec3 uniVal;
+
+void  main() {
+    vec2 val;
+    bool useZero = uniVal.x > 1.;
+    if (useZero){
+        gl_FragData[0] = vec4(0.);
+    }
+    else{
+        val = uniVal.xy;
+        xll_clip( (0.00100000 - val.x ) );
+        xll_clip( (0.00100000 - val.y ) );
+        gl_FragData[0] = vec4(1.);
+    }
+}

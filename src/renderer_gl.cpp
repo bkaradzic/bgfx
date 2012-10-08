@@ -1074,7 +1074,7 @@ namespace bgfx
 			}
 			else
 			{
-				GL_CHECK(glDisableVertexAttribArray(loc) );
+//				GL_CHECK(glDisableVertexAttribArray(loc) );
 
 				switch (num)
 				{
@@ -1703,7 +1703,7 @@ namespace bgfx
 		GL_CHECK(glUniform1i(program.m_sampler[0], 0) );
 
 		float proj[16];
-		matrix_ortho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
+		mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
 		GL_CHECK(glUniformMatrix4fv(program.m_predefined[0].m_loc
 			, 1
@@ -2023,7 +2023,7 @@ namespace bgfx
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			matrix_mul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
+			mtxMul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
 		}
 
 		uint16_t programIdx = invalidHandle;
@@ -2315,11 +2315,25 @@ namespace bgfx
 							}
 							break;
 
+						case PredefinedUniform::ModelView:
+							{
+								Matrix4 modelView;
+								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
+								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, modelView.val
+									) );
+							}
+							break;
+
 						case PredefinedUniform::ModelViewProj:
 							{
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								matrix_mul(modelViewProj.val, model.val, viewProj[view].val);
+								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
@@ -2343,10 +2357,10 @@ namespace bgfx
 
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
+								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
 								Matrix4 modelViewProj;
-								matrix_mul(modelViewProj.val, model.val, viewProjBias.val);
+								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
@@ -2368,7 +2382,7 @@ namespace bgfx
 
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								matrix_mul(viewProjBias.val, viewProj[other].val, s_bias);
+								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1

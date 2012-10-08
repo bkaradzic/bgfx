@@ -90,7 +90,7 @@ extern "C" {
 /**
  * Disable assorted warnings
  */
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
+#if !defined(OPENSTEP) && (defined(_WIN32) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
 #  if !defined(__GNUC__) /* mingw environment */
 #    pragma warning( disable : 4068 ) /* unknown pragma */
 #    pragma warning( disable : 4710 ) /* function 'foo' not inlined */
@@ -114,28 +114,29 @@ extern "C" {
 /**
  * Function inlining
  */
-#ifndef INLINE
-#  if defined(__GNUC__)
-#    define INLINE __inline__
-#  elif defined(__MSC__)
-#    define INLINE __inline
+#ifndef inline
+#  ifdef __cplusplus
+     /* C++ supports inline keyword */
+#  elif defined(__GNUC__)
+#    define inline __inline__
 #  elif defined(_MSC_VER)
-#    define INLINE __inline
+#    define inline __inline
 #  elif defined(__ICL)
-#    define INLINE __inline
+#    define inline __inline
 #  elif defined(__INTEL_COMPILER)
-#    define INLINE inline
+     /* Intel compiler supports inline keyword */
 #  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#    define INLINE __inline
+#    define inline __inline
 #  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
-#    define INLINE inline
-#    define __inline inline
-#    define __inline__ inline
-#  elif (__STDC_VERSION__ >= 199901L) /* C99 */
-#    define INLINE inline
+     /* C99 supports inline keyword */
+#  elif (__STDC_VERSION__ >= 199901L)
+     /* C99 supports inline keyword */
 #  else
-#    define INLINE
+#    define inline
 #  endif
+#endif
+#ifndef INLINE
+#  define INLINE inline
 #endif
 
 
@@ -149,24 +150,13 @@ extern "C" {
  * inline a static function that we later use in an alias. - ajax
  */
 #ifndef PUBLIC
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#  if (defined(__GNUC__) && __GNUC__ >= 4) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PUBLIC __attribute__((visibility("default")))
 #    define USED __attribute__((used))
 #  else
 #    define PUBLIC
 #    define USED
 #  endif
-#endif
-
-
-/**
- * Some compilers don't like some of Mesa's const usage.  In those places use
- * CONST instead of const.  Pass -DNO_CONST to compilers where this matters.
- */
-#ifdef NO_CONST
-#  define CONST
-#else
-#  define CONST const
 #endif
 
 
@@ -240,6 +230,9 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
            ((x & 0x00ff0000) >>  8) |
            ((x & 0xff000000) >> 24));
 }
+#elif defined(__OpenBSD__)
+#include <sys/types.h>
+#define CPU_TO_LE32( x )	htole32( x )
 #else /*__linux__ */
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
@@ -253,7 +246,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 
 
 
-#if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
+#if !defined(CAPI) && defined(_WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
 #endif
 
@@ -263,7 +256,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * than GNU C
  */
 #ifndef _ASMAPI
-#if defined(WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
+#if defined(_WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
 #define _ASMAPI __cdecl
 #else
 #define _ASMAPI
@@ -281,12 +274,6 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #else
 #define _NORMAPI
 #define _NORMAPIP *
-#endif
-
-
-/* This is a macro on IRIX */
-#ifdef _P
-#undef _P
 #endif
 
 
@@ -308,6 +295,18 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #  define ASSERT(X)
 #endif
 #endif
+
+
+/**
+ * Static (compile-time) assertion.
+ * Basically, use COND to dimension an array.  If COND is false/zero the
+ * array size will be -1 and we'll get a compilation error.
+ */
+#define STATIC_ASSERT(COND) \
+   do { \
+      typedef int static_assertion_failed[(!!(COND))*2-1]; \
+   } while (0)
+
 
 #if (__GNUC__ >= 3)
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))

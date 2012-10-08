@@ -1,0 +1,9 @@
+uniform float _Shininess;
+void main ()
+{
+  vec4 res_1;
+  res_1.xyz = ((gl_TexCoord[0].xyz * vec3(0.5, 0.5, -0.5)) + 0.5);
+  res_1.w = _Shininess;
+  gl_FragData[0] = res_1;
+}
+

@@ -7,25 +7,25 @@ uniform mat4 UNITY_MATRIX_MV;
 uniform mat4 UNITY_MATRIX_IT_MV;
 void main ()
 {
-  vec3 lightColor;
-  vec3 viewN;
-  vec3 viewpos;
-  viewpos = (UNITY_MATRIX_MV * gl_Vertex).xyz;
-  mat3 tmpvar_1;
-  tmpvar_1[0] = UNITY_MATRIX_IT_MV[0].xyz;
-  tmpvar_1[1] = UNITY_MATRIX_IT_MV[1].xyz;
-  tmpvar_1[2] = UNITY_MATRIX_IT_MV[2].xyz;
-  viewN = (tmpvar_1 * gl_Normal);
-  vec3 tmpvar_2;
-  tmpvar_2 = (unity_LightPosition[0].xyz - viewpos);
-  lightColor = (unity_LightColor[0].xyz * (max (0.0, dot (viewN, normalize (tmpvar_2))) * (1.0/((1.0 + (dot (tmpvar_2, tmpvar_2) * unity_LightAtten[0].z))))));
-  vec3 tmpvar_3;
-  tmpvar_3 = (unity_LightPosition[1].xyz - viewpos);
-  lightColor = (lightColor + (unity_LightColor[1].xyz * (max (0.0, dot (viewN, normalize (tmpvar_3))) * (1.0/((1.0 + (dot (tmpvar_3, tmpvar_3) * unity_LightAtten[1].z)))))));
-  vec4 tmpvar_4;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = (lightColor * 2.0);
+  vec3 lightColor_1;
+  vec3 viewN_2;
+  vec3 viewpos_3;
+  viewpos_3 = (UNITY_MATRIX_MV * gl_Vertex).xyz;
+  mat3 tmpvar_4;
+  tmpvar_4[0] = UNITY_MATRIX_IT_MV[0].xyz;
+  tmpvar_4[1] = UNITY_MATRIX_IT_MV[1].xyz;
+  tmpvar_4[2] = UNITY_MATRIX_IT_MV[2].xyz;
+  viewN_2 = (tmpvar_4 * gl_Normal);
+  vec3 tmpvar_5;
+  tmpvar_5 = (unity_LightPosition[0].xyz - viewpos_3);
+  lightColor_1 = (unity_LightColor[0].xyz * (max (0.0, dot (viewN_2, normalize(tmpvar_5))) * (1.0/((1.0 + (dot (tmpvar_5, tmpvar_5) * unity_LightAtten[0].z))))));
+  vec3 tmpvar_6;
+  tmpvar_6 = (unity_LightPosition[1].xyz - viewpos_3);
+  lightColor_1 = (lightColor_1 + (unity_LightColor[1].xyz * (max (0.0, dot (viewN_2, normalize(tmpvar_6))) * (1.0/((1.0 + (dot (tmpvar_6, tmpvar_6) * unity_LightAtten[1].z)))))));
+  vec4 tmpvar_7;
+  tmpvar_7.w = 1.0;
+  tmpvar_7.xyz = (lightColor_1 * 2.0);
   gl_Position = (UNITY_MATRIX_MVP * gl_Vertex);
-  xlv_TEXCOORD0 = tmpvar_4;
+  xlv_TEXCOORD0 = tmpvar_7;
 }
 

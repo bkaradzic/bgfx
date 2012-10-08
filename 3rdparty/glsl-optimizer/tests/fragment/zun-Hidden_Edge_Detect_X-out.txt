@@ -1,0 +1,18 @@
+uniform float _Treshold;
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec4 original_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  original_1 = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = (((tmpvar_2.xyz * 2.0) - texture2D (_MainTex, gl_TexCoord[1].xy).xyz) - texture2D (_MainTex, gl_TexCoord[2].xy).xyz);
+  float tmpvar_4;
+  tmpvar_4 = dot (tmpvar_3, tmpvar_3);
+  if ((tmpvar_4 >= _Treshold)) {
+    original_1.xyz = vec3(0.0, 0.0, 0.0);
+  };
+  gl_FragData[0] = original_1;
+}
+

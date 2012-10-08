@@ -128,6 +128,34 @@ glsl_type::contains_sampler() const
    }
 }
 
+gl_texture_index
+glsl_type::sampler_index() const
+{
+   const glsl_type *const t = (this->is_array()) ? this->fields.array : this;
+
+   assert(t->is_sampler());
+
+   switch (t->sampler_dimensionality) {
+   case GLSL_SAMPLER_DIM_1D:
+      return (t->sampler_array) ? TEXTURE_1D_ARRAY_INDEX : TEXTURE_1D_INDEX;
+   case GLSL_SAMPLER_DIM_2D:
+      return (t->sampler_array) ? TEXTURE_2D_ARRAY_INDEX : TEXTURE_2D_INDEX;
+   case GLSL_SAMPLER_DIM_3D:
+      return TEXTURE_3D_INDEX;
+   case GLSL_SAMPLER_DIM_CUBE:
+      return TEXTURE_CUBE_INDEX;
+   case GLSL_SAMPLER_DIM_RECT:
+      return TEXTURE_RECT_INDEX;
+   case GLSL_SAMPLER_DIM_BUF:
+      return TEXTURE_BUFFER_INDEX;
+   case GLSL_SAMPLER_DIM_EXTERNAL:
+      return TEXTURE_EXTERNAL_INDEX;
+   default:
+      assert(!"Should not get here.");
+      return TEXTURE_BUFFER_INDEX;
+   }
+}
+
 void
 glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
 {
@@ -141,7 +169,7 @@ glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
 }
 
 void
-glsl_type::generate_110_types(glsl_symbol_table *symtab)
+glsl_type::generate_110_types(glsl_symbol_table *symtab, bool add_deprecated)
 {
    generate_100ES_types(symtab);
 
@@ -149,16 +177,18 @@ glsl_type::generate_110_types(glsl_symbol_table *symtab)
 			     Elements(builtin_110_types),
 			     false);
    add_types_to_symbol_table(symtab, &_sampler3D_type, 1, false);
-   add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
-			     Elements(builtin_110_deprecated_structure_types),
-			     false);
+   if (add_deprecated) {
+      add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
+				Elements(builtin_110_deprecated_structure_types),
+				false);
+   }
 }
 
 
 void
-glsl_type::generate_120_types(glsl_symbol_table *symtab)
+glsl_type::generate_120_types(glsl_symbol_table *symtab, bool add_deprecated)
 {
-   generate_110_types(symtab);
+   generate_110_types(symtab, add_deprecated);
 
    add_types_to_symbol_table(symtab, builtin_120_types,
 			     Elements(builtin_120_types), false);
@@ -166,13 +196,27 @@ glsl_type::generate_120_types(glsl_symbol_table *symtab)
 
 
 void
-glsl_type::generate_130_types(glsl_symbol_table *symtab)
+glsl_type::generate_130_types(glsl_symbol_table *symtab, bool add_deprecated)
 {
-   generate_120_types(symtab);
+   generate_120_types(symtab, add_deprecated);
 
    add_types_to_symbol_table(symtab, builtin_130_types,
 			     Elements(builtin_130_types), false);
    generate_EXT_texture_array_types(symtab, false);
+}
+
+
+void
+glsl_type::generate_140_types(glsl_symbol_table *symtab)
+{
+   generate_130_types(symtab, false);
+
+   add_types_to_symbol_table(symtab, builtin_140_types,
+			     Elements(builtin_140_types), false);
+
+   add_types_to_symbol_table(symtab, builtin_EXT_texture_buffer_object_types,
+			     Elements(builtin_EXT_texture_buffer_object_types),
+			     false);
 }
 
 
@@ -204,6 +248,23 @@ glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
 
 
 void
+glsl_type::generate_EXT_shadow_samplers_types(glsl_symbol_table *symtab, bool warn)
+{
+   add_types_to_symbol_table(symtab, &builtin_110_types[2], 1, warn);
+}
+
+
+
+void
+glsl_type::generate_OES_EGL_image_external_types(glsl_symbol_table *symtab,
+						 bool warn)
+{
+   add_types_to_symbol_table(symtab, builtin_OES_EGL_image_external_types,
+			     Elements(builtin_OES_EGL_image_external_types),
+			     warn);
+}
+
+void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
@@ -212,20 +273,24 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       glsl_type::generate_100ES_types(state->symbols);
       break;
    case 110:
-      glsl_type::generate_110_types(state->symbols);
+      glsl_type::generate_110_types(state->symbols, true);
       break;
    case 120:
-      glsl_type::generate_120_types(state->symbols);
+      glsl_type::generate_120_types(state->symbols, true);
       break;
    case 130:
-      glsl_type::generate_130_types(state->symbols);
+      glsl_type::generate_130_types(state->symbols, true);
+      break;
+   case 140:
+      glsl_type::generate_140_types(state->symbols);
       break;
    default:
       /* error */
       break;
    }
 
-   if (state->ARB_texture_rectangle_enable) {
+   if (state->ARB_texture_rectangle_enable ||
+       state->language_version >= 140) {
       glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
    }
@@ -238,6 +303,20 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       // These are already included in 130; don't create twice.
       glsl_type::generate_EXT_texture_array_types(state->symbols,
 				       state->EXT_texture_array_warn);
+   }
+	
+	if (state->EXT_shadow_samplers_enable && state->es_shader) {
+		glsl_type::generate_EXT_shadow_samplers_types(state->symbols,
+						state->EXT_shadow_samplers_warn);
+	}
+	
+   /* We cannot check for language_version == 100 here because we need the
+    * types to support fixed-function program generation.  But this is fine
+    * since the extension is never enabled for OpenGL contexts.
+    */
+   if (state->OES_EGL_image_external_enable) {
+      glsl_type::generate_OES_EGL_image_external_types(state->symbols,
+					       state->OES_EGL_image_external_warn);
    }
 }
 
@@ -255,6 +334,29 @@ const glsl_type *glsl_type::get_base_type() const
       return bool_type;
    default:
       return error_type;
+   }
+}
+
+
+const glsl_type *glsl_type::get_scalar_type() const
+{
+   const glsl_type *type = this;
+
+   /* Handle arrays */
+   while (type->base_type == GLSL_TYPE_ARRAY)
+      type = type->fields.array;
+
+   /* Handle vectors and matrices */
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+      return uint_type;
+   case GLSL_TYPE_INT:
+      return int_type;
+   case GLSL_TYPE_FLOAT:
+      return float_type;
+   default:
+      /* Handle everything else */
+      return type;
    }
 }
 
@@ -555,4 +657,229 @@ glsl_type::can_implicitly_convert_to(const glsl_type *desired) const
    return desired->is_float()
           && this->is_integer()
           && this->vector_elements == desired->vector_elements;
+}
+
+unsigned
+glsl_type::std140_base_alignment(bool row_major) const
+{
+   /* (1) If the member is a scalar consuming <N> basic machine units, the
+    *     base alignment is <N>.
+    *
+    * (2) If the member is a two- or four-component vector with components
+    *     consuming <N> basic machine units, the base alignment is 2<N> or
+    *     4<N>, respectively.
+    *
+    * (3) If the member is a three-component vector with components consuming
+    *     <N> basic machine units, the base alignment is 4<N>.
+    */
+   if (this->is_scalar() || this->is_vector()) {
+      switch (this->vector_elements) {
+      case 1:
+	 return 4;
+      case 2:
+	 return 8;
+      case 3:
+      case 4:
+	 return 16;
+      }
+   }
+
+   /* (4) If the member is an array of scalars or vectors, the base alignment
+    *     and array stride are set to match the base alignment of a single
+    *     array element, according to rules (1), (2), and (3), and rounded up
+    *     to the base alignment of a vec4. The array may have padding at the
+    *     end; the base offset of the member following the array is rounded up
+    *     to the next multiple of the base alignment.
+    *
+    * (6) If the member is an array of <S> column-major matrices with <C>
+    *     columns and <R> rows, the matrix is stored identically to a row of
+    *     <S>*<C> column vectors with <R> components each, according to rule
+    *     (4).
+    *
+    * (8) If the member is an array of <S> row-major matrices with <C> columns
+    *     and <R> rows, the matrix is stored identically to a row of <S>*<R>
+    *     row vectors with <C> components each, according to rule (4).
+    *
+    * (10) If the member is an array of <S> structures, the <S> elements of
+    *      the array are laid out in order, according to rule (9).
+    */
+   if (this->is_array()) {
+      if (this->fields.array->is_scalar() ||
+	  this->fields.array->is_vector() ||
+	  this->fields.array->is_matrix()) {
+	 return MAX2(this->fields.array->std140_base_alignment(row_major), 16);
+      } else {
+	 assert(this->fields.array->is_record());
+	 return this->fields.array->std140_base_alignment(row_major);
+      }
+   }
+
+   /* (5) If the member is a column-major matrix with <C> columns and
+    *     <R> rows, the matrix is stored identically to an array of
+    *     <C> column vectors with <R> components each, according to
+    *     rule (4).
+    *
+    * (7) If the member is a row-major matrix with <C> columns and <R>
+    *     rows, the matrix is stored identically to an array of <R>
+    *     row vectors with <C> components each, according to rule (4).
+    */
+   if (this->is_matrix()) {
+      const struct glsl_type *vec_type, *array_type;
+      int c = this->matrix_columns;
+      int r = this->vector_elements;
+
+      if (row_major) {
+	 vec_type = get_instance(GLSL_TYPE_FLOAT, c, 1);
+	 array_type = glsl_type::get_array_instance(vec_type, r);
+      } else {
+	 vec_type = get_instance(GLSL_TYPE_FLOAT, r, 1);
+	 array_type = glsl_type::get_array_instance(vec_type, c);
+      }
+
+      return array_type->std140_base_alignment(false);
+   }
+
+   /* (9) If the member is a structure, the base alignment of the
+    *     structure is <N>, where <N> is the largest base alignment
+    *     value of any of its members, and rounded up to the base
+    *     alignment of a vec4. The individual members of this
+    *     sub-structure are then assigned offsets by applying this set
+    *     of rules recursively, where the base offset of the first
+    *     member of the sub-structure is equal to the aligned offset
+    *     of the structure. The structure may have padding at the end;
+    *     the base offset of the member following the sub-structure is
+    *     rounded up to the next multiple of the base alignment of the
+    *     structure.
+    */
+   if (this->is_record()) {
+      unsigned base_alignment = 16;
+      for (unsigned i = 0; i < this->length; i++) {
+	 const struct glsl_type *field_type = this->fields.structure[i].type;
+	 base_alignment = MAX2(base_alignment,
+			       field_type->std140_base_alignment(row_major));
+      }
+      return base_alignment;
+   }
+
+   assert(!"not reached");
+   return -1;
+}
+
+static unsigned
+align(unsigned val, unsigned align)
+{
+   return (val + align - 1) / align * align;
+}
+
+unsigned
+glsl_type::std140_size(bool row_major) const
+{
+   /* (1) If the member is a scalar consuming <N> basic machine units, the
+    *     base alignment is <N>.
+    *
+    * (2) If the member is a two- or four-component vector with components
+    *     consuming <N> basic machine units, the base alignment is 2<N> or
+    *     4<N>, respectively.
+    *
+    * (3) If the member is a three-component vector with components consuming
+    *     <N> basic machine units, the base alignment is 4<N>.
+    */
+   if (this->is_scalar() || this->is_vector()) {
+      return this->vector_elements * 4;
+   }
+
+   /* (5) If the member is a column-major matrix with <C> columns and
+    *     <R> rows, the matrix is stored identically to an array of
+    *     <C> column vectors with <R> components each, according to
+    *     rule (4).
+    *
+    * (6) If the member is an array of <S> column-major matrices with <C>
+    *     columns and <R> rows, the matrix is stored identically to a row of
+    *     <S>*<C> column vectors with <R> components each, according to rule
+    *     (4).
+    *
+    * (7) If the member is a row-major matrix with <C> columns and <R>
+    *     rows, the matrix is stored identically to an array of <R>
+    *     row vectors with <C> components each, according to rule (4).
+    *
+    * (8) If the member is an array of <S> row-major matrices with <C> columns
+    *     and <R> rows, the matrix is stored identically to a row of <S>*<R>
+    *     row vectors with <C> components each, according to rule (4).
+    */
+   if (this->is_matrix() || (this->is_array() &&
+			     this->fields.array->is_matrix())) {
+      const struct glsl_type *element_type;
+      const struct glsl_type *vec_type;
+      unsigned int array_len;
+
+      if (this->is_array()) {
+	 element_type = this->fields.array;
+	 array_len = this->length;
+      } else {
+	 element_type = this;
+	 array_len = 1;
+      }
+
+      if (row_major) {
+	 vec_type = get_instance(GLSL_TYPE_FLOAT,
+				 element_type->matrix_columns, 1);
+	 array_len *= element_type->vector_elements;
+      } else {
+	 vec_type = get_instance(GLSL_TYPE_FLOAT,
+				 element_type->vector_elements, 1);
+	 array_len *= element_type->matrix_columns;
+      }
+      const glsl_type *array_type = glsl_type::get_array_instance(vec_type,
+								  array_len);
+
+      return array_type->std140_size(false);
+   }
+
+   /* (4) If the member is an array of scalars or vectors, the base alignment
+    *     and array stride are set to match the base alignment of a single
+    *     array element, according to rules (1), (2), and (3), and rounded up
+    *     to the base alignment of a vec4. The array may have padding at the
+    *     end; the base offset of the member following the array is rounded up
+    *     to the next multiple of the base alignment.
+    *
+    * (10) If the member is an array of <S> structures, the <S> elements of
+    *      the array are laid out in order, according to rule (9).
+    */
+   if (this->is_array()) {
+      if (this->fields.array->is_record()) {
+	 return this->length * this->fields.array->std140_size(row_major);
+      } else {
+	 unsigned element_base_align =
+	    this->fields.array->std140_base_alignment(row_major);
+	 return this->length * MAX2(element_base_align, 16);
+      }
+   }
+
+   /* (9) If the member is a structure, the base alignment of the
+    *     structure is <N>, where <N> is the largest base alignment
+    *     value of any of its members, and rounded up to the base
+    *     alignment of a vec4. The individual members of this
+    *     sub-structure are then assigned offsets by applying this set
+    *     of rules recursively, where the base offset of the first
+    *     member of the sub-structure is equal to the aligned offset
+    *     of the structure. The structure may have padding at the end;
+    *     the base offset of the member following the sub-structure is
+    *     rounded up to the next multiple of the base alignment of the
+    *     structure.
+    */
+   if (this->is_record()) {
+      unsigned size = 0;
+      for (unsigned i = 0; i < this->length; i++) {
+	 const struct glsl_type *field_type = this->fields.structure[i].type;
+	 unsigned align = field_type->std140_base_alignment(row_major);
+	 size = (size + align - 1) / align * align;
+	 size += field_type->std140_size(row_major);
+      }
+      size = align(size,
+		   this->fields.structure[0].type->std140_base_alignment(row_major));
+      return size;
+   }
+
+   assert(!"not reached");
+   return -1;
 }

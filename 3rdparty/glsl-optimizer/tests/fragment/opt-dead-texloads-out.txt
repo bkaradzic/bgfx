@@ -1,0 +1,10 @@
+void main ()
+{
+  vec2 uv_1;
+  uv_1 = gl_TexCoord[0].xy;
+  if ((uv_1.x < 0.0)) {
+    discard;
+  };
+  gl_FragData[0] = vec4(0.5, 0.5, 0.5, 0.5);
+}
+

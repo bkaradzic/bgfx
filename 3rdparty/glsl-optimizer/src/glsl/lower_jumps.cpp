@@ -438,6 +438,7 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
        * satisfied, because discard statements can't contain other
        * statements.
        */
+      (void) ir;
    }
 
    enum jump_strength get_jump_strength(ir_instruction* ir)

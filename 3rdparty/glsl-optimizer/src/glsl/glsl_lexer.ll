@@ -22,6 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <ctype.h>
+#include <limits.h>
 #include "strtod.h"
 #include "ast.h"
 #include "glsl_parser_extras.h"
@@ -42,8 +43,6 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
    } while(0);
 
 #define YY_USER_INIT yylineno = 0; yycolumn = 0;
-
-#define IS_UINT (yytext[yyleng - 1] == 'u' || yytext[yyleng - 1] == 'U')
 
 /* A macro for handling reserved words and keywords across language versions.
  *
@@ -81,6 +80,51 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
  * ...means the word is a legal keyword in GLSL ES 1.00.
  */
 #define ES yyextra->es_shader
+
+static int
+literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
+		YYSTYPE *lval, YYLTYPE *lloc, int base)
+{
+   bool is_uint = (text[len - 1] == 'u' ||
+		   text[len - 1] == 'U');
+   const char *digits = text;
+
+   /* Skip "0x" */
+   if (base == 16)
+      digits += 2;
+
+#ifdef _MSC_VER
+   unsigned __int64 value = _strtoui64(digits, NULL, base);
+#else
+   unsigned long long value = strtoull(digits, NULL, base);
+#endif
+
+   lval->n = (int)value;
+
+   if (value > UINT_MAX) {
+      /* Note that signed 0xffffffff is valid, not out of range! */
+      if (state->language_version >= 130) {
+	 _mesa_glsl_error(lloc, state,
+			  "Literal value `%s' out of range", text);
+      } else {
+	 _mesa_glsl_warning(lloc, state,
+			    "Literal value `%s' out of range", text);
+      }
+   } else if (base == 10 && !is_uint && (unsigned)value > (unsigned)INT_MAX + 1) {
+      /* Tries to catch unintentionally providing a negative value.
+       * Note that -2147483648 is parsed as -(2147483648), so we don't
+       * want to warn for INT_MAX.
+       */
+      _mesa_glsl_warning(lloc, state,
+			 "Signed literal value `%s' is interpreted as %d",
+			 text, lval->n);
+   }
+   return is_uint ? UINTCONSTANT : INTCONSTANT;
+}
+
+#define LITERAL_INTEGER(base) \
+   literal_integer(yytext, yyleng, yyextra, yylval, yylloc, base)
+
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -104,7 +148,7 @@ HASH		^{SPC}#{SPC}
 
     /* Preprocessor tokens. */ 
 ^[ \t]*#[ \t]*$			;
-^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION; }
+^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION_TOK; }
 ^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }
 {HASH}line{SPCP}{INT_T}{SPCP}{INT_T}{SPC}$ {
 				   /* Eat characters until the first digit is
@@ -252,6 +296,13 @@ usamplerCube		KEYWORD(130, 130, USAMPLERCUBE);
 usampler1DArray		KEYWORD(130, 130, USAMPLER1DARRAY);
 usampler2DArray		KEYWORD(130, 130, USAMPLER2DARRAY);
 
+samplerExternalOES	{
+			  if (yyextra->OES_EGL_image_external_enable)
+			     return SAMPLEREXTERNALOES;
+			  else
+			     return IDENTIFIER;
+			}
+
 
 struct		return STRUCT;
 void		return VOID_TOK;
@@ -259,7 +310,9 @@ void		return VOID_TOK;
 layout		{
 		  if ((yyextra->language_version >= 140)
 		      || yyextra->AMD_conservative_depth_enable
+		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
+		      || yyextra->ARB_uniform_buffer_object_enable
 		      || yyextra->ARB_fragment_coord_conventions_enable) {
 		      return LAYOUT_TOK;
 		   } else {
@@ -292,16 +345,13 @@ layout		{
 -=		return SUB_ASSIGN;
 
 [1-9][0-9]*[uU]?	{
-			    yylval->n = strtol(yytext, NULL, 10);
-			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
+			    return LITERAL_INTEGER(10);
 			}
 0[xX][0-9a-fA-F]+[uU]?	{
-			    yylval->n = strtol(yytext + 2, NULL, 16);
-			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
+			    return LITERAL_INTEGER(16);
 			}
 0[0-7]*[uU]?		{
-			    yylval->n = strtol(yytext, NULL, 8);
-			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
+			    return LITERAL_INTEGER(8);
 			}
 
 [0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
@@ -343,7 +393,7 @@ enum		KEYWORD(110 || ES, 999, ENUM);
 typedef		KEYWORD(110 || ES, 999, TYPEDEF);
 template	KEYWORD(110 || ES, 999, TEMPLATE);
 this		KEYWORD(110 || ES, 999, THIS);
-packed		KEYWORD(110 || ES, 999, PACKED_TOK);
+packed		KEYWORD(110 || ES, 140 || yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
 goto		KEYWORD(110 || ES, 999, GOTO);
 switch		KEYWORD(110 || ES, 130, SWITCH);
 default		KEYWORD(110 || ES, 130, DEFAULT);
@@ -419,7 +469,13 @@ image2DArrayShadow KEYWORD(130, 999, IMAGE2DARRAYSHADOW);
 imageBuffer	KEYWORD(130, 999, IMAGEBUFFER);
 iimageBuffer	KEYWORD(130, 999, IIMAGEBUFFER);
 uimageBuffer	KEYWORD(130, 999, UIMAGEBUFFER);
-row_major	KEYWORD(130, 999, ROW_MAJOR);
+row_major	KEYWORD(130, 140 || yyextra->ARB_uniform_buffer_object_enable, ROW_MAJOR);
+
+    /* Additional reserved words in GLSL 1.40 */
+isampler2DRect	KEYWORD(140, 140, ISAMPLER2DRECT);
+usampler2DRect	KEYWORD(140, 140, USAMPLER2DRECT);
+isamplerBuffer	KEYWORD(140, 140, ISAMPLERBUFFER);
+usamplerBuffer	KEYWORD(140, 140, USAMPLERBUFFER);
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;

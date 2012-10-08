@@ -38,6 +38,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 class acp_entry : public exec_node
 {
 public:
@@ -106,6 +108,8 @@ public:
 
    void *mem_ctx;
 };
+
+} /* unnamed namespace */
 
 ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_function_signature *ir)
@@ -181,7 +185,7 @@ ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_call *ir)
 {
    /* Do copy propagation on call parameters, but skip any out params */
-   exec_list_iterator sig_param_iter = ir->get_callee()->parameters.iterator();
+   exec_list_iterator sig_param_iter = ir->callee->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -195,7 +199,7 @@ ir_copy_propagation_visitor::visit_enter(ir_call *ir)
     * this call.  So kill all copies.
 	* For any built-in functions, do not do this; they are side effect-free.
     */
-   if (!ir->get_callee()->is_builtin) {
+   if (!ir->callee->is_builtin) {
       acp->make_empty();
       this->killed_all = true;
    }

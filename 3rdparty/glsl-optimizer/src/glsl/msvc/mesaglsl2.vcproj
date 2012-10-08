@@ -186,6 +186,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\builtin_variables.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\builtin_variables.h"
 					>
 				</File>
@@ -390,10 +394,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_variable.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_variable_refcount.cpp"
 					>
 				</File>
@@ -407,6 +407,14 @@
 				</File>
 				<File
 					RelativePath="..\link_functions.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\link_uniform_initializers.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\link_uniforms.cpp"
 					>
 				</File>
 				<File
@@ -438,7 +446,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\lower_clip_distance.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\lower_discard.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_discard_flow.cpp"
 					>
 				</File>
 				<File
@@ -502,6 +518,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\opt_array_splitting.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\opt_constant_folding.cpp"
 					>
 				</File>
@@ -531,10 +551,6 @@
 				</File>
 				<File
 					RelativePath="..\opt_dead_functions.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\opt_discard_simplification.cpp"
 					>
 				</File>
 				<File
@@ -701,6 +717,18 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\mesa\program\prog_instruction.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\program\prog_parameter.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\program\prog_statevars.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\mesa\program\symbol_table.c"
 						>
 					</File>
@@ -721,15 +749,23 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\mesa\main\context.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\core.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\mesa\main\dd.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\mesa\main\extensions.h"
+						RelativePath="..\..\mesa\main\glheader.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\mesa\main\glheader.h"
+						RelativePath="..\..\mesa\main\glminimal.h"
 						>
 					</File>
 					<File
@@ -738,10 +774,6 @@
 					</File>
 					<File
 						RelativePath="..\..\mesa\main\macros.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\mesa\main\mfeatures.h"
 						>
 					</File>
 					<File

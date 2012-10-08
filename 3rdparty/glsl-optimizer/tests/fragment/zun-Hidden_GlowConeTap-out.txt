@@ -1,0 +1,16 @@
+uniform sampler2D _MainTex;
+uniform vec4 _Color;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_1 = gl_TexCoord[0];
+  tmpvar_2 = gl_TexCoord[1];
+  vec4 c_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = (((texture2D (_MainTex, tmpvar_1.xy) + texture2D (_MainTex, tmpvar_1.zw)) + texture2D (_MainTex, tmpvar_2.xy)) + texture2D (_MainTex, tmpvar_2.zw));
+  c_3.w = tmpvar_4.w;
+  c_3.xyz = (tmpvar_4.xyz * _Color.xyz);
+  gl_FragData[0] = (c_3 * _Color.w);
+}
+

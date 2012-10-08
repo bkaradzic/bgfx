@@ -16,8 +16,6 @@
 
 namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 
-#include "glsl_optimizer.h"
-
 #define MAX_TAGS 256
 extern "C"
 {
@@ -42,6 +40,8 @@ extern "C"
 #include <bx/countof.h>
 #include <bx/endian.h>
 #include <bx/uint32_t.h>
+
+#include "glsl_optimizer.h"
 
 #if BX_PLATFORM_WINDOWS
 #	include <d3dx9.h>
@@ -1611,95 +1611,102 @@ int main(int _argc, const char* _argv[])
 			{
 				entry[4] = '_';
 
-				const char* brace = strstr(entry, "{");
-				if (NULL != brace)
+				if (fragment)
 				{
-					const char* end = strmb(brace, '{', '}');
-					if (NULL != end)
+					preprocessor.writef("#define void_main() \\\n");
+					preprocessor.writef("\tvoid main(vec4 gl_FragCoord : SV_POSITION \\\n");
+					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 					{
-						strins(const_cast<char*>(end), "__RETURN__;\n");
+						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+						if (varyingIt != varyingMap.end() )
+						{
+							const Varying& var = varyingIt->second;
+							preprocessor.writef("\t, %s %s : %s \\\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+						}
 					}
-				}
-			}
 
-			if (fragment)
-			{
-				preprocessor.writef("#define void_main() \\\n");
-				preprocessor.writef("\tvec4 main(vec4 gl_FragCoord : SV_POSITION \\\n");
-				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
-				{
-					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
-					if (varyingIt != varyingMap.end() )
-					{
-						const Varying& var = varyingIt->second;
-						preprocessor.writef("\t, %s %s : %s \\\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
-					}
-				}
-				preprocessor.writef(
-					") : SV_TARGET \\\n"
-					"{ \\\n"
-					"\tvec4 gl_FragColor;\n"
-					"#define __RETURN__ \\\n"
-					"\t} \\\n"
-					"\treturn gl_FragColor"
-					);
-			}
-			else
-			{
-				preprocessor.writef(
-					"struct Output\n"
-					"{\n"
-					"\tvec4 gl_Position : SV_POSITION;\n"
-					"#define gl_Position _varying_.gl_Position\n"
-					);
-				for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
-				{
-					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
-					if (varyingIt != varyingMap.end() )
-					{
-						const Varying& var = varyingIt->second;
-						preprocessor.writef("\t%s %s : %s;\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
-						preprocessor.writef("#define %s _varying_.%s\n", var.m_name.c_str(), var.m_name.c_str() );
-					}
-				}
-				preprocessor.writef(
-					"};\n"
-					);
+					preprocessor.writef(
+						", out vec4 gl_FragColor : SV_TARGET \\\n"
+						);
 
-				preprocessor.writef("#define void_main() \\\n");
-				preprocessor.writef("Output main(");
-				bool first = true;
-				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
-				{
-					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
-					if (varyingIt != varyingMap.end() )
+					if (NULL != strstr(data, "gl_FragDepth") )
 					{
-						const Varying& var = varyingIt->second;
-						preprocessor.writef("%s%s %s : %s\\\n", first ? "" : "\t, ", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
-						first = false;
+						preprocessor.writef(
+							", out float gl_FragDepth : SV_DEPTH \\\n"
+							);
 					}
-				}
-				preprocessor.writef(
-					") \\\n"
-					"{ \\\n"
-					"\tOutput _varying_;"
-					);
 
-				for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+					preprocessor.writef(
+						")\n"
+						);
+				}
+				else
 				{
-					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
-					if (varyingIt != varyingMap.end() )
+					const char* brace = strstr(entry, "{");
+					if (NULL != brace)
 					{
-						const Varying& var = varyingIt->second;
-						preprocessor.writef(" \\\n\t%s = %s;", var.m_name.c_str(), var.m_init.c_str() );
+						const char* end = strmb(brace, '{', '}');
+						if (NULL != end)
+						{
+							strins(const_cast<char*>(end), "__RETURN__;\n");
+						}
 					}
-				}
 
-				preprocessor.writef(
-					"\n#define __RETURN__ \\\n"
-					"\t} \\\n"
-					"\treturn _varying_"
-					);
+					preprocessor.writef(
+						"struct Output\n"
+						"{\n"
+						"\tvec4 gl_Position : SV_POSITION;\n"
+						"#define gl_Position _varying_.gl_Position\n"
+						);
+					for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+					{
+						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+						if (varyingIt != varyingMap.end() )
+						{
+							const Varying& var = varyingIt->second;
+							preprocessor.writef("\t%s %s : %s;\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+							preprocessor.writef("#define %s _varying_.%s\n", var.m_name.c_str(), var.m_name.c_str() );
+						}
+					}
+					preprocessor.writef(
+						"};\n"
+						);
+
+					preprocessor.writef("#define void_main() \\\n");
+					preprocessor.writef("Output main(");
+					bool first = true;
+					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
+					{
+						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+						if (varyingIt != varyingMap.end() )
+						{
+							const Varying& var = varyingIt->second;
+							preprocessor.writef("%s%s %s : %s\\\n", first ? "" : "\t, ", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+							first = false;
+						}
+					}
+					preprocessor.writef(
+						") \\\n"
+						"{ \\\n"
+						"\tOutput _varying_;"
+						);
+
+					for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+					{
+						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+						if (varyingIt != varyingMap.end() )
+						{
+							const Varying& var = varyingIt->second;
+							preprocessor.writef(" \\\n\t%s = %s;", var.m_name.c_str(), var.m_init.c_str() );
+						}
+					}
+
+					preprocessor.writef(
+						"\n#define __RETURN__ \\\n"
+						"\t} \\\n"
+						"\treturn _varying_"
+						);
+				}
 			}
 		}
 
@@ -1805,6 +1812,8 @@ int main(int _argc, const char* _argv[])
 
 		delete [] data;
 	}
+
+	remove(outFilePath);
 
 	fprintf(stderr, "Failed to build shader.\n");
 	return EXIT_FAILURE;

@@ -34,7 +34,7 @@ int _main_(int _argc, char** _argv)
 	while (true)
 	{
 		// This dummy draw call is here to make sure that view 0 is cleared
-		// if not other draw calls are submitted to view 0.
+		// if no other draw calls are submitted to view 0.
 		bgfx::submit(0);
 
 		// Use debug font to print information about this example.

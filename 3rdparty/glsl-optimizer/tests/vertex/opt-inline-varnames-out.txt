@@ -1,7 +1,7 @@
 void main ()
 {
   float tmpvar_1;
-  tmpvar_1 = sqrt (gl_Vertex.x);
-  gl_Position = vec4((((gl_Vertex.x + tmpvar_1) + (gl_Vertex.x * tmpvar_1)) + sqrt (tmpvar_1)));
+  tmpvar_1 = sqrt(gl_Vertex.x);
+  gl_Position = vec4((((gl_Vertex.x + tmpvar_1) + (gl_Vertex.x * tmpvar_1)) + sqrt(tmpvar_1)));
 }
 

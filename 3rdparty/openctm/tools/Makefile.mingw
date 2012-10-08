@@ -1,0 +1,119 @@
+###############################################################################
+# Product:     OpenCTM tools
+# File:        Makefile.mingw
+# Description: Makefile for the OpenCTM tools, MinGW32 version
+###############################################################################
+# Copyright (c) 2009-2010 Marcus Geelnard
+#
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the authors be held liable for any damages
+# arising from the use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+#
+#     1. The origin of this software must not be misrepresented; you must not
+#     claim that you wrote the original software. If you use this software
+#     in a product, an acknowledgment in the product documentation would be
+#     appreciated but is not required.
+#
+#     2. Altered source versions must be plainly marked as such, and must not
+#     be misrepresented as being the original software.
+#
+#     3. This notice may not be removed or altered from any source
+#     distribution.
+###############################################################################
+
+OPENCTMDIR = ..\lib
+GLEWDIR = glew
+JPEGDIR = jpeg
+RPLYDIR = rply
+TINYXMLDIR = tinyxml
+ZLIBDIR = zlib
+PNGLITEDIR = pnglite
+
+CPP = g++
+CPPFLAGS = -c -O3 -W -Wall -I$(OPENCTMDIR) -I$(RPLYDIR) -I$(JPEGDIR) -I$(TINYXMLDIR) -I$(GLEWDIR) -I$(ZLIBDIR) -I$(PNGLITEDIR) -DGLEW_STATIC
+RC = windres
+
+MESHOBJS = mesh.o meshio.o ctm.o ply.o rply.o stl.o 3ds.o dae.o obj.o lwo.o off.o wrl.o
+CTMCONVOBJS = ctmconv.o common.o systimer.o convoptions.o $(MESHOBJS) ctmconv-res.o
+CTMVIEWEROBJS = ctmviewer.o common.o image.o systimer.o sysdialog_win.o convoptions.o glew.o pnglite.o $(MESHOBJS) ctmviewer-res.o
+CTMBENCHOBJS = ctmbench.o systimer.o
+
+all: ctmconv.exe ctmviewer.exe ctmbench.exe
+
+clean:
+	del /Q ctmconv.exe ctmviewer.exe ctmbench.exe $(CTMCONVOBJS) $(CTMVIEWEROBJS) $(CTMBENCHOBJS) bin2c.exe phong_frag.h phong_vert.h
+	cd $(JPEGDIR) && $(MAKE) -f Makefile.mingw clean
+	cd $(TINYXMLDIR) && $(MAKE) -f Makefile.mingw clean
+	cd $(ZLIBDIR) && $(MAKE) -f Makefile.mingw clean
+
+openctm.dll: $(OPENCTMDIR)\openctm.dll
+	copy $< $@
+
+ctmconv.exe: $(CTMCONVOBJS) $(TINYXMLDIR)/libtinyxml.a openctm.dll
+	$(CPP) -s -o $@ -L$(OPENCTMDIR) -L$(TINYXMLDIR) $(CTMCONVOBJS) -lopenctm -ltinyxml
+
+ctmviewer.exe: $(CTMVIEWEROBJS) $(JPEGDIR)/libjpeg.a $(TINYXMLDIR)/libtinyxml.a $(ZLIBDIR)/libz.a openctm.dll
+	$(CPP) -mwindows -s -o $@ -L$(OPENCTMDIR) -L$(TINYXMLDIR) -L$(JPEGDIR) -L$(ZLIBDIR) $(CTMVIEWEROBJS) -lopenctm -ltinyxml -ljpeg -lz -lfreeglut -lopengl32 -lglu32 -lcomdlg32
+
+ctmbench.exe: $(CTMBENCHOBJS) openctm.dll
+	$(CPP) -s -o $@ -L$(OPENCTMDIR) $(CTMBENCHOBJS) -lopenctm
+
+%.o: %.cpp
+	$(CPP) $(CPPFLAGS) -o $@ $<
+
+ctmconv.o: ctmconv.cpp systimer.h convoptions.h mesh.h meshio.h
+ctmviewer.o: ctmviewer.cpp common.h image.h systimer.h sysdialog.h mesh.h meshio.h phong_vert.h phong_frag.h icons/icon_open.h icons/icon_save.h icons/icon_help.h
+ctmbench.o: ctmbench.cpp systimer.h
+common.o: common.cpp common.h
+image.o: image.cpp image.h common.h $(JPEGDIR)/libjpeg.a
+systimer.o: systimer.cpp systimer.h
+sysdialog_win.o: sysdialog_win.cpp sysdialog.h
+convoptions.o: convoptions.cpp convoptions.h
+mesh.o: mesh.cpp mesh.h convoptions.h
+meshio.o: meshio.cpp common.h convoptions.h mesh.h ctm.h ply.h stl.h 3ds.h dae.h obj.h lwo.h off.h wrl.h
+ctm.o: ctm.cpp ctm.h mesh.h convoptions.h
+ply.o: ply.cpp ply.h mesh.h convoptions.h common.h
+stl.o: stl.cpp stl.h mesh.h convoptions.h
+3ds.o: 3ds.cpp 3ds.h mesh.h convoptions.h
+dae.o: dae.cpp dae.h mesh.h convoptions.h
+obj.o: obj.cpp obj.h mesh.h convoptions.h common.h
+lwo.o: lwo.cpp lwo.h mesh.h convoptions.h
+off.o: off.cpp off.h mesh.h convoptions.h common.h
+wrl.o: wrl.cpp wrl.h mesh.h convoptions.h common.h
+
+phong_vert.h: phong.vert bin2c.exe
+	bin2c.exe phong.vert phongVertSrc > $@
+
+phong_frag.h: phong.frag bin2c.exe
+	bin2c.exe phong.frag phongFragSrc > $@
+
+bin2c.exe: bin2c.cpp
+	$(CPP) -Os -W -Wall -o $@ $<
+
+ctmconv-res.o: ctmconv.rc icons\openctm.ico
+	$(RC) $< $@
+
+ctmviewer-res.o: ctmviewer.rc icons\openctm.ico
+	$(RC) $< $@
+
+$(JPEGDIR)/libjpeg.a:
+	cd $(JPEGDIR) && $(MAKE) -f Makefile.mingw libjpeg.a
+
+$(ZLIBDIR)/libz.a:
+	cd $(ZLIBDIR) && $(MAKE) -f Makefile.mingw
+
+glew.o: $(GLEWDIR)/glew.c
+	gcc -c -Os -W -I$(GLEWDIR) -DGLEW_STATIC -o $@ $<
+
+rply.o: $(RPLYDIR)/rply.c
+	gcc -c -O2 -W -I$(RPLYDIR) -o $@ $<
+
+pnglite.o: $(PNGLITEDIR)/pnglite.c
+	gcc -c -O2 -W -I$(PNGLITEDIR) -o $@ $<
+
+$(TINYXMLDIR)/libtinyxml.a:
+	cd $(TINYXMLDIR) && $(MAKE) -f Makefile.mingw

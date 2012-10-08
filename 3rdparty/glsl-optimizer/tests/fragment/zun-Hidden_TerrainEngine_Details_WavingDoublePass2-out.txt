@@ -1,0 +1,24 @@
+uniform vec4 unity_Ambient;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform float _Cutoff;
+void main ()
+{
+  vec4 light_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color);
+  float x_3;
+  x_3 = (tmpvar_2.w - _Cutoff);
+  if ((x_3 < 0.0)) {
+    discard;
+  };
+  vec4 tmpvar_4;
+  tmpvar_4 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_1.w = tmpvar_4.w;
+  light_1.xyz = (tmpvar_4.xyz + unity_Ambient.xyz);
+  vec4 c_5;
+  c_5.xyz = (tmpvar_2.xyz * light_1.xyz);
+  c_5.w = tmpvar_2.w;
+  gl_FragData[0] = c_5;
+}
+

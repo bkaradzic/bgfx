@@ -1,0 +1,27 @@
+uniform vec4 _WorldSpaceLightPos0;
+uniform sampler2D _Splat3;
+uniform sampler2D _Splat2;
+uniform sampler2D _Splat1;
+uniform sampler2D _Splat0;
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _LightColor0;
+uniform sampler2D _Control;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0];
+  vec4 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[1];
+  vec4 c_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_Control, tmpvar_1.xy);
+  vec3 tmpvar_5;
+  tmpvar_5 = ((((tmpvar_4.x * texture2D (_Splat0, tmpvar_1.zw).xyz) + (tmpvar_4.y * texture2D (_Splat1, tmpvar_2.xy).xyz)) + (tmpvar_4.z * texture2D (_Splat2, tmpvar_2.zw).xyz)) + (tmpvar_4.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
+  vec4 c_6;
+  c_6.xyz = ((tmpvar_5 * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[3].xyz, _WorldSpaceLightPos0.xyz)) * texture2DProj (_ShadowMapTexture, gl_TexCoord[5]).x) * 2.0));
+  c_6.w = 0.0;
+  c_3.w = c_6.w;
+  c_3.xyz = (c_6.xyz + (tmpvar_5 * gl_TexCoord[4].xyz));
+  gl_FragData[0] = c_3;
+}
+

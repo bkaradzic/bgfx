@@ -67,7 +67,7 @@ static void visit_variable (ir_instruction* ir, void* data)
 	if (!var)
 		return;
 	ir_struct_usage_visitor* self = reinterpret_cast<ir_struct_usage_visitor*>(data);
-	const glsl_type* t = ir->type;
+	const glsl_type* t = var->type;
 	if (t->base_type == GLSL_TYPE_STRUCT)
 	{
 		if (!self->has_struct_entry (t))

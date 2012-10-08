@@ -34,6 +34,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
@@ -68,6 +70,8 @@ public:
    bool progress;
 };
 
+} /* unnamed namespace */
+
 static inline bool
 is_vec_zero(ir_constant *ir)
 {
@@ -78,6 +82,12 @@ static inline bool
 is_vec_one(ir_constant *ir)
 {
    return (ir == NULL) ? false : ir->is_one();
+}
+
+static inline bool
+is_vec_basis(ir_constant *ir)
+{
+   return (ir == NULL) ? false : ir->is_basis();
 }
 
 static void
@@ -187,7 +197,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    ir_expression *temp;
    unsigned int i;
 
-   assert(ir->get_num_operands() <= 2);
+   if (ir->get_num_operands() > 2)
+      return ir;
    for (i = 0; i < ir->get_num_operands(); i++) {
       if (ir->operands[i]->type->is_matrix())
 	 return ir;
@@ -320,6 +331,31 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (is_vec_one(op_const[1])) {
 	 this->progress = true;
 	 return swizzle_if_required(ir, ir->operands[0]);
+      }
+      break;
+
+   case ir_binop_dot:
+      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir_constant::zero(mem_ctx, ir->type);
+      }
+      if (is_vec_basis(op_const[0])) {
+	 this->progress = true;
+	 unsigned component = 0;
+	 for (unsigned c = 0; c < op_const[0]->type->vector_elements; c++) {
+	    if (op_const[0]->value.f[c] == 1.0)
+	       component = c;
+	 }
+	 return new(mem_ctx) ir_swizzle(ir->operands[1], component, 0, 0, 0, 1);
+      }
+      if (is_vec_basis(op_const[1])) {
+	 this->progress = true;
+	 unsigned component = 0;
+	 for (unsigned c = 0; c < op_const[1]->type->vector_elements; c++) {
+	    if (op_const[1]->value.f[c] == 1.0)
+	       component = c;
+	 }
+	 return new(mem_ctx) ir_swizzle(ir->operands[0], component, 0, 0, 0, 1);
       }
       break;
 

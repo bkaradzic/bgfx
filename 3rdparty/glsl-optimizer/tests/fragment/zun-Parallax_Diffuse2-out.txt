@@ -1,0 +1,37 @@
+uniform sampler2D unity_LightmapInd;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D _ParallaxMap;
+uniform float _Parallax;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0];
+  vec3 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[3].xyz;
+  vec4 light_3;
+  vec2 tmpvar_4;
+  vec3 v_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = normalize(gl_TexCoord[1].xyz);
+  v_5.xy = tmpvar_6.xy;
+  v_5.z = (tmpvar_6.z + 0.42);
+  tmpvar_4 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_6.xy / v_5.z));
+  vec4 tmpvar_7;
+  tmpvar_7 = (texture2D (_MainTex, (tmpvar_1.xy + tmpvar_4)) * _Color);
+  vec4 normal_8;
+  normal_8.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_4)).wy * 2.0) - 1.0);
+  normal_8.z = sqrt(((1.0 - (normal_8.x * normal_8.x)) - (normal_8.y * normal_8.y)));
+  vec4 tmpvar_9;
+  tmpvar_9 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
+  light_3.w = tmpvar_9.w;
+  light_3.xyz = (tmpvar_9.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_2.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_2.xy).xyz), vec3(clamp (tmpvar_2.z, 0.0, 1.0))));
+  vec4 c_10;
+  c_10.xyz = (tmpvar_7.xyz * light_3.xyz);
+  c_10.w = tmpvar_7.w;
+  gl_FragData[0] = c_10;
+}
+

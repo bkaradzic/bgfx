@@ -2,12 +2,12 @@ varying vec4 varColor;
 uniform vec4 uniColors[4];
 void main ()
 {
-  vec4 col;
+  vec4 col_1;
   gl_Position = gl_Vertex;
-  col = uniColors[0];
-  col = (col + uniColors[1]);
-  col = (col + uniColors[2]);
-  col = (col + uniColors[3]);
-  varColor = col;
+  col_1 = uniColors[0];
+  col_1 = (col_1 + uniColors[1]);
+  col_1 = (col_1 + uniColors[2]);
+  col_1 = (col_1 + uniColors[3]);
+  varColor = col_1;
 }
 

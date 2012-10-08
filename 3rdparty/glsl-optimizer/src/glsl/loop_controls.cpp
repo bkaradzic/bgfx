@@ -26,6 +26,8 @@
 #include "glsl_types.h"
 #include "loop_analysis.h"
 #include "ir_hierarchical_visitor.h"
+#include "ir_variable_refcount.h"
+
 
 /**
  * Find an initializer of a variable outside a loop
@@ -44,6 +46,8 @@
 ir_rvalue *
 find_initial_value(ir_loop *loop, ir_variable *var)
 {
+   ir_variable_refcount_visitor refs;
+   
    for (exec_node *node = loop->prev;
 	!node->is_head_sentinel();
 	node = node->prev) {
@@ -55,7 +59,10 @@ find_initial_value(ir_loop *loop, ir_variable *var)
       case ir_type_loop_jump:
       case ir_type_return:
       case ir_type_if:
-	 return NULL;
+         ir->accept(&refs);
+         if (refs.find_variable_entry(var))
+            return NULL;
+         break;
 
       case ir_type_function:
       case ir_type_function_signature:

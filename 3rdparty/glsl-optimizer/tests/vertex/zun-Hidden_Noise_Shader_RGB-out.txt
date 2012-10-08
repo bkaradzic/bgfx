@@ -1,0 +1,25 @@
+uniform vec4 _ScratchOffsetScale;
+uniform vec4 _GrainOffsetScale;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_MultiTexCoord0.xy;
+  vec4 tmpvar_2;
+  tmpvar_2.zw = vec2(0.0, 0.0);
+  tmpvar_2.x = tmpvar_1.x;
+  tmpvar_2.y = tmpvar_1.y;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec4 tmpvar_3;
+  tmpvar_3.zw = vec2(0.0, 0.0);
+  tmpvar_3.xy = (gl_TextureMatrix[0] * tmpvar_2).xy;
+  gl_TexCoord[0] = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4.zw = vec2(0.0, 0.0);
+  tmpvar_4.xy = ((gl_MultiTexCoord0.xy * _GrainOffsetScale.zw) + _GrainOffsetScale.xy);
+  gl_TexCoord[1] = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.zw = vec2(0.0, 0.0);
+  tmpvar_5.xy = ((gl_MultiTexCoord0.xy * _ScratchOffsetScale.zw) + _ScratchOffsetScale.xy);
+  gl_TexCoord[2] = tmpvar_5;
+}
+

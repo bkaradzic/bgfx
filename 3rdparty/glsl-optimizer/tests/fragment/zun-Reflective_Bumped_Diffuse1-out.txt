@@ -1,0 +1,49 @@
+uniform sampler2D unity_LightmapInd;
+uniform sampler2D unity_Lightmap;
+uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform samplerCube _Cube;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0];
+  vec4 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[2];
+  vec4 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[3];
+  vec4 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[4];
+  vec3 tmpvar_5;
+  tmpvar_5 = gl_TexCoord[5].xyz;
+  vec4 col_6;
+  vec4 light_7;
+  vec3 tmpvar_8;
+  tmpvar_8.x = tmpvar_2.w;
+  tmpvar_8.y = tmpvar_3.w;
+  tmpvar_8.z = tmpvar_4.w;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, tmpvar_1.xy);
+  vec4 normal_10;
+  normal_10.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
+  normal_10.z = sqrt(((1.0 - (normal_10.x * normal_10.x)) - (normal_10.y * normal_10.y)));
+  vec3 tmpvar_11;
+  tmpvar_11.x = dot (tmpvar_2.xyz, normal_10.xyz);
+  tmpvar_11.y = dot (tmpvar_3.xyz, normal_10.xyz);
+  tmpvar_11.z = dot (tmpvar_4.xyz, normal_10.xyz);
+  vec4 tmpvar_12;
+  tmpvar_12 = (textureCube (_Cube, (tmpvar_8 - (2.0 * (dot (tmpvar_11, tmpvar_8) * tmpvar_11)))) * tmpvar_9.w);
+  vec4 tmpvar_13;
+  tmpvar_13 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_7.w = tmpvar_13.w;
+  light_7.xyz = (tmpvar_13.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_5.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_5.xy).xyz), vec3(clamp (tmpvar_5.z, 0.0, 1.0))));
+  vec4 c_14;
+  c_14.xyz = ((tmpvar_9 * _Color).xyz * light_7.xyz);
+  c_14.w = (tmpvar_12.w * _ReflectColor.w);
+  col_6.w = c_14.w;
+  col_6.xyz = (c_14.xyz + (tmpvar_12.xyz * _ReflectColor.xyz));
+  gl_FragData[0] = col_6;
+}
+

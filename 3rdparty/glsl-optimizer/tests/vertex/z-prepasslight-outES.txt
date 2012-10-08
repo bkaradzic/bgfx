@@ -1,0 +1,26 @@
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec4 xlv_TEXCOORD0;
+uniform highp mat4 glstate_matrix_mvp;
+uniform highp mat4 glstate_matrix_modelview0;
+uniform highp vec4 _ProjectionParams;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+void main ()
+{
+  highp vec3 tmpvar_1;
+  tmpvar_1 = _glesNormal;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = (glstate_matrix_mvp * _glesVertex);
+  highp vec4 o_3;
+  highp vec4 tmpvar_4;
+  tmpvar_4 = (tmpvar_2 * 0.5);
+  highp vec2 tmpvar_5;
+  tmpvar_5.x = tmpvar_4.x;
+  tmpvar_5.y = (tmpvar_4.y * _ProjectionParams.x);
+  o_3.xy = (tmpvar_5 + tmpvar_4.w);
+  o_3.zw = tmpvar_2.zw;
+  gl_Position = tmpvar_2;
+  xlv_TEXCOORD0 = o_3;
+  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), tmpvar_1, vec3(float((tmpvar_1.z != 0.0))));
+}
+

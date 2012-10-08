@@ -1,0 +1,17 @@
+varying lowp float xx;
+void main ()
+{
+  lowp float c_1;
+  lowp float tmpvar_2;
+  tmpvar_2 = (xx * 2.0);
+  if ((tmpvar_2 < 0.0)) {
+    discard;
+  };
+  c_1 = (xx + xx);
+  c_1 = (c_1 + xx);
+  c_1 = (c_1 + xx);
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = vec4(c_1);
+  gl_FragColor = tmpvar_3;
+}
+

@@ -27,6 +27,7 @@
 
 extern "C" {
 #include "main/core.h" /* for struct gl_context */
+#include "main/context.h"
 }
 
 #include "ralloc.h"
@@ -36,8 +37,9 @@ extern "C" {
 #include "ir_optimization.h"
 #include "loop_analysis.h"
 
-_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
+_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       GLenum target, void *mem_ctx)
+ : ctx(_ctx)
 {
    switch (target) {
    case GL_VERTEX_SHADER:   this->target = vertex_shader; break;
@@ -50,7 +52,10 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->symbols = new(mem_ctx) glsl_symbol_table;
    this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
-   this->loop_or_switch_nesting = NULL;
+   this->loop_nesting_ast = NULL;
+   this->switch_state.switch_nesting_ast = NULL;
+
+   this->num_builtins_to_link = 0;
 
    /* Set default language version and extensions */
    this->language_version = 110;
@@ -80,23 +85,11 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
 
-   /* Note: Once the OpenGL 3.0 'forward compatible' context or the OpenGL 3.2
-    * Core context is supported, this logic will need change.  Older versions of
-    * GLSL are no longer supported outside the compatibility contexts of 3.x.
-    */
-   this->Const.GLSL_100ES = (ctx->API == API_OPENGLES2)
-      || ctx->Extensions.ARB_ES2_compatibility;
-   this->Const.GLSL_110 = (ctx->API == API_OPENGL);
-   this->Const.GLSL_120 = (ctx->API == API_OPENGL)
-      && (ctx->Const.GLSLVersion >= 120);
-   this->Const.GLSL_130 = (ctx->API == API_OPENGL)
-      && (ctx->Const.GLSLVersion >= 130);
-
    const unsigned lowest_version =
       (ctx->API == API_OPENGLES2) || ctx->Extensions.ARB_ES2_compatibility
       ? 100 : 110;
    const unsigned highest_version =
-      (ctx->API == API_OPENGL) ? ctx->Const.GLSLVersion : 100;
+      _mesa_is_desktop_gl(ctx) ? ctx->Const.GLSLVersion : 100;
    char *supported = ralloc_strdup(this, "");
 
    for (unsigned ver = lowest_version; ver <= highest_version; ver += 10) {
@@ -111,6 +104,13 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    }
 
    this->supported_version_string = supported;
+
+   if (ctx->Const.ForceGLSLExtensionsWarn)
+      _mesa_glsl_process_extension("all", NULL, "warn", NULL, this);
+
+   this->default_uniform_qualifier = new(this) ast_type_qualifier();
+   this->default_uniform_qualifier->flags.q.shared = 1;
+   this->default_uniform_qualifier->flags.q.column_major = 1;
 }
 
 const char *
@@ -126,24 +126,40 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
    return "unknown";
 }
 
+/* This helper function will append the given message to the shader's
+   info log and report it via GL_ARB_debug_output. Per that extension,
+   'type' is one of the enum values classifying the message, and
+   'id' is the implementation-defined ID of the given message. */
+static void
+_mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
+               GLenum type, GLuint id, const char *fmt, va_list ap)
+{
+   bool error = (type == GL_DEBUG_TYPE_ERROR_ARB);
+
+   assert(state->info_log != NULL);
+
+   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): %s: ",
+					    locp->source,
+					    locp->first_line,
+					    locp->first_column,
+					    error ? "error" : "warning");
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
+
+   ralloc_strcat(&state->info_log, "\n");
+}
 
 void
 _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		 const char *fmt, ...)
 {
    va_list ap;
+   GLenum type = GL_DEBUG_TYPE_ERROR_ARB;
 
    state->error = true;
 
-   assert(state->info_log != NULL);
-   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): error: ",
-					    locp->source,
-					    locp->first_line,
-					    locp->first_column);
    va_start(ap, fmt);
-   ralloc_vasprintf_append(&state->info_log, fmt, ap);
+   _mesa_glsl_msg(locp, state, type, SHADER_ERROR_UNKNOWN, fmt, ap);
    va_end(ap);
-   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -152,16 +168,11 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		   const char *fmt, ...)
 {
    va_list ap;
+   GLenum type = GL_DEBUG_TYPE_OTHER_ARB;
 
-   assert(state->info_log != NULL);
-   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): warning: ",
-					    locp->source,
-					    locp->first_line,
-					    locp->first_column);
    va_start(ap, fmt);
-   ralloc_vasprintf_append(&state->info_log, fmt, ap);
+   _mesa_glsl_msg(locp, state, type, 0, fmt, ap);
    va_end(ap);
-   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -253,6 +264,7 @@ struct _mesa_glsl_extension {
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    /*                                  target availability  API availability */
    /* name                             VS     GS     FS     GL     ES         supported flag */
+   EXT(ARB_conservative_depth,         false, false, true,  true,  false,     ARB_conservative_depth),
    EXT(ARB_draw_buffers,               false, false, true,  true,  false,     dummy_true),
    EXT(ARB_draw_instanced,             true,  false, false, true,  false,     ARB_draw_instanced),
    EXT(ARB_explicit_attrib_location,   true,  false, true,  true,  false,     ARB_explicit_attrib_location),
@@ -262,10 +274,14 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_shader_texture_lod,         true,  false, true,  true,  true,      ARB_shader_texture_lod),
    EXT(EXT_shader_texture_lod,         true,  false, true,  true,  true,      ARB_shader_texture_lod),
    EXT(ARB_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
-   EXT(AMD_conservative_depth,         true,  false, true,  true,  false,     AMD_conservative_depth),
+   EXT(AMD_conservative_depth,         false, false, true,  true,  false,     ARB_conservative_depth),
    EXT(AMD_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
    EXT(OES_texture_3D,                 true,  false, true,  false, true,      EXT_texture3D),
-   EXT(OES_standard_derivatives,       false, false, true,  false, true,      OES_standard_derivatives),
+   EXT(OES_EGL_image_external,         true,  false, true,  false, true,      OES_EGL_image_external),
+   EXT(ARB_shader_bit_encoding,        true,  true,  true,  true,  false,     ARB_shader_bit_encoding),
+   EXT(ARB_uniform_buffer_object,      true,  false, true,  true,  false,     ARB_uniform_buffer_object),
+   EXT(OES_standard_derivatives,       false, false, true,  false,  true,     OES_standard_derivatives),
+   EXT(EXT_shadow_samplers,            false, false, true,  false, true,      EXT_shadow_samplers),
 };
 
 #undef EXT
@@ -623,6 +639,7 @@ ast_expression::ast_expression(int oper,
    this->subexpressions[0] = ex0;
    this->subexpressions[1] = ex1;
    this->subexpressions[2] = ex2;
+   this->non_lvalue_description = NULL;
 }
 
 
@@ -704,7 +721,7 @@ ast_declaration::print(void) const
 }
 
 
-ast_declaration::ast_declaration(char *identifier, int is_array,
+ast_declaration::ast_declaration(const char *identifier, int is_array,
 				 ast_expression *array_size,
 				 ast_expression *initializer)
 {
@@ -741,6 +758,7 @@ ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
 {
    this->type = type;
    this->invariant = false;
+   this->ubo_qualifiers_valid = false;
 }
 
 void
@@ -800,6 +818,106 @@ ast_selection_statement::ast_selection_statement(ast_expression *condition,
    this->condition = condition;
    this->then_statement = then_statement;
    this->else_statement = else_statement;
+}
+
+
+void
+ast_switch_statement::print(void) const
+{
+   printf("switch ( ");
+   test_expression->print();
+   printf(") ");
+
+   body->print();
+}
+
+
+ast_switch_statement::ast_switch_statement(ast_expression *test_expression,
+					   ast_node *body)
+{
+   this->test_expression = test_expression;
+   this->body = body;
+}
+
+
+void
+ast_switch_body::print(void) const
+{
+   printf("{\n");
+   if (stmts != NULL) {
+      stmts->print();
+   }
+   printf("}\n");
+}
+
+
+ast_switch_body::ast_switch_body(ast_case_statement_list *stmts)
+{
+   this->stmts = stmts;
+}
+
+
+void ast_case_label::print(void) const
+{
+   if (test_value != NULL) {
+      printf("case ");
+      test_value->print();
+      printf(": ");
+   } else {
+      printf("default: ");
+   }
+}
+
+
+ast_case_label::ast_case_label(ast_expression *test_value)
+{
+   this->test_value = test_value;
+}
+
+
+void ast_case_label_list::print(void) const
+{
+   foreach_list_const(n, & this->labels) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
+   }
+   printf("\n");
+}
+
+
+ast_case_label_list::ast_case_label_list(void)
+{
+}
+
+
+void ast_case_statement::print(void) const
+{
+   labels->print();
+   foreach_list_const(n, & this->stmts) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
+      printf("\n");
+   }
+}
+
+
+ast_case_statement::ast_case_statement(ast_case_label_list *labels)
+{
+   this->labels = labels;
+}
+
+
+void ast_case_statement_list::print(void) const
+{
+   foreach_list_const(n, & this->cases) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
+   }
+}
+
+
+ast_case_statement_list::ast_case_statement_list(void)
+{
 }
 
 
@@ -870,8 +988,8 @@ ast_struct_specifier::print(void) const
 }
 
 
-ast_struct_specifier::ast_struct_specifier(char *identifier,
-					   ast_node *declarator_list)
+ast_struct_specifier::ast_struct_specifier(const char *identifier,
+					   ast_declarator_list *declarator_list)
 {
    if (identifier == NULL) {
       static unsigned anon_count = 1;
@@ -882,8 +1000,27 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
 
+/**
+ * Do the set of common optimizations passes
+ *
+ * \param ir                          List of instructions to be optimized
+ * \param linked                      Is the shader linked?  This enables
+ *                                    optimizations passes that remove code at
+ *                                    global scope and could cause linking to
+ *                                    fail.
+ * \param uniform_locations_assigned  Have locations already been assigned for
+ *                                    uniforms?  This prevents the declarations
+ *                                    of unused uniforms from being removed.
+ *                                    The setting of this flag only matters if
+ *                                    \c linked is \c true.
+ * \param max_unroll_iterations       Maximum number of loop iterations to be
+ *                                    unrolled.  Setting to 0 forces all loops
+ *                                    to be unrolled.
+ */
 bool
-do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations)
+do_common_optimization(exec_list *ir, bool linked,
+		       bool uniform_locations_assigned,
+		       unsigned max_unroll_iterations)
 {
    GLboolean progress = GL_FALSE;
 
@@ -892,14 +1029,13 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
    if (linked) {
       progress = do_function_inlining(ir) || progress;
       progress = do_dead_functions(ir) || progress;
+      progress = do_structure_splitting(ir) || progress;
    }
-   progress = do_structure_splitting(ir) || progress;
    progress = do_if_simplification(ir) || progress;
-   progress = do_discard_simplification(ir) || progress;
    progress = do_copy_propagation(ir) || progress;
    progress = do_copy_propagation_elements(ir) || progress;
    if (linked)
-      progress = do_dead_code(ir) || progress;
+      progress = do_dead_code(ir, uniform_locations_assigned) || progress;
    else
       progress = do_dead_code_unlinked(ir) || progress;
    progress = do_dead_code_local(ir) || progress;
@@ -916,6 +1052,7 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
    progress = do_swizzle_swizzle(ir) || progress;
    progress = do_noop_swizzle(ir) || progress;
 
+   progress = optimize_split_arrays(ir, linked) || progress;
    progress = optimize_redundant_jumps(ir) || progress;
 
    loop_state *ls = analyze_loop_variables(ir);
