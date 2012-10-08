@@ -6,6 +6,7 @@ project "openctm"
 
 	defines {
 		"OPENCTM_STATIC",
+		"OPENCTM_NO_CPP",
 	}
 
 	includedirs {
