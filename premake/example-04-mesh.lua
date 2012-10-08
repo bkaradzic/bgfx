@@ -6,6 +6,7 @@ project "example-04-mesh"
 
 	defines {
 		"OPENCTM_STATIC",
+		"OPENCTM_NO_CPP",
 	}
 
 	includedirs {

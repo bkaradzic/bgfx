@@ -80,7 +80,8 @@ static const bgfx::Memory* load(const char* _filePath)
 	{
 		uint32_t size = (uint32_t)fsize(file);
 		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		fread(mem->data, 1, size, file);
+		size_t ignore = fread(mem->data, 1, size, file);
+		BX_UNUSED(ignore);
 		fclose(file);
 		mem->data[mem->size-1] = '\0';
 		return mem;
