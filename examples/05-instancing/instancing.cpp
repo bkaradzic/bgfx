@@ -156,11 +156,11 @@ int _main_(int _argc, char** _argv)
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
 
 	// Load vertex shader.
-	mem = loadShader("vs_cubes");
+	mem = loadShader("vs_instancing");
 	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
 
 	// Load fragment shader.
-	mem = loadShader("fs_cubes");
+	mem = loadShader("fs_instancing");
 	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
 
 	// Create program from shaders.
@@ -188,8 +188,8 @@ int _main_(int _argc, char** _argv)
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/01-cube");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering simple static mesh.");
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/05-instancing");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Geometry instancing.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
@@ -205,37 +205,49 @@ int _main_(int _argc, char** _argv)
 
 		float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
 
-		// Submit 11x11 cubes.
+		const uint16_t instanceStride = 80;
+		const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(121, instanceStride);
+		uint8_t* data = idb->data;
+
+		// Write instance data for 11x11 cubes.
 		for (uint32_t yy = 0; yy < 11; ++yy)
 		{
 			for (uint32_t xx = 0; xx < 11; ++xx)
 			{
-				float mtx[16];
+				float* mtx = (float*)data;
 				mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
 				mtx[12] = -15.0f + float(xx)*3.0f;
 				mtx[13] = -15.0f + float(yy)*3.0f;
 				mtx[14] = 0.0f;
 
-				// Set model matrix for rendering.
-				bgfx::setTransform(mtx);
+				float* color = (float*)&data[64];
+				color[0] = sin(time+float(xx)/11.0f)*0.5f+0.5f;
+				color[1] = cos(time+float(yy)/11.0f)*0.5f+0.5f;
+				color[2] = sin(time*3.0f)*0.5f+0.5f;
+				color[3] = 1.0f;
 
-				// Set vertex and fragment shaders.
-				bgfx::setProgram(program);
-
-				// Set vertex and index buffer.
-				bgfx::setVertexBuffer(vbh);
-				bgfx::setIndexBuffer(ibh);
-
-				// Set render states.
-				bgfx::setState(BGFX_STATE_RGB_WRITE
-					|BGFX_STATE_DEPTH_WRITE
-					|BGFX_STATE_DEPTH_TEST_LESS
-					);
-
-				// Submit primitive for rendering to view 0.
-				bgfx::submit(0);
+				data += instanceStride;
 			}
 		}
+
+		// Set vertex and fragment shaders.
+		bgfx::setProgram(program);
+
+		// Set vertex and index buffer.
+		bgfx::setVertexBuffer(vbh);
+		bgfx::setIndexBuffer(ibh);
+
+		// Set instance data buffer.
+		bgfx::setInstanceDataBuffer(idb);
+
+		// Set render states.
+		bgfx::setState(BGFX_STATE_RGB_WRITE
+			|BGFX_STATE_DEPTH_WRITE
+			|BGFX_STATE_DEPTH_TEST_LESS
+			);
+
+		// Submit primitive for rendering to view 0.
+		bgfx::submit(0);
 
 		// Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.

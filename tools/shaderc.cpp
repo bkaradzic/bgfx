@@ -1571,7 +1571,8 @@ int main(int _argc, const char* _argv[])
 				{
 					const Varying& var = varyingIt->second;
 					const char* name = var.m_name.c_str();
-					if (0 == strncmp(name, "a_", 2) )
+					if (0 == strncmp(name, "a_", 2)
+					||  0 == strncmp(name, "i_", 2) )
 					{
 						preprocessor.writef("attribute %s %s;\n", var.m_type.c_str(), name);
 					}

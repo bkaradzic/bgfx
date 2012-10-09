@@ -39,6 +39,11 @@
 #	define vec2_splat(_x) float2(_x, _x)
 #	define vec3_splat(_x) float3(_x, _x, _x)
 #	define vec4_splat(_x) float4(_x, _x, _x, _x)
+
+vec4 instMul(mat4 _mtx, vec4 _vec)
+{
+	return mul(_vec, _mtx);
+}
 #elif BGFX_SHADER_LANGUAGE_GLSL
 #	define frac fract
 #	define lerp mix
@@ -50,6 +55,11 @@
 #	define vec2_splat(_x) vec2(_x)
 #	define vec3_splat(_x) vec3(_x)
 #	define vec4_splat(_x) vec4(_x)
+
+vec4 instMul(mat4 _mtx, vec4 _vec)
+{
+	return mul(_mtx, _vec);
+}
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 
 #endif // __cplusplus

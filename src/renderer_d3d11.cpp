@@ -541,9 +541,10 @@ namespace bgfx
 //			DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE) );
 		}
 
-		void setInputLayout(const VertexDecl& _vertexDecl, const Program& _program)
+		void setInputLayout(const VertexDecl& _vertexDecl, const Program& _program, uint8_t _numInstanceData)
 		{
 			uint64_t layoutHash = (uint64_t(_vertexDecl.m_hash)<<32) | _program.m_vsh->m_hash;
+			layoutHash ^= _numInstanceData;
 			ID3D11InputLayout* layout = m_inputLayoutCache.find(layoutHash);
 			if (NULL == layout)
 			{
@@ -560,8 +561,41 @@ namespace bgfx
 					decl.m_attributes[ii] = attr == 0 ? 0xff : attr == 0xff ? 0 : attr;
 				}
 
+
 				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, Attrib::Count, decl);
 				ptrdiff_t num = elem-vertexElements;
+
+				const D3D11_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 };
+
+				for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
+				{
+					uint32_t index = 8-_numInstanceData+ii;
+
+					uint32_t jj;
+					D3D11_INPUT_ELEMENT_DESC* curr;
+					for (jj = 0; jj < (uint32_t)num; ++jj)
+					{
+						curr = &vertexElements[jj];
+						if (0 == strcmp(curr->SemanticName, "TEXCOORD")
+						&&  curr->SemanticIndex == index)
+						{
+							break;
+						}
+					}
+
+					if (jj == num)
+					{
+						curr = elem;
+						++elem;
+					}
+
+					memcpy(curr, &inst, sizeof(D3D11_INPUT_ELEMENT_DESC) );
+					curr->InputSlot = 1;
+					curr->SemanticIndex = index;
+					curr->AlignedByteOffset = ii*16;
+				}
+
+				num = elem-vertexElements;
 				DX_CHECK(m_device->CreateInputLayout(vertexElements
 					, uint32_t(num)
 					, _program.m_vsh->m_code->data
@@ -971,7 +1005,7 @@ namespace bgfx
 		uint32_t stride = vertexDecl.m_stride;
 		uint32_t offset = 0;
 		deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-		s_renderCtx.setInputLayout(vertexDecl, program);
+		s_renderCtx.setInputLayout(vertexDecl, program, 0);
 
 		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
 		deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
@@ -1070,7 +1104,7 @@ namespace bgfx
 
 			s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
 			deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-			s_renderCtx.setInputLayout(vertexDecl, program);
+			s_renderCtx.setInputLayout(vertexDecl, program, 0);
 
 			IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib.idx];
 			deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
@@ -2110,24 +2144,18 @@ namespace bgfx
 						uint32_t stride = vertexDecl.m_stride;
 						uint32_t offset = 0;
 						deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-						s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_program[programIdx]);
 
 						if (invalidHandle != state.m_instanceDataBuffer.idx)
 						{
-// 							const VertexBuffer& inst = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
-// 							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|state.m_numInstances) );
-// 							DX_CHECK(device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA|1) );
-// 							DX_CHECK(device->SetStreamSource(1, inst.m_ptr, state.m_instanceDataOffset, state.m_instanceDataStride) );
-// 
-// 							IDirect3DVertexDeclaration9* ptr = createVertexDecl(vertexDecl.m_decl, state.m_instanceDataStride/16);
-// 							DX_CHECK(device->SetVertexDeclaration(ptr) );
-// 							DX_RELEASE(ptr, 0);
+ 							const VertexBuffer& inst = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
+							uint32_t instStride = state.m_instanceDataStride;
+							deviceCtx->IASetVertexBuffers(1, 1, &inst.m_ptr, &instStride, &state.m_instanceDataOffset);
+							s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_program[programIdx], state.m_instanceDataStride/16);
 						}
 						else
 						{
-// 							DX_CHECK(device->SetStreamSourceFreq(0, 1) );
-// 							DX_CHECK(device->SetStreamSource(1, NULL, 0, 0) );
-// 							DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
+							deviceCtx->IASetVertexBuffers(1, 0, NULL, NULL, NULL);
+							s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_program[programIdx], 0);
 						}
 					}
 					else
@@ -2177,7 +2205,7 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							deviceCtx->DrawIndexed(numIndices, 0, state.m_startVertex);
+							deviceCtx->DrawIndexedInstanced(numIndices, state.m_numInstances, 0, state.m_startVertex, 0);
 						}
 						else if (primNumVerts <= state.m_numIndices)
 						{
@@ -2186,7 +2214,7 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							deviceCtx->DrawIndexed(numIndices, state.m_startIndex, state.m_startVertex);
+							deviceCtx->DrawIndexedInstanced(numIndices, state.m_numInstances, state.m_startIndex, state.m_startVertex, 0);
 						}
 					}
 					else
@@ -2195,7 +2223,7 @@ namespace bgfx
 						numInstances = state.m_numInstances;
 						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-						deviceCtx->Draw(numVertices, state.m_startVertex);
+						deviceCtx->DrawInstanced(numVertices, state.m_numInstances, state.m_startVertex, 0);
 					}
 
 					statsNumPrimsSubmitted += numPrimsSubmitted;
