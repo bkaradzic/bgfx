@@ -904,6 +904,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 	{
 		printCode(_code.c_str() );
 		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x %s\n", hr, errorMsg->GetBufferPointer() );
+		errorMsg->Release();
 		return false;
 	}
 
@@ -1082,15 +1083,12 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 		reflect->Release();
 	}
 
-	if (NULL != code)
-	{
-		code->Release();
-	}
-
 	if (NULL != errorMsg)
 	{
 		errorMsg->Release();
 	}
+
+	code->Release();
 
 	return true;
 #else
