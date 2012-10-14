@@ -417,7 +417,7 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	void Frame::submit(uint8_t _id)
+	void Frame::submit(uint8_t _id, int32_t _depth)
 	{
 		if (m_discard)
 		{
@@ -432,6 +432,7 @@ namespace bgfx
 			return;
 		}
 
+		m_key.m_depth = _depth;
 		m_key.m_view = _id;
 		m_key.m_seq = s_ctx.m_seq[_id] & s_ctx.m_seqMask[_id];
 		s_ctx.m_seq[_id]++;
@@ -448,7 +449,7 @@ namespace bgfx
 		m_flags = BGFX_STATE_NONE;
 	}
 
-	void Frame::submitMask(uint32_t _viewMask)
+	void Frame::submitMask(uint32_t _viewMask, int32_t _depth)
 	{
 		if (m_discard)
 		{
@@ -462,6 +463,8 @@ namespace bgfx
 			m_numDropped += uint32_cntbits(_viewMask);
 			return;
 		}
+
+		m_key.m_depth = _depth;
 
 		for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
 		{
@@ -1221,14 +1224,14 @@ namespace bgfx
 		s_ctx.m_submit->setTexture(_stage, _sampler, _handle, _depth);
 	}
 
-	void submit(uint8_t _id)
+	void submit(uint8_t _id, int32_t _depth)
 	{
-		s_ctx.m_submit->submit(_id);
+		s_ctx.m_submit->submit(_id, _depth);
 	}
 
-	void submitMask(uint32_t _viewMask)
+	void submitMask(uint32_t _viewMask, int32_t _depth)
 	{
-		s_ctx.m_submit->submitMask(_viewMask);
+		s_ctx.m_submit->submitMask(_viewMask, _depth);
 	}
 
 	void saveScreenShot(const char* _filePath)

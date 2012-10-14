@@ -1187,8 +1187,8 @@ namespace bgfx
 			}
 		}
 
-		void submit(uint8_t _id);
-		void submitMask(uint32_t _viewMask);
+		void submit(uint8_t _id, int32_t _depth);
+		void submitMask(uint32_t _viewMask, int32_t _depth);
 		void sort();
 
 		bool checkAvailTransientIndexBuffer(uint16_t _num)

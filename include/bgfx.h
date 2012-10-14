@@ -554,11 +554,11 @@ namespace bgfx
 	///
 	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth = false);
 
-	///
-	void submit(uint8_t _id);
+	/// Submit primitive for rendering into single view.
+	void submit(uint8_t _id, int32_t _depth = 0);
 
-	///
-	void submitMask(uint32_t _viewMask);
+	/// Submit primitive for rendering into multiple views.
+	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
 	///
 	void saveScreenShot(const char* _filePath);
