@@ -141,6 +141,8 @@ namespace stl = std;
 #	define BGFX_RENDERER_NAME "OpenGL"
 #elif BGFX_CONFIG_RENDERER_OPENGLES2
 #	define BGFX_RENDERER_NAME "OpenGL ES 2"
+#elif BGFX_CONFIG_RENDERER_OPENGLES3
+#	define BGFX_RENDERER_NAME "OpenGL ES 3"
 #endif // BGFX_CONFIG_RENDERER_
 
 namespace bgfx

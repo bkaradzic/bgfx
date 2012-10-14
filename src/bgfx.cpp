@@ -500,6 +500,8 @@ namespace bgfx
 		return RendererType::OpenGL;
 #elif BGFX_CONFIG_RENDERER_OPENGLES2
 		return RendererType::OpenGLES2;
+#elif BGFX_CONFIG_RENDERER_OPENGLES3
+		return RendererType::OpenGLES3;
 #else
 		return RendererType::Null;
 #endif // BGFX_CONFIG_RENDERER_

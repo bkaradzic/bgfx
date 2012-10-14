@@ -78,15 +78,30 @@
 #		define GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX 0x904B
 #	endif // GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
 
-#elif BGFX_CONFIG_RENDERER_OPENGLES2
-#	include <GLES2/gl2.h>
-#	include <GLES2/gl2ext.h>
+#elif BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
+#	if BGFX_CONFIG_RENDERER_OPENGLES2
+#		include <GLES2/gl2platform.h>
+#		include <GLES2/gl2.h>
+#		include <GLES2/gl2ext.h>
+#	elif BGFX_CONFIG_RENDERER_OPENGLES3
+#		include <GLES3/gl3platform.h>
+#		include <GLES3/gl3.h>
+#		include <GLES3/gl3ext.h>
+#	endif // BGFX_CONFIG_RENDERER_
 
 #	if BX_PLATFORM_WINDOWS
 #		include <EGL/egl.h>
 #		undef BGFX_USE_EGL
 #		define BGFX_USE_EGL 1
 #	endif // BX_PLATFORM_
+
+#	ifndef GL_BGRA_EXT
+#		define GL_BGRA_EXT 0x80E1
+#	endif // GL_BGRA_EXT
+
+#	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+#		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+#	endif // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
 
 #	ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
 #		define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
@@ -156,11 +171,11 @@ typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloa
 #endif // BGFX_USE_WGL
 
 #ifndef GL_APIENTRY
-#	define GL_APIENTRY APIENTRY
+#   define GL_APIENTRY APIENTRY
 #endif // GL_APIENTRY
 
 #ifndef GL_APIENTRYP
-#	define GL_APIENTRYP APIENTRYP
+#   define GL_APIENTRYP GL_APIENTRY*
 #endif // GL_APIENTRYP
 
 namespace bgfx

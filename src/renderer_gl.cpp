@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 
-#if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGL)
+#if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
@@ -41,9 +41,15 @@ namespace bgfx
 		glDrawElements(_mode, _count, _type, _indices);
 	}
 
+#if BGFX_CONFIG_RENDERER_OPENGLES3
+#	define s_vertexAttribDivisor glVertexAttribDivisor
+#	define s_drawArraysInstanced glDrawArraysInstanced
+#	define s_drawElementsInstanced glDrawElementsInstanced
+#else
 	static PFNGLVERTEXATTRIBDIVISORBGFXPROC s_vertexAttribDivisor = stubVertexAttribDivisor;
 	static PFNGLDRAWARRAYSINSTANCEDBGFXPROC s_drawArraysInstanced = stubDrawArraysInstanced;
 	static PFNGLDRAWELEMENTSINSTANCEDBGFXPROC s_drawElementsInstanced = stubDrawElementsInstanced;
+#endif // BGFX_CONFIG_RENDERER_OPENGLES3
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
@@ -333,24 +339,42 @@ namespace bgfx
 #elif BGFX_USE_EGL
 				if (NULL == m_context)
 				{
-					m_display = eglGetDisplay(NULL);
+					EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
+#	if BX_PLATFORM_WINDOWS
+					ndt = GetDC(g_bgfxHwnd);
+#	endif // BX_PLATFORM_
+					m_display = eglGetDisplay(ndt);
 					BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::OPENGL_UnableToCreateContext, "Failed to create display 0x%08x", m_display);
 
 					EGLint major = 0;
 					EGLint minor = 0;
 					EGLBoolean success = eglInitialize(m_display, &major, &minor);
-					BGFX_FATAL(success && major >= 1 && minor >= 4, Fatal::OPENGL_UnableToCreateContext, "Failed to initialize %d.%d", major, minor);
+					BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::OPENGL_UnableToCreateContext, "Failed to initialize %d.%d", major, minor);
 
 					EGLint attrs[] =
 					{
+						EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+
 #	if BX_PLATFORM_ANDROID
 						EGL_DEPTH_SIZE, 16,
 #	else
 						EGL_DEPTH_SIZE, 24,
 #	endif // BX_PLATFORM_
 
-						EGL_NONE 
+						EGL_NONE
 					};
+	
+					EGLint contextAttrs[] =
+					{
+#	if BGFX_CONFIG_RENDERER_OPENGLES2
+						EGL_CONTEXT_CLIENT_VERSION, 2,
+#	elif BGFX_CONFIG_RENDERER_OPENGLES3
+						EGL_CONTEXT_CLIENT_VERSION, 3,
+#	endif // BGFX_CONFIG_RENDERER_
+
+						EGL_NONE
+					};
+
 					EGLint numConfig = 0;
 					EGLConfig config = 0;
 					success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
@@ -359,7 +383,7 @@ namespace bgfx
 					m_surface = eglCreateWindowSurface(m_display, config, (EGLNativeWindowType)g_bgfxHwnd, NULL);
 					BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::OPENGL_UnableToCreateContext, "Failed to create surface.");
 
-					m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, NULL);
+					m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, contextAttrs);
 					BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::OPENGL_UnableToCreateContext, "Failed to create context.");
 
 					success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
@@ -368,6 +392,7 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)eglGetProcAddress(#_func); \
+					BX_TRACE(#_func " 0x%08x", _func); \
 					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
 				}
 #	include "glimports.h"
@@ -376,6 +401,7 @@ namespace bgfx
 #endif // BX_PLATFORM_
 			}
 
+#if !BGFX_CONFIG_RENDERER_OPENGLES3
 			if (NULL != glVertexAttribDivisor
 			&&  NULL != glDrawArraysInstanced
 			&&  NULL != glDrawElementsInstanced)
@@ -390,6 +416,7 @@ namespace bgfx
 				s_drawArraysInstanced = stubDrawArraysInstanced;
 				s_drawElementsInstanced = stubDrawElementsInstanced;
 			}
+#endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 
 			m_flip = true;
 		}
@@ -1505,8 +1532,8 @@ namespace bgfx
 					) );
 			}
 			break;
-		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+		}
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -1759,12 +1786,15 @@ namespace bgfx
 
 		BX_TRACE("GL_NUM_COMPRESSED_TEXTURE_FORMATS %d", numCmpFormats);
 
-		GLint* formats = (GLint*)alloca(sizeof(GLint)*numCmpFormats);
-		glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, formats);
-
-		for (GLint ii = 0; ii < numCmpFormats; ++ii)
+		if (0 < numCmpFormats)
 		{
-			BX_TRACE("\t%3d: %8x", ii, formats[ii]);
+			GLint* formats = (GLint*)alloca(sizeof(GLint)*numCmpFormats);
+			glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, formats);
+
+			for (GLint ii = 0; ii < numCmpFormats; ++ii)
+			{
+				BX_TRACE("\t%3d: %8x", ii, formats[ii]);
+			}
 		}
 
 #	define GL_GET(_pname, _min) BX_TRACE(#_pname " %d (min: %d)", glGet(_pname), _min)
@@ -1782,66 +1812,68 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 
 		const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
-
-		char name[1024];
- 		const char* pos = extensions;
- 		const char* end = extensions + strlen(extensions);
- 		while (pos < end)
- 		{
-			uint32_t len;
-			const char* space = strchr(pos, ' ');
-			if (NULL != space)
+		if (NULL != extensions)
+		{
+			char name[1024];
+			const char* pos = extensions;
+			const char* end = extensions + strlen(extensions);
+			while (pos < end)
 			{
-				len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
-			}
-			else
-			{
-				len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
-			}
-			
-			strncpy(name, pos, len);
-			name[len] = '\0';
+				uint32_t len;
+				const char* space = strchr(pos, ' ');
+				if (NULL != space)
+				{
+					len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
+				}
+				else
+				{
+					len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+				}
+				
+				strncpy(name, pos, len);
+				name[len] = '\0';
 
-			bool supported = false;
+				bool supported = false;
+				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
+				{
+					Extension& extension = s_extension[ii];
+					if (!extension.m_supported
+					&&  extension.m_initialize)
+					{
+						if (0 == strcmp(name, extension.m_name) )
+						{
+							extension.m_supported = true;
+							supported = true;
+							break;
+						}
+					}
+				}
+
+				BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
+				BX_UNUSED(supported);
+
+ 				pos += len+1;
+ 			}
+
+			BX_TRACE("Supported extensions:");
 			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 			{
-				Extension& extension = s_extension[ii];
-				if (!extension.m_supported
-				&&  extension.m_initialize)
+				if (s_extension[ii].m_supported)
 				{
-					if (0 == strcmp(name, extension.m_name) )
-					{
-						extension.m_supported = true;
-						supported = true;
-						break;
-					}
+					BX_TRACE("\t%2d: %s", ii, s_extension[ii].m_name);
 				}
 			}
 
-			BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
-			BX_UNUSED(supported);
+			s_renderCtx.m_dxtSupport = true
+				&& s_extension[Extension::EXT_texture_compression_dxt1].m_supported
+				&& s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
+				&& s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
+				;
 
- 			pos += len+1;
- 		}
-
-		BX_TRACE("Supported extensions:");
-		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
-		{
-			if (s_extension[ii].m_supported)
-			{
-				BX_TRACE("\t%2d: %s", ii, s_extension[ii].m_name);
-			}
+			s_renderCtx.m_dxtSupport |=
+				s_extension[Extension::EXT_texture_compression_s3tc].m_supported
+				;
 		}
-
-		s_renderCtx.m_dxtSupport = true
-			&& s_extension[Extension::EXT_texture_compression_dxt1].m_supported
-			&& s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
-			&& s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
-			;
-
-		s_renderCtx.m_dxtSupport |=
-			s_extension[Extension::EXT_texture_compression_s3tc].m_supported
-			;
 	}
 
 	void Context::rendererShutdown()
@@ -2678,4 +2710,4 @@ namespace bgfx
 	}
 }
 
-#endif // (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
+#endif // (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
