@@ -20,6 +20,9 @@ project "example-01-cubes"
 		"bgfx",
 	}
 
+	configuration { "emscripten" }
+		targetextension ".bc"
+
 	configuration { "nacl" }
 		targetextension ".nexe"
 

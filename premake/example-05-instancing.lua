@@ -27,6 +27,9 @@ project "example-05-instancing"
 		"openctm",
 	}
 
+	configuration { "emscripten" }
+		targetextension ".bc"
+
 	configuration { "nacl" }
 		targetextension ".nexe"
 

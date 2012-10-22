@@ -340,8 +340,10 @@ namespace bgfx
 				if (NULL == m_context)
 				{
 					EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
+					EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
 #	if BX_PLATFORM_WINDOWS
 					ndt = GetDC(g_bgfxHwnd);
+					nwt = g_bgfxHwnd;
 #	endif // BX_PLATFORM_
 					m_display = eglGetDisplay(ndt);
 					BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::OPENGL_UnableToCreateContext, "Failed to create display 0x%08x", m_display);
@@ -380,7 +382,7 @@ namespace bgfx
 					success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
 					BGFX_FATAL(success, Fatal::OPENGL_UnableToCreateContext, "eglChooseConfig");
 
-					m_surface = eglCreateWindowSurface(m_display, config, (EGLNativeWindowType)g_bgfxHwnd, NULL);
+					m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
 					BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::OPENGL_UnableToCreateContext, "Failed to create surface.");
 
 					m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, contextAttrs);
