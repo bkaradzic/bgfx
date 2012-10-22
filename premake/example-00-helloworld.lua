@@ -18,6 +18,9 @@ project "example-00-helloworld"
 		"bgfx",
 	}
 
+	configuration { "emscripten" }
+		targetextension ".bc"
+
 	configuration { "nacl" }
 		targetextension ".nexe"
 

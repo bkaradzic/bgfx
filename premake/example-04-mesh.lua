@@ -27,6 +27,9 @@ project "example-04-mesh"
 		"openctm",
 	}
 
+	configuration { "emscripten" }
+		targetextension ".bc"
+
 	configuration { "nacl" }
 		targetextension ".nexe"
 

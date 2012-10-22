@@ -20,6 +20,9 @@ project "example-03-raymarch"
 		"bgfx",
 	}
 
+	configuration { "emscripten" }
+		targetextension ".bc"
+
 	configuration { "nacl" }
 		targetextension ".nexe"
 

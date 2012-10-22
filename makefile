@@ -8,17 +8,18 @@ all:
 	premake --file=premake/premake4.lua --gcc=nacl gmake
 	premake --file=premake/premake4.lua --gcc=mingw gmake
 	premake --file=premake/premake4.lua --gcc=linux gmake
+	premake --file=premake/premake4.lua --gcc=emscripten gmake
 	make -s --no-print-directory -C src
 
-nacl-debug32:
-	make -C .build/projects/gmake-nacl config=debug32
-nacl-release32:
-	make -C .build/projects/gmake-nacl config=release32
-nacl-debug64:
-	make -C .build/projects/gmake-nacl config=debug64
-nacl-release64:
-	make -C .build/projects/gmake-nacl config=release64
-nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64
+linux-debug32:
+	make -C .build/projects/gmake-linux config=debug32
+linux-release32:
+	make -C .build/projects/gmake-linux config=release32
+linux-debug64:
+	make -C .build/projects/gmake-linux config=debug64
+linux-release64:
+	make -C .build/projects/gmake-linux config=release64
+linux: linux-debug32 linux-release32 linux-debug64 linux-release64
 
 mingw-debug32:
 	make -C .build/projects/gmake-mingw config=debug32
@@ -30,12 +31,12 @@ mingw-release64:
 	make -C .build/projects/gmake-mingw config=release64
 mingw: mingw-debug32 mingw-release32 mingw-debug64 mingw-release64
 
-linux-debug32:
-	make -C .build/projects/gmake-linux config=debug32
-linux-release32:
-	make -C .build/projects/gmake-linux config=release32
-linux-debug64:
-	make -C .build/projects/gmake-linux config=debug64
-linux-release64:
-	make -C .build/projects/gmake-linux config=release64
-linux: linux-debug32 linux-release32 linux-debug64 linux-release64
+nacl-debug32:
+	make -C .build/projects/gmake-nacl config=debug32
+nacl-release32:
+	make -C .build/projects/gmake-nacl config=release32
+nacl-debug64:
+	make -C .build/projects/gmake-nacl config=debug64
+nacl-release64:
+	make -C .build/projects/gmake-nacl config=release64
+nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64

@@ -22,6 +22,7 @@ newoption {
 	value = "GCC",
 	description = "Choose GCC flavor",
 	allowed = {
+		{ "emscripten", "Emscripten" },
 		{ "linux", "Linux" },
 		{ "mingw", "MinGW" },
 		{ "nacl", "Google Native Client" },
@@ -56,6 +57,13 @@ if _ACTION == "gmake" then
 	flags {
 		"ExtraWarnings",
 	}
+
+	if "emscripten" == _OPTIONS["gcc"] then
+		premake.gcc.cc = "emcc"
+		premake.gcc.cxx = "em++"
+		premake.gcc.ar = "emar"
+		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-emscripten")
+	end
 
 	if "linux" == _OPTIONS["gcc"] then
 		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-linux")
@@ -190,6 +198,11 @@ configuration { "linux", "x64" }
 	buildoptions {
 		"-m64",
 	}
+
+configuration { "emscripten" }
+	targetdir (BGFX_BUILD_DIR .. "emscripten" .. "/bin")
+	objdir (BGFX_BUILD_DIR .. "emscripten" .. "/obj")
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/emscripten" }
 
 configuration { "nacl" }
 	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600" }

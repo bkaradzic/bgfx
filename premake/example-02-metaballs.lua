@@ -20,6 +20,9 @@ project "example-02-metaballs"
 		"bgfx",
 	}
 
+	configuration { "emscripten" }
+		targetextension ".bc"
+
 	configuration { "nacl" }
 		targetextension ".nexe"
 
