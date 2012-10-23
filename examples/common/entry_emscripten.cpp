@@ -8,13 +8,13 @@
 #if BX_PLATFORM_EMSCRIPTEN
 
 #include <emscripten/emscripten.h>
-#include <pthread.h>
+#include <alloca.h>
+#include <setjmp.h>
 
 extern int _main_(int _argc, char** _argv);
 
-#include <setjmp.h>
-jmp_buf s_main;
-jmp_buf s_loop;
+static jmp_buf s_main;
+static jmp_buf s_loop;
 
 void emscripten_yield()
 {
@@ -36,6 +36,7 @@ int main(int _argc, char** _argv)
 {
 	if (!setjmp(s_loop) )
 	{
+		alloca(16<<10);
 		_main_(_argc, _argv);
 	}
 
