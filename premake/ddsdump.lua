@@ -14,5 +14,5 @@ project "ddsdump"
 	}
 
 	links {
-		"bgfx",
+--		"bgfx",
 	}

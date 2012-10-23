@@ -2951,7 +2951,7 @@ static int shiftsigned(int v, int shift, int bits)
 static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
 {
    uint8 *out;
-   unsigned int mr=0,mg=0,mb=0,ma=0, fake_a=0;
+   unsigned int mr=0,mg=0,mb=0,ma=0;
    stbi_uc pal[256][4];
    int psize=0,i,j,compress=0,width;
    int bpp, flip_vertically, pad, target, offset, hsz;
@@ -3000,7 +3000,6 @@ static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
                   mg = 0xffu <<  8;
                   mb = 0xffu <<  0;
                   ma = 0xffu << 24;
-                  fake_a = 1; // @TODO: check for cases like alpha value is all 0 and switch it to 255
                } else {
                   mr = 31u << 10;
                   mg = 31u <<  5;

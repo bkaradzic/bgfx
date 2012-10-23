@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Just hacking DDS loading code in here.
 #include "bgfx_p.h"
 using namespace bgfx;
 
@@ -20,6 +21,68 @@ using namespace bgfx;
 #include <bx/bx.h>
 #include <bx/commandline.h>
 #include <bx/uint32_t.h>
+
+namespace bgfx
+{
+	const Memory* alloc(uint32_t _size)
+	{
+		Memory* mem = (Memory*)::realloc(NULL, sizeof(Memory) + _size);
+		mem->size = _size;
+		mem->data = (uint8_t*)mem + sizeof(Memory);
+		return mem;
+	}
+
+	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
+	{
+		FILE* file = fopen(_filePath, "wb");
+		if ( NULL != file )
+		{
+			uint8_t type = _grayscale ? 3 : 2;
+			uint8_t bpp = _grayscale ? 8 : 32;
+
+			putc(0, file);
+			putc(0, file);
+			putc(type, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(0, file);
+			putc(_width&0xff, file);
+			putc( (_width>>8)&0xff, file);
+			putc(_height&0xff, file);
+			putc( (_height>>8)&0xff, file);
+			putc(bpp, file);
+			putc(32, file);
+
+			uint32_t dstPitch = _width*bpp/8;
+			if (_yflip)
+			{
+				uint8_t* data = (uint8_t*)_src + dstPitch*_height - _srcPitch;
+				for (uint32_t yy = 0; yy < _height; ++yy)
+				{
+					fwrite(data, dstPitch, 1, file);
+					data -= _srcPitch;
+				}
+			}
+			else
+			{
+				uint8_t* data = (uint8_t*)_src;
+				for (uint32_t yy = 0; yy < _height; ++yy)
+				{
+					fwrite(data, dstPitch, 1, file);
+					data += _srcPitch;
+				}
+			}
+
+			fclose(file);
+		}
+	}
+}
 
 long int fsize(FILE* _file)
 {
@@ -36,8 +99,9 @@ int main(int _argc, const char* _argv[])
 
 	FILE* file = fopen(_argv[1], "rb");
 	uint32_t size = fsize(file);
-	const Memory* mem = bgfx::alloc(size);
-	fread(mem->data, 1, size, file);
+	const Memory* mem = alloc(size);
+	size_t readSize = fread(mem->data, 1, size, file);
+	BX_UNUSED(readSize);
 	fclose(file);
 
 	Dds dds;
@@ -95,7 +159,7 @@ int main(int _argc, const char* _argv[])
 						char filePath[256];
 						_snprintf(filePath, sizeof(filePath), "mip%d_%d.tga", side, lod);
 
-						bgfx::saveTga(filePath, width, height, dstpitch, bits);
+						saveTga(filePath, width, height, dstpitch, bits);
 						free(bits);
 					}
 
