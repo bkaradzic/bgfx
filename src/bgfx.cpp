@@ -215,7 +215,14 @@ namespace bgfx
 		uint8_t* rgba = mem->data;
 		charsetFillTexture(vga8x8, rgba, 8, pitch, bpp);
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
-		m_texture = createTexture2D(2048, 24, 1, TextureFormat::L8, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT, mem);
+		m_texture = createTexture2D(2048, 24, 1, TextureFormat::L8
+						, BGFX_TEXTURE_MIN_POINT
+						| BGFX_TEXTURE_MAG_POINT
+						| BGFX_TEXTURE_MIP_POINT
+						| BGFX_TEXTURE_U_CLAMP
+						| BGFX_TEXTURE_V_CLAMP
+						, mem
+						);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 		mem = makeRef(vs_debugfont_dx9, sizeof(vs_debugfont_dx9) );

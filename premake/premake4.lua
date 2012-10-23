@@ -59,9 +59,14 @@ if _ACTION == "gmake" then
 	}
 
 	if "emscripten" == _OPTIONS["gcc"] then
-		premake.gcc.cc = "emcc"
-		premake.gcc.cxx = "em++"
-		premake.gcc.ar = "emar"
+
+		if not os.getenv("EMSCRIPTEN") then 
+			print("Set EMSCRIPTEN enviroment variables.")
+		end
+
+		premake.gcc.cc = "$(EMSCRIPTEN)/emcc"
+		premake.gcc.cxx = "$(EMSCRIPTEN)/em++"
+		premake.gcc.ar = "$(EMSCRIPTEN)/emar"
 		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-emscripten")
 	end
 
@@ -203,6 +208,10 @@ configuration { "emscripten" }
 	targetdir (BGFX_BUILD_DIR .. "emscripten" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "emscripten" .. "/obj")
 	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/emscripten" }
+	includedirs { "$(EMSCRIPTEN)/system/include" }
+	buildoptions {
+		"-pthread",
+	}
 
 configuration { "nacl" }
 	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600" }

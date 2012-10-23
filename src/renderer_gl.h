@@ -95,6 +95,10 @@
 #		define BGFX_USE_EGL 1
 #	endif // BX_PLATFORM_
 
+#	if BX_PLATFORM_EMSCRIPTEN
+#		include <emscripten/emscripten.h>
+#	endif // BX_PLATFORM_EMSCRIPTEN
+
 #	ifndef GL_BGRA_EXT
 #		define GL_BGRA_EXT 0x80E1
 #	endif // GL_BGRA_EXT
