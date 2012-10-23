@@ -391,14 +391,18 @@ namespace bgfx
 					success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 					BGFX_FATAL(success, Fatal::OPENGL_UnableToCreateContext, "Failed to set context.");
 
-#	define GL_IMPORT(_optional, _proto, _func) \
-				{ \
-					_func = (_proto)eglGetProcAddress(#_func); \
-					BX_TRACE(#_func " 0x%08x", _func); \
-					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
-				}
-#	include "glimports.h"
-#	undef GL_IMPORT
+#	if BX_PLATFORM_EMSCRIPTEN
+					emscripten_set_canvas_size(_width, _height);
+#	else
+#		define GL_IMPORT(_optional, _proto, _func) \
+					{ \
+						_func = (_proto)eglGetProcAddress(#_func); \
+						BX_TRACE(#_func " 0x%08x", _func); \
+						BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
+					}
+#		include "glimports.h"
+#		undef GL_IMPORT
+#	endif // !BX_PLATFORM_EMSCRIPTEN
 				}
 #endif // BX_PLATFORM_
 			}
