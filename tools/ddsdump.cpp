@@ -37,7 +37,8 @@ int main(int _argc, const char* _argv[])
 	FILE* file = fopen(_argv[1], "rb");
 	uint32_t size = fsize(file);
 	const Memory* mem = bgfx::alloc(size);
-	fread(mem->data, 1, size, file);
+	size_t readSize = fread(mem->data, 1, size, file);
+	BX_UNUSED(readSize);
 	fclose(file);
 
 	Dds dds;
