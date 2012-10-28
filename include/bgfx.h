@@ -152,6 +152,7 @@
 #define BGFX_RESET_MSAA_MASK            UINT32_C(0x00000070)
 #define BGFX_RESET_VSYNC                UINT32_C(0x00000080)
 
+#define BGFX_HANDLE(_name) struct _name { uint16_t idx; }
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
 namespace bgfx
@@ -236,19 +237,19 @@ namespace bgfx
 		};
 	};
 
-	static const uint16_t invalidHandle = 0xffff;
+	static const uint16_t invalidHandle = UINT16_MAX;
 
-	typedef struct { uint16_t idx; } DynamicIndexBufferHandle;
-	typedef struct { uint16_t idx; } DynamicVertexBufferHandle;
-	typedef struct { uint16_t idx; } FragmentShaderHandle;
-	typedef struct { uint16_t idx; } IndexBufferHandle;
-	typedef struct { uint16_t idx; } ProgramHandle;
-	typedef struct { uint16_t idx; } RenderTargetHandle;
-	typedef struct { uint16_t idx; } TextureHandle;
-	typedef struct { uint16_t idx; } UniformHandle;
-	typedef struct { uint16_t idx; } VertexBufferHandle;
-	typedef struct { uint16_t idx; } VertexDeclHandle;
-	typedef struct { uint16_t idx; } VertexShaderHandle;
+	BGFX_HANDLE(DynamicIndexBufferHandle);
+	BGFX_HANDLE(DynamicVertexBufferHandle);
+	BGFX_HANDLE(FragmentShaderHandle);
+	BGFX_HANDLE(IndexBufferHandle);
+	BGFX_HANDLE(ProgramHandle);
+	BGFX_HANDLE(RenderTargetHandle);
+	BGFX_HANDLE(TextureHandle);
+	BGFX_HANDLE(UniformHandle);
+	BGFX_HANDLE(VertexBufferHandle);
+	BGFX_HANDLE(VertexDeclHandle);
+	BGFX_HANDLE(VertexShaderHandle);
 
 	struct Memory
 	{
