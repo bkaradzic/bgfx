@@ -50,18 +50,21 @@ vec4 bgfxTextureCube(BgfxSamplerCube _sampler, vec3 _coord)
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform Texture2D _name ## Texture : register(t[_reg]); \
 			static BgfxSampler2D _name = { _name ## Sampler, _name ## Texture }
+#		define sampler2D BgfxSampler2D
 #		define texture2D(_name, _coord) bgfxTexture2D(_name, _coord)
 
 #		define SAMPLER3D(_name, _reg) \
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform Texture3D _name ## Texture : register(t[_reg]); \
 			static BgfxSampler3D _name = { _name ## Sampler, _name ## Texture }
+#		define sampler3D BgfxSampler3D
 #		define texture3D(_name, _coord) bgfxTexture3D(_name, _coord)
 
 #		define SAMPLERCUBE(_name, _reg) \
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform TextureCube _name ## Texture : register(t[_reg]); \
 			static BgfxSamplerCube _name = { _name ## Sampler, _name ## Texture }
+#		define samplerCube BgfxSamplerCube
 #		define textureCube(_name, _coord) bgfxTextureCube(_name, _coord)
 #	else
 #		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
