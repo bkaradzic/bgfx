@@ -1341,40 +1341,85 @@ const char* baseName(const char* _filePath)
 // 4.1    410
 // 4.2    420               11.0     vhdgf    5.0
 
+void help(const char* _error = NULL)
+{
+	if (NULL != _error)
+	{
+		fprintf(stderr, "Error:\n%s\n\n", _error);
+	}
+
+	fprintf(stderr
+		, "shaderc, bgfx shader compiler tool\n"
+		  "Copyright 2011-2012 Branimir Karadzic. All rights reserved.\n"
+		  "License: http://www.opensource.org/licenses/BSD-2-Clause\n\n"
+		);
+
+	fprintf(stderr
+		, "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n\n"
+		  "Options:\n"
+		  "\t-f                Input file path.\n"
+		  "\t-o                Output file path.\n"
+		  "\t    --bin2c       Generate C header file.\n"
+		  "\t    --depends     Generate makefile style depends file.\n"
+		  "\t    --platform    Target platform.\n"
+		  "\t         android\n"
+		  "\t         ios\n"
+		  "\t         linux\n"
+		  "\t         nacl\n"
+		  "\t         osx\n"
+		  "\t         windows\n"
+		  "\t    --type        Shader type (vertex, fragment)\n"
+		  "\t    --varyingdef  Path to varying.def.sc file.\n"
+		  "\n"
+		  "Options (DX9 and DX11 only):\n"
+		  "\n"
+		  "\t    --disasm      Disassemble compiled shader.\n"
+		  "\t-p, --profile     Shader model (f.e. ps_3_0).\n"
+		  "\n"
+		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
+		);
+}
+
 int main(int _argc, const char* _argv[])
 {
 	CommandLine cmdLine(_argc, _argv);
 
+	if (cmdLine.hasArg('h', "help") )
+	{
+		help();
+		return EXIT_FAILURE;
+	}
+
 	const char* filePath = cmdLine.findOption('f');
 	if (NULL == filePath)
 	{
-		fprintf(stderr, "Shader file name must be specified.\n");
+		help("Shader file name must be specified.");
 		return EXIT_FAILURE;
 	}
 
 	const char* outFilePath = cmdLine.findOption('o');
 	if (NULL == outFilePath)
 	{
-		fprintf(stderr, "Output file name must be specified.\n");
+		help("Output file name must be specified.");
 		return EXIT_FAILURE;
 	}
 
 	const char* type = cmdLine.findOption('\0', "type");
 	if (NULL == type)
 	{
-		fprintf(stderr, "Must specify shader type.");
+		help("Must specify shader type.");
 		return EXIT_FAILURE;
 	}
 
 	const char* platform = cmdLine.findOption('\0', "platform");
 	if (NULL == platform)
 	{
-		fprintf(stderr, "Must specify platform.\n");
+		help("Must specify platform.");
 		return EXIT_FAILURE;
 	}
 
 	uint32_t hlsl = 2;
-	const char* profile = cmdLine.findOption('p');
+	const char* profile = cmdLine.findOption('p', "profile");
 	if (NULL != profile)
 	{
 		if (0 == strncmp(&profile[1], "s_3", 3) )
@@ -1509,7 +1554,7 @@ int main(int _argc, const char* _argv[])
 	{
 		VaryingMap varyingMap;
 
-		File attribdef("varying.def.sc");
+		File attribdef(cmdLine.findOption("varyingdef", "varying.def.sc") );
 		const char* parse = attribdef.getData();
 		while (NULL != parse
 		   &&  *parse != '\0')
