@@ -517,7 +517,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
-	void init(bool _createRenderThread, FatalFn _fatal, ReallocFn _realloc, FreeFn _free, CacheFn _cache)
+	void init(FatalFn _fatal, ReallocFn _realloc, FreeFn _free, CacheFn _cache)
 	{
 		if (NULL != _fatal)
 		{
@@ -537,7 +537,9 @@ namespace bgfx
 		}
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
-		s_ctx.init(_createRenderThread);
+
+		// On NaCl renderer is on the main thread.
+		s_ctx.init(!BX_PLATFORM_NACL);
 	}
 
 	void shutdown()
@@ -669,7 +671,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 	}
 
-	const uint32_t g_constantTypeSize[ConstantType::Count] =
+	const uint32_t g_uniformTypeSize[UniformType::Count] =
 	{
 		sizeof(int32_t),
 		sizeof(float),
@@ -683,14 +685,14 @@ namespace bgfx
 		4*4*sizeof(float),
 	};
 
-	void ConstantBuffer::writeUniform(ConstantType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
+	void ConstantBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{
 		uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
 		write(opcode);
-		write(_value, g_constantTypeSize[_type]*_num);
+		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
-	void ConstantBuffer::writeUniformRef(ConstantType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
+	void ConstantBuffer::writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{
 		uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
@@ -722,7 +724,7 @@ namespace bgfx
 		{
 #	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
 			m_renderThread = CreateThread(NULL, 16<<10, renderThread, NULL, 0, NULL);
-#	elif BX_PLATFORM_LINUX
+#	elif BX_PLATFORM_POSIX
 			pthread_create(&m_renderThread, NULL, renderThread, NULL);
 #	endif // BX_PLATFORM_
 		}
@@ -770,7 +772,7 @@ namespace bgfx
 #	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
 			WaitForSingleObject(m_renderThread, INFINITE);
 			m_renderThread = NULL;
-#	elif BX_PLATFORM_LINUX
+#	elif BX_PLATFORM_POSIX
 			pthread_join(m_renderThread, NULL);
 			m_renderThread = 0;
 #	endif // BX_PLATFORM_*
@@ -1085,7 +1087,7 @@ namespace bgfx
 		s_ctx.destroyRenderTarget(_handle);
 	}
 
-	UniformHandle createUniform(const char* _name, ConstantType::Enum _type, uint16_t _num)
+	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num)
 	{
 		return s_ctx.createUniform(_name, _type, _num);
 	}
@@ -1211,9 +1213,9 @@ namespace bgfx
 		s_ctx.m_submit->setVertexBuffer(_vb, _numVertices);
 	}
 
-	void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)
 	{
-		s_ctx.m_submit->setInstanceDataBuffer(_idb);
+		s_ctx.m_submit->setInstanceDataBuffer(_idb, _num);
 	}
 
 	void setProgram(ProgramHandle _handle)

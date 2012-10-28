@@ -17,12 +17,15 @@ void main()
 	float sx = sin(pos.x*32.0+u_time*4.0)*0.5+0.5;
 	float cy = cos(pos.y*32.0+u_time*4.0)*0.5+0.5;
 	vec3 displacement = vec3(sx, cy, sx*cy);
-	pos = pos + a_normal*displacement*vec3(0.06, 0.06, 0.06);
+	vec3 normal = a_normal.xyz*2.0 - 1.0;
+
+	pos = pos + normal*displacement*vec3(0.06, 0.06, 0.06);
 
 	gl_Position = mul(u_modelViewProj, vec4(pos, 1.0) );
 	v_pos = gl_Position.xyz;
 	v_view = mul(u_modelView, vec4(pos, 1.0) ).xyz;
-	v_normal = mul(u_modelView, vec4(a_normal, 0.0) ).xyz;
+
+	v_normal = mul(u_modelView, vec4(normal, 0.0) ).xyz;
 
 	float len = length(displacement)*0.4+0.6;
 	v_color0 = vec4(len, len, len, 1.0);

@@ -10,9 +10,14 @@ project "shaderc"
 			GLSL_OPTIMIZER .. "src/glsl/msvc",
 		}
 
-	configuration { "windows" }
+	configuration { "windows", "vs*" }
 		includedirs {
 			GLSL_OPTIMIZER .. "include/c99",
+		}
+
+	configuration { "windows" }
+		includedirs {
+			"$(DXSDK_DIR)/include",
 		}
 
 		links {
@@ -22,6 +27,12 @@ project "shaderc"
 		}
 
 	configuration {}
+
+	defines { -- fcpp
+		"NINCLUDE=64",
+		"NWORK=65536",
+		"NBUFF=65536",
+	}
 
 	includedirs {
 		BGFX_DIR .. "../bx/include",

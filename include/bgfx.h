@@ -189,6 +189,7 @@ namespace bgfx
 		{
 			Position = 0,
 			Normal,
+			Tangent,
 			Color0,
 			Color1,
 			Indices,
@@ -283,7 +284,7 @@ namespace bgfx
 		VertexBufferHandle handle;
 	};
 
-	struct ConstantType
+	struct UniformType
 	{
 		enum Enum
 		{
@@ -327,7 +328,7 @@ namespace bgfx
 	RendererType::Enum getRendererType();
 
 	///
-	void init(bool _createRenderThread = true, FatalFn _fatal = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL, CacheFn _cache = NULL);
+	void init(FatalFn _fatal = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL, CacheFn _cache = NULL);
 
 	///
 	void shutdown();
@@ -365,10 +366,10 @@ namespace bgfx
 	///
 	void setDebug(uint32_t _debug);
 
-	///
+	/// Clear internal debug text buffer.
 	void dbgTextClear(uint8_t _attr = 0, bool _small = false);
 
-	///
+	/// Print into internal debug text buffer.
 	void dbgTextPrintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
 
 	///
@@ -471,49 +472,57 @@ namespace bgfx
 	void destroyRenderTarget(RenderTargetHandle _handle);
 
 	///
-	UniformHandle createUniform(const char* _name, ConstantType::Enum _type, uint16_t _num = 1);
+	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
 
 	///
 	void destroyUniform(UniformHandle _handle);
 
-	///
+	/// Set view rectangle. Draw primitive outside view will be clipped.
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
 	///
 	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
-	///
+	/// Set view clear flags.
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
 	///
 	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
-	///
+	/// Set view into sequential mode. Draw calls will be sorted in the same
+	/// order in which submit calls were called.
 	void setViewSeq(uint8_t _id, bool _enabled);
 
 	///
 	void setViewSeqMask(uint32_t _viewMask, bool _enabled);
 
-	///
+	/// Set view render target. View without render target draws primitives
+	/// into default backbuffer.
 	void setViewRenderTarget(uint8_t _id, RenderTargetHandle _handle);
 
 	///
 	void setViewRenderTargetMask(uint32_t _viewMask, RenderTargetHandle _handle);
 
-	///
+	/// Set view view and projection matrices, all draw primitives in this
+	/// view will use these matrices.
 	void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
 	///
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
-	///
+	/// Set render states for draw primitive.
+	///   BGFX_STATE_*
 	void setState(uint64_t _state);
 
+	/// Set model matrix for draw primitive. If it is not called model will
+	/// be rendered with identity model matrix.
 	///
+	/// Returns index into matrix cache in case the same model matrix has to
+	/// be used for other draw primitive call.
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
-	///
-	void setTransform(uint32_t _cache = 0, uint16_t _num = 1);
+	/// Set model matrix from matrix cache for draw primitive.
+	void setTransform(uint32_t _cache, uint16_t _num = 1);
 
 	///
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = 1);
@@ -543,7 +552,7 @@ namespace bgfx
 	void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices = UINT32_MAX);
 
 	///
-	void setInstanceDataBuffer(const InstanceDataBuffer* _idb);
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num = UINT16_MAX);
 
 	///
 	void setProgram(ProgramHandle _handle);

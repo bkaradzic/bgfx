@@ -13,20 +13,56 @@
 #	define dFdy ddy
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3
+struct BgfxSampler2D
+{
+	SamplerState m_sampler;
+	Texture2D m_texture;
+};
+
+vec4 bgfxTexture2D(BgfxSampler2D _sampler, vec2 _coord)
+{
+	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
+}
+
+struct BgfxSampler3D
+{
+	SamplerState m_sampler;
+	Texture3D m_texture;
+};
+
+vec4 bgfxTexture3D(BgfxSampler3D _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
+}
+
+struct BgfxSamplerCube
+{
+	SamplerState m_sampler;
+	TextureCube m_texture;
+};
+
+vec4 bgfxTextureCube(BgfxSamplerCube _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
+}
+
 #		define SAMPLER2D(_name, _reg) \
-					uniform SamplerState _name ## Sampler : register(s[_reg]); \
-					uniform Texture2D _name : register(t[_reg])
-#		define texture2D(_name, _coord) _name.Sample(_name ## Sampler, _coord)
+			uniform SamplerState _name ## Sampler : register(s[_reg]); \
+			uniform Texture2D _name ## Texture : register(t[_reg]); \
+			static BgfxSampler2D _name = { _name ## Sampler, _name ## Texture }
+#		define texture2D(_name, _coord) bgfxTexture2D(_name, _coord)
 
 #		define SAMPLER3D(_name, _reg) \
-					uniform SamplerState _name : register(s[_reg]) \
-					uniform Texture3D _name : register(t[_reg])
-#		define texture3D(_name, _coord) _name.Sample(_name ## Sampler, _coord)
+			uniform SamplerState _name ## Sampler : register(s[_reg]); \
+			uniform Texture3D _name ## Texture : register(t[_reg]); \
+			static BgfxSampler3D _name = { _name ## Sampler, _name ## Texture }
+#		define texture3D(_name, _coord) bgfxTexture3D(_name, _coord)
 
 #		define SAMPLERCUBE(_name, _reg) \
-					uniform SamplerState _name ## Sampler : register(s[_reg]); \
-					uniform TextureCube _name : register(t[_reg])
-#		define textureCube(_name, _coord) _name.Sample(_name ## Sampler, _coord)
+			uniform SamplerState _name ## Sampler : register(s[_reg]); \
+			uniform TextureCube _name ## Texture : register(t[_reg]); \
+			static BgfxSamplerCube _name = { _name ## Sampler, _name ## Texture }
+#		define textureCube(_name, _coord) bgfxTextureCube(_name, _coord)
 #	else
 #		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
 #		define texture2D tex2D
@@ -45,8 +81,9 @@ vec4 instMul(mat4 _mtx, vec4 _vec)
 	return mul(_vec, _mtx);
 }
 #elif BGFX_SHADER_LANGUAGE_GLSL
-#	define frac fract
-#	define lerp mix
+#	define atan2(_x, _y) atan(_x, _y)
+#	define frac(_x) fract(_x)
+#	define lerp(_x, _y, _t) mix(_x, _y, _t)
 #	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
 #	define SAMPLER2D(_name, _reg) uniform sampler2D _name

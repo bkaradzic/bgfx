@@ -179,7 +179,7 @@ namespace bgfx
 		const Memory* m_mem;
 	};
 
-	extern const uint32_t g_constantTypeSize[ConstantType::Count];
+	extern const uint32_t g_uniformTypeSize[UniformType::Count];
 	extern FatalFn g_fatal;
 	extern ReallocFn g_realloc;
 	extern FreeFn g_free;
@@ -696,9 +696,9 @@ namespace bgfx
 		uint16_t m_flags;
 	};
 	
-	struct Constant
+	struct Uniform
 	{
-		ConstantType::Enum m_type;
+		UniformType::Enum m_type;
 		uint16_t m_num;
 	};
 
@@ -733,7 +733,7 @@ namespace bgfx
 			g_free(_constantBuffer);
 		}
 
-		static uint32_t encodeOpcode(ConstantType::Enum _type, uint16_t _loc, uint16_t _num, uint16_t _copy)
+		static uint32_t encodeOpcode(UniformType::Enum _type, uint16_t _loc, uint16_t _num, uint16_t _copy)
 		{
 			uint32_t opcode = 0;
 
@@ -752,7 +752,7 @@ namespace bgfx
 			return opcode;
 		}
 
-		static void decodeOpcode(uint32_t _opcode, ConstantType::Enum& _type, uint16_t& _loc, uint16_t& _num, uint16_t& _copy)
+		static void decodeOpcode(uint32_t _opcode, UniformType::Enum& _type, uint16_t& _loc, uint16_t& _num, uint16_t& _copy)
 		{
 			uint32_t copy;
 			uint32_t num;
@@ -767,7 +767,7 @@ namespace bgfx
 			loc = _opcode&CONSTANT_OPCODE_LOC_MASK;
 			_opcode >>= CONSTANT_OPCODE_LOC_BITS;
 
-			_type = (ConstantType::Enum)(_opcode&CONSTANT_OPCODE_TYPE_MASK);
+			_type = (UniformType::Enum)(_opcode&CONSTANT_OPCODE_TYPE_MASK);
 			_opcode >>= CONSTANT_OPCODE_TYPE_BITS;
 
 			_copy = (uint16_t)copy;
@@ -822,12 +822,12 @@ namespace bgfx
 
 		void finish()
 		{
-			write(ConstantType::End);
+			write(UniformType::End);
 			m_pos = 0;
 		}
 
-		void writeUniform(ConstantType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
-		void writeUniformRef(ConstantType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
+		void writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
+		void writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
 		void commit();
 
 	private:
@@ -878,9 +878,9 @@ namespace bgfx
  			return NULL;
  		}
 
-		const UniformInfo& reg(const char* _name, const void* _data, UniformFn _func = NULL)
+		const UniformInfo& add(const char* _name, const void* _data, UniformFn _func = NULL)
 		{
-			UniformHashMap::const_iterator it = m_uniforms.find(_name);
+			UniformHashMap::iterator it = m_uniforms.find(_name);
 			if (it == m_uniforms.end() )
 			{
 				UniformInfo info;
@@ -1141,13 +1141,13 @@ namespace bgfx
 			g_free(const_cast<TransientVertexBuffer*>(_vb) );
 		}
 
-		void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
+		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)
 		{
 #if BGFX_CONFIG_RENDERER_OPENGLES2
 #else
  			m_state.m_instanceDataOffset = _idb->offset;
 			m_state.m_instanceDataStride = _idb->stride;
-			m_state.m_numInstances = _idb->num;
+			m_state.m_numInstances = uint16_min(_idb->num, _num);
 			m_state.m_instanceDataBuffer = _idb->handle;
 			g_free(const_cast<InstanceDataBuffer*>(_idb) );
 #endif // BGFX_CONFIG_RENDERER_OPENGLES
@@ -1227,7 +1227,7 @@ namespace bgfx
 			return offset;
 		}
 
-		void writeConstant(ConstantType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
+		void writeConstant(UniformType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
 		{
 			m_constantBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
@@ -1517,7 +1517,7 @@ namespace bgfx
 
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_XBOX360
 	DWORD WINAPI renderThread(LPVOID _arg);
-#elif BX_PLATFORM_LINUX
+#elif BX_PLATFORM_POSIX
 	void* renderThread(void*);
 #endif // BX_PLATFORM_
 
@@ -2092,15 +2092,15 @@ namespace bgfx
 			m_submit->free(_handle);
 		}
 
-		UniformHandle createUniform(const char* _name, ConstantType::Enum _type, uint16_t _num)
+		UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num)
 		{
 			BX_CHECK(PredefinedUniform::Count == nameToPredefinedUniformEnum(_name), "%s is predefined uniform name.", _name);
 
 			UniformHandle handle = { m_uniformHandle.alloc() };
 
-			Constant& constant = m_constant[handle.idx];
-			constant.m_type = _type;
-			constant.m_num = _num;
+			Uniform& uniform = m_uniform[handle.idx];
+			uniform.m_type = _type;
+			uniform.m_num = _num;
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
 			cmdbuf.write(handle);
@@ -2127,9 +2127,9 @@ namespace bgfx
 
 		void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
 		{
-			Constant& constant = m_constant[_handle.idx];
-			BX_CHECK(constant.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, constant.m_num);
-			m_submit->writeConstant(constant.m_type, _handle, _value, uint16_min(constant.m_num, _num) );
+			Uniform& uniform = m_uniform[_handle.idx];
+			BX_CHECK(uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
+			m_submit->writeConstant(uniform.m_type, _handle, _value, uint16_min(uniform.m_num, _num) );
 		}
 
 		void setUniform(ProgramHandle /*_program*/, UniformHandle /*_handle*/, const void* /*_value*/)
@@ -2356,7 +2356,7 @@ namespace bgfx
 		void rendererDestroyTexture(TextureHandle _handle);
 		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void rendererDestroyRenderTarget(RenderTargetHandle _handle);
-		void rendererCreateUniform(UniformHandle _handle, ConstantType::Enum _type, uint16_t _num, const char* _name);
+		void rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name);
 		void rendererDestroyUniform(UniformHandle _handle);
 		void rendererSaveScreenShot(Memory* _mem);
 		void rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size);
@@ -2368,19 +2368,19 @@ namespace bgfx
 			{
 				uint32_t opcode = _constantBuffer->read();
 
-				if (ConstantType::End == opcode)
+				if (UniformType::End == opcode)
 				{
 					break;
 				}
 
-				ConstantType::Enum type;
+				UniformType::Enum type;
 				uint16_t loc;
 				uint16_t num;
 				uint16_t copy;
 				ConstantBuffer::decodeOpcode(opcode, type, loc, num, copy);
 
 				const char* data;
-				uint32_t size = g_constantTypeSize[type]*num;
+				uint32_t size = g_uniformTypeSize[type]*num;
 				data = _constantBuffer->read(size);
 				rendererUpdateUniform(loc, data, size);
 			}
@@ -2726,7 +2726,7 @@ namespace bgfx
 						UniformHandle handle;
 						_cmdbuf.read(handle);
 
-						ConstantType::Enum type;
+						UniformType::Enum type;
 						_cmdbuf.read(type);
 
 						uint16_t num;
@@ -2875,7 +2875,7 @@ namespace bgfx
 		RenderTargetHandle m_rt[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
-		Constant m_constant[BGFX_CONFIG_MAX_UNIFORMS];
+		Uniform m_uniform[BGFX_CONFIG_MAX_UNIFORMS];
 		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
 

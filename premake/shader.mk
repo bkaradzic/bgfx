@@ -64,12 +64,12 @@ ASM = $(VS_ASM) $(FS_ASM)
 
 $(BUILD_INTERMEDIATE_DIR)/vs_%.bin : vs_%.sc
 	@echo [$(<)]
-	@$(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<)
+	@$(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<) --disasm
 	@cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 $(BUILD_INTERMEDIATE_DIR)/fs_%.bin : fs_%.sc
 	@echo [$(<)]
-	@$(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<)
+	@$(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
 	@cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 .PHONY: all

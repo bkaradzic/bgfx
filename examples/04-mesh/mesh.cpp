@@ -54,11 +54,10 @@ static const bgfx::Memory* load(const char* _filePath)
 	return NULL;
 }
 
-static const bgfx::Memory* loadShader(const char* _name, const char* _default = NULL)
+static const bgfx::Memory* loadShader(const char* _name)
 {
 	char filePath[512];
 	shaderFilePath(filePath, _name);
-	BX_UNUSED(_default);
 	return load(filePath);
 }
 
@@ -102,7 +101,7 @@ struct Mesh
 
 			if (ctmGetInteger(ctm, CTM_HAS_NORMALS) )
 			{
-				m_decl.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true);
+				m_decl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true);
 			}
 
 			if (0 < ctmGetInteger(ctm, CTM_UV_MAP_COUNT) )
@@ -152,10 +151,10 @@ struct Mesh
 
 				if (NULL != normals)
 				{
-					float* nxyz = (float*)&data[normalOffset];
-					nxyz[0] = normals[0];
-					nxyz[1] = normals[1];
-					nxyz[2] = normals[2];
+					uint8_t* nxyz = (uint8_t*)&data[normalOffset];
+					nxyz[0] = uint8_t(normals[0]*127.0f + 128.0f);
+					nxyz[1] = uint8_t(normals[1]*127.0f + 128.0f);
+					nxyz[2] = uint8_t(normals[2]*127.0f + 128.0f);
 					normals += 3;
 				}
 
@@ -195,7 +194,7 @@ struct Mesh
 
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(BX_PLATFORM_WINDOWS, fatalCb);
+	bgfx::init(fatalCb);
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.
@@ -240,7 +239,7 @@ int _main_(int _argc, char** _argv)
 		break;
 	}
 
-	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::ConstantType::Uniform1f);
+	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Uniform1f);
 
 	bgfx::ProgramHandle program = loadProgram("vs_mesh", "fs_mesh");
 

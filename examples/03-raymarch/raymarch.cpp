@@ -65,11 +65,10 @@ static const bgfx::Memory* load(const char* _filePath)
 	return NULL;
 }
 
-static const bgfx::Memory* loadShader(const char* _name, const char* _default = NULL)
+static const bgfx::Memory* loadShader(const char* _name)
 {
 	char filePath[512];
 	shaderFilePath(filePath, _name);
-	BX_UNUSED(_default);
 	return load(filePath);
 }
 
@@ -179,7 +178,7 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(BX_PLATFORM_WINDOWS, fatalCb);
+	bgfx::init(fatalCb);
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.
@@ -231,9 +230,9 @@ int _main_(int _argc, char** _argv)
 	s_PosColorTexCoord0Decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
 	s_PosColorTexCoord0Decl.end();  
 
-	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::ConstantType::Uniform1f);
-	bgfx::UniformHandle u_mtx = bgfx::createUniform("u_mtx", bgfx::ConstantType::Uniform4x4fv);
-	bgfx::UniformHandle u_lightDir = bgfx::createUniform("u_lightDir", bgfx::ConstantType::Uniform3fv);
+	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Uniform1f);
+	bgfx::UniformHandle u_mtx = bgfx::createUniform("u_mtx", bgfx::UniformType::Uniform4x4fv);
+	bgfx::UniformHandle u_lightDir = bgfx::createUniform("u_lightDir", bgfx::UniformType::Uniform3fv);
 
 	bgfx::ProgramHandle raymarching = loadProgram("vs_raymarching", "fs_raymarching");
 

@@ -16,6 +16,4 @@ uniform mat4 u_modelViewProj;
 uniform mat4 u_modelViewProjX;
 uniform mat4 u_viewProjX;
 
-SAMPLER2D(u_texColor, 0);
-
 #endif // __SHADER_COMMON_H__

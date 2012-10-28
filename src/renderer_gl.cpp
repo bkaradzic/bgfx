@@ -453,7 +453,6 @@ namespace bgfx
 
 		void saveScreenShot(Memory* _mem)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGL
 			void* data = g_realloc(NULL, m_resolution.m_width*m_resolution.m_height*4);
 			glReadPixels(0, 0, m_resolution.m_width, m_resolution.m_height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
@@ -468,7 +467,6 @@ namespace bgfx
 
 			saveTga( (const char*)_mem->data, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, data, false, true);
 			g_free(data);
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 		}
 
 		void init()
@@ -666,7 +664,8 @@ namespace bgfx
 	{
 		"a_position",
 		"a_normal",
-		"a_color",
+		"a_tangent",
+		"a_color0",
 		"a_color1",
 		"a_indices",
 		"a_weight",
@@ -825,30 +824,30 @@ namespace bgfx
 		return "UNKNOWN GLENUM!";
 	}
 
-	ConstantType::Enum convertGlType(GLenum _type)
+	UniformType::Enum convertGlType(GLenum _type)
 	{
 		switch (_type)
 		{
 		case GL_FLOAT:
-			return ConstantType::Uniform1fv;
+			return UniformType::Uniform1fv;
 
 		case GL_FLOAT_VEC2:
-			return ConstantType::Uniform2fv;
+			return UniformType::Uniform2fv;
 
 		case GL_FLOAT_VEC3:
-			return ConstantType::Uniform3fv;
+			return UniformType::Uniform3fv;
 
 		case GL_FLOAT_VEC4:
-			return ConstantType::Uniform4fv;
+			return UniformType::Uniform4fv;
 
 		case GL_FLOAT_MAT2:
 			break;
 
 		case GL_FLOAT_MAT3:
-			return ConstantType::Uniform3x3fv;
+			return UniformType::Uniform3x3fv;
 
 		case GL_FLOAT_MAT4:
-			return ConstantType::Uniform4x4fv;
+			return UniformType::Uniform4x4fv;
 
 // 		case GL_FLOAT_MAT2x3:
 // 		case GL_FLOAT_MAT2x4:
@@ -864,10 +863,10 @@ namespace bgfx
 // 		case GL_SAMPLER_3D:
 // 		case GL_SAMPLER_1D_SHADOW:
 // 		case GL_SAMPLER_2D_SHADOW:
-			return ConstantType::Uniform1iv;
+			return UniformType::Uniform1iv;
 		};
 
-		return ConstantType::End;
+		return UniformType::End;
 	}
 
 	void Program::create(const Shader& _vsh, const Shader& _fsh)
@@ -1032,7 +1031,7 @@ namespace bgfx
 				if (NULL != info)
 				{
 					data = info->m_data;
-					ConstantType::Enum type = convertGlType(gltype);
+					UniformType::Enum type = convertGlType(gltype);
 					m_constantBuffer->writeUniformRef(type, loc, data, num);
 					BX_TRACE("store %s %p", name, data);
 				}
@@ -1643,12 +1642,12 @@ namespace bgfx
 		{
 			uint32_t opcode = read();
 
-			if (ConstantType::End == opcode)
+			if (UniformType::End == opcode)
 			{
 				break;
 			}
 
-			ConstantType::Enum type;
+			UniformType::Enum type;
 			uint16_t loc;
 			uint16_t num;
 			uint16_t copy;
@@ -1657,7 +1656,7 @@ namespace bgfx
 			const char* data;
 			if (copy)
 			{
-				data = read(g_constantTypeSize[type]*num);
+				data = read(g_uniformTypeSize[type]*num);
 			}
 			else
 			{
@@ -1665,7 +1664,7 @@ namespace bgfx
 			}
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
-		case ConstantType::_uniform: \
+		case UniformType::_uniform: \
 			{ \
 				_type* value = (_type*)data; \
 				GL_CHECK(glUniform##_glsuffix(loc, num, value) ); \
@@ -1673,7 +1672,7 @@ namespace bgfx
 			break;
 			
 #define CASE_IMPLEMENT_UNIFORM_T(_uniform, _glsuffix, _dxsuffix, _type) \
-		case ConstantType::_uniform: \
+		case UniformType::_uniform: \
 			{ \
 				_type* value = (_type*)data; \
 				GL_CHECK(glUniform##_glsuffix(loc, num, GL_FALSE, value) ); \
@@ -1700,7 +1699,7 @@ namespace bgfx
 			CASE_IMPLEMENT_UNIFORM_T(Uniform3x3fv, Matrix3fv, F, float);
 			CASE_IMPLEMENT_UNIFORM_T(Uniform4x4fv, Matrix4fv, F, float);
 
-			case ConstantType::End:
+			case UniformType::End:
 				break;
 
 			default:
@@ -2004,13 +2003,13 @@ namespace bgfx
 		s_renderCtx.m_renderTargets[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateUniform(UniformHandle _handle, ConstantType::Enum _type, uint16_t _num, const char* _name)
+	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
-		uint32_t size = g_constantTypeSize[_type]*_num;
+		uint32_t size = g_uniformTypeSize[_type]*_num;
 		void* data = g_realloc(NULL, size);
 		memset(data, 0, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
-		s_renderCtx.m_uniformReg.reg(_name, s_renderCtx.m_uniforms[_handle.idx]);
+		s_renderCtx.m_uniformReg.add(_name, s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)

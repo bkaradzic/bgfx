@@ -3,9 +3,12 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#define SHADERC_DEBUG 0
+#ifndef SHADERC_DEBUG
+#	define SHADERC_DEBUG 0
+#endif // SHADERC_DEBUG
 
 #define NOMINMAX
+#include <alloca.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -44,6 +47,9 @@ extern "C"
 #include "glsl_optimizer.h"
 
 #if BX_PLATFORM_WINDOWS
+#	if BX_COMPILER_GCC
+#		include <sal.h>
+#	endif // BX_COMPILER_GCC
 #	include <d3dx9.h>
 #	include <d3dcompiler.h>
 #endif // BX_PLATFORM_WINDOWS
@@ -63,6 +69,7 @@ struct Attrib
 	{
 		Position = 0,
 		Normal,
+		Tangent,
 		Color0,
 		Color1,
 		Indices,
@@ -91,6 +98,7 @@ static const RemapInputSemantic s_remapInputSemantic[Attrib::Count+1] =
 {
 	{ Attrib::Position,  "POSITION",     0 },
 	{ Attrib::Normal,    "NORMAL",       0 },
+	{ Attrib::Tangent,   "TANGENT",      0 },
 	{ Attrib::Color0,    "COLOR",        0 },
 	{ Attrib::Color1,    "COLOR",        1 },
 	{ Attrib::Indices,   "BLENDINDICES", 0 },
@@ -241,7 +249,7 @@ ConstantType::Enum findConstantTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc,
 
 		if (remap.paramClass == constDesc.Class
 		&&  remap.paramType == constDesc.Type
-		&&  remap.paramBytes == _size)
+		&&  (_size%remap.paramBytes) == 0)
 		{
 			return remap.id;
 		}
@@ -644,6 +652,16 @@ void printCode(const char* _code)
 	fprintf(stderr, "---\n");
 }
 
+void writeFile(const char* _filePath, void* _data, uint32_t _size)
+{
+	FILE* file = fopen(_filePath, "wb");
+	if (NULL != file)
+	{
+		fwrite(_data, 1, _size, file);
+		fclose(file);
+	}
+}
+
 bool compileGLSLShader(CommandLine& _cmdLine, const std::string& _code, IStreamWriter& _stream)
 {
 	const glslopt_shader_type type = tolower(_cmdLine.findOption('\0', "type")[0]) == 'f' ? kGlslOptShaderFragment : kGlslOptShaderVertex;
@@ -820,6 +838,25 @@ bool compileHLSLShaderDx9(CommandLine& _cmdLine, const std::string& _code, IStre
 	uint8_t nul = 0;
 	_stream.write(nul);
 
+	if (_cmdLine.hasArg('\0', "disasm") )
+	{
+		LPD3DXBUFFER disasm;
+		D3DXDisassembleShader( (const DWORD*)code->GetBufferPointer()
+			, false
+			, NULL
+			, &disasm
+			);
+
+		if (NULL != disasm)
+		{
+			std::string ofp = _cmdLine.findOption('o');
+			ofp += ".disasm";
+
+			writeFile(ofp.c_str(), disasm->GetBufferPointer(), disasm->GetBufferSize() );
+			disasm->Release();
+		}
+	}
+
 	if (NULL != code)
 	{
 		code->Release();
@@ -903,7 +940,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 	||  werror && NULL != errorMsg)
 	{
 		printCode(_code.c_str() );
-		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x %s\n", hr, errorMsg->GetBufferPointer() );
+		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x %s\n", hr, (char*)errorMsg->GetBufferPointer() );
 		errorMsg->Release();
 		return false;
 	}
@@ -1009,7 +1046,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 							un.type = type;
 							un.num = constDesc.Elements;
 							un.regIndex = varDesc.StartOffset;
-							un.regCount = varDesc.Size;
+							un.regCount = BX_ALIGN_16(varDesc.Size)/16;
 							uniforms.push_back(un);
 
 							BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d"
@@ -1077,6 +1114,26 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 	_stream.write(code->GetBufferPointer(), shaderSize);
 	uint8_t nul = 0;
 	_stream.write(nul);
+
+	if (_cmdLine.hasArg('\0', "disasm") )
+	{
+		ID3DBlob* disasm;
+		D3DDisassemble(code->GetBufferPointer()
+			, code->GetBufferSize()
+			, 0
+			, NULL
+			, &disasm
+			);
+
+		if (NULL != disasm)
+		{
+			std::string ofp = _cmdLine.findOption('o');
+			ofp += ".disasm";
+
+			writeFile(ofp.c_str(), disasm->GetBufferPointer(), disasm->GetBufferSize() );
+			disasm->Release();
+		}
+	}
 
 	if (NULL != reflect)
 	{

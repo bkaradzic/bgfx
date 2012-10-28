@@ -153,7 +153,6 @@ configuration { "mingw" }
 	defines { "WIN32" }
 	includedirs { BX_DIR .. "include/compat/mingw" }
 	buildoptions {
-		"-std=c++0x",
 		"-U__STRICT_ANSI__",
 		"-Wunused-value",
 		"-fdata-sections",
@@ -162,6 +161,11 @@ configuration { "mingw" }
 	}
 	linkoptions {
 		"-Wl,--gc-sections",
+	}
+
+configuration { "*.cpp", "mingw" }
+	buildoptions {
+		"-std=c++0x"
 	}
 
 configuration { "x32", "mingw" }
@@ -178,7 +182,6 @@ configuration { "x64", "mingw" }
 
 configuration { "linux" }
 	buildoptions {
-		"-std=c++0x",
 		"-U__STRICT_ANSI__",
 		"-Wunused-value",
 		"-mfpmath=sse", -- force SSE to get 32-bit and 64-bit builds deterministic.
@@ -186,6 +189,11 @@ configuration { "linux" }
 	}
 	linkoptions {
 		"-Wl,--gc-sections",
+	}
+
+configuration { "*.cpp", "linux" }
+	buildoptions {
+		"-std=c++0x"
 	}
 
 configuration { "linux", "x32" }
@@ -217,7 +225,6 @@ configuration { "nacl" }
 	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600" }
 	includedirs { BX_DIR .. "include/compat/nacl" }
 	buildoptions {
-		"-std=c++0x",
 		"-U__STRICT_ANSI__",
 		"-pthread",
 		"-fno-stack-protector",
@@ -231,6 +238,11 @@ configuration { "nacl" }
 	}
 	linkoptions {
 		"-Wl,--gc-sections",
+	}
+
+configuration { "*.cpp", "nacl" }
+	buildoptions {
+		"-std=c++0x"
 	}
 
 configuration { "x32", "nacl" }
@@ -271,3 +283,4 @@ dofile "example-02-metaballs.lua"
 dofile "example-03-raymarch.lua"
 dofile "example-04-mesh.lua"
 dofile "example-05-instancing.lua"
+dofile "example-06-bump.lua"

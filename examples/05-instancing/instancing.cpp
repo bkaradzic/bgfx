@@ -90,17 +90,16 @@ static const bgfx::Memory* load(const char* _filePath)
 	return NULL;
 }
 
-static const bgfx::Memory* loadShader(const char* _name, const char* _default = NULL)
+static const bgfx::Memory* loadShader(const char* _name)
 {
 	char filePath[512];
 	shaderFilePath(filePath, _name);
-	BX_UNUSED(_default);
 	return load(filePath);
 }
 
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(BX_PLATFORM_WINDOWS, fatalCb);
+	bgfx::init(fatalCb);
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.

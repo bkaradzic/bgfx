@@ -4,15 +4,9 @@ project "example-05-instancing"
 
 	debugdir (BGFX_DIR .. "examples/runtime/")
 
-	defines {
-		"OPENCTM_STATIC",
-		"OPENCTM_NO_CPP",
-	}
-
 	includedirs {
 		BGFX_DIR .. "../bx/include",
 		BGFX_DIR .. "include",
-		BGFX_DIR .. "3rdparty/openctm/lib",
 	}
 
 	files {
@@ -24,7 +18,6 @@ project "example-05-instancing"
 
 	links {
 		"bgfx",
-		"openctm",
 	}
 
 	configuration { "emscripten" }

@@ -844,6 +844,7 @@ namespace bgfx
 	{
 		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0 },
 		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,       0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT,      0 },
 		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        0 },
 		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        1 },
 		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
@@ -1041,7 +1042,7 @@ namespace bgfx
 				{
 					kind = "user";
 					data = info->m_data;
-					m_constantBuffer->writeUniformRef( (ConstantType::Enum)(type|fragmentBit), regIndex, data, regCount);
+					m_constantBuffer->writeUniformRef( (UniformType::Enum)(type|fragmentBit), regIndex, data, regCount);
 				}
 			}
 
@@ -1589,12 +1590,12 @@ namespace bgfx
 		{
 			uint32_t opcode = read();
 
-			if (ConstantType::End == opcode)
+			if (UniformType::End == opcode)
 			{
 				break;
 			}
 
-			ConstantType::Enum type;
+			UniformType::Enum type;
 			uint16_t loc;
 			uint16_t num;
 			uint16_t copy;
@@ -1603,7 +1604,7 @@ namespace bgfx
 			const char* data;
 			if (copy)
 			{
-				data = read(g_constantTypeSize[type]*num);
+				data = read(g_uniformTypeSize[type]*num);
 			}
 			else
 			{
@@ -1611,14 +1612,14 @@ namespace bgfx
 			}
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
-		case ConstantType::_uniform: \
+		case UniformType::_uniform: \
 		{ \
 			_type* value = (_type*)data; \
 			s_renderCtx.m_device->SetVertexShaderConstant##_dxsuffix(loc, value, num); \
 		} \
 		break; \
 		\
-		case ConstantType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
+		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 		{ \
 			_type* value = (_type*)data; \
 			s_renderCtx.m_device->SetPixelShaderConstant##_dxsuffix(loc, value, num); \
@@ -1637,7 +1638,7 @@ namespace bgfx
 			CASE_IMPLEMENT_UNIFORM(Uniform3x3fv, Matrix3fv, F, float);
 			CASE_IMPLEMENT_UNIFORM(Uniform4x4fv, Matrix4fv, F, float);
 
-			case ConstantType::End:
+			case UniformType::End:
 				break;
 
 			default:
@@ -1843,13 +1844,13 @@ namespace bgfx
 		s_renderCtx.m_renderTargets[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateUniform(UniformHandle _handle, ConstantType::Enum _type, uint16_t _num, const char* _name)
+	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
-		uint32_t size = BX_ALIGN_16(g_constantTypeSize[_type]*_num);
+		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 		void* data = g_realloc(NULL, size);
 		memset(data, 0, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
-		s_renderCtx.m_uniformReg.reg(_name, s_renderCtx.m_uniforms[_handle.idx]);
+		s_renderCtx.m_uniformReg.add(_name, s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)

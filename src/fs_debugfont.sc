@@ -7,6 +7,8 @@ $input v_color0, v_color1, v_texcoord0
 
 #include "common.sh"
 
+SAMPLER2D(u_texColor, 0);
+
 void main()
 {
 	vec4 color = lerp(v_color1, v_color0, texture2D(u_texColor, v_texcoord0).xxxx);

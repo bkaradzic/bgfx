@@ -14,7 +14,7 @@ void fatalCb(bgfx::Fatal::Enum _code, const char* _str)
 
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(BX_PLATFORM_WINDOWS, fatalCb);
+	bgfx::init(fatalCb);
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.
@@ -45,6 +45,9 @@ int _main_(int _argc, char** _argv)
 		// Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
+
+		extern void emscripten_yield();
+		emscripten_yield();
 	}
 
 	// Shutdown bgfx.

@@ -102,6 +102,7 @@ namespace bgfx
 	{
 		{ "POSITION",     0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT",      0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR",        0, DXGI_FORMAT_R8G8B8A8_UINT,   0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR",        1, DXGI_FORMAT_R8G8B8A8_UINT,   0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,   0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -324,8 +325,8 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 			{
-				m_predefinedUniforms[ii].create(ConstantType::Uniform4x4fv, 1, false);
-				m_uniformReg.reg(getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
+				m_predefinedUniforms[ii].create(UniformType::Uniform4x4fv, 1, false);
+				m_uniformReg.add(getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
 			}
 
 			postReset();
@@ -773,8 +774,8 @@ namespace bgfx
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
-		Uniform m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
-		Uniform m_predefinedUniforms[PredefinedUniform::Count];
+		UniformBuffer m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+		UniformBuffer m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
 		
 		StateCacheT<ID3D11BlendState> m_blendStateCache;
@@ -911,12 +912,12 @@ namespace bgfx
 		{
 			uint32_t opcode = read();
 
-			if (ConstantType::End == opcode)
+			if (UniformType::End == opcode)
 			{
 				break;
 			}
 
-			ConstantType::Enum type;
+			UniformType::Enum type;
 			uint16_t loc;
 			uint16_t num;
 			uint16_t copy;
@@ -925,7 +926,7 @@ namespace bgfx
 			const char* data;
 			if (copy)
 			{
-				data = read(g_constantTypeSize[type]*num);
+				data = read(g_uniformTypeSize[type]*num);
 			}
 			else
 			{
@@ -933,8 +934,8 @@ namespace bgfx
 			}
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
-		case ConstantType::_uniform: \
-		case ConstantType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
+		case UniformType::_uniform: \
+		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 			{ \
 				s_renderCtx.setShaderConstant(type, loc, data, num); \
 			} \
@@ -952,7 +953,7 @@ namespace bgfx
 				CASE_IMPLEMENT_UNIFORM(Uniform3x3fv, Matrix3fv, F, float);
 				CASE_IMPLEMENT_UNIFORM(Uniform4x4fv, Matrix4fv, F, float);
 
-			case ConstantType::End:
+			case UniformType::End:
 				break;
 
 			default:
@@ -1183,13 +1184,13 @@ namespace bgfx
 			else
 			{
 				const UniformInfo* info = s_renderCtx.m_uniformReg.find(name);
-				Uniform* uniform = info != NULL ? (Uniform*)info->m_data : NULL;
+				UniformBuffer* uniform = info != NULL ? (UniformBuffer*)info->m_data : NULL;
 
 				if (NULL != uniform)
 				{
 					kind = "user";
 					data = uniform->m_data;
-					m_constantBuffer->writeUniformRef( (ConstantType::Enum)(type|fragmentBit), regIndex, data, regCount);
+					m_constantBuffer->writeUniformRef( (UniformType::Enum)(type|fragmentBit), regIndex, data, regCount);
 				}
 			}
 
@@ -1607,9 +1608,9 @@ namespace bgfx
 		s_renderCtx.m_textureStage.m_sampler[_stage] = m_sampler;
 	}
 
-	void Uniform::create(ConstantType::Enum _type, uint16_t _num, bool _alloc)
+	void UniformBuffer::create(UniformType::Enum _type, uint16_t _num, bool _alloc)
 	{
-		uint32_t size = BX_ALIGN_16(g_constantTypeSize[_type]*_num);
+		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 		if (_alloc)
 		{
 			m_data = g_realloc(NULL, size);
@@ -1626,7 +1627,7 @@ namespace bgfx
 		DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc, NULL, &m_ptr) );
 	}
 
-	void Uniform::destroy()
+	void UniformBuffer::destroy()
 	{
 		if (NULL != m_data)
 		{
@@ -1769,10 +1770,10 @@ namespace bgfx
 		s_renderCtx.m_renderTargets[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateUniform(UniformHandle _handle, ConstantType::Enum _type, uint16_t _num, const char* _name)
+	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
 		s_renderCtx.m_uniforms[_handle.idx].create(_type, _num);
-		s_renderCtx.m_uniformReg.reg(_name, &s_renderCtx.m_uniforms[_handle.idx]);
+		s_renderCtx.m_uniformReg.add(_name, &s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)

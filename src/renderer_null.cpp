@@ -140,7 +140,7 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateUniform(UniformHandle /*_handle*/, ConstantType::Enum /*_type*/, uint16_t /*_num*/, const char* /*_name*/)
+	void Context::rendererCreateUniform(UniformHandle /*_handle*/, UniformType::Enum /*_type*/, uint16_t /*_num*/, const char* /*_name*/)
 	{
 	}
 
