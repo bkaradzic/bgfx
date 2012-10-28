@@ -71,7 +71,7 @@ uint32_t packF4u(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
 	return packUint32(xx, yy, zz, ww);
 }
 
-void unpackF4u(float _result[3], uint32_t _packed)
+void unpackF4u(float _result[4], uint32_t _packed)
 {
 	uint8_t unpacked[4];
 	unpackUint32(unpacked, _packed);
@@ -183,7 +183,6 @@ void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices,
 	float* tangents = new float[6*_numVertices];
 	memset(tangents, 0, 6*_numVertices*sizeof(float) );
 
-	float* tan = tangents;
 	for (uint32_t ii = 0, num = _numIndices/3; ii < num; ++ii)
 	{
 		const uint16_t* indices = &_indices[ii*3];
@@ -234,7 +233,7 @@ void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices,
 		const float* tanu = &tangents[ii*6];
 		const float* tanv = &tangents[ii*6 + 3];
 
-		float normal[3];
+		float normal[4];
 		unpackF4u(normal, v0.m_normal);
 		float ndt = vec3Dot(normal, tanu);
 
@@ -392,10 +391,10 @@ int _main_(int _argc, char** _argv)
 
 		float lightRgbInnerR[4][4] =
 		{
-			1.0f, 0.7f, 0.2f, 0.8f,
-			0.7f, 0.2f, 1.0f, 0.8f,
-			0.2f, 1.0f, 0.7f, 0.8f,
-			1.0f, 0.4f, 0.2f, 0.8f,
+			{ 1.0f, 0.7f, 0.2f, 0.8f },
+			{ 0.7f, 0.2f, 1.0f, 0.8f },
+			{ 0.2f, 1.0f, 0.7f, 0.8f },
+			{ 1.0f, 0.4f, 0.2f, 0.8f },
 		};
 
 		bgfx::setUniform(u_lightRgbInnerR, lightRgbInnerR, numLights);
