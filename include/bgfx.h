@@ -85,6 +85,9 @@
 					| BGFX_STATE_MSAA \
 					)
 
+#define BGFX_STATE_ALPHA_REF(_ref) ( (uint64_t(_ref)<<BGFX_STATE_ALPHA_REF_SHIFT)&BGFX_STATE_ALPHA_REF_MASK)
+#define BGFX_STATE_POINT_SIZE(_size) ( (uint64_t(_size)<<BGFX_STATE_POINT_SIZE_SHIFT)&BGFX_STATE_POINT_SIZE_MASK)
+
 #define BGFX_CLEAR_NONE                 UINT8_C(0x00)
 #define BGFX_CLEAR_COLOR_BIT            UINT8_C(0x01)
 #define BGFX_CLEAR_DEPTH_BIT            UINT8_C(0x02)
@@ -175,12 +178,14 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			Null = 0,
+			Null,
 			Direct3D9,
 			Direct3D11,
 			OpenGLES2,
 			OpenGLES3,
 			OpenGL,
+
+			Count
 		};
 	};
 
@@ -188,7 +193,7 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			Position = 0,
+			Position,
 			Normal,
 			Tangent,
 			Color0,
@@ -204,7 +209,7 @@ namespace bgfx
 			TexCoord6,
 			TexCoord7,
 
-			Count,
+			Count
 		};
 	};
 
@@ -214,9 +219,10 @@ namespace bgfx
 		{
 			Uint8,
 			Uint16,
+			Half,
 			Float,
 
-			Count,
+			Count
 		};
 	};
 
@@ -312,12 +318,29 @@ namespace bgfx
 
 	struct VertexDecl
 	{
-		void begin();
+		/// Start VertexDecl.
+		void begin(RendererType::Enum _renderer = RendererType::Null);
+
+		/// End VertexDecl.
 		void end();
+
+		/// Add attribute to VertexDecl. Note: Must be called between begin/end.
 		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false);
+
+		/// Decode attribute.
 		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized) const;
-		bool has(Attrib::Enum _attrib) const;
-		uint16_t getOffset(Attrib::Enum _attrib) const;
+
+		/// Returns true if VertexDecl contains attribute.
+		bool has(Attrib::Enum _attrib) const { return 0xff != m_attributes[_attrib]; }
+
+		/// Returns relative attribute offset from the vertex.
+		uint16_t getOffset(Attrib::Enum _attrib) const { return m_offset[_attrib]; }
+
+		/// Returns vertex stride.
+		uint16_t getStride() const { return m_stride; }
+
+		/// Returns size of vertex buffer for number of vertices.
+		uint32_t getSize(uint32_t _num) const { return _num*m_stride; }
 
 		uint32_t m_hash;
 		uint16_t m_stride;

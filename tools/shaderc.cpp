@@ -978,7 +978,7 @@ bool compileHLSLShaderDx11(CommandLine& _cmdLine, const std::string& _code, IStr
 	{
 		D3D11_SIGNATURE_PARAMETER_DESC spd;
 		reflect->GetInputParameterDesc(ii, &spd);
-		BX_TRACE("\t%2d: %s%d, %d, %d, %x, %d"
+		BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
 			, ii
 			, spd.SemanticName
 			, spd.SemanticIndex
@@ -1664,6 +1664,13 @@ int main(int _argc, const char* _argv[])
 
 		if (glsl)
 		{
+			preprocessor.writef(
+				"#define ivec2 vec2\n"
+				"#define ivec3 vec3\n"
+				"#define ivec4 vec4\n"
+				);
+
+
 			for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 			{
 				VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
@@ -1696,15 +1703,18 @@ int main(int _argc, const char* _argv[])
 		else
 		{
 			preprocessor.writef(
-					"#define lowp\n"
-					"#define mediump\n"
-					"#define highp\n"
-					"#define vec2 float2\n"
-					"#define vec3 float3\n"
-					"#define vec4 float4\n"
-					"#define mat2 float2x2\n"
-					"#define mat3 float3x3\n"
-					"#define mat4 float4x4\n"
+				"#define lowp\n"
+				"#define mediump\n"
+				"#define highp\n"
+				"#define ivec2 int2\n"
+				"#define ivec3 int3\n"
+				"#define ivec4 int4\n"
+				"#define vec2 float2\n"
+				"#define vec3 float3\n"
+				"#define vec4 float4\n"
+				"#define mat2 float2x2\n"
+				"#define mat3 float3x3\n"
+				"#define mat4 float4x4\n"
 				);
 
 			char* entry = strstr(data, "void main()");

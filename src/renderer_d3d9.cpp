@@ -860,6 +860,34 @@ namespace bgfx
 		D3DDECL_END()
 	};
 
+	static const D3DDECLTYPE s_attribType[AttribType::Count][4][2] =
+	{
+		{
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+		},
+		{
+			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
+			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
+			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
+			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
+		},
+		{
+			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
+			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
+			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
+			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
+		},
+		{
+			{ D3DDECLTYPE_FLOAT1,    D3DDECLTYPE_FLOAT1    },
+			{ D3DDECLTYPE_FLOAT2,    D3DDECLTYPE_FLOAT2    },
+			{ D3DDECLTYPE_FLOAT3,    D3DDECLTYPE_FLOAT3    },
+			{ D3DDECLTYPE_FLOAT4,    D3DDECLTYPE_FLOAT4    },
+		},
+	};
+
 	static D3DVERTEXELEMENT9* fillVertexDecl(D3DVERTEXELEMENT9* _out, uint32_t _count, const VertexDecl& _decl)
 	{
 		D3DVERTEXELEMENT9* elem = _out;
@@ -875,81 +903,7 @@ namespace bgfx
 
 				memcpy(elem, &s_attrib[attr], sizeof(D3DVERTEXELEMENT9) );
 
-				D3DDECLTYPE declType = D3DDECLTYPE(elem->Type);
-
-				switch (type)
-				{
-				case AttribType::Uint8:
-					if (normalized)
-					{
-						declType = D3DDECLTYPE_UBYTE4N;
-					}
-					else
-					{
-						declType = D3DDECLTYPE_UBYTE4;
-					}
-					break;
-
-				case AttribType::Uint16:
-					if (normalized)
-					{
-						switch (num)
-						{
-						default:
-						case 2:
-							declType = D3DDECLTYPE_SHORT2N;
-							break;
-
-						case 4:
-							declType = D3DDECLTYPE_SHORT4N;
-							break;
-						}
-					}
-					else
-					{
-						switch (num)
-						{
-						default:
-						case 2:
-							declType = D3DDECLTYPE_SHORT2;
-							break;
-
-						case 4:
-							declType = D3DDECLTYPE_SHORT4;
-							break;
-						}
-					}
-					break;
-
-				case AttribType::Float:
-					switch (num)
-					{
-					case 1:
-						declType = D3DDECLTYPE_FLOAT1;
-						break;
-
-					case 2:
-						declType = D3DDECLTYPE_FLOAT2;
-						break;
-
-					default:
-					case 3:
-						declType = D3DDECLTYPE_FLOAT3;
-						break;
-
-					case 4:
-						declType = D3DDECLTYPE_FLOAT4;
-						break;
-					}
-
-					break;
-
-				default:
-					BX_CHECK(false, "Invalid attrib type.");
-					break;
-				}
-
-				elem->Type = declType;
+				elem->Type = s_attribType[type][num-1][normalized];
 				elem->Offset = _decl.m_offset[attr];
 				++elem;
 			}

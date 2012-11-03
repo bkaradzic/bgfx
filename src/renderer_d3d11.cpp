@@ -117,6 +117,34 @@ namespace bgfx
 		{ "TEXCOORD",     7, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
+	static const DXGI_FORMAT s_attribType[AttribType::Count][4][2] =
+	{
+		{
+			{ DXGI_FORMAT_R8_UINT,            DXGI_FORMAT_R8_UNORM           },
+			{ DXGI_FORMAT_R8G8_UINT,          DXGI_FORMAT_R8G8_UNORM         },
+			{ DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_R8G8B8A8_UNORM     },
+			{ DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_R8G8B8A8_UNORM     },
+		},
+		{
+			{ DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_UNORM          },
+			{ DXGI_FORMAT_R16G16_UINT,        DXGI_FORMAT_R16G16_UNORM       },
+			{ DXGI_FORMAT_R16G16B16A16_UINT,  DXGI_FORMAT_R16G16B16A16_UNORM },
+			{ DXGI_FORMAT_R16G16B16A16_UINT,  DXGI_FORMAT_R16G16B16A16_UNORM },
+		},
+		{
+			{ DXGI_FORMAT_R16_FLOAT,          DXGI_FORMAT_R16_FLOAT          },
+			{ DXGI_FORMAT_R16G16_FLOAT,       DXGI_FORMAT_R16G16_FLOAT       },
+			{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT },
+			{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT },
+		},
+		{
+			{ DXGI_FORMAT_R32_FLOAT,          DXGI_FORMAT_R32_FLOAT          },
+			{ DXGI_FORMAT_R32G32_FLOAT,       DXGI_FORMAT_R32G32_FLOAT       },
+			{ DXGI_FORMAT_R32G32B32_FLOAT,    DXGI_FORMAT_R32G32B32_FLOAT    },
+			{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT },
+		},
+	};
+
 	static D3D11_INPUT_ELEMENT_DESC* fillVertexDecl(D3D11_INPUT_ELEMENT_DESC* _out, uint32_t _count, const VertexDecl& _decl)
 	{
 		D3D11_INPUT_ELEMENT_DESC* elem = _out;
@@ -137,110 +165,7 @@ namespace bgfx
 					AttribType::Enum type;
 					bool normalized;
 					_decl.decode(Attrib::Enum(attr), num, type, normalized);
-
-					DXGI_FORMAT format = elem->Format;
-
-					switch (type)
-					{
-					case AttribType::Uint8:
-						if (normalized)
-						{
-							switch (num)
-							{
-							case 1:
-								format = DXGI_FORMAT_R8_UNORM;
-								break;
-
-							case 2:
-								format = DXGI_FORMAT_R8G8_UNORM;
-								break;
-
-							default:
-							case 4:
-								format = DXGI_FORMAT_R8G8B8A8_UNORM;
-								break;
-							}
-						}
-						else
-						{
-							switch (num)
-							{
-							case 1:
-								format = DXGI_FORMAT_R8_UINT;
-								break;
-
-							case 2:
-								format = DXGI_FORMAT_R8G8_UINT;
-								break;
-
-							default:
-							case 4:
-								format = DXGI_FORMAT_R8G8B8A8_UINT;
-								break;
-							}
-						}
-						break;
-
-					case AttribType::Uint16:
-						if (normalized)
-						{
-							switch (num)
-							{
-							default:
-							case 2:
-								format = DXGI_FORMAT_R16G16_UNORM;
-								break;
-
-							case 4:
-								format = DXGI_FORMAT_R16G16B16A16_UNORM;
-								break;
-							}
-						}
-						else
-						{
-							switch (num)
-							{
-							default:
-							case 2:
-								format = DXGI_FORMAT_R16G16_UINT;
-								break;
-
-							case 4:
-								format = DXGI_FORMAT_R16G16B16A16_UINT;
-								break;
-							}
-						}
-						break;
-
-					case AttribType::Float:
-						switch (num)
-						{
-						case 1:
-							format = DXGI_FORMAT_R32_FLOAT;
-							break;
-
-						case 2:
-							format = DXGI_FORMAT_R32G32_FLOAT;
-							break;
-
-						default:
-						case 3:
-							format = DXGI_FORMAT_R32G32B32_FLOAT;
-							break;
-
-						case 4:
-							format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-							break;
-						}
-
-						break;
-
-					default:
-						BX_CHECK(false, "Invalid attrib type.");
-						break;
-					}
-
-					elem->Format = format;
+					elem->Format = s_attribType[type][num-1][normalized];
 					elem->AlignedByteOffset = _decl.m_offset[attr];
 				}
 
@@ -823,7 +748,7 @@ namespace bgfx
 		}
 		else
 		{
-			desc.Usage = D3D11_USAGE_DEFAULT;
+			desc.Usage = D3D11_USAGE_IMMUTABLE;
 			desc.CPUAccessFlags = 0;
 
 			D3D11_SUBRESOURCE_DATA srd;
@@ -874,7 +799,7 @@ namespace bgfx
 		}
 		else
 		{
-			desc.Usage = D3D11_USAGE_DEFAULT;
+			desc.Usage = D3D11_USAGE_IMMUTABLE;
 			desc.CPUAccessFlags = 0;
 			desc.StructureByteStride = 0;
 
@@ -1914,6 +1839,14 @@ namespace bgfx
 					if ( (BGFX_STATE_CULL_MASK) & changedFlags)
 					{
 						s_renderCtx.setRasterizerState(newFlags, wireframe);
+					}
+
+					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+					if (primType != s_primType[primIndex])
+					{
+						primType = s_primType[primIndex];
+						primNumVerts = s_primNumVerts[primIndex];
+						deviceCtx->IASetPrimitiveTopology(primType);
 					}
 				}
 

@@ -566,16 +566,51 @@ namespace bgfx
 		return s_ctx.renderFrame();
 	}
 
-	static const uint32_t s_attribTypeSize[AttribType::Count] =
+	static const uint8_t s_attribTypeSizeDx9[AttribType::Count][4] =
 	{
-		1,
-		2,
-		4,
+		{  4,  4,  4,  4 },
+		{  4,  4,  8,  8 },
+		{  4,  4,  8,  8 },
+		{  4,  8, 12, 16 },
 	};
 
-	void VertexDecl::begin()
+	static const uint8_t s_attribTypeSizeDx11[AttribType::Count][4] =
 	{
-		m_hash = 0;
+		{  1,  2,  4,  4 },
+		{  2,  4,  8,  8 },
+		{  2,  4,  8,  8 },
+		{  4,  8, 12, 16 },
+	};
+
+	static const uint8_t s_attribTypeSizeGl[AttribType::Count][4] =
+	{
+		{  1,  2,  4,  4 },
+		{  2,  4,  6,  8 },
+		{  2,  4,  6,  8 },
+		{  4,  8, 12, 16 },
+	};
+
+	static const uint8_t (*s_attribTypeSize[RendererType::Count])[AttribType::Count][4] =
+	{
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
+		&s_attribTypeSizeDx9,
+#elif BGFX_CONFIG_RENDERER_DIRECT3D11
+		&s_attribTypeSizeDx11,
+#elif BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3
+		&s_attribTypeSizeGl,
+#else
+		&s_attribTypeSizeDx9,
+#endif // BGFX_CONFIG_RENDERER_
+		&s_attribTypeSizeDx9,
+		&s_attribTypeSizeDx11,
+		&s_attribTypeSizeGl,
+		&s_attribTypeSizeGl,
+		&s_attribTypeSizeGl,
+	};
+
+	void VertexDecl::begin(RendererType::Enum _renderer)
+	{
+		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.
 		m_stride = 0;
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
 		memset(m_offset, 0, sizeof(m_offset) );
@@ -594,7 +629,7 @@ namespace bgfx
 
 		m_attributes[_attrib] = encoded_norm|encoded_type|encoded_num;
 		m_offset[_attrib] = m_stride;
-		m_stride += s_attribTypeSize[_type]*_num;
+		m_stride += (*s_attribTypeSize[m_hash])[_type][_num-1];
 	}
 
 	void VertexDecl::decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized) const
@@ -603,16 +638,6 @@ namespace bgfx
 		_num = (val&3)+1;
 		_type = AttribType::Enum((val>>3)&3);
 		_normalized = !!(val&(1<<6) );
-	}
-
-	bool VertexDecl::has(Attrib::Enum _attrib) const
-	{
-		return 0xff != m_attributes[_attrib];
-	}
-
-	uint16_t VertexDecl::getOffset(Attrib::Enum _attrib) const
-	{
-		return m_offset[_attrib];
 	}
 
 	const char* getAttribName(Attrib::Enum _attr)

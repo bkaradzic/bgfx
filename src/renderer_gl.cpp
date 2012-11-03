@@ -598,10 +598,15 @@ namespace bgfx
 			ANGLE_translated_shader_source,
 			ARB_instanced_arrays,
 			ANGLE_instanced_arrays,
+			ARB_texture_float,
 			OES_texture_float,
 			OES_texture_float_linear,
 			OES_texture_half_float,
 			OES_texture_half_float_linear,
+			ARB_half_float_vertex,
+			OES_vertex_half_float,
+			ARB_vertex_type_2_10_10_10_rev,
+			OES_vertex_type_10_10_10_2,
 			EXT_occlusion_query_boolean,
 			ATI_meminfo,
 			NVX_gpu_memory_info,
@@ -637,10 +642,15 @@ namespace bgfx
 		{ "GL_ANGLE_translated_shader_source",    false, true },
 		{ "GL_ARB_instanced_arrays",              false, true },
 		{ "GL_ANGLE_instanced_arrays",            false, true },
+		{ "GL_ARB_texture_float",                 false, true },
 		{ "GL_OES_texture_float",                 false, true },
 		{ "GL_OES_texture_float_linear",          false, true },
 		{ "GL_OES_texture_half_float",            false, true },
 		{ "GL_OES_texture_half_float_linear",     false, true },
+		{ "GL_ARB_half_float_vertex",             false, true },
+		{ "GL_OES_vertex_half_float",             false, true },
+		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false, true },
+		{ "GL_OES_vertex_type_10_10_10_2",        false, true },
 		{ "GL_EXT_occlusion_query_boolean",       false, true },
 		{ "GL_ATI_meminfo",                       false, true },
 		{ "GL_NVX_gpu_memory_info",               false, true },
@@ -692,6 +702,7 @@ namespace bgfx
 	{
 		GL_UNSIGNED_BYTE,
 		GL_UNSIGNED_SHORT,
+		GL_HALF_FLOAT,
 		GL_FLOAT,
 	};
 
@@ -2524,7 +2535,7 @@ namespace bgfx
 						||  bindAttribs)
 						{
 							baseVertex = state.m_startVertex;
-							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+							const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
 							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
 							const Program& program = s_renderCtx.m_program[programIdx];
 							program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
@@ -2534,6 +2545,15 @@ namespace bgfx
 								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
 								program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
 							}
+						}
+
+						uint32_t numVertices = state.m_numVertices;
+						if (UINT32_C(0xffffffff) == numVertices)
+						{
+							const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[currentState.m_vertexBuffer.idx];
+							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+							const VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[decl];
+							numVertices = vb.m_size/vertexDecl.m_stride;
 						}
 
 						uint32_t numIndices = 0;
@@ -2574,13 +2594,13 @@ namespace bgfx
 						}
 						else
 						{
-							numPrimsSubmitted = state.m_numVertices/primNumVerts;
+							numPrimsSubmitted = numVertices/primNumVerts;
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
 							GL_CHECK(s_drawArraysInstanced(primType
 								, 0
-								, state.m_numVertices
+								, numVertices
 								, state.m_numInstances
 								) );
 						}
