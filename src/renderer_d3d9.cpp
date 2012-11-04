@@ -1285,36 +1285,38 @@ namespace bgfx
 
 			if (BGFX_MAGIC == magic)
 			{
-				TextureInfo ti;
-				stream.read(ti);
+				TextureCreate tc;
+				stream.read(tc);
 
-				if (ti.m_cubeMap)
+				if (tc.m_cubeMap)
 				{
-					createCubeTexture(ti.m_width, ti.m_numMips, s_textureFormat[ti.m_type].m_fmt);
+					createCubeTexture(tc.m_width, tc.m_numMips, s_textureFormat[tc.m_type].m_fmt);
 				}
-				else if (ti.m_depth > 1)
+				else if (tc.m_depth > 1)
 				{
-					createVolumeTexture(ti.m_width, ti.m_height, ti.m_depth, ti.m_numMips, s_textureFormat[ti.m_type].m_fmt);
+					createVolumeTexture(tc.m_width, tc.m_height, tc.m_depth, tc.m_numMips, s_textureFormat[tc.m_type].m_fmt);
 				}
 				else
 				{
-					createTexture(ti.m_width, ti.m_height, ti.m_numMips, s_textureFormat[ti.m_type].m_fmt);
+					createTexture(tc.m_width, tc.m_height, tc.m_numMips, s_textureFormat[tc.m_type].m_fmt);
 				}
 
-				if (NULL != ti.m_mem)
+				if (NULL != tc.m_mem)
 				{
-					uint32_t bpp = s_textureFormat[ti.m_type].m_bpp;
-					uint8_t* data = ti.m_mem->data;
+					uint32_t bpp = s_textureFormat[tc.m_type].m_bpp;
+					uint8_t* data = tc.m_mem->data;
 
-					for (uint8_t side = 0, numSides = ti.m_cubeMap ? 6 : 1; side < numSides; ++side)
+					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
 					{
-						uint32_t width = ti.m_width;
-						uint32_t height = ti.m_height;
+						uint32_t width = tc.m_width;
+						uint32_t height = tc.m_height;
+						uint32_t depth = tc.m_depth;
 
-						for (uint32_t lod = 0, num = ti.m_numMips; lod < num; ++lod)
+						for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
 						{
-							width = uint32_max(width, 1);
-							height = uint32_max(height, 1);
+							width = uint32_max(1, width);
+							height = uint32_max(1, height);
+							depth = uint32_max(1, depth);
 
 							uint32_t pitch;
 							uint32_t slicePitch;
@@ -1326,10 +1328,11 @@ namespace bgfx
 
 							width >>= 1;
 							height >>= 1;
+							depth >>= 1;
 						}
 					}
 
-					release(ti.m_mem);
+					release(tc.m_mem);
 				}
 			}
 			else

@@ -243,6 +243,26 @@ namespace bgfx
 		};
 	};
 
+	struct UniformType
+	{
+		enum Enum
+		{
+			Uniform1i,
+			Uniform1f,
+			End,
+
+			Uniform1iv,
+			Uniform1fv,
+			Uniform2fv,
+			Uniform3fv,
+			Uniform4fv,
+			Uniform3x3fv,
+			Uniform4x4fv,
+
+			Count
+		};
+	};
+
 	static const uint16_t invalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle);
@@ -256,6 +276,11 @@ namespace bgfx
 	BGFX_HANDLE(VertexBufferHandle);
 	BGFX_HANDLE(VertexDeclHandle);
 	BGFX_HANDLE(VertexShaderHandle);
+
+	typedef void (*FatalFn)(Fatal::Enum _code, const char* _str);
+	typedef void* (*ReallocFn)(void* _ptr, size_t _size);
+	typedef void (*FreeFn)(void* _ptr);
+	typedef void (*CacheFn)(uint64_t _id, bool _store, void* _data, uint32_t& _length);
 
 	struct Memory
 	{
@@ -291,30 +316,13 @@ namespace bgfx
 		VertexBufferHandle handle;
 	};
 
-	struct UniformType
+	struct TextureInfo
 	{
-		enum Enum
-		{
-			Uniform1i,
-			Uniform1f,
-			End,
-
-			Uniform1iv,
-			Uniform1fv,
-			Uniform2fv,
-			Uniform3fv,
-			Uniform4fv,
-			Uniform3x3fv,
-			Uniform4x4fv,
-
-			Count
-		};
+		TextureFormat::Enum format;
+		uint16_t width;
+		uint16_t height;
+		uint16_t depth;
 	};
-
-	typedef void (*FatalFn)(Fatal::Enum _code, const char* _str);
-	typedef void* (*ReallocFn)(void* _ptr, size_t _size);
-	typedef void (*FreeFn)(void* _ptr);
-	typedef void (*CacheFn)(uint64_t _id, bool _store, void* _data, uint32_t& _length);
 
 	struct VertexDecl
 	{
@@ -432,13 +440,13 @@ namespace bgfx
 	///
 	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
 
-	///
+	/// Returns true if internal transient index buffer has enough space.
 	bool checkAvailTransientIndexBuffer(uint16_t _num);
 
 	///
 	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num);
 
-	///
+	/// Returns true if internal transient vertex buffer has enough space.
 	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
 	///
@@ -447,26 +455,28 @@ namespace bgfx
 	///
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride);
 
-	///
+	/// Create vertex shader from memory buffer.
 	VertexShaderHandle createVertexShader(const Memory* _mem);
 
-	///
+	/// Destroy vertex shader. Once program is created with vertex shader
+	/// it is safe to destroy vertex shader.
 	void destroyVertexShader(VertexShaderHandle _handle);
 
-	///
+	/// Create fragment shader from memory buffer.
 	FragmentShaderHandle createFragmentShader(const Memory* _mem);
 
-	///
+	/// Destroy fragment shader. Once program is created with fragment shader
+	/// it is safe to destroy fragment shader.
 	void destroyFragmentShader(FragmentShaderHandle _handle);
 
-	///
+	/// Create program with vertex and fragment shaders.
 	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 
-	///
+	/// Destroy program.
 	void destroyProgram(ProgramHandle _handle);
 
-	///
-	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, uint16_t* _width = NULL, uint16_t* _height = NULL);
+	/// Create texture from memory buffer.
+	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
 
 	///
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);

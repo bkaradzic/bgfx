@@ -979,79 +979,79 @@ namespace bgfx
 		s_ctx.destroyProgram(_handle);
 	}
 
-	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint16_t* _width, uint16_t* _height)
+	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, TextureInfo* _info)
 	{
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx.createTexture(_mem, _flags, _width, _height);
+		return s_ctx.createTexture(_mem, _flags, _info);
 	}
 
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
-		uint32_t size = sizeof(uint32_t)+sizeof(TextureInfo);
+		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const bgfx::Memory* mem = alloc(size);
 
 		StreamWrite stream(mem->data, mem->size);
 		uint32_t magic = BGFX_MAGIC;
 		stream.write(magic);
 
-		TextureInfo ti;
-		ti.m_flags = _flags;
-		ti.m_width = _width;
-		ti.m_height = _height;
-		ti.m_depth = 0;
-		ti.m_numMips = _numMips;
-		ti.m_type = uint8_t(_format);
-		ti.m_cubeMap = false;
-		ti.m_mem = _mem;
-		stream.write(ti);
+		TextureCreate tc;
+		tc.m_flags = _flags;
+		tc.m_width = _width;
+		tc.m_height = _height;
+		tc.m_depth = 0;
+		tc.m_numMips = _numMips;
+		tc.m_type = uint8_t(_format);
+		tc.m_cubeMap = false;
+		tc.m_mem = _mem;
+		stream.write(tc);
 
-		return s_ctx.createTexture(mem, _flags, NULL, NULL);
+		return s_ctx.createTexture(mem, _flags, NULL);
 	}
 
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
-		uint32_t size = sizeof(uint32_t)+sizeof(TextureInfo);
+		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const bgfx::Memory* mem = alloc(size);
 
 		StreamWrite stream(mem->data, mem->size);
 		uint32_t magic = BGFX_MAGIC;
 		stream.write(magic);
 
-		TextureInfo ti;
-		ti.m_flags = _flags;
-		ti.m_width = _width;
-		ti.m_height = _height;
-		ti.m_depth = _depth;
-		ti.m_numMips = _numMips;
-		ti.m_type = uint8_t(_format);
-		ti.m_cubeMap = false;
-		ti.m_mem = _mem;
-		stream.write(ti);
+		TextureCreate tc;
+		tc.m_flags = _flags;
+		tc.m_width = _width;
+		tc.m_height = _height;
+		tc.m_depth = _depth;
+		tc.m_numMips = _numMips;
+		tc.m_type = uint8_t(_format);
+		tc.m_cubeMap = false;
+		tc.m_mem = _mem;
+		stream.write(tc);
 
-		return s_ctx.createTexture(mem, _flags, NULL, NULL);
+		return s_ctx.createTexture(mem, _flags, NULL);
 	}
 
 	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
-		uint32_t size = sizeof(uint32_t)+sizeof(TextureInfo);
+		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const bgfx::Memory* mem = alloc(size);
 
 		StreamWrite stream(mem->data, mem->size);
 		uint32_t magic = BGFX_MAGIC;
 		stream.write(magic);
 
-		TextureInfo ti;
-		ti.m_flags = _flags;
-		ti.m_width = _width;
-		ti.m_sides = _sides;
-		ti.m_depth = 0;
-		ti.m_numMips = _numMips;
-		ti.m_type = uint8_t(_format);
-		ti.m_cubeMap = true;
-		ti.m_mem = _mem;
-		stream.write(ti);
+		TextureCreate tc;
+		tc.m_flags = _flags;
+		tc.m_width = _width;
+		tc.m_sides = _sides;
+		tc.m_depth = 0;
+		tc.m_numMips = _numMips;
+		tc.m_type = uint8_t(_format);
+		tc.m_cubeMap = true;
+		tc.m_mem = _mem;
+		stream.write(tc);
 
-		return s_ctx.createTexture(mem, _flags, NULL, NULL);
+		return s_ctx.createTexture(mem, _flags, NULL);
 	}
 
 	void destroyTexture(TextureHandle _handle)

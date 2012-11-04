@@ -114,12 +114,12 @@ namespace bgfx
 
 		if (BGFX_MAGIC == magic)
 		{
-			TextureInfo ti;
-			stream.read(ti);
+			TextureCreate tc;
+			stream.read(tc);
 
-			if (NULL != ti.m_mem)
+			if (NULL != tc.m_mem)
 			{
-				release(ti.m_mem);
+				release(tc.m_mem);
 			}
 		}
 	}

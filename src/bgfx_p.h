@@ -163,7 +163,7 @@ namespace bgfx
 		uint16_t m_height;
 	};
 
-	struct TextureInfo
+	struct TextureCreate
 	{
 		uint32_t m_flags;
 		uint16_t m_width;
@@ -2014,29 +2014,24 @@ namespace bgfx
 			fragmentShaderDecRef(m_programRef[_handle.idx].m_fsh);
 		}
 
-		TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint16_t* _width, uint16_t* _height)
+		TextureHandle createTexture(const Memory* _mem, uint32_t _flags, TextureInfo* _info = NULL)
 		{
-			if (NULL != _width
-			||  NULL != _height)
+			if (NULL != _info)
 			{
-				int width = 0;
-				int height = 0;
-
 				Dds dds;
 				if (parseDds(dds, _mem) )
 				{
-					width = dds.m_width;
-					height = dds.m_height;
+					_info->format = dds.m_type;
+					_info->width = (uint16_t)dds.m_width;
+					_info->height = (uint16_t)dds.m_height;
+					_info->depth = (uint16_t)dds.m_depth;
 				}
-
-				if (NULL != _width)
+				else
 				{
-					*_width = (uint16_t)width;
-				}
-
-				if (NULL != _height)
-				{
-					*_height = (uint16_t)height;
+					_info->format = TextureFormat::Unknown;
+					_info->width = 0;
+					_info->height = 0;
+					_info->depth = 0;
 				}
 			}
 

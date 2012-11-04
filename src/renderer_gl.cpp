@@ -1158,6 +1158,72 @@ namespace bgfx
 		}
 	}
 
+	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _pixels)
+	{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		if (_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glTexImage3D(_target
+				, _level
+				, _internalFormat
+				, _width
+				, _height
+				, _depth
+				, _border
+				, _format
+				, _type
+				, _pixels
+				) );
+		}
+		else
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		{
+			BX_UNUSED(_depth);
+			GL_CHECK(glTexImage2D(_target
+				, _level
+				, _internalFormat
+				, _width
+				, _height
+				, _border
+				, _format
+				, _type
+				, _pixels
+				) );
+		}
+	}
+
+	static void compressedTexImage(GLenum _target, GLint _level, GLenum _internalformat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLsizei _imageSize, const GLvoid* _data)
+	{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		if (_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glCompressedTexImage3D(_target
+				, _level
+				, _internalformat
+				, _width
+				, _height
+				, _depth
+				, _border
+				, _imageSize
+				, _data
+				) );
+		}
+		else
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		{
+			BX_UNUSED(_depth);
+			GL_CHECK(glCompressedTexImage2D(_target
+				, _level
+				, _internalformat
+				, _width
+				, _height
+				, _border
+				, _imageSize
+				, _data
+				) );
+		}
+	}
+
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
 		Dds dds;
@@ -1171,12 +1237,12 @@ namespace bgfx
 			{
 				m_target = GL_TEXTURE_CUBE_MAP;
 			}
-#if BGFX_CONFIG_RENDERER_OPENGL
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			else if (dds.m_depth > 1)
 			{
 				m_target = GL_TEXTURE_3D;
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			else
 			{
 				m_target = GL_TEXTURE_2D;
@@ -1250,35 +1316,17 @@ namespace bgfx
 								}
 							}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-							if (target == GL_TEXTURE_3D)
-							{
-								GL_CHECK(glTexImage3D(target
-									, lod
-									, internalFmt
-									, width
-									, height
-									, depth
-									, 0
-									, m_fmt
-									, m_type
-									, bits
-									) );
-							}
-							else
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-							{
-								GL_CHECK(glTexImage2D(target+side
-									, lod
-									, internalFmt
-									, width
-									, height
-									, 0
-									, m_fmt
-									, m_type
-									, bits
-									) );
-							}
+							texImage(target+side
+								, lod
+								, internalFmt
+								, width
+								, height
+								, depth
+								, 0
+								, m_fmt
+								, m_type
+								, bits
+								);
 						}
 
 						width >>= 1;
@@ -1306,33 +1354,16 @@ namespace bgfx
 						Mip mip;
 						if (getRawImageData(dds, side, ii, _mem, mip) )
 						{
-#if BGFX_CONFIG_RENDERER_OPENGL
-							if (m_target == GL_TEXTURE_3D)
-							{
-								GL_CHECK(glCompressedTexImage3D(target
-									, ii
-									, internalFmt
-									, width
-									, height
-									, depth
-									, 0
-									, mip.m_size
-									, mip.m_data
-									) );
-							}
-							else
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-							{
-								GL_CHECK(glCompressedTexImage2D(target+side
-									, ii
-									, internalFmt
-									, width
-									, height
-									, 0
-									, mip.m_size
-									, mip.m_data
-									) );
-							}
+							compressedTexImage(target+side
+								, ii
+								, internalFmt
+								, width
+								, height
+								, depth
+								, 0
+								, mip.m_size
+								, mip.m_data
+								);
 						}
 
 						width >>= 1;
@@ -1341,15 +1372,9 @@ namespace bgfx
 					}
 				}
 			}
-
 		}
 		else
 		{
-			m_target = GL_TEXTURE_2D;
-			GL_CHECK(glGenTextures(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate texture id.");
-			GL_CHECK(glBindTexture(m_target, m_id) );
-
 			StreamRead stream(_mem->data, _mem->size);
 
 			uint32_t magic;
@@ -1357,37 +1382,63 @@ namespace bgfx
 
 			if (BGFX_MAGIC == magic)
 			{
-				TextureInfo ti;
-				stream.read(ti);
+				TextureCreate tc;
+				stream.read(tc);
 
-				const TextureFormatInfo& tfi = s_textureFormat[ti.m_type];
+				if (tc.m_cubeMap)
+				{
+					m_target = GL_TEXTURE_CUBE_MAP;
+				}
+				else if (tc.m_depth > 1)
+				{
+					m_target = GL_TEXTURE_3D;
+				}
+				else
+				{
+					m_target = GL_TEXTURE_2D;
+				}
+
+				GL_CHECK(glGenTextures(1, &m_id) );
+				BX_CHECK(0 != m_id, "Failed to generate texture id.");
+				GL_CHECK(glBindTexture(m_target, m_id) );
+
+				const TextureFormatInfo& tfi = s_textureFormat[tc.m_type];
 				GLenum internalFmt = tfi.m_internalFmt;
 				m_fmt = tfi.m_fmt;
 				m_type = tfi.m_type;
 
-				uint32_t bpp = s_textureFormat[ti.m_type].m_bpp;
-				uint8_t* data = NULL != ti.m_mem ? ti.m_mem->data : NULL;
-
-				for (uint8_t side = 0, numSides = ti.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				GLenum target = m_target;
+				if (tc.m_cubeMap)
 				{
-					uint32_t width = ti.m_width;
-					uint32_t height = ti.m_height;
+					target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+				}
 
-					for (uint32_t lod = 0, num = ti.m_numMips; lod < num; ++lod)
+				uint32_t bpp = s_textureFormat[tc.m_type].m_bpp;
+				uint8_t* data = NULL != tc.m_mem ? tc.m_mem->data : NULL;
+
+				for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				{
+					uint32_t width = tc.m_width;
+					uint32_t height = tc.m_height;
+					uint32_t depth = tc.m_depth;
+
+					for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
 					{
 						width = uint32_max(width, 1);
 						height = uint32_max(height, 1);
+						depth = uint32_max(1, depth);
 
-						GL_CHECK(glTexImage2D(m_target
+						texImage(target+side
 							, lod
 							, internalFmt
 							, width
 							, height
+							, depth
 							, 0
 							, m_fmt
 							, m_type
 							, data
-							) );
+							);
 
 						if (NULL != data)
 						{
@@ -1396,12 +1447,13 @@ namespace bgfx
 
 						width >>= 1;
 						height >>= 1;
+						depth >>= 1;
 					}
 				}
 
-				if (NULL != ti.m_mem)
+				if (NULL != tc.m_mem)
 				{
-					release(ti.m_mem);
+					release(tc.m_mem);
 				}
 			}
 			else

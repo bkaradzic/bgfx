@@ -1362,40 +1362,42 @@ namespace bgfx
 
 			if (BGFX_MAGIC == magic)
 			{
-				TextureInfo ti;
-				stream.read(ti);
+				TextureCreate tc;
+				stream.read(tc);
 
 				D3D11_TEXTURE2D_DESC desc;
-				desc.Width = ti.m_width;
-				desc.Height = ti.m_height;
-				desc.MipLevels = ti.m_numMips;
+				desc.Width = tc.m_width;
+				desc.Height = tc.m_height;
+				desc.MipLevels = tc.m_numMips;
 				desc.ArraySize = 1;
-				desc.Format = s_textureFormat[ti.m_type].m_fmt;
+				desc.Format = s_textureFormat[tc.m_type].m_fmt;
 				desc.SampleDesc.Count = 1;
 				desc.SampleDesc.Quality = 0;
 				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 				desc.CPUAccessFlags = 0;
 				desc.MiscFlags = 0;
 
-				m_numMips = ti.m_numMips;
+				m_numMips = tc.m_numMips;
 
-				if (NULL != ti.m_mem)
+				if (NULL != tc.m_mem)
 				{
 					desc.Usage = D3D11_USAGE_IMMUTABLE;
 
-					D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(ti.m_numMips*sizeof(D3D11_SUBRESOURCE_DATA) );
-					uint32_t bpp = s_textureFormat[ti.m_type].m_bpp;
-					uint8_t* data = ti.m_mem->data;
+					D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(tc.m_numMips*sizeof(D3D11_SUBRESOURCE_DATA) );
+					uint32_t bpp = s_textureFormat[tc.m_type].m_bpp;
+					uint8_t* data = tc.m_mem->data;
 
-					for (uint8_t side = 0, numSides = ti.m_cubeMap ? 6 : 1; side < numSides; ++side)
+					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
 					{
-						uint32_t width = ti.m_width;
-						uint32_t height = ti.m_height;
+						uint32_t width = tc.m_width;
+						uint32_t height = tc.m_height;
+						uint32_t depth = tc.m_depth;
 
-						for (uint32_t lod = 0, num = ti.m_numMips; lod < num; ++lod)
+						for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
 						{
-							width = uint32_max(width, 1);
-							height = uint32_max(height, 1);
+							width = uint32_max(1, width);
+							height = uint32_max(1, height);
+							depth = uint32_max(1, depth);
 
 							srd[lod].pSysMem = data;
 							srd[lod].SysMemPitch = width*bpp;
@@ -1405,12 +1407,13 @@ namespace bgfx
 
 							width >>= 1;
 							height >>= 1;
+							depth >>= 1;
 						}
 					}
 
 					DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, srd, &m_texture2d) );
 
-					release(ti.m_mem);
+					release(tc.m_mem);
 				}
 				else
 				{
@@ -1422,7 +1425,7 @@ namespace bgfx
 				D3D11_SHADER_RESOURCE_VIEW_DESC srv;
 				memset(&srv, 0, sizeof(srv) );
 				srv.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-				srv.Texture2D.MipLevels = ti.m_numMips;
+				srv.Texture2D.MipLevels = tc.m_numMips;
 				DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_ptr, &srv, &m_srv) );
 			}
 			else
