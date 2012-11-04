@@ -202,7 +202,7 @@ int _main_(int _argc, char** _argv)
 	// for each renderer.
 	switch (bgfx::getRendererType() )
 	{
-	case bgfx::RendererType::Null:
+	default:
 	case bgfx::RendererType::Direct3D9:
 		s_shaderPath = "shaders/dx9/";
 		break;
