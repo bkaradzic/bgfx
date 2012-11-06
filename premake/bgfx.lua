@@ -5,7 +5,6 @@ project "bgfx"
 	includedirs {
 		BGFX_DIR .. "../tinystl/include",
 		BGFX_DIR .. "../bx/include",
-		BGFX_DIR .. "3rdparty/glext",
 	}
 
 	buildoptions {
@@ -24,6 +23,12 @@ project "bgfx"
 	configuration { "windows" }
 		includedirs {
 			"$(DXSDK_DIR)/include",
+		}
+
+	configuration { "not nacl" }
+		includedirs {
+			--nacl has GLES2 headers modified...
+			BGFX_DIR .. "3rdparty/glext",
 		}
 
 	configuration {}

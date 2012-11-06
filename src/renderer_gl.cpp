@@ -76,6 +76,7 @@ namespace bgfx
 			, m_instance(0)
 			, m_instInterface(NULL)
 			, m_graphicsInterface(NULL)
+			, m_instancedArrays(NULL)
 #elif BGFX_USE_WGL
 			, m_context(NULL)
 			, m_hdc(NULL)
@@ -529,6 +530,7 @@ namespace bgfx
 		PP_Instance m_instance;
 		const PPB_Instance* m_instInterface;
 		const PPB_Graphics3D* m_graphicsInterface;
+		const PPB_OpenGLES2InstancedArrays* m_instancedArrays;
 #elif BGFX_USE_WGL
 		HMODULE m_opengl32dll;
 		HGLRC m_context;
@@ -547,20 +549,42 @@ namespace bgfx
 	RendererContext s_renderCtx;
 
 #if BX_PLATFORM_NACL
+	static void GL_APIENTRY naclVertexAttribDivisor(GLuint _index, GLuint _divisor)
+	{
+		s_renderCtx.m_instancedArrays->VertexAttribDivisorANGLE(s_renderCtx.m_context, _index, _divisor);
+	}
+
+	static void GL_APIENTRY naclDrawArraysInstanced(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount)
+	{
+		s_renderCtx.m_instancedArrays->DrawArraysInstancedANGLE(s_renderCtx.m_context, _mode, _first, _count, _primcount);
+	}
+
+	static void GL_APIENTRY naclDrawElementsInstanced(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount)
+	{
+		s_renderCtx.m_instancedArrays->DrawElementsInstancedANGLE(s_renderCtx.m_context, _mode, _count, _type, _indices, _primcount);
+	}
+
 	void naclSetIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
 		s_renderCtx.m_instance = _instance;
 		s_renderCtx.m_instInterface = _instInterface;
 		s_renderCtx.m_graphicsInterface = _graphicsInterface;
 		s_renderCtx.m_postSwapBuffers = _postSwapBuffers;
+		s_renderCtx.m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
 		s_renderCtx.setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+
+		if (NULL != s_renderCtx.m_instancedArrays)
+		{
+			s_vertexAttribDivisor = naclVertexAttribDivisor;
+			s_drawArraysInstanced = naclDrawArraysInstanced;
+			s_drawElementsInstanced = naclDrawElementsInstanced;
+		}
 	}
 
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/)
 	{
 		renderFrame();
 	}
-
 #elif BX_PLATFORM_LINUX
 	bool linuxGetDisplay(Display** _display, Window* _window)
 	{
