@@ -1909,6 +1909,9 @@ namespace bgfx
 		GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
 #endif // BGFX_CONFIG_DEBUG
 
+		const char* version = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
+		BX_TRACE("GLSL version: %s", version);
+
 		const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 		if (NULL != extensions)
 		{
