@@ -238,6 +238,7 @@ namespace bgfx
 			XRGB8,
 			ARGB8,
 			ABGR16,
+			R5G6B5,
 
 			Count
 		};

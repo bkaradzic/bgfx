@@ -120,6 +120,10 @@ GL_IMPORT(true,  PFNGLGETQUERYOBJECTUI64VEXTPROC,         glGetQueryObjectui64vE
 													
 GL_IMPORT(true,  PFNGLSAMPLECOVERAGEARBPROC,              glSampleCoverageARB);
 
+GL_IMPORT(true,  PFNGLBINDVERTEXARRAYPROC,                glBindVertexArray);
+GL_IMPORT(true,  PFNGLDELETEVERTEXARRAYSPROC,             glDeleteVertexArrays);
+GL_IMPORT(true,  PFNGLGENVERTEXARRAYSPROC,                glGenVertexArrays);
+
 #if BGFX_CONFIG_DEBUG_GREMEDY						
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY);
 GL_IMPORT(true,  PFNGLFRAMETERMINATORGREMEDYPROC,         glFrameTerminatorGREMEDY);

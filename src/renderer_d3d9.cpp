@@ -130,6 +130,7 @@ namespace bgfx
 		{ D3DFMT_X8R8G8B8,     4 },
 		{ D3DFMT_A8R8G8B8,     4 },
 		{ D3DFMT_A16B16G16R16, 8 },
+		{ D3DFMT_R5G6B5,       2 },
 	};
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =

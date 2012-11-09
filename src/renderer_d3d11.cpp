@@ -96,6 +96,7 @@ namespace bgfx
 		{ DXGI_FORMAT_B8G8R8A8_UNORM,     4 },
 		{ DXGI_FORMAT_B8G8R8A8_UNORM,     4 },
 		{ DXGI_FORMAT_R16G16B16A16_FLOAT, 8 },
+		{ DXGI_FORMAT_B5G6R5_UNORM,       2 },
 	};
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =

@@ -18,6 +18,7 @@
 #	define glProgramBinary glProgramBinaryOES
 #	define glGetProgramBinary glGetProgramBinaryOES
 #	define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
+#	define GL_HALF_FLOAT GL_HALF_FLOAT_OES
 #endif // BGFX_CONFIG_RENDERER_OPENGLES2
 
 namespace bgfx
@@ -640,6 +641,7 @@ namespace bgfx
 			ARB_vertex_type_2_10_10_10_rev,
 			OES_vertex_type_10_10_10_2,
 			EXT_occlusion_query_boolean,
+			ARB_vertex_array_object,
 			ATI_meminfo,
 			NVX_gpu_memory_info,
 
@@ -684,6 +686,7 @@ namespace bgfx
 		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false, true },
 		{ "GL_OES_vertex_type_10_10_10_2",        false, true },
 		{ "GL_EXT_occlusion_query_boolean",       false, true },
+		{ "GL_ARB_vertex_array_object",           false, true },
 		{ "GL_ATI_meminfo",                       false, true },
 		{ "GL_NVX_gpu_memory_info",               false, true },
 	};
@@ -734,11 +737,7 @@ namespace bgfx
 	{
 		GL_UNSIGNED_BYTE,
 		GL_UNSIGNED_SHORT,
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		GL_HALF_FLOAT,
-#else
-		GL_HALF_FLOAT_OES,
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		GL_FLOAT,
 	};
 
@@ -810,18 +809,19 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,      GL_ZERO,           4 },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,      GL_ZERO,           4 },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_ZERO,      GL_ZERO,           4 },
-		{ GL_ZERO,                          GL_ZERO,      GL_ZERO,           0 },
-		{ GL_LUMINANCE,                     GL_LUMINANCE, GL_UNSIGNED_BYTE,  1 },
-		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  4 },
-		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  4 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,      GL_ZERO,                 4 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,      GL_ZERO,                 4 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_ZERO,      GL_ZERO,                 4 },
+		{ GL_ZERO,                          GL_ZERO,      GL_ZERO,                 0 },
+		{ GL_LUMINANCE,                     GL_LUMINANCE, GL_UNSIGNED_BYTE,        1 },
+		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,        4 },
+		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,        4 },
 #if BGFX_CONFIG_RENDERER_OPENGL
-		{ GL_RGBA16,                        GL_RGBA,      GL_UNSIGNED_SHORT, 8 },
+		{ GL_RGBA16,                        GL_RGBA,      GL_HALF_FLOAT,           8 },
 #else
-		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,  8 },
+		{ GL_RGBA,                          GL_RGBA,      GL_UNSIGNED_BYTE,        8 },
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+		{ GL_RGB,                           GL_RGB,       GL_UNSIGNED_SHORT_5_6_5, 2 },
 	};
 
 	const char* glslTypeName(GLuint _type)
