@@ -10,9 +10,16 @@
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-#	define glClearDepthf(_depth) glClearDepth(_depth)
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#if !BGFX_CONFIG_RENDERER_OPENGL
+#	define glClearDepth glClearDepthf
+#endif // !BGFX_CONFIG_RENDERER_OPENGL
+
+#if BGFX_CONFIG_RENDERER_OPENGLES2
+#	define glProgramBinary glProgramBinaryOES
+#	define glGetProgramBinary glGetProgramBinaryOES
+inline void glProgramParameteri(GLuint /*_program*/, GLenum /*_pname*/, GLint /*_value*/) {}
+#	define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
+#endif // BGFX_CONFIG_RENDERER_OPENGLES2
 
 namespace bgfx
 {
@@ -68,6 +75,7 @@ namespace bgfx
 	{
 		RendererContext()
 			: m_dxtSupport(false)
+			, m_programBinarySupport(false)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
@@ -520,6 +528,7 @@ namespace bgfx
 
 		Resolution m_resolution;
 		bool m_dxtSupport;
+		bool m_programBinarySupport;
 		bool m_flip;
 
 		PostSwapBuffersFn m_postSwapBuffers;
@@ -915,11 +924,10 @@ namespace bgfx
 
 		bool cached = false;
 
-#if BGFX_CONFIG_RENDERER_OPENGL
 		uint64_t id = (uint64_t(_vsh.m_hash)<<32) | _fsh.m_hash;
 		id ^= s_renderCtx.m_hash;
 
-		if (s_extension[Extension::ARB_get_program_binary].m_supported)
+		if (s_renderCtx.m_programBinarySupport)
 		{
 			uint32_t length;
 			g_cache(id, false, NULL, length);
@@ -939,12 +947,11 @@ namespace bgfx
 
 				g_free(data);
 			}
-			else
-			{
-				GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
-			}
-		}
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+			GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+		}
 
 		if (!cached)
 		{
@@ -965,23 +972,24 @@ namespace bgfx
 				return;
 			}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-			if (s_extension[Extension::ARB_get_program_binary].m_supported)
+			if (s_renderCtx.m_programBinarySupport)
 			{
 				GLint programLength;
 				GLenum format;
 				GL_CHECK(glGetProgramiv(m_id, GL_PROGRAM_BINARY_LENGTH, &programLength) );
 
-				uint32_t length = programLength + 4;
-				uint8_t* data = (uint8_t*)g_realloc(NULL, length);
-				GL_CHECK(glGetProgramBinary(m_id, programLength, NULL, &format, &data[4]) );
-				*(uint32_t*)data = format;
+				if (0 < programLength)
+				{
+					uint32_t length = programLength + 4;
+					uint8_t* data = (uint8_t*)g_realloc(NULL, length);
+					GL_CHECK(glGetProgramBinary(m_id, programLength, NULL, &format, &data[4]) );
+					*(uint32_t*)data = format;
 
-				g_cache(id, true, data, length);
+					g_cache(id, true, data, length);
 
-				g_free(data);
+					g_free(data);
+				}
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 		}
 
 		init();
@@ -1974,6 +1982,11 @@ namespace bgfx
 			s_renderCtx.m_dxtSupport |=
 				s_extension[Extension::EXT_texture_compression_s3tc].m_supported
 				;
+
+			s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+				|| s_extension[Extension::ARB_get_program_binary].m_supported
+				|| s_extension[Extension::OES_get_program_binary].m_supported
+				;
 		}
 	}
 
@@ -2239,7 +2252,7 @@ namespace bgfx
 						if (BGFX_CLEAR_DEPTH_BIT & clear.m_flags)
 						{
 							flags |= GL_DEPTH_BUFFER_BIT;
-							GL_CHECK(glClearDepthf(clear.m_depth) );
+							GL_CHECK(glClearDepth(clear.m_depth) );
 							GL_CHECK(glDepthMask(GL_TRUE) );
 						}
 

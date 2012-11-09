@@ -125,12 +125,14 @@ GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY)
 GL_IMPORT(true,  PFNGLFRAMETERMINATORGREMEDYPROC,         glFrameTerminatorGREMEDY);
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
 
-#else
+#elif BGFX_CONFIG_RENDERER_OPENGLES2
 
 // OpenGL ES 2.0 Reference Pages
 // http://www.khronos.org/opengles/sdk/docs/man/
 
 GL_IMPORT(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC, glGetTranslatedShaderSourceANGLE);
+GL_IMPORT(true,  PFNGLGETPROGRAMBINARYOESPROC,            glGetProgramBinaryOES);
+GL_IMPORT(true,  PFNGLPROGRAMBINARYOESPROC,               glProgramBinaryOES);
 
 #endif // BGFX_CONFIG_RENDERER_
 
