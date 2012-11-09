@@ -17,7 +17,6 @@
 #if BGFX_CONFIG_RENDERER_OPENGLES2
 #	define glProgramBinary glProgramBinaryOES
 #	define glGetProgramBinary glGetProgramBinaryOES
-inline void glProgramParameteri(GLuint /*_program*/, GLenum /*_pname*/, GLint /*_value*/) {}
 #	define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #endif // BGFX_CONFIG_RENDERER_OPENGLES2
 
