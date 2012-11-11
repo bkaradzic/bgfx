@@ -513,7 +513,7 @@ namespace bgfx
 #elif BGFX_CONFIG_RENDERER_OPENGLES3
 		return RendererType::OpenGLES3;
 #else
-		return RendererType::Null;
+		return RendererType::Count;
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
@@ -927,9 +927,10 @@ namespace bgfx
 		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
 	}
 
-	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num)
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
 	{
-		return s_ctx.allocTransientIndexBuffer(_num);
+		BX_CHECK(NULL != _tib, "_tib can't be NULL");
+		return s_ctx.allocTransientIndexBuffer(_tib, _num);
 	}
 
 	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
@@ -937,9 +938,10 @@ namespace bgfx
 		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
-	const TransientVertexBuffer* allocTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
 	{
-		return s_ctx.allocTransientVertexBuffer(_num, _decl);
+		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
+		return s_ctx.allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
@@ -1177,6 +1179,11 @@ namespace bgfx
 		s_ctx.m_submit->setState(_state);
 	}
 
+	void setStencil(uint32_t _fstencil, uint32_t _bstencil)
+	{
+		s_ctx.m_submit->setStencil(_fstencil, _bstencil);
+	}
+
 	uint32_t setTransform(const void* _mtx, uint16_t _num)
 	{
 		return s_ctx.m_submit->setTransform(_mtx, _num);
@@ -1217,10 +1224,11 @@ namespace bgfx
 		s_ctx.m_submit->setIndexBuffer(s_ctx.m_dynamicIndexBuffers[_handle.idx].m_handle, BGFX_DRAW_WHOLE_INDEX_BUFFER, 0);
 	}
 
-	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices)
+	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices)
 	{
-		uint32_t numIndices = uint32_min(_numIndices, _ib->size/2);
-		s_ctx.m_submit->setIndexBuffer(_ib, numIndices);
+		BX_CHECK(NULL != _tib, "_tib can't be NULL");
+		uint32_t numIndices = uint32_min(_numIndices, _tib->size/2);
+		s_ctx.m_submit->setIndexBuffer(_tib, numIndices);
 	}
 
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
@@ -1233,9 +1241,10 @@ namespace bgfx
 		s_ctx.m_submit->setVertexBuffer(s_ctx.m_dynamicVertexBuffers[_handle.idx], _numVertices);
 	}
 
-	void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices)
+	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices)
 	{
-		s_ctx.m_submit->setVertexBuffer(_vb, _numVertices);
+		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
+		s_ctx.m_submit->setVertexBuffer(_tvb, _numVertices);
 	}
 
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)

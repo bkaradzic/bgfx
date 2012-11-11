@@ -71,6 +71,55 @@ namespace bgfx
 		D3DCMP_ALWAYS,
 	};
 
+	static const D3DCMPFUNC s_stencilFunc[] =
+	{
+		(D3DCMPFUNC)0, // ignored
+		D3DCMP_LESS,
+		D3DCMP_LESSEQUAL,
+		D3DCMP_EQUAL,
+		D3DCMP_GREATEREQUAL,
+		D3DCMP_GREATER,
+		D3DCMP_NOTEQUAL,
+		D3DCMP_NEVER,
+		D3DCMP_ALWAYS,
+	};
+
+	static const D3DSTENCILOP s_stencilOp[] =
+	{
+		D3DSTENCILOP_ZERO,
+		D3DSTENCILOP_KEEP,
+		D3DSTENCILOP_REPLACE,
+		D3DSTENCILOP_INCR,
+		D3DSTENCILOP_INCRSAT,
+		D3DSTENCILOP_DECR,
+		D3DSTENCILOP_DECRSAT,
+		D3DSTENCILOP_INVERT,
+	};
+
+	static const D3DRENDERSTATETYPE s_stencilFuncRs[] =
+	{
+		D3DRS_STENCILFUNC,
+		D3DRS_CCW_STENCILFUNC,
+	};
+
+	static const D3DRENDERSTATETYPE s_stencilFailRs[] =
+	{
+		D3DRS_STENCILFAIL,
+		D3DRS_CCW_STENCILFAIL,
+	};
+
+	static const D3DRENDERSTATETYPE s_stencilZFailRs[] =
+	{
+		D3DRS_STENCILZFAIL,
+		D3DRS_CCW_STENCILZFAIL,
+	};
+
+	static const D3DRENDERSTATETYPE s_stencilZPassRs[] =
+	{
+		D3DRS_STENCILPASS,
+		D3DRS_CCW_STENCILPASS,
+	};
+
 	static const D3DCULL s_cullMode[] =
 	{
 		D3DCULL_NONE,
@@ -1363,19 +1412,20 @@ namespace bgfx
 
 	void Texture::commit(uint8_t _stage)
 	{
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MINFILTER, m_minFilter) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, m_magFilter) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, m_mipFilter) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, m_tau) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, m_tav) );
+		IDirect3DDevice9* device = s_renderCtx.m_device;
+		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MINFILTER, m_minFilter) );
+		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, m_magFilter) );
+		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, m_mipFilter) );
+		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, m_tau) );
+		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, m_tav) );
 		if (m_type == Texture3D)
 		{
-			DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSW, m_taw) );
+			DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSW, m_taw) );
 		}
 #if BX_PLATFORM_WINDOWS
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, m_srgb) );
+		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, m_srgb) );
 #endif // BX_PLATFORM_WINDOWS
-		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_ptr) );
+		DX_CHECK(device->SetTexture(_stage, m_ptr) );
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -1624,27 +1674,29 @@ namespace bgfx
 		vp.Height = height;
 		vp.MinZ = 0.0f;
 		vp.MaxZ = 1.0f;
-		DX_CHECK(s_renderCtx.m_device->SetViewport(&vp) );
 
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZENABLE, FALSE) );
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS) );
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED|D3DCOLORWRITEENABLE_GREEN|D3DCOLORWRITEENABLE_BLUE) );
-		DX_CHECK(s_renderCtx.m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID) );
+		IDirect3DDevice9* device = s_renderCtx.m_device;
+		DX_CHECK(device->SetViewport(&vp) );
+		DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );
+		DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, FALSE) );
+		DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS) );
+		DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
+		DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
+		DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
+		DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED|D3DCOLORWRITEENABLE_GREEN|D3DCOLORWRITEENABLE_BLUE) );
+		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID) );
 
 		Program& program = s_renderCtx.m_program[m_program.idx];
-		s_renderCtx.m_device->SetVertexShader( (IDirect3DVertexShader9*)program.m_vsh->m_ptr);
-		s_renderCtx.m_device->SetPixelShader( (IDirect3DPixelShader9*)program.m_fsh->m_ptr);
+		device->SetVertexShader( (IDirect3DVertexShader9*)program.m_vsh->m_ptr);
+		device->SetPixelShader( (IDirect3DPixelShader9*)program.m_fsh->m_ptr);
 
 		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 		VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
-		DX_CHECK(s_renderCtx.m_device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
-		DX_CHECK(s_renderCtx.m_device->SetVertexDeclaration(vertexDecl.m_ptr) );
+		DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
+		DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
 
 		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
-		DX_CHECK(s_renderCtx.m_device->SetIndices(ib.m_ptr) );
+		DX_CHECK(device->SetIndices(ib.m_ptr) );
 
 		float proj[16];
 		mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
@@ -1853,6 +1905,7 @@ namespace bgfx
 		RenderState currentState;
 		currentState.reset();
 		currentState.m_flags = BGFX_STATE_NONE;
+		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
@@ -1887,11 +1940,17 @@ namespace bgfx
 				uint64_t changedFlags = currentState.m_flags ^ state.m_flags;
 				currentState.m_flags = newFlags;
 
+				const uint64_t newStencil = state.m_stencil;
+				uint64_t changedStencil = currentState.m_stencil ^ state.m_stencil;
+				currentState.m_stencil = newStencil;
+
 				if (key.m_view != view)
 				{
 					currentState.clear();
 					changedFlags = BGFX_STATE_MASK;
+					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
+					currentState.m_stencil = newStencil;
 
 					PIX_ENDEVENT();
 					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), "view");
@@ -1957,11 +2016,67 @@ namespace bgfx
 						}
 					}
 
- 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
+					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS) );
 					DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
+				}
+
+				if (0 != changedStencil)
+				{
+					bool enable = 0 != newStencil;
+					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, enable) );
+					
+					if (0 != newStencil)
+					{
+						uint32_t fstencil = unpackStencil(0, newStencil);
+						uint32_t bstencil = unpackStencil(1, newStencil);
+						uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
+						DX_CHECK(device->SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, 0 != frontAndBack) );
+
+						uint32_t fchanged = unpackStencil(0, changedStencil);
+						if ( (BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK) & fchanged)
+						{
+							uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+							DX_CHECK(device->SetRenderState(D3DRS_STENCILREF, ref) );
+
+							uint32_t rmask = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+							DX_CHECK(device->SetRenderState(D3DRS_STENCILMASK, rmask) );
+						}
+
+// 						uint32_t bchanged = unpackStencil(1, changedStencil);
+// 						if (BGFX_STENCIL_FUNC_RMASK_MASK & bchanged)
+// 						{
+// 							uint32_t wmask = (bstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+// 							DX_CHECK(device->SetRenderState(D3DRS_STENCILWRITEMASK, wmask) );
+// 						}
+
+						for (uint32_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
+						{
+							uint32_t stencil = unpackStencil(ii, newStencil);
+							uint32_t changed = unpackStencil(ii, changedStencil);
+
+							if ( (BGFX_STENCIL_TEST_MASK|BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK) & changed)
+							{
+								uint32_t func = (stencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT;
+								DX_CHECK(device->SetRenderState(s_stencilFuncRs[ii], s_stencilFunc[func]) );
+							}
+
+							if ( (BGFX_STENCIL_OP_FAIL_S_MASK|BGFX_STENCIL_OP_FAIL_Z_MASK|BGFX_STENCIL_OP_PASS_Z_MASK) & changed)
+							{
+								uint32_t sfail = (stencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT;
+								DX_CHECK(device->SetRenderState(s_stencilFailRs[ii], s_stencilOp[sfail]) );
+
+								uint32_t zfail = (stencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT;
+								DX_CHECK(device->SetRenderState(s_stencilZFailRs[ii], s_stencilOp[zfail]) );
+
+								uint32_t zpass = (stencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT;
+								DX_CHECK(device->SetRenderState(s_stencilZPassRs[ii], s_stencilOp[zpass]) );
+							}
+						}
+					}
 				}
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK

@@ -39,6 +39,9 @@ GL_IMPORT(false, PFNGLCLEARSTENCILPROC,                   glClearStencil);
 GL_IMPORT(false, PFNGLDEPTHMASKPROC,                      glDepthMask);
 GL_IMPORT(false, PFNGLCLEARDEPTHPROC,                     glClearDepth);
 GL_IMPORT(false, PFNGLCLEARCOLORPROC,                     glClearColor);
+GL_IMPORT(false, PFNGLSTENCILFUNCPROC,                    glStencilFunc);
+GL_IMPORT(false, PFNGLSTENCILMASKPROC,                    glStencilMask);
+GL_IMPORT(false, PFNGLSTENCILOPPROC,                      glStencilOp);
 #endif // BX_PLATFORM_WINDOWS
 
 GL_IMPORT(false, PFNGLACTIVETEXTUREPROC,                  glActiveTexture);
@@ -123,6 +126,10 @@ GL_IMPORT(true,  PFNGLSAMPLECOVERAGEARBPROC,              glSampleCoverageARB);
 GL_IMPORT(true,  PFNGLBINDVERTEXARRAYPROC,                glBindVertexArray);
 GL_IMPORT(true,  PFNGLDELETEVERTEXARRAYSPROC,             glDeleteVertexArrays);
 GL_IMPORT(true,  PFNGLGENVERTEXARRAYSPROC,                glGenVertexArrays);
+
+GL_IMPORT(true,  PFNGLSTENCILFUNCSEPARATEPROC,            glStencilFuncSeparate);
+GL_IMPORT(true,  PFNGLSTENCILMASKSEPARATEPROC,            glStencilMaskSeparate);
+GL_IMPORT(true,  PFNGLSTENCILOPSEPARATEPROC,              glStencilOpSeparate);
 
 #if BGFX_CONFIG_DEBUG_GREMEDY						
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY);

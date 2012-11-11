@@ -257,6 +257,16 @@ namespace bgfx
 		return un.ui;
 	}
 
+	inline uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
+	{
+		return (uint64_t(_bstencil)<<32)|uint64_t(_fstencil);
+	}
+
+	inline uint32_t unpackStencil(uint8_t _0or1, uint64_t _stencil)
+	{
+		return uint32_t( (_stencil >> (32*_0or1) ) );
+	}
+
 	void dump(const VertexDecl& _decl);
 
 	struct TextVideoMem
@@ -911,6 +921,7 @@ namespace bgfx
 		{
 			m_constBegin = m_constEnd;
 			m_flags = BGFX_STATE_DEFAULT;
+			m_stencil = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
 			m_matrix = 0;
 			m_startIndex = BGFX_DRAW_WHOLE_INDEX_BUFFER;
 			m_numIndices = 0;
@@ -933,6 +944,7 @@ namespace bgfx
 		}
 
 		uint64_t m_flags;
+		uint64_t m_stencil;
 		uint32_t m_constBegin;
 		uint32_t m_constEnd;
 		uint32_t m_matrix;
@@ -1086,6 +1098,11 @@ namespace bgfx
 			m_state.m_flags = _state;
 		}
 
+		void setStencil(uint32_t _fstencil, uint32_t _bstencil)
+		{
+			m_state.m_stencil = packStencil(_fstencil, _bstencil);
+		}
+
 		uint32_t setTransform(const void* _mtx, uint16_t _num)
 		{
 			m_state.m_matrix = m_matrixCache.add(_mtx, _num);
@@ -1107,13 +1124,12 @@ namespace bgfx
 			m_state.m_indexBuffer = _handle;
 		}
 
-		void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices)
+		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices)
 		{
-			m_state.m_indexBuffer = _ib->handle;
-			m_state.m_startIndex = _ib->startIndex;
+			m_state.m_indexBuffer = _tib->handle;
+			m_state.m_startIndex = _tib->startIndex;
 			m_state.m_numIndices = _numIndices;
 			m_discard = 0 == _numIndices;
-			g_free(const_cast<TransientIndexBuffer*>(_ib) );
 		}
 
 		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
@@ -1124,33 +1140,29 @@ namespace bgfx
 			m_state.m_vertexBuffer = _handle;
 		}
 
-		void setVertexBuffer(const DynamicVertexBuffer& dvb, uint32_t _numVertices)
+		void setVertexBuffer(const DynamicVertexBuffer& _dvb, uint32_t _numVertices)
 		{
-			m_state.m_startVertex = dvb.m_startVertex;
-			m_state.m_numVertices = uint32_min(dvb.m_numVertices, _numVertices);
-			m_state.m_vertexBuffer = dvb.m_handle;
-			m_state.m_vertexDecl = dvb.m_decl;
+			m_state.m_startVertex = _dvb.m_startVertex;
+			m_state.m_numVertices = uint32_min(_dvb.m_numVertices, _numVertices);
+			m_state.m_vertexBuffer = _dvb.m_handle;
+			m_state.m_vertexDecl = _dvb.m_decl;
 		}
 
-		void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices)
+		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices)
 		{
-			m_state.m_startVertex = _vb->startVertex;
-			m_state.m_numVertices = uint32_min(_vb->size/_vb->stride, _numVertices);
-			m_state.m_vertexBuffer = _vb->handle;
-			m_state.m_vertexDecl = _vb->decl;
-			g_free(const_cast<TransientVertexBuffer*>(_vb) );
+			m_state.m_startVertex = _tvb->startVertex;
+			m_state.m_numVertices = uint32_min(_tvb->size/_tvb->stride, _numVertices);
+			m_state.m_vertexBuffer = _tvb->handle;
+			m_state.m_vertexDecl = _tvb->decl;
 		}
 
 		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGLES2
-#else
  			m_state.m_instanceDataOffset = _idb->offset;
 			m_state.m_instanceDataStride = _idb->stride;
 			m_state.m_numInstances = uint16_min(_idb->num, _num);
 			m_state.m_instanceDataBuffer = _idb->handle;
 			g_free(const_cast<InstanceDataBuffer*>(_idb) );
-#endif // BGFX_CONFIG_RENDERER_OPENGLES
 		}
 
 		void setProgram(ProgramHandle _handle)
@@ -1821,19 +1833,16 @@ namespace bgfx
 			g_free(const_cast<TransientIndexBuffer*>(_ib) );
 		}
 
-		const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num)
+		void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
 		{
 			uint32_t offset = m_submit->allocTransientIndexBuffer(_num);
 
 			TransientIndexBuffer& dib = *m_submit->m_transientIb;
 
-			TransientIndexBuffer* ib = (TransientIndexBuffer*)g_realloc(NULL, sizeof(TransientIndexBuffer) );
-			ib->data = &dib.data[offset];
-			ib->size = _num * sizeof(uint16_t);
-			ib->handle = dib.handle;
-			ib->startIndex = offset/sizeof(uint16_t);
-
-			return ib;
+			_tib->data = &dib.data[offset];
+			_tib->size = _num * sizeof(uint16_t);
+			_tib->handle = dib.handle;
+			_tib->startIndex = offset/sizeof(uint16_t);
 		}
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexDecl* _decl = NULL)
@@ -1875,7 +1884,7 @@ namespace bgfx
 			g_free(const_cast<TransientVertexBuffer*>(_vb) );
 		}
 
-		const TransientVertexBuffer* allocTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+		void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
 		{
 			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
 
@@ -1893,22 +1902,16 @@ namespace bgfx
 
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _decl.m_stride);
 
-			TransientVertexBuffer* vb = (TransientVertexBuffer*)g_realloc(NULL, sizeof(TransientVertexBuffer) );
-			vb->data = &dvb.data[offset];
-			vb->size = _num * _decl.m_stride;
-			vb->startVertex = offset/_decl.m_stride;
-			vb->stride = _decl.m_stride;
-			vb->handle = dvb.handle;
-			vb->decl = declHandle;
-
-			return vb;
+			_tvb->data = &dvb.data[offset];
+			_tvb->size = _num * _decl.m_stride;
+			_tvb->startVertex = offset/_decl.m_stride;
+			_tvb->stride = _decl.m_stride;
+			_tvb->handle = dvb.handle;
+			_tvb->decl = declHandle;
 		}
 
 		const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGLES2
-			return NULL;
-#else
 			uint16_t stride = BX_ALIGN_16(_stride);
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
 
@@ -1922,7 +1925,6 @@ namespace bgfx
 			idb->handle = dvb.handle;
 
 			return idb;
-#endif // BGFX_CONFIG_RENDERER_OPENGLES
 		}
 
 		VertexShaderHandle createVertexShader(const Memory* _mem)

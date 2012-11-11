@@ -3,11 +3,21 @@ bgfx
 
 Cross-platform rendering library.
 
-Supports:  
-OpenGL 2.1, OpenGL ES 2.0, and Direct3D 9.0.
+Supported rendering backends:
 
-Platforms:  
-Windows, Linux, Android, and Native Client.
+ * OpenGL 2.1
+ * OpenGL ES 2
+ * OpenGL ES 3
+ * Direct3D 9
+ * Direct3D 11
+
+Platforms:
+
+ * Windows
+ * Linux
+ * Android
+ * Native Client
+ * JavaScript (via Emscripten)
 
 Dependencies
 ------------
@@ -44,6 +54,30 @@ Other platforms:
 Configuration is <platform>-<debug/release><32/64>. For example:
 
 	linux-release32, nacl-debug64, android-release32, etc.
+
+Examples
+--------
+
+### 00-helloworld
+Initialization and debug text.
+
+### 01-cubes
+Rendering simple static mesh.
+
+### 02-metaballs
+Rendering with transient buffers.
+
+### 03-raymarch
+Updating shader uniforms.
+
+### 04-mesh
+Loading OpenCTM meshes.
+
+### 05-instancing
+Geometry instancing.
+
+### 06-bump
+Loading textures.
 
 Notice
 ------

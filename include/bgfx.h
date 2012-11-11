@@ -9,6 +9,7 @@
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // size_t
 
+///
 #define BGFX_STATE_DEPTH_WRITE          UINT64_C(0x0000000000000001)
 
 #define BGFX_STATE_ALPHA_TEST           UINT64_C(0x0000000000000004)
@@ -88,17 +89,77 @@
 #define BGFX_STATE_ALPHA_REF(_ref) ( (uint64_t(_ref)<<BGFX_STATE_ALPHA_REF_SHIFT)&BGFX_STATE_ALPHA_REF_MASK)
 #define BGFX_STATE_POINT_SIZE(_size) ( (uint64_t(_size)<<BGFX_STATE_POINT_SIZE_SHIFT)&BGFX_STATE_POINT_SIZE_MASK)
 
+///
+#define BGFX_STENCIL_FUNC_REF_SHIFT     0
+#define BGFX_STENCIL_FUNC_REF_MASK      UINT32_C(0x000000ff)
+#define BGFX_STENCIL_FUNC_RMASK_SHIFT   8
+#define BGFX_STENCIL_FUNC_RMASK_MASK    UINT32_C(0x0000ff00)
+
+#define BGFX_STENCIL_TEST_LESS          UINT32_C(0x00010000)
+#define BGFX_STENCIL_TEST_LEQUAL        UINT32_C(0x00020000)
+#define BGFX_STENCIL_TEST_EQUAL         UINT32_C(0x00030000)
+#define BGFX_STENCIL_TEST_GEQUAL        UINT32_C(0x00040000)
+#define BGFX_STENCIL_TEST_GREATER       UINT32_C(0x00050000)
+#define BGFX_STENCIL_TEST_NOTEQUAL      UINT32_C(0x00060000)
+#define BGFX_STENCIL_TEST_NEVER         UINT32_C(0x00070000)
+#define BGFX_STENCIL_TEST_ALWAYS        UINT32_C(0x00080000)
+#define BGFX_STENCIL_TEST_SHIFT         16
+#define BGFX_STENCIL_TEST_MASK          UINT32_C(0x000f0000)
+
+#define BGFX_STENCIL_OP_FAIL_S_ZERO     UINT32_C(0x00000000)
+#define BGFX_STENCIL_OP_FAIL_S_KEEP     UINT32_C(0x00100000)
+#define BGFX_STENCIL_OP_FAIL_S_REPLACE  UINT32_C(0x00200000)
+#define BGFX_STENCIL_OP_FAIL_S_INCR     UINT32_C(0x00300000)
+#define BGFX_STENCIL_OP_FAIL_S_INCRSAT  UINT32_C(0x00400000)
+#define BGFX_STENCIL_OP_FAIL_S_DECR     UINT32_C(0x00500000)
+#define BGFX_STENCIL_OP_FAIL_S_DECRSAT  UINT32_C(0x00600000)
+#define BGFX_STENCIL_OP_FAIL_S_INVERT   UINT32_C(0x00700000)
+#define BGFX_STENCIL_OP_FAIL_S_SHIFT    20
+#define BGFX_STENCIL_OP_FAIL_S_MASK     UINT32_C(0x00f00000)
+
+#define BGFX_STENCIL_OP_FAIL_Z_ZERO     UINT32_C(0x00000000)
+#define BGFX_STENCIL_OP_FAIL_Z_KEEP     UINT32_C(0x01000000)
+#define BGFX_STENCIL_OP_FAIL_Z_REPLACE  UINT32_C(0x02000000)
+#define BGFX_STENCIL_OP_FAIL_Z_INCR     UINT32_C(0x03000000)
+#define BGFX_STENCIL_OP_FAIL_Z_INCRSAT  UINT32_C(0x04000000)
+#define BGFX_STENCIL_OP_FAIL_Z_DECR     UINT32_C(0x05000000)
+#define BGFX_STENCIL_OP_FAIL_Z_DECRSAT  UINT32_C(0x06000000)
+#define BGFX_STENCIL_OP_FAIL_Z_INVERT   UINT32_C(0x07000000)
+#define BGFX_STENCIL_OP_FAIL_Z_SHIFT    24
+#define BGFX_STENCIL_OP_FAIL_Z_MASK     UINT32_C(0x0f000000)
+
+#define BGFX_STENCIL_OP_PASS_Z_ZERO     UINT32_C(0x00000000)
+#define BGFX_STENCIL_OP_PASS_Z_KEEP     UINT32_C(0x10000000)
+#define BGFX_STENCIL_OP_PASS_Z_REPLACE  UINT32_C(0x20000000)
+#define BGFX_STENCIL_OP_PASS_Z_INCR     UINT32_C(0x30000000)
+#define BGFX_STENCIL_OP_PASS_Z_INCRSAT  UINT32_C(0x40000000)
+#define BGFX_STENCIL_OP_PASS_Z_DECR     UINT32_C(0x50000000)
+#define BGFX_STENCIL_OP_PASS_Z_DECRSAT  UINT32_C(0x60000000)
+#define BGFX_STENCIL_OP_PASS_Z_INVERT   UINT32_C(0x70000000)
+#define BGFX_STENCIL_OP_PASS_Z_SHIFT    28
+#define BGFX_STENCIL_OP_PASS_Z_MASK     UINT32_C(0xf0000000)
+
+#define BGFX_STENCIL_NONE               UINT32_C(0x00000000)
+#define BGFX_STENCIL_MASK               UINT32_C(0xffffffff)
+#define BGFX_STENCIL_DEFAULT            UINT32_C(0x00000000)
+
+#define BGFX_STENCIL_FUNC_REF(_ref) ( (uint32_t(_ref)<<BGFX_STENCIL_FUNC_REF_SHIFT)&BGFX_STENCIL_FUNC_REF_MASK)
+#define BGFX_STENCIL_FUNC_RMASK(_mask) ( (uint32_t(_mask)<<BGFX_STENCIL_FUNC_RMASK_SHIFT)&BGFX_STENCIL_FUNC_RMASK_MASK)
+
+///
 #define BGFX_CLEAR_NONE                 UINT8_C(0x00)
 #define BGFX_CLEAR_COLOR_BIT            UINT8_C(0x01)
 #define BGFX_CLEAR_DEPTH_BIT            UINT8_C(0x02)
 #define BGFX_CLEAR_STENCIL_BIT          UINT8_C(0x04)
 
+///
 #define BGFX_DEBUG_NONE                 UINT32_C(0x00000000)
 #define BGFX_DEBUG_WIREFRAME            UINT32_C(0x00000001)
 #define BGFX_DEBUG_IFH                  UINT32_C(0x00000002)
 #define BGFX_DEBUG_STATS                UINT32_C(0x00000004)
 #define BGFX_DEBUG_TEXT                 UINT32_C(0x00000008)
 
+///
 #define BGFX_TEXTURE_NONE               UINT32_C(0x00000000)
 #define BGFX_TEXTURE_U_REPEAT           UINT32_C(0x00000000)
 #define BGFX_TEXTURE_U_MIRROR           UINT32_C(0x00000001)
@@ -126,6 +187,7 @@
 #define BGFX_TEXTURE_MIP_MASK           UINT32_C(0x00100000)
 #define BGFX_TEXTURE_SRGB               UINT32_C(0x00200000)
 
+///
 #define BGFX_RENDER_TARGET_NONE         UINT32_C(0x00000000)
 #define BGFX_RENDER_TARGET_COLOR_RGBA   UINT32_C(0x00000001)
 #define BGFX_RENDER_TARGET_COLOR_R32F   UINT32_C(0x00000002)
@@ -142,6 +204,7 @@
 #define BGFX_RENDER_TARGET_MSAA_MASK    UINT32_C(0x00070000)
 #define BGFX_RENDER_TARGET_SRGBWRITE    UINT32_C(0x00080000)
 
+///
 #define BGFX_RESET_NONE                 UINT32_C(0x00000000)
 #define BGFX_RESET_FULLSCREEN           UINT32_C(0x00000001)
 #define BGFX_RESET_FULLSCREEN_FAKE      UINT32_C(0x00000002)
@@ -155,9 +218,11 @@
 #define BGFX_RESET_MSAA_MASK            UINT32_C(0x00000070)
 #define BGFX_RESET_VSYNC                UINT32_C(0x00000080)
 
+///
 #define BGFX_HANDLE(_name) struct _name { uint16_t idx; }
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
+/// BGFX
 namespace bgfx
 {
 	struct Fatal
@@ -384,11 +449,11 @@ namespace bgfx
 
 	/// Set debug flags.
 	///
-	/// Available flags:
+	/// @param _debug Available flags:
 	///
 	///   BGFX_DEBUG_IFH - Infinitely fast hardware. When this flag is set
-	///     all rendering calls will be skipped. It's useful for quickly
-	///     assessing bottleneck between CPU and GPU.
+	///     all rendering calls will be skipped. It's useful when profiling
+    ///     to quickly assess bottleneck between CPU and GPU.
 	///
 	///   BGFX_DEBUG_STATS - Display internal statistics.
 	///
@@ -444,14 +509,23 @@ namespace bgfx
 	/// Returns true if internal transient index buffer has enough space.
 	bool checkAvailTransientIndexBuffer(uint16_t _num);
 
+	/// Allocate transient index buffer.
 	///
-	const TransientIndexBuffer* allocTransientIndexBuffer(uint16_t _num);
+	/// @param[out] _tib is valid for the duration of frame, and it can be reused for
+	/// multiple draw calls.
+	/// @param _num number of indices to allocate.
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num);
 
 	/// Returns true if internal transient vertex buffer has enough space.
 	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
+	/// Allocate transient vertex buffer.
 	///
-	const TransientVertexBuffer* allocTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
+	/// @param[out] _tvb is valid for the duration of frame, and it can be reused for
+	/// multiple draw calls.
+	/// @param _num number of vertices to allocate.
+	/// @param _decl vertex declaration.
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl);
 
 	///
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride);
@@ -549,14 +623,26 @@ namespace bgfx
 	///   BGFX_STATE_*
 	void setState(uint64_t _state);
 
+	/// Set stencil test state.
+	///
+	/// @param _fstencil Front stencil state.
+	/// @param _bstencil Back stencil state. If back is set to BGFX_STENCIL_NONE
+	///     _fstencil is applied to both front and back facing primitives.
+	void setStencil(uint32_t _fstencil, uint32_t _bstencil = BGFX_STENCIL_NONE);
+
 	/// Set model matrix for draw primitive. If it is not called model will
 	/// be rendered with identity model matrix.
 	///
-	/// Returns index into matrix cache in case the same model matrix has to
+	/// @param _mtx pointer to first matrix in array.
+	/// @param _num number of matrices in array.
+	/// @returns index into matrix cache in case the same model matrix has to
 	/// be used for other draw primitive call.
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
 	/// Set model matrix from matrix cache for draw primitive.
+	///
+	/// @param _cache index in matrix cache.
+	/// @param _num number of matrices from cache.
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
 
 	///
@@ -575,7 +661,7 @@ namespace bgfx
 	void setIndexBuffer(DynamicIndexBufferHandle _handle);
 
 	///
-	void setIndexBuffer(const TransientIndexBuffer* _ib, uint32_t _numIndices = UINT32_MAX);
+	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices = UINT32_MAX);
 
 	///
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
@@ -584,7 +670,7 @@ namespace bgfx
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
 
 	///
-	void setVertexBuffer(const TransientVertexBuffer* _vb, uint32_t _numVertices = UINT32_MAX);
+	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices = UINT32_MAX);
 
 	///
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num = UINT16_MAX);

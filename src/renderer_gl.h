@@ -172,6 +172,9 @@ typedef void (APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
 typedef void (APIENTRYP PFNGLDEPTHMASKPROC) (GLboolean flag);
 typedef void (APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble depth);
 typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+typedef void (APIENTRYP PFNGLSTENCILFUNCPROC) (GLenum func, GLint ref, GLuint mask);
+typedef void (APIENTRYP PFNGLSTENCILMASKPROC) (GLuint mask);
+typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum zpass);
 #endif // BGFX_USE_WGL
 
 #ifndef GL_APIENTRY

@@ -53,6 +53,31 @@ namespace bgfx
 		D3D11_COMPARISON_ALWAYS,
 	};
 
+	static const D3D11_COMPARISON_FUNC s_stencilFunc[] =
+	{
+		D3D11_COMPARISON_LESS, // ignored
+		D3D11_COMPARISON_LESS,
+		D3D11_COMPARISON_LESS_EQUAL,
+		D3D11_COMPARISON_EQUAL,
+		D3D11_COMPARISON_GREATER_EQUAL,
+		D3D11_COMPARISON_GREATER,
+		D3D11_COMPARISON_NOT_EQUAL,
+		D3D11_COMPARISON_NEVER,
+		D3D11_COMPARISON_ALWAYS,
+	};
+
+	static const D3D11_STENCIL_OP s_stencilOp[] =
+	{
+		D3D11_STENCIL_OP_ZERO,
+		D3D11_STENCIL_OP_KEEP,
+		D3D11_STENCIL_OP_REPLACE,
+		D3D11_STENCIL_OP_INCR,
+		D3D11_STENCIL_OP_INCR_SAT,
+		D3D11_STENCIL_OP_DECR,
+		D3D11_STENCIL_OP_DECR_SAT,
+		D3D11_STENCIL_OP_INVERT,
+	};
+
 	static const D3D11_CULL_MODE s_cullMode[] =
 	{
 		D3D11_CULL_NONE,
@@ -571,11 +596,21 @@ namespace bgfx
 			m_deviceCtx->OMSetBlendState(bs, NULL, 0xffffffff);
 		}
 
-		void setDepthStencilState(uint64_t _state)
+		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
 		{
 			_state &= BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK;
 
-			ID3D11DepthStencilState* dss = m_depthStencilStateCache.find(_state);
+			uint32_t fstencil = unpackStencil(0, _stencil);
+			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+			_stencil &= packStencil(BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
+
+			HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_state);
+			murmur.add(_stencil);
+			uint32_t hash = murmur.end();
+
+			ID3D11DepthStencilState* dss = m_depthStencilStateCache.find(hash);
 			if (NULL == dss)
 			{
 				D3D11_DEPTH_STENCIL_DESC desc;
@@ -585,12 +620,28 @@ namespace bgfx
 				desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state) ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
 				desc.DepthFunc = s_depthFunc[func];
 
+				uint32_t bstencil = unpackStencil(1, _stencil);
+				uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
+				bstencil = frontAndBack ? bstencil : fstencil;
+
+				desc.StencilEnable = 0 != _stencil;
+				desc.StencilReadMask = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+				desc.StencilWriteMask = 0xff;
+				desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
+				desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+				desc.FrontFace.StencilPassOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
+				desc.FrontFace.StencilFunc        = s_stencilFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+				desc.BackFace.StencilFailOp       = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+				desc.BackFace.StencilDepthFailOp  = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
+				desc.BackFace.StencilPassOp       = s_stencilOp[(bstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
+				desc.BackFace.StencilFunc         = s_stencilFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+
 				DX_CHECK(m_device->CreateDepthStencilState(&desc, &dss) );
 
 				m_depthStencilStateCache.add(_state, dss);
 			}
 
-			m_deviceCtx->OMSetDepthStencilState(dss, 0);
+			m_deviceCtx->OMSetDepthStencilState(dss, ref);
 		}
 
 		void setDebugWireframe(bool _wireframe)
@@ -1743,6 +1794,7 @@ namespace bgfx
 		RenderState currentState;
 		currentState.reset();
 		currentState.m_flags = BGFX_STATE_NONE;
+		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
@@ -1780,11 +1832,17 @@ namespace bgfx
 				uint64_t changedFlags = currentState.m_flags ^ state.m_flags;
 				currentState.m_flags = newFlags;
 
+				const uint64_t newStencil = state.m_stencil;
+				uint64_t changedStencil = currentState.m_stencil ^ state.m_stencil;
+				currentState.m_stencil = newStencil;
+
 				if (key.m_view != view)
 				{
 					currentState.clear();
 					changedFlags = BGFX_STATE_MASK;
+					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
+					currentState.m_stencil = newStencil;
 
 					view = key.m_view;
 					programIdx = invalidHandle;
@@ -1813,7 +1871,7 @@ namespace bgfx
 					}
 
 					s_renderCtx.setBlendState(BGFX_STATE_DEFAULT);
-					s_renderCtx.setDepthStencilState(BGFX_STATE_DEFAULT);
+					s_renderCtx.setDepthStencilState(BGFX_STATE_DEFAULT, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 					s_renderCtx.setRasterizerState(BGFX_STATE_DEFAULT, wireframe);
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
@@ -1825,16 +1883,17 @@ namespace bgfx
 					}
 				}
 
-				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
+				if ( (BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags
+				|| 0 != changedStencil)
+				{
+					s_renderCtx.setDepthStencilState(newFlags, newStencil);
+				}
+
+				if ( (BGFX_STATE_CULL_MASK
 					 |BGFX_STATE_ALPHA_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE
 					 |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK
 					 |BGFX_STATE_POINT_SIZE_MASK|BGFX_STATE_SRGBWRITE|BGFX_STATE_MSAA) & changedFlags)
 				{
-					if ( (BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags)
-					{ 
-						s_renderCtx.setDepthStencilState(newFlags);
-					}
-
 					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
 						s_renderCtx.setBlendState(newFlags);

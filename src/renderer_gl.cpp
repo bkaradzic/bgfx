@@ -770,6 +770,38 @@ namespace bgfx
 		GL_ALWAYS,
 	};
 
+	static const GLenum s_stencilFunc[] =
+	{
+		0, // ignored
+		GL_LESS,
+		GL_LEQUAL,
+		GL_EQUAL,
+		GL_GEQUAL,
+		GL_GREATER,
+		GL_NOTEQUAL,
+		GL_NEVER,
+		GL_ALWAYS,
+	};
+
+	static const GLenum s_stencilOp[] =
+	{
+		GL_ZERO,
+		GL_KEEP,
+		GL_REPLACE,
+		GL_INCR_WRAP,
+		GL_INCR,
+		GL_DECR_WRAP,
+		GL_DECR,
+		GL_INVERT,
+	};
+
+	static const GLenum s_stencilFace[] =
+	{
+		GL_FRONT_AND_BACK,
+		GL_FRONT,
+		GL_BACK,
+	};
+
 	// Specifies the internal format of the texture.
 	// Must be one of the following symbolic constants:
 	// GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA.
@@ -1821,6 +1853,7 @@ namespace bgfx
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 		GL_CHECK(glViewport(0, 0, width, height) );
 
+		GL_CHECK(glDisable(GL_STENCIL_TEST) );
 		GL_CHECK(glDisable(GL_DEPTH_TEST) );
 		GL_CHECK(glDepthFunc(GL_ALWAYS) );
 		GL_CHECK(glDisable(GL_CULL_FACE) );
@@ -2164,6 +2197,7 @@ namespace bgfx
 		RenderState currentState;
 		currentState.reset();
 		currentState.m_flags = BGFX_STATE_NONE;
+		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
@@ -2199,10 +2233,15 @@ namespace bgfx
 				uint64_t changedFlags = currentState.m_flags ^ state.m_flags;
 				currentState.m_flags = newFlags;
 
+				const uint64_t newStencil = state.m_stencil;
+				uint64_t changedStencil = currentState.m_stencil ^ state.m_stencil;
+				currentState.m_stencil = newStencil;
+
 				if (key.m_view != view)
 				{
 					currentState.clear();
 					changedFlags = BGFX_STATE_MASK;
+					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
 
 					GREMEDY_SETMARKER("view");
@@ -2270,10 +2309,56 @@ namespace bgfx
 						}
 					}
 
+					GL_CHECK(glDisable(GL_STENCIL_TEST) );
 					GL_CHECK(glEnable(GL_DEPTH_TEST) );
 					GL_CHECK(glDepthFunc(GL_LESS) );
 					GL_CHECK(glEnable(GL_CULL_FACE) );
 					GL_CHECK(glDisable(GL_BLEND) );
+				}
+
+				if (0 != changedStencil)
+				{
+					if (0 != newStencil)
+					{
+						GL_CHECK(glEnable(GL_STENCIL_TEST) );
+
+						uint32_t bstencil = unpackStencil(1, newStencil);
+						uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != unpackStencil(0, newStencil);
+
+// 						uint32_t bchanged = unpackStencil(1, changedStencil);
+// 						if (BGFX_STENCIL_FUNC_RMASK_MASK & bchanged)
+// 						{
+// 							uint32_t wmask = (bstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+// 							BX_CHECK(glStencilMask(wmask) );
+// 						}
+
+						for (uint32_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
+						{
+							uint32_t stencil = unpackStencil(ii, newStencil);
+							uint32_t changed = unpackStencil(ii, changedStencil);
+							GLenum face = s_stencilFace[frontAndBack+ii];
+
+							if ( (BGFX_STENCIL_TEST_MASK|BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK) & changed)
+							{
+								GLint ref = (stencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+								GLint mask = (stencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+								uint32_t func = (stencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT;
+								GL_CHECK(glStencilFuncSeparate(face, s_stencilFunc[func], ref, mask));
+							}
+
+							if ( (BGFX_STENCIL_OP_FAIL_S_MASK|BGFX_STENCIL_OP_FAIL_Z_MASK|BGFX_STENCIL_OP_PASS_Z_MASK) & changed)
+							{
+								uint32_t sfail = (stencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT;
+								uint32_t zfail = (stencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT;
+								uint32_t zpass = (stencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT;
+								GL_CHECK(glStencilOpSeparate(face, s_stencilOp[sfail], s_stencilOp[zfail], s_stencilOp[zpass]) );
+							}
+						}
+					}
+					else
+					{
+						GL_CHECK(glDisable(GL_STENCIL_TEST) );
+					}
 				}
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK

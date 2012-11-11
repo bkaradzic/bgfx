@@ -97,13 +97,13 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return program;
 }
 
-bool allocTransientBuffers(const bgfx::TransientVertexBuffer*& _vb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, const bgfx::TransientIndexBuffer*& _ib, uint16_t _numIndices)
+bool allocTransientBuffers(const bgfx::TransientVertexBuffer*& _vb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _ib, uint16_t _numIndices)
 {
 	if (bgfx::checkAvailTransientVertexBuffer(_numVertices, _decl)
 	&&  bgfx::checkAvailTransientIndexBuffer(_numIndices) )
 	{
 		_vb = bgfx::allocTransientVertexBuffer(_numVertices, _decl);
-		_ib = bgfx::allocTransientIndexBuffer(_numIndices);
+		bgfx::allocTransientIndexBuffer(&_ib, _numIndices);
 		return true;
 	}
 
@@ -113,9 +113,9 @@ bool allocTransientBuffers(const bgfx::TransientVertexBuffer*& _vb, const bgfx::
 void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
 	const bgfx::TransientVertexBuffer* vb;
-	const bgfx::TransientIndexBuffer* ib;
+	const bgfx::TransientIndexBuffer ib;
 
-	if (allocTransientBuffers(vb, s_PosColorTexCoord0Decl, 4, ib, 6) )
+	if (allocTransientBuffers(vb, s_PosColorTexCoord0Decl, 4, &ib, 6) )
 	{
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb->data;
 
@@ -252,7 +252,7 @@ int _main_(int _argc, char** _argv)
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/03-raymarch");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Updating uniforms.");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Updating shader uniforms.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };

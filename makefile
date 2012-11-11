@@ -5,6 +5,7 @@
 
 all:
 	premake --file=premake/premake4.lua vs2008
+	premake --file=premake/premake4.lua vs2010
 	premake --file=premake/premake4.lua --gcc=nacl gmake
 	premake --file=premake/premake4.lua --gcc=mingw gmake
 	premake --file=premake/premake4.lua --gcc=linux gmake
@@ -40,3 +41,7 @@ nacl-debug64:
 nacl-release64:
 	make -C .build/projects/gmake-nacl config=release64
 nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64
+
+docs:
+	doxygen premake/bgfx.doxygen
+	upskirt readme.md > .build/docs/readme.html

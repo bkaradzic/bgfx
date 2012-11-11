@@ -612,155 +612,146 @@ int _main_(int _argc, char** _argv)
 
 		// Allocate 32K vertices in transient vertex buffer.
 		uint32_t maxVertices = (32<<10);
-		const bgfx::TransientVertexBuffer* tvb = bgfx::allocTransientVertexBuffer(maxVertices, s_PosNormalColorDecl);
+		bgfx::TransientVertexBuffer tvb;
+		bgfx::allocTransientVertexBuffer(&tvb, maxVertices, s_PosNormalColorDecl);
 
-		// If there is no enough space in transient vertex buffer alloc will return NULL.
-		if (NULL != tvb)
+		const uint32_t numSpheres = 16;
+		float sphere[numSpheres][4];
+		for (uint32_t ii = 0; ii < numSpheres; ++ii)
 		{
-			const uint32_t numSpheres = 16;
-			float sphere[numSpheres][4];
-			for (uint32_t ii = 0; ii < numSpheres; ++ii)
-			{
-				sphere[ii][0] = sin(time*(ii*0.21f)+ii*0.37f) * (DIMS * 0.5f - 8.0f);
-				sphere[ii][1] = sin(time*(ii*0.37f)+ii*0.67f) * (DIMS * 0.5f - 8.0f);
-				sphere[ii][2] = cos(time*(ii*0.11f)+ii*0.13f) * (DIMS * 0.5f - 8.0f);
-				sphere[ii][3] = 1.0f/(2.0f + (sin(time*(ii*0.13f) )*0.5f+0.5f)*2.0f);
-			}
-
-			profUpdate = bx::getHPCounter();
-			
-			for (uint32_t zz = 0; zz < DIMS; ++zz)
-			{
-				for (uint32_t yy = 0; yy < DIMS; ++yy)
-				{
-					uint32_t offset = (zz*DIMS+yy)*DIMS;
-
-					for (uint32_t xx = 0; xx < DIMS; ++xx)
-					{
-						uint32_t xoffset = offset + xx;
-
-						float dist = 0.0f;
-						float prod = 1.0f;
-						for (uint32_t ii = 0; ii < numSpheres; ++ii)
-						{
-							const float* pos = sphere[ii];
-							float dx = pos[0] - (-DIMS*0.5f + float(xx) );
-							float dy = pos[1] - (-DIMS*0.5f + float(yy) );
-							float dz = pos[2] - (-DIMS*0.5f + float(zz) );
-							float invr = pos[3];
-							float dot = dx*dx + dy*dy + dz*dz;
-							dot *= invr*invr;
-
-							dist *= dot;
-							dist += prod;
-							prod *= dot;
-						}
-
-						grid[xoffset].m_val = dist / prod - 1.0f;
-					}
-				}
-			}
-
-			profUpdate = bx::getHPCounter() - profUpdate;
-
-			profNormal = bx::getHPCounter();
-
-			for (uint32_t zz = 1; zz < DIMS-1; ++zz)
-			{
-				for (uint32_t yy = 1; yy < DIMS-1; ++yy)
-				{
-					uint32_t offset = (zz*DIMS+yy)*DIMS;
-
-					for (uint32_t xx = 1; xx < DIMS-1; ++xx)
-					{
-						uint32_t xoffset = offset + xx;
-
-						float normal[3] =
-						{
-							grid[xoffset-1     ].m_val - grid[xoffset+1     ].m_val,
-							grid[xoffset-ypitch].m_val - grid[xoffset+ypitch].m_val,
-							grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
-						};
-
-						vec3Norm(grid[xoffset].m_normal, normal);
-					}
-				}
-			}
-
-			profNormal = bx::getHPCounter() - profNormal;
-
-			profTriangulate = bx::getHPCounter();
-
-			PosNormalColorVertex* vertex = (PosNormalColorVertex*)tvb->data;
-
-			for (uint32_t zz = 0; zz < DIMS-1 && numVertices+12 < maxVertices; ++zz)
-			{
-				float rgb[6];
-				rgb[2] = zz*invdim;
-				rgb[5] = (zz+1)*invdim;
-
-				for (uint32_t yy = 0; yy < DIMS-1 && numVertices+12 < maxVertices; ++yy)
-				{
-					uint32_t offset = (zz*DIMS+yy)*DIMS;
-
-					rgb[1] = yy*invdim;
-					rgb[4] = (yy+1)*invdim;
-
-					for (uint32_t xx = 0; xx < DIMS-1 && numVertices+12 < maxVertices; ++xx)
-					{
-						uint32_t xoffset = offset + xx;
-
-						rgb[0] = xx*invdim;
-						rgb[3] = (xx+1)*invdim;
-
-						float pos[3] =
-						{
-							-DIMS*0.5f + float(xx),
-							-DIMS*0.5f + float(yy),
-							-DIMS*0.5f + float(zz)
-						};
-
-						const Grid* val[8] = { 
-							&grid[xoffset+zpitch+ypitch  ],
-							&grid[xoffset+zpitch+ypitch+1],
-							&grid[xoffset+ypitch+1       ],
-							&grid[xoffset+ypitch         ],
-							&grid[xoffset+zpitch         ],
-							&grid[xoffset+zpitch+1       ],
-							&grid[xoffset+1              ],
-							&grid[xoffset                ],
-						};
-
-						uint32_t num = triangulate( (uint8_t*)vertex, s_PosNormalColorDecl.m_stride, rgb, pos, val, 0.5f);
-						vertex += num;
-						numVertices += num;
-					}
-				}
-			}
-
-			profTriangulate = bx::getHPCounter() - profTriangulate;
-
-			float mtx[16];
-			mtxRotateXY(mtx, time*0.67f, time);
-
-			// Set model matrix for rendering.
-			bgfx::setTransform(mtx);
-
-			// Set vertex and fragment shaders.
-			bgfx::setProgram(program);
-
-			// Set vertex and index buffer.
-			bgfx::setVertexBuffer(tvb, numVertices);
-
-			// Set render states.
-			bgfx::setState(BGFX_STATE_RGB_WRITE
-				|BGFX_STATE_DEPTH_WRITE
-				|BGFX_STATE_DEPTH_TEST_LESS
-				);
-
-			// Submit primitive for rendering to view 0.
-			bgfx::submit(0);
+			sphere[ii][0] = sin(time*(ii*0.21f)+ii*0.37f) * (DIMS * 0.5f - 8.0f);
+			sphere[ii][1] = sin(time*(ii*0.37f)+ii*0.67f) * (DIMS * 0.5f - 8.0f);
+			sphere[ii][2] = cos(time*(ii*0.11f)+ii*0.13f) * (DIMS * 0.5f - 8.0f);
+			sphere[ii][3] = 1.0f/(2.0f + (sin(time*(ii*0.13f) )*0.5f+0.5f)*2.0f);
 		}
+
+		profUpdate = bx::getHPCounter();
+		
+		for (uint32_t zz = 0; zz < DIMS; ++zz)
+		{
+			for (uint32_t yy = 0; yy < DIMS; ++yy)
+			{
+				uint32_t offset = (zz*DIMS+yy)*DIMS;
+
+				for (uint32_t xx = 0; xx < DIMS; ++xx)
+				{
+					uint32_t xoffset = offset + xx;
+
+					float dist = 0.0f;
+					float prod = 1.0f;
+					for (uint32_t ii = 0; ii < numSpheres; ++ii)
+					{
+						const float* pos = sphere[ii];
+						float dx = pos[0] - (-DIMS*0.5f + float(xx) );
+						float dy = pos[1] - (-DIMS*0.5f + float(yy) );
+						float dz = pos[2] - (-DIMS*0.5f + float(zz) );
+						float invr = pos[3];
+						float dot = dx*dx + dy*dy + dz*dz;
+						dot *= invr*invr;
+
+						dist *= dot;
+						dist += prod;
+						prod *= dot;
+					}
+
+					grid[xoffset].m_val = dist / prod - 1.0f;
+				}
+			}
+		}
+
+		profUpdate = bx::getHPCounter() - profUpdate;
+
+		profNormal = bx::getHPCounter();
+
+		for (uint32_t zz = 1; zz < DIMS-1; ++zz)
+		{
+			for (uint32_t yy = 1; yy < DIMS-1; ++yy)
+			{
+				uint32_t offset = (zz*DIMS+yy)*DIMS;
+
+				for (uint32_t xx = 1; xx < DIMS-1; ++xx)
+				{
+					uint32_t xoffset = offset + xx;
+
+					float normal[3] =
+					{
+						grid[xoffset-1     ].m_val - grid[xoffset+1     ].m_val,
+						grid[xoffset-ypitch].m_val - grid[xoffset+ypitch].m_val,
+						grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
+					};
+
+					vec3Norm(grid[xoffset].m_normal, normal);
+				}
+			}
+		}
+
+		profNormal = bx::getHPCounter() - profNormal;
+
+		profTriangulate = bx::getHPCounter();
+
+		PosNormalColorVertex* vertex = (PosNormalColorVertex*)tvb.data;
+
+		for (uint32_t zz = 0; zz < DIMS-1 && numVertices+12 < maxVertices; ++zz)
+		{
+			float rgb[6];
+			rgb[2] = zz*invdim;
+			rgb[5] = (zz+1)*invdim;
+
+			for (uint32_t yy = 0; yy < DIMS-1 && numVertices+12 < maxVertices; ++yy)
+			{
+				uint32_t offset = (zz*DIMS+yy)*DIMS;
+
+				rgb[1] = yy*invdim;
+				rgb[4] = (yy+1)*invdim;
+
+				for (uint32_t xx = 0; xx < DIMS-1 && numVertices+12 < maxVertices; ++xx)
+				{
+					uint32_t xoffset = offset + xx;
+
+					rgb[0] = xx*invdim;
+					rgb[3] = (xx+1)*invdim;
+
+					float pos[3] =
+					{
+						-DIMS*0.5f + float(xx),
+						-DIMS*0.5f + float(yy),
+						-DIMS*0.5f + float(zz)
+					};
+
+					const Grid* val[8] = { 
+						&grid[xoffset+zpitch+ypitch  ],
+						&grid[xoffset+zpitch+ypitch+1],
+						&grid[xoffset+ypitch+1       ],
+						&grid[xoffset+ypitch         ],
+						&grid[xoffset+zpitch         ],
+						&grid[xoffset+zpitch+1       ],
+						&grid[xoffset+1              ],
+						&grid[xoffset                ],
+					};
+
+					uint32_t num = triangulate( (uint8_t*)vertex, s_PosNormalColorDecl.m_stride, rgb, pos, val, 0.5f);
+					vertex += num;
+					numVertices += num;
+				}
+			}
+		}
+
+		profTriangulate = bx::getHPCounter() - profTriangulate;
+
+		float mtx[16];
+		mtxRotateXY(mtx, time*0.67f, time);
+
+		// Set model matrix for rendering.
+		bgfx::setTransform(mtx);
+
+		// Set vertex and fragment shaders.
+		bgfx::setProgram(program);
+
+		// Set vertex and index buffer.
+		bgfx::setVertexBuffer(&tvb, numVertices);
+
+		// Submit primitive for rendering to view 0.
+		bgfx::submit(0);
 
 		// Display stats.
 		bgfx::dbgTextPrintf(1, 4, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
