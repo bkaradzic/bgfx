@@ -593,6 +593,14 @@ namespace bgfx
 	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
 	/// Set view clear flags.
+	///
+	/// @param _id view id.
+	/// @param _flags clear flags.
+	///     See: BGFX_CLEAR_*
+	///
+	/// @param _rgba color clear value.
+	/// @param _depth depth clear value.
+	/// @param _stencil stencil clear value.
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
 	///
@@ -685,9 +693,15 @@ namespace bgfx
 	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth = false);
 
 	/// Submit primitive for rendering into single view.
+	///
+	/// @param _id View id.
+	/// @param _depth depth for sorting.
 	void submit(uint8_t _id, int32_t _depth = 0);
 
 	/// Submit primitive for rendering into multiple views.
+	///
+	/// @param _viewMask mask to which views to submit draw primitive calls.
+	/// @param _depth depth for sorting.
 	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
 	///
