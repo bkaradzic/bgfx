@@ -1947,10 +1947,10 @@ namespace bgfx
 		GL_GET(GL_MAX_TEXTURE_SIZE, 64);
 		GL_GET(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, 0);
 		GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
-#endif // BGFX_CONFIG_DEBUG
 
 		const char* version = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 		BX_TRACE("GLSL version: %s", version);
+#endif // BGFX_CONFIG_DEBUG
 
 		const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 		if (NULL != extensions)

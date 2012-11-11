@@ -184,6 +184,9 @@ configuration { "linux" }
 		"-mfpmath=sse", -- force SSE to get 32-bit and 64-bit builds deterministic.
 		"-msse2",
 	}
+	links {
+		"rt",
+	}
 	linkoptions {
 		"-Wl,--gc-sections",
 	}

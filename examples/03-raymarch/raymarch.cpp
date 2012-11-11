@@ -97,13 +97,13 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return program;
 }
 
-bool allocTransientBuffers(const bgfx::TransientVertexBuffer*& _vb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _ib, uint16_t _numIndices)
+bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint16_t _numIndices)
 {
 	if (bgfx::checkAvailTransientVertexBuffer(_numVertices, _decl)
 	&&  bgfx::checkAvailTransientIndexBuffer(_numIndices) )
 	{
-		_vb = bgfx::allocTransientVertexBuffer(_numVertices, _decl);
-		bgfx::allocTransientIndexBuffer(&_ib, _numIndices);
+		bgfx::allocTransientVertexBuffer(_tvb, _numVertices, _decl);
+		bgfx::allocTransientIndexBuffer(_tib, _numIndices);
 		return true;
 	}
 
@@ -112,12 +112,12 @@ bool allocTransientBuffers(const bgfx::TransientVertexBuffer*& _vb, const bgfx::
 
 void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
-	const bgfx::TransientVertexBuffer* vb;
-	const bgfx::TransientIndexBuffer ib;
+	bgfx::TransientVertexBuffer tvb;
+	bgfx::TransientIndexBuffer tib;
 
-	if (allocTransientBuffers(vb, s_PosColorTexCoord0Decl, 4, &ib, 6) )
+	if (allocTransientBuffers(&tvb, s_PosColorTexCoord0Decl, 4, &tib, 6) )
 	{
-		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb->data;
+		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)tvb.data;
 
 		float zz = 0.0f;
 
@@ -159,7 +159,7 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 		vertex[3].m_u = minu;
 		vertex[3].m_v = maxv;
 
-		uint16_t* indices = (uint16_t*)ib->data;
+		uint16_t* indices = (uint16_t*)tib.data;
 
 		indices[0] = 0;
 		indices[1] = 1;
@@ -170,8 +170,8 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 
 		bgfx::setProgram(_program);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_DEPTH_WRITE);
-		bgfx::setIndexBuffer(ib);
-		bgfx::setVertexBuffer(vb);
+		bgfx::setIndexBuffer(&tib);
+		bgfx::setVertexBuffer(&tvb);
 		bgfx::submit(_view);
 	}
 }
