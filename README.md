@@ -30,12 +30,13 @@ Optional:
 Building
 --------
 
-### Prerequsites
+### Prerequisites
 
-Premake 4.4 beta4
+Premake 4.4 beta4  
 [http://industriousone.com/premake/download](http://industriousone.com/premake/download)
 
-GNU make. Windows users download GNU make utility from:
+GNU make  
+Windows users download GNU make utility from:  
 [http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm)
 
 ### Getting source
@@ -67,7 +68,7 @@ directory link to directory without spaces in the path.
 Download Native Client SDK from
 [https://developers.google.com/native-client/sdk/download](https://developers.google.com/native-client/sdk/download)
 
-	setx NACL_DIR <path to Native Client SDK directory>
+	setx NACL <path to Native Client SDK directory>\toolchain\win_x86_newlib
 
 ### Building
 
