@@ -333,7 +333,7 @@ private:
 			uint32_t asciiPos = 0;
 			for (uint32_t ii = 0; ii < size; ++ii)
 			{
-				_snprintf(&hex[hexPos], sizeof(hex)-hexPos, "0x%02x, ", data[asciiPos]);
+				bx::snprintf(&hex[hexPos], sizeof(hex)-hexPos, "0x%02x, ", data[asciiPos]);
 				hexPos += 6;
 
 				ascii[asciiPos] = isprint(data[asciiPos]) && data[asciiPos] != '\\' ? data[asciiPos] : '.';
