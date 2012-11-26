@@ -1257,6 +1257,7 @@ namespace bgfx
 		if (_fragment)
 		{
 			DX_CHECK(s_renderCtx.m_device->CreatePixelShader(code, shaderSize, NULL, (ID3D11PixelShader**)&m_ptr) );
+			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
 		else
 		{
@@ -1265,6 +1266,7 @@ namespace bgfx
 			memcpy(m_code->data, code, shaderSize);
 
 			DX_CHECK(s_renderCtx.m_device->CreateVertexShader(code, shaderSize, NULL, (ID3D11VertexShader**)&m_ptr) );
+			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
 		}
 	}
 

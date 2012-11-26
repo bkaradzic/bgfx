@@ -357,8 +357,8 @@ namespace bgfx
 			uint32_t magic;
 			bx::read(&reader, magic);
 
-			uint32_t hash;
-			bx::read(&reader, hash);
+			uint32_t iohash;
+			bx::read(&reader, iohash);
 
 			const uint8_t* code = reader.getDataPtr();
 
