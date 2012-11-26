@@ -17,13 +17,6 @@ namespace bgfx
 		D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
 	};
 
-	static const uint32_t s_primNumVerts[] =
-	{
-		3,
-		2,
-		1,
-	};
-
 	static const D3D11_BLEND s_blendFactor[][2] =
 	{
 		{ (D3D11_BLEND)0,             (D3D11_BLEND)0             }, // ignored
@@ -1965,7 +1958,7 @@ namespace bgfx
 					if (primType != s_primType[primIndex])
 					{
 						primType = s_primType[primIndex];
-						primNumVerts = s_primNumVerts[primIndex];
+						primNumVerts = 3-primIndex;
 						deviceCtx->IASetPrimitiveTopology(primType);
 					}
 				}
@@ -2000,7 +1993,7 @@ namespace bgfx
 					if (primType != s_primType[primIndex])
 					{
 						primType = s_primType[primIndex];
-						primNumVerts = s_primNumVerts[primIndex];
+						primNumVerts = 3-primIndex;
 						deviceCtx->IASetPrimitiveTopology(primType);
 					}
 				}

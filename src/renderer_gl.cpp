@@ -703,13 +703,6 @@ namespace bgfx
 		GL_POINTS,
 	};
 
-	static const uint32_t s_primNumVerts[] =
-	{
-		3,
-		2,
-		1,
-	};
-
 	static const char* s_attribName[Attrib::Count] =
 	{
 		"a_position",
@@ -2526,7 +2519,7 @@ namespace bgfx
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
 					primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : s_primType[primIndex];
-					primNumVerts = s_primNumVerts[primIndex];
+					primNumVerts = 3-primIndex;
 				}
 
 				bool programChanged = false;

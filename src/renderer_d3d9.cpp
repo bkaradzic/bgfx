@@ -17,13 +17,6 @@ namespace bgfx
 		D3DPT_POINTLIST,
 	};
 
-	static const uint32_t s_primNumVerts[] =
-	{
-		3,
-		2,
-		1,
-	};
-
 	static const D3DMULTISAMPLE_TYPE s_checkMsaa[] =
 	{
 		D3DMULTISAMPLE_NONE,
@@ -2175,7 +2168,7 @@ namespace bgfx
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
 					primType = s_primType[primIndex];
-					primNumVerts = s_primNumVerts[primIndex];
+					primNumVerts = 3-primIndex;
 				}
 
 				bool programChanged = false;
