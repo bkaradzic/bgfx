@@ -146,7 +146,7 @@ rendering backends are available. For OpenGL ES on desktop you can find more
 information at:  
 [OpenGL ES 2.0 and EGL on desktop](http://www.g-truc.net/post-0457.html)
 
-All configuration settings are located inside [src/config.h](src/config.h).
+All configuration settings are located inside [src/config.h](https://github.com/bkaradzic/bgfx/blob/master/src/config.h).
 
 Every `BGFX_CONFIG_*` setting can be changed by passing defines thru compiler
 switches. For example setting preprocessor define `BGFX_CONFIG_RENDERER_OPENGL=1`
