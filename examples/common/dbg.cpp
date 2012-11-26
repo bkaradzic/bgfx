@@ -39,7 +39,7 @@ void dbgPrintfVargs(const char* _format, va_list _argList)
 	char temp[8192];
 	char* out = temp;
 	int32_t len = bx::vsnprintf(out, sizeof(temp), _format, _argList);
-	if (sizeof(temp) < len)
+	if ( (int32_t)sizeof(temp) < len)
 	{
 		out = (char*)alloca(len+1);
 		len = bx::vsnprintf(out, len, _format, _argList);
