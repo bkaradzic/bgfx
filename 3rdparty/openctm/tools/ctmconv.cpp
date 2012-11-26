@@ -27,7 +27,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <vector>
 #include <iostream>
 #include <list>
@@ -113,7 +113,7 @@ static void PreProcessMesh(Mesh &aMesh, Options &aOptions)
   // Flip trianlges?
   if(aOptions.mFlipTriangles)
   {
-    CTMuint triCount = aMesh.mIndices.size() / 3;
+    CTMuint triCount = (CTMuint)(aMesh.mIndices.size() / 3);
     for(CTMuint i = 0; i < triCount; ++ i)
     {
       CTMuint tmp = aMesh.mIndices[i * 3];
@@ -131,6 +131,11 @@ static void PreProcessMesh(Mesh &aMesh, Options &aOptions)
   cout << 1000.0 * dt << " ms" << endl;
 }
 
+void throw_runtime_error(std::string str)
+{
+	cout << "Error: " << str << endl;
+	abort();
+}
 
 //-----------------------------------------------------------------------------
 // main()
@@ -141,94 +146,84 @@ int main(int argc, char ** argv)
   Options opt;
   string inFile;
   string outFile;
-  try
-  {
-    if(argc < 3)
-      throw runtime_error("Too few arguments.");
-    inFile = string(argv[1]);
-    outFile = string(argv[2]);
-    opt.GetFromArgs(argc, argv, 3);
-  }
-  catch(exception &e)
-  {
-    cout << "Error: " << e.what() << endl << endl;
-    cout << "Usage: " << argv[0] << " infile outfile [options]" << endl << endl;
-    cout << "Options:" << endl;
-    cout << endl << " Data manipulation (all formats)" << endl;
-    cout << "  --scale arg     Scale the mesh by a scalar factor." << endl;
-    cout << "  --upaxis arg    Set up axis (X, Y, Z, -X, -Y, -Z). If != Z, the mesh will" << endl;
-    cout << "                  be flipped." << endl;
-    cout << "  --flip          Flip triangle orientation." << endl;
-    cout << "  --calc-normals  If the source file does not contain any normals, calculate" << endl;
-    cout << "                  them." << endl;
-    cout << "  --no-normals    Do not export normals." << endl;
-    cout << "  --no-texcoords  Do not export texture coordinates." << endl;
-    cout << "  --no-colors     Do not export vertex colors." << endl;
-    cout << endl << " OpenCTM output" << endl;
-    cout << "  --method arg    Select compression method (RAW, MG1, MG2)" << endl;
-    cout << "  --level arg     Set the compression level (0 - 9)" << endl;
-    cout << endl << " OpenCTM MG2 method" << endl;
-    cout << "  --vprec arg     Set vertex precision" << endl;
-    cout << "  --vprecrel arg  Set vertex precision, relative method" << endl;
-    cout << "  --nprec arg     Set normal precision" << endl;
-    cout << "  --tprec arg     Set texture map precision" << endl;
-    cout << "  --cprec arg     Set color precision" << endl;
-    cout << endl << " Miscellaneous" << endl;
-    cout << "  --comment arg   Set the file comment (default is to use the comment" << endl;
-    cout << "                  from the input file, if any)." << endl;
-    cout << "  --texfile arg   Set the texture file name reference for the texture" << endl;
-    cout << "                  (default is to use the texture file name reference" << endl;
-    cout << "                  from the input file, if any)." << endl;
 
-    // Show supported formats
-    cout << endl << "Supported file formats:" << endl << endl;
-    list<string> formatList;
-    SupportedFormats(formatList);
-    for(list<string>::iterator i = formatList.begin(); i != formatList.end(); ++ i)
-      cout << "  " << (*i) << endl;
-    cout << endl;
+  if(argc < 3)
+  {
+	  cout << "Error: Too few arguments." << endl << endl;
+	  cout << "Usage: " << argv[0] << " infile outfile [options]" << endl << endl;
+	  cout << "Options:" << endl;
+	  cout << endl << " Data manipulation (all formats)" << endl;
+	  cout << "  --scale arg     Scale the mesh by a scalar factor." << endl;
+	  cout << "  --upaxis arg    Set up axis (X, Y, Z, -X, -Y, -Z). If != Z, the mesh will" << endl;
+	  cout << "                  be flipped." << endl;
+	  cout << "  --flip          Flip triangle orientation." << endl;
+	  cout << "  --calc-normals  If the source file does not contain any normals, calculate" << endl;
+	  cout << "                  them." << endl;
+	  cout << "  --no-normals    Do not export normals." << endl;
+	  cout << "  --no-texcoords  Do not export texture coordinates." << endl;
+	  cout << "  --no-colors     Do not export vertex colors." << endl;
+	  cout << endl << " OpenCTM output" << endl;
+	  cout << "  --method arg    Select compression method (RAW, MG1, MG2)" << endl;
+	  cout << "  --level arg     Set the compression level (0 - 9)" << endl;
+	  cout << endl << " OpenCTM MG2 method" << endl;
+	  cout << "  --vprec arg     Set vertex precision" << endl;
+	  cout << "  --vprecrel arg  Set vertex precision, relative method" << endl;
+	  cout << "  --nprec arg     Set normal precision" << endl;
+	  cout << "  --tprec arg     Set texture map precision" << endl;
+	  cout << "  --cprec arg     Set color precision" << endl;
+	  cout << endl << " Miscellaneous" << endl;
+	  cout << "  --comment arg   Set the file comment (default is to use the comment" << endl;
+	  cout << "                  from the input file, if any)." << endl;
+	  cout << "  --texfile arg   Set the texture file name reference for the texture" << endl;
+	  cout << "                  (default is to use the texture file name reference" << endl;
+	  cout << "                  from the input file, if any)." << endl;
 
-    return 0;
+	  // Show supported formats
+	  cout << endl << "Supported file formats:" << endl << endl;
+	  list<string> formatList;
+	  SupportedFormats(formatList);
+	  for(list<string>::iterator i = formatList.begin(); i != formatList.end(); ++ i)
+		  cout << "  " << (*i) << endl;
+	  cout << endl;
+
+	  return 0;
   }
 
-  try
-  {
-    // Define mesh
-    Mesh mesh;
+  inFile = string(argv[1]);
+  outFile = string(argv[2]);
+  opt.GetFromArgs(argc, argv, 3);
 
-    // Create a timer instance
-    SysTimer timer;
-    double dt;
+	// Define mesh
+	Mesh mesh;
 
-    // Load input file
-    cout << "Loading " << inFile << "... " << flush;
-    timer.Push();
-    ImportMesh(inFile.c_str(), &mesh);
-    dt = timer.PopDelta();
-    cout << 1000.0 * dt << " ms" << endl;
+	// Create a timer instance
+	SysTimer timer;
+	double dt;
 
-    // Manipulate the mesh
-    PreProcessMesh(mesh, opt);
+	// Load input file
+	cout << "Loading " << inFile << "... " << flush;
+	timer.Push();
+	ImportMesh(inFile.c_str(), &mesh);
+	dt = timer.PopDelta();
+	cout << 1000.0 * dt << " ms" << endl;
 
-    // Override comment?
-    if(opt.mComment.size() > 0)
-      mesh.mComment = opt.mComment;
+	// Manipulate the mesh
+	PreProcessMesh(mesh, opt);
 
-    // Override texture file name?
-    if(opt.mTexFileName.size() > 0)
-      mesh.mTexFileName = opt.mTexFileName;
+	// Override comment?
+	if(opt.mComment.size() > 0)
+	  mesh.mComment = opt.mComment;
 
-    // Save output file
-    cout << "Saving " << outFile << "... " << flush;
-    timer.Push();
-    ExportMesh(outFile.c_str(), &mesh, opt);
-    dt = timer.PopDelta();
-    cout << 1000.0 * dt << " ms" << endl;
-  }
-  catch(exception &e)
-  {
-    cout << "Error: " << e.what() << endl;
-  }
+	// Override texture file name?
+	if(opt.mTexFileName.size() > 0)
+	  mesh.mTexFileName = opt.mTexFileName;
+
+	// Save output file
+	cout << "Saving " << outFile << "... " << flush;
+	timer.Push();
+	ExportMesh(outFile.c_str(), &mesh, opt);
+	dt = timer.PopDelta();
+	cout << 1000.0 * dt << " ms" << endl;
 
   return 0;
 }

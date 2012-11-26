@@ -9,15 +9,15 @@
 namespace bgfx
 {
 
-#define DDS_MAGIC MAKEFOURCC('D','D','S',' ')
+#define DDS_MAGIC BX_MAKEFOURCC('D','D','S',' ')
 #define DDS_HEADER_SIZE 124
 #define DDS_IMAGE_DATA_OFFSET (DDS_HEADER_SIZE + 4)
 
-#define DDS_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
-#define DDS_DXT2 MAKEFOURCC('D', 'X', 'T', '2')
-#define DDS_DXT3 MAKEFOURCC('D', 'X', 'T', '3')
-#define DDS_DXT4 MAKEFOURCC('D', 'X', 'T', '4')
-#define DDS_DXT5 MAKEFOURCC('D', 'X', 'T', '5')
+#define DDS_DXT1 BX_MAKEFOURCC('D', 'X', 'T', '1')
+#define DDS_DXT2 BX_MAKEFOURCC('D', 'X', 'T', '2')
+#define DDS_DXT3 BX_MAKEFOURCC('D', 'X', 'T', '3')
+#define DDS_DXT4 BX_MAKEFOURCC('D', 'X', 'T', '4')
+#define DDS_DXT5 BX_MAKEFOURCC('D', 'X', 'T', '5')
 
 #define D3DFMT_A16B16G16R16F 113
 
@@ -58,10 +58,10 @@ namespace bgfx
 
 bool isDds(const Memory* _mem)
 {
-	StreamRead stream(_mem->data, _mem->size);
+	bx::MemoryReader reader(_mem->data, _mem->size);
 
 	uint32_t magic;
-	stream.read(magic);
+	bx::read(&reader, magic);
 
 	return DDS_MAGIC == magic;
 }
@@ -294,11 +294,11 @@ void Mip::decode(uint8_t* _dst)
 		uint32_t width = m_width;
 		uint32_t height = m_height;
 
-		if (m_bpp == 1
-		||  m_bpp == 4
-		||  m_bpp == 8)
+		if (m_bpp == 8
+		||  m_bpp == 32
+		||  m_bpp == 64)
 		{
-			uint32_t pitch = m_width*m_bpp;
+			uint32_t pitch = m_width*m_bpp/8;
 			memcpy(_dst, src, pitch*height);
 		}
 		else
@@ -322,10 +322,10 @@ void Mip::decode(uint8_t* _dst)
 
 bool parseDds(Dds& _dds, const Memory* _mem)
 {
-	StreamRead stream(_mem->data, _mem->size);
+	bx::MemoryReader reader(_mem->data, _mem->size);
 
 	uint32_t magic;
-	stream.read(magic);
+	bx::read(&reader, magic);
 
 	if (DDS_MAGIC != magic)
 	{
@@ -333,7 +333,7 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 	}
 
 	uint32_t headerSize;
-	stream.read(headerSize);
+	bx::read(&reader, headerSize);
 
 	if (headerSize < DDS_HEADER_SIZE)
 	{
@@ -341,7 +341,7 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 	}
 
 	uint32_t flags;
-	stream.read(flags);
+	bx::read(&reader, flags);
 
 	if ( (flags & (DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT) ) != (DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT) )
 	{
@@ -349,47 +349,46 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 	}
 
 	uint32_t height;
-	stream.read(height);
+	bx::read(&reader, height);
 
 	uint32_t width;
-	stream.read(width);
+	bx::read(&reader, width);
 
 	uint32_t pitch;
-	stream.read(pitch);
+	bx::read(&reader, pitch);
 
 	uint32_t depth;
-	stream.read(depth);
+	bx::read(&reader, depth);
 
 	uint32_t mips;
-	stream.read(mips);
+	bx::read(&reader, mips);
 
-	stream.skip(44); // reserved
-
-	stream.skip(4); // pixel format size
+	bx::skip(&reader, 44); // reserved
+	bx::skip(&reader, 4); // pixel format size
 
 	uint32_t pixelFlags;
-	stream.read(pixelFlags);
+	bx::read(&reader, pixelFlags);
 
 	uint32_t fourcc;
-	stream.read(fourcc);
+	bx::read(&reader, fourcc);
 
 	uint32_t rgbCount;
-	stream.read(rgbCount);
+	bx::read(&reader, rgbCount);
 
 	uint32_t rbitmask;
-	stream.read(rbitmask);
+	bx::read(&reader, rbitmask);
 
 	uint32_t gbitmask;
-	stream.read(gbitmask);
+	bx::read(&reader, gbitmask);
 
 	uint32_t bbitmask;
-	stream.read(bbitmask);
+	bx::read(&reader, bbitmask);
 
 	uint32_t abitmask;
-	stream.read(abitmask);
+	bx::read(&reader, abitmask);
 
 	uint32_t caps[4];
-	stream.read(caps);
+	bx::read(&reader, caps);
 
 	if ( (caps[0] & DDSCAPS_TEXTURE) == 0)
 	{
@@ -406,9 +405,9 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		}
 	}
 
-	stream.skip(4); // reserved
+	bx::skip(&reader, 4); // reserved
 
-	uint8_t bpp = 1;
+	uint8_t bpp = 0;
 	uint8_t blockSize = 1;
 	TextureFormat::Enum type = TextureFormat::Unknown;
 	bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
@@ -420,24 +419,27 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		case DDS_DXT1:
 			type = TextureFormat::Dxt1;
 			blockSize = 8;
+			bpp = 4;
 			break;
 
 		case DDS_DXT2:
 		case DDS_DXT3:
 			type = TextureFormat::Dxt3;
 			blockSize = 16;
+			bpp = 4;
 			break;
 
 		case DDS_DXT4:
 		case DDS_DXT5:
 			type = TextureFormat::Dxt5;
 			blockSize = 16;
+			bpp = 4;
 			break;
 
 		case D3DFMT_A16B16G16R16F:
 			type = TextureFormat::ABGR16;
 			blockSize = 8;
-			bpp = 8;
+			bpp = 64;
 			break;
 		}
 	}
@@ -448,20 +450,20 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		case DDPF_RGB:
 			type = TextureFormat::XRGB8;
 			blockSize = 3;
-			bpp = 3;
+			bpp = 24;
 			break;
 
 		case DDPF_RGB|DDPF_ALPHAPIXELS:
 			type = TextureFormat::ARGB8;
 			blockSize = 4;
-			bpp = 4;
+			bpp = 32;
 			break;
 
 		case DDPF_INDEXED:
 		case DDPF_LUMINANCE:
 		case DDPF_ALPHA:
 			type = TextureFormat::L8;
-			bpp = 1;
+			bpp = 8;
 			break;
 
 // 			type = TextureFormat::A8;

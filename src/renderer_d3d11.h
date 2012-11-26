@@ -199,6 +199,19 @@ namespace bgfx
 			m_fsh = NULL;
 		}
 
+		void commit()
+		{
+			if (NULL != m_vsh->m_constantBuffer)
+			{
+				m_vsh->m_constantBuffer->commit();
+			}
+
+			if (NULL != m_fsh->m_constantBuffer)
+			{
+				m_fsh->m_constantBuffer->commit();
+			}
+		}
+
 		const Shader* m_vsh;
 		const Shader* m_fsh;
 
@@ -223,10 +236,6 @@ namespace bgfx
 			, m_numMips(0)
 		{
 		}
-
-// 		void createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips, D3DFORMAT _fmt);
-// 		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips, D3DFORMAT _fmt);
-// 		void createCubeTexture(uint32_t _edge, uint32_t _numMips, D3DFORMAT _fmt);
 
 		void create(const Memory* _mem, uint32_t _flags);
 
@@ -256,15 +265,14 @@ namespace bgfx
 	struct RenderTarget
 	{
 		RenderTarget()
-			: 
-//		m_rt(NULL)
-// 			, m_colorTexture(NULL)
-// 			, m_color(NULL)
-// 			, m_depthTexture(NULL)
-// 			, m_depth(NULL)
+			: m_colorTexture(NULL)
+ 			, m_depthTexture(NULL)
+			, m_rtv(NULL)
+ 			, m_dsv(NULL)
+			, m_srv(NULL)
 // 			, m_minFilter(D3DTEXF_LINEAR)
 // 			, m_magFilter(D3DTEXF_LINEAR)
-			 m_width(0)
+			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
 			, m_depthOnly(false)
@@ -287,7 +295,9 @@ namespace bgfx
 // 		D3DTEXTUREFILTERTYPE m_magFilter;
 
 		ID3D11Texture2D* m_colorTexture;
+		ID3D11Texture2D* m_depthTexture;
 		ID3D11RenderTargetView* m_rtv;
+		ID3D11DepthStencilView* m_dsv;
 		ID3D11ShaderResourceView* m_srv;
 		ID3D11SamplerState* m_sampler;
 		uint16_t m_width;

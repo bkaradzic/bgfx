@@ -202,7 +202,7 @@ typedef struct sizes {
  */
 
 #ifdef	nomacarg
-#define cput		output		/* cput concatenates tokens	*/
+#define cput		generate		/* cput concatenates tokens	*/
 #else
 #if COMMENT_INVISIBLE
 #define cput(c)         { if (c != TOK_SEP && c != COM_SEP) putchar(c); }

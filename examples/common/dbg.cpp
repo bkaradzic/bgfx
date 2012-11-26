@@ -11,6 +11,7 @@
 #include <ctype.h> // isprint
 
 #include "dbg.h"
+#include <bx/string.h>
 
 #if BX_COMPILER_MSVC
 #	define snprintf _snprintf
@@ -36,9 +37,15 @@ void dbgOutput(const char* _out)
 void dbgPrintfVargs(const char* _format, va_list _argList)
 {
 	char temp[8192];
-	vsnprintf(temp, sizeof(temp), _format, _argList);
-	temp[sizeof(temp)-1] = '\0';
-	dbgOutput(temp);
+	char* out = temp;
+	int32_t len = bx::vsnprintf(out, sizeof(temp), _format, _argList);
+	if (sizeof(temp) < len)
+	{
+		out = (char*)alloca(len+1);
+		len = bx::vsnprintf(out, len, _format, _argList);
+	}
+	out[len] = '\0';
+	dbgOutput(out);
 }
 
 void dbgPrintf(const char* _format, ...)

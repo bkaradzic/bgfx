@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <fstream>
 #include <iomanip>
 #include <string>
@@ -55,14 +55,14 @@ class VRMLReader {
     char GetNextChar()
     {
       if(!mStream)
-        throw runtime_error("VRML input stream undefined.");
+        throw_runtime_error("VRML input stream undefined.");
       if(mBufPos >= mBufActual)
       {
         mBufPos = 0;
         if(!mStream->eof())
         {
           mStream->read(mBuffer, mBufSize);
-          mBufActual = mStream->gcount();
+          mBufActual = (int)(mStream->gcount());
         }
         else
           mBufActual = 0;
@@ -172,7 +172,7 @@ class VRMLReader {
       // Read the header
       string header = GetNextLine();
       if(header.substr(0, 10) != string("#VRML V2.0"))
-        throw runtime_error("Not a valid VRML 2.0 file.");
+        throw_runtime_error("Not a valid VRML 2.0 file.");
 
       // Read the rest of the file
       while(!mEndOfFile)
@@ -201,7 +201,7 @@ class VRMLReader {
 void Import_WRL(const char * aFileName, Mesh * aMesh)
 {
   // FIXME: The import functionality has not yet been fully implemented
-  throw runtime_error("VRML import is not yet supported.");
+  throw_runtime_error("VRML import is not yet supported.");
 
   // Clear the mesh
   aMesh->Clear();
@@ -209,7 +209,7 @@ void Import_WRL(const char * aFileName, Mesh * aMesh)
   // Open the input file
   ifstream f(aFileName, ios::in);
   if(f.fail())
-    throw runtime_error("Could not open input file.");
+    throw_runtime_error("Could not open input file.");
 
   // Initialize the reader object
   VRMLReader reader;
@@ -228,7 +228,7 @@ void Export_WRL(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // Open the output file
   ofstream f(aFileName, ios::out);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // Set floating point precision
   f << setprecision(8);
@@ -284,7 +284,7 @@ void Export_WRL(const char * aFileName, Mesh * aMesh, Options &aOptions)
 
   // Write faces
   f << "\t\t\t\tcoordIndex [" << endl;
-  unsigned int triCount = aMesh->mIndices.size() / 3;
+  unsigned int triCount = (unsigned int)(aMesh->mIndices.size() / 3);
   for(unsigned int i = 0; i < triCount; ++ i)
   {
     f << "\t\t\t\t\t" <<

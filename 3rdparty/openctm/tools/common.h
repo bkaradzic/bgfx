@@ -30,6 +30,8 @@
 
 #include <string>
 
+void throw_runtime_error(std::string str);
+
 // Convert a string to upper case.
 std::string UpperCase(const std::string &aString);
 

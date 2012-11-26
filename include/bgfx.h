@@ -230,6 +230,7 @@ namespace bgfx
 		enum Enum
 		{
 			MinimumRequiredSpecs = 1,
+			InvalidShader,
 			D3D9_UnableToCreateInterface,
 			D3D9_UnableToCreateDevice,
 			D3D9_UnableToCreateRenderTarget,
@@ -304,7 +305,10 @@ namespace bgfx
 			ARGB8,
 			ABGR16,
 			R5G6B5,
-
+			RGBA4,
+			RGB5A1,
+			RGB10A2,
+			
 			Count
 		};
 	};
@@ -453,7 +457,7 @@ namespace bgfx
 	///
 	///   BGFX_DEBUG_IFH - Infinitely fast hardware. When this flag is set
 	///     all rendering calls will be skipped. It's useful when profiling
-    ///     to quickly assess bottleneck between CPU and GPU.
+	///     to quickly assess bottleneck between CPU and GPU.
 	///
 	///   BGFX_DEBUG_STATS - Display internal statistics.
 	///
@@ -545,6 +549,11 @@ namespace bgfx
 	void destroyFragmentShader(FragmentShaderHandle _handle);
 
 	/// Create program with vertex and fragment shaders.
+	///
+	/// @param _vsh vertex shader.
+	/// @param _fsh fragment shader.
+	/// @returns Program handle if vertex shader output and fragment shader
+	/// input are matching, otherwise returns invalid program handle.
 	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 
 	/// Destroy program.

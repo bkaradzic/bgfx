@@ -32,7 +32,7 @@
 // http://people.sc.fsu.edu/~burkardt/data/off/off.html
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <fstream>
 #include <iomanip>
 #include <string>
@@ -99,7 +99,7 @@ void Import_OFF(const char * aFileName, Mesh * aMesh)
   // Open the input file
   ifstream f(aFileName, ios::in);
   if(f.fail())
-    throw runtime_error("Could not open input file.");
+    throw_runtime_error("Could not open input file.");
 
   // Some state variables that we need...
   unsigned int numVertices;
@@ -110,16 +110,16 @@ void Import_OFF(const char * aFileName, Mesh * aMesh)
   // Read header
   ReadNextLine(f, line, comment);
   if(line != string("OFF"))
-    throw runtime_error("Not a valid OFF format file (missing OFF signature).");
+    throw_runtime_error("Not a valid OFF format file (missing OFF signature).");
   ReadNextLine(f, line, comment);
   sstr.clear();
   sstr.str(line);
   sstr >> numVertices;
   sstr >> numFaces;
   if(numVertices < 1)
-    throw runtime_error("Not a valid OFF format file (bad vertex count).");
+    throw_runtime_error("Not a valid OFF format file (bad vertex count).");
   if(numFaces < 1)
-    throw runtime_error("Not a valid OFF format file (bad face count).");
+    throw_runtime_error("Not a valid OFF format file (bad face count).");
 
   // Read vertices
   aMesh->mVertices.resize(numVertices);
@@ -199,7 +199,7 @@ void Export_OFF(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // Open the output file
   ofstream f(aFileName, ios::out);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // Mesh information
   unsigned int numVertices = (unsigned int) aMesh->mVertices.size();

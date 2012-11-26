@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <fstream>
 #include <vector>
 #include <list>
@@ -174,16 +174,16 @@ void Import_3DS(const char * aFileName, Mesh * aMesh)
   // Open the input file
   ifstream f(aFileName, ios::in | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open input file.");
+    throw_runtime_error("Could not open input file.");
 
   // Get file size
   f.seekg(0, ios::end);
-  uint32 fileSize = f.tellg();
+  uint32 fileSize = (uint32)f.tellg();
   f.seekg(0, ios::beg);
 
   // Check file size (rough initial check)
   if(fileSize < 6)
-    throw runtime_error("Invalid 3DS file format.");
+    throw_runtime_error("Invalid 3DS file format.");
 
   uint16 chunk, count;
   uint32 chunkLen;
@@ -192,7 +192,7 @@ void Import_3DS(const char * aFileName, Mesh * aMesh)
   chunk = ReadInt16(f);
   chunkLen = ReadInt32(f);
   if((chunk != CHUNK_MAIN) || (chunkLen != fileSize))
-    throw runtime_error("Invalid 3DS file format.");
+    throw_runtime_error("Invalid 3DS file format.");
 
   // Parse chunks, and store the data in a temporary list, objList...
   Obj3DS * obj = 0;
@@ -287,8 +287,8 @@ void Import_3DS(const char * aFileName, Mesh * aMesh)
   for(list<Obj3DS>::iterator o = objList.begin(); o != objList.end(); ++ o)
   {
     // Append...
-    uint32 idxOffset = aMesh->mIndices.size();
-    uint32 vertOffset = aMesh->mVertices.size();
+    uint32 idxOffset = (uint32)aMesh->mIndices.size();
+    uint32 vertOffset = (uint32)aMesh->mVertices.size();
     aMesh->mIndices.resize(idxOffset + (*o).mIndices.size());
     aMesh->mVertices.resize(vertOffset + (*o).mVertices.size());
     if(hasUVCoords)
@@ -317,7 +317,7 @@ void Export_3DS(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // First, check that the mesh fits in a 3DS file (at most 65535 triangles
   // and 65535 vertices are supported).
   if((aMesh->mIndices.size() > (3*65535)) || (aMesh->mVertices.size() > 65535))
-    throw runtime_error("The mesh is too large to fit in a 3DS file.");
+    throw_runtime_error("The mesh is too large to fit in a 3DS file.");
 
   // What should we export?
   bool exportTexCoords = aMesh->HasTexCoords() && !aOptions.mNoTexCoords;
@@ -327,16 +327,16 @@ void Export_3DS(const char * aFileName, Mesh * aMesh, Options &aOptions)
   string matName("Material0");
 
   // Get mesh properties
-  uint32 triCount = aMesh->mIndices.size() / 3;
-  uint32 vertCount = aMesh->mVertices.size();
+  uint32 triCount = (uint32)(aMesh->mIndices.size() / 3);
+  uint32 vertCount = (uint32)aMesh->mVertices.size();
 
   // Calculate the material chunk size
   uint32 materialSize = 0;
   uint32 matGroupSize = 0;
   if(exportTexCoords && aMesh->mTexFileName.size() > 0)
   {
-    materialSize += 24 + matName.size() + 1 + aMesh->mTexFileName.size() + 1;
-    matGroupSize += 8 + matName.size() + 1 + 2 * triCount;
+    materialSize += 24 + (uint32)matName.size() + 1 + (uint32)aMesh->mTexFileName.size() + 1;
+    matGroupSize += 8 + (uint32)matName.size() + 1 + 2 * triCount;
   }
 
   // Calculate the mesh chunk size
@@ -345,12 +345,12 @@ void Export_3DS(const char * aFileName, Mesh * aMesh, Options &aOptions)
     triMeshSize += 8 + 8 * vertCount;
 
   // Calculate the total file size
-  uint32 fileSize = 38 + objName.size() + 1 + materialSize + triMeshSize;
+  uint32 fileSize = 38 + (uint32)objName.size() + 1 + materialSize + triMeshSize;
 
   // Open the output file
   ofstream f(aFileName, ios::out | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // Write file header
   WriteInt16(f, CHUNK_MAIN);
@@ -361,7 +361,7 @@ void Export_3DS(const char * aFileName, Mesh * aMesh, Options &aOptions)
 
   // 3D Edit chunk
   WriteInt16(f, CHUNK_3DEDIT);
-  WriteInt32(f, 16 + materialSize + objName.size() + 1 + triMeshSize);
+  WriteInt32(f, 16 + materialSize + (uint32)objName.size() + 1 + triMeshSize);
   WriteInt16(f, CHUNK_MESH_VERSION);
   WriteInt32(f, 6 + 4);
   WriteInt32(f, 0x00000003);
@@ -372,19 +372,19 @@ void Export_3DS(const char * aFileName, Mesh * aMesh, Options &aOptions)
     WriteInt16(f, CHUNK_MAT_ENTRY);
     WriteInt32(f, materialSize);
     WriteInt16(f, CHUNK_MAT_NAME);
-    WriteInt32(f, 6 + matName.size() + 1);
-    f.write(matName.c_str(), matName.size() + 1);
+    WriteInt32(f, 6 + (uint32)matName.size() + 1);
+    f.write(matName.c_str(), (uint32)matName.size() + 1);
     WriteInt16(f, CHUNK_MAT_TEXMAP);
-    WriteInt32(f, 12 + aMesh->mTexFileName.size() + 1);
+    WriteInt32(f, 12 + (uint32)aMesh->mTexFileName.size() + 1);
     WriteInt16(f, CHUNK_MAT_MAPNAME);
-    WriteInt32(f, 6 + aMesh->mTexFileName.size() + 1);
-    f.write(aMesh->mTexFileName.c_str(), aMesh->mTexFileName.size() + 1);
+    WriteInt32(f, 6 + (uint32)aMesh->mTexFileName.size() + 1);
+    f.write(aMesh->mTexFileName.c_str(), (uint32)aMesh->mTexFileName.size() + 1);
   }
 
   // Object chunk
   WriteInt16(f, CHUNK_OBJECT);
-  WriteInt32(f, 6 + objName.size() + 1 + triMeshSize);
-  f.write(objName.c_str(), objName.size() + 1);
+  WriteInt32(f, 6 + (uint32)objName.size() + 1 + triMeshSize);
+  f.write(objName.c_str(), (uint32)objName.size() + 1);
 
   // Triangle Mesh chunk
   WriteInt16(f, CHUNK_TRIMESH);

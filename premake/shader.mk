@@ -35,8 +35,8 @@ FS_FLAGS=--platform android
 SHADER_PATH=shaders/gles
 else
 ifeq ($(TARGET), 4)
-VS_FLAGS=--platform linux -p 140
-FS_FLAGS=--platform linux -p 140
+VS_FLAGS=--platform linux -p 120
+FS_FLAGS=--platform linux -p 120
 SHADER_PATH=shaders/glsl
 endif
 endif
@@ -45,7 +45,7 @@ endif
 endif
 
 BUILD_OUTPUT_DIR=$(addprefix ./, $(RUNTIME_DIR)/$(SHADER_PATH))
-BUILD_INTERMEDIATE_DIR=$(addprefix $(BGFX_DIR)/.build/, $(SHADER_PATH))
+BUILD_INTERMEDIATE_DIR=$(addprefix $(BUILD_DIR)/, $(SHADER_PATH))
 
 VS_SOURCES=$(wildcard vs_*.sc)
 VS_DEPS=$(addprefix $(BUILD_INTERMEDIATE_DIR)/,$(addsuffix .bin.d, $(basename $(VS_SOURCES))))

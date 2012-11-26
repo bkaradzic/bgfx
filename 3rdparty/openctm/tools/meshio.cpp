@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <string>
 #include <list>
 #include "mesh.h"
@@ -68,7 +68,7 @@ void ImportMesh(const char * aFileName, Mesh * aMesh)
   else if(fileExt == string(".WRL"))
     Import_WRL(aFileName, aMesh);
   else
-    throw runtime_error("Unknown input file extension.");
+    throw_runtime_error("Unknown input file extension.");
 }
 
 /// Export a mesh to a file.
@@ -94,7 +94,7 @@ void ExportMesh(const char * aFileName, Mesh * aMesh, Options &aOptions)
   else if(fileExt == string(".WRL"))
     Export_WRL(aFileName, aMesh, aOptions);
   else
-    throw runtime_error("Unknown output file extension.");
+    throw_runtime_error("Unknown output file extension.");
 }
 
 /// Return a list of supported formats.

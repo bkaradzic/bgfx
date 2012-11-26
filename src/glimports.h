@@ -30,6 +30,7 @@ GL_IMPORT(false, PFNGLGETINTEGERVPROC,                    glGetIntegerv);
 GL_IMPORT(false, PFNGLGETSTRINGPROC,                      glGetString);
 GL_IMPORT(false, PFNGLDRAWARRAYSPROC,                     glDrawArrays);
 GL_IMPORT(false, PFNGLBLENDFUNCPROC,                      glBlendFunc);
+GL_IMPORT(false, PFNGLBLENDEQUATIONPROC,                  glBlendEquation);
 GL_IMPORT(false, PFNGLPOINTSIZEPROC,                      glPointSize);
 GL_IMPORT(false, PFNGLCULLFACEPROC,                       glCullFace);
 GL_IMPORT(false, PFNGLCLEARPROC,                          glClear);
@@ -46,7 +47,9 @@ GL_IMPORT(false, PFNGLSTENCILOPPROC,                      glStencilOp);
 
 GL_IMPORT(false, PFNGLACTIVETEXTUREPROC,                  glActiveTexture);
 GL_IMPORT(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,           glCompressedTexImage2D);
+GL_IMPORT(false, PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC,        glCompressedTexSubImage2D);
 GL_IMPORT(false, PFNGLCOMPRESSEDTEXIMAGE3DPROC,           glCompressedTexImage3D);
+GL_IMPORT(false, PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,        glCompressedTexSubImage3D);
 GL_IMPORT(false, PFNGLBINDBUFFERPROC,                     glBindBuffer);
 GL_IMPORT(false, PFNGLDELETEBUFFERSPROC,                  glDeleteBuffers);
 GL_IMPORT(false, PFNGLGENBUFFERSPROC,                     glGenBuffers);
@@ -130,6 +133,9 @@ GL_IMPORT(true,  PFNGLGENVERTEXARRAYSPROC,                glGenVertexArrays);
 GL_IMPORT(true,  PFNGLSTENCILFUNCSEPARATEPROC,            glStencilFuncSeparate);
 GL_IMPORT(true,  PFNGLSTENCILMASKSEPARATEPROC,            glStencilMaskSeparate);
 GL_IMPORT(true,  PFNGLSTENCILOPSEPARATEPROC,              glStencilOpSeparate);
+
+GL_IMPORT(true,  PFNGLBLENDFUNCSEPARATEPROC,              glBlendFuncSeparate);
+GL_IMPORT(true,  PFNGLBLENDEQUATIONSEPARATEPROC,          glBlendEquationSeparate);
 
 #if BGFX_CONFIG_DEBUG_GREMEDY						
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY);

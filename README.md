@@ -1,6 +1,9 @@
 bgfx
 ====
 
+What is it?
+-----------
+
 Cross-platform rendering library.
 
 Supported rendering backends:
@@ -65,7 +68,7 @@ directory link to directory without spaces in the path.
 
 ### Building for Native Client (Pepper 22) on Windows
 
-Download Native Client SDK from
+Download Native Client SDK from:  
 [https://developers.google.com/native-client/sdk/download](https://developers.google.com/native-client/sdk/download)
 
 	setx NACL <path to Native Client SDK directory>\toolchain\win_x86_newlib
@@ -84,7 +87,7 @@ Other platforms:
 
 	make -R <configuration>
 
-Configuration is <platform>-<debug/release><32/64>. For example:
+Configuration is `<platform>-<debug/release><32/64>`. For example:
 
 	linux-release32, nacl-debug64, android-release32, etc.
 
@@ -112,6 +115,69 @@ Geometry instancing.
 ### 06-bump
 Loading textures.
 
+Internals
+---------
+
+bgfx is using sort-based draw call bucketing. This means that submition order
+doesn't necessarily matches the rendering order. On the high level this allows
+submitting draw calls for all passes at one place, but on the low-level they
+will be sorted and ordered correctly. This sometimes creates undesired results
+usually for GUI rendering, where draw order should usually match submit order.
+bgfx provides way to enable sequential rendering for these cases (see 
+`bgfx::setViewSeq`).
+
+Internally All low-level rendering draw calls are issued inside single function
+`Context::rendererSubmit`. This function exist inside each renderer backend
+implementation.
+
+More detailed description of sort-based draw call bucketing can be found at:  
+[Order your graphics draw calls around!](http://realtimecollisiondetection.net/blog/?p=86)
+
+Customization
+-------------
+
+By default each platform has sane default values. For example on Windows default
+renderer is DirectX9, and on Linux it is OpenGL 2.1. On Windows platform all
+rendering backends are available. For OpenGL ES on desktop you can find more 
+information at:  
+[OpenGL ES 2.0 and EGL on desktop](http://www.g-truc.net/post-0457.html)
+
+All configuration settings are located inside [src/config.h](src/config.h).
+
+Every `BGFX_CONFIG_*` setting can be changed by passing defines thru compiler
+switches. For example setting preprocessor define `BGFX_CONFIG_RENDERER_OPENGL=1`
+on Windows will change backend renderer to OpenGL 2.1. on Windows. Since
+rendering APIs are platform specific, this obviously won't work nor make sense
+in all cases. Certain platforms have only single choice, for example the Native
+Client works only with OpenGL ES 2.0 renderer, using anything other than that
+will result in build errors.
+
+Tools
+-----
+
+### Shader Compiler (shaderc)
+
+bgfx cross-platform shader language is based on GLSL syntax. It's uses ANSI C
+preprocessor to transform GLSL like language syntax into HLSL. This technique
+has certain drawbacks, but overall it's simple and allows quick authoring of
+cross-platform shaders.
+
+### Texture Compiler (texturec)
+
+### Geometry Compiler (geometryc)
+
+Todo
+----
+
+ - Multiple render targets.
+ - BlendFuncSeparate and BlendEquationSeparate.
+ - Copy from texture to texture.
+ - Occlusion queries.
+ - OSX and iOS platforms.
+ - DX11: MSAA.
+ - GL: MSAA.
+ - GL: ARB_vertex_array_object + OES_vertex_array_object.
+
 Notice
 ------
 
@@ -127,8 +193,45 @@ http://www.stuckingeometry.com
 Project page  
 https://github.com/bkaradzic/bgfx
 
-License
--------
+3rd Party Libraries
+-------------------
+
+All required 3rd party libraries are included in bgfx repository in [3rdparty/](3rdparty/)
+directory.
+
+### edtaa3 (MIT)
+
+Contour Rendering by Distance Fields
+
+https://github.com/OpenGLInsights/OpenGLInsightsCode/tree/master/Chapter%2012%202D%20Shape%20Rendering%20by%20Distance%20Fields
+
+### fcpp (BSD)
+
+Frexx C preprocessor
+
+https://github.com/bagder/fcpp
+
+### glsl-optimizer (MIT)
+
+GLSL optimizer based on Mesa's GLSL compiler. Used in Unity for mobile shader
+optimization.
+
+https://github.com/aras-p/glsl-optimizer
+
+### OpenCTM (Zlib)
+
+OpenCTM — the Open Compressed Triangle Mesh file format — is a
+file format, a software library and a tool set for compression of 3D triangle
+meshes.
+
+http://openctm.sourceforge.net/
+
+### stb_image (Public Domain)
+
+http://nothings.org/stb_image.c
+
+License (BSD 2-clause)
+----------------------
 
 Copyright 2010-2012 Branimir Karadzic. All rights reserved.
 

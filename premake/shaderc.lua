@@ -46,7 +46,8 @@ project "shaderc"
 	}
 
 	files {
-		BGFX_DIR .. "tools/shaderc.cpp",
+		BGFX_DIR .. "tools/shaderc/**.cpp",
+		BGFX_DIR .. "tools/shaderc/**.h",
 		FCPP_DIR .. "**.h",
 		FCPP_DIR .. "cpp1.c",
 		FCPP_DIR .. "cpp2.c",

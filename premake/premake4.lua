@@ -264,9 +264,10 @@ function copyLib()
 end
 
 dofile "bgfx.lua"
-dofile "ddsdump.lua"
 dofile "makedisttex.lua"
 dofile "shaderc.lua"
+dofile "texturec.lua"
+dofile "geometryc.lua"
 dofile "openctm.lua"
 dofile "example-00-helloworld.lua"
 dofile "example-01-cubes.lua"

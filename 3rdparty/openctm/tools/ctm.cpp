@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <openctm.h>
 #include "ctm.h"
 
@@ -123,8 +123,8 @@ void Export_CTM(const char * aFileName, Mesh * aMesh, Options &aOptions)
   CTMfloat * normals = 0;
   if(aMesh->HasNormals() && !aOptions.mNoNormals)
     normals = &aMesh->mNormals[0].x;
-  ctm.DefineMesh((CTMfloat *) &aMesh->mVertices[0].x, aMesh->mVertices.size(),
-                 (const CTMuint*) &aMesh->mIndices[0], aMesh->mIndices.size() / 3,
+  ctm.DefineMesh((CTMfloat *) &aMesh->mVertices[0].x, (CTMuint)aMesh->mVertices.size(),
+                 (const CTMuint*) &aMesh->mIndices[0], (CTMuint)aMesh->mIndices.size() / 3,
                  normals);
 
   // Define texture coordinates

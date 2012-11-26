@@ -506,7 +506,7 @@ static void _ctmMakeNormalCoordSys(CTMfloat * aNormal, CTMfloat * aBasisAxes)
   x[2] =  aNormal[1];
 
   // Normalize the new X axis (note: |x[2]| = |x[0]|)
-  len = sqrtf(2.0 * x[0] * x[0] + x[1] * x[1]);
+  len = sqrtf(2.0f * x[0] * x[0] + x[1] * x[1]);
   if(len > 1.0e-20f)
   {
     len = 1.0f / len;

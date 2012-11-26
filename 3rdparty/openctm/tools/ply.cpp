@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 
 #include <iostream>
-#include <stdexcept>
+#include "common.h"
 #include <string>
 #include <fstream>
 #include <iomanip>
@@ -169,9 +169,9 @@ void Import_PLY(const char * aFileName, Mesh * aMesh)
   // Open the PLY file
   p_ply ply = ply_open(aFileName, NULL);
   if(!ply)
-    throw runtime_error("Unable to open PLY file.");
+    throw_runtime_error("Unable to open PLY file.");
   if(!ply_read_header(ply))
-    throw runtime_error("Invalid PLY file.");
+    throw_runtime_error("Invalid PLY file.");
 
   // Get the file comment (if any)
   bool firstComment = true;
@@ -212,7 +212,7 @@ void Import_PLY(const char * aFileName, Mesh * aMesh)
 
   // Sanity check
   if((faceCount < 1) || (vertexCount < 1))
-    throw runtime_error("Empty PLY mesh - invalid file format?");
+    throw_runtime_error("Empty PLY mesh - invalid file format?");
 
   // Prepare the mesh
   aMesh->mIndices.resize(faceCount * 3);
@@ -223,7 +223,7 @@ void Import_PLY(const char * aFileName, Mesh * aMesh)
 
   // Read the PLY file
   if(!ply_read(ply))
-    throw runtime_error("Unable to load PLY file.");
+    throw_runtime_error("Unable to load PLY file.");
 
   // Close the PLY file
   ply_close(ply);
@@ -243,7 +243,7 @@ void Export_PLY(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // Open the output file
   ofstream f(aFileName, ios::out | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // Set floating point precision
   f << setprecision(8);

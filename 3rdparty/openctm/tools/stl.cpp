@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <fstream>
 #include <string>
 #include <vector>
@@ -115,14 +115,14 @@ void Import_STL(const char * aFileName, Mesh * aMesh)
   // Open the input file
   ifstream f(aFileName, ios::in | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open input file.");
+    throw_runtime_error("Could not open input file.");
 
   // Get the file size
   f.seekg(0, ios::end);
   uint32 fileSize = (uint32) f.tellg();
   f.seekg(0, ios::beg);
   if(fileSize < 84)
-    throw runtime_error("Invalid format - not a valid STL file.");
+    throw_runtime_error("Invalid format - not a valid STL file.");
 
   // Read header (80 character comment + triangle count)
   char comment[81];
@@ -131,7 +131,7 @@ void Import_STL(const char * aFileName, Mesh * aMesh)
   aMesh->mComment = string(comment);
   uint32 triangleCount = ReadInt32(f);
   if(fileSize != (84 + triangleCount * 50))
-    throw runtime_error("Invalid format - not a valid STL file.");
+    throw_runtime_error("Invalid format - not a valid STL file.");
 
   if(triangleCount > 0)
   {
@@ -192,7 +192,7 @@ void Export_STL(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // Open the output file
   ofstream f(aFileName, ios::out | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // Write header (80-character comment + triangle count)
   char comment[80];
@@ -204,7 +204,7 @@ void Export_STL(const char * aFileName, Mesh * aMesh, Options &aOptions)
       comment[i] = 0;
   }
   f.write(comment, 80);
-  uint32 triangleCount = aMesh->mIndices.size() / 3;
+  uint32 triangleCount = (CTMuint)(aMesh->mIndices.size() / 3);
   WriteInt32(f, triangleCount);
 
   // Write the triangle data

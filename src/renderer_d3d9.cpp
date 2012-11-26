@@ -171,15 +171,18 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ D3DFMT_DXT1,         1 },
-		{ D3DFMT_DXT3,         1 },
-		{ D3DFMT_DXT5,         1 },
-		{ D3DFMT_UNKNOWN,      0 },
-		{ D3DFMT_L8,           1 },
-		{ D3DFMT_X8R8G8B8,     4 },
-		{ D3DFMT_A8R8G8B8,     4 },
-		{ D3DFMT_A16B16G16R16, 8 },
-		{ D3DFMT_R5G6B5,       2 },
+		{ D3DFMT_DXT1,         4  },
+		{ D3DFMT_DXT3,         4  },
+		{ D3DFMT_DXT5,         4  },
+		{ D3DFMT_UNKNOWN,      0  },
+		{ D3DFMT_L8,           8  },
+		{ D3DFMT_X8R8G8B8,     32 },
+		{ D3DFMT_A8R8G8B8,     32 },
+		{ D3DFMT_A16B16G16R16, 64 },
+		{ D3DFMT_R5G6B5,       16 },
+		{ D3DFMT_A4R4G4B4,     16 },
+		{ D3DFMT_A1R5G5B5,     16 },
+		{ D3DFMT_A2B10G10R10,  32 },
 	};
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =
@@ -730,8 +733,8 @@ namespace bgfx
 			point.y = rc.top;
 			ClientToScreen(g_bgfxHwnd, &point);
 			uint8_t* data = (uint8_t*)rect.pBits;
-			uint32_t bpp = rect.Pitch/dm.Width;
-			saveTga( (const char*)_mem->data, m_params.BackBufferWidth, m_params.BackBufferHeight, rect.Pitch, &data[point.y*rect.Pitch+point.x*bpp]);
+			uint32_t bytesPerPixel = rect.Pitch/dm.Width;
+			saveTga( (const char*)_mem->data, m_params.BackBufferWidth, m_params.BackBufferHeight, rect.Pitch, &data[point.y*rect.Pitch+point.x*bytesPerPixel]);
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
@@ -993,11 +996,16 @@ namespace bgfx
 
 	void Shader::create(bool _fragment, const Memory* _mem)
 	{
-		m_constantBuffer = ConstantBuffer::create(1024);
+		bx::MemoryReader reader(_mem->data, _mem->size);
 
-		StreamRead stream(_mem->data, _mem->size);
+		uint32_t magic;
+		bx::read(&reader, magic);
+
+		uint32_t iohash;
+		bx::read(&reader, iohash);
+
 		uint16_t count;
-		stream.read(count);
+		bx::read(&reader, count);
 
 		m_numPredefined = 0;
 
@@ -1005,76 +1013,83 @@ namespace bgfx
 
 		uint8_t fragmentBit = _fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 
-		for (uint32_t ii = 0; ii < count; ++ii)
+		if (0 < count)
 		{
-			uint8_t nameSize;
-			stream.read(nameSize);
+			m_constantBuffer = ConstantBuffer::create(1024);
 
-			char name[256];
-			stream.read(&name, nameSize);
-			name[nameSize] = '\0';
-
-			uint8_t type;
-			stream.read(type);
-
-			uint8_t num;
-			stream.read(num);
-
-			uint16_t regIndex;
-			stream.read(regIndex);
-
-			uint16_t regCount;
-			stream.read(regCount);
-
-			const char* kind = "invalid";
-
-			const void* data = NULL;
-			PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
-			if (PredefinedUniform::Count != predefined)
+			for (uint32_t ii = 0; ii < count; ++ii)
 			{
-				kind = "predefined";
-				m_predefined[m_numPredefined].m_loc = regIndex;
-				m_predefined[m_numPredefined].m_count = regCount;
-				m_predefined[m_numPredefined].m_type = predefined|fragmentBit;
-				m_numPredefined++;
-			}
-			else
-			{
-				const UniformInfo* info = s_renderCtx.m_uniformReg.find(name);
-				BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
-				if (NULL != info)
+				uint8_t nameSize;
+				bx::read(&reader, nameSize);
+
+				char name[256];
+				bx::read(&reader, &name, nameSize);
+				name[nameSize] = '\0';
+
+				uint8_t type;
+				bx::read(&reader, type);
+
+				uint8_t num;
+				bx::read(&reader, num);
+
+				uint16_t regIndex;
+				bx::read(&reader, regIndex);
+
+				uint16_t regCount;
+				bx::read(&reader, regCount);
+
+				const char* kind = "invalid";
+
+				const void* data = NULL;
+				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+				if (PredefinedUniform::Count != predefined)
 				{
-					kind = "user";
-					data = info->m_data;
-					m_constantBuffer->writeUniformRef( (UniformType::Enum)(type|fragmentBit), regIndex, data, regCount);
+					kind = "predefined";
+					m_predefined[m_numPredefined].m_loc = regIndex;
+					m_predefined[m_numPredefined].m_count = regCount;
+					m_predefined[m_numPredefined].m_type = predefined|fragmentBit;
+					m_numPredefined++;
 				}
+				else
+				{
+					const UniformInfo* info = s_renderCtx.m_uniformReg.find(name);
+					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+					if (NULL != info)
+					{
+						kind = "user";
+						data = info->m_data;
+						m_constantBuffer->writeUniformRef( (UniformType::Enum)(type|fragmentBit), regIndex, data, regCount);
+					}
+				}
+
+				BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
+					, kind
+					, name
+					, type
+					, num
+					, regIndex
+					, regCount
+					);
+				BX_UNUSED(kind);
 			}
 
-			BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
-				, kind
-				, name
-				, type
-				, num
-				, regIndex
-				, regCount
-				);
-			BX_UNUSED(kind);
+			m_constantBuffer->finish();
 		}
 
 		uint16_t shaderSize;
-		stream.read(shaderSize);
+		bx::read(&reader, shaderSize);
 
-		m_constantBuffer->finish();
-
-		const DWORD* code = (const DWORD*)stream.getDataPtr();
+		const DWORD* code = (const DWORD*)reader.getDataPtr();
 
 		if (_fragment)
 		{
 			DX_CHECK(s_renderCtx.m_device->CreatePixelShader(code, (IDirect3DPixelShader9**)&m_ptr) );
+			BX_CHECK(NULL != m_ptr, "Failed to create fragment shader.");
 		}
 		else
 		{
 			DX_CHECK(s_renderCtx.m_device->CreateVertexShader(code, (IDirect3DVertexShader9**)&m_ptr) );
+			BX_CHECK(NULL != m_ptr, "Failed to create vertex shader.");
 		}
 	}
 
@@ -1234,22 +1249,24 @@ namespace bgfx
 
 		if (parseDds(dds, _mem) )
 		{
-			uint8_t bpp = dds.m_bpp;
+			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 
 			bool decompress = false;
 
 			if (dds.m_cubeMap)
 			{
-				createCubeTexture(dds.m_width, dds.m_numMips, s_textureFormat[dds.m_type].m_fmt);
+				createCubeTexture(dds.m_width, dds.m_numMips, tfi.m_fmt);
 			}
 			else if (dds.m_depth > 1)
 			{
-				createVolumeTexture(dds.m_width, dds.m_height, dds.m_depth, dds.m_numMips, s_textureFormat[dds.m_type].m_fmt);
+				createVolumeTexture(dds.m_width, dds.m_height, dds.m_depth, dds.m_numMips, tfi.m_fmt);
 			}
 			else
 			{
-				createTexture(dds.m_width, dds.m_height, dds.m_numMips, s_textureFormat[dds.m_type].m_fmt);
+				createTexture(dds.m_width, dds.m_height, dds.m_numMips, tfi.m_fmt);
 			}
+
+			uint8_t bpp = tfi.m_bpp;
 
 			if (decompress
 			||  TextureFormat::Unknown < dds.m_type)
@@ -1276,7 +1293,7 @@ namespace bgfx
 							if (width != mip.m_width
 							||  height != mip.m_height)
 							{
-								uint32_t srcpitch = mip.m_width*bpp;
+								uint32_t srcpitch = mip.m_width*bpp/8;
 
 								uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*mip.m_height);
 								mip.decode(temp);
@@ -1328,32 +1345,32 @@ namespace bgfx
 		}
 		else
 		{
-			StreamRead stream(_mem->data, _mem->size);
+			bx::MemoryReader reader(_mem->data, _mem->size);
 
 			uint32_t magic;
-			stream.read(magic);
+			bx::read(&reader, magic);
 
-			if (BGFX_MAGIC == magic)
+			if (BGFX_CHUNK_MAGIC_TEX == magic)
 			{
 				TextureCreate tc;
-				stream.read(tc);
+				bx::read(&reader, tc);
 
 				if (tc.m_cubeMap)
 				{
-					createCubeTexture(tc.m_width, tc.m_numMips, s_textureFormat[tc.m_type].m_fmt);
+					createCubeTexture(tc.m_width, tc.m_numMips, s_textureFormat[tc.m_format].m_fmt);
 				}
 				else if (tc.m_depth > 1)
 				{
-					createVolumeTexture(tc.m_width, tc.m_height, tc.m_depth, tc.m_numMips, s_textureFormat[tc.m_type].m_fmt);
+					createVolumeTexture(tc.m_width, tc.m_height, tc.m_depth, tc.m_numMips, s_textureFormat[tc.m_format].m_fmt);
 				}
 				else
 				{
-					createTexture(tc.m_width, tc.m_height, tc.m_numMips, s_textureFormat[tc.m_type].m_fmt);
+					createTexture(tc.m_width, tc.m_height, tc.m_numMips, s_textureFormat[tc.m_format].m_fmt);
 				}
 
 				if (NULL != tc.m_mem)
 				{
-					uint32_t bpp = s_textureFormat[tc.m_type].m_bpp;
+					uint32_t bpp = s_textureFormat[tc.m_format].m_bpp;
 					uint8_t* data = tc.m_mem->data;
 
 					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
@@ -1371,7 +1388,7 @@ namespace bgfx
 							uint32_t pitch;
 							uint32_t slicePitch;
 							uint8_t* dst = lock(side, lod, pitch, slicePitch);
-							uint32_t len = width*height*bpp;
+							uint32_t len = width*height*bpp/8;
 							memcpy(dst, data, len);
 							data += len;
 							unlock(side, lod);
@@ -1956,7 +1973,6 @@ namespace bgfx
 					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), "view");
 
 					view = key.m_view;
-
 					programIdx = invalidHandle;
 
 					if (m_render->m_rt[view].idx != rt.idx)
@@ -2080,9 +2096,9 @@ namespace bgfx
 				}
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
-					 |BGFX_STATE_ALPHA_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE
-					 |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK
-					 |BGFX_STATE_POINT_SIZE_MASK|BGFX_STATE_SRGBWRITE|BGFX_STATE_MSAA) & changedFlags)
+					 |BGFX_STATE_ALPHA_MASK|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_MASK
+					 |BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK|BGFX_STATE_POINT_SIZE_MASK
+					 |BGFX_STATE_SRGBWRITE|BGFX_STATE_MSAA) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -2192,8 +2208,7 @@ namespace bgfx
 
 					if (constantsChanged)
 					{
-						program.m_vsh->m_constantBuffer->commit();
-						program.m_fsh->m_constantBuffer->commit();
+						program.commit();
 					}
 
 					for (uint32_t ii = 0, num = program.m_numPredefined; ii < num; ++ii)

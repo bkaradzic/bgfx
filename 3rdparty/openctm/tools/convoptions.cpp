@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <string>
 #include <sstream>
 #include "convoptions.h"
@@ -106,7 +106,7 @@ void Options::GetFromArgs(int argc, char **argv, int aStartIdx)
       else if(upaxis == string("-Z"))
         mUpAxis = uaNZ;
       else
-        throw runtime_error("Invalid up axis (use X, Y, Z, -X, -Y or -Z).");
+        throw_runtime_error("Invalid up axis (use X, Y, Z, -X, -Y or -Z).");
     }
     else if(cmd == string("--flip"))
     {
@@ -139,13 +139,13 @@ void Options::GetFromArgs(int argc, char **argv, int aStartIdx)
       else if(method == string("MG2"))
         mMethod = CTM_METHOD_MG2;
       else
-        throw runtime_error("Invalid method (use RAW, MG1 or MG2).");
+        throw_runtime_error("Invalid method (use RAW, MG1 or MG2).");
     }
     else if((cmd == string("--level")) && (i < (argc - 1)))
     {
       CTMint val = GetIntArg(argv[i + 1]);
       if( (val < 0) || (val > 9) )
-        throw runtime_error("Invalid compression level (it must be in the range 0 - 9).");
+        throw_runtime_error("Invalid compression level (it must be in the range 0 - 9).");
       mLevel = CTMuint(val);
       ++ i;
     }
@@ -185,6 +185,6 @@ void Options::GetFromArgs(int argc, char **argv, int aStartIdx)
       ++ i;
     }
     else
-      throw runtime_error(string("Invalid argument: ") + cmd);
+      throw_runtime_error(string("Invalid argument: ") + cmd);
   }
 }

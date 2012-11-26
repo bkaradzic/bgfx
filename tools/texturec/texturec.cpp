@@ -17,7 +17,6 @@ using namespace bgfx;
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
 #endif // DEBUG
 
-#define BX_NAMESPACE 1
 #include <bx/bx.h>
 #include <bx/commandline.h>
 #include <bx/uint32_t.h>
@@ -95,7 +94,7 @@ long int fsize(FILE* _file)
 
 int main(int _argc, const char* _argv[])
 {
-	CommandLine cmdLine(_argc, _argv);
+	bx::CommandLine cmdLine(_argc, _argv);
 
 	FILE* file = fopen(_argv[1], "rb");
 	uint32_t size = fsize(file);
@@ -157,7 +156,7 @@ int main(int _argc, const char* _argv[])
 						}
 
 						char filePath[256];
-						_snprintf(filePath, sizeof(filePath), "mip%d_%d.tga", side, lod);
+						bx::snprintf(filePath, sizeof(filePath), "mip%d_%d.tga", side, lod);
 
 						saveTga(filePath, width, height, dstpitch, bits);
 						free(bits);
@@ -176,7 +175,7 @@ int main(int _argc, const char* _argv[])
 				if (getRawImageData(dds, 0, lod, mem, mip) )
 				{
 					char filePath[256];
-					_snprintf(filePath, sizeof(filePath), "mip%d.bin", lod);
+					bx::snprintf(filePath, sizeof(filePath), "mip%d.bin", lod);
 					file = fopen(filePath, "wb");
 					fwrite(mip.m_data, 1, mip.m_size, file);
 					fclose(file);

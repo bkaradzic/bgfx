@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <openctm.h>
 #include <cmath>
 #include "mesh.h"
@@ -73,8 +73,8 @@ void Mesh::Clear()
 /// Automatic detection of the optimal normal calculation method
 Mesh::NormalCalcAlgo Mesh::DetectNormalCalculationMethod()
 {
-  unsigned int triCount = mIndices.size() / 3;
-  unsigned int vertexCount = mVertices.size();
+  unsigned int triCount = (unsigned int)(mIndices.size() / 3);
+  unsigned int vertexCount = (unsigned int)(mVertices.size() );
 
   // Calculate the mean edge length
   double meanEdgeLen = 0;
@@ -169,7 +169,7 @@ void Mesh::CalculateNormals(NormalCalcAlgo aAlgo)
     mNormals[i] = Vector3(0.0f, 0.0f, 0.0f);
 
   // Calculate sum of the flat normals of the neighbouring triangles
-  unsigned int triCount = mIndices.size() / 3;
+  unsigned int triCount = (unsigned int)(mIndices.size() / 3);
   for(unsigned int i = 0; i < triCount; ++ i)
   {
     // Calculate the weighted flat normal for this triangle

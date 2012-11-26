@@ -429,7 +429,7 @@ int _main_(int _argc, char** _argv)
 				}
 			}
 
-			uint16_t numInstances = (data - idb->data)/instanceStride;
+			uint16_t numInstances = (uint16_t)( (data - idb->data)/instanceStride);
 
 			// Set vertex and fragment shaders.
 			bgfx::setProgram(program);

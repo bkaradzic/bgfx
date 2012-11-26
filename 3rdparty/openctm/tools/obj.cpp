@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <fstream>
 #include <iomanip>
 #include <string>
@@ -108,9 +108,9 @@ class OBJFace {
             if(value > 0)
               value --;
             else if(value < 0)
-              throw runtime_error("Negative vertex references in OBJ files are not supported.");
+              throw_runtime_error("Negative vertex references in OBJ files are not supported.");
             else
-              throw runtime_error("Invalid index (zero) in OBJ file.");
+              throw_runtime_error("Invalid index (zero) in OBJ file.");
           }
           n.Set(j, value);
         }
@@ -150,7 +150,7 @@ void Import_OBJ(const char * aFileName, Mesh * aMesh)
   // Open the input file
   ifstream inFile(aFileName, ios::in);
   if(inFile.fail())
-    throw runtime_error("Could not open input file.");
+    throw_runtime_error("Could not open input file.");
 
   // Mesh description - parsed from the OBJ file
   list<Vector3> vertices;
@@ -201,7 +201,7 @@ void Import_OBJ(const char * aFileName, Mesh * aMesh)
   int triCount = 0;
   for(list<OBJFace>::iterator i = faces.begin(); i != faces.end(); ++ i)
   {
-    int nodeCount = (*i).mNodes.size();
+    int nodeCount = (int)((*i).mNodes.size());
     if(nodeCount >= 3)
       triCount += (nodeCount - 2);
   }
@@ -269,7 +269,7 @@ void Export_OBJ(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // Open the output file
   ofstream f(aFileName, ios::out);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // What should we export?
   bool exportTexCoords = aMesh->HasTexCoords() && !aOptions.mNoTexCoords;
@@ -312,7 +312,7 @@ void Export_OBJ(const char * aFileName, Mesh * aMesh, Options &aOptions)
   }
 
   // Write faces
-  unsigned int triCount = aMesh->mIndices.size() / 3;
+  unsigned int triCount = (unsigned int)(aMesh->mIndices.size() / 3);
   f << "s 1" << endl; // Put all faces in the same smoothing group
   for(unsigned int i = 0; i < triCount; ++ i)
   {

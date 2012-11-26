@@ -325,6 +325,9 @@ namespace bgfx
 		Texture()
 			: m_id(0)
 			, m_target(GL_TEXTURE_2D)
+			, m_fmt(GL_ZERO)
+			, m_type(GL_ZERO)
+			, m_compressed(false)
 		{
 		}
 
@@ -338,19 +341,30 @@ namespace bgfx
 		GLenum m_target;
 		GLenum m_fmt;
 		GLenum m_type;
+		bool m_compressed;
 	};
 
 	struct Shader
 	{
-		void create(GLenum _type, const uint8_t* _code)
+		void create(GLenum _type, Memory* _mem)
 		{
 			m_id = glCreateShader(_type);
 			m_type = _type;
 
+			bx::MemoryReader reader(_mem->data, _mem->size);
+			m_hash = hashMurmur2A(_mem->data, _mem->size);
+
+			uint32_t magic;
+			bx::read(&reader, magic);
+
+			uint32_t hash;
+			bx::read(&reader, hash);
+
+			const uint8_t* code = reader.getDataPtr();
+
 			if (0 != m_id)
 			{
-				m_hash = hash(_code, (uint32_t)strlen( (const char*)_code) );
-				GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&_code, NULL) );
+				GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
 				GL_CHECK(glCompileShader(m_id) );
 
 				GLint compiled = 0;
@@ -361,9 +375,10 @@ namespace bgfx
 					char log[1024];
 					GL_CHECK(glGetShaderInfoLog(m_id, sizeof(log), NULL, log) );
 					BX_TRACE("Failed to compile shader. %d: %s", compiled, log);
-					BX_TRACE("\n####\n%s\n####", _code);
+					BX_TRACE("\n####\n%s\n####", code);
 
 					GL_CHECK(glDeleteShader(m_id) );
+					BGFX_FATAL(false, bgfx::Fatal::InvalidShader, "Failed to compile shader.");
 				}
 			}
 		}
@@ -398,6 +413,11 @@ namespace bgfx
  		void init();
  		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
+
+		void commit()
+		{
+			m_constantBuffer->commit();
+		}
  
 		GLuint m_id;
 

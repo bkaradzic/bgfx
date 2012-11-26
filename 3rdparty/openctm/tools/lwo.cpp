@@ -25,7 +25,7 @@
 //     distribution.
 //-----------------------------------------------------------------------------
 
-#include <stdexcept>
+#include "common.h"
 #include <fstream>
 #include <cstring>
 #include <string>
@@ -216,14 +216,14 @@ static void WriteVEC12(ostream &aStream, Vector3 aValue)
 /// Write a string to a stream (no zero termination).
 static void WriteString(ostream &aStream, const char * aString)
 {
-  int len = strlen(aString);
+  int len = (int)strlen(aString);
   aStream.write(aString, len);
 }
 
 /// Write a zero terminated string to a stream.
 static void WriteStringZ(ostream &aStream, const char * aString)
 {
-  int len = strlen(aString) + 1;
+  int len = (int)strlen(aString) + 1;
   aStream.write(aString, len);
   if(len & 1)
   {
@@ -262,8 +262,8 @@ static uint32 CalcPOLSSize(Mesh * aMesh)
 /// account, but exclude the name string (at least two bytes)...
 static uint32 CalcVMAPSize(Mesh * aMesh, uint32 aDimension)
 {
-  uint32 size = 6 + aMesh->mVertices.size() * (2 + 4 * aDimension);
-  uint32 maxIdx = aMesh->mVertices.size() - 1;
+  uint32 size = (uint32)(6 + aMesh->mVertices.size() * (2 + 4 * aDimension));
+  uint32 maxIdx = (uint32)(aMesh->mVertices.size() - 1);
   if(maxIdx >= 0x0000ff00)
     size += (maxIdx - 0x0000feff) * 2;
   return size;
@@ -280,14 +280,14 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
   // Open the input file
   ifstream f(aFileName, ios::in | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open input file.");
+    throw_runtime_error("Could not open input file.");
 
   // File header
   if(ReadString(f, 4) != string("FORM"))
-    throw runtime_error("Not a valid LWO file (missing FORM chunk).");
+    throw_runtime_error("Not a valid LWO file (missing FORM chunk).");
   uint32 fileSize = ReadU4(f);
   if(ReadString(f, 4) != string("LWO2"))
-    throw runtime_error("Not a valid LWO file (not LWO2 format).");
+    throw_runtime_error("Not a valid LWO file (not LWO2 format).");
 
   // Start with an empty mesh
   aMesh->Clear();
@@ -333,7 +333,7 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
       // Check point count
       uint32 newPoints = chunkSize / 12;
       if((newPoints * 12) != chunkSize)
-        throw runtime_error("Not a valid LWO file (invalid PNTS chunk).");
+        throw_runtime_error("Not a valid LWO file (invalid PNTS chunk).");
 
       // Read points (relative to current pivot point)
       aMesh->mVertices.resize(pointCount + newPoints);
@@ -347,7 +347,7 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
     {
       // POLS before PNTS?
       if(!havePoints)
-        throw runtime_error("Not a valid LWO file (POLS chunk before PNTS chunk).");
+        throw_runtime_error("Not a valid LWO file (POLS chunk before PNTS chunk).");
 
       // Check that we have a FACE or PTCH descriptor.
       string type = ReadString(f, 4);
@@ -424,7 +424,7 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
       if((type == string("RGB ")) || (type == string("RGBA")))
       {
         // Resize the mesh colors array
-        uint32 oldSize = aMesh->mColors.size();
+        uint32 oldSize = (uint32)aMesh->mColors.size();
         aMesh->mColors.resize(pointCount);
         for(uint32 i = oldSize; i < pointCount; ++ i)
           aMesh->mColors[i] = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -456,7 +456,7 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
       else if((type == string("TXUV")))
       {
         // Resize the mesh UV array
-        uint32 oldSize = aMesh->mTexCoords.size();
+        uint32 oldSize = (uint32)aMesh->mTexCoords.size();
         aMesh->mTexCoords.resize(pointCount);
         for(uint32 i = oldSize; i < pointCount; ++ i)
           aMesh->mTexCoords[i] = Vector2(0.0f, 0.0f);
@@ -491,7 +491,7 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
   // Post-adjustment: color array (if any)
   if((aMesh->mColors.size() > 0) && (aMesh->mColors.size() < pointCount))
   {
-    uint32 oldSize = aMesh->mColors.size();
+    uint32 oldSize = (uint32)aMesh->mColors.size();
     aMesh->mColors.resize(pointCount);
     for(uint32 i = oldSize; i < pointCount; ++ i)
       aMesh->mColors[i] = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -500,7 +500,7 @@ void Import_LWO(const char * aFileName, Mesh * aMesh)
   // Post-adjustment: texture coordinate array (if any)
   if((aMesh->mTexCoords.size() > 0) && (aMesh->mTexCoords.size() < pointCount))
   {
-    uint32 oldSize = aMesh->mTexCoords.size();
+    uint32 oldSize = (uint32)aMesh->mTexCoords.size();
     aMesh->mTexCoords.resize(pointCount);
     for(uint32 i = oldSize; i < pointCount; ++ i)
       aMesh->mTexCoords[i] = Vector2(0.0f, 0.0f);
@@ -515,7 +515,7 @@ void Export_LWO(const char * aFileName, Mesh * aMesh, Options &aOptions)
 {
   // Check if we can support this mesh (too many vertices?)
   if(aMesh->mVertices.size() > 0x00ffffff)
-    throw runtime_error("Too large mesh (not supported by the LWO file format).");
+    throw_runtime_error("Too large mesh (not supported by the LWO file format).");
 
   // What should we export?
   bool exportComment = (aMesh->mComment.size() > 0);
@@ -523,7 +523,7 @@ void Export_LWO(const char * aFileName, Mesh * aMesh, Options &aOptions)
   bool exportColors = aMesh->HasColors() && !aOptions.mNoColors;
 
   // Calculate the sizes of the individual chunks
-  uint32 textSize = aMesh->mComment.size() + 1;
+  uint32 textSize = (uint32)aMesh->mComment.size() + 1;
   if(textSize & 1) ++ textSize;
   uint32 tagsSize = 8;
   uint32 layrSize = 24;
@@ -548,7 +548,7 @@ void Export_LWO(const char * aFileName, Mesh * aMesh, Options &aOptions)
   // Open the output file
   ofstream f(aFileName, ios::out | ios::binary);
   if(f.fail())
-    throw runtime_error("Could not open output file.");
+    throw_runtime_error("Could not open output file.");
 
   // File header
   WriteString(f, "FORM");

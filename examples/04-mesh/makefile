@@ -5,6 +5,7 @@
 
 BGFX_DIR=../..
 RUNTIME_DIR=$(BGFX_DIR)/examples/runtime
+BUILD_DIR=../../.build
 
 include $(BGFX_DIR)/premake/shader.mk
 

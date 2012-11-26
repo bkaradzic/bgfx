@@ -27,6 +27,14 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 					dbgPrintf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
 				} while(0)
 
+#	define BX_WARN(_condition, _format, ...) \
+				do { \
+					if (!(_condition) ) \
+					{ \
+						BX_TRACE(BX_FILE_LINE_LITERAL "WARN " _format, ##__VA_ARGS__); \
+					} \
+				} while(0)
+
 #	define BX_CHECK(_condition, _format, ...) \
 				do { \
 					if (!(_condition) ) \
@@ -56,6 +64,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 #include <bx/radixsort.h>
 #include <bx/ringbuffer.h>
 #include <bx/uint32_t.h>
+#include <bx/readerwriter.h>
 
 #if BX_PLATFORM_WINDOWS
 #	include <windows.h>
@@ -67,18 +76,11 @@ extern HWND g_bgfxHwnd;
 #	include <pthread.h>
 #endif // BX_PLATFORM_*
 
-#ifndef MAKEFOURCC
-#	define MAKEFOURCC(_a, _b, _c, _d) (0 \
-				| ( (uint32_t)(_a) \
-				| ( (uint32_t)(_b) << 8) \
-				| ( (uint32_t)(_c) << 16) \
-				| ( (uint32_t)(_d) << 24) \
-				) )
-#endif // MAKEFOURCC
-
 #include "dds.h"
 
-#define BGFX_MAGIC MAKEFOURCC('B','G','F','X')
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x0)
+#define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x0)
 
 #if BGFX_CONFIG_USE_TINYSTL
 
@@ -174,7 +176,7 @@ namespace bgfx
 		};
 		uint16_t m_depth;
 		uint8_t m_numMips;
-		uint8_t m_type;
+		uint8_t m_format;
 		bool m_cubeMap;
 		const Memory* m_mem;
 	};
@@ -199,14 +201,6 @@ namespace bgfx
 	inline uint32_t uint16_max(uint16_t _a, uint16_t _b)
 	{
 		return _a < _b ? _b : _a;
-	}
-
-	inline uint32_t hash(const void* _data, uint32_t _size)
-	{
-		HashMurmur2A murmur;
-		murmur.begin();
-		murmur.add(_data, (int)_size);
-		return murmur.end();
 	}
 
 	inline uint32_t gcd(uint32_t _a, uint32_t _b)
@@ -412,113 +406,6 @@ namespace bgfx
 
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum);
 	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name);
-
-	class StreamRead
-	{
-	public:
-		StreamRead(const void* _data, uint32_t _size)
-			: m_data( (uint8_t*)_data)
-			, m_size(_size)
-			, m_pos(0)
-		{
-		}
-
-		~StreamRead()
-		{
-		}
-
-		void skip(uint32_t _size)
-		{
-			BX_CHECK(m_size-m_pos >= _size, "Available %d, requested %d.", m_size-m_pos, _size);
-			m_pos += _size;
-		}
-
-		void read(void* _data, uint32_t _size)
-		{
-			BX_CHECK(m_size-m_pos >= _size, "Available %d, requested %d.", m_size-m_pos, _size);
-			memcpy(_data, &m_data[m_pos], _size);
-			m_pos += _size;
-		}
-
-		template<typename Ty>
-		void read(Ty& _value)
-		{
-			read(&_value, sizeof(Ty) );
-		}
-
-		const uint8_t* getDataPtr() const
-		{
-			return &m_data[m_pos];
-		}
-
-		uint32_t getPos() const
-		{
-			return m_pos;
-		}
-
-		void align(uint16_t _align)
-		{
-			m_pos = strideAlign(m_pos, _align);
-		}
-
-		uint32_t remaining() const
-		{
-			return m_size-m_pos;
-		}
-
-	private:
-		const uint8_t* m_data;
-		uint32_t m_size;
-		uint32_t m_pos;
-	};
-
-	class StreamWrite
-	{
-	public:
-		StreamWrite(void* _data, uint32_t _size)
-			: m_data( (uint8_t*)_data)
-			, m_size(_size)
-			, m_pos(0)
-		{
-		}
-
-		~StreamWrite()
-		{
-		}
-
-		void write(void* _data, uint32_t _size)
-		{
-			BX_CHECK(m_size-m_pos >= _size, "Write out of bounds. Available %d, requested %d.", m_size-m_pos, _size);
-			memcpy(&m_data[m_pos], _data, _size);
-			m_pos += _size;
-		}
-
-		template<typename Ty>
-		void write(Ty& _value)
-		{
-			write(&_value, sizeof(Ty) );
-		}
-
-		uint8_t* getDataPtr() const
-		{
-			return &m_data[m_pos];
-		}
-
-		uint32_t getPos() const
-		{
-			return m_pos;
-		}
-
-		void align(uint16_t _align)
-		{
-			m_pos = strideAlign(m_pos, _align);
-		}
-
-	private:
-		uint8_t* m_data;
-		uint32_t m_size;
-		uint32_t m_pos;
-	};
 
 	struct CommandBuffer
 	{
@@ -1929,8 +1816,24 @@ namespace bgfx
 
 		VertexShaderHandle createVertexShader(const Memory* _mem)
 		{
+			bx::MemoryReader reader(_mem->data, _mem->size);
+
+			uint32_t magic;
+			bx::read(&reader, magic);
+
+			if (BGFX_CHUNK_MAGIC_VSH != magic)
+			{
+				BX_WARN(false, "Invalid vertex shader signature! 0x%08x", magic);
+				VertexShaderHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
+
 			VertexShaderHandle handle = { m_vertexShaderHandle.alloc() };
-			m_vertexShaderRef[handle.idx] = 1;
+
+			VertexShaderRef& vsr = m_vertexShaderRef[handle.idx];
+			vsr.m_refCount = 1;
+			bx::read(&reader, vsr.m_outputHash);
+
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexShader);
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
@@ -1944,12 +1847,14 @@ namespace bgfx
 
 		void vertexShaderIncRef(VertexShaderHandle _handle)
 		{
-			++m_vertexShaderRef[_handle.idx];
+			VertexShaderRef& vsr = m_vertexShaderRef[_handle.idx];
+			++vsr.m_refCount;
 		}
 
 		void vertexShaderDecRef(VertexShaderHandle _handle)
 		{
-			int32_t refs = --m_vertexShaderRef[_handle.idx];
+			VertexShaderRef& vsr = m_vertexShaderRef[_handle.idx];
+			int32_t refs = --vsr.m_refCount;
 			if (0 == refs)
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexShader);
@@ -1960,8 +1865,24 @@ namespace bgfx
 
 		FragmentShaderHandle createFragmentShader(const Memory* _mem)
 		{
+			bx::MemoryReader reader(_mem->data, _mem->size);
+
+			uint32_t magic;
+			bx::read(&reader, magic);
+
+			if (BGFX_CHUNK_MAGIC_FSH != magic)
+			{
+				BX_WARN(false, "Invalid fragment shader signature! 0x%08x", magic);
+				FragmentShaderHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
+
 			FragmentShaderHandle handle = { m_fragmentShaderHandle.alloc() };
-			m_fragmentShaderRef[handle.idx] = 1;
+
+			FragmentShaderRef& fsr = m_fragmentShaderRef[handle.idx];
+			fsr.m_refCount = 1;
+			bx::read(&reader, fsr.m_inputHash);
+
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFragmentShader);
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
@@ -1975,12 +1896,14 @@ namespace bgfx
 
 		void fragmentShaderIncRef(FragmentShaderHandle _handle)
 		{
-			++m_fragmentShaderRef[_handle.idx];
+			FragmentShaderRef& fsr = m_fragmentShaderRef[_handle.idx];
+			++fsr.m_refCount;
 		}
 
 		void fragmentShaderDecRef(FragmentShaderHandle _handle)
 		{
-			int32_t refs = --m_fragmentShaderRef[_handle.idx];
+			FragmentShaderRef& fsr = m_fragmentShaderRef[_handle.idx];
+			int32_t refs = --fsr.m_refCount;
 			if (0 == refs)
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyFragmentShader);
@@ -1991,6 +1914,15 @@ namespace bgfx
 
 		ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 		{
+			const VertexShaderRef& vsr = m_vertexShaderRef[_vsh.idx];
+			const FragmentShaderRef& fsr = m_fragmentShaderRef[_fsh.idx];
+			if (vsr.m_outputHash != fsr.m_inputHash)
+			{
+				BX_WARN(vsr.m_outputHash == fsr.m_inputHash, "Vertex shader output doesn't match fragment shader input.");
+				ProgramHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
+
 			ProgramHandle handle;
  			handle.idx = m_programHandle.alloc();
 
@@ -2859,8 +2791,19 @@ namespace bgfx
 		HandleAlloc m_renderTargetHandle;
 		HandleAlloc m_uniformHandle;
 
-		int32_t m_vertexShaderRef[BGFX_CONFIG_MAX_VERTEX_SHADERS];
-		int32_t m_fragmentShaderRef[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		struct VertexShaderRef
+		{
+			int32_t m_refCount;
+			uint32_t m_outputHash;
+		} m_vertexShaderRef[BGFX_CONFIG_MAX_VERTEX_SHADERS];
+
+		struct FragmentShaderRef
+		{
+			int32_t m_refCount;
+			uint32_t m_inputHash;
+
+		} m_fragmentShaderRef[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+
 		struct ProgramRef
 		{
 			VertexShaderHandle m_vsh;

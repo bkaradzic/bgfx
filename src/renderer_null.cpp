@@ -107,15 +107,15 @@ namespace bgfx
 
 	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* _mem, uint32_t /*_flags*/)
 	{
-		StreamRead stream(_mem->data, _mem->size);
+		bx::MemoryReader reader(_mem->data, _mem->size);
 
 		uint32_t magic;
-		stream.read(magic);
+		bx::read(&reader, magic);
 
-		if (BGFX_MAGIC == magic)
+		if (BGFX_CHUNK_MAGIC_TEX == magic)
 		{
 			TextureCreate tc;
-			stream.read(tc);
+			bx::read(&reader, tc);
 
 			if (NULL != tc.m_mem)
 			{
