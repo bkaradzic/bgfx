@@ -429,13 +429,13 @@ namespace bgfx
 	/// Returns renderer backend API type.
 	RendererType::Enum getRendererType();
 
-	///
+	/// Initialize bgfx library.
 	void init(FatalFn _fatal = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL, CacheFn _cache = NULL);
 
-	///
+	/// Shutdown bgfx library.
 	void shutdown();
 
-	///
+	/// Reset graphic settings.
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags = BGFX_RESET_NONE);
 
 	/// Advance to next frame. When using multithreaded renderer, this call
@@ -474,40 +474,40 @@ namespace bgfx
 	/// Print into internal debug text buffer.
 	void dbgTextPrintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
 
-	///
+	/// Create static index buffer.
 	IndexBufferHandle createIndexBuffer(const Memory* _mem);
 
-	///
+	/// Destroy static index buffer.
 	void destroyIndexBuffer(IndexBufferHandle _handle);
 
-	///
+	/// Create static vertex buffer.
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
 
-	///
+	/// Destroy static vertex buffer.
 	void destroyVertexBuffer(VertexBufferHandle _handle);
 
-	///
+	/// Create empty dynamic index buffer.
 	DynamicIndexBufferHandle createDynamicIndexBuffer(uint16_t _num);
 
-	///
+	/// Create dynamic index buffer and initialized it.
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem);
 
-	///
+	/// Update dynamic index buffer.
 	void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem);
 
-	///
+	/// Destroy dynamic index buffer.
 	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle);
 
-	///
+	/// Create empty dynamic vertex buffer.
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
-	///
+	/// Create dynamic vertex buffer and initialize it.
 	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
 
-	///
+	/// Update dynamic vertex buffer.
 	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem);
 
-	///
+	/// Destory dynamic vertex buffer.
 	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
 
 	/// Returns true if internal transient index buffer has enough space.
@@ -531,7 +531,7 @@ namespace bgfx
 	/// @param _decl vertex declaration.
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl);
 
-	///
+	/// Allocate instance data buffer.
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride);
 
 	/// Create vertex shader from memory buffer.
@@ -562,43 +562,43 @@ namespace bgfx
 	/// Create texture from memory buffer.
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
 
-	///
+	/// Create 2D texture.
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
-	///
+	/// Create 3D texture.
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
-	///
+	/// Create Cube texture.
 	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
-	///
+	/// Update 2D texture.
 	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
-	///
+	/// Update 3D texture.
 	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem);
 
-	///
+	/// Update Cube texture.
 	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
-	///
+	/// Destroy texture.
 	void destroyTexture(TextureHandle _handle);
 
-	///
+	/// Create render target.
 	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags = BGFX_RENDER_TARGET_COLOR_RGBA, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
 
-	///
+	/// Destroy render target.
 	void destroyRenderTarget(RenderTargetHandle _handle);
 
-	///
+	/// Create shader uniform parameter.
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
 
-	///
+	/// Destroy shader uniform parameter.
 	void destroyUniform(UniformHandle _handle);
 
 	/// Set view rectangle. Draw primitive outside view will be clipped.
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
-	///
+	/// Set view rectangle for multiple views .
 	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
 	/// Set view clear flags.
@@ -612,28 +612,28 @@ namespace bgfx
 	/// @param _stencil stencil clear value.
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
-	///
+	/// Set view clear flags for multiple views.
 	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
 	/// Set view into sequential mode. Draw calls will be sorted in the same
 	/// order in which submit calls were called.
 	void setViewSeq(uint8_t _id, bool _enabled);
 
-	///
+	/// Set mulitple views into sequential mode.
 	void setViewSeqMask(uint32_t _viewMask, bool _enabled);
 
 	/// Set view render target. View without render target draws primitives
 	/// into default backbuffer.
 	void setViewRenderTarget(uint8_t _id, RenderTargetHandle _handle);
 
-	///
+	/// Set view render target for multiple views.
 	void setViewRenderTargetMask(uint32_t _viewMask, RenderTargetHandle _handle);
 
 	/// Set view view and projection matrices, all draw primitives in this
 	/// view will use these matrices.
 	void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
-	///
+	/// Set view view and projection matrices for multiple views.
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
 	/// Set render states for draw primitive.
@@ -662,43 +662,43 @@ namespace bgfx
 	/// @param _num number of matrices from cache.
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
 
-	///
+	/// Set shader uniform parameter for draw primitive.
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = 1);
 
-	///
+	/// Set index buffer for draw primitive.
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
 
-	///
+	/// Set index buffer for draw primitive.
 	void setIndexBuffer(IndexBufferHandle _handle);
 
-	///
+	/// Set index buffer for draw primitive.
 	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
 
-	///
+	/// Set index buffer for draw primitive.
 	void setIndexBuffer(DynamicIndexBufferHandle _handle);
 
-	///
+	/// Set index buffer for draw primitive.
 	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices = UINT32_MAX);
 
-	///
+	/// Set vertex buffer for draw primitive.
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
 
-	///
+	/// Set vertex buffer for draw primitive.
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
 
-	///
+	/// Set vertex buffer for draw primitive.
 	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices = UINT32_MAX);
 
-	///
+	/// Set instance data buffer for draw primitive.
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num = UINT16_MAX);
 
-	///
+	/// Set program for draw primitive.
 	void setProgram(ProgramHandle _handle);
 
-	///
+	/// Set texture stage for draw primitive.
 	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle);
 
-	///
+	/// Set texture stage for draw primitive.
 	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth = false);
 
 	/// Submit primitive for rendering into single view.
@@ -713,7 +713,7 @@ namespace bgfx
 	/// @param _depth depth for sorting.
 	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
-	///
+	/// Request screen shot.
 	void saveScreenShot(const char* _filePath);
 
 } // namespace bgfx
