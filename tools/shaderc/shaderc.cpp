@@ -1065,7 +1065,7 @@ struct Preprocessor
 	{
 		va_list argList;
 		va_start(argList, _format);
-		m_default += bx::stringPrintfVargs(_format, argList);
+		bx::stringPrintfVargs(m_default, _format, argList);
 		va_end(argList);
 	}
 
