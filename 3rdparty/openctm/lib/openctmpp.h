@@ -95,7 +95,7 @@ class CTMimporter {
     {
       CTMenum err = ctmGetError(mContext);
       if(err != CTM_NONE)
-        throw ctm_error(err);
+        abort(); //throw ctm_error(err);
     }
 
   public:
@@ -251,7 +251,7 @@ class CTMexporter {
     {
       CTMenum err = ctmGetError(mContext);
       if(err != CTM_NONE)
-        throw ctm_error(err);
+        abort(); //throw ctm_error(err);
     }
 
   public:

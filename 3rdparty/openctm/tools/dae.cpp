@@ -168,7 +168,7 @@ Source& GetSource(map<string, Source >& sources, map<string, vector<Input> >& ve
       
     }
   } else {
-    throw string("Error");
+    abort(); //throw string("Error");
   }
   
   return srcIterator->second;
