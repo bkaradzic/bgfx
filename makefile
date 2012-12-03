@@ -43,8 +43,8 @@ nacl-release64:
 nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64
 
 docs:
-	doxygen premake/bgfx.doxygen
-	upskirt readme.md > .build/docs/readme.html
+	# doxygen premake/bgfx.doxygen
+	markdown README.md > .build/docs/readme.html
 
 clean:
 	@echo Cleaning...

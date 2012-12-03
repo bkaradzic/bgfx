@@ -104,20 +104,32 @@ Initialization and debug text.
 ### 01-cubes
 Rendering simple static mesh.
 
+![example-01-cubes](https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png)
+
 ### 02-metaballs
 Rendering with transient buffers.
+
+![example-02-metaballs](https://github.com/bkaradzic/bgfx/raw/master/examples/02-metaballs/screenshot.png)
 
 ### 03-raymarch
 Updating shader uniforms.
 
+![example-03-raymarch](https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png)
+
 ### 04-mesh
 Loading OpenCTM meshes.
+
+![example-04-mesh](https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png)
 
 ### 05-instancing
 Geometry instancing.
 
+![example-05-instancing](https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png)
+
 ### 06-bump
 Loading textures.
+
+![example-06-bump](https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png)
 
 Internals
 ---------
