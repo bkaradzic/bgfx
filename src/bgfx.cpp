@@ -752,15 +752,9 @@ namespace bgfx
 #endif // BX_PLATFORM_
 
 #if BGFX_CONFIG_MULTITHREADED
-		m_renderThread = 0;
-
 		if (_createRenderThread)
 		{
-#	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
-			m_renderThread = CreateThread(NULL, 16<<10, renderThread, NULL, 0, NULL);
-#	elif BX_PLATFORM_POSIX
-			pthread_create(&m_renderThread, NULL, renderThread, NULL);
-#	endif // BX_PLATFORM_
+			m_thread.init();
 		}
 #else
 		BX_UNUSED(_createRenderThread);
@@ -801,30 +795,14 @@ namespace bgfx
 		frame();
 
 #if BGFX_CONFIG_MULTITHREADED
-		if (0 != m_renderThread)
+		if (m_thread.isRunning() )
 		{
-#	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
-			WaitForSingleObject(m_renderThread, INFINITE);
-			m_renderThread = NULL;
-#	elif BX_PLATFORM_POSIX
-			pthread_join(m_renderThread, NULL);
-			m_renderThread = 0;
-#	endif // BX_PLATFORM_*
+			m_thread.shutdown();
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		m_submit->destroy();
 		m_render->destroy();
-	}
-
-#if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
-	DWORD WINAPI renderThread(LPVOID)
-#else
-	void* renderThread(void*)
-#endif // BX_PLATFORM_WINDOWS
-	{
-		while (!renderFrame() );
-		return EXIT_SUCCESS;
 	}
 
 	const Memory* alloc(uint32_t _size)
