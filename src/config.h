@@ -6,8 +6,6 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-
-
 #if !defined(BGFX_CONFIG_RENDERER_DIRECT3D9) \
 	&& !defined(BGFX_CONFIG_RENDERER_DIRECT3D11) \
 	&& !defined(BGFX_CONFIG_RENDERER_OPENGL) \
