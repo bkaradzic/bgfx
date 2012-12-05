@@ -1412,8 +1412,7 @@ namespace bgfx
 	struct Context
 	{
 		Context()
-			: m_thread(renderThread, thisSuppressC4355() )
-			, m_render(&m_frame[0])
+			: m_render(&m_frame[0])
 			, m_submit(&m_frame[1])
 			, m_dynamicIndexBufferHandle(BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS)
 			, m_dynamicVertexBufferHandle(BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS)
@@ -1435,11 +1434,6 @@ namespace bgfx
 
 		~Context()
 		{
-		}
-
-		Context* thisSuppressC4355()
-		{
-			return this;
 		}
 
 		static int32_t renderThread(void* _userData)

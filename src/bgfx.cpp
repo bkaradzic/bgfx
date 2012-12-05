@@ -754,7 +754,7 @@ namespace bgfx
 #if BGFX_CONFIG_MULTITHREADED
 		if (_createRenderThread)
 		{
-			m_thread.init();
+			m_thread.init(renderThread, this);
 		}
 #else
 		BX_UNUSED(_createRenderThread);
