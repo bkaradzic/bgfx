@@ -231,12 +231,9 @@ namespace bgfx
 		{
 			MinimumRequiredSpecs = 1,
 			InvalidShader,
-			D3D9_UnableToCreateInterface,
-			D3D9_UnableToCreateDevice,
-			D3D9_UnableToCreateRenderTarget,
-			D3D9_UnableToCreateTexture,
-			D3D11_UnableToInitialize,
-			OPENGL_UnableToCreateContext,
+			UnableToInitialize,
+			UnableToCreateRenderTarget,
+			UnableToCreateTexture,
 		};
 	};
 

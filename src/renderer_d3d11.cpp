@@ -251,10 +251,10 @@ namespace bgfx
 		void init()
 		{
 			m_d3d11dll = LoadLibrary("d3d11.dll");
-			BGFX_FATAL(NULL != m_d3d11dll, Fatal::D3D11_UnableToInitialize, "Failed to load d3d11.dll.");
+			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
 
 			PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN d3D11CreateDeviceAndSwapChain = (PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN)GetProcAddress(m_d3d11dll, "D3D11CreateDeviceAndSwapChain");
-			BGFX_FATAL(NULL != d3D11CreateDeviceAndSwapChain, Fatal::D3D11_UnableToInitialize, "Function D3D11CreateDeviceAndSwapChain not found.");
+			BGFX_FATAL(NULL != d3D11CreateDeviceAndSwapChain, Fatal::UnableToInitialize, "Function D3D11CreateDeviceAndSwapChain not found.");
 
 			HRESULT hr;
 
@@ -297,7 +297,7 @@ namespace bgfx
 				, &featureLevel
 				, &m_deviceCtx
 				);
-			BGFX_FATAL(SUCCEEDED(hr), Fatal::D3D11_UnableToInitialize, "Unable to create Direct3D11 device.");
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 			{

@@ -232,7 +232,7 @@ namespace bgfx
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
 			m_d3d9dll = LoadLibrary("d3d9.dll");
-			BGFX_FATAL(NULL != m_d3d9dll, Fatal::D3D9_UnableToCreateInterface, "Failed to load d3d9.dll.");
+			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
 			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
 			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
@@ -240,15 +240,15 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
-			BGFX_FATAL(NULL != direct3DCreate9Ex, Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9Ex not found.");
+			BGFX_FATAL(NULL != direct3DCreate9Ex, Fatal::UnableToInitialize, "Function Direct3DCreate9Ex not found.");
 			direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9);
 #else
 			Direct3DCreate9Fn direct3DCreate9 = (Direct3DCreate9Fn)GetProcAddress(m_d3d9dll, "Direct3DCreate9");
-			BGFX_FATAL(NULL != direct3DCreate9, Fatal::D3D9_UnableToCreateInterface, "Function Direct3DCreate9 not found.");
+			BGFX_FATAL(NULL != direct3DCreate9, Fatal::UnableToInitialize, "Function Direct3DCreate9 not found.");
 			m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
 #endif // defined(D3D_DISABLE_9EX)
 
-			BGFX_FATAL(m_d3d9, Fatal::D3D9_UnableToCreateInterface, "Unable to create Direct3D.");
+			BGFX_FATAL(m_d3d9, Fatal::UnableToInitialize, "Unable to create Direct3D.");
 
 			m_adapter = D3DADAPTER_DEFAULT;
 			m_deviceType = D3DDEVTYPE_HAL;
@@ -313,7 +313,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			}
 
-			BGFX_FATAL(m_device, Fatal::D3D9_UnableToCreateDevice, "Unable to create Direct3D9 device.");
+			BGFX_FATAL(m_device, Fatal::UnableToInitialize, "Unable to create Direct3D9 device.");
 
 			DX_CHECK(m_device->GetDeviceCaps(&m_caps) );
 
@@ -1100,7 +1100,7 @@ namespace bgfx
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_texture2d, Fatal::D3D9_UnableToCreateTexture, "Failed to create texture (size: %dx%d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_texture2d, Fatal::UnableToCreateTexture, "Failed to create texture (size: %dx%d, mips: %d, fmt: 0x%08x)."
 			, _width
 			, _height
 			, _numMips
@@ -1123,7 +1123,7 @@ namespace bgfx
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_texture3d, Fatal::D3D9_UnableToCreateTexture, "Failed to create volume texture (size: %dx%dx%d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_texture3d, Fatal::UnableToCreateTexture, "Failed to create volume texture (size: %dx%dx%d, mips: %d, fmt: 0x%08x)."
 			, _width
 			, _height
 			, _depth
@@ -1145,7 +1145,7 @@ namespace bgfx
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_textureCube, Fatal::D3D9_UnableToCreateTexture, "Failed to create cube texture (edge: %d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_textureCube, Fatal::UnableToCreateTexture, "Failed to create cube texture (edge: %d, mips: %d, fmt: 0x%08x)."
 			, _edge
 			, _numMips
 			, _fmt
@@ -1472,7 +1472,7 @@ namespace bgfx
 					, NULL
 					) );
 
-				BGFX_FATAL(m_rt, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create 1x1 render target.");
+				BGFX_FATAL(m_rt, Fatal::UnableToCreateRenderTarget, "Unable to create 1x1 render target.");
 
 				DX_CHECK(s_renderCtx.m_device->CreateTexture(m_width
 					, m_height
@@ -1484,7 +1484,7 @@ namespace bgfx
 					, NULL
 					) );
 
-				BGFX_FATAL(m_depthTexture, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth texture.");
+				BGFX_FATAL(m_depthTexture, Fatal::UnableToCreateRenderTarget, "Unable to create depth texture.");
 
 				DX_CHECK(m_depthTexture->GetSurfaceLevel(0, &m_depth) );
 			}
@@ -1502,7 +1502,7 @@ namespace bgfx
 						, NULL
 						) );
 
-					BGFX_FATAL(m_rt, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create MSAA render target.");
+					BGFX_FATAL(m_rt, Fatal::UnableToCreateRenderTarget, "Unable to create MSAA render target.");
 				}
 
 				if (0 < colorFormat)
@@ -1517,7 +1517,7 @@ namespace bgfx
 						, NULL
 						) );
 
-					BGFX_FATAL(m_colorTexture, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create color render target.");
+					BGFX_FATAL(m_colorTexture, Fatal::UnableToCreateRenderTarget, "Unable to create color render target.");
 
 					DX_CHECK(m_colorTexture->GetSurfaceLevel(0, &m_color) );
 				}
@@ -1534,7 +1534,7 @@ namespace bgfx
 							, NULL
 							) );
 
-					BGFX_FATAL(m_depth, Fatal::D3D9_UnableToCreateRenderTarget, "Unable to create depth stencil surface.");
+					BGFX_FATAL(m_depth, Fatal::UnableToCreateRenderTarget, "Unable to create depth stencil surface.");
 				}
 			}
 		}
