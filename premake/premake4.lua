@@ -25,7 +25,8 @@ newoption {
 		{ "emscripten", "Emscripten" },
 		{ "linux", "Linux" },
 		{ "mingw", "MinGW" },
-		{ "nacl", "Google Native Client" },
+		{ "nacl", "Native Client" },
+		{ "pnacl", "Native Client - PNaCl" },
 	}
 }
 
@@ -36,7 +37,7 @@ BGFX_DIR = (path.getabsolute("..") .. "/")
 local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
 local BGFX_THIRD_PARTY_DIR = (BGFX_DIR .. "3rdparty/")
 
-BX_DIR = (BGFX_DIR .. "/../../bx/")
+BX_DIR = (BGFX_DIR .. "../bx/")
 
 local XEDK = os.getenv("XEDK")
 if not XEDK then XEDK = "<you must install XBOX SDK>" end
@@ -91,6 +92,18 @@ if _ACTION == "gmake" then
 		premake.gcc.cxx = "$(NACL)/bin/x86_64-nacl-g++"
 		premake.gcc.ar = "$(NACL)/bin/x86_64-nacl-ar"
 		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-nacl")
+	end
+
+	if "pnacl" == _OPTIONS["gcc"] then
+
+		if not os.getenv("PNACL") then 
+			print("Set PNACL enviroment variables.")
+		end
+
+		premake.gcc.cc = "$(PNACL)/bin/pnacl-clang"
+		premake.gcc.cxx = "$(PNACL)/bin/pnacl-clang++"
+		premake.gcc.ar = "$(PNACL)/bin/pnacl-ar"
+		location (BGFX_BUILD_DIR .. "projects/" .. _ACTION .. "-pnacl")
 	end
 end
 
@@ -247,6 +260,23 @@ configuration { "x64", "nacl" }
 	objdir (BGFX_BUILD_DIR .. "nacl-x64" .. "/obj")
 	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/nacl-x64" }
 	linkoptions { "-melf64_nacl" }
+
+configuration { "pnacl" }
+	defines { "_BSD_SOURCE=1", "_POSIX_C_SOURCE=199506", "_XOPEN_SOURCE=600", "__native_client__", "__LITTLE_ENDIAN__" }
+	includedirs { BX_DIR .. "include/compat/nacl" }
+	buildoptions {
+		"-std=c++0x",
+		"-U__STRICT_ANSI__",
+		"-fno-stack-protector",
+		"-fdiagnostics-show-option",
+		"-Wunused-value",
+		"-fdata-sections",
+		"-ffunction-sections",
+	}
+	targetdir (BGFX_BUILD_DIR .. "pnacl" .. "/bin")
+	objdir (BGFX_BUILD_DIR .. "pnacl" .. "/obj")
+	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/pnacl" }
+	includedirs { "$(PNACL)/sysroot/include" }
 
 configuration { "Xbox360" }
 	targetdir (BGFX_BUILD_DIR .. "xbox360" .. "/bin")

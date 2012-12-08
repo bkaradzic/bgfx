@@ -47,4 +47,4 @@ project "bgfx"
 		BGFX_DIR .. "src/**.bin.h",
 	}
 
---	copyLib()
+	copyLib()
