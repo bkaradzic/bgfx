@@ -2,3 +2,4 @@
 .debug/
 .svn/
 tags
+.DS_Store
