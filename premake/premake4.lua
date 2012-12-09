@@ -36,7 +36,7 @@ BGFX_DIR = (path.getabsolute("..") .. "/")
 local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
 local BGFX_THIRD_PARTY_DIR = (BGFX_DIR .. "3rdparty/")
 
-BX_DIR = (BGFX_DIR .. "/../../bx/")
+BX_DIR = (BGFX_DIR .. "../bx/")
 
 local XEDK = os.getenv("XEDK")
 if not XEDK then XEDK = "<you must install XBOX SDK>" end
@@ -141,13 +141,19 @@ configuration { "vs*" }
 configuration { "x32", "vs*" }
 	targetdir (BGFX_BUILD_DIR .. "win32_" .. _ACTION .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win32_" .. _ACTION .. "/obj")
-	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win32_" .. _ACTION }
+	libdirs {
+		BGFX_THIRD_PARTY_DIR .. "lib/win32_" .. _ACTION,
+		"$(DXSDK_DIR)/lib/x86",
+	}
 
 configuration { "x64", "vs*" }
 	defines { "_WIN64" }
 	targetdir (BGFX_BUILD_DIR .. "win64_" .. _ACTION .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win64_" .. _ACTION .. "/obj")
-	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win64_" .. _ACTION }
+	libdirs {
+		BGFX_THIRD_PARTY_DIR .. "lib/win64_" .. _ACTION,
+		"$(DXSDK_DIR)/lib/x64",
+	}
 
 configuration { "mingw" }
 	defines { "WIN32" }
