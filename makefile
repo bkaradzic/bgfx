@@ -10,6 +10,7 @@ all:
 	premake --file=premake/premake4.lua --gcc=mingw gmake
 	premake --file=premake/premake4.lua --gcc=linux gmake
 	premake --file=premake/premake4.lua --gcc=emscripten gmake
+	premake --file=premake/premake4.lua xcode4
 	make -s --no-print-directory -C src
 
 linux-debug32:

@@ -36,7 +36,7 @@ BGFX_DIR = (path.getabsolute("..") .. "/")
 local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
 local BGFX_THIRD_PARTY_DIR = (BGFX_DIR .. "3rdparty/")
 
-BX_DIR = (BGFX_DIR .. "/../../bx/")
+BX_DIR = (BGFX_DIR .. "../bx/")
 
 local XEDK = os.getenv("XEDK")
 if not XEDK then XEDK = "<you must install XBOX SDK>" end
@@ -189,6 +189,24 @@ configuration { "linux" }
 	}
 	linkoptions {
 		"-Wl,--gc-sections",
+	}
+
+configuration { "macosx" }
+	buildoptions {
+		"-std=c++0x",
+		"-U__STRICT_ANSI__",
+		"-Wunused-value",
+		--"-mfpmath=sse", -- unsupported by clang
+		"-msse2",
+	}
+	defines {
+		"BGFX_CONFIG_RENDERER_NULL=1",
+	}
+	includedirs { BX_DIR .. "include/compat/macosx" }
+	targetdir (BGFX_BUILD_DIR .. "macosx" .. "/bin")
+	objdir (BGFX_BUILD_DIR .. "macosx" .. "/obj")
+	libdirs {
+		BGFX_BUILD_DIR .. "macosx" .. "/bin",
 	}
 
 configuration { "linux", "x32" }
