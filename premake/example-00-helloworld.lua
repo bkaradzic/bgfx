@@ -3,7 +3,7 @@ project "example-00-helloworld"
 	kind "WindowedApp"
 
 	includedirs {
-		BGFX_DIR .. "../bx/include",
+		BX_DIR .. "include",
 		BGFX_DIR .. "include",
 	}
 

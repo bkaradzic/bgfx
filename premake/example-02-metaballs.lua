@@ -5,7 +5,7 @@ project "example-02-metaballs"
 	debugdir (BGFX_DIR .. "examples/runtime/")
 
 	includedirs {
-		BGFX_DIR .. "../bx/include",
+		BX_DIR .. "include",
 		BGFX_DIR .. "include",
 	}
 

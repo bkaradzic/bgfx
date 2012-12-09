@@ -3,7 +3,7 @@ project "texturec"
 	kind "ConsoleApp"
 
 	includedirs {
-		BGFX_DIR .. "../bx/include",
+		BX_DIR .. "include",
 		BGFX_DIR .. "include",
 		BGFX_DIR .. "src",
 	}

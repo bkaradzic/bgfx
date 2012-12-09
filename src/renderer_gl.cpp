@@ -135,8 +135,8 @@ namespace bgfx
 						PP_GRAPHICS3DATTRIB_STENCIL_SIZE, 8,
 						PP_GRAPHICS3DATTRIB_SAMPLES, 0,
 						PP_GRAPHICS3DATTRIB_SAMPLE_BUFFERS, 0,
-						PP_GRAPHICS3DATTRIB_WIDTH, _width,
-						PP_GRAPHICS3DATTRIB_HEIGHT, _height,
+						PP_GRAPHICS3DATTRIB_WIDTH, int32_t(_width),
+						PP_GRAPHICS3DATTRIB_HEIGHT, int32_t(_height),
 						PP_GRAPHICS3DATTRIB_NONE
 					};
 
@@ -149,7 +149,7 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func) \
 			{ \
 				_func = (_proto)eglGetProcAddress(#_func); \
-				BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
+				BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
 			}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -164,22 +164,22 @@ namespace bgfx
 				if (NULL == m_hdc)
 				{
 					m_opengl32dll = LoadLibrary("opengl32.dll");
-					BGFX_FATAL(NULL != m_opengl32dll, Fatal::OPENGL_UnableToCreateContext, "Failed to load opengl32.dll.");
+					BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
 
 					wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(m_opengl32dll, "wglGetProcAddress");
-					BGFX_FATAL(NULL != wglGetProcAddress, Fatal::OPENGL_UnableToCreateContext, "Failed get wglGetProcAddress.");
+					BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
 
 					wglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(m_opengl32dll, "wglMakeCurrent");
-					BGFX_FATAL(NULL != wglMakeCurrent, Fatal::OPENGL_UnableToCreateContext, "Failed get wglMakeCurrent.");
+					BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
 
 					wglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglCreateContext");
-					BGFX_FATAL(NULL != wglCreateContext, Fatal::OPENGL_UnableToCreateContext, "Failed get wglCreateContext.");
+					BGFX_FATAL(NULL != wglCreateContext, Fatal::UnableToInitialize, "Failed get wglCreateContext.");
 
 					wglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglDeleteContext");
-					BGFX_FATAL(NULL != wglDeleteContext, Fatal::OPENGL_UnableToCreateContext, "Failed get wglDeleteContext.");
+					BGFX_FATAL(NULL != wglDeleteContext, Fatal::UnableToInitialize, "Failed get wglDeleteContext.");
 
 					m_hdc = GetDC(g_bgfxHwnd);
-					BGFX_FATAL(NULL != m_hdc, Fatal::OPENGL_UnableToCreateContext, "GetDC failed!");
+					BGFX_FATAL(NULL != m_hdc, Fatal::UnableToInitialize, "GetDC failed!");
 
 					PIXELFORMATDESCRIPTOR pfd;
 					memset(&pfd, 0, sizeof(pfd) );
@@ -193,19 +193,19 @@ namespace bgfx
 					pfd.iLayerType = PFD_MAIN_PLANE;
 
 					int pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-					BGFX_FATAL(0 != pixelFormat, Fatal::OPENGL_UnableToCreateContext, "ChoosePixelFormat failed!");
+					BGFX_FATAL(0 != pixelFormat, Fatal::UnableToInitialize, "ChoosePixelFormat failed!");
 
 					DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
 
 					int result;
 					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
-					BGFX_FATAL(0 != result, Fatal::OPENGL_UnableToCreateContext, "SetPixelFormat failed!");
+					BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed!");
 
 					m_context = wglCreateContext(m_hdc);
-					BGFX_FATAL(NULL != m_context, Fatal::OPENGL_UnableToCreateContext, "wglCreateContext failed!");
+					BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "wglCreateContext failed!");
 					
 					result = wglMakeCurrent(m_hdc, m_context);
-					BGFX_FATAL(0 != result, Fatal::OPENGL_UnableToCreateContext, "wglMakeCurrent failed!");
+					BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
 
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
@@ -214,7 +214,7 @@ namespace bgfx
 					{ \
 						_func = (_proto)GetProcAddress(m_opengl32dll, #_func); \
 					} \
-					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -225,14 +225,14 @@ namespace bgfx
 				{
 					Display* display = XOpenDisplay(0);
 					XLockDisplay(display);
-					BGFX_FATAL(display, Fatal::OPENGL_UnableToCreateContext, "Failed to open X display (0).");
+					BGFX_FATAL(display, Fatal::UnableToInitialize, "Failed to open X display (0).");
 
 					int glxMajor, glxMinor;
 					if (!glXQueryVersion(display, &glxMajor, &glxMinor) )
 					{
-						BGFX_FATAL(false, Fatal::OPENGL_UnableToCreateContext, "Failed to query GLX version");
+						BGFX_FATAL(false, Fatal::UnableToInitialize, "Failed to query GLX version");
 					}
-					BGFX_FATAL((glxMajor == 1 && glxMinor >= 3) || glxMajor > 1, Fatal::OPENGL_UnableToCreateContext, "GLX version is not >=1.3 (%d.%d).", glxMajor, glxMinor);
+					BGFX_FATAL((glxMajor == 1 && glxMinor >= 3) || glxMajor > 1, Fatal::UnableToInitialize, "GLX version is not >=1.3 (%d.%d).", glxMajor, glxMinor);
 
 					const int glxAttribs[] =
 					{
@@ -287,7 +287,7 @@ namespace bgfx
 					}
 
 					XFree(configs);
-					BGFX_FATAL(visualInfo, Fatal::OPENGL_UnableToCreateContext, "Failed to find a suitable X11 display configuration.");
+					BGFX_FATAL(visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
 
 					// Generate colormaps
 					XSetWindowAttributes windowAttrs;
@@ -305,7 +305,7 @@ namespace bgfx
 											, CWBorderPixel|CWColormap
 											, &windowAttrs
 											);
-					BGFX_FATAL(window, Fatal::OPENGL_UnableToCreateContext, "Failed to create X11 window.");
+					BGFX_FATAL(window, Fatal::UnableToInitialize, "Failed to create X11 window.");
 
 					XMapRaised(display, window);
 					XFlush(display);
@@ -315,7 +315,7 @@ namespace bgfx
 
 					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
-					BGFX_FATAL(glXCreateContextAttribsARB, Fatal::OPENGL_UnableToCreateContext, "Failed to get glXCreateContextAttribsARB.");
+					BGFX_FATAL(glXCreateContextAttribsARB, Fatal::UnableToInitialize, "Failed to get glXCreateContextAttribsARB.");
 
 					const int contextArrib[] =
 					{
@@ -325,14 +325,14 @@ namespace bgfx
 					};
 
 					m_context = glXCreateContextAttribsARB(display, bestconfig, 0, True, contextArrib);
-					BGFX_FATAL(m_context, Fatal::OPENGL_UnableToCreateContext, "Failed to create GLX context.");
+					BGFX_FATAL(m_context, Fatal::UnableToInitialize, "Failed to create GLX context.");
 
 					glXMakeCurrent(display, window, m_context);
 
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
 					_func = (_proto)glXGetProcAddress((const GLubyte*)#_func); \
-					BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
 				}
 #	include "glimports.h"
 #	undef GL_IMPORT
@@ -358,12 +358,12 @@ namespace bgfx
 					nwt = g_bgfxHwnd;
 #	endif // BX_PLATFORM_
 					m_display = eglGetDisplay(ndt);
-					BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::OPENGL_UnableToCreateContext, "Failed to create display 0x%08x", m_display);
+					BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display 0x%08x", m_display);
 
 					EGLint major = 0;
 					EGLint minor = 0;
 					EGLBoolean success = eglInitialize(m_display, &major, &minor);
-					BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::OPENGL_UnableToCreateContext, "Failed to initialize %d.%d", major, minor);
+					BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize %d.%d", major, minor);
 
 					EGLint attrs[] =
 					{
@@ -392,16 +392,16 @@ namespace bgfx
 					EGLint numConfig = 0;
 					EGLConfig config = 0;
 					success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
-					BGFX_FATAL(success, Fatal::OPENGL_UnableToCreateContext, "eglChooseConfig");
+					BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
 
 					m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
-					BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::OPENGL_UnableToCreateContext, "Failed to create surface.");
+					BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 					m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, contextAttrs);
-					BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::OPENGL_UnableToCreateContext, "Failed to create context.");
+					BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");
 
 					success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
-					BGFX_FATAL(success, Fatal::OPENGL_UnableToCreateContext, "Failed to set context.");
+					BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
 
 #	if BX_PLATFORM_EMSCRIPTEN
 					emscripten_set_canvas_size(_width, _height);
@@ -410,7 +410,7 @@ namespace bgfx
 					{ \
 						_func = (_proto)eglGetProcAddress(#_func); \
 						BX_TRACE(#_func " 0x%08x", _func); \
-						BGFX_FATAL(_optional || NULL != _func, Fatal::OPENGL_UnableToCreateContext, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
+						BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
 					}
 #		include "glimports.h"
 #		undef GL_IMPORT

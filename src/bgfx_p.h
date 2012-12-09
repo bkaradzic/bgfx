@@ -72,8 +72,6 @@ extern HWND g_bgfxHwnd;
 #elif BX_PLATFORM_XBOX360
 #	include <malloc.h>
 #	include <xtl.h>
-#elif BX_PLATFORM_POSIX
-#	include <pthread.h>
 #endif // BX_PLATFORM_*
 
 #include "dds.h"
@@ -107,11 +105,8 @@ namespace stl = std;
 
 #include "config.h"
 
-#if BGFX_CONFIG_MULTITHREADED
-#	include <bx/sem.h>
-#endif // BGFX_CONFIG_MULTITHREADED
-
 #include <bx/cpu.h>
+#include <bx/thread.h>
 #include <bx/timer.h>
 
 #define BGFX_DRAW_WHOLE_INDEX_BUFFER 0xffffffff
@@ -1414,12 +1409,6 @@ namespace bgfx
 		UsedList m_used;
 	};
 
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_XBOX360
-	DWORD WINAPI renderThread(LPVOID _arg);
-#elif BX_PLATFORM_POSIX
-	void* renderThread(void*);
-#endif // BX_PLATFORM_
-
 	struct Context
 	{
 		Context()
@@ -1445,6 +1434,13 @@ namespace bgfx
 
 		~Context()
 		{
+		}
+
+		static int32_t renderThread(void* _userData)
+		{
+			Context* ctx = (Context*)_userData;
+			while (!ctx->renderFrame() );
+			return EXIT_SUCCESS;
 		}
 
 		// game thread
@@ -2736,13 +2732,6 @@ namespace bgfx
 
 		Semaphore m_renderSem;
 		Semaphore m_gameSem;
-
-#	if BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
-		HANDLE m_renderThread;
-#	else
-		pthread_t m_renderThread;
-#	endif // BX_PLATFORM_WINDOWS|BX_PLATFORM_XBOX360
-
 #else
 		void gameSemPost()
 		{
@@ -2761,6 +2750,7 @@ namespace bgfx
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
+		Thread m_thread;
 		Frame m_frame[2];
 		Frame* m_render;
 		Frame* m_submit;
