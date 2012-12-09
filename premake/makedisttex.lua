@@ -3,7 +3,7 @@ project "makedisttex"
 	kind "ConsoleApp"
 
 	includedirs {
-		BGFX_DIR .. "../bx/include",
+		BX_DIR .. "include",
 		BGFX_DIR .. "3rdparty/edtaa3",
 		BGFX_DIR .. "3rdparty/stb_image",
 	}

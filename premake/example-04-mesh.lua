@@ -10,7 +10,7 @@ project "example-04-mesh"
 	}
 
 	includedirs {
-		BGFX_DIR .. "../bx/include",
+		BX_DIR .. "include",
 		BGFX_DIR .. "include",
 		BGFX_DIR .. "3rdparty/openctm/lib",
 	}

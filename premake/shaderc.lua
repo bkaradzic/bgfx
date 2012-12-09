@@ -35,7 +35,7 @@ project "shaderc"
 	}
 
 	includedirs {
-		BGFX_DIR .. "../bx/include",
+		BX_DIR .. "include",
 
 		FCPP_DIR,
 

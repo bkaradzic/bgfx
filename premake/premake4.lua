@@ -154,13 +154,19 @@ configuration { "vs*" }
 configuration { "x32", "vs*" }
 	targetdir (BGFX_BUILD_DIR .. "win32_" .. _ACTION .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win32_" .. _ACTION .. "/obj")
-	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win32_" .. _ACTION }
+	libdirs {
+		BGFX_THIRD_PARTY_DIR .. "lib/win32_" .. _ACTION,
+		"$(DXSDK_DIR)/lib/x86",
+	}
 
 configuration { "x64", "vs*" }
 	defines { "_WIN64" }
 	targetdir (BGFX_BUILD_DIR .. "win64_" .. _ACTION .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win64_" .. _ACTION .. "/obj")
-	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win64_" .. _ACTION }
+	libdirs {
+		BGFX_THIRD_PARTY_DIR .. "lib/win64_" .. _ACTION,
+		"$(DXSDK_DIR)/lib/x64",
+	}
 
 configuration { "mingw" }
 	defines { "WIN32" }
@@ -180,13 +186,19 @@ configuration { "mingw" }
 configuration { "x32", "mingw" }
 	targetdir (BGFX_BUILD_DIR .. "win32_mingw" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win32_mingw" .. "/obj")
-	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win32_mingw" }
+	libdirs {
+		BGFX_THIRD_PARTY_DIR .. "lib/win32_mingw",
+		"$(DXSDK_DIR)/lib/x86",
+	}
 	buildoptions { "-m32" }
 
 configuration { "x64", "mingw" }
 	targetdir (BGFX_BUILD_DIR .. "win64_mingw" .. "/bin")
 	objdir (BGFX_BUILD_DIR .. "win64_mingw" .. "/obj")
-	libdirs { BGFX_THIRD_PARTY_DIR .. "lib/win64_mingw" }
+	libdirs {
+		BGFX_THIRD_PARTY_DIR .. "lib/win64_mingw",
+		"$(DXSDK_DIR)/lib/x64",
+	}
 	buildoptions { "-m64" }
 
 configuration { "linux" }
