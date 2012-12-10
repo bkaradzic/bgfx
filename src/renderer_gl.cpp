@@ -77,7 +77,8 @@ namespace bgfx
 	struct RendererContext
 	{
 		RendererContext()
-			: m_dxtSupport(false)
+			: m_maxAnisotropy(0.0f)
+			, m_dxtSupport(false)
 			, m_programBinarySupport(false)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
@@ -530,6 +531,7 @@ namespace bgfx
 		TextVideoMem m_textVideoMem;
 
 		Resolution m_resolution;
+		float m_maxAnisotropy;
 		bool m_dxtSupport;
 		bool m_programBinarySupport;
 		bool m_flip;
@@ -615,6 +617,7 @@ namespace bgfx
 	{
 		enum Enum
 		{
+			EXT_texture_filter_anisotropic,
 			EXT_texture_format_BGRA8888,
 			EXT_texture_compression_s3tc,
 			EXT_texture_compression_dxt1,
@@ -659,6 +662,7 @@ namespace bgfx
 
 	static Extension s_extension[Extension::Count] =
 	{
+		{ "GL_EXT_texture_filter_anisotropic",    false, true },
 		// Nvidia BGRA on Linux bug:
 		// https://groups.google.com/a/chromium.org/forum/?fromgroups#!topic/chromium-reviews/yFfbUdyeUCQ
 		{ "GL_EXT_texture_format_BGRA8888",       false, !BX_PLATFORM_LINUX },
@@ -1567,6 +1571,11 @@ namespace bgfx
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT]) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT]) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
+		if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) 
+		&&  0.0f < s_renderCtx.m_maxAnisotropy)
+		{
+			glTexParameterf(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx.m_maxAnisotropy);
+		}
 
 		GL_CHECK(glBindTexture(m_target, 0) );
 	}
@@ -2086,6 +2095,11 @@ namespace bgfx
 				|| s_extension[Extension::ARB_get_program_binary].m_supported
 				|| s_extension[Extension::OES_get_program_binary].m_supported
 				;
+
+			if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
+			{
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy);
+			}
 		}
 	}
 

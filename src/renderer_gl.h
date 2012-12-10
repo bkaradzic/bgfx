@@ -119,6 +119,14 @@
 #		define GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE 0x93A0
 #	endif // GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE
 
+#	ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
+#		define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+#	endif // GL_TEXTURE_MAX_ANISOTROPY_EXT
+
+#	ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#		define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#	endif // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+
 typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
 
 #endif // BGFX_CONFIG_RENDERER_OPENGL
@@ -150,6 +158,7 @@ typedef void (APIENTRYP PFNGLREADPIXELSPROC) (GLint x, GLint y, GLsizei width, G
 typedef void (APIENTRYP PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 typedef void (APIENTRYP PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
 typedef void (APIENTRYP PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
+typedef void (APIENTRYP PFNGLTEXPARAMETERFPROC) (GLenum target, GLenum pname, GLfloat param);
 typedef void (APIENTRYP PFNGLPIXELSTOREI) (GLenum pname, GLint param);
 typedef void (APIENTRYP PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
 typedef void (APIENTRYP PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
@@ -160,6 +169,7 @@ typedef void (APIENTRYP PFNGLDISABLEPROC) (GLenum cap);
 typedef void (APIENTRYP PFNGLVIEWPORTPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
 typedef void (APIENTRYP PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
 typedef void (APIENTRYP PFNGLGETINTEGERVPROC) (GLenum pname, GLint *params);
+typedef void (APIENTRYP PFNGLGETFLOATVPROC) (GLenum pname, GLfloat *params);
 typedef const GLubyte * (APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
 typedef void (APIENTRYP PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
 typedef void (APIENTRYP PFNGLBLENDFUNCPROC) (GLenum sfactor, GLenum dfactor);
