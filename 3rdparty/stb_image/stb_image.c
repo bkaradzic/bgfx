@@ -3745,7 +3745,7 @@ static stbi_uc *pic_load2(stbi *s,int width,int height,int *comp, stbi_uc *resul
                   int left=width, i;
 
                   while (left>0) {
-                     stbi_uc count,value[4];
+                     stbi_uc count,value[4] = { 0 };
 
                      count=get8u(s);
                      if (at_eof(s))   return epuc("bad file","file too short (pure read count)");
@@ -3769,7 +3769,7 @@ static stbi_uc *pic_load2(stbi *s,int width,int height,int *comp, stbi_uc *resul
                   if (at_eof(s))  return epuc("bad file","file too short (mixed read count)");
 
                   if (count >= 128) { // Repeated
-                     stbi_uc value[4];
+                     stbi_uc value[4] = { 0 };
                      int i;
 
                      if (count==128)
