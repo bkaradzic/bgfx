@@ -827,6 +827,7 @@ namespace bgfx
 	{
 		GL_LINEAR,
 		GL_NEAREST,
+		GL_LINEAR,
 	};
 
 	struct TextureFormatInfo

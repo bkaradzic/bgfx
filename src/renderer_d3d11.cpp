@@ -98,6 +98,42 @@ namespace bgfx
 		D3D11_TEXTURE_ADDRESS_CLAMP,
 	};
 
+	/*
+	 * D3D11_FILTER_MIN_MAG_MIP_POINT               = 0x00,
+	 * D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR        = 0x01,
+	 * D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT  = 0x04,
+	 * D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR        = 0x05,
+	 * D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT        = 0x10,
+	 * D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x11,
+	 * D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT        = 0x14,
+	 * D3D11_FILTER_MIN_MAG_MIP_LINEAR              = 0x15,
+	 * D3D11_FILTER_ANISOTROPIC                     = 0x55,
+	 *
+	 * According to D3D11_FILTER enum bits for mip, mag and mip are:
+	 * 0x10 // MIN_LINEAR
+	 * 0x04 // MAG_LINEAR
+	 * 0x01 // MIP_LINEAR
+	 */
+
+	static const uint32_t s_textureFilter[3][3] =
+	{
+		{
+			0x10, // min linear
+			0x00, // min point
+			0x55, // anisotopic
+		},
+		{
+			0x04, // mag linear
+			0x00, // mag point
+			0x55, // anisotopic
+		},
+		{
+			0x01, // mip linear
+			0x00, // mip point
+			0x55, // anisotopic
+		},
+	};
+
 	struct TextureFormatInfo
 	{
 		DXGI_FORMAT m_fmt;
@@ -1265,13 +1301,19 @@ namespace bgfx
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
-		_flags &= BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK;
+		_flags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
+				| BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
+				;
 
 		m_sampler = s_renderCtx.m_samplerStateCache.find(_flags);
 		if (NULL == m_sampler)
 		{
+			uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+			uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+			uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+
 			D3D11_SAMPLER_DESC desc;
-			desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			desc.Filter = (D3D11_FILTER)(minFilter|magFilter|mipFilter);
 			desc.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
 			desc.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
 			desc.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
