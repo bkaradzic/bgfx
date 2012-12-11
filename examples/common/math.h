@@ -5,8 +5,8 @@
 
 // simple FPU math lib
 
-#ifndef __MATH_H__
-#define __MATH_H__
+#ifndef __FPU_MATH_H__
+#define __FPU_MATH_H__
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -238,4 +238,4 @@ inline void mtxInverse(float* __restrict _result, const float* __restrict _a)
 	_result[15] = +(xx*(yy*zz - zy*yz) - xy*(yx*zz - zx*yz) + xz*(yx*zy - zx*yy) ) * invDet;
 }
 
-#endif // __MATH_H__
+#endif // __FPU_MATH_H__
