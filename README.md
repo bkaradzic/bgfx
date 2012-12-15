@@ -142,7 +142,7 @@ usually for GUI rendering, where draw order should usually match submit order.
 bgfx provides way to enable sequential rendering for these cases (see 
 `bgfx::setViewSeq`).
 
-Internally All low-level rendering draw calls are issued inside single function
+Internally all low-level rendering draw calls are issued inside single function
 `Context::rendererSubmit`. This function exist inside each renderer backend
 implementation.
 
@@ -155,8 +155,14 @@ Customization
 By default each platform has sane default values. For example on Windows default
 renderer is DirectX9, and on Linux it is OpenGL 2.1. On Windows platform all
 rendering backends are available. For OpenGL ES on desktop you can find more 
-information at:  
-[OpenGL ES 2.0 and EGL on desktop](http://www.g-truc.net/post-0457.html)
+information at:- 
+[OpenGL ES 2.0 and EGL on desktop](http://www.g-truc.net/post-0457.html)  
+
+If you're targeting specific mobile hardware, you can find GLES support in their
+official SDKs:
+[Adreno SDK](http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources),
+[Mali SDK](http://www.malideveloper.com/),
+[PowerVR SDK](http://www.imgtec.com/powervr/insider/sdkdownloads/).
 
 All configuration settings are located inside [src/config.h](https://github.com/bkaradzic/bgfx/blob/master/src/config.h).
 

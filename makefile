@@ -50,7 +50,6 @@ pnacl-release:
 	make -C .build/projects/gmake-pnacl config=release64
 
 docs:
-	# doxygen premake/bgfx.doxygen
 	markdown README.md > .build/docs/readme.html
 
 clean:
