@@ -666,6 +666,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		bx::write(_writer, un.regIndex);
 		bx::write(_writer, un.regCount);
 
+		BX_UNUSED(s_constantTypeName);
 		BX_TRACE("%s, %s, %d, %d, %d"
 			, un.name.c_str()
 			, s_constantTypeName[un.type]
