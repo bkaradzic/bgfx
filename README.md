@@ -117,7 +117,7 @@ Updating shader uniforms.
 ![example-03-raymarch](https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png)
 
 ### 04-mesh
-Loading OpenCTM meshes.
+Loading meshes.
 
 ![example-04-mesh](https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png)
 

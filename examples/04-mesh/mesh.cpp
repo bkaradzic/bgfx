@@ -12,6 +12,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <string>
 #include <vector>
 
 void fatalCb(bgfx::Fatal::Enum _code, const char* _str)
@@ -142,7 +144,7 @@ struct Group
 
 struct Mesh
 {
-	void Mesh::load(const char* _filePath)
+	void load(const char* _filePath)
 	{
 #define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
@@ -195,8 +197,6 @@ struct Mesh
 					material.resize(len);
 					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
 
-					uint32_t type = m_decl.has(bgfx::Attrib::TexCoord0) ? 0 : 1;
-
 					uint16_t num;
 					bx::read(&reader, num);
 
@@ -234,7 +234,7 @@ struct Mesh
 		reader.close();
 	}
 
-	void Mesh::unload()
+	void unload()
 	{
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{

@@ -99,7 +99,7 @@ namespace Forsyth
         }
 
 
-        const uint kMaxVertexCacheSize = 64;
+        const int kMaxVertexCacheSize = 64;
         const uint kMaxPrecomputedVertexValenceScores = 64;
         float s_vertexCacheScores[kMaxVertexCacheSize+1][kMaxVertexCacheSize];
         float s_vertexValenceScores[kMaxPrecomputedVertexValenceScores];
