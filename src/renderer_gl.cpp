@@ -1116,7 +1116,8 @@ namespace bgfx
 				{
 					data = info->m_data;
 					UniformType::Enum type = convertGlType(gltype);
-					m_constantBuffer->writeUniformRef(type, loc, data, num);
+					m_constantBuffer->writeUniformRef(type, 0, data, num);
+					m_constantBuffer->write(loc);
 					BX_TRACE("store %s %p", name, data);
 				}
 			}
@@ -1141,8 +1142,8 @@ namespace bgfx
 		uint32_t used = 0;
 		for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 		{
-			GLuint loc = glGetAttribLocation(m_id, s_attribName[ii]);
-			if (GLuint(-1) != loc )
+			GLint loc = glGetAttribLocation(m_id, s_attribName[ii]);
+			if (-1 != loc)
 			{
 				BX_TRACE("attr %s: %d", s_attribName[ii], loc);
 				m_attributes[ii] = loc;
@@ -1170,14 +1171,14 @@ namespace bgfx
 		for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
 		{
 			Attrib::Enum attr = Attrib::Enum(m_used[ii]);
-			GLuint loc = m_attributes[attr];
+			GLint loc = m_attributes[attr];
 
 			uint8_t num;
 			AttribType::Enum type;
 			bool normalized;
 			_vertexDecl.decode(attr, num, type, normalized);
 
-			if (0xffff != loc
+			if (-1 != loc
 			&&  0xff != _vertexDecl.m_attributes[attr])
 			{
 				GL_CHECK(glEnableVertexAttribArray(loc) );
@@ -1223,7 +1224,7 @@ namespace bgfx
 		uint32_t baseVertex = _baseVertex;
 		for (uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
 		{
-			GLuint loc = m_instanceData[ii];
+			GLint loc = m_instanceData[ii];
 			GL_CHECK(glEnableVertexAttribArray(loc) );
 			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
 			GL_CHECK(s_vertexAttribDivisor(loc, 1) );
@@ -1855,10 +1856,10 @@ namespace bgfx
 			}
 
 			UniformType::Enum type;
-			uint16_t loc;
+			uint16_t ignore;
 			uint16_t num;
 			uint16_t copy;
-			decodeOpcode(opcode, type, loc, num, copy);
+			decodeOpcode(opcode, type, ignore, num, copy);
 
 			const char* data;
 			if (copy)
@@ -1869,6 +1870,8 @@ namespace bgfx
 			{
 				memcpy(&data, read(sizeof(void*) ), sizeof(void*) );
 			}
+
+			uint32_t loc = read();
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
 		case UniformType::_uniform: \

@@ -394,9 +394,9 @@ namespace bgfx
 			Count
 		};
 
-		uint8_t m_type;
-		uint16_t m_loc;
+		uint32_t m_loc;
 		uint16_t m_count;
+		uint8_t m_type;
 	};
 
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum);

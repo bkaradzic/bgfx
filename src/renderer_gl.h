@@ -432,11 +432,10 @@ namespace bgfx
 		GLuint m_id;
 
 		uint8_t m_used[Attrib::Count+1]; // dense
-		uint16_t m_attributes[Attrib::Count]; // sparse
-		uint16_t m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
-		uint32_t m_enabled;
+		GLint m_attributes[Attrib::Count]; // sparse
+		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
- 		GLuint m_sampler[BGFX_CONFIG_MAX_TEXTURES];
+ 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURES];
  		uint8_t m_numSamplers;
 
 		ConstantBuffer* m_constantBuffer;
