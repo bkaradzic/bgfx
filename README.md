@@ -244,14 +244,6 @@ optimization.
 
 https://github.com/aras-p/glsl-optimizer
 
-### OpenCTM (Zlib)
-
-OpenCTM — the Open Compressed Triangle Mesh file format — is a
-file format, a software library and a tool set for compression of 3D triangle
-meshes.
-
-http://openctm.sourceforge.net/
-
 ### stb_image (Public Domain)
 
 http://nothings.org/stb_image.c
