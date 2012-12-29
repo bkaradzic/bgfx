@@ -233,6 +233,10 @@ Frexx C preprocessor
 
 https://github.com/bagder/fcpp
 
+### Forsyth Triangle Order Optimizer (Public Domain)
+
+http://gameangst.com/?p=9
+
 ### glsl-optimizer (MIT)
 
 GLSL optimizer based on Mesa's GLSL compiler. Used in Unity for mobile shader

@@ -1657,7 +1657,7 @@ namespace bgfx
 			desc.Height = _height;
 			desc.MipLevels = 1;
 			desc.ArraySize = 1;
-			desc.Format = s_depthFormat[colorFormat];
+			desc.Format = s_depthFormat[depthFormat];
 			desc.SampleDesc.Count = 1;
 			desc.SampleDesc.Quality = 0;
 			desc.Usage = D3D11_USAGE_DEFAULT;
@@ -2321,7 +2321,7 @@ namespace bgfx
 
 					if (invalidHandle != state.m_indexBuffer.idx)
 					{
-						if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+						if (UINT32_MAX == state.m_numIndices)
 						{
 							numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
 							numPrimsSubmitted = numIndices/primNumVerts;

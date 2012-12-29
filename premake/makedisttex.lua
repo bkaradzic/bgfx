@@ -9,6 +9,7 @@ project "makedisttex"
 	}
 
 	files {
-		BGFX_DIR .. "3rdparty/edtaa3/**",
+		BGFX_DIR .. "3rdparty/edtaa3/**.cpp",
+		BGFX_DIR .. "3rdparty/edtaa3/**.h",
 		BGFX_DIR .. "tools/makedisttex.cpp",
 	}

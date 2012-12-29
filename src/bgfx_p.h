@@ -109,7 +109,7 @@ namespace stl = std;
 #include <bx/thread.h>
 #include <bx/timer.h>
 
-#define BGFX_DRAW_WHOLE_INDEX_BUFFER 0xffffffff
+#include "vertexdecl.h"
 
 #define BGFX_DEFAULT_WIDTH  1280
 #define BGFX_DEFAULT_HEIGHT 720
@@ -805,8 +805,8 @@ namespace bgfx
 			m_flags = BGFX_STATE_DEFAULT;
 			m_stencil = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
 			m_matrix = 0;
-			m_startIndex = BGFX_DRAW_WHOLE_INDEX_BUFFER;
-			m_numIndices = 0;
+			m_startIndex = 0;
+			m_numIndices = UINT32_MAX;
 			m_startVertex = 0;
 			m_numVertices = UINT32_C(0xffffffff);
 			m_instanceDataOffset = 0;

@@ -6,12 +6,13 @@
 #include <bgfx.h>
 #include <bx/bx.h>
 #include <bx/timer.h>
-#include <openctm.h>
+#include <bx/readerwriter.h>
 #include "../common/dbg.h"
 #include "../common/math.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
 void fatalCb(bgfx::Fatal::Enum _code, const char* _str)
 {
@@ -86,110 +87,194 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return program;
 }
 
-struct Mesh
+struct Aabb
 {
-	void load(const char* _filePath)
+	float m_min[3];
+	float m_max[3];
+};
+
+struct Obb
+{
+	float m_mtx[16];
+};
+
+struct Sphere
+{
+	float m_center[3];
+	float m_radius;
+};
+
+struct Primitive
+{
+	uint32_t m_startIndex;
+	uint32_t m_numIndices;
+	uint32_t m_startVertex;
+	uint32_t m_numVertices;
+
+	Sphere m_sphere;
+	Aabb m_aabb;
+	Obb m_obb;
+};
+
+typedef std::vector<Primitive> PrimitiveArray;
+
+struct Group
+{
+	Group()
 	{
-		CTMcontext ctm;
-		ctm = ctmNewContext(CTM_IMPORT);
-		ctmLoad(ctm, _filePath);
-
-		// Create vertex decleration.
-		{
-			m_decl.begin();
-			m_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-
-			if (ctmGetInteger(ctm, CTM_HAS_NORMALS) )
-			{
-				m_decl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true);
-			}
-
-			if (0 < ctmGetInteger(ctm, CTM_UV_MAP_COUNT) )
-			{
-				m_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-			}
-
-			CTMenum colorAttrib = ctmGetNamedAttribMap(ctm, "Color");
-			if (CTM_NONE != colorAttrib)
-			{
-				m_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-			}
-
-			m_decl.end();
-		}
-
-		// Allocate vertex buffer and copy vertex attributes.
-		{
-			CTMuint numVertices = ctmGetInteger(ctm, CTM_VERTEX_COUNT);
-			uint32_t stride = m_decl.m_stride;
-			const CTMfloat* vertices = ctmGetFloatArray(ctm, CTM_VERTICES);
-			const CTMfloat* normals = ctmGetFloatArray(ctm, CTM_NORMALS);
-			const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-			uint8_t* data = mem->data;
-			const uint16_t normalOffset = m_decl.getOffset(bgfx::Attrib::Normal);
-			const uint16_t color0Offset = m_decl.getOffset(bgfx::Attrib::Color0);
-			const bool hasColor0 = m_decl.has(bgfx::Attrib::Color0);
-
-			for (uint32_t ii = 0; ii < numVertices; ++ii)
-			{
-				{
-					float* xyz = (float*)data;
-					xyz[0] = vertices[0];
-					xyz[1] = vertices[1];
-					xyz[2] = vertices[2];
-					vertices += 3;
-				}
-
-				if (hasColor0)
-				{
-					uint32_t* abgr = (uint32_t*)&data[color0Offset];
-					abgr[0] = 0xff000000;
-					abgr[0] |= uint8_t( (ii%37)/37.0f*255.0f)<<16;
-					abgr[0] |= uint8_t( (ii%59)/59.0f*255.0f)<<8;
-					abgr[0] |= uint8_t( (ii%79)/79.0f*255.0f);
-				}
-
-				if (NULL != normals)
-				{
-					uint8_t* nxyz = (uint8_t*)&data[normalOffset];
-					nxyz[0] = uint8_t(normals[0]*127.0f + 128.0f);
-					nxyz[1] = uint8_t(normals[1]*127.0f + 128.0f);
-					nxyz[2] = uint8_t(normals[2]*127.0f + 128.0f);
-					normals += 3;
-				}
-
-				data += stride;
-			}
-
-			m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-		}
-
-		// Allocated static index buffer and fill with indices.
-		{
-			CTMuint numTriangles = ctmGetInteger(ctm, CTM_TRIANGLE_COUNT);
-			const CTMuint* indices = ctmGetIntegerArray(ctm, CTM_INDICES);
-			const bgfx::Memory* mem = bgfx::alloc(numTriangles*3*sizeof(uint16_t) );
-			uint16_t* data = (uint16_t*)mem->data;
-			for (uint32_t ii = 0, num = numTriangles * 3; ii < num; ++ii)
-			{
-				data[ii] = (uint16_t)indices[ii];
-			}
-
-			m_ibh = bgfx::createIndexBuffer(mem);
-		}
-
-		ctmFreeContext(ctm);
+		reset();
 	}
 
-	void setup()
+	void reset()
 	{
-		bgfx::setIndexBuffer(m_ibh);
-		bgfx::setVertexBuffer(m_vbh);
+		m_vbh.idx = bgfx::invalidHandle;
+		m_ibh.idx = bgfx::invalidHandle;
+		m_prims.clear();
+	}
+
+	bgfx::VertexBufferHandle m_vbh;
+	bgfx::IndexBufferHandle m_ibh;
+	Sphere m_sphere;
+	Aabb m_aabb;
+	Obb m_obb;
+	PrimitiveArray m_prims;
+};
+
+struct Mesh
+{
+	void Mesh::load(const char* _filePath)
+	{
+#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+
+		bx::CrtFileReader reader;
+		reader.open(_filePath);
+
+		Group group;
+
+		uint32_t chunk;
+		while (4 == bx::read(&reader, chunk) )
+		{
+			switch (chunk)
+			{
+			case BGFX_CHUNK_MAGIC_VB:
+				{
+					bx::read(&reader, group.m_sphere);
+					bx::read(&reader, group.m_aabb);
+					bx::read(&reader, group.m_obb);
+
+					bx::read(&reader, m_decl);
+					uint16_t stride = m_decl.getStride();
+
+					uint16_t numVertices;
+					bx::read(&reader, numVertices);
+					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
+					bx::read(&reader, mem->data, mem->size);
+
+					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+				}
+				break;
+
+			case BGFX_CHUNK_MAGIC_IB:
+				{
+					uint32_t numIndices;
+					bx::read(&reader, numIndices);
+					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
+					bx::read(&reader, mem->data, mem->size);
+					group.m_ibh = bgfx::createIndexBuffer(mem);
+				}
+				break;
+
+			case BGFX_CHUNK_MAGIC_PRI:
+				{
+					uint16_t len;
+					bx::read(&reader, len);
+
+					std::string material;
+					material.resize(len);
+					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
+
+					uint32_t type = m_decl.has(bgfx::Attrib::TexCoord0) ? 0 : 1;
+
+					uint16_t num;
+					bx::read(&reader, num);
+
+					for (uint32_t ii = 0; ii < num; ++ii)
+					{
+						bx::read(&reader, len);
+
+						std::string name;
+						name.resize(len);
+						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
+
+						Primitive prim;
+						bx::read(&reader, prim.m_startIndex);
+						bx::read(&reader, prim.m_numIndices);
+						bx::read(&reader, prim.m_startVertex);
+						bx::read(&reader, prim.m_numVertices);
+						bx::read(&reader, prim.m_sphere);
+						bx::read(&reader, prim.m_aabb);
+						bx::read(&reader, prim.m_obb);
+
+						group.m_prims.push_back(prim);
+					}
+
+					m_groups.push_back(group);
+					group.reset();
+				}
+				break;
+
+			default:
+				DBG("%08x at %d", chunk, reader.seek() );
+				break;
+			}
+		}
+
+		reader.close();
+	}
+
+	void Mesh::unload()
+	{
+		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		{
+			const Group& group = *it;
+			bgfx::destroyVertexBuffer(group.m_vbh);
+
+			if (bgfx::invalidHandle != group.m_ibh.idx)
+			{
+				bgfx::destroyIndexBuffer(group.m_ibh);
+			}
+		}
+		m_groups.clear();
+	}
+
+	void submit(bgfx::ProgramHandle _program, float* _mtx)
+	{
+		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		{
+			const Group& group = *it;
+
+			// Set model matrix for rendering.
+			bgfx::setTransform(_mtx);
+			bgfx::setProgram(_program);
+			bgfx::setIndexBuffer(group.m_ibh);
+			bgfx::setVertexBuffer(group.m_vbh);
+
+			// Set render states.
+			bgfx::setState(BGFX_STATE_RGB_WRITE
+				|BGFX_STATE_DEPTH_WRITE
+				|BGFX_STATE_DEPTH_TEST_LESS
+				);
+
+			// Submit primitive for rendering to view 0.
+			bgfx::submit(0);
+		}
 	}
 
 	bgfx::VertexDecl m_decl;
-	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh;
+	typedef std::vector<Group> GroupArray;
+	GroupArray m_groups;
 };
 
 int _main_(int _argc, char** _argv)
@@ -244,7 +329,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::ProgramHandle program = loadProgram("vs_mesh", "fs_mesh");
 
 	Mesh mesh;
-	mesh.load("meshes/bunny.ctm");
+	mesh.load("meshes/bunny.bin");
 
 	while (true)
 	{
@@ -264,7 +349,7 @@ int _main_(int _argc, char** _argv)
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/04-mesh");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Loading OpenCTM meshes.");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Loading meshes.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		float at[3] = { 0.0f, 1.0f, 0.0f };
@@ -284,26 +369,14 @@ int _main_(int _argc, char** _argv)
 			, time*0.37f
 			); 
 
-		// Set model matrix for rendering.
-		bgfx::setTransform(mtx);
-
-		bgfx::setProgram(program);
-
-		mesh.setup();
-
-		// Set render states.
-		bgfx::setState(BGFX_STATE_RGB_WRITE
-			|BGFX_STATE_DEPTH_WRITE
-			|BGFX_STATE_DEPTH_TEST_LESS
-			);
-
-		// Submit primitive for rendering to view 0.
-		bgfx::submit(0);
+		mesh.submit(program, mtx);
 
 		// Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
+
+	mesh.unload();
 
 	// Cleanup.
 	bgfx::destroyProgram(program);

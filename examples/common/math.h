@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-// simple FPU math lib
+// FPU math lib
 
 #ifndef __FPU_MATH_H__
 #define __FPU_MATH_H__
@@ -11,6 +11,21 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <string.h>
+
+inline float fmin(float _a, float _b)
+{
+	return _a < _b ? _a : _b;
+}
+
+inline float fmax(float _a, float _b)
+{
+	return _a > _b ? _a : _b;
+}
+
+inline float flerp(float _a, float _b, float _t)
+{
+	return _a + (_b - _a) * _t;
+}
 
 inline void vec3Add(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
 {
@@ -116,7 +131,7 @@ inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, flo
 	_result[14] = bb;
 }
 
-void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far)
+inline void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far)
 {
 	const float aa = 2.0f/(_right - _left);
 	const float bb = 2.0f/(_top - _bottom);
@@ -135,23 +150,116 @@ void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _t
 	_result[15] = 1.0f;
 }
 
-void mtxRotateXY(float* _result, float _ax, float _ay)
+inline void mtxRotateX(float* _result, float _ax)
 {
-	float sinx = sinf(_ax);
-	float cosx = cosf(_ax);
-	float siny = sinf(_ay);
-	float cosy = cosf(_ay);
+	float sx = sinf(_ax);
+	float cx = cosf(_ax);
 
 	memset(_result, 0, sizeof(float)*16);
-	_result[ 0] = cosy;
-	_result[ 2] = -siny;
-	_result[ 4] = -sinx * siny;
-	_result[ 5] = cosx;
-	_result[ 6] = -sinx * cosy;
-	_result[ 8] = cosx * siny;
-	_result[ 9] = sinx;
-	_result[10] = cosx * cosy;
+	_result[ 0] = 1.0f;
+	_result[ 5] = cx;
+	_result[ 6] = -sx;
+	_result[ 9] = sx;
+	_result[10] = cx;
 	_result[15] = 1.0f;
+}
+
+inline void mtxRotateY(float* _result, float _ay)
+{
+	float sy = sinf(_ay);
+	float cy = cosf(_ay);
+
+	memset(_result, 0, sizeof(float)*16);
+	_result[ 0] = cy;
+	_result[ 2] = sy;
+	_result[ 5] = 1.0f;
+	_result[ 8] = -sy;
+	_result[10] = cy;
+	_result[15] = 1.0f;
+}
+
+inline void mtxRotateZ(float* _result, float _az)
+{
+	float sz = sinf(_az);
+	float cz = cosf(_az);
+
+	memset(_result, 0, sizeof(float)*16);
+	_result[ 0] = cz;
+	_result[ 1] = -sz;
+	_result[ 4] = sz;
+	_result[ 5] = cz;
+	_result[10] = 1.0f;
+	_result[15] = 1.0f;
+}
+
+inline void mtxRotateXY(float* _result, float _ax, float _ay)
+{
+	float sx = sinf(_ax);
+	float cx = cosf(_ax);
+	float sy = sinf(_ay);
+	float cy = cosf(_ay);
+
+	memset(_result, 0, sizeof(float)*16);
+	_result[ 0] = cy;
+	_result[ 2] = -sy;
+	_result[ 4] = -sx*sy;
+	_result[ 5] = cx;
+	_result[ 6] = -sx*cy;
+	_result[ 8] = cx*sy;
+	_result[ 9] = sx;
+	_result[10] = cx*cy;
+	_result[15] = 1.0f;
+}
+
+inline void mtxRotateXYZ(float* _result, float _ax, float _ay, float _az)
+{
+	float sx = sinf(_ax);
+	float cx = cosf(_ax);
+	float sy = sinf(_ay);
+	float cy = cosf(_ay);
+	float sz = sinf(_az);
+	float cz = cosf(_az);
+
+	memset(_result, 0, sizeof(float)*16);
+	_result[ 0] = cy*cz;
+	_result[ 1] = -cy*sz;
+	_result[ 2] = sy;
+	_result[ 4] = cz*sx*sy + cx*sz;
+	_result[ 5] = cx*cz - sx*sy*sz;
+	_result[ 6] = -cy*sx;
+	_result[ 8] = -cx*cz*sy + sx*sz;
+	_result[ 9] = cz*sx + cx*sy*sz;
+	_result[10] = cx*cy;
+	_result[15] = 1.0f;
+}
+
+inline void mtxRotateZYX(float* _result, float _ax, float _ay, float _az)
+{
+	float sx = sinf(_ax);
+	float cx = cosf(_ax);
+	float sy = sinf(_ay);
+	float cy = cosf(_ay);
+	float sz = sinf(_az);
+	float cz = cosf(_az);
+
+	memset(_result, 0, sizeof(float)*16);
+	_result[ 0] = cy*cz;
+	_result[ 1] = cz*sx*sy-cx*sz;
+	_result[ 2] = cx*cz*sy+sx*sz;
+	_result[ 4] = cy*sz;
+	_result[ 5] = cx*cz + sx*sy*sz;
+	_result[ 6] = -cz*sx + cx*sy*sz;
+	_result[ 8] = -sy;
+	_result[ 9] = cy*sx;
+	_result[10] = cx*cy;
+	_result[15] = 1.0f;
+};
+
+inline void vec3MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
+{
+	_result[0] = _vec[0] * _mat[ 0] + _vec[1] * _mat[4] + _vec[2] * _mat[ 8] + _mat[12];
+	_result[1] = _vec[0] * _mat[ 1] + _vec[1] * _mat[5] + _vec[2] * _mat[ 9] + _mat[13];
+	_result[2] = _vec[0] * _mat[ 2] + _vec[1] * _mat[6] + _vec[2] * _mat[10] + _mat[14];
 }
 
 inline void vec4MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)

@@ -88,6 +88,7 @@
 
 #define BGFX_STATE_ALPHA_REF(_ref) ( (uint64_t(_ref)<<BGFX_STATE_ALPHA_REF_SHIFT)&BGFX_STATE_ALPHA_REF_MASK)
 #define BGFX_STATE_POINT_SIZE(_size) ( (uint64_t(_size)<<BGFX_STATE_POINT_SIZE_SHIFT)&BGFX_STATE_POINT_SIZE_MASK)
+#define BGFX_STATE_BLEND_FUNC(_src, _dst) ( uint64_t(_src)|( uint64_t(_dst)<<4) )
 
 ///
 #define BGFX_STENCIL_FUNC_REF_SHIFT     0
@@ -665,16 +666,10 @@ namespace bgfx
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = 1);
 
 	/// Set index buffer for draw primitive.
-	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
+	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex = 0, uint32_t _numIndices = UINT32_MAX);
 
 	/// Set index buffer for draw primitive.
-	void setIndexBuffer(IndexBufferHandle _handle);
-
-	/// Set index buffer for draw primitive.
-	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
-
-	/// Set index buffer for draw primitive.
-	void setIndexBuffer(DynamicIndexBufferHandle _handle);
+	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex = 0, uint32_t _numIndices = UINT32_MAX);
 
 	/// Set index buffer for draw primitive.
 	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices = UINT32_MAX);

@@ -9,8 +9,8 @@
 #ifndef __cplusplus
 
 #if BGFX_SHADER_LANGUAGE_HLSL
-#	define dFdx ddx
-#	define dFdy ddy
+#	define dFdx(_x) ddx(_x)
+#	define dFdy(_y) ddy(-_y)
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3
 struct BgfxSampler2D

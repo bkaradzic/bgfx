@@ -1343,8 +1343,7 @@ namespace bgfx
 				if (GL_RGBA == internalFmt
 				||  decompress)
 				{
-					internalFmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
-					m_fmt = internalFmt;
+					m_fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 				}
 
 				m_type = tfi.m_type;
@@ -2825,7 +2824,7 @@ namespace bgfx
 
 						if (invalidHandle != state.m_indexBuffer.idx)
 						{
-							if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+							if (UINT32_MAX == state.m_numIndices)
 							{
 								numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
 								numPrimsSubmitted = numIndices/primNumVerts;

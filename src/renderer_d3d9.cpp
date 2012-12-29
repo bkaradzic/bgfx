@@ -2435,7 +2435,7 @@ namespace bgfx
 
 					if (invalidHandle != state.m_indexBuffer.idx)
 					{
-						if (BGFX_DRAW_WHOLE_INDEX_BUFFER == state.m_startIndex)
+						if (UINT32_MAX == state.m_numIndices)
 						{
 							numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
 							numPrimsSubmitted = numIndices/primNumVerts;

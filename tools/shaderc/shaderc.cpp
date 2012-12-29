@@ -1233,26 +1233,31 @@ void help(const char* _error = NULL)
 		);
 
 	fprintf(stderr
-		, "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n\n"
+		, "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n"
+
+		  "\n"
 		  "Options:\n"
-		  "\t-f                Input file path.\n"
-		  "\t-o                Output file path.\n"
-		  "\t    --bin2c       Generate C header file.\n"
-		  "\t    --depends     Generate makefile style depends file.\n"
-		  "\t    --platform    Target platform.\n"
-		  "\t         android\n"
-		  "\t         ios\n"
-		  "\t         linux\n"
-		  "\t         nacl\n"
-		  "\t         osx\n"
-		  "\t         windows\n"
-		  "\t    --type        Shader type (vertex, fragment)\n"
-		  "\t    --varyingdef  Path to varying.def.sc file.\n"
+		  "  -f <file path>                Input file path.\n"
+		  "  -o <file path>                Output file path.\n"
+		  "      --bin2c <file path>       Generate C header file.\n"
+		  "      --depends <file path>     Generate makefile style depends file.\n"
+		  "      --platform <platform>     Target platform.\n"
+		  "           android\n"
+		  "           ios\n"
+		  "           linux\n"
+		  "           nacl\n"
+		  "           osx\n"
+		  "           windows\n"
+		  "      --type <type>             Shader type (vertex, fragment)\n"
+		  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
+
 		  "\n"
 		  "Options (DX9 and DX11 only):\n"
+
 		  "\n"
-		  "\t    --disasm      Disassemble compiled shader.\n"
-		  "\t-p, --profile     Shader model (f.e. ps_3_0).\n"
+		  "      --disasm      Disassemble compiled shader.\n"
+		  "  -p, --profile     Shader model (f.e. ps_3_0).\n"
+
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
