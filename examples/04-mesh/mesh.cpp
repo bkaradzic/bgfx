@@ -16,11 +16,6 @@
 #include <string>
 #include <vector>
 
-void fatalCb(bgfx::Fatal::Enum _code, const char* _str)
-{
-	DBG("%x: %s", _code, _str);
-}
-
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
 
@@ -279,7 +274,7 @@ struct Mesh
 
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(fatalCb);
+	bgfx::init();
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.

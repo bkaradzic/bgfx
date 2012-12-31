@@ -12,11 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 
-void fatalCb(bgfx::Fatal::Enum _code, const char* _str)
-{
-	DBG("%x: %s", _code, _str);
-}
-
 struct PosColorVertex
 {
 	float m_x;
@@ -99,7 +94,7 @@ static const bgfx::Memory* loadShader(const char* _name)
 
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(fatalCb);
+	bgfx::init();
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.

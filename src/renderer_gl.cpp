@@ -26,6 +26,97 @@
 
 namespace bgfx
 {
+	struct Extension
+	{
+		enum Enum
+		{
+			EXT_texture_filter_anisotropic,
+			EXT_texture_format_BGRA8888,
+			EXT_texture_compression_s3tc,
+			EXT_texture_compression_dxt1,
+			CHROMIUM_texture_compression_dxt3,
+			CHROMIUM_texture_compression_dxt5,
+			ARB_texture_float,
+			OES_texture_float,
+			OES_texture_float_linear,
+			OES_texture_half_float,
+			OES_texture_half_float_linear,
+			EXT_texture_type_2_10_10_10_REV,
+			EXT_texture_sRGB,
+			ARB_texture_swizzle,
+			EXT_texture_swizzle,
+			OES_standard_derivatives,
+			ARB_get_program_binary,
+			OES_get_program_binary,
+			EXT_framebuffer_blit,
+			ARB_timer_query,
+			EXT_timer_query,
+			ARB_framebuffer_sRGB,
+			EXT_framebuffer_sRGB,
+			ARB_multisample,
+			CHROMIUM_framebuffer_multisample,
+			ANGLE_translated_shader_source,
+			ARB_instanced_arrays,
+			ANGLE_instanced_arrays,
+			ARB_half_float_vertex,
+			OES_vertex_half_float,
+			ARB_vertex_type_2_10_10_10_rev,
+			OES_vertex_type_10_10_10_2,
+			EXT_occlusion_query_boolean,
+			ARB_vertex_array_object,
+			ATI_meminfo,
+			NVX_gpu_memory_info,
+
+			Count
+		};
+
+		const char* m_name;
+		bool m_supported;
+		bool m_initialize;
+	};
+
+	static Extension s_extension[Extension::Count] =
+	{
+		{ "GL_EXT_texture_filter_anisotropic",    false, true },
+		// Nvidia BGRA on Linux bug:
+		// https://groups.google.com/a/chromium.org/forum/?fromgroups#!topic/chromium-reviews/yFfbUdyeUCQ
+		{ "GL_EXT_texture_format_BGRA8888",       false, !BX_PLATFORM_LINUX },
+		{ "GL_EXT_texture_compression_s3tc",      false, true },
+		{ "GL_EXT_texture_compression_dxt1",      false, true },
+		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
+		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
+		{ "GL_ARB_texture_float",                 false, true },
+		{ "GL_OES_texture_float",                 false, true },
+		{ "GL_OES_texture_float_linear",          false, true },
+		{ "GL_OES_texture_half_float",            false, true },
+		{ "GL_OES_texture_half_float_linear",     false, true },
+		{ "GL_EXT_texture_type_2_10_10_10_REV",   false, true },
+		{ "GL_EXT_texture_sRGB",                  false, true },
+		{ "GL_ARB_texture_swizzle",               false, true },
+		{ "GL_EXT_texture_swizzle",               false, true },
+		{ "GL_OES_standard_derivatives",          false, true },
+		{ "GL_ARB_get_program_binary",            false, true },
+		{ "GL_OES_get_program_binary",            false, false },
+		{ "GL_EXT_framebuffer_blit",              false, true },
+		{ "GL_ARB_timer_query",                   false, true },
+		{ "GL_EXT_timer_query",                   false, true },
+		{ "GL_ARB_framebuffer_sRGB",              false, true },
+		{ "GL_EXT_framebuffer_sRGB",              false, true },
+		{ "GL_ARB_multisample",                   false, true },
+		{ "GL_CHROMIUM_framebuffer_multisample",  false, true },
+		{ "GL_ANGLE_translated_shader_source",    false, true },
+		{ "GL_ARB_instanced_arrays",              false, true },
+		{ "GL_ANGLE_instanced_arrays",            false, true },
+		{ "GL_ARB_half_float_vertex",             false, true },
+		{ "GL_OES_vertex_half_float",             false, true },
+		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false, true },
+		{ "GL_OES_vertex_type_10_10_10_2",        false, true },
+		{ "GL_EXT_occlusion_query_boolean",       false, true },
+		{ "GL_ARB_vertex_array_object",           false, true },
+		{ "GL_ATI_meminfo",                       false, true },
+		{ "GL_NVX_gpu_memory_info",               false, true },
+	};
+
 #if BGFX_USE_WGL
 	PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
 	PFNWGLMAKECURRENTPROC wglMakeCurrent;
@@ -74,10 +165,29 @@ namespace bgfx
 	};
 #endif // BX_PLATFORM_NACL
 
+	static void rgbaToBgra(uint8_t* _data, uint32_t _width, uint32_t _height) 
+	{
+		uint32_t dstpitch = _width*4;
+		for (uint32_t yy = 0; yy < _height; ++yy)
+		{
+			uint8_t* dst = &_data[yy*dstpitch];
+
+			for (uint32_t xx = 0; xx < _width; ++xx)
+			{
+				uint8_t tmp = dst[0];
+				dst[0] = dst[2];
+				dst[2] = tmp;
+				dst += 4;
+			}
+		}
+	}
+
 	struct RendererContext
 	{
 		RendererContext()
-			: m_maxAnisotropy(0.0f)
+			: m_capture(NULL)
+			, m_captureSize(0)
+			, m_maxAnisotropy(0.0f)
 			, m_dxtSupport(false)
 			, m_programBinarySupport(false)
 			, m_flip(false)
@@ -116,6 +226,7 @@ namespace bgfx
 
 				m_resolution = _resolution;
 				setRenderContextSize(_resolution.m_width, _resolution.m_height);
+				updateCapture();
 			}
 		}
 
@@ -197,6 +308,19 @@ namespace bgfx
 					BGFX_FATAL(0 != pixelFormat, Fatal::UnableToInitialize, "ChoosePixelFormat failed!");
 
 					DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+
+					BX_TRACE("Pixel format:\n"
+						"\tiPixelType %d\n"
+						"\tcColorBits %d\n"
+						"\tcAlphaBits %d\n"
+						"\tcDepthBits %d\n"
+						"\tcStencilBits %d\n"
+						, pfd.iPixelType
+						, pfd.cColorBits
+						, pfd.cAlphaBits
+						, pfd.cDepthBits
+						, pfd.cStencilBits
+						);
 
 					int result;
 					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
@@ -464,21 +588,75 @@ namespace bgfx
 			}
 		}
 
+		void updateCapture()
+		{
+			if (m_resolution.m_flags&BGFX_RESET_CAPTURE)
+			{
+				m_captureSize = m_resolution.m_width*m_resolution.m_height*4;
+				m_capture = g_realloc(m_capture, m_captureSize);
+				g_callback->captureBegin(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, TextureFormat::BGRA8, true);
+			}
+			else
+			{
+				if (NULL != m_capture)
+				{
+					g_callback->captureEnd();
+					g_free(m_capture);
+					m_capture = NULL;
+					m_captureSize = 0;
+				}
+			}
+		}
+
+		void capture()
+		{
+			if (NULL != m_capture)
+			{
+				GLint fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
+				GL_CHECK(glReadPixels(0
+					, 0
+					, m_resolution.m_width
+					, m_resolution.m_height
+					, fmt
+					, GL_UNSIGNED_BYTE
+					, m_capture
+					) );
+
+				g_callback->captureFrame(m_capture, m_captureSize);
+			}
+		}
+
 		void saveScreenShot(Memory* _mem)
 		{
-			void* data = g_realloc(NULL, m_resolution.m_width*m_resolution.m_height*4);
-			glReadPixels(0, 0, m_resolution.m_width, m_resolution.m_height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
+			uint8_t* data = (uint8_t*)g_realloc(NULL, length);
+			GLint fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 
-			uint8_t* rgba = (uint8_t*)data;
-			for (uint32_t ii = 0, num = m_resolution.m_width*m_resolution.m_height; ii < num; ++ii)
+			uint32_t width = m_resolution.m_width;
+			uint32_t height = m_resolution.m_height;
+
+			GL_CHECK(glReadPixels(0
+				, 0
+				, width
+				, height
+				, fmt
+				, GL_UNSIGNED_BYTE
+				, data
+				) );
+
+			if (GL_RGBA == fmt)
 			{
-				uint8_t temp = rgba[0];
-				rgba[0] = rgba[2];
-				rgba[2] = temp;
-				rgba += 4;
+				rgbaToBgra(data, width, height);
 			}
 
-			saveTga( (const char*)_mem->data, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, data, false, true);
+			g_callback->screenShot( (const char*)_mem->data
+				, width
+				, height
+				, width*4
+				, data
+				, length
+				, true
+				);
 			g_free(data);
 		}
 
@@ -531,6 +709,8 @@ namespace bgfx
 		TextVideoMem m_textVideoMem;
 
 		Resolution m_resolution;
+		void* m_capture;
+		uint32_t m_captureSize;
 		float m_maxAnisotropy;
 		bool m_dxtSupport;
 		bool m_programBinarySupport;
@@ -612,93 +792,6 @@ namespace bgfx
 		return true;
 	}
 #endif // BX_PLATFORM_
-
-	struct Extension
-	{
-		enum Enum
-		{
-			EXT_texture_filter_anisotropic,
-			EXT_texture_format_BGRA8888,
-			EXT_texture_compression_s3tc,
-			EXT_texture_compression_dxt1,
-			CHROMIUM_texture_compression_dxt3,
-			CHROMIUM_texture_compression_dxt5,
-			ARB_texture_float,
-			OES_texture_float,
-			OES_texture_float_linear,
-			OES_texture_half_float,
-			OES_texture_half_float_linear,
-			EXT_texture_type_2_10_10_10_REV,
-			EXT_texture_sRGB,
-			OES_standard_derivatives,
-			ARB_get_program_binary,
-			OES_get_program_binary,
-			EXT_framebuffer_blit,
-			ARB_timer_query,
-			EXT_timer_query,
-			ARB_framebuffer_sRGB,
-			EXT_framebuffer_sRGB,
-			ARB_multisample,
-			CHROMIUM_framebuffer_multisample,
-			ANGLE_translated_shader_source,
-			ARB_instanced_arrays,
-			ANGLE_instanced_arrays,
-			ARB_half_float_vertex,
-			OES_vertex_half_float,
-			ARB_vertex_type_2_10_10_10_rev,
-			OES_vertex_type_10_10_10_2,
-			EXT_occlusion_query_boolean,
-			ARB_vertex_array_object,
-			ATI_meminfo,
-			NVX_gpu_memory_info,
-
-			Count
-		};
-
-		const char* m_name;
-		bool m_supported;
-		bool m_initialize;
-	};
-
-	static Extension s_extension[Extension::Count] =
-	{
-		{ "GL_EXT_texture_filter_anisotropic",    false, true },
-		// Nvidia BGRA on Linux bug:
-		// https://groups.google.com/a/chromium.org/forum/?fromgroups#!topic/chromium-reviews/yFfbUdyeUCQ
-		{ "GL_EXT_texture_format_BGRA8888",       false, !BX_PLATFORM_LINUX },
-		{ "GL_EXT_texture_compression_s3tc",      false, true },
-		{ "GL_EXT_texture_compression_dxt1",      false, true },
-		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
-		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
-		{ "GL_ARB_texture_float",                 false, true },
-		{ "GL_OES_texture_float",                 false, true },
-		{ "GL_OES_texture_float_linear",          false, true },
-		{ "GL_OES_texture_half_float",            false, true },
-		{ "GL_OES_texture_half_float_linear",     false, true },
-		{ "GL_EXT_texture_type_2_10_10_10_REV",   false, true },
-		{ "GL_EXT_texture_sRGB",                  false, true },
-		{ "GL_OES_standard_derivatives",          false, true },
-		{ "GL_ARB_get_program_binary",            false, true },
-		{ "GL_OES_get_program_binary",            false, false },
-		{ "GL_EXT_framebuffer_blit",              false, true },
-		{ "GL_ARB_timer_query",                   false, true },
-		{ "GL_EXT_timer_query",                   false, true },
-		{ "GL_ARB_framebuffer_sRGB",              false, true },
-		{ "GL_EXT_framebuffer_sRGB",              false, true },
-		{ "GL_ARB_multisample",                   false, true },
-		{ "GL_CHROMIUM_framebuffer_multisample",  false, true },
-		{ "GL_ANGLE_translated_shader_source",    false, true },
-		{ "GL_ARB_instanced_arrays",              false, true },
-		{ "GL_ANGLE_instanced_arrays",            false, true },
-		{ "GL_ARB_half_float_vertex",             false, true },
-		{ "GL_OES_vertex_half_float",             false, true },
-		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false, true },
-		{ "GL_OES_vertex_type_10_10_10_2",        false, true },
-		{ "GL_EXT_occlusion_query_boolean",       false, true },
-		{ "GL_ARB_vertex_array_object",           false, true },
-		{ "GL_ATI_meminfo",                       false, true },
-		{ "GL_NVX_gpu_memory_info",               false, true },
-	};
 
 	static const GLenum s_primType[] =
 	{
@@ -966,21 +1059,21 @@ namespace bgfx
 
 		if (s_renderCtx.m_programBinarySupport)
 		{
-			uint32_t length;
-			g_cache(id, false, NULL, length);
+			uint32_t length = g_callback->cacheReadSize(id);
 			cached = length > 0;
 
 			if (cached)
 			{
 				void* data = g_realloc(NULL, length);
-				g_cache(id, false, data, length);
+				if (g_callback->cacheRead(id, data, length) )
+				{
+					bx::MemoryReader reader(data, length);
 
-				bx::MemoryReader reader(data, length);
+					GLenum format;
+					bx::read(&reader, format);
 
-				GLenum format;
-				bx::read(&reader, format);
-
-				GL_CHECK(glProgramBinary(m_id, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
+					GL_CHECK(glProgramBinary(m_id, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
+				}
 
 				g_free(data);
 			}
@@ -1022,7 +1115,7 @@ namespace bgfx
 					GL_CHECK(glGetProgramBinary(m_id, programLength, NULL, &format, &data[4]) );
 					*(uint32_t*)data = format;
 
-					g_cache(id, true, data, length);
+					g_callback->cacheWrite(id, data, length);
 
 					g_free(data);
 				}
@@ -1344,8 +1437,22 @@ namespace bgfx
 				if (GL_RGBA == internalFmt
 				||  decompress)
 				{
+					internalFmt = GL_RGBA;
 					m_fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
+
 				}
+
+				bool swizzle = GL_RGBA == m_fmt;
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+				if (swizzle
+				&& (s_extension[Extension::ARB_texture_swizzle].m_supported || s_extension[Extension::EXT_texture_swizzle].m_supported) )
+				{
+					swizzle = false;
+					GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
+					GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
+				}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 				m_type = tfi.m_type;
 				if (decompress)
@@ -1353,7 +1460,7 @@ namespace bgfx
 					m_type = GL_UNSIGNED_BYTE;
 				}
 
-				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp/8);
+				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*4);
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
@@ -1372,21 +1479,9 @@ namespace bgfx
 						{
 							mip.decode(bits);
 
-							if (GL_RGBA == internalFmt)
+							if (swizzle)
 							{
-								uint32_t dstpitch = width*4;
-								for (uint32_t yy = 0; yy < height; ++yy)
-								{
-									uint8_t* dst = &bits[yy*dstpitch];
-
-									for (uint32_t xx = 0; xx < width; ++xx)
-									{
-										uint8_t tmp = dst[0];
-										dst[0] = dst[2];
-										dst[2] = tmp;
-										dst += 4;
-									}
-								}
+								rgbaToBgra(bits, width, height);
 							}
 
 							texImage(target+side
@@ -2881,6 +2976,10 @@ namespace bgfx
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
 
+		int64_t captureElapsed = -bx::getHPCounter();
+		s_renderCtx.capture();
+		captureElapsed += bx::getHPCounter();
+
 		static int64_t last = now;
 		int64_t frameTime = now - last;
 		last = now;
@@ -2908,7 +3007,6 @@ namespace bgfx
 				next = now + bx::getHPFrequency();
 				double freq = double(bx::getHPFrequency() );
 				double toMs = 1000.0/freq;
-				double elapsedCpuMs = double(elapsed)*toMs;
 
 				tvm.clear();
 				uint16_t pos = 10;
@@ -2919,6 +3017,8 @@ namespace bgfx
 					, double(max)*toMs
 					, freq/frameTime
 					);
+
+				double elapsedCpuMs = double(elapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms] %c GPU %3.4f [ms]"
 					, m_render->m_num
 					, elapsedCpuMs
@@ -2930,6 +3030,10 @@ namespace bgfx
 					, statsNumInstances
 					, statsNumPrimsSubmitted
 					);
+
+				double captureMs = double(captureElapsed)*toMs;
+				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
+
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);

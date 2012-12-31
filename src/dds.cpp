@@ -437,7 +437,7 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 			break;
 
 		case D3DFMT_A16B16G16R16F:
-			type = TextureFormat::ABGR16;
+			type = TextureFormat::RGBA16;
 			blockSize = 8;
 			bpp = 64;
 			break;
@@ -448,13 +448,13 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		switch (pixelFlags)
 		{
 		case DDPF_RGB:
-			type = TextureFormat::XRGB8;
+			type = TextureFormat::BGRX8;
 			blockSize = 3;
 			bpp = 24;
 			break;
 
 		case DDPF_RGB|DDPF_ALPHAPIXELS:
-			type = TextureFormat::ARGB8;
+			type = TextureFormat::BGRA8;
 			blockSize = 4;
 			bpp = 32;
 			break;

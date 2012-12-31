@@ -37,14 +37,56 @@ namespace bgfx
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
-	void fatalStub(Fatal::Enum _code, const char* _str)
+	struct CallbackStub : public CallbackI
 	{
-		BX_TRACE("0x%08x: %s", _code, _str);
-		BX_UNUSED(_code);
-		BX_UNUSED(_str);
-	}
+		virtual ~CallbackStub()
+		{
+		}
 
-	void* reallocStub(void* _ptr, size_t _size)
+		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
+		{
+			BX_TRACE("0x%08x: %s", _code, _str);
+			BX_UNUSED(_code);
+			BX_UNUSED(_str);
+			abort();
+		}
+
+		virtual uint32_t cacheReadSize(uint64_t /*_id*/) BX_OVERRIDE
+		{
+			return 0;
+		}
+
+		virtual bool cacheRead(uint64_t /*_id*/, void* /*_data*/, uint32_t /*_size*/) BX_OVERRIDE
+		{
+			return false;
+		}
+
+		virtual void cacheWrite(uint64_t /*_id*/, const void* /*_data*/, uint32_t /*_size*/) BX_OVERRIDE
+		{
+		}
+
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
+		{
+			saveTga(_filePath, _width, _height, _pitch, _data, false, _yflip);
+		}
+
+		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
+		{
+			BX_TRACE("Warning: using capture without callback (a.k.a. pointless).");
+		}
+
+		virtual void captureEnd() BX_OVERRIDE
+		{
+		}
+
+		virtual void captureFrame(const void* /*_data*/, uint32_t /*_size*/) BX_OVERRIDE
+		{
+		}
+	};
+	
+	static CallbackStub s_callbackStub;
+
+	static void* reallocStub(void* _ptr, size_t _size)
 	{
 		void* ptr = ::realloc(_ptr, _size);
 		BX_CHECK(NULL != ptr, "Out of memory!");
@@ -52,21 +94,15 @@ namespace bgfx
 		return ptr;
 	}
 
-	void freeStub(void* _ptr)
+	static void freeStub(void* _ptr)
 	{
 		//	BX_TRACE("free %p", _ptr);
 		::free(_ptr);
 	}
 
-	void cacheStub(uint64_t /*_id*/, bool /*_store*/, void* /*_data*/, uint32_t& _length)
-	{
-		_length = 0;
-	}
-
-	FatalFn g_fatal = fatalStub;
+	CallbackI* g_callback = &s_callbackStub;
 	ReallocFn g_realloc = reallocStub;
 	FreeFn g_free = freeStub;
-	CacheFn g_cache = cacheStub;
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context s_ctx;
@@ -82,7 +118,7 @@ namespace bgfx
 
 		temp[sizeof(temp)-1] = '\0';
 
-		g_fatal(_code, temp);
+		g_callback->fatal(_code, temp);
 	}
 
 	inline void vec4MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
@@ -150,7 +186,7 @@ namespace bgfx
 			uint32_t dstPitch = _width*bpp/8;
 			if (_yflip)
 			{
-				uint8_t* data = (uint8_t*)_src + dstPitch*_height - _srcPitch;
+				uint8_t* data = (uint8_t*)_src + _srcPitch*_height - _srcPitch;
 				for (uint32_t yy = 0; yy < _height; ++yy)
 				{
 					fwrite(data, dstPitch, 1, file);
@@ -520,11 +556,11 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
-	void init(FatalFn _fatal, ReallocFn _realloc, FreeFn _free, CacheFn _cache)
+	void init(CallbackI* _callback, ReallocFn _realloc, FreeFn _free)
 	{
-		if (NULL != _fatal)
+		if (NULL != _callback)
 		{
-			g_fatal = _fatal;
+			g_callback = _callback;
 		}
 
 		if (NULL != _realloc
@@ -532,11 +568,6 @@ namespace bgfx
 		{
 			g_realloc = _realloc;
 			g_free = _free;
-		}
-
-		if (NULL != _cache)
-		{
-			g_cache = _cache;
 		}
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
@@ -551,10 +582,9 @@ namespace bgfx
 		s_ctx.shutdown();
 
 		s_threadIndex = 0;
-		g_fatal = fatalStub;
+		g_callback = &s_callbackStub;
 		g_realloc = reallocStub;
 		g_free = freeStub;
-		g_cache = cacheStub;
 	}
 
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags)

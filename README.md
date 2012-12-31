@@ -131,6 +131,10 @@ Loading textures.
 
 ![example-06-bump](https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png)
 
+### 07-callback
+Implementing application specific callbacks for taking screen shots, caching
+OpenGL binary shaders, and video capture.
+
 Internals
 ---------
 

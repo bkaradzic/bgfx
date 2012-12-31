@@ -220,6 +220,7 @@
 #define BGFX_RESET_MSAA_SHIFT           4
 #define BGFX_RESET_MSAA_MASK            UINT32_C(0x00000070)
 #define BGFX_RESET_VSYNC                UINT32_C(0x00000080)
+#define BGFX_RESET_CAPTURE              UINT32_C(0x00000100)
 
 ///
 #define BGFX_HANDLE(_name) struct _name { uint16_t idx; }
@@ -301,9 +302,9 @@ namespace bgfx
 			Dxt5,
 			Unknown,
 			L8,
-			XRGB8,
-			ARGB8,
-			ABGR16,
+			BGRX8,
+			BGRA8,
+			RGBA16,
 			R5G6B5,
 			RGBA4,
 			RGB5A1,
@@ -347,10 +348,47 @@ namespace bgfx
 	BGFX_HANDLE(VertexDeclHandle);
 	BGFX_HANDLE(VertexShaderHandle);
 
-	typedef void (*FatalFn)(Fatal::Enum _code, const char* _str);
 	typedef void* (*ReallocFn)(void* _ptr, size_t _size);
 	typedef void (*FreeFn)(void* _ptr);
-	typedef void (*CacheFn)(uint64_t _id, bool _store, void* _data, uint32_t& _length);
+
+	/// Callback interface to implement application specific behavior.
+	/// Cached items are currently used only when for OpenGL binary shaders.
+	///
+	/// NOTE: Callback functions can be called from any thread.
+	struct CallbackI
+	{
+		virtual ~CallbackI() = 0;
+
+		/// Called on unrecoverable error. It's not safe to continue, inform
+		/// user and terminate application from this call.
+		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
+
+		/// Return size of for cached item. Return 0 if no cached item was
+		/// found.
+		virtual uint32_t cacheReadSize(uint64_t _id) = 0;
+
+		/// Read cached item.
+		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) = 0;
+
+		/// Write cached item.
+		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) = 0;
+
+		/// Screenshot captured. Screenshot format is always 4-byte BGRA.
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) = 0;
+
+		/// Called when capture begins.
+		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, bool _yflip) = 0;
+
+		/// Called when capture ends.
+		virtual void captureEnd() = 0;
+
+		/// Captured frame.
+		virtual void captureFrame(const void* _data, uint32_t _size) = 0;
+	};
+
+	inline CallbackI::~CallbackI()
+	{
+	}
 
 	struct Memory
 	{
@@ -394,6 +432,7 @@ namespace bgfx
 		uint16_t depth;
 	};
 
+	/// Vertex declaration.
 	struct VertexDecl
 	{
 		/// Start VertexDecl.
@@ -430,7 +469,7 @@ namespace bgfx
 	RendererType::Enum getRendererType();
 
 	/// Initialize bgfx library.
-	void init(FatalFn _fatal = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL, CacheFn _cache = NULL);
+	void init(CallbackI* _callback = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL);
 
 	/// Shutdown bgfx library.
 	void shutdown();

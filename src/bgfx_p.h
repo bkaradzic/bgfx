@@ -177,10 +177,9 @@ namespace bgfx
 	};
 
 	extern const uint32_t g_uniformTypeSize[UniformType::Count];
-	extern FatalFn g_fatal;
+	extern CallbackI* g_callback;
 	extern ReallocFn g_realloc;
 	extern FreeFn g_free;
-	extern CacheFn g_cache;
 
 	void fatal(Fatal::Enum _code, const char* _format, ...);
 	void release(const Memory* _mem);

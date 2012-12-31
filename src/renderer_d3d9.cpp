@@ -656,6 +656,8 @@ namespace bgfx
 			DX_RELEASE(m_backBufferColor, 0);
 			DX_RELEASE(m_backBufferDepthStencil, 0);
 
+			capturePreReset();
+
 			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].preReset();
@@ -677,6 +679,8 @@ namespace bgfx
 			DX_CHECK(m_device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_backBufferColor) );
 			DX_CHECK(m_device->GetDepthStencilSurface(&m_backBufferDepthStencil) );
 
+			capturePostReset();
+
 			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].postReset();
@@ -690,6 +694,89 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
 			{
 				m_renderTargets[ii].postReset();
+			}
+		}
+
+		void capturePreReset()
+		{
+			if (NULL != m_captureSurface)
+			{
+				g_callback->captureEnd();
+			}
+			DX_RELEASE(m_captureSurface, 1);
+			DX_RELEASE(m_captureTexture, 0);
+			DX_RELEASE(m_captureResolve, 0);
+		}
+
+		void capturePostReset()
+		{
+			if (m_flags&BGFX_RESET_CAPTURE)
+			{
+				uint32_t width = m_params.BackBufferWidth;
+				uint32_t height = m_params.BackBufferHeight;
+				D3DFORMAT fmt = m_params.BackBufferFormat;
+
+				DX_CHECK(m_device->CreateTexture(width
+					, height
+					, 1
+					, 0
+					, fmt
+					, D3DPOOL_SYSTEMMEM
+					, &m_captureTexture
+					, NULL
+					) );
+
+				DX_CHECK(m_captureTexture->GetSurfaceLevel(0
+					, &m_captureSurface
+					) );
+
+				if (m_params.MultiSampleType != D3DMULTISAMPLE_NONE)
+				{
+					DX_CHECK(m_device->CreateRenderTarget(width
+						, height
+						, fmt
+						, D3DMULTISAMPLE_NONE
+						, 0
+						, false
+						, &m_captureResolve
+						, NULL
+						) );
+				}
+
+				g_callback->captureBegin(width, height, width*4, TextureFormat::BGRA8, false);
+			}
+		}
+
+		void capture()
+		{
+			if (NULL != m_captureSurface)
+			{
+				IDirect3DSurface9* resolve = m_backBufferColor;
+
+				if (NULL != m_captureResolve)
+				{
+					resolve = m_captureResolve;
+					DX_CHECK(m_device->StretchRect(m_backBufferColor
+						, 0
+						, m_captureResolve
+						, NULL
+						, D3DTEXF_NONE
+						) );
+				}
+
+				HRESULT hr = m_device->GetRenderTargetData(resolve, m_captureSurface);
+				if (SUCCEEDED(hr) )
+				{
+					D3DLOCKED_RECT rect;
+					DX_CHECK(m_captureSurface->LockRect(&rect
+						, NULL
+						, D3DLOCK_NO_DIRTY_UPDATE|D3DLOCK_NOSYSLOCK|D3DLOCK_READONLY
+						) );
+
+					g_callback->captureFrame(rect.pBits, m_params.BackBufferHeight*rect.Pitch);
+
+					DX_CHECK(m_captureSurface->UnlockRect() );
+				}
 			}
 		}
 
@@ -727,7 +814,15 @@ namespace bgfx
 			ClientToScreen(g_bgfxHwnd, &point);
 			uint8_t* data = (uint8_t*)rect.pBits;
 			uint32_t bytesPerPixel = rect.Pitch/dm.Width;
-			saveTga( (const char*)_mem->data, m_params.BackBufferWidth, m_params.BackBufferHeight, rect.Pitch, &data[point.y*rect.Pitch+point.x*bytesPerPixel]);
+
+			g_callback->screenShot( (const char*)_mem->data
+				, m_params.BackBufferWidth
+				, m_params.BackBufferHeight
+				, rect.Pitch
+				, &data[point.y*rect.Pitch+point.x*bytesPerPixel]
+				, m_params.BackBufferHeight*rect.Pitch
+				, false
+				);
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
@@ -752,6 +847,11 @@ namespace bgfx
 
 		IDirect3DSurface9* m_backBufferColor;
 		IDirect3DSurface9* m_backBufferDepthStencil;
+
+		IDirect3DTexture9* m_captureTexture;
+		IDirect3DSurface9* m_captureSurface;
+		IDirect3DSurface9* m_captureResolve;
+
 		IDirect3DVertexDeclaration9* m_instanceDataDecls[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		HMODULE m_d3d9dll;
@@ -2490,6 +2590,10 @@ namespace bgfx
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
 
+		int64_t captureElapsed = -bx::getHPCounter();
+		s_renderCtx.capture();
+		captureElapsed += bx::getHPCounter();
+
 		static int64_t last = now;
 		int64_t frameTime = now - last;
 		last = now;
@@ -2513,7 +2617,6 @@ namespace bgfx
 
 				double freq = double(bx::getHPFrequency() );
 				double toMs = 1000.0/freq;
-				double elapsedCpuMs = double(elapsed)*toMs;
 
 				tvm.clear();
 				uint16_t pos = 10;
@@ -2524,6 +2627,8 @@ namespace bgfx
 					, double(max)*toMs
 					, freq/frameTime
 					);
+
+				double elapsedCpuMs = double(elapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms]"
 					, m_render->m_num
 					, elapsedCpuMs
@@ -2533,6 +2638,9 @@ namespace bgfx
 					, statsNumInstances
 					, statsNumPrimsSubmitted
 					);
+
+				double captureMs = double(captureElapsed)*toMs;
+				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);

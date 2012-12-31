@@ -405,6 +405,8 @@ namespace bgfx
 			DX_RELEASE(m_backBufferColor, 0);
 
 //			invalidateCache();
+
+			capturePreReset();
 		}
 
 		void postReset()
@@ -436,6 +438,8 @@ namespace bgfx
 
 			m_currentColor = m_backBufferColor;
 			m_currentDepthStencil = m_backBufferDepthStencil;
+
+			capturePostReset();
 		}
 
 		void flip()
@@ -761,6 +765,18 @@ namespace bgfx
 			commitTextureStage();
 		}
 
+		void capturePreReset()
+		{
+		}
+
+		void capturePostReset()
+		{
+		}
+
+		void capture()
+		{
+		}
+
 		void saveScreenShot(Memory* _mem)
 		{
 			ID3D11Texture2D* backBuffer;
@@ -801,7 +817,14 @@ namespace bgfx
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
-				saveTga( (const char*)_mem->data, backBufferDesc.Width, backBufferDesc.Height, mapped.RowPitch, mapped.pData);
+				g_callback->screenShot( (const char*)_mem->data
+					, backBufferDesc.Width
+					, backBufferDesc.Height
+					, mapped.RowPitch
+					, mapped.pData
+					, backBufferDesc.Height*mapped.RowPitch
+					, false
+					);
 				m_deviceCtx->Unmap(texture, 0);
 
 				DX_RELEASE(texture, 0);
@@ -1354,7 +1377,7 @@ namespace bgfx
 			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
-			bool convert = TextureFormat::XRGB8 == dds.m_type;
+			bool convert = false;
 
 			m_numMips = dds.m_numMips;
 
@@ -1362,6 +1385,7 @@ namespace bgfx
 			||  TextureFormat::Unknown < dds.m_type)
 			{
 				uint32_t bpp = s_textureFormat[dds.m_type].m_bpp;
+				convert = TextureFormat::BGRX8 == dds.m_type;
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
@@ -1380,7 +1404,7 @@ namespace bgfx
 						{
 							if (convert)
 							{
-								uint8_t* temp = (uint8_t*)g_realloc(NULL, mip.m_width*bpp*mip.m_height/8);
+								uint8_t* temp = (uint8_t*)g_realloc(NULL, mip.m_width*mip.m_height*bpp/8);
 								mip.decode(temp);
 
 								srd[kk].pSysMem = temp;

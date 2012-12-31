@@ -7,14 +7,9 @@
 #include <bx/bx.h>
 #include "../common/dbg.h"
 
-void fatalCb(bgfx::Fatal::Enum _code, const char* _str)
-{
-	DBG("%x: %s", _code, _str);
-}
-
 int _main_(int _argc, char** _argv)
 {
-	bgfx::init(fatalCb);
+	bgfx::init();
 	bgfx::reset(1280, 720);
 
 	// Enable debug text.

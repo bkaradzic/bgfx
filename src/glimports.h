@@ -18,6 +18,7 @@ GL_IMPORT(false, PFNGLTEXIMAGE2DPROC,                     glTexImage2D);
 GL_IMPORT(false, PFNGLTEXSUBIMAGE2DPROC,                  glTexSubImage2D);
 GL_IMPORT(false, PFNGLPIXELSTOREI,                        glPixelStorei);
 GL_IMPORT(false, PFNGLTEXPARAMETERIPROC,                  glTexParameteri);
+GL_IMPORT(false, PFNGLTEXPARAMETERIVPROC,                 glTexParameteriv);
 GL_IMPORT(false, PFNGLTEXPARAMETERFPROC,                  glTexParameterf);
 GL_IMPORT(false, PFNGLBINDTEXTUREPROC,                    glBindTexture);
 GL_IMPORT(false, PFNGLGENTEXTURESPROC,                    glGenTextures);
