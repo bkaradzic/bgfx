@@ -521,6 +521,7 @@ int main(int _argc, const char* _argv[])
 					if (!result.second)
 					{
 						Index3& oldIndex = result.first->second;
+						BX_UNUSED(oldIndex);
 						BX_CHECK(oldIndex.m_position == index.m_position
 							&& oldIndex.m_texcoord == index.m_texcoord
 							&& oldIndex.m_normal == index.m_normal
@@ -968,7 +969,7 @@ int main(int _argc, const char* _argv[])
 		write(&writer, vertexData, numVertices, decl, indexData, numIndices, material, primitives);
 	}
 
-	printf("size: %d\n", writer.seek() );
+	printf("size: %d\n", uint32_t(writer.seek() ) );
 	writer.close();
 
 	delete [] indexData;
@@ -982,7 +983,7 @@ int main(int _argc, const char* _argv[])
 		, double(triReorderElapsed)/bx::getHPFrequency()
 		, double(convertElapsed)/bx::getHPFrequency()
 		, num
-		, groups.size()
+		, uint32_t(groups.size() )
 		, numPrimitives
 		, numVertices
 		, numIndices
