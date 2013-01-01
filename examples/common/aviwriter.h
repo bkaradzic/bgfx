@@ -91,8 +91,8 @@ struct AviWriter
 		bx::write(&m_writer, UINT16_C(0) );      // wPriority
 		bx::write(&m_writer, UINT16_C(0) );      // wLanguage
 		bx::write(&m_writer, UINT32_C(0) );      // dwInitialFrames
-		bx::write(&m_writer, UINT32_C(1000) );   // dwScale
-		bx::write(&m_writer, 1000*_fps);         // dwRate
+		bx::write(&m_writer, UINT32_C(1) );      // dwScale
+		bx::write(&m_writer, _fps);              // dwRate
 		bx::write(&m_writer, UINT32_C(0) );      // dwStart
 
 		m_lengthOffset = m_writer.seek();
@@ -137,19 +137,24 @@ struct AviWriter
 		{
 			int64_t pos = m_writer.seek();
 			m_writer.seek(m_moviListOffset, bx::Whence::Begin);
-			bx::write(&m_writer, uint32_t(pos-m_moviListOffset+4) );
+			bx::write(&m_writer, uint32_t(pos-m_moviListOffset-4) );
 			m_writer.seek(pos, bx::Whence::Begin);
 
 			bx::write(&m_writer, BX_MAKEFOURCC('i', 'd', 'x', '1') );
-			bx::write(&m_writer, UINT32_C(16) );
-			bx::write(&m_writer, BX_MAKEFOURCC('0', '0', 'd', 'b') );
-			bx::write(&m_writer, UINT32_C(16) );
-			bx::write(&m_writer, UINT32_C(4) );
-			bx::write(&m_writer, m_frameSize);
+			bx::write(&m_writer, m_numFrames*16);
+
+			for (uint32_t ii = 0, offset = 4; ii < m_numFrames; ++ii)
+			{
+				bx::write(&m_writer, BX_MAKEFOURCC('0', '0', 'd', 'b') );
+				bx::write(&m_writer, UINT32_C(16) );
+				bx::write(&m_writer, offset);
+				bx::write(&m_writer, m_frameSize);
+				offset += m_frameSize + 8;
+			}
 
 			pos = m_writer.seek();
 			m_writer.seek(m_riffSizeOffset, bx::Whence::Begin);
-			bx::write(&m_writer, uint32_t(pos-m_riffSizeOffset+4) );
+			bx::write(&m_writer, uint32_t(pos-m_riffSizeOffset-4) );
 
 			m_writer.seek(m_totalFramesOffset, bx::Whence::Begin);
 			bx::write(&m_writer, m_numFrames);

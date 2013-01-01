@@ -1924,6 +1924,9 @@ namespace bgfx
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
+		int64_t elapsed = -bx::getHPCounter();
+		int64_t captureElapsed = 0;
+
 		if (0 < m_render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = m_render->m_transientIb;
@@ -1965,8 +1968,6 @@ namespace bgfx
 		uint32_t statsNumIndices = 0;
 		uint32_t statsNumInstances = 0;
 		uint32_t statsNumPrimsRendered = 0;
-
-		int64_t elapsed = -bx::getHPCounter();
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -2380,6 +2381,13 @@ namespace bgfx
 					statsNumPrimsRendered += numPrimsRendered;
 				}
 			}
+
+			if (0 < m_render->m_num)
+			{
+				captureElapsed = -bx::getHPCounter();
+				s_renderCtx.capture();
+				captureElapsed += bx::getHPCounter();
+			}
 		}
 
 		int64_t now = bx::getHPCounter();
@@ -2407,7 +2415,6 @@ namespace bgfx
 				next = now + bx::getHPFrequency();
 				double freq = double(bx::getHPFrequency() );
 				double toMs = 1000.0/freq;
-				double elapsedCpuMs = double(elapsed)*toMs;
 
 				tvm.clear();
 				uint16_t pos = 10;
@@ -2418,6 +2425,8 @@ namespace bgfx
 					, double(max)*toMs
 					, freq/frameTime
 					);
+
+				double elapsedCpuMs = double(elapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms]"
 					, m_render->m_num
 					, elapsedCpuMs
@@ -2427,6 +2436,9 @@ namespace bgfx
 					, statsNumInstances
 					, statsNumPrimsSubmitted
 					);
+
+				double captureMs = double(captureElapsed)*toMs;
+				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);

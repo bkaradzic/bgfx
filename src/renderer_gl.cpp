@@ -2352,6 +2352,8 @@ namespace bgfx
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
 		int64_t elapsed = -bx::getHPCounter();
+		int64_t captureElapsed = 0;
+
 #if BGFX_CONFIG_RENDERER_OPENGL
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
@@ -2972,14 +2974,17 @@ namespace bgfx
 					}
 				}
 			}
+
+			if (0 < m_render->m_num)
+			{
+				captureElapsed = -bx::getHPCounter();
+				s_renderCtx.capture();
+				captureElapsed += bx::getHPCounter();
+			}
 		}
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
-
-		int64_t captureElapsed = -bx::getHPCounter();
-		s_renderCtx.capture();
-		captureElapsed += bx::getHPCounter();
 
 		static int64_t last = now;
 		int64_t frameTime = now - last;

@@ -1997,6 +1997,9 @@ namespace bgfx
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
+		int64_t elapsed = -bx::getHPCounter();
+		int64_t captureElapsed = 0;
+
 		device->BeginScene();
 
 		if (0 < m_render->m_iboffset)
@@ -2037,8 +2040,6 @@ namespace bgfx
 		uint32_t statsNumIndices = 0;
 		uint32_t statsNumInstances = 0;
 		uint32_t statsNumPrimsRendered = 0;
-
-		int64_t elapsed = -bx::getHPCounter();
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -2586,14 +2587,17 @@ namespace bgfx
 			}
 
 			PIX_ENDEVENT();
+
+			if (0 < m_render->m_num)
+			{
+				captureElapsed = -bx::getHPCounter();
+				s_renderCtx.capture();
+				captureElapsed += bx::getHPCounter();
+			}
 		}
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
-
-		int64_t captureElapsed = -bx::getHPCounter();
-		s_renderCtx.capture();
-		captureElapsed += bx::getHPCounter();
 
 		static int64_t last = now;
 		int64_t frameTime = now - last;
