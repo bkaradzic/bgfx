@@ -163,6 +163,7 @@ namespace bgfx
 
 		switch (type)
 		{
+		default:
 		case AttribType::Uint8:
 			{
 				uint8_t* packed = (uint8_t*)data;
@@ -279,6 +280,7 @@ namespace bgfx
 
 		switch (type)
 		{
+		default:
 		case AttribType::Uint8:
 			{
 				uint8_t* packed = (uint8_t*)data;
