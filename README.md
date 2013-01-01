@@ -139,12 +139,13 @@ Internals
 ---------
 
 bgfx is using sort-based draw call bucketing. This means that submition order
-doesn't necessarily matches the rendering order. On the high level this allows
-submitting draw calls for all passes at one place, but on the low-level they
-will be sorted and ordered correctly. This sometimes creates undesired results
-usually for GUI rendering, where draw order should usually match submit order.
-bgfx provides way to enable sequential rendering for these cases (see 
-`bgfx::setViewSeq`).
+doesn't necessarily matches the rendering order, but on the low-level they
+will be sorted and ordered correctly. On the high level this allows
+more optimal way of submitting draw calls for all passes at one place, and on
+the low-level this allows better optimization of rendering order. This sometimes
+creates undesired results usually for GUI rendering, where draw order should
+usually match submit order. bgfx provides way to enable sequential rendering for
+these cases (see `bgfx::setViewSeq`).
 
 Internally all low-level rendering draw calls are issued inside single function
 `Context::rendererSubmit`. This function exist inside each renderer backend
@@ -222,7 +223,7 @@ https://github.com/bkaradzic/bgfx
 3rd Party Libraries
 -------------------
 
-All required 3rd party libraries are included in bgfx repository in [3rdparty/](3rdparty/)
+All required 3rd party libraries are included in bgfx repository in [3rdparty/](https://github.com/bkaradzic/bgfx/tree/master/3rdparty)
 directory.
 
 ### edtaa3 (MIT)
