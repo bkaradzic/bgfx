@@ -750,9 +750,6 @@ int main(int _argc, const char* _argv[])
 
 	uint32_t positionOffset = decl.getOffset(bgfx::Attrib::Position);
 	uint32_t color0Offset = decl.getOffset(bgfx::Attrib::Color0);
-	uint32_t normalOffset = decl.getOffset(bgfx::Attrib::Normal);
-	uint32_t tangentOffset = decl.getOffset(bgfx::Attrib::Tangent);
-	uint32_t texcoord0Offset = decl.getOffset(bgfx::Attrib::TexCoord0);
 
 	uint32_t ii = 0;
 	for (GroupArray::const_iterator groupIt = groups.begin(); groupIt != groups.end(); ++groupIt, ++ii)
@@ -883,7 +880,7 @@ int main(int _argc, const char* _argv[])
 		write(&writer, vertexData, numVertices, decl, indexData, numIndices, material, primitives);
 	}
 
-	printf("size: %d\n", writer.seek() );
+	printf("size: %d\n", uint32_t(writer.seek() ) );
 	writer.close();
 
 	delete [] indexData;
@@ -897,7 +894,7 @@ int main(int _argc, const char* _argv[])
 		, double(triReorderElapsed)/bx::getHPFrequency()
 		, double(convertElapsed)/bx::getHPFrequency()
 		, num
-		, groups.size()
+		, uint32_t(groups.size() )
 		, numPrimitives
 		, numVertices
 		, numIndices
