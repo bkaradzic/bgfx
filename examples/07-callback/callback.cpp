@@ -329,7 +329,10 @@ struct BgfxCallback : public bgfx::CallbackI
 
 	virtual void fatal(bgfx::Fatal::Enum _code, const char* _str) BX_OVERRIDE
 	{
+		// Something unexpected happened, inform user and bail out.
 		dbgPrintf("Fatal error: 0x%08x: %s", _code, _str);
+
+		// Must terminate, continuing will cause crash anyway.
 		abort();
 	}
 
@@ -337,14 +340,18 @@ struct BgfxCallback : public bgfx::CallbackI
 	{
 		char filePath[256];
 		bx::snprintf(filePath, sizeof(filePath), "%016" PRIx64, _id);
+
+		// Use cache id as filename.
 		FILE* file = fopen(filePath, "rb");
 		if (NULL != file)
 		{
 			uint32_t size = fsize(file);
 			fclose(file);
+			// Return size of shader file.
 			return size;
 		}
 
+		// Return 0 if shader is not found.
 		return 0;
 	}
 
@@ -352,14 +359,20 @@ struct BgfxCallback : public bgfx::CallbackI
 	{
 		char filePath[256];
 		bx::snprintf(filePath, sizeof(filePath), "%016" PRIx64, _id);
+
+		// Use cache id as filename.
 		FILE* file = fopen(filePath, "rb");
 		if (NULL != file)
 		{
+			// Read shader.
 			size_t result = fread(_data, 1, _size, file);
 			fclose(file);
+
+			// Make sure that read size matches requested size.
 			return result == _size;
 		}
 
+		// Shader is not found in cache, needs to be rebuilt.
 		return false;
 	}
 
@@ -368,9 +381,11 @@ struct BgfxCallback : public bgfx::CallbackI
 		char filePath[256];
 		bx::snprintf(filePath, sizeof(filePath), "%016" PRIx64, _id);
 
+		// Use cache id as filename.
 		FILE* file = fopen(filePath, "wb");
 		if (NULL != file)
 		{
+			// Write shader to cache location.
 			fwrite(_data, 1, _size, file);
 			fclose(file);
 		}
@@ -378,6 +393,7 @@ struct BgfxCallback : public bgfx::CallbackI
 
 	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
 	{
+		// Save screen shot as TGA.
 		saveTga(_filePath, _width, _height, _pitch, _data, false, _yflip);
 	}
 
@@ -556,7 +572,7 @@ int _main_(int _argc, char** _argv)
 			}
 		}
 
-		// Take screenshot at frame 150.
+		// Take screen shot at frame 150.
 		if (150 == frame)
 		{
 			bgfx::saveScreenShot("frame150.tga");

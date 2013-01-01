@@ -1269,7 +1269,8 @@ namespace bgfx
 			uint8_t num;
 			AttribType::Enum type;
 			bool normalized;
-			_vertexDecl.decode(attr, num, type, normalized);
+			bool asInt;
+			_vertexDecl.decode(attr, num, type, normalized, asInt);
 
 			if (-1 != loc
 			&&  0xff != _vertexDecl.m_attributes[attr])

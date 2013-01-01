@@ -1045,7 +1045,8 @@ namespace bgfx
 				uint8_t num;
 				AttribType::Enum type;
 				bool normalized;
-				_decl.decode(Attrib::Enum(attr), num, type, normalized);
+				bool asInt;
+				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
 				memcpy(elem, &s_attrib[attr], sizeof(D3DVERTEXELEMENT9) );
 

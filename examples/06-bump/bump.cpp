@@ -42,21 +42,6 @@ uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 	return un.ui32;
 }
 
-void unpackUint32(uint8_t _result[4], uint32_t _packed)
-{
-	union
-	{
-		uint32_t ui32;
-		uint8_t arr[4];
-	} un;
-
-	un.ui32	= _packed;
-	_result[0] = un.arr[0];
-	_result[1] = un.arr[1];
-	_result[2] = un.arr[2];
-	_result[3] = un.arr[3];
-}
-
 uint32_t packF4u(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
 {
 	const uint8_t xx = uint8_t(_x*127.0f + 128.0f);
@@ -64,16 +49,6 @@ uint32_t packF4u(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
 	const uint8_t zz = uint8_t(_z*127.0f + 128.0f);
 	const uint8_t ww = uint8_t(_w*127.0f + 128.0f);
 	return packUint32(xx, yy, zz, ww);
-}
-
-void unpackF4u(float _result[4], uint32_t _packed)
-{
-	uint8_t unpacked[4];
-	unpackUint32(unpacked, _packed);
-	_result[0] = (float(unpacked[0]) - 128.0f)/127.0f;
-	_result[1] = (float(unpacked[1]) - 128.0f)/127.0f;
-	_result[2] = (float(unpacked[2]) - 128.0f)/127.0f;
-	_result[3] = (float(unpacked[3]) - 128.0f)/127.0f;
 }
 
 static PosNormalTangentTexcoordVertex s_cubeVertices[24] =
@@ -172,18 +147,42 @@ static const bgfx::Memory* loadTexture(const char* _name)
 	return load(filePath);
 }
 
-template<typename Ty>
-void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices, uint16_t _numVertices)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
 {
+	struct PosTexcoord
+	{
+		float m_x;
+		float m_y;
+		float m_z;
+		float m_pad0;
+		float m_u;
+		float m_v;
+		float m_pad1;
+		float m_pad2;
+	};
+
 	float* tangents = new float[6*_numVertices];
 	memset(tangents, 0, 6*_numVertices*sizeof(float) );
+
+	PosTexcoord v0;
+	PosTexcoord v1;
+	PosTexcoord v2;
 
 	for (uint32_t ii = 0, num = _numIndices/3; ii < num; ++ii)
 	{
 		const uint16_t* indices = &_indices[ii*3];
-		const Ty& v0 = _vertices[indices[0] ];
-		const Ty& v1 = _vertices[indices[1] ];
-		const Ty& v2 = _vertices[indices[2] ];
+		uint32_t i0 = indices[0];
+		uint32_t i1 = indices[1];
+		uint32_t i2 = indices[2];
+
+		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _decl, _vertices, i0);
+		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i0);
+
+		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _decl, _vertices, i1);
+		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i1);
+
+		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _decl, _vertices, i2);
+		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i2);
 
 		const float bax = v1.m_x - v0.m_x;
 		const float bay = v1.m_y - v0.m_y;
@@ -224,12 +223,11 @@ void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices,
 
 	for (uint32_t ii = 0; ii < _numVertices; ++ii)
 	{
-		Ty& v0 = _vertices[ii];
 		const float* tanu = &tangents[ii*6];
 		const float* tanv = &tangents[ii*6 + 3];
 
 		float normal[4];
-		unpackF4u(normal, v0.m_normal);
+		bgfx::vertexUnpack(normal, bgfx::Attrib::Normal, _decl, _vertices, ii);
 		float ndt = vec3Dot(normal, tanu);
 
 		float nxt[3];
@@ -240,13 +238,13 @@ void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices,
 		tmp[1] = tanu[1] - normal[1] * ndt;
 		tmp[2] = tanu[2] - normal[2] * ndt;
 
-		float tangent[3];
+		float tangent[4];
 		vec3Norm(tangent, tmp);
 
-		float tw = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
-		v0.m_tangent = packF4u(tangent[0], tangent[1], tangent[2], tw);
+		tangent[3] = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
+		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
 	}
-}
+} 
 
 int _main_(int _argc, char** _argv)
 {
@@ -293,14 +291,14 @@ int _main_(int _argc, char** _argv)
 	// Create vertex stream declaration.
 	s_PosNormalTangentTexcoordDecl.begin();
 	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true);
-	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true);
+	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true, true);
+	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true, true);
 	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
 	s_PosNormalTangentTexcoordDecl.end();
 
 	const bgfx::Memory* mem;
 
-	calcTangents(s_cubeIndices, countof(s_cubeIndices), s_cubeVertices, countof(s_cubeVertices) );
+	calcTangents(s_cubeVertices, countof(s_cubeVertices), s_PosNormalTangentTexcoordDecl, s_cubeIndices, countof(s_cubeIndices) );
 
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );

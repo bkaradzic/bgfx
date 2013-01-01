@@ -442,10 +442,10 @@ namespace bgfx
 		void end();
 
 		/// Add attribute to VertexDecl. Note: Must be called between begin/end.
-		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false);
+		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
 
 		/// Decode attribute.
-		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized) const;
+		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const;
 
 		/// Returns true if VertexDecl contains attribute.
 		bool has(Attrib::Enum _attrib) const { return 0xff != m_attributes[_attrib]; }
@@ -464,6 +464,12 @@ namespace bgfx
 		uint16_t m_offset[Attrib::Count];
 		uint8_t m_attributes[Attrib::Count];
 	};
+
+	/// Pack vec4 into vertex stream format.
+	void vertexPack(const float _input[4], bool _inputNormalized, Attrib::Enum _attr, const VertexDecl& _decl, void* _data, uint32_t _index = 0);
+
+	/// Unpack vec4 from vertex stream format.
+	void vertexUnpack(float _output[4], Attrib::Enum _attr, const VertexDecl& _decl, const void* _data, uint32_t _index = 0);
 
 	/// Returns renderer backend API type.
 	RendererType::Enum getRendererType();

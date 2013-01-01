@@ -7,7 +7,10 @@
 
 namespace bgfx
 {
+	/// Returns attribute name.
 	const char* getAttribName(Attrib::Enum _attr);
+
+	/// Dump vertex declaration into debug output.
 	void dump(const VertexDecl& _decl);
 
 } // namespace bgfx

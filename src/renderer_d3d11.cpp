@@ -229,7 +229,8 @@ namespace bgfx
 					uint8_t num;
 					AttribType::Enum type;
 					bool normalized;
-					_decl.decode(Attrib::Enum(attr), num, type, normalized);
+					bool asInt;
+					_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 					elem->Format = s_attribType[type][num-1][normalized];
 					elem->AlignedByteOffset = _decl.m_offset[attr];
 				}

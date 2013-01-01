@@ -133,95 +133,42 @@ void triangleReorder(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVert
 	delete [] newIndexList;
 }
 
-uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
 {
-	union
+	struct PosTexcoord
 	{
-		uint32_t ui32;
-		uint8_t arr[4];
-	} un;
-
-	un.arr[0] = _x;
-	un.arr[1] = _y;
-	un.arr[2] = _z;
-	un.arr[3] = _w;
-
-	return un.ui32;
-}
-
-void unpackUint32(uint8_t _result[4], uint32_t _packed)
-{
-	union
-	{
-		uint32_t ui32;
-		uint8_t arr[4];
-	} un;
-
-	un.ui32	= _packed;
-	_result[0] = un.arr[0];
-	_result[1] = un.arr[1];
-	_result[2] = un.arr[2];
-	_result[3] = un.arr[3];
-}
-
-uint32_t packF4u(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
-{
-	const uint8_t xx = uint8_t(_x*127.0f + 128.0f);
-	const uint8_t yy = uint8_t(_y*127.0f + 128.0f);
-	const uint8_t zz = uint8_t(_z*127.0f + 128.0f);
-	const uint8_t ww = uint8_t(_w*127.0f + 128.0f);
-	return packUint32(xx, yy, zz, ww);
-}
-
-void unpackF4u(float _result[4], uint32_t _packed)
-{
-	uint8_t unpacked[4];
-	unpackUint32(unpacked, _packed);
-	_result[0] = (float(unpacked[0]) - 128.0f)/127.0f;
-	_result[1] = (float(unpacked[1]) - 128.0f)/127.0f;
-	_result[2] = (float(unpacked[2]) - 128.0f)/127.0f;
-	_result[3] = (float(unpacked[3]) - 128.0f)/127.0f;
-}
-
-uint32_t packF2h(float _x, float _y)
-{
-	union
-	{
-		uint32_t ui32;
-		uint16_t arr[2];
-	} un;
-
-	un.arr[0] = bx::halfFromFloat(_x);
-	un.arr[1] = bx::halfFromFloat(_y);
-
-	return un.ui32;
-}
-
-void unpackF2h(float _result[2], uint32_t _packed)
-{
-	union
-	{
-		uint32_t ui32;
-		uint16_t arr[2];
-	} un;
-
-	un.ui32 = _packed;
-	_result[0] = bx::halfToFloat(un.arr[0]);
-	_result[1] = bx::halfToFloat(un.arr[1]);
-}
-
-template<typename Ty>
-void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices, uint16_t _numVertices)
-{
+		float m_x;
+		float m_y;
+		float m_z;
+		float m_pad0;
+		float m_u;
+		float m_v;
+		float m_pad1;
+		float m_pad2;
+	};
+	
 	float* tangents = new float[6*_numVertices];
 	memset(tangents, 0, 6*_numVertices*sizeof(float) );
+
+	PosTexcoord v0;
+	PosTexcoord v1;
+	PosTexcoord v2;
 
 	for (uint32_t ii = 0, num = _numIndices/3; ii < num; ++ii)
 	{
 		const uint16_t* indices = &_indices[ii*3];
-		const Ty& v0 = _vertices[indices[0] ];
-		const Ty& v1 = _vertices[indices[1] ];
-		const Ty& v2 = _vertices[indices[2] ];
+		uint32_t i0 = indices[0];
+		uint32_t i1 = indices[1];
+		uint32_t i2 = indices[2];
+
+		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _decl, _vertices, i0);
+		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i0);
+
+		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _decl, _vertices, i1);
+		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i1);
+
+		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _decl, _vertices, i2);
+		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i2);
 
 		const float bax = v1.m_x - v0.m_x;
 		const float bay = v1.m_y - v0.m_y;
@@ -262,12 +209,11 @@ void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices,
 
 	for (uint32_t ii = 0; ii < _numVertices; ++ii)
 	{
-		Ty& v0 = _vertices[ii];
 		const float* tanu = &tangents[ii*6];
 		const float* tanv = &tangents[ii*6 + 3];
 
 		float normal[4];
-		unpackF4u(normal, v0.m_normal);
+		bgfx::vertexUnpack(normal, bgfx::Attrib::Normal, _decl, _vertices, ii);
 		float ndt = vec3Dot(normal, tanu);
 
 		float nxt[3];
@@ -278,11 +224,11 @@ void calcTangents(const uint16_t* _indices, uint32_t _numIndices, Ty* _vertices,
 		tmp[1] = tanu[1] - normal[1] * ndt;
 		tmp[2] = tanu[2] - normal[2] * ndt;
 
-		float tangent[3];
+		float tangent[4];
 		vec3Norm(tangent, tmp);
 
-		float tw = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
-		v0.m_tangent = packF4u(tangent[0], tangent[1], tangent[2], tw);
+		tangent[3] = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
+		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
 	}
 } 
 
@@ -752,6 +698,8 @@ int main(int _argc, const char* _argv[])
 
 	if (hasNormal)
 	{
+		hasTangent &= hasTexcoord;
+
 		switch (packNormal)
 		{
 		default:
@@ -764,10 +712,10 @@ int main(int _argc, const char* _argv[])
 			break;
 
 		case 1:
-			decl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true);
+			decl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true, true);
 			if (hasTangent)
 			{
-				decl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true);
+				decl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true, true);
 			}
 			break;
 		}
@@ -828,6 +776,11 @@ int main(int _argc, const char* _argv[])
 				}
 				triReorderElapsed += bx::getHPCounter();
 
+				if (hasTangent)
+				{
+					calcTangents(vertexData, numVertices, decl, indexData, numIndices);
+				}
+
 				write(&writer, vertexData, numVertices, decl, indexData, numIndices, material, primitives);
 				primitives.clear();
 
@@ -875,58 +828,14 @@ int main(int _argc, const char* _argv[])
 							uv[1] = -uv[1];
 						}
 
-						switch (packUv)
-						{
-						default:
-						case 0:
-							{
-								float* texcoord0 = (float*)(vertices + texcoord0Offset);
-								memcpy(texcoord0, uv, 2*sizeof(float) );
-							}
-							break;
-
-						case 1:
-							{
-								uint32_t* texcoord0 = (uint32_t*)(vertices + texcoord0Offset);
-								*texcoord0 = packF2h(uv[0], uv[1]);
-							}
-							break;
-						}
+						bgfx::vertexPack(uv, true, bgfx::Attrib::TexCoord0, decl, vertices);
 					}
 
 					if (hasNormal)
 					{
-						switch (packNormal)
-						{
-						default:
-						case 0:
-							{
-								float* normal = (float*)(vertices + normalOffset);
-								vec3Norm(normal, (float*)&normals[index.m_normal]);
-
-								if (hasTangent)
-								{
-									float* tangent = (float*)(vertices + tangentOffset);
-									memset(tangent, 0, 3*sizeof(float) );
-								}
-							}
-							break;
-
-						case 1:
-							{
-								float normal[3];
-								vec3Norm(normal, (float*)&normals[index.m_normal]);
-								uint32_t* nxyz0 = (uint32_t*)(vertices + normalOffset);
-								*nxyz0 = packF4u(normal[0], normal[1], normal[2]);
-
-								if (hasTangent)
-								{
-									uint32_t* txyz0 = (uint32_t*)(vertices + tangentOffset);
-									*txyz0 = packF4u(0.0f);
-								}
-							}
-							break;
-						}
+						float normal[4];
+						vec3Norm(normal, (float*)&normals[index.m_normal]);
+						bgfx::vertexPack(normal, true, bgfx::Attrib::Normal, decl, vertices);
 					}
 
 					vertices += stride;
@@ -964,6 +873,11 @@ int main(int _argc, const char* _argv[])
 			triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
 		}
 		triReorderElapsed += bx::getHPCounter();
+
+		if (hasTangent)
+		{
+			calcTangents(vertexData, numVertices, decl, indexData, numIndices);
+		}
 
 		write(&writer, vertexData, numVertices, decl, indexData, numIndices, material, primitives);
 	}
