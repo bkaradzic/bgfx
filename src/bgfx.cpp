@@ -552,7 +552,7 @@ namespace bgfx
 #elif BGFX_CONFIG_RENDERER_OPENGLES3
 		return RendererType::OpenGLES3;
 #else
-		return RendererType::Count;
+		return RendererType::Null;
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
