@@ -87,27 +87,28 @@ namespace bgfx
 		_asInt = !!(val&(1<<7) );
 	}
 
+	static const char* s_attrName[Attrib::Count] = 
+	{
+		"Attrib::Position",
+		"Attrib::Normal",
+		"Attrib::Tangent",
+		"Attrib::Color0",
+		"Attrib::Color1",
+		"Attrib::Indices",
+		"Attrib::Weights",
+		"Attrib::TexCoord0",
+		"Attrib::TexCoord1",
+		"Attrib::TexCoord2",
+		"Attrib::TexCoord3",
+		"Attrib::TexCoord4",
+		"Attrib::TexCoord5",
+		"Attrib::TexCoord6",
+		"Attrib::TexCoord7",
+	};
+
 	const char* getAttribName(Attrib::Enum _attr)
 	{
-		static const char* attrName[Attrib::Count] = 
-		{
-			"Attrib::Position",
-			"Attrib::Normal",
-			"Attrib::Color0",
-			"Attrib::Color1",
-			"Attrib::Indices",
-			"Attrib::Weights",
-			"Attrib::TexCoord0",
-			"Attrib::TexCoord1",
-			"Attrib::TexCoord2",
-			"Attrib::TexCoord3",
-			"Attrib::TexCoord4",
-			"Attrib::TexCoord5",
-			"Attrib::TexCoord6",
-			"Attrib::TexCoord7",
-		};
-
-		return attrName[_attr];
+		return s_attrName[_attr];
 	}
 
 	void dump(const VertexDecl& _decl)
