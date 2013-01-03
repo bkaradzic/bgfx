@@ -76,7 +76,7 @@ void main()
 
 	vec4 color = toLinear(texture2D(u_texColor, v_texcoord0) );
 
-	gl_FragColor.xyz = max(vec3_splat(0.05), lightColor.xyz)*color.xyz; // + fres*pow(lc.z, 128.0); //normal.xyz; //color.xyz; //*normal;
+	gl_FragColor.xyz = max(vec3_splat(0.05), lightColor.xyz)*color.xyz;
 	gl_FragColor.w = 1.0;
 	gl_FragColor = toGamma(gl_FragColor);
 }
