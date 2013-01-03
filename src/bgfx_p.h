@@ -2018,7 +2018,12 @@ namespace bgfx
 
 		UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num)
 		{
-			BX_CHECK(PredefinedUniform::Count == nameToPredefinedUniformEnum(_name), "%s is predefined uniform name.", _name);
+			BX_WARN(PredefinedUniform::Count == nameToPredefinedUniformEnum(_name), "%s is predefined uniform name.", _name);
+			if (PredefinedUniform::Count != nameToPredefinedUniformEnum(_name) )
+			{
+				UniformHandle handle = BGFX_INVALID_HANDLE;
+				return handle;
+			}
 
 			UniformHandle handle = { m_uniformHandle.alloc() };
 
