@@ -9,6 +9,9 @@
 
 #include "vertexdecl.h"
 
+extern void dbgPrintf(const char* _format, ...);
+extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
+
 namespace bgfx
 {
 	static const uint8_t s_attribTypeSizeDx9[AttribType::Count][4] =
@@ -114,9 +117,9 @@ namespace bgfx
 	void dump(const VertexDecl& _decl)
 	{
 #if BGFX_CONFIG_DEBUG
-		BX_TRACE("vertexdecl %08x (%08x), stride %d"
+		dbgPrintf("vertexdecl %08x (%08x), stride %d"
 			, _decl.m_hash
-			, hashMurmur2A(_decl.m_attributes, sizeof(_decl.m_attributes) )
+			, bx::hashMurmur2A(_decl.m_attributes, sizeof(_decl.m_attributes) )
 			, _decl.m_stride
 			);
 
@@ -130,7 +133,7 @@ namespace bgfx
 				bool asInt;
 				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
-				BX_TRACE("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d"
+				dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d"
 					, attr
 					, getAttribName(Attrib::Enum(attr) )
 					, num

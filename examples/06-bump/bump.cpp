@@ -244,6 +244,8 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		tangent[3] = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
 	}
+
+	delete [] tangents;
 } 
 
 int _main_(int _argc, char** _argv)
