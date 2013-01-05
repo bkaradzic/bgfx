@@ -428,9 +428,12 @@ namespace bgfx
 	struct TextureInfo
 	{
 		TextureFormat::Enum format;
+		uint32_t storageSize;
 		uint16_t width;
 		uint16_t height;
 		uint16_t depth;
+		uint8_t numMips;
+		uint8_t bitsPerPixel;
 	};
 
 	/// Vertex declaration.
@@ -605,11 +608,8 @@ namespace bgfx
 	/// Destroy program.
 	void destroyProgram(ProgramHandle _handle);
 
-	/// Returns number of bits per pixel.
-	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
-
 	/// Calculate amount of memory required for texture.
-	uint32_t calcTextureSize(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
+	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
 
 	/// Create texture from memory buffer.
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);

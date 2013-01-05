@@ -909,16 +909,12 @@ namespace bgfx
 		32, // RGB10A2
 	};
 
-	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
-	{
-		return s_bitsPerPixel[_format];
-	}
-
-	uint32_t calcTextureSize(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
+	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
 	{
 		uint32_t width = _width;
 		uint32_t height = _height;
 		uint32_t depth = _depth;
+
 		uint32_t bpp = s_bitsPerPixel[_format];
 		uint32_t size = 0;
 
@@ -935,7 +931,13 @@ namespace bgfx
 			depth >>= 1;
 		}
 
-		return size;
+		_info.format = _format;
+		_info.storageSize = size;
+		_info.width = _width;
+		_info.height = _height;
+		_info.depth = _depth;
+		_info.numMips = _numMips;
+		_info.bitsPerPixel = bpp;
 	}
 
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, TextureInfo* _info)

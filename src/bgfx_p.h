@@ -1950,17 +1950,23 @@ namespace bgfx
 				Dds dds;
 				if (parseDds(dds, _mem) )
 				{
-					_info->format = dds.m_type;
-					_info->width = (uint16_t)dds.m_width;
-					_info->height = (uint16_t)dds.m_height;
-					_info->depth = (uint16_t)dds.m_depth;
+					calcTextureSize(*_info
+						, (uint16_t)dds.m_width
+						, (uint16_t)dds.m_height
+						, (uint16_t)dds.m_depth
+						, dds.m_numMips
+						, dds.m_type
+						);
 				}
 				else
 				{
 					_info->format = TextureFormat::Unknown;
+					_info->storageSize = 0;
 					_info->width = 0;
 					_info->height = 0;
 					_info->depth = 0;
+					_info->numMips = 0;
+					_info->bitsPerPixel = 0;
 				}
 			}
 
