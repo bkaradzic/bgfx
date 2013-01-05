@@ -354,7 +354,8 @@ namespace bgfx
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used only when for OpenGL binary shaders.
 	///
-	/// NOTE: Callback functions can be called from any thread.
+	/// NOTE: 'fatal' callback can be called from any thread. Other callbacks
+	///       are called from the render thread.
 	struct CallbackI
 	{
 		virtual ~CallbackI() = 0;
