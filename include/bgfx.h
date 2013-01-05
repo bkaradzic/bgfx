@@ -604,6 +604,12 @@ namespace bgfx
 	/// Destroy program.
 	void destroyProgram(ProgramHandle _handle);
 
+	/// Returns number of bits per pixel.
+	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
+
+	/// Calculate amount of memory required for texture.
+	uint32_t calcTextureSize(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
+
 	/// Create texture from memory buffer.
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
 

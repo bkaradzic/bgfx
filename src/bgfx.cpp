@@ -70,7 +70,7 @@ namespace bgfx
 			saveTga(_filePath, _width, _height, _pitch, _data, false, _yflip);
 		}
 
-		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
+		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
 		{
 			BX_TRACE("Warning: using capture without callback (a.k.a. pointless).");
 		}
@@ -893,6 +893,51 @@ namespace bgfx
 		s_ctx.destroyProgram(_handle);
 	}
 
+	static const uint32_t s_bitsPerPixel[TextureFormat::Count] =
+	{
+		4,  // Dxt1
+		4,  // Dxt3
+		4,  // Dxt5
+		0,  // Unknown
+		8,  // L8
+		32, // BGRX8
+		32, // BGRA8
+		16, // RGBA16
+		16, // R5G6B5
+		16, // RGBA4
+		16, // RGB5A1
+		32, // RGB10A2
+	};
+
+	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
+	{
+		return s_bitsPerPixel[_format];
+	}
+
+	uint32_t calcTextureSize(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
+	{
+		uint32_t width = _width;
+		uint32_t height = _height;
+		uint32_t depth = _depth;
+		uint32_t bpp = s_bitsPerPixel[_format];
+		uint32_t size = 0;
+
+		for (uint32_t lod = 0; lod < _numMips; ++lod)
+		{
+			width = uint32_max(1, width);
+			height = uint32_max(1, height);
+			depth = uint32_max(1, depth);
+
+			size += _width*_height*depth*bpp/8;
+
+			width >>= 1;
+			height >>= 1;
+			depth >>= 1;
+		}
+
+		return size;
+	}
+
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, TextureInfo* _info)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -904,7 +949,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
-		const bgfx::Memory* mem = alloc(size);
+		const Memory* mem = alloc(size);
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
@@ -928,7 +973,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
-		const bgfx::Memory* mem = alloc(size);
+		const Memory* mem = alloc(size);
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
@@ -952,7 +997,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
-		const bgfx::Memory* mem = alloc(size);
+		const Memory* mem = alloc(size);
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
