@@ -478,19 +478,24 @@ namespace bgfx
 			return;
 		}
 
-		m_key.m_depth = _depth;
-		m_key.m_view = _id;
-		m_key.m_seq = s_ctx.m_seq[_id] & s_ctx.m_seqMask[_id];
-		s_ctx.m_seq[_id]++;
-		uint64_t key = m_key.encode();
-		m_sortKeys[m_num] = key;
-		m_sortValues[m_num] = m_numRenderStates;
-		++m_num;
+		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
+		if (invalidHandle != m_key.m_program)
+		{
+			m_key.m_depth = _depth;
+			m_key.m_view = _id;
+			m_key.m_seq = s_ctx.m_seq[_id] & s_ctx.m_seqMask[_id];
+			s_ctx.m_seq[_id]++;
+			uint64_t key = m_key.encode();
+			m_sortKeys[m_num] = key;
+			m_sortValues[m_num] = m_numRenderStates;
+			++m_num;
 
-		m_state.m_constEnd = m_constantBuffer->getPos();
-		m_state.m_flags |= m_flags;
-		m_renderState[m_numRenderStates] = m_state;
-		++m_numRenderStates;
+			m_state.m_constEnd = m_constantBuffer->getPos();
+			m_state.m_flags |= m_flags;
+			m_renderState[m_numRenderStates] = m_state;
+			++m_numRenderStates;
+		}
+
 		m_state.clear();
 		m_flags = BGFX_STATE_NONE;
 	}
@@ -510,26 +515,31 @@ namespace bgfx
 			return;
 		}
 
-		m_key.m_depth = _depth;
-
-		for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
+		if (invalidHandle != m_key.m_program)
 		{
-			viewMask >>= ntz;
-			id += ntz;
+			m_key.m_depth = _depth;
 
-			m_key.m_view = id;
-			m_key.m_seq = s_ctx.m_seq[id] & s_ctx.m_seqMask[id];
-			s_ctx.m_seq[id]++;
-			uint64_t key = m_key.encode();
-			m_sortKeys[m_num] = key;
-			m_sortValues[m_num] = m_numRenderStates;
-			++m_num;
+			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			{
+				viewMask >>= ntz;
+				id += ntz;
+
+				m_key.m_view = id;
+				m_key.m_seq = s_ctx.m_seq[id] & s_ctx.m_seqMask[id];
+				s_ctx.m_seq[id]++;
+				uint64_t key = m_key.encode();
+				m_sortKeys[m_num] = key;
+				m_sortValues[m_num] = m_numRenderStates;
+				++m_num;
+			}
+			
+			m_state.m_constEnd = m_constantBuffer->getPos();
+			m_state.m_flags |= m_flags;
+			m_renderState[m_numRenderStates] = m_state;
+			++m_numRenderStates;
 		}
-		
-		m_state.m_constEnd = m_constantBuffer->getPos();
-		m_state.m_flags |= m_flags;
-		m_renderState[m_numRenderStates] = m_state;
-		++m_numRenderStates;
+
 		m_state.clear();
 		m_flags = BGFX_STATE_NONE;
 	}

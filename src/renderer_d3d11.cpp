@@ -492,12 +492,12 @@ namespace bgfx
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
 				memcpy(&m_fsScratch[_regIndex], _val, _numRegs*16);
-				++m_fsChanges;
+				m_fsChanges += _numRegs;
 			}
 			else
 			{
 				memcpy(&m_vsScratch[_regIndex], _val, _numRegs*16);
-				++m_vsChanges;
+				m_vsChanges += _numRegs;
 			}
 		}
 

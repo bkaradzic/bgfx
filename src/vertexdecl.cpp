@@ -117,7 +117,7 @@ namespace bgfx
 	void dump(const VertexDecl& _decl)
 	{
 #if BGFX_CONFIG_DEBUG
-		dbgPrintf("vertexdecl %08x (%08x), stride %d"
+		dbgPrintf("vertexdecl %08x (%08x), stride %d\n"
 			, _decl.m_hash
 			, bx::hashMurmur2A(_decl.m_attributes, sizeof(_decl.m_attributes) )
 			, _decl.m_stride
@@ -133,7 +133,7 @@ namespace bgfx
 				bool asInt;
 				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
-				dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d"
+				dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
 					, attr
 					, getAttribName(Attrib::Enum(attr) )
 					, num

@@ -79,6 +79,21 @@ vec4 bgfxTextureCube(BgfxSamplerCube _sampler, vec3 _coord)
 #	define vec3_splat(_x) float3(_x, _x, _x)
 #	define vec4_splat(_x) float4(_x, _x, _x, _x)
 
+vec3 instMul(vec3 _vec, mat3 _mtx)
+{
+	return mul(_mtx, _vec);
+}
+
+vec3 instMul(mat3 _mtx, vec3 _vec)
+{
+	return mul(_vec, _mtx);
+}
+
+vec4 instMul(vec4 _vec, mat4 _mtx)
+{
+	return mul(_mtx, _vec);
+}
+
 vec4 instMul(mat4 _mtx, vec4 _vec)
 {
 	return mul(_vec, _mtx);
@@ -95,6 +110,21 @@ vec4 instMul(mat4 _mtx, vec4 _vec)
 #	define vec2_splat(_x) vec2(_x)
 #	define vec3_splat(_x) vec3(_x)
 #	define vec4_splat(_x) vec4(_x)
+
+vec3 instMul(vec3 _vec, mat3 _mtx)
+{
+	return mul(_vec, _mtx);
+}
+
+vec3 instMul(mat3 _mtx, vec3 _vec)
+{
+	return mul(_mtx, _vec);
+}
+
+vec4 instMul(vec4 _vec, mat4 _mtx)
+{
+	return mul(_vec, _mtx);
+}
 
 vec4 instMul(mat4 _mtx, vec4 _vec)
 {

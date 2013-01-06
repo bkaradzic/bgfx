@@ -76,9 +76,9 @@ extern HWND g_bgfxHwnd;
 
 #include "dds.h"
 
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x0)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x0)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
 
 #if BGFX_CONFIG_USE_TINYSTL
 
@@ -595,18 +595,16 @@ namespace bgfx
 
 #define CONSTANT_OPCODE_MASK(_bits) ( (1<<_bits)-1)
 
-#define CONSTANT_OPCODE_TYPE_BITS 8
+#define CONSTANT_OPCODE_TYPE_BITS 5
 #define CONSTANT_OPCODE_TYPE_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_TYPE_BITS)
-#define CONSTANT_OPCODE_LOC_BITS 10
+#define CONSTANT_OPCODE_LOC_BITS 16
 #define CONSTANT_OPCODE_LOC_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_LOC_BITS)
 #define CONSTANT_OPCODE_NUM_BITS 10
 #define CONSTANT_OPCODE_NUM_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_NUM_BITS)
 #define CONSTANT_OPCODE_COPY_BITS 1
 #define CONSTANT_OPCODE_COPY_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_COPY_BITS)
 
-#define BGFX_UNIFORM_FUNCTIONBIT UINT8_C(0x40)
-#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x80)
-#define BGFX_UNIFORM_TYPEMASK    UINT8_C(0x3f)
+#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 
 	class ConstantBuffer
 	{
@@ -1837,6 +1835,12 @@ namespace bgfx
 
 		void destroyVertexShader(VertexShaderHandle _handle)
 		{
+			if (invalidHandle == _handle.idx)
+			{
+				BX_WARN(false, "Passing invalid vertex shader handle to bgfx::destroyVertexShader");
+				return;
+			}
+
 			vertexShaderDecRef(_handle);
 		}
 
@@ -1886,6 +1890,12 @@ namespace bgfx
 
 		void destroyFragmentShader(FragmentShaderHandle _handle)
 		{
+			if (invalidHandle == _handle.idx)
+			{
+				BX_WARN(false, "Passing invalid fragment shader handle to bgfx::destroyFragmentShader");
+				return;
+			}
+
 			fragmentShaderDecRef(_handle);
 		}
 
@@ -1909,6 +1919,14 @@ namespace bgfx
 
 		ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 		{
+			if (invalidHandle == _vsh.idx
+			||  invalidHandle == _fsh.idx)
+			{
+				BX_WARN(false, "Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
+				ProgramHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
+
 			const VertexShaderRef& vsr = m_vertexShaderRef[_vsh.idx];
 			const FragmentShaderRef& fsr = m_fragmentShaderRef[_fsh.idx];
 			if (vsr.m_outputHash != fsr.m_inputHash)

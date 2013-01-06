@@ -30,8 +30,8 @@ extern "C"
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
 #endif // DEBUG
 
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x0)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x0)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
 
 #include <bx/bx.h>
 
@@ -145,10 +145,10 @@ struct ConstantType
 		Uniform4x4fv,
 
 		Count,
-		TypeMask = 0x7f,
-		FragmentBit = 0x80
 	};
 };
+
+#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 
 static const char* s_constantTypeName[ConstantType::Count] =
 {
@@ -653,7 +653,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 	uint16_t count = (uint16_t)uniforms.size();
 	bx::write(_writer, count);
 
-	uint32_t fragmentBit = profile[0] == 'p' ? ConstantType::FragmentBit : 0;
+	uint32_t fragmentBit = profile[0] == 'p' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 	for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 	{
 		const Uniform& un = *it;
@@ -930,7 +930,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 	bx::write(_writer, size);
 
-	uint32_t fragmentBit = profile[0] == 'p' ? ConstantType::FragmentBit : 0;
+	uint32_t fragmentBit = profile[0] == 'p' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 	for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 	{
 		const Uniform& un = *it;

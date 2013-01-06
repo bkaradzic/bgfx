@@ -1,4 +1,4 @@
-$input v_wpos, v_view, v_normal, v_tangent, v_texcoord0
+$input v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0
 
 /*
  * Copyright 2011-2012 Branimir Karadzic. All rights reserved.
@@ -64,15 +64,20 @@ vec3 calcLight(int _idx, mat3 _tbn, vec3 _wpos, vec3 _normal, vec3 _view)
 
 void main()
 {
-	mat3 tbn = mat3(v_tangent, cross(v_normal, v_tangent), v_normal);
+	mat3 tbn = mat3(
+				normalize(v_tangent),
+				normalize(v_bitangent),
+				normalize(v_normal)
+				);
 
-	vec3 normal = normalize(2.0*texture2D(u_texNormal, v_texcoord0).xyz-1.0);
+	vec3 normal = normalize(texture2D(u_texNormal, v_texcoord0).xyz * 2.0 - 1.0);
+	vec3 view = -normalize(v_view);
 
 	vec3 lightColor;
-	lightColor =  calcLight(0, tbn, v_wpos, normal, v_view);
-	lightColor += calcLight(1, tbn, v_wpos, normal, v_view);
-	lightColor += calcLight(2, tbn, v_wpos, normal, v_view);
-	lightColor += calcLight(3, tbn, v_wpos, normal, v_view);
+	lightColor =  calcLight(0, tbn, v_wpos, normal, view);
+	lightColor += calcLight(1, tbn, v_wpos, normal, view);
+	lightColor += calcLight(2, tbn, v_wpos, normal, view);
+	lightColor += calcLight(3, tbn, v_wpos, normal, view);
 
 	vec4 color = toLinear(texture2D(u_texColor, v_texcoord0) );
 
