@@ -961,6 +961,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
+#if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)
 		{
 			TextureInfo ti;
@@ -971,6 +972,7 @@ namespace bgfx
 				, _mem->size
 				);
 		}
+#endif // BGFX_CONFIG_DEBUG
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
@@ -997,6 +999,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
+#if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)
 		{
 			TextureInfo ti;
@@ -1007,6 +1010,7 @@ namespace bgfx
 				, _mem->size
 				);
 		}
+#endif // BGFX_CONFIG_DEBUG
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
@@ -1033,6 +1037,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
+#if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)
 		{
 			TextureInfo ti;
@@ -1043,6 +1048,7 @@ namespace bgfx
 				, _mem->size
 				);
 		}
+#endif // BGFX_CONFIG_DEBUG
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
