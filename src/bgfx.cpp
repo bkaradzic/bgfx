@@ -960,6 +960,18 @@ namespace bgfx
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+
+		if (NULL != _mem)
+		{
+			TextureInfo ti;
+			calcTextureSize(ti, _width, _height, 1, _numMips, _format);
+			BX_CHECK(ti.storageSize == _mem->size
+				, "createTexture2D: Texture storage size doesn't match passed memory size (storage size: %d, memory size: %d)"
+				, ti.storageSize
+				, _mem->size
+				);
+		}
+
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
 
@@ -984,6 +996,18 @@ namespace bgfx
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+
+		if (NULL != _mem)
+		{
+			TextureInfo ti;
+			calcTextureSize(ti, _width, _height, _depth, _numMips, _format);
+			BX_CHECK(ti.storageSize == _mem->size
+				, "createTexture3D: Texture storage size doesn't match passed memory size (storage size: %d, memory size: %d)"
+				, ti.storageSize
+				, _mem->size
+				);
+		}
+
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
 
@@ -1008,6 +1032,18 @@ namespace bgfx
 	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+
+		if (NULL != _mem)
+		{
+			TextureInfo ti;
+			calcTextureSize(ti, _width, _width, 1, _numMips, _format);
+			BX_CHECK(ti.storageSize*_sides == _mem->size
+				, "createTextureCube: Texture storage size doesn't match passed memory size (storage size: %d, memory size: %d)"
+				, ti.storageSize*_sides
+				, _mem->size
+				);
+		}
+
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
 

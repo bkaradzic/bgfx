@@ -78,9 +78,7 @@ namespace bgfx
 	static Extension s_extension[Extension::Count] =
 	{
 		{ "GL_EXT_texture_filter_anisotropic",    false, true },
-		// Nvidia BGRA on Linux bug:
-		// https://groups.google.com/a/chromium.org/forum/?fromgroups#!topic/chromium-reviews/yFfbUdyeUCQ
-		{ "GL_EXT_texture_format_BGRA8888",       false, !BX_PLATFORM_LINUX },
+		{ "GL_EXT_texture_format_BGRA8888",       false, true },
 		{ "GL_EXT_texture_compression_s3tc",      false, true },
 		{ "GL_EXT_texture_compression_dxt1",      false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
@@ -190,6 +188,7 @@ namespace bgfx
 			, m_maxAnisotropy(0.0f)
 			, m_dxtSupport(false)
 			, m_programBinarySupport(false)
+			, m_textureSwizzleSupport(false)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
@@ -714,6 +713,7 @@ namespace bgfx
 		float m_maxAnisotropy;
 		bool m_dxtSupport;
 		bool m_programBinarySupport;
+		bool m_textureSwizzleSupport;
 		bool m_flip;
 
 		PostSwapBuffersFn m_postSwapBuffers;
@@ -935,7 +935,7 @@ namespace bgfx
 		uint8_t m_bpp;
 	};
 
-	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
+	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
 		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,                        4  },
 		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,                        4  },
@@ -1434,20 +1434,11 @@ namespace bgfx
 			||  TextureFormat::Unknown < dds.m_type)
 			{
 				bool decompress = TextureFormat::Unknown > dds.m_type;
-
-				if (GL_RGBA == internalFmt
-				||  decompress)
-				{
-					internalFmt = GL_RGBA;
-					m_fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
-
-				}
-
 				bool swizzle = GL_RGBA == m_fmt;
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 				if (swizzle
-				&& (s_extension[Extension::ARB_texture_swizzle].m_supported || s_extension[Extension::EXT_texture_swizzle].m_supported) )
+				&&  s_renderCtx.m_textureSwizzleSupport)
 				{
 					swizzle = false;
 					GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
@@ -1590,6 +1581,17 @@ namespace bgfx
 				uint32_t bpp = tfi.m_bpp;
 				uint8_t* data = NULL != tc.m_mem ? tc.m_mem->data : NULL;
 				uint32_t min = m_compressed ? 4 : 1;
+				bool swizzle = GL_RGBA == m_fmt;
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+				if (swizzle
+				&&  s_renderCtx.m_textureSwizzleSupport)
+				{
+					swizzle = false;
+					GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
+					GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
+				}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 				for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
@@ -1619,6 +1621,11 @@ namespace bgfx
 						}
 						else
 						{
+							if (swizzle)
+							{
+								rgbaToBgra(data, width, height);
+							}
+
 							texImage(target+side
 								, lod
 								, internalFmt
@@ -2195,9 +2202,20 @@ namespace bgfx
 				|| s_extension[Extension::OES_get_program_binary].m_supported
 				;
 
+			s_renderCtx.m_textureSwizzleSupport = false
+				|| s_extension[Extension::ARB_texture_swizzle].m_supported
+				|| s_extension[Extension::EXT_texture_swizzle].m_supported
+				;
+
 			if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 			{
 				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy);
+			}
+
+			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported)
+			{
+				s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
+				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 			}
 		}
 	}
