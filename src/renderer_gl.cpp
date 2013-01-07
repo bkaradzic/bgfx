@@ -375,7 +375,7 @@ namespace bgfx
 					};
 
 					// Find suitable config
-					GLXFBConfig	bestconfig = NULL;
+					GLXFBConfig	bestConfig = NULL;
 
 					int nconfigs;
 					GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), glxAttribs, &nconfigs);
@@ -401,7 +401,7 @@ namespace bgfx
 
 							if (validconfig)
 							{
-								bestconfig = configs[ii];
+								bestConfig = configs[ii];
 								break;
 							}
 						}
@@ -435,21 +435,30 @@ namespace bgfx
 					XFlush(display);
 					XFree(visualInfo);
 
-					BX_TRACE("create context");
+					BX_TRACE("Create GL 2.1 context.");
+					m_context = glXCreateContext(display, visualInfo, 0, GL_TRUE);
+					BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
 
 					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
-					BGFX_FATAL(glXCreateContextAttribsARB, Fatal::UnableToInitialize, "Failed to get glXCreateContextAttribsARB.");
-
-					const int contextArrib[] =
+					if (NULL != glXCreateContextAttribsARB)
 					{
-						GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-						GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-						None,
-					};
+						BX_TRACE("Create GL 3.0 context.");
+						const int contextArrib[] =
+						{
+							GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+							GLX_CONTEXT_MINOR_VERSION_ARB, 0,
+							None,
+						};
 
-					m_context = glXCreateContextAttribsARB(display, bestconfig, 0, True, contextArrib);
-					BGFX_FATAL(m_context, Fatal::UnableToInitialize, "Failed to create GLX context.");
+						GLXContext context = glXCreateContextAttribsARB(display, bestConfig, 0, True, contextArrib);
+
+						if (NULL != context)
+						{
+							glXDestroyContext(display, m_context);
+							m_context = context;
+						}
+					}
 
 					glXMakeCurrent(display, window, m_context);
 
