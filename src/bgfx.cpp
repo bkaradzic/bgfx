@@ -912,7 +912,7 @@ namespace bgfx
 		8,  // L8
 		32, // BGRX8
 		32, // BGRA8
-		16, // RGBA16
+		64, // RGBA16
 		16, // R5G6B5
 		16, // RGBA4
 		16, // RGB5A1
