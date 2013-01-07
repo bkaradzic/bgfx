@@ -1645,7 +1645,7 @@ namespace bgfx
 			, ...
 			);
 #else
-		deviceCtx->UpdateSubresource(m_ptr, subres, &box, _mem->data, _rect.m_width, 0); 
+		deviceCtx->UpdateSubresource(m_ptr, subres, &box, _mem->data, _rect.m_width*4, 0); 
 #endif // 0
 	}
 

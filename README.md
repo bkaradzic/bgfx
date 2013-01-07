@@ -135,6 +135,9 @@ Loading textures.
 Implementing application specific callbacks for taking screen shots, caching
 OpenGL binary shaders, and video capture.
 
+### 08-update
+Updating textures.
+
 Internals
 ---------
 

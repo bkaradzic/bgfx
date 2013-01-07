@@ -1291,11 +1291,25 @@ namespace bgfx
 
 		case TextureCube:
 			{
-				D3DLOCKED_RECT rect;
-				DX_CHECK(m_textureCube->LockRect(D3DCUBEMAP_FACES(_side), _lod, &rect, NULL, 0) );
-				_pitch = rect.Pitch;
+				D3DLOCKED_RECT lockedRect;
+
+				if (NULL != _rect)
+				{
+					RECT rect;
+					rect.left = _rect->m_x;
+					rect.top = _rect->m_y;
+					rect.right = rect.left + _rect->m_width;
+					rect.bottom = rect.top + _rect->m_height;
+					DX_CHECK(m_textureCube->LockRect(D3DCUBEMAP_FACES(_side), _lod, &lockedRect, &rect, 0) );
+				}
+				else
+				{
+					DX_CHECK(m_textureCube->LockRect(D3DCUBEMAP_FACES(_side), _lod, &lockedRect, NULL, 0) );
+				}
+
+				_pitch = lockedRect.Pitch;
 				_slicePitch = 0;
-				return (uint8_t*)rect.pBits;
+				return (uint8_t*)lockedRect.pBits;
 			}
 		}
 
@@ -1343,6 +1357,7 @@ namespace bgfx
 
 		if (parseDds(dds, _mem) )
 		{
+			m_format = dds.m_type;
 			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 
 			bool decompress = false;
@@ -1448,6 +1463,7 @@ namespace bgfx
 			{
 				TextureCreate tc;
 				bx::read(&reader, tc);
+				m_format = (TextureFormat::Enum)tc.m_format;
 
 				if (tc.m_cubeMap)
 				{
@@ -1507,9 +1523,9 @@ namespace bgfx
 	{
 		uint32_t pitch;
 		uint32_t slicePitch;
-		uint8_t* bits = lock(0, _mip, pitch, slicePitch, &_rect);
+		uint8_t* bits = lock(_side, _mip, pitch, slicePitch, &_rect);
 
-		uint32_t srcpitch = _rect.m_width;
+		uint32_t srcpitch = _rect.m_width*s_textureFormat[m_format].m_bpp/8;
 		uint32_t dstpitch = pitch;
 		for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
 		{
@@ -1518,7 +1534,7 @@ namespace bgfx
 			memcpy(dst, src, srcpitch);
 		}
 
-		unlock(0, _mip);
+		unlock(_side, _mip);
 	}
 
 	void Texture::commit(uint8_t _stage)

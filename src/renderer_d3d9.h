@@ -345,6 +345,7 @@ namespace bgfx
 		D3DTEXTUREADDRESS m_tau;
 		D3DTEXTUREADDRESS m_tav;
 		D3DTEXTUREADDRESS m_taw;
+		TextureFormat::Enum m_format;
 		Enum m_type;
 		bool m_srgb;
 	};

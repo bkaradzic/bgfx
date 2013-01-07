@@ -921,6 +921,11 @@ namespace bgfx
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
 	{
+		_width = uint32_max(1, _width);
+		_height = uint32_max(1, _height);
+		_depth = uint32_max(1, _depth);
+		_numMips = uint32_max(1, _numMips);
+
 		uint32_t width = _width;
 		uint32_t height = _height;
 		uint32_t depth = _depth;
@@ -985,6 +990,7 @@ namespace bgfx
 		tc.m_flags = _flags;
 		tc.m_width = _width;
 		tc.m_height = _height;
+		tc.m_sides = 0;
 		tc.m_depth = 0;
 		tc.m_numMips = _numMips;
 		tc.m_format = uint8_t(_format);
@@ -1023,6 +1029,7 @@ namespace bgfx
 		tc.m_flags = _flags;
 		tc.m_width = _width;
 		tc.m_height = _height;
+		tc.m_sides = 0;
 		tc.m_depth = _depth;
 		tc.m_numMips = _numMips;
 		tc.m_format = uint8_t(_format);
@@ -1060,6 +1067,7 @@ namespace bgfx
 		TextureCreate tc;
 		tc.m_flags = _flags;
 		tc.m_width = _width;
+		tc.m_height = _width;
 		tc.m_sides = _sides;
 		tc.m_depth = 0;
 		tc.m_numMips = _numMips;

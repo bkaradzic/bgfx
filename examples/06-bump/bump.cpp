@@ -338,11 +338,11 @@ int _main_(int _argc, char** _argv)
 
 	// Load diffuse texture.
 	mem = loadTexture("fieldstone-rgba.dds");
-	bgfx::TextureHandle texture_rgba = bgfx::createTexture(mem);
+	bgfx::TextureHandle textureColor = bgfx::createTexture(mem);
 
 	// Load normal texture.
 	mem = loadTexture("fieldstone-n.dds");
-	bgfx::TextureHandle texture_n = bgfx::createTexture(mem);
+	bgfx::TextureHandle textureNormal = bgfx::createTexture(mem);
 
 	while (true)
 	{
@@ -437,8 +437,8 @@ int _main_(int _argc, char** _argv)
 			bgfx::setInstanceDataBuffer(idb, numInstances);
 
 			// Bind textures.
-			bgfx::setTexture(0, u_texColor, texture_rgba);
-			bgfx::setTexture(1, u_texNormal, texture_n);
+			bgfx::setTexture(0, u_texColor, textureColor);
+			bgfx::setTexture(1, u_texNormal, textureNormal);
 
 			// Set render states.
 			bgfx::setState(BGFX_STATE_RGB_WRITE
@@ -459,8 +459,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
 	bgfx::destroyProgram(program);
-	bgfx::destroyTexture(texture_rgba);
-	bgfx::destroyTexture(texture_n);
+	bgfx::destroyTexture(textureColor);
+	bgfx::destroyTexture(textureNormal);
 	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_texNormal);
 

@@ -164,11 +164,8 @@ namespace bgfx
 	{
 		uint32_t m_flags;
 		uint16_t m_width;
-		union
-		{
-			uint16_t m_height;
-			uint16_t m_sides;
-		};
+		uint16_t m_height;
+		uint16_t m_sides;
 		uint16_t m_depth;
 		uint8_t m_numMips;
 		uint8_t m_format;
