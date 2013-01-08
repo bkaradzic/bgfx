@@ -905,7 +905,6 @@ namespace bgfx
 
 		ID3D11Texture2D* m_captureTexture;
 		ID3D11Texture2D* m_captureResolve;
-		DXGI_FORMAT m_captureFormat;
 
 		bool m_wireframe;
 
