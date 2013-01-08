@@ -242,7 +242,7 @@ namespace bgfx
 		void destroy()
 		{
 			DX_RELEASE(m_srv, 0);
-			DX_RELEASE(m_ptr, 1);
+			DX_RELEASE(m_ptr, 0);
 		}
 
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
