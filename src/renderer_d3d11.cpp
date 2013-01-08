@@ -279,7 +279,9 @@ namespace bgfx
 	struct RendererContext
 	{
 		RendererContext()
-			: m_wireframe(false)
+			: m_captureTexture(NULL)
+			, m_captureResolve(NULL)
+			, m_wireframe(false)
 			, m_vsChanges(0)
 			, m_fsChanges(0)
 		{
@@ -766,16 +768,74 @@ namespace bgfx
 			commitTextureStage();
 		}
 
-		void capturePreReset()
-		{
-		}
-
 		void capturePostReset()
 		{
+			ID3D11Texture2D* backBuffer;
+			DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
+
+			D3D11_TEXTURE2D_DESC backBufferDesc;
+			backBuffer->GetDesc(&backBufferDesc);
+
+			D3D11_TEXTURE2D_DESC desc;
+			memcpy(&desc, &backBufferDesc, sizeof(desc) );
+			desc.SampleDesc.Count = 1;
+			desc.SampleDesc.Quality = 0;
+			desc.Usage = D3D11_USAGE_STAGING;
+			desc.BindFlags = 0;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+			HRESULT hr = m_device->CreateTexture2D(&desc, NULL, &m_captureTexture);
+			if (SUCCEEDED(hr) )
+			{
+				if (backBufferDesc.SampleDesc.Count != 1)
+				{
+					desc.Usage = D3D11_USAGE_DEFAULT;
+					desc.CPUAccessFlags = 0;
+					m_device->CreateTexture2D(&desc, NULL, &m_captureResolve);
+				}
+
+				g_callback->captureBegin(backBufferDesc.Width, backBufferDesc.Height, backBufferDesc.Width*4, TextureFormat::BGRA8, false);
+			}
+
+			DX_RELEASE(backBuffer, 0);
+		}
+
+		void capturePreReset()
+		{
+			if (NULL != m_captureTexture)
+			{
+				g_callback->captureEnd();
+			}
+
+			DX_RELEASE(m_captureResolve, 0);
+			DX_RELEASE(m_captureTexture, 0);
 		}
 
 		void capture()
 		{
+			ID3D11Texture2D* backBuffer;
+			DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
+
+			DXGI_MODE_DESC& desc = m_scd.BufferDesc;
+
+			if (NULL == m_captureResolve)
+			{
+				m_deviceCtx->CopyResource(m_captureTexture, backBuffer);
+			}
+			else
+			{
+				m_deviceCtx->ResolveSubresource(m_captureResolve, 0, backBuffer, 0, desc.Format);
+				m_deviceCtx->CopyResource(m_captureTexture, m_captureResolve);
+			}
+
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
+
+			g_callback->captureFrame(mapped.pData, desc.Height*mapped.RowPitch);
+
+			m_deviceCtx->Unmap(m_captureTexture, 0);
+
+			DX_RELEASE(backBuffer, 0);
 		}
 
 		void saveScreenShot(Memory* _mem)
@@ -842,6 +902,10 @@ namespace bgfx
 		ID3D11DepthStencilView* m_backBufferDepthStencil;
 		ID3D11RenderTargetView* m_currentColor;
 		ID3D11DepthStencilView* m_currentDepthStencil;
+
+		ID3D11Texture2D* m_captureTexture;
+		ID3D11Texture2D* m_captureResolve;
+		DXGI_FORMAT m_captureFormat;
 
 		bool m_wireframe;
 
