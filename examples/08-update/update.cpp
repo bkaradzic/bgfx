@@ -6,6 +6,7 @@
 #include <bgfx.h>
 #include <bx/bx.h>
 #include <bx/timer.h>
+#include <bx/uint32_t.h>
 #include "../common/dbg.h"
 #include "../common/math.h"
 
@@ -244,7 +245,7 @@ int _main_(int _argc, char** _argv)
 
 		if (now > updateTime)
 		{
-//			updateTime = now + freq/100;
+//			updateTime = now + freq/10;
 			const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
 			uint8_t* data = (uint8_t*)mem->data;
 			for (uint32_t ii = 0, num = ti.storageSize*8/ti.bitsPerPixel; ii < num; ++ii)
@@ -259,12 +260,12 @@ int _main_(int _argc, char** _argv)
 			bgfx::updateTextureCube(textureCube, blockSide, 0, blockX, blockY, blockWidth, blockHeight, mem);
 
 			blockX += 8;
-			if (blockX > textureSide-1)
+			if (blockX >= textureSide)
 			{
 				blockX = 0;
 				blockY += 8;
 
-				if (blockY > textureSide-1)
+				if (blockY >= textureSide)
 				{
 					rr = rand()%255;
 					gg = rand()%255;

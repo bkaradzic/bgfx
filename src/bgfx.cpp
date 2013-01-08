@@ -1120,6 +1120,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
+		BX_CHECK(_side >= 0 && _side <= 5, "Invalid side %d.", _side);
 		if (_width == 0
 		||  _height == 0)
 		{

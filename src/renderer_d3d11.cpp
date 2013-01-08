@@ -1541,23 +1541,42 @@ namespace bgfx
 				TextureCreate tc;
 				bx::read(&reader, tc);
 
-				D3D11_TEXTURE2D_DESC desc;
-				desc.Width = tc.m_width;
-				desc.Height = tc.m_height;
-				desc.MipLevels = tc.m_numMips;
-				desc.ArraySize = 1;
-				desc.Format = s_textureFormat[tc.m_format].m_fmt;
-				desc.SampleDesc.Count = 1;
-				desc.SampleDesc.Quality = 0;
-				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-				desc.CPUAccessFlags = 0;
-				desc.MiscFlags = 0;
+				if (tc.m_cubeMap)
+				{
+					m_type = TextureCube;
+				}
+				else if (tc.m_depth > 1)
+				{
+					m_type = Texture3D;
+				}
+				else
+				{
+					m_type = Texture2D;
+				}
 
 				m_numMips = tc.m_numMips;
 
+				D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
+				memset(&srvd, 0, sizeof(srvd) );
+				srvd.Format = s_textureFormat[tc.m_format].m_fmt;
+
 				if (NULL != tc.m_mem)
 				{
+					D3D11_TEXTURE2D_DESC desc;
+					desc.Width = tc.m_width;
+					desc.Height = tc.m_height;
+					desc.MipLevels = tc.m_numMips;
+					desc.ArraySize = 1;
+					desc.Format = srvd.Format;
+					desc.SampleDesc.Count = 1;
+					desc.SampleDesc.Quality = 0;
 					desc.Usage = D3D11_USAGE_IMMUTABLE;
+					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+					desc.CPUAccessFlags = 0;
+					desc.MiscFlags = 0;
+
+					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+					srvd.Texture2D.MipLevels = tc.m_numMips;
 
 					D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(tc.m_numMips*sizeof(D3D11_SUBRESOURCE_DATA) );
 					uint32_t bpp = s_textureFormat[tc.m_format].m_bpp;
@@ -1593,16 +1612,64 @@ namespace bgfx
 				}
 				else
 				{
-					desc.Usage = D3D11_USAGE_DEFAULT;
+					switch (m_type)
+					{
+					case Texture2D:
+					case TextureCube:
+						{
+							D3D11_TEXTURE2D_DESC desc;
+							desc.Width = tc.m_width;
+							desc.Height = tc.m_height;
+							desc.MipLevels = tc.m_numMips;
+							desc.Format = srvd.Format;
+							desc.SampleDesc.Count = 1;
+							desc.SampleDesc.Quality = 0;
+							desc.Usage = D3D11_USAGE_DEFAULT;
+							desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+							desc.CPUAccessFlags = 0;
 
-					DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, NULL, &m_texture2d) );
+							if (TextureCube == m_type)
+							{
+								desc.ArraySize = 6;
+								desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+								srvd.TextureCube.MipLevels = m_numMips;
+							}
+							else
+							{
+								desc.ArraySize = 1;
+								desc.MiscFlags = 0;
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+								srvd.Texture2D.MipLevels = m_numMips;
+							}
+
+							DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, NULL, &m_texture2d) );
+						}
+						break;
+
+					case Texture3D:
+						{
+							D3D11_TEXTURE3D_DESC desc;
+							desc.Width = tc.m_width;
+							desc.Height = tc.m_height;
+							desc.Depth = tc.m_depth;
+							desc.MipLevels = tc.m_numMips;
+							desc.Format = srvd.Format;
+							desc.Usage = D3D11_USAGE_DEFAULT;
+							desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+							desc.CPUAccessFlags = 0;
+							desc.MiscFlags = 0;
+
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+							srvd.Texture3D.MipLevels = m_numMips;
+
+							DX_CHECK(s_renderCtx.m_device->CreateTexture3D(&desc, NULL, &m_texture3d) );
+						}
+						break;
+					}
 				}
 
-				D3D11_SHADER_RESOURCE_VIEW_DESC srv;
-				memset(&srv, 0, sizeof(srv) );
-				srv.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-				srv.Texture2D.MipLevels = tc.m_numMips;
-				DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_ptr, &srv, &m_srv) );
+				DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
 			}
 			else
 			{
