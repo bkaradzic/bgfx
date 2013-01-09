@@ -348,58 +348,74 @@ namespace bgfx
 				if (0 == m_display)
 				{
 					Display* display = XOpenDisplay(0);
-					XLockDisplay(display);
 					BGFX_FATAL(display, Fatal::UnableToInitialize, "Failed to open X display (0).");
 
-					int glxMajor, glxMinor;
-					if (!glXQueryVersion(display, &glxMajor, &glxMinor) )
-					{
-						BGFX_FATAL(false, Fatal::UnableToInitialize, "Failed to query GLX version");
-					}
-					BGFX_FATAL((glxMajor == 1 && glxMinor >= 3) || glxMajor > 1, Fatal::UnableToInitialize, "GLX version is not >=1.3 (%d.%d).", glxMajor, glxMinor);
+					XLockDisplay(display);
 
-					const int glxAttribs[] =
+					int major, minor;
+					bool version = glXQueryVersion(display, &major, &minor);
+					BGFX_FATAL(version, Fatal::UnableToInitialize, "Failed to query GLX version");
+					BGFX_FATAL( (major == 1 && minor >= 3) || major > 1
+							, Fatal::UnableToInitialize
+							, "GLX version is not >=1.3 (%d.%d)."
+							, major
+							, minor
+							);
+
+					const int attrsGlx[] =
 					{
-						GLX_X_RENDERABLE, True,
-						GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
 						GLX_RENDER_TYPE, GLX_RGBA_BIT,
-						GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+						GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+						GLX_DOUBLEBUFFER, true,
 						GLX_RED_SIZE, 8,
 						GLX_BLUE_SIZE, 8,
 						GLX_GREEN_SIZE, 8,
 						GLX_ALPHA_SIZE, 8,
 						GLX_DEPTH_SIZE, 24,
 						GLX_STENCIL_SIZE, 8,
-						GLX_DOUBLEBUFFER, True,
 						None,
 					};
 
 					// Find suitable config
-					GLXFBConfig	bestConfig = NULL;
+					GLXFBConfig bestConfig = NULL;
 
-					int nconfigs;
-					GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), glxAttribs, &nconfigs);
+					int numConfigs;
+					GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), attrsGlx, &numConfigs);
+
+					BX_TRACE("glX num configs %d", numConfigs);
 
 					XVisualInfo* visualInfo = 0;
-					for (int ii = 0; ii < nconfigs; ++ii)
+					for (int ii = 0; ii < numConfigs; ++ii)
 					{
 						visualInfo = glXGetVisualFromFBConfig(display, configs[ii]);
-						if (visualInfo)
+						if (NULL != visualInfo)
 						{
-							// Check if meets min spec
-							bool validconfig = true;
-							for (uint32_t attridx = 0; attridx < countof(glxAttribs)-1 && glxAttribs[attridx] != None; attridx += 2)
+							BX_TRACE("---");
+							bool valid = true;
+							for (uint32_t attr = 6; attr < countof(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
 							{
 								int value;
-								glXGetFBConfigAttrib(display, configs[ii], glxAttribs[attridx], &value);
-								if (value < glxAttribs[attridx + 1])
+								glXGetFBConfigAttrib(display, configs[ii], attrsGlx[attr], &value);
+								BX_TRACE("glX %d/%d %2d: %4x, %8x (%8x%s)"
+										, ii
+										, numConfigs
+										, attr/2
+										, attrsGlx[attr]
+										, value
+										, attrsGlx[attr + 1]
+										, value < attrsGlx[attr + 1] ? " *" : ""
+										);
+
+								if (value < attrsGlx[attr + 1])
 								{
-									validconfig = false;
+									valid = false;
+#if !BGFX_CONFIG_DEBUG
 									break;
+#endif // BGFX_CONFIG_DEBUG
 								}
 							}
 
-							if (validconfig)
+							if (valid)
 							{
 								bestConfig = configs[ii];
 								break;
@@ -444,14 +460,14 @@ namespace bgfx
 					if (NULL != glXCreateContextAttribsARB)
 					{
 						BX_TRACE("Create GL 3.0 context.");
-						const int contextArrib[] =
+						const int contextAttrs[] =
 						{
 							GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
 							GLX_CONTEXT_MINOR_VERSION_ARB, 0,
 							None,
 						};
 
-						GLXContext context = glXCreateContextAttribsARB(display, bestConfig, 0, True, contextArrib);
+						GLXContext context = glXCreateContextAttribsARB(display, bestConfig, 0, true, contextAttrs);
 
 						if (NULL != context)
 						{
