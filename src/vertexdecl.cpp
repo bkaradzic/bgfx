@@ -365,4 +365,101 @@ namespace bgfx
 		}
 	}
 
+	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num)
+	{
+		if (_destDecl.m_hash == _srcDecl.m_hash)
+		{
+			memcpy(_destData, _srcData, _srcDecl.getSize(_num) );
+			return;
+		}
+
+		struct ConvertOp
+		{
+			enum Enum
+			{
+				Set,
+				Copy,
+				Convert,
+			};
+
+			Attrib::Enum attr;
+			Enum op;
+			uint32_t src;
+			uint32_t dest;
+			uint32_t size;
+		};
+
+		ConvertOp convertOp[Attrib::Count];
+		uint32_t numOps = 0;
+
+		for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+		{
+			Attrib::Enum attr = (Attrib::Enum)ii;
+
+			if (_destDecl.has(attr) )
+			{
+				ConvertOp& cop = convertOp[numOps];
+				cop.attr = attr;
+				cop.dest = _destDecl.getOffset(attr);
+
+				uint8_t num;
+				AttribType::Enum type;
+				bool normalized;
+				bool asInt;
+				_destDecl.decode(attr, num, type, normalized, asInt);
+				cop.size = (*s_attribTypeSize[0])[type][num-1];
+
+				if (_srcDecl.has(attr) )
+				{
+					cop.src = _srcDecl.getOffset(attr);
+					cop.op = _destDecl.m_attributes[attr] == _srcDecl.m_attributes[attr] ? ConvertOp::Copy : ConvertOp::Convert;
+				}
+				else
+				{
+					cop.op = ConvertOp::Set;
+				}
+
+				++numOps;
+			}
+		}
+
+		if (0 < numOps)
+		{
+			const uint8_t* src = (const uint8_t*)_srcData;
+			uint32_t srcStride = _srcDecl.getStride();
+
+			uint8_t* dest = (uint8_t*)_destData;
+			uint32_t destStride = _destDecl.getStride();
+
+			float unpacked[4];
+
+			for (uint32_t ii = 0; ii < _num; ++ii)
+			{
+				for (uint32_t jj = 0; jj < numOps; ++jj)
+				{
+					const ConvertOp& cop = convertOp[jj];
+
+					switch (cop.op)
+					{
+					case ConvertOp::Set:
+						memset(dest + cop.dest, 0, cop.size);
+						break;
+
+					case ConvertOp::Copy:
+						memcpy(dest + cop.dest, src + cop.src, cop.size);
+						break;
+
+					case ConvertOp::Convert:
+						vertexUnpack(unpacked, cop.attr, _srcDecl, src);
+						vertexPack(unpacked, true, cop.attr, _destDecl, dest);
+						break;
+					}
+				}
+
+				src += srcStride;
+				dest += destStride;
+			}
+		}
+	}
+
 } // namespace bgfx
