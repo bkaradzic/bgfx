@@ -449,11 +449,12 @@ namespace bgfx
 
 					XMapRaised(display, window);
 					XFlush(display);
-					XFree(visualInfo);
 
 					BX_TRACE("Create GL 2.1 context.");
 					m_context = glXCreateContext(display, visualInfo, 0, GL_TRUE);
 					BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
+
+					XFree(visualInfo);
 
 					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
