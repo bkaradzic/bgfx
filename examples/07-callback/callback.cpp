@@ -184,7 +184,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) BX_OVERRIDE
 	{
 		char filePath[256];
-		bx::snprintf(filePath, sizeof(filePath), "%016" PRIx64, _id);
+		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
 
 		// Use cache id as filename.
 		FILE* file = fopen(filePath, "rb");
@@ -205,7 +205,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) BX_OVERRIDE
 	{
 		char filePath[256];
-		bx::snprintf(filePath, sizeof(filePath), "%016" PRIx64, _id);
+		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
 
 		// Use cache id as filename.
 		FILE* file = fopen(filePath, "wb");
@@ -226,7 +226,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) BX_OVERRIDE
 	{
 		m_writer = new AviWriter;
-		if (!m_writer->open("capture.avi", _width, _height, 60, _yflip) )
+		if (!m_writer->open("temp/capture.avi", _width, _height, 60, _yflip) )
 		{
 			delete m_writer;
 			m_writer = NULL;
@@ -401,7 +401,7 @@ int _main_(int _argc, char** _argv)
 		// Take screen shot at frame 150.
 		if (150 == frame)
 		{
-			bgfx::saveScreenShot("frame150.tga");
+			bgfx::saveScreenShot("temp/frame150.tga");
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to 
