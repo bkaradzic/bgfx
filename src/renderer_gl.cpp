@@ -12,6 +12,17 @@
 
 namespace bgfx
 {
+#if BX_PLATFORM_LINUX
+	static ::Display* s_display;
+	static ::Window s_window;
+
+	void x11SetDisplayWindow(::Display* _display, ::Window _window)
+	{
+		s_display = _display;
+		s_window = _window;
+	}
+#endif // BX_PLATFORM_LINUX
+
 	struct Extension
 	{
 		enum Enum
@@ -196,8 +207,6 @@ namespace bgfx
 			, m_surface(NULL)
 #elif BX_PLATFORM_LINUX
 			, m_context(0)
-			, m_window(0)
-			, m_display(NULL)
 #endif // BX_PLATFORM_
 		{
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -334,15 +343,12 @@ namespace bgfx
 				}
 #elif BX_PLATFORM_LINUX
 
-				if (0 == m_display)
+				if (0 == m_context)
 				{
-					Display* display = XOpenDisplay(0);
-					BGFX_FATAL(display, Fatal::UnableToInitialize, "Failed to open X display (0).");
-
-					XLockDisplay(display);
+					XLockDisplay(s_display);
 
 					int major, minor;
-					bool version = glXQueryVersion(display, &major, &minor);
+					bool version = glXQueryVersion(s_display, &major, &minor);
 					BGFX_FATAL(version, Fatal::UnableToInitialize, "Failed to query GLX version");
 					BGFX_FATAL( (major == 1 && minor >= 3) || major > 1
 							, Fatal::UnableToInitialize
@@ -369,14 +375,14 @@ namespace bgfx
 					GLXFBConfig bestConfig = NULL;
 
 					int numConfigs;
-					GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), attrsGlx, &numConfigs);
+					GLXFBConfig* configs = glXChooseFBConfig(s_display, DefaultScreen(s_display), attrsGlx, &numConfigs);
 
 					BX_TRACE("glX num configs %d", numConfigs);
 
 					XVisualInfo* visualInfo = 0;
 					for (int ii = 0; ii < numConfigs; ++ii)
 					{
-						visualInfo = glXGetVisualFromFBConfig(display, configs[ii]);
+						visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
 						if (NULL != visualInfo)
 						{
 							BX_TRACE("---");
@@ -384,7 +390,7 @@ namespace bgfx
 							for (uint32_t attr = 6; attr < countof(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
 							{
 								int value;
-								glXGetFBConfigAttrib(display, configs[ii], attrsGlx[attr], &value);
+								glXGetFBConfigAttrib(s_display, configs[ii], attrsGlx[attr], &value);
 								BX_TRACE("glX %d/%d %2d: %4x, %8x (%8x%s)"
 										, ii
 										, numConfigs
@@ -418,29 +424,8 @@ namespace bgfx
 					XFree(configs);
 					BGFX_FATAL(visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
 
-					// Generate colormaps
-					XSetWindowAttributes windowAttrs;
-					windowAttrs.colormap = XCreateColormap(display, RootWindow(display, visualInfo->screen), visualInfo->visual, AllocNone);
-					windowAttrs.background_pixmap = None;
-					windowAttrs.border_pixel = 0;
-
-					Window window = XCreateWindow(
-											  display
-											, RootWindow(display, visualInfo->screen)
-											, 0, 0
-											, _width, _height, 0, visualInfo->depth
-											, InputOutput
-											, visualInfo->visual
-											, CWBorderPixel|CWColormap
-											, &windowAttrs
-											);
-					BGFX_FATAL(window, Fatal::UnableToInitialize, "Failed to create X11 window.");
-
-					XMapRaised(display, window);
-					XFlush(display);
-
 					BX_TRACE("Create GL 2.1 context.");
-					m_context = glXCreateContext(display, visualInfo, 0, GL_TRUE);
+					m_context = glXCreateContext(s_display, visualInfo, 0, GL_TRUE);
 					BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
 
 					XFree(visualInfo);
@@ -457,16 +442,16 @@ namespace bgfx
 							None,
 						};
 
-						GLXContext context = glXCreateContextAttribsARB(display, bestConfig, 0, true, contextAttrs);
+						GLXContext context = glXCreateContextAttribsARB(s_display, bestConfig, 0, true, contextAttrs);
 
 						if (NULL != context)
 						{
-							glXDestroyContext(display, m_context);
+							glXDestroyContext(s_display, m_context);
 							m_context = context;
 						}
 					}
 
-					glXMakeCurrent(display, window, m_context);
+					glXMakeCurrent(s_display, s_window, m_context);
 
 #	define GL_IMPORT(_optional, _proto, _func) \
 				{ \
@@ -477,15 +462,12 @@ namespace bgfx
 #	undef GL_IMPORT
 					glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glXSwapBuffers(display, window);
+					glXSwapBuffers(s_display, s_window);
 
-					m_display = display;
-					m_window = window;
-					XUnlockDisplay(display);
+					XUnlockDisplay(s_display);
 				}
 				else
 				{
-					XResizeWindow(m_display, m_window, _width, _height);
 				}
 #elif BGFX_USE_EGL
 				if (NULL == m_context)
@@ -558,23 +540,6 @@ namespace bgfx
 #endif // BX_PLATFORM_
 			}
 
-#if !BGFX_CONFIG_RENDERER_OPENGLES3
-			if (NULL != glVertexAttribDivisor
-			&&  NULL != glDrawArraysInstanced
-			&&  NULL != glDrawElementsInstanced)
-			{
-				s_vertexAttribDivisor = glVertexAttribDivisor;
-				s_drawArraysInstanced = glDrawArraysInstanced;
-				s_drawElementsInstanced = glDrawElementsInstanced;
-			}
-			else
-			{
-				s_vertexAttribDivisor = stubVertexAttribDivisor;
-				s_drawArraysInstanced = stubDrawArraysInstanced;
-				s_drawElementsInstanced = stubDrawElementsInstanced;
-			}
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES3
-
 			m_flip = true;
 		}
 
@@ -592,7 +557,7 @@ namespace bgfx
 				eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 				eglSwapBuffers(m_display, m_surface);
 #elif BX_PLATFORM_LINUX
-				glXSwapBuffers(m_display, m_window);
+				glXSwapBuffers(s_display, s_window);
 #endif // BX_PLATFORM_
 			}
 
@@ -760,8 +725,6 @@ namespace bgfx
 		EGLSurface m_surface;
 #elif BX_PLATFORM_LINUX
 		GLXContext m_context;
-		Window m_window;
-		Display* m_display;
 #endif // BX_PLATFORM_NACL
 	};
 
@@ -803,18 +766,6 @@ namespace bgfx
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/)
 	{
 		renderFrame();
-	}
-#elif BX_PLATFORM_LINUX
-	bool linuxGetDisplay(Display** _display, Window* _window)
-	{
-		if (!s_renderCtx.m_display)
-		{
-			return false;
-		}
-
-		*_display = s_renderCtx.m_display;
-		*_window = s_renderCtx.m_window;
-		return true;
 	}
 #endif // BX_PLATFORM_
 
@@ -2252,6 +2203,23 @@ namespace bgfx
 				s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
 				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 			}
+
+#if !BGFX_CONFIG_RENDERER_OPENGLES3
+			if (NULL != glVertexAttribDivisor
+			&&  NULL != glDrawArraysInstanced
+			&&  NULL != glDrawElementsInstanced)
+			{
+				s_vertexAttribDivisor = glVertexAttribDivisor;
+				s_drawArraysInstanced = glDrawArraysInstanced;
+				s_drawElementsInstanced = glDrawElementsInstanced;
+			}
+			else
+			{
+				s_vertexAttribDivisor = stubVertexAttribDivisor;
+				s_drawArraysInstanced = stubDrawArraysInstanced;
+				s_drawElementsInstanced = stubDrawElementsInstanced;
+			}
+#endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 	}
 

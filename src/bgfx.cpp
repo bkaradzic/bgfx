@@ -38,7 +38,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_MULTITHREADED
 
 #if BX_PLATFORM_WINDOWS
-	void setHwnd(HWND _hwnd)
+	void setHwnd(::HWND _hwnd)
 	{
 		g_bgfxHwnd = _hwnd;
 	}
