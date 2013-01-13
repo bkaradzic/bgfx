@@ -206,7 +206,6 @@ Todo
  - OSX and iOS platforms.
  - DX11: MSAA.
  - GL: MSAA.
- - GL: ARB_vertex_array_object + OES_vertex_array_object.
 
 Notice
 ------

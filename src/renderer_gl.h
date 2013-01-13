@@ -196,6 +196,23 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 #   define GL_APIENTRYP GL_APIENTRY*
 #endif // GL_APIENTRYP
 
+#if !BGFX_CONFIG_RENDERER_OPENGL
+#	define glClearDepth glClearDepthf
+#endif // !BGFX_CONFIG_RENDERER_OPENGL
+
+#if BGFX_CONFIG_RENDERER_OPENGLES2
+#	define glProgramBinary glProgramBinaryOES
+#	define glGetProgramBinary glGetProgramBinaryOES
+#	define glBindVertexArray glBindVertexArrayOES
+#	define glDeleteVertexArrays glDeleteVertexArraysOES
+#	define glGenVertexArrays glGenVertexArraysOES
+#	define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
+#	define GL_HALF_FLOAT GL_HALF_FLOAT_OES
+#	define GL_RGB10_A2 GL_RGB10_A2_EXT
+#	define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
+#	define GL_SAMPLER_3D GL_SAMPLER_3D_OES
+#endif // BGFX_CONFIG_RENDERER_OPENGLES2
+
 namespace bgfx
 {
 	typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISORBGFXPROC)(GLuint _index, GLuint _divisor);
@@ -329,6 +346,56 @@ namespace bgfx
 		GLuint m_id;
 		uint32_t m_size;
 		VertexDeclHandle m_decl;
+	};
+
+	class VaoCache
+	{
+	public:
+		GLuint add(uint64_t _hash)
+		{
+			invalidate(_hash);
+
+			GLuint arrayId;
+			GL_CHECK(glGenVertexArrays(1, &arrayId) );
+
+			m_hashMap.insert(stl::make_pair(_hash, arrayId) );
+
+			return arrayId;
+		}
+
+		GLuint find(uint64_t _hash)
+		{
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				return it->second;
+			}
+
+			return UINT32_MAX;
+		}
+
+		void invalidate(uint64_t _hash)
+		{
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidate()
+		{
+			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			{
+				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
+			}
+			m_hashMap.clear();
+		}
+
+	private:
+		typedef stl::unordered_map<uint64_t, GLuint> HashMap;
+		HashMap m_hashMap;
 	};
 
 	struct Texture

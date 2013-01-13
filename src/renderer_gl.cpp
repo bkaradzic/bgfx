@@ -10,20 +10,6 @@
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
 
-#if !BGFX_CONFIG_RENDERER_OPENGL
-#	define glClearDepth glClearDepthf
-#endif // !BGFX_CONFIG_RENDERER_OPENGL
-
-#if BGFX_CONFIG_RENDERER_OPENGLES2
-#	define glProgramBinary glProgramBinaryOES
-#	define glGetProgramBinary glGetProgramBinaryOES
-#	define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
-#	define GL_HALF_FLOAT GL_HALF_FLOAT_OES
-#	define GL_RGB10_A2 GL_RGB10_A2_EXT
-#	define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
-#	define GL_SAMPLER_3D GL_SAMPLER_3D_OES
-#endif // BGFX_CONFIG_RENDERER_OPENGLES2
-
 namespace bgfx
 {
 	struct Extension
@@ -64,6 +50,7 @@ namespace bgfx
 			OES_vertex_type_10_10_10_2,
 			EXT_occlusion_query_boolean,
 			ARB_vertex_array_object,
+			OES_vertex_array_object,
 			ATI_meminfo,
 			NVX_gpu_memory_info,
 
@@ -111,6 +98,7 @@ namespace bgfx
 		{ "GL_OES_vertex_type_10_10_10_2",        false, true },
 		{ "GL_EXT_occlusion_query_boolean",       false, true },
 		{ "GL_ARB_vertex_array_object",           false, true },
+		{ "OES_vertex_array_object",              false, true },
 		{ "GL_ATI_meminfo",                       false, true },
 		{ "GL_NVX_gpu_memory_info",               false, true },
 	};
@@ -187,6 +175,7 @@ namespace bgfx
 			, m_captureSize(0)
 			, m_maxAnisotropy(0.0f)
 			, m_dxtSupport(false)
+			, m_vaoSupport(false)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_flip(false)
@@ -613,6 +602,11 @@ namespace bgfx
 			}
 		}
 
+		void invalidateCache()
+		{
+			m_vaoCache.invalidate();
+		}
+
 		void updateCapture()
 		{
 			if (m_resolution.m_flags&BGFX_RESET_CAPTURE)
@@ -695,6 +689,8 @@ namespace bgfx
 
 		void shutdown()
 		{
+			invalidateCache();
+
 #if BGFX_CONFIG_RENDERER_OPENGL
 			m_queries.destroy();
 #endif // BGFX_CONFIG_RENDERER_OPENGL
@@ -731,6 +727,8 @@ namespace bgfx
 		Queries m_queries;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
+		VaoCache m_vaoCache;
+
 		TextVideoMem m_textVideoMem;
 
 		Resolution m_resolution;
@@ -738,6 +736,7 @@ namespace bgfx
 		uint32_t m_captureSize;
 		float m_maxAnisotropy;
 		bool m_dxtSupport;
+		bool m_vaoSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
 		bool m_flip;
@@ -2054,6 +2053,11 @@ namespace bgfx
 
 	void TextVideoMemBlitter::setup()
 	{
+		if (s_renderCtx.m_vaoSupport)
+		{
+			GL_CHECK(glBindVertexArray(0) );
+		}
+
 		uint32_t width = s_renderCtx.m_resolution.m_width;
 		uint32_t height = s_renderCtx.m_resolution.m_height;
 
@@ -2221,6 +2225,11 @@ namespace bgfx
 
 			s_renderCtx.m_dxtSupport |=
 				s_extension[Extension::EXT_texture_compression_s3tc].m_supported
+				;
+
+			s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+				|| s_extension[Extension::ARB_vertex_array_object].m_supported
+				|| s_extension[Extension::OES_vertex_array_object].m_supported
 				;
 
 			s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
@@ -2903,57 +2912,124 @@ namespace bgfx
 						}
 					}
 
-					if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || programChanged)
+					if (s_renderCtx.m_vaoSupport)
 					{
-						currentState.m_vertexBuffer = state.m_vertexBuffer;
+						if (programChanged
+						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
+						||  baseVertex != state.m_startVertex
+						||  currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+						{
+							uint64_t hash = (uint64_t(state.m_vertexBuffer.idx)<<48)
+								| (uint64_t(state.m_indexBuffer.idx)<<32)
+								| (uint64_t(state.m_instanceDataBuffer.idx)<<16)
+								| programIdx
+								;
+							hash ^= state.m_startVertex;
 
-						uint16_t handle = state.m_vertexBuffer.idx;
-						if (invalidHandle != handle)
-						{
-							VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
-							GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-							bindAttribs = true;
-						}
-						else
-						{
-							GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+							currentState.m_vertexBuffer = state.m_vertexBuffer;
+							currentState.m_indexBuffer = state.m_indexBuffer;
+							baseVertex = state.m_startVertex;
+
+							GLuint id = s_renderCtx.m_vaoCache.find(hash);
+							if (UINT32_MAX != id)
+							{
+								GL_CHECK(glBindVertexArray(id) );
+							}
+							else
+							{
+								id = s_renderCtx.m_vaoCache.add(hash);
+								GL_CHECK(glBindVertexArray(id) );
+
+								if (invalidHandle != state.m_vertexBuffer.idx)
+								{
+									VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+
+									uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+									const Program& program = s_renderCtx.m_program[programIdx];
+									program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+
+									if (invalidHandle != state.m_instanceDataBuffer.idx)
+									{
+										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
+										program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
+									}
+								}
+								else
+								{
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+								}
+
+								if (invalidHandle != state.m_indexBuffer.idx)
+								{
+									IndexBuffer& ib = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx];
+									GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
+								}
+								else
+								{
+									GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+								}
+							}
 						}
 					}
-
-					if (currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+					else
 					{
-						currentState.m_indexBuffer = state.m_indexBuffer;
+						if (programChanged
+						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx)
+						{
+							currentState.m_vertexBuffer = state.m_vertexBuffer;
 
-						uint16_t handle = state.m_indexBuffer.idx;
-						if (invalidHandle != handle)
-						{
-							IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
-							GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
+							uint16_t handle = state.m_vertexBuffer.idx;
+							if (invalidHandle != handle)
+							{
+								VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
+								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+								bindAttribs = true;
+							}
+							else
+							{
+								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+							}
 						}
-						else
+
+						if (currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
 						{
-							GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+							currentState.m_indexBuffer = state.m_indexBuffer;
+
+							uint16_t handle = state.m_indexBuffer.idx;
+							if (invalidHandle != handle)
+							{
+								IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
+								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
+							}
+							else
+							{
+								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+							}
+						}
+
+						if (invalidHandle != currentState.m_vertexBuffer.idx)
+						{
+							if (baseVertex != state.m_startVertex
+							||  bindAttribs)
+							{
+								baseVertex = state.m_startVertex;
+								const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+								uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+								const Program& program = s_renderCtx.m_program[programIdx];
+								program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+
+								if (invalidHandle != state.m_instanceDataBuffer.idx)
+								{
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
+									program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
+								}
+							}
 						}
 					}
 
 					if (invalidHandle != currentState.m_vertexBuffer.idx)
 					{
-						if (baseVertex != state.m_startVertex
-						||  bindAttribs)
-						{
-							baseVertex = state.m_startVertex;
-							const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
-							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-							const Program& program = s_renderCtx.m_program[programIdx];
-							program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
-							
-							if (invalidHandle != state.m_instanceDataBuffer.idx)
-							{
-								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
-								program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
-							}
-						}
-
 						uint32_t numVertices = state.m_numVertices;
 						if (UINT32_C(0xffffffff) == numVertices)
 						{
