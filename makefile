@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2013 Branimir Karadzic. All rights reserved.
 # License: http://www.opensource.org/licenses/BSD-2-Clause
 #
 

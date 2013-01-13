@@ -258,7 +258,7 @@ http://nothings.org/stb_image.c
 License (BSD 2-clause)
 ----------------------
 
-Copyright 2010-2012 Branimir Karadzic. All rights reserved.
+Copyright 2010-2013 Branimir Karadzic. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
