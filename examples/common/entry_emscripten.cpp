@@ -11,6 +11,17 @@
 #include <alloca.h>
 #include <setjmp.h>
 
+#include "entry.h"
+
+namespace entry
+{
+	Event::Enum poll()
+	{
+		return Event::Nop;
+	}
+
+} // namespace entry
+
 extern int _main_(int _argc, char** _argv);
 
 static jmp_buf s_main;

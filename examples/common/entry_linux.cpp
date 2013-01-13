@@ -7,6 +7,17 @@
 
 #if BX_PLATFORM_LINUX
 
+#include "entry.h"
+
+namespace entry
+{
+	Event::Enum poll()
+	{
+		return Event::Nop;
+	}
+
+} // namespace entry
+
 extern int _main_(int _argc, char** _argv);
 
 int main(int _argc, char** _argv)

@@ -23,6 +23,17 @@
 #include <bgfxplatform.h>
 #include "dbg.h"
 
+#include "entry.h"
+
+namespace entry
+{
+	Event::Enum poll()
+	{
+		return Event::Nop;
+	}
+
+} // namespace entry
+
 extern int _main_(int _argc, char** _argv);
 
 static void* _entry_(void*)
