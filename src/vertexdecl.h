@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#ifndef __VERTEXDECL_H__
+#define __VERTEXDECL_H__
+
 #include <bgfx.h>
 
 namespace bgfx
@@ -14,3 +17,5 @@ namespace bgfx
 	void dump(const VertexDecl& _decl);
 
 } // namespace bgfx
+
+#endif // __VERTEXDECL_H__

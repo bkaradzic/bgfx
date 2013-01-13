@@ -3,13 +3,11 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bgfx.h>
 #include <bx/bx.h>
-#include "dbg.h"
-#include <stdio.h>
 
 #if BX_PLATFORM_NACL
 
+#include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -22,11 +20,8 @@
 #include <ppapi/c/ppp_instance.h>
 #include <ppapi/gles2/gl2ext_ppapi.h>
 
-namespace bgfx
-{
-	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
-	extern void naclSetIntefraces(PP_Instance, const PPB_Instance*, const PPB_Graphics3D*, PostSwapBuffersFn);
-}
+#include <bgfxplatform.h>
+#include "dbg.h"
 
 extern int _main_(int _argc, char** _argv);
 

@@ -6,6 +6,7 @@
 #include <bgfx.h>
 #include <bx/bx.h>
 #include <bx/timer.h>
+#include "../common/entry.h"
 #include "../common/dbg.h"
 #include "../common/math.h"
 
@@ -231,7 +232,7 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::ProgramHandle raymarching = loadProgram("vs_raymarching", "fs_raymarching");
 
-	while (true)
+	while (entry::Event::Exit != entry::poll() )
 	{
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to viewZ 0.

@@ -5,6 +5,7 @@
 
 #include <bgfx.h>
 #include <bx/bx.h>
+#include "../common/entry.h"
 #include "../common/dbg.h"
 
 int _main_(int _argc, char** _argv)
@@ -26,7 +27,7 @@ int _main_(int _argc, char** _argv)
 		, 0
 		);
 
-	while (true)
+	while (entry::Event::Exit != entry::poll() )
 	{
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.

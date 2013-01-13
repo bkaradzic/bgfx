@@ -1443,10 +1443,6 @@ namespace bgfx
 
 		void frame()
 		{
-#if BX_PLATFORM_WINDOWS
-			m_window.update();
-#endif // BX_PLATFORM_WINDOWS
-
 			// wait for render thread to finish
 			renderSemWait();
 
@@ -2846,165 +2842,7 @@ namespace bgfx
 		{
 			Window()
 				: m_frame(true)
-				, m_update(false)
 			{
-			}
-
-			void init()
-			{
-				if (NULL == g_bgfxHwnd)
-				{					
-					HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
-
-					WNDCLASSEX wnd;
-					memset(&wnd, 0, sizeof(wnd) );
-					wnd.cbSize = sizeof(wnd);
-					wnd.lpfnWndProc = DefWindowProc;
-					wnd.hInstance = instance;
-					wnd.hIcon = LoadIcon(instance, IDI_APPLICATION);
-					wnd.hCursor = LoadCursor(instance, IDC_ARROW);
-					wnd.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-					wnd.lpszClassName = "bgfx_letterbox";
-					wnd.hIconSm = LoadIcon(instance, IDI_APPLICATION);
-					RegisterClassExA(&wnd);
-
-					memset(&wnd, 0, sizeof(wnd) );
-					wnd.cbSize = sizeof(wnd);
-					wnd.style = CS_HREDRAW | CS_VREDRAW;
-					wnd.lpfnWndProc = wndProc;
-					wnd.hInstance = instance;
-					wnd.hIcon = LoadIcon(instance, IDI_APPLICATION);
-					wnd.hCursor = LoadCursor(instance, IDC_ARROW);
-					wnd.lpszClassName = "bgfx";
-					wnd.hIconSm = LoadIcon(instance, IDI_APPLICATION);
-					RegisterClassExA(&wnd);
-
-					HWND hwnd = CreateWindowA("bgfx_letterbox"
-						, "BGFX"
-						, WS_POPUP|WS_SYSMENU
-						, -32000
-						, -32000
-						, 0
-						, 0
-						, NULL
-						, NULL
-						, instance
-						, 0
-						);
-
-					g_bgfxHwnd = CreateWindowA("bgfx"
-						, "BGFX"
-						, WS_OVERLAPPEDWINDOW|WS_VISIBLE
-						, 0
-						, 0
-						, BGFX_DEFAULT_WIDTH
-						, BGFX_DEFAULT_HEIGHT
-						, hwnd
-						, NULL
-						, instance
-						, 0
-						);
-
-					m_update = true;
-				}
-			}
-
-			LRESULT process(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
-			{
-				switch (_id)
-				{
-				case WM_CLOSE:
-					TerminateProcess(GetCurrentProcess(), 0);
-					break;
-
-				case WM_SIZING:
-					{
-						RECT clientRect;
-						GetClientRect(_hwnd, &clientRect);
-						uint32_t width = clientRect.right-clientRect.left;
-						uint32_t height = clientRect.bottom-clientRect.top;
-
-						RECT& rect = *(RECT*)_lparam;
-						uint32_t frameWidth = rect.right-rect.left - width;
-						uint32_t frameHeight = rect.bottom-rect.top - height;
-
-						switch (_wparam)
-						{
-						case WMSZ_LEFT:
-						case WMSZ_RIGHT:
-							{
-								float aspectRatio = 1.0f/m_aspectRatio;
-								width = bx::uint32_max(BGFX_DEFAULT_WIDTH/4, width);
-								height = uint32_t(float(width)*aspectRatio);
-							}
-							break;
-
-						default:
-							{
-								float aspectRatio = m_aspectRatio;
-								height = bx::uint32_max(BGFX_DEFAULT_HEIGHT/4, height);
-								width = uint32_t(float(height)*aspectRatio);
-							}
-							break;
-						}
-
-						rect.right = rect.left + width + frameWidth;
-						rect.bottom = rect.top + height + frameHeight;
-
-						SetWindowPos(_hwnd
-							, HWND_TOP
-							, rect.left
-							, rect.top
-							, (rect.right-rect.left)
-							, (rect.bottom-rect.top)
-							, SWP_SHOWWINDOW
-							);
-					}
-					return 0;
-
-				case WM_SYSCOMMAND:
-					switch (_wparam)
-					{
-					case SC_MINIMIZE:
-					case SC_RESTORE:
-						{
-							HWND parent = GetWindow(_hwnd, GW_OWNER);
-							if (NULL != parent)
-							{
-								PostMessage(parent, _id, _wparam, _lparam);
-							}
-						}
-					}
-					break;
-
-				case WM_KEYDOWN:
-				case WM_SYSKEYDOWN:
-					if ((WM_KEYDOWN == _id && VK_F11 == _wparam)
-					||  (WM_SYSKEYDOWN == _id && VK_RETURN == _wparam) )
-					{
-						toggleWindowFrame();
-					}
-					break;
-
-				default:
-					break;
-				}
-
-				return DefWindowProc(_hwnd, _id, _wparam, _lparam);
-			}
-
-			void update()
-			{
-				if (m_update)
-				{
-					MSG msg;
-					msg.message = WM_NULL;
-					if (0 != PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE) )
-					{
-						TranslateMessage(&msg);
-						DispatchMessage(&msg);
-					}
-				}
 			}
 
 			void adjust(uint32_t _width, uint32_t _height, bool _windowFrame)
@@ -3112,13 +2950,6 @@ namespace bgfx
 			}
 
 		private:
-			static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
-
-			void toggleWindowFrame()
-			{
-				adjust(m_width, m_height, !m_frame);
-			}
-
 			RECT m_rect;
 			DWORD m_style;
 			uint32_t m_width;

@@ -7,6 +7,7 @@
 #include <bx/bx.h>
 #include <bx/timer.h>
 #include <bx/uint32_t.h>
+#include "../common/entry.h"
 #include "../common/dbg.h"
 #include "../common/math.h"
 
@@ -224,7 +225,7 @@ int _main_(int _argc, char** _argv)
 
 	int64_t updateTime = 0;
 
-	while (true)
+	while (entry::Event::Exit != entry::poll() )
 	{
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
