@@ -5,10 +5,6 @@
 
 #include "bgfx_p.h"
 
-#if BX_PLATFORM_WINDOWS
-HWND g_bgfxHwnd = NULL;
-#endif // BX_PLATFORM_WINDOWS
-
 #if BGFX_CONFIG_USE_TINYSTL
 namespace tinystl
 {
@@ -38,7 +34,9 @@ namespace bgfx
 #endif // BGFX_CONFIG_MULTITHREADED
 
 #if BX_PLATFORM_WINDOWS
-	void setHwnd(::HWND _hwnd)
+	HWND g_bgfxHwnd = NULL;
+
+	void winSetHwnd(::HWND _hwnd)
 	{
 		g_bgfxHwnd = _hwnd;
 	}

@@ -12,17 +12,6 @@
 
 namespace bgfx
 {
-#if BX_PLATFORM_LINUX
-	static ::Display* s_display;
-	static ::Window s_window;
-
-	void x11SetDisplayWindow(::Display* _display, ::Window _window)
-	{
-		s_display = _display;
-		s_window = _window;
-	}
-#endif // BX_PLATFORM_LINUX
-
 	struct Extension
 	{
 		enum Enum
@@ -114,17 +103,6 @@ namespace bgfx
 		{ "GL_NVX_gpu_memory_info",               false, true },
 	};
 
-#if BGFX_USE_WGL
-	PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
-	PFNWGLMAKECURRENTPROC wglMakeCurrent;
-	PFNWGLCREATECONTEXTPROC wglCreateContext;
-	PFNWGLDELETECONTEXTPROC wglDeleteContext;
-#endif // BGFX_USE_WGL
-
-#define GL_IMPORT(_optional, _proto, _func) _proto _func
-#include "glimports.h"
-#undef GL_IMPORT
-
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -150,17 +128,6 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_OPENGLES3
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
-
-#if BX_PLATFORM_NACL
-	void naclSwapCompleteCb(void* _data, int32_t _result);
-
-	PP_CompletionCallback naclSwapComplete = 
-	{
-		naclSwapCompleteCb,
-		NULL,
-		PP_COMPLETIONCALLBACK_FLAG_NONE
-	};
-#endif // BX_PLATFORM_NACL
 
 	static void rgbaToBgra(uint8_t* _data, uint32_t _width, uint32_t _height) 
 	{
@@ -192,22 +159,6 @@ namespace bgfx
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
-#if BX_PLATFORM_NACL
-			, m_context(0)
-			, m_instance(0)
-			, m_instInterface(NULL)
-			, m_graphicsInterface(NULL)
-			, m_instancedArrays(NULL)
-#elif BGFX_USE_WGL
-			, m_context(NULL)
-			, m_hdc(NULL)
-#elif BGFX_USE_EGL
-			, m_context(NULL)
-			, m_display(NULL)
-			, m_surface(NULL)
-#elif BX_PLATFORM_LINUX
-			, m_context(0)
-#endif // BX_PLATFORM_
 		{
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 		}
@@ -232,312 +183,14 @@ namespace bgfx
 			if (_width != 0
 			||  _height != 0)
 			{
-#if BX_PLATFORM_NACL
-				if (0 == m_context)
+				if (!m_glctx.isValid() )
 				{
-					BX_TRACE("create context");
-
-					int32_t attribs[] =
-					{
-						PP_GRAPHICS3DATTRIB_ALPHA_SIZE, 8,
-						PP_GRAPHICS3DATTRIB_DEPTH_SIZE, 24,
-						PP_GRAPHICS3DATTRIB_STENCIL_SIZE, 8,
-						PP_GRAPHICS3DATTRIB_SAMPLES, 0,
-						PP_GRAPHICS3DATTRIB_SAMPLE_BUFFERS, 0,
-						PP_GRAPHICS3DATTRIB_WIDTH, int32_t(_width),
-						PP_GRAPHICS3DATTRIB_HEIGHT, int32_t(_height),
-						PP_GRAPHICS3DATTRIB_NONE
-					};
-
-					m_context = m_graphicsInterface->Create(m_instance, 0, attribs);
-					m_instInterface->BindGraphics(m_instance, m_context);
-					glSetCurrentContextPPAPI(m_context);
-					m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
-
-#if 0
-#	define GL_IMPORT(_optional, _proto, _func) \
-			{ \
-				_func = (_proto)eglGetProcAddress(#_func); \
-				BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. eglGetProcAddress(\"%s\")", #_func); \
-			}
-#	include "glimports.h"
-#	undef GL_IMPORT
-#endif
+					m_glctx.create(_width, _height);
 				}
 				else
 				{
-					m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
+					m_glctx.resize(_width, _height);
 				}
-
-#elif BGFX_USE_WGL
-				if (NULL == m_hdc)
-				{
-					m_opengl32dll = LoadLibrary("opengl32.dll");
-					BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
-
-					wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(m_opengl32dll, "wglGetProcAddress");
-					BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
-
-					wglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(m_opengl32dll, "wglMakeCurrent");
-					BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
-
-					wglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglCreateContext");
-					BGFX_FATAL(NULL != wglCreateContext, Fatal::UnableToInitialize, "Failed get wglCreateContext.");
-
-					wglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglDeleteContext");
-					BGFX_FATAL(NULL != wglDeleteContext, Fatal::UnableToInitialize, "Failed get wglDeleteContext.");
-
-					m_hdc = GetDC(g_bgfxHwnd);
-					BGFX_FATAL(NULL != m_hdc, Fatal::UnableToInitialize, "GetDC failed!");
-
-					PIXELFORMATDESCRIPTOR pfd;
-					memset(&pfd, 0, sizeof(pfd) );
-					pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-					pfd.nVersion = 1;
-					pfd.iPixelType = PFD_TYPE_RGBA;
-					pfd.cColorBits = 32;
-					pfd.cAlphaBits = 8;
-					pfd.cDepthBits = 24;
-					pfd.cStencilBits = 8;
-					pfd.iLayerType = PFD_MAIN_PLANE;
-
-					int pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-					BGFX_FATAL(0 != pixelFormat, Fatal::UnableToInitialize, "ChoosePixelFormat failed!");
-
-					DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
-
-					BX_TRACE("Pixel format:\n"
-						"\tiPixelType %d\n"
-						"\tcColorBits %d\n"
-						"\tcAlphaBits %d\n"
-						"\tcDepthBits %d\n"
-						"\tcStencilBits %d\n"
-						, pfd.iPixelType
-						, pfd.cColorBits
-						, pfd.cAlphaBits
-						, pfd.cDepthBits
-						, pfd.cStencilBits
-						);
-
-					int result;
-					result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
-					BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed!");
-
-					m_context = wglCreateContext(m_hdc);
-					BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "wglCreateContext failed!");
-					
-					result = wglMakeCurrent(m_hdc, m_context);
-					BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
-
-#	define GL_IMPORT(_optional, _proto, _func) \
-				{ \
-					_func = (_proto)wglGetProcAddress(#_func); \
-					if (_func == NULL) \
-					{ \
-						_func = (_proto)GetProcAddress(m_opengl32dll, #_func); \
-					} \
-					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
-				}
-#	include "glimports.h"
-#	undef GL_IMPORT
-				}
-#elif BX_PLATFORM_LINUX
-
-				if (0 == m_context)
-				{
-					XLockDisplay(s_display);
-
-					int major, minor;
-					bool version = glXQueryVersion(s_display, &major, &minor);
-					BGFX_FATAL(version, Fatal::UnableToInitialize, "Failed to query GLX version");
-					BGFX_FATAL( (major == 1 && minor >= 3) || major > 1
-							, Fatal::UnableToInitialize
-							, "GLX version is not >=1.3 (%d.%d)."
-							, major
-							, minor
-							);
-
-					const int attrsGlx[] =
-					{
-						GLX_RENDER_TYPE, GLX_RGBA_BIT,
-						GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-						GLX_DOUBLEBUFFER, true,
-						GLX_RED_SIZE, 8,
-						GLX_BLUE_SIZE, 8,
-						GLX_GREEN_SIZE, 8,
-						GLX_ALPHA_SIZE, 8,
-						GLX_DEPTH_SIZE, 24,
-						GLX_STENCIL_SIZE, 8,
-						None,
-					};
-
-					// Find suitable config
-					GLXFBConfig bestConfig = NULL;
-
-					int numConfigs;
-					GLXFBConfig* configs = glXChooseFBConfig(s_display, DefaultScreen(s_display), attrsGlx, &numConfigs);
-
-					BX_TRACE("glX num configs %d", numConfigs);
-
-					XVisualInfo* visualInfo = 0;
-					for (int ii = 0; ii < numConfigs; ++ii)
-					{
-						visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
-						if (NULL != visualInfo)
-						{
-							BX_TRACE("---");
-							bool valid = true;
-							for (uint32_t attr = 6; attr < countof(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
-							{
-								int value;
-								glXGetFBConfigAttrib(s_display, configs[ii], attrsGlx[attr], &value);
-								BX_TRACE("glX %d/%d %2d: %4x, %8x (%8x%s)"
-										, ii
-										, numConfigs
-										, attr/2
-										, attrsGlx[attr]
-										, value
-										, attrsGlx[attr + 1]
-										, value < attrsGlx[attr + 1] ? " *" : ""
-										);
-
-								if (value < attrsGlx[attr + 1])
-								{
-									valid = false;
-#if !BGFX_CONFIG_DEBUG
-									break;
-#endif // BGFX_CONFIG_DEBUG
-								}
-							}
-
-							if (valid)
-							{
-								bestConfig = configs[ii];
-								break;
-							}
-						}
-
-						XFree(visualInfo);
-						visualInfo = 0;
-					}
-
-					XFree(configs);
-					BGFX_FATAL(visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
-
-					BX_TRACE("Create GL 2.1 context.");
-					m_context = glXCreateContext(s_display, visualInfo, 0, GL_TRUE);
-					BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
-
-					XFree(visualInfo);
-
-					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
-					if (NULL != glXCreateContextAttribsARB)
-					{
-						BX_TRACE("Create GL 3.0 context.");
-						const int contextAttrs[] =
-						{
-							GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-							GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-							None,
-						};
-
-						GLXContext context = glXCreateContextAttribsARB(s_display, bestConfig, 0, true, contextAttrs);
-
-						if (NULL != context)
-						{
-							glXDestroyContext(s_display, m_context);
-							m_context = context;
-						}
-					}
-
-					glXMakeCurrent(s_display, s_window, m_context);
-
-#	define GL_IMPORT(_optional, _proto, _func) \
-				{ \
-					_func = (_proto)glXGetProcAddress((const GLubyte*)#_func); \
-					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. glXGetProcAddress %s", #_func); \
-				}
-#	include "glimports.h"
-#	undef GL_IMPORT
-					glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-					glClear(GL_COLOR_BUFFER_BIT);
-					glXSwapBuffers(s_display, s_window);
-
-					XUnlockDisplay(s_display);
-				}
-				else
-				{
-				}
-#elif BGFX_USE_EGL
-				if (NULL == m_context)
-				{
-					EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
-					EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
-#	if BX_PLATFORM_WINDOWS
-					ndt = GetDC(g_bgfxHwnd);
-					nwt = g_bgfxHwnd;
-#	endif // BX_PLATFORM_
-					m_display = eglGetDisplay(ndt);
-					BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display 0x%08x", m_display);
-
-					EGLint major = 0;
-					EGLint minor = 0;
-					EGLBoolean success = eglInitialize(m_display, &major, &minor);
-					BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize %d.%d", major, minor);
-
-					EGLint attrs[] =
-					{
-						EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-
-#	if BX_PLATFORM_ANDROID
-						EGL_DEPTH_SIZE, 16,
-#	else
-						EGL_DEPTH_SIZE, 24,
-#	endif // BX_PLATFORM_
-
-						EGL_NONE
-					};
-	
-					EGLint contextAttrs[] =
-					{
-#	if BGFX_CONFIG_RENDERER_OPENGLES2
-						EGL_CONTEXT_CLIENT_VERSION, 2,
-#	elif BGFX_CONFIG_RENDERER_OPENGLES3
-						EGL_CONTEXT_CLIENT_VERSION, 3,
-#	endif // BGFX_CONFIG_RENDERER_
-
-						EGL_NONE
-					};
-
-					EGLint numConfig = 0;
-					EGLConfig config = 0;
-					success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
-					BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
-
-					m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
-					BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
-
-					m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, contextAttrs);
-					BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");
-
-					success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
-					BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
-
-#	if BX_PLATFORM_EMSCRIPTEN
-					emscripten_set_canvas_size(_width, _height);
-#	else
-#		define GL_IMPORT(_optional, _proto, _func) \
-					{ \
-						_func = (_proto)eglGetProcAddress(#_func); \
-						BX_TRACE(#_func " 0x%08x", _func); \
-						BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
-					}
-#		include "glimports.h"
-#		undef GL_IMPORT
-#	endif // !BX_PLATFORM_EMSCRIPTEN
-				}
-#endif // BX_PLATFORM_
 			}
 
 			m_flip = true;
@@ -547,18 +200,7 @@ namespace bgfx
 		{
 			if (m_flip)
 			{
-#if BX_PLATFORM_NACL
-				glSetCurrentContextPPAPI(m_context);
-				m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
-#elif BGFX_USE_WGL
-				wglMakeCurrent(m_hdc, m_context);
-				SwapBuffers(m_hdc);
-#elif BGFX_USE_EGL
-				eglMakeCurrent(m_display, m_surface, m_surface, m_context);
-				eglSwapBuffers(m_display, m_surface);
-#elif BX_PLATFORM_LINUX
-				glXSwapBuffers(s_display, s_window);
-#endif // BX_PLATFORM_
+				m_glctx.swap();
 			}
 
 			if (NULL != m_postSwapBuffers)
@@ -646,7 +288,8 @@ namespace bgfx
 
 		void init()
 		{
-			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+			m_glctx.create(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+
 #if BGFX_CONFIG_RENDERER_OPENGL
 			m_queries.create();
 #endif // BGFX_CONFIG_RENDERER_OPENGL
@@ -660,22 +303,7 @@ namespace bgfx
 			m_queries.destroy();
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-#if BGFX_USE_WGL
-			if (NULL != m_hdc)
-			{
-				wglMakeCurrent(NULL, NULL);
-				wglDeleteContext(m_context);
-				m_context = NULL;
-			}
-
-			FreeLibrary(m_opengl32dll);
-#elif BGFX_USE_EGL
-			eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-			eglDestroyContext(m_display, m_context);
-			eglDestroySurface(m_display, m_surface);
-			eglTerminate(m_display);
-			m_context = NULL;
-#endif // BGFX_USE_
+			m_glctx.destroy();
 		}
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -709,23 +337,7 @@ namespace bgfx
 		PostSwapBuffersFn m_postSwapBuffers;
 		uint64_t m_hash;
 
-#if BX_PLATFORM_NACL
-		PP_Resource m_context;
-		PP_Instance m_instance;
-		const PPB_Instance* m_instInterface;
-		const PPB_Graphics3D* m_graphicsInterface;
-		const PPB_OpenGLES2InstancedArrays* m_instancedArrays;
-#elif BGFX_USE_WGL
-		HMODULE m_opengl32dll;
-		HGLRC m_context;
-		HDC m_hdc;
-#elif BGFX_USE_EGL
-		EGLContext m_context;
-		EGLDisplay m_display;
-		EGLSurface m_surface;
-#elif BX_PLATFORM_LINUX
-		GLXContext m_context;
-#endif // BX_PLATFORM_NACL
+		GlContext m_glctx;
 	};
 
 	RendererContext s_renderCtx;
@@ -733,29 +345,29 @@ namespace bgfx
 #if BX_PLATFORM_NACL
 	static void GL_APIENTRY naclVertexAttribDivisor(GLuint _index, GLuint _divisor)
 	{
-		s_renderCtx.m_instancedArrays->VertexAttribDivisorANGLE(s_renderCtx.m_context, _index, _divisor);
+		s_renderCtx.m_glctx.m_instancedArrays->VertexAttribDivisorANGLE(s_renderCtx.m_glctx.m_context, _index, _divisor);
 	}
 
 	static void GL_APIENTRY naclDrawArraysInstanced(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount)
 	{
-		s_renderCtx.m_instancedArrays->DrawArraysInstancedANGLE(s_renderCtx.m_context, _mode, _first, _count, _primcount);
+		s_renderCtx.m_glctx.m_instancedArrays->DrawArraysInstancedANGLE(s_renderCtx.m_glctx.m_context, _mode, _first, _count, _primcount);
 	}
 
 	static void GL_APIENTRY naclDrawElementsInstanced(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount)
 	{
-		s_renderCtx.m_instancedArrays->DrawElementsInstancedANGLE(s_renderCtx.m_context, _mode, _count, _type, _indices, _primcount);
+		s_renderCtx.m_glctx.m_instancedArrays->DrawElementsInstancedANGLE(s_renderCtx.m_glctx.m_context, _mode, _count, _type, _indices, _primcount);
 	}
 
 	void naclSetIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
-		s_renderCtx.m_instance = _instance;
-		s_renderCtx.m_instInterface = _instInterface;
-		s_renderCtx.m_graphicsInterface = _graphicsInterface;
+		s_renderCtx.m_glctx.m_instance = _instance;
+		s_renderCtx.m_glctx.m_instInterface = _instInterface;
+		s_renderCtx.m_glctx.m_graphicsInterface = _graphicsInterface;
 		s_renderCtx.m_postSwapBuffers = _postSwapBuffers;
-		s_renderCtx.m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
+		s_renderCtx.m_glctx.m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
 		s_renderCtx.setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
 
-		if (NULL != s_renderCtx.m_instancedArrays)
+		if (NULL != s_renderCtx.m_glctx.m_instancedArrays)
 		{
 			s_vertexAttribDivisor = naclVertexAttribDivisor;
 			s_drawArraysInstanced = naclDrawArraysInstanced;

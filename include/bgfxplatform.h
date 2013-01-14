@@ -31,7 +31,7 @@ namespace bgfx
 
 namespace bgfx
 {
-	void setHwnd(::HWND _hwnd);
+	void winSetHwnd(::HWND _hwnd);
 } // namespace bgfx
 
 #endif // BX_PLATFORM_

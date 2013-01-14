@@ -83,6 +83,16 @@
 #		include <GLES2/gl2platform.h>
 #		include <GLES2/gl2.h>
 #		include <GLES2/gl2ext.h>
+#		define glProgramBinary glProgramBinaryOES
+#		define glGetProgramBinary glGetProgramBinaryOES
+#		define glBindVertexArray glBindVertexArrayOES
+#		define glDeleteVertexArrays glDeleteVertexArraysOES
+#		define glGenVertexArrays glGenVertexArraysOES
+#		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
+#		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
+#		define GL_RGB10_A2 GL_RGB10_A2_EXT
+#		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
+#		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
 #	elif BGFX_CONFIG_RENDERER_OPENGLES3
 #		include <GLES3/gl3platform.h>
 #		include <GLES3/gl3.h>
@@ -90,9 +100,9 @@
 #	endif // BGFX_CONFIG_RENDERER_
 
 #	if  BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_WINDOWS
-#		include <EGL/egl.h>
 #		undef BGFX_USE_EGL
 #		define BGFX_USE_EGL 1
+#		include "glcontext_egl.h"
 #	endif // BX_PLATFORM_
 
 #	if BX_PLATFORM_EMSCRIPTEN
@@ -132,14 +142,11 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #if BX_PLATFORM_NACL
-#	include <ppapi/gles2/gl2ext_ppapi.h>
-#	include <ppapi/c/pp_completion_callback.h>
-#	include <ppapi/c/ppb_instance.h>
-#	include <ppapi/c/ppb_graphics_3d.h>
+#	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
 #elif BX_PLATFORM_LINUX
-#	include <X11/Xlib.h>
+#	include "glcontext_glx.h"
 #endif // BX_PLATFORM_
 
 #if BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
@@ -147,45 +154,7 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #endif // BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
 #if BGFX_USE_WGL
-#	include <wgl/wglext.h>
-typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
-typedef BOOL (APIENTRYP PFNWGLMAKECURRENTPROC) (HDC hdc, HGLRC hglrc);
-typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTPROC) (HDC hdc);
-typedef BOOL (APIENTRYP PFNWGLDELETECONTEXTPROC) (HGLRC hglrc);
-//
-typedef GLenum (APIENTRYP PFNGLGETERRORPROC) (void);
-typedef void (APIENTRYP PFNGLREADPIXELSPROC) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
-typedef void (APIENTRYP PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-typedef void (APIENTRYP PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-typedef void (APIENTRYP PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
-typedef void (APIENTRYP PFNGLTEXPARAMETERIVPROC) (GLenum target, GLenum pname, const GLint *params);
-typedef void (APIENTRYP PFNGLTEXPARAMETERFPROC) (GLenum target, GLenum pname, GLfloat param);
-typedef void (APIENTRYP PFNGLPIXELSTOREI) (GLenum pname, GLint param);
-typedef void (APIENTRYP PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
-typedef void (APIENTRYP PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
-typedef void (APIENTRYP PFNGLDELETETEXTURESPROC) (GLsizei n, const GLuint *textures);
-typedef void (APIENTRYP PFNGLCOLORMASKPROC) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
-typedef void (APIENTRYP PFNGLDEPTHFUNCPROC) (GLenum func);
-typedef void (APIENTRYP PFNGLDISABLEPROC) (GLenum cap);
-typedef void (APIENTRYP PFNGLVIEWPORTPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
-typedef void (APIENTRYP PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
-typedef void (APIENTRYP PFNGLGETINTEGERVPROC) (GLenum pname, GLint *params);
-typedef void (APIENTRYP PFNGLGETFLOATVPROC) (GLenum pname, GLfloat *params);
-typedef const GLubyte * (APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
-typedef void (APIENTRYP PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
-typedef void (APIENTRYP PFNGLBLENDFUNCPROC) (GLenum sfactor, GLenum dfactor);
-typedef void (APIENTRYP PFNGLPOINTSIZEPROC) (GLfloat size);
-typedef void (APIENTRYP PFNGLCULLFACEPROC) (GLenum mode);
-typedef void (APIENTRYP PFNGLCLEARPROC) (GLbitfield mask);
-typedef void (APIENTRYP PFNGLSCISSORPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
-typedef void (APIENTRYP PFNGLENABLEPROC) (GLenum cap);
-typedef void (APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
-typedef void (APIENTRYP PFNGLDEPTHMASKPROC) (GLboolean flag);
-typedef void (APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble depth);
-typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-typedef void (APIENTRYP PFNGLSTENCILFUNCPROC) (GLenum func, GLint ref, GLuint mask);
-typedef void (APIENTRYP PFNGLSTENCILMASKPROC) (GLuint mask);
-typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum zpass);
+#	include "glcontext_wgl.h"
 #endif // BGFX_USE_WGL
 
 #ifndef GL_APIENTRY
@@ -199,19 +168,6 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 #if !BGFX_CONFIG_RENDERER_OPENGL
 #	define glClearDepth glClearDepthf
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
-
-#if BGFX_CONFIG_RENDERER_OPENGLES2
-#	define glProgramBinary glProgramBinaryOES
-#	define glGetProgramBinary glGetProgramBinaryOES
-#	define glBindVertexArray glBindVertexArrayOES
-#	define glDeleteVertexArrays glDeleteVertexArraysOES
-#	define glGenVertexArrays glGenVertexArraysOES
-#	define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
-#	define GL_HALF_FLOAT GL_HALF_FLOAT_OES
-#	define GL_RGB10_A2 GL_RGB10_A2_EXT
-#	define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
-#	define GL_SAMPLER_3D GL_SAMPLER_3D_OES
-#endif // BGFX_CONFIG_RENDERER_OPENGLES2
 
 namespace bgfx
 {
@@ -257,12 +213,6 @@ namespace bgfx
 
 #define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
 #define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
-
-#if BGFX_USE_WGL
-	extern PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
-	extern PFNWGLMAKECURRENTPROC wglMakeCurrent;
-	extern PFNWGLCREATECONTEXTPROC wglCreateContext;
-#endif // BGFX_USE_WGL
 
 #define GL_IMPORT(_optional, _proto, _func) extern _proto _func
 #include "glimports.h"

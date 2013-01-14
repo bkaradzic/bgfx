@@ -94,7 +94,7 @@ namespace entry
 				, 0
 				);
 
-			bgfx::setHwnd(m_hwnd);
+			bgfx::winSetHwnd(m_hwnd);
 
 			adjust(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
 

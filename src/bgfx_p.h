@@ -68,7 +68,6 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 
 #if BX_PLATFORM_WINDOWS
 #	include <windows.h>
-extern HWND g_bgfxHwnd;
 #elif BX_PLATFORM_XBOX360
 #	include <malloc.h>
 #	include <xtl.h>
@@ -144,6 +143,10 @@ namespace stl = std;
 
 namespace bgfx
 {
+#if BX_PLATFORM_WINDOWS
+	extern HWND g_bgfxHwnd;
+#endif // BX_PLATFORM_WINDOWS
+
 	struct Clear
 	{
 		uint32_t m_rgba;
