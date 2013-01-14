@@ -6,6 +6,10 @@
 #ifndef __BGFXPLATFORM_H__
 #define __BGFXPLATFORM_H__
 
+// NOTICE:
+// This header file contains platform specific interfaces. It is only
+// necessary to use this header in conjunction with creating windows.
+
 #include <bx/bx.h>
 
 #if BX_PLATFORM_LINUX
