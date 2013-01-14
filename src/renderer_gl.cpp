@@ -1011,6 +1011,7 @@ namespace bgfx
 			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 			GLenum internalFmt = tfi.m_internalFmt;
 			m_fmt = tfi.m_fmt;
+			m_type = tfi.m_type;
 
 			GLenum target = m_target;
 			if (dds.m_cubeMap)
@@ -1022,7 +1023,6 @@ namespace bgfx
 			||  TextureFormat::Unknown < dds.m_type)
 			{
 				bool decompress = TextureFormat::Unknown > dds.m_type;
-				bool swizzle = GL_RGBA == m_fmt;
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 				if (swizzle
@@ -1034,12 +1034,15 @@ namespace bgfx
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-				m_type = tfi.m_type;
 				if (decompress)
 				{
-					m_type = GL_UNSIGNED_BYTE;
+					const TextureFormatInfo& tfi = s_textureFormat[TextureFormat::BGRA8];
+					internalFmt = tfi.m_internalFmt;
+					m_fmt = tfi.m_fmt;
+					m_type = tfi.m_type;
 				}
 
+				bool swizzle = GL_RGBA == m_fmt;
 				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*4);
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
