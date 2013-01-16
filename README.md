@@ -259,7 +259,7 @@ http://nothings.org/stb_image.c
 Contributors
 ------------
 
-Garett Bass (@gtbass) - OSX port.
+Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.
 
 License (BSD 2-clause)
 ----------------------
