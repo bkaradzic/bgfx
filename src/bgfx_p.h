@@ -31,7 +31,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 				do { \
 					if (!(_condition) ) \
 					{ \
-						BX_TRACE(BX_FILE_LINE_LITERAL "WARN " _format, ##__VA_ARGS__); \
+						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
 					} \
 				} while(0)
 
@@ -39,7 +39,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 				do { \
 					if (!(_condition) ) \
 					{ \
-						BX_TRACE(BX_FILE_LINE_LITERAL "CHECK " _format, ##__VA_ARGS__); \
+						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
 						bx::debugBreak(); \
 					} \
 				} while(0)
@@ -145,7 +145,9 @@ namespace bgfx
 {
 #if BX_PLATFORM_WINDOWS
 	extern HWND g_bgfxHwnd;
-#endif // BX_PLATFORM_WINDOWS
+#elif BX_PLATFORM_OSX
+	extern void* g_bgfxNSWindow;
+#endif // BX_PLATFORM_*
 
 	struct Clear
 	{

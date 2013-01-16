@@ -28,7 +28,7 @@ void dbgOutput(const char* _out)
 {
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_XBOX360
 	OutputDebugStringA(_out);
-#elif BX_PLATFORM_NACL || BX_PLATFORM_LINUX
+#elif BX_PLATFORM_NACL || BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 	fputs(_out, stderr);
 	fflush(stderr);
 #endif // BX_PLATFORM_

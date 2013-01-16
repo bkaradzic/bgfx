@@ -12,6 +12,7 @@ project "example-08-update"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
+		BGFX_DIR .. "examples/common/**.mm",
 		BGFX_DIR .. "examples/08-update/**.cpp",
 		BGFX_DIR .. "examples/08-update/**.h",
 	}
@@ -36,4 +37,10 @@ project "example-08-update"
 		links {
 			"GL",
 			"pthread",
+		}
+
+	configuration { "macosx" }
+		links {
+			"Cocoa.framework",
+			"OpenGL.framework",
 		}
