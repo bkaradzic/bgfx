@@ -21,6 +21,7 @@ Platforms:
  * Android
  * Native Client
  * JavaScript (via Emscripten)
+ * OSX
 
 Dependencies
 ------------
@@ -203,7 +204,7 @@ Todo
  - BlendFuncSeparate and BlendEquationSeparate.
  - Copy from texture to texture.
  - Occlusion queries.
- - OSX and iOS platforms.
+ - iOS platforms.
  - DX11: MSAA.
  - GL: MSAA.
 
@@ -254,6 +255,11 @@ https://github.com/aras-p/glsl-optimizer
 ### stb_image (Public Domain)
 
 http://nothings.org/stb_image.c
+
+Contributors
+------------
+
+Garett Bass (@gbass) - OSX port.
 
 License (BSD 2-clause)
 ----------------------
