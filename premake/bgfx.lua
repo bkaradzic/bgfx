@@ -41,6 +41,7 @@ project "bgfx"
 		BGFX_DIR .. "include/**.h",
 		BGFX_DIR .. "src/**.cpp",
 		BGFX_DIR .. "src/**.h",
+		BGFX_DIR .. "src/**.mm",
 	}
 
 	excludes {

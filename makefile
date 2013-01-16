@@ -11,6 +11,7 @@ all:
 	premake --file=premake/premake4.lua --gcc=mingw gmake
 	premake --file=premake/premake4.lua --gcc=linux gmake
 	premake --file=premake/premake4.lua --gcc=emscripten gmake
+	premake --file=premake/premake4.lua --gcc=osx gmake
 	premake --file=premake/premake4.lua xcode4
 	make -s --no-print-directory -C src
 
@@ -48,6 +49,16 @@ pnacl-debug:
 	make -R -C .build/projects/gmake-pnacl config=debug64
 pnacl-release:
 	make -R -C .build/projects/gmake-pnacl config=release64
+
+osx-debug32:
+	make -C .build/projects/gmake-osx config=debug32
+osx-release32:
+	make -C .build/projects/gmake-osx config=release32
+osx-debug64:
+	make -C .build/projects/gmake-osx config=debug64
+osx-release64:
+	make -C .build/projects/gmake-osx config=release64
+osx: osx-debug32 osx-release32 osx-debug64 osx-release64
 
 docs:
 	markdown README.md > .build/docs/readme.html

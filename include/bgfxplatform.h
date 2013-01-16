@@ -38,6 +38,15 @@ namespace bgfx
 	void winSetHwnd(::HWND _hwnd);
 } // namespace bgfx
 
+#elif BX_PLATFORM_OSX
+#	include <Cocoa/Cocoa.h>
+#	include <stdlib.h>
+
+namespace bgfx
+{
+	void osxSetNSWindow(void* _nsWindow);
+} // namespace bgfx
+
 #endif // BX_PLATFORM_
 
 #endif // __BGFXPLATFORM_H__
