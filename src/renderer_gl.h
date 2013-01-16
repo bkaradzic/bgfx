@@ -8,6 +8,7 @@
 
 #define BGFX_USE_EGL 0
 #define BGFX_USE_WGL 0
+#define BGFX_USE_NSGL 0
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BX_PLATFORM_LINUX
@@ -17,18 +18,15 @@
 #		include <GL/glx.h>
 #		undef GL_PROTOTYPES
 #	elif BX_PLATFORM_OSX
-#		define GL_PROTOTYPES
 #		define GL_GLEXT_LEGACY
-#		define GL_VERSION_1_2
-#		define GL_VERSION_1_3
-#		define GL_VERSION_1_5
-#		define GL_VERSION_2_0
+#		define long ptrdiff_t
 #		include <OpenGL/gl.h>
-#		undef GL_VERSION_2_0
-#		undef GL_VERSION_1_5
-#		undef GL_VERSION_1_3
+#		undef long
 #		undef GL_VERSION_1_2
-#		undef GL_PROTOTYPES
+#		undef GL_VERSION_1_3
+#		undef GL_VERSION_1_4
+#		undef GL_VERSION_1_5
+#		undef GL_VERSION_2_0
 #	else
 #		include <GL/gl.h>
 #	endif // BX_PLATFORM_
@@ -147,6 +145,8 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	include <windows.h>
 #elif BX_PLATFORM_LINUX
 #	include "glcontext_glx.h"
+#elif BX_PLATFORM_OSX
+#	include "glcontext_nsgl.h"
 #endif // BX_PLATFORM_
 
 #if BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
@@ -156,6 +156,7 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #if BGFX_USE_WGL
 #	include "glcontext_wgl.h"
 #endif // BGFX_USE_WGL
+
 
 #ifndef GL_APIENTRY
 #   define GL_APIENTRY APIENTRY

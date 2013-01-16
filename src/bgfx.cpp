@@ -40,7 +40,14 @@ namespace bgfx
 	{
 		g_bgfxHwnd = _hwnd;
 	}
-#endif // BX_PLATFORM_WINDOWS
+#elif BX_PLATFORM_OSX
+	void* g_bgfxNSWindow = NULL;
+	
+	void osxSetNSWindow(void* _nsWindow)
+	{
+		g_bgfxNSWindow = _nsWindow;
+	}
+#endif // BX_PLATFORM_*
 
 	struct CallbackStub : public CallbackI
 	{

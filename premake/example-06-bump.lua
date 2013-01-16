@@ -12,6 +12,7 @@ project "example-06-bump"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
+		BGFX_DIR .. "examples/common/**.mm",
 		BGFX_DIR .. "examples/06-bump/**.cpp",
 		BGFX_DIR .. "examples/06-bump/**.h",
 	}
@@ -33,4 +34,10 @@ project "example-06-bump"
 		links {
 			"GL",
 			"pthread",
+		}
+
+	configuration { "macosx" }
+		links {
+			"Cocoa.framework",
+			"OpenGL.framework",
 		}

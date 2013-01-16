@@ -12,6 +12,7 @@ project "example-05-instancing"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
+		BGFX_DIR .. "examples/common/**.mm",
 		BGFX_DIR .. "examples/05-instancing/**.cpp",
 		BGFX_DIR .. "examples/05-instancing/**.h",
 	}
@@ -36,4 +37,10 @@ project "example-05-instancing"
 		links {
 			"GL",
 			"pthread",
+		}
+
+	configuration { "macosx" }
+		links {
+			"Cocoa.framework",
+			"OpenGL.framework",
 		}
