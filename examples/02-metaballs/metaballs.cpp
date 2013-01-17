@@ -9,6 +9,7 @@
 #include "../common/entry.h"
 #include "../common/dbg.h"
 #include "../common/math.h"
+#include "../common/processevents.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -495,14 +496,15 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 
 int _main_(int _argc, char** _argv)
 {
+	uint32_t width = 1280;
+	uint32_t height = 720;
+	uint32_t debug = BGFX_DEBUG_TEXT;
+
 	bgfx::init();
-	bgfx::reset(1280, 720);
+	bgfx::reset(width, height);
 
 	// Enable debug text.
-	bgfx::setDebug(BGFX_DEBUG_TEXT);
-
-	// Set view 0 default viewport.
-	bgfx::setViewRect(0, 0, 0, 1280, 720);
+	bgfx::setDebug(debug);
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(0
@@ -569,8 +571,11 @@ int _main_(int _argc, char** _argv)
 	const uint32_t zpitch = DIMS*DIMS;
 	const float invdim = 1.0f/float(DIMS-1);
 
-	while (entry::Event::Exit != entry::poll() )
+	while (!processEvents(width, height, debug) )
 	{
+		// Set view 0 default viewport.
+		bgfx::setViewRect(0, 0, 0, width, height);
+
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
 		bgfx::submit(0);

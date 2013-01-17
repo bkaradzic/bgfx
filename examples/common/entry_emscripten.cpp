@@ -15,9 +15,21 @@
 
 namespace entry
 {
-	Event::Enum poll()
+	const Event* poll()
 	{
-		return Event::Nop;
+		return NULL;
+	}
+
+	void release(const Event* _event)
+	{
+	}
+
+	void setWindowSize(uint32_t _width, uint32_t _height)
+	{
+	}
+
+	void toggleWindowFrame()
+	{
 	}
 
 } // namespace entry

@@ -88,37 +88,6 @@ namespace bgfx
 
 	void GlContext::resize(uint32_t _width, uint32_t _height)
 	{
-		eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-		eglDestroySurface(m_display, m_surface);
-
-		EGLint attrs[] =
-		{
-			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-
-#	if BX_PLATFORM_ANDROID
-			EGL_DEPTH_SIZE, 16,
-#	else
-			EGL_DEPTH_SIZE, 24,
-#	endif // BX_PLATFORM_
-
-			EGL_NONE
-		};
-
-		EGLint numConfig = 0;
-		EGLConfig config;
-		EGLBoolean success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
-		BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
-
-		EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
-#	if BX_PLATFORM_WINDOWS
-		nwt = g_bgfxHwnd;
-#	endif // BX_PLATFORM_
-
-		m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
-		BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
-
-		eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 	}
 
 	void GlContext::swap()

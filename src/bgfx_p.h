@@ -1473,14 +1473,9 @@ namespace bgfx
 		{
 			m_resolution.m_width = _width;
 			m_resolution.m_height = _height;
-			m_resolution.m_flags = _flags&(~BGFX_RESET_FULLSCREEN_FAKE);
+			m_resolution.m_flags = _flags;
 
 			memset(m_rt, 0xff, sizeof(m_rt) );
-
-#if BX_PLATFORM_WINDOWS
-			uint32_t fullscreen = (_flags&BGFX_RESET_FULLSCREEN_MASK)>>BGFX_RESET_FULLSCREEN_SHIFT;
-			m_window.adjust(_width, _height, BGFX_RESET_FULLSCREEN_FAKE != fullscreen);
-#endif // BX_PLATFORM_WINDOWS
 		}
 
 		void dbgTextClear(uint8_t _attr, bool _small)
@@ -2841,131 +2836,6 @@ namespace bgfx
 
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;
-
-#if BX_PLATFORM_WINDOWS
-		struct Window
-		{
-			Window()
-				: m_frame(true)
-			{
-			}
-
-			void adjust(uint32_t _width, uint32_t _height, bool _windowFrame)
-			{
-				m_width = _width;
-				m_height = _height;
-				m_aspectRatio = float(_width)/float(_height);
-
-				ShowWindow(g_bgfxHwnd, SW_SHOWNORMAL);
-				RECT rect;
-				RECT newrect = {0, 0, (LONG)_width, (LONG)_height};
-				DWORD style = WS_POPUP|WS_SYSMENU;
-
-				if (m_frame)
-				{
-					GetWindowRect(g_bgfxHwnd, &m_rect);
-					m_style = GetWindowLong(g_bgfxHwnd, GWL_STYLE);
-				}
-
-				if (_windowFrame)
-				{
-					rect = m_rect;
-					style = m_style;
-				}
-				else
-				{
-#if defined(__MINGW32__)
-					rect = m_rect;
-					style = m_style;
-#else
-					HMONITOR monitor = MonitorFromWindow(g_bgfxHwnd, MONITOR_DEFAULTTONEAREST);
-					MONITORINFO mi;
-					mi.cbSize = sizeof(mi);
-					GetMonitorInfo(monitor, &mi);
-					newrect = mi.rcMonitor;
-					rect = mi.rcMonitor;
-#endif // !defined(__MINGW__)
-				}
-
-				SetWindowLong(g_bgfxHwnd, GWL_STYLE, style);
-				AdjustWindowRect(&newrect, style, FALSE);
-				UpdateWindow(g_bgfxHwnd);
-
-				if (rect.left == -32000
-				||  rect.top == -32000)
-				{
-					rect.left = 0;
-					rect.top = 0;
-				}
-
-				int32_t left = rect.left;
-				int32_t top = rect.top;
-				int32_t width = (newrect.right-newrect.left);
-				int32_t height = (newrect.bottom-newrect.top);
-
-				if (!_windowFrame)
-				{
-					float aspectRatio = 1.0f/m_aspectRatio;
-					width = bx::uint32_max(BGFX_DEFAULT_WIDTH/4, width);
-					height = uint32_t(float(width)*aspectRatio);
-
-					left = newrect.left+(newrect.right-newrect.left-width)/2;
-					top = newrect.top+(newrect.bottom-newrect.top-height)/2;
-				}
-
-				HWND parent = GetWindow(g_bgfxHwnd, GW_OWNER);
-				if (NULL != parent)
-				{
-					if (_windowFrame)
-					{
-						SetWindowPos(parent
-							, HWND_TOP
-							, -32000
-							, -32000
-							, 0
-							, 0
-							, SWP_SHOWWINDOW
-							);
-					}
-					else
-					{
-						SetWindowPos(parent
-							, HWND_TOP
-							, newrect.left
-							, newrect.top
-							, newrect.right-newrect.left
-							, newrect.bottom-newrect.top
-							, SWP_SHOWWINDOW
-							);
-					}
-				}
-
-				SetWindowPos(g_bgfxHwnd
-					, HWND_TOP
-					, left
-					, top
-					, width
-					, height
-					, SWP_SHOWWINDOW
-					);
-
-				ShowWindow(g_bgfxHwnd, SW_RESTORE);
-
-				m_frame = _windowFrame;
-			}
-
-		private:
-			RECT m_rect;
-			DWORD m_style;
-			uint32_t m_width;
-			uint32_t m_height;
-			float m_aspectRatio;
-			bool m_frame;
-			bool m_update;
-		};
-
-		Window m_window;
-#endif // BX_PLATFORM_WINDOWS
 
 		bool m_rendererInitialized;
 		bool m_exit;

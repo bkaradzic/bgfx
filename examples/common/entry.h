@@ -122,12 +122,41 @@ namespace entry
 	{
 		enum Enum
 		{
-			Nop,
 			Exit,
+			Key,
+			Mouse,
+			Size,
 		};
+
+		Event::Enum m_type;
 	};
 
-	Event::Enum poll();
+	struct KeyEvent : public Event
+	{
+		Key::Enum m_key;
+		uint8_t m_modifiers;
+		bool m_down;
+	};
+
+	struct MouseEvent : public Event
+	{
+		int32_t m_mx;
+		int32_t m_my;
+		MouseButton::Enum m_button;
+		bool m_down;
+	};
+
+	struct SizeEvent : public Event
+	{
+		uint32_t m_width;
+		uint32_t m_height;
+	};
+
+	const Event* poll();
+	void release(const Event* _event);
+
+	void setWindowSize(uint32_t _width, uint32_t _height);
+	void toggleWindowFrame();
 
 } // namespace entry
 

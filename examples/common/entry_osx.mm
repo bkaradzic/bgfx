@@ -219,9 +219,21 @@ namespace entry
 	
 	static Context s_ctx;
 	
-	Event::Enum poll()
+	const Event* poll()
 	{
-		return s_ctx.m_exit ? Event::Exit : Event::Nop;
+		return NULL;
+	}
+
+	void release(const Event* _event)
+	{
+	}
+
+	void setWindowSize(uint32_t _width, uint32_t _height)
+	{
+	}
+
+	void toggleWindowFrame()
+	{
 	}
 
 } // namespace entry
