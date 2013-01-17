@@ -10,7 +10,6 @@ project "example-00-helloworld"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
-		BGFX_DIR .. "examples/common/**.mm",
 		BGFX_DIR .. "examples/00-helloworld/**.cpp",
 		BGFX_DIR .. "examples/00-helloworld/**.h",
 	}
@@ -38,6 +37,9 @@ project "example-00-helloworld"
 		}
 
 	configuration { "macosx" }
+		files {
+			BGFX_DIR .. "examples/common/**.mm",
+		}
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",

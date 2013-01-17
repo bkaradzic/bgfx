@@ -12,7 +12,6 @@ project "example-03-raymarch"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
-		BGFX_DIR .. "examples/common/**.mm",
 		BGFX_DIR .. "examples/03-raymarch/**.cpp",
 		BGFX_DIR .. "examples/03-raymarch/**.h",
 	}
@@ -40,6 +39,9 @@ project "example-03-raymarch"
 		}
 
 	configuration { "macosx" }
+		files {
+			BGFX_DIR .. "examples/common/**.mm",
+		}
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",

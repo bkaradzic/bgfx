@@ -12,7 +12,6 @@ project "example-02-metaballs"
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
-		BGFX_DIR .. "examples/common/**.mm",
 		BGFX_DIR .. "examples/02-metaballs/**.cpp",
 		BGFX_DIR .. "examples/02-metaballs/**.h",
 	}
@@ -40,6 +39,9 @@ project "example-02-metaballs"
 		}
 
 	configuration { "macosx" }
+		files {
+			BGFX_DIR .. "examples/common/**.mm",
+		}
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",
