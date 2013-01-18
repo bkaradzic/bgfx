@@ -138,6 +138,7 @@ namespace entry
 			s_translateKey['K'] = Key::KeyK;
 			s_translateKey['L'] = Key::KeyL;
 			s_translateKey['M'] = Key::KeyM;
+			s_translateKey['N'] = Key::KeyN;
 			s_translateKey['O'] = Key::KeyO;
 			s_translateKey['P'] = Key::KeyP;
 			s_translateKey['Q'] = Key::KeyQ;

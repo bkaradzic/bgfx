@@ -133,12 +133,11 @@ namespace bgfx
 			}
 		}
 
-		glXMakeCurrent(s_display, s_window, m_context);
-
 		XUnlockDisplay(s_display);
 
 		import();
 
+		glXMakeCurrent(s_display, s_window, m_context);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glXSwapBuffers(s_display, s_window);
@@ -146,6 +145,8 @@ namespace bgfx
 
 	void GlContext::destroy()
 	{
+		glXMakeCurrent(s_display, 0, 0);
+		glXDestroyContext(s_display, m_context);
 	}
 
 	void GlContext::resize(uint32_t _width, uint32_t _height)
@@ -154,6 +155,7 @@ namespace bgfx
 
 	void GlContext::swap()
 	{
+		glXMakeCurrent(s_display, s_window, m_context);
 		glXSwapBuffers(s_display, s_window);
 	}
 

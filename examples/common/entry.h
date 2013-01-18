@@ -40,7 +40,7 @@ namespace entry
 	{
 		enum Enum
 		{
-			Unknown = 0,
+			None = 0,
 			Esc,
 			Return,
 			Tab,
