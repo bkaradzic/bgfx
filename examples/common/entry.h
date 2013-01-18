@@ -12,6 +12,7 @@ namespace entry
 	{
 		enum Enum
 		{
+			None,
 			Left,
 			Middle,
 			Right,
@@ -144,6 +145,7 @@ namespace entry
 		int32_t m_my;
 		MouseButton::Enum m_button;
 		bool m_down;
+		bool m_move;
 	};
 
 	struct SizeEvent : public Event

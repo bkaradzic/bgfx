@@ -23,6 +23,15 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 			case Event::Exit:
 				return true;
 
+			case Event::Mouse:
+				{
+// 					const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
+// 					if (mouse->m_move)
+// 					{
+// 					}
+				}
+				break;
+
 			case Event::Key:
 				{
 					const KeyEvent* key = static_cast<const KeyEvent*>(ev);
