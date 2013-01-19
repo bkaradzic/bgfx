@@ -328,9 +328,16 @@ namespace entry
 
 				case WM_SIZE:
 					{
-						m_width = GET_X_LPARAM(_lparam);
-						m_height = GET_Y_LPARAM(_lparam);
-						m_eventQueue.postSizeEvent(m_width, m_height);
+						uint32_t width = GET_X_LPARAM(_lparam);
+						uint32_t height = GET_Y_LPARAM(_lparam);
+
+						if (m_width != width
+						||  m_height != height)
+						{
+							m_width = width;
+							m_height = height;
+							m_eventQueue.postSizeEvent(m_width, m_height);
+						}
 					}
 					break;
 

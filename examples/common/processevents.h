@@ -10,6 +10,8 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 {
 	using namespace entry;
 
+	bool resize = false;
+
 	const Event* ev;
 	do
 	{
@@ -68,9 +70,9 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 			case Event::Size:
 				{
 					const SizeEvent* size = static_cast<const SizeEvent*>(ev);
-					bgfx::reset(size->m_width, size->m_height);
 					_width = size->m_width;
 					_height = size->m_height;
+					resize = true;
 				}
 				break;
 
@@ -79,6 +81,11 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 			}
 		}
 	} while (NULL != ev);
+
+	if (resize)
+	{
+		bgfx::reset(_width, _height);
+	}
 
 	return false;
 }
