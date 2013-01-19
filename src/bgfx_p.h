@@ -1492,9 +1492,15 @@ namespace bgfx
 		IndexBufferHandle createIndexBuffer(const Memory* _mem)
 		{
 			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateIndexBuffer);
-			cmdbuf.write(handle);
-			cmdbuf.write(_mem);
+
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate index buffer handle.");
+			if (invalidHandle != handle.idx)
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateIndexBuffer);
+				cmdbuf.write(handle);
+				cmdbuf.write(_mem);
+			}
+
 			return handle;
 		}
 
@@ -1525,13 +1531,18 @@ namespace bgfx
 		{
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
-			VertexDeclHandle declHandle = findVertexDecl(_decl);
-			m_declRef.add(handle, declHandle, _decl.m_hash);
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate vertex buffer handle.");
+			if (invalidHandle != handle.idx)
+			{
+				VertexDeclHandle declHandle = findVertexDecl(_decl);
+				m_declRef.add(handle, declHandle, _decl.m_hash);
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexBuffer);
-			cmdbuf.write(handle);
-			cmdbuf.write(_mem);
-			cmdbuf.write(declHandle);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexBuffer);
+				cmdbuf.write(handle);
+				cmdbuf.write(_mem);
+				cmdbuf.write(declHandle);
+			}
+
 			return handle;
 		}
 
@@ -1557,6 +1568,7 @@ namespace bgfx
 			if (ptr == NonLocalAllocator::invalidBlock)
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
+				BX_WARN(invalidHandle != handle.idx, "Failed to allocate dynamic index buffer handle.");
 				if (indexBufferHandle.idx == invalidHandle)
 				{
 					return handle;
@@ -1582,7 +1594,10 @@ namespace bgfx
 		DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
 		{
 			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/2);
-			updateDynamicIndexBuffer(handle, _mem);
+			if (invalidHandle != handle.idx)
+			{
+				updateDynamicIndexBuffer(handle, _mem);
+			}
 			return handle;
 		}
 
@@ -1617,6 +1632,7 @@ namespace bgfx
 			{
 				VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
 
+				BX_WARN(invalidHandle != handle.idx, "Failed to allocate dynamic vertex buffer handle.");
 				if (vertexBufferHandle.idx == invalidHandle)
 				{
 					return handle;
@@ -1648,7 +1664,10 @@ namespace bgfx
 		DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
 		{
 			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(_mem->size/_decl.m_stride, _decl);
-			updateDynamicVertexBuffer(handle, _mem);
+			if (invalidHandle != handle.idx)
+			{
+				updateDynamicVertexBuffer(handle, _mem);
+			}
 			return handle;
 		}
 
@@ -1684,15 +1703,21 @@ namespace bgfx
 
 		TransientIndexBuffer* createTransientIndexBuffer(uint32_t _size)
 		{
-			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
-			cmdbuf.write(handle);
-			cmdbuf.write(_size);
+			TransientIndexBuffer* ib = NULL;
 
-			TransientIndexBuffer* ib = (TransientIndexBuffer*)g_realloc(NULL, sizeof(TransientIndexBuffer)+_size);
-			ib->data = (uint8_t*)&ib[1];
-			ib->size = _size;
-			ib->handle = handle;
+			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate transient index buffer handle.");
+			if (invalidHandle != handle.idx)
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
+				cmdbuf.write(handle);
+				cmdbuf.write(_size);
+
+				ib = (TransientIndexBuffer*)g_realloc(NULL, sizeof(TransientIndexBuffer)+_size);
+				ib->data = (uint8_t*)&ib[1];
+				ib->size = _size;
+				ib->handle = handle;
+			}
 
 			return ib;
 		}
@@ -1720,30 +1745,36 @@ namespace bgfx
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexDecl* _decl = NULL)
 		{
+			TransientVertexBuffer* vb = NULL;
+
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
-			uint16_t stride = 0;
-			VertexDeclHandle declHandle = BGFX_INVALID_HANDLE;
-
-			if (NULL != _decl)
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate transient vertex buffer handle.");
+			if (invalidHandle != handle.idx)
 			{
-				declHandle = findVertexDecl(*_decl);
-				m_declRef.add(handle, declHandle, _decl->m_hash);
+				uint16_t stride = 0;
+				VertexDeclHandle declHandle = BGFX_INVALID_HANDLE;
 
-				stride = _decl->m_stride;
+				if (NULL != _decl)
+				{
+					declHandle = findVertexDecl(*_decl);
+					m_declRef.add(handle, declHandle, _decl->m_hash);
+
+					stride = _decl->m_stride;
+				}
+
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
+				cmdbuf.write(handle);
+				cmdbuf.write(_size);
+
+				vb = (TransientVertexBuffer*)g_realloc(NULL, sizeof(TransientVertexBuffer)+_size);
+				vb->data = (uint8_t*)&vb[1];
+				vb->size = _size;
+				vb->startVertex = 0;
+				vb->stride = stride;
+				vb->handle = handle;
+				vb->decl = declHandle;
 			}
-
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
-			cmdbuf.write(handle);
-			cmdbuf.write(_size);
-
-			TransientVertexBuffer* vb = (TransientVertexBuffer*)g_realloc(NULL, sizeof(TransientVertexBuffer)+_size);
-			vb->data = (uint8_t*)&vb[1];
-			vb->size = _size;
-			vb->startVertex = 0;
-			vb->stride = stride;
-			vb->handle = handle;
-			vb->decl = declHandle;
 
 			return vb;
 		}
@@ -1816,13 +1847,18 @@ namespace bgfx
 
 			VertexShaderHandle handle = { m_vertexShaderHandle.alloc() };
 
-			VertexShaderRef& vsr = m_vertexShaderRef[handle.idx];
-			vsr.m_refCount = 1;
-			bx::read(&reader, vsr.m_outputHash);
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate vertex shader handle.");
+			if (invalidHandle != handle.idx)
+			{
+				VertexShaderRef& vsr = m_vertexShaderRef[handle.idx];
+				vsr.m_refCount = 1;
+				bx::read(&reader, vsr.m_outputHash);
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexShader);
-			cmdbuf.write(handle);
-			cmdbuf.write(_mem);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexShader);
+				cmdbuf.write(handle);
+				cmdbuf.write(_mem);
+			}
+
 			return handle;
 		}
 
@@ -1871,13 +1907,18 @@ namespace bgfx
 
 			FragmentShaderHandle handle = { m_fragmentShaderHandle.alloc() };
 
-			FragmentShaderRef& fsr = m_fragmentShaderRef[handle.idx];
-			fsr.m_refCount = 1;
-			bx::read(&reader, fsr.m_inputHash);
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate fragment shader handle.");
+			if (invalidHandle != handle.idx)
+			{
+				FragmentShaderRef& fsr = m_fragmentShaderRef[handle.idx];
+				fsr.m_refCount = 1;
+				bx::read(&reader, fsr.m_inputHash);
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFragmentShader);
-			cmdbuf.write(handle);
-			cmdbuf.write(_mem);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFragmentShader);
+				cmdbuf.write(handle);
+				cmdbuf.write(_mem);
+			}
+
 			return handle;
 		}
 
@@ -1932,15 +1973,20 @@ namespace bgfx
 			ProgramHandle handle;
  			handle.idx = m_programHandle.alloc();
 
-			vertexShaderIncRef(_vsh);
-			fragmentShaderIncRef(_fsh);
-			m_programRef[handle.idx].m_vsh = _vsh;
-			m_programRef[handle.idx].m_fsh = _fsh;
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate program handle.");
+			if (invalidHandle != handle.idx)
+			{
+				vertexShaderIncRef(_vsh);
+				fragmentShaderIncRef(_fsh);
+				m_programRef[handle.idx].m_vsh = _vsh;
+				m_programRef[handle.idx].m_fsh = _fsh;
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
-			cmdbuf.write(handle);
-			cmdbuf.write(_vsh);
-			cmdbuf.write(_fsh);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
+				cmdbuf.write(handle);
+				cmdbuf.write(_vsh);
+				cmdbuf.write(_fsh);
+			}
+
 			return handle;
 		}
 
@@ -1982,10 +2028,15 @@ namespace bgfx
 			}
 
 			TextureHandle handle = { m_textureHandle.alloc() };
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
-			cmdbuf.write(handle);
-			cmdbuf.write(_mem);
-			cmdbuf.write(_flags);
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate texture handle.");
+			if (invalidHandle != handle.idx)
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
+				cmdbuf.write(handle);
+				cmdbuf.write(_mem);
+				cmdbuf.write(_flags);
+			}
+
 			return handle;
 		}
 
@@ -2016,13 +2067,18 @@ namespace bgfx
 		RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 		{
 			RenderTargetHandle handle = { m_renderTargetHandle.alloc() };
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate render target handle.");
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateRenderTarget);
-			cmdbuf.write(handle);
-			cmdbuf.write(_width);
-			cmdbuf.write(_height);
-			cmdbuf.write(_flags);
-			cmdbuf.write(_textureFlags);
+			if (invalidHandle != handle.idx)
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateRenderTarget);
+				cmdbuf.write(handle);
+				cmdbuf.write(_width);
+				cmdbuf.write(_height);
+				cmdbuf.write(_flags);
+				cmdbuf.write(_textureFlags);
+			}
+
 			return handle;
 		}
 
@@ -2044,17 +2100,22 @@ namespace bgfx
 
 			UniformHandle handle = { m_uniformHandle.alloc() };
 
-			Uniform& uniform = m_uniform[handle.idx];
-			uniform.m_type = _type;
-			uniform.m_num = _num;
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate uniform handle.");
+			if (invalidHandle != handle.idx)
+			{
+				Uniform& uniform = m_uniform[handle.idx];
+				uniform.m_type = _type;
+				uniform.m_num = _num;
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
-			cmdbuf.write(handle);
-			cmdbuf.write(_type);
-			cmdbuf.write(_num);
-			uint8_t len = (uint8_t)strlen(_name);
-			cmdbuf.write(len);
-			cmdbuf.write(_name, len);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
+				cmdbuf.write(handle);
+				cmdbuf.write(_type);
+				cmdbuf.write(_num);
+				uint8_t len = (uint8_t)strlen(_name);
+				cmdbuf.write(len);
+				cmdbuf.write(_name, len);
+			}
+
 			return handle;
 		}
 
