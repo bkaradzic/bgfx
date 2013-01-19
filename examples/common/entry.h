@@ -159,6 +159,7 @@ namespace entry
 
 	void setWindowSize(uint32_t _width, uint32_t _height);
 	void toggleWindowFrame();
+	void setMouseLock(bool _lock);
 
 } // namespace entry
 

@@ -302,6 +302,10 @@ namespace entry
 	{
 	}
 
+	void setMouseLock(bool _lock)
+	{
+	}
+
 } // namespace entry
 
 int main(int _argc, char** _argv)

@@ -20,6 +20,7 @@
 
 #define WM_USER_SET_WINDOW_SIZE     (WM_USER+0)
 #define WM_USER_TOGGLE_WINDOW_FRAME (WM_USER+1)
+#define WM_USER_MOUSE_LOCK          (WM_USER+2)
 
 extern int _main_(int _argc, char** _argv);
 
@@ -267,6 +268,10 @@ namespace entry
 					}
 					break;
 
+				case WM_USER_MOUSE_LOCK:
+					setMouseLock(!!_lparam);
+					break;
+
 				case WM_DESTROY:
 					break;
 
@@ -348,6 +353,21 @@ namespace entry
 					{
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
+
+						if (m_mouseLock)
+						{
+							mx -= m_mx;
+							my -= m_my;
+
+							if (0 == mx
+							&&  0 == my)
+							{
+								break;
+							}
+
+							setMousePos(m_mx, m_my);
+						}
+
 						m_eventQueue.postMouseEvent(mx, my);
 					}
 					break;
@@ -505,6 +525,34 @@ namespace entry
 			m_frame = _windowFrame;
 		}
 
+		void setMousePos(int32_t _mx, int32_t _my)
+		{
+			POINT pt = { _mx, _my };
+			ClientToScreen(m_hwnd, &pt);
+			SetCursorPos(pt.x, pt.y);
+		}
+
+		void setMouseLock(bool _lock)
+		{
+			if (_lock != m_mouseLock)
+			{
+				if (_lock)
+				{
+					m_mx = m_width/2;
+					m_my = m_height/2;
+					ShowCursor(false);
+					setMousePos(m_mx, m_my);
+				}
+				else
+				{
+					setMousePos(m_mx, m_my);
+					ShowCursor(true);
+				}
+
+				m_mouseLock = _lock;
+			}
+		}
+
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
 		EventQueue m_eventQueue;
@@ -517,7 +565,12 @@ namespace entry
 		uint32_t m_oldWidth;
 		uint32_t m_oldHeight;
 		float m_aspectRatio;
+
+		int32_t m_mx;
+		int32_t m_my;
+
 		bool m_frame;
+		bool m_mouseLock;
 		bool m_init;
 		bool m_exit;
 
@@ -548,6 +601,11 @@ namespace entry
 	void toggleWindowFrame()
 	{
 		PostMessage(s_ctx.m_hwnd, WM_USER_TOGGLE_WINDOW_FRAME, 0, 0);
+	}
+
+	void setMouseLock(bool _lock)
+	{
+		PostMessage(s_ctx.m_hwnd, WM_USER_MOUSE_LOCK, 0, _lock);
 	}
 
 	int32_t MainThreadEntry::threadFunc(void* _userData)
