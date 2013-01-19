@@ -35,6 +35,16 @@ mingw-release64:
 	make -R -C .build/projects/gmake-mingw config=release64
 mingw: mingw-debug32 mingw-release32 mingw-debug64 mingw-release64
 
+vs2008-debug32:
+	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|Win32"
+vs2008-release32:
+	devenv .build/projects/vs2008/bgfx.sln /Build "Release|Win32"
+vs2008-debug64:
+	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|x64"
+vs2008-release64:
+	devenv .build/projects/vs2008/bgfx.sln /Build "Release|x64"
+vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
+
 nacl-debug32:
 	make -R -C .build/projects/gmake-nacl config=debug32
 nacl-release32:
