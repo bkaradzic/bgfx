@@ -210,6 +210,8 @@ namespace entry
 			bgfx::winSetHwnd(m_hwnd);
 
 			adjust(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
+			m_width = DEFAULT_WIDTH;
+			m_height = DEFAULT_HEIGHT;
 			m_oldWidth = DEFAULT_WIDTH;
 			m_oldHeight = DEFAULT_HEIGHT;
 
@@ -220,6 +222,8 @@ namespace entry
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
 			m_init = true;
+
+			m_eventQueue.postSizeEvent(m_width, m_height);
 
 			MSG msg;
 			msg.message = WM_NULL;
