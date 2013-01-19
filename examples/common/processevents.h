@@ -11,11 +11,11 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 	using namespace entry;
 
 	const Event* ev;
-	do 
+	do
 	{
 		struct SE { const Event* m_ev; SE() : m_ev(poll() ) {} ~SE() { if (NULL != m_ev) { release(m_ev); } } } scopeEvent;
 		ev = scopeEvent.m_ev;
-		
+
 		if (NULL != ev)
 		{
 			switch (ev->m_type)
@@ -45,6 +45,12 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 						_debug ^= BGFX_DEBUG_STATS;
 						bgfx::setDebug(_debug);
 						return false;
+					}
+					else if (key->m_key == Key::F9 && key->m_down)
+					{
+						setWindowSize(640, 480);
+						_width = 640;
+						_height = 480;
 					}
 					else if (key->m_key == Key::F10 && key->m_down)
 					{

@@ -48,11 +48,7 @@ namespace entry
 		int m_argc;
 		char** m_argv;
 
-		static int32_t threadFunc(void* _userData)
-		{
-			MainThreadEntry* self = (MainThreadEntry*)_userData;
-			return _main_(self->m_argc, self->m_argv);
-		}
+		static int32_t threadFunc(void* _userData);
 	};
 
 	struct Context
@@ -142,22 +138,25 @@ namespace entry
 			XInitThreads();
 			m_display = XOpenDisplay(0);
 
-			XLockDisplay(m_display);
-
 			int32_t screen = DefaultScreen(m_display);
 			int32_t depth = DefaultDepth(m_display, screen);
 			Visual* visual = DefaultVisual(m_display, screen);
 			Window root = RootWindow(m_display, screen);
 
 			XSetWindowAttributes windowAttrs;
-			windowAttrs.colormap =
-				XCreateColormap(m_display
-						, root
-						, visual
-						, AllocNone
-						);
+			memset(&windowAttrs, 0, sizeof(windowAttrs) );
 			windowAttrs.background_pixmap = 0;
 			windowAttrs.border_pixel = 0;
+			windowAttrs.event_mask = 0
+					| ButtonPressMask
+					| ButtonReleaseMask
+					| ExposureMask
+					| KeyPressMask
+					| KeyReleaseMask
+					| PointerMotionMask
+					| ResizeRedirectMask
+					| StructureNotifyMask
+					;
 
 			m_window = XCreateWindow(m_display
 									, root
@@ -165,29 +164,12 @@ namespace entry
 									, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, depth
 									, InputOutput
 									, visual
-									, CWBorderPixel|CWColormap
+									, CWBorderPixel|CWEventMask
 									, &windowAttrs
 									);
 
-			XMapRaised(m_display, m_window);
-			XFlush(m_display);
-
+			XMapWindow(m_display, m_window);
 			XStoreName(m_display, m_window, "BGFX");
-
-			XSelectInput(m_display
-					, m_window
-					, ExposureMask
-					| KeyPressMask
-					| KeyReleaseMask
-					| PointerMotionMask
-					| ButtonPressMask
-					| ButtonReleaseMask
-					| StructureNotifyMask
-					);
-
-			XUnlockDisplay(m_display);
-
-//			XResizeWindow(s_display, s_window, _width, _height);
 
 			bgfx::x11SetDisplayWindow(m_display, m_window);
 
@@ -214,12 +196,36 @@ namespace entry
 							break;
 
 						case ButtonPress:
-							break;
-
 						case ButtonRelease:
+							{
+								const XButtonEvent& button = event.xbutton;
+								MouseButton::Enum mb;
+								switch (button.button)
+								{
+									case Button1: mb = MouseButton::Left;   break;
+									case Button2: mb = MouseButton::Middle; break;
+									case Button3: mb = MouseButton::Right;  break;
+									default:      mb = MouseButton::None;   break;
+								}
+
+								if (MouseButton::None != mb)
+								{
+									m_eventQueue.postMouseEvent(button.x
+										, button.y
+										, mb
+										, event.type == ButtonPress
+										);
+								}
+							}
 							break;
 
 						case MotionNotify:
+							{
+								const XMotionEvent& motion = event.xmotion;
+								m_eventQueue.postMouseEvent(motion.x
+										, motion.y
+										);
+							}
 							break;
 
 						case KeyPress:
@@ -233,11 +239,21 @@ namespace entry
 								}
 							}
 							break;
+
+						case ResizeRequest:
+							{
+								const XResizeRequestEvent& resize = event.xresizerequest;
+								XResizeWindow(m_display, m_window, resize.width, resize.height);
+							}
+							break;
 					}
 				}
 			}
 
 			thread.shutdown();
+
+			XUnmapWindow(m_display, m_window);
+			XDestroyWindow(m_display, m_window);
 
 			return EXIT_SUCCESS;
 		}
@@ -251,6 +267,14 @@ namespace entry
 
 	static Context s_ctx;
 
+	int32_t MainThreadEntry::threadFunc(void* _userData)
+	{
+		MainThreadEntry* self = (MainThreadEntry*)_userData;
+		int32_t result = _main_(self->m_argc, self->m_argv);
+		s_ctx.m_exit = true;
+		return result;
+	}
+
 	const Event* poll()
 	{
 		return s_ctx.m_eventQueue.poll();
@@ -263,6 +287,15 @@ namespace entry
 
 	void setWindowSize(uint32_t _width, uint32_t _height)
 	{
+		XResizeRequestEvent ev;
+		ev.type = ResizeRequest;
+		ev.serial = 0;
+		ev.send_event = true;
+		ev.display = s_ctx.m_display;
+		ev.window = s_ctx.m_window;
+		ev.width = (int)_width;
+		ev.height = (int)_height;
+		XSendEvent(s_ctx.m_display, s_ctx.m_window, false, ResizeRedirectMask, (XEvent*)&ev);
 	}
 
 	void toggleWindowFrame()
