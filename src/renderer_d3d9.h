@@ -71,43 +71,43 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG_PIX
 
 #	ifndef D3DFMT_ATI1
-#		define D3DFMT_ATI1 ( (D3DFORMAT)BX_MAKEFOURCC('A','T','I','1') )
+#		define D3DFMT_ATI1 ( (D3DFORMAT)BX_MAKEFOURCC('A', 'T', 'I', '1') )
 #	endif // D3DFMT_ATI1
 
 #	ifndef D3DFMT_ATI2
-#		define D3DFMT_ATI2 ( (D3DFORMAT)BX_MAKEFOURCC('A','T','I','2') )
+#		define D3DFMT_ATI2 ( (D3DFORMAT)BX_MAKEFOURCC('A', 'T', 'I', '2') )
 #	endif // D3DFMT_ATI2
 
 #	ifndef D3DFMT_ATOC
-#		define D3DFMT_ATOC ( (D3DFORMAT)BX_MAKEFOURCC('A','T','O','C') )
+#		define D3DFMT_ATOC ( (D3DFORMAT)BX_MAKEFOURCC('A', 'T', 'O', 'C') )
 #	endif // D3DFMT_ATOC
 
 #	ifndef D3DFMT_DF16
-#		define D3DFMT_DF16 ( (D3DFORMAT)BX_MAKEFOURCC('D','F','1','6') )
+#		define D3DFMT_DF16 ( (D3DFORMAT)BX_MAKEFOURCC('D', 'F', '1', '6') )
 #	endif // D3DFMT_DF16
 
 #	ifndef D3DFMT_DF24
-#		define D3DFMT_DF24 ( (D3DFORMAT)BX_MAKEFOURCC('D','F','2','4') )
+#		define D3DFMT_DF24 ( (D3DFORMAT)BX_MAKEFOURCC('D', 'F', '2', '4') )
 #	endif // D3DFMT_DF24
 
 #	ifndef D3DFMT_INST
-#		define D3DFMT_INST ( (D3DFORMAT)BX_MAKEFOURCC('I','N','S','T') )
+#		define D3DFMT_INST ( (D3DFORMAT)BX_MAKEFOURCC('I', 'N', 'S', 'T') )
 #	endif // D3DFMT_INST
 
 #	ifndef D3DFMT_INTZ
-#		define D3DFMT_INTZ ( (D3DFORMAT)BX_MAKEFOURCC('I','N','T','Z') )
+#		define D3DFMT_INTZ ( (D3DFORMAT)BX_MAKEFOURCC('I', 'N', 'T', 'Z') )
 #	endif // D3DFMT_INTZ
 
 #	ifndef D3DFMT_NULL
-#		define D3DFMT_NULL ( (D3DFORMAT)BX_MAKEFOURCC('N','U','L','L') )
+#		define D3DFMT_NULL ( (D3DFORMAT)BX_MAKEFOURCC('N', 'U', 'L', 'L') )
 #	endif // D3DFMT_NULL
 
 #	ifndef D3DFMT_RESZ
-#		define D3DFMT_RESZ ( (D3DFORMAT)BX_MAKEFOURCC('R','E','S','Z') )
+#		define D3DFMT_RESZ ( (D3DFORMAT)BX_MAKEFOURCC('R', 'E', 'S', 'Z') )
 #	endif // D3DFMT_RESZ
 
 #	ifndef D3DFMT_RAWZ
-#		define D3DFMT_RAWZ ( (D3DFORMAT)BX_MAKEFOURCC('R','A','W','Z') )
+#		define D3DFMT_RAWZ ( (D3DFORMAT)BX_MAKEFOURCC('R', 'A', 'W', 'Z') )
 #	endif // D3DFMT_RAWZ
 
 	struct ExtendedFormat

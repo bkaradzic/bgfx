@@ -18,6 +18,8 @@ namespace bgfx
 #define DDS_DXT3 BX_MAKEFOURCC('D', 'X', 'T', '3')
 #define DDS_DXT4 BX_MAKEFOURCC('D', 'X', 'T', '4')
 #define DDS_DXT5 BX_MAKEFOURCC('D', 'X', 'T', '5')
+#define DDS_ATI1 BX_MAKEFOURCC('A', 'T', 'I', '1')
+#define DDS_ATI2 BX_MAKEFOURCC('A', 'T', 'I', '2')
 
 #define D3DFMT_A16B16G16R16F 113
 
@@ -165,7 +167,7 @@ void decodeBlockDxt1(uint8_t _dst[16*4], const uint8_t _src[8])
 
 void decodeBlockDxt23A(uint8_t _dst[16*4], const uint8_t _src[8])
 {
-	for (uint32_t ii = 3, next = 0; ii < 16*4; ii += 4, next += 4)
+	for (uint32_t ii = 0, next = 0; ii < 16*4; ii += 4, next += 4)
 	{
 		uint32_t c0 = (_src[next>>3] >> (next&7) ) & 0xf;
 		_dst[ii] = bitRangeConvert(c0, 4, 8);
@@ -197,20 +199,18 @@ void decodeBlockDxt45A(uint8_t _dst[16*4], const uint8_t _src[8])
 		alpha[7] = 255;
 	}
 
-	for (uint32_t ii = 3, next = 8*2; ii < 16*4; ii += 4, ++next)
+	uint32_t idx0 = _src[2];
+	uint32_t idx1 = _src[5];
+	idx0 |= uint32_t(_src[3])<<8;
+	idx1 |= uint32_t(_src[6])<<8;
+	idx0 |= uint32_t(_src[4])<<16;
+	idx1 |= uint32_t(_src[7])<<16;
+	for (uint32_t ii = 0; ii < 8*4; ii += 4)
 	{
-		uint32_t bit = (_src[next>>3] >> (next&7) ) & 1;
-		uint32_t idx = bit;
-		++next;
-
-		bit = (_src[next>>3] >> (next&7) ) & 1;
-		idx += bit << 1;
-		++next;
-
-		bit = (_src[next>>3] >> (next&7) ) & 1;
-		idx += bit << 2;
-
-		_dst[ii] = alpha[idx & 7];
+		_dst[ii]    = alpha[idx0&7];
+		_dst[ii+32] = alpha[idx1&7];
+		idx0 >>= 3;
+		idx1 >>= 3;
 	}
 }
 
@@ -233,7 +233,7 @@ void Mip::decode(uint8_t* _dst)
 
 		switch (m_type)
 		{
-		case TextureFormat::Dxt1:
+		case TextureFormat::BC1:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
@@ -242,46 +242,91 @@ void Mip::decode(uint8_t* _dst)
 					src += 8;
 
 					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(dst, temp, 16);
-					memcpy(&dst[pitch], &temp[16], 16);
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
 					memcpy(&dst[2*pitch], &temp[32], 16);
 					memcpy(&dst[3*pitch], &temp[48], 16);
 				}
 			}
 			break;
 
-		case TextureFormat::Dxt3:
+		case TextureFormat::BC2:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
 				{
-					decodeBlockDxt23A(temp, src);
+					decodeBlockDxt23A(temp+3, src);
 					src += 8;
 					decodeBlockDxt(temp, src);
 					src += 8;
 
 					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(dst, temp, 16);
-					memcpy(&dst[pitch], &temp[16], 16);
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
 					memcpy(&dst[2*pitch], &temp[32], 16);
 					memcpy(&dst[3*pitch], &temp[48], 16);
 				}
 			}
 			break;
 
-		case TextureFormat::Dxt5:
+		case TextureFormat::BC3:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt45A(temp+3, src);
+					src += 8;
+					decodeBlockDxt(temp, src);
+					src += 8;
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::BC4:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
 				{
 					decodeBlockDxt45A(temp, src);
 					src += 8;
-					decodeBlockDxt(temp, src);
-					src += 8;
 
 					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(dst, temp, 16);
-					memcpy(&dst[pitch], &temp[16], 16);
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::BC5:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt45A(temp+1, src);
+					src += 8;
+					decodeBlockDxt45A(temp+2, src);
+					src += 8;
+
+					for (uint32_t ii = 0; ii < 16; ++ii)
+					{
+						float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
+						float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
+						float nz = sqrtf(1.0f - nx*nx - ny*ny);
+						temp[ii*4+0] = uint8_t( (nz + 1.0f)*255.0f/2.0f);
+						temp[ii*4+3] = 0;
+					}
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
 					memcpy(&dst[2*pitch], &temp[32], 16);
 					memcpy(&dst[3*pitch], &temp[48], 16);
 				}
@@ -417,21 +462,33 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		switch (fourcc)
 		{
 		case DDS_DXT1:
-			type = TextureFormat::Dxt1;
+			type = TextureFormat::BC1;
 			blockSize = 8;
 			bpp = 4;
 			break;
 
 		case DDS_DXT2:
 		case DDS_DXT3:
-			type = TextureFormat::Dxt3;
+			type = TextureFormat::BC2;
 			blockSize = 16;
 			bpp = 4;
 			break;
 
 		case DDS_DXT4:
 		case DDS_DXT5:
-			type = TextureFormat::Dxt5;
+			type = TextureFormat::BC3;
+			blockSize = 16;
+			bpp = 4;
+			break;
+
+		case DDS_ATI1:
+			type = TextureFormat::BC4;
+			blockSize = 16;
+			bpp = 4;
+			break;
+
+		case DDS_ATI2:
+			type = TextureFormat::BC5;
 			blockSize = 16;
 			bpp = 4;
 			break;

@@ -152,6 +152,8 @@ namespace bgfx
 		{ DXGI_FORMAT_BC1_UNORM,          4  },
 		{ DXGI_FORMAT_BC2_UNORM,          4  },
 		{ DXGI_FORMAT_BC3_UNORM,          4  },
+		{ DXGI_FORMAT_BC4_UNORM,          4  },
+		{ DXGI_FORMAT_BC5_UNORM,          4  },
 		{ DXGI_FORMAT_UNKNOWN,            0  },
 		{ DXGI_FORMAT_R8_UNORM,           8  },
 		{ DXGI_FORMAT_B8G8R8A8_UNORM,     32 },

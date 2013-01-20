@@ -909,6 +909,8 @@ namespace bgfx
 		4,  // Dxt1
 		4,  // Dxt3
 		4,  // Dxt5
+		4,  // BC4
+		4,  // BC5
 		0,  // Unknown
 		8,  // L8
 		32, // BGRX8

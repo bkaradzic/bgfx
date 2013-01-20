@@ -22,6 +22,7 @@ namespace bgfx
 			EXT_texture_compression_dxt1,
 			CHROMIUM_texture_compression_dxt3,
 			CHROMIUM_texture_compression_dxt5,
+			EXT_texture_compression_latc,
 			ARB_texture_float,
 			OES_texture_float,
 			OES_texture_float_linear,
@@ -70,6 +71,7 @@ namespace bgfx
 		{ "GL_EXT_texture_compression_dxt1",      false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
+		{ "GL_EXT_texture_compression_latc",      false, true },
 		{ "GL_ARB_texture_float",                 false, true },
 		{ "GL_OES_texture_float",                 false, true },
 		{ "GL_OES_texture_float_linear",          false, true },
@@ -152,7 +154,6 @@ namespace bgfx
 			: m_capture(NULL)
 			, m_captureSize(0)
 			, m_maxAnisotropy(0.0f)
-			, m_dxtSupport(false)
 			, m_vaoSupport(false)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
@@ -328,7 +329,6 @@ namespace bgfx
 		void* m_capture;
 		uint32_t m_captureSize;
 		float m_maxAnisotropy;
-		bool m_dxtSupport;
 		bool m_vaoSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
@@ -521,26 +521,29 @@ namespace bgfx
 		GLenum m_fmt;
 		GLenum m_type;
 		uint8_t m_bpp;
+		bool m_supported;
 	};
 
 	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_ZERO,                        4  },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_ZERO,                        4  },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_ZERO,                        4  },
-		{ GL_ZERO,                          GL_ZERO,                          GL_ZERO,                        0  },
-		{ GL_LUMINANCE,                     GL_LUMINANCE,                     GL_UNSIGNED_BYTE,               8  },
-		{ GL_RGBA,                          GL_RGBA,                          GL_UNSIGNED_BYTE,               32 },
-		{ GL_RGBA,                          GL_RGBA,                          GL_UNSIGNED_BYTE,               32 },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_ZERO,                        4,  false },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_ZERO,                        4,  false },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_ZERO,                        4,  false },
+		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_ZERO,                        4,  false },
+		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                        4,  false },
+		{ GL_ZERO,                                 GL_ZERO,                                 GL_ZERO,                        0,  true  },
+		{ GL_LUMINANCE,                            GL_LUMINANCE,                            GL_UNSIGNED_BYTE,               8,  true  },
+		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
+		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
 #if BGFX_CONFIG_RENDERER_OPENGL
-		{ GL_RGBA16,                        GL_RGBA,                          GL_HALF_FLOAT,                  64 },
+		{ GL_RGBA16,                               GL_RGBA,                                 GL_HALF_FLOAT,                  64, true  },
 #else
-		{ GL_RGBA,                          GL_RGBA,                          GL_UNSIGNED_BYTE,               64 },
+		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               64, true  },
 #endif // BGFX_CONFIG_RENDERER_OPENGL
-		{ GL_RGB565,                        GL_RGB,                           GL_UNSIGNED_SHORT_5_6_5,        16 },
-		{ GL_RGBA4,                         GL_RGBA,                          GL_UNSIGNED_SHORT_4_4_4_4,      16 },
-		{ GL_RGB5_A1,                       GL_RGBA,                          GL_UNSIGNED_SHORT_5_5_5_1,      16 },
-		{ GL_RGB10_A2,                      GL_RGBA,                          GL_UNSIGNED_INT_2_10_10_10_REV, 32 },
+		{ GL_RGB565,                               GL_RGB,                                  GL_UNSIGNED_SHORT_5_6_5,        16, true  },
+		{ GL_RGBA4,                                GL_RGBA,                                 GL_UNSIGNED_SHORT_4_4_4_4,      16, true  },
+		{ GL_RGB5_A1,                              GL_RGBA,                                 GL_UNSIGNED_SHORT_5_5_5_1,      16, true  },
+		{ GL_RGB10_A2,                             GL_RGBA,                                 GL_UNSIGNED_INT_2_10_10_10_REV, 32, true  },
 	};
 
 	const char* glslTypeName(GLuint _type)
@@ -1019,7 +1022,7 @@ namespace bgfx
 				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 			}
 
-			if (!s_renderCtx.m_dxtSupport
+			if (!tfi.m_supported
 			||  TextureFormat::Unknown < dds.m_type)
 			{
 				bool decompress = TextureFormat::Unknown > dds.m_type;
@@ -1790,15 +1793,14 @@ namespace bgfx
 				}
 			}
 
-			s_renderCtx.m_dxtSupport = true
-				&& s_extension[Extension::EXT_texture_compression_dxt1].m_supported
-				&& s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
-				&& s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
-				;
+			bool dxtSupported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
+			s_textureFormat[TextureFormat::BC1].m_supported = dxtSupported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
+			s_textureFormat[TextureFormat::BC2].m_supported = dxtSupported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
+			s_textureFormat[TextureFormat::BC3].m_supported = dxtSupported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
 
-			s_renderCtx.m_dxtSupport |=
-				s_extension[Extension::EXT_texture_compression_s3tc].m_supported
-				;
+			bool latcSupported = s_extension[Extension::EXT_texture_compression_latc].m_supported;
+			s_textureFormat[TextureFormat::BC4].m_supported = latcSupported;
+			s_textureFormat[TextureFormat::BC5].m_supported = latcSupported;
 
 			s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 				|| s_extension[Extension::ARB_vertex_array_object].m_supported

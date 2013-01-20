@@ -70,7 +70,8 @@ void main()
 				normalize(v_normal)
 				);
 
-	vec3 normal = normalize(texture2D(u_texNormal, v_texcoord0).xyz * 2.0 - 1.0);
+	vec3 normal = texture2D(u_texNormal, v_texcoord0).xy * 2.0 - 1.0;
+	normal.z = sqrt(1.0 - dot(normal.xy, normal.xy) );
 	vec3 view = -normalize(v_view);
 
 	vec3 lightColor;

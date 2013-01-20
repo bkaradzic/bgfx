@@ -167,6 +167,8 @@ namespace bgfx
 		{ D3DFMT_DXT1,         4  },
 		{ D3DFMT_DXT3,         4  },
 		{ D3DFMT_DXT5,         4  },
+		{ D3DFMT_ATI1,         4  },
+		{ D3DFMT_ATI2,         4  },
 		{ D3DFMT_UNKNOWN,      0  },
 		{ D3DFMT_L8,           8  },
 		{ D3DFMT_X8R8G8B8,     32 },
@@ -357,7 +359,7 @@ namespace bgfx
 			if (m_amd
 			&&  s_extendedFormats[ExtendedFormat::Inst].m_supported)
 			{
-				// ATi only
+				// AMD only
 				m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
 			}
 
@@ -1360,22 +1362,26 @@ namespace bgfx
 			m_format = dds.m_type;
 			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 
-			bool decompress = false;
+			bool decompress = false
+				|| (TextureFormat::BC4 == dds.m_type && !s_extendedFormats[ExtendedFormat::Ati1].m_supported)
+				|| (TextureFormat::BC5 == dds.m_type && !s_extendedFormats[ExtendedFormat::Ati2].m_supported)
+				;
+
+			D3DFORMAT format = decompress ? D3DFMT_A8R8G8B8 : tfi.m_fmt;
+			uint8_t bpp = decompress ? 32 : tfi.m_bpp;
 
 			if (dds.m_cubeMap)
 			{
-				createCubeTexture(dds.m_width, dds.m_numMips, tfi.m_fmt);
+				createCubeTexture(dds.m_width, dds.m_numMips, format);
 			}
 			else if (dds.m_depth > 1)
 			{
-				createVolumeTexture(dds.m_width, dds.m_height, dds.m_depth, dds.m_numMips, tfi.m_fmt);
+				createVolumeTexture(dds.m_width, dds.m_height, dds.m_depth, dds.m_numMips, format);
 			}
 			else
 			{
-				createTexture(dds.m_width, dds.m_height, dds.m_numMips, tfi.m_fmt);
+				createTexture(dds.m_width, dds.m_height, dds.m_numMips, format);
 			}
-
-			uint8_t bpp = tfi.m_bpp;
 
 			if (decompress
 			||  TextureFormat::Unknown < dds.m_type)
