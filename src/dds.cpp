@@ -3,6 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <math.h> // sqrtf
+
 #include "bgfx_p.h"
 #include "dds.h"
 
