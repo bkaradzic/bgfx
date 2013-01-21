@@ -54,7 +54,8 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_exit(false)
+			: m_modifiers(Modifier::None)
+			, m_exit(false)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(XK_Escape,       Key::Esc);
@@ -198,9 +199,9 @@ namespace entry
 						case ButtonPress:
 						case ButtonRelease:
 							{
-								const XButtonEvent& button = event.xbutton;
+								const XButtonEvent& xbutton = event.xbutton;
 								MouseButton::Enum mb;
-								switch (button.button)
+								switch (xbutton.button)
 								{
 									case Button1: mb = MouseButton::Left;   break;
 									case Button2: mb = MouseButton::Middle; break;
@@ -210,8 +211,8 @@ namespace entry
 
 								if (MouseButton::None != mb)
 								{
-									m_eventQueue.postMouseEvent(button.x
-										, button.y
+									m_eventQueue.postMouseEvent(xbutton.x
+										, xbutton.y
 										, mb
 										, event.type == ButtonPress
 										);
@@ -221,9 +222,9 @@ namespace entry
 
 						case MotionNotify:
 							{
-								const XMotionEvent& motion = event.xmotion;
-								m_eventQueue.postMouseEvent(motion.x
-										, motion.y
+								const XMotionEvent& xmotion = event.xmotion;
+								m_eventQueue.postMouseEvent(xmotion.x
+										, xmotion.y
 										);
 							}
 							break;
@@ -231,19 +232,36 @@ namespace entry
 						case KeyPress:
 						case KeyRelease:
 							{
-								KeySym xk = XLookupKeysym(&event.xkey, 0);
-								Key::Enum key = fromXk(xk);
-								if (Key::None != key)
+								XKeyEvent& xkey = event.xkey;
+								KeySym keysym = XLookupKeysym(&xkey, 0);
+								switch (keysym)
 								{
-									m_eventQueue.postKeyEvent(key, 0, KeyPress == event.type);
+								case XK_Meta_L:    setModifier(Modifier::LeftMeta,   KeyPress == event.type); break;
+								case XK_Meta_R:    setModifier(Modifier::RightMeta,  KeyPress == event.type); break;
+								case XK_Control_L: setModifier(Modifier::LeftCtrl,   KeyPress == event.type); break;
+								case XK_Control_R: setModifier(Modifier::RightCtrl,  KeyPress == event.type); break;
+								case XK_Shift_L:   setModifier(Modifier::LeftShift,  KeyPress == event.type); break;
+								case XK_Shift_R:   setModifier(Modifier::RightShift, KeyPress == event.type); break;
+								case XK_Alt_L:     setModifier(Modifier::LeftAlt,    KeyPress == event.type); break;
+								case XK_Alt_R:     setModifier(Modifier::RightAlt,   KeyPress == event.type); break;
+
+								default:
+									{
+										Key::Enum key = fromXk(keysym);
+										if (Key::None != key)
+										{
+											m_eventQueue.postKeyEvent(key, m_modifiers, KeyPress == event.type);
+										}
+									}
+									break;
 								}
 							}
 							break;
 
 						case ResizeRequest:
 							{
-								const XResizeRequestEvent& resize = event.xresizerequest;
-								XResizeWindow(m_display, m_window, resize.width, resize.height);
+								const XResizeRequestEvent& xresize = event.xresizerequest;
+								XResizeWindow(m_display, m_window, xresize.width, xresize.height);
 							}
 							break;
 					}
@@ -258,6 +276,13 @@ namespace entry
 			return EXIT_SUCCESS;
 		}
 
+		void setModifier(Modifier::Enum _modifier, bool _set)
+		{
+			m_modifiers &= ~_modifier;
+			m_modifiers |= _set ? _modifier : 0;
+		}
+
+		uint8_t m_modifiers;
 		Display* m_display;
 		Window m_window;
 		bool m_exit;

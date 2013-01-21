@@ -37,7 +37,7 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 			case Event::Key:
 				{
 					const KeyEvent* key = static_cast<const KeyEvent*>(ev);
-					if ( (key->m_key == Key::KeyQ && (key->m_modifiers & (Modifier::LeftCtrl|Modifier::RightCtrl) ) ) 
+					if ( (key->m_key == Key::KeyQ && (key->m_modifiers & (Modifier::LeftCtrl|Modifier::RightCtrl) ) )
 					|| ( (key->m_key == Key::Esc) ) )
 					{
 						return true;
