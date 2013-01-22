@@ -772,34 +772,37 @@ namespace bgfx
 
 		void capturePostReset()
 		{
-			ID3D11Texture2D* backBuffer;
-			DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
-
-			D3D11_TEXTURE2D_DESC backBufferDesc;
-			backBuffer->GetDesc(&backBufferDesc);
-
-			D3D11_TEXTURE2D_DESC desc;
-			memcpy(&desc, &backBufferDesc, sizeof(desc) );
-			desc.SampleDesc.Count = 1;
-			desc.SampleDesc.Quality = 0;
-			desc.Usage = D3D11_USAGE_STAGING;
-			desc.BindFlags = 0;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-			HRESULT hr = m_device->CreateTexture2D(&desc, NULL, &m_captureTexture);
-			if (SUCCEEDED(hr) )
+			if (m_flags&BGFX_RESET_CAPTURE)
 			{
-				if (backBufferDesc.SampleDesc.Count != 1)
+				ID3D11Texture2D* backBuffer;
+				DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
+
+				D3D11_TEXTURE2D_DESC backBufferDesc;
+				backBuffer->GetDesc(&backBufferDesc);
+
+				D3D11_TEXTURE2D_DESC desc;
+				memcpy(&desc, &backBufferDesc, sizeof(desc) );
+				desc.SampleDesc.Count = 1;
+				desc.SampleDesc.Quality = 0;
+				desc.Usage = D3D11_USAGE_STAGING;
+				desc.BindFlags = 0;
+				desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+				HRESULT hr = m_device->CreateTexture2D(&desc, NULL, &m_captureTexture);
+				if (SUCCEEDED(hr) )
 				{
-					desc.Usage = D3D11_USAGE_DEFAULT;
-					desc.CPUAccessFlags = 0;
-					m_device->CreateTexture2D(&desc, NULL, &m_captureResolve);
+					if (backBufferDesc.SampleDesc.Count != 1)
+					{
+						desc.Usage = D3D11_USAGE_DEFAULT;
+						desc.CPUAccessFlags = 0;
+						m_device->CreateTexture2D(&desc, NULL, &m_captureResolve);
+					}
+
+					g_callback->captureBegin(backBufferDesc.Width, backBufferDesc.Height, backBufferDesc.Width*4, TextureFormat::BGRA8, false);
 				}
 
-				g_callback->captureBegin(backBufferDesc.Width, backBufferDesc.Height, backBufferDesc.Width*4, TextureFormat::BGRA8, false);
+				DX_RELEASE(backBuffer, 0);
 			}
-
-			DX_RELEASE(backBuffer, 0);
 		}
 
 		void capturePreReset()
@@ -815,29 +818,32 @@ namespace bgfx
 
 		void capture()
 		{
-			ID3D11Texture2D* backBuffer;
-			DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
-
-			DXGI_MODE_DESC& desc = m_scd.BufferDesc;
-
-			if (NULL == m_captureResolve)
+			if (NULL != m_captureTexture)
 			{
-				m_deviceCtx->CopyResource(m_captureTexture, backBuffer);
+				ID3D11Texture2D* backBuffer;
+				DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
+
+				DXGI_MODE_DESC& desc = m_scd.BufferDesc;
+
+				if (NULL == m_captureResolve)
+				{
+					m_deviceCtx->CopyResource(m_captureTexture, backBuffer);
+				}
+				else
+				{
+					m_deviceCtx->ResolveSubresource(m_captureResolve, 0, backBuffer, 0, desc.Format);
+					m_deviceCtx->CopyResource(m_captureTexture, m_captureResolve);
+				}
+
+				D3D11_MAPPED_SUBRESOURCE mapped;
+				DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
+
+				g_callback->captureFrame(mapped.pData, desc.Height*mapped.RowPitch);
+
+				m_deviceCtx->Unmap(m_captureTexture, 0);
+
+				DX_RELEASE(backBuffer, 0);
 			}
-			else
-			{
-				m_deviceCtx->ResolveSubresource(m_captureResolve, 0, backBuffer, 0, desc.Format);
-				m_deviceCtx->CopyResource(m_captureTexture, m_captureResolve);
-			}
-
-			D3D11_MAPPED_SUBRESOURCE mapped;
-			DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
-
-			g_callback->captureFrame(mapped.pData, desc.Height*mapped.RowPitch);
-
-			m_deviceCtx->Unmap(m_captureTexture, 0);
-
-			DX_RELEASE(backBuffer, 0);
 		}
 
 		void saveScreenShot(Memory* _mem)
