@@ -2532,7 +2532,7 @@ namespace bgfx
 					uint16_t handle = state.m_indexBuffer.idx;
 					if (invalidHandle != handle)
 					{
-						IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
+						const IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
 						DX_CHECK(device->SetIndices(ib.m_ptr) );
 					}
 					else
@@ -2546,9 +2546,9 @@ namespace bgfx
 					uint32_t numVertices = state.m_numVertices;
 					if (UINT32_C(0xffffffff) == numVertices)
 					{
-						VertexBuffer& vb = s_renderCtx.m_vertexBuffers[currentState.m_vertexBuffer.idx];
+						const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[currentState.m_vertexBuffer.idx];
 						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-						VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
+						const VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
 					}
 
@@ -2595,6 +2595,7 @@ namespace bgfx
 						numPrimsSubmitted = numVertices/primNumVerts;
 						numInstances = state.m_numInstances;
 						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+
 						DX_CHECK(device->DrawPrimitive(primType
 							, state.m_startVertex
 							, numPrimsSubmitted

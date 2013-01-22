@@ -2492,7 +2492,12 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							deviceCtx->DrawIndexedInstanced(numIndices, state.m_numInstances, 0, state.m_startVertex, 0);
+							deviceCtx->DrawIndexedInstanced(numIndices
+								, state.m_numInstances
+								, 0
+								, state.m_startVertex
+								, 0
+								);
 						}
 						else if (primNumVerts <= state.m_numIndices)
 						{
@@ -2501,7 +2506,12 @@ namespace bgfx
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							deviceCtx->DrawIndexedInstanced(numIndices, state.m_numInstances, state.m_startIndex, state.m_startVertex, 0);
+							deviceCtx->DrawIndexedInstanced(numIndices
+								, state.m_numInstances
+								, state.m_startIndex
+								, state.m_startVertex
+								, 0
+								);
 						}
 					}
 					else
@@ -2510,7 +2520,11 @@ namespace bgfx
 						numInstances = state.m_numInstances;
 						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-						deviceCtx->DrawInstanced(numVertices, state.m_numInstances, state.m_startVertex, 0);
+						deviceCtx->DrawInstanced(numVertices
+							, state.m_numInstances
+							, state.m_startVertex
+							, 0
+							);
 					}
 
 					statsNumPrimsSubmitted += numPrimsSubmitted;
