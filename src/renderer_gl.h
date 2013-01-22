@@ -178,6 +178,8 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	define glClearDepth glClearDepthf
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
+#include <set>
+
 namespace bgfx
 {
 	typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISORBGFXPROC)(GLuint _index, GLuint _divisor);
@@ -229,6 +231,82 @@ namespace bgfx
 	
 	class ConstantBuffer;
 	
+	class VaoCache
+	{
+	public:
+		GLuint add(uint32_t _hash)
+		{
+			invalidate(_hash);
+
+			GLuint arrayId;
+			GL_CHECK(glGenVertexArrays(1, &arrayId) );
+
+			m_hashMap.insert(stl::make_pair(_hash, arrayId) );
+
+			return arrayId;
+		}
+
+		GLuint find(uint32_t _hash)
+		{
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				return it->second;
+			}
+
+			return UINT32_MAX;
+		}
+
+		void invalidate(uint32_t _hash)
+		{
+			GL_CHECK(glBindVertexArray(0) );
+
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidate()
+		{
+			GL_CHECK(glBindVertexArray(0) );
+
+			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			{
+				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
+			}
+			m_hashMap.clear();
+		}
+
+	private:
+		typedef stl::unordered_map<uint32_t, GLuint> HashMap;
+		HashMap m_hashMap;
+	};
+
+	class VaoCacheRef
+	{
+	public:
+		void add(uint32_t _hash)
+		{
+			m_vaoSet.insert(_hash);
+		}
+
+		void invalidate(VaoCache& _vaoCache)
+		{
+			for (VaoSet::iterator it = m_vaoSet.begin(), itEnd = m_vaoSet.end(); it != itEnd; ++it)
+			{
+				_vaoCache.invalidate(*it);
+			}
+
+			m_vaoSet.clear();
+		}
+
+		typedef stl::set<uint32_t> VaoSet;
+		VaoSet m_vaoSet;
+	};
+
 	struct IndexBuffer
 	{
 		void create(uint32_t _size, void* _data)
@@ -257,14 +335,16 @@ namespace bgfx
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 		}
 
-		void destroy()
+		void destroy();
+
+		void add(uint32_t _hash)
 		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			glDeleteBuffers(1, &m_id);
+			m_vcref.add(_hash);
 		}
 
 		GLuint m_id;
 		uint32_t m_size;
+		VaoCacheRef m_vcref;
 	};
 	
 	struct VertexBuffer
@@ -296,65 +376,17 @@ namespace bgfx
 			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 		}
 
-		void destroy()
+		void destroy();
+
+		void add(uint32_t _hash)
 		{
-			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
-			GL_CHECK(glDeleteBuffers(1, &m_id) );
+			m_vcref.add(_hash);
 		}
 
 		GLuint m_id;
 		uint32_t m_size;
 		VertexDeclHandle m_decl;
-	};
-
-	class VaoCache
-	{
-	public:
-		GLuint add(uint64_t _hash)
-		{
-			invalidate(_hash);
-
-			GLuint arrayId;
-			GL_CHECK(glGenVertexArrays(1, &arrayId) );
-
-			m_hashMap.insert(stl::make_pair(_hash, arrayId) );
-
-			return arrayId;
-		}
-
-		GLuint find(uint64_t _hash)
-		{
-			HashMap::iterator it = m_hashMap.find(_hash);
-			if (it != m_hashMap.end() )
-			{
-				return it->second;
-			}
-
-			return UINT32_MAX;
-		}
-
-		void invalidate(uint64_t _hash)
-		{
-			HashMap::iterator it = m_hashMap.find(_hash);
-			if (it != m_hashMap.end() )
-			{
-				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
-				m_hashMap.erase(it);
-			}
-		}
-
-		void invalidate()
-		{
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
-			}
-			m_hashMap.clear();
-		}
-
-	private:
-		typedef stl::unordered_map<uint64_t, GLuint> HashMap;
-		HashMap m_hashMap;
+		VaoCacheRef m_vcref;
 	};
 
 	struct Texture
@@ -456,6 +488,11 @@ namespace bgfx
 			m_constantBuffer->commit();
 		}
  
+		void add(uint32_t _hash)
+		{
+			m_vcref.add(_hash);
+		}
+
 		GLuint m_id;
 
 		uint8_t m_used[Attrib::Count+1]; // dense
@@ -468,6 +505,7 @@ namespace bgfx
 		ConstantBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
+		VaoCacheRef m_vcref;
 	};
 
 #if BGFX_CONFIG_RENDERER_OPENGL

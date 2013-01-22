@@ -720,6 +720,8 @@ namespace bgfx
 	{
 		GL_CHECK(glUseProgram(0) );
 		GL_CHECK(glDeleteProgram(m_id) );
+
+		m_vcref.invalidate(s_renderCtx.m_vaoCache);
 	}
 
 	void Program::init()
@@ -915,6 +917,22 @@ namespace bgfx
 			GL_CHECK(s_vertexAttribDivisor(loc, 1) );
 			baseVertex += 16;
 		}
+	}
+
+	void IndexBuffer::destroy()
+	{
+		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+		GL_CHECK(glDeleteBuffers(1, &m_id) );
+
+		m_vcref.invalidate(s_renderCtx.m_vaoCache);
+	}
+
+	void VertexBuffer::destroy()
+	{
+		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+		GL_CHECK(glDeleteBuffers(1, &m_id) );
+
+		m_vcref.invalidate(s_renderCtx.m_vaoCache);
 	}
 
 	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _pixels)
@@ -1829,7 +1847,7 @@ namespace bgfx
 			}
 
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
-			if (NULL != glVertexAttribDivisor
+			if (false && NULL != glVertexAttribDivisor
 			&&  NULL != glDrawArraysInstanced
 			&&  NULL != glDrawElementsInstanced)
 			{
@@ -1995,6 +2013,13 @@ namespace bgfx
 
 	void Context::rendererSubmit()
 	{
+		if (s_renderCtx.m_vaoSupport)
+		{
+			GL_CHECK(glBindVertexArray(0) );
+		}
+
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
 		int64_t elapsed = -bx::getHPCounter();
@@ -2041,8 +2066,7 @@ namespace bgfx
 		GLenum primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : GL_TRIANGLES;
 		uint32_t primNumVerts = 3;
 		uint32_t baseVertex = 0;
-
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+		GLuint currentVao = 0;
 
 		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;
@@ -2504,19 +2528,22 @@ namespace bgfx
 						}
 					}
 
-					if (s_renderCtx.m_vaoSupport)
+					if (s_renderCtx.m_vaoSupport
+					&&  0 == state.m_startVertex
+					&&  0 == state.m_instanceDataOffset)
 					{
 						if (programChanged
 						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
-						||  baseVertex != state.m_startVertex
-						||  currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+						||  currentState.m_indexBuffer.idx != state.m_indexBuffer.idx
+						||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx)
 						{
-							uint64_t hash = (uint64_t(state.m_vertexBuffer.idx)<<48)
-								| (uint64_t(state.m_indexBuffer.idx)<<32)
-								| (uint64_t(state.m_instanceDataBuffer.idx)<<16)
-								| programIdx
-								;
-							hash ^= state.m_startVertex;
+							bx::HashMurmur2A murmur;
+							murmur.begin();
+							murmur.add(state.m_vertexBuffer.idx);
+							murmur.add(state.m_indexBuffer.idx);
+							murmur.add(state.m_instanceDataBuffer.idx);
+							murmur.add(programIdx);
+							uint32_t hash = murmur.end();
 
 							currentState.m_vertexBuffer = state.m_vertexBuffer;
 							currentState.m_indexBuffer = state.m_indexBuffer;
@@ -2525,25 +2552,32 @@ namespace bgfx
 							GLuint id = s_renderCtx.m_vaoCache.find(hash);
 							if (UINT32_MAX != id)
 							{
+								currentVao = id;
 								GL_CHECK(glBindVertexArray(id) );
 							}
 							else
 							{
 								id = s_renderCtx.m_vaoCache.add(hash);
+								currentVao = id;
 								GL_CHECK(glBindVertexArray(id) );
+
+								Program& program = s_renderCtx.m_program[programIdx];
+								program.add(hash);
 
 								if (invalidHandle != state.m_vertexBuffer.idx)
 								{
 									VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+									vb.add(hash);
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
 									uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-									const Program& program = s_renderCtx.m_program[programIdx];
 									program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
 
 									if (invalidHandle != state.m_instanceDataBuffer.idx)
 									{
-										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
+										VertexBuffer& instanceVb = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
+										instanceVb.add(hash);
+										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, instanceVb.m_id) );
 										program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
 									}
 								}
@@ -2555,6 +2589,7 @@ namespace bgfx
 								if (invalidHandle != state.m_indexBuffer.idx)
 								{
 									IndexBuffer& ib = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx];
+									ib.add(hash);
 									GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 								}
 								else
@@ -2566,6 +2601,16 @@ namespace bgfx
 					}
 					else
 					{
+						if (s_renderCtx.m_vaoSupport
+						&&  0 != currentVao)
+						{
+							GL_CHECK(glBindVertexArray(0) );
+							currentState.m_vertexBuffer.idx = invalidHandle;
+							currentState.m_indexBuffer.idx = invalidHandle;
+							bindAttribs = true;
+							currentVao = 0;
+						}
+
 						if (programChanged
 						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx)
 						{
