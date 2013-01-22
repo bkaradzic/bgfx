@@ -1847,7 +1847,7 @@ namespace bgfx
 			}
 
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
-			if (false && NULL != glVertexAttribDivisor
+			if (NULL != glVertexAttribDivisor
 			&&  NULL != glDrawArraysInstanced
 			&&  NULL != glDrawElementsInstanced)
 			{
