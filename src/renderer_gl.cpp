@@ -23,6 +23,7 @@ namespace bgfx
 			CHROMIUM_texture_compression_dxt3,
 			CHROMIUM_texture_compression_dxt5,
 			EXT_texture_compression_latc,
+			EXT_texture_compression_rgtc,
 			ARB_texture_float,
 			OES_texture_float,
 			OES_texture_float_linear,
@@ -72,6 +73,7 @@ namespace bgfx
 		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
 		{ "GL_EXT_texture_compression_latc",      false, true },
+		{ "GL_EXT_texture_compression_rgtc",      false, true },
 		{ "GL_ARB_texture_float",                 false, true },
 		{ "GL_OES_texture_float",                 false, true },
 		{ "GL_OES_texture_float_linear",          false, true },
@@ -1811,14 +1813,15 @@ namespace bgfx
 				}
 			}
 
-			bool dxtSupported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
-			s_textureFormat[TextureFormat::BC1].m_supported = dxtSupported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
-			s_textureFormat[TextureFormat::BC2].m_supported = dxtSupported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
-			s_textureFormat[TextureFormat::BC3].m_supported = dxtSupported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
+			bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
+			s_textureFormat[TextureFormat::BC1].m_supported = bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
+			s_textureFormat[TextureFormat::BC2].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
+			s_textureFormat[TextureFormat::BC3].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
 
-			bool latcSupported = s_extension[Extension::EXT_texture_compression_latc].m_supported;
-			s_textureFormat[TextureFormat::BC4].m_supported = latcSupported;
-			s_textureFormat[TextureFormat::BC5].m_supported = latcSupported;
+			bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
+				|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported;
+			s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
+			s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
 
 			s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 				|| s_extension[Extension::ARB_vertex_array_object].m_supported
