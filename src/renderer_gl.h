@@ -165,7 +165,6 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	include "glcontext_wgl.h"
 #endif // BGFX_USE_WGL
 
-
 #ifndef GL_APIENTRY
 #   define GL_APIENTRY APIENTRY
 #endif // GL_APIENTRY
@@ -177,8 +176,6 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #if !BGFX_CONFIG_RENDERER_OPENGL
 #	define glClearDepth glClearDepthf
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
-
-#include <set>
 
 namespace bgfx
 {
@@ -303,7 +300,7 @@ namespace bgfx
 			m_vaoSet.clear();
 		}
 
-		typedef stl::set<uint32_t> VaoSet;
+		typedef stl::unordered_set<uint32_t> VaoSet;
 		VaoSet m_vaoSet;
 	};
 
