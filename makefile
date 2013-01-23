@@ -7,6 +7,7 @@ all:
 	premake --file=premake/premake4.lua vs2008
 	premake --file=premake/premake4.lua vs2010
 	premake --file=premake/premake4.lua --gcc=nacl gmake
+	premake --file=premake/premake4.lua --gcc=nacl-arm gmake
 	premake --file=premake/premake4.lua --gcc=pnacl gmake
 	premake --file=premake/premake4.lua --gcc=mingw gmake
 	premake --file=premake/premake4.lua --gcc=linux gmake
@@ -55,10 +56,17 @@ nacl-release64:
 	make -R -C .build/projects/gmake-nacl config=release64
 nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64
 
+nacl-arm-debug32:
+	make -R -C .build/projects/gmake-nacl-arm config=debug32
+nacl-arm-release32:
+	make -R -C .build/projects/gmake-nacl-arm config=release32
+nacl-arm: nacl-arm-debug32 nacl-arm-release32
+
 pnacl-debug:
 	make -R -C .build/projects/gmake-pnacl config=debug64
 pnacl-release:
 	make -R -C .build/projects/gmake-pnacl config=release64
+pnacl: pnacl-debug pnacl-release
 
 osx-debug32:
 	make -C .build/projects/gmake-osx config=debug32

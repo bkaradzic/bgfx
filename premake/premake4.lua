@@ -29,10 +29,6 @@ function copyLib()
 end
 
 dofile "bgfx.lua"
-dofile "makedisttex.lua"
-dofile "shaderc.lua"
-dofile "texturec.lua"
-dofile "geometryc.lua"
 dofile "example-00-helloworld.lua"
 dofile "example-01-cubes.lua"
 dofile "example-02-metaballs.lua"
@@ -42,3 +38,7 @@ dofile "example-05-instancing.lua"
 dofile "example-06-bump.lua"
 dofile "example-07-callback.lua"
 dofile "example-08-update.lua"
+dofile "makedisttex.lua"
+dofile "shaderc.lua"
+dofile "texturec.lua"
+dofile "geometryc.lua"

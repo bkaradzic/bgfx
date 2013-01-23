@@ -23,8 +23,13 @@ project "example-02-metaballs"
 	configuration { "emscripten" }
 		targetextension ".bc"
 
-	configuration { "nacl" }
+	configuration { "nacl or nacl-arm or pnacl" }
 		targetextension ".nexe"
+		links {
+			"ppapi",
+			"ppapi_gles2",
+			"pthread",
+		}
 
 	configuration { "nacl", "Release" }
 		postbuildcommands {
