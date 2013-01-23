@@ -527,10 +527,10 @@ namespace bgfx
 	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
 		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_ZERO,                        4,  false },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_ZERO,                        4,  false },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_ZERO,                        4,  false },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_ZERO,                        8,  false },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_ZERO,                        8,  false },
 		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_ZERO,                        4,  false },
-		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                        4,  false },
+		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                        8,  false },
 		{ GL_ZERO,                                 GL_ZERO,                                 GL_ZERO,                        0,  true  },
 		{ GL_LUMINANCE,                            GL_LUMINANCE,                            GL_UNSIGNED_BYTE,               8,  true  },
 		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },

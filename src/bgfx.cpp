@@ -907,10 +907,10 @@ namespace bgfx
 	static const uint32_t s_bitsPerPixel[TextureFormat::Count] =
 	{
 		4,  // Dxt1
-		4,  // Dxt3
-		4,  // Dxt5
+		8,  // Dxt3
+		8,  // Dxt5
 		4,  // BC4
-		4,  // BC5
+		8,  // BC5
 		0,  // Unknown
 		8,  // L8
 		32, // BGRX8

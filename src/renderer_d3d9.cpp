@@ -165,10 +165,10 @@ namespace bgfx
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
 		{ D3DFMT_DXT1,         4  },
-		{ D3DFMT_DXT3,         4  },
-		{ D3DFMT_DXT5,         4  },
+		{ D3DFMT_DXT3,         8  },
+		{ D3DFMT_DXT5,         8  },
 		{ D3DFMT_ATI1,         4  },
-		{ D3DFMT_ATI2,         4  },
+		{ D3DFMT_ATI2,         8  },
 		{ D3DFMT_UNKNOWN,      0  },
 		{ D3DFMT_L8,           8  },
 		{ D3DFMT_X8R8G8B8,     32 },
