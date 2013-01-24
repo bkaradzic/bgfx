@@ -18,6 +18,7 @@ namespace bgfx
 		{
 			EXT_texture_filter_anisotropic,
 			EXT_texture_format_BGRA8888,
+			EXT_bgra,
 			EXT_texture_compression_s3tc,
 			EXT_texture_compression_dxt1,
 			CHROMIUM_texture_compression_dxt3,
@@ -68,6 +69,7 @@ namespace bgfx
 	{
 		{ "GL_EXT_texture_filter_anisotropic",    false, true },
 		{ "GL_EXT_texture_format_BGRA8888",       false, true },
+		{ "GL_EXT_bgra",                          false, true },
 		{ "GL_EXT_texture_compression_s3tc",      false, true },
 		{ "GL_EXT_texture_compression_dxt1",      false, true },
 		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
@@ -1819,7 +1821,8 @@ namespace bgfx
 			s_textureFormat[TextureFormat::BC3].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
 
 			bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
-				|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported;
+				|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported
+				;
 			s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
 			s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
 
@@ -1843,10 +1846,25 @@ namespace bgfx
 				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy);
 			}
 
-			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported)
+			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
+			||  s_extension[Extension::EXT_bgra].m_supported)
 			{
 				s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
 				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
+
+				// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
+				// format to be BGRA but internal format to stay RGBA, but 
+				// EXT_texture_format_BGRA8888 wants both format and internal
+				// format to be BGRA.
+				//
+				// Reference:
+				// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
+				// https://www.opengl.org/registry/specs/EXT/bgra.txt
+				if (!s_extension[Extension::EXT_bgra].m_supported)
+				{
+					s_textureFormat[TextureFormat::BGRX8].m_internalFmt = GL_BGRA_EXT;
+					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA_EXT;
+				}
 			}
 
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
