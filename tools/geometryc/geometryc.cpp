@@ -377,7 +377,7 @@ int main(int _argc, const char* _argv[])
 	cmdLine.hasArg(packNormal, '\0', "packnormal");
 
 	uint32_t packUv = 0;
-	cmdLine.hasArg(packNormal, '\0', "packuv");
+	cmdLine.hasArg(packUv, '\0', "packuv");
 	
 	bool ccw = cmdLine.hasArg("ccw");
 	bool flipV = cmdLine.hasArg("flipv");
@@ -710,7 +710,7 @@ int main(int _argc, const char* _argv[])
 			decl.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float);
 			if (hasTangent)
 			{
-				decl.add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float);
+				decl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Float);
 			}
 			break;
 

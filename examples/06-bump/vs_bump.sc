@@ -27,7 +27,7 @@ void main()
 
 	vec3 viewNormal = normalize(mul(u_view, vec4(wnormal, 0.0) ).xyz);
 	vec3 viewTangent = normalize(mul(u_view, vec4(wtangent, 0.0) ).xyz);
-	vec3 viewBitangent = cross(viewNormal, viewTangent) * a_tangent.w;
+	vec3 viewBitangent = cross(viewNormal, viewTangent) * tangent.w;
 	mat3 tbn = mat3(viewTangent, viewBitangent, viewNormal);
 
 	v_wpos = wpos;
