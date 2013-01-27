@@ -164,20 +164,21 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ D3DFMT_DXT1,         4  },
-		{ D3DFMT_DXT3,         8  },
-		{ D3DFMT_DXT5,         8  },
-		{ D3DFMT_ATI1,         4  },
-		{ D3DFMT_ATI2,         8  },
-		{ D3DFMT_UNKNOWN,      0  },
-		{ D3DFMT_L8,           8  },
-		{ D3DFMT_X8R8G8B8,     32 },
-		{ D3DFMT_A8R8G8B8,     32 },
-		{ D3DFMT_A16B16G16R16, 64 },
-		{ D3DFMT_R5G6B5,       16 },
-		{ D3DFMT_A4R4G4B4,     16 },
-		{ D3DFMT_A1R5G5B5,     16 },
-		{ D3DFMT_A2B10G10R10,  32 },
+		{ D3DFMT_DXT1,           4 },
+		{ D3DFMT_DXT3,           8 },
+		{ D3DFMT_DXT5,           8 },
+		{ D3DFMT_ATI1,           4 },
+		{ D3DFMT_ATI2,           8 },
+		{ D3DFMT_UNKNOWN,        0 },
+		{ D3DFMT_L8,             8 },
+		{ D3DFMT_X8R8G8B8,      32 },
+		{ D3DFMT_A8R8G8B8,      32 },
+		{ D3DFMT_A16B16G16R16,  64 },
+		{ D3DFMT_A16B16G16R16F, 64 },
+		{ D3DFMT_R5G6B5,        16 },
+		{ D3DFMT_A4R4G4B4,      16 },
+		{ D3DFMT_A1R5G5B5,      16 },
+		{ D3DFMT_A2B10G10R10,   32 },
 	};
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =

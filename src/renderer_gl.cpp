@@ -539,6 +539,7 @@ namespace bgfx
 		{ GL_LUMINANCE,                            GL_LUMINANCE,                            GL_UNSIGNED_BYTE,               8,  true  },
 		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
 		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
+		{ GL_RGBA16,                               GL_RGBA,                                 GL_UNSIGNED_BYTE,               64, true  },
 #if BGFX_CONFIG_RENDERER_OPENGL
 		{ GL_RGBA16,                               GL_RGBA,                                 GL_HALF_FLOAT,                  64, true  },
 #else
@@ -1047,11 +1048,13 @@ namespace bgfx
 			if (!tfi.m_supported
 			||  TextureFormat::Unknown < dds.m_type)
 			{
-				bool decompress = TextureFormat::Unknown > dds.m_type;
+				uint8_t textureFormat = dds.m_type;
+				bool decompress = TextureFormat::Unknown > textureFormat;
 
 				if (decompress)
 				{
-					const TextureFormatInfo& tfi = s_textureFormat[TextureFormat::BGRA8];
+					textureFormat = TextureFormat::BGRA8;
+					const TextureFormatInfo& tfi = s_textureFormat[textureFormat];
 					internalFmt = tfi.m_internalFmt;
 					m_fmt = tfi.m_fmt;
 					m_type = tfi.m_type;
@@ -1069,7 +1072,7 @@ namespace bgfx
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*4);
+				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp/8);
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{

@@ -306,6 +306,7 @@ namespace bgfx
 			BGRX8,
 			BGRA8,
 			RGBA16,
+			RGBA16F,
 			R5G6B5,
 			RGBA4,
 			RGB5A1,

@@ -23,6 +23,7 @@ namespace bgfx
 #define DDS_ATI1 BX_MAKEFOURCC('A', 'T', 'I', '1')
 #define DDS_ATI2 BX_MAKEFOURCC('A', 'T', 'I', '2')
 
+#define D3DFMT_A16B16G16R16  36
 #define D3DFMT_A16B16G16R16F 113
 
 #define DDSD_CAPS                   0x00000001
@@ -495,8 +496,14 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 			bpp = 4;
 			break;
 
-		case D3DFMT_A16B16G16R16F:
+		case D3DFMT_A16B16G16R16:
 			type = TextureFormat::RGBA16;
+			blockSize = 8;
+			bpp = 64;
+			break;
+
+		case D3DFMT_A16B16G16R16F:
+			type = TextureFormat::RGBA16F;
 			blockSize = 8;
 			bpp = 64;
 			break;
