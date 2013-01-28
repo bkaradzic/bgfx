@@ -352,6 +352,7 @@ namespace bgfx
 	struct TextVideoMemBlitter
 	{
 		void init();
+		void shutdown();
 
 		void blit(const TextVideoMem* _mem)
 		{
@@ -367,11 +368,13 @@ namespace bgfx
 		TransientIndexBuffer* m_ib;
 		VertexDecl m_decl;
 		ProgramHandle m_program;
+		bool m_init;
 	};
 
 	struct ClearQuad
 	{
 		void init();
+		void shutdown();
 		void clear(const Rect& _rect, const Clear& _clear);
 
 		TransientVertexBuffer* m_vb;
@@ -417,6 +420,7 @@ namespace bgfx
 		enum Enum
 		{
 			RendererInit,
+			RendererShutdownBegin,
 			CreateVertexDecl,
 			CreateIndexBuffer,
 			CreateVertexBuffer,
@@ -432,7 +436,7 @@ namespace bgfx
 			CreateRenderTarget,
 			CreateUniform,
 			End,
-			RendererShutdown,
+			RendererShutdownEnd,
 			DestroyVertexDecl,
 			DestroyIndexBuffer,
 			DestroyVertexBuffer,
@@ -2415,10 +2419,15 @@ namespace bgfx
 					}
 					break;
 
-				case CommandBuffer::RendererShutdown:
+				case CommandBuffer::RendererShutdownBegin:
+					{
+						m_rendererInitialized = false;
+					}
+					break;
+
+				case CommandBuffer::RendererShutdownEnd:
 					{
 						rendererShutdown();
-						m_rendererInitialized = false;
 						m_exit = true;
 					}
 					break;

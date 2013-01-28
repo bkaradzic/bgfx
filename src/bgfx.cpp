@@ -292,9 +292,21 @@ namespace bgfx
 		FragmentShaderHandle fsh = createFragmentShader(mem);
 
 		m_program = createProgram(vsh, fsh);
+		destroyVertexShader(vsh);
+		destroyFragmentShader(fsh);
 
 		m_vb = s_ctx.createTransientVertexBuffer(numBatchVertices*m_decl.m_stride, &m_decl);
 		m_ib = s_ctx.createTransientIndexBuffer(numBatchIndices*2);
+	}
+
+	void TextVideoMemBlitter::shutdown()
+	{
+		BGFX_CHECK_MAIN_THREAD();
+
+		destroyProgram(m_program);
+		destroyTexture(m_texture);
+		s_ctx.destroyTransientVertexBuffer(m_vb);
+		s_ctx.destroyTransientIndexBuffer(m_ib);
 	}
 
 	void TextVideoMemBlitter::blit(const TextVideoMem& _mem)
@@ -428,6 +440,8 @@ namespace bgfx
 		FragmentShaderHandle fsh = createFragmentShader(mem);
 
 		m_program = createProgram(vsh, fsh);
+		destroyVertexShader(vsh);
+		destroyFragmentShader(fsh);
 
 		m_vb = s_ctx.createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
 
@@ -440,6 +454,16 @@ namespace bgfx
 		indices[4] = 3;
 		indices[5] = 0;
 		m_ib = s_ctx.createIndexBuffer(mem);
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11
+	}
+
+	void ClearQuad::shutdown()
+	{
+		BGFX_CHECK_MAIN_THREAD();
+#if BGFX_CONFIG_RENDERER_DIRECT3D11
+		destroyProgram(m_program);
+		destroyIndexBuffer(m_ib);
+		s_ctx.destroyTransientVertexBuffer(m_vb);
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11
 	}
 
@@ -702,7 +726,20 @@ namespace bgfx
 	{
 		BX_TRACE("shutdown");
 
-		getCommandBuffer(CommandBuffer::RendererShutdown);
+		frame();
+
+		getCommandBuffer(CommandBuffer::RendererShutdownBegin);
+		destroyTransientVertexBuffer(m_submit->m_transientVb);
+		destroyTransientIndexBuffer(m_submit->m_transientIb);
+		m_textVideoMemBlitter.shutdown();
+		m_clearQuad.shutdown();
+		frame();
+
+		destroyTransientVertexBuffer(m_submit->m_transientVb);
+		destroyTransientIndexBuffer(m_submit->m_transientIb);
+		frame();
+
+		getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 		frame();
 
 #if BGFX_CONFIG_MULTITHREADED
@@ -714,6 +751,27 @@ namespace bgfx
 
 		m_submit->destroy();
 		m_render->destroy();
+
+#if BGFX_CONFIG_DEBUG
+#	define CHECK_HANDLE_LEAK(_handleAlloc) \
+		do { \
+			BX_WARN(0 == _handleAlloc.getNumHandles(), "LEAK: " #_handleAlloc " %d (max: %d)", _handleAlloc.getNumHandles(), _handleAlloc.getMaxHandles() ); \
+		} while (0)
+
+		CHECK_HANDLE_LEAK(m_dynamicIndexBufferHandle);
+		CHECK_HANDLE_LEAK(m_dynamicVertexBufferHandle);
+		CHECK_HANDLE_LEAK(m_indexBufferHandle);
+		CHECK_HANDLE_LEAK(m_vertexDeclHandle);
+		CHECK_HANDLE_LEAK(m_vertexBufferHandle);
+		CHECK_HANDLE_LEAK(m_vertexShaderHandle);
+		CHECK_HANDLE_LEAK(m_fragmentShaderHandle);
+		CHECK_HANDLE_LEAK(m_programHandle);
+		CHECK_HANDLE_LEAK(m_textureHandle);
+		CHECK_HANDLE_LEAK(m_renderTargetHandle);
+		CHECK_HANDLE_LEAK(m_uniformHandle);
+
+#	undef CHECK_HANDLE_LEAK
+#endif // BGFX_CONFIG_DEBUG
 	}
 
 	const Memory* alloc(uint32_t _size)
