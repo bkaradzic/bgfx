@@ -726,9 +726,9 @@ namespace bgfx
 	{
 		BX_TRACE("shutdown");
 
+		getCommandBuffer(CommandBuffer::RendererShutdownBegin);
 		frame();
 
-		getCommandBuffer(CommandBuffer::RendererShutdownBegin);
 		destroyTransientVertexBuffer(m_submit->m_transientVb);
 		destroyTransientIndexBuffer(m_submit->m_transientIb);
 		m_textVideoMemBlitter.shutdown();
