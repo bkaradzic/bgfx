@@ -335,6 +335,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
 	bgfx::destroyProgram(program);
+	bgfx::destroyTexture(textureCube);
+	bgfx::destroyUniform(u_texCube);
 
 	// Shutdown bgfx.
 	bgfx::shutdown();

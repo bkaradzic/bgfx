@@ -469,6 +469,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyTexture(textureNormal);
 	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_texNormal);
+	bgfx::destroyUniform(u_lightPosRadius);
+	bgfx::destroyUniform(u_lightRgbInnerR);
 
 	// Shutdown bgfx.
 	bgfx::shutdown();
