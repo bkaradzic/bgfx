@@ -1197,7 +1197,8 @@ namespace bgfx
 	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx.createRenderTarget(_width, _height, _flags, _textureFlags);
+		BX_WARN(0 != _width && 0 != _height, "Render target resolution width or height cannot be 0 (width %d, height %d).", _width, _height);
+		return s_ctx.createRenderTarget(uint16_max(1, _width), uint16_max(1, _height), _flags, _textureFlags);
 	}
 
 	void destroyRenderTarget(RenderTargetHandle _handle)

@@ -1477,8 +1477,9 @@ namespace bgfx
 
 		void reset(uint32_t _width, uint32_t _height, uint32_t _flags)
 		{
-			m_resolution.m_width = _width;
-			m_resolution.m_height = _height;
+			BX_WARN(0 != _width && 0 != _height, "Frame buffer resolution width or height cannot be 0 (width %d, height %d).", _width, _height);
+			m_resolution.m_width = uint32_max(1, _width);
+			m_resolution.m_height = uint32_max(1, _height);
 			m_resolution.m_flags = _flags;
 
 			memset(m_rt, 0xff, sizeof(m_rt) );
