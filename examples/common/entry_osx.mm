@@ -11,7 +11,7 @@
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 
-#include "entry.h"
+#include "entry_p.h"
 #include "dbg.h"
 
 #define DEFAULT_WIDTH 1280
@@ -207,11 +207,14 @@ namespace entry
 				DispatchEvent(WaitEvent());				
 				while (DispatchEvent(PeekEvent()));
 			}
+			m_eventQueue.postExitEvent();
 			
 			thread.shutdown();
 			
 			return 0;
 		}
+		
+		EventQueue m_eventQueue;
 		
 		bool m_exit;
 		
@@ -221,11 +224,12 @@ namespace entry
 	
 	const Event* poll()
 	{
-		return NULL;
+		return s_ctx.m_eventQueue.poll();
 	}
 
 	void release(const Event* _event)
 	{
+		s_ctx.m_eventQueue.release(_event);
 	}
 
 	void setWindowSize(uint32_t _width, uint32_t _height)
