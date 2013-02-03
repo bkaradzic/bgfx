@@ -114,14 +114,6 @@
 #		define GL_BGRA_EXT 0x80E1
 #	endif // GL_BGRA_EXT
 
-#	ifndef GL_RGBA16
-#		define GL_RGBA16 0x805B
-#	endif // GL_RGBA16
-
-#	ifndef GL_RGBA16F
-#		define GL_RGBA16F 0x881A
-#	endif // GL_RGBA16F
-
 #	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
 #		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
 #	endif // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
@@ -165,6 +157,14 @@
 typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
 
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+
+#ifndef GL_RGBA16
+#	define GL_RGBA16 0x805B
+#endif // GL_RGBA16
+
+#ifndef GL_RGBA16F
+#	define GL_RGBA16F 0x881A
+#endif // GL_RGBA16F
 
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
