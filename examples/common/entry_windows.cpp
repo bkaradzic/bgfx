@@ -327,6 +327,8 @@ namespace entry
 							, (rect.bottom-rect.top)
 							, SWP_SHOWWINDOW
 							);
+
+						m_eventQueue.postSizeEvent(m_width, m_height);
 					}
 					return 0;
 
@@ -335,13 +337,9 @@ namespace entry
 						uint32_t width = GET_X_LPARAM(_lparam);
 						uint32_t height = GET_Y_LPARAM(_lparam);
 
-						if (m_width != width
-						||  m_height != height)
-						{
-							m_width = width;
-							m_height = height;
-							m_eventQueue.postSizeEvent(m_width, m_height);
-						}
+						m_width = width;
+						m_height = height;
+						m_eventQueue.postSizeEvent(m_width, m_height);
 					}
 					break;
 
