@@ -4,16 +4,16 @@
 #
 
 all:
-	premake --file=premake/premake4.lua vs2008
-	premake --file=premake/premake4.lua vs2010
-	premake --file=premake/premake4.lua --gcc=nacl gmake
-	premake --file=premake/premake4.lua --gcc=nacl-arm gmake
-	premake --file=premake/premake4.lua --gcc=pnacl gmake
-	premake --file=premake/premake4.lua --gcc=mingw gmake
-	premake --file=premake/premake4.lua --gcc=linux gmake
-	premake --file=premake/premake4.lua --gcc=emscripten gmake
-	premake --file=premake/premake4.lua --gcc=osx gmake
-	premake --file=premake/premake4.lua xcode4
+	premake4 --file=premake/premake4.lua vs2008
+	premake4 --file=premake/premake4.lua vs2010
+	premake4 --file=premake/premake4.lua --gcc=nacl gmake
+	premake4 --file=premake/premake4.lua --gcc=nacl-arm gmake
+	premake4 --file=premake/premake4.lua --gcc=pnacl gmake
+	premake4 --file=premake/premake4.lua --gcc=mingw gmake
+	premake4 --file=premake/premake4.lua --gcc=linux gmake
+	premake4 --file=premake/premake4.lua --gcc=emscripten gmake
+	premake4 --file=premake/premake4.lua --gcc=osx gmake
+	premake4 --file=premake/premake4.lua xcode4
 	make -s --no-print-directory -C src
 
 linux-debug32:
