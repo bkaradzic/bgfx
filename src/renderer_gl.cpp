@@ -540,11 +540,7 @@ namespace bgfx
 		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
 		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
 		{ GL_RGBA16,                               GL_RGBA,                                 GL_UNSIGNED_BYTE,               64, true  },
-#if BGFX_CONFIG_RENDERER_OPENGL
-		{ GL_RGBA16,                               GL_RGBA,                                 GL_HALF_FLOAT,                  64, true  },
-#else
-		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               64, true  },
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+		{ GL_RGBA16F,                              GL_RGBA,                                 GL_HALF_FLOAT,                  64, true  },
 		{ GL_RGB565,                               GL_RGB,                                  GL_UNSIGNED_SHORT_5_6_5,        16, true  },
 		{ GL_RGBA4,                                GL_RGBA,                                 GL_UNSIGNED_SHORT_4_4_4_4,      16, true  },
 		{ GL_RGB5_A1,                              GL_RGBA,                                 GL_UNSIGNED_SHORT_5_5_5_1,      16, true  },

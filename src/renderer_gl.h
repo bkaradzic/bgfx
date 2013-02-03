@@ -54,6 +54,9 @@
 #	define GL_VERSION_4_1
 #	define GL_VERSION_4_2
 #	include <gl/glext.h>
+#	define glVertexAttribDivisor glVertexAttribDivisorARB
+#	define glDrawArraysInstanced glDrawArraysInstancedARB
+#	define glDrawElementsInstanced glDrawElementsInstancedARB
 
 // http://developer.download.nvidia.com/opengl/specs/GL_NVX_gpu_memory_info.txt
 #	ifndef GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
@@ -110,6 +113,14 @@
 #	ifndef GL_BGRA_EXT
 #		define GL_BGRA_EXT 0x80E1
 #	endif // GL_BGRA_EXT
+
+#	ifndef GL_RGBA16
+#		define GL_RGBA16 0x805B
+#	endif // GL_RGBA16
+
+#	ifndef GL_RGBA16F
+#		define GL_RGBA16F 0x881A
+#	endif // GL_RGBA16F
 
 #	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
 #		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
@@ -187,6 +198,7 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 
 namespace bgfx
 {
+	// Both GL_ARB_instanced_arrays and GL_ANGLE_instanced_arrays use the same function signature.
 	typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISORBGFXPROC)(GLuint _index, GLuint _divisor);
 	typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDBGFXPROC)(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount);
 	typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDBGFXPROC)(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount);
