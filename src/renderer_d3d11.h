@@ -238,13 +238,7 @@ namespace bgfx
 		}
 
 		void create(const Memory* _mem, uint32_t _flags);
-
-		void destroy()
-		{
-			DX_RELEASE(m_srv, 0);
-			DX_RELEASE(m_ptr, 0);
-		}
-
+		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
 		void commit(uint8_t _stage);
 

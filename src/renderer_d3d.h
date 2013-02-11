@@ -34,6 +34,12 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 
 #if BGFX_CONFIG_DEBUG
+#	define DX_CHECK_REFCOUNT(_ptr, _expected) \
+			do { \
+				ULONG count = getRefCount(_ptr); \
+				BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
+			} while (0)
+
 #	define DX_RELEASE(_ptr, _expected) \
 			do { \
 				if (NULL != _ptr) \
@@ -44,6 +50,7 @@ namespace bgfx
 				} \
 			} while (0)
 #else
+#	define DX_CHECK_REFCOUNT(_ptr, _expected)
 #	define DX_RELEASE(_ptr, _expected) \
 			do { \
 				if (NULL != _ptr) \
@@ -53,6 +60,13 @@ namespace bgfx
 				} \
 			} while (0)
 #endif // BGFX_CONFIG_DEBUG
+
+	inline int getRefCount(IUnknown* _interface)
+	{
+		_interface->AddRef();
+		return _interface->Release();
+	}
+
 } // namespace bgfx
 
 #endif // __RENDERER_D3D_H__

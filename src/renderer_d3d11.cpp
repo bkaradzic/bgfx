@@ -1423,6 +1423,7 @@ namespace bgfx
 			desc.MinLOD = 0;
 			desc.MaxLOD = D3D11_FLOAT32_MAX;
 			s_renderCtx.m_device->CreateSamplerState(&desc, &m_sampler);
+			DX_CHECK_REFCOUNT(m_sampler, 1);
 
 			s_renderCtx.m_samplerStateCache.add(_flags, m_sampler);
 		}
@@ -1750,6 +1751,12 @@ namespace bgfx
 		}
 	}
 
+	void Texture::destroy()
+	{
+		DX_RELEASE(m_srv, 0);
+		DX_RELEASE(m_ptr, 0);
+	}
+
 	void Texture::commit(uint8_t _stage)
 	{
 		s_renderCtx.m_textureStage.m_srv[_stage] = m_srv;
@@ -1834,7 +1841,11 @@ namespace bgfx
 //			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_depthTexture, NULL, &m_srv) );
 		}
 
-		m_sampler = s_renderCtx.m_samplerStateCache.find(_flags);
+		_textureFlags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
+					   | BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
+					   ;
+
+		m_sampler = s_renderCtx.m_samplerStateCache.find(_textureFlags);
 		if (NULL == m_sampler)
 		{
 			D3D11_SAMPLER_DESC desc;
@@ -1852,8 +1863,9 @@ namespace bgfx
 			desc.MinLOD = 0;
 			desc.MaxLOD = D3D11_FLOAT32_MAX;
 			s_renderCtx.m_device->CreateSamplerState(&desc, &m_sampler);
+			DX_CHECK_REFCOUNT(m_sampler, 1);
 
-			s_renderCtx.m_samplerStateCache.add(_flags, m_sampler);
+			s_renderCtx.m_samplerStateCache.add(_textureFlags, m_sampler);
 		}
 	}
 
