@@ -96,11 +96,14 @@ namespace tinystl
 #	include <TINYSTL/unordered_set.h>
 namespace stl = tinystl;
 #else
-namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 #	include <string>
 #	include <unordered_map>
 #	include <unordered_set>
-namespace stl = std;
+namespace std { namespace tr1 {} }
+namespace stl {
+    using namespace std;
+    using namespace std::tr1;
+}
 #endif // BGFX_CONFIG_USE_TINYSTL
 #include <list>
 
