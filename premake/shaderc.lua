@@ -11,6 +11,16 @@ project "shaderc"
 		}
 
 	configuration { "windows", "vs*" }
+		buildoptions {
+			"/wd\"4005\"", -- disable warning: macro redefinition
+			"/wd\"4018\"", -- disable warning: signed/unsigned mismatch
+			"/wd\"4065\"", -- disable warning: switch statement contains 'default' but no 'case' labels
+			"/wd\"4090\"", -- disable warning: 'function' : different 'const' qualifiers
+			"/wd\"4099\"", -- disable warning: type name first seen using 'class' now seen using 'struct'
+			"/wd\"4244\"", -- disable warning: conversion from 'double' to 'float'
+			"/wd\"4345\"", -- disable warning: behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
+			"/wd\"4800\"", -- disable warning: forcing value to bool 'true' or 'false'
+		}
 		includedirs {
 			GLSL_OPTIMIZER .. "include/c99",
 		}
