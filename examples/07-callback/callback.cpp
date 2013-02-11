@@ -238,6 +238,8 @@ struct BgfxCallback : public bgfx::CallbackI
 		if (NULL != m_writer)
 		{
 			m_writer->close();
+			delete m_writer;
+			m_writer = NULL;
 		}
 	}
 
