@@ -4,3 +4,4 @@
  */
 
 #include "../../src/common.sh"
+#include "shaderlib.sh"
