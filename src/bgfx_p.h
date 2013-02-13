@@ -96,11 +96,14 @@ namespace tinystl
 #	include <TINYSTL/unordered_set.h>
 namespace stl = tinystl;
 #else
-namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 #	include <string>
 #	include <unordered_map>
 #	include <unordered_set>
-namespace stl = std;
+namespace std { namespace tr1 {} }
+namespace stl {
+	using namespace std;
+	using namespace std::tr1;
+}
 #endif // BGFX_CONFIG_USE_TINYSTL
 #include <list>
 
@@ -594,7 +597,7 @@ namespace bgfx
 		uint16_t m_idx;
 		uint16_t m_flags;
 	};
-	
+
 	struct Uniform
 	{
 		UniformType::Enum m_type;
@@ -763,7 +766,7 @@ namespace bgfx
 		~UniformRegistry()
 		{
 		}
- 
+
  		const UniformInfo* find(const char* _name) const
  		{
 			UniformHashMap::const_iterator it = m_uniforms.find(_name);
@@ -785,7 +788,7 @@ namespace bgfx
 				info.m_func = _func;
 
 				stl::pair<UniformHashMap::iterator, bool> result = m_uniforms.insert(UniformHashMap::value_type(_name, info) );
-				return result.first->second;	
+				return result.first->second;
 			}
 
 			return it->second;
@@ -822,7 +825,7 @@ namespace bgfx
 			m_vertexDecl.idx = invalidHandle;
 			m_indexBuffer.idx = invalidHandle;
 			m_instanceDataBuffer.idx = invalidHandle;
-			
+
 			for (uint32_t ii = 0; ii < BGFX_STATE_TEX_COUNT; ++ii)
 			{
 				m_sampler[ii].m_idx = invalidHandle;
@@ -2332,7 +2335,7 @@ namespace bgfx
 			flip();
 
 			gameSemWait();
-			
+
 			rendererExecCommands(m_render->m_cmdPre);
 			if (m_rendererInitialized)
 			{
@@ -2399,7 +2402,7 @@ namespace bgfx
 				rendererUpdateUniform(loc, data, size);
 			}
 		}
-		
+
 		void rendererExecCommands(CommandBuffer& _cmdbuf)
 		{
 			_cmdbuf.reset();
