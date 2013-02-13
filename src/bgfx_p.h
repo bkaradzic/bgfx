@@ -977,7 +977,7 @@ namespace bgfx
 				viewMask >>= ntz;
 				id += ntz;
 
-				setViewTransform(id, _view, _proj, _other);
+				setViewTransform( (uint8_t)id, _view, _proj, _other);
 			}
 		}
 
@@ -1050,7 +1050,7 @@ namespace bgfx
 		{
  			m_state.m_instanceDataOffset = _idb->offset;
 			m_state.m_instanceDataStride = _idb->stride;
-			m_state.m_numInstances = uint16_min(_idb->num, _num);
+			m_state.m_numInstances = uint16_min( (uint16_t)_idb->num, _num);
 			m_state.m_instanceDataBuffer = _idb->handle;
 			g_free(const_cast<InstanceDataBuffer*>(_idb) );
 		}
@@ -1490,7 +1490,7 @@ namespace bgfx
 
 		void dbgTextClear(uint8_t _attr, bool _small)
 		{
-			m_submit->m_textVideoMem->resize(_small, m_resolution.m_width, m_resolution.m_height);
+			m_submit->m_textVideoMem->resize(_small, (uint16_t)m_resolution.m_width, (uint16_t)m_resolution.m_height);
 			m_submit->m_textVideoMem->clear(_attr);
 		}
 
