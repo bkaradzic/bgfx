@@ -525,7 +525,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 
 	const char* optimizedShader = glslopt_get_output(shader);
 
-	const char* profile = _cmdLine.findOption('p');
+	const char* profile = _cmdLine.findOption('p', "profile");
 	if (NULL == profile)
 	{
 		writef(_writer, "#ifdef GL_ES\n");
@@ -549,7 +549,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
 {
 #if BX_PLATFORM_WINDOWS
-	const char* profile = _cmdLine.findOption('p');
+	const char* profile = _cmdLine.findOption('p', "profile");
 	if (NULL == profile)
 	{
 		fprintf(stderr, "Shader profile must be specified.\n");
@@ -727,7 +727,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
 {
 #if BX_PLATFORM_WINDOWS
-	const char* profile = _cmdLine.findOption('p');
+	const char* profile = _cmdLine.findOption('p', "profile");
 	if (NULL == profile)
 	{
 		fprintf(stderr, "Shader profile must be specified.\n");
@@ -1686,7 +1686,7 @@ int main(int _argc, const char* _argv[])
 
 				if (glsl)
 				{
-					const char* profile = cmdLine.findOption('p');
+					const char* profile = cmdLine.findOption('p', "profile");
 					if (NULL == profile)
 					{
 						writef(&writer, "#ifdef GL_ES\n");
