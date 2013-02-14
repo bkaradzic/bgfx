@@ -148,13 +148,13 @@ namespace bgfx
 		}
 
 		void create(uint32_t _size, void* _data);
-		void update(uint32_t _offset, uint32_t _size, void* _data)
+		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
 			void* buffer;
 			DX_CHECK(m_ptr->Lock(_offset
 				, _size
 				, &buffer
-				, m_dynamic && 0 == _offset && m_size == _size ? D3DLOCK_DISCARD : 0
+				, _discard || (m_dynamic && 0 == _offset && m_size == _size) ? D3DLOCK_DISCARD : 0
 				) );
 
 			memcpy(buffer, _data, _size);
@@ -188,13 +188,13 @@ namespace bgfx
 		}
 
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
-		void update(uint32_t _offset, uint32_t _size, void* _data)
+		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
 			void* buffer;
 			DX_CHECK(m_ptr->Lock(_offset
 				, _size
 				, &buffer
-				, m_dynamic && 0 == _offset && m_size == _size ? D3DLOCK_DISCARD : 0
+				, _discard || (m_dynamic && 0 == _offset && m_size == _size) ? D3DLOCK_DISCARD : 0
 				) );
 
 			memcpy(buffer, _data, _size);

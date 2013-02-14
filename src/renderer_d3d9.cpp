@@ -1845,8 +1845,8 @@ namespace bgfx
 	void TextVideoMemBlitter::render(uint32_t _numIndices)
 	{
 		uint32_t numVertices = _numIndices*4/6;
-		s_renderCtx.m_indexBuffers[m_ib->handle.idx].update(0, _numIndices*2, m_ib->data);
-		s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data);
+		s_renderCtx.m_indexBuffers[m_ib->handle.idx].update(0, _numIndices*2, m_ib->data, true);
+		s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data, true);
 
 		DX_CHECK(s_renderCtx.m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST
 			, 0
@@ -2028,13 +2028,13 @@ namespace bgfx
 		if (0 < m_render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = m_render->m_transientIb;
-			s_renderCtx.m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data);
+			s_renderCtx.m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data, true);
 		}
 
 		if (0 < m_render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = m_render->m_transientVb;
-			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data);
+			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data, true);
 		}
 
 		m_render->sort();
