@@ -41,16 +41,6 @@ vec4 powRgba(vec4 _rgba, float _pow)
 	return result;
 }
 
-vec4 toLinear(vec4 _rgba)
-{
-	return powRgba(_rgba, 2.2);
-}
-
-vec4 toGamma(vec4 _rgba)
-{
-	return powRgba(_rgba, 1.0/2.2);
-}
-
 vec3 calcLight(int _idx, mat3 _tbn, vec3 _wpos, vec3 _normal, vec3 _view)
 {
 	vec3 lp = u_lightPosRadius[_idx].xyz - _wpos;

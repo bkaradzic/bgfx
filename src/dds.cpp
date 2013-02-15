@@ -21,7 +21,9 @@ namespace bgfx
 #define DDS_DXT4 BX_MAKEFOURCC('D', 'X', 'T', '4')
 #define DDS_DXT5 BX_MAKEFOURCC('D', 'X', 'T', '5')
 #define DDS_ATI1 BX_MAKEFOURCC('A', 'T', 'I', '1')
+#define DDS_BC4U BX_MAKEFOURCC('B', 'C', '4', 'U')
 #define DDS_ATI2 BX_MAKEFOURCC('A', 'T', 'I', '2')
+#define DDS_BC5U BX_MAKEFOURCC('B', 'C', '5', 'U')
 
 #define D3DFMT_A16B16G16R16  36
 #define D3DFMT_A16B16G16R16F 113
@@ -466,34 +468,36 @@ bool parseDds(Dds& _dds, const Memory* _mem)
 		{
 		case DDS_DXT1:
 			type = TextureFormat::BC1;
-			blockSize = 8;
 			bpp = 4;
+			blockSize = 4*4*bpp/8;
 			break;
 
 		case DDS_DXT2:
 		case DDS_DXT3:
 			type = TextureFormat::BC2;
-			blockSize = 16;
-			bpp = 4;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
 			break;
 
 		case DDS_DXT4:
 		case DDS_DXT5:
 			type = TextureFormat::BC3;
-			blockSize = 16;
-			bpp = 4;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
 			break;
 
 		case DDS_ATI1:
+		case DDS_BC4U:
 			type = TextureFormat::BC4;
-			blockSize = 16;
 			bpp = 4;
+			blockSize = 4*4*bpp/8;
 			break;
 
 		case DDS_ATI2:
+		case DDS_BC5U:
 			type = TextureFormat::BC5;
-			blockSize = 16;
-			bpp = 4;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
 			break;
 
 		case D3DFMT_A16B16G16R16:

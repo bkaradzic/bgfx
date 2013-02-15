@@ -1480,94 +1480,101 @@ int main(int _argc, const char* _argv[])
 
 		const size_t padding = 16;
 		uint32_t size = (uint32_t)fsize(file);
- 		char* data = new char[size+padding];
- 		size = (uint32_t)fread(data, 1, size, file);
-		memset(&data[size], 0, padding);
+		char* data = new char[size+padding+1];
+		size = (uint32_t)fread(data, 1, size, file);
+		// Compiler generates "error X3000: syntax error: unexpected end of file"
+		// if input doesn't have empty line at EOF.
+		data[size] = '\n';
+		memset(&data[size+1], 0, padding);
 		fclose(file);
 
-		InOut shaderInputs;
-		InOut shaderOutputs;
-		uint32_t inputHash = 0;
-		uint32_t outputHash = 0;
-
-		const char* input = data;
-		while (input[0] == '$')
+		char* entry = strstr(data, "void main()");
+		if (NULL == entry)
 		{
-			const char* str = input+1;
-			const char* eol = bx::streol(str);
-			const char* nl = bx::strnl(eol);
-			input = nl;
-
-			if (0 == strncmp(str, "input", 5) )
-			{
-				str += 5;
-				inputHash = parseInOut(shaderInputs, str, eol);
-			}
-			else if (0 == strncmp(str, "output", 6) )
-			{
-				str += 6;
-				outputHash = parseInOut(shaderOutputs, str, eol);
-			}
-		}
-
-		if (glsl)
-		{
-			preprocessor.writef(
-				"#define ivec2 vec2\n"
-				"#define ivec3 vec3\n"
-				"#define ivec4 vec4\n"
-				);
-
-
-			for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
-			{
-				VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
-				if (varyingIt != varyingMap.end() )
-				{
-					const Varying& var = varyingIt->second;
-					const char* name = var.m_name.c_str();
-					if (0 == strncmp(name, "a_", 2)
-					||  0 == strncmp(name, "i_", 2) )
-					{
-						preprocessor.writef("attribute %s %s;\n", var.m_type.c_str(), name);
-					}
-					else
-					{
-						preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), name);
-					}
-				}
-			}
-
-			for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
-			{
-				VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
-				if (varyingIt != varyingMap.end() )
-				{
-					const Varying& var = varyingIt->second;
-					preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), var.m_name.c_str() );
-				}
-			}
+			fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
 		}
 		else
 		{
-			preprocessor.writef(
-				"#define lowp\n"
-				"#define mediump\n"
-				"#define highp\n"
-				"#define ivec2 int2\n"
-				"#define ivec3 int3\n"
-				"#define ivec4 int4\n"
-				"#define vec2 float2\n"
-				"#define vec3 float3\n"
-				"#define vec4 float4\n"
-				"#define mat2 float2x2\n"
-				"#define mat3 float3x3\n"
-				"#define mat4 float4x4\n"
-				);
+			InOut shaderInputs;
+			InOut shaderOutputs;
+			uint32_t inputHash = 0;
+			uint32_t outputHash = 0;
 
-			char* entry = strstr(data, "void main()");
-			if (NULL != entry)
+			const char* input = data;
+			while (input[0] == '$')
 			{
+				const char* str = input+1;
+				const char* eol = bx::streol(str);
+				const char* nl = bx::strnl(eol);
+				input = nl;
+
+				if (0 == strncmp(str, "input", 5) )
+				{
+					str += 5;
+					inputHash = parseInOut(shaderInputs, str, eol);
+				}
+				else if (0 == strncmp(str, "output", 6) )
+				{
+					str += 6;
+					outputHash = parseInOut(shaderOutputs, str, eol);
+				}
+			}
+
+			if (glsl)
+			{
+				preprocessor.writef(
+					"#define ivec2 vec2\n"
+					"#define ivec3 vec3\n"
+					"#define ivec4 vec4\n"
+					);
+
+
+				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
+				{
+					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+					if (varyingIt != varyingMap.end() )
+					{
+						const Varying& var = varyingIt->second;
+						const char* name = var.m_name.c_str();
+						if (0 == strncmp(name, "a_", 2)
+						||  0 == strncmp(name, "i_", 2) )
+						{
+							preprocessor.writef("attribute %s %s;\n", var.m_type.c_str(), name);
+						}
+						else
+						{
+							preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), name);
+						}
+					}
+				}
+
+				for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
+				{
+					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
+					if (varyingIt != varyingMap.end() )
+					{
+						const Varying& var = varyingIt->second;
+						preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), var.m_name.c_str() );
+					}
+				}
+			}
+			else
+			{
+				preprocessor.writef(
+					"#define lowp\n"
+					"#define mediump\n"
+					"#define highp\n"
+					"#define ivec2 int2\n"
+					"#define ivec3 int3\n"
+					"#define ivec4 int4\n"
+					"#define vec2 float2\n"
+					"#define vec3 float3\n"
+					"#define vec4 float4\n"
+					"#define mat2 float2x2\n"
+					"#define mat3 float3x3\n"
+					"#define mat4 float4x4\n"
+					);
+
 				entry[4] = '_';
 
 				if (fragment)
@@ -1667,109 +1674,109 @@ int main(int _argc, const char* _argv[])
 						);
 				}
 			}
-		}
 
-		if (preprocessor.run(input) )
-		{
-			BX_TRACE("Input file: %s", filePath);
-			BX_TRACE("Output file: %s", outFilePath);
-
-			if (preprocessOnly)
+			if (preprocessor.run(input) )
 			{
-				bx::CrtFileWriter writer;
+				BX_TRACE("Input file: %s", filePath);
+				BX_TRACE("Output file: %s", outFilePath);
 
-				if (0 != writer.open(outFilePath) )
+				if (preprocessOnly)
 				{
-					fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-					return false;
-				}
-
-				if (glsl)
-				{
-					const char* profile = cmdLine.findOption('p', "profile");
-					if (NULL == profile)
-					{
-						writef(&writer, "#ifdef GL_ES\n");
-						writef(&writer, "precision highp float;\n");
-						writef(&writer, "#endif // GL_ES\n\n");
-					}
-					else
-					{
-						writef(&writer, "#version %s\n\n", profile);
-					}
-				}
-				writer.write(preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
-				writer.close();
-
-				return EXIT_SUCCESS;
-			}
-
-			bool compiled = false;
-
-			{
-				bx::CrtFileWriter* writer = NULL;
-
-				if (NULL != bin2c)
-				{
-					writer = new Bin2cWriter(bin2c);
-				}
-				else
-				{
-					writer = new bx::CrtFileWriter;
-				}
-
-				if (0 != writer->open(outFilePath) )
-				{
-					fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-					return false;
-				}
-
-				if (fragment)
-				{
-					bx::write(writer, BGFX_CHUNK_MAGIC_FSH);
-					bx::write(writer, inputHash);
-				}
-				else
-				{
-					bx::write(writer, BGFX_CHUNK_MAGIC_VSH);
-					bx::write(writer, outputHash);
-				}
-
-				if (glsl)
-				{
-					compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, writer);
-				}
-				else
-				{
-					if (hlsl > 3)
-					{
-						compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
-					}
-					else
-					{
-						compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, writer);
-					}
-				}
-
-				writer->close();
-				delete writer;
-			}
-
-			if (compiled)
-			{
-				if (depends)
-				{
-					std::string ofp = outFilePath;
-					ofp += ".d";
 					bx::CrtFileWriter writer;
-					if (0 == writer.open(ofp.c_str() ) )
+
+					if (0 != writer.open(outFilePath) )
 					{
-						writef(&writer, "%s : %s\n", outFilePath, preprocessor.m_depends.c_str() );
-						writer.close();
+						fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+						return false;
 					}
+
+					if (glsl)
+					{
+						const char* profile = cmdLine.findOption('p', "profile");
+						if (NULL == profile)
+						{
+							writef(&writer, "#ifdef GL_ES\n");
+							writef(&writer, "precision highp float;\n");
+							writef(&writer, "#endif // GL_ES\n\n");
+						}
+						else
+						{
+							writef(&writer, "#version %s\n\n", profile);
+						}
+					}
+					writer.write(preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
+					writer.close();
+
+					return EXIT_SUCCESS;
 				}
 
-				return EXIT_SUCCESS;
+				bool compiled = false;
+
+				{
+					bx::CrtFileWriter* writer = NULL;
+
+					if (NULL != bin2c)
+					{
+						writer = new Bin2cWriter(bin2c);
+					}
+					else
+					{
+						writer = new bx::CrtFileWriter;
+					}
+
+					if (0 != writer->open(outFilePath) )
+					{
+						fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+						return false;
+					}
+
+					if (fragment)
+					{
+						bx::write(writer, BGFX_CHUNK_MAGIC_FSH);
+						bx::write(writer, inputHash);
+					}
+					else
+					{
+						bx::write(writer, BGFX_CHUNK_MAGIC_VSH);
+						bx::write(writer, outputHash);
+					}
+
+					if (glsl)
+					{
+						compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, writer);
+					}
+					else
+					{
+						if (hlsl > 3)
+						{
+							compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
+						}
+						else
+						{
+							compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, writer);
+						}
+					}
+
+					writer->close();
+					delete writer;
+				}
+
+				if (compiled)
+				{
+					if (depends)
+					{
+						std::string ofp = outFilePath;
+						ofp += ".d";
+						bx::CrtFileWriter writer;
+						if (0 == writer.open(ofp.c_str() ) )
+						{
+							writef(&writer, "%s : %s\n", outFilePath, preprocessor.m_depends.c_str() );
+							writer.close();
+						}
+					}
+
+					return EXIT_SUCCESS;
+				}
 			}
 		}
 
