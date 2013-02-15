@@ -1440,10 +1440,26 @@ namespace bgfx
 			}
 			else
 			{
+				// For BC4 and B5 in DX9 LockRect returns wrong number of
+				// bytes. If actual mip size is used it causes memory corruption.
+				// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
+				bool useMipSize = true
+						&& dds.m_type != TextureFormat::BC4
+						&& dds.m_type != TextureFormat::BC5
+						;
+
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
+					uint32_t width = dds.m_width;
+					uint32_t height = dds.m_height;
+					uint32_t depth = dds.m_depth;
+
 					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 					{
+						width = uint32_max(1, width);
+						height = uint32_max(1, height);
+						depth = uint32_max(1, depth);
+
 						Mip mip;
 						if (getRawImageData(dds, 0, lod, _mem, mip) )
 						{
@@ -1451,10 +1467,16 @@ namespace bgfx
 							uint32_t slicePitch;
 							uint8_t* dst = lock(side, lod, pitch, slicePitch);
 
-							memcpy(dst, mip.m_data, mip.m_size);
+							uint32_t size = useMipSize ? mip.m_size : width*height*depth*bpp/8;
+
+							memcpy(dst, mip.m_data, size);
 
 							unlock(side, lod);
 						}
+
+						width >>= 1;
+						height >>= 1;
+						depth >>= 1;
 					}
 				}
 			}
@@ -1827,6 +1849,7 @@ namespace bgfx
 		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 		VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
 		DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
+		DX_CHECK_REFCOUNT(vertexDecl.m_ptr, 1);
 		DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
 
 		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
