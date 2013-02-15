@@ -1849,7 +1849,6 @@ namespace bgfx
 		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 		VertexDeclaration& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
 		DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
-		DX_CHECK_REFCOUNT(vertexDecl.m_ptr, 1);
 		DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
 
 		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
