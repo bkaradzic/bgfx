@@ -434,6 +434,7 @@ int main(int _argc, const char* _argv[])
 			else if (0 == strcmp(argv[0], "f") )
 			{
 				Triangle triangle;
+				memset(&triangle, 0, sizeof(Triangle) );
 
 				for (uint32_t edge = 0, numEdges = argc-1; edge < numEdges; ++edge)
 				{
