@@ -162,17 +162,14 @@
 
 ///
 #define BGFX_TEXTURE_NONE               UINT32_C(0x00000000)
-#define BGFX_TEXTURE_U_REPEAT           UINT32_C(0x00000000)
 #define BGFX_TEXTURE_U_MIRROR           UINT32_C(0x00000001)
 #define BGFX_TEXTURE_U_CLAMP            UINT32_C(0x00000002)
 #define BGFX_TEXTURE_U_SHIFT            0
 #define BGFX_TEXTURE_U_MASK             UINT32_C(0x00000003)
-#define BGFX_TEXTURE_V_REPEAT           UINT32_C(0x00000000)
 #define BGFX_TEXTURE_V_MIRROR           UINT32_C(0x00000010)
 #define BGFX_TEXTURE_V_CLAMP            UINT32_C(0x00000020)
 #define BGFX_TEXTURE_V_SHIFT            4
 #define BGFX_TEXTURE_V_MASK             UINT32_C(0x00000030)
-#define BGFX_TEXTURE_W_REPEAT           UINT32_C(0x00000000)
 #define BGFX_TEXTURE_W_MIRROR           UINT32_C(0x00000100)
 #define BGFX_TEXTURE_W_CLAMP            UINT32_C(0x00000200)
 #define BGFX_TEXTURE_W_SHIFT            8
@@ -617,6 +614,13 @@ namespace bgfx
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
 
 	/// Create texture from memory buffer.
+	/// @param _mem DDS texture data.
+	/// @param _flags Default texture sampling mode is linear, and wrap mode is repeat.
+	///               BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP] - Mirror or clamp to edge wrap mode.
+	///               BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic sampling.
+	///               BGFX_TEXTURE_SRGB - Sample as sRGB texture.
+	/// @param _info Returns parsed DDS texture information.
+	/// @returns Texture handle.
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
 
 	/// Create 2D texture.
