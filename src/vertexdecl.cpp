@@ -66,7 +66,7 @@ namespace bgfx
 
 	void VertexDecl::end()
 	{
-		m_hash = bx::hashMurmur2A(m_attributes, sizeof(m_attributes) );
+		m_hash = bx::hashMurmur2A(m_attributes);
 	}
 
 	void VertexDecl::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
@@ -119,7 +119,7 @@ namespace bgfx
 #if BGFX_CONFIG_DEBUG
 		dbgPrintf("vertexdecl %08x (%08x), stride %d\n"
 			, _decl.m_hash
-			, bx::hashMurmur2A(_decl.m_attributes, sizeof(_decl.m_attributes) )
+			, bx::hashMurmur2A(_decl.m_attributes)
 			, _decl.m_stride
 			);
 
