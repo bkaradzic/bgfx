@@ -311,7 +311,7 @@ namespace bgfx
 			RGBA4,
 			RGB5A1,
 			RGB10A2,
-
+			
 			Count
 		};
 	};
