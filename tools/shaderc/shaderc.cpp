@@ -150,7 +150,7 @@ struct ConstantType
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 
-static const char* s_constantTypeName[ConstantType::Count] =
+const char* s_constantTypeName[ConstantType::Count] =
 {
 	"int",
 	"float",
