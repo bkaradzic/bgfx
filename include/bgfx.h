@@ -308,7 +308,7 @@ namespace bgfx
 			RGBA4,
 			RGB5A1,
 			RGB10A2,
-			
+
 			Count
 		};
 	};
@@ -619,12 +619,6 @@ namespace bgfx
 
 	/// Create texture from memory buffer.
 	/// @param _mem DDS texture data.
-<<<<<<< HEAD
-	/// @param _flags Default texture sampling mode is linear, and wrap mode is repeat.
-	///               BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP] - Mirror or clamp to edge wrap mode.
-	///               BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic sampling.
-	///               BGFX_TEXTURE_SRGB - Sample as sRGB texture.
-=======
 	/// @param _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
 	///
@@ -636,7 +630,6 @@ namespace bgfx
 	///
 	///   BGFX_TEXTURE_SRGB - Sample as sRGB texture.
 	///
->>>>>>> upstream/master
 	/// @param _info Returns parsed DDS texture information.
 	/// @returns Texture handle.
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
