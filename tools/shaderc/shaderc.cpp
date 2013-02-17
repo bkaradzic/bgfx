@@ -1082,7 +1082,12 @@ struct Preprocessor
 
 		m_input = m_default;
 		m_input += "\n\n";
-		m_input += _input;
+
+		size_t len = strlen(_input)+1;
+		char* temp = new char[len];
+		bx::eolLF(temp, len, _input);
+		m_input += temp;
+		delete [] temp;
 
 		fppTag* tagptr = m_tagptr;
 
@@ -1201,7 +1206,7 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 		murmur.begin();
 		for (InOut::const_iterator it = _inout.begin(), itEnd = _inout.end(); it != itEnd; ++it)
 		{
-			murmur.add(it->c_str(), it->size() );
+			murmur.add(it->c_str(), (uint32_t)it->size() );
 		}
 		hash = murmur.end();
 	}
@@ -1379,7 +1384,7 @@ int main(int _argc, const char* _argv[])
 	}
 	else if (0 == bx::stricmp(platform, "linux") )
 	{
-		preprocessor.setDefine("BX_PLATFORM_IOS=1");
+		preprocessor.setDefine("BX_PLATFORM_LINUX=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		glsl = true;
 	}

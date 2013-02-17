@@ -353,8 +353,9 @@ namespace bgfx
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used only when for OpenGL binary shaders.
 	///
-	/// NOTE: 'fatal' callback can be called from any thread. Other callbacks
-	///       are called from the render thread.
+	/// NOTE:
+	///   'fatal' callback can be called from any thread. Other callbacks
+	///   are called from the render thread.
 	struct CallbackI
 	{
 		virtual ~CallbackI() = 0;
@@ -444,7 +445,10 @@ namespace bgfx
 		/// End VertexDecl.
 		void end();
 
-		/// Add attribute to VertexDecl. Note: Must be called between begin/end.
+		/// Add attribute to VertexDecl.
+		///
+		/// NOTE:
+		///   Must be called between begin/end.
 		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
 
 		/// Decode attribute.
@@ -567,7 +571,7 @@ namespace bgfx
 	/// Allocate transient index buffer.
 	///
 	/// @param[out] _tib is valid for the duration of frame, and it can be reused for
-	/// multiple draw calls.
+	///   multiple draw calls.
 	/// @param _num number of indices to allocate.
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num);
 
@@ -577,7 +581,7 @@ namespace bgfx
 	/// Allocate transient vertex buffer.
 	///
 	/// @param[out] _tvb is valid for the duration of frame, and it can be reused for
-	/// multiple draw calls.
+	///   multiple draw calls.
 	/// @param _num number of vertices to allocate.
 	/// @param _decl vertex declaration.
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl);
@@ -604,7 +608,7 @@ namespace bgfx
 	/// @param _vsh vertex shader.
 	/// @param _fsh fragment shader.
 	/// @returns Program handle if vertex shader output and fragment shader
-	/// input are matching, otherwise returns invalid program handle.
+	///   input are matching, otherwise returns invalid program handle.
 	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 
 	/// Destroy program.
@@ -615,10 +619,24 @@ namespace bgfx
 
 	/// Create texture from memory buffer.
 	/// @param _mem DDS texture data.
+<<<<<<< HEAD
 	/// @param _flags Default texture sampling mode is linear, and wrap mode is repeat.
 	///               BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP] - Mirror or clamp to edge wrap mode.
 	///               BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic sampling.
 	///               BGFX_TEXTURE_SRGB - Sample as sRGB texture.
+=======
+	/// @param _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///
+	///   BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP] - Mirror or clamp to edge wrap
+	///     mode.
+	///
+	///   BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic
+	///     sampling.
+	///
+	///   BGFX_TEXTURE_SRGB - Sample as sRGB texture.
+	///
+>>>>>>> upstream/master
 	/// @param _info Returns parsed DDS texture information.
 	/// @returns Texture handle.
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
@@ -666,9 +684,7 @@ namespace bgfx
 	/// Set view clear flags.
 	///
 	/// @param _id view id.
-	/// @param _flags clear flags.
-	///     See: BGFX_CLEAR_*
-	///
+	/// @param _flags clear flags. See: BGFX_CLEAR_*
 	/// @param _rgba color clear value.
 	/// @param _depth depth clear value.
 	/// @param _stencil stencil clear value.
@@ -699,14 +715,31 @@ namespace bgfx
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
 	/// Set render states for draw primitive.
-	///   BGFX_STATE_*
+	/// @param _state State flags. Default state for primitive type is
+	///   triangles. See: BGFX_STATE_DEFAULT.
+	///
+	///   BGFX_STATE_ALPHA_TEST - Enable alpha test.
+	///   BGFX_STATE_ALPHA_WRITE - Enable alpha write.
+	///   BGFX_STATE_ALPHA_TEST_* - Alpha test function.
+	///   BGFX_STATE_DEPTH_WRITE - Enable depth write.
+	///   BGFX_STATE_DEPTH_TEST_* - Depth test function.
+	///   BGFX_STATE_BLEND_* - See NOTE: BGFX_STATE_BLEND_FUNC.
+	///   BGFX_STATE_CULL_* - Backface culling mode.
+	///   BGFX_STATE_RGB_WRITE - Enable RGB write.
+	///   BGFX_STATE_SRGBWRITE - Enable sRGB write.
+	///   BGFX_STATE_MSAA - Enable MSAA.
+	///   BGFX_STATE_PT_[LINES/POINTS] - Primitive type.
+	///
+	/// NOTE:
+	///   Use BGFX_STATE_ALPHA_REF, BGFX_STATE_BLEND_FUNC and
+	///   BGFX_STATE_BLEND_FUNC macros to setup more complex states.
 	void setState(uint64_t _state);
 
 	/// Set stencil test state.
 	///
 	/// @param _fstencil Front stencil state.
 	/// @param _bstencil Back stencil state. If back is set to BGFX_STENCIL_NONE
-	///     _fstencil is applied to both front and back facing primitives.
+	///   _fstencil is applied to both front and back facing primitives.
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil = BGFX_STENCIL_NONE);
 
 	/// Set model matrix for draw primitive. If it is not called model will
@@ -715,7 +748,7 @@ namespace bgfx
 	/// @param _mtx pointer to first matrix in array.
 	/// @param _num number of matrices in array.
 	/// @returns index into matrix cache in case the same model matrix has to
-	/// be used for other draw primitive call.
+	///   be used for other draw primitive call.
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
 	/// Set model matrix from matrix cache for draw primitive.

@@ -759,6 +759,44 @@ namespace bgfx
 			m_deviceCtx->RSSetState(rs);
 		}
 
+		ID3D11SamplerState* getSamplerState(uint32_t _flags)
+		{
+			_flags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
+					| BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
+					;
+
+			uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+			uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+			uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+
+			D3D11_SAMPLER_DESC sd;
+			sd.Filter = (D3D11_FILTER)(minFilter|magFilter|mipFilter);
+			sd.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
+			sd.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
+			sd.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
+			sd.MipLODBias = 0.0f;
+			sd.MaxAnisotropy = 1;
+			sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+			sd.BorderColor[0] = 0.0f;
+			sd.BorderColor[1] = 0.0f;
+			sd.BorderColor[2] = 0.0f;
+			sd.BorderColor[3] = 0.0f;
+			sd.MinLOD = 0;
+			sd.MaxLOD = D3D11_FLOAT32_MAX;
+			uint32_t hash = bx::hashMurmur2A(sd);
+
+			ID3D11SamplerState* sampler = m_samplerStateCache.find(hash);
+			if (NULL == sampler)
+			{
+				m_device->CreateSamplerState(&sd, &sampler);
+				DX_CHECK_REFCOUNT(sampler, 1);
+
+				m_samplerStateCache.add(hash, sampler);
+			}
+
+			return sampler;
+		}
+
 		void commitTextureStage()
 		{
 			m_deviceCtx->PSSetShaderResources(0, BGFX_STATE_TEX_COUNT, m_textureStage.m_srv);
@@ -1396,36 +1434,7 @@ namespace bgfx
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
-		_flags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
-				| BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
-				;
-
-		m_sampler = s_renderCtx.m_samplerStateCache.find(_flags);
-		if (NULL == m_sampler)
-		{
-			uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-			uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-			uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
-
-			D3D11_SAMPLER_DESC desc;
-			desc.Filter = (D3D11_FILTER)(minFilter|magFilter|mipFilter);
-			desc.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-			desc.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-			desc.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-			desc.MipLODBias = 0.0f;
-			desc.MaxAnisotropy = 1;
-			desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-			desc.BorderColor[0] = 0.0f;
-			desc.BorderColor[1] = 0.0f;
-			desc.BorderColor[2] = 0.0f;
-			desc.BorderColor[3] = 0.0f;
-			desc.MinLOD = 0;
-			desc.MaxLOD = D3D11_FLOAT32_MAX;
-			s_renderCtx.m_device->CreateSamplerState(&desc, &m_sampler);
-			DX_CHECK_REFCOUNT(m_sampler, 1);
-
-			s_renderCtx.m_samplerStateCache.add(_flags, m_sampler);
-		}
+		m_sampler = s_renderCtx.getSamplerState(_flags);
 
 		Dds dds;
 
@@ -1840,32 +1849,7 @@ namespace bgfx
 //			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_depthTexture, NULL, &m_srv) );
 		}
 
-		_textureFlags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
-					   | BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
-					   ;
-
-		m_sampler = s_renderCtx.m_samplerStateCache.find(_textureFlags);
-		if (NULL == m_sampler)
-		{
-			D3D11_SAMPLER_DESC desc;
-			desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-			desc.AddressU = s_textureAddress[(_textureFlags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-			desc.AddressV = s_textureAddress[(_textureFlags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-			desc.AddressW = s_textureAddress[(_textureFlags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-			desc.MipLODBias = 0.0f;
-			desc.MaxAnisotropy = 1;
-			desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-			desc.BorderColor[0] = 0.0f;
-			desc.BorderColor[1] = 0.0f;
-			desc.BorderColor[2] = 0.0f;
-			desc.BorderColor[3] = 0.0f;
-			desc.MinLOD = 0;
-			desc.MaxLOD = D3D11_FLOAT32_MAX;
-			s_renderCtx.m_device->CreateSamplerState(&desc, &m_sampler);
-			DX_CHECK_REFCOUNT(m_sampler, 1);
-
-			s_renderCtx.m_samplerStateCache.add(_textureFlags, m_sampler);
-		}
+		m_sampler = s_renderCtx.getSamplerState(_textureFlags);
 	}
 
 	void RenderTarget::destroy()
