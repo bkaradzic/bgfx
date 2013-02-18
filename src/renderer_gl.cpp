@@ -34,6 +34,7 @@ namespace bgfx
 			EXT_texture_sRGB,
 			ARB_texture_swizzle,
 			EXT_texture_swizzle,
+			ARB_texture_multisample,
 			OES_standard_derivatives,
 			ARB_get_program_binary,
 			OES_get_program_binary,
@@ -85,6 +86,7 @@ namespace bgfx
 		{ "GL_EXT_texture_sRGB",                  false, true },
 		{ "GL_ARB_texture_swizzle",               false, true },
 		{ "GL_EXT_texture_swizzle",               false, true },
+		{ "GL_ARB_texture_multisample",           false, true },
 		{ "GL_OES_standard_derivatives",          false, true },
 		{ "GL_ARB_get_program_binary",            false, true },
 		{ "GL_OES_get_program_binary",            false, false },
@@ -158,13 +160,16 @@ namespace bgfx
 			: m_capture(NULL)
 			, m_captureSize(0)
 			, m_maxAnisotropy(0.0f)
+			, m_maxMsaa(0)
 			, m_vaoSupport(false)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
+			, m_rtMsaa(false)
 		{
+			m_rt.idx = invalidHandle;
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 		}
 
@@ -185,7 +190,37 @@ namespace bgfx
 			}
 		}
 
-		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa)
+		uint32_t setRenderTarget(RenderTargetHandle _rt, uint32_t _height, bool _msaa = true)
+		{
+			if (m_rt.idx != invalidHandle
+			&&  m_rt.idx != _rt.idx
+			&&  m_rtMsaa)
+			{
+				RenderTarget& renderTarget = m_renderTargets[m_rt.idx];
+				if (0 != renderTarget.m_fbo[1])
+				{
+					renderTarget.resolve();
+				}
+			}
+
+			if (_rt.idx == invalidHandle)
+			{
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+			}
+			else
+			{
+				RenderTarget& renderTarget = m_renderTargets[_rt.idx];
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.m_fbo[0]) );
+				_height = renderTarget.m_height;
+			}
+
+			m_rt = _rt;
+			m_rtMsaa = _msaa;
+
+			return _height;
+		}
+
+		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0)
 		{
 			if (_width != 0
 			||  _height != 0)
@@ -330,11 +365,14 @@ namespace bgfx
 		VaoCache m_vaoCache;
 
 		TextVideoMem m_textVideoMem;
+		RenderTargetHandle m_rt;
+		bool m_rtMsaa;
 
 		Resolution m_resolution;
 		void* m_capture;
 		uint32_t m_captureSize;
 		float m_maxAnisotropy;
+		int32_t m_maxMsaa;
 		bool m_vaoSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
@@ -1305,11 +1343,12 @@ namespace bgfx
 	{
 		GLenum internalFormat = /*_fp ? GL_RGBA16F_ARB :*/ GL_RGBA;
 		GLenum type = /*_fp ? GL_HALF_FLOAT_ARB :*/ GL_UNSIGNED_BYTE;
-		m_target = /*0 != _depth ? GL_TEXTURE_3D :*/ GL_TEXTURE_2D;
+		m_target = GL_TEXTURE_2D;
 
 		GL_CHECK(glGenTextures(1, &m_id) );
 		BX_CHECK(0 != m_id, "Failed to generate texture id.");
 		GL_CHECK(glBindTexture(m_target, m_id) );
+
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, _min) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, _mag) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE) );
@@ -1476,8 +1515,9 @@ namespace bgfx
 
 		m_width = _width;
 		m_height = _height;
+		uint32_t msaa = (_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT;
+		m_msaa = uint32_min(s_renderCtx.m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-//		m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
 		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
 		GLenum minFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
@@ -1493,11 +1533,40 @@ namespace bgfx
 		{
 			m_depth.createDepth(_width, _height);
 		}
-#endif // 
+#endif //
 
-		GL_CHECK(glGenFramebuffers(1, &m_fbo) );
-		BX_CHECK(0 != m_fbo, "Failed to generate framebuffer id.");
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo) );
+#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+		if (0 < colorFormat
+		&&  0 != m_msaa)
+		{
+			GL_CHECK(glGenFramebuffers(2, m_fbo) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[0]) );
+
+			GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
+			BX_CHECK(0 != m_colorRbo, "Failed to generate color renderbuffer id.");
+			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
+			GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, GL_RGBA8, _width, _height) );
+			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
+
+			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+				, GL_COLOR_ATTACHMENT0
+				, GL_RENDERBUFFER
+				, m_colorRbo
+				) );
+
+			BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+				, "glCheckFramebufferStatus failed 0x%08x"
+				, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+				);
+
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
+		}
+		else
+#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+		{
+			GL_CHECK(glGenFramebuffers(1, m_fbo) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[0]) );
+		}
 
 		if (0 < colorFormat)
 		{
@@ -1519,16 +1588,16 @@ namespace bgfx
 				GLenum depthComponent = GL_DEPTH_COMPONENT16;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-				GL_CHECK(glGenRenderbuffers(1, &m_rbo) );
-				BX_CHECK(0 != m_rbo, "Failed to generate renderbuffer id.");
-				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_rbo) );
+				GL_CHECK(glGenRenderbuffers(1, &m_depthRbo) );
+				BX_CHECK(0 != m_depthRbo, "Failed to generate renderbuffer id.");
+				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthRbo) );
 				GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, depthComponent, _width, _height) );
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
 					, GL_DEPTH_ATTACHMENT
 					, GL_RENDERBUFFER
-					, m_rbo
+					, m_depthRbo
 					) );
 			}
 			else
@@ -1552,15 +1621,45 @@ namespace bgfx
 
 	void RenderTarget::destroy()
 	{
-		GL_CHECK(glDeleteFramebuffers(1, &m_fbo) );
+		GL_CHECK(glDeleteFramebuffers(0 == m_fbo[1] ? 1 : 2, m_fbo) );
+		memset(m_fbo, 0, sizeof(m_fbo) );
 
-		if (0 != m_rbo)
+		if (0 != m_colorRbo)
 		{
-			GL_CHECK(glDeleteRenderbuffers(1, &m_rbo) );
+			GL_CHECK(glDeleteRenderbuffers(1, &m_colorRbo) );
+			m_colorRbo = 0;
+		}
+
+		if (0 != m_depthRbo)
+		{
+			GL_CHECK(glDeleteRenderbuffers(1, &m_depthRbo) );
+			m_depthRbo = 0;
 		}
 
 		m_color.destroy();
 		m_depth.destroy();
+	}
+
+	void RenderTarget::resolve()
+	{
+#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+		BX_CHECK(0 != m_fbo[1], "Can resolve without two framebuffers.");
+
+		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
+		GL_CHECK(glBlitFramebuffer(0
+				, 0
+				, m_width
+				, m_height
+				, 0
+				, 0
+				, m_width
+				, m_height
+				, GL_COLOR_BUFFER_BIT
+				, GL_LINEAR
+				) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
 	}
 
 	void ConstantBuffer::commit()
@@ -1847,6 +1946,13 @@ namespace bgfx
 				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy);
 			}
 
+#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+			if (s_extension[Extension::ARB_texture_multisample].m_supported)
+			{
+				glGetIntegerv(GL_MAX_COLOR_TEXTURE_SAMPLES, &s_renderCtx.m_maxMsaa);
+			}
+#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+
 			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
 			||  s_extension[Extension::EXT_bgra].m_supported)
 			{
@@ -2125,18 +2231,7 @@ namespace bgfx
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
 						rt = m_render->m_rt[view];
-
-						if (rt.idx == invalidHandle)
-						{
-							GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
-							height = m_render->m_resolution.m_height;
-						}
-						else
-						{
-							RenderTarget& renderTarget = s_renderCtx.m_renderTargets[rt.idx];
-							GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.m_fbo) );
-							height = renderTarget.m_height;
-						}
+						height = s_renderCtx.setRenderTarget(rt, m_render->m_resolution.m_height);
 					}
 
 					Rect& rect = m_render->m_rect[view];
@@ -2236,7 +2331,8 @@ namespace bgfx
 
 				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
 				     |BGFX_STATE_ALPHA_MASK|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_MASK
-					 |BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
+					 |BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK|BGFX_STATE_POINT_SIZE_MASK
+					 |BGFX_STATE_MSAA) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -2298,6 +2394,18 @@ namespace bgfx
 					{
 						float pointSize = (float)(uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
 						GL_CHECK(glPointSize(pointSize) );
+					}
+
+					if (BGFX_STATE_MSAA & changedFlags)
+					{
+						if (BGFX_STATE_MSAA & newFlags)
+						{
+							GL_CHECK(glEnable(GL_MULTISAMPLE) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_MULTISAMPLE) );
+						}
 					}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 

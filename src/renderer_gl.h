@@ -481,15 +481,26 @@ namespace bgfx
 
 	struct RenderTarget
 	{
+		RenderTarget()
+			: m_width(0)
+			, m_height(0)
+			, m_msaa(0)
+		{
+			memset(m_fbo, 0, sizeof(m_fbo) );
+		}
+
 		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void destroy();
+		void resolve();
 
 		GLsizei m_width;
 		GLsizei m_height;
+		uint32_t m_msaa;
 		Texture m_color;
 		Texture m_depth;
-		GLuint m_fbo;
-		GLuint m_rbo;
+		GLuint m_fbo[2];
+		GLuint m_colorRbo;
+		GLuint m_depthRbo;
 	};
 
 	struct Program
