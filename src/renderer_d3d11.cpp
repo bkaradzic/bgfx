@@ -611,7 +611,7 @@ namespace bgfx
 						}
 					}
 
-					if (jj == num)
+					if (jj == (uint32_t)num)
 					{
 						curr = elem;
 						++elem;
@@ -1096,7 +1096,6 @@ namespace bgfx
 
 	void ConstantBuffer::commit()
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
 
 		reset();
 
