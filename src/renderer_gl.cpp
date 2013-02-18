@@ -178,23 +178,25 @@ namespace bgfx
 				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
-				setRenderContextSize(_resolution.m_width, _resolution.m_height);
+
+				uint32_t msaa = 1<<( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT);
+				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa);
 				updateCapture();
 			}
 		}
 
-		void setRenderContextSize(uint32_t _width, uint32_t _height)
+		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
 			if (_width != 0
 			||  _height != 0)
 			{
 				if (!m_glctx.isValid() )
 				{
-					m_glctx.create(_width, _height);
+					m_glctx.create(_width, _height/*, _msaa*/);
 				}
 				else
 				{
-					m_glctx.resize(_width, _height);
+					m_glctx.resize(_width, _height/*, _msaa*/);
 				}
 			}
 
