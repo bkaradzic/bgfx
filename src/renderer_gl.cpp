@@ -1554,11 +1554,6 @@ namespace bgfx
 				, m_colorRbo
 				) );
 
-			BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
-				, "glCheckFramebufferStatus failed 0x%08x"
-				, glCheckFramebufferStatus(GL_FRAMEBUFFER)
-				);
-
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
 		}
 		else
@@ -1578,8 +1573,15 @@ namespace bgfx
 							) );
 		}
 
+		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+			, "glCheckFramebufferStatus failed 0x%08x"
+			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+			);
+
 		if (0 < depthFormat)
 		{
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[0]) );
+
 			if (0 < colorFormat)
 			{
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -1591,7 +1593,17 @@ namespace bgfx
 				GL_CHECK(glGenRenderbuffers(1, &m_depthRbo) );
 				BX_CHECK(0 != m_depthRbo, "Failed to generate renderbuffer id.");
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthRbo) );
-				GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, depthComponent, _width, _height) );
+
+#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+				if (0 != m_msaa)
+				{
+					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, depthComponent, _width, _height) );
+				}
+				else
+#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+				{
+					GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, depthComponent, _width, _height) );
+				}
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
@@ -1609,12 +1621,12 @@ namespace bgfx
 					, 0
 					) );
 			}
-		}
 
-		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+			BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 				, "glCheckFramebufferStatus failed 0x%08x"
 				, glCheckFramebufferStatus(GL_FRAMEBUFFER)
 				);
+		}
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 	}
