@@ -65,6 +65,9 @@ point to DirectX SDK directory.
 
 	setx DXSDK_DIR <path to DirectX SDK directory>
 
+If you're building with Visual Studio 2008, you'll need TR1 support from:  
+[Visual C++ 2008 Feature Pack Release](https://www.microsoft.com/en-us/download/details.aspx?id=6922)
+
 If you're building with MinGW/TDM compiler on Windows make DirectX SDK
 directory link to directory without spaces in the path.
 
