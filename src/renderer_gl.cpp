@@ -157,7 +157,8 @@ namespace bgfx
 	struct RendererContext
 	{
 		RendererContext()
-			: m_capture(NULL)
+			: m_rtMsaa(false)
+			, m_capture(NULL)
 			, m_captureSize(0)
 			, m_maxAnisotropy(0.0f)
 			, m_maxMsaa(0)
@@ -167,7 +168,6 @@ namespace bgfx
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
-			, m_rtMsaa(false)
 		{
 			m_rt.idx = invalidHandle;
 			memset(&m_resolution, 0, sizeof(m_resolution) );
