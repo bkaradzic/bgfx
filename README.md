@@ -202,6 +202,9 @@ cross-platform shaders.
 
 ### Texture Compiler (texturec)
 
+This tool doesn't currently exist. Use nvdxt, or any other tool that produces
+DDS textures for now.
+
 ### Geometry Compiler (geometryc)
 
 Converts Wavefront .obj mesh file to format optimal for using with bgfx.
@@ -211,11 +214,12 @@ Todo
 
  - Multiple render targets.
  - BlendFuncSeparate and BlendEquationSeparate.
- - Copy from texture to texture.
+ - Blit between textures.
  - Occlusion queries.
  - iOS platforms.
  - DX11: MSAA.
  - GL: MSAA.
+ - Fullscreen mode.
 
 Notice
 ------
