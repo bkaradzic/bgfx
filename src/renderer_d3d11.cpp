@@ -452,7 +452,8 @@ namespace bgfx
 		{
 			if (NULL != m_swapChain)
 			{
-				DX_CHECK(m_swapChain->Present(0, 0) );
+				unsigned syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
+				DX_CHECK(m_swapChain->Present(syncInterval, 0) );
 			}
 		}
 
