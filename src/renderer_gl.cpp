@@ -168,6 +168,7 @@ namespace bgfx
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_rtMsaa(false)
+			, m_backBufferFbo(0)
 		{
 			m_rt.idx = invalidHandle;
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -185,6 +186,7 @@ namespace bgfx
 				m_resolution = _resolution;
 
 				uint32_t msaa = 1<<( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT);
+				msaa = uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa);
 				updateCapture();
 			}
@@ -205,7 +207,7 @@ namespace bgfx
 
 			if (_rt.idx == invalidHandle)
 			{
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			}
 			else
 			{
@@ -220,6 +222,69 @@ namespace bgfx
 			return _height;
 		}
 
+		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
+		{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+			if (1 < _msaa)
+			{
+				GL_CHECK(glGenFramebuffers(1, &m_backBufferFbo) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
+				GL_CHECK(glGenRenderbuffers(3, m_backBufferRbos) );
+				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_backBufferRbos[0]) );
+				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_RGBA8, _width, _height) );
+				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_backBufferRbos[1]) );
+				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
+				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_backBufferRbos[0]) );
+				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_backBufferRbos[1]) );
+
+				BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+					, "glCheckFramebufferStatus failed 0x%08x"
+					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+					);
+
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
+			}
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		}
+
+		void destroyMsaaFbo()
+		{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+			if (0 != m_backBufferFbo)
+			{
+				GL_CHECK(glDeleteFramebuffers(1, &m_backBufferFbo) );
+				GL_CHECK(glDeleteRenderbuffers(3, m_backBufferRbos) );
+				m_backBufferFbo = 0;
+			}
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		}
+
+		void blitMsaaFbo()
+		{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+			if (0 != m_backBufferFbo)
+			{
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_backBufferFbo) );
+				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
+				uint32_t width = m_resolution.m_width;
+				uint32_t height = m_resolution.m_height;
+				GL_CHECK(glBlitFramebuffer(0
+					, 0
+					, width
+					, height
+					, 0
+					, 0
+					, width
+					, height
+					, GL_COLOR_BUFFER_BIT
+					, GL_LINEAR
+					) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+			}
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		}
+
 		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0)
 		{
 			if (_width != 0
@@ -227,11 +292,15 @@ namespace bgfx
 			{
 				if (!m_glctx.isValid() )
 				{
-					m_glctx.create(_width, _height/*, _msaa*/);
+					m_glctx.create(_width, _height);
 				}
 				else
 				{
-					m_glctx.resize(_width, _height/*, _msaa*/);
+					destroyMsaaFbo();
+
+					m_glctx.resize(_width, _height);
+
+					createMsaaFbo(_width, _height, _msaa);
 				}
 			}
 
@@ -381,6 +450,8 @@ namespace bgfx
 		PostSwapBuffersFn m_postSwapBuffers;
 		uint64_t m_hash;
 
+		GLuint m_backBufferFbo;
+		GLuint m_backBufferRbos[2];
 		GlContext m_glctx;
 	};
 
@@ -1535,7 +1606,7 @@ namespace bgfx
 		}
 #endif //
 
-#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (0 < colorFormat
 		&&  0 != m_msaa)
 		{
@@ -1557,7 +1628,7 @@ namespace bgfx
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
 		}
 		else
-#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			GL_CHECK(glGenFramebuffers(1, m_fbo) );
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[0]) );
@@ -1594,13 +1665,13 @@ namespace bgfx
 				BX_CHECK(0 != m_depthRbo, "Failed to generate renderbuffer id.");
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthRbo) );
 
-#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 				if (0 != m_msaa)
 				{
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, depthComponent, _width, _height) );
 				}
 				else
-#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 				{
 					GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, depthComponent, _width, _height) );
 				}
@@ -1628,7 +1699,7 @@ namespace bgfx
 				);
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
 	}
 
 	void RenderTarget::destroy()
@@ -1654,7 +1725,7 @@ namespace bgfx
 
 	void RenderTarget::resolve()
 	{
-#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		BX_CHECK(0 != m_fbo[1], "Can resolve without two framebuffers.");
 
 		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
@@ -1670,8 +1741,8 @@ namespace bgfx
 				, GL_COLOR_BUFFER_BIT
 				, GL_LINEAR
 				) );
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
-#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 	}
 
 	void ConstantBuffer::commit()
@@ -1958,12 +2029,12 @@ namespace bgfx
 				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy);
 			}
 
-#if BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			if (s_extension[Extension::ARB_texture_multisample].m_supported)
 			{
-				glGetIntegerv(GL_MAX_COLOR_TEXTURE_SAMPLES, &s_renderCtx.m_maxMsaa);
+				glGetIntegerv(GL_MAX_SAMPLES, &s_renderCtx.m_maxMsaa);
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES3
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
 			||  s_extension[Extension::EXT_bgra].m_supported)
@@ -2158,7 +2229,7 @@ namespace bgfx
 			GL_CHECK(glBindVertexArray(0) );
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
@@ -2882,6 +2953,8 @@ namespace bgfx
 				captureElapsed += bx::getHPCounter();
 			}
 		}
+
+		s_renderCtx.blitMsaaFbo();
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
