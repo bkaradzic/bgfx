@@ -119,7 +119,7 @@ GL_IMPORT(true,  PFNGLGETPROGRAMBINARYPROC,               glGetProgramBinary);
 GL_IMPORT(true,  PFNGLPROGRAMBINARYPROC,                  glProgramBinary);
 GL_IMPORT(true,  PFNGLPROGRAMPARAMETERIPROC,              glProgramParameteri);
 
-GL_IMPORT(true,  PFNGLBLITFRAMEBUFFEREXTPROC,             glBlitFramebufferEXT);
+GL_IMPORT(true,  PFNGLBLITFRAMEBUFFERPROC,                glBlitFramebuffer);
 
 GL_IMPORT(true,  PFNGLQUERYCOUNTERPROC,                   glQueryCounter);
 GL_IMPORT(true,  PFNGLGETQUERYOBJECTI64VPROC,             glGetQueryObjecti64v);

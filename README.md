@@ -65,6 +65,9 @@ point to DirectX SDK directory.
 
 	setx DXSDK_DIR <path to DirectX SDK directory>
 
+If you're building with Visual Studio 2008, you'll need TR1 support from:  
+[Visual C++ 2008 Feature Pack Release](https://www.microsoft.com/en-us/download/details.aspx?id=6922)
+
 If you're building with MinGW/TDM compiler on Windows make DirectX SDK
 directory link to directory without spaces in the path.
 
@@ -199,6 +202,9 @@ cross-platform shaders.
 
 ### Texture Compiler (texturec)
 
+This tool doesn't currently exist. Use nvdxt, or any other tool that produces
+DDS textures for now.
+
 ### Geometry Compiler (geometryc)
 
 Converts Wavefront .obj mesh file to format optimal for using with bgfx.
@@ -208,11 +214,12 @@ Todo
 
  - Multiple render targets.
  - BlendFuncSeparate and BlendEquationSeparate.
- - Copy from texture to texture.
+ - Blit between textures.
  - Occlusion queries.
  - iOS platforms.
  - DX11: MSAA.
  - GL: MSAA.
+ - Fullscreen mode.
 
 Notice
 ------
