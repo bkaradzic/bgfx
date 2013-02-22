@@ -3,3 +3,4 @@
 *.sc  eol=lf
 *.sh  eol=lf
 *.md  eol=lf
+*.lua eol=lf
