@@ -159,14 +159,14 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 		uint16_t* indices = (uint16_t*)tib.data;
 
 		indices[0] = 0;
-		indices[1] = 1;
-		indices[2] = 2;
+		indices[1] = 2;
+		indices[2] = 1;
 		indices[3] = 0;
-		indices[4] = 2;
-		indices[5] = 3;
+		indices[4] = 3;
+		indices[5] = 2;
 
 		bgfx::setProgram(_program);
-		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_DEPTH_WRITE);
+		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::setIndexBuffer(&tib);
 		bgfx::setVertexBuffer(&tvb);
 		bgfx::submit(_view);
@@ -178,6 +178,7 @@ int _main_(int _argc, char** _argv)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
+	uint32_t reset = BGFX_RESET_NONE;
 
 	bgfx::init();
 	bgfx::reset(width, height);
@@ -231,7 +232,7 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::ProgramHandle raymarching = loadProgram("vs_raymarching", "fs_raymarching");
 
-	while (!processEvents(width, height, debug) )
+	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);

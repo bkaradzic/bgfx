@@ -216,9 +216,8 @@ Todo
  - BlendFuncSeparate and BlendEquationSeparate.
  - Blit between textures.
  - Occlusion queries.
- - iOS platforms.
+ - iOS support.
  - DX11: MSAA.
- - GL: MSAA.
  - Fullscreen mode.
 
 Notice

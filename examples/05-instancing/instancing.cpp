@@ -38,18 +38,18 @@ static PosColorVertex s_cubeVertices[8] =
 
 static const uint16_t s_cubeIndices[36] =
 {
-	0, 2, 1, // 0
-	1, 2, 3,
-	4, 5, 6, // 2
-	5, 7, 6,
-	0, 4, 2, // 4
-	4, 6, 2,
-	1, 3, 5, // 6
-	5, 3, 7,
-	0, 1, 4, // 8
-	4, 1, 5,
-	2, 6, 3, // 10
-	6, 7, 3,
+	0, 1, 2, // 0
+	1, 3, 2,
+	4, 6, 5, // 2
+	5, 6, 7,
+	0, 2, 4, // 4
+	4, 2, 6,
+	1, 5, 3, // 6
+	5, 7, 3,
+	0, 4, 1, // 8
+	4, 5, 1,
+	2, 3, 6, // 10
+	6, 3, 7,
 };
 
 static const char* s_shaderPath = NULL;
@@ -99,6 +99,7 @@ int _main_(int _argc, char** _argv)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
+	uint32_t reset = BGFX_RESET_NONE;
 
 	bgfx::init();
 	bgfx::reset(width, height);
@@ -171,7 +172,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyVertexShader(vsh);
 	bgfx::destroyFragmentShader(fsh);
 
-	while (!processEvents(width, height, debug) )
+	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);
@@ -244,10 +245,7 @@ int _main_(int _argc, char** _argv)
 			bgfx::setInstanceDataBuffer(idb);
 
 			// Set render states.
-			bgfx::setState(BGFX_STATE_RGB_WRITE
-				|BGFX_STATE_DEPTH_WRITE
-				|BGFX_STATE_DEPTH_TEST_LESS
-				);
+			bgfx::setState(BGFX_STATE_DEFAULT);
 
 			// Submit primitive for rendering to view 0.
 			bgfx::submit(0);

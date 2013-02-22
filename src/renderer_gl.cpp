@@ -2229,7 +2229,7 @@ namespace bgfx
 			GL_CHECK(glBindVertexArray(0) );
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
@@ -2286,6 +2286,8 @@ namespace bgfx
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
+
 			for (uint32_t item = 0, numItems = m_render->m_num; item < numItems; ++item)
 			{
 				key.decode(m_render->m_sortKeys[item]);
@@ -2946,6 +2948,8 @@ namespace bgfx
 				}
 			}
 
+			s_renderCtx.blitMsaaFbo();
+
 			if (0 < m_render->m_num)
 			{
 				captureElapsed = -bx::getHPCounter();
@@ -2953,8 +2957,6 @@ namespace bgfx
 				captureElapsed += bx::getHPCounter();
 			}
 		}
-
-		s_renderCtx.blitMsaaFbo();
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;

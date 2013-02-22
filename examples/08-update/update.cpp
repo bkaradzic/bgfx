@@ -62,23 +62,23 @@ static PosColorVertex s_cubeVertices[24] =
 
 static const uint16_t s_cubeIndices[36] =
 {
-	 0,  2,  1, // 0
-	 1,  2,  3,
-
-	 4,  5,  6, // 2
-	 5,  7,  6,
-
-	 8,  9, 10, // 4
-	 9, 11, 10,
-
-	12, 13, 14, // 6
-	14, 13, 15, 
-
-	16, 17, 18, // 8
-	18, 17, 19,
-
-	20, 21, 22, // 10
-	21, 23, 22,
+	 0,  1,  2, // 0
+	 1,  3,  2,
+		  
+	 4,  6,  5, // 2
+	 5,  6,  7,
+		  
+	 8, 10,  9, // 4
+	 9, 10, 11,
+		  
+	12, 14, 13, // 6
+	14, 15, 13, 
+		  
+	16, 18, 17, // 8
+	18, 19, 17,
+		  
+	20, 22, 21, // 10
+	21, 22, 23,
 };
 
 static const char* s_shaderPath = NULL;
@@ -128,6 +128,7 @@ int _main_(int _argc, char** _argv)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
+	uint32_t reset = BGFX_RESET_NONE;
 
 	bgfx::init();
 	bgfx::reset(width, height);
@@ -227,7 +228,7 @@ int _main_(int _argc, char** _argv)
 
 	int64_t updateTime = 0;
 
-	while (!processEvents(width, height, debug) )
+	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);
@@ -318,10 +319,7 @@ int _main_(int _argc, char** _argv)
 		bgfx::setTexture(0, u_texCube, textureCube);
 
 		// Set render states.
-		bgfx::setState(BGFX_STATE_RGB_WRITE
-			|BGFX_STATE_DEPTH_WRITE
-			|BGFX_STATE_DEPTH_TEST_LESS
-			);
+		bgfx::setState(BGFX_STATE_DEFAULT);
 
 		// Submit primitive for rendering to view 0.
 		bgfx::submit(0);
