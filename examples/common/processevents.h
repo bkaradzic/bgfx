@@ -6,11 +6,11 @@
 #ifndef __PROCESS_EVENTS_H__
 #define __PROCESS_EVENTS_H__
 
-inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
+inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset)
 {
 	using namespace entry;
 
-	bool resize = false;
+	bool reset = false;
 
 	const Event* ev;
 	do
@@ -42,27 +42,35 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 					{
 						return true;
 					}
-					else if (key->m_key == Key::F1 && key->m_down)
+					else if (key->m_down)
 					{
-						_debug ^= BGFX_DEBUG_STATS;
-						bgfx::setDebug(_debug);
-						return false;
-					}
-					else if (key->m_key == Key::F9 && key->m_down)
-					{
-						setWindowSize(640, 480);
-						_width = 640;
-						_height = 480;
-					}
-					else if (key->m_key == Key::F10 && key->m_down)
-					{
-						setWindowSize(1280, 720);
-						_width = 1280;
-						_height = 720;
-					}
-					else if (key->m_key == Key::F11 && key->m_down)
-					{
-						toggleWindowFrame();
+						if (key->m_key == Key::F1)
+						{
+							_debug ^= BGFX_DEBUG_STATS;
+							bgfx::setDebug(_debug);
+							return false;
+						}
+						else if (key->m_key == Key::F8)
+						{
+							_reset ^= BGFX_RESET_MSAA_X16;
+							reset = true;
+						}
+						else if (key->m_key == Key::F9)
+						{
+							setWindowSize(640, 480);
+							_width = 640;
+							_height = 480;
+						}
+						else if (key->m_key == Key::F10)
+						{
+							setWindowSize(1280, 720);
+							_width = 1280;
+							_height = 720;
+						}
+						else if (key->m_key == Key::F11)
+						{
+							toggleWindowFrame();
+						}
 					}
 				}
 				break;
@@ -72,7 +80,7 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 					const SizeEvent* size = static_cast<const SizeEvent*>(ev);
 					_width = size->m_width;
 					_height = size->m_height;
-					resize = true;
+					reset = true;
 				}
 				break;
 
@@ -82,9 +90,9 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug)
 		}
 	} while (NULL != ev);
 
-	if (resize)
+	if (reset)
 	{
-		bgfx::reset(_width, _height);
+		bgfx::reset(_width, _height, _reset);
 	}
 
 	return false;
