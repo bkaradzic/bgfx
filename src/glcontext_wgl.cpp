@@ -24,6 +24,51 @@ namespace bgfx
 #		include "glimports.h"
 #	undef GL_IMPORT
 
+	static HGLRC createContext(HDC _hdc)
+	{
+		PIXELFORMATDESCRIPTOR pfd;
+		memset(&pfd, 0, sizeof(pfd) );
+		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+		pfd.nVersion = 1;
+		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+		pfd.iPixelType = PFD_TYPE_RGBA;
+		pfd.cColorBits = 32;
+		pfd.cAlphaBits = 8;
+		pfd.cDepthBits = 24;
+		pfd.cStencilBits = 8;
+		pfd.iLayerType = PFD_MAIN_PLANE;
+
+		int pixelFormat = ChoosePixelFormat(_hdc, &pfd);
+		BGFX_FATAL(0 != pixelFormat, Fatal::UnableToInitialize, "ChoosePixelFormat failed!");
+
+		DescribePixelFormat(_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+
+		BX_TRACE("Pixel format:\n"
+			"\tiPixelType %d\n"
+			"\tcColorBits %d\n"
+			"\tcAlphaBits %d\n"
+			"\tcDepthBits %d\n"
+			"\tcStencilBits %d\n"
+			, pfd.iPixelType
+			, pfd.cColorBits
+			, pfd.cAlphaBits
+			, pfd.cDepthBits
+			, pfd.cStencilBits
+			);
+
+		int result;
+		result = SetPixelFormat(_hdc, pixelFormat, &pfd);
+		BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed!");
+
+		HGLRC context = wglCreateContext(_hdc);
+		BGFX_FATAL(NULL != context, Fatal::UnableToInitialize, "wglCreateContext failed!");
+
+		result = wglMakeCurrent(_hdc, context);
+		BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
+
+		return context;
+	}
+
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		m_opengl32dll = LoadLibrary("opengl32.dll");
@@ -44,44 +89,28 @@ namespace bgfx
 		m_hdc = GetDC(g_bgfxHwnd);
 		BGFX_FATAL(NULL != m_hdc, Fatal::UnableToInitialize, "GetDC failed!");
 
-		PIXELFORMATDESCRIPTOR pfd;
-		memset(&pfd, 0, sizeof(pfd) );
-		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-		pfd.nVersion = 1;
-		pfd.iPixelType = PFD_TYPE_RGBA;
-		pfd.cColorBits = 32;
-		pfd.cAlphaBits = 8;
-		pfd.cDepthBits = 24;
-		pfd.cStencilBits = 8;
-		pfd.iLayerType = PFD_MAIN_PLANE;
-
-		int pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-		BGFX_FATAL(0 != pixelFormat, Fatal::UnableToInitialize, "ChoosePixelFormat failed!");
-
-		DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
-
-		BX_TRACE("Pixel format:\n"
-			"\tiPixelType %d\n"
-			"\tcColorBits %d\n"
-			"\tcAlphaBits %d\n"
-			"\tcDepthBits %d\n"
-			"\tcStencilBits %d\n"
-			, pfd.iPixelType
-			, pfd.cColorBits
-			, pfd.cAlphaBits
-			, pfd.cDepthBits
-			, pfd.cStencilBits
+		// Dummy window to peek into WGL functionality.
+		//
+		// An application can only set the pixel format of a window one time.
+		// Once a window's pixel format is set, it cannot be changed.
+		// MSDN: http://msdn.microsoft.com/en-us/library/windows/desktop/dd369049%28v=vs.85%29.aspx
+		HWND hwnd = CreateWindowA("STATIC"
+			, ""
+			, WS_POPUP|WS_DISABLED
+			, -32000
+			, -32000
+			, 0
+			, 0
+			, NULL
+			, NULL
+			, GetModuleHandle(NULL)
+			, 0
 			);
 
-		int result;
-		result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
-		BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed!");
+		HDC hdc = GetDC(hwnd);
+		BGFX_FATAL(NULL != hdc, Fatal::UnableToInitialize, "GetDC failed!");
 
-		m_context = wglCreateContext(m_hdc);
-		BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "wglCreateContext failed!");
-
-		result = wglMakeCurrent(m_hdc, m_context);
-		BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
+		HGLRC context = createContext(hdc);
 
 		wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
 		wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
@@ -90,7 +119,7 @@ namespace bgfx
 		if (NULL != wglGetExtensionsStringARB)
 		{
 			BX_TRACE("WGL extensions:");
-			const char* extensions = (const char*)wglGetExtensionsStringARB(m_hdc);
+			const char* extensions = (const char*)wglGetExtensionsStringARB(hdc);
 			if (NULL != extensions)
 			{
 				char name[1024];
@@ -119,10 +148,6 @@ namespace bgfx
 			}
 		}
 
-#if 0
-		// An application can only set the pixel format of a window one time.
-		// Once a window's pixel format is set, it cannot be changed.
-		// MSDN: http://msdn.microsoft.com/en-us/library/windows/desktop/dd369049%28v=vs.85%29.aspx
 		if (NULL != wglChoosePixelFormatARB
 		&&  NULL != wglCreateContextAttribsARB)
 		{
@@ -134,15 +159,14 @@ namespace bgfx
 				WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
 				WGL_DRAW_TO_WINDOW_ARB, true,
 				WGL_DOUBLE_BUFFER_ARB, true,
-				WGL_RED_BITS_ARB, 8,
-				WGL_BLUE_BITS_ARB, 8,
-				WGL_GREEN_BITS_ARB, 8,
-				WGL_ALPHA_BITS_ARB, 8,
+				WGL_COLOR_BITS_ARB, 32,
 				WGL_DEPTH_BITS_ARB, 24,
 				WGL_STENCIL_BITS_ARB, 8,
 				0
 			};
 
+			int result;
+			int pixelFormat;
 			uint32_t numFormats = 0;
 			do 
 			{
@@ -156,6 +180,7 @@ namespace bgfx
 
 			} while (0 == numFormats);
 
+			PIXELFORMATDESCRIPTOR pfd;
 			DescribePixelFormat(m_hdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
 
 			BX_TRACE("Pixel format:\n"
@@ -174,13 +199,16 @@ namespace bgfx
 			result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() );
 
-			wglMakeCurrent(m_hdc, NULL);
-			wglDeleteContext(m_context);
-
 			const int32_t contextAttrs[] =
 			{
-				WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
-				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+#if 1
+ 				WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
+ 				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+#else
+				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+				WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+#endif // 1
 #if BGFX_CONFIG_DEBUG
 				WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
 #endif // BGFX_CONFIG_DEBUG
@@ -188,12 +216,19 @@ namespace bgfx
 			};
 
 			m_context = wglCreateContextAttribsARB(m_hdc, 0, contextAttrs);
-
-			result = wglMakeCurrent(m_hdc, m_context);
-			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
 		}
-#endif // 0
 
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(context);
+		DestroyWindow(hwnd);
+
+		if (NULL == m_context)
+		{
+			m_context = createContext(m_hdc);
+		}
+
+		int result = wglMakeCurrent(m_hdc, m_context);
+		BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
 		import();
 	}
 

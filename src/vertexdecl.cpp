@@ -207,29 +207,29 @@ namespace bgfx
 			}
 			break;
 
-		case AttribType::Uint16:
+		case AttribType::Int16:
 			{
-				uint16_t* packed = (uint16_t*)data;
+				int16_t* packed = (int16_t*)data;
 				if (_inputNormalized)
 				{
 					if (asInt)
 					{
 						switch (num)
 						{
-						default: *packed++ = uint16_t(*_input++ * 32767.0f + 32768.0f);
-						case 3:  *packed++ = uint16_t(*_input++ * 32767.0f + 32768.0f);
-						case 2:  *packed++ = uint16_t(*_input++ * 32767.0f + 32768.0f);
-						case 1:  *packed++ = uint16_t(*_input++ * 32767.0f + 32768.0f);
+						default: *packed++ = int16_t(*_input++ * 32767.0f);
+						case 3:  *packed++ = int16_t(*_input++ * 32767.0f);
+						case 2:  *packed++ = int16_t(*_input++ * 32767.0f);
+						case 1:  *packed++ = int16_t(*_input++ * 32767.0f);
 						}
 					}
 					else
 					{
 						switch (num)
 						{
-						default: *packed++ = uint16_t(*_input++ * 65535.0f);
-						case 3:  *packed++ = uint16_t(*_input++ * 65535.0f);
-						case 2:  *packed++ = uint16_t(*_input++ * 65535.0f);
-						case 1:  *packed++ = uint16_t(*_input++ * 65535.0f);
+						default: *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f);
+						case 3:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f);
+						case 2:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f);
+						case 1:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f);
 						}
 					}
 				}
@@ -237,10 +237,10 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *packed++ = uint16_t(*_input++);
-					case 3:  *packed++ = uint16_t(*_input++);
-					case 2:  *packed++ = uint16_t(*_input++);
-					case 1:  *packed++ = uint16_t(*_input++);
+					default: *packed++ = int16_t(*_input++);
+					case 3:  *packed++ = int16_t(*_input++);
+					case 2:  *packed++ = int16_t(*_input++);
+					case 1:  *packed++ = int16_t(*_input++);
 					}
 				}
 			}
@@ -311,27 +311,27 @@ namespace bgfx
 			}
 			break;
 
-		case AttribType::Uint16:
+		case AttribType::Int16:
 			{
-				uint16_t* packed = (uint16_t*)data;
+				int16_t* packed = (int16_t*)data;
 				if (asInt)
 				{
 					switch (num)
 					{
-					default: *_output++ = (float(*packed++) - 32768.0f)*1.0f/32767.0f;
-					case 3:  *_output++ = (float(*packed++) - 32768.0f)*1.0f/32767.0f;
-					case 2:  *_output++ = (float(*packed++) - 32768.0f)*1.0f/32767.0f;
-					case 1:  *_output++ = (float(*packed++) - 32768.0f)*1.0f/32767.0f;
+					default: *_output++ = float(*packed++)*1.0f/32767.0f;
+					case 3:  *_output++ = float(*packed++)*1.0f/32767.0f;
+					case 2:  *_output++ = float(*packed++)*1.0f/32767.0f;
+					case 1:  *_output++ = float(*packed++)*1.0f/32767.0f;
 					}
 				}
 				else
 				{
 					switch (num)
 					{
-					default: *_output++ = float(*packed++)*1.0f/65535.0f;
-					case 3:  *_output++ = float(*packed++)*1.0f/65535.0f;
-					case 2:  *_output++ = float(*packed++)*1.0f/65535.0f;
-					case 1:  *_output++ = float(*packed++)*1.0f/65535.0f;
+					default: *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f;
+					case 3:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f;
+					case 2:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f;
+					case 1:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f;
 					}
 				}
 			}

@@ -194,12 +194,12 @@ namespace bgfx
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
 
-	inline uint32_t uint16_min(uint16_t _a, uint16_t _b)
+	inline uint16_t uint16_min(uint16_t _a, uint16_t _b)
 	{
 		return _a > _b ? _b : _a;
 	}
 
-	inline uint32_t uint16_max(uint16_t _a, uint16_t _b)
+	inline uint16_t uint16_max(uint16_t _a, uint16_t _b)
 	{
 		return _a < _b ? _b : _a;
 	}

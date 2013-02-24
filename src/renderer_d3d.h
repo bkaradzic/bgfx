@@ -6,7 +6,7 @@
 #ifndef __RENDERER_D3D_H__
 #define __RENDERER_D3D_H__
 
-#if BGFX_CONFIG_DEBUG && BX_PLATFORM_WINDOWS && BX_COMPILER_MSVC
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
 #	include <dxerr.h>
 #	pragma comment(lib, "dxerr.lib")
 #	define DX_CHECK_EXTRA_F " (%s): %s"
@@ -14,7 +14,7 @@
 #else
 #	define DX_CHECK_EXTRA_F ""
 #	define DX_CHECK_EXTRA_ARGS
-#endif // BGFX_CONFIG_DEBUG && BX_PLATFORM_WINDOWS && BX_COMPILER_MSVC
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9
 
 namespace bgfx
 {

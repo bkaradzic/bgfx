@@ -2671,7 +2671,7 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 10;
-				tvm.printf(0, 0, 0x8f, " " BGFX_RENDERER_NAME " ");
+				tvm.printf(0, 0, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
 				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
 					, double(frameTime)*toMs
 					, double(min)*toMs
