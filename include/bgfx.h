@@ -284,7 +284,7 @@ namespace bgfx
 		enum Enum
 		{
 			Uint8,
-			Uint16,
+			Int16,
 			Half,
 			Float,
 
@@ -449,6 +449,14 @@ namespace bgfx
 		void end();
 
 		/// Add attribute to VertexDecl.
+		///
+		/// @param _attrib Attribute semantics.
+		/// @param _num Number of elements 1, 2, 3 or 4.
+		/// @param _type Element type.
+		/// @param _normalized Value is normalized for vertex shader.
+		/// @param _asInt Packaging rule for vertexPack, vertexUnpack, and
+		///   vertexConvert for AttribType::Uint8 and AttribType::Int16.
+		///   Unpacking code must be implemented inside vertex shader.
 		///
 		/// NOTE:
 		///   Must be called between begin/end.

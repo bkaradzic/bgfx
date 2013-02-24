@@ -534,7 +534,7 @@ namespace bgfx
 	static const GLenum s_attribType[AttribType::Count] =
 	{
 		GL_UNSIGNED_BYTE,
-		GL_UNSIGNED_SHORT,
+		GL_SHORT,
 		GL_HALF_FLOAT,
 		GL_FLOAT,
 	};
