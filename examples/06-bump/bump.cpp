@@ -22,8 +22,8 @@ struct PosNormalTangentTexcoordVertex
 	float m_z;
 	uint32_t m_normal;
 	uint32_t m_tangent;
-	uint16_t m_u;
-	uint16_t m_v;
+	int16_t m_u;
+	int16_t m_v;
 };
 
 static bgfx::VertexDecl s_PosNormalTangentTexcoordDecl;
