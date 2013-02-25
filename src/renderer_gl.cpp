@@ -2058,6 +2058,14 @@ namespace bgfx
 				}
 			}
 
+			if (s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
+			{
+				s_textureFormat[TextureFormat::BC4].m_fmt = GL_COMPRESSED_RED_RGTC1_EXT;
+				s_textureFormat[TextureFormat::BC4].m_internalFmt = GL_COMPRESSED_RED_RGTC1_EXT;
+				s_textureFormat[TextureFormat::BC5].m_fmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+				s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+			}
+
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
 			if (NULL != glVertexAttribDivisor
 			&&  NULL != glDrawArraysInstanced
