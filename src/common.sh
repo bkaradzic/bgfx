@@ -8,6 +8,8 @@
 
 #include "bgfx_shader.sh"
 
+uniform vec4 u_viewRect;
+uniform vec4 u_viewTexel;
 uniform mat4 u_view;
 uniform mat4 u_viewProj;
 uniform mat4 u_model;
@@ -15,5 +17,6 @@ uniform mat4 u_modelView;
 uniform mat4 u_modelViewProj;
 uniform mat4 u_modelViewProjX;
 uniform mat4 u_viewProjX;
+uniform float u_alphaRef;
 
 #endif // __SHADER_COMMON_H__
