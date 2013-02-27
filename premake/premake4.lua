@@ -22,10 +22,6 @@ local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
 local BGFX_THIRD_PARTY_DIR = (BGFX_DIR .. "3rdparty/")
 BX_DIR = (BGFX_DIR .. "../bx/")
 
-defines {
-	"BX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1"
-}
-
 dofile (BX_DIR .. "premake/toolchain.lua")
 toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
 
@@ -101,6 +97,7 @@ exampleProject("05-instancing", "5d3da660-1105-11e2-aece-71e4dd6a022f")
 exampleProject("06-bump",       "ffb23e6c-167b-11e2-81df-94c4dd6a022f")
 exampleProject("07-callback",   "acc53bbc-52f0-11e2-9781-ad8edd4b7d02")
 exampleProject("08-update",     "e011e246-5862-11e2-b202-b7cb257a7926")
+exampleProject("09-hdr",        "969a4626-67ee-11e2-9726-9023267a7926")
 dofile "makedisttex.lua"
 dofile "shaderc.lua"
 dofile "texturec.lua"

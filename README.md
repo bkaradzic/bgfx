@@ -268,6 +268,15 @@ https://github.com/aras-p/glsl-optimizer
 
 http://nothings.org/stb_image.c
 
+Assets
+------
+
+Bunny  
+[Stanford University Computer Graphics Laboratory](http://www-graphics.stanford.edu/data/3Dscanrep/)
+
+Uffizi  
+[Light Probe Image Gallery ](http://www.pauldebevec.com/Probes/)
+
 Contributors
 ------------
 
