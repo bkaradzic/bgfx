@@ -66,13 +66,6 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 #include <bx/uint32_t.h>
 #include <bx/readerwriter.h>
 
-#if BX_PLATFORM_WINDOWS
-#	include <windows.h>
-#elif BX_PLATFORM_XBOX360
-#	include <malloc.h>
-#	include <xtl.h>
-#endif // BX_PLATFORM_*
-
 #include "dds.h"
 
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
@@ -106,6 +99,13 @@ namespace stl {
 }
 #endif // BGFX_CONFIG_USE_TINYSTL
 #include <list>
+
+#if BX_PLATFORM_WINDOWS
+#	include <windows.h>
+#elif BX_PLATFORM_XBOX360
+#	include <malloc.h>
+#	include <xtl.h>
+#endif // BX_PLATFORM_*
 
 #include "config.h"
 
