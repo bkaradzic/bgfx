@@ -22,6 +22,10 @@ local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
 local BGFX_THIRD_PARTY_DIR = (BGFX_DIR .. "3rdparty/")
 BX_DIR = (BGFX_DIR .. "../bx/")
 
+defines {
+	"BX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1"
+}
+
 dofile (BX_DIR .. "premake/toolchain.lua")
 toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
 
