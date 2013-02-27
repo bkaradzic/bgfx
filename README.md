@@ -146,6 +146,11 @@ OpenGL binary shaders, and video capture.
 ### 08-update
 Updating textures.
 
+### 09-hdr
+Using multiple views and render targets.
+
+![example-09-hdr](https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png)
+
 Internals
 ---------
 
