@@ -592,7 +592,7 @@ namespace bgfx
 				}
 
 				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, Attrib::Count, decl);
-				ptrdiff_t num = elem-vertexElements;
+				uint32_t num = uint32_t(elem-vertexElements);
 
 				const D3D11_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 };
 
@@ -602,7 +602,7 @@ namespace bgfx
 
 					uint32_t jj;
 					D3D11_INPUT_ELEMENT_DESC* curr;
-					for (jj = 0; jj < (uint32_t)num; ++jj)
+					for (jj = 0; jj < num; ++jj)
 					{
 						curr = &vertexElements[jj];
 						if (0 == strcmp(curr->SemanticName, "TEXCOORD")
@@ -624,9 +624,9 @@ namespace bgfx
 					curr->AlignedByteOffset = ii*16;
 				}
 
-				num = elem-vertexElements;
+				num = uint32_t(elem-vertexElements);
 				DX_CHECK(m_device->CreateInputLayout(vertexElements
-					, uint32_t(num)
+					, num
 					, _program.m_vsh->m_code->data
 					, _program.m_vsh->m_code->size
 					, &layout
@@ -1097,8 +1097,6 @@ namespace bgfx
 
 	void ConstantBuffer::commit()
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
-
 		reset();
 
 		do
