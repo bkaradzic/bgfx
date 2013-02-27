@@ -287,15 +287,11 @@ namespace entry
 
 				case WM_SIZING:
 					{
-						RECT clientRect;
-						GetClientRect(_hwnd, &clientRect);
-						uint32_t width = clientRect.right-clientRect.left;
-						uint32_t height = clientRect.bottom-clientRect.top;
-
 						RECT& rect = *(RECT*)_lparam;
-						uint32_t frameWidth = rect.right-rect.left - width;
-						uint32_t frameHeight = rect.bottom-rect.top - height;
+						uint32_t width = rect.right - rect.left - m_frameWidth;
+						uint32_t height = rect.bottom - rect.top - m_frameHeight;
 
+						//Recalculate size according to aspect ratio
 						switch (_wparam)
 						{
 						case WMSZ_LEFT:
@@ -309,6 +305,9 @@ namespace entry
 
 						default:
 							{
+								unsigned int oldWidth = width;
+								unsigned int oldHeight = height;
+
 								float aspectRatio = m_aspectRatio;
 								height = bx::uint32_max(DEFAULT_HEIGHT/4, height);
 								width = uint32_t(float(height)*aspectRatio);
@@ -316,18 +315,22 @@ namespace entry
 							break;
 						}
 
-						rect.right = rect.left + width + frameWidth;
-						rect.bottom = rect.top + height + frameHeight;
+						//Recalculate position using different anchor points
+						switch(_wparam)
+						{
+						case WMSZ_LEFT:
+						case WMSZ_TOPLEFT:
+						case WMSZ_BOTTOMLEFT:
+							rect.left = rect.right - width - m_frameWidth;
+							rect.bottom = rect.top + height + m_frameHeight;
+							break;
 
-						SetWindowPos(_hwnd
-							, HWND_TOP
-							, rect.left
-							, rect.top
-							, (rect.right-rect.left)
-							, (rect.bottom-rect.top)
-							, SWP_SHOWWINDOW
-							);
-
+						default:
+							rect.right = rect.left + width + m_frameWidth;
+							rect.bottom = rect.top + height + m_frameHeight;
+							break;
+						}
+						
 						m_eventQueue.postSizeEvent(m_width, m_height);
 					}
 					return 0;
@@ -468,7 +471,11 @@ namespace entry
 			}
 
 			SetWindowLong(m_hwnd, GWL_STYLE, style);
+			uint32_t prewidth = newrect.right - newrect.left;
+			uint32_t preheight = newrect.bottom - newrect.top;
 			AdjustWindowRect(&newrect, style, FALSE);
+			m_frameWidth = (newrect.right - newrect.left) - prewidth;
+			m_frameHeight = (newrect.bottom - newrect.top) - preheight;
 			UpdateWindow(m_hwnd);
 
 			if (rect.left == -32000
@@ -573,6 +580,8 @@ namespace entry
 		uint32_t m_height;
 		uint32_t m_oldWidth;
 		uint32_t m_oldHeight;
+		uint32_t m_frameWidth;
+		uint32_t m_frameHeight;
 		float m_aspectRatio;
 
 		int32_t m_mx;
