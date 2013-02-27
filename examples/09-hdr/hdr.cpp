@@ -493,8 +493,6 @@ int _main_(int _argc, char** _argv)
 	bgfx::RenderTargetHandle blur;
 	blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA);
 
-	entry::setWindowSize(1600, 900);
-
 	uint32_t oldWidth = 0;
 	uint32_t oldHeight = 0;
 
