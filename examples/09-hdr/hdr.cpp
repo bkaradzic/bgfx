@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
+#include <string>
 
 static const char* s_shaderPath = NULL;
 
@@ -368,7 +369,7 @@ void setOffsets2x2Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 		for (uint32_t xx = 0; xx < 3; ++xx)
 		{
 			offsets[num][0] = (xx - s_texelHalf) * du;
-			offsets[num][1] = (yy - s_texelHalf) * du;
+			offsets[num][1] = (yy - s_texelHalf) * dv;
 			++num;
 		}
 	}
@@ -389,7 +390,7 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 		for (uint32_t xx = 0; xx < 4; ++xx)
 		{
 			offsets[num][0] = (xx - 1.0f - s_texelHalf) * du;
-			offsets[num][1] = (yy - 1.0f - s_texelHalf) * du;
+			offsets[num][1] = (yy - 1.0f - s_texelHalf) * dv;
 			++num;
 		}
 	}
