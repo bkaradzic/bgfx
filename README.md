@@ -1,6 +1,10 @@
 bgfx
 ====
 
+https://github.com/bkaradzic/bgfx
+
+.. contents::
+
 What is it?
 -----------
 
