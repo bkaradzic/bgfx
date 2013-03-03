@@ -206,7 +206,6 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyVertexShader(vsh);
 	bgfx::destroyFragmentShader(fsh);
 
-	uint32_t blockSide = 0;
 	const uint32_t textureSide = 2048;
 
 	bgfx::TextureHandle textureCube = 
