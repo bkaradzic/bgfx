@@ -1352,7 +1352,7 @@ namespace bgfx
 		BX_CHECK(false, "You should not be here.");
 	}
 
-	void Texture::dirty(uint8_t _side, const Rect& _rect)
+	void Texture::dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth)
 	{
 		switch (m_type)
 		{
@@ -1369,7 +1369,14 @@ namespace bgfx
 
 		case Texture3D:
 			{
-//				DX_CHECK(m_texture3d->AddDirtyRect(_box) );
+				D3DBOX box;
+				box.Left = _rect.m_x;
+				box.Top = _rect.m_y;
+				box.Right = box.Left + _rect.m_width;
+				box.Bottom = box.Top + _rect.m_height;
+				box.Front = _z;
+				box.Back = box.Front + _depth;
+				DX_CHECK(m_texture3d->AddDirtyBox(&box) );
 			}
 			return;
 
@@ -1619,7 +1626,10 @@ namespace bgfx
 			}
 		}
 
-		dirty(_side, _rect);
+		if (0 == _mip)
+		{
+			dirty(_side, _rect, _z, _depth);
+		}
 	}
 
 	void Texture::updateEnd()

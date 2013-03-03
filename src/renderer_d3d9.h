@@ -320,7 +320,7 @@ namespace bgfx
 
 		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
-		void dirty(uint8_t _side, const Rect& _rect);
+		void dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth);
 
 		void create(const Memory* _mem, uint32_t _flags);
 
