@@ -194,16 +194,6 @@ namespace bgfx
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
 
-	inline uint16_t uint16_min(uint16_t _a, uint16_t _b)
-	{
-		return _a > _b ? _b : _a;
-	}
-
-	inline uint16_t uint16_max(uint16_t _a, uint16_t _b)
-	{
-		return _a < _b ? _b : _a;
-	}
-
 	inline uint32_t gcd(uint32_t _a, uint32_t _b)
 	{
 		do
@@ -374,6 +364,49 @@ namespace bgfx
 		bool m_init;
 	};
 
+	template <uint32_t maxKeys>
+	struct UpdateBatchT
+	{
+		UpdateBatchT()
+			: m_num(0)
+		{
+		}
+
+		void add(uint32_t _key, uint32_t _value)
+		{
+			uint32_t num = m_num++;
+			m_keys[num] = _key;
+			m_values[num] = _value;
+		}
+
+		bool sort()
+		{
+			if (0 < m_num)
+			{
+				uint32_t* tempKeys = (uint32_t*)alloca(sizeof(m_keys) );
+				uint32_t* tempValues = (uint32_t*)alloca(sizeof(m_values) );
+				bx::radixSort32(m_keys, tempKeys, m_values, tempValues, m_num);
+				return true;
+			}
+
+			return false;
+		}
+
+		bool isFull() const
+		{
+			return m_num >= maxKeys;
+		}
+
+		void reset()
+		{
+			m_num = 0;
+		}
+
+		uint32_t m_num;
+		uint32_t m_keys[maxKeys];
+		uint32_t m_values[maxKeys];
+	};
+
 	struct ClearQuad
 	{
 		void init();
@@ -478,6 +511,12 @@ namespace bgfx
 		void read(Type& _in)
 		{
 			read(reinterpret_cast<uint8_t*>(&_in), sizeof(Type) );
+		}
+
+		void skip(uint32_t _size)
+		{
+			BX_CHECK(m_pos < m_size, "");
+			m_pos += _size;
 		}
 
 		void reset()
@@ -2369,7 +2408,9 @@ namespace bgfx
 		void rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 		void rendererDestroyProgram(FragmentShaderHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
+		void rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip);
 		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
+		void rendererUpdateTextureEnd();
 		void rendererDestroyTexture(TextureHandle _handle);
 		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void rendererDestroyRenderTarget(RenderTargetHandle _handle);
@@ -2400,6 +2441,66 @@ namespace bgfx
 				uint32_t size = g_uniformTypeSize[type]*num;
 				data = _constantBuffer->read(size);
 				rendererUpdateUniform(loc, data, size);
+			}
+		}
+
+		void flushTextureUpdateBatch(CommandBuffer& _cmdbuf)
+		{
+			if (m_textureUpdateBatch.sort() )
+			{
+				const uint32_t pos = _cmdbuf.m_pos;
+
+				uint32_t currentKey = UINT32_MAX;
+
+				for (uint32_t ii = 0, num = m_textureUpdateBatch.m_num; ii < num; ++ii)
+				{
+					_cmdbuf.m_pos = m_textureUpdateBatch.m_values[ii];
+
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					uint8_t side;
+					_cmdbuf.read(side);
+
+					uint8_t mip;
+					_cmdbuf.read(mip);
+
+					Rect rect;
+					_cmdbuf.read(rect);
+
+					uint16_t zz;
+					_cmdbuf.read(zz);
+
+					uint16_t depth;
+					_cmdbuf.read(depth);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					uint32_t key = m_textureUpdateBatch.m_keys[ii];
+					if (key != currentKey)
+					{
+						if (currentKey != UINT32_MAX)
+						{
+							rendererUpdateTextureEnd();
+						}
+						currentKey = key;
+						rendererUpdateTextureBegin(handle, side, mip);
+					}
+
+					rendererUpdateTexture(handle, side, mip, rect, zz, depth, mem);
+
+					release(mem);
+				}
+
+				if (currentKey != UINT32_MAX)
+				{
+					rendererUpdateTextureEnd();
+				}
+
+				m_textureUpdateBatch.reset();
+
+				_cmdbuf.m_pos = pos;
 			}
 		}
 
@@ -2677,6 +2778,13 @@ namespace bgfx
 
 				case CommandBuffer::UpdateTexture:
 					{
+						if (m_textureUpdateBatch.isFull() )
+						{
+							flushTextureUpdateBatch(_cmdbuf);
+						}
+
+						uint32_t value = _cmdbuf.m_pos;
+
 						TextureHandle handle;
 						_cmdbuf.read(handle);
 
@@ -2686,21 +2794,14 @@ namespace bgfx
 						uint8_t mip;
 						_cmdbuf.read(mip);
 
-						Rect rect;
-						_cmdbuf.read(rect);
+						_cmdbuf.skip(sizeof(Rect)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(Memory*) );
+ 
+ 						uint32_t key = (handle.idx<<16)
+ 									 | (side<<8)
+									 | mip
+ 									 ;
 
-						uint16_t zz;
-						_cmdbuf.read(zz);
-
-						uint16_t depth;
-						_cmdbuf.read(depth);
-
-						Memory* mem;
-						_cmdbuf.read(mem);
-
-						rendererUpdateTexture(handle, side, mip, rect, zz, depth, mem);
-
-						release(mem);
+						m_textureUpdateBatch.add(key, value);
 					}
 					break;
 
@@ -2794,6 +2895,8 @@ namespace bgfx
 					break;
 				}
 			} while (!end);
+
+			flushTextureUpdateBatch(_cmdbuf);
 		}
 
 		void rendererSubmit();
@@ -2915,6 +3018,10 @@ namespace bgfx
 
 		bool m_rendererInitialized;
 		bool m_exit;
+
+		BX_CACHE_LINE_ALIGN_MARKER();
+		typedef UpdateBatchT<256> TextureUpdateBatch;
+		TextureUpdateBatch m_textureUpdateBatch;
 	};
 
 } // namespace bgfx

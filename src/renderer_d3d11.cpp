@@ -1799,7 +1799,7 @@ namespace bgfx
 			, ...
 			);
 #else
-		deviceCtx->UpdateSubresource(m_ptr, subres, &box, _mem->data, _rect.m_width*4, 0); 
+		deviceCtx->UpdateSubresource(m_ptr, subres, &box, _mem->data, _rect.m_width*4, 0);
 #endif // 0
 	}
 
@@ -2011,9 +2011,17 @@ namespace bgfx
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
 	}
 
+	void Context::rendererUpdateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/)
+	{
+	}
+
 	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
 		s_renderCtx.m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
+	}
+
+	void Context::rendererUpdateTextureEnd()
+	{
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)

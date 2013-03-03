@@ -881,6 +881,12 @@ namespace bgfx
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
+		Texture* m_updateTexture;
+		uint8_t* m_updateTextureBits;
+		uint32_t m_updateTexturePitch;
+		uint8_t m_updateTextureSide;
+		uint8_t m_updateTextureMip;
+
 		TextVideoMem m_textVideoMem;
 		RenderTargetHandle m_rt;
 		bool m_rtMsaa;
@@ -1346,6 +1352,42 @@ namespace bgfx
 		BX_CHECK(false, "You should not be here.");
 	}
 
+	void Texture::dirty(uint8_t _side, const Rect& _rect)
+	{
+		switch (m_type)
+		{
+		case Texture2D:
+			{
+				RECT rect;
+				rect.left = _rect.m_x;
+				rect.top = _rect.m_y;
+				rect.right = rect.left + _rect.m_width;
+				rect.bottom = rect.top + _rect.m_height;
+				DX_CHECK(m_texture2d->AddDirtyRect(&rect) );
+			}
+			return;
+
+		case Texture3D:
+			{
+//				DX_CHECK(m_texture3d->AddDirtyRect(_box) );
+			}
+			return;
+
+		case TextureCube:
+			{
+				RECT rect;
+				rect.left = _rect.m_x;
+				rect.top = _rect.m_y;
+				rect.right = rect.left + _rect.m_width;
+				rect.bottom = rect.top + _rect.m_height;
+				DX_CHECK(m_textureCube->AddDirtyRect(D3DCUBEMAP_FACES(_side), &rect) );
+			}
+			return;
+		}
+
+		BX_CHECK(false, "You should not be here.");
+	}
+
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
 		m_tau = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
@@ -1548,22 +1590,41 @@ namespace bgfx
 		}
 	}
 
+	void Texture::updateBegin(uint8_t _side, uint8_t _mip)
+	{
+		uint32_t slicePitch;
+		s_renderCtx.m_updateTextureSide = _side;
+		s_renderCtx.m_updateTextureMip = _mip;
+		s_renderCtx.m_updateTextureBits = lock(_side, _mip, s_renderCtx.m_updateTexturePitch, slicePitch);
+	}
+
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		uint32_t pitch;
-		uint32_t slicePitch;
-		uint8_t* bits = lock(_side, _mip, pitch, slicePitch, &_rect);
+		uint32_t bpp = s_textureFormat[m_format].m_bpp;
+		uint32_t srcpitch = _rect.m_width*bpp/8;
+		uint32_t dstpitch = s_renderCtx.m_updateTexturePitch;
+		uint8_t* bits = s_renderCtx.m_updateTextureBits + _rect.m_y*dstpitch + _rect.m_x*bpp/8;
 
-		uint32_t srcpitch = _rect.m_width*s_textureFormat[m_format].m_bpp/8;
-		uint32_t dstpitch = pitch;
-		for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
+		if (srcpitch == dstpitch)
 		{
-			uint8_t* src = &_mem->data[yy*srcpitch];
-			uint8_t* dst = &bits[yy*dstpitch];
-			memcpy(dst, src, srcpitch);
+			memcpy(bits, _mem->data, srcpitch*_rect.m_height);
+		}
+		else
+		{
+			for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
+			{
+				uint8_t* src = &_mem->data[yy*srcpitch];
+				uint8_t* dst = &bits[yy*dstpitch];
+				memcpy(dst, src, srcpitch);
+			}
 		}
 
-		unlock(_side, _mip);
+		dirty(_side, _rect);
+	}
+
+	void Texture::updateEnd()
+	{
+		unlock(s_renderCtx.m_updateTextureSide, s_renderCtx.m_updateTextureMip);
 	}
 
 	void Texture::commit(uint8_t _stage)
@@ -1990,9 +2051,21 @@ namespace bgfx
 		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
 	}
 
+	void Context::rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip)
+	{
+		s_renderCtx.m_updateTexture = &s_renderCtx.m_textures[_handle.idx];
+		s_renderCtx.m_updateTexture->updateBegin(_side, _mip);
+	}
+
 	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		s_renderCtx.m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
+		s_renderCtx.m_updateTexture->update(_side, _mip, _rect, _z, _depth, _mem);
+	}
+
+	void Context::rendererUpdateTextureEnd()
+	{
+		s_renderCtx.m_updateTexture->updateEnd();
+		s_renderCtx.m_updateTexture = NULL;
 	}
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)

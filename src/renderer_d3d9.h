@@ -320,6 +320,7 @@ namespace bgfx
 
 		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
+		void dirty(uint8_t _side, const Rect& _rect);
 
 		void create(const Memory* _mem, uint32_t _flags);
 
@@ -328,7 +329,9 @@ namespace bgfx
 			DX_RELEASE(m_ptr, 0);
 		}
 
+		void updateBegin(uint8_t _side, uint8_t _mip);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
+		void updateEnd();
 		void commit(uint8_t _stage);
 	
 		union

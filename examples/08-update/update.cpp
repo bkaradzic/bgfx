@@ -11,9 +11,11 @@
 #include "../common/dbg.h"
 #include "../common/math.h"
 #include "../common/processevents.h"
+#include "../common/packrect.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <list>
 
 struct PosColorVertex
 {
@@ -205,11 +207,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyFragmentShader(fsh);
 
 	uint32_t blockSide = 0;
-	uint32_t blockX = 0;
-	uint32_t blockY = 0;
-	const uint32_t blockWidth = 8;
-	const uint32_t blockHeight = 8;
-	const uint32_t textureSide = 256;
+	const uint32_t textureSide = 2048;
 
 	bgfx::TextureHandle textureCube = 
 		bgfx::createTextureCube(6
@@ -219,14 +217,17 @@ int _main_(int _argc, char** _argv)
 			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
 			);
 
-	bgfx::TextureInfo ti;
-	bgfx::calcTextureSize(ti, blockWidth, blockHeight, 1, 1, bgfx::TextureFormat::BGRA8);
-
 	uint8_t rr = rand()%255;
 	uint8_t gg = rand()%255;
 	uint8_t bb = rand()%255;
 
 	int64_t updateTime = 0;
+
+	RectPackCubeT<256> cube(textureSide);
+
+	uint32_t hit = 0;
+	uint32_t miss = 0;
+	std::list<PackCube> quads;
 
 	while (!processEvents(width, height, debug, reset) )
 	{
@@ -252,42 +253,52 @@ int _main_(int _argc, char** _argv)
 
 		if (now > updateTime)
 		{
-//			updateTime = now + freq/10;
-			const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
-			uint8_t* data = (uint8_t*)mem->data;
-			for (uint32_t ii = 0, num = ti.storageSize*8/ti.bitsPerPixel; ii < num; ++ii)
+			PackCube face;
+
+			uint32_t bw = bx::uint16_max(1, rand()%(textureSide/4) );
+			uint32_t bh = bx::uint16_max(1, rand()%(textureSide/4) );
+
+			if (cube.find(bw, bh, face) )
 			{
-				data[0] = bb;
-				data[1] = rr;
-				data[2] = gg;
-				data[3] = 0xff;
-				data += 4;
-			}
+				quads.push_back(face);
 
-			bgfx::updateTextureCube(textureCube, blockSide, 0, blockX, blockY, blockWidth, blockHeight, mem);
+				++hit;
+				bgfx::TextureInfo ti;
+				const Pack2D& rect = face.m_rect;
+				bgfx::calcTextureSize(ti, rect.m_width, rect.m_height, 1, 1, bgfx::TextureFormat::BGRA8);
 
-			blockX += 8;
-			if (blockX >= textureSide)
-			{
-				blockX = 0;
-				blockY += 8;
-
-				if (blockY >= textureSide)
+// 				updateTime = now + freq/10;
+				const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
+				uint8_t* data = (uint8_t*)mem->data;
+				for (uint32_t ii = 0, num = ti.storageSize*8/ti.bitsPerPixel; ii < num; ++ii)
 				{
-					rr = rand()%255;
-					gg = rand()%255;
-					bb = rand()%255;
+					data[0] = bb;
+					data[1] = rr;
+					data[2] = gg;
+					data[3] = 0xff;
+					data += 4;
+				}
 
-					blockY = 0;
-					++blockSide;
+				bgfx::updateTextureCube(textureCube, face.m_side, 0, rect.m_x, rect.m_y, rect.m_width, rect.m_height, mem);
 
-					if (blockSide > 5)
-					{
-						blockSide = 0;
-					}
+				rr = rand()%255;
+				gg = rand()%255;
+				bb = rand()%255;
+			}
+			else
+			{
+				++miss;
+
+				for (uint32_t ii = 0, num = bx::uint32_min(10, (uint32_t)quads.size() ); ii < num; ++ii)
+				{
+					const PackCube& face = quads.front();
+					cube.clear(face);
+					quads.pop_front();
 				}
 			}
 		}
+
+		bgfx::dbgTextPrintf(0, 4, 0x0f, "hit: %d, miss %d", hit, miss);
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -5.0f };
