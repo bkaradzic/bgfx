@@ -162,7 +162,8 @@ namespace bgfx
 			, m_captureSize(0)
 			, m_maxAnisotropy(0.0f)
 			, m_maxMsaa(0)
-			, m_vaoSupport(false)
+			, m_vao(0)
+			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 32)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_flip(false)
@@ -442,6 +443,7 @@ namespace bgfx
 		uint32_t m_captureSize;
 		float m_maxAnisotropy;
 		int32_t m_maxMsaa;
+		GLuint m_vao;
 		bool m_vaoSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
@@ -1348,7 +1350,8 @@ namespace bgfx
 						}
 						else
 						{
-							if (swizzle)
+							if (NULL != data
+							&&  swizzle)
 							{
 								rgbaToBgra(data, width, height);
 							}
@@ -1828,9 +1831,9 @@ namespace bgfx
 
 	void TextVideoMemBlitter::setup()
 	{
-		if (s_renderCtx.m_vaoSupport)
+		if (0 != s_renderCtx.m_vao)
 		{
-			GL_CHECK(glBindVertexArray(0) );
+			GL_CHECK(glBindVertexArray(s_renderCtx.m_vao) );
 		}
 
 		uint32_t width = s_renderCtx.m_resolution.m_width;
@@ -1845,9 +1848,9 @@ namespace bgfx
 		GL_CHECK(glDisable(GL_CULL_FACE) );
 		GL_CHECK(glDisable(GL_BLEND) );
 		GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
-#if BGFX_CONFIG_RENDERER_OPENGL
+#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 32
 		GL_CHECK(glDisable(GL_ALPHA_TEST) );
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL
 
 		Program& program = s_renderCtx.m_program[m_program.idx];
 		GL_CHECK(glUseProgram(program.m_id) );
@@ -2083,10 +2086,27 @@ namespace bgfx
 			}
 #endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 		}
+
+		if (s_renderCtx.m_vaoSupport)
+		{
+			GL_CHECK(glGenVertexArrays(1, &s_renderCtx.m_vao) );
+		}
+
+#if BGFX_CONFIG_RENDERER_OPENGL >= 32
+		s_textureFormat[TextureFormat::L8].m_internalFmt = GL_R8;
+		s_textureFormat[TextureFormat::L8].m_fmt         = GL_RED;
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 32
 	}
 
 	void Context::rendererShutdown()
 	{
+		if (s_renderCtx.m_vaoSupport)
+		{
+			GL_CHECK(glBindVertexArray(0) );
+			GL_CHECK(glDeleteVertexArrays(1, &s_renderCtx.m_vao) );
+			s_renderCtx.m_vao = 0;
+		}
+
 		s_renderCtx.shutdown();
 	}
 
@@ -2241,9 +2261,10 @@ namespace bgfx
 
 	void Context::rendererSubmit()
 	{
-		if (s_renderCtx.m_vaoSupport)
+		const GLuint defaultVao = s_renderCtx.m_vaoSupport;
+		if (0 != defaultVao)
 		{
-			GL_CHECK(glBindVertexArray(0) );
+			GL_CHECK(glBindVertexArray(defaultVao) );
 		}
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
@@ -2479,7 +2500,7 @@ namespace bgfx
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						alphaRef = ref/255.0f;
 
-#if BGFX_CONFIG_RENDERER_OPENGL
+#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 32
 						if (BGFX_STATE_ALPHA_TEST & newFlags)
 						{
 							GL_CHECK(glEnable(GL_ALPHA_TEST) );
@@ -2488,7 +2509,7 @@ namespace bgfx
 						{
 							GL_CHECK(glDisable(GL_ALPHA_TEST) );
 						}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 32
 					}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -2760,7 +2781,7 @@ namespace bgfx
 						}
 					}
 
-					if (s_renderCtx.m_vaoSupport
+					if (0 != defaultVao
 					&&  0 == state.m_startVertex
 					&&  0 == state.m_instanceDataOffset)
 					{
@@ -2833,10 +2854,10 @@ namespace bgfx
 					}
 					else
 					{
-						if (s_renderCtx.m_vaoSupport
+						if (0 != defaultVao
 						&&  0 != currentVao)
 						{
-							GL_CHECK(glBindVertexArray(0) );
+							GL_CHECK(glBindVertexArray(defaultVao) );
 							currentState.m_vertexBuffer.idx = invalidHandle;
 							currentState.m_indexBuffer.idx = invalidHandle;
 							bindAttribs = true;
