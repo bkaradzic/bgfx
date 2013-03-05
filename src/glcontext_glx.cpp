@@ -116,12 +116,13 @@ namespace bgfx
 		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
 		if (NULL != glXCreateContextAttribsARB)
 		{
-			BX_TRACE("Create GL 3.0 context.");
+			BX_TRACE("Create GL 3.1 context.");
 			const int contextAttrs[] =
 			{
 				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-				GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-				None,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 1,
+				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+				0,
 			};
 
 			GLXContext context = glXCreateContextAttribsARB(s_display, bestConfig, 0, true, contextAttrs);
