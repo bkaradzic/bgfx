@@ -199,24 +199,29 @@ namespace bgfx
 			result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() );
 
-			const int32_t contextAttrs[] =
+			uint32_t flags = BGFX_CONFIG_DEBUG ? WGL_CONTEXT_DEBUG_BIT_ARB : 0;
+			int32_t contextAttrs[] =
 			{
-#if BGFX_CONFIG_RENDERER_OPENGL == 32
+#if BGFX_CONFIG_RENDERER_OPENGL == 31
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-				WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+				WGL_CONTEXT_FLAGS_ARB, flags,
 				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-#	if BGFX_CONFIG_DEBUG
-				WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
-#	endif // BGFX_CONFIG_DEBUG
 #else
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
 				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
-#endif // BGFX_CONFIG_RENDERER_OPENGL == 32
+#endif // BGFX_CONFIG_RENDERER_OPENGL == 31
 				0
 			};
 
 			m_context = wglCreateContextAttribsARB(m_hdc, 0, contextAttrs);
-			BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create context.");
+			if (NULL == m_context)
+			{
+				// nVidia doesn't like context profile mask for contexts below 3.2?
+				contextAttrs[6] = WGL_CONTEXT_PROFILE_MASK_ARB == contextAttrs[6] ? 0 : contextAttrs[6];
+				m_context = wglCreateContextAttribsARB(m_hdc, 0, contextAttrs);
+			}
+			BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create context 0x%08x.", GetLastError() );
 		}
 
 		wglMakeCurrent(NULL, NULL);

@@ -11,73 +11,57 @@
 #define BGFX_USE_NSGL 0
 
 #if BGFX_CONFIG_RENDERER_OPENGL
-#	if BX_PLATFORM_LINUX
-#		define GL_PROTOTYPES
-#		define GL_GLEXT_LEGACY
-#		include <GL/gl.h>
-#		include <GL/glx.h>
-#		undef GL_PROTOTYPES
-#	elif BX_PLATFORM_OSX
-#		define GL_GLEXT_LEGACY
-#		define long ptrdiff_t
-#		include <OpenGL/gl.h>
-#		undef long
-#		undef GL_VERSION_1_2
-#		undef GL_VERSION_1_3
-#		undef GL_VERSION_1_4
-#		undef GL_VERSION_1_5
-#		undef GL_VERSION_2_0
+#	if BGFX_CONFIG_RENDERER_OPENGL >= 31
+#		include <gl/glcorearb.h>
 #	else
-#		include <GL/gl.h>
-#	endif // BX_PLATFORM_
+#		if BX_PLATFORM_LINUX
+#			define GL_PROTOTYPES
+#			define GL_GLEXT_LEGACY
+#			include <GL/gl.h>
+#			include <GL/glx.h>
+#			undef GL_PROTOTYPES
+#		elif BX_PLATFORM_OSX
+#			define GL_GLEXT_LEGACY
+#			define long ptrdiff_t
+#			include <OpenGL/gl.h>
+#			undef long
+#			undef GL_VERSION_1_2
+#			undef GL_VERSION_1_3
+#			undef GL_VERSION_1_4
+#			undef GL_VERSION_1_5
+#			undef GL_VERSION_2_0
+#		else
+#			include <GL/gl.h>
+#		endif // BX_PLATFORM_
+
+// remove deprecated from glext.h
+#		define GL_VERSION_1_2_DEPRECATED
+#		define GL_ARB_imaging_DEPRECATED
+#		define GL_VERSION_1_3_DEPRECATED
+#		define GL_VERSION_1_4_DEPRECATED
+#		define GL_VERSION_1_5_DEPRECATED
+#		define GL_VERSION_2_0_DEPRECATED
+#		define GL_VERSION_2_1_DEPRECATED
+// ignore everything above 2.1
+#		define GL_VERSION_3_0
+#		define GL_VERSION_3_0_DEPRECATED
+#		define GL_VERSION_3_1
+#		define GL_VERSION_3_2
+#		define GL_VERSION_3_3
+#		define GL_VERSION_4_0
+#		define GL_VERSION_4_1
+#		define GL_VERSION_4_2
+#		include <gl/glext.h>
+#	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+
+#	define glVertexAttribDivisor glVertexAttribDivisorARB
+#	define glDrawArraysInstanced glDrawArraysInstancedARB
+#	define glDrawElementsInstanced glDrawElementsInstancedARB
 
 #	if BX_PLATFORM_WINDOWS
 #		undef BGFX_USE_WGL
 #		define BGFX_USE_WGL 1
 #	endif // BX_PLATFORM_
-
-// remove deprecated from glext.h
-#	define GL_VERSION_1_2_DEPRECATED
-#	define GL_ARB_imaging_DEPRECATED
-#	define GL_VERSION_1_3_DEPRECATED
-#	define GL_VERSION_1_4_DEPRECATED
-#	define GL_VERSION_1_5_DEPRECATED
-#	define GL_VERSION_2_0_DEPRECATED
-#	define GL_VERSION_2_1_DEPRECATED
-// ignore everything above 2.1
-#	define GL_VERSION_3_0
-#	define GL_VERSION_3_0_DEPRECATED
-#	define GL_VERSION_3_1
-#	define GL_VERSION_3_2
-#	define GL_VERSION_3_3
-#	define GL_VERSION_4_0
-#	define GL_VERSION_4_1
-#	define GL_VERSION_4_2
-#	include <gl/glext.h>
-#	define glVertexAttribDivisor glVertexAttribDivisorARB
-#	define glDrawArraysInstanced glDrawArraysInstancedARB
-#	define glDrawElementsInstanced glDrawElementsInstancedARB
-
-// http://developer.download.nvidia.com/opengl/specs/GL_NVX_gpu_memory_info.txt
-#	ifndef GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
-#		define GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX 0x9047
-#	endif // GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
-
-#	ifndef GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
-#		define GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX 0x9048
-#	endif // GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
-
-#	ifndef GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
-#		define GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX 0x9049
-#	endif // GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
-
-#	ifndef GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX
-#		define GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX 0x904A
-#	endif // GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX
-
-#	ifndef GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
-#		define GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX 0x904B
-#	endif // GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
 
 #elif BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
 #	if BGFX_CONFIG_RENDERER_OPENGLES2
@@ -109,6 +93,14 @@
 #	if BX_PLATFORM_EMSCRIPTEN
 #		include <emscripten/emscripten.h>
 #	endif // BX_PLATFORM_EMSCRIPTEN
+
+typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
+
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
+#	ifndef GL_LUMINANCE
+#		define GL_LUMINANCE 0x1909
+#	endif // GL_LUMINANCE
 
 #	ifndef GL_BGRA_EXT
 #		define GL_BGRA_EXT 0x80E1
@@ -154,9 +146,38 @@
 #		define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
 #	endif // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
 
-typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
+#	ifndef GL_VBO_FREE_MEMORY_ATI
+#		define GL_VBO_FREE_MEMORY_ATI 0x87FB
+#	endif // GL_VBO_FREE_MEMORY_ATI
 
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#	ifndef GL_TEXTURE_FREE_MEMORY_ATI
+#		define GL_TEXTURE_FREE_MEMORY_ATI 0x87FC
+#	endif // GL_TEXTURE_FREE_MEMORY_ATI
+
+#	ifndef GL_RENDERBUFFER_FREE_MEMORY_ATI
+#		define GL_RENDERBUFFER_FREE_MEMORY_ATI 0x87FD
+#	endif // GL_RENDERBUFFER_FREE_MEMORY_ATI
+
+// http://developer.download.nvidia.com/opengl/specs/GL_NVX_gpu_memory_info.txt
+#	ifndef GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
+#		define GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX 0x9047
+#	endif // GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
+
+#	ifndef GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+#		define GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX 0x9048
+#	endif // GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+
+#	ifndef GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
+#		define GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX 0x9049
+#	endif // GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
+
+#	ifndef GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX
+#		define GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX 0x904A
+#	endif // GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX
+
+#	ifndef GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
+#		define GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX 0x904B
+#	endif // GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
 
 #ifndef GL_RGBA16
 #	define GL_RGBA16 0x805B

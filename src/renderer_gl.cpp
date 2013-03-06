@@ -68,47 +68,47 @@ namespace bgfx
 
 	static Extension s_extension[Extension::Count] =
 	{
-		{ "GL_EXT_texture_filter_anisotropic",    false, true },
-		{ "GL_EXT_texture_format_BGRA8888",       false, true },
-		{ "GL_EXT_bgra",                          false, true },
-		{ "GL_EXT_texture_compression_s3tc",      false, true },
-		{ "GL_EXT_texture_compression_dxt1",      false, true },
-		{ "GL_CHROMIUM_texture_compression_dxt3", false, true },
-		{ "GL_CHROMIUM_texture_compression_dxt5", false, true },
-		{ "GL_EXT_texture_compression_latc",      false, true },
-		{ "GL_EXT_texture_compression_rgtc",      false, true },
-		{ "GL_ARB_texture_float",                 false, true },
-		{ "GL_OES_texture_float",                 false, true },
-		{ "GL_OES_texture_float_linear",          false, true },
-		{ "GL_OES_texture_half_float",            false, true },
-		{ "GL_OES_texture_half_float_linear",     false, true },
-		{ "GL_EXT_texture_type_2_10_10_10_REV",   false, true },
-		{ "GL_EXT_texture_sRGB",                  false, true },
-		{ "GL_ARB_texture_swizzle",               false, true },
-		{ "GL_EXT_texture_swizzle",               false, true },
-		{ "GL_ARB_texture_multisample",           false, true },
-		{ "GL_OES_standard_derivatives",          false, true },
-		{ "GL_ARB_get_program_binary",            false, true },
-		{ "GL_OES_get_program_binary",            false, false },
-		{ "GL_EXT_framebuffer_blit",              false, true },
-		{ "GL_ARB_timer_query",                   false, true },
-		{ "GL_EXT_timer_query",                   false, true },
-		{ "GL_ARB_framebuffer_sRGB",              false, true },
-		{ "GL_EXT_framebuffer_sRGB",              false, true },
-		{ "GL_ARB_multisample",                   false, true },
-		{ "GL_CHROMIUM_framebuffer_multisample",  false, true },
-		{ "GL_ANGLE_translated_shader_source",    false, true },
-		{ "GL_ARB_instanced_arrays",              false, true },
-		{ "GL_ANGLE_instanced_arrays",            false, true },
-		{ "GL_ARB_half_float_vertex",             false, true },
-		{ "GL_OES_vertex_half_float",             false, true },
-		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false, true },
-		{ "GL_OES_vertex_type_10_10_10_2",        false, true },
-		{ "GL_EXT_occlusion_query_boolean",       false, true },
-		{ "GL_ARB_vertex_array_object",           false, true },
-		{ "OES_vertex_array_object",              false, true },
-		{ "GL_ATI_meminfo",                       false, true },
-		{ "GL_NVX_gpu_memory_info",               false, true },
+		{ "GL_EXT_texture_filter_anisotropic",    false,                             true  },
+		{ "GL_EXT_texture_format_BGRA8888",       false,                             true  },
+		{ "GL_EXT_bgra",                          false,                             true  },
+		{ "GL_EXT_texture_compression_s3tc",      false,                             true  },
+		{ "GL_EXT_texture_compression_dxt1",      false,                             true  },
+		{ "GL_CHROMIUM_texture_compression_dxt3", false,                             true  },
+		{ "GL_CHROMIUM_texture_compression_dxt5", false,                             true  },
+		{ "GL_EXT_texture_compression_latc",      false,                             true  },
+		{ "GL_EXT_texture_compression_rgtc",      BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_texture_float",                 BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_OES_texture_float",                 false,                             true  },
+		{ "GL_OES_texture_float_linear",          false,                             true  },
+		{ "GL_OES_texture_half_float",            false,                             true  },
+		{ "GL_OES_texture_half_float_linear",     false,                             true  },
+		{ "GL_EXT_texture_type_2_10_10_10_REV",   false,                             true  },
+		{ "GL_EXT_texture_sRGB",                  false,                             true  },
+		{ "GL_ARB_texture_swizzle",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_EXT_texture_swizzle",               false,                             true  },
+		{ "GL_ARB_texture_multisample",           false,                             true  },
+		{ "GL_OES_standard_derivatives",          false,                             true  },
+		{ "GL_ARB_get_program_binary",            BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
+		{ "GL_OES_get_program_binary",            false,                             false },
+		{ "GL_EXT_framebuffer_blit",              BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_timer_query",                   false,                             true  },
+		{ "GL_EXT_timer_query",                   false,                             true  },
+		{ "GL_ARB_framebuffer_sRGB",              false,                             true  },
+		{ "GL_EXT_framebuffer_sRGB",              false,                             true  },
+		{ "GL_ARB_multisample",                   false,                             true  },
+		{ "GL_CHROMIUM_framebuffer_multisample",  false,                             true  },
+		{ "GL_ANGLE_translated_shader_source",    false,                             true  },
+		{ "GL_ARB_instanced_arrays",              BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_ANGLE_instanced_arrays",            false,                             true  },
+		{ "GL_ARB_half_float_vertex",             false,                             true  },
+		{ "GL_OES_vertex_half_float",             false,                             true  },
+		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false,                             true  },
+		{ "GL_OES_vertex_type_10_10_10_2",        false,                             true  },
+		{ "GL_EXT_occlusion_query_boolean",       false,                             true  },
+		{ "GL_ARB_vertex_array_object",           BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "OES_vertex_array_object",              false,                             true  },
+		{ "GL_ATI_meminfo",                       false,                             true  },
+		{ "GL_NVX_gpu_memory_info",               false,                             true  },
 	};
 
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
@@ -163,7 +163,7 @@ namespace bgfx
 			, m_maxAnisotropy(0.0f)
 			, m_maxMsaa(0)
 			, m_vao(0)
-			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 32)
+			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 31)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_flip(false)
@@ -1848,7 +1848,7 @@ namespace bgfx
 		GL_CHECK(glDisable(GL_CULL_FACE) );
 		GL_CHECK(glDisable(GL_BLEND) );
 		GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
-#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 32
+#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 31
 		GL_CHECK(glDisable(GL_ALPHA_TEST) );
 #endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL
 
@@ -2001,101 +2001,101 @@ namespace bgfx
 					BX_TRACE("\t%2d: %s", ii, s_extension[ii].m_name);
 				}
 			}
+		}
 
-			bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
-			s_textureFormat[TextureFormat::BC1].m_supported = bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
-			s_textureFormat[TextureFormat::BC2].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
-			s_textureFormat[TextureFormat::BC3].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
+		bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
+		s_textureFormat[TextureFormat::BC1].m_supported = bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
+		s_textureFormat[TextureFormat::BC2].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
+		s_textureFormat[TextureFormat::BC3].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
 
-			bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
-				|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported
-				;
-			s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
-			s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
+		bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
+			|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported
+			;
+		s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
+		s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
 
-			s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
-				|| s_extension[Extension::ARB_vertex_array_object].m_supported
-				|| s_extension[Extension::OES_vertex_array_object].m_supported
-				;
+		s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+			|| s_extension[Extension::ARB_vertex_array_object].m_supported
+			|| s_extension[Extension::OES_vertex_array_object].m_supported
+			;
 
-			s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
-				|| s_extension[Extension::ARB_get_program_binary].m_supported
-				|| s_extension[Extension::OES_get_program_binary].m_supported
-				;
+		s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+			|| s_extension[Extension::ARB_get_program_binary].m_supported
+			|| s_extension[Extension::OES_get_program_binary].m_supported
+			;
 
-			s_renderCtx.m_textureSwizzleSupport = false
-				|| s_extension[Extension::ARB_texture_swizzle].m_supported
-				|| s_extension[Extension::EXT_texture_swizzle].m_supported
-				;
+		s_renderCtx.m_textureSwizzleSupport = false
+			|| s_extension[Extension::ARB_texture_swizzle].m_supported
+			|| s_extension[Extension::EXT_texture_swizzle].m_supported
+			;
 
-			if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
-			{
-				GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy) );
-			}
+		if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
+		{
+			GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy) );
+		}
 
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-			if (s_extension[Extension::ARB_texture_multisample].m_supported)
-			{
-				GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &s_renderCtx.m_maxMsaa) );
-			}
+		if (s_extension[Extension::ARB_texture_multisample].m_supported)
+		{
+			GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &s_renderCtx.m_maxMsaa) );
+		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
-			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
-			||  s_extension[Extension::EXT_bgra].m_supported)
-			{
-				s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
-				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
+		if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
+		||  s_extension[Extension::EXT_bgra].m_supported)
+		{
+			s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
+			s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 
-				// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
-				// format to be BGRA but internal format to stay RGBA, but 
-				// EXT_texture_format_BGRA8888 wants both format and internal
-				// format to be BGRA.
-				//
-				// Reference:
-				// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
-				// https://www.opengl.org/registry/specs/EXT/bgra.txt
-				if (!s_extension[Extension::EXT_bgra].m_supported)
-				{
-					s_textureFormat[TextureFormat::BGRX8].m_internalFmt = GL_BGRA_EXT;
-					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA_EXT;
-				}
-			}
-
-			if (s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
+			// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
+			// format to be BGRA but internal format to stay RGBA, but 
+			// EXT_texture_format_BGRA8888 wants both format and internal
+			// format to be BGRA.
+			//
+			// Reference:
+			// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
+			// https://www.opengl.org/registry/specs/EXT/bgra.txt
+			if (!s_extension[Extension::EXT_bgra].m_supported)
 			{
-				s_textureFormat[TextureFormat::BC4].m_fmt = GL_COMPRESSED_RED_RGTC1_EXT;
-				s_textureFormat[TextureFormat::BC4].m_internalFmt = GL_COMPRESSED_RED_RGTC1_EXT;
-				s_textureFormat[TextureFormat::BC5].m_fmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
-				s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+				s_textureFormat[TextureFormat::BGRX8].m_internalFmt = GL_BGRA_EXT;
+				s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA_EXT;
 			}
+		}
+
+		if (s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
+		{
+			s_textureFormat[TextureFormat::BC4].m_fmt = GL_COMPRESSED_RED_RGTC1_EXT;
+			s_textureFormat[TextureFormat::BC4].m_internalFmt = GL_COMPRESSED_RED_RGTC1_EXT;
+			s_textureFormat[TextureFormat::BC5].m_fmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+			s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+		}
 
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
-			if (NULL != glVertexAttribDivisor
-			&&  NULL != glDrawArraysInstanced
-			&&  NULL != glDrawElementsInstanced)
-			{
-				s_vertexAttribDivisor = glVertexAttribDivisor;
-				s_drawArraysInstanced = glDrawArraysInstanced;
-				s_drawElementsInstanced = glDrawElementsInstanced;
-			}
-			else
-			{
-				s_vertexAttribDivisor = stubVertexAttribDivisor;
-				s_drawArraysInstanced = stubDrawArraysInstanced;
-				s_drawElementsInstanced = stubDrawElementsInstanced;
-			}
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES3
+		if (NULL != glVertexAttribDivisor
+		&&  NULL != glDrawArraysInstanced
+		&&  NULL != glDrawElementsInstanced)
+		{
+			s_vertexAttribDivisor = glVertexAttribDivisor;
+			s_drawArraysInstanced = glDrawArraysInstanced;
+			s_drawElementsInstanced = glDrawElementsInstanced;
 		}
+		else
+		{
+			s_vertexAttribDivisor = stubVertexAttribDivisor;
+			s_drawArraysInstanced = stubDrawArraysInstanced;
+			s_drawElementsInstanced = stubDrawElementsInstanced;
+		}
+#endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 
 		if (s_renderCtx.m_vaoSupport)
 		{
 			GL_CHECK(glGenVertexArrays(1, &s_renderCtx.m_vao) );
 		}
 
-#if BGFX_CONFIG_RENDERER_OPENGL >= 32
+#if BGFX_CONFIG_RENDERER_OPENGL >= 31
 		s_textureFormat[TextureFormat::L8].m_internalFmt = GL_R8;
 		s_textureFormat[TextureFormat::L8].m_fmt         = GL_RED;
-#endif // BGFX_CONFIG_RENDERER_OPENGL >= 32
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 	}
 
 	void Context::rendererShutdown()
@@ -2500,7 +2500,7 @@ namespace bgfx
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						alphaRef = ref/255.0f;
 
-#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 32
+#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 31
 						if (BGFX_STATE_ALPHA_TEST & newFlags)
 						{
 							GL_CHECK(glEnable(GL_ALPHA_TEST) );
@@ -2509,7 +2509,7 @@ namespace bgfx
 						{
 							GL_CHECK(glDisable(GL_ALPHA_TEST) );
 						}
-#endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 32
+#endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 31
 					}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
