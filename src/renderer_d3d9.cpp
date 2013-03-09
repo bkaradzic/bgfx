@@ -2345,12 +2345,10 @@ namespace bgfx
 						}
 					}
 
-					if ( (BGFX_STATE_ALPHA_TEST|BGFX_STATE_ALPHA_REF_MASK) & changedFlags)
+					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						alphaRef = ref/255.0f;
-						DX_CHECK(device->SetRenderState(D3DRS_ALPHAREF, ref) );
-						DX_CHECK(device->SetRenderState(D3DRS_ALPHATESTENABLE, !!(BGFX_STATE_ALPHA_TEST & newFlags) ) );
 					}
 
 					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)

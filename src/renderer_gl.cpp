@@ -1848,9 +1848,6 @@ namespace bgfx
 		GL_CHECK(glDisable(GL_CULL_FACE) );
 		GL_CHECK(glDisable(GL_BLEND) );
 		GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
-#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 31
-		GL_CHECK(glDisable(GL_ALPHA_TEST) );
-#endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL
 
 		Program& program = s_renderCtx.m_program[m_program.idx];
 		GL_CHECK(glUseProgram(program.m_id) );
@@ -2495,21 +2492,10 @@ namespace bgfx
 						}
 					}
 
-					if ( (BGFX_STATE_ALPHA_TEST|BGFX_STATE_ALPHA_REF_MASK) & changedFlags)
+					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						alphaRef = ref/255.0f;
-
-#if BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 31
-						if (BGFX_STATE_ALPHA_TEST & newFlags)
-						{
-							GL_CHECK(glEnable(GL_ALPHA_TEST) );
-						}
-						else
-						{
-							GL_CHECK(glDisable(GL_ALPHA_TEST) );
-						}
-#endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGL < 31
 					}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
