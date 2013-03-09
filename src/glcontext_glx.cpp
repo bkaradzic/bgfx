@@ -112,6 +112,7 @@ namespace bgfx
 
 		XFree(visualInfo);
 
+#if BGFX_CONFIG_RENDERER_OPENGL >= 31
 		typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
 		if (NULL != glXCreateContextAttribsARB)
@@ -133,6 +134,9 @@ namespace bgfx
 				m_context = context;
 			}
 		}
+#else
+		BX_UNUSED(bestConfig);
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
 		XUnlockDisplay(s_display);
 
