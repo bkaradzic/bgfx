@@ -945,6 +945,7 @@ namespace bgfx
 		{
 			m_constantBuffer = ConstantBuffer::create(BGFX_CONFIG_MAX_CONSTANT_BUFFER_SIZE);
 			reset();
+			finish();
 			m_textVideoMem = new TextVideoMem;
 		}
 
@@ -1310,8 +1311,22 @@ namespace bgfx
 	{
 		VertexDeclRef()
 		{
+		}
+
+		void init()
+		{
 			memset(m_vertexDeclRef, 0, sizeof(m_vertexDeclRef) );
 			memset(m_vertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
+		}
+
+		void shutdown(HandleAlloc& _handleAlloc)
+		{
+			for (VertexDeclMap::iterator it = m_vertexDeclMap.begin(), itEnd = m_vertexDeclMap.end(); it != itEnd; ++it)
+			{
+				_handleAlloc.free(it->second.idx);
+			}
+
+			m_vertexDeclMap.clear();
 		}
 
 		VertexDeclHandle find(uint32_t _hash)
@@ -1502,7 +1517,11 @@ namespace bgfx
 		{
 			// wait for render thread to finish
 			renderSemWait();
+			frameNoRenderWait();
+		}
 
+		void frameNoRenderWait()
+		{
 			swap();
 
 			// release render thread
@@ -2523,6 +2542,7 @@ namespace bgfx
 				{
 				case CommandBuffer::RendererInit:
 					{
+						BX_CHECK(!m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
 						rendererInit();
 						m_rendererInitialized = true;
 					}
@@ -2530,12 +2550,14 @@ namespace bgfx
 
 				case CommandBuffer::RendererShutdownBegin:
 					{
+						BX_CHECK(m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
 						m_rendererInitialized = false;
 					}
 					break;
 
 				case CommandBuffer::RendererShutdownEnd:
 					{
+						BX_CHECK(!m_rendererInitialized && !m_exit, "This shouldn't happen! Bad synchronization?");
 						rendererShutdown();
 						m_exit = true;
 					}

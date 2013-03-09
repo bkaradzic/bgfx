@@ -681,7 +681,14 @@ namespace bgfx
 
 	void Context::init(bool _createRenderThread)
 	{
+		BX_CHECK(!m_rendererInitialized, "Already initialized?");
 		BX_TRACE("init");
+
+		m_exit = false;
+		m_frames = 0;
+		m_render = &m_frame[0];
+		m_submit = &m_frame[1];
+		m_debug = BGFX_DEBUG_NONE;
 
 		m_submit->create();
 		m_render->create();
@@ -707,7 +714,9 @@ namespace bgfx
 			m_rect[ii].m_height = 1;
 		}
 
-		gameSemPost();
+		m_declRef.init();
+
+		frameNoRenderWait();
 
 		getCommandBuffer(CommandBuffer::RendererInit);
 
@@ -742,12 +751,16 @@ namespace bgfx
 		getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 		frame();
 
+		m_declRef.shutdown(m_vertexDeclHandle);
+
 #if BGFX_CONFIG_MULTITHREADED
 		if (m_thread.isRunning() )
 		{
 			m_thread.shutdown();
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
+
+		renderSemWait();
 
 		m_submit->destroy();
 		m_render->destroy();
