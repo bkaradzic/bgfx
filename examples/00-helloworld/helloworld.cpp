@@ -16,7 +16,6 @@ int _main_(int _argc, char** _argv)
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_NONE;
 
-	// Now init for real example.
 	bgfx::init();
 	bgfx::reset(width, height);
 
