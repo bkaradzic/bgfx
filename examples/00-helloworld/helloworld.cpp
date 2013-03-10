@@ -16,12 +16,6 @@ int _main_(int _argc, char** _argv)
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_NONE;
 
-	// It's possible to call init/shutdown sequence multiple times inside
-	// the same application if it is necessary. State created between one
-	// init and shutdown doesn't carry over to another.
-	bgfx::init();
-	bgfx::shutdown();
-
 	// Now init for real example.
 	bgfx::init();
 	bgfx::reset(width, height);
