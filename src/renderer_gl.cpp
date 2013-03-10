@@ -415,7 +415,10 @@ namespace bgfx
 			m_queries.destroy();
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
+			destroyMsaaFbo();
 			m_glctx.destroy();
+
+			m_flip = false;
 		}
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
