@@ -108,6 +108,11 @@ Configuration is `<platform>-<debug/release><32/64>`. For example:
 Examples
 --------
 
+Most of the examples require shader/texture/mesh data to be loaded. When running
+examples your current directory should be examples/runtime.
+
+	.../examples/runtime $ ../../.build/<config>/bin/example-00-helloworldDebug
+
 ### 00-helloworld
 Initialization and debug text.
 
