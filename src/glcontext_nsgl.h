@@ -13,7 +13,7 @@ namespace bgfx
 	struct GlContext
 	{
 		GlContext()
-        : m_context(0)
+			: m_context(0)
 		{
 		}
         
