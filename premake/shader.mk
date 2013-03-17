@@ -3,14 +3,19 @@
 # License: http://www.opensource.org/licenses/BSD-2-Clause
 #
 
+ifndef VERBOSE
+SILENT = @
+endif
+
 ifndef TARGET
 .PHONY: all
-all:;@echo Usage: make TARGET=# [clean]
-	@echo 	TARGET=0 (hlsl - dx9)
-	@echo 	TARGET=1 (hlsl - dx11)
-	@echo 	TARGET=2 (glsl - nacl)
-	@echo 	TARGET=3 (glsl - android)
-	@echo 	TARGET=4 (glsl - linux)
+all:;@echo Usage: make TARGET=# [clean, all, rebuild]
+	@echo "  TARGET=0 (hlsl - dx9)"
+	@echo "  TARGET=1 (hlsl - dx11)"
+	@echo "  TARGET=2 (glsl - nacl)"
+	@echo "  TARGET=3 (glsl - android)"
+	@echo "  TARGET=4 (glsl - linux)"
+	@echo "  VERBOSE=1 show build commands."
 else
 SHADERC="$(BGFX_DIR)/tools/bin/shaderc"
 
@@ -70,13 +75,13 @@ ASM = $(VS_ASM) $(FS_ASM)
 
 $(BUILD_INTERMEDIATE_DIR)/vs_%.bin : vs_%.sc
 	@echo [$(<)]
-	@$(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<) --disasm
-	@cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
+	$(SILENT) $(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<) --disasm
+	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 $(BUILD_INTERMEDIATE_DIR)/fs_%.bin : fs_%.sc
 	@echo [$(<)]
-	@$(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
-	@cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
+	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
+	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 .PHONY: all
 all: dirs $(BIN)
