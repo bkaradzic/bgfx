@@ -18,7 +18,6 @@
 #			define GL_PROTOTYPES
 #			define GL_GLEXT_LEGACY
 #			include <GL/gl.h>
-#			include <GL/glx.h>
 #			undef GL_PROTOTYPES
 #		elif BX_PLATFORM_OSX
 #			define GL_GLEXT_LEGACY

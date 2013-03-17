@@ -9,6 +9,7 @@
 #if BX_PLATFORM_LINUX
 
 #	include <X11/Xlib.h>
+#	include <GL/glx.h>
 
 namespace bgfx
 {
