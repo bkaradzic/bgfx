@@ -397,3 +397,9 @@ ir_if::accept(ir_hierarchical_visitor *v)
 
    return v->visit_leave(this);
 }
+
+ir_visitor_status
+ir_precision_statement::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}

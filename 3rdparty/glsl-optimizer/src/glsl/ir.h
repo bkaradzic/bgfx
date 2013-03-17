@@ -80,6 +80,7 @@ enum ir_node_type {
    ir_type_return,
    ir_type_swizzle,
    ir_type_texture,
+   ir_type_precision,
    ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
@@ -1812,6 +1813,32 @@ private:
     */
    ir_constant(void);
 };
+
+
+class ir_precision_statement : public ir_instruction {
+public:
+   ir_precision_statement(const char *statement_to_store)
+   {
+	   ir_type = ir_type_precision;
+	   precision_statement = statement_to_store;
+   }
+
+   virtual ir_precision_statement *clone(void *mem_ctx, struct hash_table *) const;
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   /**
+    * Precision statement
+    */
+   const char *precision_statement;
+};
+
+
 
 /*@}*/
 

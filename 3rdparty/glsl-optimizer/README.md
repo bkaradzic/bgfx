@@ -23,7 +23,7 @@ GLSL Optimizer is licensed according to the terms of the MIT license.
 Usage
 -----
 
-Visual Studio 2008 (Windows, x86) and Xcode 3.2 (Mac, i386) project files for a static
+Visual Studio 2008 (Windows, x86) and Xcode 4.5+ (Mac, i386) project files for a static
 library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
 respectively.
 

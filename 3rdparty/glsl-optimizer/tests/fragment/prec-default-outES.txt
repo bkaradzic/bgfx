@@ -1,0 +1,25 @@
+precision lowp int;
+precision highp float;
+uniform int im;
+uniform int il2;
+uniform int il1;
+uniform mediump float fm;
+uniform highp float fh2;
+uniform float fh1;
+void main ()
+{
+  int i_1;
+  lowp float f_2;
+  highp float tmpvar_3;
+  tmpvar_3 = ((fh1 + fh2) + fm);
+  f_2 = tmpvar_3;
+  int tmpvar_4;
+  tmpvar_4 = ((il1 + il2) + im);
+  i_1 = tmpvar_4;
+  highp vec4 tmpvar_5;
+  tmpvar_5.zw = vec2(0.0, 0.0);
+  tmpvar_5.x = f_2;
+  tmpvar_5.y = float(i_1);
+  gl_FragColor = tmpvar_5;
+}
+

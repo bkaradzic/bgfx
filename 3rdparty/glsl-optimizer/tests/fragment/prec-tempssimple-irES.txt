@@ -1,6 +1,6 @@
 varying mediump vec2 var_mediump;
 varying lowp vec2 var_lowp;
-uniform sampler2D tex_highp;
+uniform highp sampler2D tex_highp;
 uniform sampler2D tex_lowp;
 uniform sampler2D tex_def;
 void main ()

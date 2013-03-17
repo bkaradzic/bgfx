@@ -875,6 +875,9 @@ move_non_declarations(exec_list *instructions, exec_node *last,
 
       if (inst->as_function())
 	 continue;
+	   
+      if (inst->ir_type == ir_type_precision)
+         continue;
 
       ir_variable *var = inst->as_variable();
       if ((var != NULL) && (var->mode != ir_var_temporary))
@@ -1071,8 +1074,8 @@ link_intrastage_shaders(void *mem_ctx,
     */
    ir_function_signature *const main_sig = get_main_function_signature(linked);
 
-   /* Move any instructions other than variable declarations or function
-    * declarations into main.
+   /* Move any instructions other than variable declarations, function
+    * declarations or precision statements into main.
     */
    exec_node *insertion_point =
       move_non_declarations(linked->ir, (exec_node *) &main_sig->body, false,

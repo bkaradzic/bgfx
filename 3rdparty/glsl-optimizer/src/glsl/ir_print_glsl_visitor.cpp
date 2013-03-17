@@ -113,7 +113,8 @@ public:
 	virtual void visit(ir_if *);
 	virtual void visit(ir_loop *);
 	virtual void visit(ir_loop_jump *);
-
+	virtual void visit(ir_precision_statement *);
+	
 	int indentation;
 	char* buffer;
 	global_print_tracker* globals;
@@ -139,6 +140,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			ralloc_strcat (&buffer, "#extension GL_OES_standard_derivatives : enable\n");
 		if (state->EXT_shadow_samplers_enable)
 			ralloc_strcat (&buffer, "#extension GL_EXT_shadow_samplers : enable\n");
+		if (state->EXT_frag_depth_enable)
+			ralloc_strcat (&buffer, "#extension GL_EXT_frag_depth : enable\n");
 	}
    if (state) {
 	   ir_struct_usage_visitor v;
@@ -173,7 +176,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
       ir_instruction *ir = (ir_instruction *)iter.get();
 	  if (ir->ir_type == ir_type_variable) {
 		ir_variable *var = static_cast<ir_variable*>(ir);
-		if (strstr(var->name, "gl_") == var->name)
+		if ((strstr(var->name, "gl_") == var->name)
+			  && !var->invariant)
 			continue;
 	  }
 
@@ -219,9 +223,23 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 {
 	if (!this->use_precision)
 		return;
-	if (type && !type->is_float() && (!type->is_array() || !type->element_type()->is_float()))
+	if (type &&
+		!type->is_float() &&
+		!type->is_sampler() &&
+		(!type->is_array() || !type->element_type()->is_float())
+	)
+	{
 		return;
+	}
 	glsl_precision prec = precision_from_ir(ir);
+	
+	// skip precision for samplers that end up being lowp (default anyway) or undefined
+	if (type && type->is_sampler())
+	{
+		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
+			return;
+	}
+	
 	if (prec == glsl_precision_high || prec == glsl_precision_undefined)
 	{
 		if (ir->ir_type == ir_type_function_signature)
@@ -288,6 +306,13 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
      }
    }
 
+   // keep invariant declaration for builtin variables
+   if (strstr(ir->name, "gl_") == ir->name) {
+      ralloc_asprintf_append (&buffer, "%s", inv);
+      print_var_name (ir);
+      return;
+   }
+	
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
 	  cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
    print_precision (ir, ir->type);
@@ -582,19 +607,30 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		sampler_uv_dim = 3;
 	const bool is_proj = (uv_dim > sampler_uv_dim);
 	
-	// texture function name
-	ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
-	ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
+    // texture function name
+    //ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
+    if(state->language_version<130) 
+    {
+        ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
+        ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
+    }
+    else 
+    {
+        ralloc_asprintf_append (&buffer, "texture");
+    }
 	
 	if (is_proj)
 		ralloc_asprintf_append (&buffer, "Proj");
 	if (ir->op == ir_txl)
 		ralloc_asprintf_append (&buffer, "Lod");
 	
-	if (is_shadow)
+	if (state->es_shader)
 	{
-		if (state->EXT_shadow_samplers_enable && state->es_shader)
+		if ( (is_shadow && state->EXT_shadow_samplers_enable) ||
+			(ir->op == ir_txl && state->EXT_shader_texture_lod_enable) )
+		{
 			ralloc_asprintf_append (&buffer, "EXT");
+		}
 	}
 	
 	ralloc_asprintf_append (&buffer, " (");
@@ -1072,4 +1108,10 @@ void
 ir_print_glsl_visitor::visit(ir_loop_jump *ir)
 {
    ralloc_asprintf_append (&buffer, "%s", ir->is_break() ? "break" : "continue");
+}
+
+void
+ir_print_glsl_visitor::visit(ir_precision_statement *ir)
+{
+	ralloc_asprintf_append (&buffer, "%s", ir->precision_statement);
 }

@@ -1,0 +1,19 @@
+// Used to expose bugs in constant variable optimization,
+// when variables were deemed constant not taking into
+// account branches or previous dereferences of them.
+
+uniform float mode;
+float func (float c) {
+    if (mode == 2.0)
+        return c;
+    if (mode == 3.0)
+    	discard;
+    if (mode == 10.0)
+        c = 0.1;
+    return c;
+}
+void main() {
+    vec4 c = gl_FragCoord;
+    c.x = func(c.x);
+    gl_FragColor = c;
+}

@@ -14474,6 +14474,25 @@ static const char *functions_for_EXT_shadow_samplers_frag [] = {
    builtin_shadow2DEXT,
    builtin_shadow2DProjEXT,
 };
+static const char prototypes_for_EXT_shadow_samplers_vert[] =
+   "(\n"
+   "(function shadow2DEXT\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 coord))\n"
+   "    ()))\n"
+   "(function shadow2DProjEXT\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 coord))\n"
+   "    ())))"
+;
+static const char *functions_for_EXT_shadow_samplers_vert [] = {
+   builtin_shadow2DEXT,
+   builtin_shadow2DProjEXT,
+};
 static const char prototypes_for_EXT_texture_array_frag[] =
    "(\n"
    "(function texture1DArray\n"
@@ -14731,7 +14750,7 @@ static const char *functions_for_OES_texture_3D_vert [] = {
    builtin_texture3DProj,
    builtin_texture3DProjLod,
 };
-static gl_shader *builtin_profiles[27];
+static gl_shader *builtin_profiles[28];
 
 static void *builtin_mem_ctx = NULL;
 
@@ -14921,43 +14940,50 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
                          Elements(functions_for_EXT_shadow_samplers_frag));
    }
 
-   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+   if (state->target == vertex_shader && state->EXT_shadow_samplers_enable) {
       _mesa_read_profile(state, 21,
+                         prototypes_for_EXT_shadow_samplers_vert,
+                         functions_for_EXT_shadow_samplers_vert,
+                         Elements(functions_for_EXT_shadow_samplers_vert));
+   }
+
+   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+      _mesa_read_profile(state, 22,
                          prototypes_for_EXT_texture_array_frag,
                          functions_for_EXT_texture_array_frag,
                          Elements(functions_for_EXT_texture_array_frag));
    }
 
    if (state->target == vertex_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, 22,
+      _mesa_read_profile(state, 23,
                          prototypes_for_EXT_texture_array_vert,
                          functions_for_EXT_texture_array_vert,
                          Elements(functions_for_EXT_texture_array_vert));
    }
 
    if (state->OES_EGL_image_external_enable) {
-      _mesa_read_profile(state, 23,
+      _mesa_read_profile(state, 24,
                          prototypes_for_OES_EGL_image_external_glsl,
                          functions_for_OES_EGL_image_external_glsl,
                          Elements(functions_for_OES_EGL_image_external_glsl));
    }
 
    if (state->target == fragment_shader && state->OES_standard_derivatives_enable) {
-      _mesa_read_profile(state, 24,
+      _mesa_read_profile(state, 25,
                          prototypes_for_OES_standard_derivatives_frag,
                          functions_for_OES_standard_derivatives_frag,
                          Elements(functions_for_OES_standard_derivatives_frag));
    }
 
    if (state->target == fragment_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 25,
+      _mesa_read_profile(state, 26,
                          prototypes_for_OES_texture_3D_frag,
                          functions_for_OES_texture_3D_frag,
                          Elements(functions_for_OES_texture_3D_frag));
    }
 
    if (state->target == vertex_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 26,
+      _mesa_read_profile(state, 27,
                          prototypes_for_OES_texture_3D_vert,
                          functions_for_OES_texture_3D_vert,
                          Elements(functions_for_OES_texture_3D_vert));

@@ -62,6 +62,7 @@ public:
    virtual void visit(class ir_if *) = 0;
    virtual void visit(class ir_loop *) = 0;
    virtual void visit(class ir_loop_jump *) = 0;
+   virtual void visit(class ir_precision_statement *) = 0;
    /*@}*/
 };
 

@@ -191,6 +191,8 @@ struct _mesa_glsl_parse_state {
    bool EXT_shader_texture_lod_warn;
    bool EXT_shadow_samplers_enable;
    bool EXT_shadow_samplers_warn;
+   bool EXT_frag_depth_enable;
+   bool EXT_frag_depth_warn;
    bool ARB_shader_stencil_export_enable;
    bool ARB_shader_stencil_export_warn;
    bool AMD_conservative_depth_enable;

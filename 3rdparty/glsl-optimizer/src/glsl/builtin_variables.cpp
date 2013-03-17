@@ -812,6 +812,11 @@ generate_100ES_fs_variables(exec_list *instructions,
       add_builtin_variable(instructions, state->symbols,
 			   & builtin_100ES_fs_variables[i], state->es_shader);
    }
+	
+	if (state->EXT_frag_depth_enable) {
+		const builtin_variable fragDepthEXT = { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepthEXT", glsl_precision_high };
+		add_builtin_variable(instructions, state->symbols, &fragDepthEXT, state->es_shader);
+	}
 
    generate_100ES_uniforms(instructions, state);
 

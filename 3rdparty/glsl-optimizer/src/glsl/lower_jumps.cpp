@@ -440,6 +440,11 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
        */
       (void) ir;
    }
+	
+   virtual void visit(class ir_precision_statement * ir)
+   {
+      /* Nothing needs to be done. */
+   }	
 
    enum jump_strength get_jump_strength(ir_instruction* ir)
    {
@@ -1002,10 +1007,12 @@ do_lower_jumps(exec_list *instructions, bool pull_out_jumps, bool lower_sub_retu
    v.lower_sub_return = lower_sub_return;
    v.lower_main_return = lower_main_return;
 
+   bool progress_ever = false;
    do {
       v.progress = false;
       visit_exec_list(instructions, &v);
+      progress_ever = v.progress || progress_ever;
    } while (v.progress);
 
-   return v.progress;
+   return progress_ever;
 }

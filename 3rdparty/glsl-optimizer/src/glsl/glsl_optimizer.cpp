@@ -31,6 +31,7 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    {
 	   ctx->Extensions.OES_standard_derivatives = GL_TRUE;
 	   ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
+	   ctx->Extensions.EXT_frag_depth = GL_TRUE;
    }
 
    ctx->Const.GLSLVersion = 140;
@@ -137,7 +138,7 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 	printf("**** %s:\n", name);
 	//_mesa_print_ir (ir, state);
 	char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
-	printf(foobar);
+	printf("%s\n", foobar);
 	validate_ir_tree(ir);
 	#endif
 }
@@ -363,13 +364,15 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	memcpy(shader->shader->builtins_to_link, state->builtins_to_link, sizeof(shader->shader->builtins_to_link[0]) * state->num_builtins_to_link);
 	shader->shader->num_builtins_to_link = state->num_builtins_to_link;
 	
+	struct gl_shader* linked_shader = 0;
+
 	if (!state->error && !ir->is_empty())
 	{
-		struct gl_shader* linked_shader = link_intrastage_shaders(ctx->mem_ctx,
-																  &ctx->mesa_ctx,
-																  shader->whole_program,
-																  shader->whole_program->Shaders,
-																  shader->whole_program->NumShaders);
+		linked_shader = link_intrastage_shaders(ctx->mem_ctx,
+												&ctx->mesa_ctx,
+												shader->whole_program,
+												shader->whole_program->Shaders,
+												shader->whole_program->NumShaders);
 		if (!linked_shader)
 		{
 			shader->status = false;
@@ -400,6 +403,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	ralloc_free (ir);
 	ralloc_free (state);
+
+	if (linked_shader)
+		ralloc_free(linked_shader);
 
 	return shader;
 }

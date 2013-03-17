@@ -1,4 +1,4 @@
-#extension GL_ARB_shader_texture_lod : enable
+#extension GL_EXT_shader_texture_lod : enable
 varying highp vec4 xlv_TEXCOORD0;
 uniform sampler2D tex;
 vec4 xll_tex2Dlod (
@@ -7,7 +7,7 @@ vec4 xll_tex2Dlod (
 )
 {
   lowp vec4 tmpvar_3;
-  tmpvar_3 = texture2DLod (s_1, coord_2.xy, coord_2.w);
+  tmpvar_3 = texture2DLodEXT (s_1, coord_2.xy, coord_2.w);
   return tmpvar_3;
 }
 

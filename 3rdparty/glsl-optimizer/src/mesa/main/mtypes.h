@@ -1145,6 +1145,7 @@ struct gl_extensions
    GLboolean EXT_vertex_array_bgra;
    GLboolean OES_standard_derivatives;
    GLboolean EXT_shadow_samplers;
+   GLboolean EXT_frag_depth;
    /* vendor extensions */
    GLboolean AMD_seamless_cubemap_per_texture;
    GLboolean APPLE_packed_pixels;

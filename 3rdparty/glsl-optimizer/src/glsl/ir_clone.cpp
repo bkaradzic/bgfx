@@ -155,7 +155,14 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
       new_loop->to = this->to->clone(mem_ctx, ht);
    if (this->increment)
       new_loop->increment = this->increment->clone(mem_ctx, ht);
-   new_loop->counter = counter;
+
+   if (ht) {
+	   new_loop->counter = (ir_variable *)hash_table_find(ht, this->counter);
+	   if (!new_loop->counter)
+		   new_loop->counter = this->counter;
+   } else {
+	   new_loop->counter = this->counter;
+   }
 
    foreach_iter(exec_list_iterator, iter, this->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -386,6 +393,14 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
       return NULL;
    }
 }
+
+
+ir_precision_statement *
+ir_precision_statement::clone(void *mem_ctx, struct hash_table *ht) const
+{
+   return new(mem_ctx) ir_precision_statement(this->precision_statement);
+}
+
 
 
 class fixup_ir_call_visitor : public ir_hierarchical_visitor {

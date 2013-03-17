@@ -2984,8 +2984,15 @@ ast_declarator_list::hir(exec_list *instructions,
 	  * but otherwise we run into trouble if a function is prototyped, a
 	  * global var is decled, then the function is defined with usage of
 	  * the global var.  See glslparsertest's CorrectModule.frag.
+	  * However, do not insert declarations before default precision statements.
 	  */
-	 instructions->push_head(var);
+	 exec_node* before_node = instructions->head;
+	 while (before_node && ((ir_instruction*)before_node)->ir_type == ir_type_precision)
+	    before_node = before_node->next;
+	 if (before_node)
+	    before_node->insert_before(var);
+	 else
+	    instructions->push_head(var);
       }
 
       instructions->append_list(&initializer_instructions);
@@ -3943,7 +3950,22 @@ ast_type_specifier::hir(exec_list *instructions,
          return NULL;
       }
 
-      /* FINISHME: Translate precision statements into IR. */
+      {
+         void *ctx = state;
+
+         const char* precision_type = NULL;
+         switch (this->precision) {
+         case glsl_precision_high:		precision_type = "highp"; break;
+         case glsl_precision_medium:		precision_type = "mediump"; break;
+         case glsl_precision_low:		precision_type = "lowp"; break;
+         case glsl_precision_undefined:	precision_type = ""; break;
+         }
+         char* precision_statement = ralloc_asprintf(ctx, "precision %s %s", precision_type, this->type_name);
+
+         ir_precision_statement *const stmt = new(ctx) ir_precision_statement(precision_statement);
+		  
+         instructions->push_head(stmt);
+      }
       return NULL;
    }
 

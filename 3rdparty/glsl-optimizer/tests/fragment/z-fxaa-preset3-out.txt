@@ -19,9 +19,6 @@ void main ()
   float lengthSign_12;
   float lumaS_13;
   float lumaN_14;
-  doneN_5 = bool(0);
-  doneP_4 = bool(0);
-  i_3 = 0;
   vec4 tmpvar_15;
   tmpvar_15.zw = vec2(0.0, 0.0);
   tmpvar_15.xy = (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy));
@@ -163,12 +160,12 @@ void main ()
     offNP_8 = tmpvar_54;
     lumaEndN_7 = lumaN_14;
     lumaEndP_6 = lumaN_14;
+    doneN_5 = bool(0);
+    doneP_4 = bool(0);
     posN_10 = (posN_10 + (tmpvar_54 * vec2(-1.0, -1.0)));
     posP_9 = (posP_9 + tmpvar_54);
-    while (true) {
-      if ((i_3 >= 16)) {
-        break;
-      };
+    i_3 = 0;
+    for (int i_3 = 0; i_3 < 16; ) {
       if (!(doneN_5)) {
         vec4 tmpvar_57;
         tmpvar_57 = texture2DLod (_MainTex, posN_10, 0.0);

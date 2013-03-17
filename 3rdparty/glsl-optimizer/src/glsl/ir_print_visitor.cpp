@@ -514,3 +514,9 @@ ir_print_visitor::visit(ir_loop_jump *ir)
 {
    printf("%s", ir->is_break() ? "break" : "continue");
 }
+
+void
+ir_print_visitor::visit(ir_precision_statement *ir)
+{
+	printf("%s", ir->precision_statement);
+}
