@@ -171,7 +171,7 @@ static void propagate_precision_expr(ir_instruction *ir, void *data)
 		return;
 	
 	glsl_precision prec_params_max = glsl_precision_undefined;
-	for (int i = 0; i < expr->get_num_operands(); ++i)
+	for (int i = 0; i < (int)expr->get_num_operands(); ++i)
 	{
 		ir_rvalue* op = expr->operands[i];
 		if (op && op->get_precision() != glsl_precision_undefined)
@@ -317,7 +317,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 {
 	glslopt_shader* shader = new (ctx->mem_ctx) glslopt_shader ();
 
-	PrintGlslMode printMode;
+	PrintGlslMode printMode = kPrintGlslVertex;
 	switch (type) {
 	case kGlslOptShaderVertex: shader->shader->Type = GL_VERTEX_SHADER; printMode = kPrintGlslVertex; break;
 	case kGlslOptShaderFragment: shader->shader->Type = GL_FRAGMENT_SHADER; printMode = kPrintGlslFragment; break;

@@ -227,6 +227,9 @@ ir_visitor_status
 ir_validate::visit_leave(ir_expression *ir)
 {
    switch (ir->operation) {
+   case ir_ternop_clamp:
+   case ir_ternop_mix:
+       break;
    case ir_unop_bit_not:
       assert(ir->operands[0]->type == ir->type);
       break;
