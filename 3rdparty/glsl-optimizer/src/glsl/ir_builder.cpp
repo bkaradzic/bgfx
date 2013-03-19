@@ -81,7 +81,7 @@ swizzle_for_size(operand a, int components)
 {
    void *mem_ctx = ralloc_parent(a.val);
 
-   if (a.val->type->vector_elements < components)
+   if ((int)a.val->type->vector_elements < components)
       components = a.val->type->vector_elements;
 
    unsigned s[4] = { 0, 1, 2, 3 };

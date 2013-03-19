@@ -87,7 +87,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
    this->ubo_var = &block->Uniforms[var->location];
    ir_rvalue *offset = new(mem_ctx) ir_constant(0u);
    unsigned const_offset = 0;
-   bool row_major = ubo_var->RowMajor;
+   bool row_major = !!ubo_var->RowMajor;
 
    /* Calculate the offset to the start of the region of the UBO
     * dereferenced by *rvalue.  This may be a variable offset if an
@@ -218,18 +218,18 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 
 	 field_offset =
 	    align(field_offset,
-		  field->type->std140_base_alignment(ubo_var->RowMajor));
+		  field->type->std140_base_alignment(!!ubo_var->RowMajor));
 
 	 emit_ubo_loads(field_deref, base_offset, deref_offset + field_offset);
 
-	 field_offset += field->type->std140_size(ubo_var->RowMajor);
+	 field_offset += field->type->std140_size(!!ubo_var->RowMajor);
       }
       return;
    }
 
    if (deref->type->is_array()) {
       unsigned array_stride =
-	 align(deref->type->fields.array->std140_size(ubo_var->RowMajor), 16);
+	 align(deref->type->fields.array->std140_size(!!ubo_var->RowMajor), 16);
 
       for (unsigned i = 0; i < deref->type->length; i++) {
 	 ir_constant *element = new(mem_ctx) ir_constant(i);

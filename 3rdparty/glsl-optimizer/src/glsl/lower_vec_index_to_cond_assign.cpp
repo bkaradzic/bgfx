@@ -109,7 +109,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
 			  mem_ctx);
 
    /* Generate a conditional move of each vector element to the temp. */
-   for (i = 0; i < orig_deref->array->type->vector_elements; i++) {
+   for (i = 0; i < (int)orig_deref->array->type->vector_elements; i++) {
       ir_rvalue *condition_swizzle =
 	 new(base_ir) ir_swizzle(cond_deref->clone(ir, NULL), i, 0, 0, 0, 1);
 
@@ -209,7 +209,7 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
 			  mem_ctx);
 
    /* Generate a conditional move of each vector element to the temp. */
-   for (i = 0; i < orig_deref->array->type->vector_elements; i++) {
+   for (i = 0; i < (int)orig_deref->array->type->vector_elements; i++) {
       ir_rvalue *condition_swizzle =
 	 new(ir) ir_swizzle(cond_deref->clone(ir, NULL), i, 0, 0, 0, 1);
 

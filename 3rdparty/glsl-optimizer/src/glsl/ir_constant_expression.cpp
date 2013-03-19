@@ -279,7 +279,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
    case ir_unop_round_even:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = round_to_even(op[0]->value.f[c]);
+	 data.f[c] = (float)round_to_even(op[0]->value.f[c]);
       }
       break;
 

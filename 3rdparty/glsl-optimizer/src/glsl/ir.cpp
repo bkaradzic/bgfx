@@ -831,7 +831,7 @@ ir_constant::get_float_component(unsigned i) const
    case GLSL_TYPE_UINT:  return (float) this->value.u[i];
    case GLSL_TYPE_INT:   return (float) this->value.i[i];
    case GLSL_TYPE_FLOAT: return this->value.f[i];
-   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0 : 0.0;
+   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0f : 0.0f;
    default:              assert(!"Should not get here."); break;
    }
 

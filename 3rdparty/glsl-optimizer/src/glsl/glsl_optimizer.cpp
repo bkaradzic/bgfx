@@ -334,7 +334,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	if (!(options & kGlslOptionSkipPreprocessor))
 	{
-		state->error = glcpp_preprocess (state, &shaderSource, &state->info_log, state->extensions, ctx->mesa_ctx.API);
+		state->error = !!glcpp_preprocess (state, &shaderSource, &state->info_log, state->extensions, ctx->mesa_ctx.API);
 		if (state->error)
 		{
 			shader->status = !state->error;

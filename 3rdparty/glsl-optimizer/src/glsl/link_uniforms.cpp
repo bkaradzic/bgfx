@@ -333,14 +333,14 @@ private:
       if (this->ubo_var) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
-	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
+	 unsigned alignment = type->std140_base_alignment(!!ubo_var->RowMajor);
 	 this->ubo_byte_offset = align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
-	 this->ubo_byte_offset += type->std140_size(ubo_var->RowMajor);
+	 this->ubo_byte_offset += type->std140_size(!!ubo_var->RowMajor);
 
 	 if (type->is_array()) {
 	    this->uniforms[id].array_stride =
-	       align(type->fields.array->std140_size(ubo_var->RowMajor), 16);
+	       align(type->fields.array->std140_size(!!ubo_var->RowMajor), 16);
 	 } else {
 	    this->uniforms[id].array_stride = 0;
 	 }
@@ -348,7 +348,7 @@ private:
 	 if (type->is_matrix() ||
 	     (type->is_array() && type->fields.array->is_matrix())) {
 	    this->uniforms[id].matrix_stride = 16;
-	    this->uniforms[id].row_major = ubo_var->RowMajor;
+	    this->uniforms[id].row_major = !!ubo_var->RowMajor;
 	 } else {
 	    this->uniforms[id].matrix_stride = 0;
 	    this->uniforms[id].row_major = false;
@@ -493,8 +493,8 @@ link_assign_uniform_block_offsets(struct gl_shader *shader)
 	 struct gl_uniform_buffer_variable *ubo_var = &block->Uniforms[i];
 	 const struct glsl_type *type = ubo_var->Type;
 
-	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
-	 unsigned size = type->std140_size(ubo_var->RowMajor);
+	 unsigned alignment = type->std140_base_alignment(!!ubo_var->RowMajor);
+	 unsigned size = type->std140_size(!!ubo_var->RowMajor);
 
 	 offset = align(offset, alignment);
 	 ubo_var->Offset = offset;

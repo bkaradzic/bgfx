@@ -852,7 +852,7 @@ ir_reader::read_constant(s_expression *expr)
 	    break;
 	 }
 	 case GLSL_TYPE_BOOL: {
-	    data.b[k] = value->value();
+	    data.b[k] = !!value->value();
 	    break;
 	 }
 	 default:

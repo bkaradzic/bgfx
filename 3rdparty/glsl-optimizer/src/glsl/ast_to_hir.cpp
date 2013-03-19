@@ -1600,11 +1600,11 @@ ast_expression::hir(exec_list *instructions,
 	  *    negative constant expression."
 	  */
 	 if (array->type->is_matrix()) {
-	    if (array->type->row_type()->vector_elements <= idx) {
+	    if ((int)array->type->row_type()->vector_elements <= idx) {
 	       bound = array->type->row_type()->vector_elements;
 	    }
 	 } else if (array->type->is_vector()) {
-	    if (array->type->vector_elements <= idx) {
+	    if ((int)array->type->vector_elements <= idx) {
 	       bound = array->type->vector_elements;
 	    }
 	 } else {
@@ -1738,7 +1738,7 @@ ast_expression::hir(exec_list *instructions,
       break;
 
    case ast_bool_constant:
-      result = new(ctx) ir_constant(bool(this->primary_expression.bool_constant));
+      result = new(ctx) ir_constant(bool(!!this->primary_expression.bool_constant));
       break;
 
    case ast_sequence: {
@@ -2477,7 +2477,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 }
 
 static void
-apply_precision_to_variable(const struct ast_type_specifier *spec,
+apply_precision_to_variable(const class ast_type_specifier *spec,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state)
 {
@@ -4110,7 +4110,7 @@ ast_uniform_block::hir(exec_list *instructions,
       decl_list->hir(&declared_variables, state);
 
       foreach_list_const(node, &declared_variables) {
-	 struct ir_variable *var = (ir_variable *)node;
+	 class ir_variable *var = (ir_variable *)node;
 
 	 struct gl_uniform_buffer_variable *ubo_var =
 	    &ubo->Uniforms[ubo->NumUniforms++];

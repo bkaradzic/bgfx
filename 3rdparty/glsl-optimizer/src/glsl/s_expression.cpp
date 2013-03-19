@@ -79,7 +79,7 @@ read_atom(void *ctx, const char *&src, char *&symbol_buffer)
          int i = strtol(src, &int_end, 10);
          // If strtod matched more characters, it must have a decimal part
          if (float_end > int_end)
-            expr = new(ctx) s_float(f);
+            expr = new(ctx) s_float((float)f);
          else
             expr = new(ctx) s_int(i);
       } else {

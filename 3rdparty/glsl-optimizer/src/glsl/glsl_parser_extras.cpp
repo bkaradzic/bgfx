@@ -108,7 +108,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    if (ctx->Const.ForceGLSLExtensionsWarn)
       _mesa_glsl_process_extension("all", NULL, "warn", NULL, this);
 
-   this->default_uniform_qualifier = new(this) ast_type_qualifier();
+   this->default_uniform_qualifier = new(this) ast_type_qualifier;
    this->default_uniform_qualifier->flags.q.shared = 1;
    this->default_uniform_qualifier->flags.q.column_major = 1;
 }
@@ -335,7 +335,7 @@ bool _mesa_glsl_extension::compatible_with_state(const _mesa_glsl_parse_state *
     * offset this->supported_flag.  See
     * _mesa_glsl_extension::supported_flag for more info.
     */
-   return state->extensions->*(this->supported_flag);
+   return !!(state->extensions->*(this->supported_flag));
 }
 
 /**
@@ -697,7 +697,7 @@ ast_parameter_declarator::print(void) const
    type->print();
    if (identifier)
       printf("%s ", identifier);
-   ast_opt_array_size_print(is_array, array_size);
+   ast_opt_array_size_print(!!is_array, array_size);
 }
 
 
@@ -713,7 +713,7 @@ void
 ast_declaration::print(void) const
 {
    printf("%s ", identifier);
-   ast_opt_array_size_print(is_array, array_size);
+   ast_opt_array_size_print(!!is_array, array_size);
 
    if (initializer) {
       printf("= ");
@@ -1063,7 +1063,7 @@ do_common_optimization(exec_list *ir, bool linked,
    }
    delete ls;
 
-   return progress;
+   return !!progress;
 }
 
 extern "C" {
