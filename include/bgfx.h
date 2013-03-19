@@ -438,7 +438,10 @@ namespace bgfx
 		/// @param _attrib Attribute semantics.
 		/// @param _num Number of elements 1, 2, 3 or 4.
 		/// @param _type Element type.
-		/// @param _normalized Value is normalized for vertex shader.
+		/// @param _normalized When using fixed point AttribType (f.e. Uint8)
+		///   value will be normalized for vertex shader usage. When normalized
+		///   is set to true, AttribType::Uint8 value in range 0-255 will be
+		///   in range 0.0-1.0 in vertex shader.
 		/// @param _asInt Packaging rule for vertexPack, vertexUnpack, and
 		///   vertexConvert for AttribType::Uint8 and AttribType::Int16.
 		///   Unpacking code must be implemented inside vertex shader.
