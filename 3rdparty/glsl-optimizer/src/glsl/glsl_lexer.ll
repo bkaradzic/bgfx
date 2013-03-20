@@ -28,6 +28,11 @@
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 
+#if defined(_MSC_VER)
+#	pragma warning(disable: 4065) // warning C4065: switch statement contains 'default' but no 'case' labels
+#	pragma warning(disable: 4244) // warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+#endif // defined(_MSC_VER)
+
 static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
 
 #ifdef _MSC_VER

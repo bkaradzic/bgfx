@@ -567,7 +567,7 @@ ir_reader::read_assignment(s_expression *expr)
    s_pattern mask_pat[] = { mask_symbol };
    if (MATCH(mask_list, mask_pat)) {
       const char *mask_str = mask_symbol->value();
-      unsigned mask_length = strlen(mask_str);
+      unsigned mask_length = (unsigned)strlen(mask_str);
       if (mask_length > 4) {
 	 ir_read_error(expr, "invalid write mask: %s", mask_str);
 	 return NULL;

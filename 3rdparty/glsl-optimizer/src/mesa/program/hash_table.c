@@ -195,7 +195,7 @@ hash_table_call_foreach(struct hash_table *ht,
 {
    int bucket;
 
-   for (bucket = 0; bucket < ht->num_buckets; bucket++) {
+   for (bucket = 0; bucket < (int)ht->num_buckets; bucket++) {
       struct node *node, *temp;
       foreach_s(node, temp, &ht->buckets[bucket]) {
 	 struct hash_node *hn = (struct hash_node *) node;

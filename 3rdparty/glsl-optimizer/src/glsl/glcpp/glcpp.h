@@ -50,7 +50,7 @@ typedef struct token_list token_list_t;
 
 typedef union YYSTYPE
 {
-	intmax_t ival;
+	int64_t ival;
 	char *str;
 	string_list_t *string_list;
 	token_t *token;

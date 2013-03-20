@@ -177,7 +177,7 @@ reralloc_size(const void *ctx, void *ptr, size_t size)
 }
 
 void *
-ralloc_array_size(const void *ctx, size_t size, unsigned count)
+ralloc_array_size(const void *ctx, size_t size, size_t count)
 {
    if (count > SIZE_MAX/size)
       return NULL;
@@ -186,7 +186,7 @@ ralloc_array_size(const void *ctx, size_t size, unsigned count)
 }
 
 void *
-rzalloc_array_size(const void *ctx, size_t size, unsigned count)
+rzalloc_array_size(const void *ctx, size_t size, size_t count)
 {
    if (count > SIZE_MAX/size)
       return NULL;
@@ -195,7 +195,7 @@ rzalloc_array_size(const void *ctx, size_t size, unsigned count)
 }
 
 void *
-reralloc_array_size(const void *ctx, void *ptr, size_t size, unsigned count)
+reralloc_array_size(const void *ctx, void *ptr, size_t size, size_t count)
 {
    if (count > SIZE_MAX/size)
       return NULL;

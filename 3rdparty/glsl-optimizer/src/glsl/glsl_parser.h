@@ -245,7 +245,7 @@ typedef union YYSTYPE
 {
 
 /* Line 2068 of yacc.c  */
-#line 59 "src/glsl/glsl_parser.yy"
+#line 64 "src/glsl/glsl_parser.yy"
 
    int n;
    float real;

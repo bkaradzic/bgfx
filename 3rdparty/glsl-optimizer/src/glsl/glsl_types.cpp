@@ -394,7 +394,7 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
     * for 32-bits of ~0.  The extra 3 are for the '[', ']', and terminating
     * NUL.
     */
-   const unsigned name_length = strlen(array->name) + 10 + 3;
+   const unsigned name_length = (unsigned)strlen(array->name) + 10 + 3;
    char *const n = (char *) ralloc_size(this->mem_ctx, name_length);
 
    if (length == 0)

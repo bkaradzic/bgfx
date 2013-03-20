@@ -184,7 +184,7 @@ void *reralloc_size(const void *ctx, void *ptr, size_t size);
  * More than a convenience function, this also checks for integer overflow when
  * multiplying \p size and \p count.  This is necessary for security.
  */
-void *ralloc_array_size(const void *ctx, size_t size, unsigned count);
+void *ralloc_array_size(const void *ctx, size_t size, size_t count);
 
 /**
  * Allocate a zero-initialized array chained off the given context.
@@ -194,7 +194,7 @@ void *ralloc_array_size(const void *ctx, size_t size, unsigned count);
  * More than a convenience function, this also checks for integer overflow when
  * multiplying \p size and \p count.  This is necessary for security.
  */
-void *rzalloc_array_size(const void *ctx, size_t size, unsigned count);
+void *rzalloc_array_size(const void *ctx, size_t size, size_t count);
 
 /**
  * Resize a ralloc-managed array, preserving data.
@@ -215,7 +215,7 @@ void *rzalloc_array_size(const void *ctx, size_t size, unsigned count);
  * \return True unless allocation failed.
  */
 void *reralloc_array_size(const void *ctx, void *ptr, size_t size,
-			  unsigned count);
+			  size_t count);
 /// @}
 
 /**
