@@ -10,6 +10,14 @@ project "shaderc"
 			GLSL_OPTIMIZER .. "src/glsl/msvc",
 		}
 
+		defines { -- glsl-optimizer
+			"__STDC__",
+			"__STDC_VERSION__=199901L",
+			"strdup=_strdup",
+			"alloca=_alloca",
+			"isascii=__isascii",
+		}
+
 		buildoptions {
 			"/wd4996" -- warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _strdup.
 		}
@@ -32,14 +40,10 @@ project "shaderc"
 
 	configuration {}
 
-	defines {
-		-- fcpp
+	defines { -- fcpp
 		"NINCLUDE=64",
 		"NWORK=65536",
 		"NBUFF=65536",
-
-		-- glsl-optimizer
-		"__STDC_VERSION__=199901L",
 	}
 
 	includedirs {
@@ -82,4 +86,3 @@ project "shaderc"
 		GLSL_OPTIMIZER .. "src/glsl/main.cpp",
 		GLSL_OPTIMIZER .. "src/glsl/builtin_stubs.cpp",
 	}
-

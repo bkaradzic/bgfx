@@ -2146,11 +2146,11 @@ yyreduce:
 #line 361 "src/glsl/glcpp/glcpp-parse.y"
     {
 		if (strlen ((yyvsp[(1) - (1)].str)) >= 3 && strncmp ((yyvsp[(1) - (1)].str), "0x", 2) == 0) {
-			(yyval.ival) = strtoll ((yyvsp[(1) - (1)].str) + 2, NULL, 16);
+			(yyval.ival) = (int)strtoll ((yyvsp[(1) - (1)].str) + 2, NULL, 16);
 		} else if ((yyvsp[(1) - (1)].str)[0] == '0') {
-			(yyval.ival) = strtoll ((yyvsp[(1) - (1)].str), NULL, 8);
+			(yyval.ival) = (int)strtoll ((yyvsp[(1) - (1)].str), NULL, 8);
 		} else {
-			(yyval.ival) = strtoll ((yyvsp[(1) - (1)].str), NULL, 10);
+			(yyval.ival) = (int)strtoll ((yyvsp[(1) - (1)].str), NULL, 10);
 		}
 	}
     break;

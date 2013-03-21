@@ -398,7 +398,7 @@ void dumpstack(OPTAB[NEXP], register OPTAB *, int [NEXP], register int *);
 void skipnl(struct Global *);
 int skipws(struct Global *);
 ReturnCode macroid(struct Global *, int *);
-ReturnCode getfile(struct Global *, int, char *, FILEINFO **);
+ReturnCode getfile(struct Global *, size_t, char *, FILEINFO **);
 DEFBUF *lookid(struct Global *, int );
 DEFBUF *defendel(struct Global *, char *, int);
 #if DEBUG
