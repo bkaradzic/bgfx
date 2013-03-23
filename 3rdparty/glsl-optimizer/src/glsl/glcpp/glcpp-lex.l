@@ -36,6 +36,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 
 #ifdef _MSC_VER
 #define YY_NO_UNISTD_H
+#pragma warning(disable: 4267) // warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
 #endif
 
 #define YY_NO_INPUT

@@ -4115,11 +4115,11 @@ ast_uniform_block::hir(exec_list *instructions,
 	 struct gl_uniform_buffer_variable *ubo_var =
 	    &ubo->Uniforms[ubo->NumUniforms++];
 
-	 var->uniform_block = ubo - state->uniform_blocks;
+	 var->uniform_block = (int)(ubo - state->uniform_blocks);
 
 	 ubo_var->Name = ralloc_strdup(state->uniform_blocks, var->name);
 	 ubo_var->Type = var->type;
-	 ubo_var->Buffer = ubo - state->uniform_blocks;
+	 ubo_var->Buffer = (int)(ubo - state->uniform_blocks);
 	 ubo_var->Offset = 0; /* Assigned at link time. */
 
 	 if (var->type->is_matrix() ||
