@@ -1272,6 +1272,7 @@ namespace bgfx
 					float m_z;
 					uint32_t m_abgr;
 				} * vertex = (Vertex*)m_vb->data;
+				BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
 
 				const uint32_t abgr = bx::endianSwap(_clear.m_rgba);
 				const float depth = _clear.m_depth;
