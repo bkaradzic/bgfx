@@ -1228,7 +1228,7 @@ namespace bgfx
 		deviceCtx->DrawIndexed(_numIndices, 0, 0);
 	}
 
-	void ClearQuad::clear(const Rect& _rect, const Clear& _clear)
+	void ClearQuad::clear(const Rect& _rect, const Clear& _clear, uint32_t _height)
 	{
 		uint32_t width = s_renderCtx.m_scd.BufferDesc.Width;
 		uint32_t height = s_renderCtx.m_scd.BufferDesc.Height;

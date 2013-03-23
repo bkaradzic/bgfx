@@ -415,7 +415,7 @@ namespace bgfx
 	{
 		void init();
 		void shutdown();
-		void clear(const Rect& _rect, const Clear& _clear);
+		void clear(const Rect& _rect, const Clear& _clear, uint32_t _height = 0);
 
 		TransientVertexBuffer* m_vb;
 		IndexBufferHandle m_ib;

@@ -166,6 +166,7 @@ namespace bgfx
 			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 31)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
+			, m_useClearQuad(false)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
@@ -450,6 +451,7 @@ namespace bgfx
 		bool m_vaoSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
+		bool m_useClearQuad;
 		bool m_flip;
 
 		PostSwapBuffersFn m_postSwapBuffers;
@@ -1891,6 +1893,113 @@ namespace bgfx
 			) );
 	}
 
+	void ClearQuad::clear(const Rect& _rect, const Clear& _clear, uint32_t _height)
+	{
+#if BGFX_CONFIG_CLEAR_QUAD
+		if (s_renderCtx.m_useClearQuad)
+		{
+			GL_CHECK(glDisable(GL_STENCIL_TEST) );
+			GL_CHECK(glEnable(GL_DEPTH_TEST) );
+			GL_CHECK(glDepthFunc(GL_ALWAYS) );
+			GL_CHECK(glDisable(GL_CULL_FACE) );
+			GL_CHECK(glDisable(GL_BLEND) );
+			GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
+			GL_CHECK(glDepthMask(GL_TRUE) );
+
+			VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
+			VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
+			uint32_t stride = vertexDecl.m_stride;
+
+			{
+				struct Vertex
+				{
+					float m_x;
+					float m_y;
+					float m_z;
+					uint32_t m_abgr;
+				} * vertex = (Vertex*)m_vb->data;
+				BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
+
+				const uint32_t abgr = bx::endianSwap(_clear.m_rgba);
+				const float depth = _clear.m_depth;
+
+				vertex->m_x = -1.0f;
+				vertex->m_y = -1.0f;
+				vertex->m_z = depth;
+				vertex->m_abgr = abgr;
+				vertex++;
+				vertex->m_x =  1.0f;
+				vertex->m_y = -1.0f;
+				vertex->m_z = depth;
+				vertex->m_abgr = abgr;
+				vertex++;
+				vertex->m_x =  1.0f;
+				vertex->m_y =  1.0f;
+				vertex->m_z = depth;
+				vertex->m_abgr = abgr;
+				vertex++;
+				vertex->m_x = -1.0f;
+				vertex->m_y =  1.0f;
+				vertex->m_z = depth;
+				vertex->m_abgr = abgr;
+			}
+
+			s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
+
+			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+
+			IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib.idx];
+			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
+
+			Program& program = s_renderCtx.m_program[m_program.idx];
+			GL_CHECK(glUseProgram(program.m_id) );
+			program.bindAttributes(m_decl, 0);
+
+			GL_CHECK(glDrawElements(GL_TRIANGLES
+				, 6
+				, GL_UNSIGNED_SHORT
+				, (void*)0
+				) );
+		}
+		else
+#endif // BGFX_CONFIG_CLEAR_QUAD
+		{
+			GLuint flags = 0;
+			if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+			{
+				flags |= GL_COLOR_BUFFER_BIT;
+				uint32_t rgba = _clear.m_rgba;
+				float rr = (rgba>>24)/255.0f;
+				float gg = ( (rgba>>16)&0xff)/255.0f;
+				float bb = ( (rgba>>8)&0xff)/255.0f;
+				float aa = (rgba&0xff)/255.0f;
+				GL_CHECK(glClearColor(rr, gg, bb, aa) );
+				GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
+			}
+
+			if (BGFX_CLEAR_DEPTH_BIT & _clear.m_flags)
+			{
+				flags |= GL_DEPTH_BUFFER_BIT;
+				GL_CHECK(glClearDepth(_clear.m_depth) );
+				GL_CHECK(glDepthMask(GL_TRUE) );
+			}
+
+			if (BGFX_CLEAR_STENCIL_BIT & _clear.m_flags)
+			{
+				flags |= GL_STENCIL_BUFFER_BIT;
+				GL_CHECK(glClearStencil(_clear.m_stencil) );
+			}
+
+			if (0 != flags)
+			{
+				GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+				GL_CHECK(glScissor(_rect.m_x, _height-_rect.m_height-_rect.m_y, _rect.m_width, _rect.m_height) );
+				GL_CHECK(glClear(flags) );
+				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+			}
+		}
+	}
+
 	void Context::flip()
 	{
 		s_renderCtx.flip();
@@ -2365,39 +2474,7 @@ namespace bgfx
 
 					if (BGFX_CLEAR_NONE != clear.m_flags)
 					{
-						GLuint flags = 0;
-						if (BGFX_CLEAR_COLOR_BIT & clear.m_flags)
-						{
-							flags |= GL_COLOR_BUFFER_BIT;
-							uint32_t rgba = clear.m_rgba;
-							float rr = (rgba>>24)/255.0f;
-							float gg = ( (rgba>>16)&0xff)/255.0f;
-							float bb = ( (rgba>>8)&0xff)/255.0f;
-							float aa = (rgba&0xff)/255.0f;
-							GL_CHECK(glClearColor(rr, gg, bb, aa) );
-							GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
-						}
-
-						if (BGFX_CLEAR_DEPTH_BIT & clear.m_flags)
-						{
-							flags |= GL_DEPTH_BUFFER_BIT;
-							GL_CHECK(glClearDepth(clear.m_depth) );
-							GL_CHECK(glDepthMask(GL_TRUE) );
-						}
-
-						if (BGFX_CLEAR_STENCIL_BIT & clear.m_flags)
-						{
-							flags |= GL_STENCIL_BUFFER_BIT;
-							GL_CHECK(glClearStencil(clear.m_stencil) );
-						}
-
-						if (0 != flags)
-						{
-							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-							GL_CHECK(glScissor(rect.m_x, height-rect.m_height-rect.m_y, rect.m_width, rect.m_height) );
-							GL_CHECK(glClear(flags) );
-							GL_CHECK(glDisable(GL_SCISSOR_TEST) );
-						}
+						m_clearQuad.clear(rect, clear, height);
 					}
 
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );

@@ -423,7 +423,7 @@ namespace bgfx
 	void ClearQuad::init()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-#if BGFX_CONFIG_RENDERER_DIRECT3D11
+#if BGFX_CONFIG_CLEAR_QUAD
 		m_decl.begin();
 		m_decl.add(Attrib::Position, 3, AttribType::Float);
 		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
@@ -431,12 +431,18 @@ namespace bgfx
 
 		const Memory* mem;
 
-		mem = alloc(sizeof(vs_clear_dx11)+1);
-		memcpy(mem->data, vs_clear_dx11, mem->size-1);
+#	if BGFX_CONFIG_RENDERER_DIRECT3D11
+		mem = makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) );
+#	elif BGFX_CONFIG_RENDERER_OPENGL
+		mem = makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) );
+#	endif // BGFX_CONFIG_RENDERER_*
 		VertexShaderHandle vsh = createVertexShader(mem);
 
-		mem = alloc(sizeof(fs_clear_dx11)+1);
-		memcpy(mem->data, fs_clear_dx11, mem->size-1);
+#	if BGFX_CONFIG_RENDERER_DIRECT3D11
+		mem = makeRef(fs_clear_dx11, sizeof(fs_clear_dx11) );
+#	elif BGFX_CONFIG_RENDERER_OPENGL
+		mem = makeRef(fs_clear_glsl, sizeof(fs_clear_glsl) );
+#	endif // BGFX_CONFIG_RENDERER_*
 		FragmentShaderHandle fsh = createFragmentShader(mem);
 
 		m_program = createProgram(vsh, fsh);
@@ -454,17 +460,18 @@ namespace bgfx
 		indices[4] = 3;
 		indices[5] = 0;
 		m_ib = s_ctx.createIndexBuffer(mem);
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D11
+#endif // BGFX_CONFIG_CLEAR_QUAD
 	}
 
 	void ClearQuad::shutdown()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-#if BGFX_CONFIG_RENDERER_DIRECT3D11
+
+#if BGFX_CONFIG_CLEAR_QUAD
 		destroyProgram(m_program);
 		destroyIndexBuffer(m_ib);
 		s_ctx.destroyTransientVertexBuffer(m_vb);
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D11
+#endif // BGFX_CONFIG_CLEAR_QUAD
 	}
 
 	static const char* s_predefinedName[PredefinedUniform::Count] =
