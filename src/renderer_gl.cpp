@@ -166,7 +166,7 @@ namespace bgfx
 			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 31)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
-			, m_useClearQuad(false)
+			, m_useClearQuad(true)
 			, m_flip(false)
 			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
@@ -1908,7 +1908,6 @@ namespace bgfx
 
 			VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 			VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
-			uint32_t stride = vertexDecl.m_stride;
 
 			{
 				struct Vertex
@@ -1918,7 +1917,7 @@ namespace bgfx
 					float m_z;
 					uint32_t m_abgr;
 				} * vertex = (Vertex*)m_vb->data;
-				BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
+				BX_CHECK(vertexDecl.m_stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
 
 				const uint32_t abgr = bx::endianSwap(_clear.m_rgba);
 				const float depth = _clear.m_depth;
@@ -1953,7 +1952,7 @@ namespace bgfx
 
 			Program& program = s_renderCtx.m_program[m_program.idx];
 			GL_CHECK(glUseProgram(program.m_id) );
-			program.bindAttributes(m_decl, 0);
+			program.bindAttributes(vertexDecl, 0);
 
 			GL_CHECK(glDrawElements(GL_TRIANGLES
 				, 6
