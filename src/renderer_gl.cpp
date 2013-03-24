@@ -2004,14 +2004,14 @@ namespace bgfx
 		s_renderCtx.flip();
 	}
 
-	static GLint glGet(GLenum _pname)
+	GLint glGet(GLenum _pname)
 	{
 		GLint result;
 		GL_CHECK(glGetIntegerv(_pname, &result) );
 		return result;
 	}
 
-	static uint32_t glGetStringHash(GLenum _name)
+	uint32_t glGetStringHash(GLenum _name)
 	{
 		const char* str = (const char*)glGetString(_name);
 		glGetError(); // ignore error if glGetString returns NULL.
