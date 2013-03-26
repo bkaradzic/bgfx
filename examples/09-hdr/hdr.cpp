@@ -403,7 +403,7 @@ inline float square(float _x)
 	return _x*_x;
 }
 
-int _main_(int _argc, char** _argv)
+int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	PosColorTexCoord0Vertex::init();
 

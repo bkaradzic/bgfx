@@ -69,7 +69,7 @@ namespace bgfx
 		return context;
 	}
 
-	void GlContext::create(uint32_t _width, uint32_t _height)
+	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/)
 	{
 		m_opengl32dll = LoadLibrary("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
@@ -200,6 +200,7 @@ namespace bgfx
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() );
 
 			uint32_t flags = BGFX_CONFIG_DEBUG ? WGL_CONTEXT_DEBUG_BIT_ARB : 0;
+			BX_UNUSED(flags);
 			int32_t contextAttrs[] =
 			{
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
@@ -252,7 +253,7 @@ namespace bgfx
 		m_opengl32dll = NULL;
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/)
 	{
 	}
 

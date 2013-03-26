@@ -1043,7 +1043,7 @@ namespace bgfx
 		},
 	};
 
-	static D3DVERTEXELEMENT9* fillVertexDecl(D3DVERTEXELEMENT9* _out, uint32_t _count, const VertexDecl& _decl)
+	static D3DVERTEXELEMENT9* fillVertexDecl(D3DVERTEXELEMENT9* _out, const VertexDecl& _decl)
 	{
 		D3DVERTEXELEMENT9* elem = _out;
 
@@ -1071,7 +1071,7 @@ namespace bgfx
 	static IDirect3DVertexDeclaration9* createVertexDecl(const VertexDecl& _decl, uint8_t _numInstanceData)
 	{
 		D3DVERTEXELEMENT9 vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
-		D3DVERTEXELEMENT9* elem = fillVertexDecl(vertexElements, Attrib::Count, _decl);
+		D3DVERTEXELEMENT9* elem = fillVertexDecl(vertexElements, _decl);
 
 		const D3DVERTEXELEMENT9 inst = { 1, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 };
 
@@ -2067,7 +2067,7 @@ namespace bgfx
 		s_renderCtx.m_updateTexture->updateBegin(_side, _mip);
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
 		s_renderCtx.m_updateTexture->update(_side, _mip, _rect, _z, _depth, _mem);
 	}

@@ -494,7 +494,7 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 	return num;
 }
 
-int _main_(int _argc, char** _argv)
+int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
 	uint32_t height = 720;

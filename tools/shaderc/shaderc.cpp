@@ -1136,7 +1136,7 @@ struct Preprocessor
 		thisClass->m_preprocessed += _ch;
 	}
 
-	static void fppError(void* _userData, char* _format, va_list _vargs)
+	static void fppError(void* /*_userData*/, char* _format, va_list _vargs)
 	{
 		vfprintf(stderr, _format, _vargs);
 	}

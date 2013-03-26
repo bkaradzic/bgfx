@@ -213,7 +213,7 @@ namespace bgfx
 		},
 	};
 
-	static D3D11_INPUT_ELEMENT_DESC* fillVertexDecl(D3D11_INPUT_ELEMENT_DESC* _out, uint32_t _count, const VertexDecl& _decl)
+	static D3D11_INPUT_ELEMENT_DESC* fillVertexDecl(D3D11_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
 	{
 		D3D11_INPUT_ELEMENT_DESC* elem = _out;
 
@@ -532,6 +532,7 @@ namespace bgfx
 
 		void setRenderTarget(RenderTargetHandle _rt, bool _msaa = true)
 		{
+			BX_UNUSED(_msaa);
 			if (_rt.idx == invalidHandle)
 			{
 				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
@@ -591,7 +592,7 @@ namespace bgfx
 					decl.m_attributes[ii] = attr == 0 ? 0xff : attr == 0xff ? 0 : attr;
 				}
 
-				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, Attrib::Count, decl);
+				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, decl);
 				uint32_t num = uint32_t(elem-vertexElements);
 
 				const D3D11_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 };
@@ -1230,6 +1231,7 @@ namespace bgfx
 
 	void ClearQuad::clear(const Rect& _rect, const Clear& _clear, uint32_t _height)
 	{
+		BX_UNUSED(_height);
 		uint32_t width = s_renderCtx.m_scd.BufferDesc.Width;
 		uint32_t height = s_renderCtx.m_scd.BufferDesc.Height;
 

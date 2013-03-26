@@ -223,7 +223,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		saveTga(_filePath, _width, _height, _pitch, _data, false, _yflip);
 	}
 
-	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) BX_OVERRIDE
+	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) BX_OVERRIDE
 	{
 		m_writer = new AviWriter;
 		if (!m_writer->open("temp/capture.avi", _width, _height, 60, _yflip) )
@@ -254,7 +254,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	AviWriter* m_writer;
 };
 
-int _main_(int _argc, char** _argv)
+int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	BgfxCallback callback;
 

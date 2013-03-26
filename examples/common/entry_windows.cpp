@@ -305,9 +305,6 @@ namespace entry
 
 						default:
 							{
-								unsigned int oldWidth = width;
-								unsigned int oldHeight = height;
-
 								float aspectRatio = m_aspectRatio;
 								height = bx::uint32_max(DEFAULT_HEIGHT/4, height);
 								width = uint32_t(float(height)*aspectRatio);
