@@ -172,6 +172,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyVertexShader(vsh);
 	bgfx::destroyFragmentShader(fsh);
 
+	float at[3] = { 0.0f, 0.0f, 0.0f };
+	float eye[3] = { 0.0f, 0.0f, -35.0f };
+
+	float view[16];
+	float proj[16];
+	mtxLookAt(view, eye, at);
+	mtxProj(proj, 60.0f, 16.0f/9.0f, 0.1f, 100.0f);
+
+	// Set view and projection matrix for view 0.
+	bgfx::setViewTransform(0, view, proj);
+
 	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
@@ -193,17 +204,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/01-cube");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering simple static mesh.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-		float at[3] = { 0.0f, 0.0f, 0.0f };
-		float eye[3] = { 0.0f, 0.0f, -35.0f };
-		
-		float view[16];
-		float proj[16];
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, 16.0f/9.0f, 0.1f, 100.0f);
-
-		// Set view and projection matrix for view 0.
-		bgfx::setViewTransform(0, view, proj);
 
 		float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
 

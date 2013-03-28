@@ -1290,13 +1290,13 @@ namespace bgfx
 	void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _other)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx.m_submit->setViewTransform(_id, _view, _proj, _other);
+		s_ctx.setViewTransform(_id, _view, _proj, _other);
 	}
 
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx.m_submit->setViewTransformMask(_viewMask, _view, _proj, _other);
+		s_ctx.setViewTransformMask(_viewMask, _view, _proj, _other);
 	}
 
 	void setState(uint64_t _state)
