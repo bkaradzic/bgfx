@@ -57,6 +57,8 @@ namespace bgfx
 			OES_vertex_array_object,
 			ATI_meminfo,
 			NVX_gpu_memory_info,
+			OES_rgb8_rgba8,
+			EXT_texture_storage,
 
 			Count
 		};
@@ -109,8 +111,15 @@ namespace bgfx
 		{ "OES_vertex_array_object",              false,                             true  },
 		{ "GL_ATI_meminfo",                       false,                             true  },
 		{ "GL_NVX_gpu_memory_info",               false,                             true  },
+		{ "GL_OES_rgb8_rgba8",                    false,                             true  },
+		{ "GL_EXT_texture_storage",               false,                             true  },
 	};
 
+#if BGFX_CONFIG_RENDERER_OPENGLES3
+#	define s_vertexAttribDivisor glVertexAttribDivisor
+#	define s_drawArraysInstanced glDrawArraysInstanced
+#	define s_drawElementsInstanced glDrawElementsInstanced
+#else
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -125,11 +134,6 @@ namespace bgfx
 		GL_CHECK(glDrawElements(_mode, _count, _type, _indices) );
 	}
 
-#if BGFX_CONFIG_RENDERER_OPENGLES3
-#	define s_vertexAttribDivisor glVertexAttribDivisor
-#	define s_drawArraysInstanced glDrawArraysInstanced
-#	define s_drawElementsInstanced glDrawElementsInstanced
-#else
 	static PFNGLVERTEXATTRIBDIVISORBGFXPROC s_vertexAttribDivisor = stubVertexAttribDivisor;
 	static PFNGLDRAWARRAYSINSTANCEDBGFXPROC s_drawArraysInstanced = stubDrawArraysInstanced;
 	static PFNGLDRAWELEMENTSINSTANCEDBGFXPROC s_drawElementsInstanced = stubDrawElementsInstanced;
@@ -246,6 +250,10 @@ namespace bgfx
 
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			}
+#else
+			BX_UNUSED(_width);
+			BX_UNUSED(_height);
+			BX_UNUSED(_msaa);
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
@@ -610,11 +618,15 @@ namespace bgfx
 	// Specifies the internal format of the texture.
 	// Must be one of the following symbolic constants:
 	// GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA.
-	static const GLenum s_colorFormat[] =
+	static const GLenum s_colorFormat[][2] =
 	{
-		0, // ignored
-		GL_RGBA,
-		GL_RGBA,
+		{ 0,           0                              }, // ignored
+		{ GL_RGBA8,    GL_UNSIGNED_BYTE               },
+		{ GL_RGB10_A2, GL_UNSIGNED_INT_2_10_10_10_REV },
+		{ GL_RGBA16,   GL_UNSIGNED_SHORT              },
+		{ GL_RGBA16F,  GL_HALF_FLOAT                  },
+		{ GL_R16F,     GL_HALF_FLOAT                  },
+		{ GL_R32F,     GL_FLOAT                       },
 	};
 
 	static const GLenum s_depthFormat[] =
@@ -1418,10 +1430,10 @@ namespace bgfx
 		GL_CHECK(glBindTexture(m_target, 0) );
 	}
 
-	void Texture::createColor(uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag)
+	void Texture::createColor(uint32_t _colorFormat, uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag)
 	{
-		GLenum internalFormat = /*_fp ? GL_RGBA16F_ARB :*/ GL_RGBA;
-		GLenum type = /*_fp ? GL_HALF_FLOAT_ARB :*/ GL_UNSIGNED_BYTE;
+		GLenum internalFormat = s_colorFormat[_colorFormat][0];
+		GLenum type = s_colorFormat[_colorFormat][1];
 		m_target = GL_TEXTURE_2D;
 
 		GL_CHECK(glGenTextures(1, &m_id) );
@@ -1488,6 +1500,9 @@ namespace bgfx
 
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
+		BX_UNUSED(_z);
+		BX_UNUSED(_depth);
+
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 
@@ -1604,7 +1619,7 @@ namespace bgfx
 
 		if (0 < colorFormat)
 		{
-			m_color.createColor(_width, _height, minFilter, magFilter);
+			m_color.createColor(colorFormat, _width, _height, minFilter, magFilter);
 		}
 		
 #if 0 // GLES can't create texture with depth texture format...
@@ -1624,7 +1639,7 @@ namespace bgfx
 			GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
 			BX_CHECK(0 != m_colorRbo, "Failed to generate color renderbuffer id.");
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
-			GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, GL_RGBA8, _width, _height) );
+			GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, s_colorFormat[colorFormat][0], _width, _height) );
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
 			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER

@@ -16,7 +16,7 @@ namespace bgfx
 #		include "glimports.h"
 #	undef GL_IMPORT
 
-	void GlContext::create(uint32_t _width, uint32_t _height)
+	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/)
 	{
 		EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
 		EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
@@ -86,7 +86,7 @@ namespace bgfx
 		m_context = NULL;
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/)
 	{
 	}
 

@@ -74,7 +74,10 @@
 #		define glGenVertexArrays glGenVertexArraysOES
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
+#		define GL_RGBA8 GL_RGBA8_OES
 #		define GL_RGB10_A2 GL_RGB10_A2_EXT
+#		define GL_R16F GL_R16F_EXT
+#		define GL_R32F GL_R32F_EXT
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
 #	elif BGFX_CONFIG_RENDERER_OPENGLES3
@@ -104,6 +107,10 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	ifndef GL_BGRA_EXT
 #		define GL_BGRA_EXT 0x80E1
 #	endif // GL_BGRA_EXT
+
+#	ifndef GL_R32F_EXT
+#		define GL_R32F_EXT 0x822E
+#	endif // GL_R32F_EXT
 
 #	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
 #		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
@@ -438,7 +445,7 @@ namespace bgfx
 		}
 
 		void create(const Memory* _mem, uint32_t _flags);
-		void createColor(uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
+		void createColor(uint32_t _colorFormat, uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
 		void createDepth(uint32_t _width, uint32_t _height);
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);

@@ -478,20 +478,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	Mesh mesh;
 	mesh.load("meshes/bunny.bin");
 
-	bgfx::RenderTargetHandle rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA|BGFX_RENDER_TARGET_DEPTH|BGFX_RENDER_TARGET_MSAA_X8);
+	bgfx::RenderTargetHandle rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH);
 
 	bgfx::RenderTargetHandle lum[5];
-	lum[0] = bgfx::createRenderTarget(128, 128, BGFX_RENDER_TARGET_COLOR_RGBA);
-	lum[1] = bgfx::createRenderTarget( 64,  64, BGFX_RENDER_TARGET_COLOR_RGBA);
-	lum[2] = bgfx::createRenderTarget( 16,  16, BGFX_RENDER_TARGET_COLOR_RGBA);
-	lum[3] = bgfx::createRenderTarget(  4,   4, BGFX_RENDER_TARGET_COLOR_RGBA);
-	lum[4] = bgfx::createRenderTarget(  1,   1, BGFX_RENDER_TARGET_COLOR_RGBA);
+	lum[0] = bgfx::createRenderTarget(128, 128, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	lum[1] = bgfx::createRenderTarget( 64,  64, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	lum[2] = bgfx::createRenderTarget( 16,  16, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	lum[3] = bgfx::createRenderTarget(  4,   4, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	lum[4] = bgfx::createRenderTarget(  1,   1, BGFX_RENDER_TARGET_COLOR_RGBA8);
 
 	bgfx::RenderTargetHandle bright;
-	bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA);
+	bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA8);
 
 	bgfx::RenderTargetHandle blur;
-	blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA);
+	blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
 
 	uint32_t oldWidth = 0;
 	uint32_t oldHeight = 0;
@@ -508,9 +508,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::destroyRenderTarget(bright);
 			bgfx::destroyRenderTarget(blur);
 
-			rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA|BGFX_RENDER_TARGET_DEPTH|BGFX_RENDER_TARGET_MSAA_X8);
-			bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA);
-			blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA);
+			rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH);
+			bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA8);
+			blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
 		}
 
 		// This dummy draw call is here to make sure that view 0 is cleared
