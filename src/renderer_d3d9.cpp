@@ -35,22 +35,29 @@ namespace bgfx
 		{ D3DMULTISAMPLE_16_SAMPLES, 0 },
 	};
 
-	static const D3DBLEND s_blendFactor[][2] =
+	struct Blend
 	{
-		{ (D3DBLEND)0,             (D3DBLEND)0             }, // ignored
-		{ D3DBLEND_ZERO,           D3DBLEND_ZERO           },
-		{ D3DBLEND_ONE,            D3DBLEND_ONE            },
-		{ D3DBLEND_SRCCOLOR,       D3DBLEND_SRCCOLOR       },
-		{ D3DBLEND_INVSRCCOLOR,    D3DBLEND_INVSRCCOLOR    },
-		{ D3DBLEND_SRCALPHA,       D3DBLEND_SRCALPHA       },
-		{ D3DBLEND_INVSRCALPHA,    D3DBLEND_INVSRCALPHA    },
-		{ D3DBLEND_DESTALPHA,      D3DBLEND_DESTALPHA      },
-		{ D3DBLEND_INVDESTALPHA,   D3DBLEND_INVDESTALPHA   },
-		{ D3DBLEND_DESTCOLOR,      D3DBLEND_DESTCOLOR      },
-		{ D3DBLEND_INVDESTCOLOR,   D3DBLEND_INVDESTCOLOR   },
-		{ D3DBLEND_SRCALPHASAT,    D3DBLEND_ONE            },
-		{ D3DBLEND_BLENDFACTOR,    D3DBLEND_BLENDFACTOR    },
-		{ D3DBLEND_INVBLENDFACTOR, D3DBLEND_INVBLENDFACTOR },
+		D3DBLEND m_src;
+		D3DBLEND m_dst;
+		bool m_factor;
+	};
+
+	static const Blend s_blendFactor[] =
+	{
+		{ (D3DBLEND)0,             (D3DBLEND)0,             false }, // ignored
+		{ D3DBLEND_ZERO,           D3DBLEND_ZERO,           false },
+		{ D3DBLEND_ONE,            D3DBLEND_ONE,            false },
+		{ D3DBLEND_SRCCOLOR,       D3DBLEND_SRCCOLOR,       false },
+		{ D3DBLEND_INVSRCCOLOR,    D3DBLEND_INVSRCCOLOR,    false },
+		{ D3DBLEND_SRCALPHA,       D3DBLEND_SRCALPHA,       false },
+		{ D3DBLEND_INVSRCALPHA,    D3DBLEND_INVSRCALPHA,    false },
+		{ D3DBLEND_DESTALPHA,      D3DBLEND_DESTALPHA,      false },
+		{ D3DBLEND_INVDESTALPHA,   D3DBLEND_INVDESTALPHA,   false },
+		{ D3DBLEND_DESTCOLOR,      D3DBLEND_DESTCOLOR,      false },
+		{ D3DBLEND_INVDESTCOLOR,   D3DBLEND_INVDESTCOLOR,   false },
+		{ D3DBLEND_SRCALPHASAT,    D3DBLEND_ONE,            false },
+		{ D3DBLEND_BLENDFACTOR,    D3DBLEND_BLENDFACTOR,    true  },
+		{ D3DBLEND_INVBLENDFACTOR, D3DBLEND_INVBLENDFACTOR, true  },
 	};
 
 	static const D3DCMPFUNC s_depthFunc[] =
@@ -2394,16 +2401,17 @@ namespace bgfx
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 
- 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src][0]) );
-							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst][1]) );
+ 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src].m_src) );
+							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst].m_dst) );
 //							DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
 //							DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
 
-							if (0 != (blend&(BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR) ) )
+							if ( (s_blendFactor[src].m_factor || s_blendFactor[dst].m_factor)
 							&&  blendFactor != state.m_rgba)
 							{
 								blendFactor = state.m_rgba;
-								DX_CHECK(device->SetRenderState(D3DRS_BLENDFACTOR, blendFactor) );
+								D3DCOLOR color = D3DCOLOR_RGBA(blendFactor>>24, (blendFactor>>16)&0xff, (blendFactor>>8)&0xff, blendFactor&0xff);
+								DX_CHECK(device->SetRenderState(D3DRS_BLENDFACTOR, color) );
 							}
 						}
 					}

@@ -556,22 +556,29 @@ namespace bgfx
 		GL_FLOAT,
 	};
 
-	static const GLenum s_blendFactor[][2] =
+	struct Blend
 	{
-		{ 0,                           0                           }, // ignored
-		{ GL_ZERO,                     GL_ZERO                     },
-		{ GL_ONE,                      GL_ONE                      },
-		{ GL_SRC_COLOR,                GL_SRC_COLOR                },
-		{ GL_ONE_MINUS_SRC_COLOR,      GL_ONE_MINUS_SRC_COLOR      },
-		{ GL_SRC_ALPHA,                GL_SRC_ALPHA                },
-		{ GL_ONE_MINUS_SRC_ALPHA,      GL_ONE_MINUS_SRC_ALPHA      },
-		{ GL_DST_ALPHA,                GL_DST_ALPHA                },
-		{ GL_ONE_MINUS_DST_ALPHA,      GL_ONE_MINUS_DST_ALPHA      },
-		{ GL_DST_COLOR,                GL_DST_COLOR                },
-		{ GL_ONE_MINUS_DST_COLOR,      GL_ONE_MINUS_DST_COLOR      },
-		{ GL_SRC_ALPHA_SATURATE,       GL_ONE                      },
-		{ GL_CONSTANT_COLOR,           GL_CONSTANT_COLOR           },
-		{ GL_ONE_MINUS_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR },
+		GLenum m_src;
+		GLenum m_dst;
+		bool m_factor;
+	};
+
+	static const Blend s_blendFactor[] =
+	{
+		{ 0,                           0,                           false }, // ignored
+		{ GL_ZERO,                     GL_ZERO,                     false },
+		{ GL_ONE,                      GL_ONE,                      false },
+		{ GL_SRC_COLOR,                GL_SRC_COLOR,                false },
+		{ GL_ONE_MINUS_SRC_COLOR,      GL_ONE_MINUS_SRC_COLOR,      false },
+		{ GL_SRC_ALPHA,                GL_SRC_ALPHA,                false },
+		{ GL_ONE_MINUS_SRC_ALPHA,      GL_ONE_MINUS_SRC_ALPHA,      false },
+		{ GL_DST_ALPHA,                GL_DST_ALPHA,                false },
+		{ GL_ONE_MINUS_DST_ALPHA,      GL_ONE_MINUS_DST_ALPHA,      false },
+		{ GL_DST_COLOR,                GL_DST_COLOR,                false },
+		{ GL_ONE_MINUS_DST_COLOR,      GL_ONE_MINUS_DST_COLOR,      false },
+		{ GL_SRC_ALPHA_SATURATE,       GL_ONE,                      false },
+		{ GL_CONSTANT_COLOR,           GL_CONSTANT_COLOR,           true  },
+		{ GL_ONE_MINUS_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, true  },
 	};
 
 	static const GLenum s_depthFunc[] =
@@ -2651,9 +2658,9 @@ namespace bgfx
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 							GL_CHECK(glEnable(GL_BLEND) );
-							GL_CHECK(glBlendFunc(s_blendFactor[src][0], s_blendFactor[dst][1]) );
+							GL_CHECK(glBlendFunc(s_blendFactor[src].m_src, s_blendFactor[dst].m_dst) );
 
-							if (0 != (blend&(BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR) ) )
+							if ( (s_blendFactor[src].m_factor || s_blendFactor[dst].m_factor)
 							&&  blendFactor != state.m_rgba)
 							{
 								blendFactor = state.m_rgba;
