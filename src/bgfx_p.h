@@ -855,11 +855,12 @@ namespace bgfx
 			m_constBegin = m_constEnd;
 			m_flags = BGFX_STATE_DEFAULT;
 			m_stencil = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
+			m_rgba = UINT32_MAX;
 			m_matrix = 0;
 			m_startIndex = 0;
 			m_numIndices = UINT32_MAX;
 			m_startVertex = 0;
-			m_numVertices = UINT32_C(0xffffffff);
+			m_numVertices = UINT32_MAX;
 			m_instanceDataOffset = 0;
 			m_instanceDataStride = 0;
 			m_numInstances = 1;
@@ -878,6 +879,7 @@ namespace bgfx
 
 		uint64_t m_flags;
 		uint64_t m_stencil;
+		uint32_t m_rgba;
 		uint32_t m_constBegin;
 		uint32_t m_constEnd;
 		uint32_t m_matrix;
@@ -984,11 +986,12 @@ namespace bgfx
 			}
 		}
 
-		void setState(uint64_t _state)
+		void setState(uint64_t _state, uint32_t _rgba)
 		{
 			uint8_t blend = ( (_state&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT)&0xff;
 			m_key.m_trans = "\x0\x1\x1\x2\x2\x1\x2\x1\x2\x1\x1\x1\x1\x1\x1\x1\x1"[( (blend)&0xf) + (!!blend)];
 			m_state.m_flags = _state;
+			m_state.m_rgba = _rgba;
 		}
 
 		void setStencil(uint32_t _fstencil, uint32_t _bstencil)

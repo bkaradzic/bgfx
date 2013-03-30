@@ -37,18 +37,20 @@ namespace bgfx
 
 	static const D3DBLEND s_blendFactor[][2] =
 	{
-		{ (D3DBLEND)0,           (D3DBLEND)0           }, // ignored
-		{ D3DBLEND_ZERO,         D3DBLEND_ZERO         },
-		{ D3DBLEND_ONE,          D3DBLEND_ONE          },
-		{ D3DBLEND_SRCCOLOR,     D3DBLEND_SRCCOLOR     },
-		{ D3DBLEND_INVSRCCOLOR,  D3DBLEND_INVSRCCOLOR  },
-		{ D3DBLEND_SRCALPHA,     D3DBLEND_SRCALPHA     },
-		{ D3DBLEND_INVSRCALPHA,  D3DBLEND_INVSRCALPHA  },
-		{ D3DBLEND_DESTALPHA,    D3DBLEND_DESTALPHA    },
-		{ D3DBLEND_INVDESTALPHA, D3DBLEND_INVDESTALPHA },
-		{ D3DBLEND_DESTCOLOR,    D3DBLEND_DESTCOLOR    },
-		{ D3DBLEND_INVDESTCOLOR, D3DBLEND_INVDESTCOLOR },
-		{ D3DBLEND_SRCALPHASAT,  D3DBLEND_ONE          },
+		{ (D3DBLEND)0,             (D3DBLEND)0             }, // ignored
+		{ D3DBLEND_ZERO,           D3DBLEND_ZERO           },
+		{ D3DBLEND_ONE,            D3DBLEND_ONE            },
+		{ D3DBLEND_SRCCOLOR,       D3DBLEND_SRCCOLOR       },
+		{ D3DBLEND_INVSRCCOLOR,    D3DBLEND_INVSRCCOLOR    },
+		{ D3DBLEND_SRCALPHA,       D3DBLEND_SRCALPHA       },
+		{ D3DBLEND_INVSRCALPHA,    D3DBLEND_INVSRCALPHA    },
+		{ D3DBLEND_DESTALPHA,      D3DBLEND_DESTALPHA      },
+		{ D3DBLEND_INVDESTALPHA,   D3DBLEND_INVDESTALPHA   },
+		{ D3DBLEND_DESTCOLOR,      D3DBLEND_DESTCOLOR      },
+		{ D3DBLEND_INVDESTCOLOR,   D3DBLEND_INVDESTCOLOR   },
+		{ D3DBLEND_SRCALPHASAT,    D3DBLEND_ONE            },
+		{ D3DBLEND_BLENDFACTOR,    D3DBLEND_BLENDFACTOR    },
+		{ D3DBLEND_INVBLENDFACTOR, D3DBLEND_INVBLENDFACTOR },
 	};
 
 	static const D3DCMPFUNC s_depthFunc[] =
@@ -2165,6 +2167,7 @@ namespace bgfx
 		uint8_t view = 0xff;
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
+		uint32_t blendFactor = 0;
 		D3DPRIMITIVETYPE primType = D3DPT_TRIANGLELIST;
 		uint32_t primNumVerts = 3;
 
@@ -2395,6 +2398,13 @@ namespace bgfx
 							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst][1]) );
 //							DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
 //							DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
+
+							if (0 != (blend&(BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR) ) )
+							&&  blendFactor != state.m_rgba)
+							{
+								blendFactor = state.m_rgba;
+								DX_CHECK(device->SetRenderState(D3DRS_BLENDFACTOR, blendFactor) );
+							}
 						}
 					}
 

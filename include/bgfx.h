@@ -37,6 +37,8 @@
 #define BGFX_STATE_BLEND_DST_COLOR       UINT64_C(0x0000000000009000)
 #define BGFX_STATE_BLEND_INV_DST_COLOR   UINT64_C(0x000000000000a000)
 #define BGFX_STATE_BLEND_SRC_ALPHA_SAT   UINT64_C(0x000000000000b000)
+#define BGFX_STATE_BLEND_FACTOR          UINT64_C(0x000000000000c000)
+#define BGFX_STATE_BLEND_INV_FACTOR      UINT64_C(0x000000000000d000)
 #define BGFX_STATE_BLEND_SHIFT           12
 #define BGFX_STATE_BLEND_MASK            UINT64_C(0x000000000ffff000)
 
@@ -724,10 +726,13 @@ namespace bgfx
 	///   BGFX_STATE_MSAA - Enable MSAA.
 	///   BGFX_STATE_PT_[LINES/POINTS] - Primitive type.
 	///
+	/// @param _rgba Sets blend factor used by BGFX_STATE_BLEND_FACTOR and
+	///   BGFX_STATE_BLEND_INV_FACTOR blend modes.
+	///
 	/// NOTE:
 	///   Use BGFX_STATE_ALPHA_REF, BGFX_STATE_BLEND_FUNC and
 	///   BGFX_STATE_BLEND_FUNC macros to setup more complex states.
-	void setState(uint64_t _state);
+	void setState(uint64_t _state, uint32_t _rgba = UINT32_MAX);
 
 	/// Set stencil test state.
 	///

@@ -1299,10 +1299,10 @@ namespace bgfx
 		s_ctx.setViewTransformMask(_viewMask, _view, _proj, _other);
 	}
 
-	void setState(uint64_t _state)
+	void setState(uint64_t _state, uint32_t _rgba)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx.m_submit->setState(_state);
+		s_ctx.m_submit->setState(_state, _rgba);
 	}
 
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil)

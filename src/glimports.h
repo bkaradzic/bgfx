@@ -135,6 +135,7 @@ GL_IMPORT(true,  PFNGLSTENCILOPSEPARATEPROC,              glStencilOpSeparate);
 
 GL_IMPORT(true,  PFNGLBLENDFUNCSEPARATEPROC,              glBlendFuncSeparate);
 GL_IMPORT(true,  PFNGLBLENDEQUATIONSEPARATEPROC,          glBlendEquationSeparate);
+GL_IMPORT(true,  PFNGLBLENDCOLORPROC,                     glBlendColor);
 
 #if BGFX_CONFIG_DEBUG_GREMEDY
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY);

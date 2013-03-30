@@ -59,6 +59,7 @@ namespace bgfx
 			NVX_gpu_memory_info,
 			OES_rgb8_rgba8,
 			EXT_texture_storage,
+			EXT_blend_color,
 
 			Count
 		};
@@ -113,6 +114,7 @@ namespace bgfx
 		{ "GL_NVX_gpu_memory_info",               false,                             true  },
 		{ "GL_OES_rgb8_rgba8",                    false,                             true  },
 		{ "GL_EXT_texture_storage",               false,                             true  },
+		{ "GL_EXT_blend_color",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 	};
 
 #if BGFX_CONFIG_RENDERER_OPENGLES3
@@ -556,18 +558,20 @@ namespace bgfx
 
 	static const GLenum s_blendFactor[][2] =
 	{
-		{ 0,                      0                      }, // ignored
-		{ GL_ZERO,                GL_ZERO                },
-		{ GL_ONE,                 GL_ONE                 },
-		{ GL_SRC_COLOR,           GL_SRC_COLOR           },
-		{ GL_ONE_MINUS_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR },
-		{ GL_SRC_ALPHA,           GL_SRC_ALPHA           },
-		{ GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA },
-		{ GL_DST_ALPHA,           GL_DST_ALPHA           },
-		{ GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA },
-		{ GL_DST_COLOR,           GL_DST_COLOR           },
-		{ GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_DST_COLOR },
-		{ GL_SRC_ALPHA_SATURATE,  GL_ONE                 },
+		{ 0,                           0                           }, // ignored
+		{ GL_ZERO,                     GL_ZERO                     },
+		{ GL_ONE,                      GL_ONE                      },
+		{ GL_SRC_COLOR,                GL_SRC_COLOR                },
+		{ GL_ONE_MINUS_SRC_COLOR,      GL_ONE_MINUS_SRC_COLOR      },
+		{ GL_SRC_ALPHA,                GL_SRC_ALPHA                },
+		{ GL_ONE_MINUS_SRC_ALPHA,      GL_ONE_MINUS_SRC_ALPHA      },
+		{ GL_DST_ALPHA,                GL_DST_ALPHA                },
+		{ GL_ONE_MINUS_DST_ALPHA,      GL_ONE_MINUS_DST_ALPHA      },
+		{ GL_DST_COLOR,                GL_DST_COLOR                },
+		{ GL_ONE_MINUS_DST_COLOR,      GL_ONE_MINUS_DST_COLOR      },
+		{ GL_SRC_ALPHA_SATURATE,       GL_ONE                      },
+		{ GL_CONSTANT_COLOR,           GL_CONSTANT_COLOR           },
+		{ GL_ONE_MINUS_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR },
 	};
 
 	static const GLenum s_depthFunc[] =
@@ -2454,6 +2458,7 @@ namespace bgfx
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
 		int32_t height = m_render->m_resolution.m_height;
 		float alphaRef = 0.0f;
+		uint32_t blendFactor = 0;
 		GLenum primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : GL_TRIANGLES;
 		uint32_t primNumVerts = 3;
 		uint32_t baseVertex = 0;
@@ -2647,6 +2652,19 @@ namespace bgfx
 							uint32_t dst = (blend>>4)&0xf;
 							GL_CHECK(glEnable(GL_BLEND) );
 							GL_CHECK(glBlendFunc(s_blendFactor[src][0], s_blendFactor[dst][1]) );
+
+							if (0 != (blend&(BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR) ) )
+							&&  blendFactor != state.m_rgba)
+							{
+								blendFactor = state.m_rgba;
+
+								GLclampf rr = (blendFactor>>24)/255.0f;
+								GLclampf gg = ( (blendFactor>>16)&0xff)/255.0f;
+								GLclampf bb = ( (blendFactor>>8)&0xff)/255.0f;
+								GLclampf aa = (blendFactor&0xff)/255.0f;
+
+								GL_CHECK(glBlendColor(rr, gg, bb, aa) );
+							}
 						}
 						else
 						{

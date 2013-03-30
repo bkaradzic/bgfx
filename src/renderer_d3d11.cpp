@@ -19,18 +19,20 @@ namespace bgfx
 
 	static const D3D11_BLEND s_blendFactor[][2] =
 	{
-		{ (D3D11_BLEND)0,             (D3D11_BLEND)0             }, // ignored
-		{ D3D11_BLEND_ZERO,           D3D11_BLEND_ZERO           },
-		{ D3D11_BLEND_ONE,            D3D11_BLEND_ONE            },
-		{ D3D11_BLEND_SRC_COLOR,      D3D11_BLEND_SRC_ALPHA      },
-		{ D3D11_BLEND_INV_SRC_COLOR,  D3D11_BLEND_INV_SRC_ALPHA  },
-		{ D3D11_BLEND_SRC_ALPHA,      D3D11_BLEND_SRC_ALPHA      },
-		{ D3D11_BLEND_INV_SRC_ALPHA,  D3D11_BLEND_INV_SRC_ALPHA  },
-		{ D3D11_BLEND_DEST_ALPHA,     D3D11_BLEND_DEST_ALPHA     },
-		{ D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_DEST_ALPHA },
-		{ D3D11_BLEND_DEST_COLOR,     D3D11_BLEND_DEST_ALPHA     },
-		{ D3D11_BLEND_INV_DEST_COLOR, D3D11_BLEND_INV_DEST_ALPHA },
-		{ D3D11_BLEND_SRC_ALPHA_SAT,  D3D11_BLEND_ONE            },
+		{ (D3D11_BLEND)0,               (D3D11_BLEND)0               }, // ignored
+		{ D3D11_BLEND_ZERO,             D3D11_BLEND_ZERO             },
+		{ D3D11_BLEND_ONE,              D3D11_BLEND_ONE              },
+		{ D3D11_BLEND_SRC_COLOR,        D3D11_BLEND_SRC_ALPHA        },
+		{ D3D11_BLEND_INV_SRC_COLOR,    D3D11_BLEND_INV_SRC_ALPHA    },
+		{ D3D11_BLEND_SRC_ALPHA,        D3D11_BLEND_SRC_ALPHA        },
+		{ D3D11_BLEND_INV_SRC_ALPHA,    D3D11_BLEND_INV_SRC_ALPHA    },
+		{ D3D11_BLEND_DEST_ALPHA,       D3D11_BLEND_DEST_ALPHA       },
+		{ D3D11_BLEND_INV_DEST_ALPHA,   D3D11_BLEND_INV_DEST_ALPHA   },
+		{ D3D11_BLEND_DEST_COLOR,       D3D11_BLEND_DEST_ALPHA       },
+		{ D3D11_BLEND_INV_DEST_COLOR,   D3D11_BLEND_INV_DEST_ALPHA   },
+		{ D3D11_BLEND_SRC_ALPHA_SAT,    D3D11_BLEND_ONE              },
+		{ D3D11_BLEND_BLEND_FACTOR,     D3D11_BLEND_BLEND_FACTOR     },
+		{ D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR },
 	};
 
 	static const D3D11_COMPARISON_FUNC s_depthFunc[] =
@@ -642,7 +644,7 @@ namespace bgfx
 			m_deviceCtx->IASetInputLayout(layout);
 		}
 
-		void setBlendState(uint64_t _state)
+		void setBlendState(uint64_t _state, uint32_t _rgba = UINT32_MAX)
 		{
 			_state &= BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE;
 
@@ -675,7 +677,13 @@ namespace bgfx
 				m_blendStateCache.add(_state, bs);
 			}
 
-			m_deviceCtx->OMSetBlendState(bs, NULL, 0xffffffff);
+			float blendFactor[4];
+			blendFactor[0] = (_rgba>>24)/255.0f;
+			blendFactor[1] = ( (_rgba>>16)&0xff)/255.0f;
+			blendFactor[2] = ( (_rgba>>8)&0xff)/255.0f;
+			blendFactor[3] = (_rgba&0xff)/255.0f;
+
+			m_deviceCtx->OMSetBlendState(bs, blendFactor, 0xffffffff);
 		}
 
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
@@ -2192,7 +2200,7 @@ namespace bgfx
 				{
 					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
-						s_renderCtx.setBlendState(newFlags);
+						s_renderCtx.setBlendState(newFlags, state.m_rgba);
 					}
 
 					if ( (BGFX_STATE_CULL_MASK) & changedFlags)
