@@ -11,6 +11,7 @@ Cross-platform rendering library.
 Supported rendering backends:
 
  * OpenGL 2.1
+ * OpenGL 3.1
  * OpenGL ES 2
  * OpenGL ES 3
  * Direct3D 9
