@@ -133,9 +133,15 @@ bvec2 equal(vec2 _a, vec2 _b) { return _a == _b; }
 bvec3 equal(vec3 _a, vec3 _b) { return _a == _b; }
 bvec4 equal(vec4 _a, vec4 _b) { return _a == _b; }
 
+float mix(float _a, float _b, float _t) { return lerp(_a, _b, _t); }
 vec2 mix(vec2 _a, vec2 _b, vec2 _t) { return lerp(_a, _b, _t); }
 vec3 mix(vec3 _a, vec3 _b, vec3 _t) { return lerp(_a, _b, _t); }
 vec4 mix(vec4 _a, vec4 _b, vec4 _t) { return lerp(_a, _b, _t); }
+
+float mod(float _a, float _b) { return _a - _b * floor(_a / _b); }
+vec2 mod(vec2 _a, vec2 _b) { return _a - _b * floor(_a / _b); }
+vec3 mod(vec3 _a, vec3 _b) { return _a - _b * floor(_a / _b); }
+vec4 mod(vec4 _a, vec4 _b) { return _a - _b * floor(_a / _b); }
 
 #elif BGFX_SHADER_LANGUAGE_GLSL
 #	define atan2(_x, _y) atan(_x, _y)
@@ -155,6 +161,17 @@ vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_vec, _mtx); }
 vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_mtx, _vec); }
 #endif // BGFX_SHADER_LANGUAGE_HLSL
+
+uniform vec4 u_viewRect;
+uniform vec4 u_viewTexel;
+uniform mat4 u_view;
+uniform mat4 u_viewProj;
+uniform mat4 u_model;
+uniform mat4 u_modelView;
+uniform mat4 u_modelViewProj;
+uniform mat4 u_modelViewProjX;
+uniform mat4 u_viewProjX;
+uniform float u_alphaRef;
 
 #endif // __cplusplus
 

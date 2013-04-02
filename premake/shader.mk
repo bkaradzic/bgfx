@@ -49,6 +49,10 @@ endif
 endif
 endif
 
+THISDIR := $(dir $(lastword $(MAKEFILE_LIST)))
+VS_FLAGS+=-i $(THISDIR)../src/
+FS_FLAGS+=-i $(THISDIR)../src/
+
 BUILD_OUTPUT_DIR=$(addprefix ./, $(RUNTIME_DIR)/$(SHADER_PATH))
 BUILD_INTERMEDIATE_DIR=$(addprefix $(BUILD_DIR)/, $(SHADER_PATH))
 

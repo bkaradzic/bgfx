@@ -3,5 +3,5 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../../src/common.sh"
+#include <bgfx_shader.sh>
 #include "shaderlib.sh"

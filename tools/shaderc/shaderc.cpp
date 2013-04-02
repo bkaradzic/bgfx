@@ -999,7 +999,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 struct Preprocessor
 {
-	Preprocessor(const char* _filePath)
+	Preprocessor(const char* _filePath, const char* _includeDir = NULL)
 		: m_tagptr(m_tags)
 		, m_scratchPos(0)
 		, m_fgetsPos(0)
@@ -1035,6 +1035,13 @@ struct Preprocessor
 		m_tagptr->tag = FPPTAG_INPUT_NAME;
 		m_tagptr->data = scratch(_filePath);
 		m_tagptr++;
+
+		if (NULL != _includeDir)
+		{
+			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
+			m_tagptr->data = scratch(_includeDir);
+			m_tagptr++;
+		}
 
 		m_default = "#define lowp\n#define mediump\n#define highp\n";
 	}
@@ -1243,6 +1250,7 @@ void help(const char* _error = NULL)
 		  "\n"
 		  "Options:\n"
 		  "  -f <file path>                Input file path.\n"
+		  "  -i <include path>             Include path.\n"
 		  "  -o <file path>                Output file path.\n"
 		  "      --bin2c <file path>       Generate C header file.\n"
 		  "      --depends <file path>     Generate makefile style depends file.\n"
@@ -1353,8 +1361,9 @@ int main(int _argc, const char* _argv[])
 
 	bool depends = cmdLine.hasArg("depends");
 	bool preprocessOnly = cmdLine.hasArg("preprocess");
+	const char* includeDir = cmdLine.findOption('i');
 
-	Preprocessor preprocessor(filePath);
+	Preprocessor preprocessor(filePath, includeDir);
 
 	preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
 	preprocessor.setDefaultDefine("BX_PLATFORM_IOS");
