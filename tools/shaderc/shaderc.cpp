@@ -1038,8 +1038,19 @@ struct Preprocessor
 
 		if (NULL != _includeDir)
 		{
+			char* start = scratch(_includeDir);
+
+			for (char* split = strchr(start, ';'); NULL != split; split = strchr(start, ';'))
+			{
+				*split = '\0';
+				m_tagptr->tag = FPPTAG_INCLUDE_DIR;
+				m_tagptr->data = start;
+				m_tagptr++;
+				start = split + 1;
+			}
+
 			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
-			m_tagptr->data = scratch(_includeDir);
+			m_tagptr->data = start;
 			m_tagptr++;
 		}
 
@@ -1250,7 +1261,7 @@ void help(const char* _error = NULL)
 		  "\n"
 		  "Options:\n"
 		  "  -f <file path>                Input file path.\n"
-		  "  -i <include path>             Include path.\n"
+		  "  -i <include path>             Include path (for multiple paths use semicolon).\n"
 		  "  -o <file path>                Output file path.\n"
 		  "      --bin2c <file path>       Generate C header file.\n"
 		  "      --depends <file path>     Generate makefile style depends file.\n"
