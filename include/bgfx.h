@@ -587,8 +587,8 @@ namespace bgfx
 
 	/// Allocate transient index buffer.
 	///
-	/// @param[out] _tib is valid for the duration of frame, and it can be reused for
-	///   multiple draw calls.
+	/// @param[out] _tib is valid for the duration of frame, and it can be
+	///   reused for multiple draw calls.
 	/// @param _num number of indices to allocate.
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num);
 
@@ -597,8 +597,8 @@ namespace bgfx
 
 	/// Allocate transient vertex buffer.
 	///
-	/// @param[out] _tvb is valid for the duration of frame, and it can be reused for
-	///   multiple draw calls.
+	/// @param[out] _tvb is valid for the duration of frame, and it can be
+	///   reused for multiple draw calls.
 	/// @param _num number of vertices to allocate.
 	/// @param _decl vertex declaration.
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl);
@@ -667,7 +667,8 @@ namespace bgfx
 	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem);
 
 	/// Update Cube texture.
-	/// @param _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z.
+	/// @param _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
+	///   -Y, 4 is +Z, and 5 is -Z.
 	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
 	/// Destroy texture.
@@ -758,8 +759,8 @@ namespace bgfx
 	///
 	/// @param _mtx pointer to first matrix in array.
 	/// @param _num number of matrices in array.
-	/// @returns index into matrix cache in case the same model matrix has to
-	///   be used for other draw primitive call.
+	/// @returns index into matrix cache in case the same model matrix has
+	///   to be used for other draw primitive call.
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
 	/// Set model matrix from matrix cache for draw primitive.
