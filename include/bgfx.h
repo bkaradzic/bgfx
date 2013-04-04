@@ -345,7 +345,7 @@ namespace bgfx
 	typedef void (*FreeFn)(void* _ptr);
 
 	/// Callback interface to implement application specific behavior.
-	/// Cached items are currently used only when for OpenGL binary shaders.
+	/// Cached items are currently used only for OpenGL binary shaders.
 	///
 	/// NOTE:
 	///   'fatal' callback can be called from any thread. Other callbacks
@@ -490,6 +490,18 @@ namespace bgfx
 	RendererType::Enum getRendererType();
 
 	/// Initialize bgfx library.
+	///
+	/// @param _callback Provide application specific callback interface.
+	///   See: CallbackI
+	///
+	/// @param _realloc Custom realloc function.
+	/// @param _free Custom free function.
+	///
+	/// NOTE: In order to properly set custom allocator realloc and free,
+	///   both functions must be provided. When custom allocator is not
+	///   specified, library uses default CRT allocator. The library assumes
+	///   custom allocator is thread safe.
+	///
 	void init(CallbackI* _callback = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL);
 
 	/// Shutdown bgfx library.
