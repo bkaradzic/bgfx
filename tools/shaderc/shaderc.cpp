@@ -1499,7 +1499,7 @@ int main(int _argc, const char* _argv[])
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = eol + 1;
+				parse = bx::strnl(parse);
 			}
 		}
 
