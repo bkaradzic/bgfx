@@ -79,14 +79,7 @@ osx-release64:
 osx: osx-debug32 osx-release32 osx-debug64 osx-release64
 
 rebuild-shaders:
-	make -C examples/01-cubes rebuild
-	make -C examples/02-metaballs rebuild
-	make -C examples/03-raymarch rebuild
-	make -C examples/04-mesh rebuild
-	make -C examples/05-instancing rebuild
-	make -C examples/06-bump rebuild
-	make -C examples/07-callback rebuild
-	make -C examples/08-update rebuild
+	make -C examples rebuild
 
 docs:
 	markdown README.md > .build/docs/readme.html
