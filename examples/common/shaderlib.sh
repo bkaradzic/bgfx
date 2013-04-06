@@ -181,8 +181,8 @@ vec4 luma(vec4 _rgba)
 vec3 conSatBri(vec3 _rgb, vec3 _csb)
 {
 	vec3 rgb = _rgb * _csb.z;
-	rgb = lerp(luma(rgb), rgb, _csb.y);
-	rgb = lerp(vec3_splat(0.5), rgb, _csb.x);
+	rgb = mix(luma(rgb), rgb, _csb.y);
+	rgb = mix(vec3_splat(0.5), rgb, _csb.x);
 	return rgb;
 }
 
@@ -219,7 +219,7 @@ vec3 blendOverlay(vec3 _base, vec3 _blend)
 {
 	vec3 lt = 2.0 * _base * _blend;
 	vec3 gte = 1.0 - 2.0 * (1.0 - _base) * (1.0 - _blend);
-	return lerp(lt, gte, step(vec3_splat(0.5), _base) );
+	return mix(lt, gte, step(vec3_splat(0.5), _base) );
 }
 
 vec4 blendOverlay(vec4 _base, vec4 _blend)
@@ -239,7 +239,7 @@ vec4 packFloatToRgba(float _value)
 {
 	const vec4 shift = vec4(256 * 256 * 256, 256 * 256, 256, 1.0);
 	const vec4 mask = vec4(0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
-	vec4 comp = frac(_value * shift);
+	vec4 comp = fract(_value * shift);
 	comp -= comp.xxyz * mask;
 	return comp;
 }
@@ -252,7 +252,7 @@ float unpackRgbaToFloat(vec4 _rgba)
 
 float random(vec2 _uv)
 {
-	return frac(sin(dot(_uv.xy, vec2(12.9898, 78.233) ) ) * 43758.5453);
+	return fract(sin(dot(_uv.xy, vec2(12.9898, 78.233) ) ) * 43758.5453);
 }
 
 #endif // __SHADERLIB_SH__

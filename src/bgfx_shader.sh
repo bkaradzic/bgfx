@@ -11,6 +11,8 @@
 #if BGFX_SHADER_LANGUAGE_HLSL
 #	define dFdx(_x) ddx(_x)
 #	define dFdy(_y) ddy(-_y)
+#	define inversesqrt(_x) rsqrt(_x)
+#	define fract(_x) frac(_x)
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3
 struct BgfxSampler2D
@@ -114,8 +116,8 @@ bvec3 lessThan(vec3 _a, vec3 _b) { return _a < _b; }
 bvec4 lessThan(vec4 _a, vec4 _b) { return _a < _b; }
 
 bvec2 lessThanEqual(vec2 _a, vec2 _b) { return _a <= _b; }
-bvec2 lessThanEqual(vec3 _a, vec3 _b) { return _a <= _b; }
-bvec2 lessThanEqual(vec4 _a, vec4 _b) { return _a <= _b; }
+bvec3 lessThanEqual(vec3 _a, vec3 _b) { return _a <= _b; }
+bvec4 lessThanEqual(vec4 _a, vec4 _b) { return _a <= _b; }
 
 bvec2 greaterThan(vec2 _a, vec2 _b) { return _a > _b; }
 bvec3 greaterThan(vec3 _a, vec3 _b) { return _a > _b; }
@@ -145,8 +147,6 @@ vec4 mod(vec4 _a, vec4 _b) { return _a - _b * floor(_a / _b); }
 
 #elif BGFX_SHADER_LANGUAGE_GLSL
 #	define atan2(_x, _y) atan(_x, _y)
-#	define frac(_x) fract(_x)
-#	define lerp(_x, _y, _t) mix(_x, _y, _t)
 #	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
 #	define SAMPLER2D(_name, _reg) uniform sampler2D _name
@@ -160,6 +160,11 @@ vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_vec, _mtx); }
 vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_mtx, _vec); }
+
+float rcp(float _a) { return 1.0/_a; }
+vec2 rcp(vec2 _a) { return vec2(1.0)/_a; }
+vec3 rcp(vec3 _a) { return vec3(1.0)/_a; }
+vec4 rcp(vec4 _a) { return vec4(1.0)/_a; }
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 
 uniform vec4 u_viewRect;
