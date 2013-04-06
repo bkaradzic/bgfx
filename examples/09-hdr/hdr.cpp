@@ -455,7 +455,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const bgfx::Memory* mem;
 
 	mem = loadTexture("uffizi.dds");
-	bgfx::TextureHandle uffizi = bgfx::createTexture(mem);
+	bgfx::TextureHandle uffizi = bgfx::createTexture(mem, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
 	bgfx::UniformHandle u_time      = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
 	bgfx::UniformHandle u_texCube   = bgfx::createUniform("u_texCube",  bgfx::UniformType::Uniform1i);

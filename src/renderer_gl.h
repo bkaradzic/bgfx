@@ -74,7 +74,7 @@
 #		define glGenVertexArrays glGenVertexArraysOES
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
-#		define GL_RGBA8 GL_RGBA8_OES
+#		define GL_RGBA8 GL_RGBA //GL_RGBA8_OES
 #		define GL_RGB10_A2 GL_RGB10_A2_EXT
 #		define GL_R16F GL_R16F_EXT
 #		define GL_R32F GL_R32F_EXT

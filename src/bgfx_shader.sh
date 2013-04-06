@@ -171,7 +171,7 @@ uniform vec4 u_viewRect;
 uniform vec4 u_viewTexel;
 uniform mat4 u_view;
 uniform mat4 u_viewProj;
-uniform mat4 u_model;
+uniform mat4 u_model[64];
 uniform mat4 u_modelView;
 uniform mat4 u_modelViewProj;
 uniform mat4 u_modelViewProjX;
