@@ -26,7 +26,6 @@ SOFTWARE.
 
 INLINE FILE_LOCAL void outadefine(struct Global *, DEFBUF *);
 INLINE FILE_LOCAL void domsg(struct Global *, ErrorCode, va_list);
-FILE_LOCAL char *incmem(struct Global *, char *, int);
 
 /*
  * skipnl()     skips over input text to the end of the line.
@@ -193,7 +192,7 @@ ReturnCode macroid(struct Global *global, int *c)
   if (global->infile != NULL && global->infile->fp != NULL)
     global->recursion = 0;
   while (type[*c] == LET && (dp = lookid(global, *c)) != NULL) {
-    if(ret=expand(global, dp))
+    if((ret=expand(global, dp)))
       return(ret);
     *c = get(global);
   }
