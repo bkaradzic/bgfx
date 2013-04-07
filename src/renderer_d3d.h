@@ -7,6 +7,7 @@
 #define __RENDERER_D3D_H__
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
+#	include <sal.h>
 #	include <dxerr.h>
 #	pragma comment(lib, "dxerr.lib")
 #	define DX_CHECK_EXTRA_F " (%s): %s"

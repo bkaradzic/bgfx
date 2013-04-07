@@ -1603,7 +1603,7 @@ namespace bgfx
 			if (ptr == NonLocalAllocator::invalidBlock)
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
-				BX_WARN(invalidHandle != handle.idx, "Failed to allocate dynamic index buffer handle.");
+				BX_WARN(invalidHandle != indexBufferHandle.idx, "Failed to allocate index buffer handle.");
 				if (indexBufferHandle.idx == invalidHandle)
 				{
 					return handle;
@@ -1618,6 +1618,12 @@ namespace bgfx
 			}
 
 			handle.idx = m_dynamicIndexBufferHandle.alloc();
+			BX_WARN(invalidHandle != handle.idx, "Failed to allocate dynamic index buffer handle.");
+			if (handle.idx == invalidHandle)
+			{
+				return handle;
+			}
+
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[handle.idx];
 			dib.m_handle.idx = uint16_t(ptr>>32);
 			dib.m_offset = uint32_t(ptr);
