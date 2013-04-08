@@ -608,7 +608,7 @@ namespace bgfx
 					uint32_t index = 8-_numInstanceData+ii;
 
 					uint32_t jj;
-					D3D11_INPUT_ELEMENT_DESC* curr;
+					D3D11_INPUT_ELEMENT_DESC* curr = vertexElements;
 					for (jj = 0; jj < num; ++jj)
 					{
 						curr = &vertexElements[jj];
