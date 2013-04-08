@@ -58,8 +58,6 @@ namespace bgfx
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
 		{
 			BX_TRACE("0x%08x: %s", _code, _str);
-			BX_UNUSED(_code);
-			BX_UNUSED(_str);
 			abort();
 		}
 

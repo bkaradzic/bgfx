@@ -60,6 +60,7 @@ namespace bgfx
 			OES_rgb8_rgba8,
 			EXT_texture_storage,
 			EXT_blend_color,
+			ARB_debug_output,
 
 			Count
 		};
@@ -115,6 +116,7 @@ namespace bgfx
 		{ "GL_OES_rgb8_rgba8",                    false,                             true  },
 		{ "GL_EXT_texture_storage",               false,                             true  },
 		{ "GL_EXT_blend_color",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_debug_output",                  BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 	};
 
 #if BGFX_CONFIG_RENDERER_OPENGLES3
@@ -158,6 +160,17 @@ namespace bgfx
 				dst += 4;
 			}
 		}
+	}
+
+	static void APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, GLvoid* /*_userParam*/)
+	{
+		BX_TRACE("src %d, type %d, id %d, severity %d, '%s'"
+				, _source
+				, _type
+				, _id
+				, _severity
+				, _message
+				);
 	}
 
 	struct RendererContext
@@ -959,7 +972,6 @@ namespace bgfx
 				, data
 				, offset
 				);
-			BX_UNUSED(offset);
 		}
 
 		m_constantBuffer->finish();
@@ -2141,7 +2153,6 @@ namespace bgfx
 				}
 
 				BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
-				BX_UNUSED(supported);
 
  				pos += len+1;
  			}
@@ -2249,6 +2260,14 @@ namespace bgfx
 		s_textureFormat[TextureFormat::L8].m_internalFmt = GL_R8;
 		s_textureFormat[TextureFormat::L8].m_fmt         = GL_RED;
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+		if (s_extension[Extension::ARB_debug_output].m_supported)
+		{
+			GL_CHECK(glDebugMessageCallbackARB(debugProcCb, NULL) );
+			GL_CHECK(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE) );
+		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 	}
 
 	void Context::rendererShutdown()

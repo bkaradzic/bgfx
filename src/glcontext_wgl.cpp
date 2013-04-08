@@ -19,6 +19,7 @@ namespace bgfx
 	PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
 	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 #	define GL_IMPORT(_optional, _proto, _func) _proto _func
 #		include "glimports.h"
@@ -115,6 +116,7 @@ namespace bgfx
 		wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
 		wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 		wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 
 		if (NULL != wglGetExtensionsStringARB)
 		{
@@ -236,6 +238,12 @@ namespace bgfx
 
 		int result = wglMakeCurrent(m_hdc, m_context);
 		BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
+
+		if (NULL != wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(0);
+		}
+
 		import();
 	}
 

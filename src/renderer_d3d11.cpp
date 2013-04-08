@@ -1419,7 +1419,6 @@ namespace bgfx
 					, regIndex
 					, regCount
 					);
-				BX_UNUSED(kind);
 			}
 
 			m_constantBuffer->finish();
