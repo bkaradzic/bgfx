@@ -205,7 +205,7 @@ ReturnCode control( struct Global *global,
 
             while( c != '\n' && c != EOF_CHAR )
                 {
-                if( ret = save( global, c ) )
+                if( (ret = save( global, c )) )
                     return(ret);
 
                 c = get( global );
@@ -213,7 +213,7 @@ ReturnCode control( struct Global *global,
 
             unget( global );
 
-            if( ret = save( global, EOS ) )
+            if( (ret = save( global, EOS )) )
                 return(ret);
 
             /*
@@ -222,7 +222,7 @@ ReturnCode control( struct Global *global,
              */
             global->line = atoi(global->work) - 1;     /* Reset line number    */
 
-            for( tp = global->work; isdigit(*tp) || type[*tp] == SPA; tp++)
+            for( tp = global->work; isdigit(*tp) || type[(unsigned)*tp] == SPA; tp++)
                 ;             /* Skip over digits */
 
             if( *tp != EOS )
@@ -559,7 +559,7 @@ ReturnCode doinclude( struct Global *global )
 
     delim = skipws( global );
 
-    if( ret = macroid( global, &delim ) )
+    if( (ret = macroid( global, &delim )) )
         return(ret);
 
     if( delim != '<' && delim != '"' )
@@ -575,7 +575,7 @@ ReturnCode doinclude( struct Global *global )
     global->workp = global->work;
 
     while( (c = get(global)) != '\n' && c != EOF_CHAR )
-        if( ret = save( global, c ) )       /* Put it away.                */
+        if( (ret = save( global, c )) )       /* Put it away.                */
             return( ret );
 
     unget( global );                        /* Force nl after include      */

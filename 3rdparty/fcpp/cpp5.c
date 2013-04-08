@@ -355,7 +355,7 @@ ReturnCode eval(struct Global *global, int *eval)
       case OP_COL:			/* : on stack.		*/
 	opp--;				/* Unstack :		*/
 	if (opp->op != OP_QUE) {        /* Matches ? on stack?  */
-	  cerror(global, ERROR_MISPLACED, opname[opp->op]);
+	  cerror(global, ERROR_MISPLACED, opname[(unsigned)opp->op]);
 	  *eval=1;
 	  return(FPP_OK);
 	}
@@ -394,7 +394,7 @@ ReturnCode evallex(struct Global *global,
     loop=FALSE;
     do {					/* Collect the token	*/
       c = skipws(global);
-      if(ret=macroid(global, &c))
+      if((ret=macroid(global, &c)))
       return(ret);
       if (c == EOF_CHAR || c == '\n') {
 	unget(global);
@@ -535,7 +535,7 @@ ReturnCode dosizeof(struct Global *global, int *result)
    */
   typecode = 0;
   while ((c = skipws(global))) {
-    if(ret=macroid(global, &c))
+    if((ret=macroid(global, &c)))
       return(ret);
     /* (I) return on fail! */
     if (c  == EOF_CHAR || c == '\n') {

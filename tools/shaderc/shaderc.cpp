@@ -46,9 +46,8 @@ extern "C"
 #include "glsl_optimizer.h"
 
 #if BX_PLATFORM_WINDOWS
-#	if BX_COMPILER_GCC
-#		include <sal.h>
-#	endif // BX_COMPILER_GCC
+#	include <sal.h>
+#	define __D3DX9MATH_INL__ // not used and MinGW complains about type-punning
 #	include <d3dx9.h>
 #	include <d3dcompiler.h>
 #endif // BX_PLATFORM_WINDOWS

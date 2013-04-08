@@ -74,7 +74,7 @@ ReturnCode dodefine(struct Global *global)
   int c;
   DEFBUF *dp;	/* -> new definition	*/
   int isredefine;	/* TRUE if redefined	*/
-  char *old;		/* Remember redefined	*/
+  char *old = NULL;		/* Remember redefined	*/
   ReturnCode ret;
 #if OK_CONCAT
   int quoting;	/* Remember we saw a #	*/
@@ -141,9 +141,9 @@ ReturnCode dodefine(struct Global *global)
 	quoting = 1;		        /* Maybe quoting op.	*/
 	continue;
       }
-      while (global->workp > global->work && type[global->workp[-1]] == SPA)
+      while (global->workp > global->work && type[(unsigned)*(global->workp - 1)] == SPA)
 	--global->workp;		/* Erase leading spaces */
-      if(ret=save(global, TOK_SEP))     /* Stuff a delimiter    */
+      if((ret=save(global, TOK_SEP)))     /* Stuff a delimiter    */
 	return(ret);
       c = skipws(global);               /* Eat whitespace       */
       continue;
