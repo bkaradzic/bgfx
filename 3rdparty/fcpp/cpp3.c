@@ -369,7 +369,6 @@ void deldefines(struct Global *global)
    * Delete the built-in #define's.
    */
   char **pp;
-  int i;
 
 
   /*
@@ -383,7 +382,7 @@ void deldefines(struct Global *global)
   /*
    * The magic pre-defines __FILE__ and __LINE__
    */
-  for (pp = global->magic, i = DEF_NOARGS; *pp != NULL; pp++) {
+  for (pp = global->magic; *pp != NULL; pp++) {
     defendel(global, *pp, TRUE);
   }
 #if OK_DATE

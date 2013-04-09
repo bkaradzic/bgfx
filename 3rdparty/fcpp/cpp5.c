@@ -806,7 +806,7 @@ int *evaleval(struct Global *global,
    *
    * evaleval() returns the new pointer to the top of the value stack.
    */
-  int v1, v2;
+  int v1, v2 = 0;
   
   if (isbinary(op))
     v2 = *--valp;
