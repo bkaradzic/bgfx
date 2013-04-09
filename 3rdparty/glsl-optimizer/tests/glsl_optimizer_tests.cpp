@@ -436,9 +436,9 @@ int main (int argc, const char** argv)
 	float timeDelta = float(time1-time0)/CLOCKS_PER_SEC;
 
 	if (errors != 0)
-		printf ("\n**** %i tests (%.2fsec), %i !!!FAILED!!!\n", tests, timeDelta, errors);
+		printf ("\n**** %i tests (%.2fsec), %i !!!FAILED!!!\n", (int)tests, timeDelta, (int)errors);
 	else
-		printf ("\n**** %i tests (%.2fsec) succeeded\n", tests, timeDelta);
+		printf ("\n**** %i tests (%.2fsec) succeeded\n", (int)tests, timeDelta);
 	
 	// 3.25s
 	// with builtin call linking, 3.84s

@@ -239,11 +239,6 @@ public:
    bool progress;
 };
 
-#if defined(__GNUC__)
-// BK - 'gcc (Ubuntu/Linaro 4.7.2-2ubuntu1) 4.7.2'
-// If destroy_links is inlined code crashes in n->remove().
-__attribute__((noinline))
-#endif // defined(__GNUC__)
 static void
 destroy_links(exec_list *list, function *f)
 {
