@@ -17,6 +17,24 @@ namespace bgfx
 		D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
 	};
 
+	static const uint32_t s_checkMsaa[] =
+	{
+		0,
+		2,
+		4,
+		8,
+		16,
+	};
+
+	static DXGI_SAMPLE_DESC s_msaa[] =
+	{
+		{  1, 0 },
+		{  2, 0 },
+		{  4, 0 },
+		{  8, 0 },
+		{ 16, 0 },
+	};
+
 	static const D3D11_BLEND s_blendFactor[][2] =
 	{
 		{ (D3D11_BLEND)0,               (D3D11_BLEND)0               }, // ignored
@@ -301,8 +319,8 @@ namespace bgfx
 			m_d3d11dll = LoadLibrary("d3d11.dll");
 			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
 
-			PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN d3D11CreateDeviceAndSwapChain = (PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN)GetProcAddress(m_d3d11dll, "D3D11CreateDeviceAndSwapChain");
-			BGFX_FATAL(NULL != d3D11CreateDeviceAndSwapChain, Fatal::UnableToInitialize, "Function D3D11CreateDeviceAndSwapChain not found.");
+			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)GetProcAddress(m_d3d11dll, "D3D11CreateDevice");
+			BGFX_FATAL(NULL != d3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
 
 			HRESULT hr;
 
@@ -332,20 +350,37 @@ namespace bgfx
 
 			D3D_FEATURE_LEVEL featureLevel;
 
-			hr = d3D11CreateDeviceAndSwapChain(NULL
+			hr = d3D11CreateDevice(NULL
 				, D3D_DRIVER_TYPE_HARDWARE
 				, NULL
 				, flags
 				, features
 				, 1
 				, D3D11_SDK_VERSION
-				, &m_scd
-				, &m_swapChain
 				, &m_device
 				, &featureLevel
 				, &m_deviceCtx
 				);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+
+			IDXGIDevice* device;
+			hr = m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)&device);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+
+			IDXGIAdapter* adapter;
+			hr = device->GetParent(__uuidof(IDXGIAdapter), (void**)&adapter);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+			DX_RELEASE(device, 2);
+
+			hr = adapter->GetParent(__uuidof(IDXGIFactory), (void**)&m_factory);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+			DX_RELEASE(adapter, 2);
+
+			hr = m_factory->CreateSwapChain(m_device
+										, &m_scd
+										, &m_swapChain
+										);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 
 			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 			{
@@ -407,6 +442,7 @@ namespace bgfx
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
 			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_factory, 0);
 
 			FreeLibrary(m_d3d11dll);
 		}
@@ -472,12 +508,35 @@ namespace bgfx
 			m_samplerStateCache.invalidate();
 		}
 
+		void updateMsaa()
+		{
+			for (uint32_t ii = 1, last = 0; ii < countof(s_msaa); ++ii)
+			{
+				uint32_t msaa = s_checkMsaa[ii];
+				uint32_t quality = 0;
+				HRESULT hr = m_device->CheckMultisampleQualityLevels(m_scd.BufferDesc.Format, msaa, &quality);
+
+				if (SUCCEEDED(hr)
+				&&  0 < quality)
+				{
+					s_msaa[ii].Count = msaa;
+					s_msaa[ii].Quality = quality - 1;
+					last = ii;
+				}
+				else
+				{
+					s_msaa[ii] = s_msaa[last];
+				}
+			}
+		}
+
 		void updateResolution(const Resolution& _resolution)
 		{
 			if ( (uint32_t)m_scd.BufferDesc.Width != _resolution.m_width
 			||   (uint32_t)m_scd.BufferDesc.Height != _resolution.m_height
 			||   m_flags != _resolution.m_flags)
 			{
+				bool resize = (m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK);
 				m_flags = _resolution.m_flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
@@ -488,12 +547,29 @@ namespace bgfx
 
 				preReset();
 
-				DX_CHECK(m_swapChain->ResizeBuffers(2
-					, m_scd.BufferDesc.Width
-					, m_scd.BufferDesc.Height
-					, m_scd.BufferDesc.Format
-					, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
-					) );
+				if (resize)
+				{
+					DX_CHECK(m_swapChain->ResizeBuffers(2
+						, m_scd.BufferDesc.Width
+						, m_scd.BufferDesc.Height
+						, m_scd.BufferDesc.Format
+						, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+						) );
+				}
+				else
+				{
+					updateMsaa();
+					m_scd.SampleDesc = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+
+					DX_RELEASE(m_swapChain, 0);
+
+					HRESULT hr;
+					hr = m_factory->CreateSwapChain(m_device
+							, &m_scd
+							, &m_swapChain
+							);
+					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
+				}
 
 				postReset();
 			}
@@ -745,7 +821,7 @@ namespace bgfx
 
 		void setRasterizerState(uint64_t _state, bool _wireframe = false)
 		{
-			_state &= BGFX_STATE_CULL_MASK;
+			_state &= BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
 
 			ID3D11RasterizerState* rs = m_rasterizerStateCache.find(_state);
@@ -762,7 +838,7 @@ namespace bgfx
 				desc.SlopeScaledDepthBias = 0.0f;
 				desc.DepthClipEnable = false;
 				desc.ScissorEnable = false;
-				desc.MultisampleEnable = false;
+				desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
 				desc.AntialiasedLineEnable = false;
 
 				DX_CHECK(m_device->CreateRasterizerState(&desc, &rs) );
@@ -956,6 +1032,7 @@ namespace bgfx
 		}
 
 		HMODULE m_d3d11dll;
+		IDXGIFactory* m_factory;
 		IDXGISwapChain* m_swapChain;
 		ID3D11Device* m_device;
 		ID3D11DeviceContext* m_deviceCtx;
@@ -2202,7 +2279,7 @@ namespace bgfx
 						s_renderCtx.setBlendState(newFlags, state.m_rgba);
 					}
 
-					if ( (BGFX_STATE_CULL_MASK) & changedFlags)
+					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
 					{
 						s_renderCtx.setRasterizerState(newFlags, wireframe);
 					}

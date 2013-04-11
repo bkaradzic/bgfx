@@ -6,6 +6,10 @@
 #ifndef __BGFX_SHADER_H__
 #define __BGFX_SHADER_H__
 
+#if !defined(BGFX_CONFIG_MAX_BONES)
+#	define BGFX_CONFIG_MAX_BONES 32
+#endif // !defined(BGFX_CONFIG_MAX_BONES)
+
 #ifndef __cplusplus
 
 #if BGFX_SHADER_LANGUAGE_HLSL
@@ -171,7 +175,7 @@ uniform vec4 u_viewRect;
 uniform vec4 u_viewTexel;
 uniform mat4 u_view;
 uniform mat4 u_viewProj;
-uniform mat4 u_model[64];
+uniform mat4 u_model[BGFX_CONFIG_MAX_BONES];
 uniform mat4 u_modelView;
 uniform mat4 u_modelViewProj;
 uniform mat4 u_modelViewProjX;
