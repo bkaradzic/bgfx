@@ -743,7 +743,7 @@ namespace bgfx
 	///   BGFX_STATE_BLEND_INV_FACTOR blend modes.
 	///
 	/// NOTE:
-	///   Use BGFX_STATE_ALPHA_REF, BGFX_STATE_BLEND_FUNC and
+	///   Use BGFX_STATE_ALPHA_REF, BGFX_STATE_POINT_SIZE and
 	///   BGFX_STATE_BLEND_FUNC macros to setup more complex states.
 	void setState(uint64_t _state, uint32_t _rgba = UINT32_MAX);
 
