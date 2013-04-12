@@ -9,7 +9,8 @@ endif
 
 ifndef TARGET
 .PHONY: all
-all:;@echo Usage: make TARGET=# [clean, all, rebuild]
+all:
+	@echo Usage: make TARGET=# [clean, all, rebuild]
 	@echo "  TARGET=0 (hlsl - dx9)"
 	@echo "  TARGET=1 (hlsl - dx11)"
 	@echo "  TARGET=2 (glsl - nacl)"
