@@ -1213,7 +1213,7 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 				_str = bx::strws(delim + 1);
 			}
 		}
-		while (delim < _eol && NULL != delim);
+		while (delim < _eol && _str < _eol && NULL != delim);
 
 		std::sort(_inout.begin(), _inout.end() );
 
@@ -1533,11 +1533,15 @@ int main(int _argc, const char* _argv[])
 				if (0 == strncmp(str, "input", 5) )
 				{
 					str += 5;
+					const char* comment = strstr(str, "//");
+					eol = NULL != comment && comment < eol ? comment : eol;
 					inputHash = parseInOut(shaderInputs, str, eol);
 				}
 				else if (0 == strncmp(str, "output", 6) )
 				{
 					str += 6;
+					const char* comment = strstr(str, "//");
+					eol = NULL != comment && comment < eol ? comment : eol;
 					outputHash = parseInOut(shaderOutputs, str, eol);
 				}
 			}

@@ -1,4 +1,4 @@
-$input v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0
+$input v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0 // in...
 
 /*
  * Copyright 2011-2013 Branimir Karadzic. All rights reserved.
