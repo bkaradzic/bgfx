@@ -39,6 +39,7 @@
 					| BX_PLATFORM_NACL \
 					| BX_PLATFORM_ANDROID \
 					| BX_PLATFORM_IOS \
+					| BX_PLATFORM_QNX \
 					)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES2
 

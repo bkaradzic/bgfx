@@ -162,6 +162,7 @@ namespace bgfx
 		}
 	}
 
+#if BGFX_CONFIG_RENDERER_OPENGL
 	static void APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, GLvoid* /*_userParam*/)
 	{
 		BX_TRACE("src %d, type %d, id %d, severity %d, '%s'"
@@ -172,6 +173,7 @@ namespace bgfx
 				, _message
 				);
 	}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 	struct RendererContext
 	{

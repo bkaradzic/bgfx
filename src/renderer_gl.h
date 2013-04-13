@@ -86,7 +86,7 @@
 #		include <GLES3/gl3ext.h>
 #	endif // BGFX_CONFIG_RENDERER_
 
-#	if  BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_WINDOWS
+#	if BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_WINDOWS || BX_PLATFORM_QNX
 #		undef BGFX_USE_EGL
 #		define BGFX_USE_EGL 1
 #		include "glcontext_egl.h"

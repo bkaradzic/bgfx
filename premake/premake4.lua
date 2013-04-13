@@ -81,7 +81,7 @@ function exampleProject(_name, _uuid)
 			"pthread",
 		}
 
-	configuration { "macosx" }
+	configuration { "osx" }
 		files {
 			BGFX_DIR .. "examples/common/**.mm",
 		}

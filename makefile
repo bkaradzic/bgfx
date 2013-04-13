@@ -13,6 +13,7 @@ all:
 	premake4 --file=premake/premake4.lua --gcc=linux gmake
 	premake4 --file=premake/premake4.lua --gcc=emscripten gmake
 	premake4 --file=premake/premake4.lua --gcc=osx gmake
+	premake4 --file=premake/premake4.lua --gcc=qnx-arm gmake
 	premake4 --file=premake/premake4.lua xcode4
 	make -s --no-print-directory -C src
 
@@ -77,6 +78,12 @@ osx-debug64:
 osx-release64:
 	make -C .build/projects/gmake-osx config=release64
 osx: osx-debug32 osx-release32 osx-debug64 osx-release64
+
+qnx-arm-debug32:
+	make -C .build/projects/gmake-osx config=debug32
+qnx-arm-release32:
+	make -C .build/projects/gmake-osx config=release32
+qnx-arm: qnx-arm-debug32 qnx-arm-release32
 
 rebuild-shaders:
 	make -C examples rebuild

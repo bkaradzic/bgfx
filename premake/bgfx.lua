@@ -25,12 +25,12 @@ project "bgfx"
 			"$(DXSDK_DIR)/include",
 		}
 
-	configuration { "macosx" }
+	configuration { "osx" }
 		files {
 			BGFX_DIR .. "src/**.mm",
 		}
 
-	configuration { "not nacl" }
+	configuration { "(not nacl*) and (not qnx*)" }
 		includedirs {
 			--nacl has GLES2 headers modified...
 			BGFX_DIR .. "3rdparty/glext",
