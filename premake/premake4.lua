@@ -90,6 +90,13 @@ function exampleProject(_name, _uuid)
 			"Cocoa.framework",
 			"OpenGL.framework",
 		}
+
+	configuration { "qnx*" }
+		targetextension ""
+		links {
+			"EGL",
+			"GLESv2",
+		}
 end
 
 dofile "bgfx.lua"
