@@ -288,7 +288,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float mtxInv[16];
 		mtxInverse(mtxInv, mtx);
 		float lightDirModel[4] = { -0.4f, -0.5f, -1.0f, 0.0f };
-		float lightDirModelN[4];
+		float lightDirModelN[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		vec3Norm(lightDirModelN, lightDirModel);
 		float lightDir[4];
 		vec4MulMtx(lightDir, lightDirModelN, mtxInv);
