@@ -57,16 +57,16 @@ nacl-release64:
 	make -R -C .build/projects/gmake-nacl config=release64
 nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64
 
-nacl-arm-debug32:
-	make -R -C .build/projects/gmake-nacl-arm config=debug32
-nacl-arm-release32:
-	make -R -C .build/projects/gmake-nacl-arm config=release32
+nacl-arm-debug:
+	make -R -C .build/projects/gmake-nacl-arm config=debug
+nacl-arm-release:
+	make -R -C .build/projects/gmake-nacl-arm config=release
 nacl-arm: nacl-arm-debug32 nacl-arm-release32
 
 pnacl-debug:
-	make -R -C .build/projects/gmake-pnacl config=debug64
+	make -R -C .build/projects/gmake-pnacl config=debug
 pnacl-release:
-	make -R -C .build/projects/gmake-pnacl config=release64
+	make -R -C .build/projects/gmake-pnacl config=release
 pnacl: pnacl-debug pnacl-release
 
 osx-debug32:
@@ -79,14 +79,14 @@ osx-release64:
 	make -C .build/projects/gmake-osx config=release64
 osx: osx-debug32 osx-release32 osx-debug64 osx-release64
 
-qnx-arm-debug32:
-	make -C .build/projects/gmake-osx config=debug32
-qnx-arm-release32:
-	make -C .build/projects/gmake-osx config=release32
-qnx-arm: qnx-arm-debug32 qnx-arm-release32
+qnx-arm-debug:
+	make -R -C .build/projects/gmake-qnx-arm config=debug
+qnx-arm-release:
+	make -R -C .build/projects/gmake-qnx-arm config=release
+qnx-arm: qnx-arm-debug qnx-arm-release
 
 rebuild-shaders:
-	make -C examples rebuild
+	make -R -C examples rebuild
 
 docs:
 	markdown README.md > .build/docs/readme.html

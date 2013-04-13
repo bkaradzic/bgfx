@@ -13,6 +13,7 @@ solution "bgfx"
 		"x32",
 		"x64",
 		"Xbox360",
+		"Native", -- for targets where bitness is not specified
 	}
 
 	language "C++"
