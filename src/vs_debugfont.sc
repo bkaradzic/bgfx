@@ -6,7 +6,7 @@ $output v_color0, v_color1, v_texcoord0
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.sh"
+#include "bgfx_shader.sh"
 
 void main()
 {
