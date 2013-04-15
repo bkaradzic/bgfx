@@ -1944,20 +1944,18 @@ namespace bgfx
 			GLboolean colorMask = !!(BGFX_CLEAR_COLOR_BIT & _clear.m_flags);
 			GL_CHECK(glColorMask(colorMask, colorMask, colorMask, colorMask) );
 
-			GLboolean depthMask = !!(BGFX_CLEAR_DEPTH_BIT & _clear.m_flags);
-			if (depthMask)
+			if (BGFX_CLEAR_DEPTH_BIT & _clear.m_flags)
 			{
 				GL_CHECK(glEnable(GL_DEPTH_TEST) );
 				GL_CHECK(glDepthFunc(GL_ALWAYS) );
-				GL_CHECK(glDepthMask(depthMask) );
+				GL_CHECK(glDepthMask(GL_TRUE) );
 			}
 			else
 			{
 				GL_CHECK(glDisable(GL_DEPTH_TEST) );
 			}
 
-			GLboolean stencilMask = !!(BGFX_CLEAR_STENCIL_BIT & _clear.m_flags);
-			if (stencilMask)
+			if (BGFX_CLEAR_STENCIL_BIT & _clear.m_flags)
 			{
 				GL_CHECK(glEnable(GL_STENCIL_TEST) );
 				GL_CHECK(glStencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, _clear.m_stencil,  0xff) );
