@@ -768,7 +768,7 @@ namespace bgfx
 
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
-			_stencil &= packStencil(BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
+			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
 
 			HashMurmur2A murmur;
 			murmur.begin();
@@ -1339,8 +1339,19 @@ namespace bgfx
 			state |= _clear.m_flags & BGFX_CLEAR_COLOR_BIT ? BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE : 0;
 			state |= _clear.m_flags & BGFX_CLEAR_DEPTH_BIT ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_DEPTH_WRITE : 0;
 
+			uint64_t stencil = 0;
+			stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL_BIT ? 0
+				| BGFX_STENCIL_TEST_ALWAYS
+				| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
+				| BGFX_STENCIL_FUNC_RMASK(0xff)
+				| BGFX_STENCIL_OP_FAIL_S_REPLACE
+				| BGFX_STENCIL_OP_FAIL_Z_REPLACE
+				| BGFX_STENCIL_OP_PASS_Z_REPLACE
+				: 0
+				;
+
 			s_renderCtx.setBlendState(state);
-			s_renderCtx.setDepthStencilState(state);
+			s_renderCtx.setDepthStencilState(state, stencil);
 			s_renderCtx.setRasterizerState(state, false);
 
 			Program& program = s_renderCtx.m_program[m_program.idx];

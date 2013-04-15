@@ -30,7 +30,7 @@ project "bgfx"
 			BGFX_DIR .. "src/**.mm",
 		}
 
-	configuration { "(not nacl*) and (not qnx*)" }
+	configuration { "vs*" }
 		includedirs {
 			--nacl has GLES2 headers modified...
 			BGFX_DIR .. "3rdparty/glext",

@@ -1938,13 +1938,35 @@ namespace bgfx
 #if BGFX_CONFIG_CLEAR_QUAD
 		if (s_renderCtx.m_useClearQuad)
 		{
-			GL_CHECK(glDisable(GL_STENCIL_TEST) );
-			GL_CHECK(glEnable(GL_DEPTH_TEST) );
-			GL_CHECK(glDepthFunc(GL_ALWAYS) );
 			GL_CHECK(glDisable(GL_CULL_FACE) );
 			GL_CHECK(glDisable(GL_BLEND) );
-			GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
-			GL_CHECK(glDepthMask(GL_TRUE) );
+
+			GLboolean colorMask = !!(BGFX_CLEAR_COLOR_BIT & _clear.m_flags);
+			GL_CHECK(glColorMask(colorMask, colorMask, colorMask, colorMask) );
+
+			GLboolean depthMask = !!(BGFX_CLEAR_DEPTH_BIT & _clear.m_flags);
+			if (depthMask)
+			{
+				GL_CHECK(glEnable(GL_DEPTH_TEST) );
+				GL_CHECK(glDepthFunc(GL_ALWAYS) );
+				GL_CHECK(glDepthMask(depthMask) );
+			}
+			else
+			{
+				GL_CHECK(glDisable(GL_DEPTH_TEST) );
+			}
+
+			GLboolean stencilMask = !!(BGFX_CLEAR_STENCIL_BIT & _clear.m_flags);
+			if (stencilMask)
+			{
+				GL_CHECK(glEnable(GL_STENCIL_TEST) );
+				GL_CHECK(glStencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, _clear.m_stencil,  0xff) );
+				GL_CHECK(glStencilOpSeparate(GL_FRONT_AND_BACK, GL_REPLACE, GL_REPLACE, GL_REPLACE) );
+			}
+			else
+			{
+				GL_CHECK(glDisable(GL_STENCIL_TEST) );
+			}
 
 			VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
 			VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
