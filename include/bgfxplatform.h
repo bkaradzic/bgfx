@@ -12,7 +12,15 @@
 
 #include <bx/bx.h>
 
-#if BX_PLATFORM_LINUX
+#if BX_PLATFORM_ANDROID
+struct android_app;
+
+namespace bgfx
+{
+	androidSetAndroidApp(struct android_app* _app);
+} // namespace bgfx
+
+#elif BX_PLATFORM_LINUX
 #	include <X11/Xlib.h>
 
 namespace bgfx

@@ -86,7 +86,7 @@
 #		include <GLES3/gl3ext.h>
 #	endif // BGFX_CONFIG_RENDERER_
 
-#	if BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_WINDOWS || BX_PLATFORM_QNX
+#	if BX_PLATFORM_ANDROID || BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_WINDOWS || BX_PLATFORM_QNX
 #		undef BGFX_USE_EGL
 #		define BGFX_USE_EGL 1
 #		include "glcontext_egl.h"
@@ -108,9 +108,17 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #		define GL_BGRA_EXT 0x80E1
 #	endif // GL_BGRA_EXT
 
+#	ifndef GL_R16F_EXT
+#		define GL_R16F_EXT 0x822D
+#	endif // GL_R16F_EXT
+
 #	ifndef GL_R32F_EXT
 #		define GL_R32F_EXT 0x822E
 #	endif // GL_R32F_EXT
+
+#	ifndef GL_RGB10_A2_EXT
+#		define GL_RGB10_A2_EXT 0x8059
+#	endif // GL_RGB10_A2_EXT
 
 #	ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
 #		define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
