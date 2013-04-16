@@ -667,18 +667,25 @@ namespace bgfx
 		GL_BACK,
 	};
 
+	struct RenderTargetColorFormat
+	{
+		GLenum m_internalFmt;
+		GLenum m_type;
+		uint8_t m_bpp;
+	};
+
 	// Specifies the internal format of the texture.
 	// Must be one of the following symbolic constants:
 	// GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA.
-	static const GLenum s_colorFormat[][2] =
+	static const RenderTargetColorFormat s_colorFormat[] =
 	{
-		{ 0,           0                              }, // ignored
-		{ GL_RGBA8,    GL_UNSIGNED_BYTE               },
-		{ GL_RGB10_A2, GL_UNSIGNED_INT_2_10_10_10_REV },
-		{ GL_RGBA16,   GL_UNSIGNED_SHORT              },
-		{ GL_RGBA16F,  GL_HALF_FLOAT                  },
-		{ GL_R16F,     GL_HALF_FLOAT                  },
-		{ GL_R32F,     GL_FLOAT                       },
+		{ 0,           0,                               0 }, // ignored
+		{ GL_RGBA8,    GL_UNSIGNED_BYTE,               32 },
+		{ GL_RGB10_A2, GL_UNSIGNED_INT_2_10_10_10_REV, 32 },
+		{ GL_RGBA16,   GL_UNSIGNED_SHORT,              64 },
+		{ GL_RGBA16F,  GL_HALF_FLOAT,                  64 },
+		{ GL_R16F,     GL_HALF_FLOAT,                  16 },
+		{ GL_R32F,     GL_FLOAT,                       32 },
 	};
 
 	static const GLenum s_depthFormat[] =
@@ -1495,8 +1502,9 @@ namespace bgfx
 
 	void Texture::createColor(uint32_t _colorFormat, uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag)
 	{
-		GLenum internalFormat = s_colorFormat[_colorFormat][0];
-		GLenum type = s_colorFormat[_colorFormat][1];
+		const RenderTargetColorFormat& rtcf = s_colorFormat[_colorFormat];
+		GLenum internalFormat = rtcf.m_internalFmt;
+		GLenum type = rtcf.m_type;
 		m_target = GL_TEXTURE_2D;
 
 		GL_CHECK(glGenTextures(1, &m_id) );
@@ -1702,7 +1710,7 @@ namespace bgfx
 			GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
 			BX_CHECK(0 != m_colorRbo, "Failed to generate color renderbuffer id.");
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
-			GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, s_colorFormat[colorFormat][0], _width, _height) );
+			GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, s_colorFormat[colorFormat].m_internalFmt, _width, _height) );
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
 			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
