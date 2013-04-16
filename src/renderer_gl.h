@@ -444,6 +444,7 @@ namespace bgfx
 		{
 		}
 
+		void init(GLenum _target, uint8_t _numMips, uint32_t _flags);
 		void create(const Memory* _mem, uint32_t _flags);
 		void createColor(uint32_t _colorFormat, uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
 		void createDepth(uint32_t _width, uint32_t _height);

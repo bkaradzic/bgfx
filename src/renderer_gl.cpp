@@ -163,13 +163,39 @@ namespace bgfx
 	}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
+	static const char* toString(GLenum _enum)
+	{
+		switch (_enum)
+		{
+		case GL_DEBUG_SOURCE_API_ARB:               return "API";
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:     return "WinSys";
+		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:   return "Shader";
+		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:       return "3rdparty";
+		case GL_DEBUG_SOURCE_APPLICATION_ARB:       return "Application";
+		case GL_DEBUG_SOURCE_OTHER_ARB:             return "Other";
+		case GL_DEBUG_TYPE_ERROR_ARB:               return "Error";
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: return "Deprecated behavior";
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:  return "Undefined behavior";
+		case GL_DEBUG_TYPE_PORTABILITY_ARB:         return "Portability";
+		case GL_DEBUG_TYPE_PERFORMANCE_ARB:         return "Performance";
+		case GL_DEBUG_TYPE_OTHER_ARB:               return "Other";
+		case GL_DEBUG_SEVERITY_HIGH_ARB:            return "High";
+		case GL_DEBUG_SEVERITY_MEDIUM_ARB:          return "Medium";
+		case GL_DEBUG_SEVERITY_LOW_ARB:             return "Low";
+		default:
+			break;
+		}
+
+		return "<unknown>";
+	}
+
 	static void APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, GLvoid* /*_userParam*/)
 	{
-		BX_TRACE("src %d, type %d, id %d, severity %d, '%s'"
-				, _source
-				, _type
+		BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
+				, toString(_source)
+				, toString(_type)
 				, _id
-				, _severity
+				, toString(_severity)
 				, _message
 				);
 	}
@@ -668,11 +694,18 @@ namespace bgfx
 		GL_CLAMP_TO_EDGE,
 	};
 
-	static const GLenum s_textureFilter[] =
+	static const GLenum s_textureFilterMag[] =
 	{
 		GL_LINEAR,
 		GL_NEAREST,
 		GL_LINEAR,
+	};
+
+	static const GLenum s_textureFilterMin[][3] =
+	{
+		{ GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,  GL_NEAREST_MIPMAP_LINEAR  },
+		{ GL_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_NEAREST },
+		{ GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,  GL_NEAREST_MIPMAP_LINEAR  },
 	};
 
 	struct TextureFormatInfo
@@ -1157,33 +1190,59 @@ namespace bgfx
 		}
 	}
 
+	void Texture::init(GLenum _target, uint8_t _numMips, uint32_t _flags)
+	{
+		m_target = _target;
+
+		GL_CHECK(glGenTextures(1, &m_id) );
+		BX_CHECK(0 != m_id, "Failed to generate texture id.");
+		GL_CHECK(glBindTexture(_target, m_id) );
+
+		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
+		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
+
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		if (_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glTexParameteri(_target, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
+		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+
+		uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
+		uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
+		uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
+		GLenum minFilter = s_textureFilterMin[min][1 < _numMips ? mip+1 : 0];
+		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
+		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_MIN_FILTER, minFilter) );
+		if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) 
+		&&  0.0f < s_renderCtx.m_maxAnisotropy)
+		{
+			GL_CHECK(glTexParameterf(_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx.m_maxAnisotropy) );
+		}
+	}
+
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
 		Dds dds;
-		uint8_t numMips = 0;
 
 		if (parseDds(dds, _mem) )
 		{
-			numMips = dds.m_numMips;
+			uint8_t numMips = dds.m_numMips;
 
 			if (dds.m_cubeMap)
 			{
-				m_target = GL_TEXTURE_CUBE_MAP;
+				init(GL_TEXTURE_CUBE_MAP, numMips, _flags);
 			}
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			else if (dds.m_depth > 1)
 			{
-				m_target = GL_TEXTURE_3D;
+				init(GL_TEXTURE_3D, numMips, _flags);
 			}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			else
 			{
-				m_target = GL_TEXTURE_2D;
+				init(GL_TEXTURE_2D, numMips, _flags);
 			}
-
-			GL_CHECK(glGenTextures(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate texture id.");
-			GL_CHECK(glBindTexture(m_target, m_id) );
 
 			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
 			GLenum internalFmt = tfi.m_internalFmt;
@@ -1231,7 +1290,7 @@ namespace bgfx
 					uint32_t height = dds.m_height;
 					uint32_t depth = dds.m_depth;
 
-					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
 						width = uint32_max(1, width);
 						height = uint32_max(1, height);
@@ -1278,7 +1337,7 @@ namespace bgfx
 					uint32_t height = dds.m_height;
 					uint32_t depth = dds.m_depth;
 
-					for (uint32_t ii = 0, num = dds.m_numMips; ii < num; ++ii)
+					for (uint32_t ii = 0, num = numMips; ii < num; ++ii)
 					{
 						width = uint32_max(1, width);
 						height = uint32_max(1, height);
@@ -1318,24 +1377,22 @@ namespace bgfx
 				TextureCreate tc;
 				bx::read(&reader, tc);
 
+				uint8_t numMips = tc.m_numMips;
+
 				if (tc.m_cubeMap)
 				{
-					m_target = GL_TEXTURE_CUBE_MAP;
+					init(GL_TEXTURE_CUBE_MAP, numMips, _flags);
 				}
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 				else if (tc.m_depth > 1)
 				{
-					m_target = GL_TEXTURE_3D;
+					init(GL_TEXTURE_3D, numMips, _flags);
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 				else
 				{
-					m_target = GL_TEXTURE_2D;
+					init(GL_TEXTURE_2D, numMips, _flags);
 				}
-
-				GL_CHECK(glGenTextures(1, &m_id) );
-				BX_CHECK(0 != m_id, "Failed to generate texture id.");
-				GL_CHECK(glBindTexture(m_target, m_id) );
 
 				const TextureFormatInfo& tfi = s_textureFormat[tc.m_format];
 				GLenum internalFmt = tfi.m_internalFmt;
@@ -1370,7 +1427,7 @@ namespace bgfx
 					uint32_t height = tc.m_height;
 					uint32_t depth = tc.m_depth;
 
-					for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
 						width = uint32_max(width, min);
 						height = uint32_max(height, min);
@@ -1431,25 +1488,6 @@ namespace bgfx
 			{
 				//
 			}
-		}
-
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
-
-#if BGFX_CONFIG_RENDERER_OPENGL
-		if (m_target == GL_TEXTURE_3D)
-		{
-			GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
-		}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT]) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT]) );
-		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, 1 < numMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
-		if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) 
-		&&  0.0f < s_renderCtx.m_maxAnisotropy)
-		{
-			GL_CHECK(glTexParameterf(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx.m_maxAnisotropy) );
 		}
 
 		GL_CHECK(glBindTexture(m_target, 0) );
@@ -1591,7 +1629,7 @@ namespace bgfx
 			}
 			break;
 
-#if BGFX_CONFIG_RENDERER_OPENGL
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		case GL_TEXTURE_3D:
 			if (m_compressed)
 			{
@@ -1624,7 +1662,7 @@ namespace bgfx
 					) );
 			}
 			break;
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 	}
 
@@ -1639,8 +1677,8 @@ namespace bgfx
 
 		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
-		GLenum minFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-		GLenum magFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+		GLenum minFilter = s_textureFilterMin[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT][0];
+		GLenum magFilter = s_textureFilterMag[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
 
 		if (0 < colorFormat)
 		{
@@ -2287,7 +2325,7 @@ namespace bgfx
 		if (s_extension[Extension::ARB_debug_output].m_supported)
 		{
 			GL_CHECK(glDebugMessageCallbackARB(debugProcCb, NULL) );
-			GL_CHECK(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE) );
+			GL_CHECK(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, NULL, GL_TRUE) );
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 	}
