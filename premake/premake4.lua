@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2012 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2013 Branimir Karadzic. All rights reserved.
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
@@ -58,6 +58,14 @@ function exampleProject(_name, _uuid)
 	links {
 		"bgfx",
 	}
+
+	configuration { "android*" }
+		kind "SharedLib"
+		targetextension ".so"
+		links {
+			"EGL",
+			"GLESv2",
+		}
 
 	configuration { "emscripten" }
 		targetextension ".bc"
