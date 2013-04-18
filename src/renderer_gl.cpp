@@ -1205,6 +1205,7 @@ namespace bgfx
 		BX_CHECK(0 != m_id, "Failed to generate texture id.");
 		GL_CHECK(glBindTexture(_target, m_id) );
 
+		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_MAX_LEVEL, _numMips-1) );
 		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
 		GL_CHECK(glTexParameteri(_target, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
 
@@ -1511,6 +1512,7 @@ namespace bgfx
 		BX_CHECK(0 != m_id, "Failed to generate texture id.");
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, 0) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, _min) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, _mag) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE) );
@@ -1537,6 +1539,7 @@ namespace bgfx
 		GL_CHECK(glGenTextures(1, &m_id) );
 		BX_CHECK(0 != m_id, "Failed to generate texture id.");
 		GL_CHECK(glBindTexture(m_target, m_id) );
+		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, 0) );
 //		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
 //		GL_CHECK(glTexParameteri(m_target, GL_DEPTH_TEXTURE_MODE, GL_NONE) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
