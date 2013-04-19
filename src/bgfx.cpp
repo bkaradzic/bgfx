@@ -42,16 +42,16 @@ namespace bgfx
 #elif BX_PLATFORM_OSX
 	void* g_bgfxNSWindow = NULL;
 	
-	void osxSetNSWindow(void* _nsWindow)
+	void osxSetNSWindow(void* _window)
 	{
-		g_bgfxNSWindow = _nsWindow;
+		g_bgfxNSWindow = _window;
 	}
 #elif BX_PLATFORM_WINDOWS
 	::HWND g_bgfxHwnd = NULL;
 
-	void winSetHwnd(::HWND _hwnd)
+	void winSetHwnd(::HWND _window)
 	{
-		g_bgfxHwnd = _hwnd;
+		g_bgfxHwnd = _window;
 	}
 #endif // BX_PLATFORM_*
 

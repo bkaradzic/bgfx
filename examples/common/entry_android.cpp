@@ -222,6 +222,7 @@ extern int _main_(int _argc, char** _argv);
 
 extern "C" void android_main(android_app* _app)
 {
+	DBG("entry_android");
 	using namespace entry;
 	app_dummy();
 	s_ctx.run(_app);

@@ -44,7 +44,7 @@ namespace bgfx
 
 namespace bgfx
 {
-	void osxSetNSWindow(void* _nsWindow);
+	void osxSetNSWindow(void* _window);
 } // namespace bgfx
 
 #elif BX_PLATFORM_WINDOWS
@@ -52,7 +52,7 @@ namespace bgfx
 
 namespace bgfx
 {
-	void winSetHwnd(::HWND _hwnd);
+	void winSetHwnd(::HWND _window);
 } // namespace bgfx
 
 #endif // BX_PLATFORM_
