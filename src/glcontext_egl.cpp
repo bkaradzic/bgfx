@@ -50,6 +50,13 @@ namespace bgfx
 		success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
 		BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
 
+#	if BX_PLATFORM_ANDROID
+		EGLint format;
+		eglGetConfigAttrib(m_display, config, EGL_NATIVE_VISUAL_ID, &format);
+		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, 0, 0, format);
+		nwt = g_bgfxAndroidWindow;
+#	endif // BX_PLATFORM_ANDROID
+
 		m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
 		BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 

@@ -100,7 +100,9 @@ namespace stl {
 #endif // BGFX_CONFIG_USE_TINYSTL
 #include <list>
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_ANDROID
+#	include <android/native_window.h>
+#elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
 #elif BX_PLATFORM_XBOX360
 #	include <malloc.h>
@@ -152,10 +154,12 @@ namespace stl {
 
 namespace bgfx
 {
-#if BX_PLATFORM_WINDOWS
-	extern HWND g_bgfxHwnd;
+#if BX_PLATFORM_ANDROID
+	extern ::ANativeWindow* g_bgfxAndroidWindow;
 #elif BX_PLATFORM_OSX
 	extern void* g_bgfxNSWindow;
+#elif BX_PLATFORM_WINDOWS
+	extern ::HWND g_bgfxHwnd;
 #endif // BX_PLATFORM_*
 
 	struct Clear

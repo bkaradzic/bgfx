@@ -33,12 +33,11 @@ namespace bgfx
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
-#if BX_PLATFORM_WINDOWS
-	HWND g_bgfxHwnd = NULL;
-
-	void winSetHwnd(::HWND _hwnd)
+#if BX_PLATFORM_ANDROID
+	::ANativeWindow* g_bgfxAndroidWindow = NULL;
+	void androidSetWindow(ANativeWindow* _window)
 	{
-		g_bgfxHwnd = _hwnd;
+		g_bgfxAndroidWindow = _window;
 	}
 #elif BX_PLATFORM_OSX
 	void* g_bgfxNSWindow = NULL;
@@ -46,6 +45,13 @@ namespace bgfx
 	void osxSetNSWindow(void* _nsWindow)
 	{
 		g_bgfxNSWindow = _nsWindow;
+	}
+#elif BX_PLATFORM_WINDOWS
+	::HWND g_bgfxHwnd = NULL;
+
+	void winSetHwnd(::HWND _hwnd)
+	{
+		g_bgfxHwnd = _hwnd;
 	}
 #endif // BX_PLATFORM_*
 

@@ -13,11 +13,11 @@
 #include <bx/bx.h>
 
 #if BX_PLATFORM_ANDROID
-struct android_app;
+#	include <android/native_window.h>
 
 namespace bgfx
 {
-	androidSetAndroidApp(struct android_app* _app);
+	void androidSetWindow(::ANativeWindow* _window);
 } // namespace bgfx
 
 #elif BX_PLATFORM_LINUX
@@ -38,14 +38,6 @@ namespace bgfx
 	void naclSetIntefraces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
 } // namespace bgfx
 
-#elif BX_PLATFORM_WINDOWS
-#	include <windows.h>
-
-namespace bgfx
-{
-	void winSetHwnd(::HWND _hwnd);
-} // namespace bgfx
-
 #elif BX_PLATFORM_OSX
 #	include <Cocoa/Cocoa.h>
 #	include <stdlib.h>
@@ -53,6 +45,14 @@ namespace bgfx
 namespace bgfx
 {
 	void osxSetNSWindow(void* _nsWindow);
+} // namespace bgfx
+
+#elif BX_PLATFORM_WINDOWS
+#	include <windows.h>
+
+namespace bgfx
+{
+	void winSetHwnd(::HWND _hwnd);
 } // namespace bgfx
 
 #endif // BX_PLATFORM_

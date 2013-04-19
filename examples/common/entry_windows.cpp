@@ -154,7 +154,7 @@ namespace entry
 			s_translateKey['Z']          = Key::KeyZ;
 		}
 
-		int32_t main(int _argc, char** _argv)
+		int32_t run(int _argc, char** _argv)
 		{
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
@@ -636,7 +636,7 @@ namespace entry
 int main(int _argc, char** _argv)
 {
 	using namespace entry;
-	return s_ctx.main(_argc, _argv);
+	return s_ctx.run(_argc, _argv);
 }
 
 #endif // BX_PLATFORM_WINDOWS
