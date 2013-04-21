@@ -19,12 +19,12 @@ Supported rendering backends:
 
 Platforms:
 
- * Windows
- * Linux
  * Android
- * Native Client
  * JavaScript (via Emscripten)
+ * Linux
+ * Native Client
  * OSX
+ * Windows
 
 Dependencies
 ------------
