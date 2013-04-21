@@ -2338,7 +2338,7 @@ namespace bgfx
 
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
 		if (s_extension[Extension::ARB_instanced_arrays].m_supported
-		&&  s_extension[Extension::ANGLE_instanced_arrays].m_supported)
+		||  s_extension[Extension::ANGLE_instanced_arrays].m_supported)
 		{
 			if (NULL != glVertexAttribDivisor
 			&&  NULL != glDrawArraysInstanced
