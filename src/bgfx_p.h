@@ -1471,8 +1471,10 @@ namespace bgfx
 
 		static int32_t renderThread(void* _userData)
 		{
+			BX_TRACE("render thread start");
 			Context* ctx = (Context*)_userData;
 			while (!ctx->renderFrame() );
+			BX_TRACE("render thread exit");
 			return EXIT_SUCCESS;
 		}
 

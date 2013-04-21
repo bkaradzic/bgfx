@@ -17,6 +17,7 @@
 #include <android/looper.h>
 #include <android/window.h>
 #include <android_native_app_glue.h>
+
 extern "C"
 {
 #include <android_native_app_glue.c>
@@ -37,6 +38,7 @@ namespace entry
 	struct Context
 	{
 		Context()
+			: m_window(NULL)
 		{
 		}
 
@@ -47,16 +49,10 @@ namespace entry
 			m_app->onAppCmd = onAppCmdCB;
 			m_app->onInputEvent = onInputEventCB;
 
-			bgfx::androidSetWindow(m_app->window);
-
 			const char* argv[1] = { "android.so" };
-			MainThreadEntry mte;
-			mte.m_argc = 1;
-			mte.m_argv = const_cast<char**>(argv);
-
-			bx::Thread thread;
-			thread.init(mte.threadFunc, &mte);
-
+			m_mte.m_argc = 1;
+			m_mte.m_argv = const_cast<char**>(argv);
+			
 			while (0 == m_app->destroyRequested)
 			{
 				int32_t num;
@@ -69,7 +65,7 @@ namespace entry
 				}
 			}
 
-			thread.shutdown();
+			m_thread.shutdown();
 		}
 
 		void onAppCmd(int32_t _cmd)
@@ -86,6 +82,12 @@ namespace entry
 					// Command from main thread: a new ANativeWindow is ready for use.  Upon
 					// receiving this command, android_app->window will contain the new window
 					// surface.
+					if (m_window == NULL)
+					{
+						m_window = m_app->window;
+						bgfx::androidSetWindow(m_app->window);
+						m_thread.init(MainThreadEntry::threadFunc, &m_mte);
+					}
 					break;
 
 				case APP_CMD_TERM_WINDOW:
@@ -180,7 +182,12 @@ namespace entry
 			return self->onInputEvent(_event);
 		}
 
+		MainThreadEntry m_mte;
+		bx::Thread m_thread;
+
 		EventQueue m_eventQueue;
+
+		ANativeWindow* m_window;
 		android_app* m_app;
 	};
 
@@ -222,9 +229,7 @@ extern int _main_(int _argc, char** _argv);
 
 extern "C" void android_main(android_app* _app)
 {
-	DBG("entry_android");
 	using namespace entry;
-	app_dummy();
 	s_ctx.run(_app);
 }
 

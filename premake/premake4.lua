@@ -78,12 +78,6 @@ function exampleProject(_name, _uuid)
 			"pthread",
 		}
 
-	configuration { "nacl", "Release" }
-		postbuildcommands {
-			"@echo Stripping symbols.",
-			"@$(NACL)/bin/x86_64-nacl-strip -s \"$(TARGET)\""
-		}
-
 	configuration { "linux" }
 		links {
 			"GL",
@@ -105,6 +99,10 @@ function exampleProject(_name, _uuid)
 			"EGL",
 			"GLESv2",
 		}
+
+	configuration {}
+
+	strip()
 end
 
 dofile "bgfx.lua"
