@@ -1763,7 +1763,7 @@ namespace bgfx
 				, GL_RENDERBUFFER
 				, m_colorRbo
 				) );
-
+ 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
 		}
 		else
@@ -2337,6 +2337,10 @@ namespace bgfx
 		}
 
 #if !BGFX_CONFIG_RENDERER_OPENGLES3
+		s_vertexAttribDivisor = stubVertexAttribDivisor;
+		s_drawArraysInstanced = stubDrawArraysInstanced;
+		s_drawElementsInstanced = stubDrawElementsInstanced;
+
 		if (s_extension[Extension::ARB_instanced_arrays].m_supported
 		||  s_extension[Extension::ANGLE_instanced_arrays].m_supported)
 		{
@@ -2347,12 +2351,6 @@ namespace bgfx
 				s_vertexAttribDivisor = glVertexAttribDivisor;
 				s_drawArraysInstanced = glDrawArraysInstanced;
 				s_drawElementsInstanced = glDrawElementsInstanced;
-			}
-			else
-			{
-				s_vertexAttribDivisor = stubVertexAttribDivisor;
-				s_drawArraysInstanced = stubDrawArraysInstanced;
-				s_drawElementsInstanced = stubDrawElementsInstanced;
 			}
 		}
 #endif // !BGFX_CONFIG_RENDERER_OPENGLES3
