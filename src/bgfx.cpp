@@ -919,6 +919,7 @@ namespace bgfx
 	bool checkAvailTransientIndexBuffer(uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 < _num, "Requesting 0 indices.");
 		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
 	}
 
@@ -926,12 +927,14 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
+		BX_CHECK(0 < _num, "Requesting 0 indices.");
 		return s_ctx.allocTransientIndexBuffer(_tib, _num);
 	}
 
 	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
@@ -939,12 +942,14 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
+		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		return s_ctx.allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
 		return s_ctx.allocInstanceDataBuffer(_num, _stride);
 	}
 
