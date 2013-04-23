@@ -40,12 +40,6 @@ namespace stl {
 }
 #endif // BGFX_CONFIG_USE_TINYSTL
 
-
-#define BGFX_FONT_ASSERT(cond, message) assert((cond) && (message));
-
-namespace bgfx_font
-{
-
 class FontManager::TrueTypeFont
 {
 public:	
@@ -445,7 +439,7 @@ const uint16_t MAX_OPENED_FILES = 64;
 const uint16_t MAX_OPENED_FONT = 64;
 const uint32_t MAX_FONT_BUFFER_SIZE = 512*512*4;
 
-FontManager::FontManager(bgfx::Atlas* atlas):m_filesHandles(MAX_OPENED_FILES), m_fontHandles(MAX_OPENED_FONT)
+FontManager::FontManager(Atlas* atlas):m_filesHandles(MAX_OPENED_FILES), m_fontHandles(MAX_OPENED_FONT)
 {
 	m_atlas = atlas;
 	m_ownAtlas = false;	
@@ -454,7 +448,7 @@ FontManager::FontManager(bgfx::Atlas* atlas):m_filesHandles(MAX_OPENED_FILES), m
 
 FontManager::FontManager(uint32_t textureSideWidth):m_filesHandles(MAX_OPENED_FILES), m_fontHandles(MAX_OPENED_FONT)
 {
-	m_atlas = new bgfx::Atlas(textureSideWidth);
+	m_atlas = new Atlas(textureSideWidth);
 	m_ownAtlas = true;	
 	init();
 }
@@ -781,12 +775,6 @@ bool FontManager::getGlyphInfo(FontHandle fontHandle, CodePoint_t codePoint, Gly
 
 bool FontManager::addBitmap(GlyphInfo& glyphInfo, const uint8_t* data)
 {
-	glyphInfo.regionIndex = m_atlas->addRegion((uint16_t) ceil(glyphInfo.width),(uint16_t) ceil(glyphInfo.height), data, bgfx::AtlasRegion::TYPE_GRAY);
+	glyphInfo.regionIndex = m_atlas->addRegion((uint16_t) ceil(glyphInfo.width),(uint16_t) ceil(glyphInfo.height), data, AtlasRegion::TYPE_GRAY);
 	return true;
-}
-
-
-
-
-
 }

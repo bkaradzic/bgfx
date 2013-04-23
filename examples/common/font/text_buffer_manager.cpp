@@ -10,9 +10,6 @@
 #include <math.h>
 #include <stddef.h>     /* offsetof */
 
-namespace bgfx_font
-{
-
 const uint16_t MAX_TEXT_BUFFER_COUNT = 64;
 
 long int fsize(FILE* _file)
@@ -807,6 +804,4 @@ void TextBufferManager::clearTextBuffer(TextBufferHandle _handle)
 	assert( _handle.idx != bgfx::invalidHandle);
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	bc.textBuffer->clearTextBuffer();
-}
-
 }

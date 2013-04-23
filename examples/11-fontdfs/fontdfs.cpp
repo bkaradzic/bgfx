@@ -62,18 +62,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	//init the text rendering system
-	bgfx_font::FontManager* fontManager = new bgfx_font::FontManager(512);
-	bgfx_font::TextBufferManager* textBufferManager = new bgfx_font::TextBufferManager(fontManager);
+	FontManager* fontManager = new FontManager(512);
+	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 	textBufferManager->init(s_shaderPath);
 
 	//load a truetype files
-	bgfx_font::TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");	
-	bgfx_font::FontHandle distance_font = fontManager->createFontByPixelSize(times_tt, 0, 48, bgfx_font::FONT_TYPE_DISTANCE);
+	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");	
+	FontHandle distance_font = fontManager->createFontByPixelSize(times_tt, 0, 48, FONT_TYPE_DISTANCE);
 	//preload glyph and generate (generate bitmap's)
 	fontManager->preloadGlyph(distance_font, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
 
 	uint32_t fontsCount = 0;
-	bgfx_font::FontHandle fonts[64];
+	FontHandle fonts[64];
 	fonts[fontsCount++] = distance_font;
 	//generate various sub distance field fonts at various size
 	int step=4;
@@ -81,13 +81,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{		
 		if(i<32) step = 2;
 		//instantiate a usable font
-		bgfx_font::FontHandle font = fontManager->createScaledFontToPixelSize(distance_font, i);
+		FontHandle font = fontManager->createScaledFontToPixelSize(distance_font, i);
 		fonts[fontsCount++] = font;
 	}
 	//You can unload the truetype files at this stage, but in that case, the set of glyph's will be limited to the set of preloaded glyph
 	fontManager->unloadTrueType(times_tt);
 			
-	bgfx_font::TextBufferHandle staticText = textBufferManager->createTextBuffer(bgfx_font::FONT_TYPE_DISTANCE, bgfx_font::STATIC);
+	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, STATIC);
 	
 	textBufferManager->setPenPosition(staticText, 10.0f, 70.0f);		
 	textBufferManager->setTextColor(staticText, 0xFFFFFFFF);

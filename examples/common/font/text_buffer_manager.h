@@ -4,9 +4,6 @@
 #pragma once
 #include "font_manager.h"
 
-namespace bgfx_font
-{
-
 BGFX_HANDLE(TextBufferHandle);
 	
 /// type of vertex and index buffer to use with a TextBuffer
@@ -86,5 +83,3 @@ private:
 	bgfx::ProgramHandle m_distanceProgram;
 	bgfx::ProgramHandle m_distanceSubpixelProgram;
 };
-
-}

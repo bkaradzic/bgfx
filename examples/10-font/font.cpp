@@ -61,17 +61,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	//init the text rendering system
-	bgfx_font::FontManager* fontManager = new bgfx_font::FontManager(512);
-	bgfx_font::TextBufferManager* textBufferManager = new bgfx_font::TextBufferManager(fontManager);
+	FontManager* fontManager = new FontManager(512);
+	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 	textBufferManager->init(s_shaderPath);
-
-	
+		
 	//load some truetype files
-	bgfx_font::TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");
-	bgfx_font::TrueTypeHandle consola_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/consola.ttf");
+	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");
+	TrueTypeHandle consola_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/consola.ttf");
 
 	//create some usable font with of a specific size
-	bgfx_font::FontHandle times_24 = fontManager->createFontByPixelSize(times_tt, 0, 24);
+	FontHandle times_24 = fontManager->createFontByPixelSize(times_tt, 0, 24);
 		
 	//preload glyphs and blit them to atlas
 	fontManager->preloadGlyph(times_24, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
@@ -81,11 +80,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	//this font doesn't have any preloaded glyph's but the truetype file is loaded
 	//so glyph will be generated as needed
-	bgfx_font::FontHandle consola_16 = fontManager->createFontByPixelSize(consola_tt, 0, 16);
+	FontHandle consola_16 = fontManager->createFontByPixelSize(consola_tt, 0, 16);
 	
 	//create a static text buffer compatible with alpha font
 	//a static text buffer content cannot be modified after its first submit.
-	bgfx_font::TextBufferHandle staticText = textBufferManager->createTextBuffer(bgfx_font::FONT_TYPE_ALPHA, bgfx_font::STATIC);
+	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, STATIC);
 	
 	//the pen position represent the top left of the box of the first line of text
 	textBufferManager->setPenPosition(staticText, 20.0f, 100.0f);
@@ -102,28 +101,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	
 
 	//text + bkg
-	textBufferManager->setStyle(staticText, bgfx_font::STYLE_BACKGROUND);
+	textBufferManager->setStyle(staticText, STYLE_BACKGROUND);
 	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
 
 	//text + strike-through
-	textBufferManager->setStyle(staticText, bgfx_font::STYLE_STRIKE_THROUGH);
+	textBufferManager->setStyle(staticText, STYLE_STRIKE_THROUGH);
 	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
 
 	//text + overline
-	textBufferManager->setStyle(staticText, bgfx_font::STYLE_OVERLINE);
+	textBufferManager->setStyle(staticText, STYLE_OVERLINE);
 	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
 	
 	//text + underline
-	textBufferManager->setStyle(staticText, bgfx_font::STYLE_UNDERLINE);
+	textBufferManager->setStyle(staticText, STYLE_UNDERLINE);
 	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
 
 	
 	//text + bkg + strike-through
-	textBufferManager->setStyle(staticText, bgfx_font::STYLE_BACKGROUND|bgfx_font::STYLE_STRIKE_THROUGH);
+	textBufferManager->setStyle(staticText, STYLE_BACKGROUND|STYLE_STRIKE_THROUGH);
 	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
 
 	//create a transient buffer for realtime data	
-	bgfx_font::TextBufferHandle transientText = textBufferManager->createTextBuffer(bgfx_font::FONT_TYPE_ALPHA, bgfx_font::TRANSIENT);	
+	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, TRANSIENT);	
 			
 	
 	uint32_t w = 0,h = 0;

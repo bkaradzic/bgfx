@@ -14,9 +14,6 @@
 
 #include <bgfx.h> 
 
-namespace bgfx 
-{
-
 struct AtlasRegion
 {
 	enum Type
@@ -133,4 +130,4 @@ private:
 	AtlasRegion* m_regions;	
 	uint8_t* m_textureBuffer;
 
-};}
+};
