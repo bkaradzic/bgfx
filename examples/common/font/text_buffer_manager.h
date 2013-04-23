@@ -28,31 +28,31 @@ class TextBuffer;
 class TextBufferManager
 {
 public:
-	TextBufferManager(FontManager* fontManager = NULL);
+	TextBufferManager(FontManager* _fontManager = NULL);
 	~TextBufferManager();
 	
-	void init(const char* shaderPath);
+	void init(const char* _shaderPath);
 
-	TextBufferHandle createTextBuffer(FontType type, BufferType bufferType);
-	void destroyTextBuffer(TextBufferHandle handle);
-	void submitTextBuffer(TextBufferHandle handle, uint8_t id, int32_t depth = 0);
-	void submitTextBufferMask(TextBufferHandle handle, uint32_t viewMask, int32_t depth = 0);
+	TextBufferHandle createTextBuffer(FontType _type, BufferType _bufferType);
+	void destroyTextBuffer(TextBufferHandle _handle);
+	void submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth = 0);
+	void submitTextBufferMask(TextBufferHandle _handle, uint32_t _viewMask, int32_t _depth = 0);
 	
-	void setStyle(TextBufferHandle handle, uint32_t flags = STYLE_NORMAL);
-	void setTextColor(TextBufferHandle handle, uint32_t rgba = 0x000000FF);
-	void setBackgroundColor(TextBufferHandle handle, uint32_t rgba = 0x000000FF);
+	void setStyle(TextBufferHandle _handle, uint32_t _flags = STYLE_NORMAL);
+	void setTextColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
+	void setBackgroundColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
 
-	void setOverlineColor(TextBufferHandle handle, uint32_t rgba = 0x000000FF);
-	void setUnderlineColor(TextBufferHandle handle, uint32_t rgba = 0x000000FF);
-	void setStrikeThroughColor(TextBufferHandle handle, uint32_t rgba = 0x000000FF);
+	void setOverlineColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
+	void setUnderlineColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
+	void setStrikeThroughColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
 	
-	void setPenPosition(TextBufferHandle handle, float x, float y);
+	void setPenPosition(TextBufferHandle _handle, float _x, float _y);
 
 	/// append an ASCII/utf-8 string to the buffer using current pen position and color
-	void appendText(TextBufferHandle _handle, FontHandle fontHandle, const char * _string);
+	void appendText(TextBufferHandle _handle, FontHandle _fontHandle, const char * _string);
 
 	/// append a wide char unicode string to the buffer using current pen position and color
-	void appendText(TextBufferHandle _handle, FontHandle fontHandle, const wchar_t * _string);	
+	void appendText(TextBufferHandle _handle, FontHandle _fontHandle, const wchar_t * _string);	
 
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer(TextBufferHandle _handle);
@@ -65,11 +65,11 @@ private:
 	
 	struct BufferCache
 	{
-		uint16_t indexBufferHandle;
-		uint16_t vertexBufferHandle;
-		TextBuffer* textBuffer;
-		BufferType bufferType;
-		FontType fontType;		
+		uint16_t m_indexBufferHandle;
+		uint16_t m_vertexBufferHandle;
+		TextBuffer* m_textBuffer;
+		BufferType m_bufferType;
+		FontType m_fontType;		
 	};
 
 	BufferCache* m_textBuffers;
