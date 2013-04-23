@@ -2,10 +2,11 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
 */
 #pragma once
-#include <bgfx.h> 
-#include <assert.h>
-#include <vector>
 #include "cube_atlas.h"
+#include <bx/bx.h>
+#include <bgfx.h> 
+#include <vector>
+
 
 //********** Rectangle packer implementation ************
 class RectanglePacker
@@ -68,8 +69,8 @@ RectanglePacker::RectanglePacker(uint32_t _width, uint32_t _height):m_width(_wid
 
 void RectanglePacker::init(uint32_t _width, uint32_t _height)
 {
-	assert(_width > 2);
-	assert(_height > 2);
+	BX_CHECK(_width > 2, "_width must be > 2");
+	BX_CHECK(_height > 2, "_height must be > 2");
 	m_width = _width;
 	m_height = _height;
 	m_usedSpace = 0;
@@ -231,8 +232,8 @@ struct Atlas::PackedLayer
 
 Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount )
 {
-	assert(_textureSize >= 64 && _textureSize <= 4096 && "suspicious texture size" );
-	assert(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000 && "suspicious _regions count" );
+	BX_CHECK(_textureSize >= 64 && _textureSize <= 4096, "suspicious texture size" );
+	BX_CHECK(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000, "suspicious _regions count" );
 	m_layers = new PackedLayer[24];
 	for(int ii=0; ii<24;++ii)
 	{
@@ -267,7 +268,7 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount )
 
 Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer , uint16_t _regionCount, const uint8_t* _regionBuffer, uint16_t _maxRegionsCount)
 {
-	assert(_regionCount <= 64 && _maxRegionsCount <= 4096);
+	BX_CHECK(_regionCount <= 64 && _maxRegionsCount <= 4096, "suspicious initialization");
 	//layers are frozen
 	m_usedLayers = 24;
 	m_usedFaces = 6;
@@ -275,7 +276,10 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer , uint16_t _re
 	m_textureSize = _textureSize;
 	m_regionCount = _regionCount;
 	//regions are frozen
-	m_maxRegionCount = _regionCount;
+	if(_regionCount < _maxRegionsCount)
+		m_maxRegionCount = _regionCount;
+	else
+		m_maxRegionCount = _maxRegionsCount;
 	m_regions = new AtlasRegion[_regionCount];
 	m_textureBuffer = new uint8_t[getTextureBufferSize()];
 	
@@ -309,7 +313,7 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 		return UINT16_MAX;
 	}
 	
-	uint16_t x,y;
+	uint16_t x=0,y=0;
 	// We want each bitmap to be separated by at least one black pixel
 	// TODO manage mipmaps
 	uint32_t idx = 0;
@@ -378,7 +382,7 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 	}else
 	{
 		uint32_t layer = _region.getComponentIndex();
-		uint32_t face = _region.getFaceIndex();
+		//uint32_t face = _region.getFaceIndex();
 		const uint8_t* inLineBuffer = _bitmapBuffer;
 		uint8_t* outLineBuffer = (m_textureBuffer + _region.getFaceIndex() * (m_textureSize*m_textureSize*4) + (((_region.m_y *m_textureSize)+_region.m_x)*4));
 		
