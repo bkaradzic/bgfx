@@ -89,7 +89,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			
 	bgfx_font::TextBufferHandle staticText = textBufferManager->createTextBuffer(bgfx_font::FONT_TYPE_DISTANCE, bgfx_font::STATIC);
 	
-	textBufferManager->setPenPosition(staticText, 10.0f, 10.0f);		
+	textBufferManager->setPenPosition(staticText, 10.0f, 70.0f);		
 	textBufferManager->setTextColor(staticText, 0xFFFFFFFF);
 	//textBufferManager->setTextColor(staticText, 0x000000FF);
 	for(size_t i = 0; i< fontsCount; ++i)
@@ -107,20 +107,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// if no other draw calls are submitted to view 0.
 		bgfx::submit(0);
 
-		//int64_t now = bx::getHPCounter();
-		//static int64_t last = now;
-		//const int64_t frameTime = now - last;
-		//last = now;
-		//const double freq = double(bx::getHPFrequency() );
-		//const double toMs = 1000.0/freq;
-		//float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
-		
+		int64_t now = bx::getHPCounter();
+		static int64_t last = now;
+		const int64_t frameTime = now - last;
+		last = now;
+		const double freq = double(bx::getHPFrequency() );
+		const double toMs = 1000.0/freq;
+
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
-		//bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/00-helloworld");
-		//bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Initialization and debug text.");
-		//bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-				
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/11-fontdfs");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use a single distance field font to render text of different size.");
+		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+
 		float at[3] = { 0, 0, 0.0f };
 		float eye[3] = {0, 0, -1.0f };
 		
