@@ -288,10 +288,10 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t * _string)
 	}
 
 	//parse string
-	for( uint32_t i=0, end = wcslen(_string) ; i < end; ++i )
+	for( uint32_t ii=0, end = wcslen(_string) ; ii < end; ++ii )
 	{
 		//if glyph cached, continue
-		uint32_t _codePoint = _string[i];
+		uint32_t _codePoint = _string[ii];
 		if(m_fontManager->getGlyphInfo(_fontHandle, _codePoint, glyph))
 		{
 			appendGlyph(_codePoint, font, glyph);
@@ -489,19 +489,19 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 
 void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
 {		
-	for( uint32_t i=m_lineStartIndex; i < m_vertexCount; i+=4 )
+	for( uint32_t ii=m_lineStartIndex; ii < m_vertexCount; ii+=4 )
     {	
-		if( m_styleBuffer[i] == STYLE_BACKGROUND)
+		if( m_styleBuffer[ii] == STYLE_BACKGROUND)
 		{
-			m_vertexBuffer[i+0].y = _top;
-			m_vertexBuffer[i+1].y = _bottom;
-			m_vertexBuffer[i+2].y = _bottom;
-			m_vertexBuffer[i+3].y = _top;
+			m_vertexBuffer[ii+0].y = _top;
+			m_vertexBuffer[ii+1].y = _bottom;
+			m_vertexBuffer[ii+2].y = _bottom;
+			m_vertexBuffer[ii+3].y = _top;
 		}else{
-			m_vertexBuffer[i+0].y += _dy;
-			m_vertexBuffer[i+1].y += _dy;
-			m_vertexBuffer[i+2].y += _dy;
-			m_vertexBuffer[i+3].y += _dy;
+			m_vertexBuffer[ii+0].y += _dy;
+			m_vertexBuffer[ii+1].y += _dy;
+			m_vertexBuffer[ii+2].y += _dy;
+			m_vertexBuffer[ii+3].y += _dy;
 		}
     }
 }

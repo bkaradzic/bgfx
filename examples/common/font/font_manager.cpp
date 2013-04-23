@@ -206,10 +206,10 @@ bool FontManager::TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo
 	int32_t charsize = 1;
 	int32_t depth=1;
 	int32_t stride = bitmap->bitmap.pitch;
-	for( int32_t i=0; i<h; ++i )
+	for( int32_t ii=0; ii<h; ++ii )
     {
-        memcpy(_outBuffer+(i*w) * charsize * depth, 
-			bitmap->bitmap.buffer + (i*stride) * charsize, w * charsize * depth  );
+        memcpy(_outBuffer+(ii*w) * charsize * depth, 
+			bitmap->bitmap.buffer + (ii*stride) * charsize, w * charsize * depth  );
     }
 	FT_Done_Glyph(glyph);
 	return true;
@@ -248,10 +248,10 @@ bool FontManager::TrueTypeFont::bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphI
 	int32_t charsize = 1;
 	int32_t depth=3;
 	int32_t stride = bitmap->bitmap.pitch;
-	for( int32_t i=0; i<h; ++i )
+	for( int32_t ii=0; ii<h; ++ii )
     {
-        memcpy(_outBuffer+(i*w) * charsize * depth, 
-			bitmap->bitmap.buffer + (i*stride) * charsize, w * charsize * depth  );
+        memcpy(_outBuffer+(ii*w) * charsize * depth, 
+			bitmap->bitmap.buffer + (ii*stride) * charsize, w * charsize * depth  );
     }
 	FT_Done_Glyph(glyph);
 	return true;
@@ -267,61 +267,61 @@ void make_distance_map( unsigned char *img, unsigned char *outImg, unsigned int 
     double * data    = (double *) calloc( width * height, sizeof(double) );
     double * outside = (double *) calloc( width * height, sizeof(double) );
     double * inside  = (double *) calloc( width * height, sizeof(double) );
-    uint32_t i;
+    uint32_t ii;
 
     // Convert img into double (data)
     double img_min = 255, img_max = -255;
-    for( i=0; i<width*height; ++i)
+    for( ii=0; ii<width*height; ++ii)
     {
-        double v = img[i];
-        data[i] = v;
+        double v = img[ii];
+        data[ii] = v;
         if (v > img_max) img_max = v;
         if (v < img_min) img_min = v;
     }
     // Rescale image levels between 0 and 1
-    for( i=0; i<width*height; ++i)
+    for( ii=0; ii<width*height; ++ii)
     {
-        data[i] = (img[i]-img_min)/(img_max-img_min);
+        data[ii] = (img[ii]-img_min)/(img_max-img_min);
     }
 
     // Compute outside = edtaa3(bitmap); % Transform background (0's)
     computegradient( data, width, height, gx, gy);
     edtaa3(data, gx, gy, width, height, xdist, ydist, outside);
-    for( i=0; i<width*height; ++i)
-        if( outside[i] < 0 )
-            outside[i] = 0.0;
+    for( ii=0; ii<width*height; ++ii)
+        if( outside[ii] < 0 )
+            outside[ii] = 0.0;
 
     // Compute inside = edtaa3(1-bitmap); % Transform foreground (1's)
     memset(gx, 0, sizeof(double)*width*height );
     memset(gy, 0, sizeof(double)*width*height );
-    for( i=0; i<width*height; ++i)
-        data[i] = 1.0 - data[i];
+    for( ii=0; ii<width*height; ++ii)
+        data[ii] = 1.0 - data[ii];
     computegradient( data, width, height, gx, gy);
     edtaa3(data, gx, gy, width, height, xdist, ydist, inside);
-    for( i=0; i<width*height; ++i)
-        if( inside[i] < 0 )
-            inside[i] = 0.0;
+    for( ii=0; ii<width*height; ++ii)
+        if( inside[ii] < 0 )
+            inside[ii] = 0.0;
 
     // distmap = outside - inside; % Bipolar distance field
     unsigned char *out = outImg;//(unsigned char *) malloc( width * height * sizeof(unsigned char) );
-    for( i=0; i<width*height; ++i)
+    for( ii=0; ii<width*height; ++ii)
     {
 		//out[i] = 127 - outside[i]*8;
 		//if(out[i]<0) out[i] = 0;
 		//out[i] += inside[i]*16;
 		//if(out[i]>255) out[i] = 255;
 
-		outside[i] -= inside[i];
-        outside[i] = 128 + outside[i]*16;
+		outside[ii] -= inside[ii];
+        outside[ii] = 128 + outside[ii]*16;
 
 		//if(outside[i] > 8) outside[i] = 8;
 		//if(inside[i] > 8) outside[i] = 8;
 
 		//outside[i] = 128 - inside[i]*8 + outside[i]*8;
 		
-        if( outside[i] < 0 ) outside[i] = 0;
-        if( outside[i] > 255 ) outside[i] = 255;
-        out[i] = 255 - (unsigned char) outside[i];
+        if( outside[ii] < 0 ) outside[ii] = 0;
+        if( outside[ii] > 255 ) outside[ii] = 255;
+        out[ii] = 255 - (unsigned char) outside[ii];
         //out[i] = (unsigned char) outside[i];
     }
 
@@ -374,11 +374,11 @@ bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphI
 	int32_t depth=1;
 	int32_t stride = bitmap->bitmap.pitch;
 	
-	for(int32_t i=0; i<h; ++i )
+	for(int32_t ii=0; ii<h; ++ii )
     {	
 
-        memcpy(_outBuffer+(i*w) * charsize * depth, 
-			bitmap->bitmap.buffer + (i*stride) * charsize, w * charsize * depth  );
+        memcpy(_outBuffer+(ii*w) * charsize * depth, 
+			bitmap->bitmap.buffer + (ii*stride) * charsize, w * charsize * depth  );
     }
 	FT_Done_Glyph(glyph);
 		
@@ -398,9 +398,9 @@ bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphI
 		memset(alphaImg, 0, nw*nh*sizeof(uint8_t));
 
 		//copy the original buffer to the temp one
-		for(uint32_t  i= dh; i< nh-dh; ++i)
+		for(uint32_t  ii= dh; ii< nh-dh; ++ii)
 		{
-			memcpy(alphaImg+i*nw+dw, _outBuffer+(i-dh)*w, w);
+			memcpy(alphaImg+ii*nw+dw, _outBuffer+(ii-dh)*w, w);
 		}
 	
 		make_distance_map(alphaImg, _outBuffer, nw, nh);
@@ -653,10 +653,10 @@ bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 	if(font.m_trueTypeFont != NULL)
 	{	
 		//parse string
-		for( uint32_t i=0, end = wcslen(_string) ; i < end; ++i )
+		for( uint32_t ii=0, end = wcslen(_string) ; ii < end; ++ii )
 		{
 			//if glyph cached, continue
-			CodePoint_t codePoint = _string[i];
+			CodePoint_t codePoint = _string[ii];
 			if(!preloadGlyph(_handle, codePoint))
 			{
 				return false;

@@ -76,12 +76,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	FontHandle fonts[64];
 	fonts[fontsCount++] = distance_font;
 	//generate various sub distance field fonts at various size
-	int step=4;
-	for(int i = 64; i>1 ; i-=step)
+	int32_t step=4;
+	for(int32_t ii = 64; ii>1 ; ii-=step)
 	{		
-		if(i<32) step = 2;
+		if(ii<32) step = 2;
 		//instantiate a usable font
-		FontHandle font = fontManager->createScaledFontToPixelSize(distance_font, i);
+		FontHandle font = fontManager->createScaledFontToPixelSize(distance_font, ii);
 		fonts[fontsCount++] = font;
 	}
 	//You can unload the truetype files at this stage, but in that case, the set of glyph's will be limited to the set of preloaded glyph
@@ -92,9 +92,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	textBufferManager->setPenPosition(staticText, 10.0f, 70.0f);		
 	textBufferManager->setTextColor(staticText, 0xFFFFFFFF);
 	//textBufferManager->setTextColor(staticText, 0x000000FF);
-	for(size_t i = 0; i< fontsCount; ++i)
+	for(uint32_t ii = 0; ii< fontsCount; ++ii)
 	{				
-		textBufferManager->appendText(staticText, fonts[i], L"The quick brown fox jumps over the lazy dog\n");		
+		textBufferManager->appendText(staticText, fonts[ii], L"The quick brown fox jumps over the lazy dog\n");		
 		//textBufferManager->appendText(staticText, fonts[i], L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n");
 	}	
 		
@@ -144,9 +144,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	//destroy the fonts
-	for(size_t i=0; i<fontsCount;++i)
+	for(uint32_t ii=0; ii<fontsCount;++ii)
 	{
-		fontManager->destroyFont(fonts[i]);
+		fontManager->destroyFont(fonts[ii]);
 	}
 	
 	textBufferManager->destroyTextBuffer(staticText);

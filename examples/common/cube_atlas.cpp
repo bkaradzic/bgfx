@@ -89,22 +89,22 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
     _outX = 0;
 	_outY = 0;
 	
-	uint32_t i;
+	uint32_t ii;
 
     best_height = INT_MAX;
     best_index  = -1;
     best_width = INT_MAX;
-	for( i = 0; i < m_skyline.size(); ++i )
+	for( ii = 0; ii < m_skyline.size(); ++ii )
 	{
-        y = fit( i, _width, _height );
+        y = fit( ii, _width, _height );
 		if( y >= 0 )
 		{
-            node = &m_skyline[i];
+            node = &m_skyline[ii];
 			if( ( (y + _height) < best_height ) ||
                 ( ((y + _height) == best_height) && (node->m_width < best_width)) )
 			{
 				best_height = y + _height;
-				best_index = i;
+				best_index = ii;
 				best_width = node->m_width;
 				_outX = node->m_x;
 				_outY = y;
@@ -120,10 +120,10 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
     Node newNode(_outX, _outY + _height, _width);
     m_skyline.insert(m_skyline.begin() + best_index, newNode);
 
-    for(i = best_index+1; i < m_skyline.size(); ++i)
+    for(ii = best_index+1; ii < m_skyline.size(); ++ii)
     {
-        node = &m_skyline[i];
-        prev = &m_skyline[i-1];
+        node = &m_skyline[ii];
+        prev = &m_skyline[ii-1];
         if (node->m_x < (prev->m_x + prev->m_width) )
         {
             int shrink = prev->m_x + prev->m_width - node->m_x;
@@ -131,8 +131,8 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
             node->m_width -= shrink;
             if (node->m_width <= 0)
             {
-                 m_skyline.erase(m_skyline.begin() + i);
-                --i;
+                 m_skyline.erase(m_skyline.begin() + ii);
+                --ii;
             }
             else
             {
@@ -206,17 +206,17 @@ void RectanglePacker::merge()
 {
 	Node* node;
     Node* next;
-    uint32_t i;
+    uint32_t ii;
 
-	for( i=0; i < m_skyline.size()-1; ++i )
+	for( ii=0; ii < m_skyline.size()-1; ++ii )
     {
-        node = (Node *) &m_skyline[i];
-        next = (Node *) &m_skyline[i+1];
+        node = (Node *) &m_skyline[ii];
+        next = (Node *) &m_skyline[ii+1];
 		if( node->m_y == next->m_y )
 		{
 			node->m_width += next->m_width;
-            m_skyline.erase(m_skyline.begin() + i + 1);
-			--i;
+            m_skyline.erase(m_skyline.begin() + ii + 1);
+			--ii;
 		}
     }
 }
@@ -234,9 +234,9 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount )
 	assert(_textureSize >= 64 && _textureSize <= 4096 && "suspicious texture size" );
 	assert(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000 && "suspicious _regions count" );
 	m_layers = new PackedLayer[24];
-	for(int i=0; i<24;++i)
+	for(int ii=0; ii<24;++ii)
 	{
-		m_layers[i].packer.init(_textureSize, _textureSize);		
+		m_layers[ii].packer.init(_textureSize, _textureSize);		
 	}
 	m_usedLayers = 0;
 	m_usedFaces = 0;
@@ -330,9 +330,9 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 				return UINT16_MAX;
 		}		
 		//create new layers
-		for(int i=0; i < _type;++i)
+		for(int ii=0; ii < _type; ++ii)
 		{
-			m_layers[idx+i].faceRegion.setMask(_type, m_usedFaces, i);			
+			m_layers[idx+ii].faceRegion.setMask(_type, m_usedFaces, ii);			
 		}
 		m_usedLayers += _type;
 		m_usedFaces++;
@@ -367,7 +367,7 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 		uint8_t* outLineBuffer = m_textureBuffer + _region.getFaceIndex() * (m_textureSize*m_textureSize*4) + (((_region.m_y *m_textureSize)+_region.m_x)*4);
 
 		//update the cpu buffer
-		for(int y = 0; y < _region.m_height; ++y)
+		for(int yy = 0; yy < _region.m_height; ++yy)
 		{
 			memcpy(outLineBuffer, inLineBuffer, _region.m_width * 4);
 			inLineBuffer += _region.m_width*4;
@@ -383,14 +383,14 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 		uint8_t* outLineBuffer = (m_textureBuffer + _region.getFaceIndex() * (m_textureSize*m_textureSize*4) + (((_region.m_y *m_textureSize)+_region.m_x)*4));
 		
 		//update the cpu buffer
-		for(int y = 0; y<_region.m_height; ++y)
+		for(int yy = 0; yy<_region.m_height; ++yy)
 		{
-			for(int x = 0; x<_region.m_width; ++x)
+			for(int xx = 0; xx<_region.m_width; ++xx)
 			{
-				outLineBuffer[(x*4) + layer] = inLineBuffer[x];
+				outLineBuffer[(xx*4) + layer] = inLineBuffer[xx];
 			}
 			//update the GPU buffer
-			memcpy(mem->data + y*_region.m_width*4, outLineBuffer, _region.m_width*4);
+			memcpy(mem->data + yy*_region.m_width*4, outLineBuffer, _region.m_width*4);
 			inLineBuffer += _region.m_width;
 			outLineBuffer +=  m_textureSize*4;
 		}
