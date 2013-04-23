@@ -89,7 +89,7 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
     _outX = 0;
 	_outY = 0;
 	
-	size_t i;
+	uint32_t i;
 
     best_height = INT_MAX;
     best_index  = -1;

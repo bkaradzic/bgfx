@@ -191,10 +191,10 @@ bool FontManager::TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo
 	
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
 		
-	int x = bitmap->left;
-	int y = -bitmap->top;
-	int w = bitmap->bitmap.width;
-	int h = bitmap->bitmap.rows;
+	int32_t x = bitmap->left;
+	int32_t y = -bitmap->top;
+	int32_t w = bitmap->bitmap.width;
+	int32_t h = bitmap->bitmap.rows;
 
 	_glyphInfo.m_offset_x = (float) x;
 	_glyphInfo.m_offset_y = (float) y;	
@@ -203,10 +203,10 @@ bool FontManager::TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo
 	_glyphInfo.m_advance_x = (float)slot->advance.x /64.0f;
 	_glyphInfo.m_advance_y = (float)slot->advance.y /64.0f;
 
-	int charsize = 1;
-	int depth=1;
-	int stride = bitmap->bitmap.pitch;
-	for( int i=0; i<h; ++i )
+	int32_t charsize = 1;
+	int32_t depth=1;
+	int32_t stride = bitmap->bitmap.pitch;
+	for( int32_t i=0; i<h; ++i )
     {
         memcpy(_outBuffer+(i*w) * charsize * depth, 
 			bitmap->bitmap.buffer + (i*stride) * charsize, w * charsize * depth  );
@@ -234,10 +234,10 @@ bool FontManager::TrueTypeFont::bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphI
 	if(error){ return false; }
 	
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
-	int x = bitmap->left;
-	int y = -bitmap->top;
-	int w = bitmap->bitmap.width;
-	int h = bitmap->bitmap.rows;
+	int32_t x = bitmap->left;
+	int32_t y = -bitmap->top;
+	int32_t w = bitmap->bitmap.width;
+	int32_t h = bitmap->bitmap.rows;
 
 	_glyphInfo.m_offset_x = (float) x;
 	_glyphInfo.m_offset_y = (float) y;	
@@ -245,10 +245,10 @@ bool FontManager::TrueTypeFont::bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphI
 	_glyphInfo.m_height = (float) h;	
 	_glyphInfo.m_advance_x = (float)slot->advance.x /64.0f;
 	_glyphInfo.m_advance_y = (float)slot->advance.y /64.0f;
-	int charsize = 1;
-	int depth=3;
-	int stride = bitmap->bitmap.pitch;
-	for( int i=0; i<h; ++i )
+	int32_t charsize = 1;
+	int32_t depth=3;
+	int32_t stride = bitmap->bitmap.pitch;
+	for( int32_t i=0; i<h; ++i )
     {
         memcpy(_outBuffer+(i*w) * charsize * depth, 
 			bitmap->bitmap.buffer + (i*stride) * charsize, w * charsize * depth  );
@@ -358,10 +358,10 @@ bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphI
 	
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
 	
-	int x = bitmap->left;
-	int y = -bitmap->top;
-	int w = bitmap->bitmap.width;
-	int h = bitmap->bitmap.rows;
+	int32_t x = bitmap->left;
+	int32_t y = -bitmap->top;
+	int32_t w = bitmap->bitmap.width;
+	int32_t h = bitmap->bitmap.rows;
 
 	_glyphInfo.m_offset_x = (float) x;
 	_glyphInfo.m_offset_y = (float) y;	
@@ -370,11 +370,11 @@ bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphI
 	_glyphInfo.m_advance_x = (float)slot->advance.x /64.0f;
 	_glyphInfo.m_advance_y = (float)slot->advance.y /64.0f;
 	 
-	int charsize = 1;
-	int depth=1;
-	int stride = bitmap->bitmap.pitch;
+	int32_t charsize = 1;
+	int32_t depth=1;
+	int32_t stride = bitmap->bitmap.pitch;
 	
-	for( int i=0; i<h; ++i )
+	for(int32_t i=0; i<h; ++i )
     {	
 
         memcpy(_outBuffer+(i*w) * charsize * depth, 
@@ -522,7 +522,7 @@ TrueTypeHandle FontManager::loadTrueTypeFromFile(const char* _fontPath)
 		fseek(pFile, 0L, SEEK_SET);
 
 		// Read the entire file into memory.
-		size_t newLen = fread((void*)buffer, sizeof(char), bufsize, pFile);						
+		uint32_t newLen = fread((void*)buffer, sizeof(char), bufsize, pFile);						
 		if (newLen == 0) 
 		{
 			fclose(pFile);
@@ -653,7 +653,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 	if(font.m_trueTypeFont != NULL)
 	{	
 		//parse string
-		for( size_t i=0, end = wcslen(_string) ; i < end; ++i )
+		for( uint32_t i=0, end = wcslen(_string) ; i < end; ++i )
 		{
 			//if glyph cached, continue
 			CodePoint_t codePoint = _string[i];

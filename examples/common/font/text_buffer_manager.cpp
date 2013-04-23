@@ -148,7 +148,7 @@ private:
 		(((_rgba >> 24) & 0xff) << 0);   
 }
 
-	static const size_t MAX_BUFFERED_CHARACTERS = 8192;
+	static const uint32_t MAX_BUFFERED_CHARACTERS = 8192;
 
 	uint32_t m_styleFlags;
 
@@ -174,7 +174,7 @@ private:
 	///
 	FontManager* m_fontManager;	
 	
-	void setVertex(size_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
+	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
 	{
 		m_vertexBuffer[_i].x = _x;
 		m_vertexBuffer[_i].y = _y;		
@@ -193,9 +193,9 @@ private:
 	uint16_t* m_indexBuffer;
 	uint8_t* m_styleBuffer;
 	
-	size_t m_vertexCount;
-	size_t m_indexCount;
-	size_t m_lineStartIndex;	
+	uint32_t m_vertexCount;
+	uint32_t m_indexCount;
+	uint32_t m_lineStartIndex;	
 };
 
 
@@ -288,7 +288,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t * _string)
 	}
 
 	//parse string
-	for( size_t i=0, end = wcslen(_string) ; i < end; ++i )
+	for( uint32_t i=0, end = wcslen(_string) ; i < end; ++i )
 	{
 		//if glyph cached, continue
 		uint32_t _codePoint = _string[i];
@@ -489,7 +489,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 
 void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
 {		
-	for( size_t i=m_lineStartIndex; i < m_vertexCount; i+=4 )
+	for( uint32_t i=m_lineStartIndex; i < m_vertexCount; i+=4 )
     {	
 		if( m_styleBuffer[i] == STYLE_BACKGROUND)
 		{
@@ -621,8 +621,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	assert(bgfx::invalidHandle != _handle.idx);
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	
-	size_t indexSize = bc.m_textBuffer->getIndexCount() * bc.m_textBuffer->getIndexSize();
-	size_t vertexSize = bc.m_textBuffer->getVertexCount() * bc.m_textBuffer->getVertexSize();
+	uint32_t indexSize = bc.m_textBuffer->getIndexCount() * bc.m_textBuffer->getIndexSize();
+	uint32_t vertexSize = bc.m_textBuffer->getVertexCount() * bc.m_textBuffer->getVertexSize();
 	const bgfx::Memory* mem;
 
 	bgfx::setTexture(0, m_u_texColor, m_fontManager->getAtlas()->getTextureHandle());
@@ -692,11 +692,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 			}else
 			{
 				ibh.idx = bc.m_indexBufferHandle;
-				vbh.idx = bc.m_vertexBufferHandle;
-
-				static int i=0;
-				//if(i++ < 5)
-				{				
+				vbh.idx = bc.m_vertexBufferHandle;				
+								
 				mem = bgfx::alloc(indexSize);
 				memcpy(mem->data, bc.m_textBuffer->getIndexBuffer(), indexSize);
 				bgfx::updateDynamicIndexBuffer(ibh, mem);
@@ -704,7 +701,6 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 				mem = bgfx::alloc(vertexSize);
 				memcpy(mem->data, bc.m_textBuffer->getVertexBuffer(), vertexSize);
 				bgfx::updateDynamicVertexBuffer(vbh, mem);				
-				}
 			}
 			bgfx::setVertexBuffer(vbh,  bc.m_textBuffer->getVertexCount());
 			bgfx::setIndexBuffer(ibh, bc.m_textBuffer->getIndexCount());
