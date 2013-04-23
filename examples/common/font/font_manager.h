@@ -18,23 +18,23 @@ enum FontType
 struct FontInfo
 {
 	//the font height in pixel 
-	uint16_t pixelSize;
+	uint16_t m_pixelSize;
 	/// Rendering type used for the font
-	int16_t fontType;
+	int16_t m_fontType;
 
 	/// The pixel extents above the baseline in pixels (typically positive)
-	float ascender;
+	float m_ascender;
 	/// The extents below the baseline in pixels (typically negative)
-	float descender;
+	float m_descender;
 	/// The spacing in pixels between one row's descent and the next row's ascent
-	float lineGap;
+	float m_lineGap;
 	/// The thickness of the under/hover/striketrough line in pixels
-	float underline_thickness;
+	float m_underline_thickness;
 	/// The position of the underline relatively to the baseline
-	float underline_position;
+	float m_underline_position;
 				
 	//scale to apply to glyph data
-	float scale;
+	float m_scale;
 };
 
 // Glyph metrics:
@@ -75,34 +75,34 @@ typedef int32_t CodePoint_t;
 struct GlyphInfo
 {
 	/// Index for faster retrieval
-	int32_t glyphIndex;
+	int32_t m_glyphIndex;
 	
 	/// Glyph's width in pixels.
-	float width;
+	float m_width;
 
 	/// Glyph's height in pixels.
-	float height;
+	float m_height;
 	
 	/// Glyph's left offset in pixels
-	float offset_x;
+	float m_offset_x;
 
 	/// Glyph's top offset in pixels
 	/// Remember that this is the distance from the baseline to the top-most
 	/// glyph scan line, upwards y coordinates being positive.
-	float offset_y;
+	float m_offset_y;
 
 	/// For horizontal text layouts, this is the unscaled horizontal distance in pixels
 	/// used to increment the pen position when the glyph is drawn as part of a string of text.
-	float advance_x;
+	float m_advance_x;
 	
 	/// For vertical text layouts, this is the unscaled vertical distance in pixels
 	/// used to increment the pen position when the glyph is drawn as part of a string of text.
-	float advance_y;
+	float m_advance_y;
 		
 	/// region index in the atlas storing textures
-	uint16_t regionIndex;
+	uint16_t m_regionIndex;
 	///32 bits alignment
-	int16_t padding;		
+	int16_t m_padding;		
 };
 
 BGFX_HANDLE(TrueTypeHandle);
@@ -112,9 +112,9 @@ class FontManager
 {
 public:
 	/// create the font manager using an external cube atlas (doesn't take ownership of the atlas)
-	FontManager(Atlas* atlas);
+	FontManager(Atlas* _atlas);
 	/// create the font manager and create the texture cube as BGRA8 with linear filtering
-	FontManager(uint32_t textureSideWidth = 512);
+	FontManager(uint32_t _textureSideWidth = 512);
 
 	~FontManager();
 
@@ -123,29 +123,29 @@ public:
 	
 	/// load a TrueType font from a file path
 	/// @return invalid handle if the loading fail
-	TrueTypeHandle loadTrueTypeFromFile(const char* fontPath);
+	TrueTypeHandle loadTrueTypeFromFile(const char* _fontPath);
 
 	/// load a TrueType font from a given buffer.
 	/// the buffer is copied and thus can be freed or reused after this call
 	/// @return invalid handle if the loading fail
-	TrueTypeHandle loadTrueTypeFromMemory(const uint8_t* buffer, uint32_t size);
+	TrueTypeHandle loadTrueTypeFromMemory(const uint8_t* _buffer, uint32_t _size);
 
 	/// unload a TrueType font (free font memory) but keep loaded glyphs
-	void unloadTrueType(TrueTypeHandle handle);
+	void unloadTrueType(TrueTypeHandle _handle);
 	
 	/// return a font whose height is a fixed pixel size	
-	FontHandle createFontByPixelSize(TrueTypeHandle handle, uint32_t typefaceIndex, uint32_t pixelSize, FontType fontType = FONT_TYPE_ALPHA);
+	FontHandle createFontByPixelSize(TrueTypeHandle _handle, uint32_t _typefaceIndex, uint32_t _pixelSize, FontType _fontType = FONT_TYPE_ALPHA);
 
 	/// return a scaled child font whose height is a fixed pixel size
-	FontHandle createScaledFontToPixelSize(FontHandle baseFontHandle, uint32_t pixelSize);
+	FontHandle createScaledFontToPixelSize(FontHandle _baseFontHandle, uint32_t _pixelSize);
 
 	/// load a baked font (the set of glyph is fixed)
 	/// @return INVALID_HANDLE if the loading fail
-	FontHandle loadBakedFontFromFile(const char* imagePath, const char* descriptorPath);
+	FontHandle loadBakedFontFromFile(const char* _imagePath, const char* _descriptorPath);
 
 	/// load a baked font (the set of glyph is fixed)
 	/// @return INVALID_HANDLE if the loading fail
-	FontHandle loadBakedFontFromMemory(const uint8_t* imageBuffer, uint32_t imageSize, const uint8_t* descriptorBuffer, uint32_t descriptorSize);
+	FontHandle loadBakedFontFromMemory(const uint8_t* _imageBuffer, uint32_t _imageSize, const uint8_t* _descriptorBuffer, uint32_t _descriptorSize);
 
 	/// destroy a font (truetype or baked)
 	void destroyFont(FontHandle _handle);
@@ -153,23 +153,23 @@ public:
 	/// Preload a set of glyphs from a TrueType file
 	/// @return true if every glyph could be preloaded, false otherwise	
 	/// if the Font is a baked font, this only do validation on the characters
-	bool preloadGlyph(FontHandle handle, const wchar_t* _string);
+	bool preloadGlyph(FontHandle _handle, const wchar_t* _string);
 
 	/// Preload a single glyph, return true on success
-	bool preloadGlyph(FontHandle handle, CodePoint_t character);
+	bool preloadGlyph(FontHandle _handle, CodePoint_t _character);
 
 	/// bake a font to disk (the set of preloaded glyph)
 	/// @return true if the baking succeed, false otherwise
-	bool saveBakedFont(FontHandle handle, const char* fontDirectory, const char* fontName );
+	bool saveBakedFont(FontHandle _handle, const char* _fontDirectory, const char* _fontName );
 	
 	/// return the font descriptor of a font
 	/// @remark the handle is required to be valid
-	const FontInfo& getFontInfo(FontHandle handle);
+	const FontInfo& getFontInfo(FontHandle _handle);
 	
 	/// Return the rendering informations about the glyph region
 	/// Load the glyph from a TrueType font if possible
 	/// @return true if the Glyph is available
-	bool getGlyphInfo(FontHandle fontHandle, CodePoint_t codePoint, GlyphInfo& outInfo);	
+	bool getGlyphInfo(FontHandle _handle, CodePoint_t _codePoint, GlyphInfo& _outInfo);	
 
 	GlyphInfo& getBlackGlyph(){ return m_blackGlyph; }
 
@@ -184,10 +184,10 @@ private:
 	};	
 
 	void init();
-	bool addBitmap(GlyphInfo& glyphInfo, const uint8_t* data);	
+	bool addBitmap(GlyphInfo& _glyphInfo, const uint8_t* _data);	
 
 	bool m_ownAtlas;
-	(Atlas* m_atlas;
+	Atlas* m_atlas;
 	
 	bx::HandleAlloc m_fontHandles;	
 	CachedFont* m_cachedFonts;	
