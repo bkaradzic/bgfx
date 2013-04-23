@@ -139,8 +139,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
         // Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
-		//just to prevent my CG Fan to howl
-		Sleep(2);
 	}
 
 	//destroy the fonts
