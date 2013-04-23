@@ -116,8 +116,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/11-fontdfs");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use a single distance field font to render text of different size.");
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/11-fontsdf");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use a single distance field font to render text of various size.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		float at[3] = { 0, 0, 0.0f };
