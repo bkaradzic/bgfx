@@ -147,11 +147,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		static int64_t last = now;
 		const int64_t frameTime = now - last;
 		last = now;
-
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
-		//float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
+
+		// Use debug font to print information about this example.
+		//bgfx::dbgTextClear();
+		//bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/10-font");
+		//bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use the font system to display text and styled text.");
+		//bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 		
+		//Use transient text to display debug information
+		//Code below is similar to commented code above
+		wchar_t fpsText[64];
+		swprintf(fpsText,L"Frame: % 7.3f[ms]", double(frameTime)*toMs);
+		
+		textBufferManager->clearTextBuffer(transientText);
+		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);		
+		textBufferManager->appendText(transientText, consola_16, L"bgfx/examples/10-font\n");		
+		textBufferManager->appendText(transientText, consola_16, L"Description: Use the font system to display text and styled text.\n");
+		textBufferManager->appendText(transientText, consola_16, fpsText);
+
 		float at[3] = { 0, 0, 0.0f };
 		float eye[3] = {0, 0, -1.0f };
 		
@@ -165,23 +180,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
 
+		//submit the debug text
+		textBufferManager->submitTextBuffer(transientText, 0);
+
 		//submit the static text
 		textBufferManager->submitTextBuffer(staticText, 0);	
-		
-		
-		//submit some realtime text
-		wchar_t fpsText[64];
-		swprintf(fpsText,L"Frame: % 7.3f[ms]", double(frameTime)*toMs);
-		
-		textBufferManager->clearTextBuffer(transientText);
-		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);
-		
-		textBufferManager->appendText(transientText, consola_16, L"bgfx_font\\sample\\01_basics\n");		
-		textBufferManager->appendText(transientText, consola_16, L"Description: truetype, font, text and style\n");
-		textBufferManager->appendText(transientText, consola_16, fpsText);
-		
-		textBufferManager->submitTextBuffer(transientText, 0);
-		
+				
         // Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
