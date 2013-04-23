@@ -112,7 +112,7 @@ public:
 	void setUnderlineColor(uint32_t rgba = 0x000000FF) { m_underlineColor = toABGR(rgba); }
 	void setStrikeThroughColor(uint32_t rgba = 0x000000FF) { m_strikeThroughColor = toABGR(rgba); }
 	
-	void setPenPosition(float x, float /*y*/) { m_penX = x; };// m_penY = y; }
+	void setPenPosition(float x, float y) { m_penX = x; m_penY = y; }
 	
 	/// return the size of the text 
 	//Rectangle measureText(FontHandle fontHandle, const char * _string);
