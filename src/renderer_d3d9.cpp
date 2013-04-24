@@ -362,6 +362,7 @@ namespace bgfx
 				fmt.m_supported = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, fmt.m_usage, fmt.m_type, fmt.m_fmt) );
 				const char* fourcc = (const char*)&fmt.m_fmt;
 				BX_TRACE("\t%2d: %c%c%c%c %s", ii, fourcc[0], fourcc[1], fourcc[2], fourcc[3], fmt.m_supported ? "supported" : "");
+				BX_UNUSED(fourcc);
 			}
 
 			m_instancing = false
