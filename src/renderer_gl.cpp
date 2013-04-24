@@ -1049,6 +1049,7 @@ namespace bgfx
 				, data
 				, offset
 				);
+			BX_UNUSED(offset);
 		}
 
 		m_constantBuffer->finish();
@@ -2256,6 +2257,7 @@ namespace bgfx
 				}
 
 				BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
+				BX_UNUSED(supported);
 
  				pos += len+1;
  			}
