@@ -222,6 +222,7 @@ namespace bgfx
 				, toString(_severity)
 				, _message
 				);
+		BX_UNUSED(_source, _type, _id, _severity, _message);
 	}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 

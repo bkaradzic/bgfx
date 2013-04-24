@@ -523,17 +523,8 @@ static const uint8_t vga8x16[256*16] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-#include "vs_debugfont_glsl.bin.h"
-#include "fs_debugfont_glsl.bin.h"
+#include "vs_debugfont.bin.h"
+#include "fs_debugfont.bin.h"
 
-#include "vs_debugfont_dx9.bin.h"
-#include "fs_debugfont_dx9.bin.h"
-
-#include "vs_debugfont_dx11.bin.h"
-#include "fs_debugfont_dx11.bin.h"
-
-#include "vs_clear_glsl.bin.h"
-#include "fs_clear_glsl.bin.h"
-
-#include "vs_clear_dx11.bin.h"
-#include "fs_clear_dx11.bin.h"
+#include "vs_clear.bin.h"
+#include "fs_clear.bin.h"

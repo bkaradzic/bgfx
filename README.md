@@ -42,9 +42,10 @@ Building
 Premake 4.4 beta4  
 [http://industriousone.com/premake/download](http://industriousone.com/premake/download)
 
-GNU make  
+GNU make and CoreUtils  
 Windows users download GNU make utility from:  
-[http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm)
+[http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm)  
+[http://gnuwin32.sourceforge.net/packages/coreutils.htm](http://gnuwin32.sourceforge.net/packages/coreutils.htm)
 
 ### Getting source
 
@@ -170,7 +171,7 @@ Using multiple views and render targets.
 Internals
 ---------
 
-bgfx is using sort-based draw call bucketing. This means that submition order
+bgfx is using sort-based draw call bucketing. This means that submission order
 doesn't necessarily matches the rendering order, but on the low-level they
 will be sorted and ordered correctly. On the high level this allows
 more optimal way of submitting draw calls for all passes at one place, and on
