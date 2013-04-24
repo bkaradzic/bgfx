@@ -4,13 +4,18 @@
 #include "font_manager.h"
 #include "../cube_atlas.h"
 
-#pragma warning( push )
-#pragma warning( disable: 4146 )
-#pragma warning( disable: 4700 )
-#pragma warning( disable: 4100 )
-#pragma warning( disable: 4701 )
-#include "../../../3rdparty/freetype/freetype.h"
-#pragma warning( pop )
+#if BX_COMPILER_MSVC
+#    pragma warning(push)
+#    pragma warning(disable: 4100) // DISABLE warning C4100: '' : unreferenced formal parameter
+#    pragma warning(disable: 4146) // DISABLE warning C4146: unary minus operator applied to unsigned type, result still unsigned
+#    pragma warning(disable: 4700) // DISABLE warning C4700: uninitialized local variable 'temp' used
+#    pragma warning(disable: 4701) // DISABLE warning C4701: potentially uninitialized local variable '' used
+#    include "../../../3rdparty/freetype/freetype.h"
+#    pragma warning(pop)
+#else
+#    include "../../../3rdparty/freetype/freetype.h"
+#endif // BX_COMPILER_MSVC
+
 
 #include "../../../3rdparty/edtaa3/edtaa3func.h"
 #include "../../../3rdparty/edtaa3/edtaa3func.cpp"
