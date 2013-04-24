@@ -518,8 +518,8 @@ TextBufferManager::~TextBufferManager()
 	BX_CHECK(m_textBufferHandles.getNumHandles() == 0, "All the text buffers must be destroyed before destroying the manager");
 	delete[] m_textBuffers;
 
-	bgfx::destroyUniform(m_u_texColor);
-	bgfx::destroyUniform(m_u_inverse_gamma);
+	bgfx::destroyUniform(u_texColor);
+	bgfx::destroyUniform(u_inverse_gamma);
 
 	bgfx::destroyProgram(m_basicProgram);	
 	bgfx::destroyProgram(m_distanceProgram);	
@@ -534,8 +534,8 @@ void TextBufferManager::init(const char* _shaderPath)
 	m_vertexDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
 	m_vertexDecl.end();
 
-	m_u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
-	m_u_inverse_gamma = bgfx::createUniform("u_inverse_gamma", bgfx::UniformType::Uniform1f);
+	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
+	u_inverse_gamma = bgfx::createUniform("u_inverse_gamma", bgfx::UniformType::Uniform1f);
 
 	const bgfx::Memory* mem;
 	mem = loadShader(_shaderPath, "vs_font_basic");
@@ -625,9 +625,9 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	uint32_t vertexSize = bc.m_textBuffer->getVertexCount() * bc.m_textBuffer->getVertexSize();
 	const bgfx::Memory* mem;
 
-	bgfx::setTexture(0, m_u_texColor, m_fontManager->getAtlas()->getTextureHandle());
+	bgfx::setTexture(0, u_texColor, m_fontManager->getAtlas()->getTextureHandle());
 	float inverse_gamme = 1.0f/2.2f;
-	bgfx::setUniform(m_u_inverse_gamma, &inverse_gamme);
+	bgfx::setUniform(u_inverse_gamma, &inverse_gamme);
 	
 	switch (bc.m_fontType)
 	{
