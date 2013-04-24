@@ -471,7 +471,9 @@ void FontManager::init()
 
 	m_blackGlyph.m_width=3;
 	m_blackGlyph.m_height=3;
-	BX_CHECK( addBitmap(m_blackGlyph, buffer), "unable to add white glyph" );
+	bool addResult = addBitmap(m_blackGlyph, buffer);
+	BX_UNUSED(addResult);
+	BX_CHECK( addResult , "unable to add white glyph" );
 	//make sure the black glyph doesn't bleed
 	
 	/*int16_t texUnit = 65535 / m_textureWidth;
