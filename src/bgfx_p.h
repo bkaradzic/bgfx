@@ -2290,7 +2290,7 @@ namespace bgfx
 			}
 			else
 			{
-				m_view[_id].setIdentity();
+				m_proj[_id].setIdentity();
 			}
 		}
 
