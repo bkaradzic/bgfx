@@ -10,7 +10,8 @@
 #include <math.h>
 #include <stddef.h>     /* offsetof */
 
-const uint16_t MAX_TEXT_BUFFER_COUNT = 64;
+#define MAX_TEXT_BUFFER_COUNT 64
+#define MAX_BUFFERED_CHARACTERS 8192
 
 long int fsize(FILE* _file)
 {
@@ -141,15 +142,13 @@ private:
 	void appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
 	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
 	uint32_t toABGR(uint32_t _rgba) 
-{ 
-	return (((_rgba >> 0) & 0xff) << 24) |  
-		(((_rgba >> 8) & 0xff) << 16) |    
-		(((_rgba >> 16) & 0xff) << 8) |    
-		(((_rgba >> 24) & 0xff) << 0);   
-}
-
-	static const uint32_t MAX_BUFFERED_CHARACTERS = 8192;
-
+	{ 
+		return (((_rgba >> 0) & 0xff) << 24) |  
+			(((_rgba >> 8) & 0xff) << 16) |    
+			(((_rgba >> 16) & 0xff) << 8) |    
+			(((_rgba >> 24) & 0xff) << 0);   
+	}
+	
 	uint32_t m_styleFlags;
 
 	// color states
