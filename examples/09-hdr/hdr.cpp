@@ -12,6 +12,7 @@
 #include "../common/dbg.h"
 #include "../common/math.h"
 #include "../common/processevents.h"
+#include "../common/imgui/imgui.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -493,10 +494,32 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::RenderTargetHandle blur;
 	blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
 
+	FILE* file = fopen("font/droidsans.ttf", "rb");
+	uint32_t size = (uint32_t)fsize(file);
+	void* data = malloc(size);
+	size_t ignore = fread(data, 1, size, file);
+	BX_UNUSED(ignore);
+	fclose(file);
+
+	imguiCreate(data, size);
+
+	free(data);
+
+	float speed      = 0.37f;
+	float middleGray = 0.18f;
+	float white      = 1.1f;
+	float treshold   = 1.5f;
+
+	int32_t scrollArea = 0;
+
 	uint32_t oldWidth = 0;
 	uint32_t oldHeight = 0;
 
-	while (!processEvents(width, height, debug, reset) )
+	MouseState mouseState;
+
+	float time = 0.0f;
+
+	while (!processEvents(width, height, debug, reset, &mouseState) )
 	{
 		if (oldWidth != width
 		||  oldHeight != height)
@@ -513,6 +536,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
 		}
 
+		imguiBeginFrame(mouseState.m_mx
+			, mouseState.m_my
+			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
+			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
+			, 0
+			, width
+			, height
+			);
+
+		imguiBeginScrollArea("Settings", width - width / 5 - 10, 10, width / 5, height / 3, &scrollArea);
+		imguiSeparatorLine();
+
+		imguiSlider("Speed", &speed, 0.0f, 1.0f, 0.01f);
+		imguiSeparator();
+
+		imguiSlider("Middle gray", &middleGray, 0.1f, 1.0f, 0.01f);
+		imguiSlider("White point", &white, 0.1f, 2.0f, 0.01f);
+		imguiSlider("Treshold", &treshold, 0.1f, 2.0f, 0.01f);
+
+		imguiEndScrollArea();
+		imguiEndFrame();
+
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
 		bgfx::submit(0);
@@ -524,7 +569,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
 
-		float time = (float)(now/freq);
+		time += (float)(frameTime*speed/freq);
 
 		bgfx::setUniform(u_time, &time);
 
@@ -588,7 +633,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float mtx[16];
 		mtxRotateXY(mtx
 			, 0.0f
-			, time*0.37f
+			, time
 			); 
 
 		float temp[4];
@@ -653,7 +698,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		screenSpaceQuad(1.0f, 1.0f, s_flipV);
 		bgfx::submit(6);
 
-		float tonemap[4] = { 0.18f, square(1.1f), 1.5f, 0.0f };
+		float tonemap[4] = { middleGray, square(white), treshold, 0.0f };
 		bgfx::setUniform(u_tonemap, tonemap);
 
 		// Bright pass treshold is tonemap[3].
@@ -685,6 +730,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
+
+	imguiDestroy();
 
 	// Cleanup.
 	mesh.unload();
