@@ -180,7 +180,7 @@ namespace bgfx
 		glGetError(); // ignore error if glGetString returns NULL.
 		if (NULL != str)
 		{
-			return bx::hashMurmur2A(str, strlen(str) );
+			return bx::hashMurmur2A(str, (uint32_t)strlen(str) );
 		}
 
 		return 0;

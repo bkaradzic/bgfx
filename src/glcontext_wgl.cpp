@@ -203,7 +203,7 @@ namespace bgfx
 
 			uint32_t flags = BGFX_CONFIG_DEBUG ? WGL_CONTEXT_DEBUG_BIT_ARB : 0;
 			BX_UNUSED(flags);
-			int32_t contextAttrs[] =
+			int32_t contextAttrs[9] =
 			{
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
@@ -213,6 +213,8 @@ namespace bgfx
 #else
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
 				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+				0, 0,
+				0, 0,
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 				0
 			};
