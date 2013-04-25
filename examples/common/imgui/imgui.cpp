@@ -386,8 +386,20 @@ struct Imgui
 		m_insideScrollArea = inRect(_x, _y, _width, _height, false);
 		m_insideCurrentScroll = m_insideScrollArea;
 
-		drawRoundedRect( (float)_x, (float)_y, (float)_width, (float)_height, 6, imguiRGBA(0, 0, 0, 192) );
-		drawText(_x + AREA_HEADER / 2, _y + AREA_HEADER / 2, IMGUI_ALIGN_LEFT, _name, imguiRGBA(255, 255, 255, 128) );
+		drawRoundedRect( (float)_x
+			, (float)_y
+			, (float)_width
+			, (float)_height
+			, 6
+			, imguiRGBA(0, 0, 0, 192)
+			);
+
+		drawText(_x + AREA_HEADER / 2
+			, _y + AREA_HEADER / 2
+			, IMGUI_ALIGN_LEFT
+			, _name
+			, imguiRGBA(255, 255, 255, 128)
+			);
 
 //		setScissor(_x + SCROLL_AREA_PADDING, _y + SCROLL_AREA_PADDING, _width - SCROLL_AREA_PADDING * 4, _height - AREA_HEADER - SCROLL_AREA_PADDING);
 
@@ -461,15 +473,34 @@ struct Imgui
 			}
 
 			// BG
-			drawRoundedRect( (float)xx, (float)yy, (float)width, (float)height, (float)width / 2 - 1, imguiRGBA(0, 0, 0, 196) );
+			drawRoundedRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, (float)width / 2 - 1
+				, imguiRGBA(0, 0, 0, 196)
+				);
+
 			// Bar
 			if (isActive(hid) )
 			{
-				drawRoundedRect( (float)hx, (float)hy, (float)hw, (float)hh, (float)width / 2 - 1, imguiRGBA(255, 196, 0, 196) );
+				drawRoundedRect( (float)hx
+					, (float)hy
+					, (float)hw
+					, (float)hh
+					, (float)width / 2 - 1
+					, imguiRGBA(255, 196, 0, 196)
+					);
 			}
 			else
 			{
-				drawRoundedRect( (float)hx, (float)hy, (float)hw, (float)hh, (float)width / 2 - 1, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64) );
+				drawRoundedRect( (float)hx
+					, (float)hy
+					, (float)hw
+					, (float)hh
+					, (float)width / 2 - 1
+					, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+					);
 			}
 
 			// Handle mouse scrolling.
@@ -508,14 +539,31 @@ struct Imgui
 		bool over = _enabled	&& inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
-		drawRoundedRect( (float)xx, (float)yy, (float)width, (float)height, (float)BUTTON_HEIGHT / 2 - 1, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96) );
+		drawRoundedRect( (float)xx
+			, (float)yy
+			, (float)width
+			, (float)height
+			, (float)BUTTON_HEIGHT / 2 - 1
+			, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96)
+			);
+
 		if (_enabled)
 		{
-			drawText(xx + BUTTON_HEIGHT / 2, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200) );
+			drawText(xx + BUTTON_HEIGHT / 2
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
+				);
 		}
 		else
 		{
-			drawText(xx + BUTTON_HEIGHT / 2, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, imguiRGBA(128, 128, 128, 200) );
+			drawText(xx + BUTTON_HEIGHT / 2
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, imguiRGBA(128, 128, 128, 200)
+				);
 		}
 
 		return res;
@@ -537,16 +585,32 @@ struct Imgui
 
 		if (isHot(id) )
 		{
-			drawRoundedRect( (float)xx, (float)yy, (float)width, (float)height, 2.0f, imguiRGBA(255, 196, 0, isActive(id) ? 196 : 96) );
+			drawRoundedRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, 2.0f
+				, imguiRGBA(255, 196, 0, isActive(id) ? 196 : 96)
+				);
 		}
 
 		if (_enabled)
 		{
-			drawText(xx + BUTTON_HEIGHT / 2, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, imguiRGBA(255, 255, 255, 200) );
+			drawText(xx + BUTTON_HEIGHT / 2
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, imguiRGBA(255, 255, 255, 200)
+				);
 		}
 		else
 		{
-			drawText(xx + BUTTON_HEIGHT / 2, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, imguiRGBA(128, 128, 128, 200) );
+			drawText(xx + BUTTON_HEIGHT / 2
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, imguiRGBA(128, 128, 128, 200)
+				);
 		}
 
 		return res;
@@ -568,26 +632,55 @@ struct Imgui
 
 		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 		const int32_t cy = yy + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-		drawRoundedRect( (float)cx - 3, (float)cy - 3, (float)CHECK_SIZE + 6, (float)CHECK_SIZE + 6, 4, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96) );
+		drawRoundedRect( (float)cx - 3
+			, (float)cy - 3
+			, (float)CHECK_SIZE + 6
+			, (float)CHECK_SIZE + 6
+			, 4
+			, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96)
+			);
+
 		if (_checked)
 		{
 			if (_enabled)
 			{
-				drawRoundedRect( (float)cx, (float)cy, (float)CHECK_SIZE, (float)CHECK_SIZE, (float)CHECK_SIZE / 2 - 1, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200) );
+				drawRoundedRect( (float)cx
+					, (float)cy
+					, (float)CHECK_SIZE
+					, (float)CHECK_SIZE
+					, (float)CHECK_SIZE / 2 - 1
+					, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200)
+					);
 			}
 			else
 			{
-				drawRoundedRect( (float)cx, (float)cy, (float)CHECK_SIZE, (float)CHECK_SIZE, (float)CHECK_SIZE / 2 - 1, imguiRGBA(128, 128, 128, 200) );
+				drawRoundedRect( (float)cx
+					, (float)cy
+					, (float)CHECK_SIZE
+					, (float)CHECK_SIZE
+					, (float)CHECK_SIZE / 2 - 1
+					, imguiRGBA(128, 128, 128, 200)
+					);
 			}
 		}
 
 		if (_enabled)
 		{
-			drawText(xx + BUTTON_HEIGHT, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200) );
+			drawText(xx + BUTTON_HEIGHT
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
+				);
 		}
 		else
 		{
-			drawText(xx + BUTTON_HEIGHT, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, imguiRGBA(128, 128, 128, 200) );
+			drawText(xx + BUTTON_HEIGHT
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, imguiRGBA(128, 128, 128, 200)
+				);
 		}
 
 		return res;
@@ -598,39 +691,66 @@ struct Imgui
 		m_widgetId++;
 		uint32_t id = (m_areaId << 16) | m_widgetId;
 
-		int32_t x = m_widgetX;
-		int32_t y = m_widgetY;
-		int32_t w = m_widgetW;
-		int32_t h = BUTTON_HEIGHT;
+		int32_t xx = m_widgetX;
+		int32_t yy = m_widgetY;
+		int32_t width = m_widgetW;
+		int32_t height = BUTTON_HEIGHT;
 		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 
-		const int32_t cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-		const int32_t cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+		const int32_t cy = yy + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 
-		bool over = _enabled && inRect(x, y, w, h);
+		bool over = _enabled && inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
 		if (_checked)
 		{
-			drawTriangle(cx, cy, CHECK_SIZE, CHECK_SIZE, 2, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200) );
+			drawTriangle(cx
+				, cy
+				, CHECK_SIZE
+				, CHECK_SIZE
+				, 2
+				, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200)
+				);
 		}
 		else
 		{
-			drawTriangle(cx, cy, CHECK_SIZE, CHECK_SIZE, 1, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200) );
+			drawTriangle(cx
+				, cy
+				, CHECK_SIZE
+				, CHECK_SIZE
+				, 1
+				, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200)
+				);
 		}
 
 		if (_enabled)
 		{
-			drawText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200) );
+			drawText(xx + BUTTON_HEIGHT
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
+				);
 		}
 		else
 		{
-			drawText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_LEFT, _text, imguiRGBA(128, 128, 128, 200) );
+			drawText(xx + BUTTON_HEIGHT
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_LEFT
+				, _text
+				, imguiRGBA(128, 128, 128, 200)
+				);
 		}
 
 		if (_subtext)
 		{
-			drawText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2, IMGUI_ALIGN_RIGHT, _subtext, imguiRGBA(255, 255, 255, 128) );
+			drawText(xx + width - BUTTON_HEIGHT / 2
+				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, IMGUI_ALIGN_RIGHT
+				, _subtext
+				, imguiRGBA(255, 255, 255, 128)
+				);
 		}
 
 		return res;

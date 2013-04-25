@@ -257,12 +257,12 @@ struct Mesh
 
 			// Set render states.
 			bgfx::setState(0
-				|BGFX_STATE_RGB_WRITE
-				|BGFX_STATE_ALPHA_WRITE
-				|BGFX_STATE_DEPTH_WRITE
-				|BGFX_STATE_DEPTH_TEST_LESS
-				|BGFX_STATE_CULL_CCW
-				|BGFX_STATE_MSAA
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_DEPTH_WRITE
+				| BGFX_STATE_DEPTH_TEST_LESS
+				| BGFX_STATE_CULL_CCW
+				| BGFX_STATE_MSAA
 				);
 
 			// Submit primitive for rendering to view 0.
