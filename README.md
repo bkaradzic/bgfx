@@ -43,7 +43,7 @@ Premake 4.4 beta4
 [http://industriousone.com/premake/download](http://industriousone.com/premake/download)
 
 GNU make and CoreUtils  
-Windows users download GNU make utility from:  
+Windows users download GNU utilities from:  
 [http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm)  
 [http://gnuwin32.sourceforge.net/packages/coreutils.htm](http://gnuwin32.sourceforge.net/packages/coreutils.htm)
 
