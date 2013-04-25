@@ -299,6 +299,9 @@ Bunny
 Uffizi  
 [Light Probe Image Gallery ](http://www.pauldebevec.com/Probes/)
 
+Droid Sans  
+[http://www.fontsquirrel.com/license/Droid-Sans](http://www.fontsquirrel.com/license/Droid-Sans)
+
 Contributors
 ------------
 
