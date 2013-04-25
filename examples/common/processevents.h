@@ -8,6 +8,12 @@
 
 struct MouseState
 {
+	MouseState()
+		: m_mx(0)
+		, m_my(0)
+	{
+	}
+
 	uint32_t m_mx;
 	uint32_t m_my;
 	uint8_t m_buttons[entry::MouseButton::Count];

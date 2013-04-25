@@ -915,7 +915,6 @@ int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)
       // now decrement to bias correctly to find smallest
       search -= 2;
       while (entrySelector) {
-         stbtt_uint16 start, end;
          searchRange >>= 1;
          start = ttUSHORT(data + search + 2 + segcount*2 + 2);
          end = ttUSHORT(data + search + 2);

@@ -14,7 +14,6 @@
 #include "../common/processevents.h"
 #include "../common/imgui/imgui.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <vector>
 #include <string>
