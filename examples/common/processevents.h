@@ -6,7 +6,14 @@
 #ifndef __PROCESS_EVENTS_H__
 #define __PROCESS_EVENTS_H__
 
-inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset)
+struct MouseState
+{
+	uint32_t m_mx;
+	uint32_t m_my;
+	uint8_t m_buttons[entry::MouseButton::Count];
+};
+
+inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL)
 {
 	using namespace entry;
 
@@ -26,11 +33,18 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug,
 				return true;
 
 			case Event::Mouse:
+				if (NULL != _mouse)
 				{
-// 					const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
-// 					if (mouse->m_move)
-// 					{
-// 					}
+					const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
+					if (mouse->m_move)
+					{
+						_mouse->m_mx = mouse->m_mx;
+						_mouse->m_my = mouse->m_my;
+					}
+					else
+					{
+						_mouse->m_buttons[mouse->m_button] = mouse->m_down;
+					}
 				}
 				break;
 
