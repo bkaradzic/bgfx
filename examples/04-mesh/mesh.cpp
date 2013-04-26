@@ -331,6 +331,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	Mesh mesh;
 	mesh.load("meshes/bunny.bin");
 
+	int64_t timeOffset = bx::getHPCounter();
+
 	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
@@ -346,7 +348,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		last = now;
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
-		float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
+		float time = (float)( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
 		bgfx::setUniform(u_time, &time);
 
 		// Use debug font to print information about this example.

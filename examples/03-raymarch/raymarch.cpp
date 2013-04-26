@@ -232,6 +232,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::ProgramHandle raymarching = loadProgram("vs_raymarching", "fs_raymarching");
 
+	int64_t timeOffset = bx::getHPCounter();
+
 	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
@@ -274,7 +276,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(1, NULL, ortho);
 
-		float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
+		float time = (float)( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
 
 		float vp[16];
 		mtxMul(vp, view, proj);
