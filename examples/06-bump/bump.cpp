@@ -348,6 +348,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = loadTexture("fieldstone-n.dds");
 	bgfx::TextureHandle textureNormal = bgfx::createTexture(mem);
 
+	int64_t timeOffset = bx::getHPCounter();
+
 	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
@@ -364,7 +366,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
 
-		float time = (float)(now/freq);
+		float time = (float)( (now-timeOffset)/freq);
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
