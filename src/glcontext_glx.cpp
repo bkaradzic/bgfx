@@ -155,7 +155,7 @@ namespace bgfx
 		if (NULL != glXSwapIntervalEXT)
 		{
 			BX_TRACE("Using glXSwapIntervalEXT.");
-			glXSwapIntervalEXT(s_display, 0, 0);
+			glXSwapIntervalEXT(s_display, s_window, 0);
 		}
 		else
 		{
@@ -186,7 +186,7 @@ namespace bgfx
 
 		if (NULL != glXSwapIntervalEXT)
 		{
-			glXSwapIntervalEXT(s_display, 0, interval);
+			glXSwapIntervalEXT(s_display, s_window, interval);
 		}
 		else if (NULL != glXSwapIntervalSGI)
 		{
