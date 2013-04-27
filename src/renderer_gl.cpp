@@ -186,6 +186,36 @@ namespace bgfx
 		return 0;
 	}
 
+	void dumpExtensions(const char* _extensions)
+	{
+		if (NULL != _extensions)
+		{
+			char name[1024];
+			const char* pos = _extensions;
+			const char* end = _extensions + strlen(_extensions);
+			while (pos < end)
+			{
+				uint32_t len;
+				const char* space = strchr(pos, ' ');
+				if (NULL != space)
+				{
+					len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
+				}
+				else
+				{
+					len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+				}
+
+				strncpy(name, pos, len);
+				name[len] = '\0';
+
+				BX_TRACE("\t%s", name);
+
+				pos += len+1;
+			}
+		}
+	}
+
 #if BGFX_CONFIG_RENDERER_OPENGL
 	const char* toString(GLenum _enum)
 	{

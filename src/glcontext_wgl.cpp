@@ -120,34 +120,9 @@ namespace bgfx
 
 		if (NULL != wglGetExtensionsStringARB)
 		{
-			BX_TRACE("WGL extensions:");
 			const char* extensions = (const char*)wglGetExtensionsStringARB(hdc);
-			if (NULL != extensions)
-			{
-				char name[1024];
-				const char* pos = extensions;
-				const char* end = extensions + strlen(extensions);
-				while (pos < end)
-				{
-					uint32_t len;
-					const char* space = strchr(pos, ' ');
-					if (NULL != space)
-					{
-						len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
-					}
-					else
-					{
-						len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
-					}
-
-					strncpy(name, pos, len);
-					name[len] = '\0';
-
-					BX_TRACE("\t%s", name);
-
-					pos += len+1;
-				}
-			}
+			BX_TRACE("WGL extensions:");
+			dumpExtensions(extensions);
 		}
 
 		if (NULL != wglChoosePixelFormatARB

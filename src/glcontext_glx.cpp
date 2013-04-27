@@ -7,6 +7,8 @@
 
 #if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
+#	define GLX_GLXEXT_PROTOTYPES
+#	include <glx/glxext.h>
 
 #	if BX_PLATFORM_LINUX
 
@@ -39,6 +41,12 @@ namespace bgfx
 				, minor
 				);
 
+		int32_t screen = DefaultScreen(s_display);
+
+		const char* extensions = glXQueryExtensionsString(s_display, screen);
+		BX_TRACE("GLX extensions:");
+		dumpExtensions(extensions);
+
 		const int attrsGlx[] =
 		{
 			GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -57,7 +65,7 @@ namespace bgfx
 		GLXFBConfig bestConfig = NULL;
 
 		int numConfigs;
-		GLXFBConfig* configs = glXChooseFBConfig(s_display, DefaultScreen(s_display), attrsGlx, &numConfigs);
+		GLXFBConfig* configs = glXChooseFBConfig(s_display, screen, attrsGlx, &numConfigs);
 
 		BX_TRACE("glX num configs %d", numConfigs);
 
@@ -113,8 +121,7 @@ namespace bgfx
 		XFree(visualInfo);
 
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
-		typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
+		PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
 		if (NULL != glXCreateContextAttribsARB)
 		{
 			BX_TRACE("Create GL 3.1 context.");
@@ -142,7 +149,24 @@ namespace bgfx
 
 		import();
 
+		PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
+		if (NULL != glXSwapIntervalEXT)
+		{
+			BX_TRACE("Using glXSwapIntervalEXT.");
+			glXSwapIntervalEXT(s_display, 0, 0);
+		}
+		else
+		{
+			PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
+			if (NULL != glXSwapIntervalSGI)
+			{
+				BX_TRACE("Using glXSwapIntervalSGI.");
+				glXSwapIntervalSGI(0);
+			}
+		}
+
 		glXMakeCurrent(s_display, s_window, m_context);
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glXSwapBuffers(s_display, s_window);
