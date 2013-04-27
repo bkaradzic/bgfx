@@ -238,8 +238,12 @@ namespace bgfx
 		m_opengl32dll = NULL;
 	}
 
-	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
 	{
+		if (NULL != wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(_vsync ? 1 : 0);
+		}
 	}
 
 	void GlContext::swap()

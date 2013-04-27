@@ -28,7 +28,7 @@ namespace bgfx
 
 		void create(uint32_t _width, uint32_t _height);
 		void destroy();
-		void resize(uint32_t _width, uint32_t _height);
+		void resize(uint32_t _width, uint32_t _height, bool _vsync);
 		void swap();
 		void import();
 

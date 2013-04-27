@@ -47,7 +47,7 @@ namespace bgfx
 	{
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height)
+	void GlContext::resize(uint32_t _width, uint32_t _height, bool /*_vsync*/)
 	{
 		m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
 	}

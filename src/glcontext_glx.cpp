@@ -12,6 +12,10 @@
 
 namespace bgfx
 {
+	PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB;
+	PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT;
+	PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
+
 #	define GL_IMPORT(_optional, _proto, _func) _proto _func
 #		include "glimports.h"
 #	undef GL_IMPORT
@@ -119,7 +123,7 @@ namespace bgfx
 		XFree(visualInfo);
 
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
-		PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
+		glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
 		if (NULL != glXCreateContextAttribsARB)
 		{
 			BX_TRACE("Create GL 3.1 context.");
@@ -147,7 +151,7 @@ namespace bgfx
 
 		import();
 
-		PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
+		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
 		if (NULL != glXSwapIntervalEXT)
 		{
 			BX_TRACE("Using glXSwapIntervalEXT.");
@@ -155,7 +159,7 @@ namespace bgfx
 		}
 		else
 		{
-			PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
+			glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
 			if (NULL != glXSwapIntervalSGI)
 			{
 				BX_TRACE("Using glXSwapIntervalSGI.");
@@ -176,8 +180,18 @@ namespace bgfx
 		glXDestroyContext(s_display, m_context);
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
 	{
+		int32_t interval = _vsync ? 1 : 0;
+
+		if (NULL != glXSwapIntervalEXT)
+		{
+			glXSwapIntervalEXT(s_display, 0, interval);
+		}
+		else if (NULL != glXSwapIntervalSGI)
+		{
+			glXSwapIntervalSGI(interval);
+		}
 	}
 
 	void GlContext::swap()

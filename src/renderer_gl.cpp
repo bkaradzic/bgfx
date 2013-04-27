@@ -291,7 +291,8 @@ namespace bgfx
 
 				uint32_t msaa = 1<<( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT);
 				msaa = uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
-				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa);
+				bool vsync = !!(m_resolution.m_flags&BGFX_RESET_VSYNC);
+				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa, vsync);
 				updateCapture();
 			}
 		}
@@ -393,7 +394,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
-		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0)
+		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0, bool _vsync = false)
 		{
 			if (_width != 0
 			||  _height != 0)
@@ -406,7 +407,7 @@ namespace bgfx
 				{
 					destroyMsaaFbo();
 
-					m_glctx.resize(_width, _height);
+					m_glctx.resize(_width, _height, _vsync);
 
 					createMsaaFbo(_width, _height, _msaa);
 				}

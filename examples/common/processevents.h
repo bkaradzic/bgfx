@@ -70,6 +70,11 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug,
 							bgfx::setDebug(_debug);
 							return false;
 						}
+						else if (key->m_key == Key::F7)
+						{
+							_reset ^= BGFX_RESET_VSYNC;
+							reset = true;
+						}
 						else if (key->m_key == Key::F8)
 						{
 							_reset ^= BGFX_RESET_MSAA_X16;
