@@ -637,6 +637,7 @@ namespace bgfx
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
 
 	/// Create texture from memory buffer.
+	///
 	/// @param _mem DDS texture data.
 	/// @param _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
@@ -728,6 +729,7 @@ namespace bgfx
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
 	/// Set render states for draw primitive.
+	///
 	/// @param _state State flags. Default state for primitive type is
 	///   triangles. See: BGFX_STATE_DEFAULT.
 	///
