@@ -10,6 +10,8 @@
 
 namespace bgfx
 {
+	typedef HRESULT (WINAPI * PFN_CREATEDXGIFACTORY)(REFIID _riid, void** _factory);
+
 	static const D3D11_PRIMITIVE_TOPOLOGY s_primType[] =
 	{
 		D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
@@ -322,7 +324,57 @@ namespace bgfx
 			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)GetProcAddress(m_d3d11dll, "D3D11CreateDevice");
 			BGFX_FATAL(NULL != d3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
 
+			m_dxgidll = LoadLibrary("dxgi.dll");
+			BGFX_FATAL(NULL != m_dxgidll, Fatal::UnableToInitialize, "Failed to load dxgi.dll.");
+
+			PFN_CREATEDXGIFACTORY dxgiCreateDXGIFactory = (PFN_CREATEDXGIFACTORY)GetProcAddress(m_dxgidll, "CreateDXGIFactory");
+			BGFX_FATAL(NULL != dxgiCreateDXGIFactory, Fatal::UnableToInitialize, "Function CreateDXGIFactory not found.");
+
 			HRESULT hr;
+
+			IDXGIFactory* factory;
+			hr = dxgiCreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create DXGI factory.");
+
+			m_adapter = NULL;
+			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
+
+			IDXGIAdapter* adapter;
+			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters(ii, &adapter); ++ii)
+			{
+				DXGI_ADAPTER_DESC desc;
+				hr = adapter->GetDesc(&desc);
+				if (SUCCEEDED(hr) )
+				{
+					BX_TRACE("Adapter #%d", ii);
+
+					char description[countof(desc.Description)];
+					wcstombs(description, desc.Description, countof(desc.Description) );
+					BX_TRACE("\tDescription: %s", description);
+					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+						, desc.VendorId
+						, desc.DeviceId
+						, desc.SubSysId
+						, desc.Revision
+						);
+					BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
+						, desc.DedicatedVideoMemory
+						, desc.DedicatedSystemMemory
+						, desc.SharedSystemMemory
+						);
+
+#if BGFX_CONFIG_DEBUG_PERFHUD
+					if (0 != strstr(description, "PerfHUD") )
+					{
+						m_adapter = adapter;
+						m_driverType = D3D_DRIVER_TYPE_REFERENCE;
+					}
+#endif // BGFX_CONFIG_DEBUG_PERFHUD
+				}
+
+				DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
+			}
+			DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 
 			D3D_FEATURE_LEVEL features[] =
 			{
@@ -350,8 +402,8 @@ namespace bgfx
 
 			D3D_FEATURE_LEVEL featureLevel;
 
-			hr = d3D11CreateDevice(NULL
-				, D3D_DRIVER_TYPE_HARDWARE
+			hr = d3D11CreateDevice(m_adapter
+				, m_driverType
 				, NULL
 				, flags
 				, features
@@ -367,10 +419,12 @@ namespace bgfx
 			hr = m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)&device);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
-			IDXGIAdapter* adapter;
 			hr = device->GetParent(__uuidof(IDXGIAdapter), (void**)&adapter);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 			DX_RELEASE(device, 2);
+
+			hr = adapter->GetDesc(&m_adapterDesc);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 			hr = adapter->GetParent(__uuidof(IDXGIFactory), (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
@@ -444,6 +498,7 @@ namespace bgfx
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_factory, 0);
 
+			FreeLibrary(m_dxgidll);
 			FreeLibrary(m_d3d11dll);
 		}
 
@@ -1032,6 +1087,10 @@ namespace bgfx
 		}
 
 		HMODULE m_d3d11dll;
+		HMODULE m_dxgidll;
+		D3D_DRIVER_TYPE m_driverType;
+		IDXGIAdapter* m_adapter;
+		DXGI_ADAPTER_DESC m_adapterDesc;
 		IDXGIFactory* m_factory;
 		IDXGISwapChain* m_swapChain;
 		ID3D11Device* m_device;
@@ -2675,8 +2734,20 @@ namespace bgfx
 				double toMs = 1000.0/freq;
 
 				tvm.clear();
-				uint16_t pos = 10;
-				tvm.printf(0, 0, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+				uint16_t pos = 0;
+				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+
+				const DXGI_ADAPTER_DESC& desc = s_renderCtx.m_adapterDesc;
+				char description[countof(desc.Description)];
+				wcstombs(description, desc.Description, countof(desc.Description) );
+				tvm.printf(0, pos++, 0x0f, " Device: %s", description);
+				tvm.printf(0, pos++, 0x0f, " Memory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
+					, desc.DedicatedVideoMemory
+					, desc.DedicatedSystemMemory
+					, desc.SharedSystemMemory
+					);
+
+				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
 					, double(frameTime)*toMs
 					, double(min)*toMs
