@@ -6,6 +6,10 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#ifndef BGFX_CONFIG_DEBUG
+#	define BGFX_CONFIG_DEBUG 0
+#endif // BGFX_CONFIG_DEBUG
+
 #if !defined(BGFX_CONFIG_RENDERER_DIRECT3D9) \
 	&& !defined(BGFX_CONFIG_RENDERER_DIRECT3D11) \
 	&& !defined(BGFX_CONFIG_RENDERER_OPENGL) \

@@ -223,7 +223,8 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			MinimumRequiredSpecs = 1,
+			DebugCheck,
+			MinimumRequiredSpecs,
 			InvalidShader,
 			UnableToInitialize,
 			UnableToCreateRenderTarget,
@@ -354,7 +355,8 @@ namespace bgfx
 	{
 		virtual ~CallbackI() = 0;
 
-		/// Called on unrecoverable error. It's not safe to continue, inform
+		/// If fatal code code is not Fatal::DebugCheck this callback is
+		/// called on unrecoverable error. It's not safe to continue, inform
 		/// user and terminate application from this call.
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 

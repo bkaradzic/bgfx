@@ -63,9 +63,16 @@ namespace bgfx
 
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
 		{
-			BX_TRACE("0x%08x: %s", _code, _str);
-			BX_UNUSED(_code, _str);
-			abort();
+			if (Fatal::DebugCheck == _code)
+			{
+				bx::debugBreak();
+			}
+			else
+			{
+				BX_TRACE("0x%08x: %s", _code, _str);
+				BX_UNUSED(_code, _str);
+				abort();
+			}
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t /*_id*/) BX_OVERRIDE
@@ -130,7 +137,7 @@ namespace bgfx
 
 		va_list argList;
 		va_start(argList, _format);
-		vsnprintf(temp, sizeof(temp), _format, argList);
+		bx::vsnprintf(temp, sizeof(temp), _format, argList);
 		va_end(argList);
 
 		temp[sizeof(temp)-1] = '\0';
