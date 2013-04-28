@@ -12,8 +12,11 @@
 
 namespace bgfx
 {
+	typedef int (*PFNGLXSWAPINTERVALMESAPROC)(uint32_t _interval);
+
 	PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB;
 	PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT;
+	PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA;
 	PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
 #	define GL_IMPORT(_optional, _proto, _func) _proto _func
@@ -159,11 +162,20 @@ namespace bgfx
 		}
 		else
 		{
-			glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
-			if (NULL != glXSwapIntervalSGI)
+			glXSwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalMESA");
+			if (NULL != glXSwapIntervalMESA)
 			{
-				BX_TRACE("Using glXSwapIntervalSGI.");
-				glXSwapIntervalSGI(0);
+				BX_TRACE("Using glXSwapIntervalMESA.");
+				glXSwapIntervalMESA(0);
+			}
+			else
+			{
+				glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
+				if (NULL != glXSwapIntervalSGI)
+				{
+					BX_TRACE("Using glXSwapIntervalSGI.");
+					glXSwapIntervalSGI(0);
+				}
 			}
 		}
 
@@ -187,6 +199,10 @@ namespace bgfx
 		if (NULL != glXSwapIntervalEXT)
 		{
 			glXSwapIntervalEXT(s_display, s_window, interval);
+		}
+		else if (NULL != glXSwapIntervalMESA)
+		{
+			glXSwapIntervalMESA(interval);
 		}
 		else if (NULL != glXSwapIntervalSGI)
 		{
