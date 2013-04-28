@@ -91,3 +91,5 @@ project "shaderc"
 		GLSL_OPTIMIZER .. "src/glsl/main.cpp",
 		GLSL_OPTIMIZER .. "src/glsl/builtin_stubs.cpp",
 	}
+
+	strip()

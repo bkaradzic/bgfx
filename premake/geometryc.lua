@@ -15,3 +15,5 @@ project "geometryc"
 		BGFX_DIR .. "tools/geometryc/**.cpp",
 		BGFX_DIR .. "tools/geometryc/**.h",
 	}
+
+	strip()
