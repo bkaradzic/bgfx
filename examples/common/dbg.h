@@ -7,6 +7,7 @@
 #define __DBG_H__
 
 #include <stdarg.h> // va_list
+#include <stdint.h>
 
 #define DBG_STRINGIZE(_x) DBG_STRINGIZE_(_x)
 #define DBG_STRINGIZE_(_x) #_x

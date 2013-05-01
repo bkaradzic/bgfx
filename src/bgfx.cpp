@@ -1271,14 +1271,12 @@ namespace bgfx
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_flags != BGFX_CLEAR_NONE, "At least one clear bit flag must be used.");
 		s_ctx.setViewClear(_id, _flags, _rgba, _depth, _stencil);
 	}
 
 	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_flags != BGFX_CLEAR_NONE, "At least one clear bit flag must be used.");
 		s_ctx.setViewClearMask(_viewMask, _flags, _rgba, _depth, _stencil);
 	}
 
