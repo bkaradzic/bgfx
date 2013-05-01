@@ -81,6 +81,7 @@ function exampleProject(_name, _uuid)
 
 	configuration { "linux" }
 		links {
+			"X11",
 			"GL",
 			"pthread",
 		}
