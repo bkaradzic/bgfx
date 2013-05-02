@@ -931,19 +931,26 @@ namespace bgfx
 		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
 	}
 
+	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 < _num, "Requesting 0 vertices.");
+		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
+	}
+
+	bool checkAvailTransientBuffers(uint16_t _numVertices, const VertexDecl& _decl, uint16_t _numIndices)
+	{
+		return checkAvailTransientVertexBuffer(_numVertices, _decl)
+			&& checkAvailTransientIndexBuffer(_numIndices)
+			;
+	}
+
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
 		return s_ctx.allocTransientIndexBuffer(_tib, _num);
-	}
-
-	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 < _num, "Requesting 0 vertices.");
-		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
