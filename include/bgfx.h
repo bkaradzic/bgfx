@@ -590,14 +590,14 @@ namespace bgfx
 	///
 	/// @param _num Number of indices.
 	///
-	bool checkAvailTransientIndexBuffer(uint16_t _num);
+	bool checkAvailTransientIndexBuffer(uint32_t _num);
 
 	/// Returns true if internal transient vertex buffer has enough space.
 	///
 	/// @param _num Number of vertices.
 	/// @param _decl Vertex declaration.
 	///
-	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
+	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
 
 	/// Returns true if both internal transient index and vertex buffer have
 	/// enough space.
@@ -606,7 +606,7 @@ namespace bgfx
 	/// @param _decl Vertex declaration.
 	/// @param _numIndices Number of indices.
 	///
-	bool checkAvailTransientBuffers(uint16_t _numVertices, const VertexDecl& _decl, uint16_t _numIndices);
+	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices);
 
 	/// Allocate transient index buffer.
 	///
@@ -614,7 +614,7 @@ namespace bgfx
 	///   reused for multiple draw calls.
 	/// @param _num number of indices to allocate.
 	///
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num);
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num);
 
 	/// Allocate transient vertex buffer.
 	///
@@ -623,10 +623,10 @@ namespace bgfx
 	/// @param _num number of vertices to allocate.
 	/// @param _decl vertex declaration.
 	///
-	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl);
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl);
 
 	/// Allocate instance data buffer.
-	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride);
+	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
 	/// Create vertex shader from memory buffer.
 	VertexShaderHandle createVertexShader(const Memory* _mem);

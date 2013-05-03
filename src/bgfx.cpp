@@ -924,28 +924,28 @@ namespace bgfx
 		s_ctx.destroyDynamicVertexBuffer(_handle);
 	}
 
-	bool checkAvailTransientIndexBuffer(uint16_t _num)
+	bool checkAvailTransientIndexBuffer(uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
 		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
 	}
 
-	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
+	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
-	bool checkAvailTransientBuffers(uint16_t _numVertices, const VertexDecl& _decl, uint16_t _numIndices)
+	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
 	{
 		return checkAvailTransientVertexBuffer(_numVertices, _decl)
 			&& checkAvailTransientIndexBuffer(_numIndices)
 			;
 	}
 
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
@@ -953,15 +953,16 @@ namespace bgfx
 		return s_ctx.allocTransientIndexBuffer(_tib, _num);
 	}
 
-	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
+		BX_CHECK(UINT16_MAX >= _num, "Requesting %d vertices (max: %d).", _num, UINT16_MAX);
 		return s_ctx.allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
-	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
+	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");

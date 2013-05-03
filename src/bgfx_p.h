@@ -1107,7 +1107,7 @@ namespace bgfx
 		void submitMask(uint32_t _viewMask, int32_t _depth);
 		void sort();
 
-		bool checkAvailTransientIndexBuffer(uint16_t _num)
+		bool checkAvailTransientIndexBuffer(uint32_t _num)
 		{
 			uint32_t offset = m_iboffset;
 			uint32_t iboffset = offset + _num*sizeof(uint16_t);
@@ -1116,16 +1116,16 @@ namespace bgfx
 			return num == _num;
 		}
 
-		uint32_t allocTransientIndexBuffer(uint16_t& _num)
+		uint32_t allocTransientIndexBuffer(uint32_t& _num)
 		{
 			uint32_t offset = m_iboffset;
 			m_iboffset = offset + _num*sizeof(uint16_t);
 			m_iboffset = uint32_min(m_iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
-			_num = uint16_t( (m_iboffset-offset)/sizeof(uint16_t) );
+			_num = (m_iboffset-offset)/sizeof(uint16_t);
 			return offset;
 		}
 
-		bool checkAvailTransientVertexBuffer(uint16_t _num, uint16_t _stride)
+		bool checkAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride)
 		{
 			uint32_t offset = strideAlign(m_vboffset, _stride);
 			uint32_t vboffset = offset + _num * _stride;
@@ -1134,12 +1134,12 @@ namespace bgfx
 			return num == _num;
 		}
 
-		uint32_t allocTransientVertexBuffer(uint16_t& _num, uint16_t _stride)
+		uint32_t allocTransientVertexBuffer(uint32_t& _num, uint16_t _stride)
 		{
 			uint32_t offset = strideAlign(m_vboffset, _stride);
 			m_vboffset = offset + _num * _stride;
 			m_vboffset = uint32_min(m_vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
-			_num = uint16_t( (m_vboffset-offset)/_stride);
+			_num = (m_vboffset-offset)/_stride;
 			return offset;
 		}
 
@@ -1781,7 +1781,7 @@ namespace bgfx
 			g_free(const_cast<TransientIndexBuffer*>(_ib) );
 		}
 
-		void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
+		void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
 		{
 			uint32_t offset = m_submit->allocTransientIndexBuffer(_num);
 
@@ -1838,7 +1838,7 @@ namespace bgfx
 			g_free(const_cast<TransientVertexBuffer*>(_vb) );
 		}
 
-		void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
+		void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
 		{
 			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
 
@@ -1864,7 +1864,7 @@ namespace bgfx
 			_tvb->decl = declHandle;
 		}
 
-		const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
+		const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 		{
 			uint16_t stride = BX_ALIGN_16(_stride);
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
