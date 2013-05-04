@@ -12,6 +12,10 @@ struct MouseState
 		: m_mx(0)
 		, m_my(0)
 	{
+		for (uint32_t ii = 0; ii < entry::MouseButton::Count; ++ii)
+		{
+			m_buttons[ii] = entry::MouseButton::None;
+		}
 	}
 
 	uint32_t m_mx;
