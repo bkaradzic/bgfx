@@ -1,4 +1,4 @@
-bgfx
+bgfx {#mainpage}
 ====
 
 https://github.com/bkaradzic/bgfx
