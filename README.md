@@ -172,7 +172,7 @@ Internals
 ---------
 
 bgfx is using sort-based draw call bucketing. This means that submission order
-doesn't necessarily matches the rendering order, but on the low-level they
+doesn't necessarily match the rendering order, but on the low-level they
 will be sorted and ordered correctly. On the high level this allows
 more optimal way of submitting draw calls for all passes at one place, and on
 the low-level this allows better optimization of rendering order. This sometimes
