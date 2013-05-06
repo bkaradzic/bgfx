@@ -80,7 +80,7 @@ namespace bgfx
 		[glView release];
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height)
+	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
 	}
 
