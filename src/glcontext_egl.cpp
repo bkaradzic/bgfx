@@ -77,6 +77,8 @@ namespace bgfx
 		success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 		BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
 
+		eglSwapInterval(m_display, 0);
+
 #	if BX_PLATFORM_EMSCRIPTEN
 		emscripten_set_canvas_size(_width, _height);
 #	endif // BX_PLATFORM_EMSCRIPTEN
@@ -93,8 +95,9 @@ namespace bgfx
 		m_context = NULL;
 	}
 
-	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
 	{
+		eglSwapInterval(m_display, _vsync ? 1 : 0);
 	}
 
 	void GlContext::swap()

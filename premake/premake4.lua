@@ -46,6 +46,7 @@ function exampleProject(_name, _uuid)
 	includedirs {
 		BX_DIR .. "include",
 		BGFX_DIR .. "include",
+		BGFX_DIR .. "3rdparty",
 	}
 
 	files {
@@ -80,6 +81,7 @@ function exampleProject(_name, _uuid)
 
 	configuration { "linux" }
 		links {
+			"X11",
 			"GL",
 			"pthread",
 		}

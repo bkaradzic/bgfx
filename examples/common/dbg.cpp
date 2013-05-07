@@ -12,24 +12,7 @@
 
 #include "dbg.h"
 #include <bx/string.h>
-
-#if BX_PLATFORM_ANDROID
-#	include <android/log.h>
-#elif BX_PLATFORM_WINDOWS || BX_PLATFORM_XBOX360
-extern "C" __declspec(dllimport) void __stdcall OutputDebugStringA(const char* _str);
-#endif // BX_PLATFORM_WINDOWS
-
-void dbgOutput(const char* _out)
-{
-#if BX_PLATFORM_ANDROID
-	__android_log_write(ANDROID_LOG_DEBUG, "", _out);
-#elif BX_PLATFORM_WINDOWS || BX_PLATFORM_XBOX360
-	OutputDebugStringA(_out);
-#elif BX_PLATFORM_NACL || BX_PLATFORM_LINUX || BX_PLATFORM_OSX
-	fputs(_out, stderr);
-	fflush(stderr);
-#endif // BX_PLATFORM_
-}
+#include <bx/debug.h>
 
 void dbgPrintfVargs(const char* _format, va_list _argList)
 {
@@ -42,7 +25,7 @@ void dbgPrintfVargs(const char* _format, va_list _argList)
 		len = bx::vsnprintf(out, len, _format, _argList);
 	}
 	out[len] = '\0';
-	dbgOutput(out);
+	bx::debugOutput(out);
 }
 
 void dbgPrintf(const char* _format, ...)

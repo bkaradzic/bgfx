@@ -130,7 +130,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_NONE;
+	uint32_t reset = BGFX_RESET_VSYNC;
 
 	bgfx::init();
 	bgfx::reset(width, height);
@@ -228,6 +228,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t miss = 0;
 	std::list<PackCube> quads;
 
+	int64_t timeOffset = bx::getHPCounter();
+
 	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
@@ -243,6 +245,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		last = now;
 		const int64_t freq = bx::getHPFrequency();
 		const double toMs = 1000.0/double(freq);
+		float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -309,8 +312,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
-
-		float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
 
 		float mtx[16];
 		mtxRotateXY(mtx, time, time*0.37f);

@@ -280,7 +280,9 @@ namespace bgfx
 #define GL_IMPORT(_optional, _proto, _func) extern _proto _func
 #include "glimports.h"
 #undef GL_IMPORT
-	
+
+	void dumpExtensions(const char* _extensions);
+
 	class ConstantBuffer;
 	
 	class VaoCache

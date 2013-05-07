@@ -283,7 +283,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_NONE;
+	uint32_t reset = BGFX_RESET_VSYNC;
 
 	bgfx::init();
 	bgfx::reset(width, height);
@@ -331,6 +331,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	Mesh mesh;
 	mesh.load("meshes/bunny.bin");
 
+	int64_t timeOffset = bx::getHPCounter();
+
 	while (!processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
@@ -346,7 +348,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		last = now;
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
-		float time = (float)(bx::getHPCounter()/double(bx::getHPFrequency() ) );
+		float time = (float)( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
 		bgfx::setUniform(u_time, &time);
 
 		// Use debug font to print information about this example.

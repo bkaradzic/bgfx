@@ -63,9 +63,16 @@ namespace bgfx
 
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
 		{
-			BX_TRACE("0x%08x: %s", _code, _str);
-			BX_UNUSED(_code, _str);
-			abort();
+			if (Fatal::DebugCheck == _code)
+			{
+				bx::debugBreak();
+			}
+			else
+			{
+				BX_TRACE("0x%08x: %s", _code, _str);
+				BX_UNUSED(_code, _str);
+				abort();
+			}
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t /*_id*/) BX_OVERRIDE
@@ -130,7 +137,7 @@ namespace bgfx
 
 		va_list argList;
 		va_start(argList, _format);
-		vsnprintf(temp, sizeof(temp), _format, argList);
+		bx::vsnprintf(temp, sizeof(temp), _format, argList);
 		va_end(argList);
 
 		temp[sizeof(temp)-1] = '\0';
@@ -917,14 +924,28 @@ namespace bgfx
 		s_ctx.destroyDynamicVertexBuffer(_handle);
 	}
 
-	bool checkAvailTransientIndexBuffer(uint16_t _num)
+	bool checkAvailTransientIndexBuffer(uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
 		return s_ctx.m_submit->checkAvailTransientIndexBuffer(_num);
 	}
 
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
+	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 < _num, "Requesting 0 vertices.");
+		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
+	}
+
+	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
+	{
+		return checkAvailTransientVertexBuffer(_numVertices, _decl)
+			&& checkAvailTransientIndexBuffer(_numIndices)
+			;
+	}
+
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
@@ -932,22 +953,16 @@ namespace bgfx
 		return s_ctx.allocTransientIndexBuffer(_tib, _num);
 	}
 
-	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 < _num, "Requesting 0 vertices.");
-		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
-	}
-
-	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
+		BX_CHECK(UINT16_MAX >= _num, "Requesting %d vertices (max: %d).", _num, UINT16_MAX);
 		return s_ctx.allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
-	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
+	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
@@ -1264,14 +1279,12 @@ namespace bgfx
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_flags != BGFX_CLEAR_NONE, "At least one clear bit flag must be used.");
 		s_ctx.setViewClear(_id, _flags, _rgba, _depth, _stencil);
 	}
 
 	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_flags != BGFX_CLEAR_NONE, "At least one clear bit flag must be used.");
 		s_ctx.setViewClearMask(_viewMask, _flags, _rgba, _depth, _stencil);
 	}
 

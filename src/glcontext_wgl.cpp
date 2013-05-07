@@ -120,34 +120,9 @@ namespace bgfx
 
 		if (NULL != wglGetExtensionsStringARB)
 		{
-			BX_TRACE("WGL extensions:");
 			const char* extensions = (const char*)wglGetExtensionsStringARB(hdc);
-			if (NULL != extensions)
-			{
-				char name[1024];
-				const char* pos = extensions;
-				const char* end = extensions + strlen(extensions);
-				while (pos < end)
-				{
-					uint32_t len;
-					const char* space = strchr(pos, ' ');
-					if (NULL != space)
-					{
-						len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
-					}
-					else
-					{
-						len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
-					}
-
-					strncpy(name, pos, len);
-					name[len] = '\0';
-
-					BX_TRACE("\t%s", name);
-
-					pos += len+1;
-				}
-			}
+			BX_TRACE("WGL extensions:");
+			dumpExtensions(extensions);
 		}
 
 		if (NULL != wglChoosePixelFormatARB
@@ -203,7 +178,7 @@ namespace bgfx
 
 			uint32_t flags = BGFX_CONFIG_DEBUG ? WGL_CONTEXT_DEBUG_BIT_ARB : 0;
 			BX_UNUSED(flags);
-			int32_t contextAttrs[] =
+			int32_t contextAttrs[9] =
 			{
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
@@ -213,6 +188,8 @@ namespace bgfx
 #else
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
 				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+				0, 0,
+				0, 0,
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 				0
 			};
@@ -261,8 +238,12 @@ namespace bgfx
 		m_opengl32dll = NULL;
 	}
 
-	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
 	{
+		if (NULL != wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(_vsync ? 1 : 0);
+		}
 	}
 
 	void GlContext::swap()

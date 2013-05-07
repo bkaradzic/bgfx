@@ -14,7 +14,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_NONE;
+	uint32_t reset = BGFX_RESET_VSYNC;
 
 	bgfx::init();
 	bgfx::reset(width, height);

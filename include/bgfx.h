@@ -223,7 +223,8 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			MinimumRequiredSpecs = 1,
+			DebugCheck,
+			MinimumRequiredSpecs,
 			InvalidShader,
 			UnableToInitialize,
 			UnableToCreateRenderTarget,
@@ -350,11 +351,13 @@ namespace bgfx
 	/// NOTE:
 	///   'fatal' callback can be called from any thread. Other callbacks
 	///   are called from the render thread.
+	///
 	struct CallbackI
 	{
 		virtual ~CallbackI() = 0;
 
-		/// Called on unrecoverable error. It's not safe to continue, inform
+		/// If fatal code code is not Fatal::DebugCheck this callback is
+		/// called on unrecoverable error. It's not safe to continue, inform
 		/// user and terminate application from this call.
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 
@@ -454,6 +457,7 @@ namespace bgfx
 		///
 		/// NOTE:
 		///   Must be called between begin/end.
+		///
 		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
 
 		/// Decode attribute.
@@ -579,21 +583,38 @@ namespace bgfx
 	/// Update dynamic vertex buffer.
 	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem);
 
-	/// Destory dynamic vertex buffer.
+	/// Destroy dynamic vertex buffer.
 	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
 
 	/// Returns true if internal transient index buffer has enough space.
-	bool checkAvailTransientIndexBuffer(uint16_t _num);
+	///
+	/// @param _num Number of indices.
+	///
+	bool checkAvailTransientIndexBuffer(uint32_t _num);
+
+	/// Returns true if internal transient vertex buffer has enough space.
+	///
+	/// @param _num Number of vertices.
+	/// @param _decl Vertex declaration.
+	///
+	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
+
+	/// Returns true if both internal transient index and vertex buffer have
+	/// enough space.
+	///
+	/// @param _numVertices Number of vertices.
+	/// @param _decl Vertex declaration.
+	/// @param _numIndices Number of indices.
+	///
+	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices);
 
 	/// Allocate transient index buffer.
 	///
 	/// @param[out] _tib is valid for the duration of frame, and it can be
 	///   reused for multiple draw calls.
 	/// @param _num number of indices to allocate.
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num);
-
-	/// Returns true if internal transient vertex buffer has enough space.
-	bool checkAvailTransientVertexBuffer(uint16_t _num, const VertexDecl& _decl);
+	///
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num);
 
 	/// Allocate transient vertex buffer.
 	///
@@ -601,10 +622,11 @@ namespace bgfx
 	///   reused for multiple draw calls.
 	/// @param _num number of vertices to allocate.
 	/// @param _decl vertex declaration.
-	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl);
+	///
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl);
 
 	/// Allocate instance data buffer.
-	const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride);
+	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
 	/// Create vertex shader from memory buffer.
 	VertexShaderHandle createVertexShader(const Memory* _mem);
@@ -626,6 +648,7 @@ namespace bgfx
 	/// @param _fsh fragment shader.
 	/// @returns Program handle if vertex shader output and fragment shader
 	///   input are matching, otherwise returns invalid program handle.
+	///
 	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 
 	/// Destroy program.
@@ -635,6 +658,7 @@ namespace bgfx
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
 
 	/// Create texture from memory buffer.
+	///
 	/// @param _mem DDS texture data.
 	/// @param _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
@@ -649,6 +673,7 @@ namespace bgfx
 	///
 	/// @param _info Returns parsed DDS texture information.
 	/// @returns Texture handle.
+	///
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
 
 	/// Create 2D texture.
@@ -699,6 +724,7 @@ namespace bgfx
 	/// @param _rgba color clear value.
 	/// @param _depth depth clear value.
 	/// @param _stencil stencil clear value.
+	///
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
 	/// Set view clear flags for multiple views.
@@ -726,6 +752,7 @@ namespace bgfx
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
 	/// Set render states for draw primitive.
+	///
 	/// @param _state State flags. Default state for primitive type is
 	///   triangles. See: BGFX_STATE_DEFAULT.
 	///
@@ -745,6 +772,7 @@ namespace bgfx
 	/// NOTE:
 	///   Use BGFX_STATE_ALPHA_REF, BGFX_STATE_POINT_SIZE and
 	///   BGFX_STATE_BLEND_FUNC macros to setup more complex states.
+	///
 	void setState(uint64_t _state, uint32_t _rgba = UINT32_MAX);
 
 	/// Set stencil test state.
@@ -752,6 +780,7 @@ namespace bgfx
 	/// @param _fstencil Front stencil state.
 	/// @param _bstencil Back stencil state. If back is set to BGFX_STENCIL_NONE
 	///   _fstencil is applied to both front and back facing primitives.
+	///
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil = BGFX_STENCIL_NONE);
 
 	/// Set model matrix for draw primitive. If it is not called model will
@@ -761,12 +790,14 @@ namespace bgfx
 	/// @param _num number of matrices in array.
 	/// @returns index into matrix cache in case the same model matrix has
 	///   to be used for other draw primitive call.
+	///
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
 	/// Set model matrix from matrix cache for draw primitive.
 	///
 	/// @param _cache index in matrix cache.
 	/// @param _num number of matrices from cache.
+	///
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
 
 	/// Set shader uniform parameter for draw primitive.
@@ -806,12 +837,14 @@ namespace bgfx
 	///
 	/// @param _id View id.
 	/// @param _depth depth for sorting.
+	///
 	void submit(uint8_t _id, int32_t _depth = 0);
 
 	/// Submit primitive for rendering into multiple views.
 	///
 	/// @param _viewMask mask to which views to submit draw primitive calls.
 	/// @param _depth depth for sorting.
+	///
 	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
 	/// Request screen shot.

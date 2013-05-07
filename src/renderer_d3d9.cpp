@@ -273,13 +273,14 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < adapterCount; ++ii)
 			{
 				D3DADAPTER_IDENTIFIER9 identifier;
-				DX_CHECK(m_d3d9->GetAdapterIdentifier(ii, 0, &identifier) );
-
-				BX_TRACE("Adapter #%d", ii);
-				BX_TRACE("\tDriver: %s", identifier.Driver);
-				BX_TRACE("\tDescription: %s", identifier.Description);
-				BX_TRACE("\tDeviceName: %s", identifier.DeviceName);
-				BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+				HRESULT hr = m_d3d9->GetAdapterIdentifier(ii, 0, &identifier);
+				if (SUCCEEDED(hr) )
+				{
+					BX_TRACE("Adapter #%d", ii);
+					BX_TRACE("\tDriver: %s", identifier.Driver);
+					BX_TRACE("\tDescription: %s", identifier.Description);
+					BX_TRACE("\tDeviceName: %s", identifier.DeviceName);
+					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
 						, identifier.VendorId
 						, identifier.DeviceId
 						, identifier.SubSysId
@@ -287,18 +288,18 @@ namespace bgfx
 						);
 
 #if BGFX_CONFIG_DEBUG_PERFHUD
-				if (0 != strstr(identifier.Description, "PerfHUD") )
-				{
-					m_adapter = ii;
-					m_deviceType = D3DDEVTYPE_REF;
-				}
+					if (0 != strstr(identifier.Description, "PerfHUD") )
+					{
+						m_adapter = ii;
+						m_deviceType = D3DDEVTYPE_REF;
+					}
 #endif // BGFX_CONFIG_DEBUG_PERFHUD
+				}
 			}
 
-			D3DADAPTER_IDENTIFIER9 identifier;
-			DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &identifier) );
-			m_amd = identifier.VendorId == 0x1002;
-			m_nvidia = identifier.VendorId == 0x10de;
+			DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &m_identifier) );
+			m_amd = m_identifier.VendorId == 0x1002;
+			m_nvidia = m_identifier.VendorId == 0x10de;
 
 			uint32_t behaviorFlags[] =
 			{
@@ -875,6 +876,7 @@ namespace bgfx
 		D3DDEVTYPE m_deviceType;
 		D3DPRESENT_PARAMETERS m_params;
 		uint32_t m_flags;
+		D3DADAPTER_IDENTIFIER9 m_identifier;
 
 		bool m_initialized;
 		bool m_amd;
@@ -2772,8 +2774,13 @@ namespace bgfx
 				double toMs = 1000.0/freq;
 
 				tvm.clear();
-				uint16_t pos = 10;
-				tvm.printf(0, 0, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+				uint16_t pos = 0;
+				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+
+				const D3DADAPTER_IDENTIFIER9& identifier = s_renderCtx.m_identifier;
+				tvm.printf(0, pos++, 0x0f, " Device: %s (%s)", identifier.Description, identifier.Driver);
+
+				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
 					, double(frameTime)*toMs
 					, double(min)*toMs

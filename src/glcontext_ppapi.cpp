@@ -5,10 +5,8 @@
 
 #include "bgfx_p.h"
 
-#if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
+#if BX_PLATFORM_NACL & (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
-
-#	if BX_PLATFORM_NACL
 
 namespace bgfx
 {
@@ -49,7 +47,7 @@ namespace bgfx
 	{
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height)
+	void GlContext::resize(uint32_t _width, uint32_t _height, bool /*_vsync*/)
 	{
 		m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
 	}
@@ -65,5 +63,4 @@ namespace bgfx
 	}
 } // namespace bgfx
 
-#	endif // BX_PLATFORM_NACL
-#endif // (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
+#endif // BX_PLATFORM_NACL & (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)

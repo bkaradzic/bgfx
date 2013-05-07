@@ -6,7 +6,24 @@
 #ifndef __PROCESS_EVENTS_H__
 #define __PROCESS_EVENTS_H__
 
-inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset)
+struct MouseState
+{
+	MouseState()
+		: m_mx(0)
+		, m_my(0)
+	{
+		for (uint32_t ii = 0; ii < entry::MouseButton::Count; ++ii)
+		{
+			m_buttons[ii] = entry::MouseButton::None;
+		}
+	}
+
+	uint32_t m_mx;
+	uint32_t m_my;
+	uint8_t m_buttons[entry::MouseButton::Count];
+};
+
+inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL)
 {
 	using namespace entry;
 
@@ -26,11 +43,18 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug,
 				return true;
 
 			case Event::Mouse:
+				if (NULL != _mouse)
 				{
-// 					const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
-// 					if (mouse->m_move)
-// 					{
-// 					}
+					const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
+					if (mouse->m_move)
+					{
+						_mouse->m_mx = mouse->m_mx;
+						_mouse->m_my = mouse->m_my;
+					}
+					else
+					{
+						_mouse->m_buttons[mouse->m_button] = mouse->m_down;
+					}
 				}
 				break;
 
@@ -49,6 +73,11 @@ inline bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug,
 							_debug ^= BGFX_DEBUG_STATS;
 							bgfx::setDebug(_debug);
 							return false;
+						}
+						else if (key->m_key == Key::F7)
+						{
+							_reset ^= BGFX_RESET_VSYNC;
+							reset = true;
 						}
 						else if (key->m_key == Key::F8)
 						{

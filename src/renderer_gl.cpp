@@ -180,10 +180,40 @@ namespace bgfx
 		glGetError(); // ignore error if glGetString returns NULL.
 		if (NULL != str)
 		{
-			return bx::hashMurmur2A(str, strlen(str) );
+			return bx::hashMurmur2A(str, (uint32_t)strlen(str) );
 		}
 
 		return 0;
+	}
+
+	void dumpExtensions(const char* _extensions)
+	{
+		if (NULL != _extensions)
+		{
+			char name[1024];
+			const char* pos = _extensions;
+			const char* end = _extensions + strlen(_extensions);
+			while (pos < end)
+			{
+				uint32_t len;
+				const char* space = strchr(pos, ' ');
+				if (NULL != space)
+				{
+					len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
+				}
+				else
+				{
+					len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+				}
+
+				strncpy(name, pos, len);
+				name[len] = '\0';
+
+				BX_TRACE("\t%s", name);
+
+				pos += len+1;
+			}
+		}
 	}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -261,7 +291,8 @@ namespace bgfx
 
 				uint32_t msaa = 1<<( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT);
 				msaa = uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
-				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa);
+				bool vsync = !!(m_resolution.m_flags&BGFX_RESET_VSYNC);
+				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa, vsync);
 				updateCapture();
 			}
 		}
@@ -363,7 +394,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
-		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0)
+		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0, bool _vsync = false)
 		{
 			if (_width != 0
 			||  _height != 0)
@@ -376,7 +407,7 @@ namespace bgfx
 				{
 					destroyMsaaFbo();
 
-					m_glctx.resize(_width, _height);
+					m_glctx.resize(_width, _height, _vsync);
 
 					createMsaaFbo(_width, _height, _msaa);
 				}
@@ -1049,6 +1080,7 @@ namespace bgfx
 				, data
 				, offset
 				);
+			BX_UNUSED(offset);
 		}
 
 		m_constantBuffer->finish();
@@ -2256,6 +2288,7 @@ namespace bgfx
 				}
 
 				BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
+				BX_UNUSED(supported);
 
  				pos += len+1;
  			}

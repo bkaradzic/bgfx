@@ -102,6 +102,7 @@ rebuild-shaders:
 	make -R -C examples rebuild
 
 docs:
+	doxygen premake/bgfx.doxygen
 	markdown README.md > .build/docs/readme.html
 
 clean:

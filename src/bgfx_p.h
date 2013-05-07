@@ -7,6 +7,8 @@
 #define __BGFX_P_H__
 
 #include "bgfx.h"
+#include "config.h"
+
 #include <inttypes.h>
 #include <stdarg.h> // va_list
 #include <stdio.h>
@@ -14,17 +16,16 @@
 #include <string.h>
 #include <alloca.h>
 
-extern void dbgPrintf(const char* _format, ...);
-extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
-
-#ifndef BGFX_CONFIG_DEBUG
-#	define BGFX_CONFIG_DEBUG 0
-#endif // BGFX_CONFIG_DEBUG
+namespace bgfx
+{
+	void fatal(Fatal::Enum _code, const char* _format, ...);
+	void dbgPrintf(const char* _format, ...);
+}
 
 #if BGFX_CONFIG_DEBUG
 #	define BX_TRACE(_format, ...) \
 				do { \
-					dbgPrintf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
+					bgfx::dbgPrintf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
 				} while(0)
 
 #	define BX_WARN(_condition, _format, ...) \
@@ -40,7 +41,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 					if (!(_condition) ) \
 					{ \
 						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
-						bx::debugBreak(); \
+						bgfx::fatal(bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
 					} \
 				} while(0)
 #endif // 0
@@ -65,6 +66,7 @@ extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format
 #include <bx/ringbuffer.h>
 #include <bx/uint32_t.h>
 #include <bx/readerwriter.h>
+#include <bx/string.h>
 
 #include "dds.h"
 
@@ -108,8 +110,6 @@ namespace stl {
 #	include <malloc.h>
 #	include <xtl.h>
 #endif // BX_PLATFORM_*
-
-#include "config.h"
 
 #include <bx/cpu.h>
 #include <bx/thread.h>
@@ -196,7 +196,6 @@ namespace bgfx
 	extern ReallocFn g_realloc;
 	extern FreeFn g_free;
 
-	void fatal(Fatal::Enum _code, const char* _format, ...);
 	void release(const Memory* _mem);
 	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
 	const char* getAttribName(Attrib::Enum _attr);
@@ -323,7 +322,7 @@ namespace bgfx
 			{
 				char* temp = (char*)alloca(m_width);
 
-				uint32_t num = vsnprintf(temp, m_width, _format, _argList);
+				uint32_t num = bx::vsnprintf(temp, m_width, _format, _argList);
 
 				uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
 				for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii, ++xx)
@@ -986,7 +985,11 @@ namespace bgfx
 
 			if (0 < m_numDropped)
 			{
-				BX_TRACE("Too many draw calls: %d, dropped %d (max: %d)", m_num+m_numDropped, m_numDropped, BGFX_CONFIG_MAX_DRAW_CALLS);
+				BX_TRACE("Too many draw calls: %d, dropped %d (max: %d)"
+					, m_num+m_numDropped
+					, m_numDropped
+					, BGFX_CONFIG_MAX_DRAW_CALLS
+					);
 			}
 		}
 
@@ -1104,7 +1107,7 @@ namespace bgfx
 		void submitMask(uint32_t _viewMask, int32_t _depth);
 		void sort();
 
-		bool checkAvailTransientIndexBuffer(uint16_t _num)
+		bool checkAvailTransientIndexBuffer(uint32_t _num)
 		{
 			uint32_t offset = m_iboffset;
 			uint32_t iboffset = offset + _num*sizeof(uint16_t);
@@ -1113,16 +1116,16 @@ namespace bgfx
 			return num == _num;
 		}
 
-		uint32_t allocTransientIndexBuffer(uint16_t& _num)
+		uint32_t allocTransientIndexBuffer(uint32_t& _num)
 		{
 			uint32_t offset = m_iboffset;
 			m_iboffset = offset + _num*sizeof(uint16_t);
 			m_iboffset = uint32_min(m_iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
-			_num = uint16_t( (m_iboffset-offset)/sizeof(uint16_t) );
+			_num = (m_iboffset-offset)/sizeof(uint16_t);
 			return offset;
 		}
 
-		bool checkAvailTransientVertexBuffer(uint16_t _num, uint16_t _stride)
+		bool checkAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride)
 		{
 			uint32_t offset = strideAlign(m_vboffset, _stride);
 			uint32_t vboffset = offset + _num * _stride;
@@ -1131,12 +1134,12 @@ namespace bgfx
 			return num == _num;
 		}
 
-		uint32_t allocTransientVertexBuffer(uint16_t& _num, uint16_t _stride)
+		uint32_t allocTransientVertexBuffer(uint32_t& _num, uint16_t _stride)
 		{
 			uint32_t offset = strideAlign(m_vboffset, _stride);
 			m_vboffset = offset + _num * _stride;
 			m_vboffset = uint32_min(m_vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
-			_num = uint16_t( (m_vboffset-offset)/_stride);
+			_num = (m_vboffset-offset)/_stride;
 			return offset;
 		}
 
@@ -1778,7 +1781,7 @@ namespace bgfx
 			g_free(const_cast<TransientIndexBuffer*>(_ib) );
 		}
 
-		void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint16_t _num)
+		void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
 		{
 			uint32_t offset = m_submit->allocTransientIndexBuffer(_num);
 
@@ -1835,7 +1838,7 @@ namespace bgfx
 			g_free(const_cast<TransientVertexBuffer*>(_vb) );
 		}
 
-		void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint16_t _num, const VertexDecl& _decl)
+		void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
 		{
 			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
 
@@ -1861,7 +1864,7 @@ namespace bgfx
 			_tvb->decl = declHandle;
 		}
 
-		const InstanceDataBuffer* allocInstanceDataBuffer(uint16_t _num, uint16_t _stride)
+		const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 		{
 			uint16_t stride = BX_ALIGN_16(_stride);
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
@@ -2290,7 +2293,7 @@ namespace bgfx
 			}
 			else
 			{
-				m_view[_id].setIdentity();
+				m_proj[_id].setIdentity();
 			}
 		}
 

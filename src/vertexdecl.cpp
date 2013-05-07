@@ -4,13 +4,13 @@
  */
 
 #include <string.h>
+#include <bx/debug.h>
 #include <bx/hash.h>
 #include <bx/uint32_t.h>
+#include <bx/countof.h>
+#include <bx/string.h>
 
 #include "vertexdecl.h"
-
-extern void dbgPrintf(const char* _format, ...);
-extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
 
 namespace bgfx
 {
@@ -55,6 +55,28 @@ namespace bgfx
 		&s_attribTypeSizeGl,
 		&s_attribTypeSizeGl,
 	};
+
+	void dbgPrintfVargs(const char* _format, va_list _argList)
+	{
+		char temp[8192];
+		char* out = temp;
+		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, _argList);
+		if ( (int32_t)sizeof(temp) < len)
+		{
+			out = (char*)alloca(len+1);
+			len = bx::vsnprintf(out, len, _format, _argList);
+		}
+		out[len] = '\0';
+		bx::debugOutput(out);
+	}
+
+	void dbgPrintf(const char* _format, ...)
+	{
+		va_list argList;
+		va_start(argList, _format);
+		dbgPrintfVargs(_format, argList);
+		va_end(argList);
+	}
 
 	void VertexDecl::begin(RendererType::Enum _renderer)
 	{
