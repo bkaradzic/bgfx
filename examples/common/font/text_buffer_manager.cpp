@@ -13,37 +13,6 @@
 #define MAX_TEXT_BUFFER_COUNT 64
 #define MAX_BUFFERED_CHARACTERS 8192
 
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* loadShader(const char* _shaderPath, const char* _shaderName)
-{
-	char out[512];
-	strcpy(out, _shaderPath);
-	strcat(out, _shaderName);
-	strcat(out, ".bin");
-
-	FILE* file = fopen(out, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		/*size_t ignore =*/ fread(mem->data, 1, size, file);
-		/*BX_UNUSED(ignore);*/
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
 // Table from Flexible and Economical UTF-8 Decoder
 // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
