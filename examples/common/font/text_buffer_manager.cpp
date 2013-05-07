@@ -489,11 +489,27 @@ TextBufferManager::~TextBufferManager()
 	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_inverse_gamma);
 
-	bgfx::destroyProgram(m_basicProgram);	
-	bgfx::destroyProgram(m_distanceProgram);	
-	bgfx::destroyProgram(m_distanceSubpixelProgram);	
+	//bgfx::destroyProgram(m_basicProgram);	
+	//bgfx::destroyProgram(m_distanceProgram);	
+	//bgfx::destroyProgram(m_distanceSubpixelProgram);	
 }
 
+void TextBufferManager::init(bgfx::ProgramHandle _basicProgram, bgfx::ProgramHandle _distanceProgram, bgfx::ProgramHandle _distanceSubpixelProgram)
+{
+	m_basicProgram = _basicProgram;
+	m_distanceProgram = _distanceProgram;
+	m_distanceSubpixelProgram = _distanceSubpixelProgram;
+
+	m_vertexDecl.begin();
+	m_vertexDecl.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float);
+	m_vertexDecl.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Int16, true);
+	m_vertexDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+	m_vertexDecl.end();
+
+	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
+	u_inverse_gamma = bgfx::createUniform("u_inverse_gamma", bgfx::UniformType::Uniform1f);
+}
+/*
 void TextBufferManager::init(const char* _shaderPath)
 {
 	m_vertexDecl.begin();
@@ -514,7 +530,7 @@ void TextBufferManager::init(const char* _shaderPath)
 	bgfx::destroyVertexShader(vsh);
 	bgfx::destroyFragmentShader(fsh);	
 
-	mem = loadShader(_shaderPath, "vs_font_distance_field");	
+	mem = loadShader(_shaderPath, "vs_font_distance_field");
 	vsh = bgfx::createVertexShader(mem);	
 	mem = loadShader(_shaderPath, "fs_font_distance_field");
 	fsh = bgfx::createFragmentShader(mem);
@@ -529,7 +545,7 @@ void TextBufferManager::init(const char* _shaderPath)
 	m_distanceSubpixelProgram = bgfx::createProgram(vsh, fsh);
 	bgfx::destroyVertexShader(vsh);
 	bgfx::destroyFragmentShader(fsh);	
-}
+}*/
 
 TextBufferHandle TextBufferManager::createTextBuffer(FontType _type, BufferType _bufferType)
 {	

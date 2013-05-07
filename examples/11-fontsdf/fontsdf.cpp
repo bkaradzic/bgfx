@@ -13,6 +13,37 @@
 #include <string.h>
 
 static const char* s_shaderPath = NULL;
+long int fsize(FILE* _file)
+{
+	long int pos = ftell(_file);
+	fseek(_file, 0L, SEEK_END);
+	long int size = ftell(_file);
+	fseek(_file, pos, SEEK_SET);
+	return size;
+}
+
+static const bgfx::Memory* loadShader(const char* _shaderPath, const char* _shaderName)
+{
+	char out[512];
+	strcpy(out, _shaderPath);
+	strcat(out, _shaderName);
+	strcat(out, ".bin");
+
+	FILE* file = fopen(out, "rb");
+	if (NULL != file)
+	{
+		uint32_t size = (uint32_t)fsize(file);
+		const bgfx::Memory* mem = bgfx::alloc(size+1);
+		/*size_t ignore =*/ fread(mem->data, 1, size, file);
+		/*BX_UNUSED(ignore);*/
+		fclose(file);
+		mem->data[mem->size-1] = '\0';
+		return mem;
+	}
+
+	return NULL;
+}
+
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
@@ -61,10 +92,35 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		break;
 	}
 
+	const bgfx::Memory* mem;
+	mem = loadShader(s_shaderPath, "vs_font_basic");
+	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	mem = loadShader(s_shaderPath, "fs_font_basic");
+	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	bgfx::ProgramHandle _basicProgram = bgfx::createProgram(vsh, fsh);
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);	
+
+	mem = loadShader(s_shaderPath, "vs_font_distance_field");
+	vsh = bgfx::createVertexShader(mem);	
+	mem = loadShader(s_shaderPath, "fs_font_distance_field");
+	fsh = bgfx::createFragmentShader(mem);
+	bgfx::ProgramHandle _distanceProgram = bgfx::createProgram(vsh, fsh);
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);
+	
+	mem = loadShader(s_shaderPath, "vs_font_distance_field_subpixel");
+	vsh = bgfx::createVertexShader(mem);		
+	mem = loadShader(s_shaderPath, "fs_font_distance_field_subpixel");
+	fsh = bgfx::createFragmentShader(mem);
+	bgfx::ProgramHandle _distanceSubpixelProgram = bgfx::createProgram(vsh, fsh);
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);	
+
 	//init the text rendering system
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
-	textBufferManager->init(s_shaderPath);
+	textBufferManager->init(_basicProgram, _distanceProgram, _distanceSubpixelProgram);
 
 	//load a truetype files
 	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");	
@@ -148,6 +204,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 	
 	textBufferManager->destroyTextBuffer(staticText);
+
+	bgfx::destroyProgram(_basicProgram);	
+	bgfx::destroyProgram(_distanceProgram);	
+	bgfx::destroyProgram(_distanceSubpixelProgram);	
+
 	delete textBufferManager;
 	delete fontManager;	
 	// Shutdown bgfx.

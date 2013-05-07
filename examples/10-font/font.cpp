@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 static const char* s_shaderPath = NULL;
 long int fsize(FILE* _file)
 {
@@ -45,6 +44,7 @@ static const bgfx::Memory* loadShader(const char* _shaderPath, const char* _shad
 	return NULL;
 }
 
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
     uint32_t width = 1280;
@@ -52,8 +52,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = 0;
 
-	bgfx::init();
-	
+	bgfx::init();	
 
 	bgfx::reset(width, height);
 
@@ -91,11 +90,37 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		break;
 	}
 
+	const bgfx::Memory* mem;
+	mem = loadShader(s_shaderPath, "vs_font_basic");
+	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	mem = loadShader(s_shaderPath, "fs_font_basic");
+	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	bgfx::ProgramHandle _basicProgram = bgfx::createProgram(vsh, fsh);
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);	
+
+	mem = loadShader(s_shaderPath, "vs_font_distance_field");
+	vsh = bgfx::createVertexShader(mem);	
+	mem = loadShader(s_shaderPath, "fs_font_distance_field");
+	fsh = bgfx::createFragmentShader(mem);
+	bgfx::ProgramHandle _distanceProgram = bgfx::createProgram(vsh, fsh);
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);
+	
+	mem = loadShader(s_shaderPath, "vs_font_distance_field_subpixel");
+	vsh = bgfx::createVertexShader(mem);		
+	mem = loadShader(s_shaderPath, "fs_font_distance_field_subpixel");
+	fsh = bgfx::createFragmentShader(mem);
+	bgfx::ProgramHandle _distanceSubpixelProgram = bgfx::createProgram(vsh, fsh);
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);	
+
+
 	//init the text rendering system
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
-	textBufferManager->init(s_shaderPath);
-		
+	textBufferManager->init(_basicProgram, _distanceProgram, _distanceSubpixelProgram);
+
 	//load some truetype files
 	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");
 	TrueTypeHandle consola_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/consola.ttf");
@@ -228,6 +253,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	textBufferManager->destroyTextBuffer(staticText);
 	textBufferManager->destroyTextBuffer(transientText);	
+
+	bgfx::destroyProgram(_basicProgram);
+	bgfx::destroyProgram(_distanceProgram);
+	bgfx::destroyProgram(_distanceSubpixelProgram);	
 
 	delete textBufferManager;
 	delete fontManager;	
