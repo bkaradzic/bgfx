@@ -86,7 +86,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				
 	//textBufferManager->appendText(staticText, distance_font, L"The quick brown fox jumps over the lazy dog\n");		
 	//textBufferManager->appendText(staticText, distance_font, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n");
-	textBufferManager->appendText(staticText, distance_font, L"BGFX  ");
+	textBufferManager->appendText(staticText, distance_font, L"BGFX ");
 	textBufferManager->appendText(staticText, smaller_font, L"bgfx");
 
 
