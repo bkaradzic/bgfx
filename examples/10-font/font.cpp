@@ -12,39 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static const char* s_shaderPath = NULL;
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* loadShader(const char* _shaderPath, const char* _shaderName)
-{
-	char out[512];
-	strcpy(out, _shaderPath);
-	strcat(out, _shaderName);
-	strcat(out, ".bin");
-
-	FILE* file = fopen(out, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		/*size_t ignore =*/ fread(mem->data, 1, size, file);
-		/*BX_UNUSED(ignore);*/
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
     uint32_t width = 1280;
@@ -66,121 +33,89 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 1.0f
 		, 0
 		);
-
-    // Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		break;
-
-	case bgfx::RendererType::OpenGLES2:
-	case bgfx::RendererType::OpenGLES3:
-		s_shaderPath = "shaders/gles/";
-		break;
-	}
-
-	const bgfx::Memory* mem;
-	mem = loadShader(s_shaderPath, "vs_font_basic");
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
-	mem = loadShader(s_shaderPath, "fs_font_basic");
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
-	bgfx::ProgramHandle _basicProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);	
-
-	mem = loadShader(s_shaderPath, "vs_font_distance_field");
-	vsh = bgfx::createVertexShader(mem);	
-	mem = loadShader(s_shaderPath, "fs_font_distance_field");
-	fsh = bgfx::createFragmentShader(mem);
-	bgfx::ProgramHandle _distanceProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
-	
-	mem = loadShader(s_shaderPath, "vs_font_distance_field_subpixel");
-	vsh = bgfx::createVertexShader(mem);		
-	mem = loadShader(s_shaderPath, "fs_font_distance_field_subpixel");
-	fsh = bgfx::createFragmentShader(mem);
-	bgfx::ProgramHandle _distanceSubpixelProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);	
-
-
+			
 	//init the text rendering system
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
-	textBufferManager->init(_basicProgram, _distanceProgram, _distanceSubpixelProgram);
 
 	//load some truetype files
-	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/times.ttf");
-	TrueTypeHandle consola_tt = fontManager->loadTrueTypeFromFile("c:/windows/fonts/consola.ttf");
+	const char* fontNames[7] = {
+		"font/droidsans.ttf",
+		"font/chp-fire.ttf", 
+		"font/bleeding_cowboys.ttf",
+		"font/mias_scribblings.ttf",
+		"font/ruritania.ttf",
+		"font/signika-regular.ttf",
+		"font/five_minutes.otf"
+	};
 
-	//create some usable font with of a specific size
-	FontHandle times_24 = fontManager->createFontByPixelSize(times_tt, 0, 24);
+	const uint32_t fontCount = sizeof(fontNames)/sizeof(const char*);
 		
-	//preload glyphs and blit them to atlas
-	fontManager->preloadGlyph(times_24, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
-		
-	//You can unload the truetype files at this stage, but in that case, the set of glyph's will be limited to the set of preloaded glyph
-	fontManager->unloadTrueType(times_tt);
+	TrueTypeHandle fontFiles[fontCount];
+	FontHandle fonts[fontCount];
+	for(int32_t  ii = 0; ii<fontCount ; ++ii)
+	{
+		//instantiate a usable font
+		fontFiles[ii] = fontManager->loadTrueTypeFromFile(fontNames[ii]);
+		fonts[ii] = fontManager->createFontByPixelSize(fontFiles[ii], 0, 32);
+		//preload glyphs and blit them to atlas
+		fontManager->preloadGlyph(fonts[ii], L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
+		//You can unload the truetype files at this stage, but in that case, the set of glyph's will be limited to the set of preloaded glyph
+		fontManager->unloadTrueType(fontFiles[ii]);
+	}
+	
+	TrueTypeHandle console_tt = fontManager->loadTrueTypeFromFile("font/visitor1.ttf");
 
 	//this font doesn't have any preloaded glyph's but the truetype file is loaded
 	//so glyph will be generated as needed
-	FontHandle consola_16 = fontManager->createFontByPixelSize(consola_tt, 0, 16);
+	FontHandle consola_16 = fontManager->createFontByPixelSize(console_tt, 0, 10);
 	
 	//create a static text buffer compatible with alpha font
 	//a static text buffer content cannot be modified after its first submit.
 	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, STATIC);
 	
 	//the pen position represent the top left of the box of the first line of text
-	textBufferManager->setPenPosition(staticText, 20.0f, 100.0f);
-	
-	//add some text to the buffer
-	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
-	//the position of the pen is adjusted when there is an endline
-	
+	textBufferManager->setPenPosition(staticText, 24.0f, 100.0f);
+
+	for(int32_t  ii = 0; ii<fontCount ; ++ii)
+	{
+		//add some text to the buffer
+		textBufferManager->appendText(staticText, fonts[ii], L"The quick brown fox jumps over the lazy dog\n");
+		//the position of the pen is adjusted when there is an endline
+	}
+
+	// Now write some styled text		
+		
 	//setup style colors 
 	textBufferManager->setBackgroundColor(staticText, 0x551111FF);
 	textBufferManager->setUnderlineColor(staticText, 0xFF2222FF);
 	textBufferManager->setOverlineColor(staticText, 0x2222FFFF);
-	textBufferManager->setStrikeThroughColor(staticText, 0x22FF22FF);
-	
+	textBufferManager->setStrikeThroughColor(staticText, 0x22FF22FF);	
 
 	//text + bkg
 	textBufferManager->setStyle(staticText, STYLE_BACKGROUND);
-	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
-
+	textBufferManager->appendText(staticText, fonts[0], L"The quick ");
+	
 	//text + strike-through
 	textBufferManager->setStyle(staticText, STYLE_STRIKE_THROUGH);
-	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
-
+	textBufferManager->appendText(staticText, fonts[0], L"brown fox ");
+	
 	//text + overline
 	textBufferManager->setStyle(staticText, STYLE_OVERLINE);
-	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
-	
+	textBufferManager->appendText(staticText, fonts[0], L"jumps over ");
+
 	//text + underline
 	textBufferManager->setStyle(staticText, STYLE_UNDERLINE);
-	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
-
+	textBufferManager->appendText(staticText, fonts[0], L"the lazy ");
 	
 	//text + bkg + strike-through
 	textBufferManager->setStyle(staticText, STYLE_BACKGROUND|STYLE_STRIKE_THROUGH);
-	textBufferManager->appendText(staticText, times_24, L"The quick brown fox jumps over the lazy dog\n");
-
+	textBufferManager->appendText(staticText, fonts[0], L"dog\n");
+	
+	
 	//create a transient buffer for realtime data	
 	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, TRANSIENT);	
 			
-	
 	uint32_t w = 0,h = 0;
     while (!processEvents(width, height, debug, reset) )
 	{
@@ -247,16 +182,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 	
 	
-	fontManager->unloadTrueType(consola_tt);
-	fontManager->destroyFont(consola_16);
-	fontManager->destroyFont(times_24);
+	fontManager->unloadTrueType(console_tt);
+	//destroy the fonts
+	fontManager->destroyFont(consola_16);	
+	for(int32_t  ii = 0; ii<fontCount ; ++ii)
+	{
+		fontManager->destroyFont(fonts[ii]);
+	}
 
 	textBufferManager->destroyTextBuffer(staticText);
 	textBufferManager->destroyTextBuffer(transientText);	
-
-	bgfx::destroyProgram(_basicProgram);
-	bgfx::destroyProgram(_distanceProgram);
-	bgfx::destroyProgram(_distanceSubpixelProgram);	
 
 	delete textBufferManager;
 	delete fontManager;	
