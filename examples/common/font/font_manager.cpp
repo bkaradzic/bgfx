@@ -465,23 +465,16 @@ void FontManager::init()
 	m_cachedFonts = new CachedFont[MAX_OPENED_FONT];
 	m_buffer = new uint8_t[MAX_FONT_BUFFER_SIZE];
 	
+	const uint32_t W = 3;
 	// Create filler rectangle
-	uint8_t buffer[4*4*4];
-	memset( buffer, 255, 4 * 4 * 4);
+	uint8_t buffer[W*W*4];
+	memset( buffer, 255, W * W * 4);
 
-	m_blackGlyph.m_width=3;
-	m_blackGlyph.m_height=3;
-	bool addResult = addBitmap(m_blackGlyph, buffer);
-	BX_UNUSED(addResult);
-	BX_CHECK( addResult , "unable to add white glyph" );
-	//make sure the black glyph doesn't bleed
-	
-	/*int16_t texUnit = 65535 / m_textureWidth;
-	m_blackGlyph.texture_x0 += texUnit;
-	m_blackGlyph.texture_y0 += texUnit;
-	m_blackGlyph.texture_x1 -= texUnit;
-	m_blackGlyph.texture_y1 -= texUnit;*/
-	
+	m_blackGlyph.m_width = W;
+	m_blackGlyph.m_height = W;
+
+	///make sure the black glyph doesn't bleed by using a one pixel inner outline
+	m_blackGlyph.m_regionIndex = m_atlas->addRegion(W, W, buffer, AtlasRegion::TYPE_GRAY, 1 );
 }
 
 FontManager::~FontManager()
