@@ -18,23 +18,23 @@ enum FontType
 struct FontInfo
 {
 	//the font height in pixel 
-	uint16_t m_pixelSize;
+	uint16_t pixelSize;
 	/// Rendering type used for the font
-	int16_t m_fontType;
+	int16_t fontType;
 
 	/// The pixel extents above the baseline in pixels (typically positive)
-	float m_ascender;
+	float ascender;
 	/// The extents below the baseline in pixels (typically negative)
-	float m_descender;
+	float descender;
 	/// The spacing in pixels between one row's descent and the next row's ascent
-	float m_lineGap;
+	float lineGap;
 	/// The thickness of the under/hover/striketrough line in pixels
-	float m_underline_thickness;
+	float underline_thickness;
 	/// The position of the underline relatively to the baseline
-	float m_underline_position;
+	float underline_position;
 				
 	//scale to apply to glyph data
-	float m_scale;
+	float scale;
 };
 
 // Glyph metrics:
@@ -75,34 +75,34 @@ typedef int32_t CodePoint_t;
 struct GlyphInfo
 {
 	/// Index for faster retrieval
-	int32_t m_glyphIndex;
+	int32_t glyphIndex;
 	
 	/// Glyph's width in pixels.
-	float m_width;
+	float width;
 
 	/// Glyph's height in pixels.
-	float m_height;
+	float height;
 	
 	/// Glyph's left offset in pixels
-	float m_offset_x;
+	float offset_x;
 
 	/// Glyph's top offset in pixels
 	/// Remember that this is the distance from the baseline to the top-most
 	/// glyph scan line, upwards y coordinates being positive.
-	float m_offset_y;
+	float offset_y;
 
 	/// For horizontal text layouts, this is the unscaled horizontal distance in pixels
 	/// used to increment the pen position when the glyph is drawn as part of a string of text.
-	float m_advance_x;
+	float advance_x;
 	
 	/// For vertical text layouts, this is the unscaled vertical distance in pixels
 	/// used to increment the pen position when the glyph is drawn as part of a string of text.
-	float m_advance_y;
+	float advance_y;
 		
 	/// region index in the atlas storing textures
-	uint16_t m_regionIndex;
+	uint16_t regionIndex;
 	///32 bits alignment
-	int16_t m_padding;		
+	int16_t padding;		
 };
 
 BGFX_HANDLE(TrueTypeHandle);

@@ -70,11 +70,11 @@ private:
 	
 	struct BufferCache
 	{
-		uint16_t m_indexBufferHandle;
-		uint16_t m_vertexBufferHandle;
-		TextBuffer* m_textBuffer;
-		BufferType m_bufferType;
-		FontType m_fontType;		
+		uint16_t indexBufferHandle;
+		uint16_t vertexBufferHandle;
+		TextBuffer* textBuffer;
+		BufferType bufferType;
+		FontType fontType;		
 	};
 
 	BufferCache* m_textBuffers;

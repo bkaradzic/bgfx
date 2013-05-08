@@ -321,17 +321,17 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		return;
     }
 		
-	if( _font.m_ascender > m_lineAscender || (_font.m_descender < m_lineDescender) )
+	if( _font.ascender > m_lineAscender || (_font.descender < m_lineDescender) )
     {
-		if( _font.m_descender < m_lineDescender )
+		if( _font.descender < m_lineDescender )
 		{
-			m_lineDescender = _font.m_descender;
-			m_lineGap = _font.m_lineGap;
+			m_lineDescender = _font.descender;
+			m_lineGap = _font.lineGap;
 		}
 				
-		float txtDecals = (_font.m_ascender - m_lineAscender);
-		m_lineAscender = _font.m_ascender;
-		m_lineGap = _font.m_lineGap;		
+		float txtDecals = (_font.ascender - m_lineAscender);
+		m_lineAscender = _font.ascender;
+		m_lineGap = _font.lineGap;		
 				
 		m_penY += txtDecals;
 		verticalCenterLastLine((txtDecals), (m_penY - m_lineAscender), (m_penY - m_lineDescender+m_lineGap));		
@@ -345,7 +345,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
         kerning = texture_glyph_get_kerning( glyph, previous );
     }
 	*/
-	m_penX += kerning * _font.m_scale;
+	m_penX += kerning * _font.scale;
 
 	GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
 	
@@ -353,10 +353,10 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	{
 		float x0 = ( m_penX - kerning );
 		float y0 = ( m_penY  - m_lineAscender);
-		float x1 = ( (float)x0 + (_glyphInfo.m_advance_x));
+		float x1 = ( (float)x0 + (_glyphInfo.advance_x));
 		float y1 = ( m_penY - m_lineDescender + m_lineGap );
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.m_regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
 
 		setVertex(m_vertexCount+0, x0, y0, m_backgroundColor,STYLE_BACKGROUND);
 		setVertex(m_vertexCount+1, x0, y1, m_backgroundColor,STYLE_BACKGROUND);
@@ -377,10 +377,10 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	{
 		float x0 = ( m_penX - kerning );
 		float y0 = (m_penY - m_lineDescender/2 );
-		float x1 = ( (float)x0 + (_glyphInfo.m_advance_x));
-		float y1 = y0+_font.m_underline_thickness;
+		float x1 = ( (float)x0 + (_glyphInfo.advance_x));
+		float y1 = y0+_font.underline_thickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.m_regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
 
 		setVertex(m_vertexCount+0, x0, y0, m_underlineColor,STYLE_UNDERLINE);
 		setVertex(m_vertexCount+1, x0, y1, m_underlineColor,STYLE_UNDERLINE);
@@ -400,11 +400,11 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	if( m_styleFlags & STYLE_OVERLINE && m_overlineColor & 0xFF000000)
 	{
 		float x0 = ( m_penX - kerning );
-		float y0 = (m_penY - _font.m_ascender );
-		float x1 = ( (float)x0 + (_glyphInfo.m_advance_x));
-		float y1 = y0+_font.m_underline_thickness;
+		float y0 = (m_penY - _font.ascender );
+		float x1 = ( (float)x0 + (_glyphInfo.advance_x));
+		float y1 = y0+_font.underline_thickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.m_regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
 
 		setVertex(m_vertexCount+0, x0, y0, m_overlineColor,STYLE_OVERLINE);
 		setVertex(m_vertexCount+1, x0, y1, m_overlineColor,STYLE_OVERLINE);
@@ -425,11 +425,11 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	if( m_styleFlags & STYLE_STRIKE_THROUGH && m_strikeThroughColor & 0xFF000000)
 	{
  		float x0 = ( m_penX - kerning );
-		float y0 = (m_penY - _font.m_ascender/3 );
-		float x1 = ( (float)x0 + (_glyphInfo.m_advance_x) );
-		float y1 = y0+_font.m_underline_thickness;
+		float y0 = (m_penY - _font.ascender/3 );
+		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
+		float y1 = y0+_font.underline_thickness;
 		
-		m_fontManager->getAtlas()->packUV(blackGlyph.m_regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer,sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
 
 		setVertex(m_vertexCount+0, x0, y0, m_strikeThroughColor,STYLE_STRIKE_THROUGH);
 		setVertex(m_vertexCount+1, x0, y1, m_strikeThroughColor,STYLE_STRIKE_THROUGH);
@@ -448,13 +448,13 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	
 
 	//handle glyph
-	float x0_precise = m_penX + (_glyphInfo.m_offset_x);
+	float x0_precise = m_penX + (_glyphInfo.offset_x);
 	float x0 = ( x0_precise);
-	float y0 = ( m_penY + (_glyphInfo.m_offset_y));
-	float x1 = ( x0 + _glyphInfo.m_width );
-	float y1 = ( y0 + _glyphInfo.m_height );
+	float y0 = ( m_penY + (_glyphInfo.offset_y));
+	float x1 = ( x0 + _glyphInfo.width );
+	float y1 = ( y0 + _glyphInfo.height );
 		
-	m_fontManager->getAtlas()->packUV(_glyphInfo.m_regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
+	m_fontManager->getAtlas()->packUV(_glyphInfo.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) *m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex));
 
 	setVertex(m_vertexCount+0, x0, y0, m_textColor);
 	setVertex(m_vertexCount+1, x0, y1, m_textColor);
@@ -470,7 +470,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	m_vertexCount += 4;
 	m_indexCount += 6;
 		
-	m_penX += _glyphInfo.m_advance_x;
+	m_penX += _glyphInfo.advance_x;
 	if(m_penX > m_rectangle.width) m_rectangle.width = m_penX;	
 	if( (m_penY - m_lineDescender) > m_rectangle.height) m_rectangle.height = (m_penY - m_lineDescender);
 	//if(x1 > m_rectangle.width) m_rectangle.width = x1;	
@@ -588,11 +588,11 @@ TextBufferHandle TextBufferManager::createTextBuffer(FontType _type, BufferType 
 	uint16_t textIdx = m_textBufferHandles.alloc();
 	BufferCache& bc = m_textBuffers[textIdx];
 	
-	bc.m_textBuffer = new TextBuffer(m_fontManager);	
-	bc.m_fontType = _type;
-	bc.m_bufferType = _bufferType;	
-	bc.m_indexBufferHandle = bgfx::invalidHandle;
-	bc.m_vertexBufferHandle = bgfx::invalidHandle;
+	bc.textBuffer = new TextBuffer(m_fontManager);	
+	bc.fontType = _type;
+	bc.bufferType = _bufferType;	
+	bc.indexBufferHandle = bgfx::invalidHandle;
+	bc.vertexBufferHandle = bgfx::invalidHandle;
 
 	TextBufferHandle ret = {textIdx};
 	return  ret;
@@ -604,19 +604,19 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 	
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	m_textBufferHandles.free(_handle.idx);
-	delete bc.m_textBuffer;
-	bc.m_textBuffer = NULL;
+	delete bc.textBuffer;
+	bc.textBuffer = NULL;
 
-	if(bc.m_vertexBufferHandle == bgfx::invalidHandle ) return;
+	if(bc.vertexBufferHandle == bgfx::invalidHandle ) return;
 	
-	switch(bc.m_bufferType)
+	switch(bc.bufferType)
 	{
 	case STATIC:
 		{
 		bgfx::IndexBufferHandle ibh;
 		bgfx::VertexBufferHandle vbh;
-		ibh.idx = bc.m_indexBufferHandle;
-		vbh.idx = bc.m_vertexBufferHandle;
+		ibh.idx = bc.indexBufferHandle;
+		vbh.idx = bc.vertexBufferHandle;
 		bgfx::destroyIndexBuffer(ibh);
 		bgfx::destroyVertexBuffer(vbh);
 		}
@@ -625,8 +625,8 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 	case DYNAMIC:
 		bgfx::DynamicIndexBufferHandle ibh;
 		bgfx::DynamicVertexBufferHandle vbh;
-		ibh.idx = bc.m_indexBufferHandle;
-		vbh.idx = bc.m_vertexBufferHandle;
+		ibh.idx = bc.indexBufferHandle;
+		vbh.idx = bc.vertexBufferHandle;
 		bgfx::destroyDynamicIndexBuffer(ibh);
 		bgfx::destroyDynamicVertexBuffer(vbh);
 	
@@ -641,15 +641,15 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	
-	uint32_t indexSize = bc.m_textBuffer->getIndexCount() * bc.m_textBuffer->getIndexSize();
-	uint32_t vertexSize = bc.m_textBuffer->getVertexCount() * bc.m_textBuffer->getVertexSize();
+	uint32_t indexSize = bc.textBuffer->getIndexCount() * bc.textBuffer->getIndexSize();
+	uint32_t vertexSize = bc.textBuffer->getVertexCount() * bc.textBuffer->getVertexSize();
 	const bgfx::Memory* mem;
 
 	bgfx::setTexture(0, u_texColor, m_fontManager->getAtlas()->getTextureHandle());
 	float inverse_gamme = 1.0f/2.2f;
 	bgfx::setUniform(u_inverse_gamma, &inverse_gamme);
 	
-	switch (bc.m_fontType)
+	switch (bc.fontType)
 	{
 	case FONT_TYPE_ALPHA:
 		bgfx::setProgram(m_basicProgram);
@@ -661,81 +661,81 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		break;
 	case FONT_TYPE_DISTANCE_SUBPIXEL:
 		bgfx::setProgram(m_distanceSubpixelProgram);
-		bgfx::setState( BGFX_STATE_RGB_WRITE |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_SRC_COLOR) , bc.m_textBuffer->getTextColor());
+		bgfx::setState( BGFX_STATE_RGB_WRITE |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_SRC_COLOR) , bc.textBuffer->getTextColor());
 		break;	
 	}	
 
-	switch(bc.m_bufferType)
+	switch(bc.bufferType)
 	{
 		case STATIC:
 		{
 			bgfx::IndexBufferHandle ibh;
 			bgfx::VertexBufferHandle vbh;
 
-			if(bc.m_vertexBufferHandle == bgfx::invalidHandle)
+			if(bc.vertexBufferHandle == bgfx::invalidHandle)
 			{
 				mem = bgfx::alloc(indexSize);
-				memcpy(mem->data, bc.m_textBuffer->getIndexBuffer(), indexSize);
+				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
 				ibh = bgfx::createIndexBuffer(mem);
 
 				mem = bgfx::alloc(vertexSize);
-				memcpy(mem->data, bc.m_textBuffer->getVertexBuffer(), vertexSize);
+				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
 				vbh = bgfx::createVertexBuffer(mem, m_vertexDecl);
 
-				bc.m_indexBufferHandle = ibh.idx ;
-				bc.m_vertexBufferHandle = vbh.idx;
+				bc.indexBufferHandle = ibh.idx ;
+				bc.vertexBufferHandle = vbh.idx;
 			}else
 			{
-				ibh.idx = bc.m_indexBufferHandle;
-				vbh.idx = bc.m_vertexBufferHandle;
+				ibh.idx = bc.indexBufferHandle;
+				vbh.idx = bc.vertexBufferHandle;
 			}
-			bgfx::setVertexBuffer(vbh,  bc.m_textBuffer->getVertexCount());
-			bgfx::setIndexBuffer(ibh, bc.m_textBuffer->getIndexCount());
+			bgfx::setVertexBuffer(vbh,  bc.textBuffer->getVertexCount());
+			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount());
 		}break;
 		case DYNAMIC:
 		{
 			bgfx::DynamicIndexBufferHandle ibh;
 			bgfx::DynamicVertexBufferHandle vbh;
 
-			if(bc.m_vertexBufferHandle == bgfx::invalidHandle)
+			if(bc.vertexBufferHandle == bgfx::invalidHandle)
 			{
 				mem = bgfx::alloc(indexSize);
-				memcpy(mem->data, bc.m_textBuffer->getIndexBuffer(), indexSize);
+				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
 				ibh = bgfx::createDynamicIndexBuffer(mem);
 
 				mem = bgfx::alloc(vertexSize);
-				memcpy(mem->data, bc.m_textBuffer->getVertexBuffer(), vertexSize);
+				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
 				vbh = bgfx::createDynamicVertexBuffer(mem, m_vertexDecl);
 
-				bc.m_indexBufferHandle = ibh.idx ;
-				bc.m_vertexBufferHandle = vbh.idx;
+				bc.indexBufferHandle = ibh.idx ;
+				bc.vertexBufferHandle = vbh.idx;
 			}else
 			{
-				ibh.idx = bc.m_indexBufferHandle;
-				vbh.idx = bc.m_vertexBufferHandle;				
+				ibh.idx = bc.indexBufferHandle;
+				vbh.idx = bc.vertexBufferHandle;				
 								
 				mem = bgfx::alloc(indexSize);
-				memcpy(mem->data, bc.m_textBuffer->getIndexBuffer(), indexSize);
+				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
 				bgfx::updateDynamicIndexBuffer(ibh, mem);
 
 				mem = bgfx::alloc(vertexSize);
-				memcpy(mem->data, bc.m_textBuffer->getVertexBuffer(), vertexSize);
+				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
 				bgfx::updateDynamicVertexBuffer(vbh, mem);				
 			}
-			bgfx::setVertexBuffer(vbh,  bc.m_textBuffer->getVertexCount());
-			bgfx::setIndexBuffer(ibh, bc.m_textBuffer->getIndexCount());
+			bgfx::setVertexBuffer(vbh,  bc.textBuffer->getVertexCount());
+			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount());
 			
 		}break;
 		case TRANSIENT:
 		{
 			bgfx::TransientIndexBuffer tib;
 			bgfx::TransientVertexBuffer tvb;
-			bgfx::allocTransientIndexBuffer(&tib, bc.m_textBuffer->getIndexCount());
-			bgfx::allocTransientVertexBuffer(&tvb, bc.m_textBuffer->getVertexCount(), m_vertexDecl);
-			memcpy(tib.data, bc.m_textBuffer->getIndexBuffer(), indexSize);
-			memcpy(tvb.data, bc.m_textBuffer->getVertexBuffer(), vertexSize);
-			bgfx::setVertexBuffer(&tvb,  bc.m_textBuffer->getVertexCount());
-			bgfx::setIndexBuffer(&tib, bc.m_textBuffer->getIndexCount());
+			bgfx::allocTransientIndexBuffer(&tib, bc.textBuffer->getIndexCount());
+			bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexDecl);
+			memcpy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
+			memcpy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
+			bgfx::setVertexBuffer(&tvb,  bc.textBuffer->getVertexCount());
+			bgfx::setIndexBuffer(&tib, bc.textBuffer->getIndexCount());
 		}break;	
 	}
 
@@ -752,75 +752,75 @@ void TextBufferManager::setStyle(TextBufferHandle _handle, uint32_t _flags )
 { 
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setStyle(_flags); 
+	 bc.textBuffer->setStyle(_flags); 
 }
 
 void TextBufferManager::setTextColor(TextBufferHandle _handle, uint32_t _rgba ) 
 { 
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setTextColor(_rgba); 
+	 bc.textBuffer->setTextColor(_rgba); 
 }
 
 void TextBufferManager::setBackgroundColor(TextBufferHandle _handle, uint32_t _rgba ) 
 { 
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setBackgroundColor(_rgba); 
+	 bc.textBuffer->setBackgroundColor(_rgba); 
 }
 
 void TextBufferManager::setOverlineColor(TextBufferHandle _handle, uint32_t _rgba ) 
 { 
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setOverlineColor(_rgba); 
+	 bc.textBuffer->setOverlineColor(_rgba); 
 }
 
 void TextBufferManager::setUnderlineColor(TextBufferHandle _handle, uint32_t _rgba ) 
 {
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setUnderlineColor(_rgba); 
+	 bc.textBuffer->setUnderlineColor(_rgba); 
 }
 
 void TextBufferManager::setStrikeThroughColor(TextBufferHandle _handle, uint32_t _rgba ) 
 { 
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setStrikeThroughColor(_rgba); 
+	 bc.textBuffer->setStrikeThroughColor(_rgba); 
 }
 	
 void TextBufferManager::setPenPosition(TextBufferHandle _handle, float _x, float _y) 
 {
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	 bc.m_textBuffer->setPenPosition(_x,_y); 
+	 bc.textBuffer->setPenPosition(_x,_y); 
 }
 
 void TextBufferManager::appendText(TextBufferHandle _handle, FontHandle _fontHandle, const char * _string)
 {
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	bc.m_textBuffer->appendText(_fontHandle, _string);
+	bc.textBuffer->appendText(_fontHandle, _string);
 }
 
 void TextBufferManager::appendText(TextBufferHandle _handle, FontHandle _fontHandle, const wchar_t * _string)
 {
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	bc.m_textBuffer->appendText(_fontHandle, _string);
+	bc.textBuffer->appendText(_fontHandle, _string);
 }
 
 void TextBufferManager::clearTextBuffer(TextBufferHandle _handle)
 {
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	bc.m_textBuffer->clearTextBuffer();
+	bc.textBuffer->clearTextBuffer();
 }
 
 TextRectangle TextBufferManager::getRectangle(TextBufferHandle _handle) const
 {
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
-	return bc.m_textBuffer->getRectangle();
+	return bc.textBuffer->getRectangle();
 }
