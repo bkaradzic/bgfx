@@ -115,6 +115,9 @@ public:
 	uint32_t getIndexSize(){ return sizeof(uint16_t); }
 
 	uint32_t getTextColor(){ return toABGR(m_textColor); }
+
+	TextRectangle getRectangle() const { return m_rectangle; }
+
 private:
 	void appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
 	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
@@ -147,6 +150,8 @@ private:
 	float m_lineDescender;
 	float m_lineGap;
 	
+	TextRectangle m_rectangle;
+
 	///
 	FontManager* m_fontManager;	
 	
@@ -195,7 +200,8 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 	m_lineDescender = 0;
 	m_lineGap = 0;
 	m_fontManager = _fontManager;	
-
+	m_rectangle.width = 0;
+	m_rectangle.height = 0;
 	
 	m_vertexBuffer = new TextVertex[MAX_BUFFERED_CHARACTERS * 4];
 	m_indexBuffer = new uint16_t[MAX_BUFFERED_CHARACTERS * 6];
@@ -224,8 +230,10 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char * _string)
 		m_originY = m_penY;
 		m_lineDescender = 0;// font.m_descender;
 		m_lineAscender = 0;//font.m_ascender;
+
+		
 	}
-	
+		
 	uint32_t codepoint;
 	uint32_t state = 0;
 
@@ -294,6 +302,8 @@ void TextBuffer::clearTextBuffer()
 	m_lineStartIndex = 0;
 	m_lineAscender = 0;
 	m_lineDescender = 0;
+	m_rectangle.width = 0;
+	m_rectangle.height = 0;
 }
 
 void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo)
@@ -307,9 +317,10 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		m_lineDescender = 0;
 		m_lineAscender = 0;
         m_lineStartIndex = m_vertexCount;
+			
 		return;
     }
-	
+		
 	if( _font.m_ascender > m_lineAscender || (_font.m_descender < m_lineDescender) )
     {
 		if( _font.m_descender < m_lineDescender )
@@ -458,9 +469,12 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	m_indexBuffer[m_indexCount + 5] = m_vertexCount+3;
 	m_vertexCount += 4;
 	m_indexCount += 6;
-	
-	//TODO see what to do when doing subpixel rendering
+		
 	m_penX += _glyphInfo.m_advance_x;
+	if(m_penX > m_rectangle.width) m_rectangle.width = m_penX;	
+	if( (m_penY - m_lineDescender) > m_rectangle.height) m_rectangle.height = (m_penY - m_lineDescender);
+	//if(x1 > m_rectangle.width) m_rectangle.width = x1;	
+	//if(y1 > m_rectangle.height) m_rectangle.height = y1;
 }
 
 void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
@@ -802,4 +816,11 @@ void TextBufferManager::clearTextBuffer(TextBufferHandle _handle)
 	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	bc.m_textBuffer->clearTextBuffer();
+}
+
+TextRectangle TextBufferManager::getRectangle(TextBufferHandle _handle) const
+{
+	BX_CHECK( bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	return bc.m_textBuffer->getRectangle();
 }

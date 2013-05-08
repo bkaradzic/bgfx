@@ -162,7 +162,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		
 		float view[16];
 		float proj[16];
-		mtxLookAt(view, eye, at);		
+		mtxLookAt(view, eye, at);
 		//setup a top-left ortho matrix for screen space drawing		
 		float centering = 0.5f;
 		mtxOrtho(proj, centering, width+centering,height+centering, centering,-1.0f, 1.0f);

@@ -24,6 +24,11 @@ enum TextStyleFlags
 	STYLE_BACKGROUND       = 1<<3,
 };
 
+struct TextRectangle
+{	
+	float width, height;
+};
+
 class TextBuffer;
 class TextBufferManager
 {
@@ -54,6 +59,8 @@ public:
 
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer(TextBufferHandle _handle);
+
+	TextRectangle getRectangle(TextBufferHandle _handle) const;	
 		
 	/// return the size of the text 
 	//Rectangle measureText(FontHandle fontHandle, const char * _string);
@@ -80,4 +87,7 @@ private:
 	bgfx::ProgramHandle m_basicProgram;
 	bgfx::ProgramHandle m_distanceProgram;
 	bgfx::ProgramHandle m_distanceSubpixelProgram;
+
+	float m_height;
+	float m_width;
 };
