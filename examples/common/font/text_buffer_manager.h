@@ -31,11 +31,6 @@ public:
 	TextBufferManager(FontManager* _fontManager = NULL);
 	~TextBufferManager();
 	
-	//shaders program
-	
-	void init(bgfx::ProgramHandle _basicProgram, bgfx::ProgramHandle _distanceProgram, bgfx::ProgramHandle _distanceSubpixelProgram);
-	//void init(const char* _shaderPath);
-
 	TextBufferHandle createTextBuffer(FontType _type, BufferType _bufferType);
 	void destroyTextBuffer(TextBufferHandle _handle);
 	void submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth = 0);
