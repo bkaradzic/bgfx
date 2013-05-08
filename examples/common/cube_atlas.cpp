@@ -306,7 +306,7 @@ Atlas::~Atlas()
 	delete[] m_textureBuffer;
 }
 
-uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bitmapBuffer,  AtlasRegion::Type _type)
+uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bitmapBuffer,  AtlasRegion::Type _type, uint16_t outline)
 {
 	if (m_regionCount >= m_maxRegionCount)
 	{
@@ -350,13 +350,19 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 	}
 	
 	AtlasRegion& region = m_regions[m_regionCount];
-	region.m_x = x;
-	region.m_y = y;
+	region.m_x = x ;
+	region.m_y = y ;
 	region.m_width = _width;
 	region.m_height = _height;
 	region.m_mask = m_layers[idx].faceRegion.m_mask;
 
 	updateRegion(region, _bitmapBuffer);
+	
+	region.m_x += outline;
+	region.m_y += outline;
+	region.m_width -= (outline*2);
+	region.m_height -= (outline*2);	
+
 	return m_regionCount++;
 }
 

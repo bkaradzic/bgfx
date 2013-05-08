@@ -50,7 +50,7 @@ public:
 	~Atlas();
 	
 	/// add a region to the atlas, and copy the content of mem to the underlying texture
-	uint16_t addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bitmapBuffer, AtlasRegion::Type _type = AtlasRegion::TYPE_BGRA8);
+	uint16_t addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bitmapBuffer, AtlasRegion::Type _type = AtlasRegion::TYPE_BGRA8, uint16_t outline = 0);
 
 	/// update a preallocated region
 	void updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffer);
