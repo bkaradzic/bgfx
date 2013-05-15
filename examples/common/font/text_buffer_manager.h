@@ -35,7 +35,7 @@ class TextBuffer;
 class TextBufferManager
 {
 public:
-	TextBufferManager(FontManager* _fontManager = NULL);
+	TextBufferManager(FontManager* _fontManager);
 	~TextBufferManager();
 	
 	TextBufferHandle createTextBuffer(FontType _type, BufferType _bufferType);
