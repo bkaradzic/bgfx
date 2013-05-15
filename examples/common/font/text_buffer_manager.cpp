@@ -7,9 +7,6 @@
 #include "../cube_atlas.h"
 
 #include <bx/bx.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
 #include <stddef.h>     /* offsetof */
 
 #include "vs_font_basic.bin.h"

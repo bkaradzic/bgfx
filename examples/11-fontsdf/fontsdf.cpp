@@ -14,9 +14,6 @@
 #include "../common/font/font_manager.h"
 #include "../common/font/text_buffer_manager.h"
 
-#include <stdio.h>
-#include <string.h>
-
 inline void mtxTranslate(float* _result, float x, float y, float z)
 {
 	memset(_result, 0, sizeof(float)*16);

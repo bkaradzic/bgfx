@@ -21,7 +21,6 @@
 
 #include <edtaa3/edtaa3func.h>
 #include <edtaa3/edtaa3func.cpp>
-#include <math.h>
 #include <bx/bx.h>
 
 

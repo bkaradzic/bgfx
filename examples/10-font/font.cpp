@@ -6,6 +6,7 @@
 #include <bgfx.h>
 #include <bx/bx.h>
 #include <bx/timer.h>
+#include <bx/countof.h> 
 #include "../common/entry.h"
 #include "../common/dbg.h"
 #include "../common/math.h"
@@ -15,7 +16,6 @@
 #include "../common/font/text_buffer_manager.h"
 
 #include <stdio.h>
-#include <string.h>
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
@@ -154,7 +154,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		//Use transient text to display debug information
 		//Code below is similar to commented code above
 		wchar_t fpsText[64];
-		swprintf(fpsText,L"Frame: % 7.3f[ms]", double(frameTime)*toMs);
+		//swprintf(fpsText,L"Frame: % 7.3f[ms]", double(frameTime)*toMs);
+		swprintf(fpsText, countof(fpsText), L"Frame: % 7.3f[ms]", double(frameTime)*toMs);
 		
 		textBufferManager->clearTextBuffer(transientText);
 		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);		
