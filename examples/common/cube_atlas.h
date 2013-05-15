@@ -1,6 +1,8 @@
-﻿/* Copyright 2013 Jeremie Roy. All rights reserved.
+﻿/*
+ * Copyright 2013 Jeremie Roy. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
-*/
+ */
+
 #ifndef __CUBE_ATLAS_H__
 #define __CUBE_ATLAS_H__
 

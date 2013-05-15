@@ -1,3 +1,8 @@
+/*
+ * Copyright 2013 Jeremie Roy. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
+ */
+
 #include <bgfx.h>
 #include <bx/bx.h>
 #include <bx/timer.h>
