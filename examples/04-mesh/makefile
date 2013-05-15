@@ -12,7 +12,7 @@ include $(BGFX_DIR)/premake/shader.mk
 geometry: ../runtime/meshes/bunny.bin
 
 ../runtime/meshes/bunny.bin: bunny.obj
-	..\..\tools\bin\geometryc -f bunny.obj -o ..\runtime\meshes\bunny.bin --packnormal 1
+	../../tools/bin/geometryc -f bunny.obj -o ../runtime/meshes/bunny.bin --packnormal 1
 
 rebuild:
 	@make -s --no-print-directory TARGET=0 clean all

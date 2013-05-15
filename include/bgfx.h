@@ -487,7 +487,14 @@ namespace bgfx
 	/// Unpack vec4 from vertex stream format.
 	void vertexUnpack(float _output[4], Attrib::Enum _attr, const VertexDecl& _decl, const void* _data, uint32_t _index = 0);
 
-	/// Convert from one vertex stream format to another.
+	/// Converts vertex stream data from one vertex stream format to another.
+	///
+	/// @param _destDecl Destination vertex stream declaration.
+	/// @param _destData Destination vertex stream.
+	/// @param _srcDecl Source vertex stream declaration.
+	/// @param _srcData Source vertex stream data.
+	/// @param _num Number of vertices to convert from source to destination.
+	///
 	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num = 1);
 
 	/// Returns renderer backend API type.

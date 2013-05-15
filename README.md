@@ -6,7 +6,7 @@ https://github.com/bkaradzic/bgfx
 What is it?
 -----------
 
-Cross-platform rendering library.
+Cross-platform rendering library ([API](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)).
 
 Supported rendering backends:
 
