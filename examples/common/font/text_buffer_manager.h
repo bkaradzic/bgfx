@@ -1,7 +1,9 @@
 /* Copyright 2013 Jeremie Roy. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
 */
-#pragma once
+#ifndef __TEXT_BUFFER_MANAGER_H__
+#define __TEXT_BUFFER_MANAGER_H__
+
 #include "font_manager.h"
 
 BGFX_HANDLE(TextBufferHandle);
@@ -91,3 +93,5 @@ private:
 	float m_height;
 	float m_width;
 };
+
+#endif // __TEXT_BUFFER_MANAGER_H__

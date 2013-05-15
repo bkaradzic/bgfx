@@ -1,7 +1,9 @@
 /* Copyright 2013 Jeremie Roy. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
 */
-#pragma once
+#ifndef __FONT_MANAGER_H__
+#define __FONT_MANAGER_H__
+
 #include <bgfx.h>
 #include <bx/handlealloc.h>
 
@@ -200,3 +202,5 @@ private:
 	//temporary buffer to raster glyph
 	uint8_t* m_buffer;	
 };
+
+#endif // __FONT_MANAGER_H__

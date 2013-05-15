@@ -1,7 +1,8 @@
 ﻿/* Copyright 2013 Jeremie Roy. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
 */
-#pragma once
+#ifndef __CUBE_ATLAS_H__
+#define __CUBE_ATLAS_H__
 
 /// Inspired from texture-atlas from freetype-gl (http://code.google.com/p/freetype-gl/)
 /// by Nicolas Rougier (Nicolas.Rougier@inria.fr)
@@ -131,3 +132,4 @@ private:
 	uint8_t* m_textureBuffer;
 
 };
+#endif // __CUBE_ATLAS_H__
