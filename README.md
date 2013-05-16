@@ -167,6 +167,12 @@ Using multiple views and render targets.
 
 ![example-09-hdr](https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png)
 
+### 10-font
+Use the font system to display text and styled text.
+
+### 11-fontsdf
+Use a single distance field font to render text of various size.
+
 Internals
 ---------
 
