@@ -279,6 +279,10 @@ https://github.com/bagder/fcpp
 
 http://gameangst.com/?p=9
 
+### FreeType
+
+http://www.freetype.org/
+
 ### glsl-optimizer (MIT)
 
 GLSL optimizer based on Mesa's GLSL compiler. Used in Unity for mobile shader
@@ -305,7 +309,8 @@ Droid Sans
 Contributors
 ------------
 
-Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.
+Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.  
+Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and examples.
 
 License (BSD 2-clause)
 ----------------------
