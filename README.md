@@ -20,7 +20,6 @@ Supported rendering backends:
 Platforms:
 
  * Android
- * JavaScript (via Emscripten)
  * Linux
  * Native Client
  * OSX
