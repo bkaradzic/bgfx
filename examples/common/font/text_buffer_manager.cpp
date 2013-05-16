@@ -278,16 +278,16 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string)
 		m_lineAscender = 0; //font.m_ascender;
 	}
 
-	uint32_t codepoint;
+	CodePoint_t codepoint = 0;
 	uint32_t state = 0;
 
 	for (; *_string; ++_string)
 	{
-		if (!utf8_decode(&state, &codepoint, *_string) )
+		if (!utf8_decode(&state, (uint32_t*)&codepoint, *_string) )
 		{
-			if (m_fontManager->getGlyphInfo(_fontHandle, (CodePoint_t)codepoint, glyph) )
+			if (m_fontManager->getGlyphInfo(_fontHandle, codepoint, glyph) )
 			{
-				appendGlyph( (CodePoint_t)codepoint, font, glyph);
+				appendGlyph(codepoint, font, glyph);
 			}
 			else
 			{
@@ -295,8 +295,6 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string)
 			}
 		}
 	}
-
-	//printf("U+%04X\n", codepoint);
 
 	if (state != UTF8_ACCEPT)
 	{
@@ -558,7 +556,9 @@ void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
 	}
 }
 
-TextBufferManager::TextBufferManager(FontManager* _fontManager) : m_fontManager(_fontManager), m_textBufferHandles(MAX_TEXT_BUFFER_COUNT)
+TextBufferManager::TextBufferManager(FontManager* _fontManager)
+	: m_textBufferHandles(MAX_TEXT_BUFFER_COUNT)
+	, m_fontManager(_fontManager)
 {
 	m_textBuffers = new BufferCache[MAX_TEXT_BUFFER_COUNT];
 

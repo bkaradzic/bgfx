@@ -59,7 +59,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	TrueTypeHandle fontFiles[fontCount];
 	FontHandle fonts[fontCount];
-	for (int32_t ii = 0; ii < fontCount; ++ii)
+	for (uint32_t ii = 0; ii < fontCount; ++ii)
 	{
 		//instantiate a usable font
 		fontFiles[ii] = fontManager->loadTrueTypeFromFile(fontNames[ii]);
@@ -83,7 +83,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	//the pen position represent the top left of the box of the first line of text
 	textBufferManager->setPenPosition(staticText, 24.0f, 100.0f);
 
-	for (int32_t ii = 0; ii < fontCount; ++ii)
+	for (uint32_t ii = 0; ii < fontCount; ++ii)
 	{
 		//add some text to the buffer
 		textBufferManager->appendText(staticText, fonts[ii], L"The quick brown fox jumps over the lazy dog\n");
