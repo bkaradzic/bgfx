@@ -302,8 +302,29 @@ Bunny
 Uffizi  
 [Light Probe Image Gallery ](http://www.pauldebevec.com/Probes/)
 
-Droid Sans  
-[http://www.fontsquirrel.com/license/Droid-Sans](http://www.fontsquirrel.com/license/Droid-Sans)
+Droid Sans Font  
+http://www.fontsquirrel.com/license/Droid-Sans
+
+Bleeding Cowboys Font  
+http://www.dafont.com/bleeding-cowboys.font
+
+Cheap Fire Font  
+http://www.dafont.com/cheap-fire.font
+
+Five Minutes Font  
+http://www.fonts2u.com/fiveminutes.font
+
+Mias Scribblings Font  
+http://www.dafont.com/mias-scribblings.font
+
+Ruritania Font  
+http://www.dafont.com/ruritania.font
+
+Signika Font  
+http://fontfabric.com/signika-font/
+
+Visitor Font  
+http://www.dafont.com/visitor.font
 
 Contributors
 ------------
