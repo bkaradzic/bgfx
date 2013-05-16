@@ -3,8 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "font_manager.h"
-#include "../cube_atlas.h"
+#include <bx/bx.h>
 
 #if BX_COMPILER_MSVC
 #   pragma warning(push)
@@ -20,7 +19,10 @@
 
 #include <edtaa3/edtaa3func.h>
 #include <edtaa3/edtaa3func.cpp>
-#include <bx/bx.h>
+#include <wchar.h> // wcslen
+
+#include "font_manager.h"
+#include "../cube_atlas.h"
 
 #if BGFX_CONFIG_USE_TINYSTL
 namespace tinystl
@@ -39,7 +41,7 @@ namespace stl = tinystl;
 #   include <unordered_map>
 namespace std
 { namespace tr1
-  {}
+{}
 }
 namespace stl
 {
@@ -48,43 +50,44 @@ namespace stl
 }
 #endif // BGFX_CONFIG_USE_TINYSTL
 
-class FontManager::TrueTypeFont
-{
-public:
-TrueTypeFont();
-~TrueTypeFont();
-
-/// Initialize from  an external buffer
-/// @remark The ownership of the buffer is external, and you must ensure it stays valid up to this object lifetime
-/// @return true if the initialization succeed
-bool init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight);
-
-/// return the font descriptor of the current font
-FontInfo getFontInfo();
-
-/// raster a glyph as 8bit alpha to a memory buffer
-/// update the GlyphInfo according to the raster strategy
-/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
-bool bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
-
-/// raster a glyph as 32bit subpixel rgba to a memory buffer
-/// update the GlyphInfo according to the raster strategy
-/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(uint32_t)
-bool bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
-
-/// raster a glyph as 8bit signed distance to a memory buffer
-/// update the GlyphInfo according to the raster strategy
-/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
-bool bakeGlyphDistance(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
-private:
-void* m_font;
-};
-
 struct FTHolder
 {
 	FT_Library library;
 	FT_Face face;
 };
+
+class FontManager::TrueTypeFont
+{
+public:
+	TrueTypeFont();
+	~TrueTypeFont();
+
+	/// Initialize from  an external buffer
+	/// @remark The ownership of the buffer is external, and you must ensure it stays valid up to this object lifetime
+	/// @return true if the initialization succeed
+	bool init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight);
+
+	/// return the font descriptor of the current font
+	FontInfo getFontInfo();
+
+	/// raster a glyph as 8bit alpha to a memory buffer
+	/// update the GlyphInfo according to the raster strategy
+	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
+	bool bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
+
+	/// raster a glyph as 32bit subpixel rgba to a memory buffer
+	/// update the GlyphInfo according to the raster strategy
+	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(uint32_t)
+	bool bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
+
+	/// raster a glyph as 8bit signed distance to a memory buffer
+	/// update the GlyphInfo according to the raster strategy
+	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
+	bool bakeGlyphDistance(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
+private:
+	FTHolder* m_font;
+};
+
 FontManager::TrueTypeFont::TrueTypeFont() : m_font(NULL)
 {
 }
@@ -104,9 +107,9 @@ FontManager::TrueTypeFont::~TrueTypeFont()
 bool FontManager::TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight)
 {
 	BX_CHECK( (_bufferSize > 256
-	          && _bufferSize < 100000000), "TrueType buffer size is suspicious");
+		&& _bufferSize < 100000000), "TrueType buffer size is suspicious");
 	BX_CHECK( (_pixelHeight > 4
-	          && _pixelHeight < 128), "TrueType buffer size is suspicious");
+		&& _pixelHeight < 128), "TrueType buffer size is suspicious");
 
 	BX_CHECK(m_font == NULL, "TrueTypeFont already initialized");
 
@@ -228,7 +231,7 @@ bool FontManager::TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo
 	for (int32_t ii = 0; ii < h; ++ii)
 	{
 		memcpy(_outBuffer + (ii * w) * charsize * depth,
-		       bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
+			bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
 	}
 
 	FT_Done_Glyph(glyph);
@@ -280,7 +283,7 @@ bool FontManager::TrueTypeFont::bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphI
 	for (int32_t ii = 0; ii < h; ++ii)
 	{
 		memcpy(_outBuffer + (ii * w) * charsize * depth,
-		       bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
+			bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
 	}
 
 	FT_Done_Glyph(glyph);
@@ -442,7 +445,7 @@ bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphI
 	for (int32_t ii = 0; ii < h; ++ii)
 	{
 		memcpy(_outBuffer + (ii * w) * charsize * depth,
-		       bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
+			bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
 	}
 
 	FT_Done_Glyph(glyph);
@@ -487,8 +490,6 @@ bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphI
 	return true;
 }
 
-//*************************************************************
-
 typedef stl::unordered_map<CodePoint_t, GlyphInfo> GlyphHash_t;
 // cache font data
 struct FontManager::CachedFont
@@ -509,17 +510,21 @@ const uint16_t MAX_OPENED_FILES = 64;
 const uint16_t MAX_OPENED_FONT = 64;
 const uint32_t MAX_FONT_BUFFER_SIZE = 512 * 512 * 4;
 
-FontManager::FontManager(Atlas* _atlas) : m_filesHandles(MAX_OPENED_FILES), m_fontHandles(MAX_OPENED_FONT)
+FontManager::FontManager(Atlas* _atlas)
+	: m_ownAtlas(false)
+	, m_atlas(_atlas)
+	, m_fontHandles(MAX_OPENED_FONT)
+	, m_filesHandles(MAX_OPENED_FILES)
 {
-	m_atlas = _atlas;
-	m_ownAtlas = false;
 	init();
 }
 
-FontManager::FontManager(uint32_t _textureSideWidth) : m_filesHandles(MAX_OPENED_FILES), m_fontHandles(MAX_OPENED_FONT)
+FontManager::FontManager(uint32_t _textureSideWidth) 
+	: m_ownAtlas(true)
+	, m_atlas(new Atlas(_textureSideWidth) )
+	, m_fontHandles(MAX_OPENED_FONT)
+	, m_filesHandles(MAX_OPENED_FILES)
 {
-	m_atlas = new Atlas(_textureSideWidth);
-	m_ownAtlas = true;
 	init();
 }
 
@@ -758,9 +763,9 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint_t _codePoint)
 			font.trueTypeFont->bakeGlyphAlpha(_codePoint, glyphInfo, m_buffer);
 			break;
 
-		//case FONT_TYPE_LCD:
-		//font.m_trueTypeFont->bakeGlyphSubpixel(codePoint, glyphInfo, m_buffer);
-		//break;
+			//case FONT_TYPE_LCD:
+			//font.m_trueTypeFont->bakeGlyphSubpixel(codePoint, glyphInfo, m_buffer);
+			//break;
 		case FONT_TYPE_DISTANCE:
 			font.trueTypeFont->bakeGlyphDistance(_codePoint, glyphInfo, m_buffer);
 			break;
@@ -841,8 +846,6 @@ bool FontManager::getGlyphInfo(FontHandle _handle, CodePoint_t _codePoint, Glyph
 	_outInfo = iter->second;
 	return true;
 }
-
-// ****************************************************************************
 
 bool FontManager::addBitmap(GlyphInfo& _glyphInfo, const uint8_t* _data)
 {

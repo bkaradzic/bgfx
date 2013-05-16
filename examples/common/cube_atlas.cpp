@@ -1,67 +1,76 @@
 /*
- * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
- */
+* Copyright 2013 Jeremie Roy. All rights reserved.
+* License: http://www.opensource.org/licenses/BSD-2-Clause
+*/
 
-#include "cube_atlas.h"
 #include <bx/bx.h>
 #include <bgfx.h>
+
+#include <limits.h> // INT_MAX
+#include <memory.h> // memset
+
 #include <vector>
 
-//********** Rectangle packer implementation ************
+#include "cube_atlas.h"
+
 class RectanglePacker
 {
 public:
-RectanglePacker();
-RectanglePacker(uint32_t _width, uint32_t _height);
+	RectanglePacker();
+	RectanglePacker(uint32_t _width, uint32_t _height);
 
-/// non constructor initialization
-void init(uint32_t _width, uint32_t _height);
-/// find a suitable position for the given rectangle
-/// @return true if the rectangle can be added, false otherwise
-bool addRectangle(uint16_t _width, uint16_t _height, uint16_t& _outX, uint16_t& _outY);
-/// return the used surface in squared unit
-uint32_t getUsedSurface()
-{
-	return m_usedSpace;
-}
-/// return the total available surface in squared unit
-uint32_t getTotalSurface()
-{
-	return m_width * m_height;
-}
-/// return the usage ratio of the available surface [0:1]
-float getUsageRatio();
-/// reset to initial state
-void clear();
+	/// non constructor initialization
+	void init(uint32_t _width, uint32_t _height);
 
-private:
-int32_t fit(uint32_t _skylineNodeIndex, uint16_t _width, uint16_t _height);
-/// Merges all skyline nodes that are at the same level.
-void merge();
+	/// find a suitable position for the given rectangle
+	/// @return true if the rectangle can be added, false otherwise
+	bool addRectangle(uint16_t _width, uint16_t _height, uint16_t& _outX, uint16_t& _outY);
 
-struct Node
-{
-	Node(int16_t _x, int16_t _y, int16_t _width) : m_x(_x), m_y(_y), m_width(_width)
+	/// return the used surface in squared unit
+	uint32_t getUsedSurface()
 	{
+		return m_usedSpace;
 	}
 
-	/// The starting x-coordinate (leftmost).
-	int16_t m_x;
-	/// The y-coordinate of the skyline level line.
-	int16_t m_y;
-	/// The line _width. The ending coordinate (inclusive) will be x+width-1.
-	int32_t m_width;         //32bit to avoid padding
-};
+	/// return the total available surface in squared unit
+	uint32_t getTotalSurface()
+	{
+		return m_width * m_height;
+	}
 
-/// width (in pixels) of the underlying texture
-uint32_t m_width;
-/// height (in pixels) of the underlying texture
-uint32_t m_height;
-/// Surface used in squared pixel
-uint32_t m_usedSpace;
-/// node of the skyline algorithm
-std::vector<Node> m_skyline;
+	/// return the usage ratio of the available surface [0:1]
+	float getUsageRatio();
+
+	/// reset to initial state
+	void clear();
+
+private:
+	int32_t fit(uint32_t _skylineNodeIndex, uint16_t _width, uint16_t _height);
+	/// Merges all skyline nodes that are at the same level.
+	void merge();
+
+	struct Node
+	{
+		Node(int16_t _x, int16_t _y, int16_t _width) : m_x(_x), m_y(_y), m_width(_width)
+		{
+		}
+
+		/// The starting x-coordinate (leftmost).
+		int16_t m_x;
+		/// The y-coordinate of the skyline level line.
+		int16_t m_y;
+		/// The line _width. The ending coordinate (inclusive) will be x+width-1.
+		int32_t m_width; // 32bit to avoid padding
+	};
+
+	/// width (in pixels) of the underlying texture
+	uint32_t m_width;
+	/// height (in pixels) of the underlying texture
+	uint32_t m_height;
+	/// Surface used in squared pixel
+	uint32_t m_usedSpace;
+	/// node of the skyline algorithm
+	std::vector<Node> m_skyline;
 };
 
 RectanglePacker::RectanglePacker() : m_width(0), m_height(0), m_usedSpace(0)
@@ -110,8 +119,8 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
 		{
 			node = &m_skyline[ii];
 			if ( ( (y + _height) < best_height)
-			   || ( ( (y + _height) == best_height)
-			      && (node->m_width < best_width) ) )
+				|| ( ( (y + _height) == best_height)
+				&& (node->m_width < best_width) ) )
 			{
 				best_height = y + _height;
 				best_index = ii;
@@ -239,8 +248,6 @@ void RectanglePacker::merge()
 	}
 }
 
-//********** Cube Atlas implementation ************
-
 struct Atlas::PackedLayer
 {
 	RectanglePacker packer;
@@ -250,9 +257,9 @@ struct Atlas::PackedLayer
 Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 {
 	BX_CHECK(_textureSize >= 64
-	        && _textureSize <= 4096, "suspicious texture size");
+		&& _textureSize <= 4096, "suspicious texture size");
 	BX_CHECK(_maxRegionsCount >= 64
-	        && _maxRegionsCount <= 32000, "suspicious _regions count");
+		&& _maxRegionsCount <= 32000, "suspicious _regions count");
 	m_layers = new PackedLayer[24];
 	for (int ii = 0; ii < 24; ++ii)
 	{
@@ -278,18 +285,18 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 	//memset(mem->data, 255, mem->size);
 	const bgfx::Memory* mem = NULL;
 	m_textureHandle = bgfx::createTextureCube(6
-	                                         , _textureSize
-	                                         , 1
-	                                         , bgfx::TextureFormat::BGRA8
-	                                         , flags
-	                                         , mem
-	                                         );
+		, _textureSize
+		, 1
+		, bgfx::TextureFormat::BGRA8
+		, flags
+		, mem
+		);
 }
 
 Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _regionCount, const uint8_t* _regionBuffer, uint16_t _maxRegionsCount)
 {
 	BX_CHECK(_regionCount <= 64
-	        && _maxRegionsCount <= 4096, "suspicious initialization");
+		&& _maxRegionsCount <= 4096, "suspicious initialization");
 	//layers are frozen
 	m_usedLayers = 24;
 	m_usedFaces = 6;
@@ -317,12 +324,12 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _reg
 	memcpy(m_textureBuffer, _textureBuffer, getTextureBufferSize() );
 
 	m_textureHandle = bgfx::createTextureCube(6
-	                                         , _textureSize
-	                                         , 1
-	                                         , bgfx::TextureFormat::BGRA8
-	                                         , flags
-	                                         , bgfx::makeRef(m_textureBuffer, getTextureBufferSize() )
-	                                         );
+		, _textureSize
+		, 1
+		, bgfx::TextureFormat::BGRA8
+		, flags
+		, bgfx::makeRef(m_textureBuffer, getTextureBufferSize() )
+		);
 }
 
 Atlas::~Atlas()
@@ -360,7 +367,7 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 	{
 		//do we have still room to add layers ?
 		if ( (idx + _type) > 24
-		   || m_usedFaces >= 6)
+			|| m_usedFaces >= 6)
 		{
 			return UINT16_MAX;
 		}

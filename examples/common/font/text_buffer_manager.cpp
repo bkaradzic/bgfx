@@ -3,11 +3,13 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <bx/bx.h>
+#include <stddef.h> // offsetof
+#include <memory.h> // memcpy
+#include <wchar.h>  // wcslen
+
 #include "text_buffer_manager.h"
 #include "../cube_atlas.h"
-
-#include <bx/bx.h>
-#include <stddef.h>     /* offsetof */
 
 #include "vs_font_basic.bin.h"
 #include "fs_font_basic.bin.h"
@@ -49,8 +51,8 @@ inline uint32_t utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte)
 	uint32_t type = utf8d[byte];
 
 	*codep = (*state != UTF8_ACCEPT) ?
-	         (byte & 0x3fu) | (*codep << 6) :
-	         (0xff >> type) & (byte);
+		(byte & 0x3fu) | (*codep << 6) :
+	(0xff >> type) & (byte);
 
 	*state = utf8d[256 + *state * 16 + type];
 	return *state;
@@ -76,156 +78,156 @@ class TextBuffer
 {
 public:
 
-/// TextBuffer is bound to a fontManager for glyph retrieval
-/// @remark the ownership of the manager is not taken
-TextBuffer(FontManager* _fontManager);
-~TextBuffer();
+	/// TextBuffer is bound to a fontManager for glyph retrieval
+	/// @remark the ownership of the manager is not taken
+	TextBuffer(FontManager* _fontManager);
+	~TextBuffer();
 
-void setStyle(uint32_t _flags = STYLE_NORMAL)
-{
-	m_styleFlags = _flags;
-}
-void setTextColor(uint32_t _rgba = 0x000000FF)
-{
-	m_textColor = toABGR(_rgba);
-}
-void setBackgroundColor(uint32_t _rgba = 0x000000FF)
-{
-	m_backgroundColor = toABGR(_rgba);
-}
+	void setStyle(uint32_t _flags = STYLE_NORMAL)
+	{
+		m_styleFlags = _flags;
+	}
+	void setTextColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_textColor = toABGR(_rgba);
+	}
+	void setBackgroundColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_backgroundColor = toABGR(_rgba);
+	}
 
-void setOverlineColor(uint32_t _rgba = 0x000000FF)
-{
-	m_overlineColor = toABGR(_rgba);
-}
-void setUnderlineColor(uint32_t _rgba = 0x000000FF)
-{
-	m_underlineColor = toABGR(_rgba);
-}
-void setStrikeThroughColor(uint32_t _rgba = 0x000000FF)
-{
-	m_strikeThroughColor = toABGR(_rgba);
-}
+	void setOverlineColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_overlineColor = toABGR(_rgba);
+	}
+	void setUnderlineColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_underlineColor = toABGR(_rgba);
+	}
+	void setStrikeThroughColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_strikeThroughColor = toABGR(_rgba);
+	}
 
-void setPenPosition(float _x, float _y)
-{
-	m_penX = _x; m_penY = _y;
-}
+	void setPenPosition(float _x, float _y)
+	{
+		m_penX = _x; m_penY = _y;
+	}
 
-/// return the size of the text
-//Rectangle measureText(FontHandle _fontHandle, const char * _string);
-//Rectangle measureText(FontHandle _fontHandle, const wchar_t * _string);
+	/// return the size of the text
+	//Rectangle measureText(FontHandle _fontHandle, const char * _string);
+	//Rectangle measureText(FontHandle _fontHandle, const wchar_t * _string);
 
-/// append an ASCII/utf-8 string to the buffer using current pen position and color
-void appendText(FontHandle _fontHandle, const char* _string);
+	/// append an ASCII/utf-8 string to the buffer using current pen position and color
+	void appendText(FontHandle _fontHandle, const char* _string);
 
-/// append a wide char unicode string to the buffer using current pen position and color
-void appendText(FontHandle _fontHandle, const wchar_t* _string);
+	/// append a wide char unicode string to the buffer using current pen position and color
+	void appendText(FontHandle _fontHandle, const wchar_t* _string);
 
-/// Clear the text buffer and reset its state (pen/color)
-void clearTextBuffer();
+	/// Clear the text buffer and reset its state (pen/color)
+	void clearTextBuffer();
 
-/// get pointer to the vertex buffer to submit it to the graphic card
-const uint8_t* getVertexBuffer()
-{
-	return (uint8_t*) m_vertexBuffer;
-}
-/// number of vertex in the vertex buffer
-uint32_t getVertexCount()
-{
-	return m_vertexCount;
-}
-/// size in bytes of a vertex
-uint32_t getVertexSize()
-{
-	return sizeof(TextVertex);
-}
+	/// get pointer to the vertex buffer to submit it to the graphic card
+	const uint8_t* getVertexBuffer()
+	{
+		return (uint8_t*) m_vertexBuffer;
+	}
+	/// number of vertex in the vertex buffer
+	uint32_t getVertexCount()
+	{
+		return m_vertexCount;
+	}
+	/// size in bytes of a vertex
+	uint32_t getVertexSize()
+	{
+		return sizeof(TextVertex);
+	}
 
-/// get a pointer to the index buffer to submit it to the graphic
-const uint16_t* getIndexBuffer()
-{
-	return m_indexBuffer;
-}
-/// number of index in the index buffer
-uint32_t getIndexCount()
-{
-	return m_indexCount;
-}
-/// size in bytes of an index
-uint32_t getIndexSize()
-{
-	return sizeof(uint16_t);
-}
+	/// get a pointer to the index buffer to submit it to the graphic
+	const uint16_t* getIndexBuffer()
+	{
+		return m_indexBuffer;
+	}
+	/// number of index in the index buffer
+	uint32_t getIndexCount()
+	{
+		return m_indexCount;
+	}
+	/// size in bytes of an index
+	uint32_t getIndexSize()
+	{
+		return sizeof(uint16_t);
+	}
 
-uint32_t getTextColor()
-{
-	return toABGR(m_textColor);
-}
+	uint32_t getTextColor()
+	{
+		return toABGR(m_textColor);
+	}
 
-TextRectangle getRectangle() const
-{
-	return m_rectangle;
-}
+	TextRectangle getRectangle() const
+	{
+		return m_rectangle;
+	}
 
 private:
-void appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
-void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
-uint32_t toABGR(uint32_t _rgba)
-{
-	return ( ( (_rgba >> 0) & 0xff) << 24) |
-	       ( ( (_rgba >> 8) & 0xff) << 16) |
-	       ( ( (_rgba >> 16) & 0xff) << 8) |
-	       ( ( (_rgba >> 24) & 0xff) << 0);
-}
+	void appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
+	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
+	uint32_t toABGR(uint32_t _rgba)
+	{
+		return ( ( (_rgba >> 0) & 0xff) << 24) |
+			( ( (_rgba >> 8) & 0xff) << 16) |
+			( ( (_rgba >> 16) & 0xff) << 8) |
+			( ( (_rgba >> 24) & 0xff) << 0);
+	}
 
-uint32_t m_styleFlags;
+	uint32_t m_styleFlags;
 
-// color states
-uint32_t m_textColor;
+	// color states
+	uint32_t m_textColor;
 
-uint32_t m_backgroundColor;
-uint32_t m_overlineColor;
-uint32_t m_underlineColor;
-uint32_t m_strikeThroughColor;
+	uint32_t m_backgroundColor;
+	uint32_t m_overlineColor;
+	uint32_t m_underlineColor;
+	uint32_t m_strikeThroughColor;
 
-//position states
-float m_penX;
-float m_penY;
+	//position states
+	float m_penX;
+	float m_penY;
 
-float m_originX;
-float m_originY;
+	float m_originX;
+	float m_originY;
 
-float m_lineAscender;
-float m_lineDescender;
-float m_lineGap;
+	float m_lineAscender;
+	float m_lineDescender;
+	float m_lineGap;
 
-TextRectangle m_rectangle;
+	TextRectangle m_rectangle;
 
-///
-FontManager* m_fontManager;
+	///
+	FontManager* m_fontManager;
 
-void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
-{
-	m_vertexBuffer[_i].x = _x;
-	m_vertexBuffer[_i].y = _y;
-	m_vertexBuffer[_i].rgba = _rgba;
-	m_styleBuffer[_i] = _style;
-}
+	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
+	{
+		m_vertexBuffer[_i].x = _x;
+		m_vertexBuffer[_i].y = _y;
+		m_vertexBuffer[_i].rgba = _rgba;
+		m_styleBuffer[_i] = _style;
+	}
 
-struct TextVertex
-{
-	float x, y;
-	int16_t u, v, w, t;
-	uint32_t rgba;
-};
+	struct TextVertex
+	{
+		float x, y;
+		int16_t u, v, w, t;
+		uint32_t rgba;
+	};
 
-TextVertex* m_vertexBuffer;
-uint16_t* m_indexBuffer;
-uint8_t* m_styleBuffer;
+	TextVertex* m_vertexBuffer;
+	uint16_t* m_indexBuffer;
+	uint8_t* m_styleBuffer;
 
-uint32_t m_vertexCount;
-uint32_t m_indexCount;
-uint32_t m_lineStartIndex;
+	uint32_t m_vertexCount;
+	uint32_t m_indexCount;
+	uint32_t m_lineStartIndex;
 };
 
 TextBuffer::TextBuffer(FontManager* _fontManager)
@@ -369,7 +371,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (_font.ascender > m_lineAscender
-	   || (_font.descender < m_lineDescender) )
+		|| (_font.descender < m_lineDescender) )
 	{
 		if (_font.descender < m_lineDescender)
 		{
@@ -398,7 +400,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
 
 	if (m_styleFlags & STYLE_BACKGROUND
-	   && m_backgroundColor & 0xFF000000)
+		&& m_backgroundColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - m_lineAscender);
@@ -423,7 +425,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (m_styleFlags & STYLE_UNDERLINE
-	   && m_underlineColor & 0xFF000000)
+		&& m_underlineColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - m_lineDescender / 2);
@@ -448,7 +450,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (m_styleFlags & STYLE_OVERLINE
-	   && m_overlineColor & 0xFF000000)
+		&& m_overlineColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - _font.ascender);
@@ -473,7 +475,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (m_styleFlags & STYLE_STRIKE_THROUGH
-	   && m_strikeThroughColor & 0xFF000000)
+		&& m_strikeThroughColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - _font.ascender / 3);
@@ -555,8 +557,6 @@ void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
 		}
 	}
 }
-
-// ****************************************************************
 
 TextBufferManager::TextBufferManager(FontManager* _fontManager) : m_fontManager(_fontManager), m_textBufferHandles(MAX_TEXT_BUFFER_COUNT)
 {
@@ -675,16 +675,16 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 	switch (bc.bufferType)
 	{
 	case STATIC:
-	{
-		bgfx::IndexBufferHandle ibh;
-		bgfx::VertexBufferHandle vbh;
-		ibh.idx = bc.indexBufferHandle;
-		vbh.idx = bc.vertexBufferHandle;
-		bgfx::destroyIndexBuffer(ibh);
-		bgfx::destroyVertexBuffer(vbh);
-	}
+		{
+			bgfx::IndexBufferHandle ibh;
+			bgfx::VertexBufferHandle vbh;
+			ibh.idx = bc.indexBufferHandle;
+			vbh.idx = bc.vertexBufferHandle;
+			bgfx::destroyIndexBuffer(ibh);
+			bgfx::destroyVertexBuffer(vbh);
+		}
 
-	break;
+		break;
 
 	case DYNAMIC:
 		bgfx::DynamicIndexBufferHandle ibh;
@@ -735,80 +735,80 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	switch (bc.bufferType)
 	{
 	case STATIC:
-	{
-		bgfx::IndexBufferHandle ibh;
-		bgfx::VertexBufferHandle vbh;
-
-		if (bc.vertexBufferHandle == bgfx::invalidHandle)
 		{
-			mem = bgfx::alloc(indexSize);
-			memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
-			ibh = bgfx::createIndexBuffer(mem);
+			bgfx::IndexBufferHandle ibh;
+			bgfx::VertexBufferHandle vbh;
 
-			mem = bgfx::alloc(vertexSize);
-			memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
-			vbh = bgfx::createVertexBuffer(mem, m_vertexDecl);
+			if (bc.vertexBufferHandle == bgfx::invalidHandle)
+			{
+				mem = bgfx::alloc(indexSize);
+				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
+				ibh = bgfx::createIndexBuffer(mem);
 
-			bc.indexBufferHandle = ibh.idx;
-			bc.vertexBufferHandle = vbh.idx;
-		}
-		else
-		{
-			ibh.idx = bc.indexBufferHandle;
-			vbh.idx = bc.vertexBufferHandle;
-		}
+				mem = bgfx::alloc(vertexSize);
+				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
+				vbh = bgfx::createVertexBuffer(mem, m_vertexDecl);
 
-		bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
-		bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
-	} break;
+				bc.indexBufferHandle = ibh.idx;
+				bc.vertexBufferHandle = vbh.idx;
+			}
+			else
+			{
+				ibh.idx = bc.indexBufferHandle;
+				vbh.idx = bc.vertexBufferHandle;
+			}
+
+			bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
+			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
+		} break;
 
 	case DYNAMIC:
-	{
-		bgfx::DynamicIndexBufferHandle ibh;
-		bgfx::DynamicVertexBufferHandle vbh;
-
-		if (bc.vertexBufferHandle == bgfx::invalidHandle)
 		{
-			mem = bgfx::alloc(indexSize);
-			memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
-			ibh = bgfx::createDynamicIndexBuffer(mem);
+			bgfx::DynamicIndexBufferHandle ibh;
+			bgfx::DynamicVertexBufferHandle vbh;
 
-			mem = bgfx::alloc(vertexSize);
-			memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
-			vbh = bgfx::createDynamicVertexBuffer(mem, m_vertexDecl);
+			if (bc.vertexBufferHandle == bgfx::invalidHandle)
+			{
+				mem = bgfx::alloc(indexSize);
+				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
+				ibh = bgfx::createDynamicIndexBuffer(mem);
 
-			bc.indexBufferHandle = ibh.idx;
-			bc.vertexBufferHandle = vbh.idx;
-		}
-		else
-		{
-			ibh.idx = bc.indexBufferHandle;
-			vbh.idx = bc.vertexBufferHandle;
+				mem = bgfx::alloc(vertexSize);
+				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
+				vbh = bgfx::createDynamicVertexBuffer(mem, m_vertexDecl);
 
-			mem = bgfx::alloc(indexSize);
-			memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
-			bgfx::updateDynamicIndexBuffer(ibh, mem);
+				bc.indexBufferHandle = ibh.idx;
+				bc.vertexBufferHandle = vbh.idx;
+			}
+			else
+			{
+				ibh.idx = bc.indexBufferHandle;
+				vbh.idx = bc.vertexBufferHandle;
 
-			mem = bgfx::alloc(vertexSize);
-			memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
-			bgfx::updateDynamicVertexBuffer(vbh, mem);
-		}
+				mem = bgfx::alloc(indexSize);
+				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
+				bgfx::updateDynamicIndexBuffer(ibh, mem);
 
-		bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
-		bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
-	} break;
+				mem = bgfx::alloc(vertexSize);
+				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
+				bgfx::updateDynamicVertexBuffer(vbh, mem);
+			}
+
+			bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
+			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
+		} break;
 
 	case TRANSIENT:
-	{
-		bgfx::TransientIndexBuffer tib;
-		bgfx::TransientVertexBuffer tvb;
-		bgfx::allocTransientIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
-		bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexDecl);
-		memcpy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
-		memcpy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
-		bgfx::setVertexBuffer(&tvb, bc.textBuffer->getVertexCount() );
-		bgfx::setIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
-	} break;
+		{
+			bgfx::TransientIndexBuffer tib;
+			bgfx::TransientVertexBuffer tvb;
+			bgfx::allocTransientIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
+			bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexDecl);
+			memcpy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
+			memcpy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
+			bgfx::setVertexBuffer(&tvb, bc.textBuffer->getVertexCount() );
+			bgfx::setIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
+		} break;
 	}
 
 	bgfx::submit(_id, _depth);
