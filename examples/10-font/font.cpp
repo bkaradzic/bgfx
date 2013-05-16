@@ -16,6 +16,7 @@
 #include "../common/font/text_buffer_manager.h"
 
 #include <stdio.h>
+#include <wchar.h>
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
@@ -191,7 +192,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	fontManager->unloadTrueType(console_tt);
 	//destroy the fonts
 	fontManager->destroyFont(consola_16);
-	for (int32_t ii = 0; ii < fontCount; ++ii)
+	for (uint32_t ii = 0; ii < fontCount; ++ii)
 	{
 		fontManager->destroyFont(fonts[ii]);
 	}
