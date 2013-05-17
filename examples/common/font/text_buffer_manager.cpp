@@ -428,7 +428,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - m_lineDescender / 2);
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
-		float y1 = y0 + _font.underline_thickness;
+		float y1 = y0 + _font.underlineThickness;
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
 
@@ -453,7 +453,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - _font.ascender);
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
-		float y1 = y0 + _font.underline_thickness;
+		float y1 = y0 + _font.underlineThickness;
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
 
@@ -478,7 +478,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - _font.ascender / 3);
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
-		float y1 = y0 + _font.underline_thickness;
+		float y1 = y0 + _font.underlineThickness;
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
 
