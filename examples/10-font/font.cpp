@@ -18,6 +18,12 @@
 #include <stdio.h>
 #include <wchar.h>
 
+#if defined(__MINGW32__)
+#	define swnprintf(_out, _count, _format, ...) swprintf(_out, _format, ##__VA_ARGS__)
+#else
+#	define swnprintf(_out, _count, _format, ...) swprintf(_out, _count, _format, ##__VA_ARGS__)
+#endif // defined(__MINGW__)
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -145,7 +151,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Use transient text to display debug information.
 		wchar_t fpsText[64];
-		swprintf(fpsText, countof(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
+		swnprintf(fpsText, countof(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
 		textBufferManager->clearTextBuffer(transientText);
 		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);
