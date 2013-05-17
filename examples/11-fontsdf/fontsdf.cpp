@@ -1,7 +1,7 @@
 /*
-* Copyright 2013 Jeremie Roy. All rights reserved.
-* License: http://www.opensource.org/licenses/BSD-2-Clause
-*/
+ * Copyright 2013 Jeremie Roy. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
+ */
 
 #include <bgfx.h>
 #include <bx/bx.h>
@@ -111,6 +111,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float proj[16];
 		mtxLookAt(view, eye, at);
 		float centering = 0.5f;
+
 		// Setup a top-left ortho matrix for screen space drawing.
 		mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
 

@@ -1,7 +1,7 @@
 /*
-* Copyright 2013 Jeremie Roy. All rights reserved.
-* License: http://www.opensource.org/licenses/BSD-2-Clause
-*/
+ * Copyright 2013 Jeremie Roy. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
+ */
 
 #include <bgfx.h>
 #include <bx/bx.h>
@@ -143,14 +143,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0 / freq;
 
-		// Use debug font to print information about this example.
-		//bgfx::dbgTextClear();
-		//bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/10-font");
-		//bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use the font system to display text and styled text.");
-		//bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-		//Use transient text to display debug information
-		//Code below is similar to commented code above
+		// Use transient text to display debug information.
 		wchar_t fpsText[64];
 		swprintf(fpsText, countof(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
@@ -166,7 +159,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float view[16];
 		float proj[16];
 		mtxLookAt(view, eye, at);
-		//setup a top-left ortho matrix for screen space drawing
+
+		// Setup a top-left ortho matrix for screen space drawing.
 		float centering = 0.5f;
 		mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
 
