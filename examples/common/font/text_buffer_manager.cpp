@@ -73,6 +73,9 @@ public:
 
 	/// append a wide char unicode string to the buffer using current pen position and color
 	void appendText(FontHandle _fontHandle, const wchar_t* _string);
+	
+	/// append a whole face of the atlas cube, mostly used for debugging and visualizing atlas
+	void appendAtlasFace(uint16_t _faceIndex);
 
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer();
@@ -276,6 +279,29 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string)
 			BX_CHECK(false, "Glyph not found");
 		}
 	}
+}
+void TextBuffer::appendAtlasFace(uint16_t _faceIndex)
+{
+	float x0 = m_penX;
+	float y0 = m_penY;
+	float x1 = x0 + (float)m_fontManager->getAtlas()->getTextureSize();
+	float y1 = y0 + (float)m_fontManager->getAtlas()->getTextureSize();
+
+	m_fontManager->getAtlas()->packFaceLayerUV(_faceIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+
+	setVertex(m_vertexCount + 0, x0, y0, m_backgroundColor);
+	setVertex(m_vertexCount + 1, x0, y1, m_backgroundColor);
+	setVertex(m_vertexCount + 2, x1, y1, m_backgroundColor);
+	setVertex(m_vertexCount + 3, x1, y0, m_backgroundColor);
+
+	m_indexBuffer[m_indexCount + 0] = m_vertexCount + 0;
+	m_indexBuffer[m_indexCount + 1] = m_vertexCount + 1;
+	m_indexBuffer[m_indexCount + 2] = m_vertexCount + 2;
+	m_indexBuffer[m_indexCount + 3] = m_vertexCount + 0;
+	m_indexBuffer[m_indexCount + 4] = m_vertexCount + 2;
+	m_indexBuffer[m_indexCount + 5] = m_vertexCount + 3;
+	m_vertexCount += 4;
+	m_indexCount += 6;
 }
 
 void TextBuffer::clearTextBuffer()
@@ -799,6 +825,13 @@ void TextBufferManager::appendText(TextBufferHandle _handle, FontHandle _fontHan
 	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	bc.textBuffer->appendText(_fontHandle, _string);
+}
+
+void TextBufferManager::appendAtlasFace(TextBufferHandle _handle, uint16_t _faceIndex)
+{
+	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	bc.textBuffer->appendAtlasFace(_faceIndex);
 }
 
 void TextBufferManager::clearTextBuffer(TextBufferHandle _handle)
