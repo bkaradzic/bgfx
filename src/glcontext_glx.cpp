@@ -127,6 +127,7 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
 		glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
+
 		if (NULL != glXCreateContextAttribsARB)
 		{
 			BX_TRACE("Create GL 3.1 context.");
@@ -154,6 +155,8 @@ namespace bgfx
 
 		import();
 
+		glXMakeCurrent(s_display, s_window, m_context);
+
 		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
 		if (NULL != glXSwapIntervalEXT)
 		{
@@ -178,8 +181,6 @@ namespace bgfx
 				}
 			}
 		}
-
-		glXMakeCurrent(s_display, s_window, m_context);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
