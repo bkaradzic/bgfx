@@ -56,7 +56,7 @@ struct FTHolder
 	FT_Face face;
 };
 
-class FontManager::TrueTypeFont
+class TrueTypeFont
 {
 public:
 	TrueTypeFont();
@@ -84,15 +84,16 @@ public:
 	/// update the GlyphInfo according to the raster strategy
 	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
 	bool bakeGlyphDistance(CodePoint_t _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
+
 private:
 	FTHolder* m_font;
 };
 
-FontManager::TrueTypeFont::TrueTypeFont() : m_font(NULL)
+TrueTypeFont::TrueTypeFont() : m_font(NULL)
 {
 }
 
-FontManager::TrueTypeFont::~TrueTypeFont()
+TrueTypeFont::~TrueTypeFont()
 {
 	if (m_font != NULL)
 	{
@@ -104,7 +105,7 @@ FontManager::TrueTypeFont::~TrueTypeFont()
 	}
 }
 
-bool FontManager::TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight)
+bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight)
 {
 	BX_CHECK( (_bufferSize > 256
 		&& _bufferSize < 100000000), "TrueType buffer size is suspicious");
@@ -163,7 +164,7 @@ bool FontManager::TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSiz
 	return true;
 }
 
-FontInfo FontManager::TrueTypeFont::getFontInfo()
+FontInfo TrueTypeFont::getFontInfo()
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
 	FTHolder* holder = (FTHolder*) m_font;
@@ -179,12 +180,12 @@ FontInfo FontManager::TrueTypeFont::getFontInfo()
 	outFontInfo.descender = metrics.descender / 64.0f;
 	outFontInfo.lineGap = (metrics.height - metrics.ascender + metrics.descender) / 64.0f;
 
-	outFontInfo.underline_position = FT_MulFix(holder->face->underline_position, metrics.y_scale) / 64.0f;
-	outFontInfo.underline_thickness = FT_MulFix(holder->face->underline_thickness, metrics.y_scale) / 64.0f;
+	outFontInfo.underlinePosition = FT_MulFix(holder->face->underline_position, metrics.y_scale) / 64.0f;
+	outFontInfo.underlineThickness = FT_MulFix(holder->face->underline_thickness, metrics.y_scale) / 64.0f;
 	return outFontInfo;
 }
 
-bool FontManager::TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
+bool TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
 	FTHolder* holder = (FTHolder*) m_font;
@@ -238,7 +239,7 @@ bool FontManager::TrueTypeFont::bakeGlyphAlpha(CodePoint_t _codePoint, GlyphInfo
 	return true;
 }
 
-bool FontManager::TrueTypeFont::bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
+bool TrueTypeFont::bakeGlyphSubpixel(CodePoint_t _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
 	FTHolder* holder = (FTHolder*) m_font;
@@ -394,7 +395,7 @@ void make_distance_map(unsigned char* img, unsigned char* outImg, unsigned int w
 	free(inside);
 }
 
-bool FontManager::TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
+bool TrueTypeFont::bakeGlyphDistance(CodePoint_t _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
 	FTHolder* holder = (FTHolder*) m_font;
@@ -500,7 +501,7 @@ struct FontManager::CachedFont
 	}
 	FontInfo fontInfo;
 	GlyphHash_t cachedGlyphs;
-	FontManager::TrueTypeFont* trueTypeFont;
+	TrueTypeFont* trueTypeFont;
 	// an handle to a master font in case of sub distance field font
 	FontHandle masterFontHandle;
 	int16_t padding;
@@ -673,8 +674,8 @@ FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, 
 	newFontInfo.ascender = (newFontInfo.ascender * newFontInfo.scale);
 	newFontInfo.descender = (newFontInfo.descender * newFontInfo.scale);
 	newFontInfo.lineGap = (newFontInfo.lineGap * newFontInfo.scale);
-	newFontInfo.underline_thickness = (newFontInfo.underline_thickness * newFontInfo.scale);
-	newFontInfo.underline_position = (newFontInfo.underline_position * newFontInfo.scale);
+	newFontInfo.underlineThickness = (newFontInfo.underlineThickness * newFontInfo.scale);
+	newFontInfo.underlinePosition = (newFontInfo.underlinePosition * newFontInfo.scale);
 
 	uint16_t fontIdx = m_fontHandles.alloc();
 	BX_CHECK(fontIdx != bx::HandleAlloc::invalid, "Invalid handle used");
