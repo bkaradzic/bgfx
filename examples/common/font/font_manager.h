@@ -6,18 +6,15 @@
 #ifndef __FONT_MANAGER_H__
 #define __FONT_MANAGER_H__
 
-#include <bgfx.h>
 #include <bx/handlealloc.h>
 
 class Atlas;
-enum FontType
-{
-	FONT_TYPE_ALPHA = 0x00000100,     // L8
-	//FONT_TYPE_LCD      = 0x00000200,  // BGRA8
-	//FONT_TYPE_RGBA     = 0x00000300,  // BGRA8
-	FONT_TYPE_DISTANCE = 0x00000400,   // L8
-	FONT_TYPE_DISTANCE_SUBPIXEL = 0x00000500   // L8
-};
+
+#define FONT_TYPE_ALPHA             UINT32_C(0x00000100) // L8
+// #define FONT_TYPE_LCD               UINT32_C(0x00000200) // BGRA8
+// #define FONT_TYPE_RGBA              UINT32_C(0x00000300) // BGRA8
+#define FONT_TYPE_DISTANCE          UINT32_C(0x00000400) // L8
+#define FONT_TYPE_DISTANCE_SUBPIXEL UINT32_C(0x00000500) // L8
 
 struct FontInfo
 {
@@ -73,7 +70,7 @@ struct FontInfo
 //              |------------- advance_x ---------->|
 
 /// Unicode value of a character
-typedef int32_t CodePoint_t;
+typedef int32_t CodePoint;
 
 /// A structure that describe a glyph.
 struct GlyphInfo
@@ -147,20 +144,10 @@ public:
 	void unloadTrueType(TrueTypeHandle _handle);
 
 	/// Return a font whose height is a fixed pixel size.
-	FontHandle createFontByPixelSize(TrueTypeHandle _handle, uint32_t _typefaceIndex, uint32_t _pixelSize, FontType _fontType = FONT_TYPE_ALPHA);
+	FontHandle createFontByPixelSize(TrueTypeHandle _handle, uint32_t _typefaceIndex, uint32_t _pixelSize, uint32_t _fontType = FONT_TYPE_ALPHA);
 
 	/// Return a scaled child font whose height is a fixed pixel size.
 	FontHandle createScaledFontToPixelSize(FontHandle _baseFontHandle, uint32_t _pixelSize);
-
-	/// Load a baked font (the set of glyph is fixed).
-	///
-	/// @return INVALID_HANDLE if the loading fail.
-	FontHandle loadBakedFontFromFile(const char* _imagePath, const char* _descriptorPath);
-
-	/// Load a baked font (the set of glyph is fixed).
-	///
-	/// @return INVALID_HANDLE if the loading fail.
-	FontHandle loadBakedFontFromMemory(const uint8_t* _imageBuffer, uint32_t _imageSize, const uint8_t* _descriptorBuffer, uint32_t _descriptorSize);
 
 	/// destroy a font (truetype or baked)
 	void destroyFont(FontHandle _handle);
@@ -172,7 +159,7 @@ public:
 	bool preloadGlyph(FontHandle _handle, const wchar_t* _string);
 
 	/// Preload a single glyph, return true on success.
-	bool preloadGlyph(FontHandle _handle, CodePoint_t _character);
+	bool preloadGlyph(FontHandle _handle, CodePoint _character);
 
 	/// Bake a font to disk (the set of preloaded glyph).
 	///
@@ -188,7 +175,7 @@ public:
 	/// glyph from a TrueType font if possible
 	///
 	/// @return True if the Glyph is available.
-	bool getGlyphInfo(FontHandle _handle, CodePoint_t _codePoint, GlyphInfo& _outInfo);
+	bool getGlyphInfo(FontHandle _handle, CodePoint _codePoint, GlyphInfo& _outInfo);
 
 	GlyphInfo& getBlackGlyph()
 	{

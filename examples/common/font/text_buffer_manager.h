@@ -40,10 +40,9 @@ public:
 	TextBufferManager(FontManager* _fontManager);
 	~TextBufferManager();
 
-	TextBufferHandle createTextBuffer(FontType _type, BufferType _bufferType);
+	TextBufferHandle createTextBuffer(uint32_t _type, BufferType _bufferType);
 	void destroyTextBuffer(TextBufferHandle _handle);
 	void submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth = 0);
-	void submitTextBufferMask(TextBufferHandle _handle, uint32_t _viewMask, int32_t _depth = 0);
 
 	void setStyle(TextBufferHandle _handle, uint32_t _flags = STYLE_NORMAL);
 	void setTextColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
@@ -66,19 +65,14 @@ public:
 
 	TextRectangle getRectangle(TextBufferHandle _handle) const;
 
-	/// return the size of the text
-	//Rectangle measureText(FontHandle fontHandle, const char * _string);
-	//Rectangle measureText(FontHandle fontHandle, const wchar_t * _string);
-
 private:
-
 	struct BufferCache
 	{
 		uint16_t indexBufferHandle;
 		uint16_t vertexBufferHandle;
 		TextBuffer* textBuffer;
 		BufferType bufferType;
-		FontType fontType;
+		uint32_t fontType;
 	};
 
 	BufferCache* m_textBuffers;
@@ -87,7 +81,6 @@ private:
 	bgfx::VertexDecl m_vertexDecl;
 	bgfx::UniformHandle u_texColor;
 	bgfx::UniformHandle u_inverse_gamma;
-	//shaders program
 	bgfx::ProgramHandle m_basicProgram;
 	bgfx::ProgramHandle m_distanceProgram;
 	bgfx::ProgramHandle m_distanceSubpixelProgram;

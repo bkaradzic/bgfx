@@ -4,11 +4,14 @@
  */
 
 #include <bx/bx.h>
+#include <bgfx.h>
+
 #include <stddef.h> // offsetof
 #include <memory.h> // memcpy
 #include <wchar.h>  // wcslen
 
 #include "text_buffer_manager.h"
+#include "utf8.h"
 #include "../cube_atlas.h"
 
 #include "vs_font_basic.bin.h"
@@ -20,59 +23,6 @@
 
 #define MAX_TEXT_BUFFER_COUNT   64
 #define MAX_BUFFERED_CHARACTERS 8192
-
-// Table from Flexible and Economical UTF-8 Decoder
-// Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-// See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-
-static const uint8_t utf8d[] =
-{
-	0,     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1f
-	0,     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3f
-	0,     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5f
-	0,     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7f
-	1,     1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9f
-	7,     7,   7,   7,   7,   7,   7,   7,   7,   7,   7,   7,   7,   7,   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // a0..bf
-	8,     8,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // c0..df
-	0xa, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3,0x3, // e0..ef
-	0xb, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,0x8, // f0..ff
-	0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1,0x1, // s0..s0
-	1,     1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
-	1,     2,   1,   1,   1,   1,   1,   2,   1,   2,   1,   1,   1,   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
-	1,     2,   1,   1,   1,   1,   1,   1,   1,   2,   1,   1,   1,   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
-	1,     3,   1,   1,   1,   1,   1,   3,   1,   3,   1,   1,   1,   1,   1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // s7..s8
-};
-
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 1
-
-inline uint32_t utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte)
-{
-	uint32_t type = utf8d[byte];
-
-	*codep = (*state != UTF8_ACCEPT) ?
-		(byte & 0x3fu) | (*codep << 6) :
-	(0xff >> type) & (byte);
-
-	*state = utf8d[256 + *state * 16 + type];
-	return *state;
-}
-
-inline int utf8_strlen(uint8_t* s, size_t* count)
-{
-	uint32_t codepoint;
-	uint32_t state = 0;
-
-	for (*count = 0; *s; ++s)
-	{
-		if (!utf8_decode(&state, &codepoint, *s) )
-		{
-			*count += 1;
-		}
-	}
-
-	return state != UTF8_ACCEPT;
-}
 
 class TextBuffer
 {
@@ -170,7 +120,7 @@ public:
 	}
 
 private:
-	void appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
+	void appendGlyph(CodePoint _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
 	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
 	uint32_t toABGR(uint32_t _rgba)
 	{
@@ -231,32 +181,29 @@ private:
 };
 
 TextBuffer::TextBuffer(FontManager* _fontManager)
+	: m_styleFlags(STYLE_NORMAL)
+	, m_textColor(0xffffffff)
+	, m_backgroundColor(0xffffffff)
+	, m_overlineColor(0xffffffff)
+	, m_underlineColor(0xffffffff)
+	, m_strikeThroughColor(0xffffffff)
+	, m_penX(0)
+	, m_penY(0)
+	, m_originX(0)
+	, m_originY(0)
+	, m_lineAscender(0)
+	, m_lineDescender(0)
+	, m_lineGap(0)
+	, m_fontManager(_fontManager)
+	, m_vertexBuffer(new TextVertex[MAX_BUFFERED_CHARACTERS * 4])
+	, m_indexBuffer(new uint16_t[MAX_BUFFERED_CHARACTERS * 6])
+	, m_styleBuffer(new uint8_t[MAX_BUFFERED_CHARACTERS * 4])
+	, m_vertexCount(0)
+	, m_indexCount(0)
+	, m_lineStartIndex(0)
 {
-	m_styleFlags = STYLE_NORMAL;
-	//0xAABBGGRR
-	m_textColor = 0xFFFFFFFF;
-	m_backgroundColor = 0xFFFFFFFF;
-	m_backgroundColor = 0xFFFFFFFF;
-	m_overlineColor = 0xFFFFFFFF;
-	m_underlineColor = 0xFFFFFFFF;
-	m_strikeThroughColor = 0xFFFFFFFF;
-	m_penX = 0;
-	m_penY = 0;
-	m_originX = 0;
-	m_originY = 0;
-	m_lineAscender = 0;
-	m_lineDescender = 0;
-	m_lineGap = 0;
-	m_fontManager = _fontManager;
 	m_rectangle.width = 0;
 	m_rectangle.height = 0;
-
-	m_vertexBuffer = new TextVertex[MAX_BUFFERED_CHARACTERS * 4];
-	m_indexBuffer = new uint16_t[MAX_BUFFERED_CHARACTERS * 6];
-	m_styleBuffer = new uint8_t[MAX_BUFFERED_CHARACTERS * 4];
-	m_vertexCount = 0;
-	m_indexCount = 0;
-	m_lineStartIndex = 0;
 }
 
 TextBuffer::~TextBuffer()
@@ -278,7 +225,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string)
 		m_lineAscender = 0; //font.m_ascender;
 	}
 
-	CodePoint_t codepoint = 0;
+	CodePoint codepoint = 0;
 	uint32_t state = 0;
 
 	for (; *_string; ++_string)
@@ -317,10 +264,8 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string)
 		m_lineGap = 0;
 	}
 
-	//parse string
 	for (uint32_t ii = 0, end = wcslen(_string); ii < end; ++ii)
 	{
-		//if glyph cached, continue
 		uint32_t _codePoint = _string[ii];
 		if (m_fontManager->getGlyphInfo(_fontHandle, _codePoint, glyph) )
 		{
@@ -332,15 +277,6 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string)
 		}
 	}
 }
-/*
-TextBuffer::Rectangle TextBuffer::measureText(FontHandle _fontHandle, const char * _string)
-{
-}
-
-TextBuffer::Rectangle TextBuffer::measureText(FontHandle _fontHandle, const wchar_t * _string)
-{
-}
-*/
 
 void TextBuffer::clearTextBuffer()
 {
@@ -353,9 +289,8 @@ void TextBuffer::clearTextBuffer()
 	m_rectangle.height = 0;
 }
 
-void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo)
+void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo)
 {
-	//handle newlines
 	if (_codePoint == L'\n')
 	{
 		m_penX = m_originX;
@@ -385,20 +320,13 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		verticalCenterLastLine( (txtDecals), (m_penY - m_lineAscender), (m_penY - m_lineDescender + m_lineGap) );
 	}
 
-	//handle kerning
 	float kerning = 0;
-	/*
-	if( previous && markup->font->kerning )
-	{
-	kerning = texture_glyph_get_kerning( glyph, previous );
-	}
-	*/
 	m_penX += kerning * _font.scale;
 
 	GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
 
 	if (m_styleFlags & STYLE_BACKGROUND
-		&& m_backgroundColor & 0xFF000000)
+	&&  m_backgroundColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - m_lineAscender);
@@ -423,7 +351,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (m_styleFlags & STYLE_UNDERLINE
-		&& m_underlineColor & 0xFF000000)
+	&&  m_underlineColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - m_lineDescender / 2);
@@ -448,7 +376,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (m_styleFlags & STYLE_OVERLINE
-		&& m_overlineColor & 0xFF000000)
+	&&  m_overlineColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - _font.ascender);
@@ -473,7 +401,7 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	}
 
 	if (m_styleFlags & STYLE_STRIKE_THROUGH
-		&& m_strikeThroughColor & 0xFF000000)
+	&&  m_strikeThroughColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY - _font.ascender / 3);
@@ -497,7 +425,6 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 		m_indexCount += 6;
 	}
 
-	//handle glyph
 	float x0_precise = m_penX + (_glyphInfo.offset_x);
 	float x0 = (x0_precise);
 	float y0 = (m_penY + (_glyphInfo.offset_y) );
@@ -530,9 +457,6 @@ void TextBuffer::appendGlyph(CodePoint_t _codePoint, const FontInfo& _font, cons
 	{
 		m_rectangle.height = (m_penY - m_lineDescender);
 	}
-
-	//if(x1 > m_rectangle.width) m_rectangle.width = x1;
-	//if(y1 > m_rectangle.height) m_rectangle.height = y1;
 }
 
 void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
@@ -643,7 +567,7 @@ TextBufferManager::~TextBufferManager()
 	bgfx::destroyProgram(m_distanceSubpixelProgram);
 }
 
-TextBufferHandle TextBufferManager::createTextBuffer(FontType _type, BufferType _bufferType)
+TextBufferHandle TextBufferManager::createTextBuffer(uint32_t _type, BufferType _bufferType)
 {
 	uint16_t textIdx = m_textBufferHandles.alloc();
 	BufferCache& bc = m_textBuffers[textIdx];
@@ -812,12 +736,6 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	}
 
 	bgfx::submit(_id, _depth);
-}
-
-void TextBufferManager::submitTextBufferMask(TextBufferHandle /*_handle*/, uint32_t /*_viewMask*/, int32_t /*_depth*/)
-{
-	//TODO
-	BX_CHECK(false, "TODO TODO");
 }
 
 void TextBufferManager::setStyle(TextBufferHandle _handle, uint32_t _flags)
