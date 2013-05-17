@@ -170,8 +170,12 @@ Using multiple views and render targets.
 ### 10-font
 Use the font system to display text and styled text.
 
+![example-10-font](https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png)
+
 ### 11-fontsdf
 Use a single distance field font to render text of various size.
+
+![example-11-fontsdf](https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png)
 
 Internals
 ---------
