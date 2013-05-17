@@ -59,6 +59,9 @@ public:
 
 	/// append a wide char unicode string to the buffer using current pen position and color
 	void appendText(TextBufferHandle _handle, FontHandle _fontHandle, const wchar_t* _string);
+	
+	/// append a whole face of the atlas cube, mostly used for debugging and visualizing atlas
+	void appendAtlasFace(TextBufferHandle _handle, uint16_t _faceIndex);
 
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer(TextBufferHandle _handle);
