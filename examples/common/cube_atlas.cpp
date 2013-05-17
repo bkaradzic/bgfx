@@ -375,6 +375,10 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 		//create new layers
 		for (int ii = 0; ii < _type; ++ii)
 		{
+			m_layers[idx + ii].faceRegion.m_x = 0;
+			m_layers[idx + ii].faceRegion.m_y = 0;
+			m_layers[idx + ii].faceRegion.m_width = m_textureSize;
+			m_layers[idx + ii].faceRegion.m_height = m_textureSize;
 			m_layers[idx + ii].faceRegion.setMask(_type, m_usedFaces, ii);
 		}
 
@@ -468,10 +472,10 @@ void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t 
 	static const int16_t minVal = -32768;
 	static const int16_t maxVal = 32767;
 
-	int16_t x0 = (int16_t)(_region.m_x * texMult) - 32768;
-	int16_t y0 = (int16_t)(_region.m_y * texMult) - 32768;
-	int16_t x1 = (int16_t)( (_region.m_x + _region.m_width) * texMult) - 32768;
-	int16_t y1 = (int16_t)( (_region.m_y + _region.m_height) * texMult) - 32768;
+	int16_t x0 = (int16_t)(_region.m_x * texMult) - 32767;
+	int16_t y0 = (int16_t)(_region.m_y * texMult) - 32767;
+	int16_t x1 = (int16_t)( (_region.m_x + _region.m_width) * texMult) - 32767;
+	int16_t y1 = (int16_t)( (_region.m_y + _region.m_height) * texMult) - 32767;
 	int16_t w = (int16_t) ( (32767.0f / 4.0f) * _region.getComponentIndex() );
 
 	_vertexBuffer += _offset;
