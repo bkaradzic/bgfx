@@ -1,7 +1,7 @@
 /*
- * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
- */
+* Copyright 2013 Jeremie Roy. All rights reserved.
+* License: http://www.opensource.org/licenses/BSD-2-Clause
+*/
 
 #include <bgfx.h>
 #include <bx/bx.h>
@@ -48,46 +48,35 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(0
-	                  , BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
-	                   //, 0x303030ff
-	                   //, 0xffffffff
-	                  , 0x000000FF
-	                  , 1.0f
-	                  , 0
-	                  );
+		, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+		, 0x303030ff
+		, 1.0f
+		, 0
+		);
 
-	//init the text rendering system
+	// Init the text rendering system.
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 
-	//load a truetype files
-	/*
-	"font/droidsans.ttf",
-	"font/chp-fire.ttf",
-	"font/bleeding_cowboys.ttf",
-	"font/mias_scribblings.ttf",
-	"font/ruritania.ttf",
-	"font/signika-regular.ttf",
-	"font/five_minutes.otf"
-	*/
 	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("font/bleeding_cowboys.ttf");
 
-	//create a distance field font
+	// Create a distance field font.
 	FontHandle distance_font = fontManager->createFontByPixelSize(times_tt, 0, 48, FONT_TYPE_DISTANCE);
-	//create a scalled down version of the same font (without adding anything to the atlas)
+
+	// Create a scalled down version of the same font (without adding 
+	// anything to the atlas).
 	FontHandle smaller_font = fontManager->createScaledFontToPixelSize(distance_font, 32);
 
-	//preload glyph and generate (generate bitmap's)
+	// Preload glyph and generate (generate bitmap's).
 	fontManager->preloadGlyph(distance_font, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,\" \n");
 
-	//You can unload the truetype files at this stage, but in that case, the set of glyph's will be limited to the set of preloaded glyph
+	// You can unload the TTF files at this stage, but in that case, the 
+	// set of glyph's will be limited to the set of preloaded glyph.
 	fontManager->unloadTrueType(times_tt);
 
 	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, STATIC);
 	textBufferManager->setTextColor(staticText, 0xDD0000FF);
 
-	//textBufferManager->appendText(staticText, distance_font, L"The quick brown fox jumps over the lazy dog\n");
-	//textBufferManager->appendText(staticText, distance_font, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n");
 	textBufferManager->appendText(staticText, distance_font, L"BGFX ");
 	textBufferManager->appendText(staticText, smaller_font, L"bgfx");
 
@@ -122,7 +111,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float proj[16];
 		mtxLookAt(view, eye, at);
 		float centering = 0.5f;
-		//setup a top-left ortho matrix for screen space drawing
+		// Setup a top-left ortho matrix for screen space drawing.
 		mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
 
 		// Set view and projection matrix for view 0.
@@ -147,7 +136,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtxA);
 
-		//draw your text
+		// Draw your text.
 		textBufferManager->submitTextBuffer(staticText, 0);
 
 		// Advance to next frame. Rendering thread will be kicked to
@@ -155,7 +144,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
-	//destroy the fonts
+	// Destroy the fonts.
 	fontManager->destroyFont(distance_font);
 	fontManager->destroyFont(smaller_font);
 
@@ -163,6 +152,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	delete textBufferManager;
 	delete fontManager;
+
 	// Shutdown bgfx.
 	bgfx::shutdown();
 
