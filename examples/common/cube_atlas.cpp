@@ -468,15 +468,15 @@ void Atlas::packUV(uint16_t handle, uint8_t* _vertexBuffer, uint32_t _offset, ui
 
 void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride)
 {
-	float texMult = 65535.0f / ( (float)(m_textureSize) );
 	static const int16_t minVal = -32768;
 	static const int16_t maxVal = 32767;
-
-	int16_t x0 = (int16_t)(_region.x * texMult) - 32767;
-	int16_t y0 = (int16_t)(_region.y * texMult) - 32767;
-	int16_t x1 = (int16_t)( (_region.x + _region.width) * texMult) - 32767;
-	int16_t y1 = (int16_t)( (_region.y + _region.height) * texMult) - 32767;
-	int16_t w = (int16_t) ( (32767.0f / 4.0f) * _region.getComponentIndex() );
+	float texMult = (float)(maxVal - minVal) / ( (float)(m_textureSize) );
+	
+	int16_t x0 = (int16_t)( ((float)_region.x * texMult) - 32767.0f);
+	int16_t y0 = (int16_t)( ((float)_region.y * texMult) - 32767.0f);
+	int16_t x1 = (int16_t)( (((float)_region.x + _region.width) * texMult) - 32767.0f);
+	int16_t y1 = (int16_t)( (((float)_region.y + _region.height) * texMult) - 32767.0f);
+	int16_t w = (int16_t) ( (32767.0f / 4.0f) * (float) _region.getComponentIndex() );
 
 	_vertexBuffer += _offset;
 	switch (_region.getFaceIndex() )
