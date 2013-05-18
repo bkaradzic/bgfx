@@ -92,9 +92,8 @@ directory link to directory without spaces in the path.
 	mklink /D c:\dxsdk <path to DirectX SDK directory>
 	setx DXSDK_DIR c:\dxsdk
 
-Apply this patch to DXSDK from June 2010 to be able to use it with MinGW/TDM:
-
-	https://github.com/bkaradzic/bx/blob/master/include/compat/mingw/dxsdk.patch
+Apply this [patch](https://github.com/bkaradzic/bx/blob/master/include/compat/mingw/dxsdk.patch)
+to DXSDK from June 2010 to be able to use it with MinGW/TDM.
 
 ### Building
 
