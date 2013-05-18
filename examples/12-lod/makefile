@@ -9,30 +9,20 @@ BUILD_DIR=../../.build
 
 include $(BGFX_DIR)/premake/shader.mk
 
-geometry:	../runtime/meshes/tree1b_lod0_1.bin
-		../runtime/meshes/tree1b_lod0_2.bin
-		../runtime/meshes/tree1b_lod1_1.bin
-		../runtime/meshes/tree1b_lod1_2.bin
-		../runtime/meshes/tree1b_lod2_1.bin
-		../runtime/meshes/tree1b_lod2_2.bin			
+GEOMETRY_SOURCES = \
+		tree1b_lod0_1 \
+		tree1b_lod0_2 \
+		tree1b_lod1_1 \
+		tree1b_lod1_2 \
+		tree1b_lod2_1 \
+		tree1b_lod2_2
 
-../runtime/meshes/tree1b_lod0_1.bin: tree1b_lod0_1.obj
-	..\..\tools\bin\geometryc -f tree1b_lod0_1.obj -o ..\runtime\meshes\tree1b_lod0_1.bin -s 0.1 --packnormal 1
+GEOMETRY_BIN = $(addprefix ../runtime/meshes/, $(addsuffix .bin, $(basename $(GEOMETRY_SOURCES))))
 
-../runtime/meshes/tree1b_lod0_2.bin: tree1b_lod0_2.obj
-	..\..\tools\bin\geometryc -f tree1b_lod0_2.obj -o ..\runtime\meshes\tree1b_lod0_2.bin -s 0.1 --packnormal 1
+geometry: $(GEOMETRY_BIN)
 
-../runtime/meshes/tree1b_lod1_1.bin: tree1b_lod1_1.obj
-	..\..\tools\bin\geometryc -f tree1b_lod1_1.obj -o ..\runtime\meshes\tree1b_lod1_1.bin -s 0.1 --packnormal 1
-
-../runtime/meshes/tree1b_lod1_2.bin: tree1b_lod1_2.obj
-	..\..\tools\bin\geometryc -f tree1b_lod1_2.obj -o ..\runtime\meshes\tree1b_lod1_2.bin -s 0.1 --packnormal 1
-
-../runtime/meshes/tree1b_lod2_1.bin: tree1b_lod2_1.obj
-	..\..\tools\bin\geometryc -f tree1b_lod2_1.obj -o ..\runtime\meshes\tree1b_lod2_1.bin -s 0.1 --packnormal 1
-
-../runtime/meshes/tree1b_lod2_2.bin: tree1b_lod2_2.obj
-	..\..\tools\bin\geometryc -f tree1b_lod2_2.obj -o ..\runtime\meshes\tree1b_lod2_2.bin -s 0.1 --packnormal 1
+../runtime/meshes/%.bin : %.obj
+	$(BGFX_DIR)/tools/bin/geometryc -f $(<) -o $(@) -s 0.1 --packnormal 1
 
 rebuild:
 	@make -s --no-print-directory TARGET=0 clean all
@@ -40,4 +30,3 @@ rebuild:
 	@make -s --no-print-directory TARGET=2 clean all
 	@make -s --no-print-directory TARGET=3 clean all
 	@make -s --no-print-directory TARGET=4 clean all
-

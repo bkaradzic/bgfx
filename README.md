@@ -343,7 +343,8 @@ Contributors
 ------------
 
 Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.  
-Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and examples.
+Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and examples.  
+Milos Tosic ([@milostosic](https://github.com/milostosic)) - LOD example.
 
 License (BSD 2-clause)
 ----------------------

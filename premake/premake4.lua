@@ -118,8 +118,9 @@ exampleProject("06-bump",       "ffb23e6c-167b-11e2-81df-94c4dd6a022f")
 exampleProject("07-callback",   "acc53bbc-52f0-11e2-9781-ad8edd4b7d02")
 exampleProject("08-update",     "e011e246-5862-11e2-b202-b7cb257a7926")
 exampleProject("09-hdr",        "969a4626-67ee-11e2-9726-9023267a7926")
-exampleProject("10-font" ,      "EF6FD5B3-B52A-41C2-A257-9DFE709AF9E1")
-exampleProject("11-fontsdf",    "F4E6F96F-3DAA-4C68-8DF8-BF2A3ECD9092")
+exampleProject("10-font" ,      "ef6fd5b3-b52a-41c2-a257-9dfe709af9e1")
+exampleProject("11-fontsdf",    "f4e6f96f-3daa-4c68-8df8-bf2a3ecd9092")
+exampleProject("12-lod",        "0512e9e6-bfd8-11e2-8e34-0291bd4c8125")
 dofile "makedisttex.lua"
 dofile "shaderc.lua"
 dofile "texturec.lua"
