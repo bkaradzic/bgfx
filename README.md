@@ -89,8 +89,12 @@ If you're building with Visual Studio 2008, you'll need TR1 support from:
 If you're building with MinGW/TDM compiler on Windows make DirectX SDK
 directory link to directory without spaces in the path.
 
-	mklink /D <path to DirectX SDK directory> c:\dxsdk
+	mklink /D c:\dxsdk <path to DirectX SDK directory>
 	setx DXSDK_DIR c:\dxsdk
+
+Apply this patch to DXSDK from June 2010 to be able to use it with MinGW/TDM:
+
+	https://github.com/bkaradzic/bx/blob/master/include/compat/mingw/dxsdk.patch
 
 ### Building
 
