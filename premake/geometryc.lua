@@ -1,3 +1,8 @@
+--
+-- Copyright 2010-2013 Branimir Karadzic. All rights reserved.
+-- License: http://www.opensource.org/licenses/BSD-2-Clause
+--
+
 project "geometryc"
 	uuid "8794dc3a-2d57-11e2-ba18-368d09e48fda"
 	kind "ConsoleApp"

@@ -50,14 +50,13 @@ function exampleProject(_name, _uuid)
 	}
 
 	files {
-		BGFX_DIR .. "examples/common/**.cpp",
-		BGFX_DIR .. "examples/common/**.h",
 		BGFX_DIR .. "examples/" .. _name .. "/**.cpp",
 		BGFX_DIR .. "examples/" .. _name .. "/**.h",
 	}
 
 	links {
 		"bgfx",
+		"common",
 	}
 
 	configuration { "android*" }
@@ -108,6 +107,7 @@ function exampleProject(_name, _uuid)
 end
 
 dofile "bgfx.lua"
+dofile "common.lua"
 exampleProject("00-helloworld", "ff2c8450-ebf4-11e0-9572-0800200c9a66")
 exampleProject("01-cubes",      "fec3bc94-e1e5-11e1-9c59-c7eeec2c1c51")
 exampleProject("02-metaballs",  "413b2cb4-f7db-11e1-bf5f-a716de6a022f")

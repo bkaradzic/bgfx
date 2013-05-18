@@ -1,3 +1,8 @@
+--
+-- Copyright 2010-2013 Branimir Karadzic. All rights reserved.
+-- License: http://www.opensource.org/licenses/BSD-2-Clause
+--
+
 project "shaderc"
 	uuid "f3cd2e90-52a4-11e1-b86c-0800200c9a66"
 	kind "ConsoleApp"

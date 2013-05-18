@@ -1,3 +1,8 @@
+--
+-- Copyright 2010-2013 Branimir Karadzic. All rights reserved.
+-- License: http://www.opensource.org/licenses/BSD-2-Clause
+--
+
 project "bgfx"
 	uuid "2dc7fd80-ed76-11e0-be50-0800200c9a66"
 	kind "StaticLib"
