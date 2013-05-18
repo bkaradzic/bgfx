@@ -1459,8 +1459,15 @@ int main(int _argc, const char* _argv[])
 	{
 		VaryingMap varyingMap;
 
-		File attribdef(cmdLine.findOption("varyingdef", "varying.def.sc") );
+		const char* varyingdef = cmdLine.findOption("varyingdef", "varying.def.sc");
+		File attribdef(varyingdef);
 		const char* parse = attribdef.getData();
+		if (NULL != parse
+		&&  *parse != '\0')
+		{
+			preprocessor.addDependency(varyingdef);
+		}
+
 		while (NULL != parse
 		   &&  *parse != '\0')
 		{
