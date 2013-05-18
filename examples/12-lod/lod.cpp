@@ -365,12 +365,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const bgfx::Memory* stipple = bgfx::alloc(8*4);
 	memset(stipple->data, 0, stipple->size);
 
-	for (int i=0; i<32; i++)
-		stipple->data[knightTour[i].m_y * 8 + knightTour[i].m_x] = i*4;
+	for (uint32_t ii = 0; ii < 32; ++ii)
+	{
+		stipple->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
+	}
 		
 	textureStipple = bgfx::createTexture2D(8, 4, 1, bgfx::TextureFormat::L8, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT, stipple);
 
-	// tree assets from: http://www.turbosquid.com/3d-models/free-obj-mode-tree-pack/506851
 	Mesh mesh_top[3];
 	mesh_top[0].load("meshes/tree1b_lod0_1.bin");
 	mesh_top[1].load("meshes/tree1b_lod1_1.bin");
@@ -417,8 +418,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiBeginScrollArea("Toggle transitions", width - width / 5 - 10, 10, width / 5, height / 7, &scrollArea);
 		imguiSeparatorLine();
 
-		if (imguiButton(transitions ? "ON" : "OFF"))
+		if (imguiButton(transitions ? "ON" : "OFF") )
+		{
 			transitions = !transitions;
+		}
 
 		static float distance = 2.0f;
 		imguiSlider("Distance", &distance, 2.0f, 6.0f, .01f);
@@ -442,7 +445,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/10-lod");
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/12-lod");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mesh LOD transitions.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 		bgfx::dbgTextPrintf(0, 4, transitions ? 0x2f : 0x1f, transitions ? "Transitions on" : "Transitions off");
@@ -484,7 +487,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setUniform(u_stipple, stipple, 1);
 		mesh_top[mainLOD].submit(program, mtx, true);
 
-		if (transitions && (transitionFrame != 0))
+		if (transitions 
+		&& (transitionFrame != 0) )
 		{
 			bgfx::setTexture(0, u_texColor, textureBark);
 			bgfx::setTexture(1, u_texStipple, textureStipple);
@@ -498,19 +502,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 	
 		int lod = 0;
-		if (eye[2]<-2.5f)
+		if (eye[2] < -2.5f)
+		{
 			lod = 1;
-		if (eye[2]<-5.0f)
+		}
+
+		if (eye[2] < -5.0f)
+		{
 			lod = 2;
+		}
 
 		if (targetLOD!=lod)
 		{
 			if (targetLOD==currLOD)
+			{
 				targetLOD = lod;
+			}
 		}
 		
 		if (currLOD!=targetLOD)
+		{
 			transitionFrame++;
+		}
 
 		if (transitionFrame>32)
 		{
@@ -523,10 +536,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
-	for (int i=0; i<3; i++)
+	for (uint32_t ii = 0; ii < 3; ++ii)
 	{
-		mesh_top[i].unload();
-		mesh_trunk[i].unload();
+		mesh_top[ii].unload();
+		mesh_trunk[ii].unload();
 	}
 
 	// Cleanup.
