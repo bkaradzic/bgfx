@@ -87,9 +87,6 @@ private:
 	bgfx::ProgramHandle m_basicProgram;
 	bgfx::ProgramHandle m_distanceProgram;
 	bgfx::ProgramHandle m_distanceSubpixelProgram;
-
-	float m_height;
-	float m_width;
 };
 
 #endif // __TEXT_BUFFER_MANAGER_H__
