@@ -25,25 +25,25 @@ struct AtlasRegion
 		TYPE_BGRA8 = 4  // 4 components
 	};
 
-	uint16_t m_x, m_y;
-	uint16_t m_width, m_height;
-	uint32_t m_mask; //encode the region type, the face index and the component index in case of a gray region
+	uint16_t x, y;
+	uint16_t width, height;
+	uint32_t mask; //encode the region type, the face index and the component index in case of a gray region
 
 	Type getType() const
 	{
-		return (Type) ( (m_mask >> 0) & 0x0000000F);
+		return (Type) ( (mask >> 0) & 0x0000000F);
 	}
 	uint32_t getFaceIndex() const
 	{
-		return (m_mask >> 4) & 0x0000000F;
+		return (mask >> 4) & 0x0000000F;
 	}
 	uint32_t getComponentIndex() const
 	{
-		return (m_mask >> 8) & 0x0000000F;
+		return (mask >> 8) & 0x0000000F;
 	}
 	void setMask(Type _type, uint32_t _faceIndex, uint32_t _componentIndex)
 	{
-		m_mask = (_componentIndex << 8) + (_faceIndex << 4) + (uint32_t)_type;
+		mask = (_componentIndex << 8) + (_faceIndex << 4) + (uint32_t)_type;
 	}
 };
 

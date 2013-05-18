@@ -51,16 +51,16 @@ private:
 
 	struct Node
 	{
-		Node(int16_t _x, int16_t _y, int16_t _width) : m_x(_x), m_y(_y), m_width(_width)
+		Node(int16_t _x, int16_t _y, int16_t _width) : x(_x), y(_y), width(_width)
 		{
 		}
 
 		/// The starting x-coordinate (leftmost).
-		int16_t m_x;
+		int16_t x;
 		/// The y-coordinate of the skyline level line.
-		int16_t m_y;
+		int16_t y;
 		/// The line _width. The ending coordinate (inclusive) will be x+width-1.
-		int32_t m_width; // 32bit to avoid padding
+		int32_t width; // 32bit to avoid padding
 	};
 
 	/// width (in pixels) of the underlying texture
@@ -120,12 +120,12 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
 			node = &m_skyline[ii];
 			if ( ( (y + _height) < best_height)
 				|| ( ( (y + _height) == best_height)
-				&& (node->m_width < best_width) ) )
+				&& (node->width < best_width) ) )
 			{
 				best_height = y + _height;
 				best_index = ii;
-				best_width = node->m_width;
-				_outX = node->m_x;
+				best_width = node->width;
+				_outX = node->x;
 				_outY = y;
 			}
 		}
@@ -143,12 +143,12 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
 	{
 		node = &m_skyline[ii];
 		prev = &m_skyline[ii - 1];
-		if (node->m_x < (prev->m_x + prev->m_width) )
+		if (node->x < (prev->x + prev->width) )
 		{
-			int shrink = prev->m_x + prev->m_width - node->m_x;
-			node->m_x += shrink;
-			node->m_width -= shrink;
-			if (node->m_width <= 0)
+			int shrink = prev->x + prev->width - node->x;
+			node->x += shrink;
+			node->width -= shrink;
+			if (node->width <= 0)
 			{
 				m_skyline.erase(m_skyline.begin() + ii);
 				--ii;
@@ -199,7 +199,7 @@ int32_t RectanglePacker::fit(uint32_t _skylineNodeIndex, uint16_t _width, uint16
 
 	const Node& baseNode = m_skyline[_skylineNodeIndex];
 
-	int32_t x = baseNode.m_x, y;
+	int32_t x = baseNode.x, y;
 	int32_t _width_left = width;
 	int32_t i = _skylineNodeIndex;
 
@@ -208,13 +208,13 @@ int32_t RectanglePacker::fit(uint32_t _skylineNodeIndex, uint16_t _width, uint16
 		return -1;
 	}
 
-	y = baseNode.m_y;
+	y = baseNode.y;
 	while (_width_left > 0)
 	{
 		const Node& node = m_skyline[i];
-		if (node.m_y > y)
+		if (node.y > y)
 		{
-			y = node.m_y;
+			y = node.y;
 		}
 
 		if ( (y + height) > (int32_t)(m_height - 1) )
@@ -222,7 +222,7 @@ int32_t RectanglePacker::fit(uint32_t _skylineNodeIndex, uint16_t _width, uint16
 			return -1;
 		}
 
-		_width_left -= node.m_width;
+		_width_left -= node.width;
 		++i;
 	}
 
@@ -239,9 +239,9 @@ void RectanglePacker::merge()
 	{
 		node = (Node*) &m_skyline[ii];
 		next = (Node*) &m_skyline[ii + 1];
-		if (node->m_y == next->m_y)
+		if (node->y == next->y)
 		{
-			node->m_width += next->m_width;
+			node->width += next->width;
 			m_skyline.erase(m_skyline.begin() + ii + 1);
 			--ii;
 		}
@@ -375,6 +375,10 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 		//create new layers
 		for (int ii = 0; ii < _type; ++ii)
 		{
+			m_layers[idx + ii].faceRegion.x = 0;
+			m_layers[idx + ii].faceRegion.y = 0;
+			m_layers[idx + ii].faceRegion.width = m_textureSize;
+			m_layers[idx + ii].faceRegion.height = m_textureSize;
 			m_layers[idx + ii].faceRegion.setMask(_type, m_usedFaces, ii);
 		}
 
@@ -389,37 +393,37 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 	}
 
 	AtlasRegion& region = m_regions[m_regionCount];
-	region.m_x = x;
-	region.m_y = y;
-	region.m_width = _width;
-	region.m_height = _height;
-	region.m_mask = m_layers[idx].faceRegion.m_mask;
+	region.x = x;
+	region.y = y;
+	region.width = _width;
+	region.height = _height;
+	region.mask = m_layers[idx].faceRegion.mask;
 
 	updateRegion(region, _bitmapBuffer);
 
-	region.m_x += outline;
-	region.m_y += outline;
-	region.m_width -= (outline * 2);
-	region.m_height -= (outline * 2);
+	region.x += outline;
+	region.y += outline;
+	region.width -= (outline * 2);
+	region.height -= (outline * 2);
 
 	return m_regionCount++;
 }
 
 void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffer)
 {
-	const bgfx::Memory* mem = bgfx::alloc(_region.m_width * _region.m_height * 4);
+	const bgfx::Memory* mem = bgfx::alloc(_region.width * _region.height * 4);
 	//BAD!
 	memset(mem->data, 0, mem->size);
 	if (_region.getType() == AtlasRegion::TYPE_BGRA8)
 	{
 		const uint8_t* inLineBuffer = _bitmapBuffer;
-		uint8_t* outLineBuffer = m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.m_y * m_textureSize) + _region.m_x) * 4);
+		uint8_t* outLineBuffer = m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.y * m_textureSize) + _region.x) * 4);
 
 		//update the cpu buffer
-		for (int yy = 0; yy < _region.m_height; ++yy)
+		for (int yy = 0; yy < _region.height; ++yy)
 		{
-			memcpy(outLineBuffer, inLineBuffer, _region.m_width * 4);
-			inLineBuffer += _region.m_width * 4;
+			memcpy(outLineBuffer, inLineBuffer, _region.width * 4);
+			inLineBuffer += _region.width * 4;
 			outLineBuffer += m_textureSize * 4;
 		}
 
@@ -431,24 +435,24 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 		uint32_t layer = _region.getComponentIndex();
 		//uint32_t face = _region.getFaceIndex();
 		const uint8_t* inLineBuffer = _bitmapBuffer;
-		uint8_t* outLineBuffer = (m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.m_y * m_textureSize) + _region.m_x) * 4) );
+		uint8_t* outLineBuffer = (m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.y * m_textureSize) + _region.x) * 4) );
 
 		//update the cpu buffer
-		for (int yy = 0; yy < _region.m_height; ++yy)
+		for (int yy = 0; yy < _region.height; ++yy)
 		{
-			for (int xx = 0; xx < _region.m_width; ++xx)
+			for (int xx = 0; xx < _region.width; ++xx)
 			{
 				outLineBuffer[(xx * 4) + layer] = inLineBuffer[xx];
 			}
 
 			//update the GPU buffer
-			memcpy(mem->data + yy * _region.m_width * 4, outLineBuffer, _region.m_width * 4);
-			inLineBuffer += _region.m_width;
+			memcpy(mem->data + yy * _region.width * 4, outLineBuffer, _region.width * 4);
+			inLineBuffer += _region.width;
 			outLineBuffer += m_textureSize * 4;
 		}
 	}
 
-	bgfx::updateTextureCube(m_textureHandle, (uint8_t)_region.getFaceIndex(), 0, _region.m_x, _region.m_y, _region.m_width, _region.m_height, mem);
+	bgfx::updateTextureCube(m_textureHandle, (uint8_t)_region.getFaceIndex(), 0, _region.x, _region.y, _region.width, _region.height, mem);
 }
 
 void Atlas::packFaceLayerUV(uint32_t _idx, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride)
@@ -464,15 +468,15 @@ void Atlas::packUV(uint16_t handle, uint8_t* _vertexBuffer, uint32_t _offset, ui
 
 void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride)
 {
-	float texMult = 65535.0f / ( (float)(m_textureSize) );
 	static const int16_t minVal = -32768;
 	static const int16_t maxVal = 32767;
-
-	int16_t x0 = (int16_t)(_region.m_x * texMult) - 32768;
-	int16_t y0 = (int16_t)(_region.m_y * texMult) - 32768;
-	int16_t x1 = (int16_t)( (_region.m_x + _region.m_width) * texMult) - 32768;
-	int16_t y1 = (int16_t)( (_region.m_y + _region.m_height) * texMult) - 32768;
-	int16_t w = (int16_t) ( (32767.0f / 4.0f) * _region.getComponentIndex() );
+	float texMult = (float)(maxVal - minVal) / ( (float)(m_textureSize) );
+	
+	int16_t x0 = (int16_t)( ((float)_region.x * texMult) - 32767.0f);
+	int16_t y0 = (int16_t)( ((float)_region.y * texMult) - 32767.0f);
+	int16_t x1 = (int16_t)( (((float)_region.x + _region.width) * texMult) - 32767.0f);
+	int16_t y1 = (int16_t)( (((float)_region.y + _region.height) * texMult) - 32767.0f);
+	int16_t w = (int16_t) ( (32767.0f / 4.0f) * (float) _region.getComponentIndex() );
 
 	_vertexBuffer += _offset;
 	switch (_region.getFaceIndex() )
