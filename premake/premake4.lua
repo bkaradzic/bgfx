@@ -67,11 +67,18 @@ function exampleProject(_name, _uuid)
 			"GLESv2",
 		}
 
-	configuration { "emscripten" }
-		targetextension ".bc"
-
-	configuration { "nacl or nacl-arm or pnacl" }
+	configuration { "nacl or nacl-arm" }
+		kind "ConsoleApp"
 		targetextension ".nexe"
+		links {
+			"ppapi",
+			"ppapi_gles2",
+			"pthread",
+		}
+
+	configuration { "pnacl" }
+		kind "ConsoleApp"
+		targetextension ".pexe"
 		links {
 			"ppapi",
 			"ppapi_gles2",

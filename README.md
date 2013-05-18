@@ -69,12 +69,12 @@ Download AndroidNDK from:
 
 	sudo apt-get install libgl1-mesa-dev
 
-### Prerequisites for Native Client (Pepper 22) on Windows
+### Prerequisites for Native Client on Windows
 
 Download Native Client SDK from:  
 [https://developers.google.com/native-client/sdk/download](https://developers.google.com/native-client/sdk/download)
 
-	setx NACL <path to Native Client SDK directory>\toolchain\win_x86_newlib
+	setx NACL_SDK_ROOT <path to Native Client SDK directory>
 
 ### Prerequisites for Windows
 
@@ -115,7 +115,8 @@ Other platforms:
 
 Configuration is `<platform>-<debug/release>[32/64]`. For example:
 
-	linux-release32, nacl-debug64, android-release, etc.
+	linux-release32, nacl-debug64, nacl-arm-debug, pnacl-release, 
+	android-release, etc.
 
 Examples
 --------
