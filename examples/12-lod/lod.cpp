@@ -481,12 +481,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setTexture(0, u_texColor, textureBark);
 		bgfx::setTexture(1, u_texStipple, textureStipple);
-		bgfx::setUniform(u_stipple, stipple, 1);
+		bgfx::setUniform(u_stipple, stipple);
 		mesh_trunk[mainLOD].submit(program, mtx, false);
 
 		bgfx::setTexture(0, u_texColor, textureLeafs);
 		bgfx::setTexture(1, u_texStipple, textureStipple);
-		bgfx::setUniform(u_stipple, stipple, 1);
+		bgfx::setUniform(u_stipple, stipple);
 		mesh_top[mainLOD].submit(program, mtx, true);
 
 		if (transitions 
@@ -494,12 +494,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			bgfx::setTexture(0, u_texColor, textureBark);
 			bgfx::setTexture(1, u_texStipple, textureStipple);
-			bgfx::setUniform(u_stipple, stippleInv, 1);
+			bgfx::setUniform(u_stipple, stippleInv);
 			mesh_trunk[targetLOD].submit(program, mtx, false);
 
 			bgfx::setTexture(0, u_texColor, textureLeafs);
 			bgfx::setTexture(1, u_texStipple, textureStipple);
-			bgfx::setUniform(u_stipple, stippleInv, 1);
+			bgfx::setUniform(u_stipple, stippleInv);
 			mesh_top[targetLOD].submit(program, mtx, true);
 		}
 	

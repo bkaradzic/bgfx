@@ -48,7 +48,7 @@ vec3 calcLight(int _idx, mat3 _tbn, vec3 _wpos, vec3 _normal, vec3 _view)
 	vec3 lightDir = mul(_tbn, normalize(lp) );
 	vec2 bln = blinn(lightDir, _normal, _view);
 	vec4 lc = lit(bln.x, bln.y, 1.0);
-	vec3 rgb = u_lightRgbInnerR[_idx].xyz*max(0.0, saturate(lc.y) ) * attn;
+	vec3 rgb = u_lightRgbInnerR[_idx].xyz * saturate(lc.y) * attn;
 	return rgb;
 }
 
