@@ -3,8 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include "../common/common.h"
+
 #include <bgfx.h>
-#include <bx/bx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>

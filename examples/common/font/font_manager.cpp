@@ -3,7 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
+#include "../common.h"
+
 #include <bgfx.h>
 #include <freetype/freetype.h>
 #include <edtaa3/edtaa3func.cpp>

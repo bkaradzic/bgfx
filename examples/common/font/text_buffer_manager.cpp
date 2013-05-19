@@ -3,9 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
-#include <bgfx.h>
+#include "../common.h"
 
+#include <bgfx.h>
 #include <stddef.h> // offsetof
 #include <memory.h> // memcpy
 #include <wchar.h>  // wcslen

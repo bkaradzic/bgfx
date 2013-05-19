@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
+#include "common.h"
 
 #include <stdio.h>
 #include <stdint.h>

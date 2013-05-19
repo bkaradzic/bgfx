@@ -3,8 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include "../common/common.h"
+
 #include <bgfx.h>
-#include <bx/bx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include "../common/entry.h"
@@ -28,7 +29,8 @@ struct KnightPos
 	int32_t m_y;
 };
 
-KnightPos knightTour[8*4] = {
+KnightPos knightTour[8*4] =
+{
 	{0,0}, {1,2}, {3,3}, {4,1}, {5,3}, {7,2}, {6,0}, {5,2},
 	{7,3}, {6,1}, {4,0}, {3,2}, {2,0}, {0,1}, {1,3}, {2,1},
 	{0,2}, {1,0}, {2,2}, {0,3}, {1,1}, {3,0}, {4,2}, {5,0},
