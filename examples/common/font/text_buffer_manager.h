@@ -65,7 +65,14 @@ public:
 
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer(TextBufferHandle _handle);
-
+	
+	/// Return the rectangular size of the text without adding it to the buffer
+	TextRectangle measureText(FontHandle _fontHandle, const wchar_t* _string) const;
+	
+	/// Return the rectangular size of the text without adding it to the buffer
+	TextRectangle measureText(FontHandle _fontHandle, const char* _string) const;
+	
+	/// Return the rectangular size of the current text buffer (including all its content)
 	TextRectangle getRectangle(TextBufferHandle _handle) const;
 
 private:

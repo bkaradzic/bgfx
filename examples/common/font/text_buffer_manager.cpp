@@ -248,8 +248,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string)
 
 	if (state != UTF8_ACCEPT)
 	{
-		//	assert(false && "The string is not well-formed");
-		return; //"The string is not well-formed\n"
+		BX_CHECK(false, "The string is not well-formed");
 	}
 }
 
@@ -280,6 +279,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string)
 		}
 	}
 }
+
 void TextBuffer::appendAtlasFace(uint16_t _faceIndex)
 {
 	float x0 = m_penX;
@@ -839,6 +839,88 @@ void TextBufferManager::clearTextBuffer(TextBufferHandle _handle)
 	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	bc.textBuffer->clearTextBuffer();
+}
+
+TextRectangle TextBufferManager::measureText(FontHandle _fontHandle, const char* _string) const
+{
+	GlyphInfo glyph;
+	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
+	TextRectangle rect;
+	rect.width = 0;
+	rect.height = font.ascender - font.descender; //should I put lineGap here ?
+	
+	CodePoint codepoint = 0;
+	uint32_t state = 0;
+	float w = 0;
+
+	for (; *_string; ++_string)
+	{
+		if (!utf8_decode(&state, (uint32_t*)&codepoint, *_string) )
+		{
+			if (m_fontManager->getGlyphInfo(_fontHandle, codepoint, glyph) )
+			{
+				if (codepoint == L'\n')
+				{	
+					rect.height += font.lineGap + font.ascender - font.descender;
+					w=0;
+					break;
+				}
+				//TODO kerning
+
+				if((w + glyph.advance_x) > rect.width)
+				{
+					rect.width = w + glyph.advance_x;
+				}
+			}
+			else
+			{
+				BX_CHECK(false, "Glyph not found");
+			}
+		}
+	}
+
+	if (state != UTF8_ACCEPT)
+	{
+		BX_CHECK(false, "The string is not well-formed");
+	}
+
+	return rect;
+}
+
+TextRectangle TextBufferManager::measureText(FontHandle _fontHandle, const wchar_t* _string) const
+{
+	GlyphInfo glyph;
+	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
+	TextRectangle rect;
+	rect.width = 0;
+	rect.height = font.ascender - font.descender; //should I put lineGap here ?
+	float w = 0;
+	
+	for (uint32_t ii = 0, end = wcslen(_string); ii < end; ++ii)
+	{
+		uint32_t codepoint = _string[ii];
+		if (m_fontManager->getGlyphInfo(_fontHandle, codepoint, glyph) )
+		{
+			if (codepoint == L'\n')
+			{	
+				rect.height += font.lineGap + font.ascender - font.descender;
+				w=0;
+				break;
+			}
+			//TODO kerning
+
+			if((w + glyph.advance_x) > rect.width)
+			{
+				rect.width = w + glyph.advance_x;
+			}
+		}
+		else
+		{
+			BX_CHECK(false, "Glyph not found");
+		}
+	}
+
+	return rect;
 }
 
 TextRectangle TextBufferManager::getRectangle(TextBufferHandle _handle) const
