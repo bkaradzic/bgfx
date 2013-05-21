@@ -1035,20 +1035,7 @@ struct Preprocessor
 
 		if (NULL != _includeDir)
 		{
-			char* start = scratch(_includeDir);
-
-			for (char* split = strchr(start, ';'); NULL != split; split = strchr(start, ';'))
-			{
-				*split = '\0';
-				m_tagptr->tag = FPPTAG_INCLUDE_DIR;
-				m_tagptr->data = start;
-				m_tagptr++;
-				start = split + 1;
-			}
-
-			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
-			m_tagptr->data = start;
-			m_tagptr++;
+			addInclude(_includeDir);
 		}
 
 		m_default = "#define lowp\n#define mediump\n#define highp\n";
@@ -1083,6 +1070,24 @@ struct Preprocessor
 		va_start(argList, _format);
 		bx::stringPrintfVargs(m_default, _format, argList);
 		va_end(argList);
+	}
+
+	void addInclude(const char* _includeDir)
+	{
+		char* start = scratch(_includeDir);
+
+		for (char* split = strchr(start, ';'); NULL != split; split = strchr(start, ';'))
+		{
+			*split = '\0';
+			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
+			m_tagptr->data = start;
+			m_tagptr++;
+			start = split + 1;
+		}
+
+		m_tagptr->tag = FPPTAG_INCLUDE_DIR;
+		m_tagptr->data = start;
+		m_tagptr++;
 	}
 
 	void addDependency(const char* _fileName)
@@ -1373,6 +1378,17 @@ int main(int _argc, const char* _argv[])
 
 	Preprocessor preprocessor(filePath, includeDir);
 
+	std::string dir;
+	{
+		const char* base = baseName(filePath);
+
+		if (base != filePath)
+		{
+			dir.assign(filePath, base-filePath);
+			preprocessor.addInclude(dir.c_str() );
+		}
+	}
+
 	preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
 	preprocessor.setDefaultDefine("BX_PLATFORM_IOS");
 	preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
@@ -1459,7 +1475,8 @@ int main(int _argc, const char* _argv[])
 	{
 		VaryingMap varyingMap;
 
-		const char* varyingdef = cmdLine.findOption("varyingdef", "varying.def.sc");
+		std::string defaultVarying = dir + "varying.def.sc";
+		const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
 		File attribdef(varyingdef);
 		const char* parse = attribdef.getData();
 		if (NULL != parse
