@@ -10,7 +10,7 @@ $input v_normal, v_color0
 void main()
 {
 	vec3 lightDir = vec3(0.0, 0.0, -1.0);
-	float ndotl = max(dot(normalize(v_normal), lightDir), 0.0);
+	float ndotl = dot(normalize(v_normal), lightDir);
 	float spec = pow(ndotl, 30.0);
-	gl_FragColor = pow(pow(v_color0, vec4_splat(2.2) ) * ndotl + spec, vec4_splat(1.0/2.2) );
+	gl_FragColor = vec4(pow(pow(v_color0.xyz, vec3_splat(2.2) ) * ndotl + spec, vec3_splat(1.0/2.2) ), 1.0);
 }
