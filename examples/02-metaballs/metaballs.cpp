@@ -15,6 +15,10 @@
 #include <stdio.h>
 #include <string.h>
 
+// embedded shaders
+#include "vs_metaballs.bin.h"
+#include "fs_metaballs.bin.h"
+
 bgfx::VertexDecl s_PosNormalColorDecl;
 
 struct PosNormalColorVertex
@@ -37,48 +41,6 @@ struct Grid
 	float m_val;
 	float m_normal[3];
 };
-
-static const char* s_shaderPath = NULL;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
 
 // Triangulation tables taken from:
 // http://paulbourke.net/geometry/polygonise/
@@ -516,29 +478,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	// Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		break;
-
-	case bgfx::RendererType::OpenGLES2:
-	case bgfx::RendererType::OpenGLES3:
-		s_shaderPath = "shaders/gles/";
-		break;
-	}
-
 	// Create vertex stream declaration.
 	s_PosNormalColorDecl.begin();
 	s_PosNormalColorDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
@@ -546,15 +485,29 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	s_PosNormalColorDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
 	s_PosNormalColorDecl.end();
 
-	const bgfx::Memory* mem;
+	const bgfx::Memory* vs_metaballs;
+	const bgfx::Memory* fs_metaballs;
 
-	// Load vertex shader.
-	mem = loadShader("vs_metaballs");
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	switch (bgfx::getRendererType() )
+	{
+	case bgfx::RendererType::Direct3D9:
+		vs_metaballs = bgfx::makeRef(vs_metaballs_dx9, sizeof(vs_metaballs_dx9) );
+		fs_metaballs = bgfx::makeRef(fs_metaballs_dx9, sizeof(fs_metaballs_dx9) );
+		break;
 
-	// Load fragment shader.
-	mem = loadShader("fs_metaballs");
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	case bgfx::RendererType::Direct3D11:
+		vs_metaballs = bgfx::makeRef(vs_metaballs_dx11, sizeof(vs_metaballs_dx11) );
+		fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
+		break;
+
+	default:
+		vs_metaballs = bgfx::makeRef(vs_metaballs_glsl, sizeof(vs_metaballs_glsl) );
+		fs_metaballs = bgfx::makeRef(fs_metaballs_glsl, sizeof(fs_metaballs_glsl) );
+		break;
+	}
+
+	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(vs_metaballs);
+	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(fs_metaballs);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
@@ -595,7 +548,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/02-metaball");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering with transient buffers.");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering with transient buffers and embedding shaders.");
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -50.0f };

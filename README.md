@@ -135,7 +135,7 @@ Rendering simple static mesh.
 ![example-01-cubes](https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png)
 
 ### 02-metaballs
-Rendering with transient buffers.
+Rendering with transient buffers and embedding shaders.
 
 ![example-02-metaballs](https://github.com/bkaradzic/bgfx/raw/master/examples/02-metaballs/screenshot.png)
 
