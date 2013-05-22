@@ -261,7 +261,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 	}
 	if( _end == NULL)
 	{
-		_end = _string + wcslen(_string);
+		_end = _string + (uint32_t) wcslen(_string);
 	}
 	BX_CHECK(_end >= _string);
 

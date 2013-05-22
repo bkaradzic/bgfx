@@ -522,7 +522,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 		
-		if (currLOD!=targetLOD)
+		if (currLOD != targetLOD)
 		{
 			transitionFrame++;
 		}
