@@ -7,6 +7,7 @@
 #define __FONT_MANAGER_H__
 
 #include <bx/handlealloc.h>
+#include <bgfx.h>
 
 class Atlas;
 
@@ -29,6 +30,8 @@ struct FontInfo
 	float descender;
 	/// The spacing in pixels between one row's descent and the next row's ascent.
 	float lineGap;
+	/// This field gives the maximum horizontal cursor advance for all glyphs in the font. 
+	float maxAdvanceWidth;
 	/// The thickness of the under/hover/strike-trough line in pixels.
 	float underlineThickness;
 	/// The position of the underline relatively to the baseline.
@@ -169,7 +172,7 @@ public:
 	/// Return the font descriptor of a font.
 	///
 	/// @remark the handle is required to be valid
-	const FontInfo& getFontInfo(FontHandle _handle);
+	const FontInfo& getFontInfo(FontHandle _handle) const;
 
 	/// Return the rendering informations about the glyph region. Load the 
 	/// glyph from a TrueType font if possible
