@@ -267,7 +267,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string)
 		m_lineGap = 0;
 	}
 
-	for (uint32_t ii = 0, end = wcslen(_string); ii < end; ++ii)
+	for (uint32_t ii = 0, end = (uint32_t)wcslen(_string); ii < end; ++ii)
 	{
 		uint32_t _codePoint = _string[ii];
 		if (m_fontManager->getGlyphInfo(_fontHandle, _codePoint, glyph) )
