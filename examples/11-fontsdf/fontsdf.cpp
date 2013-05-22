@@ -4,7 +4,6 @@
  */
 
 #include "../common/common.h"
-
 #include <bgfx.h>
 #include <bx/timer.h>
 #include "../common/entry.h"
@@ -13,7 +12,12 @@
 #include "../common/processevents.h"
 
 #include "../common/font/font_manager.h"
+#include "../common/font/text_metrics.h"
 #include "../common/font/text_buffer_manager.h"
+#include "../common/imgui/imgui.h"
+
+#include <stdio.h>
+#include <string.h>
 
 inline void mtxTranslate(float* _result, float x, float y, float z)
 {
@@ -31,6 +35,56 @@ inline void mtxScale(float* _result, float x, float y, float z)
 	_result[5] = y;
 	_result[10] = z;
 	_result[15] = 1.0f;
+}
+
+long int fsize(FILE* _file)
+{
+	long int pos = ftell(_file);
+	fseek(_file, 0L, SEEK_END);
+	long int size = ftell(_file);
+	fseek(_file, pos, SEEK_SET);
+	return size;
+}
+
+char* loadText(const char* _textFile)
+{	
+	FILE* pFile;
+	pFile = fopen(_textFile, "rb");
+	if (pFile == NULL)
+	{		
+		return NULL;
+	}
+
+	// Go to the end of the file.
+	if (fseek(pFile, 0L, SEEK_END) == 0)
+	{
+		// Get the size of the file.
+		long bufsize = ftell(pFile);
+		if (bufsize == -1)
+		{
+			fclose(pFile);			
+			return NULL;
+		}
+
+		char* buffer = new char[bufsize];
+
+		// Go back to the start of the file.
+		fseek(pFile, 0L, SEEK_SET);
+
+		// Read the entire file into memory.
+		uint32_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
+		if (newLen == 0)
+		{
+			fclose(pFile);
+			delete[] buffer;
+			return NULL;
+		}
+
+		fclose(pFile);
+
+		return buffer;
+	}
+	return NULL;
 }
 
 int _main_(int /*_argc*/, char** /*_argv*/)
@@ -55,35 +109,94 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
+	FILE* file = fopen("font/droidsans.ttf", "rb");
+	uint32_t size = (uint32_t)fsize(file);
+	void* data = malloc(size);
+	size_t ignore = fread(data, 1, size, file);
+	BX_UNUSED(ignore);
+	fclose(file);
+
+	imguiCreate(data, size);
+
+	free(data);
+
+	char* bigText = loadText( "text/sherlock_holmes_a_scandal_in_bohemia_arthur_conan_doyle.txt");
+
 	// Init the text rendering system.
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 
-	TrueTypeHandle times_tt = fontManager->loadTrueTypeFromFile("font/bleeding_cowboys.ttf");
+	TrueTypeHandle font_tt = fontManager->loadTrueTypeFromFile("font/special_elite.ttf");//bleeding_cowboys.ttf");
 
 	// Create a distance field font.
-	FontHandle distance_font = fontManager->createFontByPixelSize(times_tt, 0, 48, FONT_TYPE_DISTANCE);
+	FontHandle base_distance_font = fontManager->createFontByPixelSize(font_tt, 0, 48, FONT_TYPE_DISTANCE);
+	
+	// Create a scaled down version of the same font (without adding anything to the atlas).
+	FontHandle scaled_font = fontManager->createScaledFontToPixelSize(base_distance_font, 14);
+		
+	TextLineMetrics metrics(fontManager, scaled_font);		
+	uint32_t lineCount = metrics.getLineCount(bigText);
+	
+	float visibleLineCount = 20.0f;
 
-	// Create a scalled down version of the same font (without adding 
-	// anything to the atlas).
-	FontHandle smaller_font = fontManager->createScaledFontToPixelSize(distance_font, 32);
+	const char* textBegin = 0;
+	const char* textEnd = 0;
+	metrics.getSubText(bigText, 0, (uint32_t)visibleLineCount, textBegin, textEnd);
 
-	// Preload glyph and generate (generate bitmap's).
-	fontManager->preloadGlyph(distance_font, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,\" \n");
+	TextBufferHandle scrollableBuffer = textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, TRANSIENT);
+	textBufferManager->setTextColor(scrollableBuffer, 0xFFFFFFFF);
 
-	// You can unload the TTF files at this stage, but in that case, the 
-	// set of glyph's will be limited to the set of preloaded glyph.
-	fontManager->unloadTrueType(times_tt);
-
-	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, STATIC);
-	textBufferManager->setTextColor(staticText, 0xDD0000FF);
-
-	textBufferManager->appendText(staticText, distance_font, L"BGFX ");
-	textBufferManager->appendText(staticText, smaller_font, L"bgfx");
-
-	int64_t timeOffset = bx::getHPCounter();
-	while (!processEvents(width, height, debug, reset) )
+	textBufferManager->appendText(scrollableBuffer, scaled_font, textBegin, textEnd);
+	
+	MouseState mouseState;
+	int32_t scrollArea = 0;
+	while (!processEvents(width, height, debug, reset, &mouseState) )
 	{
+		imguiBeginFrame(mouseState.m_mx
+			, mouseState.m_my
+			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
+			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
+			, 0
+			, width
+			, height
+			);
+
+		const int guiPanelWidth = 250;
+		const int guiPanelHeight = 200;
+	
+		imguiBeginScrollArea("Text Area", width - guiPanelWidth - 10, 10, guiPanelWidth, guiPanelHeight, &scrollArea);
+		imguiSeparatorLine();
+				
+		static float textScroll = 0.0f;
+		static float textRotation = 0.0f;
+		static float textScale = 1.0f;
+		static float textSize = 14.0f;
+		
+		bool recomputeVisibleText = false;		
+		recomputeVisibleText |= imguiSlider("Number of lines", &visibleLineCount, 1.0f, 177.0f , 1.0f);
+		if(imguiSlider("Font size", &textSize, 6.0f, 64.0f , 1.0f))
+		{
+			fontManager->destroyFont(scaled_font);
+			scaled_font = fontManager->createScaledFontToPixelSize(base_distance_font, (uint32_t) textSize);
+			metrics = TextLineMetrics (fontManager, scaled_font);			
+			recomputeVisibleText = true;
+		}
+
+		recomputeVisibleText |= imguiSlider("Scroll", &textScroll, 0.0f, (lineCount-visibleLineCount) , 1.0f);
+		imguiSlider("Rotate", &textRotation, 0.0f, (float) M_PI *2.0f , 0.1f);
+		recomputeVisibleText |= imguiSlider("Scale", &textScale, 0.1f, 10.0f , 0.1f);
+
+		if(	recomputeVisibleText)
+		{
+			textBufferManager->clearTextBuffer(scrollableBuffer);
+			metrics.getSubText(bigText,(uint32_t)textScroll, (uint32_t)(textScroll+visibleLineCount), textBegin, textEnd);			
+			textBufferManager->appendText(scrollableBuffer, scaled_font, textBegin, textEnd);
+		}			
+		
+		imguiEndScrollArea();
+		
+		imguiEndFrame();
+
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);
 
@@ -97,7 +210,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		last = now;
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0 / freq;
-		float time = (float)( (now - timeOffset) / double(bx::getHPFrequency() ) );
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -115,42 +227,50 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup a top-left ortho matrix for screen space drawing.
 		mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
-
+				
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
-		TextRectangle rect = textBufferManager->getRectangle(staticText);
+		
+		//very crude approximation :(
+		float textAreaWidth = 0.5f * 66.0f * fontManager->getFontInfo(scaled_font).maxAdvanceWidth;
 
-		float mtxA[16];
-		float mtxB[16];
-		float mtxC[16];
-		mtxRotateZ(mtxA, time * 0.37f);
-		mtxTranslate(mtxB, -(rect.width * 0.5f), -(rect.height * 0.5f), 0);
+		float textRotMat[16];
+		float textCenterMat[16];
+		float textScaleMat[16];
+		float screenCenterMat[16];
+		
+		mtxRotateZ(textRotMat, textRotation);
+		mtxTranslate(textCenterMat, -(textAreaWidth * 0.5f), (-visibleLineCount)*metrics.getLineHeight()*0.5f, 0);
+		mtxScale(textScaleMat, textScale, textScale, 1.0f);
+		mtxTranslate(screenCenterMat, ( (width) * 0.5f), ( (height) * 0.5f), 0);
 
-		mtxMul(mtxC, mtxB, mtxA);
-
-		float scale = 4.1f + 4.0f * sinf(time);
-		mtxScale(mtxA, scale, scale, 1.0f);
-		mtxMul(mtxB, mtxC, mtxA);
-
-		mtxTranslate(mtxC, ( (width) * 0.5f), ( (height) * 0.5f), 0);
-		mtxMul(mtxA, mtxB, mtxC);
+		//first translate to text center, then scale, then rotate
+		float tmpMat[16];
+		mtxMul(tmpMat, textCenterMat, textRotMat);
+		
+		float tmpMat2[16];
+		mtxMul(tmpMat2, tmpMat, textScaleMat);
+		
+		float tmpMat3[16];
+		mtxMul(tmpMat3, tmpMat2, screenCenterMat);
 
 		// Set model matrix for rendering.
-		bgfx::setTransform(mtxA);
-
+		bgfx::setTransform(tmpMat3);
+	
 		// Draw your text.
-		textBufferManager->submitTextBuffer(staticText, 0);
+		textBufferManager->submitTextBuffer(scrollableBuffer, 0);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
 
+	fontManager->unloadTrueType(font_tt);
 	// Destroy the fonts.
-	fontManager->destroyFont(distance_font);
-	fontManager->destroyFont(smaller_font);
+	fontManager->destroyFont(base_distance_font);
+	fontManager->destroyFont(scaled_font);
 
-	textBufferManager->destroyTextBuffer(staticText);
+	textBufferManager->destroyTextBuffer(scrollableBuffer);
 
 	delete textBufferManager;
 	delete fontManager;
