@@ -340,6 +340,12 @@ http://fontfabric.com/signika-font/
 Visitor Font  
 http://www.dafont.com/visitor.font
 
+Special-Elite Font
+http://www.fontspace.com/astigmatic-one-eye-typographic-institute/special-elite
+
+Sherlock Holmes text
+http://www.gutenberg.org/ebooks/1661
+
 Tree Pack 1  
 http://www.turbosquid.com/3d-models/free-obj-mode-tree-pack/506851
 
