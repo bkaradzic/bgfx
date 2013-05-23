@@ -72,7 +72,7 @@ char* loadText(const char* _textFile)
 		fseek(pFile, 0L, SEEK_SET);
 
 		// Read the entire file into memory.
-		uint32_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
+		size_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
 		if (newLen == 0)
 		{
 			fclose(pFile);

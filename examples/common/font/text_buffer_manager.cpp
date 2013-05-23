@@ -37,10 +37,12 @@ public:
 	{
 		m_styleFlags = _flags;
 	}
+
 	void setTextColor(uint32_t _rgba = 0x000000FF)
 	{
 		m_textColor = toABGR(_rgba);
 	}
+
 	void setBackgroundColor(uint32_t _rgba = 0x000000FF)
 	{
 		m_backgroundColor = toABGR(_rgba);
@@ -50,10 +52,12 @@ public:
 	{
 		m_overlineColor = toABGR(_rgba);
 	}
+
 	void setUnderlineColor(uint32_t _rgba = 0x000000FF)
 	{
 		m_underlineColor = toABGR(_rgba);
 	}
+
 	void setStrikeThroughColor(uint32_t _rgba = 0x000000FF)
 	{
 		m_strikeThroughColor = toABGR(_rgba);
@@ -64,51 +68,58 @@ public:
 		m_penX = _x; m_penY = _y;
 	}
 
-	/// append an ASCII/utf-8 string to the buffer using current pen position and color
+	/// Append an ASCII/utf-8 string to the buffer using current pen
+	/// position and color.
 	void appendText(FontHandle _fontHandle, const char* _string, const char* _end = NULL);
 
-	/// append a wide char unicode string to the buffer using current pen position and color
+	/// Append a wide char unicode string to the buffer using current pen
+	/// position and color.
 	void appendText(FontHandle _fontHandle, const wchar_t* _string, const wchar_t* _end = NULL);
 	
-	/// append a whole face of the atlas cube, mostly used for debugging and visualizing atlas
+	/// Append a whole face of the atlas cube, mostly used for debugging
+	/// and visualizing atlas.
 	void appendAtlasFace(uint16_t _faceIndex);
 
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer();
 
-	/// get pointer to the vertex buffer to submit it to the graphic card
+	/// Get pointer to the vertex buffer to submit it to the graphic card.
 	const uint8_t* getVertexBuffer()
 	{
 		return (uint8_t*) m_vertexBuffer;
 	}
-	/// number of vertex in the vertex buffer
-	uint32_t getVertexCount()
+
+	/// Number of vertex in the vertex buffer.
+	uint32_t getVertexCount() const
 	{
 		return m_vertexCount;
 	}
-	/// size in bytes of a vertex
-	uint32_t getVertexSize()
+
+	/// Size in bytes of a vertex.
+	uint32_t getVertexSize() const
 	{
 		return sizeof(TextVertex);
 	}
 
 	/// get a pointer to the index buffer to submit it to the graphic
-	const uint16_t* getIndexBuffer()
+	const uint16_t* getIndexBuffer() const
 	{
 		return m_indexBuffer;
 	}
+
 	/// number of index in the index buffer
-	uint32_t getIndexCount()
+	uint32_t getIndexCount() const
 	{
 		return m_indexCount;
 	}
-	/// size in bytes of an index
-	uint32_t getIndexSize()
+
+	/// Size in bytes of an index.
+	uint32_t getIndexSize() const
 	{
 		return sizeof(uint16_t);
 	}
 
-	uint32_t getTextColor()
+	uint32_t getTextColor() const
 	{
 		return toABGR(m_textColor);
 	}
@@ -121,12 +132,14 @@ public:
 private:
 	void appendGlyph(CodePoint _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
 	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
-	uint32_t toABGR(uint32_t _rgba)
+
+	static uint32_t toABGR(uint32_t _rgba)
 	{
-		return ( ( (_rgba >> 0) & 0xff) << 24) |
-			( ( (_rgba >> 8) & 0xff) << 16) |
-			( ( (_rgba >> 16) & 0xff) << 8) |
-			( ( (_rgba >> 24) & 0xff) << 0);
+		return ( ( (_rgba >>  0) & 0xff) << 24)
+			 | ( ( (_rgba >>  8) & 0xff) << 16)
+			 | ( ( (_rgba >> 16) & 0xff) <<  8)
+			 | ( ( (_rgba >> 24) & 0xff) <<  0)
+			 ;
 	}
 
 	uint32_t m_styleFlags;
@@ -151,8 +164,6 @@ private:
 	float m_lineGap;
 
 	TextRectangle m_rectangle;
-
-	///
 	FontManager* m_fontManager;
 
 	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
@@ -259,7 +270,8 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 		m_lineAscender = 0;
 		m_lineGap = 0;
 	}
-	if( _end == NULL)
+
+	if (_end == NULL)
 	{
 		_end = _string + (uint32_t) wcslen(_string);
 	}
@@ -291,7 +303,11 @@ void TextBuffer::appendAtlasFace(uint16_t _faceIndex)
 	float x1 = x0 + (float)m_fontManager->getAtlas()->getTextureSize();
 	float y1 = y0 + (float)m_fontManager->getAtlas()->getTextureSize();
 
-	m_fontManager->getAtlas()->packFaceLayerUV(_faceIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+	m_fontManager->getAtlas()->packFaceLayerUV(_faceIndex
+		, (uint8_t*)m_vertexBuffer
+		, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+		, sizeof(TextVertex)
+		);
 
 	setVertex(m_vertexCount + 0, x0, y0, m_backgroundColor);
 	setVertex(m_vertexCount + 1, x0, y1, m_backgroundColor);
@@ -372,7 +388,11 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
 		float y1 = (m_penY + m_lineAscender - m_lineDescender + m_lineGap);
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+			, (uint8_t*)m_vertexBuffer
+			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+			, sizeof(TextVertex)
+			);
 
 		setVertex(m_vertexCount + 0, x0, y0, m_backgroundColor, STYLE_BACKGROUND);
 		setVertex(m_vertexCount + 1, x0, y1, m_backgroundColor, STYLE_BACKGROUND);
@@ -397,7 +417,11 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
 		float y1 = y0 + _font.underlineThickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+			, (uint8_t*)m_vertexBuffer
+			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+			, sizeof(TextVertex)
+			);
 
 		setVertex(m_vertexCount + 0, x0, y0, m_underlineColor, STYLE_UNDERLINE);
 		setVertex(m_vertexCount + 1, x0, y1, m_underlineColor, STYLE_UNDERLINE);
@@ -422,7 +446,11 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
 		float y1 = y0 + _font.underlineThickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+			, (uint8_t*)m_vertexBuffer
+			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+			, sizeof(TextVertex)
+			);
 
 		setVertex(m_vertexCount + 0, x0, y0, m_overlineColor, STYLE_OVERLINE);
 		setVertex(m_vertexCount + 1, x0, y1, m_overlineColor, STYLE_OVERLINE);
@@ -447,7 +475,11 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
 		float y1 = y0 + _font.underlineThickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+			, (uint8_t*)m_vertexBuffer
+			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+			, sizeof(TextVertex)
+			);
 
 		setVertex(m_vertexCount + 0, x0, y0, m_strikeThroughColor, STYLE_STRIKE_THROUGH);
 		setVertex(m_vertexCount + 1, x0, y1, m_strikeThroughColor, STYLE_STRIKE_THROUGH);
@@ -469,7 +501,11 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 	float x1 = (x0 + _glyphInfo.width);
 	float y1 = (y0 + _glyphInfo.height);
 
-	m_fontManager->getAtlas()->packUV(_glyphInfo.regionIndex, (uint8_t*)m_vertexBuffer, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u), sizeof(TextVertex) );
+	m_fontManager->getAtlas()->packUV(_glyphInfo.regionIndex
+		, (uint8_t*)m_vertexBuffer
+		, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+		, sizeof(TextVertex)
+		);
 
 	setVertex(m_vertexCount + 0, x0, y0, m_textColor);
 	setVertex(m_vertexCount + 1, x0, y1, m_textColor);
@@ -680,17 +716,27 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	{
 	case FONT_TYPE_ALPHA:
 		bgfx::setProgram(m_basicProgram);
-		bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA) );
+		bgfx::setState(0
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
 		break;
 
 	case FONT_TYPE_DISTANCE:
 		bgfx::setProgram(m_distanceProgram);
-		bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA) );
+		bgfx::setState(0
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
 		break;
 
 	case FONT_TYPE_DISTANCE_SUBPIXEL:
 		bgfx::setProgram(m_distanceSubpixelProgram);
-		bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_SRC_COLOR), bc.textBuffer->getTextColor() );
+		bgfx::setState(0
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
+			, bc.textBuffer->getTextColor()
+			);
 		break;
 	}
 

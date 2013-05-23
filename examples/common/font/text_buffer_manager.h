@@ -54,19 +54,19 @@ public:
 
 	void setPenPosition(TextBufferHandle _handle, float _x, float _y);
 
-	/// append an ASCII/utf-8 string to the buffer using current pen position and color
+	/// Append an ASCII/utf-8 string to the buffer using current pen position and color.
 	void appendText(TextBufferHandle _handle, FontHandle _fontHandle, const char* _string, const char* _end = NULL);
 
-	/// append a wide char unicode string to the buffer using current pen position and color
+	/// Append a wide char unicode string to the buffer using current pen position and color.
 	void appendText(TextBufferHandle _handle, FontHandle _fontHandle, const wchar_t* _string, const wchar_t* _end = NULL);
 		
-	/// append a whole face of the atlas cube, mostly used for debugging and visualizing atlas
+	/// Append a whole face of the atlas cube, mostly used for debugging and visualizing atlas.
 	void appendAtlasFace(TextBufferHandle _handle, uint16_t _faceIndex);
 
-	/// Clear the text buffer and reset its state (pen/color)
+	/// Clear the text buffer and reset its state (pen/color).
 	void clearTextBuffer(TextBufferHandle _handle);
 	
-	/// Return the rectangular size of the current text buffer (including all its content)
+	/// Return the rectangular size of the current text buffer (including all its content).
 	TextRectangle getRectangle(TextBufferHandle _handle) const;	
 	
 private:

@@ -2,11 +2,19 @@
  * Copyright 2013 Jeremie Roy. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
+
+#include <wchar.h> // wcslen
+
 #include "text_metrics.h"
-#include <wchar.h>  // wcslen
 #include "utf8.h"
 
-TextMetrics::TextMetrics(FontManager* _fontManager): m_fontManager(_fontManager), m_width(0), m_height(0), m_x(0), m_lineHeight(0), m_lineGap(0)
+TextMetrics::TextMetrics(FontManager* _fontManager)
+	: m_fontManager(_fontManager)
+	, m_width(0)
+	, m_height(0)
+	, m_x(0)
+	, m_lineHeight(0)
+	, m_lineGap(0)
 {
 }
 
@@ -15,12 +23,12 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 	GlyphInfo glyph;
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
 	
-	if(font.lineGap > m_lineGap) 
+	if (font.lineGap > m_lineGap)
 	{
 		m_lineGap = font.lineGap;
 	}
 
-	if( (font.ascender - font.descender) > m_lineHeight)
+	if ( (font.ascender - font.descender) > m_lineHeight)
 	{
 		m_height -= m_lineHeight;
 		m_lineHeight = font.ascender - font.descender;
@@ -66,12 +74,12 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 	GlyphInfo glyph;
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
 	
-	if(font.lineGap > m_lineGap) 
+	if (font.lineGap > m_lineGap) 
 	{
 		m_lineGap = font.lineGap;
 	}
 
-	if( (font.ascender - font.descender) > m_lineHeight)
+	if ( (font.ascender - font.descender) > m_lineHeight)
 	{
 		m_height -= m_lineHeight;
 		m_lineHeight = font.ascender - font.descender;
@@ -91,7 +99,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 				m_x = 0;
 				break;
 			}
-			//TODO handle kerning
+
 			m_x += glyph.advance_x;
 			if(m_x > m_width)
 			{
@@ -105,7 +113,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 	}
 }
 
-TextLineMetrics::TextLineMetrics(FontManager* _fontManager, FontHandle _fontHandle )
+TextLineMetrics::TextLineMetrics(FontManager* _fontManager, FontHandle _fontHandle)
 {
 	const FontInfo& font = _fontManager->getFontInfo(_fontHandle);
 	m_lineHeight = font.ascender - font.descender + font.lineGap;
@@ -118,7 +126,7 @@ uint32_t TextLineMetrics::getLineCount(const char* _string) const
 	uint32_t lineCount = 1;
 	for (; *_string; ++_string)
 	{
-		if(utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT)
+		if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT)
 		{
 			if(codepoint == L'\n')
 			{				
@@ -126,6 +134,7 @@ uint32_t TextLineMetrics::getLineCount(const char* _string) const
 			}
 		}
 	}
+
 	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 	return lineCount;
 }
@@ -165,6 +174,7 @@ void TextLineMetrics::getSubText(const char* _string, uint32_t _firstLine, uint3
 			}
 		}
 	}
+
 	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 	_begin = _string;
 	
@@ -183,6 +193,7 @@ void TextLineMetrics::getSubText(const char* _string, uint32_t _firstLine, uint3
 			}
 		}
 	}
+
 	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 	_end = _string;
 }
@@ -190,7 +201,7 @@ void TextLineMetrics::getSubText(const char* _string, uint32_t _firstLine, uint3
 void TextLineMetrics::getSubText(const wchar_t* _string, uint32_t _firstLine, uint32_t _lastLine, const wchar_t*& _begin, const wchar_t*& _end)
 {
 	uint32_t currentLine = 0;	
-	while((*_string != L'\0') && (currentLine < _firstLine))
+	while ( (*_string != L'\0') && (currentLine < _firstLine) )
 	{
 		for ( ;*_string != L'\0'; ++_string)
 		{			
@@ -204,7 +215,7 @@ void TextLineMetrics::getSubText(const wchar_t* _string, uint32_t _firstLine, ui
 	}
 	_begin = _string;
 
-	while((*_string != L'\0') && (currentLine < _lastLine) )
+	while ( (*_string != L'\0') && (currentLine < _lastLine) )
 	{
 		for ( ;*_string != L'\0'; ++_string)
 		{			
@@ -225,7 +236,7 @@ void TextLineMetrics::getVisibleText(const char* _string, float _top, float _bot
 	uint32_t state = 0;
 	// y is bottom of a text line
 	float y = m_lineHeight;
-	while(*_string && (y < _top))
+	while (*_string && (y < _top) )
 	{
 		for (; *_string; ++_string)
 		{	
@@ -240,12 +251,13 @@ void TextLineMetrics::getVisibleText(const char* _string, float _top, float _bot
 			}
 		}
 	}
+
 	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 	_begin = _string;
 
 	// y is now top of a text line
 	y -= m_lineHeight;
-	while((*_string) && (y < _bottom) )
+	while ( (*_string) && (y < _bottom) )
 	{
 		for (; *_string; ++_string)
 		{	
@@ -260,6 +272,7 @@ void TextLineMetrics::getVisibleText(const char* _string, float _top, float _bot
 			}
 		}
 	}
+
 	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 	_end = _string;
 }
@@ -271,7 +284,7 @@ void TextLineMetrics::getVisibleText(const wchar_t* _string, float _top, float _
 	
 	const wchar_t* _textEnd = _string + wcslen(_string);
 
-	while(y < _top)
+	while (y < _top)
 	{
 		for (const wchar_t* _current = _string; _current < _textEnd; ++_current)
 		{			
@@ -287,7 +300,7 @@ void TextLineMetrics::getVisibleText(const wchar_t* _string, float _top, float _
 
 	// y is now top of a text line
 	y -= m_lineHeight;
-	while(y < _bottom )
+	while (y < _bottom )
 	{
 		for (const wchar_t* _current = _string; _current < _textEnd; ++_current)
 		{			
