@@ -165,6 +165,7 @@ FontInfo TrueTypeFont::getFontInfo()
 	outFontInfo.ascender = metrics.ascender / 64.0f;
 	outFontInfo.descender = metrics.descender / 64.0f;
 	outFontInfo.lineGap = (metrics.height - metrics.ascender + metrics.descender) / 64.0f;
+	outFontInfo.maxAdvanceWidth = metrics.max_advance/ 64.0f;
 
 	outFontInfo.underlinePosition = FT_MulFix(holder->face->underline_position, metrics.y_scale) / 64.0f;
 	outFontInfo.underlineThickness = FT_MulFix(holder->face->underline_thickness, metrics.y_scale) / 64.0f;
@@ -647,6 +648,7 @@ FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, 
 	newFontInfo.ascender = (newFontInfo.ascender * newFontInfo.scale);
 	newFontInfo.descender = (newFontInfo.descender * newFontInfo.scale);
 	newFontInfo.lineGap = (newFontInfo.lineGap * newFontInfo.scale);
+	newFontInfo.maxAdvanceWidth = (newFontInfo.maxAdvanceWidth * newFontInfo.scale);
 	newFontInfo.underlineThickness = (newFontInfo.underlineThickness * newFontInfo.scale);
 	newFontInfo.underlinePosition = (newFontInfo.underlinePosition * newFontInfo.scale);
 
@@ -782,7 +784,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 	return false;
 }
 
-const FontInfo& FontManager::getFontInfo(FontHandle _handle)
+const FontInfo& FontManager::getFontInfo(FontHandle _handle) const
 {
 	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	return m_cachedFonts[_handle.idx].fontInfo;
