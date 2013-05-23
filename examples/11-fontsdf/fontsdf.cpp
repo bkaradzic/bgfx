@@ -19,24 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 
-inline void mtxTranslate(float* _result, float x, float y, float z)
-{
-	memset(_result, 0, sizeof(float) * 16);
-	_result[0] = _result[5] = _result[10] = _result[15] = 1.0f;
-	_result[12] = x;
-	_result[13] = y;
-	_result[14] = z;
-}
-
-inline void mtxScale(float* _result, float x, float y, float z)
-{
-	memset(_result, 0, sizeof(float) * 16);
-	_result[0] = x;
-	_result[5] = y;
-	_result[10] = z;
-	_result[15] = 1.0f;
-}
-
 long int fsize(FILE* _file)
 {
 	long int pos = ftell(_file);

@@ -81,6 +81,23 @@ inline void mtxIdentity(float* _result)
 	_result[0] = _result[5] = _result[10] = _result[15] = 1.0f;
 }
 
+inline void mtxTranslate(float* _result, float _x, float _y, float _z)
+{
+	mtxIdentity(_result);
+	_result[12] = _x;
+	_result[13] = _y;
+	_result[14] = _z;
+}
+
+inline void mtxScale(float* _result, float _x, float _y, float _z)
+{
+	memset(_result, 0, sizeof(float) * 16);
+	_result[0] = _x;
+	_result[5] = _y;
+	_result[10] = _z;
+	_result[15] = 1.0f;
+}
+
 inline void mtxLookAt(float* __restrict _result, const float* __restrict _eye, const float* __restrict _at)
 {
 	float tmp[4];
