@@ -3,12 +3,12 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../common/common.h"
+#include "common.h"
 
 #include <bgfx.h>
-#include "../common/entry.h"
-#include "../common/dbg.h"
-#include "../common/processevents.h"
+#include "entry.h"
+#include "dbg.h"
+#include "processevents.h"
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {

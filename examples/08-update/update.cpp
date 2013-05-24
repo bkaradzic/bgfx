@@ -3,16 +3,16 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../common/common.h"
+#include "common.h"
 
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/uint32_t.h>
-#include "../common/entry.h"
-#include "../common/dbg.h"
-#include "../common/math.h"
-#include "../common/processevents.h"
-#include "../common/packrect.h"
+#include "entry.h"
+#include "dbg.h"
+#include "fpumath.h"
+#include "processevents.h"
+#include "packrect.h"
 
 #include <stdio.h>
 #include <string.h>

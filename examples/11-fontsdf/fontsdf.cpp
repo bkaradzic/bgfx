@@ -3,18 +3,18 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../common/common.h"
+#include "common.h"
 #include <bgfx.h>
 #include <bx/timer.h>
-#include "../common/entry.h"
-#include "../common/dbg.h"
-#include "../common/math.h"
-#include "../common/processevents.h"
+#include "entry.h"
+#include "dbg.h"
+#include "fpumath.h"
+#include "processevents.h"
 
-#include "../common/font/font_manager.h"
-#include "../common/font/text_metrics.h"
-#include "../common/font/text_buffer_manager.h"
-#include "../common/imgui/imgui.h"
+#include "font/font_manager.h"
+#include "font/text_metrics.h"
+#include "font/text_buffer_manager.h"
+#include "imgui/imgui.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -112,13 +112,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Create a distance field font.
 	FontHandle base_distance_font = fontManager->createFontByPixelSize(font_tt, 0, 48, FONT_TYPE_DISTANCE);
-	
+
 	// Create a scaled down version of the same font (without adding anything to the atlas).
 	FontHandle scaled_font = fontManager->createScaledFontToPixelSize(base_distance_font, 14);
-		
-	TextLineMetrics metrics(fontManager, scaled_font);		
+
+	TextLineMetrics metrics(fontManager->getFontInfo(scaled_font) );
 	uint32_t lineCount = metrics.getLineCount(bigText);
-	
+
 	float visibleLineCount = 20.0f;
 
 	const char* textBegin = 0;
@@ -129,7 +129,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	textBufferManager->setTextColor(scrollableBuffer, 0xFFFFFFFF);
 
 	textBufferManager->appendText(scrollableBuffer, scaled_font, textBegin, textEnd);
-	
+
 	MouseState mouseState;
 	int32_t scrollArea = 0;
 	while (!processEvents(width, height, debug, reset, &mouseState) )
@@ -145,22 +145,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		const int guiPanelWidth = 250;
 		const int guiPanelHeight = 200;
-	
+
 		imguiBeginScrollArea("Text Area", width - guiPanelWidth - 10, 10, guiPanelWidth, guiPanelHeight, &scrollArea);
 		imguiSeparatorLine();
-				
+
 		static float textScroll = 0.0f;
 		static float textRotation = 0.0f;
 		static float textScale = 1.0f;
 		static float textSize = 14.0f;
-		
-		bool recomputeVisibleText = false;		
+
+		bool recomputeVisibleText = false;
 		recomputeVisibleText |= imguiSlider("Number of lines", &visibleLineCount, 1.0f, 177.0f , 1.0f);
 		if(imguiSlider("Font size", &textSize, 6.0f, 64.0f , 1.0f))
 		{
 			fontManager->destroyFont(scaled_font);
 			scaled_font = fontManager->createScaledFontToPixelSize(base_distance_font, (uint32_t) textSize);
-			metrics = TextLineMetrics (fontManager, scaled_font);			
+			metrics = TextLineMetrics(fontManager->getFontInfo(scaled_font) );
 			recomputeVisibleText = true;
 		}
 
@@ -174,9 +174,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			metrics.getSubText(bigText,(uint32_t)textScroll, (uint32_t)(textScroll+visibleLineCount), textBegin, textEnd);			
 			textBufferManager->appendText(scrollableBuffer, scaled_font, textBegin, textEnd);
 		}			
-		
+
 		imguiEndScrollArea();
-		
+
 		imguiEndFrame();
 
 		// Set view 0 default viewport.
@@ -209,10 +209,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup a top-left ortho matrix for screen space drawing.
 		mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
-				
+
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
-		
+
 		//very crude approximation :(
 		float textAreaWidth = 0.5f * 66.0f * fontManager->getFontInfo(scaled_font).maxAdvanceWidth;
 
@@ -220,7 +220,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float textCenterMat[16];
 		float textScaleMat[16];
 		float screenCenterMat[16];
-		
+
 		mtxRotateZ(textRotMat, textRotation);
 		mtxTranslate(textCenterMat, -(textAreaWidth * 0.5f), (-visibleLineCount)*metrics.getLineHeight()*0.5f, 0);
 		mtxScale(textScaleMat, textScale, textScale, 1.0f);
@@ -229,16 +229,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		//first translate to text center, then scale, then rotate
 		float tmpMat[16];
 		mtxMul(tmpMat, textCenterMat, textRotMat);
-		
+
 		float tmpMat2[16];
 		mtxMul(tmpMat2, tmpMat, textScaleMat);
-		
+
 		float tmpMat3[16];
 		mtxMul(tmpMat3, tmpMat2, screenCenterMat);
 
 		// Set model matrix for rendering.
 		bgfx::setTransform(tmpMat3);
-	
+
 		// Draw your text.
 		textBufferManager->submitTextBuffer(scrollableBuffer, 0);
 

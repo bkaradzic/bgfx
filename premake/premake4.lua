@@ -47,6 +47,7 @@ function exampleProject(_name, _uuid)
 		BX_DIR .. "include",
 		BGFX_DIR .. "include",
 		BGFX_DIR .. "3rdparty",
+		BGFX_DIR .. "examples/common",
 	}
 
 	files {

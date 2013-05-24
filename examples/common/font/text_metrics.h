@@ -1,7 +1,7 @@
 /*
- * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
- */
+* Copyright 2013 Jeremie Roy. All rights reserved.
+* License: http://www.opensource.org/licenses/BSD-2-Clause
+*/
 
 #ifndef __TEXT_METRICS_H__
 #define __TEXT_METRICS_H__
@@ -12,13 +12,13 @@ class TextMetrics
 {
 public:
 	TextMetrics(FontManager* _fontManager);
-	
+
 	/// Append an ASCII/utf-8 string to the metrics helper.
 	void appendText(FontHandle _fontHandle, const char* _string);
 
 	/// Append a wide char string to the metrics helper.
 	void appendText(FontHandle _fontHandle, const wchar_t* _string);
-		
+
 	/// Return the width of the measured text.
 	float getWidth() const { return m_width; }
 
@@ -38,8 +38,8 @@ private:
 class TextLineMetrics
 {
 public:
-	TextLineMetrics(FontManager* _fontManager, FontHandle _fontHandle);
-	
+	TextLineMetrics(const FontInfo& _fontInfo);
+
 	/// Return the height of a line of text using the given font.
 	float getLineHeight() const { return m_lineHeight; }
 
@@ -48,7 +48,7 @@ public:
 
 	/// Return the number of text line in the given text.
 	uint32_t getLineCount(const wchar_t* _string) const;
-	
+
 	/// Return the first and last character visible in the [_firstLine, _lastLine] range.
 	void getSubText(const char* _string, uint32_t _firstLine, uint32_t _lastLine, const char*& _begin, const char*& _end);
 
@@ -62,7 +62,6 @@ public:
 	void getVisibleText(const wchar_t* _string, float _top, float _bottom, const wchar_t*& _begin, const wchar_t*& _end);
 
 private:
-	FontManager* m_fontManager;
 	float m_lineHeight;
 };
 

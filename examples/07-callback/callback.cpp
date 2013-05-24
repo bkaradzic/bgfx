@@ -3,15 +3,15 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../common/common.h"
+#include "common.h"
 
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
-#include "../common/dbg.h"
-#include "../common/math.h"
-#include "../common/aviwriter.h"
+#include "dbg.h"
+#include "fpumath.h"
+#include "aviwriter.h"
 
 #include <inttypes.h>
 #include <stdio.h>

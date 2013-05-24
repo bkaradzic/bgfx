@@ -29,7 +29,7 @@
 #include <bgfx.h>
 
 #include "imgui.h"
-#include "../math.h"
+#include "../fpumath.h"
 
 #include "vs_imgui_color.bin.h"
 #include "fs_imgui_color.bin.h"

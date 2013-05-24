@@ -1,7 +1,7 @@
 /*
- * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
- */
+* Copyright 2013 Jeremie Roy. All rights reserved.
+* License: http://www.opensource.org/licenses/BSD-2-Clause
+*/
 
 #include <wchar.h> // wcslen
 
@@ -22,7 +22,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 {
 	GlyphInfo glyph;
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
-	
+
 	if (font.lineGap > m_lineGap)
 	{
 		m_lineGap = font.lineGap;
@@ -37,7 +37,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 
 	CodePoint codepoint = 0;
 	uint32_t state = 0;
-	
+
 	for (; *_string; ++_string)
 	{
 		if (!utf8_decode(&state, (uint32_t*)&codepoint, *_string) )
@@ -52,7 +52,8 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 					m_x = 0;
 					break;
 				}
-				//TODO handle kerning
+
+
 				m_x += glyph.advance_x;
 				if(m_x > m_width)
 				{
@@ -73,7 +74,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 {
 	GlyphInfo glyph;
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
-	
+
 	if (font.lineGap > m_lineGap) 
 	{
 		m_lineGap = font.lineGap;
@@ -113,10 +114,9 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 	}
 }
 
-TextLineMetrics::TextLineMetrics(FontManager* _fontManager, FontHandle _fontHandle)
+TextLineMetrics::TextLineMetrics(const FontInfo& _fontInfo)
 {
-	const FontInfo& font = _fontManager->getFontInfo(_fontHandle);
-	m_lineHeight = font.ascender - font.descender + font.lineGap;
+	m_lineHeight = _fontInfo.ascender - _fontInfo.descender + _fontInfo.lineGap;
 }
 
 uint32_t TextLineMetrics::getLineCount(const char* _string) const
@@ -177,8 +177,8 @@ void TextLineMetrics::getSubText(const char* _string, uint32_t _firstLine, uint3
 
 	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 	_begin = _string;
-	
-	while((*_string) && (currentLine < _lastLine) )
+
+	while ( (*_string) && (currentLine < _lastLine) )
 	{
 		for (; *_string; ++_string)
 		{	
@@ -281,7 +281,7 @@ void TextLineMetrics::getVisibleText(const wchar_t* _string, float _top, float _
 {
 	// y is bottom of a text line
 	float y = m_lineHeight;
-	
+
 	const wchar_t* _textEnd = _string + wcslen(_string);
 
 	while (y < _top)
