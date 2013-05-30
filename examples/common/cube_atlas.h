@@ -33,14 +33,17 @@ struct AtlasRegion
 	{
 		return (Type) ( (mask >> 0) & 0x0000000F);
 	}
+
 	uint32_t getFaceIndex() const
 	{
 		return (mask >> 4) & 0x0000000F;
 	}
+
 	uint32_t getComponentIndex() const
 	{
 		return (mask >> 8) & 0x0000000F;
 	}
+
 	void setMask(Type _type, uint32_t _faceIndex, uint32_t _componentIndex)
 	{
 		mask = (_componentIndex << 8) + (_faceIndex << 4) + (uint32_t)_type;
@@ -87,14 +90,15 @@ public:
 	void packFaceLayerUV(uint32_t _idx, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const;
 
 	/// Pack the vertex index of the region as 2 quad into an index buffer
-	void packIndex(uint16_t* _indexBuffer, uint32_t _startIndex, uint32_t _startVertex) const
+	static void packIndex(uint16_t* _indexBuffer, uint32_t _startIndex, uint32_t _startVertex)
 	{
-		_indexBuffer[_startIndex + 0] = _startVertex + 0;
-		_indexBuffer[_startIndex + 1] = _startVertex + 1;
-		_indexBuffer[_startIndex + 2] = _startVertex + 2;
-		_indexBuffer[_startIndex + 3] = _startVertex + 0;
-		_indexBuffer[_startIndex + 4] = _startVertex + 2;
-		_indexBuffer[_startIndex + 5] = _startVertex + 3;
+		uint16_t* indices = &_indexBuffer[_startIndex];
+		*indices++ = _startVertex + 0;
+		*indices++ = _startVertex + 1;
+		*indices++ = _startVertex + 2;
+		*indices++ = _startVertex + 0;
+		*indices++ = _startVertex + 2;
+		*indices++ = _startVertex + 3;
 	}
 
 	/// return the TextureHandle (cube) of the atlas
@@ -153,6 +157,8 @@ private:
 
 	struct PackedLayer;
 	PackedLayer* m_layers;
+	AtlasRegion* m_regions;
+	uint8_t* m_textureBuffer;
 
 	uint32_t m_usedLayers;
 	uint32_t m_usedFaces;
@@ -162,9 +168,6 @@ private:
 
 	uint16_t m_regionCount;
 	uint16_t m_maxRegionCount;
-
-	AtlasRegion* m_regions;
-	uint8_t* m_textureBuffer;
 };
 
 #endif // __CUBE_ATLAS_H__
