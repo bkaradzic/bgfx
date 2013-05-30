@@ -368,6 +368,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 	m_penX += kerning;
 
 	const GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
+	const Atlas* atlas = m_fontManager->getAtlas();
 
 	if (m_styleFlags & STYLE_BACKGROUND
 	&&  m_backgroundColor & 0xFF000000)
@@ -377,7 +378,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		float x1 = ( (float)x0 + (glyph->advance_x) );
 		float y1 = (m_penY + m_lineAscender - m_lineDescender + m_lineGap);
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+		atlas->packUV(blackGlyph.regionIndex
 			, (uint8_t*)m_vertexBuffer
 			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
 			, sizeof(TextVertex)
@@ -406,7 +407,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		float x1 = ( (float)x0 + (glyph->advance_x) );
 		float y1 = y0 + font.underlineThickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+		atlas->packUV(blackGlyph.regionIndex
 			, (uint8_t*)m_vertexBuffer
 			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
 			, sizeof(TextVertex)
@@ -464,7 +465,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		float x1 = ( (float)x0 + (glyph->advance_x) );
 		float y1 = y0 + font.underlineThickness;
 
-		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
+		atlas->packUV(blackGlyph.regionIndex
 			, (uint8_t*)m_vertexBuffer
 			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
 			, sizeof(TextVertex)
@@ -490,7 +491,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 	float x1 = (x0 + glyph->width);
 	float y1 = (y0 + glyph->height);
 
-	m_fontManager->getAtlas()->packUV(glyph->regionIndex
+	atlas->packUV(glyph->regionIndex
 		, (uint8_t*)m_vertexBuffer
 		, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
 		, sizeof(TextVertex)
@@ -757,7 +758,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 			bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
 			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
-		} break;
+		}
+		break;
 
 	case DYNAMIC:
 		{
@@ -793,7 +795,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 			bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
 			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
-		} break;
+		}
+		break;
 
 	case TRANSIENT:
 		{
@@ -805,7 +808,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 			memcpy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
 			bgfx::setVertexBuffer(&tvb, bc.textBuffer->getVertexCount() );
 			bgfx::setIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
-		} break;
+		}
+		break;
 	}
 
 	bgfx::submit(_id, _depth);

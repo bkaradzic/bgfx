@@ -127,7 +127,7 @@ public:
 	~FontManager();
 
 	/// Retrieve the atlas used by the font manager (e.g. to add stuff to it)
-	Atlas* getAtlas()
+	const Atlas* getAtlas() const
 	{
 		return m_atlas;
 	}

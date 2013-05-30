@@ -455,28 +455,28 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 	bgfx::updateTextureCube(m_textureHandle, (uint8_t)_region.getFaceIndex(), 0, _region.x, _region.y, _region.width, _region.height, mem);
 }
 
-void Atlas::packFaceLayerUV(uint32_t _idx, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride)
+void Atlas::packFaceLayerUV(uint32_t _idx, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const
 {
 	packUV(m_layers[_idx].faceRegion, _vertexBuffer, _offset, _stride);
 }
 
-void Atlas::packUV(uint16_t handle, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride)
+void Atlas::packUV(uint16_t _regionHandle, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const
 {
-	const AtlasRegion& region = m_regions[handle];
+	const AtlasRegion& region = m_regions[_regionHandle];
 	packUV(region, _vertexBuffer, _offset, _stride);
 }
 
-void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride)
+void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const
 {
-	static const int16_t minVal = -32768;
-	static const int16_t maxVal = 32767;
+	static const int16_t minVal = INT16_MIN;
+	static const int16_t maxVal = INT16_MAX;
 	float texMult = (float)(maxVal - minVal) / ( (float)(m_textureSize) );
 	
-	int16_t x0 = (int16_t)( ((float)_region.x * texMult) - 32767.0f);
-	int16_t y0 = (int16_t)( ((float)_region.y * texMult) - 32767.0f);
-	int16_t x1 = (int16_t)( (((float)_region.x + _region.width) * texMult) - 32767.0f);
-	int16_t y1 = (int16_t)( (((float)_region.y + _region.height) * texMult) - 32767.0f);
-	int16_t w = (int16_t) ( (32767.0f / 4.0f) * (float) _region.getComponentIndex() );
+	int16_t x0 = (int16_t)( ((float)_region.x * texMult) - float(INT16_MAX) );
+	int16_t y0 = (int16_t)( ((float)_region.y * texMult) - float(INT16_MAX) );
+	int16_t x1 = (int16_t)( (((float)_region.x + _region.width) * texMult) - float(INT16_MAX) );
+	int16_t y1 = (int16_t)( (((float)_region.y + _region.height) * texMult) - float(INT16_MAX) );
+	int16_t w = (int16_t) ( (float(INT16_MAX) / 4.0f) * (float) _region.getComponentIndex() );
 
 	_vertexBuffer += _offset;
 	switch (_region.getFaceIndex() )
