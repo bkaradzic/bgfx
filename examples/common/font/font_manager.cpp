@@ -539,58 +539,7 @@ FontManager::~FontManager()
 	}
 }
 
-TrueTypeHandle FontManager::loadTrueTypeFromFile(const char* _fontPath)
-{
-	FILE* pFile;
-	pFile = fopen(_fontPath, "rb");
-	if (pFile == NULL)
-	{
-		TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-		return invalid;
-	}
-
-	// Go to the end of the file.
-	if (fseek(pFile, 0L, SEEK_END) == 0)
-	{
-		// Get the size of the file.
-		long bufsize = ftell(pFile);
-		if (bufsize == -1)
-		{
-			fclose(pFile);
-			TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-			return invalid;
-		}
-
-		uint8_t* buffer = new uint8_t[bufsize];
-
-		// Go back to the start of the file.
-		fseek(pFile, 0L, SEEK_SET);
-
-		// Read the entire file into memory.
-		uint32_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
-		if (newLen == 0)
-		{
-			fclose(pFile);
-			delete[] buffer;
-			TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-			return invalid;
-		}
-
-		fclose(pFile);
-
-		uint16_t id = m_filesHandles.alloc();
-		BX_CHECK(id != bx::HandleAlloc::invalid, "No more room for files");
-		m_cachedFiles[id].buffer = buffer;
-		m_cachedFiles[id].bufferSize = bufsize;
-		TrueTypeHandle ret = {id};
-		return ret;
-	}
-
-	TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-	return invalid;
-}
-
-TrueTypeHandle FontManager::loadTrueTypeFromMemory(const uint8_t* _buffer, uint32_t _size)
+TrueTypeHandle FontManager::createTtf(const uint8_t* _buffer, uint32_t _size)
 {
 	uint16_t id = m_filesHandles.alloc();
 	BX_CHECK(id != bx::HandleAlloc::invalid, "Invalid handle used");
@@ -602,7 +551,7 @@ TrueTypeHandle FontManager::loadTrueTypeFromMemory(const uint8_t* _buffer, uint3
 	return ret;
 }
 
-void FontManager::unloadTrueType(TrueTypeHandle _handle)
+void FontManager::destroyTtf(TrueTypeHandle _handle)
 {
 	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
 	delete m_cachedFiles[_handle.idx].buffer;
@@ -764,9 +713,9 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 		{
 			if (preloadGlyph(font.masterFontHandle, _codePoint) )
 			{
-				GlyphInfo glyphInfo;
-				getGlyphInfo(font.masterFontHandle, _codePoint, glyphInfo);
+				const GlyphInfo* glyph = getGlyphInfo(font.masterFontHandle, _codePoint);
 
+				GlyphInfo glyphInfo = *glyph;
 				glyphInfo.advance_x = (glyphInfo.advance_x * fontInfo.scale);
 				glyphInfo.advance_y = (glyphInfo.advance_y * fontInfo.scale);
 				glyphInfo.offset_x = (glyphInfo.offset_x * fontInfo.scale);
@@ -790,23 +739,23 @@ const FontInfo& FontManager::getFontInfo(FontHandle _handle) const
 	return m_cachedFonts[_handle.idx].fontInfo;
 }
 
-bool FontManager::getGlyphInfo(FontHandle _handle, CodePoint _codePoint, GlyphInfo& _outInfo)
+const GlyphInfo* FontManager::getGlyphInfo(FontHandle _handle, CodePoint _codePoint)
 {
-	GlyphHashMap::iterator iter = m_cachedFonts[_handle.idx].cachedGlyphs.find(_codePoint);
-	if (iter == m_cachedFonts[_handle.idx].cachedGlyphs.end() )
+	const GlyphHashMap& cachedGlyphs = m_cachedFonts[_handle.idx].cachedGlyphs;
+	GlyphHashMap::const_iterator it = cachedGlyphs.find(_codePoint);
+	if (it == cachedGlyphs.end() )
 	{
 		if (preloadGlyph(_handle, _codePoint) )
 		{
-			iter = m_cachedFonts[_handle.idx].cachedGlyphs.find(_codePoint);
+			it = cachedGlyphs.find(_codePoint);
 		}
 		else
 		{
-			return false;
+			return NULL;
 		}
 	}
 
-	_outInfo = iter->second;
-	return true;
+	return &it->second;
 }
 
 bool FontManager::addBitmap(GlyphInfo& _glyphInfo, const uint8_t* _data)

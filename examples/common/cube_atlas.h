@@ -110,7 +110,7 @@ public:
 	}
 
 	/// retrieve the size of side of a texture in pixels
-	uint16_t getTextureSize()
+	uint16_t getTextureSize() const
 	{
 		return m_textureSize;
 	}

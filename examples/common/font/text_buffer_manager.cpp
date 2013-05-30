@@ -130,7 +130,7 @@ public:
 	}
 
 private:
-	void appendGlyph(CodePoint _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo);
+	void appendGlyph(FontHandle _handle, CodePoint _codePoint);
 	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
 
 	static uint32_t toABGR(uint32_t _rgba)
@@ -224,9 +224,6 @@ TextBuffer::~TextBuffer()
 
 void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const char* _end)
 {
-	GlyphInfo glyph;
-	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
-
 	if (m_vertexCount == 0)
 	{
 		m_originX = m_penX;
@@ -243,14 +240,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 	{
 		if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT )
 		{
-			if (m_fontManager->getGlyphInfo(_fontHandle, codepoint, glyph) )
-			{
-				appendGlyph(codepoint, font, glyph);
-			}
-			else
-			{
-				BX_CHECK(false, "Glyph not found");
-			}
+			appendGlyph(_fontHandle, codepoint);
 		}
 	}
 
@@ -259,9 +249,6 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 
 void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, const wchar_t* _end)
 {
-	GlyphInfo glyph;
-	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
-
 	if (m_vertexCount == 0)
 	{
 		m_originX = m_penX;
@@ -280,14 +267,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 	for (const wchar_t* _current = _string; _current < _end; ++_current)
 	{
 		uint32_t _codePoint = *_current;
-		if (m_fontManager->getGlyphInfo(_fontHandle, _codePoint, glyph) )
-		{
-			appendGlyph(_codePoint, font, glyph);
-		}
-		else
-		{
-			BX_CHECK(false, "Glyph not found");
-		}
+		appendGlyph(_fontHandle, _codePoint);
 	}
 }
 
@@ -341,8 +321,17 @@ void TextBuffer::clearTextBuffer()
 	m_rectangle.height = 0;
 }
 
-void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const GlyphInfo& _glyphInfo)
-{	
+void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
+{
+	const GlyphInfo* glyph = m_fontManager->getGlyphInfo(_handle, _codePoint);
+	BX_WARN(NULL != glyph, "Glyph not found (font handle %d, code point %d)", _handle.idx, _codePoint);
+	if (NULL == glyph)
+	{
+		return;
+	}
+
+	const FontInfo& font = m_fontManager->getFontInfo(_handle);
+
 	if( m_vertexCount/4 >= MAX_BUFFERED_CHARACTERS)
 	{
 		return;
@@ -352,40 +341,40 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 	{
 		m_penX = m_originX;
 		m_penY += m_lineGap + m_lineAscender -m_lineDescender;
-		m_lineGap = _font.lineGap;
-		m_lineDescender = _font.descender;
-		m_lineAscender = _font.ascender;
+		m_lineGap = font.lineGap;
+		m_lineDescender = font.descender;
+		m_lineAscender = font.ascender;
 		m_lineStartIndex = m_vertexCount;
 		return;
 	}
 
 	//is there a change of font size that require the text on the left to be centered again ?
-	if (_font.ascender > m_lineAscender
-		|| (_font.descender < m_lineDescender) )
+	if (font.ascender > m_lineAscender
+		|| (font.descender < m_lineDescender) )
 	{
-		if (_font.descender < m_lineDescender)
+		if (font.descender < m_lineDescender)
 		{
-			m_lineDescender = _font.descender;
-			m_lineGap = _font.lineGap;
+			m_lineDescender = font.descender;
+			m_lineGap = font.lineGap;
 		}
 
-		float txtDecals = (_font.ascender - m_lineAscender);
-		m_lineAscender = _font.ascender;
-		m_lineGap = _font.lineGap;		
+		float txtDecals = (font.ascender - m_lineAscender);
+		m_lineAscender = font.ascender;
+		m_lineGap = font.lineGap;		
 		verticalCenterLastLine( (txtDecals), (m_penY - m_lineAscender), (m_penY + m_lineAscender - m_lineDescender + m_lineGap) );
 	}
 
-	float kerning = 0 * _font.scale;
+	float kerning = 0 * font.scale;
 	m_penX += kerning;
 
-	GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
+	const GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
 
 	if (m_styleFlags & STYLE_BACKGROUND
 	&&  m_backgroundColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY);
-		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
+		float x1 = ( (float)x0 + (glyph->advance_x) );
 		float y1 = (m_penY + m_lineAscender - m_lineDescender + m_lineGap);
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
@@ -414,8 +403,8 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY + m_lineAscender - m_lineDescender * 0.5f);
-		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
-		float y1 = y0 + _font.underlineThickness;
+		float x1 = ( (float)x0 + (glyph->advance_x) );
+		float y1 = y0 + font.underlineThickness;
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
 			, (uint8_t*)m_vertexBuffer
@@ -443,8 +432,8 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY);
-		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
-		float y1 = y0 + _font.underlineThickness;
+		float x1 = ( (float)x0 + (glyph->advance_x) );
+		float y1 = y0 + font.underlineThickness;
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
 			, (uint8_t*)m_vertexBuffer
@@ -471,9 +460,9 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 	&&  m_strikeThroughColor & 0xFF000000)
 	{
 		float x0 = (m_penX - kerning);
-		float y0 = (m_penY + 0.666667f * _font.ascender);
-		float x1 = ( (float)x0 + (_glyphInfo.advance_x) );
-		float y1 = y0 + _font.underlineThickness;
+		float y0 = (m_penY + 0.666667f * font.ascender);
+		float x1 = ( (float)x0 + (glyph->advance_x) );
+		float y1 = y0 + font.underlineThickness;
 
 		m_fontManager->getAtlas()->packUV(blackGlyph.regionIndex
 			, (uint8_t*)m_vertexBuffer
@@ -496,12 +485,12 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 		m_indexCount += 6;
 	}
 
-	float x0 = m_penX + (_glyphInfo.offset_x);
-	float y0 = (m_penY + m_lineAscender + (_glyphInfo.offset_y) );
-	float x1 = (x0 + _glyphInfo.width);
-	float y1 = (y0 + _glyphInfo.height);
+	float x0 = m_penX + (glyph->offset_x);
+	float y0 = (m_penY + m_lineAscender + (glyph->offset_y) );
+	float x1 = (x0 + glyph->width);
+	float y1 = (y0 + glyph->height);
 
-	m_fontManager->getAtlas()->packUV(_glyphInfo.regionIndex
+	m_fontManager->getAtlas()->packUV(glyph->regionIndex
 		, (uint8_t*)m_vertexBuffer
 		, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
 		, sizeof(TextVertex)
@@ -521,7 +510,7 @@ void TextBuffer::appendGlyph(CodePoint _codePoint, const FontInfo& _font, const 
 	m_vertexCount += 4;
 	m_indexCount += 6;
 
-	m_penX += _glyphInfo.advance_x;
+	m_penX += glyph->advance_x;
 	if (m_penX > m_rectangle.width)
 	{
 		m_rectangle.width = m_penX;

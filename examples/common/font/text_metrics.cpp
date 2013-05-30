@@ -20,7 +20,6 @@ TextMetrics::TextMetrics(FontManager* _fontManager)
 
 void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 {
-	GlyphInfo glyph;
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
 
 	if (font.lineGap > m_lineGap)
@@ -42,7 +41,8 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 	{
 		if (!utf8_decode(&state, (uint32_t*)&codepoint, *_string) )
 		{
-			if (m_fontManager->getGlyphInfo(_fontHandle, codepoint, glyph) )
+			const GlyphInfo* glyph = m_fontManager->getGlyphInfo(_fontHandle, codepoint);
+			if (NULL != glyph)
 			{
 				if (codepoint == L'\n')
 				{
@@ -53,8 +53,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 					break;
 				}
 
-
-				m_x += glyph.advance_x;
+				m_x += glyph->advance_x;
 				if(m_x > m_width)
 				{
 					m_width = m_x;
@@ -72,7 +71,6 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 
 void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 {
-	GlyphInfo glyph;
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
 
 	if (font.lineGap > m_lineGap) 
@@ -90,7 +88,8 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 	for (uint32_t ii = 0, end = (uint32_t)wcslen(_string); ii < end; ++ii)
 	{
 		uint32_t codepoint = _string[ii];
-		if (m_fontManager->getGlyphInfo(_fontHandle, codepoint, glyph) )
+		const GlyphInfo* glyph = m_fontManager->getGlyphInfo(_fontHandle, codepoint);
+		if (NULL != glyph)
 		{
 			if (codepoint == L'\n')
 			{
@@ -101,7 +100,7 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 				break;
 			}
 
-			m_x += glyph.advance_x;
+			m_x += glyph->advance_x;
 			if(m_x > m_width)
 			{
 				m_width = m_x;

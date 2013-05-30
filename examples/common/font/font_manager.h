@@ -132,19 +132,14 @@ public:
 		return m_atlas;
 	}
 
-	/// Load a TrueType font from a file path.
-	///
-	/// @return INVALID_HANDLE if the loading fail.
-	TrueTypeHandle loadTrueTypeFromFile(const char* _fontPath);
-
 	/// Load a TrueType font from a given buffer. The buffer is copied and 
 	/// thus can be freed or reused after this call.
 	///
 	/// @return invalid handle if the loading fail
-	TrueTypeHandle loadTrueTypeFromMemory(const uint8_t* _buffer, uint32_t _size);
+	TrueTypeHandle createTtf(const uint8_t* _buffer, uint32_t _size);
 
 	/// Unload a TrueType font (free font memory) but keep loaded glyphs.
-	void unloadTrueType(TrueTypeHandle _handle);
+	void destroyTtf(TrueTypeHandle _handle);
 
 	/// Return a font whose height is a fixed pixel size.
 	FontHandle createFontByPixelSize(TrueTypeHandle _handle, uint32_t _typefaceIndex, uint32_t _pixelSize, uint32_t _fontType = FONT_TYPE_ALPHA);
@@ -164,11 +159,6 @@ public:
 	/// Preload a single glyph, return true on success.
 	bool preloadGlyph(FontHandle _handle, CodePoint _character);
 
-	/// Bake a font to disk (the set of preloaded glyph).
-	///
-	/// @return true if the baking succeed, false otherwise
-	bool saveBakedFont(FontHandle _handle, const char* _fontDirectory, const char* _fontName);
-
 	/// Return the font descriptor of a font.
 	///
 	/// @remark the handle is required to be valid
@@ -177,10 +167,9 @@ public:
 	/// Return the rendering informations about the glyph region. Load the 
 	/// glyph from a TrueType font if possible
 	///
-	/// @return True if the Glyph is available.
-	bool getGlyphInfo(FontHandle _handle, CodePoint _codePoint, GlyphInfo& _outInfo);
+	const GlyphInfo* getGlyphInfo(FontHandle _handle, CodePoint _codePoint);
 
-	GlyphInfo& getBlackGlyph()
+	const GlyphInfo& getBlackGlyph() const
 	{
 		return m_blackGlyph;
 	}

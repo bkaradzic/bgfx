@@ -69,6 +69,48 @@ char* loadText(const char* _textFile)
 	return NULL;
 }
 
+TrueTypeHandle loadTtf(FontManager* _fm, const char* _fontPath)
+{
+	FILE* pFile;
+	pFile = fopen(_fontPath, "rb");
+	if (NULL != pFile)
+	{
+		if (0 == fseek(pFile, 0L, SEEK_END) )
+		{
+			// Get the size of the file.
+			long bufsize = ftell(pFile);
+			if (bufsize == -1)
+			{
+				fclose(pFile);
+				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
+
+			uint8_t* buffer = new uint8_t[bufsize];
+
+			// Go back to the start of the file.
+			fseek(pFile, 0L, SEEK_SET);
+
+			// Read the entire file into memory.
+			uint32_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
+			if (newLen == 0)
+			{
+				fclose(pFile);
+				delete[] buffer;
+				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
+
+			fclose(pFile);
+
+			return _fm->createTtf(buffer, bufsize);
+		}
+	}
+
+	TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
+	return invalid;
+}
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -108,7 +150,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 
-	TrueTypeHandle font_tt = fontManager->loadTrueTypeFromFile("font/special_elite.ttf");//bleeding_cowboys.ttf");
+	TrueTypeHandle font_tt = loadTtf(fontManager, "font/special_elite.ttf");
 
 	// Create a distance field font.
 	FontHandle base_distance_font = fontManager->createFontByPixelSize(font_tt, 0, 48, FONT_TYPE_DISTANCE);
@@ -247,7 +289,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
-	fontManager->unloadTrueType(font_tt);
+	fontManager->destroyTtf(font_tt);
 	// Destroy the fonts.
 	fontManager->destroyFont(base_distance_font);
 	fontManager->destroyFont(scaled_font);
