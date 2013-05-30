@@ -16,22 +16,12 @@
 #if BGFX_CONFIG_USE_TINYSTL
 namespace tinystl
 {
-	//struct bgfx_allocator
-	//{
-	//static void* static_allocate(size_t _bytes);
-	//static void static_deallocate(void* _ptr, size_t /*_bytes*/);
-	//};
 } // namespace tinystl
-//#	define TINYSTL_ALLOCATOR tinystl::bgfx_allocator
-#   include <TINYSTL/unordered_map.h>
-//#	include <TINYSTL/unordered_set.h>
+#   include <TINYSTL/unordered_map.hh>
 namespace stl = tinystl;
 #else
 #   include <unordered_map>
-namespace std
-{ namespace tr1
-{}
-}
+namespace std { namespace tr1 {} }
 namespace stl
 {
 	using namespace std;
@@ -201,25 +191,25 @@ bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, u
 
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
 
-	int32_t x = bitmap->left;
-	int32_t y = -bitmap->top;
-	int32_t w = bitmap->bitmap.width;
-	int32_t h = bitmap->bitmap.rows;
+	int32_t xx = bitmap->left;
+	int32_t yy = -bitmap->top;
+	int32_t ww = bitmap->bitmap.width;
+	int32_t hh = bitmap->bitmap.rows;
 
-	_glyphInfo.offset_x = (float) x;
-	_glyphInfo.offset_y = (float) y;
-	_glyphInfo.width = (float) w;
-	_glyphInfo.height = (float) h;
+	_glyphInfo.offset_x = (float)xx;
+	_glyphInfo.offset_y = (float)yy;
+	_glyphInfo.width = (float)ww;
+	_glyphInfo.height = (float)hh;
 	_glyphInfo.advance_x = (float)slot->advance.x / 64.0f;
 	_glyphInfo.advance_y = (float)slot->advance.y / 64.0f;
 
 	int32_t charsize = 1;
 	int32_t depth = 1;
 	int32_t stride = bitmap->bitmap.pitch;
-	for (int32_t ii = 0; ii < h; ++ii)
+	for (int32_t ii = 0; ii < hh; ++ii)
 	{
-		memcpy(_outBuffer + (ii * w) * charsize * depth,
-			bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
+		memcpy(_outBuffer + (ii * ww) * charsize * depth,
+			bitmap->bitmap.buffer + (ii * stride) * charsize, ww * charsize * depth);
 	}
 
 	FT_Done_Glyph(glyph);
@@ -270,8 +260,10 @@ bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo
 	int32_t stride = bitmap->bitmap.pitch;
 	for (int32_t ii = 0; ii < h; ++ii)
 	{
-		memcpy(_outBuffer + (ii * w) * charsize * depth,
-			bitmap->bitmap.buffer + (ii * stride) * charsize, w * charsize * depth);
+		memcpy(_outBuffer + (ii * w) * charsize * depth
+			, bitmap->bitmap.buffer + (ii * stride) * charsize
+			, w * charsize * depth
+			);
 	}
 
 	FT_Done_Glyph(glyph);
@@ -472,9 +464,11 @@ typedef stl::unordered_map<CodePoint, GlyphInfo> GlyphHashMap;
 struct FontManager::CachedFont
 {
 	CachedFont()
+		: trueTypeFont(NULL)
 	{
-		trueTypeFont = NULL; masterFontHandle.idx = -1;
+		masterFontHandle.idx = bx::HandleAlloc::invalid;
 	}
+
 	FontInfo fontInfo;
 	GlyphHashMap cachedGlyphs;
 	TrueTypeFont* trueTypeFont;
@@ -568,7 +562,7 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _tt_handle, uint32_
 	if (!ttf->init(m_cachedFiles[_tt_handle.idx].buffer, m_cachedFiles[_tt_handle.idx].bufferSize, _typefaceIndex, _pixelSize) )
 	{
 		delete ttf;
-		FontHandle invalid = BGFX_INVALID_HANDLE;
+		FontHandle invalid = { bx::HandleAlloc::invalid };
 		return invalid;
 	}
 
@@ -580,7 +574,7 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _tt_handle, uint32_
 	m_cachedFonts[fontIdx].fontInfo.fontType = _fontType;
 	m_cachedFonts[fontIdx].fontInfo.pixelSize = _pixelSize;
 	m_cachedFonts[fontIdx].cachedGlyphs.clear();
-	m_cachedFonts[fontIdx].masterFontHandle.idx = -1;
+	m_cachedFonts[fontIdx].masterFontHandle.idx = bx::HandleAlloc::invalid;
 	FontHandle ret = {fontIdx};
 	return ret;
 }

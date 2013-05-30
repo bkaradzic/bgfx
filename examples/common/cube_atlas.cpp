@@ -8,7 +8,6 @@
 
 #include <limits.h> // INT_MAX
 #include <memory.h> // memset
-
 #include <vector>
 
 #include "cube_atlas.h"
@@ -175,12 +174,10 @@ float RectanglePacker::getUsageRatio()
 	uint32_t total = m_width * m_height;
 	if (total > 0)
 	{
-		return (float) m_usedSpace / (float) total;
+		return (float)m_usedSpace / (float)total;
 	}
-	else
-	{
-		return 0.0f;
-	}
+
+	return 0.0f;
 }
 
 void RectanglePacker::clear()
@@ -441,11 +438,11 @@ void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t 
 	static const int16_t maxVal = INT16_MAX;
 	float texMult = (float)(maxVal - minVal) / ( (float)(m_textureSize) );
 	
-	int16_t x0 = (int16_t)( ((float)_region.x * texMult) - float(INT16_MAX) );
-	int16_t y0 = (int16_t)( ((float)_region.y * texMult) - float(INT16_MAX) );
-	int16_t x1 = (int16_t)( (((float)_region.x + _region.width) * texMult) - float(INT16_MAX) );
-	int16_t y1 = (int16_t)( (((float)_region.y + _region.height) * texMult) - float(INT16_MAX) );
-	int16_t w =  (int16_t)( (float(INT16_MAX) / 4.0f) * (float) _region.getComponentIndex() );
+	int16_t x0 = (int16_t)( ( (float)_region.x * texMult) - float(INT16_MAX) );
+	int16_t y0 = (int16_t)( ( (float)_region.y * texMult) - float(INT16_MAX) );
+	int16_t x1 = (int16_t)( ( ( (float)_region.x + _region.width) * texMult) - float(INT16_MAX) );
+	int16_t y1 = (int16_t)( ( ( (float)_region.y + _region.height) * texMult) - float(INT16_MAX) );
+	int16_t ww = (int16_t)( (float(INT16_MAX) / 4.0f) * (float) _region.getComponentIndex() );
 
 	_vertexBuffer += _offset;
 	switch (_region.getFaceIndex() )
@@ -455,44 +452,44 @@ void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t 
 		x1 = -x1;
 		y0 = -y0;
 		y1 = -y1;
-		writeUV(_vertexBuffer, maxVal, y0, x0, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, maxVal, y1, x0, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, maxVal, y1, x1, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, maxVal, y0, x1, w); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, maxVal, y0, x0, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, maxVal, y1, x0, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, maxVal, y1, x1, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, maxVal, y0, x1, ww); _vertexBuffer += _stride;
 		break;
 
 	case 1: // -X
 		y0 = -y0;
 		y1 = -y1;
-		writeUV(_vertexBuffer, minVal, y0, x0, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, minVal, y1, x0, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, minVal, y1, x1, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, minVal, y0, x1, w); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, minVal, y0, x0, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, minVal, y1, x0, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, minVal, y1, x1, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, minVal, y0, x1, ww); _vertexBuffer += _stride;
 		break;
 
 	case 2: // +Y
-		writeUV(_vertexBuffer, x0, maxVal, y0, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x0, maxVal, y1, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, maxVal, y1, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, maxVal, y0, w); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, maxVal, y0, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, maxVal, y1, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, maxVal, y1, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, maxVal, y0, ww); _vertexBuffer += _stride;
 		break;
 
 	case 3: // -Y
 		y0 = -y0;
 		y1 = -y1;
-		writeUV(_vertexBuffer, x0, minVal, y0, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x0, minVal, y1, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, minVal, y1, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, minVal, y0, w); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, minVal, y0, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, minVal, y1, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, minVal, y1, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, minVal, y0, ww); _vertexBuffer += _stride;
 		break;
 
 	case 4: // +Z
 		y0 = -y0;
 		y1 = -y1;
-		writeUV(_vertexBuffer, x0, y0, maxVal, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x0, y1, maxVal, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, y1, maxVal, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, y0, maxVal, w); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, y0, maxVal, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, y1, maxVal, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, y1, maxVal, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, y0, maxVal, ww); _vertexBuffer += _stride;
 		break;
 
 	case 5: // -Z
@@ -500,10 +497,10 @@ void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t 
 		x1 = -x1;
 		y0 = -y0;
 		y1 = -y1;
-		writeUV(_vertexBuffer, x0, y0, minVal, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x0, y1, minVal, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, y1, minVal, w); _vertexBuffer += _stride;
-		writeUV(_vertexBuffer, x1, y0, minVal, w); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, y0, minVal, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x0, y1, minVal, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, y1, minVal, ww); _vertexBuffer += _stride;
+		writeUV(_vertexBuffer, x1, y0, minVal, ww); _vertexBuffer += _stride;
 		break;
 	}
 }
