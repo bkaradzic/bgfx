@@ -162,6 +162,34 @@ FontInfo TrueTypeFont::getFontInfo()
 	return outFontInfo;
 }
 
+static void glyphInfoInit(GlyphInfo& _glyphInfo, FT_BitmapGlyph _bitmap, FT_GlyphSlot _slot, uint8_t* _dst, uint32_t _bpp)
+{
+	int32_t xx = _bitmap->left;
+	int32_t yy = -_bitmap->top;
+	int32_t ww = _bitmap->bitmap.width;
+	int32_t hh = _bitmap->bitmap.rows;
+
+	_glyphInfo.offset_x = (float)xx;
+	_glyphInfo.offset_y = (float)yy;
+	_glyphInfo.width = (float)ww;
+	_glyphInfo.height = (float)hh;
+	_glyphInfo.advance_x = (float)_slot->advance.x / 64.0f;
+	_glyphInfo.advance_y = (float)_slot->advance.y / 64.0f;
+
+	uint32_t dstPitch = ww * _bpp;
+
+	uint8_t* src = _bitmap->bitmap.buffer;
+	uint32_t srcPitch = _bitmap->bitmap.pitch;
+
+	for (int32_t ii = 0; ii < hh; ++ii)
+	{
+		memcpy(_dst, src, dstPitch);
+
+		_dst += dstPitch;
+		src += srcPitch;
+	}
+}
+
 bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
@@ -191,26 +219,7 @@ bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, u
 
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
 
-	int32_t xx = bitmap->left;
-	int32_t yy = -bitmap->top;
-	int32_t ww = bitmap->bitmap.width;
-	int32_t hh = bitmap->bitmap.rows;
-
-	_glyphInfo.offset_x = (float)xx;
-	_glyphInfo.offset_y = (float)yy;
-	_glyphInfo.width = (float)ww;
-	_glyphInfo.height = (float)hh;
-	_glyphInfo.advance_x = (float)slot->advance.x / 64.0f;
-	_glyphInfo.advance_y = (float)slot->advance.y / 64.0f;
-
-	int32_t charsize = 1;
-	int32_t depth = 1;
-	int32_t stride = bitmap->bitmap.pitch;
-	for (int32_t ii = 0; ii < hh; ++ii)
-	{
-		memcpy(_outBuffer + (ii * ww) * charsize * depth,
-			bitmap->bitmap.buffer + (ii * stride) * charsize, ww * charsize * depth);
-	}
+	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 1);
 
 	FT_Done_Glyph(glyph);
 	return true;
@@ -244,27 +253,8 @@ bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo
 	}
 
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
-	int32_t x = bitmap->left;
-	int32_t y = -bitmap->top;
-	int32_t w = bitmap->bitmap.width;
-	int32_t h = bitmap->bitmap.rows;
 
-	_glyphInfo.offset_x = (float) x;
-	_glyphInfo.offset_y = (float) y;
-	_glyphInfo.width = (float) w;
-	_glyphInfo.height = (float) h;
-	_glyphInfo.advance_x = (float)slot->advance.x / 64.0f;
-	_glyphInfo.advance_y = (float)slot->advance.y / 64.0f;
-	int32_t charsize = 1;
-	int32_t depth = 3;
-	int32_t stride = bitmap->bitmap.pitch;
-	for (int32_t ii = 0; ii < h; ++ii)
-	{
-		memcpy(_outBuffer + (ii * w) * charsize * depth
-			, bitmap->bitmap.buffer + (ii * stride) * charsize
-			, w * charsize * depth
-			);
-	}
+	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 3);
 
 	FT_Done_Glyph(glyph);
 	return true;
@@ -394,31 +384,10 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
 
-	int32_t xx = bitmap->left;
-	int32_t yy = -bitmap->top;
 	int32_t ww = bitmap->bitmap.width;
 	int32_t hh = bitmap->bitmap.rows;
 
-	_glyphInfo.offset_x = (float) xx;
-	_glyphInfo.offset_y = (float) yy;
-	_glyphInfo.width = (float) ww;
-	_glyphInfo.height = (float) hh;
-	_glyphInfo.advance_x = (float)slot->advance.x / 64.0f;
-	_glyphInfo.advance_y = (float)slot->advance.y / 64.0f;
-
-	int32_t depth = 1;
-	int32_t stride = bitmap->bitmap.pitch;
-
-	uint32_t pitch = ww * depth;
-	uint8_t* out = _outBuffer;
-	uint8_t* input = bitmap->bitmap.buffer;
-	for (int32_t ii = 0; ii < hh; ++ii)
-	{
-		memcpy(out, input, pitch);
-
-		out += pitch;
-		input += stride;
-	}
+	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 1);
 
 	FT_Done_Glyph(glyph);
 
