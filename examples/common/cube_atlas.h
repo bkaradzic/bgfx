@@ -147,13 +147,7 @@ public:
 	}
 
 private:
-	static void writeUV(uint8_t* _vertexBuffer, int16_t _x, int16_t _y, int16_t _z, int16_t _w)
-	{
-		( (uint16_t*) _vertexBuffer)[0] = _x;
-		( (uint16_t*) _vertexBuffer)[1] = _y;
-		( (uint16_t*) _vertexBuffer)[2] = _z;
-		( (uint16_t*) _vertexBuffer)[3] = _w;
-	}
+	void Atlas::init();
 
 	struct PackedLayer;
 	PackedLayer* m_layers;
@@ -165,6 +159,8 @@ private:
 
 	bgfx::TextureHandle m_textureHandle;
 	uint16_t m_textureSize;
+	float m_texelSize;
+	float m_texelOffset[2];
 
 	uint16_t m_regionCount;
 	uint16_t m_maxRegionCount;

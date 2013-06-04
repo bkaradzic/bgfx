@@ -11,11 +11,14 @@
 BGFX_HANDLE(TextBufferHandle);
 
 /// type of vertex and index buffer to use with a TextBuffer
-enum BufferType
+struct BufferType
 {
-	STATIC,
-	DYNAMIC,
-	TRANSIENT
+	enum Enum
+	{
+		Static,
+		Dynamic,
+		Transient,
+	};
 };
 
 /// special style effect (can be combined)
@@ -40,7 +43,7 @@ public:
 	TextBufferManager(FontManager* _fontManager);
 	~TextBufferManager();
 
-	TextBufferHandle createTextBuffer(uint32_t _type, BufferType _bufferType);
+	TextBufferHandle createTextBuffer(uint32_t _type, BufferType::Enum _bufferType);
 	void destroyTextBuffer(TextBufferHandle _handle);
 	void submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth = 0);
 
@@ -75,7 +78,7 @@ private:
 		uint16_t indexBufferHandle;
 		uint16_t vertexBufferHandle;
 		TextBuffer* textBuffer;
-		BufferType bufferType;
+		BufferType::Enum bufferType;
 		uint32_t fontType;
 	};
 
@@ -84,7 +87,7 @@ private:
 	FontManager* m_fontManager;
 	bgfx::VertexDecl m_vertexDecl;
 	bgfx::UniformHandle u_texColor;
-	bgfx::UniformHandle u_inverse_gamma;
+	bgfx::UniformHandle u_fontParam;
 	bgfx::ProgramHandle m_basicProgram;
 	bgfx::ProgramHandle m_distanceProgram;
 	bgfx::ProgramHandle m_distanceSubpixelProgram;

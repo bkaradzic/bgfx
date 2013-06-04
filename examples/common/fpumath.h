@@ -27,6 +27,11 @@ inline float flerp(float _a, float _b, float _t)
 	return _a + (_b - _a) * _t;
 }
 
+inline float fsign(float _a)
+{
+	return _a < 0.0f ? -1.0f : 1.0f;
+}
+
 inline void vec3Add(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
 {
 	_result[0] = _a[0] + _b[0];
@@ -277,6 +282,18 @@ inline void vec3MulMtx(float* __restrict _result, const float* __restrict _vec, 
 	_result[0] = _vec[0] * _mat[ 0] + _vec[1] * _mat[4] + _vec[2] * _mat[ 8] + _mat[12];
 	_result[1] = _vec[0] * _mat[ 1] + _vec[1] * _mat[5] + _vec[2] * _mat[ 9] + _mat[13];
 	_result[2] = _vec[0] * _mat[ 2] + _vec[1] * _mat[6] + _vec[2] * _mat[10] + _mat[14];
+}
+
+inline void vec3MulMtxH(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
+{
+	float xx = _vec[0] * _mat[ 0] + _vec[1] * _mat[4] + _vec[2] * _mat[ 8] + _mat[12];
+	float yy = _vec[0] * _mat[ 1] + _vec[1] * _mat[5] + _vec[2] * _mat[ 9] + _mat[13];
+	float zz = _vec[0] * _mat[ 2] + _vec[1] * _mat[6] + _vec[2] * _mat[10] + _mat[14];
+	float ww = _vec[0] * _mat[ 3] + _vec[1] * _mat[7] + _vec[2] * _mat[11] + _mat[15];
+	float invW = fsign(ww)/ww;
+	_result[0] = xx*invW;
+	_result[1] = yy*invW;
+	_result[2] = zz*invW;
 }
 
 inline void vec4MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)

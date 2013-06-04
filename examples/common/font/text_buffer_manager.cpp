@@ -615,7 +615,6 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 	m_vertexDecl.end();
 
 	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
-	u_inverse_gamma = bgfx::createUniform("u_inverse_gamma", bgfx::UniformType::Uniform1f);
 }
 
 TextBufferManager::~TextBufferManager()
@@ -624,14 +623,13 @@ TextBufferManager::~TextBufferManager()
 	delete[] m_textBuffers;
 
 	bgfx::destroyUniform(u_texColor);
-	bgfx::destroyUniform(u_inverse_gamma);
 
 	bgfx::destroyProgram(m_basicProgram);
 	bgfx::destroyProgram(m_distanceProgram);
 	bgfx::destroyProgram(m_distanceSubpixelProgram);
 }
 
-TextBufferHandle TextBufferManager::createTextBuffer(uint32_t _type, BufferType _bufferType)
+TextBufferHandle TextBufferManager::createTextBuffer(uint32_t _type, BufferType::Enum _bufferType)
 {
 	uint16_t textIdx = m_textBufferHandles.alloc();
 	BufferCache& bc = m_textBuffers[textIdx];
@@ -662,7 +660,7 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 
 	switch (bc.bufferType)
 	{
-	case STATIC:
+	case BufferType::Static:
 		{
 			bgfx::IndexBufferHandle ibh;
 			bgfx::VertexBufferHandle vbh;
@@ -674,7 +672,7 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 
 		break;
 
-	case DYNAMIC:
+	case BufferType::Dynamic:
 		bgfx::DynamicIndexBufferHandle ibh;
 		bgfx::DynamicVertexBufferHandle vbh;
 		ibh.idx = bc.indexBufferHandle;
@@ -684,7 +682,7 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 
 		break;
 
-	case TRANSIENT: //naturally destroyed
+	case BufferType::Transient: // destroyed every frame
 		break;
 	}
 }
@@ -692,6 +690,7 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth)
 {
 	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+
 	BufferCache& bc = m_textBuffers[_handle.idx];
 
 	uint32_t indexSize = bc.textBuffer->getIndexCount() * bc.textBuffer->getIndexSize();
@@ -699,8 +698,6 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 	const bgfx::Memory* mem;
 
 	bgfx::setTexture(0, u_texColor, m_fontManager->getAtlas()->getTextureHandle() );
-	float inverse_gamme = 1.0f / 2.2f;
-	bgfx::setUniform(u_inverse_gamma, &inverse_gamme);
 
 	switch (bc.fontType)
 	{
@@ -732,7 +729,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 	switch (bc.bufferType)
 	{
-	case STATIC:
+	case BufferType::Static:
 		{
 			bgfx::IndexBufferHandle ibh;
 			bgfx::VertexBufferHandle vbh;
@@ -761,7 +758,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		}
 		break;
 
-	case DYNAMIC:
+	case BufferType::Dynamic:
 		{
 			bgfx::DynamicIndexBufferHandle ibh;
 			bgfx::DynamicVertexBufferHandle vbh;
@@ -798,7 +795,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		}
 		break;
 
-	case TRANSIENT:
+	case BufferType::Transient:
 		{
 			bgfx::TransientIndexBuffer tib;
 			bgfx::TransientVertexBuffer tvb;

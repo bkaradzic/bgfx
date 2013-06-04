@@ -150,15 +150,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	FontManager* fontManager = new FontManager(512);
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 
-	TrueTypeHandle font_tt = loadTtf(fontManager, "font/special_elite.ttf");
+	TrueTypeHandle font = loadTtf(fontManager, "font/special_elite.ttf");
 
 	// Create a distance field font.
-	FontHandle base_distance_font = fontManager->createFontByPixelSize(font_tt, 0, 48, FONT_TYPE_DISTANCE);
+	FontHandle fontSdf = fontManager->createFontByPixelSize(font, 0, 48, FONT_TYPE_DISTANCE);
 
 	// Create a scaled down version of the same font (without adding anything to the atlas).
-	FontHandle scaled_font = fontManager->createScaledFontToPixelSize(base_distance_font, 14);
+	FontHandle fontScaled = fontManager->createScaledFontToPixelSize(fontSdf, 14);
 
-	TextLineMetrics metrics(fontManager->getFontInfo(scaled_font) );
+	TextLineMetrics metrics(fontManager->getFontInfo(fontScaled) );
 	uint32_t lineCount = metrics.getLineCount(bigText);
 
 	float visibleLineCount = 20.0f;
@@ -167,13 +167,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const char* textEnd = 0;
 	metrics.getSubText(bigText, 0, (uint32_t)visibleLineCount, textBegin, textEnd);
 
-	TextBufferHandle scrollableBuffer = textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, TRANSIENT);
+	TextBufferHandle scrollableBuffer = textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, BufferType::Transient);
 	textBufferManager->setTextColor(scrollableBuffer, 0xFFFFFFFF);
 
-	textBufferManager->appendText(scrollableBuffer, scaled_font, textBegin, textEnd);
+	textBufferManager->appendText(scrollableBuffer, fontScaled, textBegin, textEnd);
 
 	MouseState mouseState;
 	int32_t scrollArea = 0;
+	const int32_t guiPanelWidth = 250;
+	const int32_t guiPanelHeight = 200;
+	float textScroll = 0.0f;
+	float textRotation = 0.0f;
+	float textScale = 1.0f;
+	float textSize = 14.0f;
+
 	while (!processEvents(width, height, debug, reset, &mouseState) )
 	{
 		imguiBeginFrame(mouseState.m_mx
@@ -185,24 +192,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, height
 			);
 
-		const int guiPanelWidth = 250;
-		const int guiPanelHeight = 200;
-
 		imguiBeginScrollArea("Text Area", width - guiPanelWidth - 10, 10, guiPanelWidth, guiPanelHeight, &scrollArea);
 		imguiSeparatorLine();
 
-		static float textScroll = 0.0f;
-		static float textRotation = 0.0f;
-		static float textScale = 1.0f;
-		static float textSize = 14.0f;
-
 		bool recomputeVisibleText = false;
 		recomputeVisibleText |= imguiSlider("Number of lines", &visibleLineCount, 1.0f, 177.0f , 1.0f);
-		if(imguiSlider("Font size", &textSize, 6.0f, 64.0f , 1.0f))
+		if (imguiSlider("Font size", &textSize, 6.0f, 64.0f , 1.0f) )
 		{
-			fontManager->destroyFont(scaled_font);
-			scaled_font = fontManager->createScaledFontToPixelSize(base_distance_font, (uint32_t) textSize);
-			metrics = TextLineMetrics(fontManager->getFontInfo(scaled_font) );
+			fontManager->destroyFont(fontScaled);
+			fontScaled = fontManager->createScaledFontToPixelSize(fontSdf, (uint32_t) textSize);
+			metrics = TextLineMetrics(fontManager->getFontInfo(fontScaled) );
 			recomputeVisibleText = true;
 		}
 
@@ -210,11 +209,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiSlider("Rotate", &textRotation, 0.0f, (float) M_PI *2.0f , 0.1f);
 		recomputeVisibleText |= imguiSlider("Scale", &textScale, 0.1f, 10.0f , 0.1f);
 
-		if(	recomputeVisibleText)
+		if (recomputeVisibleText)
 		{
 			textBufferManager->clearTextBuffer(scrollableBuffer);
 			metrics.getSubText(bigText,(uint32_t)textScroll, (uint32_t)(textScroll+visibleLineCount), textBegin, textEnd);			
-			textBufferManager->appendText(scrollableBuffer, scaled_font, textBegin, textEnd);
+			textBufferManager->appendText(scrollableBuffer, fontScaled, textBegin, textEnd);
 		}			
 
 		imguiEndScrollArea();
@@ -235,7 +234,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0 / freq;
 
-		// Use debug font to print information about this example.
+		// Use debug font to print32_t information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/11-fontsdf");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use a single distance field font to render text of various size.");
@@ -256,7 +255,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewTransform(0, view, proj);
 
 		//very crude approximation :(
-		float textAreaWidth = 0.5f * 66.0f * fontManager->getFontInfo(scaled_font).maxAdvanceWidth;
+		float textAreaWidth = 0.5f * 66.0f * fontManager->getFontInfo(fontScaled).maxAdvanceWidth;
 
 		float textRotMat[16];
 		float textCenterMat[16];
@@ -289,10 +288,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
-	fontManager->destroyTtf(font_tt);
+	fontManager->destroyTtf(font);
 	// Destroy the fonts.
-	fontManager->destroyFont(base_distance_font);
-	fontManager->destroyFont(scaled_font);
+	fontManager->destroyFont(fontSdf);
+	fontManager->destroyFont(fontScaled);
 
 	textBufferManager->destroyTextBuffer(scrollableBuffer);
 

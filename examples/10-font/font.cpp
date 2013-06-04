@@ -127,7 +127,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	//create a static text buffer compatible with alpha font
 	//a static text buffer content cannot be modified after its first submit.
-	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, STATIC);
+	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Static);
 
 	// The pen position represent the top left of the box of the first line 
 	// of text.
@@ -169,7 +169,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	textBufferManager->appendText(staticText, fonts[0], L"dog\n");
 
 	// Create a transient buffer for real-time data.
-	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, TRANSIENT);
+	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Transient);
 
 	while (!processEvents(width, height, debug, reset) )
 	{
