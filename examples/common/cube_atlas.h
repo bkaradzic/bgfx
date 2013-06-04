@@ -147,7 +147,7 @@ public:
 	}
 
 private:
-	void Atlas::init();
+	void init();
 
 	struct PackedLayer;
 	PackedLayer* m_layers;
