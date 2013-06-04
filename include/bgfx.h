@@ -606,6 +606,13 @@ namespace bgfx
 	///
 	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
 
+	/// Returns true if internal instance data buffer has enough space.
+	///
+	/// @param _num Number of instances.
+	/// @param _stride Stride per instance.
+	///
+	bool checkAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride);
+
 	/// Returns true if both internal transient index and vertex buffer have
 	/// enough space.
 	///

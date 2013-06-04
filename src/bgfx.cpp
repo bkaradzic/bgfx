@@ -938,6 +938,13 @@ namespace bgfx
 		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
+	bool checkAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 < _num, "Requesting 0 instances.");
+		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _stride);
+	}
+
 	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
 	{
 		return checkAvailTransientVertexBuffer(_numVertices, _decl)
