@@ -3,7 +3,7 @@
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
-project ("common")
+project ("example-common")
 	uuid ("21cc0e26-bf62-11e2-a01e-0291bd4c8125")
 	kind "StaticLib"
 
