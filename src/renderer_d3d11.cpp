@@ -2748,11 +2748,12 @@ namespace bgfx
 					);
 
 				pos = 10;
-				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
+				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS%s"
 					, double(frameTime)*toMs
 					, double(min)*toMs
 					, double(max)*toMs
 					, freq/frameTime
+					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? " (vsync)" : ""
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;

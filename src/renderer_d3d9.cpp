@@ -2782,11 +2782,12 @@ namespace bgfx
 				tvm.printf(0, pos++, 0x0f, " Device: %s (%s)", identifier.Description, identifier.Driver);
 
 				pos = 10;
-				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
+				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS%s"
 					, double(frameTime)*toMs
 					, double(min)*toMs
 					, double(max)*toMs
 					, freq/frameTime
+					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? " (vsync)" : ""
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
