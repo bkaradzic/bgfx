@@ -93,7 +93,7 @@
 
 /// DX9 PIX markers
 #ifndef BGFX_CONFIG_DEBUG_PIX
-#	define BGFX_CONFIG_DEBUG_PIX 0
+#	define BGFX_CONFIG_DEBUG_PIX BGFX_CONFIG_DEBUG
 #endif // BGFX_CONFIG_DEBUG_PIX
 
 /// AMD gDEBugger markers

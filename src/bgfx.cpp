@@ -748,6 +748,13 @@ namespace bgfx
 		m_submit->m_transientVb = createTransientVertexBuffer(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 		m_submit->m_transientIb = createTransientIndexBuffer(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 		frame();
+
+		for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+		{
+			char name[256];
+			bx::snprintf(name, sizeof(name), "%02d view", ii);
+			setViewName(ii, name);
+		}
 	}
 
 	void Context::shutdown()
@@ -1271,6 +1278,12 @@ namespace bgfx
 		s_ctx.destroyUniform(_handle);
 	}
 
+	void setViewName(uint8_t _id, const char* _name)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx.setViewName(_id, _name);
+	}
+
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -1445,9 +1458,6 @@ namespace bgfx
 	void saveScreenShot(const char* _filePath)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		uint32_t len = (uint32_t)strlen(_filePath)+1;
-		const Memory* mem = alloc(len);
-		memcpy(mem->data, _filePath, mem->size);
-		return s_ctx.saveScreenShot(mem);
+		s_ctx.saveScreenShot(_filePath);
 	}
 }

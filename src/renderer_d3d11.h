@@ -10,6 +10,9 @@
 #include <d3d11.h>
 #include "renderer_d3d.h"
 
+#define D3DCOLOR_ARGB(_a, _r, _g, _b) ( (DWORD)( ( ( (_a)&0xff)<<24)|( ( (_r)&0xff)<<16)|( ( (_g)&0xff)<<8)|( (_b)&0xff) ) )
+#define D3DCOLOR_RGBA(_r, _g, _b, _a) D3DCOLOR_ARGB(_a, _r, _g, _b)
+
 namespace bgfx
 {
 	template <typename Ty>

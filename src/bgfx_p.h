@@ -478,6 +478,7 @@ namespace bgfx
 			UpdateTexture,
 			CreateRenderTarget,
 			CreateUniform,
+			UpdateViewName,
 			End,
 			RendererShutdownEnd,
 			DestroyVertexDecl,
@@ -520,10 +521,12 @@ namespace bgfx
 			read(reinterpret_cast<uint8_t*>(&_in), sizeof(Type) );
 		}
 
-		void skip(uint32_t _size)
+		const uint8_t* skip(uint32_t _size)
 		{
 			BX_CHECK(m_pos < m_size, "");
+			const uint8_t* result = &m_buffer[m_pos];
 			m_pos += _size;
+			return result;
 		}
 
 		void reset()
@@ -2161,7 +2164,7 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_type);
 				cmdbuf.write(_num);
-				uint8_t len = (uint8_t)strlen(_name);
+				uint8_t len = (uint8_t)strlen(_name)+1;
 				cmdbuf.write(len);
 				cmdbuf.write(_name, len);
 			}
@@ -2176,10 +2179,12 @@ namespace bgfx
 			m_submit->free(_handle);
 		}
 
-		void saveScreenShot(const Memory* _mem)
+		void saveScreenShot(const char* _filePath)
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SaveScreenShot);
-			cmdbuf.write(_mem);
+			uint16_t len = (uint16_t)strlen(_filePath)+1;
+			cmdbuf.write(len);
+			cmdbuf.write(_filePath, len);
 		}
 
 		void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
@@ -2192,6 +2197,15 @@ namespace bgfx
 		void setUniform(ProgramHandle /*_program*/, UniformHandle /*_handle*/, const void* /*_value*/)
 		{
 			BX_CHECK(false, "NOT IMPLEMENTED!");
+		}
+
+		void setViewName(uint8_t _id, const char* _name)
+		{
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateViewName);
+			cmdbuf.write(_id);
+			uint16_t len = (uint16_t)strlen(_name)+1;
+			cmdbuf.write(len);
+			cmdbuf.write(_name, len);
 		}
 
 		void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -2461,7 +2475,8 @@ namespace bgfx
 		void rendererDestroyRenderTarget(RenderTargetHandle _handle);
 		void rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name);
 		void rendererDestroyUniform(UniformHandle _handle);
-		void rendererSaveScreenShot(Memory* _mem);
+		void rendererSaveScreenShot(const char* _filePath);
+		void rendererUpdateViewName(uint8_t _id, const char* _name);
 		void rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size);
 
 		void rendererUpdateUniforms(ConstantBuffer* _constantBuffer, uint32_t _begin, uint32_t _end)
@@ -2906,9 +2921,7 @@ namespace bgfx
 						uint8_t len;
 						_cmdbuf.read(len);
 
-						char name[256];
-						_cmdbuf.read(name, len);
-						name[len] = '\0';
+						const char* name = (const char*)_cmdbuf.skip(len);
 
 						rendererCreateUniform(handle, type, num, name);
 					}
@@ -2925,12 +2938,26 @@ namespace bgfx
 
 				case CommandBuffer::SaveScreenShot:
 					{
-						Memory* mem;
-						_cmdbuf.read(mem);
+						uint16_t len;
+						_cmdbuf.read(len);
 
-						rendererSaveScreenShot(mem);
+						const char* filePath = (const char*)_cmdbuf.skip(len);
 
-						release(mem);
+						rendererSaveScreenShot(filePath);
+					}
+					break;
+
+				case CommandBuffer::UpdateViewName:
+					{
+						uint8_t id;
+						_cmdbuf.read(id);
+
+						uint16_t len;
+						_cmdbuf.read(len);
+
+						const char* name = (const char*)_cmdbuf.skip(len);
+
+						rendererUpdateViewName(id, name);
 					}
 					break;
 

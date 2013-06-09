@@ -253,22 +253,8 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 
 #if BGFX_CONFIG_DEBUG_GREMEDY
-#	define _GREMEDY_SETMARKER(_string) \
-					do \
-					{ \
-						if (NULL != glStringMarkerGREMEDY) \
-						{ \
-							glStringMarkerGREMEDY( (GLsizei)strlen(_string), _string); \
-						} \
-					} while(0)
-#	define _GREMEDY_FRAMETERMINATOR() \
-					do \
-					{ \
-						if (NULL != glStringMarkerGREMEDY) \
-						{ \
-							glFrameTerminatorGREMEDY(); \
-						} \
-					} while(0)
+#	define _GREMEDY_SETMARKER(_string) glStringMarkerGREMEDY(0, _string)
+#	define _GREMEDY_FRAMETERMINATOR() glFrameTerminatorGREMEDY()
 #else
 #	define _GREMEDY_SETMARKER(_string) do {} while(0)
 #	define _GREMEDY_FRAMETERMINATOR() do {} while(0)

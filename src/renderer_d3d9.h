@@ -28,18 +28,6 @@ typedef HRESULT (WINAPI *Direct3DCreate9ExFn)(UINT SDKVersion, IDirect3D9Ex**);
 typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
-typedef int (WINAPI *D3DPERF_BeginEventFunc)(D3DCOLOR col, LPCWSTR wszName);
-typedef int (WINAPI *D3DPERF_EndEventFunc)();
-typedef void (WINAPI *D3DPERF_SetMarkerFunc)(D3DCOLOR col, LPCWSTR wszName);
-typedef void (WINAPI *D3DPERF_SetRegionFunc)(D3DCOLOR col, LPCWSTR wszName);
-typedef BOOL (WINAPI *D3DPERF_QueryRepeatFrameFunc)();
-typedef void (WINAPI *D3DPERF_SetOptionsFunc)(DWORD dwOptions);
-typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
-
-#	define _PIX_SETMARKER(_col, _name) s_renderCtx.m_D3DPERF_SetMarker(_col, L#_name)
-#	define _PIX_BEGINEVENT(_col, _name) s_renderCtx.m_D3DPERF_BeginEvent(_col, L#_name)
-#	define _PIX_ENDEVENT() s_renderCtx.m_D3DPERF_EndEvent()
-
 #elif BX_PLATFORM_XBOX360
 #	include <xgraphics.h>
 #	define D3DUSAGE_DYNAMIC 0 // not supported on X360
@@ -60,16 +48,6 @@ typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
 
 namespace bgfx
 {
-#if BGFX_CONFIG_DEBUG_PIX
-#	define PIX_SETMARKER(_col, _name) _PIX_SETMARKER(_col, _name)
-#	define PIX_BEGINEVENT(_col, _name) _PIX_BEGINEVENT(_col, _name)
-#	define PIX_ENDEVENT() _PIX_ENDEVENT()
-#else
-#	define PIX_SETMARKER(_col, _name)
-#	define PIX_BEGINEVENT(_col, _name)
-#	define PIX_ENDEVENT()
-#endif // BGFX_CONFIG_DEBUG_PIX
-
 #	ifndef D3DFMT_ATI1
 #		define D3DFMT_ATI1 ( (D3DFORMAT)BX_MAKEFOURCC('A', 'T', 'I', '1') )
 #	endif // D3DFMT_ATI1

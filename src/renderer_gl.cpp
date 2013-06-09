@@ -12,6 +12,8 @@
 
 namespace bgfx
 {
+	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][256];
+
 	struct Extension
 	{
 		enum Enum
@@ -142,6 +144,16 @@ namespace bgfx
 	static PFNGLDRAWARRAYSINSTANCEDBGFXPROC s_drawArraysInstanced = stubDrawArraysInstanced;
 	static PFNGLDRAWELEMENTSINSTANCEDBGFXPROC s_drawElementsInstanced = stubDrawElementsInstanced;
 #endif // BGFX_CONFIG_RENDERER_OPENGLES3
+
+#if BGFX_CONFIG_DEBUG_GREMEDY
+	static void GL_APIENTRY stubStringMarkerGREMEDY(GLsizei /*_len*/, const GLvoid* /*_string*/)
+	{
+	}
+
+	static void GL_APIENTRY stubFrameTerminatorGREMEDY()
+	{
+	}
+#endif // BGFX_CONFIG_DEBUG_GREMEDY
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
@@ -472,7 +484,7 @@ namespace bgfx
 			}
 		}
 
-		void saveScreenShot(Memory* _mem)
+		void saveScreenShot(const char* _filePath)
 		{
 			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
 			uint8_t* data = (uint8_t*)g_realloc(NULL, length);
@@ -495,7 +507,7 @@ namespace bgfx
 				rgbaToBgra(data, width, height);
 			}
 
-			g_callback->screenShot( (const char*)_mem->data
+			g_callback->screenShot(_filePath
 				, width
 				, height
 				, width*4
@@ -514,6 +526,15 @@ namespace bgfx
 			m_renderer = getGLString(GL_RENDERER);
 			m_version = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
+
+#if BGFX_CONFIG_DEBUG_GREMEDY
+			if (NULL == glStringMarkerGREMEDY
+			||  NULL == glFrameTerminatorGREMEDY)
+			{
+				glStringMarkerGREMEDY = stubStringMarkerGREMEDY;
+				glFrameTerminatorGREMEDY = stubFrameTerminatorGREMEDY;
+			}
+#endif // BGFX_CONFIG_DEBUG_GREMEDY
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 			m_queries.create();
@@ -2559,9 +2580,14 @@ namespace bgfx
 		g_free(s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
-	void Context::rendererSaveScreenShot(Memory* _mem)
+	void Context::rendererSaveScreenShot(const char* _filePath)
 	{
-		s_renderCtx.saveScreenShot(_mem);
+		s_renderCtx.saveScreenShot(_filePath);
+	}
+
+	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
+	{
+		bx::strlcpy(&s_viewName[_id][0], _name, sizeof(s_viewName[0][0]) );
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
@@ -2657,7 +2683,7 @@ namespace bgfx
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
 
-					GREMEDY_SETMARKER("view");
+					GREMEDY_SETMARKER(s_viewName[key.m_view]);
 
 					view = key.m_view;
 					programIdx = invalidHandle;

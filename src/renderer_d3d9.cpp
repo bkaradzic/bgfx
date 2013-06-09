@@ -10,6 +10,8 @@
 
 namespace bgfx
 {
+	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
+
 	static const D3DPRIMITIVETYPE s_primType[] =
 	{
 		D3DPT_TRIANGLELIST,
@@ -250,9 +252,17 @@ namespace bgfx
 			m_d3d9dll = LoadLibrary("d3d9.dll");
 			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
+#if BGFX_CONFIG_DEBUG_PIX
 			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
 			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
 			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_EndEvent");
+
+			BX_CHECK(NULL != m_D3DPERF_SetMarker
+				  && NULL != m_D3DPERF_BeginEvent
+				  && NULL != m_D3DPERF_EndEvent
+				  , "Failed to initialize PIX events."
+				  );
+#endif // BGFX_CONFIG_DEBUG_PIX
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
@@ -797,7 +807,7 @@ namespace bgfx
 			}
 		}
 
-		void saveScreenShot(Memory* _mem)
+		void saveScreenShot(const char* _filePath)
 		{
 #if BX_PLATFORM_WINDOWS
 			IDirect3DSurface9* surface;
@@ -832,7 +842,7 @@ namespace bgfx
 			uint8_t* data = (uint8_t*)rect.pBits;
 			uint32_t bytesPerPixel = rect.Pitch/dm.Width;
 
-			g_callback->screenShot( (const char*)_mem->data
+			g_callback->screenShot(_filePath
 				, m_params.BackBufferWidth
 				, m_params.BackBufferHeight
 				, rect.Pitch
@@ -849,9 +859,11 @@ namespace bgfx
 #if BX_PLATFORM_WINDOWS
 		D3DCAPS9 m_caps;
 
+#	if BGFX_CONFIG_DEBUG_PIX
 		D3DPERF_SetMarkerFunc m_D3DPERF_SetMarker;
 		D3DPERF_BeginEventFunc m_D3DPERF_BeginEvent;
 		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
+#	endif // BGFX_CONFIG_DEBUG_PIX
 #endif // BX_PLATFORM_WINDOWS
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
@@ -2122,9 +2134,14 @@ namespace bgfx
 		g_free(s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
-	void Context::rendererSaveScreenShot(Memory* _mem)
+	void Context::rendererSaveScreenShot(const char* _filePath)
 	{
-		s_renderCtx.saveScreenShot(_mem);
+		s_renderCtx.saveScreenShot(_filePath);
+	}
+
+	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
+	{
+		mbstowcs(&s_viewNameW[_id][0], _name, 256*sizeof(wchar_t) );
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
@@ -2136,7 +2153,7 @@ namespace bgfx
 	{
 		IDirect3DDevice9* device = s_renderCtx.m_device;
 
-		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), "rendererSubmit");
+		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 
@@ -2209,7 +2226,7 @@ namespace bgfx
 					currentState.m_stencil = newStencil;
 
 					PIX_ENDEVENT();
-					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), "view");
+					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), s_viewNameW[key.m_view]);
 
 					view = key.m_view;
 					programIdx = invalidHandle;
@@ -2761,7 +2778,7 @@ namespace bgfx
 
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugstats");
+			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
 
 			TextVideoMem& tvm = s_renderCtx.m_textVideoMem;
 
@@ -2823,7 +2840,7 @@ namespace bgfx
 		}
 		else if (m_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugtext");
+			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugtext");
 
 			m_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 

@@ -706,8 +706,10 @@ namespace bgfx
 	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem);
 
 	/// Update Cube texture.
+	///
 	/// @param _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
 	///   -Y, 4 is +Z, and 5 is -Z.
+	///
 	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
 	/// Destroy texture.
@@ -724,6 +726,16 @@ namespace bgfx
 
 	/// Destroy shader uniform parameter.
 	void destroyUniform(UniformHandle _handle);
+
+	/// Set view name.
+	///
+	/// @param _id view id.
+	/// @param _name View name.
+	///
+	/// NOTE:
+	///   This is debug only feature.
+	///
+	void setViewName(uint8_t _id, const char* _name);
 
 	/// Set view rectangle. Draw primitive outside view will be clipped.
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);

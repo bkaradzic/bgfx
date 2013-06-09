@@ -10,6 +10,8 @@
 
 namespace bgfx
 {
+	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
+
 	typedef HRESULT (WINAPI * PFN_CREATEDXGIFACTORY)(REFIID _riid, void** _factory);
 
 	static const D3D11_PRIMITIVE_TOPOLOGY s_primType[] =
@@ -320,6 +322,22 @@ namespace bgfx
 		{
 			m_d3d11dll = LoadLibrary("d3d11.dll");
 			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
+
+#if BGFX_CONFIG_DEBUG_PIX
+			// D3D11_1.h has ID3DUserDefinedAnnotation
+			// http://msdn.microsoft.com/en-us/library/windows/desktop/hh446881%28v=vs.85%29.aspx
+			m_d3d9dll = LoadLibrary("d3d9.dll");
+			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
+
+			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
+			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
+			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_EndEvent");
+			BX_CHECK(NULL != m_D3DPERF_SetMarker
+				  && NULL != m_D3DPERF_BeginEvent
+				  && NULL != m_D3DPERF_EndEvent
+				  , "Failed to initialize PIX events."
+				  );
+#endif // BGFX_CONFIG_DEBUG_PIX
 
 			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)GetProcAddress(m_d3d11dll, "D3D11CreateDevice");
 			BGFX_FATAL(NULL != d3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
@@ -1030,7 +1048,7 @@ namespace bgfx
 			}
 		}
 
-		void saveScreenShot(Memory* _mem)
+		void saveScreenShot(const char* _filePath)
 		{
 			ID3D11Texture2D* backBuffer;
 			DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
@@ -1070,7 +1088,7 @@ namespace bgfx
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
-				g_callback->screenShot( (const char*)_mem->data
+				g_callback->screenShot(_filePath
 					, backBufferDesc.Width
 					, backBufferDesc.Height
 					, mapped.RowPitch
@@ -1085,6 +1103,13 @@ namespace bgfx
 
 			DX_RELEASE(backBuffer, 0);
 		}
+
+#if BGFX_CONFIG_DEBUG_PIX
+		HMODULE m_d3d9dll;
+		D3DPERF_SetMarkerFunc m_D3DPERF_SetMarker;
+		D3DPERF_BeginEventFunc m_D3DPERF_BeginEvent;
+		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
+#endif // BGFX_CONFIG_DEBUG_PIX
 
 		HMODULE m_d3d11dll;
 		HMODULE m_dxgidll;
@@ -2211,9 +2236,14 @@ namespace bgfx
 		s_renderCtx.m_uniforms[_handle.idx].destroy();
 	}
 
-	void Context::rendererSaveScreenShot(Memory* _mem)
+	void Context::rendererSaveScreenShot(const char* _filePath)
 	{
-		s_renderCtx.saveScreenShot(_mem);
+		s_renderCtx.saveScreenShot(_filePath);
+	}
+
+	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
+	{
+		mbstowcs(&s_viewNameW[_id][0], _name, 256*sizeof(wchar_t) );
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
@@ -2223,6 +2253,8 @@ namespace bgfx
 
 	void Context::rendererSubmit()
 	{
+		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
+
 		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
@@ -2294,6 +2326,9 @@ namespace bgfx
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
 					currentState.m_stencil = newStencil;
+
+					PIX_ENDEVENT();
+					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), s_viewNameW[key.m_view]);
 
 					view = key.m_view;
 					programIdx = invalidHandle;
@@ -2721,7 +2756,7 @@ namespace bgfx
 
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugstats");
+			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
 
 			TextVideoMem& tvm = s_renderCtx.m_textVideoMem;
 
@@ -2785,15 +2820,15 @@ namespace bgfx
 
 			m_textVideoMemBlitter.blit(tvm);
 
-//			PIX_ENDEVENT();
+			PIX_ENDEVENT();
 		}
 		else if (m_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), "debugtext");
+			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugtext");
 
 			m_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 
-//			PIX_ENDEVENT();
+			PIX_ENDEVENT();
 		}
 	}
 }
