@@ -168,6 +168,10 @@ namespace bgfx
 	{
 	}
 
+	void Context::rendererSetMarker(const char* /*_marker*/, uint32_t /*_size*/)
+	{
+	}
+
 	void Context::rendererSubmit()
 	{
 	}

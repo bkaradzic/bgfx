@@ -670,7 +670,7 @@ namespace bgfx
 		return s_ctx.renderFrame();
 	}
 
-	const uint32_t g_uniformTypeSize[UniformType::Count] =
+	const uint32_t g_uniformTypeSize[UniformType::Count+1] =
 	{
 		sizeof(int32_t),
 		sizeof(float),
@@ -682,6 +682,7 @@ namespace bgfx
 		4*sizeof(float),
 		3*3*sizeof(float),
 		4*4*sizeof(float),
+		1,
 	};
 
 	void ConstantBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
@@ -696,6 +697,14 @@ namespace bgfx
 		uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
 		write(&_value, sizeof(void*) );
+	}
+
+	void ConstantBuffer::writeMarker(const char* _marker)
+	{
+		uint16_t num = (uint16_t)strlen(_marker)+1;
+		uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
+		write(opcode);
+		write(_marker, num);
 	}
 
 	void Context::init(bool _createRenderThread)
@@ -1344,6 +1353,12 @@ namespace bgfx
 		s_ctx.setViewTransformMask(_viewMask, _view, _proj, _other);
 	}
 
+	void setMarker(const char* _marker)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx.m_submit->setMarker(_marker);
+	}
+
 	void setState(uint64_t _state, uint32_t _rgba)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -1372,12 +1387,6 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx.setUniform(_handle, _value, _num);
-	}
-
-	void setUniform(ProgramHandle _program, UniformHandle _handle, const void* _value)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx.setUniform(_program, _handle, _value);
 	}
 
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)

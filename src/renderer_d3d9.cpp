@@ -2149,6 +2149,16 @@ namespace bgfx
 		memcpy(s_renderCtx.m_uniforms[_loc], _data, _size);
 	}
 
+	void Context::rendererSetMarker(const char* _marker, uint32_t _size)
+	{
+#if BGFX_CONFIG_DEBUG_PIX
+		uint32_t size = _size*sizeof(wchar_t);
+		wchar_t* name = (wchar_t*)alloca(size);
+		mbstowcs(name, _marker, size-2);
+		PIX_SETMARKER(D3DCOLOR_RGBA(0xff, 0xff, 0xff, 0xff), name);
+#endif // BGFX_CONFIG_DEBUG_PIX
+	}
+
 	void Context::rendererSubmit()
 	{
 		IDirect3DDevice9* device = s_renderCtx.m_device;

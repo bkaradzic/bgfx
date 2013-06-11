@@ -191,7 +191,7 @@ namespace bgfx
 		const Memory* m_mem;
 	};
 
-	extern const uint32_t g_uniformTypeSize[UniformType::Count];
+	extern const uint32_t g_uniformTypeSize[UniformType::Count+1];
 	extern CallbackI* g_callback;
 	extern ReallocFn g_realloc;
 	extern FreeFn g_free;
@@ -653,16 +653,14 @@ namespace bgfx
 		uint16_t m_num;
 	};
 
-#define CONSTANT_OPCODE_MASK(_bits) ( (1<<_bits)-1)
-
-#define CONSTANT_OPCODE_TYPE_BITS 5
-#define CONSTANT_OPCODE_TYPE_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_TYPE_BITS)
-#define CONSTANT_OPCODE_LOC_BITS 16
-#define CONSTANT_OPCODE_LOC_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_LOC_BITS)
-#define CONSTANT_OPCODE_NUM_BITS 10
-#define CONSTANT_OPCODE_NUM_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_NUM_BITS)
-#define CONSTANT_OPCODE_COPY_BITS 1
-#define CONSTANT_OPCODE_COPY_MASK CONSTANT_OPCODE_MASK(CONSTANT_OPCODE_COPY_BITS)
+#define CONSTANT_OPCODE_TYPE_SHIFT 27
+#define CONSTANT_OPCODE_TYPE_MASK  UINT32_C(0xf8000000)
+#define CONSTANT_OPCODE_LOC_SHIFT  11
+#define CONSTANT_OPCODE_LOC_MASK   UINT32_C(0x07fff800)
+#define CONSTANT_OPCODE_NUM_SHIFT  1
+#define CONSTANT_OPCODE_NUM_MASK   UINT32_C(0x000007fe)
+#define CONSTANT_OPCODE_COPY_SHIFT 0
+#define CONSTANT_OPCODE_COPY_MASK  UINT32_C(0x00000001)
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 
@@ -684,41 +682,21 @@ namespace bgfx
 
 		static uint32_t encodeOpcode(UniformType::Enum _type, uint16_t _loc, uint16_t _num, uint16_t _copy)
 		{
-			uint32_t opcode = 0;
-
-			opcode <<= CONSTANT_OPCODE_TYPE_BITS;
-			opcode |= _type&CONSTANT_OPCODE_TYPE_MASK;
-
-			opcode <<= CONSTANT_OPCODE_LOC_BITS;
-			opcode |= _loc&CONSTANT_OPCODE_LOC_MASK;
-
-			opcode <<= CONSTANT_OPCODE_NUM_BITS;
-			opcode |= _num&CONSTANT_OPCODE_NUM_MASK;
-
-			opcode <<= CONSTANT_OPCODE_COPY_BITS;
-			opcode |= _copy&CONSTANT_OPCODE_COPY_MASK;
-
-			return opcode;
+			const uint32_t type = _type << CONSTANT_OPCODE_TYPE_SHIFT;
+			const uint32_t loc  = _loc  << CONSTANT_OPCODE_LOC_SHIFT;
+			const uint32_t num  = _num  << CONSTANT_OPCODE_NUM_SHIFT;
+			const uint32_t copy = _copy << CONSTANT_OPCODE_COPY_SHIFT;
+			return type|loc|num|copy;
 		}
 
 		static void decodeOpcode(uint32_t _opcode, UniformType::Enum& _type, uint16_t& _loc, uint16_t& _num, uint16_t& _copy)
 		{
-			uint32_t copy;
-			uint32_t num;
-			uint32_t loc;
+			const uint32_t type = (_opcode&CONSTANT_OPCODE_TYPE_MASK) >> CONSTANT_OPCODE_TYPE_SHIFT;
+			const uint32_t loc  = (_opcode&CONSTANT_OPCODE_LOC_MASK)  >> CONSTANT_OPCODE_LOC_SHIFT;
+			const uint32_t num  = (_opcode&CONSTANT_OPCODE_NUM_MASK)  >> CONSTANT_OPCODE_NUM_SHIFT;
+			const uint32_t copy = (_opcode&CONSTANT_OPCODE_COPY_MASK) >> CONSTANT_OPCODE_COPY_SHIFT;
 
-			copy = _opcode&CONSTANT_OPCODE_COPY_MASK;
-			_opcode >>= CONSTANT_OPCODE_COPY_BITS;
-
-			num = _opcode&CONSTANT_OPCODE_NUM_MASK;
-			_opcode >>= CONSTANT_OPCODE_NUM_BITS;
-
-			loc = _opcode&CONSTANT_OPCODE_LOC_MASK;
-			_opcode >>= CONSTANT_OPCODE_LOC_BITS;
-
-			_type = (UniformType::Enum)(_opcode&CONSTANT_OPCODE_TYPE_MASK);
-			_opcode >>= CONSTANT_OPCODE_TYPE_BITS;
-
+			_type = (UniformType::Enum)(type);
 			_copy = (uint16_t)copy;
 			_num = (uint16_t)num;
 			_loc = (uint16_t)loc;
@@ -777,6 +755,7 @@ namespace bgfx
 
 		void writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
 		void writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
+		void writeMarker(const char* _marker);
 		void commit();
 
 	private:
@@ -994,6 +973,11 @@ namespace bgfx
 					, BGFX_CONFIG_MAX_DRAW_CALLS
 					);
 			}
+		}
+
+		void setMarker(const char* _name)
+		{
+			m_constantBuffer->writeMarker(_name);
 		}
 
 		void setState(uint64_t _state, uint32_t _rgba)
@@ -2194,11 +2178,6 @@ namespace bgfx
 			m_submit->writeConstant(uniform.m_type, _handle, _value, uint16_min(uniform.m_num, _num) );
 		}
 
-		void setUniform(ProgramHandle /*_program*/, UniformHandle /*_handle*/, const void* /*_value*/)
-		{
-			BX_CHECK(false, "NOT IMPLEMENTED!");
-		}
-
 		void setViewName(uint8_t _id, const char* _name)
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateViewName);
@@ -2478,6 +2457,7 @@ namespace bgfx
 		void rendererSaveScreenShot(const char* _filePath);
 		void rendererUpdateViewName(uint8_t _id, const char* _name);
 		void rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size);
+		void rendererSetMarker(const char* _marker, uint32_t _size);
 
 		void rendererUpdateUniforms(ConstantBuffer* _constantBuffer, uint32_t _begin, uint32_t _end)
 		{
@@ -2497,10 +2477,16 @@ namespace bgfx
 				uint16_t copy;
 				ConstantBuffer::decodeOpcode(opcode, type, loc, num, copy);
 
-				const char* data;
 				uint32_t size = g_uniformTypeSize[type]*num;
-				data = _constantBuffer->read(size);
-				rendererUpdateUniform(loc, data, size);
+				const char* data = _constantBuffer->read(size);
+				if (UniformType::Count > type)
+				{
+					rendererUpdateUniform(loc, data, size);
+				}
+				else
+				{
+					rendererSetMarker(data, size);
+				}
 			}
 		}
 

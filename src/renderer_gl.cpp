@@ -2595,6 +2595,11 @@ namespace bgfx
 		memcpy(s_renderCtx.m_uniforms[_loc], _data, _size);
 	}
 
+	void Context::rendererSetMarker(const char* _marker, uint32_t /*_size*/)
+	{
+		GREMEDY_SETMARKER(_marker);
+	}
+
 	void Context::rendererSubmit()
 	{
 		const GLuint defaultVao = s_renderCtx.m_vaoSupport;

@@ -777,6 +777,9 @@ namespace bgfx
 	/// Set view view and projection matrices for multiple views.
 	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other = 0xff);
 
+	/// Sets debug marker.
+	void setMarker(const char* _marker);
+
 	/// Set render states for draw primitive.
 	///
 	/// @param _state State flags. Default state for primitive type is
