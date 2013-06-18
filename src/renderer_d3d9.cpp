@@ -62,6 +62,15 @@ namespace bgfx
 		{ D3DBLEND_INVBLENDFACTOR, D3DBLEND_INVBLENDFACTOR, true  },
 	};
 
+	static const D3DBLENDOP s_blendEquation[] =
+	{
+		D3DBLENDOP_ADD,
+		D3DBLENDOP_SUBTRACT,
+		D3DBLENDOP_REVSUBTRACT,
+		D3DBLENDOP_MIN,
+		D3DBLENDOP_MAX,
+	};
+
 	static const D3DCMPFUNC s_depthFunc[] =
 	{
 		(D3DCMPFUNC)0, // ignored
@@ -2361,10 +2370,20 @@ namespace bgfx
 					}
 				}
 
-				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
-					 |BGFX_STATE_ALPHA_MASK|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_MASK
-					 |BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK|BGFX_STATE_POINT_SIZE_MASK
-					 |BGFX_STATE_SRGBWRITE|BGFX_STATE_MSAA) & changedFlags)
+				if ( (0
+					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_DEPTH_WRITE
+					 | BGFX_STATE_DEPTH_TEST_MASK
+					 | BGFX_STATE_ALPHA_MASK
+					 | BGFX_STATE_RGB_WRITE
+					 | BGFX_STATE_BLEND_MASK
+					 | BGFX_STATE_BLEND_EQUATION_MASK
+					 | BGFX_STATE_ALPHA_REF_MASK
+					 | BGFX_STATE_PT_MASK
+					 | BGFX_STATE_POINT_SIZE_MASK
+					 | BGFX_STATE_SRGBWRITE
+					 | BGFX_STATE_MSAA
+					 ) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -2418,7 +2437,7 @@ namespace bgfx
 						DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, writeEnable) );
 					}
 
-					if (BGFX_STATE_BLEND_MASK & changedFlags)
+					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK) & changedFlags)
 					{
 						bool alphaBlendEnabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
 						DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, alphaBlendEnabled) );
@@ -2427,11 +2446,13 @@ namespace bgfx
 						if (alphaBlendEnabled)
 						{
 							uint32_t blend = (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
+							uint32_t equation = (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT;
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 
  							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src].m_src) );
 							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst].m_dst) );
+							DX_CHECK(device->SetRenderState(D3DRS_BLENDOP, s_blendEquation[equation]) );
 //							DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
 //							DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
 

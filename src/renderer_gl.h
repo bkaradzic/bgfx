@@ -80,6 +80,8 @@
 #		define GL_R32F GL_R32F_EXT
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
+#		define GL_MIN GL_MIN_EXT
+#		define GL_MAX GL_MAX_EXT
 #	elif BGFX_CONFIG_RENDERER_OPENGLES3
 #		include <GLES3/gl3platform.h>
 #		include <GLES3/gl3.h>
@@ -256,7 +258,7 @@ namespace bgfx
 #	define _GREMEDY_SETMARKER(_string) glStringMarkerGREMEDY(0, _string)
 #	define _GREMEDY_FRAMETERMINATOR() glFrameTerminatorGREMEDY()
 #else
-#	define _GREMEDY_SETMARKER(_string) do {} while(0)
+#	define _GREMEDY_SETMARKER(_string) do { BX_UNUSED(_string); } while(0)
 #	define _GREMEDY_FRAMETERMINATOR() do {} while(0)
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
 

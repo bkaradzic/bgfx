@@ -57,6 +57,15 @@ namespace bgfx
 		{ D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR },
 	};
 
+	static const D3D11_BLEND_OP s_blendEquation[] =
+	{
+		D3D11_BLEND_OP_ADD,
+		D3D11_BLEND_OP_SUBTRACT,
+		D3D11_BLEND_OP_REV_SUBTRACT,
+		D3D11_BLEND_OP_MIN,
+		D3D11_BLEND_OP_MAX,
+	};
+
 	static const D3D11_COMPARISON_FUNC s_depthFunc[] =
 	{
 		D3D11_COMPARISON_LESS, // ignored
@@ -795,7 +804,7 @@ namespace bgfx
 
 		void setBlendState(uint64_t _state, uint32_t _rgba = UINT32_MAX)
 		{
-			_state &= BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE;
+			_state &= BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE;
 
 			ID3D11BlendState* bs = m_blendStateCache.find(_state);
 			if (NULL == bs)
@@ -806,6 +815,7 @@ namespace bgfx
 				drt.BlendEnable = !!(BGFX_STATE_BLEND_MASK & _state);
 
 				uint32_t blend = (_state&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
+				uint32_t equation = (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT;
 				uint32_t src = blend&0xf;
 				uint32_t dst = (blend>>4)&0xf;
 				uint32_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0;
@@ -813,11 +823,11 @@ namespace bgfx
 
 				drt.SrcBlend = s_blendFactor[src][0];
 				drt.DestBlend = s_blendFactor[dst][0];
-				drt.BlendOp = D3D11_BLEND_OP_ADD;
+				drt.BlendOp = s_blendEquation[equation];
 
 				drt.SrcBlendAlpha = s_blendFactor[src][1];
 				drt.DestBlendAlpha = s_blendFactor[dst][1];
-				drt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+				drt.BlendOpAlpha = s_blendEquation[equation];
 
 				drt.RenderTargetWriteMask = writeMask;
 
@@ -2385,11 +2395,20 @@ namespace bgfx
 					s_renderCtx.setDepthStencilState(newFlags, newStencil);
 				}
 
-				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_ALPHA_MASK|BGFX_STATE_RGB_WRITE
-					 |BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK
-					 |BGFX_STATE_POINT_SIZE_MASK|BGFX_STATE_SRGBWRITE|BGFX_STATE_MSAA) & changedFlags)
+				if ( (0
+					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_ALPHA_MASK
+					 | BGFX_STATE_RGB_WRITE
+					 | BGFX_STATE_BLEND_MASK
+					 | BGFX_STATE_BLEND_EQUATION_MASK
+					 | BGFX_STATE_ALPHA_REF_MASK
+					 | BGFX_STATE_PT_MASK
+					 | BGFX_STATE_POINT_SIZE_MASK
+					 | BGFX_STATE_SRGBWRITE
+					 | BGFX_STATE_MSAA
+					 ) & changedFlags)
 				{
-					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
+					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
 						s_renderCtx.setBlendState(newFlags, state.m_rgba);
 					}

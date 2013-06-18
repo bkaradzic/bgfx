@@ -62,6 +62,8 @@ namespace bgfx
 			OES_rgb8_rgba8,
 			EXT_texture_storage,
 			EXT_blend_color,
+			EXT_blend_subtract,
+			EXT_blend_minmax,
 			ARB_debug_output,
 
 			Count
@@ -118,6 +120,8 @@ namespace bgfx
 		{ "GL_OES_rgb8_rgba8",                    false,                             true  },
 		{ "GL_EXT_texture_storage",               false,                             true  },
 		{ "GL_EXT_blend_color",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_blend_subtract",                BGFX_CONFIG_RENDERER_OPENGL >= 31, true  }, 
+		{ "GL_EXT_blend_minmax",                  BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_debug_output",                  BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 	};
 
@@ -707,6 +711,15 @@ namespace bgfx
 		{ GL_SRC_ALPHA_SATURATE,       GL_ONE,                      false },
 		{ GL_CONSTANT_COLOR,           GL_CONSTANT_COLOR,           true  },
 		{ GL_ONE_MINUS_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, true  },
+	};
+
+	static const GLenum s_blendEquation[] =
+	{
+		GL_FUNC_ADD,
+		GL_FUNC_SUBTRACT,
+		GL_FUNC_REVERSE_SUBTRACT,
+		GL_MIN,
+		GL_MAX,
 	};
 
 	static const GLenum s_depthFunc[] =
@@ -2597,7 +2610,7 @@ namespace bgfx
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t /*_size*/)
 	{
-		GREMEDY_SETMARKER(_marker);
+		GREMEDY_SETMARKER(_marker);		
 	}
 
 	void Context::rendererSubmit()
@@ -2762,10 +2775,19 @@ namespace bgfx
 					}
 				}
 
-				if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK
-				     |BGFX_STATE_ALPHA_MASK|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_MASK
-					 |BGFX_STATE_ALPHA_REF_MASK|BGFX_STATE_PT_MASK|BGFX_STATE_POINT_SIZE_MASK
-					 |BGFX_STATE_MSAA) & changedFlags)
+				if ( (0
+					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_DEPTH_WRITE
+					 | BGFX_STATE_DEPTH_TEST_MASK
+					 | BGFX_STATE_ALPHA_MASK
+					 | BGFX_STATE_RGB_WRITE
+					 | BGFX_STATE_BLEND_MASK
+					 | BGFX_STATE_BLEND_EQUATION_MASK
+					 | BGFX_STATE_ALPHA_REF_MASK
+					 | BGFX_STATE_PT_MASK
+					 | BGFX_STATE_POINT_SIZE_MASK
+					 | BGFX_STATE_MSAA
+					 ) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -2838,15 +2860,17 @@ namespace bgfx
 						GL_CHECK(glColorMask(rgb, rgb, rgb, alpha) );
 					}
 
-					if (BGFX_STATE_BLEND_MASK & changedFlags)
+					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK) & changedFlags)
 					{
 						if (BGFX_STATE_BLEND_MASK & newFlags)
 						{
 							uint32_t blend = (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
+							uint32_t equation = (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT;
 							uint32_t src = blend&0xf;
 							uint32_t dst = (blend>>4)&0xf;
 							GL_CHECK(glEnable(GL_BLEND) );
 							GL_CHECK(glBlendFunc(s_blendFactor[src].m_src, s_blendFactor[dst].m_dst) );
+							GL_CHECK(glBlendEquation(s_blendEquation[equation]) );
 
 							if ( (s_blendFactor[src].m_factor || s_blendFactor[dst].m_factor)
 							&&  blendFactor != state.m_rgba)
