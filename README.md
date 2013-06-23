@@ -1,4 +1,4 @@
-bgfx {#mainpage}
+bgfx
 ====
 
 https://github.com/bkaradzic/bgfx
@@ -24,6 +24,16 @@ Platforms:
  * Native Client
  * OSX
  * Windows
+
+Who is using it?
+----------------
+
+http://airmech.com/ AirMech is a free-to-play futuristic action real-time
+strategy video game developed and published by Carbon Games.
+
+http://theengine.co/ Loom Game Engine developed by The Engine Company. Loom
+is a powerful 2D game engine with live reloading of code and assets, a friendly
+scripting language, and an efficient command-line workflow.
 
 Dependencies
 ------------
