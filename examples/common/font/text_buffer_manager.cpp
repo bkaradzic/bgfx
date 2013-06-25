@@ -218,8 +218,8 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 
 TextBuffer::~TextBuffer()
 {
-	delete[] m_vertexBuffer;
-	delete[] m_indexBuffer;
+	delete [] m_vertexBuffer;
+	delete [] m_indexBuffer;
 }
 
 void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const char* _end)
@@ -620,7 +620,7 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 TextBufferManager::~TextBufferManager()
 {
 	BX_CHECK(m_textBufferHandles.getNumHandles() == 0, "All the text buffers must be destroyed before destroying the manager");
-	delete[] m_textBuffers;
+	delete [] m_textBuffers;
 
 	bgfx::destroyUniform(u_texColor);
 

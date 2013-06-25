@@ -58,7 +58,7 @@ char* loadText(const char* _textFile)
 		if (newLen == 0)
 		{
 			fclose(pFile);
-			delete[] buffer;
+			delete [] buffer;
 			return NULL;
 		}
 
@@ -96,7 +96,7 @@ TrueTypeHandle loadTtf(FontManager* _fm, const char* _fontPath)
 			if (newLen == 0)
 			{
 				fclose(pFile);
-				delete[] buffer;
+				delete [] buffer;
 				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}

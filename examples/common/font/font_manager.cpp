@@ -481,12 +481,12 @@ void FontManager::init()
 FontManager::~FontManager()
 {
 	BX_CHECK(m_fontHandles.getNumHandles() == 0, "All the fonts must be destroyed before destroying the manager");
-	delete[] m_cachedFonts;
+	delete [] m_cachedFonts;
 
 	BX_CHECK(m_filesHandles.getNumHandles() == 0, "All the font files must be destroyed before destroying the manager");
-	delete[] m_cachedFiles;
+	delete [] m_cachedFiles;
 
-	delete[] m_buffer;
+	delete [] m_buffer;
 
 	if (m_ownAtlas)
 	{

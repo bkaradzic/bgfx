@@ -309,9 +309,9 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _reg
 
 Atlas::~Atlas()
 {
-	delete[] m_layers;
-	delete[] m_regions;
-	delete[] m_textureBuffer;
+	delete [] m_layers;
+	delete [] m_regions;
+	delete [] m_textureBuffer;
 }
 
 void Atlas::init()
