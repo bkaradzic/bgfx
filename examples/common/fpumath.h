@@ -380,4 +380,46 @@ inline void mtxInverse(float* __restrict _result, const float* __restrict _a)
 	_result[15] = +(xx*(yy*zz - zy*yz) - xy*(yx*zz - zx*yz) + xz*(yx*zy - zx*yy) ) * invDet;
 }
 
+/// Convert LH to RH projection matrix and vice versa.
+inline void mtxProjFlipHandedness(float* __restrict _dst, const float* __restrict _src)
+{
+	_dst[ 0] = -_src[ 0];
+	_dst[ 1] = -_src[ 1];
+	_dst[ 2] = -_src[ 2];
+	_dst[ 3] = -_src[ 3];
+	_dst[ 4] =  _src[ 4];
+	_dst[ 5] =  _src[ 5];
+	_dst[ 6] =  _src[ 6];
+	_dst[ 7] =  _src[ 7];
+	_dst[ 8] = -_src[ 8];
+	_dst[ 9] = -_src[ 9];
+	_dst[10] = -_src[10];
+	_dst[11] = -_src[11];
+	_dst[12] =  _src[12];
+	_dst[13] =  _src[13];
+	_dst[14] =  _src[14];
+	_dst[15] =  _src[15];
+}
+
+/// Convert LH to RH view matrix and vice versa.
+inline void mtxViewFlipHandedness(float* __restrict _dst, const float* __restrict _src)
+{
+	_dst[ 0] = -_src[ 0];
+	_dst[ 1] =  _src[ 1];
+	_dst[ 2] = -_src[ 2];
+	_dst[ 3] =  _src[ 3];
+	_dst[ 4] = -_src[ 4];
+	_dst[ 5] =  _src[ 5];
+	_dst[ 6] = -_src[ 6];
+	_dst[ 7] =  _src[ 7];
+	_dst[ 8] = -_src[ 8];
+	_dst[ 9] =  _src[ 9];
+	_dst[10] = -_src[10];
+	_dst[11] =  _src[11];
+	_dst[12] = -_src[12];
+	_dst[13] =  _src[13];
+	_dst[14] = -_src[14];
+	_dst[15] =  _src[15];
+}
+
 #endif // __FPU_MATH_H__
