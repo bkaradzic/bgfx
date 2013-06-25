@@ -74,11 +74,10 @@ TrueTypeFont::TrueTypeFont() : m_font(NULL)
 
 TrueTypeFont::~TrueTypeFont()
 {
-	if (m_font != NULL)
+	if (NULL != m_font)
 	{
-		FTHolder* holder = (FTHolder*) m_font;
-		FT_Done_Face(holder->face);
-		FT_Done_FreeType(holder->library);
+		FT_Done_Face(m_font->face);
+		FT_Done_FreeType(m_font->library);
 		delete m_font;
 		m_font = NULL;
 	}
@@ -86,69 +85,69 @@ TrueTypeFont::~TrueTypeFont()
 
 bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight)
 {
+	BX_CHECK(m_font == NULL, "TrueTypeFont already initialized");
 	BX_CHECK( (_bufferSize > 256 && _bufferSize < 100000000), "TrueType buffer size is suspicious");
 	BX_CHECK( (_pixelHeight > 4 && _pixelHeight < 128), "TrueType buffer size is suspicious");
 
-	BX_CHECK(m_font == NULL, "TrueTypeFont already initialized");
+	FTHolder* holder = new FTHolder;
 
-	FTHolder* holder = new FTHolder();
-
-	// Initialize Freetype library
 	FT_Error error = FT_Init_FreeType(&holder->library);
+	BX_WARN(!error, "FT_Init_FreeType failed.");
+
 	if (error)
 	{
-		delete holder;
-		return false;
+		goto err0;
 	}
 
 	error = FT_New_Memory_Face(holder->library, _buffer, _bufferSize, _fontIndex, &holder->face);
-	if (error == FT_Err_Unknown_File_Format)
+	BX_WARN(!error, "FT_Init_FreeType failed.");
+
+	if (error)
 	{
-		// the font file could be opened and read, but it appears
-		// that its font format is unsupported
-		FT_Done_FreeType(holder->library);
-		delete holder;
-		return false;
-	}
-	else if (error)
-	{
-		// another error code means that the font file could not
-		// be opened or read, or simply that it is broken...
-		FT_Done_FreeType(holder->library);
-		delete holder;
-		return false;
+		if (FT_Err_Unknown_File_Format == error)
+		{
+			goto err0;
+		}
+
+		goto err1;
 	}
 
-	// Select unicode charmap
 	error = FT_Select_Charmap(holder->face, FT_ENCODING_UNICODE);
+	BX_WARN(!error, "FT_Init_FreeType failed.");
+
 	if (error)
 	{
-		FT_Done_Face(holder->face);
-		FT_Done_FreeType(holder->library);
-		return false;
+		goto err2;
 	}
 
-	//set size in pixels
 	error = FT_Set_Pixel_Sizes(holder->face, 0, _pixelHeight);
+	BX_WARN(!error, "FT_Init_FreeType failed.");
+
 	if (error)
 	{
-		FT_Done_Face(holder->face);
-		FT_Done_FreeType(holder->library);
-		return false;
+		goto err2;
 	}
 
 	m_font = holder;
 	return true;
+
+err2:
+	FT_Done_Face(holder->face);
+
+err1:
+	FT_Done_FreeType(holder->library);
+
+err0:
+	delete holder;
+	return false;
 }
 
 FontInfo TrueTypeFont::getFontInfo()
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
-	FTHolder* holder = (FTHolder*) m_font;
+	BX_CHECK(FT_IS_SCALABLE(m_font->face), "Font is unscalable");
 
-	BX_CHECK(FT_IS_SCALABLE(holder->face), "Font is unscalable");
-
-	FT_Size_Metrics metrics = holder->face->size->metrics;
+	FT_Size_Metrics metrics = m_font->face->size->metrics;
 
 	FontInfo outFontInfo;
 	outFontInfo.scale = 1.0f;
@@ -157,8 +156,8 @@ FontInfo TrueTypeFont::getFontInfo()
 	outFontInfo.lineGap = (metrics.height - metrics.ascender + metrics.descender) / 64.0f;
 	outFontInfo.maxAdvanceWidth = metrics.max_advance/ 64.0f;
 
-	outFontInfo.underlinePosition = FT_MulFix(holder->face->underline_position, metrics.y_scale) / 64.0f;
-	outFontInfo.underlineThickness = FT_MulFix(holder->face->underline_thickness, metrics.y_scale) / 64.0f;
+	outFontInfo.underlinePosition = FT_MulFix(m_font->face->underline_position, metrics.y_scale) / 64.0f;
+	outFontInfo.underlineThickness = FT_MulFix(m_font->face->underline_thickness, metrics.y_scale) / 64.0f;
 	return outFontInfo;
 }
 
@@ -193,12 +192,11 @@ static void glyphInfoInit(GlyphInfo& _glyphInfo, FT_BitmapGlyph _bitmap, FT_Glyp
 bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
-	FTHolder* holder = (FTHolder*) m_font;
 
-	_glyphInfo.glyphIndex = FT_Get_Char_Index(holder->face, _codePoint);
+	_glyphInfo.glyphIndex = FT_Get_Char_Index(m_font->face, _codePoint);
 
-	FT_GlyphSlot slot = holder->face->glyph;
-	FT_Error error = FT_Load_Glyph(holder->face, _glyphInfo.glyphIndex, FT_LOAD_DEFAULT);
+	FT_GlyphSlot slot = m_font->face->glyph;
+	FT_Error error = FT_Load_Glyph(m_font->face, _glyphInfo.glyphIndex, FT_LOAD_DEFAULT);
 	if (error)
 	{
 		return false;
@@ -228,12 +226,11 @@ bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, u
 bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
-	FTHolder* holder = (FTHolder*) m_font;
 
-	_glyphInfo.glyphIndex = FT_Get_Char_Index(holder->face, _codePoint);
+	_glyphInfo.glyphIndex = FT_Get_Char_Index(m_font->face, _codePoint);
 
-	FT_GlyphSlot slot = holder->face->glyph;
-	FT_Error error = FT_Load_Glyph(holder->face, _glyphInfo.glyphIndex, FT_LOAD_DEFAULT);
+	FT_GlyphSlot slot = m_font->face->glyph;
+	FT_Error error = FT_Load_Glyph(m_font->face, _glyphInfo.glyphIndex, FT_LOAD_DEFAULT);
 	if (error)
 	{
 		return false;
@@ -255,8 +252,8 @@ bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo
 	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
 
 	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 3);
-
 	FT_Done_Glyph(glyph);
+
 	return true;
 }
 
@@ -355,15 +352,14 @@ static void makeDistanceMap(const uint8_t* _img, uint8_t* _outImg, uint32_t _wid
 bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
-	FTHolder* holder = (FTHolder*) m_font;
 
-	_glyphInfo.glyphIndex = FT_Get_Char_Index(holder->face, _codePoint);
+	_glyphInfo.glyphIndex = FT_Get_Char_Index(m_font->face, _codePoint);
 
 	FT_Int32 loadMode = FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING;
 	FT_Render_Mode renderMode = FT_RENDER_MODE_NORMAL;
 
-	FT_GlyphSlot slot = holder->face->glyph;
-	FT_Error error = FT_Load_Glyph(holder->face, _glyphInfo.glyphIndex, loadMode);
+	FT_GlyphSlot slot = m_font->face->glyph;
+	FT_Error error = FT_Load_Glyph(m_font->face, _glyphInfo.glyphIndex, loadMode);
 	if (error)
 	{
 		return false;
