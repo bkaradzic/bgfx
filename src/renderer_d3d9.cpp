@@ -2150,7 +2150,7 @@ namespace bgfx
 
 	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
 	{
-		mbstowcs(&s_viewNameW[_id][0], _name, 256*sizeof(wchar_t) );
+		mbstowcs(&s_viewNameW[_id][0], _name, countof(s_viewNameW[0]) );
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
