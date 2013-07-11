@@ -87,7 +87,6 @@ private:
 	FontManager* m_fontManager;
 	bgfx::VertexDecl m_vertexDecl;
 	bgfx::UniformHandle u_texColor;
-	bgfx::UniformHandle u_fontParam;
 	bgfx::ProgramHandle m_basicProgram;
 	bgfx::ProgramHandle m_distanceProgram;
 	bgfx::ProgramHandle m_distanceSubpixelProgram;

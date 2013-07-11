@@ -25,13 +25,13 @@ namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC 0x78666762
 
-#if BGFX_CONFIG_MULTITHREADED
+#if BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
 #	define BGFX_CHECK_MAIN_THREAD() BX_CHECK(BGFX_MAIN_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
 #	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(BGFX_MAIN_THREAD_MAGIC != s_threadIndex, "Must be called from render thread.")
 #else
 #	define BGFX_CHECK_MAIN_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
-#endif // BGFX_CONFIG_MULTITHREADED
+#endif // BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
 
 #if BX_PLATFORM_ANDROID
 	::ANativeWindow* g_bgfxAndroidWindow = NULL;
