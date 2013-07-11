@@ -745,7 +745,7 @@ namespace bgfx
 
 	/// Set view name.
 	///
-	/// @param _id view id.
+	/// @param _id View id.
 	/// @param _name View name.
 	///
 	/// NOTE:
@@ -761,11 +761,12 @@ namespace bgfx
 
 	/// Set view clear flags.
 	///
-	/// @param _id view id.
-	/// @param _flags clear flags. See: BGFX_CLEAR_*
-	/// @param _rgba color clear value.
-	/// @param _depth depth clear value.
-	/// @param _stencil stencil clear value.
+	/// @param _id View id.
+	/// @param _flags Clear flags. Use BGFX_CLEAR_NONE to remove any clear
+	///   operation. See: BGFX_CLEAR_*.
+	/// @param _rgba Color clear value.
+	/// @param _depth Depth clear value.
+	/// @param _stencil Stencil clear value.
 	///
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
 
@@ -779,11 +780,22 @@ namespace bgfx
 	/// Set mulitple views into sequential mode.
 	void setViewSeqMask(uint32_t _viewMask, bool _enabled);
 
-	/// Set view render target. View without render target draws primitives
-	/// into default backbuffer.
+	/// Set view render target.
+	///
+	/// @param _id View id.
+	/// @param _handle Render target handle. Passing BGFX_INVALID_HANDLE as
+	///   render target handle will draw primitives from this view into
+	///   default backbuffer.
+	///
 	void setViewRenderTarget(uint8_t _id, RenderTargetHandle _handle);
 
 	/// Set view render target for multiple views.
+	///
+	/// @param _viewMask View mask.
+	/// @param _handle Render target handle. Passing BGFX_INVALID_HANDLE as
+	///   render target handle will draw primitives from this view into
+	///   default backbuffer.
+	///
 	void setViewRenderTargetMask(uint32_t _viewMask, RenderTargetHandle _handle);
 
 	/// Set view view and projection matrices, all draw primitives in this
