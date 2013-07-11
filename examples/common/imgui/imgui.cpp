@@ -223,6 +223,8 @@ struct Imgui
 	{
 		bgfx::destroyUniform(u_texColor);
 		bgfx::destroyTexture(m_fontTexture);
+		bgfx::destroyProgram(m_colorProgram);
+		bgfx::destroyProgram(m_textureProgram);
 	}
 
 	bool anyActive() const
