@@ -1437,6 +1437,8 @@ namespace bgfx
 		Context()
 			: m_render(&m_frame[0])
 			, m_submit(&m_frame[1])
+			, m_numFreeDynamicIndexBufferHandles(0)
+			, m_numFreeDynamicVertexBufferHandles(0)
 			, m_dynamicIndexBufferHandle(BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS)
 			, m_dynamicVertexBufferHandle(BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS)
 			, m_indexBufferHandle(BGFX_CONFIG_MAX_INDEX_BUFFERS)
