@@ -159,6 +159,16 @@ namespace bgfx
 	}
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
 
+#if BX_PLATFORM_IOS
+	PFNGLBINDVERTEXARRAYOESPROC         glBindVertexArrayOES    = NULL;
+	PFNGLDELETEVERTEXARRAYSOESPROC      glDeleteVertexArraysOES = NULL;
+	PFNGLGENVERTEXARRAYSOESPROC         glGenVertexArraysOES    = NULL;
+	PFNGLPROGRAMBINARYOESPROC           glProgramBinaryOES      = NULL;
+	PFNGLGETPROGRAMBINARYOESPROC        glGetProgramBinaryOES   = NULL;
+	PFLGLDRAWARRAYSINSTANCEDANGLEPROC   glDrawArraysInstanced   = NULL;
+	PFLGLDRAWELEMENTSINSTANCEDANGLEPROC glDrawElementsInstanced = NULL;
+#endif // BX_PLATFORM_IOS
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	static void rgbaToBgra(uint8_t* _data, uint32_t _width, uint32_t _height) 

@@ -35,7 +35,7 @@ project "bgfx"
 			BGFX_DIR .. "src/**.mm",
 		}
 
-	configuration { "vs* or linux or mingw or osx" }
+	configuration { "vs* or linux or mingw or osx or ios" }
 		includedirs {
 			--nacl has GLES2 headers modified...
 			BGFX_DIR .. "3rdparty/glext",

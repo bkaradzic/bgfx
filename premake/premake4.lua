@@ -102,6 +102,13 @@ function exampleProject(_name, _uuid)
 			"OpenGL.framework",
 		}
 
+	configuration { "ios" }
+		linkoptions {
+			"-framework CoreFoundation",
+			"-framework Foundation",
+			"-framework OpenGLES",
+		}
+
 	configuration { "qnx*" }
 		targetextension ""
 		links {
