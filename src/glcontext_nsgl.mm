@@ -5,24 +5,15 @@
 
 #include "bgfx_p.h"
 
-#if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
+#if BX_PLATFORM_OSX && (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
-
-#	if BX_PLATFORM_OSX
-
-#		include <mach-o/dyld.h>
-#		include <dlfcn.h>
-#		include <stdlib.h>
-#		include <string.h>
-#		include <Cocoa/Cocoa.h>
-#		include <OpenGL/OpenGL.h>
+#	include <Cocoa/Cocoa.h>
+#	include <bx/os.h>
 
 static void* NSGLGetProcAddress (const char* name) {
-	static void* const dylib =
-	dlopen("/System/Library/Frameworks/"
-		   "OpenGL.framework/Versions/Current/OpenGL",
-		   RTLD_LAZY);
-    return dylib ? dlsym(dylib, name) : NULL;
+	static void* dylib =
+	bx::dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL");
+    return dylib ? bx::dlsym(dylib, name) : NULL;
 }
 
 namespace bgfx
@@ -37,7 +28,7 @@ namespace bgfx
 		NSWindow* nsWindow = (NSWindow*)g_bgfxNSWindow;
 		
 		NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
-			NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersionLegacy, //NSOpenGLProfileVersion3_2Core,
+			NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersionLegacy, // NSOpenGLProfileVersion3_2Core,
 			NSOpenGLPFAColorSize    , 24,
 			NSOpenGLPFAAlphaSize    ,  8,
 			NSOpenGLPFADepthSize    , 24,
@@ -104,5 +95,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#	endif // BX_PLATFORM_OSX
-#endif //(BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
+#endif // BX_PLATFORM_OSX && (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
