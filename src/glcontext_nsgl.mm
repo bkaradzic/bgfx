@@ -26,8 +26,16 @@ namespace bgfx
 
 		NSWindow* nsWindow = (NSWindow*)g_bgfxNSWindow;
 
+		NSOpenGLPixelFormatAttribute profile =
+#if BGFX_CONFIG_RENDERER_OPENGL >= 31
+			NSOpenGLProfileVersion3_2Core
+#else
+			NSOpenGLProfileVersionLegacy
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+			;
+
 		NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
-			NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersionLegacy, // NSOpenGLProfileVersion3_2Core,
+			NSOpenGLPFAOpenGLProfile, profile,
 			NSOpenGLPFAColorSize,     24,
 			NSOpenGLPFAAlphaSize,     8,
 			NSOpenGLPFADepthSize,     24,

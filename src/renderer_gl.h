@@ -12,7 +12,9 @@
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
+#		define GLCOREARB_PROTOTYPES
 #		include <gl/glcorearb.h>
+#		define GL_ARB_shader_objects // OSX collsion with GLhandleARB in gltypes.h
 #	else
 #		if BX_PLATFORM_LINUX
 #			define GL_PROTOTYPES

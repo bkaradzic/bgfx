@@ -457,7 +457,10 @@ namespace bgfx
 
 		void invalidateCache()
 		{
-			m_vaoCache.invalidate();
+			if (m_vaoSupport)
+			{
+				m_vaoCache.invalidate();
+			}
 		}
 
 		void updateCapture()
@@ -2258,12 +2261,13 @@ namespace bgfx
 
 			for (GLint ii = 0; ii < numCmpFormats; ++ii)
 			{
-				BX_TRACE("\t%3d: %8x", ii, formats[ii]);
+				BX_TRACE("  %3d: %8x", ii, formats[ii]);
 			}
 		}
 
-#	define GL_GET(_pname, _min) BX_TRACE(#_pname " %d (min: %d)", glGet(_pname), _min)
+#	define GL_GET(_pname, _min) BX_TRACE("  " #_pname " %d (min: %d)", glGet(_pname), _min)
 
+		BX_TRACE("Defaults:");
 #	if BX_PLATFORM_OSX
 		GL_GET(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, 16 * 4);
 		GL_GET(GL_MAX_VERTEX_UNIFORM_COMPONENTS, 128 * 4);
