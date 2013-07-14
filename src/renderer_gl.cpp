@@ -1380,6 +1380,7 @@ namespace bgfx
 			{
 				uint8_t textureFormat = dds.m_type;
 				bool decompress = TextureFormat::Unknown > textureFormat;
+				uint32_t bpp = tfi.m_bpp;
 
 				if (decompress)
 				{
@@ -1388,6 +1389,7 @@ namespace bgfx
 					internalFmt = tfi.m_internalFmt;
 					m_fmt = tfi.m_fmt;
 					m_type = tfi.m_type;
+					bpp = tfi.m_bpp;
 				}
 
 				bool swizzle = GL_RGBA == m_fmt;
@@ -1402,7 +1404,7 @@ namespace bgfx
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*tfi.m_bpp/8);
+				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*bpp/8);
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
