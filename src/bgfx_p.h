@@ -2226,7 +2226,7 @@ namespace bgfx
 				viewMask >>= ntz;
 				view += ntz;
 
-				setViewRect(view, _x, _y, _width, _height);
+				setViewRect( (uint8_t)view, _x, _y, _width, _height);
 			}
 		}
 
@@ -2241,12 +2241,12 @@ namespace bgfx
 
 		void setViewScissorMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t view = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
-				id += ntz;
+				view += ntz;
 
-				setViewScissor(id, _x, _y, _width, _height);
+				setViewScissor( (uint8_t)view, _x, _y, _width, _height);
 			}
 		}
 
@@ -2266,7 +2266,7 @@ namespace bgfx
 				viewMask >>= ntz;
 				view += ntz;
 
-				setViewClear(view, _flags, _rgba, _depth, _stencil);
+				setViewClear( (uint8_t)view, _flags, _rgba, _depth, _stencil);
 			}
 		}
 
