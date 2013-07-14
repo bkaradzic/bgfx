@@ -30,7 +30,7 @@ project "bgfx"
 			"$(DXSDK_DIR)/include",
 		}
 
-	configuration { "osx" }
+	configuration { "osx or ios" }
 		files {
 			BGFX_DIR .. "src/**.mm",
 		}

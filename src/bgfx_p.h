@@ -2200,12 +2200,12 @@ namespace bgfx
 
 		void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t view = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
-				id += ntz;
+				view += ntz;
 
-				setViewRect(id, _x, _y, _width, _height);
+				setViewRect(view, _x, _y, _width, _height);
 			}
 		}
 
@@ -2220,12 +2220,12 @@ namespace bgfx
 
 		void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 		{
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t view = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
-				id += ntz;
+				view += ntz;
 
-				setViewClear(id, _flags, _rgba, _depth, _stencil);
+				setViewClear(view, _flags, _rgba, _depth, _stencil);
 			}
 		}
 
@@ -2237,12 +2237,12 @@ namespace bgfx
 		void setViewSeqMask(uint32_t _viewMask, bool _enabled)
 		{
 			uint16_t mask = _enabled ? 0xffff : 0x0;
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t view = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
-				id += ntz;
+				view += ntz;
 
-				m_seqMask[id] = mask;
+				m_seqMask[view] = mask;
 			}
 		}
 
@@ -2253,12 +2253,12 @@ namespace bgfx
 
 		void setViewRenderTargetMask(uint32_t _viewMask, RenderTargetHandle _handle)
 		{
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t view = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
-				id += ntz;
+				view += ntz;
 
-				m_rt[id] = _handle;
+				m_rt[view] = _handle;
 			}
 		}
 
@@ -2294,12 +2294,12 @@ namespace bgfx
 
 		void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj, uint8_t _other)
 		{
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t view = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
-				id += ntz;
+				view += ntz;
 
-				setViewTransform( (uint8_t)id, _view, _proj, _other);
+				setViewTransform( (uint8_t)view, _view, _proj, _other);
 			}
 		}
 

@@ -86,6 +86,12 @@ osx-release64:
 	make -C .build/projects/gmake-osx config=release64
 osx: osx-debug32 osx-release32 osx-debug64 osx-release64
 
+ios-debug:
+	make -R -C .build/projects/gmake-ios config=debug
+ios-release:
+	make -R -C .build/projects/gmake-ios config=release
+ios: ios-debug ios-release
+
 qnx-arm-debug:
 	make -R -C .build/projects/gmake-qnx-arm config=debug
 qnx-arm-release:

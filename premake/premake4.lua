@@ -103,6 +103,9 @@ function exampleProject(_name, _uuid)
 		}
 
 	configuration { "ios" }
+		files {
+			BGFX_DIR .. "examples/common/**.mm",
+		}
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
