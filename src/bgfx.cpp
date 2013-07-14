@@ -733,6 +733,7 @@ namespace bgfx
 		memset(m_rt, 0xff, sizeof(m_rt) );
 		memset(m_clear, 0, sizeof(m_clear) );
 		memset(m_rect, 0, sizeof(m_rect) );
+		memset(m_scissor, 0, sizeof(m_scissor) );
 		memset(m_seq, 0, sizeof(m_seq) );
 		memset(m_seqMask, 0, sizeof(m_seqMask) );
 
@@ -1305,6 +1306,18 @@ namespace bgfx
 		s_ctx.setViewRectMask(_viewMask, _x, _y, _width, _height);
 	}
 
+	void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx.setViewScissor(_id, _x, _y, _width, _height);
+	}
+
+	void setViewScissorMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx.setViewScissorMask(_viewMask, _x, _y, _width, _height);
+	}
+
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -1369,6 +1382,18 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx.m_submit->setStencil(_fstencil, _bstencil);
+	}
+
+	uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx.m_submit->setScissor(_x, _y, _width, _height);
+	}
+
+	void setScissor(uint16_t _cache)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx.m_submit->setScissor(_cache);
 	}
 
 	uint32_t setTransform(const void* _mtx, uint16_t _num)

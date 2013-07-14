@@ -172,6 +172,12 @@ namespace bgfx
 
 	struct Rect
 	{
+		bool isZero() const
+		{
+			uint64_t ui64 = *( (uint64_t*)this);
+			return UINT64_C(0) == ui64;
+		}
+
 		uint16_t m_x;
 		uint16_t m_y;
 		uint16_t m_width;
@@ -850,6 +856,7 @@ namespace bgfx
 			m_instanceDataStride = 0;
 			m_numInstances = 1;
 			m_num = 1;
+			m_scissor = 0;
 			m_vertexBuffer.idx = invalidHandle;
 			m_vertexDecl.idx = invalidHandle;
 			m_indexBuffer.idx = invalidHandle;
@@ -876,6 +883,7 @@ namespace bgfx
 		uint16_t m_instanceDataStride;
 		uint16_t m_numInstances;
 		uint16_t m_num;
+		uint16_t m_scissor;
 
 		VertexBufferHandle m_vertexBuffer;
 		VertexDeclHandle m_vertexDecl;
@@ -992,6 +1000,18 @@ namespace bgfx
 		void setStencil(uint32_t _fstencil, uint32_t _bstencil)
 		{
 			m_state.m_stencil = packStencil(_fstencil, _bstencil);
+		}
+
+		uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			BX_UNUSED(_x, _y, _width, _height);
+			m_state.m_scissor = 0;
+			return 0;
+		}
+
+		void setScissor(uint16_t _cache)
+		{
+			m_state.m_scissor = _cache;
 		}
 
 		uint32_t setTransform(const void* _mtx, uint16_t _num)
@@ -1208,6 +1228,7 @@ namespace bgfx
 		RenderTargetHandle m_rt[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
+		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_proj[BGFX_CONFIG_MAX_VIEWS];
 		uint8_t m_other[BGFX_CONFIG_MAX_VIEWS];
@@ -2209,6 +2230,26 @@ namespace bgfx
 			}
 		}
 
+		void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			Rect& scissor = m_scissor[_id];
+			scissor.m_x = _x;
+			scissor.m_y = _y;
+			scissor.m_width = _width;
+			scissor.m_height = _height;
+		}
+
+		void setViewScissorMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			{
+				viewMask >>= ntz;
+				id += ntz;
+
+				setViewScissor(id, _x, _y, _width, _height);
+			}
+		}
+
 		void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 		{
 			Clear& clear = m_clear[_id];
@@ -2387,6 +2428,7 @@ namespace bgfx
 			memcpy(m_submit->m_rt, m_rt, sizeof(m_rt) );
 			memcpy(m_submit->m_clear, m_clear, sizeof(m_clear) );
 			memcpy(m_submit->m_rect, m_rect, sizeof(m_rect) );
+			memcpy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
 			memcpy(m_submit->m_view, m_view, sizeof(m_view) );
 			memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
 			memcpy(m_submit->m_other, m_other, sizeof(m_other) );
@@ -3068,6 +3110,7 @@ namespace bgfx
 		RenderTargetHandle m_rt[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
+		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_proj[BGFX_CONFIG_MAX_VIEWS];
 		uint8_t m_other[BGFX_CONFIG_MAX_VIEWS];

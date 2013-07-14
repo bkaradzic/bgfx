@@ -70,7 +70,7 @@
 #define BGFX_STATE_SRGBWRITE             UINT64_C(0x0010000000000000)
 #define BGFX_STATE_MSAA                  UINT64_C(0x0020000000000000)
 
-#define BGFX_STATE_RESERVED              UINT64_C(0xff00000000000000)
+#define BGFX_STATE_RESERVED_MASK         UINT64_C(0xff00000000000000)
 
 #define BGFX_STATE_NONE                  UINT64_C(0x0000000000000000)
 #define BGFX_STATE_MASK                  UINT64_C(0xffffffffffffffff)
@@ -640,18 +640,20 @@ namespace bgfx
 
 	/// Allocate transient index buffer.
 	///
-	/// @param[out] _tib is valid for the duration of frame, and it can be
-	///   reused for multiple draw calls.
-	/// @param _num number of indices to allocate.
+	/// @param[out] _tib TransientIndexBuffer structure is filled and is valid
+	///   for the duration of frame, and it can be reused for multiple draw
+	///   calls.
+	/// @param _num Number of indices to allocate.
 	///
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num);
 
 	/// Allocate transient vertex buffer.
 	///
-	/// @param[out] _tvb is valid for the duration of frame, and it can be
-	///   reused for multiple draw calls.
-	/// @param _num number of vertices to allocate.
-	/// @param _decl vertex declaration.
+	/// @param[out] _tvb TransientVertexBuffer structure is filled and is valid
+	///   for the duration of frame, and it can be reused for multiple draw
+	///   calls.
+	/// @param _num Number of vertices to allocate.
+	/// @param _decl Vertex declaration.
 	///
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl);
 
@@ -674,8 +676,8 @@ namespace bgfx
 
 	/// Create program with vertex and fragment shaders.
 	///
-	/// @param _vsh vertex shader.
-	/// @param _fsh fragment shader.
+	/// @param _vsh Vertex shader.
+	/// @param _fsh Fragment shader.
 	/// @returns Program handle if vertex shader output and fragment shader
 	///   input are matching, otherwise returns invalid program handle.
 	///
@@ -756,8 +758,16 @@ namespace bgfx
 	/// Set view rectangle. Draw primitive outside view will be clipped.
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
-	/// Set view rectangle for multiple views .
+	/// Set view rectangle for multiple views.
 	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
+
+	/// Set view scissor. Draw primitive outside view will be clipped. When
+	/// _x, _y, _width and _height are set to 0, scissor will be disabled.
+	void setViewScissor(uint8_t _id, uint16_t _x = 0, uint16_t _y = 0, uint16_t _width = 0, uint16_t _height = 0);
+
+	/// Set view scissor for multiple views. When _x, _y, _width and _height
+	/// are set to 0, scissor will be disabled.
+	void setViewScissorMask(uint32_t _viewMask, uint16_t _x = 0, uint16_t _y = 0, uint16_t _width = 0, uint16_t _height = 0);
 
 	/// Set view clear flags.
 	///
@@ -843,11 +853,20 @@ namespace bgfx
 	///
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil = BGFX_STENCIL_NONE);
 
+	/// Set scissor for draw primitive.
+	uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
+
+	/// Set scissor from cache for draw primitive.
+	///
+	/// @param _cache Index in scissor cache.
+	///
+	void setScissor(uint16_t _cache);
+
 	/// Set model matrix for draw primitive. If it is not called model will
 	/// be rendered with identity model matrix.
 	///
-	/// @param _mtx pointer to first matrix in array.
-	/// @param _num number of matrices in array.
+	/// @param _mtx Pointer to first matrix in array.
+	/// @param _num Number of matrices in array.
 	/// @returns index into matrix cache in case the same model matrix has
 	///   to be used for other draw primitive call.
 	///
@@ -855,8 +874,8 @@ namespace bgfx
 
 	/// Set model matrix from matrix cache for draw primitive.
 	///
-	/// @param _cache index in matrix cache.
-	/// @param _num number of matrices from cache.
+	/// @param _cache Index in matrix cache.
+	/// @param _num Number of matrices from cache.
 	///
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
 
@@ -896,14 +915,14 @@ namespace bgfx
 	/// Submit primitive for rendering into single view.
 	///
 	/// @param _id View id.
-	/// @param _depth depth for sorting.
+	/// @param _depth Depth for sorting.
 	///
 	void submit(uint8_t _id, int32_t _depth = 0);
 
 	/// Submit primitive for rendering into multiple views.
 	///
-	/// @param _viewMask mask to which views to submit draw primitive calls.
-	/// @param _depth depth for sorting.
+	/// @param _viewMask Mask to which views to submit draw primitive calls.
+	/// @param _depth Depth for sorting.
 	///
 	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
