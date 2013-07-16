@@ -2257,7 +2257,6 @@ namespace bgfx
 					}
 
 					Rect& rect = m_render->m_rect[view];
-
 					D3DVIEWPORT9 vp;
 					vp.X = rect.m_x;
 					vp.Y = rect.m_y;
@@ -2305,6 +2304,19 @@ namespace bgfx
 							DX_CHECK(device->Clear(0, NULL, flags, color, clear.m_depth, clear.m_stencil) );
 							DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE) );
 						}
+					}
+
+					Rect& scissorRect = m_render->m_scissor[view];
+					bool scissor = !scissorRect.isZero();
+					DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, scissor) );
+					if (scissor)
+					{
+						RECT rc;
+						rc.left = scissorRect.m_x;
+						rc.top = scissorRect.m_y;
+						rc.right = scissorRect.m_x + scissorRect.m_width;
+						rc.bottom = scissorRect.m_y + scissorRect.m_height;
+						DX_CHECK(device->SetScissorRect(&rc) );
 					}
 
 					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );

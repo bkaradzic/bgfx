@@ -2739,6 +2739,18 @@ namespace bgfx
 						m_clearQuad.clear(rect, clear, height);
 					}
 
+					Rect& scissorRect = m_render->m_scissor[view];
+					bool scissor = !scissorRect.isZero();
+					if (scissor)
+					{
+						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+						GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
+					}
+					else
+					{
+						GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+					}
+
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
 					GL_CHECK(glEnable(GL_DEPTH_TEST) );
 					GL_CHECK(glDepthFunc(GL_LESS) );

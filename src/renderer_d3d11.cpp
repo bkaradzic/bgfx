@@ -902,10 +902,11 @@ namespace bgfx
 			}
 		}
 
-		void setRasterizerState(uint64_t _state, bool _wireframe = false)
+		void setRasterizerState(uint64_t _state, bool _wireframe = false, bool _scissor = false)
 		{
 			_state &= BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
+			_state |= _scissor ? BGFX_STATE_RESERVED_MASK : 0;
 
 			ID3D11RasterizerState* rs = m_rasterizerStateCache.find(_state);
 			if (NULL == rs)
@@ -920,7 +921,7 @@ namespace bgfx
 				desc.DepthBiasClamp = 0.0f;
 				desc.SlopeScaledDepthBias = 0.0f;
 				desc.DepthClipEnable = false;
-				desc.ScissorEnable = false;
+				desc.ScissorEnable = _scissor;
 				desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
 				desc.AntialiasedLineEnable = false;
 
@@ -1367,7 +1368,7 @@ namespace bgfx
 			
  		s_renderCtx.setBlendState(state);
  		s_renderCtx.setDepthStencilState(state);
- 		s_renderCtx.setRasterizerState(state, false);
+ 		s_renderCtx.setRasterizerState(state);
 
 		Program& program = s_renderCtx.m_program[m_program.idx];
 		s_renderCtx.m_currentProgram = &program;
@@ -1446,7 +1447,7 @@ namespace bgfx
 
 			s_renderCtx.setBlendState(state);
 			s_renderCtx.setDepthStencilState(state, stencil);
-			s_renderCtx.setRasterizerState(state, false);
+			s_renderCtx.setRasterizerState(state);
 
 			Program& program = s_renderCtx.m_program[m_program.idx];
 			s_renderCtx.m_currentProgram = &program;
@@ -2308,6 +2309,7 @@ namespace bgfx
 		}
 
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
+		bool scissor = false;
 		s_renderCtx.setDebugWireframe(wireframe);
 
 		uint16_t programIdx = invalidHandle;
@@ -2376,9 +2378,21 @@ namespace bgfx
 						m_clearQuad.clear(rect, clear);
 					}
 
+					Rect& scissorRect = m_render->m_scissor[view];
+					scissor = !scissorRect.isZero();
+					if (scissor)
+					{
+						D3D11_RECT rc;
+						rc.left = scissorRect.m_x;
+						rc.top = scissorRect.m_y;
+						rc.right = scissorRect.m_x + scissorRect.m_width;
+						rc.bottom = scissorRect.m_y + scissorRect.m_height;
+						deviceCtx->RSSetScissorRects(1, &rc);
+					}
+
 					s_renderCtx.setBlendState(BGFX_STATE_DEFAULT);
 					s_renderCtx.setDepthStencilState(BGFX_STATE_DEFAULT, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
-					s_renderCtx.setRasterizerState(BGFX_STATE_DEFAULT, wireframe);
+					s_renderCtx.setRasterizerState(BGFX_STATE_DEFAULT, wireframe, scissor);
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
 					if (primType != s_primType[primIndex])
@@ -2415,7 +2429,7 @@ namespace bgfx
 
 					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
 					{
-						s_renderCtx.setRasterizerState(newFlags, wireframe);
+						s_renderCtx.setRasterizerState(newFlags, wireframe, scissor);
 					}
 
 					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
