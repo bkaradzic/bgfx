@@ -63,6 +63,7 @@ GL_IMPORT(false, PFNGLCREATESHADERPROC,                   glCreateShader);
 GL_IMPORT(false, PFNGLDELETEPROGRAMPROC,                  glDeleteProgram);
 GL_IMPORT(false, PFNGLDELETESHADERPROC,                   glDeleteShader);
 GL_IMPORT(false, PFNGLATTACHSHADERPROC,                   glAttachShader);
+GL_IMPORT(false, PFNGLDETACHSHADERPROC,                   glDetachShader);
 GL_IMPORT(false, PFNGLCOMPILESHADERPROC,                  glCompileShader);
 GL_IMPORT(false, PFNGLSHADERSOURCEPROC,                   glShaderSource);
 GL_IMPORT(false, PFNGLGETSHADERIVPROC,                    glGetShaderiv);

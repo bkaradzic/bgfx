@@ -989,6 +989,8 @@ namespace bgfx
 			GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
 			GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
 			GL_CHECK(glLinkProgram(m_id) );
+			GL_CHECK(glDetachShader(m_id, _vsh.m_id) );
+			GL_CHECK(glDetachShader(m_id, _fsh.m_id) );
 
 			GLint linked = 0;
 			GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
