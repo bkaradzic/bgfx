@@ -35,10 +35,19 @@ namespace bgfx
 
 #if BX_PLATFORM_ANDROID
 	::ANativeWindow* g_bgfxAndroidWindow = NULL;
-	void androidSetWindow(ANativeWindow* _window)
+	void androidSetWindow(::ANativeWindow* _window)
 	{
 		g_bgfxAndroidWindow = _window;
 	}
+#elif BX_PLATFORM_IOS
+	void* g_bgfxEaglContext = NULL;
+	void* g_bgfxEaglLayer = NULL;
+	void iosSetEaglContext(void* _context, void* _layer)
+	{
+		g_bgfxEaglContext = _context;
+		g_bgfxEaglLayer = _layer;
+	}
+
 #elif BX_PLATFORM_OSX
 	void* g_bgfxNSWindow = NULL;
 	
@@ -638,7 +647,7 @@ namespace bgfx
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
 		// On NaCl renderer is on the main thread.
-		s_ctx.init(!BX_PLATFORM_NACL);
+		s_ctx.init(!BX_PLATFORM_NACL && !BX_PLATFORM_IOS);
 	}
 
 	void shutdown()

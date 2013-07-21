@@ -66,9 +66,28 @@
 
 #elif BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
 #	if BGFX_CONFIG_RENDERER_OPENGLES2
-#		include <GLES2/gl2platform.h>
-#		include <GLES2/gl2.h>
-#		include <GLES2/gl2ext.h>
+#		if BX_PLATFORM_IOS
+#			include <OpenGLES/ES2/gl.h>
+#			include <OpenGLES/ES2/glext.h>
+
+typedef void (GL_APIENTRYP PFNGLBINDVERTEXARRAYOESPROC) (GLuint array);
+typedef void (GL_APIENTRYP PFNGLDELETEVERTEXARRAYSOESPROC) (GLsizei n, const GLuint *arrays);
+typedef void (GL_APIENTRYP PFNGLGENVERTEXARRAYSOESPROC) (GLsizei n, GLuint *arrays);
+typedef GLboolean (GL_APIENTRYP PFNGLISVERTEXARRAYOESPROC) (GLuint array);
+typedef void (GL_APIENTRYP PFNGLGETPROGRAMBINARYOESPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary);
+typedef void (GL_APIENTRYP PFNGLPROGRAMBINARYOESPROC) (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLint length);
+typedef void (GL_APIENTRYP PFLGLDRAWARRAYSINSTANCEDANGLEPROC) (GLenum mode, GLint first, GLsizei count, GLsizei primcount);
+typedef void (GL_APIENTRYP PFLGLDRAWELEMENTSINSTANCEDANGLEPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
+typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLuint divisor);
+//#define GL_UNSIGNED_INT_10_10_10_2_OES                          0x8DF6
+#define GL_UNSIGNED_INT_2_10_10_10_REV_EXT                      0x8368
+#define GL_SAMPLER_3D_OES                                       0x8B5F
+#define GL_PROGRAM_BINARY_LENGTH_OES                            0x8741
+#		else
+#			include <GLES2/gl2platform.h>
+#			include <GLES2/gl2.h>
+#			include <GLES2/gl2ext.h>
+#		endif // BX_PLATFORM_
 #		define glProgramBinary glProgramBinaryOES
 #		define glGetProgramBinary glGetProgramBinaryOES
 #		define glBindVertexArray glBindVertexArrayOES
@@ -214,7 +233,7 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #elif BX_PLATFORM_OSX
 #	include "glcontext_nsgl.h"
 #elif BX_PLATFORM_IOS
-#	include "glcontext_ios.h"
+#	include "glcontext_eagl.h"
 #endif // BX_PLATFORM_
 
 #if BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)

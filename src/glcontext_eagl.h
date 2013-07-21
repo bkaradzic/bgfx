@@ -3,10 +3,10 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __GLCONTEXT_NSGL_H__
-#define __GLCONTEXT_NSGL_H__
+#ifndef __GLCONTEXT_EAGL_H__
+#define __GLCONTEXT_EAGL_H__
 
-#if BX_PLATFORM_OSX
+#if BX_PLATFORM_IOS
 
 namespace bgfx
 {
@@ -30,9 +30,13 @@ namespace bgfx
 
 		void* m_view;
 		void* m_context;
+
+		GLuint m_fbo;
+		GLuint m_colorRbo;
+		GLuint m_depthRbo;
 	};
 } // namespace bgfx
 
-#endif // BX_PLATFORM_OSX
+#endif // BX_PLATFORM_IOS
 
-#endif // __GLCONTEXT_NSGL_H__
+#endif // __GLCONTEXT_EAGL_H__

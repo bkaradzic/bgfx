@@ -37,7 +37,7 @@ extern int _main_(int _argc, char** _argv);
 - (id)init {
 	self = [super init];
 	if (self) {
-		self->terminated = false;        
+		self->terminated = false;
 	}
 	return self;
 }
@@ -77,7 +77,7 @@ extern int _main_(int _argc, char** _argv);
 
 - (void)windowCreated:(NSWindow *)window {
 	assert(window);
-	
+
 	[window setDelegate:self];
 
 	assert(self->windowCount < ~0u);
@@ -86,12 +86,12 @@ extern int _main_(int _argc, char** _argv);
 
 - (BOOL)windowShouldClose:(NSWindow *)window {
 	assert(window);
-	
+
 	[window setDelegate:nil];
 
 	assert(self->windowCount);
 	self->windowCount -= 1;
-	
+
 	if (self->windowCount == 0) {
 		[NSApp terminate:self];
 		return false;
@@ -106,39 +106,39 @@ namespace entry
 	{
 		int m_argc;
 		char** m_argv;
-		
+
 		static int32_t threadFunc(void* _userData)
 		{
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
 			return _main_(self->m_argc, self->m_argv);
 		}
 	};
-	
+
 	struct Context
 	{
 		Context()
 			: m_exit(false)
 		{
 		}
-		
+
 		NSEvent* WaitEvent () {
 			return
-			[NSApp
-			 nextEventMatchingMask:NSAnyEventMask
-			 untilDate:[NSDate distantFuture] // wait for event
-			 inMode:NSDefaultRunLoopMode
-			 dequeue:YES];
+				[NSApp
+				nextEventMatchingMask:NSAnyEventMask
+				untilDate:[NSDate distantFuture] // wait for event
+				inMode:NSDefaultRunLoopMode
+				dequeue:YES];
 		}
-		
+
 		NSEvent* PeekEvent () {
 			return
-			[NSApp
-			 nextEventMatchingMask:NSAnyEventMask
-			 untilDate:[NSDate distantPast] // do not wait for event
-			 inMode:NSDefaultRunLoopMode
-			 dequeue:YES];
+				[NSApp
+				nextEventMatchingMask:NSAnyEventMask
+				untilDate:[NSDate distantPast] // do not wait for event
+				inMode:NSDefaultRunLoopMode
+				dequeue:YES];
 		}
-		
+
 		bool DispatchEvent (NSEvent* event) {
 			if (event) {
 				[NSApp sendEvent:event];
@@ -147,22 +147,22 @@ namespace entry
 			}
 			return false;
 		}
-		
+
 		int32_t main(int _argc, char** _argv)
 		{
-			[NSApplication sharedApplication];			
+			[NSApplication sharedApplication];
 			id dg = [bgfxApplicationDelegate sharedDelegate];
 			[NSApp setDelegate:dg];
 			[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 			[NSApp activateIgnoringOtherApps:YES];
 			[NSApp finishLaunching];
 			[[NSNotificationCenter defaultCenter]
-			 postNotificationName:NSApplicationWillFinishLaunchingNotification
-			 object:NSApp];
+				postNotificationName:NSApplicationWillFinishLaunchingNotification
+				object:NSApp];
 			[[NSNotificationCenter defaultCenter]
-			 postNotificationName:NSApplicationDidFinishLaunchingNotification
-			 object:NSApp];
-			
+				postNotificationName:NSApplicationDidFinishLaunchingNotification
+				object:NSApp];
+
 			id quitMenuItem = [NSMenuItem new];
 			[quitMenuItem
 				initWithTitle:@"Quit"
@@ -175,53 +175,52 @@ namespace entry
 			id menubar = [[NSMenu new] autorelease];
 			[menubar addItem:appMenuItem];
 			[NSApp setMainMenu:menubar];
-			
+
 			NSRect rect = NSMakeRect(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 			NSWindow* window = [NSWindow alloc];
 			[window
-			 initWithContentRect:rect
-			 styleMask:0
-			 |NSTitledWindowMask
-			 |NSClosableWindowMask
-			 |NSMiniaturizableWindowMask
-			 |NSResizableWindowMask
-			 backing:NSBackingStoreBuffered defer:NO
-			 ];
-			NSString* appName = [[NSProcessInfo processInfo] processName];    
+				initWithContentRect:rect
+				styleMask:0
+				|NSTitledWindowMask
+				|NSClosableWindowMask
+				|NSMiniaturizableWindowMask
+				|NSResizableWindowMask
+				backing:NSBackingStoreBuffered defer:NO
+				];
+			NSString* appName = [[NSProcessInfo processInfo] processName];
 			[window setTitle:appName];
 			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 			[window makeKeyAndOrderFront:nil];
 			[[bgfxWindowDelegate sharedDelegate] windowCreated:window];
-			
+
 			bgfx::osxSetNSWindow(window);
-			
+
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
 			mte.m_argv = _argv;
-			
+
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
 
 			while (!(m_exit = [dg applicationHasTerminated]))
 			{
-				DispatchEvent(WaitEvent());				
+				DispatchEvent(WaitEvent());
 				while (DispatchEvent(PeekEvent()));
 			}
 			m_eventQueue.postExitEvent();
-			
+
 			thread.shutdown();
-			
+
 			return 0;
 		}
-		
+
 		EventQueue m_eventQueue;
-		
+
 		bool m_exit;
-		
 	};
-	
+
 	static Context s_ctx;
-	
+
 	const Event* poll()
 	{
 		return s_ctx.m_eventQueue.poll();

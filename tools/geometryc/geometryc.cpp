@@ -345,6 +345,14 @@ inline uint32_t rgbaToAbgr(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
 		 ;
 }
 
+struct GroupSortByMaterial
+{
+	bool operator()(const Group& _lhs, const Group& _rhs)
+	{
+		return _lhs.m_material < _rhs.m_material;
+	}
+};
+
 int main(int _argc, const char* _argv[])
 {
 	bx::CommandLine cmdLine(_argc, _argv);
@@ -634,14 +642,6 @@ int main(int _argc, const char* _argv[])
 	int64_t now = bx::getHPCounter();
 	parseElapsed += now;
 	int64_t convertElapsed = -now;
-
-	struct GroupSortByMaterial
-	{
-		bool operator()(const Group& _lhs, const Group& _rhs)
-		{
-			return _lhs.m_material < _rhs.m_material;
-		}
-	};
 
 	std::sort(groups.begin(), groups.end(), GroupSortByMaterial() );
 
