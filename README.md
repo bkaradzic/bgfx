@@ -20,6 +20,7 @@ Supported rendering backends:
 Platforms:
 
  * Android
+ * iOS
  * Linux
  * Native Client
  * OSX
@@ -263,15 +264,11 @@ Todo
  - BlendFuncSeparate and BlendEquationSeparate.
  - Blit between textures.
  - Occlusion queries.
- - iOS support.
  - DX11: MSAA.
  - Fullscreen mode.
-
-Notice
-------
-
-This is alpha software, and it lacks documentation and examples. If you're
-interested to use it in your project, please let me know.
+ - GL: Add support for ARB_seamless_cube_map.
+ - GL/DX11: Add support for ARB_depth_clamp, DepthBiasClamp.
+ - Primitive scissor.
 
 Contact
 -------
