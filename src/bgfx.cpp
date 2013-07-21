@@ -40,11 +40,9 @@ namespace bgfx
 		g_bgfxAndroidWindow = _window;
 	}
 #elif BX_PLATFORM_IOS
-	void* g_bgfxEaglContext = NULL;
 	void* g_bgfxEaglLayer = NULL;
-	void iosSetEaglContext(void* _context, void* _layer)
+	void iosSetEaglLayer(void* _layer)
 	{
-		g_bgfxEaglContext = _context;
 		g_bgfxEaglLayer = _layer;
 	}
 

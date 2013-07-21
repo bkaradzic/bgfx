@@ -96,18 +96,12 @@ using namespace entry;
 
 @interface EAGLView : UIView
 {
-
-	EAGLContext* m_context;
 	CADisplayLink* m_displayLink;
 }
-
-@property (nonatomic, retain) EAGLContext* m_context;
 
 @end
 
 @implementation EAGLView
-
-@synthesize m_context;
 
 + (Class)layerClass
 {
@@ -124,22 +118,7 @@ using namespace entry;
 	}
 
 	CAEAGLLayer* layer = (CAEAGLLayer*)self.layer;
-	layer.opaque = true;
-
-	layer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys
-									: [NSNumber numberWithBool:false]
-									, kEAGLDrawablePropertyRetainedBacking
-									, kEAGLColorFormatRGBA8
-									, kEAGLDrawablePropertyColorFormat
-									, nil
-									];
-
-	m_context = [ [EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-	BX_CHECK(NULL != m_context, "Failed to create kEAGLRenderingAPIOpenGLES2 context.");
-
-	[EAGLContext setCurrentContext:m_context];
-
-	bgfx::iosSetEaglContext(m_context, layer);
+	bgfx::iosSetEaglLayer(layer);
 
 	return self;
 }

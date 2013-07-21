@@ -14,11 +14,21 @@ namespace bgfx
 {
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
-		EAGLContext* context = (EAGLContext*)g_bgfxEaglContext;
 		CAEAGLLayer* layer = (CAEAGLLayer*)g_bgfxEaglLayer;
-		[EAGLContext setCurrentContext:context];
+		layer.opaque = true;
 
-		m_context = g_bgfxEaglContext;
+		layer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys
+										: [NSNumber numberWithBool:false]
+										, kEAGLDrawablePropertyRetainedBacking
+										, kEAGLColorFormatRGBA8
+										, kEAGLDrawablePropertyColorFormat
+										, nil
+										];
+
+		EAGLContext* context = [ [EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+		BX_CHECK(NULL != context, "Failed to create kEAGLRenderingAPIOpenGLES2 context.");
+		m_context = (void*)context;
+		[EAGLContext setCurrentContext:context];
 
 		GL_CHECK(glGenFramebuffers(1, &m_fbo) );
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo) );

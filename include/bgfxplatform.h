@@ -23,7 +23,7 @@ namespace bgfx
 #elif BX_PLATFORM_IOS
 namespace bgfx
 {
-	void iosSetEaglContext(void* _context, void* _layer);
+	void iosSetEaglLayer(void* _layer);
 } // namespace bgfx
 
 #elif BX_PLATFORM_LINUX
