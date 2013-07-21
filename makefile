@@ -13,7 +13,8 @@ all:
 	premake4 --file=premake/premake4.lua --gcc=mingw gmake
 	premake4 --file=premake/premake4.lua --gcc=linux gmake
 	premake4 --file=premake/premake4.lua --gcc=osx gmake
-	premake4 --file=premake/premake4.lua --gcc=ios gmake
+	premake4 --file=premake/premake4.lua --gcc=ios-arm gmake
+	premake4 --file=premake/premake4.lua --gcc=ios-simulator gmake
 	premake4 --file=premake/premake4.lua --gcc=qnx-arm gmake
 	premake4 --file=premake/premake4.lua xcode4
 	make -s --no-print-directory -C src
@@ -86,11 +87,17 @@ osx-release64:
 	make -C .build/projects/gmake-osx config=release64
 osx: osx-debug32 osx-release32 osx-debug64 osx-release64
 
-ios-debug:
-	make -R -C .build/projects/gmake-ios config=debug
-ios-release:
-	make -R -C .build/projects/gmake-ios config=release
-ios: ios-debug ios-release
+ios-arm-debug:
+	make -R -C .build/projects/gmake-ios-arm config=debug
+ios-arm-release:
+	make -R -C .build/projects/gmake-ios-arm config=release
+ios-arm: ios-arm-debug ios-arm-release
+
+ios-simulator-debug:
+	make -R -C .build/projects/gmake-ios-simulator config=debug
+ios-simulator-release:
+	make -R -C .build/projects/gmake-ios-simulator config=release
+ios-simulator: ios-simulator-debug ios-simulator-release
 
 qnx-arm-debug:
 	make -R -C .build/projects/gmake-qnx-arm config=debug

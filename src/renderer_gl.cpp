@@ -282,6 +282,8 @@ namespace bgfx
 	}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
+	extern GLuint m_backBufferFbo;
+
 	struct RendererContext
 	{
 		RendererContext()
@@ -428,6 +430,10 @@ namespace bgfx
 				if (!m_glctx.isValid() )
 				{
 					m_glctx.create(_width, _height);
+#if BX_PLATFORM_IOS
+					// BK - Temp, need to figure out how to deal with FBO created by context.
+					m_backBufferFbo = m_glctx.m_fbo;
+#endif // BX_PLATFORM_IOS
 				}
 				else
 				{
@@ -537,7 +543,7 @@ namespace bgfx
 
 		void init()
 		{
-			m_glctx.create(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
 
 			m_vendor = getGLString(GL_VENDOR);
 			m_renderer = getGLString(GL_RENDERER);
@@ -2427,6 +2433,7 @@ namespace bgfx
 		s_drawArraysInstanced = stubDrawArraysInstanced;
 		s_drawElementsInstanced = stubDrawElementsInstanced;
 
+#	if !BX_PLATFORM_IOS
 		if (s_extension[Extension::ARB_instanced_arrays].m_supported
 		||  s_extension[Extension::ANGLE_instanced_arrays].m_supported)
 		{
@@ -2439,6 +2446,7 @@ namespace bgfx
 				s_drawElementsInstanced = glDrawElementsInstanced;
 			}
 		}
+#	endif // !BX_PLATFORM_IOS
 #endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 
 		if (s_renderCtx.m_vaoSupport)
@@ -2628,7 +2636,7 @@ namespace bgfx
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t /*_size*/)
 	{
-		GREMEDY_SETMARKER(_marker);		
+		GREMEDY_SETMARKER(_marker);
 	}
 
 	void Context::rendererSubmit()
@@ -2639,7 +2647,7 @@ namespace bgfx
 			GL_CHECK(glBindVertexArray(defaultVao) );
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
 
 		s_renderCtx.updateResolution(m_render->m_resolution);
 

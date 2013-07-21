@@ -20,6 +20,12 @@ namespace bgfx
 	void androidSetWindow(::ANativeWindow* _window);
 } // namespace bgfx
 
+#elif BX_PLATFORM_IOS
+namespace bgfx
+{
+	void iosSetEaglContext(void* _context, void* _layer);
+} // namespace bgfx
+
 #elif BX_PLATFORM_LINUX
 #	include <X11/Xlib.h>
 
