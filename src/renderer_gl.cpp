@@ -26,6 +26,7 @@ namespace bgfx
 			ARB_half_float_vertex,
 			ARB_instanced_arrays,
 			ARB_multisample,
+			ARB_seamless_cube_map,
 			ARB_texture_float,
 			ARB_texture_multisample,
 			ARB_texture_swizzle,
@@ -84,6 +85,7 @@ namespace bgfx
 		{ "GL_ARB_half_float_vertex",             false,                             true  },
 		{ "GL_ARB_instanced_arrays",              BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_multisample",                   false,                             true  },
+		{ "GL_ARB_seamless_cube_map",             BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_texture_float",                 BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_texture_multisample",           false,                             true  },
 		{ "GL_ARB_texture_swizzle",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
@@ -2313,6 +2315,7 @@ namespace bgfx
 			char name[1024];
 			const char* pos = extensions;
 			const char* end = extensions + strlen(extensions);
+			uint32_t index = 0;
 			while (pos < end)
 			{
 				uint32_t len;
@@ -2345,10 +2348,11 @@ namespace bgfx
 					}
 				}
 
-				BX_TRACE("GL_EXTENSION%s: %s", supported ? " (supported)" : "", name);
+				BX_TRACE("GL_EXTENSION %3d%s: %s", index, supported ? " (supported)" : "", name);
 				BX_UNUSED(supported);
 
  				pos += len+1;
+				++index;
  			}
 
 			BX_TRACE("Supported extensions:");
@@ -2454,16 +2458,21 @@ namespace bgfx
 			GL_CHECK(glGenVertexArrays(1, &s_renderCtx.m_vao) );
 		}
 
-#if BGFX_CONFIG_RENDERER_OPENGL >= 31
+#if BGFX_CONFIG_RENDERER_OPENGL
+#	if BGFX_CONFIG_RENDERER_OPENGL >= 31
 		s_textureFormat[TextureFormat::L8].m_internalFmt = GL_R8;
 		s_textureFormat[TextureFormat::L8].m_fmt         = GL_RED;
-#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+#	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-#if BGFX_CONFIG_RENDERER_OPENGL
 		if (s_extension[Extension::ARB_debug_output].m_supported)
 		{
 			GL_CHECK(glDebugMessageCallbackARB(debugProcCb, NULL) );
 			GL_CHECK(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM_ARB, 0, NULL, GL_TRUE) );
+		}
+
+		if (s_extension[Extension::ARB_seamless_cube_map].m_supported)
+		{
+			GL_CHECK(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS) );
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 	}

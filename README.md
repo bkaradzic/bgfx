@@ -266,7 +266,6 @@ Todo
  - Occlusion queries.
  - DX11: MSAA.
  - Fullscreen mode.
- - GL: Add support for ARB_seamless_cube_map.
  - GL/DX11: Add support for ARB_depth_clamp, DepthBiasClamp.
  - Primitive scissor.
 
