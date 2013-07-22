@@ -19,63 +19,86 @@
 
 extern int _main_(int _argc, char** _argv);
 
-@interface bgfxApplicationDelegate : NSObject <NSApplicationDelegate> {
+@interface AppDelegate : NSObject<NSApplicationDelegate>
+{
 	bool terminated;
 }
-+ (bgfxApplicationDelegate *)sharedDelegate;
+
++ (AppDelegate *)sharedDelegate;
 - (id)init;
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 - (bool)applicationHasTerminated;
+
 @end
 
-@implementation bgfxApplicationDelegate
-+ (bgfxApplicationDelegate *)sharedDelegate {
-	static id delegate = [bgfxApplicationDelegate new];
+@implementation AppDelegate
+
++ (AppDelegate *)sharedDelegate
+{
+	static id delegate = [AppDelegate new];
 	return delegate;
 }
 
-- (id)init {
+- (id)init
+{
 	self = [super init];
-	if (self) {
-		self->terminated = false;
+
+	if (nil == self)
+	{
+		return nil;
 	}
+
+	self->terminated = false;
 	return self;
 }
 
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
 	self->terminated = true;
 	return NSTerminateCancel;
 }
 
-- (bool)applicationHasTerminated {
+- (bool)applicationHasTerminated
+{
 	return self->terminated;
 }
+
 @end
 
-@interface bgfxWindowDelegate : NSObject <NSWindowDelegate> {
+@interface Window : NSObject<NSWindowDelegate>
+{
 	unsigned int windowCount;
 }
-+ (bgfxWindowDelegate *)sharedDelegate;
+
++ (Window *)sharedDelegate;
 - (id)init;
 - (void)windowCreated:(NSWindow *)window;
 - (BOOL)windowShouldClose:(NSWindow *)window;
+
 @end
 
-@implementation bgfxWindowDelegate
-+ (bgfxWindowDelegate *)sharedDelegate {
-	static id windowDelegate = [bgfxWindowDelegate new];
+@implementation Window
+
++ (Window *)sharedDelegate
+{
+	static id windowDelegate = [Window new];
 	return windowDelegate;
 }
 
-- (id)init {
+- (id)init
+{
 	self = [super init];
-	if (self) {
-		self->windowCount = 0;
+	if (nil == self)
+	{
+		return nil;
 	}
+
+	self->windowCount = 0;
 	return self;
 }
 
-- (void)windowCreated:(NSWindow *)window {
+- (void)windowCreated:(NSWindow *)window
+{
 	assert(window);
 
 	[window setDelegate:self];
@@ -84,7 +107,8 @@ extern int _main_(int _argc, char** _argv);
 	self->windowCount += 1;
 }
 
-- (BOOL)windowShouldClose:(NSWindow *)window {
+- (BOOL)windowShouldClose:(NSWindow *)window
+{
 	assert(window);
 
 	[window setDelegate:nil];
@@ -92,10 +116,12 @@ extern int _main_(int _argc, char** _argv);
 	assert(self->windowCount);
 	self->windowCount -= 1;
 
-	if (self->windowCount == 0) {
+	if (self->windowCount == 0)
+	{
 		[NSApp terminate:self];
 		return false;
 	}
+
 	return true;
 }
 @end
@@ -121,44 +147,52 @@ namespace entry
 		{
 		}
 
-		NSEvent* WaitEvent () {
-			return
-				[NSApp
+		NSEvent* WaitEvent()
+		{
+			return [NSApp
 				nextEventMatchingMask:NSAnyEventMask
 				untilDate:[NSDate distantFuture] // wait for event
 				inMode:NSDefaultRunLoopMode
-				dequeue:YES];
+				dequeue:YES
+				];
 		}
 
-		NSEvent* PeekEvent () {
-			return
-				[NSApp
+		NSEvent* PeekEvent()
+		{
+			return [NSApp
 				nextEventMatchingMask:NSAnyEventMask
 				untilDate:[NSDate distantPast] // do not wait for event
 				inMode:NSDefaultRunLoopMode
-				dequeue:YES];
+				dequeue:YES
+				];
 		}
 
-		bool DispatchEvent (NSEvent* event) {
-			if (event) {
+		bool DispatchEvent(NSEvent* event)
+		{
+			if (event)
+			{
 				[NSApp sendEvent:event];
 				[NSApp updateWindows];
 				return true;
 			}
+
 			return false;
 		}
 
-		int32_t main(int _argc, char** _argv)
+		int32_t run(int _argc, char** _argv)
 		{
 			[NSApplication sharedApplication];
-			id dg = [bgfxApplicationDelegate sharedDelegate];
+
+			id dg = [AppDelegate sharedDelegate];
 			[NSApp setDelegate:dg];
 			[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 			[NSApp activateIgnoringOtherApps:YES];
 			[NSApp finishLaunching];
+
 			[[NSNotificationCenter defaultCenter]
 				postNotificationName:NSApplicationWillFinishLaunchingNotification
 				object:NSApp];
+
 			[[NSNotificationCenter defaultCenter]
 				postNotificationName:NSApplicationDidFinishLaunchingNotification
 				object:NSApp];
@@ -168,10 +202,13 @@ namespace entry
 				initWithTitle:@"Quit"
 				action:@selector(terminate:)
 				keyEquivalent:@"q"];
+
 			id appMenu = [NSMenu new];
 			[appMenu addItem:quitMenuItem];
+
 			id appMenuItem = [NSMenuItem new];
 			[appMenuItem setSubmenu:appMenu];
+
 			id menubar = [[NSMenu new] autorelease];
 			[menubar addItem:appMenuItem];
 			[NSApp setMainMenu:menubar];
@@ -191,7 +228,7 @@ namespace entry
 			[window setTitle:appName];
 			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 			[window makeKeyAndOrderFront:nil];
-			[[bgfxWindowDelegate sharedDelegate] windowCreated:window];
+			[[Window sharedDelegate] windowCreated:window];
 
 			bgfx::osxSetNSWindow(window);
 
@@ -202,10 +239,10 @@ namespace entry
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
 
-			while (!(m_exit = [dg applicationHasTerminated]))
+			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
-				DispatchEvent(WaitEvent());
-				while (DispatchEvent(PeekEvent()));
+				DispatchEvent(WaitEvent() );
+				while (DispatchEvent(PeekEvent() ) );
 			}
 			m_eventQueue.postExitEvent();
 
@@ -248,7 +285,7 @@ namespace entry
 int main(int _argc, char** _argv)
 {
 	using namespace entry;
-	return s_ctx.main(_argc, _argv);
+	return s_ctx.run(_argc, _argv);
 }
 
 #endif // BX_PLATFORM_OSX

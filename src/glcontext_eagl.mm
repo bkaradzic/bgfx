@@ -75,8 +75,11 @@ namespace bgfx
 			GL_CHECK(glDeleteRenderbuffers(1, &m_depthRbo) );
 			m_depthRbo = 0;
 		}
+
+		EAGLContext* context = (EAGLContext*)m_context;
+		[context release];
 	}
-	
+
 	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
 		BX_TRACE("resize context");
@@ -84,9 +87,8 @@ namespace bgfx
 
 	void GlContext::swap()
 	{
-		EAGLContext* context = (EAGLContext*)m_context;
-		[EAGLContext setCurrentContext:context];
 		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
+		EAGLContext* context = (EAGLContext*)m_context;
 		[context presentRenderbuffer:GL_RENDERBUFFER];
 	}
 
