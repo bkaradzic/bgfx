@@ -122,7 +122,7 @@ namespace bgfx
 		{ "GL_OES_texture_float_linear",          false,                             true  },
 		{ "GL_OES_texture_half_float",            false,                             true  },
 		{ "GL_OES_texture_half_float_linear",     false,                             true  },
-		{ "GL_OES_vertex_array_object",           false,                             true  },
+		{ "GL_OES_vertex_array_object",           false,                             !BX_PLATFORM_IOS },
 		{ "GL_OES_vertex_half_float",             false,                             true  },
 		{ "GL_OES_vertex_type_10_10_10_2",        false,                             true  },
 	};

@@ -43,7 +43,7 @@ namespace entry
 			m_mte.m_argc = 1;
 			m_mte.m_argv = const_cast<char**>(argv);
 
-			m_eventQueue.postSizeEvent(720, 1024);
+			m_eventQueue.postSizeEvent(768, 1024);
 
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 		}
@@ -94,14 +94,14 @@ namespace entry
 
 using namespace entry;
 
-@interface EAGLView : UIView
+@interface View : UIView
 {
 	CADisplayLink* m_displayLink;
 }
 
 @end
 
-@implementation EAGLView
+@implementation View
 
 + (Class)layerClass
 {
@@ -128,6 +128,7 @@ using namespace entry;
 	if (nil == m_displayLink)
 	{
 		m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
+		[m_displayLink setFrameInterval:1];
 		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 	}
 }
@@ -151,11 +152,11 @@ using namespace entry;
 @interface AppDelegate : UIResponder<UIApplicationDelegate>
 {
 	UIWindow* m_window;
-	EAGLView* m_view;
+	View* m_view;
 }
 
 @property (nonatomic, retain) UIWindow* m_window;
-@property (nonatomic, retain) EAGLView* m_view;
+@property (nonatomic, retain) View* m_view;
 
 @end
 
@@ -168,7 +169,7 @@ using namespace entry;
 {
 	CGRect rect = [ [UIScreen mainScreen] bounds];
 	m_window = [ [UIWindow alloc] initWithFrame: rect];
-	m_view = [ [EAGLView alloc] initWithFrame: rect];
+	m_view = [ [View alloc] initWithFrame: rect];
 
 	[m_window addSubview: m_view];
 	[m_window makeKeyAndVisible];
