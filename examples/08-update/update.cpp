@@ -309,7 +309,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float view[16];
 		float proj[16];
 		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, 16.0f/9.0f, 0.1f, 100.0f);
+		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);

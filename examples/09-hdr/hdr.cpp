@@ -640,7 +640,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		vec3MulMtx(temp, eye, mtx);
 
 		mtxLookAt(view, temp, at);
-		mtxProj(proj, 60.0f, 16.0f/9.0f, 0.1f, 100.0f);
+		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 1.
 		bgfx::setViewTransformMask(1<<1, view, proj);
