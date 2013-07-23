@@ -434,6 +434,7 @@ namespace bgfx
 #if BX_PLATFORM_IOS
 					// BK - Temp, need to figure out how to deal with FBO created by context.
 					m_backBufferFbo = m_glctx.m_fbo;
+					m_msaaBackBufferFbo = m_glctx.m_fbo;
 #endif // BX_PLATFORM_IOS
 				}
 				else
