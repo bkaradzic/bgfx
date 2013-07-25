@@ -296,7 +296,7 @@ namespace bgfx
 
 	class ConstantBuffer;
 	
-	class VaoCache
+	class VaoStateCache
 	{
 	public:
 		GLuint add(uint32_t _hash)
@@ -358,7 +358,7 @@ namespace bgfx
 			m_vaoSet.insert(_hash);
 		}
 
-		void invalidate(VaoCache& _vaoCache)
+		void invalidate(VaoStateCache& _vaoCache)
 		{
 			for (VaoSet::iterator it = m_vaoSet.begin(), itEnd = m_vaoSet.end(); it != itEnd; ++it)
 			{
@@ -371,6 +371,58 @@ namespace bgfx
 		typedef stl::unordered_set<uint32_t> VaoSet;
 		VaoSet m_vaoSet;
 	};
+
+#if !BGFX_CONFIG_RENDERER_OPENGLES2
+	class SamplerStateCache
+	{
+	public:
+		GLuint add(uint32_t _hash)
+		{
+			invalidate(_hash);
+
+			GLuint samplerId;
+			GL_CHECK(glGenSamplers(1, &samplerId) );
+
+			m_hashMap.insert(stl::make_pair(_hash, samplerId) );
+
+			return samplerId;
+		}
+
+		GLuint find(uint32_t _hash)
+		{
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				return it->second;
+			}
+
+			return UINT32_MAX;
+		}
+
+		void invalidate(uint32_t _hash)
+		{
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				GL_CHECK(glDeleteSamplers(1, &it->second) );
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidate()
+		{
+			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			{
+				GL_CHECK(glDeleteSamplers(1, &it->second) );
+			}
+			m_hashMap.clear();
+		}
+
+	private:
+		typedef stl::unordered_map<uint32_t, GLuint> HashMap;
+		HashMap m_hashMap;
+	};
+#endif // !BGFX_CONFIG_RENDERER_OPENGLES2
 
 	struct IndexBuffer
 	{
@@ -461,6 +513,9 @@ namespace bgfx
 			, m_target(GL_TEXTURE_2D)
 			, m_fmt(GL_ZERO)
 			, m_type(GL_ZERO)
+			, m_flags(0)
+			, m_currentFlags(UINT32_MAX)
+			, m_numMips(0)
 			, m_compressed(false)
 		{
 		}
@@ -471,11 +526,16 @@ namespace bgfx
 		void createDepth(uint32_t _width, uint32_t _height);
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
+		void setSamplerState(uint32_t _flags);
+		void commit(uint32_t _stage, uint32_t _flags);
 
 		GLuint m_id;
 		GLenum m_target;
 		GLenum m_fmt;
 		GLenum m_type;
+		uint32_t m_flags;
+		uint32_t m_currentFlags;
+		uint8_t m_numMips;
 		bool m_compressed;
 	};
 

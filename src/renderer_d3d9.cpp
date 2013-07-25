@@ -677,6 +677,8 @@ namespace bgfx
 
 		void preReset()
 		{
+			invalidateSamplerState();
+
 			for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
 			{
 				DX_CHECK(m_device->SetTexture(stage, NULL) );
@@ -730,6 +732,36 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
 			{
 				m_renderTargets[ii].postReset();
+			}
+		}
+
+		void invalidateSamplerState()
+		{
+			for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+			{
+				m_samplerFlags[stage] = UINT32_MAX;
+			}
+		}
+
+		void setSamplerState(uint8_t _stage, uint32_t _flags)
+		{
+			const uint32_t flags = _flags&(~BGFX_TEXTURE_RESERVED_MASK);
+			if (m_samplerFlags[_stage] != flags)
+			{
+				m_samplerFlags[_stage] = flags;
+				IDirect3DDevice9* device = m_device;
+				D3DTEXTUREADDRESS tau = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
+				D3DTEXTUREADDRESS tav = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
+				D3DTEXTUREADDRESS taw = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
+				D3DTEXTUREFILTERTYPE minFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+				D3DTEXTUREFILTERTYPE magFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+				D3DTEXTUREFILTERTYPE mipFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, tau) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, tav) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MINFILTER, minFilter) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, magFilter) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, mipFilter) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSW, taw) );
 			}
 		}
 
@@ -916,6 +948,8 @@ namespace bgfx
 		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+
+		uint32_t m_samplerFlags[BGFX_STATE_TEX_COUNT];
 
 		Texture* m_updateTexture;
 		uint8_t* m_updateTextureBits;
@@ -1433,13 +1467,7 @@ namespace bgfx
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
-		m_tau = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-		m_tav = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-		m_taw = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-		m_minFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-		m_magFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-		m_mipFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
-		m_srgb = (_flags&BGFX_TEXTURE_SRGB) == BGFX_TEXTURE_SRGB;
+		m_flags = _flags;
 
 		Dds dds;
 
@@ -1673,22 +1701,10 @@ namespace bgfx
 		unlock(s_renderCtx.m_updateTextureSide, s_renderCtx.m_updateTextureMip);
 	}
 
-	void Texture::commit(uint8_t _stage)
+	void Texture::commit(uint8_t _stage, uint32_t _flags)
 	{
-		IDirect3DDevice9* device = s_renderCtx.m_device;
-		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MINFILTER, m_minFilter) );
-		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, m_magFilter) );
-		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, m_mipFilter) );
-		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, m_tau) );
-		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, m_tav) );
-		if (m_type == Texture3D)
-		{
-			DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSW, m_taw) );
-		}
-#if BX_PLATFORM_WINDOWS
-		DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, m_srgb) );
-#endif // BX_PLATFORM_WINDOWS
-		DX_CHECK(device->SetTexture(_stage, m_ptr) );
+		s_renderCtx.setSamplerState(_stage, 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) ? _flags : m_flags);
+		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_ptr) );
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -1696,8 +1712,10 @@ namespace bgfx
 		m_width = _width;
 		m_height = _height;
 		m_flags = _flags;
-		m_minFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-		m_magFilter = s_textureFilter[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+		m_textureFlags = (_textureFlags&(BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK) )
+						| BGFX_TEXTURE_U_CLAMP
+						| BGFX_TEXTURE_V_CLAMP
+						;
 
 		createTextures();
 	}
@@ -1828,16 +1846,9 @@ namespace bgfx
 		}
 	}
 
-	void RenderTarget::commit(uint8_t _stage)
+	void RenderTarget::commit(uint8_t _stage, uint32_t _textureFlags)
 	{
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MINFILTER, m_minFilter) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, m_magFilter) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, D3DTEXF_POINT) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP) );
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP) );
-#if BX_PLATFORM_WINDOWS
-		DX_CHECK(s_renderCtx.m_device->SetSamplerState(_stage, D3DSAMP_SRGBTEXTURE, (m_flags&BGFX_RENDER_TARGET_SRGBWRITE) == BGFX_RENDER_TARGET_SRGBWRITE) );
-#endif // BX_PLATFORM_WINDOWS
+		s_renderCtx.setSamplerState(_stage, 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _textureFlags) ? _textureFlags : m_textureFlags);
 		DX_CHECK(s_renderCtx.m_device->SetTexture(_stage, m_depthOnly ? m_depthTexture : m_colorTexture) );
 	}
 
@@ -2221,6 +2232,8 @@ namespace bgfx
 		uint32_t statsNumInstances = 0;
 		uint32_t statsNumPrimsRendered = 0;
 
+		s_renderCtx.invalidateSamplerState();
+
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
 			for (uint32_t item = 0, numItems = m_render->m_num; item < numItems; ++item)
@@ -2393,7 +2406,6 @@ namespace bgfx
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
 					 | BGFX_STATE_POINT_SIZE_MASK
-					 | BGFX_STATE_SRGBWRITE
 					 | BGFX_STATE_MSAA
 					 ) & changedFlags)
 				{
@@ -2429,13 +2441,6 @@ namespace bgfx
 					{
 						DX_CHECK(device->SetRenderState(D3DRS_POINTSIZE, castfu( (float)( (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) ) ) );
 					}
-
-#if BX_PLATFORM_WINDOWS
-					if (BGFX_STATE_SRGBWRITE & changedFlags)
-					{
-						DX_CHECK(device->SetRenderState(D3DRS_SRGBWRITEENABLE, (newFlags&BGFX_STATE_SRGBWRITE) == BGFX_STATE_SRGBWRITE) );
-					}
-#endif // BX_PLATFORM_WINDOWS
 
 					if (BGFX_STATE_MSAA & changedFlags)
 					{
@@ -2651,11 +2656,11 @@ namespace bgfx
 								switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 								{
 								case BGFX_SAMPLER_TEXTURE:
-									s_renderCtx.m_textures[sampler.m_idx].commit(stage);
+									s_renderCtx.m_textures[sampler.m_idx].commit(stage, sampler.m_flags);
 									break;
 
 								case BGFX_SAMPLER_RENDERTARGET_COLOR:
-									s_renderCtx.m_renderTargets[sampler.m_idx].commit(stage);
+									s_renderCtx.m_renderTargets[sampler.m_idx].commit(stage, sampler.m_flags);
 									break;
 
 								case BGFX_SAMPLER_RENDERTARGET_DEPTH:

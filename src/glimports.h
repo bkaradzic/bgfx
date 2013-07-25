@@ -143,6 +143,12 @@ GL_IMPORT(true,  PFNGLDEBUGMESSAGEINSERTARBPROC,          glDebugMessageInsertAR
 GL_IMPORT(true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,        glDebugMessageCallbackARB);
 GL_IMPORT(true,  PFNGLGETDEBUGMESSAGELOGARBPROC,          glGetDebugMessageLogARB);
 
+GL_IMPORT(true,  PFNGLGENSAMPLERSPROC,                    glGenSamplers);
+GL_IMPORT(true,  PFNGLDELETESAMPLERSPROC,                 glDeleteSamplers);
+GL_IMPORT(true,  PFNGLBINDSAMPLERPROC,                    glBindSampler);
+GL_IMPORT(true,  PFNGLSAMPLERPARAMETERIPROC,              glSamplerParameteri);
+GL_IMPORT(true,  PFNGLSAMPLERPARAMETERFPROC,              glSamplerParameterf);
+
 #if BGFX_CONFIG_DEBUG_GREMEDY
 GL_IMPORT(true,  PFNGLSTRINGMARKERGREMEDYPROC,            glStringMarkerGREMEDY);
 GL_IMPORT(true,  PFNGLFRAMETERMINATORGREMEDYPROC,         glFrameTerminatorGREMEDY);

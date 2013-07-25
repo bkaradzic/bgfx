@@ -15,6 +15,8 @@
 
 namespace bgfx
 {
+	typedef HRESULT (WINAPI * PFN_CREATEDXGIFACTORY)(REFIID _riid, void** _factory);
+
 	template <typename Ty>
 	class StateCacheT
 	{
@@ -235,7 +237,6 @@ namespace bgfx
 			: m_ptr(NULL)
 			, m_srv(NULL)
 			, m_sampler(NULL)
-			, m_srgb(false)
 			, m_numMips(0)
 		{
 		}
@@ -243,7 +244,7 @@ namespace bgfx
 		void create(const Memory* _mem, uint32_t _flags);
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
-		void commit(uint8_t _stage);
+		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
 
 		union
 		{
@@ -255,7 +256,6 @@ namespace bgfx
 		ID3D11ShaderResourceView* m_srv;
 		ID3D11SamplerState* m_sampler;
 		Enum m_type;
-		bool m_srgb;
 		uint8_t m_numMips;
 	};
 
@@ -267,8 +267,6 @@ namespace bgfx
 			, m_rtv(NULL)
  			, m_dsv(NULL)
 			, m_srv(NULL)
-// 			, m_minFilter(D3DTEXF_LINEAR)
-// 			, m_magFilter(D3DTEXF_LINEAR)
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
@@ -278,18 +276,7 @@ namespace bgfx
 
 		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
 		void destroy();
-
- 		void commit(uint8_t _stage);
-// 		void resolve();
-
-//		Msaa m_msaa;
-// 		IDirect3DSurface9* m_rt;
-// 		IDirect3DTexture9* m_colorTexture;
-// 		IDirect3DSurface9* m_color;
-// 		IDirect3DTexture9* m_depthTexture;
-// 		IDirect3DSurface9* m_depth;
-// 		D3DTEXTUREFILTERTYPE m_minFilter;
-// 		D3DTEXTUREFILTERTYPE m_magFilter;
+ 		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
 
 		ID3D11Texture2D* m_colorTexture;
 		ID3D11Texture2D* m_depthTexture;

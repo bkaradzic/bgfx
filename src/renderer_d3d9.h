@@ -310,7 +310,7 @@ namespace bgfx
 		void updateBegin(uint8_t _side, uint8_t _mip);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
 		void updateEnd();
-		void commit(uint8_t _stage);
+		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
 	
 		union
 		{
@@ -320,15 +320,9 @@ namespace bgfx
 			IDirect3DCubeTexture9* m_textureCube;
 		};
 
-		D3DTEXTUREFILTERTYPE m_minFilter;
-		D3DTEXTUREFILTERTYPE m_magFilter;
-		D3DTEXTUREFILTERTYPE m_mipFilter;
-		D3DTEXTUREADDRESS m_tau;
-		D3DTEXTUREADDRESS m_tav;
-		D3DTEXTUREADDRESS m_taw;
+		uint32_t m_flags;
 		TextureFormat::Enum m_format;
 		Enum m_type;
-		bool m_srgb;
 	};
 
 	struct RenderTarget
@@ -339,8 +333,6 @@ namespace bgfx
 			, m_color(NULL)
 			, m_depthTexture(NULL)
 			, m_depth(NULL)
-			, m_minFilter(D3DTEXF_LINEAR)
-			, m_magFilter(D3DTEXF_LINEAR)
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
@@ -368,7 +360,7 @@ namespace bgfx
 			createTextures();
 		}
 
-		void commit(uint8_t _stage);
+		void commit(uint8_t _stage, uint32_t _textureFlags = BGFX_SAMPLER_DEFAULT_FLAGS);
 		void resolve();
 
 		Msaa m_msaa;
@@ -377,11 +369,10 @@ namespace bgfx
 		IDirect3DSurface9* m_color;
 		IDirect3DTexture9* m_depthTexture;
 		IDirect3DSurface9* m_depth;
-		D3DTEXTUREFILTERTYPE m_minFilter;
-		D3DTEXTUREFILTERTYPE m_magFilter;
 		uint16_t m_width;
 		uint16_t m_height;
 		uint32_t m_flags;
+		uint32_t m_textureFlags;
 		bool m_depthOnly;
 	};
 

@@ -1472,16 +1472,16 @@ namespace bgfx
 		s_ctx.m_submit->setProgram(_handle);
 	}
 
-	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle)
+	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx.m_submit->setTexture(_stage, _sampler, _handle);
+		s_ctx.m_submit->setTexture(_stage, _sampler, _handle, _flags);
 	}
 
-	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth)
+	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth, uint32_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx.m_submit->setTexture(_stage, _sampler, _handle, _depth);
+		s_ctx.m_submit->setTexture(_stage, _sampler, _handle, _depth, _flags);
 	}
 
 	void submit(uint8_t _id, int32_t _depth)

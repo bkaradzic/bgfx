@@ -12,8 +12,6 @@ namespace bgfx
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
 
-	typedef HRESULT (WINAPI * PFN_CREATEDXGIFACTORY)(REFIID _riid, void** _factory);
-
 	static const D3D11_PRIMITIVE_TOPOLOGY s_primType[] =
 	{
 		D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
@@ -939,33 +937,32 @@ namespace bgfx
 					| BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
 					;
 
-			uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-			uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-			uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
-
-			D3D11_SAMPLER_DESC sd;
-			sd.Filter = (D3D11_FILTER)(minFilter|magFilter|mipFilter);
-			sd.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-			sd.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-			sd.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-			sd.MipLODBias = 0.0f;
-			sd.MaxAnisotropy = 1;
-			sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
-			sd.BorderColor[0] = 0.0f;
-			sd.BorderColor[1] = 0.0f;
-			sd.BorderColor[2] = 0.0f;
-			sd.BorderColor[3] = 0.0f;
-			sd.MinLOD = 0;
-			sd.MaxLOD = D3D11_FLOAT32_MAX;
-			uint32_t hash = bx::hashMurmur2A(sd);
-
-			ID3D11SamplerState* sampler = m_samplerStateCache.find(hash);
+			ID3D11SamplerState* sampler = m_samplerStateCache.find(_flags);
 			if (NULL == sampler)
 			{
+				uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+				uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+				uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+
+				D3D11_SAMPLER_DESC sd;
+				sd.Filter = (D3D11_FILTER)(minFilter|magFilter|mipFilter);
+				sd.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
+				sd.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
+				sd.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
+				sd.MipLODBias = 0.0f;
+				sd.MaxAnisotropy = 1;
+				sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+				sd.BorderColor[0] = 0.0f;
+				sd.BorderColor[1] = 0.0f;
+				sd.BorderColor[2] = 0.0f;
+				sd.BorderColor[3] = 0.0f;
+				sd.MinLOD = 0;
+				sd.MaxLOD = D3D11_FLOAT32_MAX;
+
 				m_device->CreateSamplerState(&sd, &sampler);
 				DX_CHECK_REFCOUNT(sampler, 1);
 
-				m_samplerStateCache.add(hash, sampler);
+				m_samplerStateCache.add(_flags, sampler);
 			}
 
 			return sampler;
@@ -1962,10 +1959,14 @@ namespace bgfx
 		DX_RELEASE(m_ptr, 0);
 	}
 
-	void Texture::commit(uint8_t _stage)
+	void Texture::commit(uint8_t _stage, uint32_t _flags)
 	{
-		s_renderCtx.m_textureStage.m_srv[_stage] = m_srv;
-		s_renderCtx.m_textureStage.m_sampler[_stage] = m_sampler;
+		TextureStage& ts = s_renderCtx.m_textureStage;
+		ts.m_srv[_stage] = m_srv;
+		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
+							 ? s_renderCtx.getSamplerState(_flags)
+							 : m_sampler
+							 ;
 	}
 
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
@@ -2060,10 +2061,14 @@ namespace bgfx
 		m_flags = 0;
 	}
 
-	void RenderTarget::commit(uint8_t _stage)
+	void RenderTarget::commit(uint8_t _stage, uint32_t _flags)
 	{
-		s_renderCtx.m_textureStage.m_srv[_stage] = m_srv;
-		s_renderCtx.m_textureStage.m_sampler[_stage] = m_sampler;
+		TextureStage& ts = s_renderCtx.m_textureStage;
+		ts.m_srv[_stage] = m_srv;
+		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
+							 ? s_renderCtx.getSamplerState(_flags)
+							 : m_sampler
+							 ;
 	}
 
 	void UniformBuffer::create(UniformType::Enum _type, uint16_t _num, bool _alloc)
@@ -2418,7 +2423,6 @@ namespace bgfx
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
 					 | BGFX_STATE_POINT_SIZE_MASK
-					 | BGFX_STATE_SRGBWRITE
 					 | BGFX_STATE_MSAA
 					 ) & changedFlags)
 				{
@@ -2629,15 +2633,23 @@ namespace bgfx
 								switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
 								{
 								case BGFX_SAMPLER_TEXTURE:
-									s_renderCtx.m_textures[sampler.m_idx].commit(stage);
+									{
+										Texture& texture = s_renderCtx.m_textures[sampler.m_idx];
+										texture.commit(stage, sampler.m_flags);
+									}
 									break;
 
 								case BGFX_SAMPLER_RENDERTARGET_COLOR:
-									s_renderCtx.m_renderTargets[sampler.m_idx].commit(stage);
+									{
+										RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+										rt.commit(stage, sampler.m_flags);
+									}
 									break;
 
 								case BGFX_SAMPLER_RENDERTARGET_DEPTH:
-//									id = s_renderCtx.m_renderTargets[sampler.m_idx].m_depth.m_id;
+									{
+//										id = s_renderCtx.m_renderTargets[sampler.m_idx].m_depth.m_id;
+									}
 									break;
 								}
 							}

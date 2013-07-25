@@ -131,10 +131,11 @@ namespace stl {
 #define BGFX_STATE_TEX_MASK  UINT64_C(0xff00000000000000)
 #define BGFX_STATE_TEX_COUNT 8
 
-#define BGFX_SAMPLER_TEXTURE            UINT16_C(0x0000)
-#define BGFX_SAMPLER_RENDERTARGET_COLOR UINT16_C(0x0001)
-#define BGFX_SAMPLER_RENDERTARGET_DEPTH UINT16_C(0x0002)
-#define BGFX_SAMPLER_TYPE_MASK          UINT16_C(0x0003)
+#define BGFX_SAMPLER_DEFAULT_FLAGS      UINT32_C(0x10000000)
+#define BGFX_SAMPLER_TEXTURE            UINT32_C(0x00000000)
+#define BGFX_SAMPLER_RENDERTARGET_COLOR UINT32_C(0x40000000)
+#define BGFX_SAMPLER_RENDERTARGET_DEPTH UINT32_C(0x80000000)
+#define BGFX_SAMPLER_TYPE_MASK          UINT32_C(0xc0000000)
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 #	define BGFX_RENDERER_NAME "Direct3D 9"
@@ -651,8 +652,8 @@ namespace bgfx
 
 	struct Sampler
 	{
+		uint32_t m_flags;
 		uint16_t m_idx;
-		uint16_t m_flags;
 	};
 
 	struct Uniform
@@ -1084,12 +1085,15 @@ namespace bgfx
 			m_key.m_program = _handle.idx;
 		}
 
-		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle)
+		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
 			m_flags |= BGFX_STATE_TEX0<<_stage;
 			Sampler& sampler = m_state.m_sampler[_stage];
 			sampler.m_idx = _handle.idx;
-			sampler.m_flags = BGFX_SAMPLER_TEXTURE;
+			sampler.m_flags = 0
+						| BGFX_SAMPLER_TEXTURE
+						| ( (_flags&BGFX_SAMPLER_TYPE_MASK) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags)
+						;
 
 			if (invalidHandle != _sampler.idx)
 			{
@@ -1098,12 +1102,15 @@ namespace bgfx
 			}
 		}
 
-		void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth)
+		void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth, uint32_t _flags)
 		{
 			m_flags |= BGFX_STATE_TEX0<<_stage;
 			Sampler& sampler = m_state.m_sampler[_stage];
 			sampler.m_idx = _handle.idx;
-			sampler.m_flags = _depth ? BGFX_SAMPLER_RENDERTARGET_DEPTH : BGFX_SAMPLER_RENDERTARGET_COLOR;
+			sampler.m_flags = 0
+						| (_depth ? BGFX_SAMPLER_RENDERTARGET_DEPTH : BGFX_SAMPLER_RENDERTARGET_COLOR)
+						| ( (_flags&BGFX_SAMPLER_TYPE_MASK) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags)
+						;
 
 			if (invalidHandle != _sampler.idx)
 			{

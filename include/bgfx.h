@@ -67,7 +67,6 @@
 #define BGFX_STATE_POINT_SIZE_SHIFT      44
 #define BGFX_STATE_POINT_SIZE_MASK       UINT64_C(0x000ff00000000000)
 
-#define BGFX_STATE_SRGBWRITE             UINT64_C(0x0010000000000000)
 #define BGFX_STATE_MSAA                  UINT64_C(0x0020000000000000)
 
 #define BGFX_STATE_RESERVED_MASK         UINT64_C(0xff00000000000000)
@@ -191,7 +190,7 @@
 #define BGFX_TEXTURE_MIP_POINT           UINT32_C(0x00100000)
 #define BGFX_TEXTURE_MIP_SHIFT           20
 #define BGFX_TEXTURE_MIP_MASK            UINT32_C(0x00100000)
-#define BGFX_TEXTURE_SRGB                UINT32_C(0x00200000)
+#define BGFX_TEXTURE_RESERVED_MASK       UINT32_C(0xf0000000)
 
 ///
 #define BGFX_RENDER_TARGET_NONE          UINT32_C(0x00000000)
@@ -212,7 +211,6 @@
 #define BGFX_RENDER_TARGET_MSAA_X16      UINT32_C(0x00040000)
 #define BGFX_RENDER_TARGET_MSAA_SHIFT    16
 #define BGFX_RENDER_TARGET_MSAA_MASK     UINT32_C(0x00070000)
-#define BGFX_RENDER_TARGET_SRGBWRITE     UINT32_C(0x00080000)
 
 ///
 #define BGFX_RESET_NONE                  UINT32_C(0x00000000)
@@ -701,8 +699,6 @@ namespace bgfx
 	///   BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic
 	///     sampling.
 	///
-	///   BGFX_TEXTURE_SRGB - Sample as sRGB texture.
-	///
 	/// @param _info Returns parsed DDS texture information.
 	/// @returns Texture handle.
 	///
@@ -830,7 +826,6 @@ namespace bgfx
 	///   BGFX_STATE_BLEND_EQUATION_* - See NOTE 2.
 	///   BGFX_STATE_CULL_* - Backface culling mode.
 	///   BGFX_STATE_RGB_WRITE - Enable RGB write.
-	///   BGFX_STATE_SRGBWRITE - Enable sRGB write.
 	///   BGFX_STATE_MSAA - Enable MSAA.
 	///   BGFX_STATE_PT_[LINES/POINTS] - Primitive type.
 	///
@@ -907,10 +902,39 @@ namespace bgfx
 	void setProgram(ProgramHandle _handle);
 
 	/// Set texture stage for draw primitive.
-	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle);
+	///
+	/// @param _stage Texture unit.
+	/// @param _sampler Program sampler.
+	/// @param _handle Texture handle.
+	/// @param _flags Texture sampling mode. Default value UINT32_MAX uses
+	///   texture sampling settings from the texture.
+	///
+	///   BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP] - Mirror or clamp to edge wrap
+	///     mode.
+	///
+	///   BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic
+	///     sampling.
+	///
+	/// @param _flags Texture sampler filtering flags. UINT32_MAX use the
+	///   sampler filtering mode set by texture.
+	///
+	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags = UINT32_MAX);
 
 	/// Set texture stage for draw primitive.
-	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth = false);
+	///
+	/// @param _stage Texture unit.
+	/// @param _sampler Program sampler.
+	/// @param _handle Render target handle.
+	/// @param _flags Texture sampling mode. Default value UINT32_MAX uses
+	///   texture sampling settings from the texture.
+	///
+	///   BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP] - Mirror or clamp to edge wrap
+	///     mode.
+	///
+	///   BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic
+	///     sampling.
+	///
+	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth = false, uint32_t _flags = UINT32_MAX);
 
 	/// Submit primitive for rendering into single view.
 	///
