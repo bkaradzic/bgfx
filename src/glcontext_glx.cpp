@@ -39,9 +39,9 @@ namespace bgfx
 		int major, minor;
 		bool version = glXQueryVersion(s_display, &major, &minor);
 		BGFX_FATAL(version, Fatal::UnableToInitialize, "Failed to query GLX version");
-		BGFX_FATAL( (major == 1 && minor >= 3) || major > 1
+		BGFX_FATAL( (major == 1 && minor >= 2) || major > 1
 				, Fatal::UnableToInitialize
-				, "GLX version is not >=1.3 (%d.%d)."
+				, "GLX version is not >=1.2 (%d.%d)."
 				, major
 				, minor
 				);

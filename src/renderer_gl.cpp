@@ -2347,7 +2347,10 @@ namespace bgfx
 	GLint glGet(GLenum _pname)
 	{
 		GLint result;
-		GL_CHECK(glGetIntegerv(_pname, &result) );
+		glGetIntegerv(_pname, &result);
+		GLenum err = glGetError();
+		BX_WARN(0 == err, "glGetIntegerv(0x%04x, ...) failed with GL error: 0x%04x.", _pname, err);
+		BX_UNUSED(err);
 		return result;
 	}
 
@@ -2391,7 +2394,7 @@ namespace bgfx
 		GL_GET(GL_MAX_TEXTURE_SIZE, 64);
 		GL_GET(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, 0);
 		GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
-		
+
 		BX_TRACE("      Vendor: %s", s_renderCtx.m_vendor);
 		BX_TRACE("    Renderer: %s", s_renderCtx.m_renderer);
 		BX_TRACE("     Version: %s", s_renderCtx.m_version);
@@ -2481,7 +2484,6 @@ namespace bgfx
 		s_renderCtx.m_samplerObjectSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_sampler_objects].m_supported
 			;
-s_renderCtx.m_samplerObjectSupport = false;
 
 		s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_get_program_binary].m_supported

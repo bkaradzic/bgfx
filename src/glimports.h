@@ -106,7 +106,6 @@ GL_IMPORT(false, PFNGLUNIFORMMATRIX4FVPROC,               glUniformMatrix4fv);
 GL_IMPORT(false, PFNGLTEXIMAGE3DPROC,                     glTexImage3D);
 GL_IMPORT(false, PFNGLTEXSUBIMAGE3DPROC,                  glTexSubImage3D);
 GL_IMPORT(false, PFNGLCOPYTEXSUBIMAGE3DPROC,              glCopyTexSubImage3D);
-GL_IMPORT(false, PFNGLTEXIMAGE2DMULTISAMPLEPROC,          glTexImage2DMultisample);
 
 GL_IMPORT(false, PFNGLGENQUERIESPROC,                     glGenQueries);
 GL_IMPORT(false, PFNGLDELETEQUERIESPROC,                  glDeleteQueries);
