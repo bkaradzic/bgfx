@@ -213,7 +213,6 @@ namespace bgfx
 
 	void GlContext::swap()
 	{
-		glXMakeCurrent(s_display, s_window, m_context);
 		glXSwapBuffers(s_display, s_window);
 	}
 
