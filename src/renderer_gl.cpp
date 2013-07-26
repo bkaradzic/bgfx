@@ -2754,7 +2754,7 @@ namespace bgfx
 
 	void Context::rendererSubmit()
 	{
-		const GLuint defaultVao = s_renderCtx.m_vaoSupport;
+		const GLuint defaultVao = s_renderCtx.m_vao;
 		if (0 != defaultVao)
 		{
 			GL_CHECK(glBindVertexArray(defaultVao) );
@@ -3274,18 +3274,24 @@ namespace bgfx
 						if (programChanged
 						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
 						||  currentState.m_indexBuffer.idx != state.m_indexBuffer.idx
-						||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx)
+						||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx
+						||  currentState.m_instanceDataOffset != state.m_instanceDataOffset
+						||  currentState.m_instanceDataStride != state.m_instanceDataStride)
 						{
 							bx::HashMurmur2A murmur;
 							murmur.begin();
 							murmur.add(state.m_vertexBuffer.idx);
 							murmur.add(state.m_indexBuffer.idx);
 							murmur.add(state.m_instanceDataBuffer.idx);
+							murmur.add(state.m_instanceDataOffset);
+							murmur.add(state.m_instanceDataStride);
 							murmur.add(programIdx);
 							uint32_t hash = murmur.end();
 
 							currentState.m_vertexBuffer = state.m_vertexBuffer;
 							currentState.m_indexBuffer = state.m_indexBuffer;
+							currentState.m_instanceDataOffset = state.m_instanceDataOffset;
+							currentState.m_instanceDataStride = state.m_instanceDataStride;
 							baseVertex = state.m_startVertex;
 
 							GLuint id = s_renderCtx.m_vaoStateCache.find(hash);
@@ -3351,9 +3357,15 @@ namespace bgfx
 						}
 
 						if (programChanged
-						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx)
+						||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
+						||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx
+						||  currentState.m_instanceDataOffset != state.m_instanceDataOffset
+						||  currentState.m_instanceDataStride != state.m_instanceDataStride)
 						{
 							currentState.m_vertexBuffer = state.m_vertexBuffer;
+							currentState.m_instanceDataBuffer.idx = state.m_instanceDataBuffer.idx;
+							currentState.m_instanceDataOffset = state.m_instanceDataOffset;
+							currentState.m_instanceDataStride = state.m_instanceDataStride;
 
 							uint16_t handle = state.m_vertexBuffer.idx;
 							if (invalidHandle != handle)

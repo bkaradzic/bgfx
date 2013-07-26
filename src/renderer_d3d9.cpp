@@ -2679,9 +2679,16 @@ namespace bgfx
 					}
 				}
 
-				if (currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx || programChanged)
+				if (programChanged
+				||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
+				||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx
+				||  currentState.m_instanceDataOffset != state.m_instanceDataOffset
+				||  currentState.m_instanceDataStride != state.m_instanceDataStride)
 				{
 					currentState.m_vertexBuffer = state.m_vertexBuffer;
+					currentState.m_instanceDataBuffer.idx = state.m_instanceDataBuffer.idx;
+					currentState.m_instanceDataOffset = state.m_instanceDataOffset;
+					currentState.m_instanceDataStride = state.m_instanceDataStride;
 
 					uint16_t handle = state.m_vertexBuffer.idx;
 					if (invalidHandle != handle)
