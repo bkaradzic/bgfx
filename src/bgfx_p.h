@@ -67,6 +67,7 @@ namespace bgfx
 #include <bx/uint32_t.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
+#include <bx/os.h>
 
 #include "dds.h"
 

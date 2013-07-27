@@ -72,19 +72,19 @@ namespace bgfx
 
 	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/)
 	{
-		m_opengl32dll = LoadLibrary("opengl32.dll");
+		m_opengl32dll = bx::dlopen("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
 
-		wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(m_opengl32dll, "wglGetProcAddress");
+		wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)bx::dlsym(m_opengl32dll, "wglGetProcAddress");
 		BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
 
-		wglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(m_opengl32dll, "wglMakeCurrent");
+		wglMakeCurrent = (PFNWGLMAKECURRENTPROC)bx::dlsym(m_opengl32dll, "wglMakeCurrent");
 		BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
 
-		wglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglCreateContext");
+		wglCreateContext = (PFNWGLCREATECONTEXTPROC)bx::dlsym(m_opengl32dll, "wglCreateContext");
 		BGFX_FATAL(NULL != wglCreateContext, Fatal::UnableToInitialize, "Failed get wglCreateContext.");
 
-		wglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(m_opengl32dll, "wglDeleteContext");
+		wglDeleteContext = (PFNWGLDELETECONTEXTPROC)bx::dlsym(m_opengl32dll, "wglDeleteContext");
 		BGFX_FATAL(NULL != wglDeleteContext, Fatal::UnableToInitialize, "Failed get wglDeleteContext.");
 
 		m_hdc = GetDC(g_bgfxHwnd);
@@ -234,7 +234,7 @@ namespace bgfx
 		ReleaseDC(g_bgfxHwnd, m_hdc);
 		m_hdc = NULL;
 
-		FreeLibrary(m_opengl32dll);
+		bx::dlclose(m_opengl32dll);
 		m_opengl32dll = NULL;
 	}
 
@@ -259,7 +259,7 @@ namespace bgfx
 			_func = (_proto)wglGetProcAddress(#_func); \
 			if (_func == NULL) \
 			{ \
-				_func = (_proto)GetProcAddress(m_opengl32dll, #_func); \
+				_func = (_proto)bx::dlsym(m_opengl32dll, #_func); \
 			} \
 			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
 		}

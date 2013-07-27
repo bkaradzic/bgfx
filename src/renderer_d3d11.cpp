@@ -327,18 +327,18 @@ namespace bgfx
 
 		void init()
 		{
-			m_d3d11dll = LoadLibrary("d3d11.dll");
+			m_d3d11dll = bx::dlopen("d3d11.dll");
 			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
 
 #if BGFX_CONFIG_DEBUG_PIX
 			// D3D11_1.h has ID3DUserDefinedAnnotation
 			// http://msdn.microsoft.com/en-us/library/windows/desktop/hh446881%28v=vs.85%29.aspx
-			m_d3d9dll = LoadLibrary("d3d9.dll");
+			m_d3d9dll = bx::dlopen("d3d9.dll");
 			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
-			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
-			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
-			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_EndEvent");
+			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
+			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
+			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent");
 			BX_CHECK(NULL != m_D3DPERF_SetMarker
 				  && NULL != m_D3DPERF_BeginEvent
 				  && NULL != m_D3DPERF_EndEvent
@@ -346,13 +346,13 @@ namespace bgfx
 				  );
 #endif // BGFX_CONFIG_DEBUG_PIX
 
-			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)GetProcAddress(m_d3d11dll, "D3D11CreateDevice");
+			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
 			BGFX_FATAL(NULL != d3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
 
-			m_dxgidll = LoadLibrary("dxgi.dll");
+			m_dxgidll = bx::dlopen("dxgi.dll");
 			BGFX_FATAL(NULL != m_dxgidll, Fatal::UnableToInitialize, "Failed to load dxgi.dll.");
 
-			PFN_CREATEDXGIFACTORY dxgiCreateDXGIFactory = (PFN_CREATEDXGIFACTORY)GetProcAddress(m_dxgidll, "CreateDXGIFactory");
+			PFN_CREATEDXGIFACTORY dxgiCreateDXGIFactory = (PFN_CREATEDXGIFACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
 			BGFX_FATAL(NULL != dxgiCreateDXGIFactory, Fatal::UnableToInitialize, "Function CreateDXGIFactory not found.");
 
 			HRESULT hr;
@@ -523,8 +523,8 @@ namespace bgfx
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_factory, 0);
 
-			FreeLibrary(m_dxgidll);
-			FreeLibrary(m_d3d11dll);
+			bx::dlclose(m_dxgidll);
+			bx::dlclose(m_d3d11dll);
 		}
 
 		void preReset()
@@ -1113,14 +1113,14 @@ namespace bgfx
 		}
 
 #if BGFX_CONFIG_DEBUG_PIX
-		HMODULE m_d3d9dll;
+		void* m_d3d9dll;
 		D3DPERF_SetMarkerFunc m_D3DPERF_SetMarker;
 		D3DPERF_BeginEventFunc m_D3DPERF_BeginEvent;
 		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
 #endif // BGFX_CONFIG_DEBUG_PIX
 
-		HMODULE m_d3d11dll;
-		HMODULE m_dxgidll;
+		void* m_d3d11dll;
+		void* m_dxgidll;
 		D3D_DRIVER_TYPE m_driverType;
 		IDXGIAdapter* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;

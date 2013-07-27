@@ -75,7 +75,7 @@ namespace bgfx
 			return NULL != m_context;
 		}
 
-		HMODULE m_opengl32dll;
+		void* m_opengl32dll;
 		HGLRC m_context;
 		HDC m_hdc;
 	};

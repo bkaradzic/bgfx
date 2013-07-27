@@ -218,6 +218,9 @@ namespace bgfx
 		{ D3DFMT_RAWZ, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, false },
 	};
 
+	static const GUID IID_IDirect3D9         = { 0x81bdcbca, 0x64d4, 0x426d, { 0xae, 0x8d, 0xad, 0x1, 0x47, 0xf4, 0x27, 0x5c } };
+	static const GUID IID_IDirect3DDevice9Ex = { 0xb18b10ce, 0x2649, 0x405a, { 0x87, 0xf, 0x95, 0xf7, 0x77, 0xd4, 0x31, 0x3a } };
+
 	struct RendererContext
 	{
 		RendererContext()
@@ -258,13 +261,13 @@ namespace bgfx
 			m_params.BackBufferWidth = rect.right-rect.left;
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
-			m_d3d9dll = LoadLibrary("d3d9.dll");
+			m_d3d9dll = bx::dlopen("d3d9.dll");
 			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
 #if BGFX_CONFIG_DEBUG_PIX
-			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)GetProcAddress(m_d3d9dll, "D3DPERF_SetMarker");
-			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_BeginEvent");
-			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)GetProcAddress(m_d3d9dll, "D3DPERF_EndEvent");
+			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
+			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
+			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent");
 
 			BX_CHECK(NULL != m_D3DPERF_SetMarker
 				  && NULL != m_D3DPERF_BeginEvent
@@ -274,14 +277,23 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG_PIX
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
-			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)GetProcAddress(m_d3d9dll, "Direct3DCreate9Ex");
-			BGFX_FATAL(NULL != direct3DCreate9Ex, Fatal::UnableToInitialize, "Function Direct3DCreate9Ex not found.");
-			direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9);
-#else
-			Direct3DCreate9Fn direct3DCreate9 = (Direct3DCreate9Fn)GetProcAddress(m_d3d9dll, "Direct3DCreate9");
-			BGFX_FATAL(NULL != direct3DCreate9, Fatal::UnableToInitialize, "Function Direct3DCreate9 not found.");
-			m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
-#endif // defined(D3D_DISABLE_9EX)
+			m_d3d9ex = NULL;
+
+			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)bx::dlsym(m_d3d9dll, "Direct3DCreate9Ex");
+			if (NULL != direct3DCreate9Ex)
+			{
+				direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9ex);
+				DX_CHECK(m_d3d9ex->QueryInterface(IID_IDirect3D9, (void**)&m_d3d9) );
+				m_pool = D3DPOOL_DEFAULT;
+			}
+			else
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+			{
+				Direct3DCreate9Fn direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9dll, "Direct3DCreate9");
+				BGFX_FATAL(NULL != direct3DCreate9, Fatal::UnableToInitialize, "Function Direct3DCreate9 not found.");
+				m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
+				m_pool = D3DPOOL_MANAGED;
+			}
 
 			BGFX_FATAL(m_d3d9, Fatal::UnableToInitialize, "Unable to create Direct3D.");
 
@@ -329,7 +341,7 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < countof(behaviorFlags) && NULL == m_device; ++ii)
 			{
-#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
+#if 0 // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
 						, m_deviceType
 						, g_bgfxHwnd
@@ -350,6 +362,13 @@ namespace bgfx
 			}
 
 			BGFX_FATAL(m_device, Fatal::UnableToInitialize, "Unable to create Direct3D9 device.");
+
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
+			if (NULL != m_d3d9ex)
+			{
+				DX_CHECK(m_device->QueryInterface(IID_IDirect3DDevice9Ex, (void**)&m_deviceEx) );
+			}
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
 			DX_CHECK(m_device->GetDeviceCaps(&m_caps) );
 
@@ -489,11 +508,23 @@ namespace bgfx
 				m_renderTargets[ii].destroy();
 			}
 
-			DX_RELEASE(m_device, 0);
-			DX_RELEASE(m_d3d9, 0);
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
+			if (NULL != m_d3d9ex)
+			{
+				DX_RELEASE(m_deviceEx, 1);
+				DX_RELEASE(m_device, 0);
+				DX_RELEASE(m_d3d9, 1);
+				DX_RELEASE(m_d3d9ex, 0);
+			}
+			else
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+			{
+				DX_RELEASE(m_device, 0);
+				DX_RELEASE(m_d3d9, 0);
+			}
 
 #if BX_PLATFORM_WINDOWS
-			FreeLibrary(m_d3d9dll);
+			bx::dlclose(m_d3d9dll);
 #endif // BX_PLATFORM_WINDOWS
 
 			m_initialized = false;
@@ -645,7 +676,10 @@ namespace bgfx
 			if (NULL != m_device)
 			{
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
-				DX_CHECK(m_device->WaitForVBlank(0) );
+				if (NULL != m_deviceEx)
+				{
+					DX_CHECK(m_deviceEx->WaitForVBlank(0) );
+				}
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
 				HRESULT hr;
@@ -908,12 +942,13 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
-		IDirect3D9Ex* m_d3d9;
-		IDirect3DDevice9Ex* m_device;
-#else
+		IDirect3D9Ex* m_d3d9ex;
+		IDirect3DDevice9Ex* m_deviceEx;
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+
 		IDirect3D9* m_d3d9;
 		IDirect3DDevice9* m_device;
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+		D3DPOOL m_pool;
 
 		IDirect3DSurface9* m_backBufferColor;
 		IDirect3DSurface9* m_backBufferDepthStencil;
@@ -924,7 +959,7 @@ namespace bgfx
 
 		IDirect3DVertexDeclaration9* m_instanceDataDecls[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
-		HMODULE m_d3d9dll;
+		void* m_d3d9dll;
 		uint32_t m_adapter;
 		D3DDEVTYPE m_deviceType;
 		D3DPRESENT_PARAMETERS m_params;
@@ -970,7 +1005,7 @@ namespace bgfx
 		m_dynamic = NULL == _data;
 
 		uint32_t usage = D3DUSAGE_WRITEONLY;
-		D3DPOOL pool = D3DPOOL_MANAGED;
+		D3DPOOL pool = s_renderCtx.m_pool;
 
 		if (m_dynamic)
 		{
@@ -1021,7 +1056,7 @@ namespace bgfx
 		m_dynamic = NULL == _data;
 
 		uint32_t usage = D3DUSAGE_WRITEONLY;
-		D3DPOOL pool = D3DPOOL_MANAGED;
+		D3DPOOL pool = s_renderCtx.m_pool;
 
 		if (m_dynamic)
 		{
@@ -1275,7 +1310,7 @@ namespace bgfx
 			, _numMips
 			, 0
 			, _fmt
-			, D3DPOOL_MANAGED
+			, s_renderCtx.m_pool
 			, &m_texture2d
 			, NULL
 			) );
@@ -1298,7 +1333,7 @@ namespace bgfx
 			, _numMips
 			, 0
 			, _fmt
-			, D3DPOOL_MANAGED
+			, s_renderCtx.m_pool
 			, &m_texture3d
 			, NULL
 			) );
@@ -1320,7 +1355,7 @@ namespace bgfx
 			, _numMips
 			, 0
 			, _fmt
-			, D3DPOOL_MANAGED
+			, s_renderCtx.m_pool
 			, &m_textureCube
 			, NULL
 			) );
