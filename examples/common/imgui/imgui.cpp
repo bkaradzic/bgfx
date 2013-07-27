@@ -130,6 +130,7 @@ struct Imgui
 		, m_insideCurrentScroll(false)
 		, m_areaId(0)
 		, m_widgetId(0)
+		, m_scissor(UINT16_MAX)
 		, m_scrollTop(0)
 		, m_scrollBottom(0)
 		, m_scrollRight(0)
@@ -403,7 +404,7 @@ struct Imgui
 			, imguiRGBA(255, 255, 255, 128)
 			);
 
-//		setScissor(_x + SCROLL_AREA_PADDING, _y + SCROLL_AREA_PADDING, _width - SCROLL_AREA_PADDING * 4, _height - AREA_HEADER - SCROLL_AREA_PADDING);
+		m_scissor = bgfx::setScissor(_x + SCROLL_AREA_PADDING, _y + SCROLL_AREA_PADDING, _width - SCROLL_AREA_PADDING * 4, _height - AREA_HEADER - SCROLL_AREA_PADDING);
 
 		return m_insideScrollArea;
 	}
@@ -411,7 +412,7 @@ struct Imgui
 	void endScrollArea()
 	{
 		// Disable scissoring.
-//		setScissor(-1, -1, -1, -1);
+		m_scissor = UINT16_MAX;
 
 		// Draw scroll bar
 		int32_t xx = m_scrollRight + SCROLL_AREA_PADDING / 2;
@@ -1066,6 +1067,7 @@ struct Imgui
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 				);
 			bgfx::setProgram(m_colorProgram);
+			bgfx::setScissor(m_scissor);
 			bgfx::submit(m_view);
 		}
 	}
@@ -1354,6 +1356,7 @@ struct Imgui
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 				);
 			bgfx::setProgram(m_textureProgram);
+			bgfx::setScissor(m_scissor);
 			bgfx::submit(m_view);
 		}
 	}
@@ -1380,6 +1383,7 @@ struct Imgui
 
 	uint32_t m_areaId;
 	uint32_t m_widgetId;
+	uint16_t m_scissor;
 
 	float m_tempCoords[MAX_TEMP_COORDS * 2];
 	float m_tempNormals[MAX_TEMP_COORDS * 2];

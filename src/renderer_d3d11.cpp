@@ -2314,7 +2314,7 @@ namespace bgfx
 		}
 
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
-		bool scissor = false;
+		bool scissorEnabled = false;
 		s_renderCtx.setDebugWireframe(wireframe);
 
 		uint16_t programIdx = invalidHandle;
@@ -2349,6 +2349,7 @@ namespace bgfx
 				if (key.m_view != view)
 				{
 					currentState.clear();
+					currentState.m_scissor = !state.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
@@ -2383,21 +2384,8 @@ namespace bgfx
 						m_clearQuad.clear(rect, clear);
 					}
 
-					Rect& scissorRect = m_render->m_scissor[view];
-					scissor = !scissorRect.isZero();
-					if (scissor)
-					{
-						D3D11_RECT rc;
-						rc.left = scissorRect.m_x;
-						rc.top = scissorRect.m_y;
-						rc.right = scissorRect.m_x + scissorRect.m_width;
-						rc.bottom = scissorRect.m_y + scissorRect.m_height;
-						deviceCtx->RSSetScissorRects(1, &rc);
-					}
-
-					s_renderCtx.setBlendState(BGFX_STATE_DEFAULT);
-					s_renderCtx.setDepthStencilState(BGFX_STATE_DEFAULT, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
-					s_renderCtx.setRasterizerState(BGFX_STATE_DEFAULT, wireframe, scissor);
+					s_renderCtx.setBlendState(newFlags);
+					s_renderCtx.setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
 					if (primType != s_primType[primIndex])
@@ -2406,6 +2394,40 @@ namespace bgfx
 						primNumVerts = 3-primIndex;
 						deviceCtx->IASetPrimitiveTopology(primType);
 					}
+				}
+
+				uint16_t scissor = state.m_scissor;
+				if (currentState.m_scissor != scissor)
+				{
+					currentState.m_scissor = scissor;
+
+					if (UINT16_MAX == scissor)
+					{
+						const Rect& scissorRect = m_render->m_scissor[view];
+						scissorEnabled = !scissorRect.isZero();
+						if (scissorEnabled)
+						{
+							D3D11_RECT rc;
+							rc.left = scissorRect.m_x;
+							rc.top = scissorRect.m_y;
+							rc.right = scissorRect.m_x + scissorRect.m_width;
+							rc.bottom = scissorRect.m_y + scissorRect.m_height;
+							deviceCtx->RSSetScissorRects(1, &rc);
+						}
+					}
+					else
+					{
+						const Rect& scissorRect = m_render->m_rectCache.m_cache[scissor];
+						scissorEnabled = true;
+						D3D11_RECT rc;
+						rc.left = scissorRect.m_x;
+						rc.top = scissorRect.m_y;
+						rc.right = scissorRect.m_x + scissorRect.m_width;
+						rc.bottom = scissorRect.m_y + scissorRect.m_height;
+						deviceCtx->RSSetScissorRects(1, &rc);
+					}
+
+					s_renderCtx.setRasterizerState(newFlags, wireframe, scissorEnabled);
 				}
 
 				if ( (BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags
@@ -2433,7 +2455,7 @@ namespace bgfx
 
 					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
 					{
-						s_renderCtx.setRasterizerState(newFlags, wireframe, scissor);
+						s_renderCtx.setRasterizerState(newFlags, wireframe, scissorEnabled);
 					}
 
 					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)

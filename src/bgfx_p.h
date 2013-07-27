@@ -651,6 +651,38 @@ namespace bgfx
 		uint32_t m_num;
 	};
 
+	struct RectCache
+	{
+		RectCache()
+			: m_num(0)
+		{
+		}
+
+		void reset()
+		{
+			m_num = 0;
+		}
+
+		uint32_t add(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			BX_CHECK(m_num+1 < BGFX_CONFIG_MAX_RECT_CACHE, "Rect cache overflow. %d (max: %d)", m_num, BGFX_CONFIG_MAX_RECT_CACHE);
+
+			uint32_t first = m_num;
+			Rect& rect = m_cache[m_num];
+
+			rect.m_x = _x;
+			rect.m_y = _y;
+			rect.m_width = _width;
+			rect.m_height = _height;
+
+			m_num++;
+			return first;
+		}
+
+		Rect m_cache[BGFX_CONFIG_MAX_RECT_CACHE];
+		uint32_t m_num;
+	};
+
 	struct Sampler
 	{
 		uint32_t m_flags;
@@ -860,7 +892,7 @@ namespace bgfx
 			m_instanceDataStride = 0;
 			m_numInstances = 1;
 			m_num = 1;
-			m_scissor = 0;
+			m_scissor = UINT16_MAX;
 			m_vertexBuffer.idx = invalidHandle;
 			m_vertexDecl.idx = invalidHandle;
 			m_indexBuffer.idx = invalidHandle;
@@ -958,6 +990,7 @@ namespace bgfx
 		{
 			m_state.reset();
 			m_matrixCache.reset();
+			m_rectCache.reset();
 			m_key.reset();
 			m_num = 0;
 			m_numRenderStates = 0;
@@ -1008,9 +1041,9 @@ namespace bgfx
 
 		uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			BX_UNUSED(_x, _y, _width, _height);
-			m_state.m_scissor = 0;
-			return 0;
+			uint16_t scissor = m_rectCache.add(_x, _y, _width, _height);
+			m_state.m_scissor = scissor;
+			return scissor;
 		}
 
 		void setScissor(uint16_t _cache)
@@ -1256,6 +1289,7 @@ namespace bgfx
 		uint16_t m_numDropped;
 
 		MatrixCache m_matrixCache;
+		RectCache m_rectCache;
 
 		uint32_t m_iboffset;
 		uint32_t m_vboffset;

@@ -2287,6 +2287,7 @@ namespace bgfx
 				if (key.m_view != view)
 				{
 					currentState.clear();
+					currentState.m_scissor = !state.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
@@ -2354,11 +2355,38 @@ namespace bgfx
 						}
 					}
 
-					Rect& scissorRect = m_render->m_scissor[view];
-					bool scissor = !scissorRect.isZero();
-					DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, scissor) );
-					if (scissor)
+					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS) );
+					DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
+					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
+				}
+
+				uint16_t scissor = state.m_scissor;
+				if (currentState.m_scissor != scissor)
+				{
+					currentState.m_scissor = scissor;
+
+					if (UINT16_MAX == scissor)
 					{
+						const Rect& scissorRect = m_render->m_scissor[view];
+						bool scissorEnabled = !scissorRect.isZero();
+						DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, scissorEnabled) );
+						if (scissorEnabled)
+						{
+							RECT rc;
+							rc.left = scissorRect.m_x;
+							rc.top = scissorRect.m_y;
+							rc.right = scissorRect.m_x + scissorRect.m_width;
+							rc.bottom = scissorRect.m_y + scissorRect.m_height;
+							DX_CHECK(device->SetScissorRect(&rc) );
+						}
+					}
+					else
+					{
+						DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, true) );
+						const Rect& scissorRect = m_render->m_rectCache.m_cache[scissor];
 						RECT rc;
 						rc.left = scissorRect.m_x;
 						rc.top = scissorRect.m_y;
@@ -2366,13 +2394,6 @@ namespace bgfx
 						rc.bottom = scissorRect.m_y + scissorRect.m_height;
 						DX_CHECK(device->SetScissorRect(&rc) );
 					}
-
-					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );
-					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
-					DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS) );
-					DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
-					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
-					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
 				}
 
 				if (0 != changedStencil)

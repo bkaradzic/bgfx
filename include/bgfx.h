@@ -853,9 +853,10 @@ namespace bgfx
 
 	/// Set scissor from cache for draw primitive.
 	///
-	/// @param _cache Index in scissor cache.
+	/// @param _cache Index in scissor cache. Passing UINT16_MAX unset primitive
+	///   scissor and primitive will use view scissor instead.
 	///
-	void setScissor(uint16_t _cache);
+	void setScissor(uint16_t _cache = UINT16_MAX);
 
 	/// Set model matrix for draw primitive. If it is not called model will
 	/// be rendered with identity model matrix.

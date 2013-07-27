@@ -2836,9 +2836,11 @@ namespace bgfx
 				if (key.m_view != view)
 				{
 					currentState.clear();
+					currentState.m_scissor = !state.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
+					currentState.m_stencil = newStencil;
 
 					GREMEDY_SETMARKER(s_viewName[key.m_view]);
 
@@ -2862,23 +2864,38 @@ namespace bgfx
 						m_clearQuad.clear(rect, clear, height);
 					}
 
-					Rect& scissorRect = m_render->m_scissor[view];
-					bool scissor = !scissorRect.isZero();
-					if (scissor)
-					{
-						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-						GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
-					}
-					else
-					{
-						GL_CHECK(glDisable(GL_SCISSOR_TEST) );
-					}
-
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
 					GL_CHECK(glEnable(GL_DEPTH_TEST) );
 					GL_CHECK(glDepthFunc(GL_LESS) );
 					GL_CHECK(glEnable(GL_CULL_FACE) );
 					GL_CHECK(glDisable(GL_BLEND) );
+				}
+
+				uint16_t scissor = state.m_scissor;
+				if (currentState.m_scissor != scissor)
+				{
+					currentState.m_scissor = scissor;
+
+					if (UINT16_MAX == scissor)
+					{
+						const Rect& scissorRect = m_render->m_scissor[view];
+						bool scissor = !scissorRect.isZero();
+						if (scissor)
+						{
+							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+							GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+						}
+					}
+					else
+					{
+						const Rect& scissorRect = m_render->m_rectCache.m_cache[scissor];
+						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+						GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
+					}
 				}
 
 				if (0 != changedStencil)
