@@ -2167,6 +2167,7 @@ namespace bgfx
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
 		GL_CHECK(glViewport(0, 0, width, height) );
 
+		GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 		GL_CHECK(glDisable(GL_STENCIL_TEST) );
 		GL_CHECK(glDisable(GL_DEPTH_TEST) );
 		GL_CHECK(glDepthFunc(GL_ALWAYS) );
