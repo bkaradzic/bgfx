@@ -232,11 +232,11 @@ All configuration settings are located inside [src/config.h](https://github.com/
 
 Every `BGFX_CONFIG_*` setting can be changed by passing defines thru compiler
 switches. For example setting preprocessor define `BGFX_CONFIG_RENDERER_OPENGL=1`
-on Windows will change backend renderer to OpenGL 2.1. on Windows. Since
-rendering APIs are platform specific, this obviously won't work nor make sense
-in all cases. Certain platforms have only single choice, for example the Native
-Client works only with OpenGL ES 2.0 renderer, using anything other than that
-will result in build errors.
+will change backend renderer to OpenGL 2.1. on Windows. Since rendering APIs are
+platform specific, this obviously won't work nor make sense in all cases.
+Certain platforms have only single choice, for example the Native Client works
+only with OpenGL ES 2.0 renderer, using anything other than that will result in
+build errors.
 
 Tools
 -----
