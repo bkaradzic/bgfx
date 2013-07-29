@@ -219,6 +219,7 @@ namespace bgfx
 			ANGLE_instanced_arrays,
 			ANGLE_translated_shader_source,
 			ARB_debug_output,
+			ARB_depth_clamp,
 			ARB_framebuffer_sRGB,
 			ARB_get_program_binary,
 			ARB_half_float_vertex,
@@ -279,6 +280,7 @@ namespace bgfx
 		{ "GL_ANGLE_instanced_arrays",            false,                             true  },
 		{ "GL_ANGLE_translated_shader_source",    false,                             true  },
 		{ "GL_ARB_debug_output",                  BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "GL_ARB_depth_clamp",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_framebuffer_sRGB",              false,                             true  },
 		{ "GL_ARB_get_program_binary",            BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
 		{ "GL_ARB_half_float_vertex",             false,                             true  },
@@ -2579,6 +2581,11 @@ namespace bgfx
 		if (s_extension[Extension::ARB_seamless_cube_map].m_supported)
 		{
 			GL_CHECK(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS) );
+		}
+
+		if (s_extension[Extension::ARB_depth_clamp].m_supported)
+		{
+			GL_CHECK(glEnable(GL_DEPTH_CLAMP) );
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 	}
