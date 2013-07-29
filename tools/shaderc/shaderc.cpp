@@ -1281,8 +1281,11 @@ void help(const char* _error = NULL)
 		  "Options (DX9 and DX11 only):\n"
 
 		  "\n"
-		  "      --disasm      Disassemble compiled shader.\n"
-		  "  -p, --profile     Shader model (f.e. ps_3_0).\n"
+		  "      --debug                   Debug information.\n"
+		  "      --disasm                  Disassemble compiled shader.\n"
+		  "  -p, --profile <profile>       Shader model (f.e. ps_3_0).\n"
+		  "  -O <level>                    Optimization level (0, 1, 2, 3).\n"
+		  "      --Werror                  Treat warnings as errors.\n"
 
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
