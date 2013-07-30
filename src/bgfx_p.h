@@ -1153,6 +1153,13 @@ namespace bgfx
 			}
 		}
 
+		void discard()
+		{
+			m_discard = false;
+			m_state.clear();
+			m_flags = BGFX_STATE_NONE;
+		}
+
 		void submit(uint8_t _id, int32_t _depth);
 		void submitMask(uint32_t _viewMask, int32_t _depth);
 		void sort();

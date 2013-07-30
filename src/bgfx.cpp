@@ -529,7 +529,7 @@ namespace bgfx
 	{
 		if (m_discard)
 		{
-			m_discard = false;
+			discard();
 			return;
 		}
 
@@ -566,7 +566,7 @@ namespace bgfx
 	{
 		if (m_discard)
 		{
-			m_discard = false;
+			discard();
 			return;
 		}
 
@@ -1494,6 +1494,12 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx.m_submit->submitMask(_viewMask, _depth);
+	}
+
+	void discard()
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx.m_submit->discard();
 	}
 
 	void saveScreenShot(const char* _filePath)

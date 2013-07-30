@@ -643,6 +643,10 @@ namespace bgfx
 	///   calls.
 	/// @param _num Number of indices to allocate.
 	///
+	/// NOTE:
+	///   You must call setIndexBuffer after alloc in order to avoid memory
+	///   leak.
+	///
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num);
 
 	/// Allocate transient vertex buffer.
@@ -653,9 +657,18 @@ namespace bgfx
 	/// @param _num Number of vertices to allocate.
 	/// @param _decl Vertex declaration.
 	///
+	/// NOTE:
+	///   You must call setVertexBuffer after alloc in order to avoid memory
+	///   leak.
+	///
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl);
 
 	/// Allocate instance data buffer.
+	///
+	/// NOTE:
+	///   You must call setInstanceDataBuffer after alloc in order to avoid
+	///   memory leak.
+	///
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
 	/// Create vertex shader from memory buffer.
@@ -950,6 +963,9 @@ namespace bgfx
 	/// @param _depth Depth for sorting.
 	///
 	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
+
+	/// Discard all previously set state for draw call.
+	void discard();
 
 	/// Request screen shot.
 	void saveScreenShot(const char* _filePath);
