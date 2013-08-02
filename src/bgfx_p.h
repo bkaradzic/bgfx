@@ -190,8 +190,8 @@ namespace bgfx
 			const uint16_t ey = uint16_min(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
 			m_x = sx;
 			m_y = sy;
-			m_width  = ex - sx;
-			m_height = ey - sy;
+			m_width  = (uint16_t)uint32_satsub(ex, sx);
+			m_height = (uint16_t)uint32_satsub(ey, sy);
 		}
 
 		uint16_t m_x;
