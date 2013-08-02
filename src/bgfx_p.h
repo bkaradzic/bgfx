@@ -182,6 +182,18 @@ namespace bgfx
 			return UINT64_C(0) == ui64;
 		}
 
+		void intersect(const Rect& _a, const Rect& _b)
+		{
+			const uint16_t sx = uint16_max(_a.m_x, _b.m_x);
+			const uint16_t sy = uint16_max(_a.m_y, _b.m_y);
+			const uint16_t ex = uint16_min(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
+			const uint16_t ey = uint16_min(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
+			m_x = sx;
+			m_y = sy;
+			m_width  = ex - sx;
+			m_height = ey - sy;
+		}
+
 		uint16_t m_x;
 		uint16_t m_y;
 		uint16_t m_width;

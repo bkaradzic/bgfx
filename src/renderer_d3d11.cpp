@@ -2325,6 +2325,8 @@ namespace bgfx
 		D3D11_PRIMITIVE_TOPOLOGY primType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		deviceCtx->IASetPrimitiveTopology(primType);
 		uint32_t primNumVerts = 3;
+		bool viewHasScissor = false;
+		Rect viewScissorRect;
 
 		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;
@@ -2367,7 +2369,10 @@ namespace bgfx
 						s_renderCtx.setRenderTarget(rt);
 					}
 
-					Rect& rect = m_render->m_rect[view];
+					const Rect& rect = m_render->m_rect[view];
+					const Rect& scissorRect = m_render->m_scissor[view];
+					viewHasScissor = !scissorRect.isZero();
+					viewScissorRect = viewHasScissor ? scissorRect : rect;
 
 					D3D11_VIEWPORT vp;
 					vp.TopLeftX = rect.m_x;
@@ -2403,21 +2408,21 @@ namespace bgfx
 
 					if (UINT16_MAX == scissor)
 					{
-						const Rect& scissorRect = m_render->m_scissor[view];
-						scissorEnabled = !scissorRect.isZero();
-						if (scissorEnabled)
+						scissorEnabled = viewHasScissor;
+						if (viewHasScissor)
 						{
 							D3D11_RECT rc;
-							rc.left = scissorRect.m_x;
-							rc.top = scissorRect.m_y;
-							rc.right = scissorRect.m_x + scissorRect.m_width;
-							rc.bottom = scissorRect.m_y + scissorRect.m_height;
+							rc.left = viewScissorRect.m_x;
+							rc.top = viewScissorRect.m_y;
+							rc.right = viewScissorRect.m_x + viewScissorRect.m_width;
+							rc.bottom = viewScissorRect.m_y + viewScissorRect.m_height;
 							deviceCtx->RSSetScissorRects(1, &rc);
 						}
 					}
 					else
 					{
-						const Rect& scissorRect = m_render->m_rectCache.m_cache[scissor];
+						Rect scissorRect;
+						scissorRect.intersect(viewScissorRect, m_render->m_rectCache.m_cache[scissor]);
 						scissorEnabled = true;
 						D3D11_RECT rc;
 						rc.left = scissorRect.m_x;

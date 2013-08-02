@@ -2819,6 +2819,8 @@ namespace bgfx
 		uint32_t primNumVerts = 3;
 		uint32_t baseVertex = 0;
 		GLuint currentVao = 0;
+		bool viewHasScissor = false;
+		Rect viewScissorRect;
 
 		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;
@@ -2862,7 +2864,10 @@ namespace bgfx
 						height = s_renderCtx.setRenderTarget(rt, m_render->m_resolution.m_height);
 					}
 
-					Rect& rect = m_render->m_rect[view];
+					const Rect& rect = m_render->m_rect[view];
+					const Rect& scissorRect = m_render->m_scissor[view];
+					viewHasScissor = !scissorRect.isZero();
+					viewScissorRect = viewHasScissor ? scissorRect : rect;
 
 					GL_CHECK(glViewport(rect.m_x, height-rect.m_height-rect.m_y, rect.m_width, rect.m_height) );
 
@@ -2887,12 +2892,10 @@ namespace bgfx
 
 					if (UINT16_MAX == scissor)
 					{
-						const Rect& scissorRect = m_render->m_scissor[view];
-						bool scissor = !scissorRect.isZero();
-						if (scissor)
+						if (viewHasScissor)
 						{
 							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-							GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
+							GL_CHECK(glScissor(viewScissorRect.m_x, height-viewScissorRect.m_height-viewScissorRect.m_y, viewScissorRect.m_width, viewScissorRect.m_height) );
 						}
 						else
 						{
@@ -2901,7 +2904,8 @@ namespace bgfx
 					}
 					else
 					{
-						const Rect& scissorRect = m_render->m_rectCache.m_cache[scissor];
+						Rect scissorRect;
+						scissorRect.intersect(viewScissorRect, m_render->m_rectCache.m_cache[scissor]);
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 						GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
 					}
