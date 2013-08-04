@@ -2275,6 +2275,7 @@ namespace bgfx
 		mbstowcs(name, _marker, size-2);
 		PIX_SETMARKER(D3DCOLOR_RGBA(0xff, 0xff, 0xff, 0xff), name);
 #endif // BGFX_CONFIG_DEBUG_PIX
+		BX_UNUSED(_marker, _size);
 	}
 
 	void Context::rendererSubmit()
@@ -2327,6 +2328,7 @@ namespace bgfx
 		uint32_t primNumVerts = 3;
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
+		viewScissorRect.clear();
 
 		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;

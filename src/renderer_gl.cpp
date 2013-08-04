@@ -2821,6 +2821,7 @@ namespace bgfx
 		GLuint currentVao = 0;
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
+		viewScissorRect.clear();
 
 		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;

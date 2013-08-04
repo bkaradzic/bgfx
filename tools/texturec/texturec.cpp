@@ -119,8 +119,8 @@ int main(int _argc, const char* _argv[])
 
 				for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 				{
-					width = uint32_max(1, width);
-					height = uint32_max(1, height);
+					width = bx::uint32_max(1, width);
+					height = bx::uint32_max(1, height);
 
 					Mip mip;
 					if (getRawImageData(dds, side, lod, mem, mip) )

@@ -114,7 +114,7 @@ inline double saturate(double _val)
 
 int main(int _argc, const char* _argv[])
 {
-	CommandLine cmdLine(_argc, _argv);
+	bx::CommandLine cmdLine(_argc, _argv);
 
 	const char* inFilePath = cmdLine.findOption('i');
 	if (NULL == inFilePath)

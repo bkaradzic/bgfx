@@ -175,6 +175,14 @@ namespace bgfx
 
 	struct Rect
 	{
+		void clear()
+		{
+			m_x =
+			m_y =
+			m_width =
+			m_height = 0;
+		}
+
 		bool isZero() const
 		{
 			uint64_t ui64 = *( (uint64_t*)this);
