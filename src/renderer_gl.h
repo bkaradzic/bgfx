@@ -547,7 +547,7 @@ namespace bgfx
 			m_type = _type;
 
 			bx::MemoryReader reader(_mem->data, _mem->size);
-			m_hash = hashMurmur2A(_mem->data, _mem->size);
+			m_hash = bx::hashMurmur2A(_mem->data, _mem->size);
 
 			uint32_t magic;
 			bx::read(&reader, magic);

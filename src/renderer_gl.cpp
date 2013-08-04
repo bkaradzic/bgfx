@@ -429,11 +429,11 @@ namespace bgfx
 				const char* space = strchr(pos, ' ');
 				if (NULL != space)
 				{
-					len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
+					len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
 				}
 				else
 				{
-					len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+					len = bx::uint32_min(sizeof(name), (uint32_t)strlen(pos) );
 				}
 
 				strncpy(name, pos, len);
@@ -521,7 +521,7 @@ namespace bgfx
 				m_resolution = _resolution;
 
 				uint32_t msaa = 1<<( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT);
-				msaa = uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 				bool vsync = !!(m_resolution.m_flags&BGFX_RESET_VSYNC);
 				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa, vsync);
 				updateCapture();
@@ -1109,7 +1109,7 @@ namespace bgfx
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max0) );
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max1) );
 
-		GLint maxLength = uint32_max(max0, max1);
+		GLint maxLength = bx::uint32_max(max0, max1);
 		char* name = (char*)g_realloc(NULL, maxLength + 1);
 
 		BX_TRACE("Program %d", m_id);
@@ -1461,9 +1461,9 @@ namespace bgfx
 
 					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
-						width = uint32_max(1, width);
-						height = uint32_max(1, height);
-						depth = uint32_max(1, depth);
+						width  = bx::uint32_max(1, width);
+						height = bx::uint32_max(1, height);
+						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
 						if (getRawImageData(dds, side, lod, _mem, mip) )
@@ -1502,15 +1502,15 @@ namespace bgfx
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width = dds.m_width;
+					uint32_t width  = dds.m_width;
 					uint32_t height = dds.m_height;
-					uint32_t depth = dds.m_depth;
+					uint32_t depth  = dds.m_depth;
 
 					for (uint32_t ii = 0, num = numMips; ii < num; ++ii)
 					{
-						width = uint32_max(1, width);
-						height = uint32_max(1, height);
-						depth = uint32_max(1, depth);
+						width  = bx::uint32_max(1, width);
+						height = bx::uint32_max(1, height);
+						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
 						if (getRawImageData(dds, side, ii, _mem, mip) )
@@ -1527,9 +1527,9 @@ namespace bgfx
 								);
 						}
 
-						width >>= 1;
+						width  >>= 1;
 						height >>= 1;
-						depth >>= 1;
+						depth  >>= 1;
 					}
 				}
 			}
@@ -1592,15 +1592,15 @@ namespace bgfx
 
 				for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width = tc.m_width;
+					uint32_t width  = tc.m_width;
 					uint32_t height = tc.m_height;
-					uint32_t depth = tc.m_depth;
+					uint32_t depth  = tc.m_depth;
 
 					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
-						width = uint32_max(width, min);
-						height = uint32_max(height, min);
-						depth = uint32_max(1, depth);
+						width  = bx::uint32_max(width, min);
+						height = bx::uint32_max(height, min);
+						depth  = bx::uint32_max(1, depth);
 						uint32_t size = width*height*bpp/8;
 
 						if (m_compressed)
@@ -1642,9 +1642,9 @@ namespace bgfx
 							data += size;
 						}
 
-						width >>= 1;
+						width  >>= 1;
 						height >>= 1;
-						depth >>= 1;
+						depth  >>= 1;
 					}
 				}
 
@@ -1917,7 +1917,7 @@ namespace bgfx
 		m_width = _width;
 		m_height = _height;
 		uint32_t msaa = (_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT;
-		m_msaa = uint32_min(s_renderCtx.m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+		m_msaa = bx::uint32_min(s_renderCtx.m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
 		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
@@ -2426,11 +2426,11 @@ namespace bgfx
 				const char* space = strchr(pos, ' ');
 				if (NULL != space)
 				{
-					len = uint32_min(sizeof(name), (uint32_t)(space - pos) );
+					len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
 				}
 				else
 				{
-					len = uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+					len = bx::uint32_min(sizeof(name), (uint32_t)strlen(pos) );
 				}
 				
 				strncpy(name, pos, len);
@@ -2640,7 +2640,7 @@ namespace bgfx
 
 	void Context::rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
@@ -2656,7 +2656,7 @@ namespace bgfx
 
 	void Context::rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
@@ -3017,7 +3017,7 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_OPENGL
 					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 					{
-						float pointSize = (float)(uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
+						float pointSize = (float)(bx::uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
 						GL_CHECK(glPointSize(pointSize) );
 					}
 
@@ -3158,7 +3158,7 @@ namespace bgfx
 							{
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-									, uint32_min(predefined.m_count, state.m_num)
+									, bx::uint32_min(predefined.m_count, state.m_num)
 									, GL_FALSE
 									, model.val
 									) );

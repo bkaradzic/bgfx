@@ -548,7 +548,7 @@ namespace bgfx
 				if (SUCCEEDED(hr) )
 				{
 					s_msaa[ii].m_type = msaa;
-					s_msaa[ii].m_quality = uint32_imax(0, quality-1);
+					s_msaa[ii].m_quality = bx::uint32_imax(0, quality-1);
 					last = ii;
 				}
 				else
@@ -1537,15 +1537,15 @@ namespace bgfx
 			{
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width = dds.m_width;
+					uint32_t width  = dds.m_width;
 					uint32_t height = dds.m_height;
-					uint32_t depth = dds.m_depth;
+					uint32_t depth  = dds.m_depth;
 
 					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 					{
-						width = uint32_max(1, width);
-						height = uint32_max(1, height);
-						depth = uint32_max(1, depth);
+						width  = bx::uint32_max(1, width);
+						height = bx::uint32_max(1, height);
+						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
 						if (getRawImageData(dds, side, lod, _mem, mip) )
@@ -1580,9 +1580,9 @@ namespace bgfx
 							unlock(side, lod);
 						}
 
-						width >>= 1;
+						width  >>= 1;
 						height >>= 1;
-						depth >>= 1;
+						depth  >>= 1;
 					}
 				}
 			}
@@ -1598,15 +1598,15 @@ namespace bgfx
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width = dds.m_width;
+					uint32_t width  = dds.m_width;
 					uint32_t height = dds.m_height;
-					uint32_t depth = dds.m_depth;
+					uint32_t depth  = dds.m_depth;
 
 					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
 					{
-						width = uint32_max(1, width);
-						height = uint32_max(1, height);
-						depth = uint32_max(1, depth);
+						width  = bx::uint32_max(1, width);
+						height = bx::uint32_max(1, height);
+						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
 						if (getRawImageData(dds, 0, lod, _mem, mip) )
@@ -1622,9 +1622,9 @@ namespace bgfx
 							unlock(side, lod);
 						}
 
-						width >>= 1;
+						width  >>= 1;
 						height >>= 1;
-						depth >>= 1;
+						depth  >>= 1;
 					}
 				}
 			}
@@ -1662,15 +1662,15 @@ namespace bgfx
 
 					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
 					{
-						uint32_t width = tc.m_width;
+						uint32_t width  = tc.m_width;
 						uint32_t height = tc.m_height;
-						uint32_t depth = tc.m_depth;
+						uint32_t depth  = tc.m_depth;
 
 						for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
 						{
-							width = uint32_max(1, width);
-							height = uint32_max(1, height);
-							depth = uint32_max(1, depth);
+							width  = bx::uint32_max(1, width);
+							height = bx::uint32_max(1, height);
+							depth  = bx::uint32_max(1, depth);
 
 							uint32_t pitch;
 							uint32_t slicePitch;
@@ -1680,9 +1680,9 @@ namespace bgfx
 							data += len;
 							unlock(side, lod);
 
-							width >>= 1;
+							width  >>= 1;
 							height >>= 1;
-							depth >>= 1;
+							depth  >>= 1;
 						}
 					}
 
@@ -2084,7 +2084,7 @@ namespace bgfx
 
 	void Context::rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
@@ -2100,7 +2100,7 @@ namespace bgfx
 
 	void Context::rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
@@ -2612,20 +2612,20 @@ namespace bgfx
 
 						case PredefinedUniform::View:
 							{
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, m_render->m_view[view].val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, m_render->m_view[view].val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProj:
 							{
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProj[view].val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProj[view].val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::Model:
 							{
  								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, model.val, uint32_min(state.m_num*4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, model.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
 							}
 							break;
 
@@ -2634,7 +2634,7 @@ namespace bgfx
 								Matrix4 modelView;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelView.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelView.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2643,7 +2643,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2666,7 +2666,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
 
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2684,7 +2684,7 @@ namespace bgfx
 								Matrix4 viewProjBias;
 								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
-								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProjBias.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstantF(flags, predefined.m_loc, viewProjBias.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 

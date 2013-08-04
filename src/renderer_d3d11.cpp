@@ -851,7 +851,7 @@ namespace bgfx
 			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
 
-			HashMurmur2A murmur;
+			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_state);
 			murmur.add(_stencil);
@@ -1617,7 +1617,7 @@ namespace bgfx
 		}
 		else
 		{
-			m_hash = hashMurmur2A(code, shaderSize);
+			m_hash = bx::hashMurmur2A(code, shaderSize);
 			m_code = alloc(shaderSize);
 			memcpy(m_code->data, code, shaderSize);
 
@@ -1665,15 +1665,15 @@ namespace bgfx
 
 				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width = dds.m_width;
+					uint32_t width  = dds.m_width;
 					uint32_t height = dds.m_height;
-					uint32_t depth = dds.m_depth;
+					uint32_t depth  = dds.m_depth;
 
 					for (uint32_t lod = 0, num = m_numMips; lod < num; ++lod)
 					{
-						width = uint32_max(1, width);
-						height = uint32_max(1, height);
-						depth = uint32_max(1, depth);
+						width  = bx::uint32_max(1, width);
+						height = bx::uint32_max(1, height);
+						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
 						if (getRawImageData(dds, side, lod, _mem, mip) )
@@ -1696,9 +1696,9 @@ namespace bgfx
 							++kk;
 						}
 
-						width >>= 1;
+						width  >>= 1;
 						height >>= 1;
-						depth >>= 1;
+						depth  >>= 1;
 					}
 				}
 			}
@@ -1859,15 +1859,15 @@ namespace bgfx
 
 					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
 					{
-						uint32_t width = tc.m_width;
+						uint32_t width  = tc.m_width;
 						uint32_t height = tc.m_height;
-						uint32_t depth = tc.m_depth;
+						uint32_t depth  = tc.m_depth;
 
 						for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
 						{
-							width = uint32_max(1, width);
-							height = uint32_max(1, height);
-							depth = uint32_max(1, depth);
+							width  = bx::uint32_max(1, width);
+							height = bx::uint32_max(1, height);
+							depth  = bx::uint32_max(1, depth);
 
 							srd[lod].pSysMem = data;
 							srd[lod].SysMemPitch = width*bpp/8;
@@ -1875,9 +1875,9 @@ namespace bgfx
 
 							data += width*height*bpp/8;
 
-							width >>= 1;
+							width  >>= 1;
 							height >>= 1;
-							depth >>= 1;
+							depth  >>= 1;
 						}
 					}
 
@@ -2154,7 +2154,7 @@ namespace bgfx
 
 	void Context::rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
@@ -2170,7 +2170,7 @@ namespace bgfx
 
 	void Context::rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
@@ -2548,20 +2548,20 @@ namespace bgfx
 
 						case PredefinedUniform::View:
 							{
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, m_render->m_view[view].val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, m_render->m_view[view].val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProj:
 							{
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProj[view].val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProj[view].val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::Model:
 							{
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, model.val, uint32_min(state.m_num*4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, model.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
 							}
 							break;
 
@@ -2570,7 +2570,7 @@ namespace bgfx
 								Matrix4 modelView;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelView.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelView.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2579,7 +2579,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2602,7 +2602,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
 
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2620,7 +2620,7 @@ namespace bgfx
 								Matrix4 viewProjBias;
 								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProjBias.val, uint32_min(4, predefined.m_count) );
+								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProjBias.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 

@@ -75,6 +75,7 @@ bool isDds(const Memory* _mem)
 
 uint32_t bitRangeConvert(uint32_t _in, uint32_t _from, uint32_t _to)
 {
+	using namespace bx;
 	uint32_t tmp0   = uint32_sll(1, _to);
 	uint32_t tmp1   = uint32_sll(1, _from);
 	uint32_t tmp2   = uint32_dec(tmp0);
@@ -575,15 +576,15 @@ bool getRawImageData(const Dds& _dds, uint8_t _side, uint8_t _lod, const Memory*
 
 		for (uint8_t lod = 0, num = _dds.m_numMips; lod < num; ++lod)
 		{
-			width = uint32_max(1, width);
-			height = uint32_max(1, height);
-			depth = uint32_max(1, depth);
+			width = bx::uint32_max(1, width);
+			height = bx::uint32_max(1, height);
+			depth = bx::uint32_max(1, depth);
 
 			uint32_t size = width*height*depth*blockSize;
 			if (TextureFormat::Unknown > type)
 			{
-				width = uint32_max(1, (width + 3)>>2);
-				height = uint32_max(1, (height + 3)>>2);
+				width = bx::uint32_max(1, (width + 3)>>2);
+				height = bx::uint32_max(1, (height + 3)>>2);
 				size = width*height*depth*blockSize;
 
 				width <<= 2;

@@ -573,7 +573,7 @@ namespace bgfx
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
 		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
 		{
-			m_numDropped += uint32_cntbits(_viewMask);
+			m_numDropped += bx::uint32_cntbits(_viewMask);
 			return;
 		}
 
@@ -582,7 +582,7 @@ namespace bgfx
 		{
 			m_key.m_depth = _depth;
 
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = uint32_cnttz(viewMask) )
+			for (uint32_t id = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = bx::uint32_cnttz(viewMask) )
 			{
 				viewMask >>= ntz;
 				id += ntz;
@@ -1059,10 +1059,10 @@ namespace bgfx
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
 	{
-		_width = uint32_max(1, _width);
-		_height = uint32_max(1, _height);
-		_depth = uint32_max(1, _depth);
-		_numMips = uint32_max(1, _numMips);
+		_width   = bx::uint32_max(1, _width);
+		_height  = bx::uint32_max(1, _height);
+		_depth   = bx::uint32_max(1, _depth);
+		_numMips = bx::uint32_max(1, _numMips);
 
 		uint32_t width = _width;
 		uint32_t height = _height;
@@ -1073,9 +1073,9 @@ namespace bgfx
 
 		for (uint32_t lod = 0; lod < _numMips; ++lod)
 		{
-			width = uint32_max(1, width);
-			height = uint32_max(1, height);
-			depth = uint32_max(1, depth);
+			width  = bx::uint32_max(1, width);
+			height = bx::uint32_max(1, height);
+			depth  = bx::uint32_max(1, depth);
 
 			size += _width*_height*depth*bpp/8;
 
@@ -1274,7 +1274,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_WARN(0 != _width && 0 != _height, "Render target resolution width or height cannot be 0 (width %d, height %d).", _width, _height);
-		return s_ctx.createRenderTarget(uint16_max(1, _width), uint16_max(1, _height), _flags, _textureFlags);
+		return s_ctx.createRenderTarget(bx::uint16_max(1, _width), bx::uint16_max(1, _height), _flags, _textureFlags);
 	}
 
 	void destroyRenderTarget(RenderTargetHandle _handle)
@@ -1437,7 +1437,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
-		uint32_t numIndices = uint32_min(_numIndices, _tib->size/2);
+		uint32_t numIndices = bx::uint32_min(_numIndices, _tib->size/2);
 		s_ctx.m_submit->setIndexBuffer(_tib, numIndices);
 	}
 
