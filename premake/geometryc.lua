@@ -21,4 +21,9 @@ project "geometryc"
 		BGFX_DIR .. "tools/geometryc/**.h",
 	}
 
+	configuration { "osx" }
+		links {
+			"Cocoa.framework",
+		}
+
 	strip()

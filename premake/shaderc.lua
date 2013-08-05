@@ -32,6 +32,11 @@ project "shaderc"
 			"-fno-strict-aliasing" -- glsl-optimizer has bugs if strict aliasing is used.
 		}
 
+	configuration { "osx" }
+		links {
+			"Cocoa.framework",
+		}
+
 	configuration { "windows", "vs*" }
 		includedirs {
 			GLSL_OPTIMIZER .. "include/c99",

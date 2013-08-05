@@ -22,3 +22,8 @@ project "texturec"
 	links {
 --		"bgfx",
 	}
+
+	configuration { "osx" }
+		links {
+			"Cocoa.framework",
+		}
