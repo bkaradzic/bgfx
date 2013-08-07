@@ -9,7 +9,6 @@
 
 #include "entry_p.h"
 
-#include <bx/countof.h>
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 
@@ -47,7 +46,7 @@ namespace entry
 	static uint8_t translateKeyModifiers()
 	{
 		uint8_t modifiers = 0;
-		for (uint32_t ii = 0; ii < countof(s_translateKeyModifiers); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateKeyModifiers); ++ii)
 		{
 			const TranslateKeyModifiers& tkm = s_translateKeyModifiers[ii];
 			modifiers |= 0 > GetKeyState(tkm.m_vk) ? tkm.m_modifier : Modifier::None;

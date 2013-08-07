@@ -1212,7 +1212,7 @@ namespace bgfx
 		m_used[used] = Attrib::Count;
 
 		used = 0;
-		for (uint32_t ii = 0; ii < countof(s_instanceDataName); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 		{
 			GLuint loc = glGetAttribLocation(m_id, s_instanceDataName[ii]);
 			if (GLuint(-1) != loc )

@@ -373,8 +373,8 @@ namespace bgfx
 				{
 					BX_TRACE("Adapter #%d", ii);
 
-					char description[countof(desc.Description)];
-					wcstombs(description, desc.Description, countof(desc.Description) );
+					char description[BX_COUNTOF(desc.Description)];
+					wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
 					BX_TRACE("\tDescription: %s", description);
 					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
 						, desc.VendorId
@@ -478,37 +478,37 @@ namespace bgfx
 
 			invalidateCache();
 
-			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
 			{
 				m_vertexBuffers[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexShaders); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexShaders); ++ii)
 			{
 				m_vertexShaders[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_fragmentShaders); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_fragmentShaders); ++ii)
 			{
 				m_fragmentShaders[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_textures); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
 				m_textures[ii].destroy();
 			}
 
- 			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
+ 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
  			{
  				m_renderTargets[ii].destroy();
  			}
 
-			for (uint32_t ii = 0; ii < countof(m_uniforms); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
 			{
 				m_uniforms[ii].destroy();
 			}
@@ -590,7 +590,7 @@ namespace bgfx
 
 		void updateMsaa()
 		{
-			for (uint32_t ii = 1, last = 0; ii < countof(s_msaa); ++ii)
+			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
 				uint32_t msaa = s_checkMsaa[ii];
 				uint32_t quality = 0;
@@ -2259,7 +2259,7 @@ namespace bgfx
 
 	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
 	{
-		mbstowcs(&s_viewNameW[_id][0], _name, countof(s_viewNameW[0]) );
+		mbstowcs(&s_viewNameW[_id][0], _name, BX_COUNTOF(s_viewNameW[0]) );
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
@@ -2864,8 +2864,8 @@ namespace bgfx
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
 
 				const DXGI_ADAPTER_DESC& desc = s_renderCtx.m_adapterDesc;
-				char description[countof(desc.Description)];
-				wcstombs(description, desc.Description, countof(desc.Description) );
+				char description[BX_COUNTOF(desc.Description)];
+				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
 				tvm.printf(0, pos++, 0x0f, " Device: %s", description);
 				tvm.printf(0, pos++, 0x0f, " Memory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
 					, desc.DedicatedVideoMemory

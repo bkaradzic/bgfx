@@ -7,7 +7,6 @@
 #include <bx/debug.h>
 #include <bx/hash.h>
 #include <bx/uint32_t.h>
-#include <bx/countof.h>
 #include <bx/string.h>
 
 #include "vertexdecl.h"
