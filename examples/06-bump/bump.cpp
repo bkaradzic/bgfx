@@ -6,7 +6,6 @@
 #include "common.h"
 
 #include <bgfx.h>
-#include <bx/countof.h>
 #include <bx/timer.h>
 #include "entry.h"
 #include "dbg.h"
@@ -305,7 +304,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	const bgfx::Memory* mem;
 
-	calcTangents(s_cubeVertices, countof(s_cubeVertices), s_PosNormalTangentTexcoordDecl, s_cubeIndices, countof(s_cubeIndices) );
+	calcTangents(s_cubeVertices, BX_COUNTOF(s_cubeVertices), s_PosNormalTangentTexcoordDecl, s_cubeIndices, BX_COUNTOF(s_cubeIndices) );
 
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );

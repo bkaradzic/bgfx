@@ -7,7 +7,6 @@
 
 #include <bgfx.h>
 #include <bx/timer.h>
-#include <bx/countof.h>
 #include <bx/string.h>
 #include "entry.h"
 #include "dbg.h"
@@ -100,7 +99,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		"font/five_minutes.otf"
 	};
 
-	const uint32_t fontCount = countof(fontNames);
+	const uint32_t fontCount = BX_COUNTOF(fontNames);
 
 	TrueTypeHandle fontFiles[fontCount];
 	FontHandle fonts[fontCount];
@@ -189,7 +188,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Use transient text to display debug information.
 		wchar_t fpsText[64];
-		bx::swnprintf(fpsText, countof(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
+		bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
 		textBufferManager->clearTextBuffer(transientText);
 		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);

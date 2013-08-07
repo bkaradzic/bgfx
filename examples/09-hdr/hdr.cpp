@@ -6,7 +6,6 @@
 #include "common.h"
 
 #include <bgfx.h>
-#include <bx/countof.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include "entry.h"
