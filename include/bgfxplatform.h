@@ -45,9 +45,6 @@ namespace bgfx
 } // namespace bgfx
 
 #elif BX_PLATFORM_OSX
-#	include <Cocoa/Cocoa.h>
-#	include <stdlib.h>
-
 namespace bgfx
 {
 	void osxSetNSWindow(void* _window);

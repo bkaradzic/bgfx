@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
+#include "entry.h"
 
 #if BX_PLATFORM_IOS
 
@@ -11,14 +11,9 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/CAEAGLLayer.h>
 
-#include <bgfxplatform.h>
+#include "entry_p.h"
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
-
-#include "entry_p.h"
-#include "dbg.h"
-
-extern int _main_(int _argc, char** _argv);
 
 namespace bgfx
 {
@@ -64,7 +59,7 @@ namespace entry
 	int32_t MainThreadEntry::threadFunc(void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
-		int32_t result = _main_(self->m_argc, self->m_argv);
+		int32_t result = main(self->m_argc, self->m_argv);
 		return result;
 	}
 

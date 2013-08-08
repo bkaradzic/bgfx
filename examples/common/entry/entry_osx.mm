@@ -3,21 +3,18 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
+#include "entry.h"
 
 #if BX_PLATFORM_OSX
 
-#include <bgfxplatform.h>
+#import <Cocoa/Cocoa.h>
+
+#include "entry_p.h"
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 
-#include "entry_p.h"
-#include "dbg.h"
-
 #define DEFAULT_WIDTH 1280
 #define DEFAULT_HEIGHT 720
-
-extern int _main_(int _argc, char** _argv);
 
 @interface AppDelegate : NSObject<NSApplicationDelegate>
 {
@@ -136,7 +133,7 @@ namespace entry
 		static int32_t threadFunc(void* _userData)
 		{
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
-			return _main_(self->m_argc, self->m_argv);
+			return main(self->m_argc, self->m_argv);
 		}
 	};
 

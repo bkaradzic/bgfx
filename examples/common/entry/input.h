@@ -20,7 +20,7 @@ struct InputBinding
 	const void* m_userData;
 };
 
-#define INPUT_BINDING_END { entry::Key::None, entry::Modifier::None, NULL, NULL }
+#define INPUT_BINDING_END { entry::Key::None, entry::Modifier::None, 0, NULL, NULL }
 
 ///
 void inputAddBindings(const char* _name, const InputBinding* _bindings);
