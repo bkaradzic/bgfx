@@ -7,19 +7,16 @@
 
 #if BX_PLATFORM_LINUX
 
-#include "bgfxplatform.h"
-#include <string.h>
-#include <stdlib.h>
-
 #define XK_MISCELLANY
 #define XK_LATIN1
 #include <X11/keysymdef.h>
-
-#include <bx/thread.h>
-#include <bx/os.h>
+#include <bgfxplatform.h>
 
 #undef None
 #include "entry_p.h"
+#include <bx/thread.h>
+#include <bx/os.h>
+#include <string.h> // memset
 
 #define DEFAULT_WIDTH 1280
 #define DEFAULT_HEIGHT 720

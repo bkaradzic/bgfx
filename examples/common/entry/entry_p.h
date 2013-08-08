@@ -6,7 +6,6 @@
 #ifndef __ENTRY_PRIVATE_H__
 #define __ENTRY_PRIVATE_H__
 
-#include <bgfxplatform.h>
 #include <bx/spscqueue.h>
 
 #include "entry.h"
