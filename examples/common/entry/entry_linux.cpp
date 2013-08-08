@@ -10,10 +10,11 @@
 #define XK_MISCELLANY
 #define XK_LATIN1
 #include <X11/keysymdef.h>
-#include <bgfxplatform.h>
-
 #undef None
+
+#include <bgfxplatform.h>
 #include "entry_p.h"
+
 #include <bx/thread.h>
 #include <bx/os.h>
 #include <string.h> // memset

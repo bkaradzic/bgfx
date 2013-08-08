@@ -7,6 +7,7 @@
 
 #if BX_PLATFORM_WINDOWS
 
+#include <bgfxplatform.h>
 #include "entry_p.h"
 
 #include <bx/uint32_t.h>

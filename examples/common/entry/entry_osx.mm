@@ -9,7 +9,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include <bgfxplatform.h>
 #include "entry_p.h"
+
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 

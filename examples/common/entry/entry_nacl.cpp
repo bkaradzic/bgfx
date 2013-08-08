@@ -7,6 +7,7 @@
 
 #if BX_PLATFORM_NACL
 
+#include <bgfxplatform.h>
 #include "entry_p.h"
 
 #include <stdio.h>
