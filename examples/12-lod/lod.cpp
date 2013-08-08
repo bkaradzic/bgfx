@@ -414,7 +414,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, height
 			);
 
-		imguiBeginScrollArea("Toggle transitions", width - width / 5 - 10, 10, width / 5, height / 7, &scrollArea);
+		imguiBeginScrollArea("Toggle transitions", width - width / 5 - 10, 10, width / 5, height / 6, &scrollArea);
 		imguiSeparatorLine();
 
 		if (imguiButton(transitions ? "ON" : "OFF") )
