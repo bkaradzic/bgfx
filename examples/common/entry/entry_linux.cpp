@@ -10,11 +10,10 @@
 #define XK_MISCELLANY
 #define XK_LATIN1
 #include <X11/keysymdef.h>
+#include <bgfxplatform.h> // will include X11 which #defines None... Don't mess with order of includes.
+
 #undef None
-
-#include <bgfxplatform.h>
 #include "entry_p.h"
-
 #include <bx/thread.h>
 #include <bx/os.h>
 #include <string.h> // memset
