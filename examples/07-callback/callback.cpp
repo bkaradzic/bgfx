@@ -9,7 +9,6 @@
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
-#include "dbg.h"
 #include "fpumath.h"
 #include "aviwriter.h"
 

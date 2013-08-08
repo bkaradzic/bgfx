@@ -6,9 +6,7 @@
 #include "common.h"
 
 #include <bgfx.h>
-#include "entry.h"
-#include "dbg.h"
-#include "processevents.h"
+#include "entry/entry.h"
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
@@ -31,7 +29,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	while (!processEvents(width, height, debug, reset) )
+	while (!entry::processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);

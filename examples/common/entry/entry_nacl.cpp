@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
+#include "entry.h"
 
 #if BX_PLATFORM_NACL
 
@@ -31,8 +31,6 @@
 #include <bx/thread.h>
 
 #include "entry.h"
-
-extern int _main_(int _argc, char** _argv);
 
 namespace entry
 {
@@ -112,7 +110,7 @@ namespace entry
 		PP_Resource resource = g_messageLoopInterface->Create(g_instance);
 		g_messageLoopInterface->AttachToCurrentThread(resource);
 
-		int32_t result = _main_(self->m_argc, self->m_argv);
+		int32_t result = main(self->m_argc, self->m_argv);
 		return result;
 	}
 

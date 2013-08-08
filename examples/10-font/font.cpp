@@ -8,10 +8,7 @@
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/string.h>
-#include "entry.h"
-#include "dbg.h"
 #include "fpumath.h"
-#include "processevents.h"
 
 #include "font/font_manager.h"
 #include "font/text_buffer_manager.h"
@@ -170,7 +167,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create a transient buffer for real-time data.
 	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Transient);
 
-	while (!processEvents(width, height, debug, reset) )
+	while (!entry::processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);

@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
+#include "entry.h"
 
 #if BX_PLATFORM_QNX
 
@@ -35,11 +35,9 @@ namespace entry
 
 } // namespace entry
 
-extern int _main_(int _argc, char** _argv);
-
 int main(int _argc, char** _argv)
 {
-	_main_(_argc, _argv);
+	entry::main(_argc, _argv);
 }
 
 #endif // BX_PLATFORM_QNX

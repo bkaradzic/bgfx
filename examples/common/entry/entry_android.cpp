@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
+#include "entry.h"
 
 #if BX_PLATFORM_ANDROID
 
@@ -22,8 +22,6 @@ extern "C"
 {
 #include <android_native_app_glue.c>
 } // extern "C"
-
-extern int _main_(int _argc, char** _argv);
 
 namespace entry
 {
@@ -218,14 +216,12 @@ namespace entry
 	int32_t MainThreadEntry::threadFunc(void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
-		int32_t result = _main_(self->m_argc, self->m_argv);
+		int32_t result = main(self->m_argc, self->m_argv);
 //		PostMessage(s_ctx.m_hwnd, WM_QUIT, 0, 0);
 		return result;
 	}
 
 } // namespace entry
-
-extern int _main_(int _argc, char** _argv);
 
 extern "C" void android_main(android_app* _app)
 {

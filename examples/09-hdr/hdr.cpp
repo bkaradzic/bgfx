@@ -8,10 +8,7 @@
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
-#include "entry.h"
-#include "dbg.h"
 #include "fpumath.h"
-#include "processevents.h"
 #include "imgui/imgui.h"
 
 #include <string.h>
@@ -514,11 +511,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t oldWidth = 0;
 	uint32_t oldHeight = 0;
 
-	MouseState mouseState;
+	entry::MouseState mouseState;
 
 	float time = 0.0f;
 
-	while (!processEvents(width, height, debug, reset, &mouseState) )
+	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
 		if (oldWidth != width
 		||  oldHeight != height)

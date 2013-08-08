@@ -18,8 +18,6 @@
 #include <vector>
 #include <unordered_map>
 
-namespace std { namespace tr1 {} using namespace tr1; } // namespace std
-
 #define MAX_TAGS 256
 extern "C"
 {

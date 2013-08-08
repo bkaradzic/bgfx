@@ -266,6 +266,7 @@ Todo
  - Occlusion queries.
  - DX11: MSAA.
  - Fullscreen mode.
+ - GLES: Support for ETC1 and PVR compressed textures.
 
 Contact
 -------

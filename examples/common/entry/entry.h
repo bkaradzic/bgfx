@@ -6,6 +6,11 @@
 #ifndef __ENTRY_H__
 #define __ENTRY_H__
 
+#include "dbg.h"
+
+#include <bx/bx.h>
+#include <bx/debug.h>
+
 namespace entry
 {
 	struct MouseButton
@@ -119,47 +124,24 @@ namespace entry
 		};
 	};
 
-	struct Event
+	struct MouseState
 	{
-		enum Enum
+		MouseState()
+			: m_mx(0)
+			, m_my(0)
 		{
-			Exit,
-			Key,
-			Mouse,
-			Size,
-		};
+			for (uint32_t ii = 0; ii < entry::MouseButton::Count; ++ii)
+			{
+				m_buttons[ii] = entry::MouseButton::None;
+			}
+		}
 
-		Event::Enum m_type;
+		uint32_t m_mx;
+		uint32_t m_my;
+		uint8_t m_buttons[entry::MouseButton::Count];
 	};
 
-	struct KeyEvent : public Event
-	{
-		Key::Enum m_key;
-		uint8_t m_modifiers;
-		bool m_down;
-	};
-
-	struct MouseEvent : public Event
-	{
-		int32_t m_mx;
-		int32_t m_my;
-		MouseButton::Enum m_button;
-		bool m_down;
-		bool m_move;
-	};
-
-	struct SizeEvent : public Event
-	{
-		uint32_t m_width;
-		uint32_t m_height;
-	};
-
-	const Event* poll();
-	void release(const Event* _event);
-
-	void setWindowSize(uint32_t _width, uint32_t _height);
-	void toggleWindowFrame();
-	void setMouseLock(bool _lock);
+	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
 
 } // namespace entry
 

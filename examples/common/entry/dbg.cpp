@@ -3,8 +3,6 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
-
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>

@@ -4,12 +4,10 @@
  */
 
 #include "common.h"
+
 #include <bgfx.h>
 #include <bx/timer.h>
-#include "entry.h"
-#include "dbg.h"
 #include "fpumath.h"
-#include "processevents.h"
 
 #include "font/font_manager.h"
 #include "font/text_metrics.h"
@@ -172,7 +170,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	textBufferManager->appendText(scrollableBuffer, fontScaled, textBegin, textEnd);
 
-	MouseState mouseState;
+	entry::MouseState mouseState;
 	int32_t scrollArea = 0;
 	const int32_t guiPanelWidth = 250;
 	const int32_t guiPanelHeight = 200;
@@ -181,7 +179,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float textScale = 1.0f;
 	float textSize = 14.0f;
 
-	while (!processEvents(width, height, debug, reset, &mouseState) )
+	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my

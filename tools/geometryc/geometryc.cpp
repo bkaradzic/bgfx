@@ -11,7 +11,6 @@
 #include <string.h>
 #include <algorithm>
 #include <vector>
-namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 #include <unordered_map>
 
 #include <forsythtriangleorderoptimizer.h>
