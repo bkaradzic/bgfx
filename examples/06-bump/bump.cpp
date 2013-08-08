@@ -6,12 +6,8 @@
 #include "common.h"
 
 #include <bgfx.h>
-#include <bx/countof.h>
 #include <bx/timer.h>
-#include "entry.h"
-#include "dbg.h"
 #include "fpumath.h"
-#include "processevents.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -305,7 +301,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	const bgfx::Memory* mem;
 
-	calcTangents(s_cubeVertices, countof(s_cubeVertices), s_PosNormalTangentTexcoordDecl, s_cubeIndices, countof(s_cubeIndices) );
+	calcTangents(s_cubeVertices, BX_COUNTOF(s_cubeVertices), s_PosNormalTangentTexcoordDecl, s_cubeIndices, BX_COUNTOF(s_cubeIndices) );
 
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
@@ -336,7 +332,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// We can destroy vertex and fragment shader here since
 	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is^
+	// Vertex and fragment shader will be destroyed once program is
 	// destroyed.
 	bgfx::destroyVertexShader(vsh);
 	bgfx::destroyFragmentShader(fsh);
@@ -351,7 +347,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	int64_t timeOffset = bx::getHPCounter();
 
-	while (!processEvents(width, height, debug, reset) )
+	while (!entry::processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);

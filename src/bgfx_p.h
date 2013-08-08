@@ -57,7 +57,6 @@ namespace bgfx
 #include <bx/bx.h>
 #include <bx/debug.h>
 #include <bx/blockalloc.h>
-#include <bx/countof.h>
 #include <bx/endian.h>
 #include <bx/handlealloc.h>
 #include <bx/hash.h>

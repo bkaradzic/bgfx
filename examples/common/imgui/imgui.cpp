@@ -399,7 +399,7 @@ struct Imgui
 
 		drawText(_x + AREA_HEADER / 2
 			, _y + AREA_HEADER / 2
-			, IMGUI_ALIGN_LEFT
+			, ImguiTextAlign::Left
 			, _name
 			, imguiRGBA(255, 255, 255, 128)
 			);
@@ -554,7 +554,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
 				);
@@ -563,7 +563,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
 				);
@@ -601,7 +601,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(255, 255, 255, 200)
 				);
@@ -610,7 +610,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
 				);
@@ -671,7 +671,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
 				);
@@ -680,7 +680,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
 				);
@@ -731,7 +731,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
 				);
@@ -740,7 +740,7 @@ struct Imgui
 		{
 			drawText(xx + BUTTON_HEIGHT
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
 				);
@@ -750,7 +750,7 @@ struct Imgui
 		{
 			drawText(xx + width - BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_RIGHT
+				, ImguiTextAlign::Right
 				, _subtext
 				, imguiRGBA(255, 255, 255, 128)
 				);
@@ -776,7 +776,7 @@ struct Imgui
 		m_widgetY += BUTTON_HEIGHT;
 		drawText(xx
 			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-			, IMGUI_ALIGN_LEFT
+			, ImguiTextAlign::Left
 			, out
 			, imguiRGBA(255, 255, 255, 255)
 			);
@@ -791,7 +791,7 @@ struct Imgui
 
 		drawText(xx + ww - BUTTON_HEIGHT / 2
 			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-			, IMGUI_ALIGN_RIGHT
+			, ImguiTextAlign::Right
 			, _text
 			, imguiRGBA(255, 255, 255, 200)
 			);
@@ -889,14 +889,14 @@ struct Imgui
 		{
 			drawText(xx + SLIDER_HEIGHT / 2
 				, yy + SLIDER_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
 				);
 
 			drawText(xx + width - SLIDER_HEIGHT / 2
 				, yy + SLIDER_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_RIGHT
+				, ImguiTextAlign::Right
 				, msg
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
 				);
@@ -905,14 +905,14 @@ struct Imgui
 		{
 			drawText(xx + SLIDER_HEIGHT / 2
 				, yy + SLIDER_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_LEFT
+				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
 				);
 
 			drawText(xx + width - SLIDER_HEIGHT / 2
 				, yy + SLIDER_HEIGHT / 2 + TEXT_HEIGHT / 2
-				, IMGUI_ALIGN_RIGHT
+				, ImguiTextAlign::Right
 				, msg
 				, imguiRGBA(128, 128, 128, 200)
 				);
@@ -1247,12 +1247,12 @@ struct Imgui
 		return len;
 	}
 
-	void drawText(int32_t _x, int32_t _y, imguiTextAlign _align, const char* _text, uint32_t _abgr)
+	void drawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _abgr)
 	{
 		drawText( (float)_x, (float)_y, _text, _align, _abgr);
 	}
 
-	void drawText(float _x, float _y, const char* _text, imguiTextAlign _align, uint32_t _abgr)
+	void drawText(float _x, float _y, const char* _text, ImguiTextAlign::Enum _align, uint32_t _abgr)
 	{
 		if (!_text)
 		{
@@ -1260,11 +1260,11 @@ struct Imgui
 		}
 
 		uint32_t numVertices = 0;
-		if (_align == IMGUI_ALIGN_CENTER)
+		if (_align == ImguiTextAlign::Center)
 		{
 			_x -= getTextLength(m_cdata, _text, numVertices) / 2;
 		}
-		else if (_align == IMGUI_ALIGN_RIGHT)
+		else if (_align == ImguiTextAlign::Right)
 		{
 			_x -= getTextLength(m_cdata, _text, numVertices);
 		}
@@ -1505,7 +1505,7 @@ bool imguiSlider(const char* _text, float* _val, float _vmin, float _vmax, float
 	return s_imgui.slider(_text, _val, _vmin, _vmax, _vinc, _enabled);
 }
 
-void imguiDrawText(int32_t _x, int32_t _y, imguiTextAlign _align, const char* _text, uint32_t _argb)
+void imguiDrawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb)
 {
 	s_imgui.drawText(_x, _y, _align, _text, _argb);
 }

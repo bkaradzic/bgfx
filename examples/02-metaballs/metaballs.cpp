@@ -7,10 +7,8 @@
 
 #include <bgfx.h>
 #include <bx/timer.h>
-#include "entry.h"
-#include "dbg.h"
+#include "entry/entry.h"
 #include "fpumath.h"
-#include "processevents.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -528,7 +526,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	int64_t timeOffset = bx::getHPCounter();
 
-	while (!processEvents(width, height, debug, reset) )
+	while (!entry::processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);

@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
+#include "entry.h"
 
 #if BX_PLATFORM_LINUX
 
@@ -24,8 +24,6 @@
 #define DEFAULT_WIDTH 1280
 #define DEFAULT_HEIGHT 720
 
-extern int _main_(int _argc, char** _argv);
-
 namespace entry
 {
 	static uint8_t s_translateKey[512];
@@ -33,7 +31,7 @@ namespace entry
 	static void initTranslateKey(uint16_t _xk, Key::Enum _key)
 	{
 		_xk += 256;
-		BX_CHECK(_xk < countof(s_translateKey), "Out of bounds %d.", _xk);
+		BX_CHECK(_xk < BX_COUNTOF(s_translateKey), "Out of bounds %d.", _xk);
 		s_translateKey[_xk&0x1ff] = (uint8_t)_key;
 	}
 
@@ -295,7 +293,7 @@ namespace entry
 	int32_t MainThreadEntry::threadFunc(void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
-		int32_t result = _main_(self->m_argc, self->m_argv);
+		int32_t result = main(self->m_argc, self->m_argv);
 		s_ctx.m_exit = true;
 		return result;
 	}

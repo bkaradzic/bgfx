@@ -82,7 +82,7 @@ namespace bgfx
 			{
 				BX_TRACE("---");
 				bool valid = true;
-				for (uint32_t attr = 6; attr < countof(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
+				for (uint32_t attr = 6; attr < BX_COUNTOF(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
 				{
 					int value;
 					glXGetFBConfigAttrib(s_display, configs[ii], attrsGlx[attr], &value);

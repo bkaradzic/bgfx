@@ -26,17 +26,17 @@
 #ifndef __IMGUI_H__
 #define __IMGUI_H__
 
-enum imguiMouseButton
-{
-	IMGUI_MBUT_LEFT = 0x01,
-	IMGUI_MBUT_RIGHT = 0x02,
-};
+#define IMGUI_MBUT_LEFT  0x01
+#define IMGUI_MBUT_RIGHT 0x02
 
-enum imguiTextAlign
+struct ImguiTextAlign
 {
-	IMGUI_ALIGN_LEFT,
-	IMGUI_ALIGN_CENTER,
-	IMGUI_ALIGN_RIGHT,
+	enum Enum
+	{
+		Left,
+		Center,
+		Right,
+	};
 };
 
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
@@ -71,7 +71,7 @@ void imguiLabel(const char* _format, ...);
 void imguiValue(const char* _text);
 bool imguiSlider(const char* _text, float* val, float vmin, float vmax, float vinc, bool _enabled = true);
 
-void imguiDrawText(int _x, int _y, imguiTextAlign _align, const char* _text, uint32_t _argb);
+void imguiDrawText(int _x, int _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb);
 void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_t _argb);
 void imguiDrawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint32_t _argb);
 void imguiDrawRect(float _x, float _y, float _w, float _h, uint32_t _argb);

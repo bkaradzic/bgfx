@@ -339,7 +339,7 @@ namespace bgfx
 				D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 			};
 
-			for (uint32_t ii = 0; ii < countof(behaviorFlags) && NULL == m_device; ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(behaviorFlags) && NULL == m_device; ++ii)
 			{
 #if 0 // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
@@ -473,37 +473,37 @@ namespace bgfx
 		{
 			preReset();
 
-			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
 			{
 				m_vertexBuffers[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexShaders); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexShaders); ++ii)
 			{
 				m_vertexShaders[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_fragmentShaders); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_fragmentShaders); ++ii)
 			{
 				m_fragmentShaders[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_textures); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
 				m_textures[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexDecls); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexDecls); ++ii)
 			{
 				m_vertexDecls[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
 			{
 				m_renderTargets[ii].destroy();
 			}
@@ -532,7 +532,7 @@ namespace bgfx
 
 		void updateMsaa()
 		{
-			for (uint32_t ii = 1, last = 0; ii < countof(s_checkMsaa); ++ii)
+			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_checkMsaa); ++ii)
 			{
 				D3DMULTISAMPLE_TYPE msaa = s_checkMsaa[ii];
 				DWORD quality;
@@ -730,17 +730,17 @@ namespace bgfx
 
 			capturePreReset();
 
-			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].preReset();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
 			{
 				m_vertexBuffers[ii].preReset();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
 			{
 				m_renderTargets[ii].preReset();
 			}
@@ -753,17 +753,17 @@ namespace bgfx
 
 			capturePostReset();
 
-			for (uint32_t ii = 0; ii < countof(m_indexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].postReset();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_vertexBuffers); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
 			{
 				m_vertexBuffers[ii].postReset();
 			}
 
-			for (uint32_t ii = 0; ii < countof(m_renderTargets); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
 			{
 				m_renderTargets[ii].postReset();
 			}
@@ -2196,7 +2196,7 @@ namespace bgfx
 
 	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
 	{
-		mbstowcs(&s_viewNameW[_id][0], _name, countof(s_viewNameW[0]) );
+		mbstowcs(&s_viewNameW[_id][0], _name, BX_COUNTOF(s_viewNameW[0]) );
 	}
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)

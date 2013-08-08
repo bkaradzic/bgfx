@@ -3,13 +3,12 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
+#include "entry.h"
 
 #if BX_PLATFORM_WINDOWS
 
 #include "entry_p.h"
 
-#include <bx/countof.h>
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 
@@ -21,8 +20,6 @@
 #define WM_USER_SET_WINDOW_SIZE     (WM_USER+0)
 #define WM_USER_TOGGLE_WINDOW_FRAME (WM_USER+1)
 #define WM_USER_MOUSE_LOCK          (WM_USER+2)
-
-extern int _main_(int _argc, char** _argv);
 
 namespace entry
 {
@@ -47,7 +44,7 @@ namespace entry
 	static uint8_t translateKeyModifiers()
 	{
 		uint8_t modifiers = 0;
-		for (uint32_t ii = 0; ii < countof(s_translateKeyModifiers); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateKeyModifiers); ++ii)
 		{
 			const TranslateKeyModifiers& tkm = s_translateKeyModifiers[ii];
 			modifiers |= 0 > GetKeyState(tkm.m_vk) ? tkm.m_modifier : Modifier::None;
@@ -626,7 +623,7 @@ namespace entry
 	int32_t MainThreadEntry::threadFunc(void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
-		int32_t result = _main_(self->m_argc, self->m_argv);
+		int32_t result = main(self->m_argc, self->m_argv);
 		PostMessage(s_ctx.m_hwnd, WM_QUIT, 0, 0);
 		return result;
 	}

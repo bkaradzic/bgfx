@@ -11,7 +11,6 @@
 #include <string.h>
 #include <algorithm>
 #include <vector>
-namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 #include <unordered_map>
 
 #include <forsythtriangleorderoptimizer.h>
@@ -51,7 +50,6 @@ namespace std { namespace tr1 {} using namespace tr1; } // namespace std
 
 #include <bx/bx.h>
 #include <bx/debug.h>
-#include <bx/countof.h>
 #include <bx/commandline.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
@@ -429,7 +427,7 @@ int main(int _argc, const char* _argv[])
 	const char* next = data;
 	do
 	{
-		next = tokenizeCommandLine(next, commandLine, len, argc, argv, countof(argv), '\n');
+		next = tokenizeCommandLine(next, commandLine, len, argc, argv, BX_COUNTOF(argv), '\n');
 		if (0 < argc)
 		{
 			if (0 == strcmp(argv[0], "#") )

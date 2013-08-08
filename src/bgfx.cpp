@@ -744,7 +744,7 @@ namespace bgfx
 		memset(m_seq, 0, sizeof(m_seq) );
 		memset(m_seqMask, 0, sizeof(m_seqMask) );
 
-		for (uint32_t ii = 0; ii < countof(m_rect); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rect); ++ii)
 		{
 			m_rect[ii].m_width = 1;
 			m_rect[ii].m_height = 1;

@@ -18,8 +18,6 @@
 #include <vector>
 #include <unordered_map>
 
-namespace std { namespace tr1 {} using namespace tr1; } // namespace std
-
 #define MAX_TAGS 256
 extern "C"
 {
@@ -36,7 +34,6 @@ extern "C"
 #include <bx/bx.h>
 
 #include <bx/commandline.h>
-#include <bx/countof.h>
 #include <bx/endian.h>
 #include <bx/uint32_t.h>
 #include <bx/readerwriter.h>
@@ -568,7 +565,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 	uint32_t optimization = 3;
 	if (_cmdLine.hasArg(optimization, 'O') )
 	{
-		optimization = bx::uint32_min(optimization, countof(s_optimizationLevelDx9)-1);
+		optimization = bx::uint32_min(optimization, BX_COUNTOF(s_optimizationLevelDx9)-1);
 		flags |= s_optimizationLevelDx9[optimization];
 	}
 	else
@@ -749,7 +746,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	uint32_t optimization = 3;
 	if (_cmdLine.hasArg(optimization, 'O') )
 	{
-		optimization = bx::uint32_min(optimization, countof(s_optimizationLevelDx11)-1);
+		optimization = bx::uint32_min(optimization, BX_COUNTOF(s_optimizationLevelDx11)-1);
 		flags |= s_optimizationLevelDx11[optimization];
 	}
 	else
@@ -1051,7 +1048,7 @@ struct Preprocessor
 	void setDefaultDefine(const char* _name)
 	{
 		char temp[1024];
-		bx::snprintf(temp, countof(temp)
+		bx::snprintf(temp, BX_COUNTOF(temp)
 			, "#ifndef %s\n"
 			  "#	define %s 0\n"
 			  "#endif // %s\n"

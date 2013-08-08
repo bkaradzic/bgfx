@@ -8,10 +8,7 @@
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
-#include "entry.h"
-#include "dbg.h"
 #include "fpumath.h"
-#include "processevents.h"
 #include "imgui/imgui.h"
 
 #include <stdio.h>
@@ -405,8 +402,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float at[3] = { 0.0f, 1.0f, 0.0f };
 	float eye[3] = { 0.0f, 1.0f, -2.0f };
 
-	MouseState mouseState;
-	while (!processEvents(width, height, debug, reset, &mouseState) )
+	entry::MouseState mouseState;
+	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my

@@ -7,12 +7,8 @@
 
 #include <bgfx.h>
 #include <bx/timer.h>
-#include <bx/countof.h>
 #include <bx/string.h>
-#include "entry.h"
-#include "dbg.h"
 #include "fpumath.h"
-#include "processevents.h"
 
 #include "font/font_manager.h"
 #include "font/text_buffer_manager.h"
@@ -100,7 +96,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		"font/five_minutes.otf"
 	};
 
-	const uint32_t fontCount = countof(fontNames);
+	const uint32_t fontCount = BX_COUNTOF(fontNames);
 
 	TrueTypeHandle fontFiles[fontCount];
 	FontHandle fonts[fontCount];
@@ -171,7 +167,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create a transient buffer for real-time data.
 	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Transient);
 
-	while (!processEvents(width, height, debug, reset) )
+	while (!entry::processEvents(width, height, debug, reset) )
 	{
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);
@@ -189,7 +185,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Use transient text to display debug information.
 		wchar_t fpsText[64];
-		bx::swnprintf(fpsText, countof(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
+		bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
 		textBufferManager->clearTextBuffer(transientText);
 		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);

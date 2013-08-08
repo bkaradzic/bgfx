@@ -650,12 +650,12 @@ namespace bgfx
 	{
 		void create()
 		{
-			glGenQueries(countof(m_queries), m_queries);
+			glGenQueries(BX_COUNTOF(m_queries), m_queries);
 		}
 
 		void destroy()
 		{
-			glDeleteQueries(countof(m_queries), m_queries);
+			glDeleteQueries(BX_COUNTOF(m_queries), m_queries);
 		}
 
 		void begin(uint16_t _id, GLenum _target) const
