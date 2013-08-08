@@ -3,10 +3,10 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <ctype.h>  // isspace
 #include <stdint.h>
 #include <stdlib.h> // size_t
-// #include <stdio.h>
-#include <ctype.h>  // isspace
+#include <string.h> // strlen
 #include <bx/hash.h>
 
 #include "dbg.h"

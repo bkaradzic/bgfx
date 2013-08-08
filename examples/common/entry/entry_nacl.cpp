@@ -7,6 +7,8 @@
 
 #if BX_PLATFORM_NACL
 
+#include "entry_p.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
