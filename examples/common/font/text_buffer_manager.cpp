@@ -695,6 +695,12 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 	uint32_t indexSize = bc.textBuffer->getIndexCount() * bc.textBuffer->getIndexSize();
 	uint32_t vertexSize = bc.textBuffer->getVertexCount() * bc.textBuffer->getVertexSize();
+
+	if (0 == indexSize || 0 == vertexSize)
+	{
+		return;
+	}
+
 	const bgfx::Memory* mem;
 
 	bgfx::setTexture(0, u_texColor, m_fontManager->getAtlas()->getTextureHandle() );

@@ -26,83 +26,37 @@ long int fsize(FILE* _file)
 	return size;
 }
 
-char* loadText(const char* _textFile)
-{	
-	FILE* pFile;
-	pFile = fopen(_textFile, "rb");
-	if (pFile == NULL)
-	{		
-		return NULL;
-	}
-
-	// Go to the end of the file.
-	if (fseek(pFile, 0L, SEEK_END) == 0)
+static char* loadText(const char* _filePath)
+{
+	FILE* file = fopen(_filePath, "rb");
+	if (NULL != file)
 	{
-		// Get the size of the file.
-		long bufsize = ftell(pFile);
-		if (bufsize == -1)
-		{
-			fclose(pFile);			
-			return NULL;
-		}
-
-		char* buffer = new char[bufsize];
-
-		// Go back to the start of the file.
-		fseek(pFile, 0L, SEEK_SET);
-
-		// Read the entire file into memory.
-		size_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
-		if (newLen == 0)
-		{
-			fclose(pFile);
-			delete [] buffer;
-			return NULL;
-		}
-
-		fclose(pFile);
-
-		return buffer;
+		uint32_t size = (uint32_t)fsize(file);
+		char* mem = (char*)malloc(size+1);
+		size_t ignore = fread(mem, 1, size, file);
+		BX_UNUSED(ignore);
+		fclose(file);
+		mem[size-1] = '\0';
+		return mem;
 	}
+
 	return NULL;
 }
 
-TrueTypeHandle loadTtf(FontManager* _fm, const char* _fontPath)
+TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 {
-	FILE* pFile;
-	pFile = fopen(_fontPath, "rb");
-	if (NULL != pFile)
+	FILE* file = fopen(_filePath, "rb");
+	if (NULL != file)
 	{
-		if (0 == fseek(pFile, 0L, SEEK_END) )
-		{
-			// Get the size of the file.
-			long bufsize = ftell(pFile);
-			if (bufsize == -1)
-			{
-				fclose(pFile);
-				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
-			}
-
-			uint8_t* buffer = new uint8_t[bufsize];
-
-			// Go back to the start of the file.
-			fseek(pFile, 0L, SEEK_SET);
-
-			// Read the entire file into memory.
-			uint32_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
-			if (newLen == 0)
-			{
-				fclose(pFile);
-				delete [] buffer;
-				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
-			}
-
-			fclose(pFile);
-
-			return _fm->createTtf(buffer, bufsize);
-		}
+		uint32_t size = (uint32_t)fsize(file);
+		uint8_t* mem = (uint8_t*)malloc(size+1);
+		size_t ignore = fread(mem, 1, size, file);
+		BX_UNUSED(ignore);
+		fclose(file);
+		mem[size-1] = '\0';
+		TrueTypeHandle handle = _fm->createTtf(mem, size);
+		free(mem);
+		return handle;
 	}
 
 	TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
@@ -285,6 +239,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
+
+	free(bigText);
 
 	fontManager->destroyTtf(font);
 	// Destroy the fonts.

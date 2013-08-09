@@ -16,42 +16,29 @@
 #include <stdio.h>
 #include <wchar.h>
 
-TrueTypeHandle loadTtf(FontManager* _fm, const char* _fontPath)
+long int fsize(FILE* _file)
 {
-	FILE* pFile;
-	pFile = fopen(_fontPath, "rb");
-	if (NULL != pFile)
+	long int pos = ftell(_file);
+	fseek(_file, 0L, SEEK_END);
+	long int size = ftell(_file);
+	fseek(_file, pos, SEEK_SET);
+	return size;
+}
+
+TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
+{
+	FILE* file = fopen(_filePath, "rb");
+	if (NULL != file)
 	{
-		if (0 == fseek(pFile, 0L, SEEK_END) )
-		{
-			// Get the size of the file.
-			long bufsize = ftell(pFile);
-			if (bufsize == -1)
-			{
-				fclose(pFile);
-				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
-			}
-
-			uint8_t* buffer = new uint8_t[bufsize];
-
-			// Go back to the start of the file.
-			fseek(pFile, 0L, SEEK_SET);
-
-			// Read the entire file into memory.
-			uint32_t newLen = fread( (void*)buffer, sizeof(char), bufsize, pFile);
-			if (newLen == 0)
-			{
-				fclose(pFile);
-				delete [] buffer;
-				TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
-			}
-
-			fclose(pFile);
-
-			return _fm->createTtf(buffer, bufsize);
-		}
+		uint32_t size = (uint32_t)fsize(file);
+		uint8_t* mem = (uint8_t*)malloc(size+1);
+		size_t ignore = fread(mem, 1, size, file);
+		BX_UNUSED(ignore);
+		fclose(file);
+		mem[size-1] = '\0';
+		TrueTypeHandle handle = _fm->createTtf(mem, size);
+		free(mem);
+		return handle;
 	}
 
 	TrueTypeHandle invalid = BGFX_INVALID_HANDLE;
@@ -183,14 +170,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0 / freq;
 
+		// Use debug font to print information about this example.
+		bgfx::dbgTextClear();
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/10-font");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use the font system to display text and styled text.");
+		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+
 		// Use transient text to display debug information.
 		wchar_t fpsText[64];
 		bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
 		textBufferManager->clearTextBuffer(transientText);
-		textBufferManager->setPenPosition(transientText, 20.0, 4.0f);
-		textBufferManager->appendText(transientText, consola_16, L"bgfx/examples/10-font\n");
-		textBufferManager->appendText(transientText, consola_16, L"Description: Use the font system to display text and styled text.\n");
+		textBufferManager->setPenPosition(transientText, width - 150.0f, 10.0f);
+		textBufferManager->appendText(transientText, consola_16, L"Transient\n");
+		textBufferManager->appendText(transientText, consola_16, L"text buffer\n");
 		textBufferManager->appendText(transientText, consola_16, fpsText);
 
 		float at[3] = { 0, 0, 0.0f };

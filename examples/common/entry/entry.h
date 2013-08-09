@@ -9,7 +9,6 @@
 #include "dbg.h"
 
 #include <bx/bx.h>
-#include <bx/debug.h>
 
 namespace entry
 {

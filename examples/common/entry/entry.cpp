@@ -59,14 +59,15 @@ namespace entry
 	{
 		if (_argc > 1)
 		{
-			if (setOrToggle(s_reset, "vsync", BGFX_RESET_VSYNC, 1, _argc, _argv)
-			||  setOrToggle(s_reset, "msaa", BGFX_RESET_MSAA_X16, 1, _argc, _argv) )
+			if (setOrToggle(s_reset, "vsync", BGFX_RESET_VSYNC,    1, _argc, _argv)
+			||  setOrToggle(s_reset, "msaa",  BGFX_RESET_MSAA_X16, 1, _argc, _argv) )
 			{
 				return 0;
 			}
-			else if (setOrToggle(s_debug, "stats", BGFX_DEBUG_STATS, 1, _argc, _argv)
-				 ||  setOrToggle(s_debug, "ifh", BGFX_DEBUG_IFH, 1, _argc, _argv)
-				 ||  setOrToggle(s_debug, "text", BGFX_DEBUG_TEXT, 1, _argc, _argv) )
+			else if (setOrToggle(s_debug, "stats",     BGFX_DEBUG_STATS,     1, _argc, _argv)
+				 ||  setOrToggle(s_debug, "ifh",       BGFX_DEBUG_IFH,       1, _argc, _argv)
+				 ||  setOrToggle(s_debug, "text",      BGFX_DEBUG_TEXT,      1, _argc, _argv)
+				 ||  setOrToggle(s_debug, "wireframe", BGFX_DEBUG_WIREFRAME, 1, _argc, _argv) )
 			{
 				bgfx::setDebug(s_debug);
 				return 0;
@@ -84,10 +85,11 @@ namespace entry
 
 	static const InputBinding s_bindings[] = 
 	{
-		{ entry::Key::KeyQ,  entry::Modifier::LeftCtrl,  1, cmd, "exit"           },
-		{ entry::Key::F1,    entry::Modifier::None,      1, cmd, "graphics stats" },
-		{ entry::Key::F7,    entry::Modifier::None,      1, cmd, "graphics vsync" },
-		{ entry::Key::F8,    entry::Modifier::None,      1, cmd, "graphics msaa"  },
+		{ entry::Key::KeyQ,  entry::Modifier::LeftCtrl,  1, cmd, "exit"               },
+		{ entry::Key::F1,    entry::Modifier::None,      1, cmd, "graphics stats"     },
+		{ entry::Key::F3,    entry::Modifier::None,      1, cmd, "graphics wireframe" },
+		{ entry::Key::F7,    entry::Modifier::None,      1, cmd, "graphics vsync"     },
+		{ entry::Key::F8,    entry::Modifier::None,      1, cmd, "graphics msaa"      },
 
 		INPUT_BINDING_END
 	};
