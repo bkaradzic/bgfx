@@ -139,10 +139,10 @@ struct Input
 
 			if (binding->m_flags == 1)
 			{
-				if (down
-				&&  modifiers == binding->m_modifiers)
+				if (down)
 				{
-					if (!m_keyboard.m_once[binding->m_key])
+					if (modifiers == binding->m_modifiers
+					&&  !m_keyboard.m_once[binding->m_key])
 					{
 						binding->m_fn(binding->m_userData);
 						m_keyboard.m_once[binding->m_key] = true;

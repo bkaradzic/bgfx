@@ -85,11 +85,12 @@ namespace entry
 
 	static const InputBinding s_bindings[] = 
 	{
-		{ entry::Key::KeyQ,  entry::Modifier::LeftCtrl,  1, cmd, "exit"               },
-		{ entry::Key::F1,    entry::Modifier::None,      1, cmd, "graphics stats"     },
-		{ entry::Key::F3,    entry::Modifier::None,      1, cmd, "graphics wireframe" },
-		{ entry::Key::F7,    entry::Modifier::None,      1, cmd, "graphics vsync"     },
-		{ entry::Key::F8,    entry::Modifier::None,      1, cmd, "graphics msaa"      },
+		{ entry::Key::KeyQ, entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
+		{ entry::Key::F1,   entry::Modifier::None,      1, cmd, "graphics stats"                    },
+		{ entry::Key::F1,   entry::Modifier::LeftShift, 1, cmd, "graphics stats 0\ngraphics text 0" },
+		{ entry::Key::F3,   entry::Modifier::None,      1, cmd, "graphics wireframe"                },
+		{ entry::Key::F7,   entry::Modifier::None,      1, cmd, "graphics vsync"                    },
+		{ entry::Key::F8,   entry::Modifier::None,      1, cmd, "graphics msaa"                     },
 
 		INPUT_BINDING_END
 	};
