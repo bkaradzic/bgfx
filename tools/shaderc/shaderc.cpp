@@ -278,7 +278,7 @@ int32_t writef(bx::WriterI* _writer, const char* _format, ...)
 		len = bx::vsnprintf(out, len, _format, argList);
 	}
 
-	len = _writer->write(out, len);
+	len = bx::write(_writer, out, len);
 
 	va_end(argList);
 
@@ -493,13 +493,13 @@ void printCode(const char* _code)
 	fprintf(stderr, "---\n");
 }
 
-void writeFile(const char* _filePath, void* _data, uint32_t _size)
+void writeFile(const char* _filePath, const void* _data, int32_t _size)
 {
-	FILE* file = fopen(_filePath, "wb");
-	if (NULL != file)
+	bx::CrtFileWriter out;
+	if (0 == out.open(_filePath) )
 	{
-		fwrite(_data, 1, _size, file);
-		fclose(file);
+		out.write(_data, _size);
+		out.close();
 	}
 }
 
@@ -533,7 +533,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 		writef(_writer, "#version %s\n\n", profile);
 	}
 
-	_writer->write(optimizedShader, (int32_t)strlen(optimizedShader) );
+	bx::write(_writer, optimizedShader, (int32_t)strlen(optimizedShader) );
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
@@ -552,14 +552,16 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		return false;
 	}
 
+	bool debug = _cmdLine.hasArg('\0', "debug");
+
 	uint32_t flags = 0;
-	flags |= _cmdLine.hasArg('\0', "debug") ? D3DXSHADER_DEBUG : 0;
+	flags |= debug ? D3DXSHADER_DEBUG : 0;
 	flags |= _cmdLine.hasArg('\0', "avoid-flow-control") ? D3DXSHADER_AVOID_FLOW_CONTROL : 0;
 	flags |= _cmdLine.hasArg('\0', "no-preshader") ? D3DXSHADER_NO_PRESHADER : 0;
 	flags |= _cmdLine.hasArg('\0', "partial-precision") ? D3DXSHADER_PARTIALPRECISION : 0;
 	flags |= _cmdLine.hasArg('\0', "prefer-flow-control") ? D3DXSHADER_PREFER_FLOW_CONTROL : 0;
 	flags |= _cmdLine.hasArg('\0', "backwards-compatibility") ? D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY : 0;
-	
+
 	bool werror = _cmdLine.hasArg('\0', "Werror");
 
 	uint32_t optimization = 3;
@@ -580,17 +582,43 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 	LPD3DXBUFFER errorMsg;
 	LPD3DXCONSTANTTABLE constantTable;
 
-	HRESULT hr = D3DXCompileShader(_code.c_str()
-		, (uint32_t)_code.size()
-		, NULL
-		, NULL
-		, "main"
-		, profile
-		, flags
-		, &code
-		, &errorMsg
-		, &constantTable
-		);
+	HRESULT hr;
+
+	// Output preprocessed shader so that HLSL can be debugged via GPA
+	// or PIX. Compiling through memory won't embed preprocessed shader
+	// file path.
+	if (debug)
+	{
+		std::string ofp = _cmdLine.findOption('o');
+		ofp += ".hlsl";
+		writeFile(ofp.c_str(), _code.c_str(), (int32_t)_code.size() );
+
+		hr = D3DXCompileShaderFromFileA(ofp.c_str()
+				, NULL
+				, NULL
+				, "main"
+				, profile
+				, flags
+				, &code
+				, &errorMsg
+				, &constantTable
+				);
+	}
+	else
+	{
+		hr = D3DXCompileShader(_code.c_str()
+				, (uint32_t)_code.size()
+				, NULL
+				, NULL
+				, "main"
+				, profile
+				, flags
+				, &code
+				, &errorMsg
+				, &constantTable
+				);
+	}
+
 	if (FAILED(hr)
 	|| (werror && NULL != errorMsg) )
 	{
@@ -655,7 +683,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		const Uniform& un = *it;
 		uint8_t nameSize = (uint8_t)un.name.size();
 		bx::write(_writer, nameSize);
-		_writer->write(un.name.c_str(), nameSize);
+		bx::write(_writer, un.name.c_str(), nameSize);
 		uint8_t type = un.type|fragmentBit;
 		bx::write(_writer, type);
 		bx::write(_writer, un.num);
@@ -673,7 +701,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 
 	uint16_t shaderSize = (uint16_t)code->GetBufferSize();
 	bx::write(_writer, shaderSize);
-	_writer->write(code->GetBufferPointer(), shaderSize);
+	bx::write(_writer, code->GetBufferPointer(), shaderSize);
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
@@ -831,7 +859,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		}
 	}
 
-	_writer->write(attrMask, sizeof(attrMask) );
+	bx::write(_writer, attrMask, sizeof(attrMask) );
 
 	BX_TRACE("Output:");
 	for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
@@ -930,7 +958,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		const Uniform& un = *it;
 		uint8_t nameSize = (uint8_t)un.name.size();
 		bx::write(_writer, nameSize);
-		_writer->write(un.name.c_str(), nameSize);
+		bx::write(_writer, un.name.c_str(), nameSize);
 		uint8_t type = un.type|fragmentBit;
 		bx::write(_writer, type);
 		bx::write(_writer, un.num);
@@ -948,7 +976,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 	uint16_t shaderSize = (uint16_t)code->GetBufferSize();
 	bx::write(_writer, shaderSize);
-	_writer->write(code->GetBufferPointer(), shaderSize);
+	bx::write(_writer, code->GetBufferPointer(), shaderSize);
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
