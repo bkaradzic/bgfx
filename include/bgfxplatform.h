@@ -74,8 +74,8 @@ namespace bgfx
 #endif // BX_PLATFORM_
 
 #if defined(_SDL_H)
-// If SDL.h is included before bgfxplatform.h we can enable SDL window interop
-// convenience code.
+// If SDL.h is included before bgfxplatform.h we can enable SDL window
+// interop convenience code.
 
 #	include <SDL_syswm.h>
 
@@ -104,8 +104,8 @@ namespace bgfx
 } // namespace bgfx
 
 #elif defined(_glfw3_h_)
-// If GLFW/glfw3.h is included before bgfxplatform.h we can enable GLFW3 window
-// interop convenience code.
+// If GLFW/glfw3.h is included before bgfxplatform.h we can enable GLFW3
+// window interop convenience code.
 
 #	if BX_PLATFORM_LINUX
 #		define GLFW_EXPOSE_NATIVE_X11
