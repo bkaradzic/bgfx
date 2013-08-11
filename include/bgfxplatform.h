@@ -73,9 +73,10 @@ namespace bgfx
 
 #endif // BX_PLATFORM_
 
-#ifdef _SDL_H
-// If SDL is included before bgfxplatform.h we can enable SDL window interop
+#if defined(_SDL_H)
+// If SDL.h is included before bgfxplatform.h we can enable SDL window interop
 // convenience code.
+
 #	include <SDL_syswm.h>
 
 namespace bgfx
@@ -90,17 +91,53 @@ namespace bgfx
 			return false;
 		}
 
-#if BX_PLATFORM_LINUX
+#	if BX_PLATFORM_LINUX
 		x11SetDisplayWindow(wmi.info.x11.display, wmi.info.x11.window);
-#elif BX_PLATFORM_OSX
+#	elif BX_PLATFORM_OSX
 		osxSetNSWindow(wmi.info.cocoa.window);
-#elif BX_PLATFORM_WINDOWS
+#	elif BX_PLATFORM_WINDOWS
 		winSetHwnd(wmi.info.win.window);
-#endif // BX_PLATFORM_
+#	endif // BX_PLATFORM_
 
 		return true;
 	}
 } // namespace bgfx
-#endif // _SDL_H
+
+#elif defined(_glfw3_h_)
+// If GLFW/glfw3.h is included before bgfxplatform.h we can enable GLFW3 window
+// interop convenience code.
+
+#	if BX_PLATFORM_LINUX
+#		define GLFW_EXPOSE_NATIVE_X11
+#		define GLFW_EXPOSE_NATIVE_GLX
+#	elif BX_PLATFORM_OSX
+#		define GLFW_EXPOSE_NATIVE_COCOA
+#		define GLFW_EXPOSE_NATIVE_NSGL
+#	elif BX_PLATFORM_WINDOWS
+#		define GLFW_EXPOSE_NATIVE_WIN32
+#		define GLFW_EXPOSE_NATIVE_WGL
+#	endif //
+#	include <GLFW/glfw3native.h>
+
+namespace bgfx
+{
+	inline void glfwSetWindow(GLFWwindow* _window)
+	{
+#	if BX_PLATFORM_LINUX
+		::Display* display = glfwGetX11Display();
+		::Window window = glfwGetX11Window(_window);
+		x11SetDisplayWindow(display, window);
+#	elif BX_PLATFORM_OSX
+		void* id = glfwGetCocoaWindow(_window);
+		osxSetNSWindow(id);
+#	elif BX_PLATFORM_WINDOWS
+		HWND hwnd = glfwGetWin32Window(_window);
+		winSetHwnd(hwnd);
+#	endif BX_PLATFORM_WINDOWS
+	}
+
+} // namespace bgfx
+
+#endif // defined(_SDL_H)
 
 #endif // __BGFXPLATFORM_H__
