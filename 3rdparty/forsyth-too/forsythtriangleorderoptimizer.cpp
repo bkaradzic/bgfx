@@ -123,15 +123,15 @@ namespace Forsyth
         }
         bool s_vertexScoresComputed = ComputeVertexScores();
 
-        inline float FindVertexCacheScore(uint cachePosition, uint maxSizeVertexCache)
-        {
-            return s_vertexCacheScores[maxSizeVertexCache][cachePosition];
-        }
+//        inline float FindVertexCacheScore(uint cachePosition, uint maxSizeVertexCache)
+//        {
+//            return s_vertexCacheScores[maxSizeVertexCache][cachePosition];
+//        }
 
-        inline float FindVertexValenceScore(uint numActiveTris)
-        {
-            return s_vertexValenceScores[numActiveTris];
-        }
+//        inline float FindVertexValenceScore(uint numActiveTris)
+//        {
+//            return s_vertexValenceScores[numActiveTris];
+//        }
 
         float FindVertexScore(uint numActiveFaces, uint cachePosition, uint vertexCacheSize)
         {
