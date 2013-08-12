@@ -238,6 +238,30 @@ Certain platforms have only single choice, for example the Native Client works
 only with OpenGL ES 2.0 renderer, using anything other than that will result in
 build errors.
 
+SDL, GLFW, etc.
+---------------
+
+It is possible to use bgfx with SDL, GLFW and similar cross platform windowing
+libraries. The main requirement is that windowing library provides access to
+native window handle that's used to create Direct3D device or OpenGL context.
+
+Using bgfx with SDL example:
+
+	#include <SDL.h>
+	#include <bgfxplatform.h> // it must be included after SDL to enable SDL
+	                          // integration code path.
+	
+	#include <bgfx.h>
+	...
+	
+	int main(...
+	{
+	    SDL_window* window = SDL_CreateWindow(...
+	    bgfx::sdlSetWindow(window);
+	
+	    ...
+	    bgfx::init();
+
 Tools
 -----
 
