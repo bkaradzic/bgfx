@@ -3,6 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <bx/bx.h>
+
 #ifndef SHADERC_DEBUG
 #	define SHADERC_DEBUG 0
 #endif // SHADERC_DEBUG
@@ -30,8 +32,6 @@ extern "C"
 
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
-
-#include <bx/bx.h>
 
 #include <bx/commandline.h>
 #include <bx/endian.h>

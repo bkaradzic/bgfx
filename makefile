@@ -108,6 +108,10 @@ qnx-arm: qnx-arm-debug qnx-arm-release
 rebuild-shaders:
 	make -R -C examples rebuild
 
+analyze:
+	cppcheck src/
+	cppcheck examples/
+
 docs:
 	doxygen premake/bgfx.doxygen
 	markdown README.md > .build/docs/readme.html
