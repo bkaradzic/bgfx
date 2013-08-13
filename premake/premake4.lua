@@ -95,11 +95,12 @@ function exampleProject(_name, _uuid)
 
 	configuration { "osx" }
 		files {
-			BGFX_DIR .. "examples/common/**.mm",
+--			BGFX_DIR .. "examples/common/**.mm",
 		}
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",
+			"SDL2",
 		}
 
 	configuration { "ios*" }

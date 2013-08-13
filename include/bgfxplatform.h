@@ -77,7 +77,7 @@ namespace bgfx
 // If SDL.h is included before bgfxplatform.h we can enable SDL window
 // interop convenience code.
 
-#	include <SDL_syswm.h>
+#	include <SDL2/SDL_syswm.h>
 
 namespace bgfx
 {
@@ -101,6 +101,7 @@ namespace bgfx
 
 		return true;
 	}
+
 } // namespace bgfx
 
 #elif defined(_glfw3_h_)
