@@ -244,8 +244,8 @@ namespace entry
 						const SDL_UserEvent uev = event.user;
 						if (SDL_USER_SET_WINDOW_SIZE == event.type)
 						{
-							uint32_t width = (uint32_t)uev.data1;
-							uint32_t height = (uint32_t)uev.data2;
+							uint32_t width = *(uint32_t*)&uev.data1;
+							uint32_t height = *(uint32_t*)&uev.data2;
 							setWindowSize(width, height);
 						}
 						else if (SDL_USER_TOGGLE_WINDOW_FRAME == event.type)
