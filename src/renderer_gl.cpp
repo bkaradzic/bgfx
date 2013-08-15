@@ -9,7 +9,6 @@
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
-#	include <bx/float4_t.h>
 
 namespace bgfx
 {
