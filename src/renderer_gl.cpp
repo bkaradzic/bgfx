@@ -9,6 +9,7 @@
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
+#	include <bx/float4_t.h>
 
 namespace bgfx
 {
@@ -374,23 +375,6 @@ namespace bgfx
 #endif // BX_PLATFORM_IOS
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
-
-	static void rgbaToBgra(uint8_t* _data, uint32_t _width, uint32_t _height) 
-	{
-		uint32_t dstpitch = _width*4;
-		for (uint32_t yy = 0; yy < _height; ++yy)
-		{
-			uint8_t* dst = &_data[yy*dstpitch];
-
-			for (uint32_t xx = 0; xx < _width; ++xx)
-			{
-				uint8_t tmp = dst[0];
-				dst[0] = dst[2];
-				dst[2] = tmp;
-				dst += 4;
-			}
-		}
-	}
 
 	static const char* getGLString(GLenum _name)
 	{
@@ -775,7 +759,7 @@ namespace bgfx
 
 			if (GL_RGBA == fmt)
 			{
-				rgbaToBgra(data, width, height);
+				imageSwizzleBGRA8(data, width, height);
 			}
 
 			g_callback->screenShot(_filePath
@@ -1472,7 +1456,7 @@ namespace bgfx
 
 							if (swizzle)
 							{
-								rgbaToBgra(bits, width, height);
+								imageSwizzleBGRA8(bits, width, height);
 							}
 
 							texImage(target+side
@@ -1621,7 +1605,7 @@ namespace bgfx
 							if (NULL != data
 							&&  swizzle)
 							{
-								rgbaToBgra(data, width, height);
+								imageSwizzleBGRA8(data, width, height);
 							}
 
 							texImage(target+side

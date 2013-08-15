@@ -511,6 +511,9 @@ namespace bgfx
 	///
 	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num = 1);
 
+	/// Swizzle RGBA8 image to BGRA8.
+	void imageSwizzleBGRA8(uint8_t* _rgbaData, uint32_t _width, uint32_t _height);
+
 	/// Returns renderer backend API type.
 	RendererType::Enum getRendererType();
 
