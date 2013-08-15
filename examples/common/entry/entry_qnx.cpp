@@ -5,7 +5,7 @@
 
 #include "entry.h"
 
-#if BX_PLATFORM_QNX
+#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_QNX
 
 #include <stdio.h>
 #include "entry.h"
@@ -40,4 +40,4 @@ int main(int _argc, char** _argv)
 	entry::main(_argc, _argv);
 }
 
-#endif // BX_PLATFORM_QNX
+#endif // ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_QNX

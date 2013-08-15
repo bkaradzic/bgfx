@@ -3,12 +3,11 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry.h"
+#include "entry_p.h"
 
-#if BX_PLATFORM_NACL
+#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_NACL
 
 #include <bgfxplatform.h>
-#include "entry_p.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -185,4 +184,4 @@ PP_EXPORT void PPP_ShutdownModule()
 {
 }
 
-#endif // BX_PLATFROM_NACL
+#endif // ENTRY_CONFIG_USE_NATIVE && BX_PLATFROM_NACL

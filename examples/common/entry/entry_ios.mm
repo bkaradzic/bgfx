@@ -3,16 +3,15 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry.h"
+#include "entry_p.h"
 
-#if BX_PLATFORM_IOS
+#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_IOS
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <QuartzCore/CAEAGLLayer.h>
 
 #include <bgfxplatform.h>
-#include "entry_p.h"
 
 #include <bx/uint32_t.h>
 #include <bx/thread.h>

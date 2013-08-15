@@ -10,6 +10,21 @@
 
 #include "entry.h"
 
+#ifndef ENTRY_CONFIG_USE_SDL
+#	define ENTRY_CONFIG_USE_SDL BX_PLATFORM_OSX
+#endif // ENTRY_CONFIG_USE_SDL
+
+#ifndef ENTRY_CONFIG_USE_NATIVE
+#	define ENTRY_CONFIG_USE_NATIVE !ENTRY_CONFIG_USE_SDL
+#endif // ENTRY_CONFIG_USE_NATIVE
+
+#if !defined(ENTRY_DEFAULT_WIDTH) && !defined(ENTRY_DEFAULT_HEIGHT)
+#	define ENTRY_DEFAULT_WIDTH  1280
+#	define ENTRY_DEFAULT_HEIGHT 720
+#elif !defined(ENTRY_DEFAULT_WIDTH) || !defined(ENTRY_DEFAULT_HEIGHT)
+#	error "Both ENTRY_DEFAULT_WIDTH and ENTRY_DEFAULT_HEIGHT must be defined."
+#endif // ENTRY_DEFAULT_WIDTH
+
 namespace entry
 {
 	int main(int _argc, char** _argv);

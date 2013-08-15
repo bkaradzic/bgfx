@@ -3,20 +3,16 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry.h"
+#include "entry_p.h"
 
-#if BX_PLATFORM_WINDOWS
+#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_WINDOWS
 
 #include <bgfxplatform.h>
-#include "entry_p.h"
 
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 
 #include <windowsx.h>
-
-#define DEFAULT_WIDTH 1280
-#define DEFAULT_HEIGHT 720
 
 #define WM_USER_SET_WINDOW_SIZE     (WM_USER+0)
 #define WM_USER_TOGGLE_WINDOW_FRAME (WM_USER+1)
@@ -74,6 +70,7 @@ namespace entry
 			: m_frame(true)
 			, m_init(false)
 			, m_exit(false)
+			, m_mouseLock(false)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]    = Key::Esc;
@@ -197,8 +194,8 @@ namespace entry
 				, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 				, 0
 				, 0
-				, DEFAULT_WIDTH
-				, DEFAULT_HEIGHT
+				, ENTRY_DEFAULT_WIDTH
+				, ENTRY_DEFAULT_HEIGHT
 				, hwnd
 				, NULL
 				, instance
@@ -207,11 +204,11 @@ namespace entry
 
 			bgfx::winSetHwnd(m_hwnd);
 
-			adjust(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
-			m_width = DEFAULT_WIDTH;
-			m_height = DEFAULT_HEIGHT;
-			m_oldWidth = DEFAULT_WIDTH;
-			m_oldHeight = DEFAULT_HEIGHT;
+			adjust(ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, true);
+			m_width = ENTRY_DEFAULT_WIDTH;
+			m_height = ENTRY_DEFAULT_HEIGHT;
+			m_oldWidth = ENTRY_DEFAULT_WIDTH;
+			m_oldHeight = ENTRY_DEFAULT_HEIGHT;
 
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
@@ -296,7 +293,7 @@ namespace entry
 						case WMSZ_RIGHT:
 							{
 								float aspectRatio = 1.0f/m_aspectRatio;
-								width = bx::uint32_max(DEFAULT_WIDTH/4, width);
+								width = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, width);
 								height = uint32_t(float(width)*aspectRatio);
 							}
 							break;
@@ -304,7 +301,7 @@ namespace entry
 						default:
 							{
 								float aspectRatio = m_aspectRatio;
-								height = bx::uint32_max(DEFAULT_HEIGHT/4, height);
+								height = bx::uint32_max(ENTRY_DEFAULT_HEIGHT/4, height);
 								width = uint32_t(float(height)*aspectRatio);
 							}
 							break;
@@ -488,7 +485,7 @@ namespace entry
 			if (!_windowFrame)
 			{
 				float aspectRatio = 1.0f/m_aspectRatio;
-				width = bx::uint32_max(DEFAULT_WIDTH/4, width);
+				width = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, width);
 				height = uint32_t(float(width)*aspectRatio);
 
 				left = newrect.left+(newrect.right-newrect.left-width)/2;

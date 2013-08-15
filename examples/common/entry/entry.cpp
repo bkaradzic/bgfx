@@ -110,6 +110,7 @@ namespace entry
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse)
 	{
 		s_debug = _debug;
+		s_reset = _reset;
 
 		bool mouseLock = inputIsMouseLocked();
 
@@ -177,6 +178,8 @@ namespace entry
 			}
 		} while (NULL != ev);
 
+		inputProcess();
+
 		if (_reset != s_reset)
 		{
 			_reset = s_reset;
@@ -184,7 +187,6 @@ namespace entry
 			inputSetMouseResolution(_width, _height);
 		}
 
-		inputProcess();
 		_debug = s_debug;
 
 		return s_exit;

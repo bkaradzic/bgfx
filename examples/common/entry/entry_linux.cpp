@@ -3,9 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry.h"
+#include "entry_p.h"
 
-#if BX_PLATFORM_LINUX
+#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_LINUX
 
 #define XK_MISCELLANY
 #define XK_LATIN1
@@ -13,13 +13,9 @@
 #include <bgfxplatform.h> // will include X11 which #defines None... Don't mess with order of includes.
 
 #undef None
-#include "entry_p.h"
 #include <bx/thread.h>
 #include <bx/os.h>
 #include <string.h> // memset
-
-#define DEFAULT_WIDTH 1280
-#define DEFAULT_HEIGHT 720
 
 namespace entry
 {
@@ -157,7 +153,7 @@ namespace entry
 			m_window = XCreateWindow(m_display
 									, root
 									, 0, 0
-									, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, depth
+									, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, 0, depth
 									, InputOutput
 									, visual
 									, CWBorderPixel|CWEventMask
@@ -334,4 +330,4 @@ int main(int _argc, char** _argv)
 	return s_ctx.run(_argc, _argv);
 }
 
-#endif // BX_PLATFORM_LINUX
+#endif // ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_LINUX

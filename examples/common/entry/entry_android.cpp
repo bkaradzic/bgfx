@@ -3,12 +3,11 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry.h"
+#include "entry_p.h"
 
-#if BX_PLATFORM_ANDROID
+#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_ANDROID
 
 #include <bgfxplatform.h>
-#include "entry_p.h"
 
 #include <stdio.h>
 #include <bx/thread.h>
@@ -230,4 +229,4 @@ extern "C" void android_main(android_app* _app)
 	s_ctx.run(_app);
 }
 
-#endif // BX_PLATFORM_ANDROID
+#endif // ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_ANDROID
