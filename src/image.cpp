@@ -10,7 +10,6 @@ namespace bgfx
 {
 	static void imageSwizzleBGRA8Ref(uint8_t* _rgbaData, uint32_t _width, uint32_t _height) 
 	{
-		const uint32_t dstpitch = _width*4;
 		uint8_t* ptr = _rgbaData;
 
 		for (uint32_t xx = 0, num = _width*_height; xx < num; ++xx)

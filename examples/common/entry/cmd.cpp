@@ -209,7 +209,6 @@ struct CmdContext
 		ConsoleFn m_fn;
 		void* m_userData;
 	};
-	
 
 	typedef std::unordered_map<uint32_t, Func> CmdLookup;
 	CmdLookup m_lookup;
