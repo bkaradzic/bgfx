@@ -183,7 +183,10 @@ namespace bgfx
 					);
 
 				result = SetPixelFormat(m_hdc, pixelFormat, &pfd);
-				BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() );
+				// When window is created by SDL and SDL_WINDOW_OPENGL is set SetPixelFormat
+				// will fail. Just warn and continue. In case it failed for some other reason
+				// create context will fail and it will error out there.
+				BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() );
 
 				uint32_t flags = BGFX_CONFIG_DEBUG ? WGL_CONTEXT_DEBUG_BIT_ARB : 0;
 				BX_UNUSED(flags);

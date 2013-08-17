@@ -22,13 +22,12 @@ namespace bgfx
 	void dbgPrintf(const char* _format, ...);
 }
 
-#if BGFX_CONFIG_DEBUG
-#	define BX_TRACE(_format, ...) \
+#define BX_TRACE_(_format, ...) \
 				do { \
 					bgfx::dbgPrintf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
 				} while(0)
 
-#	define BX_WARN(_condition, _format, ...) \
+#define BX_WARN_(_condition, _format, ...) \
 				do { \
 					if (!(_condition) ) \
 					{ \
@@ -36,7 +35,7 @@ namespace bgfx
 					} \
 				} while(0)
 
-#	define BX_CHECK(_condition, _format, ...) \
+#define BX_CHECK_(_condition, _format, ...) \
 				do { \
 					if (!(_condition) ) \
 					{ \
@@ -44,7 +43,12 @@ namespace bgfx
 						bgfx::fatal(bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
 					} \
 				} while(0)
-#endif // 0
+
+#if BGFX_CONFIG_DEBUG
+#	define BX_TRACE BX_TRACE_
+#	define BX_WARN  BX_WARN_
+#	define BX_CHECK BX_CHECK_
+#endif // BGFX_CONFIG_DEBUG
 
 #define BGFX_FATAL(_condition, _err, _format, ...) \
 			do { \
