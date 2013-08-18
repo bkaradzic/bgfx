@@ -971,6 +971,12 @@ namespace bgfx
 	void discard();
 
 	/// Request screen shot.
+	///
+	/// @param _filePath Will be passed to CallbackI::screenShot callback.
+	///
+	/// NOTE:
+	///   CallbackI::screenShot must be implemented.
+	///
 	void saveScreenShot(const char* _filePath);
 
 } // namespace bgfx
