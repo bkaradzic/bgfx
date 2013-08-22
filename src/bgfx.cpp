@@ -98,7 +98,10 @@ namespace bgfx
 
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
 		{
-			saveTga(_filePath, _width, _height, _pitch, _data, false, _yflip);
+			bx::CrtFileWriter writer;
+			writer.open(_filePath);
+			imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
+			writer.close();
 		}
 
 		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
@@ -185,57 +188,6 @@ namespace bgfx
 		_result[13] = ee;
 		_result[14] = ff;
 		_result[15] = 1.0f;
-	}
-
-	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
-	{
-		FILE* file = fopen(_filePath, "wb");
-		if ( NULL != file )
-		{
-			uint8_t type = _grayscale ? 3 : 2;
-			uint8_t bpp = _grayscale ? 8 : 32;
-
-			putc(0, file);
-			putc(0, file);
-			putc(type, file);
-			putc(0, file); 
-			putc(0, file);
-			putc(0, file); 
-			putc(0, file);
-			putc(0, file);
-			putc(0, file); 
-			putc(0, file);
-			putc(0, file); 
-			putc(0, file);
-			putc(_width&0xff, file);
-			putc( (_width>>8)&0xff, file);
-			putc(_height&0xff, file);
-			putc( (_height>>8)&0xff, file);
-			putc(bpp, file);
-			putc(32, file);
-
-			uint32_t dstPitch = _width*bpp/8;
-			if (_yflip)
-			{
-				uint8_t* data = (uint8_t*)_src + _srcPitch*_height - _srcPitch;
-				for (uint32_t yy = 0; yy < _height; ++yy)
-				{
-					fwrite(data, dstPitch, 1, file);
-					data -= _srcPitch;
-				}
-			}
-			else
-			{
-				uint8_t* data = (uint8_t*)_src;
-				for (uint32_t yy = 0; yy < _height; ++yy)
-				{
-					fwrite(data, dstPitch, 1, file);
-					data += _srcPitch;
-				}
-			}
-
-			fclose(file);
-		}
 	}
 
 #include "charset.h"

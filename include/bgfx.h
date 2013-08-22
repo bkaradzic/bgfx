@@ -512,7 +512,26 @@ namespace bgfx
 	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num = 1);
 
 	/// Swizzle RGBA8 image to BGRA8.
-	void imageSwizzleBGRA8(uint8_t* _rgbaData, uint32_t _width, uint32_t _height);
+	///
+	/// @param _width Width of input image (pixels).
+	/// @param _height Height of input image (pixels).
+	/// @param _pitch Pitch of input image (bytes).
+	/// @param _src Source image.
+	/// @param _dst Destination image. Must be the same size as input image.
+	///   _dst might be pointer to the same memory as _src.
+	///
+	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, const void* _src, void* _dst);
+
+	/// Downsample RGBA8 image with 2x2 pixel average filter.
+	///
+	/// @param _width Width of input image (pixels).
+	/// @param _height Height of input image (pixels).
+	/// @param _pitch Pitch of input image (bytes).
+	/// @param _src Source image.
+	/// @param _dst Destination image. Must be at least quarter size of
+	///   input image. _dst might be pointer to the same memory as _src.
+	///
+	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
 	/// Returns renderer backend API type.
 	RendererType::Enum getRendererType();

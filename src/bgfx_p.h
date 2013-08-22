@@ -229,7 +229,7 @@ namespace bgfx
 	extern FreeFn g_free;
 
 	void release(const Memory* _mem);
-	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
+	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
 

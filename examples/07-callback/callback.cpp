@@ -219,8 +219,65 @@ struct BgfxCallback : public bgfx::CallbackI
 
 	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
 	{
+		char temp[1024];
+
 		// Save screen shot as TGA.
-		saveTga(_filePath, _width, _height, _pitch, _data, false, _yflip);
+		bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip0.tga", _filePath);
+		saveTga(temp, _width, _height, _pitch, _data, false, _yflip);
+
+		uint32_t width = _width;
+		uint32_t height = _height;
+		uint32_t pitch = _pitch;
+
+		uint8_t* data = (uint8_t*)_data;
+
+		// Generate mip maps.
+		uint32_t mip = 1;
+		for (; 2 <= width && 2 <= height; ++mip)
+		{
+			bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip%d.tga", _filePath, mip);
+			bgfx::imageRgba8Downsample2x2(width, height, pitch, data, data);
+
+			width >>= 1;
+			height >>= 1;
+			pitch = width*4;
+
+			saveTga(temp, width, height, pitch, _data, false, _yflip);
+		}
+
+		if (width > height)
+		{
+			for (; 2 <= width; ++mip)
+			{
+				memcpy(&data[width*4], data, width*4);
+
+				bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip%d.tga", _filePath, mip);
+				bgfx::imageRgba8Downsample2x2(width, 2, pitch, data, data);
+
+				width >>= 1;
+				pitch = width*4;
+
+				saveTga(temp, width, 2, pitch, _data, false, _yflip);
+			}
+		}
+		else
+		{
+			for (; 2 <= height; ++mip)
+			{
+				uint32_t* src = (uint32_t*)data;
+				for (uint32_t ii = 0; ii < height; ++ii, src += 2)
+				{
+					src[1] = src[0];
+				}
+
+				bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip%d.tga", _filePath, mip);
+				bgfx::imageRgba8Downsample2x2(2, height, 8, data, data);
+
+				height >>= 1;
+
+				saveTga(temp, 2, height, 8, _data, false, _yflip);
+			}
+		}
 	}
 
 	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) BX_OVERRIDE
@@ -403,7 +460,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Take screen shot at frame 150.
 		if (150 == frame)
 		{
-			bgfx::saveScreenShot("temp/frame150.tga");
+			bgfx::saveScreenShot("temp/frame150");
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to 

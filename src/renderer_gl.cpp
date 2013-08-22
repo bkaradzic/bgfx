@@ -758,7 +758,7 @@ namespace bgfx
 
 			if (GL_RGBA == fmt)
 			{
-				imageSwizzleBGRA8(data, width, height);
+				imageSwizzleBgra8(width, height, data, data);
 			}
 
 			g_callback->screenShot(_filePath
@@ -1455,7 +1455,7 @@ namespace bgfx
 
 							if (swizzle)
 							{
-								imageSwizzleBGRA8(bits, width, height);
+								imageSwizzleBgra8(width, height, bits, bits);
 							}
 
 							texImage(target+side
@@ -1604,7 +1604,7 @@ namespace bgfx
 							if (NULL != data
 							&&  swizzle)
 							{
-								imageSwizzleBGRA8(data, width, height);
+								imageSwizzleBgra8(width, height, data, data);
 							}
 
 							texImage(target+side
