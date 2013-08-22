@@ -5,6 +5,7 @@
 
 #include "bgfx_p.h"
 #include <bx/float4_t.h>
+#include <math.h> // powf
 
 namespace bgfx
 {

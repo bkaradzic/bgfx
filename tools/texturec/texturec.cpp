@@ -31,7 +31,7 @@ namespace bgfx
 		return mem;
 	}
 
-	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
+	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false)
 	{
 		FILE* file = fopen(_filePath, "wb");
 		if ( NULL != file )
