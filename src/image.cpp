@@ -74,7 +74,6 @@ namespace bgfx
 				rr = powf(rr, 1.0f/2.2f);
 				gg = powf(gg, 1.0f/2.2f);
 				bb = powf(bb, 1.0f/2.2f);
-				aa =      aa;
 				dst[0] = (uint8_t)rr;
 				dst[1] = (uint8_t)gg;
 				dst[2] = (uint8_t)bb;
