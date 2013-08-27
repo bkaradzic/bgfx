@@ -589,11 +589,11 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 	// file path.
 	if (debug)
 	{
-		std::string ofp = _cmdLine.findOption('o');
-		ofp += ".hlsl";
-		writeFile(ofp.c_str(), _code.c_str(), (int32_t)_code.size() );
+		std::string hlslfp = _cmdLine.findOption('o');
+		hlslfp += ".hlsl";
+		writeFile(hlslfp.c_str(), _code.c_str(), (int32_t)_code.size() );
 
-		hr = D3DXCompileShaderFromFileA(ofp.c_str()
+		hr = D3DXCompileShaderFromFileA(hlslfp.c_str()
 				, NULL
 				, NULL
 				, "main"
@@ -716,10 +716,10 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 
 		if (NULL != disasm)
 		{
-			std::string ofp = _cmdLine.findOption('o');
-			ofp += ".disasm";
+			std::string disasmfp = _cmdLine.findOption('o');
+			disasmfp += ".disasm";
 
-			writeFile(ofp.c_str(), disasm->GetBufferPointer(), disasm->GetBufferSize() );
+			writeFile(disasmfp.c_str(), disasm->GetBufferPointer(), disasm->GetBufferSize() );
 			disasm->Release();
 		}
 	}
@@ -756,8 +756,10 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		return false;
 	}
 
+	bool debug = _cmdLine.hasArg('\0', "debug");
+
 	uint32_t flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
-	flags |= _cmdLine.hasArg('\0', "debug") ? D3DCOMPILE_DEBUG : 0;
+	flags |= debug ? D3DCOMPILE_DEBUG : 0;
 	flags |= _cmdLine.hasArg('\0', "avoid-flow-control") ? D3DCOMPILE_AVOID_FLOW_CONTROL : 0;
 	flags |= _cmdLine.hasArg('\0', "no-preshader") ? D3DCOMPILE_NO_PRESHADER : 0;
 	flags |= _cmdLine.hasArg('\0', "partial-precision") ? D3DCOMPILE_PARTIAL_PRECISION : 0;
@@ -788,18 +790,30 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	ID3DBlob* code;
 	ID3DBlob* errorMsg;
 
+	// Output preprocessed shader so that HLSL can be debugged via GPA
+	// or PIX. Compiling through memory won't embed preprocessed shader
+	// file path.
+	std::string hlslfp;
+
+	if (debug)
+	{
+		hlslfp = _cmdLine.findOption('o');
+		hlslfp += ".hlsl";
+		writeFile(hlslfp.c_str(), _code.c_str(), (int32_t)_code.size() );
+	}
+
 	HRESULT hr = D3DCompile(_code.c_str()
-		, _code.size()
-		, NULL
-		, NULL
-		, NULL
-		, "main"
-		, profile
-		, flags
-		, 0
-		, &code
-		, &errorMsg
-		);
+					, _code.size()
+					, hlslfp.c_str()
+					, NULL
+					, NULL
+					, "main"
+					, profile
+					, flags
+					, 0
+					, &code
+					, &errorMsg
+					);
 	if (FAILED(hr)
 	|| (werror && NULL != errorMsg) )
 	{
@@ -992,10 +1006,10 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 		if (NULL != disasm)
 		{
-			std::string ofp = _cmdLine.findOption('o');
-			ofp += ".disasm";
+			std::string disasmfp = _cmdLine.findOption('o');
+			disasmfp += ".disasm";
 
-			writeFile(ofp.c_str(), disasm->GetBufferPointer(), (uint32_t)disasm->GetBufferSize() );
+			writeFile(disasmfp.c_str(), disasm->GetBufferPointer(), (uint32_t)disasm->GetBufferSize() );
 			disasm->Release();
 		}
 	}
