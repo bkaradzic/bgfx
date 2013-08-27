@@ -759,6 +759,23 @@ namespace bgfx
 	/// @param _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
 	///   -Y, 4 is +Z, and 5 is -Z.
 	///
+	///              +----------+
+	///              |-z       2|
+	///              | ^  +y    |
+	///              | |        |
+	///              | +---->+x |
+	///   +----------+----------+----------+----------+
+	///   |+y       1|+y       4|+y       0|+y       5|
+	///   | ^  -x    | ^  +z    | ^  +x    | ^  -z    |
+	///   | |        | |        | |        | |        |
+	///   | +---->+z | +---->+x | +---->-z | +---->-x |
+	///   +----------+----------+----------+----------+
+	///              |+z       3|
+	///              | ^  -y    |
+	///              | |        |
+	///              | +---->+x |
+	///              +----------+
+	///
 	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
 
 	/// Destroy texture.
