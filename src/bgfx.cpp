@@ -99,9 +99,9 @@ namespace bgfx
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
 		{
 			bx::CrtFileWriter writer;
-			writer.open(_filePath);
+			bx::open(&writer, _filePath);
 			imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
-			writer.close();
+			bx::close(&writer);
 		}
 
 		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
@@ -839,6 +839,8 @@ namespace bgfx
 
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
 	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return s_ctx.createVertexBuffer(_mem, _decl);
 	}
 
@@ -877,6 +879,7 @@ namespace bgfx
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return s_ctx.createDynamicVertexBuffer(_num, _decl);
 	}
 
@@ -884,6 +887,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
+		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return s_ctx.createDynamicVertexBuffer(_mem, _decl);
 	}
 
@@ -911,6 +915,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
+		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return s_ctx.m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
@@ -923,6 +928,7 @@ namespace bgfx
 
 	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
 	{
+		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return checkAvailTransientVertexBuffer(_numVertices, _decl)
 			&& checkAvailTransientIndexBuffer(_numIndices)
 			;
@@ -942,6 +948,7 @@ namespace bgfx
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		BX_CHECK(UINT16_MAX >= _num, "Requesting %d vertices (max: %d).", _num, UINT16_MAX);
+		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return s_ctx.allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
