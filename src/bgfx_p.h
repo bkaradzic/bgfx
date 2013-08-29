@@ -68,6 +68,7 @@ namespace bgfx
 #include <bx/ringbuffer.h>
 #include <bx/uint32_t.h>
 #include <bx/readerwriter.h>
+#include <bx/allocator.h>
 #include <bx/string.h>
 #include <bx/os.h>
 
