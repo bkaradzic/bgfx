@@ -6,7 +6,7 @@ https://github.com/bkaradzic/bgfx
 What is it?
 -----------
 
-Cross-platform rendering library ([API](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)).
+Cross-platform rendering library ([API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)).
 
 Supported rendering backends:
 
@@ -37,6 +37,69 @@ is a powerful 2D game engine with live reloading of code and assets, a friendly
 scripting language, and an efficient command-line workflow. Here is video where
 they explain why they choose bgfx over alternatives:  
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=PHY_XHkMGIM&t=1m53s" target="_blank"><img src="http://img.youtube.com/vi/PHY_XHkMGIM/0.jpg" alt="Why did you choose bgfx?" width="240" height="180" border="10" /></a>
+
+Examples
+--------
+
+Most of the examples require shader/texture/mesh data to be loaded. When running
+examples your current directory should be examples/runtime.
+
+	<bgfx_path>/examples/runtime $ ../../.build/<config>/bin/example-00-helloworldDebug
+
+### 00-helloworld
+Initialization and debug text.
+
+### 01-cubes
+Rendering simple static mesh.
+
+![example-01-cubes](https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png)
+
+### 02-metaballs
+Rendering with transient buffers and embedding shaders.
+
+![example-02-metaballs](https://github.com/bkaradzic/bgfx/raw/master/examples/02-metaballs/screenshot.png)
+
+### 03-raymarch
+Updating shader uniforms.
+
+![example-03-raymarch](https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png)
+
+### 04-mesh
+Loading meshes.
+
+![example-04-mesh](https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png)
+
+### 05-instancing
+Geometry instancing.
+
+![example-05-instancing](https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png)
+
+### 06-bump
+Loading textures.
+
+![example-06-bump](https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png)
+
+### 07-callback
+Implementing application specific callbacks for taking screen shots, caching
+OpenGL binary shaders, and video capture.
+
+### 08-update
+Updating textures.
+
+### 09-hdr
+Using multiple views and render targets.
+
+![example-09-hdr](https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png)
+
+### 10-font
+Use the font system to display text and styled text.
+
+![example-10-font](https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png)
+
+### 11-fontsdf
+Use a single distance field font to render text of various size.
+
+![example-11-fontsdf](https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png)
 
 Dependencies
 ------------
@@ -130,69 +193,6 @@ Configuration is `<platform>-<debug/release>[32/64]`. For example:
 
 	linux-release32, nacl-debug64, nacl-arm-debug, pnacl-release, 
 	android-release, etc.
-
-Examples
---------
-
-Most of the examples require shader/texture/mesh data to be loaded. When running
-examples your current directory should be examples/runtime.
-
-	<bgfx_path>/examples/runtime $ ../../.build/<config>/bin/example-00-helloworldDebug
-
-### 00-helloworld
-Initialization and debug text.
-
-### 01-cubes
-Rendering simple static mesh.
-
-![example-01-cubes](https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png)
-
-### 02-metaballs
-Rendering with transient buffers and embedding shaders.
-
-![example-02-metaballs](https://github.com/bkaradzic/bgfx/raw/master/examples/02-metaballs/screenshot.png)
-
-### 03-raymarch
-Updating shader uniforms.
-
-![example-03-raymarch](https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png)
-
-### 04-mesh
-Loading meshes.
-
-![example-04-mesh](https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png)
-
-### 05-instancing
-Geometry instancing.
-
-![example-05-instancing](https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png)
-
-### 06-bump
-Loading textures.
-
-![example-06-bump](https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png)
-
-### 07-callback
-Implementing application specific callbacks for taking screen shots, caching
-OpenGL binary shaders, and video capture.
-
-### 08-update
-Updating textures.
-
-### 09-hdr
-Using multiple views and render targets.
-
-![example-09-hdr](https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png)
-
-### 10-font
-Use the font system to display text and styled text.
-
-![example-10-font](https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png)
-
-### 11-fontsdf
-Use a single distance field font to render text of various size.
-
-![example-11-fontsdf](https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png)
 
 Internals
 ---------
