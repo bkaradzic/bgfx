@@ -68,9 +68,9 @@ namespace entry
 	{
 		Context()
 			: m_frame(true)
+			, m_mouseLock(false)
 			, m_init(false)
 			, m_exit(false)
-			, m_mouseLock(false)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]    = Key::Esc;

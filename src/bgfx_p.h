@@ -78,8 +78,9 @@ namespace bgfx
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
 
-#if BGFX_CONFIG_USE_TINYSTL
+#include <list> // mingw wants it to be before tr1/unordered_*...
 
+#if BGFX_CONFIG_USE_TINYSTL
 namespace tinystl
 {
 	struct bgfx_allocator
@@ -98,13 +99,12 @@ namespace stl = tinystl;
 #	include <string>
 #	include <unordered_map>
 #	include <unordered_set>
-namespace std { namespace tr1 {} }
-namespace stl {
+namespace stl
+{
 	using namespace std;
 	using namespace std::tr1;
 }
 #endif // BGFX_CONFIG_USE_TINYSTL
-#include <list>
 
 #if BX_PLATFORM_ANDROID
 #	include <android/native_window.h>
