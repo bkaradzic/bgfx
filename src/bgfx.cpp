@@ -96,12 +96,8 @@ namespace bgfx
 		{
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
+		virtual void screenShot(const char* /*_filePath*/, uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, const void* /*_data*/, uint32_t /*_size*/, bool /*_yflip*/) BX_OVERRIDE
 		{
-			bx::CrtFileWriter writer;
-			bx::open(&writer, _filePath);
-			imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
-			bx::close(&writer);
 		}
 
 		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
