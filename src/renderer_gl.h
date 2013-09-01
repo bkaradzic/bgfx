@@ -443,6 +443,7 @@ namespace bgfx
 
 		void update(uint32_t _offset, uint32_t _size, void* _data)
 		{
+			BX_CHECK(0 != m_id, "Updating invalid index buffer.");
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER
 				, _offset
@@ -484,6 +485,7 @@ namespace bgfx
 
 		void update(uint32_t _offset, uint32_t _size, void* _data)
 		{
+			BX_CHECK(0 != m_id, "Updating invalid vertex buffer.");
 			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER
 				, _offset
