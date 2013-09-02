@@ -1000,6 +1000,7 @@ namespace bgfx
 		8,  // BC3
 		4,  // BC4
 		8,  // BC5
+		4,  // ETC1
 		0,  // Unknown
 		8,  // L8
 		32, // BGRX8
@@ -1011,6 +1012,11 @@ namespace bgfx
 		16, // RGB5A1
 		32, // RGB10A2
 	};
+
+	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
+	{
+		return s_bitsPerPixel[_format];
+	}
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
 	{

@@ -194,6 +194,7 @@ namespace bgfx
 		{ D3DFMT_ATI1,           4 },
 		{ D3DFMT_ATI2,           8 },
 		{ D3DFMT_UNKNOWN,        0 },
+		{ D3DFMT_UNKNOWN,        0 },
 		{ D3DFMT_L8,             8 },
 		{ D3DFMT_X8R8G8B8,      32 },
 		{ D3DFMT_A8R8G8B8,      32 },
@@ -1504,51 +1505,52 @@ namespace bgfx
 	{
 		m_flags = _flags;
 
-		Dds dds;
+		ImageContainer imageContainer;
 
-		if (parseDds(dds, _mem) )
+		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			m_format = dds.m_type;
-			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
+			m_format = imageContainer.m_type;
+			const TextureFormatInfo& tfi = s_textureFormat[imageContainer.m_type];
 
 			bool decompress = false
-				|| (TextureFormat::BC4 == dds.m_type && !s_extendedFormats[ExtendedFormat::Ati1].m_supported)
-				|| (TextureFormat::BC5 == dds.m_type && !s_extendedFormats[ExtendedFormat::Ati2].m_supported)
+				|| (TextureFormat::BC4  == imageContainer.m_type && !s_extendedFormats[ExtendedFormat::Ati1].m_supported)
+				|| (TextureFormat::BC5  == imageContainer.m_type && !s_extendedFormats[ExtendedFormat::Ati2].m_supported)
+				|| (TextureFormat::ETC1 == imageContainer.m_type)
 				;
 
 			D3DFORMAT format = decompress ? D3DFMT_A8R8G8B8 : tfi.m_fmt;
 			uint8_t bpp = decompress ? 32 : tfi.m_bpp;
 
-			if (dds.m_cubeMap)
+			if (imageContainer.m_cubeMap)
 			{
-				createCubeTexture(dds.m_width, dds.m_numMips, format);
+				createCubeTexture(imageContainer.m_width, imageContainer.m_numMips, format);
 			}
-			else if (dds.m_depth > 1)
+			else if (imageContainer.m_depth > 1)
 			{
-				createVolumeTexture(dds.m_width, dds.m_height, dds.m_depth, dds.m_numMips, format);
+				createVolumeTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_depth, imageContainer.m_numMips, format);
 			}
 			else
 			{
-				createTexture(dds.m_width, dds.m_height, dds.m_numMips, format);
+				createTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_numMips, format);
 			}
 
 			if (decompress
-			||  TextureFormat::Unknown < dds.m_type)
+			||  TextureFormat::Unknown < imageContainer.m_type)
 			{
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width  = dds.m_width;
-					uint32_t height = dds.m_height;
-					uint32_t depth  = dds.m_depth;
+					uint32_t width  = imageContainer.m_width;
+					uint32_t height = imageContainer.m_height;
+					uint32_t depth  = imageContainer.m_depth;
 
-					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 					{
 						width  = bx::uint32_max(1, width);
 						height = bx::uint32_max(1, height);
 						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, side, lod, _mem, mip) )
+						if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
 						{
 							uint32_t pitch;
 							uint32_t slicePitch;
@@ -1592,24 +1594,24 @@ namespace bgfx
 				// bytes. If actual mip size is used it causes memory corruption.
 				// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
 				bool useMipSize = true
-						&& dds.m_type != TextureFormat::BC4
-						&& dds.m_type != TextureFormat::BC5
+						&& imageContainer.m_type != TextureFormat::BC4
+						&& imageContainer.m_type != TextureFormat::BC5
 						;
 
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width  = dds.m_width;
-					uint32_t height = dds.m_height;
-					uint32_t depth  = dds.m_depth;
+					uint32_t width  = imageContainer.m_width;
+					uint32_t height = imageContainer.m_height;
+					uint32_t depth  = imageContainer.m_depth;
 
-					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 					{
 						width  = bx::uint32_max(1, width);
 						height = bx::uint32_max(1, height);
 						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, 0, lod, _mem, mip) )
+						if (imageGetRawData(imageContainer, 0, lod, _mem->data, _mem->size, mip) )
 						{
 							uint32_t pitch;
 							uint32_t slicePitch;

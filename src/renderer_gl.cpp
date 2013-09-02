@@ -189,27 +189,27 @@ namespace bgfx
 		GLenum m_internalFmt;
 		GLenum m_fmt;
 		GLenum m_type;
-		uint8_t m_bpp;
 		bool m_supported;
 	};
 
 	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_ZERO,                        4,  false },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_ZERO,                        8,  false },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_ZERO,                        8,  false },
-		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_ZERO,                        4,  false },
-		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                        8,  false },
-		{ GL_ZERO,                                 GL_ZERO,                                 GL_ZERO,                        0,  true  },
-		{ GL_LUMINANCE,                            GL_LUMINANCE,                            GL_UNSIGNED_BYTE,               8,  true  },
-		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
-		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               32, true  },
-		{ GL_RGBA16,                               GL_RGBA,                                 GL_UNSIGNED_BYTE,               64, true  },
-		{ GL_RGBA16F,                              GL_RGBA,                                 GL_HALF_FLOAT,                  64, true  },
-		{ GL_RGB565,                               GL_RGB,                                  GL_UNSIGNED_SHORT_5_6_5,        16, true  },
-		{ GL_RGBA4,                                GL_RGBA,                                 GL_UNSIGNED_SHORT_4_4_4_4,      16, true  },
-		{ GL_RGB5_A1,                              GL_RGBA,                                 GL_UNSIGNED_SHORT_5_5_5_1,      16, true  },
-		{ GL_RGB10_A2,                             GL_RGBA,                                 GL_UNSIGNED_INT_2_10_10_10_REV, 32, true  },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,        GL_ZERO,                        false },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,        GL_ZERO,                        false },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,        GL_ZERO,                        false },
+		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_ZERO,                        false },
+		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                        false },
+		{ GL_ETC1_RGB8_OES,                        GL_ETC1_RGB8_OES,                        GL_ZERO,                        false },
+		{ GL_ZERO,                                 GL_ZERO,                                 GL_ZERO,                        true  },
+		{ GL_LUMINANCE,                            GL_LUMINANCE,                            GL_UNSIGNED_BYTE,               true  },
+		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               true  },
+		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               true  },
+		{ GL_RGBA16,                               GL_RGBA,                                 GL_UNSIGNED_BYTE,               true  },
+		{ GL_RGBA16F,                              GL_RGBA,                                 GL_HALF_FLOAT,                  true  },
+		{ GL_RGB565,                               GL_RGB,                                  GL_UNSIGNED_SHORT_5_6_5,        true  },
+		{ GL_RGBA4,                                GL_RGBA,                                 GL_UNSIGNED_SHORT_4_4_4_4,      true  },
+		{ GL_RGB5_A1,                              GL_RGBA,                                 GL_UNSIGNED_SHORT_5_5_5_1,      true  },
+		{ GL_RGB10_A2,                             GL_RGBA,                                 GL_UNSIGNED_INT_2_10_10_10_REV, true  },
 	};
 
 	struct Extension
@@ -255,7 +255,13 @@ namespace bgfx
 			EXT_texture_swizzle,
 			EXT_texture_type_2_10_10_10_REV,
 			EXT_timer_query,
+			IMG_multisampled_render_to_texture,
+			IMG_shader_binary,
+			IMG_texture_compression_pvrtc,
+			IMG_texture_format_BGRA8888,
 			NVX_gpu_memory_info,
+			OES_compressed_ETC1_RGB8_texture,
+			OES_depth_texture,
 			OES_get_program_binary,
 			OES_rgb8_rgba8,
 			OES_standard_derivatives,
@@ -277,56 +283,62 @@ namespace bgfx
 
 	static Extension s_extension[Extension::Count] =
 	{
-		{ "GL_ANGLE_instanced_arrays",            false,                             true  },
-		{ "GL_ANGLE_translated_shader_source",    false,                             true  },
-		{ "GL_ARB_debug_output",                  BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "GL_ARB_depth_clamp",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_framebuffer_sRGB",              false,                             true  },
-		{ "GL_ARB_get_program_binary",            BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
-		{ "GL_ARB_half_float_vertex",             false,                             true  },
-		{ "GL_ARB_instanced_arrays",              BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_multisample",                   false,                             true  },
-		{ "GL_ARB_sampler_objects",               BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_seamless_cube_map",             BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_texture_float",                 BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_texture_multisample",           false,                             true  },
-		{ "GL_ARB_texture_swizzle",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_timer_query",                   false,                             true  },
-		{ "GL_ARB_vertex_array_object",           BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_vertex_type_2_10_10_10_rev",    false,                             true  },
-		{ "GL_ATI_meminfo",                       false,                             true  },
-		{ "GL_CHROMIUM_framebuffer_multisample",  false,                             true  },
-		{ "GL_CHROMIUM_texture_compression_dxt3", false,                             true  },
-		{ "GL_CHROMIUM_texture_compression_dxt5", false,                             true  },
-		{ "GL_EXT_bgra",                          false,                             true  },
-		{ "GL_EXT_blend_color",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_blend_minmax",                  BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_blend_subtract",                BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_framebuffer_blit",              BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_framebuffer_sRGB",              false,                             true  },
-		{ "GL_EXT_occlusion_query_boolean",       false,                             true  },
-		{ "GL_EXT_texture_compression_dxt1",      false,                             true  },
-		{ "GL_EXT_texture_compression_latc",      false,                             true  },
-		{ "GL_EXT_texture_compression_rgtc",      BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_texture_compression_s3tc",      false,                             true  },
-		{ "GL_EXT_texture_filter_anisotropic",    false,                             true  },
-		{ "GL_EXT_texture_format_BGRA8888",       false,                             true  },
-		{ "GL_EXT_texture_sRGB",                  false,                             true  },
-		{ "GL_EXT_texture_storage",               false,                             true  },
-		{ "GL_EXT_texture_swizzle",               false,                             true  },
-		{ "GL_EXT_texture_type_2_10_10_10_REV",   false,                             true  },
-		{ "GL_EXT_timer_query",                   false,                             true  },
-		{ "GL_NVX_gpu_memory_info",               false,                             true  },
-		{ "GL_OES_get_program_binary",            false,                             false },
-		{ "GL_OES_rgb8_rgba8",                    false,                             true  },
-		{ "GL_OES_standard_derivatives",          false,                             true  },
-		{ "GL_OES_texture_float",                 false,                             true  },
-		{ "GL_OES_texture_float_linear",          false,                             true  },
-		{ "GL_OES_texture_half_float",            false,                             true  },
-		{ "GL_OES_texture_half_float_linear",     false,                             true  },
-		{ "GL_OES_vertex_array_object",           false,                             !BX_PLATFORM_IOS },
-		{ "GL_OES_vertex_half_float",             false,                             true  },
-		{ "GL_OES_vertex_type_10_10_10_2",        false,                             true  },
+		{ "GL_ANGLE_instanced_arrays",             false,                             true  },
+		{ "GL_ANGLE_translated_shader_source",     false,                             true  },
+		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_framebuffer_sRGB",               false,                             true  },
+		{ "GL_ARB_get_program_binary",             BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
+		{ "GL_ARB_half_float_vertex",              false,                             true  },
+		{ "GL_ARB_instanced_arrays",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_ARB_multisample",                    false,                             true  },
+		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_seamless_cube_map",              BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_texture_float",                  BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_texture_multisample",            false,                             true  },
+		{ "GL_ARB_texture_swizzle",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_ARB_timer_query",                    false,                             true  },
+		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
+		{ "GL_ATI_meminfo",                        false,                             true  },
+		{ "GL_CHROMIUM_framebuffer_multisample",   false,                             true  },
+		{ "GL_CHROMIUM_texture_compression_dxt3",  false,                             true  },
+		{ "GL_CHROMIUM_texture_compression_dxt5",  false,                             true  },
+		{ "GL_EXT_bgra",                           false,                             true  },
+		{ "GL_EXT_blend_color",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_framebuffer_sRGB",               false,                             true  },
+		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
+		{ "GL_EXT_texture_compression_dxt1",       false,                             true  },
+		{ "GL_EXT_texture_compression_latc",       false,                             true  },
+		{ "GL_EXT_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_texture_compression_s3tc",       false,                             true  },
+		{ "GL_EXT_texture_filter_anisotropic",     false,                             true  },
+		{ "GL_EXT_texture_format_BGRA8888",        false,                             true  },
+		{ "GL_EXT_texture_sRGB",                   false,                             true  },
+		{ "GL_EXT_texture_storage",                false,                             true  },
+		{ "GL_EXT_texture_swizzle",                false,                             true  },
+		{ "GL_EXT_texture_type_2_10_10_10_REV",    false,                             true  },
+		{ "GL_EXT_timer_query",                    false,                             true  },
+		{ "GL_IMG_multisampled_render_to_texture", false,                             true  },
+		{ "GL_IMG_shader_binary",                  false,                             true  },
+		{ "GL_IMG_texture_compression_pvrtc",      false,                             true  },
+		{ "GL_IMG_texture_format_BGRA8888",        false,                             true  },
+		{ "GL_NVX_gpu_memory_info",                false,                             true  },
+		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
+		{ "GL_OES_depth_texture",                  false,                             true  },
+		{ "GL_OES_get_program_binary",             false,                             false },
+		{ "GL_OES_rgb8_rgba8",                     false,                             true  },
+		{ "GL_OES_standard_derivatives",           false,                             true  },
+		{ "GL_OES_texture_float",                  false,                             true  },
+		{ "GL_OES_texture_float_linear",           false,                             true  },
+		{ "GL_OES_texture_half_float",             false,                             true  },
+		{ "GL_OES_texture_half_float_linear",      false,                             true  },
+		{ "GL_OES_vertex_array_object",            false,                             !BX_PLATFORM_IOS },
+		{ "GL_OES_vertex_half_float",              false,                             true  },
+		{ "GL_OES_vertex_type_10_10_10_2",         false,                             true  },
 	};
 
 #if BGFX_CONFIG_RENDERER_OPENGLES3
@@ -665,7 +677,9 @@ namespace bgfx
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags)
 		{
-#if !BGFX_CONFIG_RENDERER_OPENGLES2
+#if BGFX_CONFIG_RENDERER_OPENGLES2
+			BX_UNUSED(_stage, _numMips, _flags);
+#else
 			if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
 			{
 				GLuint sampler = m_samplerStateCache.find(_flags);
@@ -697,7 +711,7 @@ namespace bgfx
 			{
 				GL_CHECK(glBindSampler(_stage, 0) );
 			}
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES2
+#endif // BGFX_CONFIG_RENDERER_OPENGLES2
 		}
 
 		void updateCapture()
@@ -1373,18 +1387,18 @@ namespace bgfx
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
-		Dds dds;
+		ImageContainer imageContainer;
 
-		if (parseDds(dds, _mem) )
+		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			uint8_t numMips = dds.m_numMips;
+			uint8_t numMips = imageContainer.m_numMips;
 
-			if (dds.m_cubeMap)
+			if (imageContainer.m_cubeMap)
 			{
 				init(GL_TEXTURE_CUBE_MAP, numMips, _flags);
 			}
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-			else if (dds.m_depth > 1)
+			else if (imageContainer.m_depth > 1)
 			{
 				init(GL_TEXTURE_3D, numMips, _flags);
 			}
@@ -1394,23 +1408,23 @@ namespace bgfx
 				init(GL_TEXTURE_2D, numMips, _flags);
 			}
 
-			const TextureFormatInfo& tfi = s_textureFormat[dds.m_type];
+			const TextureFormatInfo& tfi = s_textureFormat[imageContainer.m_type];
 			GLenum internalFmt = tfi.m_internalFmt;
 			m_fmt = tfi.m_fmt;
 			m_type = tfi.m_type;
 
 			GLenum target = m_target;
-			if (dds.m_cubeMap)
+			if (imageContainer.m_cubeMap)
 			{
 				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 			}
 
 			if (!tfi.m_supported
-			||  TextureFormat::Unknown < dds.m_type)
+			||  TextureFormat::Unknown < imageContainer.m_type)
 			{
-				uint8_t textureFormat = dds.m_type;
+				TextureFormat::Enum textureFormat = imageContainer.m_type;
 				bool decompress = TextureFormat::Unknown > textureFormat;
-				uint32_t bpp = tfi.m_bpp;
+				uint32_t bpp = getBitsPerPixel(imageContainer.m_type);
 
 				if (decompress)
 				{
@@ -1419,7 +1433,7 @@ namespace bgfx
 					internalFmt = tfi.m_internalFmt;
 					m_fmt = tfi.m_fmt;
 					m_type = tfi.m_type;
-					bpp = tfi.m_bpp;
+					bpp = getBitsPerPixel(textureFormat);
 				}
 
 				bool swizzle = GL_RGBA == m_fmt;
@@ -1434,13 +1448,13 @@ namespace bgfx
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-				uint8_t* bits = (uint8_t*)g_realloc(NULL, dds.m_width*dds.m_height*bpp/8);
+				uint8_t* bits = (uint8_t*)g_realloc(NULL, imageContainer.m_width*imageContainer.m_height*bpp/8);
 
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width = dds.m_width;
-					uint32_t height = dds.m_height;
-					uint32_t depth = dds.m_depth;
+					uint32_t width = imageContainer.m_width;
+					uint32_t height = imageContainer.m_height;
+					uint32_t depth = imageContainer.m_depth;
 
 					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
@@ -1449,7 +1463,7 @@ namespace bgfx
 						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, side, lod, _mem, mip) )
+						if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
 						{
 							mip.decode(bits);
 
@@ -1483,11 +1497,11 @@ namespace bgfx
 			{
 				m_compressed = true;
 
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width  = dds.m_width;
-					uint32_t height = dds.m_height;
-					uint32_t depth  = dds.m_depth;
+					uint32_t width  = imageContainer.m_width;
+					uint32_t height = imageContainer.m_height;
+					uint32_t depth  = imageContainer.m_depth;
 
 					for (uint32_t ii = 0, num = numMips; ii < num; ++ii)
 					{
@@ -1496,7 +1510,7 @@ namespace bgfx
 						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, side, ii, _mem, mip) )
+						if (imageGetRawData(imageContainer, side, ii, _mem->data, _mem->size, mip) )
 						{
 							compressedTexImage(target+side
 								, ii
@@ -1558,7 +1572,7 @@ namespace bgfx
 					target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 				}
 
-				uint32_t bpp = tfi.m_bpp;
+				uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
 				uint8_t* data = NULL != tc.m_mem ? tc.m_mem->data : NULL;
 				uint32_t min = m_compressed ? 4 : 1;
 				bool swizzle = GL_RGBA == m_fmt;
@@ -2462,6 +2476,7 @@ namespace bgfx
 			;
 		s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
 		s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
+		s_textureFormat[TextureFormat::ETC1].m_supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
 
 		s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_vertex_array_object].m_supported

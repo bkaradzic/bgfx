@@ -307,6 +307,7 @@ namespace bgfx
 			BC3, // DXT5
 			BC4, // LATC1/ATI1
 			BC5, // LATC2/ATI2
+			ETC1,
 			Unknown,
 			L8,
 			BGRX8,

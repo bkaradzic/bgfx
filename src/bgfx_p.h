@@ -72,7 +72,7 @@ namespace bgfx
 #include <bx/string.h>
 #include <bx/os.h>
 
-#include "dds.h"
+#include "image.h"
 
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
@@ -230,7 +230,7 @@ namespace bgfx
 	extern FreeFn g_free;
 
 	void release(const Memory* _mem);
-	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false);
+	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
 
@@ -275,7 +275,7 @@ namespace bgfx
 		return _offset+align-(_offset%align);
 	}
 
-	BX_FORCE_INLINE uint32_t castfu(float _value)
+	inline uint32_t castfu(float _value)
 	{
 		union {	float fl; uint32_t ui; } un;
 		un.fl = _value;
@@ -2138,15 +2138,15 @@ namespace bgfx
 		{
 			if (NULL != _info)
 			{
-				Dds dds;
-				if (parseDds(dds, _mem) )
+				ImageContainer imageContainer;
+				if (imageParse(imageContainer, _mem->data, _mem->size) )
 				{
 					calcTextureSize(*_info
-						, (uint16_t)dds.m_width
-						, (uint16_t)dds.m_height
-						, (uint16_t)dds.m_depth
-						, dds.m_numMips
-						, dds.m_type
+						, (uint16_t)imageContainer.m_width
+						, (uint16_t)imageContainer.m_height
+						, (uint16_t)imageContainer.m_depth
+						, imageContainer.m_numMips
+						, imageContainer.m_type
 						);
 				}
 				else

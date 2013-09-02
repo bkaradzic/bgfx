@@ -11,7 +11,7 @@
 #include "bgfx_p.h"
 using namespace bgfx;
 
-#include "dds.h"
+#include "image.h"
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
@@ -83,47 +83,45 @@ namespace bgfx
 	}
 }
 
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
 int main(int _argc, const char* _argv[])
 {
 	bx::CommandLine cmdLine(_argc, _argv);
 
-	FILE* file = fopen(_argv[1], "rb");
-	uint32_t size = fsize(file);
+	const char* inputFileName = cmdLine.findOption('i');
+
+	if (NULL == inputFileName)
+	{
+		return 0;
+	}
+
+	bx::CrtFileReader reader;
+	bx::open(&reader, inputFileName);
+	uint32_t size = (uint32_t)bx::getSize(&reader);
 	const Memory* mem = alloc(size);
-	size_t readSize = fread(mem->data, 1, size, file);
-	BX_UNUSED(readSize);
-	fclose(file);
+	bx::read(&reader, mem->data, mem->size);
+	bx::close(&reader);
 
-	Dds dds;
+	ImageContainer imageContainer;
 
-	if (parseDds(dds, mem) )
+	if (imageParse(imageContainer, mem->data, mem->size) )
 	{
 		bool decompress = cmdLine.hasArg('d');
 
 		if (decompress
-		||  0 == dds.m_type)
+		||  0 == imageContainer.m_type)
 		{
-			for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				uint32_t width = dds.m_width;
-				uint32_t height = dds.m_height;
+				uint32_t width = imageContainer.m_width;
+				uint32_t height = imageContainer.m_height;
 
-				for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+				for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 				{
 					width = bx::uint32_max(1, width);
 					height = bx::uint32_max(1, height);
 
 					Mip mip;
-					if (getRawImageData(dds, side, lod, mem, mip) )
+					if (imageGetRawData(imageContainer, side, lod, mem->data, mem->size, mip) )
 					{
 						uint32_t dstpitch = width*4;
 						uint8_t* bits = (uint8_t*)malloc(dstpitch*height);
@@ -169,16 +167,19 @@ int main(int _argc, const char* _argv[])
 		}
 		else
 		{
-			for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+			for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 			{
 				Mip mip;
-				if (getRawImageData(dds, 0, lod, mem, mip) )
+				if (imageGetRawData(imageContainer, 0, lod, mem->data, mem->size, mip) )
 				{
 					char filePath[256];
 					bx::snprintf(filePath, sizeof(filePath), "mip%d.bin", lod);
-					file = fopen(filePath, "wb");
-					fwrite(mip.m_data, 1, mip.m_size, file);
-					fclose(file);
+
+					bx::CrtFileWriter writer;
+					bx::open(&writer, filePath);
+					printf("mip%d, size %d\n", lod, mip.m_size);
+					bx::write(&writer, mip.m_data, mip.m_size);
+					bx::close(&writer);
 				}
 			}
 		}

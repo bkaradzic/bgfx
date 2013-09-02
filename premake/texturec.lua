@@ -14,7 +14,7 @@ project "texturec"
 	}
 
 	files {
-		BGFX_DIR .. "src/dds.*",
+		BGFX_DIR .. "src/image.*",
 		BGFX_DIR .. "tools/texturec/**.cpp",
 		BGFX_DIR .. "tools/texturec/**.h",
 	}

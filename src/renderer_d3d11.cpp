@@ -172,7 +172,6 @@ namespace bgfx
 	struct TextureFormatInfo
 	{
 		DXGI_FORMAT m_fmt;
-		uint8_t m_bpp;
 	};
 
 #ifndef DXGI_FORMAT_B4G4R4A4_UNORM
@@ -184,21 +183,22 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ DXGI_FORMAT_BC1_UNORM,          4  },
-		{ DXGI_FORMAT_BC2_UNORM,          8  },
-		{ DXGI_FORMAT_BC3_UNORM,          8  },
-		{ DXGI_FORMAT_BC4_UNORM,          4  },
-		{ DXGI_FORMAT_BC5_UNORM,          8  },
-		{ DXGI_FORMAT_UNKNOWN,            0  },
-		{ DXGI_FORMAT_R8_UNORM,           8  },
-		{ DXGI_FORMAT_B8G8R8A8_UNORM,     32 },
-		{ DXGI_FORMAT_B8G8R8A8_UNORM,     32 },
-		{ DXGI_FORMAT_R16G16B16A16_UNORM, 64 },
-		{ DXGI_FORMAT_R16G16B16A16_FLOAT, 64 },
-		{ DXGI_FORMAT_B5G6R5_UNORM,       16 },
-		{ DXGI_FORMAT_B4G4R4A4_UNORM,     16 },
-		{ DXGI_FORMAT_B5G5R5A1_UNORM,     16 },
-		{ DXGI_FORMAT_R10G10B10A2_UNORM,  32 },
+		{ DXGI_FORMAT_BC1_UNORM          },
+		{ DXGI_FORMAT_BC2_UNORM          },
+		{ DXGI_FORMAT_BC3_UNORM          },
+		{ DXGI_FORMAT_BC4_UNORM          },
+		{ DXGI_FORMAT_BC5_UNORM          },
+		{ DXGI_FORMAT_UNKNOWN            },
+		{ DXGI_FORMAT_UNKNOWN            },
+		{ DXGI_FORMAT_R8_UNORM           },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM     },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM     },
+		{ DXGI_FORMAT_R16G16B16A16_UNORM },
+		{ DXGI_FORMAT_R16G16B16A16_FLOAT },
+		{ DXGI_FORMAT_B5G6R5_UNORM       },
+		{ DXGI_FORMAT_B4G4R4A4_UNORM     },
+		{ DXGI_FORMAT_B5G5R5A1_UNORM     },
+		{ DXGI_FORMAT_R10G10B10A2_UNORM  },
 	};
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =
@@ -1630,17 +1630,19 @@ namespace bgfx
 	{
 		m_sampler = s_renderCtx.getSamplerState(_flags);
 
-		Dds dds;
+		ImageContainer imageContainer;
 
-		if (parseDds(dds, _mem) )
+		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			bool decompress = false;
+			bool decompress = false
+				|| (TextureFormat::ETC1 == imageContainer.m_type)
+				;
 
-			if (dds.m_cubeMap)
+			if (imageContainer.m_cubeMap)
 			{
 				m_type = TextureCube;
 			}
-			else if (dds.m_depth > 1)
+			else if (imageContainer.m_depth > 1)
 			{
 				m_type = Texture3D;
 			}
@@ -1649,25 +1651,28 @@ namespace bgfx
 				m_type = Texture2D;
 			}
 
-			uint32_t numSrd = dds.m_numMips*(dds.m_cubeMap ? 6 : 1);
+			TextureFormat::Enum textureFormat = decompress ? TextureFormat::BGRA8 : imageContainer.m_type;
+			uint32_t numSrd = imageContainer.m_numMips*(imageContainer.m_cubeMap ? 6 : 1);
 			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
 			bool convert = false;
 
-			m_numMips = dds.m_numMips;
+			m_numMips = imageContainer.m_numMips;
 
 			if (decompress
-			||  TextureFormat::Unknown < dds.m_type)
+			||  TextureFormat::Unknown < imageContainer.m_type)
 			{
-				uint32_t bpp = s_textureFormat[dds.m_type].m_bpp;
-				convert = TextureFormat::BGRX8 == dds.m_type;
+				uint32_t bpp = getBitsPerPixel(textureFormat);
+				convert = decompress
+					|| TextureFormat::BGRX8 == textureFormat
+					;
 
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					uint32_t width  = dds.m_width;
-					uint32_t height = dds.m_height;
-					uint32_t depth  = dds.m_depth;
+					uint32_t width  = imageContainer.m_width;
+					uint32_t height = imageContainer.m_height;
+					uint32_t depth  = imageContainer.m_depth;
 
 					for (uint32_t lod = 0, num = m_numMips; lod < num; ++lod)
 					{
@@ -1676,7 +1681,7 @@ namespace bgfx
 						depth  = bx::uint32_max(1, depth);
 
 						Mip mip;
-						if (getRawImageData(dds, side, lod, _mem, mip) )
+						if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
 						{
 							if (convert)
 							{
@@ -1704,15 +1709,15 @@ namespace bgfx
 			}
 			else
 			{
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
 					for (uint32_t lod = 0, num = m_numMips; lod < num; ++lod)
 					{
 						Mip mip;
-						if (getRawImageData(dds, side, lod, _mem, mip) )
+						if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
 						{
 							srd[kk].pSysMem = mip.m_data;
-							if (TextureFormat::Unknown > dds.m_type)
+							if (TextureFormat::Unknown > imageContainer.m_type)
 							{
 								srd[kk].SysMemPitch = (mip.m_width/4)*mip.m_blockSize;
 								srd[kk].SysMemSlicePitch = (mip.m_height/4)*srd[kk].SysMemPitch;
@@ -1731,7 +1736,7 @@ namespace bgfx
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
 			memset(&srvd, 0, sizeof(srvd) );
-			srvd.Format = s_textureFormat[dds.m_type].m_fmt;
+			srvd.Format = s_textureFormat[textureFormat].m_fmt;
 
 			switch (m_type)
 			{
@@ -1739,29 +1744,29 @@ namespace bgfx
 			case TextureCube:
 				{
 					D3D11_TEXTURE2D_DESC desc;
-					desc.Width = dds.m_width;
-					desc.Height = dds.m_height;
-					desc.MipLevels = dds.m_numMips;
-					desc.Format = s_textureFormat[dds.m_type].m_fmt;
+					desc.Width = imageContainer.m_width;
+					desc.Height = imageContainer.m_height;
+					desc.MipLevels = imageContainer.m_numMips;
+					desc.Format = srvd.Format;
 					desc.SampleDesc.Count = 1;
 					desc.SampleDesc.Quality = 0;
 					desc.Usage = D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
 
-					if (dds.m_cubeMap)
+					if (imageContainer.m_cubeMap)
 					{
 						desc.ArraySize = 6;
 						desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-						srvd.TextureCube.MipLevels = dds.m_numMips;
+						srvd.TextureCube.MipLevels = imageContainer.m_numMips;
 					}
 					else
 					{
 						desc.ArraySize = 1;
 						desc.MiscFlags = 0;
 						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-						srvd.Texture2D.MipLevels = dds.m_numMips;
+						srvd.Texture2D.MipLevels = imageContainer.m_numMips;
 					}
 
 					DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, srd, &m_texture2d) );
@@ -1771,18 +1776,18 @@ namespace bgfx
 			case Texture3D:
 				{
 					D3D11_TEXTURE3D_DESC desc;
-					desc.Width = dds.m_width;
-					desc.Height = dds.m_height;
-					desc.Depth = dds.m_depth;
-					desc.MipLevels = dds.m_numMips;
-					desc.Format = s_textureFormat[dds.m_type].m_fmt;
+					desc.Width = imageContainer.m_width;
+					desc.Height = imageContainer.m_height;
+					desc.Depth = imageContainer.m_depth;
+					desc.MipLevels = imageContainer.m_numMips;
+					desc.Format = srvd.Format;
 					desc.Usage = D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
 					desc.MiscFlags = 0;
 
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-					srvd.Texture3D.MipLevels = dds.m_numMips;
+					srvd.Texture3D.MipLevels = imageContainer.m_numMips;
 
 					DX_CHECK(s_renderCtx.m_device->CreateTexture3D(&desc, srd, &m_texture3d) );
 				}
@@ -1794,9 +1799,9 @@ namespace bgfx
 			if (convert)
 			{
 				kk = 0;
-				for (uint8_t side = 0, numSides = dds.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					for (uint32_t lod = 0, num = dds.m_numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 					{
 						g_free(const_cast<void*>(srd[kk].pSysMem) );
 						++kk;
@@ -1854,7 +1859,7 @@ namespace bgfx
 					srvd.Texture2D.MipLevels = tc.m_numMips;
 
 					D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(tc.m_numMips*sizeof(D3D11_SUBRESOURCE_DATA) );
-					uint32_t bpp = s_textureFormat[tc.m_format].m_bpp;
+					uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
 					uint8_t* data = tc.m_mem->data;
 
 					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
