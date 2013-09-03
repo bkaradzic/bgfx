@@ -738,12 +738,11 @@ namespace bgfx
 		{
 			if (NULL != m_capture)
 			{
-				GLint fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 				GL_CHECK(glReadPixels(0
 					, 0
 					, m_resolution.m_width
 					, m_resolution.m_height
-					, fmt
+					, m_readPixelsFmt
 					, GL_UNSIGNED_BYTE
 					, m_capture
 					) );
@@ -756,7 +755,6 @@ namespace bgfx
 		{
 			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
 			uint8_t* data = (uint8_t*)g_realloc(NULL, length);
-			GLint fmt = s_extension[Extension::EXT_texture_format_BGRA8888].m_supported ? GL_BGRA_EXT : GL_RGBA;
 
 			uint32_t width = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
@@ -765,12 +763,12 @@ namespace bgfx
 				, 0
 				, width
 				, height
-				, fmt
+				, m_readPixelsFmt
 				, GL_UNSIGNED_BYTE
 				, data
 				) );
 
-			if (GL_RGBA == fmt)
+			if (GL_RGBA == m_readPixelsFmt)
 			{
 				imageSwizzleBgra8(width, height, data, data);
 			}
@@ -862,6 +860,7 @@ namespace bgfx
 		PostSwapBuffersFn m_postSwapBuffers;
 		uint64_t m_hash;
 
+		GLenum m_readPixelsFmt;
 		GLuint m_backBufferFbo;
 		GLuint m_msaaBackBufferFbo;
 		GLuint m_msaaBackBufferRbos[2];
@@ -2490,6 +2489,7 @@ namespace bgfx
 		s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_get_program_binary].m_supported
 			|| s_extension[Extension::OES_get_program_binary].m_supported
+			|| s_extension[Extension::IMG_shader_binary].m_supported
 			;
 
 		s_renderCtx.m_textureSwizzleSupport = false
@@ -2509,9 +2509,15 @@ namespace bgfx
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
+		s_renderCtx.m_readPixelsFmt = GL_RGBA;
+
 		if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
 		||  s_extension[Extension::EXT_bgra].m_supported)
 		{
+#if BGFX_CONFIG_RENDERER_OPENGL
+			s_renderCtx.m_readPixelsFmt = GL_BGRA_EXT;
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
 			s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
 			s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 
