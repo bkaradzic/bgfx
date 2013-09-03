@@ -274,8 +274,10 @@ cross-platform shaders.
 
 ### Texture Compiler (texturec)
 
-This tool doesn't currently exist. Use nvdxt, or any other tool that produces
-DDS textures for now.
+This tool doesn't currently exist. To produce DDS or KTX textures use:
+
+[.dds - nVidia Texture Tools - DDS Utilities](https://developer.nvidia.com/legacy-texture-tools)  
+[.ktx - Mali GPU Texture Compression Tool](http://malideveloper.arm.com/develop-for-mali/mali-gpu-texture-compression-tool/)
 
 ### Geometry Compiler (geometryc)
 
@@ -290,7 +292,7 @@ Todo
  - Occlusion queries.
  - DX11: MSAA.
  - Fullscreen mode.
- - GLES: Support for ETC1 and PVR compressed textures.
+ - GLES: Support for PVR compressed textures.
 
 Contact
 -------
