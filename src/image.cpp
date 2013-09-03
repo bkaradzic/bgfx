@@ -79,6 +79,13 @@
 #define KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG           0x8C01
 #define KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG          0x8C02
 #define KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG          0x8C03
+#define KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT             0x83F1
+#define KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT             0x83F2
+#define KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT             0x83F3
+#define KTX_COMPRESSED_LUMINANCE_LATC1_EXT            0x8C70
+#define KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT      0x8C72
+#define KTX_RGBA16                                    0x805B
+#define KTX_RGBA16F                                   0x881A
 
 namespace bgfx
 {
@@ -1011,6 +1018,48 @@ namespace bgfx
 			type = TextureFormat::ETC1;
 			bpp = 4;
 			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+			type = TextureFormat::BC1;
+			bpp = 4;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+			type = TextureFormat::BC2;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+			type = TextureFormat::BC3;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_LUMINANCE_LATC1_EXT:
+			type = TextureFormat::BC4;
+			bpp = 4;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+			type = TextureFormat::BC5;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_RGBA16:
+			type = TextureFormat::RGBA16;
+			blockSize = 8;
+			bpp = 64;
+			break;
+
+		case KTX_RGBA16F:
+			type = TextureFormat::RGBA16F;
+			blockSize = 8;
+			bpp = 64;
 			break;
 
 		case KTX_COMPRESSED_R11_EAC:
