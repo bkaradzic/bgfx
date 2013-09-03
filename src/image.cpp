@@ -80,9 +80,6 @@
 #define KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG          0x8C02
 #define KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG          0x8C03
 
-#define PKM_MAGIC       BX_MAKEFOURCC('P', 'K', 'M', 0)
-#define PKM_HEADER_SIZE 16
-
 namespace bgfx
 {
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst)
