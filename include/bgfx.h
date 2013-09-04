@@ -302,12 +302,14 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			BC1, // DXT1
-			BC2, // DXT3
-			BC3, // DXT5
-			BC4, // LATC1/ATI1
-			BC5, // LATC2/ATI2
-			ETC1,
+			BC1,   // DXT1
+			BC2,   // DXT3
+			BC3,   // DXT5
+			BC4,   // LATC1/ATI1
+			BC5,   // LATC2/ATI2
+			ETC1,  // ETC1_RGB8
+			PTC12, // PVRTC1_2BPP_RGBA
+			PTC14, // PVRTC1_4BPP_RGBA
 			Unknown,
 			L8,
 			BGRX8,

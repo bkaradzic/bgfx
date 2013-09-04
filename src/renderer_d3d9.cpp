@@ -193,7 +193,9 @@ namespace bgfx
 		{ D3DFMT_DXT5,           8 },
 		{ D3DFMT_ATI1,           4 },
 		{ D3DFMT_ATI2,           8 },
-		{ D3DFMT_UNKNOWN,        0 },
+		{ D3DFMT_UNKNOWN,        0 }, // ETC1
+		{ D3DFMT_UNKNOWN,        0 }, // PVRTC1_2BPP_RGBA
+		{ D3DFMT_UNKNOWN,        0 }, // PVRTC1_4BPP_RGBA
 		{ D3DFMT_UNKNOWN,        0 },
 		{ D3DFMT_L8,             8 },
 		{ D3DFMT_X8R8G8B8,      32 },
@@ -1515,7 +1517,7 @@ namespace bgfx
 			bool decompress = false
 				|| (TextureFormat::BC4  == imageContainer.m_type && !s_extendedFormats[ExtendedFormat::Ati1].m_supported)
 				|| (TextureFormat::BC5  == imageContainer.m_type && !s_extendedFormats[ExtendedFormat::Ati2].m_supported)
-				|| (TextureFormat::ETC1 == imageContainer.m_type)
+				|| (D3DFMT_UNKNOWN == tfi.m_fmt)
 				;
 
 			D3DFORMAT format = decompress ? D3DFMT_A8R8G8B8 : tfi.m_fmt;

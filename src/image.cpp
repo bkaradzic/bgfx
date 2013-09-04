@@ -9,6 +9,7 @@
 
 #include "image.h"
 
+// DDS
 #define DDS_MAGIC             BX_MAKEFOURCC('D', 'D', 'S', ' ')
 #define DDS_HEADER_SIZE       124
 #define DDS_IMAGE_DATA_OFFSET (DDS_HEADER_SIZE + 4)
@@ -61,6 +62,7 @@
 
 #define DDSCAPS2_VOLUME             0x00200000
 
+// KTX
 #define KTX_MAGIC       BX_MAKEFOURCC(0xAB, 'K', 'T', 'X')
 #define KTX_HEADER_SIZE 64
 
@@ -87,6 +89,28 @@
 #define KTX_RGBA16                                    0x805B
 #define KTX_RGBA16F                                   0x881A
 
+// PVR3
+#define PVR3_MAKE8CC(_a, _b, _c, _d, _e, _f, _g, _h) (uint64_t(BX_MAKEFOURCC(_a, _b, _c, _d) ) | (uint64_t(BX_MAKEFOURCC(_e, _f, _g, _h) )<<32) )
+
+#define PVR3_MAGIC            BX_MAKEFOURCC('P', 'V', 'R', 3)
+#define PVR3_HEADER_SIZE      52
+
+#define PVR3_PVRTC1_2BPP_RGB  0
+#define PVR3_PVRTC1_2BPP_RGBA 1
+#define PVR3_PVRTC1_4BPP_RGB  2
+#define PVR3_PVRTC1_4BPP_RGBA 3
+#define PVR3_ETC1             6
+#define PVR3_DXT1             7
+#define PVR3_DXT2             8
+#define PVR3_DXT3             9
+#define PVR3_DXT4             10
+#define PVR3_DXT5             11
+#define PVR3_BC4              12
+#define PVR3_BC5              13
+#define PVR3_RGBA16           PVR3_MAKE8CC('r', 'g', 'b', 'a', 16, 16, 16, 16)
+
+#define PVR3_CHANNEL_TYPE_FLOAT 12
+
 namespace bgfx
 {
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst)
@@ -98,7 +122,7 @@ namespace bgfx
 		}
 	}
 
-	void imageChessboard(uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1, void* _dst)
+	void imageCheckerboard(uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1, void* _dst)
 	{
 		uint32_t* dst = (uint32_t*)_dst;
 		for (uint32_t yy = 0; yy < _height; ++yy)
@@ -738,6 +762,11 @@ namespace bgfx
 					}
 				}
 				break;
+
+			default:
+				// Decompression not implemented... Make ugly red-yellow checkerboard texture.
+				imageCheckerboard(m_width, m_height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+				break;
 			}
 		}
 		else
@@ -927,10 +956,6 @@ namespace bgfx
 				bpp = 8;
 				break;
 
-	// 			type = TextureFormat::A8;
-	// 			bpp = 1;
-	// 			break;
-
 			default:
 				bpp = 0;
 				break;
@@ -983,29 +1008,29 @@ namespace bgfx
 		uint32_t glBaseInternalFormat;
 		bx::readHE(_reader, glBaseInternalFormat, fromLittleEndian);
 
-		uint32_t pixelWidth;
-		bx::readHE(_reader, pixelWidth, fromLittleEndian);
+		uint32_t width;
+		bx::readHE(_reader, width, fromLittleEndian);
 
-		uint32_t pixelHeight;
-		bx::readHE(_reader, pixelHeight, fromLittleEndian);
+		uint32_t height;
+		bx::readHE(_reader, height, fromLittleEndian);
 
-		uint32_t pixelDepth;
-		bx::readHE(_reader, pixelDepth, fromLittleEndian);
+		uint32_t depth;
+		bx::readHE(_reader, depth, fromLittleEndian);
 
 		uint32_t numberOfArrayElements;
 		bx::readHE(_reader, numberOfArrayElements, fromLittleEndian);
 
-		uint32_t numberOfFaces;
-		bx::readHE(_reader, numberOfFaces, fromLittleEndian);
+		uint32_t numFaces;
+		bx::readHE(_reader, numFaces, fromLittleEndian);
 
-		uint32_t numberOfMipmapLevels;
-		bx::readHE(_reader, numberOfMipmapLevels, fromLittleEndian);
+		uint32_t numMips;
+		bx::readHE(_reader, numMips, fromLittleEndian);
 
-		uint32_t bytesOfKeyValueData;
-		bx::readHE(_reader, bytesOfKeyValueData, fromLittleEndian);
+		uint32_t metaDataSize;
+		bx::readHE(_reader, metaDataSize, fromLittleEndian);
 
 		// skip meta garbage...
-		int64_t offset = bx::skip(_reader, bytesOfKeyValueData);
+		int64_t offset = bx::skip(_reader, metaDataSize);
 
 		uint8_t bpp = 0;
 		uint8_t blockSize = 1;
@@ -1014,12 +1039,6 @@ namespace bgfx
 
 		switch (glInternalFormat)
 		{
-		case KTX_ETC1_RGB8_OES:
-			type = TextureFormat::ETC1;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
 		case KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT:
 			type = TextureFormat::BC1;
 			bpp = 4;
@@ -1050,6 +1069,26 @@ namespace bgfx
 			blockSize = 4*4*bpp/8;
 			break;
 
+		case KTX_ETC1_RGB8_OES:
+			type = TextureFormat::ETC1;
+			bpp = 4;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:
+		case KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG:
+			type = TextureFormat::PTC12;
+			bpp = 2;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case KTX_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:
+		case KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG:
+			type = TextureFormat::PTC14;
+			bpp = 2;
+			blockSize = 4*4*bpp/8;
+			break;
+
 		case KTX_RGBA16:
 			type = TextureFormat::RGBA16;
 			blockSize = 8;
@@ -1072,25 +1111,143 @@ namespace bgfx
 		case KTX_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
 		case KTX_COMPRESSED_RGBA8_ETC2_EAC:
 		case KTX_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-		case KTX_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:
-		case KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:
-		case KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG:
-		case KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG:
 		default:
 			break;
 		}
 
 		_imageContainer.m_type = type;
 		_imageContainer.m_offset = (uint32_t)offset;
-		_imageContainer.m_width = pixelWidth;
-		_imageContainer.m_height = pixelHeight;
-		_imageContainer.m_depth = pixelDepth;
+		_imageContainer.m_width = width;
+		_imageContainer.m_height = height;
+		_imageContainer.m_depth = depth;
 		_imageContainer.m_blockSize = blockSize;
-		_imageContainer.m_numMips = numberOfMipmapLevels;
+		_imageContainer.m_numMips = numMips;
 		_imageContainer.m_bpp = bpp;
 		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap = numberOfFaces > 1;
+		_imageContainer.m_cubeMap = numFaces > 1;
 		_imageContainer.m_ktx = true;
+
+		return TextureFormat::Unknown != type;
+	}
+
+	bool imageParsePvr3(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
+	{
+		uint32_t flags;
+		bx::read(_reader, flags);
+
+		uint64_t pixelFormat;
+		bx::read(_reader, pixelFormat);
+
+		uint32_t colorSpace;
+		bx::read(_reader, colorSpace); // 0 - linearRGB, 1 - sRGB
+
+		uint32_t channelType;
+		bx::read(_reader, channelType);
+
+		uint32_t height;
+		bx::read(_reader, height);
+
+		uint32_t width;
+		bx::read(_reader, width);
+
+		uint32_t depth;
+		bx::read(_reader, depth);
+
+		uint32_t numSurfaces;
+		bx::read(_reader, numSurfaces);
+
+		uint32_t numFaces;
+		bx::read(_reader, numFaces);
+
+		uint32_t numMips;
+		bx::read(_reader, numMips);
+
+		uint32_t metaDataSize;
+		bx::read(_reader, metaDataSize);
+
+		// skip meta garbage...
+		int64_t offset = bx::skip(_reader, metaDataSize);
+
+		uint8_t bpp = 0;
+		uint8_t blockSize = 1;
+		TextureFormat::Enum type = TextureFormat::Unknown;
+		bool hasAlpha = false;
+
+		switch (pixelFormat)
+		{
+		case PVR3_PVRTC1_2BPP_RGB:
+		case PVR3_PVRTC1_2BPP_RGBA:
+			type = TextureFormat::PTC12;
+			bpp = 2;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_PVRTC1_4BPP_RGB:
+		case PVR3_PVRTC1_4BPP_RGBA:
+			type = TextureFormat::PTC14;
+			bpp = 2;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_ETC1:
+			type = TextureFormat::ETC1;
+			bpp = 4;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_DXT1:
+			type = TextureFormat::BC1;
+			bpp = 4;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_DXT2:
+		case PVR3_DXT3:
+			type = TextureFormat::BC2;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_DXT4:
+		case PVR3_DXT5:
+			type = TextureFormat::BC3;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_BC4:
+			type = TextureFormat::BC4;
+			bpp = 4;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_BC5:
+			type = TextureFormat::BC5;
+			bpp = 8;
+			blockSize = 4*4*bpp/8;
+			break;
+
+		case PVR3_RGBA16:
+			type = PVR3_CHANNEL_TYPE_FLOAT == channelType
+				 ? TextureFormat::RGBA16F
+				 : TextureFormat::RGBA16
+				 ;
+			blockSize = 8;
+			bpp = 64;
+			break;
+		}
+
+		_imageContainer.m_type = type;
+		_imageContainer.m_offset = (uint32_t)offset;
+		_imageContainer.m_width = width;
+		_imageContainer.m_height = height;
+		_imageContainer.m_depth = depth;
+		_imageContainer.m_blockSize = blockSize;
+		_imageContainer.m_numMips = numMips;
+		_imageContainer.m_bpp = bpp;
+		_imageContainer.m_hasAlpha = hasAlpha;
+		_imageContainer.m_cubeMap = numFaces > 1;
+		_imageContainer.m_ktx = false;
 
 		return TextureFormat::Unknown != type;
 	}
@@ -1107,6 +1264,10 @@ namespace bgfx
 		else if (KTX_MAGIC == magic)
 		{
 			return imageParseKtx(_imageContainer, _reader);
+		}
+		else if (PVR3_MAGIC == magic)
+		{
+			return imageParsePvr3(_imageContainer, _reader);
 		}
 
 		return false;

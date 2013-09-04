@@ -200,6 +200,8 @@ namespace bgfx
 		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_ZERO,                        false },
 		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                        false },
 		{ GL_ETC1_RGB8_OES,                        GL_ETC1_RGB8_OES,                        GL_ZERO,                        false },
+		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,     GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,     GL_ZERO,                        false },
+		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,     GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,     GL_ZERO,                        false },
 		{ GL_ZERO,                                 GL_ZERO,                                 GL_ZERO,                        true  },
 		{ GL_LUMINANCE,                            GL_LUMINANCE,                            GL_UNSIGNED_BYTE,               true  },
 		{ GL_RGBA,                                 GL_RGBA,                                 GL_UNSIGNED_BYTE,               true  },
@@ -218,6 +220,7 @@ namespace bgfx
 		{
 			ANGLE_instanced_arrays,
 			ANGLE_translated_shader_source,
+			APPLE_texture_format_BGRA8888,
 			ARB_debug_output,
 			ARB_depth_clamp,
 			ARB_framebuffer_sRGB,
@@ -256,13 +259,16 @@ namespace bgfx
 			EXT_texture_type_2_10_10_10_REV,
 			EXT_timer_query,
 			IMG_multisampled_render_to_texture,
+			IMG_read_format,
 			IMG_shader_binary,
 			IMG_texture_compression_pvrtc,
+			IMG_texture_compression_pvrtc2,
 			IMG_texture_format_BGRA8888,
 			NVX_gpu_memory_info,
 			OES_compressed_ETC1_RGB8_texture,
 			OES_depth_texture,
 			OES_get_program_binary,
+			OES_read_format,
 			OES_rgb8_rgba8,
 			OES_standard_derivatives,
 			OES_texture_float,
@@ -285,6 +291,7 @@ namespace bgfx
 	{
 		{ "GL_ANGLE_instanced_arrays",             false,                             true  },
 		{ "GL_ANGLE_translated_shader_source",     false,                             true  },
+		{ "GL_APPLE_texture_format_BGRA8888",      false,                             true  },
 		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_framebuffer_sRGB",               false,                             true  },
@@ -323,13 +330,16 @@ namespace bgfx
 		{ "GL_EXT_texture_type_2_10_10_10_REV",    false,                             true  },
 		{ "GL_EXT_timer_query",                    false,                             true  },
 		{ "GL_IMG_multisampled_render_to_texture", false,                             true  },
+		{ "GL_IMG_read_format",                    false,                             true  },
 		{ "GL_IMG_shader_binary",                  false,                             true  },
 		{ "GL_IMG_texture_compression_pvrtc",      false,                             true  },
+		{ "GL_IMG_texture_compression_pvrtc2",     false,                             true  },
 		{ "GL_IMG_texture_format_BGRA8888",        false,                             true  },
 		{ "GL_NVX_gpu_memory_info",                false,                             true  },
 		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
 		{ "GL_OES_depth_texture",                  false,                             true  },
-		{ "GL_OES_get_program_binary",             false,                             false },
+		{ "GL_OES_get_program_binary",             false,                             true  },
+		{ "GL_OES_read_format",                    false,                             true  },
 		{ "GL_OES_rgb8_rgba8",                     false,                             true  },
 		{ "GL_OES_standard_derivatives",           false,                             true  },
 		{ "GL_OES_texture_float",                  false,                             true  },
@@ -2475,7 +2485,13 @@ namespace bgfx
 			;
 		s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
 		s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
+
 		s_textureFormat[TextureFormat::ETC1].m_supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
+
+		bool pvr1Supported = s_extension[Extension::IMG_texture_compression_pvrtc ].m_supported;
+//		bool pvr2Supported = s_extension[Extension::IMG_texture_compression_pvrtc2].m_supported;
+		s_textureFormat[TextureFormat::PTC12].m_supported = pvr1Supported;
+		s_textureFormat[TextureFormat::PTC14].m_supported = pvr1Supported;
 
 		s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_vertex_array_object].m_supported
@@ -2509,10 +2525,20 @@ namespace bgfx
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
-		s_renderCtx.m_readPixelsFmt = GL_RGBA;
+		if (s_extension[Extension::IMG_read_format].m_supported
+		&&  s_extension[Extension::OES_read_format].m_supported)
+		{
+			s_renderCtx.m_readPixelsFmt = GL_BGRA_EXT;
+		}
+		else
+		{
+			s_renderCtx.m_readPixelsFmt = GL_RGBA;
+		}
 
 		if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
-		||  s_extension[Extension::EXT_bgra].m_supported)
+		||  s_extension[Extension::EXT_bgra].m_supported
+		||  s_extension[Extension::IMG_texture_format_BGRA8888].m_supported
+		||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 		{
 #if BGFX_CONFIG_RENDERER_OPENGL
 			s_renderCtx.m_readPixelsFmt = GL_BGRA_EXT;

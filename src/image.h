@@ -43,7 +43,7 @@ namespace bgfx
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst);
 
 	///
-	void imageChessboard(uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1, void* _dst);
+	void imageCheckerboard(uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1, void* _dst);
 
 	///
 	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);

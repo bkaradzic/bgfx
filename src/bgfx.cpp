@@ -1001,6 +1001,8 @@ namespace bgfx
 		4,  // BC4
 		8,  // BC5
 		4,  // ETC1
+		2,  // PVRTC1_2BPP_RGBA
+		4,  // PVRTC1_2BPP_RGBA
 		0,  // Unknown
 		8,  // L8
 		32, // BGRX8

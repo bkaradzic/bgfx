@@ -188,7 +188,9 @@ namespace bgfx
 		{ DXGI_FORMAT_BC3_UNORM          },
 		{ DXGI_FORMAT_BC4_UNORM          },
 		{ DXGI_FORMAT_BC5_UNORM          },
-		{ DXGI_FORMAT_UNKNOWN            },
+		{ DXGI_FORMAT_UNKNOWN            }, // ETC1
+		{ DXGI_FORMAT_UNKNOWN            }, // PVRTC1_2BPP_RGBA
+		{ DXGI_FORMAT_UNKNOWN            }, // PVRTC1_4BPP_RGBA
 		{ DXGI_FORMAT_UNKNOWN            },
 		{ DXGI_FORMAT_R8_UNORM           },
 		{ DXGI_FORMAT_B8G8R8A8_UNORM     },
@@ -1634,9 +1636,7 @@ namespace bgfx
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			bool decompress = false
-				|| (TextureFormat::ETC1 == imageContainer.m_type)
-				;
+			bool decompress = DXGI_FORMAT_UNKNOWN == s_textureFormat[imageContainer.m_type].m_fmt;
 
 			if (imageContainer.m_cubeMap)
 			{
