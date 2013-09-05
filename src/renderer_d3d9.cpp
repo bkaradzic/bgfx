@@ -188,24 +188,31 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ D3DFMT_DXT1,           4 },
-		{ D3DFMT_DXT3,           8 },
-		{ D3DFMT_DXT5,           8 },
-		{ D3DFMT_ATI1,           4 },
-		{ D3DFMT_ATI2,           8 },
+		{ D3DFMT_DXT1,           4 }, // BC1 
+		{ D3DFMT_DXT3,           8 }, // BC2
+		{ D3DFMT_DXT5,           8 }, // BC3
+		{ D3DFMT_ATI1,           4 }, // BC4
+		{ D3DFMT_ATI2,           8 }, // BC5
 		{ D3DFMT_UNKNOWN,        0 }, // ETC1
-		{ D3DFMT_UNKNOWN,        0 }, // PVRTC1_2BPP_RGBA
-		{ D3DFMT_UNKNOWN,        0 }, // PVRTC1_4BPP_RGBA
-		{ D3DFMT_UNKNOWN,        0 },
-		{ D3DFMT_L8,             8 },
-		{ D3DFMT_X8R8G8B8,      32 },
-		{ D3DFMT_A8R8G8B8,      32 },
-		{ D3DFMT_A16B16G16R16,  64 },
-		{ D3DFMT_A16B16G16R16F, 64 },
-		{ D3DFMT_R5G6B5,        16 },
-		{ D3DFMT_A4R4G4B4,      16 },
-		{ D3DFMT_A1R5G5B5,      16 },
-		{ D3DFMT_A2B10G10R10,   32 },
+		{ D3DFMT_UNKNOWN,        0 }, // ETC2
+		{ D3DFMT_UNKNOWN,        0 }, // ETC2A
+		{ D3DFMT_UNKNOWN,        0 }, // ETC2A1
+		{ D3DFMT_UNKNOWN,        0 }, // PTC12
+		{ D3DFMT_UNKNOWN,        0 }, // PTC14
+		{ D3DFMT_UNKNOWN,        0 }, // PTC12A
+		{ D3DFMT_UNKNOWN,        0 }, // PTC14A
+		{ D3DFMT_UNKNOWN,        0 }, // PTC22
+		{ D3DFMT_UNKNOWN,        0 }, // PTC24
+		{ D3DFMT_UNKNOWN,        0 }, // Unknown
+		{ D3DFMT_L8,             8 }, // L8
+		{ D3DFMT_X8R8G8B8,      32 }, // BGRX8
+		{ D3DFMT_A8R8G8B8,      32 }, // BGRA8
+		{ D3DFMT_A16B16G16R16,  64 }, // RGBA16
+		{ D3DFMT_A16B16G16R16F, 64 }, // RGBA16F
+		{ D3DFMT_R5G6B5,        16 }, // R5G6B5
+		{ D3DFMT_A4R4G4B4,      16 }, // RGBA4
+		{ D3DFMT_A1R5G5B5,      16 }, // RGB5A1
+		{ D3DFMT_A2B10G10R10,   32 }, // RGB10A2
 	};
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =

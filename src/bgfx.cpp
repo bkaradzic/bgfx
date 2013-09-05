@@ -993,33 +993,6 @@ namespace bgfx
 		s_ctx.destroyProgram(_handle);
 	}
 
-	static const uint32_t s_bitsPerPixel[TextureFormat::Count] =
-	{
-		4,  // BC1
-		8,  // BC2
-		8,  // BC3
-		4,  // BC4
-		8,  // BC5
-		4,  // ETC1
-		2,  // PVRTC1_2BPP_RGBA
-		4,  // PVRTC1_2BPP_RGBA
-		0,  // Unknown
-		8,  // L8
-		32, // BGRX8
-		32, // BGRA8
-		64, // RGBA16
-		64, // RGBA16F
-		16, // R5G6B5
-		16, // RGBA4
-		16, // RGB5A1
-		32, // RGB10A2
-	};
-
-	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
-	{
-		return s_bitsPerPixel[_format];
-	}
-
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
 	{
 		_width   = bx::uint32_max(1, _width);
@@ -1031,7 +1004,7 @@ namespace bgfx
 		uint32_t height = _height;
 		uint32_t depth = _depth;
 
-		uint32_t bpp = s_bitsPerPixel[_format];
+		uint32_t bpp = getBitsPerPixel(_format);
 		uint32_t size = 0;
 
 		for (uint32_t lod = 0; lod < _numMips; ++lod)

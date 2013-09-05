@@ -183,24 +183,31 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ DXGI_FORMAT_BC1_UNORM          },
-		{ DXGI_FORMAT_BC2_UNORM          },
-		{ DXGI_FORMAT_BC3_UNORM          },
-		{ DXGI_FORMAT_BC4_UNORM          },
-		{ DXGI_FORMAT_BC5_UNORM          },
+		{ DXGI_FORMAT_BC1_UNORM          }, // BC1 
+		{ DXGI_FORMAT_BC2_UNORM          }, // BC2
+		{ DXGI_FORMAT_BC3_UNORM          }, // BC3
+		{ DXGI_FORMAT_BC4_UNORM          }, // BC4
+		{ DXGI_FORMAT_BC5_UNORM          }, // BC5
 		{ DXGI_FORMAT_UNKNOWN            }, // ETC1
-		{ DXGI_FORMAT_UNKNOWN            }, // PVRTC1_2BPP_RGBA
-		{ DXGI_FORMAT_UNKNOWN            }, // PVRTC1_4BPP_RGBA
-		{ DXGI_FORMAT_UNKNOWN            },
-		{ DXGI_FORMAT_R8_UNORM           },
-		{ DXGI_FORMAT_B8G8R8A8_UNORM     },
-		{ DXGI_FORMAT_B8G8R8A8_UNORM     },
-		{ DXGI_FORMAT_R16G16B16A16_UNORM },
-		{ DXGI_FORMAT_R16G16B16A16_FLOAT },
-		{ DXGI_FORMAT_B5G6R5_UNORM       },
-		{ DXGI_FORMAT_B4G4R4A4_UNORM     },
-		{ DXGI_FORMAT_B5G5R5A1_UNORM     },
-		{ DXGI_FORMAT_R10G10B10A2_UNORM  },
+		{ DXGI_FORMAT_UNKNOWN            }, // ETC2
+		{ DXGI_FORMAT_UNKNOWN            }, // ETC2A
+		{ DXGI_FORMAT_UNKNOWN            }, // ETC2A1
+		{ DXGI_FORMAT_UNKNOWN            }, // PTC12
+		{ DXGI_FORMAT_UNKNOWN            }, // PTC14
+		{ DXGI_FORMAT_UNKNOWN            }, // PTC12A
+		{ DXGI_FORMAT_UNKNOWN            }, // PTC14A
+		{ DXGI_FORMAT_UNKNOWN            }, // PTC22
+		{ DXGI_FORMAT_UNKNOWN            }, // PTC24
+		{ DXGI_FORMAT_UNKNOWN            }, // Unknown
+		{ DXGI_FORMAT_R8_UNORM           }, // L8
+		{ DXGI_FORMAT_B8G8R8A8_UNORM     }, // BGRX8
+		{ DXGI_FORMAT_B8G8R8A8_UNORM     }, // BGRA8
+		{ DXGI_FORMAT_R16G16B16A16_UNORM }, // RGBA16
+		{ DXGI_FORMAT_R16G16B16A16_FLOAT }, // RGBA16F
+		{ DXGI_FORMAT_B5G6R5_UNORM       }, // R5G6B5
+		{ DXGI_FORMAT_B4G4R4A4_UNORM     }, // RGBA4
+		{ DXGI_FORMAT_B5G5R5A1_UNORM     }, // RGB5A1
+		{ DXGI_FORMAT_R10G10B10A2_UNORM  }, // RGB10A2
 	};
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =

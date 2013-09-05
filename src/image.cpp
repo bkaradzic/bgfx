@@ -9,110 +9,42 @@
 
 #include "image.h"
 
-// DDS
-#define DDS_MAGIC             BX_MAKEFOURCC('D', 'D', 'S', ' ')
-#define DDS_HEADER_SIZE       124
-#define DDS_IMAGE_DATA_OFFSET (DDS_HEADER_SIZE + 4)
-
-#define DDS_DXT1 BX_MAKEFOURCC('D', 'X', 'T', '1')
-#define DDS_DXT2 BX_MAKEFOURCC('D', 'X', 'T', '2')
-#define DDS_DXT3 BX_MAKEFOURCC('D', 'X', 'T', '3')
-#define DDS_DXT4 BX_MAKEFOURCC('D', 'X', 'T', '4')
-#define DDS_DXT5 BX_MAKEFOURCC('D', 'X', 'T', '5')
-#define DDS_ATI1 BX_MAKEFOURCC('A', 'T', 'I', '1')
-#define DDS_BC4U BX_MAKEFOURCC('B', 'C', '4', 'U')
-#define DDS_ATI2 BX_MAKEFOURCC('A', 'T', 'I', '2')
-#define DDS_BC5U BX_MAKEFOURCC('B', 'C', '5', 'U')
-
-#define D3DFMT_A16B16G16R16  36
-#define D3DFMT_A16B16G16R16F 113
-
-#define DDSD_CAPS                   0x00000001
-#define DDSD_HEIGHT                 0x00000002
-#define DDSD_WIDTH                  0x00000004
-#define DDSD_PITCH                  0x00000008
-#define DDSD_PIXELFORMAT            0x00001000
-#define DDSD_MIPMAPCOUNT            0x00020000
-#define DDSD_LINEARSIZE             0x00080000
-#define DDSD_DEPTH                  0x00800000
-
-#define DDPF_ALPHAPIXELS            0x00000001
-#define DDPF_ALPHA                  0x00000002
-#define DDPF_FOURCC                 0x00000004
-#define DDPF_INDEXED                0x00000020
-#define DDPF_RGB                    0x00000040
-#define DDPF_YUV                    0x00000200
-#define DDPF_LUMINANCE              0x00020000
-
-#define DDSCAPS_COMPLEX             0x00000008
-#define DDSCAPS_TEXTURE             0x00001000
-#define DDSCAPS_MIPMAP              0x00400000
-
-#define DDSCAPS2_CUBEMAP            0x00000200
-#define DDSCAPS2_CUBEMAP_POSITIVEX  0x00000400
-#define DDSCAPS2_CUBEMAP_NEGATIVEX  0x00000800
-#define DDSCAPS2_CUBEMAP_POSITIVEY  0x00001000
-#define DDSCAPS2_CUBEMAP_NEGATIVEY  0x00002000
-#define DDSCAPS2_CUBEMAP_POSITIVEZ  0x00004000
-#define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
-
-#define DDS_CUBEMAP_ALLFACES (DDSCAPS2_CUBEMAP_POSITIVEX|DDSCAPS2_CUBEMAP_NEGATIVEX \
-							 |DDSCAPS2_CUBEMAP_POSITIVEY|DDSCAPS2_CUBEMAP_NEGATIVEY \
-							 |DDSCAPS2_CUBEMAP_POSITIVEZ|DDSCAPS2_CUBEMAP_NEGATIVEZ)
-
-#define DDSCAPS2_VOLUME             0x00200000
-
-// KTX
-#define KTX_MAGIC       BX_MAKEFOURCC(0xAB, 'K', 'T', 'X')
-#define KTX_HEADER_SIZE 64
-
-#define KTX_ETC1_RGB8_OES                             0x8D64
-#define KTX_COMPRESSED_R11_EAC                        0x9270
-#define KTX_COMPRESSED_SIGNED_R11_EAC                 0x9271
-#define KTX_COMPRESSED_RG11_EAC                       0x9272
-#define KTX_COMPRESSED_SIGNED_RG11_EAC                0x9273
-#define KTX_COMPRESSED_RGB8_ETC2                      0x9274
-#define KTX_COMPRESSED_SRGB8_ETC2                     0x9275
-#define KTX_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2  0x9276
-#define KTX_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2 0x9277
-#define KTX_COMPRESSED_RGBA8_ETC2_EAC                 0x9278
-#define KTX_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC          0x9279
-#define KTX_COMPRESSED_RGB_PVRTC_4BPPV1_IMG           0x8C00
-#define KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG           0x8C01
-#define KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG          0x8C02
-#define KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG          0x8C03
-#define KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT             0x83F1
-#define KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT             0x83F2
-#define KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT             0x83F3
-#define KTX_COMPRESSED_LUMINANCE_LATC1_EXT            0x8C70
-#define KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT      0x8C72
-#define KTX_RGBA16                                    0x805B
-#define KTX_RGBA16F                                   0x881A
-
-// PVR3
-#define PVR3_MAKE8CC(_a, _b, _c, _d, _e, _f, _g, _h) (uint64_t(BX_MAKEFOURCC(_a, _b, _c, _d) ) | (uint64_t(BX_MAKEFOURCC(_e, _f, _g, _h) )<<32) )
-
-#define PVR3_MAGIC            BX_MAKEFOURCC('P', 'V', 'R', 3)
-#define PVR3_HEADER_SIZE      52
-
-#define PVR3_PVRTC1_2BPP_RGB  0
-#define PVR3_PVRTC1_2BPP_RGBA 1
-#define PVR3_PVRTC1_4BPP_RGB  2
-#define PVR3_PVRTC1_4BPP_RGBA 3
-#define PVR3_ETC1             6
-#define PVR3_DXT1             7
-#define PVR3_DXT2             8
-#define PVR3_DXT3             9
-#define PVR3_DXT4             10
-#define PVR3_DXT5             11
-#define PVR3_BC4              12
-#define PVR3_BC5              13
-#define PVR3_RGBA16           PVR3_MAKE8CC('r', 'g', 'b', 'a', 16, 16, 16, 16)
-
-#define PVR3_CHANNEL_TYPE_FLOAT 12
-
 namespace bgfx
 {
+	static const uint32_t s_bitsPerPixel[TextureFormat::Count] =
+	{
+		4,  // BC1
+		8,  // BC2
+		8,  // BC3
+		4,  // BC4
+		8,  // BC5
+		4,  // ETC1
+		4,  // ETC2
+		4,  // ETC2A
+		4,  // ETC2A1
+		2,  // PTC12
+		4,  // PTC14
+		2,  // PTC12A
+		4,  // PTC14A
+		2,  // PTC22
+		4,  // PTC24
+		0,  // Unknown
+		8,  // L8
+		32, // BGRX8
+		32, // BGRA8
+		64, // RGBA16
+		64, // RGBA16F
+		16, // R5G6B5
+		16, // RGBA4
+		16, // RGB5A1
+		32, // RGB10A2
+	};
+
+	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
+	{
+		return s_bitsPerPixel[_format];
+	}
+
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst)
 	{
 		uint32_t* dst = (uint32_t*)_dst;
@@ -800,6 +732,84 @@ namespace bgfx
 		}
 	}
 
+// DDS
+#define DDS_MAGIC             BX_MAKEFOURCC('D', 'D', 'S', ' ')
+#define DDS_HEADER_SIZE       124
+#define DDS_IMAGE_DATA_OFFSET (DDS_HEADER_SIZE + 4)
+
+#define DDS_DXT1 BX_MAKEFOURCC('D', 'X', 'T', '1')
+#define DDS_DXT2 BX_MAKEFOURCC('D', 'X', 'T', '2')
+#define DDS_DXT3 BX_MAKEFOURCC('D', 'X', 'T', '3')
+#define DDS_DXT4 BX_MAKEFOURCC('D', 'X', 'T', '4')
+#define DDS_DXT5 BX_MAKEFOURCC('D', 'X', 'T', '5')
+#define DDS_ATI1 BX_MAKEFOURCC('A', 'T', 'I', '1')
+#define DDS_BC4U BX_MAKEFOURCC('B', 'C', '4', 'U')
+#define DDS_ATI2 BX_MAKEFOURCC('A', 'T', 'I', '2')
+#define DDS_BC5U BX_MAKEFOURCC('B', 'C', '5', 'U')
+
+#define D3DFMT_A16B16G16R16  36
+#define D3DFMT_A16B16G16R16F 113
+
+#define DDSD_CAPS                   0x00000001
+#define DDSD_HEIGHT                 0x00000002
+#define DDSD_WIDTH                  0x00000004
+#define DDSD_PITCH                  0x00000008
+#define DDSD_PIXELFORMAT            0x00001000
+#define DDSD_MIPMAPCOUNT            0x00020000
+#define DDSD_LINEARSIZE             0x00080000
+#define DDSD_DEPTH                  0x00800000
+
+#define DDPF_ALPHAPIXELS            0x00000001
+#define DDPF_ALPHA                  0x00000002
+#define DDPF_FOURCC                 0x00000004
+#define DDPF_INDEXED                0x00000020
+#define DDPF_RGB                    0x00000040
+#define DDPF_YUV                    0x00000200
+#define DDPF_LUMINANCE              0x00020000
+
+#define DDSCAPS_COMPLEX             0x00000008
+#define DDSCAPS_TEXTURE             0x00001000
+#define DDSCAPS_MIPMAP              0x00400000
+
+#define DDSCAPS2_CUBEMAP            0x00000200
+#define DDSCAPS2_CUBEMAP_POSITIVEX  0x00000400
+#define DDSCAPS2_CUBEMAP_NEGATIVEX  0x00000800
+#define DDSCAPS2_CUBEMAP_POSITIVEY  0x00001000
+#define DDSCAPS2_CUBEMAP_NEGATIVEY  0x00002000
+#define DDSCAPS2_CUBEMAP_POSITIVEZ  0x00004000
+#define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
+
+#define DDS_CUBEMAP_ALLFACES (DDSCAPS2_CUBEMAP_POSITIVEX|DDSCAPS2_CUBEMAP_NEGATIVEX \
+							 |DDSCAPS2_CUBEMAP_POSITIVEY|DDSCAPS2_CUBEMAP_NEGATIVEY \
+							 |DDSCAPS2_CUBEMAP_POSITIVEZ|DDSCAPS2_CUBEMAP_NEGATIVEZ)
+
+#define DDSCAPS2_VOLUME             0x00200000
+
+	static struct TranslateDdsFormat
+	{
+		uint32_t m_format;
+		TextureFormat::Enum m_textureFormat;
+
+	} s_translateDdsFormat[] =
+	{
+		{ DDS_DXT1,                                       TextureFormat::BC1     },
+		{ DDS_DXT2,                                       TextureFormat::BC2     },
+		{ DDS_DXT3,                                       TextureFormat::BC2     },
+		{ DDS_DXT4,                                       TextureFormat::BC3     },
+		{ DDS_DXT5,                                       TextureFormat::BC3     },
+		{ DDS_ATI1,                                       TextureFormat::BC4     },
+		{ DDS_BC4U,                                       TextureFormat::BC4     },
+		{ DDS_ATI2,                                       TextureFormat::BC5     },
+		{ DDS_BC5U,                                       TextureFormat::BC5     },
+		{ D3DFMT_A16B16G16R16,                            TextureFormat::RGBA16  },
+		{ D3DFMT_A16B16G16R16F,                           TextureFormat::RGBA16F },
+		{ DDPF_RGB,                                       TextureFormat::BGRX8   },
+		{ DDPF_RGB|DDPF_ALPHAPIXELS,                      TextureFormat::BGRA8   },
+		{ DDPF_INDEXED,                                   TextureFormat::L8      },
+		{ DDPF_LUMINANCE,                                 TextureFormat::L8      },
+		{ DDPF_ALPHA,                                     TextureFormat::L8      },
+	};
+
 	bool imageParseDds(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
 	{
 		uint32_t headerSize;
@@ -882,85 +892,22 @@ namespace bgfx
 		TextureFormat::Enum type = TextureFormat::Unknown;
 		bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
 
-		if (pixelFlags & DDPF_FOURCC)
+		uint32_t format = pixelFlags & DDPF_FOURCC ? fourcc : pixelFlags;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsFormat); ++ii)
 		{
-			switch (fourcc)
+			if (s_translateDdsFormat[ii].m_format == format)
 			{
-			case DDS_DXT1:
-				type = TextureFormat::BC1;
-				bpp = 4;
-				blockSize = 4*4*bpp/8;
-				break;
-
-			case DDS_DXT2:
-			case DDS_DXT3:
-				type = TextureFormat::BC2;
-				bpp = 8;
-				blockSize = 4*4*bpp/8;
-				break;
-
-			case DDS_DXT4:
-			case DDS_DXT5:
-				type = TextureFormat::BC3;
-				bpp = 8;
-				blockSize = 4*4*bpp/8;
-				break;
-
-			case DDS_ATI1:
-			case DDS_BC4U:
-				type = TextureFormat::BC4;
-				bpp = 4;
-				blockSize = 4*4*bpp/8;
-				break;
-
-			case DDS_ATI2:
-			case DDS_BC5U:
-				type = TextureFormat::BC5;
-				bpp = 8;
-				blockSize = 4*4*bpp/8;
-				break;
-
-			case D3DFMT_A16B16G16R16:
-				type = TextureFormat::RGBA16;
-				blockSize = 8;
-				bpp = 64;
-				break;
-
-			case D3DFMT_A16B16G16R16F:
-				type = TextureFormat::RGBA16F;
-				blockSize = 8;
-				bpp = 64;
+				type = s_translateDdsFormat[ii].m_textureFormat;
 				break;
 			}
 		}
-		else
-		{
-			switch (pixelFlags)
-			{
-			case DDPF_RGB:
-				type = TextureFormat::BGRX8;
-				blockSize = 3;
-				bpp = 24;
-				break;
 
-			case DDPF_RGB|DDPF_ALPHAPIXELS:
-				type = TextureFormat::BGRA8;
-				blockSize = 4;
-				bpp = 32;
-				break;
-
-			case DDPF_INDEXED:
-			case DDPF_LUMINANCE:
-			case DDPF_ALPHA:
-				type = TextureFormat::L8;
-				bpp = 8;
-				break;
-
-			default:
-				bpp = 0;
-				break;
-			}
-		}
+		bpp = TextureFormat::BGRX8 == type // special case to force conversion to 32-bpp.
+			? 24
+			: getBitsPerPixel(type)
+			;
+		blockSize = type < TextureFormat::Unknown ? 4*4 : 1;
+		blockSize = blockSize*bpp/8;
 
 		_imageContainer.m_type = type;
 		_imageContainer.m_offset = DDS_IMAGE_DATA_OFFSET;
@@ -976,6 +923,68 @@ namespace bgfx
 
 		return TextureFormat::Unknown != type;
 	}
+
+// KTX
+#define KTX_MAGIC       BX_MAKEFOURCC(0xAB, 'K', 'T', 'X')
+#define KTX_HEADER_SIZE 64
+
+#define KTX_ETC1_RGB8_OES                             0x8D64
+#define KTX_COMPRESSED_R11_EAC                        0x9270
+#define KTX_COMPRESSED_SIGNED_R11_EAC                 0x9271
+#define KTX_COMPRESSED_RG11_EAC                       0x9272
+#define KTX_COMPRESSED_SIGNED_RG11_EAC                0x9273
+#define KTX_COMPRESSED_RGB8_ETC2                      0x9274
+#define KTX_COMPRESSED_SRGB8_ETC2                     0x9275
+#define KTX_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2  0x9276
+#define KTX_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2 0x9277
+#define KTX_COMPRESSED_RGBA8_ETC2_EAC                 0x9278
+#define KTX_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC          0x9279
+#define KTX_COMPRESSED_RGB_PVRTC_4BPPV1_IMG           0x8C00
+#define KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG           0x8C01
+#define KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG          0x8C02
+#define KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG          0x8C03
+#define KTX_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG          0x9137
+#define KTX_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG          0x9138
+#define KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT             0x83F1
+#define KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT             0x83F2
+#define KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT             0x83F3
+#define KTX_COMPRESSED_LUMINANCE_LATC1_EXT            0x8C70
+#define KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT      0x8C72
+#define KTX_RGBA16                                    0x805B
+#define KTX_RGBA16F                                   0x881A
+
+	static struct TranslateKtxFormat
+	{
+		uint32_t m_format;
+		TextureFormat::Enum m_textureFormat;
+
+	} s_translateKtxFormat[] =
+	{
+		{ KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT,              TextureFormat::BC1     },
+		{ KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT,              TextureFormat::BC2     },
+		{ KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT,              TextureFormat::BC3     },
+		{ KTX_COMPRESSED_LUMINANCE_LATC1_EXT,             TextureFormat::BC4     },
+		{ KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,       TextureFormat::BC5     },
+		{ KTX_ETC1_RGB8_OES,                              TextureFormat::ETC1    },
+		{ KTX_COMPRESSED_RGB8_ETC2,                       TextureFormat::ETC2    },
+		{ KTX_COMPRESSED_RGBA8_ETC2_EAC,                  TextureFormat::ETC2A   },
+		{ KTX_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,   TextureFormat::ETC2A1  },
+		{ KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,            TextureFormat::PTC12   },
+		{ KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,           TextureFormat::PTC12A  },
+		{ KTX_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,            TextureFormat::PTC14   },
+		{ KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,           TextureFormat::PTC14A  },
+		{ KTX_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,           TextureFormat::PTC22   },
+		{ KTX_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,           TextureFormat::PTC24   },
+		{ KTX_RGBA16,                                     TextureFormat::RGBA16  },
+		{ KTX_RGBA16F,                                    TextureFormat::RGBA16F },
+		{ KTX_COMPRESSED_R11_EAC,                         TextureFormat::Unknown },
+		{ KTX_COMPRESSED_SIGNED_R11_EAC,                  TextureFormat::Unknown },
+		{ KTX_COMPRESSED_RG11_EAC,                        TextureFormat::Unknown },
+		{ KTX_COMPRESSED_SIGNED_RG11_EAC,                 TextureFormat::Unknown },
+		{ KTX_COMPRESSED_SRGB8_ETC2,                      TextureFormat::Unknown },
+		{ KTX_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2,  TextureFormat::Unknown },
+		{ KTX_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC,           TextureFormat::Unknown },
+	};
 
 	bool imageParseKtx(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
 	{
@@ -1037,83 +1046,21 @@ namespace bgfx
 		TextureFormat::Enum type = TextureFormat::Unknown;
 		bool hasAlpha = false;
 
-		switch (glInternalFormat)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateKtxFormat); ++ii)
 		{
-		case KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-			type = TextureFormat::BC1;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-			type = TextureFormat::BC2;
-			bpp = 8;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			type = TextureFormat::BC3;
-			bpp = 8;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_COMPRESSED_LUMINANCE_LATC1_EXT:
-			type = TextureFormat::BC4;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
-			type = TextureFormat::BC5;
-			bpp = 8;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_ETC1_RGB8_OES:
-			type = TextureFormat::ETC1;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:
-		case KTX_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG:
-			type = TextureFormat::PTC12;
-			bpp = 2;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:
-		case KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG:
-			type = TextureFormat::PTC14;
-			bpp = 2;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case KTX_RGBA16:
-			type = TextureFormat::RGBA16;
-			blockSize = 8;
-			bpp = 64;
-			break;
-
-		case KTX_RGBA16F:
-			type = TextureFormat::RGBA16F;
-			blockSize = 8;
-			bpp = 64;
-			break;
-
-		case KTX_COMPRESSED_R11_EAC:
-		case KTX_COMPRESSED_SIGNED_R11_EAC:
-		case KTX_COMPRESSED_RG11_EAC:
-		case KTX_COMPRESSED_SIGNED_RG11_EAC:
-		case KTX_COMPRESSED_RGB8_ETC2:
-		case KTX_COMPRESSED_SRGB8_ETC2:
-		case KTX_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-		case KTX_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-		case KTX_COMPRESSED_RGBA8_ETC2_EAC:
-		case KTX_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-		default:
-			break;
+			if (s_translateKtxFormat[ii].m_format == glInternalFormat)
+			{
+				type = s_translateKtxFormat[ii].m_textureFormat;
+				break;
+			}
 		}
+
+		bpp = TextureFormat::BGRX8 == type // special case to force conversion to 32-bpp.
+			? 24
+			: getBitsPerPixel(type)
+			;
+		blockSize = type < TextureFormat::Unknown ? 4*4 : 1;
+		blockSize = blockSize*bpp/8;
 
 		_imageContainer.m_type = type;
 		_imageContainer.m_offset = (uint32_t)offset;
@@ -1129,6 +1076,53 @@ namespace bgfx
 
 		return TextureFormat::Unknown != type;
 	}
+
+// PVR3
+#define PVR3_MAKE8CC(_a, _b, _c, _d, _e, _f, _g, _h) (uint64_t(BX_MAKEFOURCC(_a, _b, _c, _d) ) | (uint64_t(BX_MAKEFOURCC(_e, _f, _g, _h) )<<32) )
+
+#define PVR3_MAGIC            BX_MAKEFOURCC('P', 'V', 'R', 3)
+#define PVR3_HEADER_SIZE      52
+
+#define PVR3_PVRTC1_2BPP_RGB  0
+#define PVR3_PVRTC1_2BPP_RGBA 1
+#define PVR3_PVRTC1_4BPP_RGB  2
+#define PVR3_PVRTC1_4BPP_RGBA 3
+#define PVR3_ETC1             6
+#define PVR3_DXT1             7
+#define PVR3_DXT2             8
+#define PVR3_DXT3             9
+#define PVR3_DXT4             10
+#define PVR3_DXT5             11
+#define PVR3_BC4              12
+#define PVR3_BC5              13
+#define PVR3_RGBA16           PVR3_MAKE8CC('r', 'g', 'b', 'a', 16, 16, 16, 16)
+
+#define PVR3_CHANNEL_TYPE_ANY   UINT32_MAX
+#define PVR3_CHANNEL_TYPE_FLOAT UINT32_C(12)
+
+	static struct TranslatePvr3Format
+	{
+		uint64_t m_format;
+		uint32_t m_channelTypeMask;
+		TextureFormat::Enum m_textureFormat;
+
+	} s_translatePvr3Format[] =
+	{
+		{ PVR3_PVRTC1_2BPP_RGB,  PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12   },
+		{ PVR3_PVRTC1_2BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12   },
+		{ PVR3_PVRTC1_4BPP_RGB,  PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC14   },
+		{ PVR3_PVRTC1_4BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC14   },
+		{ PVR3_ETC1,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::ETC1    },
+		{ PVR3_DXT1,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC1     },
+		{ PVR3_DXT2,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC2     },
+		{ PVR3_DXT3,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC2     },
+		{ PVR3_DXT4,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC3     },
+		{ PVR3_DXT5,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC3     },
+		{ PVR3_BC4,              PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC4     },
+		{ PVR3_BC5,              PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC5     },
+		{ PVR3_RGBA16,           PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::RGBA16F },
+		{ PVR3_RGBA16,           PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RGBA16  },
+	};
 
 	bool imageParsePvr3(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
 	{
@@ -1173,69 +1167,22 @@ namespace bgfx
 		TextureFormat::Enum type = TextureFormat::Unknown;
 		bool hasAlpha = false;
 
-		switch (pixelFormat)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translatePvr3Format); ++ii)
 		{
-		case PVR3_PVRTC1_2BPP_RGB:
-		case PVR3_PVRTC1_2BPP_RGBA:
-			type = TextureFormat::PTC12;
-			bpp = 2;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_PVRTC1_4BPP_RGB:
-		case PVR3_PVRTC1_4BPP_RGBA:
-			type = TextureFormat::PTC14;
-			bpp = 2;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_ETC1:
-			type = TextureFormat::ETC1;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_DXT1:
-			type = TextureFormat::BC1;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_DXT2:
-		case PVR3_DXT3:
-			type = TextureFormat::BC2;
-			bpp = 8;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_DXT4:
-		case PVR3_DXT5:
-			type = TextureFormat::BC3;
-			bpp = 8;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_BC4:
-			type = TextureFormat::BC4;
-			bpp = 4;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_BC5:
-			type = TextureFormat::BC5;
-			bpp = 8;
-			blockSize = 4*4*bpp/8;
-			break;
-
-		case PVR3_RGBA16:
-			type = PVR3_CHANNEL_TYPE_FLOAT == channelType
-				 ? TextureFormat::RGBA16F
-				 : TextureFormat::RGBA16
-				 ;
-			blockSize = 8;
-			bpp = 64;
-			break;
+			if (s_translatePvr3Format[ii].m_format == pixelFormat
+			&&  channelType == (s_translatePvr3Format[ii].m_channelTypeMask & channelType) )
+			{
+				type = s_translatePvr3Format[ii].m_textureFormat;
+				break;
+			}
 		}
+
+		bpp = TextureFormat::BGRX8 == type // special case to force conversion to 32-bpp.
+			? 24
+			: getBitsPerPixel(type)
+			;
+		blockSize = type < TextureFormat::Unknown ? 4*4 : 1;
+		blockSize = blockSize*bpp/8;
 
 		_imageContainer.m_type = type;
 		_imageContainer.m_offset = (uint32_t)offset;
