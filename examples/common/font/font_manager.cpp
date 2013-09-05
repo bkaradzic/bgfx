@@ -597,7 +597,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 		return false;
 	}
 
-	for (uint32_t ii = 0, end = wcslen(_string); ii < end; ++ii)
+	for (uint32_t ii = 0, end = (uint32_t)wcslen(_string); ii < end; ++ii)
 	{
 		CodePoint codePoint = _string[ii];
 		if (!preloadGlyph(_handle, codePoint) )
