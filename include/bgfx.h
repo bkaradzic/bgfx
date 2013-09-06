@@ -525,7 +525,6 @@ namespace bgfx
 	///
 	/// @param _width Width of input image (pixels).
 	/// @param _height Height of input image (pixels).
-	/// @param _pitch Pitch of input image (bytes).
 	/// @param _src Source image.
 	/// @param _dst Destination image. Must be the same size as input image.
 	///   _dst might be pointer to the same memory as _src.

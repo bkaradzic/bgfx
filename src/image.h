@@ -40,6 +40,9 @@ namespace bgfx
 	};
 
 	///
+	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
+
+	///
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst);
 
 	///

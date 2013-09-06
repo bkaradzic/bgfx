@@ -106,9 +106,6 @@ Dependencies
 
 [https://github.com/bkaradzic/bx](https://github.com/bkaradzic/bx)
 
-Optional:  
-[https://github.com/mendsley/tinystl](https://github.com/mendsley/tinystl)
-
 Building
 --------
 
@@ -274,10 +271,11 @@ cross-platform shaders.
 
 ### Texture Compiler (texturec)
 
-This tool doesn't currently exist. To produce DDS or KTX textures use:
+This tool doesn't currently exist. To produce DDS, KTX or PVR textures use:
 
 [.dds - nVidia Texture Tools - DDS Utilities](https://developer.nvidia.com/legacy-texture-tools)  
-[.ktx - Mali GPU Texture Compression Tool](http://malideveloper.arm.com/develop-for-mali/mali-gpu-texture-compression-tool/)
+[.ktx - Mali GPU Texture Compression Tool](http://malideveloper.arm.com/develop-for-mali/mali-gpu-texture-compression-tool/)  
+[.pvr - PowerVR Insider SDK](http://www.imgtec.com/powervr/insider/sdkdownloads/index.asp)
 
 ### Geometry Compiler (geometryc)
 

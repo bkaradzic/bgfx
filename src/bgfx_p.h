@@ -230,7 +230,6 @@ namespace bgfx
 	extern FreeFn g_free;
 
 	void release(const Memory* _mem);
-	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();
 
