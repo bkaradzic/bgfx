@@ -16,9 +16,20 @@
 #include <string.h>
 #include <alloca.h>
 
+// clang analyzer annotation
+#if !defined(__has_feature)
+#	define __has_feature(_a) 0
+#endif // !defined(__has_feature)
+
+#if __has_feature(attribute_analyzer_noreturn)
+#	define CLANG_ANALYZER_NO_RETURN __attribute__( (analyzer_noreturn) )
+#else
+#	define CLANG_ANALYZER_NO_RETURN
+#endif // __has_feature(attribute_analyzer_noreturn)
+
 namespace bgfx
 {
-	void fatal(Fatal::Enum _code, const char* _format, ...);
+	void fatal(Fatal::Enum _code, const char* _format, ...) CLANG_ANALYZER_NO_RETURN;
 	void dbgPrintf(const char* _format, ...);
 }
 
