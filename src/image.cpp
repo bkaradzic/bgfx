@@ -915,6 +915,8 @@ namespace bgfx
 #define PVR3_PVRTC1_2BPP_RGBA 1
 #define PVR3_PVRTC1_4BPP_RGB  2
 #define PVR3_PVRTC1_4BPP_RGBA 3
+#define PVR3_PVRTC2_2BPP_RGBA 4
+#define PVR3_PVRTC2_4BPP_RGBA 5
 #define PVR3_ETC1             6
 #define PVR3_DXT1             7
 #define PVR3_DXT2             8
@@ -937,9 +939,11 @@ namespace bgfx
 	} s_translatePvr3Format[] =
 	{
 		{ PVR3_PVRTC1_2BPP_RGB,  PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12   },
-		{ PVR3_PVRTC1_2BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12   },
+		{ PVR3_PVRTC1_2BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12A  },
 		{ PVR3_PVRTC1_4BPP_RGB,  PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC14   },
-		{ PVR3_PVRTC1_4BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC14   },
+		{ PVR3_PVRTC1_4BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC14A  },
+		{ PVR3_PVRTC2_2BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC22   },
+		{ PVR3_PVRTC2_4BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC24   },
 		{ PVR3_ETC1,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::ETC1    },
 		{ PVR3_DXT1,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC1     },
 		{ PVR3_DXT2,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BC2     },
@@ -1217,7 +1221,7 @@ namespace bgfx
 
 		default:
 			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff0000ff), UINT32_C(0xff00ffff), _dst);
 			break;
 		}
 	}
