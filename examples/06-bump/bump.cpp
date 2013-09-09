@@ -338,7 +338,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyFragmentShader(fsh);
 
 	// Load diffuse texture.
-	mem = loadTexture("texture_compression_ptc22.pvr"); //fieldstone-rgba.dds");
+	mem = loadTexture("fieldstone-rgba.dds");
 	bgfx::TextureHandle textureColor = bgfx::createTexture(mem);
 
 	// Load normal texture.

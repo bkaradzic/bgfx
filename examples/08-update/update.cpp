@@ -233,13 +233,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
 			);
 
-	updateTextureCubeRectBgra8(textureCube, 0, 0, 0, textureSide, textureSide, 0xff, 0, 0);
-	updateTextureCubeRectBgra8(textureCube, 1, 0, 0, textureSide, textureSide, 0xff, 0, 0);
-	updateTextureCubeRectBgra8(textureCube, 2, 0, 0, textureSide, textureSide, 0xff, 0, 0);
-	updateTextureCubeRectBgra8(textureCube, 3, 0, 0, textureSide, textureSide, 0xff, 0, 0);
-	updateTextureCubeRectBgra8(textureCube, 4, 0, 0, textureSide, textureSide, 0xff, 0, 0);
-	updateTextureCubeRectBgra8(textureCube, 5, 0, 0, textureSide, textureSide, 0xff, 0, 0);
-
 	uint8_t rr = rand()%255;
 	uint8_t gg = rand()%255;
 	uint8_t bb = rand()%255;
@@ -291,7 +284,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				++hit;
 				const Pack2D& rect = face.m_rect;
 
-				updateTextureCubeRectBgra8(textureCube, face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0, 0xff, 0);
+				updateTextureCubeRectBgra8(textureCube, face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, rr, gg, bb);
 
 				rr = rand()%255;
 				gg = rand()%255;
