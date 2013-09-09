@@ -123,6 +123,25 @@ static const bgfx::Memory* loadShader(const char* _name)
 	return load(filePath);
 }
 
+static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
+{
+	bgfx::TextureInfo ti;
+	bgfx::calcTextureSize(ti, _width, _height, 1, 1, bgfx::TextureFormat::BGRA8);
+
+	const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
+	uint8_t* data = (uint8_t*)mem->data;
+	for (uint32_t ii = 0, num = ti.storageSize*8/ti.bitsPerPixel; ii < num; ++ii)
+	{
+		data[0] = _b;
+		data[1] = _g;
+		data[2] = _r;
+		data[3] = _a;
+		data += 4;
+	}
+
+	bgfx::updateTextureCube(_handle, _side, 0, _x, _y, _width, _height, mem);
+}
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -214,6 +233,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
 			);
 
+	updateTextureCubeRectBgra8(textureCube, 0, 0, 0, textureSide, textureSide, 0xff, 0, 0);
+	updateTextureCubeRectBgra8(textureCube, 1, 0, 0, textureSide, textureSide, 0xff, 0, 0);
+	updateTextureCubeRectBgra8(textureCube, 2, 0, 0, textureSide, textureSide, 0xff, 0, 0);
+	updateTextureCubeRectBgra8(textureCube, 3, 0, 0, textureSide, textureSide, 0xff, 0, 0);
+	updateTextureCubeRectBgra8(textureCube, 4, 0, 0, textureSide, textureSide, 0xff, 0, 0);
+	updateTextureCubeRectBgra8(textureCube, 5, 0, 0, textureSide, textureSide, 0xff, 0, 0);
+
 	uint8_t rr = rand()%255;
 	uint8_t gg = rand()%255;
 	uint8_t bb = rand()%255;
@@ -263,23 +289,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				quads.push_back(face);
 
 				++hit;
-				bgfx::TextureInfo ti;
 				const Pack2D& rect = face.m_rect;
-				bgfx::calcTextureSize(ti, rect.m_width, rect.m_height, 1, 1, bgfx::TextureFormat::BGRA8);
 
-// 				updateTime = now + freq/10;
-				const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
-				uint8_t* data = (uint8_t*)mem->data;
-				for (uint32_t ii = 0, num = ti.storageSize*8/ti.bitsPerPixel; ii < num; ++ii)
-				{
-					data[0] = bb;
-					data[1] = rr;
-					data[2] = gg;
-					data[3] = 0xff;
-					data += 4;
-				}
-
-				bgfx::updateTextureCube(textureCube, face.m_side, 0, rect.m_x, rect.m_y, rect.m_width, rect.m_height, mem);
+				updateTextureCubeRectBgra8(textureCube, face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0, 0xff, 0);
 
 				rr = rand()%255;
 				gg = rand()%255;

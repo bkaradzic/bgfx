@@ -1221,7 +1221,7 @@ namespace bgfx
 
 		default:
 			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff0000ff), UINT32_C(0xff00ffff), _dst);
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
 			break;
 		}
 	}
