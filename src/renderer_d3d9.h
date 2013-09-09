@@ -320,8 +320,9 @@ namespace bgfx
 		};
 
 		uint32_t m_flags;
-		TextureFormat::Enum m_format;
-		Enum m_type;
+		uint8_t m_type;
+		uint8_t m_requestedFormat;
+		uint8_t m_textureFormat;
 	};
 
 	struct RenderTarget

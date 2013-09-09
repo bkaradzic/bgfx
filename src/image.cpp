@@ -30,7 +30,6 @@ namespace bgfx
 		4,  // PTC24
 		0,  // Unknown
 		8,  // L8
-		32, // BGRX8
 		32, // BGRA8
 		64, // RGBA16
 		64, // RGBA16F
@@ -564,174 +563,6 @@ namespace bgfx
 		}
 	}
 
-	void Mip::decode(uint8_t* _dst)
-	{
-		const uint8_t* src = m_data;
-
-		if (TextureFormat::Unknown > m_type)
-		{
-			uint32_t width = m_width/4;
-			uint32_t height = m_height/4;
-			uint32_t pitch = m_width*4;
-
-			uint8_t temp[16*4];
-
-			switch (m_type)
-			{
-			case TextureFormat::BC1:
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						decodeBlockDxt1(temp, src);
-						src += 8;
-
-						uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-						memcpy(&dst[0*pitch], &temp[ 0], 16);
-						memcpy(&dst[1*pitch], &temp[16], 16);
-						memcpy(&dst[2*pitch], &temp[32], 16);
-						memcpy(&dst[3*pitch], &temp[48], 16);
-					}
-				}
-				break;
-
-			case TextureFormat::BC2:
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						decodeBlockDxt23A(temp+3, src);
-						src += 8;
-						decodeBlockDxt(temp, src);
-						src += 8;
-
-						uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-						memcpy(&dst[0*pitch], &temp[ 0], 16);
-						memcpy(&dst[1*pitch], &temp[16], 16);
-						memcpy(&dst[2*pitch], &temp[32], 16);
-						memcpy(&dst[3*pitch], &temp[48], 16);
-					}
-				}
-				break;
-
-			case TextureFormat::BC3:
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						decodeBlockDxt45A(temp+3, src);
-						src += 8;
-						decodeBlockDxt(temp, src);
-						src += 8;
-
-						uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-						memcpy(&dst[0*pitch], &temp[ 0], 16);
-						memcpy(&dst[1*pitch], &temp[16], 16);
-						memcpy(&dst[2*pitch], &temp[32], 16);
-						memcpy(&dst[3*pitch], &temp[48], 16);
-					}
-				}
-				break;
-
-			case TextureFormat::BC4:
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						decodeBlockDxt45A(temp, src);
-						src += 8;
-
-						uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-						memcpy(&dst[0*pitch], &temp[ 0], 16);
-						memcpy(&dst[1*pitch], &temp[16], 16);
-						memcpy(&dst[2*pitch], &temp[32], 16);
-						memcpy(&dst[3*pitch], &temp[48], 16);
-					}
-				}
-				break;
-
-			case TextureFormat::BC5:
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						decodeBlockDxt45A(temp+1, src);
-						src += 8;
-						decodeBlockDxt45A(temp+2, src);
-						src += 8;
-
-						for (uint32_t ii = 0; ii < 16; ++ii)
-						{
-							float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
-							float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
-							float nz = sqrtf(1.0f - nx*nx - ny*ny);
-							temp[ii*4+0] = uint8_t( (nz + 1.0f)*255.0f/2.0f);
-							temp[ii*4+3] = 0;
-						}
-
-						uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-						memcpy(&dst[0*pitch], &temp[ 0], 16);
-						memcpy(&dst[1*pitch], &temp[16], 16);
-						memcpy(&dst[2*pitch], &temp[32], 16);
-						memcpy(&dst[3*pitch], &temp[48], 16);
-					}
-				}
-				break;
-
-			case TextureFormat::ETC1:
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						decodeBlockEtc1(temp, src);
-						src += 8;
-
-						uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-						memcpy(&dst[0*pitch], &temp[ 0], 16);
-						memcpy(&dst[1*pitch], &temp[16], 16);
-						memcpy(&dst[2*pitch], &temp[32], 16);
-						memcpy(&dst[3*pitch], &temp[48], 16);
-					}
-				}
-				break;
-
-			default:
-				// Decompression not implemented... Make ugly red-yellow checkerboard texture.
-				imageCheckerboard(m_width, m_height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
-				break;
-			}
-		}
-		else
-		{
-			uint32_t width = m_width;
-			uint32_t height = m_height;
-
-			if (m_bpp == 8
-			||  m_bpp == 32
-			||  m_bpp == 64)
-			{
-				uint32_t pitch = m_width*m_bpp/8;
-				memcpy(_dst, src, pitch*height);
-			}
-			else
-			{
-				uint32_t pitch = m_width*4;
-				for (uint32_t yy = 0; yy < height; ++yy)
-				{
-					uint8_t* dst = &_dst[yy*pitch];
-
-					for (uint32_t xx = 0; xx < width; ++xx)
-					{
-						memcpy(dst, src, 3);
-						dst[3] = 255;
-						dst += 4;
-						src += 3;
-					}
-				}
-			}
-		}
-	}
-
 // DDS
 #define DDS_MAGIC             BX_MAKEFOURCC('D', 'D', 'S', ' ')
 #define DDS_HEADER_SIZE       124
@@ -803,7 +634,6 @@ namespace bgfx
 		{ DDS_BC5U,                  TextureFormat::BC5     },
 		{ D3DFMT_A16B16G16R16,       TextureFormat::RGBA16  },
 		{ D3DFMT_A16B16G16R16F,      TextureFormat::RGBA16F },
-		{ DDPF_RGB,                  TextureFormat::BGRX8   },
 		{ DDPF_RGB|DDPF_ALPHAPIXELS, TextureFormat::BGRA8   },
 		{ DDPF_INDEXED,              TextureFormat::L8      },
 		{ DDPF_LUMINANCE,            TextureFormat::L8      },
@@ -889,31 +719,30 @@ namespace bgfx
 
 		uint8_t bpp = 0;
 		uint8_t blockSize = 1;
-		TextureFormat::Enum type = TextureFormat::Unknown;
+		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
 
-		uint32_t format = pixelFlags & DDPF_FOURCC ? fourcc : pixelFlags;
+		uint32_t ddsFormat = pixelFlags & DDPF_FOURCC ? fourcc : pixelFlags;
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsFormat); ++ii)
 		{
-			if (s_translateDdsFormat[ii].m_format == format)
+			if (s_translateDdsFormat[ii].m_format == ddsFormat)
 			{
-				type = s_translateDdsFormat[ii].m_textureFormat;
+				format = s_translateDdsFormat[ii].m_textureFormat;
 				break;
 			}
 		}
 
-		bpp = TextureFormat::BGRX8 == type // special case to force conversion to 32-bpp.
-			? 24
-			: getBitsPerPixel(type)
-			;
-		blockSize = type < TextureFormat::Unknown ? 4*4 : 1;
+		bpp = getBitsPerPixel(format);
+		blockSize = format < TextureFormat::Unknown ? 4*4 : 1;
 		blockSize = blockSize*bpp/8;
 
-		_imageContainer.m_type = type;
+		_imageContainer.m_data = NULL;
+		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = DDS_IMAGE_DATA_OFFSET;
 		_imageContainer.m_width = width;
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
+		_imageContainer.m_format = format;
 		_imageContainer.m_blockSize = blockSize;
 		_imageContainer.m_numMips = (caps[0] & DDSCAPS_MIPMAP) ? mips : 1;
 		_imageContainer.m_bpp = bpp;
@@ -921,7 +750,7 @@ namespace bgfx
 		_imageContainer.m_cubeMap = cubeMap;
 		_imageContainer.m_ktx = false;
 
-		return TextureFormat::Unknown != type;
+		return TextureFormat::Unknown != format;
 	}
 
 // KTX
@@ -1043,30 +872,29 @@ namespace bgfx
 
 		uint8_t bpp = 0;
 		uint8_t blockSize = 1;
-		TextureFormat::Enum type = TextureFormat::Unknown;
+		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = false;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateKtxFormat); ++ii)
 		{
 			if (s_translateKtxFormat[ii].m_format == glInternalFormat)
 			{
-				type = s_translateKtxFormat[ii].m_textureFormat;
+				format = s_translateKtxFormat[ii].m_textureFormat;
 				break;
 			}
 		}
 
-		bpp = TextureFormat::BGRX8 == type // special case to force conversion to 32-bpp.
-			? 24
-			: getBitsPerPixel(type)
-			;
-		blockSize = type < TextureFormat::Unknown ? 4*4 : 1;
+		bpp = getBitsPerPixel(format);
+		blockSize = format < TextureFormat::Unknown ? 4*4 : 1;
 		blockSize = blockSize*bpp/8;
 
-		_imageContainer.m_type = type;
+		_imageContainer.m_data = NULL;
+		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)offset;
 		_imageContainer.m_width = width;
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
+		_imageContainer.m_format = format;
 		_imageContainer.m_blockSize = blockSize;
 		_imageContainer.m_numMips = numMips;
 		_imageContainer.m_bpp = bpp;
@@ -1074,7 +902,7 @@ namespace bgfx
 		_imageContainer.m_cubeMap = numFaces > 1;
 		_imageContainer.m_ktx = true;
 
-		return TextureFormat::Unknown != type;
+		return TextureFormat::Unknown != format;
 	}
 
 // PVR3
@@ -1164,7 +992,7 @@ namespace bgfx
 
 		uint8_t bpp = 0;
 		uint8_t blockSize = 1;
-		TextureFormat::Enum type = TextureFormat::Unknown;
+		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = false;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translatePvr3Format); ++ii)
@@ -1172,23 +1000,22 @@ namespace bgfx
 			if (s_translatePvr3Format[ii].m_format == pixelFormat
 			&&  channelType == (s_translatePvr3Format[ii].m_channelTypeMask & channelType) )
 			{
-				type = s_translatePvr3Format[ii].m_textureFormat;
+				format = s_translatePvr3Format[ii].m_textureFormat;
 				break;
 			}
 		}
 
-		bpp = TextureFormat::BGRX8 == type // special case to force conversion to 32-bpp.
-			? 24
-			: getBitsPerPixel(type)
-			;
-		blockSize = type < TextureFormat::Unknown ? 4*4 : 1;
+		bpp = getBitsPerPixel(format);
+		blockSize = format < TextureFormat::Unknown ? 4*4 : 1;
 		blockSize = blockSize*bpp/8;
 
-		_imageContainer.m_type = type;
+		_imageContainer.m_data = NULL;
+		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)offset;
 		_imageContainer.m_width = width;
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
+		_imageContainer.m_format = format;
 		_imageContainer.m_blockSize = blockSize;
 		_imageContainer.m_numMips = numMips;
 		_imageContainer.m_bpp = bpp;
@@ -1196,7 +1023,7 @@ namespace bgfx
 		_imageContainer.m_cubeMap = numFaces > 1;
 		_imageContainer.m_ktx = false;
 
-		return TextureFormat::Unknown != type;
+		return TextureFormat::Unknown != format;
 	}
 
 	bool imageParse(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
@@ -1216,6 +1043,39 @@ namespace bgfx
 		{
 			return imageParsePvr3(_imageContainer, _reader);
 		}
+		else if (BGFX_CHUNK_MAGIC_TEX == magic)
+		{
+			TextureCreate tc;
+			bx::read(_reader, tc);
+
+			uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
+			uint32_t blockSize = tc.m_format < TextureFormat::Unknown ? 4*4 : 1;
+			blockSize = blockSize*bpp/8;
+
+			_imageContainer.m_format = tc.m_format;
+			_imageContainer.m_offset = UINT32_MAX;
+			if (NULL == tc.m_mem)
+			{
+				_imageContainer.m_data = NULL;
+				_imageContainer.m_size = 0;
+			}
+			else
+			{
+				_imageContainer.m_data = tc.m_mem->data;
+				_imageContainer.m_size = tc.m_mem->size;
+			}
+			_imageContainer.m_width = tc.m_width;
+			_imageContainer.m_height = tc.m_height;
+			_imageContainer.m_depth = tc.m_depth;
+			_imageContainer.m_blockSize = blockSize;
+			_imageContainer.m_numMips = tc.m_numMips;
+			_imageContainer.m_bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
+			_imageContainer.m_hasAlpha = false;
+			_imageContainer.m_cubeMap = tc.m_cubeMap;
+			_imageContainer.m_ktx = false;
+
+			return true;
+		}
 
 		return false;
 	}
@@ -1226,13 +1086,161 @@ namespace bgfx
 		return imageParse(_imageContainer, &reader);
 	}
 
-	bool imageGetRawData(const ImageContainer& _imageContainer, uint8_t _side, uint8_t _lod, const void* _data, uint32_t _size, Mip& _mip)
+	void imageDecodeToBgra8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint8_t _type)
+	{
+		const uint8_t* src = _src;
+
+		uint32_t width = _width/4;
+		uint32_t height = _height/4;
+		uint32_t pitch = _width*4;
+
+		uint8_t temp[16*4];
+
+		switch (_type)
+		{
+		case TextureFormat::BC1:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt1(temp, src);
+					src += 8;
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::BC2:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt23A(temp+3, src);
+					src += 8;
+					decodeBlockDxt(temp, src);
+					src += 8;
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::BC3:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt45A(temp+3, src);
+					src += 8;
+					decodeBlockDxt(temp, src);
+					src += 8;
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::BC4:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt45A(temp, src);
+					src += 8;
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::BC5:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockDxt45A(temp+1, src);
+					src += 8;
+					decodeBlockDxt45A(temp+2, src);
+					src += 8;
+
+					for (uint32_t ii = 0; ii < 16; ++ii)
+					{
+						float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
+						float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
+						float nz = sqrtf(1.0f - nx*nx - ny*ny);
+						temp[ii*4+0] = uint8_t( (nz + 1.0f)*255.0f/2.0f);
+						temp[ii*4+3] = 0;
+					}
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		case TextureFormat::ETC1:
+			for (uint32_t yy = 0; yy < height; ++yy)
+			{
+				for (uint32_t xx = 0; xx < width; ++xx)
+				{
+					decodeBlockEtc1(temp, src);
+					src += 8;
+
+					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
+					memcpy(&dst[0*pitch], &temp[ 0], 16);
+					memcpy(&dst[1*pitch], &temp[16], 16);
+					memcpy(&dst[2*pitch], &temp[32], 16);
+					memcpy(&dst[3*pitch], &temp[48], 16);
+				}
+			}
+			break;
+
+		default:
+			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+			break;
+		}
+	}
+
+	bool imageGetRawData(const ImageContainer& _imageContainer, uint8_t _side, uint8_t _lod, const void* _data, uint32_t _size, ImageMip& _mip)
 	{
 		const uint32_t blockSize = _imageContainer.m_blockSize;
 		uint32_t offset = _imageContainer.m_offset;
 		const uint8_t bpp = _imageContainer.m_bpp;
-		TextureFormat::Enum type = _imageContainer.m_type;
+		TextureFormat::Enum type = TextureFormat::Enum(_imageContainer.m_format);
 		bool hasAlpha = _imageContainer.m_hasAlpha;
+
+		if (UINT32_MAX == _imageContainer.m_offset)
+		{
+			if (NULL == _imageContainer.m_data)
+			{
+				return false;
+			}
+
+			offset = 0;
+			_data = _imageContainer.m_data;
+			_size = _imageContainer.m_size;
+		}
 
 		for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 		{
@@ -1269,7 +1277,7 @@ namespace bgfx
 					_mip.m_size = size;
 					_mip.m_data = (const uint8_t*)_data + offset;
 					_mip.m_bpp = bpp;
-					_mip.m_type = type;
+					_mip.m_format = type;
 					_mip.m_hasAlpha = hasAlpha;
 					return true;
 				}

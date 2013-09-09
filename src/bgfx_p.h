@@ -16,20 +16,9 @@
 #include <string.h>
 #include <alloca.h>
 
-// clang analyzer annotation
-#if !defined(__has_feature)
-#	define __has_feature(_a) 0
-#endif // !defined(__has_feature)
-
-#if __has_feature(attribute_analyzer_noreturn)
-#	define CLANG_ANALYZER_NO_RETURN __attribute__( (analyzer_noreturn) )
-#else
-#	define CLANG_ANALYZER_NO_RETURN
-#endif // __has_feature(attribute_analyzer_noreturn)
-
 namespace bgfx
 {
-	void fatal(Fatal::Enum _code, const char* _format, ...) CLANG_ANALYZER_NO_RETURN;
+	void fatal(Fatal::Enum _code, const char* _format, ...);
 	void dbgPrintf(const char* _format, ...);
 }
 
@@ -2156,7 +2145,7 @@ namespace bgfx
 						, (uint16_t)imageContainer.m_height
 						, (uint16_t)imageContainer.m_depth
 						, imageContainer.m_numMips
-						, imageContainer.m_type
+						, TextureFormat::Enum(imageContainer.m_format)
 						);
 				}
 				else
@@ -2948,6 +2937,22 @@ namespace bgfx
 						_cmdbuf.read(flags);
 
 						rendererCreateTexture(handle, mem, flags);
+
+						bx::MemoryReader reader(mem->data, mem->size);
+
+						uint32_t magic;
+						bx::read(&reader, magic);
+
+						if (BGFX_CHUNK_MAGIC_TEX == magic)
+						{
+							TextureCreate tc;
+							bx::read(&reader, tc);
+
+							if (NULL != tc.m_mem)
+							{
+								release(tc.m_mem);
+							}
+						}
 
 						release(mem);
 					}

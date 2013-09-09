@@ -108,7 +108,7 @@ int main(int _argc, const char* _argv[])
 		bool decompress = cmdLine.hasArg('d');
 
 		if (decompress
-		||  0 == imageContainer.m_type)
+		||  0 == imageContainer.m_format)
 		{
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
@@ -120,7 +120,7 @@ int main(int _argc, const char* _argv[])
 					width = bx::uint32_max(1, width);
 					height = bx::uint32_max(1, height);
 
-					Mip mip;
+					ImageMip mip;
 					if (imageGetRawData(imageContainer, side, lod, mem->data, mem->size, mip) )
 					{
 						uint32_t dstpitch = width*4;
@@ -130,7 +130,7 @@ int main(int _argc, const char* _argv[])
 						||  height != mip.m_height)
 						{
 							uint8_t* temp = (uint8_t*)realloc(NULL, mip.m_width*mip.m_height*4);
-							mip.decode(temp);
+							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
 							uint32_t srcpitch = mip.m_width*4;
 
 							for (uint32_t yy = 0; yy < height; ++yy)
@@ -150,7 +150,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							mip.decode(bits);
+							imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
 						}
 
 						char filePath[256];
@@ -169,7 +169,7 @@ int main(int _argc, const char* _argv[])
 		{
 			for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 			{
-				Mip mip;
+				ImageMip mip;
 				if (imageGetRawData(imageContainer, 0, lod, mem->data, mem->size, mip) )
 				{
 					char filePath[256];

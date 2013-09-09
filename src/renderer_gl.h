@@ -558,11 +558,10 @@ namespace bgfx
 			, m_flags(0)
 			, m_currentFlags(UINT32_MAX)
 			, m_numMips(0)
-			, m_compressed(false)
 		{
 		}
 
-		void init(GLenum _target, uint8_t _numMips, uint32_t _flags);
+		void init(GLenum _target, uint8_t _format, uint8_t _numMips, uint32_t _flags);
 		void create(const Memory* _mem, uint32_t _flags);
 		void createColor(uint32_t _colorFormat, uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
 		void createDepth(uint32_t _width, uint32_t _height);
@@ -578,7 +577,8 @@ namespace bgfx
 		uint32_t m_flags;
 		uint32_t m_currentFlags;
 		uint8_t m_numMips;
-		bool m_compressed;
+		uint8_t m_requestedFormat;
+		uint8_t m_textureFormat;
 	};
 
 	struct Shader

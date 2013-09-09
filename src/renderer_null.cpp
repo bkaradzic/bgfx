@@ -105,23 +105,8 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* _mem, uint32_t /*_flags*/)
+	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* /*_mem*/, uint32_t /*_flags*/)
 	{
-		bx::MemoryReader reader(_mem->data, _mem->size);
-
-		uint32_t magic;
-		bx::read(&reader, magic);
-
-		if (BGFX_CHUNK_MAGIC_TEX == magic)
-		{
-			TextureCreate tc;
-			bx::read(&reader, tc);
-
-			if (NULL != tc.m_mem)
-			{
-				release(tc.m_mem);
-			}
-		}
 	}
 
 	void Context::rendererUpdateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/)

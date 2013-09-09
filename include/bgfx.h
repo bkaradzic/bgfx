@@ -319,7 +319,6 @@ namespace bgfx
 			PTC24,  // PVRTC2 RGBA 4BPP
 			Unknown,
 			L8,
-			BGRX8,
 			BGRA8,
 			RGBA16,
 			RGBA16F,
@@ -749,12 +748,37 @@ namespace bgfx
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
 
 	/// Create 2D texture.
+	///
+	/// @param _width
+	/// @param _height
+	/// @param _numMips
+	/// @param _format
+	/// @param _flags
+	/// @param _mem
+	///
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
 	/// Create 3D texture.
+	///
+	/// @param _width
+	/// @param _height
+	/// @param _depth
+	/// @param _numMips
+	/// @param _format
+	/// @param _flags
+	/// @param _mem
+	///
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
 	/// Create Cube texture.
+	///
+	/// @param _sides
+	/// @param _width
+	/// @param _numMips
+	/// @param _format
+	/// @param _flags
+	/// @param _mem
+	///
 	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
 	/// Update 2D texture.

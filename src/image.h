@@ -12,11 +12,13 @@ namespace bgfx
 {
 	struct ImageContainer
 	{
-		TextureFormat::Enum m_type;
+		void* m_data;
+		uint32_t m_size;
 		uint32_t m_offset;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
+		uint8_t m_format;
 		uint8_t m_blockSize;
 		uint8_t m_numMips;
 		uint8_t m_bpp;
@@ -25,18 +27,16 @@ namespace bgfx
 		bool m_ktx;
 	};
 
-	struct Mip
+	struct ImageMip
 	{
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_blockSize;
 		uint32_t m_size;
 		uint8_t m_bpp;
-		uint8_t m_type;
+		uint8_t m_format;
 		bool m_hasAlpha;
 		const uint8_t* m_data;
-
-		void decode(uint8_t* _dst);
 	};
 
 	///
@@ -61,10 +61,13 @@ namespace bgfx
 	bool imageParse(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader);
 
 	///
-	bool imageParse(ImageContainer& _dds, const void* _data, uint32_t _size);
+	bool imageParse(ImageContainer& _imageContainer, const void* _data, uint32_t _size);
 
 	///
-	bool imageGetRawData(const ImageContainer& _dds, uint8_t _side, uint8_t _index, const void* _data, uint32_t _size, Mip& _mip);
+	void imageDecodeToBgra8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint8_t _type);
+
+	///
+	bool imageGetRawData(const ImageContainer& _dds, uint8_t _side, uint8_t _index, const void* _data, uint32_t _size, ImageMip& _mip);
 
 } // namespace bgfx
 

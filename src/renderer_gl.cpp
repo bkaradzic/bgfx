@@ -194,31 +194,30 @@ namespace bgfx
 
 	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_ZERO,                        false },
-		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                        false },
-		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                        false },
-		{ GL_ETC1_RGB8_OES,                            GL_ETC1_RGB8_OES,                            GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                     GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                        false },
-		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                        false },
-		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                        true  },
-		{ GL_LUMINANCE,                                GL_LUMINANCE,                                GL_UNSIGNED_BYTE,               true  },
-		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  },
-		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  },
-		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  },
-		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                  true  },
-		{ GL_RGB565,                                   GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,        true  },
-		{ GL_RGBA4,                                    GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4,      true  },
-		{ GL_RGB5_A1,                                  GL_RGBA,                                     GL_UNSIGNED_SHORT_5_5_5_1,      true  },
-		{ GL_RGB10_A2,                                 GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV, true  },
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_ZERO,                        false }, // BC1
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_ZERO,                        false }, // BC2
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_ZERO,                        false }, // BC3
+		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                        false }, // BC4
+		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                        false }, // BC5
+		{ GL_ETC1_RGB8_OES,                            GL_ETC1_RGB8_OES,                            GL_ZERO,                        false }, // ETC1
+		{ GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                     GL_ZERO,                        false }, // ETC2
+		{ GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_ZERO,                        false }, // ETC2A
+		{ GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_ZERO,                        false }, // ETC2A1
+		{ GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_ZERO,                        false }, // PTC12
+		{ GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_ZERO,                        false }, // PTC14
+		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_ZERO,                        false }, // PTC12A
+		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_ZERO,                        false }, // PTC14A
+		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                        false }, // PTC22
+		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                        false }, // PTC24
+		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                        true  }, // Unknown
+		{ GL_LUMINANCE,                                GL_LUMINANCE,                                GL_UNSIGNED_BYTE,               true  }, // L8
+		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  }, // BGRA8
+		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  }, // RGBA16
+		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                  true  }, // RGBA16F
+		{ GL_RGB565,                                   GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,        true  }, // R5G6B5
+		{ GL_RGBA4,                                    GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4,      true  }, // RGBA4
+		{ GL_RGB5_A1,                                  GL_RGBA,                                     GL_UNSIGNED_SHORT_5_5_5_1,      true  }, // RGB5A1
+		{ GL_RGB10_A2,                                 GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV, true  }, // RGB10A2
 	};
 
 	struct Extension
@@ -595,9 +594,7 @@ namespace bgfx
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 			}
 #else
-			BX_UNUSED(_width);
-			BX_UNUSED(_height);
-			BX_UNUSED(_msaa);
+			BX_UNUSED(_width, _height, _msaa);
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
@@ -1323,37 +1320,33 @@ namespace bgfx
 		m_vcref.invalidate(s_renderCtx.m_vaoStateCache);
 	}
 
-	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _pixels)
+	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
 	{
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
-			GL_CHECK(glTexImage3D(_target
-				, _level
-				, _internalFormat
-				, _width
-				, _height
-				, _depth
-				, _border
-				, _format
-				, _type
-				, _pixels
-				) );
+			GL_CHECK(glTexImage3D(_target, _level, _internalFormat, _width, _height, _depth, _border, _format, _type, _data) );
 		}
 		else
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			BX_UNUSED(_depth);
-			GL_CHECK(glTexImage2D(_target
-				, _level
-				, _internalFormat
-				, _width
-				, _height
-				, _border
-				, _format
-				, _type
-				, _pixels
-				) );
+			GL_CHECK(glTexImage2D(_target, _level, _internalFormat, _width, _height, _border, _format, _type, _data) );
+		}
+	}
+
+	static void texSubImage(GLenum _target, GLint _level, GLint _xoffset, GLint _yoffset, GLint _zoffset, GLsizei _width, GLsizei _height, GLsizei _depth, GLenum _format, GLenum _type, const GLvoid* _data)
+	{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		if (_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glTexSubImage3D(_target, _level, _xoffset, _yoffset, _zoffset, _width, _height, _depth, _format, _type, _data) );
+		}
+		else
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		{
+			BX_UNUSED(_zoffset, _depth);
+			GL_CHECK(glTexSubImage2D(_target, _level, _xoffset, _yoffset, _width, _height, _format, _type, _data) );
 		}
 	}
 
@@ -1362,45 +1355,69 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
-			GL_CHECK(glCompressedTexImage3D(_target
-				, _level
-				, _internalformat
-				, _width
-				, _height
-				, _depth
-				, _border
-				, _imageSize
-				, _data
-				) );
+			GL_CHECK(glCompressedTexImage3D(_target, _level, _internalformat, _width, _height, _depth, _border, _imageSize, _data) );
 		}
 		else
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			BX_UNUSED(_depth);
-			GL_CHECK(glCompressedTexImage2D(_target
-				, _level
-				, _internalformat
-				, _width
-				, _height
-				, _border
-				, _imageSize
-				, _data
-				) );
+			GL_CHECK(glCompressedTexImage2D(_target, _level, _internalformat, _width, _height, _border, _imageSize, _data) );
 		}
 	}
 
-	void Texture::init(GLenum _target, uint8_t _numMips, uint32_t _flags)
+	static void compressedTexSubImage(GLenum _target, GLint _level, GLint _xoffset, GLint _yoffset, GLint _zoffset, GLsizei _width, GLsizei _height, GLsizei _depth, GLenum _format, GLsizei _imageSize, const GLvoid* _data)
+	{
+#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		if (_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glCompressedTexSubImage3D(_target, _level, _xoffset, _yoffset, _zoffset, _width, _height, _depth, _format, _imageSize, _data) );
+		}
+		else
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+		{
+			BX_UNUSED(_zoffset, _depth);
+			GL_CHECK(glCompressedTexSubImage2D(_target, _level, _xoffset, _yoffset, _width, _height, _format, _imageSize, _data) );
+		}
+	}
+
+	void Texture::init(GLenum _target, uint8_t _format, uint8_t _numMips, uint32_t _flags)
 	{
 		m_target = _target;
 		m_numMips = _numMips;
 		m_flags = _flags;
 		m_currentFlags = UINT32_MAX;
+		m_requestedFormat = _format;
+		m_textureFormat   = _format;
 
 		GL_CHECK(glGenTextures(1, &m_id) );
 		BX_CHECK(0 != m_id, "Failed to generate texture id.");
 		GL_CHECK(glBindTexture(_target, m_id) );
 
 		setSamplerState(_flags);
+
+		const TextureFormatInfo& tfi = s_textureFormat[_format];
+		m_fmt = tfi.m_fmt;
+		m_type = tfi.m_type;
+
+		const bool compressed = TextureFormat::Unknown > _format;
+		const bool decompress = !tfi.m_supported && compressed;
+
+		if (decompress)
+		{
+			m_textureFormat = (uint8_t)TextureFormat::BGRA8;
+			const TextureFormatInfo& tfi = s_textureFormat[TextureFormat::BGRA8];
+			m_fmt = tfi.m_fmt;
+			m_type = tfi.m_type;
+		}
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+		if (GL_RGBA == m_fmt
+		&&  s_renderCtx.m_textureSwizzleSupport)
+		{
+			GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
+			GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
+		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 	}
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
@@ -1411,127 +1428,58 @@ namespace bgfx
 		{
 			uint8_t numMips = imageContainer.m_numMips;
 
+			GLenum target = GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
 			{
-				init(GL_TEXTURE_CUBE_MAP, numMips, _flags);
+				target = GL_TEXTURE_CUBE_MAP;
 			}
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			else if (imageContainer.m_depth > 1)
 			{
-				init(GL_TEXTURE_3D, numMips, _flags);
+				target = GL_TEXTURE_3D;
 			}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-			else
+
+			init(target
+				, imageContainer.m_format
+				, numMips
+				, _flags
+				);
+
+			target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
+
+			const GLenum internalFmt = s_textureFormat[m_textureFormat].m_internalFmt;
+
+			const bool swizzle    = GL_RGBA == internalFmt;
+			const bool convert    = m_textureFormat != m_requestedFormat;
+			const bool compressed = TextureFormat::Unknown > m_textureFormat;
+			const uint32_t min    = convert && compressed ? 4 : 1;
+
+			uint8_t* temp = NULL;
+			if (convert || swizzle)
 			{
-				init(GL_TEXTURE_2D, numMips, _flags);
+				temp = (uint8_t*)g_realloc(NULL, imageContainer.m_width*imageContainer.m_height*4);
 			}
 
-			const TextureFormatInfo& tfi = s_textureFormat[imageContainer.m_type];
-			GLenum internalFmt = tfi.m_internalFmt;
-			m_fmt = tfi.m_fmt;
-			m_type = tfi.m_type;
-
-			GLenum target = m_target;
-			if (imageContainer.m_cubeMap)
+			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-			}
+				uint32_t width  = imageContainer.m_width;
+				uint32_t height = imageContainer.m_height;
+				uint32_t depth  = imageContainer.m_depth;
 
-			if (!tfi.m_supported
-			||  TextureFormat::Unknown < imageContainer.m_type)
-			{
-				TextureFormat::Enum textureFormat = imageContainer.m_type;
-				bool decompress = TextureFormat::Unknown > textureFormat;
-				uint32_t bpp = getBitsPerPixel(imageContainer.m_type);
-
-				if (decompress)
+				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 				{
-					textureFormat = TextureFormat::BGRA8;
-					const TextureFormatInfo& tfi = s_textureFormat[textureFormat];
-					internalFmt = tfi.m_internalFmt;
-					m_fmt = tfi.m_fmt;
-					m_type = tfi.m_type;
-					bpp = getBitsPerPixel(textureFormat);
-				}
+					width  = bx::uint32_max(min, width);
+					height = bx::uint32_max(min, height);
+					depth  = bx::uint32_max(1, depth);
 
-				bool swizzle = GL_RGBA == m_fmt;
-
-#if BGFX_CONFIG_RENDERER_OPENGL
-				if (swizzle
-				&&  s_renderCtx.m_textureSwizzleSupport)
-				{
-					swizzle = false;
-					GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
-					GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
-				}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-
-				uint8_t* bits = (uint8_t*)g_realloc(NULL, imageContainer.m_width*imageContainer.m_height*bpp/8);
-
-				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
-				{
-					uint32_t width = imageContainer.m_width;
-					uint32_t height = imageContainer.m_height;
-					uint32_t depth = imageContainer.m_depth;
-
-					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+					ImageMip mip;
+					if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
 					{
-						width  = bx::uint32_max(1, width);
-						height = bx::uint32_max(1, height);
-						depth  = bx::uint32_max(1, depth);
-
-						Mip mip;
-						if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
-						{
-							mip.decode(bits);
-
-							if (swizzle)
-							{
-								imageSwizzleBgra8(width, height, bits, bits);
-							}
-
-							texImage(target+side
-								, lod
-								, internalFmt
-								, width
-								, height
-								, depth
-								, 0
-								, m_fmt
-								, m_type
-								, bits
-								);
-						}
-
-						width >>= 1;
-						height >>= 1;
-						depth >>= 1;
-					}
-				}
-
-				g_free(bits);
-			}
-			else
-			{
-				m_compressed = true;
-
-				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
-				{
-					uint32_t width  = imageContainer.m_width;
-					uint32_t height = imageContainer.m_height;
-					uint32_t depth  = imageContainer.m_depth;
-
-					for (uint32_t ii = 0, num = numMips; ii < num; ++ii)
-					{
-						width  = bx::uint32_max(1, width);
-						height = bx::uint32_max(1, height);
-						depth  = bx::uint32_max(1, depth);
-
-						Mip mip;
-						if (imageGetRawData(imageContainer, side, ii, _mem->data, _mem->size, mip) )
+						if (compressed)
 						{
 							compressedTexImage(target+side
-								, ii
+								, lod
 								, internalFmt
 								, width
 								, height
@@ -1541,102 +1489,20 @@ namespace bgfx
 								, mip.m_data
 								);
 						}
-
-						width  >>= 1;
-						height >>= 1;
-						depth  >>= 1;
-					}
-				}
-			}
-		}
-		else
-		{
-			bx::MemoryReader reader(_mem->data, _mem->size);
-
-			uint32_t magic;
-			bx::read(&reader, magic);
-
-			if (BGFX_CHUNK_MAGIC_TEX == magic)
-			{
-				TextureCreate tc;
-				bx::read(&reader, tc);
-
-				uint8_t numMips = tc.m_numMips;
-
-				if (tc.m_cubeMap)
-				{
-					init(GL_TEXTURE_CUBE_MAP, numMips, _flags);
-				}
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-				else if (tc.m_depth > 1)
-				{
-					init(GL_TEXTURE_3D, numMips, _flags);
-				}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-				else
-				{
-					init(GL_TEXTURE_2D, numMips, _flags);
-				}
-
-				const TextureFormatInfo& tfi = s_textureFormat[tc.m_format];
-				GLenum internalFmt = tfi.m_internalFmt;
-				m_fmt = tfi.m_fmt;
-				m_type = tfi.m_type;
-				m_compressed = tc.m_format < TextureFormat::Unknown;
-
-				GLenum target = m_target;
-				if (tc.m_cubeMap)
-				{
-					target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-				}
-
-				uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
-				uint8_t* data = NULL != tc.m_mem ? tc.m_mem->data : NULL;
-				uint32_t min = m_compressed ? 4 : 1;
-				bool swizzle = GL_RGBA == m_fmt;
-
-#if BGFX_CONFIG_RENDERER_OPENGL
-				if (swizzle
-				&&  s_renderCtx.m_textureSwizzleSupport)
-				{
-					swizzle = false;
-					GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
-					GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
-				}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-
-				for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
-				{
-					uint32_t width  = tc.m_width;
-					uint32_t height = tc.m_height;
-					uint32_t depth  = tc.m_depth;
-
-					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
-					{
-						width  = bx::uint32_max(width, min);
-						height = bx::uint32_max(height, min);
-						depth  = bx::uint32_max(1, depth);
-						uint32_t size = width*height*bpp/8;
-
-						if (m_compressed)
-						{
-							compressedTexImage(target+side
-								, lod
-								, internalFmt
-								, width
-								, height
-								, depth
-								, 0
-								, size
-								, data
-								);
-						}
 						else
 						{
-							if (NULL != data
-							&&  swizzle)
+							const uint8_t* data = mip.m_data;
+
+							if (convert)
 							{
-								imageSwizzleBgra8(width, height, data, data);
+								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+								data = temp;
+							}
+
+							if (swizzle)
+							{
+								imageSwizzleBgra8(width, height, data, temp);
+								data = temp;
 							}
 
 							texImage(target+side
@@ -1651,26 +1517,52 @@ namespace bgfx
 								, data
 								);
 						}
-
-						if (NULL != data)
-						{
-							data += size;
-						}
-
-						width  >>= 1;
-						height >>= 1;
-						depth  >>= 1;
 					}
-				}
+					else
+					{
+						if (compressed)
+						{
+							uint32_t size = bx::uint32_max(1, (width  + 3)>>2)
+										  * bx::uint32_max(1, (height + 3)>>2)
+										  * 4*4*getBitsPerPixel(TextureFormat::Enum(m_textureFormat) )/8
+										  ;
 
-				if (NULL != tc.m_mem)
-				{
-					release(tc.m_mem);
+							compressedTexImage(target+side
+								, lod
+								, internalFmt
+								, width
+								, height
+								, depth
+								, 0
+								, size
+								, NULL
+								);
+						}
+						else
+						{
+							texImage(target+side
+								, lod
+								, internalFmt
+								, width
+								, height
+								, depth
+								, 0
+								, m_fmt
+								, m_type
+								, NULL
+								);
+						}
+					}
+
+					width  >>= 1;
+					height >>= 1;
+					depth  >>= 1;
 				}
 			}
-			else
+
+			if (NULL != temp)
 			{
-				//
+				g_free(temp);
 			}
 		}
 
@@ -1761,106 +1653,74 @@ namespace bgfx
 
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		BX_UNUSED(_z);
-		BX_UNUSED(_depth);
+		BX_UNUSED(_z, _depth);
 
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 
-		switch (m_target)
+		GLenum target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
+
+		const bool swizzle    = GL_RGBA == m_fmt;
+		const bool convert    = m_textureFormat != m_requestedFormat;
+		const bool compressed = TextureFormat::Unknown > m_textureFormat;
+
+		uint32_t width  = _rect.m_width;
+		uint32_t height = _rect.m_height;
+
+		uint8_t* temp = NULL;
+		if (convert || swizzle)
 		{
-		case GL_TEXTURE_2D:
-			if (m_compressed)
-			{
-				GL_CHECK(glCompressedTexSubImage2D(m_target
-					, _mip
-					, _rect.m_x
-					, _rect.m_y
-					, _rect.m_width
-					, _rect.m_height
-					, m_fmt
-					, _mem->size
-					, _mem->data
-					) );
-			}
-			else
-			{
-				GL_CHECK(glTexSubImage2D(m_target
-					, _mip
-					, _rect.m_x
-					, _rect.m_y
-					, _rect.m_width
-					, _rect.m_height
-					, m_fmt
-					, m_type
-					, _mem->data
-					) );
-			}
-			break;
+			temp = (uint8_t*)g_realloc(NULL, width*height*4);
+		}
 
-		case GL_TEXTURE_CUBE_MAP:
-			if (m_compressed)
-			{
-				GL_CHECK(glCompressedTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+_side
-					, _mip
-					, _rect.m_x
-					, _rect.m_y
-					, _rect.m_width
-					, _rect.m_height
-					, m_fmt
-					, _mem->size
-					, _mem->data
-					) );
-			}
-			else
-			{
-				GL_CHECK(glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+_side
-					, _mip
-					, _rect.m_x
-					, _rect.m_y
-					, _rect.m_width
-					, _rect.m_height
-					, m_fmt
-					, m_type
-					, _mem->data
-					) );
-			}
-			break;
+		if (compressed)
+		{
+			GL_CHECK(compressedTexSubImage(target+_side
+				, _mip
+				, _rect.m_x
+				, _rect.m_y
+				, _z
+				, _rect.m_width
+				, _rect.m_height
+				, _depth
+				, m_fmt
+				, _mem->size
+				, _mem->data
+				) );
+		}
+		else
+		{
+			const uint8_t* data = _mem->data;
 
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-		case GL_TEXTURE_3D:
-			if (m_compressed)
+			if (convert)
 			{
-				GL_CHECK(glCompressedTexSubImage3D(m_target
-					, _mip
-					, _rect.m_x
-					, _rect.m_y
-					, _z
-					, _rect.m_width
-					, _rect.m_height
-					, _depth
-					, m_fmt
-					, _mem->size
-					, _mem->data
-					) );
+				imageDecodeToBgra8(temp, data, width, height, m_requestedFormat);
+				data = temp;
 			}
-			else
+
+			if (swizzle)
 			{
-				GL_CHECK(glTexSubImage3D(m_target
-					, _mip
-					, _rect.m_x
-					, _rect.m_y
-					, _z
-					, _rect.m_width
-					, _rect.m_height
-					, _depth
-					, m_fmt
-					, m_type
-					, _mem->data
-					) );
+				imageSwizzleBgra8(width, height, data, temp);
+				data = temp;
 			}
-			break;
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+
+			GL_CHECK(texSubImage(target+_side
+				, _mip
+				, _rect.m_x
+				, _rect.m_y
+				, _z
+				, _rect.m_width
+				, _rect.m_height
+				, _depth
+				, m_fmt
+				, m_type
+				, data
+				) );
+		}
+
+		if (NULL != temp)
+		{
+			g_free(temp);
 		}
 	}
 
@@ -2458,6 +2318,7 @@ namespace bgfx
 						^ (uint64_t(getGLStringHash(GL_VERSION ) )<<16)
 						;
 
+#if BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 		const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 		glGetError(); // ignore error if glGetString returns NULL.
 		if (NULL != extensions)
@@ -2514,6 +2375,7 @@ namespace bgfx
 				}
 			}
 		}
+#endif // BGFX_CONFIG_RENDERER_OPENGL_USE_EXTENSIONS
 
 		bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
 		s_textureFormat[TextureFormat::BC1].m_supported = bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
@@ -2596,7 +2458,6 @@ namespace bgfx
 			s_renderCtx.m_readPixelsFmt = GL_BGRA_EXT;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-			s_textureFormat[TextureFormat::BGRX8].m_fmt = GL_BGRA_EXT;
 			s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 
 			// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
@@ -2609,7 +2470,6 @@ namespace bgfx
 			// https://www.opengl.org/registry/specs/EXT/bgra.txt
 			if (!s_extension[Extension::EXT_bgra].m_supported)
 			{
-				s_textureFormat[TextureFormat::BGRX8].m_internalFmt = GL_BGRA_EXT;
 				s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA_EXT;
 			}
 		}

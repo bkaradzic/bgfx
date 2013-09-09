@@ -183,36 +183,34 @@ namespace bgfx
 	struct TextureFormatInfo
 	{
 		D3DFORMAT m_fmt;
-		uint8_t m_bpp;
 	};
 
-	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
+	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ D3DFMT_DXT1,           4 }, // BC1 
-		{ D3DFMT_DXT3,           8 }, // BC2
-		{ D3DFMT_DXT5,           8 }, // BC3
-		{ D3DFMT_ATI1,           4 }, // BC4
-		{ D3DFMT_ATI2,           8 }, // BC5
-		{ D3DFMT_UNKNOWN,        0 }, // ETC1
-		{ D3DFMT_UNKNOWN,        0 }, // ETC2
-		{ D3DFMT_UNKNOWN,        0 }, // ETC2A
-		{ D3DFMT_UNKNOWN,        0 }, // ETC2A1
-		{ D3DFMT_UNKNOWN,        0 }, // PTC12
-		{ D3DFMT_UNKNOWN,        0 }, // PTC14
-		{ D3DFMT_UNKNOWN,        0 }, // PTC12A
-		{ D3DFMT_UNKNOWN,        0 }, // PTC14A
-		{ D3DFMT_UNKNOWN,        0 }, // PTC22
-		{ D3DFMT_UNKNOWN,        0 }, // PTC24
-		{ D3DFMT_UNKNOWN,        0 }, // Unknown
-		{ D3DFMT_L8,             8 }, // L8
-		{ D3DFMT_X8R8G8B8,      32 }, // BGRX8
-		{ D3DFMT_A8R8G8B8,      32 }, // BGRA8
-		{ D3DFMT_A16B16G16R16,  64 }, // RGBA16
-		{ D3DFMT_A16B16G16R16F, 64 }, // RGBA16F
-		{ D3DFMT_R5G6B5,        16 }, // R5G6B5
-		{ D3DFMT_A4R4G4B4,      16 }, // RGBA4
-		{ D3DFMT_A1R5G5B5,      16 }, // RGB5A1
-		{ D3DFMT_A2B10G10R10,   32 }, // RGB10A2
+		{ D3DFMT_DXT1          }, // BC1 
+		{ D3DFMT_DXT3          }, // BC2
+		{ D3DFMT_DXT5          }, // BC3
+		{ D3DFMT_UNKNOWN       }, // BC4
+		{ D3DFMT_UNKNOWN       }, // BC5
+		{ D3DFMT_UNKNOWN       }, // ETC1
+		{ D3DFMT_UNKNOWN       }, // ETC2
+		{ D3DFMT_UNKNOWN       }, // ETC2A
+		{ D3DFMT_UNKNOWN       }, // ETC2A1
+		{ D3DFMT_UNKNOWN       }, // PTC12
+		{ D3DFMT_UNKNOWN       }, // PTC14
+		{ D3DFMT_UNKNOWN       }, // PTC12A
+		{ D3DFMT_UNKNOWN       }, // PTC14A
+		{ D3DFMT_UNKNOWN       }, // PTC22
+		{ D3DFMT_UNKNOWN       }, // PTC24
+		{ D3DFMT_UNKNOWN       }, // Unknown
+		{ D3DFMT_L8            }, // L8
+		{ D3DFMT_A8R8G8B8      }, // BGRA8
+		{ D3DFMT_A16B16G16R16  }, // RGBA16
+		{ D3DFMT_A16B16G16R16F }, // RGBA16F
+		{ D3DFMT_R5G6B5        }, // R5G6B5
+		{ D3DFMT_A4R4G4B4      }, // RGBA4
+		{ D3DFMT_A1R5G5B5      }, // RGB5A1
+		{ D3DFMT_A2B10G10R10   }, // RGB10A2
 	};
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =
@@ -404,6 +402,7 @@ namespace bgfx
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
+#if BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 			BX_TRACE("Extended formats:");
 			for (uint32_t ii = 0; ii < ExtendedFormat::Count; ++ii)
 			{
@@ -425,6 +424,10 @@ namespace bgfx
 				// AMD only
 				m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
 			}
+
+			s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
+			s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
+#endif // BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 
 			uint32_t index = 1;
 			for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)
@@ -1518,17 +1521,20 @@ namespace bgfx
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			m_format = imageContainer.m_type;
-			const TextureFormatInfo& tfi = s_textureFormat[imageContainer.m_type];
+			m_requestedFormat = (uint8_t)imageContainer.m_format;
+			m_textureFormat   = (uint8_t)imageContainer.m_format;
 
-			bool decompress = false
-				|| (TextureFormat::BC4  == imageContainer.m_type && !s_extendedFormats[ExtendedFormat::Ati1].m_supported)
-				|| (TextureFormat::BC5  == imageContainer.m_type && !s_extendedFormats[ExtendedFormat::Ati2].m_supported)
-				|| (D3DFMT_UNKNOWN == tfi.m_fmt)
-				;
+			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
+			const bool convert = D3DFMT_UNKNOWN == tfi.m_fmt;
 
-			D3DFORMAT format = decompress ? D3DFMT_A8R8G8B8 : tfi.m_fmt;
-			uint8_t bpp = decompress ? 32 : tfi.m_bpp;
+			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+			if (convert)
+			{
+				m_textureFormat = (uint8_t)TextureFormat::BGRA8;
+				bpp = 32;
+			}
+
+			D3DFORMAT format = s_textureFormat[m_textureFormat].m_fmt;
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -1543,166 +1549,81 @@ namespace bgfx
 				createTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_numMips, format);
 			}
 
-			if (decompress
-			||  TextureFormat::Unknown < imageContainer.m_type)
+			// For BC4 and B5 in DX9 LockRect returns wrong number of
+			// bytes. If actual mip size is used it causes memory corruption.
+			// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
+			const bool useMipSize = true
+							&& imageContainer.m_format != TextureFormat::BC4
+							&& imageContainer.m_format != TextureFormat::BC5
+							;
+
+			const bool compressed = TextureFormat::Unknown > m_requestedFormat;
+			const uint32_t min    = compressed ? 4 : 1;
+
+			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				uint32_t width     = imageContainer.m_width;
+				uint32_t height    = imageContainer.m_height;
+				uint32_t depth     = imageContainer.m_depth;
+				uint32_t mipWidth  = imageContainer.m_width;
+				uint32_t mipHeight = imageContainer.m_height;
+
+				for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 				{
-					uint32_t width  = imageContainer.m_width;
-					uint32_t height = imageContainer.m_height;
-					uint32_t depth  = imageContainer.m_depth;
+					width     = bx::uint32_max(1, width);
+					height    = bx::uint32_max(1, height);
+					depth     = bx::uint32_max(1, depth);
+					mipWidth  = bx::uint32_max(min, mipWidth);
+					mipHeight = bx::uint32_max(min, mipHeight);
+					uint32_t mipSize = width*height*depth*bpp/8;
 
-					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
+					ImageMip mip;
+					if (imageGetRawData(imageContainer, 0, lod, _mem->data, _mem->size, mip) )
 					{
-						width  = bx::uint32_max(1, width);
-						height = bx::uint32_max(1, height);
-						depth  = bx::uint32_max(1, depth);
+						uint32_t pitch;
+						uint32_t slicePitch;
+						uint8_t* bits = lock(side, lod, pitch, slicePitch);
 
-						Mip mip;
-						if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
+						if (convert)
 						{
-							uint32_t pitch;
-							uint32_t slicePitch;
-							uint8_t* bits = lock(side, lod, pitch, slicePitch);
-
-							if (width != mip.m_width
-							||  height != mip.m_height)
+							if (width  != mipWidth
+							||  height != mipHeight)
 							{
-								uint32_t srcpitch = mip.m_width*bpp/8;
+								uint32_t srcpitch = mipWidth*bpp/8;
 
-								uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*mip.m_height);
-								mip.decode(temp);
+								uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*mipHeight);
+								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
 
 								uint32_t dstpitch = pitch;
 								for (uint32_t yy = 0; yy < height; ++yy)
 								{
 									uint8_t* src = &temp[yy*srcpitch];
 									uint8_t* dst = &bits[yy*dstpitch];
-									memcpy(dst, src, srcpitch);
+									memcpy(dst, src, dstpitch);
 								}
 
 								g_free(temp);
 							}
 							else
 							{
-								mip.decode(bits);
+								imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
 							}
-
-							unlock(side, lod);
 						}
-
-						width  >>= 1;
-						height >>= 1;
-						depth  >>= 1;
-					}
-				}
-			}
-			else
-			{
-				// For BC4 and B5 in DX9 LockRect returns wrong number of
-				// bytes. If actual mip size is used it causes memory corruption.
-				// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
-				bool useMipSize = true
-						&& imageContainer.m_type != TextureFormat::BC4
-						&& imageContainer.m_type != TextureFormat::BC5
-						;
-
-				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
-				{
-					uint32_t width  = imageContainer.m_width;
-					uint32_t height = imageContainer.m_height;
-					uint32_t depth  = imageContainer.m_depth;
-
-					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
-					{
-						width  = bx::uint32_max(1, width);
-						height = bx::uint32_max(1, height);
-						depth  = bx::uint32_max(1, depth);
-
-						Mip mip;
-						if (imageGetRawData(imageContainer, 0, lod, _mem->data, _mem->size, mip) )
+						else
 						{
-							uint32_t pitch;
-							uint32_t slicePitch;
-							uint8_t* dst = lock(side, lod, pitch, slicePitch);
-
-							uint32_t size = useMipSize ? mip.m_size : width*height*depth*bpp/8;
-
-							memcpy(dst, mip.m_data, size);
-
-							unlock(side, lod);
+							uint32_t size = useMipSize ? mip.m_size : mipSize;
+							memcpy(bits, mip.m_data, size);
 						}
 
-						width  >>= 1;
-						height >>= 1;
-						depth  >>= 1;
-					}
-				}
-			}
-		}
-		else
-		{
-			bx::MemoryReader reader(_mem->data, _mem->size);
-
-			uint32_t magic;
-			bx::read(&reader, magic);
-
-			if (BGFX_CHUNK_MAGIC_TEX == magic)
-			{
-				TextureCreate tc;
-				bx::read(&reader, tc);
-				m_format = (TextureFormat::Enum)tc.m_format;
-
-				if (tc.m_cubeMap)
-				{
-					createCubeTexture(tc.m_width, tc.m_numMips, s_textureFormat[tc.m_format].m_fmt);
-				}
-				else if (tc.m_depth > 1)
-				{
-					createVolumeTexture(tc.m_width, tc.m_height, tc.m_depth, tc.m_numMips, s_textureFormat[tc.m_format].m_fmt);
-				}
-				else
-				{
-					createTexture(tc.m_width, tc.m_height, tc.m_numMips, s_textureFormat[tc.m_format].m_fmt);
-				}
-
-				if (NULL != tc.m_mem)
-				{
-					uint32_t bpp = s_textureFormat[tc.m_format].m_bpp;
-					uint8_t* data = tc.m_mem->data;
-
-					for (uint8_t side = 0, numSides = tc.m_cubeMap ? 6 : 1; side < numSides; ++side)
-					{
-						uint32_t width  = tc.m_width;
-						uint32_t height = tc.m_height;
-						uint32_t depth  = tc.m_depth;
-
-						for (uint32_t lod = 0, num = tc.m_numMips; lod < num; ++lod)
-						{
-							width  = bx::uint32_max(1, width);
-							height = bx::uint32_max(1, height);
-							depth  = bx::uint32_max(1, depth);
-
-							uint32_t pitch;
-							uint32_t slicePitch;
-							uint8_t* dst = lock(side, lod, pitch, slicePitch);
-							uint32_t len = width*height*bpp/8;
-							memcpy(dst, data, len);
-							data += len;
-							unlock(side, lod);
-
-							width  >>= 1;
-							height >>= 1;
-							depth  >>= 1;
-						}
+						unlock(side, lod);
 					}
 
-					release(tc.m_mem);
+					width     >>= 1;
+					height    >>= 1;
+					depth     >>= 1;
+					mipWidth  >>= 1;
+					mipHeight >>= 1;
 				}
-			}
-			else
-			{
-				//
 			}
 		}
 	}
@@ -1717,23 +1638,40 @@ namespace bgfx
 
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		uint32_t bpp = s_textureFormat[m_format].m_bpp;
+		uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		uint32_t srcpitch = _rect.m_width*bpp/8;
 		uint32_t dstpitch = s_renderCtx.m_updateTexturePitch;
 		uint8_t* bits = s_renderCtx.m_updateTextureBits + _rect.m_y*dstpitch + _rect.m_x*bpp/8;
 
+		const bool convert = m_textureFormat != m_requestedFormat;
+		
+		uint8_t* data = _mem->data;
+		uint8_t* temp = NULL;
+
+		if (convert)
+		{
+			uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*_rect.m_height);
+			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, m_requestedFormat);
+			data = temp;
+		}
+
 		if (srcpitch == dstpitch)
 		{
-			memcpy(bits, _mem->data, srcpitch*_rect.m_height);
+			memcpy(bits, data, srcpitch*_rect.m_height);
 		}
 		else
 		{
 			for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
 			{
-				uint8_t* src = &_mem->data[yy*srcpitch];
+				uint8_t* src = &data[yy*srcpitch];
 				uint8_t* dst = &bits[yy*dstpitch];
 				memcpy(dst, src, srcpitch);
 			}
+		}
+
+		if (NULL != temp)
+		{
+			g_free(temp);
 		}
 
 		if (0 == _mip)

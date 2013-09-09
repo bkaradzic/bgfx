@@ -255,7 +255,9 @@ namespace bgfx
 
 		ID3D11ShaderResourceView* m_srv;
 		ID3D11SamplerState* m_sampler;
-		Enum m_type;
+		uint8_t m_type;
+		uint8_t m_requestedFormat;
+		uint8_t m_textureFormat;
 		uint8_t m_numMips;
 	};
 
