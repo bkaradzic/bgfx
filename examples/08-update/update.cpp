@@ -123,6 +123,37 @@ static const bgfx::Memory* loadShader(const char* _name)
 	return load(filePath);
 }
 
+static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshName)
+{
+	const bgfx::Memory* mem;
+
+	mem = loadShader(_vshName);
+	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+
+	mem = loadShader(_fshName);
+	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+
+	// Create program from shaders.
+	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
+
+	// We can destroy vertex and fragment shader here since
+	// their reference is kept inside bgfx after calling createProgram.
+	// Vertex and fragment shader will be destroyed once program is
+	// destroyed.
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);
+
+	return program;
+}
+
+static const bgfx::Memory* loadTexture(const char* _name)
+{
+	char filePath[512];
+	strcpy(filePath, "textures/");
+	strcat(filePath, _name);
+	return load(filePath);
+}
+
 static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
 {
 	bgfx::TextureInfo ti;
@@ -194,6 +225,55 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	const bgfx::Memory* mem;
 
+	///
+	mem = loadTexture("texture_compression_bc1.dds");
+	bgfx::TextureHandle textureBc1 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_bc2.dds");
+	bgfx::TextureHandle textureBc2 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_bc3.dds");
+	bgfx::TextureHandle textureBc3 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_etc1.ktx");
+	bgfx::TextureHandle textureEtc1 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_etc2.ktx");
+	bgfx::TextureHandle textureEtc2 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_ptc12.pvr");
+	bgfx::TextureHandle texturePtc12 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_ptc14.pvr");
+	bgfx::TextureHandle texturePtc14 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_ptc22.pvr");
+	bgfx::TextureHandle texturePtc22 = bgfx::createTexture(mem);
+
+	///
+	mem = loadTexture("texture_compression_ptc24.pvr");
+	bgfx::TextureHandle texturePtc24 = bgfx::createTexture(mem);
+
+	bgfx::TextureHandle textures[] =
+	{
+		textureBc1,
+		textureBc2,
+		textureBc3,
+		textureEtc1,
+		textureEtc2,
+		texturePtc12,
+		texturePtc14,
+		texturePtc22,
+		texturePtc24,
+	};
+
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
 	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, s_PosTexcoordDecl);
@@ -205,23 +285,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create texture sampler uniforms.
 	bgfx::UniformHandle u_texCube = bgfx::createUniform("u_texCube", bgfx::UniformType::Uniform1iv);
 
-	// Load vertex shader.
-	mem = loadShader("vs_update");
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
 
-	// Load fragment shader.
-	mem = loadShader("fs_update");
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::ProgramHandle program = loadProgram("vs_update", "fs_update");
+	bgfx::ProgramHandle programCmp = loadProgram("vs_update", "fs_update_cmp");
 
 	const uint32_t textureSide = 2048;
 
@@ -249,8 +316,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
-		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
+		// Set view 0 and 1 viewport.
+		bgfx::setViewRectMask(0x3, 0, 0, width, height);
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
@@ -338,16 +405,58 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Submit primitive for rendering to view 0.
 		bgfx::submit(0);
 
+
+		// Set view and projection matrix for view 1.
+		const float aspectRatio = float(height)/float(width);
+		const float size = 10.0f;
+		mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
+		bgfx::setViewTransform(1, NULL, proj);
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(textures); ++ii)
+		{
+			mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + ii*2.1f, 4.0f, 0.0f);
+
+			// Set model matrix for rendering.
+			bgfx::setTransform(mtx);
+
+			// Set vertex and fragment shaders.
+			bgfx::setProgram(programCmp);
+
+			// Set vertex and index buffer.
+			bgfx::setVertexBuffer(vbh);
+			bgfx::setIndexBuffer(ibh);
+
+			// Bind texture.
+			bgfx::setTexture(0, u_texColor, textures[ii]);
+
+			// Set render states.
+			bgfx::setState(BGFX_STATE_DEFAULT);
+
+			// Submit primitive for rendering to view 0.
+			bgfx::submit(1);
+		}
+
 		// Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
 
 	// Cleanup.
+	bgfx::destroyTexture(textureBc1);
+	bgfx::destroyTexture(textureBc2);
+	bgfx::destroyTexture(textureBc3);
+	bgfx::destroyTexture(textureEtc1);
+	bgfx::destroyTexture(textureEtc2);
+	bgfx::destroyTexture(texturePtc12);
+	bgfx::destroyTexture(texturePtc14);
+	bgfx::destroyTexture(texturePtc22);
+	bgfx::destroyTexture(texturePtc24);
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
+	bgfx::destroyProgram(programCmp);
 	bgfx::destroyProgram(program);
 	bgfx::destroyTexture(textureCube);
+	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_texCube);
 
 	// Shutdown bgfx.
