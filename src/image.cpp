@@ -1219,6 +1219,51 @@ namespace bgfx
 			}
 			break;
 
+		case TextureFormat::ETC2:
+			BX_WARN(false, "ETC2 decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff0000ff), _dst);
+			break;
+
+		case TextureFormat::ETC2A:
+			BX_WARN(false, "ETC2A decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff00ff00), _dst);
+			break;
+
+		case TextureFormat::ETC2A1:
+			BX_WARN(false, "ETC2A1 decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffff0000), _dst);
+			break;
+
+		case TextureFormat::PTC12:
+			BX_WARN(false, "PTC12 decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffff00ff), _dst);
+			break;
+
+		case TextureFormat::PTC12A:
+			BX_WARN(false, "PTC12A decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffff00), _dst);
+			break;
+
+		case TextureFormat::PTC14:
+			BX_WARN(false, "PTC14 decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff00ffff), _dst);
+			break;
+
+		case TextureFormat::PTC14A:
+			BX_WARN(false, "PTC14A decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xff0000ff), _dst);
+			break;
+
+		case TextureFormat::PTC22:
+			BX_WARN(false, "PTC22 decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff00ff00), UINT32_C(0xff0000ff), _dst);
+			break;
+
+		case TextureFormat::PTC24:
+			BX_WARN(false, "PTC24 decoder is not implemented.");
+			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffffff), _dst);
+			break;
+
 		default:
 			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
 			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
