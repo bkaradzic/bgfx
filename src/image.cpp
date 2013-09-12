@@ -454,21 +454,13 @@ namespace bgfx
 		{ 47, 183, -47, -183},
 	};
 
-	int8_t uint8_add2c(int32_t _a, int32_t _b)
-	{
-		return _b & 0x4
-			? _a - ( (~_b + 1) & 0x7)
-			: _a + _b
-			;
-	}
-
-	int8_t uint8_satadd(int32_t _a, int32_t _b)
+	uint8_t uint8_satadd(int32_t _a, int32_t _b)
 	{
 		using namespace bx;
 		const  int32_t add    = _a + _b;
-		const uint32_t min    = uint32_min(add, 255);
-		const uint32_t result = uint32_max(min, 0);
-		return result;
+		const uint32_t min    = uint32_imin(add, 255);
+		const uint32_t result = uint32_imax(min, 0);
+		return (uint8_t)result;
 	}
 
 	void decodeBlockEtc1(uint8_t _dst[16*4], const uint8_t _src[8])
@@ -484,14 +476,14 @@ namespace bgfx
 			rgb[1]  = _src[1] >> 3;
 			rgb[2]  = _src[2] >> 3;
 
-			uint8_t diff[3];
-			diff[0] = _src[0] & 0x07;
-			diff[1] = _src[1] & 0x07;
-			diff[2] = _src[2] & 0x07;
+			int8_t diff[3];
+			diff[0] = int8_t( (_src[0] & 0x07)<<5)>>5;
+			diff[1] = int8_t( (_src[1] & 0x07)<<5)>>5;
+			diff[2] = int8_t( (_src[2] & 0x07)<<5)>>5;
 
-			rgb[4] = uint8_add2c(rgb[0], diff[0]);
-			rgb[5] = uint8_add2c(rgb[1], diff[1]);
-			rgb[6] = uint8_add2c(rgb[2], diff[2]);
+			rgb[4] = rgb[0] + diff[0];
+			rgb[5] = rgb[1] + diff[1];
+			rgb[6] = rgb[2] + diff[2];
 
 			rgb[0] = bitRangeConvert(rgb[0], 5, 8);
 			rgb[1] = bitRangeConvert(rgb[1], 5, 8);
@@ -522,12 +514,8 @@ namespace bgfx
 		table[0] = (_src[3] >> 5) & 0x7;
 		table[1] = (_src[3] >> 2) & 0x7;
 
-		uint32_t indexBits = 0
-						| (_src[4]<<24)
-						| (_src[5]<<16)
-						| (_src[6]<< 8)
-						| (_src[7]    )
-						;
+		uint32_t indexMsb = (_src[4]<<8) | _src[5];
+		uint32_t indexLsb = (_src[6]<<8) | _src[7];
 
 		if (flipBit)
 		{
@@ -536,13 +524,16 @@ namespace bgfx
 				const uint32_t block = (ii>>1)&1;
 				const uint32_t color = block<<2;
 				const uint32_t idx   = (ii&0xc) | ( (ii & 0x3)<<4);
-				const uint32_t lsbi  = (indexBits >> ii) & 1;
-				const uint32_t msbi  = (indexBits >> (16 + ii) ) & 1;
+				const uint32_t lsbi  = indexLsb & 1;
+				const uint32_t msbi  = indexMsb & 1;
 				const  int32_t mod   = s_mod[table[block] ][lsbi + msbi*2];
 
 				_dst[idx + 0] = uint8_satadd(rgb[color+2], mod);
 				_dst[idx + 1] = uint8_satadd(rgb[color+1], mod);
 				_dst[idx + 2] = uint8_satadd(rgb[color+0], mod);
+
+				indexLsb >>= 1;
+				indexMsb >>= 1;
 			}
 		}
 		else
@@ -552,13 +543,16 @@ namespace bgfx
 				const uint32_t block = ii>>3;
 				const uint32_t color = block<<2;
 				const uint32_t idx   = (ii&0xc) | ( (ii & 0x3)<<4);
-				const uint32_t lsbi  = (indexBits >> ii) & 1;
-				const uint32_t msbi  = (indexBits >> (16 + ii) ) & 1;
+				const uint32_t lsbi  = indexLsb & 1;
+				const uint32_t msbi  = indexMsb & 1;
 				const  int32_t mod   = s_mod[table[block] ][lsbi + msbi*2];
 
 				_dst[idx + 0] = uint8_satadd(rgb[color+2], mod);
 				_dst[idx + 1] = uint8_satadd(rgb[color+1], mod);
 				_dst[idx + 2] = uint8_satadd(rgb[color+0], mod);
+
+				indexLsb >>= 1;
+				indexMsb >>= 1;
 			}
 		}
 	}
