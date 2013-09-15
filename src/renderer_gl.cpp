@@ -2397,6 +2397,14 @@ namespace bgfx
 		s_textureFormat[TextureFormat::ETC2A ].m_supported = etc2Supported;
 		s_textureFormat[TextureFormat::ETC2A1].m_supported = etc2Supported;
 
+		if (etc2Supported)
+		{
+			// When ETC2 is supported override ETC1 texture format settings.
+			s_textureFormat[TextureFormat::ETC1].m_internalFmt = GL_COMPRESSED_RGB8_ETC2;
+			s_textureFormat[TextureFormat::ETC1].m_fmt         = GL_COMPRESSED_RGB8_ETC2;
+			s_textureFormat[TextureFormat::ETC1].m_supported   = true;
+		}
+
 		bool ptc1Supported = s_extension[Extension::IMG_texture_compression_pvrtc ].m_supported;
 		s_textureFormat[TextureFormat::PTC12].m_supported  = ptc1Supported;
 		s_textureFormat[TextureFormat::PTC14].m_supported  = ptc1Supported;
