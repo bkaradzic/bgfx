@@ -2397,7 +2397,8 @@ namespace bgfx
 		s_textureFormat[TextureFormat::ETC2A ].m_supported = etc2Supported;
 		s_textureFormat[TextureFormat::ETC2A1].m_supported = etc2Supported;
 
-		if (etc2Supported)
+		if (!s_textureFormat[TextureFormat::ETC1].m_supported
+		&&  etc2Supported)
 		{
 			// When ETC2 is supported override ETC1 texture format settings.
 			s_textureFormat[TextureFormat::ETC1].m_internalFmt = GL_COMPRESSED_RGB8_ETC2;
