@@ -442,7 +442,7 @@ namespace bgfx
 		}
 	}
 
-	static const int32_t s_mod[8][4] =
+	static const int32_t s_etc1Mod[8][4] =
 	{
 		{  2,   8,  -2,   -8},
 		{ 15,  17, -15,  -17},
@@ -454,16 +454,248 @@ namespace bgfx
 		{ 47, 183, -47, -183},
 	};
 
-	uint8_t uint8_satadd(int32_t _a, int32_t _b)
+	static const uint8_t s_etc2Mod[8] = { 3, 6, 11, 16, 23, 32, 41, 64 };
+
+	uint8_t uint8_sat(int32_t _a)
 	{
 		using namespace bx;
-		const  int32_t add    = _a + _b;
-		const uint32_t min    = uint32_imin(add, 255);
+		const uint32_t min    = uint32_imin(_a, 255);
 		const uint32_t result = uint32_imax(min, 0);
 		return (uint8_t)result;
 	}
 
-	void decodeBlockEtc1(uint8_t _dst[16*4], const uint8_t _src[8])
+	uint8_t uint8_satadd(int32_t _a, int32_t _b)
+	{
+		const int32_t add = _a + _b;
+		return uint8_sat(add);
+	}
+
+	void decodeBlockEtc2ModeT(uint8_t _dst[16*4], const uint8_t _src[8])
+	{
+		uint8_t rgb[16];
+
+		// 0       1       2       3       4       5       6       7
+		// 7654321076543210765432107654321076543210765432107654321076543210
+		// ...rr.rrggggbbbbrrrrggggbbbbDDD.mmmmmmmmmmmmmmmmllllllllllllllll
+		//    ^            ^           ^   ^               ^
+		//    +-- c0       +-- c1      |   +-- msb         +-- lsb
+		//                             +-- dist
+
+		rgb[ 0] = ( (_src[0] >> 1) & 0xc)
+			    | (_src[0] & 0x3)
+			    ;
+		rgb[ 1] = _src[1] >> 4;
+		rgb[ 2] = _src[1] & 0xf;
+
+		rgb[ 8] = _src[2] >> 4;
+		rgb[ 9] = _src[2] & 0xf;
+		rgb[10] = _src[3] >> 4;
+
+		rgb[ 0] = bitRangeConvert(rgb[ 0], 4, 8);
+		rgb[ 1] = bitRangeConvert(rgb[ 1], 4, 8);
+		rgb[ 2] = bitRangeConvert(rgb[ 2], 4, 8);
+		rgb[ 8] = bitRangeConvert(rgb[ 8], 4, 8);
+		rgb[ 9] = bitRangeConvert(rgb[ 9], 4, 8);
+		rgb[10] = bitRangeConvert(rgb[10], 4, 8);
+
+		uint8_t dist = (_src[3] >> 1) & 0x7;
+		int32_t mod = s_etc2Mod[dist];
+
+		rgb[ 4] = uint8_satadd(rgb[ 8],  mod);
+		rgb[ 5] = uint8_satadd(rgb[ 9],  mod);
+		rgb[ 6] = uint8_satadd(rgb[10],  mod);
+
+		rgb[12] = uint8_satadd(rgb[ 8], -mod);
+		rgb[13] = uint8_satadd(rgb[ 9], -mod);
+		rgb[14] = uint8_satadd(rgb[10], -mod);
+
+		uint32_t indexMsb = (_src[4]<<8) | _src[5];
+		uint32_t indexLsb = (_src[6]<<8) | _src[7];
+
+		for (uint32_t ii = 0; ii < 16; ++ii)
+		{
+			const uint32_t idx  = (ii&0xc) | ( (ii & 0x3)<<4);
+			const uint32_t lsbi = indexLsb & 1;
+			const uint32_t msbi = (indexMsb & 1)<<1;
+			const uint32_t pal  = (lsbi | msbi)<<2;
+
+			_dst[idx + 0] = rgb[pal+2];
+			_dst[idx + 1] = rgb[pal+1];
+			_dst[idx + 2] = rgb[pal+0];
+			_dst[idx + 3] = 255;
+
+			indexLsb >>= 1;
+			indexMsb >>= 1;
+		}
+	}
+
+	void decodeBlockEtc2ModeH(uint8_t _dst[16*4], const uint8_t _src[8])
+	{
+		uint8_t rgb[16];
+
+		// 0       1       2       3       4       5       6       7
+		// 7654321076543210765432107654321076543210765432107654321076543210
+		// .rrrrggg...gb.bbbrrrrggggbbbbDD.mmmmmmmmmmmmmmmmllllllllllllllll
+		//  ^               ^           ^  ^               ^
+		//  +-- c0          +-- c1      |  +-- msb         +-- lsb
+		//                              +-- dist
+
+		rgb[ 0] = (_src[0] >> 3) & 0xf;
+		rgb[ 1] = ( (_src[0] << 1) & 0xe)
+				| ( (_src[1] >> 4) & 0x1)
+				;
+		rgb[ 2] = (_src[1] & 0x8)
+				| ( (_src[1] << 1) & 0x6)
+				| (_src[2] >> 7)
+				;
+
+		rgb[ 8] = (_src[2] >> 3) & 0xf;
+		rgb[ 9] = ( (_src[2] << 1) & 0xe)
+				| (_src[3] >> 7)
+				;
+		rgb[10] = (_src[2] >> 3) & 0xf;
+
+		rgb[ 0] = bitRangeConvert(rgb[ 0], 4, 8);
+		rgb[ 1] = bitRangeConvert(rgb[ 1], 4, 8);
+		rgb[ 2] = bitRangeConvert(rgb[ 2], 4, 8);
+		rgb[ 8] = bitRangeConvert(rgb[ 8], 4, 8);
+		rgb[ 9] = bitRangeConvert(rgb[ 9], 4, 8);
+		rgb[10] = bitRangeConvert(rgb[10], 4, 8);
+
+		uint32_t col0 = uint32_t(rgb[0]<<16) | uint32_t(rgb[1]<<8) | uint32_t(rgb[ 2]);
+		uint32_t col1 = uint32_t(rgb[8]<<16) | uint32_t(rgb[9]<<8) | uint32_t(rgb[10]);
+		uint8_t dist = (_src[3] & 0x6) | (col0 >= col1);
+		int32_t mod = s_etc2Mod[dist];
+
+		rgb[ 4] = uint8_satadd(rgb[ 0], -mod);
+		rgb[ 5] = uint8_satadd(rgb[ 1], -mod);
+		rgb[ 6] = uint8_satadd(rgb[ 2], -mod);
+
+		rgb[ 0] = uint8_satadd(rgb[ 0],  mod);
+		rgb[ 1] = uint8_satadd(rgb[ 1],  mod);
+		rgb[ 2] = uint8_satadd(rgb[ 2],  mod);
+
+		rgb[12] = uint8_satadd(rgb[ 8], -mod);
+		rgb[13] = uint8_satadd(rgb[ 9], -mod);
+		rgb[14] = uint8_satadd(rgb[10], -mod);
+
+		rgb[ 8] = uint8_satadd(rgb[ 8],  mod);
+		rgb[ 9] = uint8_satadd(rgb[ 9],  mod);
+		rgb[10] = uint8_satadd(rgb[10],  mod);
+
+		uint32_t indexMsb = (_src[4]<<8) | _src[5];
+		uint32_t indexLsb = (_src[6]<<8) | _src[7];
+
+		for (uint32_t ii = 0; ii < 16; ++ii)
+		{
+			const uint32_t idx  = (ii&0xc) | ( (ii & 0x3)<<4);
+			const uint32_t lsbi = indexLsb & 1;
+			const uint32_t msbi = (indexMsb & 1)<<1;
+			const uint32_t pal  = (lsbi | msbi)<<2;
+
+			_dst[idx + 0] = rgb[pal+2];
+			_dst[idx + 1] = rgb[pal+1];
+			_dst[idx + 2] = rgb[pal+0];
+			_dst[idx + 3] = 255;
+
+			indexLsb >>= 1;
+			indexMsb >>= 1;
+		}
+	}
+
+	void decodeBlockEtc2ModePlanar(uint8_t _dst[16*4], const uint8_t _src[8])
+	{
+		// 0       1       2       3       4       5       6       7
+		// 7654321076543210765432107654321076543210765432107654321076543210
+		// .rrrrrrg.ggggggb...bb.bbbrrrrr.rgggggggbbbbbbrrrrrrgggggggbbbbbb
+		//  ^                       ^                   ^
+		//  +-- c0                  +-- cH              +-- cV
+
+		uint8_t c0[3];
+		uint8_t cH[3];
+		uint8_t cV[3];
+
+		c0[0] = (_src[0] >> 1) & 0x3f;
+		c0[1] = ( (_src[0] & 1) << 6) 
+			  | ( (_src[1] >> 1) & 0x3f)
+			  ;
+		c0[2] = ( (_src[1] & 1) << 5)
+			  | ( (_src[2] & 0x18) )
+			  | ( (_src[2] << 1) & 6)
+			  | ( (_src[3] >> 7) )
+			  ;
+
+		cH[0] = ( (_src[3] >> 1) & 0x3e)
+			  | (_src[3] & 1)
+			  ;
+		cH[1] = _src[4] >> 1;
+		cH[2] = ( (_src[4] & 1) << 5)
+			  | (_src[5] >> 3)
+			  ;
+
+		cV[0] = ( (_src[5] & 0x7) << 3)
+			  | (_src[6] >> 5)
+			  ;
+		cV[1] = ( (_src[6] & 0x1f) << 2)
+			  | (_src[7] >> 5)
+			  ;
+		cV[2] = _src[8] & 0x3f;
+
+		c0[0] = bitRangeConvert(c0[0], 6, 8);
+		c0[1] = bitRangeConvert(c0[1], 7, 8);
+		c0[2] = bitRangeConvert(c0[2], 6, 8);
+
+		cH[0] = bitRangeConvert(cH[0], 6, 8);
+		cH[1] = bitRangeConvert(cH[1], 7, 8);
+		cH[2] = bitRangeConvert(cH[2], 6, 8);
+
+		cV[0] = bitRangeConvert(cV[0], 6, 8);
+		cV[1] = bitRangeConvert(cV[1], 7, 8);
+		cV[2] = bitRangeConvert(cV[2], 6, 8);
+
+		int16_t dy[3];
+		dy[0] = cV[0] - c0[0];
+		dy[1] = cV[1] - c0[1];
+		dy[2] = cV[2] - c0[2];
+
+		int16_t sx[3];
+		sx[0] = int16_t(c0[0])<<2;
+		sx[1] = int16_t(c0[1])<<2;
+		sx[2] = int16_t(c0[2])<<2;
+
+		int16_t ex[3];
+		ex[0] = int16_t(cH[0])<<2;
+		ex[1] = int16_t(cH[1])<<2;
+		ex[2] = int16_t(cH[2])<<2;
+
+		for (int32_t vv = 0; vv < 4; ++vv)
+		{
+			int16_t dx[3];
+			dx[0] = (ex[0] - sx[0])>>2;
+			dx[1] = (ex[1] - sx[1])>>2;
+			dx[2] = (ex[2] - sx[2])>>2;
+
+			for (int32_t hh = 0; hh < 4; ++hh)
+			{
+				const uint32_t idx  = (vv<<4) + (hh<<2);
+
+				_dst[idx + 0] = uint8_sat( (sx[2] + dx[2]*hh)>>2);
+				_dst[idx + 1] = uint8_sat( (sx[1] + dx[1]*hh)>>2);
+				_dst[idx + 2] = uint8_sat( (sx[0] + dx[0]*hh)>>2);
+				_dst[idx + 3] = 255;
+			}
+
+			sx[0] += dy[0];
+			sx[1] += dy[1];
+			sx[2] += dy[2];
+
+			ex[0] += dy[0];
+			ex[1] += dy[1];
+			ex[2] += dy[2];
+		}
+	}
+
+	void decodeBlockEtc12(uint8_t _dst[16*4], const uint8_t _src[8])
 	{
 		bool flipBit = 0 != (_src[3] & 0x1);
 		bool diffBit = 0 != (_src[3] & 0x2);
@@ -477,20 +709,38 @@ namespace bgfx
 			rgb[2]  = _src[2] >> 3;
 
 			int8_t diff[3];
-			diff[0] = int8_t( (_src[0] & 0x07)<<5)>>5;
-			diff[1] = int8_t( (_src[1] & 0x07)<<5)>>5;
-			diff[2] = int8_t( (_src[2] & 0x07)<<5)>>5;
+			diff[0] = int8_t( (_src[0] & 0x7)<<5)>>5;
+			diff[1] = int8_t( (_src[1] & 0x7)<<5)>>5;
+			diff[2] = int8_t( (_src[2] & 0x7)<<5)>>5;
 
-			rgb[4] = rgb[0] + diff[0];
-			rgb[5] = rgb[1] + diff[1];
-			rgb[6] = rgb[2] + diff[2];
+			int8_t rr = rgb[0] + diff[0];
+			int8_t gg = rgb[1] + diff[1];
+			int8_t bb = rgb[2] + diff[2];
 
+			// Etc2 3-modes
+			if (rr < 0 || rr > 31)
+			{
+				decodeBlockEtc2ModeT(_dst, _src);
+				return;
+			}
+			if (gg < 0 || gg > 31)
+			{
+				decodeBlockEtc2ModeH(_dst, _src);
+				return;
+			}
+			if (bb < 0 || bb > 31)
+			{
+				decodeBlockEtc2ModePlanar(_dst, _src);
+				return;
+			}
+
+			// Etc1
 			rgb[0] = bitRangeConvert(rgb[0], 5, 8);
 			rgb[1] = bitRangeConvert(rgb[1], 5, 8);
 			rgb[2] = bitRangeConvert(rgb[2], 5, 8);
-			rgb[4] = bitRangeConvert(rgb[4], 5, 8);
-			rgb[5] = bitRangeConvert(rgb[5], 5, 8);
-			rgb[6] = bitRangeConvert(rgb[6], 5, 8);
+			rgb[4] = bitRangeConvert(rr, 5, 8);
+			rgb[5] = bitRangeConvert(gg, 5, 8);
+			rgb[6] = bitRangeConvert(bb, 5, 8);
 		}
 		else
 		{
@@ -525,12 +775,13 @@ namespace bgfx
 				const uint32_t color = block<<2;
 				const uint32_t idx   = (ii&0xc) | ( (ii & 0x3)<<4);
 				const uint32_t lsbi  = indexLsb & 1;
-				const uint32_t msbi  = indexMsb & 1;
-				const  int32_t mod   = s_mod[table[block] ][lsbi + msbi*2];
+				const uint32_t msbi  = (indexMsb & 1)<<1;
+				const  int32_t mod   = s_etc1Mod[table[block] ][lsbi | msbi];
 
 				_dst[idx + 0] = uint8_satadd(rgb[color+2], mod);
 				_dst[idx + 1] = uint8_satadd(rgb[color+1], mod);
 				_dst[idx + 2] = uint8_satadd(rgb[color+0], mod);
+				_dst[idx + 3] = 255;
 
 				indexLsb >>= 1;
 				indexMsb >>= 1;
@@ -544,12 +795,13 @@ namespace bgfx
 				const uint32_t color = block<<2;
 				const uint32_t idx   = (ii&0xc) | ( (ii & 0x3)<<4);
 				const uint32_t lsbi  = indexLsb & 1;
-				const uint32_t msbi  = indexMsb & 1;
-				const  int32_t mod   = s_mod[table[block] ][lsbi + msbi*2];
+				const uint32_t msbi  = (indexMsb & 1)<<1;
+				const  int32_t mod   = s_etc1Mod[table[block] ][lsbi | msbi];
 
 				_dst[idx + 0] = uint8_satadd(rgb[color+2], mod);
 				_dst[idx + 1] = uint8_satadd(rgb[color+1], mod);
 				_dst[idx + 2] = uint8_satadd(rgb[color+0], mod);
+				_dst[idx + 3] = 255;
 
 				indexLsb >>= 1;
 				indexMsb >>= 1;
@@ -1197,11 +1449,12 @@ namespace bgfx
 			break;
 
 		case TextureFormat::ETC1:
+		case TextureFormat::ETC2:
 			for (uint32_t yy = 0; yy < height; ++yy)
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
 				{
-					decodeBlockEtc1(temp, src);
+					decodeBlockEtc12(temp, src);
 					src += 8;
 
 					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
@@ -1211,11 +1464,6 @@ namespace bgfx
 					memcpy(&dst[3*pitch], &temp[48], 16);
 				}
 			}
-			break;
-
-		case TextureFormat::ETC2:
-			BX_WARN(false, "ETC2 decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff0000ff), _dst);
 			break;
 
 		case TextureFormat::ETC2A:
