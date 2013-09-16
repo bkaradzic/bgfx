@@ -639,7 +639,7 @@ namespace bgfx
 		cV[1] = ( (_src[6] & 0x1f) << 2)
 			  | (_src[7] >> 5)
 			  ;
-		cV[2] = _src[8] & 0x3f;
+		cV[2] = _src[7] & 0x3f;
 
 		c0[0] = bitRangeConvert(c0[0], 6, 8);
 		c0[1] = bitRangeConvert(c0[1], 7, 8);
