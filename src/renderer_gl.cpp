@@ -735,7 +735,7 @@ namespace bgfx
 			if (m_resolution.m_flags&BGFX_RESET_CAPTURE)
 			{
 				m_captureSize = m_resolution.m_width*m_resolution.m_height*4;
-				m_capture = g_realloc(m_capture, m_captureSize);
+				m_capture = BX_REALLOC(g_allocator, m_capture, m_captureSize);
 				g_callback->captureBegin(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, TextureFormat::BGRA8, true);
 			}
 			else
@@ -743,7 +743,7 @@ namespace bgfx
 				if (NULL != m_capture)
 				{
 					g_callback->captureEnd();
-					g_free(m_capture);
+					BX_FREE(g_allocator, m_capture);
 					m_capture = NULL;
 					m_captureSize = 0;
 				}
@@ -770,7 +770,7 @@ namespace bgfx
 		void saveScreenShot(const char* _filePath)
 		{
 			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
-			uint8_t* data = (uint8_t*)g_realloc(NULL, length);
+			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 
 			uint32_t width = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
@@ -797,7 +797,7 @@ namespace bgfx
 				, length
 				, true
 				);
-			g_free(data);
+			BX_FREE(g_allocator, data);
 		}
 
 		void init()
@@ -1038,7 +1038,7 @@ namespace bgfx
 
 			if (cached)
 			{
-				void* data = g_realloc(NULL, length);
+				void* data = BX_ALLOC(g_allocator, length);
 				if (g_callback->cacheRead(id, data, length) )
 				{
 					bx::MemoryReader reader(data, length);
@@ -1049,7 +1049,7 @@ namespace bgfx
 					GL_CHECK(glProgramBinary(m_id, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
 				}
 
-				g_free(data);
+				BX_FREE(g_allocator, data);
 			}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -1087,13 +1087,13 @@ namespace bgfx
 				if (0 < programLength)
 				{
 					uint32_t length = programLength + 4;
-					uint8_t* data = (uint8_t*)g_realloc(NULL, length);
+					uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 					GL_CHECK(glGetProgramBinary(m_id, programLength, NULL, &format, &data[4]) );
 					*(uint32_t*)data = format;
 
 					g_callback->cacheWrite(id, data, length);
 
-					g_free(data);
+					BX_FREE(g_allocator, data);
 				}
 			}
 		}
@@ -1122,7 +1122,7 @@ namespace bgfx
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max1) );
 
 		GLint maxLength = bx::uint32_max(max0, max1);
-		char* name = (char*)g_realloc(NULL, maxLength + 1);
+		char* name = (char*)BX_ALLOC(g_allocator, maxLength + 1);
 
 		BX_TRACE("Program %d", m_id);
 		BX_TRACE("Attributes:");
@@ -1207,7 +1207,7 @@ namespace bgfx
 
 		m_constantBuffer->finish();
 
-		g_free(name);
+		BX_FREE(g_allocator, name);
 
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
 		uint32_t used = 0;
@@ -1458,7 +1458,7 @@ namespace bgfx
 			uint8_t* temp = NULL;
 			if (convert || swizzle)
 			{
-				temp = (uint8_t*)g_realloc(NULL, imageContainer.m_width*imageContainer.m_height*4);
+				temp = (uint8_t*)BX_ALLOC(g_allocator, imageContainer.m_width*imageContainer.m_height*4);
 			}
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
@@ -1562,7 +1562,7 @@ namespace bgfx
 
 			if (NULL != temp)
 			{
-				g_free(temp);
+				BX_FREE(g_allocator, temp);
 			}
 		}
 
@@ -1670,7 +1670,7 @@ namespace bgfx
 		uint8_t* temp = NULL;
 		if (convert || swizzle)
 		{
-			temp = (uint8_t*)g_realloc(NULL, width*height*4);
+			temp = (uint8_t*)BX_ALLOC(g_allocator, width*height*4);
 		}
 
 		if (compressed)
@@ -1720,7 +1720,7 @@ namespace bgfx
 
 		if (NULL != temp)
 		{
-			g_free(temp);
+			BX_FREE(g_allocator, temp);
 		}
 	}
 
@@ -2681,7 +2681,7 @@ namespace bgfx
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
 		uint32_t size = g_uniformTypeSize[_type]*_num;
-		void* data = g_realloc(NULL, size);
+		void* data = BX_ALLOC(g_allocator, size);
 		memset(data, 0, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
 		s_renderCtx.m_uniformReg.add(_name, s_renderCtx.m_uniforms[_handle.idx]);
@@ -2689,7 +2689,7 @@ namespace bgfx
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
-		g_free(s_renderCtx.m_uniforms[_handle.idx]);
+		BX_FREE(g_allocator, s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)

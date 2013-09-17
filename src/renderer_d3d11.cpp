@@ -1696,7 +1696,7 @@ namespace bgfx
 
 						if (convert)
 						{
-							uint8_t* temp = (uint8_t*)g_realloc(NULL, mip.m_width*mip.m_height*bpp/8);
+							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, mip.m_width*mip.m_height*bpp/8);
 							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
 
 							srd[kk].pSysMem = temp;
@@ -1792,7 +1792,7 @@ namespace bgfx
 				{
 					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 					{
-						g_free(const_cast<void*>(srd[kk].pSysMem) );
+						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pSysMem) );
 						++kk;
 					}
 				}
@@ -1840,7 +1840,7 @@ namespace bgfx
 
 		if (convert)
 		{
-			uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*_rect.m_height);
+			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*_rect.m_height);
 			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, m_requestedFormat);
 			data = temp;
 		}
@@ -1849,7 +1849,7 @@ namespace bgfx
 
 		if (NULL != temp)
 		{
-			g_free(temp);
+			BX_FREE(g_allocator, temp);
 		}
 	}
 
@@ -1928,7 +1928,7 @@ namespace bgfx
 		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 		if (_alloc)
 		{
-			m_data = g_realloc(NULL, size);
+			m_data = BX_ALLOC(g_allocator, size);
 			memset(m_data, 0, size);
 		}
 
@@ -1946,7 +1946,7 @@ namespace bgfx
 	{
 		if (NULL != m_data)
 		{
-			g_free(m_data);
+			BX_FREE(g_allocator, m_data);
 			m_data = NULL;
 		}
 

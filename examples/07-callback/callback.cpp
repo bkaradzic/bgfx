@@ -8,6 +8,7 @@
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
+#include <bx/allocator.h>
 #include <bx/string.h>
 #include "fpumath.h"
 #include "aviwriter.h"
@@ -311,14 +312,50 @@ struct BgfxCallback : public bgfx::CallbackI
 	AviWriter* m_writer;
 };
 
+class BgfxAllocator : public bx::ReallocatorI
+{
+public:
+	BgfxAllocator()
+	{
+	}
+
+	virtual ~BgfxAllocator()
+	{
+	}
+
+	virtual void* alloc(size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
+	{
+		BX_UNUSED(_file, _line);
+		void* ptr = ::malloc(_size);
+		BX_TRACE("ALLOC %p of %d byte(s) at %s line %d.", ptr, _size, _file, _line);
+		return ptr;
+	}
+
+	virtual void free(void* _ptr, const char* _file, uint32_t _line) BX_OVERRIDE
+	{
+		BX_TRACE("FREE %p at %s line %d.", ptr, _file, _line);
+		BX_UNUSED(_file, _line);
+		::free(_ptr);
+	}
+
+	virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
+	{
+		BX_UNUSED(_file, _line);
+		void* ptr = ::realloc(_ptr, _size);
+		BX_TRACE("REALLOC %p (old %p) of %d byte(s) at %s line %d.", ptr, _ptr, _size, _file, _line);
+		return ptr;
+	}
+};
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	BgfxCallback callback;
+	BgfxAllocator allocator;
 
 	uint32_t width = 1280;
 	uint32_t height = 720;
 
-	bgfx::init(&callback);
+	bgfx::init(&callback, &allocator);
 	bgfx::reset(width, height, BGFX_RESET_CAPTURE);
 
 	// Enable debug text.

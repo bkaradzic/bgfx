@@ -1591,7 +1591,7 @@ namespace bgfx
 							{
 								uint32_t srcpitch = mipWidth*bpp/8;
 
-								uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*mipHeight);
+								uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mipHeight);
 								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
 
 								uint32_t dstpitch = pitch;
@@ -1602,7 +1602,7 @@ namespace bgfx
 									memcpy(dst, src, dstpitch);
 								}
 
-								g_free(temp);
+								BX_FREE(g_allocator, temp);
 							}
 							else
 							{
@@ -1650,7 +1650,7 @@ namespace bgfx
 
 		if (convert)
 		{
-			uint8_t* temp = (uint8_t*)g_realloc(NULL, srcpitch*_rect.m_height);
+			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*_rect.m_height);
 			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, m_requestedFormat);
 			data = temp;
 		}
@@ -1671,7 +1671,7 @@ namespace bgfx
 
 		if (NULL != temp)
 		{
-			g_free(temp);
+			BX_FREE(g_allocator, temp);
 		}
 
 		if (0 == _mip)
@@ -2127,7 +2127,7 @@ namespace bgfx
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
 		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
-		void* data = g_realloc(NULL, size);
+		void* data = BX_ALLOC(g_allocator, size);
 		memset(data, 0, size);
 		s_renderCtx.m_uniforms[_handle.idx] = data;
 		s_renderCtx.m_uniformReg.add(_name, s_renderCtx.m_uniforms[_handle.idx]);
@@ -2135,7 +2135,7 @@ namespace bgfx
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
-		g_free(s_renderCtx.m_uniforms[_handle.idx]);
+		BX_FREE(g_allocator, s_renderCtx.m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)

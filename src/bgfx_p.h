@@ -48,6 +48,7 @@ namespace bgfx
 #	define BX_TRACE _BX_TRACE
 #	define BX_WARN  _BX_WARN
 #	define BX_CHECK _BX_CHECK
+#	define BX_CONFIG_ALLOCATOR_DEBUG 1
 #endif // BGFX_CONFIG_DEBUG
 
 #define BGFX_FATAL(_condition, _err, _format, ...) \
@@ -226,8 +227,7 @@ namespace bgfx
 
 	extern const uint32_t g_uniformTypeSize[UniformType::Count+1];
 	extern CallbackI* g_callback;
-	extern ReallocFn g_realloc;
-	extern FreeFn g_free;
+	extern bx::ReallocatorI* g_allocator;
 
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
@@ -308,7 +308,7 @@ namespace bgfx
 
 		~TextVideoMem()
 		{
-			g_free(m_mem);
+			BX_FREE(g_allocator, m_mem);
 		}
 
 		void resize(bool _small = false, uint16_t _width = BGFX_DEFAULT_WIDTH, uint16_t _height = BGFX_DEFAULT_HEIGHT)
@@ -328,7 +328,7 @@ namespace bgfx
 				uint32_t size = m_size;
 				m_size = m_width * m_height * 2;
 
-				m_mem = (uint8_t*)g_realloc(m_mem, m_size);
+				m_mem = (uint8_t*)BX_REALLOC(g_allocator, m_mem, m_size);
 
 				if (size < m_size)
 				{
@@ -734,14 +734,14 @@ namespace bgfx
 		static ConstantBuffer* create(uint32_t _size)
 		{
 			uint32_t size = BX_ALIGN_16(bx::uint32_max(_size, sizeof(ConstantBuffer) ) );
-			void* data = g_realloc(NULL, size);
+			void* data = BX_ALLOC(g_allocator, size);
 			return ::new(data) ConstantBuffer(_size);
 		}
 
 		static void destroy(ConstantBuffer* _constantBuffer)
 		{
 			_constantBuffer->~ConstantBuffer();
-			g_free(_constantBuffer);
+			BX_FREE(g_allocator, _constantBuffer);
 		}
 
 		static uint32_t encodeOpcode(UniformType::Enum _type, uint16_t _loc, uint16_t _num, uint16_t _copy)
@@ -1132,7 +1132,7 @@ namespace bgfx
 			m_state.m_instanceDataStride = _idb->stride;
 			m_state.m_numInstances = bx::uint16_min( (uint16_t)_idb->num, _num);
 			m_state.m_instanceDataBuffer = _idb->handle;
-			g_free(const_cast<InstanceDataBuffer*>(_idb) );
+			BX_FREE(g_allocator, const_cast<InstanceDataBuffer*>(_idb) );
 		}
 
 		void setProgram(ProgramHandle _handle)
@@ -1846,7 +1846,7 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_size);
 
-				ib = (TransientIndexBuffer*)g_realloc(NULL, sizeof(TransientIndexBuffer)+_size);
+				ib = (TransientIndexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientIndexBuffer)+_size);
 				ib->data = (uint8_t*)&ib[1];
 				ib->size = _size;
 				ib->handle = handle;
@@ -1861,7 +1861,7 @@ namespace bgfx
 			cmdbuf.write(_ib->handle);
 
 			m_submit->free(_ib->handle);
-			g_free(const_cast<TransientIndexBuffer*>(_ib) );
+			BX_FREE(g_allocator, const_cast<TransientIndexBuffer*>(_ib) );
 		}
 
 		void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
@@ -1900,7 +1900,7 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_size);
 
-				vb = (TransientVertexBuffer*)g_realloc(NULL, sizeof(TransientVertexBuffer)+_size);
+				vb = (TransientVertexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientVertexBuffer)+_size);
 				vb->data = (uint8_t*)&vb[1];
 				vb->size = _size;
 				vb->startVertex = 0;
@@ -1918,7 +1918,7 @@ namespace bgfx
 			cmdbuf.write(_vb->handle);
 
 			m_submit->free(_vb->handle);
-			g_free(const_cast<TransientVertexBuffer*>(_vb) );
+			BX_FREE(g_allocator, const_cast<TransientVertexBuffer*>(_vb) );
 		}
 
 		void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
@@ -1953,7 +1953,7 @@ namespace bgfx
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
-			InstanceDataBuffer* idb = (InstanceDataBuffer*)g_realloc(NULL, sizeof(InstanceDataBuffer) );
+			InstanceDataBuffer* idb = (InstanceDataBuffer*)BX_ALLOC(g_allocator, sizeof(InstanceDataBuffer) );
 			idb->data = &dvb.data[offset];
 			idb->size = _num * stride;
 			idb->offset = offset;

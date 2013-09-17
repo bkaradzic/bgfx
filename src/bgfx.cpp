@@ -10,12 +10,12 @@ namespace tinystl
 {
 	void* bgfx_allocator::static_allocate(size_t _bytes)
 	{
-		return bgfx::g_realloc(NULL, _bytes);
+		return BX_ALLOC(g_allocator, _bytes);
 	}
 
 	void bgfx_allocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
-		bgfx::g_free(_ptr);
+		BX_FREE(g_allocator, _ptr);
 	}
 
 } // namespace tinystl
@@ -115,24 +115,10 @@ namespace bgfx
 	};
 	
 	static CallbackStub s_callbackStub;
-
-	static void* reallocStub(void* _ptr, size_t _size)
-	{
-		void* ptr = ::realloc(_ptr, _size);
-		BX_CHECK(NULL != ptr, "Out of memory!");
-		//	BX_TRACE("alloc %d, %p", _size, ptr);
-		return ptr;
-	}
-
-	static void freeStub(void* _ptr)
-	{
-		//	BX_TRACE("free %p", _ptr);
-		::free(_ptr);
-	}
+	static bx::CrtAllocator s_allocatorStub;
 
 	CallbackI* g_callback = &s_callbackStub;
-	ReallocFn g_realloc = reallocStub;
-	FreeFn g_free = freeStub;
+	bx::ReallocatorI* g_allocator = &s_allocatorStub;
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context s_ctx;
@@ -576,18 +562,16 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
-	void init(CallbackI* _callback, ReallocFn _realloc, FreeFn _free)
+	void init(CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
 		if (NULL != _callback)
 		{
 			g_callback = _callback;
 		}
 
-		if (NULL != _realloc
-		&&  NULL != _free)
+		if (NULL != _allocator)
 		{
-			g_realloc = _realloc;
-			g_free = _free;
+			g_allocator = _allocator;
 		}
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
@@ -603,8 +587,7 @@ namespace bgfx
 
 		s_threadIndex = 0;
 		g_callback = &s_callbackStub;
-		g_realloc = reallocStub;
-		g_free = freeStub;
+		g_allocator = &s_allocatorStub;
 	}
 
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags)
@@ -780,7 +763,7 @@ namespace bgfx
 
 	const Memory* alloc(uint32_t _size)
 	{
-		Memory* mem = (Memory*)g_realloc(NULL, sizeof(Memory) + _size);
+		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) + _size);
 		mem->size = _size;
 		mem->data = (uint8_t*)mem + sizeof(Memory);
 		return mem;
@@ -788,7 +771,7 @@ namespace bgfx
 
 	const Memory* makeRef(const void* _data, uint32_t _size)
 	{
-		Memory* mem = (Memory*)g_realloc(NULL, sizeof(Memory) );
+		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) );
 		mem->size = _size;
 		mem->data = (uint8_t*)_data;
 		return mem;
@@ -797,7 +780,7 @@ namespace bgfx
 	void release(const Memory* _mem)
 	{
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		g_free(const_cast<Memory*>(_mem) );
+		BX_FREE(g_allocator, const_cast<Memory*>(_mem) );
 	}
 
 	void setDebug(uint32_t _debug)

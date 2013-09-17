@@ -230,6 +230,8 @@
 #define BGFX_HANDLE(_name) struct _name { uint16_t idx; }
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
+namespace bx { struct ReallocatorI; }
+
 /// BGFX
 namespace bgfx
 {
@@ -364,9 +366,6 @@ namespace bgfx
 	BGFX_HANDLE(VertexBufferHandle);
 	BGFX_HANDLE(VertexDeclHandle);
 	BGFX_HANDLE(VertexShaderHandle);
-
-	typedef void* (*ReallocFn)(void* _ptr, size_t _size);
-	typedef void (*FreeFn)(void* _ptr);
 
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used only for OpenGL binary shaders.
@@ -549,15 +548,11 @@ namespace bgfx
 	/// @param _callback Provide application specific callback interface.
 	///   See: CallbackI
 	///
-	/// @param _realloc Custom realloc function.
-	/// @param _free Custom free function.
-	///
-	/// NOTE: In order to properly set custom allocator realloc and free,
-	///   both functions must be provided. When custom allocator is not
+	/// @param _reallocator Custom allocator. When custom allocator is not
 	///   specified, library uses default CRT allocator. The library assumes
 	///   custom allocator is thread safe.
 	///
-	void init(CallbackI* _callback = NULL, ReallocFn _realloc = NULL, FreeFn _free = NULL);
+	void init(CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
 
 	/// Shutdown bgfx library.
 	void shutdown();
