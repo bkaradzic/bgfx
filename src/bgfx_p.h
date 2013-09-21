@@ -253,11 +253,12 @@ namespace bgfx
 
 	inline uint32_t strideAlign(uint32_t _offset, uint32_t _stride)
 	{
-		const uint32_t mod    = bx::uint32_mod(_offset, _stride);
-		const uint32_t add    = bx::uint32_sub(_stride, mod);
-		const uint32_t mask   = bx::uint32_cmpeq(mod, 0);
-		const uint32_t tmp    = bx::uint32_selb(mask, 0, add);
-		const uint32_t result = bx::uint32_add(_offset, tmp);
+		using namespace bx;
+		const uint32_t mod    = uint32_mod(_offset, _stride);
+		const uint32_t add    = uint32_sub(_stride, mod);
+		const uint32_t mask   = uint32_cmpeq(mod, 0);
+		const uint32_t tmp    = uint32_selb(mask, 0, add);
+		const uint32_t result = uint32_add(_offset, tmp);
 
 		return result;
 	}
@@ -306,7 +307,7 @@ namespace bgfx
 			clear();
 		}
 
-		BX_NO_INLINE ~TextVideoMem()
+		~TextVideoMem()
 		{
 			BX_FREE(g_allocator, m_mem);
 		}
