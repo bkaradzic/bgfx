@@ -306,7 +306,7 @@ namespace bgfx
 			clear();
 		}
 
-		~TextVideoMem()
+		BX_NO_INLINE ~TextVideoMem()
 		{
 			BX_FREE(g_allocator, m_mem);
 		}

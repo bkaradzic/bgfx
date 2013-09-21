@@ -656,6 +656,12 @@ namespace bgfx
 
 	struct Program
 	{
+		Program()
+			: m_constantBuffer(NULL)
+			, m_numPredefined(0)
+		{
+		}
+
 		void create(const Shader& _vsh, const Shader& _fsh);
 		void destroy();
  		void init();

@@ -740,13 +740,7 @@ namespace bgfx
 			}
 			else
 			{
-				if (NULL != m_capture)
-				{
-					g_callback->captureEnd();
-					BX_FREE(g_allocator, m_capture);
-					m_capture = NULL;
-					m_captureSize = 0;
-				}
+				captureFinish();
 			}
 		}
 
@@ -764,6 +758,17 @@ namespace bgfx
 					) );
 
 				g_callback->captureFrame(m_capture, m_captureSize);
+			}
+		}
+
+		void captureFinish()
+		{
+			if (NULL != m_capture)
+			{
+				g_callback->captureEnd();
+				BX_FREE(g_allocator, m_capture);
+				m_capture = NULL;
+				m_captureSize = 0;
 			}
 		}
 
@@ -825,6 +830,8 @@ namespace bgfx
 
 		void shutdown()
 		{
+			captureFinish();
+
 			invalidateCache();
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -1103,6 +1110,13 @@ namespace bgfx
 
 	void Program::destroy()
 	{
+		if (NULL != m_constantBuffer)
+		{
+			ConstantBuffer::destroy(m_constantBuffer);
+			m_constantBuffer = NULL;
+		}
+		m_numPredefined = 0;
+
 		GL_CHECK(glUseProgram(0) );
 		GL_CHECK(glDeleteProgram(m_id) );
 

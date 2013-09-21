@@ -614,6 +614,8 @@ namespace bgfx
 
 	void init(CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
+		BX_TRACE("Init");
+
 		if (NULL != _allocator)
 		{
 			g_allocator = _allocator;
@@ -730,7 +732,6 @@ namespace bgfx
 	void Context::init(bool _createRenderThread)
 	{
 		BX_CHECK(!m_rendererInitialized, "Already initialized?");
-		BX_TRACE("init");
 
 		m_exit = false;
 		m_frames = 0;
@@ -785,11 +786,13 @@ namespace bgfx
 			bx::snprintf(name, sizeof(name), "%02d view", ii);
 			setViewName(ii, name);
 		}
+
+		BX_TRACE("Init complete.");
 	}
 
 	void Context::shutdown()
 	{
-		BX_TRACE("shutdown");
+		BX_TRACE("Shutdown");
 
 		getCommandBuffer(CommandBuffer::RendererShutdownBegin);
 		frame();
