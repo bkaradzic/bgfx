@@ -388,6 +388,9 @@ Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.
 Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and examples.  
 Milos Tosic ([@milostosic](https://github.com/milostosic)) - LOD example.
 
+When contributing to the bgfx project you must agree to the BSD 2-clause
+licensing terms.
+
 License (BSD 2-clause)
 ----------------------
 
