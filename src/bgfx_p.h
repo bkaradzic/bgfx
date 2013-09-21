@@ -999,17 +999,18 @@ namespace bgfx
 			m_constantBuffer = ConstantBuffer::create(BGFX_CONFIG_MAX_CONSTANT_BUFFER_SIZE);
 			reset();
 			finish();
-			m_textVideoMem = new TextVideoMem;
+			m_textVideoMem = BX_NEW(g_allocator, TextVideoMem);
 		}
 
 		void destroy()
 		{
 			ConstantBuffer::destroy(m_constantBuffer);
-			delete m_textVideoMem;
+			BX_DELETE(g_allocator, m_textVideoMem);
 		}
 
 		void reset()
 		{
+			m_flags = BGFX_STATE_NONE;
 			m_state.reset();
 			m_matrixCache.reset();
 			m_rectCache.reset();
@@ -1370,7 +1371,8 @@ namespace bgfx
 			memset(m_vertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
 		}
 
-		void shutdown(bx::HandleAlloc& _handleAlloc)
+		template <uint16_t MaxHandlesT>
+		void shutdown(bx::HandleAllocT<MaxHandlesT>& _handleAlloc)
 		{
 			for (VertexDeclMap::iterator it = m_vertexDeclMap.begin(), itEnd = m_vertexDeclMap.end(); it != itEnd; ++it)
 			{
@@ -1533,17 +1535,6 @@ namespace bgfx
 			, m_submit(&m_frame[1])
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
-			, m_dynamicIndexBufferHandle(BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS)
-			, m_dynamicVertexBufferHandle(BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS)
-			, m_indexBufferHandle(BGFX_CONFIG_MAX_INDEX_BUFFERS)
-			, m_vertexDeclHandle(BGFX_CONFIG_MAX_VERTEX_DECLS)
-			, m_vertexBufferHandle(BGFX_CONFIG_MAX_VERTEX_BUFFERS)
-			, m_vertexShaderHandle(BGFX_CONFIG_MAX_VERTEX_SHADERS)
-			, m_fragmentShaderHandle(BGFX_CONFIG_MAX_FRAGMENT_SHADERS)
-			, m_programHandle(BGFX_CONFIG_MAX_PROGRAMS)
-			, m_textureHandle(BGFX_CONFIG_MAX_TEXTURES)
-			, m_renderTargetHandle(BGFX_CONFIG_MAX_RENDER_TARGETS)
-			, m_uniformHandle(BGFX_CONFIG_MAX_UNIFORMS)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
 			, m_rendererInitialized(false)
@@ -3163,19 +3154,20 @@ namespace bgfx
 		DynamicVertexBufferHandle m_freeDynamicVertexBufferHandle[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 
 		NonLocalAllocator m_dynamicIndexBufferAllocator;
-		bx::HandleAlloc m_dynamicIndexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS> m_dynamicIndexBufferHandle;
 		NonLocalAllocator m_dynamicVertexBufferAllocator;
-		bx::HandleAlloc m_dynamicVertexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS> m_dynamicVertexBufferHandle;
 
-		bx::HandleAlloc m_indexBufferHandle;
-		bx::HandleAlloc m_vertexDeclHandle;
-		bx::HandleAlloc m_vertexBufferHandle;
-		bx::HandleAlloc m_vertexShaderHandle;
-		bx::HandleAlloc m_fragmentShaderHandle;
-		bx::HandleAlloc m_programHandle;
-		bx::HandleAlloc m_textureHandle;
-		bx::HandleAlloc m_renderTargetHandle;
-		bx::HandleAlloc m_uniformHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_INDEX_BUFFERS> m_indexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_DECLS > m_vertexDeclHandle;
+
+		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_SHADERS> m_vertexShaderHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_FRAGMENT_SHADERS> m_fragmentShaderHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_PROGRAMS> m_programHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_TEXTURES> m_textureHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_RENDER_TARGETS> m_renderTargetHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_UNIFORMS> m_uniformHandle;
 
 		struct VertexShaderRef
 		{

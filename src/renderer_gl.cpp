@@ -888,34 +888,34 @@ namespace bgfx
 		const char* m_glslVersion;
 	};
 
-	RendererContext s_renderCtx;
+	RendererContext* s_renderCtx;
 
 #if BX_PLATFORM_NACL
 	static void GL_APIENTRY naclVertexAttribDivisor(GLuint _index, GLuint _divisor)
 	{
-		s_renderCtx.m_glctx.m_instancedArrays->VertexAttribDivisorANGLE(s_renderCtx.m_glctx.m_context, _index, _divisor);
+		s_renderCtx->m_glctx.m_instancedArrays->VertexAttribDivisorANGLE(s_renderCtx->m_glctx.m_context, _index, _divisor);
 	}
 
 	static void GL_APIENTRY naclDrawArraysInstanced(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount)
 	{
-		s_renderCtx.m_glctx.m_instancedArrays->DrawArraysInstancedANGLE(s_renderCtx.m_glctx.m_context, _mode, _first, _count, _primcount);
+		s_renderCtx->m_glctx.m_instancedArrays->DrawArraysInstancedANGLE(s_renderCtx->m_glctx.m_context, _mode, _first, _count, _primcount);
 	}
 
 	static void GL_APIENTRY naclDrawElementsInstanced(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount)
 	{
-		s_renderCtx.m_glctx.m_instancedArrays->DrawElementsInstancedANGLE(s_renderCtx.m_glctx.m_context, _mode, _count, _type, _indices, _primcount);
+		s_renderCtx->m_glctx.m_instancedArrays->DrawElementsInstancedANGLE(s_renderCtx->m_glctx.m_context, _mode, _count, _type, _indices, _primcount);
 	}
 
 	void naclSetIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
-		s_renderCtx.m_glctx.m_instance = _instance;
-		s_renderCtx.m_glctx.m_instInterface = _instInterface;
-		s_renderCtx.m_glctx.m_graphicsInterface = _graphicsInterface;
-		s_renderCtx.m_postSwapBuffers = _postSwapBuffers;
-		s_renderCtx.m_glctx.m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
-		s_renderCtx.setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+		s_renderCtx->m_glctx.m_instance = _instance;
+		s_renderCtx->m_glctx.m_instInterface = _instInterface;
+		s_renderCtx->m_glctx.m_graphicsInterface = _graphicsInterface;
+		s_renderCtx->m_postSwapBuffers = _postSwapBuffers;
+		s_renderCtx->m_glctx.m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
+		s_renderCtx->setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
 
-		if (NULL != s_renderCtx.m_glctx.m_instancedArrays)
+		if (NULL != s_renderCtx->m_glctx.m_instancedArrays)
 		{
 			s_vertexAttribDivisor = naclVertexAttribDivisor;
 			s_drawArraysInstanced = naclDrawArraysInstanced;
@@ -1029,9 +1029,9 @@ namespace bgfx
 		bool cached = false;
 
 		uint64_t id = (uint64_t(_vsh.m_hash)<<32) | _fsh.m_hash;
-		id ^= s_renderCtx.m_hash;
+		id ^= s_renderCtx->m_hash;
 
-		if (s_renderCtx.m_programBinarySupport)
+		if (s_renderCtx->m_programBinarySupport)
 		{
 			uint32_t length = g_callback->cacheReadSize(id);
 			cached = length > 0;
@@ -1078,7 +1078,7 @@ namespace bgfx
 				return;
 			}
 
-			if (s_renderCtx.m_programBinarySupport)
+			if (s_renderCtx->m_programBinarySupport)
 			{
 				GLint programLength;
 				GLenum format;
@@ -1106,7 +1106,7 @@ namespace bgfx
 		GL_CHECK(glUseProgram(0) );
 		GL_CHECK(glDeleteProgram(m_id) );
 
-		m_vcref.invalidate(s_renderCtx.m_vaoStateCache);
+		m_vcref.invalidate(s_renderCtx->m_vaoStateCache);
 	}
 
 	void Program::init()
@@ -1182,7 +1182,7 @@ namespace bgfx
 			}
 			else
 			{
-				const UniformInfo* info = s_renderCtx.m_uniformReg.find(name);
+				const UniformInfo* info = s_renderCtx->m_uniformReg.find(name);
 				if (NULL != info)
 				{
 					data = info->m_data;
@@ -1309,7 +1309,7 @@ namespace bgfx
 		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 		GL_CHECK(glDeleteBuffers(1, &m_id) );
 
-		m_vcref.invalidate(s_renderCtx.m_vaoStateCache);
+		m_vcref.invalidate(s_renderCtx->m_vaoStateCache);
 	}
 
 	void VertexBuffer::destroy()
@@ -1317,7 +1317,7 @@ namespace bgfx
 		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 		GL_CHECK(glDeleteBuffers(1, &m_id) );
 
-		m_vcref.invalidate(s_renderCtx.m_vaoStateCache);
+		m_vcref.invalidate(s_renderCtx->m_vaoStateCache);
 	}
 
 	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
@@ -1412,7 +1412,7 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 		if (GL_RGBA == m_fmt
-		&&  s_renderCtx.m_textureSwizzleSupport)
+		&&  s_renderCtx->m_textureSwizzleSupport)
 		{
 			GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
 			GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
@@ -1450,7 +1450,7 @@ namespace bgfx
 
 			const GLenum internalFmt = s_textureFormat[m_textureFormat].m_internalFmt;
 
-			const bool swizzle    = GL_RGBA == internalFmt && !s_renderCtx.m_textureSwizzleSupport;
+			const bool swizzle    = GL_RGBA == internalFmt && !s_renderCtx->m_textureSwizzleSupport;
 			const bool convert    = m_textureFormat != m_requestedFormat;
 			const bool compressed = TextureFormat::Unknown > m_textureFormat;
 			const uint32_t min    = convert && compressed ? 4 : 1;
@@ -1660,7 +1660,7 @@ namespace bgfx
 
 		GLenum target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
-		const bool swizzle    = GL_RGBA == m_fmt && !s_renderCtx.m_textureSwizzleSupport;
+		const bool swizzle    = GL_RGBA == m_fmt && !s_renderCtx->m_textureSwizzleSupport;
 		const bool convert    = m_textureFormat != m_requestedFormat;
 		const bool compressed = TextureFormat::Unknown > m_textureFormat;
 
@@ -1752,9 +1752,9 @@ namespace bgfx
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
 			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) 
-			&&  0.0f < s_renderCtx.m_maxAnisotropy)
+			&&  0.0f < s_renderCtx->m_maxAnisotropy)
 			{
-				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx.m_maxAnisotropy) );
+				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx->m_maxAnisotropy) );
 			}
 
 			m_currentFlags = flags;
@@ -1771,9 +1771,9 @@ namespace bgfx
 		setSamplerState(_flags);
 #elif BGFX_CONFIG_RENDERER_OPENGL < 31
 		// In case that GL 2.1 sampler object is supported via extension.
-		if (s_renderCtx.m_samplerObjectSupport)
+		if (s_renderCtx->m_samplerObjectSupport)
 		{
-			s_renderCtx.setSamplerState(_stage, m_numMips, _flags);
+			s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
 		}
 		else
 		{
@@ -1781,7 +1781,7 @@ namespace bgfx
 		}
 #else
 		// Everything else has sampler object.
-		s_renderCtx.setSamplerState(_stage, m_numMips, _flags);
+		s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
 #endif // BGFX_CONFIG_RENDERER_*
 	}
 
@@ -1792,7 +1792,7 @@ namespace bgfx
 		m_width = _width;
 		m_height = _height;
 		uint32_t msaa = (_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT;
-		m_msaa = bx::uint32_min(s_renderCtx.m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+		m_msaa = bx::uint32_min(s_renderCtx->m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
 		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
 		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
@@ -1904,7 +1904,7 @@ namespace bgfx
 				);
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_msaaBackBufferFbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_msaaBackBufferFbo) );
 	}
 
 	void RenderTarget::destroy()
@@ -1946,7 +1946,7 @@ namespace bgfx
 				, GL_COLOR_BUFFER_BIT
 				, GL_LINEAR
 				) );
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_msaaBackBufferFbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_msaaBackBufferFbo) );
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 	}
 
@@ -2033,15 +2033,15 @@ namespace bgfx
 
 	void TextVideoMemBlitter::setup()
 	{
-		if (0 != s_renderCtx.m_vao)
+		if (0 != s_renderCtx->m_vao)
 		{
-			GL_CHECK(glBindVertexArray(s_renderCtx.m_vao) );
+			GL_CHECK(glBindVertexArray(s_renderCtx->m_vao) );
 		}
 
-		uint32_t width = s_renderCtx.m_resolution.m_width;
-		uint32_t height = s_renderCtx.m_resolution.m_height;
+		uint32_t width = s_renderCtx->m_resolution.m_width;
+		uint32_t height = s_renderCtx->m_resolution.m_height;
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_backBufferFbo) );
 		GL_CHECK(glViewport(0, 0, width, height) );
 
 		GL_CHECK(glDisable(GL_SCISSOR_TEST) );
@@ -2052,7 +2052,7 @@ namespace bgfx
 		GL_CHECK(glDisable(GL_BLEND) );
 		GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
 
-		Program& program = s_renderCtx.m_program[m_program.idx];
+		Program& program = s_renderCtx->m_program[m_program.idx];
 		GL_CHECK(glUseProgram(program.m_id) );
 		GL_CHECK(glUniform1i(program.m_sampler[0], 0) );
 
@@ -2066,22 +2066,22 @@ namespace bgfx
 			) );
 
 		GL_CHECK(glActiveTexture(GL_TEXTURE0) );
-		GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx.m_textures[m_texture.idx].m_id) );
+		GL_CHECK(glBindTexture(GL_TEXTURE_2D, s_renderCtx->m_textures[m_texture.idx].m_id) );
 	}
 
 	void TextVideoMemBlitter::render(uint32_t _numIndices)
 	{
 		uint32_t numVertices = _numIndices*4/6;
-		s_renderCtx.m_indexBuffers[m_ib->handle.idx].update(0, _numIndices*2, m_ib->data);
-		s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data);
+		s_renderCtx->m_indexBuffers[m_ib->handle.idx].update(0, _numIndices*2, m_ib->data);
+		s_renderCtx->m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data);
 
-		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
+		VertexBuffer& vb = s_renderCtx->m_vertexBuffers[m_vb->handle.idx];
 		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
-		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
+		IndexBuffer& ib = s_renderCtx->m_indexBuffers[m_ib->handle.idx];
 		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 
-		Program& program = s_renderCtx.m_program[m_program.idx];
+		Program& program = s_renderCtx->m_program[m_program.idx];
 		program.bindAttributes(m_decl, 0);
 
 		GL_CHECK(glDrawElements(GL_TRIANGLES
@@ -2094,7 +2094,7 @@ namespace bgfx
 	void ClearQuad::clear(const Rect& _rect, const Clear& _clear, uint32_t _height)
 	{
 #if BGFX_CONFIG_CLEAR_QUAD
-		if (s_renderCtx.m_useClearQuad)
+		if (s_renderCtx->m_useClearQuad)
 		{
 			GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 			GL_CHECK(glDisable(GL_CULL_FACE) );
@@ -2125,8 +2125,8 @@ namespace bgfx
 				GL_CHECK(glDisable(GL_STENCIL_TEST) );
 			}
 
-			VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
-			VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
+			VertexBuffer& vb = s_renderCtx->m_vertexBuffers[m_vb->handle.idx];
+			VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[m_vb->decl.idx];
 
 			{
 				struct Vertex
@@ -2162,14 +2162,14 @@ namespace bgfx
 				vertex->m_abgr = abgr;
 			}
 
-			s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
+			s_renderCtx->m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
 
 			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
-			IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib.idx];
+			IndexBuffer& ib = s_renderCtx->m_indexBuffers[m_ib.idx];
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 
-			Program& program = s_renderCtx.m_program[m_program.idx];
+			Program& program = s_renderCtx->m_program[m_program.idx];
 			GL_CHECK(glUseProgram(program.m_id) );
 			program.bindAttributes(vertexDecl, 0);
 
@@ -2220,7 +2220,10 @@ namespace bgfx
 
 	void Context::flip()
 	{
-		s_renderCtx.flip();
+		if (NULL != s_renderCtx)
+		{
+			s_renderCtx->flip();
+		}
 	}
 
 	GLint glGet(GLenum _pname)
@@ -2235,7 +2238,8 @@ namespace bgfx
 
 	void Context::rendererInit()
 	{
-		s_renderCtx.init();
+		s_renderCtx = BX_NEW(g_allocator, RendererContext);
+		s_renderCtx->init();
 
 #if BGFX_CONFIG_DEBUG
 		GLint numCmpFormats;
@@ -2305,14 +2309,14 @@ namespace bgfx
 		GL_GET(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, 0);
 		GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
 
-		BX_TRACE("      Vendor: %s", s_renderCtx.m_vendor);
-		BX_TRACE("    Renderer: %s", s_renderCtx.m_renderer);
-		BX_TRACE("     Version: %s", s_renderCtx.m_version);
-		BX_TRACE("GLSL version: %s", s_renderCtx.m_glslVersion);
+		BX_TRACE("      Vendor: %s", s_renderCtx->m_vendor);
+		BX_TRACE("    Renderer: %s", s_renderCtx->m_renderer);
+		BX_TRACE("     Version: %s", s_renderCtx->m_version);
+		BX_TRACE("GLSL version: %s", s_renderCtx->m_glslVersion);
 #endif // BGFX_CONFIG_DEBUG
 
 		// Initial binary shader hash depends on driver version.
-		s_renderCtx.m_hash = ( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
+		s_renderCtx->m_hash = ( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 						^ (uint64_t(getGLStringHash(GL_VENDOR  ) )<<32)
 						^ (uint64_t(getGLStringHash(GL_RENDERER) )<<0 )
 						^ (uint64_t(getGLStringHash(GL_VERSION ) )<<16)
@@ -2416,46 +2420,46 @@ namespace bgfx
 		s_textureFormat[TextureFormat::PTC22].m_supported  = ptc2Supported;
 		s_textureFormat[TextureFormat::PTC24].m_supported  = ptc2Supported;
 
-		s_renderCtx.m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+		s_renderCtx->m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_vertex_array_object].m_supported
 			|| s_extension[Extension::OES_vertex_array_object].m_supported
 			;
 
-		s_renderCtx.m_samplerObjectSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+		s_renderCtx->m_samplerObjectSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_sampler_objects].m_supported
 			;
 
-		s_renderCtx.m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+		s_renderCtx->m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_get_program_binary].m_supported
 			|| s_extension[Extension::OES_get_program_binary].m_supported
 			|| s_extension[Extension::IMG_shader_binary].m_supported
 			;
 
-		s_renderCtx.m_textureSwizzleSupport = false
+		s_renderCtx->m_textureSwizzleSupport = false
 			|| s_extension[Extension::ARB_texture_swizzle].m_supported
 			|| s_extension[Extension::EXT_texture_swizzle].m_supported
 			;
 
 		if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 		{
-			GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx.m_maxAnisotropy) );
+			GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx->m_maxAnisotropy) );
 		}
 
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (s_extension[Extension::ARB_texture_multisample].m_supported)
 		{
-			GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &s_renderCtx.m_maxMsaa) );
+			GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &s_renderCtx->m_maxMsaa) );
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 		if (s_extension[Extension::IMG_read_format].m_supported
 		&&  s_extension[Extension::OES_read_format].m_supported)
 		{
-			s_renderCtx.m_readPixelsFmt = GL_BGRA_EXT;
+			s_renderCtx->m_readPixelsFmt = GL_BGRA_EXT;
 		}
 		else
 		{
-			s_renderCtx.m_readPixelsFmt = GL_RGBA;
+			s_renderCtx->m_readPixelsFmt = GL_RGBA;
 		}
 
 		if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
@@ -2464,7 +2468,7 @@ namespace bgfx
 		||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 		{
 #if BGFX_CONFIG_RENDERER_OPENGL
-			s_renderCtx.m_readPixelsFmt = GL_BGRA_EXT;
+			s_renderCtx->m_readPixelsFmt = GL_BGRA_EXT;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 			s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
@@ -2512,9 +2516,9 @@ namespace bgfx
 #	endif // !BX_PLATFORM_IOS
 #endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 
-		if (s_renderCtx.m_vaoSupport)
+		if (s_renderCtx->m_vaoSupport)
 		{
-			GL_CHECK(glGenVertexArrays(1, &s_renderCtx.m_vao) );
+			GL_CHECK(glGenVertexArrays(1, &s_renderCtx->m_vao) );
 		}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -2543,29 +2547,32 @@ namespace bgfx
 
 	void Context::rendererShutdown()
 	{
-		if (s_renderCtx.m_vaoSupport)
+		if (s_renderCtx->m_vaoSupport)
 		{
 			GL_CHECK(glBindVertexArray(0) );
-			GL_CHECK(glDeleteVertexArrays(1, &s_renderCtx.m_vao) );
-			s_renderCtx.m_vao = 0;
+			GL_CHECK(glDeleteVertexArrays(1, &s_renderCtx->m_vao) );
+			s_renderCtx->m_vao = 0;
 		}
 
-		s_renderCtx.shutdown();
+		s_renderCtx->shutdown();
+
+		BX_DELETE(g_allocator, s_renderCtx);
+		s_renderCtx = NULL;
 	}
 
 	void Context::rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
+		s_renderCtx->m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
 	}
 
 	void Context::rendererDestroyIndexBuffer(IndexBufferHandle _handle)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_indexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl)
 	{
-		VertexDecl& decl = s_renderCtx.m_vertexDecls[_handle.idx];
+		VertexDecl& decl = s_renderCtx->m_vertexDecls[_handle.idx];
 		memcpy(&decl, &_decl, sizeof(VertexDecl) );
 		dump(decl);
 	}
@@ -2576,78 +2583,78 @@ namespace bgfx
 
 	void Context::rendererCreateVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
+		s_renderCtx->m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
 	}
 
 	void Context::rendererDestroyVertexBuffer(VertexBufferHandle _handle)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_vertexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].create(_size, NULL);
+		s_renderCtx->m_indexBuffers[_handle.idx].create(_size, NULL);
 	}
 
 	void Context::rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx->m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_indexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
 	{
 		VertexDeclHandle decl = BGFX_INVALID_HANDLE;
-		s_renderCtx.m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
+		s_renderCtx->m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
 	}
 
 	void Context::rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx->m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_vertexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateVertexShader(VertexShaderHandle _handle, Memory* _mem)
 	{
-		s_renderCtx.m_vertexShaders[_handle.idx].create(GL_VERTEX_SHADER, _mem);
+		s_renderCtx->m_vertexShaders[_handle.idx].create(GL_VERTEX_SHADER, _mem);
 	}
 
 	void Context::rendererDestroyVertexShader(VertexShaderHandle _handle)
 	{
-		s_renderCtx.m_vertexShaders[_handle.idx].destroy();
+		s_renderCtx->m_vertexShaders[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem)
 	{
-		s_renderCtx.m_fragmentShaders[_handle.idx].create(GL_FRAGMENT_SHADER, _mem);
+		s_renderCtx->m_fragmentShaders[_handle.idx].create(GL_FRAGMENT_SHADER, _mem);
 	}
 
 	void Context::rendererDestroyFragmentShader(FragmentShaderHandle _handle)
 	{
-		s_renderCtx.m_fragmentShaders[_handle.idx].destroy();
+		s_renderCtx->m_fragmentShaders[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 	{
-		s_renderCtx.m_program[_handle.idx].create(s_renderCtx.m_vertexShaders[_vsh.idx], s_renderCtx.m_fragmentShaders[_fsh.idx]);
+		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], s_renderCtx->m_fragmentShaders[_fsh.idx]);
 	}
 
 	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)
 	{
-		s_renderCtx.m_program[_handle.idx].destroy();
+		s_renderCtx->m_program[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
 	{
-		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
+		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags);
 	}
 
 	void Context::rendererUpdateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/)
@@ -2656,7 +2663,7 @@ namespace bgfx
 
 	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		s_renderCtx.m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
+		s_renderCtx->m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
 	}
 
 	void Context::rendererUpdateTextureEnd()
@@ -2665,17 +2672,17 @@ namespace bgfx
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)
 	{
-		s_renderCtx.m_textures[_handle.idx].destroy();
+		s_renderCtx->m_textures[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
-		s_renderCtx.m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
+		s_renderCtx->m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
 	}
 
 	void Context::rendererDestroyRenderTarget(RenderTargetHandle _handle)
 	{
-		s_renderCtx.m_renderTargets[_handle.idx].destroy();
+		s_renderCtx->m_renderTargets[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
@@ -2683,18 +2690,18 @@ namespace bgfx
 		uint32_t size = g_uniformTypeSize[_type]*_num;
 		void* data = BX_ALLOC(g_allocator, size);
 		memset(data, 0, size);
-		s_renderCtx.m_uniforms[_handle.idx] = data;
-		s_renderCtx.m_uniformReg.add(_name, s_renderCtx.m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniforms[_handle.idx] = data;
+		s_renderCtx->m_uniformReg.add(_name, s_renderCtx->m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
-		BX_FREE(g_allocator, s_renderCtx.m_uniforms[_handle.idx]);
+		BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)
 	{
-		s_renderCtx.saveScreenShot(_filePath);
+		s_renderCtx->saveScreenShot(_filePath);
 	}
 
 	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
@@ -2704,7 +2711,7 @@ namespace bgfx
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
 	{
-		memcpy(s_renderCtx.m_uniforms[_loc], _data, _size);
+		memcpy(s_renderCtx->m_uniforms[_loc], _data, _size);
 	}
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t /*_size*/)
@@ -2714,15 +2721,15 @@ namespace bgfx
 
 	void Context::rendererSubmit()
 	{
-		const GLuint defaultVao = s_renderCtx.m_vao;
+		const GLuint defaultVao = s_renderCtx->m_vao;
 		if (0 != defaultVao)
 		{
 			GL_CHECK(glBindVertexArray(defaultVao) );
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_backBufferFbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_backBufferFbo) );
 
-		s_renderCtx.updateResolution(m_render->m_resolution);
+		s_renderCtx->updateResolution(m_render->m_resolution);
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
@@ -2730,20 +2737,20 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_OPENGL
 		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			s_renderCtx.m_queries.begin(0, GL_TIME_ELAPSED);
+			s_renderCtx->m_queries.begin(0, GL_TIME_ELAPSED);
 		}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		if (0 < m_render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = m_render->m_transientIb;
-			s_renderCtx.m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data);
+			s_renderCtx->m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data);
 		}
 
 		if (0 < m_render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = m_render->m_transientVb;
-			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data);
+			s_renderCtx->m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data);
 		}
 
 		m_render->sort();
@@ -2781,7 +2788,7 @@ namespace bgfx
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx.m_msaaBackBufferFbo) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_msaaBackBufferFbo) );
 
 			for (uint32_t item = 0, numItems = m_render->m_num; item < numItems; ++item)
 			{
@@ -2813,7 +2820,7 @@ namespace bgfx
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
 						rt = m_render->m_rt[view];
-						height = s_renderCtx.setRenderTarget(rt, m_render->m_resolution.m_height);
+						height = s_renderCtx->setRenderTarget(rt, m_render->m_resolution.m_height);
 					}
 
 					const Rect& rect = m_render->m_rect[view];
@@ -3037,7 +3044,7 @@ namespace bgfx
 				if (key.m_program != programIdx)
 				{
 					programIdx = key.m_program;
-					GLuint id = invalidHandle == programIdx ? 0 : s_renderCtx.m_program[programIdx].m_id;
+					GLuint id = invalidHandle == programIdx ? 0 : s_renderCtx->m_program[programIdx].m_id;
 					GL_CHECK(glUseProgram(id) );
 					programChanged = 
 						constantsChanged = 
@@ -3046,7 +3053,7 @@ namespace bgfx
 
 				if (invalidHandle != programIdx)
 				{
-					Program& program = s_renderCtx.m_program[programIdx];
+					Program& program = s_renderCtx->m_program[programIdx];
 
 					if (constantsChanged)
 					{
@@ -3222,21 +3229,21 @@ namespace bgfx
 									{
 									case BGFX_SAMPLER_TEXTURE:
 										{
-											Texture& texture = s_renderCtx.m_textures[sampler.m_idx];
+											Texture& texture = s_renderCtx->m_textures[sampler.m_idx];
 											texture.commit(stage, sampler.m_flags);
 										}
 										break;
 
 									case BGFX_SAMPLER_RENDERTARGET_COLOR:
 										{
-											RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+											RenderTarget& rt = s_renderCtx->m_renderTargets[sampler.m_idx];
 											rt.m_color.commit(stage, sampler.m_flags);
 										}
 										break;
 
 									case BGFX_SAMPLER_RENDERTARGET_DEPTH:
 										{
-											RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+											RenderTarget& rt = s_renderCtx->m_renderTargets[sampler.m_idx];
 											rt.m_depth.commit(stage, sampler.m_flags);
 										}
 										break;
@@ -3276,7 +3283,7 @@ namespace bgfx
 							currentState.m_instanceDataStride = state.m_instanceDataStride;
 							baseVertex = state.m_startVertex;
 
-							GLuint id = s_renderCtx.m_vaoStateCache.find(hash);
+							GLuint id = s_renderCtx->m_vaoStateCache.find(hash);
 							if (UINT32_MAX != id)
 							{
 								currentVao = id;
@@ -3284,25 +3291,25 @@ namespace bgfx
 							}
 							else
 							{
-								id = s_renderCtx.m_vaoStateCache.add(hash);
+								id = s_renderCtx->m_vaoStateCache.add(hash);
 								currentVao = id;
 								GL_CHECK(glBindVertexArray(id) );
 
-								Program& program = s_renderCtx.m_program[programIdx];
+								Program& program = s_renderCtx->m_program[programIdx];
 								program.add(hash);
 
 								if (invalidHandle != state.m_vertexBuffer.idx)
 								{
-									VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+									VertexBuffer& vb = s_renderCtx->m_vertexBuffers[state.m_vertexBuffer.idx];
 									vb.add(hash);
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
 									uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-									program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+									program.bindAttributes(s_renderCtx->m_vertexDecls[decl], state.m_startVertex);
 
 									if (invalidHandle != state.m_instanceDataBuffer.idx)
 									{
-										VertexBuffer& instanceVb = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
+										VertexBuffer& instanceVb = s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx];
 										instanceVb.add(hash);
 										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, instanceVb.m_id) );
 										program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
@@ -3315,7 +3322,7 @@ namespace bgfx
 
 								if (invalidHandle != state.m_indexBuffer.idx)
 								{
-									IndexBuffer& ib = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx];
+									IndexBuffer& ib = s_renderCtx->m_indexBuffers[state.m_indexBuffer.idx];
 									ib.add(hash);
 									GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 								}
@@ -3352,7 +3359,7 @@ namespace bgfx
 							uint16_t handle = state.m_vertexBuffer.idx;
 							if (invalidHandle != handle)
 							{
-								VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
+								VertexBuffer& vb = s_renderCtx->m_vertexBuffers[handle];
 								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 								bindAttribs = true;
 							}
@@ -3369,7 +3376,7 @@ namespace bgfx
 							uint16_t handle = state.m_indexBuffer.idx;
 							if (invalidHandle != handle)
 							{
-								IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
+								IndexBuffer& ib = s_renderCtx->m_indexBuffers[handle];
 								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 							}
 							else
@@ -3384,14 +3391,14 @@ namespace bgfx
 							||  bindAttribs)
 							{
 								baseVertex = state.m_startVertex;
-								const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[state.m_vertexBuffer.idx];
+								const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[state.m_vertexBuffer.idx];
 								uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-								const Program& program = s_renderCtx.m_program[programIdx];
-								program.bindAttributes(s_renderCtx.m_vertexDecls[decl], state.m_startVertex);
+								const Program& program = s_renderCtx->m_program[programIdx];
+								program.bindAttributes(s_renderCtx->m_vertexDecls[decl], state.m_startVertex);
 
 								if (invalidHandle != state.m_instanceDataBuffer.idx)
 								{
-									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
 									program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
 								}
 							}
@@ -3403,9 +3410,9 @@ namespace bgfx
 						uint32_t numVertices = state.m_numVertices;
 						if (UINT32_C(0xffffffff) == numVertices)
 						{
-							const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[currentState.m_vertexBuffer.idx];
+							const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[currentState.m_vertexBuffer.idx];
 							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-							const VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[decl];
+							const VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 							numVertices = vb.m_size/vertexDecl.m_stride;
 						}
 
@@ -3418,7 +3425,7 @@ namespace bgfx
 						{
 							if (UINT32_MAX == state.m_numIndices)
 							{
-								numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+								numIndices = s_renderCtx->m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
 								numPrimsSubmitted = numIndices/primNumVerts;
 								numInstances = state.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
@@ -3466,12 +3473,12 @@ namespace bgfx
 				}
 			}
 
-			s_renderCtx.blitMsaaFbo();
+			s_renderCtx->blitMsaaFbo();
 
 			if (0 < m_render->m_num)
 			{
 				captureElapsed = -bx::getHPCounter();
-				s_renderCtx.capture();
+				s_renderCtx->capture();
 				captureElapsed += bx::getHPCounter();
 			}
 		}
@@ -3492,12 +3499,12 @@ namespace bgfx
 		{
 			double elapsedGpuMs = 0.0;
 #if BGFX_CONFIG_RENDERER_OPENGL
-			s_renderCtx.m_queries.end(GL_TIME_ELAPSED);
-			uint64_t elapsedGl = s_renderCtx.m_queries.getResult(0);
+			s_renderCtx->m_queries.end(GL_TIME_ELAPSED);
+			uint64_t elapsedGl = s_renderCtx->m_queries.getResult(0);
 			elapsedGpuMs = double(elapsedGl)/1e6;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
-			TextVideoMem& tvm = s_renderCtx.m_textVideoMem;
+			TextVideoMem& tvm = s_renderCtx->m_textVideoMem;
 
 			static int64_t next = now;
 
@@ -3510,10 +3517,10 @@ namespace bgfx
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
-				tvm.printf(0, pos++, 0x0f, "      Vendor: %s", s_renderCtx.m_vendor);
-				tvm.printf(0, pos++, 0x0f, "    Renderer: %s", s_renderCtx.m_renderer);
-				tvm.printf(0, pos++, 0x0f, "     Version: %s", s_renderCtx.m_version);
-				tvm.printf(0, pos++, 0x0f, "GLSL version: %s", s_renderCtx.m_glslVersion);
+				tvm.printf(0, pos++, 0x0f, "      Vendor: %s", s_renderCtx->m_vendor);
+				tvm.printf(0, pos++, 0x0f, "    Renderer: %s", s_renderCtx->m_renderer);
+				tvm.printf(0, pos++, 0x0f, "     Version: %s", s_renderCtx->m_version);
+				tvm.printf(0, pos++, 0x0f, "GLSL version: %s", s_renderCtx->m_glslVersion);
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "  Frame CPU: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS%s"

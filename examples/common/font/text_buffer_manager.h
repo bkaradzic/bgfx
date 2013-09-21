@@ -10,6 +10,8 @@
 
 BGFX_HANDLE(TextBufferHandle);
 
+#define MAX_TEXT_BUFFER_COUNT 64
+
 /// type of vertex and index buffer to use with a TextBuffer
 struct BufferType
 {
@@ -83,7 +85,7 @@ private:
 	};
 
 	BufferCache* m_textBuffers;
-	bx::HandleAlloc m_textBufferHandles;
+	bx::HandleAllocT<MAX_TEXT_BUFFER_COUNT> m_textBufferHandles;
 	FontManager* m_fontManager;
 	bgfx::VertexDecl m_vertexDecl;
 	bgfx::UniformHandle u_texColor;

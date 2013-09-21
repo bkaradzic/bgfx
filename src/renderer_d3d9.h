@@ -199,6 +199,11 @@ namespace bgfx
 
 	struct VertexDeclaration
 	{
+		VertexDeclaration()
+			: m_ptr(NULL)
+		{
+		}
+
 		void create(const VertexDecl& _decl);
 
 		void destroy()
@@ -214,6 +219,8 @@ namespace bgfx
 	{
 		Shader()
 			: m_ptr(NULL)
+			, m_constantBuffer(NULL)
+			, m_numPredefined(0)
 		{
 		}
 
@@ -222,8 +229,11 @@ namespace bgfx
 
 		void destroy()
 		{
-			ConstantBuffer::destroy(m_constantBuffer);
-			m_constantBuffer = NULL;
+			if (NULL != m_constantBuffer)
+			{
+				ConstantBuffer::destroy(m_constantBuffer);
+				m_constantBuffer = NULL;
+			}
 			m_numPredefined = 0;
 
 			DX_RELEASE(m_ptr, 0);

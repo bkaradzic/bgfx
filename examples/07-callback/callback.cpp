@@ -316,6 +316,8 @@ class BgfxAllocator : public bx::ReallocatorI
 {
 public:
 	BgfxAllocator()
+		: m_numBlocks(0)
+		, m_maxBlocks(0)
 	{
 	}
 
@@ -327,24 +329,43 @@ public:
 	{
 		BX_UNUSED(_file, _line);
 		void* ptr = ::malloc(_size);
-		BX_TRACE("ALLOC %p of %d byte(s) at %s line %d.", ptr, _size, _file, _line);
+		dbgPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
+		++m_numBlocks;
+		m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
 		return ptr;
 	}
 
 	virtual void free(void* _ptr, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
-		BX_TRACE("FREE %p at %s line %d.", ptr, _file, _line);
+		dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
 		BX_UNUSED(_file, _line);
 		::free(_ptr);
+		--m_numBlocks;
 	}
 
 	virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
 		BX_UNUSED(_file, _line);
 		void* ptr = ::realloc(_ptr, _size);
-		BX_TRACE("REALLOC %p (old %p) of %d byte(s) at %s line %d.", ptr, _ptr, _size, _file, _line);
+		dbgPrintf("%s(%d): REALLOC %p (old %p) of %d byte(s)\n", _file, _line, ptr, _ptr, _size);
+
+		if (NULL == _ptr)
+		{
+			++m_numBlocks;
+			m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+		}
+
 		return ptr;
 	}
+
+	void dumpStats() const
+	{
+		dbgPrintf("Allocator stats: num blocks %d (peak: %d)\n", m_numBlocks, m_maxBlocks);
+	}
+
+private:
+	uint32_t m_numBlocks;
+	uint32_t m_maxBlocks;
 };
 
 int _main_(int /*_argc*/, char** /*_argv*/)
@@ -512,6 +533,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Shutdown bgfx.
 	bgfx::shutdown();
+
+	allocator.dumpStats();
 
 	return 0;
 }

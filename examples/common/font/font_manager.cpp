@@ -438,15 +438,11 @@ struct FontManager::CachedFont
 	int16_t padding;
 };
 
-const uint16_t MAX_OPENED_FILES = 64;
-const uint16_t MAX_OPENED_FONT = 64;
-const uint32_t MAX_FONT_BUFFER_SIZE = 512 * 512 * 4;
+#define MAX_FONT_BUFFER_SIZE (512 * 512 * 4)
 
 FontManager::FontManager(Atlas* _atlas)
 	: m_ownAtlas(false)
 	, m_atlas(_atlas)
-	, m_fontHandles(MAX_OPENED_FONT)
-	, m_filesHandles(MAX_OPENED_FILES)
 {
 	init();
 }
@@ -454,8 +450,6 @@ FontManager::FontManager(Atlas* _atlas)
 FontManager::FontManager(uint32_t _textureSideWidth) 
 	: m_ownAtlas(true)
 	, m_atlas(new Atlas(_textureSideWidth) )
-	, m_fontHandles(MAX_OPENED_FONT)
-	, m_filesHandles(MAX_OPENED_FILES)
 {
 	init();
 }

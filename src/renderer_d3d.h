@@ -44,9 +44,9 @@ namespace bgfx
 	typedef void (WINAPI *D3DPERF_SetOptionsFunc)(DWORD _options);
 	typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
 
-#define _PIX_SETMARKER(_col, _name) s_renderCtx.m_D3DPERF_SetMarker(_col, _name)
-#define _PIX_BEGINEVENT(_col, _name) s_renderCtx.m_D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT() s_renderCtx.m_D3DPERF_EndEvent()
+#define _PIX_SETMARKER(_col, _name) s_renderCtx->m_D3DPERF_SetMarker(_col, _name)
+#define _PIX_BEGINEVENT(_col, _name) s_renderCtx->m_D3DPERF_BeginEvent(_col, _name)
+#define _PIX_ENDEVENT() s_renderCtx->m_D3DPERF_EndEvent()
 
 #if BGFX_CONFIG_DEBUG_PIX
 #	define PIX_SETMARKER(_color, _name) _PIX_SETMARKER(_color, _name)

@@ -134,7 +134,10 @@ namespace bgfx
 			: m_ptr(NULL)
 			, m_code(NULL)
 			, m_buffer(NULL)
+			, m_constantBuffer(NULL)
 			, m_hash(0)
+			, m_numUniforms(0)
+			, m_numPredefined(0)
 		{
 		}
 
@@ -143,8 +146,12 @@ namespace bgfx
 
 		void destroy()
 		{
-			ConstantBuffer::destroy(m_constantBuffer);
-			m_constantBuffer = NULL;
+			if (NULL != m_constantBuffer)
+			{
+				ConstantBuffer::destroy(m_constantBuffer);
+				m_constantBuffer = NULL;
+			}
+
 			m_numPredefined = 0;
 
 			if (NULL != m_buffer)

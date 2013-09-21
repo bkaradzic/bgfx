@@ -21,7 +21,6 @@
 #include "vs_font_distance_field_subpixel.bin.h"
 #include "fs_font_distance_field_subpixel.bin.h"
 
-#define MAX_TEXT_BUFFER_COUNT   64
 #define MAX_BUFFERED_CHARACTERS (8192 - 5)
 
 class TextBuffer
@@ -545,8 +544,7 @@ void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
 }
 
 TextBufferManager::TextBufferManager(FontManager* _fontManager)
-	: m_textBufferHandles(MAX_TEXT_BUFFER_COUNT)
-	, m_fontManager(_fontManager)
+	: m_fontManager(_fontManager)
 {
 	m_textBuffers = new BufferCache[MAX_TEXT_BUFFER_COUNT];
 

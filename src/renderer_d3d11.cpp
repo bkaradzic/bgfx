@@ -1181,7 +1181,7 @@ namespace bgfx
 		uint32_t m_fsChanges;
 	};
 
-	static RendererContext s_renderCtx;
+	static RendererContext* s_renderCtx;
 
 	void IndexBuffer::create(uint32_t _size, void* _data)
 	{
@@ -1199,7 +1199,7 @@ namespace bgfx
 			desc.Usage = D3D11_USAGE_DYNAMIC;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-			DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc
+			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
 				) );
@@ -1214,7 +1214,7 @@ namespace bgfx
 			srd.SysMemPitch = 0;
 			srd.SysMemSlicePitch = 0;
 
-			DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc
+			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc
 				, &srd
 				, &m_ptr
 				) );
@@ -1223,7 +1223,7 @@ namespace bgfx
 
 	void IndexBuffer::update(uint32_t _offset, uint32_t _size, void* _data)
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 		BX_CHECK(m_dynamic, "Must be dynamic!");
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
@@ -1250,7 +1250,7 @@ namespace bgfx
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 			desc.StructureByteStride = 0;
 
-			DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc
+			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
 				) );
@@ -1266,7 +1266,7 @@ namespace bgfx
 			srd.SysMemPitch = 0;
 			srd.SysMemSlicePitch = 0;
 
-			DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc
+			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc
 				, &srd
 				, &m_ptr
 				) );
@@ -1275,7 +1275,7 @@ namespace bgfx
 
 	void VertexBuffer::update(uint32_t _offset, uint32_t _size, void* _data)
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 		BX_CHECK(m_dynamic, "Must be dynamic!");
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
@@ -1318,7 +1318,7 @@ namespace bgfx
 		case UniformType::_uniform: \
 		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 			{ \
-				s_renderCtx.setShaderConstant(type, loc, data, num); \
+				s_renderCtx->setShaderConstant(type, loc, data, num); \
 			} \
 			break;
 
@@ -1349,13 +1349,13 @@ namespace bgfx
 
 	void TextVideoMemBlitter::setup()
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 
-		uint32_t width = s_renderCtx.m_scd.BufferDesc.Width;
-		uint32_t height = s_renderCtx.m_scd.BufferDesc.Height;
+		uint32_t width = s_renderCtx->m_scd.BufferDesc.Width;
+		uint32_t height = s_renderCtx->m_scd.BufferDesc.Height;
 
 		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
-		s_renderCtx.setRenderTarget(rt, false);
+		s_renderCtx->setRenderTarget(rt, false);
 
 		D3D11_VIEWPORT vp;
 		vp.TopLeftX = 0;
@@ -1371,25 +1371,25 @@ namespace bgfx
 			| BGFX_STATE_DEPTH_TEST_ALWAYS
 			;
 			
- 		s_renderCtx.setBlendState(state);
- 		s_renderCtx.setDepthStencilState(state);
- 		s_renderCtx.setRasterizerState(state);
+ 		s_renderCtx->setBlendState(state);
+ 		s_renderCtx->setDepthStencilState(state);
+ 		s_renderCtx->setRasterizerState(state);
 
-		Program& program = s_renderCtx.m_program[m_program.idx];
-		s_renderCtx.m_currentProgram = &program;
+		Program& program = s_renderCtx->m_program[m_program.idx];
+		s_renderCtx->m_currentProgram = &program;
 		deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 		deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
 		deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
 		deviceCtx->PSSetConstantBuffers(0, 1, &program.m_fsh->m_buffer);
 
-		VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
-		VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
+		VertexBuffer& vb = s_renderCtx->m_vertexBuffers[m_vb->handle.idx];
+		VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[m_vb->decl.idx];
 		uint32_t stride = vertexDecl.m_stride;
 		uint32_t offset = 0;
 		deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-		s_renderCtx.setInputLayout(vertexDecl, program, 0);
+		s_renderCtx->setInputLayout(vertexDecl, program, 0);
 
-		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
+		IndexBuffer& ib = s_renderCtx->m_indexBuffers[m_ib->handle.idx];
 		deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
 
 		float proj[16];
@@ -1397,22 +1397,22 @@ namespace bgfx
 
 		PredefinedUniform& predefined = program.m_predefined[0];
 		uint8_t flags = predefined.m_type;
-		s_renderCtx.setShaderConstant(flags, predefined.m_loc, proj, 4);
+		s_renderCtx->setShaderConstant(flags, predefined.m_loc, proj, 4);
 
-		s_renderCtx.commitShaderConstants();
-		s_renderCtx.m_textures[m_texture.idx].commit(0);
-		s_renderCtx.commitTextureStage();
+		s_renderCtx->commitShaderConstants();
+		s_renderCtx->m_textures[m_texture.idx].commit(0);
+		s_renderCtx->commitTextureStage();
 	}
 
 	void TextVideoMemBlitter::render(uint32_t _numIndices)
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 
-		IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib->handle.idx];
+		IndexBuffer& ib = s_renderCtx->m_indexBuffers[m_ib->handle.idx];
  		ib.update(0, _numIndices*2, m_ib->data);
 
 		uint32_t numVertices = _numIndices*4/6;
-		s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data);
+		s_renderCtx->m_vertexBuffers[m_vb->handle.idx].update(0, numVertices*m_decl.m_stride, m_vb->data);
 
 		deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		deviceCtx->DrawIndexed(_numIndices, 0, 0);
@@ -1421,19 +1421,19 @@ namespace bgfx
 	void ClearQuad::clear(const Rect& _rect, const Clear& _clear, uint32_t _height)
 	{
 		BX_UNUSED(_height);
-		uint32_t width = s_renderCtx.m_scd.BufferDesc.Width;
-		uint32_t height = s_renderCtx.m_scd.BufferDesc.Height;
+		uint32_t width = s_renderCtx->m_scd.BufferDesc.Width;
+		uint32_t height = s_renderCtx->m_scd.BufferDesc.Height;
 
 		if (0 == _rect.m_x
 		&&  0 == _rect.m_y
 		&&  width == _rect.m_width
 		&&  height == _rect.m_height)
 		{
-			s_renderCtx.clear(_clear);
+			s_renderCtx->clear(_clear);
 		}
 		else
 		{
-			ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+			ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 
 			uint64_t state = 0;
 			state |= _clear.m_flags & BGFX_CLEAR_COLOR_BIT ? BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE : 0;
@@ -1450,19 +1450,19 @@ namespace bgfx
 				: 0
 				;
 
-			s_renderCtx.setBlendState(state);
-			s_renderCtx.setDepthStencilState(state, stencil);
-			s_renderCtx.setRasterizerState(state);
+			s_renderCtx->setBlendState(state);
+			s_renderCtx->setDepthStencilState(state, stencil);
+			s_renderCtx->setRasterizerState(state);
 
-			Program& program = s_renderCtx.m_program[m_program.idx];
-			s_renderCtx.m_currentProgram = &program;
+			Program& program = s_renderCtx->m_program[m_program.idx];
+			s_renderCtx->m_currentProgram = &program;
 			deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 			deviceCtx->VSSetConstantBuffers(0, 0, NULL);
 			deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
 			deviceCtx->PSSetConstantBuffers(0, 0, NULL);
 
-			VertexBuffer& vb = s_renderCtx.m_vertexBuffers[m_vb->handle.idx];
-			VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[m_vb->decl.idx];
+			VertexBuffer& vb = s_renderCtx->m_vertexBuffers[m_vb->handle.idx];
+			VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[m_vb->decl.idx];
 			uint32_t stride = vertexDecl.m_stride;
 			uint32_t offset = 0;
 
@@ -1500,11 +1500,11 @@ namespace bgfx
 				vertex->m_abgr = abgr;
 			}
 
-			s_renderCtx.m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
+			s_renderCtx->m_vertexBuffers[m_vb->handle.idx].update(0, 4*m_decl.m_stride, m_vb->data);
 			deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-			s_renderCtx.setInputLayout(vertexDecl, program, 0);
+			s_renderCtx->setInputLayout(vertexDecl, program, 0);
 
-			IndexBuffer& ib = s_renderCtx.m_indexBuffers[m_ib.idx];
+			IndexBuffer& ib = s_renderCtx->m_indexBuffers[m_ib.idx];
 			deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
 
 			deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -1539,7 +1539,7 @@ namespace bgfx
 			desc.CPUAccessFlags = 0;
 			desc.MiscFlags = 0;
 			desc.StructureByteStride = 0;
-			DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc, NULL, &m_buffer) );
+			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc, NULL, &m_buffer) );
 		}
 
 		m_numPredefined = 0;
@@ -1588,7 +1588,7 @@ namespace bgfx
 				}
 				else
 				{
-					const UniformInfo* info = s_renderCtx.m_uniformReg.find(name);
+					const UniformInfo* info = s_renderCtx->m_uniformReg.find(name);
 					UniformBuffer* uniform = info != NULL ? (UniformBuffer*)info->m_data : NULL;
 
 					if (NULL != uniform)
@@ -1620,7 +1620,7 @@ namespace bgfx
 
 		if (_fragment)
 		{
-			DX_CHECK(s_renderCtx.m_device->CreatePixelShader(code, shaderSize, NULL, (ID3D11PixelShader**)&m_ptr) );
+			DX_CHECK(s_renderCtx->m_device->CreatePixelShader(code, shaderSize, NULL, (ID3D11PixelShader**)&m_ptr) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
 		else
@@ -1629,14 +1629,14 @@ namespace bgfx
 			m_code = alloc(shaderSize);
 			memcpy(m_code->data, code, shaderSize);
 
-			DX_CHECK(s_renderCtx.m_device->CreateVertexShader(code, shaderSize, NULL, (ID3D11VertexShader**)&m_ptr) );
+			DX_CHECK(s_renderCtx->m_device->CreateVertexShader(code, shaderSize, NULL, (ID3D11VertexShader**)&m_ptr) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
 		}
 	}
 
 	void Texture::create(const Memory* _mem, uint32_t _flags)
 	{
-		m_sampler = s_renderCtx.getSamplerState(_flags);
+		m_sampler = s_renderCtx->getSamplerState(_flags);
 
 		ImageContainer imageContainer;
 
@@ -1757,7 +1757,7 @@ namespace bgfx
 						srvd.Texture2D.MipLevels = imageContainer.m_numMips;
 					}
 
-					DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
+					DX_CHECK(s_renderCtx->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
 				}
 				break;
 
@@ -1777,12 +1777,12 @@ namespace bgfx
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 					srvd.Texture3D.MipLevels = imageContainer.m_numMips;
 
-					DX_CHECK(s_renderCtx.m_device->CreateTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d) );
+					DX_CHECK(s_renderCtx->m_device->CreateTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d) );
 				}
 				break;
 			}
 
-			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
+			DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
 
 			if (convert
 			&&  0 != kk)
@@ -1808,17 +1808,17 @@ namespace bgfx
 
 	void Texture::commit(uint8_t _stage, uint32_t _flags)
 	{
-		TextureStage& ts = s_renderCtx.m_textureStage;
+		TextureStage& ts = s_renderCtx->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
 		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
-							 ? s_renderCtx.getSamplerState(_flags)
+							 ? s_renderCtx->getSamplerState(_flags)
 							 : m_sampler
 							 ;
 	}
 
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 
 		D3D11_BOX box;
 		box.left = _rect.m_x;
@@ -1875,9 +1875,9 @@ namespace bgfx
 		desc.CPUAccessFlags = 0;
 		desc.MiscFlags = 0;
 
-		DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, NULL, &m_colorTexture) );
-		DX_CHECK(s_renderCtx.m_device->CreateRenderTargetView(m_colorTexture, NULL, &m_rtv) );
-		DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_colorTexture, NULL, &m_srv) );
+		DX_CHECK(s_renderCtx->m_device->CreateTexture2D(&desc, NULL, &m_colorTexture) );
+		DX_CHECK(s_renderCtx->m_device->CreateRenderTargetView(m_colorTexture, NULL, &m_rtv) );
+		DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_colorTexture, NULL, &m_srv) );
 
 		if (0 < depthFormat)
 		{
@@ -1894,12 +1894,12 @@ namespace bgfx
 			desc.CPUAccessFlags = 0;
 			desc.MiscFlags = 0;
 			
-			DX_CHECK(s_renderCtx.m_device->CreateTexture2D(&desc, NULL, &m_depthTexture) );
-			DX_CHECK(s_renderCtx.m_device->CreateDepthStencilView(m_depthTexture, NULL, &m_dsv) );
-//			DX_CHECK(s_renderCtx.m_device->CreateShaderResourceView(m_depthTexture, NULL, &m_srv) );
+			DX_CHECK(s_renderCtx->m_device->CreateTexture2D(&desc, NULL, &m_depthTexture) );
+			DX_CHECK(s_renderCtx->m_device->CreateDepthStencilView(m_depthTexture, NULL, &m_dsv) );
+//			DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_depthTexture, NULL, &m_srv) );
 		}
 
-		m_sampler = s_renderCtx.getSamplerState(_textureFlags);
+		m_sampler = s_renderCtx->getSamplerState(_textureFlags);
 	}
 
 	void RenderTarget::destroy()
@@ -1915,10 +1915,10 @@ namespace bgfx
 
 	void RenderTarget::commit(uint8_t _stage, uint32_t _flags)
 	{
-		TextureStage& ts = s_renderCtx.m_textureStage;
+		TextureStage& ts = s_renderCtx->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
 		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
-							 ? s_renderCtx.getSamplerState(_flags)
+							 ? s_renderCtx->getSamplerState(_flags)
 							 : m_sampler
 							 ;
 	}
@@ -1939,7 +1939,7 @@ namespace bgfx
 		desc.CPUAccessFlags = 0;
 		desc.MiscFlags = 0;
 		desc.StructureByteStride = 0;
-		DX_CHECK(s_renderCtx.m_device->CreateBuffer(&desc, NULL, &m_ptr) );
+		DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc, NULL, &m_ptr) );
 	}
 
 	void UniformBuffer::destroy()
@@ -1955,32 +1955,38 @@ namespace bgfx
 
 	void Context::flip()
 	{
-		s_renderCtx.flip();
+		if (NULL != s_renderCtx)
+		{
+			s_renderCtx->flip();
+		}
 	}
 
 	void Context::rendererInit()
 	{
-		s_renderCtx.init();
+		s_renderCtx = BX_NEW(g_allocator, RendererContext);
+		s_renderCtx->init();
 	}
 
 	void Context::rendererShutdown()
 	{
-		s_renderCtx.shutdown();
+		s_renderCtx->shutdown();
+		BX_DELETE(g_allocator, s_renderCtx);
+		s_renderCtx = NULL;
 	}
 
 	void Context::rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
+		s_renderCtx->m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
 	}
 
 	void Context::rendererDestroyIndexBuffer(IndexBufferHandle _handle)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_indexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl)
 	{
-		VertexDecl& decl = s_renderCtx.m_vertexDecls[_handle.idx];
+		VertexDecl& decl = s_renderCtx->m_vertexDecls[_handle.idx];
 		memcpy(&decl, &_decl, sizeof(VertexDecl) );
 		dump(decl);
 	}
@@ -1991,78 +1997,78 @@ namespace bgfx
 
 	void Context::rendererCreateVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
+		s_renderCtx->m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
 	}
 
 	void Context::rendererDestroyVertexBuffer(VertexBufferHandle _handle)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_vertexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].create(_size, NULL);
+		s_renderCtx->m_indexBuffers[_handle.idx].create(_size, NULL);
 	}
 
 	void Context::rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx->m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle)
 	{
-		s_renderCtx.m_indexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_indexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size)
 	{
 		VertexDeclHandle decl = BGFX_INVALID_HANDLE;
-		s_renderCtx.m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
+		s_renderCtx->m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
 	}
 
 	void Context::rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
+		s_renderCtx->m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
 	}
 
 	void Context::rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle)
 	{
-		s_renderCtx.m_vertexBuffers[_handle.idx].destroy();
+		s_renderCtx->m_vertexBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateVertexShader(VertexShaderHandle _handle, Memory* _mem)
 	{
-		s_renderCtx.m_vertexShaders[_handle.idx].create(false, _mem);
+		s_renderCtx->m_vertexShaders[_handle.idx].create(false, _mem);
 	}
 
 	void Context::rendererDestroyVertexShader(VertexShaderHandle _handle)
 	{
-		s_renderCtx.m_vertexShaders[_handle.idx].destroy();
+		s_renderCtx->m_vertexShaders[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem)
 	{
-		s_renderCtx.m_fragmentShaders[_handle.idx].create(true, _mem);
+		s_renderCtx->m_fragmentShaders[_handle.idx].create(true, _mem);
 	}
 
 	void Context::rendererDestroyFragmentShader(FragmentShaderHandle _handle)
 	{
-		s_renderCtx.m_fragmentShaders[_handle.idx].destroy();
+		s_renderCtx->m_fragmentShaders[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 	{
-		s_renderCtx.m_program[_handle.idx].create(s_renderCtx.m_vertexShaders[_vsh.idx], s_renderCtx.m_fragmentShaders[_fsh.idx]);
+		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], s_renderCtx->m_fragmentShaders[_fsh.idx]);
 	}
 
 	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)
 	{
-		s_renderCtx.m_program[_handle.idx].destroy();
+		s_renderCtx->m_program[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
 	{
-		s_renderCtx.m_textures[_handle.idx].create(_mem, _flags);
+		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags);
 	}
 
 	void Context::rendererUpdateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/)
@@ -2071,7 +2077,7 @@ namespace bgfx
 
 	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
 	{
-		s_renderCtx.m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
+		s_renderCtx->m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
 	}
 
 	void Context::rendererUpdateTextureEnd()
@@ -2080,33 +2086,33 @@ namespace bgfx
 
 	void Context::rendererDestroyTexture(TextureHandle _handle)
 	{
-		s_renderCtx.m_textures[_handle.idx].destroy();
+		s_renderCtx->m_textures[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 	{
-		s_renderCtx.m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
+		s_renderCtx->m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
 	}
 
 	void Context::rendererDestroyRenderTarget(RenderTargetHandle _handle)
 	{
-		s_renderCtx.m_renderTargets[_handle.idx].destroy();
+		s_renderCtx->m_renderTargets[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
-		s_renderCtx.m_uniforms[_handle.idx].create(_type, _num);
-		s_renderCtx.m_uniformReg.add(_name, &s_renderCtx.m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniforms[_handle.idx].create(_type, _num);
+		s_renderCtx->m_uniformReg.add(_name, &s_renderCtx->m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
-		s_renderCtx.m_uniforms[_handle.idx].destroy();
+		s_renderCtx->m_uniforms[_handle.idx].destroy();
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)
 	{
-		s_renderCtx.saveScreenShot(_filePath);
+		s_renderCtx->saveScreenShot(_filePath);
 	}
 
 	void Context::rendererUpdateViewName(uint8_t _id, const char* _name)
@@ -2116,7 +2122,7 @@ namespace bgfx
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
 	{
-		memcpy(s_renderCtx.m_uniforms[_loc].m_data, _data, _size);
+		memcpy(s_renderCtx->m_uniforms[_loc].m_data, _data, _size);
 	}
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t _size)
@@ -2134,9 +2140,9 @@ namespace bgfx
 	{
 		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
 
-		ID3D11DeviceContext* deviceCtx = s_renderCtx.m_deviceCtx;
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 
-		s_renderCtx.updateResolution(m_render->m_resolution);
+		s_renderCtx->updateResolution(m_render->m_resolution);
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
@@ -2144,13 +2150,13 @@ namespace bgfx
 		if (0 < m_render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = m_render->m_transientIb;
-			s_renderCtx.m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data);
+			s_renderCtx->m_indexBuffers[ib->handle.idx].update(0, m_render->m_iboffset, ib->data);
 		}
 
 		if (0 < m_render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = m_render->m_transientVb;
-			s_renderCtx.m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data);
+			s_renderCtx->m_vertexBuffers[vb->handle.idx].update(0, m_render->m_vboffset, vb->data);
 		}
 
 		m_render->sort();
@@ -2168,7 +2174,7 @@ namespace bgfx
 
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		bool scissorEnabled = false;
-		s_renderCtx.setDebugWireframe(wireframe);
+		s_renderCtx->setDebugWireframe(wireframe);
 
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
@@ -2220,7 +2226,7 @@ namespace bgfx
 					if (m_render->m_rt[view].idx != rt.idx)
 					{
 						rt = m_render->m_rt[view];
-						s_renderCtx.setRenderTarget(rt);
+						s_renderCtx->setRenderTarget(rt);
 					}
 
 					const Rect& rect = m_render->m_rect[view];
@@ -2243,8 +2249,8 @@ namespace bgfx
 						m_clearQuad.clear(rect, clear);
 					}
 
-					s_renderCtx.setBlendState(newFlags);
-					s_renderCtx.setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
+					s_renderCtx->setBlendState(newFlags);
+					s_renderCtx->setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
 					if (primType != s_primType[primIndex])
@@ -2286,13 +2292,13 @@ namespace bgfx
 						deviceCtx->RSSetScissorRects(1, &rc);
 					}
 
-					s_renderCtx.setRasterizerState(newFlags, wireframe, scissorEnabled);
+					s_renderCtx->setRasterizerState(newFlags, wireframe, scissorEnabled);
 				}
 
 				if ( (BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags
 				|| 0 != changedStencil)
 				{
-					s_renderCtx.setDepthStencilState(newFlags, newStencil);
+					s_renderCtx->setDepthStencilState(newFlags, newStencil);
 				}
 
 				if ( (0
@@ -2309,12 +2315,12 @@ namespace bgfx
 				{
 					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
-						s_renderCtx.setBlendState(newFlags, state.m_rgba);
+						s_renderCtx->setBlendState(newFlags, state.m_rgba);
 					}
 
 					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
 					{
-						s_renderCtx.setRasterizerState(newFlags, wireframe, scissorEnabled);
+						s_renderCtx->setRasterizerState(newFlags, wireframe, scissorEnabled);
 					}
 
 					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
@@ -2342,15 +2348,15 @@ namespace bgfx
 
 					if (invalidHandle == programIdx)
 					{
-						s_renderCtx.m_currentProgram = NULL;
+						s_renderCtx->m_currentProgram = NULL;
 
 						deviceCtx->VSSetShader(NULL, 0, 0);
 						deviceCtx->PSSetShader(NULL, 0, 0);
 					}
 					else
 					{
-						Program& program = s_renderCtx.m_program[programIdx];
-						s_renderCtx.m_currentProgram = &program;
+						Program& program = s_renderCtx->m_program[programIdx];
+						s_renderCtx->m_currentProgram = &program;
 
 						deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 						deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
@@ -2365,7 +2371,7 @@ namespace bgfx
 
 				if (invalidHandle != programIdx)
 				{
-					Program& program = s_renderCtx.m_program[programIdx];
+					Program& program = s_renderCtx->m_program[programIdx];
 
 					if (constantsChanged)
 					{
@@ -2386,7 +2392,7 @@ namespace bgfx
 								rect[2] = m_render->m_rect[view].m_width;
 								rect[3] = m_render->m_rect[view].m_height;
 
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, &rect[0], 1);
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, &rect[0], 1);
 							}
 							break;
 
@@ -2396,26 +2402,26 @@ namespace bgfx
 								rect[0] = 1.0f/float(m_render->m_rect[view].m_width);
 								rect[1] = 1.0f/float(m_render->m_rect[view].m_height);
 
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, &rect[0], 1);
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, &rect[0], 1);
 							}
 							break;
 
 						case PredefinedUniform::View:
 							{
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, m_render->m_view[view].val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, m_render->m_view[view].val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProj:
 							{
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProj[view].val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProj[view].val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::Model:
 							{
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, model.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, model.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
 							}
 							break;
 
@@ -2424,7 +2430,7 @@ namespace bgfx
 								Matrix4 modelView;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelView.val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelView.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2433,7 +2439,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2456,7 +2462,7 @@ namespace bgfx
 								Matrix4 modelViewProj;
 								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
 
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2474,13 +2480,13 @@ namespace bgfx
 								Matrix4 viewProjBias;
 								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
 
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, viewProjBias.val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProjBias.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::AlphaRef:
 							{
-								s_renderCtx.setShaderConstant(flags, predefined.m_loc, &alphaRef, 1);
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, &alphaRef, 1);
 							}
 							break;
 
@@ -2493,7 +2499,7 @@ namespace bgfx
 					if (constantsChanged
 					||  program.m_numPredefined > 0)
 					{
-						s_renderCtx.commitShaderConstants();
+						s_renderCtx->commitShaderConstants();
 					}
 				}
 
@@ -2515,29 +2521,29 @@ namespace bgfx
 								{
 								case BGFX_SAMPLER_TEXTURE:
 									{
-										Texture& texture = s_renderCtx.m_textures[sampler.m_idx];
+										Texture& texture = s_renderCtx->m_textures[sampler.m_idx];
 										texture.commit(stage, sampler.m_flags);
 									}
 									break;
 
 								case BGFX_SAMPLER_RENDERTARGET_COLOR:
 									{
-										RenderTarget& rt = s_renderCtx.m_renderTargets[sampler.m_idx];
+										RenderTarget& rt = s_renderCtx->m_renderTargets[sampler.m_idx];
 										rt.commit(stage, sampler.m_flags);
 									}
 									break;
 
 								case BGFX_SAMPLER_RENDERTARGET_DEPTH:
 									{
-//										id = s_renderCtx.m_renderTargets[sampler.m_idx].m_depth.m_id;
+//										id = s_renderCtx->m_renderTargets[sampler.m_idx].m_depth.m_id;
 									}
 									break;
 								}
 							}
 							else
 							{
-								s_renderCtx.m_textureStage.m_srv[stage] = NULL;
-								s_renderCtx.m_textureStage.m_sampler[stage] = NULL;
+								s_renderCtx->m_textureStage.m_srv[stage] = NULL;
+								s_renderCtx->m_textureStage.m_sampler[stage] = NULL;
 							}
 
 							++changes;
@@ -2549,7 +2555,7 @@ namespace bgfx
 
 					if (0 < changes)
 					{
-						s_renderCtx.commitTextureStage();
+						s_renderCtx->commitTextureStage();
 					}
 				}
 
@@ -2567,25 +2573,25 @@ namespace bgfx
 					uint16_t handle = state.m_vertexBuffer.idx;
 					if (invalidHandle != handle)
 					{
-						const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[handle];
+						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[handle];
 
 						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-						const VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[decl];
+						const VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 						uint32_t stride = vertexDecl.m_stride;
 						uint32_t offset = 0;
 						deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
 
 						if (invalidHandle != state.m_instanceDataBuffer.idx)
 						{
- 							const VertexBuffer& inst = s_renderCtx.m_vertexBuffers[state.m_instanceDataBuffer.idx];
+ 							const VertexBuffer& inst = s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx];
 							uint32_t instStride = state.m_instanceDataStride;
 							deviceCtx->IASetVertexBuffers(1, 1, &inst.m_ptr, &instStride, &state.m_instanceDataOffset);
-							s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_program[programIdx], state.m_instanceDataStride/16);
+							s_renderCtx->setInputLayout(vertexDecl, s_renderCtx->m_program[programIdx], state.m_instanceDataStride/16);
 						}
 						else
 						{
 							deviceCtx->IASetVertexBuffers(1, 0, NULL, NULL, NULL);
-							s_renderCtx.setInputLayout(vertexDecl, s_renderCtx.m_program[programIdx], 0);
+							s_renderCtx->setInputLayout(vertexDecl, s_renderCtx->m_program[programIdx], 0);
 						}
 					}
 					else
@@ -2601,7 +2607,7 @@ namespace bgfx
 					uint16_t handle = state.m_indexBuffer.idx;
 					if (invalidHandle != handle)
 					{
-						const IndexBuffer& ib = s_renderCtx.m_indexBuffers[handle];
+						const IndexBuffer& ib = s_renderCtx->m_indexBuffers[handle];
 						deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
 					}
 					else
@@ -2615,9 +2621,9 @@ namespace bgfx
 					uint32_t numVertices = state.m_numVertices;
 					if (UINT32_C(0xffffffff) == numVertices)
 					{
-						const VertexBuffer& vb = s_renderCtx.m_vertexBuffers[currentState.m_vertexBuffer.idx];
+						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[currentState.m_vertexBuffer.idx];
 						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
-						const VertexDecl& vertexDecl = s_renderCtx.m_vertexDecls[decl];
+						const VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_stride;
 					}
 
@@ -2630,7 +2636,7 @@ namespace bgfx
 					{
 						if (UINT32_MAX == state.m_numIndices)
 						{
-							numIndices = s_renderCtx.m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+							numIndices = s_renderCtx->m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
 							numPrimsSubmitted = numIndices/primNumVerts;
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
@@ -2680,7 +2686,7 @@ namespace bgfx
 			if (0 < m_render->m_num)
 			{
 				captureElapsed = -bx::getHPCounter();
-				s_renderCtx.capture();
+				s_renderCtx->capture();
 				captureElapsed += bx::getHPCounter();
 			}
 		}
@@ -2701,7 +2707,7 @@ namespace bgfx
 		{
 			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
 
-			TextVideoMem& tvm = s_renderCtx.m_textVideoMem;
+			TextVideoMem& tvm = s_renderCtx->m_textVideoMem;
 
 			static int64_t next = now;
 
@@ -2715,7 +2721,7 @@ namespace bgfx
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
 
-				const DXGI_ADAPTER_DESC& desc = s_renderCtx.m_adapterDesc;
+				const DXGI_ADAPTER_DESC& desc = s_renderCtx->m_adapterDesc;
 				char description[BX_COUNTOF(desc.Description)];
 				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
 				tvm.printf(0, pos++, 0x0f, " Device: %s", description);

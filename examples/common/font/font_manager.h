@@ -11,6 +11,9 @@
 
 class Atlas;
 
+#define MAX_OPENED_FILES 64
+#define MAX_OPENED_FONT  64
+
 #define FONT_TYPE_ALPHA             UINT32_C(0x00000100) // L8
 // #define FONT_TYPE_LCD               UINT32_C(0x00000200) // BGRA8
 // #define FONT_TYPE_RGBA              UINT32_C(0x00000300) // BGRA8
@@ -188,10 +191,10 @@ private:
 	bool m_ownAtlas;
 	Atlas* m_atlas;
 
-	bx::HandleAlloc m_fontHandles;
+	bx::HandleAllocT<MAX_OPENED_FONT> m_fontHandles;
 	CachedFont* m_cachedFonts;
 
-	bx::HandleAlloc m_filesHandles;
+	bx::HandleAllocT<MAX_OPENED_FILES> m_filesHandles;
 	CachedFile* m_cachedFiles;
 
 	GlyphInfo m_blackGlyph;
