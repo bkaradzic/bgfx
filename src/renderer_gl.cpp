@@ -2110,6 +2110,12 @@ namespace bgfx
 #if BGFX_CONFIG_CLEAR_QUAD
 		if (s_renderCtx->m_useClearQuad)
 		{
+			const GLuint defaultVao = s_renderCtx->m_vao;
+			if (0 != defaultVao)
+			{
+				GL_CHECK(glBindVertexArray(defaultVao) );
+			}
+
 			GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 			GL_CHECK(glDisable(GL_CULL_FACE) );
 			GL_CHECK(glDisable(GL_BLEND) );
