@@ -48,12 +48,12 @@ namespace bgfx
 
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
-		return BX_ALLOC(bgfx::g_allocator, _bytes);
+		return BX_ALLOC(g_allocator, _bytes);
 	}
 
 	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
-		BX_FREE(bgfx::g_allocator, _ptr);
+		BX_FREE(g_allocator, _ptr);
 	}
 
 	struct CallbackStub : public CallbackI
