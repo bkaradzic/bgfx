@@ -13,21 +13,8 @@
 #include "font_manager.h"
 #include "../cube_atlas.h"
 
-#if BGFX_CONFIG_USE_TINYSTL
-namespace tinystl
-{
-} // namespace tinystl
-#   include <TINYSTL/unordered_map.hh>
+#include <tinystl/unordered_map.h>
 namespace stl = tinystl;
-#else
-#   include <unordered_map>
-namespace std { namespace tr1 {} }
-namespace stl
-{
-	using namespace std;
-	using namespace std::tr1;
-}
-#endif // BGFX_CONFIG_USE_TINYSTL
 
 struct FTHolder
 {

@@ -17,7 +17,6 @@ all:
 	premake4 --file=premake/premake4.lua --gcc=ios-simulator gmake
 	premake4 --file=premake/premake4.lua --gcc=qnx-arm gmake
 	premake4 --file=premake/premake4.lua xcode4
-	make -s --no-print-directory -C src
 
 android-arm-debug:
 	make -R -C .build/projects/gmake-android-arm config=debug

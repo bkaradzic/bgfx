@@ -82,19 +82,18 @@ namespace bgfx
 #include <list> // mingw wants it to be before tr1/unordered_*...
 
 #if BGFX_CONFIG_USE_TINYSTL
-namespace tinystl
+namespace bgfx
 {
-	struct bgfx_allocator
+	struct TinyStlAllocator
 	{
 		static void* static_allocate(size_t _bytes);
 		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
 	};
-} // namespace tinystl
-#	define TINYSTL_ALLOCATOR tinystl::bgfx_allocator
-
-#	include <TINYSTL/string.h>
-#	include <TINYSTL/unordered_map.h>
-#	include <TINYSTL/unordered_set.h>
+} // namespace bgfx
+#	define TINYSTL_ALLOCATOR bgfx::TinyStlAllocator
+#	include <tinystl/string.h>
+#	include <tinystl/unordered_map.h>
+#	include <tinystl/unordered_set.h>
 namespace stl = tinystl;
 #else
 #	include <string>

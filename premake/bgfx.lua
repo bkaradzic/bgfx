@@ -8,7 +8,6 @@ project "bgfx"
 	kind "StaticLib"
 
 	includedirs {
-		BGFX_DIR .. "../tinystl/include",
 		BGFX_DIR .. "../bx/include",
 	}
 

@@ -337,10 +337,13 @@ public:
 
 	virtual void free(void* _ptr, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
-		dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
-		BX_UNUSED(_file, _line);
-		::free(_ptr);
-		--m_numBlocks;
+		if (NULL != _ptr)
+		{
+			dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
+			BX_UNUSED(_file, _line);
+			::free(_ptr);
+			--m_numBlocks;
+		}
 	}
 
 	virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE

@@ -5,22 +5,6 @@
 
 #include "bgfx_p.h"
 
-#if BGFX_CONFIG_USE_TINYSTL
-namespace tinystl
-{
-	void* bgfx_allocator::static_allocate(size_t _bytes)
-	{
-		return BX_ALLOC(g_allocator, _bytes);
-	}
-
-	void bgfx_allocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
-	{
-		BX_FREE(g_allocator, _ptr);
-	}
-
-} // namespace tinystl
-#endif // BGFX_CONFIG_USE_TINYSTL
-
 namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC 0x78666762
@@ -61,6 +45,16 @@ namespace bgfx
 		g_bgfxHwnd = _window;
 	}
 #endif // BX_PLATFORM_*
+
+	void* TinyStlAllocator::static_allocate(size_t _bytes)
+	{
+		return BX_ALLOC(bgfx::g_allocator, _bytes);
+	}
+
+	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
+	{
+		BX_FREE(bgfx::g_allocator, _ptr);
+	}
 
 	struct CallbackStub : public CallbackI
 	{
@@ -134,12 +128,13 @@ namespace bgfx
 
 		virtual void free(void* _ptr, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-			BX_CHECK(_ptr != NULL, "Freeing NULL! Fix it!");
+			if (NULL != _ptr)
+			{
+				--m_numBlocks;
 
-			--m_numBlocks;
-
-			BX_UNUSED(_file, _line);
-			::free(_ptr);
+				BX_UNUSED(_file, _line);
+				::free(_ptr);
+			}
 		}
 
 		virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
