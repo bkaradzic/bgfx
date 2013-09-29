@@ -2619,7 +2619,7 @@ namespace bgfx
 				if (invalidHandle != currentState.m_vertexBuffer.idx)
 				{
 					uint32_t numVertices = state.m_numVertices;
-					if (UINT32_C(0xffffffff) == numVertices)
+					if (UINT32_MAX == numVertices)
 					{
 						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[currentState.m_vertexBuffer.idx];
 						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;

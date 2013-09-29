@@ -816,6 +816,22 @@ namespace bgfx
 	void destroyRenderTarget(RenderTargetHandle _handle);
 
 	/// Create shader uniform parameter.
+	///
+	/// @param _name Uniform name in shader.
+	/// @param _type Type of uniform (See: UniformType).
+	/// @param _num Number of elements in array.
+	///
+	/// Predefined uniforms:
+	///
+	/// u_viewRect vec4(x, y, width, height) - view rectangle for current view.
+	/// u_viewTexel vec4(1.0/width, 1.0/height, undef, undef) - inverse width and height
+	/// u_view mat4 - view matrix
+	/// u_viewProj mat4 - view projection matrix
+	/// u_model mat4[BGFX_CONFIG_MAX_BONES] - array of model matrices.
+	/// u_modelView mat4 - model view matrix, only first model matrix from array is used.
+	/// u_modelViewProj mat4 - concatinated model view projection matrix.
+	/// u_alphaRef float - alpha reference value for alpha test.
+	///
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
 
 	/// Destroy shader uniform parameter.
