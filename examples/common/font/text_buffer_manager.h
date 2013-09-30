@@ -77,8 +77,8 @@ public:
 private:
 	struct BufferCache
 	{
-		uint16_t indexBufferHandle;
-		uint16_t vertexBufferHandle;
+		uint16_t indexBufferHandleIdx;
+		uint16_t vertexBufferHandleIdx;
 		TextBuffer* textBuffer;
 		BufferType::Enum bufferType;
 		uint32_t fontType;

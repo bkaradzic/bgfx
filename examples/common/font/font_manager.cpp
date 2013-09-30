@@ -489,7 +489,7 @@ TrueTypeHandle FontManager::createTtf(const uint8_t* _buffer, uint32_t _size)
 
 void FontManager::destroyTtf(TrueTypeHandle _handle)
 {
-	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_handle), "Invalid handle used");
 	delete m_cachedFiles[_handle.idx].buffer;
 	m_cachedFiles[_handle.idx].bufferSize = 0;
 	m_cachedFiles[_handle.idx].buffer = NULL;
@@ -498,7 +498,7 @@ void FontManager::destroyTtf(TrueTypeHandle _handle)
 
 FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_t _typefaceIndex, uint32_t _pixelSize, uint32_t _fontType)
 {
-	BX_CHECK(bgfx::invalidHandle != _ttfHandle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_ttfHandle), "Invalid handle used");
 
 	TrueTypeFont* ttf = new TrueTypeFont();
 	if (!ttf->init(m_cachedFiles[_ttfHandle.idx].buffer, m_cachedFiles[_ttfHandle.idx].bufferSize, _typefaceIndex, _pixelSize) )
@@ -525,7 +525,7 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_
 
 FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, uint32_t _pixelSize)
 {
-	BX_CHECK(bgfx::invalidHandle != _baseFontHandle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_baseFontHandle), "Invalid handle used");
 	CachedFont& baseFont = m_cachedFonts[_baseFontHandle.idx];
 	FontInfo& fontInfo = baseFont.fontInfo;
 
@@ -554,7 +554,7 @@ FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, 
 
 void FontManager::destroyFont(FontHandle _handle)
 {
-	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_handle), "Invalid handle used");
 
 	CachedFont& font = m_cachedFonts[_handle.idx];
 
@@ -570,7 +570,7 @@ void FontManager::destroyFont(FontHandle _handle)
 
 bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 {
-	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_handle), "Invalid handle used");
 	CachedFont& font = m_cachedFonts[_handle.idx];
 
 	if (NULL == font.trueTypeFont)
@@ -592,7 +592,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 
 bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 {
-	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_handle), "Invalid handle used");
 	CachedFont& font = m_cachedFonts[_handle.idx];
 	FontInfo& fontInfo = font.fontInfo;
 
@@ -640,7 +640,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 		return true;
 	}
 
-	if (font.masterFontHandle.idx != bgfx::invalidHandle
+	if (isValid(font.masterFontHandle)
 	&&  preloadGlyph(font.masterFontHandle, _codePoint) )
 	{
 		const GlyphInfo* glyph = getGlyphInfo(font.masterFontHandle, _codePoint);
@@ -662,7 +662,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 
 const FontInfo& FontManager::getFontInfo(FontHandle _handle) const
 {
-	BX_CHECK(bgfx::invalidHandle != _handle.idx, "Invalid handle used");
+	BX_CHECK(bgfx::isValid(_handle), "Invalid handle used");
 	return m_cachedFonts[_handle.idx].fontInfo;
 }
 

@@ -618,7 +618,7 @@ namespace bgfx
 
 		void setRenderTarget(RenderTargetHandle _rt, bool _msaa = true)
 		{
-			if (_rt.idx == invalidHandle)
+			if (!isValid(_rt) )
 			{
 				DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
 				DX_CHECK(m_device->SetDepthStencilSurface(m_backBufferDepthStencil) );
@@ -638,7 +638,7 @@ namespace bgfx
 				DX_CHECK(m_device->SetDepthStencilSurface(NULL != renderTarget.m_depth ? renderTarget.m_depth : m_backBufferDepthStencil) );
 			}
 
-			if (m_rt.idx != invalidHandle
+			if (isValid(m_rt)
 			&&  m_rt.idx != _rt.idx
 			&&  m_rtMsaa)
 			{
@@ -2719,11 +2719,11 @@ namespace bgfx
 					{
 						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[handle];
 
-						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDeclaration& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 						DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
 
-						if (invalidHandle != state.m_instanceDataBuffer.idx
+						if (isValid(state.m_instanceDataBuffer)
 						&&  s_renderCtx->m_instancing)
 						{
 							const VertexBuffer& inst = s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx];
@@ -2765,13 +2765,13 @@ namespace bgfx
 					}
 				}
 
-				if (invalidHandle != currentState.m_vertexBuffer.idx)
+				if (isValid(currentState.m_vertexBuffer) )
 				{
 					uint32_t numVertices = state.m_numVertices;
 					if (UINT32_MAX == numVertices)
 					{
 						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[currentState.m_vertexBuffer.idx];
-						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDeclaration& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
 					}
@@ -2781,7 +2781,7 @@ namespace bgfx
 					uint32_t numInstances = 0;
 					uint32_t numPrimsRendered = 0;
 
-					if (invalidHandle != state.m_indexBuffer.idx)
+					if (isValid(state.m_indexBuffer) )
 					{
 						if (UINT32_MAX == state.m_numIndices)
 						{

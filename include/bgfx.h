@@ -227,7 +227,10 @@
 #define BGFX_RESET_CAPTURE               UINT32_C(0x00000100)
 
 ///
-#define BGFX_HANDLE(_name) struct _name { uint16_t idx; }
+#define BGFX_HANDLE(_name) \
+			struct _name { uint16_t idx; }; \
+			inline bool isValid(_name _handle) { return bgfx::invalidHandle != _handle.idx; }
+
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
 namespace bx { struct ReallocatorI; }
@@ -823,14 +826,24 @@ namespace bgfx
 	///
 	/// Predefined uniforms:
 	///
-	/// u_viewRect vec4(x, y, width, height) - view rectangle for current view.
-	/// u_viewTexel vec4(1.0/width, 1.0/height, undef, undef) - inverse width and height
-	/// u_view mat4 - view matrix
-	/// u_viewProj mat4 - view projection matrix
-	/// u_model mat4[BGFX_CONFIG_MAX_BONES] - array of model matrices.
-	/// u_modelView mat4 - model view matrix, only first model matrix from array is used.
-	/// u_modelViewProj mat4 - concatinated model view projection matrix.
-	/// u_alphaRef float - alpha reference value for alpha test.
+	///   u_viewRect vec4(x, y, width, height) - view rectangle for current
+	///     view.
+	///
+	///   u_viewTexel vec4(1.0/width, 1.0/height, undef, undef) - inverse
+	///     width and height
+	///
+	///   u_view mat4 - view matrix
+	///
+	///   u_viewProj mat4 - concatenated view projection matrix
+	///
+	///   u_model mat4[BGFX_CONFIG_MAX_BONES] - array of model matrices.
+	///
+	///   u_modelView mat4 - concatenated model view matrix, only first
+	///     model matrix from array is used.
+	///
+	///   u_modelViewProj mat4 - concatenated model view projection matrix.
+	///
+	///   u_alphaRef float - alpha reference value for alpha test.
 	///
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
 

@@ -1138,7 +1138,7 @@ namespace bgfx
 
 		void setProgram(ProgramHandle _handle)
 		{
-			BX_CHECK(invalidHandle != _handle.idx, "Can't set program with invalid handle.");
+			BX_CHECK(isValid(_handle), "Can't set program with invalid handle.");
 			m_key.m_program = _handle.idx;
 		}
 
@@ -1152,7 +1152,7 @@ namespace bgfx
 						| ( (_flags&BGFX_SAMPLER_TYPE_MASK) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags)
 						;
 
-			if (invalidHandle != _sampler.idx)
+			if (isValid(_sampler) )
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
@@ -1169,7 +1169,7 @@ namespace bgfx
 						| ( (_flags&BGFX_SAMPLER_TYPE_MASK) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags)
 						;
 
-			if (invalidHandle != _sampler.idx)
+			if (isValid(_sampler) )
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
@@ -1611,8 +1611,8 @@ namespace bgfx
 		{
 			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate index buffer handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate index buffer handle.");
+			if (isValid(handle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateIndexBuffer);
 				cmdbuf.write(handle);
@@ -1633,7 +1633,7 @@ namespace bgfx
 		{
 			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
 
-			if (invalidHandle == declHandle.idx)
+			if (!isValid(declHandle) )
 			{
 				VertexDeclHandle temp = { m_vertexDeclHandle.alloc() };
 				declHandle = temp;
@@ -1649,8 +1649,8 @@ namespace bgfx
 		{
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate vertex buffer handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate vertex buffer handle.");
+			if (isValid(handle) )
 			{
 				VertexDeclHandle declHandle = findVertexDecl(_decl);
 				m_declRef.add(handle, declHandle, _decl.m_hash);
@@ -1667,7 +1667,7 @@ namespace bgfx
 		void destroyVertexBuffer(VertexBufferHandle _handle)
 		{
 			VertexDeclHandle declHandle = m_declRef.release(_handle);
-			if (invalidHandle != declHandle.idx)
+			if (isValid(declHandle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
@@ -1686,8 +1686,8 @@ namespace bgfx
 			if (ptr == NonLocalAllocator::invalidBlock)
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
-				BX_WARN(invalidHandle != indexBufferHandle.idx, "Failed to allocate index buffer handle.");
-				if (indexBufferHandle.idx == invalidHandle)
+				BX_WARN(isValid(indexBufferHandle), "Failed to allocate index buffer handle.");
+				if (!isValid(indexBufferHandle) )
 				{
 					return handle;
 				}
@@ -1701,8 +1701,8 @@ namespace bgfx
 			}
 
 			handle.idx = m_dynamicIndexBufferHandle.alloc();
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate dynamic index buffer handle.");
-			if (handle.idx == invalidHandle)
+			BX_WARN(isValid(handle), "Failed to allocate dynamic index buffer handle.");
+			if (!isValid(handle) )
 			{
 				return handle;
 			}
@@ -1718,7 +1718,7 @@ namespace bgfx
 		DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
 		{
 			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/2);
-			if (invalidHandle != handle.idx)
+			if (isValid(handle) )
 			{
 				updateDynamicIndexBuffer(handle, _mem);
 			}
@@ -1756,8 +1756,8 @@ namespace bgfx
 			{
 				VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
 
-				BX_WARN(invalidHandle != handle.idx, "Failed to allocate dynamic vertex buffer handle.");
-				if (vertexBufferHandle.idx == invalidHandle)
+				BX_WARN(isValid(handle), "Failed to allocate dynamic vertex buffer handle.");
+				if (!isValid(vertexBufferHandle) )
 				{
 					return handle;
 				}
@@ -1788,7 +1788,7 @@ namespace bgfx
 		DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
 		{
 			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(_mem->size/_decl.m_stride, _decl);
-			if (invalidHandle != handle.idx)
+			if (isValid(handle) )
 			{
 				updateDynamicVertexBuffer(handle, _mem);
 			}
@@ -1830,8 +1830,8 @@ namespace bgfx
 			TransientIndexBuffer* ib = NULL;
 
 			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate transient index buffer handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate transient index buffer handle.");
+			if (isValid(handle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
 				cmdbuf.write(handle);
@@ -1873,8 +1873,8 @@ namespace bgfx
 
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate transient vertex buffer handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate transient vertex buffer handle.");
+			if (isValid(handle) )
 			{
 				uint16_t stride = 0;
 				VertexDeclHandle declHandle = BGFX_INVALID_HANDLE;
@@ -1918,7 +1918,7 @@ namespace bgfx
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 
-			if (invalidHandle == declHandle.idx)
+			if (!isValid(declHandle) )
 			{
 				VertexDeclHandle temp = { m_vertexDeclHandle.alloc() };
 				declHandle = temp;
@@ -1971,8 +1971,8 @@ namespace bgfx
 
 			VertexShaderHandle handle = { m_vertexShaderHandle.alloc() };
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate vertex shader handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate vertex shader handle.");
+			if (isValid(handle) )
 			{
 				VertexShaderRef& vsr = m_vertexShaderRef[handle.idx];
 				vsr.m_refCount = 1;
@@ -1988,7 +1988,7 @@ namespace bgfx
 
 		void destroyVertexShader(VertexShaderHandle _handle)
 		{
-			if (invalidHandle == _handle.idx)
+			if (!isValid(_handle) )
 			{
 				BX_WARN(false, "Passing invalid vertex shader handle to bgfx::destroyVertexShader");
 				return;
@@ -2031,8 +2031,8 @@ namespace bgfx
 
 			FragmentShaderHandle handle = { m_fragmentShaderHandle.alloc() };
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate fragment shader handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate fragment shader handle.");
+			if (isValid(handle) )
 			{
 				FragmentShaderRef& fsr = m_fragmentShaderRef[handle.idx];
 				fsr.m_refCount = 1;
@@ -2048,7 +2048,7 @@ namespace bgfx
 
 		void destroyFragmentShader(FragmentShaderHandle _handle)
 		{
-			if (invalidHandle == _handle.idx)
+			if (!isValid(_handle) )
 			{
 				BX_WARN(false, "Passing invalid fragment shader handle to bgfx::destroyFragmentShader");
 				return;
@@ -2077,8 +2077,8 @@ namespace bgfx
 
 		ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 		{
-			if (invalidHandle == _vsh.idx
-			||  invalidHandle == _fsh.idx)
+			if (!isValid(_vsh)
+			||  !isValid(_fsh) )
 			{
 				BX_WARN(false, "Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
@@ -2097,8 +2097,8 @@ namespace bgfx
 			ProgramHandle handle;
  			handle.idx = m_programHandle.alloc();
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate program handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate program handle.");
+			if (isValid(handle) )
 			{
 				vertexShaderIncRef(_vsh);
 				fragmentShaderIncRef(_fsh);
@@ -2152,8 +2152,8 @@ namespace bgfx
 			}
 
 			TextureHandle handle = { m_textureHandle.alloc() };
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate texture handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate texture handle.");
+			if (isValid(handle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
 				cmdbuf.write(handle);
@@ -2191,9 +2191,9 @@ namespace bgfx
 		RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
 		{
 			RenderTargetHandle handle = { m_renderTargetHandle.alloc() };
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate render target handle.");
+			BX_WARN(isValid(handle), "Failed to allocate render target handle.");
 
-			if (invalidHandle != handle.idx)
+			if (isValid(handle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateRenderTarget);
 				cmdbuf.write(handle);
@@ -2224,8 +2224,8 @@ namespace bgfx
 
 			UniformHandle handle = { m_uniformHandle.alloc() };
 
-			BX_WARN(invalidHandle != handle.idx, "Failed to allocate uniform handle.");
-			if (invalidHandle != handle.idx)
+			BX_WARN(isValid(handle), "Failed to allocate uniform handle.");
+			if (isValid(handle) )
 			{
 				Uniform& uniform = m_uniform[handle.idx];
 				uniform.m_type = _type;

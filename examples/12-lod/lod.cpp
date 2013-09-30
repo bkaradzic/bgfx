@@ -259,7 +259,7 @@ struct Mesh
 			const Group& group = *it;
 			bgfx::destroyVertexBuffer(group.m_vbh);
 
-			if (bgfx::invalidHandle != group.m_ibh.idx)
+			if (bgfx::isValid(group.m_ibh) )
 			{
 				bgfx::destroyIndexBuffer(group.m_ibh);
 			}

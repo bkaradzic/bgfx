@@ -703,7 +703,7 @@ namespace bgfx
 		void setRenderTarget(RenderTargetHandle _rt, bool _msaa = true)
 		{
 			BX_UNUSED(_msaa);
-			if (_rt.idx == invalidHandle)
+			if (!isValid(_rt) )
 			{
 				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
 				
@@ -2575,13 +2575,13 @@ namespace bgfx
 					{
 						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[handle];
 
-						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 						uint32_t stride = vertexDecl.m_stride;
 						uint32_t offset = 0;
 						deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
 
-						if (invalidHandle != state.m_instanceDataBuffer.idx)
+						if (isValid(state.m_instanceDataBuffer) )
 						{
  							const VertexBuffer& inst = s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx];
 							uint32_t instStride = state.m_instanceDataStride;
@@ -2616,13 +2616,13 @@ namespace bgfx
 					}
 				}
 
-				if (invalidHandle != currentState.m_vertexBuffer.idx)
+				if (isValid(currentState.m_vertexBuffer) )
 				{
 					uint32_t numVertices = state.m_numVertices;
 					if (UINT32_MAX == numVertices)
 					{
 						const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[currentState.m_vertexBuffer.idx];
-						uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_stride;
 					}
@@ -2632,7 +2632,7 @@ namespace bgfx
 					uint32_t numInstances = 0;
 					uint32_t numPrimsRendered = 0;
 
-					if (invalidHandle != state.m_indexBuffer.idx)
+					if (isValid(state.m_indexBuffer) )
 					{
 						if (UINT32_MAX == state.m_numIndices)
 						{

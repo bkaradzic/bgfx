@@ -46,6 +46,7 @@ namespace bgfx
 	}
 #endif // BX_PLATFORM_*
 
+#if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
 		return BX_ALLOC(g_allocator, _bytes);
@@ -55,6 +56,7 @@ namespace bgfx
 	{
 		BX_FREE(g_allocator, _ptr);
 	}
+#endif // BGFX_CONFIG_USE_TINYSTL
 
 	struct CallbackStub : public CallbackI
 	{

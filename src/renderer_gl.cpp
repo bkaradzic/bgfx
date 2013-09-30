@@ -543,7 +543,7 @@ namespace bgfx
 
 		uint32_t setRenderTarget(RenderTargetHandle _rt, uint32_t _height, bool _msaa = true)
 		{
-			if (m_rt.idx != invalidHandle
+			if (isValid(m_rt)
 			&&  m_rt.idx != _rt.idx
 			&&  m_rtMsaa)
 			{
@@ -554,7 +554,7 @@ namespace bgfx
 				}
 			}
 
-			if (_rt.idx == invalidHandle)
+			if (!isValid(_rt) )
 			{
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 			}
@@ -2299,7 +2299,7 @@ namespace bgfx
 				uint32_t fmt = uint32_t(TextureFormat::Unknown);
 				for (uint32_t jj = 0; jj < fmt; ++jj)
 				{
-					if (s_textureFormat[jj].m_internalFmt == internalFmt)
+					if (s_textureFormat[jj].m_internalFmt == (GLenum)internalFmt)
 					{
 						fmt = jj;
 					}
@@ -3318,16 +3318,16 @@ namespace bgfx
 								Program& program = s_renderCtx->m_program[programIdx];
 								program.add(hash);
 
-								if (invalidHandle != state.m_vertexBuffer.idx)
+								if (isValid(state.m_vertexBuffer) )
 								{
 									VertexBuffer& vb = s_renderCtx->m_vertexBuffers[state.m_vertexBuffer.idx];
 									vb.add(hash);
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
-									uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+									uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 									program.bindAttributes(s_renderCtx->m_vertexDecls[decl], state.m_startVertex);
 
-									if (invalidHandle != state.m_instanceDataBuffer.idx)
+									if (isValid(state.m_instanceDataBuffer) )
 									{
 										VertexBuffer& instanceVb = s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx];
 										instanceVb.add(hash);
@@ -3340,7 +3340,7 @@ namespace bgfx
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 								}
 
-								if (invalidHandle != state.m_indexBuffer.idx)
+								if (isValid(state.m_indexBuffer) )
 								{
 									IndexBuffer& ib = s_renderCtx->m_indexBuffers[state.m_indexBuffer.idx];
 									ib.add(hash);
@@ -3405,18 +3405,18 @@ namespace bgfx
 							}
 						}
 
-						if (invalidHandle != currentState.m_vertexBuffer.idx)
+						if (isValid(currentState.m_vertexBuffer) )
 						{
 							if (baseVertex != state.m_startVertex
 							||  bindAttribs)
 							{
 								baseVertex = state.m_startVertex;
 								const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[state.m_vertexBuffer.idx];
-								uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+								uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 								const Program& program = s_renderCtx->m_program[programIdx];
 								program.bindAttributes(s_renderCtx->m_vertexDecls[decl], state.m_startVertex);
 
-								if (invalidHandle != state.m_instanceDataBuffer.idx)
+								if (isValid(state.m_instanceDataBuffer) )
 								{
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, s_renderCtx->m_vertexBuffers[state.m_instanceDataBuffer.idx].m_id) );
 									program.bindInstanceData(state.m_instanceDataStride, state.m_instanceDataOffset);
@@ -3425,13 +3425,13 @@ namespace bgfx
 						}
 					}
 
-					if (invalidHandle != currentState.m_vertexBuffer.idx)
+					if (isValid(currentState.m_vertexBuffer) )
 					{
 						uint32_t numVertices = state.m_numVertices;
 						if (UINT32_MAX == numVertices)
 						{
 							const VertexBuffer& vb = s_renderCtx->m_vertexBuffers[currentState.m_vertexBuffer.idx];
-							uint16_t decl = vb.m_decl.idx == invalidHandle ? state.m_vertexDecl.idx : vb.m_decl.idx;
+							uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
 							const VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[decl];
 							numVertices = vb.m_size/vertexDecl.m_stride;
 						}
@@ -3441,7 +3441,7 @@ namespace bgfx
 						uint32_t numInstances = 0;
 						uint32_t numPrimsRendered = 0;
 
-						if (invalidHandle != state.m_indexBuffer.idx)
+						if (isValid(state.m_indexBuffer) )
 						{
 							if (UINT32_MAX == state.m_numIndices)
 							{
