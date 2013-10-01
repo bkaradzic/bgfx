@@ -168,7 +168,12 @@ namespace bgfx
 	bx::ReallocatorI* g_allocator = NULL;
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
-	static Context* s_ctx;
+	static Context* s_ctx = NULL;
+
+	bool hasContext()
+	{
+		return NULL != s_ctx;
+	}
 
 	void fatal(Fatal::Enum _code, const char* _format, ...)
 	{
@@ -611,8 +616,6 @@ namespace bgfx
 
 	void init(CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
-		BX_TRACE("Init");
-
 		if (NULL != _allocator)
 		{
 			g_allocator = _allocator;

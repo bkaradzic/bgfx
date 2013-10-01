@@ -18,11 +18,6 @@ namespace bgfx
 	struct GlContext
 	{
 		GlContext()
-			: m_context(0)
-			, m_instance(0)
-			, m_instInterface(NULL)
-			, m_graphicsInterface(NULL)
-			, m_instancedArrays(NULL)
 		{
 		}
 
@@ -31,17 +26,7 @@ namespace bgfx
 		void resize(uint32_t _width, uint32_t _height, bool _vsync);
 		void swap();
 		void import();
-
-		bool isValid() const
-		{
-			return 0 != m_context;
-		}
-
-		PP_Resource m_context;
-		PP_Instance m_instance;
-		const PPB_Instance* m_instInterface;
-		const PPB_Graphics3D* m_graphicsInterface;
-		const PPB_OpenGLES2InstancedArrays* m_instancedArrays;
+		bool isValid() const;
 	};
 } // namespace bgfx
 

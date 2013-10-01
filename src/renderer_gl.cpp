@@ -513,7 +513,6 @@ namespace bgfx
 			, m_textureSwizzleSupport(false)
 			, m_useClearQuad(true)
 			, m_flip(false)
-			, m_postSwapBuffers(NULL)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
@@ -668,11 +667,6 @@ namespace bgfx
 			if (m_flip)
 			{
 				m_glctx.swap();
-			}
-
-			if (NULL != m_postSwapBuffers)
-			{
-				m_postSwapBuffers(m_resolution.m_width, m_resolution.m_height);
 			}
 		}
 
@@ -880,7 +874,6 @@ namespace bgfx
 		bool m_useClearQuad;
 		bool m_flip;
 
-		PostSwapBuffersFn m_postSwapBuffers;
 		uint64_t m_hash;
 
 		GLenum m_readPixelsFmt;
@@ -896,45 +889,6 @@ namespace bgfx
 	};
 
 	RendererContext* s_renderCtx;
-
-#if BX_PLATFORM_NACL
-	static void GL_APIENTRY naclVertexAttribDivisor(GLuint _index, GLuint _divisor)
-	{
-		s_renderCtx->m_glctx.m_instancedArrays->VertexAttribDivisorANGLE(s_renderCtx->m_glctx.m_context, _index, _divisor);
-	}
-
-	static void GL_APIENTRY naclDrawArraysInstanced(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount)
-	{
-		s_renderCtx->m_glctx.m_instancedArrays->DrawArraysInstancedANGLE(s_renderCtx->m_glctx.m_context, _mode, _first, _count, _primcount);
-	}
-
-	static void GL_APIENTRY naclDrawElementsInstanced(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount)
-	{
-		s_renderCtx->m_glctx.m_instancedArrays->DrawElementsInstancedANGLE(s_renderCtx->m_glctx.m_context, _mode, _count, _type, _indices, _primcount);
-	}
-
-	void naclSetIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
-	{
-		s_renderCtx->m_glctx.m_instance = _instance;
-		s_renderCtx->m_glctx.m_instInterface = _instInterface;
-		s_renderCtx->m_glctx.m_graphicsInterface = _graphicsInterface;
-		s_renderCtx->m_postSwapBuffers = _postSwapBuffers;
-		s_renderCtx->m_glctx.m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
-		s_renderCtx->setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
-
-		if (NULL != s_renderCtx->m_glctx.m_instancedArrays)
-		{
-			s_vertexAttribDivisor = naclVertexAttribDivisor;
-			s_drawArraysInstanced = naclDrawArraysInstanced;
-			s_drawElementsInstanced = naclDrawElementsInstanced;
-		}
-	}
-
-	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/)
-	{
-		renderFrame();
-	}
-#endif // BX_PLATFORM_
 
 	const char* glslTypeName(GLuint _type)
 	{
@@ -2445,6 +2399,18 @@ namespace bgfx
 			|| s_extension[Extension::OES_vertex_array_object].m_supported
 			;
 
+#if BX_PLATFORM_NACL
+		s_renderCtx->m_vaoSupport &= NULL != glGenVertexArrays
+								  && NULL != glDeleteVertexArrays
+								  && NULL != glBindVertexArray
+								  ;
+#endif // BX_PLATFORM_NACL
+
+		if (s_renderCtx->m_vaoSupport)
+		{
+			GL_CHECK(glGenVertexArrays(1, &s_renderCtx->m_vao) );
+		}
+
 		s_renderCtx->m_samplerObjectSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_sampler_objects].m_supported
 			;
@@ -2528,18 +2494,13 @@ namespace bgfx
 			&&  NULL != glDrawArraysInstanced
 			&&  NULL != glDrawElementsInstanced)
 			{
-				s_vertexAttribDivisor = glVertexAttribDivisor;
-				s_drawArraysInstanced = glDrawArraysInstanced;
+				s_vertexAttribDivisor   = glVertexAttribDivisor;
+				s_drawArraysInstanced   = glDrawArraysInstanced;
 				s_drawElementsInstanced = glDrawElementsInstanced;
 			}
 		}
 #	endif // !BX_PLATFORM_IOS
 #endif // !BGFX_CONFIG_RENDERER_OPENGLES3
-
-		if (s_renderCtx->m_vaoSupport)
-		{
-			GL_CHECK(glGenVertexArrays(1, &s_renderCtx->m_vao) );
-		}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31

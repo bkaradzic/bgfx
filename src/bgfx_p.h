@@ -3187,6 +3187,7 @@ namespace bgfx
 			VertexShaderHandle m_vsh;
 			FragmentShaderHandle m_fsh;
 		};
+
 		ProgramRef m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
 		VertexDeclRef m_declRef;
 
