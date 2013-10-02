@@ -1692,26 +1692,28 @@ int main(int _argc, const char* _argv[])
 						if (varyingIt != varyingMap.end() )
 						{
 							const Varying& var = varyingIt->second;
-							preprocessor.writef(" \\\n\t%s%s %s : %s", arg > 0 ? ", " : "", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
-							++arg;
+							preprocessor.writef(" \\\n\t%s%s %s : %s", arg++ > 0 ? ", " : "  ", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
 						}
 					}
 
 					preprocessor.writef(
-						" \\\n\t, out vec4 gl_FragColor : SV_TARGET"
+						" \\\n\t%sout vec4 gl_FragColor : SV_TARGET"
+						, arg++ > 0 ? ", " : "  "
 						);
 
 					if (hasFragDepth)
 					{
 						preprocessor.writef(
-							" \\\n\t, out float gl_FragDepth : SV_DEPTH"
+							" \\\n\t%sout float gl_FragDepth : SV_DEPTH"
+							, arg++ > 0 ? ", " : "  "
 							);
 					}
 
 					if (hasFrontFacing)
 					{
 						preprocessor.writef(
-							" \\\n\t, float __vface : VFACE"
+							" \\\n\t%sfloat __vface : VFACE"
+							, arg++ > 0 ? ", " : "  "
 							);
 					}
 
