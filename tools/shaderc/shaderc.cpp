@@ -1671,32 +1671,60 @@ int main(int _argc, const char* _argv[])
 
 				if (fragment)
 				{
-					preprocessor.writef("#define void_main() \\\n");
-					preprocessor.writef("\tvoid main(vec4 gl_FragCoord : SV_POSITION \\\n");
+					bool hasFragCoord   = NULL != strstr(data, "gl_FragCoord") || hlsl > 3;
+					bool hasFragDepth   = NULL != strstr(data, "gl_FragDepth");
+					bool hasFrontFacing = NULL != strstr(data, "gl_FrontFacing");
+
+					preprocessor.writef("#define void_main()");
+					preprocessor.writef(" \\\n\tvoid main(");
+
+					uint32_t arg = 0;
+
+					if (hasFragCoord)
+					{
+						preprocessor.writef(" \\\n\tvec4 gl_FragCoord : SV_POSITION");
+						++arg;
+					}
+
 					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 					{
 						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
 						if (varyingIt != varyingMap.end() )
 						{
 							const Varying& var = varyingIt->second;
-							preprocessor.writef("\t, %s %s : %s \\\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+							preprocessor.writef(" \\\n\t%s%s %s : %s", arg > 0 ? ", " : "", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+							++arg;
 						}
 					}
 
 					preprocessor.writef(
-						", out vec4 gl_FragColor : SV_TARGET \\\n"
+						" \\\n\t, out vec4 gl_FragColor : SV_TARGET"
 						);
 
-					if (NULL != strstr(data, "gl_FragDepth") )
+					if (hasFragDepth)
 					{
 						preprocessor.writef(
-							", out float gl_FragDepth : SV_DEPTH \\\n"
+							" \\\n\t, out float gl_FragDepth : SV_DEPTH"
+							);
+					}
+
+					if (hasFrontFacing)
+					{
+						preprocessor.writef(
+							" \\\n\t, float __vface : VFACE"
 							);
 					}
 
 					preprocessor.writef(
-						")\n"
+						" \\\n\t)\n"
 						);
+
+					if (hasFrontFacing)
+					{
+						preprocessor.writef(
+							"#define gl_FrontFacing (__vface <= 0.0)\n"
+							);
+					}
 				}
 				else
 				{
