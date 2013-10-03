@@ -1585,7 +1585,7 @@ namespace bgfx
 					uint32_t mipSize = width*height*depth*bpp/8;
 
 					ImageMip mip;
-					if (imageGetRawData(imageContainer, 0, lod, _mem->data, _mem->size, mip) )
+					if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
 					{
 						uint32_t pitch;
 						uint32_t slicePitch;
