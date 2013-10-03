@@ -454,7 +454,10 @@ namespace bgfx
 
 			hr = device->GetParent(__uuidof(IDXGIAdapter), (void**)&adapter);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
-			DX_RELEASE(device, 2);
+
+			// GPA increases device ref count and triggers assert in debug
+			// build. Warn only instead.
+			DX_RELEASE_WARNONLY(device, 2);
 
 			hr = adapter->GetDesc(&m_adapterDesc);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");

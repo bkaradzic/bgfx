@@ -65,26 +65,22 @@ namespace bgfx
 				BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
 			} while (0)
 
-#	define DX_RELEASE(_ptr, _expected) \
+#else
+#	define DX_CHECK_REFCOUNT(_ptr, _expected)
+#endif // BGFX_CONFIG_DEBUG
+
+#define _DX_RELEASE(_ptr, _expected, _check) \
 			do { \
 				if (NULL != _ptr) \
 				{ \
 					ULONG count = _ptr->Release(); \
-					BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
+					_check(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
 					_ptr = NULL; \
 				} \
 			} while (0)
-#else
-#	define DX_CHECK_REFCOUNT(_ptr, _expected)
-#	define DX_RELEASE(_ptr, _expected) \
-			do { \
-				if (NULL != _ptr) \
-				{ \
-					_ptr->Release(); \
-					_ptr = NULL; \
-				} \
-			} while (0)
-#endif // BGFX_CONFIG_DEBUG
+
+#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
+#define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 
 	inline int getRefCount(IUnknown* _interface)
 	{
