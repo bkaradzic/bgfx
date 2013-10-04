@@ -74,7 +74,7 @@ namespace bgfx
 				if (NULL != _ptr) \
 				{ \
 					ULONG count = _ptr->Release(); \
-					_check(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
+					_check(_expected == count, "RefCount is %d (expected %d).", count, _expected); BX_UNUSED(count); \
 					_ptr = NULL; \
 				} \
 			} while (0)
