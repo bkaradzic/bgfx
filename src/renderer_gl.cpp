@@ -1071,8 +1071,12 @@ namespace bgfx
 		}
 		m_numPredefined = 0;
 
-		GL_CHECK(glUseProgram(0) );
-		GL_CHECK(glDeleteProgram(m_id) );
+		if (0 != m_id)
+		{
+			GL_CHECK(glUseProgram(0) );
+			GL_CHECK(glDeleteProgram(m_id) );
+			m_id = 0;
+		}
 
 		m_vcref.invalidate(s_renderCtx->m_vaoStateCache);
 	}

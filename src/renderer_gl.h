@@ -583,6 +583,11 @@ namespace bgfx
 
 	struct Shader
 	{
+		Shader()
+			: m_id(0)
+		{
+		}
+
 		void create(GLenum _type, Memory* _mem)
 		{
 			m_id = glCreateShader(_type);
@@ -622,7 +627,11 @@ namespace bgfx
 
 		void destroy()
 		{
-			GL_CHECK(glDeleteShader(m_id) );
+			if (0 != m_id)
+			{
+				GL_CHECK(glDeleteShader(m_id) );
+				m_id = 0;
+			}
 		}
 
 		GLuint m_id;
@@ -657,7 +666,8 @@ namespace bgfx
 	struct Program
 	{
 		Program()
-			: m_constantBuffer(NULL)
+			: m_id(0)
+			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
 		{
 		}
