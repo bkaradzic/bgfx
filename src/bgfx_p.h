@@ -1404,12 +1404,15 @@ namespace bgfx
 		VertexDeclHandle release(VertexBufferHandle _handle)
 		{
 			VertexDeclHandle declHandle = m_vertexBufferRef[_handle.idx];
-			m_vertexDeclRef[declHandle.idx]--;
-
-			if (0 != m_vertexDeclRef[declHandle.idx])
+			if (isValid(declHandle) )
 			{
-				VertexDeclHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
+				m_vertexDeclRef[declHandle.idx]--;
+
+				if (0 != m_vertexDeclRef[declHandle.idx])
+				{
+					VertexDeclHandle invalid = BGFX_INVALID_HANDLE;
+					return invalid;
+				}
 			}
 
 			return declHandle;
@@ -1666,6 +1669,13 @@ namespace bgfx
 
 		void destroyVertexBuffer(VertexBufferHandle _handle)
 		{
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexBuffer);
+			cmdbuf.write(_handle);
+			m_submit->free(_handle);
+		}
+
+		void destroyVertexBufferInternal(VertexBufferHandle _handle)
+		{
 			VertexDeclHandle declHandle = m_declRef.release(_handle);
 			if (isValid(declHandle) )
 			{
@@ -1673,9 +1683,7 @@ namespace bgfx
 				cmdbuf.write(declHandle);
 			}
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexBuffer);
-			cmdbuf.write(_handle);
-			m_submit->free(_handle);
+			m_vertexBufferHandle.free(_handle.idx);
 		}
 
 		DynamicIndexBufferHandle createDynamicIndexBuffer(uint16_t _num)
@@ -2450,7 +2458,7 @@ namespace bgfx
 
 			for (uint16_t ii = 0, num = _frame->m_numFreeVertexBufferHandles; ii < num; ++ii)
 			{
-				m_vertexBufferHandle.free(_frame->m_freeVertexBufferHandle[ii].idx);
+				destroyVertexBufferInternal(_frame->m_freeVertexBufferHandle[ii]);
 			}
 
 			for (uint16_t ii = 0, num = _frame->m_numFreeVertexShaderHandles; ii < num; ++ii)

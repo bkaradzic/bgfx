@@ -807,6 +807,8 @@ namespace bgfx
 		destroyTransientIndexBuffer(m_submit->m_transientIb);
 		frame();
 
+		frame(); // If any VertexDecls needs to be destroyed.
+
 		getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 		frame();
 
