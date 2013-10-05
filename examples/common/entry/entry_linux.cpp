@@ -160,6 +160,11 @@ namespace entry
 									, &windowAttrs
 									);
 
+			const char *wmDeleteWindowName = "WM_DELETE_WINDOW";
+			Atom wmDeleteWindow;
+			XInternAtoms(m_display, (char **)&wmDeleteWindowName, 1, False, &wmDeleteWindow);
+			XSetWMProtocols(m_display, m_window, &wmDeleteWindow, 1);
+
 			XMapWindow(m_display, m_window);
 			XStoreName(m_display, m_window, "BGFX");
 
@@ -185,6 +190,13 @@ namespace entry
 							break;
 
 						case ConfigureNotify:
+							break;
+
+						case ClientMessage:
+							if((Atom)event.xclient.data.l[0] == wmDeleteWindow)
+							{
+								m_eventQueue.postExitEvent();
+							}
 							break;
 
 						case ButtonPress:
