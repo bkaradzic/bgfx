@@ -877,7 +877,7 @@ namespace bgfx
 	void setDebug(uint32_t _debug)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_debug = _debug;
+		s_ctx->setDebug(_debug);
 	}
 
 	void dbgTextClear(uint8_t _attr, bool _small)
@@ -978,7 +978,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
-		return s_ctx->m_submit->checkAvailTransientIndexBuffer(_num);
+		return s_ctx->checkAvailTransientIndexBuffer(_num);
 	}
 
 	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
@@ -986,14 +986,14 @@ namespace bgfx
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
-		return s_ctx->m_submit->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
+		return s_ctx->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
 	bool checkAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 instances.");
-		return s_ctx->m_submit->checkAvailTransientVertexBuffer(_num, _stride);
+		return s_ctx->checkAvailTransientVertexBuffer(_num, _stride);
 	}
 
 	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
@@ -1386,43 +1386,43 @@ namespace bgfx
 	void setMarker(const char* _marker)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setMarker(_marker);
+		s_ctx->setMarker(_marker);
 	}
 
 	void setState(uint64_t _state, uint32_t _rgba)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setState(_state, _rgba);
+		s_ctx->setState(_state, _rgba);
 	}
 
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setStencil(_fstencil, _bstencil);
+		s_ctx->setStencil(_fstencil, _bstencil);
 	}
 
 	uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->m_submit->setScissor(_x, _y, _width, _height);
+		return s_ctx->setScissor(_x, _y, _width, _height);
 	}
 
 	void setScissor(uint16_t _cache)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setScissor(_cache);
+		s_ctx->setScissor(_cache);
 	}
 
 	uint32_t setTransform(const void* _mtx, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->m_submit->setTransform(_mtx, _num);
+		return s_ctx->setTransform(_mtx, _num);
 	}
 
 	void setTransform(uint32_t _cache, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setTransform(_cache, _num);
+		s_ctx->setTransform(_cache, _num);
 	}
 
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
@@ -1434,13 +1434,13 @@ namespace bgfx
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setIndexBuffer(_handle, _firstIndex, _numIndices);
+		s_ctx->setIndexBuffer(_handle, _firstIndex, _numIndices);
 	}
 
 	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setIndexBuffer(s_ctx->m_dynamicIndexBuffers[_handle.idx].m_handle, _firstIndex, _numIndices);
+		s_ctx->setIndexBuffer(_handle, _firstIndex, _numIndices);
 	}
 
 	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices)
@@ -1448,68 +1448,68 @@ namespace bgfx
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
 		uint32_t numIndices = bx::uint32_min(_numIndices, _tib->size/2);
-		s_ctx->m_submit->setIndexBuffer(_tib, numIndices);
+		s_ctx->setIndexBuffer(_tib, numIndices);
 	}
 
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setVertexBuffer(_handle, _numVertices);
+		s_ctx->setVertexBuffer(_handle, _numVertices);
 	}
 
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setVertexBuffer(s_ctx->m_dynamicVertexBuffers[_handle.idx], _numVertices);
+		s_ctx->setVertexBuffer(_handle, _numVertices);
 	}
 
 	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
-		s_ctx->m_submit->setVertexBuffer(_tvb, _numVertices);
+		s_ctx->setVertexBuffer(_tvb, _numVertices);
 	}
 
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setInstanceDataBuffer(_idb, _num);
+		s_ctx->setInstanceDataBuffer(_idb, _num);
 	}
 
 	void setProgram(ProgramHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setProgram(_handle);
+		s_ctx->setProgram(_handle);
 	}
 
 	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setTexture(_stage, _sampler, _handle, _flags);
+		s_ctx->setTexture(_stage, _sampler, _handle, _flags);
 	}
 
 	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth, uint32_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->setTexture(_stage, _sampler, _handle, _depth, _flags);
+		s_ctx->setTexture(_stage, _sampler, _handle, _depth, _flags);
 	}
 
 	void submit(uint8_t _id, int32_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->submit(_id, _depth);
+		s_ctx->submit(_id, _depth);
 	}
 
 	void submitMask(uint32_t _viewMask, int32_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->submitMask(_viewMask, _depth);
+		s_ctx->submitMask(_viewMask, _depth);
 	}
 
 	void discard()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->m_submit->discard();
+		s_ctx->discard();
 	}
 
 	void saveScreenShot(const char* _filePath)
