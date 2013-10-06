@@ -114,15 +114,22 @@ namespace bgfx
 	{
 	public:
 		AllocatorStub()
+#if BGFX_CONFIG_DEBUG
 			: m_numBlocks(0)
 			, m_maxBlocks(0)
+#endif // BGFX_CONFIG_DEBUG
 		{
 		}
 
 		virtual void* alloc(size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-			++m_numBlocks;
-			m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+#if BGFX_CONFIG_DEBUG
+			{
+				bx::LwMutexScope scope(m_mutex);
+				++m_numBlocks;
+				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+			}
+#endif // BGFX_CONFIG_DEBUG
 
 			BX_UNUSED(_file, _line);
 			return ::malloc(_size);
@@ -132,7 +139,12 @@ namespace bgfx
 		{
 			if (NULL != _ptr)
 			{
-				--m_numBlocks;
+#if BGFX_CONFIG_DEBUG
+				{
+					bx::LwMutexScope scope(m_mutex);
+					--m_numBlocks;
+				}
+#endif // BGFX_CONFIG_DEBUG
 
 				BX_UNUSED(_file, _line);
 				::free(_ptr);
@@ -141,11 +153,14 @@ namespace bgfx
 
 		virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
+#if BGFX_CONFIG_DEBUG
 			if (NULL == _ptr)
 			{
+				bx::LwMutexScope scope(m_mutex);
 				++m_numBlocks;
 				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
 			}
+#endif // BGFX_CONFIG_DEBUG
 
 			BX_UNUSED(_file, _line);
 			return ::realloc(_ptr, _size);
@@ -157,8 +172,11 @@ namespace bgfx
 		}
 
 	private:
+#if BGFX_CONFIG_DEBUG
+		bx::LwMutex m_mutex;
 		uint32_t m_numBlocks;
 		uint32_t m_maxBlocks;
+#endif // BGFX_CONFIG_DEBUG
 	};
 
 	static CallbackStub* s_callbackStub = NULL;
