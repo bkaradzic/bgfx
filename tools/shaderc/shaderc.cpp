@@ -1809,7 +1809,7 @@ int main(int _argc, const char* _argv[])
 					if (0 != writer.open(outFilePath) )
 					{
 						fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-						return false;
+						return EXIT_FAILURE;
 					}
 
 					if (glsl)
@@ -1849,7 +1849,7 @@ int main(int _argc, const char* _argv[])
 					if (0 != writer->open(outFilePath) )
 					{
 						fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-						return false;
+						return EXIT_FAILURE;
 					}
 
 					if (fragment)
