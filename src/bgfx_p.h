@@ -2551,9 +2551,10 @@ namespace bgfx
 		void frame();
 		void frameNoRenderWait();
 		void swap();
-		bool renderFrame(); // render thread
-		void rendererFlip();
 
+		// render thread
+		bool renderFrame();
+		void rendererFlip();
 		void rendererInit();
 		void rendererShutdown();
 		void rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem);

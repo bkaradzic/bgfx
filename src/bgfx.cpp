@@ -852,19 +852,6 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 	}
 
-	void Context::dumpViewStats()
-	{
-#if 0 // BGFX_CONFIG_DEBUG
-		for (uint8_t view = 0; view < BGFX_CONFIG_MAX_VIEWS; ++view)
-		{
-			if (0 < m_seq[view])
-			{
-				BX_TRACE("%d: %d", view, m_seq[view]);
-			}
-		}
-#endif // BGFX_CONFIG_DEBUG
-	}
-
 	void Context::freeDynamicBuffers()
 	{
 		for (uint16_t ii = 0, num = m_numFreeDynamicIndexBufferHandles; ii < num; ++ii)
@@ -960,8 +947,6 @@ namespace bgfx
 		memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
 		memcpy(m_submit->m_other, m_other, sizeof(m_other) );
 		m_submit->finish();
-
-		dumpViewStats();
 
 		Frame* temp = m_render;
 		m_render = m_submit;
