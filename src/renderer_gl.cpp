@@ -2196,7 +2196,7 @@ namespace bgfx
 		}
 	}
 
-	void Context::flip()
+	void Context::rendererFlip()
 	{
 		if (NULL != s_renderCtx)
 		{

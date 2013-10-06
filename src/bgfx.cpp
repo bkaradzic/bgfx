@@ -641,7 +641,7 @@ namespace bgfx
 
 		s_ctx = BX_NEW(g_allocator, Context);
 
-		// On NaCl renderer is on the main thread.
+		// On NaCl and iOS renderer is on the main thread.
 		s_ctx->init(!BX_PLATFORM_NACL && !BX_PLATFORM_IOS);
 	}
 
@@ -850,6 +850,666 @@ namespace bgfx
 
 #	undef CHECK_HANDLE_LEAK
 #endif // BGFX_CONFIG_DEBUG
+	}
+
+	void Context::dumpViewStats()
+	{
+#if 0 // BGFX_CONFIG_DEBUG
+		for (uint8_t view = 0; view < BGFX_CONFIG_MAX_VIEWS; ++view)
+		{
+			if (0 < m_seq[view])
+			{
+				BX_TRACE("%d: %d", view, m_seq[view]);
+			}
+		}
+#endif // BGFX_CONFIG_DEBUG
+	}
+
+	void Context::freeDynamicBuffers()
+	{
+		for (uint16_t ii = 0, num = m_numFreeDynamicIndexBufferHandles; ii < num; ++ii)
+		{
+			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBufferHandle[ii]);
+		}
+		m_numFreeDynamicIndexBufferHandles = 0;
+
+		for (uint16_t ii = 0, num = m_numFreeDynamicVertexBufferHandles; ii < num; ++ii)
+		{
+			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBufferHandle[ii]);
+		}
+		m_numFreeDynamicVertexBufferHandles = 0;
+	}
+
+	void Context::freeAllHandles(Frame* _frame)
+	{
+		for (uint16_t ii = 0, num = _frame->m_numFreeIndexBufferHandles; ii < num; ++ii)
+		{
+			m_indexBufferHandle.free(_frame->m_freeIndexBufferHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeVertexDeclHandles; ii < num; ++ii)
+		{
+			m_vertexDeclHandle.free(_frame->m_freeVertexDeclHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeVertexBufferHandles; ii < num; ++ii)
+		{
+			destroyVertexBufferInternal(_frame->m_freeVertexBufferHandle[ii]);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeVertexShaderHandles; ii < num; ++ii)
+		{
+			m_vertexShaderHandle.free(_frame->m_freeVertexShaderHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeFragmentShaderHandles; ii < num; ++ii)
+		{
+			m_fragmentShaderHandle.free(_frame->m_freeFragmentShaderHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeProgramHandles; ii < num; ++ii)
+		{
+			m_programHandle.free(_frame->m_freeProgramHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeTextureHandles; ii < num; ++ii)
+		{
+			m_textureHandle.free(_frame->m_freeTextureHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeRenderTargetHandles; ii < num; ++ii)
+		{
+			m_renderTargetHandle.free(_frame->m_freeRenderTargetHandle[ii].idx);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeUniformHandles; ii < num; ++ii)
+		{
+			m_uniformHandle.free(_frame->m_freeUniformHandle[ii].idx);
+		}
+	}
+
+	void Context::frame()
+	{
+		// wait for render thread to finish
+		renderSemWait();
+		frameNoRenderWait();
+	}
+
+	void Context::frameNoRenderWait()
+	{
+		swap();
+
+		// release render thread
+		gameSemPost();
+
+#if !BGFX_CONFIG_MULTITHREADED
+		renderFrame();
+#endif // BGFX_CONFIG_MULTITHREADED
+	}
+
+	void Context::swap()
+	{
+		freeDynamicBuffers();
+		m_submit->m_resolution = m_resolution;
+		m_submit->m_debug = m_debug;
+		memcpy(m_submit->m_rt, m_rt, sizeof(m_rt) );
+		memcpy(m_submit->m_clear, m_clear, sizeof(m_clear) );
+		memcpy(m_submit->m_rect, m_rect, sizeof(m_rect) );
+		memcpy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
+		memcpy(m_submit->m_view, m_view, sizeof(m_view) );
+		memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
+		memcpy(m_submit->m_other, m_other, sizeof(m_other) );
+		m_submit->finish();
+
+		dumpViewStats();
+
+		Frame* temp = m_render;
+		m_render = m_submit;
+		m_submit = temp;
+
+		m_frames++;
+		m_submit->start();
+
+		memset(m_seq, 0, sizeof(m_seq) );
+		freeAllHandles(m_submit);
+
+		m_submit->resetFreeHandles();
+		m_submit->m_textVideoMem->resize(m_render->m_textVideoMem->m_small, m_resolution.m_width, m_resolution.m_height);
+	}
+
+	bool Context::renderFrame()
+	{
+		rendererFlip();
+
+		gameSemWait();
+
+		rendererExecCommands(m_render->m_cmdPre);
+		if (m_rendererInitialized)
+		{
+			rendererSubmit();
+		}
+		rendererExecCommands(m_render->m_cmdPost);
+
+		renderSemPost();
+
+		return m_exit;
+	}
+
+	void Context::rendererUpdateUniforms(ConstantBuffer* _constantBuffer, uint32_t _begin, uint32_t _end)
+	{
+		_constantBuffer->reset(_begin);
+		while (_constantBuffer->getPos() < _end)
+		{
+			uint32_t opcode = _constantBuffer->read();
+
+			if (UniformType::End == opcode)
+			{
+				break;
+			}
+
+			UniformType::Enum type;
+			uint16_t loc;
+			uint16_t num;
+			uint16_t copy;
+			ConstantBuffer::decodeOpcode(opcode, type, loc, num, copy);
+
+			uint32_t size = g_uniformTypeSize[type]*num;
+			const char* data = _constantBuffer->read(size);
+			if (UniformType::Count > type)
+			{
+				rendererUpdateUniform(loc, data, size);
+			}
+			else
+			{
+				rendererSetMarker(data, size);
+			}
+		}
+	}
+
+	void Context::flushTextureUpdateBatch(CommandBuffer& _cmdbuf)
+	{
+		if (m_textureUpdateBatch.sort() )
+		{
+			const uint32_t pos = _cmdbuf.m_pos;
+
+			uint32_t currentKey = UINT32_MAX;
+
+			for (uint32_t ii = 0, num = m_textureUpdateBatch.m_num; ii < num; ++ii)
+			{
+				_cmdbuf.m_pos = m_textureUpdateBatch.m_values[ii];
+
+				TextureHandle handle;
+				_cmdbuf.read(handle);
+
+				uint8_t side;
+				_cmdbuf.read(side);
+
+				uint8_t mip;
+				_cmdbuf.read(mip);
+
+				Rect rect;
+				_cmdbuf.read(rect);
+
+				uint16_t zz;
+				_cmdbuf.read(zz);
+
+				uint16_t depth;
+				_cmdbuf.read(depth);
+
+				Memory* mem;
+				_cmdbuf.read(mem);
+
+				uint32_t key = m_textureUpdateBatch.m_keys[ii];
+				if (key != currentKey)
+				{
+					if (currentKey != UINT32_MAX)
+					{
+						rendererUpdateTextureEnd();
+					}
+					currentKey = key;
+					rendererUpdateTextureBegin(handle, side, mip);
+				}
+
+				rendererUpdateTexture(handle, side, mip, rect, zz, depth, mem);
+
+				release(mem);
+			}
+
+			if (currentKey != UINT32_MAX)
+			{
+				rendererUpdateTextureEnd();
+			}
+
+			m_textureUpdateBatch.reset();
+
+			_cmdbuf.m_pos = pos;
+		}
+	}
+
+	void Context::rendererExecCommands(CommandBuffer& _cmdbuf)
+	{
+		_cmdbuf.reset();
+
+		bool end = false;
+
+		do
+		{
+			uint8_t command;
+			_cmdbuf.read(command);
+
+			switch (command)
+			{
+			case CommandBuffer::RendererInit:
+				{
+					BX_CHECK(!m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
+					rendererInit();
+					m_rendererInitialized = true;
+				}
+				break;
+
+			case CommandBuffer::RendererShutdownBegin:
+				{
+					BX_CHECK(m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
+					m_rendererInitialized = false;
+				}
+				break;
+
+			case CommandBuffer::RendererShutdownEnd:
+				{
+					BX_CHECK(!m_rendererInitialized && !m_exit, "This shouldn't happen! Bad synchronization?");
+					rendererShutdown();
+					m_exit = true;
+				}
+				break;
+
+			case CommandBuffer::CreateIndexBuffer:
+				{
+					IndexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					rendererCreateIndexBuffer(handle, mem);
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::DestroyIndexBuffer:
+				{
+					IndexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyIndexBuffer(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateVertexDecl:
+				{
+					VertexDeclHandle handle;
+					_cmdbuf.read(handle);
+
+					VertexDecl decl;
+					_cmdbuf.read(decl);
+
+					rendererCreateVertexDecl(handle, decl);
+				}
+				break;
+
+			case CommandBuffer::DestroyVertexDecl:
+				{
+					VertexDeclHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyVertexDecl(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateVertexBuffer:
+				{
+					VertexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					VertexDeclHandle declHandle;
+					_cmdbuf.read(declHandle);
+
+					rendererCreateVertexBuffer(handle, mem, declHandle);
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::DestroyVertexBuffer:
+				{
+					VertexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyVertexBuffer(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateDynamicIndexBuffer:
+				{
+					IndexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					uint32_t size;
+					_cmdbuf.read(size);
+
+					rendererCreateDynamicIndexBuffer(handle, size);
+				}
+				break;
+
+			case CommandBuffer::UpdateDynamicIndexBuffer:
+				{
+					IndexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					uint32_t offset;
+					_cmdbuf.read(offset);
+
+					uint32_t size;
+					_cmdbuf.read(size);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					rendererUpdateDynamicIndexBuffer(handle, offset, size, mem);
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::DestroyDynamicIndexBuffer:
+				{
+					IndexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyDynamicIndexBuffer(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateDynamicVertexBuffer:
+				{
+					VertexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					uint32_t size;
+					_cmdbuf.read(size);
+
+					rendererCreateDynamicVertexBuffer(handle, size);
+				}
+				break;
+
+			case CommandBuffer::UpdateDynamicVertexBuffer:
+				{
+					VertexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					uint32_t offset;
+					_cmdbuf.read(offset);
+
+					uint32_t size;
+					_cmdbuf.read(size);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					rendererUpdateDynamicVertexBuffer(handle, offset, size, mem);
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::DestroyDynamicVertexBuffer:
+				{
+					VertexBufferHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyDynamicVertexBuffer(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateVertexShader:
+				{
+					VertexShaderHandle handle;
+					_cmdbuf.read(handle);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					rendererCreateVertexShader(handle, mem);
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::DestroyVertexShader:
+				{
+					VertexShaderHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyVertexShader(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateFragmentShader:
+				{
+					FragmentShaderHandle handle;
+					_cmdbuf.read(handle);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					rendererCreateFragmentShader(handle, mem);
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::DestroyFragmentShader:
+				{
+					FragmentShaderHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyFragmentShader(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateProgram:
+				{
+					ProgramHandle handle;
+					_cmdbuf.read(handle);
+
+					VertexShaderHandle vsh;
+					_cmdbuf.read(vsh);
+
+					FragmentShaderHandle fsh;
+					_cmdbuf.read(fsh);
+
+					rendererCreateProgram(handle, vsh, fsh);
+				}
+				break;
+
+			case CommandBuffer::DestroyProgram:
+				{
+					FragmentShaderHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyProgram(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateTexture:
+				{
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					Memory* mem;
+					_cmdbuf.read(mem);
+
+					uint32_t flags;
+					_cmdbuf.read(flags);
+
+					rendererCreateTexture(handle, mem, flags);
+
+					bx::MemoryReader reader(mem->data, mem->size);
+
+					uint32_t magic;
+					bx::read(&reader, magic);
+
+					if (BGFX_CHUNK_MAGIC_TEX == magic)
+					{
+						TextureCreate tc;
+						bx::read(&reader, tc);
+
+						if (NULL != tc.m_mem)
+						{
+							release(tc.m_mem);
+						}
+					}
+
+					release(mem);
+				}
+				break;
+
+			case CommandBuffer::UpdateTexture:
+				{
+					if (m_textureUpdateBatch.isFull() )
+					{
+						flushTextureUpdateBatch(_cmdbuf);
+					}
+
+					uint32_t value = _cmdbuf.m_pos;
+
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					uint8_t side;
+					_cmdbuf.read(side);
+
+					uint8_t mip;
+					_cmdbuf.read(mip);
+
+					_cmdbuf.skip(sizeof(Rect)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(Memory*) );
+
+					uint32_t key = (handle.idx<<16)
+						| (side<<8)
+						| mip
+						;
+
+					m_textureUpdateBatch.add(key, value);
+				}
+				break;
+
+			case CommandBuffer::DestroyTexture:
+				{
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyTexture(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateRenderTarget:
+				{
+					RenderTargetHandle handle;
+					_cmdbuf.read(handle);
+
+					uint16_t width;
+					_cmdbuf.read(width);
+
+					uint16_t height;
+					_cmdbuf.read(height);
+
+					uint32_t flags;
+					_cmdbuf.read(flags);
+
+					uint32_t textureFlags;
+					_cmdbuf.read(textureFlags);
+
+					rendererCreateRenderTarget(handle, width, height, flags, textureFlags);
+				}
+				break;
+
+			case CommandBuffer::DestroyRenderTarget:
+				{
+					RenderTargetHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyRenderTarget(handle);
+				}
+				break;
+
+			case CommandBuffer::CreateUniform:
+				{
+					UniformHandle handle;
+					_cmdbuf.read(handle);
+
+					UniformType::Enum type;
+					_cmdbuf.read(type);
+
+					uint16_t num;
+					_cmdbuf.read(num);
+
+					uint8_t len;
+					_cmdbuf.read(len);
+
+					const char* name = (const char*)_cmdbuf.skip(len);
+
+					rendererCreateUniform(handle, type, num, name);
+				}
+				break;
+
+			case CommandBuffer::DestroyUniform:
+				{
+					UniformHandle handle;
+					_cmdbuf.read(handle);
+
+					rendererDestroyUniform(handle);
+				}
+				break;
+
+			case CommandBuffer::SaveScreenShot:
+				{
+					uint16_t len;
+					_cmdbuf.read(len);
+
+					const char* filePath = (const char*)_cmdbuf.skip(len);
+
+					rendererSaveScreenShot(filePath);
+				}
+				break;
+
+			case CommandBuffer::UpdateViewName:
+				{
+					uint8_t id;
+					_cmdbuf.read(id);
+
+					uint16_t len;
+					_cmdbuf.read(len);
+
+					const char* name = (const char*)_cmdbuf.skip(len);
+
+					rendererUpdateViewName(id, name);
+				}
+				break;
+
+			case CommandBuffer::End:
+				end = true;
+				break;
+
+			default:
+				BX_CHECK(false, "WTF!");
+				break;
+			}
+		} while (!end);
+
+		flushTextureUpdateBatch(_cmdbuf);
 	}
 
 	const Memory* alloc(uint32_t _size)

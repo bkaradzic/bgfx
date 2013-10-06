@@ -1956,7 +1956,7 @@ namespace bgfx
 		DX_RELEASE(m_ptr, 0);
 	}
 
-	void Context::flip()
+	void Context::rendererFlip()
 	{
 		if (NULL != s_renderCtx)
 		{

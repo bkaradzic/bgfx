@@ -21,7 +21,7 @@ namespace bgfx
 	{
 	}
 
-	void Context::flip()
+	void Context::rendererFlip()
 	{
 	}
 
