@@ -54,7 +54,10 @@ namespace bgfx
 
 	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
-		BX_FREE(g_allocator, _ptr);
+		if (NULL != _ptr)
+		{
+			BX_FREE(g_allocator, _ptr);
+		}
 	}
 #endif // BGFX_CONFIG_USE_TINYSTL
 
@@ -142,6 +145,7 @@ namespace bgfx
 #if BGFX_CONFIG_DEBUG
 				{
 					bx::LwMutexScope scope(m_mutex);
+					BX_CHECK(m_numBlocks > 0, "Number of blocks is 0. Possible alloc/free mismatch?");
 					--m_numBlocks;
 				}
 #endif // BGFX_CONFIG_DEBUG
@@ -166,12 +170,12 @@ namespace bgfx
 			return ::realloc(_ptr, _size);
 		}
 
-		void checkLeaks() const
+		void checkLeaks()
 		{
 			BX_WARN(0 == m_numBlocks, "MEMORY LEAK: %d (max: %d)", m_numBlocks, m_maxBlocks);
 		}
 
-	private:
+	protected:
 #if BGFX_CONFIG_DEBUG
 		bx::LwMutex m_mutex;
 		uint32_t m_numBlocks;
@@ -634,6 +638,8 @@ namespace bgfx
 
 	void init(CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
+		BX_TRACE("Init...");
+
 		if (NULL != _allocator)
 		{
 			g_allocator = _allocator;
@@ -661,10 +667,14 @@ namespace bgfx
 
 		// On NaCl and iOS renderer is on the main thread.
 		s_ctx->init(!BX_PLATFORM_NACL && !BX_PLATFORM_IOS);
+
+		BX_TRACE("Init complete.");
 	}
 
 	void shutdown()
 	{
+		BX_TRACE("Shutdown...");
+
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->shutdown();
 
@@ -810,8 +820,6 @@ namespace bgfx
 
 	void Context::shutdown()
 	{
-		BX_TRACE("Shutdown");
-
 		getCommandBuffer(CommandBuffer::RendererShutdownBegin);
 		frame();
 

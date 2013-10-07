@@ -10,11 +10,12 @@
 #include <edtaa3/edtaa3func.cpp>
 #include <wchar.h> // wcslen
 
-#include "font_manager.h"
-#include "../cube_atlas.h"
-
+#include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
+
+#include "font_manager.h"
+#include "../cube_atlas.h"
 
 struct FTHolder
 {
