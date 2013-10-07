@@ -535,6 +535,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
+	imguiDestroy();
+
 	for (uint32_t ii = 0; ii < 3; ++ii)
 	{
 		mesh_top[ii].unload();

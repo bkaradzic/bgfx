@@ -240,6 +240,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
+	imguiDestroy();
+
 	free(bigText);
 
 	fontManager->destroyTtf(font);

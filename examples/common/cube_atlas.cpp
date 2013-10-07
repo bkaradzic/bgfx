@@ -309,6 +309,8 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _reg
 
 Atlas::~Atlas()
 {
+	bgfx::destroyTexture(m_textureHandle);
+
 	delete [] m_layers;
 	delete [] m_regions;
 	delete [] m_textureBuffer;
