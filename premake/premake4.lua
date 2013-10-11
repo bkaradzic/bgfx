@@ -60,6 +60,17 @@ function exampleProject(_name, _uuid)
 		"example-common",
 	}
 
+	configuration { "vs*" }
+		links { -- this is needed only for testing with GLES2/3 on Windows with VS2008
+			"DelayImp",
+		}
+
+	configuration { "vs2010" }
+		linkoptions { -- this is needed only for testing with GLES2/3 on Windows with VS201x
+			"/DELAYLOAD:\"libEGL.dll\"",
+			"/DELAYLOAD:\"libGLESv2.dll\"",
+		}
+
 	configuration { "android*" }
 		kind "SharedLib"
 		targetextension ".so"

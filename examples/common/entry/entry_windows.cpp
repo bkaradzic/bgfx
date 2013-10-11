@@ -151,6 +151,8 @@ namespace entry
 
 		int32_t run(int _argc, char** _argv)
 		{
+			SetDllDirectory(".");
+
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
 			WNDCLASSEX wnd;

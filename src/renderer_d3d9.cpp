@@ -397,13 +397,6 @@ namespace bgfx
 					  , m_caps.VertexShaderVersion
 					  , m_caps.PixelShaderVersion
 					  );
-			BGFX_FATAL(m_caps.MaxTextureWidth >= 2048 && m_caps.MaxTextureHeight >= 2048
-					  , Fatal::MinimumRequiredSpecs
-					  , "Maximum texture size is below 2048 (w: %d, h: %d)."
-					  , m_caps.MaxTextureWidth
-					  , m_caps.MaxTextureHeight
-					  );
-
 			BX_TRACE("Max vertex shader 3.0 instr. slots: %d", m_caps.MaxVertexShader30InstructionSlots);
 			BX_TRACE("Max vertex shader constants: %d", m_caps.MaxVertexShaderConst);
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
