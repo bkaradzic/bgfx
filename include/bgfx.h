@@ -227,6 +227,25 @@
 #define BGFX_RESET_CAPTURE               UINT32_C(0x00000100)
 
 ///
+#define BGFX_CAPS_TEXTURE_FORMAT_BC1     UINT64_C(0x0000000000000001)
+#define BGFX_CAPS_TEXTURE_FORMAT_BC2     UINT64_C(0x0000000000000002)
+#define BGFX_CAPS_TEXTURE_FORMAT_BC3     UINT64_C(0x0000000000000004)
+#define BGFX_CAPS_TEXTURE_FORMAT_BC4     UINT64_C(0x0000000000000008)
+#define BGFX_CAPS_TEXTURE_FORMAT_BC5     UINT64_C(0x0000000000000010)
+#define BGFX_CAPS_TEXTURE_FORMAT_ETC1    UINT64_C(0x0000000000000020)
+#define BGFX_CAPS_TEXTURE_FORMAT_ETC2    UINT64_C(0x0000000000000040)
+#define BGFX_CAPS_TEXTURE_FORMAT_ETC2A   UINT64_C(0x0000000000000080)
+#define BGFX_CAPS_TEXTURE_FORMAT_ETC2A1  UINT64_C(0x0000000000000100)
+#define BGFX_CAPS_TEXTURE_FORMAT_PTC12   UINT64_C(0x0000000000000200)
+#define BGFX_CAPS_TEXTURE_FORMAT_PTC14   UINT64_C(0x0000000000000400)
+#define BGFX_CAPS_TEXTURE_FORMAT_PTC14A  UINT64_C(0x0000000000000800)
+#define BGFX_CAPS_TEXTURE_FORMAT_PTC12A  UINT64_C(0x0000000000001000)
+#define BGFX_CAPS_TEXTURE_FORMAT_PTC22   UINT64_C(0x0000000000002000)
+#define BGFX_CAPS_TEXTURE_FORMAT_PTC24   UINT64_C(0x0000000000004000)
+#define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000010000)
+#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000020000)
+
+///
 #define BGFX_HANDLE(_name) \
 			struct _name { uint16_t idx; }; \
 			inline bool isValid(_name _handle) { return bgfx::invalidHandle != _handle.idx; }
@@ -419,6 +438,26 @@ namespace bgfx
 		uint32_t size;
 	};
 
+	/// Renderer capabilities.
+	struct Caps
+	{
+		/// Renderer backend type.
+		RendererType::Enum rendererType;
+
+		/// Supported functionality, it includes emulated functionality. 
+		/// Checking supported and not emulated will give functionality 
+		/// natively supported by renderer.
+		uint64_t supported;
+
+		/// Emulated functionality. For example some texture compression 
+		/// modes are not natively supported by all renderers. The library
+		/// internally decompresses texture into supported format.
+		uint64_t emulated;
+
+		/// Maximum texture size.
+		uint16_t maxTextureSize;
+	};
+
 	struct TransientIndexBuffer
 	{
 		uint8_t* data;
@@ -567,6 +606,9 @@ namespace bgfx
 	/// just swaps internal buffers, kicks render thread, and returns. In
 	/// singlethreaded renderer this call does frame rendering.
 	void frame();
+
+	/// Returns renderer capabilities.
+	const Caps* getCaps();
 
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 	const Memory* alloc(uint32_t _size);

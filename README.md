@@ -291,7 +291,6 @@ Todo
  - DX11: MSAA.
  - Fullscreen mode.
  - ETC2, PVRTC1/2 decoding fallback for targets that don't support it natively.
- - Capabilities flags for user to have idea what features are available.
 
 Contact
 -------

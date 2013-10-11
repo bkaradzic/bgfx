@@ -113,9 +113,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
+	// Get renderer capabilities info.
+	const bgfx::Caps* caps = bgfx::getCaps();
+
 	// Setup root path for binary shaders. Shader binaries are different 
 	// for each renderer.
-	switch (bgfx::getRendererType() )
+	switch (caps->rendererType)
 	{
 	default:
 	case bgfx::RendererType::Direct3D9:
@@ -195,59 +198,70 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Geometry instancing.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-		float at[3] = { 0.0f, 0.0f, 0.0f };
-		float eye[3] = { 0.0f, 0.0f, -35.0f };
-		
-		float view[16];
-		float proj[16];
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
-
-		// Set view and projection matrix for view 0.
-		bgfx::setViewTransform(0, view, proj);
-
-		const uint16_t instanceStride = 80;
-		const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(121, instanceStride);
-		if (NULL != idb)
+		// Check if instancing is supported.
+		if (0 == (BGFX_CAPS_INSTANCING & caps->supported) )
 		{
-			uint8_t* data = idb->data;
+			// When instancing is not supported by GPU, implement alternative
+			// code path that doesn't use instancing.
+			bool blink = uint32_t(time*3.0f)&1;
+			bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " Instancing is not supported by GPU. ");
+		}
+		else
+		{
+			float at[3] = { 0.0f, 0.0f, 0.0f };
+			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			
+			float view[16];
+			float proj[16];
+			mtxLookAt(view, eye, at);
+			mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
-			// Write instance data for 11x11 cubes.
-			for (uint32_t yy = 0; yy < 11; ++yy)
+			// Set view and projection matrix for view 0.
+			bgfx::setViewTransform(0, view, proj);
+
+			const uint16_t instanceStride = 80;
+			const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(121, instanceStride);
+			if (NULL != idb)
 			{
-				for (uint32_t xx = 0; xx < 11; ++xx)
+				uint8_t* data = idb->data;
+
+				// Write instance data for 11x11 cubes.
+				for (uint32_t yy = 0; yy < 11; ++yy)
 				{
-					float* mtx = (float*)data;
-					mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
-					mtx[12] = -15.0f + float(xx)*3.0f;
-					mtx[13] = -15.0f + float(yy)*3.0f;
-					mtx[14] = 0.0f;
+					for (uint32_t xx = 0; xx < 11; ++xx)
+					{
+						float* mtx = (float*)data;
+						mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
+						mtx[12] = -15.0f + float(xx)*3.0f;
+						mtx[13] = -15.0f + float(yy)*3.0f;
+						mtx[14] = 0.0f;
 
-					float* color = (float*)&data[64];
-					color[0] = sin(time+float(xx)/11.0f)*0.5f+0.5f;
-					color[1] = cos(time+float(yy)/11.0f)*0.5f+0.5f;
-					color[2] = sin(time*3.0f)*0.5f+0.5f;
-					color[3] = 1.0f;
+						float* color = (float*)&data[64];
+						color[0] = sin(time+float(xx)/11.0f)*0.5f+0.5f;
+						color[1] = cos(time+float(yy)/11.0f)*0.5f+0.5f;
+						color[2] = sin(time*3.0f)*0.5f+0.5f;
+						color[3] = 1.0f;
 
-					data += instanceStride;
+						data += instanceStride;
+					}
 				}
+
+				// Set vertex and fragment shaders.
+				bgfx::setProgram(program);
+
+				// Set vertex and index buffer.
+				bgfx::setVertexBuffer(vbh);
+				bgfx::setIndexBuffer(ibh);
+
+				// Set instance data buffer.
+				bgfx::setInstanceDataBuffer(idb);
+
+				// Set render states.
+				bgfx::setState(BGFX_STATE_DEFAULT);
+
+				// Submit primitive for rendering to view 0.
+				bgfx::submit(0);
 			}
-
-			// Set vertex and fragment shaders.
-			bgfx::setProgram(program);
-
-			// Set vertex and index buffer.
-			bgfx::setVertexBuffer(vbh);
-			bgfx::setIndexBuffer(ibh);
-
-			// Set instance data buffer.
-			bgfx::setInstanceDataBuffer(idb);
-
-			// Set render states.
-			bgfx::setState(BGFX_STATE_DEFAULT);
-
-			// Submit primitive for rendering to view 0.
-			bgfx::submit(0);
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to 

@@ -10,7 +10,9 @@ namespace bgfx
 #define BGFX_MAIN_THREAD_MAGIC 0x78666762
 
 #if BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
-#	define BGFX_CHECK_MAIN_THREAD() BX_CHECK(BGFX_MAIN_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
+#	define BGFX_CHECK_MAIN_THREAD() \
+				BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
+				BX_CHECK(BGFX_MAIN_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
 #	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(BGFX_MAIN_THREAD_MAGIC != s_threadIndex, "Must be called from render thread.")
 #else
 #	define BGFX_CHECK_MAIN_THREAD()
@@ -188,6 +190,8 @@ namespace bgfx
 
 	CallbackI* g_callback = NULL;
 	bx::ReallocatorI* g_allocator = NULL;
+
+	Caps g_caps;
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context* s_ctx = NULL;
@@ -619,6 +623,12 @@ namespace bgfx
 		bx::radixSort64(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
 	}
 
+	const Caps* getCaps()
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return &g_caps;
+	}
+
 	RendererType::Enum getRendererType()
 	{
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
@@ -639,6 +649,20 @@ namespace bgfx
 	void init(CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
 		BX_TRACE("Init...");
+
+		memset(&g_caps, 0, sizeof(g_caps) );
+		g_caps.rendererType = getRendererType();
+		g_caps.emulated = 0
+						| BGFX_CAPS_TEXTURE_FORMAT_BC1
+						| BGFX_CAPS_TEXTURE_FORMAT_BC2
+						| BGFX_CAPS_TEXTURE_FORMAT_BC3
+						| BGFX_CAPS_TEXTURE_FORMAT_BC4
+						| BGFX_CAPS_TEXTURE_FORMAT_BC5
+						| BGFX_CAPS_TEXTURE_FORMAT_ETC1
+						| BGFX_CAPS_TEXTURE_FORMAT_ETC2
+						| BGFX_CAPS_TEXTURE_FORMAT_ETC2A
+						| BGFX_CAPS_TEXTURE_FORMAT_ETC2A1
+						;
 
 		if (NULL != _allocator)
 		{
@@ -1696,6 +1720,7 @@ namespace bgfx
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_INSTANCING), "Instancing is not supported! Use bgfx::getCaps to check backend renderer capabilities.");
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
 		return s_ctx->allocInstanceDataBuffer(_num, _stride);
 	}
@@ -1823,6 +1848,7 @@ namespace bgfx
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D), "Texture3D is not supported! Use bgfx::getCaps to check backend renderer capabilities.");
 
 #if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)

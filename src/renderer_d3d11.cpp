@@ -478,6 +478,18 @@ namespace bgfx
 				m_uniformReg.add(getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
 			}
 
+			g_caps.emulated &= ~( 0
+								| BGFX_CAPS_TEXTURE_FORMAT_BC1
+								| BGFX_CAPS_TEXTURE_FORMAT_BC2
+								| BGFX_CAPS_TEXTURE_FORMAT_BC3
+								| BGFX_CAPS_TEXTURE_FORMAT_BC4
+								);
+			g_caps.supported |= ( 0
+								| BGFX_CAPS_INSTANCING
+								| BGFX_CAPS_TEXTURE_3D
+								);
+			g_caps.maxTextureSize = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+
 			postReset();
 		}
 

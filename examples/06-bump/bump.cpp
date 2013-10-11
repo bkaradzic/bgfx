@@ -268,9 +268,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
+	// Get renderer capabilities info.
+	const bgfx::Caps* caps = bgfx::getCaps();
+
+	bool instancingSupported = 0 != (caps->supported & BGFX_CAPS_INSTANCING);
+
 	// Setup root path for binary shaders. Shader binaries are different 
 	// for each renderer.
-	switch (bgfx::getRendererType() )
+	switch (caps->rendererType)
 	{
 	default:
 	case bgfx::RendererType::Direct3D9:
@@ -320,7 +325,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Uniform4fv, numLights);
 
 	// Load vertex shader.
-	mem = loadShader("vs_bump");
+	mem = loadShader(instancingSupported ? "vs_bump_instanced" : "vs_bump");
 	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
 
 	// Load fragment shader.
@@ -406,50 +411,93 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const uint16_t instanceStride = 64;
 		const uint16_t numInstances = 3;
 
-		// Write instance data for 3x3 cubes.
-		for (uint32_t yy = 0; yy < 3; ++yy)
+		if (instancingSupported)
 		{
-			const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(numInstances, instanceStride);
-			if (NULL != idb)
+			// Write instance data for 3x3 cubes.
+			for (uint32_t yy = 0; yy < 3; ++yy)
 			{
-				uint8_t* data = idb->data;
+				const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(numInstances, instanceStride);
+				if (NULL != idb)
+				{
+					uint8_t* data = idb->data;
 
+					for (uint32_t xx = 0; xx < 3; ++xx)
+					{
+						float* mtx = (float*)data;
+						mtxRotateXY(mtx, time*0.023f + xx*0.21f, time*0.03f + yy*0.37f);
+						mtx[12] = -3.0f + float(xx)*3.0f;
+						mtx[13] = -3.0f + float(yy)*3.0f;
+						mtx[14] = 0.0f;
+
+						data += instanceStride;
+					}
+
+					// Set instance data buffer.
+					bgfx::setInstanceDataBuffer(idb, numInstances);
+
+					// Set vertex and fragment shaders.
+					bgfx::setProgram(program);
+
+					// Set vertex and index buffer.
+					bgfx::setVertexBuffer(vbh);
+					bgfx::setIndexBuffer(ibh);
+
+					// Bind textures.
+					bgfx::setTexture(0, u_texColor, textureColor);
+					bgfx::setTexture(1, u_texNormal, textureNormal);
+
+					// Set render states.
+					bgfx::setState(0
+						|BGFX_STATE_RGB_WRITE
+						|BGFX_STATE_ALPHA_WRITE
+						|BGFX_STATE_DEPTH_WRITE
+						|BGFX_STATE_DEPTH_TEST_LESS
+						|BGFX_STATE_MSAA
+						);
+
+					// Submit primitive for rendering to view 0.
+					bgfx::submit(0);
+				}
+			}
+		}
+		else
+		{
+			for (uint32_t yy = 0; yy < 3; ++yy)
+			{
 				for (uint32_t xx = 0; xx < 3; ++xx)
 				{
-					float* mtx = (float*)data;
+					float mtx[16];
 					mtxRotateXY(mtx, time*0.023f + xx*0.21f, time*0.03f + yy*0.37f);
 					mtx[12] = -3.0f + float(xx)*3.0f;
 					mtx[13] = -3.0f + float(yy)*3.0f;
 					mtx[14] = 0.0f;
 
-					data += instanceStride;
+					// Set transform for draw call.
+					bgfx::setTransform(mtx);
+
+					// Set vertex and fragment shaders.
+					bgfx::setProgram(program);
+
+					// Set vertex and index buffer.
+					bgfx::setVertexBuffer(vbh);
+					bgfx::setIndexBuffer(ibh);
+
+					// Bind textures.
+					bgfx::setTexture(0, u_texColor, textureColor);
+					bgfx::setTexture(1, u_texNormal, textureNormal);
+
+					// Set render states.
+					bgfx::setState(0
+						|BGFX_STATE_RGB_WRITE
+						|BGFX_STATE_ALPHA_WRITE
+						|BGFX_STATE_DEPTH_WRITE
+						|BGFX_STATE_DEPTH_TEST_LESS
+						|BGFX_STATE_MSAA
+						);
+
+					// Submit primitive for rendering to view 0.
+					bgfx::submit(0);
 				}
-
-				// Set vertex and fragment shaders.
-				bgfx::setProgram(program);
-
-				// Set vertex and index buffer.
-				bgfx::setVertexBuffer(vbh);
-				bgfx::setIndexBuffer(ibh);
-
-				// Set instance data buffer.
-				bgfx::setInstanceDataBuffer(idb, numInstances);
-
-				// Bind textures.
-				bgfx::setTexture(0, u_texColor, textureColor);
-				bgfx::setTexture(1, u_texNormal, textureNormal);
-
-				// Set render states.
-				bgfx::setState(0
-					|BGFX_STATE_RGB_WRITE
-					|BGFX_STATE_ALPHA_WRITE
-					|BGFX_STATE_DEPTH_WRITE
-					|BGFX_STATE_DEPTH_TEST_LESS
-					|BGFX_STATE_MSAA
-					);
-
-				// Submit primitive for rendering to view 0.
-				bgfx::submit(0);
 			}
 		}
 

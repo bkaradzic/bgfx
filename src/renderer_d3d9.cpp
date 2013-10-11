@@ -409,6 +409,14 @@ namespace bgfx
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
+			g_caps.emulated &= ~( 0
+								| BGFX_CAPS_TEXTURE_FORMAT_BC1
+								| BGFX_CAPS_TEXTURE_FORMAT_BC2
+								| BGFX_CAPS_TEXTURE_FORMAT_BC3
+								);
+			g_caps.supported |= BGFX_CAPS_TEXTURE_3D;
+			g_caps.maxTextureSize = bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight);
+
 #if BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 			BX_TRACE("Extended formats:");
 			for (uint32_t ii = 0; ii < ExtendedFormat::Count; ++ii)
@@ -434,6 +442,12 @@ namespace bgfx
 
 			s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
 			s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
+
+			g_caps.emulated &= ~( 0
+								| (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC4].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC4 : 0)
+								| (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC5].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC5 : 0)
+								);
+			g_caps.supported |= m_instancing ? BGFX_CAPS_INSTANCING : 0;
 #endif // BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 
 			uint32_t index = 1;

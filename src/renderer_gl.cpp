@@ -2210,8 +2210,7 @@ namespace bgfx
 		glGetIntegerv(_pname, &result);
 		GLenum err = glGetError();
 		BX_WARN(0 == err, "glGetIntegerv(0x%04x, ...) failed with GL error: 0x%04x.", _pname, err);
-		BX_UNUSED(err);
-		return result;
+		return 0 == err ? result : 0;
 	}
 
 	void Context::rendererInit()
@@ -2370,7 +2369,8 @@ namespace bgfx
 		s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
 		s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
 
-		s_textureFormat[TextureFormat::ETC1].m_supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
+		bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
+		s_textureFormat[TextureFormat::ETC1].m_supported = etc1Supported;
 
 		bool etc2Supported = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_ES3_compatibility].m_supported
@@ -2397,6 +2397,17 @@ namespace bgfx
 		bool ptc2Supported = s_extension[Extension::IMG_texture_compression_pvrtc2].m_supported;
 		s_textureFormat[TextureFormat::PTC22].m_supported  = ptc2Supported;
 		s_textureFormat[TextureFormat::PTC24].m_supported  = ptc2Supported;
+
+		g_caps.emulated &= ~( 0
+							| bc123Supported ? BGFX_CAPS_TEXTURE_FORMAT_BC1|BGFX_CAPS_TEXTURE_FORMAT_BC2|BGFX_CAPS_TEXTURE_FORMAT_BC3 : 0
+							| bc45Supported  ? BGFX_CAPS_TEXTURE_FORMAT_BC4|BGFX_CAPS_TEXTURE_FORMAT_BC5 : 0
+							| etc1Supported  ? BGFX_CAPS_TEXTURE_FORMAT_ETC1 : 0
+							| etc2Supported  ? BGFX_CAPS_TEXTURE_FORMAT_ETC2|BGFX_CAPS_TEXTURE_FORMAT_ETC2A|BGFX_CAPS_TEXTURE_FORMAT_ETC2A1 : 0
+							| ptc1Supported  ? BGFX_CAPS_TEXTURE_FORMAT_PTC12|BGFX_CAPS_TEXTURE_FORMAT_PTC14|BGFX_CAPS_TEXTURE_FORMAT_PTC14A|BGFX_CAPS_TEXTURE_FORMAT_PTC12A : 0
+							| ptc2Supported  ? BGFX_CAPS_TEXTURE_FORMAT_PTC22|BGFX_CAPS_TEXTURE_FORMAT_PTC24 : 0
+							);
+		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3) ? BGFX_CAPS_TEXTURE_3D : 0;
+		g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
 
 		s_renderCtx->m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_vertex_array_object].m_supported
@@ -2485,7 +2496,9 @@ namespace bgfx
 			s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
 		}
 
-#if !BGFX_CONFIG_RENDERER_OPENGLES3
+#if BGFX_CONFIG_RENDERER_OPENGLES3
+		g_caps.supported |= BGFX_CAPS_INSTANCING;
+#else
 		s_vertexAttribDivisor = stubVertexAttribDivisor;
 		s_drawArraysInstanced = stubDrawArraysInstanced;
 		s_drawElementsInstanced = stubDrawElementsInstanced;
@@ -2501,6 +2514,7 @@ namespace bgfx
 				s_vertexAttribDivisor   = glVertexAttribDivisor;
 				s_drawArraysInstanced   = glDrawArraysInstanced;
 				s_drawElementsInstanced = glDrawElementsInstanced;
+				g_caps.supported |= BGFX_CAPS_INSTANCING;
 			}
 		}
 #	endif // !BX_PLATFORM_IOS
