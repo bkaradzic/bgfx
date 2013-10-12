@@ -11,15 +11,11 @@ project "bgfx"
 		BGFX_DIR .. "../bx/include",
 	}
 
-	buildoptions {
---		"-Wall",
-	}
-
 	defines {
 --		"BGFX_CONFIG_RENDERER_OPENGL=1",
 	}
 
-	configuration "Debug"
+	configuration { "Debug" }
 		defines {
 			"BGFX_CONFIG_DEBUG=1",
 		}
