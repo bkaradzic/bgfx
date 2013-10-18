@@ -117,4 +117,4 @@ docs:
 
 clean:
 	@echo Cleaning...
-	-rm -r .build
+	-@rm -rf .build
