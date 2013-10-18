@@ -101,6 +101,15 @@ Use a single distance field font to render text of various size.
 
 ![example-11-fontsdf](https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png)
 
+### 12-lod
+Mesh LOD transitions.
+
+### 13-stencil
+Stencil reflections and shadows.
+
+### 14-shadowvolumes
+Shadow volumes.
+
 Dependencies
 ------------
 
@@ -384,8 +393,11 @@ Contributors
 ------------
 
 Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.  
-Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and examples.  
-Milos Tosic ([@milostosic](https://github.com/milostosic)) - LOD example.
+Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and
+  examples.  
+Milos Tosic ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
+Dario Manesku ([@dariomanesku](https://github.com/dariomanesku) - 13-stencil, 
+  14-shadowvolumes  
 
 When contributing to the bgfx project you must agree to the BSD 2-clause
 licensing terms.
