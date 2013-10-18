@@ -118,4 +118,3 @@ docs:
 clean:
 	@echo Cleaning...
 	-rm -r .build
-	-rm -r .debug
