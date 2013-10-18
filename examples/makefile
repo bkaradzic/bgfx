@@ -16,5 +16,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 10-font
 	@make -s --no-print-directory rebuild -C 11-fontsdf
 	@make -s --no-print-directory rebuild -C 12-lod
+	@make -s --no-print-directory rebuild -C 13-stencil
+	@make -s --no-print-directory rebuild -C 14-shadowvolumes
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui
