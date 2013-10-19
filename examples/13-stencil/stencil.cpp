@@ -944,7 +944,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{
 		StencilReflectionScene = 0,
 		ProjectionShadowsScene,
-	}
+	};
 
 	Scene scene = StencilReflectionScene;
 	float settings_numLights       = 4.0f;
@@ -958,12 +958,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		"Projection Shadows Scene",
 	};
 
-
 	entry::MouseState mouseState;
 	while (!entry::processEvents(viewState.m_width, viewState.m_height, debug, reset, &mouseState) )
 	{
-		//imgui
-
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my
 			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
@@ -1062,12 +1059,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 		bgfx::setUniform(u_lightPosRadius, lightPosRadius, numLights);
 
-
-		//-------------------------------------------------
-		// Render
-		//-------------------------------------------------
-
-		//floor position
+		// Floor position.
 		float floorMtx[16];
 		mtxScaleRotateTranslate(floorMtx
 			, 20.0f  //scaleX
@@ -1081,21 +1073,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, 0.0f   //translateZ
 			);
 
-		//bunny position
+		// Bunny position.
 		float bunnyMtx[16];
 		mtxScaleRotateTranslate(bunnyMtx
-			, 5.0f                          //scaleX
-			, 5.0f                          //scaleY
-			, 5.0f                          //scaleZ
-			, 0.0f                          //rotX
-			, 1.56f + sceneTimeAccumulator  //rotY
-			, 0.0f                          //rotZ
-			, 0.0f                          //translateX
-			, 2.0f                          //translateY
-			, 0.0f                          //translateZ
+			, 5.0f
+			, 5.0f
+			, 5.0f
+			, 0.0f
+			, 1.56f + sceneTimeAccumulator
+			, 0.0f
+			, 0.0f
+			, 2.0f
+			, 0.0f
 			);
 
-		//columns position
+		// Columns position.
 		const float dist = 14.0f;
 		const float columnPositions[4][3] =
 		{
@@ -1109,15 +1101,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		for (uint8_t ii = 0; ii < 4; ++ii)
 		{
 			mtxScaleRotateTranslate(columnMtx[ii]
-				, 1.0f                    //scaleX
-				, 1.0f                    //scaleY
-				, 1.0f                    //scaleZ
-				, 0.0f                    //rotX
-				, 0.0f                    //rotY
-				, 0.0f                    //rotZ
-				, columnPositions[ii][0]  //translateX
-				, columnPositions[ii][1]  //translateY
-				, columnPositions[ii][2]  //translateZ
+				, 1.0f
+				, 1.0f
+				, 1.0f
+				, 0.0f
+				, 0.0f
+				, 0.0f
+				, columnPositions[ii][0]
+				, columnPositions[ii][1]
+				, columnPositions[ii][2]
 				);
 		}
 
@@ -1126,23 +1118,23 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		for (uint16_t ii = 0; ii < numCubes; ++ii)
 		{
 			mtxScaleRotateTranslate(cubeMtx[ii]
-				, 1.0f  //scaleX
-				, 1.0f  //scaleY
-				, 1.0f  //scaleZ
-				, 0.0f  //rotX
-				, 0.0f  //rotY
-				, 0.0f  //rotZ
-				, sin(ii * 2.0f + 13.0f + sceneTimeAccumulator) * 13.0f  //translateX
-				, 4.0f                                                   //translateY
-				, cos(ii * 2.0f + 13.0f + sceneTimeAccumulator) * 13.0f  //translateZ
+				, 1.0f
+				, 1.0f
+				, 1.0f
+				, 0.0f
+				, 0.0f
+				, 0.0f
+				, sin(ii * 2.0f + 13.0f + sceneTimeAccumulator) * 13.0f
+				, 4.0f
+				, cos(ii * 2.0f + 13.0f + sceneTimeAccumulator) * 13.0f
 				);
 		}
 
-		// Make sure at the beginning everything gets cleared
+		// Make sure at the beginning everything gets cleared.
 		clearView(0, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT, clearValues);
 		submit(0);
 
-		//white bunny and columns
+		// White bunny and columns.
 		color[0] = 1.0f;
 		color[1] = 1.0f;
 		color[2] = 1.0f;
