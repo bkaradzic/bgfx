@@ -74,7 +74,7 @@ namespace bgfx
 
 		BX_TRACE("glX num configs %d", numConfigs);
 
-		XVisualInfo* visualInfo = 0;
+		XVisualInfo* visualInfo = NULL;
 		for (int ii = 0; ii < numConfigs; ++ii)
 		{
 			visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
@@ -108,12 +108,13 @@ namespace bgfx
 				if (valid)
 				{
 					bestConfig = configs[ii];
+					BX_TRACE("Best config %d.", ii);
 					break;
 				}
 			}
 
 			XFree(visualInfo);
-			visualInfo = 0;
+			visualInfo = NULL;
 		}
 
 		XFree(configs);
