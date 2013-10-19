@@ -868,7 +868,7 @@ struct HalfEdges
 			edges[idx2].push_back(idx0);
 		}
 
-		uint32_t numRows = edges.size();
+		uint32_t numRows = (uint32_t)edges.size();
 		m_offsets = (uint32_t*)malloc(numRows * sizeof(uint32_t));
 
 		HalfEdge* he = m_data;
@@ -877,7 +877,7 @@ struct HalfEdges
 			m_offsets[ii] = uint32_t(he - m_data);
 
 			std::vector<uint16_t>& row = edges[ii];
-			for (uint32_t jj = 0, end = row.size(); jj < end; ++jj)
+			for (uint32_t jj = 0, end = (uint32_t)row.size(); jj < end; ++jj)
 			{
 				he->m_secondIndex = row[jj];
 				he->m_marked = false;
@@ -1040,7 +1040,7 @@ struct Group
 				face.m_reverseVertexOrder = false;
 				m_edges.push_back(edge);
 
-				edgeIndexMap.insert(std::make_pair(std::make_pair(i0, i1), m_edges.size()-1));
+				edgeIndexMap.insert(std::make_pair(std::make_pair(i0, i1), (uint32_t)m_edges.size()-1));
 			}
 		}
 	}
