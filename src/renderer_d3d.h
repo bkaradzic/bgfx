@@ -30,11 +30,32 @@ namespace bgfx
 					); \
 			} while (0)
 
+#define _DX_RELEASE(_ptr, _expected, _check) \
+			do { \
+				if (NULL != _ptr) \
+				{ \
+					ULONG count = _ptr->Release(); \
+					_check(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); BX_UNUSED(count); \
+					_ptr = NULL; \
+				} \
+			} while (0)
+
+#	define _DX_CHECK_REFCOUNT(_ptr, _expected) \
+			do { \
+				ULONG count = getRefCount(_ptr); \
+				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
+			} while (0)
+
 #if BGFX_CONFIG_DEBUG
 #	define DX_CHECK(_call) _DX_CHECK(_call)
+#	define DX_CHECK_REFCOUNT(_ptr, _expected) _DX_CHECK_REFCOUNT(_ptr, _expected)
 #else
 #	define DX_CHECK(_call) _call
+#	define DX_CHECK_REFCOUNT(_ptr, _expected)
 #endif // BGFX_CONFIG_DEBUG
+
+#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
+#define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 
 	typedef int (WINAPI *D3DPERF_BeginEventFunc)(DWORD _color, LPCWSTR _wszName);
 	typedef int (WINAPI *D3DPERF_EndEventFunc)();
@@ -57,30 +78,6 @@ namespace bgfx
 #	define PIX_BEGINEVENT(_color, _name)
 #	define PIX_ENDEVENT()
 #endif // BGFX_CONFIG_DEBUG_PIX
-
-#if BGFX_CONFIG_DEBUG
-#	define DX_CHECK_REFCOUNT(_ptr, _expected) \
-			do { \
-				ULONG count = getRefCount(_ptr); \
-				BX_CHECK(_expected == count, "RefCount is %d (expected %d).", count, _expected); \
-			} while (0)
-
-#else
-#	define DX_CHECK_REFCOUNT(_ptr, _expected)
-#endif // BGFX_CONFIG_DEBUG
-
-#define _DX_RELEASE(_ptr, _expected, _check) \
-			do { \
-				if (NULL != _ptr) \
-				{ \
-					ULONG count = _ptr->Release(); \
-					_check(_expected == count, "RefCount is %d (expected %d).", count, _expected); BX_UNUSED(count); \
-					_ptr = NULL; \
-				} \
-			} while (0)
-
-#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
-#define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 
 	inline int getRefCount(IUnknown* _interface)
 	{

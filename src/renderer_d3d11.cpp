@@ -66,7 +66,7 @@ namespace bgfx
 
 	static const D3D11_COMPARISON_FUNC s_depthFunc[] =
 	{
-		D3D11_COMPARISON_LESS, // ignored
+		D3D11_COMPARISON_FUNC(0), // ignored
 		D3D11_COMPARISON_LESS,
 		D3D11_COMPARISON_LESS_EQUAL,
 		D3D11_COMPARISON_EQUAL,
@@ -79,7 +79,7 @@ namespace bgfx
 
 	static const D3D11_COMPARISON_FUNC s_stencilFunc[] =
 	{
-		D3D11_COMPARISON_LESS, // ignored
+		D3D11_COMPARISON_FUNC(0), // ignored
 		D3D11_COMPARISON_LESS,
 		D3D11_COMPARISON_LESS_EQUAL,
 		D3D11_COMPARISON_EQUAL,
@@ -456,8 +456,9 @@ namespace bgfx
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 			// GPA increases device ref count and triggers assert in debug
-			// build. Warn only instead.
-			DX_RELEASE_WARNONLY(device, 2);
+			// build. Set flag to disable reference count checks.
+			setGraphicsDebuggerPresent(3 < getRefCount(device) );
+			DX_RELEASE(device, 2);
 
 			hr = adapter->GetDesc(&m_adapterDesc);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");

@@ -229,6 +229,8 @@ namespace bgfx
 	extern bx::ReallocatorI* g_allocator;
 	extern Caps g_caps;
 
+	void setGraphicsDebuggerPresent(bool _present);
+	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
 	bool renderFrame();

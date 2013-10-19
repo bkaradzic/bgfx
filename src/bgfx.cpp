@@ -187,6 +187,7 @@ namespace bgfx
 
 	static CallbackStub* s_callbackStub = NULL;
 	static AllocatorStub* s_allocatorStub = NULL;
+	static bool s_graphicsDebuggerPresent = false;
 
 	CallbackI* g_callback = NULL;
 	bx::ReallocatorI* g_allocator = NULL;
@@ -199,6 +200,17 @@ namespace bgfx
 	bool hasContext()
 	{
 		return NULL != s_ctx;
+	}
+
+	void setGraphicsDebuggerPresent(bool _present)
+	{
+		BX_TRACE("Graphics debugger is %spresent.", _present ? "" : "not ");
+		s_graphicsDebuggerPresent = _present;
+	}
+
+	bool isGraphicsDebuggerPresent()
+	{
+		return s_graphicsDebuggerPresent;
 	}
 
 	void fatal(Fatal::Enum _code, const char* _format, ...)
