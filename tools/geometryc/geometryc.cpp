@@ -9,8 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
 #include <vector>
+#include <string>
 #include <unordered_map>
 
 #include <forsythtriangleorderoptimizer.h>
