@@ -396,7 +396,7 @@ Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.
 Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and
   examples.  
 Milos Tosic ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
-Dario Manesku ([@dariomanesku](https://github.com/dariomanesku) - 13-stencil, 
+Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil, 
   14-shadowvolumes  
 
 When contributing to the bgfx project you must agree to the BSD 2-clause
