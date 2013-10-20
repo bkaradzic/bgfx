@@ -109,7 +109,7 @@ function exampleProject(_name, _uuid)
 
 	configuration { "osx" }
 		files {
---			BGFX_DIR .. "examples/common/**.mm",
+			BGFX_DIR .. "examples/common/**.mm",
 		}
 		links {
 			"Cocoa.framework",
