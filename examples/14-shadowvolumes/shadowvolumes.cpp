@@ -1333,7 +1333,7 @@ void shadowVolumeTransform(float* __restrict _outMtx
 						   , const float* __restrict _lightPos // world pos
 						   )
 {
-	/*
+	/**
 	 * Instead of transforming all the vertices, transform light instead:
 	 * mtx = pivotTranslate -> rotateZYX -> invScale
 	 * light = mtx * origin
@@ -2236,9 +2236,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		//setup light positions
 		float lightPosRadius[MAX_NUM_LIGHTS][4];
-		switch (lightPattern)
+		if (LightPattern0 == lightPattern)
 		{
-		case LightPattern0:
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
 				lightPosRadius[ii][0] = cos(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
@@ -2246,8 +2245,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				lightPosRadius[ii][2] = sin(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
-			break;
-		case LightPattern1:
+		}
+		else
+		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
 				lightPosRadius[ii][0] = cos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI) ) * 40.0f;
@@ -2255,7 +2255,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				lightPosRadius[ii][2] = sin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI) ) * 40.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
-			break;
 		}
 
 		//use debug font to print information about this example.
@@ -2426,52 +2425,55 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Scene 1 - shadow casters - Bunny instances
-		enum Direction
 		{
-			Left = 0,
-			Down,
-			Right,
-			Up,
-
-			DirectionCount,
-		};
-		uint8_t currentDirection = Left;
-		float currX = 0.0f;
-		float currY = 0.0f;
-		const float stepX = 20.0f;
-		const float stepY = 20.0f;
-		uint8_t stateStep = 0;
-		float stateChange = 1.0f;
-
-		for (uint8_t ii = 0; ii < settings_instanceCount; ++ii)
-		{
-			Instance& inst = shadowCasters[Scene1][shadowCastersCount[Scene1]++];
-			inst.m_scale[0]    = 5.0f;
-			inst.m_scale[1]    = 5.0f;
-			inst.m_scale[2]    = 5.0f;
-			inst.m_rotation[0] = 0.0f;
-			inst.m_rotation[1] = float(M_PI);
-			inst.m_rotation[2] = 0.0f;
-			inst.m_pos[0]      = currX;
-			inst.m_pos[1]      = 0.0f;
-			inst.m_pos[2]      = currY;
-			inst.m_model       = bunnyModel;
-
-			stateStep++;
-			if (stateStep >= floor(stateChange/2.0f) )
+			enum Direction
 			{
-				currentDirection = (currentDirection+1)%DirectionCount;
-				stateStep = 0;
-				stateChange += 1.0f;
-			}
+				Left = 0,
+				Down,
+				Right,
+				Up,
 
-			switch (currentDirection)
+				DirectionCount,
+			};
+
+			uint8_t currentDirection = Left;
+			float currX = 0.0f;
+			float currY = 0.0f;
+			const float stepX = 20.0f;
+			const float stepY = 20.0f;
+			uint8_t stateStep = 0;
+			float stateChange = 1.0f;
+
+			for (uint8_t ii = 0; ii < settings_instanceCount; ++ii)
 			{
-			case Left:  currX -= stepX; break;
-			case Down:  currY -= stepY; break;
-			case Right: currX += stepX; break;
-			case Up:    currY += stepY; break;
-			default: break;
+				Instance& inst = shadowCasters[Scene1][shadowCastersCount[Scene1]++];
+				inst.m_scale[0]    = 5.0f;
+				inst.m_scale[1]    = 5.0f;
+				inst.m_scale[2]    = 5.0f;
+				inst.m_rotation[0] = 0.0f;
+				inst.m_rotation[1] = float(M_PI);
+				inst.m_rotation[2] = 0.0f;
+				inst.m_pos[0]      = currX;
+				inst.m_pos[1]      = 0.0f;
+				inst.m_pos[2]      = currY;
+				inst.m_model       = bunnyModel;
+
+				stateStep++;
+				if (stateStep >= floor(stateChange/2.0f) )
+				{
+					currentDirection = (currentDirection+1)%DirectionCount;
+					stateStep = 0;
+					stateChange += 1.0f;
+				}
+
+				switch (currentDirection)
+				{
+				case Left:  currX -= stepX; break;
+				case Down:  currY -= stepY; break;
+				case Right: currX += stepX; break;
+				case Up:    currY += stepY; break;
+				default: break;
+				}
 			}
 		}
 
@@ -2541,10 +2543,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		profTime = bx::getHPCounter();
 
 		/**
-		* For each light: 
-		* 1. Compute and draw shadow volume to stencil buffer
-		* 2. Draw diffuse with stencil test
-		*/
+		 * For each light: 
+		 * 1. Compute and draw shadow volume to stencil buffer
+		 * 2. Draw diffuse with stencil test
+		 */
 		for (uint8_t ii = 0, viewId = VIEWID_RANGE15_PASS2; ii < settings_numLights; ++ii, ++viewId)
 		{
 			const float* lightPos = lightPosRadius[ii];
@@ -2565,7 +2567,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 
 			// Create near clip volume for current light.
-			float nearClipVolume[6 * 4];
+			float nearClipVolume[6 * 4] = {};
 			float pointLight[4];
 			if (settings_mixedSvImpl)
 			{
@@ -2714,9 +2716,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			s_uniforms.m_params.m_ambientPass = 0.0f;
 			s_uniforms.m_params.m_lightningPass = 1.0f;
 
-			RenderState& drawDiffuse = (settings_useStencilTexture ?
-				s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawDiffuse] :
-			s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawDiffuse]);
+			RenderState& drawDiffuse = settings_useStencilTexture
+				? s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawDiffuse]
+				: s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawDiffuse]
+				;
 
 			// If using stencil texture, viewId is set to render target. Incr it to render to default back buffer.
 			viewId += uint8_t(settings_useStencilTexture);
