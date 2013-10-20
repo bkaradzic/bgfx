@@ -41,6 +41,7 @@ namespace bgfx
 #	else
 			EGL_DEPTH_SIZE, 24,
 #	endif // BX_PLATFORM_
+			EGL_STENCIL_SIZE, 8,
 
 			EGL_NONE
 		};
