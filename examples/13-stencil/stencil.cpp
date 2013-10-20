@@ -326,10 +326,6 @@ void mtxBillboard(float* __restrict _result
 	_result[15] = 1.0f;
 }
 
-//-------------------------------------------------
-// Uniforms
-//-------------------------------------------------
-
 struct Uniforms
 {
 	void init()
@@ -418,20 +414,25 @@ struct Uniforms
 		bgfx::destroyUniform(u_lightRgbInnerR);
 	}
 
-	struct
+	struct Params
 	{
 		float m_ambientPass;
 		float m_lightningPass;
 		float m_lightCount;
 		float m_lightIndex;
-	} m_params;
-	struct
+	};
+
+	struct SvParams
 	{
 		float m_useStencilTex;
 		float m_dfail;
 		float m_unused0;
 		float m_unused1;
-	} m_svparams;
+	};
+
+
+	Params m_params;
+	SvParams m_svparams;
 	float m_ambient[4];
 	float m_diffuse[4];
 	float m_specular_shininess[4];
