@@ -23,6 +23,11 @@ using namespace std::tr1;
 #include <unordered_map>
 #include <map>
 
+#define VIEWID_RANGE1_PASS0     1 
+#define VIEWID_RANGE1_RT_PASS1  2
+#define VIEWID_RANGE15_PASS2    3
+#define VIEWID_RANGE1_PASS3    20
+
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
 	union
@@ -83,10 +88,6 @@ static const uint16_t s_planeIndices[s_numPlaneIndices] =
 	0, 1, 2,
 	1, 3, 2,
 };
-
-//-------------------------------------------------
-// Helper functions
-//-------------------------------------------------
 
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
@@ -177,21 +178,17 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return program;
 }
 
-//-------------------------------------------------
-// Math
-//-------------------------------------------------
-
 void mtxScaleRotateTranslate(float* _result
-						   , const float _scaleX
-						   , const float _scaleY
-						   , const float _scaleZ
-						   , const float _rotX
-						   , const float _rotY
-						   , const float _rotZ
-						   , const float _translateX
-						   , const float _translateY
-						   , const float _translateZ
-						   )
+							 , const float _scaleX
+							 , const float _scaleY
+							 , const float _scaleZ
+							 , const float _rotX
+							 , const float _rotY
+							 , const float _rotZ
+							 , const float _translateX
+							 , const float _translateY
+							 , const float _translateZ
+							 )
 {
 	float mtxRotateTranslate[16];
 	float mtxScale[16];
@@ -201,7 +198,7 @@ void mtxScaleRotateTranslate(float* _result
 	mtxRotateTranslate[13] = _translateY;
 	mtxRotateTranslate[14] = _translateZ;
 
-	memset(mtxScale, 0, 16*sizeof(float));
+	memset(mtxScale, 0, 16*sizeof(float) );
 	mtxScale[0]  = _scaleX;
 	mtxScale[5]  = _scaleY;
 	mtxScale[10] = _scaleZ;
@@ -210,43 +207,16 @@ void mtxScaleRotateTranslate(float* _result
 	mtxMul(_result, mtxScale, mtxRotateTranslate);
 }
 
-void mtxReflected(float*__restrict _result
-				, const float* __restrict _p /* plane */
-				, const float* __restrict _n /* normal */
-				)
-{
-	float dot = vec3Dot(_p, _n);
-
-	_result[ 0] =  1.0f -  2.0f * _n[0] * _n[0]; //1-2Nx^2
-	_result[ 1] = -2.0f * _n[0] * _n[1];         //-2*Nx*Ny
-	_result[ 2] = -2.0f * _n[0] * _n[2];         //-2*NxNz
-	_result[ 3] = 0.0f;                          //0
-
-	_result[ 4] = -2.0f * _n[0] * _n[1];         //-2*NxNy
-	_result[ 5] =  1.0f -  2.0f * _n[1] * _n[1]; //1-2*Ny^2
-	_result[ 6] = -2.0f * _n[1] * _n[2];         //-2*NyNz
-	_result[ 7] = 0.0f;                          //0
-
-	_result[ 8] = -2.0f * _n[0] * _n[2];         //-2*NxNz
-	_result[ 9] = -2.0f * _n[1] * _n[2];         //-2NyNz
-	_result[10] =  1.0f -  2.0f * _n[2] * _n[2]; //1-2*Nz^2
-	_result[11] = 0.0f;                          //0
-
-	_result[12] = 2.0f * dot * _n[0];            //2*dot*Nx
-	_result[13] = 2.0f * dot * _n[1];            //2*dot*Ny
-	_result[14] = 2.0f * dot * _n[2];            //2*dot*Nz
-	_result[15] = 1.0f;                          //1
-}
-
 void mtxShadow(float* __restrict _result
-			 , const float* __restrict _ground
-			 , const float* __restrict _light
-			 )
+			   , const float* __restrict _ground
+			   , const float* __restrict _light
+			   )
 {
-	float dot = _ground[0] * _light[0] +
-		_ground[1] * _light[1] +
-		_ground[2] * _light[2] +
-		_ground[3] * _light[3];
+	float dot = _ground[0] * _light[0]
+			  + _ground[1] * _light[1]
+			  + _ground[2] * _light[2]
+			  + _ground[3] * _light[3]
+			  ;
 
 	_result[ 0] =  dot - _light[0] * _ground[0];
 	_result[ 1] = 0.0f - _light[1] * _ground[0];
@@ -270,10 +240,10 @@ void mtxShadow(float* __restrict _result
 }
 
 void mtxBillboard(float* __restrict _result
-				, const float* __restrict _view
-				, const float* __restrict _pos
-				, const float* __restrict _scale
-				)
+				  , const float* __restrict _view
+				  , const float* __restrict _pos
+				  , const float* __restrict _scale
+				  )
 {
 	_result[ 0] = _view[0]  * _scale[0];
 	_result[ 1] = _view[4]  * _scale[0];
@@ -294,10 +264,10 @@ void mtxBillboard(float* __restrict _result
 }
 
 void planeNormal(float* __restrict _result
-		, const float* __restrict _v0
-		, const float* __restrict _v1
-		, const float* __restrict _v2
-		)
+				 , const float* __restrict _v0
+				 , const float* __restrict _v1
+				 , const float* __restrict _v2
+				 )
 {
 	float vec0[3], vec1[3];
 	float cross[3];
@@ -315,10 +285,6 @@ void planeNormal(float* __restrict _result
 
 	_result[3] = -vec3Dot(_result, _v0);
 }
-
-//-------------------------------------------------
-// Uniforms
-//-------------------------------------------------
 
 struct Uniforms
 {
@@ -344,9 +310,9 @@ struct Uniforms
 		m_specular_shininess[2] = 1.0f;
 		m_specular_shininess[3] = 25.0f; //shininess
 
-		m_fog[0] = 0.0f;   //color
-		m_fog[1] = 0.0f;   //color
-		m_fog[2] = 0.0f;   //color
+		m_fog[0] = 0.0f; //color
+		m_fog[1] = 0.0f;
+		m_fog[2] = 0.0f;
 		m_fog[3] = 0.0055f; //density
 
 		m_color[0] = 1.0f;
@@ -430,20 +396,24 @@ struct Uniforms
 		bgfx::destroyUniform(u_virtualLightPos_extrusionDist);
 	}
 
-	struct
+	struct Params
 	{
 		float m_ambientPass;
 		float m_lightningPass;
 		float m_alpha;
 		float m_lightCount;
-	} m_params;
-	struct
+	};
+	
+	struct SvParams
 	{
 		float m_useStencilTex;
 		float m_dfail;
 		float m_unused0;
 		float m_unused1;
-	} m_svparams;
+	};
+
+	Params m_params;
+	SvParams m_svparams;
 	float m_ambient[4];
 	float m_diffuse[4];
 	float m_specular_shininess[4];
@@ -480,11 +450,8 @@ struct Uniforms
 	bgfx::UniformHandle u_lightRgbInnerR;
 	bgfx::UniformHandle u_virtualLightPos_extrusionDist;
 };
-static Uniforms s_uniforms;
 
-//-------------------------------------------------
-// Render state
-//-------------------------------------------------
+static Uniforms s_uniforms;
 
 struct RenderState
 {
@@ -523,172 +490,171 @@ static void setRenderState(const RenderState& _renderState)
 
 static RenderState s_renderStates[RenderState::Count]  =
 {
-	{ //ShadowVolume_UsingStencilTexture_DrawAmbient
+	{ // ShadowVolume_UsingStencilTexture_DrawAmbient
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //ShadowVolume_UsingStencilTexture_BuildDepth
+	{ // ShadowVolume_UsingStencilTexture_BuildDepth
 		BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass
+	{ // ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-			| BGFX_STATE_DEPTH_TEST_LEQUAL
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+		| BGFX_STATE_DEPTH_TEST_LEQUAL
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //ShadowVolume_UsingStencilTexture_CraftStencil_DepthFail
+	{ // ShadowVolume_UsingStencilTexture_CraftStencil_DepthFail
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-			| BGFX_STATE_DEPTH_TEST_GEQUAL
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
-	},
-	{ //ShadowVolume_UsingStencilTexture_DrawDiffuse
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+		| BGFX_STATE_DEPTH_TEST_GEQUAL
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
+		},
+	{ // ShadowVolume_UsingStencilTexture_DrawDiffuse
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_EQUAL
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_DEPTH_TEST_EQUAL
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //ShadowVolume_UsingStencilBuffer_DrawAmbient
+	{ // ShadowVolume_UsingStencilBuffer_DrawAmbient
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //ShadowVolume_UsingStencilBuffer_CraftStencil_DepthPass
+	{ // ShadowVolume_UsingStencilBuffer_CraftStencil_DepthPass
 		BGFX_STATE_DEPTH_TEST_LEQUAL
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_TEST_ALWAYS
-			| BGFX_STENCIL_FUNC_REF(1)        
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_KEEP
-			| BGFX_STENCIL_OP_FAIL_Z_KEEP
-			| BGFX_STENCIL_OP_PASS_Z_DECR
-			, BGFX_STENCIL_TEST_ALWAYS
-			| BGFX_STENCIL_FUNC_REF(1)        
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_KEEP
-			| BGFX_STENCIL_OP_FAIL_Z_KEEP
-			| BGFX_STENCIL_OP_PASS_Z_INCR
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_TEST_ALWAYS
+		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_RMASK(0xff)
+		| BGFX_STENCIL_OP_FAIL_S_KEEP
+		| BGFX_STENCIL_OP_FAIL_Z_KEEP
+		| BGFX_STENCIL_OP_PASS_Z_DECR
+		, BGFX_STENCIL_TEST_ALWAYS
+		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_RMASK(0xff)
+		| BGFX_STENCIL_OP_FAIL_S_KEEP
+		| BGFX_STENCIL_OP_FAIL_Z_KEEP
+		| BGFX_STENCIL_OP_PASS_Z_INCR
 	},
-	{ //ShadowVolume_UsingStencilBuffer_CraftStencil_DepthFail
+	{ // ShadowVolume_UsingStencilBuffer_CraftStencil_DepthFail
 		BGFX_STATE_DEPTH_TEST_LEQUAL
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_TEST_ALWAYS
-			| BGFX_STENCIL_FUNC_REF(1)        
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_KEEP
-			| BGFX_STENCIL_OP_FAIL_Z_INCR
-			| BGFX_STENCIL_OP_PASS_Z_KEEP
-			, BGFX_STENCIL_TEST_ALWAYS
-			| BGFX_STENCIL_FUNC_REF(1)        
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_KEEP
-			| BGFX_STENCIL_OP_FAIL_Z_DECR
-			| BGFX_STENCIL_OP_PASS_Z_KEEP
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_TEST_ALWAYS
+		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_RMASK(0xff)
+		| BGFX_STENCIL_OP_FAIL_S_KEEP
+		| BGFX_STENCIL_OP_FAIL_Z_INCR
+		| BGFX_STENCIL_OP_PASS_Z_KEEP
+		, BGFX_STENCIL_TEST_ALWAYS
+		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_RMASK(0xff)
+		| BGFX_STENCIL_OP_FAIL_S_KEEP
+		| BGFX_STENCIL_OP_FAIL_Z_DECR
+		| BGFX_STENCIL_OP_PASS_Z_KEEP
 	},
-	{ //ShadowVolume_UsingStencilBuffer_DrawDiffuse
-			BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-			| BGFX_STATE_DEPTH_TEST_EQUAL
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_TEST_EQUAL
-			| BGFX_STENCIL_FUNC_REF(0)
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_KEEP
-			| BGFX_STENCIL_OP_FAIL_Z_KEEP
-			| BGFX_STENCIL_OP_PASS_Z_KEEP
-			, BGFX_STENCIL_NONE
-	},
-	{ //Custom_Default
+	{ // ShadowVolume_UsingStencilBuffer_DrawDiffuse
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+		| BGFX_STATE_DEPTH_TEST_EQUAL
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_TEST_EQUAL
+		| BGFX_STENCIL_FUNC_REF(0)
+		| BGFX_STENCIL_FUNC_RMASK(0xff)
+		| BGFX_STENCIL_OP_FAIL_S_KEEP
+		| BGFX_STENCIL_OP_FAIL_Z_KEEP
+		| BGFX_STENCIL_OP_PASS_Z_KEEP
+		, BGFX_STENCIL_NONE
 	},
-	{ //Custom_BlendLightTexture
+	{ // Custom_Default
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_COLOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //Custom_DrawPlaneBottom
+	{ // Custom_BlendLightTexture
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_CULL_CW
-			| BGFX_STATE_MSAA
-			, UINT32_MAX
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_COLOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	},
-	{ //Custom_DrawShadowVolume_Lines
+	{ // Custom_DrawPlaneBottom
 		BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_SRC_ALPHA)
-			| BGFX_STATE_PT_LINES
-			| BGFX_STATE_MSAA
-			, 0x0f0f0fff
-			, BGFX_STENCIL_NONE
-			, BGFX_STENCIL_NONE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_CULL_CW
+		| BGFX_STATE_MSAA
+		, UINT32_MAX
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
+	},
+	{ // Custom_DrawShadowVolume_Lines
+		BGFX_STATE_RGB_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_SRC_ALPHA)
+		| BGFX_STATE_PT_LINES
+		| BGFX_STATE_MSAA
+		, 0x0f0f0fff
+		, BGFX_STENCIL_NONE
+		, BGFX_STENCIL_NONE
 	}
 };
 
 struct ViewState
 {
-	ViewState(uint32_t _width  = 1280
-			, uint32_t _height = 720
-			)
+	ViewState(uint32_t _width  = 1280, uint32_t _height = 720)
 		: m_width(_width)
 		, m_height(_height)
-	{ }
+	{
+	}
 
 	uint32_t m_width;
 	uint32_t m_height;
@@ -718,44 +684,42 @@ struct ClearValues
 void clearView(uint8_t _id, uint8_t _flags, const ClearValues& _clearValues)
 {
 	bgfx::setViewClear(_id
-			, _flags
-			, _clearValues.m_clearRgba
-			, _clearValues.m_clearDepth
-			, _clearValues.m_clearStencil
-			);
+		, _flags
+		, _clearValues.m_clearRgba
+		, _clearValues.m_clearDepth
+		, _clearValues.m_clearStencil
+		);
 
-	// Keep track of cleared views
+	// Keep track of cleared views.
 	s_clearMask |= 1 << _id;
 }
 
 void clearViewMask(uint32_t _viewMask, uint8_t _flags, const ClearValues& _clearValues)
 {
 	bgfx::setViewClearMask(_viewMask
-			, _flags
-			, _clearValues.m_clearRgba
-			, _clearValues.m_clearDepth
-			, _clearValues.m_clearStencil
-			);
+		, _flags
+		, _clearValues.m_clearRgba
+		, _clearValues.m_clearDepth
+		, _clearValues.m_clearStencil
+		);
 
-	// Keep track of cleared views
+	// Keep track of cleared views.
 	s_clearMask |= _viewMask;
 }
 
 void submit(uint8_t _id, int32_t _depth = 0)
 {
-	// Submit
 	bgfx::submit(_id, _depth);
 
-	// Keep track of submited view ids
+	// Keep track of submited view ids.
 	s_viewMask |= 1 << _id;
 }
 
 void submitMask(uint32_t _viewMask, int32_t _depth = 0)
 {
-	// Submit
 	bgfx::submitMask(_viewMask, _depth);
 
-	// Keep track of submited view ids
+	// Keep track of submited view ids.
 	s_viewMask |= _viewMask;
 }
 
@@ -766,10 +730,6 @@ void setViewRenderTarget(uint8_t _id, bgfx::RenderTargetHandle _handle)
 	// Keep track of render target view ids
 	s_rtMask |= 1 << _id;
 }
-
-//-------------------------------------------------
-// Mesh
-//-------------------------------------------------
 
 struct Aabb
 {
@@ -820,8 +780,8 @@ struct Edge
 	Edge(const float* _v0, const float* _v1)
 		: m_faceIndex(0)
 	{
-		memcpy(m_v0, _v0, 3*sizeof(float));
-		memcpy(m_v1, _v1, 3*sizeof(float));
+		memcpy(m_v0, _v0, 3*sizeof(float) );
+		memcpy(m_v1, _v1, 3*sizeof(float) );
 	}               
 
 	Plane& nextFace()
@@ -850,11 +810,12 @@ struct HalfEdges
 		: m_data()
 		, m_offsets()
 		, m_endPtr()
-	{ }
+	{
+	}
 
 	void init(uint16_t* _indices, uint32_t _numIndices)
 	{
-		m_data = (HalfEdge*)malloc(2 * _numIndices * sizeof(HalfEdge));
+		m_data = (HalfEdge*)malloc(2 * _numIndices * sizeof(HalfEdge) );
 
 		std::unordered_map<uint16_t, std::vector<uint16_t> > edges;
 		for (uint32_t ii = 0; ii < _numIndices; ii+=3)
@@ -869,7 +830,7 @@ struct HalfEdges
 		}
 
 		uint32_t numRows = (uint32_t)edges.size();
-		m_offsets = (uint32_t*)malloc(numRows * sizeof(uint32_t));
+		m_offsets = (uint32_t*)malloc(numRows * sizeof(uint32_t) );
 
 		HalfEdge* he = m_data;
 		for (uint32_t ii = 0; ii < numRows; ++ii)
@@ -889,7 +850,7 @@ struct HalfEdges
 		he->m_secondIndex = 0;
 		m_endPtr = he;
 	}
-	
+
 	void destroy()
 	{
 		free(m_data);
@@ -929,8 +890,15 @@ struct HalfEdges
 		return ret;
 	}
 
-	inline HalfEdge* begin() const { return m_data; }
-	inline HalfEdge* end() const { return m_endPtr; }
+	inline HalfEdge* begin() const
+	{
+		return m_data;
+	}
+
+	inline HalfEdge* end() const
+	{
+		return m_endPtr;
+	}
 
 	HalfEdge* m_data;
 	uint32_t* m_offsets;
@@ -988,7 +956,7 @@ struct Group
 			face.m_i[0] = i0;
 			face.m_i[1] = i1;
 			face.m_i[2] = i2;
-			memcpy(face.m_plane, plane, 4*sizeof(float));
+			memcpy(face.m_plane, plane, 4*sizeof(float) );
 			m_faces.push_back(face);
 
 			uint16_t triangleI[3][2] =
@@ -1010,14 +978,14 @@ struct Group
 
 			for (uint8_t jj = 0; jj < 3; ++jj)
 			{   
-				EdgeIndexMap::iterator iter = edgeIndexMap.find(std::make_pair(triangleI[jj][1], triangleI[jj][0]));
+				EdgeIndexMap::iterator iter = edgeIndexMap.find(std::make_pair(triangleI[jj][1], triangleI[jj][0]) );
 				if (edgeIndexMap.end() != iter)
 				{
 					const uint32_t index = iter->second;
 					Edge* edge = &m_edges[index];
 
 					Edge::Plane& face = edge->nextFace();
-					memcpy(face.m_plane, plane, 4*sizeof(float));
+					memcpy(face.m_plane, plane, 4*sizeof(float) );
 					face.m_reverseVertexOrder = true;
 				}
 				else
@@ -1036,11 +1004,11 @@ struct Group
 
 				Edge edge(v0, v1);
 				Edge::Plane& face = edge.nextFace();
-				memcpy(face.m_plane, plane, 4*sizeof(float));
+				memcpy(face.m_plane, plane, 4*sizeof(float) );
 				face.m_reverseVertexOrder = false;
 				m_edges.push_back(edge);
 
-				edgeIndexMap.insert(std::make_pair(std::make_pair(i0, i1), (uint32_t)m_edges.size()-1));
+				edgeIndexMap.insert(std::make_pair(std::make_pair(i0, i1), (uint32_t)m_edges.size()-1) );
 			}
 		}
 	}
@@ -1073,6 +1041,7 @@ struct Group
 	FaceArray m_faces;
 	HalfEdges m_halfEdges;
 };
+
 typedef std::vector<Group> GroupArray;
 
 struct Mesh
@@ -1102,12 +1071,6 @@ struct Mesh
 
 		mem = bgfx::makeRef(group.m_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
-	
-		//TODO:
-		// group.m_sphere = ...
-		// group.m_aabb = ...
-		// group.m_obb = ...
-		// group.m_prims = ...
 
 		m_groups.push_back(group);
 	}
@@ -1128,77 +1091,77 @@ struct Mesh
 		{
 			switch (chunk)
 			{
-				case BGFX_CHUNK_MAGIC_VB:
+			case BGFX_CHUNK_MAGIC_VB:
+				{
+					bx::read(&reader, group.m_sphere);
+					bx::read(&reader, group.m_aabb);
+					bx::read(&reader, group.m_obb);
+
+					bx::read(&reader, m_decl);
+					uint16_t stride = m_decl.getStride();
+
+					bx::read(&reader, group.m_numVertices);
+					const uint32_t size = group.m_numVertices*stride;
+					group.m_vertices = (uint8_t*)malloc(size);
+					bx::read(&reader, group.m_vertices, size);
+
+					const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, size);
+					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+				}
+				break;
+
+			case BGFX_CHUNK_MAGIC_IB:
+				{
+					bx::read(&reader, group.m_numIndices);
+					const uint32_t size = group.m_numIndices*2;
+					group.m_indices = (uint16_t*)malloc(size);
+					bx::read(&reader, group.m_indices, size);
+
+					const bgfx::Memory* mem = bgfx::makeRef(group.m_indices, size);
+					group.m_ibh = bgfx::createIndexBuffer(mem);
+				}
+				break;
+
+			case BGFX_CHUNK_MAGIC_PRI:
+				{
+					uint16_t len;
+					bx::read(&reader, len);
+
+					std::string material;
+					material.resize(len);
+					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
+
+					uint16_t num;
+					bx::read(&reader, num);
+
+					for (uint32_t ii = 0; ii < num; ++ii)
 					{
-						bx::read(&reader, group.m_sphere);
-						bx::read(&reader, group.m_aabb);
-						bx::read(&reader, group.m_obb);
-
-						bx::read(&reader, m_decl);
-						uint16_t stride = m_decl.getStride();
-
-						bx::read(&reader, group.m_numVertices);
-						const uint32_t size = group.m_numVertices*stride;
-						group.m_vertices = (uint8_t*)malloc(size);
-						bx::read(&reader, group.m_vertices, size);
-
-						const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, size);
-						group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-					}
-					break;
-
-				case BGFX_CHUNK_MAGIC_IB:
-					{
-						bx::read(&reader, group.m_numIndices);
-						const uint32_t size = group.m_numIndices*2;
-						group.m_indices = (uint16_t*)malloc(size);
-						bx::read(&reader, group.m_indices, size);
-
-						const bgfx::Memory* mem = bgfx::makeRef(group.m_indices, size);
-						group.m_ibh = bgfx::createIndexBuffer(mem);
-					}
-					break;
-
-				case BGFX_CHUNK_MAGIC_PRI:
-					{
-						uint16_t len;
 						bx::read(&reader, len);
 
-						std::string material;
-						material.resize(len);
-						bx::read(&reader, const_cast<char*>(material.c_str() ), len);
+						std::string name;
+						name.resize(len);
+						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
 
-						uint16_t num;
-						bx::read(&reader, num);
+						Primitive prim;
+						bx::read(&reader, prim.m_startIndex);
+						bx::read(&reader, prim.m_numIndices);
+						bx::read(&reader, prim.m_startVertex);
+						bx::read(&reader, prim.m_numVertices);
+						bx::read(&reader, prim.m_sphere);
+						bx::read(&reader, prim.m_aabb);
+						bx::read(&reader, prim.m_obb);
 
-						for (uint32_t ii = 0; ii < num; ++ii)
-						{
-							bx::read(&reader, len);
-
-							std::string name;
-							name.resize(len);
-							bx::read(&reader, const_cast<char*>(name.c_str() ), len);
-
-							Primitive prim;
-							bx::read(&reader, prim.m_startIndex);
-							bx::read(&reader, prim.m_numIndices);
-							bx::read(&reader, prim.m_startVertex);
-							bx::read(&reader, prim.m_numVertices);
-							bx::read(&reader, prim.m_sphere);
-							bx::read(&reader, prim.m_aabb);
-							bx::read(&reader, prim.m_obb);
-
-							group.m_prims.push_back(prim);
-						}
-
-						m_groups.push_back(group);
-						group.reset();
+						group.m_prims.push_back(prim);
 					}
-					break;
 
-				default:
-					DBG("%08x at %d", chunk, reader.seek() );
-					break;
+					m_groups.push_back(group);
+					group.reset();
+				}
+				break;
+
+			default:
+				DBG("%08x at %d", chunk, reader.seek() );
+				break;
 			}
 		}
 
@@ -1299,20 +1262,20 @@ struct Instance
 
 	void submit(uint8_t _viewId, const RenderState& _renderState)
 	{
-		memcpy(s_uniforms.m_color, m_color, 3*sizeof(float));
+		memcpy(s_uniforms.m_color, m_color, 3*sizeof(float) );
 
 		float mtx[16];
 		mtxScaleRotateTranslate(mtx
-				, m_scale[0]
-				, m_scale[1]
-				, m_scale[2]
-				, m_rotation[0]
-				, m_rotation[1]
-				, m_rotation[2]
-				, m_pos[0]
-				, m_pos[1]
-				, m_pos[2]
-				);
+			, m_scale[0]
+			, m_scale[1]
+			, m_scale[2]
+			, m_rotation[0]
+			, m_rotation[1]
+			, m_rotation[2]
+			, m_pos[0]
+			, m_pos[1]
+			, m_pos[2]
+			);
 
 		BX_CHECK(NULL != m_model, "Instance model cannot be NULL!");
 		m_model->submit(_viewId, mtx, _renderState);
@@ -1327,10 +1290,6 @@ struct Instance
 
 	Model* m_model;
 };
-
-//-------------------------------------------------
-// Shadow volume
-//-------------------------------------------------
 
 struct ShadowVolumeImpl
 {
@@ -1356,7 +1315,7 @@ struct ShadowVolume
 	bgfx::IndexBufferHandle m_ibSides;
 	bgfx::IndexBufferHandle m_ibFrontCap;
 	bgfx::IndexBufferHandle m_ibBackCap;
-	
+
 	uint32_t m_numVertices;
 	uint32_t m_numIndices;
 
@@ -1367,12 +1326,12 @@ struct ShadowVolume
 };
 
 void shadowVolumeTransform(float* __restrict _outMtx
-		, float* __restrict _outLightPos
-		, const float* __restrict _scale
-		, const float* __restrict _rotate
-		, const float* __restrict _translate
-		, const float* __restrict _lightPos // world pos
-		)
+						   , float* __restrict _outLightPos
+						   , const float* __restrict _scale
+						   , const float* __restrict _rotate
+						   , const float* __restrict _translate
+						   , const float* __restrict _lightPos // world pos
+						   )
 {
 	/*
 	 * Instead of transforming all the vertices, transform light instead:
@@ -1381,72 +1340,72 @@ void shadowVolumeTransform(float* __restrict _outMtx
 	 * _outMtx = scale -> rotateXYZ -> translate
 	 */
 
-	float origin[3] = { 0.0f, 0.0f, 0.0f };
-	float light[3];
+	float pivot[16];
+	mtxTranslate(pivot
+		, _lightPos[0] - _translate[0]
+		, _lightPos[1] - _translate[1]
+		, _lightPos[2] - _translate[2]
+		);
+
+	float mzyx[16];
+	mtxRotateZYX(mzyx
+		, -_rotate[0]
+		, -_rotate[1]
+		, -_rotate[2]
+		);
+
+	float invScale[16];
+	mtxScale(invScale
+		, 1.0f / _scale[0]
+		, 1.0f / _scale[1]
+		, 1.0f / _scale[2]
+		);
+
+	float tmp0[16];
+	mtxMul(tmp0, pivot, mzyx);
+
 	float mtx[16];
-	float mtxPivotTranslate[16];
-	float mtxRotateZYX[16];
-	float mtxInvScale[16];
-	float mtxScale[16];
-	float mtxRotateXYZ[16];
-	float mtxTranslate[16];
-	float mtxtmp0[16];
+	mtxMul(mtx, tmp0, invScale);
 
-	::mtxTranslate(mtxPivotTranslate
-			, _lightPos[0] - _translate[0]
-			, _lightPos[1] - _translate[1]
-			, _lightPos[2] - _translate[2]
-			);
-
-	::mtxRotateZYX(mtxRotateZYX
-			, -_rotate[0]
-			, -_rotate[1]
-			, -_rotate[2]
-			);
-
-	::mtxScale(mtxInvScale
-			, 1.0f / _scale[0]
-			, 1.0f / _scale[1]
-			, 1.0f / _scale[2]
-			);
-
-	mtxMul(mtxtmp0, mtxPivotTranslate, mtxRotateZYX);
-	mtxMul(mtx, mtxtmp0, mtxInvScale);
-
+	float light[3];
+	float origin[3] = { 0.0f, 0.0f, 0.0f };
 	vec3MulMtx(light, origin, mtx);
-	memcpy(_outLightPos, light, 3*sizeof(float));
+	memcpy(_outLightPos, light, 3*sizeof(float) );
 
-	::mtxScale(mtxScale
-			, _scale[0]
-			, _scale[1]
-			, _scale[2]
-			);
+	float scale[16];
+	mtxScale(scale
+		, _scale[0]
+		, _scale[1]
+		, _scale[2]
+		);
 
-	::mtxRotateXYZ(mtxRotateXYZ
-			, _rotate[0]
-			, _rotate[1]
-			, _rotate[2]
-			);
+	float mxyz[16];
+	mtxRotateXYZ(mxyz
+		, _rotate[0]
+		, _rotate[1]
+		, _rotate[2]
+		);
 
-	::mtxTranslate(mtxTranslate
-			, _translate[0]
-			, _translate[1]
-			, _translate[2]
-			);
+	float translate[16];
+	mtxTranslate(translate
+		, _translate[0]
+		, _translate[1]
+		, _translate[2]
+		);
 
-	mtxMul(mtxtmp0, mtxScale, mtxRotateXYZ);
-	mtxMul(_outMtx, mtxtmp0, mtxTranslate);
+	mtxMul(tmp0, scale, mxyz);
+	mtxMul(_outMtx, tmp0, translate);
 }
 
 void shadowVolumeCreate(ShadowVolume& _shadowVolume
-		, Group& _group
-		, uint16_t _stride
-		, const float* _mtx
-		, const float* _light // in model space
-		, ShadowVolumeImpl::Enum _impl = ShadowVolumeImpl::DepthPass
-		, ShadowVolumeAlgorithm::Enum _algo = ShadowVolumeAlgorithm::FaceBased
-		, bool _textureAsStencil = false
-		)
+					  , Group& _group
+					  , uint16_t _stride
+					  , const float* _mtx
+					  , const float* _light // in model space
+					  , ShadowVolumeImpl::Enum _impl = ShadowVolumeImpl::DepthPass
+					  , ShadowVolumeAlgorithm::Enum _algo = ShadowVolumeAlgorithm::FaceBased
+					  , bool _textureAsStencil = false
+					  )
 {
 	const uint8_t*    vertices  = _group.m_vertices;
 	const FaceArray&  faces     = _group.m_faces;
@@ -1455,41 +1414,44 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 	struct VertexData
 	{
-		VertexData() { }
+		VertexData()
+		{
+		}
 
 		VertexData(const float* _v3, float _extrude = 0.0f, float _k = 1.0f)
 		{
-			memcpy(m_v, _v3, 3*sizeof(float));
+			memcpy(m_v, _v3, 3*sizeof(float) );
 			m_extrude = _extrude;
 			m_k = _k;
 		}
 
 		float m_v[3];
-		float m_extrude, m_k;
+		float m_extrude;
+		float m_k;
 	};
 
 	struct Index3us
 	{
-		Index3us() { }
+		Index3us()
+		{
+		}
 
 		Index3us(uint16_t _i0, uint16_t _i1, uint16_t _i2)
 			: m_i0(_i0)
 			, m_i1(_i1)
 			, m_i2(_i2)
-		{ }
+		{
+		}
 
-		uint16_t m_i0, m_i1, m_i2;
+		uint16_t m_i0;
+		uint16_t m_i1;
+		uint16_t m_i2;
 	};
 
-	VertexData* verticesSide;
-	Index3us*   indicesSide;
-	Index3us*   indicesFrontCap;
-	Index3us*   indicesBackCap;
-
-	verticesSide    = (VertexData*) malloc (100000 * sizeof(VertexData));
-	indicesSide     = (Index3us*)   malloc (100000 * sizeof(Index3us));
-	indicesFrontCap = (Index3us*)   malloc (100000 * sizeof(Index3us));
-	indicesBackCap  = (Index3us*)   malloc (100000 * sizeof(Index3us));
+	VertexData* verticesSide    = (VertexData*) malloc (100000 * sizeof(VertexData) );
+	Index3us*   indicesSide		= (Index3us*)   malloc (100000 * sizeof(Index3us) );
+	Index3us*   indicesFrontCap	= (Index3us*)   malloc (100000 * sizeof(Index3us) );
+	Index3us*   indicesBackCap	= (Index3us*)   malloc (100000 * sizeof(Index3us) );
 
 	uint16_t vsideI    = 0;
 	uint16_t sideI     = 0;
@@ -1498,173 +1460,168 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
 	uint16_t indexSide = 0;
-	
-	switch (_algo)
+
+	if (ShadowVolumeAlgorithm::FaceBased == _algo)
 	{
-		case ShadowVolumeAlgorithm::FaceBased:
+		for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
+		{
+			const Face& face = *iter;
+			const uint16_t* indices = face.m_i;
+
+			bool frontFacing = false;
+			float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
+			if (f > 0.0f)
 			{
-				for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
+				frontFacing = true;
+				uint16_t triangleEdges[3][2] = 
 				{
-					const Face& face = *iter;
-					const uint16_t* indices = face.m_i;
+					{ indices[0], indices[1] },
+					{ indices[1], indices[2] },
+					{ indices[2], indices[0] },
+				};
 
-					bool frontFacing = false;
-					float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
-					if (f > 0.0f)
-					{
-						frontFacing = true;
-						uint16_t triangleEdges[3][2] = 
-						{
-							{ indices[0], indices[1] },
-							{ indices[1], indices[2] },
-							{ indices[2], indices[0] },
-						};
-
-						for (uint8_t ii = 0; ii < 3; ++ii)
-						{
-							uint16_t first  = triangleEdges[ii][0];
-							uint16_t second = triangleEdges[ii][1];
-
-							if (!halfEdges.unmark(second, first))
-							{
-								halfEdges.mark(first, second);
-							}
-						}
-					}
-
-					if (cap)
-					{
-						if (frontFacing)
-						{
-							indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i;
-						}
-						else
-						{
-							indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
-						}
-						
-						/**
-						 * TODO: if '_useFrontFacingFacesAsBackCap' is needed, implement it as such:
-						 *
-						 * bool condition0 = frontFacing && _useFrontFacingFacesAsBackCap;
-						 * bool condition1 = !frontFacing && !_useFrontFacingFacesAsBackCap;
-						 * if (condition0 || condition1)
-						 * {
-						 *		const Index3us tmp = { indices[0], indices[1+condition0], indices[2-condition0] }; //winding regarding condition0 
-						 *		indicesBackCap.push_back(tmp);
-						 * }
-						 */
-					}
-				}
-
-				//fill side arrays
-				uint16_t firstIndex = 0;
-				HalfEdge* he = halfEdges.begin();
-				while (halfEdges.end() != he)
+				for (uint8_t ii = 0; ii < 3; ++ii)
 				{
-					if (he->m_marked)
+					uint16_t first  = triangleEdges[ii][0];
+					uint16_t second = triangleEdges[ii][1];
+
+					if (!halfEdges.unmark(second, first) )
 					{
-						he->m_marked = false;
-
-						const float* v0 = (float*)&vertices[firstIndex*_stride];
-						const float* v1 = (float*)&vertices[he->m_secondIndex*_stride];
-
-						verticesSide[vsideI++] = VertexData(v0, 0.0f);
-						verticesSide[vsideI++] = VertexData(v0, 1.0f);
-						verticesSide[vsideI++] = VertexData(v1, 0.0f);
-						verticesSide[vsideI++] = VertexData(v1, 1.0f);
-
-						//sides
-						indicesSide[sideI++] = Index3us(indexSide+0, indexSide+1, indexSide+2); 
-						indicesSide[sideI++] = Index3us(indexSide+2, indexSide+1, indexSide+3);
-
-						indexSide += 4;
-					}
-
-					++he;
-					if (INVALID_EDGE_INDEX == he->m_secondIndex)
-					{
-						++he;
-						++firstIndex;
+						halfEdges.mark(first, second);
 					}
 				}
 			}
-			break;
-		case ShadowVolumeAlgorithm::EdgeBased:
+
+			if (cap)
 			{
-				for (EdgeArray::const_iterator iter = edges.begin(), end = edges.end(); iter != end; ++iter)
+				if (frontFacing)
 				{
-					const Edge& edge = *iter;
-					const float* v0 = edge.m_v0;
-					const float* v1 = edge.m_v1;
-
-					int16_t k = 0;
-					float s;
-					for (uint8_t ii = 0; ii < edge.m_faceIndex; ++ii)
-					{
-						const Edge::Plane& face = edge.m_faces[ii];
-						s = fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
-						if (face.m_reverseVertexOrder)
-						{
-							s = -s;
-						}
-						k += uint16_t(s);
-					}
-
-					if (k == 0)
-					{
-						continue;
-					}
-
-					verticesSide[vsideI++] = VertexData(v0, 0.0f, k);
-					verticesSide[vsideI++] = VertexData(v0, 1.0f, k);
-					verticesSide[vsideI++] = VertexData(v1, 0.0f, k);
-					verticesSide[vsideI++] = VertexData(v1, 1.0f, k);
-
-					k = _textureAsStencil ? 1 : k;
-					uint16_t winding = uint16_t(k > 0);
-					for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
-					{
-						indicesSide[sideI++] =
-						Index3us(uint16_t(indexSide)
-							, uint16_t(indexSide + 2 - winding)
-							, uint16_t(indexSide + 1 + winding)
-							);
-						indicesSide[sideI++] =
-						Index3us(uint16_t(indexSide + 2)
-							, uint16_t(indexSide + 3 - winding*2)
-							, uint16_t(indexSide + 1 + winding*2) 
-							);
-					}
-
-					indexSide += 4;
+					indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i;
+				}
+				else
+				{
+					indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
 				}
 
-				if (cap)
+				/**
+				 * if '_useFrontFacingFacesAsBackCap' is needed, implement it as such:
+				 *
+				 * bool condition0 = frontFacing && _useFrontFacingFacesAsBackCap;
+				 * bool condition1 = !frontFacing && !_useFrontFacingFacesAsBackCap;
+				 * if (condition0 || condition1)
+				 * {
+				 *		const Index3us tmp = { indices[0], indices[1+condition0], indices[2-condition0] }; //winding regarding condition0 
+				 *		indicesBackCap.push_back(tmp);
+				 * }
+				 */
+			}
+		}
+
+		// Fill side arrays.
+		uint16_t firstIndex = 0;
+		HalfEdge* he = halfEdges.begin();
+		while (halfEdges.end() != he)
+		{
+			if (he->m_marked)
+			{
+				he->m_marked = false;
+
+				const float* v0 = (float*)&vertices[firstIndex*_stride];
+				const float* v1 = (float*)&vertices[he->m_secondIndex*_stride];
+
+				verticesSide[vsideI++] = VertexData(v0, 0.0f);
+				verticesSide[vsideI++] = VertexData(v0, 1.0f);
+				verticesSide[vsideI++] = VertexData(v1, 0.0f);
+				verticesSide[vsideI++] = VertexData(v1, 1.0f);
+
+				indicesSide[sideI++] = Index3us(indexSide+0, indexSide+1, indexSide+2); 
+				indicesSide[sideI++] = Index3us(indexSide+2, indexSide+1, indexSide+3);
+
+				indexSide += 4;
+			}
+
+			++he;
+			if (INVALID_EDGE_INDEX == he->m_secondIndex)
+			{
+				++he;
+				++firstIndex;
+			}
+		}
+	}
+	else // ShadowVolumeAlgorithm::EdgeBased:
+	{
+		for (EdgeArray::const_iterator iter = edges.begin(), end = edges.end(); iter != end; ++iter)
+		{
+			const Edge& edge = *iter;
+			const float* v0 = edge.m_v0;
+			const float* v1 = edge.m_v1;
+
+			int16_t k = 0;
+			float s;
+			for (uint8_t ii = 0; ii < edge.m_faceIndex; ++ii)
+			{
+				const Edge::Plane& face = edge.m_faces[ii];
+				s = fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
+				if (face.m_reverseVertexOrder)
 				{
-					//this could/should be done on GPU !
-					for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
+					s = -s;
+				}
+				k += uint16_t(s);
+			}
+
+			if (k == 0)
+			{
+				continue;
+			}
+
+			verticesSide[vsideI++] = VertexData(v0, 0.0f, k);
+			verticesSide[vsideI++] = VertexData(v0, 1.0f, k);
+			verticesSide[vsideI++] = VertexData(v1, 0.0f, k);
+			verticesSide[vsideI++] = VertexData(v1, 1.0f, k);
+
+			k = _textureAsStencil ? 1 : k;
+			uint16_t winding = uint16_t(k > 0);
+			for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
+			{
+				indicesSide[sideI++] =
+					Index3us(uint16_t(indexSide)
+						, uint16_t(indexSide + 2 - winding)
+						, uint16_t(indexSide + 1 + winding)
+						);
+
+				indicesSide[sideI++] =
+					Index3us(uint16_t(indexSide + 2)
+						, uint16_t(indexSide + 3 - winding*2)
+						, uint16_t(indexSide + 1 + winding*2) 
+						);
+			}
+
+			indexSide += 4;
+		}
+
+		if (cap)
+		{
+			// This could/should be done on GPU!
+			for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
+			{
+				const Face& face = *iter;
+
+				float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
+				bool frontFacing = (f > 0.0f); 
+
+				for (uint8_t ii = 0, end = 1 + uint8_t(!_textureAsStencil); ii < end; ++ii)
+				{
+					if (frontFacing)
 					{
-						const Face& face = *iter;
-
-						float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
-						bool frontFacing = (f > 0.0f); 
-
-						for (uint8_t ii = 0, end = 1 + uint8_t(!_textureAsStencil); ii < end; ++ii)
-						{
-							if (frontFacing)
-							{
-								indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i; 
-							}
-							else
-							{
-								indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
-							}
-						}
+						indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i; 
+					}
+					else
+					{
+						indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
 					}
 				}
 			}
-			break;
+		}
 	}
 
 	bgfx::VertexDecl decl;
@@ -1728,12 +1685,12 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 }
 
 void createNearClipVolume(float* __restrict _outPlanes24f
-		, float* __restrict _lightPos
-		, float* __restrict _view
-		, float _fovy
-		, float _aspect
-		, float _near
-		)
+						, float* __restrict _lightPos
+						, float* __restrict _view
+						, float _fovy
+						, float _aspect
+						, float _near
+						)
 {
 	float (*volumePlanes)[4] = (float(*)[4])_outPlanes24f;
 
@@ -1754,13 +1711,8 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	//  1.0f - in front of near plane
 	//  0.0f - on the near plane
 	// -1.0f - behind near plane
-	float lightSide = float((d > delta) - (d < -delta));
+	float lightSide = float( (d > delta) - (d < -delta) );
 
-	if (lightSide == 0.0f)
-	{
-		//TODO: implement.. for now this doesn't seem to cause problems.
-	}
-	
 	float t = tanf(_fovy*( (float)M_PI/180.0f)*0.5f) * _near;
 	float b = -t;
 	float r = t * _aspect;
@@ -1795,12 +1747,12 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		vec3Sub(light, _lightPos, tmp);
 
 		vec3Cross(normal, planeVec, light);
-		
+
 		normal[0] *= lightSide;
 		normal[1] *= lightSide;
 		normal[2] *= lightSide;
 
-		float lenInv = 1.0f / sqrtf(vec3Dot(normal, normal));
+		float lenInv = 1.0f / sqrtf(vec3Dot(normal, normal) );
 
 		plane[0] = normal[0] * lenInv;
 		plane[1] = normal[1] * lenInv;
@@ -1823,7 +1775,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	vec3MulMtx(tmp, lightPlaneNormal, mtxViewInv);
 	vec3Sub(lightPlaneNormal, tmp, _lightPos);
 
-	float lenInv = 1.0f / sqrtf(vec3Dot(lightPlaneNormal, lightPlaneNormal));
+	float lenInv = 1.0f / sqrtf(vec3Dot(lightPlaneNormal, lightPlaneNormal) );
 
 	lightPlane[0] = lightPlaneNormal[0] * lenInv;
 	lightPlane[1] = lightPlaneNormal[1] * lenInv;
@@ -1888,27 +1840,27 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// for each renderer.
 	switch (bgfx::getRendererType() )
 	{
-		default:
-		case bgfx::RendererType::Direct3D9:
-			s_shaderPath = "shaders/dx9/";
-			s_flipV = true;
-			break;
+	default:
+	case bgfx::RendererType::Direct3D9:
+		s_shaderPath = "shaders/dx9/";
+		s_flipV = true;
+		break;
 
-		case bgfx::RendererType::Direct3D11:
-			s_shaderPath = "shaders/dx11/";
-			s_flipV = true;
-			break;
+	case bgfx::RendererType::Direct3D11:
+		s_shaderPath = "shaders/dx11/";
+		s_flipV = true;
+		break;
 
-		case bgfx::RendererType::OpenGL:
-			s_shaderPath = "shaders/glsl/";
-			s_flipV = false;
-			break;
+	case bgfx::RendererType::OpenGL:
+		s_shaderPath = "shaders/glsl/";
+		s_flipV = false;
+		break;
 
-		case bgfx::RendererType::OpenGLES2:
-		case bgfx::RendererType::OpenGLES3:
-			s_shaderPath = "shaders/gles/";
-			s_flipV = false;
-			break;
+	case bgfx::RendererType::OpenGLES2:
+	case bgfx::RendererType::OpenGLES3:
+		s_shaderPath = "shaders/gles/";
+		s_flipV = false;
+		break;
 	}
 
 	// Imgui
@@ -1992,7 +1944,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::ProgramHandle svProgs[ShadowVolumeProgramType::Count][ShadowVolumePart::Count] =
 	{ 
-		 { programBackBlank, programSideBlank, programFrontBlank } // Blank
+		{ programBackBlank, programSideBlank, programFrontBlank } // Blank
 		,{ programBackColor, programSideColor, programFrontColor } // Color
 		,{ programBackTex1,  programSideTex,   programFrontTex1  } // Tex1
 		,{ programBackTex2,  programSideTex,   programFrontTex2  } // Tex2
@@ -2066,12 +2018,55 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t oldWidth = 0;
 	uint32_t oldHeight = 0;
 
+	// Imgui.
+	bool settings_showHelp           = false;
+	bool settings_updateLights       = true;
+	bool settings_updateScene        = true;
+	bool settings_mixedSvImpl        = true;
+	bool settings_useStencilTexture  = false;
+	bool settings_drawShadowVolumes  = false;
+	float settings_numLights         = 1.0f;
+	float settings_instanceCount     = 9.0f;
+	ShadowVolumeImpl::Enum      settings_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail; 
+	ShadowVolumeAlgorithm::Enum settings_shadowVolumeAlgorithm = ShadowVolumeAlgorithm::FaceBased;
+	int32_t scrollAreaRight = 0;
+
+	const char* titles[2] =
+	{
+		"Scene 0",
+		"Scene 1",
+	};
+
+	enum LightPattern
+	{
+		LightPattern0 = 0,
+		LightPattern1
+	};
+
+	enum MeshChoice
+	{
+		BunnyHighPoly = 0,
+		BunnyLowPoly
+	};
+
+	enum Scene
+	{
+		Scene0 = 0,
+		Scene1,
+
+		SceneCount
+	};
+
+	LightPattern lightPattern = LightPattern0;
+	MeshChoice currentMesh = BunnyLowPoly;
+	Scene currentScene = Scene0;
+
 	entry::MouseState mouseState;
 	while (!entry::processEvents(viewState.m_width, viewState.m_height, debug, reset, &mouseState) )
 	{
 		//respond properly on resize
 		if (oldWidth != viewState.m_width
-		||  oldHeight != viewState.m_height)
+			||  oldHeight != viewState.m_height)
 		{
 			oldWidth = viewState.m_width;
 			oldHeight = viewState.m_height;
@@ -2099,66 +2094,52 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const float deltaTime = float(frameTime/freq);
 		s_uniforms.m_time = time;
 
-		//imgui
-		static bool settings_showHelp           = false;
-		static bool settings_updateLights       = true;
-		static bool settings_updateScene        = true;
-		static bool settings_mixedSvImpl        = true;
-		static bool settings_useStencilTexture  = false;
-		static bool settings_drawShadowVolumes  = false;
-		static float settings_numLights         = 1.0f;
-		static float settings_instanceCount     = 9.0f;
-		static ShadowVolumeImpl::Enum      settings_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail; 
-		static ShadowVolumeAlgorithm::Enum settings_shadowVolumeAlgorithm = ShadowVolumeAlgorithm::FaceBased;
-
-		static enum LightPattern
-		{
-			LightPattern0 = 0,
-			LightPattern1
-		} lightPattern = LightPattern0;
-
-		static enum MeshChoice
-		{
-			BunnyHighPoly = 0,
-			BunnyLowPoly
-		} currentMesh = BunnyLowPoly;
-
-		static enum Scene
-		{
-			Scene0 = 0,
-			Scene1,
-
-			SceneCount
-		} currentScene = Scene0;
-
-		static std::string titles[2] =
-		{
-			"Scene 0",
-			"Scene 1",
-		};
-
 		imguiBeginFrame(mouseState.m_mx
-				, mouseState.m_my
-				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
-				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-				, 0
-				, viewState.m_width
-				, viewState.m_height
-				);
+			, mouseState.m_my
+			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
+			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
+			, 0
+			, viewState.m_width
+			, viewState.m_height
+			);
 
-		static int32_t scrollAreaRight = 0;
 		imguiBeginScrollArea("Settings", viewState.m_width - 256 - 10, 10, 256, 700, &scrollAreaRight);
 
-		if (imguiCheck(titles[Scene0].c_str(), Scene0 == currentScene)) { currentScene = Scene0; } 
-		if (imguiCheck(titles[Scene1].c_str(), Scene1 == currentScene)) { currentScene = Scene1; }
+		if (imguiCheck(titles[Scene0], Scene0 == currentScene) )
+		{
+			currentScene = Scene0;
+		}
+
+		if (imguiCheck(titles[Scene1], Scene1 == currentScene) )
+		{
+			currentScene = Scene1;
+		}
 
 		imguiSlider("Lights", &settings_numLights, 1.0f, 5.0f, 1.0f);
-		if (imguiCheck("Update lights", settings_updateLights)) { settings_updateLights = !settings_updateLights; }
+
+		if (imguiCheck("Update lights", settings_updateLights) )
+		{
+			settings_updateLights = !settings_updateLights;
+		}
+
 		imguiIndent();
-		if (imguiCheck("Light pattern 0", LightPattern0 == lightPattern, settings_updateLights)) { lightPattern = LightPattern0; }
-		if (imguiCheck("Light pattern 1", LightPattern1 == lightPattern, settings_updateLights)) { lightPattern = LightPattern1; }
+
+		if (imguiCheck("Light pattern 0", LightPattern0 == lightPattern, settings_updateLights) )
+		{
+			lightPattern = LightPattern0;
+		}
+
+		if (imguiCheck("Light pattern 1", LightPattern1 == lightPattern, settings_updateLights) )
+		{
+			lightPattern = LightPattern1;
+		}
+
 		imguiUnindent();
-		if (imguiCheck("Update scene", settings_updateScene, Scene0 == currentScene)) { settings_updateScene  = !settings_updateScene;  }
+
+		if (imguiCheck("Update scene", settings_updateScene, Scene0 == currentScene) )
+		{
+			settings_updateScene  = !settings_updateScene;
+		}
 
 		imguiSeparatorLine();
 		imguiLabel("Stencil buffer implementation:");
@@ -2171,20 +2152,37 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		settings_shadowVolumeAlgorithm = (imguiCheck("Edge based impl.", ShadowVolumeAlgorithm::EdgeBased == settings_shadowVolumeAlgorithm) ? ShadowVolumeAlgorithm::EdgeBased : settings_shadowVolumeAlgorithm);
 
 		imguiLabel("Stencil:");
-		if (imguiCheck("Use stencil buffer", !settings_useStencilTexture))
+		if (imguiCheck("Use stencil buffer", !settings_useStencilTexture) )
 		{
-			if (settings_useStencilTexture) { settings_useStencilTexture = false; }
+			if (settings_useStencilTexture)
+			{
+				settings_useStencilTexture = false;
+			}
 		}
-		if (imguiCheck("Use texture as stencil", settings_useStencilTexture))
+		if (imguiCheck("Use texture as stencil", settings_useStencilTexture) )
 		{
-			if (!settings_useStencilTexture) { settings_useStencilTexture = true; }
+			if (!settings_useStencilTexture)
+			{
+				settings_useStencilTexture = true;
+			}
 		}
 
 		imguiSeparatorLine();
 		imguiLabel("Mesh:");
-		if (imguiCheck("Bunny - high poly", BunnyHighPoly == currentMesh)) { currentMesh = BunnyHighPoly; }
-		if (imguiCheck("Bunny - low poly",  BunnyLowPoly  == currentMesh)) { currentMesh = BunnyLowPoly;  }
-		if (Scene1 == currentScene) { imguiSlider("Instance count", &settings_instanceCount, 1.0f, 49.0f, 1.0f); }
+		if (imguiCheck("Bunny - high poly", BunnyHighPoly == currentMesh) )
+		{
+			currentMesh = BunnyHighPoly;
+		}
+
+		if (imguiCheck("Bunny - low poly",  BunnyLowPoly  == currentMesh) )
+		{
+			currentMesh = BunnyLowPoly;
+		}
+
+		if (Scene1 == currentScene)
+		{
+			imguiSlider("Instance count", &settings_instanceCount, 1.0f, 49.0f, 1.0f);
+		}
 
 		imguiLabel("CPU Time: %7.1f [ms]", double(profTime)*toMs);
 		imguiLabel("Volume Vertices: %5.uk", numShadowVolumeVertices/1000);
@@ -2193,7 +2191,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		numShadowVolumeIndices = 0;  
 
 		imguiSeparatorLine();
-		settings_drawShadowVolumes = (imguiCheck("Draw Shadow Volumes", settings_drawShadowVolumes) ? !settings_drawShadowVolumes : settings_drawShadowVolumes);
+		settings_drawShadowVolumes = imguiCheck("Draw Shadow Volumes", settings_drawShadowVolumes)
+			? !settings_drawShadowVolumes
+			: settings_drawShadowVolumes
+			;
 		imguiIndent();
 		imguiUnindent();
 
@@ -2201,7 +2202,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		static int32_t scrollAreaLeft = 0;
 		imguiBeginScrollArea("Show help:", 10, viewState.m_height - 77 - 10, 120, 77, &scrollAreaLeft);
-		settings_showHelp = (imguiButton(settings_showHelp ? "ON" : "OFF") ? !settings_showHelp : settings_showHelp);
+		settings_showHelp = imguiButton(settings_showHelp ? "ON" : "OFF")
+			? !settings_showHelp
+			: settings_showHelp
+			;
+
 		imguiEndScrollArea();
 
 		imguiEndFrame();
@@ -2212,7 +2217,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_params.m_lightCount      = settings_numLights;
 		s_uniforms.m_svparams.m_useStencilTex = float(settings_useStencilTexture);
 		s_uniforms.submitPerFrameUniforms();
-		
+
 		//set picked bunny model
 		Model* bunnyModel = BunnyLowPoly == currentMesh ? &bunnyLowPolyModel : &bunnyHighPolyModel;
 
@@ -2233,24 +2238,24 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float lightPosRadius[MAX_NUM_LIGHTS][4];
 		switch (lightPattern)
 		{
-			case LightPattern0:
-				for (uint8_t ii = 0; ii < settings_numLights; ++ii)
-				{
-					lightPosRadius[ii][0] = cos(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
-					lightPosRadius[ii][1] = 20.0f;
-					lightPosRadius[ii][2] = sin(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
-					lightPosRadius[ii][3] = 20.0f;
-				}
-				break;
-			case LightPattern1:
-				for (uint8_t ii = 0; ii < settings_numLights; ++ii)
-				{
-					lightPosRadius[ii][0] = cos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI)) * 40.0f;
-					lightPosRadius[ii][1] = 20.0f;
-					lightPosRadius[ii][2] = sin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI)) * 40.0f;
-					lightPosRadius[ii][3] = 20.0f;
-				}
-				break;
+		case LightPattern0:
+			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
+			{
+				lightPosRadius[ii][0] = cos(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][1] = 20.0f;
+				lightPosRadius[ii][2] = sin(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][3] = 20.0f;
+			}
+			break;
+		case LightPattern1:
+			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
+			{
+				lightPosRadius[ii][0] = cos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI) ) * 40.0f;
+				lightPosRadius[ii][1] = 20.0f;
+				lightPosRadius[ii][2] = sin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI) ) * 40.0f;
+				lightPosRadius[ii][3] = 20.0f;
+			}
+			break;
 		}
 
 		//use debug font to print information about this example.
@@ -2258,7 +2263,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/14-shadowvolumes");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow volumes.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-		
+
 		if (settings_showHelp)
 		{
 			uint8_t row = 5;
@@ -2277,11 +2282,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::dbgTextPrintf(8, row++, 0x0f, "Stencil buffer     - Faster, but capable only of +1 incr.");
 			bgfx::dbgTextPrintf(8, row++, 0x0f, "Texture as stencil - Slower, but capable of +2 incr.");
 		}                       
-								
-		//-------------------------------------------------
-		// Setup instances
-		//-------------------------------------------------
 
+		// Setup instances
 		Instance shadowCasters[SceneCount][60];
 		uint16_t shadowCastersCount[SceneCount];
 		for (uint8_t ii = 0; ii < SceneCount; ++ii)
@@ -2296,11 +2298,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			shadowReceiversCount[ii] = 0;
 		}
 
-		/**
-		 * Scene 0 - shadow casters
-		 */
-		
-		//bunny
+		// Scene 0 - shadow casters - Bunny
 		{
 			Instance& inst = shadowCasters[Scene0][shadowCastersCount[Scene0]++];
 			inst.m_scale[0]    = 5.0f;
@@ -2318,7 +2316,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = bunnyModel;
 		}
 
-		//cubes top
+		// Scene 0 - shadow casters - Cubes top.
 		const uint8_t numCubesTop = 9;
 		for (uint16_t ii = 0; ii < numCubesTop; ++ii)
 		{
@@ -2335,7 +2333,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = &cubeModel;
 		}
 
-		//cubes bottom
+		// Scene 0 - shadow casters - Cubes bottom.
 		const uint8_t numCubesBottom = 9;
 		for (uint16_t ii = 0; ii < numCubesBottom; ++ii)
 		{
@@ -2352,7 +2350,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = &cubeModel;
 		}
 
-		//columns
+		// Scene 0 - shadow casters - Columns.
 		const float dist = 16.0f;
 		const float columnPositions[4][3] =
 		{
@@ -2380,7 +2378,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = &columnModel;
 		}
 
-		//ceiling
+		// Scene 0 - shadow casters - Ceiling.
 		{
 			Instance& inst = shadowCasters[Scene0][shadowCastersCount[Scene0]++];
 			inst.m_scale[0]    = 21.0f;
@@ -2395,8 +2393,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = &platformModel;
 			inst.m_svExtrusionDistance = 2.0f; //prevent culling on tight view frustum
 		}
-		
-		//platform
+
+		// Scene 0 - shadow casters - Platform.
 		{
 			Instance& inst = shadowCasters[Scene0][shadowCastersCount[Scene0]++];
 			inst.m_scale[0]    = 24.0f;
@@ -2412,11 +2410,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_svExtrusionDistance = 2.0f; //prevent culling on tight view frustum
 		}
 
-		/**
-		 * Scene 0 - shadow receivers
-		 */
-
-		//floor
+		// Scene 0 - shadow receivers - Floor.
 		{
 			Instance& inst = shadowReceivers[Scene0][shadowReceiversCount[Scene0]++];
 			inst.m_scale[0]    = 500.0f;
@@ -2431,11 +2425,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = &hplaneFieldModel;
 		}
 
-		/**
-		 * Scene 1 - shadow casters
-		 */
-
-		//bunny instances
+		// Scene 1 - shadow casters - Bunny instances
 		enum Direction
 		{
 			Left = 0,
@@ -2468,7 +2458,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = bunnyModel;
 
 			stateStep++;
-			if (stateStep >= floor(stateChange/2.0f))
+			if (stateStep >= floor(stateChange/2.0f) )
 			{
 				currentDirection = (currentDirection+1)%DirectionCount;
 				stateStep = 0;
@@ -2477,19 +2467,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			switch (currentDirection)
 			{
-				case Left:  currX -= stepX; break;
-				case Down:  currY -= stepY; break;
-				case Right: currX += stepX; break;
-				case Up:    currY += stepY; break;
-				default: break;
+			case Left:  currX -= stepX; break;
+			case Down:  currY -= stepY; break;
+			case Right: currX += stepX; break;
+			case Up:    currY += stepY; break;
+			default: break;
 			}
 		}
 
-		/**
-		 * Scene 1 - shadow receivers
-		 */
-
-		//floor
+		// Scene 1 - shadow receivers - Floor.
 		{
 			Instance& inst = shadowReceivers[Scene1][shadowReceiversCount[Scene1]++];
 			inst.m_scale[0]    = 500.0f;
@@ -2504,49 +2490,35 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_model       = &hplaneFigureModel;
 		}
 
-		//-------------------------------------------------
-		// Render
-		//-------------------------------------------------
-
-#define VIEWID_RANGE1_PASS0     1 
-#define VIEWID_RANGE1_RT_PASS1  2
-#define VIEWID_RANGE15_PASS2    3
-#define VIEWID_RANGE1_PASS3    20
-
-		//make sure at the beginning everything gets cleared
+		// Make sure at the beginning everything gets cleared.
 		::clearView(0, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT, clearValues);
 		::submit(0);
 
-		/**
-		 * Draw ambient
-		 */
-
-		//draw ambient only
+		// Draw ambient only.
 		s_uniforms.m_params.m_ambientPass = 1.0f;
 		s_uniforms.m_params.m_lightningPass = 0.0f;
 
-		//white bunny and columns
 		s_uniforms.m_color[0] = 1.0f;
 		s_uniforms.m_color[1] = 1.0f;
 		s_uniforms.m_color[2] = 1.0f;
 
 		const RenderState& drawAmbient = (settings_useStencilTexture ?
-				s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawAmbient]:
-				s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawAmbient]);
+			s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawAmbient]:
+		s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawAmbient]);
 
-		//draw shadow casters
+		// Draw shadow casters.
 		for (uint8_t ii = 0; ii < shadowCastersCount[currentScene]; ++ii)
 		{
 			shadowCasters[currentScene][ii].submit(VIEWID_RANGE1_PASS0, drawAmbient);
 		}
 
-		//draw shadow receivers
+		// Draw shadow receivers.
 		for (uint8_t ii = 0; ii < shadowReceiversCount[currentScene]; ++ii)
 		{
 			shadowReceivers[currentScene][ii].submit(VIEWID_RANGE1_PASS0, drawAmbient);
 		}
 
-		//using stencil texture requires rendering to separate render target. first pass is building depth buffer
+		// Using stencil texture requires rendering to separate render target. first pass is building depth buffer.
 		if (settings_useStencilTexture)
 		{
 			ClearValues cv = { 0x00000000, 1.0f, 0 };
@@ -2566,22 +2538,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		//start performance timer
 		profTime = bx::getHPCounter();
 
 		/**
-		 * For each light: 
-		 * 1. Compute and draw shadow volume to stencil buffer
-		 * 2. Draw diffuse with stencil test
-		 */
+		* For each light: 
+		* 1. Compute and draw shadow volume to stencil buffer
+		* 2. Draw diffuse with stencil test
+		*/
 		for (uint8_t ii = 0, viewId = VIEWID_RANGE15_PASS2; ii < settings_numLights; ++ii, ++viewId)
 		{
 			const float* lightPos = lightPosRadius[ii];
 
-			//set uniform data
-			memcpy(s_uniforms.m_lightPosRadius, lightPosRadius[ii], 4*sizeof(float));
-			memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR[ii], 3*sizeof(float));
-			memcpy(s_uniforms.m_color,          lightRgbInnerR[ii], 3*sizeof(float));
+			memcpy(s_uniforms.m_lightPosRadius, lightPosRadius[ii], 4*sizeof(float) );
+			memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR[ii], 3*sizeof(float) );
+			memcpy(s_uniforms.m_color,          lightRgbInnerR[ii], 3*sizeof(float) );
 
 			if (settings_useStencilTexture)
 			{
@@ -2594,7 +2564,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				::clearView(viewId, BGFX_CLEAR_STENCIL_BIT, clearValues);
 			}
 
-			//create near clip volume for current light
+			// Create near clip volume for current light.
 			float nearClipVolume[6 * 4];
 			float pointLight[4];
 			if (settings_mixedSvImpl)
@@ -2614,25 +2584,25 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				ShadowVolumeImpl::Enum shadowVolumeImpl = settings_shadowVolumeImpl; 
 				if (settings_mixedSvImpl)
 				{                                                     
-					//if instance is inside near clip volume, depth fail must be used, else depth pass is fine.
+					// If instance is inside near clip volume, depth fail must be used, else depth pass is fine.
 					bool isInsideVolume = clipTest(nearClipVolume, 6, model->m_mesh, instance.m_scale, instance.m_pos);
 					shadowVolumeImpl = (isInsideVolume ? ShadowVolumeImpl::DepthFail : ShadowVolumeImpl::DepthPass);
 				}
 				s_uniforms.m_svparams.m_dfail = float(ShadowVolumeImpl::DepthFail == shadowVolumeImpl); 
 
-				//compute transform for shadow volume
+				// Compute transform for shadow volume.
 				float shadowVolumeMtx[16];
 				float transformedLightPos[3];
 				shadowVolumeTransform(shadowVolumeMtx
-						, transformedLightPos
-						, instance.m_scale
-						, instance.m_rotation
-						, instance.m_pos
-						, lightPos
-						);
+					, transformedLightPos
+					, instance.m_scale
+					, instance.m_rotation
+					, instance.m_pos
+					, lightPos
+					);
 
-				//set virtual light pos
-				memcpy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float));
+				// Set virtual light pos.
+				memcpy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
 				s_uniforms.m_virtualLightPos_extrusionDist[3] = instance.m_svExtrusionDistance;
 
 				GroupArray& groups = model->m_mesh.m_groups;
@@ -2641,48 +2611,44 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				{
 					Group& group = *it;
 
-					//create shadow volume
+					// Create shadow volume.
 					ShadowVolume shadowVolume;
 					shadowVolumeCreate(shadowVolume
-							, group
-							, stride
-							, shadowVolumeMtx
-							, transformedLightPos
-							, shadowVolumeImpl
-							, settings_shadowVolumeAlgorithm
-							, settings_useStencilTexture
-							);
+						, group
+						, stride
+						, shadowVolumeMtx
+						, transformedLightPos
+						, shadowVolumeImpl
+						, settings_shadowVolumeAlgorithm
+						, settings_useStencilTexture
+						);
 
-					//update display information
 					numShadowVolumeVertices += shadowVolume.m_numVertices;
 					numShadowVolumeIndices += shadowVolume.m_numIndices;
 
-					//figure out which render state to use
+					ShadowVolumeProgramType::Enum programIndex = ShadowVolumeProgramType::Blank;
 					RenderState::Enum renderStateIndex;
 					if (settings_useStencilTexture)
 					{
-						renderStateIndex = (ShadowVolumeImpl::DepthFail == shadowVolumeImpl ?
-								RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthFail :
-								RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass);
+						renderStateIndex = ShadowVolumeImpl::DepthFail == shadowVolumeImpl
+							? RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthFail
+							: RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass
+							;
+
+						programIndex = ShadowVolumeAlgorithm::FaceBased == settings_shadowVolumeAlgorithm 
+							? ShadowVolumeProgramType::Tex1
+							: ShadowVolumeProgramType::Tex2
+							;
 					}
 					else
 					{
-						renderStateIndex = (ShadowVolumeImpl::DepthFail == shadowVolumeImpl ?
-								RenderState::ShadowVolume_UsingStencilBuffer_CraftStencil_DepthFail :
-								RenderState::ShadowVolume_UsingStencilBuffer_CraftStencil_DepthPass);
+						renderStateIndex = ShadowVolumeImpl::DepthFail == shadowVolumeImpl
+							? RenderState::ShadowVolume_UsingStencilBuffer_CraftStencil_DepthFail
+							: RenderState::ShadowVolume_UsingStencilBuffer_CraftStencil_DepthPass
+							;
 					}
 					const RenderState& renderStateCraftStencil = s_renderStates[renderStateIndex];
 
-					//figure out which program to use
-					ShadowVolumeProgramType::Enum programIndex = ShadowVolumeProgramType::Blank;
-					if (settings_useStencilTexture)
-					{
-						programIndex = (ShadowVolumeAlgorithm::FaceBased == settings_shadowVolumeAlgorithm ?
-								ShadowVolumeProgramType::Tex1 :
-								ShadowVolumeProgramType::Tex2);
-					}
-
-					//sides
 					s_uniforms.submitPerDrawUniforms();
 					bgfx::setProgram(svProgs[programIndex][ShadowVolumePart::Side]);
 					bgfx::setTransform(shadowVolumeMtx);
@@ -2693,7 +2659,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					if (shadowVolume.m_cap)
 					{
-						//front
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setProgram(svProgs[programIndex][ShadowVolumePart::Front]);
 						bgfx::setTransform(shadowVolumeMtx);
@@ -2702,7 +2667,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						::setRenderState(renderStateCraftStencil);
 						::submit(viewId);
 
-						//back
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setProgram(svProgs[programIndex][ShadowVolumePart::Back]);
 						bgfx::setTransform(shadowVolumeMtx);
@@ -2716,7 +2680,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					{
 						const RenderState& renderState = s_renderStates[RenderState::Custom_DrawShadowVolume_Lines];
 
-						//sides
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setProgram(svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Side]);
 						bgfx::setTransform(shadowVolumeMtx);
@@ -2727,7 +2690,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 						if (shadowVolume.m_cap)
 						{
-							//front
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setProgram(svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Front]);
 							bgfx::setTransform(shadowVolumeMtx);
@@ -2736,7 +2698,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 							::setRenderState(renderState);
 							::submit(VIEWID_RANGE1_PASS3);
 
-							//back
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setProgram(svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Back]);
 							bgfx::setTransform(shadowVolumeMtx);
@@ -2749,53 +2710,45 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				}
 			}
 
-			/**
-			 * Draw diffuse
-			 */
-
-			//draw diffuse only
+			// Draw diffuse only.
 			s_uniforms.m_params.m_ambientPass = 0.0f;
 			s_uniforms.m_params.m_lightningPass = 1.0f;
 
 			RenderState& drawDiffuse = (settings_useStencilTexture ?
-					s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawDiffuse] :
-					s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawDiffuse]);
+				s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawDiffuse] :
+			s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawDiffuse]);
 
-			//if using stencil texture, viewId is set to render target. Incr it to render to default back buffer
+			// If using stencil texture, viewId is set to render target. Incr it to render to default back buffer.
 			viewId += uint8_t(settings_useStencilTexture);
 
-			//draw shadow casters
+			// Draw shadow casters.
 			for (uint8_t ii = 0; ii < shadowCastersCount[currentScene]; ++ii)
 			{
 				shadowCasters[currentScene][ii].submit(viewId, drawDiffuse);
 			}
 
-			//draw shadow receivers
+			// Draw shadow receivers.
 			for (uint8_t ii = 0; ii < shadowReceiversCount[currentScene]; ++ii)
 			{
 				shadowReceivers[currentScene][ii].submit(viewId, drawDiffuse);
 			}
 		}
 
-		//end performance timer
 		profTime = bx::getHPCounter() - profTime; 
 
-		//lights
+		// Lights.
 		const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
 		for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 		{
-			//set color
-			memcpy(s_uniforms.m_color, lightRgbInnerR[ii], 3*sizeof(float));
+			memcpy(s_uniforms.m_color, lightRgbInnerR[ii], 3*sizeof(float) );
 
-			//calculate mtx
 			float lightMtx[16];
 			mtxBillboard(lightMtx, viewState.m_view, lightPosRadius[ii], lightScale);
 
-			//submit
 			vplaneModel.submit(VIEWID_RANGE1_PASS3, lightMtx, s_renderStates[RenderState::Custom_BlendLightTexture]);
 		}
 
-		//setup view rect and transform for all used views
+		// Setup view rect and transform for all used views.
 		setViewRectTransformMask(s_viewMask, viewState);
 		s_viewMask = 0;
 
@@ -2803,11 +2756,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// process submitted rendering primitives.
 		bgfx::frame();
 
-		//reset clear values on used views
+		// Reset clear values on used views.
 		clearViewMask(s_clearMask, BGFX_CLEAR_NONE, clearValues);
 		s_clearMask = 0;
 
-		//reset assigned render target views
+		// Reset assigned render target views.
 		const bgfx::RenderTargetHandle invalidHandle = BGFX_INVALID_HANDLE;
 		bgfx::setViewRenderTargetMask(s_rtMask, invalidHandle);
 		s_rtMask = 0;

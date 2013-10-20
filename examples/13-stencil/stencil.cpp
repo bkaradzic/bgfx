@@ -133,10 +133,6 @@ static const uint16_t s_planeIndices[s_numPlaneIndices] =
 	1, 3, 2,
 };
 
-//-------------------------------------------------
-// Helper functions
-//-------------------------------------------------
-
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
 static uint32_t s_viewMask = 0;
@@ -215,10 +211,6 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 
 	return program;
 }
-
-//-------------------------------------------------
-// Math
-//-------------------------------------------------
 
 void mtxScaleRotateTranslate(float* _result
 							 , const float _scaleX
@@ -565,10 +557,6 @@ void submitMask(uint32_t _viewMask, int32_t _depth = 0)
 	// Keep track of submited view ids
 	s_viewMask |= _viewMask;
 }
-
-//-------------------------------------------------
-// Mesh
-//-------------------------------------------------
 
 struct Aabb
 {
