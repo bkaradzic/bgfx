@@ -2030,8 +2030,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		//set view and projection matrices
-		const float aspect = float(viewState.m_width)/float(viewState.m_height);
-		mtxProj(viewState.m_proj, 60.0f, aspect, 1.0f, 1000.0f);
+		const float fov       = 60.0f;
+		const float aspect    = float(viewState.m_width)/float(viewState.m_height);
+		const float nearPlane = 1.0f;
+		const float farPlane  = 1000.0f;
+		mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
 		float at[3] = { 3.0f, 5.0f, 0.0f };
 		float eye[3] = { 3.0f, 20.0f, -58.0f };
 		mtxLookAt(viewState.m_view, eye, at);
@@ -2548,7 +2551,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				pointLight[1] = lightPos[1];
 				pointLight[2] = lightPos[2];
 				pointLight[3] = 1.0f;
-				createNearClipVolume(nearClipVolume, pointLight, viewState.m_view, 60.0f, 16.0f/9.0f, 0.1f);
+				createNearClipVolume(nearClipVolume, pointLight, viewState.m_view, fov, aspect, nearPlane);
 			}
 
 			for (uint8_t jj = 0; jj < shadowCastersCount[currentScene]; ++jj)
