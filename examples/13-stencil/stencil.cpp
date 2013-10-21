@@ -610,17 +610,17 @@ static RenderState s_renderStates[RenderState::Count] =
 
 struct ViewState
 {
-	ViewState(uint32_t _width  = 1280
-		, uint32_t _height = 720
-		)
+	ViewState(uint32_t _width = 1280, uint32_t _height = 720)
 		: m_width(_width)
 		, m_height(_height)
-	{ }
+	{
+	}
 
 	uint32_t m_width;
 	uint32_t m_height;
 
-	float m_view[16], m_proj[16];
+	float m_view[16];
+	float m_proj[16];
 };
 
 struct ClearValues
@@ -638,18 +638,6 @@ struct ClearValues
 	float    m_clearDepth;
 	uint8_t  m_clearStencil;
 };
-
-void setViewRectTransform(uint8_t _view, const ViewState& _viewState)
-{
-	bgfx::setViewRect(_view, 0, 0, _viewState.m_width, _viewState.m_height);
-	bgfx::setViewTransform(_view, _viewState.m_view, _viewState.m_proj);
-}
-
-void setViewRectTransformMask(uint32_t _viewMask, const ViewState& _viewState)
-{
-	bgfx::setViewRectMask(_viewMask, 0, 0, _viewState.m_width, _viewState.m_height);
-	bgfx::setViewTransformMask(_viewMask, _viewState.m_view, _viewState.m_proj);
-}
 
 void clearView(uint8_t _id, uint8_t _flags, const ClearValues& _clearValues)
 {
@@ -1494,7 +1482,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		// Setup view rect and transform for all used views.
-		setViewRectTransformMask(s_viewMask, viewState);
+		bgfx::setViewRectMask(s_viewMask, 0, 0, viewState.m_width, viewState.m_height);
+		bgfx::setViewTransformMask(s_viewMask, viewState.m_view, viewState.m_proj);
 		s_viewMask = 0;
 
 		// Advance to next frame. Rendering thread will be kicked to
