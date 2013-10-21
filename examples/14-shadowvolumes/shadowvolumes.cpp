@@ -2384,13 +2384,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			enum Direction
 			{
-				Left = 0,
-				Down,
-				Right,
-				Up,
-
-				DirectionCount,
+				Left  = 0x0,
+				Down  = 0x1,
+				Right = 0x2,
+				Up    = 0x3,
 			};
+			const uint8_t directionMask = 0x3;
 
 			uint8_t currentDirection = Left;
 			float currX = 0.0f;
@@ -2398,7 +2397,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			const float stepX = 20.0f;
 			const float stepY = 20.0f;
 			uint8_t stateStep = 0;
-			float stateChange = 1.0f;
+			uint8_t stateChange = 1;
 
 			for (uint8_t ii = 0; ii < settings_instanceCount; ++ii)
 			{
@@ -2414,12 +2413,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				inst.m_pos[2]      = currY;
 				inst.m_model       = bunnyModel;
 
-				stateStep++;
-				if (stateStep >= floor(stateChange/2.0f) )
+				++stateStep;
+				if (stateStep >= ( (stateChange & ~0x1) >> 1) )
 				{
-					currentDirection = (currentDirection+1)%DirectionCount;
+					currentDirection = (++currentDirection) & directionMask;
 					stateStep = 0;
-					stateChange += 1.0f;
+					++stateChange;
 				}
 
 				switch (currentDirection)
@@ -2428,7 +2427,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				case Down:  currY -= stepY; break;
 				case Right: currX += stepX; break;
 				case Up:    currY += stepY; break;
-				default: break;
 				}
 			}
 		}
