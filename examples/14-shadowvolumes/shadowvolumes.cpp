@@ -92,9 +92,7 @@ static const uint16_t s_planeIndices[s_numPlaneIndices] =
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
 
-static uint32_t s_clearMask = 0;
 static uint32_t s_viewMask = 0;
-static uint32_t s_rtMask = 0;
 
 static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_texStencil;
@@ -670,32 +668,6 @@ struct ClearValues
 	uint8_t  m_clearStencil;
 };
 
-void clearView(uint8_t _id, uint8_t _flags, const ClearValues& _clearValues)
-{
-	bgfx::setViewClear(_id
-		, _flags
-		, _clearValues.m_clearRgba
-		, _clearValues.m_clearDepth
-		, _clearValues.m_clearStencil
-		);
-
-	// Keep track of cleared views.
-	s_clearMask |= 1 << _id;
-}
-
-void clearViewMask(uint32_t _viewMask, uint8_t _flags, const ClearValues& _clearValues)
-{
-	bgfx::setViewClearMask(_viewMask
-		, _flags
-		, _clearValues.m_clearRgba
-		, _clearValues.m_clearDepth
-		, _clearValues.m_clearStencil
-		);
-
-	// Keep track of cleared views.
-	s_clearMask |= _viewMask;
-}
-
 void submit(uint8_t _id, int32_t _depth = 0)
 {
 	bgfx::submit(_id, _depth);
@@ -710,14 +682,6 @@ void submitMask(uint32_t _viewMask, int32_t _depth = 0)
 
 	// Keep track of submited view ids.
 	s_viewMask |= _viewMask;
-}
-
-void setViewRenderTarget(uint8_t _id, bgfx::RenderTargetHandle _handle)
-{
-	bgfx::setViewRenderTarget(_id, _handle);
-
-	// Keep track of render target view ids
-	s_rtMask |= 1 << _id;
 }
 
 struct Aabb
@@ -1977,7 +1941,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	vplaneModel.m_program = programColorTexture;
 	vplaneModel.m_texture = flareTex;
 
-	//setup lights
+	// Setup lights.
 	const uint8_t MAX_NUM_LIGHTS = 5;
 	const float rgbInnerR[MAX_NUM_LIGHTS][4] =
 	{
@@ -2482,7 +2446,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Make sure at the beginning everything gets cleared.
-		::clearView(0, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT, clearValues);
+		bgfx::setViewClear(0
+				, BGFX_CLEAR_COLOR_BIT
+				| BGFX_CLEAR_DEPTH_BIT
+				| BGFX_CLEAR_STENCIL_BIT
+				, clearValues.m_clearRgba
+				, clearValues.m_clearDepth
+				, clearValues.m_clearStencil
+				);
+
 		::submit(0);
 
 		// Draw ambient only.
@@ -2512,9 +2484,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Using stencil texture requires rendering to separate render target. first pass is building depth buffer.
 		if (settings_useStencilTexture)
 		{
-			ClearValues cv = { 0x00000000, 1.0f, 0 };
-			::clearView(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, cv);
-			::setViewRenderTarget(VIEWID_RANGE1_RT_PASS1, s_stencilRt);
+			bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, 0x00000000, 1.0f, 0);
+			bgfx::setViewRenderTarget(VIEWID_RANGE1_RT_PASS1, s_stencilRt);
 
 			const RenderState& renderState = s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_BuildDepth]; 
 
@@ -2546,13 +2517,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			if (settings_useStencilTexture)
 			{
-				ClearValues cv = { 0x00000000, 1.0f, 0 };
-				::clearView(viewId, BGFX_CLEAR_COLOR_BIT, cv);
-				::setViewRenderTarget(viewId, s_stencilRt);
+				bgfx::setViewRenderTarget(viewId, s_stencilRt);
+
+				bgfx::setViewClear(viewId
+						, BGFX_CLEAR_COLOR_BIT
+						, 0x00000000
+						, 1.0f
+						, 0
+						);
 			}
 			else
 			{
-				::clearView(viewId, BGFX_CLEAR_STENCIL_BIT, clearValues);
+				const bgfx::RenderTargetHandle invalidRt = BGFX_INVALID_HANDLE;
+				bgfx::setViewRenderTarget(viewId, invalidRt);
+
+				bgfx::setViewClear(viewId
+						, BGFX_CLEAR_STENCIL_BIT
+						, clearValues.m_clearRgba
+						, clearValues.m_clearDepth
+						, clearValues.m_clearStencil
+						);
 			}
 
 			// Create near clip volume for current light.
@@ -2749,14 +2733,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// process submitted rendering primitives.
 		bgfx::frame();
 
-		// Reset clear values on used views.
-		clearViewMask(s_clearMask, BGFX_CLEAR_NONE, clearValues);
-		s_clearMask = 0;
-
-		// Reset assigned render target views.
-		const bgfx::RenderTargetHandle invalidHandle = BGFX_INVALID_HANDLE;
-		bgfx::setViewRenderTargetMask(s_rtMask, invalidHandle);
-		s_rtMask = 0;
+		// Reset clear values.
+		bgfx::setViewClearMask(UINT32_MAX
+			, BGFX_CLEAR_NONE
+			, clearValues.m_clearRgba
+			, clearValues.m_clearDepth
+			, clearValues.m_clearStencil
+			);
 	}
 
 	// Cleanup
