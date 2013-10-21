@@ -1383,33 +1383,15 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		float m_k;
 	};
 
-	struct Index3us
-	{
-		Index3us()
-		{
-		}
-
-		Index3us(uint16_t _i0, uint16_t _i1, uint16_t _i2)
-			: m_i0(_i0)
-			, m_i1(_i1)
-			, m_i2(_i2)
-		{
-		}
-
-		uint16_t m_i0;
-		uint16_t m_i1;
-		uint16_t m_i2;
-	};
-
 	VertexData* verticesSide    = (VertexData*) malloc (100000 * sizeof(VertexData) );
-	Index3us*   indicesSide		= (Index3us*)   malloc (100000 * sizeof(Index3us) );
-	Index3us*   indicesFrontCap	= (Index3us*)   malloc (100000 * sizeof(Index3us) );
-	Index3us*   indicesBackCap	= (Index3us*)   malloc (100000 * sizeof(Index3us) );
+	uint16_t*   indicesSide		= (uint16_t*)   malloc (100000 * 3*sizeof(uint16_t) );
+	uint16_t*   indicesFrontCap	= (uint16_t*)   malloc (100000 * 3*sizeof(uint16_t) );
+	uint16_t*   indicesBackCap	= (uint16_t*)   malloc (100000 * 3*sizeof(uint16_t) );
 
-	uint16_t vsideI    = 0;
-	uint16_t sideI     = 0;
-	uint16_t frontCapI = 0;
-	uint16_t backCapI  = 0;
+	uint32_t vsideI    = 0;
+	uint32_t sideI     = 0;
+	uint32_t frontCapI = 0;
+	uint32_t backCapI  = 0;
 
 	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
 	uint16_t indexSide = 0;
@@ -1419,7 +1401,6 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
 		{
 			const Face& face = *iter;
-			const uint16_t* indices = face.m_i;
 
 			bool frontFacing = false;
 			float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
@@ -1428,9 +1409,9 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				frontFacing = true;
 				uint16_t triangleEdges[3][2] = 
 				{
-					{ indices[0], indices[1] },
-					{ indices[1], indices[2] },
-					{ indices[2], indices[0] },
+					{ face.m_i[0], face.m_i[1] },
+					{ face.m_i[1], face.m_i[2] },
+					{ face.m_i[2], face.m_i[0] },
 				};
 
 				for (uint8_t ii = 0; ii < 3; ++ii)
@@ -1449,11 +1430,15 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			{
 				if (frontFacing)
 				{
-					indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i;
+					indicesFrontCap[frontCapI++] = face.m_i[0];
+					indicesFrontCap[frontCapI++] = face.m_i[1];
+					indicesFrontCap[frontCapI++] = face.m_i[2];
 				}
 				else
 				{
-					indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
+					indicesBackCap[backCapI++] = face.m_i[0];
+					indicesBackCap[backCapI++] = face.m_i[1];
+					indicesBackCap[backCapI++] = face.m_i[2];
 				}
 
 				/**
@@ -1463,8 +1448,9 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				 * bool condition1 = !frontFacing && !_useFrontFacingFacesAsBackCap;
 				 * if (condition0 || condition1)
 				 * {
-				 *		const Index3us tmp = { indices[0], indices[1+condition0], indices[2-condition0] }; //winding regarding condition0 
-				 *		indicesBackCap.push_back(tmp);
+				 *      indicesBackCap[backCapI++] = face.m_i[0];
+				 *      indicesBackCap[backCapI++] = face.m_i[1+condition0];
+				 *      indicesBackCap[backCapI++] = face.m_i[2-condition0];
 				 * }
 				 */
 			}
@@ -1487,8 +1473,13 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				verticesSide[vsideI++] = VertexData(v1, 0.0f);
 				verticesSide[vsideI++] = VertexData(v1, 1.0f);
 
-				indicesSide[sideI++] = Index3us(indexSide+0, indexSide+1, indexSide+2); 
-				indicesSide[sideI++] = Index3us(indexSide+2, indexSide+1, indexSide+3);
+				indicesSide[sideI++] = indexSide+0;
+				indicesSide[sideI++] = indexSide+1;
+				indicesSide[sideI++] = indexSide+2;
+
+				indicesSide[sideI++] = indexSide+2;
+				indicesSide[sideI++] = indexSide+1;
+				indicesSide[sideI++] = indexSide+3;
 
 				indexSide += 4;
 			}
@@ -1536,17 +1527,13 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			uint16_t winding = uint16_t(k > 0);
 			for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
 			{
-				indicesSide[sideI++] =
-					Index3us(uint16_t(indexSide)
-						, uint16_t(indexSide + 2 - winding)
-						, uint16_t(indexSide + 1 + winding)
-						);
+				indicesSide[sideI++] = indexSide;
+				indicesSide[sideI++] = indexSide + 2 - winding;
+				indicesSide[sideI++] = indexSide + 1 + winding;
 
-				indicesSide[sideI++] =
-					Index3us(uint16_t(indexSide + 2)
-						, uint16_t(indexSide + 3 - winding*2)
-						, uint16_t(indexSide + 1 + winding*2) 
-						);
+				indicesSide[sideI++] = indexSide + 2;
+				indicesSide[sideI++] = indexSide + 3 - winding*2;
+				indicesSide[sideI++] = indexSide + 1 + winding*2;
 			}
 
 			indexSide += 4;
@@ -1566,11 +1553,15 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				{
 					if (frontFacing)
 					{
-						indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i; 
+						indicesFrontCap[frontCapI++] = face.m_i[0];
+						indicesFrontCap[frontCapI++] = face.m_i[1];
+						indicesFrontCap[frontCapI++] = face.m_i[2];
 					}
 					else
 					{
-						indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
+						indicesBackCap[backCapI++] = face.m_i[0];
+						indicesBackCap[backCapI++] = face.m_i[1];
+						indicesBackCap[backCapI++] = face.m_i[2];
 					}
 				}
 			}
@@ -1594,7 +1585,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 	//sides
 	uint32_t vsize = vsideI * 5*sizeof(float);
-	uint32_t isize = sideI * 3*sizeof(uint16_t);
+	uint32_t isize = sideI * sizeof(uint16_t);
 
 	mem = bgfx::alloc(vsize);
 	memcpy(mem->data, verticesSide, vsize);
@@ -1612,7 +1603,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	if (cap)
 	{
 		//front cap
-		isize = frontCapI * 3*sizeof(uint16_t); 
+		isize = frontCapI * sizeof(uint16_t);
 		mem = bgfx::alloc(isize);
 		memcpy(mem->data, indicesFrontCap, isize);
 		_shadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
@@ -1621,7 +1612,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		bgfx::destroyIndexBuffer(_shadowVolume.m_ibFrontCap);
 
 		//back cap
-		isize = backCapI * 3*sizeof(uint16_t); 
+		isize = backCapI * sizeof(uint16_t);
 		mem = bgfx::alloc(isize);
 		memcpy(mem->data, indicesBackCap, isize);
 		_shadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
