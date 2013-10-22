@@ -1194,8 +1194,8 @@ namespace bgfx
 			m_flags = BGFX_STATE_NONE;
 		}
 
-		void submit(uint8_t _id, int32_t _depth);
-		void submitMask(uint32_t _viewMask, int32_t _depth);
+		uint32_t submit(uint8_t _id, int32_t _depth);
+		uint32_t submitMask(uint32_t _viewMask, int32_t _depth);
 		void sort();
 
 		bool checkAvailTransientIndexBuffer(uint32_t _num)
@@ -2533,14 +2533,14 @@ namespace bgfx
 			m_submit->setTexture(_stage, _sampler, _handle, _depth, _flags);
 		}
 
-		BGFX_API_FUNC(void submit(uint8_t _id, int32_t _depth) )
+		BGFX_API_FUNC(uint32_t submit(uint8_t _id, int32_t _depth) )
 		{
-			m_submit->submit(_id, _depth);
+			return m_submit->submit(_id, _depth);
 		}
 
-		BGFX_API_FUNC(void submitMask(uint32_t _viewMask, int32_t _depth) )
+		BGFX_API_FUNC(uint32_t submitMask(uint32_t _viewMask, int32_t _depth) )
 		{
-			m_submit->submitMask(_viewMask, _depth);
+			return m_submit->submitMask(_viewMask, _depth);
 		}
 
 		BGFX_API_FUNC(void discard() )
@@ -2548,10 +2548,11 @@ namespace bgfx
 			m_submit->discard();
 		}
 
+		BGFX_API_FUNC(uint32_t frame() );
+
 		void dumpViewStats();
 		void freeDynamicBuffers();
 		void freeAllHandles(Frame* _frame);
-		void frame();
 		void frameNoRenderWait();
 		void swap();
 

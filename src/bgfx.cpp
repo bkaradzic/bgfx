@@ -549,19 +549,19 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	void Frame::submit(uint8_t _id, int32_t _depth)
+	uint32_t Frame::submit(uint8_t _id, int32_t _depth)
 	{
 		if (m_discard)
 		{
 			discard();
-			return;
+			return m_num;
 		}
 
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
 		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
 		{
 			++m_numDropped;
-			return;
+			return m_num;
 		}
 
 		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
@@ -584,21 +584,23 @@ namespace bgfx
 
 		m_state.clear();
 		m_flags = BGFX_STATE_NONE;
+
+		return m_num;
 	}
 
-	void Frame::submitMask(uint32_t _viewMask, int32_t _depth)
+	uint32_t Frame::submitMask(uint32_t _viewMask, int32_t _depth)
 	{
 		if (m_discard)
 		{
 			discard();
-			return;
+			return m_num;
 		}
 
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
 		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
 		{
 			m_numDropped += bx::uint32_cntbits(_viewMask);
-			return;
+			return m_num;
 		}
 
 		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
@@ -628,6 +630,8 @@ namespace bgfx
 
 		m_state.clear();
 		m_flags = BGFX_STATE_NONE;
+
+		return m_num;
 	}
 
 	void Frame::sort()
@@ -664,17 +668,21 @@ namespace bgfx
 
 		memset(&g_caps, 0, sizeof(g_caps) );
 		g_caps.rendererType = getRendererType();
+		g_caps.supported = 0
+			| (BGFX_CONFIG_MULTITHREADED ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
+			;
 		g_caps.emulated = 0
-						| BGFX_CAPS_TEXTURE_FORMAT_BC1
-						| BGFX_CAPS_TEXTURE_FORMAT_BC2
-						| BGFX_CAPS_TEXTURE_FORMAT_BC3
-						| BGFX_CAPS_TEXTURE_FORMAT_BC4
-						| BGFX_CAPS_TEXTURE_FORMAT_BC5
-						| BGFX_CAPS_TEXTURE_FORMAT_ETC1
-						| BGFX_CAPS_TEXTURE_FORMAT_ETC2
-						| BGFX_CAPS_TEXTURE_FORMAT_ETC2A
-						| BGFX_CAPS_TEXTURE_FORMAT_ETC2A1
-						;
+			| BGFX_CAPS_TEXTURE_FORMAT_BC1
+			| BGFX_CAPS_TEXTURE_FORMAT_BC2
+			| BGFX_CAPS_TEXTURE_FORMAT_BC3
+			| BGFX_CAPS_TEXTURE_FORMAT_BC4
+			| BGFX_CAPS_TEXTURE_FORMAT_BC5
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC1
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC2
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A1
+			;
+		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
 
 		if (NULL != _allocator)
 		{
@@ -744,10 +752,10 @@ namespace bgfx
 		s_ctx->reset(_width, _height, _flags);
 	}
 
-	void frame()
+	uint32_t frame()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->frame();
+		return s_ctx->frame();
 	}
 
 	bool renderFrame()
@@ -977,11 +985,13 @@ namespace bgfx
 		}
 	}
 
-	void Context::frame()
+	uint32_t Context::frame()
 	{
 		// wait for render thread to finish
 		renderSemWait();
 		frameNoRenderWait();
+
+		return m_frames;
 	}
 
 	void Context::frameNoRenderWait()
@@ -2203,16 +2213,16 @@ namespace bgfx
 		s_ctx->setTexture(_stage, _sampler, _handle, _depth, _flags);
 	}
 
-	void submit(uint8_t _id, int32_t _depth)
+	uint32_t submit(uint8_t _id, int32_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->submit(_id, _depth);
+		return s_ctx->submit(_id, _depth);
 	}
 
-	void submitMask(uint32_t _viewMask, int32_t _depth)
+	uint32_t submitMask(uint32_t _viewMask, int32_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->submitMask(_viewMask, _depth);
+		return s_ctx->submitMask(_viewMask, _depth);
 	}
 
 	void discard()

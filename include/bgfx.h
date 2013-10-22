@@ -244,6 +244,7 @@
 #define BGFX_CAPS_TEXTURE_FORMAT_PTC24   UINT64_C(0x0000000000004000)
 #define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000010000)
 #define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000020000)
+#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000000040000)
 
 ///
 #define BGFX_HANDLE(_name) \
@@ -454,8 +455,8 @@ namespace bgfx
 		/// internally decompresses texture into supported format.
 		uint64_t emulated;
 
-		/// Maximum texture size.
-		uint16_t maxTextureSize;
+		uint16_t maxTextureSize; ///< Maximum texture size.		
+		uint16_t maxDrawCalls;   ///< Maximum draw calls.
 	};
 
 	struct TransientIndexBuffer
@@ -605,7 +606,12 @@ namespace bgfx
 	/// Advance to next frame. When using multithreaded renderer, this call
 	/// just swaps internal buffers, kicks render thread, and returns. In
 	/// singlethreaded renderer this call does frame rendering.
-	void frame();
+	///
+	/// @returns Current frame number. This might be used in conjunction with
+	///   double/multi buffering data outside the library and passing it to 
+	///   library via makeRef calls.
+	///
+	uint32_t frame();
 
 	/// Returns renderer capabilities.
 	const Caps* getCaps();
@@ -903,17 +909,45 @@ namespace bgfx
 	void setViewName(uint8_t _id, const char* _name);
 
 	/// Set view rectangle. Draw primitive outside view will be clipped.
+	///
+	/// @param _id View id.
+	/// @param _x Position x from the left corner of the window.
+	/// @param _y Position y from the top corner of the window.
+	/// @param _width Width of view port region.
+	/// @param _height Height of view port region.
+	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
 	/// Set view rectangle for multiple views.
+	///
+	/// @param _viewMask Bit mask representing affected views.
+	/// @param _x Position x from the left corner of the window.
+	/// @param _y Position y from the top corner of the window.
+	/// @param _width Width of view port region.
+	/// @param _height Height of view port region.
+	///
 	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
 	/// Set view scissor. Draw primitive outside view will be clipped. When
 	/// _x, _y, _width and _height are set to 0, scissor will be disabled.
+	///
+	/// @param _x Position x from the left corner of the window.
+	/// @param _y Position y from the top corner of the window.
+	/// @param _width Width of scissor region.
+	/// @param _height Height of scissor region.
+	///
 	void setViewScissor(uint8_t _id, uint16_t _x = 0, uint16_t _y = 0, uint16_t _width = 0, uint16_t _height = 0);
 
 	/// Set view scissor for multiple views. When _x, _y, _width and _height
 	/// are set to 0, scissor will be disabled.
+	///
+	/// @param _id View id.
+	/// @param _viewMask Bit mask representing affected views.
+	/// @param _x Position x from the left corner of the window.
+	/// @param _y Position y from the top corner of the window.
+	/// @param _width Width of scissor region.
+	/// @param _height Height of scissor region.
+	///
 	void setViewScissorMask(uint32_t _viewMask, uint16_t _x = 0, uint16_t _y = 0, uint16_t _width = 0, uint16_t _height = 0);
 
 	/// Set view clear flags.
@@ -934,7 +968,7 @@ namespace bgfx
 	/// order in which submit calls were called.
 	void setViewSeq(uint8_t _id, bool _enabled);
 
-	/// Set mulitple views into sequential mode.
+	/// Set multiple views into sequential mode.
 	void setViewSeqMask(uint32_t _viewMask, bool _enabled);
 
 	/// Set view render target.
@@ -999,7 +1033,15 @@ namespace bgfx
 	///
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil = BGFX_STENCIL_NONE);
 
-	/// Set scissor for draw primitive.
+	/// Set scissor for draw primitive. For scissor for all primitives in
+	/// view see setViewScissor.
+	///
+	/// @param _x Position x from the left corner of the window.
+	/// @param _y Position y from the top corner of the window.
+	/// @param _width Width of scissor region.
+	/// @param _height Height of scissor region.
+	/// @returns Scissor cache index.
+	///
 	uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
 	/// Set scissor from cache for draw primitive.
@@ -1092,15 +1134,17 @@ namespace bgfx
 	///
 	/// @param _id View id.
 	/// @param _depth Depth for sorting.
+	/// @returns Number of draw calls.
 	///
-	void submit(uint8_t _id, int32_t _depth = 0);
+	uint32_t submit(uint8_t _id, int32_t _depth = 0);
 
 	/// Submit primitive for rendering into multiple views.
 	///
 	/// @param _viewMask Mask to which views to submit draw primitive calls.
 	/// @param _depth Depth for sorting.
+	/// @returns Number of draw calls.
 	///
-	void submitMask(uint32_t _viewMask, int32_t _depth = 0);
+	uint32_t submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
 	/// Discard all previously set state for draw call.
 	void discard();
