@@ -1637,7 +1637,7 @@ namespace bgfx
 		s_ctx->destroyVertexBuffer(_handle);
 	}
 
-	DynamicIndexBufferHandle createDynamicIndexBuffer(uint16_t _num)
+	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		return s_ctx->createDynamicIndexBuffer(_num);

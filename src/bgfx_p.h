@@ -1689,10 +1689,10 @@ namespace bgfx
 			m_vertexBufferHandle.free(_handle.idx);
 		}
 
-		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(uint16_t _num) )
+		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num) )
 		{
 			DynamicIndexBufferHandle handle = BGFX_INVALID_HANDLE;
-			uint32_t size = BX_ALIGN_16(uint32_t(_num*2) );
+			uint32_t size = BX_ALIGN_16(_num*2);
 			uint64_t ptr = m_dynamicIndexBufferAllocator.alloc(size);
 			if (ptr == NonLocalAllocator::invalidBlock)
 			{

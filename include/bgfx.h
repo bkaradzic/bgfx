@@ -654,27 +654,56 @@ namespace bgfx
 	void destroyIndexBuffer(IndexBufferHandle _handle);
 
 	/// Create static vertex buffer.
+	///
+	/// @param _mem Vertex buffer data.
+	/// @param _decl Vertex declaration.
+	/// @returns Static vertex buffer handle.
+	///
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
 
 	/// Destroy static vertex buffer.
+	///
+	/// @param _handle Static vertex buffer handle.
+	///
 	void destroyVertexBuffer(VertexBufferHandle _handle);
 
 	/// Create empty dynamic index buffer.
-	DynamicIndexBufferHandle createDynamicIndexBuffer(uint16_t _num);
+	///
+	/// @param _num Number of indices.
+	///
+	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num);
 
 	/// Create dynamic index buffer and initialized it.
+	///
+	/// @param _mem Index buffer data.
+	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem);
 
 	/// Update dynamic index buffer.
+	///
+	/// @param _handle Dynamic index buffer handle.
+	/// @param _mem Index buffer data.
+	///
 	void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem);
 
 	/// Destroy dynamic index buffer.
+	///
+	/// @param _handle Dynamic index buffer handle.
+	///
 	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle);
 
 	/// Create empty dynamic vertex buffer.
+	///
+	/// @param _num Number of vertices.
+	/// @param _decl Vertex declaration.
+	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl);
 
 	/// Create dynamic vertex buffer and initialize it.
+	///
+	/// @param _mem Vertex buffer data.
+	/// @param _decl Vertex declaration.
+	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
 
 	/// Update dynamic vertex buffer.
