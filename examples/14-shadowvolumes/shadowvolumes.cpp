@@ -1864,8 +1864,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH);
 
-	u_texColor   = bgfx::createUniform("u_texColor",            bgfx::UniformType::Uniform1iv);
-	u_texStencil = bgfx::createUniform("u_texStencil",          bgfx::UniformType::Uniform1iv);
+	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
+	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_shadowvolume_texture_lightning", "fs_shadowvolume_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_shadowvolume_color_lightning",   "fs_shadowvolume_color_lightning"  );
