@@ -300,19 +300,19 @@ namespace bgfx
 		{ "GL_ANGLE_translated_shader_source",     false,                             true  },
 		{ "GL_APPLE_texture_format_BGRA8888",      false,                             true  },
 		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_framebuffer_sRGB",               false,                             true  },
 		{ "GL_ARB_get_program_binary",             BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
 		{ "GL_ARB_half_float_vertex",              false,                             true  },
 		{ "GL_ARB_instanced_arrays",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_multisample",                    false,                             true  },
-		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_seamless_cube_map",              BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_texture_float",                  BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_texture_multisample",            false,                             true  },
+		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_ARB_seamless_cube_map",              BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "GL_ARB_texture_float",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "GL_ARB_texture_multisample",            BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_texture_swizzle",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_timer_query",                    false,                             true  },
+		{ "GL_ARB_timer_query",                    BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
 		{ "GL_ATI_meminfo",                        false,                             true  },
@@ -328,7 +328,7 @@ namespace bgfx
 		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
 		{ "GL_EXT_texture_compression_dxt1",       false,                             true  },
 		{ "GL_EXT_texture_compression_latc",       false,                             true  },
-		{ "GL_EXT_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_texture_compression_s3tc",       false,                             true  },
 		{ "GL_EXT_texture_filter_anisotropic",     false,                             true  },
 		{ "GL_EXT_texture_format_BGRA8888",        false,                             true  },
@@ -1210,7 +1210,6 @@ namespace bgfx
 
 	void Program::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex) const
 	{
-		uint32_t enabled = 0;
 		for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
 		{
 			Attrib::Enum attr = Attrib::Enum(m_used[ii]);
@@ -1222,42 +1221,19 @@ namespace bgfx
 			bool asInt;
 			_vertexDecl.decode(attr, num, type, normalized, asInt);
 
-			if (-1 != loc
-			&&  0xff != _vertexDecl.m_attributes[attr])
+			if (-1 != loc)
 			{
-				GL_CHECK(glEnableVertexAttribArray(loc) );
-				enabled |= 1<<attr;
-
-				GL_CHECK(s_vertexAttribDivisor(loc, 0) );
-
-				uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
-				GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
-			}
-			else
-			{
-//				GL_CHECK(glDisableVertexAttribArray(loc) );
-
-				switch (num)
+				if (0xff != _vertexDecl.m_attributes[attr])
 				{
-				case 1:
-					GL_CHECK(glVertexAttrib1f(loc, 0.0f) );
-					break;
+					GL_CHECK(glEnableVertexAttribArray(loc) );
+					GL_CHECK(s_vertexAttribDivisor(loc, 0) );
 
-				case 2:
-					GL_CHECK(glVertexAttrib2f(loc, 0.0f, 0.0f) );
-					break;
-
-				case 3:
-					GL_CHECK(glVertexAttrib3f(loc, 0.0f, 0.0f, 0.0f) );
-					break;
-
-				case 4:
-					GL_CHECK(glVertexAttrib4f(loc, 0.0f, 0.0f, 0.0f, 0.0f) );
-					break;
-
-				default:
-					BX_CHECK(false, "You should not be here!");
-					break;
+					uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
+					GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
+				}
+				else
+				{
+					GL_CHECK(glDisableVertexAttribArray(loc) );
 				}
 			}
 		}
