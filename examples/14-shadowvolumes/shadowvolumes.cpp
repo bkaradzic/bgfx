@@ -1275,7 +1275,7 @@ struct ShadowVolumeAllocator
 	uint8_t* m_mem;
 	uint8_t* m_ptr;
 	bool m_firstPage;
-	static const uint32_t PAGE_SIZE = 1 << 28; //256 MB
+	static const uint32_t PAGE_SIZE = 180 << 20; //180 MB, enough for 125 capped shadow volume instances
 };
 static ShadowVolumeAllocator s_svAllocator;
 
@@ -1418,17 +1418,24 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		float m_k;
 	};
 
-	VertexData* verticesSide    = (VertexData*) s_svAllocator.alloc (100000 * sizeof(VertexData) );
-	uint16_t*   indicesSide		= (uint16_t*)   s_svAllocator.alloc (100000 * 3*sizeof(uint16_t) );
-	uint16_t*   indicesFrontCap	= (uint16_t*)   s_svAllocator.alloc (100000 * 3*sizeof(uint16_t) );
-	uint16_t*   indicesBackCap	= (uint16_t*)   s_svAllocator.alloc (100000 * 3*sizeof(uint16_t) );
+	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
+
+	VertexData* verticesSide    = (VertexData*) s_svAllocator.alloc (20000 * sizeof(VertexData) );
+	uint16_t*   indicesSide     = (uint16_t*)   s_svAllocator.alloc (20000 * 3*sizeof(uint16_t) );
+	uint16_t*   indicesFrontCap = 0;
+	uint16_t*   indicesBackCap  = 0;
+
+	if (cap)
+	{
+		indicesFrontCap = (uint16_t*)s_svAllocator.alloc(80000 * 3*sizeof(uint16_t) );
+		indicesBackCap  = (uint16_t*)s_svAllocator.alloc(80000 * 3*sizeof(uint16_t) );
+	}
 
 	uint32_t vsideI    = 0;
 	uint32_t sideI     = 0;
 	uint32_t frontCapI = 0;
 	uint32_t backCapI  = 0;
 
-	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
 	uint16_t indexSide = 0;
 
 	if (ShadowVolumeAlgorithm::FaceBased == _algo)
@@ -2153,7 +2160,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		if (Scene1 == currentScene)
 		{
-			imguiSlider("Instance count", &settings_instanceCount, 1.0f, 49.0f, 1.0f);
+			imguiSlider("Instance count", &settings_instanceCount, 1.0f, 25.0f, 1.0f);
 		}
 
 		imguiLabel("CPU Time: %7.1f [ms]", double(profTime)*toMs);
