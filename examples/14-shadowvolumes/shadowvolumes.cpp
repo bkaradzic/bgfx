@@ -1244,6 +1244,41 @@ struct Instance
 	Model* m_model;
 };
 
+struct ShadowVolumeAllocator
+{
+	ShadowVolumeAllocator()
+	{
+		m_mem = (uint8_t*)malloc(PAGE_SIZE*2);
+		m_ptr = m_mem;
+		m_firstPage = true;
+	}
+
+	~ShadowVolumeAllocator()
+	{
+		free(m_mem);
+	}
+
+	void* alloc(uint32_t _size)
+	{
+		void* ret = (void*)m_ptr;
+		m_ptr += _size;
+		BX_CHECK(m_ptr - m_mem < (m_firstPage ? PAGE_SIZE : 2 * PAGE_SIZE), "Buffer overflow!");
+		return ret;
+	}
+
+	void swap()
+	{
+		m_ptr = m_firstPage ? m_mem + PAGE_SIZE : m_mem;
+		m_firstPage = !m_firstPage;
+	}
+
+	uint8_t* m_mem;
+	uint8_t* m_ptr;
+	bool m_firstPage;
+	static const uint32_t PAGE_SIZE = 1 << 28; //256 MB
+};
+static ShadowVolumeAllocator s_svAllocator;
+
 struct ShadowVolumeImpl
 {
 	enum Enum
@@ -1383,10 +1418,10 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		float m_k;
 	};
 
-	VertexData* verticesSide    = (VertexData*) malloc (100000 * sizeof(VertexData) );
-	uint16_t*   indicesSide		= (uint16_t*)   malloc (100000 * 3*sizeof(uint16_t) );
-	uint16_t*   indicesFrontCap	= (uint16_t*)   malloc (100000 * 3*sizeof(uint16_t) );
-	uint16_t*   indicesBackCap	= (uint16_t*)   malloc (100000 * 3*sizeof(uint16_t) );
+	VertexData* verticesSide    = (VertexData*) s_svAllocator.alloc (100000 * sizeof(VertexData) );
+	uint16_t*   indicesSide		= (uint16_t*)   s_svAllocator.alloc (100000 * 3*sizeof(uint16_t) );
+	uint16_t*   indicesFrontCap	= (uint16_t*)   s_svAllocator.alloc (100000 * 3*sizeof(uint16_t) );
+	uint16_t*   indicesBackCap	= (uint16_t*)   s_svAllocator.alloc (100000 * 3*sizeof(uint16_t) );
 
 	uint32_t vsideI    = 0;
 	uint32_t sideI     = 0;
@@ -1587,12 +1622,10 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	uint32_t vsize = vsideI * 5*sizeof(float);
 	uint32_t isize = sideI * sizeof(uint16_t);
 
-	mem = bgfx::alloc(vsize);
-	memcpy(mem->data, verticesSide, vsize);
+	mem = bgfx::makeRef(verticesSide, vsize);
 	_shadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, decl);
 
-	mem = bgfx::alloc(isize);
-	memcpy(mem->data, indicesSide, isize);
+	mem = bgfx::makeRef(indicesSide, isize);
 	_shadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
 
 	// bgfx::destroy*Buffer doesn't actually destroy buffers now.
@@ -1604,8 +1637,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	{
 		//front cap
 		isize = frontCapI * sizeof(uint16_t);
-		mem = bgfx::alloc(isize);
-		memcpy(mem->data, indicesFrontCap, isize);
+		mem = bgfx::makeRef(indicesFrontCap, isize);
 		_shadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
@@ -1613,19 +1645,12 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 		//back cap
 		isize = backCapI * sizeof(uint16_t);
-		mem = bgfx::alloc(isize);
-		memcpy(mem->data, indicesBackCap, isize);
+		mem = bgfx::makeRef(indicesBackCap, isize);
 		_shadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
 		bgfx::destroyIndexBuffer(_shadowVolume.m_ibBackCap);
 	}
-
-	//release resources
-	free(verticesSide);
-	free(indicesSide);
-	free(indicesFrontCap);
-	free(indicesBackCap);
 }
 
 void createNearClipVolume(float* __restrict _outPlanes24f
@@ -2724,6 +2749,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
+
+		// Swap memory pages.
+		s_svAllocator.swap();
 
 		// Reset clear values.
 		bgfx::setViewClearMask(UINT32_MAX
