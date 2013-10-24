@@ -415,6 +415,17 @@ namespace entry
 					{
 						uint8_t modifiers = translateKeyModifiers();
 						Key::Enum key = translateKey(_wparam);
+
+						if (Key::Print == key
+						&&  0x3 == (_lparam>>30) )
+						{
+							// VK_SNAPSHOT doesn't generate keydown event. Fire on down event when previous
+							// key state bit is set to 1 and transition state bit is set to 1.
+							//
+							// http://msdn.microsoft.com/en-us/library/windows/desktop/ms646280%28v=vs.85%29.aspx
+							m_eventQueue.postKeyEvent(key, modifiers, true);
+						}
+
 						m_eventQueue.postKeyEvent(key, modifiers, _id == WM_KEYDOWN || _id == WM_SYSKEYDOWN);
 					}
 					break;

@@ -104,11 +104,17 @@ Use a single distance field font to render text of various size.
 ### 12-lod
 Mesh LOD transitions.
 
+![example-12-lod](https://github.com/bkaradzic/bgfx/raw/master/examples/12-lod/screenshot.png)
+
 ### 13-stencil
 Stencil reflections and shadows.
 
+![example-13-stencil](https://github.com/bkaradzic/bgfx/raw/master/examples/13-stencil/screenshot.png)
+
 ### 14-shadowvolumes
 Shadow volumes.
+
+![example-14-shadowvolumes](https://github.com/bkaradzic/bgfx/raw/master/examples/14-shadowvolumes/screenshot.png)
 
 Dependencies
 ------------

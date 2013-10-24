@@ -6,6 +6,8 @@
 #include <bgfx.h>
 #include <bx/string.h>
 
+#include <time.h>
+
 #include "entry_p.h"
 #include "cmd.h"
 #include "input.h"
@@ -72,6 +74,24 @@ namespace entry
 				bgfx::setDebug(s_debug);
 				return 0;
 			}
+			else if (0 == strcmp(_argv[1], "screenshot") )
+			{
+				if (_argc > 2)
+				{
+					bgfx::saveScreenShot(_argv[2]);
+				}
+				else
+				{
+					time_t tt;
+					time(&tt);
+
+					char filePath[256];
+					bx::snprintf(filePath, sizeof(filePath), "temp/screenshot-%d", tt);
+					bgfx::saveScreenShot(filePath);
+				}
+
+				return 0;
+			}
 		}
 
 		return 1;
@@ -85,12 +105,13 @@ namespace entry
 
 	static const InputBinding s_bindings[] = 
 	{
-		{ entry::Key::KeyQ, entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
-		{ entry::Key::F1,   entry::Modifier::None,      1, cmd, "graphics stats"                    },
-		{ entry::Key::F1,   entry::Modifier::LeftShift, 1, cmd, "graphics stats 0\ngraphics text 0" },
-		{ entry::Key::F3,   entry::Modifier::None,      1, cmd, "graphics wireframe"                },
-		{ entry::Key::F7,   entry::Modifier::None,      1, cmd, "graphics vsync"                    },
-		{ entry::Key::F8,   entry::Modifier::None,      1, cmd, "graphics msaa"                     },
+		{ entry::Key::KeyQ,  entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
+		{ entry::Key::F1,    entry::Modifier::None,      1, cmd, "graphics stats"                    },
+		{ entry::Key::F1,    entry::Modifier::LeftShift, 1, cmd, "graphics stats 0\ngraphics text 0" },
+		{ entry::Key::F3,    entry::Modifier::None,      1, cmd, "graphics wireframe"                },
+		{ entry::Key::F7,    entry::Modifier::None,      1, cmd, "graphics vsync"                    },
+		{ entry::Key::F8,    entry::Modifier::None,      1, cmd, "graphics msaa"                     },
+		{ entry::Key::Print, entry::Modifier::None,      1, cmd, "graphics screenshot"               },
 
 		INPUT_BINDING_END
 	};
@@ -176,9 +197,10 @@ namespace entry
 					break;
 				}
 			}
-		} while (NULL != ev);
 
-		inputProcess();
+			inputProcess();
+
+		} while (NULL != ev);
 
 		if (_reset != s_reset)
 		{
