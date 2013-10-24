@@ -72,7 +72,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
 
 	// Load some TTF files.
-	const char* fontNames[7] =
+	const char* fontFilePath[7] =
 	{
 		"font/droidsans.ttf",
 		"font/chp-fire.ttf",
@@ -80,17 +80,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		"font/mias_scribblings.ttf",
 		"font/ruritania.ttf",
 		"font/signika-regular.ttf",
-		"font/five_minutes.otf"
+		"font/five_minutes.otf",
 	};
 
-	const uint32_t fontCount = BX_COUNTOF(fontNames);
+	const uint32_t numFonts = BX_COUNTOF(fontFilePath);
 
-	TrueTypeHandle fontFiles[fontCount];
-	FontHandle fonts[fontCount];
-	for (uint32_t ii = 0; ii < fontCount; ++ii)
+	TrueTypeHandle fontFiles[numFonts];
+	FontHandle fonts[numFonts];
+	for (uint32_t ii = 0; ii < numFonts; ++ii)
 	{
 		// Instantiate a usable font.
-		fontFiles[ii] = loadTtf(fontManager, fontNames[ii]);
+		fontFiles[ii] = loadTtf(fontManager, fontFilePath[ii]);
 		fonts[ii] = fontManager->createFontByPixelSize(fontFiles[ii], 0, 32);
 
 		// Preload glyphs and blit them to atlas.
@@ -102,11 +102,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		fontManager->destroyTtf(fontFiles[ii]);
 	}
 
-	TrueTypeHandle console_tt = loadTtf(fontManager, "font/visitor1.ttf");
+	TrueTypeHandle fontAwesomeTtf = loadTtf(fontManager, "font/fontawesome-webfont.ttf");
 
 	// This font doesn't have any preloaded glyph's but the truetype file 
 	// is loaded so glyph will be generated as needed.
-	FontHandle consola_16 = fontManager->createFontByPixelSize(console_tt, 0, 10);
+	FontHandle fontAwesome72 = fontManager->createFontByPixelSize(fontAwesomeTtf, 0, 72);
+
+	TrueTypeHandle visitorTtf = loadTtf(fontManager, "font/visitor1.ttf");
+
+	// This font doesn't have any preloaded glyph's but the truetype file 
+	// is loaded so glyph will be generated as needed.
+	FontHandle visitor10 = fontManager->createFontByPixelSize(visitorTtf, 0, 10);
 
 	//create a static text buffer compatible with alpha font
 	//a static text buffer content cannot be modified after its first submit.
@@ -116,7 +122,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// of text.
 	textBufferManager->setPenPosition(staticText, 24.0f, 100.0f);
 
-	for (uint32_t ii = 0; ii < fontCount; ++ii)
+	for (uint32_t ii = 0; ii < numFonts; ++ii)
 	{
 		// Add some text to the buffer.
 		// The position of the pen is adjusted when there is an endline.
@@ -126,10 +132,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Now write some styled text.
 
 	// Setup style colors.
-	textBufferManager->setBackgroundColor(staticText, 0x551111FF);
-	textBufferManager->setUnderlineColor(staticText, 0xFF2222FF);
-	textBufferManager->setOverlineColor(staticText, 0x2222FFFF);
-	textBufferManager->setStrikeThroughColor(staticText, 0x22FF22FF);
+	textBufferManager->setBackgroundColor(staticText, 0x551111ff);
+	textBufferManager->setUnderlineColor(staticText, 0xff2222ff);
+	textBufferManager->setOverlineColor(staticText, 0x2222ffff);
+	textBufferManager->setStrikeThroughColor(staticText, 0x22ff22ff);
 
 	// Background.
 	textBufferManager->setStyle(staticText, STYLE_BACKGROUND);
@@ -150,6 +156,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Background + strike-through.
 	textBufferManager->setStyle(staticText, STYLE_BACKGROUND | STYLE_STRIKE_THROUGH);
 	textBufferManager->appendText(staticText, fonts[0], L"dog\n");
+
+	textBufferManager->setStyle(staticText, STYLE_NORMAL);
+	textBufferManager->appendText(staticText, fontAwesome72, L"\xf011 \xf02e \xf061 \xf087 \xf0d9 \xf099 \xf05c \xf021 \xf113\n");
 
 	// Create a transient buffer for real-time data.
 	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Transient);
@@ -182,9 +191,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		textBufferManager->clearTextBuffer(transientText);
 		textBufferManager->setPenPosition(transientText, width - 150.0f, 10.0f);
-		textBufferManager->appendText(transientText, consola_16, L"Transient\n");
-		textBufferManager->appendText(transientText, consola_16, L"text buffer\n");
-		textBufferManager->appendText(transientText, consola_16, fpsText);
+		textBufferManager->appendText(transientText, visitor10, L"Transient\n");
+		textBufferManager->appendText(transientText, visitor10, L"text buffer\n");
+		textBufferManager->appendText(transientText, visitor10, fpsText);
 
 		float at[3] = { 0, 0, 0.0f };
 		float eye[3] = {0, 0, -1.0f };
@@ -211,11 +220,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
-	fontManager->destroyTtf(console_tt);
+	fontManager->destroyTtf(fontAwesomeTtf);
+	fontManager->destroyTtf(visitorTtf);
 
 	// Destroy the fonts.
-	fontManager->destroyFont(consola_16);
-	for (uint32_t ii = 0; ii < fontCount; ++ii)
+	fontManager->destroyFont(fontAwesome72);
+	fontManager->destroyFont(visitor10);
+	for (uint32_t ii = 0; ii < numFonts; ++ii)
 	{
 		fontManager->destroyFont(fonts[ii]);
 	}

@@ -383,6 +383,9 @@ http://www.dafont.com/visitor.font
 Special-Elite Font
 http://www.fontspace.com/astigmatic-one-eye-typographic-institute/special-elite
 
+FontAwesome Font  
+http://fontawesome.io/
+
 Sherlock Holmes text
 http://www.gutenberg.org/ebooks/1661
 
