@@ -10,12 +10,12 @@ Cross-platform rendering library ([API documentation](https://github.com/bkaradz
 
 Supported rendering backends:
 
+ * Direct3D 9
+ * Direct3D 11
  * OpenGL 2.1
  * OpenGL 3.1
  * OpenGL ES 2
  * OpenGL ES 3
- * Direct3D 9
- * Direct3D 11
 
 Platforms:
 
@@ -386,7 +386,7 @@ http://www.fontspace.com/astigmatic-one-eye-typographic-institute/special-elite
 FontAwesome Font  
 http://fontawesome.io/
 
-Sherlock Holmes text
+Sherlock Holmes text  
 http://www.gutenberg.org/ebooks/1661
 
 Tree Pack 1  
