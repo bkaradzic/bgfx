@@ -23,6 +23,9 @@ using namespace std::tr1;
 #include <unordered_map>
 #include <map>
 
+#define MAX_INSTANCE_COUNT 25
+#define MAX_LIGHTS_COUNT 5
+
 #define VIEWID_RANGE1_PASS0     1 
 #define VIEWID_RANGE1_RT_PASS1  2
 #define VIEWID_RANGE15_PASS2    3
@@ -1275,7 +1278,9 @@ struct ShadowVolumeAllocator
 	uint8_t* m_mem;
 	uint8_t* m_ptr;
 	bool m_firstPage;
-	static const uint32_t PAGE_SIZE = 180 << 20; //180 MB, enough for 125 capped shadow volume instances
+	static const uint32_t SV_INSTANCE_MEM_SIZE = 1500 << 10;
+	static const uint32_t INSTANCE_COUNT = (25 > MAX_INSTANCE_COUNT) ? 25 : MAX_INSTANCE_COUNT; //max(25, MAX_INSTANCE_COUNT);
+	static const uint32_t PAGE_SIZE = SV_INSTANCE_MEM_SIZE * INSTANCE_COUNT * MAX_LIGHTS_COUNT;
 };
 static ShadowVolumeAllocator s_svAllocator;
 
@@ -1965,8 +1970,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	vplaneModel.m_texture = flareTex;
 
 	// Setup lights.
-	const uint8_t MAX_NUM_LIGHTS = 5;
-	const float rgbInnerR[MAX_NUM_LIGHTS][4] =
+	const float rgbInnerR[MAX_LIGHTS_COUNT][4] =
 	{
 		{ 1.0f, 0.7f, 0.2f, 0.0f }, //yellow
 		{ 0.7f, 0.2f, 1.0f, 0.0f }, //purple
@@ -1975,10 +1979,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{ 0.7f, 0.7f, 0.7f, 0.0f }, //white
 	};
 
-	float lightRgbInnerR[MAX_NUM_LIGHTS][4];
-	for (uint8_t ii = 0, jj = 0; ii < MAX_NUM_LIGHTS; ++ii, ++jj)
+	float lightRgbInnerR[MAX_LIGHTS_COUNT][4];
+	for (uint8_t ii = 0, jj = 0; ii < MAX_LIGHTS_COUNT; ++ii, ++jj)
 	{
-		const uint8_t index = jj%MAX_NUM_LIGHTS;
+		const uint8_t index = jj%MAX_LIGHTS_COUNT;
 		lightRgbInnerR[ii][0] = rgbInnerR[index][0];
 		lightRgbInnerR[ii][1] = rgbInnerR[index][1];
 		lightRgbInnerR[ii][2] = rgbInnerR[index][2];
@@ -2094,7 +2098,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			currentScene = Scene1;
 		}
 
-		imguiSlider("Lights", &settings_numLights, 1.0f, 5.0f, 1.0f);
+		imguiSlider("Lights", &settings_numLights, 1.0f, float(MAX_LIGHTS_COUNT), 1.0f);
 
 		if (imguiCheck("Update lights", settings_updateLights) )
 		{
@@ -2160,7 +2164,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		if (Scene1 == currentScene)
 		{
-			imguiSlider("Instance count", &settings_instanceCount, 1.0f, 25.0f, 1.0f);
+			imguiSlider("Instance count", &settings_instanceCount, 1.0f, float(MAX_INSTANCE_COUNT), 1.0f);
 		}
 
 		imguiLabel("CPU Time: %7.1f [ms]", double(profTime)*toMs);
@@ -2214,7 +2218,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		//setup light positions
-		float lightPosRadius[MAX_NUM_LIGHTS][4];
+		float lightPosRadius[MAX_LIGHTS_COUNT][4];
 		if (LightPattern0 == lightPattern)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
