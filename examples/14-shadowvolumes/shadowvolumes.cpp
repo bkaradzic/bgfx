@@ -2443,7 +2443,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				++stateStep;
 				if (stateStep >= ( (stateChange & ~0x1) >> 1) )
 				{
-					currentDirection = (++currentDirection) & directionMask;
+					currentDirection = (currentDirection + 1) & directionMask;
 					stateStep = 0;
 					++stateChange;
 				}
