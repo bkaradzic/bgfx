@@ -23,6 +23,9 @@ using namespace std::tr1;
 #include <unordered_map>
 #include <map>
 
+#define MAX_INSTANCE_COUNT 25
+#define MAX_LIGHTS_COUNT 5
+
 #define VIEWID_RANGE1_PASS0     1 
 #define VIEWID_RANGE1_RT_PASS1  2
 #define VIEWID_RANGE15_PASS2    3
@@ -92,9 +95,7 @@ static const uint16_t s_planeIndices[s_numPlaneIndices] =
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
 
-static uint32_t s_clearMask = 0;
 static uint32_t s_viewMask = 0;
-static uint32_t s_rtMask = 0;
 
 static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_texStencil;
@@ -670,32 +671,6 @@ struct ClearValues
 	uint8_t  m_clearStencil;
 };
 
-void clearView(uint8_t _id, uint8_t _flags, const ClearValues& _clearValues)
-{
-	bgfx::setViewClear(_id
-		, _flags
-		, _clearValues.m_clearRgba
-		, _clearValues.m_clearDepth
-		, _clearValues.m_clearStencil
-		);
-
-	// Keep track of cleared views.
-	s_clearMask |= 1 << _id;
-}
-
-void clearViewMask(uint32_t _viewMask, uint8_t _flags, const ClearValues& _clearValues)
-{
-	bgfx::setViewClearMask(_viewMask
-		, _flags
-		, _clearValues.m_clearRgba
-		, _clearValues.m_clearDepth
-		, _clearValues.m_clearStencil
-		);
-
-	// Keep track of cleared views.
-	s_clearMask |= _viewMask;
-}
-
 void submit(uint8_t _id, int32_t _depth = 0)
 {
 	bgfx::submit(_id, _depth);
@@ -710,14 +685,6 @@ void submitMask(uint32_t _viewMask, int32_t _depth = 0)
 
 	// Keep track of submited view ids.
 	s_viewMask |= _viewMask;
-}
-
-void setViewRenderTarget(uint8_t _id, bgfx::RenderTargetHandle _handle)
-{
-	bgfx::setViewRenderTarget(_id, _handle);
-
-	// Keep track of render target view ids
-	s_rtMask |= 1 << _id;
 }
 
 struct Aabb
@@ -1280,6 +1247,43 @@ struct Instance
 	Model* m_model;
 };
 
+struct ShadowVolumeAllocator
+{
+	ShadowVolumeAllocator()
+	{
+		m_mem = (uint8_t*)malloc(PAGE_SIZE*2);
+		m_ptr = m_mem;
+		m_firstPage = true;
+	}
+
+	~ShadowVolumeAllocator()
+	{
+		free(m_mem);
+	}
+
+	void* alloc(uint32_t _size)
+	{
+		void* ret = (void*)m_ptr;
+		m_ptr += _size;
+		BX_CHECK(m_ptr - m_mem < (m_firstPage ? PAGE_SIZE : 2 * PAGE_SIZE), "Buffer overflow!");
+		return ret;
+	}
+
+	void swap()
+	{
+		m_ptr = m_firstPage ? m_mem + PAGE_SIZE : m_mem;
+		m_firstPage = !m_firstPage;
+	}
+
+	uint8_t* m_mem;
+	uint8_t* m_ptr;
+	bool m_firstPage;
+	static const uint32_t SV_INSTANCE_MEM_SIZE = 1500 << 10;
+	static const uint32_t INSTANCE_COUNT = (25 > MAX_INSTANCE_COUNT) ? 25 : MAX_INSTANCE_COUNT; //max(25, MAX_INSTANCE_COUNT);
+	static const uint32_t PAGE_SIZE = SV_INSTANCE_MEM_SIZE * INSTANCE_COUNT * MAX_LIGHTS_COUNT;
+};
+static ShadowVolumeAllocator s_svAllocator;
+
 struct ShadowVolumeImpl
 {
 	enum Enum
@@ -1419,35 +1423,24 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		float m_k;
 	};
 
-	struct Index3us
-	{
-		Index3us()
-		{
-		}
-
-		Index3us(uint16_t _i0, uint16_t _i1, uint16_t _i2)
-			: m_i0(_i0)
-			, m_i1(_i1)
-			, m_i2(_i2)
-		{
-		}
-
-		uint16_t m_i0;
-		uint16_t m_i1;
-		uint16_t m_i2;
-	};
-
-	VertexData* verticesSide    = (VertexData*) malloc (100000 * sizeof(VertexData) );
-	Index3us*   indicesSide		= (Index3us*)   malloc (100000 * sizeof(Index3us) );
-	Index3us*   indicesFrontCap	= (Index3us*)   malloc (100000 * sizeof(Index3us) );
-	Index3us*   indicesBackCap	= (Index3us*)   malloc (100000 * sizeof(Index3us) );
-
-	uint16_t vsideI    = 0;
-	uint16_t sideI     = 0;
-	uint16_t frontCapI = 0;
-	uint16_t backCapI  = 0;
-
 	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
+
+	VertexData* verticesSide    = (VertexData*) s_svAllocator.alloc (20000 * sizeof(VertexData) );
+	uint16_t*   indicesSide     = (uint16_t*)   s_svAllocator.alloc (20000 * 3*sizeof(uint16_t) );
+	uint16_t*   indicesFrontCap = 0;
+	uint16_t*   indicesBackCap  = 0;
+
+	if (cap)
+	{
+		indicesFrontCap = (uint16_t*)s_svAllocator.alloc(80000 * 3*sizeof(uint16_t) );
+		indicesBackCap  = (uint16_t*)s_svAllocator.alloc(80000 * 3*sizeof(uint16_t) );
+	}
+
+	uint32_t vsideI    = 0;
+	uint32_t sideI     = 0;
+	uint32_t frontCapI = 0;
+	uint32_t backCapI  = 0;
+
 	uint16_t indexSide = 0;
 
 	if (ShadowVolumeAlgorithm::FaceBased == _algo)
@@ -1455,7 +1448,6 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
 		{
 			const Face& face = *iter;
-			const uint16_t* indices = face.m_i;
 
 			bool frontFacing = false;
 			float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
@@ -1464,9 +1456,9 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				frontFacing = true;
 				uint16_t triangleEdges[3][2] = 
 				{
-					{ indices[0], indices[1] },
-					{ indices[1], indices[2] },
-					{ indices[2], indices[0] },
+					{ face.m_i[0], face.m_i[1] },
+					{ face.m_i[1], face.m_i[2] },
+					{ face.m_i[2], face.m_i[0] },
 				};
 
 				for (uint8_t ii = 0; ii < 3; ++ii)
@@ -1485,11 +1477,15 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			{
 				if (frontFacing)
 				{
-					indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i;
+					indicesFrontCap[frontCapI++] = face.m_i[0];
+					indicesFrontCap[frontCapI++] = face.m_i[1];
+					indicesFrontCap[frontCapI++] = face.m_i[2];
 				}
 				else
 				{
-					indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
+					indicesBackCap[backCapI++] = face.m_i[0];
+					indicesBackCap[backCapI++] = face.m_i[1];
+					indicesBackCap[backCapI++] = face.m_i[2];
 				}
 
 				/**
@@ -1499,8 +1495,9 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				 * bool condition1 = !frontFacing && !_useFrontFacingFacesAsBackCap;
 				 * if (condition0 || condition1)
 				 * {
-				 *		const Index3us tmp = { indices[0], indices[1+condition0], indices[2-condition0] }; //winding regarding condition0 
-				 *		indicesBackCap.push_back(tmp);
+				 *      indicesBackCap[backCapI++] = face.m_i[0];
+				 *      indicesBackCap[backCapI++] = face.m_i[1+condition0];
+				 *      indicesBackCap[backCapI++] = face.m_i[2-condition0];
 				 * }
 				 */
 			}
@@ -1523,8 +1520,13 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				verticesSide[vsideI++] = VertexData(v1, 0.0f);
 				verticesSide[vsideI++] = VertexData(v1, 1.0f);
 
-				indicesSide[sideI++] = Index3us(indexSide+0, indexSide+1, indexSide+2); 
-				indicesSide[sideI++] = Index3us(indexSide+2, indexSide+1, indexSide+3);
+				indicesSide[sideI++] = indexSide+0;
+				indicesSide[sideI++] = indexSide+1;
+				indicesSide[sideI++] = indexSide+2;
+
+				indicesSide[sideI++] = indexSide+2;
+				indicesSide[sideI++] = indexSide+1;
+				indicesSide[sideI++] = indexSide+3;
 
 				indexSide += 4;
 			}
@@ -1572,17 +1574,13 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			uint16_t winding = uint16_t(k > 0);
 			for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
 			{
-				indicesSide[sideI++] =
-					Index3us(uint16_t(indexSide)
-						, uint16_t(indexSide + 2 - winding)
-						, uint16_t(indexSide + 1 + winding)
-						);
+				indicesSide[sideI++] = indexSide;
+				indicesSide[sideI++] = indexSide + 2 - winding;
+				indicesSide[sideI++] = indexSide + 1 + winding;
 
-				indicesSide[sideI++] =
-					Index3us(uint16_t(indexSide + 2)
-						, uint16_t(indexSide + 3 - winding*2)
-						, uint16_t(indexSide + 1 + winding*2) 
-						);
+				indicesSide[sideI++] = indexSide + 2;
+				indicesSide[sideI++] = indexSide + 3 - winding*2;
+				indicesSide[sideI++] = indexSide + 1 + winding*2;
 			}
 
 			indexSide += 4;
@@ -1602,11 +1600,15 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				{
 					if (frontFacing)
 					{
-						indicesFrontCap[frontCapI++] = *(Index3us*)face.m_i; 
+						indicesFrontCap[frontCapI++] = face.m_i[0];
+						indicesFrontCap[frontCapI++] = face.m_i[1];
+						indicesFrontCap[frontCapI++] = face.m_i[2];
 					}
 					else
 					{
-						indicesBackCap[backCapI++] = *(Index3us*)face.m_i; 
+						indicesBackCap[backCapI++] = face.m_i[0];
+						indicesBackCap[backCapI++] = face.m_i[1];
+						indicesBackCap[backCapI++] = face.m_i[2];
 					}
 				}
 			}
@@ -1630,14 +1632,12 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 	//sides
 	uint32_t vsize = vsideI * 5*sizeof(float);
-	uint32_t isize = sideI * 3*sizeof(uint16_t);
+	uint32_t isize = sideI * sizeof(uint16_t);
 
-	mem = bgfx::alloc(vsize);
-	memcpy(mem->data, verticesSide, vsize);
+	mem = bgfx::makeRef(verticesSide, vsize);
 	_shadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, decl);
 
-	mem = bgfx::alloc(isize);
-	memcpy(mem->data, indicesSide, isize);
+	mem = bgfx::makeRef(indicesSide, isize);
 	_shadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
 
 	// bgfx::destroy*Buffer doesn't actually destroy buffers now.
@@ -1648,29 +1648,21 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	if (cap)
 	{
 		//front cap
-		isize = frontCapI * 3*sizeof(uint16_t); 
-		mem = bgfx::alloc(isize);
-		memcpy(mem->data, indicesFrontCap, isize);
+		isize = frontCapI * sizeof(uint16_t);
+		mem = bgfx::makeRef(indicesFrontCap, isize);
 		_shadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
 		bgfx::destroyIndexBuffer(_shadowVolume.m_ibFrontCap);
 
 		//back cap
-		isize = backCapI * 3*sizeof(uint16_t); 
-		mem = bgfx::alloc(isize);
-		memcpy(mem->data, indicesBackCap, isize);
+		isize = backCapI * sizeof(uint16_t);
+		mem = bgfx::makeRef(indicesBackCap, isize);
 		_shadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
 		bgfx::destroyIndexBuffer(_shadowVolume.m_ibBackCap);
 	}
-
-	//release resources
-	free(verticesSide);
-	free(indicesSide);
-	free(indicesFrontCap);
-	free(indicesBackCap);
 }
 
 void createNearClipVolume(float* __restrict _outPlanes24f
@@ -1884,8 +1876,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH);
 
-	u_texColor   = bgfx::createUniform("u_texColor",            bgfx::UniformType::Uniform1iv);
-	u_texStencil = bgfx::createUniform("u_texStencil",          bgfx::UniformType::Uniform1iv);
+	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
+	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_shadowvolume_texture_lightning", "fs_shadowvolume_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_shadowvolume_color_lightning",   "fs_shadowvolume_color_lightning"  );
@@ -1977,9 +1969,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	vplaneModel.m_program = programColorTexture;
 	vplaneModel.m_texture = flareTex;
 
-	//setup lights
-	const uint8_t MAX_NUM_LIGHTS = 5;
-	const float rgbInnerR[MAX_NUM_LIGHTS][4] =
+	// Setup lights.
+	const float rgbInnerR[MAX_LIGHTS_COUNT][4] =
 	{
 		{ 1.0f, 0.7f, 0.2f, 0.0f }, //yellow
 		{ 0.7f, 0.2f, 1.0f, 0.0f }, //purple
@@ -1988,10 +1979,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{ 0.7f, 0.7f, 0.7f, 0.0f }, //white
 	};
 
-	float lightRgbInnerR[MAX_NUM_LIGHTS][4];
-	for (uint8_t ii = 0, jj = 0; ii < MAX_NUM_LIGHTS; ++ii, ++jj)
+	float lightRgbInnerR[MAX_LIGHTS_COUNT][4];
+	for (uint8_t ii = 0, jj = 0; ii < MAX_LIGHTS_COUNT; ++ii, ++jj)
 	{
-		const uint8_t index = jj%MAX_NUM_LIGHTS;
+		const uint8_t index = jj%MAX_LIGHTS_COUNT;
 		lightRgbInnerR[ii][0] = rgbInnerR[index][0];
 		lightRgbInnerR[ii][1] = rgbInnerR[index][1];
 		lightRgbInnerR[ii][2] = rgbInnerR[index][2];
@@ -2066,8 +2057,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		//set view and projection matrices
-		const float aspect = float(viewState.m_width)/float(viewState.m_height);
-		mtxProj(viewState.m_proj, 60.0f, aspect, 1.0f, 1000.0f);
+		const float fov       = 60.0f;
+		const float aspect    = float(viewState.m_width)/float(viewState.m_height);
+		const float nearPlane = 1.0f;
+		const float farPlane  = 1000.0f;
+		mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
 		float at[3] = { 3.0f, 5.0f, 0.0f };
 		float eye[3] = { 3.0f, 20.0f, -58.0f };
 		mtxLookAt(viewState.m_view, eye, at);
@@ -2104,7 +2098,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			currentScene = Scene1;
 		}
 
-		imguiSlider("Lights", &settings_numLights, 1.0f, 5.0f, 1.0f);
+		imguiSlider("Lights", &settings_numLights, 1.0f, float(MAX_LIGHTS_COUNT), 1.0f);
 
 		if (imguiCheck("Update lights", settings_updateLights) )
 		{
@@ -2170,7 +2164,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		if (Scene1 == currentScene)
 		{
-			imguiSlider("Instance count", &settings_instanceCount, 1.0f, 49.0f, 1.0f);
+			imguiSlider("Instance count", &settings_instanceCount, 1.0f, float(MAX_INSTANCE_COUNT), 1.0f);
 		}
 
 		imguiLabel("CPU Time: %7.1f [ms]", double(profTime)*toMs);
@@ -2224,7 +2218,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		//setup light positions
-		float lightPosRadius[MAX_NUM_LIGHTS][4];
+		float lightPosRadius[MAX_LIGHTS_COUNT][4];
 		if (LightPattern0 == lightPattern)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
@@ -2417,13 +2411,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			enum Direction
 			{
-				Left = 0,
-				Down,
-				Right,
-				Up,
-
-				DirectionCount,
+				Left  = 0x0,
+				Down  = 0x1,
+				Right = 0x2,
+				Up    = 0x3,
 			};
+			const uint8_t directionMask = 0x3;
 
 			uint8_t currentDirection = Left;
 			float currX = 0.0f;
@@ -2431,7 +2424,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			const float stepX = 20.0f;
 			const float stepY = 20.0f;
 			uint8_t stateStep = 0;
-			float stateChange = 1.0f;
+			uint8_t stateChange = 1;
 
 			for (uint8_t ii = 0; ii < settings_instanceCount; ++ii)
 			{
@@ -2447,12 +2440,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				inst.m_pos[2]      = currY;
 				inst.m_model       = bunnyModel;
 
-				stateStep++;
-				if (stateStep >= floor(stateChange/2.0f) )
+				++stateStep;
+				if (stateStep >= ( (stateChange & ~0x1) >> 1) )
 				{
-					currentDirection = (currentDirection+1)%DirectionCount;
+					currentDirection = (++currentDirection) & directionMask;
 					stateStep = 0;
-					stateChange += 1.0f;
+					++stateChange;
 				}
 
 				switch (currentDirection)
@@ -2461,7 +2454,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				case Down:  currY -= stepY; break;
 				case Right: currX += stepX; break;
 				case Up:    currY += stepY; break;
-				default: break;
 				}
 			}
 		}
@@ -2482,7 +2474,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Make sure at the beginning everything gets cleared.
-		::clearView(0, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT, clearValues);
+		bgfx::setViewClear(0
+				, BGFX_CLEAR_COLOR_BIT
+				| BGFX_CLEAR_DEPTH_BIT
+				| BGFX_CLEAR_STENCIL_BIT
+				, clearValues.m_clearRgba
+				, clearValues.m_clearDepth
+				, clearValues.m_clearStencil
+				);
+
 		::submit(0);
 
 		// Draw ambient only.
@@ -2512,9 +2512,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Using stencil texture requires rendering to separate render target. first pass is building depth buffer.
 		if (settings_useStencilTexture)
 		{
-			ClearValues cv = { 0x00000000, 1.0f, 0 };
-			::clearView(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, cv);
-			::setViewRenderTarget(VIEWID_RANGE1_RT_PASS1, s_stencilRt);
+			bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, 0x00000000, 1.0f, 0);
+			bgfx::setViewRenderTarget(VIEWID_RANGE1_RT_PASS1, s_stencilRt);
 
 			const RenderState& renderState = s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_BuildDepth]; 
 
@@ -2546,13 +2545,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			if (settings_useStencilTexture)
 			{
-				ClearValues cv = { 0x00000000, 1.0f, 0 };
-				::clearView(viewId, BGFX_CLEAR_COLOR_BIT, cv);
-				::setViewRenderTarget(viewId, s_stencilRt);
+				bgfx::setViewRenderTarget(viewId, s_stencilRt);
+
+				bgfx::setViewClear(viewId
+						, BGFX_CLEAR_COLOR_BIT
+						, 0x00000000
+						, 1.0f
+						, 0
+						);
 			}
 			else
 			{
-				::clearView(viewId, BGFX_CLEAR_STENCIL_BIT, clearValues);
+				const bgfx::RenderTargetHandle invalidRt = BGFX_INVALID_HANDLE;
+				bgfx::setViewRenderTarget(viewId, invalidRt);
+
+				bgfx::setViewClear(viewId
+						, BGFX_CLEAR_STENCIL_BIT
+						, clearValues.m_clearRgba
+						, clearValues.m_clearDepth
+						, clearValues.m_clearStencil
+						);
 			}
 
 			// Create near clip volume for current light.
@@ -2564,7 +2576,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				pointLight[1] = lightPos[1];
 				pointLight[2] = lightPos[2];
 				pointLight[3] = 1.0f;
-				createNearClipVolume(nearClipVolume, pointLight, viewState.m_view, 60.0f, 16.0f/9.0f, 0.1f);
+				createNearClipVolume(nearClipVolume, pointLight, viewState.m_view, fov, aspect, nearPlane);
 			}
 
 			for (uint8_t jj = 0; jj < shadowCastersCount[currentScene]; ++jj)
@@ -2749,14 +2761,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// process submitted rendering primitives.
 		bgfx::frame();
 
-		// Reset clear values on used views.
-		clearViewMask(s_clearMask, BGFX_CLEAR_NONE, clearValues);
-		s_clearMask = 0;
+		// Swap memory pages.
+		s_svAllocator.swap();
 
-		// Reset assigned render target views.
-		const bgfx::RenderTargetHandle invalidHandle = BGFX_INVALID_HANDLE;
-		bgfx::setViewRenderTargetMask(s_rtMask, invalidHandle);
-		s_rtMask = 0;
+		// Reset clear values.
+		bgfx::setViewClearMask(UINT32_MAX
+			, BGFX_CLEAR_NONE
+			, clearValues.m_clearRgba
+			, clearValues.m_clearDepth
+			, clearValues.m_clearStencil
+			);
 	}
 
 	// Cleanup
