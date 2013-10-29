@@ -208,38 +208,6 @@ void mtxScaleRotateTranslate(float* _result
 	mtxMul(_result, mtxScale, mtxRotateTranslate);
 }
 
-void mtxShadow(float* __restrict _result
-			   , const float* __restrict _ground
-			   , const float* __restrict _light
-			   )
-{
-	float dot = _ground[0] * _light[0]
-			  + _ground[1] * _light[1]
-			  + _ground[2] * _light[2]
-			  + _ground[3] * _light[3]
-			  ;
-
-	_result[ 0] =  dot - _light[0] * _ground[0];
-	_result[ 1] = 0.0f - _light[1] * _ground[0];
-	_result[ 2] = 0.0f - _light[2] * _ground[0];
-	_result[ 3] = 0.0f - _light[3] * _ground[0];
-
-	_result[ 4] = 0.0f - _light[0] * _ground[1];
-	_result[ 5] =  dot - _light[1] * _ground[1];
-	_result[ 6] = 0.0f - _light[2] * _ground[1];
-	_result[ 7] = 0.0f - _light[3] * _ground[1];
-
-	_result[ 8] = 0.0f - _light[0] * _ground[2];
-	_result[ 9] = 0.0f - _light[1] * _ground[2];
-	_result[10] =  dot - _light[2] * _ground[2];
-	_result[11] = 0.0f - _light[3] * _ground[2];
-
-	_result[12] = 0.0f - _light[0] * _ground[3];
-	_result[13] = 0.0f - _light[1] * _ground[3];
-	_result[14] = 0.0f - _light[2] * _ground[3];
-	_result[15] =  dot - _light[3] * _ground[3];
-}
-
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
 				  , const float* __restrict _pos
@@ -651,7 +619,7 @@ static RenderState s_renderStates[RenderState::Count]  =
 
 struct ViewState
 {
-	ViewState(uint32_t _width  = 1280, uint32_t _height = 720)
+	ViewState(uint32_t _width = 1280, uint32_t _height = 720)
 		: m_width(_width)
 		, m_height(_height)
 	{
