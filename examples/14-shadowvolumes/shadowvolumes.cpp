@@ -1286,19 +1286,17 @@ struct ShadowVolume
 	bool m_cap;
 };
 
-void shadowVolumeTransform(float* __restrict _outMtx
-						   , float* __restrict _outLightPos
-						   , const float* __restrict _scale
-						   , const float* __restrict _rotate
-						   , const float* __restrict _translate
-						   , const float* __restrict _lightPos // world pos
-						   )
+void shadowVolumeLightTransform(float* __restrict _outLightPos
+							  , const float* __restrict _scale
+							  , const float* __restrict _rotate
+							  , const float* __restrict _translate
+							  , const float* __restrict _lightPos // world pos
+							  )
 {
 	/**
 	 * Instead of transforming all the vertices, transform light instead:
 	 * mtx = pivotTranslate -> rotateZYX -> invScale
 	 * light = mtx * origin
-	 * _outMtx = scale -> rotateXYZ -> translate
 	 */
 
 	float pivot[16];
@@ -1328,34 +1326,8 @@ void shadowVolumeTransform(float* __restrict _outMtx
 	float mtx[16];
 	mtxMul(mtx, tmp0, invScale);
 
-	float light[3];
 	float origin[3] = { 0.0f, 0.0f, 0.0f };
-	vec3MulMtx(light, origin, mtx);
-	memcpy(_outLightPos, light, 3*sizeof(float) );
-
-	float scale[16];
-	mtxScale(scale
-		, _scale[0]
-		, _scale[1]
-		, _scale[2]
-		);
-
-	float mxyz[16];
-	mtxRotateXYZ(mxyz
-		, _rotate[0]
-		, _rotate[1]
-		, _rotate[2]
-		);
-
-	float translate[16];
-	mtxTranslate(translate
-		, _translate[0]
-		, _translate[1]
-		, _translate[2]
-		);
-
-	mtxMul(tmp0, scale, mxyz);
-	mtxMul(_outMtx, tmp0, translate);
+	vec3MulMtx(_outLightPos, origin, mtx);
 }
 
 void shadowVolumeCreate(ShadowVolume& _shadowVolume
@@ -2561,11 +2533,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				}
 				s_uniforms.m_svparams.m_dfail = float(ShadowVolumeImpl::DepthFail == shadowVolumeImpl); 
 
-				// Compute transform for shadow volume.
-				float shadowVolumeMtx[16];
+				// Compute virtual light position for shadow volume generation.
 				float transformedLightPos[3];
-				shadowVolumeTransform(shadowVolumeMtx
-					, transformedLightPos
+				shadowVolumeLightTransform(transformedLightPos
 					, instance.m_scale
 					, instance.m_rotation
 					, instance.m_pos
@@ -2575,6 +2545,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Set virtual light pos.
 				memcpy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
 				s_uniforms.m_virtualLightPos_extrusionDist[3] = instance.m_svExtrusionDistance;
+
+				// Compute transform for shadow volume.
+				float shadowVolumeMtx[16];
+				mtxScaleRotateTranslate(shadowVolumeMtx
+						, instance.m_scale[0]
+						, instance.m_scale[1]
+						, instance.m_scale[2]
+						, instance.m_rotation[0]
+						, instance.m_rotation[1]
+						, instance.m_rotation[2]
+						, instance.m_pos[0]
+						, instance.m_pos[1]
+						, instance.m_pos[2]
+						);
 
 				GroupArray& groups = model->m_mesh.m_groups;
 				const uint16_t stride = model->m_mesh.m_decl.getStride();
