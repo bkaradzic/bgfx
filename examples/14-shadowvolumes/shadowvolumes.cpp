@@ -1497,7 +1497,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				{
 					s = -s;
 				}
-				k += uint16_t(s);
+				k += int16_t(s);
 			}
 
 			if (k == 0)
