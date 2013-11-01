@@ -42,6 +42,27 @@ inline float fsign(float _a)
 	return _a < 0.0f ? -1.0f : 1.0f;
 }
 
+inline void vec3Move(float* __restrict _result, const float* __restrict _a)
+{
+	_result[0] = _a[0];
+	_result[1] = _a[1];
+	_result[2] = _a[2];
+}
+
+inline void vec3Abs(float* __restrict _result, const float* __restrict _a)
+{
+	_result[0] = fabsf(_a[0]);
+	_result[1] = fabsf(_a[1]);
+	_result[2] = fabsf(_a[2]);
+}
+
+inline void vec3Neg(float* __restrict _result, const float* __restrict _a)
+{
+	_result[0] = -_a[0];
+	_result[1] = -_a[1];
+	_result[2] = -_a[2];
+}
+
 inline void vec3Add(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
 {
 	_result[0] = _a[0] + _b[0];
@@ -82,12 +103,19 @@ inline void vec3Cross(float* __restrict _result, const float* __restrict _a, con
 	_result[2] = _a[0]*_b[1] - _a[1]*_b[0];
 }
 
-inline void vec3Norm(float* __restrict _result, const float* __restrict _a)
+inline float vec3Length(const float* _a)
 {
-	float scale = 1.0f/sqrtf(vec3Dot(_a, _a) );
-	_result[0] = _a[0] * scale;
-	_result[1] = _a[1] * scale;
-	_result[2] = _a[2] * scale;
+	return sqrtf(vec3Dot(_a, _a) );
+}
+
+inline float vec3Norm(float* __restrict _result, const float* __restrict _a)
+{
+	const float len = vec3Length(_a);
+	const float invLen = 1.0f/len;
+	_result[0] = _a[0] * invLen;
+	_result[1] = _a[1] * invLen;
+	_result[2] = _a[2] * invLen;
+	return len;
 }
 
 inline void mtxIdentity(float* _result)
@@ -342,6 +370,38 @@ inline void mtxTranspose(float* __restrict _result, const float* __restrict _a)
 	_result[15] = _a[15];
 }
 
+inline void mtx3Inverse(float* __restrict _result, const float* __restrict _a)
+{
+	float xx = _a[0];
+	float xy = _a[1];
+	float xz = _a[2];
+	float yx = _a[3];
+	float yy = _a[4];
+	float yz = _a[5];
+	float zx = _a[6];
+	float zy = _a[7];
+	float zz = _a[8];
+
+	float det = 0.0f;
+	det += xx * (yy*zz - yz*zy);
+	det -= xy * (yx*zz - yz*zx);
+	det += xz * (yx*zy - yy*zx);
+
+	float invDet = 1.0f/det;
+
+	_result[0] = +(yy*zz - yz*zy) * invDet;
+	_result[1] = -(xy*zz - xz*zy) * invDet;
+	_result[2] = +(xy*yz - xz*yy) * invDet;
+
+	_result[3] = -(yx*zz - yz*zx) * invDet;
+	_result[4] = +(xx*zz - xz*zx) * invDet;
+	_result[5] = -(xx*yz - xz*yx) * invDet;
+
+	_result[6] = +(yx*zy - yy*zx) * invDet;
+	_result[7] = -(xx*zy - xy*zx) * invDet;
+	_result[8] = +(xx*yy - xy*yx) * invDet;
+}
+
 inline void mtxInverse(float* __restrict _result, const float* __restrict _a)
 {
 	float xx = _a[ 0];
@@ -430,6 +490,26 @@ inline void mtxViewFlipHandedness(float* __restrict _dst, const float* __restric
 	_dst[13] =  _src[13];
 	_dst[14] = -_src[14];
 	_dst[15] =  _src[15];
+}
+
+inline void calcPlane(float _result[4], float _va[3], float _vb[3], float _vc[3])
+{
+	float ba[3];
+	vec3Sub(ba, _vb, _va);
+
+	float ca[3];
+	vec3Sub(ca, _vc, _va);
+
+	float baxca[3];
+	vec3Cross(baxca, ba, ca);
+
+	float normal[3];
+	vec3Norm(normal, baxca);
+
+	_result[0] = normal[0];
+	_result[1] = normal[1];
+	_result[2] = normal[2];
+	_result[3] = -vec3Dot(normal, _va);
 }
 
 #endif // __FPU_MATH_H__
