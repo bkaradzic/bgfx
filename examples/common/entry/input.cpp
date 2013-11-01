@@ -49,20 +49,6 @@ struct Mouse
 		m_buttons[_button] = _state;
 	}
 
-	void read(bool _mouseLock)
-	{
-		if (_mouseLock != m_lock)
-		{
-			m_lock = _mouseLock;
-
-			if (_mouseLock)
-			{
-				m_norm[0] = 0.0f;
-				m_norm[1] = 0.0f;
-			}
-		}
-	}
-
 	int32_t m_absolute[2];
 	float m_norm[2];
 	int32_t m_wheel;
@@ -166,8 +152,6 @@ struct Input
 
 	void process()
 	{
-		m_mouse.read(m_mouse.m_lock);
-
 		for (InputBindingMap::const_iterator it = m_inputBindingsMap.begin(); it != m_inputBindingsMap.end(); ++it)
 		{
 			process(it->second);
