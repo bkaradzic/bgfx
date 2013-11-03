@@ -562,6 +562,18 @@ namespace bgfx
 	///
 	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num = 1);
 
+	/// Weld vertices.
+	///
+	/// @param _output Welded vertices remapping table. The size of buffer
+	///   must be the same as number of vertices.
+	/// @param _decl Vertex stream declaration.
+	/// @param _data Vertex stream.
+	/// @param _num Number of vertices in vertex stream.
+	/// @param _epsilon Error tolerance for vertex position comparison.
+	/// @returns Number of unique vertices after vertex welding.
+	///
+	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon = 0.001f);
+
 	/// Swizzle RGBA8 image to BGRA8.
 	///
 	/// @param _width Width of input image (pixels).

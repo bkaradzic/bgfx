@@ -483,4 +483,56 @@ namespace bgfx
 		}
 	}
 
+	inline float sqLength(const float _a[3], const float _b[3])
+	{
+		const float xx = _a[0] - _b[0];
+		const float yy = _a[1] - _b[1];
+		const float zz = _a[2] - _b[2];
+		return xx*xx + yy*yy + zz*zz;
+	}
+
+	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+	{
+		const uint32_t hashSize = bx::uint32_nextpow2(_num);
+		const uint32_t hashMask = hashSize-1;
+		const float epsilonSq = _epsilon*_epsilon;
+
+		uint32_t numVertices = 0;
+
+		const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
+		uint16_t* hashTable = (uint16_t*)alloca(size);
+		memset(hashTable, 0xff, size);
+
+		uint16_t* next = hashTable + hashSize;
+
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			float pos[4];
+			vertexUnpack(pos, bgfx::Attrib::Position, _decl, _data, ii);
+			uint32_t hashValue = bx::hashMurmur2A(pos, 3*sizeof(float) ) & hashMask;
+
+			uint16_t offset = hashTable[hashValue];
+			for (; UINT16_MAX != offset; offset = next[offset])
+			{
+				float test[4];
+				vertexUnpack(test, bgfx::Attrib::Position, _decl, _data, _output[offset]);
+				if (sqLength(test, pos) < epsilonSq)
+				{
+					_output[ii] = _output[offset];
+					break;
+				}
+			}
+
+			if (UINT16_MAX == offset)
+			{
+				_output[ii] = ii;
+				next[numVertices] = hashTable[hashValue];
+				hashTable[hashValue] = ii;
+				numVertices++;
+			}
+		}
+
+		return numVertices;
+	}
+
 } // namespace bgfx
