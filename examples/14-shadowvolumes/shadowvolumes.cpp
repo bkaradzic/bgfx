@@ -1488,16 +1488,16 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const float* v1 = edge.m_v1;
 
 			int16_t k = 0;
-			float s;
 			for (uint8_t ii = 0; ii < edge.m_faceIndex; ++ii)
 			{
 				const Edge::Plane& face = edge.m_faces[ii];
-				s = fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
+
+				int16_t s = (int16_t)fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
 				if (face.m_reverseVertexOrder)
 				{
 					s = -s;
 				}
-				k += int16_t(s);
+				k += s;
 			}
 
 			if (k == 0)
