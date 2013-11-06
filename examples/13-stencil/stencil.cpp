@@ -335,25 +335,25 @@ struct Uniforms
 		m_params.m_lightCount    = 4.0f;
 		m_params.m_lightIndex    = 4.0f;
 
-		m_ambient[0] = 0.05f;
-		m_ambient[1] = 0.05f;
-		m_ambient[2] = 0.05f;
+		m_ambient[0] = 0.02f;
+		m_ambient[1] = 0.02f;
+		m_ambient[2] = 0.02f;
 		m_ambient[3] = 0.0f; //unused
 
-		m_diffuse[0] = 0.8f;
-		m_diffuse[1] = 0.8f;
-		m_diffuse[2] = 0.8f;
+		m_diffuse[0] = 0.2f;
+		m_diffuse[1] = 0.2f;
+		m_diffuse[2] = 0.2f;
 		m_diffuse[3] = 0.0f; //unused
 
 		m_specular_shininess[0] = 1.0f;
 		m_specular_shininess[1] = 1.0f;
 		m_specular_shininess[2] = 1.0f;
-		m_specular_shininess[3] = 25.0f; //shininess
+		m_specular_shininess[3] = 10.0f; //shininess
 
 		m_color[0] = 1.0f;
 		m_color[1] = 1.0f;
 		m_color[2] = 1.0f;
-		m_color[3] = 1.0;
+		m_color[3] = 1.0f;
 
 		m_time = 0.0f;
 
@@ -469,7 +469,6 @@ struct RenderState
 	{
 		StencilReflection_CraftStencil = 0,
 		StencilReflection_DrawReflected,
-		StencilReflection_DarkenReflections,
 		StencilReflection_BlendPlane,
 		StencilReflection_DrawScene,
 
@@ -492,7 +491,10 @@ struct RenderState
 static RenderState s_renderStates[RenderState::Count] =
 {
 	{ // StencilReflection_CraftStencil
-		BGFX_STATE_MSAA
+		BGFX_STATE_RGB_WRITE
+		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_MSAA
 		, UINT32_MAX
 		, BGFX_STENCIL_TEST_ALWAYS         // pass always
 		| BGFX_STENCIL_FUNC_REF(1)         // value = 1
@@ -505,6 +507,7 @@ static RenderState s_renderStates[RenderState::Count] =
 	{ // StencilReflection_DrawReflected
 		BGFX_STATE_RGB_WRITE
 		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 		| BGFX_STATE_DEPTH_WRITE
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CW    //reflection matrix has inverted normals. using CCW instead of CW.
@@ -518,22 +521,11 @@ static RenderState s_renderStates[RenderState::Count] =
 		| BGFX_STENCIL_OP_PASS_Z_KEEP
 		, BGFX_STENCIL_NONE
 	},
-	{ // StencilReflection_DarkenReflections
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_DEPTH_WRITE
-		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_FACTOR)
-		| BGFX_STATE_DEPTH_TEST_LESS
-		| BGFX_STATE_CULL_CCW
-		| BGFX_STATE_MSAA
-		, UINT32_MAX
-		, BGFX_STENCIL_NONE
-		, BGFX_STENCIL_NONE
-	},
 	{ // StencilReflection_BlendPlane
 		BGFX_STATE_RGB_WRITE
 		| BGFX_STATE_DEPTH_WRITE
-		| BGFX_STATE_BLEND_LIGHTEN
-		| BGFX_STATE_DEPTH_TEST_EQUAL
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_SRC_COLOR)
+		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
@@ -1091,6 +1083,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_params.m_lightningPass   = 1.0f;
 		s_uniforms.m_params.m_lightCount      = settings_numLights;
 		s_uniforms.m_params.m_lightIndex      = 0.0f;
+		s_uniforms.m_color[3]                 = settings_reflectionValue;
 		s_uniforms.submitPerFrameUniforms();
 
 		// Time.
@@ -1239,6 +1232,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				// Second pass - Draw reflected objects.
 
+				// Clear depth from previous pass.
+				clearView(RENDER_VIEWID_RANGE1_PASS_1, BGFX_CLEAR_DEPTH_BIT, clearValues);
+
 				// Compute reflected matrix.
 				float reflectMtx[16];
 				float plane_pos[3] = { 0.0f, 0.01f, 0.0f };
@@ -1278,37 +1274,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Set lights back.
 				memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float));
 
-				// Third pass - Darken reflected objects.
-
-				uint8_t val = uint8_t(settings_reflectionValue * UINT8_MAX);
-				uint32_t factor = (val << 24)
-					| (val << 16)
-					| (val << 8 )
-					| (val << 0 )
-					;
-				s_renderStates[RenderState::StencilReflection_DarkenReflections].m_blendFactorRgba = factor;
+				// Third pass - Blend plane.
 
 				// Floor.
 				hplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_2
-					, floorMtx
-					, programColorBlack
-					, s_renderStates[RenderState::StencilReflection_DarkenReflections]
-					);
-
-				// Fourth pass - Draw plane. (blend plane with what's behind it)
-
-				// Floor.
-				hplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_3
 					, floorMtx
 					, programTextureLightning
 					, s_renderStates[RenderState::StencilReflection_BlendPlane]
 					, fieldstoneTex
 					);
 
-				// Fifth pass - Draw everything else but the plane.
-				
+				// Fourth pass - Draw everything else but the plane.
+
 				// Bunny.
-				bunnyMesh.submit(RENDER_VIEWID_RANGE1_PASS_4
+				bunnyMesh.submit(RENDER_VIEWID_RANGE1_PASS_3
 					, bunnyMtx
 					, programColorLightning
 					, s_renderStates[RenderState::StencilReflection_DrawScene]
@@ -1317,7 +1296,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Columns.
 				for (uint8_t ii = 0; ii < 4; ++ii)
 				{
-					columnMesh.submit(RENDER_VIEWID_RANGE1_PASS_4
+					columnMesh.submit(RENDER_VIEWID_RANGE1_PASS_3
 						, columnMtx[ii]
 						, programColorLightning
 						, s_renderStates[RenderState::StencilReflection_DrawScene]

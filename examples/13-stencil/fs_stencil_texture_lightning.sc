@@ -50,7 +50,7 @@ vec3 calcLight(int _idx, vec3 _view, vec3 _normal, vec3 _viewDir)
 	vec4 lc = lit(bln.x, bln.y, u_shininess);
 
 	float dist = max(length(toLight), u_lightPosRadius[_idx].w);
-	float attn = 150.0 * pow(dist, -2.0);
+	float attn = 250.0 * pow(dist, -2.0);
 	vec3 rgb = (lc.y * u_diffuse + lc.z * u_specular) * u_lightRgbInnerR[_idx].rgb * attn;
 
 	return rgb;
@@ -85,5 +85,5 @@ void main()
 	vec3 diffuse = toGamma(lightColor * color);
 	gl_FragColor.xyz = clamp(ambient + diffuse, 0.0, 1.0);
 
-	gl_FragColor.w = 1.0;
+	gl_FragColor.w = u_color.w;
 }
