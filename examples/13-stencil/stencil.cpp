@@ -409,6 +409,7 @@ struct Uniforms
 		bgfx::destroyUniform(u_ambient);
 		bgfx::destroyUniform(u_diffuse);
 		bgfx::destroyUniform(u_specular_shininess);
+		bgfx::destroyUniform(u_color);
 		bgfx::destroyUniform(u_time);
 		bgfx::destroyUniform(u_lightPosRadius);
 		bgfx::destroyUniform(u_lightRgbInnerR);
