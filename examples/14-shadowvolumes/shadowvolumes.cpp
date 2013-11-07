@@ -208,38 +208,6 @@ void mtxScaleRotateTranslate(float* _result
 	mtxMul(_result, mtxScale, mtxRotateTranslate);
 }
 
-void mtxShadow(float* __restrict _result
-			   , const float* __restrict _ground
-			   , const float* __restrict _light
-			   )
-{
-	float dot = _ground[0] * _light[0]
-			  + _ground[1] * _light[1]
-			  + _ground[2] * _light[2]
-			  + _ground[3] * _light[3]
-			  ;
-
-	_result[ 0] =  dot - _light[0] * _ground[0];
-	_result[ 1] = 0.0f - _light[1] * _ground[0];
-	_result[ 2] = 0.0f - _light[2] * _ground[0];
-	_result[ 3] = 0.0f - _light[3] * _ground[0];
-
-	_result[ 4] = 0.0f - _light[0] * _ground[1];
-	_result[ 5] =  dot - _light[1] * _ground[1];
-	_result[ 6] = 0.0f - _light[2] * _ground[1];
-	_result[ 7] = 0.0f - _light[3] * _ground[1];
-
-	_result[ 8] = 0.0f - _light[0] * _ground[2];
-	_result[ 9] = 0.0f - _light[1] * _ground[2];
-	_result[10] =  dot - _light[2] * _ground[2];
-	_result[11] = 0.0f - _light[3] * _ground[2];
-
-	_result[12] = 0.0f - _light[0] * _ground[3];
-	_result[13] = 0.0f - _light[1] * _ground[3];
-	_result[14] = 0.0f - _light[2] * _ground[3];
-	_result[15] =  dot - _light[3] * _ground[3];
-}
-
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
 				  , const float* __restrict _pos
@@ -651,7 +619,7 @@ static RenderState s_renderStates[RenderState::Count]  =
 
 struct ViewState
 {
-	ViewState(uint32_t _width  = 1280, uint32_t _height = 720)
+	ViewState(uint32_t _width = 1280, uint32_t _height = 720)
 		: m_width(_width)
 		, m_height(_height)
 	{
@@ -1318,19 +1286,17 @@ struct ShadowVolume
 	bool m_cap;
 };
 
-void shadowVolumeTransform(float* __restrict _outMtx
-						   , float* __restrict _outLightPos
-						   , const float* __restrict _scale
-						   , const float* __restrict _rotate
-						   , const float* __restrict _translate
-						   , const float* __restrict _lightPos // world pos
-						   )
+void shadowVolumeLightTransform(float* __restrict _outLightPos
+							  , const float* __restrict _scale
+							  , const float* __restrict _rotate
+							  , const float* __restrict _translate
+							  , const float* __restrict _lightPos // world pos
+							  )
 {
 	/**
 	 * Instead of transforming all the vertices, transform light instead:
 	 * mtx = pivotTranslate -> rotateZYX -> invScale
 	 * light = mtx * origin
-	 * _outMtx = scale -> rotateXYZ -> translate
 	 */
 
 	float pivot[16];
@@ -1360,34 +1326,8 @@ void shadowVolumeTransform(float* __restrict _outMtx
 	float mtx[16];
 	mtxMul(mtx, tmp0, invScale);
 
-	float light[3];
 	float origin[3] = { 0.0f, 0.0f, 0.0f };
-	vec3MulMtx(light, origin, mtx);
-	memcpy(_outLightPos, light, 3*sizeof(float) );
-
-	float scale[16];
-	mtxScale(scale
-		, _scale[0]
-		, _scale[1]
-		, _scale[2]
-		);
-
-	float mxyz[16];
-	mtxRotateXYZ(mxyz
-		, _rotate[0]
-		, _rotate[1]
-		, _rotate[2]
-		);
-
-	float translate[16];
-	mtxTranslate(translate
-		, _translate[0]
-		, _translate[1]
-		, _translate[2]
-		);
-
-	mtxMul(tmp0, scale, mxyz);
-	mtxMul(_outMtx, tmp0, translate);
+	vec3MulMtx(_outLightPos, origin, mtx);
 }
 
 void shadowVolumeCreate(ShadowVolume& _shadowVolume
@@ -1548,16 +1488,16 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const float* v1 = edge.m_v1;
 
 			int16_t k = 0;
-			float s;
 			for (uint8_t ii = 0; ii < edge.m_faceIndex; ++ii)
 			{
 				const Edge::Plane& face = edge.m_faces[ii];
-				s = fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
+
+				int16_t s = (int16_t)fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
 				if (face.m_reverseVertexOrder)
 				{
 					s = -s;
 				}
-				k += uint16_t(s);
+				k += s;
 			}
 
 			if (k == 0)
@@ -2593,11 +2533,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				}
 				s_uniforms.m_svparams.m_dfail = float(ShadowVolumeImpl::DepthFail == shadowVolumeImpl); 
 
-				// Compute transform for shadow volume.
-				float shadowVolumeMtx[16];
+				// Compute virtual light position for shadow volume generation.
 				float transformedLightPos[3];
-				shadowVolumeTransform(shadowVolumeMtx
-					, transformedLightPos
+				shadowVolumeLightTransform(transformedLightPos
 					, instance.m_scale
 					, instance.m_rotation
 					, instance.m_pos
@@ -2607,6 +2545,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Set virtual light pos.
 				memcpy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
 				s_uniforms.m_virtualLightPos_extrusionDist[3] = instance.m_svExtrusionDistance;
+
+				// Compute transform for shadow volume.
+				float shadowVolumeMtx[16];
+				mtxScaleRotateTranslate(shadowVolumeMtx
+						, instance.m_scale[0]
+						, instance.m_scale[1]
+						, instance.m_scale[2]
+						, instance.m_rotation[0]
+						, instance.m_rotation[1]
+						, instance.m_rotation[2]
+						, instance.m_pos[0]
+						, instance.m_pos[1]
+						, instance.m_pos[2]
+						);
 
 				GroupArray& groups = model->m_mesh.m_groups;
 				const uint16_t stride = model->m_mesh.m_decl.getStride();
