@@ -492,7 +492,7 @@ inline void mtxViewFlipHandedness(float* __restrict _dst, const float* __restric
 	_dst[15] =  _src[15];
 }
 
-inline void calcPlane(float _result[4], float _va[3], float _vb[3], float _vc[3])
+inline void calcNormal(float _result[3], float _va[3], float _vb[3], float _vc[3])
 {
 	float ba[3];
 	vec3Sub(ba, _vb, _va);
@@ -503,8 +503,13 @@ inline void calcPlane(float _result[4], float _va[3], float _vb[3], float _vc[3]
 	float baxca[3];
 	vec3Cross(baxca, ba, ca);
 
+	vec3Norm(_result, baxca);
+}
+
+inline void calcPlane(float _result[4], float _va[3], float _vb[3], float _vc[3])
+{
 	float normal[3];
-	vec3Norm(normal, baxca);
+	calcNormal(normal, _va, _vb, _vc);
 
 	_result[0] = normal[0];
 	_result[1] = normal[1];

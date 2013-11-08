@@ -1113,6 +1113,9 @@ namespace bgfx
 				uint16_t depth;
 				_cmdbuf.read(depth);
 
+				uint16_t pitch;
+				_cmdbuf.read(pitch);
+
 				Memory* mem;
 				_cmdbuf.read(mem);
 
@@ -1127,7 +1130,7 @@ namespace bgfx
 					rendererUpdateTextureBegin(handle, side, mip);
 				}
 
-				rendererUpdateTexture(handle, side, mip, rect, zz, depth, mem);
+				rendererUpdateTexture(handle, side, mip, rect, zz, depth, pitch, mem);
 
 				release(mem);
 			}
@@ -1452,7 +1455,12 @@ namespace bgfx
 					uint8_t mip;
 					_cmdbuf.read(mip);
 
-					_cmdbuf.skip(sizeof(Rect)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(Memory*) );
+					_cmdbuf.skip(sizeof(Rect)
+						+ sizeof(uint16_t)
+						+ sizeof(uint16_t)
+						+ sizeof(uint16_t)
+						+ sizeof(Memory*)
+						);
 
 					uint32_t key = (handle.idx<<16)
 						| (side<<8)
@@ -1907,7 +1915,7 @@ namespace bgfx
 		return s_ctx->createTexture(mem, _flags, NULL);
 	}
 
-	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
+	TextureHandle createTextureCube(uint16_t _size, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
@@ -1915,7 +1923,7 @@ namespace bgfx
 		if (NULL != _mem)
 		{
 			TextureInfo ti;
-			calcTextureSize(ti, _width, _width, 1, _numMips, _format);
+			calcTextureSize(ti, _size, _size, 1, _numMips, _format);
 			BX_CHECK(ti.storageSize*_sides == _mem->size
 				, "createTextureCube: Texture storage size doesn't match passed memory size (storage size: %d, memory size: %d)"
 				, ti.storageSize*_sides
@@ -1933,9 +1941,9 @@ namespace bgfx
 
 		TextureCreate tc;
 		tc.m_flags = _flags;
-		tc.m_width = _width;
-		tc.m_height = _width;
-		tc.m_sides = _sides;
+		tc.m_width = _size;
+		tc.m_height = _size;
+		tc.m_sides = 6;
 		tc.m_depth = 0;
 		tc.m_numMips = _numMips;
 		tc.m_format = uint8_t(_format);
@@ -1952,7 +1960,7 @@ namespace bgfx
 		s_ctx->destroyTexture(_handle);
 	}
 
-	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
+	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem, uint16_t _pitch)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
@@ -1963,7 +1971,7 @@ namespace bgfx
 		}
 		else
 		{
-			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, 0, _width, _height, 1, _mem);
+			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, 0, _width, _height, 1, _pitch, _mem);
 		}
 	}
 
@@ -1979,11 +1987,11 @@ namespace bgfx
 		}
 		else
 		{
-			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, _z, _width, _height, _depth, _mem);
+			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, _z, _width, _height, _depth, UINT16_MAX, _mem);
 		}
 	}
 
-	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem)
+	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem, uint16_t _pitch)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
@@ -1995,7 +2003,7 @@ namespace bgfx
 		}
 		else
 		{
-			s_ctx->updateTexture(_handle, _side, _mip, _x, _y, 0, _width, _height, 1, _mem);
+			s_ctx->updateTexture(_handle, _side, _mip, _x, _y, 0, _width, _height, 1, _pitch, _mem);
 		}
 	}
 

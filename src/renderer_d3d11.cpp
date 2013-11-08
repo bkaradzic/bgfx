@@ -1832,7 +1832,7 @@ namespace bgfx
 							 ;
 	}
 
-	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
 
@@ -1844,10 +1844,10 @@ namespace bgfx
 		box.front = _z;
 		box.back = box.front + _depth;
 
-		uint32_t subres = _mip + (_side * m_numMips);
-
-		uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
-		uint32_t srcpitch = _rect.m_width*bpp/8;
+		const uint32_t subres = _mip + (_side * m_numMips);
+		const uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t rectpitch = _rect.m_width*bpp/8;
+		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -1856,8 +1856,8 @@ namespace bgfx
 
 		if (convert)
 		{
-			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*_rect.m_height);
-			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, m_requestedFormat);
+			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
+			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, m_requestedFormat);
 			data = temp;
 		}
 
@@ -2091,9 +2091,9 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		s_renderCtx->m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
+		s_renderCtx->m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 	}
 
 	void Context::rendererUpdateTextureEnd()

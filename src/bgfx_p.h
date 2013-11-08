@@ -2192,7 +2192,7 @@ namespace bgfx
 			m_submit->free(_handle);
 		}
 
-		BGFX_API_FUNC(void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem) )
+		BGFX_API_FUNC(void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _pitch, const Memory* _mem) )
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateTexture);
 			cmdbuf.write(_handle);
@@ -2206,6 +2206,7 @@ namespace bgfx
 			cmdbuf.write(rect);
 			cmdbuf.write(_z);
 			cmdbuf.write(_depth);
+			cmdbuf.write(_pitch);
 			cmdbuf.write(_mem);
 		}
 
@@ -2581,7 +2582,7 @@ namespace bgfx
 		void rendererDestroyProgram(FragmentShaderHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
 		void rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip);
-		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem);
+		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void rendererUpdateTextureEnd();
 		void rendererDestroyTexture(TextureHandle _handle);
 		void rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);

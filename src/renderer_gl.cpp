@@ -265,6 +265,7 @@ namespace bgfx
 			EXT_texture_swizzle,
 			EXT_texture_type_2_10_10_10_REV,
 			EXT_timer_query,
+			EXT_unpack_subimage,
 			IMG_multisampled_render_to_texture,
 			IMG_read_format,
 			IMG_shader_binary,
@@ -337,6 +338,7 @@ namespace bgfx
 		{ "GL_EXT_texture_swizzle",                false,                             true  },
 		{ "GL_EXT_texture_type_2_10_10_10_REV",    false,                             true  },
 		{ "GL_EXT_timer_query",                    false,                             true  },
+		{ "GL_EXT_unpack_subimage",                false,                             true  },
 		{ "GL_IMG_multisampled_render_to_texture", false,                             true  },
 		{ "GL_IMG_read_format",                    false,                             true  },
 		{ "GL_IMG_shader_binary",                  false,                             true  },
@@ -785,7 +787,7 @@ namespace bgfx
 
 			if (GL_RGBA == m_readPixelsFmt)
 			{
-				imageSwizzleBgra8(width, height, data, data);
+				imageSwizzleBgra8(width, height, width*4, data, data);
 			}
 
 			g_callback->screenShot(_filePath
@@ -1443,13 +1445,13 @@ namespace bgfx
 
 							if (convert)
 							{
-								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_width*4, mip.m_format);
 								data = temp;
 							}
 
 							if (swizzle)
 							{
-								imageSwizzleBgra8(width, height, data, temp);
+								imageSwizzleBgra8(width, height, mip.m_width*4, data, temp);
 								data = temp;
 							}
 
@@ -1599,12 +1601,26 @@ namespace bgfx
 		}
 	}
 
-	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		BX_UNUSED(_z, _depth);
 
+		const uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t rectpitch = _rect.m_width*bpp/8;
+		uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
+
+		if (!!BGFX_CONFIG_RENDERER_OPENGL
+		||  s_extension[Extension::EXT_unpack_subimage].m_supported)
+		{
+			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
+		}
+		else
+		{
+			BX_CHECK(false, "There is no fallback for GLES2 when GL_EXT_unpack_subimage extension is not available.");
+		}
 
 		GLenum target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
@@ -1612,13 +1628,13 @@ namespace bgfx
 		const bool convert    = m_textureFormat != m_requestedFormat;
 		const bool compressed = TextureFormat::Unknown > m_textureFormat;
 
-		uint32_t width  = _rect.m_width;
-		uint32_t height = _rect.m_height;
+		const uint32_t width  = _rect.m_width;
+		const uint32_t height = _rect.m_height;
 
 		uint8_t* temp = NULL;
 		if (convert || swizzle)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, width*height*4);
+			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*height);
 		}
 
 		if (compressed)
@@ -1642,13 +1658,14 @@ namespace bgfx
 
 			if (convert)
 			{
-				imageDecodeToBgra8(temp, data, width, height, m_requestedFormat);
+				imageDecodeToBgra8(temp, data, width, height, srcpitch, m_requestedFormat);
 				data = temp;
+				srcpitch = rectpitch;
 			}
 
 			if (swizzle)
 			{
-				imageSwizzleBgra8(width, height, data, temp);
+				imageSwizzleBgra8(width, height, srcpitch, data, temp);
 				data = temp;
 			}
 
@@ -2636,9 +2653,9 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Context::rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		s_renderCtx->m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _mem);
+		s_renderCtx->m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 	}
 
 	void Context::rendererUpdateTextureEnd()

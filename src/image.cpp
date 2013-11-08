@@ -198,25 +198,29 @@ namespace bgfx
 		}
 	}
 
-	void imageSwizzleBgra8Ref(uint32_t _width, uint32_t _height, const void* _src, void* _dst)
+	void imageSwizzleBgra8Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
 	{
 		const uint8_t* src = (uint8_t*) _src;
+		const uint8_t* next = src + _pitch;
 		uint8_t* dst = (uint8_t*)_dst;
 
-		for (uint32_t xx = 0, num = _width*_height; xx < num; ++xx, src += 4, dst += 4)
+		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _pitch)
 		{
-			uint8_t rr = src[0];
-			uint8_t gg = src[1];
-			uint8_t bb = src[2];
-			uint8_t aa = src[3];
-			dst[0] = bb;
-			dst[1] = gg;
-			dst[2] = rr;
-			dst[3] = aa;
+			for (uint32_t xx = 0; xx < _width; ++xx, src += 4, dst += 4)
+			{
+				uint8_t rr = src[0];
+				uint8_t gg = src[1];
+				uint8_t bb = src[2];
+				uint8_t aa = src[3];
+				dst[0] = bb;
+				dst[1] = gg;
+				dst[2] = rr;
+				dst[3] = aa;
+			}
 		}
 	}
 
-	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, const void* _src, void* _dst)
+	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
 	{
 		// Test can we do four 4-byte pixels at the time.
 		if (0 != (_width&0x3)
@@ -228,29 +232,33 @@ namespace bgfx
 			BX_WARN(bx::isPtrAligned(_src, 16), "Source %p is not 16-byte aligned.", _src);
 			BX_WARN(bx::isPtrAligned(_dst, 16), "Destination %p is not 16-byte aligned.", _dst);
 			BX_WARN(_width < 4, "Image width must be multiple of 4 (width %d).", _width);
-			imageSwizzleBgra8Ref(_width, _height, _src, _dst);
+			imageSwizzleBgra8Ref(_width, _height, _pitch, _src, _dst);
 			return;
 		}
-
-		const uint32_t dstpitch = _width*4;
 
 		using namespace bx;
 
 		const float4_t mf0f0 = float4_isplat(0xff00ff00);
 		const float4_t m0f0f = float4_isplat(0x00ff00ff);
 		const uint8_t* src = (uint8_t*) _src;
+		const uint8_t* next = src + _pitch;
 		uint8_t* dst = (uint8_t*)_dst;
 
-		for (uint32_t xx = 0, num = dstpitch/16*_height; xx < num; ++xx, src += 16, dst += 16)
+		const uint32_t width = _width/4;
+
+		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _pitch)
 		{
-			const float4_t tabgr = float4_ld(src);
-			const float4_t t00ab = float4_srl(tabgr, 16);
-			const float4_t tgr00 = float4_sll(tabgr, 16);
-			const float4_t tgrab = float4_or(t00ab, tgr00);
-			const float4_t ta0g0 = float4_and(tabgr, mf0f0);
-			const float4_t t0r0b = float4_and(tgrab, m0f0f);
-			const float4_t targb = float4_or(ta0g0, t0r0b);
-			float4_st(dst, targb);
+			for (uint32_t xx = 0; xx < width; ++xx, src += 16, dst += 16)
+			{
+				const float4_t tabgr = float4_ld(src);
+				const float4_t t00ab = float4_srl(tabgr, 16);
+				const float4_t tgr00 = float4_sll(tabgr, 16);
+				const float4_t tgrab = float4_or(t00ab, tgr00);
+				const float4_t ta0g0 = float4_and(tabgr, mf0f0);
+				const float4_t t0r0b = float4_and(tgrab, m0f0f);
+				const float4_t targb = float4_or(ta0g0, t0r0b);
+				float4_st(dst, targb);
+			}
 		}
 	}
 
@@ -1336,13 +1344,12 @@ namespace bgfx
 		return imageParse(_imageContainer, &reader);
 	}
 
-	void imageDecodeToBgra8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint8_t _type)
+	void imageDecodeToBgra8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint32_t _pitch, uint8_t _type)
 	{
 		const uint8_t* src = _src;
 
-		uint32_t width = _width/4;
+		uint32_t width  = _width/4;
 		uint32_t height = _height/4;
-		uint32_t pitch = _width*4;
 
 		uint8_t temp[16*4];
 
@@ -1356,11 +1363,11 @@ namespace bgfx
 					decodeBlockDxt1(temp, src);
 					src += 8;
 
-					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(&dst[0*pitch], &temp[ 0], 16);
-					memcpy(&dst[1*pitch], &temp[16], 16);
-					memcpy(&dst[2*pitch], &temp[32], 16);
-					memcpy(&dst[3*pitch], &temp[48], 16);
+					uint8_t* dst = &_dst[(yy*_pitch+xx*4)*4];
+					memcpy(&dst[0*_pitch], &temp[ 0], 16);
+					memcpy(&dst[1*_pitch], &temp[16], 16);
+					memcpy(&dst[2*_pitch], &temp[32], 16);
+					memcpy(&dst[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -1375,11 +1382,11 @@ namespace bgfx
 					decodeBlockDxt(temp, src);
 					src += 8;
 
-					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(&dst[0*pitch], &temp[ 0], 16);
-					memcpy(&dst[1*pitch], &temp[16], 16);
-					memcpy(&dst[2*pitch], &temp[32], 16);
-					memcpy(&dst[3*pitch], &temp[48], 16);
+					uint8_t* dst = &_dst[(yy*_pitch+xx*4)*4];
+					memcpy(&dst[0*_pitch], &temp[ 0], 16);
+					memcpy(&dst[1*_pitch], &temp[16], 16);
+					memcpy(&dst[2*_pitch], &temp[32], 16);
+					memcpy(&dst[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -1394,11 +1401,11 @@ namespace bgfx
 					decodeBlockDxt(temp, src);
 					src += 8;
 
-					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(&dst[0*pitch], &temp[ 0], 16);
-					memcpy(&dst[1*pitch], &temp[16], 16);
-					memcpy(&dst[2*pitch], &temp[32], 16);
-					memcpy(&dst[3*pitch], &temp[48], 16);
+					uint8_t* dst = &_dst[(yy*_pitch+xx*4)*4];
+					memcpy(&dst[0*_pitch], &temp[ 0], 16);
+					memcpy(&dst[1*_pitch], &temp[16], 16);
+					memcpy(&dst[2*_pitch], &temp[32], 16);
+					memcpy(&dst[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -1411,11 +1418,11 @@ namespace bgfx
 					decodeBlockDxt45A(temp, src);
 					src += 8;
 
-					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(&dst[0*pitch], &temp[ 0], 16);
-					memcpy(&dst[1*pitch], &temp[16], 16);
-					memcpy(&dst[2*pitch], &temp[32], 16);
-					memcpy(&dst[3*pitch], &temp[48], 16);
+					uint8_t* dst = &_dst[(yy*_pitch+xx*4)*4];
+					memcpy(&dst[0*_pitch], &temp[ 0], 16);
+					memcpy(&dst[1*_pitch], &temp[16], 16);
+					memcpy(&dst[2*_pitch], &temp[32], 16);
+					memcpy(&dst[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -1439,11 +1446,11 @@ namespace bgfx
 						temp[ii*4+3] = 0;
 					}
 
-					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(&dst[0*pitch], &temp[ 0], 16);
-					memcpy(&dst[1*pitch], &temp[16], 16);
-					memcpy(&dst[2*pitch], &temp[32], 16);
-					memcpy(&dst[3*pitch], &temp[48], 16);
+					uint8_t* dst = &_dst[(yy*_pitch+xx*4)*4];
+					memcpy(&dst[0*_pitch], &temp[ 0], 16);
+					memcpy(&dst[1*_pitch], &temp[16], 16);
+					memcpy(&dst[2*_pitch], &temp[32], 16);
+					memcpy(&dst[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -1457,11 +1464,11 @@ namespace bgfx
 					decodeBlockEtc12(temp, src);
 					src += 8;
 
-					uint8_t* dst = &_dst[(yy*pitch+xx*4)*4];
-					memcpy(&dst[0*pitch], &temp[ 0], 16);
-					memcpy(&dst[1*pitch], &temp[16], 16);
-					memcpy(&dst[2*pitch], &temp[32], 16);
-					memcpy(&dst[3*pitch], &temp[48], 16);
+					uint8_t* dst = &_dst[(yy*_pitch+xx*4)*4];
+					memcpy(&dst[0*_pitch], &temp[ 0], 16);
+					memcpy(&dst[1*_pitch], &temp[16], 16);
+					memcpy(&dst[2*_pitch], &temp[32], 16);
+					memcpy(&dst[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;

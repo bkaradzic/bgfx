@@ -1273,6 +1273,13 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 	return hash;
 }
 
+// c - compute
+// d - domain
+// f - fragment
+// g - geometry
+// h - hull
+// v - vertex
+//
 // OpenGL #version Features Direct3D Features Shader Model
 // 2.1    120      vf       9.0      vf       2.0
 // 3.0    130
@@ -1281,7 +1288,8 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 // 3.3    330               10.0     vgf      4.0
 // 4.0    400      vhdgf
 // 4.1    410
-// 4.2    420               11.0     vhdgf    5.0
+// 4.2    420               11.0     vhdgf+c  5.0
+// 4.3    430      vhdgf+c
 
 void help(const char* _error = NULL)
 {

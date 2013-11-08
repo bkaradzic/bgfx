@@ -113,7 +113,7 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/, const Rect& /*_rect*/, uint16_t /*_z*/, uint16_t /*_depth*/, const Memory* /*_mem*/)
+	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/, const Rect& /*_rect*/, uint16_t /*_z*/, uint16_t /*_depth*/, uint16_t /*_pitch*/, const Memory* /*_mem*/)
 	{
 	}
 

@@ -102,6 +102,11 @@ namespace bgfx
 		m_stride += (*s_attribTypeSize[m_hash])[_type][_num-1];
 	}
 
+	void VertexDecl::skip(uint8_t _num)
+	{
+		m_stride += _num;
+	}
+
 	void VertexDecl::decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const
 	{
 		uint8_t val = m_attributes[_attrib];
@@ -491,8 +496,53 @@ namespace bgfx
 		return xx*xx + yy*yy + zz*zz;
 	}
 
+	uint16_t weldVerticesRef(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+	{
+		// Brute force slow vertex welding...
+		const float epsilonSq = _epsilon*_epsilon;
+
+		uint32_t numVertices = 0;
+		memset(_output, 0xff, _num*sizeof(uint16_t) );
+
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			if (UINT16_MAX != _output[ii])
+			{
+				continue;
+			}
+
+			_output[ii] = ii;
+			++numVertices;
+
+			float pos[4];
+			vertexUnpack(pos, bgfx::Attrib::Position, _decl, _data, ii);
+
+			for (uint32_t jj = 0; jj < _num; ++jj)
+			{
+				if (UINT16_MAX != _output[jj])
+				{
+					continue;
+				}
+
+				float test[4];
+				vertexUnpack(test, bgfx::Attrib::Position, _decl, _data, jj);
+
+				if (sqLength(test, pos) < epsilonSq)
+				{
+					_output[jj] = ii;
+				}
+			}
+		}
+
+		return numVertices;
+	}
+
 	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
 	{
+#if 1
+		return weldVerticesRef(_output, _decl, _data, _num, _epsilon);
+#else
+		// This "clever" version doesn't work as expected...
 		const uint32_t hashSize = bx::uint32_nextpow2(_num);
 		const uint32_t hashMask = hashSize-1;
 		const float epsilonSq = _epsilon*_epsilon;
@@ -516,6 +566,7 @@ namespace bgfx
 			{
 				float test[4];
 				vertexUnpack(test, bgfx::Attrib::Position, _decl, _data, _output[offset]);
+
 				if (sqLength(test, pos) < epsilonSq)
 				{
 					_output[ii] = _output[offset];
@@ -533,6 +584,7 @@ namespace bgfx
 		}
 
 		return numVertices;
+#endif // 0
 	}
 
 } // namespace bgfx

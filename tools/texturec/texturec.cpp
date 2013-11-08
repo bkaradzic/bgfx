@@ -130,7 +130,7 @@ int main(int _argc, const char* _argv[])
 						||  height != mip.m_height)
 						{
 							uint8_t* temp = (uint8_t*)realloc(NULL, mip.m_width*mip.m_height*4);
-							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_width*4, mip.m_format);
 							uint32_t srcpitch = mip.m_width*4;
 
 							for (uint32_t yy = 0; yy < height; ++yy)
@@ -150,7 +150,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+							imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, mip.m_width*4, mip.m_format);
 						}
 
 						char filePath[256];

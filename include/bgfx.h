@@ -525,6 +525,9 @@ namespace bgfx
 		///
 		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
 
+		/// Skip _num bytes in vertex stream.
+		void skip(uint8_t _num);
+
 		/// Decode attribute.
 		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const;
 
@@ -578,11 +581,12 @@ namespace bgfx
 	///
 	/// @param _width Width of input image (pixels).
 	/// @param _height Height of input image (pixels).
+	/// @param _pitch Pitch of input image (bytes).
 	/// @param _src Source image.
 	/// @param _dst Destination image. Must be the same size as input image.
 	///   _dst might be pointer to the same memory as _src.
 	///
-	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, const void* _src, void* _dst);
+	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
 	/// Downsample RGBA8 image with 2x2 pixel average filter.
 	///
@@ -859,23 +863,45 @@ namespace bgfx
 
 	/// Create Cube texture.
 	///
-	/// @param _sides
-	/// @param _width
+	/// @param _size
 	/// @param _numMips
 	/// @param _format
 	/// @param _flags
 	/// @param _mem
 	///
-	TextureHandle createTextureCube(uint16_t _sides, uint16_t _width, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
+	TextureHandle createTextureCube(uint16_t _size, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
 	/// Update 2D texture.
-	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
+	///
+	/// @param _handle
+	/// @param _mip
+	/// @param _x
+	/// @param _y
+	/// @param _width
+	/// @param _height
+	/// @param _mem
+	/// @param _pitch Pitch of input image (bytes). When _pitch is set to
+	///   UINT16_MAX, it will be calculated internally based on _width.
+	///
+	void updateTexture2D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem, uint16_t _pitch = UINT16_MAX);
 
 	/// Update 3D texture.
+	///
+	/// @param _handle
+	/// @param _mip
+	/// @param _x
+	/// @param _y
+	/// @param _z
+	/// @param _width
+	/// @param _height
+	/// @param _depth
+	/// @param _mem
+	///
 	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem);
 
 	/// Update Cube texture.
 	///
+	/// @param _handle
 	/// @param _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
 	///   -Y, 4 is +Z, and 5 is -Z.
 	///
@@ -896,7 +922,16 @@ namespace bgfx
 	///              | +---->+x |
 	///              +----------+
 	///
-	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem);
+	/// @param _mip
+	/// @param _x
+	/// @param _y
+	/// @param _width
+	/// @param _height
+	/// @param _mem
+	/// @param _pitch Pitch of input image (bytes). When _pitch is set to
+	///   UINT16_MAX, it will be calculated internally based on _width.
+	///
+	void updateTextureCube(TextureHandle _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem, uint16_t _pitch = UINT16_MAX);
 
 	/// Destroy texture.
 	void destroyTexture(TextureHandle _handle);

@@ -1606,7 +1606,7 @@ namespace bgfx
 								uint32_t srcpitch = mipWidth*bpp/8;
 
 								uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mipHeight);
-								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, srcpitch, mip.m_format);
 
 								uint32_t dstpitch = pitch;
 								for (uint32_t yy = 0; yy < height; ++yy)
@@ -1620,7 +1620,7 @@ namespace bgfx
 							}
 							else
 							{
-								imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+								imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, pitch, mip.m_format);
 							}
 						}
 						else
@@ -1650,11 +1650,12 @@ namespace bgfx
 		s_renderCtx->m_updateTextureBits = lock(_side, _mip, s_renderCtx->m_updateTexturePitch, slicePitch);
 	}
 
-	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
-		uint32_t srcpitch = _rect.m_width*bpp/8;
-		uint32_t dstpitch = s_renderCtx->m_updateTexturePitch;
+		const uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t rectpitch = _rect.m_width*bpp/8;
+		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t dstpitch  = s_renderCtx->m_updateTexturePitch;
 		uint8_t* bits = s_renderCtx->m_updateTextureBits + _rect.m_y*dstpitch + _rect.m_x*bpp/8;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
@@ -1664,8 +1665,8 @@ namespace bgfx
 
 		if (convert)
 		{
-			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*_rect.m_height);
-			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, m_requestedFormat);
+			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
+			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, m_requestedFormat);
 			data = temp;
 		}
 
@@ -2117,9 +2118,9 @@ namespace bgfx
 		s_renderCtx->m_updateTexture->updateBegin(_side, _mip);
 	}
 
-	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, const Memory* _mem)
+	void Context::rendererUpdateTexture(TextureHandle /*_handle*/, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		s_renderCtx->m_updateTexture->update(_side, _mip, _rect, _z, _depth, _mem);
+		s_renderCtx->m_updateTexture->update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 	}
 
 	void Context::rendererUpdateTextureEnd()

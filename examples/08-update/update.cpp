@@ -293,8 +293,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const uint32_t textureSide = 2048;
 
 	bgfx::TextureHandle textureCube = 
-		bgfx::createTextureCube(6
-			, textureSide
+		bgfx::createTextureCube(textureSide
 			, 1
 			, bgfx::TextureFormat::BGRA8
 			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
