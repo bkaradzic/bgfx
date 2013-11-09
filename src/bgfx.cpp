@@ -1924,9 +1924,9 @@ namespace bgfx
 		{
 			TextureInfo ti;
 			calcTextureSize(ti, _size, _size, 1, _numMips, _format);
-			BX_CHECK(ti.storageSize*_sides == _mem->size
+			BX_CHECK(ti.storageSize*6 == _mem->size
 				, "createTextureCube: Texture storage size doesn't match passed memory size (storage size: %d, memory size: %d)"
-				, ti.storageSize*_sides
+				, ti.storageSize*6
 				, _mem->size
 				);
 		}

@@ -292,12 +292,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	const uint32_t textureSide = 2048;
 
-	bgfx::TextureHandle textureCube = 
-		bgfx::createTextureCube(textureSide
-			, 1
-			, bgfx::TextureFormat::BGRA8
-			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
-			);
+	bgfx::TextureHandle textureCube = bgfx::createTextureCube(textureSide, 1
+		, bgfx::TextureFormat::BGRA8
+		, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
+		);
+
+	const uint32_t texture2dSize = 256;
+
+	bgfx::TextureHandle texture2d = bgfx::createTexture2D(texture2dSize, texture2dSize, 1
+		, bgfx::TextureFormat::BGRA8
+		, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
+		);
+
+	uint8_t* texture2dData = (uint8_t*)malloc(texture2dSize*texture2dSize*4);
 
 	uint8_t rr = rand()%255;
 	uint8_t gg = rand()%255;
@@ -367,6 +374,37 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					quads.pop_front();
 				}
 			}
+
+			{
+				// Fill rect.
+				const uint32_t pitch = texture2dSize*4;
+
+				const uint16_t tw = rand()%texture2dSize;
+				const uint16_t th = rand()%texture2dSize;
+				const uint16_t tx = rand()%(texture2dSize-tw);
+				const uint16_t ty = rand()%(texture2dSize-th);
+
+				uint8_t* dst = &texture2dData[(ty*texture2dSize+tx)*4];
+				uint8_t* next = dst + pitch;
+
+				// Using makeRef to pass texture memory without copying.
+				const bgfx::Memory* mem = bgfx::makeRef(dst, tw*th*4);
+
+				for (uint32_t yy = 0; yy < th; ++yy, dst = next, next += pitch)
+				{
+					for (uint32_t xx = 0; xx < tw; ++xx, dst += 4)
+					{
+						dst[0] = bb;
+						dst[1] = gg;
+						dst[2] = rr;
+						dst[3] = 255;
+					}
+				}
+
+				// Pitch here makes possible to pass data from source to destination
+				// without need for textures and allocated memory to be the same size.
+				bgfx::updateTexture2D(texture2d, 0, tx, ty, tw, th, mem, pitch);
+			}
 		}
 
 		bgfx::dbgTextPrintf(0, 4, 0x0f, "hit: %d, miss %d", hit, miss);
@@ -411,6 +449,29 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
 		bgfx::setViewTransform(1, NULL, proj);
 
+
+		mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f, 1.9f, 0.0f);
+
+		// Set model matrix for rendering.
+		bgfx::setTransform(mtx);
+
+		// Set vertex and fragment shaders.
+		bgfx::setProgram(programCmp);
+
+		// Set vertex and index buffer.
+		bgfx::setVertexBuffer(vbh);
+		bgfx::setIndexBuffer(ibh);
+
+		// Bind texture.
+		bgfx::setTexture(0, u_texColor, texture2d);
+
+		// Set render states.
+		bgfx::setState(BGFX_STATE_DEFAULT);
+
+		// Submit primitive for rendering to view 0.
+		bgfx::submit(1);
+
+
 		for (uint32_t ii = 0; ii < BX_COUNTOF(textures); ++ii)
 		{
 			mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + ii*2.1f, 4.0f, 0.0f);
@@ -441,6 +502,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	// Cleanup.
+	free(texture2dData);
+
 	bgfx::destroyTexture(textureBc1);
 	bgfx::destroyTexture(textureBc2);
 	bgfx::destroyTexture(textureBc3);
@@ -450,11 +513,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyTexture(texturePtc14);
 	bgfx::destroyTexture(texturePtc22);
 	bgfx::destroyTexture(texturePtc24);
+	bgfx::destroyTexture(texture2d);
+	bgfx::destroyTexture(textureCube);
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
 	bgfx::destroyProgram(programCmp);
 	bgfx::destroyProgram(program);
-	bgfx::destroyTexture(textureCube);
 	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_texCube);
 
