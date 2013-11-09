@@ -1215,11 +1215,15 @@ struct Instance
 	Model* m_model;
 };
 
+#define SV_INSTANCE_MEM_SIZE (1500 << 10)
+#define SV_INSTANCE_COUNT ( (25 > MAX_INSTANCE_COUNT) ? 25 : MAX_INSTANCE_COUNT)
+#define SV_PAGE_SIZE (SV_INSTANCE_MEM_SIZE * SV_INSTANCE_COUNT * MAX_LIGHTS_COUNT)
+
 struct ShadowVolumeAllocator
 {
 	ShadowVolumeAllocator()
 	{
-		m_mem = (uint8_t*)malloc(PAGE_SIZE*2);
+		m_mem = (uint8_t*)malloc(SV_PAGE_SIZE*2);
 		m_ptr = m_mem;
 		m_firstPage = true;
 	}
@@ -1233,22 +1237,19 @@ struct ShadowVolumeAllocator
 	{
 		void* ret = (void*)m_ptr;
 		m_ptr += _size;
-		BX_CHECK(m_ptr - m_mem < (m_firstPage ? PAGE_SIZE : 2 * PAGE_SIZE), "Buffer overflow!");
+		BX_CHECK(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
 		return ret;
 	}
 
 	void swap()
 	{
-		m_ptr = m_firstPage ? m_mem + PAGE_SIZE : m_mem;
+		m_ptr = m_firstPage ? m_mem + SV_PAGE_SIZE : m_mem;
 		m_firstPage = !m_firstPage;
 	}
 
 	uint8_t* m_mem;
 	uint8_t* m_ptr;
 	bool m_firstPage;
-	static const uint32_t SV_INSTANCE_MEM_SIZE = 1500 << 10;
-	static const uint32_t INSTANCE_COUNT = (25 > MAX_INSTANCE_COUNT) ? 25 : MAX_INSTANCE_COUNT; //max(25, MAX_INSTANCE_COUNT);
-	static const uint32_t PAGE_SIZE = SV_INSTANCE_MEM_SIZE * INSTANCE_COUNT * MAX_LIGHTS_COUNT;
 };
 static ShadowVolumeAllocator s_svAllocator;
 
