@@ -7,6 +7,8 @@ all:
 	premake4 --file=premake/premake4.lua vs2008
 	premake4 --file=premake/premake4.lua vs2010
 	premake4 --file=premake/premake4.lua --gcc=android-arm gmake
+	premake4 --file=premake/premake4.lua --gcc=android-mips gmake
+	premake4 --file=premake/premake4.lua --gcc=android-x86 gmake
 	premake4 --file=premake/premake4.lua --gcc=nacl gmake
 	premake4 --file=premake/premake4.lua --gcc=nacl-arm gmake
 	premake4 --file=premake/premake4.lua --gcc=pnacl gmake
@@ -23,6 +25,18 @@ android-arm-debug:
 android-arm-release:
 	make -R -C .build/projects/gmake-android-arm config=release
 android-arm: android-arm-debug android-arm-release
+
+android-mips-debug:
+	make -R -C .build/projects/gmake-android-mips config=debug
+android-mips-release:
+	make -R -C .build/projects/gmake-android-mips config=release
+android-mips: android-mips-debug android-mips-release
+
+android-x86-debug:
+	make -R -C .build/projects/gmake-android-x86 config=debug
+android-x86-release:
+	make -R -C .build/projects/gmake-android-x86 config=release
+android-x86: android-x86-debug android-x86-release
 
 linux-debug32:
 	make -R -C .build/projects/gmake-linux config=debug32
