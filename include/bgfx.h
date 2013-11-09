@@ -823,7 +823,7 @@ namespace bgfx
 
 	/// Create texture from memory buffer.
 	///
-	/// @param _mem DDS texture data.
+	/// @param _mem DDS, KTX or PVR texture data.
 	/// @param _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
 	///

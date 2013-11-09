@@ -1612,33 +1612,38 @@ namespace bgfx
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 
-		if (!!BGFX_CONFIG_RENDERER_OPENGL
-		||  s_extension[Extension::EXT_unpack_subimage].m_supported)
-		{
-			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
-		}
-		else
-		{
-			BX_CHECK(false, "There is no fallback for GLES2 when GL_EXT_unpack_subimage extension is not available.");
-		}
-
 		GLenum target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
-		const bool swizzle    = GL_RGBA == m_fmt && !s_renderCtx->m_textureSwizzleSupport;
-		const bool convert    = m_textureFormat != m_requestedFormat;
-		const bool compressed = TextureFormat::Unknown > m_textureFormat;
+		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
+		const bool swizzle         = GL_RGBA == m_fmt && !s_renderCtx->m_textureSwizzleSupport;
+		const bool convert         = m_textureFormat != m_requestedFormat;
+		const bool compressed      = TextureFormat::Unknown > m_textureFormat;
 
 		const uint32_t width  = _rect.m_width;
 		const uint32_t height = _rect.m_height;
 
 		uint8_t* temp = NULL;
-		if (convert || swizzle)
+		if (convert
+		||  swizzle
+		||  !unpackRowLength)
 		{
 			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*height);
+		}
+		else if (unpackRowLength)
+		{
+			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
 		}
 
 		if (compressed)
 		{
+			const uint8_t* data = _mem->data;
+
+			if (!unpackRowLength)
+			{
+				imageCopy(width, height, bpp, srcpitch, data, temp);
+				data = temp;
+			}
+
 			GL_CHECK(compressedTexSubImage(target+_side
 				, _mip
 				, _rect.m_x
@@ -1649,7 +1654,7 @@ namespace bgfx
 				, _depth
 				, m_fmt
 				, _mem->size
-				, _mem->data
+				, data
 				) );
 		}
 		else
@@ -1666,6 +1671,11 @@ namespace bgfx
 			if (swizzle)
 			{
 				imageSwizzleBgra8(width, height, srcpitch, data, temp);
+				data = temp;
+			}
+			else if (!unpackRowLength && !convert)
+			{
+				imageCopy(width, height, bpp, srcpitch, data, temp);
 				data = temp;
 			}
 

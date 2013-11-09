@@ -66,7 +66,7 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba8Downsample2x2Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba8Downsample2x2Ref(uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, void* _dst)
 	{
 		const uint32_t dstwidth  = _width/2;
 		const uint32_t dstheight = _height/2;
@@ -80,27 +80,27 @@ namespace bgfx
 		uint8_t* dst = (uint8_t*)_dst;
 		const uint8_t* src = (const uint8_t*)_src;
 		
-		for (uint32_t yy = 0, ystep = _pitch*2; yy < dstheight; ++yy, src += ystep)
+		for (uint32_t yy = 0, ystep = _srcPitch*2; yy < dstheight; ++yy, src += ystep)
 		{
 			const uint8_t* rgba = src;
 			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 8, dst += 4)
 			{
-				float rr = powf(rgba[       0], 2.2f);
-				float gg = powf(rgba[       1], 2.2f);
-				float bb = powf(rgba[       2], 2.2f);
-				float aa =      rgba[       3];
-				rr      += powf(rgba[       4], 2.2f);
-				gg      += powf(rgba[       5], 2.2f);
-				bb      += powf(rgba[       6], 2.2f);
-				aa      +=      rgba[       7];
-				rr      += powf(rgba[_pitch+0], 2.2f);
-				gg      += powf(rgba[_pitch+1], 2.2f);
-				bb      += powf(rgba[_pitch+2], 2.2f);
-				aa      +=      rgba[_pitch+3];
-				rr      += powf(rgba[_pitch+4], 2.2f);
-				gg      += powf(rgba[_pitch+5], 2.2f);
-				bb      += powf(rgba[_pitch+6], 2.2f);
-				aa      +=      rgba[_pitch+7];
+				float rr = powf(rgba[          0], 2.2f);
+				float gg = powf(rgba[          1], 2.2f);
+				float bb = powf(rgba[          2], 2.2f);
+				float aa =      rgba[          3];
+				rr      += powf(rgba[          4], 2.2f);
+				gg      += powf(rgba[          5], 2.2f);
+				bb      += powf(rgba[          6], 2.2f);
+				aa      +=      rgba[          7];
+				rr      += powf(rgba[_srcPitch+0], 2.2f);
+				gg      += powf(rgba[_srcPitch+1], 2.2f);
+				bb      += powf(rgba[_srcPitch+2], 2.2f);
+				aa      +=      rgba[_srcPitch+3];
+				rr      += powf(rgba[_srcPitch+4], 2.2f);
+				gg      += powf(rgba[_srcPitch+5], 2.2f);
+				bb      += powf(rgba[_srcPitch+6], 2.2f);
+				aa      +=      rgba[_srcPitch+7];
 
 				rr *= 0.25f;
 				gg *= 0.25f;
@@ -117,7 +117,7 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, void* _dst)
 	{
 		const uint32_t dstwidth  = _width/2;
 		const uint32_t dstheight = _height/2;
@@ -142,15 +142,15 @@ namespace bgfx
 		const float4_t linear = float4_ld(2.2f, 2.2f, 2.2f, 1.0f);
 		const float4_t quater = float4_splat(0.25f);
 
-		for (uint32_t yy = 0, ystep = _pitch*2; yy < dstheight; ++yy, src += ystep)
+		for (uint32_t yy = 0, ystep = _srcPitch*2; yy < dstheight; ++yy, src += ystep)
 		{
 			const uint8_t* rgba = src;
 			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 8, dst += 4)
 			{
 				const float4_t abgr0  = float4_splat(rgba);
 				const float4_t abgr1  = float4_splat(rgba+4);
-				const float4_t abgr2  = float4_splat(rgba+_pitch);
-				const float4_t abgr3  = float4_splat(rgba+_pitch+4);
+				const float4_t abgr2  = float4_splat(rgba+_srcPitch);
+				const float4_t abgr3  = float4_splat(rgba+_srcPitch+4);
 
 				const float4_t abgr0m = float4_and(abgr0, umask);
 				const float4_t abgr1m = float4_and(abgr1, umask);
@@ -198,13 +198,13 @@ namespace bgfx
 		}
 	}
 
-	void imageSwizzleBgra8Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageSwizzleBgra8Ref(uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, void* _dst)
 	{
 		const uint8_t* src = (uint8_t*) _src;
-		const uint8_t* next = src + _pitch;
+		const uint8_t* next = src + _srcPitch;
 		uint8_t* dst = (uint8_t*)_dst;
 
-		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _pitch)
+		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _srcPitch)
 		{
 			for (uint32_t xx = 0; xx < _width; ++xx, src += 4, dst += 4)
 			{
@@ -220,7 +220,7 @@ namespace bgfx
 		}
 	}
 
-	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, void* _dst)
 	{
 		// Test can we do four 4-byte pixels at the time.
 		if (0 != (_width&0x3)
@@ -232,7 +232,7 @@ namespace bgfx
 			BX_WARN(bx::isPtrAligned(_src, 16), "Source %p is not 16-byte aligned.", _src);
 			BX_WARN(bx::isPtrAligned(_dst, 16), "Destination %p is not 16-byte aligned.", _dst);
 			BX_WARN(_width < 4, "Image width must be multiple of 4 (width %d).", _width);
-			imageSwizzleBgra8Ref(_width, _height, _pitch, _src, _dst);
+			imageSwizzleBgra8Ref(_width, _height, _srcPitch, _src, _dst);
 			return;
 		}
 
@@ -241,12 +241,12 @@ namespace bgfx
 		const float4_t mf0f0 = float4_isplat(0xff00ff00);
 		const float4_t m0f0f = float4_isplat(0x00ff00ff);
 		const uint8_t* src = (uint8_t*) _src;
-		const uint8_t* next = src + _pitch;
+		const uint8_t* next = src + _srcPitch;
 		uint8_t* dst = (uint8_t*)_dst;
 
 		const uint32_t width = _width/4;
 
-		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _pitch)
+		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _srcPitch)
 		{
 			for (uint32_t xx = 0; xx < width; ++xx, src += 16, dst += 16)
 			{
@@ -259,6 +259,19 @@ namespace bgfx
 				const float4_t targb = float4_or(ta0g0, t0r0b);
 				float4_st(dst, targb);
 			}
+		}
+	}
+
+	void imageCopy(uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _srcPitch, const void* _src, void* _dst)
+	{
+		const uint32_t pitch = _width*_bpp/8;
+		const uint8_t* src = (uint8_t*) _src;
+		const uint8_t* next = src + _srcPitch;
+		uint8_t* dst = (uint8_t*)_dst;
+
+		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _srcPitch)
+		{
+			memcpy(dst, src, pitch);
 		}
 	}
 
