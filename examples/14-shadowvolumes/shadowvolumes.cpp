@@ -28,7 +28,7 @@ using namespace std::tr1;
 #define MAX_INSTANCE_COUNT 25
 #define MAX_LIGHTS_COUNT 5
 
-#define VIEWID_RANGE1_PASS0     1 
+#define VIEWID_RANGE1_PASS0     1
 #define VIEWID_RANGE1_RT_PASS1  2
 #define VIEWID_RANGE15_PASS2    3
 #define VIEWID_RANGE1_PASS3    20
@@ -374,7 +374,7 @@ struct Uniforms
 		float m_alpha;
 		float m_lightCount;
 	};
-	
+
 	struct SvParams
 	{
 		float m_useStencilTex;
@@ -529,13 +529,13 @@ static RenderState s_renderStates[RenderState::Count]  =
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
 		, BGFX_STENCIL_TEST_ALWAYS
-		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_REF(1)
 		| BGFX_STENCIL_FUNC_RMASK(0xff)
 		| BGFX_STENCIL_OP_FAIL_S_KEEP
 		| BGFX_STENCIL_OP_FAIL_Z_KEEP
 		| BGFX_STENCIL_OP_PASS_Z_DECR
 		, BGFX_STENCIL_TEST_ALWAYS
-		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_REF(1)
 		| BGFX_STENCIL_FUNC_RMASK(0xff)
 		| BGFX_STENCIL_OP_FAIL_S_KEEP
 		| BGFX_STENCIL_OP_FAIL_Z_KEEP
@@ -546,13 +546,13 @@ static RenderState s_renderStates[RenderState::Count]  =
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
 		, BGFX_STENCIL_TEST_ALWAYS
-		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_REF(1)
 		| BGFX_STENCIL_FUNC_RMASK(0xff)
 		| BGFX_STENCIL_OP_FAIL_S_KEEP
 		| BGFX_STENCIL_OP_FAIL_Z_INCR
 		| BGFX_STENCIL_OP_PASS_Z_KEEP
 		, BGFX_STENCIL_TEST_ALWAYS
-		| BGFX_STENCIL_FUNC_REF(1)        
+		| BGFX_STENCIL_FUNC_REF(1)
 		| BGFX_STENCIL_FUNC_RMASK(0xff)
 		| BGFX_STENCIL_OP_FAIL_S_KEEP
 		| BGFX_STENCIL_OP_FAIL_Z_DECR
@@ -1123,7 +1123,7 @@ struct Mesh
 struct Model
 {
 	Model()
-	{ 
+	{
 		m_program.idx = bgfx::invalidHandle;
 		m_texture.idx = bgfx::invalidHandle;
 	}
@@ -1187,7 +1187,7 @@ struct Instance
 {
 	Instance()
 		: m_svExtrusionDistance(150.0f)
-	{ 
+	{
 		m_color[0] = 1.0f;
 		m_color[1] = 1.0f;
 		m_color[2] = 1.0f;
@@ -1376,8 +1376,8 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
 
-	VertexData* verticesSide    = (VertexData*) s_svAllocator.alloc (20000 * sizeof(VertexData) );
-	uint16_t*   indicesSide     = (uint16_t*)   s_svAllocator.alloc (20000 * 3*sizeof(uint16_t) );
+	VertexData* verticesSide    = (VertexData*) s_svAllocator.alloc(20000 * sizeof(VertexData) );
+	uint16_t*   indicesSide     = (uint16_t*)   s_svAllocator.alloc(20000 * 3*sizeof(uint16_t) );
 	uint16_t*   indicesFrontCap = 0;
 	uint16_t*   indicesBackCap  = 0;
 
@@ -1405,7 +1405,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			if (f > 0.0f)
 			{
 				frontFacing = true;
-				uint16_t triangleEdges[3][2] = 
+				uint16_t triangleEdges[3][2] =
 				{
 					{ face.m_i[0], face.m_i[1] },
 					{ face.m_i[1], face.m_i[2] },
@@ -1617,7 +1617,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				const Face& face = *iter;
 
 				float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
-				bool frontFacing = (f > 0.0f); 
+				bool frontFacing = (f > 0.0f);
 
 				for (uint8_t ii = 0, end = 1 + uint8_t(!_textureAsStencil); ii < end; ++ii)
 				{
@@ -1766,10 +1766,10 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 
 	float nearPlaneV[4] =
 	{
-		0.0f * lightSide,  
-		0.0f * lightSide,  
-		1.0f * lightSide,  
-		_near * lightSide, 
+		0.0f * lightSide,
+		0.0f * lightSide,
+		1.0f * lightSide,
+		_near * lightSide,
 	};
 	vec4MulMtx(volumePlanes[4], nearPlaneV, mtxViewTrans);
 
@@ -1817,9 +1817,9 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 			}
 		}
 
-		if (isInside) 
+		if (isInside)
 		{
-			return true; 
+			return true;
 		}
 	}
 
@@ -1907,19 +1907,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ProgramHandle programColorTexture     = loadProgram("vs_shadowvolume_color_texture",     "fs_shadowvolume_color_texture"    );
 	bgfx::ProgramHandle programTexture          = loadProgram("vs_shadowvolume_texture",           "fs_shadowvolume_texture"          );
 
-	bgfx::ProgramHandle programBackBlank        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackblank" ); 
-	bgfx::ProgramHandle programSideBlank        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsideblank" ); 
-	bgfx::ProgramHandle programFrontBlank       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontblank"); 
+	bgfx::ProgramHandle programBackBlank        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackblank" );
+	bgfx::ProgramHandle programSideBlank        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsideblank" );
+	bgfx::ProgramHandle programFrontBlank       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontblank");
 
-	bgfx::ProgramHandle programBackColor        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackcolor" ); 
-	bgfx::ProgramHandle programSideColor        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidecolor" ); 
-	bgfx::ProgramHandle programFrontColor       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontcolor"); 
+	bgfx::ProgramHandle programBackColor        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackcolor" );
+	bgfx::ProgramHandle programSideColor        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidecolor" );
+	bgfx::ProgramHandle programFrontColor       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontcolor");
 
-	bgfx::ProgramHandle programSideTex          = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidetex"   ); 
-	bgfx::ProgramHandle programBackTex1         = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex1"  ); 
-	bgfx::ProgramHandle programBackTex2         = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex2"  ); 
-	bgfx::ProgramHandle programFrontTex1        = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex1" ); 
-	bgfx::ProgramHandle programFrontTex2        = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex2" ); 
+	bgfx::ProgramHandle programSideTex          = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidetex"   );
+	bgfx::ProgramHandle programBackTex1         = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex1"  );
+	bgfx::ProgramHandle programBackTex2         = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex2"  );
+	bgfx::ProgramHandle programFrontTex1        = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex1" );
+	bgfx::ProgramHandle programFrontTex2        = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex2" );
 
 	struct ShadowVolumeProgramType
 	{
@@ -1947,7 +1947,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	};
 
 	bgfx::ProgramHandle svProgs[ShadowVolumeProgramType::Count][ShadowVolumePart::Count] =
-	{ 
+	{
 		{ programBackBlank, programSideBlank, programFrontBlank } // Blank
 		,{ programBackColor, programSideColor, programFrontColor } // Color
 		,{ programBackTex1,  programSideTex,   programFrontTex1  } // Tex1
@@ -2015,7 +2015,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	int64_t profTime = 0;
 	int64_t timeOffset = bx::getHPCounter();
 
-	uint32_t numShadowVolumeVertices = 0; 
+	uint32_t numShadowVolumeVertices = 0;
 	uint32_t numShadowVolumeIndices  = 0;
 
 	uint32_t oldWidth = 0;
@@ -2030,8 +2030,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bool settings_drawShadowVolumes  = false;
 	float settings_numLights         = 1.0f;
 	float settings_instanceCount     = 9.0f;
-	ShadowVolumeImpl::Enum      settings_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail; 
-	ShadowVolumeAlgorithm::Enum settings_shadowVolumeAlgorithm = ShadowVolumeAlgorithm::FaceBased;
+	ShadowVolumeImpl::Enum      settings_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail;
+	ShadowVolumeAlgorithm::Enum settings_shadowVolumeAlgorithm = ShadowVolumeAlgorithm::EdgeBased;
 	int32_t scrollAreaRight = 0;
 
 	const char* titles[2] =
@@ -2193,8 +2193,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiLabel("CPU Time: %7.1f [ms]", double(profTime)*toMs);
 		imguiLabel("Volume Vertices: %5.uk", numShadowVolumeVertices/1000);
 		imguiLabel("Volume Indices: %6.uk", numShadowVolumeIndices/1000);
-		numShadowVolumeVertices = 0; 
-		numShadowVolumeIndices = 0;  
+		numShadowVolumeVertices = 0;
+		numShadowVolumeIndices = 0;
 
 		imguiSeparatorLine();
 		settings_drawShadowVolumes = imguiCheck("Draw Shadow Volumes", settings_drawShadowVolumes)
@@ -2286,7 +2286,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::dbgTextPrintf(3, row++, 0x0f, "Stencil:");
 			bgfx::dbgTextPrintf(8, row++, 0x0f, "Stencil buffer     - Faster, but capable only of +1 incr.");
 			bgfx::dbgTextPrintf(8, row++, 0x0f, "Texture as stencil - Slower, but capable of +2 incr.");
-		}                       
+		}
 
 		// Setup instances
 		Instance shadowCasters[SceneCount][60];
@@ -2538,7 +2538,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, 0x00000000, 1.0f, 0);
 			bgfx::setViewRenderTarget(VIEWID_RANGE1_RT_PASS1, s_stencilRt);
 
-			const RenderState& renderState = s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_BuildDepth]; 
+			const RenderState& renderState = s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_BuildDepth];
 
 			for (uint8_t ii = 0; ii < shadowCastersCount[currentScene]; ++ii)
 			{
@@ -2554,7 +2554,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		profTime = bx::getHPCounter();
 
 		/**
-		 * For each light: 
+		 * For each light:
 		 * 1. Compute and draw shadow volume to stencil buffer
 		 * 2. Draw diffuse with stencil test
 		 */
@@ -2607,14 +2607,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				const Instance& instance = shadowCasters[currentScene][jj];
 				Model* model = instance.m_model;
 
-				ShadowVolumeImpl::Enum shadowVolumeImpl = settings_shadowVolumeImpl; 
+				ShadowVolumeImpl::Enum shadowVolumeImpl = settings_shadowVolumeImpl;
 				if (settings_mixedSvImpl)
-				{                                                     
+				{
 					// If instance is inside near clip volume, depth fail must be used, else depth pass is fine.
 					bool isInsideVolume = clipTest(nearClipVolume, 6, model->m_mesh, instance.m_scale, instance.m_pos);
 					shadowVolumeImpl = (isInsideVolume ? ShadowVolumeImpl::DepthFail : ShadowVolumeImpl::DepthPass);
 				}
-				s_uniforms.m_svparams.m_dfail = float(ShadowVolumeImpl::DepthFail == shadowVolumeImpl); 
+				s_uniforms.m_svparams.m_dfail = float(ShadowVolumeImpl::DepthFail == shadowVolumeImpl);
 
 				// Compute virtual light position for shadow volume generation.
 				float transformedLightPos[3];
@@ -2673,7 +2673,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 							: RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass
 							;
 
-						programIndex = ShadowVolumeAlgorithm::FaceBased == settings_shadowVolumeAlgorithm 
+						programIndex = ShadowVolumeAlgorithm::FaceBased == settings_shadowVolumeAlgorithm
 							? ShadowVolumeProgramType::Tex1
 							: ShadowVolumeProgramType::Tex2
 							;
@@ -2773,7 +2773,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		profTime = bx::getHPCounter() - profTime; 
+		profTime = bx::getHPCounter() - profTime;
 
 		// Lights.
 		const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
