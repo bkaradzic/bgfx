@@ -11,6 +11,7 @@ using namespace std::tr1;
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
+#include <bx/float4_t.h>
 #include "entry/entry.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
@@ -23,6 +24,7 @@ using namespace std::tr1;
 #include <unordered_map>
 #include <map>
 
+#define SV_USE_SIMD 1
 #define MAX_INSTANCE_COUNT 25
 #define MAX_LIGHTS_COUNT 5
 
@@ -695,31 +697,23 @@ typedef std::vector<Face> FaceArray;
 
 struct Edge
 {
-	struct Plane
-	{
-		float m_plane[4];
-		bool m_reverseVertexOrder;
-	};
-
 	Edge(const float* _v0, const float* _v1)
 		: m_faceIndex(0)
 	{
 		memcpy(m_v0, _v0, 3*sizeof(float) );
 		memcpy(m_v1, _v1, 3*sizeof(float) );
-	}               
-
-	Plane& nextFace()
-	{
-		BX_CHECK(m_faceIndex < FACE_NUM, "Error! 2-manifold meshes must be used!");
-		return m_faces[(m_faceIndex++)%FACE_NUM];
 	}
 
-	float m_v0[3], m_v1[3];    
-	static const uint8_t FACE_NUM = 2;
-	Plane m_faces[FACE_NUM];
+	struct Plane
+	{
+		float m_plane[4];
+	};
+
+	Plane m_face[2];
+	bool m_faceReverseOrder[2];
 	uint8_t m_faceIndex;
+	float m_v0[3], m_v1[3];
 };
-typedef std::vector<Edge> EdgeArray;
 
 struct HalfEdge
 {
@@ -844,24 +838,48 @@ struct Group
 		m_vertices = NULL;
 		m_numIndices = 0;
 		m_indices = NULL;
+		m_numEdges = 0;
+		m_edges = NULL;
 		m_prims.clear();
 	}
+
+	typedef struct { float f[6]; } f6_t;
+
+	struct EdgeComparator
+	{
+		bool operator()(const f6_t& _a, const f6_t& _b)
+		{
+			if (_a.f[0] < _b.f[0]) return true;
+			if (_a.f[0] > _b.f[0]) return false;
+			if (_a.f[1] < _b.f[1]) return true;
+			if (_a.f[1] > _b.f[1]) return false;
+			if (_a.f[2] < _b.f[2]) return true;
+			if (_a.f[2] > _b.f[2]) return false;
+			if (_a.f[3] < _b.f[3]) return true;
+			if (_a.f[3] > _b.f[3]) return false;
+			if (_a.f[4] < _b.f[4]) return true;
+			if (_a.f[4] > _b.f[4]) return false;
+			if (_a.f[5] < _b.f[5]) return true;
+			/*if (_a.f[5] > _b.f[5]) return false;*/
+
+			return false;
+		}
+	};
 
 	void fillStructures(uint16_t _stride)
 	{
 		m_faces.clear();
-		m_edges.clear();
 		m_halfEdges.destroy();
 
 		//init halfedges
 		m_halfEdges.init(m_indices, m_numIndices);
 
 		//init faces and edges
-		m_faces.reserve(m_numIndices/3); //1 face = 3 indices 
-		m_edges.reserve(m_numIndices);   //1 triangle = 3 indices = 3 edges.
+		m_faces.reserve(m_numIndices/3); //1 face = 3 indices
+		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge)); //1 triangle = 3 indices = 3 edges.
 
-		typedef std::map<std::pair<uint16_t, uint16_t>, uint32_t> EdgeIndexMap;
-		EdgeIndexMap edgeIndexMap;
+		typedef std::map<f6_t, Edge, EdgeComparator> EdgeMap;
+		EdgeMap edgeMap;
 
 		for (uint32_t ii = 0, size = m_numIndices/3; ii < size; ++ii)
 		{
@@ -883,13 +901,6 @@ struct Group
 			memcpy(face.m_plane, plane, 4*sizeof(float) );
 			m_faces.push_back(face);
 
-			uint16_t triangleI[3][2] =
-			{
-				{i0, i1},
-				{i1, i2},
-				{i2, i0},
-			};
-
 			const float* triangleV[3][2] =
 			{
 				{v0, v1},
@@ -897,43 +908,38 @@ struct Group
 				{v2, v0},
 			};
 
-			typedef std::vector<uint8_t> TriangleIndex;
-			TriangleIndex triangleIndex;
-
 			for (uint8_t jj = 0; jj < 3; ++jj)
-			{   
-				EdgeIndexMap::iterator iter = edgeIndexMap.find(std::make_pair(triangleI[jj][1], triangleI[jj][0]) );
-				if (edgeIndexMap.end() != iter)
-				{
-					const uint32_t index = iter->second;
-					Edge* edge = &m_edges[index];
+			{
+				const float* v0 = triangleV[jj][0];
+				const float* v1 = triangleV[jj][1];
+				f6_t key;
+				f6_t keyInv;
+				memcpy(&key.f[0], v0, 3*sizeof(float) );
+				memcpy(&key.f[3], v1, 3*sizeof(float) );
+				memcpy(&keyInv.f[0], v1, 3*sizeof(float) );
+				memcpy(&keyInv.f[3], v0, 3*sizeof(float) );
 
-					Edge::Plane& face = edge->nextFace();
-					memcpy(face.m_plane, plane, 4*sizeof(float) );
-					face.m_reverseVertexOrder = true;
+				EdgeMap::iterator iter = edgeMap.find(keyInv);
+				if (iter != edgeMap.end())
+				{
+					Edge& edge = iter->second;
+					memcpy(edge.m_face[edge.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					edge.m_faceReverseOrder[edge.m_faceIndex] = true;
 				}
 				else
 				{
-					triangleIndex.push_back(jj);
+					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, Edge(v0, v1)) );
+					Edge& edge = result.first->second;
+					memcpy(edge.m_face[edge.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					edge.m_faceReverseOrder[edge.m_faceIndex] = false;
+					edge.m_faceIndex++;
 				}
 			}
+		}
 
-			for (TriangleIndex::const_iterator iter = triangleIndex.begin(), end = triangleIndex.end(); iter != end; ++iter)
-			{
-				const uint8_t index = *iter;
-				const uint16_t i0 = triangleI[index][0];
-				const uint16_t i1 = triangleI[index][1];
-				const float* v0 = triangleV[index][0];
-				const float* v1 = triangleV[index][1];
-
-				Edge edge(v0, v1);
-				Edge::Plane& face = edge.nextFace();
-				memcpy(face.m_plane, plane, 4*sizeof(float) );
-				face.m_reverseVertexOrder = false;
-				m_edges.push_back(edge);
-
-				edgeIndexMap.insert(std::make_pair(std::make_pair(i0, i1), (uint32_t)m_edges.size()-1) );
-			}
+		for (EdgeMap::const_iterator iter = edgeMap.begin(), end = edgeMap.end(); iter != end; ++iter)
+		{
+			memcpy(&m_edges[m_numEdges++], &iter->second, sizeof(Edge));
 		}
 	}
 
@@ -948,6 +954,8 @@ struct Group
 		m_vertices = NULL;
 		free(m_indices);
 		m_indices = NULL;
+		free(m_edges);
+		m_edges = NULL;
 		m_halfEdges.destroy();
 	}
 
@@ -961,7 +969,8 @@ struct Group
 	Aabb m_aabb;
 	Obb m_obb;
 	PrimitiveArray m_prims;
-	EdgeArray m_edges;
+	uint32_t m_numEdges;
+	Edge* m_edges;
 	FaceArray m_faces;
 	HalfEdges m_halfEdges;
 };
@@ -1343,7 +1352,8 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 {
 	const uint8_t*    vertices  = _group.m_vertices;
 	const FaceArray&  faces     = _group.m_faces;
-	const EdgeArray&  edges     = _group.m_edges;
+	const Edge*       edges     = _group.m_edges;
+	const uint32_t    numEdges  = _group.m_numEdges;
 	HalfEdges&        halfEdges = _group.m_halfEdges;
 
 	struct VertexData
@@ -1482,49 +1492,121 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	}
 	else // ShadowVolumeAlgorithm::EdgeBased:
 	{
-		for (EdgeArray::const_iterator iter = edges.begin(), end = edges.end(); iter != end; ++iter)
+		uint32_t ii = 0;
+
+#if SV_USE_SIMD
+		uint32_t numEdgesRounded = uint32_t(numEdges / 2) * 2;
+
+		using namespace bx;
+
+		const float4_t lx = float4_splat(_light[0]);
+		const float4_t ly = float4_splat(_light[1]);
+		const float4_t lz = float4_splat(_light[2]);
+
+		for (; ii < numEdgesRounded; ii+=2)
 		{
-			const Edge& edge = *iter;
-			const float* v0 = edge.m_v0;
-			const float* v1 = edge.m_v1;
+			const Edge& edge0 = edges[ii];
+			const Edge& edge1 = edges[ii+1];
 
-			int16_t k = 0;
-			for (uint8_t ii = 0; ii < edge.m_faceIndex; ++ii)
+			const float4_t reverse = float4_ild(edge0.m_faceReverseOrder[0]
+						 , edge1.m_faceReverseOrder[0]
+						 , edge0.m_faceReverseOrder[1]
+						 , edge1.m_faceReverseOrder[1]
+						 );
+
+			const float4_t v0 = float4_ldu(edge0.m_face[0].m_plane);
+			const float4_t v1 = float4_ldu(edge1.m_face[0].m_plane);
+			const float4_t v2 = float4_ldu(edge0.m_face[1].m_plane);
+			const float4_t v3 = float4_ldu(edge1.m_face[1].m_plane);
+
+			const float4_t xxyy0 = float4_shuf_xAyB(v0, v2);
+			const float4_t zzww0 = float4_shuf_zCwD(v0, v2);
+			const float4_t xxyy1 = float4_shuf_xAyB(v1, v3);
+			const float4_t zzww1 = float4_shuf_zCwD(v1, v3);
+
+			const float4_t vX = float4_shuf_xAyB(xxyy0, xxyy1);
+			const float4_t vY = float4_shuf_zCwD(xxyy0, xxyy1);
+			const float4_t vZ = float4_shuf_xAyB(zzww0, zzww1);
+			const float4_t vW = float4_shuf_zCwD(zzww0, zzww1);
+
+			const float4_t r0 = float4_mul(vX, lx);
+			const float4_t r1 = float4_mul(vY, ly);
+			const float4_t r2 = float4_mul(vZ, lz);
+
+			const float4_t dot = float4_add(r0, float4_add(r1, r2));
+			const float4_t f = float4_add(dot, vW);
+
+			const float4_t mask = float4_cmpgt(f, float4_zero() );
+			const float4_t tmp0 = float4_and(mask, float4_splat(1.0f) );
+			const float4_t tmp1 = float4_ftoi(tmp0);
+			const float4_t tmp2 = float4_xor(tmp1, reverse);
+			const float4_t tmp3 = float4_sll(tmp2, 1);
+			const float4_t tmp4 = float4_isub(tmp3, float4_isplat(1) );
+
+			BX_ALIGN_STRUCT_16(int32_t res[4]);
+			float4_st(&res, tmp4);
+
+			for (uint16_t jj = 0; jj < 2; ++jj)
 			{
-				const Edge::Plane& face = edge.m_faces[ii];
-
-				int16_t s = (int16_t)fsign(vec3Dot(face.m_plane, _light) + face.m_plane[3]);
-				if (face.m_reverseVertexOrder)
+				int16_t k = res[jj] + res[jj+2];
+				if (k != 0)
 				{
-					s = -s;
+					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v0, 0.0f, float(k));
+					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v0, 1.0f, float(k));
+					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v1, 0.0f, float(k));
+					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v1, 1.0f, float(k));
+
+					k = _textureAsStencil ? 1 : k;
+					uint16_t winding = uint16_t(k > 0);
+					for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
+					{
+						indicesSide[sideI++] = indexSide;
+						indicesSide[sideI++] = indexSide + 2 - winding;
+						indicesSide[sideI++] = indexSide + 1 + winding;
+
+						indicesSide[sideI++] = indexSide + 2;
+						indicesSide[sideI++] = indexSide + 3 - winding*2;
+						indicesSide[sideI++] = indexSide + 1 + winding*2;
+					}
+
+					indexSide += 4;
 				}
-				k += s;
 			}
+		}
+#endif
 
-			if (k == 0)
+		for (; ii < numEdges; ++ii)
+		{
+			const Edge& edge = edges[ii];
+			const Edge::Plane& face0 = edge.m_face[0];
+			const Edge::Plane& face1 = edge.m_face[1];
+
+			int16_t s0 = ( (vec3Dot(face0.m_plane, _light) + face0.m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
+			int16_t s1 = ( (vec3Dot(face1.m_plane, _light) + face1.m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
+			int16_t k = ( (s0 + s1) << 1) - 2;
+
+			if (k != 0)
 			{
-				continue;
+				verticesSide[vsideI++] = VertexData(edge.m_v0, 0.0f, k);
+				verticesSide[vsideI++] = VertexData(edge.m_v0, 1.0f, k);
+				verticesSide[vsideI++] = VertexData(edge.m_v1, 0.0f, k);
+				verticesSide[vsideI++] = VertexData(edge.m_v1, 1.0f, k);
+
+				k = _textureAsStencil ? 1 : k;
+				uint16_t winding = uint16_t(k > 0);
+				for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
+				{
+					indicesSide[sideI++] = indexSide;
+					indicesSide[sideI++] = indexSide + 2 - winding;
+					indicesSide[sideI++] = indexSide + 1 + winding;
+
+					indicesSide[sideI++] = indexSide + 2;
+					indicesSide[sideI++] = indexSide + 3 - winding*2;
+					indicesSide[sideI++] = indexSide + 1 + winding*2;
+				}
+
+				indexSide += 4;
 			}
-
-			verticesSide[vsideI++] = VertexData(v0, 0.0f, k);
-			verticesSide[vsideI++] = VertexData(v0, 1.0f, k);
-			verticesSide[vsideI++] = VertexData(v1, 0.0f, k);
-			verticesSide[vsideI++] = VertexData(v1, 1.0f, k);
-
-			k = _textureAsStencil ? 1 : k;
-			uint16_t winding = uint16_t(k > 0);
-			for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
-			{
-				indicesSide[sideI++] = indexSide;
-				indicesSide[sideI++] = indexSide + 2 - winding;
-				indicesSide[sideI++] = indexSide + 1 + winding;
-
-				indicesSide[sideI++] = indexSide + 2;
-				indicesSide[sideI++] = indexSide + 3 - winding*2;
-				indicesSide[sideI++] = indexSide + 1 + winding*2;
-			}
-
-			indexSide += 4;
 		}
 
 		if (cap)
@@ -1944,7 +2026,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bool settings_updateLights       = true;
 	bool settings_updateScene        = true;
 	bool settings_mixedSvImpl        = true;
-	bool settings_useStencilTexture  = false;
+	bool settings_useStencilTexture  = true;
 	bool settings_drawShadowVolumes  = false;
 	float settings_numLights         = 1.0f;
 	float settings_instanceCount     = 9.0f;
