@@ -1566,12 +1566,15 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const float4_t dot = float4_add(r0, float4_add(r1, r2));
 			const float4_t f = float4_add(dot, vW);
 
-			const float4_t mask = float4_cmpgt(f, float4_zero() );
-			const float4_t tmp0 = float4_and(mask, float4_splat(1.0f) );
+			const float4_t zero = float4_zero();
+			const float4_t mask = float4_cmpgt(f, zero);
+			const float4_t onef = float4_splat(1.0f);
+			const float4_t tmp0 = float4_and(mask, onef);
 			const float4_t tmp1 = float4_ftoi(tmp0);
 			const float4_t tmp2 = float4_xor(tmp1, reverse);
 			const float4_t tmp3 = float4_sll(tmp2, 1);
-			const float4_t tmp4 = float4_isub(tmp3, float4_isplat(1) );
+			const float4_t onei = float4_isplat(1);
+			const float4_t tmp4 = float4_isub(tmp3, onei);
 
 			BX_ALIGN_STRUCT_16(int32_t res[4]);
 			float4_st(&res, tmp4);
