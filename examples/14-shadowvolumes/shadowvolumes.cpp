@@ -849,20 +849,25 @@ struct Group
 	{
 		bool operator()(const f6_t& _a, const f6_t& _b)
 		{
-			if (_a.f[0] < _b.f[0]) return true;
-			if (_a.f[0] > _b.f[0]) return false;
-			if (_a.f[1] < _b.f[1]) return true;
-			if (_a.f[1] > _b.f[1]) return false;
-			if (_a.f[2] < _b.f[2]) return true;
-			if (_a.f[2] > _b.f[2]) return false;
-			if (_a.f[3] < _b.f[3]) return true;
-			if (_a.f[3] > _b.f[3]) return false;
-			if (_a.f[4] < _b.f[4]) return true;
-			if (_a.f[4] > _b.f[4]) return false;
-			if (_a.f[5] < _b.f[5]) return true;
-			/*if (_a.f[5] > _b.f[5]) return false;*/
+			const uint8_t t0 = 0
+				| ( (_a.f[0] < _b.f[0]) << 5)
+				| ( (_a.f[1] < _b.f[1]) << 4)
+				| ( (_a.f[2] < _b.f[2]) << 3)
+				| ( (_a.f[3] < _b.f[3]) << 2)
+				| ( (_a.f[4] < _b.f[4]) << 1)
+				| ( (_a.f[5] < _b.f[5]) << 0)
+				;
 
-			return false;
+			const uint8_t t1 = 0
+				| ( (_a.f[0] > _b.f[0]) << 5)
+				| ( (_a.f[1] > _b.f[1]) << 4)
+				| ( (_a.f[2] > _b.f[2]) << 3)
+				| ( (_a.f[3] > _b.f[3]) << 2)
+				| ( (_a.f[4] > _b.f[4]) << 1)
+				| ( (_a.f[5] > _b.f[5]) << 0)
+				;
+
+			return t0 > t1;
 		}
 	};
 
