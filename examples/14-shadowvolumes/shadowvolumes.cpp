@@ -11,6 +11,7 @@ using namespace std::tr1;
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
+#include <bx/allocator.h>
 #include <bx/float4_t.h>
 #include "entry/entry.h"
 #include "fpumath.h"
@@ -697,22 +698,14 @@ typedef std::vector<Face> FaceArray;
 
 struct Edge
 {
-	Edge(const float* _v0, const float* _v1)
-		: m_faceIndex(0)
-	{
-		memcpy(m_v0, _v0, 3*sizeof(float) );
-		memcpy(m_v1, _v1, 3*sizeof(float) );
-	}
-
-	struct Plane
-	{
-		float m_plane[4];
-	};
-
-	Plane m_face[2];
 	bool m_faceReverseOrder[2];
 	uint8_t m_faceIndex;
 	float m_v0[3], m_v1[3];
+};
+
+struct Plane
+{
+	float m_plane[4];
 };
 
 struct HalfEdge
@@ -840,6 +833,7 @@ struct Group
 		m_indices = NULL;
 		m_numEdges = 0;
 		m_edges = NULL;
+		m_edgePlanesUnalignedPtr = NULL;
 		m_prims.clear();
 	}
 
@@ -882,8 +876,24 @@ struct Group
 		//init faces and edges
 		m_faces.reserve(m_numIndices/3); //1 face = 3 indices
 		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge)); //1 triangle = 3 indices = 3 edges.
+		m_edgePlanesUnalignedPtr = (Plane*)malloc(m_numIndices * sizeof(Plane) + 15);
+		m_edgePlanes = (Plane*)bx::alignPtr(m_edgePlanesUnalignedPtr, 0, 16);
 
-		typedef std::map<f6_t, Edge, EdgeComparator> EdgeMap;
+		struct EdgeAndPlane
+		{
+			EdgeAndPlane(const float* _v0, const float* _v1)
+				: m_faceIndex(0)
+			{
+				memcpy(m_v0, _v0, 3*sizeof(float) );
+				memcpy(m_v1, _v1, 3*sizeof(float) );
+			}
+
+			bool m_faceReverseOrder[2];
+			uint8_t m_faceIndex;
+			float m_v0[3], m_v1[3];
+			Plane m_plane[2];
+		};
+		typedef std::map<f6_t, EdgeAndPlane, EdgeComparator> EdgeMap;
 		EdgeMap edgeMap;
 
 		for (uint32_t ii = 0, size = m_numIndices/3; ii < size; ++ii)
@@ -927,24 +937,32 @@ struct Group
 				EdgeMap::iterator iter = edgeMap.find(keyInv);
 				if (iter != edgeMap.end())
 				{
-					Edge& edge = iter->second;
-					memcpy(edge.m_face[edge.m_faceIndex].m_plane, plane, 4*sizeof(float) );
-					edge.m_faceReverseOrder[edge.m_faceIndex] = true;
+					EdgeAndPlane& ep = iter->second;
+					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					ep.m_faceReverseOrder[ep.m_faceIndex] = true;
 				}
 				else
 				{
-					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, Edge(v0, v1)) );
-					Edge& edge = result.first->second;
-					memcpy(edge.m_face[edge.m_faceIndex].m_plane, plane, 4*sizeof(float) );
-					edge.m_faceReverseOrder[edge.m_faceIndex] = false;
-					edge.m_faceIndex++;
+					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, EdgeAndPlane(v0, v1)) );
+					EdgeAndPlane& ep = result.first->second;
+					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					ep.m_faceReverseOrder[ep.m_faceIndex] = false;
+					ep.m_faceIndex++;
 				}
 			}
 		}
 
+		uint32_t index = 0;
 		for (EdgeMap::const_iterator iter = edgeMap.begin(), end = edgeMap.end(); iter != end; ++iter)
 		{
-			memcpy(&m_edges[m_numEdges++], &iter->second, sizeof(Edge));
+			Edge* edge = &m_edges[m_numEdges];
+			Plane* plane = &m_edgePlanes[index];
+
+			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge));
+			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane));
+
+			m_numEdges++;
+			index += 2;
 		}
 	}
 
@@ -961,6 +979,8 @@ struct Group
 		m_indices = NULL;
 		free(m_edges);
 		m_edges = NULL;
+		free(m_edgePlanesUnalignedPtr);
+		m_edgePlanesUnalignedPtr = NULL;
 		m_halfEdges.destroy();
 	}
 
@@ -976,6 +996,8 @@ struct Group
 	PrimitiveArray m_prims;
 	uint32_t m_numEdges;
 	Edge* m_edges;
+	Plane* m_edgePlanesUnalignedPtr;
+	Plane* m_edgePlanes;
 	FaceArray m_faces;
 	HalfEdges m_halfEdges;
 };
@@ -1355,11 +1377,12 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 					  , bool _textureAsStencil = false
 					  )
 {
-	const uint8_t*    vertices  = _group.m_vertices;
-	const FaceArray&  faces     = _group.m_faces;
-	const Edge*       edges     = _group.m_edges;
-	const uint32_t    numEdges  = _group.m_numEdges;
-	HalfEdges&        halfEdges = _group.m_halfEdges;
+	const uint8_t*    vertices   = _group.m_vertices;
+	const FaceArray&  faces      = _group.m_faces;
+	const Edge*       edges      = _group.m_edges;
+	const Plane*      edgePlanes = _group.m_edgePlanes;
+	const uint32_t    numEdges   = _group.m_numEdges;
+	HalfEdges&        halfEdges  = _group.m_halfEdges;
 
 	struct VertexData
 	{
@@ -1500,7 +1523,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		uint32_t ii = 0;
 
 #if SV_USE_SIMD
-		uint32_t numEdgesRounded = uint32_t(numEdges / 2) * 2;
+		uint32_t numEdgesRounded = numEdges & (~0x1);
 
 		using namespace bx;
 
@@ -1512,6 +1535,8 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		{
 			const Edge& edge0 = edges[ii];
 			const Edge& edge1 = edges[ii+1];
+			const Plane* edgePlane0 = &edgePlanes[ii*2];
+			const Plane* edgePlane1 = &edgePlanes[ii*2 + 2];
 
 			const float4_t reverse = float4_ild(edge0.m_faceReverseOrder[0]
 						 , edge1.m_faceReverseOrder[0]
@@ -1519,10 +1544,10 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 						 , edge1.m_faceReverseOrder[1]
 						 );
 
-			const float4_t v0 = float4_ldu(edge0.m_face[0].m_plane);
-			const float4_t v1 = float4_ldu(edge1.m_face[0].m_plane);
-			const float4_t v2 = float4_ldu(edge0.m_face[1].m_plane);
-			const float4_t v3 = float4_ldu(edge1.m_face[1].m_plane);
+			const float4_t v0 = float4_ld(edgePlane0[0].m_plane);
+			const float4_t v1 = float4_ld(edgePlane1[0].m_plane);
+			const float4_t v2 = float4_ld(edgePlane0[1].m_plane);
+			const float4_t v3 = float4_ld(edgePlane1[1].m_plane);
 
 			const float4_t xxyy0 = float4_shuf_xAyB(v0, v2);
 			const float4_t zzww0 = float4_shuf_zCwD(v0, v2);
@@ -1583,11 +1608,10 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		for (; ii < numEdges; ++ii)
 		{
 			const Edge& edge = edges[ii];
-			const Edge::Plane& face0 = edge.m_face[0];
-			const Edge::Plane& face1 = edge.m_face[1];
+			const Plane* edgePlane = &edgePlanes[ii*2];
 
-			int16_t s0 = ( (vec3Dot(face0.m_plane, _light) + face0.m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
-			int16_t s1 = ( (vec3Dot(face1.m_plane, _light) + face1.m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
+			int16_t s0 = ( (vec3Dot(edgePlane[0].m_plane, _light) + edgePlane[0].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
+			int16_t s1 = ( (vec3Dot(edgePlane[1].m_plane, _light) + edgePlane[1].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
 			int16_t k = ( (s0 + s1) << 1) - 2;
 
 			if (k != 0)
