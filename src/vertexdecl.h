@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __VERTEXDECL_H__
-#define __VERTEXDECL_H__
+#ifndef BGFX_VERTEXDECL_H_HEADER_GUARD
+#define BGFX_VERTEXDECL_H_HEADER_GUARD
 
 #include <bgfx.h>
 
@@ -18,4 +18,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // __VERTEXDECL_H__
+#endif // BGFX_VERTEXDECL_H_HEADER_GUARD

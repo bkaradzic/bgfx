@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __RENDERER_D3D_H__
-#define __RENDERER_D3D_H__
+#ifndef BGFX_RENDERER_D3D_H_HEADER_GUARD
+#define BGFX_RENDERER_D3D_H_HEADER_GUARD
 
 #if BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9 && !(BX_COMPILER_GCC || BX_COMPILER_CLANG)
 #	include <sal.h>
@@ -87,4 +87,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // __RENDERER_D3D_H__
+#endif // BGFX_RENDERER_D3D_H_HEADER_GUARD

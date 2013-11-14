@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef BGFX_CONFIG_H_HEADER_GUARD
+#define BGFX_CONFIG_H_HEADER_GUARD
 
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
@@ -219,4 +219,4 @@
 #	define BGFX_CONFIG_CLEAR_QUAD (BGFX_CONFIG_RENDERER_DIRECT3D11|BGFX_CONFIG_RENDERER_OPENGL)
 #endif // BGFX_CONFIG_CLEAR_QUAD
 
-#endif // __CONFIG_H__
+#endif // BGFX_CONFIG_H_HEADER_GUARD

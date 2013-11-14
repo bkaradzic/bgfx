@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __GLCONTEXT_WGL_H__
-#define __GLCONTEXT_WGL_H__
+#ifndef BGFX_GLCONTEXT_WGL_H_HEADER_GUARD
+#define BGFX_GLCONTEXT_WGL_H_HEADER_GUARD
 
 #if BGFX_USE_WGL
 
@@ -83,4 +83,4 @@ namespace bgfx
 
 #endif // BGFX_USE_WGL
 
-#endif // __GLCONTEXT_WGL_H__
+#endif // BGFX_GLCONTEXT_WGL_H_HEADER_GUARD

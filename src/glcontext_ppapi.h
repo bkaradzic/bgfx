@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __GLCONTEXT_PPAPI_H__
-#define __GLCONTEXT_PPAPI_H__
+#ifndef BGFX_GLCONTEXT_PPAPI_H_HEADER_GUARD
+#define BGFX_GLCONTEXT_PPAPI_H_HEADER_GUARD
 
 #if BX_PLATFORM_NACL
 
@@ -32,4 +32,4 @@ namespace bgfx
 
 #endif // BX_PLATFORM_NACL
 
-#endif // __GLCONTEXT_PPAPI_H__
+#endif // BGFX_GLCONTEXT_PPAPI_H_HEADER_GUARD

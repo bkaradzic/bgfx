@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __BGFXPLATFORM_H__
-#define __BGFXPLATFORM_H__
+#ifndef BGFX_PLATFORM_H_HEADER_GUARD
+#define BGFX_PLATFORM_H_HEADER_GUARD
 
 // NOTICE:
 // This header file contains platform specific interfaces. It is only
@@ -141,4 +141,4 @@ namespace bgfx
 
 #endif // defined(_SDL_H)
 
-#endif // __BGFXPLATFORM_H__
+#endif // BGFX_PLATFORM_H_HEADER_GUARD

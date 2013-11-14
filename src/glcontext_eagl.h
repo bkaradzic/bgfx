@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __GLCONTEXT_EAGL_H__
-#define __GLCONTEXT_EAGL_H__
+#ifndef BGFX_GLCONTEXT_EAGL_H_HEADER_GUARD
+#define BGFX_GLCONTEXT_EAGL_H_HEADER_GUARD
 
 #if BX_PLATFORM_IOS
 
@@ -39,4 +39,4 @@ namespace bgfx
 
 #endif // BX_PLATFORM_IOS
 
-#endif // __GLCONTEXT_EAGL_H__
+#endif // BGFX_GLCONTEXT_EAGL_H_HEADER_GUARD

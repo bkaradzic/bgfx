@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __RENDERER_D3D11_H__
-#define __RENDERER_D3D11_H__
+#ifndef BGFX_RENDERER_D3D11_H_HEADER_GUARD
+#define BGFX_RENDERER_D3D11_H_HEADER_GUARD
 
 #define D3D11_NO_HELPERS
 #include <d3d11.h>
@@ -309,4 +309,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // __RENDERER_D3D11_H__
+#endif // BGFX_RENDERER_D3D11_H_HEADER_GUARD

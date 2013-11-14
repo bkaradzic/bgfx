@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __GLCONTEXT_NSGL_H__
-#define __GLCONTEXT_NSGL_H__
+#ifndef BGFX_GLCONTEXT_NSGL_H_HEADER_GUARD
+#define BGFX_GLCONTEXT_NSGL_H_HEADER_GUARD
 
 #if BX_PLATFORM_OSX
 
@@ -35,4 +35,4 @@ namespace bgfx
 
 #endif // BX_PLATFORM_OSX
 
-#endif // __GLCONTEXT_NSGL_H__
+#endif // BGFX_GLCONTEXT_NSGL_H_HEADER_GUARD

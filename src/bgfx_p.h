@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __BGFX_P_H__
-#define __BGFX_P_H__
+#ifndef BGFX_P_H_HEADER_GUARD
+#define BGFX_P_H_HEADER_GUARD
 
 #include "bgfx.h"
 #include "config.h"
@@ -2739,4 +2739,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // __BGFX_P_H__
+#endif // BGFX_P_H_HEADER_GUARD
