@@ -152,12 +152,14 @@ Download AndroidNDK from:
 
 	setx ANDROID_NDK_ROOT <path to AndroidNDK directory>
 	setx ANDROID_NDK_ARM <path to AndroidNDK directory>\toolchains\arm-linux-androideabi-4.7\prebuilt\windows-x86_64
+	setx ANDROID_NDK_MIPS <path to AndroidNDK directory>\toolchains\mipsel-linux-android-4.7\prebuilt\windows-x86_64
+	setx ANDROID_NDK_X86 <path to AndroidNDK directory>\toolchains\x86-4.7\prebuilt\windows-x86_64
 
 ### Prerequisites for Linux
 
 	sudo apt-get install libgl1-mesa-dev
 
-### Prerequisites for Native Client on Windows
+### Prerequisites for Native Client
 
 Download Native Client SDK from:  
 [https://developers.google.com/native-client/sdk/download](https://developers.google.com/native-client/sdk/download)
