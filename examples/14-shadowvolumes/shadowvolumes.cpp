@@ -841,7 +841,7 @@ struct Group
 
 	struct EdgeComparator
 	{
-		bool operator()(const f6_t& _a, const f6_t& _b)
+		bool operator()(const f6_t& _a, const f6_t& _b) const
 		{
 			const uint8_t t0 = 0
 				| ( (_a.f[0] < _b.f[0]) << 5)
