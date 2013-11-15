@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __FONT_MANAGER_H__
-#define __FONT_MANAGER_H__
+#ifndef FONT_MANAGER_H_HEADER_GUARD
+#define FONT_MANAGER_H_HEADER_GUARD
 
 #include <bx/handlealloc.h>
 #include <bgfx.h>
@@ -203,4 +203,4 @@ private:
 	uint8_t* m_buffer;
 };
 
-#endif // __FONT_MANAGER_H__
+#endif // FONT_MANAGER_H_HEADER_GUARD

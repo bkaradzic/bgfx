@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __ENTRY_H__
-#define __ENTRY_H__
+#ifndef ENTRY_H_HEADER_GUARD
+#define ENTRY_H_HEADER_GUARD
 
 #include "dbg.h"
 
@@ -144,4 +144,4 @@ namespace entry
 
 } // namespace entry
 
-#endif // __ENTRY_H__
+#endif // ENTRY_H_HEADER_GUARD

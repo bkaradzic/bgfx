@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __INPUT_H__
-#define __INPUT_H__
+#ifndef INPUT_H_HEADER_GUARD
+#define INPUT_H_HEADER_GUARD
 
 #include <stdint.h>
 #include "entry.h"
@@ -52,4 +52,4 @@ void inputGetMouse(float _mouse[2]);
 ///
 bool inputIsMouseLocked();
 
-#endif // __INPUT_H__
+#endif // INPUT_H_HEADER_GUARD

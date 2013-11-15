@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __ENTRY_PRIVATE_H__
-#define __ENTRY_PRIVATE_H__
+#ifndef ENTRY_PRIVATE_H_HEADER_GUARD
+#define ENTRY_PRIVATE_H_HEADER_GUARD
 
 #include <bx/spscqueue.h>
 
@@ -140,4 +140,4 @@ namespace entry
 
 } // namespace entry
 
-#endif // __ENTRY_PRIVATE_H__
+#endif // ENTRY_PRIVATE_H_HEADER_GUARD

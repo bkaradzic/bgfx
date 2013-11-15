@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __CUBE_ATLAS_H__
-#define __CUBE_ATLAS_H__
+#ifndef CUBE_ATLAS_H_HEADER_GUARD
+#define CUBE_ATLAS_H_HEADER_GUARD
 
 /// Inspired from texture-atlas from freetype-gl (http://code.google.com/p/freetype-gl/)
 /// by Nicolas Rougier (Nicolas.Rougier@inria.fr)
@@ -166,4 +166,4 @@ private:
 	uint16_t m_maxRegionCount;
 };
 
-#endif // __CUBE_ATLAS_H__
+#endif // CUBE_ATLAS_H_HEADER_GUARD

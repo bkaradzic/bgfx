@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __BOUNDS_H__
-#define __BOUNDS_H__
+#ifndef BOUNDS_H_HEADER_GUARD
+#define BOUNDS_H_HEADER_GUARD
 
 struct Aabb
 {
@@ -44,4 +44,4 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 /// Calculate minimum bounding sphere.
 void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f);
 
-#endif // __BOUNDS_H__
+#endif // BOUNDS_H_HEADER_GUARD

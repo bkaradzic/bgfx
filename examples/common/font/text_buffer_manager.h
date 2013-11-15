@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __TEXT_BUFFER_MANAGER_H__
-#define __TEXT_BUFFER_MANAGER_H__
+#ifndef TEXT_BUFFER_MANAGER_H_HEADER_GUARD
+#define TEXT_BUFFER_MANAGER_H_HEADER_GUARD
 
 #include "font_manager.h"
 
@@ -94,4 +94,4 @@ private:
 	bgfx::ProgramHandle m_distanceSubpixelProgram;
 };
 
-#endif // __TEXT_BUFFER_MANAGER_H__
+#endif // TEXT_BUFFER_MANAGER_H_HEADER_GUARD

@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __AVIWRITER_H__
-#define __AVIWRITER_H__
+#ifndef AVIWRITER_H_HEADER_GUARD
+#define AVIWRITER_H_HEADER_GUARD
 
 #include <bx/readerwriter.h>
 
@@ -226,4 +226,4 @@ struct AviWriter
 	bool m_yflip;
 };
 
-#endif // __AVIWRITER_H__
+#endif // AVIWRITER_H_HEADER_GUARD

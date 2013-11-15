@@ -23,8 +23,8 @@
 //
 // Source altered and distributed from https://github.com/AdrienHerubel/imgui
 
-#ifndef __IMGUI_H__
-#define __IMGUI_H__
+#ifndef IMGUI_H_HEADER_GUARD
+#define IMGUI_H_HEADER_GUARD
 
 #define IMGUI_MBUT_LEFT  0x01
 #define IMGUI_MBUT_RIGHT 0x02
@@ -76,4 +76,4 @@ void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_
 void imguiDrawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint32_t _argb);
 void imguiDrawRect(float _x, float _y, float _w, float _h, uint32_t _argb);
 
-#endif // __IMGUI_H__
+#endif // IMGUI_H_HEADER_GUARD

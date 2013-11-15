@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __CMD_H__
-#define __CMD_H__
+#ifndef CMD_H_HEADER_GUARD
+#define CMD_H_HEADER_GUARD
 
 struct CmdContext;
 typedef int (*ConsoleFn)(CmdContext* _context, void* _userData, int _argc, char const* const* _argv);
@@ -12,4 +12,4 @@ typedef int (*ConsoleFn)(CmdContext* _context, void* _userData, int _argc, char 
 void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData = NULL);
 void cmdExec(const char* _cmd);
 
-#endif // __CMD_H__
+#endif // CMD_H_HEADER_GUARD

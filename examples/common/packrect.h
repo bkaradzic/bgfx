@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __RECTPACK_H__
-#define __RECTPACK_H__
+#ifndef RECTPACK_H_HEADER_GUARD
+#define RECTPACK_H_HEADER_GUARD
 
 #include <bx/uint32_t.h>
 
@@ -174,4 +174,4 @@ private:
 	uint8_t m_mru[6];
 };
 
-#endif // __RECTPACK_H__
+#endif // RECTPACK_H_HEADER_GUARD

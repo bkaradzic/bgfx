@@ -5,8 +5,8 @@
 
 // FPU math lib
 
-#ifndef __FPU_MATH_H__
-#define __FPU_MATH_H__
+#ifndef FPU_MATH_H_HEADER_GUARD
+#define FPU_MATH_H_HEADER_GUARD
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -517,4 +517,4 @@ inline void calcPlane(float _result[4], float _va[3], float _vb[3], float _vc[3]
 	_result[3] = -vec3Dot(normal, _va);
 }
 
-#endif // __FPU_MATH_H__
+#endif // FPU_MATH_H_HEADER_GUARD

@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __DBG_H__
-#define __DBG_H__
+#ifndef DBG_H_HEADER_GUARD
+#define DBG_H_HEADER_GUARD
 
 #include <stdarg.h> // va_list
 #include <stdint.h>
@@ -18,4 +18,4 @@ extern void dbgPrintfVargs(const char* _format, va_list _argList);
 extern void dbgPrintf(const char* _format, ...);
 extern void dbgPrintfData(const void* _data, uint32_t _size, const char* _format, ...);
 
-#endif // __DBG_H__
+#endif // DBG_H_HEADER_GUARD

@@ -3,8 +3,8 @@
 * License: http://www.opensource.org/licenses/BSD-2-Clause
 */
 
-#ifndef __TEXT_METRICS_H__
-#define __TEXT_METRICS_H__
+#ifndef TEXT_METRICS_H_HEADER_GUARD
+#define TEXT_METRICS_H_HEADER_GUARD
 
 #include "font_manager.h"
 
@@ -65,4 +65,4 @@ private:
 	float m_lineHeight;
 };
 
-#endif // __TEXT_METRICS_H__
+#endif // TEXT_METRICS_H_HEADER_GUARD
