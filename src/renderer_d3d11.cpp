@@ -412,6 +412,8 @@ namespace bgfx
 			D3D_FEATURE_LEVEL features[] =
 			{
 				D3D_FEATURE_LEVEL_11_0,
+				D3D_FEATURE_LEVEL_10_1,
+				D3D_FEATURE_LEVEL_10_0,
 			};
 
 			memset(&m_scd, 0, sizeof(m_scd) );
@@ -1712,11 +1714,12 @@ namespace bgfx
 
 						if (convert)
 						{
+							uint32_t srcpitch = mip.m_width*bpp/8;
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, mip.m_width*mip.m_height*bpp/8);
-							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_format);
+							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, srcpitch, mip.m_format);
 
 							srd[kk].pSysMem = temp;
-							srd[kk].SysMemPitch = mip.m_width*bpp/8;
+							srd[kk].SysMemPitch = srcpitch;
 						}
 						else if (TextureFormat::Unknown > m_textureFormat)
 						{
