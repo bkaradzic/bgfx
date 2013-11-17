@@ -488,7 +488,7 @@ namespace bgfx
 		return "<unknown>";
 	}
 
-	static void APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, GLvoid* /*_userParam*/)
+	static void APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
 	{
 		BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
 				, toString(_source)

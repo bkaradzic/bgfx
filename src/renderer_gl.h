@@ -35,23 +35,6 @@
 #			include <GL/gl.h>
 #		endif // BX_PLATFORM_
 
-// remove deprecated from glext.h
-#		define GL_VERSION_1_2_DEPRECATED
-#		define GL_ARB_imaging_DEPRECATED
-#		define GL_VERSION_1_3_DEPRECATED
-#		define GL_VERSION_1_4_DEPRECATED
-#		define GL_VERSION_1_5_DEPRECATED
-#		define GL_VERSION_2_0_DEPRECATED
-#		define GL_VERSION_2_1_DEPRECATED
-// ignore everything above 2.1
-#		define GL_VERSION_3_0
-#		define GL_VERSION_3_0_DEPRECATED
-#		define GL_VERSION_3_1
-#		define GL_VERSION_3_2
-#		define GL_VERSION_3_3
-#		define GL_VERSION_4_0
-#		define GL_VERSION_4_1
-#		define GL_VERSION_4_2
 #		include <gl/glext.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
