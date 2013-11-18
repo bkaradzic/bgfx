@@ -1980,10 +1980,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::ProgramHandle svProgs[ShadowVolumeProgramType::Count][ShadowVolumePart::Count] =
 	{
-		{ programBackBlank, programSideBlank, programFrontBlank } // Blank
-		,{ programBackColor, programSideColor, programFrontColor } // Color
-		,{ programBackTex1,  programSideTex,   programFrontTex1  } // Tex1
-		,{ programBackTex2,  programSideTex,   programFrontTex2  } // Tex2
+		{ programBackBlank, programSideBlank, programFrontBlank }, // Blank
+		{ programBackColor, programSideColor, programFrontColor }, // Color
+		{ programBackTex1,  programSideTex,   programFrontTex1  }, // Tex1
+		{ programBackTex2,  programSideTex,   programFrontTex2  }, // Tex2
 	};
 
 	Model bunnyLowPolyModel;
@@ -2101,7 +2101,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{
 		//respond properly on resize
 		if (oldWidth != viewState.m_width
-			||  oldHeight != viewState.m_height)
+		||  oldHeight != viewState.m_height)
 		{
 			oldWidth = viewState.m_width;
 			oldHeight = viewState.m_height;
