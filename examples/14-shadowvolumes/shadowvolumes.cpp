@@ -1822,7 +1822,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const float* _scale, const float* _translate)
 {
 	float (*volumePlanes)[4] = (float(*)[4])_planes;
-	float scale = fmax(fmax(_scale[0], _scale[1]), _scale[2]);
+	float scale = fmaxf(fmaxf(_scale[0], _scale[1]), _scale[2]);
 
 	const GroupArray& groups = _mesh.m_groups;
 	for (GroupArray::const_iterator it = groups.begin(), itEnd = groups.end(); it != itEnd; ++it)

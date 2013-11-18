@@ -12,19 +12,21 @@
 #include <math.h>
 #include <string.h>
 
-inline float fmin(float _a, float _b)
+#if BX_COMPILER_MSVC
+inline float fminf(float _a, float _b)
 {
 	return _a < _b ? _a : _b;
 }
 
-inline float fmax(float _a, float _b)
+inline float fmaxf(float _a, float _b)
 {
 	return _a > _b ? _a : _b;
 }
+#endif // BX_COMPILER_MSVC
 
 inline float fclamp(float _a, float _min, float _max)
 {
-	return fmin(fmax(_a, _min), _max);
+	return fminf(fmaxf(_a, _min), _max);
 }
 
 inline float fsaturate(float _a)
