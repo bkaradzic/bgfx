@@ -223,56 +223,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	s_PosTexcoordDecl.add(bgfx::Attrib::TexCoord0, 3, bgfx::AttribType::Float);
 	s_PosTexcoordDecl.end();
 
-	const bgfx::Memory* mem;
-
-	///
-	mem = loadTexture("texture_compression_bc1.dds");
-	bgfx::TextureHandle textureBc1 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_bc2.dds");
-	bgfx::TextureHandle textureBc2 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_bc3.dds");
-	bgfx::TextureHandle textureBc3 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_etc1.ktx");
-	bgfx::TextureHandle textureEtc1 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_etc2.ktx");
-	bgfx::TextureHandle textureEtc2 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_ptc12.pvr");
-	bgfx::TextureHandle texturePtc12 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_ptc14.pvr");
-	bgfx::TextureHandle texturePtc14 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_ptc22.pvr");
-	bgfx::TextureHandle texturePtc22 = bgfx::createTexture(mem);
-
-	///
-	mem = loadTexture("texture_compression_ptc24.pvr");
-	bgfx::TextureHandle texturePtc24 = bgfx::createTexture(mem);
-
 	bgfx::TextureHandle textures[] =
 	{
-		textureBc1,
-		textureBc2,
-		textureBc3,
-		textureEtc1,
-		textureEtc2,
-		texturePtc12,
-		texturePtc14,
-		texturePtc22,
-		texturePtc24,
+		bgfx::createTexture(loadTexture("texture_compression_bc1.dds") ),
+		bgfx::createTexture(loadTexture("texture_compression_bc2.dds") ),
+		bgfx::createTexture(loadTexture("texture_compression_bc3.dds") ),
+		bgfx::createTexture(loadTexture("texture_compression_etc1.ktx") ),
+		bgfx::createTexture(loadTexture("texture_compression_etc2.ktx") ),
+		bgfx::createTexture(loadTexture("texture_compression_ptc12.pvr") ),
+		bgfx::createTexture(loadTexture("texture_compression_ptc14.pvr") ),
+		bgfx::createTexture(loadTexture("texture_compression_ptc22.pvr") ),
+		bgfx::createTexture(loadTexture("texture_compression_ptc24.pvr") ),
 	};
+
+	const bgfx::Memory* mem;
 
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
@@ -504,15 +468,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Cleanup.
 	free(texture2dData);
 
-	bgfx::destroyTexture(textureBc1);
-	bgfx::destroyTexture(textureBc2);
-	bgfx::destroyTexture(textureBc3);
-	bgfx::destroyTexture(textureEtc1);
-	bgfx::destroyTexture(textureEtc2);
-	bgfx::destroyTexture(texturePtc12);
-	bgfx::destroyTexture(texturePtc14);
-	bgfx::destroyTexture(texturePtc22);
-	bgfx::destroyTexture(texturePtc24);
+	for (uint32_t ii = 0; ii < BX_COUNTOF(textures); ++ii)
+	{
+		bgfx::destroyTexture(textures[ii]);
+	}
+
 	bgfx::destroyTexture(texture2d);
 	bgfx::destroyTexture(textureCube);
 	bgfx::destroyIndexBuffer(ibh);
