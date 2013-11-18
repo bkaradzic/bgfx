@@ -865,6 +865,21 @@ struct Group
 		}
 	};
 
+	struct EdgeAndPlane
+	{
+		EdgeAndPlane(const float* _v0, const float* _v1)
+			: m_faceIndex(0)
+		{
+			memcpy(m_v0, _v0, 3*sizeof(float) );
+			memcpy(m_v1, _v1, 3*sizeof(float) );
+		}
+
+		bool m_faceReverseOrder[2];
+		uint8_t m_faceIndex;
+		float m_v0[3], m_v1[3];
+		Plane m_plane[2];
+	};
+
 	void fillStructures(uint16_t _stride)
 	{
 		m_faces.clear();
@@ -879,20 +894,6 @@ struct Group
 		m_edgePlanesUnalignedPtr = (Plane*)malloc(m_numIndices * sizeof(Plane) + 15);
 		m_edgePlanes = (Plane*)bx::alignPtr(m_edgePlanesUnalignedPtr, 0, 16);
 
-		struct EdgeAndPlane
-		{
-			EdgeAndPlane(const float* _v0, const float* _v1)
-				: m_faceIndex(0)
-			{
-				memcpy(m_v0, _v0, 3*sizeof(float) );
-				memcpy(m_v1, _v1, 3*sizeof(float) );
-			}
-
-			bool m_faceReverseOrder[2];
-			uint8_t m_faceIndex;
-			float m_v0[3], m_v1[3];
-			Plane m_plane[2];
-		};
 		typedef std::map<f6_t, EdgeAndPlane, EdgeComparator> EdgeMap;
 		EdgeMap edgeMap;
 
