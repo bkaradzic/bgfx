@@ -73,6 +73,7 @@ namespace bgfx
 #include <bx/string.h>
 #include <bx/os.h>
 
+#include "bgfxplatform.h"
 #include "image.h"
 
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
@@ -233,7 +234,6 @@ namespace bgfx
 	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
-	bool renderFrame();
 
 	inline uint32_t gcd(uint32_t _a, uint32_t _b)
 	{

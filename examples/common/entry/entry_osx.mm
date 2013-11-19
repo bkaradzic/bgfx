@@ -13,6 +13,7 @@
 
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
+#include <bx/os.h>
 
 #define DEFAULT_WIDTH 1280
 #define DEFAULT_HEIGHT 720
@@ -225,7 +226,8 @@ namespace entry
 			NSString* appName = [[NSProcessInfo processInfo] processName];
 			[window setTitle:appName];
 			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
-			[window makeKeyAndOrderFront:nil];
+			[window makeKeyAndOrderFront:window];
+			[window setContentView:nil];
 			[[Window sharedDelegate] windowCreated:window];
 
 			bgfx::osxSetNSWindow(window);
@@ -239,11 +241,18 @@ namespace entry
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
-				DispatchEvent(WaitEvent() );
+				//DispatchEvent(WaitEvent() );
+				if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
+				{
+					break;
+				}
 				while (DispatchEvent(PeekEvent() ) );
 			}
+
+
 			m_eventQueue.postExitEvent();
 
+			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() );
 			thread.shutdown();
 
 			return 0;

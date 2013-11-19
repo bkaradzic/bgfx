@@ -15,8 +15,6 @@ namespace bgfx
 #		include "glimports.h"
 #	undef GL_IMPORT
 
-	extern bool hasContext();
-
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/);
 
 	PP_CompletionCallback naclSwapComplete = 
@@ -80,10 +78,7 @@ namespace bgfx
 			s_ppapi.swap();
 		}
 
-		if (hasContext() )
-		{
-			renderFrame();
-		}
+		renderFrame();
 	}
 
 	static void GL_APIENTRY naclVertexAttribDivisor(GLuint _index, GLuint _divisor)
