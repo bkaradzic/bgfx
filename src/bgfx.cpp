@@ -197,11 +197,6 @@ namespace bgfx
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context* s_ctx = NULL;
 
-	bool hasContext()
-	{
-		return NULL != s_ctx;
-	}
-
 	void setGraphicsDebuggerPresent(bool _present)
 	{
 		BX_TRACE("Graphics debugger is %spresent.", _present ? "" : "not ");
@@ -710,7 +705,7 @@ namespace bgfx
 		s_ctx = BX_NEW(g_allocator, Context);
 
 		// On NaCl and iOS renderer is on the main thread.
-		s_ctx->init(!BX_PLATFORM_NACL && !BX_PLATFORM_IOS);
+		s_ctx->init(!BX_PLATFORM_NACL && !BX_PLATFORM_IOS && !BX_PLATFORM_OSX);
 
 		BX_TRACE("Init complete.");
 	}
@@ -720,9 +715,10 @@ namespace bgfx
 		BX_TRACE("Shutdown...");
 
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->shutdown();
+		Context* ctx = s_ctx; // it's going to be NULLd inside shutdown.
+		ctx->shutdown();
 
-		BX_DELETE(g_allocator, s_ctx);
+		BX_DELETE(g_allocator, ctx);
 
 		if (NULL != s_callbackStub)
 		{
@@ -758,10 +754,20 @@ namespace bgfx
 		return s_ctx->frame();
 	}
 
-	bool renderFrame()
+	RenderFrame::Enum renderFrame()
 	{
+		if (NULL == s_ctx)
+		{
+			return RenderFrame::NoContext;
+		}
+
 		BGFX_CHECK_RENDER_THREAD();
-		return s_ctx->renderFrame();
+		if (s_ctx->renderFrame() )
+		{
+			return RenderFrame::Exiting;
+		}
+
+		return RenderFrame::Render;
 	}
 
 	const uint32_t g_uniformTypeSize[UniformType::Count+1] =
@@ -891,6 +897,7 @@ namespace bgfx
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
+		s_ctx = NULL; // Can't be used by renderFrame at this point.
 		renderSemWait();
 
 		m_submit->destroy();

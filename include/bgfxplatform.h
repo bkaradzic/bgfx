@@ -12,6 +12,26 @@
 
 #include <bx/bx.h>
 
+namespace bgfx
+{
+	struct RenderFrame
+	{
+		enum Enum
+		{
+			NoContext,
+			Render,
+			Exiting,
+
+			Count
+		};
+	};
+
+	/// WARNING: This call should be only used on platforms that don't
+	/// allow creating separate rendering thread. Proper use requires
+	/// changes inside lib.
+	RenderFrame::Enum renderFrame();
+}
+
 #if BX_PLATFORM_ANDROID
 #	include <android/native_window.h>
 
