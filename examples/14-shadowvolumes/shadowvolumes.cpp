@@ -12,6 +12,7 @@ using namespace std::tr1;
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include <bx/allocator.h>
+#include <bx/hash.h>
 #include <bx/float4_t.h>
 #include "entry/entry.h"
 #include "fpumath.h"
@@ -700,7 +701,7 @@ struct Edge
 {
 	bool m_faceReverseOrder[2];
 	uint8_t m_faceIndex;
-	float m_v0[3], m_v1[3];
+	uint16_t m_i0, m_i1;
 };
 
 struct Plane
@@ -816,6 +817,67 @@ struct HalfEdges
 	HalfEdge* m_endPtr;
 };
 
+struct WeldedVertex
+{
+	uint16_t m_v;
+	bool m_welded;
+};
+
+inline float sqLength(const float _a[3], const float _b[3])
+{
+	const float xx = _a[0] - _b[0];
+	const float yy = _a[1] - _b[1];
+	const float zz = _a[2] - _b[2];
+	return xx*xx + yy*yy + zz*zz;
+}
+
+uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+{
+	const uint32_t hashSize = bx::uint32_nextpow2(_num);
+	const uint32_t hashMask = hashSize-1;
+	const float epsilonSq = _epsilon*_epsilon;
+
+	uint32_t numVertices = 0;
+
+	const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
+	uint16_t* hashTable = (uint16_t*)alloca(size);
+	memset(hashTable, 0xff, size);
+
+	uint16_t* next = hashTable + hashSize;
+
+	for (uint32_t ii = 0; ii < _num; ++ii)
+	{
+		float pos[4];
+		vertexUnpack(pos, bgfx::Attrib::Position, _decl, _data, ii);
+		uint32_t hashValue = bx::hashMurmur2A(pos, 3*sizeof(float) ) & hashMask;
+
+		uint16_t offset = hashTable[hashValue];
+		for (; UINT16_MAX != offset; offset = next[offset])
+		{
+			float test[4];
+			vertexUnpack(test, bgfx::Attrib::Position, _decl, _data, _output[offset].m_v);
+
+			if (sqLength(test, pos) < epsilonSq)
+			{
+				_output[ii].m_v = _output[offset].m_v;
+				_output[ii].m_welded = true;
+				break;
+			}
+		}
+
+		if (UINT16_MAX == offset)
+		{
+			_output[ii].m_v = ii;
+			_output[ii].m_welded = false;
+			next[ii] = hashTable[hashValue];
+			hashTable[hashValue] = ii;
+			numVertices++;
+		}
+	}
+
+	return numVertices;
+}
+
 struct Group
 {
 	Group()
@@ -839,63 +901,56 @@ struct Group
 
 	typedef struct { float f[6]; } f6_t;
 
-	struct EdgeComparator
-	{
-		bool operator()(const f6_t& _a, const f6_t& _b) const
-		{
-			const uint8_t t0 = 0
-				| ( (_a.f[0] < _b.f[0]) << 5)
-				| ( (_a.f[1] < _b.f[1]) << 4)
-				| ( (_a.f[2] < _b.f[2]) << 3)
-				| ( (_a.f[3] < _b.f[3]) << 2)
-				| ( (_a.f[4] < _b.f[4]) << 1)
-				| ( (_a.f[5] < _b.f[5]) << 0)
-				;
-
-			const uint8_t t1 = 0
-				| ( (_a.f[0] > _b.f[0]) << 5)
-				| ( (_a.f[1] > _b.f[1]) << 4)
-				| ( (_a.f[2] > _b.f[2]) << 3)
-				| ( (_a.f[3] > _b.f[3]) << 2)
-				| ( (_a.f[4] > _b.f[4]) << 1)
-				| ( (_a.f[5] > _b.f[5]) << 0)
-				;
-
-			return t0 > t1;
-		}
-	};
-
 	struct EdgeAndPlane
 	{
-		EdgeAndPlane(const float* _v0, const float* _v1)
+		EdgeAndPlane(uint16_t _i0, uint16_t _i1)
 			: m_faceIndex(0)
+			, m_i0(_i0)
+			, m_i1(_i1)
 		{
-			memcpy(m_v0, _v0, 3*sizeof(float) );
-			memcpy(m_v1, _v1, 3*sizeof(float) );
 		}
 
 		bool m_faceReverseOrder[2];
 		uint8_t m_faceIndex;
-		float m_v0[3], m_v1[3];
+		uint16_t m_i0, m_i1;
 		Plane m_plane[2];
 	};
 
-	void fillStructures(uint16_t _stride)
+	void fillStructures(const bgfx::VertexDecl& _decl)
 	{
+		uint16_t stride = _decl.getStride();
 		m_faces.clear();
 		m_halfEdges.destroy();
 
-		//init halfedges
+		//Init halfedges.
 		m_halfEdges.init(m_indices, m_numIndices);
 
-		//init faces and edges
+		//Init faces and edges.
 		m_faces.reserve(m_numIndices/3); //1 face = 3 indices
 		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge)); //1 triangle = 3 indices = 3 edges.
 		m_edgePlanesUnalignedPtr = (Plane*)malloc(m_numIndices * sizeof(Plane) + 15);
 		m_edgePlanes = (Plane*)bx::alignPtr(m_edgePlanesUnalignedPtr, 0, 16);
 
-		typedef std::map<f6_t, EdgeAndPlane, EdgeComparator> EdgeMap;
+		typedef std::map<std::pair<uint16_t, uint16_t>, EdgeAndPlane> EdgeMap;
 		EdgeMap edgeMap;
+
+		//Get unique indices.
+		WeldedVertex* uniqueVertices = (WeldedVertex*)malloc(m_numVertices*sizeof(WeldedVertex) );
+		::weldVertices(uniqueVertices, _decl, m_vertices, m_numVertices, 0.0001f);
+		uint16_t* uniqueIndices = (uint16_t*)malloc(m_numIndices*sizeof(uint16_t) );
+		for (uint32_t ii = 0; ii < m_numIndices; ++ii)
+		{
+			uint16_t index = m_indices[ii];
+			if (uniqueVertices[index].m_welded)
+			{
+				uniqueIndices[ii] = uniqueVertices[index].m_v;
+			}
+			else
+			{
+				uniqueIndices[ii] = index;
+			}
+		}
+		free(uniqueVertices);
 
 		for (uint32_t ii = 0, size = m_numIndices/3; ii < size; ++ii)
 		{
@@ -903,9 +958,9 @@ struct Group
 			const uint16_t i0 = indices[0];
 			const uint16_t i1 = indices[1];
 			const uint16_t i2 = indices[2];
-			const float* v0 = (float*)&m_vertices[i0*_stride];
-			const float* v1 = (float*)&m_vertices[i1*_stride];
-			const float* v2 = (float*)&m_vertices[i2*_stride];
+			const float* v0 = (float*)&m_vertices[i0*stride];
+			const float* v1 = (float*)&m_vertices[i1*stride];
+			const float* v2 = (float*)&m_vertices[i2*stride];
 
 			float plane[4];
 			planeNormal(plane, v0, v2, v1);
@@ -917,23 +972,26 @@ struct Group
 			memcpy(face.m_plane, plane, 4*sizeof(float) );
 			m_faces.push_back(face);
 
-			const float* triangleV[3][2] =
+			//Use unique indices for EdgeMap.
+			const uint16_t* uindices = &uniqueIndices[ii*3];
+			const uint16_t ui0 = uindices[0];
+			const uint16_t ui1 = uindices[1];
+			const uint16_t ui2 = uindices[2];
+
+			const uint16_t triangleEdge[3][2] =
 			{
-				{v0, v1},
-				{v1, v2},
-				{v2, v0},
+				{ui0, ui1},
+				{ui1, ui2},
+				{ui2, ui0},
 			};
 
 			for (uint8_t jj = 0; jj < 3; ++jj)
 			{
-				const float* v0 = triangleV[jj][0];
-				const float* v1 = triangleV[jj][1];
-				f6_t key;
-				f6_t keyInv;
-				memcpy(&key.f[0], v0, 3*sizeof(float) );
-				memcpy(&key.f[3], v1, 3*sizeof(float) );
-				memcpy(&keyInv.f[0], v1, 3*sizeof(float) );
-				memcpy(&keyInv.f[3], v0, 3*sizeof(float) );
+				const uint16_t ui0 = triangleEdge[jj][0];
+				const uint16_t ui1 = triangleEdge[jj][1];
+
+				std::pair<uint16_t, uint16_t> key    = std::make_pair(ui0, ui1);
+				std::pair<uint16_t, uint16_t> keyInv = std::make_pair(ui1, ui0);
 
 				EdgeMap::iterator iter = edgeMap.find(keyInv);
 				if (iter != edgeMap.end())
@@ -944,7 +1002,7 @@ struct Group
 				}
 				else
 				{
-					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, EdgeAndPlane(v0, v1)) );
+					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, EdgeAndPlane(ui0, ui1) ) );
 					EdgeAndPlane& ep = result.first->second;
 					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = false;
@@ -952,6 +1010,8 @@ struct Group
 				}
 			}
 		}
+
+		free(uniqueIndices);
 
 		uint32_t index = 0;
 		for (EdgeMap::const_iterator iter = edgeMap.begin(), end = edgeMap.end(); iter != end; ++iter)
@@ -1128,10 +1188,9 @@ struct Mesh
 
 		reader.close();
 
-		uint16_t stride = m_decl.getStride();
 		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
-			it->fillStructures(stride);
+			it->fillStructures(m_decl);
 		}
 	}
 
@@ -1585,10 +1644,12 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				int16_t k = res[jj] + res[jj+2];
 				if (k != 0)
 				{
-					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v0, 0.0f, float(k));
-					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v0, 1.0f, float(k));
-					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v1, 0.0f, float(k));
-					verticesSide[vsideI++] = VertexData(edges[ii+jj].m_v1, 1.0f, float(k));
+					float* v0 = (float*)&vertices[edges[ii+jj].m_i0*_stride];
+					float* v1 = (float*)&vertices[edges[ii+jj].m_i1*_stride];
+					verticesSide[vsideI++] = VertexData(v0, 0.0f, float(k));
+					verticesSide[vsideI++] = VertexData(v0, 1.0f, float(k));
+					verticesSide[vsideI++] = VertexData(v1, 0.0f, float(k));
+					verticesSide[vsideI++] = VertexData(v1, 1.0f, float(k));
 
 					k = _textureAsStencil ? 1 : k;
 					uint16_t winding = uint16_t(k > 0);
@@ -1620,10 +1681,12 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 			if (k != 0)
 			{
-				verticesSide[vsideI++] = VertexData(edge.m_v0, 0.0f, k);
-				verticesSide[vsideI++] = VertexData(edge.m_v0, 1.0f, k);
-				verticesSide[vsideI++] = VertexData(edge.m_v1, 0.0f, k);
-				verticesSide[vsideI++] = VertexData(edge.m_v1, 1.0f, k);
+				float* v0 = (float*)&vertices[edge.m_i0*_stride];
+				float* v1 = (float*)&vertices[edge.m_i1*_stride];
+				verticesSide[vsideI++] = VertexData(v0, 0.0f, k);
+				verticesSide[vsideI++] = VertexData(v0, 1.0f, k);
+				verticesSide[vsideI++] = VertexData(v1, 0.0f, k);
+				verticesSide[vsideI++] = VertexData(v1, 1.0f, k);
 
 				k = _textureAsStencil ? 1 : k;
 				uint16_t winding = uint16_t(k > 0);
