@@ -100,7 +100,7 @@ function exampleProject(_name, _uuid)
 			"pthread",
 		}
 
-	configuration { "linux" }
+	configuration { "linux-*" }
 		links {
 			"X11",
 			"GL",
