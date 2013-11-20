@@ -95,6 +95,16 @@ typedef int   EGLNativeDisplayType;
 typedef void *EGLNativeWindowType;
 typedef void *EGLNativePixmapType;
 
+#elif defined(__ANDROID__) || defined(ANDROID)
+
+#include <android/native_window.h>
+
+struct egl_native_pixmap_t;
+
+typedef struct ANativeWindow*           EGLNativeWindowType;
+typedef struct egl_native_pixmap_t*     EGLNativePixmapType;
+typedef void*                           EGLNativeDisplayType;
+
 #elif defined(__unix__)
 
 /* X11 (tentative)  */
