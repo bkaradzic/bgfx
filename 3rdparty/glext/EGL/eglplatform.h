@@ -2,7 +2,7 @@
 #define __eglplatform_h_
 
 /*
-** Copyright (c) 2007-2009 The Khronos Group Inc.
+** Copyright (c) 2007-2013 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -25,7 +25,7 @@
 */
 
 /* Platform-specific types and definitions for egl.h
- * $Revision: 7244 $ on $Date: 2009-01-20 17:06:59 -0800 (Tue, 20 Jan 2009) $
+ * $Revision: 23432 $ on $Date: 2013-10-09 00:57:24 -0700 (Wed, 09 Oct 2013) $
  *
  * Adopters may modify khrplatform.h and this file to suit their platform.
  * You are encouraged to submit all modifications to the Khronos group so that
@@ -53,13 +53,18 @@
 #ifndef EGLAPIENTRY
 #define EGLAPIENTRY  KHRONOS_APIENTRY
 #endif
-#define EGLAPIENTRYP KHRONOS_APIENTRY*
+#define EGLAPIENTRYP EGLAPIENTRY*
 
 /* The types NativeDisplayType, NativeWindowType, and NativePixmapType
  * are aliases of window-system-dependent types, such as X Display * or
  * Windows Device Context. They must be defined in platform-specific
  * code below. The EGL-prefixed versions of Native*Type are the same
  * types, renamed in EGL 1.3 so all types in the API start with "EGL".
+ *
+ * Khronos STRONGLY RECOMMENDS that you use the default definitions
+ * provided below, since these changes affect both binary and source
+ * portability of applications using EGL running on different EGL
+ * implementations.
  */
 
 #if defined(_WIN32) || defined(__VC32__) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__) /* Win32 and WinCE */
@@ -71,23 +76,6 @@
 typedef HDC     EGLNativeDisplayType;
 typedef HBITMAP EGLNativePixmapType;
 typedef HWND    EGLNativeWindowType;
-
-#elif defined(_WIN32) && defined(__CYGWIN__)  /* Cygwin targetting Windows */
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
-#include <windows.h>
-
-typedef HDC     EGLNativeDisplayType;
-typedef HBITMAP EGLNativePixmapType;
-typedef HWND    EGLNativeWindowType;
-
-#elif defined(__arm__) && defined(__gnu_linux__)  /* ARM Linux Mali */
-#include <EGL/fbdev_window.h>
-
-typedef void*         EGLNativeDisplayType;
-typedef void*         EGLNativePixmapType;
-typedef fbdev_window* EGLNativeWindowType;
 
 #elif defined(__WINSCW__) || defined(__SYMBIAN32__)  /* Symbian */
 
