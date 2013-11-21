@@ -539,10 +539,6 @@ namespace bgfx
 
 	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
 	{
-#if 1
-		return weldVerticesRef(_output, _decl, _data, _num, _epsilon);
-#else
-		// This "clever" version doesn't work as expected...
 		const uint32_t hashSize = bx::uint32_nextpow2(_num);
 		const uint32_t hashMask = hashSize-1;
 		const float epsilonSq = _epsilon*_epsilon;
@@ -577,14 +573,12 @@ namespace bgfx
 			if (UINT16_MAX == offset)
 			{
 				_output[ii] = ii;
-				next[numVertices] = hashTable[hashValue];
+				next[ii] = hashTable[hashValue];
 				hashTable[hashValue] = ii;
 				numVertices++;
 			}
 		}
 
 		return numVertices;
-#endif // 0
 	}
-
 } // namespace bgfx
