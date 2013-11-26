@@ -126,7 +126,7 @@ Building
 
 ### Prerequisites
 
-Premake 4.4 beta4  
+Premake 4.4 beta5  
 [http://industriousone.com/premake/download](http://industriousone.com/premake/download)
 
 GNU make and CoreUtils  

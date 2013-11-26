@@ -6,6 +6,7 @@
 all:
 	premake4 --file=premake/premake4.lua vs2008
 	premake4 --file=premake/premake4.lua vs2010
+	premake4 --file=premake/premake4.lua vs2012
 	premake4 --file=premake/premake4.lua --gcc=android-arm gmake
 	premake4 --file=premake/premake4.lua --gcc=android-mips gmake
 	premake4 --file=premake/premake4.lua --gcc=android-x86 gmake
@@ -81,6 +82,9 @@ vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
 
 .build/projects/vs2010:
 	premake4 --file=premake/premake4.lua vs2010
+
+.build/projects/vs2012:
+	premake4 --file=premake/premake4.lua vs2012
 
 .build/projects/gmake-nacl:
 	premake4 --file=premake/premake4.lua --gcc=nacl gmake
