@@ -11,6 +11,7 @@
 #include "entry_p.h"
 #include "cmd.h"
 #include "input.h"
+#include "camera.h"
 
 extern int _main_(int _argc, char** _argv);
 
@@ -116,6 +117,16 @@ namespace entry
 		INPUT_BINDING_END
 	};
 
+	static const InputBinding s_camBindings[] = 
+	{
+		{ entry::Key::KeyW,  entry::Modifier::None,      0, cmd, "move forward"         },
+		{ entry::Key::KeyA,  entry::Modifier::None,      0, cmd, "move left"            },
+		{ entry::Key::KeyS,  entry::Modifier::None,      0, cmd, "move backward"        },
+		{ entry::Key::KeyD,  entry::Modifier::None,      0, cmd, "move right"           },
+
+		INPUT_BINDING_END
+	};
+
 	int main(int _argc, char** _argv)
 	{
 		DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
@@ -123,8 +134,10 @@ namespace entry
 		cmdAdd("mouselock", cmdMouseLock);
 		cmdAdd("graphics",  cmdGraphics );
 		cmdAdd("exit",      cmdExit     );
+		cmdAdd("move",      cmdMove     );
 
 		inputAddBindings("bindings", s_bindings);
+		inputAddBindings("camBindings", s_camBindings);
 
 		int32_t result = ::_main_(_argc, _argv);
 		return result;
@@ -153,6 +166,9 @@ namespace entry
 				case Event::Mouse:
 					{
 						const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
+
+						//TODO: move this from here.
+						cameraSetMouseState(mouse->m_mx, mouse->m_my, mouse->m_down, mouse->m_move);
 
 						if (mouse->m_move)
 						{
