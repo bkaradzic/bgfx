@@ -53,10 +53,12 @@ namespace entry
 
 	void release(const Event* _event)
 	{
+		BX_UNUSED(_event);
 	}
 
 	void setWindowSize(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 	}
 
 	void toggleWindowFrame()
@@ -65,6 +67,7 @@ namespace entry
 
 	void setMouseLock(bool _lock)
 	{
+		BX_UNUSED(_lock);
 	}
 
 	template<typename Type>
@@ -125,6 +128,7 @@ namespace entry
 
 	static void naclInstanceDidDestroy(PP_Instance _instance)
 	{
+		BX_UNUSED(_instance);
 		delete s_ctx;
 	}
 
@@ -166,6 +170,7 @@ PP_EXPORT const void* PPP_GetInterface(const char* _name)
 
 PP_EXPORT int32_t PPP_InitializeModule(PP_Module _module, PPB_GetInterface _interface)
 {
+	BX_UNUSED(_module);
 	bool result = true;
 	result &= initializeInterface(_interface, PPB_CORE_INTERFACE,            g_coreInterface);
 	result &= initializeInterface(_interface, PPB_GRAPHICS_3D_INTERFACE,     g_graphicsInterface);

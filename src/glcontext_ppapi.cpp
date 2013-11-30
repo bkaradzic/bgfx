@@ -134,6 +134,7 @@ namespace bgfx
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 		BX_TRACE("GlContext::create");
 	}
 
