@@ -75,8 +75,11 @@ function exampleProject(_name, _uuid)
 		}
 
 	configuration { "android*" }
-		kind "SharedLib"
+		kind "ConsoleApp"
 		targetextension ".so"
+		linkoptions {
+			"-shared",
+		}
 		links {
 			"EGL",
 			"GLESv2",
