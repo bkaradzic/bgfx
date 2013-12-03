@@ -490,6 +490,7 @@ namespace bgfx
 			g_caps.supported |= ( 0
 								| BGFX_CAPS_INSTANCING
 								| BGFX_CAPS_TEXTURE_3D
+								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								);
 			g_caps.maxTextureSize = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 
