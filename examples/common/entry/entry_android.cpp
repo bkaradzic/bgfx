@@ -165,6 +165,7 @@ namespace entry
 
 		int32_t onInputEvent(AInputEvent* _event)
 		{
+			BX_UNUSED(_event);
 			return 0;
 		}
 
@@ -203,6 +204,7 @@ namespace entry
 
 	void setWindowSize(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 	}
 
 	void toggleWindowFrame()
@@ -211,6 +213,7 @@ namespace entry
 
 	void setMouseLock(bool _lock)
 	{
+		BX_UNUSED(_lock);
 	}
 
 	int32_t MainThreadEntry::threadFunc(void* _userData)
