@@ -2413,7 +2413,7 @@ namespace bgfx
 						 ? BGFX_CAPS_TEXTURE_3D
 						 : 0
 						 ;
-		g_caps.supported |= BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3|s_extension[Extension::OES_vertex_half_float].m_supported
+		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_vertex_half_float].m_supported
 						 ? BGFX_CAPS_VERTEX_ATTRIB_HALF
 						 : 0
 						 ;
