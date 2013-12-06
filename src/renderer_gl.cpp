@@ -1231,6 +1231,7 @@ namespace bgfx
 					GL_CHECK(s_vertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
+          // assert here: invalid enum HALF_FLOAT under opengl 2.1
 					GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
 				}
 				else

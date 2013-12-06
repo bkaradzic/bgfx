@@ -280,6 +280,22 @@ namespace bgfx
 			{ \
 				_func = (_proto)bx::dlsym(m_opengl32dll, #_func); \
 			} \
+		  if (_func == NULL) \
+			{ \
+			  _func = (_proto) wglGetProcAddress(#_func "ARB"); \
+	    } \
+			if (_func == NULL) \
+			{ \
+				_func = (_proto)bx::dlsym(m_opengl32dll, #_func "ARB"); \
+			} \
+		  if (_func == NULL) \
+			{ \
+			  _func = (_proto) wglGetProcAddress(#_func "EXT"); \
+	    } \
+			if (_func == NULL) \
+			{ \
+				_func = (_proto)bx::dlsym(m_opengl32dll, #_func "EXT"); \
+			} \
 			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
 		}
 #	include "glimports.h"
