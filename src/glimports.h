@@ -93,7 +93,7 @@ GL_IMPORT(false, PFNGLBINDRENDERBUFFERPROC,               glBindRenderbuffer);
 GL_IMPORT(false, PFNGLGENRENDERBUFFERSPROC,               glGenRenderbuffers);
 GL_IMPORT(false, PFNGLDELETERENDERBUFFERSPROC,            glDeleteRenderbuffers);
 GL_IMPORT(false, PFNGLRENDERBUFFERSTORAGEPROC,            glRenderbufferStorage);
-GL_IMPORT(false, PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC, glRenderbufferStorageMultisample);
+GL_IMPORT( true, PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC, glRenderbufferStorageMultisample);
 GL_IMPORT(false, PFNGLUNIFORM1IPROC,                      glUniform1i);
 GL_IMPORT(false, PFNGLUNIFORM1IVPROC,                     glUniform1iv);
 GL_IMPORT(false, PFNGLUNIFORM1FPROC,                      glUniform1f);
