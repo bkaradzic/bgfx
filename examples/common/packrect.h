@@ -159,7 +159,7 @@ public:
 		uint8_t side = _pack.m_side;
 
 		uint32_t ii = 0;
-		for (; ii < 6 && m_mru[ii] != side; ++ii);
+		for (; ii < 6 && m_mru[ii] != side; ++ii) {};
 
 		m_mru[ii] = m_mru[0];
 		m_mru[0] = side;

@@ -36,7 +36,7 @@ const char* tokenizeCommandLine(const char* _commandLine, char* _buffer, uint32_
 		switch (state)
 		{
 			case SkipWhitespace:
-				for (; isspace(*curr); ++curr); // skip whitespace
+				for (; isspace(*curr); ++curr) {}; // skip whitespace
 				state = SetTerm;
 				break;
 				
@@ -86,7 +86,7 @@ const char* tokenizeCommandLine(const char* _commandLine, char* _buffer, uint32_
 			case Escape:
 				{
 					const char* start = --curr;
-					for (; '\\' == *curr; ++curr);
+					for (; '\\' == *curr; ++curr) {};
 
 					if ('"' != *curr)
 					{

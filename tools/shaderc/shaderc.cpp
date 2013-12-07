@@ -741,6 +741,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 
 	return true;
 #else
+	BX_UNUSED(_cmdLine, _code, _writer);
 	fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
 	return false;
 #endif // BX_PLATFORM_WINDOWS
@@ -1028,6 +1029,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 	return true;
 #else
+	BX_UNUSED(_cmdLine, _code, _writer);
 	fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
 	return false;
 #endif // BX_PLATFORM_WINDOWS
