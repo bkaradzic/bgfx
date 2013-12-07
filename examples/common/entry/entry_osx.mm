@@ -53,6 +53,7 @@
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
 {
+	BX_UNUSED(sender);
 	self->terminated = true;
 	return NSTerminateCancel;
 }
@@ -246,13 +247,13 @@ namespace entry
 				{
 					break;
 				}
-				while (DispatchEvent(PeekEvent() ) );
+				while (DispatchEvent(PeekEvent() ) ) {};
 			}
 
 
 			m_eventQueue.postExitEvent();
 
-			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() );
+			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 			thread.shutdown();
 
 			return 0;
@@ -277,6 +278,7 @@ namespace entry
 
 	void setWindowSize(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 	}
 
 	void toggleWindowFrame()
@@ -285,6 +287,7 @@ namespace entry
 
 	void setMouseLock(bool _lock)
 	{
+		BX_UNUSED(_lock);
 	}
 
 } // namespace entry

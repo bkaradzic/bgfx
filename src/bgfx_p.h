@@ -1570,7 +1570,7 @@ namespace bgfx
 		{
 			BX_TRACE("render thread start");
 			Context* ctx = (Context*)_userData;
-			while (!ctx->renderFrame() );
+			while (!ctx->renderFrame() ) {};
 			BX_TRACE("render thread exit");
 			return EXIT_SUCCESS;
 		}

@@ -16,11 +16,6 @@
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 
-namespace bgfx
-{
-	void renderFrame();
-}
-
 namespace entry
 {
 	struct MainThreadEntry
@@ -76,6 +71,7 @@ namespace entry
 
 	void setWindowSize(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 	}
 
 	void toggleWindowFrame()
@@ -84,6 +80,7 @@ namespace entry
 
 	void setMouseLock(bool _lock)
 	{
+		BX_UNUSED(_lock);
 	}
 
 } // namespace entry
@@ -124,8 +121,8 @@ using namespace entry;
 	if (nil == m_displayLink)
 	{
 		m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
-		[m_displayLink setFrameInterval:1];
-		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+		//[m_displayLink setFrameInterval:1];
+		//[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 	}
 }
 
@@ -163,6 +160,8 @@ using namespace entry;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+	BX_UNUSED(application, launchOptions);
+
 	CGRect rect = [ [UIScreen mainScreen] bounds];
 	m_window = [ [UIWindow alloc] initWithFrame: rect];
 	m_view = [ [View alloc] initWithFrame: rect];
@@ -176,24 +175,29 @@ using namespace entry;
 
 - (void)applicationWillResignActive:(UIApplication *)application
 {
+	BX_UNUSED(application);
 	[m_view stop];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
+	BX_UNUSED(application);
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
+	BX_UNUSED(application);
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+	BX_UNUSED(application);
 	[m_view start];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
+	BX_UNUSED(application);
 	[m_view stop];
 }
 

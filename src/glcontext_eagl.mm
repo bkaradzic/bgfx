@@ -14,6 +14,7 @@ namespace bgfx
 {
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 		CAEAGLLayer* layer = (CAEAGLLayer*)g_bgfxEaglLayer;
 		layer.opaque = true;
 
@@ -82,6 +83,7 @@ namespace bgfx
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
+		BX_UNUSED(_width, _height, _vsync);
 		BX_TRACE("resize context");
 	}
 

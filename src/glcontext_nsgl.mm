@@ -13,7 +13,7 @@
 namespace bgfx
 {
 
-#	define GL_IMPORT(_optional, _proto, _func) _proto _func
+#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
 #	undef GL_IMPORT
 	
@@ -21,6 +21,8 @@ namespace bgfx
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
+
 		s_opengl = bx::dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL");
 		BX_CHECK(NULL != s_opengl, "OpenGL dynamic library is not found!");
 
@@ -75,6 +77,7 @@ namespace bgfx
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
+		BX_UNUSED(_width, _height, _vsync);
 	}
 
 	void GlContext::swap()
@@ -86,10 +89,10 @@ namespace bgfx
 
 	void GlContext::import()
 	{
-#	define GL_IMPORT(_optional, _proto, _func) \
+#	define GL_IMPORT(_optional, _proto, _func, _import) \
 		{ \
-			_func = (_proto)bx::dlsym(s_opengl, #_func); \
-			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. NSGLGetProcAddress(\"%s\")", #_func); \
+			_func = (_proto)bx::dlsym(s_opengl, #_import); \
+			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. NSGLGetProcAddress(\"%s\")", #_import); \
 		}
 #	include "glimports.h"
 #	undef GL_IMPORT
