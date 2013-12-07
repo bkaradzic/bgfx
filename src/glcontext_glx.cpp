@@ -34,6 +34,7 @@ namespace bgfx
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 		XLockDisplay(s_display);
 
 		int major, minor;
