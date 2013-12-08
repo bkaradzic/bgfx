@@ -12,7 +12,7 @@
 
 namespace bgfx
 {
-#	define GL_IMPORT(_optional, _proto, _func) _proto _func
+#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #		include "glimports.h"
 #	undef GL_IMPORT
 
@@ -110,11 +110,11 @@ namespace bgfx
 	void GlContext::import()
 	{
 #	if !BX_PLATFORM_EMSCRIPTEN
-#		define GL_IMPORT(_optional, _proto, _func) \
+#		define GL_IMPORT(_optional, _proto, _func, _import) \
 		{ \
-			_func = (_proto)eglGetProcAddress(#_func); \
-			BX_TRACE(#_func " 0x%08x", _func); \
-			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_func); \
+			_func = (_proto)eglGetProcAddress(#_import); \
+			BX_TRACE(#_import " 0x%08x", _func); \
+			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
 		}
 #		include "glimports.h"
 #		undef GL_IMPORT

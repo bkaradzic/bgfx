@@ -2538,8 +2538,8 @@ namespace bgfx
 
 		if (s_extension[Extension::ARB_debug_output].m_supported)
 		{
-			GL_CHECK(glDebugMessageCallbackARB(debugProcCb, NULL) );
-			GL_CHECK(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM_ARB, 0, NULL, GL_TRUE) );
+			GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
+			GL_CHECK(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM_ARB, 0, NULL, GL_TRUE) );
 		}
 
 		if (s_extension[Extension::ARB_seamless_cube_map].m_supported)

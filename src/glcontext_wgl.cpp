@@ -21,7 +21,7 @@ namespace bgfx
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
-#	define GL_IMPORT(_optional, _proto, _func) _proto _func
+#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #		include "glimports.h"
 #	undef GL_IMPORT
 
@@ -273,14 +273,15 @@ namespace bgfx
 
 	void GlContext::import()
 	{
-#	define GL_IMPORT(_optional, _proto, _func) \
+#	define GL_IMPORT(_optional, _proto, _func, _import) \
 		{ \
-			_func = (_proto)wglGetProcAddress(#_func); \
+			BX_TRACE("%s", #_import); \
+			_func = (_proto)wglGetProcAddress(#_import); \
 			if (_func == NULL) \
 			{ \
-				_func = (_proto)bx::dlsym(m_opengl32dll, #_func); \
+				_func = (_proto)bx::dlsym(m_opengl32dll, #_import); \
 			} \
-			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_func); \
+			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_import); \
 		}
 #	include "glimports.h"
 #	undef GL_IMPORT

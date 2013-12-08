@@ -11,7 +11,7 @@
 
 namespace bgfx
 {
-#	define GL_IMPORT(_optional, _proto, _func) _proto _func
+#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #		include "glimports.h"
 #	undef GL_IMPORT
 

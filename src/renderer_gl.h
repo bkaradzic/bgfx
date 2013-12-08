@@ -38,10 +38,6 @@
 #		include <gl/glext.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-#	define glVertexAttribDivisor glVertexAttribDivisorARB
-#	define glDrawArraysInstanced glDrawArraysInstancedARB
-#	define glDrawElementsInstanced glDrawElementsInstancedARB
-
 #	if BX_PLATFORM_WINDOWS
 #		undef BGFX_USE_WGL
 #		define BGFX_USE_WGL 1
@@ -315,7 +311,7 @@ namespace bgfx
 #define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
 #define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
 
-#define GL_IMPORT(_optional, _proto, _func) extern _proto _func
+#define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
 #include "glimports.h"
 #undef GL_IMPORT
 
