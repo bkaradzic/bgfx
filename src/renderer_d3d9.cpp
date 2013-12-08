@@ -1673,17 +1673,14 @@ namespace bgfx
 			data = temp;
 		}
 
-		if (srcpitch == dstpitch)
 		{
-			memcpy(bits, data, srcpitch*_rect.m_height);
-		}
-		else
-		{
+			uint8_t* src = data;
+			uint8_t* dst = bits;
 			for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
 			{
-				uint8_t* src = &data[yy*srcpitch];
-				uint8_t* dst = &bits[yy*dstpitch];
-				memcpy(dst, src, srcpitch);
+				memcpy(dst, src, rectpitch);
+				src += srcpitch;
+				dst += dstpitch;
 			}
 		}
 
