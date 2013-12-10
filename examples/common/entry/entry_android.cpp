@@ -218,8 +218,11 @@ namespace entry
 
 	int32_t MainThreadEntry::threadFunc(void* _userData)
 	{
+		int32_t result = chdir("/sdcard/bgfx/examples/runtime");
+		BX_CHECK(0 == result, "Failed to chdir to dir. android.permission.WRITE_EXTERNAL_STORAGE?", errno);
+
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
-		int32_t result = main(self->m_argc, self->m_argv);
+		result = main(self->m_argc, self->m_argv);
 //		PostMessage(s_ctx.m_hwnd, WM_QUIT, 0, 0);
 		return result;
 	}
