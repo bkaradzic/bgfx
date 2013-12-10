@@ -16,7 +16,7 @@ namespace bgfx
 #		include "glimports.h"
 #	undef GL_IMPORT
 
-	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/)
+	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
 		EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
@@ -54,7 +54,7 @@ namespace bgfx
 #	if BX_PLATFORM_ANDROID
 		EGLint format;
 		eglGetConfigAttrib(m_display, config, EGL_NATIVE_VISUAL_ID, &format);
-		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, 0, 0, format);
+		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, _width, _height, format);
 		nwt = g_bgfxAndroidWindow;
 #	endif // BX_PLATFORM_ANDROID
 
