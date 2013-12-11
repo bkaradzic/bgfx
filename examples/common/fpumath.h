@@ -24,6 +24,16 @@ inline float fmaxf(float _a, float _b)
 }
 #endif // BX_COMPILER_MSVC
 
+inline float toRad(float _deg)
+{
+	return _deg * float(M_PI) / 180.0f;
+}
+
+inline float toDeg(float _rad)
+{
+	return _rad * 180.0f / float(M_PI);
+}
+
 inline float fclamp(float _a, float _min, float _max)
 {
 	return fminf(fmaxf(_a, _min), _max);

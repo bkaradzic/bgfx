@@ -1,0 +1,293 @@
+FSHFÅ≠úuniform sampler2D u_shadowMap3;
+uniform sampler2D u_shadowMap2;
+uniform sampler2D u_shadowMap1;
+uniform sampler2D u_shadowMap0;
+uniform vec4 u_csmFarDistances;
+uniform vec4 u_smSamplingParams;
+uniform vec4 u_lightAttenuationSpotOuter;
+uniform vec4 u_lightSpotDirectionInner;
+uniform vec4 u_lightSpecularPower;
+uniform vec4 u_lightDiffusePower;
+uniform vec4 u_lightAmbientPower;
+uniform vec4 u_lightPosition;
+uniform vec4 u_materialKs;
+uniform vec3 u_materialKd;
+uniform vec3 u_materialKa;
+uniform vec4 u_color;
+uniform vec4 u_params2;
+uniform vec4 u_params1;
+varying vec3 v_view;
+varying vec4 v_texcoord4;
+varying vec4 v_texcoord3;
+varying vec4 v_texcoord2;
+varying vec4 v_texcoord1;
+varying vec4 v_position;
+varying vec3 v_normal;
+void main ()
+{
+  float visibility_1;
+  vec3 colorCoverage_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = u_params2.zz;
+  visibility_1 = 1.0;
+  if ((v_position.z < u_csmFarDistances.x)) {
+    vec2 tmpvar_4;
+    tmpvar_4 = (v_texcoord1.xy / v_texcoord1.w);
+    float tmpvar_5;
+    tmpvar_5 = (clamp ((1.0 - (float(any(greaterThan (tmpvar_4, vec2(1.0, 1.0)))) + float(any(lessThan (tmpvar_4, vec2(0.0, 0.0)))))), 0.0, 1.0) * 0.4);
+    vec3 tmpvar_6;
+    tmpvar_6.x = -(tmpvar_5);
+    tmpvar_6.y = tmpvar_5;
+    tmpvar_6.z = -(tmpvar_5);
+    colorCoverage_2 = tmpvar_6;
+    vec4 _shadowCoord_7;
+    _shadowCoord_7 = v_texcoord1;
+    float _bias_8;
+    _bias_8 = u_params1.x;
+    vec4 _pcfParams_9;
+    _pcfParams_9 = u_smSamplingParams;
+    vec2 _texelSize_10;
+    _texelSize_10 = tmpvar_3;
+    int x_11;
+    int ynum_12;
+    int xnum_13;
+    float result_14;
+    vec2 tmpvar_15;
+    tmpvar_15 = ((u_smSamplingParams.xy * 2.0) + 1.0);
+    float tmpvar_16;
+    tmpvar_16 = (tmpvar_15.x * tmpvar_15.y);
+    result_14 = 0.0;
+    int tmpvar_17;
+    tmpvar_17 = int(u_smSamplingParams.x);
+    xnum_13 = tmpvar_17;
+    ynum_12 = int(u_smSamplingParams.y);
+    x_11 = -(tmpvar_17);
+    while (true) {
+      int y_18;
+      if ((x_11 > xnum_13)) {
+        break;
+      };
+      y_18 = -(ynum_12);
+      while (true) {
+        if ((y_18 > ynum_12)) {
+          break;
+        };
+        vec2 tmpvar_19;
+        tmpvar_19.x = float(x_11);
+        tmpvar_19.y = float(y_18);
+        vec4 tmpvar_20;
+        tmpvar_20.zw = vec2(0.0, 0.0);
+        tmpvar_20.xy = ((tmpvar_19 * _pcfParams_9.zw) * _texelSize_10);
+        vec4 tmpvar_21;
+        tmpvar_21 = (_shadowCoord_7 + tmpvar_20);
+        result_14 = (result_14 + float((dot (texture2D (u_shadowMap0, (tmpvar_21.xy / tmpvar_21.w)), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) >= ((tmpvar_21.z - _bias_8) / tmpvar_21.w))));
+        y_18 = (y_18 + 1);
+      };
+      x_11 = (x_11 + 1);
+    };
+    visibility_1 = (result_14 / max (tmpvar_16, 1.0));
+  } else {
+    if ((v_position.z < u_csmFarDistances.y)) {
+      vec2 tmpvar_22;
+      tmpvar_22 = (v_texcoord2.xy / v_texcoord2.w);
+      float tmpvar_23;
+      tmpvar_23 = (clamp ((1.0 - (float(any(greaterThan (tmpvar_22, vec2(1.0, 1.0)))) + float(any(lessThan (tmpvar_22, vec2(0.0, 0.0)))))), 0.0, 1.0) * 0.4);
+      vec3 tmpvar_24;
+      tmpvar_24.x = tmpvar_23;
+      tmpvar_24.y = tmpvar_23;
+      tmpvar_24.z = -(tmpvar_23);
+      colorCoverage_2 = tmpvar_24;
+      vec4 _shadowCoord_25;
+      _shadowCoord_25 = v_texcoord2;
+      float _bias_26;
+      _bias_26 = u_params1.x;
+      vec4 _pcfParams_27;
+      _pcfParams_27 = u_smSamplingParams;
+      vec2 _texelSize_28;
+      _texelSize_28 = (u_params2.zz / 2.0);
+      int x_29;
+      int ynum_30;
+      int xnum_31;
+      float result_32;
+      vec2 tmpvar_33;
+      tmpvar_33 = ((u_smSamplingParams.xy * 2.0) + 1.0);
+      float tmpvar_34;
+      tmpvar_34 = (tmpvar_33.x * tmpvar_33.y);
+      result_32 = 0.0;
+      int tmpvar_35;
+      tmpvar_35 = int(u_smSamplingParams.x);
+      xnum_31 = tmpvar_35;
+      ynum_30 = int(u_smSamplingParams.y);
+      x_29 = -(tmpvar_35);
+      while (true) {
+        int y_36;
+        if ((x_29 > xnum_31)) {
+          break;
+        };
+        y_36 = -(ynum_30);
+        while (true) {
+          if ((y_36 > ynum_30)) {
+            break;
+          };
+          vec2 tmpvar_37;
+          tmpvar_37.x = float(x_29);
+          tmpvar_37.y = float(y_36);
+          vec4 tmpvar_38;
+          tmpvar_38.zw = vec2(0.0, 0.0);
+          tmpvar_38.xy = ((tmpvar_37 * _pcfParams_27.zw) * _texelSize_28);
+          vec4 tmpvar_39;
+          tmpvar_39 = (_shadowCoord_25 + tmpvar_38);
+          result_32 = (result_32 + float((dot (texture2D (u_shadowMap1, (tmpvar_39.xy / tmpvar_39.w)), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) >= ((tmpvar_39.z - _bias_26) / tmpvar_39.w))));
+          y_36 = (y_36 + 1);
+        };
+        x_29 = (x_29 + 1);
+      };
+      visibility_1 = (result_32 / max (tmpvar_34, 1.0));
+    } else {
+      if ((v_position.z < u_csmFarDistances.z)) {
+        vec2 tmpvar_40;
+        tmpvar_40 = (v_texcoord3.xy / v_texcoord3.w);
+        float tmpvar_41;
+        tmpvar_41 = (clamp ((1.0 - (float(any(greaterThan (tmpvar_40, vec2(1.0, 1.0)))) + float(any(lessThan (tmpvar_40, vec2(0.0, 0.0)))))), 0.0, 1.0) * 0.4);
+        vec3 tmpvar_42;
+        tmpvar_42.x = -(tmpvar_41);
+        tmpvar_42.y = -(tmpvar_41);
+        tmpvar_42.z = tmpvar_41;
+        colorCoverage_2 = tmpvar_42;
+        vec4 _shadowCoord_43;
+        _shadowCoord_43 = v_texcoord3;
+        float _bias_44;
+        _bias_44 = u_params1.x;
+        vec4 _pcfParams_45;
+        _pcfParams_45 = u_smSamplingParams;
+        vec2 _texelSize_46;
+        _texelSize_46 = (u_params2.zz / 3.0);
+        int x_47;
+        int ynum_48;
+        int xnum_49;
+        float result_50;
+        vec2 tmpvar_51;
+        tmpvar_51 = ((u_smSamplingParams.xy * 2.0) + 1.0);
+        float tmpvar_52;
+        tmpvar_52 = (tmpvar_51.x * tmpvar_51.y);
+        result_50 = 0.0;
+        int tmpvar_53;
+        tmpvar_53 = int(u_smSamplingParams.x);
+        xnum_49 = tmpvar_53;
+        ynum_48 = int(u_smSamplingParams.y);
+        x_47 = -(tmpvar_53);
+        while (true) {
+          int y_54;
+          if ((x_47 > xnum_49)) {
+            break;
+          };
+          y_54 = -(ynum_48);
+          while (true) {
+            if ((y_54 > ynum_48)) {
+              break;
+            };
+            vec2 tmpvar_55;
+            tmpvar_55.x = float(x_47);
+            tmpvar_55.y = float(y_54);
+            vec4 tmpvar_56;
+            tmpvar_56.zw = vec2(0.0, 0.0);
+            tmpvar_56.xy = ((tmpvar_55 * _pcfParams_45.zw) * _texelSize_46);
+            vec4 tmpvar_57;
+            tmpvar_57 = (_shadowCoord_43 + tmpvar_56);
+            result_50 = (result_50 + float((dot (texture2D (u_shadowMap2, (tmpvar_57.xy / tmpvar_57.w)), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) >= ((tmpvar_57.z - _bias_44) / tmpvar_57.w))));
+            y_54 = (y_54 + 1);
+          };
+          x_47 = (x_47 + 1);
+        };
+        visibility_1 = (result_50 / max (tmpvar_52, 1.0));
+      } else {
+        vec2 tmpvar_58;
+        tmpvar_58 = (v_texcoord4.xy / v_texcoord4.w);
+        float tmpvar_59;
+        tmpvar_59 = (clamp ((1.0 - (float(any(greaterThan (tmpvar_58, vec2(1.0, 1.0)))) + float(any(lessThan (tmpvar_58, vec2(0.0, 0.0)))))), 0.0, 1.0) * 0.4);
+        vec3 tmpvar_60;
+        tmpvar_60.x = tmpvar_59;
+        tmpvar_60.y = -(tmpvar_59);
+        tmpvar_60.z = -(tmpvar_59);
+        colorCoverage_2 = tmpvar_60;
+        vec4 _shadowCoord_61;
+        _shadowCoord_61 = v_texcoord4;
+        float _bias_62;
+        _bias_62 = u_params1.x;
+        vec4 _pcfParams_63;
+        _pcfParams_63 = u_smSamplingParams;
+        vec2 _texelSize_64;
+        _texelSize_64 = (u_params2.zz / 4.0);
+        int x_65;
+        int ynum_66;
+        int xnum_67;
+        float result_68;
+        vec2 tmpvar_69;
+        tmpvar_69 = ((u_smSamplingParams.xy * 2.0) + 1.0);
+        float tmpvar_70;
+        tmpvar_70 = (tmpvar_69.x * tmpvar_69.y);
+        result_68 = 0.0;
+        int tmpvar_71;
+        tmpvar_71 = int(u_smSamplingParams.x);
+        xnum_67 = tmpvar_71;
+        ynum_66 = int(u_smSamplingParams.y);
+        x_65 = -(tmpvar_71);
+        while (true) {
+          int y_72;
+          if ((x_65 > xnum_67)) {
+            break;
+          };
+          y_72 = -(ynum_66);
+          while (true) {
+            if ((y_72 > ynum_66)) {
+              break;
+            };
+            vec2 tmpvar_73;
+            tmpvar_73.x = float(x_65);
+            tmpvar_73.y = float(y_72);
+            vec4 tmpvar_74;
+            tmpvar_74.zw = vec2(0.0, 0.0);
+            tmpvar_74.xy = ((tmpvar_73 * _pcfParams_63.zw) * _texelSize_64);
+            vec4 tmpvar_75;
+            tmpvar_75 = (_shadowCoord_61 + tmpvar_74);
+            result_68 = (result_68 + float((dot (texture2D (u_shadowMap3, (tmpvar_75.xy / tmpvar_75.w)), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) >= ((tmpvar_75.z - _bias_62) / tmpvar_75.w))));
+            y_72 = (y_72 + 1);
+          };
+          x_65 = (x_65 + 1);
+        };
+        visibility_1 = (result_68 / max (tmpvar_70, 1.0));
+      };
+    };
+  };
+  vec3 tmpvar_76;
+  tmpvar_76 = -(normalize(v_view));
+  vec3 tmpvar_77;
+  float tmpvar_78;
+  tmpvar_77 = -(normalize(u_lightPosition.xyz));
+  tmpvar_78 = 1.0;
+  if ((0.0 != u_lightPosition.w)) {
+    vec3 tmpvar_79;
+    tmpvar_79 = (u_lightPosition.xyz - v_view);
+    vec3 tmpvar_80;
+    tmpvar_80 = normalize(tmpvar_79);
+    tmpvar_77 = tmpvar_80;
+    float tmpvar_81;
+    tmpvar_81 = cos((u_lightAttenuationSpotOuter.w * 0.0174533));
+    float tmpvar_82;
+    tmpvar_82 = sqrt(dot (tmpvar_79, tmpvar_79));
+    tmpvar_78 = ((1.0/(((u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_82)) + ((u_lightAttenuationSpotOuter.z * tmpvar_82) * tmpvar_82)))) * mix (clamp (((max (0.0, dot (-(tmpvar_80), normalize(u_lightSpotDirectionInner.xyz))) - tmpvar_81) / (cos((min (u_lightSpotDirectionInner.w, (u_lightAttenuationSpotOuter.w - 0.001)) * 0.0174533)) - tmpvar_81)), 0.0, 1.0), 1.0, float((u_lightAttenuationSpotOuter.w >= 90.0))));
+  };
+  float tmpvar_83;
+  tmpvar_83 = dot (v_normal, tmpvar_77);
+  vec2 tmpvar_84;
+  tmpvar_84.x = tmpvar_83;
+  tmpvar_84.y = (((float((tmpvar_83 >= 0.0)) * pow (max (0.0, dot ((((2.0 * tmpvar_83) * v_normal) - tmpvar_77), tmpvar_76)), u_materialKs.w)) * (2.0 + u_materialKs.w)) / 8.0);
+  vec2 tmpvar_85;
+  tmpvar_85 = (max (tmpvar_84, 0.0) * tmpvar_78);
+  float tmpvar_86;
+  tmpvar_86 = sqrt(dot (v_view, v_view));
+  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (((((u_lightAmbientPower.xyz * u_lightAmbientPower.w) * u_materialKa) * u_color.xyz) + ((((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_85.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_85.y)) * u_color.xyz) * visibility_1)), vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(exp2(((4.36415e-05 * tmpvar_86) * tmpvar_86)))), 0.0, 1.0));
+  gl_FragColor.w = 1.0;
+}
+
+ 

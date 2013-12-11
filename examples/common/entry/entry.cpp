@@ -104,6 +104,35 @@ namespace entry
 		return 0;
 	}
 
+	int cmdMove(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
+	{
+		if (_argc > 1)
+		{
+			if (0 == strcmp(_argv[1], "forward") )
+			{
+				cameraSetKeyState(CAMERA_KEY_UP, true);
+				return 0;
+			}
+			else if (0 == strcmp(_argv[1], "left") )
+			{
+				cameraSetKeyState(CAMERA_KEY_LEFT, true);
+				return 0;
+			}
+			else if (0 == strcmp(_argv[1], "right") )
+			{
+				cameraSetKeyState(CAMERA_KEY_RIGHT, true);
+				return 0;
+			}
+			else if (0 == strcmp(_argv[1], "backward") )
+			{
+				cameraSetKeyState(CAMERA_KEY_DOWN, true);
+				return 0;
+			}
+		}
+
+		return 1;
+	}
+
 	static const InputBinding s_bindings[] = 
 	{
 		{ entry::Key::KeyQ,  entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
@@ -129,7 +158,7 @@ namespace entry
 
 	int main(int _argc, char** _argv)
 	{
-		DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
+		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
 
 		cmdAdd("mouselock", cmdMouseLock);
 		cmdAdd("graphics",  cmdGraphics );
