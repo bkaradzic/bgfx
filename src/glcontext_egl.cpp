@@ -18,6 +18,7 @@ namespace bgfx
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_width, _height);
 		EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
 		EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
 #	if BX_PLATFORM_WINDOWS

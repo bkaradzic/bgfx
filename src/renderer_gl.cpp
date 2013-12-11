@@ -1272,6 +1272,10 @@ namespace bgfx
 
 	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
 	{
+#if !BGFX_CONFIG_RENDERER_OPENGL
+		_internalFormat = _format; // GLES wants internal format to match format...
+#endif // !BGFX_CONFIG_RENDERER_OPENGL
+
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
