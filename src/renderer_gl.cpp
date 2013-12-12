@@ -534,7 +534,7 @@ namespace bgfx
 
 				m_resolution = _resolution;
 
-				uint32_t msaa = 1<<( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT);
+				uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 				bool vsync = !!(m_resolution.m_flags&BGFX_RESET_VSYNC);
 				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa, vsync);
