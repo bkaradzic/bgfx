@@ -181,6 +181,10 @@ GL_IMPORT____(true,  PFNGLFRAMETERMINATORGREMEDYPROC,            glFrameTerminat
 GL_IMPORT____(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC,    glGetTranslatedShaderSourceANGLE);
 GL_IMPORT____(true,  PFNGLGETPROGRAMBINARYOESPROC,               glGetProgramBinaryOES);
 GL_IMPORT____(true,  PFNGLPROGRAMBINARYOESPROC,                  glProgramBinaryOES);
+GL_IMPORT____(true,  PFNGLTEXIMAGE3DOESPROC,                     glTexImage3DOES);
+GL_IMPORT____(true,  PFNGLTEXSUBIMAGE3DOESPROC,                  glTexSubImage3DOES);
+GL_IMPORT____(true,  PFNGLCOMPRESSEDTEXIMAGE3DOESPROC,           glCompressedTexImage3DOES);
+GL_IMPORT____(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DOESPROC,        glCompressedTexSubImage3DOES);
 
 GL_IMPORT____(true,  PFNGLBINDVERTEXARRAYOESPROC,                glBindVertexArrayOES);
 GL_IMPORT____(true,  PFNGLDELETEVERTEXARRAYSOESPROC,             glDeleteVertexArraysOES);

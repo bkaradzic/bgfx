@@ -55,12 +55,18 @@ typedef void (GL_APIENTRYP PFNGLGENVERTEXARRAYSOESPROC) (GLsizei n, GLuint *arra
 typedef GLboolean (GL_APIENTRYP PFNGLISVERTEXARRAYOESPROC) (GLuint array);
 typedef void (GL_APIENTRYP PFNGLGETPROGRAMBINARYOESPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary);
 typedef void (GL_APIENTRYP PFNGLPROGRAMBINARYOESPROC) (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLint length);
+typedef void (GL_APIENTRYP PFNGLTEXIMAGE3DOESPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels);
+typedef void (GL_APIENTRYP PFNGLTEXSUBIMAGE3DOESPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels);
+typedef void (GL_APIENTRYP PFNGLCOMPRESSEDTEXIMAGE3DOESPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* data);
+typedef void (GL_APIENTRYP PFNGLCOMPRESSEDTEXSUBIMAGE3DOESPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data);
 typedef void (GL_APIENTRYP PFLGLDRAWARRAYSINSTANCEDANGLEPROC) (GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 typedef void (GL_APIENTRYP PFLGLDRAWELEMENTSINSTANCEDANGLEPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
 typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLuint divisor);
 //#define GL_UNSIGNED_INT_10_10_10_2_OES                          0x8DF6
 #define GL_UNSIGNED_INT_2_10_10_10_REV_EXT                      0x8368
+#define GL_TEXTURE_3D_OES                                       0x806F
 #define GL_SAMPLER_3D_OES                                       0x8B5F
+#define GL_TEXTURE_WRAP_R_OES                                   0x8072
 #define GL_PROGRAM_BINARY_LENGTH_OES                            0x8741
 #		else
 #			include <GLES2/gl2platform.h>
@@ -69,6 +75,10 @@ typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLu
 #		endif // BX_PLATFORM_
 #		define glProgramBinary glProgramBinaryOES
 #		define glGetProgramBinary glGetProgramBinaryOES
+#		define glTexImage3D glTexImage3DOES
+#		define glTexSubImage3D glTexSubImage3DOES
+#		define glCompressedTexImage3D glCompressedTexImage3DOES
+#		define glCompressedTexSubImage3D glCompressedTexSubImage3DOES
 #		define glBindVertexArray glBindVertexArrayOES
 #		define glDeleteVertexArrays glDeleteVertexArraysOES
 #		define glGenVertexArrays glGenVertexArraysOES
@@ -79,7 +89,9 @@ typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLu
 #		define GL_R16F GL_R16F_EXT
 #		define GL_R32F GL_R32F_EXT
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
+#		define GL_TEXTURE_3D GL_TEXTURE_3D_OES
 #		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
+#		define GL_TEXTURE_WRAP_R GL_TEXTURE_WRAP_R_OES
 #		define GL_MIN GL_MIN_EXT
 #		define GL_MAX GL_MAX_EXT
 #	elif BGFX_CONFIG_RENDERER_OPENGLES3
@@ -571,51 +583,8 @@ namespace bgfx
 		{
 		}
 
-		void create(GLenum _type, Memory* _mem)
-		{
-			m_id = glCreateShader(_type);
-			m_type = _type;
-
-			bx::MemoryReader reader(_mem->data, _mem->size);
-			m_hash = bx::hashMurmur2A(_mem->data, _mem->size);
-
-			uint32_t magic;
-			bx::read(&reader, magic);
-
-			uint32_t iohash;
-			bx::read(&reader, iohash);
-
-			const uint8_t* code = reader.getDataPtr();
-
-			if (0 != m_id)
-			{
-				GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
-				GL_CHECK(glCompileShader(m_id) );
-
-				GLint compiled = 0;
-				GL_CHECK(glGetShaderiv(m_id, GL_COMPILE_STATUS, &compiled) );
-
-				if (0 == compiled)
-				{
-					char log[1024];
-					GL_CHECK(glGetShaderInfoLog(m_id, sizeof(log), NULL, log) );
-					BX_TRACE("Failed to compile shader. %d: %s", compiled, log);
-					BX_TRACE("\n####\n%s\n####", code);
-
-					GL_CHECK(glDeleteShader(m_id) );
-					BGFX_FATAL(false, bgfx::Fatal::InvalidShader, "Failed to compile shader.");
-				}
-			}
-		}
-
-		void destroy()
-		{
-			if (0 != m_id)
-			{
-				GL_CHECK(glDeleteShader(m_id) );
-				m_id = 0;
-			}
-		}
+		void create(GLenum _type, Memory* _mem);
+		void destroy();
 
 		GLuint m_id;
 		GLenum m_type;

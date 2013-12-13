@@ -279,6 +279,7 @@ namespace bgfx
 			OES_read_format,
 			OES_rgb8_rgba8,
 			OES_standard_derivatives,
+			OES_texture_3D,
 			OES_texture_float,
 			OES_texture_float_linear,
 			OES_texture_half_float,
@@ -352,6 +353,7 @@ namespace bgfx
 		{ "GL_OES_read_format",                    false,                             true  },
 		{ "GL_OES_rgb8_rgba8",                     false,                             true  },
 		{ "GL_OES_standard_derivatives",           false,                             true  },
+		{ "GL_OES_texture_3D",                     false,                             true  },
 		{ "GL_OES_texture_float",                  false,                             true  },
 		{ "GL_OES_texture_float_linear",           false,                             true  },
 		{ "GL_OES_texture_half_float",             false,                             true  },
@@ -396,13 +398,17 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
 
 #if BX_PLATFORM_IOS
-	PFNGLBINDVERTEXARRAYOESPROC         glBindVertexArrayOES    = NULL;
-	PFNGLDELETEVERTEXARRAYSOESPROC      glDeleteVertexArraysOES = NULL;
-	PFNGLGENVERTEXARRAYSOESPROC         glGenVertexArraysOES    = NULL;
-	PFNGLPROGRAMBINARYOESPROC           glProgramBinaryOES      = NULL;
-	PFNGLGETPROGRAMBINARYOESPROC        glGetProgramBinaryOES   = NULL;
-	PFLGLDRAWARRAYSINSTANCEDANGLEPROC   glDrawArraysInstanced   = NULL;
-	PFLGLDRAWELEMENTSINSTANCEDANGLEPROC glDrawElementsInstanced = NULL;
+	PFNGLBINDVERTEXARRAYOESPROC         glBindVertexArrayOES         = NULL;
+	PFNGLDELETEVERTEXARRAYSOESPROC      glDeleteVertexArraysOES      = NULL;
+	PFNGLGENVERTEXARRAYSOESPROC         glGenVertexArraysOES         = NULL;
+	PFNGLPROGRAMBINARYOESPROC           glProgramBinaryOES           = NULL;
+	PFNGLGETPROGRAMBINARYOESPROC        glGetProgramBinaryOES        = NULL;
+	PFNGLTEXIMAGE3DOESPROC              glTexImage3DOES              = NULL;
+	PFNGLTEXSUBIMAGE3DOESPROC           glTexSubImage3DOES           = NULL;
+	PFNGLCOMPRESSEDTEXIMAGE3DOESPROC    glCompressedTexImage3DOES    = NULL;
+	PFNGLCOMPRESSEDTEXSUBIMAGE3DOESPROC glCompressedTexSubImage3DOES = NULL;
+	PFLGLDRAWARRAYSINSTANCEDANGLEPROC   glDrawArraysInstanced        = NULL;
+	PFLGLDRAWELEMENTSINSTANCEDANGLEPROC glDrawElementsInstanced      = NULL;
 #endif // BX_PLATFORM_IOS
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
@@ -1276,13 +1282,11 @@ namespace bgfx
 		_internalFormat = _format; // GLES wants internal format to match format...
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
 			GL_CHECK(glTexImage3D(_target, _level, _internalFormat, _width, _height, _depth, _border, _format, _type, _data) );
 		}
 		else
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			BX_UNUSED(_depth);
 			GL_CHECK(glTexImage2D(_target, _level, _internalFormat, _width, _height, _border, _format, _type, _data) );
@@ -1291,13 +1295,11 @@ namespace bgfx
 
 	static void texSubImage(GLenum _target, GLint _level, GLint _xoffset, GLint _yoffset, GLint _zoffset, GLsizei _width, GLsizei _height, GLsizei _depth, GLenum _format, GLenum _type, const GLvoid* _data)
 	{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
 			GL_CHECK(glTexSubImage3D(_target, _level, _xoffset, _yoffset, _zoffset, _width, _height, _depth, _format, _type, _data) );
 		}
 		else
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			BX_UNUSED(_zoffset, _depth);
 			GL_CHECK(glTexSubImage2D(_target, _level, _xoffset, _yoffset, _width, _height, _format, _type, _data) );
@@ -1306,13 +1308,11 @@ namespace bgfx
 
 	static void compressedTexImage(GLenum _target, GLint _level, GLenum _internalformat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLsizei _imageSize, const GLvoid* _data)
 	{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
 			GL_CHECK(glCompressedTexImage3D(_target, _level, _internalformat, _width, _height, _depth, _border, _imageSize, _data) );
 		}
 		else
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			BX_UNUSED(_depth);
 			GL_CHECK(glCompressedTexImage2D(_target, _level, _internalformat, _width, _height, _border, _imageSize, _data) );
@@ -1321,13 +1321,11 @@ namespace bgfx
 
 	static void compressedTexSubImage(GLenum _target, GLint _level, GLint _xoffset, GLint _yoffset, GLint _zoffset, GLsizei _width, GLsizei _height, GLsizei _depth, GLenum _format, GLsizei _imageSize, const GLvoid* _data)
 	{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (_target == GL_TEXTURE_3D)
 		{
 			GL_CHECK(glCompressedTexSubImage3D(_target, _level, _xoffset, _yoffset, _zoffset, _width, _height, _depth, _format, _imageSize, _data) );
 		}
 		else
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		{
 			BX_UNUSED(_zoffset, _depth);
 			GL_CHECK(glCompressedTexSubImage2D(_target, _level, _xoffset, _yoffset, _width, _height, _format, _imageSize, _data) );
@@ -1387,12 +1385,10 @@ namespace bgfx
 			{
 				target = GL_TEXTURE_CUBE_MAP;
 			}
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			else if (imageContainer.m_depth > 1)
 			{
 				target = GL_TEXTURE_3D;
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 			init(target
 				, imageContainer.m_format
@@ -1717,12 +1713,12 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, numMips-1) );
+#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 			if (target == GL_TEXTURE_3D)
 			{
 				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 			uint32_t mag = (flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
 			uint32_t min = (flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
@@ -1762,6 +1758,124 @@ namespace bgfx
 		// Everything else has sampler object.
 		s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
 #endif // BGFX_CONFIG_RENDERER_*
+	}
+
+	void writeString(bx::WriterI* _writer, const char* _str)
+	{
+		bx::write(_writer, _str, strlen(_str) );
+	}
+
+	const char* findMatch(const char* _str, const char* _word)
+	{
+		size_t len = strlen(_word);
+		const char* ptr = strstr(_str, _word);
+		for (; NULL != ptr; ptr = strstr(ptr + len, _word) )
+		{
+			if (ptr != _str)
+			{
+				char ch = *(ptr - 1);
+				if (isalnum(ch) || '_' == ch)
+				{
+					continue;
+				}
+			}
+
+			char ch = ptr[len];
+			if (isalnum(ch) || '_' == ch)
+			{
+				continue;
+			}
+
+			return ptr;
+		}
+
+		return ptr;
+	}
+
+	void Shader::create(GLenum _type, Memory* _mem)
+	{
+		m_id = glCreateShader(_type);
+		m_type = _type;
+
+		bx::MemoryReader reader(_mem->data, _mem->size);
+		m_hash = bx::hashMurmur2A(_mem->data, _mem->size);
+
+		uint32_t magic;
+		bx::read(&reader, magic);
+
+		uint32_t iohash;
+		bx::read(&reader, iohash);
+
+		const char* code = (const char*)reader.getDataPtr();
+
+		if (0 != m_id)
+		{
+#if BGFX_CONFIG_RENDERER_OPENGLES2
+			bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported &&
+							(  findMatch(code, "dFdx")
+							|| findMatch(code, "dFdy")
+							|| findMatch(code, "fwidth")
+							);
+
+			bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported &&
+							(  findMatch(code, "texture3D")
+							|| findMatch(code, "texture3DProj")
+							|| findMatch(code, "texture3DLod")
+							|| findMatch(code, "texture3DProjLod")
+							);
+
+			if (usesDerivatives
+			||  usesTexture3D)
+			{
+				size_t codeLen = strlen(code);
+				size_t tempLen = codeLen + 1024;
+				char* temp = (char*)alloca(tempLen);
+				bx::StaticMemoryBlockWriter writer(temp, tempLen);
+
+				if (usesDerivatives)
+				{
+					writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
+				}
+
+				if (usesTexture3D)
+				{
+					writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
+				}
+
+				bx::write(&writer, code, codeLen);
+				bx::write(&writer, '\0');
+
+				code = temp;
+			}
+#endif // BGFX_CONFIG_RENDERER_OPENGLES2
+
+			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
+			GL_CHECK(glCompileShader(m_id) );
+
+			GLint compiled = 0;
+			GL_CHECK(glGetShaderiv(m_id, GL_COMPILE_STATUS, &compiled) );
+
+			if (0 == compiled)
+			{
+				BX_TRACE("\n####\n%s\n####", code);
+
+				char log[1024];
+				GL_CHECK(glGetShaderInfoLog(m_id, sizeof(log), NULL, log) );
+				BX_TRACE("Failed to compile shader. %d: %s", compiled, log);
+
+				GL_CHECK(glDeleteShader(m_id) );
+				BGFX_FATAL(false, bgfx::Fatal::InvalidShader, "Failed to compile shader.");
+			}
+		}
+	}
+
+	void Shader::destroy()
+	{
+		if (0 != m_id)
+		{
+			GL_CHECK(glDeleteShader(m_id) );
+			m_id = 0;
+		}
 	}
 
 	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
@@ -2413,7 +2527,7 @@ namespace bgfx
 							| ptc1Supported  ? BGFX_CAPS_TEXTURE_FORMAT_PTC12|BGFX_CAPS_TEXTURE_FORMAT_PTC14|BGFX_CAPS_TEXTURE_FORMAT_PTC14A|BGFX_CAPS_TEXTURE_FORMAT_PTC12A : 0
 							| ptc2Supported  ? BGFX_CAPS_TEXTURE_FORMAT_PTC22|BGFX_CAPS_TEXTURE_FORMAT_PTC24 : 0
 							);
-		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_texture_3D].m_supported
 						 ? BGFX_CAPS_TEXTURE_3D
 						 : 0
 						 ;
