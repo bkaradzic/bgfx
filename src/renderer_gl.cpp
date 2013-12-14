@@ -274,6 +274,7 @@ namespace bgfx
 			IMG_texture_format_BGRA8888,
 			NVX_gpu_memory_info,
 			OES_compressed_ETC1_RGB8_texture,
+			OES_depth24,
 			OES_depth_texture,
 			OES_get_program_binary,
 			OES_read_format,
@@ -282,6 +283,7 @@ namespace bgfx
 			OES_texture_3D,
 			OES_texture_float,
 			OES_texture_float_linear,
+			OES_texture_npot,
 			OES_texture_half_float,
 			OES_texture_half_float_linear,
 			OES_vertex_array_object,
@@ -348,6 +350,7 @@ namespace bgfx
 		{ "GL_IMG_texture_format_BGRA8888",        false,                             true  },
 		{ "GL_NVX_gpu_memory_info",                false,                             true  },
 		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
+		{ "GL_OES_depth24",                        false,                             true  },
 		{ "GL_OES_depth_texture",                  false,                             true  },
 		{ "GL_OES_get_program_binary",             false,                             true  },
 		{ "GL_OES_read_format",                    false,                             true  },
@@ -356,6 +359,7 @@ namespace bgfx
 		{ "GL_OES_texture_3D",                     false,                             true  },
 		{ "GL_OES_texture_float",                  false,                             true  },
 		{ "GL_OES_texture_float_linear",           false,                             true  },
+		{ "GL_OES_texture_npot",                   false,                             true  },
 		{ "GL_OES_texture_half_float",             false,                             true  },
 		{ "GL_OES_texture_half_float_linear",      false,                             true  },
 		{ "GL_OES_vertex_array_object",            false,                             !BX_PLATFORM_IOS },
@@ -1031,8 +1035,6 @@ namespace bgfx
 			GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
 			GL_CHECK(glAttachShader(m_id, _fsh.m_id) );
 			GL_CHECK(glLinkProgram(m_id) );
-			GL_CHECK(glDetachShader(m_id, _vsh.m_id) );
-			GL_CHECK(glDetachShader(m_id, _fsh.m_id) );
 
 			GLint linked = 0;
 			GL_CHECK(glGetProgramiv(m_id, GL_LINK_STATUS, &linked) );
@@ -1068,6 +1070,14 @@ namespace bgfx
 		}
 
 		init();
+
+		if (!cached)
+		{
+			// Must be after init, otherwise init might fail to lookup shader
+			// info (NVIDIA Tegra 3 OpenGL ES 2.0 14.01003).
+			GL_CHECK(glDetachShader(m_id, _vsh.m_id) );
+			GL_CHECK(glDetachShader(m_id, _fsh.m_id) );
+		}
 	}
 
 	void Program::destroy()
@@ -1102,16 +1112,17 @@ namespace bgfx
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max1) );
 
 		GLint maxLength = bx::uint32_max(max0, max1);
-		char* name = (char*)BX_ALLOC(g_allocator, maxLength + 1);
+		char* name = (char*)alloca(maxLength + 1);
 
 		BX_TRACE("Program %d", m_id);
-		BX_TRACE("Attributes:");
+		BX_TRACE("Attributes (%d):", activeAttribs);
 		for (int32_t ii = 0; ii < activeAttribs; ++ii)
 		{
 			GLint size;
 			GLenum type;
 
 			GL_CHECK(glGetActiveAttrib(m_id, ii, maxLength + 1, NULL, &size, &type, name) );
+
 			BX_TRACE("\t%s %s is at location %d"
 				, glslTypeName(type)
 				, name
@@ -1123,7 +1134,7 @@ namespace bgfx
 		m_constantBuffer = ConstantBuffer::create(1024);
  		m_numSamplers = 0;
 
-		BX_TRACE("Uniforms:");
+		BX_TRACE("Uniforms (%d):", activeUniforms);
 		for (int32_t ii = 0; ii < activeUniforms; ++ii)
 		{
 			GLint num;
@@ -1186,8 +1197,6 @@ namespace bgfx
 		}
 
 		m_constantBuffer->finish();
-
-		BX_FREE(g_allocator, name);
 
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
 		uint32_t used = 0;
