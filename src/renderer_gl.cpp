@@ -251,6 +251,7 @@ namespace bgfx
 			EXT_blend_color,
 			EXT_blend_minmax,
 			EXT_blend_subtract,
+			EXT_frag_depth,
 			EXT_framebuffer_blit,
 			EXT_framebuffer_sRGB,
 			EXT_occlusion_query_boolean,
@@ -276,6 +277,7 @@ namespace bgfx
 			OES_compressed_ETC1_RGB8_texture,
 			OES_depth24,
 			OES_depth_texture,
+			OES_fragment_precision_high,
 			OES_get_program_binary,
 			OES_read_format,
 			OES_rgb8_rgba8,
@@ -327,6 +329,7 @@ namespace bgfx
 		{ "GL_EXT_blend_color",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_frag_depth",                     false,                             true  }, // GLES2 extension.
 		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_EXT_framebuffer_sRGB",               false,                             true  },
 		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
@@ -352,6 +355,7 @@ namespace bgfx
 		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
 		{ "GL_OES_depth24",                        false,                             true  },
 		{ "GL_OES_depth_texture",                  false,                             true  },
+		{ "GL_OES_fragment_precision_high",        false,                             true  },
 		{ "GL_OES_get_program_binary",             false,                             true  },
 		{ "GL_OES_read_format",                    false,                             true  },
 		{ "GL_OES_rgb8_rgba8",                     false,                             true  },
@@ -1801,6 +1805,13 @@ namespace bgfx
 		return ptr;
 	}
 
+	void strins(char* _str, const char* _insert)
+	{
+		size_t len = strlen(_insert);
+		memmove(&_str[len], _str, strlen(_str) );
+		memcpy(_str, _insert, len);
+	}
+
 	void Shader::create(GLenum _type, Memory* _mem)
 	{
 		m_id = glCreateShader(_type);
@@ -1826,6 +1837,8 @@ namespace bgfx
 							|| findMatch(code, "fwidth")
 							);
 
+			bool usesFragDepth = findMatch(code, "gl_FragDepth");
+
 			bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported &&
 							(  findMatch(code, "texture3D")
 							|| findMatch(code, "texture3DProj")
@@ -1834,6 +1847,7 @@ namespace bgfx
 							);
 
 			if (usesDerivatives
+			||  usesFragDepth
 			||  usesTexture3D)
 			{
 				size_t codeLen = strlen(code);
@@ -1846,6 +1860,28 @@ namespace bgfx
 					writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
 				}
 
+				bool insertFragDepth = false;
+				if (usesFragDepth)
+				{
+					if (s_extension[Extension::EXT_frag_depth].m_supported)
+					{
+						writeString(&writer
+							, "#extension GL_EXT_frag_depth : enable\n"
+							  "#define gl_FragDepth gl_FragDepthEXT\n"
+							);
+
+						char str[128];
+						bx::snprintf(str, BX_COUNTOF(str), "%s float gl_FragDepthEXT;\n"
+							, s_extension[Extension::OES_fragment_precision_high].m_supported ? "highp" : "mediump"
+							);
+						writeString(&writer, str);
+					}
+					else
+					{
+						insertFragDepth = true;
+					}
+				}
+
 				if (usesTexture3D)
 				{
 					writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
@@ -1855,6 +1891,23 @@ namespace bgfx
 				bx::write(&writer, '\0');
 
 				code = temp;
+
+				if (insertFragDepth)
+				{
+					char* entry = strstr(temp, "void main ()");
+					if (NULL != entry)
+					{
+						const char* brace = strstr(entry, "{");
+						if (NULL != brace)
+						{
+							const char* end = bx::strmb(brace, '{', '}');
+							if (NULL != end)
+							{
+								strins(temp, "float gl_FragDepth = 0.0;\n");
+							}
+						}
+					}
+				}
 			}
 #endif // BGFX_CONFIG_RENDERER_OPENGLES2
 
