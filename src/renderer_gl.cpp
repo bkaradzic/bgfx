@@ -1775,7 +1775,7 @@ namespace bgfx
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, strlen(_str) );
+		bx::write(_writer, _str, (int32_t)strlen(_str) );
 	}
 
 	const char* findMatch(const char* _str, const char* _word)
@@ -2595,6 +2595,10 @@ namespace bgfx
 						 ;
 		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_vertex_half_float].m_supported
 						 ? BGFX_CAPS_VERTEX_ATTRIB_HALF
+						 : 0
+						 ;
+		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::EXT_frag_depth].m_supported
+						 ? BGFX_CAPS_FRAGMENT_DEPTH
 						 : 0
 						 ;
 		g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
