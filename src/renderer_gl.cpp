@@ -708,6 +708,7 @@ namespace bgfx
 #else
 			if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
 			{
+				_flags = (_flags&(~BGFX_TEXTURE_RESERVED_MASK) ) | (_numMips<<BGFX_TEXTURE_RESERVED_SHIFT);
 				GLuint sampler = m_samplerStateCache.find(_flags);
 
 				if (UINT32_MAX == sampler)
