@@ -232,6 +232,7 @@ namespace bgfx
 			ARB_ES3_compatibility,
 			ARB_framebuffer_sRGB,
 			ARB_get_program_binary,
+			ARB_half_float_pixel,
 			ARB_half_float_vertex,
 			ARB_instanced_arrays,
 			ARB_multisample,
@@ -255,6 +256,7 @@ namespace bgfx
 			EXT_framebuffer_blit,
 			EXT_framebuffer_sRGB,
 			EXT_occlusion_query_boolean,
+			EXT_texture_array,
 			EXT_texture_compression_dxt1,
 			EXT_texture_compression_latc,
 			EXT_texture_compression_rgtc,
@@ -310,7 +312,8 @@ namespace bgfx
 		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_framebuffer_sRGB",               false,                             true  },
 		{ "GL_ARB_get_program_binary",             BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
-		{ "GL_ARB_half_float_vertex",              false,                             true  },
+		{ "GL_ARB_half_float_pixel",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "GL_ARB_half_float_vertex",              BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_instanced_arrays",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_multisample",                    false,                             true  },
 		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
@@ -319,7 +322,7 @@ namespace bgfx
 		{ "GL_ARB_texture_multisample",            BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_texture_swizzle",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_timer_query",                    BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
 		{ "GL_ATI_meminfo",                        false,                             true  },
 		{ "GL_CHROMIUM_framebuffer_multisample",   false,                             true  },
@@ -327,12 +330,13 @@ namespace bgfx
 		{ "GL_CHROMIUM_texture_compression_dxt5",  false,                             true  },
 		{ "GL_EXT_bgra",                           false,                             true  },
 		{ "GL_EXT_blend_color",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
+		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "GL_EXT_frag_depth",                     false,                             true  }, // GLES2 extension.
-		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_framebuffer_sRGB",               false,                             true  },
+		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "GL_EXT_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
+		{ "GL_EXT_texture_array",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_texture_compression_dxt1",       false,                             true  },
 		{ "GL_EXT_texture_compression_latc",       false,                             true  },
 		{ "GL_EXT_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -1855,8 +1859,8 @@ namespace bgfx
 			||  usesFragDepth
 			||  usesTexture3D)
 			{
-				size_t codeLen = strlen(code);
-				size_t tempLen = codeLen + 1024;
+				int32_t codeLen = (int32_t)strlen(code);
+				int32_t tempLen = codeLen + 1024;
 				char* temp = (char*)alloca(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
@@ -1915,8 +1919,8 @@ namespace bgfx
 				}
 			}
 #elif BGFX_CONFIG_RENDERER_OPENGL >= 31
-			size_t codeLen = strlen(code);
-			size_t tempLen = codeLen + 1024;
+			int32_t codeLen = (int32_t)strlen(code);
+			int32_t tempLen = codeLen + 1024;
 			char* temp = (char*)alloca(tempLen);
 			bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
