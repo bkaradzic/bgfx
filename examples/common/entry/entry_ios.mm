@@ -123,6 +123,8 @@ using namespace entry;
 		m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
 		//[m_displayLink setFrameInterval:1];
 		//[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+//		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop]];
+		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 	}
 }
 

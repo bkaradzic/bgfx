@@ -117,7 +117,6 @@ function exampleProject(_name, _uuid)
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",
-			"SDL2",
 		}
 
 	configuration { "ios*" }
