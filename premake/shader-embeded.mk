@@ -8,9 +8,22 @@ SILENT = @
 endif
 
 THISDIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
+UNAME := $(shell uname)
+ifeq ($(UNAME),$(filter $(UNAME),Linux))
+OS=linux
+else
+ifeq ($(UNAME),$(filter $(UNAME),Darwin))
+OS=darwin
+else
+OS=windows
+endif
+endif
+
+SHADERC="$(THISDIR)../tools/bin/$(OS)/shaderc"
+
 VS_FLAGS+=-i $(THISDIR)../src/ --type vertex
 FS_FLAGS+=-i $(THISDIR)../src/ --type fragment
-SHADERC="$(THISDIR)../tools/bin/shaderc"
 
 VS_SOURCES=$(wildcard vs_*.sc)
 FS_SOURCES=$(wildcard fs_*.sc)

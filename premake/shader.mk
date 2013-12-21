@@ -18,7 +18,25 @@ all:
 	@echo "  TARGET=4 (glsl - linux)"
 	@echo "  VERBOSE=1 show build commands."
 else
-SHADERC="$(BGFX_DIR)/tools/bin/shaderc"
+
+THISDIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
+UNAME := $(shell uname)
+ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
+CMD_MKDIR=mkdir -p "$(1)"
+CMD_RMDIR=rm -r "$(1)"
+ifeq ($(UNAME),$(filter $(UNAME),Darwin))
+OS=darwin
+else
+OS=linux
+endif
+else
+CMD_MKDIR=cmd /C "if not exist "$(subst /,\,$(1))" mkdir "$(subst /,\,$(1))""
+CMD_RMDIR=cmd /C "if exist "$(subst /,\,$(1))" rmdir /S /Q "$(subst /,\,$(1))""
+OS=windows
+endif
+
+SHADERC="$(THISDIR)../tools/bin/$(OS)/shaderc"
 
 ifeq ($(TARGET), 0)
 VS_FLAGS=--platform windows -p vs_3_0 -O 3
@@ -62,15 +80,6 @@ VS_DEPS=$(addprefix $(BUILD_INTERMEDIATE_DIR)/,$(addsuffix .bin.d, $(basename $(
 
 FS_SOURCES=$(wildcard fs_*.sc)
 FS_DEPS=$(addprefix $(BUILD_INTERMEDIATE_DIR)/,$(addsuffix .bin.d, $(basename $(FS_SOURCES))))
-
-UNAME := $(shell uname)
-ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
-CMD_MKDIR=mkdir -p "$(1)"
-CMD_RMDIR=rm -r "$(1)"
-else
-CMD_MKDIR=cmd /C "if not exist "$(subst /,\,$(1))" mkdir "$(subst /,\,$(1))""
-CMD_RMDIR=cmd /C "if exist "$(subst /,\,$(1))" rmdir /S /Q "$(subst /,\,$(1))""
-endif
 
 VS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(VS_SOURCES))))
 FS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(FS_SOURCES))))
