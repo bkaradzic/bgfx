@@ -410,6 +410,7 @@ namespace bgfx
 			g_caps.supported |= ( 0
 								| BGFX_CAPS_TEXTURE_3D
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
+								| BGFX_CAPS_FRAGMENT_DEPTH
 								);
 			g_caps.maxTextureSize = bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight);
 
