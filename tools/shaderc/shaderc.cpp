@@ -530,7 +530,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 	}
 	else
 	{
-		writef(_writer, "#version %s\n\n", profile);
+//		writef(_writer, "#version %s\n\n", profile);
 	}
 
 	bx::write(_writer, optimizedShader, (int32_t)strlen(optimizedShader) );
@@ -1833,7 +1833,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							writef(&writer, "#version %s\n\n", profile);
+//							writef(&writer, "#version %s\n\n", profile);
 						}
 					}
 					writer.write(preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );

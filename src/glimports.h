@@ -15,7 +15,7 @@
 // OpenGL 2.1 Reference Pages
 // http://www.opengl.org/sdk/docs/man/
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS || BGFX_CONFIG_RENDERER_OPENGL >= 31
 GL_IMPORT____(false, PFNGLGETERRORPROC,                          glGetError);
 GL_IMPORT____(false, PFNGLREADPIXELSPROC,                        glReadPixels);
 GL_IMPORT____(false, PFNGLTEXIMAGE2DPROC,                        glTexImage2D);
@@ -100,6 +100,7 @@ GL_IMPORT____(false, PFNGLGENRENDERBUFFERSPROC,                  glGenRenderbuff
 GL_IMPORT____(false, PFNGLDELETERENDERBUFFERSPROC,               glDeleteRenderbuffers);
 GL_IMPORT____(false, PFNGLRENDERBUFFERSTORAGEPROC,               glRenderbufferStorage);
 GL_IMPORT____(false, PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+GL_IMPORT____(false, PFNGLBINDFRAGDATALOCATIONPROC,              glBindFragDataLocation);
 #else
 GL_IMPORT_EXT(false, PFNGLBINDFRAMEBUFFEREXTPROC,                glBindFramebuffer);
 GL_IMPORT_EXT(false, PFNGLGENFRAMEBUFFERSEXTPROC,                glGenFramebuffers);

@@ -1,6 +1,4 @@
-FSHƒòá#version 120
-
-uniform vec3 u_lightDir;
+FSHƒòáuniform vec3 u_lightDir;
 uniform mat4 u_mtx;
 varying vec2 v_texcoord0;
 varying vec4 v_color0;

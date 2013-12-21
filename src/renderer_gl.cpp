@@ -1109,6 +1109,10 @@ namespace bgfx
 		GLint activeAttribs;
 		GLint activeUniforms;
 
+#if BGFX_CONFIG_RENDERER_OPENGL >= 31
+		GL_CHECK(glBindFragDataLocation(m_id, 0, "bgfx_FragColor") );
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_ATTRIBUTES, &activeAttribs) );
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORMS, &activeUniforms) );
 
@@ -1910,6 +1914,31 @@ namespace bgfx
 					}
 				}
 			}
+#elif BGFX_CONFIG_RENDERER_OPENGL >= 31
+			size_t codeLen = strlen(code);
+			size_t tempLen = codeLen + 1024;
+			char* temp = (char*)alloca(tempLen);
+			bx::StaticMemoryBlockWriter writer(temp, tempLen);
+
+			writeString(&writer, "#version 140\n");
+			if (_type == GL_FRAGMENT_SHADER)
+			{
+				writeString(&writer, "#define varying in\n");
+				writeString(&writer, "#define texture2D texture\n");
+				writeString(&writer, "#define texture3D texture\n");
+				writeString(&writer, "#define textureCube texture\n");
+				writeString(&writer, "out vec4 bgfx_FragColor;\n");
+				writeString(&writer, "#define gl_FragColor bgfx_FragColor\n");
+			}
+			else
+			{
+				writeString(&writer, "#define attribute in\n");
+				writeString(&writer, "#define varying out\n");
+			}
+
+			bx::write(&writer, code, codeLen);
+			bx::write(&writer, '\0');
+			code = temp;
 #endif // BGFX_CONFIG_RENDERER_OPENGLES2
 
 			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
