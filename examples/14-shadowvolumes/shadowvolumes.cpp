@@ -3,6 +3,14 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <stdio.h>
+#include <string.h>
+
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <map>
+
 namespace std { namespace tr1 {} }
 using namespace std::tr1;
 
@@ -17,14 +25,6 @@ using namespace std::tr1;
 #include "entry/entry.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
-
-#include <stdio.h>
-#include <string.h>
-
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <map>
 
 #define SV_USE_SIMD 1
 #define MAX_INSTANCE_COUNT 25
