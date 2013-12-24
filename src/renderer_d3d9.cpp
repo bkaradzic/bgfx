@@ -1459,6 +1459,8 @@ namespace bgfx
 		}
 
 		BX_CHECK(false, "You should not be here.");
+		_pitch = 0;
+		_slicePitch = 0;
 		return NULL;
 	}
 
