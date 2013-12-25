@@ -3,12 +3,12 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry_p.h"
-#include "input.h"
-
 #include <memory.h>
 #include <string>
 #include <unordered_map>
+
+#include "entry_p.h"
+#include "input.h"
 
 struct Mouse
 {

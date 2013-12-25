@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <vector>
+#include <string>
+
 #include "common.h"
 
 #include <bgfx.h>
@@ -12,8 +15,6 @@
 #include "imgui/imgui.h"
 
 #include <string.h>
-#include <vector>
-#include <string>
 
 static const char* s_shaderPath = NULL;
 
