@@ -476,7 +476,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	Mesh mesh;
 	mesh.load("meshes/bunny.bin");
 
-	bgfx::RenderTargetHandle rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH);
+	bgfx::RenderTargetHandle rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH_D16);
 
 	bgfx::RenderTargetHandle lum[5];
 	lum[0] = bgfx::createRenderTarget(128, 128, BGFX_RENDER_TARGET_COLOR_RGBA8);
@@ -528,7 +528,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::destroyRenderTarget(bright);
 			bgfx::destroyRenderTarget(blur);
 
-			rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH);
+			rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH_D16);
 			bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA8);
 			blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
 		}

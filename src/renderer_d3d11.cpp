@@ -122,8 +122,15 @@ namespace bgfx
 
 	static const DXGI_FORMAT s_depthFormat[] =
 	{
-		DXGI_FORMAT_UNKNOWN, // ignored
-		DXGI_FORMAT_D24_UNORM_S8_UINT,
+		DXGI_FORMAT_UNKNOWN,           // ignored
+		DXGI_FORMAT_D16_UNORM,         // D16
+		DXGI_FORMAT_D24_UNORM_S8_UINT, // D24
+		DXGI_FORMAT_D24_UNORM_S8_UINT, // D24S8
+		DXGI_FORMAT_D24_UNORM_S8_UINT, // D32
+		DXGI_FORMAT_D32_FLOAT,         // D16F
+		DXGI_FORMAT_D32_FLOAT,         // D24F
+		DXGI_FORMAT_D32_FLOAT,         // D32F
+		DXGI_FORMAT_D24_UNORM_S8_UINT, // D0S8
 	};
 
 	static const D3D11_TEXTURE_ADDRESS_MODE s_textureAddress[] =
@@ -2740,7 +2747,7 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 0;
-				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " ");
 
 				const DXGI_ADAPTER_DESC& desc = s_renderCtx->m_adapterDesc;
 				char description[BX_COUNTOF(desc.Description)];

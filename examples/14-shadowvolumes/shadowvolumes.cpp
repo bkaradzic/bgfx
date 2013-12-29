@@ -1993,7 +1993,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = loadTexture("fieldstone-rgba.dds");
 	bgfx::TextureHandle fieldstoneTex = bgfx::createTexture(mem);
 
-	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH);
+	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
 
 	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
 	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
@@ -2172,7 +2172,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			bgfx::destroyRenderTarget(s_stencilRt);
 
-			s_stencilRt = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH);
+			s_stencilRt = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
 		}
 
 		//set view and projection matrices
