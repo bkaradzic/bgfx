@@ -332,7 +332,7 @@ namespace bgfx
 	void dumpExtensions(const char* _extensions);
 
 	class ConstantBuffer;
-	
+
 	class VaoStateCache
 	{
 	public:
@@ -501,7 +501,7 @@ namespace bgfx
 		uint32_t m_size;
 		VaoCacheRef m_vcref;
 	};
-	
+
 	struct VertexBuffer
 	{
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle)
@@ -636,7 +636,7 @@ namespace bgfx
 		{
 			m_constantBuffer->commit();
 		}
- 
+
 		void add(uint32_t _hash)
 		{
 			m_vcref.add(_hash);

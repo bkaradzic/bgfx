@@ -729,7 +729,7 @@ namespace bgfx
 					GLenum minFilter = s_textureFilterMin[min][1 < _numMips ? mip+1 : 0];
 					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
 					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
-					if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) 
+					if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 					&&  0.0f < m_maxAnisotropy)
 					{
 						GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
@@ -1748,7 +1748,7 @@ namespace bgfx
 			GLenum minFilter = s_textureFilterMin[min][1 < numMips ? mip+1 : 0];
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
-			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) 
+			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 			&&  0.0f < s_renderCtx->m_maxAnisotropy)
 			{
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx->m_maxAnisotropy) );
@@ -1992,7 +1992,7 @@ namespace bgfx
 		{
 			m_color.createColor(colorFormat, _width, _height, minFilter, magFilter);
 		}
-		
+
 #if 0 // GLES can't create texture with depth texture format...
 		if (0 < depthFormat)
 		{
@@ -2018,7 +2018,7 @@ namespace bgfx
 				, GL_RENDERBUFFER
 				, m_colorRbo
 				) );
- 
+
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
 		}
 		else
@@ -2177,7 +2177,7 @@ namespace bgfx
 				GL_CHECK(glUniform##_glsuffix(loc, num, value) ); \
 			} \
 			break;
-			
+
 #define CASE_IMPLEMENT_UNIFORM_T(_uniform, _glsuffix, _dxsuffix, _type) \
 		case UniformType::_uniform: \
 			{ \
@@ -2537,7 +2537,7 @@ namespace bgfx
 				{
 					len = bx::uint32_min(sizeof(name), (uint32_t)strlen(pos) );
 				}
-				
+
 				strncpy(name, pos, len);
 				name[len] = '\0';
 
@@ -2703,7 +2703,7 @@ namespace bgfx
 			s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 
 			// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
-			// format to be BGRA but internal format to stay RGBA, but 
+			// format to be BGRA but internal format to stay RGBA, but
 			// EXT_texture_format_BGRA8888 wants both format and internal
 			// format to be BGRA.
 			//
@@ -3273,8 +3273,8 @@ namespace bgfx
 					programIdx = key.m_program;
 					GLuint id = invalidHandle == programIdx ? 0 : s_renderCtx->m_program[programIdx].m_id;
 					GL_CHECK(glUseProgram(id) );
-					programChanged = 
-						constantsChanged = 
+					programChanged =
+						constantsChanged =
 						bindAttribs = true;
 				}
 

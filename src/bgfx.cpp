@@ -34,7 +34,7 @@ namespace bgfx
 
 #elif BX_PLATFORM_OSX
 	void* g_bgfxNSWindow = NULL;
-	
+
 	void osxSetNSWindow(void* _window)
 	{
 		g_bgfxNSWindow = _window;
@@ -421,7 +421,7 @@ namespace bgfx
 						uint32_t fg = palette[attr&0xf];
 						uint32_t bg = palette[(attr>>4)&0xf];
 
-						Vertex vert[4] = 
+						Vertex vert[4] =
 						{
 							{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
 							{ (xx+1)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
@@ -616,7 +616,7 @@ namespace bgfx
 				m_sortValues[m_num] = m_numRenderStates;
 				++m_num;
 			}
-			
+
 			m_state.m_constEnd = m_constantBuffer->getPos();
 			m_state.m_flags |= m_flags;
 			m_renderState[m_numRenderStates] = m_state;
