@@ -222,6 +222,19 @@ namespace bgfx
 		{ D3DFMT_A4R4G4B4      }, // RGBA4
 		{ D3DFMT_A1R5G5B5      }, // RGB5A1
 		{ D3DFMT_A2B10G10R10   }, // RGB10A2
+		{ D3DFMT_UNKNOWN       }, // UnknownDepth
+		{ D3DFMT_D16           }, // D16  
+		{ D3DFMT_D24X8         }, // D24  
+		{ D3DFMT_D24S8         }, // D24S8
+		{ D3DFMT_D32           }, // D32  
+		{ D3DFMT_DF16          }, // D16F 
+		{ D3DFMT_DF24          }, // D24F
+		{ D3DFMT_D32F_LOCKABLE }, // D32F
+#if defined(D3D_DISABLE_9EX)
+		{ D3DFMT_UNKNOWN       }, // D0S8
+#else
+		{ D3DFMT_S8_LOCKABLE   }, // D0S8
+#endif // defined(D3D_DISABLE_9EX)
 	};
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =
@@ -413,13 +426,12 @@ namespace bgfx
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 
-			g_caps.emulated &= ~( 0
+			g_caps.supported |= ( 0
 								| BGFX_CAPS_TEXTURE_FORMAT_BC1
 								| BGFX_CAPS_TEXTURE_FORMAT_BC2
 								| BGFX_CAPS_TEXTURE_FORMAT_BC3
-								);
-			g_caps.supported |= ( 0
 								| BGFX_CAPS_TEXTURE_3D
+								| BGFX_CAPS_TEXTURE_DEPTH_MASK
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								);
@@ -451,10 +463,10 @@ namespace bgfx
 			s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
 			s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
 
-			g_caps.emulated &= ~( 0
-								| (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC4].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC4 : 0)
-								| (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC5].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC5 : 0)
-								);
+			g_caps.supported |= 0
+							 | (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC4].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC4 : 0)
+							 | (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC5].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC5 : 0)
+							 ;
 			g_caps.supported |= m_instancing ? BGFX_CAPS_INSTANCING : 0;
 #endif // BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 

@@ -231,6 +231,15 @@ namespace bgfx
 		{ GL_RGBA4,                                    GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4,      true  }, // RGBA4
 		{ GL_RGB5_A1,                                  GL_RGBA,                                     GL_UNSIGNED_SHORT_5_5_5_1,      true  }, // RGB5A1
 		{ GL_RGB10_A2,                                 GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV, true  }, // RGB10A2
+		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                        true  }, // UnknownDepth
+		{ GL_DEPTH_COMPONENT16,                        GL_DEPTH_COMPONENT,                          GL_SHORT,                       false }, // D16
+		{ GL_DEPTH_COMPONENT24,                        GL_DEPTH_COMPONENT,                          GL_UNSIGNED_INT,                false }, // D24
+		{ GL_DEPTH24_STENCIL8,                         GL_DEPTH_STENCIL,                            GL_UNSIGNED_INT_24_8,           false }, // D24S8
+		{ GL_DEPTH_COMPONENT32,                        GL_DEPTH_COMPONENT,                          GL_UNSIGNED_INT,                false }, // D32
+		{ GL_DEPTH_COMPONENT32F,                       GL_DEPTH_COMPONENT,                          GL_FLOAT,                       false }, // D16F
+		{ GL_DEPTH_COMPONENT32F,                       GL_DEPTH_COMPONENT,                          GL_FLOAT,                       false }, // D24F
+		{ GL_DEPTH_COMPONENT32F,                       GL_DEPTH_COMPONENT,                          GL_FLOAT,                       false }, // D32F
+		{ GL_STENCIL_INDEX8,                           GL_DEPTH_STENCIL,                            GL_UNSIGNED_BYTE,               false }, // D0S8
 	};
 
 	struct Extension
@@ -251,6 +260,7 @@ namespace bgfx
 			ARB_multisample,
 			ARB_sampler_objects,
 			ARB_seamless_cube_map,
+			ARB_texture_compression_rgtc,
 			ARB_texture_float,
 			ARB_texture_multisample,
 			ARB_texture_swizzle,
@@ -258,6 +268,7 @@ namespace bgfx
 			ARB_vertex_array_object,
 			ARB_vertex_type_2_10_10_10_rev,
 			ATI_meminfo,
+			CHROMIUM_depth_texture,
 			CHROMIUM_framebuffer_multisample,
 			CHROMIUM_texture_compression_dxt3,
 			CHROMIUM_texture_compression_dxt5,
@@ -282,6 +293,7 @@ namespace bgfx
 			EXT_texture_type_2_10_10_10_REV,
 			EXT_timer_query,
 			EXT_unpack_subimage,
+			GOOGLE_depth_texture,
 			IMG_multisampled_render_to_texture,
 			IMG_read_format,
 			IMG_shader_binary,
@@ -334,6 +346,7 @@ namespace bgfx
 		{ "GL_ARB_multisample",                    false,                             true  },
 		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_seamless_cube_map",              BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "GL_ARB_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_texture_float",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_texture_multisample",            BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_texture_swizzle",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
@@ -341,6 +354,7 @@ namespace bgfx
 		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
 		{ "GL_ATI_meminfo",                        false,                             true  },
+		{ "GL_CHROMIUM_depth_texture",             false,                             true  },
 		{ "GL_CHROMIUM_framebuffer_multisample",   false,                             true  },
 		{ "GL_CHROMIUM_texture_compression_dxt3",  false,                             true  },
 		{ "GL_CHROMIUM_texture_compression_dxt5",  false,                             true  },
@@ -365,6 +379,7 @@ namespace bgfx
 		{ "GL_EXT_texture_type_2_10_10_10_REV",    false,                             true  },
 		{ "GL_EXT_timer_query",                    false,                             true  },
 		{ "GL_EXT_unpack_subimage",                false,                             true  },
+		{ "GL_GOOGLE_depth_texture",               false,                             true  },
 		{ "GL_IMG_multisampled_render_to_texture", false,                             true  },
 		{ "GL_IMG_read_format",                    false,                             true  },
 		{ "GL_IMG_shader_binary",                  false,                             true  },
@@ -550,6 +565,7 @@ namespace bgfx
 			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 31)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
+			, m_depthTextureSupport(false)
 			, m_useClearQuad(true)
 			, m_flip(false)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
@@ -911,6 +927,7 @@ namespace bgfx
 		bool m_samplerObjectSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
+		bool m_depthTextureSupport;
 		bool m_useClearQuad;
 		bool m_flip;
 
@@ -1617,7 +1634,6 @@ namespace bgfx
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE) );
 		GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE) );
 
-		// OpenGL ES 2.0 doesn't support GL_DEPTH_COMPONENT... this will fail.
 		GL_CHECK(glTexImage2D(m_target
 							, 0
 							, GL_DEPTH_COMPONENT
@@ -2013,7 +2029,8 @@ namespace bgfx
 		}
 
 #if 0 // GLES can't create texture with depth texture format...
-		if (0 < depthFormat)
+		if (s_renderCtx->m_depthTextureSupport
+		&&  0 < depthFormat)
 		{
 			m_depth.createDepth(_width, _height);
 		}
@@ -2472,14 +2489,18 @@ namespace bgfx
 		s_renderCtx = BX_NEW(g_allocator, RendererContext);
 		s_renderCtx->init();
 
-#if BGFX_CONFIG_DEBUG
 		GLint numCmpFormats;
 		GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
-
 		BX_TRACE("GL_NUM_COMPRESSED_TEXTURE_FORMATS %d", numCmpFormats);
+
+		GLint* cmpFormat = NULL;
 
 		if (0 < numCmpFormats)
 		{
+			cmpFormat = (GLint*)alloca(sizeof(GLint)*numCmpFormats);
+			GL_CHECK(glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, cmpFormat) );
+
+#if BGFX_CONFIG_DEBUG
 			static const char* s_textureFormatName[TextureFormat::Unknown+1] =
 			{
 				"BC1",
@@ -2500,18 +2521,17 @@ namespace bgfx
 				"",
 				// TextureFormat::Count
 			};
-
-			GLint* formats = (GLint*)alloca(sizeof(GLint)*numCmpFormats);
-			GL_CHECK(glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, formats) );
+#endif // BGFX_CONFIG_DEBUG
 
 			for (GLint ii = 0; ii < numCmpFormats; ++ii)
 			{
-				GLint internalFmt = formats[ii];
+				GLint internalFmt = cmpFormat[ii];
 				uint32_t fmt = uint32_t(TextureFormat::Unknown);
 				for (uint32_t jj = 0; jj < fmt; ++jj)
 				{
 					if (s_textureFormat[jj].m_internalFmt == (GLenum)internalFmt)
 					{
+						s_textureFormat[jj].m_supported = true;
 						fmt = jj;
 					}
 				}
@@ -2520,6 +2540,7 @@ namespace bgfx
 			}
 		}
 
+#if BGFX_CONFIG_DEBUG
 #	define GL_GET(_pname, _min) BX_TRACE("  " #_pname " %d (min: %d)", glGet(_pname), _min)
 
 		BX_TRACE("Defaults:");
@@ -2613,28 +2634,46 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_OPENGL_USE_EXTENSIONS
 
 		bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
-		s_textureFormat[TextureFormat::BC1].m_supported = bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
-		s_textureFormat[TextureFormat::BC2].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
-		s_textureFormat[TextureFormat::BC3].m_supported = bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
+		s_textureFormat[TextureFormat::BC1].m_supported |= bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
+
+		if (!s_textureFormat[TextureFormat::BC1].m_supported
+		&& (s_textureFormat[TextureFormat::BC2].m_supported || s_textureFormat[TextureFormat::BC3].m_supported) )
+		{
+			// If RGBA_S3TC_DXT1 is not supported, maybe RGB_S3TC_DXT1 is?
+			for (GLint ii = 0; ii < numCmpFormats; ++ii)
+			{
+				if (GL_COMPRESSED_RGB_S3TC_DXT1_EXT == cmpFormat[ii])
+				{
+					s_textureFormat[TextureFormat::BC1].m_internalFmt = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+					s_textureFormat[TextureFormat::BC1].m_fmt         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+					s_textureFormat[TextureFormat::BC1].m_supported   = true;
+					break;
+				}
+			}
+		}
+
+		s_textureFormat[TextureFormat::BC2].m_supported |= bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
+		s_textureFormat[TextureFormat::BC3].m_supported |= bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
 
 		bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
+			|| s_extension[Extension::ARB_texture_compression_rgtc].m_supported
 			|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported
 			;
-		s_textureFormat[TextureFormat::BC4].m_supported = bc45Supported;
-		s_textureFormat[TextureFormat::BC5].m_supported = bc45Supported;
+		s_textureFormat[TextureFormat::BC4].m_supported |= bc45Supported;
+		s_textureFormat[TextureFormat::BC5].m_supported |= bc45Supported;
 
 		bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
-		s_textureFormat[TextureFormat::ETC1].m_supported = etc1Supported;
+		s_textureFormat[TextureFormat::ETC1].m_supported |= etc1Supported;
 
 		bool etc2Supported = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_ES3_compatibility].m_supported
 			;
-		s_textureFormat[TextureFormat::ETC2  ].m_supported = etc2Supported;
-		s_textureFormat[TextureFormat::ETC2A ].m_supported = etc2Supported;
-		s_textureFormat[TextureFormat::ETC2A1].m_supported = etc2Supported;
+		s_textureFormat[TextureFormat::ETC2  ].m_supported |= etc2Supported;
+		s_textureFormat[TextureFormat::ETC2A ].m_supported |= etc2Supported;
+		s_textureFormat[TextureFormat::ETC2A1].m_supported |= etc2Supported;
 
 		if (!s_textureFormat[TextureFormat::ETC1].m_supported
-		&&  etc2Supported)
+		&&   s_textureFormat[TextureFormat::ETC2].m_supported)
 		{
 			// When ETC2 is supported override ETC1 texture format settings.
 			s_textureFormat[TextureFormat::ETC1].m_internalFmt = GL_COMPRESSED_RGB8_ETC2;
@@ -2643,23 +2682,35 @@ namespace bgfx
 		}
 
 		bool ptc1Supported = s_extension[Extension::IMG_texture_compression_pvrtc ].m_supported;
-		s_textureFormat[TextureFormat::PTC12].m_supported  = ptc1Supported;
-		s_textureFormat[TextureFormat::PTC14].m_supported  = ptc1Supported;
-		s_textureFormat[TextureFormat::PTC12A].m_supported = ptc1Supported;
-		s_textureFormat[TextureFormat::PTC14A].m_supported = ptc1Supported;
+		s_textureFormat[TextureFormat::PTC12 ].m_supported |= ptc1Supported;
+		s_textureFormat[TextureFormat::PTC14 ].m_supported |= ptc1Supported;
+		s_textureFormat[TextureFormat::PTC12A].m_supported |= ptc1Supported;
+		s_textureFormat[TextureFormat::PTC14A].m_supported |= ptc1Supported;
 
 		bool ptc2Supported = s_extension[Extension::IMG_texture_compression_pvrtc2].m_supported;
-		s_textureFormat[TextureFormat::PTC22].m_supported  = ptc2Supported;
-		s_textureFormat[TextureFormat::PTC24].m_supported  = ptc2Supported;
+		s_textureFormat[TextureFormat::PTC22].m_supported |= ptc2Supported;
+		s_textureFormat[TextureFormat::PTC24].m_supported |= ptc2Supported;
 
-		g_caps.emulated &= ~( 0
-							| bc123Supported ? BGFX_CAPS_TEXTURE_FORMAT_BC1|BGFX_CAPS_TEXTURE_FORMAT_BC2|BGFX_CAPS_TEXTURE_FORMAT_BC3 : 0
-							| bc45Supported  ? BGFX_CAPS_TEXTURE_FORMAT_BC4|BGFX_CAPS_TEXTURE_FORMAT_BC5 : 0
-							| etc1Supported  ? BGFX_CAPS_TEXTURE_FORMAT_ETC1 : 0
-							| etc2Supported  ? BGFX_CAPS_TEXTURE_FORMAT_ETC2|BGFX_CAPS_TEXTURE_FORMAT_ETC2A|BGFX_CAPS_TEXTURE_FORMAT_ETC2A1 : 0
-							| ptc1Supported  ? BGFX_CAPS_TEXTURE_FORMAT_PTC12|BGFX_CAPS_TEXTURE_FORMAT_PTC14|BGFX_CAPS_TEXTURE_FORMAT_PTC14A|BGFX_CAPS_TEXTURE_FORMAT_PTC12A : 0
-							| ptc2Supported  ? BGFX_CAPS_TEXTURE_FORMAT_PTC22|BGFX_CAPS_TEXTURE_FORMAT_PTC24 : 0
-							);
+		uint64_t supportedCompressedFormats = 0
+			| (s_textureFormat[TextureFormat::BC1   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC1    : 0)
+			| (s_textureFormat[TextureFormat::BC2   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC2    : 0)
+			| (s_textureFormat[TextureFormat::BC3   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC3    : 0)
+			| (s_textureFormat[TextureFormat::BC4   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC4    : 0)
+			| (s_textureFormat[TextureFormat::BC5   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC5    : 0)
+			| (s_textureFormat[TextureFormat::ETC1  ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_ETC1   : 0)
+			| (s_textureFormat[TextureFormat::ETC2  ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_ETC2   : 0)
+			| (s_textureFormat[TextureFormat::ETC2A ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_ETC2A  : 0)
+			| (s_textureFormat[TextureFormat::ETC2A1].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_ETC2A1 : 0)
+			| (s_textureFormat[TextureFormat::PTC12 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC12  : 0)
+			| (s_textureFormat[TextureFormat::PTC14 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC14  : 0)
+			| (s_textureFormat[TextureFormat::PTC14A].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC14A : 0)
+			| (s_textureFormat[TextureFormat::PTC12A].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC12A : 0)
+			| (s_textureFormat[TextureFormat::PTC22 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC22  : 0)
+			| (s_textureFormat[TextureFormat::PTC24 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC24  : 0)
+			;
+
+		g_caps.supported |= supportedCompressedFormats;
+
 		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_texture_3D].m_supported
 						 ? BGFX_CAPS_TEXTURE_3D
 						 : 0
@@ -2705,6 +2756,14 @@ namespace bgfx
 			|| s_extension[Extension::ARB_texture_swizzle].m_supported
 			|| s_extension[Extension::EXT_texture_swizzle].m_supported
 			;
+
+		s_renderCtx->m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			|| s_extension[Extension::CHROMIUM_depth_texture].m_supported
+			|| s_extension[Extension::GOOGLE_depth_texture].m_supported
+			|| s_extension[Extension::OES_depth_texture].m_supported
+			;
+
+		g_caps.supported |= s_renderCtx->m_depthTextureSupport ? BGFX_CAPS_TEXTURE_DEPTH_MASK : 0;
 
 		if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 		{
