@@ -332,6 +332,7 @@ namespace entry
 
 	void setMouseLock(bool _lock)
 	{
+		BX_UNUSED(_lock);
 	}
 
 } // namespace entry

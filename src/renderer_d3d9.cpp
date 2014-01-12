@@ -162,8 +162,19 @@ namespace bgfx
 
 	static const D3DFORMAT s_depthFormat[] =
 	{
-		D3DFMT_UNKNOWN, // ignored
-		D3DFMT_D24S8,
+		D3DFMT_UNKNOWN,       // ignored
+		D3DFMT_D16,           // D16  
+		D3DFMT_D24X8,         // D24  
+		D3DFMT_D24S8,         // D24S8
+		D3DFMT_D32,           // D32  
+		D3DFMT_DF16,          // D16F 
+		D3DFMT_DF24,          // D24F
+		D3DFMT_D32F_LOCKABLE, // D32F
+#if defined(D3D_DISABLE_9EX)
+		D3DFMT_UNKNOWN,       // D0S8
+#else
+		D3DFMT_S8_LOCKABLE,   // D0S8
+#endif // defined(D3D_DISABLE_9EX)
 	};
 
 	static const D3DTEXTUREADDRESS s_textureAddress[] =
@@ -1459,6 +1470,8 @@ namespace bgfx
 		}
 
 		BX_CHECK(false, "You should not be here.");
+		_pitch = 0;
+		_slicePitch = 0;
 		return NULL;
 	}
 
@@ -1725,8 +1738,8 @@ namespace bgfx
 		if (0 != m_flags)
 		{
 			m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
-			uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
-			uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
+			const uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
+			const uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
 			m_depthOnly = (0 == colorFormat && 0 < depthFormat);
 
 			// CheckDeviceFormat D3DUSAGE_SRGBWRITE
@@ -1749,7 +1762,7 @@ namespace bgfx
 					, m_height
 					, 1
 					, D3DUSAGE_DEPTHSTENCIL
-					, D3DFMT_DF24 //s_depthFormat[depthFormat]
+					, s_depthFormat[depthFormat]
 					, D3DPOOL_DEFAULT
 					, &m_depthTexture
 					, NULL
@@ -1797,7 +1810,7 @@ namespace bgfx
 				{
 					DX_CHECK(s_renderCtx->m_device->CreateDepthStencilSurface(m_width
 							, m_height
-							, s_depthFormat[depthFormat] // s_renderCtx->m_fmtDepth
+							, s_depthFormat[depthFormat]
 							, m_msaa.m_type
 							, m_msaa.m_quality
 							, FALSE
@@ -2881,7 +2894,7 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 0;
-				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " ");
 
 				const D3DADAPTER_IDENTIFIER9& identifier = s_renderCtx->m_identifier;
 				tvm.printf(0, pos++, 0x0f, " Device: %s (%s)", identifier.Description, identifier.Driver);

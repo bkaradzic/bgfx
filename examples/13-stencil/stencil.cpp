@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <string>
+#include <vector>
+
 #include "common.h"
 
 #include <bgfx.h>
@@ -11,9 +14,6 @@
 #include "entry/entry.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
-
-#include <string>
-#include <vector>
 
 #define RENDER_VIEWID_RANGE1_PASS_0   1 
 #define RENDER_VIEWID_RANGE1_PASS_1   2 

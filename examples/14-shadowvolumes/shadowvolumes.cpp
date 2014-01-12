@@ -3,6 +3,14 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <stdio.h>
+#include <string.h>
+
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <map>
+
 namespace std { namespace tr1 {} }
 using namespace std::tr1;
 
@@ -17,14 +25,6 @@ using namespace std::tr1;
 #include "entry/entry.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
-
-#include <stdio.h>
-#include <string.h>
-
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <map>
 
 #define SV_USE_SIMD 1
 #define MAX_INSTANCE_COUNT 25
@@ -1993,7 +1993,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = loadTexture("fieldstone-rgba.dds");
 	bgfx::TextureHandle fieldstoneTex = bgfx::createTexture(mem);
 
-	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH);
+	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
 
 	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
 	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
@@ -2172,7 +2172,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			bgfx::destroyRenderTarget(s_stencilRt);
 
-			s_stencilRt = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH);
+			s_stencilRt = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
 		}
 
 		//set view and projection matrices

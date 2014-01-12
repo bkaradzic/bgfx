@@ -219,6 +219,7 @@ TextBuffer::~TextBuffer()
 {
 	delete [] m_vertexBuffer;
 	delete [] m_indexBuffer;
+	delete [] m_styleBuffer;
 }
 
 void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const char* _end)

@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <string>
+#include <vector>
+
 #include "common.h"
 
 #include <bgfx.h>
@@ -13,9 +16,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#include <string>
-#include <vector>
 
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;

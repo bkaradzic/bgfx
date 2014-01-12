@@ -114,7 +114,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define floorf(f) ((float) floor(f))
 #define logf(f) ((float) log(f))
 
-#ifdef ANDROID
+#if defined(__ANDROID__) || defined(ANDROID)
 #define log2f(f) (logf(f) * (float) (1.0 / M_LN2))
 #else
 #define log2f(f) ((float) log2(f))

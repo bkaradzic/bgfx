@@ -454,7 +454,7 @@ struct glsl_type {
     */
    const glsl_type *field_type(const char *name) const;
 
-   const glsl_precision field_precision(const char *name) const;
+   glsl_precision field_precision(const char *name) const;
 
 
    /**

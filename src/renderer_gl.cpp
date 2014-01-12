@@ -157,10 +157,23 @@ namespace bgfx
 		{ GL_R32F,     GL_FLOAT,                       32 },
 	};
 
-	static const GLenum s_depthFormat[] =
+	struct RenderTargetDepthFormat
 	{
-		0, // ignored
-		0,
+		GLenum m_internalFmt;
+		GLenum m_attachment;
+	};
+
+	static const RenderTargetDepthFormat s_depthFormat[] =
+	{
+		{ 0,                     0                           }, // ignored
+		{ GL_DEPTH_COMPONENT16,  GL_DEPTH_ATTACHMENT         }, // D16
+		{ GL_DEPTH_COMPONENT24,  GL_DEPTH_ATTACHMENT         }, // D24
+		{ GL_DEPTH24_STENCIL8,   GL_DEPTH_STENCIL_ATTACHMENT }, // D24S8
+		{ GL_DEPTH_COMPONENT32,  GL_DEPTH_ATTACHMENT         }, // D32
+		{ GL_DEPTH_COMPONENT32F, GL_DEPTH_ATTACHMENT         }, // D16F 
+		{ GL_DEPTH_COMPONENT32F, GL_DEPTH_ATTACHMENT         }, // D24F 
+		{ GL_DEPTH_COMPONENT32F, GL_DEPTH_ATTACHMENT         }, // D32F 
+		{ GL_STENCIL_INDEX8,     GL_STENCIL_ATTACHMENT       }, // D0S8
 	};
 
 	static const GLenum s_textureAddress[] =
@@ -278,9 +291,12 @@ namespace bgfx
 			NVX_gpu_memory_info,
 			OES_compressed_ETC1_RGB8_texture,
 			OES_depth24,
+			OES_depth32,
 			OES_depth_texture,
 			OES_fragment_precision_high,
 			OES_get_program_binary,
+			OES_required_internalformat,
+			OES_packed_depth_stencil,
 			OES_read_format,
 			OES_rgb8_rgba8,
 			OES_standard_derivatives,
@@ -358,9 +374,12 @@ namespace bgfx
 		{ "GL_NVX_gpu_memory_info",                false,                             true  },
 		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
 		{ "GL_OES_depth24",                        false,                             true  },
+		{ "GL_OES_depth32",                        false,                             true  },
 		{ "GL_OES_depth_texture",                  false,                             true  },
 		{ "GL_OES_fragment_precision_high",        false,                             true  },
 		{ "GL_OES_get_program_binary",             false,                             true  },
+		{ "GL_OES_required_internalformat",        false,                             true  },
+		{ "GL_OES_packed_depth_stencil",           false,                             true  },
 		{ "GL_OES_read_format",                    false,                             true  },
 		{ "GL_OES_rgb8_rgba8",                     false,                             true  },
 		{ "GL_OES_standard_derivatives",           false,                             true  },
@@ -1846,7 +1865,7 @@ namespace bgfx
 							|| findMatch(code, "fwidth")
 							);
 
-			bool usesFragDepth = findMatch(code, "gl_FragDepth");
+			bool usesFragDepth = !!findMatch(code, "gl_FragDepth");
 
 			bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported &&
 							(  findMatch(code, "texture3D")
@@ -1983,10 +2002,10 @@ namespace bgfx
 		uint32_t msaa = (_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT;
 		m_msaa = bx::uint32_min(s_renderCtx->m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-		uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
-		uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
-		GLenum minFilter = s_textureFilterMin[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT][0];
-		GLenum magFilter = s_textureFilterMag[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+		const uint32_t colorFormat = (_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
+		const uint32_t depthFormat = (_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
+		const GLenum minFilter = s_textureFilterMin[(_textureFlags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT][0];
+		const GLenum magFilter = s_textureFilterMag[(_textureFlags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
 
 		if (0 < colorFormat)
 		{
@@ -2049,15 +2068,12 @@ namespace bgfx
 
 			if (0 < colorFormat)
 			{
-#if BGFX_CONFIG_RENDERER_OPENGL
-				GLenum depthComponent = GL_DEPTH_COMPONENT32;
-#else
-				GLenum depthComponent = GL_DEPTH_COMPONENT16;
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-
 				GL_CHECK(glGenRenderbuffers(1, &m_depthRbo) );
 				BX_CHECK(0 != m_depthRbo, "Failed to generate renderbuffer id.");
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthRbo) );
+
+				const GLenum depthComponent = s_depthFormat[depthFormat].m_internalFmt;
+				const GLenum attachment = s_depthFormat[depthFormat].m_attachment;
 
 #if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 				if (0 != m_msaa)
@@ -2071,11 +2087,32 @@ namespace bgfx
 				}
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
+#if BGFX_CONFIG_RENDERER_OPENGLES2
+				if (GL_STENCIL_ATTACHMENT != attachment)
+				{
+					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+						, GL_DEPTH_ATTACHMENT
+						, GL_RENDERBUFFER
+						, m_depthRbo
+						) );
+				}
+
+				if (GL_DEPTH_STENCIL_ATTACHMENT == attachment
+				||  GL_STENCIL_ATTACHMENT == attachment)
+				{
+					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+						, GL_STENCIL_ATTACHMENT
+						, GL_RENDERBUFFER
+						, m_depthRbo
+						) );
+				}
+#else
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
-					, GL_DEPTH_ATTACHMENT
+					, attachment
 					, GL_RENDERBUFFER
 					, m_depthRbo
 					) );
+#endif // BGFX_CONFIG_RENDERER_OPENGLES2
 			}
 			else
 			{
@@ -3743,7 +3780,7 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 0;
-				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " ");
+				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " " BGFX_RENDERER_NAME " / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " ");
 				tvm.printf(0, pos++, 0x0f, "      Vendor: %s", s_renderCtx->m_vendor);
 				tvm.printf(0, pos++, 0x0f, "    Renderer: %s", s_renderCtx->m_renderer);
 				tvm.printf(0, pos++, 0x0f, "     Version: %s", s_renderCtx->m_version);

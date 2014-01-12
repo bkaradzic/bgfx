@@ -29,7 +29,7 @@
 #include <stdint.h>
 
 /* Android defines SIZE_MAX in limits.h, instead of the standard stdint.h */
-#ifdef ANDROID
+#if defined(__ANDROID__) || defined(ANDROID)
 #include <limits.h>
 #endif
 
