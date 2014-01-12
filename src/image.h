@@ -40,6 +40,15 @@ namespace bgfx
 	};
 
 	///
+	bool isCompressed(TextureFormat::Enum _format);
+
+	///
+	bool isColor(TextureFormat::Enum _format);
+
+	///
+	bool isDepth(TextureFormat::Enum _format);
+
+	///
 	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
 
 	///

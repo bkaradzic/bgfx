@@ -37,7 +37,35 @@ namespace bgfx
 		16, // RGBA4
 		16, // RGB5A1
 		32, // RGB10A2
+		0,  // UnknownDepth
+		16, // D16
+		24, // D24
+		32, // D24S8
+		32, // D32
+		16, // D16F
+		24, // D24F
+		32, // D32F
+		8,  // D0S8
 	};
+
+	bool isCompressed(TextureFormat::Enum _format)
+	{
+		return _format < TextureFormat::Unknown;
+	}
+
+	bool isColor(TextureFormat::Enum _format)
+	{
+		return _format > TextureFormat::Unknown
+			&& _format < TextureFormat::UnknownDepth
+			;
+	}
+
+	bool isDepth(TextureFormat::Enum _format)
+	{
+		return _format > TextureFormat::UnknownDepth
+			&& _format < TextureFormat::Count
+			;
+	}
 
 	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
 	{
