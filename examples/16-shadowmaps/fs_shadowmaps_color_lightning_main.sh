@@ -107,7 +107,7 @@
 		float coverage = texcoordInRange(shadowcoord.xy/shadowcoord.w) * 0.3;
 		colorCoverage = vec3(-coverage, -coverage, coverage);
 	}
-	else // (faceSelection.w == faceMax) 
+	else // (faceSelection.w == faceMax)
 	{
 		shadowcoord = v_texcoord4;
 

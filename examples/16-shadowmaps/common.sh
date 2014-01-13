@@ -61,7 +61,7 @@ Light evalLight(vec3 _v, vec4 _l, vec3 _spotDirection, float _spotInner, float _
 		light.ld = normalize(light.l);
 
 		float ldotsd = max(0.0, dot(-light.ld, normalize(_spotDirection)));
-		float falloff = spot(ldotsd, _spotOuter, _spotInner); 
+		float falloff = spot(ldotsd, _spotOuter, _spotInner);
 		light.attn = attenuation(length(light.l), _attnParams) * mix(falloff, 1.0, step(90, _spotOuter));
 	}
 

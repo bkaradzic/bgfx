@@ -6,7 +6,7 @@ $output v_position
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../common/common.sh" 
+#include "../common/common.sh"
 
 void main()
 {

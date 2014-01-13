@@ -12,7 +12,7 @@ uniform vec4 u_color;
 
 uniform vec3 u_materialKa;
 uniform vec3 u_materialKd;
-uniform vec4 u_materialKs; 
+uniform vec4 u_materialKs;
 uniform vec4 u_lightPosition;
 uniform vec4 u_lightAmbientPower;
 uniform vec4 u_lightDiffusePower;
@@ -45,7 +45,7 @@ Shader evalShader(float _diff, float _spec)
 {
 	Shader shader;
 
-	shader.ambi = u_lightAmbientPower.xyz  * u_lightAmbientPower.w  * u_materialKa;    
+	shader.ambi = u_lightAmbientPower.xyz  * u_lightAmbientPower.w  * u_materialKa;
 	shader.diff = u_lightDiffusePower.xyz  * u_lightDiffusePower.w  * u_materialKd     * _diff;
 	shader.spec = u_lightSpecularPower.xyz * u_lightSpecularPower.w * u_materialKs.xyz * _spec;
 

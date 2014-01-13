@@ -1,15 +1,15 @@
 $input a_position, a_normal
-$output v_position, v_normal, v_view, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4 
+$output v_position, v_normal, v_view, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
 
 /*
  * Copyright 2013 Dario Manesku. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "../common/common.sh" 
+#include "../common/common.sh"
 
 uniform vec4 u_params1;
-#define u_shadowMapOffset u_params1.y 
+#define u_shadowMapOffset u_params1.y
 
 uniform mat4 u_lightMtx;
 uniform mat4 u_shadowMapMtx0;
