@@ -490,17 +490,17 @@ namespace bgfx
 		/// Renderer backend type.
 		RendererType::Enum rendererType;
 
-		/// Supported functionality, it includes emulated functionality. 
-		/// Checking supported and not emulated will give functionality 
+		/// Supported functionality, it includes emulated functionality.
+		/// Checking supported and not emulated will give functionality
 		/// natively supported by renderer.
 		uint64_t supported;
 
-		/// Emulated functionality. For example some texture compression 
+		/// Emulated functionality. For example some texture compression
 		/// modes are not natively supported by all renderers. The library
 		/// internally decompresses texture into supported format.
 		uint64_t emulated;
 
-		uint16_t maxTextureSize; ///< Maximum texture size.		
+		uint16_t maxTextureSize; ///< Maximum texture size.
 		uint16_t maxDrawCalls;   ///< Maximum draw calls.
 	};
 
@@ -669,7 +669,7 @@ namespace bgfx
 	/// singlethreaded renderer this call does frame rendering.
 	///
 	/// @returns Current frame number. This might be used in conjunction with
-	///   double/multi buffering data outside the library and passing it to 
+	///   double/multi buffering data outside the library and passing it to
 	///   library via makeRef calls.
 	///
 	uint32_t frame();
