@@ -2,7 +2,7 @@ $input a_position, a_normal
 $output v_position, v_normal, v_view, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
 
 /*
- * Copyright 2013 Dario Manesku. All rights reserved.
+ * Copyright 2013-2014 Dario Manesku. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
