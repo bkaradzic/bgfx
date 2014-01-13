@@ -1505,6 +1505,14 @@ bool imguiSlider(const char* _text, float* _val, float _vmin, float _vmax, float
 	return s_imgui.slider(_text, _val, _vmin, _vmax, _vinc, _enabled);
 }
 
+bool imguiSlider(const char* _text, int32_t* _val, int32_t _vmin, int32_t _vmax, bool _enabled)
+{
+	float val = (float)*_val;
+	bool result = s_imgui.slider(_text, &val, (float)_vmin, (float)_vmax, 1.0f, _enabled);
+	*_val = (int32_t)val;
+	return result;
+}
+
 void imguiDrawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb)
 {
 	s_imgui.drawText(_x, _y, _align, _text, _argb);

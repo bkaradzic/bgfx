@@ -69,7 +69,8 @@ bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
 void imguiLabel(const char* _format, ...);
 void imguiValue(const char* _text);
-bool imguiSlider(const char* _text, float* val, float vmin, float vmax, float vinc, bool _enabled = true);
+bool imguiSlider(const char* _text, float* _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
+bool imguiSlider(const char* _text, int32_t* _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
 
 void imguiDrawText(int _x, int _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb);
 void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_t _argb);

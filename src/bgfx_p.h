@@ -991,6 +991,8 @@ namespace bgfx
 		BX_CACHE_LINE_ALIGN_MARKER();
 
 		Frame()
+			: m_waitSubmit(0)
+			, m_waitRender(0)
 		{
 		}
 
