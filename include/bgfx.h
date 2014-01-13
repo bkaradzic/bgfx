@@ -252,11 +252,30 @@
 #define BGFX_CAPS_TEXTURE_FORMAT_PTC12A  UINT64_C(0x0000000000001000)
 #define BGFX_CAPS_TEXTURE_FORMAT_PTC22   UINT64_C(0x0000000000002000)
 #define BGFX_CAPS_TEXTURE_FORMAT_PTC24   UINT64_C(0x0000000000004000)
-#define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000010000)
-#define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000000020000)
-#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000040000)
-#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000000080000)
-#define BGFX_CAPS_FRAGMENT_DEPTH         UINT64_C(0x0000000000100000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D16     UINT64_C(0x0000000000008000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D24     UINT64_C(0x0000000000010000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D24S8   UINT64_C(0x0000000000020000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D32     UINT64_C(0x0000000000040000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D16F    UINT64_C(0x0000000000080000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D24F    UINT64_C(0x0000000000100000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D32F    UINT64_C(0x0000000000200000)
+#define BGFX_CAPS_TEXTURE_FORMAT_D0S8    UINT64_C(0x0000000000400000)
+#define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000001000000)
+#define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000004000000)
+#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000008000000)
+#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000010000000)
+#define BGFX_CAPS_FRAGMENT_DEPTH         UINT64_C(0x0000000020000000)
+
+#define BGFX_CAPS_TEXTURE_DEPTH_MASK (0 \
+			| BGFX_CAPS_TEXTURE_FORMAT_D16 \
+			| BGFX_CAPS_TEXTURE_FORMAT_D24 \
+			| BGFX_CAPS_TEXTURE_FORMAT_D24S8 \
+			| BGFX_CAPS_TEXTURE_FORMAT_D32 \
+			| BGFX_CAPS_TEXTURE_FORMAT_D16F \
+			| BGFX_CAPS_TEXTURE_FORMAT_D24F \
+			| BGFX_CAPS_TEXTURE_FORMAT_D32F \
+			| BGFX_CAPS_TEXTURE_FORMAT_D0S8 \
+			)
 
 ///
 #define BGFX_HANDLE(_name) \
@@ -355,7 +374,9 @@ namespace bgfx
 			PTC12A, // PVRTC1 RGBA 2BPP
 			PTC22,  // PVRTC2 RGBA 2BPP
 			PTC24,  // PVRTC2 RGBA 4BPP
-			Unknown,
+
+			Unknown, // compressed formats above
+
 			L8,
 			BGRA8,
 			RGBA16,
@@ -364,6 +385,17 @@ namespace bgfx
 			RGBA4,
 			RGB5A1,
 			RGB10A2,
+
+			UnknownDepth, // depth formats below
+
+			D16,
+			D24,
+			D24S8,
+			D32,
+			D16F,
+			D24F,
+			D32F,
+			D0S8,
 			
 			Count
 		};
@@ -458,17 +490,17 @@ namespace bgfx
 		/// Renderer backend type.
 		RendererType::Enum rendererType;
 
-		/// Supported functionality, it includes emulated functionality. 
-		/// Checking supported and not emulated will give functionality 
+		/// Supported functionality, it includes emulated functionality.
+		/// Checking supported and not emulated will give functionality
 		/// natively supported by renderer.
 		uint64_t supported;
 
-		/// Emulated functionality. For example some texture compression 
+		/// Emulated functionality. For example some texture compression
 		/// modes are not natively supported by all renderers. The library
 		/// internally decompresses texture into supported format.
 		uint64_t emulated;
 
-		uint16_t maxTextureSize; ///< Maximum texture size.		
+		uint16_t maxTextureSize; ///< Maximum texture size.
 		uint16_t maxDrawCalls;   ///< Maximum draw calls.
 	};
 
@@ -637,7 +669,7 @@ namespace bgfx
 	/// singlethreaded renderer this call does frame rendering.
 	///
 	/// @returns Current frame number. This might be used in conjunction with
-	///   double/multi buffering data outside the library and passing it to 
+	///   double/multi buffering data outside the library and passing it to
 	///   library via makeRef calls.
 	///
 	uint32_t frame();

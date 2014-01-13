@@ -148,6 +148,10 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	define GL_RGBA16F 0x881A
 #endif // GL_RGBA16F
 
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#	define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+#endif // GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+
 #ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
 #	define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
 #endif // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
@@ -265,6 +269,10 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 #	define GL_UNPACK_ROW_LENGTH 0x0CF2
 #endif // GL_UNPACK_ROW_LENGTH
 
+#ifndef GL_DEPTH_STENCIL
+#	define GL_DEPTH_STENCIL 0x84F9
+#endif // GL_DEPTH_STENCIL
+
 #ifndef GL_DEPTH_COMPONENT32
 #	define GL_DEPTH_COMPONENT32 0x81A7
 #endif // GL_DEPTH_COMPONENT32
@@ -348,7 +356,7 @@ namespace bgfx
 	void dumpExtensions(const char* _extensions);
 
 	class ConstantBuffer;
-	
+
 	class VaoStateCache
 	{
 	public:
@@ -517,7 +525,7 @@ namespace bgfx
 		uint32_t m_size;
 		VaoCacheRef m_vcref;
 	};
-	
+
 	struct VertexBuffer
 	{
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle)
@@ -652,7 +660,7 @@ namespace bgfx
 		{
 			m_constantBuffer->commit();
 		}
- 
+
 		void add(uint32_t _hash)
 		{
 			m_vcref.add(_hash);

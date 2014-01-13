@@ -214,6 +214,15 @@ namespace bgfx
 		{ DXGI_FORMAT_B4G4R4A4_UNORM     }, // RGBA4
 		{ DXGI_FORMAT_B5G5R5A1_UNORM     }, // RGB5A1
 		{ DXGI_FORMAT_R10G10B10A2_UNORM  }, // RGB10A2
+		{ DXGI_FORMAT_UNKNOWN            }, // UnknownDepth
+		{ DXGI_FORMAT_D16_UNORM          }, // D16
+		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D24
+		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D24S8
+		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D32
+		{ DXGI_FORMAT_D32_FLOAT,         }, // D16F
+		{ DXGI_FORMAT_D32_FLOAT,         }, // D24F
+		{ DXGI_FORMAT_D32_FLOAT,         }, // D32F
+		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D0S8
 	};
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =
@@ -488,15 +497,15 @@ namespace bgfx
 				m_uniformReg.add(getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
 			}
 
-			g_caps.emulated &= ~( 0
+			g_caps.supported |= ( 0
 								| BGFX_CAPS_TEXTURE_FORMAT_BC1
 								| BGFX_CAPS_TEXTURE_FORMAT_BC2
 								| BGFX_CAPS_TEXTURE_FORMAT_BC3
 								| BGFX_CAPS_TEXTURE_FORMAT_BC4
-								);
-			g_caps.supported |= ( 0
+								| BGFX_CAPS_TEXTURE_FORMAT_BC5
 								| BGFX_CAPS_INSTANCING
 								| BGFX_CAPS_TEXTURE_3D
+								| BGFX_CAPS_TEXTURE_DEPTH_MASK
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								);
