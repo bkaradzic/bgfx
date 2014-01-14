@@ -15,8 +15,8 @@
 #include "entry/entry.h"
 #include "fpumath.h"
 
-#define RENDER_PASS_0 0
-#define RENDER_PASS_1 1
+#define RENDER_SHADOW_PASS_ID 0
+#define RENDER_SCENE_PASS_ID  1
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -577,17 +577,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const float area = 30.0f;
 		mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f);
 
-		/**
-		 * RENDER_PASS_0 - Craft shadow map.
-		 * RENDER_PASS_1 - Draw scene.
-		 */
-		bgfx::setViewRect(RENDER_PASS_0, 0, 0, shadowMapSize, shadowMapSize);
-		bgfx::setViewRect(RENDER_PASS_1, 0, 0, width, height);
+		bgfx::setViewRect(RENDER_SHADOW_PASS_ID, 0, 0, shadowMapSize, shadowMapSize);
+		bgfx::setViewRect(RENDER_SCENE_PASS_ID, 0, 0, width, height);
 
-		bgfx::setViewTransform(RENDER_PASS_0, lightView, lightProj);
-		bgfx::setViewTransform(RENDER_PASS_1, view, proj);
+		bgfx::setViewTransform(RENDER_SHADOW_PASS_ID, lightView, lightProj);
+		bgfx::setViewTransform(RENDER_SCENE_PASS_ID, view, proj);
 
-		bgfx::setViewRenderTarget(RENDER_PASS_0, s_rtShadowMap);
+		bgfx::setViewRenderTarget(RENDER_SHADOW_PASS_ID, s_rtShadowMap);
 
 		// Clear backbuffer and shadowmap rendertarget at beginning.
 		bgfx::setViewClearMask(0x3, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT, 0x303030ff, 1.0f, 0);
@@ -597,10 +593,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		{ // Craft shadow map.
 
-			hplaneMesh.submit(RENDER_PASS_0, mtxFloor, progPackDepth);
-			bunnyMesh.submit(RENDER_PASS_0, mtxBunny, progPackDepth);
-			hollowcubeMesh.submit(RENDER_PASS_0, mtxHollowcube, progPackDepth);
-			cubeMesh.submit(RENDER_PASS_0, mtxCube, progPackDepth);
+			hplaneMesh.submit(RENDER_SHADOW_PASS_ID, mtxFloor, progPackDepth);
+			bunnyMesh.submit(RENDER_SHADOW_PASS_ID, mtxBunny, progPackDepth);
+			hollowcubeMesh.submit(RENDER_SHADOW_PASS_ID, mtxHollowcube, progPackDepth);
+			cubeMesh.submit(RENDER_SHADOW_PASS_ID, mtxCube, progPackDepth);
 		}
 
 		{ // Draw Scene.
@@ -625,22 +621,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			// Floor.
 			mtxMul(lightMtx, mtxFloor, mtxShadow);
 			bgfx::setUniform(u_lightMtx, lightMtx);
-			hplaneMesh.submit(RENDER_PASS_1, mtxFloor, progDraw);
+			hplaneMesh.submit(RENDER_SCENE_PASS_ID, mtxFloor, progDraw);
 
 			// Bunny.
 			mtxMul(lightMtx, mtxBunny, mtxShadow);
 			bgfx::setUniform(u_lightMtx, lightMtx);
-			bunnyMesh.submit(RENDER_PASS_1, mtxBunny, progDraw);
+			bunnyMesh.submit(RENDER_SCENE_PASS_ID, mtxBunny, progDraw);
 
 			// Hollow cube.
 			mtxMul(lightMtx, mtxHollowcube, mtxShadow);
 			bgfx::setUniform(u_lightMtx, lightMtx);
-			hollowcubeMesh.submit(RENDER_PASS_1, mtxHollowcube, progDraw);
+			hollowcubeMesh.submit(RENDER_SCENE_PASS_ID, mtxHollowcube, progDraw);
 
 			// Cube.
 			mtxMul(lightMtx, mtxCube, mtxShadow);
 			bgfx::setUniform(u_lightMtx, lightMtx);
-			cubeMesh.submit(RENDER_PASS_1, mtxCube, progDraw);
+			cubeMesh.submit(RENDER_SCENE_PASS_ID, mtxCube, progDraw);
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to

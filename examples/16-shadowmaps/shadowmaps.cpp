@@ -1552,34 +1552,34 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Materials.
 	Material defaultMaterial =
 	{
-		 {{ 1.0f, 1.0f, 1.0f, 0.0f }} //ambient
-		,{{ 1.0f, 1.0f, 1.0f, 0.0f }} //diffuse
-		,{{ 1.0f, 1.0f, 1.0f, 0.0f }} //specular, exponent
+		{ { 1.0f, 1.0f, 1.0f, 0.0f } }, //ambient
+		{ { 1.0f, 1.0f, 1.0f, 0.0f } }, //diffuse
+		{ { 1.0f, 1.0f, 1.0f, 0.0f } }, //specular, exponent
 	};
 
 	// Lights.
 	Light pointLight =
 	{
-		{{ 0.0f, 0.0f, 0.0f, 1.0f   }}, //position
-		{  0.0f, 0.0f, 0.0f, 0.0f    }, //-ignore
-		{{ 1.0f, 1.0f, 1.0f, 0.0f   }}, //ambient
-		{{ 1.0f, 1.0f, 1.0f, 850.0f }}, //diffuse
-		{{ 1.0f, 1.0f, 1.0f, 0.0f   }}, //specular
-		{{ 0.0f,-0.4f,-0.6f, 0.0f   }}, //spotdirection, spotexponent
-		{  0.0f, 0.0f, 0.0f, 0.0f    }, //-ignore
-		{{ 1.0f, 0.0f, 1.0f, 91.0f  }}, //attenuation, spotcutoff
+		{ { 0.0f, 0.0f, 0.0f, 1.0f   } }, //position
+		{   0.0f, 0.0f, 0.0f, 0.0f     }, //-ignore
+		{ { 1.0f, 1.0f, 1.0f, 0.0f   } }, //ambient
+		{ { 1.0f, 1.0f, 1.0f, 850.0f } }, //diffuse
+		{ { 1.0f, 1.0f, 1.0f, 0.0f   } }, //specular
+		{ { 0.0f,-0.4f,-0.6f, 0.0f   } }, //spotdirection, spotexponent
+		{   0.0f, 0.0f, 0.0f, 0.0f     }, //-ignore
+		{ { 1.0f, 0.0f, 1.0f, 91.0f  } }, //attenuation, spotcutoff
 	};
 
 	Light directionalLight =
 	{
-		{{ 0.5f,-1.0f, 0.1f, 0.0f  }}, //position
-		{  0.0f, 0.0f, 0.0f, 0.0f   }, //-ignore
-		{{ 1.0f, 1.0f, 1.0f, 0.02f }}, //ambient
-		{{ 1.0f, 1.0f, 1.0f, 0.4f  }}, //diffuse
-		{{ 1.0f, 1.0f, 1.0f, 0.0f  }}, //specular
-		{{ 0.0f, 0.0f, 0.0f, 1.0f  }}, //spotdirection, spotexponent
-		{  0.0f, 0.0f, 0.0f, 0.0f   }, //-ignore
-		{{ 0.0f, 0.0f, 0.0f, 1.0f  }}, //attenuation, spotcutoff
+		{ { 0.5f,-1.0f, 0.1f, 0.0f  } }, //position
+		{   0.0f, 0.0f, 0.0f, 0.0f    }, //-ignore
+		{ { 1.0f, 1.0f, 1.0f, 0.02f } }, //ambient
+		{ { 1.0f, 1.0f, 1.0f, 0.4f  } }, //diffuse
+		{ { 1.0f, 1.0f, 1.0f, 0.0f  } }, //specular
+		{ { 0.0f, 0.0f, 0.0f, 1.0f  } }, //spotdirection, spotexponent
+		{   0.0f, 0.0f, 0.0f, 0.0f    }, //-ignore
+		{ { 0.0f, 0.0f, 0.0f, 1.0f  } }, //attenuation, spotcutoff
 	};
 
 	// Setup uniforms.
@@ -2131,13 +2131,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		static int32_t rightScrollArea = 0;
 		imguiBeginScrollArea("Settings", viewState.m_width - 256 - 10, 10, 256, 660, &rightScrollArea);
+
 #define IMGUI_FLOAT_SLIDER(_name, _val) \
-		imguiSlider(_name               \
-				, &_val                 \
-				, *(((float*)&_val)+1)  \
-				, *(((float*)&_val)+2)  \
-				, *(((float*)&_val)+3)  \
-				)
+			imguiSlider(_name \
+					, &_val \
+					, *(((float*)&_val)+1) \
+					, *(((float*)&_val)+2) \
+					, *(((float*)&_val)+3) \
+					)
 
 		imguiBool("Update lights", settings.m_updateLights);
 		imguiBool("Update scene", settings.m_updateScene);
@@ -2175,11 +2176,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			case SmImpl::Hard:
 				//imguiLabel("Hard");
 				break;
+
 			case SmImpl::PCF:
 				imguiLabel("PCF");
 				IMGUI_FLOAT_SLIDER("X Offset:", currentSmSettings->m_xOffset);
 				IMGUI_FLOAT_SLIDER("Y Offset:", currentSmSettings->m_yOffset);
 				break;
+
 			case SmImpl::VSM:
 				imguiLabel("VSM");
 				IMGUI_FLOAT_SLIDER("Min variance", currentSmSettings->m_customParam0);
@@ -2191,6 +2194,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					IMGUI_FLOAT_SLIDER("Blur Y Offset:", currentSmSettings->m_yOffset);
 				}
 				break;
+
 			case SmImpl::ESM:
 				imguiLabel("ESM");
 				IMGUI_FLOAT_SLIDER("ESM Hardness", currentSmSettings->m_customParam0);
@@ -2203,7 +2207,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				}
 				break;
 
-			case SmImpl::Count:
 			default:
 				break;
 		};
@@ -2253,6 +2256,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 #undef IMGUI_FLOAT_SLIDER
+
 		imguiEndScrollArea();
 		imguiEndFrame();
 

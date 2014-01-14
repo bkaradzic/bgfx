@@ -26,12 +26,12 @@ inline float fmaxf(float _a, float _b)
 
 inline float toRad(float _deg)
 {
-	return _deg * float(M_PI) / 180.0f;
+	return _deg * float(M_PI / 180.0);
 }
 
 inline float toDeg(float _rad)
 {
-	return _rad * 180.0f / float(M_PI);
+	return _rad * float(180.0 / M_PI);
 }
 
 inline float fclamp(float _a, float _min, float _max)
