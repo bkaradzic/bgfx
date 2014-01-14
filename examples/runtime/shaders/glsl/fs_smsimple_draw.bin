@@ -17,7 +17,7 @@ void main ()
   float result_5;
   result_5 = 0.0;
   vec2 tmpvar_6;
-  tmpvar_6 = (vec2(0.00195312, 0.00195312) * v_shadowcoord.w);
+  tmpvar_6 = (vec2(0.00195313, 0.00195313) * v_shadowcoord.w);
   vec4 tmpvar_7;
   tmpvar_7.zw = vec2(0.0, 0.0);
   tmpvar_7.xy = (vec2(-1.5, -1.5) * tmpvar_6);
