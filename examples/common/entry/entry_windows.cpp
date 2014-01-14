@@ -417,7 +417,7 @@ namespace entry
 						Key::Enum key = translateKey(_wparam);
 
 						if (Key::Print == key
-						&&  0x3 == (_lparam>>30) )
+						&&  0x3 == ( (uint32_t)(_lparam)>>30) )
 						{
 							// VK_SNAPSHOT doesn't generate keydown event. Fire on down event when previous
 							// key state bit is set to 1 and transition state bit is set to 1.
