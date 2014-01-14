@@ -1,0 +1,487 @@
+FSHF­œuniform sampler2D u_shadowMap0;
+uniform vec3 u_tetraNormalRed;
+uniform vec3 u_tetraNormalBlue;
+uniform vec3 u_tetraNormalYellow;
+uniform vec3 u_tetraNormalGreen;
+uniform vec4 u_smSamplingParams;
+uniform vec4 u_lightAttenuationSpotOuter;
+uniform vec4 u_lightSpotDirectionInner;
+uniform vec4 u_lightSpecularPower;
+uniform vec4 u_lightDiffusePower;
+uniform vec4 u_lightAmbientPower;
+uniform vec4 u_lightPosition;
+uniform vec4 u_materialKs;
+uniform vec3 u_materialKd;
+uniform vec3 u_materialKa;
+uniform vec4 u_color;
+uniform vec4 u_params2;
+uniform vec4 u_params1;
+varying vec3 v_view;
+varying vec4 v_texcoord4;
+varying vec4 v_texcoord3;
+varying vec4 v_texcoord2;
+varying vec4 v_texcoord1;
+varying vec4 v_position;
+varying vec3 v_normal;
+void main ()
+{
+  vec4 shadowcoord_1;
+  vec4 faceSelection_2;
+  vec3 colorCoverage_3;
+  vec2 tmpvar_4;
+  tmpvar_4 = vec2((u_params2.z / 4.0));
+  faceSelection_2.x = dot (u_tetraNormalGreen, v_position.xyz);
+  faceSelection_2.y = dot (u_tetraNormalYellow, v_position.xyz);
+  faceSelection_2.z = dot (u_tetraNormalBlue, v_position.xyz);
+  faceSelection_2.w = dot (u_tetraNormalRed, v_position.xyz);
+  float tmpvar_5;
+  tmpvar_5 = max (max (faceSelection_2.x, faceSelection_2.y), max (faceSelection_2.z, faceSelection_2.w));
+  if ((faceSelection_2.x == tmpvar_5)) {
+    shadowcoord_1 = v_texcoord1;
+    vec2 _texcoord_6;
+    _texcoord_6 = (v_texcoord1.xy / v_texcoord1.w);
+    bvec2 tmpvar_7;
+    tmpvar_7 = greaterThan (_texcoord_6, vec2(0.0, 0.0));
+    bool tmpvar_8;
+    if ((tmpvar_7.x && tmpvar_7.y)) {
+      bvec2 tmpvar_9;
+      tmpvar_9 = lessThan (_texcoord_6, vec2(1.0, 1.0));
+      tmpvar_8 = (tmpvar_9.x && tmpvar_9.y);
+    } else {
+      tmpvar_8 = bool(0);
+    };
+    float tmpvar_10;
+    tmpvar_10 = (float(tmpvar_8) * 0.3);
+    vec3 tmpvar_11;
+    tmpvar_11.x = -(tmpvar_10);
+    tmpvar_11.y = tmpvar_10;
+    tmpvar_11.z = -(tmpvar_10);
+    colorCoverage_3 = tmpvar_11;
+  } else {
+    if ((faceSelection_2.y == tmpvar_5)) {
+      shadowcoord_1 = v_texcoord2;
+      vec2 _texcoord_12;
+      _texcoord_12 = (v_texcoord2.xy / v_texcoord2.w);
+      bvec2 tmpvar_13;
+      tmpvar_13 = greaterThan (_texcoord_12, vec2(0.0, 0.0));
+      bool tmpvar_14;
+      if ((tmpvar_13.x && tmpvar_13.y)) {
+        bvec2 tmpvar_15;
+        tmpvar_15 = lessThan (_texcoord_12, vec2(1.0, 1.0));
+        tmpvar_14 = (tmpvar_15.x && tmpvar_15.y);
+      } else {
+        tmpvar_14 = bool(0);
+      };
+      float tmpvar_16;
+      tmpvar_16 = (float(tmpvar_14) * 0.3);
+      vec3 tmpvar_17;
+      tmpvar_17.x = tmpvar_16;
+      tmpvar_17.y = tmpvar_16;
+      tmpvar_17.z = -(tmpvar_16);
+      colorCoverage_3 = tmpvar_17;
+    } else {
+      if ((faceSelection_2.z == tmpvar_5)) {
+        shadowcoord_1 = v_texcoord3;
+        vec2 _texcoord_18;
+        _texcoord_18 = (v_texcoord3.xy / v_texcoord3.w);
+        bvec2 tmpvar_19;
+        tmpvar_19 = greaterThan (_texcoord_18, vec2(0.0, 0.0));
+        bool tmpvar_20;
+        if ((tmpvar_19.x && tmpvar_19.y)) {
+          bvec2 tmpvar_21;
+          tmpvar_21 = lessThan (_texcoord_18, vec2(1.0, 1.0));
+          tmpvar_20 = (tmpvar_21.x && tmpvar_21.y);
+        } else {
+          tmpvar_20 = bool(0);
+        };
+        float tmpvar_22;
+        tmpvar_22 = (float(tmpvar_20) * 0.3);
+        vec3 tmpvar_23;
+        tmpvar_23.x = -(tmpvar_22);
+        tmpvar_23.y = -(tmpvar_22);
+        tmpvar_23.z = tmpvar_22;
+        colorCoverage_3 = tmpvar_23;
+      } else {
+        shadowcoord_1 = v_texcoord4;
+        vec2 _texcoord_24;
+        _texcoord_24 = (v_texcoord4.xy / v_texcoord4.w);
+        bvec2 tmpvar_25;
+        tmpvar_25 = greaterThan (_texcoord_24, vec2(0.0, 0.0));
+        bool tmpvar_26;
+        if ((tmpvar_25.x && tmpvar_25.y)) {
+          bvec2 tmpvar_27;
+          tmpvar_27 = lessThan (_texcoord_24, vec2(1.0, 1.0));
+          tmpvar_26 = (tmpvar_27.x && tmpvar_27.y);
+        } else {
+          tmpvar_26 = bool(0);
+        };
+        float tmpvar_28;
+        tmpvar_28 = (float(tmpvar_26) * 0.3);
+        vec3 tmpvar_29;
+        tmpvar_29.x = tmpvar_28;
+        tmpvar_29.y = -(tmpvar_28);
+        tmpvar_29.z = -(tmpvar_28);
+        colorCoverage_3 = tmpvar_29;
+      };
+    };
+  };
+  float tmpvar_30;
+  float result_31;
+  result_31 = 0.0;
+  vec2 tmpvar_32;
+  tmpvar_32 = ((u_smSamplingParams.zw * tmpvar_4) * shadowcoord_1.w);
+  vec4 tmpvar_33;
+  tmpvar_33.zw = vec2(0.0, 0.0);
+  tmpvar_33.xy = (vec2(-1.5, -1.5) * tmpvar_32);
+  vec4 _shadowCoord_34;
+  _shadowCoord_34 = (shadowcoord_1 + tmpvar_33);
+  float tmpvar_35;
+  vec2 tmpvar_36;
+  tmpvar_36 = (_shadowCoord_34.xy / _shadowCoord_34.w);
+  bool tmpvar_37;
+  if (any(greaterThan (tmpvar_36, vec2(1.0, 1.0)))) {
+    tmpvar_37 = bool(1);
+  } else {
+    tmpvar_37 = any(lessThan (tmpvar_36, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_37) {
+    tmpvar_35 = 1.0;
+  } else {
+    tmpvar_35 = float((dot (texture2D (u_shadowMap0, tmpvar_36), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_34.z - u_params1.x) / _shadowCoord_34.w)));
+  };
+  result_31 = tmpvar_35;
+  vec4 tmpvar_38;
+  tmpvar_38.zw = vec2(0.0, 0.0);
+  tmpvar_38.xy = (vec2(-1.5, -0.5) * tmpvar_32);
+  vec4 _shadowCoord_39;
+  _shadowCoord_39 = (shadowcoord_1 + tmpvar_38);
+  float tmpvar_40;
+  vec2 tmpvar_41;
+  tmpvar_41 = (_shadowCoord_39.xy / _shadowCoord_39.w);
+  bool tmpvar_42;
+  if (any(greaterThan (tmpvar_41, vec2(1.0, 1.0)))) {
+    tmpvar_42 = bool(1);
+  } else {
+    tmpvar_42 = any(lessThan (tmpvar_41, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_42) {
+    tmpvar_40 = 1.0;
+  } else {
+    tmpvar_40 = float((dot (texture2D (u_shadowMap0, tmpvar_41), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_39.z - u_params1.x) / _shadowCoord_39.w)));
+  };
+  result_31 = (tmpvar_35 + tmpvar_40);
+  vec4 tmpvar_43;
+  tmpvar_43.zw = vec2(0.0, 0.0);
+  tmpvar_43.xy = (vec2(-1.5, 0.5) * tmpvar_32);
+  vec4 _shadowCoord_44;
+  _shadowCoord_44 = (shadowcoord_1 + tmpvar_43);
+  float tmpvar_45;
+  vec2 tmpvar_46;
+  tmpvar_46 = (_shadowCoord_44.xy / _shadowCoord_44.w);
+  bool tmpvar_47;
+  if (any(greaterThan (tmpvar_46, vec2(1.0, 1.0)))) {
+    tmpvar_47 = bool(1);
+  } else {
+    tmpvar_47 = any(lessThan (tmpvar_46, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_47) {
+    tmpvar_45 = 1.0;
+  } else {
+    tmpvar_45 = float((dot (texture2D (u_shadowMap0, tmpvar_46), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_44.z - u_params1.x) / _shadowCoord_44.w)));
+  };
+  result_31 = (result_31 + tmpvar_45);
+  vec4 tmpvar_48;
+  tmpvar_48.zw = vec2(0.0, 0.0);
+  tmpvar_48.xy = (vec2(-1.5, 1.5) * tmpvar_32);
+  vec4 _shadowCoord_49;
+  _shadowCoord_49 = (shadowcoord_1 + tmpvar_48);
+  float tmpvar_50;
+  vec2 tmpvar_51;
+  tmpvar_51 = (_shadowCoord_49.xy / _shadowCoord_49.w);
+  bool tmpvar_52;
+  if (any(greaterThan (tmpvar_51, vec2(1.0, 1.0)))) {
+    tmpvar_52 = bool(1);
+  } else {
+    tmpvar_52 = any(lessThan (tmpvar_51, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_52) {
+    tmpvar_50 = 1.0;
+  } else {
+    tmpvar_50 = float((dot (texture2D (u_shadowMap0, tmpvar_51), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_49.z - u_params1.x) / _shadowCoord_49.w)));
+  };
+  result_31 = (result_31 + tmpvar_50);
+  vec4 tmpvar_53;
+  tmpvar_53.zw = vec2(0.0, 0.0);
+  tmpvar_53.xy = (vec2(-0.5, -1.5) * tmpvar_32);
+  vec4 _shadowCoord_54;
+  _shadowCoord_54 = (shadowcoord_1 + tmpvar_53);
+  float tmpvar_55;
+  vec2 tmpvar_56;
+  tmpvar_56 = (_shadowCoord_54.xy / _shadowCoord_54.w);
+  bool tmpvar_57;
+  if (any(greaterThan (tmpvar_56, vec2(1.0, 1.0)))) {
+    tmpvar_57 = bool(1);
+  } else {
+    tmpvar_57 = any(lessThan (tmpvar_56, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_57) {
+    tmpvar_55 = 1.0;
+  } else {
+    tmpvar_55 = float((dot (texture2D (u_shadowMap0, tmpvar_56), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_54.z - u_params1.x) / _shadowCoord_54.w)));
+  };
+  result_31 = (result_31 + tmpvar_55);
+  vec4 tmpvar_58;
+  tmpvar_58.zw = vec2(0.0, 0.0);
+  tmpvar_58.xy = (vec2(-0.5, -0.5) * tmpvar_32);
+  vec4 _shadowCoord_59;
+  _shadowCoord_59 = (shadowcoord_1 + tmpvar_58);
+  float tmpvar_60;
+  vec2 tmpvar_61;
+  tmpvar_61 = (_shadowCoord_59.xy / _shadowCoord_59.w);
+  bool tmpvar_62;
+  if (any(greaterThan (tmpvar_61, vec2(1.0, 1.0)))) {
+    tmpvar_62 = bool(1);
+  } else {
+    tmpvar_62 = any(lessThan (tmpvar_61, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_62) {
+    tmpvar_60 = 1.0;
+  } else {
+    tmpvar_60 = float((dot (texture2D (u_shadowMap0, tmpvar_61), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_59.z - u_params1.x) / _shadowCoord_59.w)));
+  };
+  result_31 = (result_31 + tmpvar_60);
+  vec4 tmpvar_63;
+  tmpvar_63.zw = vec2(0.0, 0.0);
+  tmpvar_63.xy = (vec2(-0.5, 0.5) * tmpvar_32);
+  vec4 _shadowCoord_64;
+  _shadowCoord_64 = (shadowcoord_1 + tmpvar_63);
+  float tmpvar_65;
+  vec2 tmpvar_66;
+  tmpvar_66 = (_shadowCoord_64.xy / _shadowCoord_64.w);
+  bool tmpvar_67;
+  if (any(greaterThan (tmpvar_66, vec2(1.0, 1.0)))) {
+    tmpvar_67 = bool(1);
+  } else {
+    tmpvar_67 = any(lessThan (tmpvar_66, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_67) {
+    tmpvar_65 = 1.0;
+  } else {
+    tmpvar_65 = float((dot (texture2D (u_shadowMap0, tmpvar_66), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_64.z - u_params1.x) / _shadowCoord_64.w)));
+  };
+  result_31 = (result_31 + tmpvar_65);
+  vec4 tmpvar_68;
+  tmpvar_68.zw = vec2(0.0, 0.0);
+  tmpvar_68.xy = (vec2(-0.5, 1.5) * tmpvar_32);
+  vec4 _shadowCoord_69;
+  _shadowCoord_69 = (shadowcoord_1 + tmpvar_68);
+  float tmpvar_70;
+  vec2 tmpvar_71;
+  tmpvar_71 = (_shadowCoord_69.xy / _shadowCoord_69.w);
+  bool tmpvar_72;
+  if (any(greaterThan (tmpvar_71, vec2(1.0, 1.0)))) {
+    tmpvar_72 = bool(1);
+  } else {
+    tmpvar_72 = any(lessThan (tmpvar_71, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_72) {
+    tmpvar_70 = 1.0;
+  } else {
+    tmpvar_70 = float((dot (texture2D (u_shadowMap0, tmpvar_71), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_69.z - u_params1.x) / _shadowCoord_69.w)));
+  };
+  result_31 = (result_31 + tmpvar_70);
+  vec4 tmpvar_73;
+  tmpvar_73.zw = vec2(0.0, 0.0);
+  tmpvar_73.xy = (vec2(0.5, -1.5) * tmpvar_32);
+  vec4 _shadowCoord_74;
+  _shadowCoord_74 = (shadowcoord_1 + tmpvar_73);
+  float tmpvar_75;
+  vec2 tmpvar_76;
+  tmpvar_76 = (_shadowCoord_74.xy / _shadowCoord_74.w);
+  bool tmpvar_77;
+  if (any(greaterThan (tmpvar_76, vec2(1.0, 1.0)))) {
+    tmpvar_77 = bool(1);
+  } else {
+    tmpvar_77 = any(lessThan (tmpvar_76, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_77) {
+    tmpvar_75 = 1.0;
+  } else {
+    tmpvar_75 = float((dot (texture2D (u_shadowMap0, tmpvar_76), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_74.z - u_params1.x) / _shadowCoord_74.w)));
+  };
+  result_31 = (result_31 + tmpvar_75);
+  vec4 tmpvar_78;
+  tmpvar_78.zw = vec2(0.0, 0.0);
+  tmpvar_78.xy = (vec2(0.5, -0.5) * tmpvar_32);
+  vec4 _shadowCoord_79;
+  _shadowCoord_79 = (shadowcoord_1 + tmpvar_78);
+  float tmpvar_80;
+  vec2 tmpvar_81;
+  tmpvar_81 = (_shadowCoord_79.xy / _shadowCoord_79.w);
+  bool tmpvar_82;
+  if (any(greaterThan (tmpvar_81, vec2(1.0, 1.0)))) {
+    tmpvar_82 = bool(1);
+  } else {
+    tmpvar_82 = any(lessThan (tmpvar_81, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_82) {
+    tmpvar_80 = 1.0;
+  } else {
+    tmpvar_80 = float((dot (texture2D (u_shadowMap0, tmpvar_81), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_79.z - u_params1.x) / _shadowCoord_79.w)));
+  };
+  result_31 = (result_31 + tmpvar_80);
+  vec4 tmpvar_83;
+  tmpvar_83.zw = vec2(0.0, 0.0);
+  tmpvar_83.xy = (vec2(0.5, 0.5) * tmpvar_32);
+  vec4 _shadowCoord_84;
+  _shadowCoord_84 = (shadowcoord_1 + tmpvar_83);
+  float tmpvar_85;
+  vec2 tmpvar_86;
+  tmpvar_86 = (_shadowCoord_84.xy / _shadowCoord_84.w);
+  bool tmpvar_87;
+  if (any(greaterThan (tmpvar_86, vec2(1.0, 1.0)))) {
+    tmpvar_87 = bool(1);
+  } else {
+    tmpvar_87 = any(lessThan (tmpvar_86, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_87) {
+    tmpvar_85 = 1.0;
+  } else {
+    tmpvar_85 = float((dot (texture2D (u_shadowMap0, tmpvar_86), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_84.z - u_params1.x) / _shadowCoord_84.w)));
+  };
+  result_31 = (result_31 + tmpvar_85);
+  vec4 tmpvar_88;
+  tmpvar_88.zw = vec2(0.0, 0.0);
+  tmpvar_88.xy = (vec2(0.5, 1.5) * tmpvar_32);
+  vec4 _shadowCoord_89;
+  _shadowCoord_89 = (shadowcoord_1 + tmpvar_88);
+  float tmpvar_90;
+  vec2 tmpvar_91;
+  tmpvar_91 = (_shadowCoord_89.xy / _shadowCoord_89.w);
+  bool tmpvar_92;
+  if (any(greaterThan (tmpvar_91, vec2(1.0, 1.0)))) {
+    tmpvar_92 = bool(1);
+  } else {
+    tmpvar_92 = any(lessThan (tmpvar_91, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_92) {
+    tmpvar_90 = 1.0;
+  } else {
+    tmpvar_90 = float((dot (texture2D (u_shadowMap0, tmpvar_91), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_89.z - u_params1.x) / _shadowCoord_89.w)));
+  };
+  result_31 = (result_31 + tmpvar_90);
+  vec4 tmpvar_93;
+  tmpvar_93.zw = vec2(0.0, 0.0);
+  tmpvar_93.xy = (vec2(1.5, -1.5) * tmpvar_32);
+  vec4 _shadowCoord_94;
+  _shadowCoord_94 = (shadowcoord_1 + tmpvar_93);
+  float tmpvar_95;
+  vec2 tmpvar_96;
+  tmpvar_96 = (_shadowCoord_94.xy / _shadowCoord_94.w);
+  bool tmpvar_97;
+  if (any(greaterThan (tmpvar_96, vec2(1.0, 1.0)))) {
+    tmpvar_97 = bool(1);
+  } else {
+    tmpvar_97 = any(lessThan (tmpvar_96, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_97) {
+    tmpvar_95 = 1.0;
+  } else {
+    tmpvar_95 = float((dot (texture2D (u_shadowMap0, tmpvar_96), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_94.z - u_params1.x) / _shadowCoord_94.w)));
+  };
+  result_31 = (result_31 + tmpvar_95);
+  vec4 tmpvar_98;
+  tmpvar_98.zw = vec2(0.0, 0.0);
+  tmpvar_98.xy = (vec2(1.5, -0.5) * tmpvar_32);
+  vec4 _shadowCoord_99;
+  _shadowCoord_99 = (shadowcoord_1 + tmpvar_98);
+  float tmpvar_100;
+  vec2 tmpvar_101;
+  tmpvar_101 = (_shadowCoord_99.xy / _shadowCoord_99.w);
+  bool tmpvar_102;
+  if (any(greaterThan (tmpvar_101, vec2(1.0, 1.0)))) {
+    tmpvar_102 = bool(1);
+  } else {
+    tmpvar_102 = any(lessThan (tmpvar_101, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_102) {
+    tmpvar_100 = 1.0;
+  } else {
+    tmpvar_100 = float((dot (texture2D (u_shadowMap0, tmpvar_101), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_99.z - u_params1.x) / _shadowCoord_99.w)));
+  };
+  result_31 = (result_31 + tmpvar_100);
+  vec4 tmpvar_103;
+  tmpvar_103.zw = vec2(0.0, 0.0);
+  tmpvar_103.xy = (vec2(1.5, 0.5) * tmpvar_32);
+  vec4 _shadowCoord_104;
+  _shadowCoord_104 = (shadowcoord_1 + tmpvar_103);
+  float tmpvar_105;
+  vec2 tmpvar_106;
+  tmpvar_106 = (_shadowCoord_104.xy / _shadowCoord_104.w);
+  bool tmpvar_107;
+  if (any(greaterThan (tmpvar_106, vec2(1.0, 1.0)))) {
+    tmpvar_107 = bool(1);
+  } else {
+    tmpvar_107 = any(lessThan (tmpvar_106, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_107) {
+    tmpvar_105 = 1.0;
+  } else {
+    tmpvar_105 = float((dot (texture2D (u_shadowMap0, tmpvar_106), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_104.z - u_params1.x) / _shadowCoord_104.w)));
+  };
+  result_31 = (result_31 + tmpvar_105);
+  vec4 tmpvar_108;
+  tmpvar_108.zw = vec2(0.0, 0.0);
+  tmpvar_108.xy = (vec2(1.5, 1.5) * tmpvar_32);
+  vec4 _shadowCoord_109;
+  _shadowCoord_109 = (shadowcoord_1 + tmpvar_108);
+  float tmpvar_110;
+  vec2 tmpvar_111;
+  tmpvar_111 = (_shadowCoord_109.xy / _shadowCoord_109.w);
+  bool tmpvar_112;
+  if (any(greaterThan (tmpvar_111, vec2(1.0, 1.0)))) {
+    tmpvar_112 = bool(1);
+  } else {
+    tmpvar_112 = any(lessThan (tmpvar_111, vec2(0.0, 0.0)));
+  };
+  if (tmpvar_112) {
+    tmpvar_110 = 1.0;
+  } else {
+    tmpvar_110 = float((dot (texture2D (u_shadowMap0, tmpvar_111), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((_shadowCoord_109.z - u_params1.x) / _shadowCoord_109.w)));
+  };
+  float tmpvar_113;
+  tmpvar_113 = (result_31 + tmpvar_110);
+  result_31 = tmpvar_113;
+  tmpvar_30 = (tmpvar_113 / 16.0);
+  vec3 tmpvar_114;
+  tmpvar_114 = -(normalize(v_view));
+  vec3 tmpvar_115;
+  float tmpvar_116;
+  tmpvar_115 = -(normalize(u_lightPosition.xyz));
+  tmpvar_116 = 1.0;
+  if ((0.0 != u_lightPosition.w)) {
+    vec3 tmpvar_117;
+    tmpvar_117 = (u_lightPosition.xyz - v_view);
+    vec3 tmpvar_118;
+    tmpvar_118 = normalize(tmpvar_117);
+    tmpvar_115 = tmpvar_118;
+    float tmpvar_119;
+    tmpvar_119 = cos((u_lightAttenuationSpotOuter.w * 0.0174533));
+    float tmpvar_120;
+    tmpvar_120 = sqrt(dot (tmpvar_117, tmpvar_117));
+    tmpvar_116 = ((1.0/(((u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_120)) + ((u_lightAttenuationSpotOuter.z * tmpvar_120) * tmpvar_120)))) * mix (clamp (((max (0.0, dot (-(tmpvar_118), normalize(u_lightSpotDirectionInner.xyz))) - tmpvar_119) / (cos((min (u_lightSpotDirectionInner.w, (u_lightAttenuationSpotOuter.w - 0.001)) * 0.0174533)) - tmpvar_119)), 0.0, 1.0), 1.0, float((u_lightAttenuationSpotOuter.w >= 90.0))));
+  };
+  float tmpvar_121;
+  tmpvar_121 = dot (v_normal, tmpvar_115);
+  vec2 tmpvar_122;
+  tmpvar_122.x = tmpvar_121;
+  tmpvar_122.y = (((float((tmpvar_121 >= 0.0)) * pow (max (0.0, dot ((((2.0 * tmpvar_121) * v_normal) - tmpvar_115), tmpvar_114)), u_materialKs.w)) * (2.0 + u_materialKs.w)) / 8.0);
+  vec2 tmpvar_123;
+  tmpvar_123 = (max (tmpvar_122, 0.0) * tmpvar_116);
+  float tmpvar_124;
+  tmpvar_124 = sqrt(dot (v_view, v_view));
+  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (abs(((((u_lightAmbientPower.xyz * u_lightAmbientPower.w) * u_materialKa) * u_color.xyz) + ((((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_123.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_123.y)) * u_color.xyz) * tmpvar_30))), vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_3 * u_params2.y)), clamp ((1.0/(exp2(((1.7673e-005 * tmpvar_124) * tmpvar_124)))), 0.0, 1.0));
+  gl_FragColor.w = 1.0;
+}
+
+ 

@@ -250,6 +250,21 @@ float unpackRgbaToFloat(vec4 _rgba)
 	return dot(_rgba, shift);
 }
 
+vec2 packHalfFloat(float _value)
+{
+	const vec2 shift = vec2(256, 1.0);
+	const vec2 mask = vec2(0, 1.0 / 256.0);
+	vec2 comp = fract(_value * shift);
+	comp -= comp.xx * mask;
+	return comp;
+}
+
+float unpackHalfFloat(vec2 _rg)
+{
+	const vec2 shift = vec2(1.0 / 256.0, 1.0);
+	return dot(_rg, shift);
+}
+
 float random(vec2 _uv)
 {
 	return fract(sin(dot(_uv.xy, vec2(12.9898, 78.233) ) ) * 43758.5453);

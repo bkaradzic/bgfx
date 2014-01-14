@@ -24,6 +24,16 @@ inline float fmaxf(float _a, float _b)
 }
 #endif // BX_COMPILER_MSVC
 
+inline float toRad(float _deg)
+{
+	return _deg * float(M_PI) / 180.0f;
+}
+
+inline float toDeg(float _rad)
+{
+	return _rad * 180.0f / float(M_PI);
+}
+
 inline float fclamp(float _a, float _min, float _max)
 {
 	return fminf(fmaxf(_a, _min), _max);
@@ -143,7 +153,7 @@ inline void mtxScale(float* _result, float _x, float _y, float _z)
 	_result[15] = 1.0f;
 }
 
-inline void mtxLookAt(float* __restrict _result, const float* __restrict _eye, const float* __restrict _at)
+inline void mtxLookAt(float* __restrict _result, const float* __restrict _eye, const float* __restrict _at, const float* __restrict _up = NULL)
 {
 	float tmp[4];
 	vec3Sub(tmp, _at, _eye);
@@ -152,6 +162,12 @@ inline void mtxLookAt(float* __restrict _result, const float* __restrict _eye, c
 	vec3Norm(view, tmp);
 
 	float up[3] = { 0.0f, 1.0f, 0.0f };
+	if (NULL != _up)
+	{
+		up[0] = _up[0];
+		up[1] = _up[1];
+		up[2] = _up[2];
+	}
 	vec3Cross(tmp, up, view);
 
 	float right[4];
