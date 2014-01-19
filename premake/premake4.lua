@@ -162,7 +162,8 @@ exampleProject("12-lod",               "0512e9e6-bfd8-11e2-8e34-0291bd4c8125")
 exampleProject("13-stencil",           "d12d6522-37bc-11e3-b89c-e46428d43830")
 exampleProject("14-shadowvolumes",     "d7eb4bcc-37bc-11e3-b7a4-e46428d43830")
 exampleProject("15-shadowmaps-simple", "a10f22ab-e0ee-471a-b2b6-2f6cb1c63fdc")
-exampleProject("16-shadowmaps",		   "f9a91cb0-7b1b-11e3-981f-0800200c9a66")
+exampleProject("16-shadowmaps",        "f9a91cb0-7b1b-11e3-981f-0800200c9a66")
+exampleProject("17-drawstress",        "9aeea4c6-80dc-11e3-b3ca-4da6db0f677b")
 
 dofile "makedisttex.lua"
 dofile "shaderc.lua"
