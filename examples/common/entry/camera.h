@@ -3,10 +3,10 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-static const uint8_t CAMERA_KEY_UP    = 1u << 1;
-static const uint8_t CAMERA_KEY_DOWN  = 1u << 2;
-static const uint8_t CAMERA_KEY_LEFT  = 1u << 3;
-static const uint8_t CAMERA_KEY_RIGHT = 1u << 4;
+#define CAMERA_KEY_UP    UINT8_C(0x1)
+#define CAMERA_KEY_DOWN  UINT8_C(0x2)
+#define CAMERA_KEY_LEFT  UINT8_C(0x4)
+#define CAMERA_KEY_RIGHT UINT8_C(0x8)
 
 ///
 void cameraSetPosition(float* _pos);
