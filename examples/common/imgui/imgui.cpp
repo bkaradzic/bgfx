@@ -1513,6 +1513,20 @@ bool imguiSlider(const char* _text, int32_t* _val, int32_t _vmin, int32_t _vmax,
 	return result;
 }
 
+uint32_t imguiChooseUseMacroInstead(uint32_t _selected, const char* _first, ...)
+{
+	uint32_t ii = 0;
+	for (const char** str = &_first; *str != NULL; ++str, ++ii)
+	{
+		if (imguiCheck(*str, ii == _selected) )
+		{
+			_selected = ii;
+		}
+	}
+
+	return _selected;
+}
+
 void imguiDrawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb)
 {
 	s_imgui.drawText(_x, _y, _align, _text, _argb);
