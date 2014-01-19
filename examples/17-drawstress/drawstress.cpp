@@ -283,7 +283,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/xx-drawstress");
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/17-drawstress");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Draw stress, maximizing number of draw calls.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
