@@ -243,12 +243,12 @@ namespace bgfx
 	};
 
 	static const Matrix4 s_bias =
-	{
+	{{{
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.5f, 0.0f,
 		0.5f, 0.5f, 0.5f, 1.0f,
-	};
+	}}};
 
 	struct Extension
 	{
@@ -2486,7 +2486,7 @@ namespace bgfx
 
 	GLint glGet(GLenum _pname)
 	{
-		GLint result;
+		GLint result = 0;
 		glGetIntegerv(_pname, &result);
 		GLenum err = glGetError();
 		BX_WARN(0 == err, "glGetIntegerv(0x%04x, ...) failed with GL error: 0x%04x.", _pname, err);
@@ -2498,7 +2498,7 @@ namespace bgfx
 		s_renderCtx = BX_NEW(g_allocator, RendererContext);
 		s_renderCtx->init();
 
-		GLint numCmpFormats;
+		GLint numCmpFormats = 0;
 		GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
 		BX_TRACE("GL_NUM_COMPRESSED_TEXTURE_FORMATS %d", numCmpFormats);
 
@@ -2506,6 +2506,7 @@ namespace bgfx
 
 		if (0 < numCmpFormats)
 		{
+			numCmpFormats = numCmpFormats > 256 ? 256 : numCmpFormats;
 			cmpFormat = (GLint*)alloca(sizeof(GLint)*numCmpFormats);
 			GL_CHECK(glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, cmpFormat) );
 

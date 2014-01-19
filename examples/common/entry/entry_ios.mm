@@ -36,6 +36,9 @@ namespace entry
 
 			m_eventQueue.postSizeEvent(768, 1024);
 
+			// Prevent render thread creation.
+			bgfx::renderFrame();
+
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 		}
 

@@ -27,8 +27,8 @@ namespace bgfx
 	};
 
 	/// WARNING: This call should be only used on platforms that don't
-	/// allow creating separate rendering thread. Proper use requires
-	/// changes inside lib.
+	/// allow creating separate rendering thread. If it is called before
+	/// to bgfx::init, render thread won't be created by bgfx::init call.
 	RenderFrame::Enum renderFrame();
 }
 
@@ -69,7 +69,7 @@ namespace bgfx
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	///
-	void naclSetIntefraces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
+	void naclSetInterfaces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
 
 } // namespace bgfx
 

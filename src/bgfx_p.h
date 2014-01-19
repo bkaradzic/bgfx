@@ -642,8 +642,8 @@ namespace bgfx
 	{
 		union
 		{
-			bx::float4x4_t f4x4;
 			float val[16];
+			bx::float4x4_t f4x4;
 		} un;
 
 		void setIdentity()

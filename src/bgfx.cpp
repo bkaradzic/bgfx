@@ -209,6 +209,7 @@ namespace bgfx
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context* s_ctx = NULL;
+	static bool s_renderFrame = false;
 
 	void setGraphicsDebuggerPresent(bool _present)
 	{
@@ -733,8 +734,9 @@ namespace bgfx
 
 		s_ctx = BX_NEW(g_allocator, Context);
 
-		// On NaCl and iOS renderer is on the main thread.
-		s_ctx->init(!BX_PLATFORM_NACL && !BX_PLATFORM_IOS && !BX_PLATFORM_OSX);
+		// When bgfx::renderFrame is called before init render thread
+		// should not be created.
+		s_ctx->init(!s_renderFrame);
 
 		const uint64_t emulatedCaps = 0
 			| BGFX_CAPS_TEXTURE_FORMAT_BC1
@@ -819,6 +821,7 @@ namespace bgfx
 	{
 		if (NULL == s_ctx)
 		{
+			s_renderFrame = true;
 			return RenderFrame::NoContext;
 		}
 

@@ -93,7 +93,7 @@ namespace entry
 			m_mte.m_argc = 1;
 			m_mte.m_argv = const_cast<char**>(argv);
 
-			bgfx::naclSetIntefraces(g_instance, g_instInterface, g_graphicsInterface, NULL);
+			bgfx::naclSetInterfaces(g_instance, g_instInterface, g_graphicsInterface, NULL);
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 		}
 

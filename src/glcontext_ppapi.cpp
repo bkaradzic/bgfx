@@ -37,7 +37,7 @@ namespace bgfx
 		{
 		}
 
-		void setIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers);
+		void setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers);
 
 		void resize(uint32_t _width, uint32_t _height, bool /*_vsync*/)
 		{
@@ -96,14 +96,18 @@ namespace bgfx
 		s_ppapi.m_instancedArrays->DrawElementsInstancedANGLE(s_ppapi.m_context, _mode, _count, _type, _indices, _primcount);
 	}
 
-	void naclSetIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
+	void naclSetInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
-		s_ppapi.setIntefraces( _instance, _instInterface, _graphicsInterface, _postSwapBuffers);
+		s_ppapi.setInterfaces( _instance, _instInterface, _graphicsInterface, _postSwapBuffers);
 	}
 
-	void Ppapi::setIntefraces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
+	void Ppapi::setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
 		BX_TRACE("PPAPI Interfaces");
+
+		// Prevent render thread creation.
+		renderFrame();
+
 		m_instance = _instance;
 		m_instInterface = _instInterface;
 		m_graphicsInterface = _graphicsInterface;
