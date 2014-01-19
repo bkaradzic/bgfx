@@ -338,6 +338,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	// Cleanup.
+	imguiDestroy();
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
 	bgfx::destroyProgram(program);

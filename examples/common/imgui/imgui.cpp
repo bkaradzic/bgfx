@@ -28,6 +28,7 @@
 #include <bx/uint32_t.h>
 #include <bgfx.h>
 
+#include "../entry/dbg.h"
 #include "imgui.h"
 #include "../fpumath.h"
 
@@ -1513,16 +1514,21 @@ bool imguiSlider(const char* _text, int32_t* _val, int32_t _vmin, int32_t _vmax,
 	return result;
 }
 
-uint32_t imguiChooseUseMacroInstead(uint32_t _selected, const char* _first, ...)
+uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)
 {
-	uint32_t ii = 0;
-	for (const char** str = &_first; *str != NULL; ++str, ++ii)
+	va_list argList;
+	va_start(argList, _selected);
+
+	const char* str = va_arg(argList, const char*);
+	for (uint32_t ii = 0; str != NULL; ++ii, str = va_arg(argList, const char*))
 	{
-		if (imguiCheck(*str, ii == _selected) )
+		if (imguiCheck(str, ii == _selected) )
 		{
 			_selected = ii;
 		}
 	}
+
+	va_end(argList);
 
 	return _selected;
 }
