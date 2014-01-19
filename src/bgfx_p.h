@@ -61,6 +61,7 @@ namespace bgfx
 
 #include <bx/bx.h>
 #include <bx/debug.h>
+#include <bx/float4x4_t.h>
 #include <bx/blockalloc.h>
 #include <bx/endian.h>
 #include <bx/handlealloc.h>
@@ -639,16 +640,19 @@ namespace bgfx
 
 	BX_ALIGN_STRUCT_16(struct) Matrix4
 	{
-		float val[16];
+		union
+		{
+			bx::float4x4_t f4x4;
+			float val[16];
+		} un;
 
 		void setIdentity()
 		{
-			memset(val, 0, sizeof(val) );
-			val[0] = val[5] = val[10] = val[15] = 1.0f;
+			memset(un.val, 0, sizeof(un.val) );
+			un.val[0] = un.val[5] = un.val[10] = un.val[15] = 1.0f;
 		}
 	};
 
-	void mtxMul(float* __restrict _result, const float* __restrict _a, const float* __restrict _b);
 	void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far);
 
 	struct MatrixCache
@@ -2416,7 +2420,7 @@ namespace bgfx
 
 			if (NULL != _view)
 			{
-				memcpy(m_view[_id].val, _view, sizeof(Matrix4) );
+				memcpy(m_view[_id].un.val, _view, sizeof(Matrix4) );
 			}
 			else
 			{
@@ -2425,7 +2429,7 @@ namespace bgfx
 
 			if (NULL != _proj)
 			{
-				memcpy(m_proj[_id].val, _proj, sizeof(Matrix4) );
+				memcpy(m_proj[_id].un.val, _proj, sizeof(Matrix4) );
 			}
 			else
 			{

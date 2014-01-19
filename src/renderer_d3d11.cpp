@@ -176,6 +176,14 @@ namespace bgfx
 		},
 	};
 
+	static const Matrix4 s_bias =
+	{
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,
+	};
+
 	struct TextureFormatInfo
 	{
 		DXGI_FORMAT m_fmt;
@@ -2206,7 +2214,7 @@ namespace bgfx
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			mtxMul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
+			bx::float4x4_mul(&viewProj[ii].un.f4x4, &m_render->m_view[ii].un.f4x4, &m_render->m_proj[ii].un.f4x4);
 		}
 
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
@@ -2445,20 +2453,20 @@ namespace bgfx
 
 						case PredefinedUniform::View:
 							{
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, m_render->m_view[view].val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, m_render->m_view[view].un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProj:
 							{
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProj[view].val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProj[view].un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::Model:
 							{
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, model.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, model.un.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
 							}
 							break;
 
@@ -2466,8 +2474,8 @@ namespace bgfx
 							{
 								Matrix4 modelView;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelView.val, bx::uint32_min(4, predefined.m_count) );
+								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &m_render->m_view[view].un.f4x4);
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelView.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2475,8 +2483,8 @@ namespace bgfx
 							{
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
+								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -2484,40 +2492,24 @@ namespace bgfx
 							{
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 
-								static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
-								{
-									0.5f, 0.0f, 0.0f, 0.0f,
-									0.0f, 0.5f, 0.0f, 0.0f,
-									0.0f, 0.0f, 0.5f, 0.0f,
-									0.5f, 0.5f, 0.5f, 1.0f,
-								};
-
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
+								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
 
 								Matrix4 modelViewProj;
-								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
+								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProjBias.un.f4x4);
 
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelViewProj.val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProjX:
 							{
-								static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
-								{
-									0.5f, 0.0f, 0.0f, 0.0f,
-									0.0f, 0.5f, 0.0f, 0.0f,
-									0.0f, 0.0f, 0.5f, 0.0f,
-									0.5f, 0.5f, 0.5f, 1.0f,
-								};
-
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
+								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
 
-								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProjBias.val, bx::uint32_min(4, predefined.m_count) );
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProjBias.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 

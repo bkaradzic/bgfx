@@ -242,6 +242,14 @@ namespace bgfx
 		{ GL_STENCIL_INDEX8,                           GL_DEPTH_STENCIL,                            GL_UNSIGNED_BYTE,               false }, // D0S8
 	};
 
+	static const Matrix4 s_bias =
+	{
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,
+	};
+
 	struct Extension
 	{
 		enum Enum
@@ -3087,7 +3095,7 @@ namespace bgfx
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			mtxMul(viewProj[ii].val, m_render->m_view[ii].val, m_render->m_proj[ii].val);
+			float4x4_mul(&viewProj[ii].un.f4x4, &m_render->m_view[ii].un.f4x4, &m_render->m_proj[ii].un.f4x4);
 		}
 
 		uint16_t programIdx = invalidHandle;
@@ -3422,7 +3430,7 @@ namespace bgfx
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, m_render->m_view[view].val
+									, m_render->m_view[view].un.val
 									) );
 							}
 							break;
@@ -3432,7 +3440,7 @@ namespace bgfx
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, viewProj[view].val
+									, viewProj[view].un.val
 									) );
 							}
 							break;
@@ -3443,7 +3451,7 @@ namespace bgfx
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, bx::uint32_min(predefined.m_count, state.m_num)
 									, GL_FALSE
-									, model.val
+									, model.un.val
 									) );
 							}
 							break;
@@ -3452,12 +3460,12 @@ namespace bgfx
 							{
 								Matrix4 modelView;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								mtxMul(modelView.val, model.val, m_render->m_view[view].val);
+								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &m_render->m_view[view].un.f4x4);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, modelView.val
+									, modelView.un.val
 									) );
 							}
 							break;
@@ -3466,12 +3474,12 @@ namespace bgfx
 							{
 								Matrix4 modelViewProj;
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
-								mtxMul(modelViewProj.val, model.val, viewProj[view].val);
+								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, modelViewProj.val
+									, modelViewProj.un.val
 									) );
 							}
 							break;
@@ -3480,47 +3488,31 @@ namespace bgfx
 							{
 								const Matrix4& model = m_render->m_matrixCache.m_cache[state.m_matrix];
 
-								static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
-								{
-									0.5f, 0.0f, 0.0f, 0.0f,
-									0.0f, 0.5f, 0.0f, 0.0f,
-									0.0f, 0.0f, 0.5f, 0.0f,
-									0.5f, 0.5f, 0.5f, 1.0f,
-								};
-
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
+								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
 
 								Matrix4 modelViewProj;
-								mtxMul(modelViewProj.val, model.val, viewProjBias.val);
+								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProjBias.un.f4x4);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, modelViewProj.val
+									, modelViewProj.un.val
 									) );
 							}
 							break;
 
 						case PredefinedUniform::ViewProjX:
 							{
-								static const BX_ALIGN_STRUCT_16(float) s_bias[16] =
-								{
-									0.5f, 0.0f, 0.0f, 0.0f,
-									0.0f, 0.5f, 0.0f, 0.0f,
-									0.0f, 0.0f, 0.5f, 0.0f,
-									0.5f, 0.5f, 0.5f, 1.0f,
-								};
-
 								uint8_t other = m_render->m_other[view];
 								Matrix4 viewProjBias;
-								mtxMul(viewProjBias.val, viewProj[other].val, s_bias);
+								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, viewProjBias.val
+									, viewProjBias.un.val
 									) );
 							}
 							break;

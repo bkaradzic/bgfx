@@ -235,22 +235,6 @@ namespace bgfx
 		g_callback->fatal(_code, temp);
 	}
 
-	inline void vec4MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
-	{
-		_result[0] = _vec[0] * _mat[ 0] + _vec[1] * _mat[4] + _vec[2] * _mat[ 8] + _vec[3] * _mat[12];
-		_result[1] = _vec[0] * _mat[ 1] + _vec[1] * _mat[5] + _vec[2] * _mat[ 9] + _vec[3] * _mat[13];
-		_result[2] = _vec[0] * _mat[ 2] + _vec[1] * _mat[6] + _vec[2] * _mat[10] + _vec[3] * _mat[14];
-		_result[3] = _vec[0] * _mat[ 3] + _vec[1] * _mat[7] + _vec[2] * _mat[11] + _vec[3] * _mat[15];
-	}
-
-	void mtxMul(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)
-	{
-		vec4MulMtx(&_result[ 0], &_a[ 0], _b);
-		vec4MulMtx(&_result[ 4], &_a[ 4], _b);
-		vec4MulMtx(&_result[ 8], &_a[ 8], _b);
-		vec4MulMtx(&_result[12], &_a[12], _b);
-	}
-
 	void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far)
 	{
 		const float aa = 2.0f/(_right - _left);
