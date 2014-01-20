@@ -177,12 +177,12 @@ namespace bgfx
 	};
 
 	static const Matrix4 s_bias =
-	{
+	{{{
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.5f, 0.0f,
 		0.5f, 0.5f, 0.5f, 1.0f,
-	};
+	}}};
 
 	struct TextureFormatInfo
 	{
