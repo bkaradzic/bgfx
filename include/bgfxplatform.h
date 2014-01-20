@@ -69,7 +69,7 @@ namespace bgfx
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	///
-	void naclSetInterfaces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
+	bool naclSetInterfaces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
 
 } // namespace bgfx
 

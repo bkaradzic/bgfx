@@ -209,7 +209,7 @@ namespace bgfx
 
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context* s_ctx = NULL;
-	static bool s_renderFrame = false;
+	static bool s_renderFrameCalled = false;
 
 	void setGraphicsDebuggerPresent(bool _present)
 	{
@@ -733,10 +733,7 @@ namespace bgfx
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
 		s_ctx = BX_NEW(g_allocator, Context);
-
-		// When bgfx::renderFrame is called before init render thread
-		// should not be created.
-		s_ctx->init(!s_renderFrame);
+		s_ctx->init();
 
 		const uint64_t emulatedCaps = 0
 			| BGFX_CAPS_TEXTURE_FORMAT_BC1
@@ -821,7 +818,7 @@ namespace bgfx
 	{
 		if (NULL == s_ctx)
 		{
-			s_renderFrame = true;
+			s_renderFrameCalled = true;
 			return RenderFrame::NoContext;
 		}
 
@@ -871,7 +868,7 @@ namespace bgfx
 		write(_marker, num);
 	}
 
-	void Context::init(bool _createRenderThread)
+	void Context::init()
 	{
 		BX_CHECK(!m_rendererInitialized, "Already initialized?");
 
@@ -885,12 +882,19 @@ namespace bgfx
 		m_render->create();
 
 #if BGFX_CONFIG_MULTITHREADED
-		if (_createRenderThread)
+		if (s_renderFrameCalled)
 		{
+			// When bgfx::renderFrame is called before init render thread
+			// should not be created.
+			BX_TRACE("Application called bgfx::renderFrame directly, not creating render thread.");
+		}
+		else
+		{
+			BX_TRACE("Creating rendering thread.");
 			m_thread.init(renderThread, this);
 		}
 #else
-		BX_UNUSED(_createRenderThread);
+		BX_TRACE("Multithreaded renderer is disabled.");
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		memset(m_rt, 0xff, sizeof(m_rt) );

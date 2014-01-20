@@ -1582,7 +1582,7 @@ namespace bgfx
 		}
 
 		// game thread
-		void init(bool _createRenderThread);
+		void init();
 		void shutdown();
 
 		CommandBuffer& getCommandBuffer(CommandBuffer::Enum _cmd)

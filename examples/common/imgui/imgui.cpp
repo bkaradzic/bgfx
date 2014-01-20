@@ -155,7 +155,7 @@ struct Imgui
 		m_textureProgram.idx = bgfx::invalidHandle;
 	}
 
-	bool create(void* _data, uint32_t /*_size*/)
+	bool create(const void* _data, uint32_t /*_size*/)
 	{
 		for (int32_t ii = 0; ii < NUM_CIRCLE_VERTS; ++ii)
 		{
@@ -1418,7 +1418,7 @@ struct Imgui
 
 static Imgui s_imgui;
 
-bool imguiCreate(void* _data, uint32_t _size)
+bool imguiCreate(const void* _data, uint32_t _size)
 {
 	return s_imgui.create(_data, _size);
 }

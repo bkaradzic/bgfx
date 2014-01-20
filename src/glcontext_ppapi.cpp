@@ -37,7 +37,7 @@ namespace bgfx
 		{
 		}
 
-		void setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers);
+		bool setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers);
 
 		void resize(uint32_t _width, uint32_t _height, bool /*_vsync*/)
 		{
@@ -96,17 +96,14 @@ namespace bgfx
 		s_ppapi.m_instancedArrays->DrawElementsInstancedANGLE(s_ppapi.m_context, _mode, _count, _type, _indices, _primcount);
 	}
 
-	void naclSetInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
+	bool naclSetInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
-		s_ppapi.setInterfaces( _instance, _instInterface, _graphicsInterface, _postSwapBuffers);
+		return s_ppapi.setInterfaces( _instance, _instInterface, _graphicsInterface, _postSwapBuffers);
 	}
 
-	void Ppapi::setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
+	bool Ppapi::setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
 		BX_TRACE("PPAPI Interfaces");
-
-		// Prevent render thread creation.
-		renderFrame();
 
 		m_instance = _instance;
 		m_instInterface = _instInterface;
@@ -127,6 +124,12 @@ namespace bgfx
 		};
 
 		m_context = m_graphicsInterface->Create(m_instance, 0, attribs);
+		if (0 == m_context)
+		{
+			BX_TRACE("Failed to create context!");
+			return false;
+		}
+
 		m_instInterface->BindGraphics(m_instance, m_context);
 		glSetCurrentContextPPAPI(m_context);
 		m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
@@ -134,6 +137,10 @@ namespace bgfx
 		glVertexAttribDivisor   = naclVertexAttribDivisor;
 		glDrawArraysInstanced   = naclDrawArraysInstanced;
 		glDrawElementsInstanced = naclDrawElementsInstanced;
+
+		// Prevent render thread creation.
+		RenderFrame::Enum result = renderFrame();
+		return RenderFrame::NoContext == result;
 	}
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
