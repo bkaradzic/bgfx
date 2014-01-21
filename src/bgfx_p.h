@@ -1081,7 +1081,7 @@ namespace bgfx
 
 		uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			uint16_t scissor = m_rectCache.add(_x, _y, _width, _height);
+			uint16_t scissor = (uint16_t)m_rectCache.add(_x, _y, _width, _height);
 			m_state.m_scissor = scissor;
 			return scissor;
 		}
@@ -1561,6 +1561,7 @@ namespace bgfx
 			, m_submit(&m_frame[1])
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
+			, m_instBufferCount(0)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
 			, m_rendererInitialized(false)
@@ -1967,6 +1968,8 @@ namespace bgfx
 
 		BGFX_API_FUNC(const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride) )
 		{
+			++m_instBufferCount;
+
 			uint16_t stride = BX_ALIGN_16(_stride);
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
 
@@ -2522,6 +2525,8 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num) )
 		{
+			--m_instBufferCount;
+
 			m_submit->setInstanceDataBuffer(_idb, _num);
 		}
 
@@ -2727,6 +2732,7 @@ namespace bgfx
 		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
 
 		Resolution m_resolution;
+		int32_t  m_instBufferCount;
 		uint32_t m_frames;
 		uint32_t m_debug;
 

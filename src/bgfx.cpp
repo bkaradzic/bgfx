@@ -1062,6 +1062,8 @@ namespace bgfx
 
 	uint32_t Context::frame()
 	{
+		BX_CHECK(0 == m_instBufferCount, "Instance buffer allocated, but not used. This is incorrect, and causes memory leak.");
+
 		// wait for render thread to finish
 		renderSemWait();
 		frameNoRenderWait();
