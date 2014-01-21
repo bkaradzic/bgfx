@@ -207,9 +207,9 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 	, m_vertexBuffer(new TextVertex[MAX_BUFFERED_CHARACTERS * 4])
 	, m_indexBuffer(new uint16_t[MAX_BUFFERED_CHARACTERS * 6])
 	, m_styleBuffer(new uint8_t[MAX_BUFFERED_CHARACTERS * 4])
-	, m_vertexCount(0)
 	, m_indexCount(0)
 	, m_lineStartIndex(0)
+	, m_vertexCount(0)
 {
 	m_rectangle.width = 0;
 	m_rectangle.height = 0;
