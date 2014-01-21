@@ -184,9 +184,9 @@ private:
 	uint16_t* m_indexBuffer;
 	uint8_t* m_styleBuffer;
 
-	uint32_t m_vertexCount;
 	uint32_t m_indexCount;
 	uint32_t m_lineStartIndex;
+	uint16_t m_vertexCount;
 };
 
 TextBuffer::TextBuffer(FontManager* _fontManager)
@@ -384,17 +384,18 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 			, sizeof(TextVertex)
 			);
 
-		setVertex(m_vertexCount + 0, x0, y0, m_backgroundColor, STYLE_BACKGROUND);
-		setVertex(m_vertexCount + 1, x0, y1, m_backgroundColor, STYLE_BACKGROUND);
-		setVertex(m_vertexCount + 2, x1, y1, m_backgroundColor, STYLE_BACKGROUND);
-		setVertex(m_vertexCount + 3, x1, y0, m_backgroundColor, STYLE_BACKGROUND);
+		const uint16_t vertexCount = m_vertexCount;
+		setVertex(vertexCount + 0, x0, y0, m_backgroundColor, STYLE_BACKGROUND);
+		setVertex(vertexCount + 1, x0, y1, m_backgroundColor, STYLE_BACKGROUND);
+		setVertex(vertexCount + 2, x1, y1, m_backgroundColor, STYLE_BACKGROUND);
+		setVertex(vertexCount + 3, x1, y0, m_backgroundColor, STYLE_BACKGROUND);
 
-		m_indexBuffer[m_indexCount + 0] = m_vertexCount + 0;
-		m_indexBuffer[m_indexCount + 1] = m_vertexCount + 1;
-		m_indexBuffer[m_indexCount + 2] = m_vertexCount + 2;
-		m_indexBuffer[m_indexCount + 3] = m_vertexCount + 0;
-		m_indexBuffer[m_indexCount + 4] = m_vertexCount + 2;
-		m_indexBuffer[m_indexCount + 5] = m_vertexCount + 3;
+		m_indexBuffer[m_indexCount + 0] = vertexCount + 0;
+		m_indexBuffer[m_indexCount + 1] = vertexCount + 1;
+		m_indexBuffer[m_indexCount + 2] = vertexCount + 2;
+		m_indexBuffer[m_indexCount + 3] = vertexCount + 0;
+		m_indexBuffer[m_indexCount + 4] = vertexCount + 2;
+		m_indexBuffer[m_indexCount + 5] = vertexCount + 3;
 		m_vertexCount += 4;
 		m_indexCount += 6;
 	}

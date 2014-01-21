@@ -89,18 +89,6 @@ public:
 	/// Same as packUV but pack a whole face of the atlas cube, mostly used for debugging and visualizing atlas
 	void packFaceLayerUV(uint32_t _idx, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const;
 
-	/// Pack the vertex index of the region as 2 quad into an index buffer
-	static void packIndex(uint16_t* _indexBuffer, uint32_t _startIndex, uint32_t _startVertex)
-	{
-		uint16_t* indices = &_indexBuffer[_startIndex];
-		*indices++ = _startVertex + 0;
-		*indices++ = _startVertex + 1;
-		*indices++ = _startVertex + 2;
-		*indices++ = _startVertex + 0;
-		*indices++ = _startVertex + 2;
-		*indices++ = _startVertex + 3;
-	}
-
 	/// return the TextureHandle (cube) of the atlas
 	bgfx::TextureHandle getTextureHandle() const
 	{

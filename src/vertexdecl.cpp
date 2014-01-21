@@ -511,7 +511,7 @@ namespace bgfx
 				continue;
 			}
 
-			_output[ii] = ii;
+			_output[ii] = (uint16_t)ii;
 			++numVertices;
 
 			float pos[4];
@@ -529,12 +529,12 @@ namespace bgfx
 
 				if (sqLength(test, pos) < epsilonSq)
 				{
-					_output[jj] = ii;
+					_output[jj] = (uint16_t)ii;
 				}
 			}
 		}
 
-		return numVertices;
+		return (uint16_t)numVertices;
 	}
 
 	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
@@ -572,13 +572,13 @@ namespace bgfx
 
 			if (UINT16_MAX == offset)
 			{
-				_output[ii] = ii;
+				_output[ii] = (uint16_t)ii;
 				next[ii] = hashTable[hashValue];
-				hashTable[hashValue] = ii;
+				hashTable[hashValue] = (uint16_t)ii;
 				numVertices++;
 			}
 		}
 
-		return numVertices;
+		return (uint16_t)numVertices;
 	}
 } // namespace bgfx
