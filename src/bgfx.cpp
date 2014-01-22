@@ -100,7 +100,8 @@ namespace bgfx
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) BX_OVERRIDE
 		{
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
-#if 0
+
+#if BX_CONFIG_CRT_FILE_READER_WRITER
 			char* filePath = (char*)alloca(strlen(_filePath)+5);
 			strcpy(filePath, _filePath);
 			strcat(filePath, ".tga");
@@ -111,7 +112,7 @@ namespace bgfx
 				imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
 				writer.close();
 			}
-#endif // 0
+#endif // BX_CONFIG_CRT_FILE_READER_WRITER
 		}
 
 		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
