@@ -186,15 +186,16 @@ namespace entry
 				case SDL_MOUSEMOTION:
 					{
 						const SDL_MouseMotionEvent& mev = event.motion;
-						int32_t mx = mev.xrel;
-						int32_t my = mev.yrel;
-
-						m_eventQueue.postMouseEvent(mx, my);
+						m_eventQueue.postMouseEvent(mev.x, mev.y);
 					}
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
+					{
+						const SDL_MouseButtonEvent& mev = event.button;
+						m_eventQueue.postMouseEvent(mev.x, mev.y, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+					}
 					break;
 
 				case SDL_KEYDOWN:
@@ -269,6 +270,7 @@ namespace entry
 
 		void setMousePos(int32_t _mx, int32_t _my)
 		{
+			BX_UNUSED(_mx, _my);
 		}
 
 		void setMouseLock(bool _lock)
@@ -371,6 +373,7 @@ namespace entry
 
 int main(int _argc, const char* _argv[])
 {
+	BX_UNUSED(_argc, _argv);
 	using namespace entry;
 	s_ctx.run();
 	return 0;
