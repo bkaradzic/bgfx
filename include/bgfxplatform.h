@@ -106,7 +106,7 @@ namespace bgfx
 	{
 		SDL_SysWMinfo wmi;
 		SDL_VERSION(&wmi.version);
-		if (-1 == SDL_GetWindowWMInfo(_window, &wmi) )
+		if (!SDL_GetWindowWMInfo(_window, &wmi) )
 		{
 			return false;
 		}
