@@ -161,56 +161,29 @@ struct ShadowMapRenderTargets
 
 void imguiEnum(SmImpl::Enum& _enum)
 {
-	if (imguiCheck("Hard", SmImpl::Hard == _enum) )
-	{
-		_enum = SmImpl::Hard;
-	}
-
-	if (imguiCheck("PCF", SmImpl::PCF == _enum) )
-	{
-		_enum = SmImpl::PCF;
-	}
-
-	if (imguiCheck("VSM", SmImpl::VSM == _enum) )
-	{
-		_enum = SmImpl::VSM;
-	}
-
-	if (imguiCheck("ESM", SmImpl::ESM == _enum) )
-	{
-		_enum = SmImpl::ESM;
-	}
+	_enum = (SmImpl::Enum)imguiChoose(_enum
+			, "Hard"
+			, "PCF"
+			, "VSM"
+			, "ESM"
+			);
 }
 
 void imguiEnum(DepthImpl::Enum& _enum)
 {
-	if (imguiCheck("InvZ", DepthImpl::InvZ == _enum) )
-	{
-		_enum = DepthImpl::InvZ;
-	}
-
-	if (imguiCheck("Linear", DepthImpl::Linear == _enum) )
-	{
-		_enum = DepthImpl::Linear;
-	}
+	_enum = (DepthImpl::Enum)imguiChoose(_enum
+			, "InvZ"
+			, "Linear"
+			);
 }
 
 void imguiEnum(LightType::Enum& _enum)
 {
-	if (imguiCheck("Spot light", LightType::SpotLight == _enum) )
-	{
-		_enum = LightType::SpotLight;
-	}
-
-	if (imguiCheck("Point light", LightType::PointLight == _enum) )
-	{
-		_enum = LightType::PointLight;
-	}
-
-	if (imguiCheck("Directional light", LightType::DirectionalLight == _enum) )
-	{
-		_enum = LightType::DirectionalLight;
-	}
+	_enum = (LightType::Enum)imguiChoose(_enum
+			, "Spot light"
+			, "Point light"
+			, "Directional light"
+			);
 }
 
 void imguiBool(const char* _str, bool& _flag, bool _enabled = true)
