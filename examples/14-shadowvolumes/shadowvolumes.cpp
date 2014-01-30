@@ -2171,6 +2171,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float initialPos[3] = { 3.0f, 20.0f, -58.0f };
 	cameraSetPosition(initialPos);
 	cameraSetVerticalAngle(-0.25f);
+	cameraUpdate(0.0f);
 	cameraGetViewMtx(viewState.m_view);
 
 	entry::MouseState mouseState;

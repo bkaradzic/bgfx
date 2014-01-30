@@ -2095,6 +2095,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float initialPos[3] = { 0.0f, 60.0f, -105.0f };
 	cameraSetPosition(initialPos);
 	cameraSetVerticalAngle(-0.45f);
+	cameraUpdate(0.0f);
 
 	// Set view and projection matrices.
 	const float camFovy    = 60.0f;
