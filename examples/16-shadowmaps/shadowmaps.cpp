@@ -17,25 +17,45 @@
 #include "fpumath.h"
 #include "imgui/imgui.h"
 
-#define RENDER_PASS_0 1
-#define RENDER_PASS_1 2
-#define RENDER_PASS_2 3
-#define RENDER_PASS_3 4
-#define RENDER_PASS_4 5
-#define RENDER_PASS_5 6
-#define RENDER_PASS_6 7
-#define RENDER_PASS_7 8
-#define RENDER_PASS_8 9
-#define RENDER_PASS_9 10
-#define RENDER_PASS_10 11
-#define RENDER_PASS_11 12
-#define RENDER_PASS_12 13
-#define RENDER_PASS_13 14
-#define RENDER_PASS_14 15
-#define RENDER_PASS_15 16
-#define RENDER_PASS_16 17
-#define RENDER_PASS_17 18
-#define RENDER_PASS_18 19
+#define RENDERVIEW_SHADOWMAP_0_ID 1
+#define RENDERVIEW_SHADOWMAP_1_ID 2
+#define RENDERVIEW_SHADOWMAP_2_ID 3
+#define RENDERVIEW_SHADOWMAP_3_ID 4
+#define RENDERVIEW_SHADOWMAP_4_ID 5
+#define RENDERVIEW_VBLUR_0_ID     6
+#define RENDERVIEW_HBLUR_0_ID     7
+#define RENDERVIEW_VBLUR_1_ID     8
+#define RENDERVIEW_HBLUR_1_ID     9
+#define RENDERVIEW_VBLUR_2_ID     10
+#define RENDERVIEW_HBLUR_2_ID     11
+#define RENDERVIEW_VBLUR_3_ID     12
+#define RENDERVIEW_HBLUR_3_ID     13
+#define RENDERVIEW_DRAWSCENE_0_ID 14
+#define RENDERVIEW_DRAWSCENE_1_ID 15
+#define RENDERVIEW_DRAWDEPTH_0_ID 16
+#define RENDERVIEW_DRAWDEPTH_1_ID 17
+#define RENDERVIEW_DRAWDEPTH_2_ID 18
+#define RENDERVIEW_DRAWDEPTH_3_ID 19
+
+#define RENDERVIEW_SHADOWMAP_0_BIT (1<<RENDERVIEW_SHADOWMAP_0_ID)
+#define RENDERVIEW_SHADOWMAP_1_BIT (1<<RENDERVIEW_SHADOWMAP_1_ID)
+#define RENDERVIEW_SHADOWMAP_2_BIT (1<<RENDERVIEW_SHADOWMAP_2_ID)
+#define RENDERVIEW_SHADOWMAP_3_BIT (1<<RENDERVIEW_SHADOWMAP_3_ID)
+#define RENDERVIEW_SHADOWMAP_4_BIT (1<<RENDERVIEW_SHADOWMAP_4_ID)
+#define RENDERVIEW_VBLUR_0_BIT     (1<<RENDERVIEW_VBLUR_0_ID)
+#define RENDERVIEW_HBLUR_0_BIT     (1<<RENDERVIEW_HBLUR_0_ID)
+#define RENDERVIEW_VBLUR_1_BIT     (1<<RENDERVIEW_VBLUR_1_ID)
+#define RENDERVIEW_HBLUR_1_BIT     (1<<RENDERVIEW_HBLUR_1_ID)
+#define RENDERVIEW_VBLUR_2_BIT     (1<<RENDERVIEW_VBLUR_2_ID)
+#define RENDERVIEW_HBLUR_2_BIT     (1<<RENDERVIEW_HBLUR_2_ID)
+#define RENDERVIEW_VBLUR_3_BIT     (1<<RENDERVIEW_VBLUR_3_ID)
+#define RENDERVIEW_HBLUR_3_BIT     (1<<RENDERVIEW_HBLUR_3_ID)
+#define RENDERVIEW_DRAWSCENE_0_BIT (1<<RENDERVIEW_DRAWSCENE_0_ID)
+#define RENDERVIEW_DRAWSCENE_1_BIT (1<<RENDERVIEW_DRAWSCENE_1_ID)
+#define RENDERVIEW_DRAWDEPTH_0_BIT (1<<RENDERVIEW_DRAWDEPTH_0_ID)
+#define RENDERVIEW_DRAWDEPTH_1_BIT (1<<RENDERVIEW_DRAWDEPTH_1_ID)
+#define RENDERVIEW_DRAWDEPTH_2_BIT (1<<RENDERVIEW_DRAWDEPTH_2_ID)
+#define RENDERVIEW_DRAWDEPTH_3_BIT (1<<RENDERVIEW_DRAWDEPTH_3_ID)
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -2568,7 +2588,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Reset render targets.
-		const uint32_t viewMask = (uint32_t(1) << (RENDER_PASS_18+1) ) - 1;
+		const uint32_t viewMask = (uint32_t(1) << (RENDERVIEW_DRAWDEPTH_3_ID+1) ) - 1;
 		const bgfx::RenderTargetHandle invalidRt = BGFX_INVALID_HANDLE;
 		bgfx::setViewRenderTargetMask(viewMask, invalidRt);
 
@@ -2585,123 +2605,123 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		if (LightType::SpotLight == settings.m_lightType)
 		{
 			/**
-			 * RENDER_PASS_0  - Clear shadow map. (used as convenience, otherwise render_pass_1 could be cleared)
-			 * RENDER_PASS_1  - Craft shadow map.
-			 * RENDER_PASS_5  - Vertical blur.
-			 * RENDER_PASS_6  - Horizontal blur.
-			 * RENDER_PASS_13 - Draw scene.
-			 * RENDER_PASS_14 - Draw floor bottom.
-			 * RENDER_PASS_15 - Draw depth buffer.
+			 * RENDERVIEW_SHADOWMAP_0_ID - Clear shadow map. (used as convenience, otherwise render_pass_1 could be cleared)
+			 * RENDERVIEW_SHADOWMAP_1_ID - Craft shadow map.
+			 * RENDERVIEW_VBLUR_0_ID - Vertical blur.
+			 * RENDERVIEW_HBLUR_0_ID - Horizontal blur.
+			 * RENDERVIEW_DRAWSCENE_0_ID - Draw scene.
+			 * RENDERVIEW_DRAWSCENE_1_ID - Draw floor bottom.
+			 * RENDERVIEW_DRAWDEPTH_0_ID - Draw depth buffer.
 			 */
 
-			bgfx::setViewRect(RENDER_PASS_0,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_1,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_5,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_6,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_13, 0, 0, viewState.m_width, viewState.m_height);
-			bgfx::setViewRect(RENDER_PASS_14, 0, 0, viewState.m_width, viewState.m_height);
-			bgfx::setViewRect(RENDER_PASS_15, depthRectX, depthRectY, depthRectWidth, depthRectHeight);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_VBLUR_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_HBLUR_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_DRAWSCENE_0_ID, 0, 0, viewState.m_width, viewState.m_height);
+			bgfx::setViewRect(RENDERVIEW_DRAWSCENE_1_ID, 0, 0, viewState.m_width, viewState.m_height);
+			bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_0_ID, depthRectX, depthRectY, depthRectWidth, depthRectHeight);
 
-			bgfx::setViewTransform(RENDER_PASS_0,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_1,  lightView[0], lightProj[ProjType::Horizontal]);
-			bgfx::setViewTransform(RENDER_PASS_5,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_6,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_13, viewState.m_view, viewState.m_proj);
-			bgfx::setViewTransform(RENDER_PASS_14, viewState.m_view, viewState.m_proj);
-			bgfx::setViewTransform(RENDER_PASS_15, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_1_ID, lightView[0], lightProj[ProjType::Horizontal]);
+			bgfx::setViewTransform(RENDERVIEW_VBLUR_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_HBLUR_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_0_ID, viewState.m_view, viewState.m_proj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, viewState.m_view, viewState.m_proj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
 
-			bgfx::setViewRenderTarget(RENDER_PASS_0, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_1, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_5, s_rtBlur);
-			bgfx::setViewRenderTarget(RENDER_PASS_6, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
+			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]);
 		}
 		else if (LightType::PointLight == settings.m_lightType)
 		{
 			/**
-			 * RENDER_PASS_0  - Clear entire shadow map.
-			 * RENDER_PASS_1  - Craft green tetrahedron shadow face.
-			 * RENDER_PASS_2  - Craft yellow tetrahedron shadow face.
-			 * RENDER_PASS_3  - Craft blue tetrahedron shadow face.
-			 * RENDER_PASS_4  - Craft red tetrahedron shadow face.
-			 * RENDER_PASS_5  - Vertical blur.
-			 * RENDER_PASS_6  - Horizontal blur.
-			 * RENDER_PASS_13 - Draw scene.
-			 * RENDER_PASS_14 - Draw floor bottom.
-			 * RENDER_PASS_15 - Draw depth buffer.
+			 * RENDERVIEW_SHADOWMAP_0_ID - Clear entire shadow map.
+			 * RENDERVIEW_SHADOWMAP_1_ID - Craft green tetrahedron shadow face.
+			 * RENDERVIEW_SHADOWMAP_2_ID - Craft yellow tetrahedron shadow face.
+			 * RENDERVIEW_SHADOWMAP_3_ID - Craft blue tetrahedron shadow face.
+			 * RENDERVIEW_SHADOWMAP_4_ID - Craft red tetrahedron shadow face.
+			 * RENDERVIEW_VBLUR_0_ID - Vertical blur.
+			 * RENDERVIEW_HBLUR_0_ID - Horizontal blur.
+			 * RENDERVIEW_DRAWSCENE_0_ID - Draw scene.
+			 * RENDERVIEW_DRAWSCENE_1_ID - Draw floor bottom.
+			 * RENDERVIEW_DRAWDEPTH_0_ID - Draw depth buffer.
 			 */
 
-			bgfx::setViewRect(RENDER_PASS_0, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
 			if (settings.m_stencilPack)
 			{
 				const uint16_t f = currentShadowMapSize;   //full size
 				const uint16_t h = currentShadowMapSize/2; //half size
-				bgfx::setViewRect(RENDER_PASS_1, 0, 0, f, h);
-				bgfx::setViewRect(RENDER_PASS_2, 0, h, f, h);
-				bgfx::setViewRect(RENDER_PASS_3, 0, 0, h, f);
-				bgfx::setViewRect(RENDER_PASS_4, h, 0, h, f);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, f, h);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_2_ID, 0, h, f, h);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_3_ID, 0, 0, h, f);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_4_ID, h, 0, h, f);
 			}
 			else
 			{
 				const uint16_t h = currentShadowMapSize/2; //half size
-				bgfx::setViewRect(RENDER_PASS_1, 0, 0, h, h);
-				bgfx::setViewRect(RENDER_PASS_2, h, 0, h, h);
-				bgfx::setViewRect(RENDER_PASS_3, 0, h, h, h);
-				bgfx::setViewRect(RENDER_PASS_4, h, h, h, h);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, h, h);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_2_ID, h, 0, h, h);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_3_ID, 0, h, h, h);
+				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_4_ID, h, h, h, h);
 			}
-			bgfx::setViewRect(RENDER_PASS_5,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_6,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_13, 0, 0, viewState.m_width, viewState.m_height);
-			bgfx::setViewRect(RENDER_PASS_14, 0, 0, viewState.m_width, viewState.m_height);
-			bgfx::setViewRect(RENDER_PASS_15, depthRectX, depthRectY, depthRectWidth, depthRectHeight);
+			bgfx::setViewRect(RENDERVIEW_VBLUR_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_HBLUR_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_DRAWSCENE_0_ID, 0, 0, viewState.m_width, viewState.m_height);
+			bgfx::setViewRect(RENDERVIEW_DRAWSCENE_1_ID, 0, 0, viewState.m_width, viewState.m_height);
+			bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_0_ID, depthRectX, depthRectY, depthRectWidth, depthRectHeight);
 
-			bgfx::setViewTransform(RENDER_PASS_0, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_1, lightView[TetrahedronFaces::Green],  lightProj[ProjType::Horizontal]);
-			bgfx::setViewTransform(RENDER_PASS_2, lightView[TetrahedronFaces::Yellow], lightProj[ProjType::Horizontal]);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_1_ID, lightView[TetrahedronFaces::Green],  lightProj[ProjType::Horizontal]);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_2_ID, lightView[TetrahedronFaces::Yellow], lightProj[ProjType::Horizontal]);
 			if(settings.m_stencilPack)
 			{
-				bgfx::setViewTransform(RENDER_PASS_3, lightView[TetrahedronFaces::Blue], lightProj[ProjType::Vertical]);
-				bgfx::setViewTransform(RENDER_PASS_4, lightView[TetrahedronFaces::Red],  lightProj[ProjType::Vertical]);
+				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_3_ID, lightView[TetrahedronFaces::Blue], lightProj[ProjType::Vertical]);
+				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_4_ID, lightView[TetrahedronFaces::Red],  lightProj[ProjType::Vertical]);
 			}
 			else
 			{
-				bgfx::setViewTransform(RENDER_PASS_3, lightView[TetrahedronFaces::Blue], lightProj[ProjType::Horizontal]);
-				bgfx::setViewTransform(RENDER_PASS_4, lightView[TetrahedronFaces::Red],  lightProj[ProjType::Horizontal]);
+				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_3_ID, lightView[TetrahedronFaces::Blue], lightProj[ProjType::Horizontal]);
+				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_4_ID, lightView[TetrahedronFaces::Red],  lightProj[ProjType::Horizontal]);
 			}
-			bgfx::setViewTransform(RENDER_PASS_5, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_6, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_13, viewState.m_view, viewState.m_proj);
-			bgfx::setViewTransform(RENDER_PASS_14, viewState.m_view, viewState.m_proj);
-			bgfx::setViewTransform(RENDER_PASS_15, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_VBLUR_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_HBLUR_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_0_ID, viewState.m_view, viewState.m_proj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, viewState.m_view, viewState.m_proj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
 
-			bgfx::setViewRenderTarget(RENDER_PASS_0, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_1, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_2, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_3, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_4, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_5, s_rtBlur);
-			bgfx::setViewRenderTarget(RENDER_PASS_6, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_4_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
+			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]);
 		}
 		else // LightType::DirectionalLight == settings.m_lightType
 		{
 			/**
-			 * RENDER_PASS_1  - Craft shadow map for first  split.
-			 * RENDER_PASS_2  - Craft shadow map for second split.
-			 * RENDER_PASS_3  - Craft shadow map for third  split.
-			 * RENDER_PASS_4  - Craft shadow map for fourth split.
-			 * RENDER_PASS_5  - Vertical   blur for first  split.
-			 * RENDER_PASS_6  - Horizontal blur for first  split.
-			 * RENDER_PASS_7  - Vertical   blur for second split.
-			 * RENDER_PASS_8  - Horizontal blur for second split.
-			 * RENDER_PASS_9  - Vertical   blur for third  split.
-			 * RENDER_PASS_10 - Horizontal blur for third  split.
-			 * RENDER_PASS_11 - Vertical   blur for fourth split.
-			 * RENDER_PASS_12 - Horizontal blur for fourth split.
-			 * RENDER_PASS_13 - Draw scene.
-			 * RENDER_PASS_14 - Draw floor bottom.
-			 * RENDER_PASS_15 - Draw depth buffer for first  split.
-			 * RENDER_PASS_16 - Draw depth buffer for second split.
-			 * RENDER_PASS_17 - Draw depth buffer for third  split.
-			 * RENDER_PASS_18 - Draw depth buffer for fourth split.
+			 * RENDERVIEW_SHADOWMAP_1_ID - Craft shadow map for first  split.
+			 * RENDERVIEW_SHADOWMAP_2_ID - Craft shadow map for second split.
+			 * RENDERVIEW_SHADOWMAP_3_ID - Craft shadow map for third  split.
+			 * RENDERVIEW_SHADOWMAP_4_ID - Craft shadow map for fourth split.
+			 * RENDERVIEW_VBLUR_0_ID - Vertical   blur for first  split.
+			 * RENDERVIEW_HBLUR_0_ID - Horizontal blur for first  split.
+			 * RENDERVIEW_VBLUR_1_ID - Vertical   blur for second split.
+			 * RENDERVIEW_HBLUR_1_ID - Horizontal blur for second split.
+			 * RENDERVIEW_VBLUR_2_ID - Vertical   blur for third  split.
+			 * RENDERVIEW_HBLUR_2_ID - Horizontal blur for third  split.
+			 * RENDERVIEW_VBLUR_3_ID - Vertical   blur for fourth split.
+			 * RENDERVIEW_HBLUR_3_ID - Horizontal blur for fourth split.
+			 * RENDERVIEW_DRAWSCENE_0_ID - Draw scene.
+			 * RENDERVIEW_DRAWSCENE_1_ID - Draw floor bottom.
+			 * RENDERVIEW_DRAWDEPTH_0_ID - Draw depth buffer for first  split.
+			 * RENDERVIEW_DRAWDEPTH_1_ID - Draw depth buffer for second split.
+			 * RENDERVIEW_DRAWDEPTH_2_ID - Draw depth buffer for third  split.
+			 * RENDERVIEW_DRAWDEPTH_3_ID - Draw depth buffer for fourth split.
 			 */
 
 			const uint16_t depthRectHeight = viewState.m_height / 3;
@@ -2709,56 +2729,56 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			const uint16_t depthRectX = 0;
 			const uint16_t depthRectY = viewState.m_height - depthRectHeight;
 
-			bgfx::setViewRect(RENDER_PASS_1,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_2,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_3,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_4,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_5,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_6,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_7,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_8,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_9,  0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_10, 0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_11, 0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_12, 0, 0, currentShadowMapSize, currentShadowMapSize);
-			bgfx::setViewRect(RENDER_PASS_13, 0, 0, viewState.m_width, viewState.m_height);
-			bgfx::setViewRect(RENDER_PASS_14, 0, 0, viewState.m_width, viewState.m_height);
-			bgfx::setViewRect(RENDER_PASS_15, depthRectX+(0*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
-			bgfx::setViewRect(RENDER_PASS_16, depthRectX+(1*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
-			bgfx::setViewRect(RENDER_PASS_17, depthRectX+(2*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
-			bgfx::setViewRect(RENDER_PASS_18, depthRectX+(3*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_2_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_3_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_4_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_VBLUR_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_HBLUR_0_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_VBLUR_1_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_HBLUR_1_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_VBLUR_2_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_HBLUR_2_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_VBLUR_3_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_HBLUR_3_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
+			bgfx::setViewRect(RENDERVIEW_DRAWSCENE_0_ID, 0, 0, viewState.m_width, viewState.m_height);
+			bgfx::setViewRect(RENDERVIEW_DRAWSCENE_1_ID, 0, 0, viewState.m_width, viewState.m_height);
+			bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_0_ID, depthRectX+(0*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
+			bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_1_ID, depthRectX+(1*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
+			bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_2_ID, depthRectX+(2*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
+			bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_3_ID, depthRectX+(3*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
 
-			bgfx::setViewTransform(RENDER_PASS_1,  lightView[0], lightProj[0]);
-			bgfx::setViewTransform(RENDER_PASS_2,  lightView[0], lightProj[1]);
-			bgfx::setViewTransform(RENDER_PASS_3,  lightView[0], lightProj[2]);
-			bgfx::setViewTransform(RENDER_PASS_4,  lightView[0], lightProj[3]);
-			bgfx::setViewTransform(RENDER_PASS_5,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_6,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_7,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_8,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_9,  screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_10, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_11, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_12, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_13, viewState.m_view, viewState.m_proj);
-			bgfx::setViewTransform(RENDER_PASS_14, viewState.m_view, viewState.m_proj);
-			bgfx::setViewTransform(RENDER_PASS_15, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_16, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_17, screenView, screenProj);
-			bgfx::setViewTransform(RENDER_PASS_18, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_1_ID, lightView[0], lightProj[0]);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_2_ID, lightView[0], lightProj[1]);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_3_ID, lightView[0], lightProj[2]);
+			bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_4_ID, lightView[0], lightProj[3]);
+			bgfx::setViewTransform(RENDERVIEW_VBLUR_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_HBLUR_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_VBLUR_1_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_HBLUR_1_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_VBLUR_2_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_HBLUR_2_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_VBLUR_3_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_HBLUR_3_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_0_ID, viewState.m_view, viewState.m_proj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, viewState.m_view, viewState.m_proj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_1_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_2_ID, screenView, screenProj);
+			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_3_ID, screenView, screenProj);
 
-			bgfx::setViewRenderTarget(RENDER_PASS_1,  s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDER_PASS_2,  s_rtShadowMap[1]);
-			bgfx::setViewRenderTarget(RENDER_PASS_3,  s_rtShadowMap[2]);
-			bgfx::setViewRenderTarget(RENDER_PASS_4,  s_rtShadowMap[3]);
-			bgfx::setViewRenderTarget(RENDER_PASS_5,  s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDER_PASS_6,  s_rtShadowMap[0]); //hblur
-			bgfx::setViewRenderTarget(RENDER_PASS_7,  s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDER_PASS_8,  s_rtShadowMap[1]); //hblur
-			bgfx::setViewRenderTarget(RENDER_PASS_9,  s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDER_PASS_10, s_rtShadowMap[2]); //hblur
-			bgfx::setViewRenderTarget(RENDER_PASS_11, s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDER_PASS_12, s_rtShadowMap[3]); //hblur
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[1]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[2]);
+			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_4_ID, s_rtShadowMap[3]);
+			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_0_ID, s_rtBlur);         //vblur
+			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]); //hblur
+			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_1_ID, s_rtBlur);         //vblur
+			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_1_ID, s_rtShadowMap[1]); //hblur
+			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_2_ID, s_rtBlur);         //vblur
+			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_2_ID, s_rtShadowMap[2]); //hblur
+			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_3_ID, s_rtBlur);         //vblur
+			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_3_ID, s_rtShadowMap[3]); //hblur
 		}
 
 		// Clear backbuffer at beginning.
@@ -2777,13 +2797,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 							 : BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT
 							 ;
 
-		bgfx::setViewClear(RENDER_PASS_0
+		bgfx::setViewClear(RENDERVIEW_SHADOWMAP_0_ID
 				, flags0
 				, 0xfefefefe //blur fails on completely white regions
 				, clearValues.m_clearDepth
 				, clearValues.m_clearStencil
 				);
-		bgfx::submit(RENDER_PASS_0);
+		bgfx::submit(RENDERVIEW_SHADOWMAP_0_ID);
 
 		const uint8_t flags1 = (LightType::DirectionalLight == settings.m_lightType)
 							 ? BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
@@ -2792,13 +2812,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		for (uint8_t ii = 0; ii < 4; ++ii)
 		{
-			bgfx::setViewClear(RENDER_PASS_1+ii
+			bgfx::setViewClear(RENDERVIEW_SHADOWMAP_1_ID+ii
 					, flags1
 					, 0xfefefefe //blur fails on completely white regions
 					, clearValues.m_clearDepth
 					, clearValues.m_clearStencil
 					);
-			bgfx::submit(RENDER_PASS_1+ii);
+			bgfx::submit(RENDERVIEW_SHADOWMAP_1_ID+ii);
 		}
 
 		// Render.
@@ -2858,7 +2878,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 							| BGFX_STENCIL_OP_PASS_Z_REPLACE
 							);
 					bgfx::setVertexBuffer(&vb);
-					bgfx::submit(RENDER_PASS_0);
+					bgfx::submit(RENDERVIEW_SHADOWMAP_0_ID);
 				}
 			}
 
@@ -2879,7 +2899,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			for (uint8_t ii = 0; ii < drawNum; ++ii)
 			{
-				const uint8_t viewId = RENDER_PASS_1 + ii;
+				const uint8_t viewId = RENDERVIEW_SHADOWMAP_1_ID + ii;
 
 				uint8_t renderStateIndex = RenderState::ShadowMap_PackDepth;
 				if(LightType::PointLight == settings.m_lightType && settings.m_stencilPack)
@@ -2937,19 +2957,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setProgram(s_programs.m_vBlur[depthType]);
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
-			bgfx::submit(RENDER_PASS_5);
+			bgfx::submit(RENDERVIEW_VBLUR_0_ID);
 
 			bgfx::setTexture(4, u_shadowMap[0], s_rtBlur);
 			bgfx::setProgram(s_programs.m_hBlur[depthType]);
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
-			bgfx::submit(RENDER_PASS_6);
+			bgfx::submit(RENDERVIEW_HBLUR_0_ID);
 
 			if (LightType::DirectionalLight == settings.m_lightType)
 			{
 				for (uint8_t ii = 1, jj = 2; ii < settings.m_numSplits; ++ii, jj+=2)
 				{
-					const uint8_t viewId = RENDER_PASS_5 + jj;
+					const uint8_t viewId = RENDERVIEW_VBLUR_0_ID + jj;
 
 					bgfx::setTexture(4, u_shadowMap[0], s_rtShadowMap[ii]);
 					bgfx::setProgram(s_programs.m_vBlur[depthType]);
@@ -3096,7 +3116,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				mtxMul(lightMtx, mtxFloor, mtxShadow); //not needed for directional light
 			}
-			hplaneMesh.submit(RENDER_PASS_13
+			hplaneMesh.submit(RENDERVIEW_DRAWSCENE_0_ID
 					, mtxFloor
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
@@ -3107,7 +3127,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				mtxMul(lightMtx, mtxBunny, mtxShadow);
 			}
-			bunnyMesh.submit(RENDER_PASS_13
+			bunnyMesh.submit(RENDERVIEW_DRAWSCENE_0_ID
 					, mtxBunny
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
@@ -3118,7 +3138,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				mtxMul(lightMtx, mtxHollowcube, mtxShadow);
 			}
-			hollowcubeMesh.submit(RENDER_PASS_13
+			hollowcubeMesh.submit(RENDERVIEW_DRAWSCENE_0_ID
 					, mtxHollowcube
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
@@ -3129,7 +3149,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				mtxMul(lightMtx, mtxCube, mtxShadow);
 			}
-			cubeMesh.submit(RENDER_PASS_13
+			cubeMesh.submit(RENDERVIEW_DRAWSCENE_0_ID
 					, mtxCube
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
@@ -3142,7 +3162,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				{
 					mtxMul(lightMtx, mtxTrees[ii], mtxShadow);
 				}
-				treeMesh.submit(RENDER_PASS_13
+				treeMesh.submit(RENDERVIEW_DRAWSCENE_0_ID
 						, mtxTrees[ii]
 						, *currentSmSettings->m_progDraw
 						, s_renderStates[RenderState::Default]
@@ -3155,7 +3175,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
 				float mtx[16];
 				mtxBillboard(mtx, viewState.m_view, pointLight.m_position.m_v, lightScale);
-				vplaneMesh.submit(RENDER_PASS_13
+				vplaneMesh.submit(RENDERVIEW_DRAWSCENE_0_ID
 						, mtx
 						, s_programs.m_colorTexture
 						, s_renderStates[RenderState::Custom_BlendLightTexture]
@@ -3177,7 +3197,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					, 0.0f  //translateZ
 					);
 
-			hplaneMesh.submit(RENDER_PASS_14
+			hplaneMesh.submit(RENDERVIEW_DRAWSCENE_1_ID
 					, floorBottomMtx
 					, s_programs.m_texture
 					, s_renderStates[RenderState::Custom_DrawPlaneBottom]
@@ -3192,7 +3212,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setProgram(s_programs.m_drawDepth[depthType]);
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
-			bgfx::submit(RENDER_PASS_15);
+			bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID);
 
 			if (LightType::DirectionalLight == settings.m_lightType)
 			{
@@ -3202,7 +3222,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					bgfx::setProgram(s_programs.m_drawDepth[depthType]);
 					bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 					screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
-					bgfx::submit(RENDER_PASS_15+ii);
+					bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID+ii);
 				}
 			}
 		}
