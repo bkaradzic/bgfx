@@ -23,6 +23,7 @@ using namespace std::tr1;
 #include <bx/hash.h>
 #include <bx/float4_t.h>
 #include "entry/entry.h"
+#include "entry/camera.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
 
@@ -2160,10 +2161,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	MeshChoice currentMesh = BunnyLowPoly;
 	Scene currentScene = Scene0;
 
+	// Set view and projection matrices.
+	const float fov = 60.0f;
+	const float aspect = float(viewState.m_width)/float(viewState.m_height);
+	const float nearPlane = 1.0f;
+	const float farPlane = 1000.0f;
+	mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
+
+	float initialPos[3] = { 3.0f, 20.0f, -58.0f };
+	cameraSetPosition(initialPos);
+	cameraSetVerticalAngle(-0.25f);
+	cameraGetViewMtx(viewState.m_view);
+
 	entry::MouseState mouseState;
 	while (!entry::processEvents(viewState.m_width, viewState.m_height, debug, reset, &mouseState) )
 	{
-		//respond properly on resize
+		// Respond properly on resize.
 		if (oldWidth != viewState.m_width
 		||  oldHeight != viewState.m_height)
 		{
@@ -2175,17 +2188,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			s_stencilRt = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
 		}
 
-		//set view and projection matrices
-		const float fov       = 60.0f;
-		const float aspect    = float(viewState.m_width)/float(viewState.m_height);
-		const float nearPlane = 1.0f;
-		const float farPlane  = 1000.0f;
-		mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
-		float at[3] = { 3.0f, 5.0f, 0.0f };
-		float eye[3] = { 3.0f, 20.0f, -58.0f };
-		mtxLookAt(viewState.m_view, eye, at);
-
-		//time
+		// Time.
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
 		const int64_t frameTime = now - last;
@@ -2195,6 +2198,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
 		const float deltaTime = float(frameTime/freq);
 		s_uniforms.m_time = time;
+
+		// Update camera.
+		cameraUpdate(deltaTime);
+		cameraGetViewMtx(viewState.m_view);
 
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my
