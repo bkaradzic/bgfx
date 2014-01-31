@@ -13,6 +13,10 @@ project ("example-common")
 		BGFX_DIR .. "3rdparty",
 	}
 
+	defines {
+--		"ENTRY_CONFIG_USE_SDL=1",
+	}
+
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",

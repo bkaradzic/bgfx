@@ -338,8 +338,8 @@ namespace entry
 		SDL_Event event;
 		SDL_UserEvent& uev = event.user;
 		uev.type = SDL_USER_SET_WINDOW_SIZE;
-		uev.data1 = (void*)_width;
-		uev.data2 = (void*)_height;
+		uev.data1 = reinterpret_cast<void*>(_width);
+		uev.data2 = reinterpret_cast<void*>(_height);
 		SDL_PushEvent(&event);
 	}
 
