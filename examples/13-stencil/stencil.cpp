@@ -12,6 +12,7 @@
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include "entry/entry.h"
+#include "entry/camera.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
 
@@ -1010,6 +1011,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 	memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR, MAX_NUM_LIGHTS * 4*sizeof(float));
 
+	// Set view and projection matrices.
+	const float aspect = float(viewState.m_width)/float(viewState.m_height);
+	mtxProj(viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
+
+	float initialPos[3] = { 0.0f, 18.0f, -40.0f };
+	cameraSetPosition(initialPos);
+	cameraSetVerticalAngle(-0.35f);
+	cameraUpdate(0.0f);
+	cameraGetViewMtx(viewState.m_view);
+
 	int64_t timeOffset = bx::getHPCounter();
 
 	enum Scene
@@ -1103,12 +1114,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Stencil reflections and shadows.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-		// Set view and projection matrices.
-		const float aspect = float(viewState.m_width)/float(viewState.m_height);
-		mtxProj(viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
-		float at[3] = { 0.0f, 5.0f, 0.0f };
-		float eye[3] = { 0.0f, 18.0f, -40.0f };
-		mtxLookAt(viewState.m_view, eye, at);
+		// Update camera.
+		cameraUpdate(deltaTime);
+		cameraGetViewMtx(viewState.m_view);
 
 		static float lightTimeAccumulator = 0.0f;
 		if (settings_updateLights)

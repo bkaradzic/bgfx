@@ -96,7 +96,7 @@ void main ()
     if (tmpvar_24) {
       tmpvar_23 = 1.0;
     } else {
-      tmpvar_23 = clamp (exp((_depthMultiplier_22 * (dot (texture2D (u_shadowMap0, tmpvar_21.xy), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) - (v_texcoord1.z - u_params1.x)))), 0.0, 1.0);
+      tmpvar_23 = clamp (exp((_depthMultiplier_22 * (dot (texture2D (u_shadowMap0, tmpvar_21.xy), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) - (v_texcoord1.z - u_params1.x)))), 0.0, 1.0);
     };
     visibility_1 = tmpvar_23;
   } else {
@@ -136,7 +136,7 @@ void main ()
       if (tmpvar_34) {
         tmpvar_33 = 1.0;
       } else {
-        tmpvar_33 = clamp (exp((_depthMultiplier_32 * (dot (texture2D (u_shadowMap1, tmpvar_31.xy), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) - (v_texcoord2.z - u_params1.x)))), 0.0, 1.0);
+        tmpvar_33 = clamp (exp((_depthMultiplier_32 * (dot (texture2D (u_shadowMap1, tmpvar_31.xy), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) - (v_texcoord2.z - u_params1.x)))), 0.0, 1.0);
       };
       visibility_1 = tmpvar_33;
     } else {
@@ -176,7 +176,7 @@ void main ()
         if (tmpvar_44) {
           tmpvar_43 = 1.0;
         } else {
-          tmpvar_43 = clamp (exp((_depthMultiplier_42 * (dot (texture2D (u_shadowMap2, tmpvar_41.xy), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) - (v_texcoord3.z - u_params1.x)))), 0.0, 1.0);
+          tmpvar_43 = clamp (exp((_depthMultiplier_42 * (dot (texture2D (u_shadowMap2, tmpvar_41.xy), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) - (v_texcoord3.z - u_params1.x)))), 0.0, 1.0);
         };
         visibility_1 = tmpvar_43;
       } else {
@@ -215,7 +215,7 @@ void main ()
         if (tmpvar_54) {
           tmpvar_53 = 1.0;
         } else {
-          tmpvar_53 = clamp (exp((_depthMultiplier_52 * (dot (texture2D (u_shadowMap3, tmpvar_51.xy), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) - (v_texcoord4.z - u_params1.x)))), 0.0, 1.0);
+          tmpvar_53 = clamp (exp((_depthMultiplier_52 * (dot (texture2D (u_shadowMap3, tmpvar_51.xy), vec4(5.96046e-08, 1.52588e-05, 0.00390625, 1.0)) - (v_texcoord4.z - u_params1.x)))), 0.0, 1.0);
         };
         visibility_1 = tmpvar_53;
       };
@@ -248,7 +248,7 @@ void main ()
   tmpvar_64 = (max (tmpvar_63, 0.0) * tmpvar_57);
   float tmpvar_65;
   tmpvar_65 = sqrt(dot (v_view, v_view));
-  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (abs(((((u_lightAmbientPower.xyz * u_lightAmbientPower.w) * u_materialKa) * u_color.xyz) + ((((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_64.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_64.y)) * u_color.xyz) * visibility_1))), vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(exp2(((1.7673e-005 * tmpvar_65) * tmpvar_65)))), 0.0, 1.0));
+  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (abs(((((u_lightAmbientPower.xyz * u_lightAmbientPower.w) * u_materialKa) * u_color.xyz) + ((((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_64.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_64.y)) * u_color.xyz) * visibility_1))), vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(exp2(((1.7673e-05 * tmpvar_65) * tmpvar_65)))), 0.0, 1.0));
   gl_FragColor.w = 1.0;
 }
 
