@@ -733,7 +733,7 @@ namespace bgfx
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
-		s_ctx = BX_NEW(g_allocator, Context);
+		s_ctx = BX_ALIGNED_NEW(g_allocator, 16, Context);
 		s_ctx->init();
 
 		const uint64_t emulatedCaps = 0
@@ -779,7 +779,7 @@ namespace bgfx
 		Context* ctx = s_ctx; // it's going to be NULLd inside shutdown.
 		ctx->shutdown();
 
-		BX_DELETE(g_allocator, ctx);
+		BX_ALIGNED_DELETE(g_allocator, 16, ctx);
 
 		if (NULL != s_callbackStub)
 		{
