@@ -86,9 +86,9 @@ struct LightType
 {
 	enum Enum
 	{
-		SpotLight        = 0,
-		PointLight       = 1,
-		DirectionalLight = 2,
+		SpotLight,
+		PointLight,
+		DirectionalLight,
 
 		Count
 	};
@@ -99,8 +99,8 @@ struct DepthImpl
 {
 	enum Enum
 	{
-		InvZ   = 0,
-		Linear = 1,
+		InvZ,
+		Linear,
 
 		Count
 	};
@@ -110,8 +110,8 @@ struct PackDepth
 {
 	enum Enum
 	{
-		RGBA = 0,
-		VSM  = 1,
+		RGBA,
+		VSM,
 
 		Count
 	};
@@ -121,10 +121,10 @@ struct SmImpl
 {
 	enum Enum
 	{
-		Hard = 0,
-		PCF  = 1,
-		VSM  = 2,
-		ESM  = 3,
+		Hard,
+		PCF,
+		VSM,
+		ESM,
 
 		Count
 	};
@@ -134,9 +134,9 @@ struct SmType
 {
 	enum Enum
 	{
-		Single  = 0,
-		Omni    = 1,
-		Cascade = 2,
+		Single,
+		Omni,
+		Cascade,
 
 		Count
 	};
@@ -146,12 +146,12 @@ struct TetrahedronFaces
 {
 	enum Enum
 	{
-		Green  = 0,
-		Yellow = 1,
-		Blue   = 2,
-		Red    = 3,
+		Green,
+		Yellow,
+		Blue,
+		Red,
 
-		Count  = 4
+		Count
 	};
 };
 
@@ -159,8 +159,8 @@ struct ProjType
 {
 	enum Enum
 	{
-		Horizontal = 0,
-		Vertical   = 1,
+		Horizontal,
+		Vertical,
 
 		Count
 	};
@@ -170,10 +170,10 @@ struct ShadowMapRenderTargets
 {
 	enum Enum
 	{
-		First  = 0,
-		Second = 1,
-		Third  = 2,
-		Fourth = 3,
+		First,
+		Second,
+		Third,
+		Fourth,
 
 		Count
 	};
