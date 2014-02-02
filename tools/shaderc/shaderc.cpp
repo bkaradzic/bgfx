@@ -531,10 +531,6 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 		writef(_writer, "precision highp float;\n");
 		writef(_writer, "#endif // GL_ES\n\n");
 	}
-	else
-	{
-//		writef(_writer, "#version %s\n\n", profile);
-	}
 
 	bx::write(_writer, optimizedShader, (int32_t)strlen(optimizedShader) );
 	uint8_t nul = 0;
@@ -1862,10 +1858,6 @@ int main(int _argc, const char* _argv[])
 							writef(&writer, "precision highp float;\n");
 							writef(&writer, "#endif // GL_ES\n\n");
 						}
-						else
-						{
-//							writef(&writer, "#version %s\n\n", profile);
-						}
 					}
 					writer.write(preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
 					writer.close();
@@ -1906,7 +1898,13 @@ int main(int _argc, const char* _argv[])
 
 					if (glsl)
 					{
-						compiled = compileGLSLShader(cmdLine, preprocessor.m_preprocessed, writer);
+						std::string code;
+						if (0 == gles)
+						{
+							bx::stringPrintf(code, "#version %s\n", profile);
+						}
+						code += preprocessor.m_preprocessed;
+						compiled = compileGLSLShader(cmdLine, code, writer);
 					}
 					else
 					{
