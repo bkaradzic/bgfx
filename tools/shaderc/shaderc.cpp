@@ -388,6 +388,7 @@ private:
 
 struct Varying
 {
+	std::string m_precision;
 	std::string m_name;
 	std::string m_type;
 	std::string m_init;
@@ -507,7 +508,10 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 {
 	const glslopt_shader_type type = tolower(_cmdLine.findOption('\0', "type")[0]) == 'f' ? kGlslOptShaderFragment : kGlslOptShaderVertex;
 
-	glslopt_ctx* ctx = glslopt_initialize(false);
+	const char* profile = _cmdLine.findOption('p', "profile");
+	bool gles = NULL == profile;
+
+	glslopt_ctx* ctx = glslopt_initialize(gles);
 
 	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), 0); 
 
@@ -521,8 +525,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 
 	const char* optimizedShader = glslopt_get_output(shader);
 
-	const char* profile = _cmdLine.findOption('p', "profile");
-	if (NULL == profile)
+	if (gles)
 	{
 		writef(_writer, "#ifdef GL_ES\n");
 		writef(_writer, "precision highp float;\n");
@@ -1037,7 +1040,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 struct Preprocessor
 {
-	Preprocessor(const char* _filePath, const char* _includeDir = NULL)
+	Preprocessor(const char* _filePath, bool _gles, const char* _includeDir = NULL)
 		: m_tagptr(m_tags)
 		, m_scratchPos(0)
 		, m_fgetsPos(0)
@@ -1079,7 +1082,10 @@ struct Preprocessor
 			addInclude(_includeDir);
 		}
 
-		m_default = "#define lowp\n#define mediump\n#define highp\n";
+		if (!_gles)
+		{
+			m_default = "#define lowp\n#define mediump\n#define highp\n";
+		}
 	}
 
 	void setDefine(const char* _define)
@@ -1379,6 +1385,7 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
+	uint32_t gles = 0;
 	uint32_t hlsl = 2;
 	const char* profile = cmdLine.findOption('p', "profile");
 	if (NULL != profile)
@@ -1395,6 +1402,10 @@ int main(int _argc, const char* _argv[])
 		{
 			hlsl = 5;
 		}
+	}
+	else
+	{
+		gles = 2;
 	}
 
 	const char* bin2c = NULL;
@@ -1428,7 +1439,7 @@ int main(int _argc, const char* _argv[])
 	bool preprocessOnly = cmdLine.hasArg("preprocess");
 	const char* includeDir = cmdLine.findOption('i');
 
-	Preprocessor preprocessor(filePath, includeDir);
+	Preprocessor preprocessor(filePath, 0 != gles, includeDir);
 
 	std::string dir;
 	{
@@ -1544,7 +1555,16 @@ int main(int _argc, const char* _argv[])
 			const char* eol = strchr(parse, ';');
 			if (NULL != eol)
 			{
+				const char* precision = NULL;
 				const char* type = parse;
+
+				if (0 == strncmp(type, "lowp", 4)
+				||  0 == strncmp(type, "mediump", 7)
+				||  0 == strncmp(type, "highp", 5) )
+				{
+					precision = type;
+					type = parse = bx::strws(bx::strword(parse) );
+				}
 				const char* name = parse = bx::strws(bx::strword(parse) );
 				const char* column = parse = bx::strws(bx::strword(parse) );
 				const char* semantics = parse = bx::strws(bx::strnws(parse) );
@@ -1558,6 +1578,10 @@ int main(int _argc, const char* _argv[])
 				&&  semantics < eol)
 				{
 					Varying var;
+					if (NULL != precision)
+					{
+						var.m_precision.assign(precision, bx::strword(precision)-precision);
+					}
 					var.m_type.assign(type, bx::strword(type)-type);
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
@@ -1630,7 +1654,6 @@ int main(int _argc, const char* _argv[])
 					"#define ivec4 vec4\n"
 					);
 
-
 				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 				{
 					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
@@ -1641,11 +1664,19 @@ int main(int _argc, const char* _argv[])
 						if (0 == strncmp(name, "a_", 2)
 						||  0 == strncmp(name, "i_", 2) )
 						{
-							preprocessor.writef("attribute %s %s;\n", var.m_type.c_str(), name);
+							preprocessor.writef("attribute %s %s %s;\n"
+									, var.m_precision.c_str()
+									, var.m_type.c_str()
+									, name
+									);
 						}
 						else
 						{
-							preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), name);
+							preprocessor.writef("varying %s %s %s;\n"
+									, var.m_precision.c_str()
+									, var.m_type.c_str()
+									, name
+									);
 						}
 					}
 				}
