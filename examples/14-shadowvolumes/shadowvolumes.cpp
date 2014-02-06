@@ -104,7 +104,7 @@ static uint32_t s_viewMask = 0;
 
 static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_texStencil;
-static bgfx::RenderTargetHandle s_stencilRt;
+static bgfx::FrameBufferHandle s_stencilFb;
 
 inline uint32_t uint32_max(uint32_t _a, uint32_t _b)
 {
@@ -1256,7 +1256,7 @@ struct Model
 			{
 				bgfx::setTexture(0, u_texColor, m_texture);
 			}
-			bgfx::setTexture(7, u_texStencil, s_stencilRt);
+			bgfx::setTexture(7, u_texStencil, s_stencilFb);
 
 			// Apply render state
 			::setRenderState(_renderState);
@@ -1994,7 +1994,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = loadTexture("fieldstone-rgba.dds");
 	bgfx::TextureHandle fieldstoneTex = bgfx::createTexture(mem);
 
-	s_stencilRt  = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
+	bgfx::TextureHandle fbtextures[] =
+	{
+		bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::D16),
+	};
+	s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
 	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
 	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
@@ -2184,9 +2189,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			oldWidth = viewState.m_width;
 			oldHeight = viewState.m_height;
 
-			bgfx::destroyRenderTarget(s_stencilRt);
+			bgfx::destroyFrameBuffer(s_stencilFb);
 
-			s_stencilRt = bgfx::createRenderTarget(viewState.m_width, viewState.m_height, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
+			fbtextures[0] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT);
+			fbtextures[1] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::D16);
+			s_stencilFb = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 
 		// Time.
@@ -2640,7 +2647,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		if (settings_useStencilTexture)
 		{
 			bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, 0x00000000, 1.0f, 0);
-			bgfx::setViewRenderTarget(VIEWID_RANGE1_RT_PASS1, s_stencilRt);
+			bgfx::setViewFrameBuffer(VIEWID_RANGE1_RT_PASS1, s_stencilFb);
 
 			const RenderState& renderState = s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_BuildDepth];
 
@@ -2672,7 +2679,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			if (settings_useStencilTexture)
 			{
-				bgfx::setViewRenderTarget(viewId, s_stencilRt);
+				bgfx::setViewFrameBuffer(viewId, s_stencilFb);
 
 				bgfx::setViewClear(viewId
 						, BGFX_CLEAR_COLOR_BIT
@@ -2683,8 +2690,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 			else
 			{
-				const bgfx::RenderTargetHandle invalidRt = BGFX_INVALID_HANDLE;
-				bgfx::setViewRenderTarget(viewId, invalidRt);
+				const bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
+				bgfx::setViewFrameBuffer(viewId, invalid);
 
 				bgfx::setViewClear(viewId
 						, BGFX_CLEAR_STENCIL_BIT
@@ -2926,7 +2933,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_texStencil);
-	bgfx::destroyRenderTarget(s_stencilRt);
+	bgfx::destroyFrameBuffer(s_stencilFb);
 
 	bgfx::destroyTexture(figureTex);
 	bgfx::destroyTexture(fieldstoneTex);

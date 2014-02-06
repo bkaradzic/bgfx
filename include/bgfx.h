@@ -171,56 +171,36 @@
 #define BGFX_TEXTURE_U_CLAMP             UINT32_C(0x00000002)
 #define BGFX_TEXTURE_U_SHIFT             0
 #define BGFX_TEXTURE_U_MASK              UINT32_C(0x00000003)
-#define BGFX_TEXTURE_V_MIRROR            UINT32_C(0x00000010)
-#define BGFX_TEXTURE_V_CLAMP             UINT32_C(0x00000020)
-#define BGFX_TEXTURE_V_SHIFT             4
-#define BGFX_TEXTURE_V_MASK              UINT32_C(0x00000030)
-#define BGFX_TEXTURE_W_MIRROR            UINT32_C(0x00000100)
-#define BGFX_TEXTURE_W_CLAMP             UINT32_C(0x00000200)
-#define BGFX_TEXTURE_W_SHIFT             8
-#define BGFX_TEXTURE_W_MASK              UINT32_C(0x00000300)
-#define BGFX_TEXTURE_MIN_POINT           UINT32_C(0x00001000)
-#define BGFX_TEXTURE_MIN_ANISOTROPIC     UINT32_C(0x00002000)
-#define BGFX_TEXTURE_MIN_SHIFT           12
-#define BGFX_TEXTURE_MIN_MASK            UINT32_C(0x00003000)
-#define BGFX_TEXTURE_MAG_POINT           UINT32_C(0x00010000)
-#define BGFX_TEXTURE_MAG_ANISOTROPIC     UINT32_C(0x00020000)
-#define BGFX_TEXTURE_MAG_SHIFT           16
-#define BGFX_TEXTURE_MAG_MASK            UINT32_C(0x00030000)
-#define BGFX_TEXTURE_MIP_POINT           UINT32_C(0x00100000)
-#define BGFX_TEXTURE_MIP_SHIFT           20
-#define BGFX_TEXTURE_MIP_MASK            UINT32_C(0x00100000)
+#define BGFX_TEXTURE_V_MIRROR            UINT32_C(0x00000004)
+#define BGFX_TEXTURE_V_CLAMP             UINT32_C(0x00000008)
+#define BGFX_TEXTURE_V_SHIFT             2
+#define BGFX_TEXTURE_V_MASK              UINT32_C(0x0000000c)
+#define BGFX_TEXTURE_W_MIRROR            UINT32_C(0x00000010)
+#define BGFX_TEXTURE_W_CLAMP             UINT32_C(0x00000020)
+#define BGFX_TEXTURE_W_SHIFT             4
+#define BGFX_TEXTURE_W_MASK              UINT32_C(0x00000030)
+#define BGFX_TEXTURE_MIN_POINT           UINT32_C(0x00000040)
+#define BGFX_TEXTURE_MIN_ANISOTROPIC     UINT32_C(0x00000080)
+#define BGFX_TEXTURE_MIN_SHIFT           6
+#define BGFX_TEXTURE_MIN_MASK            UINT32_C(0x000000c0)
+#define BGFX_TEXTURE_MAG_POINT           UINT32_C(0x00000100)
+#define BGFX_TEXTURE_MAG_ANISOTROPIC     UINT32_C(0x00000200)
+#define BGFX_TEXTURE_MAG_SHIFT           8
+#define BGFX_TEXTURE_MAG_MASK            UINT32_C(0x00000300)
+#define BGFX_TEXTURE_MIP_POINT           UINT32_C(0x00000400)
+#define BGFX_TEXTURE_MIP_SHIFT           10
+#define BGFX_TEXTURE_MIP_MASK            UINT32_C(0x00000400)
+#define BGFX_TEXTURE_RT                  UINT32_C(0x00001000)
+#define BGFX_TEXTURE_RT_MSAA_X2          UINT32_C(0x00002000)
+#define BGFX_TEXTURE_RT_MSAA_X4          UINT32_C(0x00003000)
+#define BGFX_TEXTURE_RT_MSAA_X8          UINT32_C(0x00004000)
+#define BGFX_TEXTURE_RT_MSAA_X16         UINT32_C(0x00005000)
+#define BGFX_TEXTURE_RT_MSAA_SHIFT       12
+#define BGFX_TEXTURE_RT_MSAA_MASK        UINT32_C(0x00007000)
+#define BGFX_TEXTURE_RT_BUFFER_ONLY      UINT32_C(0x00008000)
+#define BGFX_TEXTURE_RT_MASK             UINT32_C(0x0000f000)
 #define BGFX_TEXTURE_RESERVED_SHIFT      24
 #define BGFX_TEXTURE_RESERVED_MASK       UINT32_C(0xff000000)
-
-///
-#define BGFX_RENDER_TARGET_NONE          UINT32_C(0x00000000)
-#define BGFX_RENDER_TARGET_COLOR_RGBA8   UINT32_C(0x00000001)
-#define BGFX_RENDER_TARGET_COLOR_RGB10A2 UINT32_C(0x00000002)
-#define BGFX_RENDER_TARGET_COLOR_RGBA16  UINT32_C(0x00000003)
-#define BGFX_RENDER_TARGET_COLOR_RGBA16F UINT32_C(0x00000004)
-#define BGFX_RENDER_TARGET_COLOR_R16F    UINT32_C(0x00000005)
-#define BGFX_RENDER_TARGET_COLOR_R32F    UINT32_C(0x00000006)
-#define BGFX_RENDER_TARGET_COLOR_SHIFT   0
-#define BGFX_RENDER_TARGET_COLOR_MASK    UINT32_C(0x000000ff)
-
-#define BGFX_RENDER_TARGET_DEPTH_D16     UINT32_C(0x00000100)
-#define BGFX_RENDER_TARGET_DEPTH_D24     UINT32_C(0x00000200)
-#define BGFX_RENDER_TARGET_DEPTH_D24S8   UINT32_C(0x00000300)
-#define BGFX_RENDER_TARGET_DEPTH_D32     UINT32_C(0x00000400)
-#define BGFX_RENDER_TARGET_DEPTH_D16F    UINT32_C(0x00000500)
-#define BGFX_RENDER_TARGET_DEPTH_D24F    UINT32_C(0x00000600)
-#define BGFX_RENDER_TARGET_DEPTH_D32F    UINT32_C(0x00000700)
-#define BGFX_RENDER_TARGET_DEPTH_D0S8    UINT32_C(0x00000800)
-#define BGFX_RENDER_TARGET_DEPTH_SHIFT   8
-#define BGFX_RENDER_TARGET_DEPTH_MASK    UINT32_C(0x0000ff00)
-
-#define BGFX_RENDER_TARGET_MSAA_X2       UINT32_C(0x00010000)
-#define BGFX_RENDER_TARGET_MSAA_X4       UINT32_C(0x00020000)
-#define BGFX_RENDER_TARGET_MSAA_X8       UINT32_C(0x00030000)
-#define BGFX_RENDER_TARGET_MSAA_X16      UINT32_C(0x00040000)
-#define BGFX_RENDER_TARGET_MSAA_SHIFT    16
-#define BGFX_RENDER_TARGET_MSAA_MASK     UINT32_C(0x00070000)
 
 ///
 #define BGFX_RESET_NONE                  UINT32_C(0x00000000)
@@ -297,7 +277,6 @@ namespace bgfx
 			MinimumRequiredSpecs,
 			InvalidShader,
 			UnableToInitialize,
-			UnableToCreateRenderTarget,
 			UnableToCreateTexture,
 		};
 	};
@@ -428,7 +407,7 @@ namespace bgfx
 	BGFX_HANDLE(FragmentShaderHandle);
 	BGFX_HANDLE(IndexBufferHandle);
 	BGFX_HANDLE(ProgramHandle);
-	BGFX_HANDLE(RenderTargetHandle);
+	BGFX_HANDLE(FrameBufferHandle);
 	BGFX_HANDLE(TextureHandle);
 	BGFX_HANDLE(UniformHandle);
 	BGFX_HANDLE(VertexBufferHandle);
@@ -500,8 +479,9 @@ namespace bgfx
 		/// internally decompresses texture into supported format.
 		uint64_t emulated;
 
-		uint16_t maxTextureSize; ///< Maximum texture size.
-		uint16_t maxDrawCalls;   ///< Maximum draw calls.
+		uint16_t maxTextureSize;   ///< Maximum texture size.
+		uint16_t maxDrawCalls;     ///< Maximum draw calls.
+		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
 	};
 
 	struct TransientIndexBuffer
@@ -981,11 +961,26 @@ namespace bgfx
 	/// Destroy texture.
 	void destroyTexture(TextureHandle _handle);
 
-	/// Create render target.
-	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags = BGFX_RENDER_TARGET_COLOR_RGBA8, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
+	/// Create frame buffer (simple).
+	///
+	/// @param _width Texture width.
+	/// @param _height Texture height.
+	/// @param _format Texture format.
+	/// @param _textureFlags Texture flags.
+	///
+	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
 
-	/// Destroy render target.
-	void destroyRenderTarget(RenderTargetHandle _handle);
+	/// Create frame buffer.
+	///
+	/// @param _num Number of texture attachments.
+	/// @param _handles Texture attachments.
+	/// @param _destroyTextures Destroy textures when frame buffer is
+	///   destroyed.
+	///
+	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures = false);
+
+	/// Destroy frame buffer.
+	void destroyFrameBuffer(FrameBufferHandle _handle);
 
 	/// Create shader uniform parameter.
 	///
@@ -1092,23 +1087,23 @@ namespace bgfx
 	/// Set multiple views into sequential mode.
 	void setViewSeqMask(uint32_t _viewMask, bool _enabled);
 
-	/// Set view render target.
+	/// Set view frame buffer.
 	///
 	/// @param _id View id.
-	/// @param _handle Render target handle. Passing BGFX_INVALID_HANDLE as
-	///   render target handle will draw primitives from this view into
-	///   default backbuffer.
+	/// @param _handle Frame buffer handle. Passing BGFX_INVALID_HANDLE as
+	///   frame buffer handle will draw primitives from this view into
+	///   default back buffer.
 	///
-	void setViewRenderTarget(uint8_t _id, RenderTargetHandle _handle);
+	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle);
 
-	/// Set view render target for multiple views.
+	/// Set view frame buffer for multiple views.
 	///
 	/// @param _viewMask View mask.
-	/// @param _handle Render target handle. Passing BGFX_INVALID_HANDLE as
-	///   render target handle will draw primitives from this view into
-	///   default backbuffer.
+	/// @param _handle Frame buffer handle. Passing BGFX_INVALID_HANDLE as
+	///   frame buffer handle will draw primitives from this view into
+	///   default back buffer.
 	///
-	void setViewRenderTargetMask(uint32_t _viewMask, RenderTargetHandle _handle);
+	void setViewFrameBufferMask(uint32_t _viewMask, FrameBufferHandle _handle);
 
 	/// Set view view and projection matrices, all draw primitives in this
 	/// view will use these matrices.
@@ -1239,7 +1234,8 @@ namespace bgfx
 	///
 	/// @param _stage Texture unit.
 	/// @param _sampler Program sampler.
-	/// @param _handle Render target handle.
+	/// @param _handle Frame buffer handle.
+	/// @param _attachment Attachment index.
 	/// @param _flags Texture sampling mode. Default value UINT32_MAX uses
 	///   texture sampling settings from the texture.
 	///
@@ -1249,7 +1245,7 @@ namespace bgfx
 	///   BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic
 	///     sampling.
 	///
-	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth = false, uint32_t _flags = UINT32_MAX);
+	void setTexture(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment = 0, uint32_t _flags = UINT32_MAX);
 
 	/// Submit primitive for rendering into single view.
 	///

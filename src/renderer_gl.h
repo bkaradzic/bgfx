@@ -573,6 +573,7 @@ namespace bgfx
 	{
 		Texture()
 			: m_id(0)
+			, m_rbo(0)
 			, m_target(GL_TEXTURE_2D)
 			, m_fmt(GL_ZERO)
 			, m_type(GL_ZERO)
@@ -582,21 +583,22 @@ namespace bgfx
 		{
 		}
 
-		void init(GLenum _target, uint8_t _format, uint8_t _numMips, uint32_t _flags);
+		bool init(GLenum _target, uint32_t _width, uint32_t _height, uint8_t _format, uint8_t _numMips, uint32_t _flags);
 		void create(const Memory* _mem, uint32_t _flags);
-		void createColor(uint32_t _colorFormat, uint32_t _width, uint32_t _height, GLenum _min, GLenum _mag);
-		void createDepth(uint32_t _width, uint32_t _height);
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void setSamplerState(uint32_t _flags);
 		void commit(uint32_t _stage, uint32_t _flags);
 
 		GLuint m_id;
+		GLuint m_rbo;
 		GLenum m_target;
 		GLenum m_fmt;
 		GLenum m_type;
 		uint32_t m_flags;
 		uint32_t m_currentFlags;
+		uint32_t m_width;
+		uint32_t m_height;
 		uint8_t m_numMips;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
@@ -617,28 +619,22 @@ namespace bgfx
 		uint32_t m_hash;
 	};
 
-	struct RenderTarget
+	struct FrameBuffer
 	{
-		RenderTarget()
-			: m_width(0)
-			, m_height(0)
-			, m_msaa(0)
+		FrameBuffer()
+			: m_num(0)
 		{
 			memset(m_fbo, 0, sizeof(m_fbo) );
 		}
 
-		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
+		void create(uint8_t _num, const TextureHandle* _handles);
 		void destroy();
 		void resolve();
 
-		GLsizei m_width;
-		GLsizei m_height;
-		uint32_t m_msaa;
-		Texture m_color;
-		Texture m_depth;
+		uint8_t m_num;
 		GLuint m_fbo[2];
-		GLuint m_colorRbo;
-		GLuint m_depthRbo;
+		uint32_t m_width;
+		uint32_t m_height;
 	};
 
 	struct Program

@@ -125,11 +125,11 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateRenderTarget(RenderTargetHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint32_t /*_flags*/, uint32_t /*_textureFlags*/)
+	void Context::rendererCreateFrameBuffer(FrameBufferHandle /*_handle*/, uint8_t /*_num*/, const TextureHandle* /*_textureHandles*/)
 	{
 	}
 
-	void Context::rendererDestroyRenderTarget(RenderTargetHandle /*_handle*/)
+	void Context::rendererDestroyFrameBuffer(FrameBufferHandle /*_handle*/)
 	{
 	}
 

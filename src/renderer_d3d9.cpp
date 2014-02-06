@@ -233,7 +233,7 @@ namespace bgfx
 #if defined(D3D_DISABLE_9EX)
 		{ D3DFMT_UNKNOWN       }, // D0S8
 #else
-		{ D3DFMT_S8_LOCKABLE   }, // D0S8
+		{ D3DFMT_INTZ /*D3DFMT_S8_LOCKABLE*/   }, // D0S8
 #endif // defined(D3D_DISABLE_9EX)
 	};
 
@@ -278,7 +278,7 @@ namespace bgfx
 			, m_instancing(false)
 			, m_rtMsaa(false)
 		{
-			m_rt.idx = invalidHandle;
+			m_fbh.idx = invalidHandle;
 		}
 
 		void init()
@@ -433,17 +433,20 @@ namespace bgfx
 			BX_TRACE("Max vertex shader constants: %d", m_caps.MaxVertexShaderConst);
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
+			BX_TRACE("Num simultaneous render targets: %d", m_caps.NumSimultaneousRTs);
 
 			g_caps.supported |= ( 0
 								| BGFX_CAPS_TEXTURE_FORMAT_BC1
 								| BGFX_CAPS_TEXTURE_FORMAT_BC2
 								| BGFX_CAPS_TEXTURE_FORMAT_BC3
 								| BGFX_CAPS_TEXTURE_3D
-								| BGFX_CAPS_TEXTURE_DEPTH_MASK
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								);
 			g_caps.maxTextureSize = bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight);
+
+			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+			g_caps.maxFBAttachments = (uint8_t)m_caps.NumSimultaneousRTs;
 
 #if BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 			BX_TRACE("Extended formats:");
@@ -474,6 +477,8 @@ namespace bgfx
 			g_caps.supported |= 0
 							 | (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC4].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC4 : 0)
 							 | (D3DFMT_UNKNOWN != s_textureFormat[TextureFormat::BC5].m_fmt ? BGFX_CAPS_TEXTURE_FORMAT_BC5 : 0)
+							 | (s_extendedFormats[ExtendedFormat::Df16].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D16F : 0)
+							 | (s_extendedFormats[ExtendedFormat::Df24].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D24F : 0)
 							 ;
 			g_caps.supported |= m_instancing ? BGFX_CAPS_INSTANCING : 0;
 #endif // BGFX_CONFIG_RENDERER_USE_EXTENSIONS
@@ -565,11 +570,6 @@ namespace bgfx
 				m_vertexDecls[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
-			{
-				m_renderTargets[ii].destroy();
-			}
-
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			if (NULL != m_d3d9ex)
 			{
@@ -658,41 +658,43 @@ namespace bgfx
 			}
 		}
 
-		void setRenderTarget(RenderTargetHandle _rt, bool _msaa = true)
+		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
-			if (!isValid(_rt) )
+			if (!isValid(_fbh) )
 			{
 				DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
+				for (uint32_t ii = 1, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				{
+					DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
+				}
 				DX_CHECK(m_device->SetDepthStencilSurface(m_backBufferDepthStencil) );
 			}
 			else
 			{
-				RenderTarget& renderTarget = m_renderTargets[_rt.idx];
-				if (NULL != renderTarget.m_rt)
+				const FrameBuffer& frameBuffer = m_frameBuffers[_fbh.idx];
+				for (uint32_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 				{
-					DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_rt) );
-				}
-				else
-				{
-					DX_CHECK(m_device->SetRenderTarget(0, renderTarget.m_color) );
+					DX_CHECK(m_device->SetRenderTarget(ii, frameBuffer.m_color[ii]) );
 				}
 
-				DX_CHECK(m_device->SetDepthStencilSurface(NULL != renderTarget.m_depth ? renderTarget.m_depth : m_backBufferDepthStencil) );
+				for (uint32_t ii = frameBuffer.m_num, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				{
+					DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
+				}
+
+				IDirect3DSurface9* depthStencil = frameBuffer.m_depthStencil;
+				DX_CHECK(m_device->SetDepthStencilSurface(NULL != depthStencil ? depthStencil : m_backBufferDepthStencil) );
 			}
 
-			if (isValid(m_rt)
-			&&  m_rt.idx != _rt.idx
+			if (isValid(m_fbh)
+			&&  m_fbh.idx != _fbh.idx
 			&&  m_rtMsaa)
 			{
-				RenderTarget& renderTarget = m_renderTargets[m_rt.idx];
-				if (!renderTarget.m_depthOnly
-				&&  renderTarget.m_rt != NULL)
-				{
-					renderTarget.resolve();
-				}
+				FrameBuffer& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.resolve();
 			}
 
-			m_rt = _rt;
+			m_fbh = _fbh;
 			m_rtMsaa = _msaa;
 		}
 
@@ -781,6 +783,10 @@ namespace bgfx
 			}
 
 			DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
+			for (uint32_t ii = 1, num = g_caps.maxFBAttachments; ii < num; ++ii)
+			{
+				DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
+			}
 			DX_CHECK(m_device->SetDepthStencilSurface(m_backBufferDepthStencil) );
 			DX_CHECK(m_device->SetVertexShader(NULL) );
 			DX_CHECK(m_device->SetPixelShader(NULL) );
@@ -802,9 +808,14 @@ namespace bgfx
 				m_vertexBuffers[ii].preReset();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
-				m_renderTargets[ii].preReset();
+				m_frameBuffers[ii].preReset();
+			}
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
+			{
+				m_textures[ii].preReset();
 			}
 		}
 
@@ -825,9 +836,14 @@ namespace bgfx
 				m_vertexBuffers[ii].postReset();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
-				m_renderTargets[ii].postReset();
+				m_textures[ii].postReset();
+			}
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+			{
+				m_frameBuffers[ii].postReset();
 			}
 		}
 
@@ -1042,7 +1058,7 @@ namespace bgfx
 		Program m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDeclaration m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
-		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
+		FrameBuffer m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
@@ -1055,7 +1071,8 @@ namespace bgfx
 		uint8_t m_updateTextureMip;
 
 		TextVideoMem m_textVideoMem;
-		RenderTargetHandle m_rt;
+
+		FrameBufferHandle m_fbh;
 		bool m_rtMsaa;
 	};
 
@@ -1363,69 +1380,138 @@ namespace bgfx
 		}
 	}
 
-	void Texture::createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips, D3DFORMAT _fmt)
+	void Texture::createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips)
 	{
+		m_width = (uint16_t)_width;
+		m_height = (uint16_t)_height;
+		m_numMips = _numMips;
 		m_type = Texture2D;
+		const TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
+
+		DWORD usage = 0;
+		D3DPOOL pool = s_renderCtx->m_pool;
+
+		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+		if (isDepth(fmt) )
+		{
+			usage = D3DUSAGE_DEPTHSTENCIL;
+			pool = D3DPOOL_DEFAULT;
+		}
+		else if (renderTarget)
+		{
+			usage = D3DUSAGE_RENDERTARGET;
+			pool = D3DPOOL_DEFAULT;
+		}
+
+		if (renderTarget)
+		{
+			uint32_t msaaQuality = ( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
+			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
+
+			bool bufferOnly = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+
+			if (0 != msaaQuality
+			||  bufferOnly)
+			{
+				const Msaa& msaa = s_msaa[msaaQuality];
+
+				if (isDepth(fmt) )
+				{
+					DX_CHECK(s_renderCtx->m_device->CreateDepthStencilSurface(
+						  m_width
+						, m_height
+						, s_textureFormat[m_textureFormat].m_fmt
+						, msaa.m_type
+						, msaa.m_quality
+						, FALSE
+						, &m_surface
+						, NULL
+						) );
+				}
+				else
+				{
+					DX_CHECK(s_renderCtx->m_device->CreateRenderTarget(
+						  m_width
+						, m_height
+						, s_textureFormat[m_textureFormat].m_fmt
+						, msaa.m_type
+						, msaa.m_quality
+						, FALSE
+						, &m_surface
+						, NULL
+						) );
+				}
+
+				if (bufferOnly)
+				{
+					// This is render buffer, there is no sampling, no need
+					// to create texture.
+					return;
+				}
+			}
+		}
 
 		DX_CHECK(s_renderCtx->m_device->CreateTexture(_width
 			, _height
 			, _numMips
-			, 0
-			, _fmt
-			, s_renderCtx->m_pool
+			, usage
+			, s_textureFormat[fmt].m_fmt
+			, pool
 			, &m_texture2d
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_texture2d, Fatal::UnableToCreateTexture, "Failed to create texture (size: %dx%d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_texture2d, Fatal::UnableToCreateTexture, "Failed to create texture (size: %dx%d, mips: %d, fmt: %d)."
 			, _width
 			, _height
 			, _numMips
-			, _fmt
+			, getName(fmt)
 			);
 	}
 
-	void Texture::createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips, D3DFORMAT _fmt)
+	void Texture::createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips)
 	{
 		m_type = Texture3D;
+		const TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
 
 		DX_CHECK(s_renderCtx->m_device->CreateVolumeTexture(_width
 			, _height
 			, _depth
 			, _numMips
 			, 0
-			, _fmt
+			, s_textureFormat[fmt].m_fmt
 			, s_renderCtx->m_pool
 			, &m_texture3d
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_texture3d, Fatal::UnableToCreateTexture, "Failed to create volume texture (size: %dx%dx%d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_texture3d, Fatal::UnableToCreateTexture, "Failed to create volume texture (size: %dx%dx%d, mips: %d, fmt: %s)."
 			, _width
 			, _height
 			, _depth
 			, _numMips
-			, _fmt
+			, getName(fmt)
 			);
 	}
 
-	void Texture::createCubeTexture(uint32_t _edge, uint32_t _numMips, D3DFORMAT _fmt)
+	void Texture::createCubeTexture(uint32_t _edge, uint32_t _numMips)
 	{
 		m_type = TextureCube;
+		const TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
 
 		DX_CHECK(s_renderCtx->m_device->CreateCubeTexture(_edge
 			, _numMips
 			, 0
-			, _fmt
+			, s_textureFormat[fmt].m_fmt
 			, s_renderCtx->m_pool
 			, &m_textureCube
 			, NULL
 			) );
 
-		BGFX_FATAL(NULL != m_textureCube, Fatal::UnableToCreateTexture, "Failed to create cube texture (edge: %d, mips: %d, fmt: 0x%08x)."
+		BGFX_FATAL(NULL != m_textureCube, Fatal::UnableToCreateTexture, "Failed to create cube texture (edge: %d, mips: %d, fmt: %s)."
 			, _edge
 			, _numMips
-			, _fmt
+			, getName(fmt)
 			);
 	}
 
@@ -1585,19 +1671,22 @@ namespace bgfx
 				bpp = 32;
 			}
 
-			D3DFORMAT format = s_textureFormat[m_textureFormat].m_fmt;
-
 			if (imageContainer.m_cubeMap)
 			{
-				createCubeTexture(imageContainer.m_width, imageContainer.m_numMips, format);
+				createCubeTexture(imageContainer.m_width, imageContainer.m_numMips);
 			}
 			else if (imageContainer.m_depth > 1)
 			{
-				createVolumeTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_depth, imageContainer.m_numMips, format);
+				createVolumeTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_depth, imageContainer.m_numMips);
 			}
 			else
 			{
-				createTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_numMips, format);
+				createTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_numMips);
+			}
+
+			if (0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY) )
+			{
+				return;
 			}
 
 			// For BC4 and B5 in DX9 LockRect returns wrong number of
@@ -1740,161 +1829,180 @@ namespace bgfx
 		DX_CHECK(s_renderCtx->m_device->SetTexture(_stage, m_ptr) );
 	}
 
-	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
+	void Texture::resolve() const
 	{
-		m_width = _width;
-		m_height = _height;
-		m_flags = _flags;
-		m_textureFlags = (_textureFlags&(BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK) )
-						| BGFX_TEXTURE_U_CLAMP
-						| BGFX_TEXTURE_V_CLAMP
-						;
-
-		createTextures();
-	}
-
-	void RenderTarget::createTextures()
-	{
-		if (0 != m_flags)
+		if (NULL != m_surface
+		&&  NULL != m_texture2d)
 		{
-			m_msaa = s_msaa[(m_flags&BGFX_RENDER_TARGET_MSAA_MASK)>>BGFX_RENDER_TARGET_MSAA_SHIFT];
-			const uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
-			const uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
-			m_depthOnly = (0 == colorFormat && 0 < depthFormat);
-
-			// CheckDeviceFormat D3DUSAGE_SRGBWRITE
-
-			if (m_depthOnly)
-			{
-				DX_CHECK(s_renderCtx->m_device->CreateRenderTarget(1
-					, 1
-					, D3DFMT_R5G6B5
-					, D3DMULTISAMPLE_NONE
-					, 0
-					, false
-					, &m_rt
-					, NULL
-					) );
-
-				BGFX_FATAL(m_rt, Fatal::UnableToCreateRenderTarget, "Unable to create 1x1 render target.");
-
-				DX_CHECK(s_renderCtx->m_device->CreateTexture(m_width
-					, m_height
-					, 1
-					, D3DUSAGE_DEPTHSTENCIL
-					, s_depthFormat[depthFormat]
-					, D3DPOOL_DEFAULT
-					, &m_depthTexture
-					, NULL
-					) );
-
-				BGFX_FATAL(m_depthTexture, Fatal::UnableToCreateRenderTarget, "Unable to create depth texture.");
-
-				DX_CHECK(m_depthTexture->GetSurfaceLevel(0, &m_depth) );
-			}
-			else
-			{
-				if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
-				{
-					DX_CHECK(s_renderCtx->m_device->CreateRenderTarget(m_width
-						, m_height
-						, s_colorFormat[colorFormat]
-						, m_msaa.m_type
-						, m_msaa.m_quality
-						, false
-						, &m_rt
-						, NULL
-						) );
-
-					BGFX_FATAL(m_rt, Fatal::UnableToCreateRenderTarget, "Unable to create MSAA render target.");
-				}
-
-				if (0 < colorFormat)
-				{
-					DX_CHECK(s_renderCtx->m_device->CreateTexture(m_width
-						, m_height
-						, 1
-						, D3DUSAGE_RENDERTARGET
-						, s_colorFormat[colorFormat]
-						, D3DPOOL_DEFAULT
-						, &m_colorTexture
-						, NULL
-						) );
-
-					BGFX_FATAL(m_colorTexture, Fatal::UnableToCreateRenderTarget, "Unable to create color render target.");
-
-					DX_CHECK(m_colorTexture->GetSurfaceLevel(0, &m_color) );
-				}
-
-				if (0 < depthFormat)
-				{
-					DX_CHECK(s_renderCtx->m_device->CreateDepthStencilSurface(m_width
-							, m_height
-							, s_depthFormat[depthFormat]
-							, m_msaa.m_type
-							, m_msaa.m_quality
-							, FALSE
-							, &m_depth
-							, NULL
-							) );
-
-					BGFX_FATAL(m_depth, Fatal::UnableToCreateRenderTarget, "Unable to create depth stencil surface.");
-				}
-			}
-		}
-	}
-
-	void RenderTarget::destroyTextures()
-	{
-		if (0 != m_flags)
-		{
-			if (m_depthOnly)
-			{
-				DX_RELEASE(m_rt, 0);
-
-				DX_RELEASE(m_depth, 1);
-				DX_RELEASE(m_depthTexture, 0);
-			}
-			else
-			{
-				uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
-				uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
-
-				if (D3DMULTISAMPLE_NONE != m_msaa.m_type)
-				{
-					DX_RELEASE(m_rt, 0);
-				}
-
-				if (0 < colorFormat)
-				{
-					DX_RELEASE(m_color, 1);
-					DX_RELEASE(m_colorTexture, 0);
-				}
-
-				if (0 < depthFormat)
-				{
-					DX_RELEASE(m_depth, 0);
-				}
-			}
-		}
-	}
-
-	void RenderTarget::commit(uint8_t _stage, uint32_t _textureFlags)
-	{
-		s_renderCtx->setSamplerState(_stage, 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _textureFlags) ? _textureFlags : m_textureFlags);
-		DX_CHECK(s_renderCtx->m_device->SetTexture(_stage, m_depthOnly ? m_depthTexture : m_colorTexture) );
-	}
-
-	void RenderTarget::resolve()
-	{
-#if BX_PLATFORM_WINDOWS
-		DX_CHECK(s_renderCtx->m_device->StretchRect(m_rt
+			IDirect3DSurface9* surface;
+			DX_CHECK(m_texture2d->GetSurfaceLevel(0, &surface) );
+			DX_CHECK(s_renderCtx->m_device->StretchRect(m_surface
 				, NULL
-				, m_color
+				, surface
 				, NULL
-				, D3DTEXF_NONE
+				, D3DTEXF_LINEAR
 				) );
-#endif // BX_PLATFORM_WINDOWS
+			DX_RELEASE(surface, 1);
+		}
+	}
+
+	void Texture::preReset()
+	{
+		TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
+		if (TextureFormat::Unknown != fmt
+		&& (isDepth(fmt) || !!(m_flags&BGFX_TEXTURE_RT_MASK) ) )
+		{
+			DX_RELEASE(m_ptr, 0);
+			DX_RELEASE(m_surface, 0);
+		}
+	}
+
+	void Texture::postReset()
+	{
+		TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
+		if (TextureFormat::Unknown != fmt
+		&& (isDepth(fmt) || !!(m_flags&BGFX_TEXTURE_RT_MASK) ) )
+		{
+			createTexture(m_width, m_height, m_numMips);
+		}
+	}
+
+	void FrameBuffer::create(uint8_t _num, const TextureHandle* _handles)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_color); ++ii)
+		{
+			m_color[ii] = NULL;
+		}
+		m_depthStencil = NULL;
+
+		m_num = 0;
+		m_needResolve = false;
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			TextureHandle handle = _handles[ii];
+			if (isValid(handle) )
+			{
+				const Texture& texture = s_renderCtx->m_textures[handle.idx];
+
+				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
+				{
+					m_depthHandle = handle;
+					if (NULL != texture.m_surface)
+					{
+						m_depthStencil = texture.m_surface;
+						m_depthStencil->AddRef();
+					}
+					else
+					{
+						DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_depthStencil) );
+					}
+				}
+				else
+				{
+					m_colorHandle[m_num] = handle;
+					if (NULL != texture.m_surface)
+					{
+						m_color[m_num] = texture.m_surface;
+						m_color[m_num]->AddRef();
+					}
+					else
+					{
+						DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_color[m_num]) );
+					}
+					m_num++;
+				}
+
+				m_needResolve |= (NULL != texture.m_surface) && (NULL != texture.m_texture2d);
+			}
+		}
+	}
+
+	void FrameBuffer::destroy()
+	{
+		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			m_colorHandle[ii].idx = invalidHandle;
+
+			IDirect3DSurface9* ptr = m_color[ii];
+			if (NULL != ptr)
+			{
+				ptr->Release();
+				m_color[ii] = NULL;
+			}
+		}
+
+		if (NULL != m_depthStencil)
+		{
+			m_depthStencil->Release();
+			m_depthStencil = NULL;
+		}
+
+		m_num = 0;
+		m_depthHandle.idx = invalidHandle;
+	}
+
+	void FrameBuffer::resolve() const
+	{
+		if (m_needResolve)
+		{
+			if (isValid(m_depthHandle) )
+			{
+				const Texture& texture = s_renderCtx->m_textures[m_depthHandle.idx];
+				texture.resolve();
+			}
+
+			for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+			{
+				const Texture& texture = s_renderCtx->m_textures[m_colorHandle[ii].idx];
+				texture.resolve();
+			}
+		}
+	}
+
+	void FrameBuffer::preReset()
+	{
+		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			m_color[ii]->Release();
+			m_color[ii] = NULL;
+		}
+
+		if (isValid(m_depthHandle) )
+		{
+			m_depthStencil->Release();
+			m_depthStencil = NULL;
+		}
+	}
+
+	void FrameBuffer::postReset()
+	{
+		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			Texture& texture = s_renderCtx->m_textures[m_colorHandle[ii].idx];
+			if (NULL != texture.m_surface)
+			{
+				m_color[ii] = texture.m_surface;
+				m_color[ii]->AddRef();
+			}
+			else
+			{
+				DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_color[ii]) );
+			}
+		}
+
+		if (isValid(m_depthHandle) )
+		{
+			Texture& texture = s_renderCtx->m_textures[m_depthHandle.idx];
+			if (NULL != texture.m_surface)
+			{
+				m_depthStencil = texture.m_surface;
+				m_depthStencil->AddRef();
+			}
+			else
+			{
+				DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_depthStencil) );
+			}
+		}
 	}
 
 	void ConstantBuffer::commit()
@@ -1971,8 +2079,8 @@ namespace bgfx
 		uint32_t width = s_renderCtx->m_params.BackBufferWidth;
 		uint32_t height = s_renderCtx->m_params.BackBufferHeight;
 
-		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
-		s_renderCtx->setRenderTarget(rt, false);
+		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
+		s_renderCtx->setFrameBuffer(fbh, false);
 
 		D3DVIEWPORT9 vp;
 		vp.X = 0;
@@ -2168,14 +2276,14 @@ namespace bgfx
 		s_renderCtx->m_textures[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
+	void Context::rendererCreateFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles)
 	{
-		s_renderCtx->m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
+		s_renderCtx->m_frameBuffers[_handle.idx].create(_num, _textureHandles);
 	}
 
-	void Context::rendererDestroyRenderTarget(RenderTargetHandle _handle)
+	void Context::rendererDestroyFrameBuffer(FrameBufferHandle _handle)
 	{
-		s_renderCtx->m_renderTargets[_handle.idx].destroy();
+		s_renderCtx->m_frameBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
@@ -2260,7 +2368,7 @@ namespace bgfx
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
-		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
+		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
 		D3DPRIMITIVETYPE primType = D3DPT_TRIANGLELIST;
@@ -2306,10 +2414,10 @@ namespace bgfx
 					view = key.m_view;
 					programIdx = invalidHandle;
 
-					if (m_render->m_rt[view].idx != rt.idx)
+					if (m_render->m_fb[view].idx != fbh.idx)
 					{
-						rt = m_render->m_rt[view];
-						s_renderCtx->setRenderTarget(rt);
+						fbh = m_render->m_fb[view];
+						s_renderCtx->setFrameBuffer(fbh);
 					}
 
 					const Rect& rect = m_render->m_rect[view];
@@ -2708,14 +2816,6 @@ namespace bgfx
 								case BGFX_SAMPLER_TEXTURE:
 									s_renderCtx->m_textures[sampler.m_idx].commit(stage, sampler.m_flags);
 									break;
-
-								case BGFX_SAMPLER_RENDERTARGET_COLOR:
-									s_renderCtx->m_renderTargets[sampler.m_idx].commit(stage, sampler.m_flags);
-									break;
-
-								case BGFX_SAMPLER_RENDERTARGET_DEPTH:
-//									id = s_renderCtx->m_renderTargets[sampler.m_idx].m_depth.m_id;
-									break;
 								}
 							}
 							else
@@ -2904,36 +3004,42 @@ namespace bgfx
 				tvm.printf(0, pos++, 0x0f, " Device: %s (%s)", identifier.Description, identifier.Driver);
 
 				pos = 10;
-				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS%s"
+				tvm.printf(10, pos++, 0x8e, "       Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
 					, double(frameTime)*toMs
 					, double(min)*toMs
 					, double(max)*toMs
 					, freq/frameTime
-					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? " (vsync)" : ""
+					);
+
+				const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				tvm.printf(10, pos++, 0x8e, " Reset flags: [%c] vsync, [%c] MSAAx%d "
+					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+					, 0 != msaa ? '\xfe' : ' '
+					, 1<<msaa
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms]"
+				tvm.printf(10, pos++, 0x8e, "  Draw calls: %4d / CPU %3.4f [ms]"
 					, m_render->m_num
 					, elapsedCpuMs
 					);
-				tvm.printf(10, pos++, 0x8e, "      Prims: %7d (#inst: %5d), submitted: %7d"
+				tvm.printf(10, pos++, 0x8e, "       Prims: %7d (#inst: %5d), submitted: %7d"
 					, statsNumPrimsRendered
 					, statsNumInstances
 					, statsNumPrimsSubmitted
 					);
 
 				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
-				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
+				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", m_render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", m_render->m_iboffset);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = m_render->m_waitSubmit < m_render->m_waitRender;
 
-				tvm.printf(10, pos++, attr[attrIndex&1], "Submit wait: %3.4f [ms]", m_render->m_waitSubmit*toMs);
-				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", m_render->m_waitRender*toMs);
+				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %3.4f [ms]", m_render->m_waitSubmit*toMs);
+				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %3.4f [ms]", m_render->m_waitRender*toMs);
 
 				min = frameTime;
 				max = frameTime;

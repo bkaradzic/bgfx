@@ -256,8 +256,8 @@ static float s_texelHalf = 0.0f;
 
 static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_shadowMap[ShadowMapRenderTargets::Count];
-static bgfx::RenderTargetHandle s_rtShadowMap[ShadowMapRenderTargets::Count];
-static bgfx::RenderTargetHandle s_rtBlur;
+static bgfx::FrameBufferHandle s_rtShadowMap[ShadowMapRenderTargets::Count];
+static bgfx::FrameBufferHandle s_rtBlur;
 
 static void shaderFilePath(char* _out, const char* _name)
 {
@@ -1580,14 +1580,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float lightMtx[16];
 	float shadowMapMtx[ShadowMapRenderTargets::Count][16];
 	s_uniforms.setPtrs(&defaultMaterial
-			         , &pointLight
-			         , color
-			         , lightMtx
-			         , &shadowMapMtx[ShadowMapRenderTargets::First][0]
-			         , &shadowMapMtx[ShadowMapRenderTargets::Second][0]
-			         , &shadowMapMtx[ShadowMapRenderTargets::Third][0]
-			         , &shadowMapMtx[ShadowMapRenderTargets::Fourth][0]
-			         );
+					 , &pointLight
+					 , color
+					 , lightMtx
+					 , &shadowMapMtx[ShadowMapRenderTargets::First][0]
+					 , &shadowMapMtx[ShadowMapRenderTargets::Second][0]
+					 , &shadowMapMtx[ShadowMapRenderTargets::Third][0]
+					 , &shadowMapMtx[ShadowMapRenderTargets::Fourth][0]
+					 );
 	s_uniforms.submitConstUniforms();
 
 	// Settings.
@@ -2087,9 +2087,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
 	for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 	{
-		s_rtShadowMap[ii] = bgfx::createRenderTarget(currentShadowMapSize, currentShadowMapSize, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D24S8);
+		bgfx::TextureHandle fbtextures[] =
+		{
+			bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+			bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8),
+		};
+		s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 	}
-	s_rtBlur = bgfx::createRenderTarget(currentShadowMapSize, currentShadowMapSize, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	s_rtBlur = bgfx::createFrameBuffer(currentShadowMapSize, currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 
 	// Setup camera.
 	float initialPos[3] = { 0.0f, 60.0f, -105.0f };
@@ -2590,8 +2595,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Reset render targets.
 		const uint32_t viewMask = (uint32_t(1) << (RENDERVIEW_DRAWDEPTH_3_ID+1) ) - 1;
-		const bgfx::RenderTargetHandle invalidRt = BGFX_INVALID_HANDLE;
-		bgfx::setViewRenderTargetMask(viewMask, invalidRt);
+		const bgfx::FrameBufferHandle invalidRt = BGFX_INVALID_HANDLE;
+		bgfx::setViewFrameBufferMask(viewMask, invalidRt);
 
 		// Determine on-screen rectangle size where depth buffer will be drawn.
 		const uint16_t depthRectHeight = uint16_t(float(viewState.m_height) / 2.5f);
@@ -2631,10 +2636,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, viewState.m_view, viewState.m_proj);
 			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
 
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
-			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
+			bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]);
 		}
 		else if (LightType::PointLight == settings.m_lightType)
 		{
@@ -2694,13 +2699,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, viewState.m_view, viewState.m_proj);
 			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
 
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_4_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
-			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_4_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
+			bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]);
 		}
 		else // LightType::DirectionalLight == settings.m_lightType
 		{
@@ -2768,18 +2773,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_2_ID, screenView, screenProj);
 			bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_3_ID, screenView, screenProj);
 
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[1]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[2]);
-			bgfx::setViewRenderTarget(RENDERVIEW_SHADOWMAP_4_ID, s_rtShadowMap[3]);
-			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_0_ID, s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]); //hblur
-			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_1_ID, s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_1_ID, s_rtShadowMap[1]); //hblur
-			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_2_ID, s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_2_ID, s_rtShadowMap[2]); //hblur
-			bgfx::setViewRenderTarget(RENDERVIEW_VBLUR_3_ID, s_rtBlur);         //vblur
-			bgfx::setViewRenderTarget(RENDERVIEW_HBLUR_3_ID, s_rtShadowMap[3]); //hblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[1]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[2]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_4_ID, s_rtShadowMap[3]);
+			bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_0_ID, s_rtBlur);         //vblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_0_ID, s_rtShadowMap[0]); //hblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_1_ID, s_rtBlur);         //vblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_1_ID, s_rtShadowMap[1]); //hblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_2_ID, s_rtBlur);         //vblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_2_ID, s_rtShadowMap[2]); //hblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_3_ID, s_rtBlur);         //vblur
+			bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_3_ID, s_rtShadowMap[3]); //hblur
 		}
 
 		// Clear backbuffer at beginning.
@@ -3236,20 +3241,36 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			currentShadowMapSizef = float(int16_t(currentShadowMapSize) );
 			s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
 
-			bgfx::destroyRenderTarget(s_rtShadowMap[0]);
-			s_rtShadowMap[0] = bgfx::createRenderTarget(currentShadowMapSize, currentShadowMapSize, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D24S8);
+			{
+				bgfx::destroyFrameBuffer(s_rtShadowMap[0]);
+
+				bgfx::TextureHandle fbtextures[] =
+				{
+					bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+					bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8),
+				};
+				s_rtShadowMap[0] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+			}
 
 			if (LightType::DirectionalLight == settings.m_lightType)
 			{
 				for (uint8_t ii = 1; ii < ShadowMapRenderTargets::Count; ++ii)
 				{
-					bgfx::destroyRenderTarget(s_rtShadowMap[ii]);
-					s_rtShadowMap[ii] = bgfx::createRenderTarget(currentShadowMapSize, currentShadowMapSize, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D24S8);
+					{
+						bgfx::destroyFrameBuffer(s_rtShadowMap[ii]);
+
+						bgfx::TextureHandle fbtextures[] =
+						{
+							bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+							bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8),
+						};
+						s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+					}
 				}
 			}
 
-			bgfx::destroyRenderTarget(s_rtBlur);
-			s_rtBlur = bgfx::createRenderTarget(currentShadowMapSize, currentShadowMapSize, BGFX_RENDER_TARGET_COLOR_RGBA8);
+			bgfx::destroyFrameBuffer(s_rtBlur);
+			s_rtBlur = bgfx::createFrameBuffer(currentShadowMapSize, currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to
@@ -3271,9 +3292,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 	{
-		bgfx::destroyRenderTarget(s_rtShadowMap[ii]);
+		bgfx::destroyFrameBuffer(s_rtShadowMap[ii]);
 	}
-	bgfx::destroyRenderTarget(s_rtBlur);
+	bgfx::destroyFrameBuffer(s_rtBlur);
 
 	s_programs.destroy();
 

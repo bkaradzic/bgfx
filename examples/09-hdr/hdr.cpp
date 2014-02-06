@@ -476,20 +476,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	Mesh mesh;
 	mesh.load("meshes/bunny.bin");
 
-	bgfx::RenderTargetHandle rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH_D16);
+	bgfx::FrameBufferHandle fbh;
+	bgfx::TextureHandle fbtextures[] =
+	{
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
+	};
+	fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
-	bgfx::RenderTargetHandle lum[5];
-	lum[0] = bgfx::createRenderTarget(128, 128, BGFX_RENDER_TARGET_COLOR_RGBA8);
-	lum[1] = bgfx::createRenderTarget( 64,  64, BGFX_RENDER_TARGET_COLOR_RGBA8);
-	lum[2] = bgfx::createRenderTarget( 16,  16, BGFX_RENDER_TARGET_COLOR_RGBA8);
-	lum[3] = bgfx::createRenderTarget(  4,   4, BGFX_RENDER_TARGET_COLOR_RGBA8);
-	lum[4] = bgfx::createRenderTarget(  1,   1, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	bgfx::FrameBufferHandle lum[5];
+	lum[0] = bgfx::createFrameBuffer(128, 128, bgfx::TextureFormat::BGRA8);
+	lum[1] = bgfx::createFrameBuffer( 64,  64, bgfx::TextureFormat::BGRA8);
+	lum[2] = bgfx::createFrameBuffer( 16,  16, bgfx::TextureFormat::BGRA8);
+	lum[3] = bgfx::createFrameBuffer(  4,   4, bgfx::TextureFormat::BGRA8);
+	lum[4] = bgfx::createFrameBuffer(  1,   1, bgfx::TextureFormat::BGRA8);
 
-	bgfx::RenderTargetHandle bright;
-	bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	bgfx::FrameBufferHandle bright;
+	bright = bgfx::createFrameBuffer(width/2, height/2, bgfx::TextureFormat::BGRA8);
 
-	bgfx::RenderTargetHandle blur;
-	blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
+	bgfx::FrameBufferHandle blur;
+	blur = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
 
 	FILE* file = fopen("font/droidsans.ttf", "rb");
 	uint32_t size = (uint32_t)fsize(file);
@@ -511,6 +517,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	uint32_t oldWidth = 0;
 	uint32_t oldHeight = 0;
+	uint32_t oldReset = reset;
 
 	entry::MouseState mouseState;
 
@@ -518,19 +525,27 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
-		if (oldWidth != width
-		||  oldHeight != height)
+		if (oldWidth  != width
+		||  oldHeight != height
+		||  oldReset  != reset)
 		{
 			// Recreate variable size render targets when resolution changes.
 			oldWidth = width;
 			oldHeight = height;
-			bgfx::destroyRenderTarget(rt);
-			bgfx::destroyRenderTarget(bright);
-			bgfx::destroyRenderTarget(blur);
+			oldReset = reset;
 
-			rt = bgfx::createRenderTarget(width, height, BGFX_RENDER_TARGET_COLOR_RGBA8|BGFX_RENDER_TARGET_DEPTH_D16);
-			bright = bgfx::createRenderTarget(width/2, height/2, BGFX_RENDER_TARGET_COLOR_RGBA8);
-			blur = bgfx::createRenderTarget(width/8, height/8, BGFX_RENDER_TARGET_COLOR_RGBA8);
+			uint32_t msaa = (reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+
+			bgfx::destroyFrameBuffer(fbh);
+			bgfx::destroyFrameBuffer(bright);
+			bgfx::destroyFrameBuffer(blur);
+
+			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
+			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, 0|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
+			fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+
+			bright = bgfx::createFrameBuffer(width/2, height/2, bgfx::TextureFormat::BGRA8);
+			blur = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
 		}
 
 		imguiBeginFrame(mouseState.m_mx
@@ -578,28 +593,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set views.
 		bgfx::setViewRectMask(0x1f, 0, 0, width, height);
-		bgfx::setViewRenderTargetMask(0x3, rt);
+		bgfx::setViewFrameBufferMask(0x3, fbh);
 
 		bgfx::setViewRect(2, 0, 0, 128, 128);
-		bgfx::setViewRenderTarget(2, lum[0]);
+		bgfx::setViewFrameBuffer(2, lum[0]);
 
 		bgfx::setViewRect(3, 0, 0, 64, 64);
-		bgfx::setViewRenderTarget(3, lum[1]);
+		bgfx::setViewFrameBuffer(3, lum[1]);
 
 		bgfx::setViewRect(4, 0, 0, 16, 16);
-		bgfx::setViewRenderTarget(4, lum[2]);
+		bgfx::setViewFrameBuffer(4, lum[2]);
 
 		bgfx::setViewRect(5, 0, 0, 4, 4);
-		bgfx::setViewRenderTarget(5, lum[3]);
+		bgfx::setViewFrameBuffer(5, lum[3]);
 
 		bgfx::setViewRect(6, 0, 0, 1, 1);
-		bgfx::setViewRenderTarget(6, lum[4]);
+		bgfx::setViewFrameBuffer(6, lum[4]);
 
 		bgfx::setViewRect(7, 0, 0, width/2, height/2);
-		bgfx::setViewRenderTarget(7, bright);
+		bgfx::setViewFrameBuffer(7, bright);
 
 		bgfx::setViewRect(8, 0, 0, width/8, height/8);
-		bgfx::setViewRenderTarget(8, blur);
+		bgfx::setViewFrameBuffer(8, blur);
 
 		bgfx::setViewRect(9, 0, 0, width, height);
 
@@ -657,7 +672,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Calculate luminance.
 		setOffsets2x2Lum(u_offset, 128, 128);
-		bgfx::setTexture(0, u_texColor, rt);
+		bgfx::setTexture(0, u_texColor, fbtextures[0]);
 		bgfx::setProgram(lumProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad(128.0f, 128.0f, s_flipV);
@@ -700,7 +715,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Bright pass treshold is tonemap[3].
 		setOffsets4x4Lum(u_offset, width/2, height/2);
-		bgfx::setTexture(0, u_texColor, rt);
+		bgfx::setTexture(0, u_texColor, fbtextures[0]);
 		bgfx::setTexture(1, u_texLum, lum[4]);
 		bgfx::setProgram(brightProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
@@ -715,7 +730,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::submit(8);
 
 		// Blur bright pass horizontally, do tonemaping and combine.
-		bgfx::setTexture(0, u_texColor, rt);
+		bgfx::setTexture(0, u_texColor, fbtextures[0]);
 		bgfx::setTexture(1, u_texLum, lum[4]);
 		bgfx::setTexture(2, u_texBlur, blur);
 		bgfx::setProgram(tonemapProgram);
@@ -733,14 +748,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Cleanup.
 	mesh.unload();
 
-	bgfx::destroyRenderTarget(lum[0]);
-	bgfx::destroyRenderTarget(lum[1]);
-	bgfx::destroyRenderTarget(lum[2]);
-	bgfx::destroyRenderTarget(lum[3]);
-	bgfx::destroyRenderTarget(lum[4]);
-	bgfx::destroyRenderTarget(bright);
-	bgfx::destroyRenderTarget(blur);
-	bgfx::destroyRenderTarget(rt);
+	for (uint32_t ii = 0; ii < BX_COUNTOF(lum); ++ii)
+	{
+		bgfx::destroyFrameBuffer(lum[ii]);
+	}
+	bgfx::destroyFrameBuffer(bright);
+	bgfx::destroyFrameBuffer(blur);
+	bgfx::destroyFrameBuffer(fbh);
 
 	bgfx::destroyProgram(meshProgram);
 	bgfx::destroyProgram(skyProgram);

@@ -71,7 +71,7 @@ static const uint16_t s_planeIndices[s_numPlaneIndices] =
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
-static bgfx::RenderTargetHandle s_rtShadowMap;
+bgfx::FrameBufferHandle s_shadowMapFB;
 static bgfx::UniformHandle u_shadowMap;
 
 static void shaderFilePath(char* _out, const char* _name)
@@ -365,7 +365,7 @@ struct Mesh
 			bgfx::setVertexBuffer(group.m_vbh);
 
 			// Set shadow map.
-			bgfx::setTexture(4, u_shadowMap, s_rtShadowMap);
+			bgfx::setTexture(4, u_shadowMap, s_shadowMapFB);
 
 			// Set render states.
 			bgfx::setState(0
@@ -455,7 +455,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Render targets.
 	uint16_t shadowMapSize = 512;
-	s_rtShadowMap = bgfx::createRenderTarget(shadowMapSize, shadowMapSize, BGFX_RENDER_TARGET_COLOR_RGBA8 | BGFX_RENDER_TARGET_DEPTH_D16);
+
+	bgfx::TextureHandle fbtextures[] =
+	{
+		bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
+	};
+	s_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
 	// Set view and projection matrices.
 	float view[16];
@@ -583,9 +589,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewTransform(RENDER_SHADOW_PASS_ID, lightView, lightProj);
 		bgfx::setViewTransform(RENDER_SCENE_PASS_ID, view, proj);
 
-		bgfx::setViewRenderTarget(RENDER_SHADOW_PASS_ID, s_rtShadowMap);
+		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, s_shadowMapFB);
 
-		// Clear backbuffer and shadowmap rendertarget at beginning.
+		// Clear backbuffer and shadowmap framebuffer at beginning.
 		bgfx::setViewClearMask(0x3, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT, 0x303030ff, 1.0f, 0);
 		bgfx::submitMask(0x3);
 
@@ -653,7 +659,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyProgram(progPackDepth);
 	bgfx::destroyProgram(progDraw);
 
-	bgfx::destroyRenderTarget(s_rtShadowMap);
+	bgfx::destroyFrameBuffer(s_shadowMapFB);
 
 	bgfx::destroyUniform(u_shadowMap);
 	bgfx::destroyUniform(u_lightPos);

@@ -309,11 +309,9 @@ Converts Wavefront .obj mesh file to format optimal for using with bgfx.
 Todo
 ----
 
- - Multiple render targets.
  - BlendFuncSeparate and BlendEquationSeparate.
  - Blit between textures.
  - Occlusion queries.
- - DX11: MSAA.
  - Fullscreen mode.
  - ETC2, PVRTC1/2 decoding fallback for targets that don't support it natively.
 

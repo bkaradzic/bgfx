@@ -148,10 +148,10 @@ namespace entry
 
 	static const InputBinding s_camBindings[] = 
 	{
-		{ entry::Key::KeyW,  entry::Modifier::None,      0, cmd, "move forward"         },
-		{ entry::Key::KeyA,  entry::Modifier::None,      0, cmd, "move left"            },
-		{ entry::Key::KeyS,  entry::Modifier::None,      0, cmd, "move backward"        },
-		{ entry::Key::KeyD,  entry::Modifier::None,      0, cmd, "move right"           },
+		{ entry::Key::KeyW,  entry::Modifier::None,      0, cmd, "move forward"  },
+		{ entry::Key::KeyA,  entry::Modifier::None,      0, cmd, "move left"     },
+		{ entry::Key::KeyS,  entry::Modifier::None,      0, cmd, "move backward" },
+		{ entry::Key::KeyD,  entry::Modifier::None,      0, cmd, "move right"    },
 
 		INPUT_BINDING_END
 	};

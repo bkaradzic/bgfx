@@ -298,12 +298,14 @@ namespace bgfx
 
 		Texture()
 			: m_ptr(NULL)
+			, m_surface(NULL)
+			, m_textureFormat(TextureFormat::Unknown)
 		{
 		}
 
-		void createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips, D3DFORMAT _fmt);
-		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips, D3DFORMAT _fmt);
-		void createCubeTexture(uint32_t _edge, uint32_t _numMips, D3DFORMAT _fmt);
+		void createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips);
+		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips);
+		void createCubeTexture(uint32_t _edge, uint32_t _numMips);
 
 		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
@@ -314,12 +316,18 @@ namespace bgfx
 		void destroy()
 		{
 			DX_RELEASE(m_ptr, 0);
+			DX_RELEASE(m_surface, 0);
+			m_textureFormat = TextureFormat::Unknown;
 		}
 
 		void updateBegin(uint8_t _side, uint8_t _mip);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void updateEnd();
 		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
+		void resolve() const;
+
+		void preReset();
+		void postReset();
 	
 		union
 		{
@@ -329,61 +337,37 @@ namespace bgfx
 			IDirect3DCubeTexture9* m_textureCube;
 		};
 
+		IDirect3DSurface9* m_surface;
 		uint32_t m_flags;
+		uint16_t m_width;
+		uint16_t m_height;
+		uint8_t m_numMips;
 		uint8_t m_type;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
 	};
 
-	struct RenderTarget
+	struct FrameBuffer
 	{
-		RenderTarget()
-			: m_rt(NULL)
-			, m_colorTexture(NULL)
-			, m_color(NULL)
-			, m_depthTexture(NULL)
-			, m_depth(NULL)
-			, m_width(0)
-			, m_height(0)
-			, m_flags(0)
-			, m_depthOnly(false)
+		FrameBuffer()
+			: m_num(0)
+			, m_needResolve(0)
 		{
+			m_depthHandle.idx = invalidHandle;
 		}
 
-		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
-		void createTextures();
-		void destroyTextures();
+		void create(uint8_t _num, const TextureHandle* _handles);
+		void destroy();
+		void resolve() const;
+		void preReset();
+		void postReset();
 
-		void destroy()
-		{
-			destroyTextures();
-			m_flags = 0;
-		}
-
-		void preReset()
-		{
-			destroyTextures();
-		}
-
-		void postReset()
-		{
-			createTextures();
-		}
-
-		void commit(uint8_t _stage, uint32_t _textureFlags = BGFX_SAMPLER_DEFAULT_FLAGS);
-		void resolve();
-
-		Msaa m_msaa;
-		IDirect3DSurface9* m_rt;
-		IDirect3DTexture9* m_colorTexture;
-		IDirect3DSurface9* m_color;
-		IDirect3DTexture9* m_depthTexture;
-		IDirect3DSurface9* m_depth;
-		uint16_t m_width;
-		uint16_t m_height;
-		uint32_t m_flags;
-		uint32_t m_textureFlags;
-		bool m_depthOnly;
+		IDirect3DSurface9* m_color[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
+		IDirect3DSurface9* m_depthStencil;
+		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
+		TextureHandle m_depthHandle;
+		uint8_t m_num;
+		bool m_needResolve;
 	};
 
 } // namespace bgfx

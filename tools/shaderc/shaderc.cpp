@@ -441,6 +441,15 @@ void strins(char* _str, const char* _insert)
 	memcpy(_str, _insert, len);
 }
 
+void strreplace(char* _str, const char* _find, const char* _replace)
+{
+	const size_t len = strlen(_find);
+	for (char* ptr = strstr(_str, _find); NULL != ptr; ptr = strstr(ptr + len, _find) )
+	{
+		memcpy(ptr, _replace, len);
+	}
+}
+
 class LineReader
 {
 public:
@@ -1277,6 +1286,25 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 	return hash;
 }
 
+void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
+{
+	char find[32];
+	bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
+
+	char replace[32];
+	bx::snprintf(replace, sizeof(replace), "gl_FragData_%d_", _idx);
+
+	strreplace(_data, find, replace);
+
+	_preprocessor.writef(
+		" \\\n\t%sout vec4 gl_FragData_%d_ : SV_TARGET%d"
+		, _comma ? ", " : "  "
+		, _idx
+		, _idx
+		);
+
+}
+
 // c - compute
 // d - domain
 // f - fragment
@@ -1708,9 +1736,23 @@ int main(int _argc, const char* _argv[])
 
 				if (fragment)
 				{
-					bool hasFragCoord   = NULL != strstr(data, "gl_FragCoord") || hlsl > 3;
-					bool hasFragDepth   = NULL != strstr(data, "gl_FragDepth");
-					bool hasFrontFacing = NULL != strstr(data, "gl_FrontFacing");
+					const bool hasFragCoord   = NULL != strstr(data, "gl_FragCoord") || hlsl > 3;
+					const bool hasFragDepth   = NULL != strstr(data, "gl_FragDepth");
+					const bool hasFrontFacing = NULL != strstr(data, "gl_FrontFacing");
+					const bool hasFragData0   = NULL != strstr(data, "gl_FragData[0]");
+					const bool hasFragData1   = NULL != strstr(data, "gl_FragData[1]");
+					const bool hasFragData2   = NULL != strstr(data, "gl_FragData[2]");
+					const bool hasFragData3   = NULL != strstr(data, "gl_FragData[3]");
+
+					if (!hasFragData0
+					&&  !hasFragData1
+					&&  !hasFragData2
+					&&  !hasFragData3)
+					{
+						// GL errors when both gl_FragColor and gl_FragData is used.
+						// This will trigger the same error with HLSL compiler too.
+						preprocessor.writef("#define gl_FragColor gl_FragData_0_\n");
+					}
 
 					preprocessor.writef("#define void_main()");
 					preprocessor.writef(" \\\n\tvoid main(");
@@ -1733,10 +1775,22 @@ int main(int _argc, const char* _argv[])
 						}
 					}
 
-					preprocessor.writef(
-						" \\\n\t%sout vec4 gl_FragColor : SV_TARGET"
-						, arg++ > 0 ? ", " : "  "
-						);
+					addFragData(preprocessor, data, 0, arg++ > 0);
+
+					if (hasFragData1)
+					{
+						addFragData(preprocessor, data, 1, arg++ > 0);
+					}
+
+					if (hasFragData2)
+					{
+						addFragData(preprocessor, data, 2, arg++ > 0);
+					}
+
+					if (hasFragData3)
+					{
+						addFragData(preprocessor, data, 3, arg++ > 0);
+					}
 
 					if (hasFragDepth)
 					{

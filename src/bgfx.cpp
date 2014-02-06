@@ -709,6 +709,7 @@ namespace bgfx
 			;
 		g_caps.emulated = 0;
 		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
+		g_caps.maxFBAttachments = 1;
 
 		if (NULL != _allocator)
 		{
@@ -898,7 +899,7 @@ namespace bgfx
 		BX_TRACE("Multithreaded renderer is disabled.");
 #endif // BGFX_CONFIG_MULTITHREADED
 
-		memset(m_rt, 0xff, sizeof(m_rt) );
+		memset(m_fb, 0xff, sizeof(m_fb) );
 		memset(m_clear, 0, sizeof(m_clear) );
 		memset(m_rect, 0, sizeof(m_rect) );
 		memset(m_scissor, 0, sizeof(m_scissor) );
@@ -991,7 +992,7 @@ namespace bgfx
 		CHECK_HANDLE_LEAK(m_fragmentShaderHandle);
 		CHECK_HANDLE_LEAK(m_programHandle);
 		CHECK_HANDLE_LEAK(m_textureHandle);
-		CHECK_HANDLE_LEAK(m_renderTargetHandle);
+		CHECK_HANDLE_LEAK(m_frameBufferHandle);
 		CHECK_HANDLE_LEAK(m_uniformHandle);
 
 #	undef CHECK_HANDLE_LEAK
@@ -1050,9 +1051,9 @@ namespace bgfx
 			m_textureHandle.free(_frame->m_freeTextureHandle[ii].idx);
 		}
 
-		for (uint16_t ii = 0, num = _frame->m_numFreeRenderTargetHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = _frame->m_numFreeFrameBufferHandles; ii < num; ++ii)
 		{
-			m_renderTargetHandle.free(_frame->m_freeRenderTargetHandle[ii].idx);
+			m_frameBufferHandle.free(_frame->m_freeFrameBufferHandle[ii].idx);
 		}
 
 		for (uint16_t ii = 0, num = _frame->m_numFreeUniformHandles; ii < num; ++ii)
@@ -1089,7 +1090,7 @@ namespace bgfx
 		freeDynamicBuffers();
 		m_submit->m_resolution = m_resolution;
 		m_submit->m_debug = m_debug;
-		memcpy(m_submit->m_rt, m_rt, sizeof(m_rt) );
+		memcpy(m_submit->m_fb, m_fb, sizeof(m_fb) );
 		memcpy(m_submit->m_clear, m_clear, sizeof(m_clear) );
 		memcpy(m_submit->m_rect, m_rect, sizeof(m_rect) );
 		memcpy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
@@ -1533,12 +1534,11 @@ namespace bgfx
 					uint8_t mip;
 					_cmdbuf.read(mip);
 
-					_cmdbuf.skip(sizeof(Rect)
-						+ sizeof(uint16_t)
-						+ sizeof(uint16_t)
-						+ sizeof(uint16_t)
-						+ sizeof(Memory*)
-						);
+					_cmdbuf.skip<Rect>();
+					_cmdbuf.skip<uint16_t>();
+					_cmdbuf.skip<uint16_t>();
+					_cmdbuf.skip<uint16_t>();
+					_cmdbuf.skip<Memory*>();
 
 					uint32_t key = (handle.idx<<16)
 						| (side<<8)
@@ -1558,33 +1558,30 @@ namespace bgfx
 				}
 				break;
 
-			case CommandBuffer::CreateRenderTarget:
+			case CommandBuffer::CreateFrameBuffer:
 				{
-					RenderTargetHandle handle;
+					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
-					uint16_t width;
-					_cmdbuf.read(width);
+					uint8_t num;
+					_cmdbuf.read(num);
 
-					uint16_t height;
-					_cmdbuf.read(height);
+					TextureHandle textureHandles[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+					for (uint32_t ii = 0; ii < num; ++ii)
+					{
+						_cmdbuf.read(textureHandles[ii]);
+					}
 
-					uint32_t flags;
-					_cmdbuf.read(flags);
-
-					uint32_t textureFlags;
-					_cmdbuf.read(textureFlags);
-
-					rendererCreateRenderTarget(handle, width, height, flags, textureFlags);
+					rendererCreateFrameBuffer(handle, num, textureHandles);
 				}
 				break;
 
-			case CommandBuffer::DestroyRenderTarget:
+			case CommandBuffer::DestroyFrameBuffer:
 				{
-					RenderTargetHandle handle;
+					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
-					rendererDestroyRenderTarget(handle);
+					rendererDestroyFrameBuffer(handle);
 				}
 				break;
 
@@ -1647,7 +1644,7 @@ namespace bgfx
 				break;
 
 			default:
-				BX_CHECK(false, "WTF!");
+				BX_CHECK(false, "Invalid command: %d", command);
 				break;
 			}
 		} while (!end);
@@ -1876,11 +1873,10 @@ namespace bgfx
 		_width   = bx::uint32_max(1, _width);
 		_height  = bx::uint32_max(1, _height);
 		_depth   = bx::uint32_max(1, _depth);
-		_numMips = bx::uint32_max(1, _numMips);
 
-		uint32_t width = _width;
+		uint32_t width  = _width;
 		uint32_t height = _height;
-		uint32_t depth = _depth;
+		uint32_t depth  = _depth;
 
 		uint32_t bpp = getBitsPerPixel(_format);
 		uint32_t size = 0;
@@ -1917,6 +1913,8 @@ namespace bgfx
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+
+		_numMips = bx::uint32_max(1, _numMips);
 
 #if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)
@@ -1958,6 +1956,8 @@ namespace bgfx
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D), "Texture3D is not supported! Use bgfx::getCaps to check backend renderer capabilities.");
 
+		_numMips = bx::uint32_max(1, _numMips);
+
 #if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)
 		{
@@ -1996,6 +1996,8 @@ namespace bgfx
 	TextureHandle createTextureCube(uint16_t _size, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+
+		_numMips = bx::uint32_max(1, _numMips);
 
 #if BGFX_CONFIG_DEBUG
 		if (NULL != _mem)
@@ -2085,17 +2087,33 @@ namespace bgfx
 		}
 	}
 
-	RenderTargetHandle createRenderTarget(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
+	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags)
 	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_WARN(0 != _width && 0 != _height, "Render target resolution width or height cannot be 0 (width %d, height %d).", _width, _height);
-		return s_ctx->createRenderTarget(bx::uint16_max(1, _width), bx::uint16_max(1, _height), _flags, _textureFlags);
+		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
+		TextureHandle th = createTexture2D(_width, _height, 1, _format, _textureFlags);
+		return createFrameBuffer(1, &th, true);
 	}
 
-	void destroyRenderTarget(RenderTargetHandle _handle)
+	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->destroyRenderTarget(_handle);
+		BX_CHECK(NULL != _handles, "_handles can't be NULL");
+		FrameBufferHandle handle = s_ctx->createFrameBuffer(_num, _handles);
+		if (_destroyTextures)
+		{
+			for (uint32_t ii = 0; ii < _num; ++ii)
+			{
+				destroyTexture(_handles[ii]);
+			}
+		}
+
+		return handle;
+	}
+
+	void destroyFrameBuffer(FrameBufferHandle _handle)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->destroyFrameBuffer(_handle);
 	}
 
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num)
@@ -2164,16 +2182,16 @@ namespace bgfx
 		s_ctx->setViewSeqMask(_viewMask, _enabled);
 	}
 
-	void setViewRenderTarget(uint8_t _id, RenderTargetHandle _handle)
+	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewRenderTarget(_id, _handle);
+		s_ctx->setViewFrameBuffer(_id, _handle);
 	}
 
-	void setViewRenderTargetMask(uint32_t _mask, RenderTargetHandle _handle)
+	void setViewFrameBufferMask(uint32_t _mask, FrameBufferHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewRenderTargetMask(_mask, _handle);
+		s_ctx->setViewFrameBufferMask(_mask, _handle);
 	}
 
 	void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _other)
@@ -2293,10 +2311,10 @@ namespace bgfx
 		s_ctx->setTexture(_stage, _sampler, _handle, _flags);
 	}
 
-	void setTexture(uint8_t _stage, UniformHandle _sampler, RenderTargetHandle _handle, bool _depth, uint32_t _flags)
+	void setTexture(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, uint32_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setTexture(_stage, _sampler, _handle, _depth, _flags);
+		s_ctx->setTexture(_stage, _sampler, _handle, _attachment, _flags);
 	}
 
 	uint32_t submit(uint8_t _id, int32_t _depth)

@@ -187,6 +187,8 @@ namespace bgfx
 	struct TextureFormatInfo
 	{
 		DXGI_FORMAT m_fmt;
+		DXGI_FORMAT m_fmtSrv;
+		DXGI_FORMAT m_fmtDsv;
 	};
 
 #ifndef DXGI_FORMAT_B4G4R4A4_UNORM
@@ -198,39 +200,39 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
 	{
-		{ DXGI_FORMAT_BC1_UNORM          }, // BC1 
-		{ DXGI_FORMAT_BC2_UNORM          }, // BC2
-		{ DXGI_FORMAT_BC3_UNORM          }, // BC3
-		{ DXGI_FORMAT_BC4_UNORM          }, // BC4
-		{ DXGI_FORMAT_BC5_UNORM          }, // BC5
-		{ DXGI_FORMAT_UNKNOWN            }, // ETC1
-		{ DXGI_FORMAT_UNKNOWN            }, // ETC2
-		{ DXGI_FORMAT_UNKNOWN            }, // ETC2A
-		{ DXGI_FORMAT_UNKNOWN            }, // ETC2A1
-		{ DXGI_FORMAT_UNKNOWN            }, // PTC12
-		{ DXGI_FORMAT_UNKNOWN            }, // PTC14
-		{ DXGI_FORMAT_UNKNOWN            }, // PTC12A
-		{ DXGI_FORMAT_UNKNOWN            }, // PTC14A
-		{ DXGI_FORMAT_UNKNOWN            }, // PTC22
-		{ DXGI_FORMAT_UNKNOWN            }, // PTC24
-		{ DXGI_FORMAT_UNKNOWN            }, // Unknown
-		{ DXGI_FORMAT_R8_UNORM           }, // L8
-		{ DXGI_FORMAT_B8G8R8A8_UNORM     }, // BGRA8
-		{ DXGI_FORMAT_R16G16B16A16_UNORM }, // RGBA16
-		{ DXGI_FORMAT_R16G16B16A16_FLOAT }, // RGBA16F
-		{ DXGI_FORMAT_B5G6R5_UNORM       }, // R5G6B5
-		{ DXGI_FORMAT_B4G4R4A4_UNORM     }, // RGBA4
-		{ DXGI_FORMAT_B5G5R5A1_UNORM     }, // RGB5A1
-		{ DXGI_FORMAT_R10G10B10A2_UNORM  }, // RGB10A2
-		{ DXGI_FORMAT_UNKNOWN            }, // UnknownDepth
-		{ DXGI_FORMAT_D16_UNORM          }, // D16
-		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D24
-		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D24S8
-		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D32
-		{ DXGI_FORMAT_D32_FLOAT,         }, // D16F
-		{ DXGI_FORMAT_D32_FLOAT,         }, // D24F
-		{ DXGI_FORMAT_D32_FLOAT,         }, // D32F
-		{ DXGI_FORMAT_D24_UNORM_S8_UINT  }, // D0S8
+		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1 
+		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC2
+		{ DXGI_FORMAT_BC3_UNORM,          DXGI_FORMAT_BC3_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC3
+		{ DXGI_FORMAT_BC4_UNORM,          DXGI_FORMAT_BC4_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC4
+		{ DXGI_FORMAT_BC5_UNORM,          DXGI_FORMAT_BC5_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC5
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // ETC1
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // ETC2
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // ETC2A
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // ETC2A1
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC12
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC14
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC12A
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC14A
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC22
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC24
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // Unknown
+		{ DXGI_FORMAT_R8_UNORM,           DXGI_FORMAT_R8_UNORM,              DXGI_FORMAT_UNKNOWN           }, // L8
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,     DXGI_FORMAT_B8G8R8A8_UNORM,        DXGI_FORMAT_UNKNOWN           }, // BGRA8
+		{ DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM,    DXGI_FORMAT_UNKNOWN           }, // RGBA16
+		{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT,    DXGI_FORMAT_UNKNOWN           }, // RGBA16F
+		{ DXGI_FORMAT_B5G6R5_UNORM,       DXGI_FORMAT_B5G6R5_UNORM,          DXGI_FORMAT_UNKNOWN           }, // R5G6B5
+		{ DXGI_FORMAT_B4G4R4A4_UNORM,     DXGI_FORMAT_B4G4R4A4_UNORM,        DXGI_FORMAT_UNKNOWN           }, // RGBA4
+		{ DXGI_FORMAT_B5G5R5A1_UNORM,     DXGI_FORMAT_B5G5R5A1_UNORM,        DXGI_FORMAT_UNKNOWN           }, // RGB5A1
+		{ DXGI_FORMAT_R10G10B10A2_UNORM,  DXGI_FORMAT_R10G10B10A2_UNORM,     DXGI_FORMAT_UNKNOWN           }, // RGB10A2
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // UnknownDepth
+		{ DXGI_FORMAT_R16_TYPELESS,       DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_D16_UNORM         }, // D16
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT }, // D24
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT }, // D24S8
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT }, // D32
+		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT         }, // D16F
+		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT         }, // D24F
+		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT         }, // D32F
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT }, // D0S8
 	};
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =
@@ -352,9 +354,12 @@ namespace bgfx
 			: m_captureTexture(NULL)
 			, m_captureResolve(NULL)
 			, m_wireframe(false)
+			, m_flags(BGFX_RESET_NONE)
 			, m_vsChanges(0)
 			, m_fsChanges(0)
+			, m_rtMsaa(false)
 		{
+			m_fbh.idx = invalidHandle;
 		}
 
 		void init()
@@ -513,12 +518,13 @@ namespace bgfx
 								| BGFX_CAPS_TEXTURE_FORMAT_BC5
 								| BGFX_CAPS_INSTANCING
 								| BGFX_CAPS_TEXTURE_3D
-								| BGFX_CAPS_TEXTURE_DEPTH_MASK
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								);
-			g_caps.maxTextureSize = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+			g_caps.maxFBAttachments = bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 
+			updateMsaa();
 			postReset();
 		}
 
@@ -554,11 +560,6 @@ namespace bgfx
 			{
 				m_textures[ii].destroy();
 			}
-
- 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_renderTargets); ++ii)
- 			{
- 				m_renderTargets[ii].destroy();
- 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
 			{
@@ -744,13 +745,13 @@ namespace bgfx
 			}
 		}
 
-		void setRenderTarget(RenderTargetHandle _rt, bool _msaa = true)
+		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			BX_UNUSED(_msaa);
-			if (!isValid(_rt) )
+			if (!isValid(_fbh) )
 			{
 				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
-				
+
 				m_currentColor = m_backBufferColor;
 				m_currentDepthStencil = m_backBufferDepthStencil;
 			}
@@ -758,12 +759,23 @@ namespace bgfx
 			{
 				invalidateTextureStage();
 
-				RenderTarget& renderTarget = m_renderTargets[_rt.idx];
-				m_deviceCtx->OMSetRenderTargets(1, &renderTarget.m_rtv, renderTarget.m_dsv);
+				FrameBuffer& frameBuffer = m_frameBuffers[_fbh.idx];
+				m_deviceCtx->OMSetRenderTargets(frameBuffer.m_num, frameBuffer.m_rtv, frameBuffer.m_dsv);
 
-				m_currentColor = renderTarget.m_rtv;
-				m_currentDepthStencil = renderTarget.m_dsv;
+				m_currentColor = frameBuffer.m_rtv[0];
+				m_currentDepthStencil = frameBuffer.m_dsv;
 			}
+
+			if (isValid(m_fbh)
+			&&  m_fbh.idx != _fbh.idx
+			&&  m_rtMsaa)
+			{
+				FrameBuffer& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.resolve();
+			}
+
+			m_fbh = _fbh;
+			m_rtMsaa = _msaa;
 		}
 
 		void clear(const Clear& _clear)
@@ -1200,7 +1212,7 @@ namespace bgfx
 		Program m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
-		RenderTarget m_renderTargets[BGFX_CONFIG_MAX_RENDER_TARGETS];
+		FrameBuffer m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformBuffer m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		UniformBuffer m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
@@ -1212,7 +1224,6 @@ namespace bgfx
 		StateCacheT<ID3D11SamplerState> m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
-		RenderTargetHandle m_rt;
 
 		TextureStage m_textureStage;
 
@@ -1223,6 +1234,9 @@ namespace bgfx
 
 		uint32_t m_vsChanges;
 		uint32_t m_fsChanges;
+
+		FrameBufferHandle m_fbh;
+		bool m_rtMsaa;
 	};
 
 	static RendererContext* s_renderCtx;
@@ -1398,8 +1412,8 @@ namespace bgfx
 		uint32_t width = s_renderCtx->m_scd.BufferDesc.Width;
 		uint32_t height = s_renderCtx->m_scd.BufferDesc.Height;
 
-		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
-		s_renderCtx->setRenderTarget(rt, false);
+		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
+		s_renderCtx->setFrameBuffer(fbh, false);
 
 		D3D11_VIEWPORT vp;
 		vp.TopLeftX = 0;
@@ -1686,6 +1700,7 @@ namespace bgfx
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
+			m_flags = _flags;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
 			m_textureFormat   = (uint8_t)imageContainer.m_format;
 
@@ -1698,8 +1713,6 @@ namespace bgfx
 				m_textureFormat = (uint8_t)TextureFormat::BGRA8;
 				bpp = 32;
 			}
-
-			DXGI_FORMAT format = s_textureFormat[m_textureFormat].m_fmt;
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -1769,7 +1782,14 @@ namespace bgfx
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
 			memset(&srvd, 0, sizeof(srvd) );
-			srvd.Format = format;
+			srvd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
+
+			const DXGI_FORMAT format = s_textureFormat[m_textureFormat].m_fmt;
+
+			const bool bufferOnly   = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
 			switch (m_type)
 			{
@@ -1780,12 +1800,22 @@ namespace bgfx
 					desc.Width = imageContainer.m_width;
 					desc.Height = imageContainer.m_height;
 					desc.MipLevels = imageContainer.m_numMips;
-					desc.Format = srvd.Format;
-					desc.SampleDesc.Count = 1;
-					desc.SampleDesc.Quality = 0;
+					desc.Format = format;
+					desc.SampleDesc = msaa;
 					desc.Usage = kk == 0 ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
-					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+					desc.BindFlags = bufferOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
+
+					if (isDepth( (TextureFormat::Enum)m_textureFormat) )
+					{
+						desc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
+					else if (renderTarget)
+					{
+						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
 
 					if (imageContainer.m_cubeMap)
 					{
@@ -1798,7 +1828,7 @@ namespace bgfx
 					{
 						desc.ArraySize = 1;
 						desc.MiscFlags = 0;
-						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+						srvd.ViewDimension = 1 < msaa.Count ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
 						srvd.Texture2D.MipLevels = imageContainer.m_numMips;
 					}
 
@@ -1813,7 +1843,7 @@ namespace bgfx
 					desc.Height = imageContainer.m_height;
 					desc.Depth = imageContainer.m_depth;
 					desc.MipLevels = imageContainer.m_numMips;
-					desc.Format = srvd.Format;
+					desc.Format = format;
 					desc.Usage = kk == 0 ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
@@ -1827,7 +1857,10 @@ namespace bgfx
 				break;
 			}
 
-			DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
+			if (!bufferOnly)
+			{
+				DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
+			}
 
 			if (convert
 			&&  0 != kk)
@@ -1849,16 +1882,6 @@ namespace bgfx
 	{
 		DX_RELEASE(m_srv, 0);
 		DX_RELEASE(m_ptr, 0);
-	}
-
-	void Texture::commit(uint8_t _stage, uint32_t _flags)
-	{
-		TextureStage& ts = s_renderCtx->m_textureStage;
-		ts.m_srv[_stage] = m_srv;
-		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
-							 ? s_renderCtx->getSamplerState(_flags)
-							 : m_sampler
-							 ;
 	}
 
 	void Texture::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -1898,74 +1921,74 @@ namespace bgfx
 		}
 	}
 
-	void RenderTarget::create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
-	{
-		m_width = _width;
-		m_height = _height;
-		m_flags = _flags;
-
-		uint32_t colorFormat = (m_flags&BGFX_RENDER_TARGET_COLOR_MASK)>>BGFX_RENDER_TARGET_COLOR_SHIFT;
-		uint32_t depthFormat = (m_flags&BGFX_RENDER_TARGET_DEPTH_MASK)>>BGFX_RENDER_TARGET_DEPTH_SHIFT;
-
-		D3D11_TEXTURE2D_DESC desc;
-		desc.Width = _width;
-		desc.Height = _height;
-		desc.MipLevels = 1;
-		desc.ArraySize = 1;
-		desc.Format = s_colorFormat[colorFormat];
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET;
-		desc.CPUAccessFlags = 0;
-		desc.MiscFlags = 0;
-
-		DX_CHECK(s_renderCtx->m_device->CreateTexture2D(&desc, NULL, &m_colorTexture) );
-		DX_CHECK(s_renderCtx->m_device->CreateRenderTargetView(m_colorTexture, NULL, &m_rtv) );
-		DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_colorTexture, NULL, &m_srv) );
-
-		if (0 < depthFormat)
-		{
-			D3D11_TEXTURE2D_DESC desc;
-			desc.Width = _width;
-			desc.Height = _height;
-			desc.MipLevels = 1;
-			desc.ArraySize = 1;
-			desc.Format = s_depthFormat[depthFormat];
-			desc.SampleDesc.Count = 1;
-			desc.SampleDesc.Quality = 0;
-			desc.Usage = D3D11_USAGE_DEFAULT;
-			desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-			desc.CPUAccessFlags = 0;
-			desc.MiscFlags = 0;
-			
-			DX_CHECK(s_renderCtx->m_device->CreateTexture2D(&desc, NULL, &m_depthTexture) );
-			DX_CHECK(s_renderCtx->m_device->CreateDepthStencilView(m_depthTexture, NULL, &m_dsv) );
-//			DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(m_depthTexture, NULL, &m_srv) );
-		}
-
-		m_sampler = s_renderCtx->getSamplerState(_textureFlags);
-	}
-
-	void RenderTarget::destroy()
-	{
-		DX_RELEASE(m_srv, 0);
-		DX_RELEASE(m_rtv, 0);
-		DX_RELEASE(m_colorTexture, 0);
-		DX_RELEASE(m_dsv, 0);
-		DX_RELEASE(m_depthTexture, 0);
-
-		m_flags = 0;
-	}
-
-	void RenderTarget::commit(uint8_t _stage, uint32_t _flags)
+	void Texture::commit(uint8_t _stage, uint32_t _flags)
 	{
 		TextureStage& ts = s_renderCtx->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
 		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
-							 ? s_renderCtx->getSamplerState(_flags)
-							 : m_sampler
-							 ;
+			? s_renderCtx->getSamplerState(_flags)
+			: m_sampler
+			;
+	}
+
+	void Texture::resolve()
+	{
+	}
+
+	void FrameBuffer::create(uint8_t _num, const TextureHandle* _handles)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rtv); ++ii)
+		{
+			m_rtv[ii] = NULL;
+		}
+		m_dsv = NULL;
+
+		m_num = 0;
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			TextureHandle handle = _handles[ii];
+			if (isValid(handle) )
+			{
+				const Texture& texture = s_renderCtx->m_textures[handle.idx];
+				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
+				{
+					BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
+
+					const uint32_t msaaQuality = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+					const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+
+					D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+					dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
+					dsvDesc.ViewDimension = 1 < msaa.Count ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;
+					dsvDesc.Flags = 0;
+					dsvDesc.Texture2D.MipSlice = 0;
+					DX_CHECK(s_renderCtx->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
+				}
+				else
+				{
+					DX_CHECK(s_renderCtx->m_device->CreateRenderTargetView(texture.m_ptr, NULL, &m_rtv[m_num]) );
+					DX_CHECK(s_renderCtx->m_device->CreateShaderResourceView(texture.m_ptr, NULL, &m_srv[m_num]) );
+					m_num++;
+				}
+			}
+		}
+	}
+
+	void FrameBuffer::destroy()
+	{
+		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			DX_RELEASE(m_srv[ii], 0);
+			DX_RELEASE(m_rtv[ii], 0);
+		}
+
+		DX_RELEASE(m_dsv, 0);
+
+		m_num = 0;
+	}
+
+	void FrameBuffer::resolve()
+	{
 	}
 
 	void UniformBuffer::create(UniformType::Enum _type, uint16_t _num, bool _alloc)
@@ -2134,14 +2157,14 @@ namespace bgfx
 		s_renderCtx->m_textures[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateRenderTarget(RenderTargetHandle _handle, uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags)
+	void Context::rendererCreateFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles)
 	{
-		s_renderCtx->m_renderTargets[_handle.idx].create(_width, _height, _flags, _textureFlags);
+		s_renderCtx->m_frameBuffers[_handle.idx].create(_num, _textureHandles);
 	}
 
-	void Context::rendererDestroyRenderTarget(RenderTargetHandle _handle)
+	void Context::rendererDestroyFrameBuffer(FrameBufferHandle _handle)
 	{
-		s_renderCtx->m_renderTargets[_handle.idx].destroy();
+		s_renderCtx->m_frameBuffers[_handle.idx].destroy();
 	}
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
@@ -2224,7 +2247,7 @@ namespace bgfx
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
-		RenderTargetHandle rt = BGFX_INVALID_HANDLE;
+		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
 		D3D11_PRIMITIVE_TOPOLOGY primType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		deviceCtx->IASetPrimitiveTopology(primType);
@@ -2268,10 +2291,10 @@ namespace bgfx
 					view = key.m_view;
 					programIdx = invalidHandle;
 
-					if (m_render->m_rt[view].idx != rt.idx)
+					if (m_render->m_fb[view].idx != fbh.idx)
 					{
-						rt = m_render->m_rt[view];
-						s_renderCtx->setRenderTarget(rt);
+						fbh = m_render->m_fb[view];
+						s_renderCtx->setFrameBuffer(fbh);
 					}
 
 					const Rect& rect = m_render->m_rect[view];
@@ -2554,19 +2577,6 @@ namespace bgfx
 										texture.commit(stage, sampler.m_flags);
 									}
 									break;
-
-								case BGFX_SAMPLER_RENDERTARGET_COLOR:
-									{
-										RenderTarget& rt = s_renderCtx->m_renderTargets[sampler.m_idx];
-										rt.commit(stage, sampler.m_flags);
-									}
-									break;
-
-								case BGFX_SAMPLER_RENDERTARGET_DEPTH:
-									{
-//										id = s_renderCtx->m_renderTargets[sampler.m_idx].m_depth.m_id;
-									}
-									break;
 								}
 							}
 							else
@@ -2761,16 +2771,22 @@ namespace bgfx
 					);
 
 				pos = 10;
-				tvm.printf(10, pos++, 0x8e, "      Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS%s"
+				tvm.printf(10, pos++, 0x8e, "       Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
 					, double(frameTime)*toMs
 					, double(min)*toMs
 					, double(max)*toMs
 					, freq/frameTime
-					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? " (vsync)" : ""
+					);
+
+				const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				tvm.printf(10, pos++, 0x8e, " Reset flags: [%c] vsync, [%c] MSAAx%d "
+					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+					, 0 != msaa ? '\xfe' : ' '
+					, 1<<msaa
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, " Draw calls: %4d / CPU %3.4f [ms]"
+				tvm.printf(10, pos++, 0x8e, "  Draw calls: %4d / CPU %3.4f [ms]"
 					, m_render->m_num
 					, elapsedCpuMs
 					);
@@ -2781,16 +2797,16 @@ namespace bgfx
 					);
 
 				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
-				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
+				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", m_render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", m_render->m_iboffset);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = m_render->m_waitSubmit < m_render->m_waitRender;
 
-				tvm.printf(10, pos++, attr[attrIndex&1], "Submit wait: %3.4f [ms]", m_render->m_waitSubmit*toMs);
-				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", m_render->m_waitRender*toMs);
+				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %3.4f [ms]", m_render->m_waitSubmit*toMs);
+				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %3.4f [ms]", m_render->m_waitRender*toMs);
 
 				min = frameTime;
 				max = frameTime;

@@ -260,6 +260,7 @@ namespace bgfx
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
+		void resolve();
 
 		union
 		{
@@ -270,41 +271,28 @@ namespace bgfx
 
 		ID3D11ShaderResourceView* m_srv;
 		ID3D11SamplerState* m_sampler;
+		uint32_t m_flags;
 		uint8_t m_type;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
 		uint8_t m_numMips;
 	};
 
-	struct RenderTarget
+	struct FrameBuffer
 	{
-		RenderTarget()
-			: m_colorTexture(NULL)
- 			, m_depthTexture(NULL)
-			, m_rtv(NULL)
- 			, m_dsv(NULL)
-			, m_srv(NULL)
-			, m_width(0)
-			, m_height(0)
-			, m_flags(0)
-			, m_depthOnly(false)
+		FrameBuffer()
+			: m_num(0)
 		{
 		}
 
-		void create(uint16_t _width, uint16_t _height, uint32_t _flags, uint32_t _textureFlags);
+		void create(uint8_t _num, const TextureHandle* _handles);
 		void destroy();
- 		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
+		void resolve();
 
-		ID3D11Texture2D* m_colorTexture;
-		ID3D11Texture2D* m_depthTexture;
-		ID3D11RenderTargetView* m_rtv;
+		ID3D11RenderTargetView* m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
+		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11DepthStencilView* m_dsv;
-		ID3D11ShaderResourceView* m_srv;
-		ID3D11SamplerState* m_sampler;
-		uint16_t m_width;
-		uint16_t m_height;
-		uint32_t m_flags;
-		bool m_depthOnly;
+		uint8_t m_num;
 	};
 
 } // namespace bgfx
