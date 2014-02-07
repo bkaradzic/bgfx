@@ -1856,10 +1856,18 @@ namespace bgfx
 		s_ctx->destroyFragmentShader(_handle);
 	}
 
-	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
+	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh, bool _destroyShaders)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->createProgram(_vsh, _fsh);
+		ProgramHandle handle = s_ctx->createProgram(_vsh, _fsh);
+
+		if (_destroyShaders)
+		{
+			destroyVertexShader(_vsh);
+			destroyFragmentShader(_fsh);
+		}
+
+		return handle;
 	}
 
 	void destroyProgram(ProgramHandle _handle)

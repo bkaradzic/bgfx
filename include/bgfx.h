@@ -835,10 +835,12 @@ namespace bgfx
 	///
 	/// @param _vsh Vertex shader.
 	/// @param _fsh Fragment shader.
+	/// @param _destroyShaders If true, shaders will be destroyed when
+	///   program is destroyed.
 	/// @returns Program handle if vertex shader output and fragment shader
 	///   input are matching, otherwise returns invalid program handle.
 	///
-	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
+	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh, bool _destroyShaders = false);
 
 	/// Destroy program.
 	void destroyProgram(ProgramHandle _handle);
@@ -974,8 +976,8 @@ namespace bgfx
 	///
 	/// @param _num Number of texture attachments.
 	/// @param _handles Texture attachments.
-	/// @param _destroyTextures Destroy textures when frame buffer is
-	///   destroyed.
+	/// @param _destroyTextures If true, textures will be destroyed when 
+	///   frame buffer is destroyed.
 	///
 	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures = false);
 
