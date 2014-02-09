@@ -3,11 +3,16 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
-
 #ifndef SHADERC_DEBUG
 #	define SHADERC_DEBUG 0
 #endif // SHADERC_DEBUG
+
+#if SHADERC_DEBUG
+#	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
+#endif // DEBUG
+
+#include <bx/bx.h>
+#include <bx/debug.h>
 
 #define NOMINMAX
 #include <alloca.h>
@@ -25,10 +30,6 @@ extern "C"
 {
 #include <fpp.h>
 } // extern "C"
-
-#if SHADERC_DEBUG
-#	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
-#endif // DEBUG
 
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
@@ -477,7 +478,6 @@ public:
 		return m_str[m_pos] == '\0';
 	}
 
-private:
 	void skipLine()
 	{
 		const char* str = &m_str[m_pos];
@@ -490,14 +490,21 @@ private:
 	uint32_t m_size;
 };
 
-void printCode(const char* _code)
+void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX)
 {
 	fprintf(stderr, "Code:\n---\n");
 
 	LineReader lr(_code);
-	for (uint32_t line =  1; !lr.isEof(); ++line)
+	for (int32_t line = 1; !lr.isEof() && line < _end; ++line)
 	{
-		fprintf(stderr, "%3d: %s", line, lr.getLine().c_str() );
+		if (line >= _start)
+		{
+			fprintf(stderr, "%s%3d: %s", _line == line ? ">>> " : "    ", line, lr.getLine().c_str() );
+		}
+		else
+		{
+			lr.skipLine();
+		}
 	}
 
 	fprintf(stderr, "---\n");
@@ -522,23 +529,36 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 
 	glslopt_ctx* ctx = glslopt_initialize(gles);
 
-	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), 0); 
+	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), kGlslOptionSkipPreprocessor); 
 
-	if( !glslopt_get_status(shader) )
+	if (!glslopt_get_status(shader) )
 	{
-		printCode(_code.c_str() );
-		fprintf(stderr, "Error: %s\n", glslopt_get_log(shader) );
+		const char* log = glslopt_get_log(shader);
+		int32_t source = 0;
+		int32_t line = 0;
+		int32_t column = 0;
+		int32_t start = 0;
+		int32_t end = INT32_MAX;
+
+		if (3 == sscanf(log, "%u:%u(%u):", &source, &line, &column) )
+		{
+			start = bx::uint32_imax(1, line-10);
+			end = start + 20;
+		}
+
+		printCode(_code.c_str(), line, start, end);
+		fprintf(stderr, "Error: %s\n", log);
 		glslopt_cleanup(ctx);
 		return false;
 	}
 
 	const char* optimizedShader = glslopt_get_output(shader);
 
-	if (gles)
+	const char* version = strstr(optimizedShader, "#version");
+	if (NULL != version)
 	{
-		writef(_writer, "#ifdef GL_ES\n");
-		writef(_writer, "precision highp float;\n");
-		writef(_writer, "#endif // GL_ES\n\n");
+		// trim version line...
+		optimizedShader = bx::strnl(version);
 	}
 
 	bx::write(_writer, optimizedShader, (int32_t)strlen(optimizedShader) );
@@ -630,8 +650,23 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 	if (FAILED(hr)
 	|| (werror && NULL != errorMsg) )
 	{
-		printCode(_code.c_str() );
-		fprintf(stderr, "Error: 0x%08x %s\n", (uint32_t)hr, (const char*)errorMsg->GetBufferPointer() );
+		const char* log = (const char*)errorMsg->GetBufferPointer();
+
+		char source[1024];
+		int32_t line = 0;
+		int32_t column = 0;
+		int32_t start = 0;
+		int32_t end = INT32_MAX;
+
+		if (3 == sscanf(log, "%[^(](%u,%u):", source, &line, &column) )
+		{
+			start = bx::uint32_imax(1, line-10);
+			end = start + 20;
+		}
+
+		printCode(_code.c_str(), line, start, end);
+		fprintf(stderr, "Error: 0x%08x %s\n", (uint32_t)hr, log);
+		errorMsg->Release();
 		return false;
 	}
 
@@ -826,8 +861,21 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	if (FAILED(hr)
 	|| (werror && NULL != errorMsg) )
 	{
-		printCode(_code.c_str() );
-		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x %s\n", (uint32_t)hr, (char*)errorMsg->GetBufferPointer() );
+		const char* log = (char*)errorMsg->GetBufferPointer();
+
+		int32_t line = 0;
+		int32_t column = 0;
+		int32_t start = 0;
+		int32_t end = INT32_MAX;
+
+		if (2 == sscanf(log, "(%u,%u):", &line, &column) )
+		{
+			start = bx::uint32_imax(1, line-10);
+			end = start + 20;
+		}
+
+		printCode(_code.c_str(), line, start, end);
+		fprintf(stderr, "Error: 0x%08x %s\n", (uint32_t)hr, log);
 		errorMsg->Release();
 		return false;
 	}
@@ -842,7 +890,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		);
 	if (FAILED(hr) )
 	{
-		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x\n", (uint32_t)hr);
+		fprintf(stderr, "Error: 0x%08x\n", (uint32_t)hr);
 		return false;
 	}
 
@@ -1152,6 +1200,7 @@ struct Preprocessor
 	{
 		m_fgetsPos = 0;
 
+		m_preprocessed.clear();
 		m_input = m_default;
 		m_input += "\n\n";
 
@@ -1624,15 +1673,29 @@ int main(int _argc, const char* _argv[])
 			}
 		}
 
-		const size_t padding = 16;
-		uint32_t size = (uint32_t)fsize(file);
-		char* data = new char[size+padding+1];
-		size = (uint32_t)fread(data, 1, size, file);
-		// Compiler generates "error X3000: syntax error: unexpected end of file"
-		// if input doesn't have empty line at EOF.
-		data[size] = '\n';
-		memset(&data[size+1], 0, padding);
-		fclose(file);
+		char* data;
+		{
+			const size_t padding = 16;
+			uint32_t size = (uint32_t)fsize(file);
+			data = new char[size+padding+1];
+			size = (uint32_t)fread(data, 1, size, file);
+			// Compiler generates "error X3000: syntax error: unexpected end of file"
+			// if input doesn't have empty line at EOF.
+			data[size] = '\n';
+			memset(&data[size+1], 0, padding);
+			fclose(file);
+
+			// To avoid commented code being recognized as used feature,
+			// first preprocess pass is used to strip all comments before
+			// substituting code.
+			preprocessor.run(data);
+			delete [] data;
+
+			size = preprocessor.m_preprocessed.size();
+			data = new char[size+padding+1];
+			memcpy(data, preprocessor.m_preprocessed.c_str(), size);
+			memset(&data[size], 0, padding+1);
+		}
 
 		char* entry = strstr(data, "void main()");
 		if (NULL == entry)
