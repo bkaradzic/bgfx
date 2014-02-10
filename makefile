@@ -166,12 +166,14 @@ ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
 ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
 BUILD_PROJECT_DIR=gmake-osx
-BUILD_OUTPUT_DIR=linux64_gcc
+BUILD_OUTPUT_DIR=osx64_gcc
+BUILD_TOOLS_CONFIG=release64
 EXE=
 else
 OS=linux
 BUILD_PROJECT_DIR=gmake-linux
-BUILD_OUTPUT_DIR=osx64_gcc
+BUILD_OUTPUT_DIR=linux64_gcc
+BUILD_TOOLS_CONFIG=release64
 EXE=
 endif
 else
