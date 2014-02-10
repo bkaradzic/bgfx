@@ -156,3 +156,42 @@ docs:
 clean:
 	@echo Cleaning...
 	-@rm -rf .build
+
+###
+
+SILENT ?= @
+
+UNAME := $(shell uname)
+ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
+ifeq ($(UNAME),$(filter $(UNAME),Darwin))
+OS=darwin
+BUILD_PROJECT_DIR=gmake-osx
+BUILD_OUTPUT_DIR=linux64_gcc
+EXE=
+else
+OS=linux
+BUILD_PROJECT_DIR=gmake-linux
+BUILD_OUTPUT_DIR=osx64_gcc
+EXE=
+endif
+else
+OS=windows
+BUILD_PROJECT_DIR=gmake-mingw
+BUILD_OUTPUT_DIR=win32_mingw
+BUILD_TOOLS_CONFIG=release32
+EXE=.exe
+endif
+
+.build/$(BUILD_OUTPUT_DIR)/bin/shadercRelease$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
+	$(SILENT) make -C .build/projects/$(BUILD_PROJECT_DIR) -f shaderc.make config=$(BUILD_TOOLS_CONFIG)
+
+tools/bin/$(OS)/shaderc$(EXE): .build/$(BUILD_OUTPUT_DIR)/bin/shadercRelease$(EXE)
+	$(SILENT) cp $(<) $(@)
+
+.build/$(BUILD_OUTPUT_DIR)/bin/geometrycRelease$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
+	$(SILENT) make -C .build/projects/$(BUILD_PROJECT_DIR) -f geometryc.make config=$(BUILD_TOOLS_CONFIG)
+
+tools/bin/$(OS)/geometryc$(EXE): .build/$(BUILD_OUTPUT_DIR)/bin/geometrycRelease$(EXE)
+	$(SILENT) cp $(<) $(@)
+
+tools: tools/bin/$(OS)/shaderc$(EXE) tools/bin/$(OS)/geometryc$(EXE)
