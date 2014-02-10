@@ -93,7 +93,7 @@ vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 #	else
 #		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
 #		define texture2D(_sampler, _coord) tex2D(_sampler, _coord)
-#		define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec3( (_coord).xy, _level) )
+#		define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec4( (_coord).xy, _level, 0.0) )
 #		define SAMPLER3D(_name, _reg) uniform sampler3D _name : register(s ## _reg)
 #		define texture3D(_sampler, _coord) tex3D(_sampler, _coord)
 #		define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )

@@ -7,8 +7,32 @@
 #	define SHADERC_DEBUG 0
 #endif // SHADERC_DEBUG
 
+#define _BX_TRACE(_format, ...) \
+				do { \
+					fprintf(stderr, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
+				} while(0)
+
+#define _BX_WARN(_condition, _format, ...) \
+				do { \
+					if (!(_condition) ) \
+					{ \
+						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
+					} \
+				} while(0)
+
+#define _BX_CHECK(_condition, _format, ...) \
+				do { \
+					if (!(_condition) ) \
+					{ \
+						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
+						bx::debugBreak(); \
+					} \
+				} while(0)
+
 #if SHADERC_DEBUG
-#	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
+#	define BX_TRACE _BX_TRACE
+#	define BX_WARN  _BX_WARN
+#	define BX_CHECK _BX_CHECK
 #endif // DEBUG
 
 #include <bx/bx.h>
@@ -81,6 +105,46 @@ struct Attrib
 
 		Count,
 	};
+};
+
+static const char* s_ARB_shader_texture_lod[] =
+{
+	"texture2DLod",
+	"texture2DProjLod",
+	"texture3DLod",
+	"texture3DProjLod",
+	"textureCubeLod",
+	"shadow2DLod",
+	"shadow2DProjLod",
+	NULL
+	// "texture1DLod",
+	// "texture1DProjLod",
+	// "shadow1DLod",
+	// "shadow1DProjLod",
+};
+
+static const char* s_EXT_shadow_samplers[] =
+{
+	"shadow2D",
+	"shadow2DProj",
+	NULL
+};
+
+static const char* s_OES_standard_derivatives[] =
+{
+	"dFdx",
+	"dFdy",
+	"fwidth",
+	NULL
+};
+
+static const char* s_OES_texture_3D[] =
+{
+	"texture3D",
+	"texture3DProj",
+	"texture3DLod",
+	"texture3DProjLod",
+	NULL
 };
 
 struct RemapInputSemantic
@@ -445,9 +509,19 @@ void strins(char* _str, const char* _insert)
 void strreplace(char* _str, const char* _find, const char* _replace)
 {
 	const size_t len = strlen(_find);
+
+	char* replace = (char*)alloca(len+1);
+	bx::strlcpy(replace, _replace, len+1);
+	for (uint32_t ii = strlen(replace); ii < len; ++ii)
+	{
+		replace[ii] = ' ';
+	}
+	replace[len] = '\0';
+
+	BX_CHECK(len >= strlen(_replace), "");
 	for (char* ptr = strstr(_str, _find); NULL != ptr; ptr = strstr(ptr + len, _find) )
 	{
-		memcpy(ptr, _replace, len);
+		memcpy(ptr, replace, len);
 	}
 }
 
@@ -520,7 +594,7 @@ void writeFile(const char* _filePath, const void* _data, int32_t _size)
 	}
 }
 
-bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
+bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer)
 {
 	const glslopt_shader_type type = tolower(_cmdLine.findOption('\0', "type")[0]) == 'f' ? kGlslOptShaderFragment : kGlslOptShaderVertex;
 
@@ -529,7 +603,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 
 	glslopt_ctx* ctx = glslopt_initialize(gles);
 
-	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), kGlslOptionSkipPreprocessor); 
+	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), 0); 
 
 	if (!glslopt_get_status(shader) )
 	{
@@ -540,7 +614,8 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 		int32_t start = 0;
 		int32_t end = INT32_MAX;
 
-		if (3 == sscanf(log, "%u:%u(%u):", &source, &line, &column) )
+		if (3 == sscanf(log, "%u:%u(%u):", &source, &line, &column)
+		&&  0 != line)
 		{
 			start = bx::uint32_imax(1, line-10);
 			end = start + 20;
@@ -554,11 +629,26 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::
 
 	const char* optimizedShader = glslopt_get_output(shader);
 
-	const char* version = strstr(optimizedShader, "#version");
-	if (NULL != version)
+	// Trim all directives.
+	while ('#' == *optimizedShader)
 	{
-		// trim version line...
-		optimizedShader = bx::strnl(version);
+		optimizedShader = bx::strnl(optimizedShader);
+	}
+
+	if (0 != _gles)
+	{
+		char* shader = const_cast<char*>(optimizedShader);
+		strreplace(shader, "gl_FragDepthEXT", "gl_FragDepth");
+
+		strreplace(shader, "texture2DLodEXT", "texture2DLod");
+		strreplace(shader, "texture2DProjLodEXT", "texture2DProjLod");
+		strreplace(shader, "textureCubeLodEXT", "textureCubeLod");
+		strreplace(shader, "texture2DGradEXT", "texture2DGrad");
+		strreplace(shader, "texture2DProjGradEXT", "texture2DProjGrad");
+		strreplace(shader, "textureCubeGradEXT", "textureCubeGrad");
+
+		strreplace(shader, "shadow2DEXT", "shadow2D");
+		strreplace(shader, "shadow2DProjEXT", "shadow2DProj");
 	}
 
 	bx::write(_writer, optimizedShader, (int32_t)strlen(optimizedShader) );
@@ -658,7 +748,8 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		int32_t start = 0;
 		int32_t end = INT32_MAX;
 
-		if (3 == sscanf(log, "%[^(](%u,%u):", source, &line, &column) )
+		if (3 == sscanf(log, "%[^(](%u,%u):", source, &line, &column)
+		&&  0 != line)
 		{
 			start = bx::uint32_imax(1, line-10);
 			end = start + 20;
@@ -678,7 +769,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		return false;
 	}
 
-	BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
+	BX_TRACE("Creator: %s 0x%08x", desc.Creator, (uint32_t /*mingw warning*/)desc.Version);
 	BX_TRACE("Num constants: %d", desc.Constants);
 	BX_TRACE("#   cl ty RxC   S  By Name");
 
@@ -868,7 +959,8 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		int32_t start = 0;
 		int32_t end = INT32_MAX;
 
-		if (2 == sscanf(log, "(%u,%u):", &line, &column) )
+		if (2 == sscanf(log, "(%u,%u):", &line, &column)
+		&&  0 != line)
 		{
 			start = bx::uint32_imax(1, line-10);
 			end = start + 20;
@@ -2016,12 +2108,70 @@ int main(int _argc, const char* _argv[])
 					if (glsl)
 					{
 						std::string code;
+
+						bool hasTextureLod = NULL != bx::findIdentifierMatch(data, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
+
 						if (0 == gles)
 						{
 							bx::stringPrintf(code, "#version %s\n", profile);
+							int32_t version = atoi(profile);
+
+							if (hasTextureLod
+							&&  130 > version)
+							{
+								bx::stringPrintf(code
+									, "#extension GL_ARB_shader_texture_lod : enable\n"
+									);
+							}
+						}
+						else
+						{
+							// Pretend that all extensions are available.
+							// This will be stripped later.
+							if (hasTextureLod)
+							{
+								bx::stringPrintf(code
+									, "#extension GL_EXT_shader_texture_lod : enable\n"
+									  "#define texture2DLod texture2DLodEXT\n"
+									  "#define texture2DProjLod texture2DProjLodEXT\n"
+									  "#define textureCubeLod textureCubeLodEXT\n"
+//									  "#define texture2DGrad texture2DGradEXT\n"
+//									  "#define texture2DProjGrad texture2DProjGradEXT\n"
+//									  "#define textureCubeGrad textureCubeGradEXT\n"
+									);
+							}
+
+							if (NULL != bx::findIdentifierMatch(data, s_OES_standard_derivatives) )
+							{
+								bx::stringPrintf(code, "#extension GL_OES_standard_derivatives : enable\n");
+							}
+
+							if (NULL != bx::findIdentifierMatch(data, s_OES_texture_3D) )
+							{
+								bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
+							}
+
+							if (NULL != bx::findIdentifierMatch(data, s_EXT_shadow_samplers) )
+							{
+								bx::stringPrintf(code
+									, "#extension GL_EXT_shadow_samplers : enable\n"
+									  "#define shadow2D shadow2DEXT\n"
+									  "#define shadow2DProj shadow2DProjEXT\n"
+									);
+							}
+
+							if (NULL != bx::findIdentifierMatch(data, "gl_FragDepth") )
+							{
+								bx::stringPrintf(code
+									, "#extension GL_EXT_frag_depth : enable\n"
+									  "#define gl_FragDepth gl_FragDepthEXT\n"
+									);
+							}
+
+							bx::stringPrintf(code, "precision highp float;\n");
 						}
 						code += preprocessor.m_preprocessed;
-						compiled = compileGLSLShader(cmdLine, code, writer);
+						compiled = compileGLSLShader(cmdLine, gles, code, writer);
 					}
 					else
 					{
