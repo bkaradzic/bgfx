@@ -12,11 +12,11 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 _ProjectionParams;
-uniform vec4 _MainTex_ST;
 uniform vec4 _Detail_ST;
+uniform vec4 _MainTex_ST;
+uniform vec4 _ProjectionParams;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void PositionFog (
   in vec4 v_1,
   out vec4 pos_2,

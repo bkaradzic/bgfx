@@ -1,6 +1,6 @@
-varying highp vec2 xlv_TEXCOORD0;
-varying lowp vec4 xlv_COLOR;
 uniform sampler2D _FlareTexture;
+varying lowp vec4 xlv_COLOR;
+varying highp vec2 xlv_TEXCOORD0;
 lowp vec4 xlat_main (
   in lowp vec4 color_1,
   in highp vec2 texcoord_2

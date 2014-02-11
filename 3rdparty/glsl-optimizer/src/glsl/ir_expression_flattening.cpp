@@ -59,8 +59,8 @@ do_expression_flattening(exec_list *instructions,
 {
    ir_expression_flattening_visitor v(predicate);
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
 
       ir->accept(&v);
    }

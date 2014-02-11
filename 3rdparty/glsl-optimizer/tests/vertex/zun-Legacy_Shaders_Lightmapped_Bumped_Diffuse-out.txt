@@ -1,11 +1,11 @@
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _World2Object;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
-uniform mat4 _LightMatrix0;
 uniform vec4 _BumpMap_ST;
+uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec4 _WorldSpaceLightPos0;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -41,3 +41,5 @@ void main ()
   gl_TexCoord[2] = tmpvar_7;
 }
 
+
+// inputs: 4, stats: 16 alu 0 tex 0 flow

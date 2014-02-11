@@ -76,24 +76,7 @@ struct exec_node {
    struct exec_node *prev;
 
 #ifdef __cplusplus
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = ralloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *node)
-   {
-      ralloc_free(node);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(exec_node)
 
    exec_node() : next(NULL), prev(NULL)
    {
@@ -223,61 +206,7 @@ struct exec_node {
 
 #ifdef __cplusplus
 struct exec_node;
-
-class iterator {
-public:
-   void next()
-   {
-   }
-
-   void *get()
-   {
-      return NULL;
-   }
-
-   bool has_next() const
-   {
-      return false;
-   }
-};
-
-class exec_list_iterator : public iterator {
-public:
-   exec_list_iterator(exec_node *n) : node(n), _next(n->next)
-   {
-      /* empty */
-   }
-
-   void next()
-   {
-      node = _next;
-      _next = node->next;
-   }
-
-   void remove()
-   {
-      node->remove();
-   }
-
-   exec_node *get()
-   {
-      return node;
-   }
-
-   bool has_next() const
-   {
-      return _next != NULL;
-   }
-
-private:
-   exec_node *node;
-   exec_node *_next;
-};
-
-#define foreach_iter(iter_type, iter, container) \
-   for (iter_type iter = (container) . iterator(); iter.has_next(); iter.next())
 #endif
-
 
 struct exec_list {
    struct exec_node *head;
@@ -285,24 +214,7 @@ struct exec_list {
    struct exec_node *tail_pred;
 
 #ifdef __cplusplus
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = ralloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *node)
-   {
-      ralloc_free(node);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(exec_list)
 
    exec_list()
    {
@@ -438,16 +350,6 @@ struct exec_list {
        */
       source->make_empty();
    }
-
-   exec_list_iterator iterator()
-   {
-      return exec_list_iterator(head);
-   }
-
-   exec_list_iterator iterator() const
-   {
-      return exec_list_iterator((exec_node *) head);
-   }
 #endif
 };
 
@@ -480,6 +382,22 @@ inline void exec_node::insert_before(exec_list *before)
    for (exec_node * __node = (__list)->head		\
 	; (__node)->next != NULL 			\
 	; (__node) = (__node)->next)
+
+/**
+ * Iterate through two lists at once.  Stops at the end of the shorter list.
+ *
+ * This is safe against either current node being removed or replaced.
+ */
+#define foreach_two_lists(__node1, __list1, __node2, __list2) \
+   for (exec_node * __node1 = (__list1)->head,                \
+                  * __node2 = (__list2)->head,                \
+                  * __next1 = __node1->next,                  \
+                  * __next2 = __node2->next                   \
+	; __next1 != NULL && __next2 != NULL                  \
+	; __node1 = __next1,                                  \
+          __node2 = __next2,                                  \
+          __next1 = __next1->next,                            \
+          __next2 = __next2->next)
 
 #define foreach_list_const(__node, __list)		\
    for (const exec_node * __node = (__list)->head	\

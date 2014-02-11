@@ -12,13 +12,13 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 unity_LightmapST;
-uniform mat4 _Object2World;
-uniform vec4 _Decal_ST;
 uniform vec4 _DecalBump_ST;
+uniform vec4 _Decal_ST;
+uniform mat4 _Object2World;
+uniform vec4 unity_LightmapST;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 mat3 xll_constructMat3 (
   in mat4 m_1
 )
@@ -113,8 +113,8 @@ v2f_surf vert_surf (
   tmpvar_35 = v_14.normal.z;
   tmpvar_26[2].z = tmpvar_35;
   mat3 tmpvar_36;
-  tmpvar_36 = (tmpvar_26);
-  rotation_15 = (tmpvar_36);
+  tmpvar_36 = tmpvar_26;
+  rotation_15 = tmpvar_36;
   return o_18;
 }
 

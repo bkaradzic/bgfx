@@ -17,11 +17,11 @@ struct v2f_surf {
   vec3 normal;
   vec3 lightDir;
 };
-varying vec4 xlv_FOG;
-uniform float _RimPower;
-uniform vec4 _RimColor;
-uniform sampler2D _MainTex;
 uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform vec4 _RimColor;
+uniform float _RimPower;
+varying vec4 xlv_FOG;
 float xll_saturate (
   in float x_1
 )

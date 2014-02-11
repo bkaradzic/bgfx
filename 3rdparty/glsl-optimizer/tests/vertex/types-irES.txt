@@ -9,14 +9,14 @@ struct a2v {
   mediump vec3 normal;
   lowp vec4 color;
 };
-varying lowp vec4 xlv_COLOR;
-varying mediump vec2 xlv_TEXCOORD0;
-uniform highp mat4 mvp;
-attribute lowp vec4 _glesColor;
-attribute highp vec4 _glesMultiTexCoord1;
-attribute highp vec4 _glesMultiTexCoord0;
-attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute lowp vec4 _glesColor;
+uniform highp mat4 mvp;
+varying mediump vec2 xlv_TEXCOORD0;
+varying lowp vec4 xlv_COLOR;
 v2f xlat_main (
   in a2v v_1
 )

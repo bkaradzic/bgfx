@@ -1,25 +1,25 @@
-FSHF­œuniform sampler2D u_shadowMap3;
-uniform sampler2D u_shadowMap2;
-uniform sampler2D u_shadowMap1;
-uniform sampler2D u_shadowMap0;
-uniform vec4 u_lightAttenuationSpotOuter;
-uniform vec4 u_lightSpotDirectionInner;
-uniform vec4 u_lightSpecularPower;
-uniform vec4 u_lightDiffusePower;
-uniform vec4 u_lightAmbientPower;
-uniform vec4 u_lightPosition;
-uniform vec4 u_materialKs;
-uniform vec3 u_materialKd;
-uniform vec3 u_materialKa;
-uniform vec4 u_color;
-uniform vec4 u_params2;
-uniform vec4 u_params1;
-varying vec3 v_view;
-varying vec4 v_texcoord4;
-varying vec4 v_texcoord3;
-varying vec4 v_texcoord2;
+FSHF­œvarying vec3 v_normal;
 varying vec4 v_texcoord1;
-varying vec3 v_normal;
+varying vec4 v_texcoord2;
+varying vec4 v_texcoord3;
+varying vec4 v_texcoord4;
+varying vec3 v_view;
+uniform vec4 u_params1;
+uniform vec4 u_params2;
+uniform vec4 u_color;
+uniform vec3 u_materialKa;
+uniform vec3 u_materialKd;
+uniform vec4 u_materialKs;
+uniform vec4 u_lightPosition;
+uniform vec4 u_lightAmbientPower;
+uniform vec4 u_lightDiffusePower;
+uniform vec4 u_lightSpecularPower;
+uniform vec4 u_lightSpotDirectionInner;
+uniform vec4 u_lightAttenuationSpotOuter;
+uniform sampler2D u_shadowMap0;
+uniform sampler2D u_shadowMap1;
+uniform sampler2D u_shadowMap2;
+uniform sampler2D u_shadowMap3;
 void main ()
 {
   float visibility_1;
@@ -297,18 +297,46 @@ void main ()
     tmpvar_80 = cos((u_lightAttenuationSpotOuter.w * 0.0174533));
     float tmpvar_81;
     tmpvar_81 = sqrt(dot (tmpvar_78, tmpvar_78));
-    tmpvar_77 = ((1.0/(((u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_81)) + ((u_lightAttenuationSpotOuter.z * tmpvar_81) * tmpvar_81)))) * mix (clamp (((max (0.0, dot (-(tmpvar_79), normalize(u_lightSpotDirectionInner.xyz))) - tmpvar_80) / (cos((min (u_lightSpotDirectionInner.w, (u_lightAttenuationSpotOuter.w - 0.001)) * 0.0174533)) - tmpvar_80)), 0.0, 1.0), 1.0, float((u_lightAttenuationSpotOuter.w >= 90.0))));
+    tmpvar_77 = ((1.0/((
+      (u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_81))
+     + 
+      ((u_lightAttenuationSpotOuter.z * tmpvar_81) * tmpvar_81)
+    ))) * mix (clamp (
+      ((max (0.0, dot (
+        -(tmpvar_79)
+      , 
+        normalize(u_lightSpotDirectionInner.xyz)
+      )) - tmpvar_80) / (cos((
+        min (u_lightSpotDirectionInner.w, (u_lightAttenuationSpotOuter.w - 0.001))
+       * 0.0174533)) - tmpvar_80))
+    , 0.0, 1.0), 1.0, float(
+      (u_lightAttenuationSpotOuter.w >= 90.0)
+    )));
   };
   float tmpvar_82;
   tmpvar_82 = dot (v_normal, tmpvar_76);
   vec2 tmpvar_83;
   tmpvar_83.x = tmpvar_82;
-  tmpvar_83.y = (((float((tmpvar_82 >= 0.0)) * pow (max (0.0, dot ((((2.0 * tmpvar_82) * v_normal) - tmpvar_76), tmpvar_75)), u_materialKs.w)) * (2.0 + u_materialKs.w)) / 8.0);
+  tmpvar_83.y = (((
+    float((tmpvar_82 >= 0.0))
+   * 
+    pow (max (0.0, dot ((
+      ((2.0 * tmpvar_82) * v_normal)
+     - tmpvar_76), tmpvar_75)), u_materialKs.w)
+  ) * (2.0 + u_materialKs.w)) / 8.0);
   vec2 tmpvar_84;
   tmpvar_84 = (max (tmpvar_83, 0.0) * tmpvar_77);
   float tmpvar_85;
   tmpvar_85 = sqrt(dot (v_view, v_view));
-  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (abs(((((u_lightAmbientPower.xyz * u_lightAmbientPower.w) * u_materialKa) * u_color.xyz) + ((((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_84.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_84.y)) * u_color.xyz) * visibility_1))), vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(exp2(((1.7673e-05 * tmpvar_85) * tmpvar_85)))), 0.0, 1.0));
+  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (
+    abs((((
+      (u_lightAmbientPower.xyz * u_lightAmbientPower.w)
+     * u_materialKa) * u_color.xyz) + ((
+      ((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_84.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_84.y))
+     * u_color.xyz) * visibility_1)))
+  , vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(
+    exp2(((1.7673e-005 * tmpvar_85) * tmpvar_85))
+  )), 0.0, 1.0));
   gl_FragColor.w = 1.0;
 }
 

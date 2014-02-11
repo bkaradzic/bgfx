@@ -1,5 +1,5 @@
-varying vec4 varColor;
 uniform vec4 uniColors[4];
+varying vec4 varColor;
 void main ()
 {
   vec4 col_1;
@@ -11,3 +11,5 @@ void main ()
   varColor = col_1;
 }
 
+
+// inputs: 1, stats: 7 alu 0 tex 0 flow

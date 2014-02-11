@@ -1,5 +1,5 @@
-varying vec4 xlv_TEXCOORD1;
 varying vec4 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
 vec4 xlat_main (
   in vec4 uv_1,
   in vec4 foobar_xlv_foo_2

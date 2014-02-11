@@ -72,6 +72,6 @@ mediump vec4 xlat_main( in highp vec4 uv ) {
 varying highp vec4 xlv_TEXCOORD0;
 void main() {
     mediump vec4 xl_retval;
-    xl_retval = xlat_main( highp vec4(xlv_TEXCOORD0));
-    gl_FragData[0] = mediump vec4( xl_retval);
+    xl_retval = xlat_main( vec4(xlv_TEXCOORD0));
+    gl_FragData[0] = vec4( xl_retval);
 }

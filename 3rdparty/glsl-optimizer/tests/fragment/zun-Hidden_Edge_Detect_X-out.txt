@@ -1,5 +1,5 @@
-uniform float _Treshold;
 uniform sampler2D _MainTex;
+uniform float _Treshold;
 void main ()
 {
   vec4 original_1;
@@ -16,3 +16,5 @@ void main ()
   gl_FragData[0] = original_1;
 }
 
+
+// inputs: 1, stats: 6 alu 3 tex 1 flow

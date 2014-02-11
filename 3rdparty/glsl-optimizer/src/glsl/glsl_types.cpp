@@ -27,13 +27,14 @@
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
-#include "builtin_types.h"
+#include "main/glminimal.h"
 extern "C" {
 #include "program/hash_table.h"
 }
 
 hash_table *glsl_type::array_types = NULL;
 hash_table *glsl_type::record_types = NULL;
+hash_table *glsl_type::interface_types = NULL;
 void *glsl_type::mem_ctx = NULL;
 
 void
@@ -51,11 +52,12 @@ glsl_type::glsl_type(GLenum gl_type,
    gl_type(gl_type),
    base_type(base_type),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-   sampler_type(0),
+   sampler_type(0), interface_packing(0),
    vector_elements(vector_elements), matrix_columns(matrix_columns),
    length(0)
 {
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    /* Neither dimension is zero or both dimensions are zero.
     */
@@ -69,26 +71,29 @@ glsl_type::glsl_type(GLenum gl_type,
    gl_type(gl_type),
    base_type(GLSL_TYPE_SAMPLER),
    sampler_dimensionality(dim), sampler_shadow(shadow),
-   sampler_array(array), sampler_type(type),
+   sampler_array(array), sampler_type(type), interface_packing(0),
    vector_elements(0), matrix_columns(0),
    length(0)
 {
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    memset(& fields, 0, sizeof(fields));
 }
 
 glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 		     const char *name) :
+   gl_type(0),
    base_type(GLSL_TYPE_STRUCT),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-   sampler_type(0),
+   sampler_type(0), interface_packing(0),
    vector_elements(0), matrix_columns(0),
    length(num_fields)
 {
    unsigned int i;
 
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    this->fields.structure = ralloc_array(this->mem_ctx,
 					 glsl_struct_field, length);
@@ -96,21 +101,44 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].type = fields[i].type;
       this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
 						     fields[i].name);
-	  this->fields.structure[i].precision = fields[i].precision;
+      this->fields.structure[i].precision = fields[i].precision;
+      this->fields.structure[i].location = fields[i].location;
+      this->fields.structure[i].interpolation = fields[i].interpolation;
+      this->fields.structure[i].centroid = fields[i].centroid;
+      this->fields.structure[i].sample = fields[i].sample;
+      this->fields.structure[i].row_major = fields[i].row_major;
    }
 }
 
-static void
-add_types_to_symbol_table(glsl_symbol_table *symtab,
-			  const struct glsl_type *types,
-			  unsigned num_types, bool warn)
+glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+		     enum glsl_interface_packing packing, const char *name) :
+   gl_type(0),
+   base_type(GLSL_TYPE_INTERFACE),
+   sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+   sampler_type(0), interface_packing((unsigned) packing),
+   vector_elements(0), matrix_columns(0),
+   length(num_fields)
 {
-   (void) warn;
+   unsigned int i;
 
-   for (unsigned i = 0; i < num_types; i++) {
-      symtab->add_type(types[i].name, & types[i]);
+   init_ralloc_type_ctx();
+   assert(name != NULL);
+   this->name = ralloc_strdup(this->mem_ctx, name);
+   this->fields.structure = ralloc_array(this->mem_ctx,
+					 glsl_struct_field, length);
+   for (i = 0; i < length; i++) {
+      this->fields.structure[i].type = fields[i].type;
+      this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
+						     fields[i].name);
+      this->fields.structure[i].precision = fields[i].precision;
+      this->fields.structure[i].location = fields[i].location;
+      this->fields.structure[i].interpolation = fields[i].interpolation;
+      this->fields.structure[i].centroid = fields[i].centroid;
+      this->fields.structure[i].sample = fields[i].sample;
+      this->fields.structure[i].row_major = fields[i].row_major;
    }
 }
+
 
 bool
 glsl_type::contains_sampler() const
@@ -125,6 +153,42 @@ glsl_type::contains_sampler() const
       return false;
    } else {
       return this->is_sampler();
+   }
+}
+
+
+bool
+glsl_type::contains_integer() const
+{
+   if (this->is_array()) {
+      return this->fields.array->contains_integer();
+   } else if (this->is_record()) {
+      for (unsigned int i = 0; i < this->length; i++) {
+	 if (this->fields.structure[i].type->contains_integer())
+	    return true;
+      }
+      return false;
+   } else {
+      return this->is_integer();
+   }
+}
+
+bool
+glsl_type::contains_opaque() const {
+   switch (base_type) {
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
+      return true;
+   case GLSL_TYPE_ARRAY:
+      return element_type()->contains_opaque();
+   case GLSL_TYPE_STRUCT:
+      for (unsigned int i = 0; i < length; i++) {
+         if (fields.structure[i].type->contains_opaque())
+            return true;
+      }
+      return false;
+   default:
+      return false;
    }
 }
 
@@ -143,180 +207,18 @@ glsl_type::sampler_index() const
    case GLSL_SAMPLER_DIM_3D:
       return TEXTURE_3D_INDEX;
    case GLSL_SAMPLER_DIM_CUBE:
-      return TEXTURE_CUBE_INDEX;
+      return (t->sampler_array) ? TEXTURE_CUBE_ARRAY_INDEX : TEXTURE_CUBE_INDEX;
    case GLSL_SAMPLER_DIM_RECT:
       return TEXTURE_RECT_INDEX;
    case GLSL_SAMPLER_DIM_BUF:
       return TEXTURE_BUFFER_INDEX;
    case GLSL_SAMPLER_DIM_EXTERNAL:
       return TEXTURE_EXTERNAL_INDEX;
+   case GLSL_SAMPLER_DIM_MS:
+      return (t->sampler_array) ? TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX : TEXTURE_2D_MULTISAMPLE_INDEX;
    default:
       assert(!"Should not get here.");
       return TEXTURE_BUFFER_INDEX;
-   }
-}
-
-void
-glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
-{
-   add_types_to_symbol_table(symtab, builtin_core_types,
-			     Elements(builtin_core_types),
-			     false);
-   add_types_to_symbol_table(symtab, builtin_structure_types,
-			     Elements(builtin_structure_types),
-			     false);
-   add_types_to_symbol_table(symtab, void_type, 1, false);
-}
-
-void
-glsl_type::generate_110_types(glsl_symbol_table *symtab, bool add_deprecated)
-{
-   generate_100ES_types(symtab);
-
-   add_types_to_symbol_table(symtab, builtin_110_types,
-			     Elements(builtin_110_types),
-			     false);
-   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, false);
-   if (add_deprecated) {
-      add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
-				Elements(builtin_110_deprecated_structure_types),
-				false);
-   }
-}
-
-
-void
-glsl_type::generate_120_types(glsl_symbol_table *symtab, bool add_deprecated)
-{
-   generate_110_types(symtab, add_deprecated);
-
-   add_types_to_symbol_table(symtab, builtin_120_types,
-			     Elements(builtin_120_types), false);
-}
-
-
-void
-glsl_type::generate_130_types(glsl_symbol_table *symtab, bool add_deprecated)
-{
-   generate_120_types(symtab, add_deprecated);
-
-   add_types_to_symbol_table(symtab, builtin_130_types,
-			     Elements(builtin_130_types), false);
-   generate_EXT_texture_array_types(symtab, false);
-}
-
-
-void
-glsl_type::generate_140_types(glsl_symbol_table *symtab)
-{
-   generate_130_types(symtab, false);
-
-   add_types_to_symbol_table(symtab, builtin_140_types,
-			     Elements(builtin_140_types), false);
-
-   add_types_to_symbol_table(symtab, builtin_EXT_texture_buffer_object_types,
-			     Elements(builtin_EXT_texture_buffer_object_types),
-			     false);
-}
-
-
-void
-glsl_type::generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab,
-						bool warn)
-{
-   add_types_to_symbol_table(symtab, builtin_ARB_texture_rectangle_types,
-			     Elements(builtin_ARB_texture_rectangle_types),
-			     warn);
-}
-
-
-void
-glsl_type::generate_EXT_texture_array_types(glsl_symbol_table *symtab,
-					    bool warn)
-{
-   add_types_to_symbol_table(symtab, builtin_EXT_texture_array_types,
-			     Elements(builtin_EXT_texture_array_types),
-			     warn);
-}
-
-
-void
-glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
-{
-   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, warn);
-}
-
-
-void
-glsl_type::generate_EXT_shadow_samplers_types(glsl_symbol_table *symtab, bool warn)
-{
-   add_types_to_symbol_table(symtab, &builtin_110_types[2], 1, warn);
-}
-
-
-
-void
-glsl_type::generate_OES_EGL_image_external_types(glsl_symbol_table *symtab,
-						 bool warn)
-{
-   add_types_to_symbol_table(symtab, builtin_OES_EGL_image_external_types,
-			     Elements(builtin_OES_EGL_image_external_types),
-			     warn);
-}
-
-void
-_mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
-{
-   switch (state->language_version) {
-   case 100:
-      assert(state->es_shader);
-      glsl_type::generate_100ES_types(state->symbols);
-      break;
-   case 110:
-      glsl_type::generate_110_types(state->symbols, true);
-      break;
-   case 120:
-      glsl_type::generate_120_types(state->symbols, true);
-      break;
-   case 130:
-      glsl_type::generate_130_types(state->symbols, true);
-      break;
-   case 140:
-      glsl_type::generate_140_types(state->symbols);
-      break;
-   default:
-      /* error */
-      break;
-   }
-
-   if (state->ARB_texture_rectangle_enable ||
-       state->language_version >= 140) {
-      glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
-					   state->ARB_texture_rectangle_warn);
-   }
-   if (state->OES_texture_3D_enable && state->language_version == 100) {
-      glsl_type::generate_OES_texture_3D_types(state->symbols,
-					       state->OES_texture_3D_warn);
-   }
-
-   if (state->EXT_texture_array_enable && state->language_version < 130) {
-      // These are already included in 130; don't create twice.
-      glsl_type::generate_EXT_texture_array_types(state->symbols,
-				       state->EXT_texture_array_warn);
-   }
-	
-	if (state->EXT_shadow_samplers_enable && state->es_shader) {
-		glsl_type::generate_EXT_shadow_samplers_types(state->symbols,
-						state->EXT_shadow_samplers_warn);
-	}
-	
-   /* We cannot check for language_version == 100 here because we need the
-    * types to support fixed-function program generation.  But this is fine
-    * since the extension is never enabled for OpenGL contexts.
-    */
-   if (state->OES_EGL_image_external_enable) {
-      glsl_type::generate_OES_EGL_image_external_types(state->symbols,
-					       state->OES_EGL_image_external_warn);
    }
 }
 
@@ -354,6 +256,8 @@ const glsl_type *glsl_type::get_scalar_type() const
       return int_type;
    case GLSL_TYPE_FLOAT:
       return float_type;
+   case GLSL_TYPE_BOOL:
+      return bool_type;
    default:
       /* Handle everything else */
       return type;
@@ -379,7 +283,7 @@ _mesa_glsl_release_types(void)
 glsl_type::glsl_type(const glsl_type *array, unsigned length) :
    base_type(GLSL_TYPE_ARRAY),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-   sampler_type(0),
+   sampler_type(0), interface_packing(0),
    vector_elements(0), matrix_columns(0),
    name(NULL), length(length)
 {
@@ -399,10 +303,74 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
-   else
-      snprintf(n, name_length, "%s[%u]", array->name, length);
+   else {
+      /* insert outermost dimensions in the correct spot
+       * otherwise the dimension order will be backwards
+       */
+      const char *pos = strchr(array->name, '[');
+      if (pos) {
+         int idx = pos - array->name;
+         snprintf(n, idx+1, "%s", array->name);
+         snprintf(n + idx, name_length - idx, "[%u]%s",
+                  length, array->name + idx);
+      } else {
+         snprintf(n, name_length, "%s[%u]", array->name, length);
+      }
+   }
 
    this->name = n;
+}
+
+
+const glsl_type *
+glsl_type::vec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      float_type, vec2_type, vec3_type, vec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
+glsl_type::ivec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      int_type, ivec2_type, ivec3_type, ivec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
+glsl_type::uvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      uint_type, uvec2_type, uvec3_type, uvec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
+glsl_type::bvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      bool_type, bvec2_type, bvec3_type, bvec4_type
+   };
+   return ts[components - 1];
 }
 
 
@@ -420,13 +388,13 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
    if (columns == 1) {
       switch (base_type) {
       case GLSL_TYPE_UINT:
-	 return uint_type + (rows - 1);
+	 return uvec(rows);
       case GLSL_TYPE_INT:
-	 return int_type + (rows - 1);
+	 return ivec(rows);
       case GLSL_TYPE_FLOAT:
-	 return float_type + (rows - 1);
+	 return vec(rows);
       case GLSL_TYPE_BOOL:
-	 return bool_type + (rows - 1);
+	 return bvec(rows);
       default:
 	 return error_type;
       }
@@ -496,6 +464,45 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 }
 
 
+bool
+glsl_type::record_compare(const glsl_type *b) const
+{
+   if (this->length != b->length)
+      return false;
+
+   if (this->interface_packing != b->interface_packing)
+      return false;
+
+   for (unsigned i = 0; i < this->length; i++) {
+      if (this->fields.structure[i].type != b->fields.structure[i].type)
+	 return false;
+      if (strcmp(this->fields.structure[i].name,
+		 b->fields.structure[i].name) != 0)
+	 return false;
+      if (this->fields.structure[i].row_major
+         != b->fields.structure[i].row_major)
+        return false;
+      if (this->fields.structure[i].location
+          != b->fields.structure[i].location)
+         return false;
+      if (this->fields.structure[i].interpolation
+          != b->fields.structure[i].interpolation)
+         return false;
+      if (this->fields.structure[i].centroid
+          != b->fields.structure[i].centroid)
+         return false;
+      if (this->fields.structure[i].sample
+          != b->fields.structure[i].sample)
+         return false;
+      if (this->fields.structure[i].precision
+          != b->fields.structure[i].precision)
+         return false;
+   }
+
+   return true;
+}
+
+
 int
 glsl_type::record_key_compare(const void *a, const void *b)
 {
@@ -508,20 +515,7 @@ glsl_type::record_key_compare(const void *a, const void *b)
    if (strcmp(key1->name, key2->name) != 0)
       return 1;
 
-   if (key1->length != key2->length)
-      return 1;
-
-   for (unsigned i = 0; i < key1->length; i++) {
-      if (key1->fields.structure[i].type != key2->fields.structure[i].type)
-	 return 1;
-      if (key1->fields.structure[i].precision != key2->fields.structure[i].precision)
-	 return 1;
-      if (strcmp(key1->fields.structure[i].name,
-		 key2->fields.structure[i].name) != 0)
-	 return 1;
-   }
-
-   return 0;
+   return !key1->record_compare(key2);
 }
 
 
@@ -573,9 +567,37 @@ glsl_type::get_record_instance(const glsl_struct_field *fields,
 
 
 const glsl_type *
+glsl_type::get_interface_instance(const glsl_struct_field *fields,
+				  unsigned num_fields,
+				  enum glsl_interface_packing packing,
+				  const char *block_name)
+{
+   const glsl_type key(fields, num_fields, packing, block_name);
+
+   if (interface_types == NULL) {
+      interface_types = hash_table_ctor(64, record_key_hash, record_key_compare);
+   }
+
+   const glsl_type *t = (glsl_type *) hash_table_find(interface_types, & key);
+   if (t == NULL) {
+      t = new glsl_type(fields, num_fields, packing, block_name);
+
+      hash_table_insert(interface_types, (void *) t, t);
+   }
+
+   assert(t->base_type == GLSL_TYPE_INTERFACE);
+   assert(t->length == num_fields);
+   assert(strcmp(t->name, block_name) == 0);
+
+   return t;
+}
+
+
+const glsl_type *
 glsl_type::field_type(const char *name) const
 {
-   if (this->base_type != GLSL_TYPE_STRUCT)
+   if (this->base_type != GLSL_TYPE_STRUCT
+       && this->base_type != GLSL_TYPE_INTERFACE)
       return error_type;
 
    for (unsigned i = 0; i < this->length; i++) {
@@ -586,7 +608,7 @@ glsl_type::field_type(const char *name) const
    return error_type;
 }
 
-glsl_precision
+const glsl_precision
 glsl_type::field_precision(const char *name) const
 {
    if (this->base_type != GLSL_TYPE_STRUCT)
@@ -604,7 +626,8 @@ glsl_type::field_precision(const char *name) const
 int
 glsl_type::field_index(const char *name) const
 {
-   if (this->base_type != GLSL_TYPE_STRUCT)
+   if (this->base_type != GLSL_TYPE_STRUCT
+       && this->base_type != GLSL_TYPE_INTERFACE)
       return -1;
 
    for (unsigned i = 0; i < this->length; i++) {
@@ -626,7 +649,8 @@ glsl_type::component_slots() const
    case GLSL_TYPE_BOOL:
       return this->components();
 
-   case GLSL_TYPE_STRUCT: {
+   case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE: {
       unsigned size = 0;
 
       for (unsigned i = 0; i < this->length; i++)
@@ -638,9 +662,14 @@ glsl_type::component_slots() const
    case GLSL_TYPE_ARRAY:
       return this->length * this->fields.array->component_slots();
 
-   default:
-      return 0;
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      break;
    }
+
+   return 0;
 }
 
 bool
@@ -765,12 +794,6 @@ glsl_type::std140_base_alignment(bool row_major) const
    return -1;
 }
 
-static unsigned
-align(unsigned val, unsigned align)
-{
-   return (val + align - 1) / align * align;
-}
-
 unsigned
 glsl_type::std140_size(bool row_major) const
 {
@@ -872,14 +895,105 @@ glsl_type::std140_size(bool row_major) const
       for (unsigned i = 0; i < this->length; i++) {
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
 	 unsigned align = field_type->std140_base_alignment(row_major);
-	 size = (size + align - 1) / align * align;
+	 size = glsl_align(size, align);
 	 size += field_type->std140_size(row_major);
       }
-      size = align(size,
-		   this->fields.structure[0].type->std140_base_alignment(row_major));
+      size = glsl_align(size,
+			this->fields.structure[0].type->std140_base_alignment(row_major));
       return size;
    }
 
    assert(!"not reached");
    return -1;
+}
+
+
+unsigned
+glsl_type::count_attribute_slots() const
+{
+   /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
+    *
+    *     "A scalar input counts the same amount against this limit as a vec4,
+    *     so applications may want to consider packing groups of four
+    *     unrelated float inputs together into a vector to better utilize the
+    *     capabilities of the underlying hardware. A matrix input will use up
+    *     multiple locations.  The number of locations used will equal the
+    *     number of columns in the matrix."
+    *
+    * The spec does not explicitly say how arrays are counted.  However, it
+    * should be safe to assume the total number of slots consumed by an array
+    * is the number of entries in the array multiplied by the number of slots
+    * consumed by a single element of the array.
+    *
+    * The spec says nothing about how structs are counted, because vertex
+    * attributes are not allowed to be (or contain) structs.  However, Mesa
+    * allows varying structs, the number of varying slots taken up by a
+    * varying struct is simply equal to the sum of the number of slots taken
+    * up by each element.
+    */
+   switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      return this->matrix_columns;
+
+   case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE: {
+      unsigned size = 0;
+
+      for (unsigned i = 0; i < this->length; i++)
+         size += this->fields.structure[i].type->count_attribute_slots();
+
+      return size;
+   }
+
+   case GLSL_TYPE_ARRAY:
+      return this->length * this->fields.array->count_attribute_slots();
+
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      break;
+   }
+
+   assert(!"Unexpected type in count_attribute_slots()");
+
+   return 0;
+}
+
+int
+glsl_type::sampler_coordinate_components() const
+{
+   assert(is_sampler());
+
+   int size;
+
+   switch (sampler_dimensionality) {
+   case GLSL_SAMPLER_DIM_1D:
+   case GLSL_SAMPLER_DIM_BUF:
+      size = 1;
+      break;
+   case GLSL_SAMPLER_DIM_2D:
+   case GLSL_SAMPLER_DIM_RECT:
+   case GLSL_SAMPLER_DIM_MS:
+   case GLSL_SAMPLER_DIM_EXTERNAL:
+      size = 2;
+      break;
+   case GLSL_SAMPLER_DIM_3D:
+   case GLSL_SAMPLER_DIM_CUBE:
+      size = 3;
+      break;
+   default:
+      assert(!"Should not get here.");
+      size = 1;
+      break;
+   }
+
+   /* Array textures need an additional component for the array index. */
+   if (sampler_array)
+      size += 1;
+
+   return size;
 }

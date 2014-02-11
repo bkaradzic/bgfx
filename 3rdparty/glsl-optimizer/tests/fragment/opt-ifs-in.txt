@@ -1,0 +1,11 @@
+void main() {
+	vec4 c = vec4(0.0);
+
+	// nested ifs
+	if (gl_FragCoord.x > 0.5) {
+		if (gl_FragCoord.y > 0.5) {
+			c = vec4(0.5);
+		}
+	}
+    gl_FragColor = c;
+}

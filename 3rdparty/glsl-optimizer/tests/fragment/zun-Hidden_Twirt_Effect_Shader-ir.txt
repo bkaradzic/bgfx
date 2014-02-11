@@ -2,9 +2,9 @@ struct v2f {
   vec4 pos;
   vec2 uv;
 };
-uniform mat4 _RotationMatrix;
-uniform sampler2D _MainTex;
 uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
+uniform mat4 _RotationMatrix;
 vec2 MultiplyUV (
   in mat4 mat_1,
   in vec2 inUV_2

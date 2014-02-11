@@ -1,5 +1,5 @@
-uniform sampler2D _RampTex;
 uniform sampler2D _MainTex;
+uniform sampler2D _RampTex;
 void main ()
 {
   vec4 tmpvar_1;
@@ -12,3 +12,5 @@ void main ()
   gl_FragData[0] = tmpvar_2;
 }
 
+
+// inputs: 1, stats: 3 alu 4 tex 0 flow

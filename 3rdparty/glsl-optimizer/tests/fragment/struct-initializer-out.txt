@@ -1,0 +1,41 @@
+varying vec4 position;
+varying vec3 varyingNormalDirection;
+uniform mat4 v_inv;
+void main ()
+{
+  vec3 specularReflection_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = normalize(varyingNormalDirection);
+  vec3 tmpvar_3;
+  tmpvar_3 = normalize(((v_inv * vec4(0.0, 0.0, 0.0, 1.0)) - position).xyz);
+  vec3 tmpvar_4;
+  tmpvar_4 = (vec4(0.0, 3.0, 0.0, 1.0) - position).xyz;
+  float tmpvar_5;
+  tmpvar_5 = dot (tmpvar_4, tmpvar_4);
+  vec3 tmpvar_6;
+  tmpvar_6 = (inversesqrt(tmpvar_5) * tmpvar_4);
+  float tmpvar_7;
+  tmpvar_7 = (2.0 * inversesqrt(tmpvar_5));
+  vec3 tmpvar_8;
+  tmpvar_8 = ((vec3(tmpvar_7) * vec3(1.0, 0.8, 0.8)) * max (0.0, dot (tmpvar_2, tmpvar_6)));
+  float tmpvar_9;
+  tmpvar_9 = dot (tmpvar_2, tmpvar_6);
+  if ((tmpvar_9 < 0.0)) {
+    specularReflection_1 = vec3(0.0, 0.0, 0.0);
+  } else {
+    vec3 I_10;
+    I_10 = -(tmpvar_6);
+    specularReflection_1 = (vec3(tmpvar_7) * pow (max (0.0, 
+      dot ((I_10 - (2.0 * (
+        dot (tmpvar_2, I_10)
+       * tmpvar_2))), tmpvar_3)
+    ), 5.0));
+  };
+  vec4 tmpvar_11;
+  tmpvar_11.w = 1.0;
+  tmpvar_11.xyz = ((vec3(0.04, 0.04, 0.04) + tmpvar_8) + specularReflection_1);
+  gl_FragColor = tmpvar_11;
+}
+
+
+// inputs: 2, stats: 29 alu 0 tex 1 flow

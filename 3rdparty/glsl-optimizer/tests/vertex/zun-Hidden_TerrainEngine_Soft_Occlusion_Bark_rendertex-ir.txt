@@ -11,16 +11,16 @@ struct appdata_tree {
   vec4 color;
   vec4 texcoord;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec3 _TerrainTreeLightDirections[4];
-uniform vec4 _TerrainTreeLightColors[4];
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform vec4 _Color;
 uniform float _AO;
+uniform vec4 _Color;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TerrainTreeLightDirections[4];
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 vec4 Squash (
   in vec4 pos_1
 )

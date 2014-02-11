@@ -15,12 +15,12 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 hip_screen;
 };
-varying vec4 xlv_FOG;
-uniform vec4 unity_Ambient;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 unity_Ambient;
+varying vec4 xlv_FOG;
 void xll_clip (
   in float x_1
 )

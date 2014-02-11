@@ -1,6 +1,6 @@
-uniform sampler2D _MainTex;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 tmpvar_1;
@@ -13,3 +13,5 @@ void main ()
   gl_FragData[0] = tmpvar_1;
 }
 
+
+// inputs: 1, stats: 3 alu 2 tex 1 flow

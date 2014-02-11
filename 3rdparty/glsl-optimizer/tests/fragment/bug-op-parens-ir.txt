@@ -1,5 +1,5 @@
-uniform float otherValue;
 uniform float value;
+uniform float otherValue;
 void main ()
 {
   float result_1;

@@ -18,14 +18,14 @@ struct v2f_surf {
   vec3 viewDir;
   vec4 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
 uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 void surf (
   in Input IN_1,
   inout SurfaceOutput o_2
@@ -112,10 +112,16 @@ vec4 LightingBlinnPhong (
   tmpvar_35 = (tmpvar_34 * s_17.Gloss);
   spec_22 = tmpvar_35;
   vec3 tmpvar_36;
-  tmpvar_36 = ((((s_17.Albedo * _LightColor0.xyz) * diff_24) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_22)) * (atten_20 * 2.0));
+  tmpvar_36 = (((
+    (s_17.Albedo * _LightColor0.xyz)
+   * diff_24) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_22)) * (atten_20 * 2.0));
   c_21.xyz = tmpvar_36.xyz.xyz;
   float tmpvar_37;
-  tmpvar_37 = (s_17.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_22) * atten_20));
+  tmpvar_37 = (s_17.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_22) * atten_20));
   c_21.w = vec4(tmpvar_37).w;
   return c_21;
 }
@@ -167,7 +173,9 @@ vec4 frag_surf (
   float tmpvar_56;
   tmpvar_56 = UnitySpotAttenuate (IN_38._LightCoord.xyz);
   vec4 tmpvar_57;
-  tmpvar_57 = LightingBlinnPhong (o_41, lightDir_40, tmpvar_54, ((float((IN_38._LightCoord.z > 0.0)) * tmpvar_55) * tmpvar_56));
+  tmpvar_57 = LightingBlinnPhong (o_41, lightDir_40, tmpvar_54, ((float(
+    (IN_38._LightCoord.z > 0.0)
+  ) * tmpvar_55) * tmpvar_56));
   vec4 tmpvar_58;
   tmpvar_58 = tmpvar_57;
   c_39 = tmpvar_58;

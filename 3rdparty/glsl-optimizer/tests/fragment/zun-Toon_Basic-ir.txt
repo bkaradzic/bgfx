@@ -3,9 +3,9 @@ struct v2f {
   vec2 texcoord;
   vec3 cubenormal;
 };
-uniform samplerCube _ToonShade;
-uniform sampler2D _MainTex;
 uniform vec4 _Color;
+uniform sampler2D _MainTex;
+uniform samplerCube _ToonShade;
 vec4 frag (
   in v2f i_1
 )

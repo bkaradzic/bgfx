@@ -5,6 +5,6 @@ mediump vec4 xlat_main( in highp float face ) {
 varying highp float xlv_VFACE;
 void main() {
     mediump vec4 xl_retval;
-    xl_retval = xlat_main( highp float(xlv_VFACE));
-    gl_FragData[0] = mediump vec4( xl_retval);
+    xl_retval = xlat_main( float(xlv_VFACE));
+    gl_FragData[0] = vec4( xl_retval);
 }

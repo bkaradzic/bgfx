@@ -1,8 +1,8 @@
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
 uniform vec4 _ProjectionParams;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
 void main ()
 {
   vec4 tmpvar_1;
@@ -18,7 +18,9 @@ void main ()
   tmpvar_4.y = _SquashPlaneNormal.w;
   vec4 tmpvar_5;
   tmpvar_5.w = 1.0;
-  tmpvar_5.xyz = mix ((pos_2.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_4 - pos_2.xyz)) * _SquashPlaneNormal.xyz)), pos_2.xyz, vec3(_SquashAmount));
+  tmpvar_5.xyz = mix ((pos_2.xyz + (
+    dot (_SquashPlaneNormal.xyz, (tmpvar_4 - pos_2.xyz))
+   * _SquashPlaneNormal.xyz)), pos_2.xyz, vec3(_SquashAmount));
   pos_2 = tmpvar_5;
   mat3 tmpvar_6;
   tmpvar_6[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
@@ -34,3 +36,5 @@ void main ()
   gl_TexCoord[1] = tmpvar_1;
 }
 
+
+// inputs: 4, stats: 17 alu 0 tex 0 flow

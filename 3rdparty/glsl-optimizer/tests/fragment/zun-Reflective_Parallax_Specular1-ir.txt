@@ -20,18 +20,18 @@ struct v2f_surf {
   vec3 lightDir;
   vec2 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform vec4 _ReflectColor;
-uniform sampler2D _ParallaxMap;
-uniform float _Parallax;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform samplerCube _Cube;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform samplerCube _Cube;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform float _Parallax;
+uniform sampler2D _ParallaxMap;
+uniform vec4 _ReflectColor;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )
@@ -174,10 +174,16 @@ vec4 LightingBlinnPhong (
   tmpvar_60 = (tmpvar_59 * s_42.Gloss);
   spec_47 = tmpvar_60;
   vec3 tmpvar_61;
-  tmpvar_61 = ((((s_42.Albedo * _LightColor0.xyz) * diff_49) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_47)) * (atten_45 * 2.0));
+  tmpvar_61 = (((
+    (s_42.Albedo * _LightColor0.xyz)
+   * diff_49) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_47)) * (atten_45 * 2.0));
   c_46.xyz = tmpvar_61.xyz.xyz;
   float tmpvar_62;
-  tmpvar_62 = (s_42.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_47) * atten_45));
+  tmpvar_62 = (s_42.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_47) * atten_45));
   c_46.w = vec4(tmpvar_62).w;
   return c_46;
 }

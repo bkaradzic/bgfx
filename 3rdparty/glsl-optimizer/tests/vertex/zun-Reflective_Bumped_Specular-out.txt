@@ -1,13 +1,13 @@
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
-uniform mat4 _LightMatrix0;
 uniform vec4 _BumpMap_ST;
+uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -38,11 +38,15 @@ void main ()
   gl_TexCoord[0] = tmpvar_1;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = (tmpvar_4 * (((_World2Object * _WorldSpaceLightPos0).xyz * unity_Scale.w) - gl_Vertex.xyz));
+  tmpvar_7.xyz = (tmpvar_4 * ((
+    (_World2Object * _WorldSpaceLightPos0)
+  .xyz * unity_Scale.w) - gl_Vertex.xyz));
   gl_TexCoord[1] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.w = 0.0;
-  tmpvar_8.xyz = (tmpvar_4 * (((_World2Object * tmpvar_5).xyz * unity_Scale.w) - gl_Vertex.xyz));
+  tmpvar_8.xyz = (tmpvar_4 * ((
+    (_World2Object * tmpvar_5)
+  .xyz * unity_Scale.w) - gl_Vertex.xyz));
   gl_TexCoord[2] = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9.w = 0.0;
@@ -50,3 +54,5 @@ void main ()
   gl_TexCoord[3] = tmpvar_9;
 }
 
+
+// inputs: 4, stats: 24 alu 0 tex 0 flow

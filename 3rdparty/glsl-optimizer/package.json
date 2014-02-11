@@ -1,0 +1,21 @@
+{
+  "name": "glsl-optimizer",
+  "version": "0.1.0",
+  "description": "GLSL optimizer",
+  "main": "build/Release/glslOptimizer.node",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/donny-dont/glsl-optimizer.git"
+  },
+  "keywords": [
+    "glsl",
+    "webgl"
+  ],
+  "author": "Don Olmstead",
+  "license": "MIT",
+  "gypfile": true,
+  "readmeFilename": "README.md"
+}

@@ -14,31 +14,31 @@ struct v2f_surf {
   vec3 normal;
   vec3 vlight;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 unity_SHC;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAb;
-uniform vec3 unity_LightColor3;
-uniform vec3 unity_LightColor2;
-uniform vec3 unity_LightColor1;
-uniform vec3 unity_LightColor0;
-uniform vec4 unity_4LightPosZ0;
-uniform vec4 unity_4LightPosY0;
-uniform vec4 unity_4LightPosX0;
-uniform vec4 unity_4LightAtten0;
-uniform vec4 _WavingTint;
-uniform vec4 _WaveAndDistance;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
-uniform vec3 _CameraUp;
-uniform vec3 _CameraRight;
 uniform vec4 _CameraPosition;
+uniform vec3 _CameraRight;
+uniform vec3 _CameraUp;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+uniform vec4 unity_4LightAtten0;
+uniform vec4 unity_4LightPosX0;
+uniform vec4 unity_4LightPosY0;
+uniform vec4 unity_4LightPosZ0;
+uniform vec3 unity_LightColor0;
+uniform vec3 unity_LightColor1;
+uniform vec3 unity_LightColor2;
+uniform vec3 unity_LightColor3;
+uniform vec4 unity_SHAb;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHC;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 mat3 xll_constructMat3 (
   in mat4 m_1
 )
@@ -108,10 +108,16 @@ void FastSinCos (
   tmpvar_30 = (r2_15 * r5_20);
   r3_14 = tmpvar_30;
   vec4 tmpvar_31;
-  tmpvar_31 = (((val_9 + (r1_16 * sin7_13.y)) + (r2_15 * sin7_13.z)) + (r3_14 * sin7_13.w));
+  tmpvar_31 = (((val_9 + 
+    (r1_16 * sin7_13.y)
+  ) + (r2_15 * sin7_13.z)) + (r3_14 * sin7_13.w));
   s_10 = tmpvar_31;
   vec4 tmpvar_32;
-  tmpvar_32 = ((((1.0 + (r5_20 * cos8_12.x)) + (r6_19 * cos8_12.y)) + (r7_18 * cos8_12.z)) + (r8_17 * cos8_12.w));
+  tmpvar_32 = (((
+    (1.0 + (r5_20 * cos8_12.x))
+   + 
+    (r6_19 * cos8_12.y)
+  ) + (r7_18 * cos8_12.z)) + (r8_17 * cos8_12.w));
   c_11 = tmpvar_32;
 }
 

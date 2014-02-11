@@ -1,5 +1,5 @@
-uniform vec4 _TintColor;
 uniform sampler2D _MainTex;
+uniform vec4 _TintColor;
 void main ()
 {
   vec4 col_1;
@@ -10,3 +10,5 @@ void main ()
   gl_FragData[0] = col_1;
 }
 
+
+// inputs: 2, stats: 7 alu 1 tex 0 flow

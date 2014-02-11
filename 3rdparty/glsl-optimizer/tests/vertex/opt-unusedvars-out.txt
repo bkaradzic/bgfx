@@ -1,8 +1,10 @@
-attribute vec4 myColor;
 uniform mat4 mvp;
+attribute vec4 myColor;
 void main ()
 {
   gl_Position = (mvp * gl_Vertex);
   gl_FrontColor = myColor;
 }
 
+
+// inputs: 2, stats: 1 alu 0 tex 0 flow

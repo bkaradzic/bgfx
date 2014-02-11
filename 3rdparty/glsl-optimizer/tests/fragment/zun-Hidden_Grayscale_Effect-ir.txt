@@ -2,9 +2,9 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _RampTex;
-uniform float _RampOffset;
 uniform sampler2D _MainTex;
+uniform float _RampOffset;
+uniform sampler2D _RampTex;
 float Luminance (
   in vec3 c_1
 )

@@ -1,9 +1,9 @@
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform float _TranslucencyViewDependency;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform float _TranslucencyViewDependency;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
 void main ()
 {
   vec3 viewDir_1;
@@ -25,28 +25,48 @@ void main ()
   vec4 tmpvar_10;
   tmpvar_10.w = 1.0;
   tmpvar_10.xyz = _WorldSpaceCameraPos;
-  viewDir_1 = normalize((((_World2Object * tmpvar_10).xyz * unity_Scale.w) - tmpvar_8.xyz));
+  viewDir_1 = normalize(((
+    (_World2Object * tmpvar_10)
+  .xyz * unity_Scale.w) - tmpvar_8.xyz));
   vec3 tmpvar_11;
   tmpvar_11 = _TerrainTreeLightDirections[0];
   float tmpvar_12;
   tmpvar_12 = dot (tmpvar_9, tmpvar_11);
-  tmpvar_2.x = (mix (clamp (-(tmpvar_12), 0.0, 1.0), clamp (dot (viewDir_1, -(tmpvar_11)), 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
+  tmpvar_2.x = (mix (clamp (
+    -(tmpvar_12)
+  , 0.0, 1.0), clamp (
+    dot (viewDir_1, -(tmpvar_11))
+  , 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
   tmpvar_3.x = max (0.0, ((tmpvar_12 * 0.6) + 0.4));
-  tmpvar_4.x = max (0.0, dot (tmpvar_9, normalize((tmpvar_11 + viewDir_1))));
+  tmpvar_4.x = max (0.0, dot (tmpvar_9, normalize(
+    (tmpvar_11 + viewDir_1)
+  )));
   vec3 tmpvar_13;
   tmpvar_13 = _TerrainTreeLightDirections[1];
   float tmpvar_14;
   tmpvar_14 = dot (tmpvar_9, tmpvar_13);
-  tmpvar_2.y = (mix (clamp (-(tmpvar_14), 0.0, 1.0), clamp (dot (viewDir_1, -(tmpvar_13)), 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
+  tmpvar_2.y = (mix (clamp (
+    -(tmpvar_14)
+  , 0.0, 1.0), clamp (
+    dot (viewDir_1, -(tmpvar_13))
+  , 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
   tmpvar_3.y = max (0.0, ((tmpvar_14 * 0.6) + 0.4));
-  tmpvar_4.y = max (0.0, dot (tmpvar_9, normalize((tmpvar_13 + viewDir_1))));
+  tmpvar_4.y = max (0.0, dot (tmpvar_9, normalize(
+    (tmpvar_13 + viewDir_1)
+  )));
   vec3 tmpvar_15;
   tmpvar_15 = _TerrainTreeLightDirections[2];
   float tmpvar_16;
   tmpvar_16 = dot (tmpvar_9, tmpvar_15);
-  tmpvar_2.z = (mix (clamp (-(tmpvar_16), 0.0, 1.0), clamp (dot (viewDir_1, -(tmpvar_15)), 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
+  tmpvar_2.z = (mix (clamp (
+    -(tmpvar_16)
+  , 0.0, 1.0), clamp (
+    dot (viewDir_1, -(tmpvar_15))
+  , 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
   tmpvar_3.z = max (0.0, ((tmpvar_16 * 0.6) + 0.4));
-  tmpvar_4.z = max (0.0, dot (tmpvar_9, normalize((tmpvar_15 + viewDir_1))));
+  tmpvar_4.z = max (0.0, dot (tmpvar_9, normalize(
+    (tmpvar_15 + viewDir_1)
+  )));
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_8);
   vec4 tmpvar_17;
   tmpvar_17.zw = vec2(0.0, 0.0);
@@ -70,3 +90,5 @@ void main ()
   gl_TexCoord[4] = tmpvar_21;
 }
 
+
+// inputs: 5, stats: 75 alu 0 tex 0 flow

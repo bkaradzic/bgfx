@@ -1,5 +1,5 @@
-varying vec4 xlv_TEXCOORD0;
 uniform sampler2DShadow shadowmap;
+varying vec4 xlv_TEXCOORD0;
 float xll_shadow2D (
   in sampler2DShadow s_1,
   in vec3 coord_2

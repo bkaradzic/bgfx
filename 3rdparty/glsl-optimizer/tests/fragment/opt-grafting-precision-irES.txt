@@ -1,6 +1,6 @@
-uniform mediump float specPower;
-varying lowp vec3 halfDir;
 varying lowp vec3 normal;
+varying lowp vec3 halfDir;
+uniform mediump float specPower;
 void main ()
 {
   lowp vec4 c_1;

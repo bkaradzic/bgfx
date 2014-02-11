@@ -18,13 +18,13 @@ struct v2f_surf {
   vec3 viewDir;
   vec2 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
 uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 void surf (
   in Input IN_1,
   inout SurfaceOutput o_2
@@ -87,10 +87,16 @@ vec4 LightingBlinnPhong (
   tmpvar_28 = (tmpvar_27 * s_10.Gloss);
   spec_15 = tmpvar_28;
   vec3 tmpvar_29;
-  tmpvar_29 = ((((s_10.Albedo * _LightColor0.xyz) * diff_17) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_15)) * (atten_13 * 2.0));
+  tmpvar_29 = (((
+    (s_10.Albedo * _LightColor0.xyz)
+   * diff_17) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_15)) * (atten_13 * 2.0));
   c_14.xyz = tmpvar_29.xyz.xyz;
   float tmpvar_30;
-  tmpvar_30 = (s_10.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_15) * atten_13));
+  tmpvar_30 = (s_10.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_15) * atten_13));
   c_14.w = vec4(tmpvar_30).w;
   return c_14;
 }

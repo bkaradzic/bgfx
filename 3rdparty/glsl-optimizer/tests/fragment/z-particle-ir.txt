@@ -3,9 +3,9 @@ struct v2f {
   vec4 color;
   vec2 texcoord;
 };
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_COLOR;
 uniform sampler2D _MainTex;
+varying vec4 xlv_COLOR;
+varying vec2 xlv_TEXCOORD0;
 vec4 xlat_main (
   in v2f i_1
 )

@@ -10,10 +10,10 @@ struct appdata_grass {
   vec4 texcoord;
   vec4 texcoord1;
 };
-attribute vec4 TANGENT;
-uniform vec4 _WavingTint;
-uniform vec4 _WaveAndDistance;
 uniform vec4 _ProjectionParams;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+attribute vec4 TANGENT;
 void FastSinCos (
   in vec4 val_1,
   out vec4 s_2,
@@ -60,10 +60,16 @@ void FastSinCos (
   tmpvar_22 = (r2_7 * r5_12);
   r3_6 = tmpvar_22;
   vec4 tmpvar_23;
-  tmpvar_23 = (((val_1 + (r1_8 * sin7_5.y)) + (r2_7 * sin7_5.z)) + (r3_6 * sin7_5.w));
+  tmpvar_23 = (((val_1 + 
+    (r1_8 * sin7_5.y)
+  ) + (r2_7 * sin7_5.z)) + (r3_6 * sin7_5.w));
   s_2 = tmpvar_23;
   vec4 tmpvar_24;
-  tmpvar_24 = ((((1.0 + (r5_12 * cos8_4.x)) + (r6_11 * cos8_4.y)) + (r7_10 * cos8_4.z)) + (r8_9 * cos8_4.w));
+  tmpvar_24 = (((
+    (1.0 + (r5_12 * cos8_4.x))
+   + 
+    (r6_11 * cos8_4.y)
+  ) + (r7_10 * cos8_4.z)) + (r8_9 * cos8_4.w));
   c_3 = tmpvar_24;
 }
 

@@ -1,0 +1,14 @@
+uniform sampler2D maintex;
+uniform float factor;
+varying vec2 uv;
+void main()
+{
+    vec4 c = texture2D (maintex, uv);
+    vec2 coord = c.xy;
+    bool cond = c.w >= 0.5;
+    if (!cond)
+        coord.x += factor;
+    if (cond)
+        coord.y += factor;
+    gl_FragColor = vec4(coord,0,0);
+}

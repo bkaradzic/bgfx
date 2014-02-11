@@ -5,3 +5,5 @@ void main ()
   gl_FragDepthEXT = 0.9;
 }
 
+
+// inputs: 0, stats: 2 alu 0 tex 0 flow

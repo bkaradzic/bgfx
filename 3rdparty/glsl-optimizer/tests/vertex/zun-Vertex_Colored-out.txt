@@ -1,5 +1,5 @@
-varying vec4 xlv_FOG;
 uniform vec4 _MainTex_ST;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -20,3 +20,5 @@ void main ()
   gl_TexCoord[1] = tmpvar_4;
 }
 
+
+// inputs: 4, stats: 6 alu 0 tex 0 flow

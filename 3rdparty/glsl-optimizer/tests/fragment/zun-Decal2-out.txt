@@ -1,8 +1,8 @@
-uniform vec4 unity_Ambient;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _DecalTex;
 uniform vec4 _Color;
+uniform sampler2D _DecalTex;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 unity_Ambient;
 void main ()
 {
   vec4 tmpvar_1;
@@ -28,3 +28,5 @@ void main ()
   gl_FragData[0] = c_8;
 }
 
+
+// inputs: 1, stats: 6 alu 3 tex 0 flow

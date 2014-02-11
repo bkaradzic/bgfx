@@ -17,13 +17,13 @@ struct v2f_surf {
   vec3 lightDir;
   vec3 viewDir;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform vec4 _LightColor0;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 void xll_clip (
   in float x_1
 )
@@ -95,10 +95,16 @@ vec4 LightingBlinnPhong (
   tmpvar_29 = (tmpvar_28 * s_11.Gloss);
   spec_16 = tmpvar_29;
   vec3 tmpvar_30;
-  tmpvar_30 = ((((s_11.Albedo * _LightColor0.xyz) * diff_18) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_16)) * (atten_14 * 2.0));
+  tmpvar_30 = (((
+    (s_11.Albedo * _LightColor0.xyz)
+   * diff_18) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_16)) * (atten_14 * 2.0));
   c_15.xyz = tmpvar_30.xyz.xyz;
   float tmpvar_31;
-  tmpvar_31 = (s_11.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_16) * atten_14));
+  tmpvar_31 = (s_11.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_16) * atten_14));
   c_15.w = vec4(tmpvar_31).w;
   return c_15;
 }

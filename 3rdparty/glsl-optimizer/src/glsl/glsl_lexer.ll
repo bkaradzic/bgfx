@@ -54,22 +54,36 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
  *
  * Certain words start out as identifiers, become reserved words in
  * later language revisions, and finally become language keywords.
+ * This may happen at different times in desktop GLSL and GLSL ES.
  *
  * For example, consider the following lexer rule:
- * samplerBuffer       KEYWORD(130, 140, SAMPLERBUFFER)
+ * samplerBuffer       KEYWORD(130, 0, 140, 0, SAMPLERBUFFER)
  *
  * This means that "samplerBuffer" will be treated as:
  * - a keyword (SAMPLERBUFFER token)         ...in GLSL >= 1.40
  * - a reserved word - error                 ...in GLSL >= 1.30
- * - an identifier                           ...in GLSL <  1.30
+ * - an identifier                           ...in GLSL <  1.30 or GLSL ES
  */
-#define KEYWORD(reserved_version, allowed_version, token)		\
+#define KEYWORD(reserved_glsl, reserved_glsl_es,			\
+                allowed_glsl, allowed_glsl_es, token)			\
+   KEYWORD_WITH_ALT(reserved_glsl, reserved_glsl_es,			\
+                    allowed_glsl, allowed_glsl_es, false, token)
+
+/**
+ * Like the KEYWORD macro, but the word is also treated as a keyword
+ * if the given boolean expression is true.
+ */
+#define KEYWORD_WITH_ALT(reserved_glsl, reserved_glsl_es,		\
+                         allowed_glsl, allowed_glsl_es,			\
+                         alt_expr, token)				\
    do {									\
-      if (yyextra->language_version >= allowed_version) {		\
+      if (yyextra->is_version(allowed_glsl, allowed_glsl_es)		\
+          || (alt_expr)) {						\
 	 return token;							\
-      } else if (yyextra->language_version >= reserved_version) {	\
+      } else if (yyextra->is_version(reserved_glsl,			\
+                                     reserved_glsl_es)) {		\
 	 _mesa_glsl_error(yylloc, yyextra,				\
-			  "Illegal use of reserved word `%s'", yytext);	\
+			  "illegal use of reserved word `%s'", yytext);	\
 	 return ERROR_TOK;						\
       } else {								\
 	 yylval->identifier = strdup(yytext);				\
@@ -77,15 +91,20 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
       }									\
    } while (0)
 
-/* The ES macro can be used in KEYWORD checks:
- *
- *    word      KEYWORD(110 || ES, 400, TOKEN)
- * ...means the word is reserved in GLSL ES 1.00, while
- *
- *    word      KEYWORD(110, 130 || ES, TOKEN)
- * ...means the word is a legal keyword in GLSL ES 1.00.
+/**
+ * A macro for handling keywords that have been present in GLSL since
+ * its origin, but were changed into reserved words in GLSL 3.00 ES.
  */
-#define ES yyextra->es_shader
+#define DEPRECATED_ES_KEYWORD(token)					\
+   do {									\
+      if (yyextra->is_version(0, 300)) {				\
+	 _mesa_glsl_error(yylloc, yyextra,				\
+			  "illegal use of reserved word `%s'", yytext);	\
+	 return ERROR_TOK;						\
+      } else {								\
+         return token;							\
+      }									\
+   } while (0)
 
 static int
 literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
@@ -109,12 +128,12 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 
    if (value > UINT_MAX) {
       /* Note that signed 0xffffffff is valid, not out of range! */
-      if (state->language_version >= 130) {
+      if (state->is_version(130, 300)) {
 	 _mesa_glsl_error(lloc, state,
-			  "Literal value `%s' out of range", text);
+			  "literal value `%s' out of range", text);
       } else {
 	 _mesa_glsl_warning(lloc, state,
-			    "Literal value `%s' out of range", text);
+			    "literal value `%s' out of range", text);
       }
    } else if (base == 10 && !is_uint && (unsigned)value > (unsigned)INT_MAX + 1) {
       /* Tries to catch unintentionally providing a negative value.
@@ -122,7 +141,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
        * want to warn for INT_MAX.
        */
       _mesa_glsl_warning(lloc, state,
-			 "Signed literal value `%s' is interpreted as %d",
+			 "signed literal value `%s' is interpreted as %d",
 			 text, lval->n);
    }
    return is_uint ? UINTCONSTANT : INTCONSTANT;
@@ -136,7 +155,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 %option bison-bridge bison-locations reentrant noyywrap
 %option nounput noyy_top_state
 %option never-interactive
-%option prefix="_mesa_glsl_"
+%option prefix="_mesa_glsl_lexer_"
 %option extra-type="struct _mesa_glsl_parse_state *"
 
 %x PP PRAGMA
@@ -225,12 +244,12 @@ HASH		^{SPC}#{SPC}
 
 \n		{ yylineno++; yycolumn = 0; }
 
-attribute	return ATTRIBUTE;
+attribute	DEPRECATED_ES_KEYWORD(ATTRIBUTE);
 const		return CONST_TOK;
 bool		return BOOL_TOK;
 float		return FLOAT_TOK;
 int		return INT_TOK;
-uint		KEYWORD(130, 130, UINT_TOK);
+uint		KEYWORD(130, 300, 130, 300, UINT_TOK);
 
 break		return BREAK;
 continue	return CONTINUE;
@@ -248,82 +267,99 @@ bvec4		return BVEC4;
 ivec2		return IVEC2;
 ivec3		return IVEC3;
 ivec4		return IVEC4;
-uvec2		KEYWORD(130, 130, UVEC2);
-uvec3		KEYWORD(130, 130, UVEC3);
-uvec4		KEYWORD(130, 130, UVEC4);
+uvec2		KEYWORD(130, 300, 130, 300, UVEC2);
+uvec3		KEYWORD(130, 300, 130, 300, UVEC3);
+uvec4		KEYWORD(130, 300, 130, 300, UVEC4);
 vec2		return VEC2;
 vec3		return VEC3;
 vec4		return VEC4;
 mat2		return MAT2X2;
 mat3		return MAT3X3;
 mat4		return MAT4X4;
-mat2x2		KEYWORD(120, 120, MAT2X2);
-mat2x3		KEYWORD(120, 120, MAT2X3);
-mat2x4		KEYWORD(120, 120, MAT2X4);
-mat3x2		KEYWORD(120, 120, MAT3X2);
-mat3x3		KEYWORD(120, 120, MAT3X3);
-mat3x4		KEYWORD(120, 120, MAT3X4);
-mat4x2		KEYWORD(120, 120, MAT4X2);
-mat4x3		KEYWORD(120, 120, MAT4X3);
-mat4x4		KEYWORD(120, 120, MAT4X4);
+mat2x2		KEYWORD(120, 300, 120, 300, MAT2X2);
+mat2x3		KEYWORD(120, 300, 120, 300, MAT2X3);
+mat2x4		KEYWORD(120, 300, 120, 300, MAT2X4);
+mat3x2		KEYWORD(120, 300, 120, 300, MAT3X2);
+mat3x3		KEYWORD(120, 300, 120, 300, MAT3X3);
+mat3x4		KEYWORD(120, 300, 120, 300, MAT3X4);
+mat4x2		KEYWORD(120, 300, 120, 300, MAT4X2);
+mat4x3		KEYWORD(120, 300, 120, 300, MAT4X3);
+mat4x4		KEYWORD(120, 300, 120, 300, MAT4X4);
 
 in		return IN_TOK;
 out		return OUT_TOK;
 inout		return INOUT_TOK;
 uniform		return UNIFORM;
-varying		return VARYING;
-centroid	KEYWORD(120, 120, CENTROID);
-invariant	KEYWORD(120 || ES, 120 || ES, INVARIANT);
-flat		KEYWORD(130 || ES, 130, FLAT);
-smooth		KEYWORD(130, 130, SMOOTH);
-noperspective	KEYWORD(130, 130, NOPERSPECTIVE);
+varying		DEPRECATED_ES_KEYWORD(VARYING);
+centroid	KEYWORD(120, 300, 120, 300, CENTROID);
+invariant	KEYWORD(120, 100, 120, 100, INVARIANT);
+flat		KEYWORD(130, 100, 130, 300, FLAT);
+smooth		KEYWORD(130, 300, 130, 300, SMOOTH);
+noperspective	KEYWORD(130, 300, 130, 0, NOPERSPECTIVE);
 
-sampler1D	return SAMPLER1D;
+sampler1D	DEPRECATED_ES_KEYWORD(SAMPLER1D);
 sampler2D	return SAMPLER2D;
 sampler3D	return SAMPLER3D;
 samplerCube	return SAMPLERCUBE;
-sampler1DArray	KEYWORD(130, 130, SAMPLER1DARRAY);
-sampler2DArray	KEYWORD(130, 130, SAMPLER2DARRAY);
-sampler1DShadow	return SAMPLER1DSHADOW;
+sampler1DArray	KEYWORD(130, 300, 130, 0, SAMPLER1DARRAY);
+sampler2DArray	KEYWORD(130, 300, 130, 300, SAMPLER2DARRAY);
+sampler1DShadow	DEPRECATED_ES_KEYWORD(SAMPLER1DSHADOW);
 sampler2DShadow	return SAMPLER2DSHADOW;
-samplerCubeShadow	KEYWORD(130, 130, SAMPLERCUBESHADOW);
-sampler1DArrayShadow	KEYWORD(130, 130, SAMPLER1DARRAYSHADOW);
-sampler2DArrayShadow	KEYWORD(130, 130, SAMPLER2DARRAYSHADOW);
-isampler1D		KEYWORD(130, 130, ISAMPLER1D);
-isampler2D		KEYWORD(130, 130, ISAMPLER2D);
-isampler3D		KEYWORD(130, 130, ISAMPLER3D);
-isamplerCube		KEYWORD(130, 130, ISAMPLERCUBE);
-isampler1DArray		KEYWORD(130, 130, ISAMPLER1DARRAY);
-isampler2DArray		KEYWORD(130, 130, ISAMPLER2DARRAY);
-usampler1D		KEYWORD(130, 130, USAMPLER1D);
-usampler2D		KEYWORD(130, 130, USAMPLER2D);
-usampler3D		KEYWORD(130, 130, USAMPLER3D);
-usamplerCube		KEYWORD(130, 130, USAMPLERCUBE);
-usampler1DArray		KEYWORD(130, 130, USAMPLER1DARRAY);
-usampler2DArray		KEYWORD(130, 130, USAMPLER2DARRAY);
+samplerCubeShadow	KEYWORD(130, 300, 130, 300, SAMPLERCUBESHADOW);
+sampler1DArrayShadow	KEYWORD(130, 300, 130, 0, SAMPLER1DARRAYSHADOW);
+sampler2DArrayShadow	KEYWORD(130, 300, 130, 300, SAMPLER2DARRAYSHADOW);
+isampler1D		KEYWORD(130, 300, 130, 0, ISAMPLER1D);
+isampler2D		KEYWORD(130, 300, 130, 300, ISAMPLER2D);
+isampler3D		KEYWORD(130, 300, 130, 300, ISAMPLER3D);
+isamplerCube		KEYWORD(130, 300, 130, 300, ISAMPLERCUBE);
+isampler1DArray		KEYWORD(130, 300, 130, 0, ISAMPLER1DARRAY);
+isampler2DArray		KEYWORD(130, 300, 130, 300, ISAMPLER2DARRAY);
+usampler1D		KEYWORD(130, 300, 130, 0, USAMPLER1D);
+usampler2D		KEYWORD(130, 300, 130, 300, USAMPLER2D);
+usampler3D		KEYWORD(130, 300, 130, 300, USAMPLER3D);
+usamplerCube		KEYWORD(130, 300, 130, 300, USAMPLERCUBE);
+usampler1DArray		KEYWORD(130, 300, 130, 0, USAMPLER1DARRAY);
+usampler2DArray		KEYWORD(130, 300, 130, 300, USAMPLER2DARRAY);
 
-samplerExternalOES	{
+   /* additional keywords in ARB_texture_multisample, included in GLSL 1.50 */
+   /* these are reserved but not defined in GLSL 3.00 */
+sampler2DMS        KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, SAMPLER2DMS);
+isampler2DMS       KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMS);
+usampler2DMS       KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMS);
+sampler2DMSArray   KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, SAMPLER2DMSARRAY);
+isampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMSARRAY);
+usampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMSARRAY);
+
+   /* keywords available with ARB_texture_cube_map_array_enable extension on desktop GLSL */
+samplerCubeArray   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAY);
+isamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, ISAMPLERCUBEARRAY);
+usamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, USAMPLERCUBEARRAY);
+samplerCubeArrayShadow   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAYSHADOW);
+
+samplerExternalOES		{
 			  if (yyextra->OES_EGL_image_external_enable)
 			     return SAMPLEREXTERNALOES;
 			  else
 			     return IDENTIFIER;
-			}
+		}
 
+atomic_uint     KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_atomic_counters_enable, ATOMIC_UINT);
 
 struct		return STRUCT;
 void		return VOID_TOK;
 
 layout		{
-		  if ((yyextra->language_version >= 140)
+		  if ((yyextra->is_version(140, 300))
 		      || yyextra->AMD_conservative_depth_enable
 		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
 		      || yyextra->ARB_uniform_buffer_object_enable
-		      || yyextra->ARB_fragment_coord_conventions_enable) {
+		      || yyextra->ARB_fragment_coord_conventions_enable
+                      || yyextra->ARB_shading_language_420pack_enable) {
 		      return LAYOUT_TOK;
 		   } else {
 		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
+		      return classify_identifier(yyextra, yytext);
 		   }
 		}
 
@@ -361,23 +397,23 @@ layout		{
 			}
 
 [0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 \.[0-9]+([eE][+-]?[0-9]+)?[fF]?		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 [0-9]+\.([eE][+-]?[0-9]+)?[fF]?		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 [0-9]+[eE][+-]?[0-9]+[fF]?		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 [0-9]+[fF]		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 
@@ -392,96 +428,107 @@ false			{
 
 
     /* Reserved words in GLSL 1.10. */
-asm		KEYWORD(110 || ES, 999, ASM);
-class		KEYWORD(110 || ES, 999, CLASS);
-union		KEYWORD(110 || ES, 999, UNION);
-enum		KEYWORD(110 || ES, 999, ENUM);
-typedef		KEYWORD(110 || ES, 999, TYPEDEF);
-template	KEYWORD(110 || ES, 999, TEMPLATE);
-this		KEYWORD(110 || ES, 999, THIS);
-packed		KEYWORD(110 || ES, 140 || yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
-goto		KEYWORD(110 || ES, 999, GOTO);
-switch		KEYWORD(110 || ES, 130, SWITCH);
-default		KEYWORD(110 || ES, 130, DEFAULT);
-inline		KEYWORD(110 || ES, 999, INLINE_TOK);
-noinline	KEYWORD(110 || ES, 999, NOINLINE);
-volatile	KEYWORD(110 || ES, 999, VOLATILE);
-public		KEYWORD(110 || ES, 999, PUBLIC_TOK);
-static		KEYWORD(110 || ES, 999, STATIC);
-extern		KEYWORD(110 || ES, 999, EXTERN);
-external	KEYWORD(110 || ES, 999, EXTERNAL);
-interface	KEYWORD(110 || ES, 999, INTERFACE);
-long		KEYWORD(110 || ES, 999, LONG_TOK);
-short		KEYWORD(110 || ES, 999, SHORT_TOK);
-double		KEYWORD(110 || ES, 400, DOUBLE_TOK);
-half		KEYWORD(110 || ES, 999, HALF);
-fixed		KEYWORD(110 || ES, 999, FIXED_TOK);
-unsigned	KEYWORD(110 || ES, 999, UNSIGNED);
-input		KEYWORD(110 || ES, 999, INPUT_TOK);
-output		KEYWORD(110 || ES, 999, OUTPUT);
-hvec2		KEYWORD(110 || ES, 999, HVEC2);
-hvec3		KEYWORD(110 || ES, 999, HVEC3);
-hvec4		KEYWORD(110 || ES, 999, HVEC4);
-dvec2		KEYWORD(110 || ES, 400, DVEC2);
-dvec3		KEYWORD(110 || ES, 400, DVEC3);
-dvec4		KEYWORD(110 || ES, 400, DVEC4);
-fvec2		KEYWORD(110 || ES, 999, FVEC2);
-fvec3		KEYWORD(110 || ES, 999, FVEC3);
-fvec4		KEYWORD(110 || ES, 999, FVEC4);
-sampler2DRect		return SAMPLER2DRECT;
-sampler3DRect		KEYWORD(110 || ES, 999, SAMPLER3DRECT);
-sampler2DRectShadow	return SAMPLER2DRECTSHADOW;
-sizeof		KEYWORD(110 || ES, 999, SIZEOF);
-cast		KEYWORD(110 || ES, 999, CAST);
-namespace	KEYWORD(110 || ES, 999, NAMESPACE);
-using		KEYWORD(110 || ES, 999, USING);
+asm		KEYWORD(110, 100, 0, 0, ASM);
+class		KEYWORD(110, 100, 0, 0, CLASS);
+union		KEYWORD(110, 100, 0, 0, UNION);
+enum		KEYWORD(110, 100, 0, 0, ENUM);
+typedef		KEYWORD(110, 100, 0, 0, TYPEDEF);
+template	KEYWORD(110, 100, 0, 0, TEMPLATE);
+this		KEYWORD(110, 100, 0, 0, THIS);
+packed		KEYWORD_WITH_ALT(110, 100, 140, 300, yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
+goto		KEYWORD(110, 100, 0, 0, GOTO);
+switch		KEYWORD(110, 100, 130, 300, SWITCH);
+default		KEYWORD(110, 100, 130, 300, DEFAULT);
+inline		KEYWORD(110, 100, 0, 0, INLINE_TOK);
+noinline	KEYWORD(110, 100, 0, 0, NOINLINE);
+volatile	KEYWORD(110, 100, 0, 0, VOLATILE);
+public		KEYWORD(110, 100, 0, 0, PUBLIC_TOK);
+static		KEYWORD(110, 100, 0, 0, STATIC);
+extern		KEYWORD(110, 100, 0, 0, EXTERN);
+external	KEYWORD(110, 100, 0, 0, EXTERNAL);
+interface	KEYWORD(110, 100, 0, 0, INTERFACE);
+long		KEYWORD(110, 100, 0, 0, LONG_TOK);
+short		KEYWORD(110, 100, 0, 0, SHORT_TOK);
+double		KEYWORD(110, 100, 400, 0, DOUBLE_TOK);
+half		KEYWORD(110, 100, 0, 0, HALF);
+fixed		KEYWORD(110, 100, 0, 0, FIXED_TOK);
+unsigned	KEYWORD(110, 100, 0, 0, UNSIGNED);
+input		KEYWORD(110, 100, 0, 0, INPUT_TOK);
+output		KEYWORD(110, 100, 0, 0, OUTPUT);
+hvec2		KEYWORD(110, 100, 0, 0, HVEC2);
+hvec3		KEYWORD(110, 100, 0, 0, HVEC3);
+hvec4		KEYWORD(110, 100, 0, 0, HVEC4);
+dvec2		KEYWORD(110, 100, 400, 0, DVEC2);
+dvec3		KEYWORD(110, 100, 400, 0, DVEC3);
+dvec4		KEYWORD(110, 100, 400, 0, DVEC4);
+fvec2		KEYWORD(110, 100, 0, 0, FVEC2);
+fvec3		KEYWORD(110, 100, 0, 0, FVEC3);
+fvec4		KEYWORD(110, 100, 0, 0, FVEC4);
+sampler2DRect		DEPRECATED_ES_KEYWORD(SAMPLER2DRECT);
+sampler3DRect		KEYWORD(110, 100, 0, 0, SAMPLER3DRECT);
+sampler2DRectShadow	DEPRECATED_ES_KEYWORD(SAMPLER2DRECTSHADOW);
+sizeof		KEYWORD(110, 100, 0, 0, SIZEOF);
+cast		KEYWORD(110, 100, 0, 0, CAST);
+namespace	KEYWORD(110, 100, 0, 0, NAMESPACE);
+using		KEYWORD(110, 100, 0, 0, USING);
 
     /* Additional reserved words in GLSL 1.20. */
-lowp		KEYWORD(120, 130 || ES, LOWP);
-mediump		KEYWORD(120, 130 || ES, MEDIUMP);
-highp		KEYWORD(120, 130 || ES, HIGHP);
-precision	KEYWORD(120, 130 || ES, PRECISION);
+lowp		KEYWORD(120, 100, 130, 100, LOWP);
+mediump		KEYWORD(120, 100, 130, 100, MEDIUMP);
+highp		KEYWORD(120, 100, 130, 100, HIGHP);
+precision	KEYWORD(120, 100, 130, 100, PRECISION);
 
     /* Additional reserved words in GLSL 1.30. */
-case		KEYWORD(130, 130, CASE);
-common		KEYWORD(130, 999, COMMON);
-partition	KEYWORD(130, 999, PARTITION);
-active		KEYWORD(130, 999, ACTIVE);
-superp		KEYWORD(130 || ES, 999, SUPERP);
-samplerBuffer	KEYWORD(130, 140, SAMPLERBUFFER);
-filter		KEYWORD(130, 999, FILTER);
-image1D		KEYWORD(130, 999, IMAGE1D);
-image2D		KEYWORD(130, 999, IMAGE2D);
-image3D		KEYWORD(130, 999, IMAGE3D);
-imageCube	KEYWORD(130, 999, IMAGECUBE);
-iimage1D	KEYWORD(130, 999, IIMAGE1D);
-iimage2D	KEYWORD(130, 999, IIMAGE2D);
-iimage3D	KEYWORD(130, 999, IIMAGE3D);
-iimageCube	KEYWORD(130, 999, IIMAGECUBE);
-uimage1D	KEYWORD(130, 999, UIMAGE1D);
-uimage2D	KEYWORD(130, 999, UIMAGE2D);
-uimage3D	KEYWORD(130, 999, UIMAGE3D);
-uimageCube	KEYWORD(130, 999, UIMAGECUBE);
-image1DArray	KEYWORD(130, 999, IMAGE1DARRAY);
-image2DArray	KEYWORD(130, 999, IMAGE2DARRAY);
-iimage1DArray	KEYWORD(130, 999, IIMAGE1DARRAY);
-iimage2DArray	KEYWORD(130, 999, IIMAGE2DARRAY);
-uimage1DArray	KEYWORD(130, 999, UIMAGE1DARRAY);
-uimage2DArray	KEYWORD(130, 999, UIMAGE2DARRAY);
-image1DShadow	KEYWORD(130, 999, IMAGE1DSHADOW);
-image2DShadow	KEYWORD(130, 999, IMAGE2DSHADOW);
-image1DArrayShadow KEYWORD(130, 999, IMAGE1DARRAYSHADOW);
-image2DArrayShadow KEYWORD(130, 999, IMAGE2DARRAYSHADOW);
-imageBuffer	KEYWORD(130, 999, IMAGEBUFFER);
-iimageBuffer	KEYWORD(130, 999, IIMAGEBUFFER);
-uimageBuffer	KEYWORD(130, 999, UIMAGEBUFFER);
-row_major	KEYWORD(130, 140 || yyextra->ARB_uniform_buffer_object_enable, ROW_MAJOR);
+case		KEYWORD(130, 300, 130, 300, CASE);
+common		KEYWORD(130, 300, 0, 0, COMMON);
+partition	KEYWORD(130, 300, 0, 0, PARTITION);
+active		KEYWORD(130, 300, 0, 0, ACTIVE);
+superp		KEYWORD(130, 100, 0, 0, SUPERP);
+samplerBuffer	KEYWORD(130, 300, 140, 0, SAMPLERBUFFER);
+filter		KEYWORD(130, 300, 0, 0, FILTER);
+image1D		KEYWORD(130, 300, 0, 0, IMAGE1D);
+image2D		KEYWORD(130, 300, 0, 0, IMAGE2D);
+image3D		KEYWORD(130, 300, 0, 0, IMAGE3D);
+imageCube	KEYWORD(130, 300, 0, 0, IMAGECUBE);
+iimage1D	KEYWORD(130, 300, 0, 0, IIMAGE1D);
+iimage2D	KEYWORD(130, 300, 0, 0, IIMAGE2D);
+iimage3D	KEYWORD(130, 300, 0, 0, IIMAGE3D);
+iimageCube	KEYWORD(130, 300, 0, 0, IIMAGECUBE);
+uimage1D	KEYWORD(130, 300, 0, 0, UIMAGE1D);
+uimage2D	KEYWORD(130, 300, 0, 0, UIMAGE2D);
+uimage3D	KEYWORD(130, 300, 0, 0, UIMAGE3D);
+uimageCube	KEYWORD(130, 300, 0, 0, UIMAGECUBE);
+image1DArray	KEYWORD(130, 300, 0, 0, IMAGE1DARRAY);
+image2DArray	KEYWORD(130, 300, 0, 0, IMAGE2DARRAY);
+iimage1DArray	KEYWORD(130, 300, 0, 0, IIMAGE1DARRAY);
+iimage2DArray	KEYWORD(130, 300, 0, 0, IIMAGE2DARRAY);
+uimage1DArray	KEYWORD(130, 300, 0, 0, UIMAGE1DARRAY);
+uimage2DArray	KEYWORD(130, 300, 0, 0, UIMAGE2DARRAY);
+image1DShadow	KEYWORD(130, 300, 0, 0, IMAGE1DSHADOW);
+image2DShadow	KEYWORD(130, 300, 0, 0, IMAGE2DSHADOW);
+image1DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE1DARRAYSHADOW);
+image2DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE2DARRAYSHADOW);
+imageBuffer	KEYWORD(130, 300, 0, 0, IMAGEBUFFER);
+iimageBuffer	KEYWORD(130, 300, 0, 0, IIMAGEBUFFER);
+uimageBuffer	KEYWORD(130, 300, 0, 0, UIMAGEBUFFER);
+row_major	KEYWORD_WITH_ALT(130, 0, 140, 0, yyextra->ARB_uniform_buffer_object_enable && !yyextra->es_shader, ROW_MAJOR);
 
     /* Additional reserved words in GLSL 1.40 */
-isampler2DRect	KEYWORD(140, 140, ISAMPLER2DRECT);
-usampler2DRect	KEYWORD(140, 140, USAMPLER2DRECT);
-isamplerBuffer	KEYWORD(140, 140, ISAMPLERBUFFER);
-usamplerBuffer	KEYWORD(140, 140, USAMPLERBUFFER);
+isampler2DRect	KEYWORD(140, 300, 140, 0, ISAMPLER2DRECT);
+usampler2DRect	KEYWORD(140, 300, 140, 0, USAMPLER2DRECT);
+isamplerBuffer	KEYWORD(140, 300, 140, 0, ISAMPLERBUFFER);
+usamplerBuffer	KEYWORD(140, 300, 140, 0, USAMPLERBUFFER);
+
+    /* Additional reserved words in GLSL ES 3.00 */
+coherent	KEYWORD(0, 300, 0, 0, COHERENT);
+restrict	KEYWORD(0, 300, 0, 0, RESTRICT);
+readonly	KEYWORD(0, 300, 0, 0, READONLY);
+writeonly	KEYWORD(0, 300, 0, 0, WRITEONLY);
+resource	KEYWORD(0, 300, 0, 0, RESOURCE);
+patch		KEYWORD(0, 300, 0, 0, PATCH);
+sample		KEYWORD_WITH_ALT(400, 300, 400, 0, yyextra->ARB_gpu_shader5_enable, SAMPLE);
+subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
+
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;

@@ -9,3 +9,5 @@ void main ()
   gl_FragData[0] = mix (vec4(0.5, 0.5, 0.5, 0.5), col_1, col_1.wwww);
 }
 
+
+// inputs: 2, stats: 4 alu 1 tex 0 flow

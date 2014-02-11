@@ -3,3 +3,5 @@ void main ()
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 }
 
+
+// inputs: 1, stats: 1 alu 0 tex 0 flow

@@ -2,8 +2,8 @@ struct v2f {
   vec4 vertex;
   vec2 texcoord;
 };
-uniform sampler2D _UpTex;
 uniform vec4 _Tint;
+uniform sampler2D _UpTex;
 vec4 skybox_frag (
   in v2f i_1,
   in sampler2D smp_2

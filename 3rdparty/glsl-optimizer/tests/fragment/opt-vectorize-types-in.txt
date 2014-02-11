@@ -1,0 +1,14 @@
+uniform sampler2D maintex;
+uniform float factor;
+varying vec2 uv;
+void main() {
+    vec4 c = texture2D(maintex, uv);
+    vec4 r;
+    // when these become vectorized, they need to turn scalar
+    // arguments into proper types as well
+    r.x = max(0.123, c.x);
+    r.y = max(0.123, c.y);
+    r.z = min(c.z, factor);
+    r.w = min(c.w, factor);
+    gl_FragColor = r;
+}

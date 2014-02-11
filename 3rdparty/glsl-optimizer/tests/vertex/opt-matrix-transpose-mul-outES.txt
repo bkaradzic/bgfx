@@ -1,15 +1,15 @@
-varying lowp vec3 varViewDir;
-varying lowp vec3 varLightDir;
-varying lowp vec3 varWorldN;
-uniform highp vec4 unity_Scale;
-uniform lowp vec4 _WorldSpaceLightPos0;
-uniform highp vec3 _WorldSpaceCameraPos;
-uniform highp mat4 _World2Object;
-uniform highp mat4 _Object2World;
-attribute vec4 attrTangent;
-attribute vec3 attrNormal;
-attribute vec4 attrVertex;
 uniform mat4 glstate_matrix_mvp;
+attribute vec4 attrVertex;
+attribute vec3 attrNormal;
+attribute vec4 attrTangent;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform lowp vec4 _WorldSpaceLightPos0;
+uniform highp vec4 unity_Scale;
+varying lowp vec3 varWorldN;
+varying lowp vec3 varLightDir;
+varying lowp vec3 varViewDir;
 void main ()
 {
   lowp vec3 tmpvar_1;
@@ -43,7 +43,9 @@ void main ()
   tmpvar_10.w = 1.0;
   tmpvar_10.xyz = _WorldSpaceCameraPos;
   highp vec3 tmpvar_11;
-  tmpvar_11 = normalize((tmpvar_9 + normalize((tmpvar_8 * (((_World2Object * tmpvar_10).xyz * unity_Scale.w) - attrVertex.xyz)))));
+  tmpvar_11 = normalize((tmpvar_9 + normalize(
+    (tmpvar_8 * (((_World2Object * tmpvar_10).xyz * unity_Scale.w) - attrVertex.xyz))
+  )));
   tmpvar_2 = tmpvar_11;
   gl_Position = (glstate_matrix_mvp * attrVertex);
   varWorldN = tmpvar_3;
@@ -51,3 +53,5 @@ void main ()
   varViewDir = tmpvar_2;
 }
 
+
+// inputs: 3, stats: 16 alu 0 tex 0 flow

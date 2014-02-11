@@ -1,9 +1,9 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
 uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -28,7 +28,9 @@ void main ()
   xlv_FOG = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = (tmpvar_4 * (tmpvar_3 - (2.0 * (dot (gl_Normal, tmpvar_3) * gl_Normal))));
+  tmpvar_7.xyz = (tmpvar_4 * (tmpvar_3 - (2.0 * 
+    (dot (gl_Normal, tmpvar_3) * gl_Normal)
+  )));
   gl_TexCoord[0] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.w = 0.0;
@@ -40,3 +42,5 @@ void main ()
   gl_TexCoord[2] = tmpvar_9;
 }
 
+
+// inputs: 2, stats: 16 alu 0 tex 0 flow

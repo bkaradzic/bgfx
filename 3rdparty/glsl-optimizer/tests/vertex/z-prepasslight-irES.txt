@@ -7,16 +7,16 @@ struct appdata {
   highp vec4 vertex;
   highp vec3 normal;
 };
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec4 xlv_TEXCOORD0;
-uniform highp mat4 glstate_matrix_mvp;
-uniform highp mat4 glstate_matrix_modelview0;
-uniform highp vec4 _ProjectionParams;
-attribute lowp vec4 _glesColor;
-attribute highp vec4 _glesMultiTexCoord1;
-attribute highp vec4 _glesMultiTexCoord0;
-attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute lowp vec4 _glesColor;
+uniform highp vec4 _ProjectionParams;
+uniform highp mat4 glstate_matrix_modelview0;
+uniform highp mat4 glstate_matrix_mvp;
+varying highp vec4 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
 vec4 ComputeScreenPos (
   in highp vec4 pos_1
 )
@@ -72,9 +72,9 @@ void main ()
   highp vec4 tmpvar_19;
   tmpvar_19 = tmpvar_18;
   xlt_v_16.vertex = tmpvar_19;
-  highp vec3 tmpvar_20;
+  mediump vec3 tmpvar_20;
   tmpvar_20 = _glesNormal.xyz;
-  highp vec3 tmpvar_21;
+  mediump vec3 tmpvar_21;
   tmpvar_21 = tmpvar_20;
   xlt_v_16.normal = tmpvar_21;
   v2f tmpvar_22;

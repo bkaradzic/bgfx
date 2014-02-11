@@ -13,8 +13,8 @@ struct v2f_surf {
   vec4 pos;
   vec3 normal;
 };
-uniform sampler2D _MainTex;
 uniform vec4 _Color;
+uniform sampler2D _MainTex;
 void surf (
   in Input IN_1,
   inout SurfaceOutput o_2

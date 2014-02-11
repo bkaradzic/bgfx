@@ -5,5 +5,5 @@ mediump vec4 xlat_main(  ) {
 void main() {
     mediump vec4 xl_retval;
     xl_retval = xlat_main( );
-    gl_FragData[0] = mediump vec4( xl_retval);
+    gl_FragData[0] = vec4( xl_retval);
 }

@@ -1,5 +1,5 @@
-varying vec4 xlv_FOG;
 uniform vec4 _ProjectionParams;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -29,3 +29,5 @@ void main ()
   gl_TexCoord[1] = o_5;
 }
 
+
+// inputs: 1, stats: 8 alu 0 tex 0 flow

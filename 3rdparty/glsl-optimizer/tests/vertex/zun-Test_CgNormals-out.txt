@@ -11,3 +11,5 @@ void main ()
   gl_FrontColor = tmpvar_2;
 }
 
+
+// inputs: 2, stats: 5 alu 0 tex 0 flow

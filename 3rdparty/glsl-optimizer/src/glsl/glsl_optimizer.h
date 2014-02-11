@@ -35,7 +35,14 @@ enum glslopt_options {
 	kGlslOptionNotFullShader = (1<<1), // Passed shader is not the full shader source. This makes some optimizations weaker.
 };
 
-glslopt_ctx* glslopt_initialize (bool openglES);
+// Optimizer target language
+enum glslopt_target {
+	kGlslTargetOpenGL = 0,
+	kGlslTargetOpenGLES20 = 1,
+	kGlslTargetOpenGLES30 = 2
+};
+
+glslopt_ctx* glslopt_initialize (glslopt_target target);
 void glslopt_cleanup (glslopt_ctx* ctx);
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options);
@@ -44,6 +51,13 @@ const char* glslopt_get_output (glslopt_shader* shader);
 const char* glslopt_get_raw_output (glslopt_shader* shader);
 const char* glslopt_get_log (glslopt_shader* shader);
 void glslopt_shader_delete (glslopt_shader* shader);
+
+int glslopt_shader_get_input_count (glslopt_shader* shader);
+const char* glslopt_shader_get_input_name (glslopt_shader* shader, int index);
+
+// Get *very* approximate shader stats:
+// Number of math, texture and flow control instructions.
+void glslopt_shader_get_stats (glslopt_shader* shader, int* approxMath, int* approxTex, int* approxFlow);
 
 
 #endif /* GLSL_OPTIMIZER_H */

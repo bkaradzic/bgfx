@@ -1,10 +1,10 @@
-uniform sampler2D _TranslucencyMap;
-uniform vec3 _TranslucencyColor;
-uniform vec4 _TerrainTreeLightColors[4];
-uniform vec4 _SpecColor;
-uniform sampler2D _MainTex;
-uniform float _Cutoff;
 uniform sampler2D _BumpSpecMap;
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
+uniform vec4 _SpecColor;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
 void main ()
 {
   vec2 tmpvar_1;
@@ -31,17 +31,25 @@ void main ()
   tmpvar_11 = texture2D (_TranslucencyMap, tmpvar_1);
   light_6 = (gl_LightModel.ambient.xyz * tmpvar_10);
   backContribs_5 = (gl_TexCoord[2].xyz * tmpvar_11.z);
-  float tmpvar_12;
-  tmpvar_12 = (pow (tmpvar_3.x, specular_7) * tmpvar_11.w);
-  light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.x * _TranslucencyColor) + tmpvar_2.x)) + (_SpecColor.xyz * tmpvar_12)) * _TerrainTreeLightColors[0].xyz));
-  float tmpvar_13;
-  tmpvar_13 = (pow (tmpvar_3.y, specular_7) * tmpvar_11.w);
-  light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.y * _TranslucencyColor) + tmpvar_2.y)) + (_SpecColor.xyz * tmpvar_13)) * _TerrainTreeLightColors[1].xyz));
-  float tmpvar_14;
-  tmpvar_14 = (pow (tmpvar_3.z, specular_7) * tmpvar_11.w);
-  light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z)) + (_SpecColor.xyz * tmpvar_14)) * _TerrainTreeLightColors[2].xyz));
+  light_6 = (light_6 + ((
+    (tmpvar_10 * ((backContribs_5.x * _TranslucencyColor) + tmpvar_2.x))
+   + 
+    (_SpecColor.xyz * (pow (tmpvar_3.x, specular_7) * tmpvar_11.w))
+  ) * _TerrainTreeLightColors[0].xyz));
+  light_6 = (light_6 + ((
+    (tmpvar_10 * ((backContribs_5.y * _TranslucencyColor) + tmpvar_2.y))
+   + 
+    (_SpecColor.xyz * (pow (tmpvar_3.y, specular_7) * tmpvar_11.w))
+  ) * _TerrainTreeLightColors[1].xyz));
+  light_6 = (light_6 + ((
+    (tmpvar_10 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z))
+   + 
+    (_SpecColor.xyz * (pow (tmpvar_3.z, specular_7) * tmpvar_11.w))
+  ) * _TerrainTreeLightColors[2].xyz));
   c_4.xyz = (light_6 * 2.0);
   c_4.w = 1.0;
   gl_FragData[0] = c_4;
 }
 
+
+// inputs: 1, stats: 35 alu 4 tex 1 flow

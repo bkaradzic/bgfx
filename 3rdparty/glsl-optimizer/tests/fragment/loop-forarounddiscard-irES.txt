@@ -2,10 +2,10 @@ struct v2f {
   highp vec2 uv;
   highp vec3 nl;
 };
-varying highp vec3 xlv_nl;
-varying highp vec2 xlv_uv;
-uniform highp vec4 _TerrainTreeLightColors[4];
 uniform sampler2D _MainTex;
+uniform highp vec4 _TerrainTreeLightColors[4];
+varying highp vec2 xlv_uv;
+varying highp vec3 xlv_nl;
 lowp vec4 xlat_main (
   in v2f i_1
 )
@@ -32,7 +32,9 @@ lowp vec4 xlat_main (
       break;
     };
     highp vec3 tmpvar_9;
-    tmpvar_9 = (light_2 + ((col_3.xyz * i_1.nl[j_4]) * _TerrainTreeLightColors[j_4].xyz));
+    tmpvar_9 = (light_2 + ((col_3.xyz * 
+      i_1.nl[j_4]
+    ) * _TerrainTreeLightColors[j_4].xyz));
     light_2 = tmpvar_9;
     int _post_incdec_tmp_10;
     _post_incdec_tmp_10 = j_4;

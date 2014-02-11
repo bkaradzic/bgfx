@@ -4,8 +4,8 @@ struct v2f {
   vec4 color;
   vec2 uv;
 };
-varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
+varying vec4 xlv_FOG;
 void xll_clip (
   in float x_1
 )

@@ -49,24 +49,7 @@ struct YYLTYPE;
  */
 class ast_node {
 public:
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *table)
-   {
-      ralloc_free(table);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(ast_node);
 
    /**
     * Print an AST node in something approximating the original GLSL code
@@ -189,7 +172,8 @@ enum ast_operators {
    ast_float_constant,
    ast_bool_constant,
 
-   ast_sequence
+   ast_sequence,
+   ast_aggregate
 };
 
 /**
@@ -292,6 +276,76 @@ private:
    bool cons;
 };
 
+class ast_array_specifier : public ast_node {
+public:
+   /** Unsized array specifier ([]) */
+   explicit ast_array_specifier(const struct YYLTYPE &locp)
+     : dimension_count(1), is_unsized_array(true)
+   {
+      set_location(locp);
+   }
+
+   /** Sized array specifier ([dim]) */
+   ast_array_specifier(const struct YYLTYPE &locp, ast_expression *dim)
+     : dimension_count(1), is_unsized_array(false)
+   {
+      set_location(locp);
+      array_dimensions.push_tail(&dim->link);
+   }
+
+   void add_dimension(ast_expression *dim)
+   {
+      array_dimensions.push_tail(&dim->link);
+      dimension_count++;
+   }
+
+   virtual void print(void) const;
+
+   /* Count including sized and unsized dimensions */
+   unsigned dimension_count;
+
+   /* If true, this means that the array has an unsized outermost dimension. */
+   bool is_unsized_array;
+
+   /* This list contains objects of type ast_node containing the
+    * sized dimensions only, in outermost-to-innermost order.
+    */
+   exec_list array_dimensions;
+};
+
+/**
+ * C-style aggregate initialization class
+ *
+ * Represents C-style initializers of vectors, matrices, arrays, and
+ * structures. E.g., vec3 pos = {1.0, 0.0, -1.0} is equivalent to
+ * vec3 pos = vec3(1.0, 0.0, -1.0).
+ *
+ * Specified in GLSL 4.20 and GL_ARB_shading_language_420pack.
+ *
+ * \sa _mesa_ast_set_aggregate_type
+ */
+class ast_aggregate_initializer : public ast_expression {
+public:
+   ast_aggregate_initializer()
+      : ast_expression(ast_aggregate, NULL, NULL, NULL),
+        constructor_type(NULL)
+   {
+      /* empty */
+   }
+
+   /**
+    * glsl_type of the aggregate, which is inferred from the LHS of whatever
+    * the aggregate is being used to initialize.  This can't be inferred at
+    * parse time (since the parser deals with ast_type_specifiers, not
+    * glsl_types), so the parser leaves it NULL.  However, the ast-to-hir
+    * conversion code makes sure to fill it in with the appropriate type
+    * before hir() is called.
+    */
+   const glsl_type *constructor_type;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+};
 
 /**
  * Number of possible operators for an ast_expression
@@ -317,14 +371,14 @@ public:
 
 class ast_declaration : public ast_node {
 public:
-   ast_declaration(const char *identifier, int is_array, ast_expression *array_size,
-		   ast_expression *initializer);
+   ast_declaration(const char *identifier,
+                   ast_array_specifier *array_specifier,
+                   ast_expression *initializer);
    virtual void print(void) const;
 
    const char *identifier;
-   
-   int is_array;
-   ast_expression *array_size;
+
+   ast_array_specifier *array_specifier;
 
    ast_expression *initializer;
 };
@@ -338,24 +392,7 @@ enum {
 };
 
 struct ast_type_qualifier {
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *table)
-   {
-      ralloc_free(table);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(ast_type_qualifier);
 
    union {
       struct {
@@ -366,6 +403,7 @@ struct ast_type_qualifier {
 	 unsigned in:1;
 	 unsigned out:1;
 	 unsigned centroid:1;
+         unsigned sample:1;
 	 unsigned uniform:1;
 	 unsigned smooth:1;
 	 unsigned flat:1;
@@ -388,6 +426,18 @@ struct ast_type_qualifier {
 	  */
 	 unsigned explicit_index:1;
 
+         /**
+          * Flag set if GL_ARB_shading_language_420pack "binding" layout
+          * qualifier is used.
+          */
+         unsigned explicit_binding:1;
+
+         /**
+          * Flag set if GL_ARB_shader_atomic counter "offset" layout
+          * qualifier is used.
+          */
+         unsigned explicit_offset:1;
+
          /** \name Layout qualifiers for GL_AMD_conservative_depth */
          /** \{ */
          unsigned depth_any:1;
@@ -404,6 +454,12 @@ struct ast_type_qualifier {
          unsigned column_major:1;
          unsigned row_major:1;
 	 /** \} */
+
+	 /** \name Layout qualifiers for GLSL 1.50 geometry shaders */
+	 /** \{ */
+	 unsigned prim_type:1;
+	 unsigned max_vertices:1;
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -411,6 +467,9 @@ struct ast_type_qualifier {
       /** \brief Set of flags, accessed as a bitmask. */
       unsigned i;
    } flags;
+
+   /** Precision of the type (highp/medium/lowp). */
+   unsigned precision:2;
 
    /**
     * Location specified via GL_ARB_explicit_attrib_location layout
@@ -427,10 +486,48 @@ struct ast_type_qualifier {
     */
    int index;
 
+   /** Maximum output vertices in GLSL 1.50 geometry shaders. */
+   int max_vertices;
+
+   /** Input or output primitive type in GLSL 1.50 geometry shaders */
+   GLenum prim_type;
+
+   /**
+    * Binding specified via GL_ARB_shading_language_420pack's "binding" keyword.
+    *
+    * \note
+    * This field is only valid if \c explicit_binding is set.
+    */
+   int binding;
+
+   /**
+    * Offset specified via GL_ARB_shader_atomic_counter's "offset"
+    * keyword.
+    *
+    * \note
+    * This field is only valid if \c explicit_offset is set.
+    */
+   int offset;
+
    /**
     * Return true if and only if an interpolation qualifier is present.
     */
    bool has_interpolation() const;
+
+   /**
+    * Return whether a layout qualifier is present.
+    */
+   bool has_layout() const;
+
+   /**
+    * Return whether a storage qualifier is present.
+    */
+   bool has_storage() const;
+
+   /**
+    * Return whether an auxiliary storage qualifier is present.
+    */
+   bool has_auxiliary_storage() const;
 
    /**
     * \brief Return string representation of interpolation qualifier.
@@ -453,6 +550,19 @@ class ast_declarator_list;
 
 class ast_struct_specifier : public ast_node {
 public:
+   /**
+    * \brief Make a shallow copy of an ast_struct_specifier.
+    *
+    * Use only if the objects are allocated from the same context and will not
+    * be modified. Zeros the inherited ast_node's fields.
+    */
+   ast_struct_specifier(const ast_struct_specifier& that):
+      ast_node(), name(that.name), declarations(that.declarations),
+      is_declaration(that.is_declaration)
+   {
+      /* empty */
+   }
+
    ast_struct_specifier(const char *identifier,
 			ast_declarator_list *declarator_list);
    virtual void print(void) const;
@@ -463,26 +573,41 @@ public:
    const char *name;
    /* List of ast_declarator_list * */
    exec_list declarations;
+   bool is_declaration;
 };
 
 
 
 class ast_type_specifier : public ast_node {
 public:
+   /**
+    * \brief Make a shallow copy of an ast_type_specifier, specifying array
+    *        fields.
+    *
+    * Use only if the objects are allocated from the same context and will not
+    * be modified. Zeros the inherited ast_node's fields.
+    */
+   ast_type_specifier(const ast_type_specifier *that,
+                      ast_array_specifier *array_specifier)
+      : ast_node(), type_name(that->type_name), structure(that->structure),
+        array_specifier(array_specifier),
+        default_precision(that->default_precision)
+   {
+      /* empty */
+   }
+
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
-      : type_name(name), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
-	is_precision_statement(false)
+      : type_name(name), structure(NULL), array_specifier(NULL),
+	default_precision(ast_precision_none)
    {
       /* empty */
    }
 
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
-      : type_name(s->name), structure(s),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
-	is_precision_statement(false)
+      : type_name(s->name), structure(s), array_specifier(NULL),
+	default_precision(ast_precision_none)
    {
       /* empty */
    }
@@ -498,28 +623,26 @@ public:
    const char *type_name;
    ast_struct_specifier *structure;
 
-   int is_array;
-   ast_expression *array_size;
+   ast_array_specifier *array_specifier;
 
-   unsigned precision:2;
-
-   bool is_precision_statement;
+   /** For precision statements, this is the given precision; otherwise none. */
+   unsigned default_precision:2;
 };
 
 
 class ast_fully_specified_type : public ast_node {
 public:
-   ast_fully_specified_type ()
-   {
-	   union {
-		   ast_type_qualifier q;
-		   unsigned i;
-	   } q;
-	   q.i = 0;
-	   qualifier = q.q;
-   }
    virtual void print(void) const;
    bool has_qualifiers() const;
+
+   ast_fully_specified_type() : qualifier(), specifier(NULL)
+   {
+	   qualifier.precision = ast_precision_none;
+   }
+
+   const struct glsl_type *glsl_type(const char **name,
+				     struct _mesa_glsl_parse_state *state)
+      const;
 
    ast_type_qualifier qualifier;
    ast_type_specifier *specifier;
@@ -535,6 +658,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
+   /** List of 'ast_declaration *' */
    exec_list declarations;
 
    /**
@@ -545,22 +669,19 @@ public:
     * is used to note these cases when no type is specified.
     */
    int invariant;
-
-   /**
-    * Flag indicating that these declarators are in a uniform block,
-    * allowing UBO type qualifiers.
-    */
-   bool ubo_qualifiers_valid;
 };
 
 
 class ast_parameter_declarator : public ast_node {
 public:
-   ast_parameter_declarator()
+   ast_parameter_declarator() :
+      type(NULL),
+      identifier(NULL),
+      array_specifier(NULL),
+      formal_parameter(false),
+      is_void(false)
    {
-      this->identifier = NULL;
-      this->is_array = false;
-      this->array_size = 0;
+      /* empty */
    }
 
    virtual void print(void) const;
@@ -570,8 +691,7 @@ public:
 
    ast_fully_specified_type *type;
    const char *identifier;
-   int is_array;
-   ast_expression *array_size;
+   ast_array_specifier *array_specifier;
 
    static void parameters_to_hir(exec_list *ast_parameters,
 				 bool formal, exec_list *ir_parameters,
@@ -801,6 +921,10 @@ public:
 
 class ast_function_definition : public ast_node {
 public:
+   ast_function_definition() : prototype(NULL), body(NULL)
+   {
+   }
+
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
@@ -810,14 +934,14 @@ public:
    ast_compound_statement *body;
 };
 
-class ast_uniform_block : public ast_node {
+class ast_interface_block : public ast_node {
 public:
-   ast_uniform_block(ast_type_qualifier layout,
-		     const char *block_name,
-		     ast_declarator_list *member_list)
-   : layout(layout), block_name(block_name)
+   ast_interface_block(ast_type_qualifier layout,
+                       const char *instance_name,
+                       ast_array_specifier *array_specifier)
+   : layout(layout), block_name(NULL), instance_name(instance_name),
+     array_specifier(array_specifier)
    {
-      declarations.push_degenerate_list_at_head(&member_list->link);
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
@@ -825,9 +949,48 @@ public:
 
    ast_type_qualifier layout;
    const char *block_name;
+
+   /**
+    * Declared name of the block instance, if specified.
+    *
+    * If the block does not have an instance name, this field will be
+    * \c NULL.
+    */
+   const char *instance_name;
+
    /** List of ast_declarator_list * */
    exec_list declarations;
+
+   /**
+    * Declared array size of the block instance
+    *
+    * If the block is not declared as an array or if the block instance array
+    * is unsized, this field will be \c NULL.
+    */
+   ast_array_specifier *array_specifier;
 };
+
+
+/**
+ * AST node representing a declaration of the input layout for geometry
+ * shaders.
+ */
+class ast_gs_input_layout : public ast_node
+{
+public:
+   ast_gs_input_layout(const struct YYLTYPE &locp, GLenum prim_type)
+      : prim_type(prim_type)
+   {
+      set_location(locp);
+   }
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+
+private:
+   const GLenum prim_type;
+};
+
 /*@}*/
 
 extern void
@@ -838,7 +1001,21 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state);
 
+extern ir_rvalue *
+_mesa_ast_array_index_to_hir(void *mem_ctx,
+			     struct _mesa_glsl_parse_state *state,
+			     ir_rvalue *array, ir_rvalue *idx,
+			     YYLTYPE &loc, YYLTYPE &idx_loc);
+
+extern void
+_mesa_ast_set_aggregate_type(const glsl_type *type,
+                             ast_expression *expr);
+
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);
+
+extern void
+check_builtin_array_max_size(const char *name, unsigned size,
+                             YYLTYPE loc, struct _mesa_glsl_parse_state *state);
 
 #endif /* AST_H */

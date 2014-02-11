@@ -3,16 +3,16 @@ struct v2f {
   vec2 uv;
   vec3 ray;
 };
-uniform vec4 _ZBufferParams;
-uniform mat4 _View2Shadow3;
-uniform mat4 _View2Shadow2;
-uniform mat4 _View2Shadow1;
-uniform mat4 _View2Shadow;
-uniform sampler2D _ShadowMapTexture;
-uniform vec4 _LightSplitsNear;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightSplitsNear;
+uniform sampler2D _ShadowMapTexture;
+uniform mat4 _View2Shadow;
+uniform mat4 _View2Shadow1;
+uniform mat4 _View2Shadow2;
+uniform mat4 _View2Shadow3;
+uniform vec4 _ZBufferParams;
 float unitySampleShadow (
   in vec4 eyePos_1
 )
@@ -65,7 +65,11 @@ float unitySampleShadow (
   weights_4 = tmpvar_25;
   vec4 tmpvar_26;
   tmpvar_26.w = 1.0;
-  tmpvar_26.xyz = ((((sc0_11 * weights_4.x) + (sc1_10 * weights_4.y)) + (sc2_9 * weights_4.z)) + (sc3_8 * weights_4.w)).xyz;
+  tmpvar_26.xyz = (((
+    (sc0_11 * weights_4.x)
+   + 
+    (sc1_10 * weights_4.y)
+  ) + (sc2_9 * weights_4.z)) + (sc3_8 * weights_4.w)).xyz;
   vec4 tmpvar_27;
   tmpvar_27 = tmpvar_26;
   coord_3 = tmpvar_27;

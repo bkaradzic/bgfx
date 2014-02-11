@@ -1,6 +1,6 @@
 void main ()
 {
-  mediump float f_1;
+  highp float f_1;
   int i_2;
   int tmpvar_3;
   tmpvar_3 = 0;
@@ -12,16 +12,16 @@ void main ()
     if (!((i_2 < 32))) {
       break;
     };
-    mediump float tmpvar_5;
+    highp float tmpvar_5;
     tmpvar_5 = (f_1 + (gl_FragCoord.x * float(i_2)));
     f_1 = tmpvar_5;
     int tmpvar_6;
     tmpvar_6 = (i_2 + 1);
     i_2 = tmpvar_6;
   };
-  mediump vec4 tmpvar_7;
+  highp vec4 tmpvar_7;
   tmpvar_7 = vec4(f_1);
-  mediump vec4 tmpvar_8;
+  highp vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   gl_FragColor = tmpvar_8;
 }

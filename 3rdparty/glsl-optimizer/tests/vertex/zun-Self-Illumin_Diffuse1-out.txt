@@ -1,9 +1,9 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
-uniform vec4 _ProjectionParams;
-uniform vec4 _MainTex_ST;
 uniform vec4 _Illum_ST;
+uniform vec4 _MainTex_ST;
+uniform vec4 _ProjectionParams;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -21,7 +21,9 @@ void main ()
   o_4.xy = (tmpvar_6 + tmpvar_5.w);
   o_4.zw = tmpvar_3.zw;
   tmpvar_2.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
-  tmpvar_2.z = ((-((gl_ModelViewMatrix * gl_Vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_2.z = ((-(
+    (gl_ModelViewMatrix * gl_Vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   gl_Position = tmpvar_3;
   vec4 tmpvar_7;
   tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);
@@ -35,3 +37,5 @@ void main ()
   gl_TexCoord[2] = tmpvar_8;
 }
 
+
+// inputs: 3, stats: 16 alu 0 tex 0 flow

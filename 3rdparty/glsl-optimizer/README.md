@@ -15,17 +15,23 @@ compiler; all this library does is spits out optimized GLSL back, and adds GLES 
 handling to the optimizer.
 
 This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is built-in
-in [Unity 3](http://unity3d.com/unity/whats-new/unity-3) and later.
+starting with Unity 3.0.
 
 GLSL Optimizer is licensed according to the terms of the MIT license.
+
+See badly maintained [change log](Changelog.md).
 
 
 Usage
 -----
 
-Visual Studio 2008 (Windows, x86) and Xcode 4.5+ (Mac, i386) project files for a static
-library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
+Visual Studio 2010 (Windows, x86/x64) and Xcode 5+ (Mac, i386) project files for a static
+library are provided in `projects/vs2010/glsl_optimizer.sln` and `projects/xcode5/glsl_optimizer_lib`
 respectively.
+
+> Note: only the VS and Xcode project files are maintained and should work at any time.
+> There's also a cmake and gyp build system for Linux et al., and some stuff in contrib folder -
+> all that may or might not work.
 
 For Linux you can use cmake. Just type "cmake . && make" in the root directory.
 This will build the optimizer library and some executable binaries.
@@ -44,9 +50,44 @@ Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
 	}
 	glslopt_cleanup (ctx);
 
+
+Tests
+-----
+
+There's a testing suite for catching regressions, see `tests` folder. In VS, build
+and run `glsl_optimizer_tests` project; in Xcode use `projects/xcode5/glsl_optimizer_tests`
+project. The test executable requires path to the `tests` folder as an argument.
+
+Each test comes as three text files; input, expected IR dump and expected optimized
+GLSL dump.
+
+If you're making changes to the project and want pull requests accepted easier, I'd
+appreciate if there would be no test suite regressions. If you are implementing a
+feature, it would be cool to add tests to cover it as well!
+
+
 Notes
 -----
 
 * GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use #version 120 to specify 
 1.20.
-* GLSL ES version 1.00 is supported.
+* GLSL ES versions 1.00 and 3.00 are supported.
+
+
+Dev Notes
+---------
+
+Pulling Mesa upstream:
+
+    git fetch upstream
+    git merge upstream/master
+    sh removeDeletedByUs.sh
+    # inspect files, git rm unneeded ones, fix conflicts etc.
+    # git commit
+    
+Rebuilding flex/bison parsers:
+
+* When .y/.l files are changed, the parsers are *not* rebuilt automatically,
+* Run ./generateParsers.sh to do that. You'll need bison & flex (on Mac, do "Install Command Line Tools" from Xcode)
+* I use bison 2.3 and flex 2.5.35 (in OS X 10.8/10.9)
+

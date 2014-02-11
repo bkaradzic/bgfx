@@ -1,19 +1,19 @@
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 unity_SHC;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAb;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _World2Object;
-uniform vec4 _ProjectionParams;
-uniform mat4 _Object2World;
-uniform vec4 _Decal_ST;
 uniform vec4 _DecalBump_ST;
+uniform vec4 _Decal_ST;
+uniform mat4 _Object2World;
+uniform vec4 _ProjectionParams;
+uniform mat4 _World2Object;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_SHAb;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHC;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -72,8 +72,14 @@ void main ()
   gl_TexCoord[1] = tmpvar_15;
   vec4 tmpvar_16;
   tmpvar_16.w = 0.0;
-  tmpvar_16.xyz = ((x1_9 + x2_8) + (unity_SHC.xyz * ((tmpvar_4.x * tmpvar_4.x) - (tmpvar_4.y * tmpvar_4.y))));
+  tmpvar_16.xyz = ((x1_9 + x2_8) + (unity_SHC.xyz * (
+    (tmpvar_4.x * tmpvar_4.x)
+   - 
+    (tmpvar_4.y * tmpvar_4.y)
+  )));
   gl_TexCoord[2] = tmpvar_16;
   gl_TexCoord[3] = o_11;
 }
 
+
+// inputs: 4, stats: 33 alu 0 tex 0 flow

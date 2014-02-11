@@ -1,11 +1,11 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec4 _WavingTint;
-uniform vec4 _WaveAndDistance;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 vertex_1;
@@ -14,7 +14,9 @@ void main ()
   vec3 waveMove_3;
   waveMove_3.y = 0.0;
   vec4 tmpvar_4;
-  tmpvar_4 = ((fract((((gl_Vertex.x * (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y)) + (gl_Vertex.z * (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.2, 2.0, 1.6, 4.8)))) * 6.40885) - 3.14159);
+  tmpvar_4 = ((fract(
+    (((gl_Vertex.x * (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y)) + (gl_Vertex.z * (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.2, 2.0, 1.6, 4.8)))
+  ) * 6.40885) - 3.14159);
   vec4 tmpvar_5;
   tmpvar_5 = (tmpvar_4 * tmpvar_4);
   vec4 tmpvar_6;
@@ -22,7 +24,9 @@ void main ()
   vec4 tmpvar_7;
   tmpvar_7 = (tmpvar_6 * tmpvar_5);
   vec4 tmpvar_8;
-  tmpvar_8 = (((tmpvar_4 + (tmpvar_6 * -0.161616)) + (tmpvar_7 * 0.0083333)) + ((tmpvar_7 * tmpvar_5) * -0.00019841));
+  tmpvar_8 = (((tmpvar_4 + 
+    (tmpvar_6 * -0.161616)
+  ) + (tmpvar_7 * 0.0083333)) + ((tmpvar_7 * tmpvar_5) * -0.00019841));
   vec4 tmpvar_9;
   tmpvar_9 = (tmpvar_8 * tmpvar_8);
   vec4 tmpvar_10;
@@ -32,7 +36,9 @@ void main ()
   waveMove_3.x = dot (tmpvar_11, vec4(0.024, 0.04, -0.12, 0.096));
   waveMove_3.z = dot (tmpvar_11, vec4(0.006, 0.02, -0.02, 0.1));
   vertex_1.xz = (gl_Vertex.xz - (waveMove_3.xz * _WaveAndDistance.z));
-  outColor_2.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3((dot (tmpvar_10, normalize(vec4(1.0, 1.0, 0.4, 0.2))) * 0.7)))) * 2.0);
+  outColor_2.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3(
+    (dot (tmpvar_10, vec4(0.6742, 0.6742, 0.26968, 0.13484)) * 0.7)
+  ))) * 2.0);
   outColor_2.w = 1.0;
   vec4 tmpvar_12;
   tmpvar_12 = (gl_ModelViewProjectionMatrix * vertex_1);
@@ -61,3 +67,5 @@ void main ()
   gl_TexCoord[3] = (_LightMatrix0 * (_Object2World * vertex_1));
 }
 
+
+// inputs: 4, stats: 48 alu 0 tex 0 flow

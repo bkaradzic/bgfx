@@ -7,8 +7,8 @@ struct v2f {
   vec3 backContrib;
   vec3 nl;
 };
-uniform float _TranslucencyViewDependency;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform float _TranslucencyViewDependency;
 v2f vert (
   in appdata_full v_1
 )
@@ -47,14 +47,14 @@ v2f vert (
     backContrib_8 = tmpvar_15;
     float tmpvar_16;
     tmpvar_16 = mix (-(nl_9), backContrib_8, _TranslucencyViewDependency);
-    float tmpvar_17;
-    tmpvar_17 = tmpvar_16;
-    o_4.backContrib[j_2] = tmpvar_17;
+    vec3 tmpvar_17;
+    tmpvar_17 = o_4.backContrib; tmpvar_17[j_2] = tmpvar_16;
+    o_4.backContrib = tmpvar_17;
     float tmpvar_18;
     tmpvar_18 = max (0.0, ((nl_9 * 0.6) + 0.4));
-    float tmpvar_19;
-    tmpvar_19 = tmpvar_18;
-    o_4.nl[j_2] = tmpvar_19;
+    vec3 tmpvar_19;
+    tmpvar_19 = o_4.nl; tmpvar_19[j_2] = tmpvar_18;
+    o_4.nl = tmpvar_19;
     int _post_incdec_tmp_20;
     _post_incdec_tmp_20 = j_2;
     int tmpvar_21;

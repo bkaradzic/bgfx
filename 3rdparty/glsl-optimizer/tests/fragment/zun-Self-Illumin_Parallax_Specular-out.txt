@@ -1,12 +1,12 @@
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _ParallaxMap;
-uniform float _Parallax;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform float _Parallax;
+uniform sampler2D _ParallaxMap;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
 void main ()
 {
   vec4 tmpvar_1;
@@ -29,18 +29,32 @@ void main ()
   tmpvar_9 = (tmpvar_8 * _Color);
   vec4 normal_10;
   normal_10.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_5)).wy * 2.0) - 1.0);
-  normal_10.z = sqrt(((1.0 - (normal_10.x * normal_10.x)) - (normal_10.y * normal_10.y)));
+  normal_10.z = sqrt(((1.0 - 
+    (normal_10.x * normal_10.x)
+  ) - (normal_10.y * normal_10.y)));
   vec3 tmpvar_11;
   tmpvar_11 = normalize(gl_TexCoord[2].xyz);
   vec4 tmpvar_12;
   tmpvar_12 = texture2D (_LightTexture0, vec2(dot (tmpvar_3, tmpvar_3)));
   vec4 c_13;
   float tmpvar_14;
-  tmpvar_14 = (pow (max (0.0, dot (normal_10.xyz, normalize((tmpvar_11 + normalize(tmpvar_2))))), (_Shininess * 128.0)) * tmpvar_8.w);
-  c_13.xyz = ((((tmpvar_9.xyz * _LightColor0.xyz) * max (0.0, dot (normal_10.xyz, tmpvar_11))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_14)) * (tmpvar_12.w * 2.0));
-  c_13.w = (tmpvar_9.w + (((_LightColor0.w * _SpecColor.w) * tmpvar_14) * tmpvar_12.w));
+  tmpvar_14 = (pow (max (0.0, 
+    dot (normal_10.xyz, normalize((tmpvar_11 + normalize(tmpvar_2))))
+  ), (_Shininess * 128.0)) * tmpvar_8.w);
+  c_13.xyz = (((
+    (tmpvar_9.xyz * _LightColor0.xyz)
+   * 
+    max (0.0, dot (normal_10.xyz, tmpvar_11))
+  ) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * tmpvar_14)) * (tmpvar_12.w * 2.0));
+  c_13.w = (tmpvar_9.w + ((
+    (_LightColor0.w * _SpecColor.w)
+   * tmpvar_14) * tmpvar_12.w));
   c_4.xyz = c_13.xyz;
   c_4.w = 0.0;
   gl_FragData[0] = c_4;
 }
 
+
+// inputs: 1, stats: 41 alu 4 tex 0 flow

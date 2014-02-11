@@ -39,16 +39,12 @@ analyze_loop_variables(exec_list *instructions);
 /**
  * Fill in loop control fields
  *
- * Based on analysis of loop variables, this function tries to remove sequences
- * in the loop of the form
+ * Based on analysis of loop variables, this function tries to remove
+ * redundant sequences in the loop of the form
  *
  *  (if (expression bool ...) (break))
  *
- * and fill in the \c ir_loop::from, \c ir_loop::to, and \c ir_loop::counter
- * fields of the \c ir_loop.
- *
- * In this process, some conditional break-statements may be eliminated
- * altogether.  For example, if it is provable that one loop exit condition will
+ * For example, if it is provable that one loop exit condition will
  * always be satisfied before another, the unnecessary exit condition will be
  * removed.
  */
@@ -59,6 +55,13 @@ set_loop_controls(exec_list *instructions, loop_state *ls);
 extern bool
 unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations);
 
+ir_rvalue *
+find_initial_value(ir_loop *loop, ir_variable *var);
+
+int
+calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
+		     enum ir_expression_operation op);
+
 
 /**
  * Tracking for all variables used in a loop
@@ -67,13 +70,9 @@ class loop_variable_state : public exec_node {
 public:
    class loop_variable *get(const ir_variable *);
    class loop_variable *insert(ir_variable *);
+   class loop_variable *get_or_insert(ir_variable *, bool in_assignee);
    class loop_terminator *insert(ir_if *);
 
-
-   /**
-    * Loop whose variable state is being tracked by this structure
-    */
-   ir_loop *loop;
 
    /**
     * Variables that have not yet been classified
@@ -93,6 +92,7 @@ public:
     * This list contains \c loop_variable objects.
     */
    exec_list induction_variables;
+   int private_induction_variable_count;
 
    /**
     * Simple if-statements that lead to the termination of the loop
@@ -104,18 +104,17 @@ public:
    exec_list terminators;
 
    /**
+    * If any of the terminators in \c terminators leads to termination of the
+    * loop after a constant number of iterations, this is the terminator that
+    * leads to termination after the smallest number of iterations.  Otherwise
+    * NULL.
+    */
+   loop_terminator *limiting_terminator;
+
+   /**
     * Hash table containing all variables accessed in this loop
     */
    hash_table *var_hash;
-
-   /**
-    * Maximum number of loop iterations.
-    *
-    * If this value is negative, then the loop may be infinite.  This actually
-    * means that analysis was unable to determine an upper bound on the number
-    * of loop iterations.
-    */
-   int max_iterations;
 
    /**
     * Number of ir_loop_jump instructions that operate on this loop
@@ -129,11 +128,11 @@ public:
 
    loop_variable_state()
    {
-      this->max_iterations = -1;
       this->num_loop_jumps = 0;
       this->contains_calls = false;
       this->var_hash = hash_table_ctor(0, hash_table_pointer_hash,
 				       hash_table_pointer_compare);
+      this->limiting_terminator = NULL;
    }
 
    ~loop_variable_state()
@@ -171,37 +170,46 @@ public:
    /** Are all variables in the RHS of the assignment loop constants? */
    bool rhs_clean;
 
-   /** Is there an assignment to the variable that is conditional? */
-   bool conditional_assignment;
+   /**
+    * Is there an assignment to the variable that is conditional, or inside a
+    * nested loop?
+    */
+   bool conditional_or_nested_assignment;
 
    /** Reference to the first assignment to the variable in the loop body. */
    ir_assignment *first_assignment;
+
+   /** Reference to initial value outside of the loop. */
+   ir_rvalue *initial_value;
 
    /** Number of assignments to the variable in the loop body. */
    unsigned num_assignments;
 
    /**
-    * Increment values for loop induction variables
+    * Increment value for a loop induction variable
     *
-    * Loop induction variables have a single increment of the form
-    * \c b * \c biv + \c c, where \c b and \c c are loop constants and \c i
-    * is a basic loop induction variable.
+    * If this is a loop induction variable, the amount by which the variable
+    * is incremented on each iteration through the loop.
     *
-    * If \c iv_scale is \c NULL, 1 is used.  If \c biv is the same as \c var,
-    * then \c var is a basic loop induction variable.
+    * If this is not a loop induction variable, NULL.
     */
-   /*@{*/
-   ir_rvalue *iv_scale;
-   ir_variable *biv;
    ir_rvalue *increment;
-   /*@}*/
+
+
+   inline bool is_induction_var() const
+   {
+      /* Induction variables always have a non-null increment, and vice
+       * versa.
+       */
+      return this->increment != NULL;
+   }
 
 
    inline bool is_loop_constant() const
    {
       const bool is_const = (this->num_assignments == 0)
 	 || ((this->num_assignments == 1)
-	     && !this->conditional_assignment
+	     && !this->conditional_or_nested_assignment
 	     && !this->read_before_write
 	     && this->rhs_clean);
 
@@ -213,16 +221,35 @@ public:
 
       /* Variables that are marked read-only *MUST* be loop constant.
        */
-      assert(!this->var->read_only || (this->var->read_only && is_const));
+      assert(!this->var->data.read_only
+            || (this->var->data.read_only && is_const));
 
       return is_const;
    }
+
+   void record_reference(bool in_assignee,
+                         bool in_conditional_code_or_nested_loop,
+                         ir_assignment *current_assignment);
 };
 
 
 class loop_terminator : public exec_node {
 public:
+   loop_terminator()
+      : ir(NULL), iterations(-1)
+   {
+   }
+
+   /**
+    * Statement which terminates the loop.
+    */
    ir_if *ir;
+
+   /**
+    * The number of iterations after which the terminator is known to
+    * terminate the loop (if that is a fixed value).  Otherwise -1.
+    */
+   int iterations;
 };
 
 
@@ -236,6 +263,9 @@ public:
    loop_variable_state *get(const ir_loop *);
 
    loop_variable_state *insert(ir_loop *ir);
+	
+   loop_variable_state* get_for_inductor (const ir_variable*);
+   void insert_inductor(ir_variable* var, loop_variable_state* state, ir_loop* loop);
 
    bool loop_found;
 
@@ -246,10 +276,15 @@ private:
     * Hash table containing all loops that have been analyzed.
     */
    hash_table *ht;
+	
+   /**
+    * Hash table from ir_variables to loop state, for induction variables.
+    */
+   hash_table *ht_inductors;
 
    void *mem_ctx;
 
-   friend class loop_analysis;
+   friend loop_state *analyze_loop_variables(exec_list *instructions);
 };
 
 #endif /* LOOP_ANALYSIS_H */

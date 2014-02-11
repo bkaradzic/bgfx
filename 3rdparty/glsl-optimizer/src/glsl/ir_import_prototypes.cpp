@@ -30,6 +30,8 @@
 #include "ir.h"
 #include "glsl_symbol_table.h"
 
+namespace {
+
 /**
  * Visitor used to import function prototypes
  *
@@ -99,6 +101,7 @@ private:
    void *mem_ctx;
 };
 
+} /* anonymous namespace */
 
 /**
  * Import function prototypes from one IR tree into another

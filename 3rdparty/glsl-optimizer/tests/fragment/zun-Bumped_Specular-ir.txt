@@ -19,14 +19,14 @@ struct v2f_surf {
   vec3 vlight;
   vec4 _ShadowCoord;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _ShadowMapTexture;
-uniform sampler2D _MainTex;
-uniform vec4 _LightColor0;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform sampler2D _ShadowMapTexture;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 float unitySampleShadow (
   in vec4 shadowCoord_1
 )
@@ -127,10 +127,16 @@ vec4 LightingBlinnPhong (
   tmpvar_41 = (tmpvar_40 * s_23.Gloss);
   spec_28 = tmpvar_41;
   vec3 tmpvar_42;
-  tmpvar_42 = ((((s_23.Albedo * _LightColor0.xyz) * diff_30) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_28)) * (atten_26 * 2.0));
+  tmpvar_42 = (((
+    (s_23.Albedo * _LightColor0.xyz)
+   * diff_30) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_28)) * (atten_26 * 2.0));
   c_27.xyz = tmpvar_42.xyz.xyz;
   float tmpvar_43;
-  tmpvar_43 = (s_23.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_28) * atten_26));
+  tmpvar_43 = (s_23.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_28) * atten_26));
   c_27.w = vec4(tmpvar_43).w;
   return c_27;
 }

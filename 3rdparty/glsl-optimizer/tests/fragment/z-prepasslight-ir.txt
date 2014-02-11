@@ -3,23 +3,23 @@ struct v2f {
   vec4 uv;
   vec3 ray;
 };
-varying vec3 xlv_TEXCOORD1;
-varying vec4 xlv_TEXCOORD0;
-uniform vec4 unity_LightmapFade;
-uniform vec4 _ZBufferParams;
-uniform vec3 _WorldSpaceCameraPos;
-uniform samplerCube _ShadowMapTexture;
-uniform vec4 _ProjectionParams;
-uniform sampler2D _LightTextureB0;
-uniform samplerCube _LightTexture0;
-uniform vec4 _LightShadowData;
-uniform vec4 _LightPositionRange;
-uniform vec4 _LightPos;
-uniform mat4 _LightMatrix0;
-uniform vec4 _LightColor;
-uniform mat4 _CameraToWorld;
-uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
+uniform sampler2D _CameraNormalsTexture;
+uniform mat4 _CameraToWorld;
+uniform vec4 _LightColor;
+uniform mat4 _LightMatrix0;
+uniform vec4 _LightPos;
+uniform vec4 _LightPositionRange;
+uniform vec4 _LightShadowData;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform vec4 _ProjectionParams;
+uniform samplerCube _ShadowMapTexture;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _ZBufferParams;
+uniform vec4 unity_LightmapFade;
+varying vec4 xlv_TEXCOORD0;
+varying vec3 xlv_TEXCOORD1;
 float xll_saturate (
   in float x_1
 )

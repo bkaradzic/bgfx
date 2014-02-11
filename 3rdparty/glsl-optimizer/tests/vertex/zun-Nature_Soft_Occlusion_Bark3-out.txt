@@ -1,13 +1,13 @@
-uniform mat4 _World2Shadow3;
-uniform mat4 _World2Shadow2;
-uniform mat4 _World2Shadow1;
-uniform mat4 _World2Shadow;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
 uniform vec4 _LightShadowData;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+uniform mat4 _World2Shadow;
+uniform mat4 _World2Shadow1;
+uniform mat4 _World2Shadow2;
+uniform mat4 _World2Shadow3;
 void main ()
 {
   vec2 tmpvar_1;
@@ -23,7 +23,9 @@ void main ()
   tmpvar_4.y = _SquashPlaneNormal.w;
   vec4 tmpvar_5;
   tmpvar_5.w = 1.0;
-  tmpvar_5.xyz = mix ((pos_2.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_4 - pos_2.xyz)) * _SquashPlaneNormal.xyz)), pos_2.xyz, vec3(_SquashAmount));
+  tmpvar_5.xyz = mix ((pos_2.xyz + (
+    dot (_SquashPlaneNormal.xyz, (tmpvar_4 - pos_2.xyz))
+   * _SquashPlaneNormal.xyz)), pos_2.xyz, vec3(_SquashAmount));
   pos_2 = tmpvar_5;
   float tmpvar_6;
   tmpvar_6 = -((gl_ModelViewMatrix * tmpvar_5).z);
@@ -54,3 +56,5 @@ void main ()
   gl_TexCoord[4] = tmpvar_12;
 }
 
+
+// inputs: 2, stats: 26 alu 0 tex 0 flow

@@ -3,8 +3,8 @@ struct v2f {
   vec4 color;
   vec2 texcoord;
 };
-uniform vec4 _TintColor;
 uniform sampler2D _MainTex;
+uniform vec4 _TintColor;
 vec4 frag (
   in v2f i_1
 )

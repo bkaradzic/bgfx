@@ -1,10 +1,10 @@
-uniform sampler2D _ParallaxMap;
-uniform float _Parallax;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform float _Parallax;
+uniform sampler2D _ParallaxMap;
 void main ()
 {
   vec4 tmpvar_1;
@@ -21,12 +21,18 @@ void main ()
   tmpvar_6 = (texture2D (_MainTex, (tmpvar_1.xy + tmpvar_3)) * _Color);
   vec4 normal_7;
   normal_7.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_3)).wy * 2.0) - 1.0);
-  normal_7.z = sqrt(((1.0 - (normal_7.x * normal_7.x)) - (normal_7.y * normal_7.y)));
+  normal_7.z = sqrt(((1.0 - 
+    (normal_7.x * normal_7.x)
+  ) - (normal_7.y * normal_7.y)));
   vec4 c_8;
-  c_8.xyz = ((tmpvar_6.xyz * _LightColor0.xyz) * ((max (0.0, dot (normal_7.xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
+  c_8.xyz = ((tmpvar_6.xyz * _LightColor0.xyz) * ((
+    max (0.0, dot (normal_7.xyz, gl_TexCoord[2].xyz))
+   * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
   c_8.w = tmpvar_6.w;
   c_2.xyz = c_8.xyz;
   c_2.w = 0.0;
   gl_FragData[0] = c_2;
 }
 
+
+// inputs: 1, stats: 24 alu 4 tex 0 flow

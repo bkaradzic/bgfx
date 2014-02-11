@@ -1,8 +1,8 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _Object2World;
 uniform mat4 _LightMatrix0;
+uniform mat4 _Object2World;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -26,11 +26,15 @@ void main ()
   gl_TexCoord[1] = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6.w = 0.0;
-  tmpvar_6.xyz = (_WorldSpaceLightPos0.xyz - (_Object2World * gl_Vertex).xyz);
+  vec4 cse_7;
+  cse_7 = (_Object2World * gl_Vertex);
+  tmpvar_6.xyz = (_WorldSpaceLightPos0.xyz - cse_7.xyz);
   gl_TexCoord[2] = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = (_LightMatrix0 * (_Object2World * gl_Vertex)).xyz;
-  gl_TexCoord[3] = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8.w = 0.0;
+  tmpvar_8.xyz = (_LightMatrix0 * cse_7).xyz;
+  gl_TexCoord[3] = tmpvar_8;
 }
 
+
+// inputs: 2, stats: 13 alu 0 tex 0 flow

@@ -99,7 +99,7 @@ compare_index_block(exec_list *instructions, ir_variable *index,
 
    ir_rvalue *const condition_val =
       new(mem_ctx) ir_expression(ir_binop_equal,
-				 &glsl_type::bool_type[components - 1],
+				 glsl_type::bvec(components),
 				 broadcast_index,
 				 test_indices);
 
@@ -122,6 +122,7 @@ is_array_or_matrix(const ir_rvalue *ir)
    return (ir->type->is_array() || ir->type->is_matrix());
 }
 
+namespace {
 /**
  * Replace a dereference of a variable with a specified r-value
  *
@@ -191,6 +192,12 @@ struct assignment_generator
    ir_variable* var;
 
    assignment_generator()
+      : base_ir(NULL),
+        rvalue(NULL),
+        old_index(NULL),
+        is_write(false),
+        write_mask(0),
+        var(NULL)
    {
    }
 
@@ -358,18 +365,22 @@ public:
       if (var == NULL)
 	 return this->lower_temps;
 
-      switch (var->mode) {
+      switch (var->data.mode) {
       case ir_var_auto:
       case ir_var_temporary:
 	 return this->lower_temps;
       case ir_var_uniform:
 	 return this->lower_uniforms;
-      case ir_var_in:
+      case ir_var_function_in:
       case ir_var_const_in:
-	 return (var->location == -1) ? this->lower_temps : this->lower_inputs;
-      case ir_var_out:
-	 return (var->location == -1) ? this->lower_temps : this->lower_outputs;
-      case ir_var_inout:
+         return this->lower_temps;
+      case ir_var_shader_in:
+         return this->lower_inputs;
+      case ir_var_function_out:
+         return this->lower_temps;
+      case ir_var_shader_out:
+         return this->lower_outputs;
+      case ir_var_function_inout:
 	 return this->lower_temps;
       }
 
@@ -507,6 +518,8 @@ public:
       return visit_continue;
    }
 };
+
+} /* anonymous namespace */
 
 bool
 lower_variable_index_to_cond_assign(exec_list *instructions,

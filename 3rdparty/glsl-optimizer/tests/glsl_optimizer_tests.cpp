@@ -3,6 +3,8 @@
 #include <time.h>
 #include "../src/glsl/glsl_optimizer.h"
 
+#define GL_GLEXT_PROTOTYPES 1
+
 #if __linux__
 #define GOT_GFX 0
 #else
@@ -11,6 +13,7 @@
 
 #if GOT_GFX
 
+// ---- Windows GL bits
 #ifdef _MSC_VER
 #define GOT_MORE_THAN_GLSL_120 1
 #include <windows.h>
@@ -34,21 +37,34 @@ static PFNGLCOMPILESHADERARBPROC glCompileShaderARB;
 static PFNGLGETINFOLOGARBPROC glGetInfoLogARB;
 static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 }
-#else
+#endif // #ifdef _MSC_VER
+
+
+// ---- Apple GL bits
+#ifdef __APPLE__
+
 #define GOT_MORE_THAN_GLSL_120 0
 #include <OpenGL/OpenGL.h>
-#include <AGL/agl.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/CGLTypes.h>
 #include <dirent.h>
-#endif
+static CGLContextObj s_GLContext;
+static CGLContextObj s_GLContext3;
+static bool s_GL3Active = false;
 
-#else // GOT_GFX
+#endif // ifdef __APPLE__
+
+
+#else // #if GOT_GFX
+
 #define GOT_MORE_THAN_GLSL_120 0
 #include <cstdio>
 #include <cstring>
 #include "dirent.h"
 #include "GL/gl.h"
 #include "GL/glext.h"
-#endif
+
+#endif // ! #if GOT_GFX
 
 
 #ifndef _MSC_VER
@@ -88,25 +104,52 @@ static bool InitializeOpenGL ()
 
 	HGLRC rc = wglCreateContext( dc );
 	wglMakeCurrent( dc, rc );
-
-#else
-	GLint attributes[16];
-	int i = 0;
-	attributes[i++]=AGL_RGBA;
-	attributes[i++]=AGL_PIXEL_SIZE;
-	attributes[i++]=32;
-	attributes[i++]=AGL_NO_RECOVERY;
-	attributes[i++]=AGL_NONE;
 	
-	AGLPixelFormat pixelFormat = aglChoosePixelFormat(NULL,0,attributes);
-	AGLContext agl = aglCreateContext(pixelFormat, NULL);
-	aglSetCurrentContext (agl);
+#elif defined(__APPLE__)
+	
+	CGLPixelFormatAttribute attributes[] = {
+		kCGLPFAAccelerated,   // no software rendering
+		(CGLPixelFormatAttribute) 0
+	};
+	CGLPixelFormatAttribute attributes3[] = {
+		kCGLPFAAccelerated,   // no software rendering
+		kCGLPFAOpenGLProfile, // core profile with the version stated below
+		(CGLPixelFormatAttribute) kCGLOGLPVersion_3_2_Core,
+		(CGLPixelFormatAttribute) 0
+	};
+	GLint num;
+	CGLPixelFormatObj pix;
+	
+	// create legacy context
+	CGLChoosePixelFormat(attributes, &pix, &num);
+	if (pix == NULL)
+		return false;
+	CGLCreateContext(pix, NULL, &s_GLContext);
+	if (s_GLContext == NULL)
+		return false;
+	CGLDestroyPixelFormat(pix);
+	CGLSetCurrentContext(s_GLContext);
+	
+	// create core 3.2 context
+	CGLChoosePixelFormat(attributes3, &pix, &num);
+	if (pix == NULL)
+		return false;
+	CGLCreateContext(pix, NULL, &s_GLContext3);
+	if (s_GLContext3 == NULL)
+		return false;
+	CGLDestroyPixelFormat(pix);
 
 #endif
 
 	// check if we have GLSL
 	const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
-	hasGLSL = strstr(extensions, "GL_ARB_shader_objects") && strstr(extensions, "GL_ARB_vertex_shader") && strstr(extensions, "GL_ARB_fragment_shader");
+	hasGLSL = extensions != NULL && strstr(extensions, "GL_ARB_shader_objects") && strstr(extensions, "GL_ARB_vertex_shader") && strstr(extensions, "GL_ARB_fragment_shader");
+	
+	#if defined(__APPLE__)
+	// using core profile; always has GLSL
+	hasGLSL = true;
+	#endif
+	
 	
 #ifdef _MSC_VER
 	if (hasGLSL)
@@ -122,6 +165,19 @@ static bool InitializeOpenGL ()
 
 #endif
 	return hasGLSL;
+}
+
+static void CleanupGL()
+{
+#if GOT_GFX
+	#ifdef __APPLE__
+	CGLSetCurrentContext(NULL);
+	if (s_GLContext)
+		CGLDestroyContext(s_GLContext);
+	if (s_GLContext3)
+		CGLDestroyContext(s_GLContext3);
+	#endif // #ifdef __APPLE__
+#endif // #if GOT_GFX
 }
 
 static void replace_string (std::string& target, const std::string& search, const std::string& replace, size_t startPos)
@@ -148,6 +204,27 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		return true;
 	#endif
 	
+#	ifdef __APPLE__
+	// Mac core context does not accept any older shader versions, so need to switch to
+	// either legacy context or core one.
+	const bool need3 =
+		(source.find("#version 150") != std::string::npos) ||
+		(source.find("#version 300") != std::string::npos);
+	if (need3)
+	{
+		if (!s_GL3Active)
+			CGLSetCurrentContext(s_GLContext3);
+		s_GL3Active = true;
+	}
+	else
+	{
+		if (s_GL3Active)
+			CGLSetCurrentContext(s_GLContext);
+		s_GL3Active = false;
+	}
+#	endif // ifdef __APPLE__
+	
+	
 	std::string src;
 	if (gles)
 	{
@@ -156,6 +233,8 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		src += "#define highp\n";
 		src += "#define texture2DLodEXT texture2DLod\n";
 		src += "#define texture2DProjLodEXT texture2DProjLod\n";
+		src += "#define texture2DGradEXT texture2DGradARB\n";
+		src += "#define textureCubeGradEXT textureCubeGradARB\n";
 		src += "#define gl_FragDepthEXT gl_FragDepth\n";
 		src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
 		src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
@@ -167,7 +246,11 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "#extension GL_OES_standard_derivatives : require", "", 0);
 		replace_string (src, "#extension GL_EXT_shadow_samplers : require", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : require", "", 0);
+		replace_string (src, "#extension GL_OES_standard_derivatives : enable", "", 0);
+		replace_string (src, "#extension GL_EXT_shadow_samplers : enable", "", 0);
+		replace_string (src, "#extension GL_EXT_frag_depth : enable", "", 0);
 		replace_string (src, "precision ", "// precision ", 0);
+		replace_string (src, "#version 300 es", "#version 330", 0);
 	}
 	const char* sourcePtr = src.c_str();
 
@@ -212,6 +295,8 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 		output.clear();
 		return false;
 	}
+
+	replace_string(output, "\r\n", "\n", 0);
 	return true;
 }
 
@@ -326,6 +411,14 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	{
 		std::string textHir = glslopt_get_raw_output (shader);
 		std::string textOpt = glslopt_get_output (shader);
+
+		char buffer[200];
+		int statsAlu, statsTex, statsFlow;
+		glslopt_shader_get_stats (shader, &statsAlu, &statsTex, &statsFlow);
+		int inputCount = glslopt_shader_get_input_count (shader);
+		sprintf(buffer, "\n// inputs: %i, stats: %i alu %i tex %i flow\n", inputCount, statsAlu, statsTex, statsFlow);
+		textOpt += buffer;
+
 		std::string outputHir;
 		ReadStringFromFile (hirPath.c_str(), outputHir);
 		std::string outputOpt;
@@ -390,14 +483,18 @@ int main (int argc, const char** argv)
 	}
 
 	bool hasOpenGL = InitializeOpenGL ();
-	glslopt_ctx* ctx[2] = {
-		glslopt_initialize(true),
-		glslopt_initialize(false),
+	glslopt_ctx* ctx[3] = {
+		glslopt_initialize(kGlslTargetOpenGLES20),
+		glslopt_initialize(kGlslTargetOpenGLES30),
+		glslopt_initialize(kGlslTargetOpenGL),
 	};
 
 	std::string baseFolder = argv[1];
 
 	clock_t time0 = clock();
+
+	// 2.39s
+	// ralloc fix 256 initial: 1.35s
 
 	static const char* kTypeName[2] = { "vertex", "fragment" };
 	size_t tests = 0;
@@ -406,11 +503,11 @@ int main (int argc, const char** argv)
 	{
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
 
-		static const char* kAPIName[2] = { "OpenGL ES 2.0", "OpenGL" };
-		static const char* kApiIn [2] = {"-inES.txt", "-in.txt"};
-		static const char* kApiIR [2] = {"-irES.txt", "-ir.txt"};
-		static const char* kApiOut[2] = {"-outES.txt", "-out.txt"};
-		for (int api = 0; api < 2; ++api)
+		static const char* kAPIName[3] = { "OpenGL ES 2.0", "OpenGL ES 3.0", "OpenGL" };
+		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
+		static const char* kApiIR [3] = {"-irES.txt", "-irES3.txt", "-ir.txt"};
+		static const char* kApiOut[3] = {"-outES.txt", "-outES3.txt", "-out.txt"};
+		for (int api = 0; api < 3; ++api)
 		{
 			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
 			StringVector inputFiles = GetFiles (testFolder, kApiIn[api]);
@@ -445,6 +542,7 @@ int main (int argc, const char** argv)
 
 	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
+	CleanupGL();
 
 	return errors ? 1 : 0;
 }

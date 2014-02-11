@@ -1,6 +1,6 @@
-uniform sampler2D _RampTex;
-uniform float _RampOffset;
 uniform sampler2D _MainTex;
+uniform float _RampOffset;
+uniform sampler2D _RampTex;
 void main ()
 {
   vec4 xlat_var_output_1;
@@ -14,3 +14,5 @@ void main ()
   gl_FragData[0] = xlat_var_output_1;
 }
 
+
+// inputs: 1, stats: 3 alu 2 tex 0 flow

@@ -1,8 +1,8 @@
-attribute vec3 myUnused;
-attribute vec4 myColor;
-uniform float unusedFloat;
-uniform mat4 unusedMatrix;
 uniform mat4 mvp;
+uniform mat4 unusedMatrix;
+uniform float unusedFloat;
+attribute vec4 myColor;
+attribute vec3 myUnused;
 void main ()
 {
   vec4 tmpvar_1;

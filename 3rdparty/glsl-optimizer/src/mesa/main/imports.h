@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -80,7 +80,7 @@ extern "C" {
  * these casts generate warnings.
  * The following union typedef is used to solve that.
  */
-typedef union { GLfloat f; GLint i; } fi_type;
+typedef union { GLfloat f; GLint i; GLuint u; } fi_type;
 
 
 
@@ -114,7 +114,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define floorf(f) ((float) floor(f))
 #define logf(f) ((float) log(f))
 
-#if defined(__ANDROID__) || defined(ANDROID)
+#ifdef ANDROID
 #define log2f(f) (logf(f) * (float) (1.0 / M_LN2))
 #else
 #define log2f(f) ((float) log2(f))
@@ -140,6 +140,7 @@ static inline float acoshf(float x) { return logf(x + sqrtf(x * x - 1.0f)); }
 static inline float atanhf(float x) { return (logf(1.0f + x) - logf(1.0f - x)) / 2.0f; }
 static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 #define strtoll(p, e, b) _strtoi64(p, e, b)
+#define strcasecmp(s1, s2) _stricmp(s1, s2)
 #endif
 /*@}*/
 
@@ -212,8 +213,6 @@ static inline int IS_INF_OR_NAN( float x )
 #elif defined(isfinite)
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
 #elif defined(finite)
-#define IS_INF_OR_NAN(x)        (!finite(x))
-#elif defined(__VMS)
 #define IS_INF_OR_NAN(x)        (!finite(x))
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
@@ -493,17 +492,11 @@ _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 #ifndef FFS_DEFINED
 #define FFS_DEFINED 1
 #ifdef __GNUC__
-
-#if defined(__MINGW32__) || defined(__CYGWIN__) || defined(ANDROID) || defined(__APPLE__)
 #define ffs __builtin_ffs
 #define ffsll __builtin_ffsll
-#endif
-
 #else
-
 extern int ffs(int i);
 extern int ffsll(long long int i);
-
 #endif /*__ GNUC__ */
 #endif /* FFS_DEFINED */
 
@@ -540,6 +533,15 @@ _mesa_fls(unsigned int n)
    return v;
 #endif
 }
+
+extern int
+_mesa_round_to_even(float val);
+
+extern GLhalfARB
+_mesa_float_to_half(float f);
+
+extern float
+_mesa_half_to_float(GLhalfARB h);
 
 
 extern void *

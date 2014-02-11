@@ -8,11 +8,11 @@ struct v2f {
   vec3 TtoW1;
   vec3 TtoW2;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _ReflectColor;
-uniform sampler2D _MainTex;
-uniform samplerCube _Cube;
 uniform sampler2D _BumpMap;
+uniform samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform vec4 _ReflectColor;
+varying vec4 xlv_FOG;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

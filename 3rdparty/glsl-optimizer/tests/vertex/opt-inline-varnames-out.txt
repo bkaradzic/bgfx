@@ -5,3 +5,5 @@ void main ()
   gl_Position = vec4((((gl_Vertex.x + tmpvar_1) + (gl_Vertex.x * tmpvar_1)) + sqrt(tmpvar_1)));
 }
 
+
+// inputs: 1, stats: 6 alu 0 tex 0 flow

@@ -1,0 +1,21 @@
+attribute vec3 _in_position;
+uniform mat4 mtx;
+void main ()
+{
+  mat4 m_1;
+  m_1 = mtx;
+  vec4 tmpvar_2;
+  tmpvar_2 = mtx[0]; tmpvar_2.w = 0.0;
+  m_1[0] = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = m_1[0]; tmpvar_3.z = tmpvar_2.w;
+  m_1[0] = tmpvar_3;
+  m_1[0] = m_1[0]; m_1[0].y = tmpvar_3.z;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = _in_position;
+  gl_Position = (m_1 * tmpvar_4);
+}
+
+
+// inputs: 1, stats: 5 alu 0 tex 0 flow

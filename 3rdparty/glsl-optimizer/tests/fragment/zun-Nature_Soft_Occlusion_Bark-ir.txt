@@ -17,12 +17,12 @@ struct v2f_surf {
   vec3 lightDir;
   vec4 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
 uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+varying vec4 xlv_FOG;
 void surf (
   in Input IN_1,
   inout SurfaceOutput o_2
@@ -133,7 +133,9 @@ vec4 frag_surf (
   float tmpvar_41;
   tmpvar_41 = UnitySpotAttenuate (IN_25._LightCoord.xyz);
   vec4 tmpvar_42;
-  tmpvar_42 = LightingLambert (o_28, lightDir_27, ((float((IN_25._LightCoord.z > 0.0)) * tmpvar_40) * tmpvar_41));
+  tmpvar_42 = LightingLambert (o_28, lightDir_27, ((float(
+    (IN_25._LightCoord.z > 0.0)
+  ) * tmpvar_40) * tmpvar_41));
   vec4 tmpvar_43;
   tmpvar_43 = tmpvar_42;
   c_26 = tmpvar_43;

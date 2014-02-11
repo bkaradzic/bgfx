@@ -15,8 +15,8 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 lop_color;
 };
-uniform sampler2D _MainTex;
 uniform float _Cutoff;
+uniform sampler2D _MainTex;
 void xll_clip (
   in float x_1
 )

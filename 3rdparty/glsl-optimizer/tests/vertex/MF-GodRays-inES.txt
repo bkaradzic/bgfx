@@ -74,7 +74,7 @@ highp float CalcFadeOutFactor( in highp float dist );
 highp float CalcDistScale( in highp float dist );
 v2f xlat_main( in appdata_full v );
 void CalcOrthonormalBasis( in highp vec3 dir, out highp vec3 right, out highp vec3 up ) {
-    up = (( (abs( dir.y  ) > 0.999000) ) ? ( highp vec3( 0.00000, 0.00000, 1.00000) ) : ( highp vec3( 0.00000, 1.00000, 0.00000) ));
+    up = (( (abs( dir.y  ) > 0.999000) ) ? ( vec3( 0.0, 0.0, 1.0) ) : ( vec3( 0.0, 1.0, 0.0) ));
     right = normalize( cross( up, dir) );
     up = cross( dir, right);
 }

@@ -21,18 +21,18 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 lop_color;
 };
-uniform sampler2D _TranslucencyMap;
-uniform vec4 _TranslucencyColor;
-uniform float _Shininess;
-uniform sampler2D _ShadowMapTexture;
-uniform vec4 _ProjectionParams;
-uniform sampler2D _MainTex;
-uniform vec4 _LightSplitsNear;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightShadowData;
-uniform sampler2D _GlossMap;
-uniform float _Cutoff;
 uniform sampler2D _BumpMap;
+uniform float _Cutoff;
+uniform sampler2D _GlossMap;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightSplitsNear;
+uniform sampler2D _MainTex;
+uniform vec4 _ProjectionParams;
+uniform sampler2D _ShadowMapTexture;
+uniform float _Shininess;
+uniform vec4 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
 void xll_clip (
   in float x_1
 )
@@ -291,7 +291,11 @@ vec4 frag_surf (
   weights_71 = tmpvar_91;
   vec4 tmpvar_92;
   tmpvar_92.w = 1.0;
-  tmpvar_92.xyz = ((((IN_66._ShadowCoord0 * weights_71.x) + (IN_66._ShadowCoord1 * weights_71.y)) + (IN_66._ShadowCoord2 * weights_71.z)) + (IN_66._ShadowCoord3 * weights_71.w)).xyz;
+  tmpvar_92.xyz = (((
+    (IN_66._ShadowCoord0 * weights_71.x)
+   + 
+    (IN_66._ShadowCoord1 * weights_71.y)
+  ) + (IN_66._ShadowCoord2 * weights_71.z)) + (IN_66._ShadowCoord3 * weights_71.w)).xyz;
   vec4 tmpvar_93;
   tmpvar_93 = tmpvar_92;
   coord_70 = tmpvar_93;

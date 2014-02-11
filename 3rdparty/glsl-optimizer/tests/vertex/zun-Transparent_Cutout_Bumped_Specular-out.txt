@@ -1,6 +1,6 @@
-attribute vec4 TANGENT;
-uniform vec4 _MainTex_ST;
 uniform vec4 _BumpMap_ST;
+uniform vec4 _MainTex_ST;
+attribute vec4 TANGENT;
 void main ()
 {
   vec4 tmpvar_1;
@@ -34,3 +34,5 @@ void main ()
   gl_TexCoord[3] = tmpvar_6;
 }
 
+
+// inputs: 4, stats: 15 alu 0 tex 0 flow

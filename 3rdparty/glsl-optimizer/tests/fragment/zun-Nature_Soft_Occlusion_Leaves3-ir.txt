@@ -14,10 +14,10 @@ struct v2f_surf {
   vec3 vec;
   vec2 hip_pack0;
 };
-uniform sampler2D _MainTex;
-uniform vec4 _LightPositionRange;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightPositionRange;
+uniform sampler2D _MainTex;
 void xll_clip (
   in float x_1
 )

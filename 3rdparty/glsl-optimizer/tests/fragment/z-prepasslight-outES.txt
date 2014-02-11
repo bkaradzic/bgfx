@@ -1,20 +1,20 @@
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec4 xlv_TEXCOORD0;
-uniform highp vec4 unity_LightmapFade;
-uniform highp vec4 _ZBufferParams;
-uniform highp vec3 _WorldSpaceCameraPos;
-uniform samplerCube _ShadowMapTexture;
-uniform highp vec4 _ProjectionParams;
-uniform sampler2D _LightTextureB0;
-uniform samplerCube _LightTexture0;
-uniform highp vec4 _LightShadowData;
-uniform highp vec4 _LightPositionRange;
-uniform highp vec4 _LightPos;
-uniform highp mat4 _LightMatrix0;
-uniform highp vec4 _LightColor;
-uniform highp mat4 _CameraToWorld;
-uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
+uniform sampler2D _CameraNormalsTexture;
+uniform highp mat4 _CameraToWorld;
+uniform highp vec4 _LightColor;
+uniform highp mat4 _LightMatrix0;
+uniform highp vec4 _LightPos;
+uniform highp vec4 _LightPositionRange;
+uniform highp vec4 _LightShadowData;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform highp vec4 _ProjectionParams;
+uniform samplerCube _ShadowMapTexture;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp vec4 _ZBufferParams;
+uniform highp vec4 unity_LightmapFade;
+varying highp vec4 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
 void main ()
 {
   mediump vec4 res_1;
@@ -53,7 +53,9 @@ void main ()
   tmpvar_18 = texture2D (_LightTextureB0, tmpvar_17).w;
   atten_4 = tmpvar_18;
   highp float tmpvar_19;
-  tmpvar_19 = ((sqrt(dot (tmpvar_15, tmpvar_15)) * _LightPositionRange.w) * 0.97);
+  tmpvar_19 = ((sqrt(
+    dot (tmpvar_15, tmpvar_15)
+  ) * _LightPositionRange.w) * 0.97);
   mediump vec4 shadows_20;
   highp vec4 shadowVals_21;
   highp vec3 vec_22;
@@ -133,7 +135,9 @@ void main ()
   mediump float tmpvar_46;
   tmpvar_46 = max (0.0, dot (lightDir_5, normal_7));
   highp vec3 tmpvar_47;
-  tmpvar_47 = normalize((lightDir_5 - normalize((tmpvar_14 - _WorldSpaceCameraPos))));
+  tmpvar_47 = normalize((lightDir_5 - normalize(
+    (tmpvar_14 - _WorldSpaceCameraPos)
+  )));
   h_3 = tmpvar_47;
   mediump float tmpvar_48;
   tmpvar_48 = pow (max (0.0, dot (h_3, normal_7)), (nspec_8.w * 128.0));
@@ -152,10 +156,14 @@ void main ()
   tmpvar_53 = (tmpvar_49 * tmpvar_52);
   res_1.w = tmpvar_53;
   highp float tmpvar_54;
-  tmpvar_54 = clamp ((1.0 - ((tmpvar_13.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0);
+  tmpvar_54 = clamp ((1.0 - (
+    (tmpvar_13.z * unity_LightmapFade.z)
+   + unity_LightmapFade.w)), 0.0, 1.0);
   mediump vec4 tmpvar_55;
   tmpvar_55 = (res_1 * tmpvar_54);
   res_1 = tmpvar_55;
   gl_FragData[0] = exp2(-(tmpvar_55));
 }
 
+
+// inputs: 2, stats: 62 alu 8 tex 4 flow

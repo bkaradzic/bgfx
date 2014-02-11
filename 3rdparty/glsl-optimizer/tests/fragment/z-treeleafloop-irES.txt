@@ -6,20 +6,20 @@ struct v2f {
   highp vec3 nl;
   highp vec3 nh;
 };
-varying highp vec3 xlv_TEXCOORD4;
-varying highp vec3 xlv_TEXCOORD3;
-varying highp vec3 xlv_TEXCOORD2;
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-varying highp vec4 xlv_SV_POSITION;
-uniform sampler2D _TranslucencyMap;
-uniform lowp vec3 _TranslucencyColor;
-uniform highp vec4 _TerrainTreeLightColors[4];
-uniform lowp vec4 _SpecColor;
-uniform sampler2D _MainTex;
-uniform lowp float _Cutoff;
-uniform sampler2D _BumpSpecMap;
 uniform lowp vec4 UNITY_LIGHTMODEL_AMBIENT;
+uniform sampler2D _BumpSpecMap;
+uniform lowp float _Cutoff;
+uniform sampler2D _MainTex;
+uniform lowp vec4 _SpecColor;
+uniform highp vec4 _TerrainTreeLightColors[4];
+uniform lowp vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
+varying highp vec4 xlv_SV_POSITION;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec3 xlv_TEXCOORD2;
+varying highp vec3 xlv_TEXCOORD3;
+varying highp vec3 xlv_TEXCOORD4;
 void xll_clip (
   in float x_1
 )
@@ -102,7 +102,11 @@ lowp vec4 xlat_main (
     tmpvar_34 = (tmpvar_33 * gloss_12);
     spec_4 = tmpvar_34;
     mediump vec3 tmpvar_35;
-    tmpvar_35 = (light_11 + (((albedo_15 * (translucencyColor_7 + nl_6)) + (_SpecColor.xyz * spec_4)) * lightColor_8));
+    tmpvar_35 = (light_11 + ((
+      (albedo_15 * (translucencyColor_7 + nl_6))
+     + 
+      (_SpecColor.xyz * spec_4)
+    ) * lightColor_8));
     light_11 = tmpvar_35;
     int _post_incdec_tmp_36;
     _post_incdec_tmp_36 = j_9;

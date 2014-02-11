@@ -601,7 +601,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 	const char* profile = _cmdLine.findOption('p', "profile");
 	bool gles = NULL == profile;
 
-	glslopt_ctx* ctx = glslopt_initialize(gles);
+	glslopt_ctx* ctx = glslopt_initialize( (glslopt_target)gles);
 
 	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), 0); 
 

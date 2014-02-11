@@ -15,3 +15,5 @@ void main ()
   gl_FragColor = tmpvar_3;
 }
 
+
+// inputs: 1, stats: 5 alu 1 tex 1 flow

@@ -1,0 +1,7 @@
+#extension GL_ARB_shader_texture_lod : require
+uniform sampler2D tex;
+uniform samplerCube cub;
+varying vec3 uv;
+void main() {
+	gl_FragColor = texture2DGradARB(tex,uv.xy,dFdx(uv.xy),dFdy(uv.xy)) + textureCubeGradARB(cub,uv,dFdx(uv),dFdy(uv));
+}

@@ -1,6 +1,6 @@
-varying vec4 xlv_COLOR;
-varying vec2 xlv_TEXCOORD0;
 uniform mat4 mvp;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR;
 void main ()
 {
   vec4 tmpvar_1;
@@ -11,3 +11,5 @@ void main ()
   xlv_COLOR = tmpvar_1;
 }
 
+
+// inputs: 4, stats: 2 alu 0 tex 0 flow

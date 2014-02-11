@@ -17,11 +17,11 @@ struct v2f_surf {
   vec3 TtoV1;
   vec3 TtoV2;
 };
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform float _Cutoff;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
 void xll_clip (
   in float x_1
 )

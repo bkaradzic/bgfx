@@ -49,6 +49,8 @@
 #include "ir.h"
 #include "program/hash_table.h"
 
+namespace {
+
 class ir_if_to_cond_assign_visitor : public ir_hierarchical_visitor {
 public:
    ir_if_to_cond_assign_visitor(unsigned max_depth)
@@ -75,6 +77,8 @@ public:
 
    struct hash_table *condition_variables;
 };
+
+} /* anonymous namespace */
 
 bool
 lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth)
@@ -174,12 +178,12 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
    ir_assignment *assign;
 
    /* Check that both blocks don't contain anything we can't support. */
-   foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
-      ir_instruction *then_ir = (ir_instruction *)then_iter.get();
+   foreach_list(n, &ir->then_instructions) {
+      ir_instruction *then_ir = (ir_instruction *) n;
       visit_tree(then_ir, check_control_flow, &found_control_flow);
    }
-   foreach_iter(exec_list_iterator, else_iter, ir->else_instructions) {
-      ir_instruction *else_ir = (ir_instruction *)else_iter.get();
+   foreach_list(n, &ir->else_instructions) {
+      ir_instruction *else_ir = (ir_instruction *) n;
       visit_tree(else_ir, check_control_flow, &found_control_flow);
    }
    if (found_control_flow)

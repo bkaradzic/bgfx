@@ -16,11 +16,11 @@ struct v2f_surf {
   vec4 hip_screen;
   vec3 hip_lmapFade;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
 uniform vec4 _ProjectionParams;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void vert (
   inout appdata_full v_1,
   out Input o_2
@@ -85,7 +85,9 @@ v2f_surf vert_surf (
   tmpvar_21 = ((v_15.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   o_16.hip_lmapFade.xy = tmpvar_21.xy.xy;
   float tmpvar_22;
-  tmpvar_22 = ((-((gl_ModelViewMatrix * v_15.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_22 = ((-(
+    (gl_ModelViewMatrix * v_15.vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   o_16.hip_lmapFade.z = vec3(tmpvar_22).z;
   return o_16;
 }

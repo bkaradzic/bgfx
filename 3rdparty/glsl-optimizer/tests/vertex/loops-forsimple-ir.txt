@@ -1,5 +1,5 @@
-varying vec4 varColor;
 uniform vec4 uniColors[4];
+varying vec4 varColor;
 void main ()
 {
   int i_1;

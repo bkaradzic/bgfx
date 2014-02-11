@@ -54,6 +54,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include "main/compiler.h"
 
 /**
  * \def ralloc(ctx, type)
@@ -301,7 +302,7 @@ bool ralloc_strncat(char **dest, const char *str, size_t n);
  *
  * \return The newly allocated string.
  */
-char *ralloc_asprintf (const void *ctx, const char *fmt, ...);
+char *ralloc_asprintf (const void *ctx, const char *fmt, ...) PRINTFLIKE(2, 3);
 
 /**
  * Print to a string, given a va_list.
@@ -334,7 +335,8 @@ char *ralloc_vasprintf(const void *ctx, const char *fmt, va_list args);
  * \return True unless allocation failed.
  */
 bool ralloc_asprintf_rewrite_tail(char **str, size_t *start,
-				  const char *fmt, ...);
+				  const char *fmt, ...)
+				  PRINTFLIKE(3, 4);
 
 /**
  * Rewrite the tail of an existing string, starting at a given index.
@@ -376,7 +378,8 @@ bool ralloc_vasprintf_rewrite_tail(char **str, size_t *start, const char *fmt,
  *
  * \return True unless allocation failed.
  */
-bool ralloc_asprintf_append (char **str, const char *fmt, ...);
+bool ralloc_asprintf_append (char **str, const char *fmt, ...)
+			     PRINTFLIKE(2, 3);
 
 /**
  * Append formatted text to the supplied string, given a va_list.
@@ -397,8 +400,50 @@ bool ralloc_asprintf_append (char **str, const char *fmt, ...);
 bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
 /// @}
 
+
+size_t printf_length(const char *fmt, va_list untouched_args);
+
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 #endif
+
+/**
+ * Declare C++ new and delete operators which use ralloc.
+ *
+ * Placing this macro in the body of a class makes it possible to do:
+ *
+ * TYPE *var = new(mem_ctx) TYPE(...);
+ * delete var;
+ *
+ * which is more idiomatic in C++ than calling ralloc.
+ */
+#define DECLARE_RALLOC_CXX_OPERATORS(TYPE)                               \
+private:                                                                 \
+   static void _ralloc_destructor(void *p)                               \
+   {                                                                     \
+      reinterpret_cast<TYPE *>(p)->~TYPE();                              \
+   }                                                                     \
+public:                                                                  \
+   static void* operator new(size_t size, void *mem_ctx)                 \
+   {                                                                     \
+      void *p = ralloc_size(mem_ctx, size);                              \
+      assert(p != NULL);                                                 \
+      if (!HAS_TRIVIAL_DESTRUCTOR(TYPE))                                 \
+         ralloc_set_destructor(p, _ralloc_destructor);                   \
+      return p;                                                          \
+   }                                                                     \
+                                                                         \
+   static void operator delete(void *p)                                  \
+   {                                                                     \
+      /* The object's destructor is guaranteed to have already been      \
+       * called by the delete operator at this point -- Make sure it's   \
+       * not called again.                                               \
+       */                                                                \
+      if (!HAS_TRIVIAL_DESTRUCTOR(TYPE))                                 \
+         ralloc_set_destructor(p, NULL);                                 \
+      ralloc_free(p);                                                    \
+   }
+
 
 #endif

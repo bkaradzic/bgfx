@@ -1,0 +1,100 @@
+float xll_saturate_f( float x) {
+  return clamp( x, 0.0, 1.0);
+}
+struct v2f_ao {
+    vec4 pos;
+    vec2 uv;
+    vec2 uvr;
+};
+uniform vec4 _ProjectionParams;
+uniform vec2 _NoiseScale;
+uniform vec4 _CameraDepthNormalsTexture_ST;
+uniform sampler2D _CameraDepthNormalsTexture;
+uniform sampler2D _RandomTexture;
+uniform vec4 _Params;
+float DecodeFloatRG( in vec2 enc ) {
+    vec2 kDecodeDot = vec2( 1.0, 0.00392157);
+    return dot( enc, kDecodeDot);
+}
+vec3 DecodeViewNormalStereo( in vec4 enc4 ) {
+    float kScale = 1.7777;
+    vec3 nn = ((enc4.xyz * vec3( (2.0 * kScale), (2.0 * kScale), 0.0)) + vec3( (-kScale), (-kScale), 1.0));
+    float g = (2.0 / dot( nn.xyz, nn.xyz));
+    vec3 n;
+    n.xy = (g * nn.xy);
+    n.z = (g - 1.0);
+    return n;
+}
+void DecodeDepthNormal( in vec4 enc, out float depth, out vec3 normal ) {
+    depth = DecodeFloatRG( enc.zw);
+    normal = DecodeViewNormalStereo( enc);
+}
+float frag_ao( in v2f_ao i, in int sampleCount, in vec3 samples[24] ) {
+    vec3 randN = ((texture2D( _RandomTexture, i.uvr).xyz * 2.0) - 1.0);
+    vec4 depthnormal = texture2D( _CameraDepthNormalsTexture, i.uv);
+    vec3 viewNorm;
+    float depth;
+    DecodeDepthNormal( depthnormal, depth, viewNorm);
+    depth *= _ProjectionParams.z;
+    float scale = (_Params.x / depth);
+    float occ = 0.0;
+    int s = 0;
+    for ( ; (s < sampleCount); (++s)) {
+        vec3 randomDir = reflect( samples[s], randN);
+        float flip = (( (dot( viewNorm, randomDir) < 0.0) ) ? ( 1.0 ) : ( -1.0 ));
+        randomDir *= (-flip);
+        randomDir += (viewNorm * 0.3);
+        vec2 offset = (randomDir.xy * scale);
+        float sD = (depth - (randomDir.z * _Params.x));
+        vec4 sampleND = texture2D( _CameraDepthNormalsTexture, (i.uv + offset));
+        float sampleD;
+        vec3 sampleN;
+        DecodeDepthNormal( sampleND, sampleD, sampleN);
+        sampleD *= _ProjectionParams.z;
+        float zd = xll_saturate_f((sD - sampleD));
+        if ((zd > _Params.y)){
+            occ += pow( (1.0 - zd), _Params.z);
+        }
+    }
+    occ /= float(sampleCount);
+    return (1.0 - occ);
+}
+vec4 frag( in v2f_ao i ) {
+    vec3 RAND_SAMPLES[24];
+    RAND_SAMPLES[0] = vec3( 0.0130572, 0.587232, -0.119337);
+    RAND_SAMPLES[1] = vec3( 0.323078, 0.0220727, -0.418873);
+    RAND_SAMPLES[2] = vec3( -0.310725, -0.191367, 0.0561369);
+    RAND_SAMPLES[3] = vec3( -0.479646, 0.0939877, -0.580265);
+    RAND_SAMPLES[4] = vec3( 0.139999, -0.33577, 0.559679);
+    RAND_SAMPLES[5] = vec3( -0.248458, 0.255532, 0.348944);
+    RAND_SAMPLES[6] = vec3( 0.18719, -0.702764, -0.231748);
+    RAND_SAMPLES[7] = vec3( 0.884915, 0.284208, 0.368524);
+    RAND_SAMPLES[8] = vec3( 0.0130572, 0.587232, -0.119337);
+    RAND_SAMPLES[9] = vec3( 0.323078, 0.0220727, -0.418873);
+    RAND_SAMPLES[10] = vec3( -0.310725, -0.191367, 0.0561369);
+    RAND_SAMPLES[11] = vec3( -0.479646, 0.0939877, -0.580265);
+    RAND_SAMPLES[12] = vec3( 0.139999, -0.33577, 0.559679);
+    RAND_SAMPLES[13] = vec3( -0.248458, 0.255532, 0.348944);
+    RAND_SAMPLES[14] = vec3( 0.18719, -0.702764, -0.231748);
+    RAND_SAMPLES[15] = vec3( 0.884915, 0.284208, 0.368524);
+    RAND_SAMPLES[16] = vec3( 0.0130572, 0.587232, -0.119337);
+    RAND_SAMPLES[17] = vec3( 0.323078, 0.0220727, -0.418873);
+    RAND_SAMPLES[18] = vec3( -0.310725, -0.191367, 0.0561369);
+    RAND_SAMPLES[19] = vec3( -0.479646, 0.0939877, -0.580265);
+    RAND_SAMPLES[20] = vec3( 0.139999, -0.33577, 0.559679);
+    RAND_SAMPLES[21] = vec3( -0.248458, 0.255532, 0.348944);
+    RAND_SAMPLES[22] = vec3( 0.18719, -0.702764, -0.231748);
+    RAND_SAMPLES[23] = vec3( 0.884915, 0.284208, 0.368524);
+    return vec4( frag_ao( i, 24, RAND_SAMPLES));
+}
+varying vec2 xlv_TEXCOORD0;
+varying vec2 xlv_TEXCOORD1;
+void main() {
+    vec4 xl_retval;
+    v2f_ao xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2(xlv_TEXCOORD0);
+    xlt_i.uvr = vec2(xlv_TEXCOORD1);
+    xl_retval = frag( xlt_i);
+    gl_FragData[0] = vec4(xl_retval);
+}

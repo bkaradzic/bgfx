@@ -7,11 +7,11 @@ struct appdata {
   vec4 vertex;
   vec3 normal;
 };
-varying vec3 xlv_TEXCOORD1;
-varying vec4 xlv_TEXCOORD0;
-uniform mat4 glstate_matrix_mvp;
-uniform mat4 glstate_matrix_modelview0;
 uniform vec4 _ProjectionParams;
+uniform mat4 glstate_matrix_modelview0;
+uniform mat4 glstate_matrix_mvp;
+varying vec4 xlv_TEXCOORD0;
+varying vec3 xlv_TEXCOORD1;
 vec4 ComputeScreenPos (
   in vec4 pos_1
 )

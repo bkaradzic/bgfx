@@ -1,14 +1,14 @@
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform vec4 _ProjectionParams;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform vec4 _BumpMap_ST;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _ProjectionParams;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -25,7 +25,9 @@ void main ()
   tmpvar_5[1] = _Object2World[1].xyz;
   tmpvar_5[2] = _Object2World[2].xyz;
   vec3 tmpvar_6;
-  tmpvar_6 = (tmpvar_5 * (gl_Vertex.xyz - ((_World2Object * tmpvar_4).xyz * unity_Scale.w)));
+  tmpvar_6 = (tmpvar_5 * (gl_Vertex.xyz - (
+    (_World2Object * tmpvar_4)
+  .xyz * unity_Scale.w)));
   vec3 tmpvar_7;
   tmpvar_7 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_8;
@@ -56,7 +58,9 @@ void main ()
   o_12.xy = (tmpvar_14 + tmpvar_13.w);
   o_12.zw = tmpvar_3.zw;
   tmpvar_2.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
-  tmpvar_2.z = ((-((gl_ModelViewMatrix * gl_Vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_2.z = ((-(
+    (gl_ModelViewMatrix * gl_Vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   gl_Position = tmpvar_3;
   vec4 tmpvar_15;
   tmpvar_15.yzw = vec3(0.0, 0.0, 0.0);
@@ -73,3 +77,5 @@ void main ()
   gl_TexCoord[5] = tmpvar_16;
 }
 
+
+// inputs: 5, stats: 31 alu 0 tex 0 flow

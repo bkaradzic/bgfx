@@ -9,11 +9,11 @@ struct appdata {
   vec4 color;
   vec4 texcoord;
 };
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
 uniform vec4 _ProjectionParams;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
 mat3 xll_constructMat3 (
   in mat4 m_1
 )

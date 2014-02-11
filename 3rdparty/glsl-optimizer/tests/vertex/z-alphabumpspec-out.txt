@@ -1,19 +1,19 @@
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 unity_SHC;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAb;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform vec4 _BumpMap_ST;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_SHAb;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHC;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -63,7 +63,9 @@ void main ()
   gl_TexCoord[0] = tmpvar_1;
   vec4 tmpvar_13;
   tmpvar_13.w = 0.0;
-  tmpvar_13.xyz = (tmpvar_6 * (((_World2Object * tmpvar_7).xyz * unity_Scale.w) - gl_Vertex.xyz));
+  tmpvar_13.xyz = (tmpvar_6 * ((
+    (_World2Object * tmpvar_7)
+  .xyz * unity_Scale.w) - gl_Vertex.xyz));
   gl_TexCoord[1] = tmpvar_13;
   vec4 tmpvar_14;
   tmpvar_14.w = 0.0;
@@ -71,7 +73,13 @@ void main ()
   gl_TexCoord[2] = tmpvar_14;
   vec4 tmpvar_15;
   tmpvar_15.w = 0.0;
-  tmpvar_15.xyz = ((x1_10 + x2_9) + (unity_SHC.xyz * ((tmpvar_4.x * tmpvar_4.x) - (tmpvar_4.y * tmpvar_4.y))));
+  tmpvar_15.xyz = ((x1_10 + x2_9) + (unity_SHC.xyz * (
+    (tmpvar_4.x * tmpvar_4.x)
+   - 
+    (tmpvar_4.y * tmpvar_4.y)
+  )));
   gl_TexCoord[3] = tmpvar_15;
 }
 
+
+// inputs: 4, stats: 36 alu 0 tex 0 flow

@@ -13,9 +13,9 @@ struct Input {
 struct v2f_surf {
   vec4 pos;
 };
-uniform sampler2D _TranslucencyMap;
-uniform sampler2D _MainTex;
 uniform sampler2D _BumpSpecMap;
+uniform sampler2D _MainTex;
+uniform sampler2D _TranslucencyMap;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

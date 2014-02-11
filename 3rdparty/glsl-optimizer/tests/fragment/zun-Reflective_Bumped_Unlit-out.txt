@@ -1,7 +1,7 @@
-uniform vec4 _ReflectColor;
-uniform sampler2D _MainTex;
-uniform samplerCube _Cube;
 uniform sampler2D _BumpMap;
+uniform samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform vec4 _ReflectColor;
 void main ()
 {
   vec3 tmpvar_1;
@@ -10,7 +10,9 @@ void main ()
   vec3 wn_3;
   vec4 normal_4;
   normal_4.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.0) - 1.0);
-  normal_4.z = sqrt(((1.0 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
+  normal_4.z = sqrt(((1.0 - 
+    (normal_4.x * normal_4.x)
+  ) - (normal_4.y * normal_4.y)));
   vec4 tmpvar_5;
   tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
   wn_3.x = dot (gl_TexCoord[3].xyz, normal_4.xyz);
@@ -20,8 +22,10 @@ void main ()
   tmpvar_6 = (gl_LightModel.ambient * tmpvar_5);
   c_2.w = tmpvar_6.w;
   c_2.xyz = (tmpvar_6.xyz * 2.0);
-  vec4 tmpvar_7;
-  tmpvar_7 = ((textureCube (_Cube, (tmpvar_1 - (2.0 * (dot (wn_3, tmpvar_1) * wn_3)))) * _ReflectColor) * tmpvar_5.w);
-  gl_FragData[0] = (c_2 + tmpvar_7);
+  gl_FragData[0] = (c_2 + ((textureCube (_Cube, 
+    (tmpvar_1 - (2.0 * (dot (wn_3, tmpvar_1) * wn_3)))
+  ) * _ReflectColor) * tmpvar_5.w));
 }
 
+
+// inputs: 1, stats: 19 alu 3 tex 0 flow

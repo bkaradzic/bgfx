@@ -18,12 +18,12 @@ struct v2f_surf {
   vec3 TtoV1;
   vec3 TtoV2;
 };
-uniform float _Shininess;
-uniform vec4 _ReflectColor;
-uniform sampler2D _MainTex;
-uniform samplerCube _Cube;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform vec4 _ReflectColor;
+uniform float _Shininess;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

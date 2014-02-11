@@ -11,9 +11,9 @@ struct v2f {
   vec2 uv;
   vec3 color;
 };
-attribute vec4 TANGENT;
-uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TerrainTreeLightDirections[4];
+attribute vec4 TANGENT;
 void ExpandBillboard (
   in mat4 mat_1,
   inout vec4 pos_2,

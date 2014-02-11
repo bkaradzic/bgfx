@@ -14,12 +14,12 @@ struct v2f {
   vec3 nl;
   vec3 nh;
 };
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform float _TranslucencyViewDependency;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform float _TranslucencyViewDependency;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
 float xll_saturate (
   in float x_1
 )
@@ -158,17 +158,17 @@ v2f vert (
     float tmpvar_56;
     tmpvar_56 = tmpvar_55;
     backContrib_36 = tmpvar_56;
-    float tmpvar_57;
-    tmpvar_57 = (backContrib_36 * 2.0);
-    o_41.backContrib[j_39] = tmpvar_57;
+    vec3 tmpvar_57;
+    tmpvar_57 = o_41.backContrib; tmpvar_57[j_39] = (backContrib_36 * 2.0);
+    o_41.backContrib = tmpvar_57;
     float tmpvar_58;
     tmpvar_58 = max (0.0, ((nl_37 * 0.6) + 0.4));
     float tmpvar_59;
     tmpvar_59 = tmpvar_58;
     nl_37 = tmpvar_59;
-    float tmpvar_60;
-    tmpvar_60 = nl_37;
-    o_41.nl[j_39] = tmpvar_60;
+    vec3 tmpvar_60;
+    tmpvar_60 = o_41.nl; tmpvar_60[j_39] = nl_37;
+    o_41.nl = tmpvar_60;
     vec3 tmpvar_61;
     tmpvar_61 = normalize ((lightDir_38 + viewDir_40));
     vec3 tmpvar_62;
@@ -181,9 +181,9 @@ v2f vert (
     float tmpvar_65;
     tmpvar_65 = tmpvar_64;
     nh_34 = tmpvar_65;
-    float tmpvar_66;
-    tmpvar_66 = nh_34;
-    o_41.nh[j_39] = tmpvar_66;
+    vec3 tmpvar_66;
+    tmpvar_66 = o_41.nh; tmpvar_66[j_39] = nh_34;
+    o_41.nh = tmpvar_66;
     int _post_incdec_tmp_67;
     _post_incdec_tmp_67 = j_39;
     int tmpvar_68;

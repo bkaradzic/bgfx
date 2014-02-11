@@ -1,6 +1,6 @@
-uniform vec4 _ZBufferParams;
-uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
+uniform sampler2D _CameraNormalsTexture;
+uniform vec4 _ZBufferParams;
 void main ()
 {
   vec2 tmpvar_1;
@@ -16,7 +16,9 @@ void main ()
   vec4 tmpvar_5;
   if ((tmpvar_4 < 0.999985)) {
     vec4 enc_6;
-    enc_6.xy = ((((n_2.xy / (n_2.z + 1.0)) / 1.7777) * 0.5) + 0.5);
+    enc_6.xy = (((
+      (n_2.xy / (n_2.z + 1.0))
+     / 1.7777) * 0.5) + 0.5);
     vec2 enc_7;
     vec2 tmpvar_8;
     tmpvar_8 = fract((vec2(1.0, 255.0) * tmpvar_4));
@@ -30,3 +32,5 @@ void main ()
   gl_FragData[0] = tmpvar_5;
 }
 
+
+// inputs: 1, stats: 17 alu 2 tex 1 flow

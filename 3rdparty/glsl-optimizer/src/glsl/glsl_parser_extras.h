@@ -34,12 +34,6 @@
 #include <stdlib.h>
 #include "glsl_symbol_table.h"
 
-enum _mesa_glsl_parser_targets {
-   vertex_shader,
-   geometry_shader,
-   fragment_shader
-};
-
 struct gl_context;
 
 struct glsl_switch_state {
@@ -56,26 +50,103 @@ struct glsl_switch_state {
    bool is_switch_innermost; // if switch stmt is closest to break, ...
 };
 
+const char *
+glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version);
+
+typedef struct YYLTYPE {
+   int first_line;
+   int first_column;
+   int last_line;
+   int last_column;
+   unsigned source;
+} YYLTYPE;
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+
+extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
+			     const char *fmt, ...);
+
+
 struct _mesa_glsl_parse_state {
-   _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
+   _mesa_glsl_parse_state(struct gl_context *_ctx, gl_shader_stage stage,
 			  void *mem_ctx);
 
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *mem = rzalloc_size(ctx, size);
-      assert(mem != NULL);
+   DECLARE_RALLOC_CXX_OPERATORS(_mesa_glsl_parse_state);
 
-      return mem;
+   /**
+    * Generate a string representing the GLSL version currently being compiled
+    * (useful for error messages).
+    */
+   const char *get_version_string()
+   {
+      return glsl_compute_version_string(this, this->es_shader,
+                                         this->language_version);
    }
 
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *mem)
+   /**
+    * Determine whether the current GLSL version is sufficiently high to
+    * support a certain feature.
+    *
+    * \param required_glsl_version is the desktop GLSL version that is
+    * required to support the feature, or 0 if no version of desktop GLSL
+    * supports the feature.
+    *
+    * \param required_glsl_es_version is the GLSL ES version that is required
+    * to support the feature, or 0 if no version of GLSL ES suports the
+    * feature.
+    */
+   bool is_version(unsigned required_glsl_version,
+                   unsigned required_glsl_es_version) const
    {
-      ralloc_free(mem);
+      unsigned required_version = this->es_shader ?
+         required_glsl_es_version : required_glsl_version;
+      return required_version != 0
+         && this->language_version >= required_version;
    }
+
+   bool check_version(unsigned required_glsl_version,
+                      unsigned required_glsl_es_version,
+                      YYLTYPE *locp, const char *fmt, ...) PRINTFLIKE(5, 6);
+
+   bool check_precision_qualifiers_allowed(YYLTYPE *locp)
+   {
+      return check_version(130, 100, locp,
+                           "precision qualifiers are forbidden");
+   }
+
+   bool check_bitwise_operations_allowed(YYLTYPE *locp)
+   {
+      return check_version(130, 300, locp, "bit-wise operations are forbidden");
+   }
+
+   bool check_explicit_attrib_location_allowed(YYLTYPE *locp,
+                                               const ir_variable *var)
+   {
+      if (!this->has_explicit_attrib_location()) {
+         const char *const requirement = this->es_shader
+            ? "GLSL ES 300"
+            : "GL_ARB_explicit_attrib_location extension or GLSL 330";
+
+         _mesa_glsl_error(locp, this, "%s explicit location requires %s",
+                          mode_string(var), requirement);
+         return false;
+      }
+
+      return true;
+   }
+
+   bool has_explicit_attrib_location() const
+   {
+      return ARB_explicit_attrib_location_enable || is_version(330, 300);
+   }
+
+   bool has_uniform_buffer_objects() const
+   {
+      return ARB_uniform_buffer_object_enable || is_version(140, 300);
+   }
+
+   void process_version_directive(YYLTYPE *locp, int version,
+                                  const char *ident);
 
    struct gl_context *const ctx;
    void *scanner;
@@ -86,10 +157,23 @@ struct _mesa_glsl_parse_state {
    unsigned uniform_block_array_size;
    struct gl_uniform_block *uniform_blocks;
 
+   unsigned num_supported_versions;
+   struct {
+      unsigned ver;
+      bool es;
+   } supported_versions[12];
+
    bool es_shader;
    unsigned language_version;
-   const char *version_string;
-   enum _mesa_glsl_parser_targets target;
+   bool had_version_string;
+   gl_shader_stage stage;
+
+   /**
+    * Number of nested struct_specifier levels
+    *
+    * Outside a struct_specifer, this is zero.
+    */
+   unsigned struct_specifier_depth;
 
    /**
     * Default uniform layout qualifiers tracked during parsing.
@@ -97,6 +181,24 @@ struct _mesa_glsl_parse_state {
     * those blocks.
     */
    struct ast_type_qualifier *default_uniform_qualifier;
+
+   /**
+    * True if a geometry shader input primitive type was specified using a
+    * layout directive.
+    *
+    * Note: this value is computed at ast_to_hir time rather than at parse
+    * time.
+    */
+   bool gs_input_prim_type_specified;
+
+   /**
+    * If gs_input_prim_type_specified is true, the primitive type that was
+    * specified.  Otherwise ignored.
+    */
+   GLenum gs_input_prim_type;
+
+   /** Output layout qualifiers from GLSL 1.50. (geometry shader controls)*/
+   struct ast_type_qualifier *out_qualifier;
 
    /**
     * Printable list of GLSL versions supported by the current context
@@ -121,7 +223,6 @@ struct _mesa_glsl_parse_state {
       unsigned MaxTextureCoords;
       unsigned MaxVertexAttribs;
       unsigned MaxVertexUniformComponents;
-      unsigned MaxVaryingFloats;
       unsigned MaxVertexTextureImageUnits;
       unsigned MaxCombinedTextureImageUnits;
       unsigned MaxTextureImageUnits;
@@ -129,6 +230,27 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_draw_buffers */
       unsigned MaxDrawBuffers;
+
+      /* 3.00 ES */
+      int MinProgramTexelOffset;
+      int MaxProgramTexelOffset;
+
+      /* 1.50 */
+      unsigned MaxVertexOutputComponents;
+      unsigned MaxGeometryInputComponents;
+      unsigned MaxGeometryOutputComponents;
+      unsigned MaxFragmentInputComponents;
+      unsigned MaxGeometryTextureImageUnits;
+      unsigned MaxGeometryOutputVertices;
+      unsigned MaxGeometryTotalOutputComponents;
+      unsigned MaxGeometryUniformComponents;
+
+      /* ARB_shader_atomic_counters */
+      unsigned MaxVertexAtomicCounters;
+      unsigned MaxGeometryAtomicCounters;
+      unsigned MaxFragmentAtomicCounters;
+      unsigned MaxCombinedAtomicCounters;
+      unsigned MaxAtomicBufferBindings;
    } Const;
 
    /**
@@ -173,6 +295,8 @@ struct _mesa_glsl_parse_state {
     * \name Enable bits for GLSL extensions
     */
    /*@{*/
+   bool ARB_arrays_of_arrays_enable;
+   bool ARB_arrays_of_arrays_warn;
    bool ARB_draw_buffers_enable;
    bool ARB_draw_buffers_warn;
    bool ARB_draw_instanced_enable;
@@ -183,6 +307,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_fragment_coord_conventions_warn;
    bool ARB_texture_rectangle_enable;
    bool ARB_texture_rectangle_warn;
+   bool ARB_texture_gather_enable;
+   bool ARB_texture_gather_warn;
    bool EXT_texture_array_enable;
    bool EXT_texture_array_warn;
    bool ARB_shader_texture_lod_enable;
@@ -211,25 +337,51 @@ struct _mesa_glsl_parse_state {
    bool ARB_uniform_buffer_object_warn;
    bool OES_standard_derivatives_enable;
    bool OES_standard_derivatives_warn;
+   bool ARB_texture_cube_map_array_enable;
+   bool ARB_texture_cube_map_array_warn;
+   bool ARB_shading_language_packing_enable;
+   bool ARB_shading_language_packing_warn;
+   bool ARB_texture_multisample_enable;
+   bool ARB_texture_multisample_warn;
+   bool ARB_texture_query_levels_enable;
+   bool ARB_texture_query_levels_warn;
+   bool ARB_texture_query_lod_enable;
+   bool ARB_texture_query_lod_warn;
+   bool ARB_gpu_shader5_enable;
+   bool ARB_gpu_shader5_warn;
+   bool AMD_vertex_shader_layer_enable;
+   bool AMD_vertex_shader_layer_warn;
+   bool ARB_shading_language_420pack_enable;
+   bool ARB_shading_language_420pack_warn;
+   bool ARB_sample_shading_enable;
+   bool ARB_sample_shading_warn;
+   bool EXT_shader_integer_mix_enable;
+   bool EXT_shader_integer_mix_warn;
+   bool ARB_shader_atomic_counters_enable;
+   bool ARB_shader_atomic_counters_warn;
+   bool AMD_shader_trinary_minmax_enable;
+   bool AMD_shader_trinary_minmax_warn;
+   bool ARB_viewport_array_enable;
+   bool ARB_viewport_array_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
    const struct gl_extensions *extensions;
 
-   /** Shaders containing built-in functions that are used for linking. */
-   struct gl_shader *builtins_to_link[16];
-   unsigned num_builtins_to_link;
-};
+   bool uses_builtin_functions;
 
-typedef struct YYLTYPE {
-   int first_line;
-   int first_column;
-   int last_line;
-   int last_column;
-   unsigned source;
-} YYLTYPE;
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
+   /**
+    * For geometry shaders, size of the most recently seen input declaration
+    * that was a sized array, or 0 if no sized input array declarations have
+    * been seen.
+    *
+    * Unused for other shader types.
+    */
+   unsigned gs_input_size;
+
+   /** Atomic counter offsets by binding */
+   unsigned atomic_counter_offsets[MAX_COMBINED_ATOMIC_BUFFERS];
+};
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\
 do {								\
@@ -250,9 +402,6 @@ do {								\
    (Current).source = 0;					\
 } while (0)
 
-extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
-			     const char *fmt, ...);
-
 /**
  * Emit a warning to the shader log
  *
@@ -268,8 +417,8 @@ extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
 extern void _mesa_glsl_lexer_dtor(struct _mesa_glsl_parse_state *state);
 
 union YYSTYPE;
-extern int _mesa_glsl_lex(union YYSTYPE *yylval, YYLTYPE *yylloc, 
-			  void *scanner);
+extern int _mesa_glsl_lexer_lex(union YYSTYPE *yylval, YYLTYPE *yylloc,
+                                void *scanner);
 
 extern int _mesa_glsl_parse(struct _mesa_glsl_parse_state *);
 
@@ -285,13 +434,6 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 					 YYLTYPE *behavior_locp,
 					 _mesa_glsl_parse_state *state);
 
-/**
- * Get the textual name of the specified shader target
- */
-extern const char *
-_mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
-
-
 #endif /* __cplusplus */
 
 
@@ -302,8 +444,15 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
 extern "C" {
 #endif
 
+/**
+ * Get the textual name of the specified shader stage (which is a
+ * gl_shader_stage).
+ */
+extern const char *
+_mesa_shader_stage_to_string(unsigned stage);
+
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
-                      const struct gl_extensions *extensions, int api);
+                      const struct gl_extensions *extensions, struct gl_context *gl_ctx);
 
 extern void _mesa_destroy_shader_compiler(void);
 extern void _mesa_destroy_shader_compiler_caches(void);

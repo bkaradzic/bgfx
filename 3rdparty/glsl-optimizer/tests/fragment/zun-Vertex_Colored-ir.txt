@@ -5,8 +5,8 @@ struct v2f {
   vec2 texcoord;
   vec3 normal;
 };
-varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
+varying vec4 xlv_FOG;
 vec4 frag (
   in v2f i_1
 )

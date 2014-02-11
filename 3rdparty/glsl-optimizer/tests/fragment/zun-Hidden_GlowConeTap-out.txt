@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform vec4 _Color;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 tmpvar_1;
@@ -14,3 +14,5 @@ void main ()
   gl_FragData[0] = (c_3 * _Color.w);
 }
 
+
+// inputs: 1, stats: 5 alu 4 tex 0 flow

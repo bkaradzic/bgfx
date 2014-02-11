@@ -1,6 +1,6 @@
-uniform lowp float low_c;
-uniform mediump float med_b;
 uniform mediump float med_a;
+uniform mediump float med_b;
+uniform lowp float low_c;
 void main ()
 {
   lowp float t_1;
@@ -12,3 +12,5 @@ void main ()
   gl_FragColor = tmpvar_3;
 }
 
+
+// inputs: 0, stats: 3 alu 0 tex 0 flow

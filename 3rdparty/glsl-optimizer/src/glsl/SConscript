@@ -46,56 +46,32 @@ glsl_sources = [
 source_lists = env.ParseSourceList('Makefile.sources')
 
 # add non-generated sources
-for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES', 'LIBGLSL_CXX_FILES'):
+for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES'):
     glsl_sources += source_lists[l]
 
 if env['msvc']:
     env.Prepend(CPPPATH = ['#/src/getopt'])
     env.PrependUnique(LIBS = [getopt])
 
-if env['crosscompile'] and not env['embedded']:
-    Import('builtin_glsl_function')
-else:
-    # Copy these files to avoid generation object files into src/mesa/program
-    env.Prepend(CPPPATH = ['#src/mesa/program'])
-    env.Command('hash_table.c', '#src/mesa/program/hash_table.c', Copy('$TARGET', '$SOURCE'))
-    env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET', '$SOURCE'))
+# Copy these files to avoid generation object files into src/mesa/program
+env.Prepend(CPPPATH = ['#src/mesa/main'])
+env.Command('hash_table.c', '#src/mesa/main/hash_table.c', Copy('$TARGET', '$SOURCE'))
+env.Command('imports.c', '#src/mesa/main/imports.c', Copy('$TARGET', '$SOURCE'))
+# Copy these files to avoid generation object files into src/mesa/program
+env.Prepend(CPPPATH = ['#src/mesa/program'])
+env.Command('prog_hash_table.c', '#src/mesa/program/prog_hash_table.c', Copy('$TARGET', '$SOURCE'))
+env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET', '$SOURCE'))
 
-    compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_FILES'])
+compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_FILES'])
 
-    mesa_objs = env.StaticObject([
-        'hash_table.c',
-        'symbol_table.c',
-    ])
+mesa_objs = env.StaticObject([
+    'hash_table.c',
+    'imports.c',
+    'prog_hash_table.c',
+    'symbol_table.c',
+])
 
-    compiler_objs += mesa_objs
-
-    builtin_compiler = env.Program(
-        target = 'builtin_compiler',
-        source = compiler_objs + glsl_sources + \
-            source_lists['BUILTIN_COMPILER_CXX_FILES'],
-    )
-
-    # SCons builtin dependency scanner doesn't detect that glsl_lexer.ll
-    # depends on glsl_parser.h
-    env.Depends(builtin_compiler, glsl_parser)
-
-    builtin_glsl_function = env.CodeGenerate(
-        target = 'builtin_function.cpp',
-        script = 'builtins/tools/generate_builtins.py',
-        source = builtin_compiler,
-        command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
-    )
-
-    env.Depends(builtin_glsl_function, ['builtins/tools/generate_builtins.py', '#src/glsl/builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
-
-    Export('builtin_glsl_function')
-
-    if env['hostonly']:
-        Return()
-
-
-glsl_sources += builtin_glsl_function
+compiler_objs += mesa_objs
 
 glsl = env.ConvenienceLibrary(
     target = 'glsl',
@@ -122,11 +98,11 @@ if env['platform'] == 'windows':
 
 env.Prepend(LIBS = [glsl])
 
-glsl2 = env.Program(
-    target = 'glsl2',
+glsl_compiler = env.Program(
+    target = 'glsl_compiler',
     source = compiler_objs,
 )
-env.Alias('glsl2', glsl2)
+env.Alias('glsl_compiler', glsl_compiler)
 
 glcpp = env.Program(
     target = 'glcpp/glcpp',

@@ -1,10 +1,10 @@
-uniform vec4 v3c;
-uniform vec4 v3b;
-uniform vec4 v3a;
-uniform mat3 m3c;
-uniform mat3 m3b;
-uniform mat3 m3a;
 uniform mat4 mvp;
+uniform mat3 m3a;
+uniform mat3 m3b;
+uniform mat3 m3c;
+uniform vec4 v3a;
+uniform vec4 v3b;
+uniform vec4 v3c;
 void main ()
 {
   vec3 rc_1;

@@ -2,22 +2,22 @@ struct v2f {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _MainTex9;
-uniform sampler2D _MainTex8;
-uniform sampler2D _MainTex7;
-uniform sampler2D _MainTex6;
-uniform sampler2D _MainTex5;
-uniform sampler2D _MainTex4;
-uniform sampler2D _MainTex3;
-uniform sampler2D _MainTex2;
-uniform sampler2D _MainTex15;
-uniform sampler2D _MainTex14;
-uniform sampler2D _MainTex13;
-uniform sampler2D _MainTex12;
-uniform sampler2D _MainTex11;
-uniform sampler2D _MainTex10;
-uniform sampler2D _MainTex1;
 uniform sampler2D _MainTex0;
+uniform sampler2D _MainTex1;
+uniform sampler2D _MainTex10;
+uniform sampler2D _MainTex11;
+uniform sampler2D _MainTex12;
+uniform sampler2D _MainTex13;
+uniform sampler2D _MainTex14;
+uniform sampler2D _MainTex15;
+uniform sampler2D _MainTex2;
+uniform sampler2D _MainTex3;
+uniform sampler2D _MainTex4;
+uniform sampler2D _MainTex5;
+uniform sampler2D _MainTex6;
+uniform sampler2D _MainTex7;
+uniform sampler2D _MainTex8;
+uniform sampler2D _MainTex9;
 vec4 frag (
   in v2f i_1
 )

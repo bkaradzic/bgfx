@@ -1,23 +1,23 @@
-varying vec2 xlv_TEXCOORD3;
-varying vec3 xlv_TEXCOORD2;
-varying vec3 xlv_TEXCOORD1;
-varying vec4 xlv_COLOR0;
-varying vec2 xlv_TEXCOORD0;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform mat4 glstate_matrix_mvp;
-uniform mat4 glstate_matrix_invtrans_modelview0;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform vec4 _Wind;
-uniform vec4 _Time;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform vec4 _Time;
+uniform vec4 _Wind;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform mat4 glstate_matrix_invtrans_modelview0;
+uniform mat4 glstate_matrix_mvp;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR0;
+varying vec3 xlv_TEXCOORD1;
+varying vec3 xlv_TEXCOORD2;
+varying vec2 xlv_TEXCOORD3;
 void main ()
 {
   vec4 tmpvar_1;
@@ -54,17 +54,27 @@ void main ()
   tmpvar_14.x = dot (tmpvar_1.xyz, vec3((gl_Color.y + tmpvar_13)));
   tmpvar_14.y = tmpvar_13;
   vec4 tmpvar_15;
-  tmpvar_15 = abs(((fract((((fract(((_Time.yy + tmpvar_14).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0) - 1.0) + 0.5)) * 2.0) - 1.0));
+  tmpvar_15 = abs(((
+    fract((((
+      fract(((_Time.yy + tmpvar_14).xxyy * vec4(1.975, 0.793, 0.375, 0.193)))
+     * 2.0) - 1.0) + 0.5))
+   * 2.0) - 1.0));
   vec4 tmpvar_16;
   tmpvar_16 = ((tmpvar_15 * tmpvar_15) * (3.0 - (2.0 * tmpvar_15)));
   vec2 tmpvar_17;
   tmpvar_17 = (tmpvar_16.xz + tmpvar_16.yw);
   bend_12.xz = ((gl_Color.y * 0.1) * tmpvar_8).xz;
   bend_12.y = (gl_MultiTexCoord1.y * 0.3);
-  pos_11.xyz = (tmpvar_1.xyz + (((tmpvar_17.xyx * bend_12) + ((_Wind.xyz * tmpvar_17.y) * gl_MultiTexCoord1.y)) * _Wind.w));
+  pos_11.xyz = (tmpvar_1.xyz + ((
+    (tmpvar_17.xyx * bend_12)
+   + 
+    ((_Wind.xyz * tmpvar_17.y) * gl_MultiTexCoord1.y)
+  ) * _Wind.w));
   pos_11.xyz = (pos_11.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
   vec3 tmpvar_18;
-  tmpvar_18 = mix ((pos_11.xyz - ((dot (_SquashPlaneNormal.xyz, pos_11.xyz) + _SquashPlaneNormal.w) * _SquashPlaneNormal.xyz)), pos_11.xyz, vec3(_SquashAmount));
+  tmpvar_18 = mix ((pos_11.xyz - (
+    (dot (_SquashPlaneNormal.xyz, pos_11.xyz) + _SquashPlaneNormal.w)
+   * _SquashPlaneNormal.xyz)), pos_11.xyz, vec3(_SquashAmount));
   vec4 tmpvar_19;
   tmpvar_19.w = 1.0;
   tmpvar_19.xyz = tmpvar_18;
@@ -94,7 +104,11 @@ void main ()
   xlv_TEXCOORD0 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   xlv_COLOR0 = tmpvar_20;
   xlv_TEXCOORD1 = (tmpvar_23 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  xlv_TEXCOORD2 = (tmpvar_23 * (((_World2Object * tmpvar_24).xyz * unity_Scale.w) - tmpvar_18));
+  xlv_TEXCOORD2 = (tmpvar_23 * ((
+    (_World2Object * tmpvar_24)
+  .xyz * unity_Scale.w) - tmpvar_18));
   xlv_TEXCOORD3 = (_LightMatrix0 * (_Object2World * tmpvar_19)).xy;
 }
 
+
+// inputs: 6, stats: 71 alu 0 tex 0 flow

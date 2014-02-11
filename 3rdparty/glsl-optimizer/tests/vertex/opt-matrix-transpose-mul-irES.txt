@@ -9,23 +9,23 @@ struct appdata {
   highp vec4 tangent;
   highp vec3 normal;
 };
-varying lowp vec3 varViewDir;
-varying lowp vec3 varLightDir;
-varying lowp vec3 varWorldN;
-uniform highp vec4 unity_Scale;
-uniform lowp vec4 _WorldSpaceLightPos0;
-uniform highp vec3 _WorldSpaceCameraPos;
-uniform highp mat4 _World2Object;
-uniform highp mat4 _Object2World;
-attribute vec4 attrTangent;
-attribute vec3 attrNormal;
-attribute vec4 attrVertex;
-uniform mat4 glstate_matrix_mvp;
-attribute lowp vec4 _glesColor;
-attribute highp vec4 _glesMultiTexCoord1;
-attribute highp vec4 _glesMultiTexCoord0;
-attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute lowp vec4 _glesColor;
+uniform mat4 glstate_matrix_mvp;
+attribute vec4 attrVertex;
+attribute vec3 attrNormal;
+attribute vec4 attrTangent;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform lowp vec4 _WorldSpaceLightPos0;
+uniform highp vec4 unity_Scale;
+varying lowp vec3 varWorldN;
+varying lowp vec3 varLightDir;
+varying lowp vec3 varViewDir;
 mat3 xll_transpose (
   in mat3 m_1
 )
@@ -148,8 +148,8 @@ v2f_surf vert_surf (
   mat3 tmpvar_44;
   tmpvar_44 = xll_transpose (tmpvar_40);
   mat3 tmpvar_45;
-  tmpvar_45 = (tmpvar_44);
-  rotation_30 = (tmpvar_45);
+  tmpvar_45 = tmpvar_44;
+  rotation_30 = tmpvar_45;
   highp vec3 tmpvar_46;
   tmpvar_46 = ObjSpaceLightDir (v_27.vertex);
   highp vec3 tmpvar_47;

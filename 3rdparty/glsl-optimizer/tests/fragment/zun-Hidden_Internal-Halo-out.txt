@@ -9,3 +9,5 @@ void main ()
   gl_FragData[0] = tmpvar_2;
 }
 
+
+// inputs: 2, stats: 1 alu 1 tex 0 flow

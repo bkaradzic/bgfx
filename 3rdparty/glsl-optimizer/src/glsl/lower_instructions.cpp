@@ -37,6 +37,9 @@
  * - POW_TO_EXP2
  * - LOG_TO_LOG2
  * - MOD_TO_FRACT
+ * - LDEXP_TO_ARITH
+ * - LRP_TO_ARITH
+ * - BITFIELD_INSERT_TO_BFM_BFI
  *
  * SUB_TO_ADD_NEG:
  * ---------------
@@ -79,12 +82,34 @@
  * Many GPUs don't have a MOD instruction (945 and 965 included), and
  * if we have to break it down like this anyway, it gives an
  * opportunity to do things like constant fold the (1.0 / op1) easily.
+ *
+ * LDEXP_TO_ARITH:
+ * -------------
+ * Converts ir_binop_ldexp to arithmetic and bit operations.
+ *
+ * LRP_TO_ARITH:
+ * -------------
+ * Converts ir_triop_lrp to (op0 * (1.0f - op2)) + (op1 * op2).
+ *
+ * BITFIELD_INSERT_TO_BFM_BFI:
+ * ---------------------------
+ * Breaks ir_quadop_bitfield_insert into ir_binop_bfm (bitfield mask) and
+ * ir_triop_bfi (bitfield insert).
+ *
+ * Many GPUs implement the bitfieldInsert() built-in from ARB_gpu_shader_5
+ * with a pair of instructions.
+ *
  */
 
 #include "main/core.h" /* for M_LOG2E */
 #include "glsl_types.h"
 #include "ir.h"
+#include "ir_builder.h"
 #include "ir_optimization.h"
+
+using namespace ir_builder;
+
+namespace {
 
 class lower_instructions_visitor : public ir_hierarchical_visitor {
 public:
@@ -105,7 +130,12 @@ private:
    void exp_to_exp2(ir_expression *);
    void pow_to_exp2(ir_expression *);
    void log_to_log2(ir_expression *);
+   void lrp_to_arith(ir_expression *);
+   void bitfield_insert_to_bfm_bfi(ir_expression *);
+   void ldexp_to_arith(ir_expression *);
 };
+
+} /* anonymous namespace */
 
 /**
  * Determine if a particular type of lowering should occur
@@ -268,6 +298,172 @@ lower_instructions_visitor::mod_to_fract(ir_expression *ir)
    this->progress = true;
 }
 
+void
+lower_instructions_visitor::lrp_to_arith(ir_expression *ir)
+{
+   /* (lrp x y a) -> x*(1-a) + y*a */
+
+   /* Save op2 */
+   ir_variable *temp = new(ir) ir_variable(ir->operands[2]->type, "lrp_factor",
+					   ir_var_temporary, precision_from_ir(ir->operands[2]));
+   this->base_ir->insert_before(temp);
+   this->base_ir->insert_before(assign(temp, ir->operands[2]));
+
+   ir_constant *one = new(ir) ir_constant(1.0f);
+
+   ir->operation = ir_binop_add;
+   ir->operands[0] = mul(ir->operands[0], sub(one, temp));
+   ir->operands[1] = mul(ir->operands[1], temp);
+   ir->operands[2] = NULL;
+
+   this->progress = true;
+}
+
+void
+lower_instructions_visitor::bitfield_insert_to_bfm_bfi(ir_expression *ir)
+{
+   /* Translates
+    *    ir_quadop_bitfield_insert base insert offset bits
+    * into
+    *    ir_triop_bfi (ir_binop_bfm bits offset) insert base
+    */
+
+   ir_rvalue *base_expr = ir->operands[0];
+
+   ir->operation = ir_triop_bfi;
+   ir->operands[0] = new(ir) ir_expression(ir_binop_bfm,
+                                           ir->type->get_base_type(),
+                                           ir->operands[3],
+                                           ir->operands[2]);
+   /* ir->operands[1] is still the value to insert. */
+   ir->operands[2] = base_expr;
+   ir->operands[3] = NULL;
+
+   this->progress = true;
+}
+
+void
+lower_instructions_visitor::ldexp_to_arith(ir_expression *ir)
+{
+   /* Translates
+    *    ir_binop_ldexp x exp
+    * into
+    *
+    *    extracted_biased_exp = rshift(bitcast_f2i(abs(x)), exp_shift);
+    *    resulting_biased_exp = extracted_biased_exp + exp;
+    *
+    *    if (resulting_biased_exp < 1) {
+    *       return copysign(0.0, x);
+    *    }
+    *
+    *    return bitcast_u2f((bitcast_f2u(x) & sign_mantissa_mask) |
+    *                       lshift(i2u(resulting_biased_exp), exp_shift));
+    *
+    * which we can't actually implement as such, since the GLSL IR doesn't
+    * have vectorized if-statements. We actually implement it without branches
+    * using conditional-select:
+    *
+    *    extracted_biased_exp = rshift(bitcast_f2i(abs(x)), exp_shift);
+    *    resulting_biased_exp = extracted_biased_exp + exp;
+    *
+    *    is_not_zero_or_underflow = gequal(resulting_biased_exp, 1);
+    *    x = csel(is_not_zero_or_underflow, x, copysign(0.0f, x));
+    *    resulting_biased_exp = csel(is_not_zero_or_underflow,
+    *                                resulting_biased_exp, 0);
+    *
+    *    return bitcast_u2f((bitcast_f2u(x) & sign_mantissa_mask) |
+    *                       lshift(i2u(resulting_biased_exp), exp_shift));
+    */
+
+   const unsigned vec_elem = ir->type->vector_elements;
+
+   /* Types */
+   const glsl_type *ivec = glsl_type::get_instance(GLSL_TYPE_INT, vec_elem, 1);
+   const glsl_type *bvec = glsl_type::get_instance(GLSL_TYPE_BOOL, vec_elem, 1);
+
+   /* Constants */
+   ir_constant *zeroi = ir_constant::zero(ir, ivec);
+
+   ir_constant *sign_mask = new(ir) ir_constant(0x80000000u, vec_elem);
+
+   ir_constant *exp_shift = new(ir) ir_constant(23u, vec_elem);
+   ir_constant *exp_width = new(ir) ir_constant(8u, vec_elem);
+
+   /* Temporary variables */
+   glsl_precision prec = ir->get_precision();
+   ir_variable *x = new(ir) ir_variable(ir->type, "x", ir_var_temporary, prec);
+   ir_variable *exp = new(ir) ir_variable(ivec, "exp", ir_var_temporary, prec);
+
+   ir_variable *zero_sign_x = new(ir) ir_variable(ir->type, "zero_sign_x",
+                                                  ir_var_temporary, prec);
+
+   ir_variable *extracted_biased_exp =
+      new(ir) ir_variable(ivec, "extracted_biased_exp", ir_var_temporary, prec);
+   ir_variable *resulting_biased_exp =
+      new(ir) ir_variable(ivec, "resulting_biased_exp", ir_var_temporary, prec);
+
+   ir_variable *is_not_zero_or_underflow =
+      new(ir) ir_variable(bvec, "is_not_zero_or_underflow", ir_var_temporary, prec);
+
+   ir_instruction &i = *base_ir;
+
+   /* Copy <x> and <exp> arguments. */
+   i.insert_before(x);
+   i.insert_before(assign(x, ir->operands[0]));
+   i.insert_before(exp);
+   i.insert_before(assign(exp, ir->operands[1]));
+
+   /* Extract the biased exponent from <x>. */
+   i.insert_before(extracted_biased_exp);
+   i.insert_before(assign(extracted_biased_exp,
+                          rshift(bitcast_f2i(abs(x)), exp_shift)));
+
+   i.insert_before(resulting_biased_exp);
+   i.insert_before(assign(resulting_biased_exp,
+                          add(extracted_biased_exp, exp)));
+
+   /* Test if result is ±0.0, subnormal, or underflow by checking if the
+    * resulting biased exponent would be less than 0x1. If so, the result is
+    * 0.0 with the sign of x. (Actually, invert the conditions so that
+    * immediate values are the second arguments, which is better for i965)
+    */
+   i.insert_before(zero_sign_x);
+   i.insert_before(assign(zero_sign_x,
+                          bitcast_u2f(bit_and(bitcast_f2u(x), sign_mask))));
+
+   i.insert_before(is_not_zero_or_underflow);
+   i.insert_before(assign(is_not_zero_or_underflow,
+                          gequal(resulting_biased_exp,
+                                  new(ir) ir_constant(0x1, vec_elem))));
+   i.insert_before(assign(x, csel(is_not_zero_or_underflow,
+                                  x, zero_sign_x)));
+   i.insert_before(assign(resulting_biased_exp,
+                          csel(is_not_zero_or_underflow,
+                               resulting_biased_exp, zeroi)));
+
+   /* We could test for overflows by checking if the resulting biased exponent
+    * would be greater than 0xFE. Turns out we don't need to because the GLSL
+    * spec says:
+    *
+    *    "If this product is too large to be represented in the
+    *     floating-point type, the result is undefined."
+    */
+
+   ir_constant *exp_shift_clone = exp_shift->clone(ir, NULL);
+   ir->operation = ir_unop_bitcast_i2f;
+   ir->operands[0] = bitfield_insert(bitcast_f2i(x), resulting_biased_exp,
+                                     exp_shift_clone, exp_width);
+   ir->operands[1] = NULL;
+
+   /* Don't generate new IR that would need to be lowered in an additional
+    * pass.
+    */
+   if (lowering(BITFIELD_INSERT_TO_BFM_BFI))
+      bitfield_insert_to_bfm_bfi(ir->operands[0]->as_expression());
+
+   this->progress = true;
+}
+
 ir_visitor_status
 lower_instructions_visitor::visit_leave(ir_expression *ir)
 {
@@ -302,6 +498,21 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
    case ir_binop_pow:
       if (lowering(POW_TO_EXP2))
 	 pow_to_exp2(ir);
+      break;
+
+   case ir_triop_lrp:
+      if (lowering(LRP_TO_ARITH))
+	 lrp_to_arith(ir);
+      break;
+
+   case ir_quadop_bitfield_insert:
+      if (lowering(BITFIELD_INSERT_TO_BFM_BFI))
+         bitfield_insert_to_bfm_bfi(ir);
+      break;
+
+   case ir_binop_ldexp:
+      if (lowering(LDEXP_TO_ARITH))
+         ldexp_to_arith(ir);
       break;
 
    default:

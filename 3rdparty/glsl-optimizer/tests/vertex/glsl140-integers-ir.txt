@@ -1,9 +1,9 @@
 #version 140
-flat out ivec4 colint;
-out vec4 col;
-in vec4 icol;
-in vec4 position;
 uniform vec2 p;
+in vec4 position;
+in vec4 icol;
+out vec4 col;
+flat out ivec4 colint;
 void main ()
 {
   vec4 tmpvar_1;

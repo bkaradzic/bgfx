@@ -1,0 +1,21 @@
+uniform sampler2D mainTex;
+varying vec2 uv;
+
+void main()
+{
+	vec4 c = vec4(0.0);
+
+	// various loop forms
+	for (int i = 0; i < 100; ++i)
+		c.x += texture2D (mainTex, uv + vec2(i,i)).r;
+	for (int i = 0; i <= 100; i += 3)
+		c.x += texture2D (mainTex, uv + vec2(i,i)).r;
+	for (int i = 100; i >= 0; --i)
+		c.x += texture2D (mainTex, uv + vec2(i,i)).r;
+	int n = int(c.x * 10.0);
+	for (int i = 3; i < n; ++i)
+		c.x += texture2D (mainTex, uv + vec2(i,i)).r;
+	for (int i = 1, j = 2; i < 100 && j < 50; i += 2, j += 3)
+		c.x += texture2D (mainTex, uv + vec2(i,j)).r;
+    gl_FragColor = c;
+}

@@ -1,6 +1,6 @@
 #version 120
-uniform mat4x3 nonSqMat;
 uniform float inInit = 13.0;
+uniform mat4x3 nonSqMat;
 void main ()
 {
   float arr_1[4];

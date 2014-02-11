@@ -78,6 +78,33 @@ ir_hierarchical_visitor::visit(ir_precision_statement *ir)
 }
 
 ir_visitor_status
+ir_hierarchical_visitor::visit(ir_typedecl_statement *ir)
+{
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_hierarchical_visitor::visit(ir_emit_vertex *ir)
+{
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_hierarchical_visitor::visit(ir_end_primitive *ir)
+{
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_hierarchical_visitor::visit(ir_dereference_variable *ir)
 {
    if (this->callback != NULL)

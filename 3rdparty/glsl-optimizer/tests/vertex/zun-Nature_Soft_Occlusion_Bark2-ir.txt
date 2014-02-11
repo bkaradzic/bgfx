@@ -10,13 +10,13 @@ struct v2f_surf {
   vec4 pos;
   vec3 vec;
 };
-attribute vec4 TANGENT;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
 uniform vec4 _LightPositionRange;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+attribute vec4 TANGENT;
 vec4 Squash (
   in vec4 pos_1
 )

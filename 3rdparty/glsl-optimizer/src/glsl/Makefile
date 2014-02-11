@@ -24,6 +24,7 @@ SRC = ast_expr.cpp \
 	ir_basic_block.cpp \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
+	ir_equals.cpp \
 	ir_expression_flattening.cpp \
 	ir_function.cpp \
 	ir_function_can_inline.cpp \
@@ -72,6 +73,7 @@ SRC = ast_expr.cpp \
 	opt_structure_splitting.cpp \
 	opt_swizzle_swizzle.cpp \
 	opt_tree_grafting.cpp \
+	opt_vectorize.cpp \
 	ralloc.c \
 	s_expression.cpp \
 	standalone_scaffolding.cpp \

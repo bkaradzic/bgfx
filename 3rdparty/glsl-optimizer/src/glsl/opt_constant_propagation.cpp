@@ -92,6 +92,7 @@ public:
    ir_constant_propagation_visitor()
    {
       progress = false;
+      killed_all = false;
       mem_ctx = ralloc_context(0);
       this->acp = new(mem_ctx) exec_list;
       this->kills = new(mem_ctx) exec_list;
@@ -171,8 +172,8 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 channel = i;
       }
 
-      foreach_iter(exec_list_iterator, iter, *this->acp) {
-	 acp_entry *entry = (acp_entry *)iter.get();
+      foreach_list(n, this->acp) {
+	 acp_entry *entry = (acp_entry *) n;
 	 if (entry->var == deref->var && entry->write_mask & (1 << channel)) {
 	    found = entry;
 	    break;
@@ -280,11 +281,12 @@ ir_visitor_status
 ir_constant_propagation_visitor::visit_enter(ir_call *ir)
 {
    /* Do constant propagation on call parameters, but skip any out params */
-   exec_list_iterator sig_param_iter = ir->callee->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
-      ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout) {
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_variable *sig_param = (ir_variable *) formal_node;
+      ir_rvalue *param = (ir_rvalue *) actual_node;
+      if (sig_param->data.mode != ir_var_function_out
+          && sig_param->data.mode != ir_var_function_inout) {
 	 ir_rvalue *new_param = param;
 	 handle_rvalue(&new_param);
          if (new_param != param)
@@ -292,14 +294,13 @@ ir_constant_propagation_visitor::visit_enter(ir_call *ir)
 	 else
 	    param->accept(this);
       }
-      sig_param_iter.next();
    }
 
    /* Since we're unlinked, we don't (necssarily) know the side effects of
     * this call.  So kill all copies. Except if it's a built-in; we know
 	* they are side effect free.
     */
-   if (!ir->callee->is_builtin) {
+   if (!ir->callee->is_builtin()) {
       acp->make_empty();
       this->killed_all = true;
    }
@@ -319,8 +320,8 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a constant of the original */
-   foreach_iter(exec_list_iterator, iter, *orig_acp) {
-      acp_entry *a = (acp_entry *)iter.get();
+   foreach_list(n, orig_acp) {
+      acp_entry *a = (acp_entry *) n;
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 
@@ -335,8 +336,8 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_list(n, new_kills) {
+      kill_entry *k = (kill_entry *) n;
       kill(k->var, k->write_mask);
    }
 }
@@ -380,8 +381,8 @@ ir_constant_propagation_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_list(n, new_kills) {
+      kill_entry *k = (kill_entry *) n;
       kill(k->var, k->write_mask);
    }
 
@@ -399,8 +400,8 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
       return;
 
    /* Remove any entries currently in the ACP for this kill. */
-   foreach_iter(exec_list_iterator, iter, *this->acp) {
-      acp_entry *entry = (acp_entry *)iter.get();
+   foreach_list_safe(n, this->acp) {
+      acp_entry *entry = (acp_entry *) n;
 
       if (entry->var == var) {
 	 entry->write_mask &= ~write_mask;
@@ -412,8 +413,8 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
    /* Add this writemask of the variable to the list of killed
     * variables in this block.
     */
-   foreach_iter(exec_list_iterator, iter, *this->kills) {
-      kill_entry *entry = (kill_entry *)iter.get();
+   foreach_list(n, this->kills) {
+      kill_entry *entry = (kill_entry *) n;
 
       if (entry->var == var) {
 	 entry->write_mask |= write_mask;

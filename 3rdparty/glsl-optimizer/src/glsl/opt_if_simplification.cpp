@@ -25,7 +25,8 @@
  * \file opt_if_simplification.cpp
  *
  * Moves constant branches of if statements out to the surrounding
- * instruction stream.
+ * instruction stream, and inverts if conditionals to avoid empty
+ * "then" blocks.
  */
 
 #include "ir.h"
@@ -89,17 +90,41 @@ ir_if_simplification_visitor::visit_leave(ir_if *ir)
        * that matters out.
        */
       if (condition_constant->value.b[0]) {
-	 foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
-	    ir_instruction *then_ir = (ir_instruction *)then_iter.get();
+	 foreach_list_safe(n, &ir->then_instructions) {
+	    ir_instruction *then_ir = (ir_instruction *) n;
 	    ir->insert_before(then_ir);
 	 }
       } else {
-	 foreach_iter(exec_list_iterator, else_iter, ir->else_instructions) {
-	    ir_instruction *else_ir = (ir_instruction *)else_iter.get();
+	 foreach_list_safe(n, &ir->else_instructions) {
+	    ir_instruction *else_ir = (ir_instruction *) n;
 	    ir->insert_before(else_ir);
 	 }
       }
       ir->remove();
+      this->made_progress = true;
+      return visit_continue;
+   }
+
+   /* Turn:
+    *
+    *     if (cond) {
+    *     } else {
+    *         do_work();
+    *     }
+    *
+    * into :
+    *
+    *     if (!cond)
+    *         do_work();
+    *
+    * which avoids control flow for "else" (which is usually more
+    * expensive than normal operations), and the "not" can usually be
+    * folded into the generation of "cond" anyway.
+    */
+   if (ir->then_instructions.is_empty()) {
+      ir->condition = new(ralloc_parent(ir->condition))
+	 ir_expression(ir_unop_logic_not, ir->condition);
+      ir->else_instructions.move_nodes_to(&ir->then_instructions);
       this->made_progress = true;
    }
 

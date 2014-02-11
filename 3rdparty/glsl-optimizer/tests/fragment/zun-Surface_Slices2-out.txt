@@ -1,7 +1,7 @@
-uniform sampler2D unity_LightmapInd;
-uniform sampler2D unity_Lightmap;
-uniform sampler2D _MainTex;
 uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
 void main ()
 {
   vec3 tmpvar_1;
@@ -10,7 +10,9 @@ void main ()
   tmpvar_2 = gl_TexCoord[3].xyz;
   vec4 light_3;
   float x_4;
-  x_4 = (fract(((tmpvar_1.y + (tmpvar_1.z * 0.1)) * 5.0)) - 0.5);
+  x_4 = (fract((
+    (tmpvar_1.y + (tmpvar_1.z * 0.1))
+   * 5.0)) - 0.5);
   if ((x_4 < 0.0)) {
     discard;
   };
@@ -24,3 +26,5 @@ void main ()
   gl_FragData[0] = c_6;
 }
 
+
+// inputs: 1, stats: 15 alu 5 tex 1 flow

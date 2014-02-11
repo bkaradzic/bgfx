@@ -2,8 +2,8 @@ struct v2f {
   vec4 vertex;
   vec3 texcoord;
 };
-uniform vec4 _Tint;
 uniform samplerCube _Tex;
+uniform vec4 _Tint;
 vec4 frag (
   in v2f i_1
 )

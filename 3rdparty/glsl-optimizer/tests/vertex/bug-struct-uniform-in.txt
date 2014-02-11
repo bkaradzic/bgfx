@@ -1,0 +1,14 @@
+// https://github.com/aras-p/glsl-optimizer/issues/18
+
+struct shadow_map_t
+{
+    mat4 transform;
+};
+
+uniform shadow_map_t ShadowMaps[1];
+attribute vec3 _in_position;
+
+void main()
+{   
+    gl_Position = ShadowMaps[0].transform * vec4(_in_position,1);
+}

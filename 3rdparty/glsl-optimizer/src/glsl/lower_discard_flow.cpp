@@ -48,6 +48,8 @@
 #include "ir.h"
 #include "program/hash_table.h"
 
+namespace {
+
 class lower_discard_flow_visitor : public ir_hierarchical_visitor {
 public:
    lower_discard_flow_visitor(ir_variable *discarded)
@@ -70,6 +72,8 @@ public:
    ir_variable *discarded;
    void *mem_ctx;
 };
+
+} /* anonymous namespace */
 
 ir_visitor_status
 lower_discard_flow_visitor::visit_enter(ir_loop_jump *ir)

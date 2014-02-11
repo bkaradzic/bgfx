@@ -6,15 +6,15 @@ struct appdata {
   highp vec4 vertex;
   highp vec3 normal;
 };
-varying mediump vec4 xlv_TEXCOORD0;
-uniform highp vec4 unity_LightColor[4];
-uniform highp vec4 unity_LightAtten[4];
-uniform highp mat4 UNITY_MATRIX_MVP;
-attribute lowp vec4 _glesColor;
-attribute highp vec4 _glesMultiTexCoord1;
-attribute highp vec4 _glesMultiTexCoord0;
-attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute lowp vec4 _glesColor;
+uniform highp mat4 UNITY_MATRIX_MVP;
+uniform highp vec4 unity_LightAtten[4];
+uniform highp vec4 unity_LightColor[4];
+varying mediump vec4 xlv_TEXCOORD0;
 v2f xlat_main (
   in appdata v_1
 )

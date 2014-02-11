@@ -1,10 +1,10 @@
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec4 xlv_TEXCOORD0;
-uniform highp mat4 glstate_matrix_mvp;
-uniform highp mat4 glstate_matrix_modelview0;
-uniform highp vec4 _ProjectionParams;
-attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
+attribute mediump vec3 _glesNormal;
+uniform highp vec4 _ProjectionParams;
+uniform highp mat4 glstate_matrix_modelview0;
+uniform highp mat4 glstate_matrix_mvp;
+varying highp vec4 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
 void main ()
 {
   highp vec3 tmpvar_1;
@@ -24,3 +24,5 @@ void main ()
   xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), tmpvar_1, vec3(float((tmpvar_1.z != 0.0))));
 }
 
+
+// inputs: 2, stats: 9 alu 0 tex 0 flow

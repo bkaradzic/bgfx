@@ -8,8 +8,8 @@ struct v2f {
   vec2 uvg;
   vec2 uvs;
 };
-uniform vec4 _ScratchOffsetScale;
 uniform vec4 _GrainOffsetScale;
+uniform vec4 _ScratchOffsetScale;
 vec2 MultiplyUV (
   in mat4 mat_1,
   in vec2 inUV_2

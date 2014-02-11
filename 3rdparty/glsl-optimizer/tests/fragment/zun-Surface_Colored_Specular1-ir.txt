@@ -14,8 +14,8 @@ struct v2f_surf {
   vec4 pos;
   vec3 normal;
 };
-uniform sampler2D _SpecMap;
 uniform sampler2D _MainTex;
+uniform sampler2D _SpecMap;
 void surf (
   in Input IN_1,
   inout MySurfaceOutput o_2

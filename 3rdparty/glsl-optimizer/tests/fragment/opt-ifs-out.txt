@@ -1,0 +1,12 @@
+void main ()
+{
+  vec4 c_1;
+  c_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  if (((gl_FragCoord.x > 0.5) && (gl_FragCoord.y > 0.5))) {
+    c_1 = vec4(0.5, 0.5, 0.5, 0.5);
+  };
+  gl_FragColor = c_1;
+}
+
+
+// inputs: 1, stats: 5 alu 0 tex 1 flow

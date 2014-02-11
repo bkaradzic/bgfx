@@ -19,12 +19,12 @@ struct v2f_surf {
   vec3 viewDir;
   vec4 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D _SpecMap;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform sampler2D _LightTexture0;
 uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+uniform sampler2D _SpecMap;
+varying vec4 xlv_FOG;
 void surf (
   in Input IN_1,
   inout MySurfaceOutput o_2
@@ -114,7 +114,9 @@ vec4 LightingColoredSpecular (
   tmpvar_37 = (spec_23 * s_17.GlossColor);
   specCol_22 = tmpvar_37;
   vec3 tmpvar_38;
-  tmpvar_38 = ((((s_17.Albedo * _LightColor0.xyz) * diff_25) + (_LightColor0.xyz * specCol_22)) * (atten_20 * 2.0));
+  tmpvar_38 = (((
+    (s_17.Albedo * _LightColor0.xyz)
+   * diff_25) + (_LightColor0.xyz * specCol_22)) * (atten_20 * 2.0));
   c_21.xyz = tmpvar_38.xyz.xyz;
   float tmpvar_39;
   tmpvar_39 = s_17.Alpha;
@@ -169,7 +171,9 @@ vec4 frag_surf (
   float tmpvar_58;
   tmpvar_58 = UnitySpotAttenuate (IN_40._LightCoord.xyz);
   vec4 tmpvar_59;
-  tmpvar_59 = LightingColoredSpecular (o_43, lightDir_42, tmpvar_56, ((float((IN_40._LightCoord.z > 0.0)) * tmpvar_57) * tmpvar_58));
+  tmpvar_59 = LightingColoredSpecular (o_43, lightDir_42, tmpvar_56, ((float(
+    (IN_40._LightCoord.z > 0.0)
+  ) * tmpvar_57) * tmpvar_58));
   vec4 tmpvar_60;
   tmpvar_60 = tmpvar_59;
   c_41 = tmpvar_60;

@@ -37,6 +37,8 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 
+#ifdef __cplusplus
+
 /**
  * \defgroup IR Intermediate representation nodes
  *
@@ -81,6 +83,9 @@ enum ir_node_type {
    ir_type_swizzle,
    ir_type_texture,
    ir_type_precision,
+   ir_type_typedecl,
+   ir_type_emit_vertex,
+   ir_type_end_primitive,
    ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
@@ -123,6 +128,7 @@ public:
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
    virtual class ir_dereference_variable *as_dereference_variable() { return NULL; }
+   virtual class ir_dereference_record *as_dereference_record() { return NULL; }
    virtual class ir_expression *        as_expression()       { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
@@ -131,9 +137,21 @@ public:
    virtual class ir_return *            as_return()           { return NULL; }
    virtual class ir_if *                as_if()               { return NULL; }
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
+   virtual class ir_texture *           as_texture()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
    virtual class ir_discard *           as_discard()          { return NULL; }
+   virtual class ir_jump *              as_jump()             { return NULL; }
    /*@}*/
+
+   /**
+    * IR equality method: Return true if the referenced instruction would
+    * return the same value as this one.
+    *
+    * This intended to be used for CSE and algebraic optimizations, on rvalues
+    * in particular.  No support for other instruction types (assignments,
+    * jumps, calls, etc.) is planned.
+    */
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
 protected:
    ir_instruction()
@@ -273,12 +291,43 @@ protected:
 enum ir_variable_mode {
    ir_var_auto = 0,     /**< Function local variables and globals. */
    ir_var_uniform,      /**< Variable declared as a uniform. */
-   ir_var_in,
-   ir_var_out,
-   ir_var_inout,
+   ir_var_shader_in,
+   ir_var_shader_out,
+   ir_var_function_in,
+   ir_var_function_out,
+   ir_var_function_inout,
    ir_var_const_in,	/**< "in" param that must be a constant expression */
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
-   ir_var_temporary	/**< Temporary variable generated during compilation. */
+   ir_var_temporary,	/**< Temporary variable generated during compilation. */
+   ir_var_mode_count	/**< Number of variable modes */
+};
+
+/**
+ * Enum keeping track of how a variable was declared.  For error checking of
+ * the gl_PerVertex redeclaration rules.
+ */
+enum ir_var_declaration_type {
+   /**
+    * Normal declaration (for most variables, this means an explicit
+    * declaration.  Exception: temporaries are always implicitly declared, but
+    * they still use ir_var_declared_normally).
+    *
+    * Note: an ir_variable that represents a named interface block uses
+    * ir_var_declared_normally.
+    */
+   ir_var_declared_normally = 0,
+
+   /**
+    * Variable was explicitly declared (or re-declared) in an unnamed
+    * interface block.
+    */
+   ir_var_declared_in_block,
+
+   /**
+    * Variable is an implicitly declared built-in that has not been explicitly
+    * re-declared by the shader.
+    */
+   ir_var_declared_implicitly,
 };
 
 /**
@@ -312,6 +361,21 @@ struct ir_state_slot {
 };
 
 
+/**
+ * Get the string value for an interpolation qualifier
+ *
+ * \return The string that would be used in a shader to specify \c
+ * mode will be returned.
+ *
+ * This function is used to generate error messages of the form "shader
+ * uses %s interpolation qualifier", so in the case where there is no
+ * interpolation qualifier, it returns "no".
+ *
+ * This function should only be used on a shader input or output variable.
+ */
+const char *interpolation_string(unsigned interpolation);
+
+
 class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *, ir_variable_mode, glsl_precision);
@@ -332,20 +396,6 @@ public:
 
 
    /**
-    * Get the string value for the interpolation qualifier
-    *
-    * \return The string that would be used in a shader to specify \c
-    * mode will be returned.
-    *
-    * This function is used to generate error messages of the form "shader
-    * uses %s interpolation qualifier", so in the case where there is no
-    * interpolation qualifier, it returns "no".
-    *
-    * This function should only be used on a shader input or output variable.
-    */
-   const char *interpolation_string() const;
-
-   /**
     * Determine how this variable should be interpolated based on its
     * interpolation qualifier (if present), whether it is gl_Color or
     * gl_SecondaryColor, and whether flatshading is enabled in the current GL
@@ -355,6 +405,100 @@ public:
     * INTERP_QUALIFIER_NOPERSPECTIVE, or INTERP_QUALIFIER_FLAT.
     */
    glsl_interp_qualifier determine_interpolation_mode(bool flat_shade);
+
+   /**
+    * Determine whether or not a variable is part of a uniform block.
+    */
+   inline bool is_in_uniform_block() const
+   {
+      return this->data.mode == ir_var_uniform && this->interface_type != NULL;
+   }
+
+   /**
+    * Determine whether or not a variable is the declaration of an interface
+    * block
+    *
+    * For the first declaration below, there will be an \c ir_variable named
+    * "instance" whose type and whose instance_type will be the same
+    *  \cglsl_type.  For the second declaration, there will be an \c ir_variable
+    * named "f" whose type is float and whose instance_type is B2.
+    *
+    * "instance" is an interface instance variable, but "f" is not.
+    *
+    * uniform B1 {
+    *     float f;
+    * } instance;
+    *
+    * uniform B2 {
+    *     float f;
+    * };
+    */
+   inline bool is_interface_instance() const
+   {
+      const glsl_type *const t = this->type;
+
+      return (t == this->interface_type)
+         || (t->is_array() && t->fields.array == this->interface_type);
+    }
+
+   /**
+    * Set this->interface_type on a newly created variable.
+    */
+   void init_interface_type(const struct glsl_type *type)
+   {
+      assert(this->interface_type == NULL);
+      this->interface_type = type;
+      if (this->is_interface_instance()) {
+         this->max_ifc_array_access =
+            rzalloc_array(this, unsigned, type->length);
+      }
+   }
+
+   /**
+    * Change this->interface_type on a variable that previously had a
+    * different, but compatible, interface_type.  This is used during linking
+    * to set the size of arrays in interface blocks.
+    */
+   void change_interface_type(const struct glsl_type *type)
+   {
+      if (this->max_ifc_array_access != NULL) {
+         /* max_ifc_array_access has already been allocated, so make sure the
+          * new interface has the same number of fields as the old one.
+          */
+         assert(this->interface_type->length == type->length);
+      }
+      this->interface_type = type;
+   }
+
+   /**
+    * Change this->interface_type on a variable that previously had a
+    * different, and incompatible, interface_type. This is used during
+    * compilation to handle redeclaration of the built-in gl_PerVertex
+    * interface block.
+    */
+   void reinit_interface_type(const struct glsl_type *type)
+   {
+      if (this->max_ifc_array_access != NULL) {
+#ifndef _NDEBUG
+         /* Redeclaring gl_PerVertex is only allowed if none of the built-ins
+          * it defines have been accessed yet; so it's safe to throw away the
+          * old max_ifc_array_access pointer, since all of its values are
+          * zero.
+          */
+         for (unsigned i = 0; i < this->interface_type->length; i++)
+            assert(this->max_ifc_array_access[i] == 0);
+#endif
+         ralloc_free(this->max_ifc_array_access);
+         this->max_ifc_array_access = NULL;
+      }
+      this->interface_type = NULL;
+      init_interface_type(type);
+   }
+
+   const glsl_type *get_interface_type() const
+   {
+      return this->interface_type;
+   }
 
    /**
     * Declared type of the variable
@@ -367,126 +511,203 @@ public:
    const char *name;
 
    /**
-    * Highest element accessed with a constant expression array index
+    * For variables which satisfy the is_interface_instance() predicate, this
+    * points to an array of integers such that if the ith member of the
+    * interface block is an array, max_ifc_array_access[i] is the maximum
+    * array element of that member that has been accessed.  If the ith member
+    * of the interface block is not an array, max_ifc_array_access[i] is
+    * unused.
     *
-    * Not used for non-array variables.
+    * For variables whose type is not an interface block, this pointer is
+    * NULL.
     */
-   unsigned max_array_access;
+   unsigned *max_ifc_array_access;
 
-   /**
-    * Is the variable read-only?
-    *
-    * This is set for variables declared as \c const, shader inputs,
-    * and uniforms.
-    */
-   unsigned read_only:1;
-   unsigned centroid:1;
-   unsigned invariant:1;
+   struct ir_variable_data {
 
-   /**
-    * Has this variable been used for reading or writing?
-    *
-    * Several GLSL semantic checks require knowledge of whether or not a
-    * variable has been used.  For example, it is an error to redeclare a
-    * variable as invariant after it has been used.
-    *
-    * This is only maintained in the ast_to_hir.cpp path, not in
-    * Mesa's fixed function or ARB program paths.
-    */
-   unsigned used:1;
+      /**
+       * Is the variable read-only?
+       *
+       * This is set for variables declared as \c const, shader inputs,
+       * and uniforms.
+       */
+      unsigned read_only:1;
+      unsigned centroid:1;
+      unsigned sample:1;
+      unsigned invariant:1;
 
-   /**
-    * Has this variable been statically assigned?
-    *
-    * This answers whether the variable was assigned in any path of
-    * the shader during ast_to_hir.  This doesn't answer whether it is
-    * still written after dead code removal, nor is it maintained in
-    * non-ast_to_hir.cpp (GLSL parsing) paths.
-    */
-   unsigned assigned:1;
+      /**
+       * Has this variable been used for reading or writing?
+       *
+       * Several GLSL semantic checks require knowledge of whether or not a
+       * variable has been used.  For example, it is an error to redeclare a
+       * variable as invariant after it has been used.
+       *
+       * This is only maintained in the ast_to_hir.cpp path, not in
+       * Mesa's fixed function or ARB program paths.
+       */
+      unsigned used:1;
 
-   /**
-    * Storage class of the variable.
-    *
-    * \sa ir_variable_mode
-    */
-   unsigned mode:3;
+      /**
+       * Has this variable been statically assigned?
+       *
+       * This answers whether the variable was assigned in any path of
+       * the shader during ast_to_hir.  This doesn't answer whether it is
+       * still written after dead code removal, nor is it maintained in
+       * non-ast_to_hir.cpp (GLSL parsing) paths.
+       */
+      unsigned assigned:1;
 
-   /**
-    * Interpolation mode for shader inputs / outputs
-    *
-    * \sa ir_variable_interpolation
-    */
-   unsigned interpolation:2;
+      /**
+       * Enum indicating how the variable was declared.  See
+       * ir_var_declaration_type.
+       *
+       * This is used to detect certain kinds of illegal variable redeclarations.
+       */
+      unsigned how_declared:2;
 
-   unsigned precision:2;
+      /**
+       * Storage class of the variable.
+       *
+       * \sa ir_variable_mode
+       */
+      unsigned mode:4;
 
-   /**
-    * \name ARB_fragment_coord_conventions
-    * @{
-    */
-   unsigned origin_upper_left:1;
-   unsigned pixel_center_integer:1;
-   /*@}*/
+      /**
+       * Interpolation mode for shader inputs / outputs
+       *
+       * \sa ir_variable_interpolation
+       */
+      unsigned interpolation:2;
 
-   /**
-    * Was the location explicitly set in the shader?
-    *
-    * If the location is explicitly set in the shader, it \b cannot be changed
-    * by the linker or by the API (e.g., calls to \c glBindAttribLocation have
-    * no effect).
-    */
-   unsigned explicit_location:1;
-   unsigned explicit_index:1;
+      unsigned precision:2;
 
-   /**
-    * Does this variable have an initializer?
-    *
-    * This is used by the linker to cross-validiate initializers of global
-    * variables.
-    */
-   unsigned has_initializer:1;
+      /**
+       * \name ARB_fragment_coord_conventions
+       * @{
+       */
+      unsigned origin_upper_left:1;
+      unsigned pixel_center_integer:1;
+      /*@}*/
 
-   /**
-    * \brief Layout qualifier for gl_FragDepth.
-    *
-    * This is not equal to \c ir_depth_layout_none if and only if this
-    * variable is \c gl_FragDepth and a layout qualifier is specified.
-    */
-   ir_depth_layout depth_layout;
+      /**
+       * Was the location explicitly set in the shader?
+       *
+       * If the location is explicitly set in the shader, it \b cannot be changed
+       * by the linker or by the API (e.g., calls to \c glBindAttribLocation have
+       * no effect).
+       */
+      unsigned explicit_location:1;
+      unsigned explicit_index:1;
 
-   /**
-    * Storage location of the base of this variable
-    *
-    * The precise meaning of this field depends on the nature of the variable.
-    *
-    *   - Vertex shader input: one of the values from \c gl_vert_attrib.
-    *   - Vertex shader output: one of the values from \c gl_vert_result.
-    *   - Fragment shader input: one of the values from \c gl_frag_attrib.
-    *   - Fragment shader output: one of the values from \c gl_frag_result.
-    *   - Uniforms: Per-stage uniform slot number for default uniform block.
-    *   - Uniforms: Index within the uniform block definition for UBO members.
-    *   - Other: This field is not currently used.
-    *
-    * If the variable is a uniform, shader input, or shader output, and the
-    * slot has not been assigned, the value will be -1.
-    */
-   int location;
+      /**
+       * Was an initial binding explicitly set in the shader?
+       *
+       * If so, constant_value contains an integer ir_constant representing the
+       * initial binding point.
+       */
+      unsigned explicit_binding:1;
 
-   /**
-    * Uniform block number for uniforms.
-    *
-    * This index is into the shader's list of uniform blocks, not the
-    * linked program's merged list.
-    *
-    * If the variable is not in a uniform block, the value will be -1.
-    */
-   int uniform_block;
+      /**
+       * Does this variable have an initializer?
+       *
+       * This is used by the linker to cross-validiate initializers of global
+       * variables.
+       */
+      unsigned has_initializer:1;
 
-   /**
-    * output index for dual source blending.
-    */
-   int index;
+      /**
+       * Is this variable a generic output or input that has not yet been matched
+       * up to a variable in another stage of the pipeline?
+       *
+       * This is used by the linker as scratch storage while assigning locations
+       * to generic inputs and outputs.
+       */
+      unsigned is_unmatched_generic_inout:1;
+
+      /**
+       * If non-zero, then this variable may be packed along with other variables
+       * into a single varying slot, so this offset should be applied when
+       * accessing components.  For example, an offset of 1 means that the x
+       * component of this variable is actually stored in component y of the
+       * location specified by \c location.
+       */
+      unsigned location_frac:2;
+
+      /**
+       * Non-zero if this variable was created by lowering a named interface
+       * block which was not an array.
+       *
+       * Note that this variable and \c from_named_ifc_block_array will never
+       * both be non-zero.
+       */
+      unsigned from_named_ifc_block_nonarray:1;
+
+      /**
+       * Non-zero if this variable was created by lowering a named interface
+       * block which was an array.
+       *
+       * Note that this variable and \c from_named_ifc_block_nonarray will never
+       * both be non-zero.
+       */
+      unsigned from_named_ifc_block_array:1;
+
+      /**
+       * \brief Layout qualifier for gl_FragDepth.
+       *
+       * This is not equal to \c ir_depth_layout_none if and only if this
+       * variable is \c gl_FragDepth and a layout qualifier is specified.
+       */
+      ir_depth_layout depth_layout;
+
+      /**
+       * Storage location of the base of this variable
+       *
+       * The precise meaning of this field depends on the nature of the variable.
+       *
+       *   - Vertex shader input: one of the values from \c gl_vert_attrib.
+       *   - Vertex shader output: one of the values from \c gl_varying_slot.
+       *   - Geometry shader input: one of the values from \c gl_varying_slot.
+       *   - Geometry shader output: one of the values from \c gl_varying_slot.
+       *   - Fragment shader input: one of the values from \c gl_varying_slot.
+       *   - Fragment shader output: one of the values from \c gl_frag_result.
+       *   - Uniforms: Per-stage uniform slot number for default uniform block.
+       *   - Uniforms: Index within the uniform block definition for UBO members.
+       *   - Other: This field is not currently used.
+       *
+       * If the variable is a uniform, shader input, or shader output, and the
+       * slot has not been assigned, the value will be -1.
+       */
+      int location;
+
+      /**
+       * output index for dual source blending.
+       */
+      int index;
+
+      /**
+       * Initial binding point for a sampler or UBO.
+       *
+       * For array types, this represents the binding point for the first element.
+       */
+      int binding;
+
+      /**
+       * Location an atomic counter is stored at.
+       */
+      struct {
+         unsigned buffer_index;
+         unsigned offset;
+      } atomic;
+
+      /**
+       * Highest element accessed with a constant expression array index
+       *
+       * Not used for non-array variables.
+       */
+      unsigned max_array_access;
+
+   } data;
 
    /**
     * Built-in state that backs this uniform
@@ -523,8 +744,22 @@ public:
     * objects.
     */
    ir_constant *constant_initializer;
+
+private:
+   /**
+    * For variables that are in an interface block or are an instance of an
+    * interface block, this is the \c GLSL_TYPE_INTERFACE type for that block.
+    *
+    * \sa ir_variable::location
+    */
+   const glsl_type *interface_type;
 };
 
+/**
+ * A function that returns whether a built-in function is available in the
+ * current shading language (based on version, ES or desktop, and extensions).
+ */
+typedef bool (*builtin_available_predicate)(const _mesa_glsl_parse_state *);
 
 /*@{*/
 /**
@@ -536,7 +771,8 @@ class ir_function_signature : public ir_instruction {
     * an ir_function.
     */
 public:
-   ir_function_signature(const glsl_type *return_type, glsl_precision precision);
+   ir_function_signature(const glsl_type *return_type, glsl_precision precision,
+                         builtin_available_predicate builtin_avail = NULL);
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
@@ -612,12 +848,27 @@ public:
    unsigned is_defined:1;
 
    /** Whether or not this function signature is a built-in. */
-   unsigned is_builtin:1;
+   bool is_builtin() const;
+
+   /**
+    * Whether or not this function is an intrinsic to be implemented
+    * by the driver.
+    */
+   bool is_intrinsic;
+
+   /** Whether or not a built-in is available for this shader. */
+   bool is_builtin_available(const _mesa_glsl_parse_state *state) const;
 
    /** Body of instructions in the function. */
    struct exec_list body;
 
 private:
+   /**
+    * A function pointer to a predicate that answers whether a built-in
+    * function is available in the current shader.  NULL if not a built-in.
+    */
+   builtin_available_predicate builtin_avail;
+
    /** Function of which this signature is one overload. */
    class ir_function *_function;
 
@@ -673,31 +924,26 @@ public:
    }
 
    /**
-    * Get an iterator for the set of function signatures
-    */
-   exec_list_iterator iterator()
-   {
-      return signatures.iterator();
-   }
-
-   /**
     * Find a signature that matches a set of actual parameters, taking implicit
     * conversions into account.  Also flags whether the match was exact.
     */
-   ir_function_signature *matching_signature(const exec_list *actual_param,
+   ir_function_signature *matching_signature(_mesa_glsl_parse_state *state,
+                                             const exec_list *actual_param,
 					     bool *match_is_exact);
 
    /**
     * Find a signature that matches a set of actual parameters, taking implicit
     * conversions into account.
     */
-   ir_function_signature *matching_signature(const exec_list *actual_param);
+   ir_function_signature *matching_signature(_mesa_glsl_parse_state *state,
+                                             const exec_list *actual_param);
 
    /**
     * Find a signature that exactly matches a set of actual parameters without
     * any implicit type conversions.
     */
-   ir_function_signature *exact_matching_signature(const exec_list *actual_ps);
+   ir_function_signature *exact_matching_signature(_mesa_glsl_parse_state *state,
+                                                   const exec_list *actual_ps);
 
    /**
     * Name of the function.
@@ -774,44 +1020,8 @@ public:
       return this;
    }
 
-   /**
-    * Get an iterator for the instructions of the loop body
-    */
-   exec_list_iterator iterator()
-   {
-      return body_instructions.iterator();
-   }
-
    /** List of ir_instruction that make up the body of the loop. */
    exec_list body_instructions;
-
-   /**
-    * \name Loop counter and controls
-    *
-    * Represents a loop like a FORTRAN \c do-loop.
-    *
-    * \note
-    * If \c from and \c to are the same value, the loop will execute once.
-    */
-   /*@{*/
-   ir_rvalue *from;             /** Value of the loop counter on the first
-				 * iteration of the loop.
-				 */
-   ir_rvalue *to;               /** Value of the loop counter on the last
-				 * iteration of the loop.
-				 */
-   ir_rvalue *increment;
-   ir_variable *counter;
-
-   /**
-    * Comparison operation in the loop terminator.
-    *
-    * If any of the loop control fields are non-\c NULL, this field must be
-    * one of \c ir_binop_less, \c ir_binop_greater, \c ir_binop_lequal,
-    * \c ir_binop_gequal, \c ir_binop_equal, or \c ir_binop_nequal.
-    */
-   int cmp;
-   /*@}*/
 };
 
 
@@ -901,7 +1111,7 @@ public:
    unsigned write_mask:4;
 };
 
-/* Update ir_expression::num_operands() and operator_strs when
+/* Update ir_expression::get_num_operands() and operator_strs when
  * updating this list.
  */
 enum ir_expression_operation {
@@ -963,6 +1173,42 @@ enum ir_expression_operation {
    ir_unop_dFdy,
    /*@}*/
 
+   /**
+    * \name Floating point pack and unpack operations.
+    */
+   /*@{*/
+   ir_unop_pack_snorm_2x16,
+   ir_unop_pack_snorm_4x8,
+   ir_unop_pack_unorm_2x16,
+   ir_unop_pack_unorm_4x8,
+   ir_unop_pack_half_2x16,
+   ir_unop_unpack_snorm_2x16,
+   ir_unop_unpack_snorm_4x8,
+   ir_unop_unpack_unorm_2x16,
+   ir_unop_unpack_unorm_4x8,
+   ir_unop_unpack_half_2x16,
+   /*@}*/
+
+   /**
+    * \name Lowered floating point unpacking operations.
+    *
+    * \see lower_packing_builtins_visitor::split_unpack_half_2x16
+    */
+   /*@{*/
+   ir_unop_unpack_half_2x16_split_x,
+   ir_unop_unpack_half_2x16_split_y,
+   /*@}*/
+
+   /**
+    * \name Bit operations, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_unop_bitfield_reverse,
+   ir_unop_bit_count,
+   ir_unop_find_msb,
+   ir_unop_find_lsb,
+   /*@}*/
+
    ir_unop_noise,
 
    /**
@@ -972,8 +1218,24 @@ enum ir_expression_operation {
 
    ir_binop_add,
    ir_binop_sub,
-   ir_binop_mul,
+   ir_binop_mul,       /**< Floating-point or low 32-bit integer multiply. */
+   ir_binop_imul_high, /**< Calculates the high 32-bits of a 64-bit multiply. */
    ir_binop_div,
+
+   /**
+    * Returns the carry resulting from the addition of the two arguments.
+    */
+   /*@{*/
+   ir_binop_carry,
+   /*@}*/
+
+   /**
+    * Returns the borrow resulting from the subtraction of the second argument
+    * from the first argument.
+    */
+   /*@{*/
+   ir_binop_borrow,
+   /*@}*/
 
    /**
     * Takes one of two combinations of arguments:
@@ -1030,6 +1292,24 @@ enum ir_expression_operation {
    ir_binop_pow,
 
    /**
+    * \name Lowered floating point packing operations.
+    *
+    * \see lower_packing_builtins_visitor::split_pack_half_2x16
+    */
+   /*@{*/
+   ir_binop_pack_half_2x16_split,
+   /*@}*/
+
+   /**
+    * \name First half of a lowered bitfieldInsert() operation.
+    *
+    * \see lower_instructions::bitfield_insert_to_bfm_bfi
+    */
+   /*@{*/
+   ir_binop_bfm,
+   /*@}*/
+
+   /**
     * Load a value the size of a given GLSL type from a uniform block.
     *
     * operand0 is the ir_constant uniform block index in the linked shader.
@@ -1038,15 +1318,80 @@ enum ir_expression_operation {
    ir_binop_ubo_load,
 
    /**
+    * \name Multiplies a number by two to a power, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_binop_ldexp,
+   /*@}*/
+
+   /**
+    * Extract a scalar from a vector
+    *
+    * operand0 is the vector
+    * operand1 is the index of the field to read from operand0
+    */
+   ir_binop_vector_extract,
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_ubo_load,
+   ir_last_binop = ir_binop_vector_extract,
 
-   ir_ternop_clamp,
-   ir_ternop_mix,
-   ir_last_ternop = ir_ternop_mix,
-	
+   /**
+    * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_triop_fma,
+   /*@}*/
+
+   ir_triop_clamp,
+   ir_triop_lrp,
+
+   /**
+    * \name Conditional Select
+    *
+    * A vector conditional select instruction (like ?:, but operating per-
+    * component on vectors).
+    *
+    * \see lower_instructions_visitor::ldexp_to_arith
+    */
+   /*@{*/
+   ir_triop_csel,
+   /*@}*/
+
+   /**
+    * \name Second half of a lowered bitfieldInsert() operation.
+    *
+    * \see lower_instructions::bitfield_insert_to_bfm_bfi
+    */
+   /*@{*/
+   ir_triop_bfi,
+   /*@}*/
+
+   ir_triop_bitfield_extract,
+
+   /**
+    * Generate a value with one field of a vector changed
+    *
+    * operand0 is the vector
+    * operand1 is the value to write into the vector result
+    * operand2 is the index in operand0 to be modified
+    */
+   ir_triop_vector_insert,
+
+   /**
+    * A sentinel marking the last of the ternary operations.
+    */
+   ir_last_triop = ir_triop_vector_insert,
+
+   ir_quadop_bitfield_insert,
+
    ir_quadop_vector,
+
+   /**
+    * A sentinel marking the last of the ternary operations.
+    */
+   ir_last_quadop = ir_quadop_vector,
 
    /**
     * A sentinel marking the last of all operations.
@@ -1056,35 +1401,31 @@ enum ir_expression_operation {
 
 class ir_expression : public ir_rvalue {
 public:
+   ir_expression(int op, const struct glsl_type *type,
+                 ir_rvalue *op0, ir_rvalue *op1 = NULL,
+                 ir_rvalue *op2 = NULL, ir_rvalue *op3 = NULL);
+
    /**
     * Constructor for unary operation expressions
     */
-   ir_expression(int op, const struct glsl_type *type, ir_rvalue *);
    ir_expression(int op, ir_rvalue *);
 
    /**
     * Constructor for binary operation expressions
     */
-   ir_expression(int op, const struct glsl_type *type,
-		 ir_rvalue *, ir_rvalue *);
    ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1);
-	
+
    /**
-	* Constructor for ternary operation expressions
+    * Constructor for ternary operation expressions
     */
-   ir_expression(int op, const struct glsl_type *type,
-         ir_rvalue *op0, ir_rvalue *op1, ir_rvalue *op2);
-	
-   /**
-    * Constructor for quad operator expressions
-    */
-   ir_expression(int op, const struct glsl_type *type,
-		 ir_rvalue *, ir_rvalue *, ir_rvalue *, ir_rvalue *);
+   ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1, ir_rvalue *op2);
 
    virtual ir_expression *as_expression()
    {
       return this;
    }
+
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    virtual ir_expression *clone(void *mem_ctx, struct hash_table *ht) const;
 
@@ -1156,7 +1497,7 @@ public:
       ir_type = ir_type_call;
       assert(callee->return_type != NULL);
       actual_parameters->move_nodes_to(& this->actual_parameters);
-      this->use_builtin = callee->is_builtin;
+      this->use_builtin = callee->is_builtin();
    }
 
    virtual ir_call *clone(void *mem_ctx, struct hash_table *ht) const;
@@ -1174,14 +1515,6 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
-
-   /**
-    * Get an iterator for the set of acutal parameters
-    */
-   exec_list_iterator iterator()
-   {
-      return actual_parameters.iterator();
-   }
 
    /**
     * Get the name of the function being called.
@@ -1227,6 +1560,12 @@ protected:
    ir_jump()
    {
       ir_type = ir_type_unset;
+   }
+
+public:
+   virtual ir_jump *as_jump()
+   {
+      return this;
    }
 };
 
@@ -1356,7 +1695,11 @@ enum ir_texture_opcode {
    ir_txl,		/**< Texture look-up with explicit LOD */
    ir_txd,		/**< Texture look-up with partial derivatvies */
    ir_txf,		/**< Texel fetch with explicit LOD */
-   ir_txs		/**< Texture size */
+   ir_txf_ms,           /**< Multisample texture fetch */
+   ir_txs,		/**< Texture size */
+   ir_lod,		/**< Texture lod query */
+   ir_tg4,		/**< Texture gather */
+   ir_query_levels      /**< Texture levels query */
 };
 
 
@@ -1375,15 +1718,21 @@ enum ir_texture_opcode {
  * (txl <type> <sampler> <coordinate> 0 <lod>)
  * (txd <type> <sampler> <coordinate> 0 (dPdx dPdy))
  * (txf <type> <sampler> <coordinate> 0 <lod>)
+ * (txf_ms
+ *      <type> <sampler> <coordinate>   <sample_index>)
  * (txs <type> <sampler> <lod>)
+ * (lod <type> <sampler> <coordinate>)
+ * (tg4 <type> <sampler> <coordinate> <offset> <component>)
+ * (query_levels <type> <sampler>)
  */
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : ir_rvalue(glsl_precision_low), op(op), coordinate(NULL),
+      : ir_rvalue(glsl_precision_low), op(op), sampler(NULL), coordinate(NULL),
         offset(NULL)
    {
       this->ir_type = ir_type_texture;
+      memset(&lod_info, 0, sizeof(lod_info));
    }
 
    virtual ir_texture *clone(void *mem_ctx, struct hash_table *) const;
@@ -1395,7 +1744,14 @@ public:
       v->visit(this);
    }
 
+   virtual ir_texture *as_texture()
+   {
+      return this;
+   }
+
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    /**
     * Return a string representing the ir_texture_opcode.
@@ -1424,6 +1780,8 @@ public:
    union {
       ir_rvalue *lod;		/**< Floating point LOD */
       ir_rvalue *bias;		/**< Floating point LOD bias */
+      ir_rvalue *sample_index;  /**< MSAA sample index */
+      ir_rvalue *component;     /**< Gather component selector */
       struct {
 	 ir_rvalue *dPdx;	/**< Partial derivative of coordinate wrt X */
 	 ir_rvalue *dPdy;	/**< Partial derivative of coordinate wrt Y */
@@ -1481,6 +1839,8 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    bool is_lvalue() const
    {
@@ -1549,6 +1909,8 @@ public:
       return this;
    }
 
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
+
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
@@ -1607,6 +1969,8 @@ public:
       return this;
    }
 
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
+
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
@@ -1649,6 +2013,11 @@ public:
 					struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
+
+   virtual ir_dereference_record *as_dereference_record()
+   {
+      return this;
+   }
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -1693,10 +2062,10 @@ union ir_constant_data {
 class ir_constant : public ir_rvalue {
 public:
    ir_constant(const struct glsl_type *type, const ir_constant_data *data);
-   ir_constant(bool b);
-   ir_constant(unsigned int u);
-   ir_constant(int i);
-   ir_constant(float f);
+   ir_constant(bool b, unsigned vector_elements=1);
+   ir_constant(unsigned int u, unsigned vector_elements=1);
+   ir_constant(int i, unsigned vector_elements=1);
+   ir_constant(float f, unsigned vector_elements=1);
 
    /**
     * Construct an ir_constant from a list of ir_constant values
@@ -1735,6 +2104,8 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    /**
     * Get a particular component of a constant as a specific type
@@ -1787,6 +2158,12 @@ public:
     */
    bool has_value(const ir_constant *) const;
 
+   /**
+    * Return true if this ir_constant represents the given value.
+    *
+    * For vectors, this checks that each component is the given value.
+    */
+   virtual bool is_value(float f, int i) const;
    virtual bool is_zero() const;
    virtual bool is_one() const;
    virtual bool is_negative_one() const;
@@ -1839,8 +2216,76 @@ public:
 };
 
 
+class ir_typedecl_statement : public ir_instruction {
+public:
+	ir_typedecl_statement(const glsl_type* type_decl)
+	{
+		this->ir_type = ir_type_typedecl;
+		this->type_decl = type_decl;
+	}
+	
+	virtual ir_typedecl_statement *clone(void *mem_ctx, struct hash_table *) const;
+	
+	virtual void accept(ir_visitor *v)
+	{
+		v->visit(this);
+	}
+	
+	virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+	
+	const glsl_type* type_decl;
+};
+
+
 
 /*@}*/
+
+/**
+ * IR instruction to emit a vertex in a geometry shader.
+ */
+class ir_emit_vertex : public ir_instruction {
+public:
+   ir_emit_vertex()
+   {
+      ir_type = ir_type_emit_vertex;
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_emit_vertex *clone(void *mem_ctx, struct hash_table *) const
+   {
+      return new(mem_ctx) ir_emit_vertex();
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+};
+
+/**
+ * IR instruction to complete the current primitive and start a new one in a
+ * geometry shader.
+ */
+class ir_end_primitive : public ir_instruction {
+public:
+   ir_end_primitive()
+   {
+      ir_type = ir_type_end_primitive;
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_end_primitive *clone(void *mem_ctx, struct hash_table *) const
+   {
+      return new(mem_ctx) ir_end_primitive();
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+};
 
 /**
  * Apply a visitor to each IR node in a list
@@ -1893,10 +2338,17 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state);
 
 extern void
-_mesa_glsl_initialize_functions(_mesa_glsl_parse_state *state);
+_mesa_glsl_initialize_builtin_functions();
+
+extern ir_function_signature *
+_mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
+                                 const char *name, exec_list *actual_parameters);
+
+extern gl_shader *
+_mesa_glsl_get_builtin_function_shader(void);
 
 extern void
-_mesa_glsl_release_functions(void);
+_mesa_glsl_release_builtin_functions(void);
 
 extern void
 reparent_ir(exec_list *list, void *mem_ctx);
@@ -1909,7 +2361,7 @@ import_prototypes(const exec_list *source, exec_list *dest,
 
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
-                      bool is_fragment_shader);
+                      gl_shader_stage shader_stage);
 
 extern glsl_precision
 precision_from_ir (ir_instruction* ir);
@@ -1924,5 +2376,21 @@ static inline glsl_precision higher_precision (glsl_precision a, glsl_precision 
 extern char *
 prototype_string(const glsl_type *return_type, const char *name,
 		 exec_list *parameters);
+
+const char *
+mode_string(const ir_variable *var);
+
+extern "C" {
+#endif /* __cplusplus */
+
+extern void _mesa_print_ir(struct exec_list *instructions,
+                           struct _mesa_glsl_parse_state *state);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+unsigned
+vertices_per_prim(GLenum prim);
 
 #endif /* IR_H */

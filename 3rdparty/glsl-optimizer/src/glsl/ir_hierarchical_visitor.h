@@ -36,6 +36,7 @@ enum ir_visitor_status {
 };
 
 
+#ifdef __cplusplus
 /**
  * Base class of hierarchical visitors of IR instruction trees
  *
@@ -87,6 +88,9 @@ public:
    virtual ir_visitor_status visit(class ir_constant *);
    virtual ir_visitor_status visit(class ir_loop_jump *);
    virtual ir_visitor_status visit(class ir_precision_statement *);
+   virtual ir_visitor_status visit(class ir_typedecl_statement *);
+   virtual ir_visitor_status visit(class ir_emit_vertex *);
+   virtual ir_visitor_status visit(class ir_end_primitive *);
 
    /**
     * ir_dereference_variable isn't technically a leaf, but it is treated as a
@@ -182,5 +186,6 @@ void visit_tree(ir_instruction *ir,
 
 ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
                                       bool statement_list = true);
+#endif /* __cplusplus */
 
 #endif /* IR_HIERARCHICAL_VISITOR_H */

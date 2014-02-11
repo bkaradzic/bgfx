@@ -4,7 +4,11 @@ void main ()
   vec3 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0].xyz;
   vec4 tmpvar_2;
-  tmpvar_2 = fract((vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (sqrt(dot (tmpvar_1, tmpvar_1)) * _LightPositionRange.w)));
+  tmpvar_2 = fract((vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (
+    sqrt(dot (tmpvar_1, tmpvar_1))
+   * _LightPositionRange.w)));
   gl_FragData[0] = (tmpvar_2 - (tmpvar_2.yzww * 0.00392157));
 }
 
+
+// inputs: 1, stats: 7 alu 0 tex 0 flow

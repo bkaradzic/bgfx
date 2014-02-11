@@ -3,18 +3,18 @@ struct v2f {
   highp vec2 uv;
   highp vec3 ray;
 };
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-uniform highp vec4 _ZBufferParams;
-uniform highp mat4 _View2Shadow3;
-uniform highp mat4 _View2Shadow2;
-uniform highp mat4 _View2Shadow1;
-uniform highp mat4 _View2Shadow;
-uniform sampler2D _ShadowMapTexture;
-uniform highp vec4 _LightSplitsNear;
-uniform highp vec4 _LightSplitsFar;
-uniform highp vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
+uniform highp vec4 _LightShadowData;
+uniform highp vec4 _LightSplitsFar;
+uniform highp vec4 _LightSplitsNear;
+uniform sampler2D _ShadowMapTexture;
+uniform highp mat4 _View2Shadow;
+uniform highp mat4 _View2Shadow1;
+uniform highp mat4 _View2Shadow2;
+uniform highp mat4 _View2Shadow3;
+uniform highp vec4 _ZBufferParams;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
 mediump float unitySampleShadow (
   in highp vec4 eyePos_1
 )
@@ -67,7 +67,11 @@ mediump float unitySampleShadow (
   weights_4 = tmpvar_25;
   highp vec4 tmpvar_26;
   tmpvar_26.w = 1.0;
-  tmpvar_26.xyz = ((((sc0_11 * weights_4.x) + (sc1_10 * weights_4.y)) + (sc2_9 * weights_4.z)) + (sc3_8 * weights_4.w)).xyz;
+  tmpvar_26.xyz = (((
+    (sc0_11 * weights_4.x)
+   + 
+    (sc1_10 * weights_4.y)
+  ) + (sc2_9 * weights_4.z)) + (sc3_8 * weights_4.w)).xyz;
   highp vec4 tmpvar_27;
   tmpvar_27 = tmpvar_26;
   coord_3 = tmpvar_27;

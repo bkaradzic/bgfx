@@ -133,6 +133,10 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
 static void
 _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc);
 
+static void
+_glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t version,
+                                         const char *ident, bool explicitly_set);
+
 static int
 glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser);
 
@@ -160,10 +164,10 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 %lex-param {glcpp_parser_t *parser}
 
 %expect 0
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE integer_constant
-%type <str> IDENTIFIER INTEGER_STRING OTHER
+%type <str> IDENTIFIER FUNC_IDENTIFIER OBJ_IDENTIFIER INTEGER_STRING OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token conditional_token
 %type <token_list> pp_tokens replacement_list text_line conditional_tokens
@@ -189,6 +193,17 @@ input:
 line:
 	control_line {
 		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
+	}
+|	HASH_LINE {
+		glcpp_parser_resolve_implicit_version(parser);
+	} pp_tokens NEWLINE {
+
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_expand_and_lex_from (parser,
+							   LINE_EXPANDED, $3);
+		}
 	}
 |	text_line {
 		_glcpp_parser_print_expanded_token_list (parser, $1);
@@ -226,33 +241,35 @@ expanded_line:
 	}
 ;
 
+define:
+	OBJ_IDENTIFIER replacement_list NEWLINE {
+		_define_object_macro (parser, & @1, $1, $2);
+	}
+|	FUNC_IDENTIFIER '(' ')' replacement_list NEWLINE {
+		_define_function_macro (parser, & @1, $1, NULL, $4);
+	}
+|	FUNC_IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE {
+		_define_function_macro (parser, & @1, $1, $3, $5);
+	}
+;
+
 control_line:
-	HASH_DEFINE_OBJ	IDENTIFIER replacement_list NEWLINE {
-		_define_object_macro (parser, & @2, $2, $3);
-	}
-|	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE {
-		_define_function_macro (parser, & @2, $2, NULL, $5);
-	}
-|	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE {
-		_define_function_macro (parser, & @2, $2, $4, $6);
-	}
-|	HASH_UNDEF IDENTIFIER NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, $2);
+	HASH_DEFINE {
+		glcpp_parser_resolve_implicit_version(parser);
+	} define
+|	HASH_UNDEF {
+		glcpp_parser_resolve_implicit_version(parser);
+	} IDENTIFIER NEWLINE {
+		macro_t *macro = hash_table_find (parser->defines, $3);
 		if (macro) {
-			hash_table_remove (parser->defines, $2);
+			hash_table_remove (parser->defines, $3);
 			ralloc_free (macro);
 		}
-		ralloc_free ($2);
+		ralloc_free ($3);
 	}
-|	HASH_LINE pp_tokens NEWLINE {
-		if (parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			_glcpp_parser_expand_and_lex_from (parser,
-							   LINE_EXPANDED, $2);
-		}
-	}
-|	HASH_IF conditional_tokens NEWLINE {
+|	HASH_IF {
+		glcpp_parser_resolve_implicit_version(parser);
+	} conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'if' expression if
 		 * we are not skipping. When we are skipping, we
 		 * simply push a new 0-valued 'if' onto the skip
@@ -264,7 +281,7 @@ control_line:
 		    parser->skip_stack->type == SKIP_NO_SKIP)
 		{
 			_glcpp_parser_expand_and_lex_from (parser,
-							   IF_EXPANDED, $2);
+							   IF_EXPANDED, $3);
 		}	
 		else
 		{
@@ -282,15 +299,19 @@ control_line:
 		}	
 		_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
 	}
-|	HASH_IFDEF IDENTIFIER junk NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, $2);
-		ralloc_free ($2);
+|	HASH_IFDEF {
+		glcpp_parser_resolve_implicit_version(parser);
+	} IDENTIFIER junk NEWLINE {
+		macro_t *macro = hash_table_find (parser->defines, $3);
+		ralloc_free ($3);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro != NULL);
 	}
-|	HASH_IFNDEF IDENTIFIER junk NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, $2);
-		ralloc_free ($2);
-		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
+|	HASH_IFNDEF {
+		glcpp_parser_resolve_implicit_version(parser);
+	} IDENTIFIER junk NEWLINE {
+		macro_t *macro = hash_table_find (parser->defines, $3);
+		ralloc_free ($3);
+		_glcpp_parser_skip_stack_push_if (parser, & @2, macro == NULL);
 	}
 |	HASH_ELIF conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'elif' expression
@@ -306,6 +327,11 @@ control_line:
 			_glcpp_parser_expand_and_lex_from (parser,
 							   ELIF_EXPANDED, $2);
 		}
+		else if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "#elif after #else");
+		}
 		else
 		{
 			_glcpp_parser_skip_stack_change_if (parser, & @1,
@@ -320,6 +346,11 @@ control_line:
 		{
 			glcpp_error(& @1, parser, "#elif with no expression");
 		}
+		else if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "#elif after #else");
+		}
 		else
 		{
 			_glcpp_parser_skip_stack_change_if (parser, & @1,
@@ -327,34 +358,31 @@ control_line:
 			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
 		}
 	}
-|	HASH_ELSE NEWLINE {
-		_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
-	}
-|	HASH_ENDIF NEWLINE {
-		_glcpp_parser_skip_stack_pop (parser, & @1);
-	}
-|	HASH_VERSION integer_constant NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
-		if (macro) {
-			hash_table_remove (parser->defines, "__VERSION__");
-			ralloc_free (macro);
+|	HASH_ELSE {
+		if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "multiple #else");
 		}
-		add_builtin_define (parser, "__VERSION__", $2);
-
-		if ($2 == 100)
-			add_builtin_define (parser, "GL_ES", 1);
-
-		/* Currently, all ES2 implementations support highp in the
-		 * fragment shader, so we always define this macro in ES2.
-		 * If we ever get a driver that doesn't support highp, we'll
-		 * need to add a flag to the gl_context and check that here.
-		 */
-		if ($2 >= 130 || $2 == 100)
-			add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
-
-		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "#version %" PRIiMAX, $2);
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
+			if (parser->skip_stack)
+				parser->skip_stack->has_else = true;
+		}
+	} NEWLINE
+|	HASH_ENDIF {
+		_glcpp_parser_skip_stack_pop (parser, & @1);
+	} NEWLINE
+|	HASH_VERSION integer_constant NEWLINE {
+		_glcpp_parser_handle_version_declaration(parser, $2, NULL, true);
 	}
-|	HASH NEWLINE
+|	HASH_VERSION integer_constant IDENTIFIER NEWLINE {
+		_glcpp_parser_handle_version_declaration(parser, $2, $3, true);
+	}
+|	HASH NEWLINE {
+		glcpp_parser_resolve_implicit_version(parser);
+	}
 ;
 
 integer_constant:
@@ -374,6 +402,8 @@ integer_constant:
 expression:
 	integer_constant
 |	IDENTIFIER {
+		if (parser->is_gles)
+			glcpp_error(& @1, parser, "undefined macro %s in expression (illegal in GLES)", $1);
 		$$ = 0;
 	}
 |	expression OR expression {
@@ -1054,26 +1084,67 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 		return combined;
 	}
 
-	/* Two string-valued tokens can usually just be mashed
-	 * together.
+	/* Two string-valued (or integer) tokens can usually just be
+	 * mashed together. (We also handle a string followed by an
+	 * integer here as well.)
 	 *
-	 * XXX: This isn't actually legitimate. Several things here
-	 * should result in a diagnostic since the result cannot be a
-	 * valid, single pre-processing token. For example, pasting
-	 * "123" and "abc" is not legal, but we don't catch that
-	 * here. */
-	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING) &&
-	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING))
+	 * There are some exceptions here. Notably, if the first token
+	 * is an integer (or a string representing an integer), then
+	 * the second token must also be an integer or must be a
+	 * string representing an integer that begins with a digit.
+	 */
+	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING || token->type == INTEGER) &&
+	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING || other->type == INTEGER))
 	{
 		char *str;
+		int combined_type;
 
-		str = ralloc_asprintf (token, "%s%s", token->value.str,
-				       other->value.str);
-		combined = _token_create_str (token, token->type, str);
+		/* Check that pasting onto an integer doesn't create a
+		 * non-integer, (that is, only digits can be
+		 * pasted. */
+		if (token->type == INTEGER_STRING || token->type == INTEGER)
+		{
+			switch (other->type) {
+			case INTEGER_STRING:
+				if (other->value.str[0] < '0' ||
+				    other->value.str[0] > '9')
+					goto FAIL;
+				break;
+			case INTEGER:
+				if (other->value.ival < 0)
+					goto FAIL;
+				break;
+			default:
+				goto FAIL;
+			}
+		}
+
+		if (token->type == INTEGER)
+			str = ralloc_asprintf (token, "%" PRIiMAX,
+					       token->value.ival);
+		else
+			str = ralloc_strdup (token, token->value.str);
+					       
+
+		if (other->type == INTEGER)
+			ralloc_asprintf_append (&str, "%" PRIiMAX,
+						other->value.ival);
+		else
+			ralloc_strcat (&str, other->value.str);
+
+		/* New token is same type as original token, unless we
+		 * started with an integer, in which case we will be
+		 * creating an integer-string. */
+		combined_type = token->type;
+		if (combined_type == INTEGER)
+			combined_type = INTEGER_STRING;
+
+		combined = _token_create_str (token, combined_type, str);
 		combined->location = token->location;
 		return combined;
 	}
 
+    FAIL:
 	glcpp_error (&token->location, parser, "");
 	ralloc_asprintf_rewrite_tail (&parser->info_log, &parser->info_log_length, "Pasting \"");
 	_token_print (&parser->info_log, &parser->info_log_length, token);
@@ -1116,10 +1187,9 @@ static void add_builtin_define(glcpp_parser_t *parser,
 }
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions, int api)
+glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
 {
 	glcpp_parser_t *parser;
-	int language_version;
 
 	parser = ralloc (NULL, glcpp_parser_t);
 
@@ -1132,6 +1202,7 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
 	parser->paren_count = 0;
+        parser->commented_newlines = 0;
 
 	parser->skip_stack = NULL;
 
@@ -1144,53 +1215,14 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->info_log_length = 0;
 	parser->error = 0;
 
+        parser->extensions = extensions;
+        parser->api = api;
+        parser->version_resolved = false;
+
 	parser->has_new_line_number = 0;
 	parser->new_line_number = 1;
 	parser->has_new_source_number = 0;
 	parser->new_source_number = 0;
-
-	/* Add pre-defined macros. */
-	add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
-	add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
-
-	if (api == API_OPENGLES2)
-		add_builtin_define(parser, "GL_ES", 1);
-
-	if (extensions != NULL) {
-	   if (extensions->EXT_texture_array) {
-	      add_builtin_define(parser, "GL_EXT_texture_array", 1);
-	   }
-
-	   if (extensions->ARB_fragment_coord_conventions)
-	      add_builtin_define(parser, "GL_ARB_fragment_coord_conventions",
-				 1);
-
-	   if (extensions->ARB_explicit_attrib_location)
-	      add_builtin_define(parser, "GL_ARB_explicit_attrib_location", 1);
-
-	   if (extensions->ARB_shader_texture_lod)
-	      add_builtin_define(parser, "GL_ARB_shader_texture_lod", 1);
-
-	   if (extensions->ARB_draw_instanced)
-	      add_builtin_define(parser, "GL_ARB_draw_instanced", 1);
-
-	   if (extensions->ARB_conservative_depth) {
-	      add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
-	      add_builtin_define(parser, "GL_ARB_conservative_depth", 1);
-	   }
-
-	   if (extensions->OES_EGL_image_external)
-	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
-
-	   if (extensions->ARB_shader_bit_encoding)
-	      add_builtin_define(parser, "GL_ARB_shader_bit_encoding", 1);
-
-	   if (extensions->ARB_uniform_buffer_object)
-	      add_builtin_define(parser, "GL_ARB_uniform_buffer_object", 1);
-	}
-
-	language_version = 110;
-	add_builtin_define(parser, "__VERSION__", language_version);
 
 	return parser;
 }
@@ -1294,16 +1326,28 @@ _arguments_parse (argument_list_t *arguments,
 }
 
 static token_list_t *
-_token_list_create_with_one_space (void *ctx)
+_token_list_create_with_one_ival (void *ctx, int type, int ival)
 {
 	token_list_t *list;
-	token_t *space;
+	token_t *node;
 
 	list = _token_list_create (ctx);
-	space = _token_create_ival (list, SPACE, SPACE);
-	_token_list_append (list, space);
+	node = _token_create_ival (list, type, ival);
+	_token_list_append (list, node);
 
 	return list;
+}
+
+static token_list_t *
+_token_list_create_with_one_space (void *ctx)
+{
+	return _token_list_create_with_one_ival (ctx, SPACE, SPACE);
+}
+
+static token_list_t *
+_token_list_create_with_one_integer (void *ctx, int ival)
+{
+	return _token_list_create_with_one_ival (ctx, INTEGER, ival);
 }
 
 /* Perform macro expansion on 'list', placing the resulting tokens
@@ -1522,8 +1566,18 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 		return NULL;
 	}
 
-	/* Look up this identifier in the hash table. */
+	*last = node;
 	identifier = token->value.str;
+
+	/* Special handling for __LINE__ and __FILE__, (not through
+	 * the hash table). */
+	if (strcmp(identifier, "__LINE__") == 0)
+		return _token_list_create_with_one_integer (parser, node->token->location.first_line);
+
+	if (strcmp(identifier, "__FILE__") == 0)
+		return _token_list_create_with_one_integer (parser, node->token->location.source);
+
+	/* Look up this identifier in the hash table. */
 	macro = hash_table_find (parser->defines, identifier);
 
 	/* Not a macro, so no expansion needed. */
@@ -1544,14 +1598,12 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 		final = _token_create_str (parser, OTHER, str);
 		expansion = _token_list_create (parser);
 		_token_list_append (expansion, final);
-		*last = node;
 		return expansion;
 	}
 
 	if (! macro->is_function)
 	{
 		token_list_t *replacement;
-		*last = node;
 
 		/* Replace a macro defined as empty with a SPACE token. */
 		if (macro->replacements == NULL)
@@ -1843,7 +1895,7 @@ glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser)
 			if (ret == NEWLINE)
 				parser->in_control_line = 0;
 		}
-		else if (ret == HASH_DEFINE_OBJ || ret == HASH_DEFINE_FUNC ||
+		else if (ret == HASH_DEFINE ||
 			   ret == HASH_UNDEF || ret == HASH_IF ||
 			   ret == HASH_IFDEF || ret == HASH_IFNDEF ||
 			   ret == HASH_ELIF || ret == HASH_ELSE ||
@@ -1930,6 +1982,7 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, YYLTYPE *loc,
 		node->type = SKIP_TO_ENDIF;
 	}
 
+	node->has_else = false;
 	node->next = parser->skip_stack;
 	parser->skip_stack = node;
 }
@@ -1964,4 +2017,147 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc)
 	node = parser->skip_stack;
 	parser->skip_stack = node->next;
 	ralloc_free (node);
+}
+
+static void
+_glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t version,
+                                         const char *es_identifier,
+                                         bool explicitly_set)
+{
+	const struct gl_extensions *extensions = parser->extensions;
+
+	if (parser->version_resolved)
+		return;
+
+	parser->version_resolved = true;
+
+	add_builtin_define (parser, "__VERSION__", version);
+
+	parser->is_gles = (version == 100) ||
+			   (es_identifier &&
+			    (strcmp(es_identifier, "es") == 0));
+
+	/* Add pre-defined macros. */
+	if (parser->is_gles) {
+	   add_builtin_define(parser, "GL_ES", 1);
+
+	   if (extensions != NULL) {
+	      if (extensions->OES_EGL_image_external)
+	         add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
+	   }
+	} else {
+	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
+	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
+           add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
+
+
+	   if (extensions != NULL) {
+	      if (extensions->EXT_texture_array)
+	         add_builtin_define(parser, "GL_EXT_texture_array", 1);
+
+	      if (extensions->ARB_arrays_of_arrays)
+	          add_builtin_define(parser, "GL_ARB_arrays_of_arrays", 1);
+
+	      if (extensions->ARB_fragment_coord_conventions)
+	         add_builtin_define(parser, "GL_ARB_fragment_coord_conventions",
+				    1);
+
+	      if (extensions->ARB_explicit_attrib_location)
+	         add_builtin_define(parser, "GL_ARB_explicit_attrib_location", 1);
+
+	      if (extensions->ARB_shader_texture_lod)
+	         add_builtin_define(parser, "GL_ARB_shader_texture_lod", 1);
+
+	      if (extensions->ARB_draw_instanced)
+	         add_builtin_define(parser, "GL_ARB_draw_instanced", 1);
+
+	      if (extensions->ARB_conservative_depth) {
+	         add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
+	         add_builtin_define(parser, "GL_ARB_conservative_depth", 1);
+	      }
+
+	      if (extensions->ARB_shader_bit_encoding)
+	         add_builtin_define(parser, "GL_ARB_shader_bit_encoding", 1);
+
+	      if (extensions->ARB_uniform_buffer_object)
+	         add_builtin_define(parser, "GL_ARB_uniform_buffer_object", 1);
+
+	      if (extensions->ARB_texture_cube_map_array)
+	         add_builtin_define(parser, "GL_ARB_texture_cube_map_array", 1);
+
+	      if (extensions->ARB_shading_language_packing)
+	         add_builtin_define(parser, "GL_ARB_shading_language_packing", 1);
+
+	      if (extensions->ARB_texture_multisample)
+	         add_builtin_define(parser, "GL_ARB_texture_multisample", 1);
+
+	      if (extensions->ARB_texture_query_levels)
+	         add_builtin_define(parser, "GL_ARB_texture_query_levels", 1);
+
+	      if (extensions->ARB_texture_query_lod)
+	         add_builtin_define(parser, "GL_ARB_texture_query_lod", 1);
+
+	      if (extensions->ARB_gpu_shader5)
+	         add_builtin_define(parser, "GL_ARB_gpu_shader5", 1);
+
+	      if (extensions->AMD_vertex_shader_layer)
+	         add_builtin_define(parser, "GL_AMD_vertex_shader_layer", 1);
+
+	      if (extensions->ARB_shading_language_420pack)
+	         add_builtin_define(parser, "GL_ARB_shading_language_420pack", 1);
+
+	      if (extensions->ARB_sample_shading)
+	         add_builtin_define(parser, "GL_ARB_sample_shading", 1);
+
+	      if (extensions->ARB_texture_gather)
+	         add_builtin_define(parser, "GL_ARB_texture_gather", 1);
+
+	      if (extensions->ARB_shader_atomic_counters)
+	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
+
+	      if (extensions->ARB_viewport_array)
+	         add_builtin_define(parser, "GL_ARB_viewport_array", 1);
+	   }
+	}
+
+	if (extensions != NULL) {
+	   if (extensions->EXT_shader_integer_mix)
+	      add_builtin_define(parser, "GL_EXT_shader_integer_mix", 1);
+	}
+
+	if (version >= 150)
+		add_builtin_define(parser, "GL_core_profile", 1);
+
+	/* Currently, all ES2/ES3 implementations support highp in the
+	 * fragment shader, so we always define this macro in ES2/ES3.
+	 * If we ever get a driver that doesn't support highp, we'll
+	 * need to add a flag to the gl_context and check that here.
+	 */
+	if (version >= 130 || parser->is_gles)
+		add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
+
+	if (explicitly_set) {
+	   ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length,
+					 "#version %" PRIiMAX "%s%s", version,
+					 es_identifier ? " " : "",
+					 es_identifier ? es_identifier : "");
+	}
+}
+
+/* GLSL version if no version is explicitly specified. */
+#define IMPLICIT_GLSL_VERSION 110
+#define IMPLICIT_GLSL_ES_VERSION 100
+
+/* GLSL ES version if no version is explicitly specified. */
+#define IMPLICIT_GLSL_ES_VERSION 100
+
+void
+glcpp_parser_resolve_implicit_version(glcpp_parser_t *parser)
+{
+	int language_version = parser->api == API_OPENGLES2 ?
+			       IMPLICIT_GLSL_ES_VERSION :
+			       IMPLICIT_GLSL_VERSION;
+
+	_glcpp_parser_handle_version_declaration(parser, language_version,
+						 NULL, false);
 }

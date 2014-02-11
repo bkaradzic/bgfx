@@ -1,12 +1,12 @@
-varying vec4 xlv_FOG;
-uniform vec3 _TerrainTreeLightDirections[4];
-uniform vec4 _TerrainTreeLightColors[4];
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform vec4 _Color;
 uniform float _AO;
+uniform vec4 _Color;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TerrainTreeLightDirections[4];
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 lightColor_1;
@@ -24,20 +24,30 @@ void main ()
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec4 tmpvar_7;
   tmpvar_7.w = 1.0;
-  tmpvar_7.xyz = mix ((pos_4.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_6 - pos_4.xyz)) * _SquashPlaneNormal.xyz)), pos_4.xyz, vec3(_SquashAmount));
+  tmpvar_7.xyz = mix ((pos_4.xyz + (
+    dot (_SquashPlaneNormal.xyz, (tmpvar_6 - pos_4.xyz))
+   * _SquashPlaneNormal.xyz)), pos_4.xyz, vec3(_SquashAmount));
   pos_4 = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8 = (gl_ModelViewProjectionMatrix * tmpvar_7);
   lightDir_2.w = _AO;
   lightColor_1 = gl_LightModel.ambient;
   lightDir_2.xyz = _TerrainTreeLightDirections[0];
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[0] * max (0.0, dot (lightDir_2.xyz, gl_Normal))));
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[0] * max (0.0, 
+    dot (lightDir_2.xyz, gl_Normal)
+  )));
   lightDir_2.xyz = _TerrainTreeLightDirections[1];
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[1] * max (0.0, dot (lightDir_2.xyz, gl_Normal))));
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[1] * max (0.0, 
+    dot (lightDir_2.xyz, gl_Normal)
+  )));
   lightDir_2.xyz = _TerrainTreeLightDirections[2];
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[2] * max (0.0, dot (lightDir_2.xyz, gl_Normal))));
+  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[2] * max (0.0, 
+    dot (lightDir_2.xyz, gl_Normal)
+  )));
   lightDir_2.xyz = _TerrainTreeLightDirections[3];
-  lightColor_1.xyz = (lightColor_1 + (_TerrainTreeLightColors[3] * max (0.0, dot (lightDir_2.xyz, gl_Normal)))).xyz;
+  lightColor_1.xyz = (lightColor_1 + (_TerrainTreeLightColors[3] * max (0.0, 
+    dot (lightDir_2.xyz, gl_Normal)
+  ))).xyz;
   lightColor_1.w = 1.0;
   tmpvar_3.xyz = (lightColor_1 * _Color).xyz;
   tmpvar_3.w = 1.0;
@@ -50,3 +60,5 @@ void main ()
   gl_FrontColor = tmpvar_3;
 }
 
+
+// inputs: 4, stats: 32 alu 0 tex 0 flow

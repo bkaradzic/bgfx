@@ -3,3 +3,5 @@ void main ()
   gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
 }
 
+
+// inputs: 0, stats: 1 alu 0 tex 0 flow

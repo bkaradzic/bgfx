@@ -12,14 +12,14 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 hip_screen;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform vec4 _ProjectionParams;
 uniform vec4 _MainTex_ST;
+uniform vec4 _ProjectionParams;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 vec4 Squash (
   in vec4 pos_1
 )

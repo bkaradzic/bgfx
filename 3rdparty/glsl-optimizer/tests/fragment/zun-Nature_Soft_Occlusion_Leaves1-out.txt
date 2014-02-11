@@ -1,8 +1,8 @@
-uniform vec4 unity_Ambient;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 unity_Ambient;
 void main ()
 {
   vec4 light_1;
@@ -23,3 +23,5 @@ void main ()
   gl_FragData[0] = c_5;
 }
 
+
+// inputs: 1, stats: 7 alu 3 tex 1 flow

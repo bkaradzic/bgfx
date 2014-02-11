@@ -1,10 +1,10 @@
-uniform vec4 unity_Ambient;
-uniform vec4 _SpecColor;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _Illum;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform sampler2D _Illum;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 _SpecColor;
+uniform vec4 unity_Ambient;
 void main ()
 {
   vec4 tmpvar_1;
@@ -18,7 +18,9 @@ void main ()
   tmpvar_6 = (tmpvar_5 * _Color);
   vec4 normal_7;
   normal_7.xy = ((texture2D (_BumpMap, tmpvar_4).wy * 2.0) - 1.0);
-  normal_7.z = sqrt(((1.0 - (normal_7.x * normal_7.x)) - (normal_7.y * normal_7.y)));
+  normal_7.z = sqrt(((1.0 - 
+    (normal_7.x * normal_7.x)
+  ) - (normal_7.y * normal_7.y)));
   vec4 tmpvar_8;
   tmpvar_8 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
   light_3.w = tmpvar_8.w;
@@ -33,3 +35,5 @@ void main ()
   gl_FragData[0] = col_2;
 }
 
+
+// inputs: 1, stats: 20 alu 4 tex 0 flow

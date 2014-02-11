@@ -1,5 +1,5 @@
-varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_COLOR;
 void main ()
 {
   mediump vec4 c_1;
@@ -10,3 +10,5 @@ void main ()
   gl_FragData[0] = c_1;
 }
 
+
+// inputs: 2, stats: 1 alu 0 tex 0 flow

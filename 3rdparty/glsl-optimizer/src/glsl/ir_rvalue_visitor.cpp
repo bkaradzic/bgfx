@@ -32,7 +32,6 @@
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
-#include "ir_print_visitor.h"
 #include "glsl_types.h"
 
 ir_visitor_status
@@ -55,6 +54,8 @@ ir_rvalue_base_visitor::rvalue_visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
+   case ir_lod:
+   case ir_query_levels:
       break;
    case ir_txb:
       handle_rvalue(&ir->lod_info.bias);
@@ -64,9 +65,15 @@ ir_rvalue_base_visitor::rvalue_visit(ir_texture *ir)
    case ir_txs:
       handle_rvalue(&ir->lod_info.lod);
       break;
+   case ir_txf_ms:
+      handle_rvalue(&ir->lod_info.sample_index);
+      break;
    case ir_txd:
       handle_rvalue(&ir->lod_info.grad.dPdx);
       handle_rvalue(&ir->lod_info.grad.dPdy);
+      break;
+   case ir_tg4:
+      handle_rvalue(&ir->lod_info.component);
       break;
    }
 
@@ -114,8 +121,8 @@ ir_rvalue_base_visitor::rvalue_visit(ir_assignment *ir)
 ir_visitor_status
 ir_rvalue_base_visitor::rvalue_visit(ir_call *ir)
 {
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
+   foreach_list_safe(n, &ir->actual_parameters) {
+      ir_rvalue *param = (ir_rvalue *) n;
       ir_rvalue *new_param = param;
       handle_rvalue(&new_param);
 

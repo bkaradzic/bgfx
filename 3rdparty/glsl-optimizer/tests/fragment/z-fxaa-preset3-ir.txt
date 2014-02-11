@@ -1,7 +1,7 @@
 #extension GL_ARB_shader_texture_lod : enable
-varying vec2 xlv_TEXCOORD0;
-uniform vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform vec4 _MainTex_TexelSize;
+varying vec2 xlv_TEXCOORD0;
 vec4 xll_tex2Dlod (
   in sampler2D s_1,
   in vec4 coord_2
@@ -206,10 +206,14 @@ vec3 FxaaPixelShader (
     return tmpvar_102;
   };
   vec3 tmpvar_103;
-  tmpvar_103 = ((((rgbN_69 + rgbW_68) + rgbM_67) + rgbE_66) + rgbS_65);
+  tmpvar_103 = (((
+    (rgbN_69 + rgbW_68)
+   + rgbM_67) + rgbE_66) + rgbS_65);
   rgbL_56 = tmpvar_103;
   float tmpvar_104;
-  tmpvar_104 = ((((lumaN_64 + lumaW_63) + lumaE_61) + lumaS_60) * 0.25);
+  tmpvar_104 = (((
+    (lumaN_64 + lumaW_63)
+   + lumaE_61) + lumaS_60) * 0.25);
   lumaL_55 = tmpvar_104;
   float tmpvar_105;
   tmpvar_105 = abs ((lumaL_55 - lumaM_62));
@@ -219,7 +223,9 @@ vec3 FxaaPixelShader (
   float tmpvar_107;
   tmpvar_107 = max (0.0, ((rangeL_54 / range_57) - (1.0 / 4.0)));
   float tmpvar_108;
-  tmpvar_108 = (tmpvar_107 * (1.0 / (1.0 - (1.0 / 4.0))));
+  tmpvar_108 = (tmpvar_107 * (1.0 / (1.0 - 
+    (1.0 / 4.0)
+  )));
   blendL_53 = tmpvar_108;
   float tmpvar_109;
   tmpvar_109 = min (0.75, blendL_53);
@@ -247,7 +253,9 @@ vec3 FxaaPixelShader (
   tmpvar_118 = tmpvar_117.xyz;
   rgbSE_49 = tmpvar_118;
   vec3 tmpvar_119;
-  tmpvar_119 = (rgbL_56 + (((rgbNW_52 + rgbNE_51) + rgbSW_50) + rgbSE_49));
+  tmpvar_119 = (rgbL_56 + ((
+    (rgbNW_52 + rgbNE_51)
+   + rgbSW_50) + rgbSE_49));
   rgbL_56 = tmpvar_119;
   vec3 tmpvar_120;
   tmpvar_120 = (rgbL_56 * vec3(0.111111, 0.111111, 0.111111));
@@ -273,20 +281,32 @@ vec3 FxaaPixelShader (
   tmpvar_128 = tmpvar_127;
   lumaSE_45 = tmpvar_128;
   float tmpvar_129;
-  tmpvar_129 = abs ((((0.25 * lumaNW_48) + (-(0.5) * lumaN_64)) + (0.25 * lumaNE_47)));
+  tmpvar_129 = abs ((((0.25 * lumaNW_48) + (
+    -(0.5)
+   * lumaN_64)) + (0.25 * lumaNE_47)));
   float tmpvar_130;
-  tmpvar_130 = abs ((((0.5 * lumaW_63) + (-(1.0) * lumaM_62)) + (0.5 * lumaE_61)));
+  tmpvar_130 = abs ((((0.5 * lumaW_63) + (
+    -(1.0)
+   * lumaM_62)) + (0.5 * lumaE_61)));
   float tmpvar_131;
-  tmpvar_131 = abs ((((0.25 * lumaSW_46) + (-(0.5) * lumaS_60)) + (0.25 * lumaSE_45)));
+  tmpvar_131 = abs ((((0.25 * lumaSW_46) + (
+    -(0.5)
+   * lumaS_60)) + (0.25 * lumaSE_45)));
   float tmpvar_132;
   tmpvar_132 = ((tmpvar_129 + tmpvar_130) + tmpvar_131);
   edgeVert_44 = tmpvar_132;
   float tmpvar_133;
-  tmpvar_133 = abs ((((0.25 * lumaNW_48) + (-(0.5) * lumaW_63)) + (0.25 * lumaSW_46)));
+  tmpvar_133 = abs ((((0.25 * lumaNW_48) + (
+    -(0.5)
+   * lumaW_63)) + (0.25 * lumaSW_46)));
   float tmpvar_134;
-  tmpvar_134 = abs ((((0.5 * lumaN_64) + (-(1.0) * lumaM_62)) + (0.5 * lumaS_60)));
+  tmpvar_134 = abs ((((0.5 * lumaN_64) + (
+    -(1.0)
+   * lumaM_62)) + (0.5 * lumaS_60)));
   float tmpvar_135;
-  tmpvar_135 = abs ((((0.25 * lumaNE_47) + (-(0.5) * lumaE_61)) + (0.25 * lumaSE_45)));
+  tmpvar_135 = abs ((((0.25 * lumaNE_47) + (
+    -(0.5)
+   * lumaE_61)) + (0.25 * lumaSE_45)));
   float tmpvar_136;
   tmpvar_136 = ((tmpvar_133 + tmpvar_134) + tmpvar_135);
   edgeHorz_43 = tmpvar_136;
@@ -517,7 +537,9 @@ vec3 FxaaPixelShader (
   tmpvar_195 = tmpvar_194;
   dstN_29 = tmpvar_195;
   float tmpvar_196;
-  tmpvar_196 = ((0.5 + (dstN_29 * (-(1.0) / spanLength_26))) * lengthSign_41);
+  tmpvar_196 = ((0.5 + (dstN_29 * 
+    (-(1.0) / spanLength_26)
+  )) * lengthSign_41);
   subPixelOffset_25 = tmpvar_196;
   float tmpvar_197;
   if (horzSpan_42) {

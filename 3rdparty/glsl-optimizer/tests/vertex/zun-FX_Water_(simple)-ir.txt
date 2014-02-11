@@ -8,12 +8,12 @@ struct appdata {
   vec4 vertex;
   vec3 normal;
 };
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform float _WaveScale;
 uniform vec4 _WaveOffset;
+uniform float _WaveScale;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void PositionFog (
   in vec4 v_1,
   out vec4 pos_2,

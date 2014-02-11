@@ -2,9 +2,9 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 unity_ShadowBlurParams;
-uniform sampler2D _MainTex;
 uniform vec4 _BlurOffsets[8];
+uniform sampler2D _MainTex;
+uniform vec4 unity_ShadowBlurParams;
 float xll_saturate (
   in float x_1
 )

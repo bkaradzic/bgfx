@@ -1,9 +1,9 @@
-uniform sampler2D unity_LightmapInd;
-uniform sampler2D unity_Lightmap;
-uniform float _RimPower;
-uniform vec4 _RimColor;
-uniform sampler2D _MainTex;
 uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 _RimColor;
+uniform float _RimPower;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
 void main ()
 {
   vec3 tmpvar_1;
@@ -18,7 +18,11 @@ void main ()
   c_5.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_3.xyz);
   c_5.w = 0.0;
   col_2.w = c_5.w;
-  col_2.xyz = (c_5.xyz + (_RimColor.xyz * pow ((1.0 - clamp (dot (normalize(gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0)), _RimPower)));
+  col_2.xyz = (c_5.xyz + (_RimColor.xyz * pow (
+    (1.0 - clamp (dot (normalize(gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0))
+  , _RimPower)));
   gl_FragData[0] = col_2;
 }
 
+
+// inputs: 1, stats: 16 alu 4 tex 0 flow

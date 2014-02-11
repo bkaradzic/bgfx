@@ -8,9 +8,9 @@ struct appdata_t {
   vec4 color;
   vec3 normal;
 };
-uniform vec4 unity_Scale;
-uniform vec3 _WorldSpaceCameraPos;
 uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
 vec3 ObjSpaceViewDir (
   in vec4 v_1
 )

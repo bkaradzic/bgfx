@@ -1,8 +1,8 @@
 #extension GL_ARB_shader_texture_lod : enable
-varying vec4 xlv_TEXCOORD1;
-varying vec2 xlv_TEXCOORD0;
-uniform vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform vec4 _MainTex_TexelSize;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
 void main ()
 {
   vec4 fxaaConsoleRcpFrameOpt_1;
@@ -48,7 +48,9 @@ void main ()
     tmpvar_19.zw = vec2(0.0, 0.0);
     tmpvar_19.xy = (xlv_TEXCOORD0 + (tmpvar_17 * fxaaConsoleRcpFrameOpt_1.zw));
     vec2 tmpvar_20;
-    tmpvar_20 = clamp ((tmpvar_17 / (min (abs(tmpvar_17.x), abs(tmpvar_17.y)) * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
+    tmpvar_20 = clamp ((tmpvar_17 / (
+      min (abs(tmpvar_17.x), abs(tmpvar_17.y))
+     * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
     vec4 tmpvar_21;
     tmpvar_21.zw = vec2(0.0, 0.0);
     tmpvar_21.xy = (xlv_TEXCOORD0 - (tmpvar_20 * fxaaConsoleRcpFrameOpt2_2.zw));
@@ -68,3 +70,5 @@ void main ()
   gl_FragData[0] = tmpvar_3;
 }
 
+
+// inputs: 2, stats: 47 alu 9 tex 2 flow

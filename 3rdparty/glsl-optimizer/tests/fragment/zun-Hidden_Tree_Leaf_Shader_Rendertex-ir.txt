@@ -3,8 +3,8 @@ struct v2f {
   vec2 uv;
   vec3 color;
 };
-uniform sampler2D _MainTex;
 uniform float _HalfOverCutoff;
+uniform sampler2D _MainTex;
 void xll_clip (
   in float x_1
 )

@@ -4,8 +4,8 @@ struct v2f {
   vec2 texcoord;
   vec2 texgencoord;
 };
-uniform sampler2D _MainTex;
 uniform sampler2D _GUIClipTexture;
+uniform sampler2D _MainTex;
 vec4 frag (
   in v2f i_1
 )

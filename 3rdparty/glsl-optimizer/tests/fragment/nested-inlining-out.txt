@@ -18,3 +18,5 @@ void main ()
   };
 }
 
+
+// inputs: 0, stats: 7 alu 2 tex 3 flow

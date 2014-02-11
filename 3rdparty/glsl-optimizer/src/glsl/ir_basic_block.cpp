@@ -43,8 +43,8 @@ static ir_if* as_if_skip_discard (ir_instruction* ir)
 	
 	bool only_discards = true;
 	int count = 0;
-	foreach_iter(exec_list_iterator, iter, irif->then_instructions) {
-		ir_instruction *iir = (ir_instruction *)iter.get();
+	foreach_list(node, &irif->then_instructions) {
+		ir_instruction *iir = (ir_instruction *)node;
 		if (!iir->as_discard())
 		{
 			only_discards = false;
@@ -85,8 +85,8 @@ void call_for_basic_blocks(exec_list *instructions,
    ir_instruction *leader = NULL;
    ir_instruction *last = NULL;
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir_if *ir_if;
       ir_loop *ir_loop;
       ir_function *ir_function;
@@ -104,7 +104,7 @@ void call_for_basic_blocks(exec_list *instructions,
 	 callback(leader, ir, data);
 	 leader = NULL;
 	 call_for_basic_blocks(&ir_loop->body_instructions, callback, data);
-      } else if (ir->as_return() || ir->as_call()) {
+      } else if (ir->as_jump() || ir->as_call()) {
 	 callback(leader, ir, data);
 	 leader = NULL;
       } else if ((ir_function = ir->as_function())) {
@@ -117,10 +117,8 @@ void call_for_basic_blocks(exec_list *instructions,
 	  * and the body of main().  Perhaps those instructions ought
 	  * to live inside of main().
 	  */
-	 foreach_iter(exec_list_iterator, fun_iter, *ir_function) {
-	    ir_function_signature *ir_sig;
-
-	    ir_sig = (ir_function_signature *)fun_iter.get();
+	 foreach_list(func_node, &ir_function->signatures) {
+	    ir_function_signature *ir_sig = (ir_function_signature *) func_node;
 
 	    call_for_basic_blocks(&ir_sig->body, callback, data);
 	 }

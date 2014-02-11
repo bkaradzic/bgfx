@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform float _HalfOverCutoff;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 col_1;
@@ -15,3 +15,5 @@ void main ()
   gl_FragData[0] = col_1;
 }
 
+
+// inputs: 1, stats: 6 alu 2 tex 1 flow

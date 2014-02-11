@@ -34,10 +34,11 @@
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "ir_optimization.h"
-#include "ir_print_visitor.h"
 #include "program.h"
 #include "loop_analysis.h"
 #include "standalone_scaffolding.h"
+
+static int glsl_version = 330;
 
 static void
 initialize_context(struct gl_context *ctx, gl_api api)
@@ -47,15 +48,150 @@ initialize_context(struct gl_context *ctx, gl_api api)
    /* The standalone compiler needs to claim support for almost
     * everything in order to compile the built-in functions.
     */
-   ctx->Const.GLSLVersion = 140;
+   ctx->Const.GLSLVersion = glsl_version;
+   ctx->Extensions.ARB_ES3_compatibility = true;
 
-   ctx->Const.MaxClipPlanes = 8;
-   ctx->Const.MaxDrawBuffers = 2;
+   switch (ctx->Const.GLSLVersion) {
+   case 100:
+      ctx->Const.MaxClipPlanes = 0;
+      ctx->Const.MaxCombinedTextureImageUnits = 8;
+      ctx->Const.MaxDrawBuffers = 2;
+      ctx->Const.MinProgramTexelOffset = 0;
+      ctx->Const.MaxProgramTexelOffset = 0;
+      ctx->Const.MaxLights = 0;
+      ctx->Const.MaxTextureCoordUnits = 0;
+      ctx->Const.MaxTextureUnits = 8;
 
-   /* More than the 1.10 minimum to appease parser tests taken from
-    * apps that (hopefully) already checked the number of coords.
-    */
-   ctx->Const.MaxTextureCoordUnits = 4;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 8;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 0;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 128 * 4;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 32;
+
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits =
+         ctx->Const.MaxCombinedTextureImageUnits;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 16 * 4;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
+
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4;
+      break;
+   case 110:
+   case 120:
+      ctx->Const.MaxClipPlanes = 6;
+      ctx->Const.MaxCombinedTextureImageUnits = 2;
+      ctx->Const.MaxDrawBuffers = 1;
+      ctx->Const.MinProgramTexelOffset = 0;
+      ctx->Const.MaxProgramTexelOffset = 0;
+      ctx->Const.MaxLights = 8;
+      ctx->Const.MaxTextureCoordUnits = 2;
+      ctx->Const.MaxTextureUnits = 2;
+
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 0;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 512;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 32;
+
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits =
+         ctx->Const.MaxCombinedTextureImageUnits;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 64;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
+
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4;
+      break;
+   case 130:
+   case 140:
+      ctx->Const.MaxClipPlanes = 8;
+      ctx->Const.MaxCombinedTextureImageUnits = 16;
+      ctx->Const.MaxDrawBuffers = 8;
+      ctx->Const.MinProgramTexelOffset = -8;
+      ctx->Const.MaxProgramTexelOffset = 7;
+      ctx->Const.MaxLights = 8;
+      ctx->Const.MaxTextureCoordUnits = 8;
+      ctx->Const.MaxTextureUnits = 2;
+
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 64;
+
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
+
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4;
+      break;
+   case 150:
+   case 330:
+      ctx->Const.MaxClipPlanes = 8;
+      ctx->Const.MaxDrawBuffers = 8;
+      ctx->Const.MinProgramTexelOffset = -8;
+      ctx->Const.MaxProgramTexelOffset = 7;
+      ctx->Const.MaxLights = 8;
+      ctx->Const.MaxTextureCoordUnits = 8;
+      ctx->Const.MaxTextureUnits = 2;
+
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 64;
+
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents = 128;
+
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
+
+      ctx->Const.MaxCombinedTextureImageUnits =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits
+         + ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits
+         + ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
+
+      ctx->Const.MaxGeometryOutputVertices = 256;
+      ctx->Const.MaxGeometryTotalOutputComponents = 1024;
+
+//      ctx->Const.MaxGeometryVaryingComponents = 64;
+
+      ctx->Const.MaxVarying = 60 / 4;
+      break;
+   case 300:
+      ctx->Const.MaxClipPlanes = 8;
+      ctx->Const.MaxCombinedTextureImageUnits = 32;
+      ctx->Const.MaxDrawBuffers = 4;
+      ctx->Const.MinProgramTexelOffset = -8;
+      ctx->Const.MaxProgramTexelOffset = 7;
+      ctx->Const.MaxLights = 0;
+      ctx->Const.MaxTextureCoordUnits = 0;
+      ctx->Const.MaxTextureUnits = 0;
+
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 16 * 4;
+
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 224;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = 15 * 4;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
+
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents / 4;
+      break;
+   }
 
    ctx->Driver.NewShader = _mesa_new_shader;
 }
@@ -103,18 +239,17 @@ load_text_file(void *ctx, const char *file_name)
 	return text;
 }
 
-int glsl_es = 0;
 int dump_ast = 0;
 int dump_hir = 0;
 int dump_lir = 0;
 int do_link = 0;
 
 const struct option compiler_opts[] = {
-   { "glsl-es",  0, &glsl_es,  1 },
-   { "dump-ast", 0, &dump_ast, 1 },
-   { "dump-hir", 0, &dump_hir, 1 },
-   { "dump-lir", 0, &dump_lir, 1 },
-   { "link",     0, &do_link,  1 },
+   { "dump-ast", no_argument, &dump_ast, 1 },
+   { "dump-hir", no_argument, &dump_hir, 1 },
+   { "dump-lir", no_argument, &dump_lir, 1 },
+   { "link",     no_argument, &do_link,  1 },
+   { "version",  required_argument, NULL, 'v' },
    { NULL, 0, NULL, 0 }
 };
 
@@ -141,68 +276,14 @@ void
 compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
+      new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
 
-   const char *source = shader->Source;
-   state->error = glcpp_preprocess(state, &source, &state->info_log,
-			     state->extensions, ctx->API) != 0;
-
-   if (!state->error) {
-      _mesa_glsl_lexer_ctor(state, source);
-      _mesa_glsl_parse(state);
-      _mesa_glsl_lexer_dtor(state);
-   }
-
-   if (dump_ast) {
-      foreach_list_const(n, &state->translation_unit) {
-	 ast_node *ast = exec_node_data(ast_node, n, link);
-	 ast->print();
-      }
-      printf("\n\n");
-   }
-
-   shader->ir = new(shader) exec_list;
-   if (!state->error && !state->translation_unit.is_empty())
-      _mesa_ast_to_hir(shader->ir, state);
-
-   /* Print out the unoptimized IR. */
-   if (!state->error && dump_hir) {
-      validate_ir_tree(shader->ir);
-      _mesa_print_ir(shader->ir, state);
-   }
-
-   /* Optimization passes */
-   if (!state->error && !shader->ir->is_empty()) {
-      bool progress;
-      do {
-	 progress = do_common_optimization(shader->ir, false, false, 32);
-      } while (progress);
-
-      validate_ir_tree(shader->ir);
-   }
-
+   _mesa_glsl_compile_shader(ctx, shader, dump_ast, dump_hir);
 
    /* Print out the resulting IR */
    if (!state->error && dump_lir) {
       _mesa_print_ir(shader->ir, state);
    }
-
-   shader->symbols = state->symbols;
-   shader->CompileStatus = !state->error;
-   shader->Version = state->language_version;
-   memcpy(shader->builtins_to_link, state->builtins_to_link,
-	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
-   shader->num_builtins_to_link = state->num_builtins_to_link;
-
-   if (shader->InfoLog)
-      ralloc_free(shader->InfoLog);
-
-   shader->InfoLog = state->info_log;
-
-   /* Retain any live IR, but trash the rest. */
-   reparent_ir(shader->ir, shader);
-
-   ralloc_free(state);
 
    return;
 }
@@ -213,17 +294,43 @@ main(int argc, char **argv)
    int status = EXIT_SUCCESS;
    struct gl_context local_ctx;
    struct gl_context *ctx = &local_ctx;
+   bool glsl_es = false;
 
    int c;
    int idx = 0;
-   while ((c = getopt_long(argc, argv, "", compiler_opts, &idx)) != -1)
-      /* empty */ ;
+   while ((c = getopt_long(argc, argv, "", compiler_opts, &idx)) != -1) {
+      switch (c) {
+      case 'v':
+         glsl_version = strtol(optarg, NULL, 10);
+         switch (glsl_version) {
+         case 100:
+         case 300:
+            glsl_es = true;
+            break;
+         case 110:
+         case 120:
+         case 130:
+         case 140:
+         case 150:
+         case 330:
+            glsl_es = false;
+            break;
+         default:
+            fprintf(stderr, "Unrecognized GLSL version `%s'\n", optarg);
+            usage_fail(argv[0]);
+            break;
+         }
+         break;
+      default:
+         break;
+      }
+   }
 
 
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL);
+   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL_COMPAT);
 
    struct gl_shader_program *whole_program;
 
@@ -255,6 +362,7 @@ main(int argc, char **argv)
 	 shader->Type = GL_FRAGMENT_SHADER;
       else
 	 usage_fail(argv[0]);
+      shader->Stage = _mesa_shader_enum_to_shader_stage(shader->Type);
 
       shader->Source = load_text_file(whole_program, argv[optind]);
       if (shader->Source == NULL) {
@@ -264,8 +372,10 @@ main(int argc, char **argv)
 
       compile_shader(ctx, shader);
 
-      if (!shader->CompileStatus) {
+      if (strlen(shader->InfoLog) > 0)
 	 printf("Info log for %s:\n%s\n", argv[optind], shader->InfoLog);
+
+      if (!shader->CompileStatus) {
 	 status = EXIT_FAILURE;
 	 break;
       }
@@ -279,12 +389,12 @@ main(int argc, char **argv)
 	 printf("Info log for linking:\n%s\n", whole_program->InfoLog);
    }
 
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++)
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++)
       ralloc_free(whole_program->_LinkedShaders[i]);
 
    ralloc_free(whole_program);
    _mesa_glsl_release_types();
-   _mesa_glsl_release_functions();
+   _mesa_glsl_release_builtin_functions();
 
    return status;
 }

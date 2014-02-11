@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform float _Cutoff;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 tmpvar_1;
@@ -10,7 +10,9 @@ void main ()
     discard;
   };
   vec4 enc_3;
-  enc_3.xy = ((((tmpvar_1.xy / (tmpvar_1.z + 1.0)) / 1.7777) * 0.5) + 0.5);
+  enc_3.xy = (((
+    (tmpvar_1.xy / (tmpvar_1.z + 1.0))
+   / 1.7777) * 0.5) + 0.5);
   vec2 enc_4;
   vec2 tmpvar_5;
   tmpvar_5 = fract((vec2(1.0, 255.0) * tmpvar_1.w));
@@ -20,3 +22,5 @@ void main ()
   gl_FragData[0] = enc_3;
 }
 
+
+// inputs: 1, stats: 11 alu 2 tex 1 flow

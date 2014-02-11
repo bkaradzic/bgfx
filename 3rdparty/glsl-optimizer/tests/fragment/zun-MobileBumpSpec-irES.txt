@@ -16,14 +16,14 @@ struct v2f_surf {
   lowp vec3 lightDir;
   lowp vec3 vlight;
 };
-varying lowp vec3 xlv_TEXCOORD3;
-varying lowp vec3 xlv_TEXCOORD2;
-varying mediump vec3 xlv_TEXCOORD1;
-varying mediump vec2 xlv_TEXCOORD0;
-uniform mediump float _Shininess;
-uniform sampler2D _MainTex;
-uniform lowp vec4 _LightColor0;
 uniform sampler2D _BumpMap;
+uniform lowp vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform mediump float _Shininess;
+varying mediump vec2 xlv_TEXCOORD0;
+varying mediump vec3 xlv_TEXCOORD1;
+varying lowp vec3 xlv_TEXCOORD2;
+varying lowp vec3 xlv_TEXCOORD3;
 lowp vec3 UnpackNormal (
   in lowp vec4 packednormal_1
 )
@@ -94,7 +94,9 @@ lowp vec4 LightingMobileBlinnPhong (
   tmpvar_29 = (tmpvar_28 * s_14.Gloss);
   spec_19 = tmpvar_29;
   lowp vec3 tmpvar_30;
-  tmpvar_30 = ((((s_14.Albedo * diff_21) + spec_19) * _LightColor0.xyz) * (atten_17 * 2.0));
+  tmpvar_30 = (((
+    (s_14.Albedo * diff_21)
+   + spec_19) * _LightColor0.xyz) * (atten_17 * 2.0));
   c_18.xyz = tmpvar_30.xyz.xyz;
   float tmpvar_31;
   tmpvar_31 = 0.0;

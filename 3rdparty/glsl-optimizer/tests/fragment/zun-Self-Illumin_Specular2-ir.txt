@@ -17,15 +17,15 @@ struct v2f_surf {
   vec4 hip_screen;
   vec3 hip_lmapFade;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D unity_LightmapInd;
-uniform sampler2D unity_Lightmap;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _Illum;
 uniform vec4 _Color;
+uniform sampler2D _Illum;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
+varying vec4 xlv_FOG;
 float xll_saturate (
   in float x_1
 )

@@ -21,14 +21,14 @@ struct v2f_surf {
   vec2 hip_pack2;
   vec4 hip_screen;
 };
-varying vec4 xlv_FOG;
-uniform vec4 unity_Ambient;
-uniform sampler2D _Splat3;
-uniform sampler2D _Splat2;
-uniform sampler2D _Splat1;
-uniform sampler2D _Splat0;
-uniform sampler2D _LightBuffer;
 uniform sampler2D _Control;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _Splat0;
+uniform sampler2D _Splat1;
+uniform sampler2D _Splat2;
+uniform sampler2D _Splat3;
+uniform vec4 unity_Ambient;
+varying vec4 xlv_FOG;
 void surf (
   in Input IN_1,
   inout SurfaceOutput o_2

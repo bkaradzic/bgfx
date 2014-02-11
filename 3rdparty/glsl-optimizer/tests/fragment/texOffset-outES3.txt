@@ -1,0 +1,14 @@
+#version 300 es
+in mediump vec3 uv;
+out lowp vec4 outColor;
+uniform sampler2D tex;
+uniform sampler3D vol;
+void main ()
+{
+  outColor = (((
+    ((((textureOffset (tex, uv.xy, ivec2(-2, -3)) + textureOffset (tex, uv.xy, 0.5, ivec2(4, 5))) + textureOffset (vol, uv, ivec3(-2, -3, -4))) + textureOffset (vol, uv, -0.5, ivec3(4, 5, 6))) + texelFetch (tex, ivec2(1, 2), 1))
+   + texelFetch (vol, ivec3(1, 2, 3), 2)) + texelFetchOffset (tex, ivec2(1, 2), 3, ivec2(-2, -3))) + texelFetchOffset (vol, ivec3(1, 2, 3), 0, ivec3(-2, -3, -4)));
+}
+
+
+// inputs: 1, stats: 7 alu 8 tex 0 flow

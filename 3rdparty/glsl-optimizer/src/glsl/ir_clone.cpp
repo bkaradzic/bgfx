@@ -36,32 +36,24 @@ ir_rvalue::clone(void *mem_ctx, struct hash_table *ht) const
 
 /**
  * Duplicate an IR variable
- *
- * \note
- * This will probably be made \c virtual and moved to the base class
- * eventually.
  */
 ir_variable *
 ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_variable *var = new(mem_ctx) ir_variable(this->type, this->name,
-					       (ir_variable_mode) this->mode, (glsl_precision)this->precision);
+					       (ir_variable_mode) this->data.mode, (glsl_precision)this->data.precision);
 
-   var->max_array_access = this->max_array_access;
-   var->read_only = this->read_only;
-   var->centroid = this->centroid;
-   var->invariant = this->invariant;
-   var->interpolation = this->interpolation;
-   var->location = this->location;
-   var->index = this->index;
-   var->uniform_block = this->uniform_block;
+   var->data.max_array_access = this->data.max_array_access;
+   if (this->is_interface_instance()) {
+      var->max_ifc_array_access =
+         rzalloc_array(var, unsigned, this->interface_type->length);
+      memcpy(var->max_ifc_array_access, this->max_ifc_array_access,
+             this->interface_type->length * sizeof(unsigned));
+   }
+
+   memcpy(&var->data, &this->data, sizeof(var->data));
+
    var->warn_extension = this->warn_extension;
-   var->origin_upper_left = this->origin_upper_left;
-   var->pixel_center_integer = this->pixel_center_integer;
-   var->explicit_location = this->explicit_location;
-   var->explicit_index = this->explicit_index;
-   var->has_initializer = this->has_initializer;
-   var->depth_layout = this->depth_layout;
 
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
@@ -80,6 +72,8 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    if (this->constant_initializer)
       var->constant_initializer =
 	 this->constant_initializer->clone(mem_ctx, ht);
+
+   var->interface_type = this->interface_type;
 
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
@@ -131,13 +125,13 @@ ir_if::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_if *new_if = new(mem_ctx) ir_if(this->condition->clone(mem_ctx, ht));
 
-   foreach_iter(exec_list_iterator, iter, this->then_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->then_instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_if->then_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   foreach_iter(exec_list_iterator, iter, this->else_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->else_instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_if->else_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
@@ -149,27 +143,11 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_loop *new_loop = new(mem_ctx) ir_loop();
 
-   if (this->from)
-      new_loop->from = this->from->clone(mem_ctx, ht);
-   if (this->to)
-      new_loop->to = this->to->clone(mem_ctx, ht);
-   if (this->increment)
-      new_loop->increment = this->increment->clone(mem_ctx, ht);
-
-   if (ht) {
-	   new_loop->counter = (ir_variable *)hash_table_find(ht, this->counter);
-	   if (!new_loop->counter)
-		   new_loop->counter = this->counter;
-   } else {
-	   new_loop->counter = this->counter;
-   }
-
-   foreach_iter(exec_list_iterator, iter, this->body_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->body_instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_loop->body_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   new_loop->cmp = this->cmp;
    return new_loop;
 }
 
@@ -182,8 +160,8 @@ ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 
    exec_list new_parameters;
 
-   foreach_iter(exec_list_iterator, iter, this->actual_parameters) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->actual_parameters) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_parameters.push_tail(ir->clone(mem_ctx, ht));
    }
 
@@ -255,6 +233,8 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
 
    switch (this->op) {
    case ir_tex:
+   case ir_lod:
+   case ir_query_levels:
       break;
    case ir_txb:
       new_tex->lod_info.bias = this->lod_info.bias->clone(mem_ctx, ht);
@@ -264,9 +244,15 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
    case ir_txs:
       new_tex->lod_info.lod = this->lod_info.lod->clone(mem_ctx, ht);
       break;
+   case ir_txf_ms:
+      new_tex->lod_info.sample_index = this->lod_info.sample_index->clone(mem_ctx, ht);
+      break;
    case ir_txd:
       new_tex->lod_info.grad.dPdx = this->lod_info.grad.dPdx->clone(mem_ctx, ht);
       new_tex->lod_info.grad.dPdy = this->lod_info.grad.dPdy->clone(mem_ctx, ht);
+      break;
+   case ir_tg4:
+      new_tex->lod_info.component = this->lod_info.component->clone(mem_ctx, ht);
       break;
    }
 
@@ -333,7 +319,7 @@ ir_function_signature::clone_prototype(void *mem_ctx, struct hash_table *ht) con
       new(mem_ctx) ir_function_signature(this->return_type, this->precision);
 
    copy->is_defined = false;
-   copy->is_builtin = this->is_builtin;
+   copy->builtin_avail = this->builtin_avail;
    copy->origin = this;
 
    /* Clone the parameter list, but NOT the body.
@@ -388,10 +374,16 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
       return c;
    }
 
-   default:
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+   case GLSL_TYPE_INTERFACE:
       assert(!"Should not get here.");
-      return NULL;
+      break;
    }
+
+   return NULL;
 }
 
 
@@ -399,6 +391,12 @@ ir_precision_statement *
 ir_precision_statement::clone(void *mem_ctx, struct hash_table *ht) const
 {
    return new(mem_ctx) ir_precision_statement(this->precision_statement);
+}
+
+ir_typedecl_statement *
+ir_typedecl_statement::clone(void *mem_ctx, struct hash_table *ht) const
+{
+	return new(mem_ctx) ir_typedecl_statement(this->type_decl);
 }
 
 

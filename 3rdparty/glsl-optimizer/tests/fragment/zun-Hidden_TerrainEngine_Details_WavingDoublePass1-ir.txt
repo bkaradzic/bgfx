@@ -19,12 +19,12 @@ struct v2f_surf {
   vec3 lightDir;
   vec4 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
 uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+varying vec4 xlv_FOG;
 void xll_clip (
   in float x_1
 )
@@ -148,7 +148,9 @@ vec4 frag_surf (
   float tmpvar_43;
   tmpvar_43 = UnitySpotAttenuate (IN_26._LightCoord.xyz);
   vec4 tmpvar_44;
-  tmpvar_44 = LightingLambert (o_29, lightDir_28, ((float((IN_26._LightCoord.z > 0.0)) * tmpvar_42) * tmpvar_43));
+  tmpvar_44 = LightingLambert (o_29, lightDir_28, ((float(
+    (IN_26._LightCoord.z > 0.0)
+  ) * tmpvar_42) * tmpvar_43));
   vec4 tmpvar_45;
   tmpvar_45 = tmpvar_44;
   c_27 = tmpvar_45;

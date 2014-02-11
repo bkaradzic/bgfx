@@ -1,14 +1,14 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 unity_SHC;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAb;
-uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 unity_SHAb;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHC;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -47,7 +47,13 @@ void main ()
   gl_TexCoord[1] = tmpvar_10;
   vec4 tmpvar_11;
   tmpvar_11.w = 0.0;
-  tmpvar_11.xyz = ((x1_6 + x2_5) + (unity_SHC.xyz * ((tmpvar_3.x * tmpvar_3.x) - (tmpvar_3.y * tmpvar_3.y))));
+  tmpvar_11.xyz = ((x1_6 + x2_5) + (unity_SHC.xyz * (
+    (tmpvar_3.x * tmpvar_3.x)
+   - 
+    (tmpvar_3.y * tmpvar_3.y)
+  )));
   gl_TexCoord[2] = tmpvar_11;
 }
 
+
+// inputs: 3, stats: 23 alu 0 tex 0 flow

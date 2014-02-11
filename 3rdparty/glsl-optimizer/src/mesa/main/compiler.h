@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -18,9 +17,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -36,17 +36,15 @@
 
 #include <assert.h>
 #include <ctype.h>
-#if defined(__alpha__) && defined(CCPML)
-#include <cpml.h> /* use Compaq's Fast Math Library on Alpha */
-#else
 #include <math.h>
-#endif
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
 #include <stdarg.h>
+
+#include "c99_compat.h" /* inline, __func__, etc. */
 
 
 #ifdef __cplusplus
@@ -82,15 +80,13 @@ extern "C" {
  */
 #if defined(_MSC_VER)
 #  define finite _finite
-#elif defined(__WATCOMC__)
-#  define finite _finite
 #endif
 
 
 /**
  * Disable assorted warnings
  */
-#if !defined(OPENSTEP) && (defined(_WIN32) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #  if !defined(__GNUC__) /* mingw environment */
 #    pragma warning( disable : 4068 ) /* unknown pragma */
 #    pragma warning( disable : 4710 ) /* function 'foo' not inlined */
@@ -105,36 +101,10 @@ extern "C" {
 #    endif
 #  endif
 #endif
-#if defined(__WATCOMC__)
-#  pragma disable_message(201) /* Disable unreachable code warnings */
-#endif
 
 
 
-/**
- * Function inlining
- */
-#ifndef inline
-#  ifdef __cplusplus
-     /* C++ supports inline keyword */
-#  elif defined(__GNUC__)
-#    define inline __inline__
-#  elif defined(_MSC_VER)
-#    define inline __inline
-#  elif defined(__ICL)
-#    define inline __inline
-#  elif defined(__INTEL_COMPILER)
-     /* Intel compiler supports inline keyword */
-#  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#    define inline __inline
-#  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
-     /* C99 supports inline keyword */
-#  elif (__STDC_VERSION__ >= 199901L)
-     /* C99 supports inline keyword */
-#  else
-#    define inline
-#  endif
-#endif
+/* XXX: Use standard `inline` keyword instead */
 #ifndef INLINE
 #  define INLINE inline
 #endif
@@ -177,37 +147,10 @@ extern "C" {
 #  endif
 #endif
 
-/**
- * The __FUNCTION__ gcc variable is generally only used for debugging.
- * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
- * Don't define it if using a newer Windows compiler.
- */
+/* XXX: Use standard `__func__` instead */
 #ifndef __FUNCTION__
-# if defined(__VMS)
-#  define __FUNCTION__ "VMS$NL:"
-# elif !defined(__GNUC__) && !defined(__xlC__) &&	\
-      (!defined(_MSC_VER) || _MSC_VER < 1300)
-#  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
-    (defined(__SUNPRO_C) && defined(__C99FEATURES__))
-#   define __FUNCTION__ __func__
-#  else
-#   define __FUNCTION__ "<unknown>"
-#  endif
-# endif
+#  define __FUNCTION__ __func__
 #endif
-#ifndef __func__
-#  if (__STDC_VERSION__ >= 199901L) || \
-      (defined(__SUNPRO_C) && defined(__C99FEATURES__))
-       /* __func__ is part of C99 */
-#  elif defined(_MSC_VER)
-#    if _MSC_VER >= 1300
-#      define __func__ __FUNCTION__
-#    else
-#      define __func__ "<unknown>"
-#    endif
-#  endif
-#endif
-
 
 /**
  * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN, and CPU_TO_LE32.
@@ -246,7 +189,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 
 
 
-#if !defined(CAPI) && defined(_WIN32) && !defined(BUILD_FOR_SNAP)
+#if !defined(CAPI) && defined(_WIN32)
 #define CAPI _cdecl
 #endif
 
@@ -256,7 +199,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * than GNU C
  */
 #ifndef _ASMAPI
-#if defined(_WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
+#if defined(_WIN32)
 #define _ASMAPI __cdecl
 #else
 #define _ASMAPI
@@ -287,9 +230,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * ASSERT macro
  */
 #if !defined(_WIN32_WCE)
-#if defined(BUILD_FOR_SNAP) && defined(CHECKED)
-#  define ASSERT(X)   _CHECK(X) 
-#elif defined(DEBUG)
+#if defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
@@ -304,9 +245,24 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  */
 #define STATIC_ASSERT(COND) \
    do { \
-      typedef int static_assertion_failed[(!!(COND))*2-1]; \
+      (void) sizeof(char [1 - 2*!(COND)]); \
    } while (0)
 
+/**
+ * Unreachable macro. Useful for suppressing "control reaches end of non-void
+ * function" warnings.
+ */
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
+#define unreachable() __builtin_unreachable()
+#elif (defined(__clang__) && defined(__has_builtin))
+# if __has_builtin(__builtin_unreachable)
+#  define unreachable() __builtin_unreachable()
+# endif
+#endif
+
+#ifndef unreachable
+#define unreachable()
+#endif
 
 #if (__GNUC__ >= 3)
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
@@ -316,6 +272,15 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 
 #ifndef NULL
 #define NULL 0
+#endif
+
+/* Used to optionally mark structures with misaligned elements or size as
+ * packed, to trade off performance for space.
+ */
+#if (__GNUC__ >= 3)
+#define PACKED __attribute__((__packed__))
+#else
+#define PACKED
 #endif
 
 
@@ -355,15 +320,16 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * USE_IEEE: Determine if we're using IEEE floating point
  */
 #if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
-    defined(__s390x__) || defined(__powerpc__) || \
+    defined(__s390__) || defined(__s390x__) || defined(__powerpc__) || \
     defined(__x86_64__) || \
+    defined(__m68k__) || \
     defined(ia64) || defined(__ia64__) || \
     defined(__hppa__) || defined(hpux) || \
     defined(__mips) || defined(_MIPS_ARCH) || \
-    defined(__arm__) || \
+    defined(__arm__) || defined(__aarch64__) || \
     defined(__sh__) || defined(__m32r__) || \
     (defined(__sun) && defined(_IEEE_754)) || \
-    (defined(__alpha__) && (defined(__IEEE_FLOAT) || !defined(VMS)))
+    defined(__alpha__)
 #define USE_IEEE
 #define IEEE_ONE 0x3f800000
 #endif
@@ -421,36 +387,6 @@ do {									\
    __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
 } while (0)
 
-#elif defined(__WATCOMC__) && defined(__386__)
-#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
-#define FAST_X86_FPU		0x003f /* See GCC comments above */
-void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
-#pragma aux _watcom_start_fast_math =                                   \
-   "fnstcw  word ptr [eax]"                                             \
-   "fldcw   word ptr [ecx]"                                             \
-   parm [eax] [ecx]                                                     \
-   modify exact [];
-void _watcom_end_fast_math(unsigned short *x);
-#pragma aux _watcom_end_fast_math =                                     \
-   "fnclex"                                                             \
-   "fldcw   word ptr [eax]"                                             \
-   parm [eax]                                                           \
-   modify exact [];
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = DEFAULT_X86_FPU;	                        \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#else
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = FAST_X86_FPU;                                 \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#endif
-#define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
-
 #elif defined(_MSC_VER) && defined(_M_IX86)
 #define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
 #define FAST_X86_FPU		0x003f /* See GCC comments above */
@@ -482,7 +418,29 @@ do {                                                                    \
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-
+#ifdef __cplusplus
+/**
+ * Macro function that evaluates to true if T is a trivially
+ * destructible type -- that is, if its (non-virtual) destructor
+ * performs no action and all member variables and base classes are
+ * trivially destructible themselves.
+ */
+#   if defined(__GNUC__)
+#      if ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
+#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#      endif
+#   elif (defined(__clang__) && defined(__has_feature))
+#      if __has_feature(has_trivial_destructor)
+#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#      endif
+#   endif
+#   ifndef HAS_TRIVIAL_DESTRUCTOR
+       /* It's always safe (if inefficient) to assume that a
+        * destructor is non-trivial.
+        */
+#      define HAS_TRIVIAL_DESTRUCTOR(T) (false)
+#   endif
+#endif
 
 #ifdef __cplusplus
 }

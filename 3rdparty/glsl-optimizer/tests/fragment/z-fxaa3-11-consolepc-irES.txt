@@ -4,10 +4,10 @@ struct v2f {
   highp vec2 uv;
   highp vec4 uvPosPos;
 };
-varying highp vec4 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-uniform highp vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform highp vec4 _MainTex_TexelSize;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_TEXCOORD1;
 vec4 xll_tex2Dlod (
   in sampler2D s_1,
   in vec4 coord_2

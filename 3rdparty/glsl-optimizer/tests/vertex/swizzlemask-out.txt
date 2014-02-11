@@ -8,3 +8,5 @@ void main ()
   texcoord.w = gl_Vertex.x;
 }
 
+
+// inputs: 1, stats: 1 alu 0 tex 0 flow

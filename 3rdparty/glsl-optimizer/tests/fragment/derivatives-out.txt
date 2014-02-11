@@ -2,9 +2,12 @@ varying vec4 xlv_TEXCOORD0;
 void main ()
 {
   vec4 res_1;
-  res_1.x = dFdx(xlv_TEXCOORD0.x);
-  res_1.y = dFdx(xlv_TEXCOORD0.y);
-  res_1.zw = (abs(dFdx(xlv_TEXCOORD0.xy)) + abs(dFdy(xlv_TEXCOORD0.xy)));
+  vec2 cse_2;
+  cse_2 = dFdx(xlv_TEXCOORD0.xy);
+  res_1.xy = cse_2;
+  res_1.zw = (abs(cse_2) + abs(dFdy(xlv_TEXCOORD0.xy)));
   gl_FragData[0] = res_1;
 }
 
+
+// inputs: 1, stats: 5 alu 0 tex 0 flow

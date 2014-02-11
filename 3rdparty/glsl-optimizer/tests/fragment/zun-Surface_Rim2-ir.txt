@@ -19,13 +19,13 @@ struct v2f_surf {
   vec3 normal;
   vec3 hip_lmapFade;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D unity_LightmapInd;
-uniform sampler2D unity_Lightmap;
-uniform float _RimPower;
-uniform vec4 _RimColor;
-uniform sampler2D _MainTex;
 uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 _RimColor;
+uniform float _RimPower;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
+varying vec4 xlv_FOG;
 float xll_saturate (
   in float x_1
 )

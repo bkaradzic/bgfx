@@ -35,6 +35,8 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+namespace {
+
 class ir_mat_op_to_vec_visitor : public ir_hierarchical_visitor {
 public:
    ir_mat_op_to_vec_visitor()
@@ -62,6 +64,8 @@ public:
    void *mem_ctx;
    bool made_progress;
 };
+
+} /* anonymous namespace */
 
 static bool
 mat_op_to_vec_predicate(ir_instruction *ir)
@@ -122,7 +126,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_dereference *result,
 					 ir_dereference *a,
 					 ir_dereference *b)
 {
-   int b_col, i;
+   unsigned b_col, i;
    ir_assignment *assign;
    ir_expression *expr;
 
@@ -154,7 +158,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_dereference *result,
 					 ir_dereference *a,
 					 ir_dereference *b)
 {
-   int i;
+   unsigned i;
    ir_assignment *assign;
    ir_expression *expr;
 
@@ -183,7 +187,7 @@ ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_dereference *result,
 					 ir_dereference *a,
 					 ir_dereference *b)
 {
-   int i;
+   unsigned i;
 
    for (i = 0; i < (int)b->type->matrix_columns; i++) {
       ir_rvalue *column_result;
@@ -208,7 +212,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_dereference *result,
 					    ir_dereference *a,
 					    ir_dereference *b)
 {
-   int i;
+   unsigned i;
 
    for (i = 0; i < (int)a->type->matrix_columns; i++) {
       ir_expression *column_expr;

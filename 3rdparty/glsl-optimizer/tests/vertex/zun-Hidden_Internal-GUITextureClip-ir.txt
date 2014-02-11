@@ -9,8 +9,8 @@ struct appdata_t {
   vec4 color;
   vec2 texcoord;
 };
-uniform vec4 _MainTex_ST;
 uniform mat4 _GUIClipTextureMatrix;
+uniform vec4 _MainTex_ST;
 v2f vert (
   in appdata_t v_1
 )

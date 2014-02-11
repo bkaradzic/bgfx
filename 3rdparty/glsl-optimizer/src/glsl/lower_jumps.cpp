@@ -133,6 +133,8 @@ enum jump_strength
    strength_return
 };
 
+namespace {
+
 struct block_record
 {
    /* minimum jump strength (of lowered IR, not pre-lowering IR)
@@ -279,8 +281,13 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
    bool lower_main_return;
 
    ir_lower_jumps_visitor()
+      : progress(false),
+        pull_out_jumps(false),
+        lower_continue(false),
+        lower_break(false),
+        lower_sub_return(false),
+        lower_main_return(false)
    {
-      this->progress = false;
    }
 
    void truncate_after_instruction(exec_node *ir)
@@ -444,7 +451,12 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
    virtual void visit(class ir_precision_statement * ir)
    {
       /* Nothing needs to be done. */
-   }	
+   }
+
+   virtual void visit(class ir_typedecl_statement * ir)
+   {
+      /* Nothing needs to be done. */
+   }
 
    enum jump_strength get_jump_strength(ir_instruction* ir)
    {
@@ -996,6 +1008,8 @@ lower_continue:
       visit_block(&ir->signatures);
    }
 };
+
+} /* anonymous namespace */
 
 bool
 do_lower_jumps(exec_list *instructions, bool pull_out_jumps, bool lower_sub_return, bool lower_main_return, bool lower_continue, bool lower_break)

@@ -2,8 +2,8 @@ struct v2f {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 _ZBufferParams;
 uniform sampler2D _CameraDepthTexture;
+uniform vec4 _ZBufferParams;
 float Linear01Depth (
   in float z_1
 )

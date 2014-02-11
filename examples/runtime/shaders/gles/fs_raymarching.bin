@@ -1,44 +1,37 @@
-FSHƒòá#ifdef GL_ES
-precision highp float;
-#endif // GL_ES
-
-uniform vec3 u_lightDir;
-uniform mat4 u_mtx;
-varying vec2 v_texcoord0;
+FSHƒòáprecision highp float;
 varying vec4 v_color0;
+varying vec2 v_texcoord0;
+uniform mat4 u_mtx;
+uniform vec3 u_lightDir;
 void main ()
 {
   vec4 tmpvar_1;
   tmpvar_1.zw = vec2(0.0, 1.0);
-  tmpvar_1.x = v_texcoord0.x;
-  tmpvar_1.y = v_texcoord0.y;
+  tmpvar_1.xy = v_texcoord0;
   vec4 tmpvar_2;
   tmpvar_2 = (u_mtx * tmpvar_1);
   vec3 tmpvar_3;
   tmpvar_3 = (tmpvar_2.xyz / tmpvar_2.w);
   vec4 tmpvar_4;
   tmpvar_4.zw = vec2(1.0, 1.0);
-  tmpvar_4.x = v_texcoord0.x;
-  tmpvar_4.y = v_texcoord0.y;
+  tmpvar_4.xy = v_texcoord0;
   vec4 tmpvar_5;
   tmpvar_5 = (u_mtx * tmpvar_4);
   vec3 tmpvar_6;
   tmpvar_6 = (tmpvar_5.xyz / tmpvar_5.w);
   float tmpvar_7;
-  vec3 arg0_8;
-  arg0_8 = (tmpvar_6 - tmpvar_3);
-  tmpvar_7 = sqrt(dot (arg0_8, arg0_8));
+  vec3 x_8;
+  x_8 = (tmpvar_6 - tmpvar_3);
+  tmpvar_7 = sqrt(dot (x_8, x_8));
   vec3 tmpvar_9;
   tmpvar_9 = normalize((tmpvar_6 - tmpvar_3));
   vec3 _ray_10;
   _ray_10 = tmpvar_3;
   vec3 _dir_11;
   _dir_11 = tmpvar_9;
-  int ii_12;
   float tt_13;
   tt_13 = 0.0;
-  ii_12 = 0;
-  for (int ii_12 = 0; ii_12 < 64; ) {
+  for (int ii_12 = 0; ii_12 < 64; ii_12++) {
     vec3 _pos_14;
     _pos_14 = (_ray_10 + (_dir_11 * tt_13));
     vec3 tmpvar_15;
@@ -56,11 +49,24 @@ void main ()
     vec3 _pos_21;
     _pos_21 = (_pos_14 + vec3(0.0, 0.0, -4.0));
     float tmpvar_22;
-    tmpvar_22 = min (min (min (min (min (min ((sqrt(dot (tmpvar_15, tmpvar_15)) - 0.5), (sqrt(dot (_pos_16, _pos_16)) - 1.0)), (sqrt(dot (_pos_17, _pos_17)) - 1.0)), (sqrt(dot (_pos_18, _pos_18)) - 1.0)), (sqrt(dot (_pos_19, _pos_19)) - 1.0)), (sqrt(dot (_pos_20, _pos_20)) - 1.0)), (sqrt(dot (_pos_21, _pos_21)) - 1.0));
+    tmpvar_22 = min (min (min (
+      min (min (min ((
+        sqrt(dot (tmpvar_15, tmpvar_15))
+       - 0.5), (
+        sqrt(dot (_pos_16, _pos_16))
+       - 1.0)), (sqrt(
+        dot (_pos_17, _pos_17)
+      ) - 1.0)), (sqrt(dot (_pos_18, _pos_18)) - 1.0))
+    , 
+      (sqrt(dot (_pos_19, _pos_19)) - 1.0)
+    ), (
+      sqrt(dot (_pos_20, _pos_20))
+     - 1.0)), (sqrt(
+      dot (_pos_21, _pos_21)
+    ) - 1.0));
     if ((tmpvar_22 > 0.001)) {
       tt_13 = (tt_13 + tmpvar_22);
     };
-    ii_12 = (ii_12 + 1);
   };
   float tmpvar_23;
   if ((tt_13 < tmpvar_7)) {
@@ -168,16 +174,102 @@ void main ()
     vec3 _pos_72;
     _pos_72 = (_pos_65 + vec3(0.0, 0.0, -4.0));
     vec3 tmpvar_73;
-    tmpvar_73.x = (min (min (min (min (min (min ((sqrt(dot (tmpvar_26, tmpvar_26)) - 0.5), (sqrt(dot (_pos_27, _pos_27)) - 1.0)), (sqrt(dot (_pos_28, _pos_28)) - 1.0)), (sqrt(dot (_pos_29, _pos_29)) - 1.0)), (sqrt(dot (_pos_30, _pos_30)) - 1.0)), (sqrt(dot (_pos_31, _pos_31)) - 1.0)), (sqrt(dot (_pos_32, _pos_32)) - 1.0)) - min (min (min (min (min (min ((sqrt(dot (tmpvar_34, tmpvar_34)) - 0.5), (sqrt(dot (_pos_35, _pos_35)) - 1.0)), (sqrt(dot (_pos_36, _pos_36)) - 1.0)), (sqrt(dot (_pos_37, _pos_37)) - 1.0)), (sqrt(dot (_pos_38, _pos_38)) - 1.0)), (sqrt(dot (_pos_39, _pos_39)) - 1.0)), (sqrt(dot (_pos_40, _pos_40)) - 1.0)));
-    tmpvar_73.y = (min (min (min (min (min (min ((sqrt(dot (tmpvar_42, tmpvar_42)) - 0.5), (sqrt(dot (_pos_43, _pos_43)) - 1.0)), (sqrt(dot (_pos_44, _pos_44)) - 1.0)), (sqrt(dot (_pos_45, _pos_45)) - 1.0)), (sqrt(dot (_pos_46, _pos_46)) - 1.0)), (sqrt(dot (_pos_47, _pos_47)) - 1.0)), (sqrt(dot (_pos_48, _pos_48)) - 1.0)) - min (min (min (min (min (min ((sqrt(dot (tmpvar_50, tmpvar_50)) - 0.5), (sqrt(dot (_pos_51, _pos_51)) - 1.0)), (sqrt(dot (_pos_52, _pos_52)) - 1.0)), (sqrt(dot (_pos_53, _pos_53)) - 1.0)), (sqrt(dot (_pos_54, _pos_54)) - 1.0)), (sqrt(dot (_pos_55, _pos_55)) - 1.0)), (sqrt(dot (_pos_56, _pos_56)) - 1.0)));
-    tmpvar_73.z = (min (min (min (min (min (min ((sqrt(dot (tmpvar_58, tmpvar_58)) - 0.5), (sqrt(dot (_pos_59, _pos_59)) - 1.0)), (sqrt(dot (_pos_60, _pos_60)) - 1.0)), (sqrt(dot (_pos_61, _pos_61)) - 1.0)), (sqrt(dot (_pos_62, _pos_62)) - 1.0)), (sqrt(dot (_pos_63, _pos_63)) - 1.0)), (sqrt(dot (_pos_64, _pos_64)) - 1.0)) - min (min (min (min (min (min ((sqrt(dot (tmpvar_66, tmpvar_66)) - 0.5), (sqrt(dot (_pos_67, _pos_67)) - 1.0)), (sqrt(dot (_pos_68, _pos_68)) - 1.0)), (sqrt(dot (_pos_69, _pos_69)) - 1.0)), (sqrt(dot (_pos_70, _pos_70)) - 1.0)), (sqrt(dot (_pos_71, _pos_71)) - 1.0)), (sqrt(dot (_pos_72, _pos_72)) - 1.0)));
+    tmpvar_73.x = (min (min (
+      min (min (min (min (
+        (sqrt(dot (tmpvar_26, tmpvar_26)) - 0.5)
+      , 
+        (sqrt(dot (_pos_27, _pos_27)) - 1.0)
+      ), (
+        sqrt(dot (_pos_28, _pos_28))
+       - 1.0)), (sqrt(
+        dot (_pos_29, _pos_29)
+      ) - 1.0)), (sqrt(dot (_pos_30, _pos_30)) - 1.0))
+    , 
+      (sqrt(dot (_pos_31, _pos_31)) - 1.0)
+    ), (
+      sqrt(dot (_pos_32, _pos_32))
+     - 1.0)) - min (min (
+      min (min (min (min (
+        (sqrt(dot (tmpvar_34, tmpvar_34)) - 0.5)
+      , 
+        (sqrt(dot (_pos_35, _pos_35)) - 1.0)
+      ), (
+        sqrt(dot (_pos_36, _pos_36))
+       - 1.0)), (sqrt(
+        dot (_pos_37, _pos_37)
+      ) - 1.0)), (sqrt(dot (_pos_38, _pos_38)) - 1.0))
+    , 
+      (sqrt(dot (_pos_39, _pos_39)) - 1.0)
+    ), (
+      sqrt(dot (_pos_40, _pos_40))
+     - 1.0)));
+    tmpvar_73.y = (min (min (
+      min (min (min (min (
+        (sqrt(dot (tmpvar_42, tmpvar_42)) - 0.5)
+      , 
+        (sqrt(dot (_pos_43, _pos_43)) - 1.0)
+      ), (
+        sqrt(dot (_pos_44, _pos_44))
+       - 1.0)), (sqrt(
+        dot (_pos_45, _pos_45)
+      ) - 1.0)), (sqrt(dot (_pos_46, _pos_46)) - 1.0))
+    , 
+      (sqrt(dot (_pos_47, _pos_47)) - 1.0)
+    ), (
+      sqrt(dot (_pos_48, _pos_48))
+     - 1.0)) - min (min (
+      min (min (min (min (
+        (sqrt(dot (tmpvar_50, tmpvar_50)) - 0.5)
+      , 
+        (sqrt(dot (_pos_51, _pos_51)) - 1.0)
+      ), (
+        sqrt(dot (_pos_52, _pos_52))
+       - 1.0)), (sqrt(
+        dot (_pos_53, _pos_53)
+      ) - 1.0)), (sqrt(dot (_pos_54, _pos_54)) - 1.0))
+    , 
+      (sqrt(dot (_pos_55, _pos_55)) - 1.0)
+    ), (
+      sqrt(dot (_pos_56, _pos_56))
+     - 1.0)));
+    tmpvar_73.z = (min (min (
+      min (min (min (min (
+        (sqrt(dot (tmpvar_58, tmpvar_58)) - 0.5)
+      , 
+        (sqrt(dot (_pos_59, _pos_59)) - 1.0)
+      ), (
+        sqrt(dot (_pos_60, _pos_60))
+       - 1.0)), (sqrt(
+        dot (_pos_61, _pos_61)
+      ) - 1.0)), (sqrt(dot (_pos_62, _pos_62)) - 1.0))
+    , 
+      (sqrt(dot (_pos_63, _pos_63)) - 1.0)
+    ), (
+      sqrt(dot (_pos_64, _pos_64))
+     - 1.0)) - min (min (
+      min (min (min (min (
+        (sqrt(dot (tmpvar_66, tmpvar_66)) - 0.5)
+      , 
+        (sqrt(dot (_pos_67, _pos_67)) - 1.0)
+      ), (
+        sqrt(dot (_pos_68, _pos_68))
+       - 1.0)), (sqrt(
+        dot (_pos_69, _pos_69)
+      ) - 1.0)), (sqrt(dot (_pos_70, _pos_70)) - 1.0))
+    , 
+      (sqrt(dot (_pos_71, _pos_71)) - 1.0)
+    ), (
+      sqrt(dot (_pos_72, _pos_72))
+     - 1.0)));
     vec3 tmpvar_74;
     tmpvar_74 = normalize(tmpvar_73);
     float tmpvar_75;
     tmpvar_75 = dot (tmpvar_74, u_lightDir);
     vec2 tmpvar_76;
     tmpvar_76.x = tmpvar_75;
-    tmpvar_76.y = dot ((u_lightDir - ((2.0 * tmpvar_75) * tmpvar_74)), tmpvar_9);
+    tmpvar_76.y = dot ((u_lightDir - (
+      (2.0 * tmpvar_75)
+     * tmpvar_74)), tmpvar_9);
     float tmpvar_77;
     tmpvar_77 = max (0.0, tmpvar_75);
     vec4 tmpvar_78;
@@ -185,16 +277,16 @@ void main ()
     tmpvar_78.y = tmpvar_77;
     tmpvar_78.z = (float((tmpvar_75 >= 0.0)) * max (0.0, tmpvar_76.y));
     float tmpvar_79;
-    tmpvar_79 = ((0.9 * tmpvar_77) + (pow (tmpvar_78.z, 128.0) * max ((0.2 + (0.8 * pow ((1.0 - tmpvar_75), 5.0))), 0.0)));
+    tmpvar_79 = ((0.9 * tmpvar_77) + (pow (tmpvar_78.z, 128.0) * max (
+      (0.2 + (0.8 * pow ((1.0 - tmpvar_75), 5.0)))
+    , 0.0)));
     vec3 _pos_80;
     _pos_80 = tmpvar_24;
     vec3 _normal_81;
     _normal_81 = tmpvar_74;
-    int ii_82;
     float occ_83;
     occ_83 = 0.0;
-    ii_82 = 1;
-    for (int ii_82 = 1; ii_82 < 4; ) {
+    for (int ii_82 = 1; ii_82 < 4; ii_82++) {
       float tmpvar_84;
       tmpvar_84 = float(ii_82);
       vec3 _pos_85;
@@ -213,8 +305,23 @@ void main ()
       _pos_91 = (_pos_85 + vec3(0.0, 0.0, 4.0));
       vec3 _pos_92;
       _pos_92 = (_pos_85 + vec3(0.0, 0.0, -4.0));
-      occ_83 = (occ_83 + (((tmpvar_84 * 0.2) - min (min (min (min (min (min ((sqrt(dot (tmpvar_86, tmpvar_86)) - 0.5), (sqrt(dot (_pos_87, _pos_87)) - 1.0)), (sqrt(dot (_pos_88, _pos_88)) - 1.0)), (sqrt(dot (_pos_89, _pos_89)) - 1.0)), (sqrt(dot (_pos_90, _pos_90)) - 1.0)), (sqrt(dot (_pos_91, _pos_91)) - 1.0)), (sqrt(dot (_pos_92, _pos_92)) - 1.0))) / pow (2.0, tmpvar_84)));
-      ii_82 = (ii_82 + 1);
+      occ_83 = (occ_83 + ((
+        (tmpvar_84 * 0.2)
+       - 
+        min (min (min (min (
+          min (min ((sqrt(
+            dot (tmpvar_86, tmpvar_86)
+          ) - 0.5), (sqrt(
+            dot (_pos_87, _pos_87)
+          ) - 1.0)), (sqrt(dot (_pos_88, _pos_88)) - 1.0))
+        , 
+          (sqrt(dot (_pos_89, _pos_89)) - 1.0)
+        ), (
+          sqrt(dot (_pos_90, _pos_90))
+         - 1.0)), (sqrt(
+          dot (_pos_91, _pos_91)
+        ) - 1.0)), (sqrt(dot (_pos_92, _pos_92)) - 1.0))
+      ) / exp2(tmpvar_84)));
     };
     float tmpvar_93;
     tmpvar_93 = pow ((tmpvar_79 * (1.0 - occ_83)), 0.454545);
@@ -224,10 +331,10 @@ void main ()
     tmpvar_94.y = tmpvar_93;
     tmpvar_94.z = tmpvar_93;
     gl_FragColor = tmpvar_94;
-    gl_FragDepth = (tmpvar_23 / tmpvar_7);
+    gl_FragDepth    = (tmpvar_23 / tmpvar_7);
   } else {
     gl_FragColor = v_color0;
-    gl_FragDepth = 1.0;
+    gl_FragDepth    = 1.0;
   };
 }
 

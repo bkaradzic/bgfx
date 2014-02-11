@@ -1,8 +1,8 @@
-varying mediump vec4 xlv_TEXCOORD0;
-uniform highp vec4 unity_LightColor[4];
-uniform highp vec4 unity_LightAtten[4];
-uniform highp mat4 UNITY_MATRIX_MVP;
 attribute highp vec4 _glesVertex;
+uniform highp mat4 UNITY_MATRIX_MVP;
+uniform highp vec4 unity_LightAtten[4];
+uniform highp vec4 unity_LightColor[4];
+varying mediump vec4 xlv_TEXCOORD0;
 void main ()
 {
   mediump vec4 tmpvar_1;
@@ -62,3 +62,5 @@ void main ()
   xlv_TEXCOORD0 = tmpvar_2;
 }
 
+
+// inputs: 1, stats: 20 alu 0 tex 0 flow

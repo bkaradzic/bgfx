@@ -31,7 +31,11 @@
 #ifndef STANDALONE_SCAFFOLDING_H
 #define STANDALONE_SCAFFOLDING_H
 
+#include <assert.h>
 #include "main/mtypes.h"
+
+extern "C" void
+_mesa_warning(struct gl_context *ctx, const char *fmtString, ... );
 
 extern "C" void
 _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
@@ -41,8 +45,24 @@ extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
 extern "C" void
-_mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint id,
+_mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint *id,
                    const char *msg, int len);
+
+static inline gl_shader_stage
+_mesa_shader_enum_to_shader_stage(GLenum v)
+{
+   switch (v) {
+   case GL_VERTEX_SHADER:
+      return MESA_SHADER_VERTEX;
+   case GL_FRAGMENT_SHADER:
+      return MESA_SHADER_FRAGMENT;
+   case GL_GEOMETRY_SHADER:
+      return MESA_SHADER_GEOMETRY;
+   default:
+      assert(!"bad value in _mesa_shader_enum_to_shader_stage()");
+      return MESA_SHADER_VERTEX;
+   }
+}
 
 /**
  * Initialize the given gl_context structure to a reasonable set of

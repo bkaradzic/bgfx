@@ -1,8 +1,10 @@
 #version 140
-out vec4 fragCol;
 in vec4 col;
+out vec4 fragCol;
 void main ()
 {
   fragCol = col;
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

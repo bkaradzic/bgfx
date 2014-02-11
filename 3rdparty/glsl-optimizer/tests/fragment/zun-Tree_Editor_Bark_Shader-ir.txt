@@ -18,13 +18,13 @@ struct v2f_surf {
   vec3 lightDir;
   vec3 viewDir;
 };
-varying vec4 xlv_FOG;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform vec4 _LightColor0;
-uniform sampler2D _GlossMap;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform sampler2D _GlossMap;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+varying vec4 xlv_FOG;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )
@@ -114,7 +114,9 @@ vec4 LightingTreeBark (
   tmpvar_38 = (tmpvar_37 * s_20.Gloss);
   spec_25 = tmpvar_38;
   vec3 tmpvar_39;
-  tmpvar_39 = ((((s_20.Albedo * _LightColor0.xyz) * diff_27) + (_LightColor0.xyz * spec_25)) * (atten_23 * 2.0));
+  tmpvar_39 = (((
+    (s_20.Albedo * _LightColor0.xyz)
+   * diff_27) + (_LightColor0.xyz * spec_25)) * (atten_23 * 2.0));
   c_24.xyz = tmpvar_39.xyz.xyz;
   float tmpvar_40;
   tmpvar_40 = (((_LightColor0.w * spec_25) * atten_23) * s_20.Alpha);

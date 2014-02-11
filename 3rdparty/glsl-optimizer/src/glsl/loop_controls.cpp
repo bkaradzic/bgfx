@@ -158,6 +158,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
    return (valid_loop) ? iter_value : -1;
 }
 
+namespace {
 
 class loop_control_visitor : public ir_hierarchical_visitor {
 public:
@@ -174,6 +175,7 @@ public:
    bool progress;
 };
 
+} /* anonymous namespace */
 
 ir_visitor_status
 loop_control_visitor::visit_leave(ir_loop *ir)
@@ -188,113 +190,40 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   /* Search the loop terminating conditions for one of the form 'i < c' where
-    * i is a loop induction variable, c is a constant, and < is any relative
-    * operator.
-    */
-   int max_iterations = ls->max_iterations;
-
-   if(ir->from && ir->to && ir->increment)
-      max_iterations = calculate_iterations(ir->from, ir->to, ir->increment, (ir_expression_operation)ir->cmp);
-
-   if(max_iterations < 0)
-      max_iterations = INT_MAX;
-
-   foreach_list(node, &ls->terminators) {
-      loop_terminator *t = (loop_terminator *) node;
-      ir_if *if_stmt = t->ir;
-
-      /* If-statements can be either 'if (expr)' or 'if (deref)'.  We only care
-       * about the former here.
+   if (ls->limiting_terminator != NULL) {
+      /* If the limiting terminator has an iteration count of zero, then we've
+       * proven that the loop cannot run, so delete it.
        */
-      ir_expression *cond = if_stmt->condition->as_expression();
-      if (cond == NULL)
-	 continue;
-
-      switch (cond->operation) {
-      case ir_binop_less:
-      case ir_binop_greater:
-      case ir_binop_lequal:
-      case ir_binop_gequal: {
-	 /* The expressions that we care about will either be of the form
-	  * 'counter < limit' or 'limit < counter'.  Figure out which is
-	  * which.
-	  */
-	 ir_rvalue *counter = cond->operands[0]->as_dereference_variable();
-	 ir_constant *limit = cond->operands[1]->as_constant();
-	 enum ir_expression_operation cmp = cond->operation;
-
-	 if (limit == NULL) {
-	    counter = cond->operands[1]->as_dereference_variable();
-	    limit = cond->operands[0]->as_constant();
-
-	    switch (cmp) {
-	    case ir_binop_less:    cmp = ir_binop_gequal;  break;
-	    case ir_binop_greater: cmp = ir_binop_lequal;  break;
-	    case ir_binop_lequal:  cmp = ir_binop_greater; break;
-	    case ir_binop_gequal:  cmp = ir_binop_less;    break;
-	    default: assert(!"Should not get here.");
-	    }
-	 }
-
-	 if ((counter == NULL) || (limit == NULL))
-	    break;
-
-	 ir_variable *var = counter->variable_referenced();
-
-	 ir_rvalue *init = find_initial_value(ir, var);
-
-	 foreach_list(iv_node, &ls->induction_variables) {
-	    loop_variable *lv = (loop_variable *) iv_node;
-
-	    if (lv->var == var) {
-	       const int iterations = calculate_iterations(init, limit,
-							   lv->increment,
-							   cmp);
-	       if (iterations >= 0) {
-		  /* If the new iteration count is lower than the previously
-		   * believed iteration count, update the loop control values.
-		   */
-		  if (iterations < max_iterations) {
-		     ir->from = init->clone(ir, NULL);
-		     ir->to = limit->clone(ir, NULL);
-		     ir->increment = lv->increment->clone(ir, NULL);
-		     ir->counter = lv->var;
-		     ir->cmp = cmp;
-
-		     max_iterations = iterations;
-		  }
-
-		  /* Remove the conditional break statement.  The loop
-		   * controls are now set such that the exit condition will be
-		   * satisfied.
-		   */
-		  if_stmt->remove();
-
-		  assert(ls->num_loop_jumps > 0);
-		  ls->num_loop_jumps--;
-
-		  this->progress = true;
-	       }
-
-	       break;
-	    }
-	 }
-	 break;
-      }
-
-      default:
-	 break;
+      int iterations = ls->limiting_terminator->iterations;
+      if (iterations == 0) {
+         ir->remove();
+         this->progress = true;
+         return visit_continue;
       }
    }
 
-   /* If we have proven the one of the loop exit conditions is satisifed before
-    * running the loop once, remove the loop.
+   /* Remove the conditional break statements associated with all terminators
+    * that are associated with a fixed iteration count, except for the one
+    * associated with the limiting terminator--that one needs to stay, since
+    * it terminates the loop.  Exception: if the loop still has a normative
+    * bound, then that terminates the loop, so we don't even need the limiting
+    * terminator.
     */
-   if (max_iterations == 0)
-      ir->remove();
-   else
-      ls->max_iterations = max_iterations;
+   foreach_list(node, &ls->terminators) {
+      loop_terminator *t = (loop_terminator *) node;
+
+      if (t->iterations < 0)
+         continue;
+
+      if (t != ls->limiting_terminator) {
+         t->ir->remove();
+
+         assert(ls->num_loop_jumps > 0);
+         ls->num_loop_jumps--;
+
+         this->progress = true;
+      }
+   }
 
    return visit_continue;
 }

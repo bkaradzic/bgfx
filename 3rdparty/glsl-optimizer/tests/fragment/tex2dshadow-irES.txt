@@ -1,8 +1,8 @@
 #extension GL_EXT_shadow_samplers : enable
+uniform lowp sampler2DShadow shadowmap;
 varying highp vec4 xlv_TEXCOORD0;
-uniform sampler2DShadow shadowmap;
 float xll_shadow2D (
-  in sampler2DShadow s_1,
+  in lowp sampler2DShadow s_1,
   in vec3 coord_2
 )
 {
@@ -12,7 +12,7 @@ float xll_shadow2D (
 }
 
 float xll_shadow2Dproj (
-  in sampler2DShadow s_4,
+  in lowp sampler2DShadow s_4,
   in vec4 coord_5
 )
 {

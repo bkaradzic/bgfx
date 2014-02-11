@@ -1,12 +1,14 @@
-uniform float _Shininess;
 uniform sampler2D _BumpMap;
+uniform float _Shininess;
 void main ()
 {
   vec4 res_1;
   vec3 viewN_2;
   vec4 normal_3;
   normal_3.xy = ((texture2D (_BumpMap, gl_TexCoord[0].xy).wy * 2.0) - 1.0);
-  normal_3.z = sqrt(((1.0 - (normal_3.x * normal_3.x)) - (normal_3.y * normal_3.y)));
+  normal_3.z = sqrt(((1.0 - 
+    (normal_3.x * normal_3.x)
+  ) - (normal_3.y * normal_3.y)));
   viewN_2.x = dot (gl_TexCoord[1].xyz, normal_3.xyz);
   viewN_2.y = dot (gl_TexCoord[2].xyz, normal_3.xyz);
   viewN_2.z = dot (gl_TexCoord[3].xyz, normal_3.xyz);
@@ -15,3 +17,5 @@ void main ()
   gl_FragData[0] = res_1;
 }
 
+
+// inputs: 1, stats: 12 alu 1 tex 0 flow

@@ -1,15 +1,15 @@
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-uniform highp vec4 _ZBufferParams;
-uniform highp mat4 _View2Shadow3;
-uniform highp mat4 _View2Shadow2;
-uniform highp mat4 _View2Shadow1;
-uniform highp mat4 _View2Shadow;
-uniform sampler2D _ShadowMapTexture;
-uniform highp vec4 _LightSplitsNear;
-uniform highp vec4 _LightSplitsFar;
-uniform highp vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
+uniform highp vec4 _LightShadowData;
+uniform highp vec4 _LightSplitsFar;
+uniform highp vec4 _LightSplitsNear;
+uniform sampler2D _ShadowMapTexture;
+uniform highp mat4 _View2Shadow;
+uniform highp mat4 _View2Shadow1;
+uniform highp mat4 _View2Shadow2;
+uniform highp mat4 _View2Shadow3;
+uniform highp vec4 _ZBufferParams;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
 void main ()
 {
   mediump vec4 tmpvar_1;
@@ -41,7 +41,13 @@ void main ()
   tmpvar_14 = (near_9 * far_8);
   highp vec4 tmpvar_15;
   tmpvar_15.w = 1.0;
-  tmpvar_15.xyz = (((((_View2Shadow * tmpvar_6).xyz * tmpvar_14.x) + ((_View2Shadow1 * tmpvar_6).xyz * tmpvar_14.y)) + ((_View2Shadow2 * tmpvar_6).xyz * tmpvar_14.z)) + ((_View2Shadow3 * tmpvar_6).xyz * tmpvar_14.w));
+  tmpvar_15.xyz = (((
+    ((_View2Shadow * tmpvar_6).xyz * tmpvar_14.x)
+   + 
+    ((_View2Shadow1 * tmpvar_6).xyz * tmpvar_14.y)
+  ) + (
+    (_View2Shadow2 * tmpvar_6)
+  .xyz * tmpvar_14.z)) + ((_View2Shadow3 * tmpvar_6).xyz * tmpvar_14.w));
   lowp vec4 tmpvar_16;
   tmpvar_16 = texture2D (_ShadowMapTexture, tmpvar_15.xy);
   highp float tmpvar_17;
@@ -63,3 +69,5 @@ void main ()
   gl_FragData[0] = tmpvar_1;
 }
 
+
+// inputs: 2, stats: 30 alu 2 tex 1 flow

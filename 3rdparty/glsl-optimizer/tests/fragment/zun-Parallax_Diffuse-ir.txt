@@ -20,14 +20,14 @@ struct v2f_surf {
   vec3 vlight;
   vec4 _ShadowCoord;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D _ShadowMapTexture;
-uniform sampler2D _ParallaxMap;
-uniform float _Parallax;
-uniform sampler2D _MainTex;
-uniform vec4 _LightColor0;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform float _Parallax;
+uniform sampler2D _ParallaxMap;
+uniform sampler2D _ShadowMapTexture;
+varying vec4 xlv_FOG;
 float unitySampleShadow (
   in vec4 shadowCoord_1
 )

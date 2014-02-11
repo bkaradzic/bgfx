@@ -1,8 +1,8 @@
-varying mediump vec2 var_mediump;
-varying lowp vec2 var_lowp;
-uniform highp sampler2D tex_highp;
-uniform sampler2D tex_lowp;
 uniform sampler2D tex_def;
+uniform sampler2D tex_lowp;
+uniform highp sampler2D tex_highp;
+varying lowp vec2 var_lowp;
+varying mediump vec2 var_mediump;
 void main ()
 {
   lowp vec4 a1_1;
@@ -36,7 +36,9 @@ void main ()
   tmpvar_15 = tmpvar_14;
   a1_1 = tmpvar_15;
   lowp vec4 tmpvar_16;
-  tmpvar_16 = ((((c1_5 + c2_4) + c3_3) + c4_2) + a1_1);
+  tmpvar_16 = (((
+    (c1_5 + c2_4)
+   + c3_3) + c4_2) + a1_1);
   gl_FragColor = tmpvar_16;
 }
 

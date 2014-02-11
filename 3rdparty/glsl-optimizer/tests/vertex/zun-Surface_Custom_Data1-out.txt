@@ -1,8 +1,8 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _Object2World;
 uniform mat4 _LightMatrix0;
+uniform mat4 _Object2World;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -34,3 +34,5 @@ void main ()
   gl_TexCoord[3] = tmpvar_7;
 }
 
+
+// inputs: 2, stats: 12 alu 0 tex 0 flow

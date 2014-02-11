@@ -1,7 +1,7 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_LightmapST;
-uniform vec4 _Decal_ST;
 uniform vec4 _DecalBump_ST;
+uniform vec4 _Decal_ST;
+uniform vec4 unity_LightmapST;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -21,3 +21,5 @@ void main ()
   gl_TexCoord[1] = tmpvar_4;
 }
 
+
+// inputs: 3, stats: 9 alu 0 tex 0 flow

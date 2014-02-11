@@ -34,7 +34,6 @@
 
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_print_visitor.h"
 #include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
 
@@ -104,11 +103,12 @@ ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
 {
    assert(var);
 
-   if (!var->type->is_record() || var->mode == ir_var_uniform)
+   if (!var->type->is_record() || var->data.mode == ir_var_uniform
+       || var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out)
       return NULL;
 
-   foreach_iter(exec_list_iterator, iter, this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_list(n, &this->variable_list) {
+      variable_entry *entry = (variable_entry *) n;
       if (entry->var == var)
 	 return entry;
    }
@@ -209,8 +209,8 @@ ir_structure_splitting_visitor::get_splitting_entry(ir_variable *var)
    if (!var->type->is_record())
       return NULL;
 
-   foreach_iter(exec_list_iterator, iter, *this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_list(n, this->variable_list) {
+      variable_entry *entry = (variable_entry *) n;
       if (entry->var == var) {
 	 return entry;
       }
@@ -315,8 +315,8 @@ do_structure_splitting(exec_list *instructions)
    visit_list_elements(&refs, instructions);
 
    /* Trim out variables we can't split. */
-   foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_list_safe(n, &refs.variable_list) {
+      variable_entry *entry = (variable_entry *) n;
 
       if (debug) {
 	 printf("structure %s@%p: decl %d, whole_access %d\n",
@@ -337,8 +337,8 @@ do_structure_splitting(exec_list *instructions)
    /* Replace the decls of the structures to be split with their split
     * components.
     */
-   foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_list_safe(n, &refs.variable_list) {
+      variable_entry *entry = (variable_entry *) n;
       const struct glsl_type *type = entry->var->type;
 
       entry->mem_ctx = ralloc_parent(entry->var);

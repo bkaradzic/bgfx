@@ -2,9 +2,9 @@ struct v2f {
   vec4 pos;
   vec2 uv;
 };
-varying vec2 xlv_TEXCOORD0;
-uniform vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform vec4 _MainTex_TexelSize;
+varying vec2 xlv_TEXCOORD0;
 vec2 maxMag (
   in vec2 a_1,
   in vec2 b_2

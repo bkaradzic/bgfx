@@ -1,18 +1,18 @@
-varying highp vec2 xlv_TEXCOORD3;
-varying highp vec3 xlv_TEXCOORD2;
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec4 xlv_COLOR0;
-varying highp vec2 xlv_TEXCOORD0;
-uniform mediump float _TranslucencyViewDependency;
-uniform sampler2D _TranslucencyMap;
-uniform mediump vec3 _TranslucencyColor;
-uniform mediump float _ShadowStrength;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform highp vec4 _LightColor0;
-uniform highp float _Cutoff;
-uniform highp vec4 _Color;
 uniform sampler2D _BumpSpecMap;
+uniform highp vec4 _Color;
+uniform highp float _Cutoff;
+uniform highp vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform mediump float _ShadowStrength;
+uniform mediump vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
+uniform mediump float _TranslucencyViewDependency;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_COLOR0;
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec3 xlv_TEXCOORD2;
+varying highp vec2 xlv_TEXCOORD3;
 void main ()
 {
   mediump vec4 c_1;
@@ -39,7 +39,9 @@ void main ()
   norspc_5 = tmpvar_12;
   mediump vec4 normal_13;
   normal_13.xy = ((norspc_5.wy * 2.0) - 1.0);
-  normal_13.z = sqrt(((1.0 - (normal_13.x * normal_13.x)) - (normal_13.y * normal_13.y)));
+  normal_13.z = sqrt(((1.0 - 
+    (normal_13.x * normal_13.x)
+  ) - (normal_13.y * normal_13.y)));
   highp float x_14;
   x_14 = (c_7.w - _Cutoff);
   if ((x_14 < 0.0)) {
@@ -58,8 +60,18 @@ void main ()
   mediump float tmpvar_20;
   tmpvar_20 = dot (normal_13.xyz, lightDir_2);
   mediump float tmpvar_21;
-  tmpvar_21 = (pow (max (0.0, dot (normal_13.xyz, normalize((lightDir_2 + viewDir_17)))), (norspc_5.x * 128.0)) * tmpvar_4);
-  c_19.xyz = (tmpvar_3 * ((((mix (clamp (-(tmpvar_20), 0.0, 1.0), clamp (dot (viewDir_17, -(lightDir_2)), 0.0, 1.0), _TranslucencyViewDependency) * trngls_6.z) * _TranslucencyColor) * 2.0) + max (0.0, ((tmpvar_20 * 0.6) + 0.4))));
+  tmpvar_21 = (pow (max (0.0, 
+    dot (normal_13.xyz, normalize((lightDir_2 + viewDir_17)))
+  ), (norspc_5.x * 128.0)) * tmpvar_4);
+  c_19.xyz = (tmpvar_3 * ((
+    ((mix (clamp (
+      -(tmpvar_20)
+    , 0.0, 1.0), clamp (
+      dot (viewDir_17, -(lightDir_2))
+    , 0.0, 1.0), _TranslucencyViewDependency) * trngls_6.z) * _TranslucencyColor)
+   * 2.0) + max (0.0, 
+    ((tmpvar_20 * 0.6) + 0.4)
+  )));
   highp vec3 tmpvar_22;
   tmpvar_22 = ((c_19.xyz * _LightColor0.xyz) + tmpvar_21);
   c_19.xyz = tmpvar_22;
@@ -69,3 +81,5 @@ void main ()
   gl_FragData[0] = c_1;
 }
 
+
+// inputs: 5, stats: 40 alu 5 tex 1 flow

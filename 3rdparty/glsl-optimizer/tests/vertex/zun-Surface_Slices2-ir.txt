@@ -14,13 +14,13 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
-uniform vec4 _ProjectionParams;
-uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _ProjectionParams;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void PositionFog (
   in vec4 v_1,
   out vec4 pos_2,
@@ -76,7 +76,9 @@ v2f_surf vert_surf (
   tmpvar_18 = ((v_12.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   o_13.hip_lmapFade.xy = tmpvar_18.xy.xy;
   float tmpvar_19;
-  tmpvar_19 = ((-((gl_ModelViewMatrix * v_12.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_19 = ((-(
+    (gl_ModelViewMatrix * v_12.vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   o_13.hip_lmapFade.z = vec3(tmpvar_19).z;
   return o_13;
 }

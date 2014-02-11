@@ -1,8 +1,8 @@
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform sampler2D _DecalTex;
 uniform vec4 _Color;
+uniform sampler2D _DecalTex;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 tmpvar_1;
@@ -19,10 +19,14 @@ void main ()
   tmpvar_6 = (c_3 * _Color);
   c_3 = tmpvar_6;
   vec4 c_7;
-  c_7.xyz = ((tmpvar_6.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
+  c_7.xyz = ((tmpvar_6.xyz * _LightColor0.xyz) * ((
+    max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz))
+   * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
   c_7.w = tmpvar_6.w;
   c_2.xyz = c_7.xyz;
   c_2.w = 0.0;
   gl_FragData[0] = c_2;
 }
 
+
+// inputs: 1, stats: 9 alu 3 tex 0 flow

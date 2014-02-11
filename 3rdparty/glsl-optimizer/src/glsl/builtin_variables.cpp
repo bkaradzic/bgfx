@@ -29,12 +29,12 @@
 #include "program/prog_statevars.h"
 #include "program/prog_instruction.h"
 
+// these two are ripped from mesa/main/uniforms.h in upstream
 struct gl_builtin_uniform_element {
 	const char *field;
 	int tokens[STATE_LENGTH];
 	int swizzle;
 };
-
 struct gl_builtin_uniform_desc {
 	const char *name;
 	struct gl_builtin_uniform_element *elements;
@@ -42,101 +42,10 @@ struct gl_builtin_uniform_desc {
 };
 
 
-
-static void generate_ARB_draw_buffers_variables(exec_list *,
-						struct _mesa_glsl_parse_state *,
-						bool, _mesa_glsl_parser_targets);
-
-static void
-generate_ARB_draw_instanced_variables(exec_list *,
-                                      struct _mesa_glsl_parse_state *,
-                                      bool, _mesa_glsl_parser_targets);
-
-struct builtin_variable {
-   enum ir_variable_mode mode;
-   int slot;
-   const char *type;
-   const char *name;
-   glsl_precision prec;
+static struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
+	{NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
 };
 
-static const builtin_variable builtin_core_vs_variables[] = {
-   { ir_var_out, VERT_RESULT_HPOS, "vec4",  "gl_Position", glsl_precision_high },
-   { ir_var_out, VERT_RESULT_PSIZ, "float", "gl_PointSize", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_core_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord", glsl_precision_medium },
-   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing", glsl_precision_low },
-   { ir_var_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_100ES_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_110_fs_variables[] = {
-   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_110_deprecated_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color", glsl_precision_medium },
-   { ir_var_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor", glsl_precision_medium },
-   { ir_var_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_110_deprecated_vs_variables[] = {
-   { ir_var_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal", glsl_precision_medium },
-   { ir_var_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color", glsl_precision_medium },
-   { ir_var_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor", glsl_precision_medium },
-   { ir_var_in,  VERT_ATTRIB_TEX0,        "vec4",  "gl_MultiTexCoord0", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX1,        "vec4",  "gl_MultiTexCoord1", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX2,        "vec4",  "gl_MultiTexCoord2", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX3,        "vec4",  "gl_MultiTexCoord3", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX4,        "vec4",  "gl_MultiTexCoord4", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX5,        "vec4",  "gl_MultiTexCoord5", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX6,        "vec4",  "gl_MultiTexCoord6", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_TEX7,        "vec4",  "gl_MultiTexCoord7", glsl_precision_high },
-   { ir_var_in,  VERT_ATTRIB_FOG,         "float", "gl_FogCoord", glsl_precision_high },
-   { ir_var_out, VERT_RESULT_CLIP_VERTEX, "vec4",  "gl_ClipVertex", glsl_precision_high },
-   { ir_var_out, VERT_RESULT_COL0,        "vec4",  "gl_FrontColor", glsl_precision_medium },
-   { ir_var_out, VERT_RESULT_BFC0,        "vec4",  "gl_BackColor", glsl_precision_medium },
-   { ir_var_out, VERT_RESULT_COL1,        "vec4",  "gl_FrontSecondaryColor", glsl_precision_medium },
-   { ir_var_out, VERT_RESULT_BFC1,        "vec4",  "gl_BackSecondaryColor", glsl_precision_medium },
-   { ir_var_out, VERT_RESULT_FOGC,        "float", "gl_FogFragCoord", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_120_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord", glsl_precision_medium },
-};
-
-static const builtin_variable builtin_130_vs_variables[] = {
-   { ir_var_system_value,  SYSTEM_VALUE_VERTEX_ID, "int",   "gl_VertexID", glsl_precision_high },
-};
-
-static const builtin_variable builtin_110_deprecated_uniforms[] = {
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrix", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrix", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrix", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat3", "gl_NormalMatrix", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverse", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverse", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverse", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixTranspose", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixTranspose", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixTranspose", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverseTranspose", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverseTranspose", glsl_precision_undefined },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverseTranspose", glsl_precision_undefined },
-   { ir_var_uniform, -1, "float", "gl_NormalScale", glsl_precision_undefined },
-   { ir_var_uniform, -1, "gl_LightModelParameters", "gl_LightModel", glsl_precision_undefined},
-
-   /* Mesa-internal ATI_envmap_bumpmap state. */
-   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix0MESA", glsl_precision_undefined},
-   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix1MESA", glsl_precision_undefined},
-   { ir_var_uniform, -1, "vec4", "gl_FogParamsOptimizedMESA", glsl_precision_undefined},
-};
 
 static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
@@ -343,6 +252,7 @@ static struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
 #define STATEVAR(name) {#name, name ## _elements, Elements(name ## _elements)}
 
 static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
+   STATEVAR(gl_NumSamples),
    STATEVAR(gl_DepthRange),
    STATEVAR(gl_ClipPlane),
    STATEVAR(gl_Point),
@@ -397,32 +307,174 @@ static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    {NULL, NULL, 0}
 };
 
-static ir_variable *
-add_variable(exec_list *instructions, glsl_symbol_table *symtab,
-	     const char *name, const glsl_type *type,
-	     enum ir_variable_mode mode, int slot, glsl_precision prec = glsl_precision_undefined)
-{
-   ir_variable *var = new(symtab) ir_variable(type, name, mode, prec);
 
-   switch (var->mode) {
+namespace {
+
+/**
+ * Data structure that accumulates fields for the gl_PerVertex interface
+ * block.
+ */
+class per_vertex_accumulator
+{
+public:
+   per_vertex_accumulator();
+   void add_field(int slot, const glsl_type *type, const char *name, glsl_precision prec);
+   const glsl_type *construct_interface_instance() const;
+
+private:
+   glsl_struct_field fields[10];
+   unsigned num_fields;
+};
+
+
+per_vertex_accumulator::per_vertex_accumulator()
+   : fields(),
+     num_fields(0)
+{
+}
+
+
+void
+per_vertex_accumulator::add_field(int slot, const glsl_type *type,
+                                  const char *name, glsl_precision prec)
+{
+   assert(this->num_fields < ARRAY_SIZE(this->fields));
+   this->fields[this->num_fields].type = type;
+   this->fields[this->num_fields].name = name;
+   this->fields[this->num_fields].row_major = false;
+   this->fields[this->num_fields].precision = prec;
+   this->fields[this->num_fields].location = slot;
+   this->fields[this->num_fields].interpolation = INTERP_QUALIFIER_NONE;
+   this->fields[this->num_fields].centroid = 0;
+   this->fields[this->num_fields].sample = 0;
+   this->num_fields++;
+}
+
+
+const glsl_type *
+per_vertex_accumulator::construct_interface_instance() const
+{
+   return glsl_type::get_interface_instance(this->fields, this->num_fields,
+                                            GLSL_INTERFACE_PACKING_STD140,
+                                            "gl_PerVertex");
+}
+
+
+class builtin_variable_generator
+{
+public:
+   builtin_variable_generator(exec_list *instructions,
+                              struct _mesa_glsl_parse_state *state);
+   void generate_constants();
+   void generate_uniforms();
+   void generate_vs_special_vars();
+   void generate_gs_special_vars();
+   void generate_fs_special_vars();
+   void generate_varyings();
+
+private:
+   const glsl_type *array(const glsl_type *base, unsigned elements)
+   {
+      return glsl_type::get_array_instance(base, elements);
+   }
+
+   const glsl_type *type(const char *name)
+   {
+      return symtab->get_type(name);
+   }
+
+   ir_variable *add_input(int slot, const glsl_type *type, const char *name, glsl_precision prec)
+   {
+      return add_variable(name, type, ir_var_shader_in, slot, prec);
+   }
+
+   ir_variable *add_output(int slot, const glsl_type *type, const char *name, glsl_precision prec)
+   {
+      return add_variable(name, type, ir_var_shader_out, slot, prec);
+   }
+
+   ir_variable *add_system_value(int slot, const glsl_type *type,
+                                 const char *name, glsl_precision prec)
+   {
+      return add_variable(name, type, ir_var_system_value, slot, prec);
+   }
+
+   ir_variable *add_variable(const char *name, const glsl_type *type,
+                             enum ir_variable_mode mode, int slot, glsl_precision prec);
+   ir_variable *add_uniform(const glsl_type *type, const char *name, glsl_precision prec);
+   ir_variable *add_const(const char *name, int value);
+   void add_varying(int slot, const glsl_type *type, const char *name,
+                    const char *name_as_gs_input, glsl_precision prec);
+
+   exec_list * const instructions;
+   struct _mesa_glsl_parse_state * const state;
+   glsl_symbol_table * const symtab;
+
+   /**
+    * True if compatibility-profile-only variables should be included.  (In
+    * desktop GL, these are always included when the GLSL version is 1.30 and
+    * or below).
+    */
+   const bool compatibility;
+
+   const glsl_type * const bool_t;
+   const glsl_type * const int_t;
+   const glsl_type * const float_t;
+   const glsl_type * const vec2_t;
+   const glsl_type * const vec3_t;
+   const glsl_type * const vec4_t;
+   const glsl_type * const mat3_t;
+   const glsl_type * const mat4_t;
+
+   per_vertex_accumulator per_vertex_in;
+   per_vertex_accumulator per_vertex_out;
+};
+
+
+builtin_variable_generator::builtin_variable_generator(
+   exec_list *instructions, struct _mesa_glsl_parse_state *state)
+   : instructions(instructions), state(state), symtab(state->symbols),
+     compatibility(!state->is_version(140, 100)),
+     bool_t(glsl_type::bool_type), int_t(glsl_type::int_type),
+     float_t(glsl_type::float_type), vec2_t(glsl_type::vec2_type),
+     vec3_t(glsl_type::vec3_type), vec4_t(glsl_type::vec4_type),
+     mat3_t(glsl_type::mat3_type), mat4_t(glsl_type::mat4_type)
+{
+}
+
+
+ir_variable *
+builtin_variable_generator::add_variable(const char *name,
+                                         const glsl_type *type,
+                                         enum ir_variable_mode mode, int slot, glsl_precision prec)
+
+{
+   if (!this->state->es_shader)
+      prec = glsl_precision_undefined;
+   ir_variable *var = new(symtab) ir_variable(type, name, mode, prec);
+   var->data.how_declared = ir_var_declared_implicitly;
+
+   switch (var->data.mode) {
    case ir_var_auto:
-   case ir_var_in:
-   case ir_var_const_in:
+   case ir_var_shader_in:
    case ir_var_uniform:
    case ir_var_system_value:
-      var->read_only = true;
+      var->data.read_only = true;
       break;
-   case ir_var_inout:
-   case ir_var_out:
+   case ir_var_shader_out:
       break;
    default:
+      /* The only variables that are added using this function should be
+       * uniforms, shader inputs, and shader outputs, constants (which use
+       * ir_var_auto), and system values.
+       */
       assert(0);
       break;
    }
 
-   var->location = slot;
-   var->explicit_location = (slot >= 0);
-   var->explicit_index = 0;
+   var->data.location = slot;
+   var->data.explicit_location = (slot >= 0);
+   var->data.explicit_index = 0;
 
    /* Once the variable is created an initialized, add it to the symbol table
     * and add the declaration to the IR stream.
@@ -433,12 +485,12 @@ add_variable(exec_list *instructions, glsl_symbol_table *symtab,
    return var;
 }
 
-static ir_variable *
-add_uniform(exec_list *instructions, glsl_symbol_table *symtab,
-	    const char *name, const glsl_type *type, glsl_precision prec = glsl_precision_undefined)
+
+ir_variable *
+builtin_variable_generator::add_uniform(const glsl_type *type,
+                                        const char *name, glsl_precision prec)
 {
-   ir_variable *const uni =
-      add_variable(instructions, symtab, name, type, ir_var_uniform, -1, prec);
+   ir_variable *const uni = add_variable(name, type, ir_var_uniform, -1, prec);
 
    unsigned i;
    for (i = 0; _mesa_builtin_uniform_desc[i].name != NULL; i++) {
@@ -481,600 +533,473 @@ add_uniform(exec_list *instructions, glsl_symbol_table *symtab,
    return uni;
 }
 
-static void
-add_builtin_variable(exec_list *instructions, glsl_symbol_table *symtab,
-		     const builtin_variable *proto, bool use_precision)
+
+ir_variable *
+builtin_variable_generator::add_const(const char *name, int value)
 {
-   /* Create a new variable declaration from the description supplied by
-    * the caller.
-    */
-   const glsl_type *const type = symtab->get_type(proto->type);
-
-   assert(type != NULL);
-
-   if (proto->mode == ir_var_uniform) {
-      add_uniform(instructions, symtab, proto->name, type, use_precision ? proto->prec : glsl_precision_undefined);
-   } else {
-      add_variable(instructions, symtab, proto->name, type, proto->mode,
-		   proto->slot, use_precision ? proto->prec : glsl_precision_undefined);
-   }
-}
-
-static ir_variable *
-add_builtin_constant(exec_list *instructions, glsl_symbol_table *symtab,
-		     const char *name, int value)
-{
-   ir_variable *const var = add_variable(instructions, symtab,
-					 name, glsl_type::int_type,
+   ir_variable *const var = add_variable(name, glsl_type::int_type,
 					 ir_var_auto, -1, glsl_precision_undefined);
    var->constant_value = new(var) ir_constant(value);
    var->constant_initializer = new(var) ir_constant(value);
-   var->has_initializer = true;
+   var->data.has_initializer = true;
    return var;
 }
 
-/* Several constants in GLSL ES have different names than normal desktop GLSL.
- * Therefore, this function should only be called on the ES path.
- */
-static void
-generate_100ES_uniforms(exec_list *instructions,
-		     struct _mesa_glsl_parse_state *state)
+
+void
+builtin_variable_generator::generate_constants()
 {
-   glsl_symbol_table *const symtab = state->symbols;
+   add_const("gl_MaxVertexAttribs", state->Const.MaxVertexAttribs);
+   add_const("gl_MaxVertexTextureImageUnits",
+             state->Const.MaxVertexTextureImageUnits);
+   add_const("gl_MaxCombinedTextureImageUnits",
+             state->Const.MaxCombinedTextureImageUnits);
+   add_const("gl_MaxTextureImageUnits", state->Const.MaxTextureImageUnits);
+   add_const("gl_MaxDrawBuffers", state->Const.MaxDrawBuffers);
 
-   add_builtin_constant(instructions, symtab, "gl_MaxVertexAttribs",
-			state->Const.MaxVertexAttribs);
-   add_builtin_constant(instructions, symtab, "gl_MaxVertexUniformVectors",
-			state->Const.MaxVertexUniformComponents);
-   add_builtin_constant(instructions, symtab, "gl_MaxVaryingVectors",
-			state->Const.MaxVaryingFloats / 4);
-   add_builtin_constant(instructions, symtab, "gl_MaxVertexTextureImageUnits",
-			state->Const.MaxVertexTextureImageUnits);
-   add_builtin_constant(instructions, symtab, "gl_MaxCombinedTextureImageUnits",
-			state->Const.MaxCombinedTextureImageUnits);
-   add_builtin_constant(instructions, symtab, "gl_MaxTextureImageUnits",
-			state->Const.MaxTextureImageUnits);
-   add_builtin_constant(instructions, symtab, "gl_MaxFragmentUniformVectors",
-			state->Const.MaxFragmentUniformComponents);
+   /* Max uniforms/varyings: GLSL ES counts these in units of vectors; desktop
+    * GL counts them in units of "components" or "floats".
+    */
+   if (state->es_shader) {
+      add_const("gl_MaxVertexUniformVectors",
+                state->Const.MaxVertexUniformComponents / 4);
+      add_const("gl_MaxFragmentUniformVectors",
+                state->Const.MaxFragmentUniformComponents / 4);
 
-   add_uniform(instructions, symtab, "gl_DepthRange",
-	       state->symbols->get_type("gl_DepthRangeParameters"), glsl_precision_undefined);
+      /* In GLSL ES 3.00, gl_MaxVaryingVectors was split out to separate
+       * vertex and fragment shader constants.
+       */
+      if (state->is_version(0, 300)) {
+         add_const("gl_MaxVertexOutputVectors",
+                   state->ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4);
+         add_const("gl_MaxFragmentInputVectors",
+                   state->ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents / 4);
+      } else {
+         add_const("gl_MaxVaryingVectors",
+                   state->ctx->Const.MaxVarying);
+      }
+   } else {
+      add_const("gl_MaxVertexUniformComponents",
+                state->Const.MaxVertexUniformComponents);
+
+      /* Note: gl_MaxVaryingFloats was deprecated in GLSL 1.30+, but not
+       * removed
+       */
+      add_const("gl_MaxVaryingFloats", state->ctx->Const.MaxVarying * 4);
+
+      add_const("gl_MaxFragmentUniformComponents",
+                state->Const.MaxFragmentUniformComponents);
+   }
+
+   /* Texel offsets were introduced in ARB_shading_language_420pack (which
+    * requires desktop GLSL version 130), and adopted into desktop GLSL
+    * version 4.20 and GLSL ES version 3.00.
+    */
+   if ((state->is_version(130, 0) &&
+        state->ARB_shading_language_420pack_enable) ||
+      state->is_version(420, 300)) {
+      add_const("gl_MinProgramTexelOffset",
+                state->Const.MinProgramTexelOffset);
+      add_const("gl_MaxProgramTexelOffset",
+                state->Const.MaxProgramTexelOffset);
+   }
+
+   if (state->is_version(130, 0)) {
+      add_const("gl_MaxClipDistances", state->Const.MaxClipPlanes);
+      add_const("gl_MaxVaryingComponents", state->ctx->Const.MaxVarying * 4);
+   }
+
+   if (state->is_version(150, 0)) {
+      add_const("gl_MaxVertexOutputComponents",
+                state->Const.MaxVertexOutputComponents);
+      add_const("gl_MaxGeometryInputComponents",
+                state->Const.MaxGeometryInputComponents);
+      add_const("gl_MaxGeometryOutputComponents",
+                state->Const.MaxGeometryOutputComponents);
+      add_const("gl_MaxFragmentInputComponents",
+                state->Const.MaxFragmentInputComponents);
+      add_const("gl_MaxGeometryTextureImageUnits",
+                state->Const.MaxGeometryTextureImageUnits);
+      add_const("gl_MaxGeometryOutputVertices",
+                state->Const.MaxGeometryOutputVertices);
+      add_const("gl_MaxGeometryTotalOutputComponents",
+                state->Const.MaxGeometryTotalOutputComponents);
+      add_const("gl_MaxGeometryUniformComponents",
+                state->Const.MaxGeometryUniformComponents);
+
+      /* Note: the GLSL 1.50-4.40 specs require
+       * gl_MaxGeometryVaryingComponents to be present, and to be at least 64.
+       * But they do not define what it means (and there does not appear to be
+       * any corresponding constant in the GL specs).  However,
+       * ARB_geometry_shader4 defines MAX_GEOMETRY_VARYING_COMPONENTS_ARB to
+       * be the maximum number of components available for use as geometry
+       * outputs.  So we assume this is a synonym for
+       * gl_MaxGeometryOutputComponents.
+       */
+      add_const("gl_MaxGeometryVaryingComponents",
+                state->Const.MaxGeometryOutputComponents);
+   }
+
+   if (compatibility) {
+      /* Note: gl_MaxLights stopped being listed as an explicit constant in
+       * GLSL 1.30, however it continues to be referred to (as a minimum size
+       * for compatibility-mode uniforms) all the way up through GLSL 4.30, so
+       * this seems like it was probably an oversight.
+       */
+      add_const("gl_MaxLights", state->Const.MaxLights);
+
+      add_const("gl_MaxClipPlanes", state->Const.MaxClipPlanes);
+
+      /* Note: gl_MaxTextureUnits wasn't made compatibility-only until GLSL
+       * 1.50, however this seems like it was probably an oversight.
+       */
+      add_const("gl_MaxTextureUnits", state->Const.MaxTextureUnits);
+
+      /* Note: gl_MaxTextureCoords was left out of GLSL 1.40, but it was
+       * re-introduced in GLSL 1.50, so this seems like it was probably an
+       * oversight.
+       */
+      add_const("gl_MaxTextureCoords", state->Const.MaxTextureCoords);
+   }
+
+   if (state->ARB_shader_atomic_counters_enable) {
+      add_const("gl_MaxVertexAtomicCounters",
+                state->Const.MaxVertexAtomicCounters);
+      add_const("gl_MaxGeometryAtomicCounters",
+                state->Const.MaxGeometryAtomicCounters);
+      add_const("gl_MaxFragmentAtomicCounters",
+                state->Const.MaxFragmentAtomicCounters);
+      add_const("gl_MaxCombinedAtomicCounters",
+                state->Const.MaxCombinedAtomicCounters);
+      add_const("gl_MaxAtomicCounterBindings",
+                state->Const.MaxAtomicBufferBindings);
+      add_const("gl_MaxTessControlAtomicCounters", 0);
+      add_const("gl_MaxTessEvaluationAtomicCounters", 0);
+   }
 }
 
-static void
-generate_110_uniforms(exec_list *instructions,
-		      struct _mesa_glsl_parse_state *state,
-		      bool add_deprecated)
+
+/**
+ * Generate uniform variables (which exist in all types of shaders).
+ */
+void
+builtin_variable_generator::generate_uniforms()
 {
-   glsl_symbol_table *const symtab = state->symbols;
+   add_uniform(int_t, "gl_NumSamples", glsl_precision_undefined);
+   add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange", glsl_precision_undefined);
+   add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA", glsl_precision_undefined);
+   add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA", glsl_precision_undefined);
 
-   if (add_deprecated) {
-      for (unsigned i = 0
-	      ; i < Elements(builtin_110_deprecated_uniforms)
-	      ; i++) {
-	 add_builtin_variable(instructions, symtab,
-			      & builtin_110_deprecated_uniforms[i], state->es_shader);
-      }
-   }
+   if (compatibility) {
+      add_uniform(mat4_t, "gl_ModelViewMatrix", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ProjectionMatrix", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrix", glsl_precision_undefined);
+      add_uniform(mat3_t, "gl_NormalMatrix", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewMatrixInverse", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ProjectionMatrixInverse", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverse", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewMatrixTranspose", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ProjectionMatrixTranspose", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixTranspose", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewMatrixInverseTranspose", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ProjectionMatrixInverseTranspose", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverseTranspose", glsl_precision_undefined);
+      add_uniform(float_t, "gl_NormalScale", glsl_precision_undefined);
+      add_uniform(type("gl_LightModelParameters"), "gl_LightModel", glsl_precision_undefined);
+      add_uniform(vec2_t, "gl_BumpRotMatrix0MESA", glsl_precision_undefined);
+      add_uniform(vec2_t, "gl_BumpRotMatrix1MESA", glsl_precision_undefined);
+      add_uniform(vec4_t, "gl_FogParamsOptimizedMESA", glsl_precision_undefined);
 
-   if (add_deprecated) {
-      add_builtin_constant(instructions, symtab, "gl_MaxLights",
-			   state->Const.MaxLights);
-      add_builtin_constant(instructions, symtab, "gl_MaxClipPlanes",
-			   state->Const.MaxClipPlanes);
-      add_builtin_constant(instructions, symtab, "gl_MaxTextureUnits",
-			   state->Const.MaxTextureUnits);
-      add_builtin_constant(instructions, symtab, "gl_MaxTextureCoords",
-			   state->Const.MaxTextureCoords);
-   }
-   add_builtin_constant(instructions, symtab, "gl_MaxVertexAttribs",
-			state->Const.MaxVertexAttribs);
-   add_builtin_constant(instructions, symtab, "gl_MaxVertexUniformComponents",
-			state->Const.MaxVertexUniformComponents);
-   add_builtin_constant(instructions, symtab, "gl_MaxVaryingFloats",
-			state->Const.MaxVaryingFloats);
-   add_builtin_constant(instructions, symtab, "gl_MaxVertexTextureImageUnits",
-			state->Const.MaxVertexTextureImageUnits);
-   add_builtin_constant(instructions, symtab, "gl_MaxCombinedTextureImageUnits",
-			state->Const.MaxCombinedTextureImageUnits);
-   add_builtin_constant(instructions, symtab, "gl_MaxTextureImageUnits",
-			state->Const.MaxTextureImageUnits);
-   add_builtin_constant(instructions, symtab, "gl_MaxFragmentUniformComponents",
-			state->Const.MaxFragmentUniformComponents);
-
-   if (add_deprecated) {
       const glsl_type *const mat4_array_type =
-	 glsl_type::get_array_instance(glsl_type::mat4_type,
-				       state->Const.MaxTextureCoords);
+	 array(mat4_t, state->Const.MaxTextureCoords);
+      add_uniform(mat4_array_type, "gl_TextureMatrix", glsl_precision_undefined);
+      add_uniform(mat4_array_type, "gl_TextureMatrixInverse", glsl_precision_undefined);
+      add_uniform(mat4_array_type, "gl_TextureMatrixTranspose", glsl_precision_undefined);
+      add_uniform(mat4_array_type, "gl_TextureMatrixInverseTranspose", glsl_precision_undefined);
 
-      add_uniform(instructions, symtab, "gl_TextureMatrix", mat4_array_type);
-      add_uniform(instructions, symtab, "gl_TextureMatrixInverse", mat4_array_type);
-      add_uniform(instructions, symtab, "gl_TextureMatrixTranspose", mat4_array_type);
-      add_uniform(instructions, symtab, "gl_TextureMatrixInverseTranspose", mat4_array_type);
-   }
-
-   add_uniform(instructions, symtab, "gl_DepthRange",
-		symtab->get_type("gl_DepthRangeParameters"));
-
-   if (add_deprecated) {
-      add_uniform(instructions, symtab, "gl_ClipPlane",
-		  glsl_type::get_array_instance(glsl_type::vec4_type,
-						state->Const.MaxClipPlanes));
-      add_uniform(instructions, symtab, "gl_Point",
-		  symtab->get_type("gl_PointParameters"));
+      add_uniform(array(vec4_t, state->Const.MaxClipPlanes), "gl_ClipPlane", glsl_precision_undefined);
+      add_uniform(type("gl_PointParameters"), "gl_Point", glsl_precision_undefined);
 
       const glsl_type *const material_parameters_type =
-	 symtab->get_type("gl_MaterialParameters");
-      add_uniform(instructions, symtab, "gl_FrontMaterial", material_parameters_type);
-      add_uniform(instructions, symtab, "gl_BackMaterial", material_parameters_type);
+	 type("gl_MaterialParameters");
+      add_uniform(material_parameters_type, "gl_FrontMaterial", glsl_precision_undefined);
+      add_uniform(material_parameters_type, "gl_BackMaterial", glsl_precision_undefined);
 
-      const glsl_type *const light_source_array_type =
-	 glsl_type::get_array_instance(symtab->get_type("gl_LightSourceParameters"), state->Const.MaxLights);
-
-      add_uniform(instructions, symtab, "gl_LightSource", light_source_array_type);
+      add_uniform(array(type("gl_LightSourceParameters"),
+                        state->Const.MaxLights),
+                  "gl_LightSource", glsl_precision_undefined);
 
       const glsl_type *const light_model_products_type =
-	 symtab->get_type("gl_LightModelProducts");
-      add_uniform(instructions, symtab, "gl_FrontLightModelProduct",
-		  light_model_products_type);
-      add_uniform(instructions, symtab, "gl_BackLightModelProduct",
-		  light_model_products_type);
+         type("gl_LightModelProducts");
+      add_uniform(light_model_products_type, "gl_FrontLightModelProduct", glsl_precision_undefined);
+      add_uniform(light_model_products_type, "gl_BackLightModelProduct", glsl_precision_undefined);
 
       const glsl_type *const light_products_type =
-	 glsl_type::get_array_instance(symtab->get_type("gl_LightProducts"),
-				       state->Const.MaxLights);
-      add_uniform(instructions, symtab, "gl_FrontLightProduct", light_products_type);
-      add_uniform(instructions, symtab, "gl_BackLightProduct", light_products_type);
+         array(type("gl_LightProducts"), state->Const.MaxLights);
+      add_uniform(light_products_type, "gl_FrontLightProduct", glsl_precision_undefined);
+      add_uniform(light_products_type, "gl_BackLightProduct", glsl_precision_undefined);
 
-      add_uniform(instructions, symtab, "gl_TextureEnvColor",
-		  glsl_type::get_array_instance(glsl_type::vec4_type,
-						state->Const.MaxTextureUnits));
+      add_uniform(array(vec4_t, state->Const.MaxTextureUnits),
+                  "gl_TextureEnvColor", glsl_precision_undefined);
 
       const glsl_type *const texcoords_vec4 =
-	 glsl_type::get_array_instance(glsl_type::vec4_type,
-				       state->Const.MaxTextureCoords);
-      add_uniform(instructions, symtab, "gl_EyePlaneS", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_EyePlaneT", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_EyePlaneR", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_EyePlaneQ", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_ObjectPlaneS", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_ObjectPlaneT", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_ObjectPlaneR", texcoords_vec4);
-      add_uniform(instructions, symtab, "gl_ObjectPlaneQ", texcoords_vec4);
+	 array(vec4_t, state->Const.MaxTextureCoords);
+      add_uniform(texcoords_vec4, "gl_EyePlaneS", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_EyePlaneT", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_EyePlaneR", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_EyePlaneQ", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_ObjectPlaneS", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_ObjectPlaneT", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_ObjectPlaneR", glsl_precision_undefined);
+      add_uniform(texcoords_vec4, "gl_ObjectPlaneQ", glsl_precision_undefined);
 
-      add_uniform(instructions, symtab, "gl_Fog",
-		  symtab->get_type("gl_FogParameters"));
+      add_uniform(type("gl_FogParameters"), "gl_Fog", glsl_precision_undefined);
    }
-
-   /* Mesa-internal current attrib state */
-   const glsl_type *const vert_attribs =
-      glsl_type::get_array_instance(glsl_type::vec4_type, VERT_ATTRIB_MAX);
-   add_uniform(instructions, symtab, "gl_CurrentAttribVertMESA", vert_attribs);
-   const glsl_type *const frag_attribs =
-      glsl_type::get_array_instance(glsl_type::vec4_type, FRAG_ATTRIB_MAX);
-   add_uniform(instructions, symtab, "gl_CurrentAttribFragMESA", frag_attribs);
-}
-
-/* This function should only be called for ES, not desktop GL. */
-static void
-generate_100ES_vs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state)
-{
-   for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_vs_variables[i], state->es_shader);
-   }
-
-   generate_100ES_uniforms(instructions, state);
-
-   generate_ARB_draw_buffers_variables(instructions, state, false,
-				       vertex_shader);
 }
 
 
-static void
-generate_110_vs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state,
-			  bool add_deprecated)
+/**
+ * Generate variables which only exist in vertex shaders.
+ */
+void
+builtin_variable_generator::generate_vs_special_vars()
 {
-   for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_vs_variables[i], state->es_shader);
-   }
 
-   if (add_deprecated) {
-      for (unsigned i = 0
-	      ; i < Elements(builtin_110_deprecated_vs_variables)
-	      ; i++) {
-	 add_builtin_variable(instructions, state->symbols,
-			      & builtin_110_deprecated_vs_variables[i], state->es_shader);
-      }
+   if (state->is_version(130, 300))
+      add_system_value(SYSTEM_VALUE_VERTEX_ID, int_t, "gl_VertexID", glsl_precision_high);
+   if (state->ARB_draw_instanced_enable)
+      add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceIDARB", glsl_precision_high);
+   if (state->ARB_draw_instanced_enable || state->is_version(140, 300))
+      add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceID", glsl_precision_high);
+   if (state->AMD_vertex_shader_layer_enable)
+      add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
+   if (compatibility) {
+      add_input(VERT_ATTRIB_POS, vec4_t, "gl_Vertex", glsl_precision_high);
+      add_input(VERT_ATTRIB_NORMAL, vec3_t, "gl_Normal", glsl_precision_medium);
+      add_input(VERT_ATTRIB_COLOR0, vec4_t, "gl_Color", glsl_precision_medium);
+      add_input(VERT_ATTRIB_COLOR1, vec4_t, "gl_SecondaryColor", glsl_precision_medium);
+      add_input(VERT_ATTRIB_TEX0, vec4_t, "gl_MultiTexCoord0", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX1, vec4_t, "gl_MultiTexCoord1", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX2, vec4_t, "gl_MultiTexCoord2", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX3, vec4_t, "gl_MultiTexCoord3", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX4, vec4_t, "gl_MultiTexCoord4", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX5, vec4_t, "gl_MultiTexCoord5", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX6, vec4_t, "gl_MultiTexCoord6", glsl_precision_high);
+      add_input(VERT_ATTRIB_TEX7, vec4_t, "gl_MultiTexCoord7", glsl_precision_high);
+      add_input(VERT_ATTRIB_FOG, float_t, "gl_FogCoord", glsl_precision_high);
    }
-   generate_110_uniforms(instructions, state, add_deprecated);
+}
 
-   /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+
+/**
+ * Generate variables which only exist in geometry shaders.
+ */
+void
+builtin_variable_generator::generate_gs_special_vars()
+{
+   add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
+   if (state->ARB_viewport_array_enable)
+      add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
+
+   /* Although gl_PrimitiveID appears in tessellation control and tessellation
+    * evaluation shaders, it has a different function there than it has in
+    * geometry shaders, so we treat it (and its counterpart gl_PrimitiveIDIn)
+    * as special geometry shader variables.
     *
-    *     "As with all arrays, indices used to subscript gl_TexCoord must
-    *     either be an integral constant expressions, or this array must be
-    *     re-declared by the shader with a size. The size can be at most
-    *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
-    *     implementation in preserving varying resources."
+    * Note that although the general convention of suffixing geometry shader
+    * input varyings with "In" was not adopted into GLSL 1.50, it is used in
+    * the specific case of gl_PrimitiveIDIn.  So we don't need to treat
+    * gl_PrimitiveIDIn as an {ARB,EXT}_geometry_shader4-only variable.
     */
-   const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 0);
-
-   add_variable(instructions, state->symbols,
-		"gl_TexCoord", vec4_array_type, ir_var_out, VERT_RESULT_TEX0);
-
-   generate_ARB_draw_buffers_variables(instructions, state, false,
-				       vertex_shader);
+   ir_variable *var;
+   var = add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveIDIn", glsl_precision_high);
+   var->data.interpolation = INTERP_QUALIFIER_FLAT;
+   var = add_output(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID", glsl_precision_high);
+   var->data.interpolation = INTERP_QUALIFIER_FLAT;
 }
 
 
-static void
-generate_120_vs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state,
-			  bool add_deprecated)
+/**
+ * Generate variables which only exist in fragment shaders.
+ */
+void
+builtin_variable_generator::generate_fs_special_vars()
 {
-   /* GLSL version 1.20 did not add any built-in variables in the vertex
-    * shader.
-    */
-   generate_110_vs_variables(instructions, state, add_deprecated);
-}
+   add_input(VARYING_SLOT_POS, vec4_t, "gl_FragCoord", glsl_precision_high);
+   add_input(VARYING_SLOT_FACE, bool_t, "gl_FrontFacing", glsl_precision_low);
+   if (state->is_version(120, 100))
+      add_input(VARYING_SLOT_PNTC, vec2_t, "gl_PointCoord", glsl_precision_medium);
 
-
-static void
-generate_130_uniforms(exec_list *instructions,
-		      struct _mesa_glsl_parse_state *state)
-{
-   glsl_symbol_table *const symtab = state->symbols;
-
-   add_builtin_constant(instructions, symtab, "gl_MaxClipDistances",
-                        state->Const.MaxClipPlanes);
-   add_builtin_constant(instructions, symtab, "gl_MaxVaryingComponents",
-			state->Const.MaxVaryingFloats);
-}
-
-
-static void
-generate_130_vs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state,
-			  bool add_deprecated)
-{
-   generate_120_vs_variables(instructions, state, add_deprecated);
-
-   for (unsigned i = 0; i < Elements(builtin_130_vs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_130_vs_variables[i], state->es_shader);
+   if (state->is_version(150, 0)) {
+      ir_variable *var =
+         add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID", glsl_precision_high);
+      var->data.interpolation = INTERP_QUALIFIER_FLAT;
    }
 
-   generate_130_uniforms(instructions, state);
-
-   /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special
-    * Variables):
-    *
-    *   The gl_ClipDistance array is predeclared as unsized and must
-    *   be sized by the shader either redeclaring it with a size or
-    *   indexing it only with integral constant expressions.
-    *
-    * We represent this in Mesa by initially declaring the array as
-    * size 0.
+   /* gl_FragColor and gl_FragData were deprecated starting in desktop GLSL
+    * 1.30, and were relegated to the compatibility profile in GLSL 4.20.
+    * They were removed from GLSL ES 3.00.
     */
-   const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(glsl_type::float_type, 0);
-
-   add_variable(instructions, state->symbols,
-		"gl_ClipDistance", clip_distance_array_type, ir_var_out,
-                VERT_RESULT_CLIP_DIST0);
-
-}
-
-
-static void
-initialize_vs_variables(exec_list *instructions,
-			struct _mesa_glsl_parse_state *state)
-{
-
-   switch (state->language_version) {
-   case 100:
-      generate_100ES_vs_variables(instructions, state);
-      break;
-   case 110:
-      generate_110_vs_variables(instructions, state, true);
-      break;
-   case 120:
-      generate_120_vs_variables(instructions, state, true);
-      break;
-   case 130:
-      generate_130_vs_variables(instructions, state, true);
-      break;
-   case 140:
-      generate_130_vs_variables(instructions, state, false);
-      break;
+   if (compatibility || !state->is_version(420, 300)) {
+      add_output(FRAG_RESULT_COLOR, vec4_t, "gl_FragColor", glsl_precision_medium);
+      add_output(FRAG_RESULT_DATA0,
+                 array(vec4_t, state->Const.MaxDrawBuffers), "gl_FragData", glsl_precision_medium);
    }
 
-   generate_ARB_draw_instanced_variables(instructions, state, false,
-					 vertex_shader);
-}
+   /* gl_FragDepth has always been in desktop GLSL, but did not appear in GLSL
+    * ES 1.00.
+    */
+   if (state->is_version(110, 300))
+      add_output(FRAG_RESULT_DEPTH, float_t, "gl_FragDepth", glsl_precision_high);
 
-
-/* This function should only be called for ES, not desktop GL. */
-static void
-generate_100ES_fs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state)
-{
-   for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_fs_variables[i], state->es_shader);
+   if (state->ARB_shader_stencil_export_enable) {
+      ir_variable *const var =
+         add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefARB", glsl_precision_high);
+      if (state->ARB_shader_stencil_export_warn)
+         var->warn_extension = "GL_ARB_shader_stencil_export";
    }
 
-   for (unsigned i = 0; i < Elements(builtin_100ES_fs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_100ES_fs_variables[i], state->es_shader);
+   if (state->AMD_shader_stencil_export_enable) {
+      ir_variable *const var =
+         add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefAMD", glsl_precision_high);
+      if (state->AMD_shader_stencil_export_warn)
+         var->warn_extension = "GL_AMD_shader_stencil_export";
    }
 	
 	if (state->EXT_frag_depth_enable) {
-		const builtin_variable fragDepthEXT = { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepthEXT", glsl_precision_high };
-		add_builtin_variable(instructions, state->symbols, &fragDepthEXT, state->es_shader);
+		ir_variable *const var =
+		add_output(FRAG_RESULT_DEPTH, float_t, "gl_FragDepthEXT", glsl_precision_high);
+		if (state->EXT_frag_depth_warn)
+			var->warn_extension = "GL_EXT_frag_depth";
 	}
 
-   generate_100ES_uniforms(instructions, state);
+   if (state->ARB_sample_shading_enable) {
+      add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, "gl_SampleID", glsl_precision_high);
+      add_system_value(SYSTEM_VALUE_SAMPLE_POS, vec2_t, "gl_SamplePosition", glsl_precision_high);
+      /* From the ARB_sample_shading specification:
+       *    "The number of elements in the array is ceil(<s>/32), where
+       *    <s> is the maximum number of color samples supported by the
+       *    implementation."
+       * Since no drivers expose more than 32x MSAA, we can simply set
+       * the array size to 1 rather than computing it.
+       */
+      add_output(FRAG_RESULT_SAMPLE_MASK, array(int_t, 1), "gl_SampleMask", glsl_precision_high);
+   }
 
-   generate_ARB_draw_buffers_variables(instructions, state, false,
-				       fragment_shader);
+   if (state->ARB_gpu_shader5_enable) {
+      add_system_value(SYSTEM_VALUE_SAMPLE_MASK_IN, array(int_t, 1), "gl_SampleMaskIn", glsl_precision_high);
+   }
 }
 
-static void
-generate_110_fs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state,
-			  bool add_deprecated)
+
+/**
+ * Add a single "varying" variable.  The variable's type and direction (input
+ * or output) are adjusted as appropriate for the type of shader being
+ * compiled.  For geometry shaders using {ARB,EXT}_geometry_shader4,
+ * name_as_gs_input is used for the input (to avoid ambiguity).
+ */
+void
+builtin_variable_generator::add_varying(int slot, const glsl_type *type,
+                                        const char *name,
+                                        const char *name_as_gs_input,
+										glsl_precision prec)
 {
-   for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_fs_variables[i], state->es_shader);
+   switch (state->stage) {
+   case MESA_SHADER_GEOMETRY:
+      this->per_vertex_in.add_field(slot, type, name, prec);
+      /* FALLTHROUGH */
+   case MESA_SHADER_VERTEX:
+      this->per_vertex_out.add_field(slot, type, name, prec);
+      break;
+   case MESA_SHADER_FRAGMENT:
+      add_input(slot, type, name, prec);
+      break;
+   }
+}
+
+
+/**
+ * Generate variables that are used to communicate data from one shader stage
+ * to the next ("varyings").
+ */
+void
+builtin_variable_generator::generate_varyings()
+{
+#define ADD_VARYING(loc, type, name, prec) \
+   add_varying(loc, type, name, name "In", prec)
+
+   /* gl_Position and gl_PointSize are not visible from fragment shaders. */
+   if (state->stage != MESA_SHADER_FRAGMENT) {
+      ADD_VARYING(VARYING_SLOT_POS, vec4_t, "gl_Position", glsl_precision_high);
+      ADD_VARYING(VARYING_SLOT_PSIZ, float_t, "gl_PointSize", glsl_precision_high);
    }
 
-   for (unsigned i = 0; i < Elements(builtin_110_fs_variables); i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_110_fs_variables[i], state->es_shader);
+   if (state->is_version(130, 0)) {
+       ADD_VARYING(VARYING_SLOT_CLIP_DIST0, array(float_t, 0),
+                   "gl_ClipDistance", glsl_precision_high);
    }
 
-   if (add_deprecated) {
-      for (unsigned i = 0
-	      ; i < Elements(builtin_110_deprecated_fs_variables)
-	      ; i++) {
-	 add_builtin_variable(instructions, state->symbols,
-			      & builtin_110_deprecated_fs_variables[i], state->es_shader);
+   if (compatibility) {
+      ADD_VARYING(VARYING_SLOT_TEX0, array(vec4_t, 0), "gl_TexCoord", glsl_precision_undefined);
+      ADD_VARYING(VARYING_SLOT_FOGC, float_t, "gl_FogFragCoord", glsl_precision_undefined);
+      if (state->stage == MESA_SHADER_FRAGMENT) {
+         ADD_VARYING(VARYING_SLOT_COL0, vec4_t, "gl_Color", glsl_precision_medium);
+         ADD_VARYING(VARYING_SLOT_COL1, vec4_t, "gl_SecondaryColor", glsl_precision_medium);
+      } else {
+         ADD_VARYING(VARYING_SLOT_CLIP_VERTEX, vec4_t, "gl_ClipVertex", glsl_precision_high);
+         ADD_VARYING(VARYING_SLOT_COL0, vec4_t, "gl_FrontColor", glsl_precision_medium);
+         ADD_VARYING(VARYING_SLOT_BFC0, vec4_t, "gl_BackColor", glsl_precision_medium);
+         ADD_VARYING(VARYING_SLOT_COL1, vec4_t, "gl_FrontSecondaryColor", glsl_precision_medium);
+         ADD_VARYING(VARYING_SLOT_BFC1, vec4_t, "gl_BackSecondaryColor", glsl_precision_medium);
       }
    }
 
-   generate_110_uniforms(instructions, state, add_deprecated);
-
-   /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
-    *
-    *     "As with all arrays, indices used to subscript gl_TexCoord must
-    *     either be an integral constant expressions, or this array must be
-    *     re-declared by the shader with a size. The size can be at most
-    *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
-    *     implementation in preserving varying resources."
-    */
-   const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 0);
-
-   add_variable(instructions, state->symbols,
-		"gl_TexCoord", vec4_array_type, ir_var_in, FRAG_ATTRIB_TEX0);
-
-   generate_ARB_draw_buffers_variables(instructions, state, false,
-				       fragment_shader);
-}
-
-
-static void
-generate_ARB_draw_buffers_variables(exec_list *instructions,
-				    struct _mesa_glsl_parse_state *state,
-				    bool warn, _mesa_glsl_parser_targets target)
-{
-   /* gl_MaxDrawBuffers is available in all shader stages.
-    */
-   ir_variable *const mdb =
-      add_builtin_constant(instructions, state->symbols, "gl_MaxDrawBuffers",
-			   state->Const.MaxDrawBuffers);
-
-   if (warn)
-      mdb->warn_extension = "GL_ARB_draw_buffers";
-
-   /* gl_FragData is only available in the fragment shader.
-    */
-   if (target == fragment_shader) {
-      const glsl_type *const vec4_array_type =
-	 glsl_type::get_array_instance(glsl_type::vec4_type,
-				       state->Const.MaxDrawBuffers);
-
-      ir_variable *const fd =
-	 add_variable(instructions, state->symbols,
-		      "gl_FragData", vec4_array_type,
-		      ir_var_out, FRAG_RESULT_DATA0);
-
-      if (warn)
-	 fd->warn_extension = "GL_ARB_draw_buffers";
+   if (state->stage == MESA_SHADER_GEOMETRY) {
+      const glsl_type *per_vertex_in_type =
+         this->per_vertex_in.construct_interface_instance();
+      add_variable("gl_in", array(per_vertex_in_type, 0),
+                   ir_var_shader_in, -1, glsl_precision_undefined);
+   }
+   if (state->stage == MESA_SHADER_VERTEX || state->stage == MESA_SHADER_GEOMETRY) {
+      const glsl_type *per_vertex_out_type =
+         this->per_vertex_out.construct_interface_instance();
+      const glsl_struct_field *fields = per_vertex_out_type->fields.structure;
+      for (unsigned i = 0; i < per_vertex_out_type->length; i++) {
+         ir_variable *var =
+            add_variable(fields[i].name, fields[i].type, ir_var_shader_out,
+                         fields[i].location, fields[i].precision);
+         var->data.interpolation = fields[i].interpolation;
+         var->data.centroid = fields[i].centroid;
+         var->data.sample = fields[i].sample;
+         var->init_interface_type(per_vertex_out_type);
+      }
    }
 }
 
 
-static void
-generate_ARB_draw_instanced_variables(exec_list *instructions,
-                                      struct _mesa_glsl_parse_state *state,
-                                      bool warn,
-                                      _mesa_glsl_parser_targets target)
-{
-   /* gl_InstanceIDARB is only available in the vertex shader.
-    */
-   if (target != vertex_shader)
-      return;
+}; /* Anonymous namespace */
 
-   if (state->ARB_draw_instanced_enable) {
-      ir_variable *inst =
-         add_variable(instructions, state->symbols,
-		      "gl_InstanceIDARB", glsl_type::int_type,
-		      ir_var_system_value, SYSTEM_VALUE_INSTANCE_ID);
-
-      if (warn)
-         inst->warn_extension = "GL_ARB_draw_instanced";
-   }
-
-   if (state->ARB_draw_instanced_enable || state->language_version >= 140) {
-      /* Originally ARB_draw_instanced only specified that ARB decorated name.
-       * Since no vendor actually implemented that behavior and some apps use
-       * the undecorated name, the extension now specifies that both names are
-       * available.
-       */
-      ir_variable *inst =
-	 add_variable(instructions, state->symbols,
-		      "gl_InstanceID", glsl_type::int_type,
-		      ir_var_system_value, SYSTEM_VALUE_INSTANCE_ID);
-
-      if (state->language_version < 140 && warn)
-         inst->warn_extension = "GL_ARB_draw_instanced";
-   }
-}
-
-
-static void
-generate_ARB_shader_stencil_export_variables(exec_list *instructions,
-					     struct _mesa_glsl_parse_state *state,
-					     bool warn)
-{
-   /* gl_FragStencilRefARB is only available in the fragment shader.
-    */
-   ir_variable *const fd =
-      add_variable(instructions, state->symbols,
-		   "gl_FragStencilRefARB", glsl_type::int_type,
-		   ir_var_out, FRAG_RESULT_STENCIL);
-
-   if (warn)
-      fd->warn_extension = "GL_ARB_shader_stencil_export";
-}
-
-static void
-generate_AMD_shader_stencil_export_variables(exec_list *instructions,
-					     struct _mesa_glsl_parse_state *state,
-					     bool warn)
-{
-   /* gl_FragStencilRefAMD is only available in the fragment shader.
-    */
-   ir_variable *const fd =
-      add_variable(instructions, state->symbols,
-		   "gl_FragStencilRefAMD", glsl_type::int_type,
-		   ir_var_out, FRAG_RESULT_STENCIL);
-
-   if (warn)
-      fd->warn_extension = "GL_AMD_shader_stencil_export";
-}
-
-static void
-generate_120_fs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state,
-			  bool add_deprecated)
-{
-   generate_110_fs_variables(instructions, state, add_deprecated);
-
-   for (unsigned i = 0
-	   ; i < Elements(builtin_120_fs_variables)
-	   ; i++) {
-      add_builtin_variable(instructions, state->symbols,
-			   & builtin_120_fs_variables[i], state->es_shader);
-   }
-}
-
-static void
-generate_fs_clipdistance(exec_list *instructions,
-			 struct _mesa_glsl_parse_state *state)
-{
-   /* From the GLSL 1.30 spec, section 7.2 (Fragment Shader Special
-    * Variables):
-    *
-    *   The built-in input variable gl_ClipDistance array contains linearly
-    *   interpolated values for the vertex values written by the vertex shader
-    *   to the gl_ClipDistance vertex output variable. This array must be
-    *   sized in the fragment shader either implicitly or explicitly to be the
-    *   same size as it was sized in the vertex shader.
-    *
-    * In other words, the array must be pre-declared as implicitly sized.  We
-    * represent this in Mesa by initially declaring the array as size 0.
-    */
-   const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(glsl_type::float_type, 0);
-
-   add_variable(instructions, state->symbols,
-		"gl_ClipDistance", clip_distance_array_type, ir_var_in,
-                FRAG_ATTRIB_CLIP_DIST0);
-}
-
-static void
-generate_130_fs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state)
-{
-   generate_120_fs_variables(instructions, state, true);
-
-   generate_130_uniforms(instructions, state);
-   generate_fs_clipdistance(instructions, state);
-}
-
-
-static void
-generate_140_fs_variables(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state)
-{
-   generate_120_fs_variables(instructions, state, false);
-
-   generate_130_uniforms(instructions, state);
-   generate_fs_clipdistance(instructions, state);
-}
-
-static void
-initialize_fs_variables(exec_list *instructions,
-			struct _mesa_glsl_parse_state *state)
-{
-
-   switch (state->language_version) {
-   case 100:
-      generate_100ES_fs_variables(instructions, state);
-      break;
-   case 110:
-      generate_110_fs_variables(instructions, state, true);
-      break;
-   case 120:
-      generate_120_fs_variables(instructions, state, true);
-      break;
-   case 130:
-      generate_130_fs_variables(instructions, state);
-      break;
-   case 140:
-      generate_140_fs_variables(instructions, state);
-      break;
-   }
-
-   if (state->ARB_shader_stencil_export_enable)
-      generate_ARB_shader_stencil_export_variables(instructions, state,
-						   state->ARB_shader_stencil_export_warn);
-
-   if (state->AMD_shader_stencil_export_enable)
-      generate_AMD_shader_stencil_export_variables(instructions, state,
-						   state->AMD_shader_stencil_export_warn);
-}
 
 void
 _mesa_glsl_initialize_variables(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state)
 {
-   switch (state->target) {
-   case vertex_shader:
-      initialize_vs_variables(instructions, state);
+   builtin_variable_generator gen(instructions, state);
+
+   gen.generate_constants();
+   gen.generate_uniforms();
+
+   gen.generate_varyings();
+
+   switch (state->stage) {
+   case MESA_SHADER_VERTEX:
+      gen.generate_vs_special_vars();
       break;
-   case geometry_shader:
+   case MESA_SHADER_GEOMETRY:
+      gen.generate_gs_special_vars();
       break;
-   case fragment_shader:
-      initialize_fs_variables(instructions, state);
+   case MESA_SHADER_FRAGMENT:
+      gen.generate_fs_special_vars();
       break;
    }
 }

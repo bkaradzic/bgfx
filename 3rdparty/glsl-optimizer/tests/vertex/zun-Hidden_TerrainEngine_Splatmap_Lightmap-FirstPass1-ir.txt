@@ -15,16 +15,16 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
-uniform vec4 _Splat3_ST;
-uniform vec4 _Splat2_ST;
-uniform vec4 _Splat1_ST;
-uniform vec4 _Splat0_ST;
-uniform vec4 _ProjectionParams;
 uniform vec4 _Control_ST;
+uniform vec4 _ProjectionParams;
+uniform vec4 _Splat0_ST;
+uniform vec4 _Splat1_ST;
+uniform vec4 _Splat2_ST;
+uniform vec4 _Splat3_ST;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void PositionFog (
   in vec4 v_1,
   out vec4 pos_2,
@@ -89,7 +89,9 @@ v2f_surf vert_surf (
   tmpvar_21 = ((v_12.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   o_13.hip_lmapFade.xy = tmpvar_21.xy.xy;
   float tmpvar_22;
-  tmpvar_22 = ((-((gl_ModelViewMatrix * v_12.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_22 = ((-(
+    (gl_ModelViewMatrix * v_12.vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   o_13.hip_lmapFade.z = vec3(tmpvar_22).z;
   return o_13;
 }

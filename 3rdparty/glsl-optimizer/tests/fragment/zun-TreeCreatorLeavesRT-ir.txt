@@ -6,13 +6,13 @@ struct v2f {
   vec3 nl;
   vec3 nh;
 };
-uniform sampler2D _TranslucencyMap;
-uniform vec3 _TranslucencyColor;
-uniform vec4 _TerrainTreeLightColors[4];
-uniform vec4 _SpecColor;
-uniform sampler2D _MainTex;
-uniform float _Cutoff;
 uniform sampler2D _BumpSpecMap;
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
+uniform vec4 _SpecColor;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
 void xll_clip (
   in float x_1
 )
@@ -95,7 +95,11 @@ vec4 frag (
     tmpvar_34 = (tmpvar_33 * gloss_12);
     spec_4 = tmpvar_34;
     vec3 tmpvar_35;
-    tmpvar_35 = (light_11 + (((albedo_15 * (translucencyColor_7 + nl_6)) + (_SpecColor.xyz * spec_4)) * lightColor_8));
+    tmpvar_35 = (light_11 + ((
+      (albedo_15 * (translucencyColor_7 + nl_6))
+     + 
+      (_SpecColor.xyz * spec_4)
+    ) * lightColor_8));
     light_11 = tmpvar_35;
     int _post_incdec_tmp_36;
     _post_incdec_tmp_36 = j_9;

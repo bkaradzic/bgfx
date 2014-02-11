@@ -1,33 +1,30 @@
-FSHF­œ#ifdef GL_ES
-precision highp float;
-#endif // GL_ES
-
-uniform sampler2D u_shadowMap3;
-uniform sampler2D u_shadowMap2;
-uniform sampler2D u_shadowMap1;
-uniform sampler2D u_shadowMap0;
-uniform vec4 u_lightAttenuationSpotOuter;
-uniform vec4 u_lightSpotDirectionInner;
-uniform vec4 u_lightSpecularPower;
-uniform vec4 u_lightDiffusePower;
-uniform vec4 u_lightAmbientPower;
-uniform vec4 u_lightPosition;
-uniform vec4 u_materialKs;
-uniform vec3 u_materialKd;
-uniform vec3 u_materialKa;
-uniform vec4 u_color;
-uniform vec4 u_params2;
-uniform vec4 u_params1;
-varying vec3 v_view;
-varying vec4 v_texcoord4;
-varying vec4 v_texcoord3;
-varying vec4 v_texcoord2;
-varying vec4 v_texcoord1;
+FSHF­œprecision highp float;
 varying vec3 v_normal;
+varying vec4 v_texcoord1;
+varying vec4 v_texcoord2;
+varying vec4 v_texcoord3;
+varying vec4 v_texcoord4;
+varying vec3 v_view;
+uniform vec4 u_params1;
+uniform vec4 u_params2;
+uniform vec4 u_color;
+uniform vec3 u_materialKa;
+uniform vec3 u_materialKd;
+uniform vec4 u_materialKs;
+uniform vec4 u_lightPosition;
+uniform vec4 u_lightAmbientPower;
+uniform vec4 u_lightDiffusePower;
+uniform vec4 u_lightSpecularPower;
+uniform vec4 u_lightSpotDirectionInner;
+uniform vec4 u_lightAttenuationSpotOuter;
+uniform sampler2D u_shadowMap0;
+uniform sampler2D u_shadowMap1;
+uniform sampler2D u_shadowMap2;
+uniform sampler2D u_shadowMap3;
 void main ()
 {
-  float visibility_1;
-  vec3 colorCoverage_2;
+  lowp float visibility_1;
+  lowp vec3 colorCoverage_2;
   vec2 tmpvar_3;
   tmpvar_3 = (v_texcoord1.xy / v_texcoord1.w);
   vec2 tmpvar_4;
@@ -77,14 +74,14 @@ void main ()
     } else {
       tmpvar_17 = bool(0);
     };
-    float tmpvar_19;
+    lowp float tmpvar_19;
     tmpvar_19 = (float(tmpvar_17) * 0.4);
-    vec3 tmpvar_20;
+    lowp vec3 tmpvar_20;
     tmpvar_20.x = -(tmpvar_19);
     tmpvar_20.y = tmpvar_19;
     tmpvar_20.z = -(tmpvar_19);
     colorCoverage_2 = tmpvar_20;
-    float tmpvar_21;
+    lowp float tmpvar_21;
     vec2 tmpvar_22;
     tmpvar_22 = (v_texcoord1.xy / v_texcoord1.w);
     bool tmpvar_23;
@@ -96,7 +93,9 @@ void main ()
     if (tmpvar_23) {
       tmpvar_21 = 1.0;
     } else {
-      tmpvar_21 = float((dot (texture2D (u_shadowMap0, tmpvar_22), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((v_texcoord1.z - u_params1.x) / v_texcoord1.w)));
+      tmpvar_21 = float((dot (texture2D (u_shadowMap0, tmpvar_22), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= (
+        (v_texcoord1.z - u_params1.x)
+       / v_texcoord1.w)));
     };
     visibility_1 = tmpvar_21;
   } else {
@@ -113,14 +112,14 @@ void main ()
       } else {
         tmpvar_26 = bool(0);
       };
-      float tmpvar_28;
+      lowp float tmpvar_28;
       tmpvar_28 = (float(tmpvar_26) * 0.4);
-      vec3 tmpvar_29;
+      lowp vec3 tmpvar_29;
       tmpvar_29.x = tmpvar_28;
       tmpvar_29.y = tmpvar_28;
       tmpvar_29.z = -(tmpvar_28);
       colorCoverage_2 = tmpvar_29;
-      float tmpvar_30;
+      lowp float tmpvar_30;
       vec2 tmpvar_31;
       tmpvar_31 = (v_texcoord2.xy / v_texcoord2.w);
       bool tmpvar_32;
@@ -132,7 +131,9 @@ void main ()
       if (tmpvar_32) {
         tmpvar_30 = 1.0;
       } else {
-        tmpvar_30 = float((dot (texture2D (u_shadowMap1, tmpvar_31), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((v_texcoord2.z - u_params1.x) / v_texcoord2.w)));
+        tmpvar_30 = float((dot (texture2D (u_shadowMap1, tmpvar_31), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= (
+          (v_texcoord2.z - u_params1.x)
+         / v_texcoord2.w)));
       };
       visibility_1 = tmpvar_30;
     } else {
@@ -149,14 +150,14 @@ void main ()
         } else {
           tmpvar_35 = bool(0);
         };
-        float tmpvar_37;
+        lowp float tmpvar_37;
         tmpvar_37 = (float(tmpvar_35) * 0.4);
-        vec3 tmpvar_38;
+        lowp vec3 tmpvar_38;
         tmpvar_38.x = -(tmpvar_37);
         tmpvar_38.y = -(tmpvar_37);
         tmpvar_38.z = tmpvar_37;
         colorCoverage_2 = tmpvar_38;
-        float tmpvar_39;
+        lowp float tmpvar_39;
         vec2 tmpvar_40;
         tmpvar_40 = (v_texcoord3.xy / v_texcoord3.w);
         bool tmpvar_41;
@@ -168,7 +169,9 @@ void main ()
         if (tmpvar_41) {
           tmpvar_39 = 1.0;
         } else {
-          tmpvar_39 = float((dot (texture2D (u_shadowMap2, tmpvar_40), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((v_texcoord3.z - u_params1.x) / v_texcoord3.w)));
+          tmpvar_39 = float((dot (texture2D (u_shadowMap2, tmpvar_40), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= (
+            (v_texcoord3.z - u_params1.x)
+           / v_texcoord3.w)));
         };
         visibility_1 = tmpvar_39;
       } else {
@@ -184,14 +187,14 @@ void main ()
         } else {
           tmpvar_44 = bool(0);
         };
-        float tmpvar_46;
+        lowp float tmpvar_46;
         tmpvar_46 = (float(tmpvar_44) * 0.4);
-        vec3 tmpvar_47;
+        lowp vec3 tmpvar_47;
         tmpvar_47.x = tmpvar_46;
         tmpvar_47.y = -(tmpvar_46);
         tmpvar_47.z = -(tmpvar_46);
         colorCoverage_2 = tmpvar_47;
-        float tmpvar_48;
+        lowp float tmpvar_48;
         vec2 tmpvar_49;
         tmpvar_49 = (v_texcoord4.xy / v_texcoord4.w);
         bool tmpvar_50;
@@ -203,7 +206,9 @@ void main ()
         if (tmpvar_50) {
           tmpvar_48 = 1.0;
         } else {
-          tmpvar_48 = float((dot (texture2D (u_shadowMap3, tmpvar_49), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= ((v_texcoord4.z - u_params1.x) / v_texcoord4.w)));
+          tmpvar_48 = float((dot (texture2D (u_shadowMap3, tmpvar_49), vec4(5.96046e-008, 1.52588e-005, 0.00390625, 1.0)) >= (
+            (v_texcoord4.z - u_params1.x)
+           / v_texcoord4.w)));
         };
         visibility_1 = tmpvar_48;
       };
@@ -225,18 +230,48 @@ void main ()
     tmpvar_56 = cos((u_lightAttenuationSpotOuter.w * 0.0174533));
     float tmpvar_57;
     tmpvar_57 = sqrt(dot (tmpvar_54, tmpvar_54));
-    tmpvar_53 = ((1.0/(((u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_57)) + ((u_lightAttenuationSpotOuter.z * tmpvar_57) * tmpvar_57)))) * mix (clamp (((max (0.0, dot (-(tmpvar_55), normalize(u_lightSpotDirectionInner.xyz))) - tmpvar_56) / (cos((min (u_lightSpotDirectionInner.w, (u_lightAttenuationSpotOuter.w - 0.001)) * 0.0174533)) - tmpvar_56)), 0.0, 1.0), 1.0, float((u_lightAttenuationSpotOuter.w >= 90.0))));
+    tmpvar_53 = ((1.0/((
+      (u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_57))
+     + 
+      ((u_lightAttenuationSpotOuter.z * tmpvar_57) * tmpvar_57)
+    ))) * mix (clamp (
+      ((max (0.0, dot (
+        -(tmpvar_55)
+      , 
+        normalize(u_lightSpotDirectionInner.xyz)
+      )) - tmpvar_56) / (cos((
+        min (u_lightSpotDirectionInner.w, (u_lightAttenuationSpotOuter.w - 0.001))
+       * 0.0174533)) - tmpvar_56))
+    , 0.0, 1.0), 1.0, float(
+      (u_lightAttenuationSpotOuter.w >= 90.0)
+    )));
   };
   float tmpvar_58;
   tmpvar_58 = dot (v_normal, tmpvar_52);
   vec2 tmpvar_59;
   tmpvar_59.x = tmpvar_58;
-  tmpvar_59.y = (((float((tmpvar_58 >= 0.0)) * pow (max (0.0, dot ((((2.0 * tmpvar_58) * v_normal) - tmpvar_52), tmpvar_51)), u_materialKs.w)) * (2.0 + u_materialKs.w)) / 8.0);
+  tmpvar_59.y = (((
+    float((tmpvar_58 >= 0.0))
+   * 
+    pow (max (0.0, dot ((
+      ((2.0 * tmpvar_58) * v_normal)
+     - tmpvar_52), tmpvar_51)), u_materialKs.w)
+  ) * (2.0 + u_materialKs.w)) / 8.0);
   vec2 tmpvar_60;
   tmpvar_60 = (max (tmpvar_59, 0.0) * tmpvar_53);
   float tmpvar_61;
   tmpvar_61 = sqrt(dot (v_view, v_view));
-  gl_FragColor.xyz = mix (vec3(0.0, 0.0, 0.0), (pow (abs(((((u_lightAmbientPower.xyz * u_lightAmbientPower.w) * u_materialKa) * u_color.xyz) + ((((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_60.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_60.y)) * u_color.xyz) * visibility_1))), vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(exp2(((1.7673e-005 * tmpvar_61) * tmpvar_61)))), 0.0, 1.0));
+  lowp vec3 tmpvar_62;
+  tmpvar_62 = mix (vec3(0.0, 0.0, 0.0), (pow (
+    abs((((
+      (u_lightAmbientPower.xyz * u_lightAmbientPower.w)
+     * u_materialKa) * u_color.xyz) + ((
+      ((((u_lightDiffusePower.xyz * u_lightDiffusePower.w) * u_materialKd) * tmpvar_60.x) + (((u_lightSpecularPower.xyz * u_lightSpecularPower.w) * u_materialKs.xyz) * tmpvar_60.y))
+     * u_color.xyz) * visibility_1)))
+  , vec3(0.454545, 0.454545, 0.454545)) + (colorCoverage_2 * u_params2.y)), clamp ((1.0/(
+    exp2(((1.7673e-005 * tmpvar_61) * tmpvar_61))
+  )), 0.0, 1.0));
+  gl_FragColor.xyz = tmpvar_62;
   gl_FragColor.w = 1.0;
 }
 

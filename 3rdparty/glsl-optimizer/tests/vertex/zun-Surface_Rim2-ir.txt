@@ -15,15 +15,15 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform vec4 _ProjectionParams;
 uniform vec4 _MainTex_ST;
+uniform vec4 _ProjectionParams;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void PositionFog (
   in vec4 v_1,
   out vec4 pos_2,
@@ -92,7 +92,9 @@ v2f_surf vert_surf (
   tmpvar_23 = ((v_16.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   o_19.hip_lmapFade.xy = tmpvar_23.xy.xy;
   float tmpvar_24;
-  tmpvar_24 = ((-((gl_ModelViewMatrix * v_16.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_24 = ((-(
+    (gl_ModelViewMatrix * v_16.vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   o_19.hip_lmapFade.z = vec3(tmpvar_24).z;
   vec3 tmpvar_25;
   tmpvar_25 = cross (v_16.normal, v_16.tangent.xyz);
@@ -128,8 +130,8 @@ v2f_surf vert_surf (
   tmpvar_36 = v_16.normal.z;
   tmpvar_27[2].z = tmpvar_36;
   mat3 tmpvar_37;
-  tmpvar_37 = (tmpvar_27);
-  rotation_17 = (tmpvar_37);
+  tmpvar_37 = tmpvar_27;
+  rotation_17 = tmpvar_37;
   vec3 tmpvar_38;
   tmpvar_38 = (rotation_17 * (v_16.normal * unity_Scale.w));
   o_19.normal = tmpvar_38;

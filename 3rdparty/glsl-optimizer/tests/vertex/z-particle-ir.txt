@@ -8,10 +8,10 @@ struct appdata_t {
   vec4 color;
   vec2 texcoord;
 };
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_COLOR;
-uniform mat4 glstate_matrix_mvp;
 uniform vec4 _MainTex_ST;
+uniform mat4 glstate_matrix_mvp;
+varying vec4 xlv_COLOR;
+varying vec2 xlv_TEXCOORD0;
 v2f xlat_main (
   in appdata_t v_1
 )

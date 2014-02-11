@@ -17,11 +17,11 @@ else()
 endif()
 
 file(GLOB glcpp-library_sources src/glsl/glcpp/*.c)
-file(GLOB glcpp-library_sources_remove src/glsl/glcpp/glcpp.c)
-list(REMOVE_ITEM glcpp-library_sources ${glcpp-library_sources_remove})
+#file(GLOB glcpp-library_sources_remove src/glsl/glcpp/glcpp.c)
+#list(REMOVE_ITEM glcpp-library_sources ${glcpp-library_sources_remove})
 add_library(glcpp-library ${glcpp-library_sources})
 
-file(GLOB mesa_sources src/mesa/program/*.c)
+file(GLOB mesa_sources src/mesa/program/*.c src/mesa/main/*.c)
 add_library(mesa ${mesa_sources})
 
 file(GLOB glsl_sources src/glsl/*.cpp src/glsl/*.c)
@@ -41,5 +41,5 @@ file(GLOB glslopt_sources contrib/glslopt/*.cpp)
 add_executable(glslopt ${glslopt_sources})
 target_link_libraries(glslopt glsl_optimizer)
 
-add_executable(glcpp src/glsl/glcpp/glcpp.c)
-target_link_libraries(glcpp glsl_optimizer)
+#add_executable(glcpp src/glsl/glcpp/glcpp.c)
+#target_link_libraries(glcpp glsl_optimizer)

@@ -1,0 +1,18 @@
+#version 300 es
+precision mediump float;
+
+vec4 xll_tex2Dlod(sampler2D s, vec4 coord) {
+   return textureLod( s, coord.xy, coord.w);
+}
+uniform sampler2D tex;
+mediump vec4 xlat_main( in highp vec4 uv );
+mediump vec4 xlat_main( in highp vec4 uv ) {
+    return xll_tex2Dlod( tex, vec4( uv.xy , 0.0, 0.0));
+}
+in highp vec4 xlv_TEXCOORD0;
+out vec4 _fragColor;
+void main() {
+    mediump vec4 xl_retval;
+    xl_retval = xlat_main(xlv_TEXCOORD0);
+    _fragColor = xl_retval;
+}

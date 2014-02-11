@@ -1,7 +1,7 @@
-uniform sampler2D _MainTex;
-uniform vec4 _LightPositionRange;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightPositionRange;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec3 tmpvar_1;
@@ -12,7 +12,11 @@ void main ()
     discard;
   };
   vec4 tmpvar_3;
-  tmpvar_3 = fract((vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (sqrt(dot (tmpvar_1, tmpvar_1)) * _LightPositionRange.w)));
+  tmpvar_3 = fract((vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (
+    sqrt(dot (tmpvar_1, tmpvar_1))
+   * _LightPositionRange.w)));
   gl_FragData[0] = (tmpvar_3 - (tmpvar_3.yzww * 0.00392157));
 }
 
+
+// inputs: 1, stats: 10 alu 2 tex 1 flow

@@ -1,5 +1,5 @@
-uniform sampler2D tex;
 varying vec2 uv;
+uniform sampler2D tex;
 void main ()
 {
   vec4 v_1;

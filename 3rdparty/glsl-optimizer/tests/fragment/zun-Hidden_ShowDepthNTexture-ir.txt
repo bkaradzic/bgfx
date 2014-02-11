@@ -2,8 +2,8 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthNormalsTexture;
+uniform sampler2D _MainTex;
 vec3 DecodeViewNormalStereo (
   in vec4 enc4_1
 )

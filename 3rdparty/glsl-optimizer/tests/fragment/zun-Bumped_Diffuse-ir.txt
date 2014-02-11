@@ -17,9 +17,9 @@ struct v2f_surf {
   vec3 TtoV1;
   vec3 TtoV2;
 };
-uniform sampler2D _MainTex;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform sampler2D _MainTex;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -36,14 +36,13 @@ extern "C" {
 #endif
 
 
-
 /**
  * Checks if the context is for Desktop GL (Compatibility or Core)
  */
 static inline GLboolean
 _mesa_is_desktop_gl(const struct gl_context *ctx)
 {
-   return ctx->API == API_OPENGL || ctx->API == API_OPENGL_CORE;
+   return ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGL_CORE;
 }
 
 
@@ -64,6 +63,17 @@ static inline GLboolean
 _mesa_is_gles3(const struct gl_context *ctx)
 {
    return ctx->API == API_OPENGLES2 && ctx->Version >= 30;
+}
+
+
+/**
+ * Checks if the context supports geometry shaders.
+ */
+static inline GLboolean
+_mesa_has_geometry_shaders(const struct gl_context *ctx)
+{
+   return _mesa_is_desktop_gl(ctx) &&
+      (ctx->Version >= 32 || ctx->Extensions.ARB_geometry_shader4);
 }
 
 

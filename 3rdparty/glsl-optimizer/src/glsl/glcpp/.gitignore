@@ -10,4 +10,3 @@ glcpp-parse.h
 *~
 
 tests/*.out
-/Makefile

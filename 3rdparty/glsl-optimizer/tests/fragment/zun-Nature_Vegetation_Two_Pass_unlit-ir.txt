@@ -3,9 +3,9 @@ struct v2f {
   vec4 color;
   vec2 texcoord;
 };
-uniform sampler2D _MainTex;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
 void xll_clip (
   in float x_1
 )

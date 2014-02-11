@@ -2,9 +2,9 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _MainTex;
-uniform sampler2D _CurTex;
 uniform vec4 _AdaptParams;
+uniform sampler2D _CurTex;
+uniform sampler2D _MainTex;
 vec4 frag (
   in v2f_img i_1
 )

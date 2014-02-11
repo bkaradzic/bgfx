@@ -11,32 +11,32 @@ struct appdata_full {
   highp vec4 texcoord1;
   highp vec4 color;
 };
-varying lowp vec4 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-varying highp vec4 xlv_SV_POSITION;
-attribute vec4 TANGENT;
-uniform highp mat4 glstate_matrix_mvp;
-uniform highp vec3 _WorldSpaceCameraPos;
-uniform highp mat4 _World2Object;
-uniform highp float _VerticalBillboarding;
-uniform highp float _TimeOnDuration;
-uniform highp float _TimeOffDuration;
-uniform highp vec4 _Time;
-uniform highp float _SizeGrowStartDist;
-uniform highp float _SizeGrowEndDist;
-uniform highp float _NoiseAmount;
-uniform highp float _Multiplier;
-uniform highp float _MaxGrowSize;
-uniform highp float _FadeOutDistNear;
-uniform highp float _FadeOutDistFar;
-uniform highp vec4 _Color;
-uniform highp float _BlinkingTimeOffsScale;
-uniform highp float _Bias;
-attribute lowp vec4 _glesColor;
-attribute highp vec4 _glesMultiTexCoord1;
-attribute highp vec4 _glesMultiTexCoord0;
-attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute lowp vec4 _glesColor;
+uniform highp float _Bias;
+uniform highp float _BlinkingTimeOffsScale;
+uniform highp vec4 _Color;
+uniform highp float _FadeOutDistFar;
+uniform highp float _FadeOutDistNear;
+uniform highp float _MaxGrowSize;
+uniform highp float _Multiplier;
+uniform highp float _NoiseAmount;
+uniform highp float _SizeGrowEndDist;
+uniform highp float _SizeGrowStartDist;
+uniform highp vec4 _Time;
+uniform highp float _TimeOffDuration;
+uniform highp float _TimeOnDuration;
+uniform highp float _VerticalBillboarding;
+uniform highp mat4 _World2Object;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp mat4 glstate_matrix_mvp;
+attribute vec4 TANGENT;
+varying highp vec4 xlv_SV_POSITION;
+varying highp vec2 xlv_TEXCOORD0;
+varying lowp vec4 xlv_TEXCOORD1;
 float xll_mod (
   in float x_1,
   in float y_2
@@ -434,7 +434,11 @@ v2f xlat_main (
   tmpvar_137 = ((rightLocal_118 * v_106.normal.x) + (upLocal_117 * v_106.normal.y));
   BBNormal_115 = tmpvar_137;
   highp vec3 tmpvar_138;
-  tmpvar_138 = ((centerLocal_122 - ((rightLocal_118 * centerOffs_123.x) + (upLocal_117 * centerOffs_123.y))) + (BBNormal_115 * distScale_116));
+  tmpvar_138 = ((centerLocal_122 - (
+    (rightLocal_118 * centerOffs_123.x)
+   + 
+    (upLocal_117 * centerOffs_123.y)
+  )) + (BBNormal_115 * distScale_116));
   BBLocalPos_114 = tmpvar_138;
   highp float tmpvar_139;
   tmpvar_139 = (_Time.y + (_BlinkingTimeOffsScale * v_106.color.z));

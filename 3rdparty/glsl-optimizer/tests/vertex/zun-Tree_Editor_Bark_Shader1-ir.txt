@@ -15,21 +15,21 @@ struct v2f_surf {
   vec3 viewDir;
   vec3 _LightCoord;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform vec4 _Wind;
-uniform float _TimeX;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
-uniform mat4 _LightMatrix0;
 uniform vec4 _Color;
+uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform float _TimeX;
+uniform vec4 _Wind;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 vec4 Squash (
   in vec4 pos_1
 )
@@ -160,7 +160,11 @@ vec4 AnimateVertex (
   tmpvar_51 = (animParams_25.w * fBranchAmp_33);
   bend_26.y = vec2(tmpvar_51).y;
   vec3 tmpvar_52;
-  tmpvar_52 = (pos_23.xyz + (((vWavesSum_27.xyx * bend_26) + ((_Wind.xyz * vWavesSum_27.y) * animParams_25.w)) * _Wind.w));
+  tmpvar_52 = (pos_23.xyz + ((
+    (vWavesSum_27.xyx * bend_26)
+   + 
+    ((_Wind.xyz * vWavesSum_27.y) * animParams_25.w)
+  ) * _Wind.w));
   pos_23.xyz = tmpvar_52.xyz.xyz;
   vec3 tmpvar_53;
   tmpvar_53 = (pos_23.xyz + (animParams_25.z * _Wind.xyz));
@@ -294,8 +298,8 @@ v2f_surf vert_surf (
   tmpvar_96 = v_79.normal.z;
   tmpvar_87[2].z = tmpvar_96;
   mat3 tmpvar_97;
-  tmpvar_97 = (tmpvar_87);
-  rotation_80 = (tmpvar_97);
+  tmpvar_97 = tmpvar_87;
+  rotation_80 = tmpvar_97;
   vec3 tmpvar_98;
   tmpvar_98 = ObjSpaceLightDir (v_79.vertex);
   vec3 tmpvar_99;

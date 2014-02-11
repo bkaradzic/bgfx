@@ -1,8 +1,12 @@
-varying highp vec2 xlv_TEXCOORD0;
-varying lowp vec4 xlv_COLOR;
 uniform sampler2D _FlareTexture;
+varying lowp vec4 xlv_COLOR;
+varying highp vec2 xlv_TEXCOORD0;
 void main ()
 {
-  gl_FragData[0] = (texture2D (_FlareTexture, xlv_TEXCOORD0) * xlv_COLOR);
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = (texture2D (_FlareTexture, xlv_TEXCOORD0) * xlv_COLOR);
+  gl_FragData[0] = tmpvar_1;
 }
 
+
+// inputs: 2, stats: 1 alu 1 tex 0 flow

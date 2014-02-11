@@ -17,11 +17,11 @@ struct v2f_surf {
   vec3 lightDir;
   vec3 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform sampler2D _DecalBump;
 uniform sampler2D _Decal;
+uniform sampler2D _DecalBump;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+varying vec4 xlv_FOG;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

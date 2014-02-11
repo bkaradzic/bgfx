@@ -20,21 +20,21 @@ struct v2f_surf {
   vec3 viewDir;
   vec2 _LightCoord;
 };
-varying vec2 xlv_TEXCOORD3;
-varying vec3 xlv_TEXCOORD2;
-varying vec3 xlv_TEXCOORD1;
-varying vec4 xlv_COLOR0;
-varying vec2 xlv_TEXCOORD0;
-uniform float _TranslucencyViewDependency;
-uniform sampler2D _TranslucencyMap;
-uniform vec3 _TranslucencyColor;
-uniform float _ShadowStrength;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform float _Cutoff;
-uniform vec4 _Color;
 uniform sampler2D _BumpSpecMap;
+uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
+uniform float _ShadowStrength;
+uniform vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
+uniform float _TranslucencyViewDependency;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR0;
+varying vec3 xlv_TEXCOORD1;
+varying vec3 xlv_TEXCOORD2;
+varying vec2 xlv_TEXCOORD3;
 void xll_clip (
   in float x_1
 )

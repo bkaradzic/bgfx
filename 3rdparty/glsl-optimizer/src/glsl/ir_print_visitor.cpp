@@ -24,6 +24,7 @@
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
+#include "main/macros.h"
 #include "program/hash_table.h"
 
 static void print_type(const glsl_type *t);
@@ -37,6 +38,7 @@ ir_instruction::print(void) const
    deconsted->accept(&v);
 }
 
+extern "C" {
 void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
@@ -59,14 +61,16 @@ _mesa_print_ir(exec_list *instructions,
    }
 
    printf("(\n");
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir->print();
       if (ir->ir_type != ir_type_function)
 	 printf("\n");
    }
    printf("\n)");
 }
+
+} /* extern "C" */
 
 ir_print_visitor::ir_print_visitor()
 {
@@ -144,14 +148,18 @@ void ir_print_visitor::visit(ir_variable *ir)
 {
    printf("(declare ");
 
-   const char *const cent = (ir->centroid) ? "centroid " : "";
-   const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
+   const char *const cent = (ir->data.centroid) ? "centroid " : "";
+   const char *const samp = (ir->data.sample) ? "sample " : "";
+   const char *const inv = (ir->data.invariant) ? "invariant " : "";
+   const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
+                                "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
-   const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
+   STATIC_ASSERT(ARRAY_SIZE(mode) == ir_var_mode_count);
+   const char *const interp[] = { "", "smooth", "flat", "noperspective" };
+   STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
-   printf("(%s%s%s%s) ",
-	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
+   printf("(%s%s%s%s%s) ",
+	  cent, samp, inv, mode[ir->data.mode], interp[ir->data.interpolation]);
 
    print_type(ir->type);
    printf(" %s)", unique_name(ir));
@@ -171,8 +179,8 @@ void ir_print_visitor::visit(ir_function_signature *ir)
    printf("(parameters\n");
    indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->parameters) {
-      ir_variable *const inst = (ir_variable *) iter.get();
+   foreach_list(n, &ir->parameters) {
+      ir_variable *const inst = (ir_variable *) n;
 
       indent();
       inst->accept(this);
@@ -188,8 +196,8 @@ void ir_print_visitor::visit(ir_function_signature *ir)
    printf("(\n");
    indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->body) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(n, &ir->body) {
+      ir_instruction *const inst = (ir_instruction *) n;
 
       indent();
       inst->accept(this);
@@ -207,8 +215,8 @@ void ir_print_visitor::visit(ir_function *ir)
 {
    printf("(function %s\n", ir->name);
    indentation++;
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
+   foreach_list(n, &ir->signatures) {
+      ir_function_signature *const sig = (ir_function_signature *) n;
       indent();
       sig->accept(this);
       printf("\n");
@@ -245,7 +253,7 @@ void ir_print_visitor::visit(ir_texture *ir)
    ir->sampler->accept(this);
    printf(" ");
 
-   if (ir->op != ir_txs) {
+   if (ir->op != ir_txs && ir->op != ir_query_levels) {
       ir->coordinate->accept(this);
 
       printf(" ");
@@ -263,6 +271,8 @@ void ir_print_visitor::visit(ir_texture *ir)
    switch (ir->op)
    {
    case ir_tex:
+   case ir_lod:
+   case ir_query_levels:
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
@@ -272,12 +282,18 @@ void ir_print_visitor::visit(ir_texture *ir)
    case ir_txs:
       ir->lod_info.lod->accept(this);
       break;
+   case ir_txf_ms:
+      ir->lod_info.sample_index->accept(this);
+      break;
    case ir_txd:
       printf("(");
       ir->lod_info.grad.dPdx->accept(this);
       printf(" ");
       ir->lod_info.grad.dPdy->accept(this);
       printf(")");
+      break;
+   case ir_tg4:
+      ir->lod_info.component->accept(this);
       break;
    };
    printf(")");
@@ -381,7 +397,17 @@ void ir_print_visitor::visit(ir_constant *ir)
 	 switch (ir->type->base_type) {
 	 case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
 	 case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
-	 case GLSL_TYPE_FLOAT: printf("%f", ir->value.f[i]); break;
+	 case GLSL_TYPE_FLOAT:
+            if (ir->value.f[i] == 0.0f)
+               /* 0.0 == -0.0, so print with %f to get the proper sign. */
+               printf("%.1f", ir->value.f[i]);
+            else if (fabs(ir->value.f[i]) < 0.000001f)
+               printf("%a", ir->value.f[i]);
+            else if (fabs(ir->value.f[i]) > 1000000.0f)
+               printf("%e", ir->value.f[i]);
+            else
+               printf("%f", ir->value.f[i]);
+            break;
 	 case GLSL_TYPE_BOOL:  printf("%d", ir->value.b[i]); break;
 	 default: assert(0);
 	 }
@@ -398,10 +424,10 @@ ir_print_visitor::visit(ir_call *ir)
    if (ir->return_deref)
       ir->return_deref->accept(this);
    printf(" (");
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(n, &ir->actual_parameters) {
+      ir_rvalue *const param = (ir_rvalue *) n;
 
-      inst->accept(this);
+      param->accept(this);
    }
    printf("))\n");
 }
@@ -445,8 +471,8 @@ ir_print_visitor::visit(ir_if *ir)
    printf("(\n");
    indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(n, &ir->then_instructions) {
+      ir_instruction *const inst = (ir_instruction *) n;
 
       indent();
       inst->accept(this);
@@ -462,8 +488,8 @@ ir_print_visitor::visit(ir_if *ir)
       printf("(\n");
       indentation++;
 
-      foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
-	 ir_instruction *const inst = (ir_instruction *) iter.get();
+      foreach_list(n, &ir->else_instructions) {
+	 ir_instruction *const inst = (ir_instruction *) n;
 
 	 indent();
 	 inst->accept(this);
@@ -481,23 +507,11 @@ ir_print_visitor::visit(ir_if *ir)
 void
 ir_print_visitor::visit(ir_loop *ir)
 {
-   printf("(loop (");
-   if (ir->counter != NULL)
-      ir->counter->accept(this);
-   printf(") (");
-   if (ir->from != NULL)
-      ir->from->accept(this);
-   printf(") (");
-   if (ir->to != NULL)
-      ir->to->accept(this);
-   printf(") (");
-   if (ir->increment != NULL)
-      ir->increment->accept(this);
-   printf(") (\n");
+   printf("(loop (\n");
    indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(n, &ir->body_instructions) {
+      ir_instruction *const inst = (ir_instruction *) n;
 
       indent();
       inst->accept(this);
@@ -518,5 +532,22 @@ ir_print_visitor::visit(ir_loop_jump *ir)
 void
 ir_print_visitor::visit(ir_precision_statement *ir)
 {
-	printf("%s", ir->precision_statement);
+	//printf("%s", ir->precision_statement);
+}
+
+void
+ir_print_visitor::visit(ir_typedecl_statement *ir)
+{
+}
+
+void
+ir_print_visitor::visit(ir_emit_vertex *ir)
+{
+   printf("(emit-vertex)");
+}
+
+void
+ir_print_visitor::visit(ir_end_primitive *ir)
+{
+   printf("(end-primitive)");
 }

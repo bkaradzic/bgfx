@@ -13,15 +13,15 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _World2Object;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
-uniform mat4 _LightMatrix0;
 uniform vec4 _BumpMap_ST;
+uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void PositionFog (
   in vec4 v_1,
   out vec4 pos_2,
@@ -95,8 +95,8 @@ v2f_surf vert_surf (
   tmpvar_26 = v_9.normal.z;
   tmpvar_17[2].z = tmpvar_26;
   mat3 tmpvar_27;
-  tmpvar_27 = (tmpvar_17);
-  rotation_10 = (tmpvar_27);
+  tmpvar_27 = tmpvar_17;
+  rotation_10 = tmpvar_27;
   vec3 tmpvar_28;
   tmpvar_28 = ObjSpaceLightDir (v_9.vertex);
   vec3 tmpvar_29;

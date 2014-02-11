@@ -1,5 +1,5 @@
-varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_COLOR;
 mediump vec4 xlat_main (
   in highp vec2 uv_1,
   in highp vec4 color_2

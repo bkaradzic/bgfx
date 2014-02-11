@@ -35,9 +35,9 @@
 #include "program/hash_table.h"
 
 static void
-do_sampler_replacement(exec_list *instructions,
-		       ir_variable *sampler,
-		       ir_dereference *deref);
+do_variable_replacement(exec_list *instructions,
+                        ir_variable *orig,
+                        ir_dereference *repl);
 
 namespace {
 
@@ -121,7 +121,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    ht = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 
    num_parameters = 0;
-   foreach_iter(exec_list_iterator, iter_sig, this->callee->parameters)
+   foreach_list(n, &this->callee->parameters)
       num_parameters++;
 
    parameters = new ir_variable *[num_parameters];
@@ -130,43 +130,42 @@ ir_call::generate_inline(ir_instruction *next_ir)
     * and set up the mapping of real function body variables to ours.
     */
    i = 0;
-   exec_list_iterator sig_param_iter = this->callee->parameters.iterator();
-   exec_list_iterator param_iter = this->actual_parameters.iterator();
    glsl_precision prec_params_max = glsl_precision_undefined;
-   for (i = 0; i < num_parameters; i++) {
-      ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
-      ir_rvalue *param = (ir_rvalue *) param_iter.get();
+   foreach_two_lists(formal_node, &this->callee->parameters,
+                     actual_node, &this->actual_parameters) {
+      ir_variable *sig_param = (ir_variable *) formal_node;
+      ir_rvalue *param = (ir_rvalue *) actual_node;
 
       /* Generate a new variable for the parameter. */
-      if (sig_param->type->base_type == GLSL_TYPE_SAMPLER) {
-	 /* For samplers, we want the inlined sampler references
-	  * referencing the passed in sampler variable, since that
-	  * will have the location information, which an assignment of
-	  * a sampler wouldn't.  Fix it up below.
+      if (sig_param->type->contains_opaque()) {
+	 /* For opaque types, we want the inlined variable references
+	  * referencing the passed in variable, since that will have
+	  * the location information, which an assignment of an opaque
+	  * variable wouldn't.  Fix it up below.
 	  */
 	 parameters[i] = NULL;
       } else {
 	 parameters[i] = sig_param->clone(ctx, ht);
-	 parameters[i]->mode = ir_var_auto;
+	 parameters[i]->data.mode = ir_var_auto;
 
-     parameters[i]->precision = (glsl_precision)parameters[i]->precision;
-     if (parameters[i]->precision == glsl_precision_undefined)
-        parameters[i]->precision = param->get_precision();
-     prec_params_max = higher_precision (prec_params_max, (glsl_precision)parameters[i]->precision);
+     parameters[i]->data.precision = (glsl_precision)parameters[i]->data.precision;
+     if (parameters[i]->data.precision == glsl_precision_undefined)
+        parameters[i]->data.precision = param->get_precision();
+     prec_params_max = higher_precision (prec_params_max, (glsl_precision)parameters[i]->data.precision);
 
 	 /* Remove the read-only decoration becuase we're going to write
 	  * directly to this variable.  If the cloned variable is left
 	  * read-only and the inlined function is inside a loop, the loop
 	  * analysis code will get confused.
 	  */
-	 parameters[i]->read_only = false;
+	 parameters[i]->data.read_only = false;
 	 next_ir->insert_before(parameters[i]);
       }
 
       /* Move the actual param into our param variable if it's an 'in' type. */
-      if (parameters[i] && (sig_param->mode == ir_var_in ||
-			    sig_param->mode == ir_var_const_in ||
-			    sig_param->mode == ir_var_inout)) {
+      if (parameters[i] && (sig_param->data.mode == ir_var_function_in ||
+			    sig_param->data.mode == ir_var_const_in ||
+			    sig_param->data.mode == ir_var_function_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(parameters[i]),
@@ -174,38 +173,34 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 next_ir->insert_before(assign);
       }
 
-      sig_param_iter.next();
-      param_iter.next();
+      ++i;
    }
 	
    exec_list new_instructions;
 
    /* Generate the inlined body of the function to a new list */
-   foreach_iter(exec_list_iterator, iter, callee->body) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &callee->body) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir_instruction *new_ir = ir->clone(ctx, ht);
 
       new_instructions.push_tail(new_ir);
       visit_tree(new_ir, replace_return_with_assignment, this->return_deref);
    }
 
-   /* If any samplers were passed in, replace any deref of the sampler
-    * with a deref of the sampler argument.
+   /* If any opaque types were passed in, replace any deref of the
+    * opaque variable with a deref of the argument.
     */
-   param_iter = this->actual_parameters.iterator();
-   sig_param_iter = this->callee->parameters.iterator();
-   for (i = 0; i < num_parameters; i++) {
-      ir_instruction *const param = (ir_instruction *) param_iter.get();
-      ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
+   foreach_two_lists(formal_node, &this->callee->parameters,
+                     actual_node, &this->actual_parameters) {
+      ir_rvalue *const param = (ir_rvalue *) actual_node;
+      ir_variable *sig_param = (ir_variable *) formal_node;
 
-      if (sig_param->type->base_type == GLSL_TYPE_SAMPLER) {
+      if (sig_param->type->contains_opaque()) {
 	 ir_dereference *deref = param->as_dereference();
 
 	 assert(deref);
-	 do_sampler_replacement(&new_instructions, sig_param, deref);
+	 do_variable_replacement(&new_instructions, sig_param, deref);
       }
-      param_iter.next();
-      sig_param_iter.next();
    }
 
    /* Now push those new instructions in. */
@@ -215,15 +210,14 @@ ir_call::generate_inline(ir_instruction *next_ir)
     * variables to our own.
     */
    i = 0;
-   param_iter = this->actual_parameters.iterator();
-   sig_param_iter = this->callee->parameters.iterator();
-   for (i = 0; i < num_parameters; i++) {
-      ir_instruction *const param = (ir_instruction *) param_iter.get();
-      const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
+   foreach_two_lists(formal_node, &this->callee->parameters,
+                     actual_node, &this->actual_parameters) {
+      ir_rvalue *const param = (ir_rvalue *) actual_node;
+      const ir_variable *const sig_param = (ir_variable *) formal_node;
 
       /* Move our param variable into the actual param if it's an 'out' type. */
-      if (parameters[i] && (sig_param->mode == ir_var_out ||
-			    sig_param->mode == ir_var_inout)) {
+      if (parameters[i] && (sig_param->data.mode == ir_var_function_out ||
+			    sig_param->data.mode == ir_var_function_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(param->clone(ctx, NULL)->as_rvalue(),
@@ -232,8 +226,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 next_ir->insert_before(assign);
       }
 
-      param_iter.next();
-      sig_param_iter.next();
+      ++i;
    }
 
    delete [] parameters;
@@ -288,23 +281,23 @@ ir_function_inlining_visitor::visit_enter(ir_call *ir)
 
 
 /**
- * Replaces references to the "sampler" variable with a clone of "deref."
+ * Replaces references to the "orig" variable with a clone of "repl."
  *
- * From the spec, samplers can appear in the tree as function
+ * From the spec, opaque types can appear in the tree as function
  * (non-out) parameters and as the result of array indexing and
  * structure field selection.  In our builtin implementation, they
  * also appear in the sampler field of an ir_tex instruction.
  */
 
-class ir_sampler_replacement_visitor : public ir_hierarchical_visitor {
+class ir_variable_replacement_visitor : public ir_hierarchical_visitor {
 public:
-   ir_sampler_replacement_visitor(ir_variable *sampler, ir_dereference *deref)
+   ir_variable_replacement_visitor(ir_variable *orig, ir_dereference *repl)
    {
-      this->sampler = sampler;
-      this->deref = deref;
+      this->orig = orig;
+      this->repl = repl;
    }
 
-   virtual ~ir_sampler_replacement_visitor()
+   virtual ~ir_variable_replacement_visitor()
    {
    }
 
@@ -316,21 +309,21 @@ public:
    void replace_deref(ir_dereference **deref);
    void replace_rvalue(ir_rvalue **rvalue);
 
-   ir_variable *sampler;
-   ir_dereference *deref;
+   ir_variable *orig;
+   ir_dereference *repl;
 };
 
 void
-ir_sampler_replacement_visitor::replace_deref(ir_dereference **deref)
+ir_variable_replacement_visitor::replace_deref(ir_dereference **deref)
 {
    ir_dereference_variable *deref_var = (*deref)->as_dereference_variable();
-   if (deref_var && deref_var->var == this->sampler) {
-      *deref = this->deref->clone(ralloc_parent(*deref), NULL);
+   if (deref_var && deref_var->var == this->orig) {
+      *deref = this->repl->clone(ralloc_parent(*deref), NULL);
    }
 }
 
 void
-ir_sampler_replacement_visitor::replace_rvalue(ir_rvalue **rvalue)
+ir_variable_replacement_visitor::replace_rvalue(ir_rvalue **rvalue)
 {
    if (!*rvalue)
       return;
@@ -345,7 +338,7 @@ ir_sampler_replacement_visitor::replace_rvalue(ir_rvalue **rvalue)
 }
 
 ir_visitor_status
-ir_sampler_replacement_visitor::visit_leave(ir_texture *ir)
+ir_variable_replacement_visitor::visit_leave(ir_texture *ir)
 {
    replace_deref(&ir->sampler);
 
@@ -353,24 +346,24 @@ ir_sampler_replacement_visitor::visit_leave(ir_texture *ir)
 }
 
 ir_visitor_status
-ir_sampler_replacement_visitor::visit_leave(ir_dereference_array *ir)
+ir_variable_replacement_visitor::visit_leave(ir_dereference_array *ir)
 {
    replace_rvalue(&ir->array);
    return visit_continue;
 }
 
 ir_visitor_status
-ir_sampler_replacement_visitor::visit_leave(ir_dereference_record *ir)
+ir_variable_replacement_visitor::visit_leave(ir_dereference_record *ir)
 {
    replace_rvalue(&ir->record);
    return visit_continue;
 }
 
 ir_visitor_status
-ir_sampler_replacement_visitor::visit_leave(ir_call *ir)
+ir_variable_replacement_visitor::visit_leave(ir_call *ir)
 {
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
+   foreach_list_safe(n, &ir->actual_parameters) {
+      ir_rvalue *param = (ir_rvalue *) n;
       ir_rvalue *new_param = param;
       replace_rvalue(&new_param);
 
@@ -382,11 +375,11 @@ ir_sampler_replacement_visitor::visit_leave(ir_call *ir)
 }
 
 static void
-do_sampler_replacement(exec_list *instructions,
-		       ir_variable *sampler,
-		       ir_dereference *deref)
+do_variable_replacement(exec_list *instructions,
+                        ir_variable *orig,
+                        ir_dereference *repl)
 {
-   ir_sampler_replacement_visitor v(sampler, deref);
+   ir_variable_replacement_visitor v(orig, repl);
 
    visit_list_elements(&v, instructions);
 }

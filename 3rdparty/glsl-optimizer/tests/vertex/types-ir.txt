@@ -9,9 +9,9 @@ struct a2v {
   vec3 normal;
   vec4 color;
 };
-varying vec4 xlv_COLOR;
-varying vec2 xlv_TEXCOORD0;
 uniform mat4 mvp;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR;
 v2f xlat_main (
   in a2v v_1
 )

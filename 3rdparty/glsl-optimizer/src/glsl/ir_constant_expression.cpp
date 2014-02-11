@@ -40,24 +40,25 @@
 #include "glsl_types.h"
 #include "program/hash_table.h"
 
-/* Using C99 rounding functions for roundToEven() implementation is
- * difficult, because round(), rint, and nearbyint() are affected by
- * fesetenv(), which the application may have done for its own
- * purposes.  Mesa's IROUND macro is close to what we want, but it
- * rounds away from 0 on n + 0.5.
- */
-static int
-round_to_even(float val)
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
+static int isnormal(double x)
 {
-   int rounded = IROUND(val);
-
-   if (val - floor(val) == 0.5) {
-      if (rounded % 2 != 0)
-	 rounded += val > 0 ? -1 : 1;
-   }
-
-   return rounded;
+   return _fpclass(x) == _FPCLASS_NN || _fpclass(x) == _FPCLASS_PN;
 }
+#elif defined(__SUNPRO_CC)
+#include <ieeefp.h>
+static int isnormal(double x)
+{
+   return fpclass(x) == FP_NORMAL;
+}
+#endif
+
+#if defined(_MSC_VER)
+static double copysign(double x, double y)
+{
+   return _copysign(x, y);
+}
+#endif
 
 static float
 dot(ir_constant *op0, ir_constant *op1)
@@ -94,6 +95,297 @@ bitcast_f2u(float f)
    return u;
 }
 
+/**
+ * Evaluate one component of a floating-point 4x8 unpacking function.
+ */
+typedef uint8_t
+(*pack_1x8_func_t)(float);
+
+/**
+ * Evaluate one component of a floating-point 2x16 unpacking function.
+ */
+typedef uint16_t
+(*pack_1x16_func_t)(float);
+
+/**
+ * Evaluate one component of a floating-point 4x8 unpacking function.
+ */
+typedef float
+(*unpack_1x8_func_t)(uint8_t);
+
+/**
+ * Evaluate one component of a floating-point 2x16 unpacking function.
+ */
+typedef float
+(*unpack_1x16_func_t)(uint16_t);
+
+/**
+ * Evaluate a 2x16 floating-point packing function.
+ */
+static uint32_t
+pack_2x16(pack_1x16_func_t pack_1x16,
+          float x, float y)
+{
+   /* From section 8.4 of the GLSL ES 3.00 spec:
+    *
+    *    packSnorm2x16
+    *    -------------
+    *    The first component of the vector will be written to the least
+    *    significant bits of the output; the last component will be written to
+    *    the most significant bits.
+    *
+    * The specifications for the other packing functions contain similar
+    * language.
+    */
+   uint32_t u = 0;
+   u |= ((uint32_t) pack_1x16(x) << 0);
+   u |= ((uint32_t) pack_1x16(y) << 16);
+   return u;
+}
+
+/**
+ * Evaluate a 4x8 floating-point packing function.
+ */
+static uint32_t
+pack_4x8(pack_1x8_func_t pack_1x8,
+         float x, float y, float z, float w)
+{
+   /* From section 8.4 of the GLSL 4.30 spec:
+    *
+    *    packSnorm4x8
+    *    ------------
+    *    The first component of the vector will be written to the least
+    *    significant bits of the output; the last component will be written to
+    *    the most significant bits.
+    *
+    * The specifications for the other packing functions contain similar
+    * language.
+    */
+   uint32_t u = 0;
+   u |= ((uint32_t) pack_1x8(x) << 0);
+   u |= ((uint32_t) pack_1x8(y) << 8);
+   u |= ((uint32_t) pack_1x8(z) << 16);
+   u |= ((uint32_t) pack_1x8(w) << 24);
+   return u;
+}
+
+/**
+ * Evaluate a 2x16 floating-point unpacking function.
+ */
+static void
+unpack_2x16(unpack_1x16_func_t unpack_1x16,
+            uint32_t u,
+            float *x, float *y)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    unpackSnorm2x16
+     *    ---------------
+     *    The first component of the returned vector will be extracted from
+     *    the least significant bits of the input; the last component will be
+     *    extracted from the most significant bits.
+     *
+     * The specifications for the other unpacking functions contain similar
+     * language.
+     */
+   *x = unpack_1x16((uint16_t) (u & 0xffff));
+   *y = unpack_1x16((uint16_t) (u >> 16));
+}
+
+/**
+ * Evaluate a 4x8 floating-point unpacking function.
+ */
+static void
+unpack_4x8(unpack_1x8_func_t unpack_1x8, uint32_t u,
+           float *x, float *y, float *z, float *w)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    unpackSnorm4x8
+     *    --------------
+     *    The first component of the returned vector will be extracted from
+     *    the least significant bits of the input; the last component will be
+     *    extracted from the most significant bits.
+     *
+     * The specifications for the other unpacking functions contain similar
+     * language.
+     */
+   *x = unpack_1x8((uint8_t) (u & 0xff));
+   *y = unpack_1x8((uint8_t) (u >> 8));
+   *z = unpack_1x8((uint8_t) (u >> 16));
+   *w = unpack_1x8((uint8_t) (u >> 24));
+}
+
+/**
+ * Evaluate one component of packSnorm4x8.
+ */
+static uint8_t
+pack_snorm_1x8(float x)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    packSnorm4x8
+     *    ------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *      packSnorm4x8: round(clamp(c, -1, +1) * 127.0)
+     *
+     * We must first cast the float to an int, because casting a negative
+     * float to a uint is undefined.
+     */
+   return (uint8_t) (int8_t)
+          _mesa_round_to_even(CLAMP(x, -1.0f, +1.0f) * 127.0f);
+}
+
+/**
+ * Evaluate one component of packSnorm2x16.
+ */
+static uint16_t
+pack_snorm_1x16(float x)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    packSnorm2x16
+     *    -------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *      packSnorm2x16: round(clamp(c, -1, +1) * 32767.0)
+     *
+     * We must first cast the float to an int, because casting a negative
+     * float to a uint is undefined.
+     */
+   return (uint16_t) (int16_t)
+          _mesa_round_to_even(CLAMP(x, -1.0f, +1.0f) * 32767.0f);
+}
+
+/**
+ * Evaluate one component of unpackSnorm4x8.
+ */
+static float
+unpack_snorm_1x8(uint8_t u)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    unpackSnorm4x8
+     *    --------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackSnorm4x8: clamp(f / 127.0, -1, +1)
+     */
+   return CLAMP((int8_t) u / 127.0f, -1.0f, +1.0f);
+}
+
+/**
+ * Evaluate one component of unpackSnorm2x16.
+ */
+static float
+unpack_snorm_1x16(uint16_t u)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    unpackSnorm2x16
+     *    ---------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackSnorm2x16: clamp(f / 32767.0, -1, +1)
+     */
+   return CLAMP((int16_t) u / 32767.0f, -1.0f, +1.0f);
+}
+
+/**
+ * Evaluate one component packUnorm4x8.
+ */
+static uint8_t
+pack_unorm_1x8(float x)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    packUnorm4x8
+     *    ------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *       packUnorm4x8: round(clamp(c, 0, +1) * 255.0)
+     */
+   return (uint8_t) _mesa_round_to_even(CLAMP(x, 0.0f, 1.0f) * 255.0f);
+}
+
+/**
+ * Evaluate one component packUnorm2x16.
+ */
+static uint16_t
+pack_unorm_1x16(float x)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    packUnorm2x16
+     *    -------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *       packUnorm2x16: round(clamp(c, 0, +1) * 65535.0)
+     */
+   return (uint16_t) _mesa_round_to_even(CLAMP(x, 0.0f, 1.0f) * 65535.0f);
+}
+
+/**
+ * Evaluate one component of unpackUnorm4x8.
+ */
+static float
+unpack_unorm_1x8(uint8_t u)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    unpackUnorm4x8
+     *    --------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackUnorm4x8: f / 255.0
+     */
+   return (float) u / 255.0f;
+}
+
+/**
+ * Evaluate one component of unpackUnorm2x16.
+ */
+static float
+unpack_unorm_1x16(uint16_t u)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    unpackUnorm2x16
+     *    ---------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackUnorm2x16: f / 65535.0
+     */
+   return (float) u / 65535.0f;
+}
+
+/**
+ * Evaluate one component of packHalf2x16.
+ */
+static uint16_t
+pack_half_1x16(float x)
+{
+   return _mesa_float_to_half(x);
+}
+
+/**
+ * Evaluate one component of unpackHalf2x16.
+ */
+static float
+unpack_half_1x16(uint16_t u)
+{
+   return _mesa_half_to_float(u);
+}
+
 ir_constant *
 ir_rvalue::constant_expression_value(struct hash_table *variable_context)
 {
@@ -119,9 +411,19 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
    }
 
    if (op[1] != NULL)
-      assert(op[0]->type->base_type == op[1]->type->base_type ||
-	     this->operation == ir_binop_lshift ||
-	     this->operation == ir_binop_rshift);
+      switch (this->operation) {
+      case ir_binop_lshift:
+      case ir_binop_rshift:
+      case ir_binop_ldexp:
+      case ir_binop_vector_extract:
+      case ir_triop_csel:
+      case ir_triop_bitfield_extract:
+         break;
+
+      default:
+         assert(op[0]->type->base_type == op[1]->type->base_type);
+         break;
+      }
 
    bool op0_scalar = op[0]->type->is_scalar();
    bool op1_scalar = op[1] != NULL && op[1]->type->is_scalar();
@@ -279,7 +581,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
    case ir_unop_round_even:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = (float)round_to_even(op[0]->value.f[c]);
+	 data.f[c] = (float)_mesa_round_to_even(op[0]->value.f[c]);
       }
       break;
 
@@ -296,6 +598,23 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
 	 data.f[c] = floorf(op[0]->value.f[c]);
       }
       break;
+
+	case ir_unop_normalize:
+	{
+		assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+		float mag2 = 0.0f;
+		for (unsigned c = 0; c < op[0]->type->components(); c++) {
+			mag2 += op[0]->value.f[c] * op[0]->value.f[c];
+		}
+		// how would one express "vec3(nan)" in GLSL? no idea, so let's just not handle it
+		if (mag2 == 0.0f)
+			return NULL;
+		float mag = sqrtf(mag2);
+		for (unsigned c = 0; c < op[0]->type->components(); c++) {
+			data.f[c] = op[0]->value.f[c] / mag;
+		}
+	}
+	break;      
 
    case ir_unop_fract:
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
@@ -459,6 +778,70 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+   case ir_unop_pack_snorm_2x16:
+      assert(op[0]->type == glsl_type::vec2_type);
+      data.u[0] = pack_2x16(pack_snorm_1x16,
+                            op[0]->value.f[0],
+                            op[0]->value.f[1]);
+      break;
+   case ir_unop_pack_snorm_4x8:
+      assert(op[0]->type == glsl_type::vec4_type);
+      data.u[0] = pack_4x8(pack_snorm_1x8,
+                           op[0]->value.f[0],
+                           op[0]->value.f[1],
+                           op[0]->value.f[2],
+                           op[0]->value.f[3]);
+      break;
+   case ir_unop_unpack_snorm_2x16:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_2x16(unpack_snorm_1x16,
+                  op[0]->value.u[0],
+                  &data.f[0], &data.f[1]);
+      break;
+   case ir_unop_unpack_snorm_4x8:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_4x8(unpack_snorm_1x8,
+                 op[0]->value.u[0],
+                 &data.f[0], &data.f[1], &data.f[2], &data.f[3]);
+      break;
+   case ir_unop_pack_unorm_2x16:
+      assert(op[0]->type == glsl_type::vec2_type);
+      data.u[0] = pack_2x16(pack_unorm_1x16,
+                            op[0]->value.f[0],
+                            op[0]->value.f[1]);
+      break;
+   case ir_unop_pack_unorm_4x8:
+      assert(op[0]->type == glsl_type::vec4_type);
+      data.u[0] = pack_4x8(pack_unorm_1x8,
+                           op[0]->value.f[0],
+                           op[0]->value.f[1],
+                           op[0]->value.f[2],
+                           op[0]->value.f[3]);
+      break;
+   case ir_unop_unpack_unorm_2x16:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_2x16(unpack_unorm_1x16,
+                  op[0]->value.u[0],
+                  &data.f[0], &data.f[1]);
+      break;
+   case ir_unop_unpack_unorm_4x8:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_4x8(unpack_unorm_1x8,
+                 op[0]->value.u[0],
+                 &data.f[0], &data.f[1], &data.f[2], &data.f[3]);
+      break;
+   case ir_unop_pack_half_2x16:
+      assert(op[0]->type == glsl_type::vec2_type);
+      data.u[0] = pack_2x16(pack_half_1x16,
+                            op[0]->value.f[0],
+                            op[0]->value.f[1]);
+      break;
+   case ir_unop_unpack_half_2x16:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_2x16(unpack_half_1x16,
+                  op[0]->value.u[0],
+                  &data.f[0], &data.f[1]);
+      break;
    case ir_binop_pow:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
@@ -894,6 +1277,29 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+   case ir_binop_vector_extract: {
+      const int c = CLAMP(op[1]->value.i[0], 0,
+			  (int) op[0]->type->vector_elements - 1);
+
+      switch (op[0]->type->base_type) {
+      case GLSL_TYPE_UINT:
+         data.u[0] = op[0]->value.u[c];
+         break;
+      case GLSL_TYPE_INT:
+         data.i[0] = op[0]->value.i[c];
+         break;
+      case GLSL_TYPE_FLOAT:
+         data.f[0] = op[0]->value.f[c];
+         break;
+      case GLSL_TYPE_BOOL:
+         data.b[0] = op[0]->value.b[c];
+         break;
+      default:
+         assert(0);
+      }
+      break;
+   }
+
    case ir_binop_bit_xor:
       for (unsigned c = 0, c0 = 0, c1 = 0;
            c < components;
@@ -911,6 +1317,211 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
           }
       }
       break;
+
+   case ir_unop_bitfield_reverse:
+      /* http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious */
+      for (unsigned c = 0; c < components; c++) {
+         unsigned int v = op[0]->value.u[c]; // input bits to be reversed
+         unsigned int r = v; // r will be reversed bits of v; first get LSB of v
+         int s = sizeof(v) * CHAR_BIT - 1; // extra shift needed at end
+
+         for (v >>= 1; v; v >>= 1) {
+            r <<= 1;
+            r |= v & 1;
+            s--;
+         }
+         r <<= s; // shift when v's highest bits are zero
+
+         data.u[c] = r;
+      }
+      break;
+
+   case ir_unop_bit_count:
+      for (unsigned c = 0; c < components; c++) {
+         unsigned count = 0;
+         unsigned v = op[0]->value.u[c];
+
+         for (; v; count++) {
+            v &= v - 1;
+         }
+         data.u[c] = count;
+      }
+      break;
+
+   case ir_unop_find_msb:
+      for (unsigned c = 0; c < components; c++) {
+         int v = op[0]->value.i[c];
+
+         if (v == 0 || (op[0]->type->base_type == GLSL_TYPE_INT && v == -1))
+            data.i[c] = -1;
+         else {
+            int count = 0;
+            int top_bit = op[0]->type->base_type == GLSL_TYPE_UINT
+                          ? 0 : v & (1 << 31);
+
+            while (((v & (1 << 31)) == top_bit) && count != 32) {
+               count++;
+               v <<= 1;
+            }
+
+            data.i[c] = 31 - count;
+         }
+      }
+      break;
+
+   case ir_unop_find_lsb:
+      for (unsigned c = 0; c < components; c++) {
+         if (op[0]->value.i[c] == 0)
+            data.i[c] = -1;
+         else {
+            unsigned pos = 0;
+            unsigned v = op[0]->value.u[c];
+
+            for (; !(v & 1); v >>= 1) {
+               pos++;
+            }
+            data.u[c] = pos;
+         }
+      }
+      break;
+
+   case ir_triop_bitfield_extract: {
+      int offset = op[1]->value.i[0];
+      int bits = op[2]->value.i[0];
+
+      for (unsigned c = 0; c < components; c++) {
+         if (bits == 0)
+            data.u[c] = 0;
+         else if (offset < 0 || bits < 0)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else if (offset + bits > 32)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else {
+            if (op[0]->type->base_type == GLSL_TYPE_INT) {
+               /* int so that the right shift will sign-extend. */
+               int value = op[0]->value.i[c];
+               value <<= 32 - bits - offset;
+               value >>= 32 - bits;
+               data.i[c] = value;
+            } else {
+               unsigned value = op[0]->value.u[c];
+               value <<= 32 - bits - offset;
+               value >>= 32 - bits;
+               data.u[c] = value;
+            }
+         }
+      }
+      break;
+   }
+
+   case ir_binop_bfm: {
+      int bits = op[0]->value.i[0];
+      int offset = op[1]->value.i[0];
+
+      for (unsigned c = 0; c < components; c++) {
+         if (bits == 0)
+            data.u[c] = op[0]->value.u[c];
+         else if (offset < 0 || bits < 0)
+            data.u[c] = 0; /* Undefined for bitfieldInsert, per spec. */
+         else if (offset + bits > 32)
+            data.u[c] = 0; /* Undefined for bitfieldInsert, per spec. */
+         else
+            data.u[c] = ((1 << bits) - 1) << offset;
+      }
+      break;
+   }
+
+   case ir_binop_ldexp:
+      for (unsigned c = 0; c < components; c++) {
+         data.f[c] = ldexp(op[0]->value.f[c], op[1]->value.i[c]);
+         /* Flush subnormal values to zero. */
+         if (!isnormal(data.f[c]))
+            data.f[c] = copysign(0.0f, op[0]->value.f[c]);
+      }
+      break;
+
+   case ir_triop_fma:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[2]->type->base_type == GLSL_TYPE_FLOAT);
+
+      for (unsigned c = 0; c < components; c++) {
+         data.f[c] = op[0]->value.f[c] * op[1]->value.f[c]
+                                       + op[2]->value.f[c];
+      }
+      break;
+
+   case ir_triop_lrp: {
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[2]->type->base_type == GLSL_TYPE_FLOAT);
+
+      unsigned c2_inc = op[2]->type->is_scalar() ? 0 : 1;
+      for (unsigned c = 0, c2 = 0; c < components; c2 += c2_inc, c++) {
+         data.f[c] = op[0]->value.f[c] * (1.0f - op[2]->value.f[c2]) +
+                     (op[1]->value.f[c] * op[2]->value.f[c2]);
+      }
+      break;
+   }
+
+   case ir_triop_csel:
+      for (unsigned c = 0; c < components; c++) {
+         data.u[c] = op[0]->value.b[c] ? op[1]->value.u[c]
+                                       : op[2]->value.u[c];
+      }
+      break;
+
+   case ir_triop_vector_insert: {
+      const unsigned idx = op[2]->value.u[0];
+
+      memcpy(&data, &op[0]->value, sizeof(data));
+
+      switch (this->type->base_type) {
+      case GLSL_TYPE_INT:
+	 data.i[idx] = op[1]->value.i[0];
+	 break;
+      case GLSL_TYPE_UINT:
+	 data.u[idx] = op[1]->value.u[0];
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 data.f[idx] = op[1]->value.f[0];
+	 break;
+      case GLSL_TYPE_BOOL:
+	 data.b[idx] = op[1]->value.b[0];
+	 break;
+      default:
+	 assert(!"Should not get here.");
+	 break;
+      }
+      break;
+   }
+
+   case ir_quadop_bitfield_insert: {
+      int offset = op[2]->value.i[0];
+      int bits = op[3]->value.i[0];
+
+      for (unsigned c = 0; c < components; c++) {
+         if (bits == 0)
+            data.u[c] = op[0]->value.u[c];
+         else if (offset < 0 || bits < 0)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else if (offset + bits > 32)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else {
+            unsigned insert_mask = ((1 << bits) - 1) << offset;
+
+            unsigned insert = op[1]->value.u[c];
+            insert <<= offset;
+            insert &= insert_mask;
+
+            unsigned base = op[0]->value.u[c];
+            base &= ~insert_mask;
+
+            data.u[c] = base | insert;
+         }
+      }
+      break;
+   }
 
    case ir_quadop_vector:
       for (unsigned c = 0; c < this->type->vector_elements; c++) {
@@ -1006,7 +1617,7 @@ ir_dereference_variable::constant_expression_value(struct hash_table *variable_c
    /* The constant_value of a uniform variable is its initializer,
     * not the lifetime constant value of the uniform.
     */
-   if (var->mode == ir_var_uniform)
+   if (var->data.mode == ir_var_uniform)
       return NULL;
 
    if (!var->constant_value)
@@ -1049,7 +1660,7 @@ ir_dereference_array::constant_referenced(struct hash_table *variable_context,
       return;
    }
 
-   const glsl_type *vt = substore->type;
+   const glsl_type *vt = array->type;
    if (vt->is_array()) {
       store = substore->get_array_element(index);
       offset = 0;
@@ -1301,7 +1912,7 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
     * "Function calls to user-defined functions (non-built-in functions)
     *  cannot be used to form constant expressions."
     */
-   if (!this->is_builtin)
+   if (!this->is_builtin())
       return NULL;
 
    /*

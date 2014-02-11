@@ -1,6 +1,6 @@
-uniform lowp float low_c;
-uniform mediump float med_b;
 uniform mediump float med_a;
+uniform mediump float med_b;
+uniform lowp float low_c;
 void main ()
 {
   lowp vec4 c_1;

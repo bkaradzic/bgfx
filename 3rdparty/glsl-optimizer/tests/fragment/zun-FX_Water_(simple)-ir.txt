@@ -4,10 +4,10 @@ struct v2f {
   vec2 bumpuv[2];
   vec3 viewDir;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _horizonColor;
-uniform sampler2D _ColorControl;
 uniform sampler2D _BumpMap;
+uniform sampler2D _ColorControl;
+uniform vec4 _horizonColor;
+varying vec4 xlv_FOG;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

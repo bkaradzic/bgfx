@@ -17,12 +17,12 @@ struct v2f_surf {
   vec3 lightDir;
   vec2 _LightCoord;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _Object2World;
 uniform mat4 _LightMatrix0;
+uniform mat4 _Object2World;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 mat3 xll_constructMat3 (
   in mat4 m_1
 )

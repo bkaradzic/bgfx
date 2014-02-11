@@ -3,3 +3,5 @@ void main ()
   gl_FragColor = vec4((((gl_FragCoord.x * 2.0) + gl_FragCoord.x) + (gl_FragCoord.x * 4.0)));
 }
 
+
+// inputs: 1, stats: 4 alu 0 tex 0 flow

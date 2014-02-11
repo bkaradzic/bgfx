@@ -3,9 +3,9 @@ struct v2f {
   vec2 uv;
   vec2 uvOrig;
 };
-uniform sampler2D _MainTex;
-uniform vec4 _CenterRadius;
 uniform float _Angle;
+uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
 void xll_sincos (
   in float x_1,
   out float s_2,
@@ -96,8 +96,8 @@ void xll_sincos (
   tmpvar_36 = tmpvar_33;
   tmpvar_34[1] = tmpvar_36;
   mat2 tmpvar_37;
-  tmpvar_37 = (tmpvar_34);
-  s_30 = (tmpvar_37);
+  tmpvar_37 = tmpvar_34;
+  s_30 = tmpvar_37;
   vec2 tmpvar_38;
   tmpvar_38 = cos (x_29[0]);
   vec2 tmpvar_39;
@@ -110,8 +110,8 @@ void xll_sincos (
   tmpvar_42 = tmpvar_39;
   tmpvar_40[1] = tmpvar_42;
   mat2 tmpvar_43;
-  tmpvar_43 = (tmpvar_40);
-  c_31 = (tmpvar_43);
+  tmpvar_43 = tmpvar_40;
+  c_31 = tmpvar_43;
 }
 
 void xll_sincos (
@@ -137,8 +137,8 @@ void xll_sincos (
   tmpvar_53 = tmpvar_49;
   tmpvar_50[2] = tmpvar_53;
   mat3 tmpvar_54;
-  tmpvar_54 = (tmpvar_50);
-  s_45 = (tmpvar_54);
+  tmpvar_54 = tmpvar_50;
+  s_45 = tmpvar_54;
   vec3 tmpvar_55;
   tmpvar_55 = cos (x_44[0]);
   vec3 tmpvar_56;
@@ -156,8 +156,8 @@ void xll_sincos (
   tmpvar_61 = tmpvar_57;
   tmpvar_58[2] = tmpvar_61;
   mat3 tmpvar_62;
-  tmpvar_62 = (tmpvar_58);
-  c_46 = (tmpvar_62);
+  tmpvar_62 = tmpvar_58;
+  c_46 = tmpvar_62;
 }
 
 void xll_sincos (
@@ -188,8 +188,8 @@ void xll_sincos (
   tmpvar_74 = tmpvar_69;
   tmpvar_70[3] = tmpvar_74;
   mat4 tmpvar_75;
-  tmpvar_75 = (tmpvar_70);
-  s_64 = (tmpvar_75);
+  tmpvar_75 = tmpvar_70;
+  s_64 = tmpvar_75;
   vec4 tmpvar_76;
   tmpvar_76 = cos (x_63[0]);
   vec4 tmpvar_77;
@@ -212,8 +212,8 @@ void xll_sincos (
   tmpvar_84 = tmpvar_79;
   tmpvar_80[3] = tmpvar_84;
   mat4 tmpvar_85;
-  tmpvar_85 = (tmpvar_80);
-  c_65 = (tmpvar_85);
+  tmpvar_85 = tmpvar_80;
+  c_65 = tmpvar_85;
 }
 
 vec4 frag (

@@ -13,9 +13,9 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-attribute vec4 TANGENT;
-uniform vec4 _MainTex_ST;
 uniform vec4 _BumpMap_ST;
+uniform vec4 _MainTex_ST;
+attribute vec4 TANGENT;
 mat3 xll_constructMat3 (
   in mat4 m_1
 )
@@ -89,8 +89,8 @@ v2f_surf vert_surf (
   tmpvar_27 = v_9.normal.z;
   tmpvar_18[2].z = tmpvar_27;
   mat3 tmpvar_28;
-  tmpvar_28 = (tmpvar_18);
-  rotation_10 = (tmpvar_28);
+  tmpvar_28 = tmpvar_18;
+  rotation_10 = tmpvar_28;
   mat3 tmpvar_29;
   tmpvar_29 = xll_constructMat3 (gl_ModelViewMatrixInverseTranspose);
   vec3 tmpvar_30;

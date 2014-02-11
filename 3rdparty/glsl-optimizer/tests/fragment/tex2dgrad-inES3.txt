@@ -1,0 +1,9 @@
+#version 300 es
+precision mediump float;
+uniform sampler2D tex;
+uniform samplerCube cub;
+in vec3 uv;
+out vec4 _fragColor;
+void main() {
+	_fragColor = textureGrad(tex,uv.xy,dFdx(uv.xy),dFdy(uv.xy)) + textureGrad(cub,uv,dFdx(uv),dFdy(uv));
+}

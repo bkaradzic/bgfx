@@ -17,13 +17,13 @@ struct v2f_surf {
   vec3 _ShadowCoord3;
   vec2 _ShadowZFade;
 };
-uniform sampler2D _ShadowMapTexture;
-uniform vec4 _ProjectionParams;
-uniform sampler2D _MainTex;
-uniform vec4 _LightSplitsNear;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightShadowData;
 uniform vec4 _Color;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightSplitsNear;
+uniform sampler2D _MainTex;
+uniform vec4 _ProjectionParams;
+uniform sampler2D _ShadowMapTexture;
 float xll_saturate (
   in float x_1
 )
@@ -229,7 +229,11 @@ vec4 frag_surf (
   weights_55 = tmpvar_74;
   vec4 tmpvar_75;
   tmpvar_75.w = 1.0;
-  tmpvar_75.xyz = ((((IN_50._ShadowCoord0 * weights_55.x) + (IN_50._ShadowCoord1 * weights_55.y)) + (IN_50._ShadowCoord2 * weights_55.z)) + (IN_50._ShadowCoord3 * weights_55.w)).xyz;
+  tmpvar_75.xyz = (((
+    (IN_50._ShadowCoord0 * weights_55.x)
+   + 
+    (IN_50._ShadowCoord1 * weights_55.y)
+  ) + (IN_50._ShadowCoord2 * weights_55.z)) + (IN_50._ShadowCoord3 * weights_55.w)).xyz;
   vec4 tmpvar_76;
   tmpvar_76 = tmpvar_75;
   coord_54 = tmpvar_76;

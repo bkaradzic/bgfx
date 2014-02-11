@@ -1,0 +1,109 @@
+mat3 xll_constructMat3_mf4x4( mat4 m) {
+  return mat3( vec3( m[0]), vec3( m[1]), vec3( m[2]));
+}
+struct VertexOutput {
+    vec4 pos;
+    vec4 tex;
+    vec4 posWorld;
+    vec3 normalWorld;
+    vec4 tangentWorld;
+    vec3 extra;
+    vec4 _ShadowCoord;
+    vec3 lightDir;
+};
+struct VertexInput {
+    vec4 vertex;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 texcoord1;
+    vec4 tangent;
+};
+uniform vec4 _ProjectionParams;
+uniform vec4 _ScreenParams;
+uniform vec4 _WorldSpaceLightPos0;
+
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec4 unity_Scale;
+uniform mat4 glstate_matrix_transpose_modelview0;
+
+uniform samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform vec4 _MainTex_ST;
+uniform sampler2D _DetailAlbedoMap;
+uniform vec4 _DetailAlbedoMap_ST;
+uniform sampler2D _AlphaMap;
+uniform sampler2D _Occlusion;
+uniform sampler2D _DetailNormalMap;
+uniform vec4 _DetailNormalMap_ST;
+uniform float _DetailNormalMapScale;
+uniform sampler2D _BumpMap;
+uniform float _BumpScale;
+uniform float _Exposure;
+uniform float _DetailBumpScale;
+uniform float _AlphaTestRef;
+uniform float _DetailBumpTiling;
+uniform vec4 _Color;
+uniform vec4 _SpecularColor;
+uniform sampler2D _SpecGlossMap;
+uniform float _Glossiness;
+
+uniform vec4 unity_ColorSpaceGrey;
+
+uniform vec4 _LightColor0;
+
+uniform samplerCube _SpecCube;
+uniform vec4 unity_LightmapST;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
+uniform float _SelfIllumScale;
+uniform sampler2D _SelfIllum;
+
+vec4 ComputeScreenPos( in vec4 pos ) {
+    vec4 o = (pos * 0.5);
+    o.xy = (vec2( o.x, (o.y * _ProjectionParams.x)) + o.w);
+    o.zw = pos.zw;
+    return o;
+}
+
+VertexOutput vert( in VertexInput v ) {
+    VertexOutput o;
+    o.posWorld = (_Object2World * v.vertex);
+    o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
+    o.tex = v.texcoord;
+    o.tex.xy = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+    o.tex.zw = ((v.texcoord.xy * _DetailAlbedoMap_ST.xy) + _DetailAlbedoMap_ST.zw);
+    o.normalWorld = normalize((xll_constructMat3_mf4x4( _Object2World) * v.normal));
+    o.tangentWorld = vec4( (xll_constructMat3_mf4x4( _Object2World) * v.tangent.xyz), v.tangent.w);
+    o.tangentWorld.xyz = normalize(o.tangentWorld.xyz);
+    o._ShadowCoord = ComputeScreenPos( o.pos);
+    o.extra.xy = ((v.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
+    o.extra.z = 0.0;
+    return o;
+}
+attribute vec4 TANGENT;
+varying vec4 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
+varying vec3 xlv_TEXCOORD2;
+varying vec4 xlv_TEXCOORD3;
+varying vec3 xlv_TEXCOORD4;
+varying vec4 xlv_TEXCOORD5;
+varying vec3 xlv_TEXCOORD7;
+void main() {
+    VertexOutput xl_retval;
+    VertexInput xlt_v;
+    xlt_v.vertex = vec4(gl_Vertex);
+    xlt_v.normal = vec3(gl_Normal);
+    xlt_v.texcoord = vec4(gl_MultiTexCoord0);
+    xlt_v.texcoord1 = vec4(gl_MultiTexCoord1);
+    xlt_v.tangent = vec4(TANGENT);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4(xl_retval.pos);
+    xlv_TEXCOORD0 = vec4(xl_retval.tex);
+    xlv_TEXCOORD1 = vec4(xl_retval.posWorld);
+    xlv_TEXCOORD2 = vec3(xl_retval.normalWorld);
+    xlv_TEXCOORD3 = vec4(xl_retval.tangentWorld);
+    xlv_TEXCOORD4 = vec3(xl_retval.extra);
+    xlv_TEXCOORD5 = vec4(xl_retval._ShadowCoord);
+    xlv_TEXCOORD7 = vec3(xl_retval.lightDir);
+}

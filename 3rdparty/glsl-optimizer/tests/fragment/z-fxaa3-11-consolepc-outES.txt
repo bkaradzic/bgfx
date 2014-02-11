@@ -1,8 +1,8 @@
 #extension GL_EXT_shader_texture_lod : enable
-varying highp vec4 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-uniform highp vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform highp vec4 _MainTex_TexelSize;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_TEXCOORD1;
 void main ()
 {
   highp vec4 fxaaConsoleRcpFrameOpt_1;
@@ -62,7 +62,9 @@ void main ()
     tmpvar_26.zw = vec2(0.0, 0.0);
     tmpvar_26.xy = (xlv_TEXCOORD0 + (tmpvar_24 * fxaaConsoleRcpFrameOpt_1.zw));
     highp vec2 tmpvar_27;
-    tmpvar_27 = clamp ((tmpvar_24 / (min (abs(tmpvar_24.x), abs(tmpvar_24.y)) * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
+    tmpvar_27 = clamp ((tmpvar_24 / (
+      min (abs(tmpvar_24.x), abs(tmpvar_24.y))
+     * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
     highp vec4 tmpvar_28;
     tmpvar_28.zw = vec2(0.0, 0.0);
     tmpvar_28.xy = (xlv_TEXCOORD0 - (tmpvar_27 * fxaaConsoleRcpFrameOpt2_2.zw));
@@ -82,3 +84,5 @@ void main ()
   gl_FragData[0] = tmpvar_3;
 }
 
+
+// inputs: 2, stats: 47 alu 9 tex 2 flow

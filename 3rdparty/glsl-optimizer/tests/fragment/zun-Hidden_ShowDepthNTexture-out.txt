@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthNormalsTexture;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec2 tmpvar_1;
@@ -21,3 +21,5 @@ void main ()
   gl_FragData[0] = col_2;
 }
 
+
+// inputs: 1, stats: 11 alu 2 tex 0 flow

@@ -4,11 +4,11 @@ struct v2f {
   vec2 uv;
   vec4 uvPosPos;
 };
-varying vec4 xlv_TEXCOORD1;
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_SV_POSITION;
-uniform vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform vec4 _MainTex_TexelSize;
+varying vec4 xlv_SV_POSITION;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
 vec4 xll_tex2Dlod (
   in sampler2D s_1,
   in vec4 coord_2

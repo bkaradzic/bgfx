@@ -127,6 +127,8 @@
 #include "program/hash_table.h"
 #include "program.h"
 
+namespace {
+
 struct call_node : public exec_node {
    class function *func;
 };
@@ -139,25 +141,7 @@ public:
       /* empty */
    }
 
-
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = ralloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *node)
-   {
-      ralloc_free(node);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(function)
 
    ir_function_signature *sig;
 
@@ -173,6 +157,7 @@ public:
    has_recursion_visitor()
       : current(NULL)
    {
+      progress = false;
       this->mem_ctx = ralloc_context(NULL);
       this->function_hash = hash_table_ctor(0, hash_table_pointer_hash,
 					    hash_table_pointer_compare);
@@ -239,6 +224,8 @@ public:
    bool progress;
 };
 
+} /* anonymous namespace */
+
 static void
 destroy_links(exec_list *list, function *f)
 {
@@ -297,7 +284,7 @@ emit_errors_unlinked(const void *key, void *data, void *closure)
 
    memset(&loc, 0, sizeof(loc));
    _mesa_glsl_error(&loc, state,
-		    "function `%s' has static recursion.",
+		    "function `%s' has static recursion",
 		    proto);
    ralloc_free(proto);
 }
@@ -318,7 +305,6 @@ emit_errors_linked(const void *key, void *data, void *closure)
 
    linker_error(prog, "function `%s' has static recursion.\n", proto);
    ralloc_free(proto);
-   prog->LinkStatus = false;
 }
 
 

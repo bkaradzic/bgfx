@@ -1,8 +1,8 @@
 #version 140
-out vec4 col;
-in vec4 icol;
-in vec4 position;
 uniform vec2 p;
+in vec4 position;
+in vec4 icol;
+out vec4 col;
 void main ()
 {
   vec4 tmpvar_1;

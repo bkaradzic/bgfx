@@ -1,5 +1,5 @@
-uniform float _TranslucencyViewDependency;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform float _TranslucencyViewDependency;
 void main ()
 {
   vec3 tmpvar_1;
@@ -33,3 +33,5 @@ void main ()
   gl_TexCoord[3] = tmpvar_10;
 }
 
+
+// inputs: 2, stats: 32 alu 0 tex 0 flow

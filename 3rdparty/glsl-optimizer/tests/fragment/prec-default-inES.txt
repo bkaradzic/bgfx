@@ -1,6 +1,12 @@
 precision highp float;
 precision lowp int;
 
+struct MyStruct {
+	float f;
+	int i;
+};
+uniform MyStruct s1;
+
 uniform float fh1;
 uniform highp float fh2;
 uniform mediump float fm;
@@ -11,7 +17,7 @@ uniform mediump int im;
 
 
 void main() {
-    lowp float f = fh1 + fh2 + fm;
-    highp int i = il1 + il2 + im;
+    lowp float f = fh1 + fh2 + fm + s1.f;
+    highp int i = il1 + il2 + im + s1.i;
     gl_FragColor = vec4(f, i, 0.0, 0.0);
 }

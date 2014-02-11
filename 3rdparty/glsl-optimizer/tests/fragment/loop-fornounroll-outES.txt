@@ -1,13 +1,14 @@
 void main ()
 {
-  mediump float f_1;
-  int i_2;
-  i_2 = 0;
+  highp float f_1;
   f_1 = 0.0;
-  for (int i_2 = 0; i_2 < 32; ) {
+  for (int i_2 = 0; i_2 < 32; i_2++) {
     f_1 = (f_1 + (gl_FragCoord.x * float(i_2)));
-    i_2 = (i_2 + 1);
   };
-  gl_FragColor = vec4(f_1);
+  highp vec4 tmpvar_3;
+  tmpvar_3 = vec4(f_1);
+  gl_FragColor = tmpvar_3;
 }
 
+
+// inputs: 1, stats: 7 alu 0 tex 2 flow

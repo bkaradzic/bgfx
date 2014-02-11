@@ -1,8 +1,8 @@
 #version 140
-out vec4 col;
-in vec4 icol;
-in vec4 position;
 uniform vec2 p;
+in vec4 position;
+in vec4 icol;
+out vec4 col;
 void main ()
 {
   col = icol;
@@ -12,3 +12,5 @@ void main ()
   gl_Position = (tmpvar_1 + position);
 }
 
+
+// inputs: 2, stats: 2 alu 0 tex 0 flow

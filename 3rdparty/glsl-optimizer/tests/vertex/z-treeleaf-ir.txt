@@ -14,26 +14,26 @@ struct v2f_surf {
   vec3 viewDir;
   vec2 _LightCoord;
 };
-varying vec2 xlv_TEXCOORD3;
-varying vec3 xlv_TEXCOORD2;
-varying vec3 xlv_TEXCOORD1;
-varying vec4 xlv_COLOR0;
-varying vec2 xlv_TEXCOORD0;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform mat4 glstate_matrix_mvp;
-uniform mat4 glstate_matrix_invtrans_modelview0;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform vec4 _Wind;
-uniform vec4 _Time;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform vec4 _Time;
+uniform vec4 _Wind;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform mat4 glstate_matrix_invtrans_modelview0;
+uniform mat4 glstate_matrix_mvp;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR0;
+varying vec3 xlv_TEXCOORD1;
+varying vec3 xlv_TEXCOORD2;
+varying vec2 xlv_TEXCOORD3;
 vec4 Squash (
   in vec4 pos_1
 )
@@ -214,7 +214,11 @@ vec4 AnimateVertex (
   tmpvar_73 = (animParams_47.w * fBranchAmp_55);
   bend_48.y = vec2(tmpvar_73).y;
   vec3 tmpvar_74;
-  tmpvar_74 = (pos_45.xyz + (((vWavesSum_49.xyx * bend_48) + ((_Wind.xyz * vWavesSum_49.y) * animParams_47.w)) * _Wind.w));
+  tmpvar_74 = (pos_45.xyz + ((
+    (vWavesSum_49.xyx * bend_48)
+   + 
+    ((_Wind.xyz * vWavesSum_49.y) * animParams_47.w)
+  ) * _Wind.w));
   pos_45.xyz = tmpvar_74.xyz.xyz;
   vec3 tmpvar_75;
   tmpvar_75 = (pos_45.xyz + (animParams_47.z * _Wind.xyz));
@@ -337,8 +341,8 @@ v2f_surf xlat_main (
   tmpvar_114 = v_96.normal.z;
   tmpvar_105[2].z = tmpvar_114;
   mat3 tmpvar_115;
-  tmpvar_115 = (tmpvar_105);
-  rotation_97 = (tmpvar_115);
+  tmpvar_115 = tmpvar_105;
+  rotation_97 = tmpvar_115;
   vec3 tmpvar_116;
   tmpvar_116 = ObjSpaceLightDir (v_96.vertex);
   vec3 tmpvar_117;

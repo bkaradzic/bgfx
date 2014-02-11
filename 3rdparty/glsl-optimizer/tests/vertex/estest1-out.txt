@@ -1,7 +1,7 @@
-varying vec4 xlv_TEXCOORD1;
-varying vec4 xlv_TEXCOORD0;
-uniform mat4 modelViewProjectionMatrix;
 attribute vec4 position;
+uniform mat4 modelViewProjectionMatrix;
+varying vec4 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
 void main ()
 {
   gl_Position = (modelViewProjectionMatrix * position);
@@ -15,3 +15,5 @@ void main ()
   xlv_TEXCOORD1 = tmpvar_2;
 }
 
+
+// inputs: 1, stats: 4 alu 0 tex 0 flow

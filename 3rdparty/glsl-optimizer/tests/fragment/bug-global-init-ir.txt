@@ -1,15 +1,15 @@
-float otherValue;
-uniform float value;
 float tmpvar_1;
-//;
 float tmpvar_2;
+uniform float value;
+float otherValue;
+//;
 //;
 //;
 void main ()
 {
-tmpvar_1 = log (value);
-tmpvar_2 = tmpvar_1;
-otherValue = tmpvar_2;
+tmpvar_2 = log (value);
+tmpvar_1 = tmpvar_2;
+otherValue = tmpvar_1;
   vec4 tmpvar_3;
   tmpvar_3 = vec4(otherValue);
   vec4 tmpvar_4;

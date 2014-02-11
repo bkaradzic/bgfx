@@ -15,15 +15,15 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_Scale;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
-uniform vec4 _ProjectionParams;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform vec4 _BumpMap_ST;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _ProjectionParams;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 mat3 xll_constructMat3 (
   in mat4 m_1
 )
@@ -155,8 +155,8 @@ v2f_surf vert_surf (
   tmpvar_47 = v_24.normal.z;
   tmpvar_38[2].z = tmpvar_47;
   mat3 tmpvar_48;
-  tmpvar_48 = (tmpvar_38);
-  rotation_25 = (tmpvar_48);
+  tmpvar_48 = tmpvar_38;
+  rotation_25 = tmpvar_48;
   vec4 tmpvar_49;
   tmpvar_49.xyz = (rotation_25 * _Object2World[0].xyz).xyz;
   tmpvar_49.w = worldRefl_27.x;

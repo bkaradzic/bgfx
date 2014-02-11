@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -33,8 +33,6 @@
 #define GLHEADER_H
 
 
-
-
 #define GL_GLEXT_PROTOTYPES
 #include "glminimal.h"
 
@@ -43,6 +41,7 @@
 #define GL_FRAGMENT_SHADER                0x8B30
 #define GL_VERTEX_SHADER                  0x8B31
 #define GL_GEOMETRY_SHADER                0x8DD9
+#define GL_GEOMETRY_SHADER_ARB            0x8DD9
 
 #define GL_DEBUG_TYPE_ERROR_ARB           0x824C
 #define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB 0x824D
@@ -124,6 +123,7 @@ extern "C" {
 
 typedef int GLfixed;
 typedef int GLclampx;
+typedef unsigned short GLhalfARB;
 
 
 #ifndef GL_OES_EGL_image
@@ -138,7 +138,9 @@ typedef void *GLeglImageOES;
 #define GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES                     0x8D68
 #endif
 
+#define GL_UNSIGNED_INT_ATOMIC_COUNTER                      0x92DB
 
+	
 #ifndef GL_OES_point_size_array
 #define GL_POINT_SIZE_ARRAY_OES                                 0x8B9C
 #define GL_POINT_SIZE_ARRAY_TYPE_OES                            0x898A
@@ -172,12 +174,6 @@ typedef void *GLeglImageOES;
 #define GL_PALETTE8_R5_G6_B5_OES                                0x8B97
 #define GL_PALETTE8_RGBA4_OES                                   0x8B98
 #define GL_PALETTE8_RGB5_A1_OES                                 0x8B99
-#endif
-
-#ifndef GL_OES_matrix_get
-#define GL_MODELVIEW_MATRIX_FLOAT_AS_INT_BITS_OES               0x898D
-#define GL_PROJECTION_MATRIX_FLOAT_AS_INT_BITS_OES              0x898E
-#define GL_TEXTURE_MATRIX_FLOAT_AS_INT_BITS_OES                 0x898F
 #endif
 
 #ifndef GL_ES_VERSION_2_0

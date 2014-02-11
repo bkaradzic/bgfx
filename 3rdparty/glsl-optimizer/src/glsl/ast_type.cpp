@@ -22,9 +22,6 @@
  */
 
 #include "ast.h"
-extern "C" {
-#include "program/symbol_table.h"
-}
 
 void
 ast_type_specifier::print(void) const
@@ -35,14 +32,8 @@ ast_type_specifier::print(void) const
       printf("%s ", type_name);
    }
 
-   if (is_array) {
-      printf("[ ");
-
-      if (array_size) {
-	 array_size->print();
-      }
-
-      printf("] ");
+   if (array_specifier) {
+      array_specifier->print();
    }
 }
 
@@ -57,6 +48,44 @@ bool ast_type_qualifier::has_interpolation() const
    return this->flags.q.smooth
           || this->flags.q.flat
           || this->flags.q.noperspective;
+}
+
+bool
+ast_type_qualifier::has_layout() const
+{
+   return this->flags.q.origin_upper_left
+          || this->flags.q.pixel_center_integer
+          || this->flags.q.depth_any
+          || this->flags.q.depth_greater
+          || this->flags.q.depth_less
+          || this->flags.q.depth_unchanged
+          || this->flags.q.std140
+          || this->flags.q.shared
+          || this->flags.q.column_major
+          || this->flags.q.row_major
+          || this->flags.q.packed
+          || this->flags.q.explicit_location
+          || this->flags.q.explicit_index
+          || this->flags.q.explicit_binding
+          || this->flags.q.explicit_offset;
+}
+
+bool
+ast_type_qualifier::has_storage() const
+{
+   return this->flags.q.constant
+          || this->flags.q.attribute
+          || this->flags.q.varying
+          || this->flags.q.in
+          || this->flags.q.out
+          || this->flags.q.uniform;
+}
+
+bool
+ast_type_qualifier::has_auxiliary_storage() const
+{
+   return this->flags.q.centroid
+          || this->flags.q.sample;
 }
 
 const char*
@@ -88,16 +117,40 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    ubo_layout_mask.flags.q.packed = 1;
    ubo_layout_mask.flags.q.shared = 1;
 
+   ast_type_qualifier ubo_binding_mask;
+   ubo_binding_mask.flags.q.explicit_binding = 1;
+   ubo_binding_mask.flags.q.explicit_offset = 1;
+
    /* Uniform block layout qualifiers get to overwrite each
     * other (rightmost having priority), while all other
     * qualifiers currently don't allow duplicates.
     */
 
    if ((this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
-				      ubo_layout_mask.flags.i)) != 0) {
+				      ubo_layout_mask.flags.i |
+                                      ubo_binding_mask.flags.i)) != 0) {
       _mesa_glsl_error(loc, state,
-		       "duplicate layout qualifiers used\n");
+		       "duplicate layout qualifiers used");
       return false;
+   }
+
+   if (q.flags.q.prim_type) {
+      if (this->flags.q.prim_type && this->prim_type != q.prim_type) {
+	 _mesa_glsl_error(loc, state,
+			  "conflicting primitive type qualifiers used");
+	 return false;
+      }
+      this->prim_type = q.prim_type;
+   }
+
+   if (q.flags.q.max_vertices) {
+      if (this->flags.q.max_vertices && this->max_vertices != q.max_vertices) {
+	 _mesa_glsl_error(loc, state,
+			  "geometry shader set conflicting max_vertices "
+			  "(%d and %d)", this->max_vertices, q.max_vertices);
+	 return false;
+      }
+      this->max_vertices = q.max_vertices;
    }
 
    if ((q.flags.i & ubo_mat_mask.flags.i) != 0)
@@ -112,6 +165,15 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
 
    if (q.flags.q.explicit_index)
       this->index = q.index;
+
+   if (q.flags.q.explicit_binding)
+      this->binding = q.binding;
+
+   if (q.flags.q.explicit_offset)
+      this->offset = q.offset;
+
+   if (q.precision != ast_precision_none)
+      this->precision = q.precision;
 
    return true;
 }

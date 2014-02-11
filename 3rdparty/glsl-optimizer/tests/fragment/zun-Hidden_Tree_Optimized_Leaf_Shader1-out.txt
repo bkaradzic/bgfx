@@ -1,10 +1,10 @@
-uniform sampler2D _TranslucencyMap;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform samplerCube _LightTexture0;
-uniform vec4 _LightColor0;
-uniform float _Cutoff;
 uniform sampler2D _BumpSpecMap;
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+uniform sampler2D _TranslucencyMap;
 void main ()
 {
   vec2 tmpvar_1;
@@ -22,7 +22,9 @@ void main ()
   tmpvar_7 = texture2D (_BumpSpecMap, tmpvar_1);
   vec4 normal_8;
   normal_8.xy = ((tmpvar_7.wy * 2.0) - 1.0);
-  normal_8.z = sqrt(((1.0 - (normal_8.x * normal_8.x)) - (normal_8.y * normal_8.y)));
+  normal_8.z = sqrt(((1.0 - 
+    (normal_8.x * normal_8.x)
+  ) - (normal_8.y * normal_8.y)));
   float x_9;
   x_9 = (tmpvar_6 - _Cutoff);
   if ((x_9 < 0.0)) {
@@ -35,9 +37,21 @@ void main ()
   tmpvar_12 = dot (normal_8.xyz, tmpvar_10);
   float tmpvar_13;
   tmpvar_13 = max (0.0, -(tmpvar_12));
-  c_11.xyz = (((((tmpvar_4.xyz * gl_Color.xyz) * (max (0.0, ((tmpvar_12 * 0.5) + 0.5)) + ((tmpvar_5.xyz * tmpvar_13) * 2.0))) + ((pow (max (0.0, dot (normal_8.xyz, normalize((tmpvar_10 + normalize(gl_TexCoord[2].xyz))))), (tmpvar_7.x * 128.0)) * tmpvar_5.w) * (1.0 - clamp (ceil(tmpvar_13), 0.0, 1.0)))) * _LightColor0.xyz) * ((texture2D (_LightTextureB0, vec2(dot (tmpvar_2, tmpvar_2))).w * textureCube (_LightTexture0, tmpvar_2).w) * 2.0));
+  c_11.xyz = (((
+    ((tmpvar_4.xyz * gl_Color.xyz) * (max (0.0, (
+      (tmpvar_12 * 0.5)
+     + 0.5)) + ((tmpvar_5.xyz * tmpvar_13) * 2.0)))
+   + 
+    ((pow (max (0.0, 
+      dot (normal_8.xyz, normalize((tmpvar_10 + normalize(gl_TexCoord[2].xyz))))
+    ), (tmpvar_7.x * 128.0)) * tmpvar_5.w) * (1.0 - clamp (ceil(tmpvar_13), 0.0, 1.0)))
+  ) * _LightColor0.xyz) * ((texture2D (_LightTextureB0, vec2(
+    dot (tmpvar_2, tmpvar_2)
+  )).w * textureCube (_LightTexture0, tmpvar_2).w) * 2.0));
   c_3.xyz = c_11.xyz;
   c_3.w = tmpvar_6;
   gl_FragData[0] = c_3;
 }
 
+
+// inputs: 2, stats: 40 alu 6 tex 1 flow

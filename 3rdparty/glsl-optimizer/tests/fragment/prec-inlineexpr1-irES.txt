@@ -1,8 +1,8 @@
-varying mediump vec2 xlv_TEXCOORD0;
-uniform mediump float _EmberFadeStart;
-uniform mediump float _EmberFadeEnd;
-uniform sampler2D _BurntTex;
 uniform sampler2D _MainTex;
+uniform sampler2D _BurntTex;
+uniform mediump float _EmberFadeEnd;
+uniform mediump float _EmberFadeStart;
+varying mediump vec2 xlv_TEXCOORD0;
 float xll_saturate (
   in float x_1
 )
