@@ -3474,15 +3474,8 @@ namespace bgfx
 							{
 								if (invalidHandle != sampler.m_idx)
 								{
-									switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
-									{
-									case BGFX_SAMPLER_TEXTURE:
-										{
-											Texture& texture = s_renderCtx->m_textures[sampler.m_idx];
-											texture.commit(stage, sampler.m_flags);
-										}
-										break;
-									}
+									Texture& texture = s_renderCtx->m_textures[sampler.m_idx];
+									texture.commit(stage, sampler.m_flags);
 								}
 							}
 

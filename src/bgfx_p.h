@@ -138,8 +138,6 @@ namespace stl
 #define BGFX_STATE_TEX_COUNT 8
 
 #define BGFX_SAMPLER_DEFAULT_FLAGS      UINT32_C(0x10000000)
-#define BGFX_SAMPLER_TEXTURE            UINT32_C(0x00000000)
-#define BGFX_SAMPLER_TYPE_MASK          UINT32_C(0xc0000000)
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 #	define BGFX_RENDERER_NAME "Direct3D 9"
@@ -945,7 +943,7 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < BGFX_STATE_TEX_COUNT; ++ii)
 			{
 				m_sampler[ii].m_idx = invalidHandle;
-				m_sampler[ii].m_flags = BGFX_SAMPLER_TEXTURE;
+				m_sampler[ii].m_flags = 0;
 			}
 		}
 
@@ -1178,10 +1176,7 @@ namespace bgfx
 			m_flags |= BGFX_STATE_TEX0<<_stage;
 			Sampler& sampler = m_state.m_sampler[_stage];
 			sampler.m_idx = _handle.idx;
-			sampler.m_flags = 0
-						| BGFX_SAMPLER_TEXTURE
-						| ( (_flags&BGFX_SAMPLER_TYPE_MASK) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags)
-						;
+			sampler.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
 
 			if (isValid(_sampler) )
 			{

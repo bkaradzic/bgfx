@@ -160,23 +160,6 @@ namespace bgfx
 		D3DFMT_R32F,
 	};
 
-	static const D3DFORMAT s_depthFormat[] =
-	{
-		D3DFMT_UNKNOWN,       // ignored
-		D3DFMT_D16,           // D16  
-		D3DFMT_D24X8,         // D24  
-		D3DFMT_D24S8,         // D24S8
-		D3DFMT_D32,           // D32  
-		D3DFMT_DF16,          // D16F 
-		D3DFMT_DF24,          // D24F
-		D3DFMT_D32F_LOCKABLE, // D32F
-#if defined(D3D_DISABLE_9EX)
-		D3DFMT_UNKNOWN,       // D0S8
-#else
-		D3DFMT_S8_LOCKABLE,   // D0S8
-#endif // defined(D3D_DISABLE_9EX)
-	};
-
 	static const D3DTEXTUREADDRESS s_textureAddress[] =
 	{
 		D3DTADDRESS_WRAP,
@@ -2811,12 +2794,7 @@ namespace bgfx
 						{
 							if (invalidHandle != sampler.m_idx)
 							{
-								switch (sampler.m_flags&BGFX_SAMPLER_TYPE_MASK)
-								{
-								case BGFX_SAMPLER_TEXTURE:
-									s_renderCtx->m_textures[sampler.m_idx].commit(stage, sampler.m_flags);
-									break;
-								}
+								s_renderCtx->m_textures[sampler.m_idx].commit(stage, sampler.m_flags);
 							}
 							else
 							{
