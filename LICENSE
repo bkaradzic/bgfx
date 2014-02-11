@@ -1,4 +1,6 @@
-Copyright 2010-2013 Branimir Karadzic. All rights reserved.
+Copyright 2010-2014 Branimir Karadzic. All rights reserved.
+
+https://github.com/bkaradzic/bgfx
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -21,4 +23,4 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 OF THE POSSIBILITY OF SUCH DAMAGE.
 
-https://github.com/bkaradzic/bgfx
+https://github.com/bkaradzic/bgfx/blob/master/LICENSE

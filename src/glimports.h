@@ -1,7 +1,7 @@
 /*
-* Copyright 2011-2013 Branimir Karadzic. All rights reserved.
-* License: http://www.opensource.org/licenses/BSD-2-Clause
-*/
+ * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
+ */
 
 #ifndef GL_IMPORT
 #	error GL_IMPORT(_optional, _proto, _func, _import) must be defined!
