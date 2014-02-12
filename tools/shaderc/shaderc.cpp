@@ -598,12 +598,25 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 {
 	const glslopt_shader_type type = tolower(_cmdLine.findOption('\0', "type")[0]) == 'f' ? kGlslOptShaderFragment : kGlslOptShaderVertex;
 
-	const char* profile = _cmdLine.findOption('p', "profile");
-	bool gles = NULL == profile;
+	glslopt_target target = kGlslTargetOpenGL;
+	switch (_gles)
+	{
+		case 2:
+			target = kGlslTargetOpenGLES20;
+			break;
 
-	glslopt_ctx* ctx = glslopt_initialize( (glslopt_target)gles);
+		case 3:
+			target = kGlslTargetOpenGLES30;
+			break;
 
-	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), 0); 
+		default:
+			target = kGlslTargetOpenGL;
+			break;
+	}
+
+	glslopt_ctx* ctx = glslopt_initialize(target);
+
+	glslopt_shader* shader = glslopt_optimize(ctx, type, _code.c_str(), 0);
 
 	if (!glslopt_get_status(shader) )
 	{
