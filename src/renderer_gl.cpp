@@ -1955,6 +1955,12 @@ namespace bgfx
 					}
 				}
 
+				writeString(&writer
+						, "#define lowp\n"
+						  "#define mediump\n"
+						  "#define highp\n"
+						);
+
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
 			}
@@ -1978,6 +1984,12 @@ namespace bgfx
 					writeString(&writer, "#define attribute in\n");
 					writeString(&writer, "#define varying out\n");
 				}
+
+				writeString(&writer
+						, "#define lowp\n"
+						  "#define mediump\n"
+						  "#define highp\n"
+						);
 
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
