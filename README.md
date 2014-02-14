@@ -124,6 +124,13 @@ Shadow volumes.
 
 ![example-16-shadowmaps](https://github.com/bkaradzic/bgfx/raw/master/examples/16-shadowmaps/screenshot.png)
 
+### 17-drawstress
+Draw stress, maximizing number of draw calls.
+
+### 18-ibl
+Image based lighting.
+
+
 Dependencies
 ------------
 
@@ -414,7 +421,7 @@ Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and
   examples.  
 Milos Tosic ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
 Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil, 
-  14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps  
+  14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
 
 When contributing to the bgfx project you must agree to the BSD 2-clause
 licensing terms.

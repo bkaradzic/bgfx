@@ -62,7 +62,7 @@ void main()
 	vec3 cd = kd * (1.0 - cs);
 
 	vec3 diff = cd;
-    float pwr = exp2(u_glossiness * 11.0 + 1.0);
+	float pwr = exp2(u_glossiness * 11.0 + 1.0);
 	vec3 spec = cs * pow(ndoth, pwr) * ( (pwr + 8.0)/8.0) * fresnel(cs, vdoth);
 
 	vec3 ambspec = fresnel(cs, ndotv) * cenv;
