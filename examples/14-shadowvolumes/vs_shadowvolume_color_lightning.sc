@@ -19,5 +19,5 @@ void main()
 	v_view = mul(u_modelView, vec4(a_position, 1.0)).xyz;
 
 	v_pos = gl_Position;
-	v_pos.y *= -u_flipV;
+	v_pos.y *= u_flipV;
 }
