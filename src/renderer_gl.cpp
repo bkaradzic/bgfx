@@ -1940,7 +1940,7 @@ namespace bgfx
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
 			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL == 21) )
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
 			{
 				bool usesTextureLod = s_extension[Extension::ARB_shader_texture_lod].m_supported
 					&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
@@ -1953,10 +1953,10 @@ namespace bgfx
 					{
 						writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
 					}
-
-					bx::write(&writer, code, codeLen);
-					bx::write(&writer, '\0');
 				}
+
+				bx::write(&writer, code, codeLen);
+				bx::write(&writer, '\0');
 			}
 			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
 			{
