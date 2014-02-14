@@ -612,18 +612,39 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	Mesh meshBunny;
 	meshBunny.load("meshes/bunny.bin");
 
-	float settings_speed = 0.37f;
-	float settings_glossiness = 1.0f;
-	float settings_exposure = 0.0f;
-	float settings_diffspec = 0.65f;
-	float settings_rgbDiff[3] = { 0.2f, 0.2f, 0.2f };
-	float settings_rgbSpec[3] = { 1.0f, 1.0f, 1.0f };
-	bool settings_diffuse = true;
-	bool settings_specular = true;
-	bool settings_diffuseIbl = true;
-	bool settings_specularIbl = true;
-	bool settings_singleSliderDiff = false;
-	bool settings_singleSliderSpec = false;
+	struct Settings
+	{
+		float m_speed;
+		float m_glossiness;
+		float m_exposure;
+		float m_diffspec;
+		float m_rgbDiff[3];
+		float m_rgbSpec[3];
+		bool m_diffuse;
+		bool m_specular;
+		bool m_diffuseIbl;
+		bool m_specularIbl;
+		bool m_singleSliderDiff;
+		bool m_singleSliderSpec;
+	};
+
+	Settings settings;
+	settings.m_speed = 0.37f;
+	settings.m_glossiness = 1.0f;
+	settings.m_exposure = 0.0f;
+	settings.m_diffspec = 0.65f;
+	settings.m_rgbDiff[0] = 0.2f;
+	settings.m_rgbDiff[1] = 0.2f;
+	settings.m_rgbDiff[2] = 0.2f;
+	settings.m_rgbSpec[0] = 1.0f;
+	settings.m_rgbSpec[1] = 1.0f;
+	settings.m_rgbSpec[2] = 1.0f;
+	settings.m_diffuse = true;
+	settings.m_specular = true;
+	settings.m_diffuseIbl = true;
+	settings.m_specularIbl = true;
+	settings.m_singleSliderDiff = false;
+	settings.m_singleSliderSpec = false;
 
 	float time = 0.0f;
 
@@ -646,13 +667,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		imguiLabel("Shade:");
 		imguiSeparator();
-		imguiBool("Diffuse",      settings_diffuse);
-		imguiBool("Specular",     settings_specular);
-		imguiBool("IBL Diffuse",  settings_diffuseIbl);
-		imguiBool("IBL Specular", settings_specularIbl);
+		imguiBool("Diffuse",      settings.m_diffuse);
+		imguiBool("Specular",     settings.m_specular);
+		imguiBool("IBL Diffuse",  settings.m_diffuseIbl);
+		imguiBool("IBL Specular", settings.m_specularIbl);
 
 		imguiSeparatorLine();
-		imguiSlider("Speed", &settings_speed, 0.0f, 1.0f, 0.01f);
+		imguiSlider("Speed", &settings.m_speed, 0.0f, 1.0f, 0.01f);
 
 		imguiSeparatorLine();
 		imguiLabel("Environment:");
@@ -665,7 +686,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 									   );
 
 		imguiSeparator();
-		imguiSlider("Exposure", &settings_exposure, -8.0f, 8.0f, 0.01f);
+		imguiSlider("Exposure", &settings.m_exposure, -8.0f, 8.0f, 0.01f);
 		imguiEndScrollArea();
 
 		static int32_t leftScrollArea = 0;
@@ -673,43 +694,43 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		imguiLabel("Material properties:");
 		imguiSeparator();
-		imguiSlider("Diffuse - Specular", &settings_diffspec,   0.0f, 1.0f, 0.01f);
-		imguiSlider("Glossiness"        , &settings_glossiness, 0.0f, 1.0f, 0.01f);
+		imguiSlider("Diffuse - Specular", &settings.m_diffspec,   0.0f, 1.0f, 0.01f);
+		imguiSlider("Glossiness"        , &settings.m_glossiness, 0.0f, 1.0f, 0.01f);
 
 		imguiSeparatorLine();
 		imguiLabel("Diffuse color:");
 		imguiSeparator();
-		imguiBool("Single slider", settings_singleSliderDiff);
-		if (settings_singleSliderDiff)
+		imguiBool("Single slider", settings.m_singleSliderDiff);
+		if (settings.m_singleSliderDiff)
 		{
-			imguiSlider("RGB:", &settings_rgbDiff[0], 0.0f, 1.0f, 0.01f);
-			settings_rgbDiff[1] = settings_rgbDiff[0];
-			settings_rgbDiff[2] = settings_rgbDiff[0];
+			imguiSlider("RGB:", &settings.m_rgbDiff[0], 0.0f, 1.0f, 0.01f);
+			settings.m_rgbDiff[1] = settings.m_rgbDiff[0];
+			settings.m_rgbDiff[2] = settings.m_rgbDiff[0];
 
 		}
 		else
 		{
-			imguiSlider("R:", &settings_rgbDiff[0], 0.0f, 1.0f, 0.01f);
-			imguiSlider("G:", &settings_rgbDiff[1], 0.0f, 1.0f, 0.01f);
-			imguiSlider("B:", &settings_rgbDiff[2], 0.0f, 1.0f, 0.01f);
+			imguiSlider("R:", &settings.m_rgbDiff[0], 0.0f, 1.0f, 0.01f);
+			imguiSlider("G:", &settings.m_rgbDiff[1], 0.0f, 1.0f, 0.01f);
+			imguiSlider("B:", &settings.m_rgbDiff[2], 0.0f, 1.0f, 0.01f);
 		}
 
 		imguiSeparatorLine();
 		imguiLabel("Specular color:");
 		imguiSeparator();
-		imguiBool("Single slider", settings_singleSliderSpec);
-		if (settings_singleSliderSpec)
+		imguiBool("Single slider", settings.m_singleSliderSpec);
+		if (settings.m_singleSliderSpec)
 		{
-			imguiSlider("RGB:", &settings_rgbSpec[0], 0.0f, 1.0f, 0.01f);
-			settings_rgbSpec[1] = settings_rgbSpec[0];
-			settings_rgbSpec[2] = settings_rgbSpec[0];
+			imguiSlider("RGB:", &settings.m_rgbSpec[0], 0.0f, 1.0f, 0.01f);
+			settings.m_rgbSpec[1] = settings.m_rgbSpec[0];
+			settings.m_rgbSpec[2] = settings.m_rgbSpec[0];
 
 		}
 		else
 		{
-			imguiSlider("R:", &settings_rgbSpec[0], 0.0f, 1.0f, 0.01f);
-			imguiSlider("G:", &settings_rgbSpec[1], 0.0f, 1.0f, 0.01f);
-			imguiSlider("B:", &settings_rgbSpec[2], 0.0f, 1.0f, 0.01f);
+			imguiSlider("R:", &settings.m_rgbSpec[0], 0.0f, 1.0f, 0.01f);
+			imguiSlider("G:", &settings.m_rgbSpec[1], 0.0f, 1.0f, 0.01f);
+			imguiSlider("B:", &settings.m_rgbSpec[2], 0.0f, 1.0f, 0.01f);
 		}
 
 		imguiSeparatorLine();
@@ -718,80 +739,80 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		if (imguiButton("Gold") )
 		{
-			settings_glossiness = 0.8f;
-			settings_diffspec   = 1.0f;
+			settings.m_glossiness = 0.8f;
+			settings.m_diffspec   = 1.0f;
 
-			settings_rgbDiff[0] = 0.0f;
-			settings_rgbDiff[1] = 0.0f;
-			settings_rgbDiff[2] = 0.0f;
+			settings.m_rgbDiff[0] = 0.0f;
+			settings.m_rgbDiff[1] = 0.0f;
+			settings.m_rgbDiff[2] = 0.0f;
 
-			settings_rgbSpec[0] = 1.0f;
-			settings_rgbSpec[1] = 0.86f;
-			settings_rgbSpec[2] = 0.58f;
+			settings.m_rgbSpec[0] = 1.0f;
+			settings.m_rgbSpec[1] = 0.86f;
+			settings.m_rgbSpec[2] = 0.58f;
 
-			settings_singleSliderSpec = false;
+			settings.m_singleSliderSpec = false;
 		}
 
 		if (imguiButton("Copper") )
 		{
-			settings_glossiness = 0.67f;
-			settings_diffspec   = 1.0f;
+			settings.m_glossiness = 0.67f;
+			settings.m_diffspec   = 1.0f;
 
-			settings_rgbDiff[0] = 0.0f;
-			settings_rgbDiff[1] = 0.0f;
-			settings_rgbDiff[2] = 0.0f;
+			settings.m_rgbDiff[0] = 0.0f;
+			settings.m_rgbDiff[1] = 0.0f;
+			settings.m_rgbDiff[2] = 0.0f;
 
-			settings_rgbSpec[0] = 0.98f;
-			settings_rgbSpec[1] = 0.82f;
-			settings_rgbSpec[2] = 0.76f;
+			settings.m_rgbSpec[0] = 0.98f;
+			settings.m_rgbSpec[1] = 0.82f;
+			settings.m_rgbSpec[2] = 0.76f;
 
-			settings_singleSliderSpec = false;
+			settings.m_singleSliderSpec = false;
 		}
 
 		if (imguiButton("Titanium") )
 		{
-			settings_glossiness = 0.57f;
-			settings_diffspec   = 1.0f;
+			settings.m_glossiness = 0.57f;
+			settings.m_diffspec   = 1.0f;
 
-			settings_rgbDiff[0] = 0.0f;
-			settings_rgbDiff[1] = 0.0f;
-			settings_rgbDiff[2] = 0.0f;
+			settings.m_rgbDiff[0] = 0.0f;
+			settings.m_rgbDiff[1] = 0.0f;
+			settings.m_rgbDiff[2] = 0.0f;
 
-			settings_rgbSpec[0] = 0.76f;
-			settings_rgbSpec[1] = 0.73f;
-			settings_rgbSpec[2] = 0.71f;
+			settings.m_rgbSpec[0] = 0.76f;
+			settings.m_rgbSpec[1] = 0.73f;
+			settings.m_rgbSpec[2] = 0.71f;
 
-			settings_singleSliderSpec = false;
+			settings.m_singleSliderSpec = false;
 		}
 
 		if (imguiButton("Steel") )
 		{
-			settings_glossiness = 0.82f;
-			settings_diffspec   = 1.0f;
+			settings.m_glossiness = 0.82f;
+			settings.m_diffspec   = 1.0f;
 
-			settings_rgbDiff[0] = 0.0f;
-			settings_rgbDiff[1] = 0.0f;
-			settings_rgbDiff[2] = 0.0f;
+			settings.m_rgbDiff[0] = 0.0f;
+			settings.m_rgbDiff[1] = 0.0f;
+			settings.m_rgbDiff[2] = 0.0f;
 
-			settings_rgbSpec[0] = 0.77f;
-			settings_rgbSpec[1] = 0.78f;
-			settings_rgbSpec[2] = 0.77f;
+			settings.m_rgbSpec[0] = 0.77f;
+			settings.m_rgbSpec[1] = 0.78f;
+			settings.m_rgbSpec[2] = 0.77f;
 
-			settings_singleSliderSpec = false;
+			settings.m_singleSliderSpec = false;
 		}
 
 		imguiEndScrollArea();
 		imguiEndFrame();
 
-		s_uniforms.m_glossiness = settings_glossiness;
-		s_uniforms.m_exposure = settings_exposure;
-		s_uniforms.m_diffspec = settings_diffspec;
-		s_uniforms.m_flags[0] = float(settings_diffuse);
-		s_uniforms.m_flags[1] = float(settings_specular);
-		s_uniforms.m_flags[2] = float(settings_diffuseIbl);
-		s_uniforms.m_flags[3] = float(settings_specularIbl);
-		memcpy(s_uniforms.m_rgbDiff, settings_rgbDiff, 3*sizeof(float));
-		memcpy(s_uniforms.m_rgbSpec, settings_rgbSpec, 3*sizeof(float));
+		s_uniforms.m_glossiness = settings.m_glossiness;
+		s_uniforms.m_exposure = settings.m_exposure;
+		s_uniforms.m_diffspec = settings.m_diffspec;
+		s_uniforms.m_flags[0] = float(settings.m_diffuse);
+		s_uniforms.m_flags[1] = float(settings.m_specular);
+		s_uniforms.m_flags[2] = float(settings.m_diffuseIbl);
+		s_uniforms.m_flags[3] = float(settings.m_specularIbl);
+		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float));
+		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float));
 
 		s_uniforms.submitPerFrameUniforms();
 
@@ -802,7 +823,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
 
-		time += (float)(frameTime*settings_speed/freq);
+		time += (float)(frameTime*settings.m_speed/freq);
 		s_uniforms.m_time = time;
 
 		// Use debug font to print information about this example.
