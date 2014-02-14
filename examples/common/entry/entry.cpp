@@ -197,7 +197,7 @@ namespace entry
 						const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
 
 						//TODO: move this from here.
-						cameraSetMouseState(mouse->m_mx, mouse->m_my, mouse->m_down, mouse->m_move);
+						cameraSetMouseState(mouse->m_mx, mouse->m_my, mouse->m_down && MouseButton::Right == mouse->m_button, mouse->m_move);
 
 						if (mouse->m_move)
 						{
