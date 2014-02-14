@@ -99,6 +99,7 @@ static const uint16_t s_planeIndices[s_numPlaneIndices] =
 
 static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
+static float s_texelHalf = 0.0f;
 
 static uint32_t s_viewMask = 0;
 
@@ -266,8 +267,7 @@ struct Uniforms
 	{
 		m_params.m_ambientPass   = 1.0f;
 		m_params.m_lightningPass = 1.0f;
-		m_params.m_lightCount    = 4.0f;
-		m_params.m_alpha         = 1.0f;
+		m_params.m_texelHalf     = 0.0f;
 
 		m_ambient[0] = 0.05f;
 		m_ambient[1] = 0.05f;
@@ -374,16 +374,16 @@ struct Uniforms
 	{
 		float m_ambientPass;
 		float m_lightningPass;
-		float m_alpha;
-		float m_lightCount;
+		float m_texelHalf;
+		float m_unused00;
 	};
 
 	struct SvParams
 	{
 		float m_useStencilTex;
 		float m_dfail;
-		float m_unused0;
-		float m_unused1;
+		float m_unused10;
+		float m_unused11;
 	};
 
 	Params m_params;
@@ -402,8 +402,8 @@ struct Uniforms
 	/**
 	 * u_params.x - u_ambientPass
 	 * u_params.y - u_lightningPass
-	 * u_params.z - u_alpha
-	 * u_params.w - u_lightCount
+	 * u_params.z - u_texelHalf
+	 * u_params.w - unused
 
 	 * u_svparams.x - u_useStencilTex
 	 * u_svparams.y - u_dfail
@@ -1944,23 +1944,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	default:
 	case bgfx::RendererType::Direct3D9:
 		s_shaderPath = "shaders/dx9/";
-		s_flipV = true;
+		s_texelHalf = 0.5f;
 		break;
 
 	case bgfx::RendererType::Direct3D11:
 		s_shaderPath = "shaders/dx11/";
-		s_flipV = true;
 		break;
 
 	case bgfx::RendererType::OpenGL:
 		s_shaderPath = "shaders/glsl/";
-		s_flipV = false;
+		s_flipV = true;
 		break;
 
 	case bgfx::RendererType::OpenGLES2:
 	case bgfx::RendererType::OpenGLES3:
 		s_shaderPath = "shaders/gles/";
-		s_flipV = false;
+		s_flipV = true;
 		break;
 	}
 
@@ -2331,7 +2330,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		//update settings
 		s_uniforms.m_params.m_ambientPass     = 1.0f;
 		s_uniforms.m_params.m_lightningPass   = 1.0f;
-		s_uniforms.m_params.m_lightCount      = settings_numLights;
+		s_uniforms.m_params.m_texelHalf       = s_texelHalf;
 		s_uniforms.m_svparams.m_useStencilTex = float(settings_useStencilTexture);
 		s_uniforms.submitPerFrameUniforms();
 

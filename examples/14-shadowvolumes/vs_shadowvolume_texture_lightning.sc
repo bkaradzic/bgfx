@@ -21,5 +21,5 @@ void main()
 	v_texcoord0 = a_texcoord0;
 
 	v_pos = gl_Position;
-	v_pos.y *= -u_flipV;
+	v_pos.y *= u_flipV;
 }
