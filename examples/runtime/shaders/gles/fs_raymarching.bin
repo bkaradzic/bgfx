@@ -1,5 +1,4 @@
-FSHƒòáprecision highp float;
-varying vec4 v_color0;
+FSHƒòávarying vec4 v_color0;
 varying vec2 v_texcoord0;
 uniform mat4 u_mtx;
 uniform vec3 u_lightDir;

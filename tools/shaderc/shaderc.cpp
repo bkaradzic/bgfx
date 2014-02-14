@@ -659,7 +659,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 		strreplace(shader, "texture2DGradEXT", "texture2DGrad");
 		strreplace(shader, "texture2DProjGradEXT", "texture2DProjGrad");
 		strreplace(shader, "textureCubeGradEXT", "textureCubeGrad");
-
+ 
 		strreplace(shader, "shadow2DEXT", "shadow2D");
 		strreplace(shader, "shadow2DProjEXT", "shadow2DProj");
 	}
@@ -2076,9 +2076,11 @@ int main(int _argc, const char* _argv[])
 						const char* profile = cmdLine.findOption('p', "profile");
 						if (NULL == profile)
 						{
-							writef(&writer, "#ifdef GL_ES\n");
-							writef(&writer, "precision highp float;\n");
-							writef(&writer, "#endif // GL_ES\n\n");
+							writef(&writer
+								, "#ifdef GL_ES\n"
+								  "precision highp float;\n"
+								  "#endif // GL_ES\n\n"
+								);
 						}
 					}
 					writer.write(preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
@@ -2180,8 +2182,6 @@ int main(int _argc, const char* _argv[])
 									  "#define gl_FragDepth gl_FragDepthEXT\n"
 									);
 							}
-
-							bx::stringPrintf(code, "precision highp float;\n");
 						}
 						code += preprocessor.m_preprocessed;
 						compiled = compileGLSLShader(cmdLine, gles, code, writer);

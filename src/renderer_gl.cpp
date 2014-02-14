@@ -1455,8 +1455,6 @@ namespace bgfx
 			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
 			msaaQuality = bx::uint32_min(s_renderCtx->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 
-			BX_TRACE("%p MSAA %d %s", this, msaaQuality, getName( (TextureFormat::Enum)m_textureFormat) );
-
 			if (0 != msaaQuality
 			||  bufferOnly)
 			{
@@ -1833,7 +1831,7 @@ namespace bgfx
 	void strins(char* _str, const char* _insert)
 	{
 		size_t len = strlen(_insert);
-		memmove(&_str[len], _str, strlen(_str) );
+		memmove(&_str[len], _str, strlen(_str)+1);
 		memcpy(_str, _insert, len);
 	}
 
@@ -1855,6 +1853,11 @@ namespace bgfx
 
 		if (0 != m_id)
 		{
+			int32_t codeLen = (int32_t)strlen(code);
+			int32_t tempLen = codeLen + 1024;
+			char* temp = (char*)alloca(tempLen);
+			bx::StaticMemoryBlockWriter writer(temp, tempLen);
+
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) )
 			{
 				bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
@@ -1871,75 +1874,71 @@ namespace bgfx
 					&& bx::findIdentifierMatch(code, s_OES_texture_3D)
 					;
 
-				if (usesDerivatives
-				||  usesFragDepth
-				||  usesShadowSamplers
-				||  usesTexture3D)
+				if (usesDerivatives)
 				{
-					int32_t codeLen = (int32_t)strlen(code);
-					int32_t tempLen = codeLen + 1024;
-					char* temp = (char*)alloca(tempLen);
-					bx::StaticMemoryBlockWriter writer(temp, tempLen);
+					writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
+				}
 
-					if (usesDerivatives)
+				bool insertFragDepth = false;
+				if (usesFragDepth)
+				{
+					if (s_extension[Extension::EXT_frag_depth].m_supported)
 					{
-						writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
+						writeString(&writer
+							, "#extension GL_EXT_frag_depth : enable\n"
+							  "#define gl_FragDepth gl_FragDepthEXT\n"
+							);
+
+						char str[128];
+						bx::snprintf(str, BX_COUNTOF(str), "%s float gl_FragDepthEXT;\n"
+							, s_extension[Extension::OES_fragment_precision_high].m_supported ? "highp" : "mediump"
+							);
+						writeString(&writer, str);
 					}
-
-					bool insertFragDepth = false;
-					if (usesFragDepth)
+					else
 					{
-						if (s_extension[Extension::EXT_frag_depth].m_supported)
+						insertFragDepth = true;
+					}
+				}
+
+				if (usesShadowSamplers)
+				{
+					writeString(&writer, "#extension GL_EXT_shadow_samplers : enable\n");
+				}
+
+				if (usesTexture3D)
+				{
+					writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
+				}
+
+				writeString(&writer, "precision highp float;\n");
+
+				bx::write(&writer, code, codeLen);
+				bx::write(&writer, '\0');
+
+				if (insertFragDepth)
+				{
+					char* entry = strstr(temp, "void main ()");
+					if (NULL != entry)
+					{
+						char* brace = strstr(entry, "{");
+						if (NULL != brace)
 						{
-							writeString(&writer
-								, "#extension GL_EXT_frag_depth : enable\n"
-								  "#define gl_FragDepth gl_FragDepthEXT\n"
-								);
-
-							char str[128];
-							bx::snprintf(str, BX_COUNTOF(str), "%s float gl_FragDepthEXT;\n"
-								, s_extension[Extension::OES_fragment_precision_high].m_supported ? "highp" : "mediump"
-								);
-							writeString(&writer, str);
-						}
-						else
-						{
-							insertFragDepth = true;
-						}
-					}
-
-					if (usesShadowSamplers)
-					{
-						writeString(&writer, "#extension GL_EXT_shadow_samplers : enable\n");
-					}
-
-					if (usesTexture3D)
-					{
-						writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
-					}
-
-					bx::write(&writer, code, codeLen);
-					bx::write(&writer, '\0');
-
-					code = temp;
-
-					if (insertFragDepth)
-					{
-						char* entry = strstr(temp, "void main ()");
-						if (NULL != entry)
-						{
-							char* brace = strstr(entry, "{");
-							if (NULL != brace)
+							const char* end = bx::strmb(brace, '{', '}');
+							if (NULL != end)
 							{
-								const char* end = bx::strmb(brace, '{', '}');
-								if (NULL != end)
-								{
-									strins(brace+1, "\n  float gl_FragDepth = 0.0;\n");
-								}
+								strins(brace+1, "\n  float gl_FragDepth = 0.0;\n");
 							}
 						}
 					}
 				}
+			}
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+			{
+				writeString(&writer, "precision highp float;\n");
+
+				bx::write(&writer, code, codeLen);
+				bx::write(&writer, '\0');
 			}
 			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL == 21) )
 			{
@@ -1949,11 +1948,6 @@ namespace bgfx
 
 				if (usesTextureLod)
 				{
-					int32_t codeLen = (int32_t)strlen(code);
-					int32_t tempLen = codeLen + 1024;
-					char* temp = (char*)alloca(tempLen);
-					bx::StaticMemoryBlockWriter writer(temp, tempLen);
-
 					writeString(&writer, "#version 120\n");
 					if (_type == GL_FRAGMENT_SHADER)
 					{
@@ -1962,16 +1956,10 @@ namespace bgfx
 
 					bx::write(&writer, code, codeLen);
 					bx::write(&writer, '\0');
-					code = temp;
 				}
 			}
 			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
 			{
-				int32_t codeLen = (int32_t)strlen(code);
-				int32_t tempLen = codeLen + 1024;
-				char* temp = (char*)alloca(tempLen);
-				bx::StaticMemoryBlockWriter writer(temp, tempLen);
-
 				writeString(&writer, "#version 140\n");
 				if (_type == GL_FRAGMENT_SHADER)
 				{
@@ -1993,8 +1981,9 @@ namespace bgfx
 
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
-				code = temp;
 			}
+
+			code = temp;
 
 			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
 			GL_CHECK(glCompileShader(m_id) );

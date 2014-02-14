@@ -1,5 +1,4 @@
-FSHFÅ≠úprecision highp float;
-varying vec3 v_normal;
+FSHFÅ≠úvarying vec3 v_normal;
 varying vec4 v_texcoord1;
 varying vec4 v_texcoord2;
 varying vec4 v_texcoord3;

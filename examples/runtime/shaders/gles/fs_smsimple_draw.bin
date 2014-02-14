@@ -1,5 +1,4 @@
-FSHpjHprecision highp float;
-varying vec3 v_normal;
+FSHpjHvarying vec3 v_normal;
 varying vec4 v_shadowcoord;
 varying vec3 v_view;
 uniform vec4 u_lightPos;

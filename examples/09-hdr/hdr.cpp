@@ -541,7 +541,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::destroyFrameBuffer(blur);
 
 			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
-			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, 0|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
+			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
 			fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
 			bright = bgfx::createFrameBuffer(width/2, height/2, bgfx::TextureFormat::BGRA8);
