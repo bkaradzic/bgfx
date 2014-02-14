@@ -130,6 +130,7 @@ Draw stress, maximizing number of draw calls.
 ### 18-ibl
 Image based lighting.
 
+![example-18-ibl](https://github.com/bkaradzic/bgfx/raw/master/examples/18-ibl/screenshot.png)
 
 Dependencies
 ------------
