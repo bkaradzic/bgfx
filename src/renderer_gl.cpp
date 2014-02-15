@@ -1439,7 +1439,7 @@ namespace bgfx
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 			if (GL_RGBA == m_fmt
-				&&  s_renderCtx->m_textureSwizzleSupport)
+			&&  s_renderCtx->m_textureSwizzleSupport)
 			{
 				GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
 				GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
@@ -1529,10 +1529,18 @@ namespace bgfx
 
 			const GLenum internalFmt = s_textureFormat[m_textureFormat].m_internalFmt;
 
-			const bool swizzle    = GL_RGBA == internalFmt && !s_renderCtx->m_textureSwizzleSupport;
+			const bool swizzle    = GL_RGBA == m_fmt && !s_renderCtx->m_textureSwizzleSupport;
 			const bool convert    = m_textureFormat != m_requestedFormat;
 			const bool compressed = TextureFormat::Unknown > m_textureFormat;
 			const uint32_t min    = convert && compressed ? 4 : 1;
+
+			BX_WARN(!swizzle && !convert, "Texture %s%s%s from %s to %s."
+					, swizzle ? "swizzle" : ""
+					, swizzle&&convert ? " and " : ""
+					, convert ? "convert" : ""
+					, getName( (TextureFormat::Enum)m_requestedFormat)
+					, getName( (TextureFormat::Enum)m_textureFormat)
+					);
 
 			uint8_t* temp = NULL;
 			if (convert || swizzle)
