@@ -376,7 +376,13 @@ Bunny
 [Stanford University Computer Graphics Laboratory](http://www-graphics.stanford.edu/data/3Dscanrep/)
 
 Uffizi  
-[Light Probe Image Gallery ](http://www.pauldebevec.com/Probes/)
+[Light Probe Image Gallery](http://www.pauldebevec.com/Probes/)
+
+Wells  
+[Bernhard Vogl Light probes](http://dativ.at/lightprobes/)
+
+Pisa, Ennis, Grace  
+[High-Resolution Light Probe Image Gallery](http://gl.ict.usc.edu/Data/HighResProbes/)
 
 Droid Sans Font  
 http://www.fontsquirrel.com/license/Droid-Sans
@@ -402,7 +408,7 @@ http://fontfabric.com/signika-font/
 Visitor Font  
 http://www.dafont.com/visitor.font
 
-Special-Elite Font
+Special-Elite Font  
 http://www.fontspace.com/astigmatic-one-eye-typographic-institute/special-elite
 
 FontAwesome Font  
