@@ -1529,7 +1529,11 @@ namespace bgfx
 
 			const GLenum internalFmt = s_textureFormat[m_textureFormat].m_internalFmt;
 
-			const bool swizzle    = GL_RGBA == m_fmt && !s_renderCtx->m_textureSwizzleSupport;
+			const bool swizzle = true
+				&& TextureFormat::BGRA8 == m_textureFormat
+				&& GL_RGBA == m_fmt
+				&& !s_renderCtx->m_textureSwizzleSupport
+				;
 			const bool convert    = m_textureFormat != m_requestedFormat;
 			const bool compressed = TextureFormat::Unknown > m_textureFormat;
 			const uint32_t min    = convert && compressed ? 4 : 1;
@@ -1685,8 +1689,12 @@ namespace bgfx
 
 		GLenum target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
+		const bool swizzle = true
+			&& TextureFormat::BGRA8 == m_textureFormat
+			&& GL_RGBA == m_fmt
+			&& !s_renderCtx->m_textureSwizzleSupport
+			;
 		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
-		const bool swizzle         = GL_RGBA == m_fmt && !s_renderCtx->m_textureSwizzleSupport;
 		const bool convert         = m_textureFormat != m_requestedFormat;
 		const bool compressed      = TextureFormat::Unknown > m_textureFormat;
 
