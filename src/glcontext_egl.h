@@ -32,6 +32,7 @@ namespace bgfx
 			return NULL != m_context;
 		}
 
+		void* m_eglLibrary;
 		EGLContext m_context;
 		EGLDisplay m_display;
 		EGLSurface m_surface;

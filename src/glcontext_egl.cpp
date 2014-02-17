@@ -12,12 +12,83 @@
 
 namespace bgfx
 {
+#if BX_PLATFORM_WINDOWS
+	typedef void (*EGLPROC)(void);
+
+	typedef EGLPROC (EGLAPIENTRY* PFNEGLGETPROCADDRESSPROC)(const char *procname);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLSWAPINTERVALPROC)(EGLDisplay dpy, EGLint interval);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLMAKECURRENTPROC)(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
+	typedef EGLContext (EGLAPIENTRY* PFNEGLCREATECONTEXTPROC)(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint *attrib_list);
+	typedef EGLSurface (EGLAPIENTRY* PFNEGLCREATEWINDOWSURFACEPROC)(EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint *attrib_list);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLCHOOSECONFIGPROC)(EGLDisplay dpy, const EGLint *attrib_list,	EGLConfig *configs, EGLint config_size,	EGLint *num_config);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLINITIALIZEPROC)(EGLDisplay dpy, EGLint *major, EGLint *minor);
+	typedef EGLDisplay (EGLAPIENTRY* PFNEGLGETDISPLAYPROC)(EGLNativeDisplayType display_id);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLDESTROYSURFACEPROC)(EGLDisplay dpy, EGLSurface surface);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLDESTROYCONTEXTPROC)(EGLDisplay dpy, EGLContext ctx);
+	typedef EGLBoolean (EGLAPIENTRY* PFNEGLSWAPBUFFERSPROC)(EGLDisplay dpy, EGLSurface surface);
+
+#define EGL_IMPORT \
+			EGL_IMPORT_FUNC(PFNEGLGETPROCADDRESSPROC,      eglGetProcAddress); \
+			EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,        eglSwapInterval); \
+			EGL_IMPORT_FUNC(PFNEGLMAKECURRENTPROC,         eglMakeCurrent); \
+			EGL_IMPORT_FUNC(PFNEGLCREATECONTEXTPROC,       eglCreateContext); \
+			EGL_IMPORT_FUNC(PFNEGLCREATEWINDOWSURFACEPROC, eglCreateWindowSurface); \
+			EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig); \
+			EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,          eglInitialize); \
+			EGL_IMPORT_FUNC(PFNEGLGETDISPLAYPROC,          eglGetDisplay); \
+			EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate); \
+			EGL_IMPORT_FUNC(PFNEGLDESTROYSURFACEPROC,      eglDestroySurface); \
+			EGL_IMPORT_FUNC(PFNEGLDESTROYCONTEXTPROC,      eglDestroyContext); \
+			EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,         eglSwapBuffers);
+
+#define EGL_IMPORT_FUNC(_proto, _func) _proto _func
+EGL_IMPORT
+#undef EGL_IMPORT_FUNC
+
+	void* eglOpen()
+	{
+		void* handle = bx::dlopen("libEGL.dll");
+		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library.");
+
+#define EGL_IMPORT_FUNC(_proto, _func) \
+			_func = (_proto)bx::dlsym(handle, #_func); \
+			BGFX_FATAL(NULL != _func, Fatal::UnableToInitialize, "Failed get " #_func ".")
+EGL_IMPORT
+#undef EGL_IMPORT_FUNC
+
+		return handle;
+	}
+
+	void eglClose(void* _handle)
+	{
+		bx::dlclose(_handle);
+
+#define EGL_IMPORT_FUNC(_proto, _func) _func = NULL
+EGL_IMPORT
+#undef EGL_IMPORT_FUNC
+	}
+
+#else
+
+	void* eglOpen()
+	{
+		return NULL;
+	}
+
+	void eglClose(void* /*_handle*/)
+	{
+	}
+#endif // BX_PLATFORM_WINDOWS
+
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #		include "glimports.h"
 #	undef GL_IMPORT
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		m_eglLibrary = eglOpen();
+
 		BX_UNUSED(_width, _height);
 		EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
 		EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
@@ -95,6 +166,8 @@ namespace bgfx
 		eglDestroySurface(m_display, m_surface);
 		eglTerminate(m_display);
 		m_context = NULL;
+
+		eglClose(m_eglLibrary);
 	}
 
 	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
