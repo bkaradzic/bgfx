@@ -249,6 +249,7 @@ namespace bgfx
 			EXT_framebuffer_blit,
 			EXT_framebuffer_sRGB,
 			EXT_occlusion_query_boolean,
+			EXT_shader_texture_lod,
 			EXT_shadow_samplers,
 			EXT_texture_array,
 			EXT_texture_compression_dxt1,
@@ -337,6 +338,7 @@ namespace bgfx
 		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
+		{ "GL_EXT_shader_texture_lod",             false,                             true  }, // GLES2 extension.
 		{ "GL_EXT_shadow_samplers",                false,                             true  },
 		{ "GL_EXT_texture_array",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_texture_compression_dxt1",       false,                             true  },
@@ -395,6 +397,17 @@ namespace bgfx
 		// "texture1DProjLod",
 		// "shadow1DLod",
 		// "shadow1DProjLod",
+	};
+
+	static const char* s_EXT_shader_texture_lod[] =
+	{
+		"texture2DLod",
+		"texture2DProjLod",
+		"textureCubeLod",
+		NULL
+		// "texture2DGrad",
+		// "texture2DProjGrad",
+		// "textureCubeGrad",
 	};
 
 	static const char* s_EXT_shadow_samplers[] =
@@ -1890,6 +1903,8 @@ namespace bgfx
 					&& bx::findIdentifierMatch(code, s_OES_texture_3D)
 					;
 
+				bool usesTextureLod = !!bx::findIdentifierMatch(code, s_EXT_shader_texture_lod);
+
 				if (usesDerivatives)
 				{
 					writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
@@ -1898,6 +1913,7 @@ namespace bgfx
 				bool insertFragDepth = false;
 				if (usesFragDepth)
 				{
+					BX_WARN(s_extension[Extension::EXT_frag_depth].m_supported, "EXT_frag_depth is used but not supported by GLES2 driver.");
 					if (s_extension[Extension::EXT_frag_depth].m_supported)
 					{
 						writeString(&writer
@@ -1925,6 +1941,28 @@ namespace bgfx
 				if (usesTexture3D)
 				{
 					writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
+				}
+
+				if (usesTextureLod)
+				{
+					BX_WARN(s_extension[Extension::EXT_shader_texture_lod].m_supported, "EXT_shader_texture_lod is used but not supported by GLES2 driver.");
+					if (s_extension[Extension::EXT_shader_texture_lod].m_supported)
+					{
+						writeString(&writer
+							, "#extension GL_EXT_shader_texture_lod : enable\n"
+							  "#define texture2DLod texture2DLodEXT\n"
+							  "#define texture2DProjLod texture2DProjLodEXT\n"
+							  "#define textureCubeLod textureCubeLodEXT\n"
+							);
+					}
+					else
+					{
+						writeString(&writer
+							, "#define texture2DLod(_sampler, _coord, _level) texture2D(_sampler, _coord)\n"
+							  "#define texture2DProjLod(_sampler, _coord, _level) texture2DProj(_sampler, _coord)\n"
+							  "#define textureCubeLod(_sampler, _coord, _level) textureCube(_sampler, _coord)\n"
+							);
+					}
 				}
 
 				writeString(&writer, "precision highp float;\n");
