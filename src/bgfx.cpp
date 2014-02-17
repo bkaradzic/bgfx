@@ -751,7 +751,7 @@ namespace bgfx
 
 		g_caps.emulated |= emulatedCaps ^ (g_caps.supported & emulatedCaps);
 
-		BX_TRACE("Supported capabilities:");
+		BX_TRACE("Supported capabilities (" BGFX_RENDERER_NAME "):");
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
 		{
 			if (0 != (g_caps.supported & s_capsFlags[ii].m_flag) )
@@ -934,8 +934,6 @@ namespace bgfx
 			bx::snprintf(name, sizeof(name), "%02d view", ii);
 			setViewName(ii, name);
 		}
-
-		BX_TRACE("Init complete.");
 	}
 
 	void Context::shutdown()
