@@ -470,6 +470,7 @@ typedef khronos_ssize_t  GLsizeiptr;
  * GL core functions.
  *-----------------------------------------------------------------------*/
 
+#if !BGFX_USE_GL_DYNAMIC_LIB
 GL_APICALL void         GL_APIENTRY glActiveTexture (GLenum texture);
 GL_APICALL void         GL_APIENTRY glAttachShader (GLuint program, GLuint shader);
 GL_APICALL void         GL_APIENTRY glBindAttribLocation (GLuint program, GLuint index, const GLchar* name);
@@ -612,6 +613,7 @@ GL_APICALL void         GL_APIENTRY glVertexAttrib4f (GLuint indx, GLfloat x, GL
 GL_APICALL void         GL_APIENTRY glVertexAttrib4fv (GLuint indx, const GLfloat* values);
 GL_APICALL void         GL_APIENTRY glVertexAttribPointer (GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr);
 GL_APICALL void         GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
+#endif // !BGFX_USE_GL_DYNAMIC_LIB
 
 #ifdef __cplusplus
 }

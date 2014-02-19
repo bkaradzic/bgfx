@@ -6,13 +6,12 @@
 #ifndef BGFX_RENDERER_GL_H_HEADER_GUARD
 #define BGFX_RENDERER_GL_H_HEADER_GUARD
 
-#define BGFX_USE_EGL 0
-#define BGFX_USE_WGL 0
-#define BGFX_USE_NSGL 0
+#define BGFX_USE_EGL ( (BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3) && (BX_PLATFORM_ANDROID || BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_QNX || BX_PLATFORM_WINDOWS) )
+#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
+#define BGFX_USE_GL_DYNAMIC_LIB BX_PLATFORM_WINDOWS
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
-#		define GLCOREARB_PROTOTYPES
 #		include <gl/glcorearb.h>
 #		if BX_PLATFORM_OSX
 #			define GL_ARB_shader_objects // OSX collsion with GLhandleARB in gltypes.h
@@ -40,30 +39,11 @@
 #		include <gl/glext.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-#	if BX_PLATFORM_WINDOWS
-#		undef BGFX_USE_WGL
-#		define BGFX_USE_WGL 1
-#	endif // BX_PLATFORM_
-
 #elif BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
 #	if BGFX_CONFIG_RENDERER_OPENGLES2
 #		if BX_PLATFORM_IOS
 #			include <OpenGLES/ES2/gl.h>
 #			include <OpenGLES/ES2/glext.h>
-
-typedef void (GL_APIENTRYP PFNGLBINDVERTEXARRAYOESPROC) (GLuint array);
-typedef void (GL_APIENTRYP PFNGLDELETEVERTEXARRAYSOESPROC) (GLsizei n, const GLuint *arrays);
-typedef void (GL_APIENTRYP PFNGLGENVERTEXARRAYSOESPROC) (GLsizei n, GLuint *arrays);
-typedef GLboolean (GL_APIENTRYP PFNGLISVERTEXARRAYOESPROC) (GLuint array);
-typedef void (GL_APIENTRYP PFNGLGETPROGRAMBINARYOESPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary);
-typedef void (GL_APIENTRYP PFNGLPROGRAMBINARYOESPROC) (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLint length);
-typedef void (GL_APIENTRYP PFNGLTEXIMAGE3DOESPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels);
-typedef void (GL_APIENTRYP PFNGLTEXSUBIMAGE3DOESPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels);
-typedef void (GL_APIENTRYP PFNGLCOMPRESSEDTEXIMAGE3DOESPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* data);
-typedef void (GL_APIENTRYP PFNGLCOMPRESSEDTEXSUBIMAGE3DOESPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data);
-typedef void (GL_APIENTRYP PFLGLDRAWARRAYSINSTANCEDANGLEPROC) (GLenum mode, GLint first, GLsizei count, GLsizei primcount);
-typedef void (GL_APIENTRYP PFLGLDRAWELEMENTSINSTANCEDANGLEPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
-typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLuint divisor);
 //#define GL_UNSIGNED_INT_10_10_10_2_OES                          0x8DF6
 #define GL_UNSIGNED_INT_2_10_10_10_REV_EXT                      0x8368
 #define GL_TEXTURE_3D_OES                                       0x806F
@@ -75,15 +55,8 @@ typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLu
 #			include <GLES2/gl2.h>
 #			include <GLES2/gl2ext.h>
 #		endif // BX_PLATFORM_
-#		define glProgramBinary glProgramBinaryOES
-#		define glGetProgramBinary glGetProgramBinaryOES
-#		define glTexImage3D glTexImage3DOES
-#		define glTexSubImage3D glTexSubImage3DOES
-#		define glCompressedTexImage3D glCompressedTexImage3DOES
-#		define glCompressedTexSubImage3D glCompressedTexSubImage3DOES
-#		define glBindVertexArray glBindVertexArrayOES
-#		define glDeleteVertexArrays glDeleteVertexArraysOES
-#		define glGenVertexArrays glGenVertexArraysOES
+typedef khronos_int64_t  GLint64;
+typedef khronos_uint64_t GLuint64;
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
 #		define GL_RGBA8 GL_RGBA //GL_RGBA8_OES
@@ -106,17 +79,13 @@ typedef void (GL_APIENTRYP PFLGLVERTEXATTRIBDIVISORANGLEPROC) (GLuint index, GLu
 #		include <GLES3/gl3ext.h>
 #	endif // BGFX_CONFIG_RENDERER_
 
-#	if BX_PLATFORM_ANDROID || BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_WINDOWS || BX_PLATFORM_QNX
-#		undef BGFX_USE_EGL
-#		define BGFX_USE_EGL 1
+#	if BGFX_USE_EGL
 #		include "glcontext_egl.h"
-#	endif // BX_PLATFORM_
+#	endif // BGFX_USE_EGL
 
 #	if BX_PLATFORM_EMSCRIPTEN
 #		include <emscripten/emscripten.h>
 #	endif // BX_PLATFORM_EMSCRIPTEN
-
-typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
 
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
@@ -319,11 +288,6 @@ typedef void (*PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GLuint shader, GLsizei b
 
 namespace bgfx
 {
-	// Both GL_ARB_instanced_arrays and GL_ANGLE_instanced_arrays use the same function signature.
-	typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISORBGFXPROC)(GLuint _index, GLuint _divisor);
-	typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDBGFXPROC)(GLenum _mode, GLint _first, GLsizei _count, GLsizei _primcount);
-	typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDBGFXPROC)(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount);
-
 #	define _GL_CHECK(_call) \
 				do { \
 					/*BX_TRACE(#_call);*/ \
@@ -349,9 +313,9 @@ namespace bgfx
 #define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
 #define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
 
+#define GL_IMPORT_TYPEDEFS 1
 #define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
 #include "glimports.h"
-#undef GL_IMPORT
 
 	void dumpExtensions(const char* _extensions);
 

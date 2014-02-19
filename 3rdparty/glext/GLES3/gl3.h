@@ -811,6 +811,7 @@ typedef struct __GLsync *GLsync;
 
 /* OpenGL ES 2.0 */
 
+#if !BGFX_USE_GL_DYNAMIC_LIB
 GL_APICALL void           GL_APIENTRY glActiveTexture (GLenum texture);
 GL_APICALL void           GL_APIENTRY glAttachShader (GLuint program, GLuint shader);
 GL_APICALL void           GL_APIENTRY glBindAttribLocation (GLuint program, GLuint index, const GLchar* name);
@@ -1060,6 +1061,7 @@ GL_APICALL void           GL_APIENTRY glInvalidateSubFramebuffer (GLenum target,
 GL_APICALL void           GL_APIENTRY glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 GL_APICALL void           GL_APIENTRY glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 GL_APICALL void           GL_APIENTRY glGetInternalformativ (GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
+#endif // !BGFX_USE_GL_DYNAMIC_LIB
 
 #ifdef __cplusplus
 }

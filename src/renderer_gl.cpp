@@ -220,6 +220,7 @@ namespace bgfx
 			ARB_debug_output,
 			ARB_depth_clamp,
 			ARB_ES3_compatibility,
+			ARB_framebuffer_object,
 			ARB_framebuffer_sRGB,
 			ARB_get_program_binary,
 			ARB_half_float_pixel,
@@ -247,6 +248,7 @@ namespace bgfx
 			EXT_blend_subtract,
 			EXT_frag_depth,
 			EXT_framebuffer_blit,
+			EXT_framebuffer_object,
 			EXT_framebuffer_sRGB,
 			EXT_occlusion_query_boolean,
 			EXT_shader_texture_lod,
@@ -309,6 +311,7 @@ namespace bgfx
 		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "GL_ARB_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_framebuffer_sRGB",               false,                             true  },
 		{ "GL_ARB_get_program_binary",             BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
 		{ "GL_ARB_half_float_pixel",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -336,6 +339,7 @@ namespace bgfx
 		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "GL_EXT_frag_depth",                     false,                             true  }, // GLES2 extension.
 		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "GL_EXT_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
 		{ "GL_EXT_shader_texture_lod",             false,                             true  }, // GLES2 extension.
@@ -453,9 +457,9 @@ namespace bgfx
 		GL_CHECK(glDrawElements(_mode, _count, _type, _indices) );
 	}
 
-	static PFNGLVERTEXATTRIBDIVISORBGFXPROC s_vertexAttribDivisor = stubVertexAttribDivisor;
-	static PFNGLDRAWARRAYSINSTANCEDBGFXPROC s_drawArraysInstanced = stubDrawArraysInstanced;
-	static PFNGLDRAWELEMENTSINSTANCEDBGFXPROC s_drawElementsInstanced = stubDrawElementsInstanced;
+	static PFNGLVERTEXATTRIBDIVISORPROC   s_vertexAttribDivisor   = stubVertexAttribDivisor;
+	static PFNGLDRAWARRAYSINSTANCEDPROC   s_drawArraysInstanced   = stubDrawArraysInstanced;
+	static PFNGLDRAWELEMENTSINSTANCEDPROC s_drawElementsInstanced = stubDrawElementsInstanced;
 #endif // BGFX_CONFIG_RENDERER_OPENGLES3
 
 #if BGFX_CONFIG_DEBUG_GREMEDY

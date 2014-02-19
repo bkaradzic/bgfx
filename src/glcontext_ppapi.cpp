@@ -12,8 +12,7 @@
 namespace bgfx
 {
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
-#		include "glimports.h"
-#	undef GL_IMPORT
+#	include "glimports.h"
 
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/);
 

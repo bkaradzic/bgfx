@@ -12,7 +12,8 @@
 
 namespace bgfx
 {
-#if BX_PLATFORM_WINDOWS
+#if BGFX_USE_GL_DYNAMIC_LIB
+
 	typedef void (*EGLPROC)(void);
 
 	typedef EGLPROC (EGLAPIENTRY* PFNEGLGETPROCADDRESSPROC)(const char *procname);
@@ -53,6 +54,7 @@ EGL_IMPORT
 
 #define EGL_IMPORT_FUNC(_proto, _func) \
 			_func = (_proto)bx::dlsym(handle, #_func); \
+			BX_TRACE("%p " #_func, _func); \
 			BGFX_FATAL(NULL != _func, Fatal::UnableToInitialize, "Failed get " #_func ".")
 EGL_IMPORT
 #undef EGL_IMPORT_FUNC
@@ -79,11 +81,10 @@ EGL_IMPORT
 	void eglClose(void* /*_handle*/)
 	{
 	}
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_USE_GL_DYNAMIC_LIB
 
-#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
-#		include "glimports.h"
-#	undef GL_IMPORT
+#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
+#	include "glimports.h"
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
@@ -97,7 +98,7 @@ EGL_IMPORT
 		nwt = g_bgfxHwnd;
 #	endif // BX_PLATFORM_
 		m_display = eglGetDisplay(ndt);
-		BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display 0x%08x", m_display);
+		BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
 
 		EGLint major = 0;
 		EGLint minor = 0;
@@ -184,14 +185,30 @@ EGL_IMPORT
 	void GlContext::import()
 	{
 #	if !BX_PLATFORM_EMSCRIPTEN
-#		define GL_IMPORT(_optional, _proto, _func, _import) \
-		{ \
-			_func = (_proto)eglGetProcAddress(#_import); \
-			BX_TRACE(#_import " 0x%08x", _func); \
-			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
-		}
+		BX_TRACE("Import:");
+#		if BX_PLATFORM_WINDOWS
+		void* glesv2 = bx::dlopen("libGLESv2.dll");
+#		define GL_EXTENSION(_optional, _proto, _func, _import) \
+					{ \
+						if (NULL == _func) \
+						{ \
+							_func = (_proto)bx::dlsym(glesv2, #_import); \
+							BX_TRACE("\t%p " #_func " (" #_import ")", _func); \
+							BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
+						} \
+					}
+#		else
+#		define GL_EXTENSION(_optional, _proto, _func, _import) \
+					{ \
+						if (NULL == _func) \
+						{ \
+							_func = (_proto)eglGetProcAddress(#_import); \
+							BX_TRACE("\t%p " #_func " (" #_import ")", _func); \
+							BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
+						} \
+					}
+#		endif // BX_PLATFORM_
 #		include "glimports.h"
-#		undef GL_IMPORT
 #	endif // !BX_PLATFORM_EMSCRIPTEN
 	}
 
