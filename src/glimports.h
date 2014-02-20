@@ -22,10 +22,11 @@
 #	define GL_IMPORT_TYPEDEFS 0
 #endif // GL_IMPORT_TYPEDEFS
 
-#define GL_IMPORT____(_optional, _proto, _func) GL_IMPORT(_optional, _proto, _func, _func)
-#define GL_IMPORT_ARB(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## ARB)
-#define GL_IMPORT_EXT(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## EXT)
-#define GL_IMPORT_OES(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## OES)
+#define GL_IMPORT______(_optional, _proto, _func) GL_IMPORT(_optional, _proto, _func, _func)
+#define GL_IMPORT_ANGLE(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## ANGLE)
+#define GL_IMPORT_ARB__(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## ARB)
+#define GL_IMPORT_EXT__(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## EXT)
+#define GL_IMPORT_OES__(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## OES)
 
 #if GL_IMPORT_TYPEDEFS
 typedef void           (GL_APIENTRYP PFNGLACTIVETEXTUREPROC) (GLenum texture);
@@ -157,193 +158,191 @@ typedef void           (GL_APIENTRYP PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GL
 #endif // GL_IMPORT_TYPEDEFS
 
 #if BGFX_USE_GL_DYNAMIC_LIB
-GL_IMPORT____(false, PFNGLACTIVETEXTUREPROC,                     glActiveTexture);
-GL_IMPORT____(false, PFNGLATTACHSHADERPROC,                      glAttachShader);
-GL_IMPORT____(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery);
-GL_IMPORT____(false, PFNGLBINDBUFFERPROC,                        glBindBuffer);
-GL_IMPORT____(true,  PFNGLBINDFRAGDATALOCATIONPROC,              glBindFragDataLocation);
-GL_IMPORT____(true,  PFNGLBINDFRAMEBUFFERPROC,                   glBindFramebuffer);
-GL_IMPORT____(true,  PFNGLBINDRENDERBUFFERPROC,                  glBindRenderbuffer);
-GL_IMPORT____(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
-GL_IMPORT____(false, PFNGLBINDTEXTUREPROC,                       glBindTexture);
-GL_IMPORT____(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
-GL_IMPORT____(true,  PFNGLBLENDCOLORPROC,                        glBlendColor);
-GL_IMPORT____(false, PFNGLBLENDEQUATIONPROC,                     glBlendEquation);
-GL_IMPORT____(true,  PFNGLBLENDEQUATIONSEPARATEPROC,             glBlendEquationSeparate);
-GL_IMPORT____(false, PFNGLBLENDFUNCPROC,                         glBlendFunc);
-GL_IMPORT____(true,  PFNGLBLENDFUNCSEPARATEPROC,                 glBlendFuncSeparate);
-GL_IMPORT____(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
-GL_IMPORT____(false, PFNGLBUFFERDATAPROC,                        glBufferData);
-GL_IMPORT____(false, PFNGLBUFFERSUBDATAPROC,                     glBufferSubData);
-GL_IMPORT____(true,  PFNGLCHECKFRAMEBUFFERSTATUSPROC,            glCheckFramebufferStatus);
-GL_IMPORT____(false, PFNGLCLEARPROC,                             glClear);
-GL_IMPORT____(false, PFNGLCLEARCOLORPROC,                        glClearColor);
-GL_IMPORT____(false, PFNGLCLEARSTENCILPROC,                      glClearStencil);
-GL_IMPORT____(false, PFNGLCOLORMASKPROC,                         glColorMask);
-GL_IMPORT____(false, PFNGLCOMPILESHADERPROC,                     glCompileShader);
-GL_IMPORT____(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,              glCompressedTexImage2D);
-GL_IMPORT____(false, PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC,           glCompressedTexSubImage2D);
-GL_IMPORT____(true , PFNGLCOMPRESSEDTEXIMAGE3DPROC,              glCompressedTexImage3D);
-GL_IMPORT____(true , PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedTexSubImage3D);
-GL_IMPORT____(false, PFNGLCREATEPROGRAMPROC,                     glCreateProgram);
-GL_IMPORT____(false, PFNGLCREATESHADERPROC,                      glCreateShader);
-GL_IMPORT____(false, PFNGLCULLFACEPROC,                          glCullFace);
-GL_IMPORT____(false, PFNGLDELETEBUFFERSPROC,                     glDeleteBuffers);
-GL_IMPORT____(true,  PFNGLDELETEFRAMEBUFFERSPROC,                glDeleteFramebuffers);
-GL_IMPORT____(false, PFNGLDELETEPROGRAMPROC,                     glDeleteProgram);
-GL_IMPORT____(true,  PFNGLDELETEQUERIESPROC,                     glDeleteQueries);
-GL_IMPORT____(true,  PFNGLDELETERENDERBUFFERSPROC,               glDeleteRenderbuffers);
-GL_IMPORT____(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSamplers);
-GL_IMPORT____(false, PFNGLDELETESHADERPROC,                      glDeleteShader);
-GL_IMPORT____(false, PFNGLDELETETEXTURESPROC,                    glDeleteTextures);
-GL_IMPORT____(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
-GL_IMPORT____(false, PFNGLDEPTHFUNCPROC,                         glDepthFunc);
-GL_IMPORT____(false, PFNGLDEPTHMASKPROC,                         glDepthMask);
-GL_IMPORT____(false, PFNGLDETACHSHADERPROC,                      glDetachShader);
-GL_IMPORT____(false, PFNGLDISABLEPROC,                           glDisable);
-GL_IMPORT____(false, PFNGLDISABLEVERTEXATTRIBARRAYPROC,          glDisableVertexAttribArray);
-GL_IMPORT____(false, PFNGLDRAWARRAYSPROC,                        glDrawArrays);
-GL_IMPORT____(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
-GL_IMPORT____(false, PFNGLDRAWELEMENTSPROC,                      glDrawElements);
-GL_IMPORT____(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
-GL_IMPORT____(false, PFNGLENABLEPROC,                            glEnable);
-GL_IMPORT____(false, PFNGLENABLEVERTEXATTRIBARRAYPROC,           glEnableVertexAttribArray);
-GL_IMPORT____(true,  PFNGLENDQUERYPROC,                          glEndQuery);
-GL_IMPORT____(true,  PFNGLFRAMEBUFFERRENDERBUFFERPROC,           glFramebufferRenderbuffer);
-GL_IMPORT____(true,  PFNGLFRAMEBUFFERTEXTURE2DPROC,              glFramebufferTexture2D);
-GL_IMPORT____(false, PFNGLGENBUFFERSPROC,                        glGenBuffers);
-GL_IMPORT____(true,  PFNGLGENFRAMEBUFFERSPROC,                   glGenFramebuffers);
-GL_IMPORT____(true,  PFNGLGENRENDERBUFFERSPROC,                  glGenRenderbuffers);
-GL_IMPORT____(true,  PFNGLGENQUERIESPROC,                        glGenQueries);
-GL_IMPORT____(true,  PFNGLGENSAMPLERSPROC,                       glGenSamplers);
-GL_IMPORT____(false, PFNGLGENTEXTURESPROC,                       glGenTextures);
-GL_IMPORT____(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
-GL_IMPORT____(false, PFNGLGETACTIVEATTRIBPROC,                   glGetActiveAttrib);
-GL_IMPORT____(false, PFNGLGETATTRIBLOCATIONPROC,                 glGetAttribLocation);
-GL_IMPORT____(false, PFNGLGETACTIVEUNIFORMPROC,                  glGetActiveUniform);
-GL_IMPORT____(false, PFNGLGETERRORPROC,                          glGetError);
-GL_IMPORT____(false, PFNGLGETFLOATVPROC,                         glGetFloatv);
-GL_IMPORT____(false, PFNGLGETINTEGERVPROC,                       glGetIntegerv);
-GL_IMPORT____(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
-GL_IMPORT____(false, PFNGLGETPROGRAMIVPROC,                      glGetProgramiv);
-GL_IMPORT____(false, PFNGLGETPROGRAMINFOLOGPROC,                 glGetProgramInfoLog);
-GL_IMPORT____(true,  PFNGLGETQUERYIVPROC,                        glGetQueryiv);
-GL_IMPORT____(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
-GL_IMPORT____(true,  PFNGLGETQUERYOBJECTI64VPROC,                glGetQueryObjecti64v);
-GL_IMPORT____(true,  PFNGLGETQUERYOBJECTUIVPROC,                 glGetQueryObjectuiv);
-GL_IMPORT____(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
-GL_IMPORT____(false, PFNGLGETSHADERIVPROC,                       glGetShaderiv);
-GL_IMPORT____(false, PFNGLGETSHADERINFOLOGPROC,                  glGetShaderInfoLog);
-GL_IMPORT____(false, PFNGLGETSTRINGPROC,                         glGetString);
-GL_IMPORT____(false, PFNGLGETUNIFORMLOCATIONPROC,                glGetUniformLocation);
-GL_IMPORT____(false, PFNGLLINKPROGRAMPROC,                       glLinkProgram);
-GL_IMPORT____(false, PFNGLPIXELSTOREIPROC,                       glPixelStorei);
-GL_IMPORT____(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
-GL_IMPORT____(true,  PFNGLPROGRAMPARAMETERIPROC,                 glProgramParameteri);
-GL_IMPORT____(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounter);
-GL_IMPORT____(false, PFNGLREADPIXELSPROC,                        glReadPixels);
-GL_IMPORT____(true,  PFNGLRENDERBUFFERSTORAGEPROC,               glRenderbufferStorage);
-GL_IMPORT____(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
-GL_IMPORT____(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
-GL_IMPORT____(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
-GL_IMPORT____(false, PFNGLSCISSORPROC,                           glScissor);
-GL_IMPORT____(false, PFNGLSHADERSOURCEPROC,                      glShaderSource);
-GL_IMPORT____(false, PFNGLSTENCILFUNCPROC,                       glStencilFunc);
-GL_IMPORT____(true,  PFNGLSTENCILFUNCSEPARATEPROC,               glStencilFuncSeparate);
-GL_IMPORT____(false, PFNGLSTENCILMASKPROC,                       glStencilMask);
-GL_IMPORT____(true,  PFNGLSTENCILMASKSEPARATEPROC,               glStencilMaskSeparate);
-GL_IMPORT____(false, PFNGLSTENCILOPPROC,                         glStencilOp);
-GL_IMPORT____(true,  PFNGLSTENCILOPSEPARATEPROC,                 glStencilOpSeparate);
-GL_IMPORT____(false, PFNGLTEXIMAGE2DPROC,                        glTexImage2D);
-GL_IMPORT____(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
-GL_IMPORT____(false, PFNGLTEXPARAMETERIPROC,                     glTexParameteri);
-GL_IMPORT____(false, PFNGLTEXPARAMETERIVPROC,                    glTexParameteriv);
-GL_IMPORT____(false, PFNGLTEXPARAMETERFPROC,                     glTexParameterf);
-GL_IMPORT____(false, PFNGLTEXSUBIMAGE2DPROC,                     glTexSubImage2D);
-GL_IMPORT____(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
-GL_IMPORT____(false, PFNGLUNIFORM1IPROC,                         glUniform1i);
-GL_IMPORT____(false, PFNGLUNIFORM1IVPROC,                        glUniform1iv);
-GL_IMPORT____(false, PFNGLUNIFORM1FPROC,                         glUniform1f);
-GL_IMPORT____(false, PFNGLUNIFORM1FVPROC,                        glUniform1fv);
-GL_IMPORT____(false, PFNGLUNIFORM2FVPROC,                        glUniform2fv);
-GL_IMPORT____(false, PFNGLUNIFORM3FVPROC,                        glUniform3fv);
-GL_IMPORT____(false, PFNGLUNIFORM4FVPROC,                        glUniform4fv);
-GL_IMPORT____(false, PFNGLUNIFORMMATRIX3FVPROC,                  glUniformMatrix3fv);
-GL_IMPORT____(false, PFNGLUNIFORMMATRIX4FVPROC,                  glUniformMatrix4fv);
-GL_IMPORT____(false, PFNGLUSEPROGRAMPROC,                        glUseProgram);
-GL_IMPORT____(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
-GL_IMPORT____(false, PFNGLVERTEXATTRIBPOINTERPROC,               glVertexAttribPointer);
-GL_IMPORT____(false, PFNGLVERTEXATTRIB1FPROC,                    glVertexAttrib1f);
-GL_IMPORT____(false, PFNGLVERTEXATTRIB2FPROC,                    glVertexAttrib2f);
-GL_IMPORT____(false, PFNGLVERTEXATTRIB3FPROC,                    glVertexAttrib3f);
-GL_IMPORT____(false, PFNGLVERTEXATTRIB4FPROC,                    glVertexAttrib4f);
-GL_IMPORT____(false, PFNGLVIEWPORTPROC,                          glViewport);
+GL_IMPORT______(false, PFNGLACTIVETEXTUREPROC,                     glActiveTexture);
+GL_IMPORT______(false, PFNGLATTACHSHADERPROC,                      glAttachShader);
+GL_IMPORT______(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery);
+GL_IMPORT______(false, PFNGLBINDBUFFERPROC,                        glBindBuffer);
+GL_IMPORT______(true,  PFNGLBINDFRAGDATALOCATIONPROC,              glBindFragDataLocation);
+GL_IMPORT______(true,  PFNGLBINDFRAMEBUFFERPROC,                   glBindFramebuffer);
+GL_IMPORT______(true,  PFNGLBINDRENDERBUFFERPROC,                  glBindRenderbuffer);
+GL_IMPORT______(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
+GL_IMPORT______(false, PFNGLBINDTEXTUREPROC,                       glBindTexture);
+GL_IMPORT______(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
+GL_IMPORT______(true,  PFNGLBLENDCOLORPROC,                        glBlendColor);
+GL_IMPORT______(false, PFNGLBLENDEQUATIONPROC,                     glBlendEquation);
+GL_IMPORT______(true,  PFNGLBLENDEQUATIONSEPARATEPROC,             glBlendEquationSeparate);
+GL_IMPORT______(false, PFNGLBLENDFUNCPROC,                         glBlendFunc);
+GL_IMPORT______(true,  PFNGLBLENDFUNCSEPARATEPROC,                 glBlendFuncSeparate);
+GL_IMPORT______(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
+GL_IMPORT______(false, PFNGLBUFFERDATAPROC,                        glBufferData);
+GL_IMPORT______(false, PFNGLBUFFERSUBDATAPROC,                     glBufferSubData);
+GL_IMPORT______(true,  PFNGLCHECKFRAMEBUFFERSTATUSPROC,            glCheckFramebufferStatus);
+GL_IMPORT______(false, PFNGLCLEARPROC,                             glClear);
+GL_IMPORT______(false, PFNGLCLEARCOLORPROC,                        glClearColor);
+GL_IMPORT______(false, PFNGLCLEARSTENCILPROC,                      glClearStencil);
+GL_IMPORT______(false, PFNGLCOLORMASKPROC,                         glColorMask);
+GL_IMPORT______(false, PFNGLCOMPILESHADERPROC,                     glCompileShader);
+GL_IMPORT______(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,              glCompressedTexImage2D);
+GL_IMPORT______(false, PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC,           glCompressedTexSubImage2D);
+GL_IMPORT______(true , PFNGLCOMPRESSEDTEXIMAGE3DPROC,              glCompressedTexImage3D);
+GL_IMPORT______(true , PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedTexSubImage3D);
+GL_IMPORT______(false, PFNGLCREATEPROGRAMPROC,                     glCreateProgram);
+GL_IMPORT______(false, PFNGLCREATESHADERPROC,                      glCreateShader);
+GL_IMPORT______(false, PFNGLCULLFACEPROC,                          glCullFace);
+GL_IMPORT______(false, PFNGLDELETEBUFFERSPROC,                     glDeleteBuffers);
+GL_IMPORT______(true,  PFNGLDELETEFRAMEBUFFERSPROC,                glDeleteFramebuffers);
+GL_IMPORT______(false, PFNGLDELETEPROGRAMPROC,                     glDeleteProgram);
+GL_IMPORT______(true,  PFNGLDELETEQUERIESPROC,                     glDeleteQueries);
+GL_IMPORT______(true,  PFNGLDELETERENDERBUFFERSPROC,               glDeleteRenderbuffers);
+GL_IMPORT______(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSamplers);
+GL_IMPORT______(false, PFNGLDELETESHADERPROC,                      glDeleteShader);
+GL_IMPORT______(false, PFNGLDELETETEXTURESPROC,                    glDeleteTextures);
+GL_IMPORT______(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
+GL_IMPORT______(false, PFNGLDEPTHFUNCPROC,                         glDepthFunc);
+GL_IMPORT______(false, PFNGLDEPTHMASKPROC,                         glDepthMask);
+GL_IMPORT______(false, PFNGLDETACHSHADERPROC,                      glDetachShader);
+GL_IMPORT______(false, PFNGLDISABLEPROC,                           glDisable);
+GL_IMPORT______(false, PFNGLDISABLEVERTEXATTRIBARRAYPROC,          glDisableVertexAttribArray);
+GL_IMPORT______(false, PFNGLDRAWARRAYSPROC,                        glDrawArrays);
+GL_IMPORT______(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
+GL_IMPORT______(false, PFNGLDRAWELEMENTSPROC,                      glDrawElements);
+GL_IMPORT______(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
+GL_IMPORT______(false, PFNGLENABLEPROC,                            glEnable);
+GL_IMPORT______(false, PFNGLENABLEVERTEXATTRIBARRAYPROC,           glEnableVertexAttribArray);
+GL_IMPORT______(true,  PFNGLENDQUERYPROC,                          glEndQuery);
+GL_IMPORT______(true,  PFNGLFRAMEBUFFERRENDERBUFFERPROC,           glFramebufferRenderbuffer);
+GL_IMPORT______(true,  PFNGLFRAMEBUFFERTEXTURE2DPROC,              glFramebufferTexture2D);
+GL_IMPORT______(false, PFNGLGENBUFFERSPROC,                        glGenBuffers);
+GL_IMPORT______(true,  PFNGLGENFRAMEBUFFERSPROC,                   glGenFramebuffers);
+GL_IMPORT______(true,  PFNGLGENRENDERBUFFERSPROC,                  glGenRenderbuffers);
+GL_IMPORT______(true,  PFNGLGENQUERIESPROC,                        glGenQueries);
+GL_IMPORT______(true,  PFNGLGENSAMPLERSPROC,                       glGenSamplers);
+GL_IMPORT______(false, PFNGLGENTEXTURESPROC,                       glGenTextures);
+GL_IMPORT______(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
+GL_IMPORT______(false, PFNGLGETACTIVEATTRIBPROC,                   glGetActiveAttrib);
+GL_IMPORT______(false, PFNGLGETATTRIBLOCATIONPROC,                 glGetAttribLocation);
+GL_IMPORT______(false, PFNGLGETACTIVEUNIFORMPROC,                  glGetActiveUniform);
+GL_IMPORT______(false, PFNGLGETERRORPROC,                          glGetError);
+GL_IMPORT______(false, PFNGLGETFLOATVPROC,                         glGetFloatv);
+GL_IMPORT______(false, PFNGLGETINTEGERVPROC,                       glGetIntegerv);
+GL_IMPORT______(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
+GL_IMPORT______(false, PFNGLGETPROGRAMIVPROC,                      glGetProgramiv);
+GL_IMPORT______(false, PFNGLGETPROGRAMINFOLOGPROC,                 glGetProgramInfoLog);
+GL_IMPORT______(true,  PFNGLGETQUERYIVPROC,                        glGetQueryiv);
+GL_IMPORT______(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
+GL_IMPORT______(true,  PFNGLGETQUERYOBJECTI64VPROC,                glGetQueryObjecti64v);
+GL_IMPORT______(true,  PFNGLGETQUERYOBJECTUIVPROC,                 glGetQueryObjectuiv);
+GL_IMPORT______(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
+GL_IMPORT______(false, PFNGLGETSHADERIVPROC,                       glGetShaderiv);
+GL_IMPORT______(false, PFNGLGETSHADERINFOLOGPROC,                  glGetShaderInfoLog);
+GL_IMPORT______(false, PFNGLGETSTRINGPROC,                         glGetString);
+GL_IMPORT______(false, PFNGLGETUNIFORMLOCATIONPROC,                glGetUniformLocation);
+GL_IMPORT______(false, PFNGLLINKPROGRAMPROC,                       glLinkProgram);
+GL_IMPORT______(false, PFNGLPIXELSTOREIPROC,                       glPixelStorei);
+GL_IMPORT______(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
+GL_IMPORT______(true,  PFNGLPROGRAMPARAMETERIPROC,                 glProgramParameteri);
+GL_IMPORT______(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounter);
+GL_IMPORT______(false, PFNGLREADPIXELSPROC,                        glReadPixels);
+GL_IMPORT______(true,  PFNGLRENDERBUFFERSTORAGEPROC,               glRenderbufferStorage);
+GL_IMPORT______(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
+GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
+GL_IMPORT______(false, PFNGLSCISSORPROC,                           glScissor);
+GL_IMPORT______(false, PFNGLSHADERSOURCEPROC,                      glShaderSource);
+GL_IMPORT______(false, PFNGLSTENCILFUNCPROC,                       glStencilFunc);
+GL_IMPORT______(true,  PFNGLSTENCILFUNCSEPARATEPROC,               glStencilFuncSeparate);
+GL_IMPORT______(false, PFNGLSTENCILMASKPROC,                       glStencilMask);
+GL_IMPORT______(true,  PFNGLSTENCILMASKSEPARATEPROC,               glStencilMaskSeparate);
+GL_IMPORT______(false, PFNGLSTENCILOPPROC,                         glStencilOp);
+GL_IMPORT______(true,  PFNGLSTENCILOPSEPARATEPROC,                 glStencilOpSeparate);
+GL_IMPORT______(false, PFNGLTEXIMAGE2DPROC,                        glTexImage2D);
+GL_IMPORT______(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
+GL_IMPORT______(false, PFNGLTEXPARAMETERIPROC,                     glTexParameteri);
+GL_IMPORT______(false, PFNGLTEXPARAMETERIVPROC,                    glTexParameteriv);
+GL_IMPORT______(false, PFNGLTEXPARAMETERFPROC,                     glTexParameterf);
+GL_IMPORT______(false, PFNGLTEXSUBIMAGE2DPROC,                     glTexSubImage2D);
+GL_IMPORT______(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
+GL_IMPORT______(false, PFNGLUNIFORM1IPROC,                         glUniform1i);
+GL_IMPORT______(false, PFNGLUNIFORM1IVPROC,                        glUniform1iv);
+GL_IMPORT______(false, PFNGLUNIFORM1FPROC,                         glUniform1f);
+GL_IMPORT______(false, PFNGLUNIFORM1FVPROC,                        glUniform1fv);
+GL_IMPORT______(false, PFNGLUNIFORM2FVPROC,                        glUniform2fv);
+GL_IMPORT______(false, PFNGLUNIFORM3FVPROC,                        glUniform3fv);
+GL_IMPORT______(false, PFNGLUNIFORM4FVPROC,                        glUniform4fv);
+GL_IMPORT______(false, PFNGLUNIFORMMATRIX3FVPROC,                  glUniformMatrix3fv);
+GL_IMPORT______(false, PFNGLUNIFORMMATRIX4FVPROC,                  glUniformMatrix4fv);
+GL_IMPORT______(false, PFNGLUSEPROGRAMPROC,                        glUseProgram);
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
+GL_IMPORT______(false, PFNGLVERTEXATTRIBPOINTERPROC,               glVertexAttribPointer);
+GL_IMPORT______(false, PFNGLVERTEXATTRIB1FPROC,                    glVertexAttrib1f);
+GL_IMPORT______(false, PFNGLVERTEXATTRIB2FPROC,                    glVertexAttrib2f);
+GL_IMPORT______(false, PFNGLVERTEXATTRIB3FPROC,                    glVertexAttrib3f);
+GL_IMPORT______(false, PFNGLVERTEXATTRIB4FPROC,                    glVertexAttrib4f);
+GL_IMPORT______(false, PFNGLVIEWPORTPROC,                          glViewport);
 
 #	if BGFX_CONFIG_RENDERER_OPENGL
-GL_IMPORT____(false, PFNGLCLEARDEPTHPROC,                        glClearDepth);
-GL_IMPORT____(false, PFNGLPOINTSIZEPROC,                         glPointSize);
+GL_IMPORT______(false, PFNGLCLEARDEPTHPROC,                        glClearDepth);
+GL_IMPORT______(false, PFNGLPOINTSIZEPROC,                         glPointSize);
 
-//GL_IMPORT____(true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl);
-//GL_IMPORT____(true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert);
-//GL_IMPORT____(true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback);
-//GL_IMPORT____(true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog);
-GL_IMPORT    (true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl,  glDebugMessageControlARB);
-GL_IMPORT    (true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert,   glDebugMessageInsertARB);
-GL_IMPORT    (true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback, glDebugMessageCallbackARB);
-GL_IMPORT    (true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog,   glGetDebugMessageLogARB);
+GL_IMPORT      (true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl,  glDebugMessageControlARB);
+GL_IMPORT      (true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert,   glDebugMessageInsertARB);
+GL_IMPORT      (true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback, glDebugMessageCallbackARB);
+GL_IMPORT      (true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog,   glGetDebugMessageLogARB);
 
-GL_IMPORT_ARB(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
-GL_IMPORT_ARB(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
-GL_IMPORT_ARB(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
+GL_IMPORT_ARB__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
+GL_IMPORT_ARB__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
+GL_IMPORT_ARB__(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
 
-GL_IMPORT_EXT(true,  PFNGLBINDFRAMEBUFFERPROC,                   glBindFramebuffer);
-GL_IMPORT_EXT(true,  PFNGLGENFRAMEBUFFERSPROC,                   glGenFramebuffers);
-GL_IMPORT_EXT(true,  PFNGLDELETEFRAMEBUFFERSPROC,                glDeleteFramebuffers);
-GL_IMPORT_EXT(true,  PFNGLCHECKFRAMEBUFFERSTATUSPROC,            glCheckFramebufferStatus);
-GL_IMPORT_EXT(true,  PFNGLFRAMEBUFFERRENDERBUFFERPROC,           glFramebufferRenderbuffer);
-GL_IMPORT_EXT(true,  PFNGLFRAMEBUFFERTEXTURE2DPROC,              glFramebufferTexture2D);
-GL_IMPORT_EXT(true,  PFNGLBINDRENDERBUFFERPROC,                  glBindRenderbuffer);
-GL_IMPORT_EXT(true,  PFNGLGENRENDERBUFFERSPROC,                  glGenRenderbuffers);
-GL_IMPORT_EXT(true,  PFNGLDELETERENDERBUFFERSPROC,               glDeleteRenderbuffers);
-GL_IMPORT_EXT(true,  PFNGLRENDERBUFFERSTORAGEPROC,               glRenderbufferStorage);
-GL_IMPORT_EXT(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+GL_IMPORT_EXT__(true,  PFNGLBINDFRAMEBUFFERPROC,                   glBindFramebuffer);
+GL_IMPORT_EXT__(true,  PFNGLGENFRAMEBUFFERSPROC,                   glGenFramebuffers);
+GL_IMPORT_EXT__(true,  PFNGLDELETEFRAMEBUFFERSPROC,                glDeleteFramebuffers);
+GL_IMPORT_EXT__(true,  PFNGLCHECKFRAMEBUFFERSTATUSPROC,            glCheckFramebufferStatus);
+GL_IMPORT_EXT__(true,  PFNGLFRAMEBUFFERRENDERBUFFERPROC,           glFramebufferRenderbuffer);
+GL_IMPORT_EXT__(true,  PFNGLFRAMEBUFFERTEXTURE2DPROC,              glFramebufferTexture2D);
+GL_IMPORT_EXT__(true,  PFNGLBINDRENDERBUFFERPROC,                  glBindRenderbuffer);
+GL_IMPORT_EXT__(true,  PFNGLGENRENDERBUFFERSPROC,                  glGenRenderbuffers);
+GL_IMPORT_EXT__(true,  PFNGLDELETERENDERBUFFERSPROC,               glDeleteRenderbuffers);
+GL_IMPORT_EXT__(true,  PFNGLRENDERBUFFERSTORAGEPROC,               glRenderbufferStorage);
+GL_IMPORT_EXT__(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
 #	else // GLES
-GL_IMPORT____(false, PFNGLCLEARDEPTHFPROC,                       glClearDepthf);
+GL_IMPORT______(false, PFNGLCLEARDEPTHFPROC,                       glClearDepthf);
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #endif // BGFX_USE_GL_DYNAMIC_LIB
 
 #if BGFX_CONFIG_DEBUG_GREMEDY
-GL_IMPORT____(true,  PFNGLSTRINGMARKERGREMEDYPROC,               glStringMarkerGREMEDY);
-GL_IMPORT____(true,  PFNGLFRAMETERMINATORGREMEDYPROC,            glFrameTerminatorGREMEDY);
+GL_IMPORT______(true,  PFNGLSTRINGMARKERGREMEDYPROC,               glStringMarkerGREMEDY);
+GL_IMPORT______(true,  PFNGLFRAMETERMINATORGREMEDYPROC,            glFrameTerminatorGREMEDY);
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
 
 #if !BGFX_CONFIG_RENDERER_OPENGL
-GL_IMPORT____(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC,    glGetTranslatedShaderSourceANGLE);
+GL_IMPORT______(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC,    glGetTranslatedShaderSourceANGLE);
+GL_IMPORT_ANGLE(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
+GL_IMPORT_ANGLE(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
 
 #	if BGFX_CONFIG_RENDERER_OPENGLES2
-GL_IMPORT_OES(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
-GL_IMPORT_OES(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
-GL_IMPORT_OES(true,  PFNGLCOMPRESSEDTEXIMAGE3DPROC,              glCompressedTexImage3D);
-GL_IMPORT_OES(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedTexSubImage3D);
+GL_IMPORT_OES__(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
+GL_IMPORT_OES__(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
+GL_IMPORT_OES__(true,  PFNGLCOMPRESSEDTEXIMAGE3DPROC,              glCompressedTexImage3D);
+GL_IMPORT_OES__(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedTexSubImage3D);
 
-GL_IMPORT_OES(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
-GL_IMPORT_OES(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
+GL_IMPORT_OES__(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
+GL_IMPORT_OES__(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
 
-GL_IMPORT_OES(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
-GL_IMPORT_OES(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
-GL_IMPORT_OES(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
+GL_IMPORT_OES__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
+GL_IMPORT_OES__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
+GL_IMPORT_OES__(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
 
-GL_IMPORT_OES(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
-GL_IMPORT_OES(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
-GL_IMPORT_OES(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
+GL_IMPORT_OES__(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
+GL_IMPORT_OES__(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
+GL_IMPORT_OES__(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES2
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
 #undef GL_IMPORT_TYPEDEFS
 #undef GL_IMPORT
 #undef GL_EXTENSION
-#undef GL_IMPORT____
-#undef GL_IMPORT_ARB
-#undef GL_IMPORT_EXT
-#undef GL_IMPORT_OES
+#undef GL_IMPORT______
+#undef GL_IMPORT_ARB__
+#undef GL_IMPORT_EXT__
+#undef GL_IMPORT_OES__

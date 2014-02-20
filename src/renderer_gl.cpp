@@ -214,9 +214,17 @@ namespace bgfx
 	{
 		enum Enum
 		{
+			ANGLE_depth_texture,
+			ANGLE_framebuffer_blit,
+			ANGLE_framebuffer_multisample,
 			ANGLE_instanced_arrays,
+			ANGLE_texture_compression_dxt1,
+			ANGLE_texture_compression_dxt3,
+			ANGLE_texture_compression_dxt5,
 			ANGLE_translated_shader_source,
+
 			APPLE_texture_format_BGRA8888,
+
 			ARB_debug_output,
 			ARB_depth_clamp,
 			ARB_ES3_compatibility,
@@ -237,11 +245,14 @@ namespace bgfx
 			ARB_timer_query,
 			ARB_vertex_array_object,
 			ARB_vertex_type_2_10_10_10_rev,
+
 			ATI_meminfo,
+
 			CHROMIUM_depth_texture,
 			CHROMIUM_framebuffer_multisample,
 			CHROMIUM_texture_compression_dxt3,
 			CHROMIUM_texture_compression_dxt5,
+
 			EXT_bgra,
 			EXT_blend_color,
 			EXT_blend_minmax,
@@ -266,14 +277,18 @@ namespace bgfx
 			EXT_texture_type_2_10_10_10_REV,
 			EXT_timer_query,
 			EXT_unpack_subimage,
+
 			GOOGLE_depth_texture,
+
 			IMG_multisampled_render_to_texture,
 			IMG_read_format,
 			IMG_shader_binary,
 			IMG_texture_compression_pvrtc,
 			IMG_texture_compression_pvrtc2,
 			IMG_texture_format_BGRA8888,
+
 			NVX_gpu_memory_info,
+
 			OES_compressed_ETC1_RGB8_texture,
 			OES_depth24,
 			OES_depth32,
@@ -305,9 +320,17 @@ namespace bgfx
 
 	static Extension s_extension[Extension::Count] =
 	{
+		{ "GL_ANGLE_depth_texture",                false,                             true  },
+		{ "GL_ANGLE_framebuffer_blit",             false,                             true  },
+		{ "GL_ANGLE_framebuffer_multisample",      false,                             false },
 		{ "GL_ANGLE_instanced_arrays",             false,                             true  },
+		{ "GL_ANGLE_texture_compression_dxt1",     false,                             true  },
+		{ "GL_ANGLE_texture_compression_dxt3",     false,                             true  },
+		{ "GL_ANGLE_texture_compression_dxt5",     false,                             true  },
 		{ "GL_ANGLE_translated_shader_source",     false,                             true  },
+
 		{ "GL_APPLE_texture_format_BGRA8888",      false,                             true  },
+
 		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
@@ -328,11 +351,14 @@ namespace bgfx
 		{ "GL_ARB_timer_query",                    BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
+
 		{ "GL_ATI_meminfo",                        false,                             true  },
+
 		{ "GL_CHROMIUM_depth_texture",             false,                             true  },
 		{ "GL_CHROMIUM_framebuffer_multisample",   false,                             true  },
 		{ "GL_CHROMIUM_texture_compression_dxt3",  false,                             true  },
 		{ "GL_CHROMIUM_texture_compression_dxt5",  false,                             true  },
+
 		{ "GL_EXT_bgra",                           false,                             true  },
 		{ "GL_EXT_blend_color",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
@@ -357,14 +383,18 @@ namespace bgfx
 		{ "GL_EXT_texture_type_2_10_10_10_REV",    false,                             true  },
 		{ "GL_EXT_timer_query",                    false,                             true  },
 		{ "GL_EXT_unpack_subimage",                false,                             true  },
+
 		{ "GL_GOOGLE_depth_texture",               false,                             true  },
+
 		{ "GL_IMG_multisampled_render_to_texture", false,                             true  },
 		{ "GL_IMG_read_format",                    false,                             true  },
 		{ "GL_IMG_shader_binary",                  false,                             true  },
 		{ "GL_IMG_texture_compression_pvrtc",      false,                             true  },
 		{ "GL_IMG_texture_compression_pvrtc2",     false,                             true  },
 		{ "GL_IMG_texture_format_BGRA8888",        false,                             true  },
+
 		{ "GL_NVX_gpu_memory_info",                false,                             true  },
+
 		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
 		{ "GL_OES_depth24",                        false,                             true  },
 		{ "GL_OES_depth32",                        false,                             true  },
@@ -639,7 +669,6 @@ namespace bgfx
 
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			if (1 < _msaa)
 			{
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
@@ -650,7 +679,9 @@ namespace bgfx
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
 				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
-				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
+
+				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) ? GL_DEPTH_ATTACHMENT : GL_DEPTH_STENCIL_ATTACHMENT;
+				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
 
 				BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 					, "glCheckFramebufferStatus failed 0x%08x"
@@ -659,26 +690,20 @@ namespace bgfx
 
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 			}
-#else
-			BX_UNUSED(_width, _height, _msaa);
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
 		void destroyMsaaFbo()
 		{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			if (0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
 				m_msaaBackBufferFbo = 0;
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
 		void blitMsaaFbo()
 		{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 			if (0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
@@ -687,6 +712,7 @@ namespace bgfx
 				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
 				uint32_t width = m_resolution.m_width;
 				uint32_t height = m_resolution.m_height;
+				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) ? GL_NEAREST : GL_LINEAR;
 				GL_CHECK(glBlitFramebuffer(0
 					, 0
 					, width
@@ -696,11 +722,10 @@ namespace bgfx
 					, width
 					, height
 					, GL_COLOR_BUFFER_BIT
-					, GL_LINEAR
+					, filter
 					) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		}
 
 		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0, bool _vsync = false)
@@ -2181,7 +2206,6 @@ namespace bgfx
 
 	void FrameBuffer::resolve()
 	{
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 		if (0 != m_fbo[1])
 		{
 			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
@@ -2199,7 +2223,6 @@ namespace bgfx
 				) );
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_msaaBackBufferFbo) );
 		}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 	}
 
 	void ConstantBuffer::commit()
@@ -2621,7 +2644,10 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_OPENGL_USE_EXTENSIONS
 
 		bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
-		s_textureFormat[TextureFormat::BC1].m_supported |= bc123Supported || s_extension[Extension::EXT_texture_compression_dxt1].m_supported;
+		s_textureFormat[TextureFormat::BC1].m_supported |= bc123Supported
+			|| s_extension[Extension::ANGLE_texture_compression_dxt1].m_supported
+			|| s_extension[Extension::EXT_texture_compression_dxt1].m_supported
+			;
 
 		if (!s_textureFormat[TextureFormat::BC1].m_supported
 		&& (s_textureFormat[TextureFormat::BC2].m_supported || s_textureFormat[TextureFormat::BC3].m_supported) )
@@ -2639,8 +2665,15 @@ namespace bgfx
 			}
 		}
 
-		s_textureFormat[TextureFormat::BC2].m_supported |= bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported;
-		s_textureFormat[TextureFormat::BC3].m_supported |= bc123Supported || s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported;
+		s_textureFormat[TextureFormat::BC2].m_supported |= bc123Supported
+			|| s_extension[Extension::ANGLE_texture_compression_dxt3].m_supported
+			|| s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
+			;
+
+		s_textureFormat[TextureFormat::BC3].m_supported |= bc123Supported
+			|| s_extension[Extension::ANGLE_texture_compression_dxt5].m_supported
+			|| s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
+			;
 
 		bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
 			|| s_extension[Extension::ARB_texture_compression_rgtc].m_supported
@@ -2761,12 +2794,11 @@ namespace bgfx
 			GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &s_renderCtx->m_maxAnisotropy) );
 		}
 
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-		if (s_extension[Extension::ARB_texture_multisample].m_supported)
+		if (s_extension[Extension::ARB_texture_multisample].m_supported
+		||  s_extension[Extension::ANGLE_framebuffer_multisample].m_supported)
 		{
 			GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &s_renderCtx->m_maxMsaa) );
 		}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 		if (s_extension[Extension::IMG_read_format].m_supported
 		&&  s_extension[Extension::OES_read_format].m_supported)
