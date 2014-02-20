@@ -472,20 +472,6 @@ namespace bgfx
 	}
 #endif // BGFX_CONFIG_DEBUG_GREMEDY
 
-#if BX_PLATFORM_IOS
-	PFNGLBINDVERTEXARRAYOESPROC         glBindVertexArrayOES         = NULL;
-	PFNGLDELETEVERTEXARRAYSOESPROC      glDeleteVertexArraysOES      = NULL;
-	PFNGLGENVERTEXARRAYSOESPROC         glGenVertexArraysOES         = NULL;
-	PFNGLPROGRAMBINARYOESPROC           glProgramBinaryOES           = NULL;
-	PFNGLGETPROGRAMBINARYOESPROC        glGetProgramBinaryOES        = NULL;
-	PFNGLTEXIMAGE3DOESPROC              glTexImage3DOES              = NULL;
-	PFNGLTEXSUBIMAGE3DOESPROC           glTexSubImage3DOES           = NULL;
-	PFNGLCOMPRESSEDTEXIMAGE3DOESPROC    glCompressedTexImage3DOES    = NULL;
-	PFNGLCOMPRESSEDTEXSUBIMAGE3DOESPROC glCompressedTexSubImage3DOES = NULL;
-	PFLGLDRAWARRAYSINSTANCEDANGLEPROC   glDrawArraysInstanced        = NULL;
-	PFLGLDRAWELEMENTSINSTANCEDANGLEPROC glDrawElementsInstanced      = NULL;
-#endif // BX_PLATFORM_IOS
-
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	static const char* getGLString(GLenum _name)

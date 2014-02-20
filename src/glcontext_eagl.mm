@@ -12,6 +12,9 @@
 
 namespace bgfx
 {
+#	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
+#	include "glimports.h"
+
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);

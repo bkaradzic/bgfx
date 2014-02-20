@@ -8,7 +8,7 @@
 
 #define BGFX_USE_EGL ( (BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3) && (BX_PLATFORM_ANDROID || BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_QNX || BX_PLATFORM_WINDOWS) )
 #define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
-#define BGFX_USE_GL_DYNAMIC_LIB BX_PLATFORM_WINDOWS
+#define BGFX_USE_GL_DYNAMIC_LIB (BX_PLATFORM_LINUX || BX_PLATFORM_OSX || BX_PLATFORM_WINDOWS)
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
@@ -44,6 +44,7 @@
 #		if BX_PLATFORM_IOS
 #			include <OpenGLES/ES2/gl.h>
 #			include <OpenGLES/ES2/glext.h>
+typedef double GLdouble;
 //#define GL_UNSIGNED_INT_10_10_10_2_OES                          0x8DF6
 #define GL_UNSIGNED_INT_2_10_10_10_REV_EXT                      0x8368
 #define GL_TEXTURE_3D_OES                                       0x806F
@@ -55,8 +56,8 @@
 #			include <GLES2/gl2.h>
 #			include <GLES2/gl2ext.h>
 #		endif // BX_PLATFORM_
-typedef khronos_int64_t  GLint64;
-typedef khronos_uint64_t GLuint64;
+typedef int64_t  GLint64;
+typedef uint64_t GLuint64;
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
 #		define GL_RGBA8 GL_RGBA //GL_RGBA8_OES

@@ -49,6 +49,7 @@ typedef void           (GL_APIENTRYP PFNGLBUFFERSUBDATAPROC) (GLenum target, GLi
 typedef GLenum         (GL_APIENTRYP PFNGLCHECKFRAMEBUFFERSTATUSPROC) (GLenum target);
 typedef void           (GL_APIENTRYP PFNGLCLEARPROC) (GLbitfield mask);
 typedef void           (GL_APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+typedef void           (GL_APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble d);
 typedef void           (GL_APIENTRYP PFNGLCLEARDEPTHFPROC) (GLfloat d);
 typedef void           (GL_APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
 typedef void           (GL_APIENTRYP PFNGLCOLORMASKPROC) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
@@ -110,6 +111,7 @@ typedef const GLubyte* (GL_APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
 typedef GLint          (GL_APIENTRYP PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar *name);
 typedef void           (GL_APIENTRYP PFNGLLINKPROGRAMPROC) (GLuint program);
 typedef void           (GL_APIENTRYP PFNGLPIXELSTOREIPROC) (GLenum pname, GLint param);
+typedef void           (GL_APIENTRYP PFNGLPOINTSIZEPROC) (GLfloat size);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMBINARYPROC) (GLuint program, GLenum binaryFormat, const void *binary, GLsizei length);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMPARAMETERIPROC) (GLuint program, GLenum pname, GLint value);
 typedef void           (GL_APIENTRYP PFNGLQUERYCOUNTERPROC) (GLuint id, GLenum target);
@@ -155,7 +157,6 @@ typedef void           (GL_APIENTRYP PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC)(GL
 #endif // GL_IMPORT_TYPEDEFS
 
 #if BGFX_USE_GL_DYNAMIC_LIB
-
 GL_IMPORT____(false, PFNGLACTIVETEXTUREPROC,                     glActiveTexture);
 GL_IMPORT____(false, PFNGLATTACHSHADERPROC,                      glAttachShader);
 GL_IMPORT____(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery);

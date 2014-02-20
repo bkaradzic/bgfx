@@ -15,7 +15,6 @@ namespace bgfx
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
-#	undef GL_IMPORT
 	
 	static void* s_opengl = NULL;
 
@@ -89,13 +88,17 @@ namespace bgfx
 
 	void GlContext::import()
 	{
-#	define GL_IMPORT(_optional, _proto, _func, _import) \
-		{ \
-			_func = (_proto)bx::dlsym(s_opengl, #_import); \
-			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. NSGLGetProcAddress(\"%s\")", #_import); \
-		}
+		BX_TRACE("Import:");
+#	define GL_EXTENSION(_optional, _proto, _func, _import) \
+				{ \
+					if (_func == NULL) \
+					{ \
+						_func = (_proto)bx::dlsym(s_opengl, #_import); \
+						BX_TRACE("%p " #_func " (" #_import ")", _func); \
+					} \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. NSGLGetProcAddress(\"%s\")", #_import); \
+				}
 #	include "glimports.h"
-#	undef GL_IMPORT
 	}
 
 } // namespace bgfx
