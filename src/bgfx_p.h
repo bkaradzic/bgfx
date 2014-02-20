@@ -2148,7 +2148,7 @@ namespace bgfx
 			fragmentShaderDecRef(m_programRef[_handle.idx].m_fsh);
 		}
 
-		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info = NULL) )
+		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info) )
 		{
 			if (NULL != _info)
 			{

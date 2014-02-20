@@ -1957,7 +1957,7 @@ namespace bgfx
 		tc.m_mem = _mem;
 		bx::write(&writer, tc);
 
-		return s_ctx->createTexture(mem, _flags, NULL);
+		return s_ctx->createTexture(mem, _flags, 0, NULL);
 	}
 
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
@@ -1999,7 +1999,7 @@ namespace bgfx
 		tc.m_mem = _mem;
 		bx::write(&writer, tc);
 
-		return s_ctx->createTexture(mem, _flags, NULL);
+		return s_ctx->createTexture(mem, _flags, 0, NULL);
 	}
 
 	TextureHandle createTextureCube(uint16_t _size, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
@@ -2040,7 +2040,7 @@ namespace bgfx
 		tc.m_mem = _mem;
 		bx::write(&writer, tc);
 
-		return s_ctx->createTexture(mem, _flags, NULL);
+		return s_ctx->createTexture(mem, _flags, 0, NULL);
 	}
 
 	void destroyTexture(TextureHandle _handle)
