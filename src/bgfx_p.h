@@ -153,6 +153,8 @@ namespace stl
 #	define BGFX_RENDERER_NAME "OpenGL ES 2"
 #elif BGFX_CONFIG_RENDERER_OPENGLES3
 #	define BGFX_RENDERER_NAME "OpenGL ES 3"
+#else
+#	define BGFX_RENDERER_NAME "NULL"
 #endif // BGFX_CONFIG_RENDERER_
 
 namespace bgfx
@@ -2146,7 +2148,7 @@ namespace bgfx
 			fragmentShaderDecRef(m_programRef[_handle.idx].m_fsh);
 		}
 
-		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, TextureInfo* _info = NULL) )
+		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info = NULL) )
 		{
 			if (NULL != _info)
 			{
@@ -2184,6 +2186,7 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
 				cmdbuf.write(_flags);
+				cmdbuf.write(_skip);
 			}
 
 			return handle;
@@ -2635,7 +2638,7 @@ namespace bgfx
 		void rendererDestroyFragmentShader(FragmentShaderHandle _handle);
 		void rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
 		void rendererDestroyProgram(FragmentShaderHandle _handle);
-		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags);
+		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip);
 		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void rendererUpdateTextureEnd();

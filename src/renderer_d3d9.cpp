@@ -1633,7 +1633,7 @@ namespace bgfx
 		BX_CHECK(false, "You should not be here.");
 	}
 
-	void Texture::create(const Memory* _mem, uint32_t _flags)
+	void Texture::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
 		m_flags = _flags;
 
@@ -1641,6 +1641,12 @@ namespace bgfx
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
+			uint8_t numMips = imageContainer.m_numMips;
+			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
+			numMips -= startLod;
+			const uint32_t textureWidth  = bx::uint32_max(1, imageContainer.m_width >>startLod);
+			const uint32_t textureHeight = bx::uint32_max(1, imageContainer.m_height>>startLod);
+
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
 			m_textureFormat   = (uint8_t)imageContainer.m_format;
 
@@ -1656,15 +1662,15 @@ namespace bgfx
 
 			if (imageContainer.m_cubeMap)
 			{
-				createCubeTexture(imageContainer.m_width, imageContainer.m_numMips);
+				createCubeTexture(textureWidth, numMips);
 			}
 			else if (imageContainer.m_depth > 1)
 			{
-				createVolumeTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_depth, imageContainer.m_numMips);
+				createVolumeTexture(textureWidth, textureHeight, imageContainer.m_depth, numMips);
 			}
 			else
 			{
-				createTexture(imageContainer.m_width, imageContainer.m_height, imageContainer.m_numMips);
+				createTexture(textureWidth, textureHeight, numMips);
 			}
 
 			if (0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY) )
@@ -1685,13 +1691,13 @@ namespace bgfx
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				uint32_t width     = imageContainer.m_width;
-				uint32_t height    = imageContainer.m_height;
+				uint32_t width     = textureWidth;
+				uint32_t height    = textureHeight;
 				uint32_t depth     = imageContainer.m_depth;
 				uint32_t mipWidth  = imageContainer.m_width;
 				uint32_t mipHeight = imageContainer.m_height;
 
-				for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
+				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 				{
 					width     = bx::uint32_max(1, width);
 					height    = bx::uint32_max(1, height);
@@ -1701,7 +1707,7 @@ namespace bgfx
 					uint32_t mipSize = width*height*depth*bpp/8;
 
 					ImageMip mip;
-					if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
+					if (imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
 						uint32_t pitch;
 						uint32_t slicePitch;
@@ -2232,9 +2238,9 @@ namespace bgfx
 		s_renderCtx->m_program[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
+	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
-		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags);
+		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags, _skip);
 	}
 
 	void Context::rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip)

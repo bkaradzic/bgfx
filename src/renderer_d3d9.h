@@ -311,7 +311,7 @@ namespace bgfx
 		void unlock(uint8_t _side, uint8_t _lod);
 		void dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth);
 
-		void create(const Memory* _mem, uint32_t _flags);
+		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 
 		void destroy()
 		{

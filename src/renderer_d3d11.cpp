@@ -1692,7 +1692,7 @@ namespace bgfx
 		}
 	}
 
-	void Texture::create(const Memory* _mem, uint32_t _flags)
+	void Texture::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
 		m_sampler = s_renderCtx->getSamplerState(_flags);
 
@@ -1700,6 +1700,12 @@ namespace bgfx
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
+			uint8_t numMips = imageContainer.m_numMips;
+			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
+			numMips -= startLod;
+			const uint32_t textureWidth  = bx::uint32_max(1, imageContainer.m_width >>startLod);
+			const uint32_t textureHeight = bx::uint32_max(1, imageContainer.m_height>>startLod);
+
 			m_flags = _flags;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
 			m_textureFormat   = (uint8_t)imageContainer.m_format;
@@ -1727,27 +1733,27 @@ namespace bgfx
 				m_type = Texture2D;
 			}
 
-			m_numMips = imageContainer.m_numMips;
+			m_numMips = numMips;
 
-			uint32_t numSrd = imageContainer.m_numMips*(imageContainer.m_cubeMap ? 6 : 1);
+			uint32_t numSrd = numMips*(imageContainer.m_cubeMap ? 6 : 1);
 			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				uint32_t width  = imageContainer.m_width;
-				uint32_t height = imageContainer.m_height;
+				uint32_t width  = textureWidth;
+				uint32_t height = textureHeight;
 				uint32_t depth  = imageContainer.m_depth;
 
-				for (uint32_t lod = 0, num = m_numMips; lod < num; ++lod)
+				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 				{
 					width  = bx::uint32_max(1, width);
 					height = bx::uint32_max(1, height);
 					depth  = bx::uint32_max(1, depth);
 
 					ImageMip mip;
-					if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
+					if (imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
 						srd[kk].pSysMem = mip.m_data;
 
@@ -1797,9 +1803,9 @@ namespace bgfx
 			case TextureCube:
 				{
 					D3D11_TEXTURE2D_DESC desc;
-					desc.Width = imageContainer.m_width;
-					desc.Height = imageContainer.m_height;
-					desc.MipLevels = imageContainer.m_numMips;
+					desc.Width = textureWidth;
+					desc.Height = textureHeight;
+					desc.MipLevels = numMips;
 					desc.Format = format;
 					desc.SampleDesc = msaa;
 					desc.Usage = kk == 0 ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
@@ -1822,14 +1828,14 @@ namespace bgfx
 						desc.ArraySize = 6;
 						desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-						srvd.TextureCube.MipLevels = imageContainer.m_numMips;
+						srvd.TextureCube.MipLevels = numMips;
 					}
 					else
 					{
 						desc.ArraySize = 1;
 						desc.MiscFlags = 0;
 						srvd.ViewDimension = 1 < msaa.Count ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
-						srvd.Texture2D.MipLevels = imageContainer.m_numMips;
+						srvd.Texture2D.MipLevels = numMips;
 					}
 
 					DX_CHECK(s_renderCtx->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
@@ -1839,8 +1845,8 @@ namespace bgfx
 			case Texture3D:
 				{
 					D3D11_TEXTURE3D_DESC desc;
-					desc.Width = imageContainer.m_width;
-					desc.Height = imageContainer.m_height;
+					desc.Width = textureWidth;
+					desc.Height = textureHeight;
 					desc.Depth = imageContainer.m_depth;
 					desc.MipLevels = imageContainer.m_numMips;
 					desc.Format = format;
@@ -1850,7 +1856,7 @@ namespace bgfx
 					desc.MiscFlags = 0;
 
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-					srvd.Texture3D.MipLevels = imageContainer.m_numMips;
+					srvd.Texture3D.MipLevels = numMips;
 
 					DX_CHECK(s_renderCtx->m_device->CreateTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d) );
 				}
@@ -1868,7 +1874,7 @@ namespace bgfx
 				kk = 0;
 				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
 						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pSysMem) );
 						++kk;
@@ -2134,9 +2140,9 @@ namespace bgfx
 		s_renderCtx->m_program[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
+	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
-		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags);
+		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags, _skip);
 	}
 
 	void Context::rendererUpdateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/)

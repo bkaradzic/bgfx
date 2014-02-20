@@ -1492,7 +1492,10 @@ namespace bgfx
 					uint32_t flags;
 					_cmdbuf.read(flags);
 
-					rendererCreateTexture(handle, mem, flags);
+					uint8_t skip;
+					_cmdbuf.read(skip);
+
+					rendererCreateTexture(handle, mem, flags, skip);
 
 					bx::MemoryReader reader(mem->data, mem->size);
 
@@ -1909,11 +1912,11 @@ namespace bgfx
 		_info.bitsPerPixel = bpp;
 	}
 
-	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, TextureInfo* _info)
+	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createTexture(_mem, _flags, _info);
+		return s_ctx->createTexture(_mem, _flags, _skip, _info);
 	}
 
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)

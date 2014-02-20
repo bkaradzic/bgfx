@@ -105,7 +105,7 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* /*_mem*/, uint32_t /*_flags*/)
+	void Context::rendererCreateTexture(TextureHandle /*_handle*/, Memory* /*_mem*/, uint32_t /*_flags*/, uint8_t /*_skip*/)
 	{
 	}
 

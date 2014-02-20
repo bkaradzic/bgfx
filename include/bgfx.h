@@ -860,10 +860,11 @@ namespace bgfx
 	///   BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC] - Point or anisotropic
 	///     sampling.
 	///
+	/// @param _skip Skip top level mips when parsing texture.
 	/// @param _info Returns parsed DDS texture information.
 	/// @returns Texture handle.
 	///
-	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, TextureInfo* _info = NULL);
+	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, uint8_t _skip = 0, TextureInfo* _info = NULL);
 
 	/// Create 2D texture.
 	///

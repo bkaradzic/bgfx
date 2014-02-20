@@ -1499,13 +1499,17 @@ namespace bgfx
 		return true;
 	}
 
-	void Texture::create(const Memory* _mem, uint32_t _flags)
+	void Texture::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
 		ImageContainer imageContainer;
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
+			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
+			numMips -= startLod;
+			const uint32_t textureWidth  = bx::uint32_max(1, imageContainer.m_width >>startLod);
+			const uint32_t textureHeight = bx::uint32_max(1, imageContainer.m_height>>startLod);
 
 			GLenum target = GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
@@ -1518,8 +1522,8 @@ namespace bgfx
 			}
 
 			if (!init(target
-					, imageContainer.m_width
-					, imageContainer.m_height
+					, textureWidth
+					, textureHeight
 					, imageContainer.m_format
 					, numMips
 					, _flags
@@ -1552,13 +1556,13 @@ namespace bgfx
 			uint8_t* temp = NULL;
 			if (convert || swizzle)
 			{
-				temp = (uint8_t*)BX_ALLOC(g_allocator, imageContainer.m_width*imageContainer.m_height*4);
+				temp = (uint8_t*)BX_ALLOC(g_allocator, textureWidth*textureHeight*4);
 			}
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				uint32_t width  = imageContainer.m_width;
-				uint32_t height = imageContainer.m_height;
+				uint32_t width  = textureWidth;
+				uint32_t height = textureHeight;
 				uint32_t depth  = imageContainer.m_depth;
 
 				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
@@ -1568,7 +1572,7 @@ namespace bgfx
 					depth  = bx::uint32_max(1, depth);
 
 					ImageMip mip;
-					if (imageGetRawData(imageContainer, side, lod, _mem->data, _mem->size, mip) )
+					if (imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
 						if (compressed)
 						{
@@ -2962,9 +2966,9 @@ namespace bgfx
 		s_renderCtx->m_program[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags)
+	void Context::rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
-		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags);
+		s_renderCtx->m_textures[_handle.idx].create(_mem, _flags, _skip);
 	}
 
 	void Context::rendererUpdateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/)
