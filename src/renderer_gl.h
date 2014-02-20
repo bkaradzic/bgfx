@@ -40,11 +40,11 @@
 #	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
 #elif BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
+typedef double GLdouble;
 #	if BGFX_CONFIG_RENDERER_OPENGLES2
 #		if BX_PLATFORM_IOS
 #			include <OpenGLES/ES2/gl.h>
 #			include <OpenGLES/ES2/glext.h>
-typedef double GLdouble;
 //#define GL_UNSIGNED_INT_10_10_10_2_OES                          0x8DF6
 #define GL_UNSIGNED_INT_2_10_10_10_REV_EXT                      0x8368
 #define GL_TEXTURE_3D_OES                                       0x806F
