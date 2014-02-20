@@ -283,14 +283,14 @@ GL_IMPORT____(false, PFNGLVIEWPORTPROC,                          glViewport);
 GL_IMPORT____(false, PFNGLCLEARDEPTHPROC,                        glClearDepth);
 GL_IMPORT____(false, PFNGLPOINTSIZEPROC,                         glPointSize);
 
-GL_IMPORT____(true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl);
-GL_IMPORT____(true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert);
-GL_IMPORT____(true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback);
-GL_IMPORT____(true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog);
-GL_IMPORT_ARB(true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl);
-GL_IMPORT_ARB(true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert);
-GL_IMPORT_ARB(true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback);
-GL_IMPORT_ARB(true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog);
+//GL_IMPORT____(true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl);
+//GL_IMPORT____(true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert);
+//GL_IMPORT____(true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback);
+//GL_IMPORT____(true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog);
+GL_IMPORT    (true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl,  glDebugMessageControlARB);
+GL_IMPORT    (true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert,   glDebugMessageInsertARB);
+GL_IMPORT    (true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback, glDebugMessageCallbackARB);
+GL_IMPORT    (true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog,   glGetDebugMessageLogARB);
 
 GL_IMPORT_ARB(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
 GL_IMPORT_ARB(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);

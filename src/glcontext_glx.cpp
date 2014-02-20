@@ -223,8 +223,8 @@ namespace bgfx
 				{ \
 					if (NULL == _func) \
 					{ \
-						_func = (_proto)glXGetProcAddress((const GLubyte*)#_import); \
-						BX_TRACE(#_func " = " #_import " 0x%08x", _func); \
+						_func = (_proto)glXGetProcAddress( (const GLubyte*)#_import); \
+						BX_TRACE("%p " #_func " (" #_import ")", _func); \
 						BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. glXGetProcAddress %s", #_import); \
 					} \
 				}
