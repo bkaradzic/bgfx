@@ -206,6 +206,14 @@ typedef uint64_t GLuint64;
 #	define GL_MAX_SAMPLES 0x8D57
 #endif // GL_MAX_SAMPLES
 
+#ifndef GL_MAX_COLOR_ATTACHMENTS
+#	define GL_MAX_COLOR_ATTACHMENTS 0x8CDF
+#endif // GL_MAX_COLOR_ATTACHMENTS
+
+#ifndef GL_QUERY_RESULT
+#	define GL_QUERY_RESULT 0x8866
+#endif // GL_QUERY_RESULT
+
 #ifndef GL_READ_FRAMEBUFFER
 #	define GL_READ_FRAMEBUFFER 0x8CA8
 #endif /// GL_READ_FRAMEBUFFER
@@ -213,6 +221,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_DRAW_FRAMEBUFFER
 #	define GL_DRAW_FRAMEBUFFER 0x8CA9
 #endif // GL_DRAW_FRAMEBUFFER
+
+#ifndef GL_TIME_ELAPSED
+#	define GL_TIME_ELAPSED 0x88BF
+#endif // GL_TIME_ELAPSED
 
 #ifndef GL_VBO_FREE_MEMORY_ATI
 #	define GL_VBO_FREE_MEMORY_ATI 0x87FB
@@ -410,7 +422,6 @@ namespace bgfx
 		VaoSet m_vaoSet;
 	};
 
-#if !BGFX_CONFIG_RENDERER_OPENGLES2
 	class SamplerStateCache
 	{
 	public:
@@ -460,7 +471,6 @@ namespace bgfx
 		typedef stl::unordered_map<uint32_t, GLuint> HashMap;
 		HashMap m_hashMap;
 	};
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES2
 
 	struct IndexBuffer
 	{
@@ -654,7 +664,6 @@ namespace bgfx
 		VaoCacheRef m_vcref;
 	};
 
-#if BGFX_CONFIG_RENDERER_OPENGL
 	struct Queries
 	{
 		void create()
@@ -686,7 +695,6 @@ namespace bgfx
 
 		GLuint m_queries[64];
 	};
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 } // namespace bgfx
 

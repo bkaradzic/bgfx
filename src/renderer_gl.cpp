@@ -492,7 +492,6 @@ namespace bgfx
 	static PFNGLDRAWELEMENTSINSTANCEDPROC s_drawElementsInstanced = stubDrawElementsInstanced;
 #endif // BGFX_CONFIG_RENDERER_OPENGLES3
 
-#if BGFX_CONFIG_DEBUG_GREMEDY
 	static void GL_APIENTRY stubStringMarkerGREMEDY(GLsizei /*_len*/, const GLvoid* /*_string*/)
 	{
 	}
@@ -500,7 +499,6 @@ namespace bgfx
 	static void GL_APIENTRY stubFrameTerminatorGREMEDY()
 	{
 	}
-#endif // BGFX_CONFIG_DEBUG_GREMEDY
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
@@ -736,6 +734,7 @@ namespace bgfx
 				if (!m_glctx.isValid() )
 				{
 					m_glctx.create(_width, _height);
+
 #if BX_PLATFORM_IOS
 					// BK - Temp, need to figure out how to deal with FBO created by context.
 					m_backBufferFbo = m_glctx.m_fbo;
@@ -770,52 +769,50 @@ namespace bgfx
 				m_vaoStateCache.invalidate();
 			}
 
-#if !BGFX_CONFIG_RENDERER_OPENGLES2
-			if (m_samplerObjectSupport)
+			if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2)
+			&&  m_samplerObjectSupport)
 			{
 				m_samplerStateCache.invalidate();
 			}
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES2
 		}
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGLES2
-			BX_UNUSED(_stage, _numMips, _flags);
-#else
-			if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
+			if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2) )
 			{
-				_flags = (_flags&(~BGFX_TEXTURE_RESERVED_MASK) ) | (_numMips<<BGFX_TEXTURE_RESERVED_SHIFT);
-				GLuint sampler = m_samplerStateCache.find(_flags);
-
-				if (UINT32_MAX == sampler)
+				if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
 				{
-					sampler = m_samplerStateCache.add(_flags);
+					_flags = (_flags&(~BGFX_TEXTURE_RESERVED_MASK) ) | (_numMips<<BGFX_TEXTURE_RESERVED_SHIFT);
+					GLuint sampler = m_samplerStateCache.find(_flags);
 
-					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
-					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
-					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
-
-					uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
-					uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
-					uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
-					GLenum minFilter = s_textureFilterMin[min][1 < _numMips ? mip+1 : 0];
-					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
-					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
-					if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
-					&&  0.0f < m_maxAnisotropy)
+					if (UINT32_MAX == sampler)
 					{
-						GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
-					}
-				}
+						sampler = m_samplerStateCache.add(_flags);
 
-				GL_CHECK(glBindSampler(_stage, sampler) );
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
+
+						uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
+						uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
+						uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
+						GLenum minFilter = s_textureFilterMin[min][1 < _numMips ? mip+1 : 0];
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
+						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
+						&&  0.0f < m_maxAnisotropy)
+						{
+							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
+						}
+					}
+
+					GL_CHECK(glBindSampler(_stage, sampler) );
+				}
+				else
+				{
+					GL_CHECK(glBindSampler(_stage, 0) );
+				}
 			}
-			else
-			{
-				GL_CHECK(glBindSampler(_stage, 0) );
-			}
-#endif // BGFX_CONFIG_RENDERER_OPENGLES2
 		}
 
 		void updateCapture()
@@ -902,18 +899,20 @@ namespace bgfx
 			m_version = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
 
-#if BGFX_CONFIG_DEBUG_GREMEDY
-			if (NULL == glStringMarkerGREMEDY
-			||  NULL == glFrameTerminatorGREMEDY)
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_GREMEDY) )
 			{
-				glStringMarkerGREMEDY = stubStringMarkerGREMEDY;
-				glFrameTerminatorGREMEDY = stubFrameTerminatorGREMEDY;
+				if (NULL == glStringMarkerGREMEDY
+				||  NULL == glFrameTerminatorGREMEDY)
+				{
+					glStringMarkerGREMEDY = stubStringMarkerGREMEDY;
+					glFrameTerminatorGREMEDY = stubFrameTerminatorGREMEDY;
+				}
 			}
-#endif // BGFX_CONFIG_DEBUG_GREMEDY
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-			m_queries.create();
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			{
+				m_queries.create();
+			}
 		}
 
 		void shutdown()
@@ -922,9 +921,10 @@ namespace bgfx
 
 			invalidateCache();
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-			m_queries.destroy();
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			{
+				m_queries.destroy();
+			}
 
 			destroyMsaaFbo();
 			m_glctx.destroy();
@@ -942,14 +942,10 @@ namespace bgfx
 		FrameBuffer m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
-#if BGFX_CONFIG_RENDERER_OPENGL
 		Queries m_queries;
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		VaoStateCache m_vaoStateCache;
-#if !BGFX_CONFIG_RENDERER_OPENGLES2
 		SamplerStateCache m_samplerStateCache;
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES2
 
 		TextVideoMem m_textVideoMem;
 		bool m_rtMsaa;
@@ -1375,9 +1371,10 @@ namespace bgfx
 
 	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
 	{
-#if !BGFX_CONFIG_RENDERER_OPENGL
-		_internalFormat = _format; // GLES wants internal format to match format...
-#endif // !BGFX_CONFIG_RENDERER_OPENGL
+		if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGL) )
+		{
+			_internalFormat = _format; // GLES wants internal format to match format...
+		}
 
 		if (_target == GL_TEXTURE_3D)
 		{
@@ -1498,8 +1495,7 @@ namespace bgfx
 						, _height
 						) );
 				}
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-				else
+				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3) )
 				{
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER
 						, msaaQuality
@@ -1508,7 +1504,6 @@ namespace bgfx
 						, _height
 						) );
 				}
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
 
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0) );
 
@@ -1852,23 +1847,28 @@ namespace bgfx
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
-#if BGFX_CONFIG_RENDERER_OPENGLES2
-		// GLES2 doesn't have support for sampler object.
-		setSamplerState(_flags);
-#elif BGFX_CONFIG_RENDERER_OPENGL < 31
-		// In case that GL 2.1 sampler object is supported via extension.
-		if (s_renderCtx->m_samplerObjectSupport)
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) )
 		{
-			s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
+			// GLES2 doesn't have support for sampler object.
+			setSamplerState(_flags);
+		}
+		else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL < 31) )
+		{
+			// In case that GL 2.1 sampler object is supported via extension.
+			if (s_renderCtx->m_samplerObjectSupport)
+			{
+				s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
+			}
+			else
+			{
+				setSamplerState(_flags);
+			}
 		}
 		else
 		{
-			setSamplerState(_flags);
+			// Everything else has sampler object.
+			s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
 		}
-#else
-		// Everything else has sampler object.
-		s_renderCtx->setSamplerState(_stage, m_numMips, _flags);
-#endif // BGFX_CONFIG_RENDERER_*
 	}
 
 	void writeString(bx::WriterI* _writer, const char* _str)
@@ -2368,8 +2368,8 @@ namespace bgfx
 
 	void ClearQuad::clear(const Rect& _rect, const Clear& _clear, uint32_t _height)
 	{
-#if BGFX_CONFIG_CLEAR_QUAD
-		if (s_renderCtx->m_useClearQuad)
+		if (BX_ENABLED(BGFX_CONFIG_CLEAR_QUAD)
+		&&  s_renderCtx->m_useClearQuad)
 		{
 			const GLuint defaultVao = s_renderCtx->m_vao;
 			if (0 != defaultVao)
@@ -2461,7 +2461,6 @@ namespace bgfx
 				) );
 		}
 		else
-#endif // BGFX_CONFIG_CLEAR_QUAD
 		{
 			GLuint flags = 0;
 			if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
@@ -2745,21 +2744,23 @@ namespace bgfx
 						 ;
 		g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
 
-#if !BGFX_CONFIG_RENDERER_OPENGLES2
-		g_caps.maxFBAttachments = bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES2
+		if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2) )
+		{
+			g_caps.maxFBAttachments = bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+		}
 
 		s_renderCtx->m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_vertex_array_object].m_supported
 			|| s_extension[Extension::OES_vertex_array_object].m_supported
 			;
 
-#if BX_PLATFORM_NACL
-		s_renderCtx->m_vaoSupport &= NULL != glGenVertexArrays
-								  && NULL != glDeleteVertexArrays
-								  && NULL != glBindVertexArray
-								  ;
-#endif // BX_PLATFORM_NACL
+		if (BX_ENABLED(BX_PLATFORM_NACL) )
+		{
+			s_renderCtx->m_vaoSupport &= NULL != glGenVertexArrays
+									  && NULL != glDeleteVertexArrays
+									  && NULL != glBindVertexArray
+									  ;
+		}
 
 		if (s_renderCtx->m_vaoSupport)
 		{
@@ -2815,9 +2816,10 @@ namespace bgfx
 		||  s_extension[Extension::IMG_texture_format_BGRA8888].m_supported
 		||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 		{
-#if BGFX_CONFIG_RENDERER_OPENGL
-			s_renderCtx->m_readPixelsFmt = GL_BGRA_EXT;
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			{
+				s_renderCtx->m_readPixelsFmt = GL_BGRA_EXT;
+			}
 
 			s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
 
@@ -3080,12 +3082,11 @@ namespace bgfx
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-		if (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+		&& (m_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) ) )
 		{
 			s_renderCtx->m_queries.begin(0, GL_TIME_ELAPSED);
 		}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		if (0 < m_render->m_iboffset)
 		{
