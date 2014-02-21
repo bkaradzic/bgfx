@@ -465,6 +465,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
+	// texture2dData is managed from main thread, and it's passed to renderer
+	// just as MemoryRef. At this point render might be using it. We must wait
+	// previous frame to finish before we can free it.
+	bgfx::frame();
+
 	// Cleanup.
 	free(texture2dData);
 
