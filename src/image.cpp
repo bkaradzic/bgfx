@@ -1069,7 +1069,7 @@ namespace bgfx
 		}
 
 		bpp = getBitsPerPixel(format);
-		blockSize = format < TextureFormat::Unknown ? 4*4 : 1;
+		blockSize = isCompressed(format) ? 4*4 : 1;
 		blockSize = blockSize*bpp/8;
 
 		_imageContainer.m_data = NULL;
@@ -1221,7 +1221,7 @@ namespace bgfx
 		}
 
 		bpp = getBitsPerPixel(format);
-		blockSize = format < TextureFormat::Unknown ? 4*4 : 1;
+		blockSize = isCompressed(format) ? 4*4 : 1;
 		blockSize = blockSize*bpp/8;
 
 		_imageContainer.m_data = NULL;
@@ -1346,7 +1346,7 @@ namespace bgfx
 		}
 
 		bpp = getBitsPerPixel(format);
-		blockSize = format < TextureFormat::Unknown ? 4*4 : 1;
+		blockSize = isCompressed(format) ? 4*4 : 1;
 		blockSize = blockSize*bpp/8;
 
 		_imageContainer.m_data = NULL;
@@ -1389,7 +1389,7 @@ namespace bgfx
 			bx::read(_reader, tc);
 
 			uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
-			uint32_t blockSize = tc.m_format < TextureFormat::Unknown ? 4*4 : 1;
+			uint32_t blockSize = isCompressed(TextureFormat::Enum(tc.m_format) ) ? 4*4 : 1;
 			blockSize = blockSize*bpp/8;
 
 			_imageContainer.m_format = tc.m_format;
@@ -1638,7 +1638,7 @@ namespace bgfx
 				depth  = bx::uint32_max(1, depth);
 
 				uint32_t size = width*height*depth*blockSize;
-				if (TextureFormat::Unknown > type)
+				if (isCompressed(type) )
 				{
 					width  = bx::uint32_max(1, (width + 3)>>2);
 					height = bx::uint32_max(1, (height + 3)>>2);

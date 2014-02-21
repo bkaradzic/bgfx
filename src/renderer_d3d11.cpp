@@ -1766,7 +1766,7 @@ namespace bgfx
 							srd[kk].pSysMem = temp;
 							srd[kk].SysMemPitch = srcpitch;
 						}
-						else if (TextureFormat::Unknown > m_textureFormat)
+						else if (isCompressed(TextureFormat::Enum(m_textureFormat) ) )
 						{
 							srd[kk].SysMemPitch = (mip.m_width/4)*mip.m_blockSize;
 							srd[kk].SysMemSlicePitch = (mip.m_height/4)*srd[kk].SysMemPitch;

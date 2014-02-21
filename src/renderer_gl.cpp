@@ -1454,7 +1454,7 @@ namespace bgfx
 			m_fmt = tfi.m_fmt;
 			m_type = tfi.m_type;
 
-			const bool compressed = TextureFormat::Unknown > _format;
+			const bool compressed = isCompressed(TextureFormat::Enum(_format) );
 			const bool decompress = !tfi.m_supported && compressed;
 
 			if (decompress)
@@ -1567,7 +1567,7 @@ namespace bgfx
 				&& !s_renderCtx->m_textureSwizzleSupport
 				;
 			const bool convert    = m_textureFormat != m_requestedFormat;
-			const bool compressed = TextureFormat::Unknown > m_textureFormat;
+			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
 			const uint32_t min    = convert && compressed ? 4 : 1;
 
 			BX_WARN(!swizzle && !convert, "Texture %s%s%s from %s to %s."
@@ -1728,7 +1728,7 @@ namespace bgfx
 			;
 		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
 		const bool convert         = m_textureFormat != m_requestedFormat;
-		const bool compressed      = TextureFormat::Unknown > m_textureFormat;
+		const bool compressed      = isCompressed(TextureFormat::Enum(m_textureFormat) );
 
 		const uint32_t width  = _rect.m_width;
 		const uint32_t height = _rect.m_height;
