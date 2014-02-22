@@ -16,7 +16,10 @@
 #include "fpumath.h"
 
 #define RENDER_SHADOW_PASS_ID 0
+#define RENDER_SHADOW_PASS_BIT (1<<RENDER_SHADOW_PASS_ID)
+
 #define RENDER_SCENE_PASS_ID  1
+#define RENDER_SCENE_PASS_BIT (1<<RENDER_SCENE_PASS_ID)
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -382,6 +385,33 @@ struct Mesh
 		}
 	}
 
+	void submitShadow(uint8_t _view, float* _mtx, bgfx::ProgramHandle _program)
+	{
+		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		{
+			const Group& group = *it;
+
+			// Set model matrix for rendering.
+			bgfx::setTransform(_mtx);
+			bgfx::setProgram(_program);
+			bgfx::setIndexBuffer(group.m_ibh);
+			bgfx::setVertexBuffer(group.m_vbh);
+
+			// Set render states.
+			bgfx::setState(0
+				|BGFX_STATE_RGB_WRITE
+				|BGFX_STATE_ALPHA_WRITE
+				|BGFX_STATE_DEPTH_WRITE
+				|BGFX_STATE_DEPTH_TEST_LESS
+				|BGFX_STATE_CULL_CCW
+				|BGFX_STATE_MSAA
+				);
+
+			// Submit primitive for rendering.
+			bgfx::submit(_view);
+		}
+	}
+
 	bgfx::VertexDecl m_decl;
 	typedef std::vector<Group> GroupArray;
 	GroupArray m_groups;
@@ -512,54 +542,30 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Setup instance matrices.
 		float mtxFloor[16];
 		mtxScaleRotateTranslate(mtxFloor
-			, 30.0f //scaleX
-			, 30.0f //scaleY
-			, 30.0f //scaleZ
-			, 0.0f  //rotX
-			, 0.0f  //rotY
-			, 0.0f  //rotZ
-			, 0.0f  //translateX
-			, 0.0f  //translateY
-			, 0.0f  //translateZ
+			, 30.0f, 30.0f, 30.0f
+			, 0.0f, 0.0f, 0.0f
+			, 0.0f, 0.0f, 0.0f
 			);
 
 		float mtxBunny[16];
 		mtxScaleRotateTranslate(mtxBunny
-			, 5.0f
-			, 5.0f
-			, 5.0f
-			, 0.0f
-			, float(M_PI) - timeAccumulatorScene
-			, 0.0f
-			, 15.0f
-			, 5.0f
-			, 0.0f
+			, 5.0f, 5.0f, 5.0f
+			, 0.0f, float(M_PI) - timeAccumulatorScene, 0.0f
+			, 15.0f, 5.0f, 0.0f
 			);
 
 		float mtxHollowcube[16];
 		mtxScaleRotateTranslate(mtxHollowcube
-			, 2.5f
-			, 2.5f
-			, 2.5f
-			, 0.0f
-			, 1.56f - timeAccumulatorScene
-			, 0.0f
-			, 0.0f
-			, 10.0f
-			, 0.0f
+			, 2.5f, 2.5f, 2.5f
+			, 0.0f, 1.56f - timeAccumulatorScene, 0.0f
+			, 0.0f, 10.0f, 0.0f
 			);
 
 		float mtxCube[16];
 		mtxScaleRotateTranslate(mtxCube
-			, 2.5f
-			, 2.5f
-			, 2.5f
-			, 0.0f
-			, 1.56f - timeAccumulatorScene
-			, 0.0f
-			, -15.0f
-			, 5.0f
-			, 0.0f
+			, 2.5f, 2.5f, 2.5f
+			, 0.0f, 1.56f - timeAccumulatorScene, 0.0f
+			, -15.0f, 5.0f, 0.0f
 			);
 
 		// Define matrices.
@@ -584,66 +590,59 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f);
 
 		bgfx::setViewRect(RENDER_SHADOW_PASS_ID, 0, 0, shadowMapSize, shadowMapSize);
-		bgfx::setViewRect(RENDER_SCENE_PASS_ID, 0, 0, width, height);
-
+		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, s_shadowMapFB);
 		bgfx::setViewTransform(RENDER_SHADOW_PASS_ID, lightView, lightProj);
+
+		bgfx::setViewRect(RENDER_SCENE_PASS_ID, 0, 0, width, height);
 		bgfx::setViewTransform(RENDER_SCENE_PASS_ID, view, proj);
 
-		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, s_shadowMapFB);
-
 		// Clear backbuffer and shadowmap framebuffer at beginning.
-		bgfx::setViewClearMask(0x3, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT, 0x303030ff, 1.0f, 0);
-		bgfx::submitMask(0x3);
+		bgfx::setViewClearMask(RENDER_SHADOW_PASS_BIT|RENDER_SCENE_PASS_BIT
+			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+			, 0x303030ff, 1.0f, 0
+			);
+		bgfx::submitMask(RENDER_SHADOW_PASS_BIT|RENDER_SCENE_PASS_BIT);
 
 		// Render.
+		float mtxShadow[16];
+		float lightMtx[16];
 
-		{ // Craft shadow map.
+		const float sy = s_flipV ? 0.5f : -0.5f;
+		const float mtxCrop[16] =
+		{
+			0.5f, 0.0f, 0.0f, 0.0f,
+			0.0f,   sy, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.5f, 0.0f,
+			0.5f, 0.5f, 0.5f, 1.0f,
+		};
 
-			hplaneMesh.submit(RENDER_SHADOW_PASS_ID, mtxFloor, progPackDepth);
-			bunnyMesh.submit(RENDER_SHADOW_PASS_ID, mtxBunny, progPackDepth);
-			hollowcubeMesh.submit(RENDER_SHADOW_PASS_ID, mtxHollowcube, progPackDepth);
-			cubeMesh.submit(RENDER_SHADOW_PASS_ID, mtxCube, progPackDepth);
-		}
+		float mtxTmp[16];
+		mtxMul(mtxTmp, lightProj, mtxCrop);
+		mtxMul(mtxShadow, lightView, mtxTmp);
 
-		{ // Draw Scene.
+		// Floor.
+		mtxMul(lightMtx, mtxFloor, mtxShadow);
+		bgfx::setUniform(u_lightMtx, lightMtx);
+		hplaneMesh.submit(RENDER_SCENE_PASS_ID, mtxFloor, progDraw);
+		hplaneMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxFloor, progPackDepth);
 
-			float mtxShadow[16]; //lightviewProjCrop
-			float lightMtx[16];  //modelLightviewProjCrop
+		// Bunny.
+		mtxMul(lightMtx, mtxBunny, mtxShadow);
+		bgfx::setUniform(u_lightMtx, lightMtx);
+		bunnyMesh.submit(RENDER_SCENE_PASS_ID, mtxBunny, progDraw);
+		bunnyMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxBunny, progPackDepth);
 
-			const float s = (s_flipV) ? 1.0f : -1.0f; //sign
+		// Hollow cube.
+		mtxMul(lightMtx, mtxHollowcube, mtxShadow);
+		bgfx::setUniform(u_lightMtx, lightMtx);
+		hollowcubeMesh.submit(RENDER_SCENE_PASS_ID, mtxHollowcube, progDraw);
+		hollowcubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxHollowcube, progPackDepth);
 
-			const float mtxCrop[16] =
-			{
-				0.5f,   0.0f, 0.0f, 0.0f,
-				0.0f, s*0.5f, 0.0f, 0.0f,
-				0.0f,   0.0f, 0.5f, 0.0f,
-				0.5f,   0.5f, 0.5f, 1.0f,
-			};
-
-			float mtxTmp[16];
-			mtxMul(mtxTmp, lightProj, mtxCrop);
-			mtxMul(mtxShadow, lightView, mtxTmp);
-
-			// Floor.
-			mtxMul(lightMtx, mtxFloor, mtxShadow);
-			bgfx::setUniform(u_lightMtx, lightMtx);
-			hplaneMesh.submit(RENDER_SCENE_PASS_ID, mtxFloor, progDraw);
-
-			// Bunny.
-			mtxMul(lightMtx, mtxBunny, mtxShadow);
-			bgfx::setUniform(u_lightMtx, lightMtx);
-			bunnyMesh.submit(RENDER_SCENE_PASS_ID, mtxBunny, progDraw);
-
-			// Hollow cube.
-			mtxMul(lightMtx, mtxHollowcube, mtxShadow);
-			bgfx::setUniform(u_lightMtx, lightMtx);
-			hollowcubeMesh.submit(RENDER_SCENE_PASS_ID, mtxHollowcube, progDraw);
-
-			// Cube.
-			mtxMul(lightMtx, mtxCube, mtxShadow);
-			bgfx::setUniform(u_lightMtx, lightMtx);
-			cubeMesh.submit(RENDER_SCENE_PASS_ID, mtxCube, progDraw);
-		}
+		// Cube.
+		mtxMul(lightMtx, mtxCube, mtxShadow);
+		bgfx::setUniform(u_lightMtx, lightMtx);
+		cubeMesh.submit(RENDER_SCENE_PASS_ID, mtxCube, progDraw);
+		cubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxCube, progPackDepth);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
