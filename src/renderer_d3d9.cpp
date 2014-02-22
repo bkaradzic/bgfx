@@ -71,20 +71,7 @@ namespace bgfx
 		D3DBLENDOP_MAX,
 	};
 
-	static const D3DCMPFUNC s_depthFunc[] =
-	{
-		(D3DCMPFUNC)0, // ignored
-		D3DCMP_LESS,
-		D3DCMP_LESSEQUAL,
-		D3DCMP_EQUAL,
-		D3DCMP_GREATEREQUAL,
-		D3DCMP_GREATER,
-		D3DCMP_NOTEQUAL,
-		D3DCMP_NEVER,
-		D3DCMP_ALWAYS,
-	};
-
-	static const D3DCMPFUNC s_stencilFunc[] =
+	static const D3DCMPFUNC s_cmpFunc[] =
 	{
 		(D3DCMPFUNC)0, // ignored
 		D3DCMP_LESS,
@@ -655,12 +642,17 @@ namespace bgfx
 			else
 			{
 				const FrameBuffer& frameBuffer = m_frameBuffers[_fbh.idx];
-				for (uint32_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+				
+				// If frame buffer has only depth attachement D3DFMT_NULL
+				// render target is created.
+				uint32_t fbnum = bx::uint32_max(1, frameBuffer.m_num);
+
+				for (uint32_t ii = 0; ii < fbnum; ++ii)
 				{
 					DX_CHECK(m_device->SetRenderTarget(ii, frameBuffer.m_color[ii]) );
 				}
 
-				for (uint32_t ii = frameBuffer.m_num, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = fbnum, num = g_caps.maxFBAttachments; ii < num; ++ii)
 				{
 					DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
 				}
@@ -1904,6 +1896,11 @@ namespace bgfx
 				m_needResolve |= (NULL != texture.m_surface) && (NULL != texture.m_texture2d);
 			}
 		}
+
+		if (0 == m_num)
+		{
+			createNullColorRT();
+		}
 	}
 
 	void FrameBuffer::destroy()
@@ -1922,6 +1919,16 @@ namespace bgfx
 
 		if (NULL != m_depthStencil)
 		{
+			if (0 == m_num)
+			{
+				IDirect3DSurface9* ptr = m_color[0];
+				if (NULL != ptr)
+				{
+					ptr->Release();
+					m_color[0] = NULL;
+				}
+			}
+
 			m_depthStencil->Release();
 			m_depthStencil = NULL;
 		}
@@ -1958,6 +1965,12 @@ namespace bgfx
 
 		if (isValid(m_depthHandle) )
 		{
+			if (0 == m_num)
+			{
+				m_color[0]->Release();
+				m_color[0] = NULL;
+			}
+
 			m_depthStencil->Release();
 			m_depthStencil = NULL;
 		}
@@ -1991,7 +2004,26 @@ namespace bgfx
 			{
 				DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_depthStencil) );
 			}
+
+			if (0 == m_num)
+			{
+				createNullColorRT();
+			}
 		}
+	}
+
+	void FrameBuffer::createNullColorRT()
+	{
+		const Texture& texture = s_renderCtx->m_textures[m_depthHandle.idx];
+		DX_CHECK(s_renderCtx->m_device->CreateRenderTarget(texture.m_width
+			, texture.m_height
+			, D3DFMT_NULL
+			, D3DMULTISAMPLE_NONE
+			, 0
+			, false
+			, &m_color[0]
+			, NULL
+			) );
 	}
 
 	void ConstantBuffer::commit()
@@ -2540,7 +2572,7 @@ namespace bgfx
 							if ( (BGFX_STENCIL_TEST_MASK|BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK) & changed)
 							{
 								uint32_t func = (stencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT;
-								DX_CHECK(device->SetRenderState(s_stencilFuncRs[ii], s_stencilFunc[func]) );
+								DX_CHECK(device->SetRenderState(s_stencilFuncRs[ii], s_cmpFunc[func]) );
 							}
 
 							if ( (BGFX_STENCIL_OP_FAIL_S_MASK|BGFX_STENCIL_OP_FAIL_Z_MASK|BGFX_STENCIL_OP_PASS_Z_MASK) & changed)
@@ -2590,7 +2622,7 @@ namespace bgfx
 
 						if (0 != func)
 						{
-							DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, s_depthFunc[func]) );
+							DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, s_cmpFunc[func]) );
 						}
 					}
 

@@ -361,6 +361,7 @@ namespace bgfx
 		void resolve() const;
 		void preReset();
 		void postReset();
+		void createNullColorRT();
 
 		IDirect3DSurface9* m_color[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		IDirect3DSurface9* m_depthStencil;
