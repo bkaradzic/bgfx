@@ -91,20 +91,7 @@ namespace bgfx
 		GL_MAX,
 	};
 
-	static const GLenum s_depthFunc[] =
-	{
-		0, // ignored
-		GL_LESS,
-		GL_LEQUAL,
-		GL_EQUAL,
-		GL_GEQUAL,
-		GL_GREATER,
-		GL_NOTEQUAL,
-		GL_NEVER,
-		GL_ALWAYS,
-	};
-
-	static const GLenum s_stencilFunc[] =
+	static const GLenum s_cmpFunc[] =
 	{
 		0, // ignored
 		GL_LESS,
@@ -605,7 +592,9 @@ namespace bgfx
 			, m_maxAnisotropy(0.0f)
 			, m_maxMsaa(0)
 			, m_vao(0)
-			, m_vaoSupport(BGFX_CONFIG_RENDERER_OPENGL >= 31)
+			, m_vaoSupport(false)
+			, m_samplerObjectSupport(false)
+			, m_shadowSamplersSupport(false)
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_depthTextureSupport(false)
@@ -793,9 +782,9 @@ namespace bgfx
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
 
-						uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
-						uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
-						uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
+						const uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
+						const uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
+						const uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
 						GLenum minFilter = s_textureFilterMin[min][1 < _numMips ? mip+1 : 0];
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
@@ -803,6 +792,21 @@ namespace bgfx
 						&&  0.0f < m_maxAnisotropy)
 						{
 							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
+						}
+
+						if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2)
+						||  m_shadowSamplersSupport)
+						{
+							const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
+							if (0 == cmpFunc)
+							{
+								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+							}
+							else
+							{
+								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
+								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+							}
 						}
 					}
 
@@ -960,6 +964,7 @@ namespace bgfx
 		GLuint m_vao;
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
+		bool m_shadowSamplersSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
 		bool m_depthTextureSupport;
@@ -1006,7 +1011,7 @@ namespace bgfx
 			GLSL_TYPE(GL_SAMPLER_3D);
 			GLSL_TYPE(GL_SAMPLER_CUBE);
 // 			GLSL_TYPE(GL_SAMPLER_1D_SHADOW);
-// 			GLSL_TYPE(GL_SAMPLER_2D_SHADOW);
+			GLSL_TYPE(GL_SAMPLER_2D_SHADOW);
 		}
 
 #undef GLSL_TYPE
@@ -1067,7 +1072,7 @@ namespace bgfx
 		case GL_SAMPLER_3D:
 		case GL_SAMPLER_CUBE:
 // 		case GL_SAMPLER_1D_SHADOW:
-// 		case GL_SAMPLER_2D_SHADOW:
+ 		case GL_SAMPLER_2D_SHADOW:
 			return UniformType::Uniform1iv;
 		};
 
@@ -1239,12 +1244,20 @@ namespace bgfx
 				offset = atoi(array);
 			}
 
- 			if (GL_SAMPLER_2D == gltype)
- 			{
- 				BX_TRACE("Sampler %d at %d.", m_numSamplers, loc);
- 				m_sampler[m_numSamplers] = loc;
- 				m_numSamplers++;
- 			}
+			switch (gltype)
+			{
+			case GL_SAMPLER_2D:
+			case GL_SAMPLER_3D:
+			case GL_SAMPLER_CUBE:
+			case GL_SAMPLER_2D_SHADOW:
+				BX_TRACE("Sampler %d at %d.", m_numSamplers, loc);
+				m_sampler[m_numSamplers] = loc;
+				m_numSamplers++;
+				break;
+
+			default:
+				break;
+			}
 
 			const void* data = NULL;
 			PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -1826,16 +1839,31 @@ namespace bgfx
 				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
 			}
 
-			uint32_t mag = (flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
-			uint32_t min = (flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
-			uint32_t mip = (flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
-			GLenum minFilter = s_textureFilterMin[min][1 < numMips ? mip+1 : 0];
+			const uint32_t mag = (flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
+			const uint32_t min = (flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
+			const uint32_t mip = (flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
+			const GLenum minFilter = s_textureFilterMin[min][1 < numMips ? mip+1 : 0];
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
 			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 			&&  0.0f < s_renderCtx->m_maxAnisotropy)
 			{
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx->m_maxAnisotropy) );
+			}
+
+			if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2)
+			||  s_renderCtx->m_shadowSamplersSupport)
+			{
+				const uint32_t cmpFunc = (flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
+				if (0 == cmpFunc)
+				{
+					GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+				}
+				else
+				{
+					GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
+					GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+				}
 			}
 
 			m_currentFlags = flags;
@@ -1902,7 +1930,7 @@ namespace bgfx
 		if (0 != m_id)
 		{
 			int32_t codeLen = (int32_t)strlen(code);
-			int32_t tempLen = codeLen + 1024;
+			int32_t tempLen = codeLen + (4<<10);
 			char* temp = (char*)alloca(tempLen);
 			bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
@@ -1914,9 +1942,7 @@ namespace bgfx
 
 				bool usesFragDepth = !!bx::findIdentifierMatch(code, "gl_FragDepth");
 
-				bool usesShadowSamplers = s_extension[Extension::EXT_shadow_samplers].m_supported
-					&& bx::findIdentifierMatch(code, s_EXT_shadow_samplers)
-					;
+				bool usesShadowSamplers = !!bx::findIdentifierMatch(code, s_EXT_shadow_samplers);
 
 				bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported
 					&& bx::findIdentifierMatch(code, s_OES_texture_3D)
@@ -1954,7 +1980,22 @@ namespace bgfx
 
 				if (usesShadowSamplers)
 				{
-					writeString(&writer, "#extension GL_EXT_shadow_samplers : enable\n");
+					if (s_renderCtx->m_shadowSamplersSupport)
+					{
+						writeString(&writer
+							, "#extension GL_EXT_shadow_samplers : enable\n"
+							  "#define shadow2D shadow2DEXT\n"
+							  "#define shadow2DProj shadow2DProjEXT\n"
+							);
+					}
+					else
+					{
+						writeString(&writer
+							, "#define sampler2DShadow sampler2D\n"
+							  "#define shadow2D(_sampler, _coord) step(_coord.z, texture2D(_sampler, _coord.xy).x)\n"
+							  "#define shadow2DProj(_sampler, _coord) step(_coord.z/_coord.w, texture2DProj(_sampler, _coord).x)\n"
+							);
+					}
 				}
 
 				if (usesTexture3D)
@@ -2102,7 +2143,7 @@ namespace bgfx
 	void FrameBuffer::create(uint8_t _num, const TextureHandle* _handles)
 	{
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[0]) );
+		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[0]) );
 
 		bool needResolve = false;
 
@@ -2120,18 +2161,18 @@ namespace bgfx
 				}
 				else
 				{
-					if (0 == colorIdx)
-					{
-						m_width  = texture.m_width;
-						m_height = texture.m_height;
-					}
-
 					++colorIdx;
+				}
+
+				if (0 == colorIdx)
+				{
+					m_width  = texture.m_width;
+					m_height = texture.m_height;
 				}
 
 				if (0 != texture.m_rbo)
 				{
-					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+					GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER
 						, attachment
 						, GL_RENDERBUFFER
 						, texture.m_rbo
@@ -2139,7 +2180,7 @@ namespace bgfx
 				}
 				else
 				{
-					GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+					GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER
 						, attachment
 						, texture.m_target
 						, texture.m_id
@@ -2151,15 +2192,15 @@ namespace bgfx
 			}
 		}
 
-		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER)
 			, "glCheckFramebufferStatus failed 0x%08x"
-			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+			, glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER)
 			);
 
 		if (needResolve)
 		{
 			GL_CHECK(glGenFramebuffers(1, &m_fbo[1]) );
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
+			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
 
 			for (uint32_t ii = 0, colorIdx = 0; ii < _num; ++ii)
 			{
@@ -2178,7 +2219,7 @@ namespace bgfx
 						else
 						{
 							++colorIdx;
-							GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+							GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER
 								, attachment
 								, texture.m_target
 								, texture.m_id
@@ -2734,6 +2775,10 @@ namespace bgfx
 						 ? BGFX_CAPS_TEXTURE_3D
 						 : 0
 						 ;
+		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::EXT_shadow_samplers].m_supported
+						 ? BGFX_CAPS_TEXTURE_COMPARE_ALL
+						 : 0
+						 ;
 		g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_vertex_half_float].m_supported
 						 ? BGFX_CAPS_VERTEX_ATTRIB_HALF
 						 : 0
@@ -2771,6 +2816,10 @@ namespace bgfx
 			|| s_extension[Extension::ARB_sampler_objects].m_supported
 			;
 
+		s_renderCtx->m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			|| s_extension[Extension::EXT_shadow_samplers].m_supported
+			;
+
 		s_renderCtx->m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
 			|| s_extension[Extension::ARB_get_program_binary].m_supported
 			|| s_extension[Extension::OES_get_program_binary].m_supported
@@ -2788,7 +2837,10 @@ namespace bgfx
 			|| s_extension[Extension::OES_depth_texture].m_supported
 			;
 
-		g_caps.supported |= s_renderCtx->m_depthTextureSupport ? BGFX_CAPS_TEXTURE_DEPTH_MASK : 0;
+		g_caps.supported |= s_renderCtx->m_depthTextureSupport 
+						 ? (BGFX_CAPS_TEXTURE_DEPTH_MASK|BGFX_CAPS_TEXTURE_COMPARE_LEQUAL) 
+						 : 0
+						 ;
 
 		if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 		{
@@ -3244,7 +3296,7 @@ namespace bgfx
 								GLint ref = (stencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 								GLint mask = (stencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 								uint32_t func = (stencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT;
-								GL_CHECK(glStencilFuncSeparate(face, s_stencilFunc[func], ref, mask));
+								GL_CHECK(glStencilFuncSeparate(face, s_cmpFunc[func], ref, mask));
 							}
 
 							if ( (BGFX_STENCIL_OP_FAIL_S_MASK|BGFX_STENCIL_OP_FAIL_Z_MASK|BGFX_STENCIL_OP_PASS_Z_MASK) & changed)
@@ -3306,7 +3358,7 @@ namespace bgfx
 						if (0 != func)
 						{
 							GL_CHECK(glEnable(GL_DEPTH_TEST) );
-							GL_CHECK(glDepthFunc(s_depthFunc[func]) );
+							GL_CHECK(glDepthFunc(s_cmpFunc[func]) );
 						}
 						else
 						{

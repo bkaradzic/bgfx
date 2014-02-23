@@ -64,20 +64,7 @@ namespace bgfx
 		D3D11_BLEND_OP_MAX,
 	};
 
-	static const D3D11_COMPARISON_FUNC s_depthFunc[] =
-	{
-		D3D11_COMPARISON_FUNC(0), // ignored
-		D3D11_COMPARISON_LESS,
-		D3D11_COMPARISON_LESS_EQUAL,
-		D3D11_COMPARISON_EQUAL,
-		D3D11_COMPARISON_GREATER_EQUAL,
-		D3D11_COMPARISON_GREATER,
-		D3D11_COMPARISON_NOT_EQUAL,
-		D3D11_COMPARISON_NEVER,
-		D3D11_COMPARISON_ALWAYS,
-	};
-
-	static const D3D11_COMPARISON_FUNC s_stencilFunc[] =
+	static const D3D11_COMPARISON_FUNC s_cmpFunc[] =
 	{
 		D3D11_COMPARISON_FUNC(0), // ignored
 		D3D11_COMPARISON_LESS,
@@ -150,6 +137,9 @@ namespace bgfx
 	 * D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT        = 0x14,
 	 * D3D11_FILTER_MIN_MAG_MIP_LINEAR              = 0x15,
 	 * D3D11_FILTER_ANISOTROPIC                     = 0x55,
+	 *
+	 * D3D11_COMPARISON_FILTERING_BIT               = 0x80,
+	 * D3D11_ANISOTROPIC_FILTERING_BIT              = 0x40,
 	 *
 	 * According to D3D11_FILTER enum bits for mip, mag and mip are:
 	 * 0x10 // MIN_LINEAR
@@ -516,8 +506,9 @@ namespace bgfx
 								| BGFX_CAPS_TEXTURE_FORMAT_BC3
 								| BGFX_CAPS_TEXTURE_FORMAT_BC4
 								| BGFX_CAPS_TEXTURE_FORMAT_BC5
-								| BGFX_CAPS_INSTANCING
 								| BGFX_CAPS_TEXTURE_3D
+								| BGFX_CAPS_TEXTURE_COMPARE_ALL
+								| BGFX_CAPS_INSTANCING
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								);
@@ -929,7 +920,7 @@ namespace bgfx
 				uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
 				desc.DepthEnable = 0 != func;
 				desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state) ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
-				desc.DepthFunc = s_depthFunc[func];
+				desc.DepthFunc = s_cmpFunc[func];
 
 				uint32_t bstencil = unpackStencil(1, _stencil);
 				uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
@@ -941,11 +932,11 @@ namespace bgfx
 				desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
 				desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
 				desc.FrontFace.StencilPassOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
-				desc.FrontFace.StencilFunc        = s_stencilFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+				desc.FrontFace.StencilFunc        = s_cmpFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
 				desc.BackFace.StencilFailOp       = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
 				desc.BackFace.StencilDepthFailOp  = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
 				desc.BackFace.StencilPassOp       = s_stencilOp[(bstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
-				desc.BackFace.StencilFunc         = s_stencilFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+				desc.BackFace.StencilFunc         = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
 
 				DX_CHECK(m_device->CreateDepthStencilState(&desc, &dss) );
 
@@ -999,23 +990,26 @@ namespace bgfx
 		{
 			_flags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
 					| BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
+					| BGFX_TEXTURE_COMPARE_MASK
 					;
 
 			ID3D11SamplerState* sampler = m_samplerStateCache.find(_flags);
 			if (NULL == sampler)
 			{
-				uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-				uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-				uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+				const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
+				const uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+				const uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+				const uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+				const uint8_t filter = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
 
 				D3D11_SAMPLER_DESC sd;
-				sd.Filter = (D3D11_FILTER)(minFilter|magFilter|mipFilter);
+				sd.Filter = (D3D11_FILTER)(filter|minFilter|magFilter|mipFilter);
 				sd.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
 				sd.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
 				sd.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
 				sd.MipLODBias = 0.0f;
 				sd.MaxAnisotropy = 1;
-				sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+				sd.ComparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
 				sd.BorderColor[0] = 0.0f;
 				sd.BorderColor[1] = 0.0f;
 				sd.BorderColor[2] = 0.0f;

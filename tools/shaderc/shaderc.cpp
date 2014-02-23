@@ -127,6 +127,7 @@ static const char* s_EXT_shadow_samplers[] =
 {
 	"shadow2D",
 	"shadow2DProj",
+	"sampler2DShadow",
 	NULL
 };
 

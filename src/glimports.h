@@ -136,6 +136,8 @@ typedef void           (GL_APIENTRYP PFNGLTEXIMAGE3DPROC) (GLenum target, GLint 
 typedef void           (GL_APIENTRYP PFNGLTEXPARAMETERFPROC) (GLenum target, GLenum pname, GLfloat param);
 typedef void           (GL_APIENTRYP PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
 typedef void           (GL_APIENTRYP PFNGLTEXPARAMETERIVPROC) (GLenum target, GLenum pname, const GLint *params);
+typedef void           (GL_APIENTRYP PFNGLTEXSTORAGE2DPROC) (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void           (GL_APIENTRYP PFNGLTEXSTORAGE3DPROC) (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void           (GL_APIENTRYP PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 typedef void           (GL_APIENTRYP PFNGLTEXSUBIMAGE3DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels);
 typedef void           (GL_APIENTRYP PFNGLUNIFORM1FPROC) (GLint location, GLfloat v0);
@@ -264,6 +266,8 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D)
 GL_IMPORT______(false, PFNGLTEXPARAMETERIPROC,                     glTexParameteri);
 GL_IMPORT______(false, PFNGLTEXPARAMETERIVPROC,                    glTexParameteriv);
 GL_IMPORT______(false, PFNGLTEXPARAMETERFPROC,                     glTexParameterf);
+GL_IMPORT______(true,  PFNGLTEXSTORAGE2DPROC,                      glTexStorage2D);
+GL_IMPORT______(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3D);
 GL_IMPORT______(false, PFNGLTEXSUBIMAGE2DPROC,                     glTexSubImage2D);
 GL_IMPORT______(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
 GL_IMPORT______(false, PFNGLUNIFORM1IPROC,                         glUniform1i);
@@ -327,6 +331,9 @@ GL_IMPORT_OES__(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D)
 GL_IMPORT_OES__(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
 GL_IMPORT_OES__(true,  PFNGLCOMPRESSEDTEXIMAGE3DPROC,              glCompressedTexImage3D);
 GL_IMPORT_OES__(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedTexSubImage3D);
+
+GL_IMPORT_EXT__(true,  PFNGLTEXSTORAGE2DPROC,                      glTexStorage2D);
+GL_IMPORT_EXT__(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3D);
 
 GL_IMPORT_OES__(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
 GL_IMPORT_OES__(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
