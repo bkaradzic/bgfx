@@ -2150,7 +2150,8 @@ namespace bgfx
 
 		bool needResolve = false;
 
-		for (uint32_t ii = 0, colorIdx = 0; ii < _num; ++ii)
+		uint32_t colorIdx = 0;
+		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
 			TextureHandle handle = _handles[ii];
 			if (isValid(handle) )
@@ -2193,6 +2194,19 @@ namespace bgfx
 				
 				needResolve |= (0 != texture.m_rbo) && (0 != texture.m_id);
 			}
+		}
+
+		if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGL) )
+		{
+			if (0 == colorIdx)
+			{
+				// When only depth is attached disable draw buffer to avoid
+				// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
+				glDrawBuffer(GL_NONE);
+			}
+
+			// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
+			glReadBuffer(GL_NONE);
 		}
 
 		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
