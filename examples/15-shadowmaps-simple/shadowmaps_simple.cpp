@@ -462,10 +462,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_lightPos = bgfx::createUniform("u_lightPos", bgfx::UniformType::Uniform4fv);
 	bgfx::UniformHandle u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Uniform4x4fv);
 
-	// Programs.
-	bgfx::ProgramHandle progPackDepth = loadProgram("vs_smsimple_packdepth", "fs_smsimple_packdepth");
-	bgfx::ProgramHandle progDraw      = loadProgram("vs_smsimple_draw",      "fs_smsimple_draw");
-
 	// Vertex declarations.
 	bgfx::VertexDecl PosNormalDecl;
 	PosNormalDecl.begin();
@@ -486,12 +482,41 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Render targets.
 	uint16_t shadowMapSize = 512;
 
-	bgfx::TextureHandle fbtextures[] =
+	// Get renderer capabilities info.
+	//const bgfx::Caps* caps = bgfx::getCaps();
+	// Shadow samplers are supported at least partially supported if texture
+	// compare less equal feature is supported.
+	bool shadowSamplerSupported = false; //0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
+
+	bgfx::ProgramHandle progShadow;
+	bgfx::ProgramHandle progMesh;
+
+	if (shadowSamplerSupported)
 	{
-		bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
-	};
-	s_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+		// Depth textures and shadow samplers are supported.
+		progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
+		progMesh   = loadProgram("vs_sms_mesh",   "fs_sms_mesh");
+
+		bgfx::TextureHandle fbtextures[] =
+		{
+			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_COMPARE_LEQUAL),
+		};
+		s_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+	}
+	else
+	{
+		// Depth textures and shadow samplers are not supported. Use float
+		// depth packing into color buffer instead.
+		progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
+		progMesh   = loadProgram("vs_sms_mesh",      "fs_sms_mesh_pd");
+
+		bgfx::TextureHandle fbtextures[] =
+		{
+			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
+		};
+		s_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+	}
 
 	// Set view and projection matrices.
 	float view[16];
@@ -527,7 +552,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/15-shadowmaps-simple");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow maps example.");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow maps example (technique: %s).", shadowSamplerSupported ? "depth texture and shadow samplers" : "shadow depth packed into color texture");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		// Setup lights.
@@ -569,11 +594,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		// Define matrices.
-		float screenView[16];
-		float screenProj[16];
-		mtxIdentity(screenView);
-		mtxOrtho(screenProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
-
 		float lightView[16];
 		float lightProj[16];
 
@@ -601,7 +621,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
 			, 0x303030ff, 1.0f, 0
 			);
-		bgfx::submitMask(RENDER_SHADOW_PASS_BIT|RENDER_SCENE_PASS_BIT);
 
 		// Render.
 		float mtxShadow[16];
@@ -623,26 +642,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Floor.
 		mtxMul(lightMtx, mtxFloor, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		hplaneMesh.submit(RENDER_SCENE_PASS_ID, mtxFloor, progDraw);
-		hplaneMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxFloor, progPackDepth);
+		hplaneMesh.submit(RENDER_SCENE_PASS_ID, mtxFloor, progMesh);
+		hplaneMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxFloor, progShadow);
 
 		// Bunny.
 		mtxMul(lightMtx, mtxBunny, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		bunnyMesh.submit(RENDER_SCENE_PASS_ID, mtxBunny, progDraw);
-		bunnyMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxBunny, progPackDepth);
+		bunnyMesh.submit(RENDER_SCENE_PASS_ID, mtxBunny, progMesh);
+		bunnyMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxBunny, progShadow);
 
 		// Hollow cube.
 		mtxMul(lightMtx, mtxHollowcube, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		hollowcubeMesh.submit(RENDER_SCENE_PASS_ID, mtxHollowcube, progDraw);
-		hollowcubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxHollowcube, progPackDepth);
+		hollowcubeMesh.submit(RENDER_SCENE_PASS_ID, mtxHollowcube, progMesh);
+		hollowcubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxHollowcube, progShadow);
 
 		// Cube.
 		mtxMul(lightMtx, mtxCube, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		cubeMesh.submit(RENDER_SCENE_PASS_ID, mtxCube, progDraw);
-		cubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxCube, progPackDepth);
+		cubeMesh.submit(RENDER_SCENE_PASS_ID, mtxCube, progMesh);
+		cubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxCube, progShadow);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
@@ -655,8 +674,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	hollowcubeMesh.unload();
 	hplaneMesh.unload();
 
-	bgfx::destroyProgram(progPackDepth);
-	bgfx::destroyProgram(progDraw);
+	bgfx::destroyProgram(progShadow);
+	bgfx::destroyProgram(progMesh);
 
 	bgfx::destroyFrameBuffer(s_shadowMapFB);
 

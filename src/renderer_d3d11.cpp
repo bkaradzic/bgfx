@@ -1510,8 +1510,15 @@ namespace bgfx
 			s_renderCtx->m_currentProgram = &program;
 			deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 			deviceCtx->VSSetConstantBuffers(0, 0, NULL);
-			deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
-			deviceCtx->PSSetConstantBuffers(0, 0, NULL);
+			if (NULL != s_renderCtx->m_currentColor)
+			{
+				deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
+				deviceCtx->PSSetConstantBuffers(0, 0, NULL);
+			}
+			else
+			{
+				deviceCtx->PSSetShader(NULL, NULL, 0);
+			}
 
 			VertexBuffer& vb = s_renderCtx->m_vertexBuffers[m_vb->handle.idx];
 			VertexDecl& vertexDecl = s_renderCtx->m_vertexDecls[m_vb->decl.idx];
@@ -2418,8 +2425,8 @@ namespace bgfx
 					{
 						s_renderCtx->m_currentProgram = NULL;
 
-						deviceCtx->VSSetShader(NULL, 0, 0);
-						deviceCtx->PSSetShader(NULL, 0, 0);
+						deviceCtx->VSSetShader(NULL, NULL, 0);
+						deviceCtx->PSSetShader(NULL, NULL, 0);
 					}
 					else
 					{
@@ -2429,8 +2436,16 @@ namespace bgfx
 						deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 						deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
 
-						deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
-						deviceCtx->PSSetConstantBuffers(0, 1, &program.m_fsh->m_buffer);
+						if (NULL != s_renderCtx->m_currentColor)
+						{
+							const Shader* fsh = program.m_fsh;
+							deviceCtx->PSSetShader( (ID3D11PixelShader*)fsh->m_ptr, NULL, 0);
+							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
+						}
+						else
+						{
+							deviceCtx->PSSetShader(NULL, NULL, 0);
+						}
 					}
 
 					programChanged = 

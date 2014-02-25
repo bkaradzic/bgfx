@@ -1847,6 +1847,16 @@ int main(int _argc, const char* _argv[])
 					"#define ivec4 vec4\n"
 					);
 
+				if (0 == gles)
+				{
+					// bgfx shadow2D/Proj behave like EXT_shadow_samplers
+					// not as GLSL language 1.2 specs shadow2D/Proj.
+					preprocessor.writef(
+						"#define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord).x\n"
+						"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
+						);
+				}
+
 				for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 				{
 					VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
@@ -2131,6 +2141,11 @@ int main(int _argc, const char* _argv[])
 						{
 							bx::stringPrintf(code, "#version %s\n", profile);
 							int32_t version = atoi(profile);
+
+							bx::stringPrintf(code
+								, "#define bgfxShadow2D shadow2D\n"
+								  "#define bgfxShadow2DProj shadow2DProj\n"
+								);
 
 							if (hasTextureLod
 							&&  130 > version)

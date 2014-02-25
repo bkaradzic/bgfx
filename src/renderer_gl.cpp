@@ -2086,6 +2086,9 @@ namespace bgfx
 					writeString(&writer, "#define varying in\n");
 					writeString(&writer, "#define texture2D texture\n");
 					writeString(&writer, "#define texture2DLod textureLod\n");
+					writeString(&writer, "#define texture2DProj textureProj\n");
+					writeString(&writer, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
+					writeString(&writer, "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) ) )\n");
 					writeString(&writer, "#define texture3D texture\n");
 					writeString(&writer, "#define texture3DLod textureLod\n");
 					writeString(&writer, "#define textureCube texture\n");
@@ -2143,7 +2146,7 @@ namespace bgfx
 	void FrameBuffer::create(uint8_t _num, const TextureHandle* _handles)
 	{
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
-		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[0]) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[0]) );
 
 		bool needResolve = false;
 
@@ -2172,7 +2175,7 @@ namespace bgfx
 
 				if (0 != texture.m_rbo)
 				{
-					GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER
+					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
 						, attachment
 						, GL_RENDERBUFFER
 						, texture.m_rbo
@@ -2180,7 +2183,7 @@ namespace bgfx
 				}
 				else
 				{
-					GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER
+					GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
 						, attachment
 						, texture.m_target
 						, texture.m_id
@@ -2192,15 +2195,15 @@ namespace bgfx
 			}
 		}
 
-		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER)
+		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 			, "glCheckFramebufferStatus failed 0x%08x"
-			, glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER)
+			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
 			);
 
 		if (needResolve)
 		{
 			GL_CHECK(glGenFramebuffers(1, &m_fbo[1]) );
-			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
 
 			for (uint32_t ii = 0, colorIdx = 0; ii < _num; ++ii)
 			{
@@ -2219,7 +2222,7 @@ namespace bgfx
 						else
 						{
 							++colorIdx;
-							GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER
+							GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
 								, attachment
 								, texture.m_target
 								, texture.m_id
@@ -2832,6 +2835,7 @@ namespace bgfx
 			;
 
 		s_renderCtx->m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			|| s_extension[Extension::ANGLE_depth_texture].m_supported
 			|| s_extension[Extension::CHROMIUM_depth_texture].m_supported
 			|| s_extension[Extension::GOOGLE_depth_texture].m_supported
 			|| s_extension[Extension::OES_depth_texture].m_supported
@@ -3044,7 +3048,8 @@ namespace bgfx
 
 	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
 	{
-		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], s_renderCtx->m_fragmentShaders[_fsh.idx]);
+		Shader dummyFragmentShader;
+		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], isValid(_fsh) ? s_renderCtx->m_fragmentShaders[_fsh.idx] : dummyFragmentShader);
 	}
 
 	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)

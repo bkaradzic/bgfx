@@ -1,5 +1,3 @@
-$input v_view, v_normal, v_shadowcoord
-
 /*
  * Copyright 2013-2014 Dario Manesku. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
@@ -8,7 +6,13 @@ $input v_view, v_normal, v_shadowcoord
 #include "../common/common.sh"
 
 uniform vec4 u_lightPos;
+#if SHADOW_PACKED_DEPTH
 SAMPLER2D(u_shadowMap, 4);
+#	define Sampler sampler2D
+#else
+SAMPLER2DSHADOW(u_shadowMap, 4);
+#	define Sampler sampler2DShadow
+#endif // SHADOW_PACKED_DEPTH
 
 vec2 lit(vec3 _ld, vec3 _n, vec3 _vd, float _exp)
 {
@@ -23,7 +27,17 @@ vec2 lit(vec3 _ld, vec3 _n, vec3 _vd, float _exp)
 	return max(vec2(ndotl, spec), 0.0);
 }
 
-float hardShadow(sampler2D _sampler, vec4 _shadowCoord, float _bias)
+float hardShadow(Sampler _sampler, vec4 _shadowCoord, float _bias)
+{
+	vec3 texCoord = _shadowCoord.xyz/_shadowCoord.w;
+#if SHADOW_PACKED_DEPTH
+	return step(texCoord.z-_bias, unpackRgbaToFloat(texture2D(_sampler, texCoord.xy) ) );
+#else
+	return shadow2D(_sampler, vec3(texCoord.xy, texCoord.z-_bias) );
+#endif // SHADOW_PACKED_DEPTH
+}
+
+float PCF(Sampler _sampler, vec4 _shadowCoord, float _bias, vec2 _texelSize)
 {
 	vec2 texCoord = _shadowCoord.xy/_shadowCoord.w;
 
@@ -36,15 +50,6 @@ float hardShadow(sampler2D _sampler, vec4 _shadowCoord, float _bias)
 		return 1.0;
 	}
 
-	float receiver = (_shadowCoord.z-_bias)/_shadowCoord.w;
-	float occluder = unpackRgbaToFloat(texture2D(_sampler, texCoord) );
-
-	float visibility = step(receiver, occluder);
-	return visibility;
-}
-
-float PCF(sampler2D _sampler, vec4 _shadowCoord, float _bias, vec2 _texelSize)
-{
 	float result = 0.0;
 	vec2 offset = _texelSize * _shadowCoord.w;
 
@@ -73,8 +78,8 @@ float PCF(sampler2D _sampler, vec4 _shadowCoord, float _bias, vec2 _texelSize)
 
 void main()
 {
-	const float shadowMapBias = 0.005;
-	const vec3 color = vec3_splat(1.0);
+	float shadowMapBias = 0.005;
+	vec3 color = vec3_splat(1.0);
 
 	vec3 v  = v_view;
 	vec3 vd = -normalize(v);
@@ -91,6 +96,5 @@ void main()
 	vec3 brdf = (lc.x + lc.y) * color * visibility;
 
 	vec3 final = toGamma(abs(ambient + brdf) );
-	gl_FragColor.xyz = final;
-	gl_FragColor.w = 1.0;
+	gl_FragColor = vec4(final, 1.0);
 }

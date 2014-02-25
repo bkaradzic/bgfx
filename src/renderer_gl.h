@@ -611,6 +611,8 @@ namespace bgfx
 	{
 		Shader()
 			: m_id(0)
+			, m_type(0)
+			, m_hash(0)
 		{
 		}
 
