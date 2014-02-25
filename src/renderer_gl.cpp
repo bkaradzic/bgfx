@@ -2158,6 +2158,12 @@ namespace bgfx
 			{
 				const Texture& texture = s_renderCtx->m_textures[handle.idx];
 
+				if (0 == colorIdx)
+				{
+					m_width  = texture.m_width;
+					m_height = texture.m_height;
+				}
+
 				GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
 				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 				{
@@ -2166,12 +2172,6 @@ namespace bgfx
 				else
 				{
 					++colorIdx;
-				}
-
-				if (0 == colorIdx)
-				{
-					m_width  = texture.m_width;
-					m_height = texture.m_height;
 				}
 
 				if (0 != texture.m_rbo)
