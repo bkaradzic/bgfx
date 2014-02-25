@@ -2196,7 +2196,7 @@ namespace bgfx
 			}
 		}
 
-		if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGL) )
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 		{
 			if (0 == colorIdx)
 			{
