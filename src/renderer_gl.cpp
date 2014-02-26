@@ -2202,11 +2202,11 @@ namespace bgfx
 			{
 				// When only depth is attached disable draw buffer to avoid
 				// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
-				glDrawBuffer(GL_NONE);
+				GL_CHECK(glDrawBuffer(GL_NONE) );
 			}
 
 			// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
-			glReadBuffer(GL_NONE);
+			GL_CHECK(glReadBuffer(GL_NONE) );
 		}
 
 		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
@@ -2267,6 +2267,7 @@ namespace bgfx
 		if (0 != m_fbo[1])
 		{
 			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+			GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
 			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
 			GL_CHECK(glBlitFramebuffer(0
 				, 0
@@ -2279,6 +2280,8 @@ namespace bgfx
 				, GL_COLOR_BUFFER_BIT
 				, GL_LINEAR
 				) );
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+			GL_CHECK(glReadBuffer(GL_NONE) );
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_msaaBackBufferFbo) );
 		}
 	}
