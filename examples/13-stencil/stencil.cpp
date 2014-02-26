@@ -947,7 +947,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	size_t ignore = fread(data, 1, size, file);
 	BX_UNUSED(ignore);
 	fclose(file);
+
 	imguiCreate(data, size);
+
+	free(data);
 
 	bgfx::VertexDecl PosNormalTexcoordDecl;
 	PosNormalTexcoordDecl.begin();

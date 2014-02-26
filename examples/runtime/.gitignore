@@ -1,2 +1,3 @@
 libEGL.dll
 libGLESv2.dll
+D3DCompiler*.dll
