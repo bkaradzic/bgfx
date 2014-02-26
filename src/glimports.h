@@ -350,6 +350,8 @@ GL_IMPORT_OES__(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexA
 GL_IMPORT_OES__(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
 GL_IMPORT_OES__(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
 
+GL_IMPORT_____x(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer);
+GL_IMPORT_____x(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);
 GL_IMPORT_____x(true,  PFNGLGENSAMPLERSPROC,                       glGenSamplers);
 GL_IMPORT_____x(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSamplers);
 GL_IMPORT_____x(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
