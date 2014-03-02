@@ -1704,8 +1704,9 @@ namespace bgfx
 			uint8_t numMips = imageContainer.m_numMips;
 			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
 			numMips -= startLod;
-			const uint32_t textureWidth  = bx::uint32_max(1, imageContainer.m_width >>startLod);
-			const uint32_t textureHeight = bx::uint32_max(1, imageContainer.m_height>>startLod);
+			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
+			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
+			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
 			m_flags = _flags;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;

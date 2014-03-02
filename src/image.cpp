@@ -10,41 +10,41 @@
 
 namespace bgfx
 {
-	static const uint32_t s_bitsPerPixel[TextureFormat::Count] =
+	static const ImageBlockInfo s_imageBlockInfo[TextureFormat::Count] =
 	{
-		4,  // BC1
-		8,  // BC2
-		8,  // BC3
-		4,  // BC4
-		8,  // BC5
-		4,  // ETC1
-		4,  // ETC2
-		4,  // ETC2A
-		4,  // ETC2A1
-		2,  // PTC12
-		4,  // PTC14
-		2,  // PTC12A
-		4,  // PTC14A
-		2,  // PTC22
-		4,  // PTC24
-		0,  // Unknown
-		8,  // L8
-		32, // BGRA8
-		64, // RGBA16
-		64, // RGBA16F
-		16, // R5G6B5
-		16, // RGBA4
-		16, // RGB5A1
-		32, // RGB10A2
-		0,  // UnknownDepth
-		16, // D16
-		24, // D24
-		32, // D24S8
-		32, // D32
-		16, // D16F
-		24, // D24F
-		32, // D32F
-		8,  // D0S8
+		{  4, 4, 4,  8 }, // BC1
+		{  8, 4, 4, 16 }, // BC2
+		{  8, 4, 4, 16 }, // BC3
+		{  4, 4, 4,  8 }, // BC4
+		{  8, 4, 4, 16 }, // BC5
+		{  4, 4, 4,  8 }, // ETC1
+		{  4, 4, 4,  8 }, // ETC2
+		{  4, 4, 4,  8 }, // ETC2A
+		{  4, 4, 4,  8 }, // ETC2A1
+		{  2, 8, 4,  8 }, // PTC12
+		{  4, 4, 4,  8 }, // PTC14
+		{  2, 8, 4,  8 }, // PTC12A
+		{  4, 4, 4,  8 }, // PTC14A
+		{  2, 8, 4,  8 }, // PTC22
+		{  4, 4, 4,  8 }, // PTC24
+		{  0, 0, 0,  0 }, // Unknown
+		{  8, 1, 1,  1 }, // L8
+		{ 32, 1, 1,  4 }, // BGRA8
+		{ 64, 1, 1,  8 }, // RGBA16
+		{ 64, 1, 1,  8 }, // RGBA16F
+		{ 16, 1, 1,  2 }, // R5G6B5
+		{ 16, 1, 1,  2 }, // RGBA4
+		{ 16, 1, 1,  2 }, // RGB5A1
+		{ 32, 1, 1,  4 }, // RGB10A2
+		{  0, 0, 0,  0 }, // UnknownDepth
+		{ 16, 1, 1,  2 }, // D16
+		{ 24, 1, 1,  3 }, // D24
+		{ 32, 1, 1,  4 }, // D24S8
+		{ 32, 1, 1,  4 }, // D32
+		{ 16, 1, 1,  2 }, // D16F
+		{ 24, 1, 1,  3 }, // D24F
+		{ 32, 1, 1,  4 }, // D32F
+		{  8, 1, 1,  1 }, // D0S8
 	};
 
 	static const char* s_textureFormatName[TextureFormat::Count] =
@@ -103,9 +103,19 @@ namespace bgfx
 			;
 	}
 
-	uint32_t getBitsPerPixel(TextureFormat::Enum _format)
+	uint8_t getBitsPerPixel(TextureFormat::Enum _format)
 	{
-		return s_bitsPerPixel[_format];
+		return s_imageBlockInfo[_format].bitsPerPixel;
+	}
+
+	const ImageBlockInfo& getBlockInfo(TextureFormat::Enum _format)
+	{
+		return s_imageBlockInfo[_format];
+	}
+
+	uint8_t getBlockSize(TextureFormat::Enum _format)
+	{
+		return s_imageBlockInfo[_format].blockSize;
 	}
 
 	const char* getName(TextureFormat::Enum _format)
@@ -1053,8 +1063,6 @@ namespace bgfx
 
 		bx::skip(_reader, 4); // reserved
 
-		uint8_t bpp = 0;
-		uint8_t blockSize = 1;
 		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
 
@@ -1068,10 +1076,6 @@ namespace bgfx
 			}
 		}
 
-		bpp = getBitsPerPixel(format);
-		blockSize = isCompressed(format) ? 4*4 : 1;
-		blockSize = blockSize*bpp/8;
-
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = DDS_IMAGE_DATA_OFFSET;
@@ -1079,9 +1083,7 @@ namespace bgfx
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
 		_imageContainer.m_format = format;
-		_imageContainer.m_blockSize = blockSize;
 		_imageContainer.m_numMips = (caps[0] & DDSCAPS_MIPMAP) ? mips : 1;
-		_imageContainer.m_bpp = bpp;
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap = cubeMap;
 		_imageContainer.m_ktx = false;
@@ -1206,8 +1208,6 @@ namespace bgfx
 		// skip meta garbage...
 		int64_t offset = bx::skip(_reader, metaDataSize);
 
-		uint8_t bpp = 0;
-		uint8_t blockSize = 1;
 		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = false;
 
@@ -1220,10 +1220,6 @@ namespace bgfx
 			}
 		}
 
-		bpp = getBitsPerPixel(format);
-		blockSize = isCompressed(format) ? 4*4 : 1;
-		blockSize = blockSize*bpp/8;
-
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)offset;
@@ -1231,9 +1227,7 @@ namespace bgfx
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
 		_imageContainer.m_format = format;
-		_imageContainer.m_blockSize = blockSize;
 		_imageContainer.m_numMips = numMips;
-		_imageContainer.m_bpp = bpp;
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap = numFaces > 1;
 		_imageContainer.m_ktx = true;
@@ -1330,8 +1324,6 @@ namespace bgfx
 		// skip meta garbage...
 		int64_t offset = bx::skip(_reader, metaDataSize);
 
-		uint8_t bpp = 0;
-		uint8_t blockSize = 1;
 		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = false;
 
@@ -1345,10 +1337,6 @@ namespace bgfx
 			}
 		}
 
-		bpp = getBitsPerPixel(format);
-		blockSize = isCompressed(format) ? 4*4 : 1;
-		blockSize = blockSize*bpp/8;
-
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)offset;
@@ -1356,9 +1344,7 @@ namespace bgfx
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
 		_imageContainer.m_format = format;
-		_imageContainer.m_blockSize = blockSize;
 		_imageContainer.m_numMips = numMips;
-		_imageContainer.m_bpp = bpp;
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap = numFaces > 1;
 		_imageContainer.m_ktx = false;
@@ -1388,10 +1374,6 @@ namespace bgfx
 			TextureCreate tc;
 			bx::read(_reader, tc);
 
-			uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
-			uint32_t blockSize = isCompressed(TextureFormat::Enum(tc.m_format) ) ? 4*4 : 1;
-			blockSize = blockSize*bpp/8;
-
 			_imageContainer.m_format = tc.m_format;
 			_imageContainer.m_offset = UINT32_MAX;
 			if (NULL == tc.m_mem)
@@ -1407,9 +1389,7 @@ namespace bgfx
 			_imageContainer.m_width = tc.m_width;
 			_imageContainer.m_height = tc.m_height;
 			_imageContainer.m_depth = tc.m_depth;
-			_imageContainer.m_blockSize = blockSize;
 			_imageContainer.m_numMips = tc.m_numMips;
-			_imageContainer.m_bpp = getBitsPerPixel(TextureFormat::Enum(tc.m_format) );
 			_imageContainer.m_hasAlpha = false;
 			_imageContainer.m_cubeMap = tc.m_cubeMap;
 			_imageContainer.m_ktx = false;
@@ -1604,11 +1584,15 @@ namespace bgfx
 
 	bool imageGetRawData(const ImageContainer& _imageContainer, uint8_t _side, uint8_t _lod, const void* _data, uint32_t _size, ImageMip& _mip)
 	{
-		const uint32_t blockSize = _imageContainer.m_blockSize;
 		uint32_t offset = _imageContainer.m_offset;
-		const uint8_t bpp = _imageContainer.m_bpp;
 		TextureFormat::Enum type = TextureFormat::Enum(_imageContainer.m_format);
 		bool hasAlpha = _imageContainer.m_hasAlpha;
+
+		const ImageBlockInfo& blockInfo = s_imageBlockInfo[type];
+		const uint8_t  bpp         = blockInfo.bitsPerPixel;
+		const uint32_t blockSize   = blockInfo.blockSize;
+		const uint32_t blockWidth  = blockInfo.blockWidth;
+		const uint32_t blockHeight = blockInfo.blockHeight;
 
 		if (UINT32_MAX == _imageContainer.m_offset)
 		{
@@ -1633,20 +1617,11 @@ namespace bgfx
 				// skip imageSize in KTX format.
 				offset += _imageContainer.m_ktx ? sizeof(uint32_t) : 0;
 
-				width  = bx::uint32_max(1, width);
-				height = bx::uint32_max(1, height);
+				width  = bx::uint32_max(blockWidth,  width);
+				height = bx::uint32_max(blockHeight, height);
 				depth  = bx::uint32_max(1, depth);
 
-				uint32_t size = width*height*depth*blockSize;
-				if (isCompressed(type) )
-				{
-					width  = bx::uint32_max(1, (width + 3)>>2);
-					height = bx::uint32_max(1, (height + 3)>>2);
-					size   = width*height*depth*blockSize;
-
-					width  <<= 2;
-					height <<= 2;
-				}
+				uint32_t size = width*height*depth*bpp/8;
 
 				if (side == _side
 				&&  lod == _lod)

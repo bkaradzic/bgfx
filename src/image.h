@@ -19,9 +19,7 @@ namespace bgfx
 		uint32_t m_height;
 		uint32_t m_depth;
 		uint8_t m_format;
-		uint8_t m_blockSize;
 		uint8_t m_numMips;
-		uint8_t m_bpp;
 		bool m_hasAlpha;
 		bool m_cubeMap;
 		bool m_ktx;
@@ -39,6 +37,14 @@ namespace bgfx
 		const uint8_t* m_data;
 	};
 
+	struct ImageBlockInfo
+	{
+		uint8_t bitsPerPixel;
+		uint8_t blockWidth;
+		uint8_t blockHeight;
+		uint8_t blockSize;
+	};
+
 	///
 	bool isCompressed(TextureFormat::Enum _format);
 
@@ -49,7 +55,10 @@ namespace bgfx
 	bool isDepth(TextureFormat::Enum _format);
 
 	///
-	uint32_t getBitsPerPixel(TextureFormat::Enum _format);
+	uint8_t getBitsPerPixel(TextureFormat::Enum _format);
+
+	///
+	const ImageBlockInfo& getBlockInfo(TextureFormat::Enum _format);
 
 	///
 	const char* getName(TextureFormat::Enum _format);
