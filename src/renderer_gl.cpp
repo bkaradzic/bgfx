@@ -221,6 +221,7 @@ namespace bgfx
 			ARB_half_float_pixel,
 			ARB_half_float_vertex,
 			ARB_instanced_arrays,
+			ARB_map_buffer_range,
 			ARB_multisample,
 			ARB_sampler_objects,
 			ARB_seamless_cube_map,
@@ -228,8 +229,10 @@ namespace bgfx
 			ARB_texture_compression_rgtc,
 			ARB_texture_float,
 			ARB_texture_multisample,
+			ARB_texture_storage,
 			ARB_texture_swizzle,
 			ARB_timer_query,
+			ARB_uniform_buffer_object,
 			ARB_vertex_array_object,
 			ARB_vertex_type_2_10_10_10_rev,
 
@@ -244,6 +247,8 @@ namespace bgfx
 			EXT_blend_color,
 			EXT_blend_minmax,
 			EXT_blend_subtract,
+			EXT_debug_label,
+			EXT_debug_marker,
 			EXT_frag_depth,
 			EXT_framebuffer_blit,
 			EXT_framebuffer_object,
@@ -322,11 +327,12 @@ namespace bgfx
 		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_framebuffer_sRGB",               false,                             true  },
+		{ "GL_ARB_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_get_program_binary",             BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
 		{ "GL_ARB_half_float_pixel",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_half_float_vertex",              BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_instanced_arrays",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_ARB_map_buffer_range",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_multisample",                    false,                             true  },
 		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_seamless_cube_map",              BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
@@ -334,8 +340,10 @@ namespace bgfx
 		{ "GL_ARB_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_texture_float",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_texture_multisample",            BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "GL_ARB_texture_storage",                BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
 		{ "GL_ARB_texture_swizzle",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "GL_ARB_timer_query",                    BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "GL_ARB_uniform_buffer_object",          BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
 
@@ -350,6 +358,8 @@ namespace bgfx
 		{ "GL_EXT_blend_color",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
+		{ "GL_EXT_debug_label",                    false,                             true  },
+		{ "GL_EXT_debug_marker",                   false,                             true  },
 		{ "GL_EXT_frag_depth",                     false,                             true  }, // GLES2 extension.
 		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_EXT_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -2125,12 +2135,24 @@ namespace bgfx
 			{
 				BX_TRACE("\n####\n%s\n####", code);
 
+				GLsizei len;
 				char log[1024];
-				GL_CHECK(glGetShaderInfoLog(m_id, sizeof(log), NULL, log) );
+				GL_CHECK(glGetShaderInfoLog(m_id, sizeof(log), &len, log) );
 				BX_TRACE("Failed to compile shader. %d: %s", compiled, log);
 
 				GL_CHECK(glDeleteShader(m_id) );
 				BGFX_FATAL(false, bgfx::Fatal::InvalidShader, "Failed to compile shader.");
+			}
+			else if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+				 &&  s_extension[Extension::ANGLE_translated_shader_source].m_supported)
+			{
+				GLsizei len;
+				GL_CHECK(glGetShaderiv(m_id, GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE, &len) );
+
+				char* source = (char*)alloca(len);
+				GL_CHECK(glGetTranslatedShaderSourceANGLE(m_id, len, &len, source) );
+
+				BX_TRACE("ANGLE source (len: %d):\n%s\n####", len, source);
 			}
 		}
 	}
