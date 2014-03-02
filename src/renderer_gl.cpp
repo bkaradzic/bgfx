@@ -1587,7 +1587,14 @@ namespace bgfx
 				;
 			const bool convert    = m_textureFormat != m_requestedFormat;
 			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
-			const uint32_t min    = convert && compressed ? 4 : 1;
+			uint32_t blockWidth  = 1;
+			uint32_t blockHeight = 1;
+			
+			if (convert && compressed)
+			{
+				blockWidth  = blockInfo.blockWidth;
+				blockHeight = blockInfo.blockHeight;
+			}
 
 			BX_WARN(!swizzle && !convert, "Texture %s%s%s from %s to %s."
 					, swizzle ? "swizzle" : ""
@@ -1611,8 +1618,8 @@ namespace bgfx
 
 				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 				{
-					width  = bx::uint32_max(min, width);
-					height = bx::uint32_max(min, height);
+					width  = bx::uint32_max(blockWidth,  width);
+					height = bx::uint32_max(blockHeight, height);
 					depth  = bx::uint32_max(1, depth);
 
 					ImageMip mip;

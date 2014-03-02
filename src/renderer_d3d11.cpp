@@ -1742,6 +1742,8 @@ namespace bgfx
 
 			uint32_t kk = 0;
 
+			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
+
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
 				uint32_t width  = textureWidth;
@@ -1768,10 +1770,10 @@ namespace bgfx
 							srd[kk].pSysMem = temp;
 							srd[kk].SysMemPitch = srcpitch;
 						}
-						else if (isCompressed(TextureFormat::Enum(m_textureFormat) ) )
+						else if (compressed)
 						{
-							srd[kk].SysMemPitch = (mip.m_width/4)*mip.m_blockSize;
-							srd[kk].SysMemSlicePitch = (mip.m_height/4)*srd[kk].SysMemPitch;
+							srd[kk].SysMemPitch = (mip.m_width/blockInfo.blockWidth)*mip.m_blockSize;
+							srd[kk].SysMemSlicePitch = (mip.m_height/blockInfo.blockHeight)*srd[kk].SysMemPitch;
 						}
 						else
 						{

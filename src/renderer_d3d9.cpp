@@ -1681,7 +1681,6 @@ namespace bgfx
 							;
 
 			const bool compressed = isCompressed(TextureFormat::Enum(m_requestedFormat) );
-			const uint32_t min    = compressed ? 4 : 1;
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
@@ -1696,8 +1695,8 @@ namespace bgfx
 					width     = bx::uint32_max(1, width);
 					height    = bx::uint32_max(1, height);
 					depth     = bx::uint32_max(1, depth);
-					mipWidth  = bx::uint32_max(min, mipWidth);
-					mipHeight = bx::uint32_max(min, mipHeight);
+					mipWidth  = bx::uint32_max(blockInfo.blockWidth,  mipWidth);
+					mipHeight = bx::uint32_max(blockInfo.blockHeight, mipHeight);
 					uint32_t mipSize = width*height*depth*bpp/8;
 
 					ImageMip mip;
