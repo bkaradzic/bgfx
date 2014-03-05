@@ -1272,8 +1272,6 @@ namespace bgfx
 				, &m_ptr
 				) );
 		}
-
-		setDebugObjectName(m_ptr, "IndexBuffer (dynamic %d)", m_dynamic);
 	}
 
 	void IndexBuffer::update(uint32_t _offset, uint32_t _size, void* _data)
