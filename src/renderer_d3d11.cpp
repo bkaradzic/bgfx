@@ -326,16 +326,17 @@ namespace bgfx
 	template <typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(Ty* _interface, const char* _format, ...)
 	{
-#if BGFX_CONFIG_DEBUG_OBJECT_NAME
-		char temp[2048];
-		va_list argList;
-		va_start(argList, _format);
-		int size = uint32_min(sizeof(temp)-1, vsnprintf(temp, sizeof(temp), _format, argList) );
-		va_end(argList);
-		temp[size] = '\0';
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME) )
+		{
+			char temp[2048];
+			va_list argList;
+			va_start(argList, _format);
+			int size = bx::uint32_min(sizeof(temp)-1, vsnprintf(temp, sizeof(temp), _format, argList) );
+			va_end(argList);
+			temp[size] = '\0';
 
-		_interface->SetPrivateData(WKPDID_D3DDebugObjectName, size, temp);
-#endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
+			_interface->SetPrivateData(WKPDID_D3DDebugObjectName, size, temp);
+		}
 	}
 
 	struct RendererContext
@@ -357,21 +358,22 @@ namespace bgfx
 			m_d3d11dll = bx::dlopen("d3d11.dll");
 			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
 
-#if BGFX_CONFIG_DEBUG_PIX
-			// D3D11_1.h has ID3DUserDefinedAnnotation
-			// http://msdn.microsoft.com/en-us/library/windows/desktop/hh446881%28v=vs.85%29.aspx
-			m_d3d9dll = bx::dlopen("d3d9.dll");
-			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			{
+				// D3D11_1.h has ID3DUserDefinedAnnotation
+				// http://msdn.microsoft.com/en-us/library/windows/desktop/hh446881%28v=vs.85%29.aspx
+				m_d3d9dll = bx::dlopen("d3d9.dll");
+				BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
-			m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
-			m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
-			m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent");
-			BX_CHECK(NULL != m_D3DPERF_SetMarker
-				  && NULL != m_D3DPERF_BeginEvent
-				  && NULL != m_D3DPERF_EndEvent
-				  , "Failed to initialize PIX events."
-				  );
-#endif // BGFX_CONFIG_DEBUG_PIX
+				m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
+				m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
+				m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent");
+				BX_CHECK(NULL != m_D3DPERF_SetMarker
+					  && NULL != m_D3DPERF_BeginEvent
+					  && NULL != m_D3DPERF_EndEvent
+					  , "Failed to initialize PIX events."
+					  );
+			}
 
 			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
 			BGFX_FATAL(NULL != d3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
@@ -415,13 +417,12 @@ namespace bgfx
 						, desc.SharedSystemMemory
 						);
 
-#if BGFX_CONFIG_DEBUG_PERFHUD
-					if (0 != strstr(description, "PerfHUD") )
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
+					&&  0 != strstr(description, "PerfHUD") )
 					{
 						m_adapter = adapter;
 						m_driverType = D3D_DRIVER_TYPE_REFERENCE;
 					}
-#endif // BGFX_CONFIG_DEBUG_PERFHUD
 				}
 
 				DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
@@ -1271,6 +1272,8 @@ namespace bgfx
 				, &m_ptr
 				) );
 		}
+
+		setDebugObjectName(m_ptr, "IndexBuffer (dynamic %d)", m_dynamic);
 	}
 
 	void IndexBuffer::update(uint32_t _offset, uint32_t _size, void* _data)
@@ -2205,13 +2208,13 @@ namespace bgfx
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t _size)
 	{
-#if BGFX_CONFIG_DEBUG_PIX
-		uint32_t size = _size*sizeof(wchar_t);
-		wchar_t* name = (wchar_t*)alloca(size);
-		mbstowcs(name, _marker, size-2);
-		PIX_SETMARKER(D3DCOLOR_RGBA(0xff, 0xff, 0xff, 0xff), name);
-#endif // BGFX_CONFIG_DEBUG_PIX
-		BX_UNUSED(_marker, _size);
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+		{
+			uint32_t size = _size*sizeof(wchar_t);
+			wchar_t* name = (wchar_t*)alloca(size);
+			mbstowcs(name, _marker, size-2);
+			PIX_SETMARKER(D3DCOLOR_RGBA(0xff, 0xff, 0xff, 0xff), name);
+		}
 	}
 
 	void Context::rendererSubmit()

@@ -307,10 +307,6 @@ typedef uint64_t GLuint64;
 #	include "glcontext_eagl.h"
 #endif // BX_PLATFORM_
 
-#if BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
-#	include <gl/GRemedyGLExtensions.h>
-#endif // BGFX_CONFIG_DEBUG_GREMEDY && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
-
 #if BGFX_USE_WGL
 #	include "glcontext_wgl.h"
 #endif // BGFX_USE_WGL
@@ -342,17 +338,6 @@ namespace bgfx
 #else
 #	define GL_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
-
-#if BGFX_CONFIG_DEBUG_GREMEDY
-#	define _GREMEDY_SETMARKER(_string) glStringMarkerGREMEDY(0, _string)
-#	define _GREMEDY_FRAMETERMINATOR() glFrameTerminatorGREMEDY()
-#else
-#	define _GREMEDY_SETMARKER(_string) do { BX_UNUSED(_string); } while(0)
-#	define _GREMEDY_FRAMETERMINATOR() do {} while(0)
-#endif // BGFX_CONFIG_DEBUG_GREMEDY
-
-#define GREMEDY_SETMARKER(_string) _GREMEDY_SETMARKER(_string)
-#define GREMEDY_FRAMETERMINATOR() _GREMEDY_FRAMETERMINATOR()
 
 #define GL_IMPORT_TYPEDEFS 1
 #define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
