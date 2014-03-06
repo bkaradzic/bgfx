@@ -1287,9 +1287,6 @@ namespace bgfx
 			}
 			else
 			{
-				glVertexAttribDivisor = stubVertexAttribDivisor;
-				glDrawArraysInstanced = stubDrawArraysInstanced;
-				glDrawElementsInstanced = stubDrawElementsInstanced;
 
 				if (!BX_ENABLED(BX_PLATFORM_IOS) )
 				{
@@ -1300,12 +1297,16 @@ namespace bgfx
 						&&  NULL != glDrawArraysInstanced
 						&&  NULL != glDrawElementsInstanced)
 						{
-							glVertexAttribDivisor   = glVertexAttribDivisor;
-							glDrawArraysInstanced   = glDrawArraysInstanced;
-							glDrawElementsInstanced = glDrawElementsInstanced;
 							g_caps.supported |= BGFX_CAPS_INSTANCING;
 						}
 					}
+				}
+
+				if (0 == (g_caps.supported & BGFX_CAPS_INSTANCING) )
+				{
+					glVertexAttribDivisor   = stubVertexAttribDivisor;
+					glDrawArraysInstanced   = stubDrawArraysInstanced;
+					glDrawElementsInstanced = stubDrawElementsInstanced;
 				}
 			}
 
