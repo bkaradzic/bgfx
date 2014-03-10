@@ -295,6 +295,10 @@ typedef uint64_t GLuint64;
 #	define GL_SAMPLER_2D_SHADOW 0x8B62
 #endif // GL_SAMPLER_2D_SHADOW
 
+#ifndef GL_TEXTURE_MAX_LEVEL
+#	define GL_TEXTURE_MAX_LEVEL 0x813D
+#endif // GL_TEXTURE_MAX_LEVEL
+
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS

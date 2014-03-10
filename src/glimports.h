@@ -31,6 +31,8 @@
 #define GL_IMPORT_____x(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## XXXXX)
 
 #if GL_IMPORT_TYPEDEFS
+typedef void (GL_APIENTRYP GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+
 typedef void           (GL_APIENTRYP PFNGLACTIVETEXTUREPROC) (GLenum texture);
 typedef void           (GL_APIENTRYP PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
 typedef void           (GL_APIENTRYP PFNGLBEGINQUERYPROC) (GLenum target, GLuint id);
@@ -64,6 +66,9 @@ typedef void           (GL_APIENTRYP PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC) (GLenum t
 typedef GLuint         (GL_APIENTRYP PFNGLCREATEPROGRAMPROC) (void);
 typedef GLuint         (GL_APIENTRYP PFNGLCREATESHADERPROC) (GLenum type);
 typedef void           (GL_APIENTRYP PFNGLCULLFACEPROC) (GLenum mode);
+typedef void           (GL_APIENTRYP PFNGLDEBUGMESSAGECONTROLPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
+typedef void           (GL_APIENTRYP PFNGLDEBUGMESSAGEINSERTPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf);
+typedef void           (GL_APIENTRYP PFNGLDEBUGMESSAGECALLBACKPROC) (GLDEBUGPROC callback, const void *userParam);
 typedef void           (GL_APIENTRYP PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint *buffers);
 typedef void           (GL_APIENTRYP PFNGLDELETEFRAMEBUFFERSPROC) (GLsizei n, const GLuint *framebuffers);
 typedef void           (GL_APIENTRYP PFNGLDELETEPROGRAMPROC) (GLuint program);
@@ -98,9 +103,13 @@ typedef void           (GL_APIENTRYP PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuin
 typedef void           (GL_APIENTRYP PFNGLGETACTIVEATTRIBPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 typedef void           (GL_APIENTRYP PFNGLGETACTIVEUNIFORMPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 typedef GLint          (GL_APIENTRYP PFNGLGETATTRIBLOCATIONPROC) (GLuint program, const GLchar *name);
+typedef GLuint         (GL_APIENTRYP PFNGLGETDEBUGMESSAGELOGPROC) (GLuint count, GLsizei bufsize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
 typedef GLenum         (GL_APIENTRYP PFNGLGETERRORPROC) (void);
 typedef void           (GL_APIENTRYP PFNGLGETFLOATVPROC) (GLenum pname, GLfloat *data);
 typedef void           (GL_APIENTRYP PFNGLGETINTEGERVPROC) (GLenum pname, GLint *data);
+typedef void           (GL_APIENTRYP PFNGLGETOBJECTLABELPROC) (GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label);
+typedef void           (GL_APIENTRYP PFNGLGETOBJECTPTRLABELPROC) (const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label);
+typedef void           (GL_APIENTRYP PFNGLGETPOINTERVPROC) (GLenum pname, void **params);
 typedef void           (GL_APIENTRYP PFNGLGETPROGRAMBINARYPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary);
 typedef void           (GL_APIENTRYP PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 typedef void           (GL_APIENTRYP PFNGLGETPROGRAMIVPROC) (GLuint program, GLenum pname, GLint *params);
@@ -114,10 +123,14 @@ typedef void           (GL_APIENTRYP PFNGLGETSHADERIVPROC) (GLuint shader, GLenu
 typedef const GLubyte* (GL_APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
 typedef GLint          (GL_APIENTRYP PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar *name);
 typedef void           (GL_APIENTRYP PFNGLLINKPROGRAMPROC) (GLuint program);
+typedef void           (GL_APIENTRYP PFNGLOBJECTLABELPROC) (GLenum identifier, GLuint name, GLsizei length, const GLchar *label);
+typedef void           (GL_APIENTRYP PFNGLOBJECTPTRLABELPROC) (const void *ptr, GLsizei length, const GLchar *label);
 typedef void           (GL_APIENTRYP PFNGLPIXELSTOREIPROC) (GLenum pname, GLint param);
 typedef void           (GL_APIENTRYP PFNGLPOINTSIZEPROC) (GLfloat size);
+typedef void           (GL_APIENTRYP PFNGLPOPDEBUGGROUPPROC) (void);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMBINARYPROC) (GLuint program, GLenum binaryFormat, const void *binary, GLsizei length);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMPARAMETERIPROC) (GLuint program, GLenum pname, GLint value);
+typedef void           (GL_APIENTRYP PFNGLPUSHDEBUGGROUPPROC) (GLenum source, GLuint id, GLsizei length, const GLchar *message);
 typedef void           (GL_APIENTRYP PFNGLQUERYCOUNTERPROC) (GLuint id, GLenum target);
 typedef void           (GL_APIENTRYP PFNGLREADBUFFERPROC) (GLenum mode);
 typedef void           (GL_APIENTRYP PFNGLREADPIXELSPROC) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels);
@@ -201,6 +214,9 @@ GL_IMPORT______(true , PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedT
 GL_IMPORT______(false, PFNGLCREATEPROGRAMPROC,                     glCreateProgram);
 GL_IMPORT______(false, PFNGLCREATESHADERPROC,                      glCreateShader);
 GL_IMPORT______(false, PFNGLCULLFACEPROC,                          glCullFace);
+GL_IMPORT______(true,  PFNGLDEBUGMESSAGECONTROLPROC,               glDebugMessageControl);
+GL_IMPORT______(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessageInsert);
+GL_IMPORT______(true,  PFNGLDEBUGMESSAGECALLBACKPROC,              glDebugMessageCallback);
 GL_IMPORT______(false, PFNGLDELETEBUFFERSPROC,                     glDeleteBuffers);
 GL_IMPORT______(true,  PFNGLDELETEFRAMEBUFFERSPROC,                glDeleteFramebuffers);
 GL_IMPORT______(false, PFNGLDELETEPROGRAMPROC,                     glDeleteProgram);
@@ -235,9 +251,13 @@ GL_IMPORT______(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexAr
 GL_IMPORT______(false, PFNGLGETACTIVEATTRIBPROC,                   glGetActiveAttrib);
 GL_IMPORT______(false, PFNGLGETATTRIBLOCATIONPROC,                 glGetAttribLocation);
 GL_IMPORT______(false, PFNGLGETACTIVEUNIFORMPROC,                  glGetActiveUniform);
+GL_IMPORT______(true,  PFNGLGETDEBUGMESSAGELOGPROC,                glGetDebugMessageLog);
 GL_IMPORT______(false, PFNGLGETERRORPROC,                          glGetError);
 GL_IMPORT______(false, PFNGLGETFLOATVPROC,                         glGetFloatv);
 GL_IMPORT______(false, PFNGLGETINTEGERVPROC,                       glGetIntegerv);
+GL_IMPORT______(true,  PFNGLGETOBJECTLABELPROC,                    glGetObjectLabel);
+GL_IMPORT______(true,  PFNGLGETOBJECTPTRLABELPROC,                 glGetObjectPtrLabel);
+GL_IMPORT______(true,  PFNGLGETPOINTERVPROC,                       glGetPointerv);
 GL_IMPORT______(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
 GL_IMPORT______(false, PFNGLGETPROGRAMIVPROC,                      glGetProgramiv);
 GL_IMPORT______(false, PFNGLGETPROGRAMINFOLOGPROC,                 glGetProgramInfoLog);
@@ -251,9 +271,13 @@ GL_IMPORT______(false, PFNGLGETSHADERINFOLOGPROC,                  glGetShaderIn
 GL_IMPORT______(false, PFNGLGETSTRINGPROC,                         glGetString);
 GL_IMPORT______(false, PFNGLGETUNIFORMLOCATIONPROC,                glGetUniformLocation);
 GL_IMPORT______(false, PFNGLLINKPROGRAMPROC,                       glLinkProgram);
+GL_IMPORT______(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
+GL_IMPORT______(true,  PFNGLOBJECTPTRLABELPROC,                    glObjectPtrLabel);
 GL_IMPORT______(false, PFNGLPIXELSTOREIPROC,                       glPixelStorei);
+GL_IMPORT______(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT______(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
 GL_IMPORT______(true,  PFNGLPROGRAMPARAMETERIPROC,                 glProgramParameteri);
+GL_IMPORT______(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
 GL_IMPORT______(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounter);
 GL_IMPORT______(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);
 GL_IMPORT______(false, PFNGLREADPIXELSPROC,                        glReadPixels);
@@ -300,10 +324,17 @@ GL_IMPORT______(false, PFNGLVIEWPORTPROC,                          glViewport);
 GL_IMPORT______(false, PFNGLCLEARDEPTHPROC,                        glClearDepth);
 GL_IMPORT______(false, PFNGLPOINTSIZEPROC,                         glPointSize);
 
-GL_IMPORT      (true,  PFNGLDEBUGMESSAGECONTROLARBPROC,            glDebugMessageControl,  glDebugMessageControlARB);
-GL_IMPORT      (true,  PFNGLDEBUGMESSAGEINSERTARBPROC,             glDebugMessageInsert,   glDebugMessageInsertARB);
-GL_IMPORT      (true,  PFNGLDEBUGMESSAGECALLBACKARBPROC,           glDebugMessageCallback, glDebugMessageCallbackARB);
-GL_IMPORT      (true,  PFNGLGETDEBUGMESSAGELOGARBPROC,             glGetDebugMessageLog,   glGetDebugMessageLogARB);
+GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGECONTROLPROC,               glDebugMessageControl);
+GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessageInsert);
+GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGECALLBACKPROC,              glDebugMessageCallback);
+GL_IMPORT_ARB__(true,  PFNGLGETDEBUGMESSAGELOGPROC,                glGetDebugMessageLog);
+GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
+GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
+GL_IMPORT_ARB__(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
+GL_IMPORT_ARB__(true,  PFNGLGETOBJECTLABELPROC,                    glGetObjectLabel);
+GL_IMPORT_ARB__(true,  PFNGLOBJECTPTRLABELPROC,                    glObjectPtrLabel);
+GL_IMPORT_ARB__(true,  PFNGLGETOBJECTPTRLABELPROC,                 glGetObjectPtrLabel);
+GL_IMPORT_ARB__(true,  PFNGLGETPOINTERVPROC,                       glGetPointerv);
 
 GL_IMPORT_ARB__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
 GL_IMPORT_ARB__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
@@ -350,6 +381,7 @@ GL_IMPORT_EXT__(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3
 GL_IMPORT_EXT__(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
 GL_IMPORT_EXT__(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
 GL_IMPORT_EXT__(true,  PFNGLPOPGROUPMARKEREXTPROC,                 glPopGroupMarker);
+GL_IMPORT_EXT__(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
 
 GL_IMPORT_OES__(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
 GL_IMPORT_OES__(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);

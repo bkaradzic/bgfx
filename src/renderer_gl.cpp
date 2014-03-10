@@ -211,6 +211,7 @@ namespace bgfx
 			ANGLE_translated_shader_source,
 
 			APPLE_texture_format_BGRA8888,
+			APPLE_texture_max_level,
 
 			ARB_debug_label,
 			ARB_debug_output,
@@ -329,7 +330,8 @@ namespace bgfx
 		{ "GL_ANGLE_translated_shader_source",     false,                             true  },
 
 		{ "GL_APPLE_texture_format_BGRA8888",      false,                             true  },
-
+		{ "GL_APPLE_texture_max_level",            false,                             true  },
+			
 		{ "GL_ARB_debug_label",                    false,                             true  },
 		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
@@ -517,6 +519,10 @@ namespace bgfx
 		GL_CHECK(glStringMarkerGREMEDY(_length, _marker) );
 	}
 
+	static void GL_APIENTRY stubObjectLabel(GLenum /*_identifier*/, GLuint /*_name*/, GLsizei /*_length*/, const char* /*_label*/)
+	{
+	}
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	static const char* getGLString(GLenum _name)
@@ -573,9 +579,9 @@ namespace bgfx
 		}
 	}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
 	const char* toString(GLenum _enum)
 	{
+#if defined(GL_DEBUG_SOURCE_API_ARB)
 		switch (_enum)
 		{
 		case GL_DEBUG_SOURCE_API_ARB:               return "API";
@@ -596,12 +602,17 @@ namespace bgfx
 		default:
 			break;
 		}
+#else
+		BX_UNUSED(_enum);
+#endif // defined(GL_DEBUG_SOURCE_API_ARB)
 
 		return "<unknown>";
 	}
 
-	static void APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
+	static void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
 	{
+		BX_UNUSED(debugProcCb(_source, _type, _id, _severity, 0, NULL, NULL) );
+
 		BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
 				, toString(_source)
 				, toString(_type)
@@ -611,7 +622,6 @@ namespace bgfx
 				);
 		BX_UNUSED(_source, _type, _id, _severity, _message);
 	}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 	GLint glGet(GLenum _pname)
 	{
@@ -1317,7 +1327,8 @@ namespace bgfx
 				s_textureFormat[TextureFormat::L8].m_fmt         = GL_RED;
 			}
 
-			if (s_extension[Extension::ARB_debug_output].m_supported)
+			if (s_extension[Extension::ARB_debug_output].m_supported
+			||  s_extension[Extension::KHR_debug].m_supported)
 			{
 				GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
 				GL_CHECK(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM_ARB, 0, NULL, GL_TRUE) );
@@ -1345,6 +1356,11 @@ namespace bgfx
 					? stubInsertEventMarkerGREMEDY
 					: stubInsertEventMarker
 					;
+			}
+
+			if (NULL == glObjectLabel)
+			{
+				glObjectLabel = stubObjectLabel;
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
@@ -2272,9 +2288,11 @@ namespace bgfx
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
 
-#if BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, numMips-1) );
-#endif // BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			||  s_extension[Extension::APPLE_texture_max_level].m_supported)
+			{
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, numMips-1) );
+			}
 
 			if (target == GL_TEXTURE_3D)
 			{
@@ -2405,7 +2423,7 @@ namespace bgfx
 					{
 						writeString(&writer
 							, "#extension GL_EXT_frag_depth : enable\n"
-							  "#define gl_FragDepth gl_FragDepthEXT\n"
+							  "#define bgfx_FragDepth gl_FragDepthEXT\n"
 							);
 
 						char str[128];
@@ -2483,10 +2501,18 @@ namespace bgfx
 							const char* end = bx::strmb(brace, '{', '}');
 							if (NULL != end)
 							{
-								strins(brace+1, "\n  float gl_FragDepth = 0.0;\n");
+								strins(brace+1, "\n  float bgfx_FragDepth = 0.0;\n");
 							}
 						}
 					}
+				}
+
+				// Replace all instances of gl_FragDepth with bgfx_FragDepth.
+				for (const char* fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth"); NULL != fragDepth; fragDepth = bx::findIdentifierMatch(fragDepth, "gl_FragDepth") )
+				{
+					char* insert = const_cast<char*>(fragDepth);
+					strins(insert, "bg");
+					memcpy(insert + 2, "fx", 2);
 				}
 			}
 			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
