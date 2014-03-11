@@ -1680,8 +1680,6 @@ namespace bgfx
 							&& imageContainer.m_format != TextureFormat::BC5
 							;
 
-			const bool compressed = isCompressed(TextureFormat::Enum(m_requestedFormat) );
-
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
 				uint32_t width     = textureWidth;
