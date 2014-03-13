@@ -149,12 +149,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
+		const int64_t hpFreq = bx::getHPFrequency();
 		const int64_t frameTime = now - last;
 		last = now;
-		const double freq = double(bx::getHPFrequency() );
+		const double freq = double(hpFreq);
 		const double toMs = 1000.0/freq;
 
-		deltaTimeNs += frameTime*1000000/bx::getHPFrequency();
+		deltaTimeNs += frameTime*1000000/hpFreq;
 
 		if (deltaTimeNs > 1000000)
 		{
@@ -172,8 +173,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				}
 			}
 
-			deltaTimeNs = deltaTimeAvgNs;
-			numFrames = 1;
+			deltaTimeNs = 0;
+			numFrames = 0;
 		}
 		else
 		{

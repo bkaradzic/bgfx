@@ -216,6 +216,7 @@ namespace bgfx
 			ARB_debug_label,
 			ARB_debug_output,
 			ARB_depth_clamp,
+			ARB_draw_buffers_blend,
 			ARB_ES3_compatibility,
 			ARB_framebuffer_object,
 			ARB_framebuffer_sRGB,
@@ -335,6 +336,7 @@ namespace bgfx
 		{ "GL_ARB_debug_label",                    false,                             true  },
 		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "GL_ARB_draw_buffers_blend",             BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
 		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "GL_ARB_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "GL_ARB_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -512,7 +514,7 @@ namespace bgfx
 		//
 		// If <length> is 0 then <marker> is assumed to be null-terminated.
 
-		uint32_t size = (0 == _length ? strlen(_marker) : _length) + 1;
+		uint32_t size = (0 == _length ? (uint32_t)strlen(_marker) : _length) + 1;
 		size *= sizeof(wchar_t);
 		wchar_t* name = (wchar_t*)alloca(size);
 		mbstowcs(name, _marker, size-2);
@@ -1859,6 +1861,7 @@ namespace bgfx
 		else
 		{
 			BX_UNUSED(_zoffset, _depth);
+			BX_TRACE("x %d, y %d, w %d, h %d", _xoffset, _yoffset, _width, _height);
 			GL_CHECK(glTexSubImage2D(_target, _level, _xoffset, _yoffset, _width, _height, _format, _type, _data) );
 		}
 	}

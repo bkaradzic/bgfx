@@ -45,9 +45,13 @@ typedef void           (GL_APIENTRYP PFNGLBINDTEXTUREPROC) (GLenum target, GLuin
 typedef void           (GL_APIENTRYP PFNGLBINDVERTEXARRAYPROC) (GLuint array);
 typedef void           (GL_APIENTRYP PFNGLBLENDCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 typedef void           (GL_APIENTRYP PFNGLBLENDEQUATIONPROC) (GLenum mode);
+typedef void           (GL_APIENTRYP PFNGLBLENDEQUATIONIPROC) (GLuint buf, GLenum mode);
 typedef void           (GL_APIENTRYP PFNGLBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenum modeAlpha);
+typedef void           (GL_APIENTRYP PFNGLBLENDEQUATIONSEPARATEIPROC) (GLuint buf, GLenum modeRGB, GLenum modeAlpha);
 typedef void           (GL_APIENTRYP PFNGLBLENDFUNCPROC) (GLenum sfactor, GLenum dfactor);
+typedef void           (GL_APIENTRYP PFNGLBLENDFUNCIPROC) (GLuint buf, GLenum src, GLenum dst);
 typedef void           (GL_APIENTRYP PFNGLBLENDFUNCSEPARATEPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+typedef void           (GL_APIENTRYP PFNGLBLENDFUNCSEPARATEIPROC) (GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
 typedef void           (GL_APIENTRYP PFNGLBLITFRAMEBUFFERPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 typedef void           (GL_APIENTRYP PFNGLBUFFERDATAPROC) (GLenum target, GLsizeiptr size, const void *data, GLenum usage);
 typedef void           (GL_APIENTRYP PFNGLBUFFERSUBDATAPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
@@ -195,9 +199,13 @@ GL_IMPORT______(false, PFNGLBINDTEXTUREPROC,                       glBindTexture
 GL_IMPORT______(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
 GL_IMPORT______(true,  PFNGLBLENDCOLORPROC,                        glBlendColor);
 GL_IMPORT______(false, PFNGLBLENDEQUATIONPROC,                     glBlendEquation);
+GL_IMPORT______(true,  PFNGLBLENDEQUATIONIPROC,                    glBlendEquationi);
 GL_IMPORT______(true,  PFNGLBLENDEQUATIONSEPARATEPROC,             glBlendEquationSeparate);
+GL_IMPORT______(true,  PFNGLBLENDEQUATIONSEPARATEIPROC,            glBlendEquationSeparatei);
 GL_IMPORT______(false, PFNGLBLENDFUNCPROC,                         glBlendFunc);
+GL_IMPORT______(true,  PFNGLBLENDFUNCIPROC,                        glBlendFunci);
 GL_IMPORT______(true,  PFNGLBLENDFUNCSEPARATEPROC,                 glBlendFuncSeparate);
+GL_IMPORT______(true,  PFNGLBLENDFUNCSEPARATEIPROC,                glBlendFuncSeparatei);
 GL_IMPORT______(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
 GL_IMPORT______(false, PFNGLBUFFERDATAPROC,                        glBufferData);
 GL_IMPORT______(false, PFNGLBUFFERSUBDATAPROC,                     glBufferSubData);
@@ -335,6 +343,11 @@ GL_IMPORT_ARB__(true,  PFNGLGETOBJECTLABELPROC,                    glGetObjectLa
 GL_IMPORT_ARB__(true,  PFNGLOBJECTPTRLABELPROC,                    glObjectPtrLabel);
 GL_IMPORT_ARB__(true,  PFNGLGETOBJECTPTRLABELPROC,                 glGetObjectPtrLabel);
 GL_IMPORT_ARB__(true,  PFNGLGETPOINTERVPROC,                       glGetPointerv);
+
+GL_IMPORT_ARB__(true,  PFNGLBLENDEQUATIONIPROC,                    glBlendEquationi);
+GL_IMPORT_ARB__(true,  PFNGLBLENDEQUATIONSEPARATEIPROC,            glBlendEquationSeparatei);
+GL_IMPORT_ARB__(true,  PFNGLBLENDFUNCIPROC,                        glBlendFunci);
+GL_IMPORT_ARB__(true,  PFNGLBLENDFUNCSEPARATEIPROC,                glBlendFuncSeparatei);
 
 GL_IMPORT_ARB__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
 GL_IMPORT_ARB__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
