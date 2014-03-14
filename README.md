@@ -130,6 +130,7 @@ calls while maintaining 60Hz frame rate.
 
 | CPU          | Renderer    | GPU       |Compiler| Arch | OS       | Dim | Calls |
 |:-------------|:------------|:----------|:------:|:----:|:--------:|----:|------:|
+| i5-3570 3.8  | NV 331.49   | GTX560Ti  | GCC    | x64  | Linux    |  40 | 64000 |
 | i7-920 2.66  | GL2.1       | GTX650Ti  | VS2008 | x64  | Windows7 |  38 | 54872 |
 | i7-920 2.66  | GL2.1       | GTX650Ti  | VS2008 | x86  | Windows7 |  38 | 54872 |
 | i7-920 2.66  | DX9         | GTX650Ti  | GCC    | x64  | Windows7 |  32 | 32768 |
@@ -140,8 +141,8 @@ calls while maintaining 60Hz frame rate.
 | i7-920 2.66  | GLES2-ANGLE | GTX650Ti  | VS2008 | x86  | Windows7 |  21 |  9261 |
 | i5-2450M 2.5 | Mesa 10.2.0 | HD3000    | GCC    | x64  | Linux    |  19 |  6859 |
 | i5-4250U 1.3 | GL2.1       | HD5000    | Clang  | x64  | OSX 10.9 |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1       | HD5000    | GCC    | x86  | Nacl 33  |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1       | HD5000    | Clang  | JIT  | PNacl 33 |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1       | HD5000    | GCC    | x86  | NaCl 33  |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1       | HD5000    | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
 | i7-920 2.66  | GLES2       | GTX650Ti  | GCC    | x64  | NaCl 33  |  15 |  3375 |
 | i7-920 2.66  | GLES2       | GTX650Ti  | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
 | '12 Nexus 7  | GLES2       | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
