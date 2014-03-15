@@ -128,24 +128,27 @@ Shadow volumes.
 Draw stress is CPU stress test to show what is the maximimum number of draw
 calls while maintaining 60Hz frame rate.
 
-| CPU          | Renderer    | GPU       |Compiler| Arch | OS       | Dim | Calls |
-|:-------------|:------------|:----------|:------:|:----:|:--------:|----:|------:|
-| i7-920 2.66  | GL2.1       | GTX650Ti  | VS2008 | x64  | Windows7 |  38 | 54872 |
-| i7-920 2.66  | GL2.1       | GTX650Ti  | VS2008 | x86  | Windows7 |  38 | 54872 |
-| i7-920 2.66  | DX9         | GTX650Ti  | GCC    | x64  | Windows7 |  32 | 32768 |
-| i7-920 2.66  | DX9         | GTX650Ti  | VS2008 | x64  | Windows7 |  32 | 32768 |
-| i7-920 2.66  | DX9         | GTX650Ti  | GCC    | x86  | Windows7 |  30 | 27000 |
-| i7-920 2.66  | DX9         | GTX650Ti  | VS2008 | x86  | Windows7 |  30 | 27000 |
-| i7-4770R 3.2 | MESA 10.0.1 | HD5200    | GCC    | x64  | SteamOS  |  25 | 15625 |
-| i7-920 2.66  | GLES2-ANGLE | GTX650Ti  | VS2008 | x86  | Windows7 |  21 |  9261 |
-| i5-4250U 1.3 | GL2.1       | HD5000    | Clang  | x64  | OSX 10.9 |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1       | HD5000    | GCC    | x86  | Nacl 33  |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1       | HD5000    | Clang  | JIT  | PNacl 33 |  15 |  3375 |
-| i7-920 2.66  | GLES2       | GTX650Ti  | GCC    | x64  | NaCl 33  |  15 |  3375 |
-| i7-920 2.66  | GLES2       | GTX650Ti  | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
-| '12 Nexus 7  | GLES2       | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
-| '13 Nexus 10 | GLES2       | Mali T604 | GCC    | ARM  | Android  |  13 |  2197 |
-| '13 Nexus 7  | GLES2       | S4 Pro    | GCC    | ARM  | Android  |  12 |  1728 |
+| CPU          | Renderer     | GPU       |Compiler| Arch | OS       | Dim | Calls |
+|:-------------|:-------------|:----------|:------:|:----:|:--------:|----:|------:|
+| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7 |  38 | 54872 |
+| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x86  | Windows7 |  38 | 54872 |
+| i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x64  | Windows7 |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x64  | Windows7 |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x86  | Windows7 |  30 | 27000 |
+| i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x86  | Windows7 |  30 | 27000 |
+| i7-4770R 3.2 | MESA 10.0.1  | HD5200    | GCC    | x64  | SteamOS  |  25 | 15625 |
+| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | VS2008 | x86  | Windows7 |  21 |  9261 |
+| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | VS2008 | x86  | Windows7 |  18 |  5832 |
+| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | VS2008 | x86  | Windows7 |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9 |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | GCC    | x86  | Nacl 33  |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | JIT  | PNacl 33 |  15 |  3375 |
+| i7-920 2.66  | ES2          | GTX650Ti  | GCC    | x64  | NaCl 33  |  15 |  3375 |
+| i7-920 2.66  | ES2          | GTX650Ti  | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
+| '12 Nexus 7  | ES2          | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
+| '13 Nexus 10 | ES2          | Mali T604 | GCC    | ARM  | Android  |  13 |  2197 |
+| '13 Nexus 7  | ES2          | S4 Pro    | GCC    | ARM  | Android  |  12 |  1728 |
+| i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7 |   6 |   216 |
 
 ### 18-ibl
 Image based lighting.
