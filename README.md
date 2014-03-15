@@ -1,7 +1,5 @@
-bgfx
-====
-
-https://github.com/bkaradzic/bgfx
+[bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
+============================================================================
 
 What is it?
 -----------
@@ -450,6 +448,16 @@ http://www.gutenberg.org/ebooks/1661
 Tree Pack 1  
 http://www.turbosquid.com/3d-models/free-obj-mode-tree-pack/506851
 
+Getting involved
+----------------
+
+Everyone is welcome to contribute to bgfx by submitting bug reports, testing
+on different platforms, writing examples, improving documentation, profiling
+and optimizing, etc.
+
+When contributing to the bgfx project you must agree to the BSD 2-clause
+licensing terms.
+
 Contributors
 ------------
 
@@ -459,9 +467,6 @@ Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and
 Milos Tosic ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
 Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil, 
   14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
-
-When contributing to the bgfx project you must agree to the BSD 2-clause
-licensing terms.
 
 License (BSD 2-clause)
 ----------------------
