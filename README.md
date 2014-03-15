@@ -143,8 +143,8 @@ draw calls per frame.
 | i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | VS2008 | x86  | Windows7 |  18 |  5832 |
 | i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | VS2008 | x86  | Windows7 |  15 |  3375 |
 | i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9 |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1        | HD5000    | GCC    | x86  | Nacl 33  |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | JIT  | PNacl 33 |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | GCC    | x86  | NaCl 33  |  15 |  3375 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | GCC    | x64  | NaCl 33  |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
 | '12 Nexus 7  | ES2          | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
