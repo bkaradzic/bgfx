@@ -1171,12 +1171,10 @@ namespace bgfx
 			DX_RELEASE(backBuffer, 0);
 		}
 
-#if BGFX_CONFIG_DEBUG_PIX
 		void* m_d3d9dll;
 		D3DPERF_SetMarkerFunc m_D3DPERF_SetMarker;
 		D3DPERF_BeginEventFunc m_D3DPERF_BeginEvent;
 		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
-#endif // BGFX_CONFIG_DEBUG_PIX
 
 		void* m_d3d11dll;
 		void* m_dxgidll;
