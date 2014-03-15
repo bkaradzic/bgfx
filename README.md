@@ -131,6 +131,7 @@ draw calls per frame.
 
 | CPU          | Renderer     | GPU       |Compiler| Arch | OS       | Dim | Calls |
 |:-------------|:-------------|:----------|:------:|:----:|:--------:|----:|------:|
+| i5-3570 3.8  | NV 331.49    | GTX560Ti  | GCC    | x64  | Linux    |  40 | 64000 |
 | i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7 |  38 | 54872 |
 | i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x86  | Windows7 |  38 | 54872 |
 | i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x64  | Windows7 |  32 | 32768 |
