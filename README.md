@@ -126,7 +126,8 @@ Shadow volumes.
 
 ### 17-drawstress
 Draw stress is CPU stress test to show what is the maximimum number of draw
-calls while maintaining 60Hz frame rate.
+calls while maintaining 60Hz frame rate. bgfx currently has limit of maximum 64K
+draw calls per frame.
 
 | CPU          | Renderer     | GPU       |Compiler| Arch | OS       | Dim | Calls |
 |:-------------|:-------------|:----------|:------:|:----:|:--------:|----:|------:|
@@ -148,6 +149,7 @@ calls while maintaining 60Hz frame rate.
 | '12 Nexus 7  | ES2          | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
 | '13 Nexus 10 | ES2          | Mali T604 | GCC    | ARM  | Android  |  13 |  2197 |
 | '13 Nexus 7  | ES2          | S4 Pro    | GCC    | ARM  | Android  |  12 |  1728 |
+| Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android  |  11 |  1331 |
 | i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7 |   6 |   216 |
 
 ### 18-ibl
