@@ -138,8 +138,12 @@ draw calls per frame.
 | i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x64  | Windows7 |  32 | 32768 |
 | i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x86  | Windows7 |  30 | 27000 |
 | i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x86  | Windows7 |  30 | 27000 |
-| i7-4770R 3.2 | MESA 10.0.1  | HD5200    | GCC    | x64  | SteamOS  |  25 | 15625 |
+| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | Linux    |  27 | 19683 |
+| i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | GCC    | x64  | SteamOS  |  25 | 15625 |
 | i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | VS2008 | x86  | Windows7 |  21 |  9261 |
+| Q8200 2.33   | Gallium 0.4  | AMD5770   | GCC    | x64  | Linux    |  21 |  9261 |
+| Q8200 2.33   | Gallium 0.4  | GTX260    | GCC    | x64  | Linux    |  19 |  6859 |
+| i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | GCC    | x64  | Linux    |  19 |  6859 |
 | i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | VS2008 | x86  | Windows7 |  18 |  5832 |
 | i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | VS2008 | x86  | Windows7 |  15 |  3375 |
 | i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9 |  15 |  3375 |
