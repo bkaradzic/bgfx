@@ -484,8 +484,8 @@ Milos Tosic ([@milostosic](https://github.com/milostosic)) - 12-lod example.
 Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil, 
   14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
 
-License (BSD 2-clause)
-----------------------
+[License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
+-------------------------------------------------------------------------------
 
 	Copyright 2010-2014 Branimir Karadzic. All rights reserved.
 	
@@ -511,5 +511,3 @@ License (BSD 2-clause)
 	LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 	OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 	ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-[https://github.com/bkaradzic/bgfx/blob/master/LICENSE](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
