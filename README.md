@@ -44,85 +44,100 @@ examples your current directory should be examples/runtime.
 
 	<bgfx_path>/examples/runtime $ ../../.build/<config>/bin/example-00-helloworldDebug
 
-### 00-helloworld
+### [00-helloworld](https://github.com/bkaradzic/bgfx/blob/master/examples/00-helloworld)
+
 Initialization and debug text.
 
-### 01-cubes
+### [01-cubes](https://github.com/bkaradzic/bgfx/blob/master/examples/01-cubes/cubes.cpp)
+
 Rendering simple static mesh.
 
 ![example-01-cubes](https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png)
 
-### 02-metaballs
+### [02-metaballs](https://github.com/bkaradzic/bgfx/blob/master/examples/02-metaballs)
+
 Rendering with transient buffers and embedding shaders.
 
 ![example-02-metaballs](https://github.com/bkaradzic/bgfx/raw/master/examples/02-metaballs/screenshot.png)
 
-### 03-raymarch
+### [03-raymarch](https://github.com/bkaradzic/bgfx/blob/master/examples/03-raymarch)
+
 Updating shader uniforms.
 
 ![example-03-raymarch](https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png)
 
-### 04-mesh
+### [04-mesh](https://github.com/bkaradzic/bgfx/blob/master/examples/04-mesh)
+
 Loading meshes.
 
 ![example-04-mesh](https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png)
 
-### 05-instancing
+### [05-instancing](https://github.com/bkaradzic/bgfx/blob/master/examples/05-instancing)
+
 Geometry instancing.
 
 ![example-05-instancing](https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png)
 
-### 06-bump
+### [06-bump](https://github.com/bkaradzic/bgfx/blob/master/examples/06-bump)
+
 Loading textures.
 
 ![example-06-bump](https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png)
 
-### 07-callback
+### [07-callback](https://github.com/bkaradzic/bgfx/blob/master/examples/07-callback)
+
 Implementing application specific callbacks for taking screen shots, caching
 OpenGL binary shaders, and video capture.
 
-### 08-update
+### [08-update](https://github.com/bkaradzic/bgfx/blob/master/examples/08-update)
+
 Updating textures.
 
-### 09-hdr
+### [09-hdr](https://github.com/bkaradzic/bgfx/tree/master/examples/09-hdr)
 Using multiple views and render targets.
 
 ![example-09-hdr](https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png)
 
-### 10-font
+### [10-font](https://github.com/bkaradzic/bgfx/tree/master/examples/10-font)
+
 Use the font system to display text and styled text.
 
 ![example-10-font](https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png)
 
-### 11-fontsdf
+### [11-fontsdf](https://github.com/bkaradzic/bgfx/tree/master/examples/11-fontsdf)
+
 Use a single distance field font to render text of various size.
 
 ![example-11-fontsdf](https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png)
 
-### 12-lod
+### [12-lod](https://github.com/bkaradzic/bgfx/tree/master/examples/12-lod)
+
 Mesh LOD transitions.
 
 ![example-12-lod](https://github.com/bkaradzic/bgfx/raw/master/examples/12-lod/screenshot.png)
 
-### 13-stencil
+### [13-stencil](https://github.com/bkaradzic/bgfx/tree/master/examples/13-stencil)
+
 Stencil reflections and shadows.
 
 ![example-13-stencil](https://github.com/bkaradzic/bgfx/raw/master/examples/13-stencil/screenshot.png)
 
-### 14-shadowvolumes
+### [14-shadowvolumes](https://github.com/bkaradzic/bgfx/tree/master/examples/14-shadowvolumes)
+
 Shadow volumes.
 
 ![example-14-shadowvolumes](https://github.com/bkaradzic/bgfx/raw/master/examples/14-shadowvolumes/screenshot.png)
 
-### 15-shadowmaps-simple
+### [15-shadowmaps-simple](https://github.com/bkaradzic/bgfx/tree/master/examples/15-shadowmaps-simple)
 
 ![example-15-shadowmaps-simple](https://github.com/bkaradzic/bgfx/raw/master/examples/15-shadowmaps-simple/screenshot.png)
 
-### 16-shadowmaps
+### [16-shadowmaps](https://github.com/bkaradzic/bgfx/tree/master/examples/16-shadowmaps)
 
 ![example-16-shadowmaps](https://github.com/bkaradzic/bgfx/raw/master/examples/16-shadowmaps/screenshot.png)
 
-### 17-drawstress
+### [17-drawstress](https://github.com/bkaradzic/bgfx/blob/master/examples/17-drawstress)
+
 Draw stress is CPU stress test to show what is the maximimum number of draw
 calls while maintaining 60Hz frame rate. bgfx currently has limit of maximum 64K
 draw calls per frame.
@@ -155,7 +170,8 @@ draw calls per frame.
 | Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android  |  11 |  1331 |
 | i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7 |   6 |   216 |
 
-### 18-ibl
+### [18-ibl](https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl)
+
 Image based lighting.
 
 ![example-18-ibl](https://github.com/bkaradzic/bgfx/raw/master/examples/18-ibl/screenshot.png)
