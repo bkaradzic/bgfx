@@ -13,6 +13,7 @@ namespace entry
 {
 	const Event* poll()
 	{
+		return NULL;
 	}
 
 	void release(const Event* /*_event*/)
