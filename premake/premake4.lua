@@ -103,6 +103,10 @@ function exampleProject(_name, _uuid)
 			"pthread",
 		}
 
+	configuration { "asmjs" }
+		kind "ConsoleApp"
+		targetextension ".bc"
+
 	configuration { "linux-*" }
 		links {
 			"X11",
