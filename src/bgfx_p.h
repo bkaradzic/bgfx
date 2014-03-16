@@ -2685,6 +2685,7 @@ namespace bgfx
 
 		bx::Semaphore m_renderSem;
 		bx::Semaphore m_gameSem;
+		bx::Thread m_thread;
 #else
 		void gameSemPost()
 		{
@@ -2703,7 +2704,6 @@ namespace bgfx
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
-		bx::Thread m_thread;
 		Frame m_frame[2];
 		Frame* m_render;
 		Frame* m_submit;
