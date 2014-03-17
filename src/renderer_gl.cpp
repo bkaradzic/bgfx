@@ -288,6 +288,9 @@ namespace bgfx
 
 			KHR_debug,
 
+			MOZ_WEBGL_compressed_texture_s3tc,
+			MOZ_WEBGL_depth_texture,
+
 			NVX_gpu_memory_info,
 
 			OES_compressed_ETC1_RGB8_texture,
@@ -311,6 +314,13 @@ namespace bgfx
 			OES_vertex_half_float,
 			OES_vertex_type_10_10_10_2,
 
+			WEBGL_compressed_texture_s3tc,
+			WEBGL_depth_texture,
+
+			WEBKIT_EXT_texture_filter_anisotropic,
+			WEBKIT_WEBGL_compressed_texture_s3tc,
+			WEBKIT_WEBGL_depth_texture,
+
 			Count
 		};
 
@@ -321,115 +331,125 @@ namespace bgfx
 
 	static Extension s_extension[Extension::Count] =
 	{
-		{ "GL_ANGLE_depth_texture",                false,                             true  },
-		{ "GL_ANGLE_framebuffer_blit",             false,                             true  },
-		{ "GL_ANGLE_framebuffer_multisample",      false,                             false },
-		{ "GL_ANGLE_instanced_arrays",             false,                             true  },
-		{ "GL_ANGLE_texture_compression_dxt1",     false,                             true  },
-		{ "GL_ANGLE_texture_compression_dxt3",     false,                             true  },
-		{ "GL_ANGLE_texture_compression_dxt5",     false,                             true  },
-		{ "GL_ANGLE_translated_shader_source",     false,                             true  },
+		{ "ANGLE_depth_texture",                   false,                             true  },
+		{ "ANGLE_framebuffer_blit",                false,                             true  },
+		{ "ANGLE_framebuffer_multisample",         false,                             false },
+		{ "ANGLE_instanced_arrays",                false,                             true  },
+		{ "ANGLE_texture_compression_dxt1",        false,                             true  },
+		{ "ANGLE_texture_compression_dxt3",        false,                             true  },
+		{ "ANGLE_texture_compression_dxt5",        false,                             true  },
+		{ "ANGLE_translated_shader_source",        false,                             true  },
 
-		{ "GL_APPLE_texture_format_BGRA8888",      false,                             true  },
-		{ "GL_APPLE_texture_max_level",            false,                             true  },
-			
-		{ "GL_ARB_debug_label",                    false,                             true  },
-		{ "GL_ARB_debug_output",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "GL_ARB_depth_clamp",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "GL_ARB_draw_buffers_blend",             BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
-		{ "GL_ARB_ES3_compatibility",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "GL_ARB_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_get_program_binary",             BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
-		{ "GL_ARB_half_float_pixel",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_half_float_vertex",              BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_instanced_arrays",               BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_map_buffer_range",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_multisample",                    false,                             true  },
-		{ "GL_ARB_sampler_objects",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_seamless_cube_map",              BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "GL_ARB_shader_texture_lod",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_texture_float",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_texture_multisample",            BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "GL_ARB_texture_storage",                BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
-		{ "GL_ARB_texture_swizzle",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_timer_query",                    BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "GL_ARB_uniform_buffer_object",          BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_ARB_vertex_array_object",            BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_ARB_vertex_type_2_10_10_10_rev",     false,                             true  },
+		{ "APPLE_texture_format_BGRA8888",         false,                             true  },
+		{ "APPLE_texture_max_level",               false,                             true  },
 
-		{ "GL_ATI_meminfo",                        false,                             true  },
+		{ "ARB_debug_label",                       false,                             true  },
+		{ "ARB_debug_output",                      BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "ARB_depth_clamp",                       BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "ARB_draw_buffers_blend",                BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
+		{ "ARB_ES3_compatibility",                 BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "ARB_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_framebuffer_sRGB",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_get_program_binary",                BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
+		{ "ARB_half_float_pixel",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_half_float_vertex",                 BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_instanced_arrays",                  BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "ARB_map_buffer_range",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_multisample",                       false,                             true  },
+		{ "ARB_sampler_objects",                   BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "ARB_seamless_cube_map",                 BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "ARB_shader_texture_lod",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_texture_compression_rgtc",          BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_texture_float",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_texture_multisample",               BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
+		{ "ARB_texture_storage",                   BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
+		{ "ARB_texture_swizzle",                   BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "ARB_timer_query",                       BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "ARB_uniform_buffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "ARB_vertex_array_object",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_vertex_type_2_10_10_10_rev",        false,                             true  },
 
-		{ "GL_CHROMIUM_depth_texture",             false,                             true  },
-		{ "GL_CHROMIUM_framebuffer_multisample",   false,                             true  },
-		{ "GL_CHROMIUM_texture_compression_dxt3",  false,                             true  },
-		{ "GL_CHROMIUM_texture_compression_dxt5",  false,                             true  },
+		{ "ATI_meminfo",                           false,                             true  },
 
-		{ "GL_EXT_bgra",                           false,                             true  },
-		{ "GL_EXT_blend_color",                    BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "GL_EXT_blend_minmax",                   BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
-		{ "GL_EXT_blend_subtract",                 BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
-		{ "GL_EXT_debug_label",                    false,                             true  },
-		{ "GL_EXT_debug_marker",                   false,                             true  },
-		{ "GL_EXT_frag_depth",                     false,                             true  }, // GLES2 extension.
-		{ "GL_EXT_framebuffer_blit",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_EXT_framebuffer_object",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_EXT_framebuffer_sRGB",               BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_EXT_occlusion_query_boolean",        false,                             true  },
-		{ "GL_EXT_read_format_bgra",               false,                             true  },
-		{ "GL_EXT_shader_texture_lod",             false,                             true  }, // GLES2 extension.
-		{ "GL_EXT_shadow_samplers",                false,                             true  },
-		{ "GL_EXT_texture_array",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_EXT_texture_compression_dxt1",       false,                             true  },
-		{ "GL_EXT_texture_compression_latc",       false,                             true  },
-		{ "GL_EXT_texture_compression_rgtc",       BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "GL_EXT_texture_compression_s3tc",       false,                             true  },
-		{ "GL_EXT_texture_filter_anisotropic",     false,                             true  },
-		{ "GL_EXT_texture_format_BGRA8888",        false,                             true  },
-		{ "GL_EXT_texture_sRGB",                   false,                             true  },
-		{ "GL_EXT_texture_storage",                false,                             true  },
-		{ "GL_EXT_texture_swizzle",                false,                             true  },
-		{ "GL_EXT_texture_type_2_10_10_10_REV",    false,                             true  },
-		{ "GL_EXT_timer_query",                    false,                             true  },
-		{ "GL_EXT_unpack_subimage",                false,                             true  },
+		{ "CHROMIUM_depth_texture",                false,                             true  },
+		{ "CHROMIUM_framebuffer_multisample",      false,                             true  },
+		{ "CHROMIUM_texture_compression_dxt3",     false,                             true  },
+		{ "CHROMIUM_texture_compression_dxt5",     false,                             true  },
 
-		{ "GL_GOOGLE_depth_texture",               false,                             true  },
+		{ "EXT_bgra",                              false,                             true  },
+		{ "EXT_blend_color",                       BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
+		{ "EXT_blend_minmax",                      BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
+		{ "EXT_blend_subtract",                    BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
+		{ "EXT_debug_label",                       false,                             true  },
+		{ "EXT_debug_marker",                      false,                             true  },
+		{ "EXT_frag_depth",                        false,                             true  }, // GLES2 extension.
+		{ "EXT_framebuffer_blit",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "EXT_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "EXT_framebuffer_sRGB",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "EXT_occlusion_query_boolean",           false,                             true  },
+		{ "EXT_read_format_bgra",                  false,                             true  },
+		{ "EXT_shader_texture_lod",                false,                             true  }, // GLES2 extension.
+		{ "EXT_shadow_samplers",                   false,                             true  },
+		{ "EXT_texture_array",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "EXT_texture_compression_dxt1",          false,                             true  },
+		{ "EXT_texture_compression_latc",          false,                             true  },
+		{ "EXT_texture_compression_rgtc",          BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "EXT_texture_compression_s3tc",          false,                             true  },
+		{ "EXT_texture_filter_anisotropic",        false,                             true  },
+		{ "EXT_texture_format_BGRA8888",           false,                             true  },
+		{ "EXT_texture_sRGB",                      false,                             true  },
+		{ "EXT_texture_storage",                   false,                             true  },
+		{ "EXT_texture_swizzle",                   false,                             true  },
+		{ "EXT_texture_type_2_10_10_10_REV",       false,                             true  },
+		{ "EXT_timer_query",                       false,                             true  },
+		{ "EXT_unpack_subimage",                   false,                             true  },
 
-		{ "GL_GREMEDY_string_marker",              false,                             true  },
-		{ "GL_GREMEDY_frame_terminator",           false,                             true  },
+		{ "GOOGLE_depth_texture",                  false,                             true  },
 
-		{ "GL_IMG_multisampled_render_to_texture", false,                             true  },
-		{ "GL_IMG_read_format",                    false,                             true  },
-		{ "GL_IMG_shader_binary",                  false,                             true  },
-		{ "GL_IMG_texture_compression_pvrtc",      false,                             true  },
-		{ "GL_IMG_texture_compression_pvrtc2",     false,                             true  },
-		{ "GL_IMG_texture_format_BGRA8888",        false,                             true  },
+		{ "GREMEDY_string_marker",                 false,                             true  },
+		{ "GREMEDY_frame_terminator",              false,                             true  },
 
-		{ "GL_KHR_debug",                          BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "IMG_multisampled_render_to_texture",    false,                             true  },
+		{ "IMG_read_format",                       false,                             true  },
+		{ "IMG_shader_binary",                     false,                             true  },
+		{ "IMG_texture_compression_pvrtc",         false,                             true  },
+		{ "IMG_texture_compression_pvrtc2",        false,                             true  },
+		{ "IMG_texture_format_BGRA8888",           false,                             true  },
 
-		{ "GL_NVX_gpu_memory_info",                false,                             true  },
+		{ "KHR_debug",                             BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 
-		{ "GL_OES_compressed_ETC1_RGB8_texture",   false,                             true  },
-		{ "GL_OES_depth24",                        false,                             true  },
-		{ "GL_OES_depth32",                        false,                             true  },
-		{ "GL_OES_depth_texture",                  false,                             true  },
-		{ "GL_OES_fragment_precision_high",        false,                             true  },
-		{ "GL_OES_get_program_binary",             false,                             true  },
-		{ "GL_OES_required_internalformat",        false,                             true  },
-		{ "GL_OES_packed_depth_stencil",           false,                             true  },
-		{ "GL_OES_read_format",                    false,                             true  },
-		{ "GL_OES_rgb8_rgba8",                     false,                             true  },
-		{ "GL_OES_standard_derivatives",           false,                             true  },
-		{ "GL_OES_texture_3D",                     false,                             true  },
-		{ "GL_OES_texture_float",                  false,                             true  },
-		{ "GL_OES_texture_float_linear",           false,                             true  },
-		{ "GL_OES_texture_npot",                   false,                             true  },
-		{ "GL_OES_texture_half_float",             false,                             true  },
-		{ "GL_OES_texture_half_float_linear",      false,                             true  },
-		{ "GL_OES_vertex_array_object",            false,                             !BX_PLATFORM_IOS },
-		{ "GL_OES_vertex_half_float",              false,                             true  },
-		{ "GL_OES_vertex_type_10_10_10_2",         false,                             true  },
+		{ "MOZ_WEBGL_compressed_texture_s3tc",     false,                             true  },
+		{ "MOZ_WEBGL_depth_texture",               false,                             true  },
+
+		{ "NVX_gpu_memory_info",                   false,                             true  },
+
+		{ "OES_compressed_ETC1_RGB8_texture",      false,                             true  },
+		{ "OES_depth24",                           false,                             true  },
+		{ "OES_depth32",                           false,                             true  },
+		{ "OES_depth_texture",                     false,                             true  },
+		{ "OES_fragment_precision_high",           false,                             true  },
+		{ "OES_get_program_binary",                false,                             true  },
+		{ "OES_required_internalformat",           false,                             true  },
+		{ "OES_packed_depth_stencil",              false,                             true  },
+		{ "OES_read_format",                       false,                             true  },
+		{ "OES_rgb8_rgba8",                        false,                             true  },
+		{ "OES_standard_derivatives",              false,                             true  },
+		{ "OES_texture_3D",                        false,                             true  },
+		{ "OES_texture_float",                     false,                             true  },
+		{ "OES_texture_float_linear",              false,                             true  },
+		{ "OES_texture_npot",                      false,                             true  },
+		{ "OES_texture_half_float",                false,                             true  },
+		{ "OES_texture_half_float_linear",         false,                             true  },
+		{ "OES_vertex_array_object",               false,                             !BX_PLATFORM_IOS },
+		{ "OES_vertex_half_float",                 false,                             true  },
+		{ "OES_vertex_type_10_10_10_2",            false,                             true  },
+
+		{ "WEBGL_compressed_texture_s3tc",         false,                             true  },
+		{ "WEBGL_depth_texture",                   false,                             true  },
+
+		{ "WEBKIT_EXT_texture_filter_anisotropic", false,                             true  },
+		{ "WEBKIT_WEBGL_compressed_texture_s3tc",  false,                             true  },
+		{ "WEBKIT_WEBGL_depth_texture",            false,                             true  },
 	};
 
 	static const char* s_ARB_shader_texture_lod[] =
@@ -1049,9 +1069,15 @@ namespace bgfx
 						{
 							Extension& extension = s_extension[ii];
 							if (!extension.m_supported
-								&&  extension.m_initialize)
+							&&  extension.m_initialize)
 							{
-								if (0 == strcmp(name, extension.m_name) )
+								const char* ext = name;
+								if (0 == strncmp(ext, "GL_", 3) ) // skip GL_
+								{
+									ext += 3;
+								}
+
+								if (0 == strcmp(ext, extension.m_name) )
 								{
 									extension.m_supported = true;
 									supported = true;
@@ -1078,7 +1104,12 @@ namespace bgfx
 				}
 			}
 
-			bool bc123Supported = s_extension[Extension::EXT_texture_compression_s3tc].m_supported;
+			bool bc123Supported = 0
+				|| s_extension[Extension::EXT_texture_compression_s3tc].m_supported
+				|| s_extension[Extension::MOZ_WEBGL_compressed_texture_s3tc].m_supported
+				|| s_extension[Extension::WEBGL_compressed_texture_s3tc].m_supported
+				|| s_extension[Extension::WEBKIT_WEBGL_compressed_texture_s3tc].m_supported
+				;
 			s_textureFormat[TextureFormat::BC1].m_supported |= bc123Supported
 				|| s_extension[Extension::ANGLE_texture_compression_dxt1].m_supported
 				|| s_extension[Extension::EXT_texture_compression_dxt1].m_supported
@@ -1231,6 +1262,9 @@ namespace bgfx
 				|| s_extension[Extension::CHROMIUM_depth_texture].m_supported
 				|| s_extension[Extension::GOOGLE_depth_texture].m_supported
 				|| s_extension[Extension::OES_depth_texture].m_supported
+				|| s_extension[Extension::MOZ_WEBGL_depth_texture].m_supported
+				|| s_extension[Extension::WEBGL_depth_texture].m_supported
+				|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 				;
 
 			g_caps.supported |= m_depthTextureSupport 
