@@ -171,11 +171,14 @@ draw calls per frame.
 | i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | asm.js   |  14 |  2744 |
 | '13 Nexus 10 | ES2          | Mali T604 | GCC    | ARM  | Android  |  13 |  2197 |
 | '13 Nexus 7  | ES2          | S4 Pro    | GCC    | ARM  | Android  |  12 |  1728 |
-| i7-920 2.66  | ES2-FF27     | GTX650Ti  | Clang  | JIT  | asm.js   |  12 |  1728 |
+| i7-920 2.66  | ES2-FF27*    | GTX650Ti  | Clang  | JIT  | asm.js   |  12 |  1728 |
 | Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android  |  11 |  1331 |
 | i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7 |   6 |   216 |
 
-asm.js build is here: [https://gist.github.com/bkaradzic/9593537](https://gist.github.com/bkaradzic/9593537)
+_* With Firefox 27 about:config adjustments webgl.prefer-native-gl = true, and
+layout.frame_rate = 500, asm.js can do 4913 @ 60Hz._
+
+asm.js build is here: [https://gist.github.com/bkaradzic/9594247](https://gist.github.com/bkaradzic/9594247)
 
 ### [18-ibl](https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl)
 
