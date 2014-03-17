@@ -129,26 +129,30 @@ namespace bgfx
 		}
 	};
 
+#ifndef BGFX_CONFIG_MEMORY_TRACKING
+#	define BGFX_CONFIG_MEMORY_TRACKING (BGFX_CONFIG_DEBUG && BX_CONFIG_SUPPORTED_THREADING)
+#endif // BGFX_CONFIG_MEMORY_TRACKING
+
 	class AllocatorStub : public bx::ReallocatorI
 	{
 	public:
 		AllocatorStub()
-#if BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_MEMORY_TRACKING
 			: m_numBlocks(0)
 			, m_maxBlocks(0)
-#endif // BGFX_CONFIG_DEBUG
+#endif // BGFX_CONFIG_MEMORY_TRACKING
 		{
 		}
 
 		virtual void* alloc(size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-#if BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_MEMORY_TRACKING
 			{
 				bx::LwMutexScope scope(m_mutex);
 				++m_numBlocks;
 				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
 			}
-#endif // BGFX_CONFIG_DEBUG
+#endif // BGFX_CONFIG_MEMORY_TRACKING
 
 			BX_UNUSED(_file, _line);
 			return ::malloc(_size);
@@ -158,13 +162,13 @@ namespace bgfx
 		{
 			if (NULL != _ptr)
 			{
-#if BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_MEMORY_TRACKING
 				{
 					bx::LwMutexScope scope(m_mutex);
 					BX_CHECK(m_numBlocks > 0, "Number of blocks is 0. Possible alloc/free mismatch?");
 					--m_numBlocks;
 				}
-#endif // BGFX_CONFIG_DEBUG
+#endif // BGFX_CONFIG_MEMORY_TRACKING
 
 				BX_UNUSED(_file, _line);
 				::free(_ptr);
@@ -173,14 +177,14 @@ namespace bgfx
 
 		virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-#if BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_MEMORY_TRACKING
 			if (NULL == _ptr)
 			{
 				bx::LwMutexScope scope(m_mutex);
 				++m_numBlocks;
 				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
 			}
-#endif // BGFX_CONFIG_DEBUG
+#endif // BGFX_CONFIG_MEMORY_TRACKING
 
 			BX_UNUSED(_file, _line);
 			return ::realloc(_ptr, _size);
@@ -188,15 +192,17 @@ namespace bgfx
 
 		void checkLeaks()
 		{
+#if BGFX_CONFIG_MEMORY_TRACKING
 			BX_WARN(0 == m_numBlocks, "MEMORY LEAK: %d (max: %d)", m_numBlocks, m_maxBlocks);
+#endif // BGFX_CONFIG_MEMORY_TRACKING
 		}
 
 	protected:
-#if BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_MEMORY_TRACKING
 		bx::LwMutex m_mutex;
 		uint32_t m_numBlocks;
 		uint32_t m_maxBlocks;
-#endif // BGFX_CONFIG_DEBUG
+#endif // BGFX_CONFIG_MEMORY_TRACKING
 	};
 
 	static CallbackStub* s_callbackStub = NULL;

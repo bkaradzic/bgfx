@@ -1682,11 +1682,14 @@ namespace bgfx
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_ATTRIBUTES, &activeAttribs) );
 		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORMS, &activeUniforms) );
 
-		GLint max0, max1;
-		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max0) );
-		GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max1) );
-
-		GLint maxLength = bx::uint32_max(max0, max1);
+		GLint maxLength = 512;
+		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+		{
+			GLint max0, max1;
+			GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max0) );
+			GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max1) );
+			maxLength = bx::uint32_max(max0, max1);
+		}
 		char* name = (char*)alloca(maxLength + 1);
 
 		BX_TRACE("Program %d", m_id);
