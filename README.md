@@ -18,6 +18,7 @@ Supported rendering backends:
 Platforms:
 
  * Android
+ * asm.js/Emscripten
  * iOS
  * Linux
  * Native Client
@@ -164,11 +165,22 @@ draw calls per frame.
 | i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | GCC    | x64  | NaCl 33  |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
+| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | NaCl 33  |  15 |  3375 |
+| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | PNaCl 33 |  15 |  3375 |
 | '12 Nexus 7  | ES2          | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
 | '13 Nexus 10 | ES2          | Mali T604 | GCC    | ARM  | Android  |  13 |  2197 |
 | '13 Nexus 7  | ES2          | S4 Pro    | GCC    | ARM  | Android  |  12 |  1728 |
 | Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android  |  11 |  1331 |
 | i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7 |   6 |   216 |
+
+I couldn't get asm.js/Emscripten to run in 60Hz, I changed test to do 30Hz instead:
+
+| CPU          | Renderer     | GPU       |Compiler| Arch | OS       | Dim | Calls |
+|:-------------|:-------------|:----------|:------:|:----:|:--------:|----:|------:|
+| i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | Windows7 |  14 |  2744 |
+| i7-920 2.66  | ES2-FF27     | GTX650Ti  | Clang  | JIT  | Windows7 |  13 |  2197 |
+
+asm.js build is here: [https://gist.github.com/bkaradzic/9592792](https://gist.github.com/bkaradzic/9592792)
 
 ### [18-ibl](https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl)
 
