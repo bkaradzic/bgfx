@@ -23,6 +23,7 @@ all:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-arm gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-mips gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-x86 gmake
+	$(PREMAKE4) --file=premake/premake4.lua --gcc=asmjs gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl-arm gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=pnacl gmake
@@ -56,6 +57,14 @@ android-x86-debug: .build/projects/gmake-android-x86
 android-x86-release: .build/projects/gmake-android-x86
 	make -R -C .build/projects/gmake-android-x86 config=release
 android-x86: android-x86-debug android-x86-release
+
+.build/projects/gmake-asmjs:
+	$(PREMAKE4) --file=premake/premake4.lua --gcc=asmjs gmake
+asmjs-debug: .build/projects/gmake-asmjs
+	make -R -C .build/projects/gmake-asmjs config=debug
+asmjs-release: .build/projects/gmake-asmjs
+	make -R -C .build/projects/gmake-asmjs config=release
+asmjs: asmjs-debug asmjs-release
 
 .build/projects/gmake-linux:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=linux-gcc gmake
