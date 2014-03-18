@@ -139,46 +139,68 @@ Shadow volumes.
 
 ### [17-drawstress](https://github.com/bkaradzic/bgfx/blob/master/examples/17-drawstress)
 
+#### 60Hz
+
 Draw stress is CPU stress test to show what is the maximimum number of draw
 calls while maintaining 60Hz frame rate. bgfx currently has limit of maximum 64K
 draw calls per frame.
 
-| CPU          | Renderer     | GPU       |Compiler| Arch | OS       | Dim | Calls |
-|:-------------|:-------------|:----------|:------:|:----:|:--------:|----:|------:|
-| i5-3570 3.8  | NV 331.49    | GTX560Ti  | GCC    | x64  | Linux    |  40 | 64000 |
-| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7 |  38 | 54872 |
-| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x86  | Windows7 |  38 | 54872 |
-| i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x64  | Windows7 |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x64  | Windows7 |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x86  | Windows7 |  30 | 27000 |
-| i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x86  | Windows7 |  30 | 27000 |
-| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | Linux    |  27 | 19683 |
-| i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | GCC    | x64  | SteamOS  |  25 | 15625 |
-| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | VS2008 | x86  | Windows7 |  21 |  9261 |
-| Q8200 2.33   | Gallium 0.4  | AMD5770   | GCC    | x64  | Linux    |  21 |  9261 |
-| Q8200 2.33   | Gallium 0.4  | GTX260    | GCC    | x64  | Linux    |  19 |  6859 |
-| i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | GCC    | x64  | Linux    |  19 |  6859 |
-| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | VS2008 | x86  | Windows7 |  18 |  5832 |
-| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | VS2008 | x86  | Windows7 |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9 |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1        | HD5000    | GCC    | x86  | NaCl 33  |  15 |  3375 |
-| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
-| i7-920 2.66  | ES2          | GTX650Ti  | GCC    | x64  | NaCl 33  |  15 |  3375 |
-| i7-920 2.66  | ES2          | GTX650Ti  | Clang  | JIT  | PNaCl 33 |  15 |  3375 |
-| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | NaCl 33  |  15 |  3375 |
-| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | PNaCl 33 |  15 |  3375 |
-| '12 Nexus 7  | ES2          | Tegra3    | GCC    | ARM  | Android  |  15 |  3375 |
-| i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | asm.js   |  14 |  2744 |
-| '13 Nexus 10 | ES2          | Mali T604 | GCC    | ARM  | Android  |  13 |  2197 |
-| '13 Nexus 7  | ES2          | S4 Pro    | GCC    | ARM  | Android  |  12 |  1728 |
-| i7-920 2.66  | ES2-FF27*    | GTX650Ti  | Clang  | JIT  | asm.js   |  12 |  1728 |
-| Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android  |  11 |  1331 |
-| i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7 |   6 |   216 |
+| CPU          | Renderer     | GPU       |Compiler| Arch | OS         | Dim | Calls |
+|:-------------|:-------------|:----------|:------:|:----:|:----------:|----:|------:|
+| i5-3570 3.8  | NV 331.49    | GTX560Ti  | GCC    | x64  | Linux      |  40 | 64000+|
+| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7   |  38 | 54872 |
+| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x86  | Windows7   |  38 | 54872 |
+| i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x64  | Windows7   |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x64  | Windows7   |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | GCC    | x86  | Windows7   |  30 | 27000 |
+| i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x86  | Windows7   |  30 | 27000 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9   |  28 | 21852 |
+| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | Linux      |  27 | 19683 |
+| i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | GCC    | x64  | SteamOS    |  25 | 15625 |
+| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | VS2008 | x86  | Windows7   |  21 |  9261 |
+| Q8200 2.33   | Gallium 0.4  | AMD5770   | GCC    | x64  | Linux      |  21 |  9261 |
+| i5-4250U 1.3 | ES2          | HD5000    | Clang  | JIT  | PNaCl 31   |  21 |  9261 |
+| i5-4250U 1.3 | ES2          | HD5000    | GCC    | x86  | NaCl 31    |  20 |  8000 |
+| Q8200 2.33   | Gallium 0.4  | GTX260    | GCC    | x64  | Linux      |  19 |  6859 |
+| i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | GCC    | x64  | Linux      |  19 |  6859 |
+| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | VS2008 | x86  | Windows7   |  18 |  5832 |
+| i7-920 2.66  | FF27-GL      | GTX650Ti  | Clang  | JIT  | W7-asm.js  |  17 |  4913 |
+| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | VS2008 | x86  | Windows7   |  15 |  3375 |
+| i7-920 2.66  | ES2          | GTX650Ti  | GCC    | x64  | NaCl 31    |  15 |  3375 |
+| i7-920 2.66  | ES2          | GTX650Ti  | Clang  | JIT  | PNaCl 31   |  15 |  3375 |
+| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | NaCl 31    |  15 |  3375 |
+| Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | PNaCl 31   |  15 |  3375 |
+| '12 Nexus 7  | ES2          | Tegra3    | GCC    | ARM  | Android    |  15 |  3375 |
+| i5-4250U 1.3 | ES2-FF27     | HD5000    | Clang  | JIT  | OSX-asm.js |  15 |  3375 |
+| i5-4250U 1.3 | Chrome33     | HD5000    | Clang  | JIT  | OSX-asm.js |  15 |  3375 |
+| i7-920 2.66  | Chrome33     | GTX650Ti  | Clang  | JIT  | W7-asm.js  |  14 |  2744 |
+| i7-920 2.66  | FF27-ANGLE   | GTX650Ti  | Clang  | JIT  | W7-asm.js  |  12 |  2744 |
+| '13 Nexus 10 | ES2          | Mali T604 | GCC    | ARM  | Android    |  13 |  2197 |
+| '13 Nexus 7  | ES2          | S4 Pro    | GCC    | ARM  | Android    |  12 |  1728 |
+| Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android    |  11 |  1331 |
+| i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7   |   6 |   216 |
 
-_* With Firefox 27 about:config adjustments webgl.prefer-native-gl = true, and
-layout.frame_rate = 500, asm.js can do 4913 @ 60Hz._
+To test browsers in 60Hz mode following changes were made:
 
-asm.js build is here: [https://gist.github.com/bkaradzic/9594247](https://gist.github.com/bkaradzic/9594247)
+ * Firefox 27 about:config adjustments: `webgl.prefer-native-gl true` (on Windows),
+   and `layout.frame_rate 500`.
+ * Chrome 33 command line option: `--disable-gpu-vsync`.
+
+#### 30Hz (test for browsers)
+
+By default browsers are using vsync, and don't have option to turn it off
+programatically.
+
+| CPU          | Renderer     | GPU       |Compiler| Arch | OS           | Dim | Calls |
+|:-------------|:-------------|:----------|:------:|:----:|:------------:|----:|------:|
+| i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7     |  38 | 64000+|
+| i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9     |  36 | 46656 |
+| i5-4250U 1.3 | ES2-Chrome33 | HD5000    | Clang  | JIT  | OSX-PNaCl 31 |  27 | 19683 |
+| i5-4250U 1.3 | ES2-FF27     | HD5000    | Clang  | JIT  | OSX-asm.js   |  20 |  8000 |
+| i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | W7-PNaCl 31  |  20 |  8000 |
+| i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | W7-asm.js    |  18 |  5832 |
+| i7-920 2.66  | ES2-FF27     | GTX650Ti  | Clang  | JIT  | W7-asm.js    |  18 |  5832 |
+| i5-4250U 1.3 | ES2-Safari7  | HD5000    | Clang  | JIT  | OSX-asm.js   |  15 |  3375 |
 
 ### [18-ibl](https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl)
 
