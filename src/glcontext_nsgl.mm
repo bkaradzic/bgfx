@@ -57,6 +57,8 @@ namespace bgfx
 		NSOpenGLContext* glContext = [glView openGLContext];
 
 		[glContext makeCurrentContext];
+		GLint interval = 0;
+		[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
 		
 		m_view    = glView;
 		m_context = glContext;
@@ -77,6 +79,10 @@ namespace bgfx
 	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
 		BX_UNUSED(_width, _height, _vsync);
+
+		GLint interval = _vsync ? 1 : 0;
+		NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
+		[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
 	}
 
 	void GlContext::swap()
