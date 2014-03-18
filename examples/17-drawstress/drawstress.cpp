@@ -21,6 +21,10 @@
 // embedded font
 #include "droidsans.ttf.h"
 
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <emscripten.h>
+#endif // BX_PLATFORM_EMSCRIPTEN
+
 struct PosColorVertex
 {
 	float m_x;
@@ -59,93 +63,39 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-int _main_(int /*_argc*/, char** /*_argv*/)
+uint32_t width = 1280;
+uint32_t height = 720;
+uint32_t debug = BGFX_DEBUG_TEXT;
+uint32_t reset = BGFX_RESET_NONE;
+
+bool autoAdjust = true;
+int32_t scrollArea = 0;
+int32_t dim = 16;
+uint32_t transform = 0;
+
+entry::MouseState mouseState;
+
+int64_t timeOffset = bx::getHPCounter();
+
+int64_t deltaTimeNs = 0;
+int64_t deltaTimeAvgNs = 0;
+int64_t numFrames = 0;
+
+#if BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL
+static const int64_t highwm = 1000000/35;
+static const int64_t lowwm  = 1000000/27;
+#else
+static const int64_t highwm = 1000000/65;
+static const int64_t lowwm  = 1000000/57;
+#endif // BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL
+
+bgfx::ProgramHandle program;
+bgfx::VertexBufferHandle vbh;
+bgfx::IndexBufferHandle ibh;
+
+bool mainloop()
 {
-	uint32_t width = 1280;
-	uint32_t height = 720;
-	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_NONE;
-
-	bgfx::init();
-	bgfx::reset(width, height, reset);
-
-	// Enable debug text.
-	bgfx::setDebug(debug);
-
-	// Set view 0 clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
-
-	// Create vertex stream declaration.
-	s_PosColorDecl.begin();
-	s_PosColorDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosColorDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-	s_PosColorDecl.end();
-
-	const bgfx::Memory* vs_drawstress;
-	const bgfx::Memory* fs_drawstress;
-
-	switch (bgfx::getRendererType() )
-	{
-	case bgfx::RendererType::Direct3D9:
-		vs_drawstress = bgfx::makeRef(vs_drawstress_dx9, sizeof(vs_drawstress_dx9) );
-		fs_drawstress = bgfx::makeRef(fs_drawstress_dx9, sizeof(fs_drawstress_dx9) );
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		vs_drawstress = bgfx::makeRef(vs_drawstress_dx11, sizeof(vs_drawstress_dx11) );
-		fs_drawstress = bgfx::makeRef(fs_drawstress_dx11, sizeof(fs_drawstress_dx11) );
-		break;
-
-	default:
-		vs_drawstress = bgfx::makeRef(vs_drawstress_glsl, sizeof(vs_drawstress_glsl) );
-		fs_drawstress = bgfx::makeRef(fs_drawstress_glsl, sizeof(fs_drawstress_glsl) );
-		break;
-	}
-
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(vs_drawstress);
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(fs_drawstress);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	const bgfx::Memory* mem;
-
-	// Create static vertex buffer.
-	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
-	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, s_PosColorDecl);
-
-	// Create static index buffer.
-	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
-	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
-
-	imguiCreate(s_droidSansTtf, sizeof(s_droidSansTtf) );
-
-	bool autoAdjust = true;
-	int32_t scrollArea = 0;
-	int32_t dim = 16;
-	uint32_t transform = 0;
-
-	entry::MouseState mouseState;
-
-	int64_t timeOffset = bx::getHPCounter();
-
-	int64_t deltaTimeNs = 0;
-	int64_t deltaTimeAvgNs = 0;
-	int64_t numFrames = 0;
-
-	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
+	if (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -163,13 +113,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			if (autoAdjust)
 			{
-				if (deltaTimeAvgNs < 1000000/65)
+				if (deltaTimeAvgNs < highwm)
 				{
 					dim = bx::uint32_min(dim + 2, 40);
 				}
-				else if (deltaTimeAvgNs > 1000000/57)
+				else if (deltaTimeAvgNs > lowwm)
 				{
-					dim = bx::uint32_max(dim - 1, 5);
+					dim = bx::uint32_max(dim - 1, 2);
 				}
 			}
 
@@ -184,21 +134,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float time = (float)( (now-timeOffset)/freq);
 
 		imguiBeginFrame(mouseState.m_mx
-			, mouseState.m_my
-			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
-			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-			, 0
-			, width
-			, height
-			);
+				, mouseState.m_my
+				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
+				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
+				, 0
+				, width
+				, height
+				);
 
 		imguiBeginScrollArea("Settings", width - width / 4 - 10, 10, width / 4, height / 3, &scrollArea);
 		imguiSeparatorLine();
 
 		transform = imguiChoose(transform
-			, "Rotate"
-			, "No fragments"
-			);
+				, "Rotate"
+				, "No fragments"
+				);
 		imguiSeparatorLine();
 
 		if (imguiCheck("Auto adjust", autoAdjust) )
@@ -235,7 +185,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/17-drawstress");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Draw stress, maximizing number of draw calls.");
-		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: %7.3f[ms]", double(frameTime)*toMs);
 
 		float mtxS[16];
 		const float scale = 0 == transform ? 0.25f : 0.0f;
@@ -285,7 +235,91 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
+
+		return false;
 	}
+
+	return true;
+}
+
+void loop()
+{
+	mainloop();
+}
+
+int _main_(int /*_argc*/, char** /*_argv*/)
+{
+	bgfx::init();
+	bgfx::reset(width, height, reset);
+
+	// Enable debug text.
+	bgfx::setDebug(debug);
+
+	// Set view 0 clear state.
+	bgfx::setViewClear(0
+			, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
+
+	// Create vertex stream declaration.
+	s_PosColorDecl.begin();
+	s_PosColorDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+	s_PosColorDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+	s_PosColorDecl.end();
+
+	const bgfx::Memory* vs_drawstress;
+	const bgfx::Memory* fs_drawstress;
+
+	switch (bgfx::getRendererType() )
+	{
+		case bgfx::RendererType::Direct3D9:
+			vs_drawstress = bgfx::makeRef(vs_drawstress_dx9, sizeof(vs_drawstress_dx9) );
+			fs_drawstress = bgfx::makeRef(fs_drawstress_dx9, sizeof(fs_drawstress_dx9) );
+			break;
+
+		case bgfx::RendererType::Direct3D11:
+			vs_drawstress = bgfx::makeRef(vs_drawstress_dx11, sizeof(vs_drawstress_dx11) );
+			fs_drawstress = bgfx::makeRef(fs_drawstress_dx11, sizeof(fs_drawstress_dx11) );
+			break;
+
+		default:
+			vs_drawstress = bgfx::makeRef(vs_drawstress_glsl, sizeof(vs_drawstress_glsl) );
+			fs_drawstress = bgfx::makeRef(fs_drawstress_glsl, sizeof(fs_drawstress_glsl) );
+			break;
+	}
+
+	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(vs_drawstress);
+	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(fs_drawstress);
+
+	// Create program from shaders.
+	program = bgfx::createProgram(vsh, fsh);
+
+	const bgfx::Memory* mem;
+
+	// Create static vertex buffer.
+	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
+	vbh = bgfx::createVertexBuffer(mem, s_PosColorDecl);
+
+	// Create static index buffer.
+	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
+	ibh = bgfx::createIndexBuffer(mem);
+
+	// We can destroy vertex and fragment shader here since
+	// their reference is kept inside bgfx after calling createProgram.
+	// Vertex and fragment shader will be destroyed once program is
+	// destroyed.
+	bgfx::destroyVertexShader(vsh);
+	bgfx::destroyFragmentShader(fsh);
+
+	imguiCreate(s_droidSansTtf, sizeof(s_droidSansTtf) );
+
+#if BX_PLATFORM_EMSCRIPTEN
+	emscripten_set_main_loop(&loop, -1, 1);
+#else
+	while (!mainloop() );
+#endif // BX_PLATFORM_EMSCRIPTEN
 
 	// Cleanup.
 	imguiDestroy();
