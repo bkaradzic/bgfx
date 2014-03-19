@@ -184,9 +184,8 @@ EGL_IMPORT
 
 	void GlContext::import()
 	{
-#	if !BX_PLATFORM_EMSCRIPTEN
 		BX_TRACE("Import:");
-#		if BX_PLATFORM_WINDOWS
+#	if BX_PLATFORM_WINDOWS
 		void* glesv2 = bx::dlopen("libGLESv2.dll");
 #		define GL_EXTENSION(_optional, _proto, _func, _import) \
 					{ \
@@ -197,7 +196,7 @@ EGL_IMPORT
 							BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
 						} \
 					}
-#		else
+#	else
 #		define GL_EXTENSION(_optional, _proto, _func, _import) \
 					{ \
 						if (NULL == _func) \
@@ -207,9 +206,8 @@ EGL_IMPORT
 							BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
 						} \
 					}
-#		endif // BX_PLATFORM_
-#		include "glimports.h"
-#	endif // !BX_PLATFORM_EMSCRIPTEN
+#	endif // BX_PLATFORM_
+#	include "glimports.h"
 	}
 
 } // namespace bgfx
