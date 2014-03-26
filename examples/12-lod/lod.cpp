@@ -369,7 +369,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		stipple->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
 	}
 		
-	textureStipple = bgfx::createTexture2D(8, 4, 1, bgfx::TextureFormat::L8, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT, stipple);
+	textureStipple = bgfx::createTexture2D(8, 4, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT, stipple);
 
 	Mesh mesh_top[3];
 	mesh_top[0].load("meshes/tree1b_lod0_1.bin");

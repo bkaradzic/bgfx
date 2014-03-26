@@ -216,7 +216,7 @@ struct Imgui
 
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, 15.0f, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_cdata);
-		m_fontTexture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::L8, BGFX_TEXTURE_NONE, mem);
+		m_fontTexture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
 
 		return true;
 	}
