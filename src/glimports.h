@@ -86,6 +86,7 @@ typedef void           (GL_APIENTRYP PFNGLDEPTHFUNCPROC) (GLenum func);
 typedef void           (GL_APIENTRYP PFNGLDEPTHMASKPROC) (GLboolean flag);
 typedef void           (GL_APIENTRYP PFNGLDETACHSHADERPROC) (GLuint program, GLuint shader);
 typedef void           (GL_APIENTRYP PFNGLDISABLEPROC) (GLenum cap);
+typedef void           (GL_APIENTRYP PFNGLDISABLEIPROC) (GLenum cap, GLuint index);
 typedef void           (GL_APIENTRYP PFNGLDISABLEVERTEXATTRIBARRAYPROC) (GLuint index);
 typedef void           (GL_APIENTRYP PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
 typedef void           (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDPROC) (GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
@@ -93,6 +94,7 @@ typedef void           (GL_APIENTRYP PFNGLDRAWBUFFERPROC) (GLenum mode);
 typedef void           (GL_APIENTRYP PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices);
 typedef void           (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount);
 typedef void           (GL_APIENTRYP PFNGLENABLEPROC) (GLenum cap);
+typedef void           (GL_APIENTRYP PFNGLENABLEIPROC) (GLenum cap, GLuint index);
 typedef void           (GL_APIENTRYP PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint index);
 typedef void           (GL_APIENTRYP PFNGLENDQUERYPROC) (GLenum target);
 typedef void           (GL_APIENTRYP PFNGLFRAMEBUFFERRENDERBUFFERPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
@@ -238,6 +240,7 @@ GL_IMPORT______(false, PFNGLDEPTHFUNCPROC,                         glDepthFunc);
 GL_IMPORT______(false, PFNGLDEPTHMASKPROC,                         glDepthMask);
 GL_IMPORT______(false, PFNGLDETACHSHADERPROC,                      glDetachShader);
 GL_IMPORT______(false, PFNGLDISABLEPROC,                           glDisable);
+GL_IMPORT______(true,  PFNGLDISABLEIPROC,                          glDisablei);
 GL_IMPORT______(false, PFNGLDISABLEVERTEXATTRIBARRAYPROC,          glDisableVertexAttribArray);
 GL_IMPORT______(false, PFNGLDRAWARRAYSPROC,                        glDrawArrays);
 GL_IMPORT______(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
@@ -245,6 +248,7 @@ GL_IMPORT______(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer)
 GL_IMPORT______(false, PFNGLDRAWELEMENTSPROC,                      glDrawElements);
 GL_IMPORT______(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
 GL_IMPORT______(false, PFNGLENABLEPROC,                            glEnable);
+GL_IMPORT______(true,  PFNGLENABLEIPROC,                           glEnablei);
 GL_IMPORT______(false, PFNGLENABLEVERTEXATTRIBARRAYPROC,           glEnableVertexAttribArray);
 GL_IMPORT______(true,  PFNGLENDQUERYPROC,                          glEndQuery);
 GL_IMPORT______(true,  PFNGLFRAMEBUFFERRENDERBUFFERPROC,           glFramebufferRenderbuffer);
@@ -406,6 +410,13 @@ GL_IMPORT_OES__(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElement
 GL_IMPORT_OES__(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
 GL_IMPORT_OES__(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
 GL_IMPORT_OES__(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
+
+GL_IMPORT_____x(true,  PFNGLENABLEIPROC,                           glEnablei);
+GL_IMPORT_____x(true,  PFNGLDISABLEIPROC,                          glDisablei);
+GL_IMPORT_____x(true,  PFNGLBLENDEQUATIONIPROC,                    glBlendEquationi);
+GL_IMPORT_____x(true,  PFNGLBLENDEQUATIONSEPARATEIPROC,            glBlendEquationSeparatei);
+GL_IMPORT_____x(true,  PFNGLBLENDFUNCIPROC,                        glBlendFunci);
+GL_IMPORT_____x(true,  PFNGLBLENDFUNCSEPARATEIPROC,                glBlendFuncSeparatei);
 
 GL_IMPORT_____x(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer);
 GL_IMPORT_____x(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);

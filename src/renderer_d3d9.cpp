@@ -47,19 +47,19 @@ namespace bgfx
 	static const Blend s_blendFactor[] =
 	{
 		{ (D3DBLEND)0,             (D3DBLEND)0,             false }, // ignored
-		{ D3DBLEND_ZERO,           D3DBLEND_ZERO,           false },
-		{ D3DBLEND_ONE,            D3DBLEND_ONE,            false },
-		{ D3DBLEND_SRCCOLOR,       D3DBLEND_SRCCOLOR,       false },
-		{ D3DBLEND_INVSRCCOLOR,    D3DBLEND_INVSRCCOLOR,    false },
-		{ D3DBLEND_SRCALPHA,       D3DBLEND_SRCALPHA,       false },
-		{ D3DBLEND_INVSRCALPHA,    D3DBLEND_INVSRCALPHA,    false },
-		{ D3DBLEND_DESTALPHA,      D3DBLEND_DESTALPHA,      false },
-		{ D3DBLEND_INVDESTALPHA,   D3DBLEND_INVDESTALPHA,   false },
-		{ D3DBLEND_DESTCOLOR,      D3DBLEND_DESTCOLOR,      false },
-		{ D3DBLEND_INVDESTCOLOR,   D3DBLEND_INVDESTCOLOR,   false },
-		{ D3DBLEND_SRCALPHASAT,    D3DBLEND_ONE,            false },
-		{ D3DBLEND_BLENDFACTOR,    D3DBLEND_BLENDFACTOR,    true  },
-		{ D3DBLEND_INVBLENDFACTOR, D3DBLEND_INVBLENDFACTOR, true  },
+		{ D3DBLEND_ZERO,           D3DBLEND_ZERO,           false }, // ZERO
+		{ D3DBLEND_ONE,            D3DBLEND_ONE,            false }, // ONE
+		{ D3DBLEND_SRCCOLOR,       D3DBLEND_SRCCOLOR,       false }, // SRC_COLOR
+		{ D3DBLEND_INVSRCCOLOR,    D3DBLEND_INVSRCCOLOR,    false }, // INV_SRC_COLOR
+		{ D3DBLEND_SRCALPHA,       D3DBLEND_SRCALPHA,       false }, // SRC_ALPHA
+		{ D3DBLEND_INVSRCALPHA,    D3DBLEND_INVSRCALPHA,    false }, // INV_SRC_ALPHA
+		{ D3DBLEND_DESTALPHA,      D3DBLEND_DESTALPHA,      false }, // DST_ALPHA
+		{ D3DBLEND_INVDESTALPHA,   D3DBLEND_INVDESTALPHA,   false }, // INV_DST_ALPHA
+		{ D3DBLEND_DESTCOLOR,      D3DBLEND_DESTCOLOR,      false }, // DST_COLOR
+		{ D3DBLEND_INVDESTCOLOR,   D3DBLEND_INVDESTCOLOR,   false }, // INV_DST_COLOR
+		{ D3DBLEND_SRCALPHASAT,    D3DBLEND_ONE,            false }, // SRC_ALPHA_SAT
+		{ D3DBLEND_BLENDFACTOR,    D3DBLEND_BLENDFACTOR,    true  }, // FACTOR
+		{ D3DBLEND_INVBLENDFACTOR, D3DBLEND_INVBLENDFACTOR, true  }, // INV_FACTOR
 	};
 
 	static const D3DBLENDOP s_blendEquation[] =
@@ -184,7 +184,9 @@ namespace bgfx
 		{ D3DFMT_UNKNOWN       }, // PTC22
 		{ D3DFMT_UNKNOWN       }, // PTC24
 		{ D3DFMT_UNKNOWN       }, // Unknown
-		{ D3DFMT_L8            }, // L8
+		{ D3DFMT_L8            }, // R8
+		{ D3DFMT_G16R16        }, // R16
+		{ D3DFMT_R16F          }, // R16F
 		{ D3DFMT_A8R8G8B8      }, // BGRA8
 		{ D3DFMT_A16B16G16R16  }, // RGBA16
 		{ D3DFMT_A16B16G16R16F }, // RGBA16F
@@ -2593,8 +2595,8 @@ namespace bgfx
 					 | BGFX_STATE_CULL_MASK
 					 | BGFX_STATE_DEPTH_WRITE
 					 | BGFX_STATE_DEPTH_TEST_MASK
-					 | BGFX_STATE_ALPHA_MASK
 					 | BGFX_STATE_RGB_WRITE
+					 | BGFX_STATE_ALPHA_WRITE
 					 | BGFX_STATE_BLEND_MASK
 					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
@@ -2648,33 +2650,53 @@ namespace bgfx
 						DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, writeEnable) );
 					}
 
-					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK) & changedFlags)
+					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK) & changedFlags
+					||  blendFactor != state.m_rgba)
 					{
-						bool alphaBlendEnabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
-						DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, alphaBlendEnabled) );
-//						DX_CHECK(device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, alphaBlendEnabled) );
+						bool enabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
+						DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, enabled) );
 
-						if (alphaBlendEnabled)
+						if (enabled)
 						{
-							uint32_t blend = (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
-							uint32_t equation = (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT;
-							uint32_t src = blend&0xf;
-							uint32_t dst = (blend>>4)&0xf;
+							const uint32_t blend    = uint32_t( (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
+							const uint32_t equation = uint32_t( (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
 
- 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND, s_blendFactor[src].m_src) );
-							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dst].m_dst) );
-							DX_CHECK(device->SetRenderState(D3DRS_BLENDOP, s_blendEquation[equation]) );
-//							DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA) );
-//							DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA) );
+							const uint32_t srcRGB  = (blend    )&0xf;
+							const uint32_t dstRGB  = (blend>> 4)&0xf;
+							const uint32_t srcA    = (blend>> 8)&0xf;
+							const uint32_t dstA    = (blend>>12)&0xf;
 
-							if ( (s_blendFactor[src].m_factor || s_blendFactor[dst].m_factor)
+							const uint32_t equRGB = (equation   )&0x7;
+							const uint32_t equA   = (equation>>3)&0x7;
+
+ 							DX_CHECK(device->SetRenderState(D3DRS_SRCBLEND,  s_blendFactor[srcRGB].m_src) );
+							DX_CHECK(device->SetRenderState(D3DRS_DESTBLEND, s_blendFactor[dstRGB].m_dst) );
+							DX_CHECK(device->SetRenderState(D3DRS_BLENDOP,   s_blendEquation[equRGB]) );
+
+							const bool separate = srcRGB != srcA || dstRGB != dstA || equRGB != equA;
+
+							DX_CHECK(device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, separate) );
+							if (separate)
+							{
+								DX_CHECK(device->SetRenderState(D3DRS_SRCBLENDALPHA,  s_blendFactor[srcA].m_src) );
+								DX_CHECK(device->SetRenderState(D3DRS_DESTBLENDALPHA, s_blendFactor[dstA].m_dst) );
+								DX_CHECK(device->SetRenderState(D3DRS_BLENDOPALPHA,   s_blendEquation[equA]) );
+							}
+
+							if ( (s_blendFactor[srcRGB].m_factor || s_blendFactor[dstRGB].m_factor)
 							&&  blendFactor != state.m_rgba)
 							{
-								blendFactor = state.m_rgba;
-								D3DCOLOR color = D3DCOLOR_RGBA(blendFactor>>24, (blendFactor>>16)&0xff, (blendFactor>>8)&0xff, blendFactor&0xff);
+								const uint32_t rgba = state.m_rgba;
+								D3DCOLOR color = D3DCOLOR_RGBA(rgba>>24
+															, (rgba>>16)&0xff
+															, (rgba>> 8)&0xff
+															, (rgba    )&0xff
+															);
 								DX_CHECK(device->SetRenderState(D3DRS_BLENDFACTOR, color) );
 							}
 						}
+
+						blendFactor = state.m_rgba;
 					}
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);

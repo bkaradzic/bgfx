@@ -307,7 +307,7 @@ namespace bgfx
 		uint8_t* rgba = mem->data;
 		charsetFillTexture(vga8x8, rgba, 8, pitch, bpp);
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
-		m_texture = createTexture2D(width, height, 1, TextureFormat::L8
+		m_texture = createTexture2D(width, height, 1, TextureFormat::R8
 						, BGFX_TEXTURE_MIN_POINT
 						| BGFX_TEXTURE_MAG_POINT
 						| BGFX_TEXTURE_MIP_POINT
@@ -472,29 +472,39 @@ namespace bgfx
 		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
 		m_decl.end();
 
-		const Memory* mem;
-
+		VertexShaderHandle vsh = createVertexShader(
 #	if BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) );
+			makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) )
 #	elif BGFX_CONFIG_RENDERER_OPENGL
-		mem = makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) );
+			makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) )
 #	endif // BGFX_CONFIG_RENDERER_*
-		VertexShaderHandle vsh = createVertexShader(mem);
+			);
 
+		const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 #	if BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = makeRef(fs_clear_dx11, sizeof(fs_clear_dx11) );
+		fragMem[0] = makeRef(fs_clear0_dx11, sizeof(fs_clear0_dx11) );
+		fragMem[1] = makeRef(fs_clear1_dx11, sizeof(fs_clear1_dx11) );
+		fragMem[2] = makeRef(fs_clear2_dx11, sizeof(fs_clear2_dx11) );
+		fragMem[3] = makeRef(fs_clear3_dx11, sizeof(fs_clear3_dx11) );
 #	elif BGFX_CONFIG_RENDERER_OPENGL
-		mem = makeRef(fs_clear_glsl, sizeof(fs_clear_glsl) );
+		fragMem[0] = makeRef(fs_clear0_glsl, sizeof(fs_clear0_glsl) );
+		fragMem[1] = makeRef(fs_clear1_glsl, sizeof(fs_clear1_glsl) );
+		fragMem[2] = makeRef(fs_clear2_glsl, sizeof(fs_clear2_glsl) );
+		fragMem[3] = makeRef(fs_clear3_glsl, sizeof(fs_clear3_glsl) );
 #	endif // BGFX_CONFIG_RENDERER_*
-		FragmentShaderHandle fsh = createFragmentShader(mem);
 
-		m_program = createProgram(vsh, fsh);
+		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+		{
+			FragmentShaderHandle fsh = createFragmentShader(fragMem[ii]);
+			m_program[ii] = createProgram(vsh, fsh);
+			destroyFragmentShader(fsh);
+		}
+
 		destroyVertexShader(vsh);
-		destroyFragmentShader(fsh);
 
 		m_vb = s_ctx->createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
 
-		mem = alloc(6*sizeof(uint16_t) );
+		const Memory* mem = alloc(6*sizeof(uint16_t) );
 		uint16_t* indices = (uint16_t*)mem->data;
 		indices[0] = 0;
 		indices[1] = 1;
@@ -511,7 +521,10 @@ namespace bgfx
 		BGFX_CHECK_MAIN_THREAD();
 
 #if BGFX_CONFIG_CLEAR_QUAD
-		destroyProgram(m_program);
+		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+		{
+			destroyProgram(m_program[ii]);
+		}
 		destroyIndexBuffer(m_ib);
 		s_ctx->destroyTransientVertexBuffer(m_vb);
 #endif // BGFX_CONFIG_CLEAR_QUAD

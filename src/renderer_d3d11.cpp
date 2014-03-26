@@ -40,19 +40,19 @@ namespace bgfx
 	static const D3D11_BLEND s_blendFactor[][2] =
 	{
 		{ (D3D11_BLEND)0,               (D3D11_BLEND)0               }, // ignored
-		{ D3D11_BLEND_ZERO,             D3D11_BLEND_ZERO             },
-		{ D3D11_BLEND_ONE,              D3D11_BLEND_ONE              },
-		{ D3D11_BLEND_SRC_COLOR,        D3D11_BLEND_SRC_ALPHA        },
-		{ D3D11_BLEND_INV_SRC_COLOR,    D3D11_BLEND_INV_SRC_ALPHA    },
-		{ D3D11_BLEND_SRC_ALPHA,        D3D11_BLEND_SRC_ALPHA        },
-		{ D3D11_BLEND_INV_SRC_ALPHA,    D3D11_BLEND_INV_SRC_ALPHA    },
-		{ D3D11_BLEND_DEST_ALPHA,       D3D11_BLEND_DEST_ALPHA       },
-		{ D3D11_BLEND_INV_DEST_ALPHA,   D3D11_BLEND_INV_DEST_ALPHA   },
-		{ D3D11_BLEND_DEST_COLOR,       D3D11_BLEND_DEST_ALPHA       },
-		{ D3D11_BLEND_INV_DEST_COLOR,   D3D11_BLEND_INV_DEST_ALPHA   },
-		{ D3D11_BLEND_SRC_ALPHA_SAT,    D3D11_BLEND_ONE              },
-		{ D3D11_BLEND_BLEND_FACTOR,     D3D11_BLEND_BLEND_FACTOR     },
-		{ D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR },
+		{ D3D11_BLEND_ZERO,             D3D11_BLEND_ZERO             }, // ZERO
+		{ D3D11_BLEND_ONE,              D3D11_BLEND_ONE              },	// ONE
+		{ D3D11_BLEND_SRC_COLOR,        D3D11_BLEND_SRC_ALPHA        },	// SRC_COLOR
+		{ D3D11_BLEND_INV_SRC_COLOR,    D3D11_BLEND_INV_SRC_ALPHA    },	// INV_SRC_COLOR
+		{ D3D11_BLEND_SRC_ALPHA,        D3D11_BLEND_SRC_ALPHA        },	// SRC_ALPHA
+		{ D3D11_BLEND_INV_SRC_ALPHA,    D3D11_BLEND_INV_SRC_ALPHA    },	// INV_SRC_ALPHA
+		{ D3D11_BLEND_DEST_ALPHA,       D3D11_BLEND_DEST_ALPHA       },	// DST_ALPHA
+		{ D3D11_BLEND_INV_DEST_ALPHA,   D3D11_BLEND_INV_DEST_ALPHA   },	// INV_DST_ALPHA
+		{ D3D11_BLEND_DEST_COLOR,       D3D11_BLEND_DEST_ALPHA       },	// DST_COLOR
+		{ D3D11_BLEND_INV_DEST_COLOR,   D3D11_BLEND_INV_DEST_ALPHA   },	// INV_DST_COLOR
+		{ D3D11_BLEND_SRC_ALPHA_SAT,    D3D11_BLEND_ONE              },	// SRC_ALPHA_SAT
+		{ D3D11_BLEND_BLEND_FACTOR,     D3D11_BLEND_BLEND_FACTOR     },	// FACTOR
+		{ D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR },	// INV_FACTOR
 	};
 
 	static const D3D11_BLEND_OP s_blendEquation[] =
@@ -206,7 +206,9 @@ namespace bgfx
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC22
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // PTC24
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN           }, // Unknown
-		{ DXGI_FORMAT_R8_UNORM,           DXGI_FORMAT_R8_UNORM,              DXGI_FORMAT_UNKNOWN           }, // L8
+		{ DXGI_FORMAT_R8_UNORM,           DXGI_FORMAT_R8_UNORM,              DXGI_FORMAT_UNKNOWN           }, // R8
+		{ DXGI_FORMAT_R16_UNORM,          DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_UNKNOWN           }, // R16
+		{ DXGI_FORMAT_R16_FLOAT,          DXGI_FORMAT_R16_FLOAT,             DXGI_FORMAT_UNKNOWN           }, // R16F
 		{ DXGI_FORMAT_B8G8R8A8_UNORM,     DXGI_FORMAT_B8G8R8A8_UNORM,        DXGI_FORMAT_UNKNOWN           }, // BGRA8
 		{ DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM,    DXGI_FORMAT_UNKNOWN           }, // RGBA16
 		{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT,    DXGI_FORMAT_UNKNOWN           }, // RGBA16F
@@ -512,6 +514,7 @@ namespace bgfx
 								| BGFX_CAPS_INSTANCING
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
+								| BGFX_CAPS_BLEND_INDEPENDENT
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 			g_caps.maxFBAttachments = bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
@@ -772,21 +775,29 @@ namespace bgfx
 
 		void clear(const Clear& _clear)
 		{
-			if (NULL != m_currentColor
-			&&  BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+			if (isValid(m_fbh) )
 			{
-				uint32_t rgba = _clear.m_rgba;
-				float frgba[4] = { (rgba>>24)/255.0f, ( (rgba>>16)&0xff)/255.0f, ( (rgba>>8)&0xff)/255.0f, (rgba&0xff)/255.0f };
-				m_deviceCtx->ClearRenderTargetView(m_currentColor, frgba);
+				FrameBuffer& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.clear(_clear);
 			}
-
-			if (NULL != m_currentDepthStencil
-			&& (BGFX_CLEAR_DEPTH_BIT|BGFX_CLEAR_STENCIL_BIT) & _clear.m_flags)
+			else
 			{
-				DWORD flags = 0;
-				flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH_BIT) ? D3D11_CLEAR_DEPTH : 0;
-				flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL_BIT) ? D3D11_CLEAR_STENCIL : 0;
-				m_deviceCtx->ClearDepthStencilView(m_currentDepthStencil, flags, _clear.m_depth, _clear.m_stencil);
+				if (NULL != m_currentColor
+				&&  BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+				{
+					uint32_t rgba = _clear.m_rgba;
+					float frgba[4] = { (rgba>>24)/255.0f, ( (rgba>>16)&0xff)/255.0f, ( (rgba>>8)&0xff)/255.0f, (rgba&0xff)/255.0f };
+					m_deviceCtx->ClearRenderTargetView(m_currentColor, frgba);
+				}
+
+				if (NULL != m_currentDepthStencil
+				&& (BGFX_CLEAR_DEPTH_BIT|BGFX_CLEAR_STENCIL_BIT) & _clear.m_flags)
+				{
+					DWORD flags = 0;
+					flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH_BIT) ? D3D11_CLEAR_DEPTH : 0;
+					flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL_BIT) ? D3D11_CLEAR_STENCIL : 0;
+					m_deviceCtx->ClearDepthStencilView(m_currentDepthStencil, flags, _clear.m_depth, _clear.m_stencil);
+				}
 			}
 		}
 
@@ -856,45 +867,109 @@ namespace bgfx
 			m_deviceCtx->IASetInputLayout(layout);
 		}
 
-		void setBlendState(uint64_t _state, uint32_t _rgba = UINT32_MAX)
+		void setBlendState(uint64_t _state, uint32_t _rgba = 0)
 		{
-			_state &= BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE;
+			_state &= 0
+				| BGFX_STATE_BLEND_MASK
+				| BGFX_STATE_BLEND_EQUATION_MASK
+				| BGFX_STATE_BLEND_INDEPENDENT
+				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_RGB_WRITE
+				;
 
-			ID3D11BlendState* bs = m_blendStateCache.find(_state);
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_state);
+
+			const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
+			const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
+			bool hasFactor = f0 == (_state & f0) 
+						  || f1 == (_state & f1)
+						  ;
+
+			float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			if (hasFactor)
+			{
+				blendFactor[0] = ( (_rgba>>24)     )/255.0f;
+				blendFactor[1] = ( (_rgba>>16)&0xff)/255.0f;
+				blendFactor[2] = ( (_rgba>> 8)&0xff)/255.0f;
+				blendFactor[3] = ( (_rgba    )&0xff)/255.0f;
+			}
+			else
+			{
+				murmur.add(_rgba);
+			}
+
+			uint32_t hash = murmur.end();
+
+			ID3D11BlendState* bs = m_blendStateCache.find(hash);
 			if (NULL == bs)
 			{
 				D3D11_BLEND_DESC desc;
 				memset(&desc, 0, sizeof(desc) );
-				D3D11_RENDER_TARGET_BLEND_DESC& drt = desc.RenderTarget[0];
-				drt.BlendEnable = !!(BGFX_STATE_BLEND_MASK & _state);
+				desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
 
-				uint32_t blend = (_state&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
-				uint32_t equation = (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT;
-				uint32_t src = blend&0xf;
-				uint32_t dst = (blend>>4)&0xf;
+				D3D11_RENDER_TARGET_BLEND_DESC* drt = &desc.RenderTarget[0];
+				drt->BlendEnable = !!(BGFX_STATE_BLEND_MASK & _state);
+
+				const uint32_t blend    = uint32_t( (_state&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
+				const uint32_t equation = uint32_t( (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
+
+				const uint32_t srcRGB = (blend    )&0xf;
+				const uint32_t dstRGB = (blend>> 4)&0xf;
+				const uint32_t srcA   = (blend>> 8)&0xf;
+				const uint32_t dstA   = (blend>>12)&0xf;
+
+				const uint32_t equRGB = (equation   )&0x7;
+				const uint32_t equA   = (equation>>3)&0x7;
+
+				drt->SrcBlend       = s_blendFactor[srcRGB][0];
+				drt->DestBlend      = s_blendFactor[dstRGB][0];
+				drt->BlendOp        = s_blendEquation[equRGB];
+
+				drt->SrcBlendAlpha  = s_blendFactor[srcA][1];
+				drt->DestBlendAlpha = s_blendFactor[dstA][1];
+				drt->BlendOpAlpha   = s_blendEquation[equA];
+
 				uint32_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0;
 				writeMask |= (_state&BGFX_STATE_RGB_WRITE) ? D3D11_COLOR_WRITE_ENABLE_RED|D3D11_COLOR_WRITE_ENABLE_GREEN|D3D11_COLOR_WRITE_ENABLE_BLUE : 0;
 
-				drt.SrcBlend = s_blendFactor[src][0];
-				drt.DestBlend = s_blendFactor[dst][0];
-				drt.BlendOp = s_blendEquation[equation];
+				drt->RenderTargetWriteMask = writeMask;
 
-				drt.SrcBlendAlpha = s_blendFactor[src][1];
-				drt.DestBlendAlpha = s_blendFactor[dst][1];
-				drt.BlendOpAlpha = s_blendEquation[equation];
+				if (desc.IndependentBlendEnable)
+				{
+					for (uint32_t ii = 1, rgba = _rgba; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii, rgba >>= 11)
+					{
+						drt = &desc.RenderTarget[ii];
+						drt->BlendEnable = 0 != (rgba&0x7ff);
 
-				drt.RenderTargetWriteMask = writeMask;
+						const uint32_t src      = (rgba   )&0xf;
+						const uint32_t dst      = (rgba>>4)&0xf;
+						const uint32_t equation = (rgba>>8)&0x7;
 
+						drt->SrcBlend       = s_blendFactor[src][0];
+						drt->DestBlend      = s_blendFactor[dst][0];
+						drt->BlendOp        = s_blendEquation[equation];
+
+						drt->SrcBlendAlpha  = s_blendFactor[src][1];
+						drt->DestBlendAlpha = s_blendFactor[dst][1];
+						drt->BlendOpAlpha   = s_blendEquation[equation];
+
+						drt->RenderTargetWriteMask = writeMask;
+					}
+				}
+				else
+				{
+					for (uint32_t ii = 1; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+					{
+						memcpy(&desc.RenderTarget[ii], drt, sizeof(D3D11_RENDER_TARGET_BLEND_DESC) );
+					}
+				}
+				
 				DX_CHECK(m_device->CreateBlendState(&desc, &bs) );
 
-				m_blendStateCache.add(_state, bs);
+				m_blendStateCache.add(hash, bs);
 			}
-
-			float blendFactor[4];
-			blendFactor[0] = (_rgba>>24)/255.0f;
-			blendFactor[1] = ( (_rgba>>16)&0xff)/255.0f;
-			blendFactor[2] = ( (_rgba>>8)&0xff)/255.0f;
-			blendFactor[3] = (_rgba&0xff)/255.0f;
 
 			m_deviceCtx->OMSetBlendState(bs, blendFactor, 0xffffffff);
 		}
@@ -1505,7 +1580,15 @@ namespace bgfx
 			s_renderCtx->setDepthStencilState(state, stencil);
 			s_renderCtx->setRasterizerState(state);
 
-			Program& program = s_renderCtx->m_program[m_program.idx];
+			uint32_t numMrt = 0;
+			FrameBufferHandle fbh = s_renderCtx->m_fbh;
+			if (isValid(fbh) )
+			{
+				const FrameBuffer& fb = s_renderCtx->m_frameBuffers[fbh.idx];
+				numMrt = bx::uint32_max(1, fb.m_num)-1;
+			}
+
+			Program& program = s_renderCtx->m_program[m_program[numMrt].idx];
 			s_renderCtx->m_currentProgram = &program;
 			deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
 			deviceCtx->VSSetConstantBuffers(0, 0, NULL);
@@ -2000,6 +2083,33 @@ namespace bgfx
 	{
 	}
 
+	void FrameBuffer::clear(const Clear& _clear)
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderCtx->m_deviceCtx;
+
+		if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+		{
+			uint32_t rgba = _clear.m_rgba;
+			float frgba[4] = { (rgba>>24)/255.0f, ( (rgba>>16)&0xff)/255.0f, ( (rgba>>8)&0xff)/255.0f, (rgba&0xff)/255.0f };
+			for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+			{
+				if (NULL != m_rtv[ii])
+				{
+					deviceCtx->ClearRenderTargetView(m_rtv[ii], frgba);
+				}
+			}
+		}
+
+		if (NULL != m_dsv
+		&& (BGFX_CLEAR_DEPTH_BIT|BGFX_CLEAR_STENCIL_BIT) & _clear.m_flags)
+		{
+			DWORD flags = 0;
+			flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH_BIT) ? D3D11_CLEAR_DEPTH : 0;
+			flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL_BIT) ? D3D11_CLEAR_STENCIL : 0;
+			deviceCtx->ClearDepthStencilView(m_dsv, flags, _clear.m_depth, _clear.m_stencil);
+		}
+	}
+
 	void UniformBuffer::create(UniformType::Enum _type, uint16_t _num, bool _alloc)
 	{
 		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
@@ -2380,8 +2490,8 @@ namespace bgfx
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
-					 | BGFX_STATE_ALPHA_MASK
 					 | BGFX_STATE_RGB_WRITE
+					 | BGFX_STATE_ALPHA_WRITE
 					 | BGFX_STATE_BLEND_MASK
 					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK

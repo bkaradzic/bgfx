@@ -288,6 +288,7 @@ namespace bgfx
 		void create(uint8_t _num, const TextureHandle* _handles);
 		void destroy();
 		void resolve();
+		void clear(const Clear& _clear);
 
 		ID3D11RenderTargetView* m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];

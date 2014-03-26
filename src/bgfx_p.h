@@ -457,7 +457,7 @@ namespace bgfx
 		TransientVertexBuffer* m_vb;
 		IndexBufferHandle m_ib;
 		VertexDecl m_decl;
-		ProgramHandle m_program;
+		ProgramHandle m_program[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
 	struct PredefinedUniform
@@ -926,7 +926,7 @@ namespace bgfx
 			m_constBegin = m_constEnd;
 			m_flags = BGFX_STATE_DEFAULT;
 			m_stencil = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
-			m_rgba = UINT32_MAX;
+			m_rgba = 0;
 			m_matrix = 0;
 			m_startIndex = 0;
 			m_numIndices = UINT32_MAX;

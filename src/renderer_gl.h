@@ -64,6 +64,7 @@ typedef uint64_t GLuint64;
 #		define GL_RGB10_A2 GL_RGB10_A2_EXT
 #		define GL_R16F GL_R16F_EXT
 #		define GL_R32F GL_R32F_EXT
+#		define GL_RED GL_RED_EXT
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_TEXTURE_3D GL_TEXTURE_3D_OES
 #		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
@@ -98,6 +99,10 @@ typedef uint64_t GLuint64;
 #	define GL_BGRA_EXT 0x80E1
 #endif // GL_BGRA_EXT
 
+#ifndef GL_R16
+#	define GL_R16 0x822A
+#endif // GL_R16
+
 #ifndef GL_R16F_EXT
 #	define GL_R16F_EXT 0x822D
 #endif // GL_R16F_EXT
@@ -105,6 +110,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_R32F_EXT
 #	define GL_R32F_EXT 0x822E
 #endif // GL_R32F_EXT
+
+#ifndef GL_RED_EXT
+#	define GL_RED_EXT 0x1903
+#endif // GL_RED_EXT
 
 #ifndef GL_RGB10_A2_EXT
 #	define GL_RGB10_A2_EXT 0x8059

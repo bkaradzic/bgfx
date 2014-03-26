@@ -527,4 +527,7 @@ static const uint8_t vga8x16[256*16] =
 #include "fs_debugfont.bin.h"
 
 #include "vs_clear.bin.h"
-#include "fs_clear.bin.h"
+#include "fs_clear0.bin.h"
+#include "fs_clear1.bin.h"
+#include "fs_clear2.bin.h"
+#include "fs_clear3.bin.h"

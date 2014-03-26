@@ -393,7 +393,6 @@ Converts Wavefront .obj mesh file to format optimal for using with bgfx.
 Todo
 ----
 
- - BlendFuncSeparate and BlendEquationSeparate.
  - Blit between textures.
  - Occlusion queries.
  - Fullscreen mode.

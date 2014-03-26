@@ -28,7 +28,9 @@ namespace bgfx
 		{  2, 8, 4,  8 }, // PTC22
 		{  4, 4, 4,  8 }, // PTC24
 		{  0, 0, 0,  0 }, // Unknown
-		{  8, 1, 1,  1 }, // L8
+		{  8, 1, 1,  1 }, // R8
+		{ 16, 1, 1,  2 }, // R16
+		{ 16, 1, 1,  2 }, // R16F
 		{ 32, 1, 1,  4 }, // BGRA8
 		{ 64, 1, 1,  8 }, // RGBA16
 		{ 64, 1, 1,  8 }, // RGBA16F
@@ -65,7 +67,9 @@ namespace bgfx
 		"PTC22",     // PTC22
 		"PTC24",     // PTC24
 		"<unknown>", // Unknown
-		"L8",        // L8
+		"R8",        // R8
+		"R16",       // R16
+		"R16F"       // R16F
 		"BGRA8",     // BGRA8
 		"RGBA16",    // RGBA16
 		"RGBA16F",   // RGBA16F
@@ -981,9 +985,9 @@ namespace bgfx
 		{ D3DFMT_A16B16G16R16,       TextureFormat::RGBA16  },
 		{ D3DFMT_A16B16G16R16F,      TextureFormat::RGBA16F },
 		{ DDPF_RGB|DDPF_ALPHAPIXELS, TextureFormat::BGRA8   },
-		{ DDPF_INDEXED,              TextureFormat::L8      },
-		{ DDPF_LUMINANCE,            TextureFormat::L8      },
-		{ DDPF_ALPHA,                TextureFormat::L8      },
+		{ DDPF_INDEXED,              TextureFormat::R8      },
+		{ DDPF_LUMINANCE,            TextureFormat::R8      },
+		{ DDPF_ALPHA,                TextureFormat::R8      },
 	};
 
 	bool imageParseDds(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)

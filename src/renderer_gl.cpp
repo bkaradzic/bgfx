@@ -67,19 +67,19 @@ namespace bgfx
 	static const Blend s_blendFactor[] =
 	{
 		{ 0,                           0,                           false }, // ignored
-		{ GL_ZERO,                     GL_ZERO,                     false },
-		{ GL_ONE,                      GL_ONE,                      false },
-		{ GL_SRC_COLOR,                GL_SRC_COLOR,                false },
-		{ GL_ONE_MINUS_SRC_COLOR,      GL_ONE_MINUS_SRC_COLOR,      false },
-		{ GL_SRC_ALPHA,                GL_SRC_ALPHA,                false },
-		{ GL_ONE_MINUS_SRC_ALPHA,      GL_ONE_MINUS_SRC_ALPHA,      false },
-		{ GL_DST_ALPHA,                GL_DST_ALPHA,                false },
-		{ GL_ONE_MINUS_DST_ALPHA,      GL_ONE_MINUS_DST_ALPHA,      false },
-		{ GL_DST_COLOR,                GL_DST_COLOR,                false },
-		{ GL_ONE_MINUS_DST_COLOR,      GL_ONE_MINUS_DST_COLOR,      false },
-		{ GL_SRC_ALPHA_SATURATE,       GL_ONE,                      false },
-		{ GL_CONSTANT_COLOR,           GL_CONSTANT_COLOR,           true  },
-		{ GL_ONE_MINUS_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, true  },
+		{ GL_ZERO,                     GL_ZERO,                     false }, // ZERO
+		{ GL_ONE,                      GL_ONE,                      false }, // ONE
+		{ GL_SRC_COLOR,                GL_SRC_COLOR,                false }, // SRC_COLOR
+		{ GL_ONE_MINUS_SRC_COLOR,      GL_ONE_MINUS_SRC_COLOR,      false }, // INV_SRC_COLOR
+		{ GL_SRC_ALPHA,                GL_SRC_ALPHA,                false }, // SRC_ALPHA
+		{ GL_ONE_MINUS_SRC_ALPHA,      GL_ONE_MINUS_SRC_ALPHA,      false }, // INV_SRC_ALPHA
+		{ GL_DST_ALPHA,                GL_DST_ALPHA,                false }, // DST_ALPHA
+		{ GL_ONE_MINUS_DST_ALPHA,      GL_ONE_MINUS_DST_ALPHA,      false }, // INV_DST_ALPHA
+		{ GL_DST_COLOR,                GL_DST_COLOR,                false }, // DST_COLOR
+		{ GL_ONE_MINUS_DST_COLOR,      GL_ONE_MINUS_DST_COLOR,      false }, // INV_DST_COLOR
+		{ GL_SRC_ALPHA_SATURATE,       GL_ONE,                      false }, // SRC_ALPHA_SAT
+		{ GL_CONSTANT_COLOR,           GL_CONSTANT_COLOR,           true  }, // FACTOR
+		{ GL_ONE_MINUS_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, true  }, // INV_FACTOR
 	};
 
 	static const GLenum s_blendEquation[] =
@@ -170,7 +170,9 @@ namespace bgfx
 		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                        false }, // PTC22
 		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                        false }, // PTC24
 		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                        true  }, // Unknown
-		{ GL_LUMINANCE,                                GL_LUMINANCE,                                GL_UNSIGNED_BYTE,               true  }, // L8
+		{ GL_LUMINANCE,                                GL_LUMINANCE,                                GL_UNSIGNED_BYTE,               true  }, // R8
+		{ GL_R16,                                      GL_RED,                                      GL_UNSIGNED_SHORT,              true  }, // R16
+		{ GL_R16F,                                     GL_RED,                                      GL_HALF_FLOAT,                  true  }, // R16F
 		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  }, // BGRA8
 		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  }, // RGBA16
 		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                  true  }, // RGBA16F
@@ -725,6 +727,17 @@ namespace bgfx
 			return _height;
 		}
 
+		uint32_t getNumRt() const
+		{
+			if (isValid(m_fbh) )
+			{
+				const FrameBuffer& frameBuffer = m_frameBuffers[m_fbh.idx];
+				return frameBuffer.m_num;
+			}
+
+			return 1;
+		}
+
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
 			if (1 < _msaa)
@@ -1213,6 +1226,10 @@ namespace bgfx
 				? BGFX_CAPS_FRAGMENT_DEPTH
 				: 0
 				;
+			g_caps.supported |= s_extension[Extension::ARB_draw_buffers_blend].m_supported
+				? BGFX_CAPS_BLEND_INDEPENDENT
+				: 0
+				;
 			g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
 
 			if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2) )
@@ -1359,8 +1376,8 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_OPENGL
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
 			{
-				s_textureFormat[TextureFormat::L8].m_internalFmt = GL_R8;
-				s_textureFormat[TextureFormat::L8].m_fmt         = GL_RED;
+				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
+				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
 			}
 
 			if (s_extension[Extension::ARB_debug_output].m_supported
@@ -1962,7 +1979,8 @@ namespace bgfx
 			}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
-			if (GL_RGBA == m_fmt
+			if (TextureFormat::BGRA8 == m_textureFormat
+			&&  GL_RGBA == m_fmt
 			&&  s_renderCtx->m_textureSwizzleSupport)
 			{
 				GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
@@ -2712,6 +2730,8 @@ namespace bgfx
 			}
 		}
 
+		m_num = colorIdx;
+
 		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 		{
 			if (0 == colorIdx)
@@ -2745,11 +2765,7 @@ namespace bgfx
 					if (0 != texture.m_id)
 					{
 						GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
-						if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
-						{
-							attachment = GL_DEPTH_ATTACHMENT;
-						}
-						else
+						if (!isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 						{
 							++colorIdx;
 							GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
@@ -2776,6 +2792,7 @@ namespace bgfx
 	{
 		GL_CHECK(glDeleteFramebuffers(0 == m_fbo[1] ? 1 : 2, m_fbo) );
 		memset(m_fbo, 0, sizeof(m_fbo) );
+		m_num = 0;
 	}
 
 	void FrameBuffer::resolve()
@@ -3027,7 +3044,15 @@ namespace bgfx
 			IndexBuffer& ib = s_renderCtx->m_indexBuffers[m_ib.idx];
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 
-			Program& program = s_renderCtx->m_program[m_program.idx];
+			uint32_t numMrt = 0;
+			FrameBufferHandle fbh = s_renderCtx->m_fbh;
+			if (isValid(fbh) )
+			{
+				const FrameBuffer& fb = s_renderCtx->m_frameBuffers[fbh.idx];
+				numMrt = bx::uint32_max(1, fb.m_num)-1;
+			}
+
+			Program& program = s_renderCtx->m_program[m_program[numMrt].idx];
 			GL_CHECK(glUseProgram(program.m_id) );
 			program.bindAttributes(vertexDecl, 0);
 
@@ -3463,8 +3488,8 @@ namespace bgfx
 					 | BGFX_STATE_CULL_MASK
 					 | BGFX_STATE_DEPTH_WRITE
 					 | BGFX_STATE_DEPTH_TEST_MASK
-					 | BGFX_STATE_ALPHA_MASK
 					 | BGFX_STATE_RGB_WRITE
+					 | BGFX_STATE_ALPHA_WRITE
 					 | BGFX_STATE_BLEND_MASK
 					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
@@ -3544,35 +3569,104 @@ namespace bgfx
 						GL_CHECK(glColorMask(rgb, rgb, rgb, alpha) );
 					}
 
-					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK) & changedFlags)
+					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_BLEND_INDEPENDENT) & changedFlags
+					||  blendFactor != state.m_rgba)
 					{
-						if (BGFX_STATE_BLEND_MASK & newFlags)
+						if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_BLEND_INDEPENDENT) & newFlags
+						||  blendFactor != state.m_rgba)
 						{
-							uint32_t blend = (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT;
-							uint32_t equation = (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT;
-							uint32_t src = blend&0xf;
-							uint32_t dst = (blend>>4)&0xf;
-							GL_CHECK(glEnable(GL_BLEND) );
-							GL_CHECK(glBlendFunc(s_blendFactor[src].m_src, s_blendFactor[dst].m_dst) );
-							GL_CHECK(glBlendEquation(s_blendEquation[equation]) );
+							const bool enabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
+							const bool independent = !!(BGFX_STATE_BLEND_INDEPENDENT & newFlags);
 
-							if ( (s_blendFactor[src].m_factor || s_blendFactor[dst].m_factor)
-							&&  blendFactor != state.m_rgba)
+							const uint32_t blend    = uint32_t( (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
+							const uint32_t equation = uint32_t( (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
+
+							const uint32_t srcRGB  = (blend    )&0xf;
+							const uint32_t dstRGB  = (blend>> 4)&0xf;
+							const uint32_t srcA    = (blend>> 8)&0xf;
+							const uint32_t dstA    = (blend>>12)&0xf;
+
+							const uint32_t equRGB = (equation   )&0x7;
+							const uint32_t equA   = (equation>>3)&0x7;
+
+							const uint32_t numRt = s_renderCtx->getNumRt();
+
+							if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+							||  1 >= numRt
+							||  !independent)
 							{
-								blendFactor = state.m_rgba;
+								if (enabled)
+								{
+									GL_CHECK(glEnable(GL_BLEND) );
+									GL_CHECK(glBlendFuncSeparate(s_blendFactor[srcRGB].m_src
+										, s_blendFactor[dstRGB].m_dst
+										, s_blendFactor[srcA].m_src
+										, s_blendFactor[dstA].m_dst)
+										);
+									GL_CHECK(glBlendEquationSeparate(s_blendEquation[equRGB], s_blendEquation[equA]) );
 
-								GLclampf rr = (blendFactor>>24)/255.0f;
-								GLclampf gg = ( (blendFactor>>16)&0xff)/255.0f;
-								GLclampf bb = ( (blendFactor>>8)&0xff)/255.0f;
-								GLclampf aa = (blendFactor&0xff)/255.0f;
+									if ( (s_blendFactor[srcRGB].m_factor || s_blendFactor[dstRGB].m_factor)
+									&&  blendFactor != state.m_rgba)
+									{
+										const uint32_t rgba = state.m_rgba;
+										GLclampf rr = ( (rgba>>24)     )/255.0f;
+										GLclampf gg = ( (rgba>>16)&0xff)/255.0f;
+										GLclampf bb = ( (rgba>> 8)&0xff)/255.0f;
+										GLclampf aa = ( (rgba    )&0xff)/255.0f;
 
-								GL_CHECK(glBlendColor(rr, gg, bb, aa) );
+										GL_CHECK(glBlendColor(rr, gg, bb, aa) );
+									}
+								}
+								else
+								{
+									GL_CHECK(glDisable(GL_BLEND) );
+								}
+							}
+							else
+							{
+								if (enabled)
+								{
+									GL_CHECK(glEnablei(GL_BLEND, 0) );
+									GL_CHECK(glBlendFuncSeparatei(0
+										, s_blendFactor[srcRGB].m_src
+										, s_blendFactor[dstRGB].m_dst
+										, s_blendFactor[srcA].m_src
+										, s_blendFactor[dstA].m_dst)
+										);
+									GL_CHECK(glBlendEquationSeparatei(0
+										, s_blendEquation[equRGB]
+										, s_blendEquation[equA])
+										);
+								}
+								else
+								{
+									GL_CHECK(glDisablei(GL_BLEND, 0) );
+								}
+
+								for (uint32_t ii = 1, rgba = state.m_rgba; ii < numRt; ++ii, rgba >>= 11)
+								{
+									if (0 != (rgba&0x7ff) )
+									{
+										const uint32_t src      = (rgba   )&0xf;
+										const uint32_t dst      = (rgba>>4)&0xf;
+										const uint32_t equation = (rgba>>8)&0x7;
+										GL_CHECK(glEnablei(GL_BLEND, ii) );
+										GL_CHECK(glBlendFunci(ii, s_blendFactor[src].m_src, s_blendFactor[dst].m_dst) );
+										GL_CHECK(glBlendEquationi(ii, s_blendEquation[equation]) );
+									}
+									else
+									{
+										GL_CHECK(glDisablei(GL_BLEND, ii) );
+									}
+								}
 							}
 						}
 						else
 						{
 							GL_CHECK(glDisable(GL_BLEND) );
 						}
+
+						blendFactor = state.m_rgba;
 					}
 
 					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
