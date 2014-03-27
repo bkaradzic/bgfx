@@ -1406,7 +1406,7 @@ namespace bgfx
 
 			if (NULL == glInsertEventMarker)
 			{
-				glInsertEventMarker = NULL != glStringMarkerGREMEDY 
+				glInsertEventMarker = NULL != glStringMarkerGREMEDY
 					? stubInsertEventMarkerGREMEDY
 					: stubInsertEventMarker
 					;
@@ -3287,7 +3287,7 @@ namespace bgfx
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t _size)
 	{
-		GL_CHECK(glInsertEventMarker(_size, _marker) );
+		GL_CHECK_I(glInsertEventMarker(_size, _marker) );
 	}
 
 	void Context::rendererSubmit()
@@ -3384,7 +3384,7 @@ namespace bgfx
 					currentState.m_flags = newFlags;
 					currentState.m_stencil = newStencil;
 
-					GL_CHECK(glInsertEventMarker(0, s_viewName[key.m_view]) );
+					GL_CHECK_I(glInsertEventMarker(0, s_viewName[key.m_view]) );
 
 					view = key.m_view;
 					programIdx = invalidHandle;
@@ -4224,7 +4224,7 @@ namespace bgfx
 			m_textVideoMemBlitter.blit(m_render->m_textVideoMem);
 		}
 
-		GL_CHECK(glFrameTerminatorGREMEDY() );
+		GL_CHECK_I(glFrameTerminatorGREMEDY() );
 	}
 }
 

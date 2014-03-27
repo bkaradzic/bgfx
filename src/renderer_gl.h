@@ -338,18 +338,23 @@ typedef uint64_t GLuint64;
 
 namespace bgfx
 {
-#	define _GL_CHECK(_call) \
+#define _GL_CHECK(_check, _call) \
 				do { \
 					/*BX_TRACE(#_call);*/ \
 					_call; \
 					GLenum err = glGetError(); \
-					BX_CHECK(0 == err, #_call "; glError 0x%x %d", err, err); \
+					_check(0 == err, #_call "; glError 0x%x %d", err, err); \
+					BX_UNUSED(err); \
 				} while (0)
 
+#define IGNORE(...) do {} while(0)
+
 #if BGFX_CONFIG_DEBUG
-#	define GL_CHECK(_call) _GL_CHECK(_call)
+#	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)
+#	define GL_CHECK_I(_call) _GL_CHECK(IGNORE, _call)
 #else
-#	define GL_CHECK(_call) _call
+#	define GL_CHECK(_call)   _call
+#	define GL_CHECK_I(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
 #define GL_IMPORT_TYPEDEFS 1
