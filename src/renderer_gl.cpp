@@ -1226,6 +1226,7 @@ namespace bgfx
 				? BGFX_CAPS_FRAGMENT_DEPTH
 				: 0
 				;
+
 			g_caps.supported |= s_extension[Extension::ARB_draw_buffers_blend].m_supported
 				? BGFX_CAPS_BLEND_INDEPENDENT
 				: 0
@@ -3350,6 +3351,8 @@ namespace bgfx
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
+		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
+
 		uint32_t statsNumPrimsSubmitted = 0;
 		uint32_t statsNumIndices = 0;
 		uint32_t statsNumInstances = 0;
@@ -3576,7 +3579,9 @@ namespace bgfx
 						||  blendFactor != state.m_rgba)
 						{
 							const bool enabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
-							const bool independent = !!(BGFX_STATE_BLEND_INDEPENDENT & newFlags);
+							const bool independent = !!(BGFX_STATE_BLEND_INDEPENDENT & newFlags)
+								&& blendIndependentSupported
+								;
 
 							const uint32_t blend    = uint32_t( (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
 							const uint32_t equation = uint32_t( (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
