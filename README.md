@@ -212,6 +212,12 @@ Image based lighting.
 
 ![example-18-ibl](https://github.com/bkaradzic/bgfx/raw/master/examples/18-ibl/screenshot.png)
 
+### [19-oit](https://github.com/bkaradzic/bgfx/tree/master/examples/19-oit)
+
+Weighted, Blended Order-Independent Transparency
+
+![example-19-oit](https://github.com/bkaradzic/bgfx/raw/master/examples/19-oit/screenshot.png)
+
 Dependencies
 ------------
 

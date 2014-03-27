@@ -170,6 +170,7 @@ exampleProject("15-shadowmaps-simple", "a10f22ab-e0ee-471a-b2b6-2f6cb1c63fdc")
 exampleProject("16-shadowmaps",        "f9a91cb0-7b1b-11e3-981f-0800200c9a66")
 exampleProject("17-drawstress",        "9aeea4c6-80dc-11e3-b3ca-4da6db0f677b")
 exampleProject("18-ibl",               "711bcbb0-9531-11e3-a5e2-0800200c9a66")
+exampleProject("19-oit",               "d7eca4fc-96d7-11e3-a73b-fcafdb0f677b")
 
 dofile "makedisttex.lua"
 dofile "shaderc.lua"

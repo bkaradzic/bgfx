@@ -1,0 +1,499 @@
+/*
+ * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * License: http://www.opensource.org/licenses/BSD-2-Clause
+ */
+
+#include "common.h"
+
+#include <bgfx.h>
+#include <bx/timer.h>
+#include "fpumath.h"
+#include "imgui/imgui.h"
+
+#include <stdio.h>
+#include <string.h>
+
+struct PosColorVertex
+{
+	float m_x;
+	float m_y;
+	float m_z;
+	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		ms_decl.end();
+	}
+
+	static bgfx::VertexDecl ms_decl;
+};
+
+bgfx::VertexDecl PosColorVertex::ms_decl;
+
+struct PosColorTexCoord0Vertex
+{
+	float m_x;
+	float m_y;
+	float m_z;
+	uint32_t m_rgba;
+	float m_u;
+	float m_v;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
+		ms_decl.end();
+	}
+
+	static bgfx::VertexDecl ms_decl;
+};
+
+bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+
+static PosColorVertex s_cubeVertices[8] =
+{
+	{-1.0f,  1.0f,  1.0f, 0xff000000 },
+	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
+	{-1.0f, -1.0f,  1.0f, 0xff00ff00 },
+	{ 1.0f, -1.0f,  1.0f, 0xff00ffff },
+	{-1.0f,  1.0f, -1.0f, 0xffff0000 },
+	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
+	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
+	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
+};
+
+static const uint16_t s_cubeIndices[36] =
+{
+	0, 1, 2, // 0
+	1, 3, 2,
+	4, 6, 5, // 2
+	5, 6, 7,
+	0, 2, 4, // 4
+	4, 2, 6,
+	1, 5, 3, // 6
+	5, 7, 3,
+	0, 4, 1, // 8
+	4, 5, 1,
+	2, 3, 6, // 10
+	6, 3, 7,
+};
+
+static const char* s_shaderPath = NULL;
+
+static void shaderFilePath(char* _out, const char* _name)
+{
+	strcpy(_out, s_shaderPath);
+	strcat(_out, _name);
+	strcat(_out, ".bin");
+}
+
+long int fsize(FILE* _file)
+{
+	long int pos = ftell(_file);
+	fseek(_file, 0L, SEEK_END);
+	long int size = ftell(_file);
+	fseek(_file, pos, SEEK_SET);
+	return size;
+}
+
+static const bgfx::Memory* load(const char* _filePath)
+{
+	FILE* file = fopen(_filePath, "rb");
+	if (NULL != file)
+	{
+		uint32_t size = (uint32_t)fsize(file);
+		const bgfx::Memory* mem = bgfx::alloc(size+1);
+		size_t ignore = fread(mem->data, 1, size, file);
+		BX_UNUSED(ignore);
+		fclose(file);
+		mem->data[mem->size-1] = '\0';
+		return mem;
+	}
+
+	return NULL;
+}
+
+static const bgfx::Memory* loadShader(const char* _name)
+{
+	char filePath[512];
+	shaderFilePath(filePath, _name);
+	return load(filePath);
+}
+
+static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshName)
+{
+	const bgfx::Memory* mem;
+
+	mem = loadShader(_vshName);
+	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+
+	mem = loadShader(_fshName);
+	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+
+	return bgfx::createProgram(vsh, fsh, true);
+}
+
+static float s_texelHalf = 0.0f;
+static bool s_flipV = false;
+
+void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
+{
+	if (bgfx::checkAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
+	{
+		bgfx::TransientVertexBuffer vb;
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_decl);
+		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb.data;
+
+		const float zz = 0.0f;
+
+		const float minx = -_width;
+		const float maxx =  _width;
+		const float miny = 0.0f;
+		const float maxy = _height*2.0f;
+
+		const float texelHalfW = s_texelHalf/_textureWidth;
+		const float texelHalfH = s_texelHalf/_textureHeight;
+		const float minu = -1.0f + texelHalfW;
+		const float maxu =  1.0f + texelHalfW;
+
+		float minv = texelHalfH;
+		float maxv = 2.0f + texelHalfH;
+
+		if (_originBottomLeft)
+		{
+			float tmp = minv;
+			minv = maxv;
+			maxv = tmp;
+
+			minv -= 1.0f;
+			maxv -= 1.0f;
+		}
+
+		vertex[0].m_x = minx;
+		vertex[0].m_y = miny;
+		vertex[0].m_z = zz;
+		vertex[0].m_rgba = 0xffffffff;
+		vertex[0].m_u = minu;
+		vertex[0].m_v = minv;
+
+		vertex[1].m_x = maxx;
+		vertex[1].m_y = miny;
+		vertex[1].m_z = zz;
+		vertex[1].m_rgba = 0xffffffff;
+		vertex[1].m_u = maxu;
+		vertex[1].m_v = minv;
+
+		vertex[2].m_x = maxx;
+		vertex[2].m_y = maxy;
+		vertex[2].m_z = zz;
+		vertex[2].m_rgba = 0xffffffff;
+		vertex[2].m_u = maxu;
+		vertex[2].m_v = maxv;
+
+		bgfx::setVertexBuffer(&vb);
+	}
+}
+
+int _main_(int /*_argc*/, char** /*_argv*/)
+{
+	// Create vertex stream declaration.
+	PosColorVertex::init();
+	PosColorTexCoord0Vertex::init();
+
+	uint32_t width = 1280;
+	uint32_t height = 720;
+	uint32_t debug = BGFX_DEBUG_TEXT;
+	uint32_t reset = BGFX_RESET_VSYNC;
+
+	bgfx::init();
+	bgfx::reset(width, height, reset);
+
+	// Enable debug text.
+	bgfx::setDebug(debug);
+
+	// Get renderer capabilities info.
+	const bgfx::Caps* caps = bgfx::getCaps();
+
+	// Setup root path for binary shaders. Shader binaries are different 
+	// for each renderer.
+	switch (caps->rendererType)
+	{
+	default:
+	case bgfx::RendererType::Direct3D9:
+		s_shaderPath = "shaders/dx9/";
+		s_texelHalf = 0.5f;
+		break;
+
+	case bgfx::RendererType::Direct3D11:
+		s_shaderPath = "shaders/dx11/";
+		break;
+
+	case bgfx::RendererType::OpenGL:
+		s_shaderPath = "shaders/glsl/";
+		s_flipV = true;
+		break;
+
+	case bgfx::RendererType::OpenGLES2:
+	case bgfx::RendererType::OpenGLES3:
+		s_shaderPath = "shaders/gles/";
+		s_flipV = true;
+		break;
+	}
+
+	// Imgui.
+	FILE* file = fopen("font/droidsans.ttf", "rb");
+	uint32_t size = (uint32_t)fsize(file);
+	void* data = malloc(size);
+	size_t ignore = fread(data, 1, size, file);
+	BX_UNUSED(ignore);
+	fclose(file);
+	imguiCreate(data, size);
+
+	const bgfx::Memory* mem;
+
+	// Create static vertex buffer.
+	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
+	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, PosColorVertex::ms_decl);
+
+	// Create static index buffer.
+	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
+	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
+
+	// Create texture sampler uniforms.
+	bgfx::UniformHandle u_texColor0 = bgfx::createUniform("u_texColor0", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle u_texColor1 = bgfx::createUniform("u_texColor1", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle u_color     = bgfx::createUniform("u_color",     bgfx::UniformType::Uniform4fv);
+
+	bgfx::ProgramHandle blend          = loadProgram("vs_oit",      "fs_oit"                  );
+	bgfx::ProgramHandle wbSeparatePass = loadProgram("vs_oit",      "fs_oit_wb_separate"      );
+	bgfx::ProgramHandle wbSeparateBlit = loadProgram("vs_oit_blit", "fs_oit_wb_separate_blit" );
+	bgfx::ProgramHandle wbPass         = loadProgram("vs_oit",      "fs_oit_wb"               );
+	bgfx::ProgramHandle wbBlit         = loadProgram("vs_oit_blit", "fs_oit_wb_blit"          );
+
+	bgfx::TextureHandle fbtextures[] =
+	{
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
+	};
+	bgfx::FrameBufferHandle fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+
+	int64_t timeOffset = bx::getHPCounter();
+
+	uint32_t mode = 1;
+	int32_t scrollArea = 0;
+	bool frontToBack = true;
+	bool fadeInOut = false;
+
+	entry::MouseState mouseState;
+	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
+	{
+		imguiBeginFrame(mouseState.m_mx
+			, mouseState.m_my
+			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
+			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
+			, 0
+			, width
+			, height
+			);
+
+		imguiBeginScrollArea("Settings", width - width / 4 - 10, 10, width / 4, height / 3, &scrollArea);
+		imguiSeparatorLine();
+
+		imguiLabel("Blend mode:");
+
+		mode = imguiChoose(mode
+			, "None"
+			, "Separate"
+			, "MRT Independent"
+			);
+
+		imguiSeparatorLine();
+
+		if (imguiCheck("Front to back", frontToBack) )
+		{
+			frontToBack ^= true;
+		}
+
+		if (imguiCheck("Fade in/out", fadeInOut) )
+		{
+			fadeInOut ^= true;
+		}
+
+		imguiEndScrollArea();
+		imguiEndFrame();
+
+		// Set view 0 default viewport.
+		bgfx::setViewRectMask(0x3, 0, 0, width, height);
+
+		int64_t now = bx::getHPCounter();
+		static int64_t last = now;
+		const int64_t frameTime = now - last;
+		last = now;
+		const double freq = double(bx::getHPFrequency() );
+		const double toMs = 1000.0/freq;
+
+		float time = (float)( (now-timeOffset)/freq);
+
+		// Use debug font to print information about this example.
+		bgfx::dbgTextClear();
+		// Reference:
+		// Weighted, Blended Order-Independent Transparency
+		// http://jcgt.org/published/0002/02/09/
+		// http://casual-effects.blogspot.com/2014/03/weighted-blended-order-independent.html
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/19-oit");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Weighted, Blended Order Independent Transparency.");
+		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+
+		float at[3] = { 0.0f, 0.0f, 0.0f };
+		float eye[3] = { 0.0f, 0.0f, -7.0f };
+	
+		float view[16];
+		float proj[16];
+
+		// Set view and projection matrix for view 0.
+		mtxLookAt(view, eye, at);
+		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+
+		bgfx::setViewTransform(0, view, proj);
+
+		bgfx::setViewClearMask(0x3
+			, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+			, 0x00000000
+			, 1.0f
+			, 0
+			);
+
+		bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
+		bgfx::setViewFrameBuffer(0, 0 == mode ? invalid : fbh);
+
+		// Set view and projection matrix for view 1.
+		mtxIdentity(view);
+		mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+		bgfx::setViewTransform(1, view, proj);
+
+		for (uint32_t depth = 0; depth < 3; ++depth)
+		{
+			uint32_t zz = frontToBack ? 2-depth : depth;
+
+			for (uint32_t yy = 0; yy < 3; ++yy)
+			{
+				for (uint32_t xx = 0; xx < 3; ++xx)
+				{
+					float color[4] = { xx*1.0f/3.0f, zz*1.0f/3.0f, yy*1.0f/3.0f, 0.5f };
+
+					if (fadeInOut
+					&&  zz == 1)
+					{
+						color[3] = sinf(time*3.0f)*0.49f+0.5f;
+					}
+
+					bgfx::setUniform(u_color, color);
+
+					BX_UNUSED(time);
+					float mtx[16];
+					mtxRotateXY(mtx, time*0.023f + xx*0.21f, time*0.03f + yy*0.37f);
+					//mtxIdentity(mtx);
+					mtx[12] = -2.5f + float(xx)*2.5f;
+					mtx[13] = -2.5f + float(yy)*2.5f;
+					mtx[14] = -2.5f + float(zz)*2.5f; //0.0f; // sinf(time + ( (xx+1)*(yy+1)/9.0f)*float(M_PI) )*50.0f+50.0f; //90.0f - (xx+1)*(yy+1)*10.0f;
+
+					// Set transform for draw call.
+					bgfx::setTransform(mtx);
+
+					// Set vertex and index buffer.
+					bgfx::setVertexBuffer(vbh);
+					bgfx::setIndexBuffer(ibh);
+
+					const uint64_t state = 0
+						| BGFX_STATE_CULL_CW
+						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_DEPTH_TEST_LESS
+						| BGFX_STATE_MSAA
+						;
+
+					switch (mode)
+					{
+						case 0:
+							// Set vertex and fragment shaders.
+							bgfx::setProgram(blend);
+
+							// Set render states.
+							bgfx::setState(state
+								| BGFX_STATE_BLEND_ALPHA
+								);
+							break;
+
+						case 1:
+							// Set vertex and fragment shaders.
+							bgfx::setProgram(wbSeparatePass);
+
+							// Set render states.
+							bgfx::setState(state
+								| BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+								);
+							break;
+
+						default:
+							// Set vertex and fragment shaders.
+							bgfx::setProgram(wbPass);
+
+							// Set render states.
+							bgfx::setState(state
+								| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+								| BGFX_STATE_BLEND_INDEPENDENT
+								, 0
+								| BGFX_STATE_BLEND_FUNC_RT_1(BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_SRC_COLOR)
+								);
+							break;
+					}
+
+					// Submit primitive for rendering to view 0.
+					bgfx::submit(0);
+				}
+			}
+		}
+
+		if (0 != mode)
+		{
+			bgfx::setTexture(0, u_texColor0, fbtextures[0]);
+			bgfx::setTexture(1, u_texColor1, fbtextures[1]);
+			bgfx::setProgram(1 == mode ? wbSeparateBlit : wbBlit);
+			bgfx::setState(0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_SRC_ALPHA, BGFX_STATE_BLEND_SRC_ALPHA)
+				);
+			screenSpaceQuad( (float)width, (float)height, s_flipV);
+			bgfx::submit(1);
+		}
+
+		// Advance to next frame. Rendering thread will be kicked to 
+		// process submitted rendering primitives.
+		bgfx::frame();
+	}
+
+	// Cleanup.
+	bgfx::destroyFrameBuffer(fbh);
+	bgfx::destroyIndexBuffer(ibh);
+	bgfx::destroyVertexBuffer(vbh);
+	bgfx::destroyProgram(blend);
+	bgfx::destroyProgram(wbSeparatePass);
+	bgfx::destroyProgram(wbSeparateBlit);
+	bgfx::destroyProgram(wbPass);
+	bgfx::destroyProgram(wbBlit);
+	bgfx::destroyUniform(u_texColor0);
+	bgfx::destroyUniform(u_texColor1);
+	bgfx::destroyUniform(u_color);
+
+	// Shutdown bgfx.
+	bgfx::shutdown();
+
+	return 0;
+}

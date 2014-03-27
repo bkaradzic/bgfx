@@ -66,6 +66,9 @@ static void imguiFree(void* _ptr, void* /*_userptr*/)
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype/stb_truetype.h>
 
+namespace
+{
+
 struct PosColorVertex
 {
 	float m_x;
@@ -106,6 +109,8 @@ struct PosColorUvVertex
 };
 
 bgfx::VertexDecl PosColorUvVertex::ms_decl;
+
+} // namespace
 
 struct Imgui
 {
