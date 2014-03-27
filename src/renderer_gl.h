@@ -347,11 +347,11 @@ namespace bgfx
 					BX_UNUSED(err); \
 				} while (0)
 
-#define IGNORE(...) do {} while(0)
+#define IGNORE_GL_ERROR_CHECK(...) do {} while(0)
 
 #if BGFX_CONFIG_DEBUG
 #	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)
-#	define GL_CHECK_I(_call) _GL_CHECK(IGNORE, _call)
+#	define GL_CHECK_I(_call) _GL_CHECK(IGNORE_GL_ERROR_CHECK, _call)
 #else
 #	define GL_CHECK(_call)   _call
 #	define GL_CHECK_I(_call) _call
