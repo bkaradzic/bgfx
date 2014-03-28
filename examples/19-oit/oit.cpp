@@ -279,8 +279,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::TextureHandle fbtextures[] =
 	{
 		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT),
 	};
 	bgfx::FrameBufferHandle fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 

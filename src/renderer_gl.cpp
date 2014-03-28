@@ -2685,6 +2685,8 @@ namespace bgfx
 
 		bool needResolve = false;
 
+		GLenum buffers[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+
 		uint32_t colorIdx = 0;
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -2706,6 +2708,7 @@ namespace bgfx
 				}
 				else
 				{
+					buffers[colorIdx] = attachment;
 					++colorIdx;
 				}
 
@@ -2740,6 +2743,10 @@ namespace bgfx
 				// When only depth is attached disable draw buffer to avoid
 				// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
 				GL_CHECK(glDrawBuffer(GL_NONE) );
+			}
+			else
+			{
+				GL_CHECK(glDrawBuffers(colorIdx, buffers) );
 			}
 
 			// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
@@ -3606,8 +3613,8 @@ namespace bgfx
 									GL_CHECK(glBlendFuncSeparate(s_blendFactor[srcRGB].m_src
 										, s_blendFactor[dstRGB].m_dst
 										, s_blendFactor[srcA].m_src
-										, s_blendFactor[dstA].m_dst)
-										);
+										, s_blendFactor[dstA].m_dst
+										) );
 									GL_CHECK(glBlendEquationSeparate(s_blendEquation[equRGB], s_blendEquation[equA]) );
 
 									if ( (s_blendFactor[srcRGB].m_factor || s_blendFactor[dstRGB].m_factor)
@@ -3636,12 +3643,12 @@ namespace bgfx
 										, s_blendFactor[srcRGB].m_src
 										, s_blendFactor[dstRGB].m_dst
 										, s_blendFactor[srcA].m_src
-										, s_blendFactor[dstA].m_dst)
-										);
+										, s_blendFactor[dstA].m_dst
+										) );
 									GL_CHECK(glBlendEquationSeparatei(0
 										, s_blendEquation[equRGB]
-										, s_blendEquation[equA])
-										);
+										, s_blendEquation[equA]
+										) );
 								}
 								else
 								{
