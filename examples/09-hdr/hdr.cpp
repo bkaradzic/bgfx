@@ -530,9 +530,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		||  oldReset  != reset)
 		{
 			// Recreate variable size render targets when resolution changes.
-			oldWidth = width;
+			oldWidth  = width;
 			oldHeight = height;
-			oldReset = reset;
+			oldReset  = reset;
 
 			uint32_t msaa = (reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 
@@ -743,9 +743,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::frame();
 	}
 
+	// Cleanup.
 	imguiDestroy();
 
-	// Cleanup.
 	mesh.unload();
 
 	for (uint32_t ii = 0; ii < BX_COUNTOF(lum); ++ii)

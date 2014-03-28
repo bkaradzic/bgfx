@@ -276,12 +276,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ProgramHandle wbPass         = loadProgram("vs_oit",      "fs_oit_wb"               );
 	bgfx::ProgramHandle wbBlit         = loadProgram("vs_oit_blit", "fs_oit_wb_blit"          );
 
-	bgfx::TextureHandle fbtextures[] =
-	{
-		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_RT),
-	};
-	bgfx::FrameBufferHandle fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+	bgfx::TextureHandle fbtextures[2] = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
+	bgfx::FrameBufferHandle fbh = BGFX_INVALID_HANDLE; 
 
 	int64_t timeOffset = bx::getHPCounter();
 
@@ -290,9 +286,33 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bool frontToBack = true;
 	bool fadeInOut = false;
 
+	uint32_t oldWidth = 0;
+	uint32_t oldHeight = 0;
+	uint32_t oldReset = reset;
+
 	entry::MouseState mouseState;
 	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
+		if (oldWidth  != width
+		||  oldHeight != height
+		||  oldReset  != reset
+		||  !bgfx::isValid(fbh) )
+		{
+			// Recreate variable size render targets when resolution changes.
+			oldWidth  = width;
+			oldHeight = height;
+			oldReset  = reset;
+
+			if (bgfx::isValid(fbh) )
+			{
+				bgfx::destroyFrameBuffer(fbh);
+			}
+
+			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT),
+			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_RT),
+			fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+		}
+
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my
 			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
@@ -479,6 +499,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	// Cleanup.
+	imguiDestroy();
+
 	bgfx::destroyFrameBuffer(fbh);
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
