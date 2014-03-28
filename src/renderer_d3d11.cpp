@@ -2248,7 +2248,7 @@ namespace bgfx
 		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], s_renderCtx->m_fragmentShaders[_fsh.idx]);
 	}
 
-	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)
+	void Context::rendererDestroyProgram(ProgramHandle _handle)
 	{
 		s_renderCtx->m_program[_handle.idx].destroy();
 	}

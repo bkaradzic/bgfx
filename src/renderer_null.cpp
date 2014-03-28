@@ -101,7 +101,7 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererDestroyProgram(FragmentShaderHandle /*_handle*/)
+	void Context::rendererDestroyProgram(ProgramHandle /*_handle*/)
 	{
 	}
 

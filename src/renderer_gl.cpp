@@ -293,6 +293,7 @@ namespace bgfx
 			MOZ_WEBGL_compressed_texture_s3tc,
 			MOZ_WEBGL_depth_texture,
 
+			NV_draw_buffers,
 			NVX_gpu_memory_info,
 
 			OES_compressed_ETC1_RGB8_texture,
@@ -423,6 +424,7 @@ namespace bgfx
 		{ "MOZ_WEBGL_compressed_texture_s3tc",     false,                             true  },
 		{ "MOZ_WEBGL_depth_texture",               false,                             true  },
 
+		{ "NV_draw_buffers",                       false,                             true  }, // GLES2 extension.
 		{ "NVX_gpu_memory_info",                   false,                             true  },
 
 		{ "OES_compressed_ETC1_RGB8_texture",      false,                             true  },
@@ -3225,7 +3227,7 @@ namespace bgfx
 		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], isValid(_fsh) ? s_renderCtx->m_fragmentShaders[_fsh.idx] : dummyFragmentShader);
 	}
 
-	void Context::rendererDestroyProgram(FragmentShaderHandle _handle)
+	void Context::rendererDestroyProgram(ProgramHandle _handle)
 	{
 		s_renderCtx->m_program[_handle.idx].destroy();
 	}

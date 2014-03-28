@@ -2637,7 +2637,7 @@ namespace bgfx
 		void rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem);
 		void rendererDestroyFragmentShader(FragmentShaderHandle _handle);
 		void rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
-		void rendererDestroyProgram(FragmentShaderHandle _handle);
+		void rendererDestroyProgram(ProgramHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip);
 		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);

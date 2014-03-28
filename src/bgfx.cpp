@@ -1496,7 +1496,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyProgram:
 				{
-					FragmentShaderHandle handle;
+					ProgramHandle handle;
 					_cmdbuf.read(handle);
 
 					rendererDestroyProgram(handle);
