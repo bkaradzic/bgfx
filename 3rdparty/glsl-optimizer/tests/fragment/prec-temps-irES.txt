@@ -59,7 +59,7 @@ lowp vec4 frag_surf (
     (_LightColor0.xyz * diff_5)
    + IN_1.vlight)) + (_LightColor0.xyz * spec_3));
   c_2.xyz = tmpvar_21.xyz.xyz;
-  float tmpvar_22;
+  mediump float tmpvar_22;
   tmpvar_22 = 0.0;
   c_2.w = vec4(tmpvar_22).w;
   return c_2;
@@ -69,7 +69,7 @@ void main ()
 {
   v2f_surf xlt_IN_23;
   lowp vec4 xl_retval_24;
-  vec4 tmpvar_25;
+  mediump vec4 tmpvar_25;
   tmpvar_25 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_IN_23.pos = tmpvar_25;
   lowp vec2 tmpvar_26;

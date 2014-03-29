@@ -6,7 +6,7 @@ mediump vec4 xlat_main (
 )
 {
   mediump vec4 c_3;
-  vec4 tmpvar_4;
+  mediump vec4 tmpvar_4;
   tmpvar_4 = vec4(0.0, 0.0, 0.0, 0.0);
   c_3 = tmpvar_4;
   return c_3;

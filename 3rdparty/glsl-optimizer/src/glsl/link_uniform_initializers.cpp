@@ -69,6 +69,7 @@ copy_constant_to_storage(union gl_constant_value *storage,
 	 break;
       case GLSL_TYPE_ARRAY:
       case GLSL_TYPE_STRUCT:
+      case GLSL_TYPE_IMAGE:
       case GLSL_TYPE_ATOMIC_UINT:
       case GLSL_TYPE_INTERFACE:
       case GLSL_TYPE_VOID:

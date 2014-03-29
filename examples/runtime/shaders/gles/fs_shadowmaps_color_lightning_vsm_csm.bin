@@ -1,21 +1,21 @@
-FSHF­œvarying vec3 v_normal;
-varying vec4 v_texcoord1;
-varying vec4 v_texcoord2;
-varying vec4 v_texcoord3;
-varying vec4 v_texcoord4;
-varying vec3 v_view;
-uniform vec4 u_params1;
-uniform vec4 u_params2;
-uniform vec4 u_color;
-uniform vec3 u_materialKa;
-uniform vec3 u_materialKd;
-uniform vec4 u_materialKs;
-uniform vec4 u_lightPosition;
-uniform vec4 u_lightAmbientPower;
-uniform vec4 u_lightDiffusePower;
-uniform vec4 u_lightSpecularPower;
-uniform vec4 u_lightSpotDirectionInner;
-uniform vec4 u_lightAttenuationSpotOuter;
+FSHF­œvarying mediump vec3 v_normal;
+varying mediump vec4 v_texcoord1;
+varying mediump vec4 v_texcoord2;
+varying mediump vec4 v_texcoord3;
+varying mediump vec4 v_texcoord4;
+varying mediump vec3 v_view;
+uniform mediump vec4 u_params1;
+uniform mediump vec4 u_params2;
+uniform mediump vec4 u_color;
+uniform mediump vec3 u_materialKa;
+uniform mediump vec3 u_materialKd;
+uniform mediump vec4 u_materialKs;
+uniform mediump vec4 u_lightPosition;
+uniform mediump vec4 u_lightAmbientPower;
+uniform mediump vec4 u_lightDiffusePower;
+uniform mediump vec4 u_lightSpecularPower;
+uniform mediump vec4 u_lightSpotDirectionInner;
+uniform mediump vec4 u_lightAttenuationSpotOuter;
 uniform sampler2D u_shadowMap0;
 uniform sampler2D u_shadowMap1;
 uniform sampler2D u_shadowMap2;
@@ -24,11 +24,11 @@ void main ()
 {
   lowp float visibility_1;
   lowp vec3 colorCoverage_2;
-  vec2 tmpvar_3;
+  mediump vec2 tmpvar_3;
   tmpvar_3 = (v_texcoord1.xy / v_texcoord1.w);
-  vec2 tmpvar_4;
+  mediump vec2 tmpvar_4;
   tmpvar_4 = (v_texcoord2.xy / v_texcoord2.w);
-  vec2 tmpvar_5;
+  mediump vec2 tmpvar_5;
   tmpvar_5 = (v_texcoord3.xy / v_texcoord3.w);
   bvec2 tmpvar_6;
   tmpvar_6 = lessThan (tmpvar_3, vec2(0.99, 0.99));
@@ -61,7 +61,7 @@ void main ()
     tmpvar_13 = bool(0);
   };
   if (tmpvar_7) {
-    vec2 _texcoord_15;
+    mediump vec2 _texcoord_15;
     _texcoord_15 = (v_texcoord1.xy / v_texcoord1.w);
     bvec2 tmpvar_16;
     tmpvar_16 = greaterThan (_texcoord_15, vec2(0.0, 0.0));
@@ -81,7 +81,7 @@ void main ()
     tmpvar_20.z = -(tmpvar_19);
     colorCoverage_2 = tmpvar_20;
     lowp float tmpvar_21;
-    vec2 tmpvar_22;
+    mediump vec2 tmpvar_22;
     tmpvar_22 = (v_texcoord1.xy / v_texcoord1.w);
     bool tmpvar_23;
     if (any(greaterThan (tmpvar_22, vec2(1.0, 1.0)))) {
@@ -92,7 +92,7 @@ void main ()
     if (tmpvar_23) {
       tmpvar_21 = 1.0;
     } else {
-      float tmpvar_24;
+      mediump float tmpvar_24;
       tmpvar_24 = (((v_texcoord1.z - u_params1.x) / v_texcoord1.w) * u_params1.w);
       lowp vec4 tmpvar_25;
       tmpvar_25 = texture2D (u_shadowMap0, tmpvar_22);
@@ -114,7 +114,7 @@ void main ()
     visibility_1 = tmpvar_21;
   } else {
     if (tmpvar_10) {
-      vec2 _texcoord_30;
+      mediump vec2 _texcoord_30;
       _texcoord_30 = (v_texcoord2.xy / v_texcoord2.w);
       bvec2 tmpvar_31;
       tmpvar_31 = greaterThan (_texcoord_30, vec2(0.0, 0.0));
@@ -134,7 +134,7 @@ void main ()
       tmpvar_35.z = -(tmpvar_34);
       colorCoverage_2 = tmpvar_35;
       lowp float tmpvar_36;
-      vec2 tmpvar_37;
+      mediump vec2 tmpvar_37;
       tmpvar_37 = (v_texcoord2.xy / v_texcoord2.w);
       bool tmpvar_38;
       if (any(greaterThan (tmpvar_37, vec2(1.0, 1.0)))) {
@@ -145,7 +145,7 @@ void main ()
       if (tmpvar_38) {
         tmpvar_36 = 1.0;
       } else {
-        float tmpvar_39;
+        mediump float tmpvar_39;
         tmpvar_39 = (((v_texcoord2.z - u_params1.x) / v_texcoord2.w) * u_params1.w);
         lowp vec4 tmpvar_40;
         tmpvar_40 = texture2D (u_shadowMap1, tmpvar_37);
@@ -167,7 +167,7 @@ void main ()
       visibility_1 = tmpvar_36;
     } else {
       if (tmpvar_13) {
-        vec2 _texcoord_45;
+        mediump vec2 _texcoord_45;
         _texcoord_45 = (v_texcoord3.xy / v_texcoord3.w);
         bvec2 tmpvar_46;
         tmpvar_46 = greaterThan (_texcoord_45, vec2(0.0, 0.0));
@@ -187,7 +187,7 @@ void main ()
         tmpvar_50.z = tmpvar_49;
         colorCoverage_2 = tmpvar_50;
         lowp float tmpvar_51;
-        vec2 tmpvar_52;
+        mediump vec2 tmpvar_52;
         tmpvar_52 = (v_texcoord3.xy / v_texcoord3.w);
         bool tmpvar_53;
         if (any(greaterThan (tmpvar_52, vec2(1.0, 1.0)))) {
@@ -198,7 +198,7 @@ void main ()
         if (tmpvar_53) {
           tmpvar_51 = 1.0;
         } else {
-          float tmpvar_54;
+          mediump float tmpvar_54;
           tmpvar_54 = (((v_texcoord3.z - u_params1.x) / v_texcoord3.w) * u_params1.w);
           lowp vec4 tmpvar_55;
           tmpvar_55 = texture2D (u_shadowMap2, tmpvar_52);
@@ -219,7 +219,7 @@ void main ()
         };
         visibility_1 = tmpvar_51;
       } else {
-        vec2 _texcoord_60;
+        mediump vec2 _texcoord_60;
         _texcoord_60 = (v_texcoord4.xy / v_texcoord4.w);
         bvec2 tmpvar_61;
         tmpvar_61 = greaterThan (_texcoord_60, vec2(0.0, 0.0));
@@ -239,7 +239,7 @@ void main ()
         tmpvar_65.z = -(tmpvar_64);
         colorCoverage_2 = tmpvar_65;
         lowp float tmpvar_66;
-        vec2 tmpvar_67;
+        mediump vec2 tmpvar_67;
         tmpvar_67 = (v_texcoord4.xy / v_texcoord4.w);
         bool tmpvar_68;
         if (any(greaterThan (tmpvar_67, vec2(1.0, 1.0)))) {
@@ -250,7 +250,7 @@ void main ()
         if (tmpvar_68) {
           tmpvar_66 = 1.0;
         } else {
-          float tmpvar_69;
+          mediump float tmpvar_69;
           tmpvar_69 = (((v_texcoord4.z - u_params1.x) / v_texcoord4.w) * u_params1.w);
           lowp vec4 tmpvar_70;
           tmpvar_70 = texture2D (u_shadowMap3, tmpvar_67);
@@ -273,21 +273,21 @@ void main ()
       };
     };
   };
-  vec3 tmpvar_75;
+  mediump vec3 tmpvar_75;
   tmpvar_75 = -(normalize(v_view));
-  vec3 tmpvar_76;
-  float tmpvar_77;
+  mediump vec3 tmpvar_76;
+  mediump float tmpvar_77;
   tmpvar_76 = -(normalize(u_lightPosition.xyz));
   tmpvar_77 = 1.0;
   if ((0.0 != u_lightPosition.w)) {
-    vec3 tmpvar_78;
+    mediump vec3 tmpvar_78;
     tmpvar_78 = (u_lightPosition.xyz - v_view);
-    vec3 tmpvar_79;
+    mediump vec3 tmpvar_79;
     tmpvar_79 = normalize(tmpvar_78);
     tmpvar_76 = tmpvar_79;
-    float tmpvar_80;
+    mediump float tmpvar_80;
     tmpvar_80 = cos((u_lightAttenuationSpotOuter.w * 0.0174533));
-    float tmpvar_81;
+    mediump float tmpvar_81;
     tmpvar_81 = sqrt(dot (tmpvar_78, tmpvar_78));
     tmpvar_77 = ((1.0/((
       (u_lightAttenuationSpotOuter.x + (u_lightAttenuationSpotOuter.y * tmpvar_81))
@@ -305,9 +305,9 @@ void main ()
       (u_lightAttenuationSpotOuter.w >= 90.0)
     )));
   };
-  float tmpvar_82;
+  mediump float tmpvar_82;
   tmpvar_82 = dot (v_normal, tmpvar_76);
-  vec2 tmpvar_83;
+  mediump vec2 tmpvar_83;
   tmpvar_83.x = tmpvar_82;
   tmpvar_83.y = (((
     float((tmpvar_82 >= 0.0))
@@ -316,9 +316,9 @@ void main ()
       ((2.0 * tmpvar_82) * v_normal)
      - tmpvar_76), tmpvar_75)), u_materialKs.w)
   ) * (2.0 + u_materialKs.w)) / 8.0);
-  vec2 tmpvar_84;
+  mediump vec2 tmpvar_84;
   tmpvar_84 = (max (tmpvar_83, 0.0) * tmpvar_77);
-  float tmpvar_85;
+  mediump float tmpvar_85;
   tmpvar_85 = sqrt(dot (v_view, v_view));
   lowp vec3 tmpvar_86;
   tmpvar_86 = mix (vec3(0.0, 0.0, 0.0), (pow (

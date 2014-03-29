@@ -23,7 +23,7 @@ void main ()
 {
   v2f xlt_i_5;
   mediump vec4 xl_retval_6;
-  vec4 tmpvar_7;
+  mediump vec4 tmpvar_7;
   tmpvar_7 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_5.pos = tmpvar_7;
   highp vec2 tmpvar_8;

@@ -17,7 +17,7 @@ static int printhelp(const char* msg)
 
 static bool init()
 {
-	gContext = glslopt_initialize(false);
+	gContext = glslopt_initialize(kGlslTargetOpenGL);
 	if( !gContext )
 		return false;
 	return true;

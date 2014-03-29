@@ -1,7 +1,7 @@
 mediump vec4 xlat_main ()
 {
   highp float foo_1;
-  float tmpvar_2;
+  mediump float tmpvar_2;
   tmpvar_2 = 1.0;
   foo_1 = tmpvar_2;
   highp float tmpvar_3;

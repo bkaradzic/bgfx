@@ -1,0 +1,187 @@
+vec4 xll_tex2Dlod(sampler2D s, vec4 coord) {
+   return texture2DLod( s, coord.xy, coord.w);
+}
+mat3 xll_transpose_mf3x3(mat3 m) {
+  return mat3( m[0][0], m[1][0], m[2][0],
+               m[0][1], m[1][1], m[2][1],
+               m[0][2], m[1][2], m[2][2]);
+}
+mat3 xll_constructMat3_mf4x4( mat4 m) {
+  return mat3( vec3( m[0]), vec3( m[1]), vec3( m[2]));
+}
+struct Lamp {
+    vec4 posRange;
+    vec4 colorImp;
+    vec4 spotParam;
+};
+struct v2f {
+    vec4 pos;
+    vec3 hybridDir;
+    vec3 hybridCol;
+    vec3 ambient;
+    vec2 uv;
+};
+struct HybridAppData {
+    vec4 vertex;
+    vec4 tangent;
+    vec3 normal;
+    vec4 texcoord;
+    vec4 bakedCol;
+    vec2 bakedDir;
+};
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+
+uniform vec3 _Tonemap_blackLevel;
+uniform vec3 _Tonemap_toeLength;
+uniform vec3 _Tonemap_heel;
+uniform vec3 _Tonemap_shoulder;
+uniform vec3 _Tonemap_colorScale1;
+uniform vec3 _Tonemap_colorScale2;
+uniform vec3 _HybridSunDir;
+uniform vec4 _HybridSunCol;
+uniform vec3 GridLightTextureStartCell;
+uniform vec3 GridLightTextureCellSize;
+uniform sampler2D GridLightTexture;
+uniform vec4 IngameGridLimit;
+uniform vec4 LightPos[30];
+uniform vec4 LightCol[30];
+uniform vec4 _MainTex_ST;
+float Luma( in vec3 c ) {
+    return dot( c, vec3( 0.22, 0.707, 0.071));
+}
+void CalcDynamicLight( in vec3 worldVert, in vec3 worldNorm, in Lamp lamp[4], inout vec3 hybridDir, inout vec3 hybridCol )
+{
+    vec3 lAgg = vec3( 0.0);
+    float wAgg = 0.001;
+    vec4 atten;
+    int i = 0;
+    for ( ; (i < 4); (i++)) {
+        vec3 lightToVert = (lamp[i].posRange.xyz - worldVert);
+        float lengthSq = dot( lightToVert, lightToVert);
+        vec3 lightToVertNorm = (lightToVert * inversesqrt(lengthSq));
+        atten[i] = max( (1.0 - ((lengthSq * lamp[i].posRange.w) * 0.8)), 0.0);
+        atten[i] *= atten[i];
+        float nDotL = max( dot( lightToVertNorm, worldNorm), 0.05);
+        float weight = ((atten[i] * lamp[i].colorImp.w) * nDotL);
+        lAgg += (weight * lightToVertNorm);
+        wAgg += weight;
+    }
+    float w = (Luma( hybridCol) * 2.0);
+    lAgg += (hybridDir * w);
+    wAgg += w;
+    hybridDir = (lAgg / wAgg);
+    int j = 0;
+    for ( ; (j < 4); (j++)) {
+        vec3 lightToVertNorm_1 = normalize((lamp[j].posRange.xyz - worldVert));
+        hybridCol += (lamp[j].colorImp.xyz * atten[j]);
+    }
+}
+ivec4 GetLightIdxFromGrid( in vec3 worldVert )
+{
+    vec2 pos = ((worldVert - GridLightTextureStartCell) * GridLightTextureCellSize).xz;
+    pos = clamp( pos, IngameGridLimit.xy, IngameGridLimit.zw);
+    return ivec4((xll_tex2Dlod( GridLightTexture, vec4( pos.x, pos.y, 0.0, 0.0)) * 255.0));
+}
+vec3 DecodeBakedCol( in vec3 bakedCol )
+{
+    vec3 c = (bakedCol * 3.0);
+    return (c * c);
+}
+vec3 DecodeNormal( in vec2 enc )
+{
+    vec4 nn = ((enc.xyxy * vec4( 2.0, 2.0, 0.0, 0.0)) + vec4( -1.0, -1.0, 1.01, -1.0));
+    float l = dot( nn.xyz, (-nn.xyw));
+    nn.z = l;
+    nn.xy *= sqrt(l);
+    return ((nn.xyz * 2.0) + vec3( 0.0, 0.0, -1.0));
+}
+void DecodeBaking( in vec4 bakedColor, in vec2 bakedDir, out vec3 hybridCol, out vec3 hybridDir )
+{
+    hybridDir = (DecodeNormal( bakedDir) * (bakedColor.w * 2.0));
+    hybridCol = DecodeBakedCol( bakedColor.xyz);
+}
+void LoadBakedLight( in vec3 worldVert, in vec3 worldNorm, in vec4 bakedColor, in vec2 bakedDir, out vec3 hybridCol, out vec3 hybridDir )
+{
+    DecodeBaking( bakedColor, bakedDir, hybridCol, hybridDir);
+}
+void ReadLightArray3( in ivec4 lightIdx, out Lamp l0, out Lamp l1, out Lamp l2, out Lamp l3 )
+{
+    l0.posRange = LightPos[lightIdx.x];
+    l0.colorImp = LightCol[lightIdx.x];
+    l0.spotParam = vec4( 0.0, 0.0, 0.0, 1.0);
+    l1.posRange = LightPos[lightIdx.y];
+    l1.colorImp = LightCol[lightIdx.y];
+    l1.spotParam = vec4( 0.0, 0.0, 0.0, 1.0);
+    l2.posRange = LightPos[lightIdx.z];
+    l2.colorImp = LightCol[lightIdx.z];
+    l2.spotParam = vec4( 0.0, 0.0, 0.0, 1.0);
+    l3.posRange = LightPos[lightIdx.w];
+    l3.colorImp = LightCol[lightIdx.w];
+    l3.spotParam = vec4( 0.0, 0.0, 0.0, 1.0);
+}
+vec3 JimTonemapping( in vec3 x )
+{
+    x = max( (x - (_Tonemap_blackLevel * 0.25)), vec3( 0.0, 0.0, 0.0));
+    x = ((x * ((_Tonemap_colorScale1 * x) + _Tonemap_heel)) / ((x * ((_Tonemap_colorScale2 * x) + _Tonemap_shoulder)) + _Tonemap_toeLength));
+    return x;
+}
+vec3 NichTonemap( in vec3 x )
+{
+    return (JimTonemapping( (x * 0.25)) * 4.0);
+    float total = (length(x) + 0.0001);
+    vec3 norm = (x / total);
+    float tonemapped = (JimTonemapping( vec3( 0.0, (total * 0.25), 0.0)).y * 4.0);
+    return (norm * tonemapped);
+}
+vec3 VertexTonemap( in vec3 x )
+{
+    return NichTonemap( x);
+}
+void DoCalcHybridLight2( in vec3 worldVert, in vec3 worldNorm, out vec3 hybridDir, out vec3 hybridCol, out vec3 ambient, in vec4 bakedColor, in vec2 bakedDir )
+{
+    LoadBakedLight( worldVert, worldNorm, bakedColor, bakedDir, hybridCol, hybridDir);
+    ivec4 lightIdx = GetLightIdxFromGrid( worldVert);
+    Lamp l[4];
+    ReadLightArray3( lightIdx, l[0], l[1], l[2], l[3]);
+    CalcDynamicLight( worldVert, worldNorm, l, hybridDir, hybridCol);
+    hybridCol = VertexTonemap( hybridCol);
+    ambient = VertexTonemap( (_HybridSunCol.xyz * dot( worldNorm, _HybridSunDir)));
+}
+v2f vert (in HybridAppData v)
+{
+    v2f o;
+    o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
+    o.uv = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+    vec3 worldVert = (_Object2World * v.vertex).xyz;
+    vec3 worldNorm = normalize((xll_constructMat3_mf4x4( _Object2World) * v.normal.xyz));
+    DoCalcHybridLight2( worldVert, worldNorm, o.hybridDir, o.hybridCol, o.ambient, v.bakedCol, v.bakedDir);
+    vec3 eyeToVert = normalize((_WorldSpaceCameraPos.xyz - worldVert));
+    vec3 binormal = (cross( v.normal, v.tangent.xyz) * v.tangent.w);
+    mat3 rotation = xll_transpose_mf3x3(mat3( v.tangent.xyz, binormal, v.normal));
+    o.hybridDir = (rotation * (xll_constructMat3_mf4x4( _World2Object) * o.hybridDir));
+    return o;
+}
+attribute vec4 TANGENT;
+varying vec3 xlv_TEXCOORD0;
+varying vec3 xlv_TEXCOORD1;
+varying vec3 xlv_COLOR;
+varying vec2 xlv_TEXCOORD2;
+void main()
+{
+    v2f xl_retval;
+    HybridAppData xlt_v;
+    xlt_v.vertex = vec4(gl_Vertex);
+    xlt_v.tangent = vec4(TANGENT);
+    xlt_v.normal = vec3(gl_Normal);
+    xlt_v.texcoord = vec4(gl_MultiTexCoord0);
+    xlt_v.bakedCol = vec4(gl_Color);
+    xlt_v.bakedDir = vec2(gl_MultiTexCoord1);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4(xl_retval.pos);
+    xlv_TEXCOORD0 = vec3(xl_retval.hybridDir);
+    xlv_TEXCOORD1 = vec3(xl_retval.hybridCol);
+    xlv_COLOR = vec3(xl_retval.ambient);
+    xlv_TEXCOORD2 = vec2(xl_retval.uv);
+}

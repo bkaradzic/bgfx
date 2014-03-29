@@ -4,10 +4,10 @@ void xlat_main (
   out mediump float oz_2
 )
 {
-  vec4 tmpvar_3;
+  mediump vec4 tmpvar_3;
   tmpvar_3 = vec4(0.5, 0.5, 0.5, 0.5);
   ocol_1 = tmpvar_3;
-  float tmpvar_4;
+  mediump float tmpvar_4;
   tmpvar_4 = 0.9;
   oz_2 = tmpvar_4;
 }

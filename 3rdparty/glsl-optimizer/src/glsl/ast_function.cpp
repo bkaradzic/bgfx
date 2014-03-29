@@ -93,7 +93,6 @@ prototype_string(const glsl_type *return_type, const char *name,
    return str;
 }
 
-
 static glsl_precision precision_for_call (const ir_function_signature* sig, glsl_precision max_prec, glsl_precision first_prec)
 {
 	if (sig->precision != glsl_precision_undefined)
@@ -144,6 +143,57 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, exec
 	}
 	
 	return precision_for_call (sig, prec_params_max, prec_params_first);
+}
+
+static bool
+verify_image_parameter(YYLTYPE *loc, _mesa_glsl_parse_state *state,
+                       const ir_variable *formal, const ir_variable *actual)
+{
+   /**
+    * From the ARB_shader_image_load_store specification:
+    *
+    * "The values of image variables qualified with coherent,
+    *  volatile, restrict, readonly, or writeonly may not be passed
+    *  to functions whose formal parameters lack such
+    *  qualifiers. [...] It is legal to have additional qualifiers
+    *  on a formal parameter, but not to have fewer."
+    */
+   if (actual->data.image.coherent && !formal->data.image.coherent) {
+      _mesa_glsl_error(loc, state,
+                       "function call parameter `%s' drops "
+                       "`coherent' qualifier", formal->name);
+      return false;
+   }
+
+   if (actual->data.image._volatile && !formal->data.image._volatile) {
+      _mesa_glsl_error(loc, state,
+                       "function call parameter `%s' drops "
+                       "`volatile' qualifier", formal->name);
+      return false;
+   }
+
+   if (actual->data.image.restrict_flag && !formal->data.image.restrict_flag) {
+      _mesa_glsl_error(loc, state,
+                       "function call parameter `%s' drops "
+                       "`restrict' qualifier", formal->name);
+      return false;
+   }
+
+   if (actual->data.image.read_only && !formal->data.image.read_only) {
+      _mesa_glsl_error(loc, state,
+                       "function call parameter `%s' drops "
+                       "`readonly' qualifier", formal->name);
+      return false;
+   }
+
+   if (actual->data.image.write_only && !formal->data.image.write_only) {
+      _mesa_glsl_error(loc, state,
+                       "function call parameter `%s' drops "
+                       "`writeonly' qualifier", formal->name);
+      return false;
+   }
+
+   return true;
 }
 
 
@@ -232,6 +282,13 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
                return false;
             }
 	 }
+      }
+
+      if (formal->type->is_image() &&
+          actual->variable_referenced()) {
+         if (!verify_image_parameter(&loc, state, formal,
+                                     actual->variable_referenced()))
+            return false;
       }
 
       actual_ir_node  = actual_ir_node->next;

@@ -1,0 +1,53 @@
+uniform int loopNum;
+void main ()
+{
+  vec4 r_1;
+  int myIdx_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = vec4(0.0, 0.0, 0.0, 0.0);
+  r_1 = tmpvar_3;
+  int tmpvar_4;
+  tmpvar_4 = 1;
+  myIdx_2 = tmpvar_4;
+  while (true) {
+    if (!((myIdx_2 < loopNum))) {
+      break;
+    };
+    float tmpvar_5;
+    tmpvar_5 = (r_1.x + 1.0);
+    r_1.x = tmpvar_5;
+    float tmpvar_6;
+    tmpvar_6 = (r_1.y + 2.0);
+    r_1.y = vec2(tmpvar_6).y;
+    float tmpvar_7;
+    tmpvar_7 = (r_1.z + 3.0);
+    r_1.z = vec3(tmpvar_7).z;
+    int tmpvar_8;
+    tmpvar_8 = (myIdx_2 + 1);
+    myIdx_2 = tmpvar_8;
+  };
+  int tmpvar_9;
+  tmpvar_9 = 2;
+  myIdx_2 = tmpvar_9;
+  while (true) {
+    if (!((myIdx_2 < loopNum))) {
+      break;
+    };
+    float tmpvar_10;
+    tmpvar_10 = (r_1.x + 1.0);
+    r_1.x = tmpvar_10;
+    float tmpvar_11;
+    tmpvar_11 = (r_1.y + 2.0);
+    r_1.y = vec2(tmpvar_11).y;
+    float tmpvar_12;
+    tmpvar_12 = (r_1.z + 3.0);
+    r_1.z = vec3(tmpvar_12).z;
+    int tmpvar_13;
+    tmpvar_13 = (myIdx_2 + 1);
+    myIdx_2 = tmpvar_13;
+  };
+  vec4 tmpvar_14;
+  tmpvar_14 = r_1;
+  gl_FragColor = tmpvar_14;
+}
+

@@ -336,6 +336,17 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 	}
 	glsl_precision prec = precision_from_ir(ir);
 	
+	// In fragment shader, default float precision is undefined.
+	// We must thus always print it, when there was no default precision
+	// and for whatever reason our type ended up having undefined precision.
+	if (prec == glsl_precision_undefined &&
+		type && type->is_float() &&
+//		this->state->stage == MESA_SHADER_FRAGMENT &&
+		!this->state->had_float_precision)
+	{
+		prec = glsl_precision_medium;
+	}		
+	
 	// skip precision for samplers that end up being lowp (default anyway) or undefined;
 	// except always emit it for shadowmap samplers (some drivers don't implement
 	// default EXT_shadow_samplers precision)

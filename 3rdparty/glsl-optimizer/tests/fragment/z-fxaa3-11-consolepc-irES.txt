@@ -8,9 +8,9 @@ uniform sampler2D _MainTex;
 uniform highp vec4 _MainTex_TexelSize;
 varying highp vec2 xlv_TEXCOORD0;
 varying highp vec4 xlv_TEXCOORD1;
-vec4 xll_tex2Dlod (
+mediump vec4 xll_tex2Dlod (
   in sampler2D s_1,
-  in vec4 coord_2
+  in mediump vec4 coord_2
 )
 {
   lowp vec4 tmpvar_3;
@@ -77,7 +77,7 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_51;
   tmpvar_51.zw = vec2(0.0, 0.0);
   tmpvar_51.xy = fxaaConsolePosPos_6.xy.xy;
-  vec4 tmpvar_52;
+  mediump vec4 tmpvar_52;
   tmpvar_52 = xll_tex2Dlod (tex_7, tmpvar_51);
   highp float tmpvar_53;
   tmpvar_53 = FxaaLuma (tmpvar_52);
@@ -87,7 +87,7 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_55;
   tmpvar_55.zw = vec2(0.0, 0.0);
   tmpvar_55.xy = fxaaConsolePosPos_6.xw.xy;
-  vec4 tmpvar_56;
+  mediump vec4 tmpvar_56;
   tmpvar_56 = xll_tex2Dlod (tex_7, tmpvar_55);
   highp float tmpvar_57;
   tmpvar_57 = FxaaLuma (tmpvar_56);
@@ -97,7 +97,7 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_59;
   tmpvar_59.zw = vec2(0.0, 0.0);
   tmpvar_59.xy = fxaaConsolePosPos_6.zy.xy;
-  vec4 tmpvar_60;
+  mediump vec4 tmpvar_60;
   tmpvar_60 = xll_tex2Dlod (tex_7, tmpvar_59);
   highp float tmpvar_61;
   tmpvar_61 = FxaaLuma (tmpvar_60);
@@ -107,7 +107,7 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_63;
   tmpvar_63.zw = vec2(0.0, 0.0);
   tmpvar_63.xy = fxaaConsolePosPos_6.zw.xy;
-  vec4 tmpvar_64;
+  mediump vec4 tmpvar_64;
   tmpvar_64 = xll_tex2Dlod (tex_7, tmpvar_63);
   highp float tmpvar_65;
   tmpvar_65 = FxaaLuma (tmpvar_64);
@@ -117,9 +117,9 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_67;
   tmpvar_67.zw = vec2(0.0, 0.0);
   tmpvar_67.xy = pos_5.xy.xy;
-  vec4 tmpvar_68;
+  mediump vec4 tmpvar_68;
   tmpvar_68 = xll_tex2Dlod (tex_7, tmpvar_67);
-  vec4 tmpvar_69;
+  mediump vec4 tmpvar_69;
   tmpvar_69 = tmpvar_68;
   rgbyM_46 = tmpvar_69;
   lowp float tmpvar_70;
@@ -202,17 +202,17 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_98;
   tmpvar_98.zw = vec2(0.0, 0.0);
   tmpvar_98.xy = (pos_5.xy - (dir1_30 * fxaaConsoleRcpFrameOpt_11.zw)).xy;
-  vec4 tmpvar_99;
+  mediump vec4 tmpvar_99;
   tmpvar_99 = xll_tex2Dlod (tex_7, tmpvar_98);
-  vec4 tmpvar_100;
+  mediump vec4 tmpvar_100;
   tmpvar_100 = tmpvar_99;
   rgbyN1_29 = tmpvar_100;
   highp vec4 tmpvar_101;
   tmpvar_101.zw = vec2(0.0, 0.0);
   tmpvar_101.xy = (pos_5.xy + (dir1_30 * fxaaConsoleRcpFrameOpt_11.zw)).xy;
-  vec4 tmpvar_102;
+  mediump vec4 tmpvar_102;
   tmpvar_102 = xll_tex2Dlod (tex_7, tmpvar_101);
-  vec4 tmpvar_103;
+  mediump vec4 tmpvar_103;
   tmpvar_103 = tmpvar_102;
   rgbyP1_28 = tmpvar_103;
   highp float tmpvar_104;
@@ -232,17 +232,17 @@ lowp vec4 FxaaPixelShader (
   highp vec4 tmpvar_110;
   tmpvar_110.zw = vec2(0.0, 0.0);
   tmpvar_110.xy = (pos_5.xy - (dir2_26 * fxaaConsoleRcpFrameOpt2_12.zw)).xy;
-  vec4 tmpvar_111;
+  mediump vec4 tmpvar_111;
   tmpvar_111 = xll_tex2Dlod (tex_7, tmpvar_110);
-  vec4 tmpvar_112;
+  mediump vec4 tmpvar_112;
   tmpvar_112 = tmpvar_111;
   rgbyN2_25 = tmpvar_112;
   highp vec4 tmpvar_113;
   tmpvar_113.zw = vec2(0.0, 0.0);
   tmpvar_113.xy = (pos_5.xy + (dir2_26 * fxaaConsoleRcpFrameOpt2_12.zw)).xy;
-  vec4 tmpvar_114;
+  mediump vec4 tmpvar_114;
   tmpvar_114 = xll_tex2Dlod (tex_7, tmpvar_113);
-  vec4 tmpvar_115;
+  mediump vec4 tmpvar_115;
   tmpvar_115 = tmpvar_114;
   rgbyP2_24 = tmpvar_115;
   lowp vec4 tmpvar_116;
@@ -267,7 +267,7 @@ lowp vec4 xlat_main (
 )
 {
   highp float fxaaN_121;
-  float tmpvar_122;
+  mediump float tmpvar_122;
   tmpvar_122 = 0.5;
   fxaaN_121 = tmpvar_122;
   highp vec4 tmpvar_123;
@@ -284,7 +284,7 @@ void main ()
 {
   v2f xlt_i_125;
   lowp vec4 xl_retval_126;
-  vec4 tmpvar_127;
+  mediump vec4 tmpvar_127;
   tmpvar_127 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_125.pos = tmpvar_127;
   highp vec2 tmpvar_128;

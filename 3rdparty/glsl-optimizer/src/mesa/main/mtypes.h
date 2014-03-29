@@ -213,9 +213,10 @@ typedef enum
    MESA_SHADER_VERTEX = 0,
    MESA_SHADER_GEOMETRY = 1,
    MESA_SHADER_FRAGMENT = 2,
+   MESA_SHADER_COMPUTE = 3,
 } gl_shader_stage;
 
-#define MESA_SHADER_STAGES (MESA_SHADER_FRAGMENT + 1)
+#define MESA_SHADER_STAGES (MESA_SHADER_COMPUTE + 1)
 
 
 
@@ -601,6 +602,17 @@ struct gl_shader
     * ImageAccess arrays above.
     */
    GLuint NumImages;
+	
+   /**
+    * Compute shader state from ARB_compute_shader layout qualifiers.
+    */
+   struct {
+      /**
+       * Size specified using local_size_{x,y,z}, or all 0's to indicate that
+       * it's not set in this shader.
+       */
+      unsigned LocalSize[3];
+   } Comp;
 };
 
 
@@ -785,6 +797,18 @@ struct gl_shader_program
       GLuint ClipDistanceArraySize; /**< Size of the gl_ClipDistance array, or
                                          0 if not present. */
    } Vert;
+	
+   /**
+    * Compute shader state - copied into gl_compute_program by
+    * _mesa_copy_linked_program_data().
+    */
+   struct {
+      /**
+       * If this shader contains a compute stage, size specified using
+       * local_size_{x,y,z}.  Otherwise undefined.
+       */
+      unsigned LocalSize[3];
+   } Comp;
 
    /* post-link info: */
    unsigned NumUserUniformStorage;
@@ -1178,6 +1202,15 @@ struct gl_constants
    GLuint MaxCombinedImageUnitsAndFragmentOutputs;
    GLuint MaxImageSamples;
    GLuint MaxCombinedImageUniforms;
+
+   /** GL_ARB_compute_shader */
+   GLuint MaxComputeWorkGroupCount[3]; /* Array of x, y, z dimensions */
+   GLuint MaxComputeWorkGroupSize[3]; /* Array of x, y, z dimensions */
+   GLuint MaxComputeWorkGroupInvocations;
+
+   /** GL_ARB_gpu_shader5 */
+   GLfloat MinFragmentInterpolationOffset;
+   GLfloat MaxFragmentInterpolationOffset;
 };
 
 
@@ -1197,6 +1230,7 @@ struct gl_extensions
    GLboolean ARB_base_instance;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_color_buffer_float;
+   GLboolean ARB_compute_shader;
    GLboolean ARB_conservative_depth;
    GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;

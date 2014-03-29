@@ -204,6 +204,40 @@ const static struct builtin_type_versions {
 
    T(struct_gl_DepthRangeParameters,  110, 100)
 
+   T(image1D,                         420, 999)
+   T(image2D,                         420, 999)
+   T(image3D,                         420, 999)
+   T(image2DRect,                     420, 999)
+   T(imageCube,                       420, 999)
+   T(imageBuffer,                     420, 999)
+   T(image1DArray,                    420, 999)
+   T(image2DArray,                    420, 999)
+   T(imageCubeArray,                  420, 999)
+   T(image2DMS,                       420, 999)
+   T(image2DMSArray,                  420, 999)
+   T(iimage1D,                        420, 999)
+   T(iimage2D,                        420, 999)
+   T(iimage3D,                        420, 999)
+   T(iimage2DRect,                    420, 999)
+   T(iimageCube,                      420, 999)
+   T(iimageBuffer,                    420, 999)
+   T(iimage1DArray,                   420, 999)
+   T(iimage2DArray,                   420, 999)
+   T(iimageCubeArray,                 420, 999)
+   T(iimage2DMS,                      420, 999)
+   T(iimage2DMSArray,                 420, 999)
+   T(uimage1D,                        420, 999)
+   T(uimage2D,                        420, 999)
+   T(uimage3D,                        420, 999)
+   T(uimage2DRect,                    420, 999)
+   T(uimageCube,                      420, 999)
+   T(uimageBuffer,                    420, 999)
+   T(uimage1DArray,                   420, 999)
+   T(uimage2DArray,                   420, 999)
+   T(uimageCubeArray,                 420, 999)
+   T(uimage2DMS,                      420, 999)
+   T(uimage2DMSArray,                 420, 999)
+
    T(atomic_uint,                     420, 999)
 };
 
@@ -289,6 +323,42 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 
    if (state->OES_texture_3D_enable) {
       add_type(symbols, glsl_type::sampler3D_type);
+   }
+
+   if (state->ARB_shader_image_load_store_enable) {
+      add_type(symbols, glsl_type::image1D_type);
+      add_type(symbols, glsl_type::image2D_type);
+      add_type(symbols, glsl_type::image3D_type);
+      add_type(symbols, glsl_type::image2DRect_type);
+      add_type(symbols, glsl_type::imageCube_type);
+      add_type(symbols, glsl_type::imageBuffer_type);
+      add_type(symbols, glsl_type::image1DArray_type);
+      add_type(symbols, glsl_type::image2DArray_type);
+      add_type(symbols, glsl_type::imageCubeArray_type);
+      add_type(symbols, glsl_type::image2DMS_type);
+      add_type(symbols, glsl_type::image2DMSArray_type);
+      add_type(symbols, glsl_type::iimage1D_type);
+      add_type(symbols, glsl_type::iimage2D_type);
+      add_type(symbols, glsl_type::iimage3D_type);
+      add_type(symbols, glsl_type::iimage2DRect_type);
+      add_type(symbols, glsl_type::iimageCube_type);
+      add_type(symbols, glsl_type::iimageBuffer_type);
+      add_type(symbols, glsl_type::iimage1DArray_type);
+      add_type(symbols, glsl_type::iimage2DArray_type);
+      add_type(symbols, glsl_type::iimageCubeArray_type);
+      add_type(symbols, glsl_type::iimage2DMS_type);
+      add_type(symbols, glsl_type::iimage2DMSArray_type);
+      add_type(symbols, glsl_type::uimage1D_type);
+      add_type(symbols, glsl_type::uimage2D_type);
+      add_type(symbols, glsl_type::uimage3D_type);
+      add_type(symbols, glsl_type::uimage2DRect_type);
+      add_type(symbols, glsl_type::uimageCube_type);
+      add_type(symbols, glsl_type::uimageBuffer_type);
+      add_type(symbols, glsl_type::uimage1DArray_type);
+      add_type(symbols, glsl_type::uimage2DArray_type);
+      add_type(symbols, glsl_type::uimageCubeArray_type);
+      add_type(symbols, glsl_type::uimage2DMS_type);
+      add_type(symbols, glsl_type::uimage2DMSArray_type);
    }
 
    if (state->ARB_shader_atomic_counters_enable) {

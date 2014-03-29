@@ -21,7 +21,7 @@ varying highp vec3 xlv_TEXCOORD2;
 varying highp vec3 xlv_TEXCOORD3;
 varying highp vec3 xlv_TEXCOORD4;
 void xll_clip (
-  in float x_1
+  in mediump float x_1
 )
 {
   if ((x_1 < 0.0)) {
@@ -117,7 +117,7 @@ lowp vec4 xlat_main (
   mediump vec3 tmpvar_38;
   tmpvar_38 = (light_11 * 2.0);
   c_3.xyz = tmpvar_38.xyz.xyz;
-  float tmpvar_39;
+  mediump float tmpvar_39;
   tmpvar_39 = 1.0;
   c_3.w = vec4(tmpvar_39).w;
   return c_3;

@@ -1,6 +1,20 @@
 GLSL optimizer Change Log
 =========================
 
+2014 03
+-------
+
+Fixes:
+
+* Fixed missing precision qualifier in some ES shaders (mostly due to expansion of ternary ?: check).
+
+2014 02
+-------
+
+Fixes:
+
+* Fixed vectorize pass introduced last month going wrong with dot products.
+
 2014 01
 -------
 
@@ -15,6 +29,7 @@ Fixes:
 * Fixed array assignments sometimes appearing in pre-GLSL1.20 versions, especially with
   complex loops that couldn't be unrolled.
 * Fixed output of textureOffset and texelFetch.
+* Fixed error messages on MRT outputs on GL & GLES3 (now supports 4 MRTs).
 
 2013 12
 -------

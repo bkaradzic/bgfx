@@ -281,6 +281,8 @@ private:
     * Hash table from ir_variables to loop state, for induction variables.
     */
    hash_table *ht_inductors;
+   hash_table *ht_non_inductors;
+ 
 
    void *mem_ctx;
 

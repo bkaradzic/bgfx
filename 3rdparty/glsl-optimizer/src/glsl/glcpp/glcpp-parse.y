@@ -375,9 +375,15 @@ control_line:
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	} NEWLINE
 |	HASH_VERSION integer_constant NEWLINE {
+		if (parser->version_resolved) {
+			glcpp_error(& @1, parser, "#version must appear on the first line");
+		}
 		_glcpp_parser_handle_version_declaration(parser, $2, NULL, true);
 	}
 |	HASH_VERSION integer_constant IDENTIFIER NEWLINE {
+		if (parser->version_resolved) {
+			glcpp_error(& @1, parser, "#version must appear on the first line");
+		}
 		_glcpp_parser_handle_version_declaration(parser, $2, $3, true);
 	}
 |	HASH NEWLINE {
@@ -2117,6 +2123,12 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 
 	      if (extensions->ARB_viewport_array)
 	         add_builtin_define(parser, "GL_ARB_viewport_array", 1);
+
+              if (extensions->ARB_compute_shader)
+                 add_builtin_define(parser, "GL_ARB_compute_shader", 1);
+
+	      if (extensions->ARB_shader_image_load_store)
+	         add_builtin_define(parser, "GL_ARB_shader_image_load_store", 1);
 	   }
 	}
 

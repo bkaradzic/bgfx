@@ -41,15 +41,15 @@ struct gl_shader;
 
 
 struct dd_function_table {
+   
 
    /**
     * \name GLSL-related functions (ARB extensions and OpenGL 2.x)
     */
    /*@{*/
-   struct gl_shader *(*NewShader)(struct gl_context *ctx, GLuint name, GLenum type);
+   struct gl_shader *(*NewShader)(struct gl_context *ctx,
+                                  GLuint name, GLenum type);
    void (*DeleteShader)(struct gl_context *ctx, struct gl_shader *shader);
-   /*@}*/
-
 };
 
 #endif /* DD_INCLUDED */

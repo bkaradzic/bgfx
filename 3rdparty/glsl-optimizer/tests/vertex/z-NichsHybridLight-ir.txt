@@ -1,0 +1,587 @@
+struct Lamp {
+  vec4 posRange;
+  vec4 colorImp;
+  vec4 spotParam;
+};
+struct v2f {
+  vec4 pos;
+  vec3 hybridDir;
+  vec3 hybridCol;
+  vec3 ambient;
+  vec2 uv;
+};
+struct HybridAppData {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 bakedCol;
+  vec2 bakedDir;
+};
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec3 _Tonemap_blackLevel;
+uniform vec3 _Tonemap_toeLength;
+uniform vec3 _Tonemap_heel;
+uniform vec3 _Tonemap_shoulder;
+uniform vec3 _Tonemap_colorScale1;
+uniform vec3 _Tonemap_colorScale2;
+uniform vec3 _HybridSunDir;
+uniform vec4 _HybridSunCol;
+uniform vec3 GridLightTextureStartCell;
+uniform vec3 GridLightTextureCellSize;
+uniform sampler2D GridLightTexture;
+uniform vec4 IngameGridLimit;
+uniform vec4 LightPos[30];
+uniform vec4 LightCol[30];
+uniform vec4 _MainTex_ST;
+attribute vec4 TANGENT;
+varying vec3 xlv_TEXCOORD0;
+varying vec3 xlv_TEXCOORD1;
+varying vec3 xlv_COLOR;
+varying vec2 xlv_TEXCOORD2;
+vec4 xll_tex2Dlod (
+  in sampler2D s_1,
+  in vec4 coord_2
+)
+{
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2DLod (s_1, coord_2.xy, coord_2.w);
+  return tmpvar_3;
+}
+
+mat3 xll_transpose_mf3x3 (
+  in mat3 m_4
+)
+{
+  mat3 tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = m_4[0][0];
+  tmpvar_5[0].x = tmpvar_6;
+  float tmpvar_7;
+  tmpvar_7 = m_4[1][0];
+  tmpvar_5[0].y = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = m_4[2][0];
+  tmpvar_5[0].z = tmpvar_8;
+  float tmpvar_9;
+  tmpvar_9 = m_4[0][1];
+  tmpvar_5[1].x = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = m_4[1][1];
+  tmpvar_5[1].y = tmpvar_10;
+  float tmpvar_11;
+  tmpvar_11 = m_4[2][1];
+  tmpvar_5[1].z = tmpvar_11;
+  float tmpvar_12;
+  tmpvar_12 = m_4[0][2];
+  tmpvar_5[2].x = tmpvar_12;
+  float tmpvar_13;
+  tmpvar_13 = m_4[1][2];
+  tmpvar_5[2].y = tmpvar_13;
+  float tmpvar_14;
+  tmpvar_14 = m_4[2][2];
+  tmpvar_5[2].z = tmpvar_14;
+  return tmpvar_5;
+}
+
+mat3 xll_constructMat3_mf4x4 (
+  in mat4 m_15
+)
+{
+  vec3 tmpvar_16;
+  tmpvar_16 = m_15[0].xyz;
+  vec3 tmpvar_17;
+  tmpvar_17 = m_15[1].xyz;
+  vec3 tmpvar_18;
+  tmpvar_18 = m_15[2].xyz;
+  mat3 tmpvar_19;
+  vec3 tmpvar_20;
+  tmpvar_20 = tmpvar_16;
+  tmpvar_19[0] = tmpvar_20;
+  vec3 tmpvar_21;
+  tmpvar_21 = tmpvar_17;
+  tmpvar_19[1] = tmpvar_21;
+  vec3 tmpvar_22;
+  tmpvar_22 = tmpvar_18;
+  tmpvar_19[2] = tmpvar_22;
+  return tmpvar_19;
+}
+
+float Luma (
+  in vec3 c_23
+)
+{
+  float tmpvar_24;
+  tmpvar_24 = dot (c_23, vec3(0.22, 0.707, 0.071));
+  return tmpvar_24;
+}
+
+void CalcDynamicLight (
+  in vec3 worldVert_25,
+  in vec3 worldNorm_26,
+  in Lamp lamp_27[4],
+  inout vec3 hybridDir_28,
+  inout vec3 hybridCol_29
+)
+{
+  int j_30;
+  float w_31;
+  int i_32;
+  vec4 atten_33;
+  float wAgg_34;
+  vec3 lAgg_35;
+  vec3 tmpvar_36;
+  tmpvar_36 = vec3(0.0, 0.0, 0.0);
+  lAgg_35 = tmpvar_36;
+  float tmpvar_37;
+  tmpvar_37 = 0.001;
+  wAgg_34 = tmpvar_37;
+  int tmpvar_38;
+  tmpvar_38 = 0;
+  i_32 = tmpvar_38;
+  while (true) {
+    float weight_39;
+    float nDotL_40;
+    vec3 lightToVertNorm_41;
+    float lengthSq_42;
+    vec3 lightToVert_43;
+    if (!((i_32 < 4))) {
+      break;
+    };
+    vec3 tmpvar_44;
+    tmpvar_44 = (lamp_27[i_32].posRange.xyz - worldVert_25);
+    lightToVert_43 = tmpvar_44;
+    float tmpvar_45;
+    tmpvar_45 = dot (lightToVert_43, lightToVert_43);
+    float tmpvar_46;
+    tmpvar_46 = tmpvar_45;
+    lengthSq_42 = tmpvar_46;
+    float tmpvar_47;
+    tmpvar_47 = inversesqrt (lengthSq_42);
+    vec3 tmpvar_48;
+    tmpvar_48 = (lightToVert_43 * tmpvar_47);
+    lightToVertNorm_41 = tmpvar_48;
+    float tmpvar_49;
+    tmpvar_49 = max ((1.0 - ((lengthSq_42 * lamp_27[i_32].posRange.w) * 0.8)), 0.0);
+    vec4 tmpvar_50;
+    tmpvar_50 = atten_33; tmpvar_50[i_32] = tmpvar_49;
+    atten_33 = tmpvar_50;
+    vec4 tmpvar_51;
+    tmpvar_51 = atten_33; tmpvar_51[i_32] = (atten_33[i_32] * atten_33[i_32]);
+    atten_33 = tmpvar_51;
+    float tmpvar_52;
+    tmpvar_52 = dot (lightToVertNorm_41, worldNorm_26);
+    float tmpvar_53;
+    tmpvar_53 = max (tmpvar_52, 0.05);
+    float tmpvar_54;
+    tmpvar_54 = tmpvar_53;
+    nDotL_40 = tmpvar_54;
+    float tmpvar_55;
+    tmpvar_55 = ((atten_33[i_32] * lamp_27[i_32].colorImp.w) * nDotL_40);
+    weight_39 = tmpvar_55;
+    vec3 tmpvar_56;
+    tmpvar_56 = (lAgg_35 + (weight_39 * lightToVertNorm_41));
+    lAgg_35 = tmpvar_56;
+    float tmpvar_57;
+    tmpvar_57 = (wAgg_34 + weight_39);
+    wAgg_34 = tmpvar_57;
+    int _post_incdec_tmp_58;
+    _post_incdec_tmp_58 = i_32;
+    int tmpvar_59;
+    tmpvar_59 = (i_32 + 1);
+    i_32 = tmpvar_59;
+  };
+  float tmpvar_60;
+  tmpvar_60 = Luma (hybridCol_29);
+  float tmpvar_61;
+  tmpvar_61 = (tmpvar_60 * 2.0);
+  w_31 = tmpvar_61;
+  vec3 tmpvar_62;
+  tmpvar_62 = (lAgg_35 + (hybridDir_28 * w_31));
+  lAgg_35 = tmpvar_62;
+  float tmpvar_63;
+  tmpvar_63 = (wAgg_34 + w_31);
+  wAgg_34 = tmpvar_63;
+  vec3 tmpvar_64;
+  tmpvar_64 = (lAgg_35 / wAgg_34);
+  hybridDir_28 = tmpvar_64;
+  int tmpvar_65;
+  tmpvar_65 = 0;
+  j_30 = tmpvar_65;
+  while (true) {
+    vec3 lightToVertNorm_1_66;
+    if (!((j_30 < 4))) {
+      break;
+    };
+    vec3 tmpvar_67;
+    tmpvar_67 = normalize ((lamp_27[j_30].posRange.xyz - worldVert_25));
+    vec3 tmpvar_68;
+    tmpvar_68 = tmpvar_67;
+    lightToVertNorm_1_66 = tmpvar_68;
+    vec3 tmpvar_69;
+    tmpvar_69 = (hybridCol_29 + (lamp_27[j_30].colorImp.xyz * atten_33[j_30]));
+    hybridCol_29 = tmpvar_69;
+    int _post_incdec_tmp_70;
+    _post_incdec_tmp_70 = j_30;
+    int tmpvar_71;
+    tmpvar_71 = (j_30 + 1);
+    j_30 = tmpvar_71;
+  };
+}
+
+ivec4 GetLightIdxFromGrid (
+  in vec3 worldVert_72
+)
+{
+  vec2 pos_73;
+  vec2 tmpvar_74;
+  tmpvar_74 = ((worldVert_72 - GridLightTextureStartCell) * GridLightTextureCellSize).xz;
+  pos_73 = tmpvar_74;
+  vec2 tmpvar_75;
+  tmpvar_75 = clamp (pos_73, IngameGridLimit.xy, IngameGridLimit.zw);
+  vec2 tmpvar_76;
+  tmpvar_76 = tmpvar_75;
+  pos_73 = tmpvar_76;
+  vec4 tmpvar_77;
+  tmpvar_77.zw = vec2(0.0, 0.0);
+  tmpvar_77.x = pos_73.x;
+  tmpvar_77.y = pos_73.y;
+  vec4 tmpvar_78;
+  tmpvar_78 = xll_tex2Dlod (GridLightTexture, tmpvar_77);
+  ivec4 tmpvar_79;
+  tmpvar_79 = ivec4((tmpvar_78 * 255.0)).xyzw;
+  return tmpvar_79;
+}
+
+vec3 DecodeBakedCol (
+  in vec3 bakedCol_80
+)
+{
+  vec3 c_81;
+  vec3 tmpvar_82;
+  tmpvar_82 = (bakedCol_80 * 3.0);
+  c_81 = tmpvar_82;
+  return (c_81 * c_81);
+}
+
+vec3 DecodeNormal (
+  in vec2 enc_83
+)
+{
+  float l_84;
+  vec4 nn_85;
+  vec4 tmpvar_86;
+  tmpvar_86 = ((enc_83.xyxy * vec4(2.0, 2.0, 0.0, 0.0)) + vec4(-1.0, -1.0, 1.01, -1.0));
+  nn_85 = tmpvar_86;
+  float tmpvar_87;
+  tmpvar_87 = dot (nn_85.xyz, -(nn_85.xyw));
+  float tmpvar_88;
+  tmpvar_88 = tmpvar_87;
+  l_84 = tmpvar_88;
+  float tmpvar_89;
+  tmpvar_89 = l_84;
+  nn_85.z = vec3(tmpvar_89).z;
+  float tmpvar_90;
+  tmpvar_90 = sqrt (l_84);
+  vec2 tmpvar_91;
+  tmpvar_91 = (nn_85.xy * tmpvar_90);
+  nn_85.xy = tmpvar_91.xy.xy;
+  return ((nn_85.xyz * 2.0) + vec3(0.0, 0.0, -1.0));
+}
+
+void DecodeBaking (
+  in vec4 bakedColor_92,
+  in vec2 bakedDir_93,
+  out vec3 hybridCol_94,
+  out vec3 hybridDir_95
+)
+{
+  vec3 tmpvar_96;
+  tmpvar_96 = DecodeNormal (bakedDir_93);
+  vec3 tmpvar_97;
+  tmpvar_97 = (tmpvar_96 * (bakedColor_92.w * 2.0));
+  hybridDir_95 = tmpvar_97;
+  vec3 tmpvar_98;
+  tmpvar_98 = DecodeBakedCol (bakedColor_92.xyz);
+  vec3 tmpvar_99;
+  tmpvar_99 = tmpvar_98;
+  hybridCol_94 = tmpvar_99;
+}
+
+void LoadBakedLight (
+  in vec3 worldVert_100,
+  in vec3 worldNorm_101,
+  in vec4 bakedColor_102,
+  in vec2 bakedDir_103,
+  out vec3 hybridCol_104,
+  out vec3 hybridDir_105
+)
+{
+  DecodeBaking (bakedColor_102, bakedDir_103, hybridCol_104, hybridDir_105);
+}
+
+void ReadLightArray3 (
+  in ivec4 lightIdx_106,
+  out Lamp l0_107,
+  out Lamp l1_108,
+  out Lamp l2_109,
+  out Lamp l3_110
+)
+{
+  vec4 tmpvar_111;
+  tmpvar_111 = LightPos[lightIdx_106.x];
+  l0_107.posRange = tmpvar_111;
+  vec4 tmpvar_112;
+  tmpvar_112 = LightCol[lightIdx_106.x];
+  l0_107.colorImp = tmpvar_112;
+  vec4 tmpvar_113;
+  tmpvar_113 = vec4(0.0, 0.0, 0.0, 1.0);
+  l0_107.spotParam = tmpvar_113;
+  vec4 tmpvar_114;
+  tmpvar_114 = LightPos[lightIdx_106.y];
+  l1_108.posRange = tmpvar_114;
+  vec4 tmpvar_115;
+  tmpvar_115 = LightCol[lightIdx_106.y];
+  l1_108.colorImp = tmpvar_115;
+  vec4 tmpvar_116;
+  tmpvar_116 = vec4(0.0, 0.0, 0.0, 1.0);
+  l1_108.spotParam = tmpvar_116;
+  vec4 tmpvar_117;
+  tmpvar_117 = LightPos[lightIdx_106.z];
+  l2_109.posRange = tmpvar_117;
+  vec4 tmpvar_118;
+  tmpvar_118 = LightCol[lightIdx_106.z];
+  l2_109.colorImp = tmpvar_118;
+  vec4 tmpvar_119;
+  tmpvar_119 = vec4(0.0, 0.0, 0.0, 1.0);
+  l2_109.spotParam = tmpvar_119;
+  vec4 tmpvar_120;
+  tmpvar_120 = LightPos[lightIdx_106.w];
+  l3_110.posRange = tmpvar_120;
+  vec4 tmpvar_121;
+  tmpvar_121 = LightCol[lightIdx_106.w];
+  l3_110.colorImp = tmpvar_121;
+  vec4 tmpvar_122;
+  tmpvar_122 = vec4(0.0, 0.0, 0.0, 1.0);
+  l3_110.spotParam = tmpvar_122;
+}
+
+vec3 JimTonemapping (
+  in vec3 x_123
+)
+{
+  vec3 tmpvar_124;
+  tmpvar_124 = max ((x_123 - (_Tonemap_blackLevel * 0.25)), vec3(0.0, 0.0, 0.0));
+  vec3 tmpvar_125;
+  tmpvar_125 = tmpvar_124;
+  x_123 = tmpvar_125;
+  vec3 tmpvar_126;
+  tmpvar_126 = ((x_123 * (
+    (_Tonemap_colorScale1 * x_123)
+   + _Tonemap_heel)) / ((x_123 * 
+    ((_Tonemap_colorScale2 * x_123) + _Tonemap_shoulder)
+  ) + _Tonemap_toeLength));
+  x_123 = tmpvar_126;
+  return x_123;
+}
+
+vec3 NichTonemap (
+  in vec3 x_127
+)
+{
+  float tonemapped_128;
+  vec3 norm_129;
+  float total_130;
+  vec3 tmpvar_131;
+  tmpvar_131 = JimTonemapping ((x_127 * 0.25));
+  return (tmpvar_131 * 4.0);
+  float tmpvar_132;
+  tmpvar_132 = length (x_127);
+  float tmpvar_133;
+  tmpvar_133 = (tmpvar_132 + 0.0001);
+  total_130 = tmpvar_133;
+  vec3 tmpvar_134;
+  tmpvar_134 = (x_127 / total_130);
+  norm_129 = tmpvar_134;
+  vec3 tmpvar_135;
+  tmpvar_135.xz = vec2(0.0, 0.0);
+  tmpvar_135.y = (total_130 * 0.25);
+  vec3 tmpvar_136;
+  tmpvar_136 = JimTonemapping (tmpvar_135);
+  float tmpvar_137;
+  tmpvar_137 = (tmpvar_136.y * 4.0);
+  tonemapped_128 = tmpvar_137;
+  return (norm_129 * tonemapped_128);
+}
+
+vec3 VertexTonemap (
+  in vec3 x_138
+)
+{
+  vec3 tmpvar_139;
+  tmpvar_139 = NichTonemap (x_138);
+  return tmpvar_139;
+}
+
+void DoCalcHybridLight2 (
+  in vec3 worldVert_140,
+  in vec3 worldNorm_141,
+  out vec3 hybridDir_142,
+  out vec3 hybridCol_143,
+  out vec3 ambient_144,
+  in vec4 bakedColor_145,
+  in vec2 bakedDir_146
+)
+{
+  Lamp l_147[4];
+  ivec4 lightIdx_148;
+  LoadBakedLight (worldVert_140, worldNorm_141, bakedColor_145, bakedDir_146, hybridCol_143, hybridDir_142);
+  ivec4 tmpvar_149;
+  tmpvar_149 = GetLightIdxFromGrid (worldVert_140);
+  ivec4 tmpvar_150;
+  tmpvar_150 = tmpvar_149;
+  lightIdx_148 = tmpvar_150;
+  ReadLightArray3 (lightIdx_148, l_147[0], l_147[1], l_147[2], l_147[3]);
+  CalcDynamicLight (worldVert_140, worldNorm_141, l_147, hybridDir_142, hybridCol_143);
+  vec3 tmpvar_151;
+  tmpvar_151 = VertexTonemap (hybridCol_143);
+  vec3 tmpvar_152;
+  tmpvar_152 = tmpvar_151;
+  hybridCol_143 = tmpvar_152;
+  float tmpvar_153;
+  tmpvar_153 = dot (worldNorm_141, _HybridSunDir);
+  vec3 tmpvar_154;
+  tmpvar_154 = VertexTonemap ((_HybridSunCol.xyz * tmpvar_153));
+  vec3 tmpvar_155;
+  tmpvar_155 = tmpvar_154;
+  ambient_144 = tmpvar_155;
+}
+
+v2f vert (
+  in HybridAppData v_156
+)
+{
+  mat3 rotation_157;
+  vec3 binormal_158;
+  vec3 eyeToVert_159;
+  vec3 worldNorm_160;
+  vec3 worldVert_161;
+  v2f o_162;
+  vec4 tmpvar_163;
+  tmpvar_163 = (gl_ModelViewProjectionMatrix * v_156.vertex);
+  o_162.pos = tmpvar_163;
+  vec2 tmpvar_164;
+  tmpvar_164 = ((v_156.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o_162.uv = tmpvar_164;
+  vec3 tmpvar_165;
+  tmpvar_165 = (_Object2World * v_156.vertex).xyz;
+  worldVert_161 = tmpvar_165;
+  mat3 tmpvar_166;
+  tmpvar_166 = xll_constructMat3_mf4x4 (_Object2World);
+  vec3 tmpvar_167;
+  tmpvar_167 = normalize ((tmpvar_166 * v_156.normal.xyz));
+  vec3 tmpvar_168;
+  tmpvar_168 = tmpvar_167;
+  worldNorm_160 = tmpvar_168;
+  DoCalcHybridLight2 (worldVert_161, worldNorm_160, o_162.hybridDir, o_162.hybridCol, o_162.ambient, v_156.bakedCol, v_156.bakedDir);
+  vec3 tmpvar_169;
+  tmpvar_169 = normalize ((_WorldSpaceCameraPos.xyz - worldVert_161));
+  vec3 tmpvar_170;
+  tmpvar_170 = tmpvar_169;
+  eyeToVert_159 = tmpvar_170;
+  vec3 tmpvar_171;
+  tmpvar_171 = cross (v_156.normal, v_156.tangent.xyz);
+  vec3 tmpvar_172;
+  tmpvar_172 = (tmpvar_171 * v_156.tangent.w);
+  binormal_158 = tmpvar_172;
+  mat3 tmpvar_173;
+  vec3 tmpvar_174;
+  tmpvar_174 = v_156.tangent.xyz;
+  tmpvar_173[0] = tmpvar_174;
+  vec3 tmpvar_175;
+  tmpvar_175 = binormal_158;
+  tmpvar_173[1] = tmpvar_175;
+  vec3 tmpvar_176;
+  tmpvar_176 = v_156.normal;
+  tmpvar_173[2] = tmpvar_176;
+  mat3 tmpvar_177;
+  tmpvar_177 = xll_transpose_mf3x3 (tmpvar_173);
+  mat3 tmpvar_178;
+  tmpvar_178 = tmpvar_177;
+  rotation_157 = tmpvar_178;
+  mat3 tmpvar_179;
+  tmpvar_179 = xll_constructMat3_mf4x4 (_World2Object);
+  vec3 tmpvar_180;
+  tmpvar_180 = (rotation_157 * (tmpvar_179 * o_162.hybridDir));
+  o_162.hybridDir = tmpvar_180;
+  return o_162;
+}
+
+void main ()
+{
+  HybridAppData xlt_v_181;
+  v2f xl_retval_182;
+  vec4 tmpvar_183;
+  tmpvar_183 = gl_Vertex.xyzw;
+  vec4 tmpvar_184;
+  tmpvar_184 = tmpvar_183;
+  xlt_v_181.vertex = tmpvar_184;
+  vec4 tmpvar_185;
+  tmpvar_185 = TANGENT.xyzw;
+  vec4 tmpvar_186;
+  tmpvar_186 = tmpvar_185;
+  xlt_v_181.tangent = tmpvar_186;
+  vec3 tmpvar_187;
+  tmpvar_187 = gl_Normal.xyz;
+  vec3 tmpvar_188;
+  tmpvar_188 = tmpvar_187;
+  xlt_v_181.normal = tmpvar_188;
+  vec4 tmpvar_189;
+  tmpvar_189 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_190;
+  tmpvar_190 = tmpvar_189;
+  xlt_v_181.texcoord = tmpvar_190;
+  vec4 tmpvar_191;
+  tmpvar_191 = gl_Color.xyzw;
+  vec4 tmpvar_192;
+  tmpvar_192 = tmpvar_191;
+  xlt_v_181.bakedCol = tmpvar_192;
+  vec2 tmpvar_193;
+  tmpvar_193 = gl_MultiTexCoord1.xy;
+  vec2 tmpvar_194;
+  tmpvar_194 = tmpvar_193;
+  xlt_v_181.bakedDir = tmpvar_194;
+  v2f tmpvar_195;
+  tmpvar_195 = vert (xlt_v_181);
+  v2f tmpvar_196;
+  tmpvar_196 = tmpvar_195;
+  xl_retval_182 = tmpvar_196;
+  vec4 tmpvar_197;
+  tmpvar_197 = xl_retval_182.pos.xyzw;
+  vec4 tmpvar_198;
+  tmpvar_198 = tmpvar_197;
+  gl_Position = tmpvar_198;
+  vec3 tmpvar_199;
+  tmpvar_199 = xl_retval_182.hybridDir.xyz;
+  vec3 tmpvar_200;
+  tmpvar_200 = tmpvar_199;
+  xlv_TEXCOORD0 = tmpvar_200;
+  vec3 tmpvar_201;
+  tmpvar_201 = xl_retval_182.hybridCol.xyz;
+  vec3 tmpvar_202;
+  tmpvar_202 = tmpvar_201;
+  xlv_TEXCOORD1 = tmpvar_202;
+  vec3 tmpvar_203;
+  tmpvar_203 = xl_retval_182.ambient.xyz;
+  vec3 tmpvar_204;
+  tmpvar_204 = tmpvar_203;
+  xlv_COLOR = tmpvar_204;
+  vec2 tmpvar_205;
+  tmpvar_205 = xl_retval_182.uv.xy;
+  vec2 tmpvar_206;
+  tmpvar_206 = tmpvar_205;
+  xlv_TEXCOORD2 = tmpvar_206;
+}
+

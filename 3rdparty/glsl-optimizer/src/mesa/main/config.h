@@ -272,6 +272,15 @@
 #define MAX_DEBUG_GROUP_STACK_DEPTH 64
 /*@}*/
 
+/** For GL_ARB_gpu_shader5 */
+/*@{*/
+#define MAX_GEOMETRY_SHADER_INVOCATIONS     32
+#define MIN_FRAGMENT_INTERPOLATION_OFFSET   -0.5
+#define MAX_FRAGMENT_INTERPOLATION_OFFSET   0.5
+#define FRAGMENT_INTERPOLATION_OFFSET_BITS  4
+#define MAX_VERTEX_STREAMS                  4
+/*@}*/
+
 /*
  * Color channel component order
  * 

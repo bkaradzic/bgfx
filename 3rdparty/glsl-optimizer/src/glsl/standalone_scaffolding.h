@@ -58,6 +58,8 @@ _mesa_shader_enum_to_shader_stage(GLenum v)
       return MESA_SHADER_FRAGMENT;
    case GL_GEOMETRY_SHADER:
       return MESA_SHADER_GEOMETRY;
+   case GL_COMPUTE_SHADER:
+      return MESA_SHADER_COMPUTE;
    default:
       assert(!"bad value in _mesa_shader_enum_to_shader_stage()");
       return MESA_SHADER_VERTEX;

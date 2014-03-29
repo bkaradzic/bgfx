@@ -21,7 +21,7 @@ lowp vec4 xlat_main (
   lowp vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   col_3 = tmpvar_7;
-  vec3 tmpvar_8;
+  mediump vec3 tmpvar_8;
   tmpvar_8 = vec3(0.0, 0.0, 0.0);
   light_2 = tmpvar_8;
   while (true) {

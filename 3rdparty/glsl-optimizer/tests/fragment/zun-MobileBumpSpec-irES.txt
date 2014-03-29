@@ -98,7 +98,7 @@ lowp vec4 LightingMobileBlinnPhong (
     (s_14.Albedo * diff_21)
    + spec_19) * _LightColor0.xyz) * (atten_17 * 2.0));
   c_18.xyz = tmpvar_30.xyz.xyz;
-  float tmpvar_31;
+  mediump float tmpvar_31;
   tmpvar_31 = 0.0;
   c_18.w = vec4(tmpvar_31).w;
   return c_18;
@@ -115,26 +115,26 @@ lowp vec4 frag_surf (
   mediump vec2 tmpvar_37;
   tmpvar_37 = IN_32.pack0.xy;
   surfIN_36.uv_MainTex = tmpvar_37;
-  vec3 tmpvar_38;
+  mediump vec3 tmpvar_38;
   tmpvar_38 = vec3(0.0, 0.0, 0.0);
   o_35.Albedo = tmpvar_38;
-  vec3 tmpvar_39;
+  mediump vec3 tmpvar_39;
   tmpvar_39 = vec3(0.0, 0.0, 0.0);
   o_35.Emission = tmpvar_39;
-  float tmpvar_40;
+  mediump float tmpvar_40;
   tmpvar_40 = 0.0;
   o_35.Specular = tmpvar_40;
-  float tmpvar_41;
+  mediump float tmpvar_41;
   tmpvar_41 = 0.0;
   o_35.Alpha = tmpvar_41;
-  float tmpvar_42;
+  mediump float tmpvar_42;
   tmpvar_42 = 0.0;
   o_35.Gloss = tmpvar_42;
   surf (surfIN_36, o_35);
-  float tmpvar_43;
+  mediump float tmpvar_43;
   tmpvar_43 = 1.0;
   atten_34 = tmpvar_43;
-  vec4 tmpvar_44;
+  mediump vec4 tmpvar_44;
   tmpvar_44 = vec4(0.0, 0.0, 0.0, 0.0);
   c_33 = tmpvar_44;
   lowp vec4 tmpvar_45;
@@ -152,7 +152,7 @@ void main ()
 {
   v2f_surf xlt_IN_48;
   lowp vec4 xl_retval_49;
-  vec4 tmpvar_50;
+  mediump vec4 tmpvar_50;
   tmpvar_50 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_IN_48.pos = tmpvar_50;
   mediump vec2 tmpvar_51;

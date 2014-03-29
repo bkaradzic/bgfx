@@ -75,12 +75,14 @@ struct glslopt_ctx {
 	glslopt_ctx (glslopt_target target) {
 		mem_ctx = ralloc_context (NULL);
 		initialize_mesa_context (&mesa_ctx, target);
+		max_unroll_iterations = 8;
 	}
 	~glslopt_ctx() {
 		ralloc_free (mem_ctx);
 	}
 	struct gl_context mesa_ctx;
 	void* mem_ctx;
+	unsigned int max_unroll_iterations;
 };
 
 glslopt_ctx* glslopt_initialize (glslopt_target target)
@@ -92,6 +94,11 @@ void glslopt_cleanup (glslopt_ctx* ctx)
 {
 	delete ctx;
 	_mesa_destroy_shader_compiler();
+}
+
+void glslopt_set_max_unroll_iterations (glslopt_ctx* ctx, unsigned iterations)
+{
+	ctx->max_unroll_iterations = iterations;
 }
 
 struct glslopt_shader_input
@@ -284,7 +291,7 @@ static bool propagate_precision(exec_list* list)
 }
 
 
-static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx)
+static void do_optimization_passes(exec_list* ir, bool linked, unsigned max_unroll_iterations, _mesa_glsl_parse_state* state, void* mem_ctx)
 {
 	bool progress;
 	do {
@@ -336,7 +343,7 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 			loop_state *ls = analyze_loop_variables(ir);
 			if (ls->loop_found) {
 				progress2 = set_loop_controls(ir, ls); progress |= progress2; if (progress2) debug_print_ir ("After set loop", ir, state, mem_ctx);
-				progress2 = unroll_loops(ir, ls, 8); progress |= progress2; if (progress2) debug_print_ir ("After unroll", ir, state, mem_ctx);
+				progress2 = unroll_loops(ir, ls, max_unroll_iterations); progress |= progress2; if (progress2) debug_print_ir ("After unroll", ir, state, mem_ctx);
 			}
 			delete ls;
 		}
@@ -443,7 +450,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (!state->error && !ir->is_empty())
 	{		
 		const bool linked = !(options & kGlslOptionNotFullShader);
-		do_optimization_passes(ir, linked, state, shader);
+		do_optimization_passes(ir, linked, ctx->max_unroll_iterations, state, shader);
 		validate_ir_tree(ir);
 	}	
 	

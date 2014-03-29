@@ -1,0 +1,22 @@
+uniform float _Fresnel;
+uniform float _SpecIntensity;
+float saturate (float f) { return max(0.0, min(1.0,f)); }
+float splineFresnel (in vec3 N, in vec3 E, in float specIntensity, in float fresnel)
+{
+    float factor = (1.0 - saturate(dot(N,E)));
+    float factor3 = ((factor * factor) * factor);
+    vec3 p = vec3(1.0, factor, factor3);
+    vec2 t = vec2(1.0 - fresnel, fresnel);
+    p.x = dot(p.xy, t);
+    p.y = dot(p.yz, t);
+    factor = (0.05 + (0.95 * dot(p.xy, t)));
+    factor *= specIntensity;
+    return factor;
+}
+varying vec3 inN;
+varying vec3 inE;
+void main()
+{
+	float f = splineFresnel (inN, inE, _SpecIntensity, _Fresnel);
+	gl_FragColor = vec4(f);
+}

@@ -275,61 +275,112 @@ void main ()
     tmpvar_78.xw = vec2(1.0, 1.0);
     tmpvar_78.y = tmpvar_77;
     tmpvar_78.z = (float((tmpvar_75 >= 0.0)) * max (0.0, tmpvar_76.y));
-    float tmpvar_79;
-    tmpvar_79 = ((0.9 * tmpvar_77) + (pow (tmpvar_78.z, 128.0) * max (
-      (0.2 + (0.8 * pow ((1.0 - tmpvar_75), 5.0)))
-    , 0.0)));
+    float occ_79;
     vec3 _pos_80;
-    _pos_80 = tmpvar_24;
-    vec3 _normal_81;
-    _normal_81 = tmpvar_74;
-    float occ_83;
-    occ_83 = 0.0;
-    for (int ii_82 = 1; ii_82 < 4; ii_82++) {
-      float tmpvar_84;
-      tmpvar_84 = float(ii_82);
-      vec3 _pos_85;
-      _pos_85 = (_pos_80 + ((_normal_81 * tmpvar_84) * 0.2));
-      vec3 tmpvar_86;
-      tmpvar_86 = max ((abs(_pos_85) - vec3(2.5, 2.5, 2.5)), 0.0);
-      vec3 _pos_87;
-      _pos_87 = (_pos_85 + vec3(4.0, 0.0, 0.0));
-      vec3 _pos_88;
-      _pos_88 = (_pos_85 + vec3(-4.0, 0.0, 0.0));
-      vec3 _pos_89;
-      _pos_89 = (_pos_85 + vec3(0.0, 4.0, 0.0));
-      vec3 _pos_90;
-      _pos_90 = (_pos_85 + vec3(0.0, -4.0, 0.0));
-      vec3 _pos_91;
-      _pos_91 = (_pos_85 + vec3(0.0, 0.0, 4.0));
-      vec3 _pos_92;
-      _pos_92 = (_pos_85 + vec3(0.0, 0.0, -4.0));
-      occ_83 = (occ_83 + ((
-        (tmpvar_84 * 0.2)
-       - 
-        min (min (min (min (
-          min (min ((sqrt(
-            dot (tmpvar_86, tmpvar_86)
-          ) - 0.5), (sqrt(
-            dot (_pos_87, _pos_87)
-          ) - 1.0)), (sqrt(dot (_pos_88, _pos_88)) - 1.0))
-        , 
-          (sqrt(dot (_pos_89, _pos_89)) - 1.0)
-        ), (
-          sqrt(dot (_pos_90, _pos_90))
-         - 1.0)), (sqrt(
-          dot (_pos_91, _pos_91)
-        ) - 1.0)), (sqrt(dot (_pos_92, _pos_92)) - 1.0))
-      ) / exp2(tmpvar_84)));
-    };
-    float tmpvar_93;
-    tmpvar_93 = pow ((tmpvar_79 * (1.0 - occ_83)), 0.454545);
-    vec4 tmpvar_94;
-    tmpvar_94.w = 1.0;
-    tmpvar_94.x = tmpvar_93;
-    tmpvar_94.y = tmpvar_93;
-    tmpvar_94.z = tmpvar_93;
-    gl_FragColor = tmpvar_94;
+    _pos_80 = (tmpvar_24 + (tmpvar_74 * 0.2));
+    vec3 tmpvar_81;
+    tmpvar_81 = max ((abs(_pos_80) - vec3(2.5, 2.5, 2.5)), 0.0);
+    vec3 _pos_82;
+    _pos_82 = (_pos_80 + vec3(4.0, 0.0, 0.0));
+    vec3 _pos_83;
+    _pos_83 = (_pos_80 + vec3(-4.0, 0.0, 0.0));
+    vec3 _pos_84;
+    _pos_84 = (_pos_80 + vec3(0.0, 4.0, 0.0));
+    vec3 _pos_85;
+    _pos_85 = (_pos_80 + vec3(0.0, -4.0, 0.0));
+    vec3 _pos_86;
+    _pos_86 = (_pos_80 + vec3(0.0, 0.0, 4.0));
+    vec3 _pos_87;
+    _pos_87 = (_pos_80 + vec3(0.0, 0.0, -4.0));
+    occ_79 = ((0.2 - min (
+      min (min (min (min (
+        min ((sqrt(dot (tmpvar_81, tmpvar_81)) - 0.5), (sqrt(dot (_pos_82, _pos_82)) - 1.0))
+      , 
+        (sqrt(dot (_pos_83, _pos_83)) - 1.0)
+      ), (
+        sqrt(dot (_pos_84, _pos_84))
+       - 1.0)), (sqrt(
+        dot (_pos_85, _pos_85)
+      ) - 1.0)), (sqrt(dot (_pos_86, _pos_86)) - 1.0))
+    , 
+      (sqrt(dot (_pos_87, _pos_87)) - 1.0)
+    )) / 2.0);
+    vec3 _pos_88;
+    _pos_88 = (tmpvar_24 + (0.4 * tmpvar_74));
+    vec3 tmpvar_89;
+    tmpvar_89 = max ((abs(_pos_88) - vec3(2.5, 2.5, 2.5)), 0.0);
+    vec3 _pos_90;
+    _pos_90 = (_pos_88 + vec3(4.0, 0.0, 0.0));
+    vec3 _pos_91;
+    _pos_91 = (_pos_88 + vec3(-4.0, 0.0, 0.0));
+    vec3 _pos_92;
+    _pos_92 = (_pos_88 + vec3(0.0, 4.0, 0.0));
+    vec3 _pos_93;
+    _pos_93 = (_pos_88 + vec3(0.0, -4.0, 0.0));
+    vec3 _pos_94;
+    _pos_94 = (_pos_88 + vec3(0.0, 0.0, 4.0));
+    vec3 _pos_95;
+    _pos_95 = (_pos_88 + vec3(0.0, 0.0, -4.0));
+    occ_79 = (occ_79 + ((0.4 - 
+      min (min (min (min (
+        min (min ((sqrt(
+          dot (tmpvar_89, tmpvar_89)
+        ) - 0.5), (sqrt(
+          dot (_pos_90, _pos_90)
+        ) - 1.0)), (sqrt(dot (_pos_91, _pos_91)) - 1.0))
+      , 
+        (sqrt(dot (_pos_92, _pos_92)) - 1.0)
+      ), (
+        sqrt(dot (_pos_93, _pos_93))
+       - 1.0)), (sqrt(
+        dot (_pos_94, _pos_94)
+      ) - 1.0)), (sqrt(dot (_pos_95, _pos_95)) - 1.0))
+    ) / 4.0));
+    vec3 _pos_96;
+    _pos_96 = (tmpvar_24 + (0.6 * tmpvar_74));
+    vec3 tmpvar_97;
+    tmpvar_97 = max ((abs(_pos_96) - vec3(2.5, 2.5, 2.5)), 0.0);
+    vec3 _pos_98;
+    _pos_98 = (_pos_96 + vec3(4.0, 0.0, 0.0));
+    vec3 _pos_99;
+    _pos_99 = (_pos_96 + vec3(-4.0, 0.0, 0.0));
+    vec3 _pos_100;
+    _pos_100 = (_pos_96 + vec3(0.0, 4.0, 0.0));
+    vec3 _pos_101;
+    _pos_101 = (_pos_96 + vec3(0.0, -4.0, 0.0));
+    vec3 _pos_102;
+    _pos_102 = (_pos_96 + vec3(0.0, 0.0, 4.0));
+    vec3 _pos_103;
+    _pos_103 = (_pos_96 + vec3(0.0, 0.0, -4.0));
+    occ_79 = (occ_79 + ((0.6 - 
+      min (min (min (min (
+        min (min ((sqrt(
+          dot (tmpvar_97, tmpvar_97)
+        ) - 0.5), (sqrt(
+          dot (_pos_98, _pos_98)
+        ) - 1.0)), (sqrt(dot (_pos_99, _pos_99)) - 1.0))
+      , 
+        (sqrt(dot (_pos_100, _pos_100)) - 1.0)
+      ), (
+        sqrt(dot (_pos_101, _pos_101))
+       - 1.0)), (sqrt(
+        dot (_pos_102, _pos_102)
+      ) - 1.0)), (sqrt(dot (_pos_103, _pos_103)) - 1.0))
+    ) / 8.0));
+    float tmpvar_104;
+    tmpvar_104 = pow (((
+      (0.9 * tmpvar_77)
+     + 
+      (pow (tmpvar_78.z, 128.0) * max ((0.2 + (0.8 * 
+        pow ((1.0 - tmpvar_75), 5.0)
+      )), 0.0))
+    ) * (1.0 - occ_79)), 0.454545);
+    vec4 tmpvar_105;
+    tmpvar_105.w = 1.0;
+    tmpvar_105.x = tmpvar_104;
+    tmpvar_105.y = tmpvar_104;
+    tmpvar_105.z = tmpvar_104;
+    gl_FragColor = tmpvar_105;
     gl_FragDepth = (tmpvar_23 / tmpvar_7);
   } else {
     gl_FragColor = v_color0;

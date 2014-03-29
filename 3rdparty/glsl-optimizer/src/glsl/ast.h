@@ -460,12 +460,29 @@ struct ast_type_qualifier {
 	 unsigned prim_type:1;
 	 unsigned max_vertices:1;
 	 /** \} */
+
+         /**
+          * local_size_{x,y,z} flags for compute shaders.  Bit 0 represents
+          * local_size_x, and so on.
+          */
+         unsigned local_size:3;
+
+	 /** \name Layout and memory qualifiers for ARB_shader_image_load_store. */
+	 /** \{ */
+	 unsigned early_fragment_tests:1;
+	 unsigned explicit_image_format:1;
+	 unsigned coherent:1;
+	 unsigned _volatile:1;
+	 unsigned restrict_flag:1;
+	 unsigned read_only:1; /**< "readonly" qualifier. */
+	 unsigned write_only:1; /**< "writeonly" qualifier. */
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
 
       /** \brief Set of flags, accessed as a bitmask. */
-      unsigned i;
+      uint64_t i;
    } flags;
 
    /** Precision of the type (highp/medium/lowp). */
@@ -508,6 +525,32 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_offset is set.
     */
    int offset;
+
+   /**
+    * Local size specified via GL_ARB_compute_shader's "local_size_{x,y,z}"
+    * layout qualifier.  Element i of this array is only valid if
+    * flags.q.local_size & (1 << i) is set.
+    */
+   int local_size[3];
+
+   /**
+    * Image format specified with an ARB_shader_image_load_store
+    * layout qualifier.
+    *
+    * \note
+    * This field is only valid if \c explicit_image_format is set.
+    */
+   GLenum image_format;
+
+   /**
+    * Base type of the data read from or written to this image.  Only
+    * the following enumerants are allowed: GLSL_TYPE_UINT,
+    * GLSL_TYPE_INT, GLSL_TYPE_FLOAT.
+    *
+    * \note
+    * This field is only valid if \c explicit_image_format is set.
+    */
+   glsl_base_type image_base_type;
 
    /**
     * Return true if and only if an interpolation qualifier is present.
@@ -889,14 +932,13 @@ public:
 
    ast_node *body;
 
-private:
    /**
     * Generate IR from the condition of a loop
     *
     * This is factored out of ::hir because some loops have the condition
     * test at the top (for and while), and others have it at the end (do-while).
     */
-   void condition_to_hir(class ir_loop *, struct _mesa_glsl_parse_state *);
+   void condition_to_hir(exec_list *, struct _mesa_glsl_parse_state *);
 };
 
 
@@ -989,6 +1031,27 @@ public:
 
 private:
    const GLenum prim_type;
+};
+
+
+/**
+ * AST node representing a decalaration of the input layout for compute
+ * shaders.
+ */
+class ast_cs_input_layout : public ast_node
+{
+public:
+   ast_cs_input_layout(const struct YYLTYPE &locp, const unsigned *local_size)
+   {
+      memcpy(this->local_size, local_size, sizeof(this->local_size));
+      set_location(locp);
+   }
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+
+private:
+   unsigned local_size[3];
 };
 
 /*@}*/

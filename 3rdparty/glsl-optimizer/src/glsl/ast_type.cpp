@@ -118,6 +118,7 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    ubo_layout_mask.flags.q.shared = 1;
 
    ast_type_qualifier ubo_binding_mask;
+   ubo_binding_mask.flags.i = 0;
    ubo_binding_mask.flags.q.explicit_binding = 1;
    ubo_binding_mask.flags.q.explicit_offset = 1;
 
@@ -158,6 +159,20 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if ((q.flags.i & ubo_layout_mask.flags.i) != 0)
       this->flags.i &= ~ubo_layout_mask.flags.i;
 
+   for (int i = 0; i < 3; i++) {
+      if (q.flags.q.local_size & (1 << i)) {
+         if ((this->flags.q.local_size & (1 << i)) &&
+             this->local_size[i] != q.local_size[i]) {
+            _mesa_glsl_error(loc, state,
+                             "compute shader set conflicting values for "
+                             "local_size_%c (%d and %d)", 'x' + i,
+                             this->local_size[i], q.local_size[i]);
+            return false;
+         }
+         this->local_size[i] = q.local_size[i];
+      }
+   }
+
    this->flags.i |= q.flags.i;
 
    if (q.flags.q.explicit_location)
@@ -174,6 +189,11 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
 
    if (q.precision != ast_precision_none)
       this->precision = q.precision;
+
+   if (q.flags.q.explicit_image_format) {
+      this->image_format = q.image_format;
+      this->image_base_type = q.image_base_type;
+   }
 
    return true;
 }

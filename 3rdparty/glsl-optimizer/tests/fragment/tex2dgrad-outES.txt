@@ -2,7 +2,7 @@
 #extension GL_OES_standard_derivatives : enable
 uniform sampler2D tex;
 uniform samplerCube cub;
-varying vec3 uv;
+varying mediump vec3 uv;
 void main ()
 {
   lowp vec4 tmpvar_1;

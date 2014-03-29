@@ -156,8 +156,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* Single-line comments */
 "//"[^\n]* {
-	if (parser->commented_newlines)
-		BEGIN NEWLINE_CATCHUP;
 }
 
 	/* Multi-line comments */

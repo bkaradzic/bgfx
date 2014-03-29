@@ -82,10 +82,13 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
+   virtual ir_visitor_status visit_enter(ir_dereference_array *);
+   virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_if *);
    virtual ir_visitor_status visit_enter(ir_loop *);
 
    virtual ir_visitor_status visit_leave(ir_assignment *);
+
 
    void try_vectorize();
 
@@ -106,9 +109,10 @@ public:
  * the nodes of the tree (expression float log2 (swiz z   (var_ref v0))),
  * rewriting it into     (expression vec3  log2 (swiz xyz (var_ref v0))).
  *
- * The function modifies only ir_expressions and ir_swizzles. For expressions
- * it sets a new type and swizzles any scalar dereferences into appropriately
- * sized vector arguments. For example, if combining
+ * The function operates on ir_expressions (and its operands) and ir_swizzles.
+ * For expressions it sets a new type and swizzles any non-expression and non-
+ * swizzle scalar operands into appropriately sized vector arguments. For
+ * example, if combining
  *
  * (assign (x) (var_ref r1) (expression float + (swiz x (var_ref v0) (var_ref v1))))
  * (assign (y) (var_ref r1) (expression float + (swiz y (var_ref v0) (var_ref v1))))
@@ -146,16 +150,12 @@ rewrite_swizzle(ir_instruction *ir, void *data)
                                            mask->num_components, 1);
       for (unsigned i = 0; i < 4; i++) {
          if (expr->operands[i]) {
-            ir_dereference *deref = expr->operands[i]->as_dereference();
-            if (deref && deref->type->is_scalar()) {
-               expr->operands[i] = new(ir) ir_swizzle(deref, 0, 0, 0, 0,
+            ir_rvalue *rval = expr->operands[i]->as_rvalue();
+            if (rval && rval->type->is_scalar() &&
+                !rval->as_expression() && !rval->as_swizzle()) {
+               expr->operands[i] = new(ir) ir_swizzle(rval, 0, 0, 0, 0,
                                                       mask->num_components);
             }
-			 ir_constant *cns = expr->operands[i]->as_constant();
-			 if (cns && cns->type->is_scalar()) {
-				 expr->operands[i] = new(ir) ir_swizzle(cns, 0, 0, 0, 0,
-														mask->num_components);
-			 }
          }
       }
       break;
@@ -290,6 +290,33 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
       }
    }
    return visit_continue;
+}
+
+/* Upon entering an ir_binop_dot, remove the current assignment from
+ * further consideration. Dot product is "horizontal" instruction
+ * that we can't vectorize.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_expression *ir)
+{
+   if (ir->operation == ir_binop_dot) {
+      this->current_assignment = NULL;
+      return visit_continue_with_parent;
+   }
+   return visit_continue;
+}
+
+/* Upon entering an ir_array_dereference, remove the current assignment from
+ * further consideration. Since the index of an array dereference must scalar,
+ * we are not able to vectorize it.
+ *
+ * FINISHME: If all of scalar indices are identical we could vectorize.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_dereference_array *ir)
+{
+   this->current_assignment = NULL;
+   return visit_continue_with_parent;
 }
 
 /* Since there is no statement to visit between the "then" and "else"

@@ -3,20 +3,20 @@ uniform sampler2D _BurntTex;
 uniform mediump float _EmberFadeEnd;
 uniform mediump float _EmberFadeStart;
 varying mediump vec2 xlv_TEXCOORD0;
-float xll_saturate (
-  in float x_1
+mediump float xll_saturate (
+  in mediump float x_1
 )
 {
-  float tmpvar_2;
+  mediump float tmpvar_2;
   tmpvar_2 = clamp (x_1, 0.0, 1.0);
   return tmpvar_2;
 }
 
-vec3 xll_saturate (
-  in vec3 x_3
+mediump vec3 xll_saturate (
+  in mediump vec3 x_3
 )
 {
-  vec3 tmpvar_4;
+  mediump vec3 tmpvar_4;
   tmpvar_4 = clamp (x_3, 0.0, 1.0);
   return tmpvar_4;
 }
@@ -38,11 +38,11 @@ lowp vec4 frag (
   lowp vec3 tmpvar_12;
   tmpvar_12 = tmpvar_11.xyz;
   burn_7 = tmpvar_12;
-  float tmpvar_13;
+  mediump float tmpvar_13;
   tmpvar_13 = xll_saturate (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)));
-  vec3 tmpvar_14;
+  mediump vec3 tmpvar_14;
   tmpvar_14 = vec3(tmpvar_13);
-  vec3 tmpvar_15;
+  mediump vec3 tmpvar_15;
   tmpvar_15 = tmpvar_14;
   t_6 = tmpvar_15;
   lowp vec3 tmpvar_16;

@@ -48,7 +48,7 @@ void main ()
     randomDir_17 = tmpvar_18;
     highp float tmpvar_20;
     tmpvar_20 = dot (viewNorm_7, randomDir_17);
-    float tmpvar_21;
+    mediump float tmpvar_21;
     if ((tmpvar_20 < 0.0)) {
       tmpvar_21 = 1.0;
     } else {

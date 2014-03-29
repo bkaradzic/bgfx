@@ -1,0 +1,23 @@
+uniform int loopNum;
+void main ()
+{
+  vec4 r_1;
+  int myIdx_2;
+  r_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  myIdx_2 = 1;
+  for (; myIdx_2 < loopNum; myIdx_2++) {
+    r_1.x = (r_1.x + 1.0);
+    r_1.y = (r_1.y + 2.0);
+    r_1.z = (r_1.z + 3.0);
+  };
+  myIdx_2 = 2;
+  for (; myIdx_2 < loopNum; myIdx_2++) {
+    r_1.x = (r_1.x + 1.0);
+    r_1.y = (r_1.y + 2.0);
+    r_1.z = (r_1.z + 3.0);
+  };
+  gl_FragColor = r_1;
+}
+
+
+// inputs: 0, stats: 13 alu 0 tex 4 flow

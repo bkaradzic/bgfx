@@ -507,7 +507,6 @@ namespace bgfx
 		NULL
 	};
 
-#if !BGFX_CONFIG_RENDERER_OPENGLES3
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -521,7 +520,6 @@ namespace bgfx
 	{
 		GL_CHECK(glDrawElements(_mode, _count, _type, _indices) );
 	}
-#endif // !BGFX_CONFIG_RENDERER_OPENGLES3
 
 	static void GL_APIENTRY stubFrameTerminatorGREMEDY()
 	{
@@ -1353,7 +1351,6 @@ namespace bgfx
 			}
 			else
 			{
-
 				if (!BX_ENABLED(BX_PLATFORM_IOS) )
 				{
 					if (s_extension[Extension::ARB_instanced_arrays].m_supported
@@ -1916,7 +1913,6 @@ namespace bgfx
 		else
 		{
 			BX_UNUSED(_zoffset, _depth);
-			BX_TRACE("x %d, y %d, w %d, h %d", _xoffset, _yoffset, _width, _height);
 			GL_CHECK(glTexSubImage2D(_target, _level, _xoffset, _yoffset, _width, _height, _format, _type, _data) );
 		}
 	}

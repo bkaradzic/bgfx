@@ -370,6 +370,7 @@ public:
    void generate_vs_special_vars();
    void generate_gs_special_vars();
    void generate_fs_special_vars();
+   void generate_cs_special_vars();
    void generate_varyings();
 
 private:
@@ -403,6 +404,7 @@ private:
                              enum ir_variable_mode mode, int slot, glsl_precision prec);
    ir_variable *add_uniform(const glsl_type *type, const char *name, glsl_precision prec);
    ir_variable *add_const(const char *name, int value);
+   ir_variable *add_const_ivec3(const char *name, int x, int y, int z);
    void add_varying(int slot, const glsl_type *type, const char *name,
                     const char *name_as_gs_input, glsl_precision prec);
 
@@ -546,6 +548,25 @@ builtin_variable_generator::add_const(const char *name, int value)
 }
 
 
+ir_variable *
+builtin_variable_generator::add_const_ivec3(const char *name, int x, int y,
+                                            int z)
+{
+   ir_variable *const var = add_variable(name, glsl_type::ivec3_type,
+                                         ir_var_auto, -1, glsl_precision_undefined);
+   ir_constant_data data;
+   memset(&data, 0, sizeof(data));
+   data.i[0] = x;
+   data.i[1] = y;
+   data.i[2] = z;
+   var->constant_value = new(var) ir_constant(glsl_type::ivec3_type, &data);
+   var->constant_initializer =
+      new(var) ir_constant(glsl_type::ivec3_type, &data);
+   var->data.has_initializer = true;
+   return var;
+}
+
+
 void
 builtin_variable_generator::generate_constants()
 {
@@ -675,6 +696,57 @@ builtin_variable_generator::generate_constants()
                 state->Const.MaxAtomicBufferBindings);
       add_const("gl_MaxTessControlAtomicCounters", 0);
       add_const("gl_MaxTessEvaluationAtomicCounters", 0);
+   }
+
+   if (state->is_version(430, 0) || state->ARB_compute_shader_enable) {
+      add_const_ivec3("gl_MaxComputeWorkGroupCount",
+                      state->Const.MaxComputeWorkGroupCount[0],
+                      state->Const.MaxComputeWorkGroupCount[1],
+                      state->Const.MaxComputeWorkGroupCount[2]);
+      add_const_ivec3("gl_MaxComputeWorkGroupSize",
+                      state->Const.MaxComputeWorkGroupSize[0],
+                      state->Const.MaxComputeWorkGroupSize[1],
+                      state->Const.MaxComputeWorkGroupSize[2]);
+
+      /* From the GLSL 4.40 spec, section 7.1 (Built-In Language Variables):
+       *
+       *     The built-in constant gl_WorkGroupSize is a compute-shader
+       *     constant containing the local work-group size of the shader.  The
+       *     size of the work group in the X, Y, and Z dimensions is stored in
+       *     the x, y, and z components.  The constants values in
+       *     gl_WorkGroupSize will match those specified in the required
+       *     local_size_x, local_size_y, and local_size_z layout qualifiers
+       *     for the current shader.  This is a constant so that it can be
+       *     used to size arrays of memory that can be shared within the local
+       *     work group.  It is a compile-time error to use gl_WorkGroupSize
+       *     in a shader that does not declare a fixed local group size, or
+       *     before that shader has declared a fixed local group size, using
+       *     local_size_x, local_size_y, and local_size_z.
+       *
+       * To prevent the shader from trying to refer to gl_WorkGroupSize before
+       * the layout declaration, we don't define it here.  Intead we define it
+       * in ast_cs_input_layout::hir().
+       */
+   }
+
+   if (state->is_version(420, 0) ||
+       state->ARB_shader_image_load_store_enable) {
+      add_const("gl_MaxImageUnits",
+                state->Const.MaxImageUnits);
+      add_const("gl_MaxCombinedImageUnitsAndFragmentOutputs",
+                state->Const.MaxCombinedImageUnitsAndFragmentOutputs);
+      add_const("gl_MaxImageSamples",
+                state->Const.MaxImageSamples);
+      add_const("gl_MaxVertexImageUniforms",
+                state->Const.MaxVertexImageUniforms);
+      add_const("gl_MaxTessControlImageUniforms", 0);
+      add_const("gl_MaxTessEvaluationImageUniforms", 0);
+      add_const("gl_MaxGeometryImageUniforms",
+                state->Const.MaxGeometryImageUniforms);
+      add_const("gl_MaxFragmentImageUniforms",
+                state->Const.MaxFragmentImageUniforms);
+      add_const("gl_MaxCombinedImageUniforms",
+                state->Const.MaxCombinedImageUniforms);
    }
 }
 
@@ -893,6 +965,16 @@ builtin_variable_generator::generate_fs_special_vars()
 
 
 /**
+ * Generate variables which only exist in compute shaders.
+ */
+void
+builtin_variable_generator::generate_cs_special_vars()
+{
+   /* TODO: finish this. */
+}
+
+
+/**
  * Add a single "varying" variable.  The variable's type and direction (input
  * or output) are adjusted as appropriate for the type of shader being
  * compiled.  For geometry shaders using {ARB,EXT}_geometry_shader4,
@@ -913,6 +995,9 @@ builtin_variable_generator::add_varying(int slot, const glsl_type *type,
       break;
    case MESA_SHADER_FRAGMENT:
       add_input(slot, type, name, prec);
+      break;
+   case MESA_SHADER_COMPUTE:
+      /* Compute shaders don't have varyings. */
       break;
    }
 }
@@ -1000,6 +1085,9 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
       break;
    case MESA_SHADER_FRAGMENT:
       gen.generate_fs_special_vars();
+      break;
+   case MESA_SHADER_COMPUTE:
+      gen.generate_cs_special_vars();
       break;
    }
 }

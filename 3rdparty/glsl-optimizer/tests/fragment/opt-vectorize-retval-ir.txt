@@ -1,0 +1,85 @@
+uniform float _Fresnel;
+uniform float _SpecIntensity;
+varying vec3 inN;
+varying vec3 inE;
+float saturate (
+  in float f_1
+)
+{
+  float tmpvar_2;
+  tmpvar_2 = min (1.0, f_1);
+  float tmpvar_3;
+  tmpvar_3 = max (0.0, tmpvar_2);
+  return tmpvar_3;
+}
+
+float splineFresnel (
+  in vec3 N_4,
+  in vec3 E_5,
+  in float specIntensity_6,
+  in float fresnel_7
+)
+{
+  vec2 t_8;
+  vec3 p_9;
+  float factor3_10;
+  float factor_11;
+  float tmpvar_12;
+  tmpvar_12 = dot (N_4, E_5);
+  float tmpvar_13;
+  tmpvar_13 = saturate (tmpvar_12);
+  float tmpvar_14;
+  tmpvar_14 = (1.0 - tmpvar_13);
+  factor_11 = tmpvar_14;
+  float tmpvar_15;
+  tmpvar_15 = ((factor_11 * factor_11) * factor_11);
+  factor3_10 = tmpvar_15;
+  vec3 tmpvar_16;
+  tmpvar_16.x = 1.0;
+  tmpvar_16.y = factor_11;
+  tmpvar_16.z = factor3_10;
+  vec3 tmpvar_17;
+  tmpvar_17 = tmpvar_16;
+  p_9 = tmpvar_17;
+  vec2 tmpvar_18;
+  tmpvar_18.x = (1.0 - fresnel_7);
+  tmpvar_18.y = fresnel_7;
+  vec2 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  t_8 = tmpvar_19;
+  float tmpvar_20;
+  tmpvar_20 = dot (p_9.xy, t_8);
+  float tmpvar_21;
+  tmpvar_21 = tmpvar_20;
+  p_9.x = tmpvar_21;
+  float tmpvar_22;
+  tmpvar_22 = dot (p_9.yz, t_8);
+  float tmpvar_23;
+  tmpvar_23 = tmpvar_22;
+  p_9.y = vec2(tmpvar_23).y;
+  float tmpvar_24;
+  tmpvar_24 = dot (p_9.xy, t_8);
+  float tmpvar_25;
+  tmpvar_25 = (0.05 + (0.95 * tmpvar_24));
+  factor_11 = tmpvar_25;
+  float tmpvar_26;
+  tmpvar_26 = (factor_11 * specIntensity_6);
+  factor_11 = tmpvar_26;
+  return factor_11;
+}
+
+void main ()
+{
+  float f_27;
+  float tmpvar_28;
+  tmpvar_28 = splineFresnel (inN, inE, _SpecIntensity, _Fresnel);
+  float tmpvar_29;
+  tmpvar_29 = tmpvar_28;
+  f_27 = tmpvar_29;
+  vec4 tmpvar_30;
+  tmpvar_30 = vec4(f_27);
+  vec4 tmpvar_31;
+  tmpvar_31 = tmpvar_30;
+  gl_FragColor = tmpvar_31;
+}
+

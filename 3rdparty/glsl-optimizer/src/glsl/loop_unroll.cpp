@@ -253,7 +253,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
     */
    loop_unroll_count count(&ir->body_instructions);
 
-   if (count.fail || count.nodes * iterations > (int)max_iterations * 15)
+   if (count.fail || count.nodes * iterations > (int)max_iterations * 25)
       return visit_continue;
 
    /* Note: the limiting terminator contributes 1 to ls->num_loop_jumps.

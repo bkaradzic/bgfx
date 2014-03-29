@@ -30,6 +30,8 @@
 #ifndef __gl_minimal_h_
 #define __gl_minimal_h_
 
+#include "stdint.h"
+
 
 /**********************************************************************
  * Begin system-specific stuff. Do not do any of this when building
@@ -100,6 +102,9 @@ typedef double		GLdouble;	/* double precision float */
 typedef double		GLclampd;	/* double precision float in [0,1] */
 typedef char GLchar;
 typedef char GLcharARB;
+typedef int64_t GLint64;
+typedef uint64_t GLuint64;
+
 
 
 
@@ -415,6 +420,57 @@ typedef char GLcharARB;
 #define GL_SAMPLER_2D_MULTISAMPLE_ARRAY   0x910B
 #define GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY 0x910C
 #define GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY 0x910D
+
+/* Texture formats */
+#define GL_RGBA32F                        0x8814
+#define GL_RGB32F                         0x8815
+#define GL_RGBA16F                        0x881A
+#define GL_RGB16F                         0x881B
+#define GL_R8                             0x8229
+#define GL_R16                            0x822A
+#define GL_RG8                            0x822B
+#define GL_RG16                           0x822C
+#define GL_R16F                           0x822D
+#define GL_R32F                           0x822E
+#define GL_RG16F                          0x822F
+#define GL_RG32F                          0x8230
+#define GL_R8I                            0x8231
+#define GL_R8UI                           0x8232
+#define GL_R16I                           0x8233
+#define GL_R16UI                          0x8234
+#define GL_R32I                           0x8235
+#define GL_R32UI                          0x8236
+#define GL_RG8I                           0x8237
+#define GL_RG8UI                          0x8238
+#define GL_RG16I                          0x8239
+#define GL_RG16UI                         0x823A
+#define GL_RG32I                          0x823B
+#define GL_RG32UI                         0x823C
+#define GL_RGBA32UI                       0x8D70
+#define GL_RGB32UI                        0x8D71
+#define GL_RGBA16UI                       0x8D76
+#define GL_RGB16UI                        0x8D77
+#define GL_RGBA8UI                        0x8D7C
+#define GL_RGB8UI                         0x8D7D
+#define GL_RGBA32I                        0x8D82
+#define GL_RGB32I                         0x8D83
+#define GL_RGBA16I                        0x8D88
+#define GL_RGB16I                         0x8D89
+#define GL_RGBA8I                         0x8D8E
+#define GL_RGB8I                          0x8D8F
+#define GL_RGBA8                          0x8058
+#define GL_RGB10_A2                       0x8059
+#define GL_R11F_G11F_B10F                 0x8C3A
+#define GL_R8_SNORM                       0x8F94
+#define GL_RG8_SNORM                      0x8F95
+#define GL_RGB8_SNORM                     0x8F96
+#define GL_RGBA8_SNORM                    0x8F97
+#define GL_R16_SNORM                      0x8F98
+#define GL_RG16_SNORM                     0x8F99
+#define GL_RGB16_SNORM                    0x8F9A
+#define GL_RGBA16_SNORM                   0x8F9B
+#define GL_RGB10_A2UI                     0x906F
+#define GL_RGBA16                         0x805B
 
 
 

@@ -103,10 +103,10 @@ vec2 EncodeFloatRG (
   highp vec2 enc_33;
   highp float kEncodeBit_34;
   highp vec2 kEncodeMul_35;
-  vec2 tmpvar_36;
+  mediump vec2 tmpvar_36;
   tmpvar_36 = vec2(1.0, 255.0);
   kEncodeMul_35 = tmpvar_36;
-  float tmpvar_37;
+  mediump float tmpvar_37;
   tmpvar_37 = 0.00392157;
   kEncodeBit_34 = tmpvar_37;
   highp vec2 tmpvar_38;
@@ -155,7 +155,7 @@ mediump vec4 xlat_main (
   mediump float tmpvar_55;
   tmpvar_55 = shadow_44;
   res_43.x = tmpvar_55;
-  float tmpvar_56;
+  mediump float tmpvar_56;
   tmpvar_56 = 1.0;
   res_43.y = vec2(tmpvar_56).y;
   highp vec2 tmpvar_57;
@@ -170,7 +170,7 @@ void main ()
 {
   v2f xlt_i_59;
   mediump vec4 xl_retval_60;
-  vec4 tmpvar_61;
+  mediump vec4 tmpvar_61;
   tmpvar_61 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_59.pos = tmpvar_61;
   highp vec2 tmpvar_62;

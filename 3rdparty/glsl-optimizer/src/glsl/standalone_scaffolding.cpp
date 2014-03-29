@@ -91,6 +91,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->Extensions.dummy_false = false;
    ctx->Extensions.dummy_true = true;
+   ctx->Extensions.ARB_compute_shader = true;
    ctx->Extensions.ARB_conservative_depth = true;
    ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_ES2_compatibility = true;
@@ -140,6 +141,17 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = 32;
 
    ctx->Const.MaxDrawBuffers = 1;
+   ctx->Const.MaxComputeWorkGroupCount[0] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[1] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[2] = 65535;
+   ctx->Const.MaxComputeWorkGroupSize[0] = 1024;
+   ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
+   ctx->Const.MaxComputeWorkGroupSize[2] = 64;
+   ctx->Const.MaxComputeWorkGroupInvocations = 1024;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits = 16;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxUniformComponents = 1024;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxInputComponents = 0; /* not used */
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxOutputComponents = 0; /* not used */
 
    /* Set up default shader compiler options. */
    struct gl_shader_compiler_options options;

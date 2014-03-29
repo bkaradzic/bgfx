@@ -1351,13 +1351,13 @@ ir_dereference::is_lvalue() const
    if ((var == NULL) || var->data.read_only)
       return false;
 
-   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+   /* From section 4.1.7 of the GLSL 4.40 spec:
     *
-    *    "Samplers cannot be treated as l-values; hence cannot be used
-    *     as out or inout function parameters, nor can they be
-    *     assigned into."
+    *   "Opaque variables cannot be treated as l-values; hence cannot
+    *    be used as out or inout function parameters, nor can they be
+    *    assigned into."
     */
-   if (this->type->contains_sampler())
+   if (this->type->contains_opaque())
       return false;
 
    return true;
@@ -1595,6 +1595,11 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.max_array_access = 0;
    this->data.atomic.buffer_index = 0;
    this->data.atomic.offset = 0;
+   this->data.image.read_only = false;
+   this->data.image.write_only = false;
+   this->data.image.coherent = false;
+   this->data.image._volatile = false;
+   this->data.image.restrict_flag = false;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
@@ -1700,7 +1705,12 @@ ir_function_signature::qualifiers_match(exec_list *params)
 	  !modes_match(a->data.mode, b->data.mode) ||
 	  a->data.interpolation != b->data.interpolation ||
 	  a->data.centroid != b->data.centroid ||
-         a->data.sample != b->data.sample) {
+          a->data.sample != b->data.sample ||
+          a->data.image.read_only != b->data.image.read_only ||
+          a->data.image.write_only != b->data.image.write_only ||
+          a->data.image.coherent != b->data.image.coherent ||
+          a->data.image._volatile != b->data.image._volatile ||
+          a->data.image.restrict_flag != b->data.image.restrict_flag) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;

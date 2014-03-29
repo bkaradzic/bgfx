@@ -50,6 +50,17 @@ initialize_context(struct gl_context *ctx, gl_api api)
     */
    ctx->Const.GLSLVersion = glsl_version;
    ctx->Extensions.ARB_ES3_compatibility = true;
+   ctx->Const.MaxComputeWorkGroupCount[0] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[1] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[2] = 65535;
+   ctx->Const.MaxComputeWorkGroupSize[0] = 1024;
+   ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
+   ctx->Const.MaxComputeWorkGroupSize[2] = 64;
+   ctx->Const.MaxComputeWorkGroupInvocations = 1024;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits = 16;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxUniformComponents = 1024;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxInputComponents = 0; /* not used */
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxOutputComponents = 0; /* not used */
 
    switch (ctx->Const.GLSLVersion) {
    case 100:
@@ -221,7 +232,7 @@ load_text_file(void *ctx, const char *file_name)
 			if (bytes < size - total_read) {
 				free(text);
 				text = NULL;
-				break;
+				goto error;
 			}
 
 			if (bytes == 0) {
@@ -232,6 +243,7 @@ load_text_file(void *ctx, const char *file_name)
 		} while (total_read < size);
 
 		text[total_read] = '\0';
+error:;
 	}
 
 	fclose(fp);
@@ -360,6 +372,8 @@ main(int argc, char **argv)
 	 shader->Type = GL_GEOMETRY_SHADER;
       else if (strncmp(".frag", ext, 5) == 0)
 	 shader->Type = GL_FRAGMENT_SHADER;
+      else if (strncmp(".comp", ext, 5) == 0)
+         shader->Type = GL_COMPUTE_SHADER;
       else
 	 usage_fail(argv[0]);
       shader->Stage = _mesa_shader_enum_to_shader_stage(shader->Type);

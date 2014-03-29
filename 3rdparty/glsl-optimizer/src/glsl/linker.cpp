@@ -1291,6 +1291,69 @@ link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
    prog->Geom.VerticesOut = linked_shader->Geom.VerticesOut;
 }
 
+
+/**
+ * Perform cross-validation of compute shader local_size_{x,y,z} layout
+ * qualifiers for the attached compute shaders, and propagate them to the
+ * linked CS and linked shader program.
+ */
+static void
+link_cs_input_layout_qualifiers(struct gl_shader_program *prog,
+                                struct gl_shader *linked_shader,
+                                struct gl_shader **shader_list,
+                                unsigned num_shaders)
+{
+   for (int i = 0; i < 3; i++)
+      linked_shader->Comp.LocalSize[i] = 0;
+
+   /* This function is called for all shader stages, but it only has an effect
+    * for compute shaders.
+    */
+   if (linked_shader->Stage != MESA_SHADER_COMPUTE)
+      return;
+
+   /* From the ARB_compute_shader spec, in the section describing local size
+    * declarations:
+    *
+    *     If multiple compute shaders attached to a single program object
+    *     declare local work-group size, the declarations must be identical;
+    *     otherwise a link-time error results. Furthermore, if a program
+    *     object contains any compute shaders, at least one must contain an
+    *     input layout qualifier specifying the local work sizes of the
+    *     program, or a link-time error will occur.
+    */
+   for (unsigned sh = 0; sh < num_shaders; sh++) {
+      struct gl_shader *shader = shader_list[sh];
+
+      if (shader->Comp.LocalSize[0] != 0) {
+         if (linked_shader->Comp.LocalSize[0] != 0) {
+            for (int i = 0; i < 3; i++) {
+               if (linked_shader->Comp.LocalSize[i] !=
+                   shader->Comp.LocalSize[i]) {
+                  linker_error(prog, "compute shader defined with conflicting "
+                               "local sizes\n");
+                  return;
+               }
+            }
+         }
+         for (int i = 0; i < 3; i++)
+            linked_shader->Comp.LocalSize[i] = shader->Comp.LocalSize[i];
+      }
+   }
+
+   /* Just do the intrastage -> interstage propagation right now,
+    * since we already know we're in the right type of shader program
+    * for doing it.
+    */
+   if (linked_shader->Comp.LocalSize[0] == 0) {
+      linker_error(prog, "compute shader didn't declare local size\n");
+      return;
+   }
+   for (int i = 0; i < 3; i++)
+      prog->Comp.LocalSize[i] = linked_shader->Comp.LocalSize[i];
+}
+
+
 /**
  * Combine a group of shaders for a single stage to generate a linked shader
  *
@@ -1395,6 +1458,7 @@ link_intrastage_shaders(void *mem_ctx,
    ralloc_steal(linked, linked->UniformBlocks);
 
    link_gs_inout_layout_qualifiers(prog, linked, shader_list, num_shaders);
+   link_cs_input_layout_qualifiers(prog, linked, shader_list, num_shaders);
 
    populate_symbol_table(linked);
 
@@ -1971,6 +2035,46 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 }
 
+/**
+ * Validate shader image resources.
+ */
+static void
+check_image_resources(struct gl_context *ctx, struct gl_shader_program *prog)
+{
+   unsigned total_image_units = 0;
+   unsigned fragment_outputs = 0;
+
+   if (!ctx->Extensions.ARB_shader_image_load_store)
+      return;
+
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh) {
+         if (sh->NumImages > ctx->Const.Program[i].MaxImageUniforms)
+            linker_error(prog, "Too many %s shader image uniforms",
+                         _mesa_shader_stage_to_string(i));
+
+         total_image_units += sh->NumImages;
+
+         if (i == MESA_SHADER_FRAGMENT) {
+            foreach_list(node, sh->ir) {
+               ir_variable *var = ((ir_instruction *)node)->as_variable();
+               if (var && var->data.mode == ir_var_shader_out)
+                  fragment_outputs += var->type->count_attribute_slots();
+            }
+         }
+      }
+   }
+
+   if (total_image_units > ctx->Const.MaxCombinedImageUniforms)
+      linker_error(prog, "Too many combined image uniforms");
+
+   if (total_image_units + fragment_outputs >
+       ctx->Const.MaxCombinedImageUnitsAndFragmentOutputs)
+      linker_error(prog, "Too many combined image uniforms and fragment outputs");
+}
+
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
@@ -2049,6 +2153,13 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
    }
 
+   /* Compute shaders have additional restrictions. */
+   if (num_shaders[MESA_SHADER_COMPUTE] > 0 &&
+       num_shaders[MESA_SHADER_COMPUTE] != prog->NumShaders) {
+      linker_error(prog, "Compute shaders may not be linked with any other "
+                   "type of shader\n");
+   }
+
    for (unsigned int i = 0; i < MESA_SHADER_STAGES; i++) {
       if (prog->_LinkedShaders[i] != NULL)
 	 ctx->Driver.DeleteShader(ctx, prog->_LinkedShaders[i]);
@@ -2102,7 +2213,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    unsigned prev;
 
-   for (prev = 0; prev < MESA_SHADER_STAGES; prev++) {
+   for (prev = 0; prev <= MESA_SHADER_FRAGMENT; prev++) {
       if (prog->_LinkedShaders[prev] != NULL)
          break;
    }
@@ -2110,7 +2221,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Validate the inputs of each stage with the output of the preceding
     * stage.
     */
-   for (unsigned i = prev + 1; i < MESA_SHADER_STAGES; i++) {
+   for (unsigned i = prev + 1; i <= MESA_SHADER_FRAGMENT; i++) {
       if (prog->_LinkedShaders[i] == NULL)
          continue;
 
@@ -2205,7 +2316,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    unsigned first;
-   for (first = 0; first < MESA_SHADER_STAGES; first++) {
+   for (first = 0; first <= MESA_SHADER_FRAGMENT; first++) {
       if (prog->_LinkedShaders[first] != NULL)
 	 break;
    }
@@ -2237,7 +2348,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * eliminated if they are (transitively) not used in a later stage.
     */
    int last, next;
-   for (last = MESA_SHADER_STAGES-1; last >= 0; last--) {
+   for (last = MESA_SHADER_FRAGMENT; last >= 0; last--) {
       if (prog->_LinkedShaders[last] != NULL)
          break;
    }
@@ -2327,6 +2438,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    store_fragdepth_layout(prog);
 
    check_resources(ctx, prog);
+   check_image_resources(ctx, prog);
    link_check_atomic_counter_resources(ctx, prog);
 
    if (!prog->LinkStatus)

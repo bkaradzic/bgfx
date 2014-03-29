@@ -1,0 +1,131 @@
+float xll_saturate_f( float x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec2 xll_saturate_vf2( vec2 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec3 xll_saturate_vf3( vec3 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec4 xll_saturate_vf4( vec4 x) {
+  return clamp( x, 0.0, 1.0);
+}
+mat2 xll_saturate_mf2x2(mat2 m) {
+  return mat2( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0));
+}
+mat3 xll_saturate_mf3x3(mat3 m) {
+  return mat3( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0));
+}
+mat4 xll_saturate_mf4x4(mat4 m) {
+  return mat4( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0), clamp(m[3], 0.0, 1.0));
+}
+#line 4
+struct v2f_ao {
+    highp vec4 pos;
+    highp vec2 uv;
+    highp vec2 uvr;
+};
+#line 10
+uniform sampler2D _CameraDepthNormalsTexture;
+uniform sampler2D _RandomTexture;
+uniform highp vec4 _Params;
+uniform highp vec4 _ProjectionParams;
+#line 15
+#line 36
+#line 83
+#line 25
+highp float DecodeFloatRG( in highp vec2 enc ) {
+    #line 27
+    highp vec2 kDecodeDot = vec2( 1.0, 0.00392157);
+    return dot( enc, kDecodeDot);
+}
+#line 15
+highp vec3 DecodeViewNormalStereo( in highp vec4 enc4 ) {
+    highp float kScale = 1.7777;
+    highp vec3 nn = ((enc4.xyz * vec3( (2.0 * kScale), (2.0 * kScale), 0.0)) + vec3( (-kScale), (-kScale), 1.0));
+    #line 19
+    highp float g = (2.0 / dot( nn.xyz, nn.xyz));
+    highp vec3 n;
+    n.xy = (g * nn.xy);
+    n.z = (g - 1.0);
+    #line 23
+    return n;
+}
+#line 30
+void DecodeDepthNormal( in highp vec4 enc, out highp float depth, out highp vec3 normal ) {
+    #line 32
+    depth = DecodeFloatRG( enc.zw);
+    normal = DecodeViewNormalStereo( enc);
+}
+#line 36
+mediump float frag_ao( in v2f_ao i, in highp int sampleCount, in highp vec3 samples[8] ) {
+    mediump vec3 randN = ((texture2D( _RandomTexture, i.uvr).xyz * 2.0) - 1.0);
+    #line 42
+    highp vec4 depthnormal = texture2D( _CameraDepthNormalsTexture, i.uv);
+    highp vec3 viewNorm;
+    highp float depth;
+    DecodeDepthNormal( depthnormal, depth, viewNorm);
+    #line 46
+    depth *= _ProjectionParams.z;
+    highp float scale = (_Params.x / depth);
+    #line 50
+    highp float occ = 0.0;
+    highp int s = 0;
+    for ( ; (s < sampleCount); (++s)) {
+        #line 54
+        mediump vec3 randomDir = reflect( samples[s], randN);
+        mediump float flip = (( (dot( viewNorm, randomDir) < 0.0) ) ? ( 1.0 ) : ( -1.0 ));
+        #line 58
+        randomDir *= (-flip);
+        randomDir += (viewNorm * 0.3);
+        #line 62
+        highp vec2 offset = (randomDir.xy * scale);
+        highp float sD = (depth - (randomDir.z * _Params.x));
+        #line 66
+        highp vec4 sampleND = texture2D( _CameraDepthNormalsTexture, (i.uv + offset));
+        highp float sampleD;
+        highp vec3 sampleN;
+        DecodeDepthNormal( sampleND, sampleD, sampleN);
+        #line 70
+        sampleD *= _ProjectionParams.z;
+        highp float zd = xll_saturate_f((sD - sampleD));
+        if ((zd > _Params.y)){
+            #line 74
+            occ += pow( (1.0 - zd), _Params.z);
+        }
+    }
+    #line 79
+    occ /= float(sampleCount);
+    return (1.0 - occ);
+}
+#line 83
+mediump vec4 xlat_main( in v2f_ao i ) {
+    highp vec3 RAND_SAMPLES[8];
+    RAND_SAMPLES[0] = vec3( 0.0130572, 0.587232, -0.119337);
+    RAND_SAMPLES[1] = vec3( 0.323078, 0.0220727, -0.418873);
+    RAND_SAMPLES[2] = vec3( -0.310725, -0.191367, 0.0561369);
+    RAND_SAMPLES[3] = vec3( -0.479646, 0.0939877, -0.580265);
+    RAND_SAMPLES[4] = vec3( 0.139999, -0.33577, 0.559679);
+    RAND_SAMPLES[5] = vec3( -0.248458, 0.255532, 0.348944);
+    RAND_SAMPLES[6] = vec3( 0.18719, -0.702764, -0.231748);
+    RAND_SAMPLES[7] = vec3( 0.884915, 0.284208, 0.368524);
+    #line 95
+    return vec4( frag_ao( i, 8, RAND_SAMPLES));
+}
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec2 xlv_TEXCOORD1;
+void main() {
+    mediump vec4 xl_retval;
+    v2f_ao xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2(xlv_TEXCOORD0);
+    xlt_i.uvr = vec2(xlv_TEXCOORD1);
+    xl_retval = xlat_main( xlt_i);
+    gl_FragData[0] = vec4(xl_retval);
+}
+
+// uniforms:
+// _CameraDepthNormalsTexture:<none> type 25 arrsize 0
+// _Params:<none> type 12 arrsize 0
+// _ProjectionParams:<none> type 12 arrsize 0
+// _RandomTexture:<none> type 25 arrsize 0

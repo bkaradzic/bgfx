@@ -5,7 +5,7 @@ void main ()
   int tmpvar_3;
   tmpvar_3 = 0;
   i_2 = tmpvar_3;
-  float tmpvar_4;
+  mediump float tmpvar_4;
   tmpvar_4 = 0.0;
   f_1 = tmpvar_4;
   while (true) {

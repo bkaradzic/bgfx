@@ -78,6 +78,26 @@ struct gl_uniform_driver_storage {
    void *data;
 };
 
+struct gl_opaque_uniform_index {
+   /**
+    * Base opaque uniform index
+    *
+    * If \c gl_uniform_storage::base_type is an opaque type, this
+    * represents its uniform index.  If \c
+    * gl_uniform_storage::array_elements is not zero, the array will
+    * use opaque uniform indices \c index through \c index + \c
+    * gl_uniform_storage::array_elements - 1, inclusive.
+    *
+    * Note that the index may be different in each shader stage.
+    */
+   uint8_t index;
+
+   /**
+    * Whether this opaque uniform is used in this shader stage.
+    */
+   bool active;
+};
+
 struct gl_uniform_storage {
    char *name;
    /** Type of this uniform data stored.
@@ -99,24 +119,9 @@ struct gl_uniform_storage {
     */
    bool initialized;
 
-   struct {
-      /**
-       * Base sampler index
-       *
-       * If \c ::base_type is \c GLSL_TYPE_SAMPLER, this represents the index
-       * of this sampler.  If \c ::array_elements is not zero, the array will
-       * use sampler indices \c ::sampler through \c ::sampler +
-       * \c ::array_elements - 1, inclusive.
-       *
-       * Note that the index may be different in each shader stage.
-       */
-      uint8_t index;
+   struct gl_opaque_uniform_index sampler[MESA_SHADER_STAGES];
 
-      /**
-       * Whether this sampler is used in this shader stage.
-       */
-      bool active;
-   } sampler[MESA_SHADER_STAGES];
+   struct gl_opaque_uniform_index image[MESA_SHADER_STAGES];
 
    /**
     * Storage used by the driver for the uniform

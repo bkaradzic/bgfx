@@ -80,6 +80,8 @@ loop_state::loop_state()
 			      hash_table_pointer_compare);
    this->ht_inductors = hash_table_ctor(0, hash_table_pointer_hash,
             hash_table_pointer_compare);
+   this->ht_non_inductors = hash_table_ctor(0, hash_table_pointer_hash,
+										 hash_table_pointer_compare);
    this->mem_ctx = ralloc_context(NULL);
    this->loop_found = false;
 }
@@ -89,6 +91,7 @@ loop_state::~loop_state()
 {
    hash_table_dtor(this->ht);
    hash_table_dtor(this->ht_inductors);
+   hash_table_dtor(this->ht_non_inductors);
    ralloc_free(this->mem_ctx);
 }
 
@@ -120,6 +123,10 @@ loop_state::get_for_inductor(const ir_variable *ir)
 void
 loop_state::insert_inductor(ir_variable* var, loop_variable_state* state, ir_loop* loop)
 {
+	// Check if this variable is already marked as "sure can't be a private inductor variable"
+	if (hash_table_find(this->ht_non_inductors, var))
+		return;
+
 	// Check if this variable is used after the loop anywhere. If it is, it can't be a
 	// variable that's private to the loop.
 	ir_variable_refcount_visitor refs;
@@ -130,7 +137,12 @@ loop_state::insert_inductor(ir_variable* var, loop_variable_state* state, ir_loo
 		ir_instruction *ir = (ir_instruction *) node;
 		ir->accept (&refs);
 		if (refs.find_variable_entry(var))
+		{
+			// add to list of "non inductors", so that next loop does not try
+			// to add it as inductor again
+			hash_table_insert(this->ht_non_inductors, state, var);
 			return;
+		}
 	}
 	
 	state->private_induction_variable_count++;

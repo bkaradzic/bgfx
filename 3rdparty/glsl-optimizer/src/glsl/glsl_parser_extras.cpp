@@ -56,7 +56,8 @@ static unsigned known_desktop_glsl_versions[] =
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       gl_shader_stage stage,
                                                void *mem_ctx)
-   : ctx(_ctx), switch_state()
+   : ctx(_ctx), cs_input_local_size_specified(false), cs_input_local_size(),
+     switch_state()
 {
    assert(stage < MESA_SHADER_STAGES);
    this->stage = stage;
@@ -82,6 +83,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
                             ctx->Const.ForceGLSLVersion : 110;
    this->es_shader = false;
    this->had_version_string = false;
+   this->had_float_precision = false;
    this->ARB_texture_rectangle_enable = true;
 
    /* OpenGL ES 2.0 has different defaults from desktop GL. */
@@ -123,6 +125,20 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxFragmentAtomicCounters = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters;
    this->Const.MaxCombinedAtomicCounters = ctx->Const.MaxCombinedAtomicCounters;
    this->Const.MaxAtomicBufferBindings = ctx->Const.MaxAtomicBufferBindings;
+
+   /* Compute shader constants */
+   for (unsigned i = 0; i < Elements(this->Const.MaxComputeWorkGroupCount); i++)
+      this->Const.MaxComputeWorkGroupCount[i] = ctx->Const.MaxComputeWorkGroupCount[i];
+   for (unsigned i = 0; i < Elements(this->Const.MaxComputeWorkGroupSize); i++)
+      this->Const.MaxComputeWorkGroupSize[i] = ctx->Const.MaxComputeWorkGroupSize[i];
+
+   this->Const.MaxImageUnits = ctx->Const.MaxImageUnits;
+   this->Const.MaxCombinedImageUnitsAndFragmentOutputs = ctx->Const.MaxCombinedImageUnitsAndFragmentOutputs;
+   this->Const.MaxImageSamples = ctx->Const.MaxImageSamples;
+   this->Const.MaxVertexImageUniforms = ctx->Const.Program[MESA_SHADER_VERTEX].MaxImageUniforms;
+   this->Const.MaxGeometryImageUniforms = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxImageUniforms;
+   this->Const.MaxFragmentImageUniforms = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxImageUniforms;
+   this->Const.MaxCombinedImageUniforms = ctx->Const.MaxCombinedImageUniforms;
 
    this->current_function = NULL;
    this->toplevel_ir = NULL;
@@ -191,6 +207,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->gs_input_prim_type = GL_POINTS;
    this->gs_input_size = 0;
    this->out_qualifier = new(this) ast_type_qualifier();
+   this->early_fragment_tests = false;
    memset(this->atomic_counter_offsets, 0,
           sizeof(this->atomic_counter_offsets));
 }
@@ -524,6 +541,8 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
    EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
    EXT(ARB_viewport_array,             true,  false,     ARB_viewport_array),
+   EXT(ARB_compute_shader,             true,  false,     ARB_compute_shader),
+   EXT(ARB_shader_image_load_store,    true,  false,     ARB_shader_image_load_store),
 };
 
 #undef EXT
@@ -1337,23 +1356,45 @@ set_shader_inout_layout(struct gl_shader *shader,
       /* Should have been prevented by the parser. */
       assert(!state->gs_input_prim_type_specified);
       assert(!state->out_qualifier->flags.i);
-      return;
    }
 
-   shader->Geom.VerticesOut = 0;
-   if (state->out_qualifier->flags.q.max_vertices)
-      shader->Geom.VerticesOut = state->out_qualifier->max_vertices;
-
-   if (state->gs_input_prim_type_specified) {
-      shader->Geom.InputType = state->gs_input_prim_type;
-   } else {
-      shader->Geom.InputType = PRIM_UNKNOWN;
+   if (shader->Stage != MESA_SHADER_COMPUTE) {
+      /* Should have been prevented by the parser. */
+      assert(!state->cs_input_local_size_specified);
    }
 
-   if (state->out_qualifier->flags.q.prim_type) {
-      shader->Geom.OutputType = state->out_qualifier->prim_type;
-   } else {
-      shader->Geom.OutputType = PRIM_UNKNOWN;
+   switch (shader->Stage) {
+   case MESA_SHADER_GEOMETRY:
+      shader->Geom.VerticesOut = 0;
+      if (state->out_qualifier->flags.q.max_vertices)
+         shader->Geom.VerticesOut = state->out_qualifier->max_vertices;
+
+      if (state->gs_input_prim_type_specified) {
+         shader->Geom.InputType = state->gs_input_prim_type;
+      } else {
+         shader->Geom.InputType = PRIM_UNKNOWN;
+      }
+
+      if (state->out_qualifier->flags.q.prim_type) {
+         shader->Geom.OutputType = state->out_qualifier->prim_type;
+      } else {
+         shader->Geom.OutputType = PRIM_UNKNOWN;
+      }
+      break;
+
+   case MESA_SHADER_COMPUTE:
+      if (state->cs_input_local_size_specified) {
+         for (int i = 0; i < 3; i++)
+            shader->Comp.LocalSize[i] = state->cs_input_local_size[i];
+      } else {
+         for (int i = 0; i < 3; i++)
+            shader->Comp.LocalSize[i] = 0;
+      }
+      break;
+
+   default:
+      /* Nothing to do. */
+      break;
    }
 }
 

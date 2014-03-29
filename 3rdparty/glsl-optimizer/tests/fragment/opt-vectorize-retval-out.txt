@@ -1,0 +1,28 @@
+uniform float _Fresnel;
+uniform float _SpecIntensity;
+varying vec3 inN;
+varying vec3 inE;
+void main ()
+{
+  vec3 p_1;
+  float tmpvar_2;
+  tmpvar_2 = (1.0 - max (0.0, min (1.0, 
+    dot (inN, inE)
+  )));
+  vec3 tmpvar_3;
+  tmpvar_3.x = 1.0;
+  tmpvar_3.y = tmpvar_2;
+  tmpvar_3.z = ((tmpvar_2 * tmpvar_2) * tmpvar_2);
+  p_1.z = tmpvar_3.z;
+  vec2 tmpvar_4;
+  tmpvar_4.x = (1.0 - _Fresnel);
+  tmpvar_4.y = _Fresnel;
+  p_1.x = dot (tmpvar_3.xy, tmpvar_4);
+  p_1.y = dot (tmpvar_3.yz, tmpvar_4);
+  gl_FragColor = vec4(((0.05 + (0.95 * 
+    dot (p_1.xy, tmpvar_4)
+  )) * _SpecIntensity));
+}
+
+
+// inputs: 2, stats: 14 alu 0 tex 0 flow

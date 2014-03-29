@@ -21,7 +21,7 @@ lowp vec4 xlat_main (
   if ((col_4.w < 0.5)) {
     discard;
   };
-  vec3 tmpvar_7;
+  mediump vec3 tmpvar_7;
   tmpvar_7 = vec3(0.0, 0.0, 0.0);
   light_3 = tmpvar_7;
   int tmpvar_8;

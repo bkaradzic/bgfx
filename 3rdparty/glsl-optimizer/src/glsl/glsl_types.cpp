@@ -65,20 +65,26 @@ glsl_type::glsl_type(GLenum gl_type,
    memset(& fields, 0, sizeof(fields));
 }
 
-glsl_type::glsl_type(GLenum gl_type,
+glsl_type::glsl_type(GLenum gl_type, glsl_base_type base_type,
 		     enum glsl_sampler_dim dim, bool shadow, bool array,
 		     unsigned type, const char *name) :
    gl_type(gl_type),
-   base_type(GLSL_TYPE_SAMPLER),
+   base_type(base_type),
    sampler_dimensionality(dim), sampler_shadow(shadow),
    sampler_array(array), sampler_type(type), interface_packing(0),
-   vector_elements(0), matrix_columns(0),
    length(0)
 {
    init_ralloc_type_ctx();
    assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    memset(& fields, 0, sizeof(fields));
+
+   if (base_type == GLSL_TYPE_SAMPLER) {
+      /* Samplers take no storage whatsoever. */
+      matrix_columns = vector_elements = 0;
+   } else {
+      matrix_columns = vector_elements = 1;
+   }
 }
 
 glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
@@ -177,6 +183,7 @@ bool
 glsl_type::contains_opaque() const {
    switch (base_type) {
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_IMAGE:
    case GLSL_TYPE_ATOMIC_UINT:
       return true;
    case GLSL_TYPE_ARRAY:
@@ -222,6 +229,21 @@ glsl_type::sampler_index() const
    }
 }
 
+bool
+glsl_type::contains_image() const
+{
+   if (this->is_array()) {
+      return this->fields.array->contains_image();
+   } else if (this->is_record()) {
+      for (unsigned int i = 0; i < this->length; i++) {
+	 if (this->fields.structure[i].type->contains_image())
+	    return true;
+      }
+      return false;
+   } else {
+      return this->is_image();
+   }
+}
 
 const glsl_type *glsl_type::get_base_type() const
 {
@@ -662,6 +684,9 @@ glsl_type::component_slots() const
    case GLSL_TYPE_ARRAY:
       return this->length * this->fields.array->component_slots();
 
+   case GLSL_TYPE_IMAGE:
+      return 1;
+
    case GLSL_TYPE_SAMPLER:
    case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_VOID:
@@ -952,6 +977,7 @@ glsl_type::count_attribute_slots() const
       return this->length * this->fields.array->count_attribute_slots();
 
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_IMAGE:
    case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
@@ -964,10 +990,8 @@ glsl_type::count_attribute_slots() const
 }
 
 int
-glsl_type::sampler_coordinate_components() const
+glsl_type::coordinate_components() const
 {
-   assert(is_sampler());
-
    int size;
 
    switch (sampler_dimensionality) {

@@ -1,9 +1,9 @@
 #extension GL_EXT_shader_texture_lod : enable
 uniform sampler2D tex;
 varying highp vec4 xlv_TEXCOORD0;
-vec4 xll_tex2Dlod (
+mediump vec4 xll_tex2Dlod (
   in sampler2D s_1,
-  in vec4 coord_2
+  in mediump vec4 coord_2
 )
 {
   lowp vec4 tmpvar_3;
@@ -18,7 +18,7 @@ mediump vec4 xlat_main (
   highp vec4 tmpvar_5;
   tmpvar_5.zw = vec2(0.0, 0.0);
   tmpvar_5.xy = uv_4.xy.xy;
-  vec4 tmpvar_6;
+  mediump vec4 tmpvar_6;
   tmpvar_6 = xll_tex2Dlod (tex, tmpvar_5);
   return tmpvar_6;
 }

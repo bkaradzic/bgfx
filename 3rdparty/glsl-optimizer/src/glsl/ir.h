@@ -479,7 +479,7 @@ public:
    void reinit_interface_type(const struct glsl_type *type)
    {
       if (this->max_ifc_array_access != NULL) {
-#ifndef _NDEBUG
+#ifndef NDEBUG
          /* Redeclaring gl_PerVertex is only allowed if none of the built-ins
           * it defines have been accessed yet; so it's safe to throw away the
           * old max_ifc_array_access pointer, since all of its values are
@@ -699,6 +699,20 @@ public:
          unsigned buffer_index;
          unsigned offset;
       } atomic;
+
+      /**
+       * ARB_shader_image_load_store qualifiers.
+       */
+      struct {
+         bool read_only; /**< "readonly" qualifier. */
+         bool write_only; /**< "writeonly" qualifier. */
+         bool coherent;
+         bool _volatile;
+         bool restrict_flag;
+
+         /** Image internal format if specified explicitly, otherwise GL_NONE. */
+         GLenum format;
+      } image;
 
       /**
        * Highest element accessed with a constant expression array index

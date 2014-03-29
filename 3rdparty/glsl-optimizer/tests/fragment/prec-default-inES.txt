@@ -19,5 +19,7 @@ uniform mediump int im;
 void main() {
     lowp float f = fh1 + fh2 + fm + s1.f;
     highp int i = il1 + il2 + im + s1.i;
-    gl_FragColor = vec4(f, i, 0.0, 0.0);
+    float z = 0.0;
+    z += gl_FragCoord.x  > 0.5 ? 0.9 : 0.1;
+    gl_FragColor = vec4(f, i, z, 0.0);
 }

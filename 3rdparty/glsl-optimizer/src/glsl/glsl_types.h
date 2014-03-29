@@ -53,6 +53,7 @@ enum glsl_base_type {
    GLSL_TYPE_FLOAT,
    GLSL_TYPE_BOOL,
    GLSL_TYPE_SAMPLER,
+   GLSL_TYPE_IMAGE,
    GLSL_TYPE_ATOMIC_UINT,
    GLSL_TYPE_STRUCT,
    GLSL_TYPE_INTERFACE,
@@ -96,8 +97,9 @@ struct glsl_type {
    unsigned sampler_dimensionality:3; /**< \see glsl_sampler_dim */
    unsigned sampler_shadow:1;
    unsigned sampler_array:1;
-   unsigned sampler_type:2;    /**< Type of data returned using this sampler.
-				* only \c GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
+   unsigned sampler_type:2;    /**< Type of data returned using this
+				* sampler or image.  Only \c
+				* GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
    unsigned interface_packing:2;
@@ -409,6 +411,20 @@ struct glsl_type {
    gl_texture_index sampler_index() const;
 
    /**
+    * Query whether or not type is an image, or for struct and array
+    * types, contains an image.
+    */
+   bool contains_image() const;
+
+   /**
+    * Query whether or not a type is an image
+    */
+   bool is_image() const
+   {
+      return base_type == GLSL_TYPE_IMAGE;
+   }
+
+   /**
     * Query whether or not a type is an array
     */
    bool is_array() const
@@ -541,7 +557,8 @@ struct glsl_type {
    }
 
    /**
-    * Return the number of coordinate components needed for this sampler type.
+    * Return the number of coordinate components needed for this
+    * sampler or image type.
     *
     * This is based purely on the sampler's dimensionality.  For example, this
     * returns 1 for sampler1D, and 3 for sampler2DArray.
@@ -550,7 +567,7 @@ struct glsl_type {
     * a texturing built-in function, since those pack additional values (such
     * as the shadow comparitor or projector) into the coordinate type.
     */
-   int sampler_coordinate_components() const;
+   int coordinate_components() const;
 
    /**
     * Compare a record type against another record type.
@@ -574,8 +591,8 @@ private:
 	     glsl_base_type base_type, unsigned vector_elements,
 	     unsigned matrix_columns, const char *name);
 
-   /** Constructor for sampler types */
-   glsl_type(GLenum gl_type,
+   /** Constructor for sampler or image types */
+   glsl_type(GLenum gl_type, glsl_base_type base_type,
 	     enum glsl_sampler_dim dim, bool shadow, bool array,
 	     unsigned type, const char *name);
 

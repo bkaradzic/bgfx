@@ -19,7 +19,7 @@ void main ()
   if ((x_3 < 2)) {
     discard;
   };
-  float tmpvar_7;
+  mediump float tmpvar_7;
   tmpvar_7 = 0.0;
   c_1 = tmpvar_7;
   while (true) {
