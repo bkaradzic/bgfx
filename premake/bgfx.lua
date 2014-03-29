@@ -33,7 +33,7 @@ project "bgfx"
 	configuration { "vs* or linux or mingw or osx or ios*" }
 		includedirs {
 			--nacl has GLES2 headers modified...
-			BGFX_DIR .. "3rdparty/glext",
+			BGFX_DIR .. "3rdparty/khronos",
 		}
 
 	configuration {}
