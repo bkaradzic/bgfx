@@ -228,7 +228,7 @@ Building
 
 ### Prerequisites
 
-Premake 4.4 beta5  
+Premake 4.4 beta5 ([prebuilt binaries are part of bx](https://github.com/bkaradzic/bx/tree/master/tools/bin))  
 [http://industriousone.com/premake/download](http://industriousone.com/premake/download)
 
 GNU make and CoreUtils  
