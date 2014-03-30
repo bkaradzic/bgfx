@@ -2471,7 +2471,8 @@ namespace bgfx
 			char* temp = (char*)alloca(tempLen);
 			bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+			&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 			{
 				bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
 					&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
@@ -2592,7 +2593,8 @@ namespace bgfx
 					memcpy(insert + 2, "fx", 2);
 				}
 			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL != 0 && BGFX_CONFIG_RENDERER_OPENGL <= 21) )
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+				 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
 			{
 				bool usesTextureLod = s_extension[Extension::ARB_shader_texture_lod].m_supported
 					&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
