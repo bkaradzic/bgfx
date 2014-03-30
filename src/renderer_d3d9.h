@@ -224,7 +224,7 @@ namespace bgfx
 		{
 		}
 
-		void create(bool _fragment, const Memory* _mem);
+		void create(const Memory* _mem);
 		DWORD* getShaderCode(uint8_t _fragmentBit, const Memory* _mem);
 
 		void destroy()

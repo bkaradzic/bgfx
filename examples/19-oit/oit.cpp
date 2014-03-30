@@ -131,10 +131,10 @@ static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshNam
 	const bgfx::Memory* mem;
 
 	mem = loadShader(_vshName);
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
 
 	mem = loadShader(_fshName);
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
 
 	return bgfx::createProgram(vsh, fsh, true);
 }

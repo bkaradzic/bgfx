@@ -504,8 +504,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		break;
 	}
 
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(vs_metaballs);
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(fs_metaballs);
+	bgfx::ShaderHandle vsh = bgfx::createShader(vs_metaballs);
+	bgfx::ShaderHandle fsh = bgfx::createShader(fs_metaballs);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
@@ -514,8 +514,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// their reference is kept inside bgfx after calling createProgram.
 	// Vertex and fragment shader will be destroyed once program is
 	// destroyed.
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
 #define DIMS 32
 

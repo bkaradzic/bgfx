@@ -1444,8 +1444,7 @@ namespace bgfx
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		Shader m_vertexShaders[BGFX_CONFIG_MAX_VERTEX_SHADERS];
-		Shader m_fragmentShaders[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		Shader m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		Program m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
@@ -2427,19 +2426,33 @@ namespace bgfx
 		memcpy(_str, _insert, len);
 	}
 
-	void Shader::create(GLenum _type, Memory* _mem)
+	void Shader::create(Memory* _mem)
 	{
-		m_id = glCreateShader(_type);
-		m_type = _type;
-
 		bx::MemoryReader reader(_mem->data, _mem->size);
 		m_hash = bx::hashMurmur2A(_mem->data, _mem->size);
 
 		uint32_t magic;
 		bx::read(&reader, magic);
 
+		switch (magic)
+		{
+		case BGFX_CHUNK_MAGIC_FSH:
+			m_type = GL_FRAGMENT_SHADER;
+			break;
+
+		case BGFX_CHUNK_MAGIC_VSH:
+			m_type = GL_VERTEX_SHADER;
+			break;
+
+		default:
+			BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
+			break;
+		}
+
 		uint32_t iohash;
 		bx::read(&reader, iohash);
+
+		m_id = glCreateShader(m_type);
 
 		const char* code = (const char*)reader.getDataPtr();
 
@@ -2580,7 +2593,7 @@ namespace bgfx
 				if (usesTextureLod)
 				{
 					writeString(&writer, "#version 120\n");
-					if (_type == GL_FRAGMENT_SHADER)
+					if (m_type == GL_FRAGMENT_SHADER)
 					{
 						writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
 					}
@@ -2610,7 +2623,7 @@ namespace bgfx
 					writeString(&writer, "#version 140\n");
 				}
 
-				if (_type == GL_FRAGMENT_SHADER)
+				if (m_type == GL_FRAGMENT_SHADER)
 				{
 					writeString(&writer, "#define varying in\n");
 					writeString(&writer, "#define texture2D texture\n");
@@ -3208,30 +3221,20 @@ namespace bgfx
 		s_renderCtx->m_vertexBuffers[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateVertexShader(VertexShaderHandle _handle, Memory* _mem)
+	void Context::rendererCreateShader(ShaderHandle _handle, Memory* _mem)
 	{
-		s_renderCtx->m_vertexShaders[_handle.idx].create(GL_VERTEX_SHADER, _mem);
+		s_renderCtx->m_shaders[_handle.idx].create(_mem);
 	}
 
-	void Context::rendererDestroyVertexShader(VertexShaderHandle _handle)
+	void Context::rendererDestroyShader(ShaderHandle _handle)
 	{
-		s_renderCtx->m_vertexShaders[_handle.idx].destroy();
+		s_renderCtx->m_shaders[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem)
-	{
-		s_renderCtx->m_fragmentShaders[_handle.idx].create(GL_FRAGMENT_SHADER, _mem);
-	}
-
-	void Context::rendererDestroyFragmentShader(FragmentShaderHandle _handle)
-	{
-		s_renderCtx->m_fragmentShaders[_handle.idx].destroy();
-	}
-
-	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
+	void Context::rendererCreateProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh)
 	{
 		Shader dummyFragmentShader;
-		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], isValid(_fsh) ? s_renderCtx->m_fragmentShaders[_fsh.idx] : dummyFragmentShader);
+		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_shaders[_vsh.idx], isValid(_fsh) ? s_renderCtx->m_shaders[_fsh.idx] : dummyFragmentShader);
 	}
 
 	void Context::rendererDestroyProgram(ProgramHandle _handle)

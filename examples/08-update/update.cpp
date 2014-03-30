@@ -128,10 +128,10 @@ static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshNam
 	const bgfx::Memory* mem;
 
 	mem = loadShader(_vshName);
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
 
 	mem = loadShader(_fshName);
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
@@ -140,8 +140,8 @@ static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshNam
 	// their reference is kept inside bgfx after calling createProgram.
 	// Vertex and fragment shader will be destroyed once program is
 	// destroyed.
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
 	return program;
 }

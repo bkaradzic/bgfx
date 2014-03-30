@@ -587,26 +587,26 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		break;
 	}
 
-	bgfx::VertexShaderHandle vsh;
-	bgfx::FragmentShaderHandle fsh;
+	bgfx::ShaderHandle vsh;
+	bgfx::ShaderHandle fsh;
 
-	vsh = bgfx::createVertexShader(vs_font_basic);
-	fsh = bgfx::createFragmentShader(fs_font_basic);
+	vsh = bgfx::createShader(vs_font_basic);
+	fsh = bgfx::createShader(fs_font_basic);
 	m_basicProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
-	vsh = bgfx::createVertexShader(vs_font_distance_field);
-	fsh = bgfx::createFragmentShader(fs_font_distance_field);
+	vsh = bgfx::createShader(vs_font_distance_field);
+	fsh = bgfx::createShader(fs_font_distance_field);
 	m_distanceProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
-	vsh = bgfx::createVertexShader(vs_font_distance_field_subpixel);
-	fsh = bgfx::createFragmentShader(fs_font_distance_field_subpixel);
+	vsh = bgfx::createShader(vs_font_distance_field_subpixel);
+	fsh = bgfx::createShader(fs_font_distance_field_subpixel);
 	m_distanceSubpixelProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
 	m_vertexDecl.begin();
 	m_vertexDecl.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float);

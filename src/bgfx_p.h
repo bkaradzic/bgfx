@@ -505,8 +505,7 @@ namespace bgfx
 			UpdateDynamicIndexBuffer,
 			CreateDynamicVertexBuffer,
 			UpdateDynamicVertexBuffer,
-			CreateVertexShader,
-			CreateFragmentShader,
+			CreateShader,
 			CreateProgram,
 			CreateTexture,
 			UpdateTexture,
@@ -520,8 +519,7 @@ namespace bgfx
 			DestroyVertexBuffer,
 			DestroyDynamicIndexBuffer,
 			DestroyDynamicVertexBuffer,
-			DestroyVertexShader,
-			DestroyFragmentShader,
+			DestroyShader,
 			DestroyProgram,
 			DestroyTexture,
 			DestroyFrameBuffer,
@@ -1257,16 +1255,10 @@ namespace bgfx
 			++m_numFreeVertexBufferHandles;
 		}
 
-		void free(VertexShaderHandle _handle)
+		void free(ShaderHandle _handle)
 		{
-			m_freeVertexShaderHandle[m_numFreeVertexShaderHandles] = _handle;
-			++m_numFreeVertexShaderHandles;
-		}
-
-		void free(FragmentShaderHandle _handle)
-		{
-			m_freeFragmentShaderHandle[m_numFreeFragmentShaderHandles] = _handle;
-			++m_numFreeFragmentShaderHandles;
+			m_freeShaderHandle[m_numFreeShaderHandles] = _handle;
+			++m_numFreeShaderHandles;
 		}
 
 		void free(ProgramHandle _handle)
@@ -1299,8 +1291,7 @@ namespace bgfx
 			m_numFreeVertexDeclHandles = 0;
 			m_numFreeVertexBufferHandles = 0;
 			m_numFreeVertexShaderHandles = 0;
-			m_numFreeFragmentShaderHandles = 0;
-			m_numFreeFragmentShaderHandles = 0;
+			m_numFreeShaderHandles = 0;
 			m_numFreeProgramHandles = 0;
 			m_numFreeTextureHandles = 0;
 			m_numFreeFrameBufferHandles = 0;
@@ -1347,7 +1338,7 @@ namespace bgfx
 		uint16_t m_numFreeVertexDeclHandles;
 		uint16_t m_numFreeVertexBufferHandles;
 		uint16_t m_numFreeVertexShaderHandles;
-		uint16_t m_numFreeFragmentShaderHandles;
+		uint16_t m_numFreeShaderHandles;
 		uint16_t m_numFreeProgramHandles;
 		uint16_t m_numFreeTextureHandles;
 		uint16_t m_numFreeFrameBufferHandles;
@@ -1356,8 +1347,7 @@ namespace bgfx
 		IndexBufferHandle m_freeIndexBufferHandle[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexDeclHandle m_freeVertexDeclHandle[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		VertexBufferHandle m_freeVertexBufferHandle[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		VertexShaderHandle m_freeVertexShaderHandle[BGFX_CONFIG_MAX_VERTEX_SHADERS];
-		FragmentShaderHandle m_freeFragmentShaderHandle[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		ShaderHandle m_freeShaderHandle[BGFX_CONFIG_MAX_SHADERS];
 		ProgramHandle m_freeProgramHandle[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureHandle m_freeTextureHandle[BGFX_CONFIG_MAX_TEXTURES];
 		FrameBufferHandle m_freeFrameBufferHandle[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -1979,90 +1969,31 @@ namespace bgfx
 			return idb;
 		}
 
-		BGFX_API_FUNC(VertexShaderHandle createVertexShader(const Memory* _mem) )
+		BGFX_API_FUNC(ShaderHandle createShader(const Memory* _mem) )
 		{
 			bx::MemoryReader reader(_mem->data, _mem->size);
 
 			uint32_t magic;
 			bx::read(&reader, magic);
 
-			if (BGFX_CHUNK_MAGIC_VSH != magic)
+			if (BGFX_CHUNK_MAGIC_VSH != magic
+			&&  BGFX_CHUNK_MAGIC_FSH != magic)
 			{
-				BX_WARN(false, "Invalid vertex shader signature! 0x%08x", magic);
-				VertexShaderHandle invalid = BGFX_INVALID_HANDLE;
+				BX_WARN(false, "Invalid shader signature! 0x%08x", magic);
+				ShaderHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
 
-			VertexShaderHandle handle = { m_vertexShaderHandle.alloc() };
+			ShaderHandle handle = { m_shaderHandle.alloc() };
 
-			BX_WARN(isValid(handle), "Failed to allocate vertex shader handle.");
+			BX_WARN(isValid(handle), "Failed to allocate shader handle.");
 			if (isValid(handle) )
 			{
-				VertexShaderRef& vsr = m_vertexShaderRef[handle.idx];
-				vsr.m_refCount = 1;
-				bx::read(&reader, vsr.m_outputHash);
-
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexShader);
-				cmdbuf.write(handle);
-				cmdbuf.write(_mem);
-			}
-
-			return handle;
-		}
-
-		BGFX_API_FUNC(void destroyVertexShader(VertexShaderHandle _handle) )
-		{
-			if (!isValid(_handle) )
-			{
-				BX_WARN(false, "Passing invalid vertex shader handle to bgfx::destroyVertexShader");
-				return;
-			}
-
-			vertexShaderDecRef(_handle);
-		}
-
-		void vertexShaderIncRef(VertexShaderHandle _handle)
-		{
-			VertexShaderRef& vsr = m_vertexShaderRef[_handle.idx];
-			++vsr.m_refCount;
-		}
-
-		void vertexShaderDecRef(VertexShaderHandle _handle)
-		{
-			VertexShaderRef& vsr = m_vertexShaderRef[_handle.idx];
-			int32_t refs = --vsr.m_refCount;
-			if (0 == refs)
-			{
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexShader);
-				cmdbuf.write(_handle);
-				m_submit->free(_handle);
-			}
-		}
-
-		BGFX_API_FUNC(FragmentShaderHandle createFragmentShader(const Memory* _mem) )
-		{
-			bx::MemoryReader reader(_mem->data, _mem->size);
-
-			uint32_t magic;
-			bx::read(&reader, magic);
-
-			if (BGFX_CHUNK_MAGIC_FSH != magic)
-			{
-				BX_WARN(false, "Invalid fragment shader signature! 0x%08x", magic);
-				FragmentShaderHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
-			}
-
-			FragmentShaderHandle handle = { m_fragmentShaderHandle.alloc() };
-
-			BX_WARN(isValid(handle), "Failed to allocate fragment shader handle.");
-			if (isValid(handle) )
-			{
-				FragmentShaderRef& fsr = m_fragmentShaderRef[handle.idx];
+				ShaderRef& fsr = m_shaderRef[handle.idx];
 				fsr.m_refCount = 1;
-				bx::read(&reader, fsr.m_inputHash);
+				bx::read(&reader, fsr.m_hash);
 
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFragmentShader);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
 			}
@@ -2070,36 +2001,36 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(void destroyFragmentShader(FragmentShaderHandle _handle) )
+		BGFX_API_FUNC(void destroyShader(ShaderHandle _handle) )
 		{
 			if (!isValid(_handle) )
 			{
-				BX_WARN(false, "Passing invalid fragment shader handle to bgfx::destroyFragmentShader");
+				BX_WARN(false, "Passing invalid shader handle to bgfx::destroyShader");
 				return;
 			}
 
-			fragmentShaderDecRef(_handle);
+			shaderDecRef(_handle);
 		}
 
-		void fragmentShaderIncRef(FragmentShaderHandle _handle)
+		void shaderIncRef(ShaderHandle _handle)
 		{
-			FragmentShaderRef& fsr = m_fragmentShaderRef[_handle.idx];
-			++fsr.m_refCount;
+			ShaderRef& sr = m_shaderRef[_handle.idx];
+			++sr.m_refCount;
 		}
 
-		void fragmentShaderDecRef(FragmentShaderHandle _handle)
+		void shaderDecRef(ShaderHandle _handle)
 		{
-			FragmentShaderRef& fsr = m_fragmentShaderRef[_handle.idx];
-			int32_t refs = --fsr.m_refCount;
+			ShaderRef& sr = m_shaderRef[_handle.idx];
+			int32_t refs = --sr.m_refCount;
 			if (0 == refs)
 			{
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyFragmentShader);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyShader);
 				cmdbuf.write(_handle);
 				m_submit->free(_handle);
 			}
 		}
 
-		BGFX_API_FUNC(ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh) )
+		BGFX_API_FUNC(ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh) )
 		{
 			if (!isValid(_vsh)
 			||  !isValid(_fsh) )
@@ -2109,11 +2040,11 @@ namespace bgfx
 				return invalid;
 			}
 
-			const VertexShaderRef& vsr = m_vertexShaderRef[_vsh.idx];
-			const FragmentShaderRef& fsr = m_fragmentShaderRef[_fsh.idx];
-			if (vsr.m_outputHash != fsr.m_inputHash)
+			const ShaderRef& vsr = m_shaderRef[_vsh.idx];
+			const ShaderRef& fsr = m_shaderRef[_fsh.idx];
+			if (vsr.m_hash != fsr.m_hash)
 			{
-				BX_WARN(vsr.m_outputHash == fsr.m_inputHash, "Vertex shader output doesn't match fragment shader input.");
+				BX_WARN(vsr.m_hash == fsr.m_hash, "Vertex shader output doesn't match fragment shader input.");
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
@@ -2124,8 +2055,8 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate program handle.");
 			if (isValid(handle) )
 			{
-				vertexShaderIncRef(_vsh);
-				fragmentShaderIncRef(_fsh);
+				shaderIncRef(_vsh);
+				shaderIncRef(_fsh);
 				m_programRef[handle.idx].m_vsh = _vsh;
 				m_programRef[handle.idx].m_fsh = _fsh;
 
@@ -2144,8 +2075,8 @@ namespace bgfx
 			cmdbuf.write(_handle);
 			m_submit->free(_handle);
 
-			vertexShaderDecRef(m_programRef[_handle.idx].m_vsh);
-			fragmentShaderDecRef(m_programRef[_handle.idx].m_fsh);
+			shaderDecRef(m_programRef[_handle.idx].m_vsh);
+			shaderDecRef(m_programRef[_handle.idx].m_fsh);
 		}
 
 		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info) )
@@ -2632,11 +2563,9 @@ namespace bgfx
 		void rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle);
 		void rendererCreateVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl);
 		void rendererDestroyVertexDecl(VertexDeclHandle _handle);
-		void rendererCreateVertexShader(VertexShaderHandle _handle, Memory* _mem);
-		void rendererDestroyVertexShader(VertexShaderHandle _handle);
-		void rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem);
-		void rendererDestroyFragmentShader(FragmentShaderHandle _handle);
-		void rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh);
+		void rendererCreateShader(ShaderHandle _handle, Memory* _mem);
+		void rendererDestroyShader(ShaderHandle _handle);
+		void rendererCreateProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh);
 		void rendererDestroyProgram(ProgramHandle _handle);
 		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip);
@@ -2728,29 +2657,22 @@ namespace bgfx
 		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_DECLS > m_vertexDeclHandle;
 
 		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBufferHandle;
-		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_SHADERS> m_vertexShaderHandle;
-		bx::HandleAllocT<BGFX_CONFIG_MAX_FRAGMENT_SHADERS> m_fragmentShaderHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_SHADERS> m_shaderHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_PROGRAMS> m_programHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_TEXTURES> m_textureHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_FRAME_BUFFERS> m_frameBufferHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_UNIFORMS> m_uniformHandle;
 
-		struct FragmentShaderRef
+		struct ShaderRef
 		{
-			uint32_t m_inputHash;
+			uint32_t m_hash;
 			int16_t m_refCount;
 		};
 		
-		struct VertexShaderRef
-		{
-			uint32_t m_outputHash;
-			int16_t m_refCount;
-		};
-
 		struct ProgramRef
 		{
-			VertexShaderHandle m_vsh;
-			FragmentShaderHandle m_fsh;
+			ShaderHandle m_vsh;
+			ShaderHandle m_fsh;
 		};
 
 		struct UniformRef
@@ -2773,8 +2695,7 @@ namespace bgfx
 		typedef stl::unordered_map<stl::string, UniformHandle> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
 		UniformRef m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
-		VertexShaderRef m_vertexShaderRef[BGFX_CONFIG_MAX_VERTEX_SHADERS];
-		FragmentShaderRef m_fragmentShaderRef[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		ShaderRef m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
 		ProgramRef m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureRef m_textureRef[BGFX_CONFIG_MAX_TEXTURES];
 		FrameBufferRef m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];

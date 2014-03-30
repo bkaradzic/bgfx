@@ -623,7 +623,7 @@ namespace bgfx
 		{
 		}
 
-		void create(GLenum _type, Memory* _mem);
+		void create(Memory* _mem);
 		void destroy();
 
 		GLuint m_id;

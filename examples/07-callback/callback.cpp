@@ -437,11 +437,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Load vertex shader.
 	mem = loadShader("vs_callback");
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
 
 	// Load fragment shader.
 	mem = loadShader("fs_callback");
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
@@ -450,8 +450,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// their reference is kept inside bgfx after calling createProgram.
 	// Vertex and fragment shader will be destroyed once program is
 	// destroyed.
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
 	float time = 0.0f;
 

@@ -523,14 +523,9 @@ namespace bgfx
 				m_vertexBuffers[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexShaders); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
 			{
-				m_vertexShaders[ii].destroy();
-			}
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_fragmentShaders); ++ii)
-			{
-				m_fragmentShaders[ii].destroy();
+				m_shaders[ii].destroy();
 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
@@ -1031,8 +1026,7 @@ namespace bgfx
 
 		IndexBuffer m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		Shader m_vertexShaders[BGFX_CONFIG_MAX_VERTEX_SHADERS];
-		Shader m_fragmentShaders[BGFX_CONFIG_MAX_FRAGMENT_SHADERS];
+		Shader m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		Program m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDeclaration m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
@@ -1259,12 +1253,25 @@ namespace bgfx
 		m_ptr = createVertexDecl(_decl, 0);
 	}
 
-	void Shader::create(bool _fragment, const Memory* _mem)
+	void Shader::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
 		uint32_t magic;
 		bx::read(&reader, magic);
+
+		switch (magic)
+		{
+		case BGFX_CHUNK_MAGIC_FSH:
+		case BGFX_CHUNK_MAGIC_VSH:
+			break;
+
+		default:
+			BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
+			break;
+		}
+
+		bool fragment = BGFX_CHUNK_MAGIC_FSH == magic;
 
 		uint32_t iohash;
 		bx::read(&reader, iohash);
@@ -1276,7 +1283,7 @@ namespace bgfx
 
 		BX_TRACE("Shader consts %d", count);
 
-		uint8_t fragmentBit = _fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 
 		if (0 < count)
 		{
@@ -1346,7 +1353,7 @@ namespace bgfx
 
 		const DWORD* code = (const DWORD*)reader.getDataPtr();
 
-		if (_fragment)
+		if (fragment)
 		{
 			DX_CHECK(s_renderCtx->m_device->CreatePixelShader(code, (IDirect3DPixelShader9**)&m_ptr) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
@@ -2241,29 +2248,19 @@ namespace bgfx
 		s_renderCtx->m_vertexBuffers[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateVertexShader(VertexShaderHandle _handle, Memory* _mem)
+	void Context::rendererCreateShader(ShaderHandle _handle, Memory* _mem)
 	{
-		s_renderCtx->m_vertexShaders[_handle.idx].create(false, _mem);
+		s_renderCtx->m_shaders[_handle.idx].create(_mem);
 	}
 
-	void Context::rendererDestroyVertexShader(VertexShaderHandle _handle)
+	void Context::rendererDestroyShader(ShaderHandle _handle)
 	{
-		s_renderCtx->m_vertexShaders[_handle.idx].destroy();
+		s_renderCtx->m_shaders[_handle.idx].destroy();
 	}
 
-	void Context::rendererCreateFragmentShader(FragmentShaderHandle _handle, Memory* _mem)
+	void Context::rendererCreateProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh)
 	{
-		s_renderCtx->m_fragmentShaders[_handle.idx].create(true, _mem);
-	}
-
-	void Context::rendererDestroyFragmentShader(FragmentShaderHandle _handle)
-	{
-		s_renderCtx->m_fragmentShaders[_handle.idx].destroy();
-	}
-
-	void Context::rendererCreateProgram(ProgramHandle _handle, VertexShaderHandle _vsh, FragmentShaderHandle _fsh)
-	{
-		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_vertexShaders[_vsh.idx], s_renderCtx->m_fragmentShaders[_fsh.idx]);
+		s_renderCtx->m_program[_handle.idx].create(s_renderCtx->m_shaders[_vsh.idx], s_renderCtx->m_shaders[_fsh.idx]);
 	}
 
 	void Context::rendererDestroyProgram(ProgramHandle _handle)

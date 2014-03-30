@@ -326,11 +326,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Load vertex shader.
 	mem = loadShader(instancingSupported ? "vs_bump_instanced" : "vs_bump");
-	bgfx::VertexShaderHandle vsh = bgfx::createVertexShader(mem);
+	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
 
 	// Load fragment shader.
 	mem = loadShader("fs_bump");
-	bgfx::FragmentShaderHandle fsh = bgfx::createFragmentShader(mem);
+	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
@@ -339,8 +339,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// their reference is kept inside bgfx after calling createProgram.
 	// Vertex and fragment shader will be destroyed once program is
 	// destroyed.
-	bgfx::destroyVertexShader(vsh);
-	bgfx::destroyFragmentShader(fsh);
+	bgfx::destroyShader(vsh);
+	bgfx::destroyShader(fsh);
 
 	// Load diffuse texture.
 	mem = loadTexture("fieldstone-rgba.dds");

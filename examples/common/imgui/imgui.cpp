@@ -204,20 +204,20 @@ struct Imgui
 			break;
 		}
 
-		bgfx::VertexShaderHandle vsh;
-		bgfx::FragmentShaderHandle fsh;
+		bgfx::ShaderHandle vsh;
+		bgfx::ShaderHandle fsh;
 
-		vsh = bgfx::createVertexShader(vs_imgui_color);
-		fsh = bgfx::createFragmentShader(fs_imgui_color);
+		vsh = bgfx::createShader(vs_imgui_color);
+		fsh = bgfx::createShader(fs_imgui_color);
 		m_colorProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyVertexShader(vsh);
-		bgfx::destroyFragmentShader(fsh);
+		bgfx::destroyShader(vsh);
+		bgfx::destroyShader(fsh);
 
-		vsh = bgfx::createVertexShader(vs_imgui_texture);
-		fsh = bgfx::createFragmentShader(fs_imgui_texture);
+		vsh = bgfx::createShader(vs_imgui_texture);
+		fsh = bgfx::createShader(fs_imgui_texture);
 		m_textureProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyVertexShader(vsh);
-		bgfx::destroyFragmentShader(fsh);
+		bgfx::destroyShader(vsh);
+		bgfx::destroyShader(fsh);
 
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, 15.0f, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_cdata);

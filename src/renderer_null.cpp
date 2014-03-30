@@ -81,23 +81,15 @@ namespace bgfx
 	{
 	}
 
-	void Context::rendererCreateVertexShader(VertexShaderHandle /*_handle*/, Memory* /*_mem*/)
+	void Context::rendererCreateShader(ShaderHandle /*_handle*/, Memory* /*_mem*/)
 	{
 	}
 
-	void Context::rendererDestroyVertexShader(VertexShaderHandle /*_handle*/)
+	void Context::rendererDestroyShader(ShaderHandle /*_handle*/)
 	{
 	}
 
-	void Context::rendererCreateFragmentShader(FragmentShaderHandle /*_handle*/, Memory* /*_mem*/)
-	{
-	}
-
-	void Context::rendererDestroyFragmentShader(FragmentShaderHandle /*_handle*/)
-	{
-	}
-
-	void Context::rendererCreateProgram(ProgramHandle /*_handle*/, VertexShaderHandle /*_vsh*/, FragmentShaderHandle /*_fsh*/)
+	void Context::rendererCreateProgram(ProgramHandle /*_handle*/, ShaderHandle /*_vsh*/, ShaderHandle /*_fsh*/)
 	{
 	}
 

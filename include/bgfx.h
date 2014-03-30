@@ -448,15 +448,14 @@ namespace bgfx
 
 	BGFX_HANDLE(DynamicIndexBufferHandle);
 	BGFX_HANDLE(DynamicVertexBufferHandle);
-	BGFX_HANDLE(FragmentShaderHandle);
+	BGFX_HANDLE(FrameBufferHandle);
 	BGFX_HANDLE(IndexBufferHandle);
 	BGFX_HANDLE(ProgramHandle);
-	BGFX_HANDLE(FrameBufferHandle);
+	BGFX_HANDLE(ShaderHandle);
 	BGFX_HANDLE(TextureHandle);
 	BGFX_HANDLE(UniformHandle);
 	BGFX_HANDLE(VertexBufferHandle);
 	BGFX_HANDLE(VertexDeclHandle);
-	BGFX_HANDLE(VertexShaderHandle);
 
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used only for OpenGL binary shaders.
@@ -861,19 +860,12 @@ namespace bgfx
 	///
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
-	/// Create vertex shader from memory buffer.
-	VertexShaderHandle createVertexShader(const Memory* _mem);
+	/// Create shader from memory buffer.
+	ShaderHandle createShader(const Memory* _mem);
 
-	/// Destroy vertex shader. Once program is created with vertex shader
-	/// it is safe to destroy vertex shader.
-	void destroyVertexShader(VertexShaderHandle _handle);
-
-	/// Create fragment shader from memory buffer.
-	FragmentShaderHandle createFragmentShader(const Memory* _mem);
-
-	/// Destroy fragment shader. Once program is created with fragment shader
-	/// it is safe to destroy fragment shader.
-	void destroyFragmentShader(FragmentShaderHandle _handle);
+	/// Destroy shader. Once program is created with shader it is safe to
+	/// destroy shader.
+	void destroyShader(ShaderHandle _handle);
 
 	/// Create program with vertex and fragment shaders.
 	///
@@ -884,7 +876,7 @@ namespace bgfx
 	/// @returns Program handle if vertex shader output and fragment shader
 	///   input are matching, otherwise returns invalid program handle.
 	///
-	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh, bool _destroyShaders = false);
+	ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders = false);
 
 	/// Destroy program.
 	void destroyProgram(ProgramHandle _handle);

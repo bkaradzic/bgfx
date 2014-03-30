@@ -323,7 +323,7 @@ namespace bgfx
 #else
 		mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
 #endif // BGFX_CONFIG_RENDERER_
-		VertexShaderHandle vsh = createVertexShader(mem);
+		ShaderHandle vsh = createShader(mem);
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 		mem = makeRef(fs_debugfont_dx9, sizeof(fs_debugfont_dx9) );
@@ -332,11 +332,9 @@ namespace bgfx
 #else
 		mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
 #endif // BGFX_CONFIG_RENDERER_
-		FragmentShaderHandle fsh = createFragmentShader(mem);
+		ShaderHandle fsh = createShader(mem);
 
-		m_program = createProgram(vsh, fsh);
-		destroyVertexShader(vsh);
-		destroyFragmentShader(fsh);
+		m_program = createProgram(vsh, fsh, true);
 
 		m_vb = s_ctx->createTransientVertexBuffer(numBatchVertices*m_decl.m_stride, &m_decl);
 		m_ib = s_ctx->createTransientIndexBuffer(numBatchIndices*2);
@@ -472,7 +470,7 @@ namespace bgfx
 		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
 		m_decl.end();
 
-		VertexShaderHandle vsh = createVertexShader(
+		ShaderHandle vsh = createShader(
 #	if BGFX_CONFIG_RENDERER_DIRECT3D11
 			makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) )
 #	elif BGFX_CONFIG_RENDERER_OPENGL
@@ -495,12 +493,12 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
 		{
-			FragmentShaderHandle fsh = createFragmentShader(fragMem[ii]);
+			ShaderHandle fsh = createShader(fragMem[ii]);
 			m_program[ii] = createProgram(vsh, fsh);
-			destroyFragmentShader(fsh);
+			destroyShader(fsh);
 		}
 
-		destroyVertexShader(vsh);
+		destroyShader(vsh);
 
 		m_vb = s_ctx->createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
 
@@ -1008,8 +1006,7 @@ namespace bgfx
 		CHECK_HANDLE_LEAK(m_indexBufferHandle);
 		CHECK_HANDLE_LEAK(m_vertexDeclHandle);
 		CHECK_HANDLE_LEAK(m_vertexBufferHandle);
-		CHECK_HANDLE_LEAK(m_vertexShaderHandle);
-		CHECK_HANDLE_LEAK(m_fragmentShaderHandle);
+		CHECK_HANDLE_LEAK(m_shaderHandle);
 		CHECK_HANDLE_LEAK(m_programHandle);
 		CHECK_HANDLE_LEAK(m_textureHandle);
 		CHECK_HANDLE_LEAK(m_frameBufferHandle);
@@ -1051,14 +1048,9 @@ namespace bgfx
 			destroyVertexBufferInternal(_frame->m_freeVertexBufferHandle[ii]);
 		}
 
-		for (uint16_t ii = 0, num = _frame->m_numFreeVertexShaderHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = _frame->m_numFreeShaderHandles; ii < num; ++ii)
 		{
-			m_vertexShaderHandle.free(_frame->m_freeVertexShaderHandle[ii].idx);
-		}
-
-		for (uint16_t ii = 0, num = _frame->m_numFreeFragmentShaderHandles; ii < num; ++ii)
-		{
-			m_fragmentShaderHandle.free(_frame->m_freeFragmentShaderHandle[ii].idx);
+			m_shaderHandle.free(_frame->m_freeShaderHandle[ii].idx);
 		}
 
 		for (uint16_t ii = 0, num = _frame->m_numFreeProgramHandles; ii < num; ++ii)
@@ -1433,49 +1425,26 @@ namespace bgfx
 				}
 				break;
 
-			case CommandBuffer::CreateVertexShader:
+			case CommandBuffer::CreateShader:
 				{
-					VertexShaderHandle handle;
+					ShaderHandle handle;
 					_cmdbuf.read(handle);
 
 					Memory* mem;
 					_cmdbuf.read(mem);
 
-					rendererCreateVertexShader(handle, mem);
+					rendererCreateShader(handle, mem);
 
 					release(mem);
 				}
 				break;
 
-			case CommandBuffer::DestroyVertexShader:
+			case CommandBuffer::DestroyShader:
 				{
-					VertexShaderHandle handle;
+					ShaderHandle handle;
 					_cmdbuf.read(handle);
 
-					rendererDestroyVertexShader(handle);
-				}
-				break;
-
-			case CommandBuffer::CreateFragmentShader:
-				{
-					FragmentShaderHandle handle;
-					_cmdbuf.read(handle);
-
-					Memory* mem;
-					_cmdbuf.read(mem);
-
-					rendererCreateFragmentShader(handle, mem);
-
-					release(mem);
-				}
-				break;
-
-			case CommandBuffer::DestroyFragmentShader:
-				{
-					FragmentShaderHandle handle;
-					_cmdbuf.read(handle);
-
-					rendererDestroyFragmentShader(handle);
+					rendererDestroyShader(handle);
 				}
 				break;
 
@@ -1484,10 +1453,10 @@ namespace bgfx
 					ProgramHandle handle;
 					_cmdbuf.read(handle);
 
-					VertexShaderHandle vsh;
+					ShaderHandle vsh;
 					_cmdbuf.read(vsh);
 
-					FragmentShaderHandle fsh;
+					ShaderHandle fsh;
 					_cmdbuf.read(fsh);
 
 					rendererCreateProgram(handle, vsh, fsh);
@@ -1853,41 +1822,28 @@ namespace bgfx
 		return s_ctx->allocInstanceDataBuffer(_num, _stride);
 	}
 
-	VertexShaderHandle createVertexShader(const Memory* _mem)
+	ShaderHandle createShader(const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createVertexShader(_mem);
+		return s_ctx->createShader(_mem);
 	}
 
-	void destroyVertexShader(VertexShaderHandle _handle)
+	void destroyShader(ShaderHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->destroyVertexShader(_handle);
+		s_ctx->destroyShader(_handle);
 	}
 
-	FragmentShaderHandle createFragmentShader(const Memory* _mem)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createFragmentShader(_mem);
-	}
-
-	void destroyFragmentShader(FragmentShaderHandle _handle)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->destroyFragmentShader(_handle);
-	}
-
-	ProgramHandle createProgram(VertexShaderHandle _vsh, FragmentShaderHandle _fsh, bool _destroyShaders)
+	ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		ProgramHandle handle = s_ctx->createProgram(_vsh, _fsh);
 
 		if (_destroyShaders)
 		{
-			destroyVertexShader(_vsh);
-			destroyFragmentShader(_fsh);
+			destroyShader(_vsh);
+			destroyShader(_fsh);
 		}
 
 		return handle;
