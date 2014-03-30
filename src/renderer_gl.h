@@ -99,6 +99,10 @@ typedef uint64_t GLuint64;
 #	define GL_BGRA_EXT 0x80E1
 #endif // GL_BGRA_EXT
 
+#ifndef GL_R8
+#	define GL_R8 0x8229
+#endif // GL_R8
+
 #ifndef GL_R16
 #	define GL_R16 0x822A
 #endif // GL_R16

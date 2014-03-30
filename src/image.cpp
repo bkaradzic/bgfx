@@ -69,7 +69,7 @@ namespace bgfx
 		"<unknown>", // Unknown
 		"R8",        // R8
 		"R16",       // R16
-		"R16F"       // R16F
+		"R16F",      // R16F
 		"BGRA8",     // BGRA8
 		"RGBA16",    // RGBA16
 		"RGBA16F",   // RGBA16F

@@ -1373,13 +1373,14 @@ namespace bgfx
 				}
 			}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
 			{
 				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
 			}
 
+#if BGFX_CONFIG_RENDERER_OPENGL
 			if (s_extension[Extension::ARB_debug_output].m_supported
 			||  s_extension[Extension::KHR_debug].m_supported)
 			{
@@ -2540,7 +2541,7 @@ namespace bgfx
 					}
 				}
 
-				writeString(&writer, "precision highp float;\n");
+				writeString(&writer, "precision mediump float;\n");
 
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
@@ -2570,14 +2571,7 @@ namespace bgfx
 					memcpy(insert + 2, "fx", 2);
 				}
 			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
-			{
-				writeString(&writer, "precision highp float;\n");
-
-				bx::write(&writer, code, codeLen);
-				bx::write(&writer, '\0');
-			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL != 0 && BGFX_CONFIG_RENDERER_OPENGL <= 21) )
 			{
 				bool usesTextureLod = s_extension[Extension::ARB_shader_texture_lod].m_supported
 					&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
@@ -2601,9 +2595,21 @@ namespace bgfx
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
 			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
+				 ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
 			{
-				writeString(&writer, "#version 140\n");
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+				{
+					writeString(&writer
+						, "#version 300 es\n"
+						  "precision mediump float;\n"
+						);
+				}
+				else
+				{
+					writeString(&writer, "#version 140\n");
+				}
+
 				if (_type == GL_FRAGMENT_SHADER)
 				{
 					writeString(&writer, "#define varying in\n");
@@ -2625,11 +2631,14 @@ namespace bgfx
 					writeString(&writer, "#define varying out\n");
 				}
 
-				writeString(&writer
-						, "#define lowp\n"
-						  "#define mediump\n"
-						  "#define highp\n"
-						);
+				if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+				{
+					writeString(&writer
+							, "#define lowp\n"
+							  "#define mediump\n"
+							  "#define highp\n"
+							);
+				}
 
 				bx::write(&writer, code, codeLen);
 				bx::write(&writer, '\0');
