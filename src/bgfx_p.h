@@ -1292,7 +1292,6 @@ namespace bgfx
 			m_numFreeIndexBufferHandles = 0;
 			m_numFreeVertexDeclHandles = 0;
 			m_numFreeVertexBufferHandles = 0;
-			m_numFreeVertexShaderHandles = 0;
 			m_numFreeShaderHandles = 0;
 			m_numFreeProgramHandles = 0;
 			m_numFreeTextureHandles = 0;
@@ -1339,7 +1338,6 @@ namespace bgfx
 		uint16_t m_numFreeIndexBufferHandles;
 		uint16_t m_numFreeVertexDeclHandles;
 		uint16_t m_numFreeVertexBufferHandles;
-		uint16_t m_numFreeVertexShaderHandles;
 		uint16_t m_numFreeShaderHandles;
 		uint16_t m_numFreeProgramHandles;
 		uint16_t m_numFreeTextureHandles;
