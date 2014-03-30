@@ -48,6 +48,8 @@ namespace bgfx
 		};
 
 		NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:pixelFormatAttributes];
+		BGFX_FATAL(NULL != pixelFormat, Fatal::UnableToInitialize, "Failed to initialize pixel format.");
+
 		NSRect glViewRect = [[nsWindow contentView] bounds];
 		NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
 		
@@ -55,6 +57,7 @@ namespace bgfx
 		[nsWindow setContentView:glView];
 		
 		NSOpenGLContext* glContext = [glView openGLContext];
+		BGFX_FATAL(NULL != glContext, Fatal::UnableToInitialize, "Failed to initialize GL context.");
 
 		[glContext makeCurrentContext];
 		GLint interval = 0;
@@ -62,7 +65,7 @@ namespace bgfx
 		
 		m_view    = glView;
 		m_context = glContext;
-		
+
 		import();
 	}
 

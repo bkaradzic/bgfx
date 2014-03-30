@@ -232,7 +232,6 @@ namespace entry
 							break;
 
 						case SDL_WINDOWEVENT_CLOSE:
-							DBG("SDL_WINDOWEVENT_CLOSE");
 							m_eventQueue.postExitEvent();
 							exit = true;
 							break;

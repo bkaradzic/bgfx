@@ -10,10 +10,15 @@
 
 #include "entry.h"
 
-#if !defined(ENTRY_CONFIG_USE_SDL) && \
-	!defined(ENTRY_CONFIG_USE_NATIVE)
+#ifndef ENTRY_CONFIG_USE_SDL
 #	define ENTRY_CONFIG_USE_SDL 0
+#endif // ENTRY_CONFIG_USE_SDL
+
+#if !ENTRY_CONFIG_USE_SDL && \
+	!defined(ENTRY_CONFIG_USE_NATIVE)
 #	define ENTRY_CONFIG_USE_NATIVE 1
+#else
+#	define ENTRY_CONFIG_USE_NATIVE 0
 #endif // ...
 
 #if !defined(ENTRY_DEFAULT_WIDTH) && !defined(ENTRY_DEFAULT_HEIGHT)
