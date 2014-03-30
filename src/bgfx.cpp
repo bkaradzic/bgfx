@@ -664,10 +664,8 @@ namespace bgfx
 		return RendererType::Direct3D11;
 #elif BGFX_CONFIG_RENDERER_OPENGL
 		return RendererType::OpenGL;
-#elif BGFX_CONFIG_RENDERER_OPENGLES2
-		return RendererType::OpenGLES2;
-#elif BGFX_CONFIG_RENDERER_OPENGLES3
-		return RendererType::OpenGLES3;
+#elif BGFX_CONFIG_RENDERER_OPENGLES
+		return RendererType::OpenGLES;
 #else
 		return RendererType::Null;
 #endif // BGFX_CONFIG_RENDERER_

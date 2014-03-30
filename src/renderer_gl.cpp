@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 
-#if (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
+#if (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
@@ -751,7 +751,10 @@ namespace bgfx
 				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
 
-				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) ? GL_DEPTH_ATTACHMENT : GL_DEPTH_STENCIL_ATTACHMENT;
+				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) 
+					? GL_DEPTH_ATTACHMENT 
+					: GL_DEPTH_STENCIL_ATTACHMENT
+					;
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
 
 				BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
@@ -783,7 +786,10 @@ namespace bgfx
 				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
 				uint32_t width = m_resolution.m_width;
 				uint32_t height = m_resolution.m_height;
-				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) ? GL_NEAREST : GL_LINEAR;
+				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) 
+					? GL_NEAREST 
+					: GL_LINEAR
+					;
 				GL_CHECK(glBlitFramebuffer(0
 					, 0
 					, width
@@ -842,7 +848,7 @@ namespace bgfx
 				m_vaoStateCache.invalidate();
 			}
 
-			if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2)
+			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			&&  m_samplerObjectSupport)
 			{
 				m_samplerStateCache.invalidate();
@@ -851,7 +857,8 @@ namespace bgfx
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags)
 		{
-			if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
 				{
@@ -878,7 +885,7 @@ namespace bgfx
 							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
 						}
 
-						if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2)
+						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 						||  m_shadowSamplersSupport)
 						{
 							const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
@@ -1020,7 +1027,7 @@ namespace bgfx
 			{
 #define GL_GET(_pname, _min) BX_TRACE("  " #_pname " %d (min: %d)", glGet(_pname), _min)
 				BX_TRACE("Defaults:");
-#if BGFX_CONFIG_RENDERER_OPENGL >= 41 || BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
+#if BGFX_CONFIG_RENDERER_OPENGL >= 41 || BGFX_CONFIG_RENDERER_OPENGLES
 				GL_GET(GL_MAX_FRAGMENT_UNIFORM_VECTORS, 16);
 				GL_GET(GL_MAX_VERTEX_UNIFORM_VECTORS, 128);
 				GL_GET(GL_MAX_VARYING_VECTORS, 8);
@@ -1028,7 +1035,7 @@ namespace bgfx
 				GL_GET(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, 16 * 4);
 				GL_GET(GL_MAX_VERTEX_UNIFORM_COMPONENTS, 128 * 4);
 				GL_GET(GL_MAX_VARYING_FLOATS, 8 * 4);
-#endif // BGFX_CONFIG_RENDERER_OPENGL >= 41 || BGFX_CONFIG_RENDERER_OPENGLES2 || BGFX_CONFIG_RENDERER_OPENGLES3
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 41 || BGFX_CONFIG_RENDERER_OPENGLES
 				GL_GET(GL_MAX_VERTEX_ATTRIBS, 8);
 				GL_GET(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, 8);
 				GL_GET(GL_MAX_CUBE_MAP_TEXTURE_SIZE, 16);
@@ -1164,7 +1171,7 @@ namespace bgfx
 			bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
 			s_textureFormat[TextureFormat::ETC1].m_supported |= etc1Supported;
 
-			bool etc2Supported = !!BGFX_CONFIG_RENDERER_OPENGLES3
+			bool etc2Supported = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_ES3_compatibility].m_supported
 				;
 			s_textureFormat[TextureFormat::ETC2  ].m_supported |= etc2Supported;
@@ -1210,19 +1217,19 @@ namespace bgfx
 
 			g_caps.supported |= supportedCompressedFormats;
 
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_texture_3D].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::OES_texture_3D].m_supported
 				? BGFX_CAPS_TEXTURE_3D
 				: 0
 				;
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::EXT_shadow_samplers].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_shadow_samplers].m_supported
 				? BGFX_CAPS_TEXTURE_COMPARE_ALL
 				: 0
 				;
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::OES_vertex_half_float].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::OES_vertex_half_float].m_supported
 				? BGFX_CAPS_VERTEX_ATTRIB_HALF
 				: 0
 				;
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)|s_extension[Extension::EXT_frag_depth].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_frag_depth].m_supported
 				? BGFX_CAPS_FRAGMENT_DEPTH
 				: 0
 				;
@@ -1233,12 +1240,13 @@ namespace bgfx
 				;
 			g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
 
-			if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGLES2) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				g_caps.maxFBAttachments = bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 			}
 
-			m_vaoSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+			m_vaoSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_vertex_array_object].m_supported
 				|| s_extension[Extension::OES_vertex_array_object].m_supported
 				;
@@ -1256,15 +1264,15 @@ namespace bgfx
 				GL_CHECK(glGenVertexArrays(1, &m_vao) );
 			}
 
-			m_samplerObjectSupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+			m_samplerObjectSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_sampler_objects].m_supported
 				;
 
-			m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::EXT_shadow_samplers].m_supported
 				;
 
-			m_programBinarySupport = !!BGFX_CONFIG_RENDERER_OPENGLES3
+			m_programBinarySupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_get_program_binary].m_supported
 				|| s_extension[Extension::OES_get_program_binary].m_supported
 				|| s_extension[Extension::IMG_shader_binary].m_supported
@@ -1275,7 +1283,7 @@ namespace bgfx
 				|| s_extension[Extension::EXT_texture_swizzle].m_supported
 				;
 
-			m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ANGLE_depth_texture].m_supported
 				|| s_extension[Extension::CHROMIUM_depth_texture].m_supported
 				|| s_extension[Extension::GOOGLE_depth_texture].m_supported
@@ -1345,7 +1353,7 @@ namespace bgfx
 				s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				g_caps.supported |= BGFX_CAPS_INSTANCING;
 			}
@@ -1374,7 +1382,7 @@ namespace bgfx
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
-			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
@@ -2013,7 +2021,7 @@ namespace bgfx
 						, _height
 						) );
 				}
-				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3) )
+				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 				{
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER
 						, msaaQuality
@@ -2343,7 +2351,7 @@ namespace bgfx
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES3)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_extension[Extension::APPLE_texture_max_level].m_supported)
 			{
 				GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, numMips-1) );
@@ -2366,7 +2374,7 @@ namespace bgfx
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderCtx->m_maxAnisotropy) );
 			}
 
-			if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_renderCtx->m_shadowSamplersSupport)
 			{
 				const uint32_t cmpFunc = (flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
@@ -2390,7 +2398,7 @@ namespace bgfx
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) )
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 		{
 			// GLES2 doesn't have support for sampler object.
 			setSamplerState(_flags);
@@ -2463,7 +2471,7 @@ namespace bgfx
 			char* temp = (char*)alloca(tempLen);
 			bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES2) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 			{
 				bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
 					&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
@@ -2609,9 +2617,9 @@ namespace bgfx
 				bx::write(&writer, '\0');
 			}
 			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
-				 ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+				 ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 				{
 					writeString(&writer
 						, "#version 300 es\n"
@@ -2644,7 +2652,7 @@ namespace bgfx
 					writeString(&writer, "#define varying out\n");
 				}
 
-				if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES3) )
+				if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 				{
 					writeString(&writer
 							, "#define lowp\n"
@@ -4247,4 +4255,4 @@ namespace bgfx
 	}
 }
 
-#endif // (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)
+#endif // (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)

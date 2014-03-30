@@ -390,7 +390,7 @@ GL_IMPORT______(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC,    glGetTranslat
 GL_IMPORT_ANGLE(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
 GL_IMPORT_ANGLE(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
 
-#	if BGFX_CONFIG_RENDERER_OPENGLES2
+#	if BGFX_CONFIG_RENDERER_OPENGLES < 30
 GL_IMPORT_OES__(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
 GL_IMPORT_OES__(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
 GL_IMPORT_OES__(true,  PFNGLCOMPRESSEDTEXIMAGE3DPROC,              glCompressedTexImage3D);
@@ -437,7 +437,7 @@ GL_IMPORT_NV___(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery)
 GL_IMPORT_NV___(true,  PFNGLENDQUERYPROC,                          glEndQuery);
 GL_IMPORT_NV___(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
 
-#	endif // BGFX_CONFIG_RENDERER_OPENGLES2
+#	endif // BGFX_CONFIG_RENDERER_OPENGLES < 30
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
 #undef GL_IMPORT_TYPEDEFS

@@ -330,8 +330,7 @@ namespace bgfx
 			Null,
 			Direct3D9,
 			Direct3D11,
-			OpenGLES2,
-			OpenGLES3,
+			OpenGLES,
 			OpenGL,
 
 			Count

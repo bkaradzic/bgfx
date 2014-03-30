@@ -239,8 +239,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_flipV = true;
 		break;
 
-	case bgfx::RendererType::OpenGLES2:
-	case bgfx::RendererType::OpenGLES3:
+	case bgfx::RendererType::OpenGLES:
 		s_shaderPath = "shaders/gles/";
 		s_flipV = true;
 		break;

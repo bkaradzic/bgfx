@@ -1,14 +1,14 @@
 #ifndef __gl3platform_h_
 #define __gl3platform_h_
 
-/* $Revision: 15558 $ on $Date:: 2011-09-20 13:58:54 -0700 #$ */
+/* $Revision: 23328 $ on $Date:: 2013-10-02 02:28:28 -0700 #$ */
 
 /*
  * This document is licensed under the SGI Free Software B License Version
  * 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
  */
 
-/* Platform-specific types and definitions for OpenGL ES 2.X  gl3.h
+/* Platform-specific types and definitions for OpenGL ES 3.X  gl3.h
  *
  * Adopters may modify khrplatform.h and this file to suit their platform.
  * You are encouraged to submit all modifications to the Khronos group so that

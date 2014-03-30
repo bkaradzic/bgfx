@@ -43,14 +43,13 @@ namespace bgfx
 		&s_attribTypeSizeDx9,
 #elif BGFX_CONFIG_RENDERER_DIRECT3D11
 		&s_attribTypeSizeDx11,
-#elif BGFX_CONFIG_RENDERER_OPENGL|BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3
+#elif BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES
 		&s_attribTypeSizeGl,
 #else
 		&s_attribTypeSizeDx9,
 #endif // BGFX_CONFIG_RENDERER_
 		&s_attribTypeSizeDx9,
 		&s_attribTypeSizeDx11,
-		&s_attribTypeSizeGl,
 		&s_attribTypeSizeGl,
 		&s_attribTypeSizeGl,
 	};
