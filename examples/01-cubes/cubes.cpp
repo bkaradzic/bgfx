@@ -173,18 +173,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float at[3] = { 0.0f, 0.0f, 0.0f };
 	float eye[3] = { 0.0f, 0.0f, -35.0f };
 
-	float view[16];
-	float proj[16];
-	mtxLookAt(view, eye, at);
-	mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
-
-	// Set view and projection matrix for view 0.
-	bgfx::setViewTransform(0, view, proj);
-
 	int64_t timeOffset = bx::getHPCounter();
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
+		float view[16];
+		float proj[16];
+		mtxLookAt(view, eye, at);
+		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+
+		// Set view and projection matrix for view 0.
+		bgfx::setViewTransform(0, view, proj);
+
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);
 
