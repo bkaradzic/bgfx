@@ -633,10 +633,8 @@ namespace bgfx
 		return "<unknown>";
 	}
 
-	static void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
+	void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
 	{
-		BX_UNUSED(debugProcCb(_source, _type, _id, _severity, 0, NULL, NULL) );
-
 		BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
 				, toString(_source)
 				, toString(_type)
