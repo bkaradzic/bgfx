@@ -35,7 +35,7 @@ http://theengine.co/ Loom Game Engine developed by The Engine Company. Loom
 is a powerful 2D game engine with live reloading of code and assets, a friendly
 scripting language, and an efficient command-line workflow. Here is video where
 they explain why they choose bgfx over alternatives:  
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=PHY_XHkMGIM&t=1m53s" target="_blank"><img src="http://img.youtube.com/vi/PHY_XHkMGIM/0.jpg" alt="Why did you choose bgfx?" width="240" height="180" border="10" /></a>
+<a href="https://www.youtube.com/watch?feature=player_embedded&v=PHY_XHkMGIM&t=1m53s" target="_blank"><img src="https://img.youtube.com/vi/PHY_XHkMGIM/0.jpg" alt="Why did you choose bgfx?" width="240" height="180" border="10" /></a>
 
 Examples
 --------
@@ -205,6 +205,8 @@ programatically.
 | i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | W7-asm.js    |  18 |  5832 |
 | i7-920 2.66  | ES2-FF27     | GTX650Ti  | Clang  | JIT  | W7-asm.js    |  18 |  5832 |
 | i5-4250U 1.3 | ES2-Safari7  | HD5000    | Clang  | JIT  | OSX-asm.js   |  15 |  3375 |
+
+ * [WebGL port](https://github.com/djg/webgl-drawstress-js)
 
 ### [18-ibl](https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl)
 
