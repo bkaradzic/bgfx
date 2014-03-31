@@ -352,7 +352,7 @@ namespace bgfx
 		const uint8_t* next = src + _srcPitch;
 		uint8_t* dst = (uint8_t*)_dst;
 
-		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _srcPitch)
+		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _srcPitch, dst += pitch)
 		{
 			memcpy(dst, src, pitch);
 		}
