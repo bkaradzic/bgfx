@@ -316,22 +316,34 @@ namespace bgfx
 						, mem
 						);
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = makeRef(vs_debugfont_dx9, sizeof(vs_debugfont_dx9) );
-#elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = makeRef(vs_debugfont_dx11, sizeof(vs_debugfont_dx11) );
-#else
-		mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
-#endif // BGFX_CONFIG_RENDERER_
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D9) )
+		{
+			mem = makeRef(vs_debugfont_dx9, sizeof(vs_debugfont_dx9) );
+		}
+		else if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D11) )
+		{
+			mem = makeRef(vs_debugfont_dx11, sizeof(vs_debugfont_dx11) );
+		}
+		else
+		{
+			mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
+		}
+
 		ShaderHandle vsh = createShader(mem);
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D9
-		mem = makeRef(fs_debugfont_dx9, sizeof(fs_debugfont_dx9) );
-#elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		mem = makeRef(fs_debugfont_dx11, sizeof(fs_debugfont_dx11) );
-#else
-		mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
-#endif // BGFX_CONFIG_RENDERER_
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D9) )
+		{
+			mem = makeRef(fs_debugfont_dx9, sizeof(fs_debugfont_dx9) );
+		}
+		else if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D11) )
+		{
+			mem = makeRef(fs_debugfont_dx11, sizeof(fs_debugfont_dx11) );
+		}
+		else
+		{
+			mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
+		}
+
 		ShaderHandle fsh = createShader(mem);
 
 		m_program = createProgram(vsh, fsh, true);
@@ -464,68 +476,70 @@ namespace bgfx
 	void ClearQuad::init()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-#if BGFX_CONFIG_CLEAR_QUAD
-		m_decl.begin();
-		m_decl.add(Attrib::Position, 3, AttribType::Float);
-		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
-		m_decl.end();
 
-		ShaderHandle vsh = createShader(
-#	if BGFX_CONFIG_RENDERER_DIRECT3D11
-			makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) )
-#	elif BGFX_CONFIG_RENDERER_OPENGL
-			makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) )
-#	endif // BGFX_CONFIG_RENDERER_*
-			);
-
-		const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-#	if BGFX_CONFIG_RENDERER_DIRECT3D11
-		fragMem[0] = makeRef(fs_clear0_dx11, sizeof(fs_clear0_dx11) );
-		fragMem[1] = makeRef(fs_clear1_dx11, sizeof(fs_clear1_dx11) );
-		fragMem[2] = makeRef(fs_clear2_dx11, sizeof(fs_clear2_dx11) );
-		fragMem[3] = makeRef(fs_clear3_dx11, sizeof(fs_clear3_dx11) );
-#	elif BGFX_CONFIG_RENDERER_OPENGL
-		fragMem[0] = makeRef(fs_clear0_glsl, sizeof(fs_clear0_glsl) );
-		fragMem[1] = makeRef(fs_clear1_glsl, sizeof(fs_clear1_glsl) );
-		fragMem[2] = makeRef(fs_clear2_glsl, sizeof(fs_clear2_glsl) );
-		fragMem[3] = makeRef(fs_clear3_glsl, sizeof(fs_clear3_glsl) );
-#	endif // BGFX_CONFIG_RENDERER_*
-
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+		if (BX_ENABLED(BGFX_CONFIG_CLEAR_QUAD) )
 		{
-			ShaderHandle fsh = createShader(fragMem[ii]);
-			m_program[ii] = createProgram(vsh, fsh);
-			destroyShader(fsh);
+			m_decl.begin();
+			m_decl.add(Attrib::Position, 3, AttribType::Float);
+			m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
+			m_decl.end();
+
+			ShaderHandle vsh;
+			
+			const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D11) )
+			{
+				vsh = createShader(makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) ) );
+				fragMem[0] = makeRef(fs_clear0_dx11, sizeof(fs_clear0_dx11) );
+				fragMem[1] = makeRef(fs_clear1_dx11, sizeof(fs_clear1_dx11) );
+				fragMem[2] = makeRef(fs_clear2_dx11, sizeof(fs_clear2_dx11) );
+				fragMem[3] = makeRef(fs_clear3_dx11, sizeof(fs_clear3_dx11) );
+			}
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			{
+				vsh = createShader(makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) ) );
+				fragMem[0] = makeRef(fs_clear0_glsl, sizeof(fs_clear0_glsl) );
+				fragMem[1] = makeRef(fs_clear1_glsl, sizeof(fs_clear1_glsl) );
+				fragMem[2] = makeRef(fs_clear2_glsl, sizeof(fs_clear2_glsl) );
+				fragMem[3] = makeRef(fs_clear3_glsl, sizeof(fs_clear3_glsl) );
+			}
+
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+			{
+				ShaderHandle fsh = createShader(fragMem[ii]);
+				m_program[ii] = createProgram(vsh, fsh);
+				destroyShader(fsh);
+			}
+
+			destroyShader(vsh);
+
+			m_vb = s_ctx->createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
+
+			const Memory* mem = alloc(6*sizeof(uint16_t) );
+			uint16_t* indices = (uint16_t*)mem->data;
+			indices[0] = 0;
+			indices[1] = 1;
+			indices[2] = 2;
+			indices[3] = 2;
+			indices[4] = 3;
+			indices[5] = 0;
+			m_ib = s_ctx->createIndexBuffer(mem);
 		}
-
-		destroyShader(vsh);
-
-		m_vb = s_ctx->createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
-
-		const Memory* mem = alloc(6*sizeof(uint16_t) );
-		uint16_t* indices = (uint16_t*)mem->data;
-		indices[0] = 0;
-		indices[1] = 1;
-		indices[2] = 2;
-		indices[3] = 2;
-		indices[4] = 3;
-		indices[5] = 0;
-		m_ib = s_ctx->createIndexBuffer(mem);
-#endif // BGFX_CONFIG_CLEAR_QUAD
 	}
 
 	void ClearQuad::shutdown()
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-#if BGFX_CONFIG_CLEAR_QUAD
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+		if (BX_ENABLED(BGFX_CONFIG_CLEAR_QUAD) )
 		{
-			destroyProgram(m_program[ii]);
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+			{
+				destroyProgram(m_program[ii]);
+			}
+			destroyIndexBuffer(m_ib);
+			s_ctx->destroyTransientVertexBuffer(m_vb);
 		}
-		destroyIndexBuffer(m_ib);
-		s_ctx->destroyTransientVertexBuffer(m_vb);
-#endif // BGFX_CONFIG_CLEAR_QUAD
 	}
 
 	static const char* s_predefinedName[PredefinedUniform::Count] =
@@ -989,29 +1003,30 @@ namespace bgfx
 		m_submit->destroy();
 		m_render->destroy();
 
-#if BGFX_CONFIG_DEBUG
-#	define CHECK_HANDLE_LEAK(_handleAlloc) \
-		do { \
-			BX_WARN(0 == _handleAlloc.getNumHandles() \
-				, "LEAK: " #_handleAlloc " %d (max: %d)" \
-				, _handleAlloc.getNumHandles() \
-				, _handleAlloc.getMaxHandles() \
-				); \
-		} while (0)
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+		{
+#define CHECK_HANDLE_LEAK(_handleAlloc) \
+					do { \
+						BX_WARN(0 == _handleAlloc.getNumHandles() \
+							, "LEAK: " #_handleAlloc " %d (max: %d)" \
+							, _handleAlloc.getNumHandles() \
+							, _handleAlloc.getMaxHandles() \
+							); \
+					} while (0)
 
-		CHECK_HANDLE_LEAK(m_dynamicIndexBufferHandle);
-		CHECK_HANDLE_LEAK(m_dynamicVertexBufferHandle);
-		CHECK_HANDLE_LEAK(m_indexBufferHandle);
-		CHECK_HANDLE_LEAK(m_vertexDeclHandle);
-		CHECK_HANDLE_LEAK(m_vertexBufferHandle);
-		CHECK_HANDLE_LEAK(m_shaderHandle);
-		CHECK_HANDLE_LEAK(m_programHandle);
-		CHECK_HANDLE_LEAK(m_textureHandle);
-		CHECK_HANDLE_LEAK(m_frameBufferHandle);
-		CHECK_HANDLE_LEAK(m_uniformHandle);
+			CHECK_HANDLE_LEAK(m_dynamicIndexBufferHandle);
+			CHECK_HANDLE_LEAK(m_dynamicVertexBufferHandle);
+			CHECK_HANDLE_LEAK(m_indexBufferHandle);
+			CHECK_HANDLE_LEAK(m_vertexDeclHandle);
+			CHECK_HANDLE_LEAK(m_vertexBufferHandle);
+			CHECK_HANDLE_LEAK(m_shaderHandle);
+			CHECK_HANDLE_LEAK(m_programHandle);
+			CHECK_HANDLE_LEAK(m_textureHandle);
+			CHECK_HANDLE_LEAK(m_frameBufferHandle);
+			CHECK_HANDLE_LEAK(m_uniformHandle);
 
-#	undef CHECK_HANDLE_LEAK
-#endif // BGFX_CONFIG_DEBUG
+#undef CHECK_HANDLE_LEAK
+		}
 	}
 
 	void Context::freeDynamicBuffers()
@@ -1901,8 +1916,8 @@ namespace bgfx
 
 		_numMips = bx::uint32_max(1, _numMips);
 
-#if BGFX_CONFIG_DEBUG
-		if (NULL != _mem)
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+		&&  NULL != _mem)
 		{
 			TextureInfo ti;
 			calcTextureSize(ti, _width, _height, 1, _numMips, _format);
@@ -1912,7 +1927,6 @@ namespace bgfx
 				, _mem->size
 				);
 		}
-#endif // BGFX_CONFIG_DEBUG
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
@@ -1943,8 +1957,8 @@ namespace bgfx
 
 		_numMips = bx::uint32_max(1, _numMips);
 
-#if BGFX_CONFIG_DEBUG
-		if (NULL != _mem)
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+		&&  NULL != _mem)
 		{
 			TextureInfo ti;
 			calcTextureSize(ti, _width, _height, _depth, _numMips, _format);
@@ -1954,7 +1968,6 @@ namespace bgfx
 				, _mem->size
 				);
 		}
-#endif // BGFX_CONFIG_DEBUG
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);
@@ -1984,8 +1997,8 @@ namespace bgfx
 
 		_numMips = bx::uint32_max(1, _numMips);
 
-#if BGFX_CONFIG_DEBUG
-		if (NULL != _mem)
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+		&&  NULL != _mem)
 		{
 			TextureInfo ti;
 			calcTextureSize(ti, _size, _size, 1, _numMips, _format);
@@ -1995,7 +2008,6 @@ namespace bgfx
 				, _mem->size
 				);
 		}
-#endif // BGFX_CONFIG_DEBUG
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
 		const Memory* mem = alloc(size);

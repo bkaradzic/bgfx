@@ -141,37 +141,36 @@ namespace bgfx
 
 	void dump(const VertexDecl& _decl)
 	{
-#if BGFX_CONFIG_DEBUG
-		dbgPrintf("vertexdecl %08x (%08x), stride %d\n"
-			, _decl.m_hash
-			, bx::hashMurmur2A(_decl.m_attributes)
-			, _decl.m_stride
-			);
-
-		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-			if (0xff != _decl.m_attributes[attr])
-			{
-				uint8_t num;
-				AttribType::Enum type;
-				bool normalized;
-				bool asInt;
-				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
-
-				dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
-					, attr
-					, getAttribName(Attrib::Enum(attr) )
-					, num
-					, type
-					, normalized
-					, asInt
-					, _decl.m_offset[attr]
+			dbgPrintf("vertexdecl %08x (%08x), stride %d\n"
+				, _decl.m_hash
+				, bx::hashMurmur2A(_decl.m_attributes)
+				, _decl.m_stride
 				);
+
+			for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
+			{
+				if (0xff != _decl.m_attributes[attr])
+				{
+					uint8_t num;
+					AttribType::Enum type;
+					bool normalized;
+					bool asInt;
+					_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
+
+					dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
+						, attr
+						, getAttribName(Attrib::Enum(attr) )
+						, num
+						, type
+						, normalized
+						, asInt
+						, _decl.m_offset[attr]
+					);
+				}
 			}
 		}
-#else
-		BX_UNUSED(_decl);
-#endif // BGFX_CONFIG_DEBUG
 	}
 
 	void vertexPack(const float _input[4], bool _inputNormalized, Attrib::Enum _attr, const VertexDecl& _decl, void* _data, uint32_t _index)

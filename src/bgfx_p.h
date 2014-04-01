@@ -149,12 +149,14 @@ namespace stl
 #	else
 #		define BGFX_RENDERER_NAME "OpenGL 2.1"
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
-#elif BGFX_CONFIG_RENDERER_OPENGLES == 30
-#	define BGFX_RENDERER_NAME "OpenGL ES 3.0"
-#elif BGFX_CONFIG_RENDERER_OPENGLES == 31
-#	define BGFX_RENDERER_NAME "OpenGL ES 3.1"
 #elif BGFX_CONFIG_RENDERER_OPENGLES
-#	define BGFX_RENDERER_NAME "OpenGL ES 2.0"
+#	if BGFX_CONFIG_RENDERER_OPENGLES == 30
+#		define BGFX_RENDERER_NAME "OpenGL ES 3.0"
+#	elif BGFX_CONFIG_RENDERER_OPENGLES == 31
+#		define BGFX_RENDERER_NAME "OpenGL ES 3.1"
+#	else
+#		define BGFX_RENDERER_NAME "OpenGL ES 2.0"
+#	endif // BGFX_CONFIG_RENDERER_OPENGLES
 #else
 #	define BGFX_RENDERER_NAME "NULL"
 #endif // BGFX_CONFIG_RENDERER_
@@ -197,14 +199,15 @@ namespace bgfx
 
 		void intersect(const Rect& _a, const Rect& _b)
 		{
-			const uint16_t sx = bx::uint16_max(_a.m_x, _b.m_x);
-			const uint16_t sy = bx::uint16_max(_a.m_y, _b.m_y);
-			const uint16_t ex = bx::uint16_min(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
-			const uint16_t ey = bx::uint16_min(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
+			using namespace bx;
+			const uint16_t sx = uint16_max(_a.m_x, _b.m_x);
+			const uint16_t sy = uint16_max(_a.m_y, _b.m_y);
+			const uint16_t ex = uint16_min(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
+			const uint16_t ey = uint16_min(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
 			m_x = sx;
 			m_y = sy;
-			m_width  = (uint16_t)bx::uint32_satsub(ex, sx);
-			m_height = (uint16_t)bx::uint32_satsub(ey, sy);
+			m_width  = (uint16_t)uint32_satsub(ex, sx);
+			m_height = (uint16_t)uint32_satsub(ey, sy);
 		}
 
 		uint16_t m_x;
