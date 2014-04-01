@@ -181,7 +181,7 @@ namespace bgfx
 		{ GL_RGB5_A1,                                  GL_RGBA,                                     GL_UNSIGNED_SHORT_5_5_5_1,      true  }, // RGB5A1
 		{ GL_RGB10_A2,                                 GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV, true  }, // RGB10A2
 		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                        true  }, // UnknownDepth
-		{ GL_DEPTH_COMPONENT16,                        GL_DEPTH_COMPONENT,                          GL_SHORT,                       false }, // D16
+		{ GL_DEPTH_COMPONENT16,                        GL_DEPTH_COMPONENT,                          GL_UNSIGNED_SHORT,              false }, // D16
 		{ GL_DEPTH_COMPONENT24,                        GL_DEPTH_COMPONENT,                          GL_UNSIGNED_INT,                false }, // D24
 		{ GL_DEPTH24_STENCIL8,                         GL_DEPTH_STENCIL,                            GL_UNSIGNED_INT_24_8,           false }, // D24S8
 		{ GL_DEPTH_COMPONENT32,                        GL_DEPTH_COMPONENT,                          GL_UNSIGNED_INT,                false }, // D32
@@ -738,7 +738,8 @@ namespace bgfx
 
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
-			if (1 < _msaa)
+			if (0 == m_msaaBackBufferFbo // iOS
+			&&  1 < _msaa)
 			{
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
@@ -766,7 +767,8 @@ namespace bgfx
 
 		void destroyMsaaFbo()
 		{
-			if (0 != m_msaaBackBufferFbo)
+			if (m_backBufferFbo != m_msaaBackBufferFbo // iOS
+			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
@@ -776,7 +778,8 @@ namespace bgfx
 
 		void blitMsaaFbo()
 		{
-			if (0 != m_msaaBackBufferFbo)
+			if (m_backBufferFbo != m_msaaBackBufferFbo // iOS
+			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
@@ -813,7 +816,7 @@ namespace bgfx
 					m_glctx.create(_width, _height);
 
 #if BX_PLATFORM_IOS
-					// BK - Temp, need to figure out how to deal with FBO created by context.
+					// iOS: need to figure out how to deal with FBO created by context.
 					m_backBufferFbo = m_glctx.m_fbo;
 					m_msaaBackBufferFbo = m_glctx.m_fbo;
 #endif // BX_PLATFORM_IOS
@@ -1985,15 +1988,14 @@ namespace bgfx
 				m_type = tfi.m_type;
 			}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-			if (TextureFormat::BGRA8 == m_textureFormat
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			&&  TextureFormat::BGRA8 == m_textureFormat
 			&&  GL_RGBA == m_fmt
 			&&  s_renderCtx->m_textureSwizzleSupport)
 			{
 				GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
 				GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
 			}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 		}
 
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
@@ -2396,12 +2398,14 @@ namespace bgfx
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+		&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 		{
 			// GLES2 doesn't have support for sampler object.
 			setSamplerState(_flags);
 		}
-		else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL < 31) )
+		else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL < 31) )
 		{
 			// In case that GL 2.1 sampler object is supported via extension.
 			if (s_renderCtx->m_samplerObjectSupport)

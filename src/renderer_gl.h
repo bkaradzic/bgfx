@@ -64,7 +64,6 @@ typedef uint64_t GLuint64;
 #		define GL_RGB10_A2 GL_RGB10_A2_EXT
 #		define GL_R16F GL_R16F_EXT
 #		define GL_R32F GL_R32F_EXT
-#		define GL_RED GL_RED_EXT
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_TEXTURE_3D GL_TEXTURE_3D_OES
 #		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
@@ -115,9 +114,17 @@ typedef uint64_t GLuint64;
 #	define GL_R32F_EXT 0x822E
 #endif // GL_R32F_EXT
 
-#ifndef GL_RED_EXT
-#	define GL_RED_EXT 0x1903
-#endif // GL_RED_EXT
+#ifndef GL_RED
+#	define GL_RED 0x1903
+#endif // GL_RED
+
+#ifndef GL_GREEN
+#	define GL_GREEN 0x1904
+#endif // GL_GREEN
+
+#ifndef GL_BLUE
+#	define GL_BLUE 0x1905
+#endif // GL_BLUE
 
 #ifndef GL_RGB10_A2_EXT
 #	define GL_RGB10_A2_EXT 0x8059
@@ -214,6 +221,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
 #	define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
 #endif // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+
+#ifndef GL_TEXTURE_SWIZZLE_RGBA
+#	define GL_TEXTURE_SWIZZLE_RGBA 0x8E46
+#endif // GL_TEXTURE_SWIZZLE_RGBA
 
 #ifndef GL_MAX_SAMPLES
 #	define GL_MAX_SAMPLES 0x8D57
