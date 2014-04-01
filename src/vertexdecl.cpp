@@ -9,6 +9,7 @@
 #include <bx/uint32_t.h>
 #include <bx/string.h>
 
+#include "config.h"
 #include "vertexdecl.h"
 
 namespace bgfx
