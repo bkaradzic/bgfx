@@ -1382,8 +1382,8 @@ namespace bgfx
 				}
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
-			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
+//			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
@@ -2641,8 +2641,18 @@ namespace bgfx
 					writeString(&writer, "#define texture2D texture\n");
 					writeString(&writer, "#define texture2DLod textureLod\n");
 					writeString(&writer, "#define texture2DProj textureProj\n");
-					writeString(&writer, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
-					writeString(&writer, "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) ) )\n");
+
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					{
+						writeString(&writer, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
+						writeString(&writer, "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) ) )\n");
+					}
+					else
+					{
+						writeString(&writer, "#define shadow2D(_sampler, _coord) (textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
+						writeString(&writer, "#define shadow2DProj(_sampler, _coord) (textureProj(_sampler, _coord) ) )\n");
+					}
+
 					writeString(&writer, "#define texture3D texture\n");
 					writeString(&writer, "#define texture3DLod textureLod\n");
 					writeString(&writer, "#define textureCube texture\n");
