@@ -1382,11 +1382,11 @@ namespace bgfx
 				}
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
-//			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
-// 				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
-// 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
+				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
+				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
 			}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
