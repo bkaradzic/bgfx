@@ -61,9 +61,6 @@ typedef uint64_t GLuint64;
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
 #		define GL_RGBA8 GL_RGBA8_OES
-#		define GL_RGB10_A2 GL_RGB10_A2_EXT
-#		define GL_R16F GL_R16F_EXT
-#		define GL_R32F GL_R32F_EXT
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_TEXTURE_3D GL_TEXTURE_3D_OES
 #		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
@@ -94,9 +91,9 @@ typedef uint64_t GLuint64;
 #	define GL_LUMINANCE 0x1909
 #endif // GL_LUMINANCE
 
-#ifndef GL_BGRA_EXT
-#	define GL_BGRA_EXT 0x80E1
-#endif // GL_BGRA_EXT
+#ifndef GL_BGRA
+#	define GL_BGRA 0x80E1
+#endif // GL_BGRA
 
 #ifndef GL_R8
 #	define GL_R8 0x8229
@@ -106,13 +103,13 @@ typedef uint64_t GLuint64;
 #	define GL_R16 0x822A
 #endif // GL_R16
 
-#ifndef GL_R16F_EXT
-#	define GL_R16F_EXT 0x822D
-#endif // GL_R16F_EXT
+#ifndef GL_R16F
+#	define GL_R16F 0x822D
+#endif // GL_R16F
 
-#ifndef GL_R32F_EXT
-#	define GL_R32F_EXT 0x822E
-#endif // GL_R32F_EXT
+#ifndef GL_R32F
+#	define GL_R32F 0x822E
+#endif // GL_R32F
 
 #ifndef GL_RED
 #	define GL_RED 0x1903
@@ -126,9 +123,9 @@ typedef uint64_t GLuint64;
 #	define GL_BLUE 0x1905
 #endif // GL_BLUE
 
-#ifndef GL_RGB10_A2_EXT
-#	define GL_RGB10_A2_EXT 0x8059
-#endif // GL_RGB10_A2_EXT
+#ifndef GL_RGB10_A2
+#	define GL_RGB10_A2 0x8059
+#endif // GL_RGB10_A2
 
 #ifndef GL_RGBA16
 #	define GL_RGBA16 0x805B
@@ -353,12 +350,14 @@ typedef uint64_t GLuint64;
 
 namespace bgfx
 {
+	const char* glEnumName(GLenum _enum);
+
 #define _GL_CHECK(_check, _call) \
 				do { \
 					/*BX_TRACE(#_call);*/ \
 					_call; \
 					GLenum err = glGetError(); \
-					_check(0 == err, #_call "; glError 0x%x %d", err, err); \
+					_check(0 == err, #_call "; GL error 0x%x: %s", err, glEnumName(err) ); \
 					BX_UNUSED(err); \
 				} while (0)
 

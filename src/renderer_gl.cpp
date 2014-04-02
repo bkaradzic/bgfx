@@ -1313,7 +1313,7 @@ namespace bgfx
 			if (s_extension[Extension::OES_read_format].m_supported
 			&& (s_extension[Extension::IMG_read_format].m_supported	|| s_extension[Extension::EXT_read_format_bgra].m_supported) )
 			{
-				m_readPixelsFmt = GL_BGRA_EXT;
+				m_readPixelsFmt = GL_BGRA;
 			}
 			else
 			{
@@ -1327,10 +1327,10 @@ namespace bgfx
 			{
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 				{
-					m_readPixelsFmt = GL_BGRA_EXT;
+					m_readPixelsFmt = GL_BGRA;
 				}
 
-				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA_EXT;
+				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA;
 
 				// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
 				// format to be BGRA but internal format to stay RGBA, but
@@ -1342,7 +1342,7 @@ namespace bgfx
 				// https://www.opengl.org/registry/specs/EXT/bgra.txt
 				if (!s_extension[Extension::EXT_bgra].m_supported)
 				{
-					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA_EXT;
+					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA;
 				}
 			}
 
@@ -1385,8 +1385,8 @@ namespace bgfx
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) )
 //			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
-				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
-				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
+// 				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
+// 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
 			}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -1541,11 +1541,22 @@ namespace bgfx
 		{
 			GLENUM(GL_TEXTURE);
 			GLENUM(GL_RENDERBUFFER);
+
+			GLENUM(GL_INVALID_ENUM);
+			GLENUM(GL_INVALID_VALUE);
+			GLENUM(GL_INVALID_OPERATION);
+			GLENUM(GL_OUT_OF_MEMORY);
+
+			GLENUM(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+			GLENUM(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
+//			GLENUM(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER);
+//			GLENUM(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER);
+			GLENUM(GL_FRAMEBUFFER_UNSUPPORTED);
 		}
 
 #undef GLENUM
 
-		return "UNKNOWN GLENUM!";
+		return "<GLenum?>";
 	}
 
 	UniformType::Enum convertGlType(GLenum _type)
@@ -1897,11 +1908,6 @@ namespace bgfx
 
 	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
 	{
-		if (BX_ENABLED(!BGFX_CONFIG_RENDERER_OPENGL) )
-		{
-			_internalFormat = _format; // GLES wants internal format to match format...
-		}
-
 		if (_target == GL_TEXTURE_3D)
 		{
 			GL_CHECK(glTexImage3D(_target, _level, _internalFormat, _width, _height, _depth, _border, _format, _type, _data) );
@@ -2429,6 +2435,18 @@ namespace bgfx
 		bx::write(_writer, _str, (int32_t)strlen(_str) );
 	}
 
+	void writeStringf(bx::WriterI* _writer, const char* _format, ...)
+	{
+		char temp[512];
+
+		va_list argList;
+		va_start(argList, _format);
+		int len = bx::vsnprintf(temp, BX_COUNTOF(temp), _format, argList);
+		va_end(argList);
+
+		bx::write(_writer, temp, len);
+	}
+
 	void strins(char* _str, const char* _insert)
 	{
 		size_t len = strlen(_insert);
@@ -2657,8 +2675,30 @@ namespace bgfx
 					writeString(&writer, "#define texture3DLod textureLod\n");
 					writeString(&writer, "#define textureCube texture\n");
 					writeString(&writer, "#define textureCubeLod textureLod\n");
-					writeString(&writer, "out vec4 bgfx_FragColor;\n");
-					writeString(&writer, "#define gl_FragColor bgfx_FragColor\n");
+
+					uint32_t fragData = 0;
+
+					if (!!bx::findIdentifierMatch(code, "gl_FragData") )
+					{
+						using namespace bx;
+						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[0]") ? 0 : 1);
+						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[1]") ? 0 : 2);
+						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[2]") ? 0 : 3);
+						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[3]") ? 0 : 4);
+
+						BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
+					}
+
+					if (0 != fragData)
+					{
+						writeStringf(&writer, "out vec4 bgfx_FragData[%d];\n", fragData);
+						writeString(&writer, "#define gl_FragData bgfx_FragData\n");
+					}
+					else
+					{
+						writeString(&writer, "out vec4 bgfx_FragColor;\n");
+						writeString(&writer, "#define gl_FragColor bgfx_FragColor\n");
+					}
 				}
 				else
 				{
@@ -2720,6 +2760,17 @@ namespace bgfx
 			GL_CHECK(glDeleteShader(m_id) );
 			m_id = 0;
 		}
+	}
+
+	static void frameBufferValidate()
+	{
+		GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		BX_CHECK(GL_FRAMEBUFFER_COMPLETE == complete
+			, "glCheckFramebufferStatus failed 0x%08x: %s"
+			, complete
+			, glEnumName(complete)
+		);
+		BX_UNUSED(complete);
 	}
 
 	void FrameBuffer::create(uint8_t _num, const TextureHandle* _handles)
@@ -2797,10 +2848,7 @@ namespace bgfx
 			GL_CHECK(glReadBuffer(GL_NONE) );
 		}
 
-		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
-			, "glCheckFramebufferStatus failed 0x%08x"
-			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
-			);
+		frameBufferValidate();
 
 		if (needResolve)
 		{
@@ -2831,10 +2879,7 @@ namespace bgfx
 				}
 			}
 
-			BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
-				, "glCheckFramebufferStatus failed 0x%08x"
-				, glCheckFramebufferStatus(GL_FRAMEBUFFER)
-				);
+			frameBufferValidate();
 		}
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderCtx->m_msaaBackBufferFbo) );
