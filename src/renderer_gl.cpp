@@ -654,6 +654,19 @@ namespace bgfx
 		return 0 == err ? result : 0;
 	}
 
+	void checkCmpFormat(GLint* _cmp, uint32_t _num, TextureFormat::Enum _fmt)
+	{
+		GLint glfmt = s_textureFormat[_fmt].m_fmt;
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			if (glfmt == _cmp[ii])
+			{
+				s_textureFormat[_fmt].m_supported = true;
+				break;
+			}
+		}
+	}
+
 	struct RendererContext
 	{
 		RendererContext()
@@ -1162,12 +1175,13 @@ namespace bgfx
 				|| s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
 				;
 
-			bool bc45Supported = s_extension[Extension::EXT_texture_compression_latc].m_supported
-				|| s_extension[Extension::ARB_texture_compression_rgtc].m_supported
-				|| s_extension[Extension::EXT_texture_compression_rgtc].m_supported
-				;
-			s_textureFormat[TextureFormat::BC4].m_supported |= bc45Supported;
-			s_textureFormat[TextureFormat::BC5].m_supported |= bc45Supported;
+			if (s_extension[Extension::EXT_texture_compression_latc].m_supported
+			||  s_extension[Extension::ARB_texture_compression_rgtc].m_supported
+			||  s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
+			{
+				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC4);
+				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC5);
+			}
 
 			bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
 			s_textureFormat[TextureFormat::ETC1].m_supported |= etc1Supported;
