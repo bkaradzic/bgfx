@@ -654,15 +654,16 @@ namespace bgfx
 		return 0 == err ? result : 0;
 	}
 
-	void checkCmpFormat(GLint* _cmp, uint32_t _num, TextureFormat::Enum _fmt)
+	static void checkCmpFormat(GLint* _cmp, uint32_t _num, TextureFormat::Enum _fmt, GLint _glfmt)
 	{
-		GLint glfmt = s_textureFormat[_fmt].m_fmt;
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			if (glfmt == _cmp[ii])
+			if (_glfmt == _cmp[ii])
 			{
-				s_textureFormat[_fmt].m_supported = true;
-				break;
+				s_textureFormat[_fmt].m_fmt         = _glfmt;
+				s_textureFormat[_fmt].m_internalFmt = _glfmt;
+				s_textureFormat[_fmt].m_supported   = true;
+				return;
 			}
 		}
 	}
@@ -1175,12 +1176,24 @@ namespace bgfx
 				|| s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
 				;
 
-			if (s_extension[Extension::EXT_texture_compression_latc].m_supported
-			||  s_extension[Extension::ARB_texture_compression_rgtc].m_supported
+			if (s_extension[Extension::EXT_texture_compression_latc].m_supported)
+			{
+				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC4, GL_COMPRESSED_LUMINANCE_LATC1_EXT);
+				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC5, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT);
+			}
+
+			if (s_extension[Extension::ARB_texture_compression_rgtc].m_supported
 			||  s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
 			{
-				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC4);
-				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC5);
+				s_textureFormat[TextureFormat::BC4].m_fmt         = GL_COMPRESSED_RED_RGTC1;
+				s_textureFormat[TextureFormat::BC4].m_internalFmt = GL_COMPRESSED_RED_RGTC1;
+				s_textureFormat[TextureFormat::BC4].m_supported   = true;
+				s_textureFormat[TextureFormat::BC5].m_fmt         = GL_COMPRESSED_RG_RGTC2;
+				s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RG_RGTC2;
+				s_textureFormat[TextureFormat::BC5].m_supported   = true;
+
+//				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC4, GL_COMPRESSED_RED_RGTC1);
+//				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC5, GL_COMPRESSED_RG_RGTC2);
 			}
 
 			bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
@@ -1358,14 +1371,6 @@ namespace bgfx
 				{
 					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA;
 				}
-			}
-
-			if (s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
-			{
-				s_textureFormat[TextureFormat::BC4].m_fmt = GL_COMPRESSED_RED_RGTC1_EXT;
-				s_textureFormat[TextureFormat::BC4].m_internalFmt = GL_COMPRESSED_RED_RGTC1_EXT;
-				s_textureFormat[TextureFormat::BC5].m_fmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
-				s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
