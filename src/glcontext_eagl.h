@@ -33,7 +33,7 @@ namespace bgfx
 
 		GLuint m_fbo;
 		GLuint m_colorRbo;
-		GLuint m_depthRbo;
+		GLuint m_depthStencilRbo;
 	};
 } // namespace bgfx
 
