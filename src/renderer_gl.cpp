@@ -1359,7 +1359,8 @@ namespace bgfx
 
 				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA;
 
-				// Mixing GLES and GL extensions here. OpenGL EXT_bgra wants
+				// Mixing GLES and GL extensions here. OpenGL EXT_bgra and
+                // APPLE_texture_format_BGRA8888 wants
 				// format to be BGRA but internal format to stay RGBA, but
 				// EXT_texture_format_BGRA8888 wants both format and internal
 				// format to be BGRA.
@@ -1367,7 +1368,8 @@ namespace bgfx
 				// Reference:
 				// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
 				// https://www.opengl.org/registry/specs/EXT/bgra.txt
-				if (!s_extension[Extension::EXT_bgra].m_supported)
+                // https://www.khronos.org/registry/gles/extensions/APPLE/APPLE_texture_format_BGRA8888.txt
+				if (!s_extension[Extension::EXT_bgra].m_supported && !s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 				{
 					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA;
 				}
