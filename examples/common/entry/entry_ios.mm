@@ -28,13 +28,13 @@ namespace entry
 
 	struct Context
 	{
-		Context()
+		Context(uint32_t _width, uint32_t _height)
 		{
 			const char* argv[1] = { "ios" };
 			m_mte.m_argc = 1;
 			m_mte.m_argv = const_cast<char**>(argv);
 
-			m_eventQueue.postSizeEvent(768, 1024);
+			m_eventQueue.postSizeEvent(_width, _height);
 
 			// Prevent render thread creation.
 			bgfx::renderFrame();
@@ -57,6 +57,13 @@ namespace entry
 
 	int32_t MainThreadEntry::threadFunc(void* _userData)
 	{
+        CFBundleRef mainBundle = CFBundleGetMainBundle();
+        CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+        char path[PATH_MAX];
+        if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX))
+            chdir(path);
+        CFRelease(resourcesURL);
+        
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
 		return result;
@@ -145,6 +152,36 @@ using namespace entry;
 	bgfx::renderFrame();
 }
 
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint touchLocation = [touch locationInView:self];
+    
+    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y);
+    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, MouseButton::Left, true);
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint touchLocation = [touch locationInView:self];
+    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, MouseButton::Left, false);
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint touchLocation = [touch locationInView:self];
+    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y);
+}
+
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint touchLocation = [touch locationInView:self];
+    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, MouseButton::Left, false);
+}
+
 @end
 
 @interface AppDelegate : UIResponder<UIApplicationDelegate>
@@ -173,8 +210,12 @@ using namespace entry;
 
 	[m_window addSubview: m_view];
 	[m_window makeKeyAndVisible];
+    
+    //float scaleFactor = [[UIScreen mainScreen] scale]; // should use this, but ui is too small on ipad retina
+    float scaleFactor = 1.0f;
+    [m_view setContentScaleFactor: scaleFactor ];
 
-	s_ctx = new Context;
+	s_ctx = new Context((uint32_t)(scaleFactor*rect.size.width), (uint32_t)(scaleFactor*rect.size.height));
 	return YES;
 }
 
