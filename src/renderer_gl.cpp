@@ -654,18 +654,37 @@ namespace bgfx
 		return 0 == err ? result : 0;
 	}
 
-	static void checkCmpFormat(GLint* _cmp, uint32_t _num, TextureFormat::Enum _fmt, GLint _glfmt)
+	void setTextureFormat(TextureFormat::Enum _format, GLenum _internalFmt, GLenum _fmt, GLenum _type = GL_ZERO)
 	{
-		for (uint32_t ii = 0; ii < _num; ++ii)
+		TextureFormatInfo& tfi = s_textureFormat[_format];
+		tfi.m_internalFmt = _internalFmt;
+		tfi.m_fmt         = _fmt;
+		tfi.m_type        = _type;
+	}
+
+	bool isTextureFormatValid(TextureFormat::Enum _format)
+	{
+		GLuint id;
+		GL_CHECK(glGenTextures(1, &id) );
+		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
+
+		const TextureFormatInfo& tfi = s_textureFormat[_format];
+
+		if (isCompressed(_format) )
 		{
-			if (_glfmt == _cmp[ii])
-			{
-				s_textureFormat[_fmt].m_fmt         = _glfmt;
-				s_textureFormat[_fmt].m_internalFmt = _glfmt;
-				s_textureFormat[_fmt].m_supported   = true;
-				return;
-			}
+			glCompressedTexImage2D(GL_TEXTURE_2D, 0, tfi.m_internalFmt, 16, 16, 0, (16*16*getBitsPerPixel(_format) )/8, NULL);
 		}
+		else
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, tfi.m_internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, NULL);
+		}
+
+		GLenum err = glGetError();
+		BX_WARN(0 == err, "TextureFormat::%s is not supported (%x: %s).", getName(_format), err, glEnumName(err) );
+
+		GL_CHECK(glDeleteTextures(1, &id) );
+
+		return 0 == err;
 	}
 
 	struct RendererContext
@@ -1151,7 +1170,7 @@ namespace bgfx
 				;
 
 			if (!s_textureFormat[TextureFormat::BC1].m_supported
-			&& (s_textureFormat[TextureFormat::BC2].m_supported || s_textureFormat[TextureFormat::BC3].m_supported) )
+			&& ( s_textureFormat[TextureFormat::BC2].m_supported || s_textureFormat[TextureFormat::BC3].m_supported) )
 			{
 				// If RGBA_S3TC_DXT1 is not supported, maybe RGB_S3TC_DXT1 is?
 				for (GLint ii = 0; ii < numCmpFormats; ++ii)
@@ -1178,22 +1197,15 @@ namespace bgfx
 
 			if (s_extension[Extension::EXT_texture_compression_latc].m_supported)
 			{
-				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC4, GL_COMPRESSED_LUMINANCE_LATC1_EXT);
-				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC5, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT);
+				setTextureFormat(TextureFormat::BC4, GL_COMPRESSED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_LUMINANCE_LATC1_EXT);
+				setTextureFormat(TextureFormat::BC5, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT);
 			}
 
 			if (s_extension[Extension::ARB_texture_compression_rgtc].m_supported
 			||  s_extension[Extension::EXT_texture_compression_rgtc].m_supported)
 			{
-				s_textureFormat[TextureFormat::BC4].m_fmt         = GL_COMPRESSED_RED_RGTC1;
-				s_textureFormat[TextureFormat::BC4].m_internalFmt = GL_COMPRESSED_RED_RGTC1;
-				s_textureFormat[TextureFormat::BC4].m_supported   = true;
-				s_textureFormat[TextureFormat::BC5].m_fmt         = GL_COMPRESSED_RG_RGTC2;
-				s_textureFormat[TextureFormat::BC5].m_internalFmt = GL_COMPRESSED_RG_RGTC2;
-				s_textureFormat[TextureFormat::BC5].m_supported   = true;
-
-//				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC4, GL_COMPRESSED_RED_RGTC1);
-//				checkCmpFormat(cmpFormat, numCmpFormats, TextureFormat::BC5, GL_COMPRESSED_RG_RGTC2);
+				setTextureFormat(TextureFormat::BC4, GL_COMPRESSED_RED_RGTC1, GL_COMPRESSED_RED_RGTC1);
+				setTextureFormat(TextureFormat::BC5, GL_COMPRESSED_RG_RGTC2,  GL_COMPRESSED_RG_RGTC2);
 			}
 
 			bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
@@ -1224,6 +1236,57 @@ namespace bgfx
 			bool ptc2Supported = s_extension[Extension::IMG_texture_compression_pvrtc2].m_supported;
 			s_textureFormat[TextureFormat::PTC22].m_supported |= ptc2Supported;
 			s_textureFormat[TextureFormat::PTC24].m_supported |= ptc2Supported;
+
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+			&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			{
+				setTextureFormat(TextureFormat::R16,    GL_R16UI,    GL_RED_INTEGER,  GL_UNSIGNED_SHORT);
+				setTextureFormat(TextureFormat::RGBA16, GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
+			}
+
+			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
+			||  s_extension[Extension::EXT_bgra].m_supported
+			||  s_extension[Extension::IMG_texture_format_BGRA8888].m_supported
+			||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
+			{
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+				{
+					m_readPixelsFmt = GL_BGRA;
+				}
+
+				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA;
+
+				// Mixing GLES and GL extensions here. OpenGL EXT_bgra and
+				// APPLE_texture_format_BGRA8888 wants
+				// format to be BGRA but internal format to stay RGBA, but
+				// EXT_texture_format_BGRA8888 wants both format and internal
+				// format to be BGRA.
+				//
+				// Reference:
+				// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
+				// https://www.opengl.org/registry/specs/EXT/bgra.txt
+				// https://www.khronos.org/registry/gles/extensions/APPLE/APPLE_texture_format_BGRA8888.txt
+				if (!s_extension[Extension::EXT_bgra].m_supported
+				&&  !s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
+				{
+					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA;
+				}
+
+				if (!isTextureFormatValid(TextureFormat::BGRA8) )
+				{
+					// Revert back to RGBA if texture can't be created.
+					setTextureFormat(TextureFormat::BGRA8, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+				}
+			}
+
+			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			{
+				if (TextureFormat::Unknown != ii
+				&&  TextureFormat::UnknownDepth != ii)
+				{
+					s_textureFormat[ii].m_supported = isTextureFormatValid( (TextureFormat::Enum)ii);
+				}
+			}
 
 			uint64_t supportedCompressedFormats = 0
 				| (s_textureFormat[TextureFormat::BC1   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC1    : 0)
@@ -1345,34 +1408,6 @@ namespace bgfx
 			else
 			{
 				m_readPixelsFmt = GL_RGBA;
-			}
-
-			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
-			||  s_extension[Extension::EXT_bgra].m_supported
-			||  s_extension[Extension::IMG_texture_format_BGRA8888].m_supported
-			||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
-			{
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-				{
-					m_readPixelsFmt = GL_BGRA;
-				}
-
-				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA;
-
-				// Mixing GLES and GL extensions here. OpenGL EXT_bgra and
-                // APPLE_texture_format_BGRA8888 wants
-				// format to be BGRA but internal format to stay RGBA, but
-				// EXT_texture_format_BGRA8888 wants both format and internal
-				// format to be BGRA.
-				//
-				// Reference:
-				// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
-				// https://www.opengl.org/registry/specs/EXT/bgra.txt
-                // https://www.khronos.org/registry/gles/extensions/APPLE/APPLE_texture_format_BGRA8888.txt
-				if (!s_extension[Extension::EXT_bgra].m_supported && !s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
-				{
-					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA;
-				}
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
