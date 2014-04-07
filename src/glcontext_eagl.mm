@@ -49,11 +49,12 @@ namespace bgfx
 		GL_CHECK(glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height) );
 		BX_TRACE("Screen size: %d x %d", width, height);
 
-		GL_CHECK(glGenRenderbuffers(1, &m_depthRbo) );
-		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthRbo) );
-		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height) );
-		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthRbo) );
-
+		GL_CHECK(glGenRenderbuffers(1, &m_depthStencilRbo) );
+		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencilRbo) );
+		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height) ); // from OES_packed_depth_stencil
+		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
+		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
+        
 		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 			, "glCheckFramebufferStatus failed 0x%08x"
 			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
@@ -74,10 +75,10 @@ namespace bgfx
 			m_colorRbo = 0;
 		}
 
-		if (0 != m_depthRbo)
+		if (0 != m_depthStencilRbo)
 		{
-			GL_CHECK(glDeleteRenderbuffers(1, &m_depthRbo) );
-			m_depthRbo = 0;
+			GL_CHECK(glDeleteRenderbuffers(1, &m_depthStencilRbo) );
+			m_depthStencilRbo = 0;
 		}
 
 		EAGLContext* context = (EAGLContext*)m_context;
