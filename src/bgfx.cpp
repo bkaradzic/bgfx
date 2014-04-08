@@ -484,7 +484,7 @@ namespace bgfx
 			m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
 			m_decl.end();
 
-			ShaderHandle vsh;
+			ShaderHandle vsh = BGFX_INVALID_HANDLE;
 			
 			const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D11) )
@@ -502,6 +502,10 @@ namespace bgfx
 				fragMem[1] = makeRef(fs_clear1_glsl, sizeof(fs_clear1_glsl) );
 				fragMem[2] = makeRef(fs_clear2_glsl, sizeof(fs_clear2_glsl) );
 				fragMem[3] = makeRef(fs_clear3_glsl, sizeof(fs_clear3_glsl) );
+			}
+			else
+			{
+				BX_CHECK(false, "You should not be here!");
 			}
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
