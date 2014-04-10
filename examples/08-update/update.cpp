@@ -27,7 +27,7 @@ struct PosColorVertex
 
 static bgfx::VertexDecl s_PosTexcoordDecl;
 
-static PosColorVertex s_cubeVertices[24] =
+static PosColorVertex s_cubeVertices[28] =
 {
 	{-1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f },
 	{ 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f },
@@ -58,27 +58,35 @@ static PosColorVertex s_cubeVertices[24] =
 	{-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f },
 	{ 1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f },
 	{ 1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f },
+
+	{-1.0f,  1.0f,  1.0f, -2.0f,  2.0f,  2.0f },
+	{ 1.0f,  1.0f,  1.0f,  2.0f,  2.0f,  2.0f },
+	{-1.0f, -1.0f,  1.0f, -2.0f, -2.0f,  2.0f },
+	{ 1.0f, -1.0f,  1.0f,  2.0f, -2.0f,  2.0f },
 };
 
-static const uint16_t s_cubeIndices[36] =
+static const uint16_t s_cubeIndices[42] =
 {
 	 0,  1,  2, // 0
 	 1,  3,  2,
-		  
+
 	 4,  6,  5, // 2
 	 5,  6,  7,
-		  
+
 	 8, 10,  9, // 4
 	 9, 10, 11,
-		  
+
 	12, 14, 13, // 6
 	14, 15, 13, 
-		  
+
 	16, 18, 17, // 8
 	18, 19, 17,
-		  
+
 	20, 22, 21, // 10
 	21, 22, 23,
+
+	24, 25, 26, // 
+	25, 27, 26,
 };
 
 static const char* s_shaderPath = NULL;
@@ -224,9 +232,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::TextureHandle textures[] =
 	{
-		bgfx::createTexture(loadTexture("texture_compression_bc1.dds") ),
-		bgfx::createTexture(loadTexture("texture_compression_bc2.dds") ),
-		bgfx::createTexture(loadTexture("texture_compression_bc3.dds") ),
+		bgfx::createTexture(loadTexture("texture_compression_bc1.dds"), BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
+		bgfx::createTexture(loadTexture("texture_compression_bc2.dds"), BGFX_TEXTURE_U_CLAMP),
+		bgfx::createTexture(loadTexture("texture_compression_bc3.dds"), BGFX_TEXTURE_V_CLAMP),
 		bgfx::createTexture(loadTexture("texture_compression_etc1.ktx") ),
 		bgfx::createTexture(loadTexture("texture_compression_etc2.ktx") ),
 		bgfx::createTexture(loadTexture("texture_compression_ptc12.pvr") ),
@@ -447,7 +455,31 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set vertex and index buffer.
 			bgfx::setVertexBuffer(vbh);
-			bgfx::setIndexBuffer(ibh);
+			bgfx::setIndexBuffer(ibh, 0, 6);
+
+			// Bind texture.
+			bgfx::setTexture(0, u_texColor, textures[ii]);
+
+			// Set render states.
+			bgfx::setState(BGFX_STATE_DEFAULT);
+
+			// Submit primitive for rendering to view 0.
+			bgfx::submit(1);
+		}
+
+		for (uint32_t ii = 0; ii < 3; ++ii)
+		{
+			mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + 8*2.1f, -4.0f + ii*2.1f, 0.0f);
+
+			// Set model matrix for rendering.
+			bgfx::setTransform(mtx);
+
+			// Set vertex and fragment shaders.
+			bgfx::setProgram(programCmp);
+
+			// Set vertex and index buffer.
+			bgfx::setVertexBuffer(vbh);
+			bgfx::setIndexBuffer(ibh, 36, 6);
 
 			// Bind texture.
 			bgfx::setTexture(0, u_texColor, textures[ii]);

@@ -830,7 +830,7 @@ namespace bgfx
 
 		void setSamplerState(uint8_t _stage, uint32_t _flags)
 		{
-			const uint32_t flags = _flags&(~BGFX_TEXTURE_RESERVED_MASK);
+			const uint32_t flags = _flags&( (~BGFX_TEXTURE_RESERVED_MASK) | BGFX_TEXTURE_SAMPLER_BITS_MASK);
 			if (m_samplerFlags[_stage] != flags)
 			{
 				m_samplerFlags[_stage] = flags;

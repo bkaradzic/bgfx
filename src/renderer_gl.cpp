@@ -896,7 +896,9 @@ namespace bgfx
 			{
 				if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
 				{
-					_flags = (_flags&(~BGFX_TEXTURE_RESERVED_MASK) ) | (_numMips<<BGFX_TEXTURE_RESERVED_SHIFT);
+					_flags &= ~BGFX_TEXTURE_RESERVED_MASK;
+					_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
+					_flags |= _numMips<<BGFX_TEXTURE_RESERVED_SHIFT;
 					GLuint sampler = m_samplerStateCache.find(_flags);
 
 					if (UINT32_MAX == sampler)
@@ -2403,9 +2405,8 @@ namespace bgfx
 
 	void Texture::setSamplerState(uint32_t _flags)
 	{
-		const uint32_t flags = _flags&(~BGFX_TEXTURE_RESERVED_MASK);
-		if ( (0 != (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) && m_flags != m_currentFlags)
-		||  m_currentFlags != flags)
+		const uint32_t flags = (0 != (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) ? m_flags : _flags) & BGFX_TEXTURE_SAMPLER_BITS_MASK;
+		if (flags != m_currentFlags)
 		{
 			const GLenum target = m_target;
 			const uint8_t numMips = m_numMips;

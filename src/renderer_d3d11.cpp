@@ -1059,11 +1059,7 @@ namespace bgfx
 
 		ID3D11SamplerState* getSamplerState(uint32_t _flags)
 		{
-			_flags &= BGFX_TEXTURE_MIN_MASK|BGFX_TEXTURE_MAG_MASK|BGFX_TEXTURE_MIP_MASK
-					| BGFX_TEXTURE_U_MASK|BGFX_TEXTURE_V_MASK|BGFX_TEXTURE_W_MASK
-					| BGFX_TEXTURE_COMPARE_MASK
-					;
-
+			_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
 			ID3D11SamplerState* sampler = m_samplerStateCache.find(_flags);
 			if (NULL == sampler)
 			{
