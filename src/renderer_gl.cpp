@@ -670,13 +670,16 @@ namespace bgfx
 
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 
+		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
+		void* data = alloca(size);
+
 		if (isCompressed(_format) )
 		{
-			glCompressedTexImage2D(GL_TEXTURE_2D, 0, tfi.m_internalFmt, 16, 16, 0, (16*16*getBitsPerPixel(_format) )/8, NULL);
+			glCompressedTexImage2D(GL_TEXTURE_2D, 0, tfi.m_internalFmt, 16, 16, 0, size, data);
 		}
 		else
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, tfi.m_internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, tfi.m_internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, data);
 		}
 
 		GLenum err = glGetError();
