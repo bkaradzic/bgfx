@@ -65,7 +65,7 @@ static PosColorVertex s_cubeVertices[28] =
 	{ 1.0f, -1.0f,  1.0f,  2.0f, -2.0f,  2.0f },
 };
 
-static const uint16_t s_cubeIndices[42] =
+static const uint16_t s_cubeIndices[36] =
 {
 	 0,  1,  2, // 0
 	 1,  3,  2,
@@ -84,9 +84,6 @@ static const uint16_t s_cubeIndices[42] =
 
 	20, 22, 21, // 10
 	21, 22, 23,
-
-	24, 25, 26, // 
-	25, 27, 26,
 };
 
 static const char* s_shaderPath = NULL;
@@ -478,8 +475,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setProgram(programCmp);
 
 			// Set vertex and index buffer.
-			bgfx::setVertexBuffer(vbh);
-			bgfx::setIndexBuffer(ibh, 36, 6);
+			bgfx::setVertexBuffer(vbh, 24, 4);
+			bgfx::setIndexBuffer(ibh, 0, 6);
 
 			// Bind texture.
 			bgfx::setTexture(0, u_texColor, textures[ii]);

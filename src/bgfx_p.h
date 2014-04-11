@@ -1137,10 +1137,10 @@ namespace bgfx
 			m_discard = 0 == _numIndices;
 		}
 
-		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
+		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 		{
 			BX_CHECK(_handle.idx < BGFX_CONFIG_MAX_VERTEX_BUFFERS, "Invalid vertex buffer handle. %d (< %d)", _handle.idx, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
-			m_state.m_startVertex = 0;
+			m_state.m_startVertex = _startVertex;
 			m_state.m_numVertices = _numVertices;
 			m_state.m_vertexBuffer = _handle;
 		}
@@ -2481,9 +2481,9 @@ namespace bgfx
 			m_submit->setIndexBuffer(_tib, _numIndices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices) )
+		BGFX_API_FUNC(void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices, uint32_t _startVertex) )
 		{
-			m_submit->setVertexBuffer(_handle, _numVertices);
+			m_submit->setVertexBuffer(_handle, _numVertices, _startVertex);
 		}
 
 		BGFX_API_FUNC(void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices) )

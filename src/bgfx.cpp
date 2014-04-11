@@ -2275,10 +2275,10 @@ namespace bgfx
 		s_ctx->setIndexBuffer(_tib, numIndices);
 	}
 
-	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices)
+	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setVertexBuffer(_handle, _numVertices);
+		s_ctx->setVertexBuffer(_handle, _startVertex, _numVertices);
 	}
 
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices)

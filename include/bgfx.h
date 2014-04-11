@@ -1245,7 +1245,7 @@ namespace bgfx
 	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices = UINT32_MAX);
 
 	/// Set vertex buffer for draw primitive.
-	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
+	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex = 0, uint32_t _numVertices = UINT32_MAX);
 
 	/// Set vertex buffer for draw primitive.
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
