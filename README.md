@@ -199,14 +199,16 @@ programatically.
 |:-------------|:-------------|:----------|:------:|:----:|:------------:|----:|------:|
 | i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7     |  38 | 64000+|
 | i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9     |  36 | 46656 |
+| i5-4250U 1.3 | ES2-Chrome34 | HD5000    | Clang  | JIT  | OSX-PNaCl 31 |  28 | 21952 |
 | i5-4250U 1.3 | ES2-Chrome33 | HD5000    | Clang  | JIT  | OSX-PNaCl 31 |  27 | 19683 |
+| i5-4250U 1.3 | ES2-FF28     | HD5000    | Clang  | JIT  | OSX-asm.js   |  25 | 15625 |
 | i5-4250U 1.3 | ES2-FF27     | HD5000    | Clang  | JIT  | OSX-asm.js   |  20 |  8000 |
 | i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | W7-PNaCl 31  |  20 |  8000 |
 | i7-920 2.66  | ES2-Chrome33 | GTX650Ti  | Clang  | JIT  | W7-asm.js    |  18 |  5832 |
 | i7-920 2.66  | ES2-FF27     | GTX650Ti  | Clang  | JIT  | W7-asm.js    |  18 |  5832 |
 | i5-4250U 1.3 | ES2-Safari7  | HD5000    | Clang  | JIT  | OSX-asm.js   |  15 |  3375 |
 
- * [WebGL port](https://github.com/djg/webgl-drawstress-js)
+ * [JavaScript+WebGL port](https://github.com/djg/webgl-drawstress-js)
 
 ### [18-ibl](https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl)
 
