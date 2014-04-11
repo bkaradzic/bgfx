@@ -1284,12 +1284,15 @@ namespace bgfx
 				}
 			}
 
-			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 			{
-				if (TextureFormat::Unknown != ii
-				&&  TextureFormat::UnknownDepth != ii)
+				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					s_textureFormat[ii].m_supported = isTextureFormatValid( (TextureFormat::Enum)ii);
+					if (TextureFormat::Unknown != ii
+					&&  TextureFormat::UnknownDepth != ii)
+					{
+						s_textureFormat[ii].m_supported = isTextureFormatValid( (TextureFormat::Enum)ii);
+					}
 				}
 			}
 
