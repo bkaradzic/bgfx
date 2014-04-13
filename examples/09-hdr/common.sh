@@ -6,7 +6,6 @@
 #include "../common/common.sh"
 
 uniform vec4 u_offset[16];
-uniform vec4 u_weight[16];
 uniform vec4 u_tonemap;
 
 float reinhard(float _x)

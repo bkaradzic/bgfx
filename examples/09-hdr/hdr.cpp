@@ -462,7 +462,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_mtx       = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
 	bgfx::UniformHandle u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Uniform4fv);
 	bgfx::UniformHandle u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Uniform4fv, 16);
-	bgfx::UniformHandle u_weight    = bgfx::createUniform("u_weight",   bgfx::UniformType::Uniform4fv, 16);
 
 	bgfx::ProgramHandle skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
 	bgfx::ProgramHandle lumProgram     = loadProgram("vs_hdr_lum",     "fs_hdr_lum");
@@ -772,7 +771,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyUniform(u_mtx);
 	bgfx::destroyUniform(u_tonemap);
 	bgfx::destroyUniform(u_offset);
-	bgfx::destroyUniform(u_weight);
 
 	// Shutdown bgfx.
 	bgfx::shutdown();
