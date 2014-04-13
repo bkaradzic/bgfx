@@ -621,31 +621,31 @@ namespace bgfx
 			// |                 ^          ^ ^        ^                       ^|
 			// |                 |          | |        |                       ||
 
-			uint64_t tmp0 = m_depth;
-			uint64_t tmp1 = uint64_t(m_program)<<0x18;
-			uint64_t tmp2 = uint64_t(m_trans)<<0x21;
-			uint64_t tmp3 = uint64_t(m_seq)<<0x23;
-			uint64_t tmp4 = uint64_t(m_view)<<0x2e;
-			uint64_t key = tmp0|tmp1|tmp2|tmp3|tmp4;
+			const uint64_t tmp0 = m_depth;
+			const uint64_t tmp1 = uint64_t(m_program)<<0x18;
+			const uint64_t tmp2 = uint64_t(m_trans  )<<0x21;
+			const uint64_t tmp3 = uint64_t(m_seq    )<<0x23;
+			const uint64_t tmp4 = uint64_t(m_view   )<<0x2e;
+			const uint64_t key  = tmp0|tmp1|tmp2|tmp3|tmp4;
 			return key;
 		}
 
 		void decode(uint64_t _key)
 		{
-			m_depth = _key&0xffffffff;
+			m_depth   =  _key       & 0xffffffff;
 			m_program = (_key>>0x18)&(BGFX_CONFIG_MAX_PROGRAMS-1);
-			m_trans = (_key>>0x21)&0x3;
-			m_seq = (_key>>0x23)&0x7ff;
-			m_view = (_key>>0x2e)&(BGFX_CONFIG_MAX_VIEWS-1);
+			m_trans   = (_key>>0x21)& 0x3;
+			m_seq     = (_key>>0x23)& 0x7ff;
+			m_view    = (_key>>0x2e)&(BGFX_CONFIG_MAX_VIEWS-1);
 		}
 
 		void reset()
 		{
-			m_depth = 0;
+			m_depth   = 0;
 			m_program = 0;
-			m_seq = 0;
-			m_view = 0;
-			m_trans = 0;
+			m_seq     = 0;
+			m_view    = 0;
+			m_trans   = 0;
 		}
 
 		int32_t m_depth;

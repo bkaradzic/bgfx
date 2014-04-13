@@ -1242,11 +1242,20 @@ namespace bgfx
 			s_textureFormat[TextureFormat::PTC22].m_supported |= ptc2Supported;
 			s_textureFormat[TextureFormat::PTC24].m_supported |= ptc2Supported;
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-			&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 			{
-				setTextureFormat(TextureFormat::R16,    GL_R16UI,    GL_RED_INTEGER,  GL_UNSIGNED_SHORT);
-				setTextureFormat(TextureFormat::RGBA16, GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
+				setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
+
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				{
+					setTextureFormat(TextureFormat::R16,    GL_R16UI,    GL_RED_INTEGER,  GL_UNSIGNED_SHORT);
+					setTextureFormat(TextureFormat::RGBA16, GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
+				}
+				else if (BX_ENABLED(BX_PLATFORM_IOS) )
+				{
+					setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
+					setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
+				}
 			}
 
 			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported

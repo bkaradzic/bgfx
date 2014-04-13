@@ -478,7 +478,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::FrameBufferHandle fbh;
 	bgfx::TextureHandle fbtextures[] =
 	{
-		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
 		bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
 	};
 	fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
@@ -539,12 +539,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::destroyFrameBuffer(bright);
 			bgfx::destroyFrameBuffer(blur);
 
-			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
+			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT)|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
 			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
 			fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
 			bright = bgfx::createFrameBuffer(width/2, height/2, bgfx::TextureFormat::BGRA8);
-			blur = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
+			blur   = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
 		}
 
 		imguiBeginFrame(mouseState.m_mx
