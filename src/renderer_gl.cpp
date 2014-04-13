@@ -1305,7 +1305,7 @@ namespace bgfx
 				}
 			}
 
-			uint64_t supportedCompressedFormats = 0
+			uint64_t supportedTextureFormats = 0
 				| (s_textureFormat[TextureFormat::BC1   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC1    : 0)
 				| (s_textureFormat[TextureFormat::BC2   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC2    : 0)
 				| (s_textureFormat[TextureFormat::BC3   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_BC3    : 0)
@@ -1321,9 +1321,18 @@ namespace bgfx
 				| (s_textureFormat[TextureFormat::PTC12A].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC12A : 0)
 				| (s_textureFormat[TextureFormat::PTC22 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC22  : 0)
 				| (s_textureFormat[TextureFormat::PTC24 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_PTC24  : 0)
+				| 0
+				| (s_textureFormat[TextureFormat::D16   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D16    : 0)
+				| (s_textureFormat[TextureFormat::D24   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D24    : 0)
+				| (s_textureFormat[TextureFormat::D24S8 ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D24S8  : 0)
+				| (s_textureFormat[TextureFormat::D32   ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D32    : 0)
+				| (s_textureFormat[TextureFormat::D16F  ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D16F   : 0)
+				| (s_textureFormat[TextureFormat::D24F  ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D24F   : 0)
+				| (s_textureFormat[TextureFormat::D32F  ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D32F   : 0)
+				| (s_textureFormat[TextureFormat::D0S8  ].m_supported ? BGFX_CAPS_TEXTURE_FORMAT_D0S8   : 0)
 				;
 
-			g_caps.supported |= supportedCompressedFormats;
+			g_caps.supported |= supportedTextureFormats;
 
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::OES_texture_3D].m_supported
 				? BGFX_CAPS_TEXTURE_3D
@@ -1383,7 +1392,7 @@ namespace bgfx
 			m_programBinarySupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_get_program_binary].m_supported
 				|| s_extension[Extension::OES_get_program_binary].m_supported
-				|| s_extension[Extension::IMG_shader_binary].m_supported
+				|| s_extension[Extension::IMG_shader_binary     ].m_supported
 				;
 
 			m_textureSwizzleSupport = false
@@ -1392,17 +1401,17 @@ namespace bgfx
 				;
 
 			m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-				|| s_extension[Extension::ANGLE_depth_texture].m_supported
-				|| s_extension[Extension::CHROMIUM_depth_texture].m_supported
-				|| s_extension[Extension::GOOGLE_depth_texture].m_supported
-				|| s_extension[Extension::OES_depth_texture].m_supported
-				|| s_extension[Extension::MOZ_WEBGL_depth_texture].m_supported
-				|| s_extension[Extension::WEBGL_depth_texture].m_supported
+				|| s_extension[Extension::ANGLE_depth_texture       ].m_supported
+				|| s_extension[Extension::CHROMIUM_depth_texture    ].m_supported
+				|| s_extension[Extension::GOOGLE_depth_texture      ].m_supported
+				|| s_extension[Extension::OES_depth_texture         ].m_supported
+				|| s_extension[Extension::MOZ_WEBGL_depth_texture   ].m_supported
+				|| s_extension[Extension::WEBGL_depth_texture       ].m_supported
 				|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 				;
 
 			g_caps.supported |= m_depthTextureSupport 
-				? (BGFX_CAPS_TEXTURE_DEPTH_MASK|BGFX_CAPS_TEXTURE_COMPARE_LEQUAL) 
+				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 				: 0
 				;
 
