@@ -77,9 +77,9 @@ namespace bgfx
 #include "bgfxplatform.h"
 #include "image.h"
 
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x2)
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x2)
 
 #include <list> // mingw wants it to be before tr1/unordered_*...
 
@@ -487,6 +487,8 @@ namespace bgfx
 		uint8_t m_type;
 	};
 
+	const char* getUniformTypeName(UniformType::Enum _enum);
+	UniformType::Enum nameToUniformTypeEnum(const char* _name);
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum);
 	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name);
 
@@ -844,7 +846,7 @@ namespace bgfx
 		}
 
 		void writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
-		void writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
+		void writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num = 1);
 		void writeMarker(const char* _marker);
 		void commit();
 
@@ -871,6 +873,7 @@ namespace bgfx
 	{
 		const void* m_data;
 		UniformFn m_func;
+		UniformHandle m_handle;
 	};
 
  	class UniformRegistry
@@ -895,20 +898,26 @@ namespace bgfx
  			return NULL;
  		}
 
-		const UniformInfo& add(const char* _name, const void* _data, UniformFn _func = NULL)
+		const UniformInfo& add(UniformHandle _handle, const char* _name, const void* _data, UniformFn _func = NULL)
 		{
 			UniformHashMap::iterator it = m_uniforms.find(_name);
 			if (it == m_uniforms.end() )
 			{
 				UniformInfo info;
-				info.m_data = _data;
-				info.m_func = _func;
+				info.m_data   = _data;
+				info.m_func   = _func;
+				info.m_handle = _handle;
 
 				stl::pair<UniformHashMap::iterator, bool> result = m_uniforms.insert(UniformHashMap::value_type(_name, info) );
 				return result.first->second;
 			}
 
-			return it->second;
+			UniformInfo& info = it->second;
+			info.m_data   = _data;
+			info.m_func   = _func;
+			info.m_handle = _handle;
+
+			return info;
 		}
 
  	private:
@@ -1183,7 +1192,8 @@ namespace bgfx
 			sampler.m_idx = _handle.idx;
 			sampler.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
 
-			if (isValid(_sampler) )
+			if (isValid(_sampler)
+			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
@@ -1237,7 +1247,7 @@ namespace bgfx
 			return offset;
 		}
 
-		void writeConstant(UniformType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
+		void writeUniform(UniformType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
 		{
 			m_constantBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
@@ -1982,7 +1992,7 @@ namespace bgfx
 			if (BGFX_CHUNK_MAGIC_VSH != magic
 			&&  BGFX_CHUNK_MAGIC_FSH != magic)
 			{
-				BX_WARN(false, "Invalid shader signature! 0x%08x", magic);
+				BX_WARN(false, "Invalid shader signature! 0x%08x.", magic);
 				ShaderHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
@@ -1992,9 +2002,56 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate shader handle.");
 			if (isValid(handle) )
 			{
-				ShaderRef& fsr = m_shaderRef[handle.idx];
-				fsr.m_refCount = 1;
-				bx::read(&reader, fsr.m_hash);
+				uint32_t iohash;
+				bx::read(&reader, iohash);
+
+				uint16_t count;
+				bx::read(&reader, count);
+
+				ShaderRef& sr = m_shaderRef[handle.idx];
+				sr.m_refCount = 1;
+				sr.m_hash     = iohash;
+				sr.m_num      = 0;
+				sr.m_uniforms = NULL;
+
+				UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
+
+				for (uint32_t ii = 0; ii < count; ++ii)
+				{
+					uint8_t nameSize;
+					bx::read(&reader, nameSize);
+
+					char name[256];
+					bx::read(&reader, &name, nameSize);
+					name[nameSize] = '\0';
+
+					uint8_t type;
+					bx::read(&reader, type);
+					type &= ~BGFX_UNIFORM_FRAGMENTBIT;
+
+					uint8_t num;
+					bx::read(&reader, num);
+
+					uint16_t regIndex;
+					bx::read(&reader, regIndex);
+
+					uint16_t regCount;
+					bx::read(&reader, regCount);
+
+					PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+					if (PredefinedUniform::Count == predefined)
+					{
+						uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), regCount);
+						sr.m_num++;
+					}
+				}
+
+				if (0 != sr.m_num)
+				{
+					uint32_t size = sr.m_num*sizeof(UniformHandle);
+					sr.m_uniforms = (UniformHandle*)BX_ALLOC(g_allocator, size);
+					memcpy(sr.m_uniforms, uniforms, size);
+				}
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
 				cmdbuf.write(handle);
@@ -2004,11 +2061,28 @@ namespace bgfx
 			return handle;
 		}
 
+		BGFX_API_FUNC(uint16_t getShaderUniforms(ShaderHandle _handle, UniformHandle* _uniforms, uint16_t _max) )
+		{
+			if (!isValid(_handle) )
+			{
+				BX_WARN(false, "Passing invalid shader handle to bgfx::getShaderUniforms.");
+				return 0;
+			}
+
+			ShaderRef& sr = m_shaderRef[_handle.idx];
+			if (NULL != _uniforms)
+			{
+				memcpy(_uniforms, sr.m_uniforms, bx::uint16_min(_max, sr.m_num)*sizeof(UniformHandle) );
+			}
+
+			return sr.m_num;
+		}
+
 		BGFX_API_FUNC(void destroyShader(ShaderHandle _handle) )
 		{
 			if (!isValid(_handle) )
 			{
-				BX_WARN(false, "Passing invalid shader handle to bgfx::destroyShader");
+				BX_WARN(false, "Passing invalid shader handle to bgfx::destroyShader.");
 				return;
 			}
 
@@ -2030,6 +2104,18 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyShader);
 				cmdbuf.write(_handle);
 				m_submit->free(_handle);
+
+				if (0 != sr.m_num)
+				{
+					for (uint32_t ii = 0, num = sr.m_num; ii < num; ++ii)
+					{
+						destroyUniform(sr.m_uniforms[ii]);
+					}
+
+					BX_FREE(g_allocator, sr.m_uniforms);
+					sr.m_uniforms = NULL;
+					sr.m_num = 0;
+				}
 			}
 		}
 
@@ -2231,6 +2317,25 @@ namespace bgfx
 			{
 				UniformHandle handle = it->second;
 				UniformRef& uniform = m_uniformRef[handle.idx];
+
+				uint32_t oldsize = g_uniformTypeSize[uniform.m_type];
+				uint32_t newsize = g_uniformTypeSize[_type];
+
+				if (oldsize < newsize
+				||  uniform.m_num < _num)
+				{
+					uniform.m_type = oldsize < newsize ? _type : uniform.m_type;
+					uniform.m_num  = bx::uint16_max(uniform.m_num, _num);
+
+					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
+					cmdbuf.write(handle);
+					cmdbuf.write(uniform.m_type);
+					cmdbuf.write(uniform.m_num);
+					uint8_t len = (uint8_t)strlen(_name)+1;
+					cmdbuf.write(len);
+					cmdbuf.write(_name, len);
+				}
+
 				++uniform.m_refCount;
 				return handle;
 			}
@@ -2243,7 +2348,7 @@ namespace bgfx
 				UniformRef& uniform = m_uniformRef[handle.idx];
 				uniform.m_refCount = 1;
 				uniform.m_type = _type;
-				uniform.m_num = _num;
+				uniform.m_num  = _num;
 
 				m_uniformHashMap.insert(stl::make_pair(stl::string(_name), handle) );
 
@@ -2463,7 +2568,7 @@ namespace bgfx
 		{
 			UniformRef& uniform = m_uniformRef[_handle.idx];
 			BX_CHECK(uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
-			m_submit->writeConstant(uniform.m_type, _handle, _value, bx::uint16_min(uniform.m_num, _num) );
+			m_submit->writeUniform(uniform.m_type, _handle, _value, bx::uint16_min(uniform.m_num, _num) );
 		}
 
 		BGFX_API_FUNC(void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices) )
@@ -2668,8 +2773,10 @@ namespace bgfx
 
 		struct ShaderRef
 		{
+			UniformHandle* m_uniforms;
 			uint32_t m_hash;
-			int16_t m_refCount;
+			int16_t  m_refCount;
+			uint16_t m_num;
 		};
 		
 		struct ProgramRef

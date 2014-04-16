@@ -454,6 +454,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = loadTexture("uffizi.dds");
 	bgfx::TextureHandle uffizi = bgfx::createTexture(mem, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
+	bgfx::ProgramHandle skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
+	bgfx::ProgramHandle lumProgram     = loadProgram("vs_hdr_lum",     "fs_hdr_lum");
+	bgfx::ProgramHandle lumAvgProgram  = loadProgram("vs_hdr_lumavg",  "fs_hdr_lumavg");
+	bgfx::ProgramHandle blurProgram    = loadProgram("vs_hdr_blur",    "fs_hdr_blur");
+	bgfx::ProgramHandle brightProgram  = loadProgram("vs_hdr_bright",  "fs_hdr_bright");
+	bgfx::ProgramHandle meshProgram    = loadProgram("vs_hdr_mesh",    "fs_hdr_mesh");
+	bgfx::ProgramHandle tonemapProgram = loadProgram("vs_hdr_tonemap", "fs_hdr_tonemap");
+
 	bgfx::UniformHandle u_time      = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
 	bgfx::UniformHandle u_texCube   = bgfx::createUniform("u_texCube",  bgfx::UniformType::Uniform1i);
 	bgfx::UniformHandle u_texColor  = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
@@ -462,14 +470,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_mtx       = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
 	bgfx::UniformHandle u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Uniform4fv);
 	bgfx::UniformHandle u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Uniform4fv, 16);
-
-	bgfx::ProgramHandle skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
-	bgfx::ProgramHandle lumProgram     = loadProgram("vs_hdr_lum",     "fs_hdr_lum");
-	bgfx::ProgramHandle lumAvgProgram  = loadProgram("vs_hdr_lumavg",  "fs_hdr_lumavg");
-	bgfx::ProgramHandle blurProgram    = loadProgram("vs_hdr_blur",    "fs_hdr_blur");
-	bgfx::ProgramHandle brightProgram  = loadProgram("vs_hdr_bright",  "fs_hdr_bright");
-	bgfx::ProgramHandle meshProgram    = loadProgram("vs_hdr_mesh",    "fs_hdr_mesh");
-	bgfx::ProgramHandle tonemapProgram = loadProgram("vs_hdr_tonemap", "fs_hdr_tonemap");
 
 	Mesh mesh;
 	mesh.load("meshes/bunny.bin");

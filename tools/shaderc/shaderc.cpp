@@ -3,13 +3,12 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef SHADERC_DEBUG
-#	define SHADERC_DEBUG 0
-#endif // SHADERC_DEBUG
-
 #define _BX_TRACE(_format, ...) \
 				do { \
-					fprintf(stderr, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
+					if (g_verbose) \
+					{ \
+						fprintf(stderr, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
+					} \
 				} while(0)
 
 #define _BX_WARN(_condition, _format, ...) \
@@ -29,11 +28,11 @@
 					} \
 				} while(0)
 
-#if SHADERC_DEBUG
-#	define BX_TRACE _BX_TRACE
-#	define BX_WARN  _BX_WARN
-#	define BX_CHECK _BX_CHECK
-#endif // DEBUG
+#define BX_TRACE _BX_TRACE
+#define BX_WARN  _BX_WARN
+#define BX_CHECK _BX_CHECK
+
+bool g_verbose = false;
 
 #include <bx/bx.h>
 #include <bx/debug.h>
@@ -55,8 +54,8 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x1)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x1)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x2)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x2)
 
 #include <bx/commandline.h>
 #include <bx/endian.h>
@@ -190,7 +189,7 @@ const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
 	return s_remapInputSemantic[Attrib::Count];
 }
 
-struct ConstantType
+struct UniformType
 {
 	enum Enum
 	{
@@ -206,30 +205,44 @@ struct ConstantType
 		Uniform3x3fv,
 		Uniform4x4fv,
 
-		Count,
+		Count
 	};
 };
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 
-const char* s_constantTypeName[ConstantType::Count] =
+const char* s_uniformTypeName[UniformType::Count] =
 {
 	"int",
 	"float",
 	NULL,
 	"int",
 	"float",
-	"float2",
-	"float3",
-	"float4",
-	"float3x3",
-	"float4x4",
+	"vec2",
+	"vec3",
+	"vec4",
+	"mat3",
+	"mat4",
 };
+
+UniformType::Enum nameToUniformTypeEnum(const char* _name)
+{
+	for (uint32_t ii = 0; ii < UniformType::Count; ++ii)
+	{
+		if (NULL != s_uniformTypeName[ii]
+		&&  0 == strcmp(_name, s_uniformTypeName[ii]) )
+		{
+			return UniformType::Enum(ii);
+		}
+	}
+
+	return UniformType::Count;
+}
 
 struct Uniform
 {
 	std::string name;
-	ConstantType::Enum type;
+	UniformType::Enum type;
 	uint8_t num;
 	uint16_t regIndex;
 	uint16_t regCount;
@@ -237,31 +250,31 @@ struct Uniform
 typedef std::vector<Uniform> UniformArray;
 
 #if BX_PLATFORM_WINDOWS
-struct ConstRemapDx9
+struct UniformRemapDx9
 {
-	ConstantType::Enum id;
+	UniformType::Enum id;
 	D3DXPARAMETER_CLASS paramClass;
 	D3DXPARAMETER_TYPE paramType;
 	uint32_t paramBytes;
 };
 
-static const ConstRemapDx9 s_constRemapDx9[7] =
+static const UniformRemapDx9 s_constRemapDx9[7] =
 {
-	{ ConstantType::Uniform1iv,   D3DXPC_SCALAR,         D3DXPT_INT,    4 },
-	{ ConstantType::Uniform1fv,   D3DXPC_SCALAR,         D3DXPT_FLOAT,  4 },
-	{ ConstantType::Uniform2fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT,  8 },
-	{ ConstantType::Uniform3fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 12 },
-	{ ConstantType::Uniform4fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 16 },
-	{ ConstantType::Uniform3x3fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 36 },
-	{ ConstantType::Uniform4x4fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 64 },
+	{ UniformType::Uniform1iv,   D3DXPC_SCALAR,         D3DXPT_INT,    4 },
+	{ UniformType::Uniform1fv,   D3DXPC_SCALAR,         D3DXPT_FLOAT,  4 },
+	{ UniformType::Uniform2fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT,  8 },
+	{ UniformType::Uniform3fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 12 },
+	{ UniformType::Uniform4fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 16 },
+	{ UniformType::Uniform3x3fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 36 },
+	{ UniformType::Uniform4x4fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 64 },
 };
 
-ConstantType::Enum findConstantTypeDx9(const D3DXCONSTANT_DESC& constDesc)
+UniformType::Enum findUniformTypeDx9(const D3DXCONSTANT_DESC& constDesc)
 {
-	uint32_t count = sizeof(s_constRemapDx9)/sizeof(ConstRemapDx9);
+	uint32_t count = sizeof(s_constRemapDx9)/sizeof(UniformRemapDx9);
 	for (uint32_t ii = 0; ii < count; ++ii)
 	{
-		const ConstRemapDx9& remap = s_constRemapDx9[ii];
+		const UniformRemapDx9& remap = s_constRemapDx9[ii];
 
 		if (remap.paramClass == constDesc.Class
 		&&  remap.paramType == constDesc.Type
@@ -271,7 +284,7 @@ ConstantType::Enum findConstantTypeDx9(const D3DXCONSTANT_DESC& constDesc)
 		}
 	}
 
-	return ConstantType::Count;
+	return UniformType::Count;
 }
 
 static uint32_t s_optimizationLevelDx9[4] =
@@ -282,31 +295,31 @@ static uint32_t s_optimizationLevelDx9[4] =
 	D3DXSHADER_OPTIMIZATION_LEVEL3,
 };
 
-struct ConstRemapDx11
+struct UniformRemapDx11
 {
-	ConstantType::Enum id;
+	UniformType::Enum id;
 	D3D_SHADER_VARIABLE_CLASS paramClass;
 	D3D_SHADER_VARIABLE_TYPE paramType;
 	uint32_t paramBytes;
 };
 
-static const ConstRemapDx11 s_constRemapDx11[7] =
+static const UniformRemapDx11 s_constRemapDx11[7] =
 {
-	{ ConstantType::Uniform1iv,   D3D_SVC_SCALAR,         D3D_SVT_INT,    4 },
-	{ ConstantType::Uniform1fv,   D3D_SVC_SCALAR,         D3D_SVT_FLOAT,  4 },
-	{ ConstantType::Uniform2fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT,  8 },
-	{ ConstantType::Uniform3fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 12 },
-	{ ConstantType::Uniform4fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 16 },
-	{ ConstantType::Uniform3x3fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 36 },
-	{ ConstantType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 64 },
+	{ UniformType::Uniform1iv,   D3D_SVC_SCALAR,         D3D_SVT_INT,    4 },
+	{ UniformType::Uniform1fv,   D3D_SVC_SCALAR,         D3D_SVT_FLOAT,  4 },
+	{ UniformType::Uniform2fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT,  8 },
+	{ UniformType::Uniform3fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 12 },
+	{ UniformType::Uniform4fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 16 },
+	{ UniformType::Uniform3x3fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 36 },
+	{ UniformType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 64 },
 };
 
-ConstantType::Enum findConstantTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc, uint32_t _size)
+UniformType::Enum findUniformTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc, uint32_t _size)
 {
-	uint32_t count = sizeof(s_constRemapDx11)/sizeof(ConstRemapDx9);
+	uint32_t count = sizeof(s_constRemapDx11)/sizeof(UniformRemapDx9);
 	for (uint32_t ii = 0; ii < count; ++ii)
 	{
-		const ConstRemapDx11& remap = s_constRemapDx11[ii];
+		const UniformRemapDx11& remap = s_constRemapDx11[ii];
 
 		if (remap.paramClass == constDesc.Class
 		&&  remap.paramType == constDesc.Type
@@ -316,7 +329,7 @@ ConstantType::Enum findConstantTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc,
 		}
 	}
 
-	return ConstantType::Count;
+	return UniformType::Count;
 }
 
 static uint32_t s_optimizationLevelDx11[4] =
@@ -665,7 +678,126 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 		strreplace(shader, "shadow2DProjEXT", "shadow2DProj");
 	}
 
-	bx::write(_writer, optimizedShader, (int32_t)strlen(optimizedShader) );
+	UniformArray uniforms;
+
+	{
+		const char* parse = optimizedShader;
+
+		while (NULL != parse
+		   &&  *parse != '\0')
+		{
+			parse = bx::strws(parse);
+			const char* eol = strchr(parse, ';');
+			if (NULL != eol)
+			{
+				const char* qualifier = parse;
+				parse = bx::strws(bx::strword(parse) );
+
+				if (0 == strncmp(qualifier, "attribute", 9)
+				||  0 == strncmp(qualifier, "varying", 7) )
+				{
+					// skip attributes and varyings.
+					parse = eol + 1;
+					continue;
+				}
+
+				if (0 != strncmp(qualifier, "uniform", 7) )
+				{
+					// end if there is no uniform keyword.
+					parse = NULL;
+					continue;
+				}
+
+				const char* precision = NULL;
+				const char* type = parse;
+
+				if (0 == strncmp(type, "lowp", 4)
+				||  0 == strncmp(type, "mediump", 7)
+				||  0 == strncmp(type, "highp", 5) )
+				{
+					precision = type;
+					type = parse = bx::strws(bx::strword(parse) );
+				}
+
+				BX_UNUSED(precision);
+
+				char uniformType[256];
+				parse = bx::strword(parse);
+
+				if (0 == strncmp(type, "sampler", 7) )
+				{
+					strcpy(uniformType, "int");
+				}
+				else
+				{
+					bx::strlcpy(uniformType, type, parse-type+1);
+				}
+
+				const char* name = parse = bx::strws(parse);
+
+				char uniformName[256];
+				uint8_t num = 1;
+				const char* array = bx::strnstr(name, "[", eol-parse);
+				if (NULL != array)
+				{
+					bx::strlcpy(uniformName, name, array-name+1);
+
+					char arraySize[32];
+					const char* end = bx::strnstr(array, "]", eol-array);
+					bx::strlcpy(arraySize, array+1, end-array);
+					num = atoi(arraySize);
+				}
+				else
+				{
+					bx::strlcpy(uniformName, name, eol-name+1);
+				}
+
+				Uniform un;
+				un.type = nameToUniformTypeEnum(uniformType);
+
+				if (UniformType::Count != un.type)
+				{
+					BX_TRACE("name: %s (type %d, num %d)", uniformName, un.type, num);
+
+					un.name = uniformName;
+					un.num = num;
+					un.regIndex = 0;
+					un.regCount = num;
+					uniforms.push_back(un);
+				}
+
+				parse = eol + 1;
+			}
+		}
+	}
+
+	uint16_t count = (uint16_t)uniforms.size();
+	bx::write(_writer, count);
+
+	for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
+	{
+		const Uniform& un = *it;
+		uint8_t nameSize = (uint8_t)un.name.size();
+		bx::write(_writer, nameSize);
+		bx::write(_writer, un.name.c_str(), nameSize);
+		uint8_t type = un.type;
+		bx::write(_writer, type);
+		bx::write(_writer, un.num);
+		bx::write(_writer, un.regIndex);
+		bx::write(_writer, un.regCount);
+
+		BX_TRACE("%s, %s, %d, %d, %d"
+			, un.name.c_str()
+			, s_uniformTypeName[un.type]
+			, un.num
+			, un.regIndex
+			, un.regCount
+			);
+	}
+
+	uint32_t shaderSize = (uint32_t)strlen(optimizedShader);
+	bx::write(_writer, shaderSize);
+	bx::write(_writer, optimizedShader, shaderSize);
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
@@ -809,8 +941,8 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 			, constDesc.RegisterCount
 			);
 
-		ConstantType::Enum type = findConstantTypeDx9(constDesc);
-		if (ConstantType::Count != type)
+		UniformType::Enum type = findUniformTypeDx9(constDesc);
+		if (UniformType::Count != type)
 		{
 			Uniform un;
 			un.name = '$' == constDesc.Name[0] ? constDesc.Name+1 : constDesc.Name;
@@ -840,7 +972,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 
 		BX_TRACE("%s, %s, %d, %d, %d"
 			, un.name.c_str()
-			, s_constantTypeName[un.type]
+			, s_uniformTypeName[un.type]
 			, un.num
 			, un.regIndex
 			, un.regCount
@@ -1036,8 +1168,6 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		}
 	}
 
-	bx::write(_writer, attrMask, sizeof(attrMask) );
-
 	BX_TRACE("Output:");
 	for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
 	{
@@ -1077,9 +1207,9 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 					hr = type->GetDesc(&constDesc);
 					if (SUCCEEDED(hr) )
 					{
-						ConstantType::Enum type = findConstantTypeDx11(constDesc, varDesc.Size);
+						UniformType::Enum type = findUniformTypeDx11(constDesc, varDesc.Size);
 
-						if (ConstantType::Count != type
+						if (UniformType::Count != type
 						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 						{
 							Uniform un;
@@ -1127,8 +1257,6 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	uint16_t count = (uint16_t)uniforms.size();
 	bx::write(_writer, count);
 
-	bx::write(_writer, size);
-
 	uint32_t fragmentBit = profile[0] == 'p' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 	for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 	{
@@ -1144,7 +1272,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 		BX_TRACE("%s, %s, %d, %d, %d"
 			, un.name.c_str()
-			, s_constantTypeName[un.type]
+			, s_uniformTypeName[un.type]
 			, un.num
 			, un.regIndex
 			, un.regCount
@@ -1156,6 +1284,9 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	bx::write(_writer, code->GetBufferPointer(), shaderSize);
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
+
+	bx::write(_writer, attrMask, sizeof(attrMask) );
+	bx::write(_writer, size);
 
 	if (_cmdLine.hasArg('\0', "disasm") )
 	{
@@ -1503,6 +1634,7 @@ void help(const char* _error = NULL)
 		  "      --depends <file path>     Generate makefile style depends file.\n"
 		  "      --platform <platform>     Target platform.\n"
 		  "           android\n"
+		  "           asm.js\n"
 		  "           ios\n"
 		  "           linux\n"
 		  "           nacl\n"
@@ -1510,6 +1642,7 @@ void help(const char* _error = NULL)
 		  "           windows\n"
 		  "      --type <type>             Shader type (vertex, fragment)\n"
 		  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
+		  "      --verbose                 Verbose.\n"
 
 		  "\n"
 		  "Options (DX9 and DX11 only):\n"
@@ -1535,6 +1668,8 @@ int main(int _argc, const char* _argv[])
 		help();
 		return EXIT_FAILURE;
 	}
+
+	g_verbose = cmdLine.hasArg("verbose");
 
 	const char* filePath = cmdLine.findOption('f');
 	if (NULL == filePath)
@@ -1632,12 +1767,14 @@ int main(int _argc, const char* _argv[])
 	}
 
 	preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
+	preprocessor.setDefaultDefine("BX_PLATFORM_EMSCRIPTEN");
 	preprocessor.setDefaultDefine("BX_PLATFORM_IOS");
 	preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
 	preprocessor.setDefaultDefine("BX_PLATFORM_NACL");
 	preprocessor.setDefaultDefine("BX_PLATFORM_OSX");
 	preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
 	preprocessor.setDefaultDefine("BX_PLATFORM_XBOX360");
+//	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
@@ -1648,6 +1785,12 @@ int main(int _argc, const char* _argv[])
 	if (0 == bx::stricmp(platform, "android") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_ANDROID=1");
+		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+		glsl = true;
+	}
+	else if (0 == bx::stricmp(platform, "asm.js") )
+	{
+		preprocessor.setDefine("BX_PLATFORM_EMSCRIPTEN=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		glsl = true;
 	}
@@ -2199,6 +2342,7 @@ int main(int _argc, const char* _argv[])
 									);
 							}
 						}
+
 						code += preprocessor.m_preprocessed;
 						compiled = compileGLSLShader(cmdLine, gles, code, writer);
 					}

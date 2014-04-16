@@ -121,21 +121,6 @@ namespace bgfx
 		bool m_dynamic;
 	};
 
-	struct UniformBuffer
-	{
-		UniformBuffer()
-			: m_ptr(NULL)
-			, m_data(NULL)
-		{
-		}
-
-		void create(UniformType::Enum _type, uint16_t _num, bool _alloc = true);
-		void destroy();
-
-		ID3D11Buffer* m_ptr;
-		void* m_data;
-	};
-
 	struct Shader
 	{
 		Shader()

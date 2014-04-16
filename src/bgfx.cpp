@@ -546,6 +546,39 @@ namespace bgfx
 		}
 	}
 
+	const char* s_uniformTypeName[UniformType::Count] =
+	{
+		"int",
+		"float",
+		NULL,
+		"int",
+		"float",
+		"vec2",
+		"vec3",
+		"vec4",
+		"mat3",
+		"mat4",
+	};
+
+	const char* getUniformTypeName(UniformType::Enum _enum)
+	{
+		return s_uniformTypeName[_enum];
+	}
+
+	UniformType::Enum nameToUniformTypeEnum(const char* _name)
+	{
+		for (uint32_t ii = 0; ii < UniformType::Count; ++ii)
+		{
+			if (NULL != s_uniformTypeName[ii]
+			&&  0 == strcmp(_name, s_uniformTypeName[ii]) )
+			{
+				return UniformType::Enum(ii);
+			}
+		}
+
+		return UniformType::Count;
+	}
+
 	static const char* s_predefinedName[PredefinedUniform::Count] =
 	{
 		"u_viewRect",
@@ -891,11 +924,11 @@ namespace bgfx
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
-	void ConstantBuffer::writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
+	void ConstantBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
 		uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
-		write(&_value, sizeof(void*) );
+		write(&_handle, sizeof(UniformHandle) );
 	}
 
 	void ConstantBuffer::writeMarker(const char* _marker)
@@ -1182,7 +1215,14 @@ namespace bgfx
 			const char* data = _constantBuffer->read(size);
 			if (UniformType::Count > type)
 			{
-				rendererUpdateUniform(loc, data, size);
+				if (copy)
+				{
+					rendererUpdateUniform(loc, data, size);
+				}
+				else
+				{
+					rendererUpdateUniform(loc, *(const char**)(data), size);
+				}
 			}
 			else
 			{
@@ -1844,6 +1884,12 @@ namespace bgfx
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createShader(_mem);
+	}
+
+	uint16_t getShaderUniforms(ShaderHandle _handle, UniformHandle* _uniforms, uint16_t _max)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->getShaderUniforms(_handle, _uniforms, _max);
 	}
 
 	void destroyShader(ShaderHandle _handle)

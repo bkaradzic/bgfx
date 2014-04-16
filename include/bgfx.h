@@ -872,6 +872,18 @@ namespace bgfx
 	/// Create shader from memory buffer.
 	ShaderHandle createShader(const Memory* _mem);
 
+	/// Returns num of uniforms, and uniform handles used inside shader.
+	///
+	/// @param _handle Shader handle.
+	/// @param _uniforms UniformHandle array where data will be stored.
+	/// @param _max Maximum capacity of array.
+	/// @returns Number of uniforms used by shader.
+	///
+	/// NOTE:
+	///   Only non-predefined uniforms are returned.
+	///
+	uint16_t getShaderUniforms(ShaderHandle _handle, UniformHandle* _uniforms = NULL, uint16_t _max = 0);
+
 	/// Destroy shader. Once program is created with shader it is safe to
 	/// destroy shader.
 	void destroyShader(ShaderHandle _handle);

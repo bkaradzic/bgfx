@@ -251,6 +251,7 @@ namespace bgfx
 			, m_rtMsaa(false)
 		{
 			m_fbh.idx = invalidHandle;
+			memset(m_uniforms, 0, sizeof(m_uniforms) );
 		}
 
 		void init()
@@ -1312,7 +1313,6 @@ namespace bgfx
 
 				const char* kind = "invalid";
 
-				const void* data = NULL;
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 				if (PredefinedUniform::Count != predefined)
 				{
@@ -1329,8 +1329,7 @@ namespace bgfx
 					if (NULL != info)
 					{
 						kind = "user";
-						data = info->m_data;
-						m_constantBuffer->writeUniformRef( (UniformType::Enum)(type|fragmentBit), regIndex, data, regCount);
+						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
 					}
 				}
 
@@ -2060,7 +2059,9 @@ namespace bgfx
 			}
 			else
 			{
-				memcpy(&data, read(sizeof(void*) ), sizeof(void*) );
+				UniformHandle handle;
+				memcpy(&handle, read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+				data = (const char*)s_renderCtx->m_uniforms[handle.idx];
 			}
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
@@ -2307,16 +2308,22 @@ namespace bgfx
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
+		if (NULL != s_renderCtx->m_uniforms[_handle.idx])
+		{
+			BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
+		}
+
 		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 		void* data = BX_ALLOC(g_allocator, size);
 		memset(data, 0, size);
 		s_renderCtx->m_uniforms[_handle.idx] = data;
-		s_renderCtx->m_uniformReg.add(_name, s_renderCtx->m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniformReg.add(_handle, _name, data);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
 		BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniforms[_handle.idx] = NULL;
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)

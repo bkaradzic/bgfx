@@ -353,6 +353,7 @@ namespace bgfx
 			, m_rtMsaa(false)
 		{
 			m_fbh.idx = invalidHandle;
+			memset(m_uniforms, 0, sizeof(m_uniforms) );
 		}
 
 		void init()
@@ -497,10 +498,10 @@ namespace bgfx
 										);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 
+			UniformHandle handle = BGFX_INVALID_HANDLE;
 			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 			{
-				m_predefinedUniforms[ii].create(UniformType::Uniform4x4fv, 1, false);
-				m_uniformReg.add(getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
+				m_uniformReg.add(handle, getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
 			}
 
 			g_caps.supported |= ( 0
@@ -549,16 +550,6 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
 				m_textures[ii].destroy();
-			}
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
-			{
-				m_uniforms[ii].destroy();
-			}
-
-			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
-			{
-				m_predefinedUniforms[ii].destroy();
 			}
 
 			DX_RELEASE(m_swapChain, 0);
@@ -1271,8 +1262,8 @@ namespace bgfx
 		Texture m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBuffer m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		UniformBuffer m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
-		UniformBuffer m_predefinedUniforms[PredefinedUniform::Count];
+		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
 		
 		StateCacheT<ID3D11BlendState> m_blendStateCache;
@@ -1427,7 +1418,9 @@ namespace bgfx
 			}
 			else
 			{
-				memcpy(&data, read(sizeof(void*) ), sizeof(void*) );
+				UniformHandle handle;
+				memcpy(&handle, read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+				data = (const char*)s_renderCtx->m_uniforms[handle.idx];
 			}
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
@@ -1666,25 +1659,8 @@ namespace bgfx
 		uint32_t iohash;
 		bx::read(&reader, iohash);
 
-		bx::read(&reader, m_attrMask, sizeof(m_attrMask) );
-
 		uint16_t count;
 		bx::read(&reader, count);
-
-		uint16_t size;
-		bx::read(&reader, size);
-
-		if (0 < size)
-		{
-			D3D11_BUFFER_DESC desc;
-			desc.ByteWidth = size;
-			desc.Usage = D3D11_USAGE_DEFAULT;
-			desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-			desc.CPUAccessFlags = 0;
-			desc.MiscFlags = 0;
-			desc.StructureByteStride = 0;
-			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc, NULL, &m_buffer) );
-		}
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
@@ -1720,26 +1696,23 @@ namespace bgfx
 
 				const char* kind = "invalid";
 
-				const void* data = NULL;
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 				if (PredefinedUniform::Count != predefined)
 				{
 					kind = "predefined";
-					m_predefined[m_numPredefined].m_loc = regIndex;
+					m_predefined[m_numPredefined].m_loc   = regIndex;
 					m_predefined[m_numPredefined].m_count = regCount;
-					m_predefined[m_numPredefined].m_type = predefined|fragmentBit;
+					m_predefined[m_numPredefined].m_type  = predefined|fragmentBit;
 					m_numPredefined++;
 				}
 				else
 				{
 					const UniformInfo* info = s_renderCtx->m_uniformReg.find(name);
-					UniformBuffer* uniform = info != NULL ? (UniformBuffer*)info->m_data : NULL;
 
-					if (NULL != uniform)
+					if (NULL != info)
 					{
 						kind = "user";
-						data = uniform->m_data;
-						m_constantBuffer->writeUniformRef( (UniformType::Enum)(type|fragmentBit), regIndex, data, regCount);
+						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
 					}
 				}
 
@@ -1760,7 +1733,7 @@ namespace bgfx
 		bx::read(&reader, shaderSize);
 
 		const DWORD* code = (const DWORD*)reader.getDataPtr();
-		bx::skip(&reader, shaderSize);
+		bx::skip(&reader, shaderSize+1);
 
 		if (fragment)
 		{
@@ -1775,6 +1748,23 @@ namespace bgfx
 
 			DX_CHECK(s_renderCtx->m_device->CreateVertexShader(code, shaderSize, NULL, (ID3D11VertexShader**)&m_ptr) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+		}
+
+		bx::read(&reader, m_attrMask, sizeof(m_attrMask) );
+
+		uint16_t size;
+		bx::read(&reader, size);
+
+		if (0 < size)
+		{
+			D3D11_BUFFER_DESC desc;
+			desc.ByteWidth = size;
+			desc.Usage = D3D11_USAGE_DEFAULT;
+			desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			desc.CPUAccessFlags = 0;
+			desc.MiscFlags = 0;
+			desc.StructureByteStride = 0;
+			DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc, NULL, &m_buffer) );
 		}
 	}
 
@@ -2113,36 +2103,6 @@ namespace bgfx
 		}
 	}
 
-	void UniformBuffer::create(UniformType::Enum _type, uint16_t _num, bool _alloc)
-	{
-		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
-		if (_alloc)
-		{
-			m_data = BX_ALLOC(g_allocator, size);
-			memset(m_data, 0, size);
-		}
-
-		D3D11_BUFFER_DESC desc;
-		desc.ByteWidth = size;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		desc.CPUAccessFlags = 0;
-		desc.MiscFlags = 0;
-		desc.StructureByteStride = 0;
-		DX_CHECK(s_renderCtx->m_device->CreateBuffer(&desc, NULL, &m_ptr) );
-	}
-
-	void UniformBuffer::destroy()
-	{
-		if (NULL != m_data)
-		{
-			BX_FREE(g_allocator, m_data);
-			m_data = NULL;
-		}
-
-		DX_RELEASE(m_ptr, 0);
-	}
-
 	void Context::rendererFlip()
 	{
 		if (NULL != s_renderCtx)
@@ -2281,13 +2241,22 @@ namespace bgfx
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
-		s_renderCtx->m_uniforms[_handle.idx].create(_type, _num);
-		s_renderCtx->m_uniformReg.add(_name, &s_renderCtx->m_uniforms[_handle.idx]);
+		if (NULL != s_renderCtx->m_uniforms[_handle.idx])
+		{
+			BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
+		}
+
+		uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
+		void* data = BX_ALLOC(g_allocator, size);
+		memset(data, 0, size);
+		s_renderCtx->m_uniforms[_handle.idx] = data;
+		s_renderCtx->m_uniformReg.add(_handle, _name, data);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
-		s_renderCtx->m_uniforms[_handle.idx].destroy();
+		BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniforms[_handle.idx] = NULL;
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)
@@ -2302,7 +2271,7 @@ namespace bgfx
 
 	void Context::rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size)
 	{
-		memcpy(s_renderCtx->m_uniforms[_loc].m_data, _data, _size);
+		memcpy(s_renderCtx->m_uniforms[_loc], _data, _size);
 	}
 
 	void Context::rendererSetMarker(const char* _marker, uint32_t _size)

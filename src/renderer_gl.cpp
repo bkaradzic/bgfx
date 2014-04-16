@@ -712,6 +712,7 @@ namespace bgfx
 			, m_msaaBackBufferFbo(0)
 		{
 			m_fbh.idx = invalidHandle;
+			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 		}
 
@@ -1865,7 +1866,6 @@ namespace bgfx
 				break;
 			}
 
-			const void* data = NULL;
 			PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 			if (PredefinedUniform::Count != predefined)
 			{
@@ -1879,21 +1879,19 @@ namespace bgfx
 				const UniformInfo* info = s_renderCtx->m_uniformReg.find(name);
 				if (NULL != info)
 				{
-					data = info->m_data;
 					UniformType::Enum type = convertGlType(gltype);
-					m_constantBuffer->writeUniformRef(type, 0, data, num);
+					m_constantBuffer->writeUniformHandle(type, 0, info->m_handle, num);
 					m_constantBuffer->write(loc);
-					BX_TRACE("store %s %p", name, data);
+					BX_TRACE("store %s %d", name, info->m_handle);
 				}
 			}
 
-			BX_TRACE("\tuniform %s %s%s is at location %d, size %d (%p), offset %d"
+			BX_TRACE("\tuniform %s %s%s is at location %d, size %d, offset %d"
 				, glslTypeName(gltype)
 				, name
 				, PredefinedUniform::Count != predefined ? "*" : ""
 				, loc
 				, num
-				, data
 				, offset
 				);
 			BX_UNUSED(offset);
@@ -2561,6 +2559,34 @@ namespace bgfx
 		uint32_t iohash;
 		bx::read(&reader, iohash);
 
+		uint16_t count;
+		bx::read(&reader, count);
+
+		for (uint32_t ii = 0; ii < count; ++ii)
+		{
+			uint8_t nameSize;
+			bx::read(&reader, nameSize);
+
+			char name[256];
+			bx::read(&reader, &name, nameSize);
+			name[nameSize] = '\0';
+
+			uint8_t type;
+			bx::read(&reader, type);
+
+			uint8_t num;
+			bx::read(&reader, num);
+
+			uint16_t regIndex;
+			bx::read(&reader, regIndex);
+
+			uint16_t regCount;
+			bx::read(&reader, regCount);
+		}
+
+		uint32_t shaderSize;
+		bx::read(&reader, shaderSize);
+
 		m_id = glCreateShader(m_type);
 
 		const char* code = (const char*)reader.getDataPtr();
@@ -3023,7 +3049,10 @@ namespace bgfx
 			}
 			else
 			{
-				memcpy(&data, read(sizeof(void*) ), sizeof(void*) );
+				UniformHandle handle;
+				memcpy(&handle, read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+				data = (const char*)s_renderCtx->m_uniforms[handle.idx];
+//				memcpy(&data, read(sizeof(void*) ), sizeof(void*) );
 			}
 
 			uint32_t loc = read();
@@ -3425,16 +3454,22 @@ namespace bgfx
 
 	void Context::rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 	{
+		if (NULL != s_renderCtx->m_uniforms[_handle.idx])
+		{
+			BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
+		}
+
 		uint32_t size = g_uniformTypeSize[_type]*_num;
 		void* data = BX_ALLOC(g_allocator, size);
 		memset(data, 0, size);
 		s_renderCtx->m_uniforms[_handle.idx] = data;
-		s_renderCtx->m_uniformReg.add(_name, s_renderCtx->m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniformReg.add(_handle, _name, s_renderCtx->m_uniforms[_handle.idx]);
 	}
 
 	void Context::rendererDestroyUniform(UniformHandle _handle)
 	{
 		BX_FREE(g_allocator, s_renderCtx->m_uniforms[_handle.idx]);
+		s_renderCtx->m_uniforms[_handle.idx] = NULL;
 	}
 
 	void Context::rendererSaveScreenShot(const char* _filePath)
