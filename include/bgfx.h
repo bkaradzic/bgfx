@@ -918,7 +918,7 @@ namespace bgfx
 	///     sampling.
 	///
 	/// @param _skip Skip top level mips when parsing texture.
-	/// @param _info Returns parsed DDS texture information.
+	/// @param _info Returns parsed texture information.
 	/// @returns Texture handle.
 	///
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags = BGFX_TEXTURE_NONE, uint8_t _skip = 0, TextureInfo* _info = NULL);

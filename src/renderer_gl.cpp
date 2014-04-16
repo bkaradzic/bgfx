@@ -317,7 +317,9 @@ namespace bgfx
 			OES_vertex_half_float,
 			OES_vertex_type_10_10_10_2,
 
+			WEBGL_compressed_texture_etc1,
 			WEBGL_compressed_texture_s3tc,
+			WEBGL_compressed_texture_pvrtc,
 			WEBGL_depth_texture,
 
 			WEBKIT_EXT_texture_filter_anisotropic,
@@ -448,7 +450,9 @@ namespace bgfx
 		{ "OES_vertex_half_float",                 false,                             true  },
 		{ "OES_vertex_type_10_10_10_2",            false,                             true  },
 
+		{ "WEBGL_compressed_texture_etc1",         false,                             true  },
 		{ "WEBGL_compressed_texture_s3tc",         false,                             true  },
+		{ "WEBGL_compressed_texture_pvrtc",        false,                             true  },
 		{ "WEBGL_depth_texture",                   false,                             true  },
 
 		{ "WEBKIT_EXT_texture_filter_anisotropic", false,                             true  },
@@ -1165,14 +1169,14 @@ namespace bgfx
 			}
 
 			bool bc123Supported = 0
-				|| s_extension[Extension::EXT_texture_compression_s3tc].m_supported
-				|| s_extension[Extension::MOZ_WEBGL_compressed_texture_s3tc].m_supported
-				|| s_extension[Extension::WEBGL_compressed_texture_s3tc].m_supported
+				|| s_extension[Extension::EXT_texture_compression_s3tc        ].m_supported
+				|| s_extension[Extension::MOZ_WEBGL_compressed_texture_s3tc   ].m_supported
+				|| s_extension[Extension::WEBGL_compressed_texture_s3tc       ].m_supported
 				|| s_extension[Extension::WEBKIT_WEBGL_compressed_texture_s3tc].m_supported
 				;
 			s_textureFormat[TextureFormat::BC1].m_supported |= bc123Supported
 				|| s_extension[Extension::ANGLE_texture_compression_dxt1].m_supported
-				|| s_extension[Extension::EXT_texture_compression_dxt1].m_supported
+				|| s_extension[Extension::EXT_texture_compression_dxt1  ].m_supported
 				;
 
 			if (!s_textureFormat[TextureFormat::BC1].m_supported
@@ -1183,8 +1187,7 @@ namespace bgfx
 				{
 					if (GL_COMPRESSED_RGB_S3TC_DXT1_EXT == cmpFormat[ii])
 					{
-						s_textureFormat[TextureFormat::BC1].m_internalFmt = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-						s_textureFormat[TextureFormat::BC1].m_fmt         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+						setTextureFormat(TextureFormat::BC1, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, GL_COMPRESSED_RGB_S3TC_DXT1_EXT);
 						s_textureFormat[TextureFormat::BC1].m_supported   = true;
 						break;
 					}
@@ -1192,12 +1195,12 @@ namespace bgfx
 			}
 
 			s_textureFormat[TextureFormat::BC2].m_supported |= bc123Supported
-				|| s_extension[Extension::ANGLE_texture_compression_dxt3].m_supported
+				|| s_extension[Extension::ANGLE_texture_compression_dxt3   ].m_supported
 				|| s_extension[Extension::CHROMIUM_texture_compression_dxt3].m_supported
 				;
 
 			s_textureFormat[TextureFormat::BC3].m_supported |= bc123Supported
-				|| s_extension[Extension::ANGLE_texture_compression_dxt5].m_supported
+				|| s_extension[Extension::ANGLE_texture_compression_dxt5   ].m_supported
 				|| s_extension[Extension::CHROMIUM_texture_compression_dxt5].m_supported
 				;
 
@@ -1214,7 +1217,10 @@ namespace bgfx
 				setTextureFormat(TextureFormat::BC5, GL_COMPRESSED_RG_RGTC2,  GL_COMPRESSED_RG_RGTC2);
 			}
 
-			bool etc1Supported = s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported;
+			bool etc1Supported = 0
+				|| s_extension[Extension::OES_compressed_ETC1_RGB8_texture].m_supported
+				|| s_extension[Extension::WEBGL_compressed_texture_etc1   ].m_supported
+				;
 			s_textureFormat[TextureFormat::ETC1].m_supported |= etc1Supported;
 
 			bool etc2Supported = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
@@ -1233,7 +1239,10 @@ namespace bgfx
 				s_textureFormat[TextureFormat::ETC1].m_supported   = true;
 			}
 
-			bool ptc1Supported = s_extension[Extension::IMG_texture_compression_pvrtc ].m_supported;
+			bool ptc1Supported = 0
+				|| s_extension[Extension::IMG_texture_compression_pvrtc ].m_supported
+				|| s_extension[Extension::WEBGL_compressed_texture_pvrtc].m_supported
+				;
 			s_textureFormat[TextureFormat::PTC12 ].m_supported |= ptc1Supported;
 			s_textureFormat[TextureFormat::PTC14 ].m_supported |= ptc1Supported;
 			s_textureFormat[TextureFormat::PTC12A].m_supported |= ptc1Supported;
@@ -1245,23 +1254,28 @@ namespace bgfx
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 			{
-				setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
+				setTextureFormat(TextureFormat::D32, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 				{
 					setTextureFormat(TextureFormat::R16,    GL_R16UI,    GL_RED_INTEGER,  GL_UNSIGNED_SHORT);
 					setTextureFormat(TextureFormat::RGBA16, GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
 				}
-				else if (BX_ENABLED(BX_PLATFORM_IOS) )
+				else
 				{
-					setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
-					setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
+					setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
+
+					if (BX_ENABLED(BX_PLATFORM_IOS) )
+					{
+						setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
+						setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
+					}
 				}
 			}
 
-			if (s_extension[Extension::EXT_texture_format_BGRA8888].m_supported
-			||  s_extension[Extension::EXT_bgra].m_supported
-			||  s_extension[Extension::IMG_texture_format_BGRA8888].m_supported
+			if (s_extension[Extension::EXT_texture_format_BGRA8888  ].m_supported
+			||  s_extension[Extension::EXT_bgra                     ].m_supported
+			||  s_extension[Extension::IMG_texture_format_BGRA8888  ].m_supported
 			||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 			{
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
@@ -1281,7 +1295,7 @@ namespace bgfx
 				// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
 				// https://www.opengl.org/registry/specs/EXT/bgra.txt
 				// https://www.khronos.org/registry/gles/extensions/APPLE/APPLE_texture_format_BGRA8888.txt
-				if (!s_extension[Extension::EXT_bgra].m_supported
+				if (!s_extension[Extension::EXT_bgra                     ].m_supported
 				&&  !s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 				{
 					s_textureFormat[TextureFormat::BGRA8].m_internalFmt = GL_BGRA;
