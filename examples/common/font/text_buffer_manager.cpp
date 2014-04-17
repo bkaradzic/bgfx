@@ -698,8 +698,6 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		return;
 	}
 
-	const bgfx::Memory* mem;
-
 	bgfx::setTexture(0, u_texColor, m_fontManager->getAtlas()->getTextureHandle() );
 
 	switch (bc.fontType)
@@ -739,21 +737,22 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 			if (bgfx::invalidHandle == bc.vertexBufferHandleIdx)
 			{
-				mem = bgfx::alloc(indexSize);
-				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
-				ibh = bgfx::createIndexBuffer(mem);
+				ibh = bgfx::createIndexBuffer(
+								bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
+								);
 
-				mem = bgfx::alloc(vertexSize);
-				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
-				vbh = bgfx::createVertexBuffer(mem, m_vertexDecl);
+				vbh = bgfx::createVertexBuffer(
+								  bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
+								, m_vertexDecl
+								);
 
-				bc.indexBufferHandleIdx = ibh.idx;
 				bc.vertexBufferHandleIdx = vbh.idx;
+				bc.indexBufferHandleIdx = ibh.idx;
 			}
 			else
 			{
-				ibh.idx = bc.indexBufferHandleIdx;
 				vbh.idx = bc.vertexBufferHandleIdx;
+				ibh.idx = bc.indexBufferHandleIdx;
 			}
 
 			bgfx::setVertexBuffer(vbh, 0, bc.textBuffer->getVertexCount() );
@@ -768,13 +767,14 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 			if (bgfx::invalidHandle == bc.vertexBufferHandleIdx )
 			{
-				mem = bgfx::alloc(indexSize);
-				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
-				ibh = bgfx::createDynamicIndexBuffer(mem);
+				ibh = bgfx::createDynamicIndexBuffer(
+								bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
+								);
 
-				mem = bgfx::alloc(vertexSize);
-				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
-				vbh = bgfx::createDynamicVertexBuffer(mem, m_vertexDecl);
+				vbh = bgfx::createDynamicVertexBuffer(
+								  bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
+								, m_vertexDecl
+								);
 
 				bc.indexBufferHandleIdx = ibh.idx;
 				bc.vertexBufferHandleIdx = vbh.idx;
@@ -784,13 +784,13 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 				ibh.idx = bc.indexBufferHandleIdx;
 				vbh.idx = bc.vertexBufferHandleIdx;
 
-				mem = bgfx::alloc(indexSize);
-				memcpy(mem->data, bc.textBuffer->getIndexBuffer(), indexSize);
-				bgfx::updateDynamicIndexBuffer(ibh, mem);
+				bgfx::updateDynamicIndexBuffer(ibh
+						, bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
+						);
 
-				mem = bgfx::alloc(vertexSize);
-				memcpy(mem->data, bc.textBuffer->getVertexBuffer(), vertexSize);
-				bgfx::updateDynamicVertexBuffer(vbh, mem);
+				bgfx::updateDynamicVertexBuffer(vbh
+						, bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
+						);
 			}
 
 			bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );

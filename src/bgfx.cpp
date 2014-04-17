@@ -1709,6 +1709,13 @@ namespace bgfx
 		return mem;
 	}
 
+	const Memory* copy(const void* _data, uint32_t _size)
+	{
+		const Memory* mem = alloc(_size);
+		memcpy(mem->data, _data, _size);
+		return mem;
+	}
+
 	const Memory* makeRef(const void* _data, uint32_t _size)
 	{
 		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) );

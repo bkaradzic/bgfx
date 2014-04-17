@@ -712,6 +712,9 @@ namespace bgfx
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 	const Memory* alloc(uint32_t _size);
 
+	/// Allocate buffer and copy data into it. Data will be freed inside bgfx.
+	const Memory* copy(const void* _data, uint32_t _size);
+
 	/// Make reference to data to pass to bgfx. Unlike bgfx::alloc this call
 	/// doesn't allocate memory for data. It just copies pointer to data.
 	/// You must make sure data is available for at least 2 bgfx::frame calls.
