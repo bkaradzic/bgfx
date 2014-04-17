@@ -2321,6 +2321,11 @@ namespace bgfx
 		s_ctx->setIndexBuffer(_tib, numIndices);
 	}
 
+	void setVertexBuffer(VertexBufferHandle _handle)
+	{
+		setVertexBuffer(_handle, 0, UINT32_MAX);
+	}
+
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
