@@ -11,7 +11,6 @@
 #include "entry_p.h"
 #include "cmd.h"
 #include "input.h"
-#include "camera.h"
 
 extern int _main_(int _argc, char** _argv);
 
@@ -104,35 +103,6 @@ namespace entry
 		return 0;
 	}
 
-	int cmdMove(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
-	{
-		if (_argc > 1)
-		{
-			if (0 == strcmp(_argv[1], "forward") )
-			{
-				cameraSetKeyState(CAMERA_KEY_UP, true);
-				return 0;
-			}
-			else if (0 == strcmp(_argv[1], "left") )
-			{
-				cameraSetKeyState(CAMERA_KEY_LEFT, true);
-				return 0;
-			}
-			else if (0 == strcmp(_argv[1], "right") )
-			{
-				cameraSetKeyState(CAMERA_KEY_RIGHT, true);
-				return 0;
-			}
-			else if (0 == strcmp(_argv[1], "backward") )
-			{
-				cameraSetKeyState(CAMERA_KEY_DOWN, true);
-				return 0;
-			}
-		}
-
-		return 1;
-	}
-
 	static const InputBinding s_bindings[] = 
 	{
 		{ entry::Key::KeyQ,  entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
@@ -146,16 +116,6 @@ namespace entry
 		INPUT_BINDING_END
 	};
 
-	static const InputBinding s_camBindings[] = 
-	{
-		{ entry::Key::KeyW,  entry::Modifier::None,      0, cmd, "move forward"  },
-		{ entry::Key::KeyA,  entry::Modifier::None,      0, cmd, "move left"     },
-		{ entry::Key::KeyS,  entry::Modifier::None,      0, cmd, "move backward" },
-		{ entry::Key::KeyD,  entry::Modifier::None,      0, cmd, "move right"    },
-
-		INPUT_BINDING_END
-	};
-
 	int main(int _argc, char** _argv)
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
@@ -163,10 +123,8 @@ namespace entry
 		cmdAdd("mouselock", cmdMouseLock);
 		cmdAdd("graphics",  cmdGraphics );
 		cmdAdd("exit",      cmdExit     );
-		cmdAdd("move",      cmdMove     );
 
 		inputAddBindings("bindings", s_bindings);
-		inputAddBindings("camBindings", s_camBindings);
 
 		int32_t result = ::_main_(_argc, _argv);
 		return result;
@@ -195,9 +153,6 @@ namespace entry
 				case Event::Mouse:
 					{
 						const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
-
-						//TODO: move this from here.
-						cameraSetMouseState(mouse->m_mx, mouse->m_my, mouse->m_down && MouseButton::Right == mouse->m_button, mouse->m_move);
 
 						if (mouse->m_move)
 						{

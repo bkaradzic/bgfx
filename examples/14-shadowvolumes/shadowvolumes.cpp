@@ -23,7 +23,7 @@ using namespace std::tr1;
 #include <bx/hash.h>
 #include <bx/float4_t.h>
 #include "entry/entry.h"
-#include "entry/camera.h"
+#include "camera.h"
 #include "fpumath.h"
 #include "imgui/imgui.h"
 
@@ -2175,9 +2175,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
 
 	float initialPos[3] = { 3.0f, 20.0f, -58.0f };
+	cameraCreate();
 	cameraSetPosition(initialPos);
 	cameraSetVerticalAngle(-0.25f);
-	cameraUpdate(0.0f);
 	cameraGetViewMtx(viewState.m_view);
 
 	entry::MouseState mouseState;
@@ -2209,7 +2209,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_time = time;
 
 		// Update camera.
-		cameraUpdate(deltaTime);
+		cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
 		cameraGetViewMtx(viewState.m_view);
 
 		imguiBeginFrame(mouseState.m_mx
@@ -2957,6 +2957,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyProgram(programFrontTex1);
 	bgfx::destroyProgram(programFrontTex2);
 
+	cameraDestroy();
 	imguiDestroy();
 
 	// Shutdown bgfx.
