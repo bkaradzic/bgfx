@@ -1675,6 +1675,16 @@ namespace bgfx
 				createTexture(textureWidth, textureHeight, numMips);
 			}
 
+			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
+				, this - s_renderCtx->m_textures
+				, getName( (TextureFormat::Enum)m_textureFormat)
+				, getName( (TextureFormat::Enum)m_requestedFormat)
+				, textureWidth
+				, textureHeight
+				, imageContainer.m_cubeMap ? "x6" : ""
+				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
+				);
+
 			if (0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY) )
 			{
 				return;

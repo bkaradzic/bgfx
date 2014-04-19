@@ -2199,6 +2199,16 @@ namespace bgfx
 				blockHeight = blockInfo.blockHeight;
 			}
 
+			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
+				, this - s_renderCtx->m_textures
+				, getName( (TextureFormat::Enum)m_textureFormat)
+				, getName( (TextureFormat::Enum)m_requestedFormat)
+				, textureWidth
+				, textureHeight
+				, imageContainer.m_cubeMap ? "x6" : ""
+				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
+				);
+
 			BX_WARN(!swizzle && !convert, "Texture %s%s%s from %s to %s."
 					, swizzle ? "swizzle" : ""
 					, swizzle&&convert ? " and " : ""

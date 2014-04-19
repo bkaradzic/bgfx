@@ -1819,6 +1819,16 @@ namespace bgfx
 
 			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
 
+			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
+				, this - s_renderCtx->m_textures
+				, getName( (TextureFormat::Enum)m_textureFormat)
+				, getName( (TextureFormat::Enum)m_requestedFormat)
+				, textureWidth
+				, textureHeight
+				, imageContainer.m_cubeMap ? "x6" : ""
+				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
+				);
+
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
 				uint32_t width  = textureWidth;
