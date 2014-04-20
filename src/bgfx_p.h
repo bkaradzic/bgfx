@@ -455,6 +455,14 @@ namespace bgfx
 
 	struct ClearQuad
 	{
+		ClearQuad()
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+			{
+				m_program[ii].idx = invalidHandle;
+			}
+		}
+
 		void init();
 		void shutdown();
 		void clear(const Rect& _rect, const Clear& _clear, uint32_t _height = 0);

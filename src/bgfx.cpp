@@ -508,7 +508,7 @@ namespace bgfx
 				BX_CHECK(false, "You should not be here!");
 			}
 
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+			for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 			{
 				ShaderHandle fsh = createShader(fragMem[ii]);
 				m_program[ii] = createProgram(vsh, fsh);
@@ -539,7 +539,11 @@ namespace bgfx
 		{
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
 			{
-				destroyProgram(m_program[ii]);
+				if (isValid(m_program[ii]) )
+				{
+					destroyProgram(m_program[ii]);
+					m_program[ii].idx = invalidHandle;
+				}
 			}
 			destroyIndexBuffer(m_ib);
 			s_ctx->destroyTransientVertexBuffer(m_vb);
@@ -722,51 +726,6 @@ namespace bgfx
 #endif // BGFX_CONFIG_RENDERER_
 	}
 
-	struct CapsFlags
-	{
-		uint64_t m_flag;
-		const char* m_str;
-	};
-
-	static const CapsFlags s_capsFlags[] =
-	{
-#define CAPS_FLAGS(_x) { _x, #_x }
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC1),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC2),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC3),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC4),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC5),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC1),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2A),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2A1),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC12),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC14),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC14A),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC12A),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC22),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC24),
-
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D16),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24S8),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D32),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D16F),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24F),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D32F),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D0S8),
-
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_ALL),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_3D),
-		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
-		CAPS_FLAGS(BGFX_CAPS_INSTANCING),
-		CAPS_FLAGS(BGFX_CAPS_RENDERER_MULTITHREADED),
-		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_DEPTH),
-		CAPS_FLAGS(BGFX_CAPS_BLEND_INDEPENDENT),
-#undef CAPS_FLAGS
-	};
-
 	void init(CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
 		BX_TRACE("Init...");
@@ -805,38 +764,6 @@ namespace bgfx
 
 		s_ctx = BX_ALIGNED_NEW(g_allocator, 16, Context);
 		s_ctx->init();
-
-		const uint64_t emulatedCaps = 0
-			| BGFX_CAPS_TEXTURE_FORMAT_BC1
-			| BGFX_CAPS_TEXTURE_FORMAT_BC2
-			| BGFX_CAPS_TEXTURE_FORMAT_BC3
-			| BGFX_CAPS_TEXTURE_FORMAT_BC4
-			| BGFX_CAPS_TEXTURE_FORMAT_BC5
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC1
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC2
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A1
-			;
-
-		g_caps.emulated |= emulatedCaps ^ (g_caps.supported & emulatedCaps);
-
-		BX_TRACE("Supported capabilities (" BGFX_RENDERER_NAME "):");
-		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
-		{
-			if (0 != (g_caps.supported & s_capsFlags[ii].m_flag) )
-			{
-				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
-			}
-		}
-
-		BX_TRACE("Emulated capabilities:");
-		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
-		{
-			if (0 != (g_caps.emulated & s_capsFlags[ii].m_flag) )
-			{
-				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
-			}
-		}
 
 		BX_TRACE("Init complete.");
 	}
@@ -939,6 +866,74 @@ namespace bgfx
 		write(_marker, num);
 	}
 
+	struct CapsFlags
+	{
+		uint64_t m_flag;
+		const char* m_str;
+	};
+
+	static const CapsFlags s_capsFlags[] =
+	{
+#define CAPS_FLAGS(_x) { _x, #_x }
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC1),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC2),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC3),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC4),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC5),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC1),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2A),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2A1),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC12),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC14),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC14A),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC12A),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC22),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC24),
+
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D16),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24S8),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D32),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D16F),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24F),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D32F),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D0S8),
+
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_ALL),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_3D),
+		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
+		CAPS_FLAGS(BGFX_CAPS_INSTANCING),
+		CAPS_FLAGS(BGFX_CAPS_RENDERER_MULTITHREADED),
+		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_DEPTH),
+		CAPS_FLAGS(BGFX_CAPS_BLEND_INDEPENDENT),
+#undef CAPS_FLAGS
+	};
+
+	static void dumpCaps()
+	{
+		BX_TRACE("Supported capabilities (" BGFX_RENDERER_NAME "):");
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
+		{
+			if (0 != (g_caps.supported & s_capsFlags[ii].m_flag) )
+			{
+				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
+			}
+		}
+
+		BX_TRACE("Emulated capabilities:");
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
+		{
+			if (0 != (g_caps.emulated & s_capsFlags[ii].m_flag) )
+			{
+				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
+			}
+		}
+
+		BX_TRACE("Max FB attachments: %d", g_caps.maxFBAttachments);
+	}
+
 	void Context::init()
 	{
 		BX_CHECK(!m_rendererInitialized, "Already initialized?");
@@ -983,9 +978,28 @@ namespace bgfx
 
 		m_declRef.init();
 
+		getCommandBuffer(CommandBuffer::RendererInit);
 		frameNoRenderWait();
 
-		getCommandBuffer(CommandBuffer::RendererInit);
+		// Make sure renderer init is called from render thread.
+		// g_caps is initialized and available after this point.
+		frame();
+
+		const uint64_t emulatedCaps = 0
+			| BGFX_CAPS_TEXTURE_FORMAT_BC1
+			| BGFX_CAPS_TEXTURE_FORMAT_BC2
+			| BGFX_CAPS_TEXTURE_FORMAT_BC3
+			| BGFX_CAPS_TEXTURE_FORMAT_BC4
+			| BGFX_CAPS_TEXTURE_FORMAT_BC5
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC1
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC2
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A
+			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A1
+			;
+
+		g_caps.emulated |= emulatedCaps ^ (g_caps.supported & emulatedCaps);
+
+		dumpCaps();
 
 		m_textVideoMemBlitter.init();
 		m_clearQuad.init();

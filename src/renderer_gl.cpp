@@ -2754,6 +2754,7 @@ namespace bgfx
 				if (usesTextureLod)
 				{
 					writeString(&writer, "#version 120\n");
+
 					if (m_type == GL_FRAGMENT_SHADER)
 					{
 						writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
