@@ -806,8 +806,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 			bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexDecl);
 			memcpy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
 			memcpy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
-			bgfx::setVertexBuffer(&tvb, bc.textBuffer->getVertexCount() );
-			bgfx::setIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
+			bgfx::setVertexBuffer(&tvb, 0, bc.textBuffer->getVertexCount() );
+			bgfx::setIndexBuffer(&tib, 0, bc.textBuffer->getIndexCount() );
 		}
 		break;
 	}
