@@ -410,7 +410,7 @@ struct FONScontext
 	void* errorUptr;
 };
 
-static void* fons__tmpalloc(size_t size, void* up)
+void* fons__tmpalloc(size_t size, void* up)
 {
 	unsigned char* ptr;
 
@@ -425,7 +425,7 @@ static void* fons__tmpalloc(size_t size, void* up)
 	return ptr;
 }
 
-static void fons__tmpfree(void* ptr, void* up)
+void fons__tmpfree(void* ptr, void* up)
 {
 	(void)ptr;
 	(void)up;
