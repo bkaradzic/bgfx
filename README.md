@@ -394,6 +394,20 @@ preprocessor to transform GLSL like language syntax into HLSL. This technique
 has certain drawbacks, but overall it's simple and allows quick authoring of
 cross-platform shaders.
 
+Some differences between bgfx's shaderc flavor of GLSL and regular GLSL:
+
+ - No `bool/int` uniforms, all uniforms must be `float`.
+ - Attributes and varyings can be accessed only from `main()` function.
+ - Must use `SAMPLER2D/3D/CUBE/etc.` macros instead of `sampler2D/3D/Cube/etc.`
+   tokens.
+ - Must use `vec2/3/4_splat(<value>)` instead of `vec2/3/4(<value>)`.
+ - Must use `mul(x, y)` when multiplying vectors and matrices.
+ - Must use `varying.def.sc` to define input/output semantic and precission
+   instead of using `attribute/in` and `varying/in/out`.
+ - `$input/$output` tokens must appear at the begining of shader.
+
+For more info see [shader helper macros](https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh).
+
 ### Texture Compiler (texturec)
 
 This tool doesn't currently exist. To produce DDS, KTX or PVR textures use:
