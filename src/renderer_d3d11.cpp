@@ -12,11 +12,28 @@ namespace bgfx
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
 
-	static const D3D11_PRIMITIVE_TOPOLOGY s_primType[] =
+	struct PrimInfo
 	{
-		D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-		D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
-		D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
+		D3D11_PRIMITIVE_TOPOLOGY m_type;
+		uint32_t m_min;
+		uint32_t m_div;
+		uint32_t m_sub;
+	};
+
+	static const PrimInfo s_primInfo[] =
+	{
+		{ D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,  3, 3, 0 },
+		{ D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 3, 1, 2 },
+		{ D3D11_PRIMITIVE_TOPOLOGY_LINELIST,      2, 2, 0 },
+		{ D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,     1, 1, 0 },
+	};
+
+	static const char* s_primName[] =
+	{
+		"TriList",
+		"TriStrip",
+		"Line",
+		"Point",
 	};
 
 	static const uint32_t s_checkMsaa[] =
@@ -497,6 +514,31 @@ namespace bgfx
 										, &m_swapChain
 										);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			{
+				ID3D11InfoQueue* infoQueue;
+				hr = m_device->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&infoQueue);
+				BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+
+				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      true);
+				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
+
+				D3D11_INFO_QUEUE_FILTER filter;
+				memset(&filter, 0, sizeof(filter) );
+
+				D3D11_MESSAGE_CATEGORY categies[] =
+				{
+					D3D11_MESSAGE_CATEGORY_STATE_SETTING,
+					D3D11_MESSAGE_CATEGORY_EXECUTION,
+				};
+				filter.DenyList.NumCategories = BX_COUNTOF(categies);
+				filter.DenyList.pCategoryList = categies;
+				infoQueue->PushStorageFilter(&filter);
+
+				DX_RELEASE(infoQueue, 3);
+			}
 
 			UniformHandle handle = BGFX_INVALID_HANDLE;
 			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
@@ -1423,7 +1465,7 @@ namespace bgfx
 				data = (const char*)s_renderCtx->m_uniforms[handle.idx];
 			}
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
+#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 		case UniformType::_uniform: \
 		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 			{ \
@@ -1431,17 +1473,40 @@ namespace bgfx
 			} \
 			break;
 
-			switch ((int32_t)type)
+			switch ( (int32_t)type)
 			{
-				CASE_IMPLEMENT_UNIFORM(Uniform1i, 1iv, I, int);
-				CASE_IMPLEMENT_UNIFORM(Uniform1f, 1fv, F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform1iv, 1iv, I, int);
-				CASE_IMPLEMENT_UNIFORM(Uniform1fv, 1fv, F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform2fv, 2fv, F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform3fv, 3fv, F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform4fv, 4fv, F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform3x3fv, Matrix3fv, F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform4x4fv, Matrix4fv, F, float);
+			case UniformType::Uniform3x3fv:
+			case UniformType::Uniform3x3fv|BGFX_UNIFORM_FRAGMENTBIT: \
+				{
+					float* value = (float*)data;
+					for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
+					{
+						Matrix4 mtx;
+						mtx.un.val[ 0] = value[0];
+						mtx.un.val[ 1] = value[1];
+						mtx.un.val[ 2] = value[2];
+						mtx.un.val[ 3] = 0.0f;
+						mtx.un.val[ 4] = value[3];
+						mtx.un.val[ 5] = value[4];
+						mtx.un.val[ 6] = value[5];
+						mtx.un.val[ 7] = 0.0f;
+						mtx.un.val[ 8] = value[6];
+						mtx.un.val[ 9] = value[7];
+						mtx.un.val[10] = value[8];
+						mtx.un.val[11] = 0.0f;
+						s_renderCtx->setShaderConstant(type, loc, &mtx.un.val[0], 3);
+					}
+				}
+				break;
+
+				CASE_IMPLEMENT_UNIFORM(Uniform1i,    I, int);
+				CASE_IMPLEMENT_UNIFORM(Uniform1f,    F, float);
+				CASE_IMPLEMENT_UNIFORM(Uniform1iv,   I, int);
+				CASE_IMPLEMENT_UNIFORM(Uniform1fv,   F, float);
+				CASE_IMPLEMENT_UNIFORM(Uniform2fv,   F, float);
+				CASE_IMPLEMENT_UNIFORM(Uniform3fv,   F, float);
+				CASE_IMPLEMENT_UNIFORM(Uniform4fv,   F, float);
+				CASE_IMPLEMENT_UNIFORM(Uniform4x4fv, F, float);
 
 			case UniformType::End:
 				break;
@@ -2340,17 +2405,20 @@ namespace bgfx
 		uint8_t view = 0xff;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
-		D3D11_PRIMITIVE_TOPOLOGY primType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		deviceCtx->IASetPrimitiveTopology(primType);
-		uint32_t primNumVerts = 3;
+
+		const uint64_t pt = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+		uint8_t primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+		PrimInfo prim = s_primInfo[primIndex];
+		deviceCtx->IASetPrimitiveTopology(prim.m_type);
+
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
-		uint32_t statsNumPrimsSubmitted = 0;
+		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
+		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
+		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
-		uint32_t statsNumInstances = 0;
-		uint32_t statsNumPrimsRendered = 0;
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -2411,12 +2479,12 @@ namespace bgfx
 					s_renderCtx->setBlendState(newFlags);
 					s_renderCtx->setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
-					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-					if (primType != s_primType[primIndex])
+					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+					if (prim.m_type != s_primInfo[primIndex].m_type)
 					{
-						primType = s_primType[primIndex];
-						primNumVerts = 3-primIndex;
-						deviceCtx->IASetPrimitiveTopology(primType);
+						prim = s_primInfo[primIndex];
+						deviceCtx->IASetPrimitiveTopology(prim.m_type);
 					}
 				}
 
@@ -2488,12 +2556,12 @@ namespace bgfx
 						alphaRef = ref/255.0f;
 					}
 
-					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-					if (primType != s_primType[primIndex])
+					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+					if (prim.m_type != s_primInfo[primIndex].m_type)
 					{
-						primType = s_primType[primIndex];
-						primNumVerts = 3-primIndex;
-						deviceCtx->IASetPrimitiveTopology(primType);
+						prim = s_primInfo[primIndex];
+						deviceCtx->IASetPrimitiveTopology(prim.m_type);
 					}
 				}
 
@@ -2768,7 +2836,7 @@ namespace bgfx
 						if (UINT32_MAX == state.m_numIndices)
 						{
 							numIndices = s_renderCtx->m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-							numPrimsSubmitted = numIndices/primNumVerts;
+							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
@@ -2779,10 +2847,10 @@ namespace bgfx
 								, 0
 								);
 						}
-						else if (primNumVerts <= state.m_numIndices)
+						else if (prim.m_min <= state.m_numIndices)
 						{
 							numIndices = state.m_numIndices;
-							numPrimsSubmitted = numIndices/primNumVerts;
+							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
@@ -2796,7 +2864,7 @@ namespace bgfx
 					}
 					else
 					{
-						numPrimsSubmitted = numVertices/primNumVerts;
+						numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
 						numInstances = state.m_numInstances;
 						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
@@ -2807,10 +2875,10 @@ namespace bgfx
 							);
 					}
 
-					statsNumPrimsSubmitted += numPrimsSubmitted;
+					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
+					statsNumPrimsRendered[primIndex]  += numPrimsRendered;
+					statsNumInstances[primIndex]      += numInstances;
 					statsNumIndices += numIndices;
-					statsNumInstances += numInstances;
-					statsNumPrimsRendered += numPrimsRendered;
 				}
 			}
 
@@ -2882,17 +2950,22 @@ namespace bgfx
 					, m_render->m_num
 					, elapsedCpuMs
 					);
-				tvm.printf(10, pos++, 0x8e, "      Prims: %7d (#inst: %5d), submitted: %7d"
-					, statsNumPrimsRendered
-					, statsNumInstances
-					, statsNumPrimsSubmitted
-					);
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primInfo); ++ii)
+				{
+					tvm.printf(10, pos++, 0x8e, "    %8s: %7d (#inst: %5d), submitted: %7d"
+						, s_primName[ii]
+						, statsNumPrimsRendered[ii]
+						, statsNumInstances[ii]
+						, statsNumPrimsSubmitted[ii]
+						);
+				}
 
-				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
 				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", m_render->m_iboffset);
+
+				double captureMs = double(captureElapsed)*toMs;
+				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = m_render->m_waitSubmit < m_render->m_waitRender;

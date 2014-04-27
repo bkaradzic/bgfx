@@ -14,11 +14,28 @@ namespace bgfx
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][256];
 
-	static const GLenum s_primType[] =
+	struct PrimInfo
 	{
-		GL_TRIANGLES,
-		GL_LINES,
-		GL_POINTS,
+		GLenum m_type;
+		uint32_t m_min;
+		uint32_t m_div;
+		uint32_t m_sub;
+	};
+
+	static const PrimInfo s_primInfo[] =
+	{
+		{ GL_TRIANGLES,      3, 3, 0 },
+		{ GL_TRIANGLE_STRIP, 3, 1, 2 },
+		{ GL_LINES,          2, 2, 0 },
+		{ GL_POINTS,         1, 1, 0 },
+	};
+
+	static const char* s_primName[] =
+	{
+		"TriList",
+		"TriStrip",
+		"Line",
+		"Point",
 	};
 
 	static const char* s_attribName[Attrib::Count] =
@@ -1660,6 +1677,9 @@ namespace bgfx
 	{
 		switch (_type)
 		{
+		case GL_INT:
+			return UniformType::Uniform1iv;
+
 		case GL_FLOAT:
 			return UniformType::Uniform1fv;
 
@@ -1698,6 +1718,7 @@ namespace bgfx
 			return UniformType::Uniform1iv;
 		};
 
+		BX_CHECK(false, "Unrecognized GL type 0x%04x.", _type);
 		return UniformType::End;
 	}
 
@@ -3570,8 +3591,11 @@ namespace bgfx
 		int32_t height = m_render->m_resolution.m_height;
 		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
-		GLenum primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : GL_TRIANGLES;
-		uint32_t primNumVerts = 3;
+
+		const uint64_t pt = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+		uint8_t primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+		PrimInfo prim = s_primInfo[primIndex];
+
 		uint32_t baseVertex = 0;
 		GLuint currentVao = 0;
 		bool viewHasScissor = false;
@@ -3580,10 +3604,10 @@ namespace bgfx
 
 		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
 
-		uint32_t statsNumPrimsSubmitted = 0;
+		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
+		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
+		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
-		uint32_t statsNumInstances = 0;
-		uint32_t statsNumPrimsRendered = 0;
 
 		if (0 == (m_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -3901,9 +3925,9 @@ namespace bgfx
 						blendFactor = state.m_rgba;
 					}
 
-					uint8_t primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-					primType = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? GL_LINES : s_primType[primIndex];
-					primNumVerts = 3-primIndex;
+					const uint64_t pt = m_render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : newFlags&BGFX_STATE_PT_MASK;
+					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+					prim = s_primInfo[primIndex];
 				}
 
 				bool programChanged = false;
@@ -4259,25 +4283,25 @@ namespace bgfx
 							if (UINT32_MAX == state.m_numIndices)
 							{
 								numIndices = s_renderCtx->m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
-								numPrimsSubmitted = numIndices/primNumVerts;
+								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances = state.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-								GL_CHECK(glDrawElementsInstanced(primType
+								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
 									, GL_UNSIGNED_SHORT
 									, (void*)0
 									, state.m_numInstances
 									) );
 							}
-							else if (primNumVerts <= state.m_numIndices)
+							else if (prim.m_min <= state.m_numIndices)
 							{
 								numIndices = state.m_numIndices;
-								numPrimsSubmitted = numIndices/primNumVerts;
+								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances = state.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-								GL_CHECK(glDrawElementsInstanced(primType
+								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
 									, GL_UNSIGNED_SHORT
 									, (void*)(uintptr_t)(state.m_startIndex*2)
@@ -4287,21 +4311,21 @@ namespace bgfx
 						}
 						else
 						{
-							numPrimsSubmitted = numVertices/primNumVerts;
+							numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
 							numInstances = state.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
 
-							GL_CHECK(glDrawArraysInstanced(primType
+							GL_CHECK(glDrawArraysInstanced(prim.m_type
 								, 0
 								, numVertices
 								, state.m_numInstances
 								) );
 						}
 
-						statsNumPrimsSubmitted += numPrimsSubmitted;
+						statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
+						statsNumPrimsRendered[primIndex]  += numPrimsRendered;
+						statsNumInstances[primIndex]      += numInstances;
 						statsNumIndices += numIndices;
-						statsNumInstances += numInstances;
-						statsNumPrimsRendered += numPrimsRendered;
 					}
 				}
 			}
@@ -4377,18 +4401,22 @@ namespace bgfx
 					, elapsedCpuMs > elapsedGpuMs ? '>' : '<'
 					, elapsedGpuMs
 					);
-				tvm.printf(10, pos++, 0x8e, "      Prims: %7d (#inst: %5d), submitted: %7d"
-					, statsNumPrimsRendered
-					, statsNumInstances
-					, statsNumPrimsSubmitted
-					);
-
-				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primInfo); ++ii)
+				{
+					tvm.printf(10, pos++, 0x8e, "   %8s: %7d (#inst: %5d), submitted: %7d"
+						, s_primName[ii]
+						, statsNumPrimsRendered[ii]
+						, statsNumInstances[ii]
+						, statsNumPrimsSubmitted[ii]
+						);
+				}
 
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", m_render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", m_render->m_iboffset);
+
+				double captureMs = double(captureElapsed)*toMs;
+				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 				if (s_extension[Extension::ATI_meminfo].m_supported)

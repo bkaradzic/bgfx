@@ -1146,10 +1146,10 @@ namespace bgfx
 			m_state.m_indexBuffer = _handle;
 		}
 
-		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices)
+		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
 			m_state.m_indexBuffer = _tib->handle;
-			m_state.m_startIndex = _tib->startIndex;
+			m_state.m_startIndex = _firstIndex;
 			m_state.m_numIndices = _numIndices;
 			m_discard = 0 == _numIndices;
 		}
@@ -1170,9 +1170,9 @@ namespace bgfx
 			m_state.m_vertexDecl = _dvb.m_decl;
 		}
 
-		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices)
+		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_state.m_startVertex = _tvb->startVertex;
+			m_state.m_startVertex = _startVertex;
 			m_state.m_numVertices = bx::uint32_min(_tvb->size/_tvb->stride, _numVertices);
 			m_state.m_vertexBuffer = _tvb->handle;
 			m_state.m_vertexDecl = _tvb->decl;
@@ -2589,9 +2589,9 @@ namespace bgfx
 			m_submit->setIndexBuffer(m_dynamicIndexBuffers[_handle.idx].m_handle, _firstIndex, _numIndices);
 		}
 
-		BGFX_API_FUNC(void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices) )
+		BGFX_API_FUNC(void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices) )
 		{
-			m_submit->setIndexBuffer(_tib, _numIndices);
+			m_submit->setIndexBuffer(_tib, _firstIndex, _numIndices);
 		}
 
 		BGFX_API_FUNC(void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices, uint32_t _startVertex) )
@@ -2604,9 +2604,9 @@ namespace bgfx
 			m_submit->setVertexBuffer(m_dynamicVertexBuffers[_handle.idx], _numVertices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices) )
+		BGFX_API_FUNC(void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices) )
 		{
-			m_submit->setVertexBuffer(_tvb, _numVertices);
+			m_submit->setVertexBuffer(_tvb, _startVertex, _numVertices);
 		}
 
 		BGFX_API_FUNC(void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num) )

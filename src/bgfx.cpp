@@ -2334,12 +2334,17 @@ namespace bgfx
 		s_ctx->setIndexBuffer(_handle, _firstIndex, _numIndices);
 	}
 
-	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices)
+	void setIndexBuffer(const TransientIndexBuffer* _tib)
+	{
+		setIndexBuffer(_tib, 0, UINT32_MAX);
+	}
+
+	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
 		uint32_t numIndices = bx::uint32_min(_numIndices, _tib->size/2);
-		s_ctx->setIndexBuffer(_tib, numIndices);
+		s_ctx->setIndexBuffer(_tib, _tib->startIndex + _firstIndex, numIndices);
 	}
 
 	void setVertexBuffer(VertexBufferHandle _handle)
@@ -2359,11 +2364,16 @@ namespace bgfx
 		s_ctx->setVertexBuffer(_handle, _numVertices);
 	}
 
-	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices)
+	void setVertexBuffer(const TransientVertexBuffer* _tvb)
+	{
+		setVertexBuffer(_tvb, 0, UINT32_MAX);
+	}
+
+	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
-		s_ctx->setVertexBuffer(_tvb, _numVertices);
+		s_ctx->setVertexBuffer(_tvb, _tvb->startVertex + _startVertex, _numVertices);
 	}
 
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)

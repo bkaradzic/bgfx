@@ -265,20 +265,18 @@ static const UniformRemapDx9 s_constRemapDx9[7] =
 	{ UniformType::Uniform2fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT,  8 },
 	{ UniformType::Uniform3fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 12 },
 	{ UniformType::Uniform4fv,   D3DXPC_VECTOR,         D3DXPT_FLOAT, 16 },
-	{ UniformType::Uniform3x3fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 36 },
+	{ UniformType::Uniform3x3fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 48 },
 	{ UniformType::Uniform4x4fv, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 64 },
 };
 
 UniformType::Enum findUniformTypeDx9(const D3DXCONSTANT_DESC& constDesc)
 {
-	uint32_t count = sizeof(s_constRemapDx9)/sizeof(UniformRemapDx9);
-	for (uint32_t ii = 0; ii < count; ++ii)
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_constRemapDx9); ++ii)
 	{
 		const UniformRemapDx9& remap = s_constRemapDx9[ii];
 
 		if (remap.paramClass == constDesc.Class
-		&&  remap.paramType == constDesc.Type
-		&&  (constDesc.Bytes%remap.paramBytes) == 0)
+		&&  remap.paramType == constDesc.Type)
 		{
 			return remap.id;
 		}
@@ -314,16 +312,14 @@ static const UniformRemapDx11 s_constRemapDx11[7] =
 	{ UniformType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 64 },
 };
 
-UniformType::Enum findUniformTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc, uint32_t _size)
+UniformType::Enum findUniformTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc)
 {
-	uint32_t count = sizeof(s_constRemapDx11)/sizeof(UniformRemapDx9);
-	for (uint32_t ii = 0; ii < count; ++ii)
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_constRemapDx11); ++ii)
 	{
 		const UniformRemapDx11& remap = s_constRemapDx11[ii];
 
 		if (remap.paramClass == constDesc.Class
-		&&  remap.paramType == constDesc.Type
-		&&  (_size%remap.paramBytes) == 0)
+		&&  remap.paramType == constDesc.Type)
 		{
 			return remap.id;
 		}
@@ -809,6 +805,8 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
 {
 #if BX_PLATFORM_WINDOWS
+	BX_TRACE("DX9");
+
 	const char* profile = _cmdLine.findOption('p', "profile");
 	if (NULL == profile)
 	{
@@ -1030,6 +1028,8 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
 {
 #if BX_PLATFORM_WINDOWS
+	BX_TRACE("DX11");
+
 	const char* profile = _cmdLine.findOption('p', "profile");
 	if (NULL == profile)
 	{
@@ -1207,7 +1207,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 					hr = type->GetDesc(&constDesc);
 					if (SUCCEEDED(hr) )
 					{
-						UniformType::Enum type = findUniformTypeDx11(constDesc, varDesc.Size);
+						UniformType::Enum type = findUniformTypeDx11(constDesc);
 
 						if (UniformType::Count != type
 						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
@@ -1227,6 +1227,10 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 								, varDesc.uFlags
 								, type
 								);
+						}
+						else
+						{
+							BX_TRACE("\t%s, unknown type", varDesc.Name);
 						}
 					}
 				}

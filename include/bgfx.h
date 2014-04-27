@@ -58,8 +58,9 @@
 #define BGFX_STATE_ALPHA_REF_SHIFT       40
 #define BGFX_STATE_ALPHA_REF_MASK        UINT64_C(0x0000ff0000000000)
 
-#define BGFX_STATE_PT_LINES              UINT64_C(0x0001000000000000)
-#define BGFX_STATE_PT_POINTS             UINT64_C(0x0002000000000000)
+#define BGFX_STATE_PT_TRISTRIP           UINT64_C(0x0001000000000000)
+#define BGFX_STATE_PT_LINES              UINT64_C(0x0002000000000000)
+#define BGFX_STATE_PT_POINTS             UINT64_C(0x0003000000000000)
 #define BGFX_STATE_PT_SHIFT              48
 #define BGFX_STATE_PT_MASK               UINT64_C(0x0003000000000000)
 
@@ -1257,7 +1258,10 @@ namespace bgfx
 	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex = 0, uint32_t _numIndices = UINT32_MAX);
 
 	/// Set index buffer for draw primitive.
-	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _numIndices = UINT32_MAX);
+	void setIndexBuffer(const TransientIndexBuffer* _tib);
+
+	/// Set index buffer for draw primitive.
+	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices);
 
 	/// Set vertex buffer for draw primitive.
 	void setVertexBuffer(VertexBufferHandle _handle);
@@ -1269,7 +1273,10 @@ namespace bgfx
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
 
 	/// Set vertex buffer for draw primitive.
-	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _numVertices = UINT32_MAX);
+	void setVertexBuffer(const TransientVertexBuffer* _tvb);
+
+	/// Set vertex buffer for draw primitive.
+	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices);
 
 	/// Set instance data buffer for draw primitive.
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num = UINT16_MAX);
