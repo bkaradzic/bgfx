@@ -224,6 +224,12 @@ Weighted, Blended Order-Independent Transparency
 
 ![example-19-oit](https://github.com/bkaradzic/bgfx/raw/master/examples/19-oit/screenshot.png)
 
+### [20-nanovg](https://github.com/bkaradzic/bgfx/tree/master/examples/20-nanovg)
+
+NanoVG is small antialiased vector graphics rendering library.
+
+![example-20-nanovg](https://github.com/bkaradzic/bgfx/raw/master/examples/20-nanovg/screenshot.png)
+
 Dependencies
 ------------
 
@@ -470,9 +476,15 @@ optimization.
 
 https://github.com/aras-p/glsl-optimizer
 
-### stb_image (Public Domain)
+### NanoVG (ZLIB)
 
-http://nothings.org/stb_image.c
+NanoVG is small antialiased vector graphics rendering library.
+
+https://github.com/memononen/nanovg
+
+### stb_image, stb_truetype (Public Domain)
+
+http://nothings.org
 
 Assets
 ------
