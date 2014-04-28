@@ -1218,6 +1218,7 @@ static struct NVGvertex* nvg__bevelJoin(struct NVGvertex* dst, struct NVGpoint* 
 	float dlx1 = p1->dy;
 	float dly1 = -p1->dx;
 	NVG_NOTUSED(fringe);
+	NVG_NOTUSED(mu);
 
 	if (p1->flags & NVG_PT_LEFT) {
 		nvg__chooseBevel(p1->flags & NVG_PR_INNERBEVEL, p0, p1, lw, &lx0,&ly0, &lx1,&ly1);
