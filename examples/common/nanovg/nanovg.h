@@ -534,14 +534,7 @@ struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa);
 //
 void nvgDelete(struct NVGcontext* ctx);
 
-// Compiler references
-// http://sourceforge.net/p/predef/wiki/Compilers/
-#if _MSC_VER >= 1800
-	// VS 2013 seems to be too smart for school, it will still list the variable as unused if passed into sizeof().
-	#define NVG_NOTUSED(v) do { (void)(v); } while(0)
-#else
-	#define NVG_NOTUSED(v)  (void)sizeof(v)
-#endif
+#define NVG_NOTUSED(v) do { (void)(true ? (void)0 : ( (void)(v) ) ); } while(0)
 
 #ifdef __cplusplus
 }
