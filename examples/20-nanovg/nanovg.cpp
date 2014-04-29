@@ -1085,9 +1085,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/20-nanovg");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: NanoVG is small antialiased vector graphics rendering library.");
 
-		float ratio = float(width)/float(height);
-
-		nvgBeginFrame(nvg, width, height, ratio, NVG_STRAIGHT_ALPHA);
+		nvgBeginFrame(nvg, width, height, 1.0f, NVG_STRAIGHT_ALPHA);
 
 		renderDemo(nvg, float(mouseState.m_mx), float(mouseState.m_my), float(width), float(height), time, 0, &data);
 
