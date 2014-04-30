@@ -112,6 +112,7 @@ namespace
 		bgfx::UniformHandle u_scissorExtScale;
 		bgfx::UniformHandle u_extentRadius;
 		bgfx::UniformHandle u_params;
+		bgfx::UniformHandle u_halfTexel;
 
 		bgfx::UniformHandle s_tex;
 
@@ -254,6 +255,15 @@ namespace
 		gl->u_extentRadius    = bgfx::createUniform("u_extentRadius",    bgfx::UniformType::Uniform4fv);
 		gl->u_params          = bgfx::createUniform("u_params",          bgfx::UniformType::Uniform4fv);
 		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Uniform1i);
+
+		if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9)
+		{
+			gl->u_halfTexel   = bgfx::createUniform("u_halfTexel",       bgfx::UniformType::Uniform4fv);
+		}
+		else
+		{
+			gl->u_halfTexel.idx = bgfx::invalidHandle;
+		}
 
 		gl->viewid = 0;
 
@@ -477,13 +487,19 @@ namespace
 		bgfx::setUniform(gl->u_params,          &frag->feather);
 
 		bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-
+ 
 		if (image != 0)
 		{
 			struct GLNVGtexture* tex = glnvg__findTexture(gl, image);
 			if (tex != NULL)
 			{
 				handle = tex->id;
+
+				if (bgfx::isValid(gl->u_halfTexel) )
+				{
+					float halfTexel[4] = { 0.5f / tex->width, 0.5f / tex->height };
+					bgfx::setUniform(gl->u_halfTexel, halfTexel);
+				}
 			}
 		}
 

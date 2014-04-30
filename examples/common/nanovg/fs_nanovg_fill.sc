@@ -11,6 +11,7 @@ uniform vec4 u_outerCol;
 uniform vec4 u_scissorExtScale;
 uniform vec4 u_extentRadius;
 uniform vec4 u_params;
+
 SAMPLER2D(s_tex, 0);
 
 #define u_scissorExt   (u_scissorExtScale.xy)
@@ -65,7 +66,7 @@ void main()
 	}
 	else if (u_type == 1.0) // Image
 	{
-		// Calculate color fron texture
+		// Calculate color from texture
 		vec2 pt = mul(u_paintMat, vec3(v_position, 1.0) ).xy / u_extent;
 		vec4 color = texture2D(s_tex, pt);
 		color = u_texType == 0.0 ? color : vec4(1.0, 1.0, 1.0, color.x);
@@ -79,7 +80,7 @@ void main()
 	}
 	else if (u_type == 3.0) // Textured tris
 	{
-		vec4 color = texture2D(s_tex, v_texcoord0);
+		vec4 color = texture2D(s_tex, v_texcoord0.xy);
 		color = u_texType == 0.0 ? color : vec4(1.0, 1.0, 1.0, color.x);
 		color.w *= scissor;
 		result = color * u_innerCol;
