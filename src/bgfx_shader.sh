@@ -3,8 +3,8 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#ifndef __BGFX_SHADER_H__
-#define __BGFX_SHADER_H__
+#ifndef BGFX_SHADER_H_HEADER_GUARD
+#define BGFX_SHADER_H_HEADER_GUARD
 
 #if !defined(BGFX_CONFIG_MAX_BONES)
 #	define BGFX_CONFIG_MAX_BONES 32
@@ -17,6 +17,13 @@
 #	define dFdy(_y) ddy(-_y)
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
+#	define vec2_splat(_x) float2(_x, _x)
+#	define vec3_splat(_x) float3(_x, _x, _x)
+#	define vec4_splat(_x) float4(_x, _x, _x, _x)
+
+#	define bvec2 bool2
+#	define bvec3 bool3
+#	define bvec4 bool4
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3
 struct BgfxSampler2D
@@ -181,14 +188,6 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #		define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
 #	endif //
 
-#	define vec2_splat(_x) float2(_x, _x)
-#	define vec3_splat(_x) float3(_x, _x, _x)
-#	define vec4_splat(_x) float4(_x, _x, _x, _x)
-
-#	define bvec2 bool2
-#	define bvec3 bool3
-#	define bvec4 bool4
-
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
@@ -264,4 +263,4 @@ uniform float u_alphaRef;
 
 #endif // __cplusplus
 
-#endif // __BGFX_SHADER_H__
+#endif // BGFX_SHADER_H_HEADER_GUARD
