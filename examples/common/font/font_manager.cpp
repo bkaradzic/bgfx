@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#define USE_EDTAA3 1
+#define USE_EDTAA3 0
 
 #include "../common.h"
 
@@ -347,7 +347,7 @@ static void makeDistanceMap(const uint8_t* _img, uint8_t* _outImg, uint32_t _wid
 	free(outside);
 	free(inside);
 #else
-	sdfBuild(_outImg, _width, 2.0f, _img, _width, _height, _width);
+	sdfBuild(_outImg, _width, 8.0f, _img, _width, _height, _width);
 #endif // USE_EDTAA3
 }
 

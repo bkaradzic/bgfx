@@ -482,6 +482,13 @@ NanoVG is small antialiased vector graphics rendering library.
 
 https://github.com/memononen/nanovg
 
+### SDF (MIT)
+
+Sweep-and-update Euclidean distance transform of an antialised image for contour
+texturing.
+
+https://github.com/memononen/SDF
+
 ### stb_image, stb_truetype (Public Domain)
 
 http://nothings.org
