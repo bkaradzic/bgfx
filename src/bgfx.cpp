@@ -144,50 +144,64 @@ namespace bgfx
 		{
 		}
 
-		virtual void* alloc(size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
+		virtual void* alloc(size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-#if BGFX_CONFIG_MEMORY_TRACKING
-			{
-				bx::LwMutexScope scope(m_mutex);
-				++m_numBlocks;
-				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
-			}
-#endif // BGFX_CONFIG_MEMORY_TRACKING
-
-			BX_UNUSED(_file, _line);
-			return ::malloc(_size);
-		}
-
-		virtual void free(void* _ptr, const char* _file, uint32_t _line) BX_OVERRIDE
-		{
-			if (NULL != _ptr)
+			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 			{
 #if BGFX_CONFIG_MEMORY_TRACKING
 				{
 					bx::LwMutexScope scope(m_mutex);
-					BX_CHECK(m_numBlocks > 0, "Number of blocks is 0. Possible alloc/free mismatch?");
-					--m_numBlocks;
+					++m_numBlocks;
+					m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
 				}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
-				BX_UNUSED(_file, _line);
-				::free(_ptr);
+				return ::malloc(_size);
+			}
+
+			return bx::alignedAlloc(this, _size, _align, _file, _line);
+		}
+
+		virtual void free(void* _ptr, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
+		{
+			if (NULL != _ptr)
+			{
+				if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+				{
+#if BGFX_CONFIG_MEMORY_TRACKING
+					{
+						bx::LwMutexScope scope(m_mutex);
+						BX_CHECK(m_numBlocks > 0, "Number of blocks is 0. Possible alloc/free mismatch?");
+						--m_numBlocks;
+					}
+#endif // BGFX_CONFIG_MEMORY_TRACKING
+
+					::free(_ptr);
+				}
+				else
+				{
+					bx::alignedFree(this, _ptr, _align, _file, _line);
+				}
 			}
 		}
 
-		virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
+		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-#if BGFX_CONFIG_MEMORY_TRACKING
-			if (NULL == _ptr)
+			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 			{
-				bx::LwMutexScope scope(m_mutex);
-				++m_numBlocks;
-				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
-			}
+#if BGFX_CONFIG_MEMORY_TRACKING
+				if (NULL == _ptr)
+				{
+					bx::LwMutexScope scope(m_mutex);
+					++m_numBlocks;
+					m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+				}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
-			BX_UNUSED(_file, _line);
-			return ::realloc(_ptr, _size);
+				return ::realloc(_ptr, _size);
+			}
+
+			return bx::alignedRealloc(this, _ptr, _size, _align, _file, _line);
 		}
 
 		void checkLeaks()
@@ -762,7 +776,7 @@ namespace bgfx
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
-		s_ctx = BX_ALIGNED_NEW(g_allocator, 16, Context);
+		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 16);
 		s_ctx->init();
 
 		BX_TRACE("Init complete.");
@@ -776,7 +790,7 @@ namespace bgfx
 		Context* ctx = s_ctx; // it's going to be NULLd inside shutdown.
 		ctx->shutdown();
 
-		BX_ALIGNED_DELETE(g_allocator, 16, ctx);
+		BX_ALIGNED_DELETE(g_allocator, ctx, 16);
 
 		if (NULL != s_callbackStub)
 		{

@@ -325,40 +325,54 @@ public:
 	{
 	}
 
-	virtual void* alloc(size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
+	virtual void* alloc(size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
-		BX_UNUSED(_file, _line);
-		void* ptr = ::malloc(_size);
-		dbgPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
-		++m_numBlocks;
-		m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
-		return ptr;
+		if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+		{
+			void* ptr = ::malloc(_size);
+			dbgPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
+			++m_numBlocks;
+			m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+			return ptr;
+		}
+
+		return bx::alignedAlloc(this, _size, _align, _file, _line);
 	}
 
-	virtual void free(void* _ptr, const char* _file, uint32_t _line) BX_OVERRIDE
+	virtual void free(void* _ptr, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
 		if (NULL != _ptr)
 		{
-			dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
-			BX_UNUSED(_file, _line);
-			::free(_ptr);
-			--m_numBlocks;
+			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+			{
+				dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
+				::free(_ptr);
+				--m_numBlocks;
+			}
+			else
+			{
+				bx::alignedFree(this, _ptr, _align, _file, _line);
+			}
 		}
 	}
 
-	virtual void* realloc(void* _ptr, size_t _size, const char* _file, uint32_t _line) BX_OVERRIDE
+	virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
-		BX_UNUSED(_file, _line);
-		void* ptr = ::realloc(_ptr, _size);
-		dbgPrintf("%s(%d): REALLOC %p (old %p) of %d byte(s)\n", _file, _line, ptr, _ptr, _size);
-
-		if (NULL == _ptr)
+		if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 		{
-			++m_numBlocks;
-			m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+			void* ptr = ::realloc(_ptr, _size);
+			dbgPrintf("%s(%d): REALLOC %p (old %p) of %d byte(s)\n", _file, _line, ptr, _ptr, _size);
+
+			if (NULL == _ptr)
+			{
+				++m_numBlocks;
+				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+			}
+
+			return ptr;
 		}
 
-		return ptr;
+		return bx::alignedRealloc(this, _ptr, _size, _align, _file, _line);
 	}
 
 	void dumpStats() const
@@ -380,7 +394,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t height = 720;
 
 	bgfx::init(&callback, &allocator);
-	bgfx::reset(width, height, BGFX_RESET_CAPTURE);
+	bgfx::reset(width, height, BGFX_RESET_CAPTURE|BGFX_RESET_MSAA_X16);
 
 	// Enable debug text.
 	bgfx::setDebug(BGFX_DEBUG_TEXT);
