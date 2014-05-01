@@ -3,11 +3,21 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#define USE_EDTAA3 1
+
 #include "../common.h"
 
 #include <bgfx.h>
 #include <freetype/freetype.h>
-#include <edtaa3/edtaa3func.cpp>
+#include <math.h>
+
+#if USE_EDTAA3
+#	include <edtaa3/edtaa3func.cpp>
+#else
+#	define SDF_IMPLEMENTATION
+#	include <sdf/sdf.h>
+#endif // USE_EDTAA3
+
 #include <wchar.h> // wcslen
 
 #include <tinystl/allocator.h>
@@ -247,6 +257,7 @@ bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo
 
 static void makeDistanceMap(const uint8_t* _img, uint8_t* _outImg, uint32_t _width, uint32_t _height)
 {
+#if USE_EDTAA3
 	int16_t* xdist = (int16_t*)malloc(_width * _height * sizeof(int16_t) );
 	int16_t* ydist = (int16_t*)malloc(_width * _height * sizeof(int16_t) );
 	double* gx = (double*)calloc(_width * _height, sizeof(double) );
@@ -335,6 +346,9 @@ static void makeDistanceMap(const uint8_t* _img, uint8_t* _outImg, uint32_t _wid
 	free(data);
 	free(outside);
 	free(inside);
+#else
+	sdfBuild(_outImg, _width, 2.0f, _img, _width, _height, _width);
+#endif // USE_EDTAA3
 }
 
 bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
