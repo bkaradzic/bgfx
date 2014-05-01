@@ -703,7 +703,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setProgram(program);
 
 		// Set vertex and index buffer.
-		bgfx::setVertexBuffer(&tvb, numVertices);
+		bgfx::setVertexBuffer(&tvb, 0, numVertices);
 
 		// Submit primitive for rendering to view 0.
 		bgfx::submit(0);
