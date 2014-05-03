@@ -203,16 +203,7 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
 
 	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
-
-	return program;
+	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 
 void mtxScaleRotateTranslate(float* _result
@@ -947,7 +938,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	BX_UNUSED(ignore);
 	fclose(file);
 
-	imguiCreate(data, size);
+	imguiCreate(data);
 
 	free(data);
 

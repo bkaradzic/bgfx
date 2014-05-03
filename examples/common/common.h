@@ -3,4 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <bx/timer.h>
+
 #include "entry/entry.h"
+#include "fpumath.h"

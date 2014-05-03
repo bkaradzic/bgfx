@@ -4,27 +4,31 @@
  */
 
 #include "common.h"
-
 #include <bgfx.h>
-#include <bx/timer.h>
-#include "entry/entry.h"
-#include "fpumath.h"
-
-#include <stdio.h>
-#include <string.h>
 
 // embedded shaders
 #include "vs_metaballs.bin.h"
 #include "fs_metaballs.bin.h"
-
-bgfx::VertexDecl s_PosNormalColorDecl;
 
 struct PosNormalColorVertex
 {
 	float m_pos[3];
 	float m_normal[3];
 	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Normal,   3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true);
+		ms_decl.end();
+	};
+
+	static bgfx::VertexDecl ms_decl;
 };
+
+bgfx::VertexDecl PosNormalColorVertex::ms_decl;
 
 struct Grid
 {
@@ -477,11 +481,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		);
 
 	// Create vertex stream declaration.
-	s_PosNormalColorDecl.begin();
-	s_PosNormalColorDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosNormalColorDecl.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float);
-	s_PosNormalColorDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-	s_PosNormalColorDecl.end();
+	PosNormalColorVertex::init();
 
 	const bgfx::Memory* vs_metaballs;
 	const bgfx::Memory* fs_metaballs;
@@ -508,14 +508,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ShaderHandle fsh = bgfx::createShader(fs_metaballs);
 
 	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
+	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 
 #define DIMS 32
 
@@ -568,7 +561,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Allocate 32K vertices in transient vertex buffer.
 		uint32_t maxVertices = (32<<10);
 		bgfx::TransientVertexBuffer tvb;
-		bgfx::allocTransientVertexBuffer(&tvb, maxVertices, s_PosNormalColorDecl);
+		bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_decl);
 
 		const uint32_t numSpheres = 16;
 		float sphere[numSpheres][4];
@@ -684,7 +677,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						&grid[xoffset                ],
 					};
 
-					uint32_t num = triangulate( (uint8_t*)vertex, s_PosNormalColorDecl.m_stride, rgb, pos, val, 0.5f);
+					uint32_t num = triangulate( (uint8_t*)vertex, PosNormalColorVertex::ms_decl.getStride(), rgb, pos, val, 0.5f);
 					vertex += num;
 					numVertices += num;
 				}

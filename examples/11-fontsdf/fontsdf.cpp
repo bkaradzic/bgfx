@@ -92,7 +92,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	BX_UNUSED(ignore);
 	fclose(file);
 
-	imguiCreate(data, size);
+	imguiCreate(data);
 
 	free(data);
 

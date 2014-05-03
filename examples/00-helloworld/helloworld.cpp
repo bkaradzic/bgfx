@@ -4,9 +4,7 @@
  */
 
 #include "common.h"
-
 #include <bgfx.h>
-#include "entry/entry.h"
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {

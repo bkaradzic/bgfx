@@ -4,14 +4,7 @@
  */
 
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include "entry/entry.h"
-#include "fpumath.h"
-
-#include <stdio.h>
-#include <string.h>
+#include "bgfx_utils.h"
 
 struct PosColorTexCoord0Vertex
 {
@@ -21,77 +14,22 @@ struct PosColorTexCoord0Vertex
 	uint32_t m_abgr;
 	float m_u;
 	float m_v;
-};
 
-static bgfx::VertexDecl s_PosColorTexCoord0Decl;
-
-static const char* s_shaderPath = NULL;
-static bool s_flipV = false;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
+	static void init()
 	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true);
+		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
+		ms_decl.end();  
 	}
 
-	return NULL;
-}
+	static bgfx::VertexDecl ms_decl;
+};
 
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
+bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
 
-static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
-{
-	const bgfx::Memory* mem;
-
-	// Load vertex shader.
-	mem = loadShader(_vsName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader(_fsName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
-
-	return program;
-}
+static bool s_flipV = false;
 
 bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint16_t _numIndices)
 {
@@ -111,7 +49,7 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 	bgfx::TransientVertexBuffer tvb;
 	bgfx::TransientIndexBuffer tib;
 
-	if (allocTransientBuffers(&tvb, s_PosColorTexCoord0Decl, 4, &tib, 6) )
+	if (allocTransientBuffers(&tvb, PosColorTexCoord0Vertex::ms_decl, 4, &tib, 6) )
 	{
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)tvb.data;
 
@@ -198,36 +136,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	switch (bgfx::getRendererType() )
 	{
 	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
 		break;
 
 	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
-		break;
-
 	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
 		s_flipV = true;
 		break;
 	}
 
 	// Create vertex stream declaration.
-	s_PosColorTexCoord0Decl.begin();
-	s_PosColorTexCoord0Decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosColorTexCoord0Decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-	s_PosColorTexCoord0Decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-	s_PosColorTexCoord0Decl.end();  
+	PosColorTexCoord0Vertex::init();
 
-	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Uniform1f);
-	bgfx::UniformHandle u_mtx = bgfx::createUniform("u_mtx", bgfx::UniformType::Uniform4x4fv);
+	bgfx::UniformHandle u_time     = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
+	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
 	bgfx::UniformHandle u_lightDir = bgfx::createUniform("u_lightDir", bgfx::UniformType::Uniform3fv);
 
+	// Create program from shaders.
 	bgfx::ProgramHandle raymarching = loadProgram("vs_raymarching", "fs_raymarching");
 
 	int64_t timeOffset = bx::getHPCounter();

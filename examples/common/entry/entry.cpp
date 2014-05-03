@@ -5,6 +5,7 @@
 
 #include <bgfx.h>
 #include <bx/string.h>
+#include <bx/readerwriter.h>
 
 #include <time.h>
 
@@ -19,6 +20,8 @@ namespace entry
 	static uint32_t s_debug = BGFX_DEBUG_NONE;
 	static uint32_t s_reset = BGFX_RESET_NONE;
 	static bool s_exit = false;
+	static bx::FileReaderI* s_fileReader = NULL;
+	static bx::FileWriterI* s_fileWriter = NULL;
 
 	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
 	{
@@ -120,6 +123,11 @@ namespace entry
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
 
+#if BX_CONFIG_CRT_FILE_READER_WRITER
+		s_fileReader = new bx::CrtFileReader;
+		s_fileWriter = new bx::CrtFileWriter;
+#endif // BX_CONFIG_CRT_FILE_READER_WRITER
+
 		cmdAdd("mouselock", cmdMouseLock);
 		cmdAdd("graphics",  cmdGraphics );
 		cmdAdd("exit",      cmdExit     );
@@ -127,6 +135,15 @@ namespace entry
 		inputAddBindings("bindings", s_bindings);
 
 		int32_t result = ::_main_(_argc, _argv);
+
+#if BX_CONFIG_CRT_FILE_READER_WRITER
+		delete s_fileReader;
+		s_fileReader = NULL;
+
+		delete s_fileWriter;
+		s_fileWriter = NULL;
+#endif // BX_CONFIG_CRT_FILE_READER_WRITER
+
 		return result;
 	}
 
@@ -214,6 +231,16 @@ namespace entry
 		_debug = s_debug;
 
 		return s_exit;
+	}
+
+	bx::FileReaderI* getFileReader()
+	{
+		return s_fileReader;
+	}
+
+	bx::FileWriterI* getFileWriter()
+	{
+		return s_fileWriter;
 	}
 
 } // namespace entry

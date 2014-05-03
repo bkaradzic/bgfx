@@ -3,275 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <vector>
-#include <string>
-
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include <bx/readerwriter.h>
-#include "fpumath.h"
+#include "bgfx_utils.h"
 #include "imgui/imgui.h"
-
-#include <string.h>
-
-static const char* s_shaderPath = NULL;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshName)
-{
-	const bgfx::Memory* mem;
-
-	mem = loadShader(_vshName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-	mem = loadShader(_fshName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
-
-	return program;
-}
-
-static const bgfx::Memory* loadTexture(const char* _name)
-{
-	char filePath[512];
-	strcpy(filePath, "textures/");
-	strcat(filePath, _name);
-	return load(filePath);
-}
-
-struct Aabb
-{
-	float m_min[3];
-	float m_max[3];
-};
-
-struct Obb
-{
-	float m_mtx[16];
-};
-
-struct Sphere
-{
-	float m_center[3];
-	float m_radius;
-};
-
-struct Primitive
-{
-	uint32_t m_startIndex;
-	uint32_t m_numIndices;
-	uint32_t m_startVertex;
-	uint32_t m_numVertices;
-
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-};
-
-typedef std::vector<Primitive> PrimitiveArray;
-
-struct Group
-{
-	Group()
-	{
-		reset();
-	}
-
-	void reset()
-	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
-		m_prims.clear();
-	}
-
-	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-	PrimitiveArray m_prims;
-};
-
-struct Mesh
-{
-	void load(const char* _filePath)
-	{
-#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
-
-		bx::CrtFileReader reader;
-		reader.open(_filePath);
-
-		Group group;
-
-		uint32_t chunk;
-		while (4 == bx::read(&reader, chunk) )
-		{
-			switch (chunk)
-			{
-			case BGFX_CHUNK_MAGIC_VB:
-				{
-					bx::read(&reader, group.m_sphere);
-					bx::read(&reader, group.m_aabb);
-					bx::read(&reader, group.m_obb);
-
-					bx::read(&reader, m_decl);
-					uint16_t stride = m_decl.getStride();
-
-					uint16_t numVertices;
-					bx::read(&reader, numVertices);
-					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-					bx::read(&reader, mem->data, mem->size);
-
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_IB:
-				{
-					uint32_t numIndices;
-					bx::read(&reader, numIndices);
-					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
-					bx::read(&reader, mem->data, mem->size);
-					group.m_ibh = bgfx::createIndexBuffer(mem);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_PRI:
-				{
-					uint16_t len;
-					bx::read(&reader, len);
-
-					std::string material;
-					material.resize(len);
-					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(&reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(&reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(&reader, prim.m_startIndex);
-						bx::read(&reader, prim.m_numIndices);
-						bx::read(&reader, prim.m_startVertex);
-						bx::read(&reader, prim.m_numVertices);
-						bx::read(&reader, prim.m_sphere);
-						bx::read(&reader, prim.m_aabb);
-						bx::read(&reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
-				}
-				break;
-
-			default:
-				DBG("%08x at %d", chunk, reader.seek() );
-				break;
-			}
-		}
-
-		reader.close();
-	}
-
-	void unload()
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-			bgfx::destroyVertexBuffer(group.m_vbh);
-
-			if (bgfx::isValid(group.m_ibh) )
-			{
-				bgfx::destroyIndexBuffer(group.m_ibh);
-			}
-		}
-		m_groups.clear();
-	}
-
-	void submit(uint8_t _view, bgfx::ProgramHandle _program, float* _mtx)
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-
-			// Set model matrix for rendering.
-			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
-			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
-
-			// Set render states.
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CCW
-				| BGFX_STATE_MSAA
-				);
-
-			// Submit primitive for rendering to view 0.
-			bgfx::submit(_view);
-		}
-	}
-
-	bgfx::VertexDecl m_decl;
-	typedef std::vector<Group> GroupArray;
-	GroupArray m_groups;
-};
 
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
@@ -288,8 +22,8 @@ struct PosColorTexCoord0Vertex
 	static void init()
 	{
 		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true);
 		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
 		ms_decl.end();
 	}
@@ -324,7 +58,10 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 
 		if (_originBottomLeft)
 		{
-			std::swap(minv, maxv);
+			float temp = minv;
+			minv = maxv;
+			maxv = temp;
+
 			minv -= 1.0f;
 			maxv -= 1.0f;
 		}
@@ -424,35 +161,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	// Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		s_texelHalf = 0.5f;
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		s_flipV = true;
-		break;
-	}
-
-	const bgfx::Memory* mem;
-
-	mem = loadTexture("uffizi.dds");
-	bgfx::TextureHandle uffizi = bgfx::createTexture(mem, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
+	bgfx::TextureHandle uffizi = loadTexture("uffizi.dds", BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
 	bgfx::ProgramHandle skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
 	bgfx::ProgramHandle lumProgram     = loadProgram("vs_hdr_lum",     "fs_hdr_lum");
@@ -471,8 +180,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Uniform4fv);
 	bgfx::UniformHandle u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Uniform4fv, 16);
 
-	Mesh mesh;
-	mesh.load("meshes/bunny.bin");
+	Mesh* mesh = meshLoad("meshes/bunny.bin");
 
 	bgfx::FrameBufferHandle fbh;
 	bgfx::TextureHandle fbtextures[] =
@@ -495,15 +203,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::FrameBufferHandle blur;
 	blur = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
 
-	FILE* file = fopen("font/droidsans.ttf", "rb");
-	uint32_t size = (uint32_t)fsize(file);
-	void* data = malloc(size);
-	size_t ignore = fread(data, 1, size, file);
-	BX_UNUSED(ignore);
-	fclose(file);
-
-	imguiCreate(data, size);
-
+	void* data = load("font/droidsans.ttf");
+	imguiCreate(data);
 	free(data);
 
 	float speed      = 0.37f;
@@ -666,7 +367,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Render mesh into view 1
 		bgfx::setTexture(0, u_texCube, uffizi);
-		mesh.submit(1, meshProgram, NULL);
+		meshSubmit(mesh, 1, meshProgram, NULL);
 
 		// Calculate luminance.
 		setOffsets2x2Lum(u_offset, 128, 128);
@@ -744,7 +445,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Cleanup.
 	imguiDestroy();
 
-	mesh.unload();
+	meshUnload(mesh);
 
 	for (uint32_t ii = 0; ii < BX_COUNTOF(lum); ++ii)
 	{

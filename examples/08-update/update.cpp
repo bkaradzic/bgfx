@@ -4,18 +4,14 @@
  */
 
 #include "common.h"
+#include "bgfx_utils.h"
 
-#include <bgfx.h>
-#include <bx/timer.h>
 #include <bx/uint32_t.h>
-#include "fpumath.h"
 #include "packrect.h"
 
-#include <stdio.h>
-#include <string.h>
 #include <list>
 
-struct PosColorVertex
+struct PosTexcoordVertex
 {
 	float m_x;
 	float m_y;
@@ -23,11 +19,21 @@ struct PosColorVertex
 	float m_u;
 	float m_v;
 	float m_w;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::TexCoord0, 3, bgfx::AttribType::Float);
+		ms_decl.end();
+	};
+
+	static bgfx::VertexDecl ms_decl;
 };
 
-static bgfx::VertexDecl s_PosTexcoordDecl;
+bgfx::VertexDecl PosTexcoordVertex::ms_decl;
 
-static PosColorVertex s_cubeVertices[28] =
+static PosTexcoordVertex s_cubeVertices[28] =
 {
 	{-1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f },
 	{ 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f },
@@ -86,79 +92,6 @@ static const uint16_t s_cubeIndices[36] =
 	21, 22, 23,
 };
 
-static const char* s_shaderPath = NULL;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshName)
-{
-	const bgfx::Memory* mem;
-
-	mem = loadShader(_vshName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	mem = loadShader(_fshName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
-
-	return program;
-}
-
-static const bgfx::Memory* loadTexture(const char* _name)
-{
-	char filePath[512];
-	strcpy(filePath, "textures/");
-	strcat(filePath, _name);
-	return load(filePath);
-}
-
 static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
 {
 	bgfx::TextureInfo ti;
@@ -199,63 +132,34 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	// Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		break;
-	}
-
 	// Create vertex stream declaration.
-	s_PosTexcoordDecl.begin();
-	s_PosTexcoordDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosTexcoordDecl.add(bgfx::Attrib::TexCoord0, 3, bgfx::AttribType::Float);
-	s_PosTexcoordDecl.end();
+	PosTexcoordVertex::init();
 
 	bgfx::TextureHandle textures[] =
 	{
-		bgfx::createTexture(loadTexture("texture_compression_bc1.dds"), BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
-		bgfx::createTexture(loadTexture("texture_compression_bc2.dds"), BGFX_TEXTURE_U_CLAMP),
-		bgfx::createTexture(loadTexture("texture_compression_bc3.dds"), BGFX_TEXTURE_V_CLAMP),
-		bgfx::createTexture(loadTexture("texture_compression_etc1.ktx") ),
-		bgfx::createTexture(loadTexture("texture_compression_etc2.ktx") ),
-		bgfx::createTexture(loadTexture("texture_compression_ptc12.pvr") ),
-		bgfx::createTexture(loadTexture("texture_compression_ptc14.pvr") ),
-		bgfx::createTexture(loadTexture("texture_compression_ptc22.pvr") ),
-		bgfx::createTexture(loadTexture("texture_compression_ptc24.pvr") ),
+		loadTexture("texture_compression_bc1.dds", BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
+		loadTexture("texture_compression_bc2.dds", BGFX_TEXTURE_U_CLAMP),
+		loadTexture("texture_compression_bc3.dds", BGFX_TEXTURE_V_CLAMP),
+		loadTexture("texture_compression_etc1.ktx"),
+		loadTexture("texture_compression_etc2.ktx"),
+		loadTexture("texture_compression_ptc12.pvr"),
+		loadTexture("texture_compression_ptc14.pvr"),
+		loadTexture("texture_compression_ptc22.pvr"),
+		loadTexture("texture_compression_ptc24.pvr"),
 	};
 
-	const bgfx::Memory* mem;
-
 	// Create static vertex buffer.
-	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
-	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, s_PosTexcoordDecl);
+	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_decl);
 
 	// Create static index buffer.
-	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
-	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
+	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
 	bgfx::UniformHandle u_texCube = bgfx::createUniform("u_texCube", bgfx::UniformType::Uniform1iv);
 
 	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
 
-	bgfx::ProgramHandle program = loadProgram("vs_update", "fs_update");
+	bgfx::ProgramHandle program    = loadProgram("vs_update", "fs_update");
 	bgfx::ProgramHandle programCmp = loadProgram("vs_update", "fs_update_cmp");
 
 	const uint32_t textureSide = 2048;

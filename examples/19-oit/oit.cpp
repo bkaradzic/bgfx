@@ -4,14 +4,8 @@
  */
 
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include "fpumath.h"
+#include "bgfx_utils.h"
 #include "imgui/imgui.h"
-
-#include <stdio.h>
-#include <string.h>
 
 struct PosColorVertex
 {
@@ -24,7 +18,7 @@ struct PosColorVertex
 	{
 		ms_decl.begin();
 		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		ms_decl.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true);
 		ms_decl.end();
 	}
 
@@ -45,8 +39,8 @@ struct PosColorTexCoord0Vertex
 	static void init()
 	{
 		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true);
 		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
 		ms_decl.end();
 	}
@@ -83,61 +77,6 @@ static const uint16_t s_cubeIndices[36] =
 	2, 3, 6, // 10
 	6, 3, 7,
 };
-
-static const char* s_shaderPath = NULL;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vshName, const char* _fshName)
-{
-	const bgfx::Memory* mem;
-
-	mem = loadShader(_vshName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	mem = loadShader(_fshName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	return bgfx::createProgram(vsh, fsh, true);
-}
 
 static float s_texelHalf = 0.0f;
 static bool s_flipV = false;
@@ -225,34 +164,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	switch (caps->rendererType)
 	{
 	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		s_texelHalf = 0.5f;
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
 		break;
 
 	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
-		break;
-
 	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
 		s_flipV = true;
 		break;
 	}
 
 	// Imgui.
-	FILE* file = fopen("font/droidsans.ttf", "rb");
-	uint32_t size = (uint32_t)fsize(file);
-	void* data = malloc(size);
-	size_t ignore = fread(data, 1, size, file);
-	BX_UNUSED(ignore);
-	fclose(file);
-	imguiCreate(data, size);
+	void* data = load("font/droidsans.ttf");
+	imguiCreate(data);
+	free(data);
 
 	const bgfx::Memory* mem;
 

@@ -7,18 +7,10 @@
 #include <vector>
 
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include <bx/readerwriter.h>
-#include "fpumath.h"
+#include "bgfx_utils.h"
 #include "imgui/imgui.h"
 
-#include <stdio.h>
-#include <string.h>
-
-static const char* s_shaderPath = NULL;
-static bool s_flipV = false;
+#include <bx/readerwriter.h>
 
 struct KnightPos
 {
@@ -33,79 +25,6 @@ KnightPos knightTour[8*4] =
 	{0,2}, {1,0}, {2,2}, {0,3}, {1,1}, {3,0}, {4,2}, {5,0},
 	{7,1}, {6,3}, {5,1}, {7,0}, {6,2}, {4,3}, {3,1}, {2,3}
 };
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadTexture(const char* _name)
-{
-	char filePath[512];
-	strcpy(filePath, "textures/");
-	strcat(filePath, _name);
-	return load(filePath);
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
-{
-	const bgfx::Memory* mem;
-
-	// Load vertex shader.
-	mem = loadShader(_vsName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader(_fsName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
-
-	return program;
-}
 
 struct Aabb
 {
@@ -281,13 +200,13 @@ struct Mesh
 
 			// Set render states.
 			bgfx::setState(0
-				|BGFX_STATE_RGB_WRITE
-				|BGFX_STATE_ALPHA_WRITE
-				|(_blend?0:BGFX_STATE_DEPTH_WRITE)
-				|BGFX_STATE_DEPTH_TEST_LESS
-				|BGFX_STATE_CULL_CCW
-				|BGFX_STATE_MSAA
-				|(_blend?BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA):0)
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				| (_blend?0:BGFX_STATE_DEPTH_WRITE)
+				| BGFX_STATE_DEPTH_TEST_LESS
+				| BGFX_STATE_CULL_CCW
+				| BGFX_STATE_MSAA
+				| (_blend?BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA):0)
 				);
 
 			// Submit primitive for rendering to view 0.
@@ -320,30 +239,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 1.0f
 		, 0
 		);
-
-	// Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		s_flipV = true;
-		break;
-	}
 	
 	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
 	bgfx::UniformHandle u_stipple = bgfx::createUniform("u_stipple", bgfx::UniformType::Uniform3fv);
@@ -351,12 +246,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::ProgramHandle program = loadProgram("vs_tree", "fs_tree");
 
-	const bgfx::Memory* mem;
-	mem = loadTexture("leafs1.dds");
-	bgfx::TextureHandle textureLeafs = bgfx::createTexture(mem); 
-
-	mem = loadTexture("bark1.dds");
-	bgfx::TextureHandle textureBark = bgfx::createTexture(mem); 
+	bgfx::TextureHandle textureLeafs = loadTexture("leafs1.dds"); 
+	bgfx::TextureHandle textureBark  = loadTexture("bark1.dds"); 
 
 	bgfx::TextureHandle textureStipple;
 
@@ -380,15 +271,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mesh_trunk[1].load("meshes/tree1b_lod1_2.bin");
 	mesh_trunk[2].load("meshes/tree1b_lod2_2.bin");
 
-	FILE* file = fopen("font/droidsans.ttf", "rb");
-	uint32_t size = (uint32_t)fsize(file);
-	void* data = malloc(size);
-	size_t ignore = fread(data, 1, size, file);
-	BX_UNUSED(ignore);
-	fclose(file);
-
-	imguiCreate(data, size);
-
+	// Imgui.
+	void* data = load("font/droidsans.ttf");
+	imguiCreate(data);
 	free(data);
 
 	int32_t scrollArea = 0;

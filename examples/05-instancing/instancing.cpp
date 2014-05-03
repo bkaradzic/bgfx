@@ -4,13 +4,7 @@
  */
 
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include "fpumath.h"
-
-#include <stdio.h>
-#include <string.h>
+#include "bgfx_utils.h"
 
 struct PosColorVertex
 {
@@ -18,9 +12,19 @@ struct PosColorVertex
 	float m_y;
 	float m_z;
 	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true);
+		ms_decl.end();
+	};
+
+	static bgfx::VertexDecl ms_decl;
 };
 
-static bgfx::VertexDecl s_PosColorDecl;
+bgfx::VertexDecl PosColorVertex::ms_decl;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -50,48 +54,6 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-static const char* s_shaderPath = NULL;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -116,61 +78,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Get renderer capabilities info.
 	const bgfx::Caps* caps = bgfx::getCaps();
 
-	// Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (caps->rendererType)
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		break;
-	}
-
 	// Create vertex stream declaration.
-	s_PosColorDecl.begin();
-	s_PosColorDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosColorDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-	s_PosColorDecl.end();
+	PosColorVertex::init();
 
 	const bgfx::Memory* mem;
 
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
-	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, s_PosColorDecl);
+	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, PosColorVertex::ms_decl);
 
 	// Create static index buffer.
 	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
 
-	// Load vertex shader.
-	mem = loadShader("vs_instancing");
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader("fs_instancing");
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
 	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
+	bgfx::ProgramHandle program = loadProgram("vs_instancing", "fs_instancing");
 
 	int64_t timeOffset = bx::getHPCounter();
 

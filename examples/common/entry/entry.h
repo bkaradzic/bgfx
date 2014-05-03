@@ -10,6 +10,8 @@
 
 #include <bx/bx.h>
 
+namespace bx { struct FileReaderI; struct FileWriterI; }
+
 namespace entry
 {
 	struct MouseButton
@@ -141,6 +143,9 @@ namespace entry
 	};
 
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
+
+	bx::FileReaderI* getFileReader();
+	bx::FileWriterI* getFileWriter();
 
 } // namespace entry
 

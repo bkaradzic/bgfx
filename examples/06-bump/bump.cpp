@@ -4,13 +4,7 @@
  */
 
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include "fpumath.h"
-
-#include <stdio.h>
-#include <string.h>
+#include "bgfx_utils.h"
 
 struct PosNormalTangentTexcoordVertex
 {
@@ -21,9 +15,21 @@ struct PosNormalTangentTexcoordVertex
 	uint32_t m_tangent;
 	int16_t m_u;
 	int16_t m_v;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true);
+		ms_decl.add(bgfx::Attrib::Tangent,   4, bgfx::AttribType::Uint8, true, true);
+		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Int16, true, true);
+		ms_decl.end();
+	}
+
+	static bgfx::VertexDecl ms_decl;
 };
 
-static bgfx::VertexDecl s_PosNormalTangentTexcoordDecl;
+bgfx::VertexDecl PosNormalTangentTexcoordVertex::ms_decl;
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -96,157 +102,6 @@ static const uint16_t s_cubeIndices[36] =
 	21, 23, 22,
 };
 
-static const char* s_shaderPath = NULL;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static const bgfx::Memory* loadTexture(const char* _name)
-{
-	char filePath[512];
-	strcpy(filePath, "textures/");
-	strcat(filePath, _name);
-	return load(filePath);
-}
-
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
-{
-	struct PosTexcoord
-	{
-		float m_x;
-		float m_y;
-		float m_z;
-		float m_pad0;
-		float m_u;
-		float m_v;
-		float m_pad1;
-		float m_pad2;
-	};
-
-	float* tangents = new float[6*_numVertices];
-	memset(tangents, 0, 6*_numVertices*sizeof(float) );
-
-	PosTexcoord v0;
-	PosTexcoord v1;
-	PosTexcoord v2;
-
-	for (uint32_t ii = 0, num = _numIndices/3; ii < num; ++ii)
-	{
-		const uint16_t* indices = &_indices[ii*3];
-		uint32_t i0 = indices[0];
-		uint32_t i1 = indices[1];
-		uint32_t i2 = indices[2];
-
-		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _decl, _vertices, i0);
-		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i0);
-
-		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _decl, _vertices, i1);
-		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i1);
-
-		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _decl, _vertices, i2);
-		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i2);
-
-		const float bax = v1.m_x - v0.m_x;
-		const float bay = v1.m_y - v0.m_y;
-		const float baz = v1.m_z - v0.m_z;
-		const float bau = v1.m_u - v0.m_u;
-		const float bav = v1.m_v - v0.m_v;
-
-		const float cax = v2.m_x - v0.m_x;
-		const float cay = v2.m_y - v0.m_y;
-		const float caz = v2.m_z - v0.m_z;
-		const float cau = v2.m_u - v0.m_u;
-		const float cav = v2.m_v - v0.m_v;
-
-		const float det = (bau * cav - bav * cau);
-		const float invDet = 1.0f / det;
-
-		const float tx = (bax * cav - cax * bav) * invDet;
-		const float ty = (bay * cav - cay * bav) * invDet;
-		const float tz = (baz * cav - caz * bav) * invDet;
-
-		const float bx = (cax * bau - bax * cau) * invDet;
-		const float by = (cay * bau - bay * cau) * invDet;
-		const float bz = (caz * bau - baz * cau) * invDet;
-
-		for (uint32_t jj = 0; jj < 3; ++jj)
-		{
-			float* tanu = &tangents[indices[jj]*6];
-			float* tanv = &tanu[3];
-			tanu[0] += tx;
-			tanu[1] += ty;
-			tanu[2] += tz;
-
-			tanv[0] += bx;
-			tanv[1] += by;
-			tanv[2] += bz;
-		}
-	}
-
-	for (uint32_t ii = 0; ii < _numVertices; ++ii)
-	{
-		const float* tanu = &tangents[ii*6];
-		const float* tanv = &tangents[ii*6 + 3];
-
-		float normal[4];
-		bgfx::vertexUnpack(normal, bgfx::Attrib::Normal, _decl, _vertices, ii);
-		float ndt = vec3Dot(normal, tanu);
-
-		float nxt[3];
-		vec3Cross(nxt, normal, tanu);
-
-		float tmp[3];
-		tmp[0] = tanu[0] - normal[0] * ndt;
-		tmp[1] = tanu[1] - normal[1] * ndt;
-		tmp[2] = tanu[2] - normal[2] * ndt;
-
-		float tangent[4];
-		vec3Norm(tangent, tmp);
-
-		tangent[3] = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
-		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
-	}
-
-	delete [] tangents;
-} 
-
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -270,50 +125,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Get renderer capabilities info.
 	const bgfx::Caps* caps = bgfx::getCaps();
-
 	bool instancingSupported = 0 != (caps->supported & BGFX_CAPS_INSTANCING);
 
-	// Setup root path for binary shaders. Shader binaries are different 
-	// for each renderer.
-	switch (caps->rendererType)
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		break;
-	}
-
 	// Create vertex stream declaration.
-	s_PosNormalTangentTexcoordDecl.begin();
-	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true, true);
-	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true, true);
-	s_PosNormalTangentTexcoordDecl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Int16, true, true);
-	s_PosNormalTangentTexcoordDecl.end();
+	PosNormalTangentTexcoordVertex::init();
 
-	const bgfx::Memory* mem;
-
-	calcTangents(s_cubeVertices, BX_COUNTOF(s_cubeVertices), s_PosNormalTangentTexcoordDecl, s_cubeIndices, BX_COUNTOF(s_cubeIndices) );
+	calcTangents(s_cubeVertices
+		, BX_COUNTOF(s_cubeVertices)
+		, PosNormalTangentTexcoordVertex::ms_decl
+		, s_cubeIndices
+		, BX_COUNTOF(s_cubeIndices)
+		);
 
 	// Create static vertex buffer.
-	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
-	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, s_PosNormalTangentTexcoordDecl);
+	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
+		  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
+		, PosNormalTangentTexcoordVertex::ms_decl
+		);
 
 	// Create static index buffer.
-	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
-	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
+	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
 	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
@@ -323,31 +154,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Uniform4fv, numLights);
 	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Uniform4fv, numLights);
 
-	// Load vertex shader.
-	mem = loadShader(instancingSupported ? "vs_bump_instanced" : "vs_bump");
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader("fs_bump");
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
 	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
+	bgfx::ProgramHandle program = loadProgram(instancingSupported ? "vs_bump_instanced" : "vs_bump", "fs_bump");
 
 	// Load diffuse texture.
-	mem = loadTexture("fieldstone-rgba.dds");
-	bgfx::TextureHandle textureColor = bgfx::createTexture(mem);
+	bgfx::TextureHandle textureColor = loadTexture("fieldstone-rgba.dds");
 
 	// Load normal texture.
-	mem = loadTexture("fieldstone-n.dds");
-	bgfx::TextureHandle textureNormal = bgfx::createTexture(mem);
+	bgfx::TextureHandle textureNormal = loadTexture("fieldstone-n.dds");
 
 	int64_t timeOffset = bx::getHPCounter();
 
@@ -447,11 +261,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					// Set render states.
 					bgfx::setState(0
-						|BGFX_STATE_RGB_WRITE
-						|BGFX_STATE_ALPHA_WRITE
-						|BGFX_STATE_DEPTH_WRITE
-						|BGFX_STATE_DEPTH_TEST_LESS
-						|BGFX_STATE_MSAA
+						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_DEPTH_WRITE
+						| BGFX_STATE_DEPTH_TEST_LESS
+						| BGFX_STATE_MSAA
 						);
 
 					// Submit primitive for rendering to view 0.
@@ -487,11 +301,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					// Set render states.
 					bgfx::setState(0
-						|BGFX_STATE_RGB_WRITE
-						|BGFX_STATE_ALPHA_WRITE
-						|BGFX_STATE_DEPTH_WRITE
-						|BGFX_STATE_DEPTH_TEST_LESS
-						|BGFX_STATE_MSAA
+						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_DEPTH_WRITE
+						| BGFX_STATE_DEPTH_TEST_LESS
+						| BGFX_STATE_MSAA
 						);
 
 					// Submit primitive for rendering to view 0.

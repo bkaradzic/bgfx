@@ -13,8 +13,9 @@
 // enough for an example.
 struct AviWriter
 {
-	AviWriter()
-		: m_frame(NULL)
+	AviWriter(bx::FileWriterI* _writer)
+		: m_writer(_writer)
+		, m_frame(NULL)
 		, m_frameSize(0)
 		, m_numFrames(0)
 		, m_width(0)
@@ -25,7 +26,7 @@ struct AviWriter
 
 	bool open(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _fps, bool _yflip)
 	{
-		if (0 != m_writer.open(_filePath) )
+		if (0 != m_writer->open(_filePath) )
 		{
 			return false;
 		}
@@ -45,88 +46,88 @@ struct AviWriter
 		bx::write(&mem, BX_MAKEFOURCC('0', '0', 'd', 'b') );
 		bx::write(&mem, m_frameSize);
 
-		bx::write(&m_writer, BX_MAKEFOURCC('R', 'I', 'F', 'F') );
-		m_riffSizeOffset = m_writer.seek();
-		bx::write(&m_writer, UINT32_C(0) );
+		bx::write(m_writer, BX_MAKEFOURCC('R', 'I', 'F', 'F') );
+		m_riffSizeOffset = m_writer->seek();
+		bx::write(m_writer, UINT32_C(0) );
 
-		bx::write(&m_writer, BX_MAKEFOURCC('A', 'V', 'I', ' ') );
+		bx::write(m_writer, BX_MAKEFOURCC('A', 'V', 'I', ' ') );
 
 		// AVI RIFF Form http://msdn.microsoft.com/en-us/library/ms899422.aspx
-		bx::write(&m_writer, BX_MAKEFOURCC('L', 'I', 'S', 'T') );
-		bx::write(&m_writer, UINT32_C(192) );
-		bx::write(&m_writer, BX_MAKEFOURCC('h', 'd', 'r', 'l') );
+		bx::write(m_writer, BX_MAKEFOURCC('L', 'I', 'S', 'T') );
+		bx::write(m_writer, UINT32_C(192) );
+		bx::write(m_writer, BX_MAKEFOURCC('h', 'd', 'r', 'l') );
 
 		// AVI Main Header http://msdn.microsoft.com/en-us/library/ms779632.aspx
-		bx::write(&m_writer, BX_MAKEFOURCC('a', 'v', 'i', 'h') );
-		bx::write(&m_writer, UINT32_C(56) );
-		bx::write(&m_writer, UINT32_C(0) );      // dwMicroSecPerFrame
-		bx::write(&m_writer, UINT32_C(0) );      // dwMaxBytesPerSec
-		bx::write(&m_writer, UINT32_C(0) );      // dwPaddingGranularity
-		bx::write(&m_writer, UINT32_C(0x101) );  // dwFlags
+		bx::write(m_writer, BX_MAKEFOURCC('a', 'v', 'i', 'h') );
+		bx::write(m_writer, UINT32_C(56) );
+		bx::write(m_writer, UINT32_C(0) );      // dwMicroSecPerFrame
+		bx::write(m_writer, UINT32_C(0) );      // dwMaxBytesPerSec
+		bx::write(m_writer, UINT32_C(0) );      // dwPaddingGranularity
+		bx::write(m_writer, UINT32_C(0x101) );  // dwFlags
 
-		m_totalFramesOffset = m_writer.seek();
-		bx::write(&m_writer, UINT32_C(0) );      // dwTotalFrames
+		m_totalFramesOffset = m_writer->seek();
+		bx::write(m_writer, UINT32_C(0) );      // dwTotalFrames
 
-		bx::write(&m_writer, UINT32_C(0) );      // dwInitialFrames
-		bx::write(&m_writer, UINT32_C(1) );      // dwStreams
-		bx::write(&m_writer, UINT32_C(0) );      // dwSuggestedBufferSize
-		bx::write(&m_writer, _width);            // dwWidth
-		bx::write(&m_writer, _height);           // dwHeight
-		bx::write(&m_writer, UINT32_C(0) );      // dwReserved0
-		bx::write(&m_writer, UINT32_C(0) );      // dwReserved1
-		bx::write(&m_writer, UINT32_C(0) );      // dwReserved2
-		bx::write(&m_writer, UINT32_C(0) );      // dwReserved3
+		bx::write(m_writer, UINT32_C(0) );      // dwInitialFrames
+		bx::write(m_writer, UINT32_C(1) );      // dwStreams
+		bx::write(m_writer, UINT32_C(0) );      // dwSuggestedBufferSize
+		bx::write(m_writer, _width);            // dwWidth
+		bx::write(m_writer, _height);           // dwHeight
+		bx::write(m_writer, UINT32_C(0) );      // dwReserved0
+		bx::write(m_writer, UINT32_C(0) );      // dwReserved1
+		bx::write(m_writer, UINT32_C(0) );      // dwReserved2
+		bx::write(m_writer, UINT32_C(0) );      // dwReserved3
 
-		bx::write(&m_writer, BX_MAKEFOURCC('L', 'I', 'S', 'T') );
-		bx::write(&m_writer, UINT32_C(116) );
-		bx::write(&m_writer, BX_MAKEFOURCC('s', 't', 'r', 'l') );
+		bx::write(m_writer, BX_MAKEFOURCC('L', 'I', 'S', 'T') );
+		bx::write(m_writer, UINT32_C(116) );
+		bx::write(m_writer, BX_MAKEFOURCC('s', 't', 'r', 'l') );
 
 		// AVISTREAMHEADER Structure http://msdn.microsoft.com/en-us/library/ms779638.aspx
-		bx::write(&m_writer, BX_MAKEFOURCC('s', 't', 'r', 'h') );
-		bx::write(&m_writer, UINT32_C(56) );
+		bx::write(m_writer, BX_MAKEFOURCC('s', 't', 'r', 'h') );
+		bx::write(m_writer, UINT32_C(56) );
 		// AVI Stream Headers http://msdn.microsoft.com/en-us/library/ms899423.aspx
-		bx::write(&m_writer, BX_MAKEFOURCC('v', 'i', 'd', 's') ); // fccType
-		bx::write(&m_writer, BX_MAKEFOURCC('D', 'I', 'B', ' ') ); // fccHandler
-		bx::write(&m_writer, UINT32_C(0) );      // dwFlags
-		bx::write(&m_writer, UINT16_C(0) );      // wPriority
-		bx::write(&m_writer, UINT16_C(0) );      // wLanguage
-		bx::write(&m_writer, UINT32_C(0) );      // dwInitialFrames
-		bx::write(&m_writer, UINT32_C(1) );      // dwScale
-		bx::write(&m_writer, _fps);              // dwRate
-		bx::write(&m_writer, UINT32_C(0) );      // dwStart
+		bx::write(m_writer, BX_MAKEFOURCC('v', 'i', 'd', 's') ); // fccType
+		bx::write(m_writer, BX_MAKEFOURCC('D', 'I', 'B', ' ') ); // fccHandler
+		bx::write(m_writer, UINT32_C(0) );      // dwFlags
+		bx::write(m_writer, UINT16_C(0) );      // wPriority
+		bx::write(m_writer, UINT16_C(0) );      // wLanguage
+		bx::write(m_writer, UINT32_C(0) );      // dwInitialFrames
+		bx::write(m_writer, UINT32_C(1) );      // dwScale
+		bx::write(m_writer, _fps);              // dwRate
+		bx::write(m_writer, UINT32_C(0) );      // dwStart
 
-		m_lengthOffset = m_writer.seek();
-		bx::write(&m_writer, UINT32_C(0) );      // dwLength
+		m_lengthOffset = m_writer->seek();
+		bx::write(m_writer, UINT32_C(0) );      // dwLength
 
-		bx::write(&m_writer, m_frameSize);       // dwSuggestedBufferSize
-		bx::write(&m_writer, UINT32_MAX);        // dwQuality
-		bx::write(&m_writer, UINT32_C(0) );      // dwSampleSize
-		bx::write(&m_writer, INT16_C(0) );       // rcFrame.left
-		bx::write(&m_writer, INT16_C(0) );       // rcFrame.top
-		bx::write(&m_writer, uint16_t(_width) ); // rcFrame.right
-		bx::write(&m_writer, uint16_t(_height) );// rcFrame.bottom
+		bx::write(m_writer, m_frameSize);       // dwSuggestedBufferSize
+		bx::write(m_writer, UINT32_MAX);        // dwQuality
+		bx::write(m_writer, UINT32_C(0) );      // dwSampleSize
+		bx::write(m_writer, INT16_C(0) );       // rcFrame.left
+		bx::write(m_writer, INT16_C(0) );       // rcFrame.top
+		bx::write(m_writer, uint16_t(_width) ); // rcFrame.right
+		bx::write(m_writer, uint16_t(_height) );// rcFrame.bottom
 
-		bx::write(&m_writer, BX_MAKEFOURCC('s', 't', 'r', 'f') );
-		bx::write(&m_writer, UINT32_C(40) );
+		bx::write(m_writer, BX_MAKEFOURCC('s', 't', 'r', 'f') );
+		bx::write(m_writer, UINT32_C(40) );
 
 		// BITMAPINFOHEADER structure http://msdn.microsoft.com/en-us/library/windows/desktop/dd318229%28v=vs.85%29.aspx
-		bx::write(&m_writer, UINT32_C(40) );     // biSize
-		bx::write(&m_writer, _width);            // biWidth
-		bx::write(&m_writer, _height);           // biHeight
-		bx::write(&m_writer, UINT16_C(1) );      // biPlanes
-		bx::write(&m_writer, UINT16_C(24) );     // biBitCount
-		bx::write(&m_writer, UINT32_C(0) );      // biCompression
-		bx::write(&m_writer, m_frameSize);       // biSizeImage
-		bx::write(&m_writer, UINT32_C(0) );      // biXPelsPerMeter
-		bx::write(&m_writer, UINT32_C(0) );      // biYPelsPerMeter
-		bx::write(&m_writer, UINT32_C(0) );      // biClrUsed
-		bx::write(&m_writer, UINT32_C(0) );      // biClrImportant
+		bx::write(m_writer, UINT32_C(40) );     // biSize
+		bx::write(m_writer, _width);            // biWidth
+		bx::write(m_writer, _height);           // biHeight
+		bx::write(m_writer, UINT16_C(1) );      // biPlanes
+		bx::write(m_writer, UINT16_C(24) );     // biBitCount
+		bx::write(m_writer, UINT32_C(0) );      // biCompression
+		bx::write(m_writer, m_frameSize);       // biSizeImage
+		bx::write(m_writer, UINT32_C(0) );      // biXPelsPerMeter
+		bx::write(m_writer, UINT32_C(0) );      // biYPelsPerMeter
+		bx::write(m_writer, UINT32_C(0) );      // biClrUsed
+		bx::write(m_writer, UINT32_C(0) );      // biClrImportant
 
-		bx::write(&m_writer, BX_MAKEFOURCC('L', 'I', 'S', 'T') );
+		bx::write(m_writer, BX_MAKEFOURCC('L', 'I', 'S', 'T') );
 
-		m_moviListOffset = m_writer.seek();
-		bx::write(&m_writer, UINT32_C(0) );
-		bx::write(&m_writer, BX_MAKEFOURCC('m', 'o', 'v', 'i') );
+		m_moviListOffset = m_writer->seek();
+		bx::write(m_writer, UINT32_C(0) );
+		bx::write(m_writer, BX_MAKEFOURCC('m', 'o', 'v', 'i') );
 
 		return true;
 	}
@@ -135,34 +136,34 @@ struct AviWriter
 	{
 		if (NULL != m_frame)
 		{
-			int64_t pos = m_writer.seek();
-			m_writer.seek(m_moviListOffset, bx::Whence::Begin);
-			bx::write(&m_writer, uint32_t(pos-m_moviListOffset-4) );
-			m_writer.seek(pos, bx::Whence::Begin);
+			int64_t pos = m_writer->seek();
+			m_writer->seek(m_moviListOffset, bx::Whence::Begin);
+			bx::write(m_writer, uint32_t(pos-m_moviListOffset-4) );
+			m_writer->seek(pos, bx::Whence::Begin);
 
-			bx::write(&m_writer, BX_MAKEFOURCC('i', 'd', 'x', '1') );
-			bx::write(&m_writer, m_numFrames*16);
+			bx::write(m_writer, BX_MAKEFOURCC('i', 'd', 'x', '1') );
+			bx::write(m_writer, m_numFrames*16);
 
 			for (uint32_t ii = 0, offset = 4; ii < m_numFrames; ++ii)
 			{
-				bx::write(&m_writer, BX_MAKEFOURCC('0', '0', 'd', 'b') );
-				bx::write(&m_writer, UINT32_C(16) );
-				bx::write(&m_writer, offset);
-				bx::write(&m_writer, m_frameSize);
+				bx::write(m_writer, BX_MAKEFOURCC('0', '0', 'd', 'b') );
+				bx::write(m_writer, UINT32_C(16) );
+				bx::write(m_writer, offset);
+				bx::write(m_writer, m_frameSize);
 				offset += m_frameSize + 8;
 			}
 
-			pos = m_writer.seek();
-			m_writer.seek(m_riffSizeOffset, bx::Whence::Begin);
-			bx::write(&m_writer, uint32_t(pos-m_riffSizeOffset-4) );
+			pos = m_writer->seek();
+			m_writer->seek(m_riffSizeOffset, bx::Whence::Begin);
+			bx::write(m_writer, uint32_t(pos-m_riffSizeOffset-4) );
 
-			m_writer.seek(m_totalFramesOffset, bx::Whence::Begin);
-			bx::write(&m_writer, m_numFrames);
+			m_writer->seek(m_totalFramesOffset, bx::Whence::Begin);
+			bx::write(m_writer, m_numFrames);
 
-			m_writer.seek(m_lengthOffset, bx::Whence::Begin);
-			bx::write(&m_writer, m_numFrames);
+			m_writer->seek(m_lengthOffset, bx::Whence::Begin);
+			bx::write(m_writer, m_numFrames);
 
-			m_writer.close();
+			m_writer->close();
 
 			delete [] m_frame;
 			m_frame = NULL;
@@ -209,11 +210,11 @@ struct AviWriter
 				}
 			}
 
-			bx::write(&m_writer, m_frame, m_frameSize+8);
+			bx::write(m_writer, m_frame, m_frameSize+8);
 		}
 	}
 
-	bx::CrtFileWriter m_writer;
+	bx::FileWriterI* m_writer;
 	int64_t m_riffSizeOffset;
 	int64_t m_totalFramesOffset;
 	int64_t m_lengthOffset;

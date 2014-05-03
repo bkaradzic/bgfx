@@ -3,16 +3,11 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "common.h"
-
 #include <bgfx.h>
-#include <bx/timer.h>
 #include <bx/uint32_t.h>
-#include "fpumath.h"
-#include "imgui/imgui.h"
 
-#include <stdio.h>
-#include <string.h>
+#include "common.h"
+#include "imgui/imgui.h"
 
 // embedded shaders
 #include "vs_drawstress.bin.h"
@@ -31,9 +26,19 @@ struct PosColorVertex
 	float m_y;
 	float m_z;
 	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl.begin();
+		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+		ms_decl.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true);
+		ms_decl.end();
+	}
+
+	static bgfx::VertexDecl ms_decl;
 };
 
-static bgfx::VertexDecl s_PosColorDecl;
+bgfx::VertexDecl PosColorVertex::ms_decl;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -264,10 +269,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 	// Create vertex stream declaration.
-	s_PosColorDecl.begin();
-	s_PosColorDecl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	s_PosColorDecl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
-	s_PosColorDecl.end();
+	PosColorVertex::init();
 
 	const bgfx::Memory* vs_drawstress;
 	const bgfx::Memory* fs_drawstress;
@@ -300,7 +302,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Create static vertex buffer.
 	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
-	vbh = bgfx::createVertexBuffer(mem, s_PosColorDecl);
+	vbh = bgfx::createVertexBuffer(mem, PosColorVertex::ms_decl);
 
 	// Create static index buffer.
 	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
@@ -313,7 +315,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyShader(vsh);
 	bgfx::destroyShader(fsh);
 
-	imguiCreate(s_droidSansTtf, sizeof(s_droidSansTtf) );
+	imguiCreate(s_droidSansTtf);
 
 #if BX_PLATFORM_EMSCRIPTEN
 	emscripten_set_main_loop(&loop, -1, 1);

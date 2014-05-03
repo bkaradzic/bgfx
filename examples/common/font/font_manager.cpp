@@ -5,10 +5,11 @@
 
 #define USE_EDTAA3 0
 
+#include <freetype/freetype.h>
+
 #include "../common.h"
 
 #include <bgfx.h>
-#include <freetype/freetype.h>
 #include <math.h>
 
 #if USE_EDTAA3

@@ -3,87 +3,17 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <string>
-#include <vector>
-
 #include "common.h"
-
-#include <bgfx.h>
-#include <bx/timer.h>
-#include <bx/readerwriter.h>
-#include "entry/entry.h"
-#include "fpumath.h"
+#include "bgfx_utils.h"
 #include "imgui/imgui.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <bx/readerwriter.h>
 
-static const char* s_shaderPath = NULL;
+#include <vector>
+#include <string>
+
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
-{
-	const bgfx::Memory* mem;
-
-	mem = loadShader(_vsName);
-	bgfx::ShaderHandle vs = bgfx::createShader(mem);
-	mem = loadShader(_fsName);
-	bgfx::ShaderHandle fs = bgfx::createShader(mem);
-	bgfx::ProgramHandle program = bgfx::createProgram(vs, fs);
-	bgfx::destroyShader(vs);
-	bgfx::destroyShader(fs);
-
-	return program;
-}
-
-static const bgfx::Memory* loadTexture(const char* _name)
-{
-	char filePath[512];
-	strcpy(filePath, "textures/");
-	strcat(filePath, _name);
-	return load(filePath);
-}
 
 struct Uniforms
 {
@@ -512,33 +442,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	switch (bgfx::getRendererType() )
 	{
 	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
 		break;
 
 	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
-		break;
-
 	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
 		s_flipV = true;
 		break;
 	}
 
 	// Imgui.
-	FILE* file = fopen("font/droidsans.ttf", "rb");
-	uint32_t size = (uint32_t)fsize(file);
-	void* data = malloc(size);
-	size_t ignore = fread(data, 1, size, file);
-	BX_UNUSED(ignore);
-	fclose(file);
-	imguiCreate(data, size);
+	void* data = load("font/droidsans.ttf");
+	imguiCreate(data);
+	free(data);
 
 	// Uniforms.
 	s_uniforms.init();
@@ -550,16 +465,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{
 		void load(const char* _name)
 		{
-			const uint32_t texFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP;
 			char filePath[512];
 
 			strcpy(filePath, _name);
 			strcat(filePath, "_lod.dds");
-			m_tex = bgfx::createTexture(loadTexture(filePath), texFlags);
+			m_tex = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
 			strcpy(filePath, _name);
 			strcat(filePath, "_irr.dds");
-			m_texIrr = bgfx::createTexture(loadTexture(filePath), texFlags);
+			m_texIrr = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 		}
 
 		void destroy()
