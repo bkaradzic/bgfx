@@ -3,6 +3,11 @@
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
+newoption {
+	trigger = "with-tools",
+	description = "Enable building tools.",
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
@@ -173,7 +178,9 @@ exampleProject("18-ibl",               "711bcbb0-9531-11e3-a5e2-0800200c9a66")
 exampleProject("19-oit",               "d7eca4fc-96d7-11e3-a73b-fcafdb0f677b")
 exampleProject("20-nanovg",            "359ce7c4-cd06-11e3-bb8b-6c2f9a125b5a")
 
-dofile "makedisttex.lua"
-dofile "shaderc.lua"
-dofile "texturec.lua"
-dofile "geometryc.lua"
+if _OPTIONS["with-tools"] then
+	dofile "makedisttex.lua"
+	dofile "shaderc.lua"
+	dofile "texturec.lua"
+	dofile "geometryc.lua"
+end

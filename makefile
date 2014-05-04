@@ -17,9 +17,14 @@ endif
 PREMAKE4=../bx/tools/bin/$(OS)/premake4
 
 all:
-	$(PREMAKE4) --file=premake/premake4.lua vs2008
-	$(PREMAKE4) --file=premake/premake4.lua vs2010
-	$(PREMAKE4) --file=premake/premake4.lua vs2012
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools vs2008
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools vs2010
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools vs2012
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --gcc=mingw gmake
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --gcc=linux-gcc gmake
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --gcc=osx gmake
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools xcode4
+	
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-arm gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-mips gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-x86 gmake
@@ -27,12 +32,8 @@ all:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl-arm gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=pnacl gmake
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=mingw gmake
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=linux-gcc gmake
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=osx gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=ios-arm gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=ios-simulator gmake
-	$(PREMAKE4) --file=premake/premake4.lua xcode4
 
 .build/projects/gmake-android-arm:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-arm gmake
@@ -67,7 +68,7 @@ asmjs-release: .build/projects/gmake-asmjs
 asmjs: asmjs-debug asmjs-release
 
 .build/projects/gmake-linux:
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=linux-gcc gmake
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --gcc=linux-gcc gmake
 linux-debug32: .build/projects/gmake-linux
 	make -R -C .build/projects/gmake-linux config=debug32
 linux-release32: .build/projects/gmake-linux
@@ -79,7 +80,7 @@ linux-release64: .build/projects/gmake-linux
 linux: linux-debug32 linux-release32 linux-debug64 linux-release64
 
 .build/projects/gmake-mingw:
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=mingw gmake
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --gcc=mingw gmake
 mingw-debug32: .build/projects/gmake-mingw
 	make -R -C .build/projects/gmake-mingw config=debug32
 mingw-release32: .build/projects/gmake-mingw
@@ -91,7 +92,7 @@ mingw-release64: .build/projects/gmake-mingw
 mingw: mingw-debug32 mingw-release32 mingw-debug64 mingw-release64
 
 .build/projects/vs2008:
-	$(PREMAKE4) --file=premake/premake4.lua vs2008
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools vs2008
 vs2008-debug32:
 	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|Win32"
 vs2008-release32:
@@ -103,10 +104,10 @@ vs2008-release64:
 vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
 
 .build/projects/vs2010:
-	$(PREMAKE4) --file=premake/premake4.lua vs2010
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools vs2010
 
 .build/projects/vs2012:
-	$(PREMAKE4) --file=premake/premake4.lua vs2012
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools vs2012
 
 .build/projects/gmake-nacl:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl gmake
@@ -137,7 +138,7 @@ pnacl-release: .build/projects/gmake-pnacl
 pnacl: pnacl-debug pnacl-release
 
 .build/projects/gmake-osx:
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=osx gmake
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --gcc=osx gmake
 osx-debug32: .build/projects/gmake-osx
 	make -C .build/projects/gmake-osx config=debug32
 osx-release32: .build/projects/gmake-osx
