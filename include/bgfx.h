@@ -580,7 +580,7 @@ namespace bgfx
 	struct VertexDecl
 	{
 		/// Start VertexDecl.
-		void begin(RendererType::Enum _renderer = RendererType::Null);
+		VertexDecl& begin(RendererType::Enum _renderer = RendererType::Null);
 
 		/// End VertexDecl.
 		void end();
@@ -601,10 +601,10 @@ namespace bgfx
 		/// NOTE:
 		///   Must be called between begin/end.
 		///
-		void add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
+		VertexDecl& add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
 
 		/// Skip _num bytes in vertex stream.
-		void skip(uint8_t _num);
+		VertexDecl& skip(uint8_t _num);
 
 		/// Decode attribute.
 		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const;
@@ -1062,7 +1062,15 @@ namespace bgfx
 	///
 	///   u_view mat4 - view matrix
 	///
+	///   u_invView mat4 - inverted view matrix
+	///
+	///   u_proj mat4 - projection matrix
+	///
+	///   u_invProj mat4 - inverted projection matrix
+	///
 	///   u_viewProj mat4 - concatenated view projection matrix
+	///
+	///   u_invViewProj mat4 - concatenated inverted view projection matrix
 	///
 	///   u_model mat4[BGFX_CONFIG_MAX_BONES] - array of model matrices.
 	///

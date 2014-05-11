@@ -1046,6 +1046,65 @@ namespace bgfx
 			BX_FREE(g_allocator, data);
 		}
 
+		bool programFetchFromCache(GLuint programId, uint64_t _id)
+		{
+			_id ^= m_hash;
+
+			bool cached = false;
+
+			if (m_programBinarySupport)
+			{
+				uint32_t length = g_callback->cacheReadSize(_id);
+				cached = length > 0;
+
+				if (cached)
+				{
+					void* data = BX_ALLOC(g_allocator, length);
+					if (g_callback->cacheRead(_id, data, length) )
+					{
+						bx::MemoryReader reader(data, length);
+
+						GLenum format;
+						bx::read(&reader, format);
+
+						GL_CHECK(glProgramBinary(programId, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
+					}
+
+					BX_FREE(g_allocator, data);
+				}
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+				GL_CHECK(glProgramParameteri(programId, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+			}
+
+			return cached;
+		}
+
+		void programCache(GLuint programId, uint64_t _id)
+		{
+			_id ^= m_hash;
+
+			if (m_programBinarySupport)
+			{
+				GLint programLength;
+				GLenum format;
+				GL_CHECK(glGetProgramiv(programId, GL_PROGRAM_BINARY_LENGTH, &programLength) );
+
+				if (0 < programLength)
+				{
+					uint32_t length = programLength + 4;
+					uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
+					GL_CHECK(glGetProgramBinary(programId, programLength, NULL, &format, &data[4]) );
+					*(uint32_t*)data = format;
+
+					g_callback->cacheWrite(_id, data, length);
+
+					BX_FREE(g_allocator, data);
+				}
+			}
+		}
+
 		void init()
 		{
 			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
@@ -1727,36 +1786,8 @@ namespace bgfx
 		m_id = glCreateProgram();
 		BX_TRACE("program create: %d: %d, %d", m_id, _vsh.m_id, _fsh.m_id);
 
-		bool cached = false;
-
-		uint64_t id = (uint64_t(_vsh.m_hash)<<32) | _fsh.m_hash;
-		id ^= s_renderCtx->m_hash;
-
-		if (s_renderCtx->m_programBinarySupport)
-		{
-			uint32_t length = g_callback->cacheReadSize(id);
-			cached = length > 0;
-
-			if (cached)
-			{
-				void* data = BX_ALLOC(g_allocator, length);
-				if (g_callback->cacheRead(id, data, length) )
-				{
-					bx::MemoryReader reader(data, length);
-
-					GLenum format;
-					bx::read(&reader, format);
-
-					GL_CHECK(glProgramBinary(m_id, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
-				}
-
-				BX_FREE(g_allocator, data);
-			}
-
-#if BGFX_CONFIG_RENDERER_OPENGL
-			GL_CHECK(glProgramParameteri(m_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE) );
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-		}
+		const uint64_t id = (uint64_t(_vsh.m_hash)<<32) | _fsh.m_hash;
+		const bool cached = s_renderCtx->programFetchFromCache(m_id, id);
 
 		if (!cached)
 		{
@@ -1777,24 +1808,7 @@ namespace bgfx
 				return;
 			}
 
-			if (s_renderCtx->m_programBinarySupport)
-			{
-				GLint programLength;
-				GLenum format;
-				GL_CHECK(glGetProgramiv(m_id, GL_PROGRAM_BINARY_LENGTH, &programLength) );
-
-				if (0 < programLength)
-				{
-					uint32_t length = programLength + 4;
-					uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
-					GL_CHECK(glGetProgramBinary(m_id, programLength, NULL, &format, &data[4]) );
-					*(uint32_t*)data = format;
-
-					g_callback->cacheWrite(id, data, length);
-
-					BX_FREE(g_allocator, data);
-				}
-			}
+			s_renderCtx->programCache(m_id, id);
 		}
 
 		init();
@@ -2588,13 +2602,9 @@ namespace bgfx
 
 		switch (magic)
 		{
-		case BGFX_CHUNK_MAGIC_FSH:
-			m_type = GL_FRAGMENT_SHADER;
-			break;
-
-		case BGFX_CHUNK_MAGIC_VSH:
-			m_type = GL_VERTEX_SHADER;
-			break;
+		case BGFX_CHUNK_MAGIC_CSH: m_type = GL_COMPUTE_SHADER;  break;
+		case BGFX_CHUNK_MAGIC_FSH: m_type = GL_FRAGMENT_SHADER;	break;
+		case BGFX_CHUNK_MAGIC_VSH: m_type = GL_VERTEX_SHADER;   break;
 
 		default:
 			BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
@@ -2638,241 +2648,244 @@ namespace bgfx
 
 		if (0 != m_id)
 		{
-			int32_t codeLen = (int32_t)strlen(code);
-			int32_t tempLen = codeLen + (4<<10);
-			char* temp = (char*)alloca(tempLen);
-			bx::StaticMemoryBlockWriter writer(temp, tempLen);
-
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-			&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+			if (GL_COMPUTE_SHADER != m_type)
 			{
-				bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
-					&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
-					;
+				int32_t codeLen = (int32_t)strlen(code);
+				int32_t tempLen = codeLen + (4<<10);
+				char* temp = (char*)alloca(tempLen);
+				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
-				bool usesFragDepth = !!bx::findIdentifierMatch(code, "gl_FragDepth");
-
-				bool usesShadowSamplers = !!bx::findIdentifierMatch(code, s_EXT_shadow_samplers);
-
-				bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported
-					&& bx::findIdentifierMatch(code, s_OES_texture_3D)
-					;
-
-				bool usesTextureLod = !!bx::findIdentifierMatch(code, s_EXT_shader_texture_lod);
-
-				if (usesDerivatives)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+				&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 				{
-					writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
-				}
+					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
+						&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
+						;
 
-				bool insertFragDepth = false;
-				if (usesFragDepth)
-				{
-					BX_WARN(s_extension[Extension::EXT_frag_depth].m_supported, "EXT_frag_depth is used but not supported by GLES2 driver.");
-					if (s_extension[Extension::EXT_frag_depth].m_supported)
+					bool usesFragDepth = !!bx::findIdentifierMatch(code, "gl_FragDepth");
+
+					bool usesShadowSamplers = !!bx::findIdentifierMatch(code, s_EXT_shadow_samplers);
+
+					bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported
+						&& bx::findIdentifierMatch(code, s_OES_texture_3D)
+						;
+
+					bool usesTextureLod = !!bx::findIdentifierMatch(code, s_EXT_shader_texture_lod);
+
+					if (usesDerivatives)
 					{
-						writeString(&writer
-							, "#extension GL_EXT_frag_depth : enable\n"
-							  "#define bgfx_FragDepth gl_FragDepthEXT\n"
-							);
-
-						char str[128];
-						bx::snprintf(str, BX_COUNTOF(str), "%s float gl_FragDepthEXT;\n"
-							, s_extension[Extension::OES_fragment_precision_high].m_supported ? "highp" : "mediump"
-							);
-						writeString(&writer, str);
+						writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
 					}
-					else
-					{
-						insertFragDepth = true;
-					}
-				}
 
-				if (usesShadowSamplers)
-				{
-					if (s_renderCtx->m_shadowSamplersSupport)
+					bool insertFragDepth = false;
+					if (usesFragDepth)
 					{
-						writeString(&writer
-							, "#extension GL_EXT_shadow_samplers : enable\n"
-							  "#define shadow2D shadow2DEXT\n"
-							  "#define shadow2DProj shadow2DProjEXT\n"
-							);
-					}
-					else
-					{
-						writeString(&writer
-							, "#define sampler2DShadow sampler2D\n"
-							  "#define shadow2D(_sampler, _coord) step(_coord.z, texture2D(_sampler, _coord.xy).x)\n"
-							  "#define shadow2DProj(_sampler, _coord) step(_coord.z/_coord.w, texture2DProj(_sampler, _coord).x)\n"
-							);
-					}
-				}
-
-				if (usesTexture3D)
-				{
-					writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
-				}
-
-				if (usesTextureLod)
-				{
-					BX_WARN(s_extension[Extension::EXT_shader_texture_lod].m_supported, "EXT_shader_texture_lod is used but not supported by GLES2 driver.");
-					if (s_extension[Extension::EXT_shader_texture_lod].m_supported)
-					{
-						writeString(&writer
-							, "#extension GL_EXT_shader_texture_lod : enable\n"
-							  "#define texture2DLod texture2DLodEXT\n"
-							  "#define texture2DProjLod texture2DProjLodEXT\n"
-							  "#define textureCubeLod textureCubeLodEXT\n"
-							);
-					}
-					else
-					{
-						writeString(&writer
-							, "#define texture2DLod(_sampler, _coord, _level) texture2D(_sampler, _coord)\n"
-							  "#define texture2DProjLod(_sampler, _coord, _level) texture2DProj(_sampler, _coord)\n"
-							  "#define textureCubeLod(_sampler, _coord, _level) textureCube(_sampler, _coord)\n"
-							);
-					}
-				}
-
-				writeString(&writer, "precision mediump float;\n");
-
-				bx::write(&writer, code, codeLen);
-				bx::write(&writer, '\0');
-
-				if (insertFragDepth)
-				{
-					char* entry = strstr(temp, "void main ()");
-					if (NULL != entry)
-					{
-						char* brace = strstr(entry, "{");
-						if (NULL != brace)
+						BX_WARN(s_extension[Extension::EXT_frag_depth].m_supported, "EXT_frag_depth is used but not supported by GLES2 driver.");
+						if (s_extension[Extension::EXT_frag_depth].m_supported)
 						{
-							const char* end = bx::strmb(brace, '{', '}');
-							if (NULL != end)
+							writeString(&writer
+								, "#extension GL_EXT_frag_depth : enable\n"
+								  "#define bgfx_FragDepth gl_FragDepthEXT\n"
+								);
+
+							char str[128];
+							bx::snprintf(str, BX_COUNTOF(str), "%s float gl_FragDepthEXT;\n"
+								, s_extension[Extension::OES_fragment_precision_high].m_supported ? "highp" : "mediump"
+								);
+							writeString(&writer, str);
+						}
+						else
+						{
+							insertFragDepth = true;
+						}
+					}
+
+					if (usesShadowSamplers)
+					{
+						if (s_renderCtx->m_shadowSamplersSupport)
+						{
+							writeString(&writer
+								, "#extension GL_EXT_shadow_samplers : enable\n"
+								  "#define shadow2D shadow2DEXT\n"
+								  "#define shadow2DProj shadow2DProjEXT\n"
+								);
+						}
+						else
+						{
+							writeString(&writer
+								, "#define sampler2DShadow sampler2D\n"
+								  "#define shadow2D(_sampler, _coord) step(_coord.z, texture2D(_sampler, _coord.xy).x)\n"
+								  "#define shadow2DProj(_sampler, _coord) step(_coord.z/_coord.w, texture2DProj(_sampler, _coord).x)\n"
+								);
+						}
+					}
+
+					if (usesTexture3D)
+					{
+						writeString(&writer, "#extension GL_OES_texture_3D : enable\n");
+					}
+
+					if (usesTextureLod)
+					{
+						BX_WARN(s_extension[Extension::EXT_shader_texture_lod].m_supported, "EXT_shader_texture_lod is used but not supported by GLES2 driver.");
+						if (s_extension[Extension::EXT_shader_texture_lod].m_supported)
+						{
+							writeString(&writer
+								, "#extension GL_EXT_shader_texture_lod : enable\n"
+								  "#define texture2DLod texture2DLodEXT\n"
+								  "#define texture2DProjLod texture2DProjLodEXT\n"
+								  "#define textureCubeLod textureCubeLodEXT\n"
+								);
+						}
+						else
+						{
+							writeString(&writer
+								, "#define texture2DLod(_sampler, _coord, _level) texture2D(_sampler, _coord)\n"
+								  "#define texture2DProjLod(_sampler, _coord, _level) texture2DProj(_sampler, _coord)\n"
+								  "#define textureCubeLod(_sampler, _coord, _level) textureCube(_sampler, _coord)\n"
+								);
+						}
+					}
+
+					writeString(&writer, "precision mediump float;\n");
+
+					bx::write(&writer, code, codeLen);
+					bx::write(&writer, '\0');
+
+					if (insertFragDepth)
+					{
+						char* entry = strstr(temp, "void main ()");
+						if (NULL != entry)
+						{
+							char* brace = strstr(entry, "{");
+							if (NULL != brace)
 							{
-								strins(brace+1, "\n  float bgfx_FragDepth = 0.0;\n");
+								const char* end = bx::strmb(brace, '{', '}');
+								if (NULL != end)
+								{
+									strins(brace+1, "\n  float bgfx_FragDepth = 0.0;\n");
+								}
 							}
 						}
 					}
-				}
 
-				// Replace all instances of gl_FragDepth with bgfx_FragDepth.
-				for (const char* fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth"); NULL != fragDepth; fragDepth = bx::findIdentifierMatch(fragDepth, "gl_FragDepth") )
-				{
-					char* insert = const_cast<char*>(fragDepth);
-					strins(insert, "bg");
-					memcpy(insert + 2, "fx", 2);
-				}
-			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
-			{
-				bool usesTextureLod = s_extension[Extension::ARB_shader_texture_lod].m_supported
-					&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
-					;
-
-				if (usesTextureLod)
-				{
-					writeString(&writer, "#version 120\n");
-
-					if (m_type == GL_FRAGMENT_SHADER)
+					// Replace all instances of gl_FragDepth with bgfx_FragDepth.
+					for (const char* fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth"); NULL != fragDepth; fragDepth = bx::findIdentifierMatch(fragDepth, "gl_FragDepth") )
 					{
-						writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
+						char* insert = const_cast<char*>(fragDepth);
+						strins(insert, "bg");
+						memcpy(insert + 2, "fx", 2);
 					}
 				}
-
-				writeString(&writer
-						, "#define lowp\n"
-						  "#define mediump\n"
-						  "#define highp\n"
-						);
-
-				bx::write(&writer, code, codeLen);
-				bx::write(&writer, '\0');
-			}
-			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
-				 ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
-			{
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+					 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
 				{
-					writeString(&writer
-						, "#version 300 es\n"
-						  "precision mediump float;\n"
-						);
-				}
-				else
-				{
-					writeString(&writer, "#version 140\n");
-				}
+					bool usesTextureLod = s_extension[Extension::ARB_shader_texture_lod].m_supported
+						&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
+						;
 
-				if (m_type == GL_FRAGMENT_SHADER)
-				{
-					writeString(&writer, "#define varying in\n");
-					writeString(&writer, "#define texture2D texture\n");
-					writeString(&writer, "#define texture2DLod textureLod\n");
-					writeString(&writer, "#define texture2DProj textureProj\n");
-
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					if (usesTextureLod)
 					{
-						writeString(&writer, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
-						writeString(&writer, "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) ) )\n");
-					}
-					else
-					{
-						writeString(&writer, "#define shadow2D(_sampler, _coord) (textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
-						writeString(&writer, "#define shadow2DProj(_sampler, _coord) (textureProj(_sampler, _coord) ) )\n");
+						writeString(&writer, "#version 120\n");
+
+						if (m_type == GL_FRAGMENT_SHADER)
+						{
+							writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
+						}
 					}
 
-					writeString(&writer, "#define texture3D texture\n");
-					writeString(&writer, "#define texture3DLod textureLod\n");
-					writeString(&writer, "#define textureCube texture\n");
-					writeString(&writer, "#define textureCubeLod textureLod\n");
-
-					uint32_t fragData = 0;
-
-					if (!!bx::findIdentifierMatch(code, "gl_FragData") )
-					{
-						using namespace bx;
-						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[0]") ? 0 : 1);
-						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[1]") ? 0 : 2);
-						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[2]") ? 0 : 3);
-						fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[3]") ? 0 : 4);
-
-						BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
-					}
-
-					if (0 != fragData)
-					{
-						writeStringf(&writer, "out vec4 bgfx_FragData[%d];\n", fragData);
-						writeString(&writer, "#define gl_FragData bgfx_FragData\n");
-					}
-					else
-					{
-						writeString(&writer, "out vec4 bgfx_FragColor;\n");
-						writeString(&writer, "#define gl_FragColor bgfx_FragColor\n");
-					}
-				}
-				else
-				{
-					writeString(&writer, "#define attribute in\n");
-					writeString(&writer, "#define varying out\n");
-				}
-
-				if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
-				{
 					writeString(&writer
 							, "#define lowp\n"
 							  "#define mediump\n"
 							  "#define highp\n"
 							);
+
+					bx::write(&writer, code, codeLen);
+					bx::write(&writer, '\0');
+				}
+				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)
+					 ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				{
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+					{
+						writeString(&writer
+							, "#version 300 es\n"
+							  "precision mediump float;\n"
+							);
+					}
+					else
+					{
+						writeString(&writer, "#version 140\n");
+					}
+
+					if (m_type == GL_FRAGMENT_SHADER)
+					{
+						writeString(&writer, "#define varying in\n");
+						writeString(&writer, "#define texture2D texture\n");
+						writeString(&writer, "#define texture2DLod textureLod\n");
+						writeString(&writer, "#define texture2DProj textureProj\n");
+
+						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+						{
+							writeString(&writer, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
+							writeString(&writer, "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) ) )\n");
+						}
+						else
+						{
+							writeString(&writer, "#define shadow2D(_sampler, _coord) (textureProj(_sampler, vec4(_coord, 1.0) ) )\n");
+							writeString(&writer, "#define shadow2DProj(_sampler, _coord) (textureProj(_sampler, _coord) ) )\n");
+						}
+
+						writeString(&writer, "#define texture3D texture\n");
+						writeString(&writer, "#define texture3DLod textureLod\n");
+						writeString(&writer, "#define textureCube texture\n");
+						writeString(&writer, "#define textureCubeLod textureLod\n");
+
+						uint32_t fragData = 0;
+
+						if (!!bx::findIdentifierMatch(code, "gl_FragData") )
+						{
+							using namespace bx;
+							fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[0]") ? 0 : 1);
+							fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[1]") ? 0 : 2);
+							fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[2]") ? 0 : 3);
+							fragData = uint32_max(fragData, NULL == strstr(code, "gl_FragData[3]") ? 0 : 4);
+
+							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
+						}
+
+						if (0 != fragData)
+						{
+							writeStringf(&writer, "out vec4 bgfx_FragData[%d];\n", fragData);
+							writeString(&writer, "#define gl_FragData bgfx_FragData\n");
+						}
+						else
+						{
+							writeString(&writer, "out vec4 bgfx_FragColor;\n");
+							writeString(&writer, "#define gl_FragColor bgfx_FragColor\n");
+						}
+					}
+					else
+					{
+						writeString(&writer, "#define attribute in\n");
+						writeString(&writer, "#define varying out\n");
+					}
+
+					if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+					{
+						writeString(&writer
+								, "#define lowp\n"
+								  "#define mediump\n"
+								  "#define highp\n"
+								);
+					}
+
+					bx::write(&writer, code, codeLen);
+					bx::write(&writer, '\0');
 				}
 
-				bx::write(&writer, code, codeLen);
-				bx::write(&writer, '\0');
+				code = temp;
 			}
-
-			code = temp;
 
 			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
 			GL_CHECK(glCompileShader(m_id) );
@@ -3581,8 +3594,15 @@ namespace bgfx
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			float4x4_mul(&viewProj[ii].un.f4x4, &m_render->m_view[ii].un.f4x4, &m_render->m_proj[ii].un.f4x4);
+			bx::float4x4_mul(&viewProj[ii].un.f4x4, &m_render->m_view[ii].un.f4x4, &m_render->m_proj[ii].un.f4x4);
 		}
+
+		Matrix4 invView;
+		Matrix4 invProj;
+		Matrix4 invViewProj;
+		uint8_t invViewCached = 0xff;
+		uint8_t invProjCached = 0xff;
+		uint8_t invViewProjCached = 0xff;
 
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
@@ -3997,12 +4017,70 @@ namespace bgfx
 							}
 							break;
 
+						case PredefinedUniform::InvView:
+							{
+								if (view != invViewCached)
+								{
+									invViewCached = view;
+									bx::float4x4_inverse(&invView.un.f4x4, &m_render->m_view[view].un.f4x4);
+								}
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, invView.un.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::Proj:
+							{
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, m_render->m_proj[view].un.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::InvProj:
+							{
+								if (view != invProjCached)
+								{
+									invProjCached = view;
+									bx::float4x4_inverse(&invProj.un.f4x4, &m_render->m_proj[view].un.f4x4);
+								}
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, invProj.un.val
+									) );
+							}
+							break;
+
 						case PredefinedUniform::ViewProj:
 							{
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
 									, viewProj[view].un.val
+									) );
+							}
+							break;
+
+						case PredefinedUniform::InvViewProj:
+							{
+								if (view != invViewProjCached)
+								{
+									invViewProjCached = view;
+									bx::float4x4_inverse(&invViewProj.un.f4x4, &viewProj[view].un.f4x4);
+								}
+
+								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
+									, 1
+									, GL_FALSE
+									, invViewProj.un.val
 									) );
 							}
 							break;

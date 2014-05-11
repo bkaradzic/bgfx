@@ -16,10 +16,11 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true);
-		ms_decl.end();
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
+			.end();
 	}
 
 	static bgfx::VertexDecl ms_decl;
@@ -38,11 +39,12 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true);
-		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-		ms_decl.end();
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.end();
 	}
 
 	static bgfx::VertexDecl ms_decl;
@@ -230,8 +232,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::destroyFrameBuffer(fbh);
 			}
 
-			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT),
-			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_RT),
+			fbtextures[0] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);
+			fbtextures[1] = bgfx::createTexture2D(width, height, 1, bgfx::TextureFormat::R16F,    BGFX_TEXTURE_RT);
 			fbh = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 

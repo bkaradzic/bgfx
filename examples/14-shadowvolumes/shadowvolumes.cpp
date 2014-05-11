@@ -1727,10 +1727,10 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	}
 
 	bgfx::VertexDecl decl;
-	decl.begin();
-	decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-	decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-	decl.end();
+	decl.begin()
+		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+		.end();
 
 	//fill the structure
 	_shadowVolume.m_numVertices = vsideI;
@@ -1966,11 +1966,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	free(data);
 
 	bgfx::VertexDecl PosNormalTexcoordDecl;
-	PosNormalTexcoordDecl.begin();
-	PosNormalTexcoordDecl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
-	PosNormalTexcoordDecl.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true);
-	PosNormalTexcoordDecl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-	PosNormalTexcoordDecl.end();
+	PosNormalTexcoordDecl.begin()
+		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
+		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+		.end();
 
 	s_uniforms.init();
 	s_uniforms.submitConstUniforms();

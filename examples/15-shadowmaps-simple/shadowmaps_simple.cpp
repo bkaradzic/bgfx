@@ -454,10 +454,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Vertex declarations.
 	bgfx::VertexDecl PosNormalDecl;
-	PosNormalDecl.begin();
-	PosNormalDecl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
-	PosNormalDecl.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true);
-	PosNormalDecl.end();
+	PosNormalDecl.begin()
+		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
+		.end();
 
 	// Meshes.
 	Mesh bunnyMesh;

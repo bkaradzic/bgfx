@@ -253,7 +253,11 @@ vec4  rcp(vec4  _a) { return vec4(1.0)/_a; }
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;
 uniform mat4  u_view;
+uniform mat4  u_invView;
+uniform mat4  u_proj;
+uniform mat4  u_invProj;
 uniform mat4  u_viewProj;
+uniform mat4  u_invViewProj;
 uniform mat4  u_model[BGFX_CONFIG_MAX_BONES];
 uniform mat4  u_modelView;
 uniform mat4  u_modelViewProj;

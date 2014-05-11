@@ -29,10 +29,11 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true);
-		ms_decl.end();
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
+			.end();
 	}
 
 	static bgfx::VertexDecl ms_decl;

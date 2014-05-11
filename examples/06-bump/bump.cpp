@@ -18,12 +18,13 @@ struct PosNormalTangentTexcoordVertex
 
 	static void init()
 	{
-		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true);
-		ms_decl.add(bgfx::Attrib::Tangent,   4, bgfx::AttribType::Uint8, true, true);
-		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Int16, true, true);
-		ms_decl.end();
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
+			.add(bgfx::Attrib::Tangent,   4, bgfx::AttribType::Uint8, true, true)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Int16, true, true)
+			.end();
 	}
 
 	static bgfx::VertexDecl ms_decl;
@@ -147,7 +148,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
-	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle u_texColor  = bgfx::createUniform("u_texColor",  bgfx::UniformType::Uniform1iv);
 	bgfx::UniformHandle u_texNormal = bgfx::createUniform("u_texNormal", bgfx::UniformType::Uniform1iv);
 
 	uint16_t numLights = 4;

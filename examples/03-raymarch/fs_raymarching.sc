@@ -96,10 +96,10 @@ vec4 lit(float _ndotl, float _rdotv, float _m)
 void main()
 {
 	vec4 tmp;
-	tmp = mul(u_mtx, vec4(v_texcoord0.x, v_texcoord0.y, 0.0, 1.0) );
+	tmp = mul(u_mtx, vec4(v_texcoord0.xy, 0.0, 1.0) );
 	vec3 eye = tmp.xyz/tmp.w;
 
-	tmp = mul(u_mtx, vec4(v_texcoord0.x, v_texcoord0.y, 1.0, 1.0) );
+	tmp = mul(u_mtx, vec4(v_texcoord0.xy, 1.0, 1.0) );
 	vec3 at = tmp.xyz/tmp.w;
 
 	float maxd = length(at - eye);

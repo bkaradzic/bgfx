@@ -2396,6 +2396,13 @@ namespace bgfx
 			bx::float4x4_mul(&viewProj[ii].un.f4x4, &m_render->m_view[ii].un.f4x4, &m_render->m_proj[ii].un.f4x4);
 		}
 
+		Matrix4 invView;
+		Matrix4 invProj;
+		Matrix4 invViewProj;
+		uint8_t invViewCached = 0xff;
+		uint8_t invProjCached = 0xff;
+		uint8_t invViewProjCached = 0xff;
+
 		bool wireframe = !!(m_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		bool scissorEnabled = false;
 		s_renderCtx->setDebugWireframe(wireframe);
@@ -2647,9 +2654,51 @@ namespace bgfx
 							}
 							break;
 
+						case PredefinedUniform::InvView:
+							{
+								if (view != invViewCached)
+								{
+									invViewCached = view;
+									bx::float4x4_inverse(&invView.un.f4x4, &m_render->m_view[view].un.f4x4);
+								}
+
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, invView.un.val, bx::uint32_min(4, predefined.m_count) );
+							}
+							break;
+
+						case PredefinedUniform::Proj:
+							{
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, m_render->m_proj[view].un.val, bx::uint32_min(4, predefined.m_count) );
+							}
+							break;
+
+						case PredefinedUniform::InvProj:
+							{
+								if (view != invProjCached)
+								{
+									invProjCached = view;
+									bx::float4x4_inverse(&invProj.un.f4x4, &m_render->m_proj[view].un.f4x4);
+								}
+
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, invProj.un.val, bx::uint32_min(4, predefined.m_count) );
+							}
+							break;
+
 						case PredefinedUniform::ViewProj:
 							{
 								s_renderCtx->setShaderConstant(flags, predefined.m_loc, viewProj[view].un.val, bx::uint32_min(4, predefined.m_count) );
+							}
+							break;
+
+						case PredefinedUniform::InvViewProj:
+							{
+								if (view != invViewProjCached)
+								{
+									invViewProjCached = view;
+									bx::float4x4_inverse(&invViewProj.un.f4x4, &viewProj[view].un.f4x4);
+								}
+
+								s_renderCtx->setShaderConstant(flags, predefined.m_loc, invViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 

@@ -77,12 +77,14 @@ namespace bgfx
 		va_end(argList);
 	}
 
-	void VertexDecl::begin(RendererType::Enum _renderer)
+	VertexDecl& VertexDecl::begin(RendererType::Enum _renderer)
 	{
 		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.
 		m_stride = 0;
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
 		memset(m_offset, 0, sizeof(m_offset) );
+
+		return *this;
 	}
 
 	void VertexDecl::end()
@@ -90,7 +92,7 @@ namespace bgfx
 		m_hash = bx::hashMurmur2A(m_attributes);
 	}
 
-	void VertexDecl::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
+	VertexDecl& VertexDecl::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
 	{
 		const uint8_t encodedNorm = (_normalized&1)<<6;
 		const uint8_t encodedType = (_type&3)<<3;
@@ -100,11 +102,15 @@ namespace bgfx
 		m_attributes[_attrib] = encodedNorm|encodedType|encodedNum|encodeAsInt;
 		m_offset[_attrib] = m_stride;
 		m_stride += (*s_attribTypeSize[m_hash])[_type][_num-1];
+
+		return *this;
 	}
 
-	void VertexDecl::skip(uint8_t _num)
+	VertexDecl& VertexDecl::skip(uint8_t _num)
 	{
 		m_stride += _num;
+
+		return *this;
 	}
 
 	void VertexDecl::decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const

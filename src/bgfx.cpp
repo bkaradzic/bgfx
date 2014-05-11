@@ -303,12 +303,13 @@ namespace bgfx
 	void TextVideoMemBlitter::init()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		m_decl.begin();
-		m_decl.add(Attrib::Position, 3, AttribType::Float);
-		m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
-		m_decl.add(Attrib::Color1, 4, AttribType::Uint8, true);
-		m_decl.add(Attrib::TexCoord0, 2, AttribType::Float);
-		m_decl.end();
+		m_decl
+			.begin()
+			.add(Attrib::Position,  3, AttribType::Float)
+			.add(Attrib::Color0,    4, AttribType::Uint8, true)
+			.add(Attrib::Color1,    4, AttribType::Uint8, true)
+			.add(Attrib::TexCoord0, 2, AttribType::Float)
+			.end();
 
 		uint16_t width = 2048;
 		uint16_t height = 24;
@@ -493,10 +494,11 @@ namespace bgfx
 
 		if (BX_ENABLED(BGFX_CONFIG_CLEAR_QUAD) )
 		{
-			m_decl.begin();
-			m_decl.add(Attrib::Position, 3, AttribType::Float);
-			m_decl.add(Attrib::Color0, 4, AttribType::Uint8, true);
-			m_decl.end();
+			m_decl
+				.begin()
+				.add(Attrib::Position, 3, AttribType::Float)
+				.add(Attrib::Color0,   4, AttribType::Uint8, true)
+				.end();
 
 			ShaderHandle vsh = BGFX_INVALID_HANDLE;
 			
@@ -602,7 +604,11 @@ namespace bgfx
 		"u_viewRect",
 		"u_viewTexel",
 		"u_view",
+		"u_invView",
+		"u_proj",
+		"u_invProj",
 		"u_viewProj",
+		"u_invViewProj",
 		"u_viewProjX",
 		"u_model",
 		"u_modelView",

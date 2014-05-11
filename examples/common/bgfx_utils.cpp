@@ -45,7 +45,7 @@ static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePa
 	return NULL;
 }
 
-static const bgfx::Memory* loadShader(bx::FileReaderI* _reader, const char* _name)
+static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
 {
 	char filePath[512];
 
@@ -73,22 +73,19 @@ static const bgfx::Memory* loadShader(bx::FileReaderI* _reader, const char* _nam
 	strcat(filePath, _name);
 	strcat(filePath, ".bin");
 
-	return loadMem(_reader, filePath);
+	return bgfx::createShader(loadMem(_reader, filePath) );
+}
+
+bgfx::ShaderHandle loadShader(const char* _name)
+{
+	return loadShader(entry::getFileReader(), _name);
 }
 
 bgfx::ProgramHandle loadProgram(bx::FileReaderI* _reader, const char* _vsName, const char* _fsName)
 {
-	const bgfx::Memory* mem;
+	bgfx::ShaderHandle vsh = loadShader(_reader, _vsName);
+	bgfx::ShaderHandle fsh = loadShader(_reader, _fsName);
 
-	// Load vertex shader.
-	mem = loadShader(_reader, _vsName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader(_reader, _fsName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	// Create program from shaders.
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 

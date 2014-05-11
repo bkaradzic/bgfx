@@ -384,6 +384,12 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			shader->shader->Stage = MESA_SHADER_FRAGMENT;
 			printMode = kPrintGlslFragment;
 			break;
+	case kGlslOptShaderCompute:
+			shader->shader->Type = GL_COMPUTE_SHADER;
+			shader->shader->Stage = MESA_SHADER_COMPUTE;
+			printMode = kPrintGlslFragment;
+			break;
+			
 	}
 	if (!shader->shader->Type)
 	{

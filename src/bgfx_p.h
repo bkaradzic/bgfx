@@ -77,6 +77,7 @@ namespace bgfx
 #include "bgfxplatform.h"
 #include "image.h"
 
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x0)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x2)
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x2)
@@ -152,7 +153,7 @@ namespace stl
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 #	if BGFX_CONFIG_RENDERER_OPENGLES == 30
 #		define BGFX_RENDERER_NAME "OpenGL ES 3.0"
-#	elif BGFX_CONFIG_RENDERER_OPENGLES == 31
+#	elif BGFX_CONFIG_RENDERER_OPENGLES >= 31
 #		define BGFX_RENDERER_NAME "OpenGL ES 3.1"
 #	else
 #		define BGFX_RENDERER_NAME "OpenGL ES 2.0"
@@ -480,7 +481,11 @@ namespace bgfx
 			ViewRect,
 			ViewTexel,
 			View,
+			InvView,
+			Proj,
+			InvProj,
 			ViewProj,
+			InvViewProj,
 			ViewProjX,
 			Model,
 			ModelView,
@@ -1997,8 +2002,9 @@ namespace bgfx
 			uint32_t magic;
 			bx::read(&reader, magic);
 
-			if (BGFX_CHUNK_MAGIC_VSH != magic
-			&&  BGFX_CHUNK_MAGIC_FSH != magic)
+			if (BGFX_CHUNK_MAGIC_CSH != magic
+			&&  BGFX_CHUNK_MAGIC_FSH != magic
+			&&  BGFX_CHUNK_MAGIC_VSH != magic)
 			{
 				BX_WARN(false, "Invalid shader signature! 0x%08x.", magic);
 				ShaderHandle invalid = BGFX_INVALID_HANDLE;

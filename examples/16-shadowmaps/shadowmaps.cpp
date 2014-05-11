@@ -1165,11 +1165,12 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl.begin();
-		ms_decl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
-		ms_decl.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true);
-		ms_decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-		ms_decl.end();
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.end();
 	}
 
 	static bgfx::VertexDecl ms_decl;
@@ -1496,11 +1497,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Vertex declarations.
 	bgfx::VertexDecl PosNormalTexcoordDecl;
-	PosNormalTexcoordDecl.begin();
-	PosNormalTexcoordDecl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
-	PosNormalTexcoordDecl.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true);
-	PosNormalTexcoordDecl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-	PosNormalTexcoordDecl.end();
+	PosNormalTexcoordDecl.begin()
+		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
+		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+		.end();
 
 	bgfx::VertexDecl posDecl;
 	posDecl.begin();

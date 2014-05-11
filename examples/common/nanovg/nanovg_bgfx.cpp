@@ -267,10 +267,11 @@ namespace
 
 		gl->viewid = 0;
 
-		s_nvgDecl.begin();
-		s_nvgDecl.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float);
-		s_nvgDecl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
-		s_nvgDecl.end();
+		s_nvgDecl
+			.begin()
+			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.end();
 
 		int align = 1;
 		gl->fragSize = sizeof(struct GLNVGfragUniforms) + align - sizeof(struct GLNVGfragUniforms) % align; 

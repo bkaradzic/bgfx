@@ -27,6 +27,7 @@ struct glslopt_ctx;
 enum glslopt_shader_type {
 	kGlslOptShaderVertex = 0,
 	kGlslOptShaderFragment,
+	kGlslOptShaderCompute,
 };
 
 // Options flags for glsl_optimize
