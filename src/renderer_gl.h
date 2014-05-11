@@ -336,6 +336,10 @@ typedef uint64_t GLuint64;
 #	define GL_TEXTURE_MAX_LEVEL 0x813D
 #endif // GL_TEXTURE_MAX_LEVEL
 
+#ifndef GL_COMPUTE_SHADER
+#	define GL_COMPUTE_SHADER 0x91B9
+#endif // GL_COMPUTE_SHADER
+
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS
