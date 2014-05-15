@@ -136,20 +136,20 @@ inline void mtxIdentity(float* _result)
 	_result[0] = _result[5] = _result[10] = _result[15] = 1.0f;
 }
 
-inline void mtxTranslate(float* _result, float _x, float _y, float _z)
+inline void mtxTranslate(float* _result, float _tx, float _ty, float _tz)
 {
 	mtxIdentity(_result);
-	_result[12] = _x;
-	_result[13] = _y;
-	_result[14] = _z;
+	_result[12] = _tx;
+	_result[13] = _ty;
+	_result[14] = _tz;
 }
 
-inline void mtxScale(float* _result, float _x, float _y, float _z)
+inline void mtxScale(float* _result, float _sx, float _sy, float _sz)
 {
 	memset(_result, 0, sizeof(float) * 16);
-	_result[0] = _x;
-	_result[5] = _y;
-	_result[10] = _z;
+	_result[0]  = _sx;
+	_result[5]  = _sy;
+	_result[10] = _sz;
 	_result[15] = 1.0f;
 }
 
