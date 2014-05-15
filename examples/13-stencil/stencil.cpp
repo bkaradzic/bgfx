@@ -206,35 +206,6 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 
-void mtxScaleRotateTranslate(float* _result
-							 , const float _scaleX
-							 , const float _scaleY
-							 , const float _scaleZ
-							 , const float _rotX
-							 , const float _rotY
-							 , const float _rotZ
-							 , const float _translateX
-							 , const float _translateY
-							 , const float _translateZ
-							 )
-{
-	float mtxRotateTranslate[16];
-	float mtxScale[16];
-
-	mtxRotateXYZ(mtxRotateTranslate, _rotX, _rotY, _rotZ);
-	mtxRotateTranslate[12] = _translateX;
-	mtxRotateTranslate[13] = _translateY;
-	mtxRotateTranslate[14] = _translateZ;
-
-	memset(mtxScale, 0, sizeof(float)*16);
-	mtxScale[0]  = _scaleX;
-	mtxScale[5]  = _scaleY;
-	mtxScale[10] = _scaleZ;
-	mtxScale[15] = 1.0f;
-
-	mtxMul(_result, mtxScale, mtxRotateTranslate);
-}
-
 void mtxReflected(float*__restrict _result
 				  , const float* __restrict _p  /* plane */
 				  , const float* __restrict _n  /* normal */
@@ -1136,7 +1107,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Floor position.
 		float floorMtx[16];
-		mtxScaleRotateTranslate(floorMtx
+		mtxSRT(floorMtx
 			, 20.0f  //scaleX
 			, 20.0f  //scaleY
 			, 20.0f  //scaleZ
@@ -1150,7 +1121,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Bunny position.
 		float bunnyMtx[16];
-		mtxScaleRotateTranslate(bunnyMtx
+		mtxSRT(bunnyMtx
 			, 5.0f
 			, 5.0f
 			, 5.0f
@@ -1175,7 +1146,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float columnMtx[4][16];
 		for (uint8_t ii = 0; ii < 4; ++ii)
 		{
-			mtxScaleRotateTranslate(columnMtx[ii]
+			mtxSRT(columnMtx[ii]
 				, 1.0f
 				, 1.0f
 				, 1.0f
@@ -1192,7 +1163,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float cubeMtx[numCubes][16];
 		for (uint16_t ii = 0; ii < numCubes; ++ii)
 		{
-			mtxScaleRotateTranslate(cubeMtx[ii]
+			mtxSRT(cubeMtx[ii]
 				, 1.0f
 				, 1.0f
 				, 1.0f
@@ -1443,7 +1414,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Draw floor bottom.
 		float floorBottomMtx[16];
-		mtxScaleRotateTranslate(floorBottomMtx
+		mtxSRT(floorBottomMtx
 			, 20.0f  //scaleX
 			, 20.0f  //scaleY
 			, 20.0f  //scaleZ

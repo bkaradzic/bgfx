@@ -176,35 +176,6 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 
-void mtxScaleRotateTranslate(float* _result
-							 , const float _scaleX
-							 , const float _scaleY
-							 , const float _scaleZ
-							 , const float _rotX
-							 , const float _rotY
-							 , const float _rotZ
-							 , const float _translateX
-							 , const float _translateY
-							 , const float _translateZ
-							 )
-{
-	float mtxRotateTranslate[16];
-	float mtxScale[16];
-
-	mtxRotateXYZ(mtxRotateTranslate, _rotX, _rotY, _rotZ);
-	mtxRotateTranslate[12] = _translateX;
-	mtxRotateTranslate[13] = _translateY;
-	mtxRotateTranslate[14] = _translateZ;
-
-	memset(mtxScale, 0, 16*sizeof(float) );
-	mtxScale[0]  = _scaleX;
-	mtxScale[5]  = _scaleY;
-	mtxScale[10] = _scaleZ;
-	mtxScale[15] = 1.0f;
-
-	mtxMul(_result, mtxScale, mtxRotateTranslate);
-}
-
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
 				  , const float* __restrict _pos
@@ -1277,7 +1248,7 @@ struct Instance
 		memcpy(s_uniforms.m_color, m_color, 3*sizeof(float) );
 
 		float mtx[16];
-		mtxScaleRotateTranslate(mtx
+		mtxSRT(mtx
 			, m_scale[0]
 			, m_scale[1]
 			, m_scale[2]
@@ -2734,7 +2705,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				// Compute transform for shadow volume.
 				float shadowVolumeMtx[16];
-				mtxScaleRotateTranslate(shadowVolumeMtx
+				mtxSRT(shadowVolumeMtx
 						, instance.m_scale[0]
 						, instance.m_scale[1]
 						, instance.m_scale[2]

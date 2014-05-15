@@ -323,35 +323,6 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 
-void mtxScaleRotateTranslate(float* _result
-							, const float _scaleX
-							, const float _scaleY
-							, const float _scaleZ
-							, const float _rotX
-							, const float _rotY
-							, const float _rotZ
-							, const float _translateX
-							, const float _translateY
-							, const float _translateZ
-							)
-{
-	float mtxRotateTranslate[16];
-	float mtxScale[16];
-
-	mtxRotateXYZ(mtxRotateTranslate, _rotX, _rotY, _rotZ);
-	mtxRotateTranslate[12] = _translateX;
-	mtxRotateTranslate[13] = _translateY;
-	mtxRotateTranslate[14] = _translateZ;
-
-	memset(mtxScale, 0, sizeof(float)*16);
-	mtxScale[0]  = _scaleX;
-	mtxScale[5]  = _scaleY;
-	mtxScale[10] = _scaleZ;
-	mtxScale[15] = 1.0f;
-
-	mtxMul(_result, mtxScale, mtxRotateTranslate);
-}
-
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
 				  , const float* __restrict _pos
@@ -2322,7 +2293,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Setup instance matrices.
 		float mtxFloor[16];
 		const float floorScale = 550.0f;
-		mtxScaleRotateTranslate(mtxFloor
+		mtxSRT(mtxFloor
 			, floorScale //scaleX
 			, floorScale //scaleY
 			, floorScale //scaleZ
@@ -2335,7 +2306,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		float mtxBunny[16];
-		mtxScaleRotateTranslate(mtxBunny
+		mtxSRT(mtxBunny
 			, 5.0f
 			, 5.0f
 			, 5.0f
@@ -2348,7 +2319,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		float mtxHollowcube[16];
-		mtxScaleRotateTranslate(mtxHollowcube
+		mtxSRT(mtxHollowcube
 			, 2.5f
 			, 2.5f
 			, 2.5f
@@ -2361,7 +2332,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		float mtxCube[16];
-		mtxScaleRotateTranslate(mtxCube
+		mtxSRT(mtxCube
 			, 2.5f
 			, 2.5f
 			, 2.5f
@@ -2377,7 +2348,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float mtxTrees[numTrees][16];
 		for (uint8_t ii = 0; ii < numTrees; ++ii)
 		{
-			mtxScaleRotateTranslate(mtxTrees[ii]
+			mtxSRT(mtxTrees[ii]
 					, 2.0f
 					, 2.0f
 					, 2.0f
@@ -3185,7 +3156,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Draw floor bottom.
 			float floorBottomMtx[16];
-			mtxScaleRotateTranslate(floorBottomMtx
+			mtxSRT(floorBottomMtx
 					, floorScale //scaleX
 					, floorScale //scaleY
 					, floorScale //scaleZ

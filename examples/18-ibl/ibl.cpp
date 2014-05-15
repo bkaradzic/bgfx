@@ -380,35 +380,6 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 	}
 }
 
-void mtxScaleRotateTranslate(float* _result
-							, const float _scaleX
-							, const float _scaleY
-							, const float _scaleZ
-							, const float _rotX
-							, const float _rotY
-							, const float _rotZ
-							, const float _translateX
-							, const float _translateY
-							, const float _translateZ
-							)
-{
-	float mtxRotateTranslate[16];
-	float mtxScale[16];
-
-	mtxRotateXYZ(mtxRotateTranslate, _rotX, _rotY, _rotZ);
-	mtxRotateTranslate[12] = _translateX;
-	mtxRotateTranslate[13] = _translateY;
-	mtxRotateTranslate[14] = _translateZ;
-
-	memset(mtxScale, 0, sizeof(float)*16);
-	mtxScale[0]  = _scaleX;
-	mtxScale[5]  = _scaleY;
-	mtxScale[10] = _scaleZ;
-	mtxScale[15] = 1.0f;
-
-	mtxMul(_result, mtxScale, mtxRotateTranslate);
-}
-
 void imguiBool(const char* _str, bool& _flag, bool _enabled = true)
 {
 	if (imguiCheck(_str, _flag, _enabled) )
@@ -778,7 +749,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// View 1.
 		float mtx[16];
-		mtxScaleRotateTranslate(mtx
+		mtxSRT(mtx
 				, 1.0f
 				, 1.0f
 				, 1.0f

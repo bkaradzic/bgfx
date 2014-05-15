@@ -196,10 +196,10 @@ inline void mtxLookAt(float* __restrict _result, const float* __restrict _eye, c
 
 inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
 {
-	float height = 1.0f/tanf(_fovy*( (float)M_PI/180.0f)*0.5f);
-	float width = height * 1.0f/_aspect;
-	float aa = _far/(_far-_near);
-	float bb = -_near * aa;
+	const float height = 1.0f/tanf(_fovy*( (float)M_PI/180.0f)*0.5f);
+	const float width = height * 1.0f/_aspect;
+	const float aa = _far/(_far-_near);
+	const float bb = -_near * aa;
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[0] = width;
@@ -230,8 +230,8 @@ inline void mtxOrtho(float* _result, float _left, float _right, float _bottom, f
 
 inline void mtxRotateX(float* _result, float _ax)
 {
-	float sx = sinf(_ax);
-	float cx = cosf(_ax);
+	const float sx = sinf(_ax);
+	const float cx = cosf(_ax);
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = 1.0f;
@@ -244,8 +244,8 @@ inline void mtxRotateX(float* _result, float _ax)
 
 inline void mtxRotateY(float* _result, float _ay)
 {
-	float sy = sinf(_ay);
-	float cy = cosf(_ay);
+	const float sy = sinf(_ay);
+	const float cy = cosf(_ay);
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = cy;
@@ -258,8 +258,8 @@ inline void mtxRotateY(float* _result, float _ay)
 
 inline void mtxRotateZ(float* _result, float _az)
 {
-	float sz = sinf(_az);
-	float cz = cosf(_az);
+	const float sz = sinf(_az);
+	const float cz = cosf(_az);
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = cz;
@@ -272,10 +272,10 @@ inline void mtxRotateZ(float* _result, float _az)
 
 inline void mtxRotateXY(float* _result, float _ax, float _ay)
 {
-	float sx = sinf(_ax);
-	float cx = cosf(_ax);
-	float sy = sinf(_ay);
-	float cy = cosf(_ay);
+	const float sx = sinf(_ax);
+	const float cx = cosf(_ax);
+	const float sy = sinf(_ay);
+	const float cy = cosf(_ay);
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = cy;
@@ -291,12 +291,12 @@ inline void mtxRotateXY(float* _result, float _ax, float _ay)
 
 inline void mtxRotateXYZ(float* _result, float _ax, float _ay, float _az)
 {
-	float sx = sinf(_ax);
-	float cx = cosf(_ax);
-	float sy = sinf(_ay);
-	float cy = cosf(_ay);
-	float sz = sinf(_az);
-	float cz = cosf(_az);
+	const float sx = sinf(_ax);
+	const float cx = cosf(_ax);
+	const float sy = sinf(_ay);
+	const float cy = cosf(_ay);
+	const float sz = sinf(_az);
+	const float cz = cosf(_az);
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = cy*cz;
@@ -313,12 +313,12 @@ inline void mtxRotateXYZ(float* _result, float _ax, float _ay, float _az)
 
 inline void mtxRotateZYX(float* _result, float _ax, float _ay, float _az)
 {
-	float sx = sinf(_ax);
-	float cx = cosf(_ax);
-	float sy = sinf(_ay);
-	float cy = cosf(_ay);
-	float sz = sinf(_az);
-	float cz = cosf(_az);
+	const float sx = sinf(_ax);
+	const float cx = cosf(_ax);
+	const float sy = sinf(_ay);
+	const float cy = cosf(_ay);
+	const float sz = sinf(_az);
+	const float cz = cosf(_az);
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = cy*cz;
@@ -332,6 +332,39 @@ inline void mtxRotateZYX(float* _result, float _ax, float _ay, float _az)
 	_result[10] = cx*cy;
 	_result[15] = 1.0f;
 };
+
+inline void mtxSRT(float* _result, float _sx, float _sy, float _sz, float _ax, float _ay, float _az, float _tx, float _ty, float _tz)
+{
+	const float sx = sinf(_ax);
+	const float cx = cosf(_ax);
+	const float sy = sinf(_ay);
+	const float cy = cosf(_ay);
+	const float sz = sinf(_az);
+	const float cz = cosf(_az);
+
+	const float sxsz = sx*sz;
+	const float cycz = cy*cz;
+
+	_result[ 0] = _sx * (cycz - sxsz*sy);
+	_result[ 1] = _sx * -cx*sz;
+	_result[ 2] = _sx * (cz*sy + cy*sxsz);
+	_result[ 3] = 0.0f;
+
+	_result[ 4] = _sy * (cz*sx*sy + cy*sz);
+	_result[ 5] = _sy * cx*cz;
+	_result[ 6] = _sy * (sy*sz -cycz*sx);
+	_result[ 7] = 0.0f;
+
+	_result[ 8] = _sz * -cx*sy;
+	_result[ 9] = _sz * sx;
+	_result[10] = _sz * cx*cy;
+	_result[11] = 0.0f;
+
+	_result[12] = _tx;
+	_result[13] = _ty;
+	_result[14] = _tz;
+	_result[15] = 1.0f;
+}
 
 inline void vec3MulMtx(float* __restrict _result, const float* __restrict _vec, const float* __restrict _mat)
 {

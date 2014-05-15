@@ -54,7 +54,6 @@ struct PosNormalVertex
 	uint32_t m_normal;
 };
 
-static const float s_texcoord = 5.0f;
 static const uint32_t s_numHPlaneVertices = 4;
 static PosNormalVertex s_hplaneVertices[s_numHPlaneVertices] =
 {
@@ -131,35 +130,6 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 
 	// Create program from shaders.
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
-}
-
-void mtxScaleRotateTranslate(float* _result
-							, const float _scaleX
-							, const float _scaleY
-							, const float _scaleZ
-							, const float _rotX
-							, const float _rotY
-							, const float _rotZ
-							, const float _translateX
-							, const float _translateY
-							, const float _translateZ
-							)
-{
-	float mtxRotateTranslate[16];
-	float mtxScale[16];
-
-	mtxRotateXYZ(mtxRotateTranslate, _rotX, _rotY, _rotZ);
-	mtxRotateTranslate[12] = _translateX;
-	mtxRotateTranslate[13] = _translateY;
-	mtxRotateTranslate[14] = _translateZ;
-
-	memset(mtxScale, 0, sizeof(float)*16);
-	mtxScale[0]  = _scaleX;
-	mtxScale[5]  = _scaleY;
-	mtxScale[10] = _scaleZ;
-	mtxScale[15] = 1.0f;
-
-	mtxMul(_result, mtxScale, mtxRotateTranslate);
 }
 
 struct Aabb
@@ -556,28 +526,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup instance matrices.
 		float mtxFloor[16];
-		mtxScaleRotateTranslate(mtxFloor
+		mtxSRT(mtxFloor
 			, 30.0f, 30.0f, 30.0f
 			, 0.0f, 0.0f, 0.0f
 			, 0.0f, 0.0f, 0.0f
 			);
 
 		float mtxBunny[16];
-		mtxScaleRotateTranslate(mtxBunny
+		mtxSRT(mtxBunny
 			, 5.0f, 5.0f, 5.0f
 			, 0.0f, float(M_PI) - timeAccumulatorScene, 0.0f
 			, 15.0f, 5.0f, 0.0f
 			);
 
 		float mtxHollowcube[16];
-		mtxScaleRotateTranslate(mtxHollowcube
+		mtxSRT(mtxHollowcube
 			, 2.5f, 2.5f, 2.5f
 			, 0.0f, 1.56f - timeAccumulatorScene, 0.0f
 			, 0.0f, 10.0f, 0.0f
 			);
 
 		float mtxCube[16];
-		mtxScaleRotateTranslate(mtxCube
+		mtxSRT(mtxCube
 			, 2.5f, 2.5f, 2.5f
 			, 0.0f, 1.56f - timeAccumulatorScene, 0.0f
 			, -15.0f, 5.0f, 0.0f
