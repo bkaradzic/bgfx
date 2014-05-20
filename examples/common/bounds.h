@@ -26,6 +26,9 @@ struct Sphere
 /// Convert axis aligned bounding box to oriented bounding box.
 void aabbToObb(Obb& _obb, const Aabb& _aabb);
 
+/// Convert sphere to axis aligned bounding box.
+void sphereToAabb(Aabb& _aabb, const Sphere& _sphere);
+
 /// Calculate surface area of axis aligned bounding box.
 float calcAabbArea(Aabb& _aabb);
 

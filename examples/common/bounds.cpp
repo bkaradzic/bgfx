@@ -5,7 +5,7 @@
 
 #include <bx/rng.h>
 #include "bounds.h"
-#include "math.h"
+#include "fpumath.h"
 
 void aabbToObb(Obb& _obb, const Aabb& _aabb)
 {
@@ -17,6 +17,20 @@ void aabbToObb(Obb& _obb, const Aabb& _aabb)
 	_obb.m_mtx[13] = (_aabb.m_min[1] + _aabb.m_max[1]) * 0.5f;
 	_obb.m_mtx[14] = (_aabb.m_min[2] + _aabb.m_max[2]) * 0.5f;
 	_obb.m_mtx[15] = 1.0f;
+}
+
+void sphereToAabb(Aabb& _aabb, const Sphere& _sphere)
+{
+	float xx = _sphere.m_center[0];
+	float yy = _sphere.m_center[1];
+	float zz = _sphere.m_center[2];
+	float radius = _sphere.m_radius;
+	_aabb.m_min[0] = xx - radius;
+	_aabb.m_min[1] = yy - radius;
+	_aabb.m_min[2] = zz - radius;
+	_aabb.m_max[0] = xx + radius;
+	_aabb.m_max[1] = yy + radius;
+	_aabb.m_max[2] = zz + radius;
 }
 
 void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
@@ -53,12 +67,12 @@ void calcAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_
 		float xx = position[0];
 		float yy = position[1];
 		float zz = position[2];
-		min[0] = fmin(xx, min[0]);
-		min[1] = fmin(yy, min[1]);
-		min[2] = fmin(zz, min[2]);
-		max[0] = fmax(xx, max[0]);
-		max[1] = fmax(yy, max[1]);
-		max[2] = fmax(zz, max[2]);
+		min[0] = fminf(xx, min[0]);
+		min[1] = fminf(yy, min[1]);
+		min[2] = fminf(zz, min[2]);
+		max[0] = fmaxf(xx, max[0]);
+		max[1] = fmaxf(yy, max[1]);
+		max[2] = fmaxf(zz, max[2]);
 	}
 
 	_aabb.m_min[0] = min[0];
@@ -89,12 +103,12 @@ void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _n
 		float xx = position[0];
 		float yy = position[1];
 		float zz = position[2];
-		min[0] = fmin(xx, min[0]);
-		min[1] = fmin(yy, min[1]);
-		min[2] = fmin(zz, min[2]);
-		max[0] = fmax(xx, max[0]);
-		max[1] = fmax(yy, max[1]);
-		max[2] = fmax(zz, max[2]);
+		min[0] = fminf(xx, min[0]);
+		min[1] = fminf(yy, min[1]);
+		min[2] = fminf(zz, min[2]);
+		max[0] = fmaxf(xx, max[0]);
+		max[1] = fmaxf(yy, max[1]);
+		max[2] = fmaxf(zz, max[2]);
 	}
 
 	_aabb.m_min[0] = min[0];
@@ -176,7 +190,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 		float zz = position[2] - center[2];
 
 		float distSq = xx*xx + yy*yy + zz*zz;
-		maxDistSq = fmax(distSq, maxDistSq);
+		maxDistSq = fmaxf(distSq, maxDistSq);
 	}
 
 	_sphere.m_center[0] = center[0];

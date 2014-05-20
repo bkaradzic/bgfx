@@ -60,7 +60,7 @@
 
 #include "tokenizecmd.h"
 #include "bounds.h"
-#include "math.h"
+#include "fpumath.h"
 
 struct Vector3
 {

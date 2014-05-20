@@ -32,25 +32,12 @@ bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
 
 static bool s_flipV = false;
 
-bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint16_t _numIndices)
-{
-	if (bgfx::checkAvailTransientVertexBuffer(_numVertices, _decl)
-	&&  bgfx::checkAvailTransientIndexBuffer(_numIndices) )
-	{
-		bgfx::allocTransientVertexBuffer(_tvb, _numVertices, _decl);
-		bgfx::allocTransientIndexBuffer(_tib, _numIndices);
-		return true;
-	}
-
-	return false;
-}
-
 void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
 	bgfx::TransientVertexBuffer tvb;
 	bgfx::TransientIndexBuffer tib;
 
-	if (allocTransientBuffers(&tvb, PosColorTexCoord0Vertex::ms_decl, 4, &tib, 6) )
+	if (bgfx::allocTransientBuffers(&tvb, PosColorTexCoord0Vertex::ms_decl, 4, &tib, 6) )
 	{
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)tvb.data;
 

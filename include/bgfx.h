@@ -745,6 +745,10 @@ namespace bgfx
 	void dbgTextPrintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
 
 	/// Create static index buffer.
+	///
+	/// NOTE:
+	///   Only 16-bit index buffer is supported.
+	///
 	IndexBufferHandle createIndexBuffer(const Memory* _mem);
 
 	/// Destroy static index buffer.
@@ -768,11 +772,17 @@ namespace bgfx
 	///
 	/// @param _num Number of indices.
 	///
+	/// NOTE:
+	///   Only 16-bit index buffer is supported.
+	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num);
 
 	/// Create dynamic index buffer and initialized it.
 	///
 	/// @param _mem Index buffer data.
+	///
+	/// NOTE:
+	///   Only 16-bit index buffer is supported.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem);
 
@@ -846,8 +856,9 @@ namespace bgfx
 	/// @param _num Number of indices to allocate.
 	///
 	/// NOTE:
-	///   You must call setIndexBuffer after alloc in order to avoid memory
-	///   leak.
+	///   1. You must call setIndexBuffer after alloc in order to avoid memory
+	///      leak.
+	///   2. Only 16-bit index buffer is supported.
 	///
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num);
 
@@ -864,6 +875,15 @@ namespace bgfx
 	///   leak.
 	///
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl);
+
+	/// Check for required space and allocate transient vertex and index
+	/// buffers. If both space requirements are satisfied function returns
+	/// true.
+	///
+	/// NOTE:
+	///   Only 16-bit index buffer is supported.
+	///
+	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint16_t _numIndices);
 
 	/// Allocate instance data buffer.
 	///

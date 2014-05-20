@@ -1912,6 +1912,18 @@ namespace bgfx
 		return s_ctx->allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
+	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint16_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint16_t _numIndices)
+	{
+		if (checkAvailTransientBuffers(_numVertices, _decl, _numIndices) )
+		{
+			allocTransientVertexBuffer(_tvb, _numVertices, _decl);
+			allocTransientIndexBuffer(_tib, _numIndices);
+			return true;
+		}
+
+		return false;
+	}
+
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
