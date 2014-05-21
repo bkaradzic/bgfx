@@ -17,6 +17,6 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 struct Mesh;
 Mesh* meshLoad(const char* _filePath);
 void meshUnload(Mesh* _mesh);
-void meshSubmit(Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, float* _mtx);
+void meshSubmit(Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, float* _mtx, uint64_t _state = BGFX_STATE_MASK);
 
 #endif // BGFX_UTILS_H_HEADER_GUARD

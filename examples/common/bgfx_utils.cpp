@@ -366,8 +366,20 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	void submit(uint8_t _id, bgfx::ProgramHandle _program, float* _mtx)
+	void submit(uint8_t _id, bgfx::ProgramHandle _program, float* _mtx, uint64_t _state)
 	{
+		if (BGFX_STATE_MASK == _state)
+		{
+			_state = 0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_DEPTH_WRITE
+				| BGFX_STATE_DEPTH_TEST_LESS
+				| BGFX_STATE_CULL_CCW
+				| BGFX_STATE_MSAA
+				;
+		}
+
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
 			const Group& group = *it;
@@ -377,18 +389,7 @@ struct Mesh
 			bgfx::setProgram(_program);
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(group.m_vbh);
-
-			// Set render states.
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CCW
-				| BGFX_STATE_MSAA
-				);
-
-			// Submit primitive for rendering to view 0.
+			bgfx::setState(_state);
 			bgfx::submit(_id);
 		}
 	}
@@ -420,7 +421,7 @@ void meshUnload(Mesh* _mesh)
 	delete _mesh;
 }
 
-void meshSubmit(Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, float* _mtx)
+void meshSubmit(Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, float* _mtx, uint64_t _state)
 {
-	_mesh->submit(_id, _program, _mtx);
+	_mesh->submit(_id, _program, _mtx, _state);
 }

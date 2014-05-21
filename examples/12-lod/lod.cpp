@@ -26,199 +26,6 @@ KnightPos knightTour[8*4] =
 	{7,1}, {6,3}, {5,1}, {7,0}, {6,2}, {4,3}, {3,1}, {2,3}
 };
 
-struct Aabb
-{
-	float m_min[3];
-	float m_max[3];
-};
-
-struct Obb
-{
-	float m_mtx[16];
-};
-
-struct Sphere
-{
-	float m_center[3];
-	float m_radius;
-};
-
-struct Primitive
-{
-	uint32_t m_startIndex;
-	uint32_t m_numIndices;
-	uint32_t m_startVertex;
-	uint32_t m_numVertices;
-
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-};
-
-typedef std::vector<Primitive> PrimitiveArray;
-
-struct Group
-{
-	Group()
-	{
-		reset();
-	}
-
-	void reset()
-	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
-		m_prims.clear();
-	}
-
-	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-	PrimitiveArray m_prims;
-};
-
-struct Mesh
-{
-	void load(const char* _filePath)
-	{
-#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
-
-		bx::CrtFileReader reader;
-		reader.open(_filePath);
-
-		Group group;
-
-		uint32_t chunk;
-		while (4 == bx::read(&reader, chunk) )
-		{
-			switch (chunk)
-			{
-			case BGFX_CHUNK_MAGIC_VB:
-				{
-					bx::read(&reader, group.m_sphere);
-					bx::read(&reader, group.m_aabb);
-					bx::read(&reader, group.m_obb);
-
-					bx::read(&reader, m_decl);
-					uint16_t stride = m_decl.getStride();
-
-					uint16_t numVertices;
-					bx::read(&reader, numVertices);
-					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-					bx::read(&reader, mem->data, mem->size);
-
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_IB:
-				{
-					uint32_t numIndices;
-					bx::read(&reader, numIndices);
-					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
-					bx::read(&reader, mem->data, mem->size);
-					group.m_ibh = bgfx::createIndexBuffer(mem);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_PRI:
-				{
-					uint16_t len;
-					bx::read(&reader, len);
-
-					std::string material;
-					material.resize(len);
-					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(&reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(&reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(&reader, prim.m_startIndex);
-						bx::read(&reader, prim.m_numIndices);
-						bx::read(&reader, prim.m_startVertex);
-						bx::read(&reader, prim.m_numVertices);
-						bx::read(&reader, prim.m_sphere);
-						bx::read(&reader, prim.m_aabb);
-						bx::read(&reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
-				}
-				break;
-
-			default:
-				DBG("%08x at %d", chunk, reader.seek() );
-				break;
-			}
-		}
-
-		reader.close();
-	}
-
-	void unload()
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-			bgfx::destroyVertexBuffer(group.m_vbh);
-
-			if (bgfx::isValid(group.m_ibh) )
-			{
-				bgfx::destroyIndexBuffer(group.m_ibh);
-			}
-		}
-		m_groups.clear();
-	}
-
-	void submit(bgfx::ProgramHandle _program, float* _mtx, bool _blend)
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-
-			// Set model matrix for rendering.
-			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
-			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
-
-			// Set render states.
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| (_blend?0:BGFX_STATE_DEPTH_WRITE)
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CCW
-				| BGFX_STATE_MSAA
-				| (_blend?BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA):0)
-				);
-
-			// Submit primitive for rendering to view 0.
-			bgfx::submit(0);
-		}
-	}
-
-	bgfx::VertexDecl m_decl;
-	typedef std::vector<Group> GroupArray;
-	GroupArray m_groups;
-};
-
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -240,8 +47,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 	
-	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle u_stipple = bgfx::createUniform("u_stipple", bgfx::UniformType::Uniform3fv);
+	bgfx::UniformHandle u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Uniform3fv);
 	bgfx::UniformHandle u_texStipple = bgfx::createUniform("u_texStipple", bgfx::UniformType::Uniform1iv);
 
 	bgfx::ProgramHandle program = loadProgram("vs_tree", "fs_tree");
@@ -261,20 +68,40 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		
 	textureStipple = bgfx::createTexture2D(8, 4, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT, stipple);
 
-	Mesh mesh_top[3];
-	mesh_top[0].load("meshes/tree1b_lod0_1.bin");
-	mesh_top[1].load("meshes/tree1b_lod1_1.bin");
-	mesh_top[2].load("meshes/tree1b_lod2_1.bin");
+	Mesh* meshTop[3] =
+	{
+		meshLoad("meshes/tree1b_lod0_1.bin"),
+		meshLoad("meshes/tree1b_lod1_1.bin"),
+		meshLoad("meshes/tree1b_lod2_1.bin"),
+	};
 	
-	Mesh mesh_trunk[3];
-	mesh_trunk[0].load("meshes/tree1b_lod0_2.bin");
-	mesh_trunk[1].load("meshes/tree1b_lod1_2.bin");
-	mesh_trunk[2].load("meshes/tree1b_lod2_2.bin");
+	Mesh* meshTrunk[3] =
+	{
+		meshLoad("meshes/tree1b_lod0_2.bin"),
+		meshLoad("meshes/tree1b_lod1_2.bin"),
+		meshLoad("meshes/tree1b_lod2_2.bin"),
+	};
 
 	// Imgui.
 	void* data = load("font/droidsans.ttf");
 	imguiCreate(data);
 	free(data);
+
+	const uint64_t stateCommon = 0
+		| BGFX_STATE_RGB_WRITE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_DEPTH_TEST_LESS
+		| BGFX_STATE_CULL_CCW
+		| BGFX_STATE_MSAA
+		;
+
+	const uint64_t stateTransparent = stateCommon
+		| BGFX_STATE_BLEND_ALPHA
+		;
+
+	const uint64_t stateOpaque = stateCommon
+		| BGFX_STATE_DEPTH_WRITE
+		;
 
 	int32_t scrollArea = 0;
 
@@ -363,12 +190,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setTexture(0, u_texColor, textureBark);
 		bgfx::setTexture(1, u_texStipple, textureStipple);
 		bgfx::setUniform(u_stipple, stipple);
-		mesh_trunk[mainLOD].submit(program, mtx, false);
+		meshSubmit(meshTrunk[mainLOD], 0, program, mtx, stateOpaque);
 
 		bgfx::setTexture(0, u_texColor, textureLeafs);
 		bgfx::setTexture(1, u_texStipple, textureStipple);
 		bgfx::setUniform(u_stipple, stipple);
-		mesh_top[mainLOD].submit(program, mtx, true);
+		meshSubmit(meshTop[mainLOD], 0, program, mtx, stateTransparent);
 
 		if (transitions 
 		&& (transitionFrame != 0) )
@@ -376,12 +203,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setTexture(0, u_texColor, textureBark);
 			bgfx::setTexture(1, u_texStipple, textureStipple);
 			bgfx::setUniform(u_stipple, stippleInv);
-			mesh_trunk[targetLOD].submit(program, mtx, false);
+			meshSubmit(meshTrunk[targetLOD], 0, program, mtx, stateOpaque);
 
 			bgfx::setTexture(0, u_texColor, textureLeafs);
 			bgfx::setTexture(1, u_texStipple, textureStipple);
 			bgfx::setUniform(u_stipple, stippleInv);
-			mesh_top[targetLOD].submit(program, mtx, true);
+			meshSubmit(meshTop[targetLOD], 0, program, mtx, stateTransparent);
 		}
 	
 		int lod = 0;
@@ -423,8 +250,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	for (uint32_t ii = 0; ii < 3; ++ii)
 	{
-		mesh_top[ii].unload();
-		mesh_trunk[ii].unload();
+		meshUnload(meshTop[ii]);
+		meshUnload(meshTrunk[ii]);
 	}
 
 	// Cleanup.
