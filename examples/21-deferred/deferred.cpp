@@ -543,14 +543,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				float box[8][3] = 
 				{
-					aabb.m_min[0], aabb.m_min[1], aabb.m_min[2],
-					aabb.m_min[0], aabb.m_min[1], aabb.m_max[2],
-					aabb.m_min[0], aabb.m_max[1], aabb.m_min[2],
-					aabb.m_min[0], aabb.m_max[1], aabb.m_max[2],
-					aabb.m_max[0], aabb.m_min[1], aabb.m_min[2],
-					aabb.m_max[0], aabb.m_min[1], aabb.m_max[2],
-					aabb.m_max[0], aabb.m_max[1], aabb.m_min[2],
-					aabb.m_max[0], aabb.m_max[1], aabb.m_max[2],
+					{ aabb.m_min[0], aabb.m_min[1], aabb.m_min[2] },
+					{ aabb.m_min[0], aabb.m_min[1], aabb.m_max[2] },
+					{ aabb.m_min[0], aabb.m_max[1], aabb.m_min[2] },
+					{ aabb.m_min[0], aabb.m_max[1], aabb.m_max[2] },
+					{ aabb.m_max[0], aabb.m_min[1], aabb.m_min[2] },
+					{ aabb.m_max[0], aabb.m_min[1], aabb.m_max[2] },
+					{ aabb.m_max[0], aabb.m_max[1], aabb.m_min[2] },
+					{ aabb.m_max[0], aabb.m_max[1], aabb.m_max[2] },
 				};
 
 				float xyz[3];
