@@ -230,6 +230,12 @@ NanoVG is small antialiased vector graphics rendering library.
 
 ![example-20-nanovg](https://github.com/bkaradzic/bgfx/raw/master/examples/20-nanovg/screenshot.png)
 
+### [21-deferred](https://github.com/bkaradzic/bgfx/tree/master/examples/21-deferred)
+
+MRT rendering and deferred shading.
+
+![example-21-deferred](https://github.com/bkaradzic/bgfx/raw/master/examples/21-deferred/screenshot.png)
+
 Dependencies
 ------------
 

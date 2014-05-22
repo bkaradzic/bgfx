@@ -462,6 +462,12 @@ namespace bgfx
 				m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
 			}
 
+			if (s_extendedFormats[ExtendedFormat::Intz].m_supported)
+			{
+				s_textureFormat[TextureFormat::D24].m_fmt = D3DFMT_INTZ;
+				s_textureFormat[TextureFormat::D32].m_fmt = D3DFMT_INTZ;
+			}
+
 			s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
 			s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
 

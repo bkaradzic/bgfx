@@ -39,6 +39,16 @@ vec3 decodeRGBE8(vec4 _rgbe8)
 	return rgb;
 }
 
+vec3 encodeNormalUint(vec3 _normal)
+{
+	return _normal * 0.5 + 0.5;
+}
+
+vec3 decodeNormalUint(vec3 _encodedNormal)
+{
+	return _encodedNormal * 2.0 - 1.0;
+}
+
 // Reference:
 // RGB/XYZ Matrices
 // http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html

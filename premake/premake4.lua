@@ -177,6 +177,7 @@ exampleProject("17-drawstress",        "9aeea4c6-80dc-11e3-b3ca-4da6db0f677b")
 exampleProject("18-ibl",               "711bcbb0-9531-11e3-a5e2-0800200c9a66")
 exampleProject("19-oit",               "d7eca4fc-96d7-11e3-a73b-fcafdb0f677b")
 exampleProject("20-nanovg",            "359ce7c4-cd06-11e3-bb8b-6c2f9a125b5a")
+exampleProject("21-deferred",          "f89e59ec-d16b-11e3-bc9c-2dfd99125b5a")
 
 if _OPTIONS["with-tools"] then
 	dofile "makedisttex.lua"
