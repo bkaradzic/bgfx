@@ -49,6 +49,44 @@ vec3 decodeNormalUint(vec3 _encodedNormal)
 	return _encodedNormal * 2.0 - 1.0;
 }
 
+vec2 encodeNormalSphereMap(vec3 _normal)
+{
+	return normalize(_normal.xy) * sqrt(_normal.z * 0.5 + 0.5);
+}
+
+vec3 decodeNormalSphereMap(vec2 _encodedNormal)
+{
+	float zz = dot(_encodedNormal, _encodedNormal) * 2.0 - 1.0;
+	return vec3(normalize(_encodedNormal.xy) * sqrt(1.0 - zz*zz), zz);
+}
+
+// Reference:
+// Octahedron normal vector encoding
+// http://kriscg.blogspot.com/2014/04/octahedron-normal-vector-encoding.html
+vec2 octahedronWrap(vec2 _val)
+{
+	return (1.0 - abs(_val.yx) )
+		 * mix(vec2_splat(-1.0), vec2_splat(1.0), vec2(greaterThanEqual(_val.xy, vec2_splat(0.0) ) ) );
+}
+
+vec2 encodeNormalOctahedron(vec3 _normal)
+{
+	_normal /= abs(_normal.x) + abs(_normal.y) + abs(_normal.z);
+	_normal.xy = _normal.z >= 0.0 ? _normal.xy : octahedronWrap(_normal.xy);
+	_normal.xy = _normal.xy * 0.5 + 0.5;
+	return _normal.xy;
+}
+
+vec3 decodeNormalOctahedron(vec2 _encodedNormal)
+{
+	_encodedNormal = _encodedNormal * 2.0 - 1.0;
+
+	vec3 normal;
+	normal.z  = 1.0 - abs(_encodedNormal.x) - abs(_encodedNormal.y);
+	normal.xy = normal.z >= 0.0 ? _encodedNormal.xy : octahedronWrap(_encodedNormal.xy);
+	return normalize(normal);
+}
+
 // Reference:
 // RGB/XYZ Matrices
 // http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html

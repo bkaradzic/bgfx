@@ -277,8 +277,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Uniform1iv);
 	bgfx::UniformHandle s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Uniform1iv);
 
-	bgfx::UniformHandle u_mtx    = bgfx::createUniform("u_mtx",    bgfx::UniformType::Uniform4x4fv);
-
+	bgfx::UniformHandle u_mtx            = bgfx::createUniform("u_mtx",            bgfx::UniformType::Uniform4x4fv);
 	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Uniform4fv);
 	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Uniform4fv);
 

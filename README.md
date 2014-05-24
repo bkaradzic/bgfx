@@ -249,10 +249,11 @@ Building
 Premake 4.4 beta5 ([prebuilt binaries are part of bx](https://github.com/bkaradzic/bx/tree/master/tools/bin))  
 [http://industriousone.com/premake/download](http://industriousone.com/premake/download)
 
-GNU make and CoreUtils  
-Windows users download GNU utilities from:  
+Windows users download GnuWin32 utilities from:  
 [http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm)  
-[http://gnuwin32.sourceforge.net/packages/coreutils.htm](http://gnuwin32.sourceforge.net/packages/coreutils.htm)
+[http://gnuwin32.sourceforge.net/packages/coreutils.htm](http://gnuwin32.sourceforge.net/packages/coreutils.htm)  
+[http://gnuwin32.sourceforge.net/packages/libiconv.htm](http://gnuwin32.sourceforge.net/packages/libiconv.htm)  
+[http://gnuwin32.sourceforge.net/packages/libintl.htm](http://gnuwin32.sourceforge.net/packages/libintl.htm)
 
 ### Getting source
 
