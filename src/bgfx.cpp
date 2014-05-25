@@ -1990,7 +1990,7 @@ namespace bgfx
 			height = bx::uint32_max(1, height);
 			depth  = bx::uint32_max(1, depth);
 
-			size += _width*_height*depth*bpp/8;
+			size += width*height*depth*bpp/8;
 
 			width >>= 1;
 			height >>= 1;
