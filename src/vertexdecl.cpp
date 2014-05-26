@@ -55,6 +55,11 @@ namespace bgfx
 		&s_attribTypeSizeGl,
 	};
 
+	void initAttribTypeSizeTable(RendererType::Enum _type)
+	{
+		s_attribTypeSize[0] = s_attribTypeSize[_type];
+	}
+
 	void dbgPrintfVargs(const char* _format, va_list _argList)
 	{
 		char temp[8192];

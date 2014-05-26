@@ -10,6 +10,9 @@
 
 namespace bgfx
 {
+	///
+	void initAttribTypeSizeTable(RendererType::Enum _type);
+
 	/// Returns attribute name.
 	const char* getAttribName(Attrib::Enum _attr);
 

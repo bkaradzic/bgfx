@@ -705,8 +705,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	cameraDestroy();
 	imguiDestroy();
 
-	bgfx::destroyFrameBuffer(gbuffer);
-	bgfx::destroyFrameBuffer(lightBuffer);
+	if (bgfx::isValid(gbuffer) )
+	{
+		bgfx::destroyFrameBuffer(gbuffer);
+		bgfx::destroyFrameBuffer(lightBuffer);
+	}
 
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);

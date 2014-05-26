@@ -368,8 +368,11 @@ typedef uint64_t GLuint64;
 #	define glClearDepth glClearDepthf
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
-namespace bgfx
-{
+namespace bgfx 
+{ 
+	class ConstantBuffer;
+	void dumpExtensions(const char* _extensions);
+
 	const char* glEnumName(GLenum _enum);
 
 #define _GL_CHECK(_check, _call) \
@@ -394,10 +397,6 @@ namespace bgfx
 #define GL_IMPORT_TYPEDEFS 1
 #define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
 #include "glimports.h"
-
-	void dumpExtensions(const char* _extensions);
-
-	class ConstantBuffer;
 
 	class VaoStateCache
 	{
@@ -525,7 +524,7 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
-	struct IndexBuffer
+	struct IndexBufferGL
 	{
 		void create(uint32_t _size, void* _data)
 		{
@@ -566,7 +565,7 @@ namespace bgfx
 		VaoCacheRef m_vcref;
 	};
 
-	struct VertexBuffer
+	struct VertexBufferGL
 	{
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle)
 		{
@@ -609,9 +608,9 @@ namespace bgfx
 		VaoCacheRef m_vcref;
 	};
 
-	struct Texture
+	struct TextureGL
 	{
-		Texture()
+		TextureGL()
 			: m_id(0)
 			, m_rbo(0)
 			, m_target(GL_TEXTURE_2D)
@@ -644,9 +643,9 @@ namespace bgfx
 		uint8_t m_textureFormat;
 	};
 
-	struct Shader
+	struct ShaderGL
 	{
-		Shader()
+		ShaderGL()
 			: m_id(0)
 			, m_type(0)
 			, m_hash(0)
@@ -661,9 +660,9 @@ namespace bgfx
 		uint32_t m_hash;
 	};
 
-	struct FrameBuffer
+	struct FrameBufferGL
 	{
-		FrameBuffer()
+		FrameBufferGL()
 			: m_num(0)
 		{
 			memset(m_fbo, 0, sizeof(m_fbo) );
@@ -679,25 +678,20 @@ namespace bgfx
 		uint32_t m_height;
 	};
 
-	struct Program
+	struct ProgramGL
 	{
-		Program()
+		ProgramGL()
 			: m_id(0)
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
 		{
 		}
 
-		void create(const Shader& _vsh, const Shader& _fsh);
+		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);
 		void destroy();
  		void init();
  		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
-
-		void commit()
-		{
-			m_constantBuffer->commit();
-		}
 
 		void add(uint32_t _hash)
 		{
@@ -719,7 +713,7 @@ namespace bgfx
 		VaoCacheRef m_vcref;
 	};
 
-	struct Queries
+	struct QueriesGL
 	{
 		void create()
 		{

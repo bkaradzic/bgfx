@@ -9,6 +9,9 @@
 #if BGFX_USE_WGL
 
 #include <wgl/wglext.h>
+
+namespace bgfx
+{
 typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
 typedef BOOL (APIENTRYP PFNWGLMAKECURRENTPROC) (HDC hdc, HGLRC hglrc);
 typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTPROC) (HDC hdc);
@@ -48,8 +51,6 @@ typedef void (APIENTRYP PFNGLSTENCILFUNCPROC) (GLenum func, GLint ref, GLuint ma
 typedef void (APIENTRYP PFNGLSTENCILMASKPROC) (GLuint mask);
 typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum zpass);
 
-namespace bgfx
-{
 	extern PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
 	extern PFNWGLMAKECURRENTPROC wglMakeCurrent;
 	extern PFNWGLCREATECONTEXTPROC wglCreateContext;

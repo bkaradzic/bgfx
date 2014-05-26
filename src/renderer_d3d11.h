@@ -70,9 +70,9 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
-	struct IndexBuffer
+	struct IndexBufferD3D11
 	{
-		IndexBuffer()
+		IndexBufferD3D11()
 			: m_ptr(NULL)
 			, m_dynamic(false)
 		{
@@ -95,9 +95,9 @@ namespace bgfx
 		bool m_dynamic;
 	};
 
-	struct VertexBuffer
+	struct VertexBufferD3D11
 	{
-		VertexBuffer()
+		VertexBufferD3D11()
 			: m_ptr(NULL)
 			, m_dynamic(false)
 		{
@@ -121,9 +121,9 @@ namespace bgfx
 		bool m_dynamic;
 	};
 
-	struct Shader
+	struct ShaderD3D11
 	{
-		Shader()
+		ShaderD3D11()
 			: m_ptr(NULL)
 			, m_code(NULL)
 			, m_buffer(NULL)
@@ -176,15 +176,15 @@ namespace bgfx
 		uint8_t m_numPredefined;
 	};
 
-	struct Program
+	struct ProgramD3D11
 	{
-		Program()
+		ProgramD3D11()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
 		{
 		}
 
-		void create(const Shader& _vsh, const Shader& _fsh)
+		void create(const ShaderD3D11& _vsh, const ShaderD3D11& _fsh)
 		{
 			BX_CHECK(NULL != _vsh.m_ptr, "Vertex shader doesn't exist.");
 			m_vsh = &_vsh;
@@ -204,27 +204,14 @@ namespace bgfx
 			m_fsh = NULL;
 		}
 
-		void commit()
-		{
-			if (NULL != m_vsh->m_constantBuffer)
-			{
-				m_vsh->m_constantBuffer->commit();
-			}
-
-			if (NULL != m_fsh->m_constantBuffer)
-			{
-				m_fsh->m_constantBuffer->commit();
-			}
-		}
-
-		const Shader* m_vsh;
-		const Shader* m_fsh;
+		const ShaderD3D11* m_vsh;
+		const ShaderD3D11* m_fsh;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
 	};
 
-	struct Texture
+	struct TextureD3D11
 	{
 		enum Enum
 		{
@@ -233,7 +220,7 @@ namespace bgfx
 			TextureCube,
 		};
 
-		Texture()
+		TextureD3D11()
 			: m_ptr(NULL)
 			, m_srv(NULL)
 			, m_sampler(NULL)
@@ -263,9 +250,9 @@ namespace bgfx
 		uint8_t m_numMips;
 	};
 
-	struct FrameBuffer
+	struct FrameBufferD3D11
 	{
-		FrameBuffer()
+		FrameBufferD3D11()
 			: m_num(0)
 		{
 		}

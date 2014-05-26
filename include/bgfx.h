@@ -677,10 +677,13 @@ namespace bgfx
 	///
 	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
-	/// Returns renderer backend API type.
-	RendererType::Enum getRendererType();
+	/// Returns supported backend API renderers.
+	uint8_t getSupportedRenderers(RendererType::Enum _enum[RendererType::Count]);
 
 	/// Initialize bgfx library.
+	///
+	/// @param _type Select rendering backend. When set to RendererType::Count
+	///   default rendering backend will be selected.
 	///
 	/// @param _callback Provide application specific callback interface.
 	///   See: CallbackI
@@ -689,7 +692,7 @@ namespace bgfx
 	///   specified, library uses default CRT allocator. The library assumes
 	///   custom allocator is thread safe.
 	///
-	void init(CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
+	void init(RendererType::Enum _type = RendererType::Count, CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
 
 	/// Shutdown bgfx library.
 	void shutdown();
@@ -707,7 +710,18 @@ namespace bgfx
 	///
 	uint32_t frame();
 
+	/// Returns current renderer backend API type.
+	///
+	/// NOTE:
+	///   Library must be initialized.
+	///
+	RendererType::Enum getRendererType();
+
 	/// Returns renderer capabilities.
+	///
+	/// NOTE:
+	///   Library must be initialized.
+	///
 	const Caps* getCaps();
 
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.

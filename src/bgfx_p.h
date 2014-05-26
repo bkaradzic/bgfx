@@ -140,27 +140,25 @@ namespace stl
 
 #define BGFX_SAMPLER_DEFAULT_FLAGS UINT32_C(0x10000000)
 
-#if BGFX_CONFIG_RENDERER_DIRECT3D9
-#	define BGFX_RENDERER_NAME "Direct3D 9"
-#elif BGFX_CONFIG_RENDERER_DIRECT3D11
-#	define BGFX_RENDERER_NAME "Direct3D 11"
-#elif BGFX_CONFIG_RENDERER_OPENGL
+#define BGFX_RENDERER_DIRECT3D9_NAME "Direct3D 9"
+#define BGFX_RENDERER_DIRECT3D11_NAME "Direct3D 11"
+#define BGFX_RENDERER_NULL_NAME "NULL"
+
+#if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
-#		define BGFX_RENDERER_NAME "OpenGL 3.1"
+#		define BGFX_RENDERER_OPENGL_NAME "OpenGL 3.1"
 #	else
-#		define BGFX_RENDERER_NAME "OpenGL 2.1"
+#		define BGFX_RENDERER_OPENGL_NAME "OpenGL 2.1"
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 #	if BGFX_CONFIG_RENDERER_OPENGLES == 30
-#		define BGFX_RENDERER_NAME "OpenGL ES 3.0"
+#		define BGFX_RENDERER_OPENGL_NAME "OpenGL ES 3.0"
 #	elif BGFX_CONFIG_RENDERER_OPENGLES >= 31
-#		define BGFX_RENDERER_NAME "OpenGL ES 3.1"
+#		define BGFX_RENDERER_OPENGL_NAME "OpenGL ES 3.1"
 #	else
-#		define BGFX_RENDERER_NAME "OpenGL ES 2.0"
+#		define BGFX_RENDERER_OPENGL_NAME "OpenGL ES 2.0"
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
-#else
-#	define BGFX_RENDERER_NAME "NULL"
-#endif // BGFX_CONFIG_RENDERER_
+#endif //
 
 namespace bgfx
 {
@@ -394,15 +392,6 @@ namespace bgfx
 		void init();
 		void shutdown();
 
-		void blit(const TextVideoMem* _mem)
-		{
-			blit(*_mem);
-		}
-
-		void blit(const TextVideoMem& _mem);
-		void setup();
-		void render(uint32_t _numIndices);
-
 		TextureHandle m_texture;
 		TransientVertexBuffer* m_vb;
 		TransientIndexBuffer* m_ib;
@@ -410,6 +399,15 @@ namespace bgfx
 		ProgramHandle m_program;
 		bool m_init;
 	};
+
+	struct RendererContextI;
+
+	extern void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem);
+
+	inline void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem* _mem)
+	{
+		blit(_renderCtx, _blitter, *_mem);
+	}
 
 	template <uint32_t maxKeys>
 	struct UpdateBatchT
@@ -466,7 +464,6 @@ namespace bgfx
 
 		void init();
 		void shutdown();
-		void clear(const Rect& _rect, const Clear& _clear, uint32_t _height = 0);
 
 		TransientVertexBuffer* m_vb;
 		IndexBufferHandle m_ib;
@@ -861,7 +858,6 @@ namespace bgfx
 		void writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
 		void writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num = 1);
 		void writeMarker(const char* _marker);
-		void commit();
 
 	private:
 		ConstantBuffer(uint32_t _size)
@@ -1558,10 +1554,56 @@ namespace bgfx
 		UsedList m_used;
 	};
 
+	struct BX_NO_VTABLE RendererContextI
+	{
+		virtual ~RendererContextI() = 0;
+		virtual RendererType::Enum getRendererType() const = 0;
+		virtual const char* getRendererName() const = 0;
+		virtual void flip() = 0;
+		virtual void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem) = 0;
+		virtual void destroyIndexBuffer(IndexBufferHandle _handle) = 0;
+		virtual void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) = 0;
+		virtual void destroyVertexDecl(VertexDeclHandle _handle) = 0;
+		virtual void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle) = 0;
+		virtual void destroyVertexBuffer(VertexBufferHandle _handle) = 0;
+		virtual void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size) = 0;
+		virtual void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) = 0;
+		virtual void destroyDynamicIndexBuffer(IndexBufferHandle _handle) = 0;
+		virtual void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size) = 0;
+		virtual void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) = 0;
+		virtual void destroyDynamicVertexBuffer(VertexBufferHandle _handle) = 0;
+		virtual void createShader(ShaderHandle _handle, Memory* _mem) = 0;
+		virtual void destroyShader(ShaderHandle _handle) = 0;
+		virtual void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) = 0;
+		virtual void destroyProgram(ProgramHandle _handle) = 0;
+		virtual void createTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip) = 0;
+		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
+		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
+		virtual void updateTextureEnd() = 0;
+		virtual void destroyTexture(TextureHandle _handle) = 0;
+		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) = 0;
+		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
+		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
+		virtual void destroyUniform(UniformHandle _handle) = 0;
+		virtual void saveScreenShot(const char* _filePath) = 0;
+		virtual void updateViewName(uint8_t _id, const char* _name) = 0;
+		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
+		virtual void setMarker(const char* _marker, uint32_t _size) = 0;
+		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
+		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
+		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
+	};
+
+	inline RendererContextI::~RendererContextI()
+	{
+	}
+
+	void rendererUpdateUniforms(RendererContextI* _renderCtx, ConstantBuffer* _constantBuffer, uint32_t _begin, uint32_t _end);
+
 #if BGFX_CONFIG_DEBUG
-#	define BGFX_API_FUNC(_api) BX_NO_INLINE _api
+#	define BGFX_API_FUNC(_func) BX_NO_INLINE _func
 #else
-#	define BGFX_API_FUNC(_api) _api
+#	define BGFX_API_FUNC(_func) _func
 #endif // BGFX_CONFIG_DEBUG
 
 	struct Context
@@ -1593,7 +1635,7 @@ namespace bgfx
 		}
 
 		// game thread
-		void init();
+		void init(RendererType::Enum _type);
 		void shutdown();
 
 		CommandBuffer& getCommandBuffer(CommandBuffer::Enum _cmd)
@@ -2670,42 +2712,8 @@ namespace bgfx
 
 		// render thread
 		bool renderFrame();
-		void rendererFlip();
-		void rendererInit();
-		void rendererShutdown();
-		void rendererCreateIndexBuffer(IndexBufferHandle _handle, Memory* _mem);
-		void rendererDestroyIndexBuffer(IndexBufferHandle _handle);
-		void rendererCreateVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle);
-		void rendererDestroyVertexBuffer(VertexBufferHandle _handle);
-		void rendererCreateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size);
-		void rendererUpdateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem);
-		void rendererDestroyDynamicIndexBuffer(IndexBufferHandle _handle);
-		void rendererCreateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size);
-		void rendererUpdateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem);
-		void rendererDestroyDynamicVertexBuffer(VertexBufferHandle _handle);
-		void rendererCreateVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl);
-		void rendererDestroyVertexDecl(VertexDeclHandle _handle);
-		void rendererCreateShader(ShaderHandle _handle, Memory* _mem);
-		void rendererDestroyShader(ShaderHandle _handle);
-		void rendererCreateProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh);
-		void rendererDestroyProgram(ProgramHandle _handle);
-		void rendererCreateTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip);
-		void rendererUpdateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip);
-		void rendererUpdateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void rendererUpdateTextureEnd();
-		void rendererDestroyTexture(TextureHandle _handle);
-		void rendererCreateFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles);
-		void rendererDestroyFrameBuffer(FrameBufferHandle _handle);
-		void rendererCreateUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name);
-		void rendererDestroyUniform(UniformHandle _handle);
-		void rendererSaveScreenShot(const char* _filePath);
-		void rendererUpdateViewName(uint8_t _id, const char* _name);
-		void rendererUpdateUniform(uint16_t _loc, const void* _data, uint32_t _size);
-		void rendererSetMarker(const char* _marker, uint32_t _size);
-		void rendererUpdateUniforms(ConstantBuffer* _constantBuffer, uint32_t _begin, uint32_t _end);
 		void flushTextureUpdateBatch(CommandBuffer& _cmdbuf);
 		void rendererExecCommands(CommandBuffer& _cmdbuf);
-		void rendererSubmit();
 
 #if BGFX_CONFIG_MULTITHREADED
 		void gameSemPost()
@@ -2842,6 +2850,8 @@ namespace bgfx
 
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;
+
+		RendererContextI* m_renderCtx;
 
 		bool m_rendererInitialized;
 		bool m_exit;

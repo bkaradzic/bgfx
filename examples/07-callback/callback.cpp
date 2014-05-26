@@ -366,7 +366,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 
-	bgfx::init(&callback, &allocator);
+	bgfx::init(bgfx::RendererType::Count /* initialize with default renderer */, &callback, &allocator);
 	bgfx::reset(width, height, BGFX_RESET_CAPTURE|BGFX_RESET_MSAA_X16);
 
 	// Enable debug text.
