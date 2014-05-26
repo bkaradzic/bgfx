@@ -158,6 +158,8 @@ namespace stl
 #	else
 #		define BGFX_RENDERER_OPENGL_NAME "OpenGL ES 2.0"
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
+#else
+#	define BGFX_RENDERER_OPENGL_NAME "OpenGL"
 #endif //
 
 namespace bgfx
