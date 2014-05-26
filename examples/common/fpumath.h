@@ -279,11 +279,11 @@ inline void mtxRotateXY(float* _result, float _ax, float _ay)
 
 	memset(_result, 0, sizeof(float)*16);
 	_result[ 0] = cy;
-	_result[ 2] = -sy;
-	_result[ 4] = -sx*sy;
+	_result[ 2] = sy;
+	_result[ 4] = sx*sy;
 	_result[ 5] = cx;
 	_result[ 6] = -sx*cy;
-	_result[ 8] = cx*sy;
+	_result[ 8] = -cx*sy;
 	_result[ 9] = sx;
 	_result[10] = cx*cy;
 	_result[15] = 1.0f;
