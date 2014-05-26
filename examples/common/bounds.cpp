@@ -119,6 +119,35 @@ void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _n
 	_aabb.m_max[2] = max[2];
 }
 
+void aabbExpand(Aabb& _aabb, float _factor)
+{
+	_aabb.m_min[0] -= _factor;
+	_aabb.m_min[1] -= _factor;
+	_aabb.m_min[2] -= _factor;
+	_aabb.m_max[0] += _factor;
+	_aabb.m_max[1] += _factor;
+	_aabb.m_max[2] += _factor;
+}
+
+uint32_t aabbOverlapTest(Aabb& _aabb0, Aabb& _aabb1)
+{
+	const uint32_t ltMinX = _aabb0.m_max[0] < _aabb1.m_min[0];
+	const uint32_t gtMaxX = _aabb0.m_min[0] > _aabb1.m_max[0];
+	const uint32_t ltMinY = _aabb0.m_max[1] < _aabb1.m_min[1];
+	const uint32_t gtMaxY = _aabb0.m_min[1] > _aabb1.m_max[1];
+	const uint32_t ltMinZ = _aabb0.m_max[2] < _aabb1.m_min[2];
+	const uint32_t gtMaxZ = _aabb0.m_min[2] > _aabb1.m_max[2];
+
+	return 0
+		| (ltMinX<<0)
+		| (gtMaxX<<1)
+		| (ltMinY<<2)
+		| (gtMaxY<<3)
+		| (ltMinZ<<4)
+		| (gtMaxZ<<5)
+		;
+}
+
 void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps)
 {
 	Aabb aabb;

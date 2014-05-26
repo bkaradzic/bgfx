@@ -38,6 +38,13 @@ void calcAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_
 /// Transform vertices and calculate axis aligned bounding box.
 void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
+/// Expand AABB.
+void aabbExpand(Aabb& _aabb, float _factor);
+
+/// Returns 0 is two AABB don't overlap, otherwise returns flags of overlap
+/// test.
+uint32_t aabbOverlapTest(Aabb& _aabb0, Aabb& _aabb1);
+
 /// Calculate oriented bounding box.
 void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps = 17);
 
