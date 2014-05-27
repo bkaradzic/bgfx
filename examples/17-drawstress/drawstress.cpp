@@ -293,11 +293,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			break;
 	}
 
-	bgfx::ShaderHandle vsh = bgfx::createShader(vs_drawstress);
-	bgfx::ShaderHandle fsh = bgfx::createShader(fs_drawstress);
-
 	// Create program from shaders.
-	program = bgfx::createProgram(vsh, fsh);
+	program = bgfx::createProgram(
+		  bgfx::createShader(vs_drawstress)
+		, bgfx::createShader(fs_drawstress)
+		, true /* destroy shaders when program is destroyed */
+		);
 
 	const bgfx::Memory* mem;
 
@@ -308,13 +309,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create static index buffer.
 	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
 	ibh = bgfx::createIndexBuffer(mem);
-
-	// We can destroy vertex and fragment shader here since
-	// their reference is kept inside bgfx after calling createProgram.
-	// Vertex and fragment shader will be destroyed once program is
-	// destroyed.
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
 
 	imguiCreate(s_droidSansTtf);
 
