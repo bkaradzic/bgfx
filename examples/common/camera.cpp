@@ -4,7 +4,7 @@
  */
 
 #include <bx/timer.h>
-#include "fpumath.h"
+#include <bx/fpumath.h>
 #include "camera.h"
 #include "entry/cmd.h"
 #include "entry/input.h"
@@ -152,8 +152,8 @@ struct Camera
 			float tmpRhs[3];
 			float tmpPos[3];
 			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			vec3Mul(tmpRhs, direction, _deltaTime * m_moveSpeed);
-			vec3Add(m_eye, tmpPos, tmpRhs);
+			bx::vec3Mul(tmpRhs, direction, _deltaTime * m_moveSpeed);
+			bx::vec3Add(m_eye, tmpPos, tmpRhs);
 			setKeyState(CAMERA_KEY_UP, false);
 		}
 
@@ -163,8 +163,8 @@ struct Camera
 			float tmpRhs[3];
 			float tmpPos[3];
 			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			vec3Mul(tmpRhs, direction, _deltaTime * m_moveSpeed);
-			vec3Sub(m_eye, tmpPos, tmpRhs);
+			bx::vec3Mul(tmpRhs, direction, _deltaTime * m_moveSpeed);
+			bx::vec3Sub(m_eye, tmpPos, tmpRhs);
 			setKeyState(CAMERA_KEY_DOWN, false);
 		}
 
@@ -174,8 +174,8 @@ struct Camera
 			float tmpRhs[3];
 			float tmpPos[3];
 			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			vec3Mul(tmpRhs, right, _deltaTime * m_moveSpeed);
-			vec3Add(m_eye, tmpPos, tmpRhs);
+			bx::vec3Mul(tmpRhs, right, _deltaTime * m_moveSpeed);
+			bx::vec3Add(m_eye, tmpPos, tmpRhs);
 			setKeyState(CAMERA_KEY_LEFT, false);
 		}
 
@@ -185,18 +185,18 @@ struct Camera
 			float tmpRhs[3];
 			float tmpPos[3];
 			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			vec3Mul(tmpRhs, right, _deltaTime * m_moveSpeed);
-			vec3Sub(m_eye, tmpPos, tmpRhs);
+			bx::vec3Mul(tmpRhs, right, _deltaTime * m_moveSpeed);
+			bx::vec3Sub(m_eye, tmpPos, tmpRhs);
 			setKeyState(CAMERA_KEY_RIGHT, false);
 		}
 
-		vec3Add(m_at, m_eye, direction);
-		vec3Cross(m_up, right, direction);
+		bx::vec3Add(m_at, m_eye, direction);
+		bx::vec3Cross(m_up, right, direction);
 	}
 
 	void getViewMtx(float* _viewMtx)
 	{
-		mtxLookAt(_viewMtx, m_eye, m_at, m_up);
+		bx::mtxLookAt(_viewMtx, m_eye, m_at, m_up);
 	}
 
 	void setPosition(float* _pos)

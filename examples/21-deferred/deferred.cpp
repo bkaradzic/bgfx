@@ -453,15 +453,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, lightBuffer);
 
 				float proj[16];
-				mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+				bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 				bgfx::setViewFrameBuffer(RENDER_PASS_GEOMETRY_ID, gbuffer);
 				bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
 
-				mtxMul(vp, view, proj);
-				mtxInverse(invMvp, vp);
+				bx::mtxMul(vp, view, proj);
+				bx::mtxInverse(invMvp, vp);
 
-				mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+				bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 				bgfx::setViewTransformMask(0
 					| RENDER_PASS_LIGHT_BIT
 					| RENDER_PASS_COMBINE_BIT
@@ -470,10 +470,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				const float aspectRatio = float(height)/float(width);
 				const float size = 10.0f;
-				mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
+				bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
 				bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj); 
 
-				mtxOrtho(proj, 0.0f, (float)width, 0.0f, (float)height, 0.0f, 1000.0f);
+				bx::mtxOrtho(proj, 0.0f, (float)width, 0.0f, (float)height, 0.0f, 1000.0f);
 				bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj); 
 			}
 
@@ -488,11 +488,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					float mtx[16];
 					if (animateMesh)
 					{
-						mtxRotateXY(mtx, time*1.023f + xx*0.21f, time*0.03f + yy*0.37f);
+						bx::mtxRotateXY(mtx, time*1.023f + xx*0.21f, time*0.03f + yy*0.37f);
 					}
 					else
 					{
-						mtxIdentity(mtx);
+						bx::mtxIdentity(mtx);
 					}
 					mtx[12] = -offset + float(xx)*3.0f;
 					mtx[13] = -offset + float(yy)*3.0f;
@@ -553,7 +553,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				};
 
 				float xyz[3];
-				vec3MulMtxH(xyz, box[0], vp);
+				bx::vec3MulMtxH(xyz, box[0], vp);
 				float minx = xyz[0];
 				float miny = xyz[1];
 				float maxx = xyz[0];
@@ -562,21 +562,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				for (uint32_t ii = 1; ii < 8; ++ii)
 				{
-					vec3MulMtxH(xyz, box[ii], vp);
-					minx = fminf(minx, xyz[0]);
-					miny = fminf(miny, xyz[1]);
-					maxx = fmaxf(maxx, xyz[0]);
-					maxy = fmaxf(maxy, xyz[1]);
-					maxz = fmaxf(maxz, xyz[2]);
+					bx::vec3MulMtxH(xyz, box[ii], vp);
+					minx = bx::fmin(minx, xyz[0]);
+					miny = bx::fmin(miny, xyz[1]);
+					maxx = bx::fmax(maxx, xyz[0]);
+					maxy = bx::fmax(maxy, xyz[1]);
+					maxz = bx::fmax(maxz, xyz[2]);
 				}
 
 				// Cull light if it's fully behind camera.
 				if (maxz >= 0.0f)
 				{
-					float x0 = fclamp( (minx * 0.5f + 0.5f) * width,  0.0f, (float)width);
-					float y0 = fclamp( (miny * 0.5f + 0.5f) * height, 0.0f, (float)height);
-					float x1 = fclamp( (maxx * 0.5f + 0.5f) * width,  0.0f, (float)width);
-					float y1 = fclamp( (maxy * 0.5f + 0.5f) * height, 0.0f, (float)height);
+					float x0 = bx::fclamp( (minx * 0.5f + 0.5f) * width,  0.0f, (float)width);
+					float y0 = bx::fclamp( (miny * 0.5f + 0.5f) * height, 0.0f, (float)height);
+					float x1 = bx::fclamp( (maxx * 0.5f + 0.5f) * width,  0.0f, (float)width);
+					float y1 = bx::fclamp( (maxy * 0.5f + 0.5f) * height, 0.0f, (float)height);
 
 					if (showScissorRects)
 					{
@@ -679,7 +679,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				for (uint32_t ii = 0; ii < BX_COUNTOF(gbufferTex); ++ii)
 				{
 					float mtx[16];
-					mtxSRT(mtx
+					bx::mtxSRT(mtx
 						, aspectRatio, 1.0f, 1.0f
 						, 0.0f, 0.0f, 0.0f
 						, -7.9f - BX_COUNTOF(gbufferTex)*0.1f*0.5f + ii*2.1f*aspectRatio, 4.0f, 0.0f

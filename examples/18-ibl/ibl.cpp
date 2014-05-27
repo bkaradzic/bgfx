@@ -20,7 +20,7 @@ struct Uniforms
 	void init()
 	{
 		m_time = 0.0f;
-		mtxIdentity(m_mtx);
+		bx::mtxIdentity(m_mtx);
 
 		u_time    = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
 		u_mtx     = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
@@ -720,7 +720,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -3.0f };
 
-		mtxRotateXY(s_uniforms.m_mtx
+		bx::mtxRotateXY(s_uniforms.m_mtx
 			, 0.0f
 			, time
 			);
@@ -728,13 +728,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float view[16];
 		float proj[16];
 
-		mtxIdentity(view);
-		mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+		bx::mtxIdentity(view);
+		bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 		bgfx::setViewTransform(0, view, proj);
 
-		mtxLookAt(view, eye, at);
+		bx::mtxLookAt(view, eye, at);
 		memcpy(s_uniforms.m_camPos, eye, 3*sizeof(float));
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 		bgfx::setViewTransform(1, view, proj);
 
 		bgfx::setViewRect(0, 0, 0, width, height);
@@ -749,7 +749,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// View 1.
 		float mtx[16];
-		mtxSRT(mtx
+		bx::mtxSRT(mtx
 				, 1.0f
 				, 1.0f
 				, 1.0f

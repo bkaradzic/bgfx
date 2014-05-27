@@ -11,9 +11,9 @@
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
+#include <bx/fpumath.h>
 #include "entry/entry.h"
 #include "camera.h"
-#include "fpumath.h"
 #include "imgui/imgui.h"
 
 #define RENDER_VIEWID_RANGE1_PASS_0   1 
@@ -211,7 +211,7 @@ void mtxReflected(float*__restrict _result
 				  , const float* __restrict _n  /* normal */
 				  )
 {
-	float dot = vec3Dot(_p, _n);
+	float dot = bx::vec3Dot(_p, _n);
 
 	_result[ 0] =  1.0f -  2.0f * _n[0] * _n[0]; //1-2Nx^2
 	_result[ 1] = -2.0f * _n[0] * _n[1];         //-2*Nx*Ny
@@ -977,7 +977,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set view and projection matrices.
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
-	mtxProj(viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
+	bx::mtxProj(viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
 
 	float initialPos[3] = { 0.0f, 18.0f, -40.0f };
 	cameraCreate();
@@ -1107,7 +1107,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Floor position.
 		float floorMtx[16];
-		mtxSRT(floorMtx
+		bx::mtxSRT(floorMtx
 			, 20.0f  //scaleX
 			, 20.0f  //scaleY
 			, 20.0f  //scaleZ
@@ -1121,7 +1121,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Bunny position.
 		float bunnyMtx[16];
-		mtxSRT(bunnyMtx
+		bx::mtxSRT(bunnyMtx
 			, 5.0f
 			, 5.0f
 			, 5.0f
@@ -1146,7 +1146,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float columnMtx[4][16];
 		for (uint8_t ii = 0; ii < 4; ++ii)
 		{
-			mtxSRT(columnMtx[ii]
+			bx::mtxSRT(columnMtx[ii]
 				, 1.0f
 				, 1.0f
 				, 1.0f
@@ -1163,7 +1163,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float cubeMtx[numCubes][16];
 		for (uint16_t ii = 0; ii < numCubes; ++ii)
 		{
-			mtxSRT(cubeMtx[ii]
+			bx::mtxSRT(cubeMtx[ii]
 				, 1.0f
 				, 1.0f
 				, 1.0f
@@ -1217,14 +1217,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				float reflectedLights[MAX_NUM_LIGHTS][4];
 				for (uint8_t ii = 0; ii < numLights; ++ii)
 				{
-					vec3MulMtx(reflectedLights[ii], lightPosRadius[ii], reflectMtx);
+					bx::vec3MulMtx(reflectedLights[ii], lightPosRadius[ii], reflectMtx);
 					reflectedLights[ii][3] = lightPosRadius[ii][3];
 				}
 				memcpy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float));
 
 				// Reflect and submit bunny.
 				float mtxReflectedBunny[16];
-				mtxMul(mtxReflectedBunny, bunnyMtx, reflectMtx);
+				bx::mtxMul(mtxReflectedBunny, bunnyMtx, reflectMtx);
 				bunnyMesh.submit(RENDER_VIEWID_RANGE1_PASS_1
 					, mtxReflectedBunny
 					, programColorLightning
@@ -1235,7 +1235,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				float mtxReflectedColumn[16];
 				for (uint8_t ii = 0; ii < 4; ++ii)
 				{
-					mtxMul(mtxReflectedColumn, columnMtx[ii], reflectMtx);
+					bx::mtxMul(mtxReflectedColumn, columnMtx[ii], reflectMtx);
 					columnMesh.submit(RENDER_VIEWID_RANGE1_PASS_1
 						, mtxReflectedColumn
 						, programColorLightning
@@ -1314,7 +1314,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				float plane_pos[3] = { 0.0f, 0.0f, 0.0f };
 				float normal[3] = { 0.0f, 1.0f, 0.0f };
 				memcpy(ground, normal, sizeof(float) * 3);
-				ground[3] = -vec3Dot(plane_pos, normal) - 0.01f; // - 0.01 against z-fighting
+				ground[3] = -bx::vec3Dot(plane_pos, normal) - 0.01f; // - 0.01 against z-fighting
 
 				for (uint8_t ii = 0, viewId = RENDER_VIEWID_RANGE5_PASS_6; ii < numLights; ++ii, ++viewId)
 				{
@@ -1335,7 +1335,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					// Submit bunny's shadow.
 					float mtxShadowedBunny[16];
-					mtxMul(mtxShadowedBunny, bunnyMtx, shadowMtx);
+					bx::mtxMul(mtxShadowedBunny, bunnyMtx, shadowMtx);
 					bunnyMesh.submit(viewId
 						, mtxShadowedBunny
 						, programColorBlack
@@ -1346,7 +1346,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					float mtxShadowedCube[16];
 					for (uint8_t jj = 0; jj < numCubes; ++jj)
 					{
-						mtxMul(mtxShadowedCube, cubeMtx[jj], shadowMtx);
+						bx::mtxMul(mtxShadowedCube, cubeMtx[jj], shadowMtx);
 						cubeMesh.submit(viewId
 							, mtxShadowedCube
 							, programColorBlack
@@ -1414,7 +1414,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Draw floor bottom.
 		float floorBottomMtx[16];
-		mtxSRT(floorBottomMtx
+		bx::mtxSRT(floorBottomMtx
 			, 20.0f  //scaleX
 			, 20.0f  //scaleY
 			, 20.0f  //scaleZ

@@ -8,7 +8,7 @@
 
 #include <bgfx.h>
 #include <bx/readerwriter.h>
-#include "fpumath.h"
+#include <bx/fpumath.h>
 #include "entry/entry.h"
 
 void* load(bx::FileReaderI* _reader, const char* _filePath)
@@ -191,10 +191,10 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 
 		float normal[4];
 		bgfx::vertexUnpack(normal, bgfx::Attrib::Normal, _decl, _vertices, ii);
-		float ndt = vec3Dot(normal, tanu);
+		float ndt = bx::vec3Dot(normal, tanu);
 
 		float nxt[3];
-		vec3Cross(nxt, normal, tanu);
+		bx::vec3Cross(nxt, normal, tanu);
 
 		float tmp[3];
 		tmp[0] = tanu[0] - normal[0] * ndt;
@@ -202,9 +202,9 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		tmp[2] = tanu[2] - normal[2] * ndt;
 
 		float tangent[4];
-		vec3Norm(tangent, tmp);
+		bx::vec3Norm(tangent, tmp);
 
-		tangent[3] = vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
+		tangent[3] = bx::vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
 	}
 

@@ -323,8 +323,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float view[16];
 		float proj[16];
 
-		mtxIdentity(view);
-		mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+		bx::mtxIdentity(view);
+		bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransformMask(0
@@ -345,16 +345,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float eye[3] = { 0.0f, 1.0f, -2.5f };
 
 		float mtx[16];
-		mtxRotateXY(mtx
+		bx::mtxRotateXY(mtx
 			, 0.0f
 			, time
 			); 
 
 		float temp[4];
-		vec3MulMtx(temp, eye, mtx);
+		bx::vec3MulMtx(temp, eye, mtx);
 
-		mtxLookAt(view, temp, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxLookAt(view, temp, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 1.
 		bgfx::setViewTransformMask(1<<1, view, proj);

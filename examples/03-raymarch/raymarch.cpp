@@ -174,14 +174,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		
 		float view[16];
 		float proj[16];
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxLookAt(view, eye, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 1.
 		bgfx::setViewTransform(0, view, proj);
 
 		float ortho[16];
-		mtxOrtho(ortho, 0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 100.0f);
+		bx::mtxOrtho(ortho, 0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 100.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(1, NULL, ortho);
@@ -189,28 +189,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float time = (float)( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
 
 		float vp[16];
-		mtxMul(vp, view, proj);
+		bx::mtxMul(vp, view, proj);
 
 		float mtx[16];
-		mtxRotateXY(mtx
+		bx::mtxRotateXY(mtx
 			, time
 			, time*0.37f
 			); 
 
 		float mtxInv[16];
-		mtxInverse(mtxInv, mtx);
+		bx::mtxInverse(mtxInv, mtx);
 		float lightDirModel[4] = { -0.4f, -0.5f, -1.0f, 0.0f };
 		float lightDirModelN[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		vec3Norm(lightDirModelN, lightDirModel);
+		bx::vec3Norm(lightDirModelN, lightDirModel);
 		float lightDir[4];
-		vec4MulMtx(lightDir, lightDirModelN, mtxInv);
+		bx::vec4MulMtx(lightDir, lightDirModelN, mtxInv);
 		bgfx::setUniform(u_lightDir, lightDir);
 
 		float mvp[16];
-		mtxMul(mvp, mtx, vp);
+		bx::mtxMul(mvp, mtx, vp);
 
 		float invMvp[16];
-		mtxInverse(invMvp, mvp);
+		bx::mtxInverse(invMvp, mvp);
 		bgfx::setUniform(u_mtx, invMvp);
 
 		bgfx::setUniform(u_time, &time);

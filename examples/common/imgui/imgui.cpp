@@ -26,11 +26,11 @@
 #include <stdio.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
+#include <bx/fpumath.h>
 #include <bgfx.h>
 
 #include "../entry/dbg.h"
 #include "imgui.h"
-#include "../fpumath.h"
 
 #include "vs_imgui_color.bin.h"
 #include "fs_imgui_color.bin.h"
@@ -350,7 +350,7 @@ struct Imgui
 		bgfx::setViewRect(_view, 0, 0, _width, _height);
 
 		float proj[16];
-		mtxOrtho(proj, 0.0f, (float)_width, (float)_height, 0.0f, 0.0f, 1000.0f);
+		bx::mtxOrtho(proj, 0.0f, (float)_width, (float)_height, 0.0f, 0.0f, 1000.0f);
 		bgfx::setViewTransform(_view, NULL, proj);
 
 		updateInput(_mx, _my, _button, _scroll);

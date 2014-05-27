@@ -174,8 +174,8 @@ bool mainloop()
 
 		float view[16];
 		float proj[16];
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxLookAt(view, eye, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
@@ -195,7 +195,7 @@ bool mainloop()
 
 		float mtxS[16];
 		const float scale = 0 == transform ? 0.25f : 0.0f;
-		mtxScale(mtxS, scale, scale, scale);
+		bx::mtxScale(mtxS, scale, scale, scale);
 
 		const float step = 0.6f;
 		float pos[3];
@@ -210,10 +210,10 @@ bool mainloop()
 				for (uint32_t xx = 0; xx < uint32_t(dim); ++xx)
 				{
 					float mtxR[16];
-					mtxRotateXYZ(mtxR, time + xx*0.21f, time + yy*0.37f, time + yy*0.13f);
+					bx::mtxRotateXYZ(mtxR, time + xx*0.21f, time + yy*0.37f, time + yy*0.13f);
 
 					float mtx[16];
-					mtxMul(mtx, mtxS, mtxR);
+					bx::mtxMul(mtx, mtxS, mtxR);
 
 					mtx[12] = pos[0] + float(xx)*step;
 					mtx[13] = pos[1] + float(yy)*step;

@@ -22,9 +22,9 @@ using namespace std::tr1;
 #include <bx/allocator.h>
 #include <bx/hash.h>
 #include <bx/float4_t.h>
+#include <bx/fpumath.h>
 #include "entry/entry.h"
 #include "camera.h"
-#include "fpumath.h"
 #include "imgui/imgui.h"
 
 #define SV_USE_SIMD 1
@@ -217,10 +217,10 @@ void planeNormal(float* __restrict _result
 	vec1[1] = _v2[1] - _v1[1];
 	vec1[2] = _v2[2] - _v1[2];
 
-	vec3Cross(cross, vec0, vec1);
-	vec3Norm(_result, cross);
+	bx::vec3Cross(cross, vec0, vec1);
+	bx::vec3Norm(_result, cross);
 
-	_result[3] = -vec3Dot(_result, _v0);
+	_result[3] = -bx::vec3Dot(_result, _v0);
 }
 
 struct Uniforms
@@ -1248,7 +1248,7 @@ struct Instance
 		memcpy(s_uniforms.m_color, m_color, 3*sizeof(float) );
 
 		float mtx[16];
-		mtxSRT(mtx
+		bx::mtxSRT(mtx
 			, m_scale[0]
 			, m_scale[1]
 			, m_scale[2]
@@ -1360,34 +1360,34 @@ void shadowVolumeLightTransform(float* __restrict _outLightPos
 	 */
 
 	float pivot[16];
-	mtxTranslate(pivot
+	bx::mtxTranslate(pivot
 		, _lightPos[0] - _translate[0]
 		, _lightPos[1] - _translate[1]
 		, _lightPos[2] - _translate[2]
 		);
 
 	float mzyx[16];
-	mtxRotateZYX(mzyx
+	bx::mtxRotateZYX(mzyx
 		, -_rotate[0]
 		, -_rotate[1]
 		, -_rotate[2]
 		);
 
 	float invScale[16];
-	mtxScale(invScale
+	bx::mtxScale(invScale
 		, 1.0f / _scale[0]
 		, 1.0f / _scale[1]
 		, 1.0f / _scale[2]
 		);
 
 	float tmp0[16];
-	mtxMul(tmp0, pivot, mzyx);
+	bx::mtxMul(tmp0, pivot, mzyx);
 
 	float mtx[16];
-	mtxMul(mtx, tmp0, invScale);
+	bx::mtxMul(mtx, tmp0, invScale);
 
 	float origin[3] = { 0.0f, 0.0f, 0.0f };
-	vec3MulMtx(_outLightPos, origin, mtx);
+	bx::vec3MulMtx(_outLightPos, origin, mtx);
 }
 
 void shadowVolumeCreate(ShadowVolume& _shadowVolume
@@ -1452,7 +1452,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const Face& face = *iter;
 
 			bool frontFacing = false;
-			float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
+			float f = bx::vec3Dot(face.m_plane, _light) + face.m_plane[3];
 			if (f > 0.0f)
 			{
 				frontFacing = true;
@@ -1759,16 +1759,16 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 
 	float mtxViewInv[16];
 	float mtxViewTrans[16];
-	mtxInverse(mtxViewInv, _view);
-	mtxTranspose(mtxViewTrans, _view);
+	bx::mtxInverse(mtxViewInv, _view);
+	bx::mtxTranspose(mtxViewTrans, _view);
 
 	float lightPosV[4];
-	vec4MulMtx(lightPosV, _lightPos, _view);
+	bx::vec4MulMtx(lightPosV, _lightPos, _view);
 
 	const float delta = 0.1f;
 
 	float nearNormal[4] = { 0.0f, 0.0f, 1.0f, _near };
-	float d = vec3Dot(lightPosV, nearNormal) + lightPosV[3] * nearNormal[3];
+	float d = bx::vec3Dot(lightPosV, nearNormal) + lightPosV[3] * nearNormal[3];
 
 	// Light is:
 	//  1.0f - in front of near plane
@@ -1790,10 +1790,10 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	};
 
 	float corners[4][3];
-	vec3MulMtx(corners[0], cornersV[0], mtxViewInv);
-	vec3MulMtx(corners[1], cornersV[1], mtxViewInv);
-	vec3MulMtx(corners[2], cornersV[2], mtxViewInv);
-	vec3MulMtx(corners[3], cornersV[3], mtxViewInv);
+	bx::vec3MulMtx(corners[0], cornersV[0], mtxViewInv);
+	bx::vec3MulMtx(corners[1], cornersV[1], mtxViewInv);
+	bx::vec3MulMtx(corners[2], cornersV[2], mtxViewInv);
+	bx::vec3MulMtx(corners[3], cornersV[3], mtxViewInv);
 
 	float planeNormals[4][3];
 	for (uint8_t ii = 0; ii < 4; ++ii)
@@ -1802,25 +1802,25 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		float* plane = volumePlanes[ii];
 
 		float planeVec[3];
-		vec3Sub(planeVec, corners[ii], corners[(ii-1)%4]);
+		bx::vec3Sub(planeVec, corners[ii], corners[(ii-1)%4]);
 
 		float light[3];
 		float tmp[3];
-		vec3Mul(tmp, corners[ii], _lightPos[3]);
-		vec3Sub(light, _lightPos, tmp);
+		bx::vec3Mul(tmp, corners[ii], _lightPos[3]);
+		bx::vec3Sub(light, _lightPos, tmp);
 
-		vec3Cross(normal, planeVec, light);
+		bx::vec3Cross(normal, planeVec, light);
 
 		normal[0] *= lightSide;
 		normal[1] *= lightSide;
 		normal[2] *= lightSide;
 
-		float lenInv = 1.0f / sqrtf(vec3Dot(normal, normal) );
+		float lenInv = 1.0f / sqrtf(bx::vec3Dot(normal, normal) );
 
 		plane[0] = normal[0] * lenInv;
 		plane[1] = normal[1] * lenInv;
 		plane[2] = normal[2] * lenInv;
-		plane[3] = -vec3Dot(normal, corners[ii]) * lenInv;
+		plane[3] = -bx::vec3Dot(normal, corners[ii]) * lenInv;
 	}
 
 	float nearPlaneV[4] =
@@ -1830,26 +1830,26 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		1.0f * lightSide,
 		_near * lightSide,
 	};
-	vec4MulMtx(volumePlanes[4], nearPlaneV, mtxViewTrans);
+	bx::vec4MulMtx(volumePlanes[4], nearPlaneV, mtxViewTrans);
 
 	float* lightPlane = volumePlanes[5];
 	float lightPlaneNormal[3] = { 0.0f, 0.0f, -_near * lightSide };
 	float tmp[3];
-	vec3MulMtx(tmp, lightPlaneNormal, mtxViewInv);
-	vec3Sub(lightPlaneNormal, tmp, _lightPos);
+	bx::vec3MulMtx(tmp, lightPlaneNormal, mtxViewInv);
+	bx::vec3Sub(lightPlaneNormal, tmp, _lightPos);
 
-	float lenInv = 1.0f / sqrtf(vec3Dot(lightPlaneNormal, lightPlaneNormal) );
+	float lenInv = 1.0f / sqrtf(bx::vec3Dot(lightPlaneNormal, lightPlaneNormal) );
 
 	lightPlane[0] = lightPlaneNormal[0] * lenInv;
 	lightPlane[1] = lightPlaneNormal[1] * lenInv;
 	lightPlane[2] = lightPlaneNormal[2] * lenInv;
-	lightPlane[3] = -vec3Dot(lightPlaneNormal, _lightPos) * lenInv;
+	lightPlane[3] = -bx::vec3Dot(lightPlaneNormal, _lightPos) * lenInv;
 }
 
 bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const float* _scale, const float* _translate)
 {
 	float (*volumePlanes)[4] = (float(*)[4])_planes;
-	float scale = fmaxf(fmaxf(_scale[0], _scale[1]), _scale[2]);
+	float scale = bx::fmax(bx::fmax(_scale[0], _scale[1]), _scale[2]);
 
 	const GroupArray& groups = _mesh.m_groups;
 	for (GroupArray::const_iterator it = groups.begin(), itEnd = groups.end(); it != itEnd; ++it)
@@ -1867,7 +1867,7 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 		{
 			const float* plane = volumePlanes[ii];
 
-			float positiveSide = vec3Dot(plane, sphere.m_center) + plane[3] + sphere.m_radius;
+			float positiveSide = bx::vec3Dot(plane, sphere.m_center) + plane[3] + sphere.m_radius;
 
 			if (positiveSide < 0.0f)
 			{
@@ -2134,7 +2134,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
 	const float nearPlane = 1.0f;
 	const float farPlane = 1000.0f;
-	mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
+	bx::mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
 
 	float initialPos[3] = { 3.0f, 20.0f, -58.0f };
 	cameraCreate();
@@ -2705,7 +2705,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				// Compute transform for shadow volume.
 				float shadowVolumeMtx[16];
-				mtxSRT(shadowVolumeMtx
+				bx::mtxSRT(shadowVolumeMtx
 						, instance.m_scale[0]
 						, instance.m_scale[1]
 						, instance.m_scale[2]

@@ -8,7 +8,7 @@
 #include <bgfx.h>
 #include <bx/timer.h>
 #include <bx/string.h>
-#include "fpumath.h"
+#include <bx/fpumath.h>
 
 #include "font/font_manager.h"
 #include "font/text_buffer_manager.h"
@@ -200,11 +200,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		float view[16];
 		float proj[16];
-		mtxLookAt(view, eye, at);
+		bx::mtxLookAt(view, eye, at);
 
 		// Setup a top-left ortho matrix for screen space drawing.
 		float centering = 0.5f;
-		mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
+		bx::mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);

@@ -287,14 +287,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		
 		float view[16];
 		float proj[16];
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxLookAt(view, eye, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
 
 		float mtx[16];
-		mtxRotateXY(mtx, time, time*0.37f);
+		bx::mtxRotateXY(mtx, time, time*0.37f);
 
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtx);
@@ -319,11 +319,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set view and projection matrix for view 1.
 		const float aspectRatio = float(height)/float(width);
 		const float size = 10.0f;
-		mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
+		bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
 		bgfx::setViewTransform(1, NULL, proj);
 
 
-		mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f, 1.9f, 0.0f);
+		bx::mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f, 1.9f, 0.0f);
 
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtx);
@@ -347,7 +347,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(textures); ++ii)
 		{
-			mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + ii*2.1f, 4.0f, 0.0f);
+			bx::mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + ii*2.1f, 4.0f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -371,7 +371,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		for (uint32_t ii = 0; ii < 3; ++ii)
 		{
-			mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + 8*2.1f, -4.0f + ii*2.1f, 0.0f);
+			bx::mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + 8*2.1f, -4.0f + ii*2.1f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);

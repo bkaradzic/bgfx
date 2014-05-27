@@ -547,8 +547,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		
 		float view[16];
 		float proj[16];
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxLookAt(view, eye, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 0.
 		bgfx::setViewTransform(0, view, proj);
@@ -629,7 +629,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
 					};
 
-					vec3Norm(grid[xoffset].m_normal, normal);
+					bx::vec3Norm(grid[xoffset].m_normal, normal);
 				}
 			}
 		}
@@ -688,7 +688,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		profTriangulate = bx::getHPCounter() - profTriangulate;
 
 		float mtx[16];
-		mtxRotateXY(mtx, time*0.67f, time);
+		bx::mtxRotateXY(mtx, time*0.67f, time);
 
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtx);

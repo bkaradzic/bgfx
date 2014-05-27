@@ -4,6 +4,6 @@
  */
 
 #include <bx/timer.h>
+#include <bx/fpumath.h>
 
 #include "entry/entry.h"
-#include "fpumath.h"

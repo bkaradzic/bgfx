@@ -4,8 +4,8 @@
  */
 
 #include <bx/rng.h>
+#include <bx/fpumath.h>
 #include "bounds.h"
-#include "fpumath.h"
 
 void aabbToObb(Obb& _obb, const Aabb& _aabb)
 {
@@ -37,7 +37,7 @@ void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
 {
 	aabbToObb(_obb, _aabb);
 	float result[16];
-	mtxMul(result, _obb.m_mtx, _mtx);
+	bx::mtxMul(result, _obb.m_mtx, _mtx);
 	memcpy(_obb.m_mtx, result, sizeof(result) );
 }
 
@@ -67,12 +67,12 @@ void calcAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_
 		float xx = position[0];
 		float yy = position[1];
 		float zz = position[2];
-		min[0] = fminf(xx, min[0]);
-		min[1] = fminf(yy, min[1]);
-		min[2] = fminf(zz, min[2]);
-		max[0] = fmaxf(xx, max[0]);
-		max[1] = fmaxf(yy, max[1]);
-		max[2] = fmaxf(zz, max[2]);
+		min[0] = bx::fmin(xx, min[0]);
+		min[1] = bx::fmin(yy, min[1]);
+		min[2] = bx::fmin(zz, min[2]);
+		max[0] = bx::fmax(xx, max[0]);
+		max[1] = bx::fmax(yy, max[1]);
+		max[2] = bx::fmax(zz, max[2]);
 	}
 
 	_aabb.m_min[0] = min[0];
@@ -89,7 +89,7 @@ void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _n
 	uint8_t* vertex = (uint8_t*)_vertices;
 
 	float position[3];
-	vec3MulMtx(position, (float*)vertex, _mtx);
+	bx::vec3MulMtx(position, (float*)vertex, _mtx);
 	min[0] = max[0] = position[0];
 	min[1] = max[1] = position[1];
 	min[2] = max[2] = position[2];
@@ -97,18 +97,18 @@ void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _n
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
 	{
-		vec3MulMtx(position, (float*)vertex, _mtx);
+		bx::vec3MulMtx(position, (float*)vertex, _mtx);
 		vertex += _stride;
 
 		float xx = position[0];
 		float yy = position[1];
 		float zz = position[2];
-		min[0] = fminf(xx, min[0]);
-		min[1] = fminf(yy, min[1]);
-		min[2] = fminf(zz, min[2]);
-		max[0] = fmaxf(xx, max[0]);
-		max[1] = fmaxf(yy, max[1]);
-		max[2] = fmaxf(zz, max[2]);
+		min[0] = bx::fmin(xx, min[0]);
+		min[1] = bx::fmin(yy, min[1]);
+		min[2] = bx::fmin(zz, min[2]);
+		max[0] = bx::fmax(xx, max[0]);
+		max[1] = bx::fmax(yy, max[1]);
+		max[2] = bx::fmax(zz, max[2]);
 	}
 
 	_aabb.m_min[0] = min[0];
@@ -171,10 +171,10 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 
 			for (uint32_t kk = 0; kk < _steps; ++kk)
 			{
-				mtxRotateXYZ(mtx, ax, ay, az);
+				bx::mtxRotateXYZ(mtx, ax, ay, az);
 
 				float mtxT[16];
-				mtxTranspose(mtxT, mtx);
+				bx::mtxTranspose(mtxT, mtx);
 				calcAabb(aabb, mtxT, _vertices, _numVertices, _stride);
 
 				float area = calcAreaAabb(aabb);
@@ -219,7 +219,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 		float zz = position[2] - center[2];
 
 		float distSq = xx*xx + yy*yy + zz*zz;
-		maxDistSq = fmaxf(distSq, maxDistSq);
+		maxDistSq = bx::fmax(distSq, maxDistSq);
 	}
 
 	_sphere.m_center[0] = center[0];
@@ -276,7 +276,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 				center[0] += xx * radiusStep;
 				center[1] += yy * radiusStep;
 				center[2] += zz * radiusStep;
-				maxDistSq = flerp(maxDistSq, distSq, _step);
+				maxDistSq = bx::flerp(maxDistSq, distSq, _step);
 
 				break;
 			}

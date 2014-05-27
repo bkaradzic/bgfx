@@ -301,8 +301,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float proj[16];
 
 		// Set view and projection matrix for view 0.
-		mtxLookAt(view, eye, at);
-		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxLookAt(view, eye, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		bgfx::setViewTransform(0, view, proj);
 
@@ -317,8 +317,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewFrameBuffer(0, 0 == mode ? invalid : fbh);
 
 		// Set view and projection matrix for view 1.
-		mtxIdentity(view);
-		mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+		bx::mtxIdentity(view);
+		bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 		bgfx::setViewTransform(1, view, proj);
 
 		for (uint32_t depth = 0; depth < 3; ++depth)
@@ -341,7 +341,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					BX_UNUSED(time);
 					float mtx[16];
-					mtxRotateXY(mtx, time*0.023f + xx*0.21f, time*0.03f + yy*0.37f);
+					bx::mtxRotateXY(mtx, time*0.023f + xx*0.21f, time*0.03f + yy*0.37f);
 					//mtxIdentity(mtx);
 					mtx[12] = -2.5f + float(xx)*2.5f;
 					mtx[13] = -2.5f + float(yy)*2.5f;
