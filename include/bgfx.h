@@ -680,6 +680,9 @@ namespace bgfx
 	/// Returns supported backend API renderers.
 	uint8_t getSupportedRenderers(RendererType::Enum _enum[RendererType::Count]);
 
+	/// Returns name of renderer.
+	const char* getRendererName(RendererType::Enum _type);
+
 	/// Initialize bgfx library.
 	///
 	/// @param _type Select rendering backend. When set to RendererType::Count

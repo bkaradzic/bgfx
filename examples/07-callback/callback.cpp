@@ -366,7 +366,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 
-	bgfx::init(bgfx::RendererType::Count /* initialize with default renderer */, &callback, &allocator);
+	// Enumerate supported backend renderers.
+	bgfx::RendererType::Enum renderers[bgfx::RendererType::Count];
+	uint8_t numRenderers = bgfx::getSupportedRenderers(renderers);
+
+	bgfx::init(
+		  renderers[bx::getHPCounter() % numRenderers] /* randomize renderer */
+		, &callback  // custom callback handler
+		, &allocator // custom allocator
+		);
 	bgfx::reset(width, height, BGFX_RESET_CAPTURE|BGFX_RESET_MSAA_X16);
 
 	// Enable debug text.
@@ -400,6 +408,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	float time = 0.0f;
 
+	const bgfx::RendererType::Enum rendererType = bgfx::getRendererType();
+
 	// 5 second 60Hz video
 	for (uint32_t frame = 0; frame < 300; ++frame)
 	{
@@ -420,6 +430,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf( 0, 2, 0x6f, "Description: Implementing application specific callbacks for taking screen shots,");
 		bgfx::dbgTextPrintf(13, 3, 0x6f, "caching OpenGL binary shaders, and video capture.");
 		bgfx::dbgTextPrintf( 0, 4, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+
+		bgfx::dbgTextPrintf( 2, 6, 0x0e, "Supported renderers:");
+		for (uint8_t ii = 0; ii < numRenderers; ++ii)
+		{
+			bgfx::dbgTextPrintf( 2, 7+ii, 0x0c, "[%c] %s"
+				, renderers[ii] == rendererType ? '\xfe' : ' '
+				, bgfx::getRendererName(renderers[ii])
+				);
+		}
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -35.0f };
