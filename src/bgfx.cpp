@@ -1262,6 +1262,28 @@ namespace bgfx
 		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
 	};
 
+	uint32_t getWindowsVersion()
+	{
+#if BX_PLATFORM_WINDOWS
+		OSVERSIONINFOEXA ovi = {};
+		ovi.dwOSVersionInfoSize = sizeof(ovi);
+		if (!GetVersionExA( (LPOSVERSIONINFOA)&ovi) )
+		{
+			return 0x0501; // _WIN32_WINNT_WINXP
+		}
+
+		// _WIN32_WINNT_WINBLUE 0x0602
+		// _WIN32_WINNT_WIN8    0x0602
+		// _WIN32_WINNT_WIN7    0x0601
+		// _WIN32_WINNT_VISTA   0x0600
+		return (ovi.dwMajorVersion<<8)
+			 |  ovi.dwMinorVersion
+			 ;
+#else
+		return 0;
+#endif // BX_PLATFORM_WINDOWS
+	}
+
 	RendererContextI* rendererCreate(RendererType::Enum _type)
 	{
 		if (RendererType::Count == _type)
@@ -1269,13 +1291,21 @@ namespace bgfx
 again:
 			if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 			{
-				if (s_rendererCreator[RendererType::Direct3D9].supported)
+				RendererType::Enum first  = RendererType::Direct3D9;
+				RendererType::Enum second = RendererType::Direct3D11;
+				if (0x602 == getWindowsVersion() )
 				{
-					_type = RendererType::Direct3D9;
+					first  = RendererType::Direct3D11;
+					second = RendererType::Direct3D9;
 				}
-				else if (s_rendererCreator[RendererType::Direct3D11].supported)
+
+				if (s_rendererCreator[first].supported)
 				{
-					_type = RendererType::Direct3D11;
+					_type = first;
+				}
+				else if (s_rendererCreator[second].supported)
+				{
+					_type = second;
 				}
 				else if (s_rendererCreator[RendererType::OpenGL].supported)
 				{
