@@ -208,6 +208,46 @@ struct bgfx_texture_info
 
 typedef struct bgfx_texture_info bgfx_texture_info_t;
 
+enum bgfx_fatal
+{
+	BGFX_FATAL_DEBUG_CHECK,
+	BGFX_FATAL_MINIMUM_REQUIRED_SPECS,
+	BGFX_FATAL_INVALID_SHADER,
+	BGFX_FATAL_UNABLE_TO_INITIALIZE,
+	BGFX_FATAL_UNABLE_TO_CREATE_TEXTURE,
+};
+
+typedef enum bgfx_fatal bgfx_fatal_t;
+
+struct bgfx_callback_vtbl
+{
+	void (*fatal)(bgfx_fatal_t _code, const char* _str);
+	uint32_t (*cache_read_size)(uint64_t _id);
+	bool (*cache_read)(uint64_t _id, void* _data, uint32_t _size);
+	void (*cache_write)(uint64_t _id, const void* _data, uint32_t _size);
+	void (*screen_shot)(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip);
+	void (*capture_begin)(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
+	void (*capture_end)();
+	void (*capture_frame)(const void* _data, uint32_t _size);
+};
+
+struct bgfx_callback_interface
+{
+	const struct bgfx_callback_vtbl* vtbl;
+};
+
+struct bgfx_reallocator_vtbl
+{
+	void* (*alloc)(size_t _size, size_t _align, const char* _file, uint32_t _line);
+	void (*free)(void* _ptr, size_t _align, const char* _file, uint32_t _line);
+	void* (*realloc)(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
+};
+
+struct bgfx_reallocator_interface
+{
+	const struct bgfx_reallocator_vtbl* vtbl;
+};
+
 #if defined(__cplusplus)
 #	define BGFX_C_API extern "C"
 #else
@@ -227,7 +267,7 @@ BGFX_C_API void bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _decl, uint8_t _num);
 BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _decl);
 
 ///
-BGFX_C_API void bgfx_init();
+BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, struct bgfx_callback_interface* _callback, struct bgfx_reallocator_interface* _allocator);
 
 ///
 BGFX_C_API void bgfx_shutdown();

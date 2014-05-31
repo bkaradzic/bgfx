@@ -2650,9 +2650,12 @@ BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _decl)
 	decl->end();
 }
 
-BGFX_C_API void bgfx_init()
+BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, struct bgfx_callback_interface* _callback, struct bgfx_reallocator_interface* _allocator)
 {
-	return bgfx::init();
+	return bgfx::init(bgfx::RendererType::Enum(_type)
+		, reinterpret_cast<bgfx::CallbackI*>(_callback)
+		, reinterpret_cast<bx::ReallocatorI*>(_allocator)
+		);
 }
 
 BGFX_C_API void bgfx_shutdown()
