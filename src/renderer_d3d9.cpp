@@ -239,14 +239,6 @@ namespace bgfx
 		{ D3DFMT_RAWZ, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, false },
 	};
 
-	static const Matrix4 s_bias =
-	{{{
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f,
-	}}};
-
 	static const GUID IID_IDirect3D9         = { 0x81bdcbca, 0x64d4, 0x426d, { 0xae, 0x8d, 0xad, 0x1, 0x47, 0xf4, 0x27, 0x5c } };
 	static const GUID IID_IDirect3DDevice9Ex = { 0xb18b10ce, 0x2649, 0x405a, { 0x87, 0xf, 0x95, 0xf7, 0x77, 0xd4, 0x31, 0x3a } };
 
@@ -2945,31 +2937,6 @@ namespace bgfx
 								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
 								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
 								setShaderConstantF(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ModelViewProjX:
-							{
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
-
-								uint8_t other = _render->m_other[view];
-								Matrix4 viewProjBias;
-								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
-
-								Matrix4 modelViewProj;
-								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProjBias.un.f4x4);
-
-								setShaderConstantF(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ViewProjX:
-							{
-								uint8_t other = _render->m_other[view];
-								Matrix4 viewProjBias;
-								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
-
-								setShaderConstantF(flags, predefined.m_loc, viewProjBias.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 

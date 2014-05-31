@@ -208,14 +208,6 @@ namespace bgfx
 		{ GL_STENCIL_INDEX8,                           GL_DEPTH_STENCIL,                            GL_UNSIGNED_BYTE,               false }, // D0S8
 	};
 
-	static const Matrix4 s_bias =
-	{{{
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f,
-	}}};
-
 	struct Extension
 	{
 		enum Enum
@@ -4118,39 +4110,6 @@ namespace bgfx
 									, 1
 									, GL_FALSE
 									, modelViewProj.un.val
-									) );
-							}
-							break;
-
-						case PredefinedUniform::ModelViewProjX:
-							{
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
-
-								uint8_t other = _render->m_other[view];
-								Matrix4 viewProjBias;
-								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
-
-								Matrix4 modelViewProj;
-								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProjBias.un.f4x4);
-
-								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-									, 1
-									, GL_FALSE
-									, modelViewProj.un.val
-									) );
-							}
-							break;
-
-						case PredefinedUniform::ViewProjX:
-							{
-								uint8_t other = _render->m_other[view];
-								Matrix4 viewProjBias;
-								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
-
-								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
-									, 1
-									, GL_FALSE
-									, viewProjBias.un.val
 									) );
 							}
 							break;

@@ -183,14 +183,6 @@ namespace bgfx
 		},
 	};
 
-	static const Matrix4 s_bias =
-	{{{
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f,
-	}}};
-
 	struct TextureFormatInfo
 	{
 		DXGI_FORMAT m_fmt;
@@ -2733,31 +2725,6 @@ namespace bgfx
 								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
 								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
 								setShaderConstant(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ModelViewProjX:
-							{
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
-
-								uint8_t other = _render->m_other[view];
-								Matrix4 viewProjBias;
-								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
-
-								Matrix4 modelViewProj;
-								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProjBias.un.f4x4);
-
-								setShaderConstant(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ViewProjX:
-							{
-								uint8_t other = _render->m_other[view];
-								Matrix4 viewProjBias;
-								bx::float4x4_mul(&viewProjBias.un.f4x4, &viewProj[other].un.f4x4, &s_bias.un.f4x4);
-
-								setShaderConstant(flags, predefined.m_loc, viewProjBias.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
