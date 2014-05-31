@@ -4,7 +4,8 @@
 What is it?
 -----------
 
-Cross-platform rendering library ([API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)).
+Cross-platform rendering library ([C++ API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h), 
+[C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)).
 
 Supported rendering backends:
 
