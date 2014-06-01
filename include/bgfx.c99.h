@@ -1,6 +1,8 @@
 /*
  * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+ *
+ * vim: set tabstop=4 expandtab:
  */
 
 #ifndef BGFX_C99_H_HEADER_GUARD
@@ -394,6 +396,74 @@ BGFX_C_API void bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _decl, uint8_t _num);
 BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _decl);
 
 /**
+ *  Pack vec4 into vertex stream format.
+ */
+BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl* _decl, void* _data, uint32_t _index);
+
+/**
+ *  Unpack vec4 from vertex stream format.
+ */
+BGFX_C_API void bgfx_vertex_unpack(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_decl_t* _decl, const void* _data, uint32_t _index);
+
+/**
+ *  Converts vertex stream data from one vertex stream format to another.
+ *
+ *  @param _destDecl Destination vertex stream declaration.
+ *  @param _destData Destination vertex stream.
+ *  @param _srcDecl Source vertex stream declaration.
+ *  @param _srcData Source vertex stream data.
+ *  @param _num Number of vertices to convert from source to destination.
+ */
+BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_decl_t* _destDecl, void* _destData, const bgfx_vertex_decl_t* _srcDecl, const void* _srcData, uint32_t _num);
+
+/**
+ *  Weld vertices.
+ *
+ *  @param _output Welded vertices remapping table. The size of buffer
+ *    must be the same as number of vertices.
+ *  @param _decl Vertex stream declaration.
+ *  @param _data Vertex stream.
+ *  @param _num Number of vertices in vertex stream.
+ *  @param _epsilon Error tolerance for vertex position comparison.
+ *  @returns Number of unique vertices after vertex welding.
+ */
+BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_decl_t* _decl, const void* _data, uint16_t _num, float _epsilon);
+
+/**
+ *  Swizzle RGBA8 image to BGRA8.
+ *
+ *  @param _width Width of input image (pixels).
+ *  @param _height Height of input image (pixels).
+ *  @param _pitch Pitch of input image (bytes).
+ *  @param _src Source image.
+ *  @param _dst Destination image. Must be the same size as input image.
+ *    _dst might be pointer to the same memory as _src.
+ */
+BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
+
+/**
+ *  Downsample RGBA8 image with 2x2 pixel average filter.
+ *
+ *  @param _width Width of input image (pixels).
+ *  @param _height Height of input image (pixels).
+ *  @param _pitch Pitch of input image (bytes).
+ *  @param _src Source image.
+ *  @param _dst Destination image. Must be at least quarter size of
+ *    input image. _dst might be pointer to the same memory as _src.
+ */
+BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
+
+/**
+ *  Returns supported backend API renderers.
+ */
+BGFX_C_API uint8_t bgfx_get_supported_renderers(bgfx_renderer_type_t _enum[BGFX_RENDERER_TYPE_COUNT]);
+
+/**
+ *  Returns name of renderer.
+ */
+BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type);
+
+/**
  *  Initialize bgfx library.
  *
  *  @param _type Select rendering backend. When set to RendererType::Count
@@ -436,6 +506,14 @@ BGFX_C_API uint32_t bgfx_frame();
  *    Library must be initialized.
  */
 BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type();
+
+/**
+ *  Returns renderer capabilities.
+ *
+ *  NOTE:
+ *    Library must be initialized.
+ */
+BGFX_C_API bgfx_caps_t* bgfx_get_caps();
 
 /**
  *  Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
@@ -840,7 +918,7 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer(uint16_t _width, 
  *
  *  @param _num Number of texture attachments.
  *  @param _handles Texture attachments.
- *  @param _destroyTextures If true, textures will be destroyed when 
+ *  @param _destroyTextures If true, textures will be destroyed when
  *    frame buffer is destroyed.
  */
 BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_handles(uint8_t _num, bgfx_texture_handle_t* _handles, bool _destroyTextures);

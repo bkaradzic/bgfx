@@ -2650,6 +2650,51 @@ BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _decl)
 	decl->end();
 }
 
+BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl* _decl, void* _data, uint32_t _index)
+{
+	bgfx::VertexDecl& decl = *(bgfx::VertexDecl*)_decl;
+	bgfx::vertexPack(_input, _inputNormalized, bgfx::Attrib::Enum(_attr), decl, _data, _index);
+}
+
+BGFX_C_API void bgfx_vertex_unpack(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_decl_t* _decl, const void* _data, uint32_t _index)
+{
+	bgfx::VertexDecl& decl = *(bgfx::VertexDecl*)_decl;
+	bgfx::vertexUnpack(_output, bgfx::Attrib::Enum(_attr), decl, _data, _index);
+}
+
+BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_decl_t* _destDecl, void* _destData, const bgfx_vertex_decl_t* _srcDecl, const void* _srcData, uint32_t _num)
+{
+	bgfx::VertexDecl& destDecl = *(bgfx::VertexDecl*)_destDecl;
+	bgfx::VertexDecl& srcDecl  = *(bgfx::VertexDecl*)_srcDecl;
+	bgfx::vertexConvert(destDecl, _destData, srcDecl, _srcData, _num);
+}
+
+BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_decl_t* _decl, const void* _data, uint16_t _num, float _epsilon)
+{
+	bgfx::VertexDecl& decl = *(bgfx::VertexDecl*)_decl;
+	return bgfx::weldVertices(_output, decl, _data, _num, _epsilon);
+}
+
+BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+{
+	bgfx::imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+}
+
+BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+{
+	bgfx::imageRgba8Downsample2x2(_width, _height, _pitch, _src, _dst);
+}
+
+BGFX_C_API uint8_t bgfx_get_supported_renderers(bgfx_renderer_type_t _enum[BGFX_RENDERER_TYPE_COUNT])
+{
+	return bgfx::getSupportedRenderers( (bgfx::RendererType::Enum*)_enum);
+}
+
+BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type)
+{
+	return bgfx::getRendererName(bgfx::RendererType::Enum(_type) );
+}
+
 BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, struct bgfx_callback_interface* _callback, struct bgfx_reallocator_interface* _allocator)
 {
 	return bgfx::init(bgfx::RendererType::Enum(_type)
@@ -2676,6 +2721,11 @@ BGFX_C_API uint32_t bgfx_frame()
 BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type()
 {
 	return bgfx_renderer_type_t(bgfx::getRendererType() );
+}
+
+BGFX_C_API bgfx_caps_t* bgfx_get_caps()
+{
+	return (bgfx_caps_t*)bgfx::getCaps();
 }
 
 BGFX_C_API const bgfx_memory_t* bgfx_alloc(uint32_t _size)
