@@ -12,6 +12,8 @@
 
 namespace bx { struct FileReaderI; struct FileWriterI; }
 
+extern "C" int _main_(int _argc, char** _argv);
+
 namespace entry
 {
 	struct MouseButton

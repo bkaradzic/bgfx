@@ -13,7 +13,7 @@
 #include "cmd.h"
 #include "input.h"
 
-extern int _main_(int _argc, char** _argv);
+extern "C" int _main_(int _argc, char** _argv);
 
 namespace entry
 {
