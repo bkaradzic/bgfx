@@ -2650,7 +2650,7 @@ BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _decl)
 	decl->end();
 }
 
-BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl* _decl, void* _data, uint32_t _index)
+BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl_t* _decl, void* _data, uint32_t _index)
 {
 	bgfx::VertexDecl& decl = *(bgfx::VertexDecl*)_decl;
 	bgfx::vertexPack(_input, _inputNormalized, bgfx::Attrib::Enum(_attr), decl, _data, _index);

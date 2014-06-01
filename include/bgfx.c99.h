@@ -398,7 +398,7 @@ BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _decl);
 /**
  *  Pack vec4 into vertex stream format.
  */
-BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl* _decl, void* _data, uint32_t _index);
+BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl_t* _decl, void* _data, uint32_t _index);
 
 /**
  *  Unpack vec4 from vertex stream format.
