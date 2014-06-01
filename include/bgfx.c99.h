@@ -253,15 +253,37 @@ typedef enum bgfx_fatal
 
 } bgfx_fatal_t;
 
+#ifndef BGFX_SHARED_LIB_BUILD
+#    define BGFX_SHARED_LIB_BUILD 0
+#endif // BGFX_SHARED_LIB_BUILD
+
+#ifndef BGFX_SHARED_LIB_USE
+#    define BGFX_SHARED_LIB_USE 0
+#endif // BGFX_SHARED_LIB_USE
+
 #if defined(_MSC_VER)
 #   define BGFX_VTBL_CALL __stdcall
 #   define BGFX_VTBL_THIS  // passed via ecx
 #   define BGFX_VTBL_THIS_ // passed via ecx
+#   if BGFX_SHARED_LIB_BUILD
+#       define BGFX_SHARED_LIB_API __declspec(dllexport)
+#   elif BGFX_SHARED_LIB_USE
+#       define BGFX_SHARED_LIB_API __declspec(dllimport)
+#   else
+#       define BGFX_SHARED_LIB_API
+#   endif // BGFX_SHARED_LIB_*
 #else
-#   define BGFX_VTBL_CALL _cdecl
+#   define BGFX_VTBL_CALL
 #   define BGFX_VTBL_THIS  BGFX_VTBL_INTEFRACE _this
 #   define BGFX_VTBL_THIS_ BGFX_VTBL_INTEFRACE _this,
+#   define BGFX_SHARED_LIB_API
 #endif // defined(_MSC_VER)
+
+#if defined(__cplusplus)
+#   define BGFX_C_API extern "C" BGFX_SHARED_LIB_API
+#else
+#   define BGFX_C_API BGFX_SHARED_LIB_API
+#endif // defined(__cplusplus)
 
 /**
  */
@@ -354,12 +376,6 @@ typedef struct bgfx_reallocator_vtbl
 #   undef BGFX_VTBL_INTEFRACE
 
 } bgfx_reallocator_vtbl_t;
-
-#if defined(__cplusplus)
-#    define BGFX_C_API extern "C"
-#else
-#    define BGFX_C_API
-#endif // defined(__cplusplus)
 
 /**
  *  Start vertex declaration.
@@ -1282,7 +1298,5 @@ BGFX_C_API void bgfx_discard();
  *    CallbackI::screenShot must be implemented.
  */
 BGFX_C_API void bgfx_save_screen_shot(const char* _filePath);
-
-#undef BGFX_C_API
 
 #endif // BGFX_C99_H_HEADER_GUARD
