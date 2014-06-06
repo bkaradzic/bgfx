@@ -2605,12 +2605,14 @@ again:
 } // namespace bgfx
 
 #include <bgfx.c99.h>
+#include <bgfxplatform.c99.h>
 
 BX_STATIC_ASSERT(bgfx::RendererType::Count  == bgfx::RendererType::Enum(BGFX_RENDERER_TYPE_COUNT) );
 BX_STATIC_ASSERT(bgfx::Attrib::Count        == bgfx::Attrib::Enum(BGFX_ATTRIB_COUNT) );
 BX_STATIC_ASSERT(bgfx::AttribType::Count    == bgfx::AttribType::Enum(BGFX_ATTRIB_TYPE_COUNT) );
 BX_STATIC_ASSERT(bgfx::TextureFormat::Count == bgfx::TextureFormat::Enum(BGFX_TEXTURE_FORMAT_COUNT) );
 BX_STATIC_ASSERT(bgfx::UniformType::Count   == bgfx::UniformType::Enum(BGFX_UNIFORM_TYPE_COUNT) );
+BX_STATIC_ASSERT(bgfx::RenderFrame::Count   == bgfx::RenderFrame::Enum(BGFX_RENDER_FRAME_COUNT) );
 
 BX_STATIC_ASSERT(sizeof(bgfx::Memory)                == sizeof(bgfx_memory_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::VertexDecl)            == sizeof(bgfx_vertex_decl_t) );
@@ -3196,3 +3198,46 @@ BGFX_C_API void bgfx_save_screen_shot(const char* _filePath)
 {
 	bgfx::saveScreenShot(_filePath);
 }
+
+BGFX_C_API bgfx_render_frame_t bgfx_render_frame()
+{
+	return bgfx_render_frame_t(bgfx::renderFrame() );
+}
+
+#if BX_PLATFORM_ANDROID
+BGFX_C_API void bgfx_android_set_window(ANativeWindow* _window)
+{
+	bgfx::androidSetWindow(_window);
+}
+
+#elif BX_PLATFORM_IOS
+BGFX_C_API void bgfx_ios_set_eagl_layer(void* _layer)
+{
+	bgfx::iosSetEaglLayer(_layer);
+}
+
+#elif BX_PLATFORM_LINUX
+BGFX_C_API void bgfx_x11_set_display_window(::Display* _display, ::Window _window)
+{
+	bgfx::x11SetDisplayWindow(_display, _window);
+}
+
+#elif BX_PLATFORM_NACL
+BGFX_C_API bool bgfx_nacl_set_interfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, bgfx_post_swap_buffers_fn _postSwapBuffers)
+{
+	return bgfx::naclSetInterfaces(_instance, _instInterface, _graphicsInterface, _postSwapBuffers);
+}
+
+#elif BX_PLATFORM_OSX
+BGFX_C_API void bgfx_osx_set_ns_window(void* _window)
+{
+	bgfx::osxSetNSWindow(_window);
+}
+
+#elif BX_PLATFORM_WINDOWS
+BGFX_C_API void bgfx_win_set_hwnd(HWND _window)
+{
+	bgfx::winSetHwnd(_window);
+}
+
+#endif // BX_PLATFORM_*

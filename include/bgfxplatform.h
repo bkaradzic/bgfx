@@ -1,6 +1,6 @@
 /*
  * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_PLATFORM_H_HEADER_GUARD
@@ -10,7 +10,7 @@
 // This header file contains platform specific interfaces. It is only
 // necessary to use this header in conjunction with creating windows.
 
-#include <bx/bx.h>
+#include <bx/platform.h>
 
 namespace bgfx
 {
