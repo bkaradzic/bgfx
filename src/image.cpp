@@ -1636,8 +1636,8 @@ namespace bgfx
 				// skip imageSize in KTX format.
 				offset += _imageContainer.m_ktx ? sizeof(uint32_t) : 0;
 
-				width  = bx::uint32_max(blockWidth,  width);
-				height = bx::uint32_max(blockHeight, height);
+				width  = bx::uint32_max(blockWidth,  ( (width +blockWidth -1)/blockWidth )*blockWidth);
+				height = bx::uint32_max(blockHeight, ( (height+blockHeight-1)/blockHeight)*blockHeight);
 				depth  = bx::uint32_max(1, depth);
 
 				uint32_t size = width*height*depth*bpp/8;
