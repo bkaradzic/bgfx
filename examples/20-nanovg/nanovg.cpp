@@ -833,10 +833,12 @@ void freeDemoData(struct NVGcontext* vg, struct DemoData* data)
 		nvgDeleteImage(vg, data->images[i]);
 }
 
+#if _MSC_VER < 1800
 inline float round(float _f)
 {
 	return float(int(_f) );
 }
+#endif
 
 void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float height, float mx, float my)
 {
