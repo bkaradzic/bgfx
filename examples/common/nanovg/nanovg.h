@@ -534,7 +534,7 @@ struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa);
 //
 void nvgDelete(struct NVGcontext* ctx);
 
-#define NVG_NOTUSED(v) do { (void)(true ? (void)0 : ( (void)(v) ) ); } while(0)
+#define NVG_NOTUSED(v) for (;;) { (void)(true ? (void)0 : ( (void)(v) ) ); break; }
 
 #ifdef __cplusplus
 }

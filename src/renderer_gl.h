@@ -376,15 +376,15 @@ namespace bgfx
 	const char* glEnumName(GLenum _enum);
 
 #define _GL_CHECK(_check, _call) \
-				do { \
+				BX_MACRO_BLOCK_BEGIN \
 					/*BX_TRACE(#_call);*/ \
 					_call; \
 					GLenum err = glGetError(); \
 					_check(0 == err, #_call "; GL error 0x%x: %s", err, glEnumName(err) ); \
 					BX_UNUSED(err); \
-				} while (0)
+				BX_MACRO_BLOCK_END
 
-#define IGNORE_GL_ERROR_CHECK(...) do {} while(0)
+#define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
 
 #if BGFX_CONFIG_DEBUG
 #	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)

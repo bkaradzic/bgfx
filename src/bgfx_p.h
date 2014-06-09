@@ -23,26 +23,26 @@ namespace bgfx
 }
 
 #define _BX_TRACE(_format, ...) \
-				do { \
+				BX_MACRO_BLOCK_BEGIN \
 					bgfx::dbgPrintf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
-				} while(0)
+				BX_MACRO_BLOCK_END
 
 #define _BX_WARN(_condition, _format, ...) \
-				do { \
-					if (!(_condition) ) \
+				BX_MACRO_BLOCK_BEGIN \
+					if (!BX_IGNORE_C4127(_condition) ) \
 					{ \
 						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
 					} \
-				} while(0)
+				BX_MACRO_BLOCK_END
 
 #define _BX_CHECK(_condition, _format, ...) \
-				do { \
-					if (!(_condition) ) \
+				BX_MACRO_BLOCK_BEGIN \
+					if (!BX_IGNORE_C4127(_condition) ) \
 					{ \
 						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
 						bgfx::fatal(bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
 					} \
-				} while(0)
+				BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
 #	define BX_TRACE _BX_TRACE
@@ -52,12 +52,12 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG
 
 #define BGFX_FATAL(_condition, _err, _format, ...) \
-			do { \
-				if (!(_condition) ) \
+			BX_MACRO_BLOCK_BEGIN \
+				if (!BX_IGNORE_C4127(_condition) ) \
 				{ \
 					fatal(_err, _format, ##__VA_ARGS__); \
 				} \
-			} while(0)
+			BX_MACRO_BLOCK_END
 
 #include <bx/bx.h>
 #include <bx/debug.h>

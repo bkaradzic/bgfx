@@ -1852,7 +1852,7 @@ namespace bgfx
 		{
 			_constantBuffer.reset();
 
-			do
+			for (;;)
 			{
 				uint32_t opcode = _constantBuffer.read();
 
@@ -1928,7 +1928,7 @@ namespace bgfx
 #undef CASE_IMPLEMENT_UNIFORM
 #undef CASE_IMPLEMENT_UNIFORM_T
 
-			} while (true);
+			}
 		}
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, uint32_t _height)
@@ -2859,7 +2859,7 @@ namespace bgfx
 			&& GL_RGBA == m_fmt
 			&& !s_renderGL->m_textureSwizzleSupport
 			;
-		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
+		const bool unpackRowLength = BX_IGNORE_C4127(!!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported);
 		const bool convert         = m_textureFormat != m_requestedFormat;
 		const bool compressed      = isCompressed(TextureFormat::Enum(m_textureFormat) );
 

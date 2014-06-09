@@ -22,29 +22,29 @@
 namespace bgfx
 {
 #define _DX_CHECK(_call) \
-			do { \
+			BX_MACRO_BLOCK_BEGIN \
 				HRESULT __hr__ = _call; \
 				BX_CHECK(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
 					, (uint32_t)__hr__ \
 					DX_CHECK_EXTRA_ARGS \
 					); \
-			} while (0)
+			BX_MACRO_BLOCK_END
 
 #define _DX_RELEASE(_ptr, _expected, _check) \
-			do { \
+			BX_MACRO_BLOCK_BEGIN \
 				if (NULL != _ptr) \
 				{ \
 					ULONG count = _ptr->Release(); \
 					_check(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); BX_UNUSED(count); \
 					_ptr = NULL; \
 				} \
-			} while (0)
+			BX_MACRO_BLOCK_END
 
 #	define _DX_CHECK_REFCOUNT(_ptr, _expected) \
-			do { \
+			BX_MACRO_BLOCK_BEGIN \
 				ULONG count = getRefCount(_ptr); \
 				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
-			} while (0)
+			BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
 #	define DX_CHECK(_call) _DX_CHECK(_call)

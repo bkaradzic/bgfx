@@ -974,13 +974,13 @@ namespace bgfx
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
 #define CHECK_HANDLE_LEAK(_handleAlloc) \
-					do { \
+					BX_MACRO_BLOCK_BEGIN \
 						BX_WARN(0 == _handleAlloc.getNumHandles() \
 							, "LEAK: " #_handleAlloc " %d (max: %d)" \
 							, _handleAlloc.getNumHandles() \
 							, _handleAlloc.getMaxHandles() \
 							); \
-					} while (0)
+					BX_MACRO_BLOCK_END
 
 			CHECK_HANDLE_LEAK(m_dynamicIndexBufferHandle);
 			CHECK_HANDLE_LEAK(m_dynamicVertexBufferHandle);

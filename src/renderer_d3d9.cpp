@@ -1239,7 +1239,7 @@ namespace bgfx
 
 			IDirect3DDevice9* device = m_device;
 
-			do
+			for (;;)
 			{
 				uint32_t opcode = _constantBuffer.read();
 
@@ -1348,7 +1348,7 @@ namespace bgfx
 
 #undef CASE_IMPLEMENT_UNIFORM
 
-			} while (true);
+			}
 		}
 
 #if BX_PLATFORM_WINDOWS

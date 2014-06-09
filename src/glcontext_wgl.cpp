@@ -287,7 +287,7 @@ namespace bgfx
 						{ \
 							BX_TRACE("wgl %p " #_func " (" #_import ")", _func); \
 						} \
-						BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_import); \
+						BGFX_FATAL(BX_IGNORE_C4127(_optional) || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_import); \
 					} \
 				}
 #	include "glimports.h"
