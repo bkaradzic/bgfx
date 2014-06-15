@@ -4,8 +4,7 @@
 What is it?
 -----------
 
-Cross-platform rendering library ([C++ API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h), 
-[C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)).
+Cross-platform rendering library.
 
 Supported rendering backends:
 
@@ -25,6 +24,13 @@ Platforms:
  * Native Client
  * OSX
  * Windows
+
+Languages:
+
+ * [C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)
+ * [C++ API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)
+ * [D API bindings](https://github.com/p0nce/DerelictBgfx)
+ * [Go API bindings](https://github.com/james4k/go-bgfx)
 
 Who is using it?
 ----------------
