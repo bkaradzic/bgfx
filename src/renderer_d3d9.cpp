@@ -3004,7 +3004,7 @@ namespace bgfx
 						{
 							const VertexBufferD3D9& inst = m_vertexBuffers[state.m_instanceDataBuffer.idx];
 							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|state.m_numInstances) );
-							DX_CHECK(device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA|1) );
+							DX_CHECK(device->SetStreamSourceFreq(1, UINT(D3DSTREAMSOURCE_INSTANCEDATA|1) ) );
 							DX_CHECK(device->SetStreamSource(1, inst.m_ptr, state.m_instanceDataOffset, state.m_instanceDataStride) );
 
 							IDirect3DVertexDeclaration9* ptr = createVertexDeclaration(vertexDecl.m_decl, state.m_instanceDataStride/16);
