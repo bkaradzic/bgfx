@@ -29,8 +29,9 @@ Languages:
 
  * [C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)
  * [C++ API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)
- * [D API bindings](https://github.com/p0nce/DerelictBgfx)
- * [Go API bindings](https://github.com/james4k/go-bgfx)
+ * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
+ * [D language API bindings](https://github.com/p0nce/DerelictBgfx)
+ * [Go language API bindings](https://github.com/james4k/go-bgfx)
 
 Who is using it?
 ----------------
@@ -579,6 +580,8 @@ Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil,
   14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
 James Gray ([@james4k](https://github.com/james4k)) - Go language API bindings.  
 p0nce ([@p0nce](https://github.com/p0nce)) - D language API bindings.  
+Mike Popoloski ([@MikePopoloski](https://github.com/MikePopoloski)) - C#/VB/F# 
+language API bindings  
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------
