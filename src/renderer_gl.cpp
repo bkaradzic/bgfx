@@ -1524,8 +1524,8 @@ namespace bgfx
 		void updateResolution(const Resolution& _resolution)
 		{
 			if (m_resolution.m_width != _resolution.m_width
-				||  m_resolution.m_height != _resolution.m_height
-				||  m_resolution.m_flags != _resolution.m_flags)
+			||  m_resolution.m_height != _resolution.m_height
+			||  m_resolution.m_flags != _resolution.m_flags)
 			{
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
@@ -1543,8 +1543,8 @@ namespace bgfx
 		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, bool _msaa = true)
 		{
 			if (isValid(m_fbh)
-				&&  m_fbh.idx != _fbh.idx
-				&&  m_rtMsaa)
+			&&  m_fbh.idx != _fbh.idx
+			&&  m_rtMsaa)
 			{
 				FrameBufferGL& frameBuffer = m_frameBuffers[m_fbh.idx];
 				frameBuffer.resolve();
@@ -1581,7 +1581,7 @@ namespace bgfx
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
 			if (0 == m_msaaBackBufferFbo // iOS
-				&&  1 < _msaa)
+			&&  1 < _msaa)
 			{
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
@@ -1610,7 +1610,7 @@ namespace bgfx
 		void destroyMsaaFbo()
 		{
 			if (m_backBufferFbo != m_msaaBackBufferFbo // iOS
-				&&  0 != m_msaaBackBufferFbo)
+			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
@@ -1621,7 +1621,7 @@ namespace bgfx
 		void blitMsaaFbo()
 		{
 			if (m_backBufferFbo != m_msaaBackBufferFbo // iOS
-				&&  0 != m_msaaBackBufferFbo)
+			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
@@ -1651,7 +1651,7 @@ namespace bgfx
 		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0, bool _vsync = false)
 		{
 			if (_width != 0
-				||  _height != 0)
+			||  _height != 0)
 			{
 				if (!m_glctx.isValid() )
 				{
@@ -1684,7 +1684,7 @@ namespace bgfx
 			}
 
 			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
-				&&  m_samplerObjectSupport)
+			&&  m_samplerObjectSupport)
 			{
 				m_samplerStateCache.invalidate();
 			}
@@ -1693,7 +1693,7 @@ namespace bgfx
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags)
 		{
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
 				{
@@ -1717,13 +1717,13 @@ namespace bgfx
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
 						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
-							&&  0.0f < m_maxAnisotropy)
+						&&  0.0f < m_maxAnisotropy)
 						{
 							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
 						}
 
 						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-							||  m_shadowSamplersSupport)
+						||  m_shadowSamplersSupport)
 						{
 							const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
 							if (0 == cmpFunc)
