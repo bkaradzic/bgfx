@@ -42,7 +42,7 @@ struct ImguiTextAlign
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 {
 	return 0
-		| (uint32_t(_r) <<  0) 
+		| (uint32_t(_r) <<  0)
 		| (uint32_t(_g) <<  8)
 		| (uint32_t(_b) << 16)
 		| (uint32_t(_a) << 24)
@@ -79,5 +79,7 @@ void imguiDrawText(int _x, int _y, ImguiTextAlign::Enum _align, const char* _tex
 void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_t _argb);
 void imguiDrawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint32_t _argb);
 void imguiDrawRect(float _x, float _y, float _w, float _h, uint32_t _argb);
+
+int imguiReserve(int _y);
 
 #endif // IMGUI_H_HEADER_GUARD
