@@ -6,11 +6,16 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
+#include "nanovg/nanovg.h"
 
 #include <bx/readerwriter.h>
+#include <bx/string.h>
 
 #include <vector>
 #include <string>
+
+#define IMGUI_VIEWID  30
+#define NANOVG_VIEWID 31
 
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
@@ -24,7 +29,7 @@ struct Uniforms
 
 		u_time    = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
 		u_mtx     = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
-		u_params  = bgfx::createUniform("u_params",  bgfx::UniformType::Uniform4fv);
+		u_params  = bgfx::createUniform("u_params",   bgfx::UniformType::Uniform4fv);
 		u_flags   = bgfx::createUniform("u_flags",    bgfx::UniformType::Uniform4fv);
 		u_camPos  = bgfx::createUniform("u_camPos",   bgfx::UniformType::Uniform3fv);
 		u_rgbDiff = bgfx::createUniform("u_rgbDiff",  bgfx::UniformType::Uniform3fv);
@@ -388,6 +393,21 @@ void imguiBool(const char* _str, bool& _flag, bool _enabled = true)
 	}
 }
 
+void imguiColorWheel(const char* _str, float _color[3], bool* _activated, bool _enabled = true)
+{
+	char buf[128];
+	bx::snprintf(buf, 127, "%s [RGB %-2.2f %-2.2f %-2.2f]", _str, _color[0], _color[1], _color[2]);
+	if (imguiButton(buf, true))
+	{
+	    *_activated = !*_activated;
+	}
+
+	if (*_activated)
+	{
+	    imguiColorWheel(_color, false, _enabled);
+	}
+}
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -426,6 +446,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	void* data = load("font/droidsans.ttf");
 	imguiCreate(data);
 	free(data);
+
+	NVGcontext* nvg = nvgCreate(512, 512, 1, NANOVG_VIEWID);
+	bgfx::setViewSeq(NANOVG_VIEWID, true);
 
 	// Uniforms.
 	s_uniforms.init();
@@ -504,8 +527,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bool m_specular;
 		bool m_diffuseIbl;
 		bool m_specularIbl;
-		bool m_singleSliderDiff;
-		bool m_singleSliderSpec;
+		bool m_showDiffColorWheel;
+		bool m_showSpecColorWheel;
 	};
 
 	Settings settings;
@@ -523,8 +546,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	settings.m_specular = true;
 	settings.m_diffuseIbl = true;
 	settings.m_specularIbl = true;
-	settings.m_singleSliderDiff = false;
-	settings.m_singleSliderSpec = false;
+	settings.m_showDiffColorWheel = false;
+	settings.m_showSpecColorWheel = false;
 
 	float time = 0.0f;
 
@@ -540,10 +563,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, 0
 			, width
 			, height
+			, IMGUI_VIEWID
 			);
 
+		nvgBeginFrame(nvg, int32_t(width), int32_t(height), 1.0f, NVG_STRAIGHT_ALPHA);
+
 		static int32_t rightScrollArea = 0;
-		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 426, &rightScrollArea);
+		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 426, &rightScrollArea, nvg);
 
 		imguiLabel("Shade:");
 		imguiSeparator();
@@ -570,50 +596,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiEndScrollArea();
 
 		static int32_t leftScrollArea = 0;
-		imguiBeginScrollArea("Settings", 10, 70, 256, 576, &leftScrollArea);
+		imguiBeginScrollArea("Settings", 10, 70, 256, 576, &leftScrollArea, nvg);
 
 		imguiLabel("Material properties:");
 		imguiSeparator();
 		imguiSlider("Diffuse - Specular", &settings.m_diffspec,   0.0f, 1.0f, 0.01f);
 		imguiSlider("Glossiness"        , &settings.m_glossiness, 0.0f, 1.0f, 0.01f);
-
-		imguiSeparatorLine();
-		imguiLabel("Diffuse color:");
 		imguiSeparator();
-		imguiBool("Single slider", settings.m_singleSliderDiff);
-		if (settings.m_singleSliderDiff)
-		{
-			imguiSlider("RGB:", &settings.m_rgbDiff[0], 0.0f, 1.0f, 0.01f);
-			settings.m_rgbDiff[1] = settings.m_rgbDiff[0];
-			settings.m_rgbDiff[2] = settings.m_rgbDiff[0];
 
-		}
-		else
-		{
-			imguiSlider("R:", &settings.m_rgbDiff[0], 0.0f, 1.0f, 0.01f);
-			imguiSlider("G:", &settings.m_rgbDiff[1], 0.0f, 1.0f, 0.01f);
-			imguiSlider("B:", &settings.m_rgbDiff[2], 0.0f, 1.0f, 0.01f);
-		}
-
-		imguiSeparatorLine();
-		imguiLabel("Specular color:");
+		imguiColorWheel("Diffuse color:", &settings.m_rgbDiff[0], &settings.m_showDiffColorWheel);
 		imguiSeparator();
-		imguiBool("Single slider", settings.m_singleSliderSpec);
-		if (settings.m_singleSliderSpec)
-		{
-			imguiSlider("RGB:", &settings.m_rgbSpec[0], 0.0f, 1.0f, 0.01f);
-			settings.m_rgbSpec[1] = settings.m_rgbSpec[0];
-			settings.m_rgbSpec[2] = settings.m_rgbSpec[0];
+		imguiColorWheel("Specular color:", &settings.m_rgbSpec[0], &settings.m_showSpecColorWheel);
 
-		}
-		else
-		{
-			imguiSlider("R:", &settings.m_rgbSpec[0], 0.0f, 1.0f, 0.01f);
-			imguiSlider("G:", &settings.m_rgbSpec[1], 0.0f, 1.0f, 0.01f);
-			imguiSlider("B:", &settings.m_rgbSpec[2], 0.0f, 1.0f, 0.01f);
-		}
-
-		imguiSeparatorLine();
+		imguiSeparator();
 		imguiLabel("Predefined materials:");
 		imguiSeparator();
 
@@ -629,8 +624,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			settings.m_rgbSpec[0] = 1.0f;
 			settings.m_rgbSpec[1] = 0.86f;
 			settings.m_rgbSpec[2] = 0.58f;
-
-			settings.m_singleSliderSpec = false;
 		}
 
 		if (imguiButton("Copper") )
@@ -645,8 +638,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			settings.m_rgbSpec[0] = 0.98f;
 			settings.m_rgbSpec[1] = 0.82f;
 			settings.m_rgbSpec[2] = 0.76f;
-
-			settings.m_singleSliderSpec = false;
 		}
 
 		if (imguiButton("Titanium") )
@@ -661,8 +652,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			settings.m_rgbSpec[0] = 0.76f;
 			settings.m_rgbSpec[1] = 0.73f;
 			settings.m_rgbSpec[2] = 0.71f;
-
-			settings.m_singleSliderSpec = false;
 		}
 
 		if (imguiButton("Steel") )
@@ -677,11 +666,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			settings.m_rgbSpec[0] = 0.77f;
 			settings.m_rgbSpec[1] = 0.78f;
 			settings.m_rgbSpec[2] = 0.77f;
-
-			settings.m_singleSliderSpec = false;
 		}
 
 		imguiEndScrollArea();
+
+		nvgEndFrame(nvg);
 		imguiEndFrame();
 
 		s_uniforms.m_glossiness = settings.m_glossiness;
@@ -734,12 +723,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setViewRect(0, 0, 0, width, height);
 		bgfx::setViewRect(1, 0, 0, width, height);
+		bgfx::setViewRect(NANOVG_VIEWID, 0, 0, width, height);
 
 		// View 0.
 		bgfx::setTexture(4, u_texCube, lightProbes[currentLightProbe].m_tex);
 		bgfx::setProgram(programSky);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, true);
+		s_uniforms.submitPerDrawUniforms();
 		bgfx::submit(0);
 
 		// View 1.
@@ -787,6 +778,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_uniforms.destroy();
 
+	nvgDelete(nvg);
 	imguiDestroy();
 
 	// Shutdown bgfx.
