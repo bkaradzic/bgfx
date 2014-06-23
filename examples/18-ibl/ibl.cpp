@@ -486,11 +486,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_texCube    = bgfx::createUniform("u_texCube",    bgfx::UniformType::Uniform1i);
 	bgfx::UniformHandle u_texCubeIrr = bgfx::createUniform("u_texCubeIrr", bgfx::UniformType::Uniform1i);
 
-	bgfx::UniformHandle u_texAlbedo    = bgfx::createUniform("u_texAlbedo",    bgfx::UniformType::Uniform1i);
-	bgfx::UniformHandle u_texNormal    = bgfx::createUniform("u_texNormal",    bgfx::UniformType::Uniform1i);
-	bgfx::UniformHandle u_texSpecular  = bgfx::createUniform("u_texSpecular",  bgfx::UniformType::Uniform1i);
-	bgfx::UniformHandle u_texRoughness = bgfx::createUniform("u_texRoughness", bgfx::UniformType::Uniform1i);
-
 	bgfx::ProgramHandle programMesh = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
 	bgfx::ProgramHandle programSky  = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
 
@@ -781,11 +776,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyUniform(u_params);
 	bgfx::destroyUniform(u_mtx);
 	bgfx::destroyUniform(u_time);
-
-	bgfx::destroyUniform(u_texRoughness);
-	bgfx::destroyUniform(u_texSpecular);
-	bgfx::destroyUniform(u_texNormal);
-	bgfx::destroyUniform(u_texAlbedo);
 
 	bgfx::destroyUniform(u_texCube);
 	bgfx::destroyUniform(u_texCubeIrr);
