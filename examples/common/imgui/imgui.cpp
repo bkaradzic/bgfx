@@ -382,14 +382,14 @@ struct Imgui
 		m_scrollId = (m_areaId << 16) | m_widgetId;
 
 		m_widgetX = _x + SCROLL_AREA_PADDING;
-		m_widgetY = _y + + AREA_HEADER + (*_scroll);
+		m_widgetY = _y + AREA_HEADER + (*_scroll);
 		m_widgetW = _width - SCROLL_AREA_PADDING * 4;
 		m_scrollTop = _y + SCROLL_AREA_PADDING;
 		m_scrollBottom = _y - AREA_HEADER + _height;
 		m_scrollRight = _x + _width - SCROLL_AREA_PADDING * 3;
 		m_scrollVal = _scroll;
 
-		m_scrollAreaTop = m_widgetY;
+		m_scrollAreaTop = m_widgetY - AREA_HEADER;
 
 		m_focusTop = _y - AREA_HEADER;
 		m_focusBottom = _y - AREA_HEADER + _height;
@@ -436,7 +436,7 @@ struct Imgui
 
 		if (barHeight < 1)
 		{
-			float barY = (float)(yy - sbot) / (float)sh;
+			float barY = (float)(yy - stop) / (float)sh;
 			if (barY < 0)
 			{
 				barY = 0;
@@ -479,7 +479,7 @@ struct Imgui
 						u = 1;
 					}
 
-					*m_scrollVal = (int)( (1 - u) * (sh - height) );
+					*m_scrollVal = (int)(u * (height - sh) );
 				}
 			}
 
