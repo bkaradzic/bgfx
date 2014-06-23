@@ -723,7 +723,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setViewRect(0, 0, 0, width, height);
 		bgfx::setViewRect(1, 0, 0, width, height);
-		bgfx::setViewRect(NANOVG_VIEWID, 0, 0, width, height);
 
 		// View 0.
 		bgfx::setTexture(4, u_texCube, lightProbes[currentLightProbe].m_tex);
