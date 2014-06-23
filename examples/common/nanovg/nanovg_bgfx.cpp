@@ -511,6 +511,7 @@ namespace
 		NVG_NOTUSED(alphaBlend);
 		gl->view[0] = (float)width;
 		gl->view[1] = (float)height;
+		bgfx::setViewRect(gl->viewid, 0, 0, width, height);
 	}
 
 	static void fan(uint32_t _start, uint32_t _count)
