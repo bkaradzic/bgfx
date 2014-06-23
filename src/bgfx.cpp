@@ -1784,6 +1784,7 @@ again:
 
 	void init(RendererType::Enum _type, CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
+		BX_CHECK(NULL == s_ctx, "bgfx is already initialized.");
 		BX_TRACE("Init...");
 
 		memset(&g_caps, 0, sizeof(g_caps) );
