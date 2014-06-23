@@ -146,6 +146,7 @@ struct Imgui
 		, m_scrollRight(0)
 		, m_scrollAreaTop(0)
 		, m_scrollAreaWidth(0)
+		, m_scrollAreaX(0)
 		, m_scrollVal(NULL)
 		, m_focusTop(0)
 		, m_focusBottom(0)
@@ -393,8 +394,9 @@ struct Imgui
 		m_scrollRight = _x + _width - SCROLL_AREA_PADDING * 3;
 		m_scrollVal = _scroll;
 
-		m_scrollAreaTop = m_widgetY - AREA_HEADER;
+		m_scrollAreaX = _x;
 		m_scrollAreaWidth = _width;
+		m_scrollAreaTop = m_widgetY - AREA_HEADER;
 
 		m_focusTop = _y - AREA_HEADER;
 		m_focusBottom = _y - AREA_HEADER + _height;
@@ -1568,7 +1570,7 @@ struct Imgui
 		_u = 1.0f - _v - _w;
 	}
 
-	void colorWheelWidget(float _color[3], bool _enabled = true)
+	void colorWheelWidget(float _color[3], bool _respectIndentation, bool _enabled)
 	{
 		if (NULL == m_nvg)
 		{
@@ -1583,7 +1585,7 @@ struct Imgui
 		const int32_t height = m_scrollAreaWidth - COLOR_WHEEL_PADDING;
 		const float heightf = float(height);
 		const float widthf = float(m_scrollAreaWidth - COLOR_WHEEL_PADDING);
-		const float xx = float(m_widgetX - SCROLL_AREA_PADDING + COLOR_WHEEL_PADDING/2);
+		const float xx = float( (_respectIndentation ? m_widgetX-SCROLL_AREA_PADDING : m_scrollAreaX) + COLOR_WHEEL_PADDING/2);
 		const float yy = float(m_widgetY);
 
 		m_widgetY += height + DEFAULT_SPACING;
@@ -1840,6 +1842,7 @@ struct Imgui
 	int32_t m_scrollRight;
 	int32_t m_scrollAreaTop;
 	int32_t m_scrollAreaWidth;
+	int32_t m_scrollAreaX;
 	int32_t* m_scrollVal;
 	int32_t m_focusTop;
 	int32_t m_focusBottom;
@@ -2007,7 +2010,7 @@ int imguiReserve(int _y)
 	return yy;
 }
 
-void imguiColorWheel(float _color[3], bool _enabled)
+void imguiColorWheel(float _color[3], bool _respectIndentation, bool _enabled)
 {
-	s_imgui.colorWheelWidget(_color, _enabled);
+	s_imgui.colorWheelWidget(_color, _respectIndentation, _enabled);
 }
