@@ -529,7 +529,7 @@ void nvgDeleteInternal(struct NVGcontext* ctx);
 void nvgDebugDumpPathCache(struct NVGcontext* ctx);
 
 //
-struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa);
+struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa, unsigned char viewid);
 
 //
 void nvgDelete(struct NVGcontext* ctx);

@@ -29,6 +29,8 @@
 #define IMGUI_MBUT_LEFT  0x01
 #define IMGUI_MBUT_RIGHT 0x02
 
+struct NVGcontext;
+
 struct ImguiTextAlign
 {
 	enum Enum
@@ -55,7 +57,7 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view = 31);
 void imguiEndFrame();
 
-bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll);
+bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, struct NVGcontext* _nvg = NULL);
 void imguiEndScrollArea();
 
 void imguiIndent();
@@ -81,5 +83,6 @@ void imguiDrawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint
 void imguiDrawRect(float _x, float _y, float _w, float _h, uint32_t _argb);
 
 int imguiReserve(int _y);
+void imguiColorWheel(float _color[3], bool _enabled = true);
 
 #endif // IMGUI_H_HEADER_GUARD

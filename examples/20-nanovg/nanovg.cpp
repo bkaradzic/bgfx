@@ -1060,7 +1060,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	NVGcontext* nvg = nvgCreate(512, 512, 1);
+	NVGcontext* nvg = nvgCreate(512, 512, 1, 0);
 	bgfx::setViewSeq(0, true);
 
 	DemoData data;
