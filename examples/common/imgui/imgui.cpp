@@ -1612,13 +1612,6 @@ struct Imgui
 		float hsv[3];
 		rgbToHsv(hsv, _color);
 
-		enum Picked
-		{
-			None,
-			Wheel,
-			Triangle,
-		};
-
 		if (_enabled)
 		{
 			if (m_leftPressed)
