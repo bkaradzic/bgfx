@@ -31,6 +31,7 @@
 
 #include "../entry/dbg.h"
 #include "imgui.h"
+#include "../nanovg/nanovg.h"
 
 #include "vs_imgui_color.bin.h"
 #include "fs_imgui_color.bin.h"
@@ -49,6 +50,7 @@ static const int32_t TEXT_HEIGHT = 8;
 static const int32_t SCROLL_AREA_PADDING = 6;
 static const int32_t INDENT_SIZE = 16;
 static const int32_t AREA_HEADER = 28;
+static const int32_t COLOR_WHEEL_PADDING = 60;
 static const float s_tabStops[4] = {150, 210, 270, 330};
 
 static void* imguiMalloc(size_t size, void* /*_userptr*/)
@@ -143,6 +145,8 @@ struct Imgui
 		, m_scrollBottom(0)
 		, m_scrollRight(0)
 		, m_scrollAreaTop(0)
+		, m_scrollAreaWidth(0)
+		, m_scrollAreaX(0)
 		, m_scrollVal(NULL)
 		, m_focusTop(0)
 		, m_focusBottom(0)
@@ -151,6 +155,7 @@ struct Imgui
 		, m_textureWidth(512)
 		, m_textureHeight(512)
 		, m_halfTexel(0.0f)
+		, m_nvg(NULL)
 		, m_view(31)
 	{
 		m_invTextureWidth  = 1.0f/m_textureWidth;
@@ -375,21 +380,23 @@ struct Imgui
 		clearInput();
 	}
 
-	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll)
+	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, NVGcontext* _nvg)
 	{
 		m_areaId++;
 		m_widgetId = 0;
 		m_scrollId = (m_areaId << 16) | m_widgetId;
 
 		m_widgetX = _x + SCROLL_AREA_PADDING;
-		m_widgetY = _y + + AREA_HEADER + (*_scroll);
+		m_widgetY = _y + AREA_HEADER + (*_scroll);
 		m_widgetW = _width - SCROLL_AREA_PADDING * 4;
 		m_scrollTop = _y + SCROLL_AREA_PADDING;
 		m_scrollBottom = _y - AREA_HEADER + _height;
 		m_scrollRight = _x + _width - SCROLL_AREA_PADDING * 3;
 		m_scrollVal = _scroll;
 
-		m_scrollAreaTop = m_widgetY;
+		m_scrollAreaX = _x;
+		m_scrollAreaWidth = _width;
+		m_scrollAreaTop = m_widgetY - AREA_HEADER;
 
 		m_focusTop = _y - AREA_HEADER;
 		m_focusBottom = _y - AREA_HEADER + _height;
@@ -412,7 +419,22 @@ struct Imgui
 			, imguiRGBA(255, 255, 255, 128)
 			);
 
-		m_scissor = bgfx::setScissor(_x + SCROLL_AREA_PADDING, _y + SCROLL_AREA_PADDING, _width - SCROLL_AREA_PADDING * 4, _height - AREA_HEADER - SCROLL_AREA_PADDING);
+		if (NULL != _nvg)
+		{
+			m_nvg = _nvg;
+			nvgScissor(m_nvg
+					 , float(_x + SCROLL_AREA_PADDING)
+					 , float(_y + SCROLL_AREA_PADDING)
+					 , float(_width - SCROLL_AREA_PADDING * 4)
+					 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
+					 );
+		}
+
+		m_scissor = bgfx::setScissor(uint16_t(_x + SCROLL_AREA_PADDING)
+								   , uint16_t(_y + SCROLL_AREA_PADDING)
+								   , uint16_t(_width - SCROLL_AREA_PADDING * 4)
+								   , uint16_t(_height - AREA_HEADER - SCROLL_AREA_PADDING)
+								   );
 
 		return m_insideScrollArea;
 	}
@@ -421,6 +443,11 @@ struct Imgui
 	{
 		// Disable scissoring.
 		m_scissor = UINT16_MAX;
+		if (NULL != m_nvg)
+		{
+			nvgResetScissor(m_nvg);
+			m_nvg = NULL;
+		}
 
 		// Draw scroll bar
 		int32_t xx = m_scrollRight + SCROLL_AREA_PADDING / 2;
@@ -436,7 +463,7 @@ struct Imgui
 
 		if (barHeight < 1)
 		{
-			float barY = (float)(yy - sbot) / (float)sh;
+			float barY = (float)(yy - stop) / (float)sh;
 			if (barY < 0)
 			{
 				barY = 0;
@@ -479,7 +506,7 @@ struct Imgui
 						u = 1;
 					}
 
-					*m_scrollVal = (int)( (1 - u) * (sh - height) );
+					*m_scrollVal = (int)(u * (height - sh) );
 				}
 			}
 
@@ -1369,6 +1396,411 @@ struct Imgui
 		}
 	}
 
+	/// Assumes _min < _max.
+	inline float clampf(float _val, float _min, float _max)
+	{
+		return ( _val > _max ? _max
+			   : _val < _min ? _min
+			   : _val
+			   );
+	}
+
+	float sign(float px, float py, float ax, float ay, float bx, float by)
+	{
+		return (px - bx) * (ay - by) - (ax - bx) * (py - by);
+	}
+
+	bool pointInTriangle(float px, float py, float ax, float ay, float bx, float by, float cx, float cy)
+	{
+		const bool b1 = sign(px, py, ax, ay, bx, by) < 0.0f;
+		const bool b2 = sign(px, py, bx, by, cx, cy) < 0.0f;
+		const bool b3 = sign(px, py, cx, cy, ax, ay) < 0.0f;
+
+		return ((b1 == b2) && (b2 == b3));
+	}
+
+	void closestPointOnLine(float& ox, float &oy, float px, float py, float ax, float ay, float bx, float by)
+	{
+		float dx = px - ax;
+		float dy = py - ay;
+
+		float lx = bx - ax;
+		float ly = by - ay;
+
+		float len = sqrtf(lx*lx+ly*ly);
+
+		// Normalize.
+		float invLen = 1.0f/len;
+		lx*=invLen;
+		ly*=invLen;
+
+		float dot = (dx*lx + dy*ly);
+
+		if (dot < 0.0f)
+		{
+			ox = ax;
+			oy = ay;
+		}
+		else if (dot > len)
+		{
+			ox = bx;
+			oy = by;
+		}
+		else
+		{
+			ox = ax + lx*dot;
+			oy = ay + ly*dot;
+		}
+	}
+
+	void closestPointOnTriangle(float& ox, float &oy, float px, float py, float ax, float ay, float bx, float by, float cx, float cy)
+	{
+		float abx, aby;
+		float bcx, bcy;
+		float cax, cay;
+		closestPointOnLine(abx, aby, px, py, ax, ay, bx, by);
+		closestPointOnLine(bcx, bcy, px, py, bx, by, cx, cy);
+		closestPointOnLine(cax, cay, px, py, cx, cy, ax, ay);
+
+		const float pabx = px - abx;
+		const float paby = py - aby;
+		const float pbcx = px - bcx;
+		const float pbcy = py - bcy;
+		const float pcax = px - cax;
+		const float pcay = py - cay;
+
+		const float lab = sqrtf(pabx*pabx+paby*paby);
+		const float lbc = sqrtf(pbcx*pbcx+pbcy*pbcy);
+		const float lca = sqrtf(pcax*pcax+pcay*pcay);
+
+		const float m = bx::fmin(lab, bx::fmin(lbc, lca));
+		if (m == lab)
+		{
+			ox = abx;
+			oy = aby;
+		}
+		else if (m == lbc)
+		{
+			ox = bcx;
+			oy = bcy;
+		}
+		else// if (m == lca).
+		{
+			ox = cax;
+			oy = cay;
+		}
+	}
+
+	/// Reference: http://codeitdown.com/hsl-hsb-hsv-color/
+	void rgbToHsv(float _hsv[3], const float _rgb[3])
+	{
+		const float min = bx::fmin(_rgb[0], bx::fmin(_rgb[1], _rgb[2]));
+		const float max = bx::fmax(_rgb[0], bx::fmax(_rgb[1], _rgb[2]));
+		const float delta = max - min;
+
+		if (0.0f == delta)
+		{
+			_hsv[0] = 0.0f; // Achromatic.
+		}
+		else
+		{
+			if (max == _rgb[0])
+			{
+				_hsv[0] = (_rgb[1]-_rgb[2])/delta + (_rgb[1]<_rgb[2]?6.0f:0.0f); // Between yellow and magenta.
+			}
+			else if(max == _rgb[1])
+			{
+				_hsv[0] = (_rgb[2]-_rgb[0])/delta + 2.0f; // Between cyan and yellow.
+			}
+			else //if(max == _rgb[2]).
+			{
+				_hsv[0] = (_rgb[0]-_rgb[1])/delta + 4.0f; // Between magenta and cyan.
+			}
+
+			_hsv[0] /= 6.0f;
+		}
+		_hsv[1] = max == 0.0f ? 0.0f : delta/max;
+		_hsv[2] = max;
+	}
+
+	/// Reference: http://codeitdown.com/hsl-hsb-hsv-color/
+	void hsvToRgb(float _rgb[3], const float _hsv[3])
+	{
+		const int32_t ii = int32_t(_hsv[0]*6.0f);
+		const float ff = _hsv[0]*6.0f - float(ii);
+		const float vv = _hsv[2];
+		const float pp = vv * (1.0f - _hsv[1]);
+		const float qq = vv * (1.0f - _hsv[1]*ff);
+		const float tt = vv * (1.0f - _hsv[1]*(1.0f-ff));
+
+		switch (ii)
+		{
+		case 0: _rgb[0] = vv; _rgb[1] = tt; _rgb[2] = pp; break;
+		case 1: _rgb[0] = qq; _rgb[1] = vv; _rgb[2] = pp; break;
+		case 2: _rgb[0] = pp; _rgb[1] = vv; _rgb[2] = tt; break;
+		case 3: _rgb[0] = pp; _rgb[1] = qq; _rgb[2] = vv; break;
+		case 4: _rgb[0] = tt; _rgb[1] = pp; _rgb[2] = vv; break;
+		case 5: _rgb[0] = vv; _rgb[1] = pp; _rgb[2] = qq; break;
+		}
+	}
+
+	inline float vec2Dot(const float* __restrict _a, const float* __restrict _b)
+	{
+		return _a[0]*_b[0] + _a[1]*_b[1];
+	}
+
+	void barycentric(float& _u, float& _v, float& _w
+				   , float _ax, float _ay
+				   , float _bx, float _by
+				   , float _cx, float _cy
+				   , float _px, float _py
+				   )
+	{
+		const float v0[2] = { _bx - _ax, _by - _ay };
+		const float v1[2] = { _cx - _ax, _cy - _ay };
+		const float v2[2] = { _px - _ax, _py - _ay };
+		const float d00 = vec2Dot(v0, v0);
+		const float d01 = vec2Dot(v0, v1);
+		const float d11 = vec2Dot(v1, v1);
+		const float d20 = vec2Dot(v2, v0);
+		const float d21 = vec2Dot(v2, v1);
+		const float denom = d00 * d11 - d01 * d01;
+		_v = (d11 * d20 - d01 * d21) / denom;
+		_w = (d00 * d21 - d01 * d20) / denom;
+		_u = 1.0f - _v - _w;
+	}
+
+	void colorWheelWidget(float _color[3], bool _respectIndentation, bool _enabled)
+	{
+		if (NULL == m_nvg)
+		{
+			return;
+		}
+
+		m_widgetId++;
+		const uint32_t wheelId = (m_areaId << 16) | m_widgetId;
+		m_widgetId++;
+		const uint32_t triangleId = (m_areaId << 16) | m_widgetId;
+
+		const int32_t height = m_scrollAreaWidth - COLOR_WHEEL_PADDING;
+		const float heightf = float(height);
+		const float widthf = float(m_scrollAreaWidth - COLOR_WHEEL_PADDING);
+		const float xx = float( (_respectIndentation ? m_widgetX-SCROLL_AREA_PADDING : m_scrollAreaX) + COLOR_WHEEL_PADDING/2);
+		const float yy = float(m_widgetY);
+
+		m_widgetY += height + DEFAULT_SPACING;
+
+		const float ro = (widthf < heightf ? widthf : heightf) * 0.5f - 5.0f; // radiusOuter.
+		const float rd = 20.0f; // radiusDelta.
+		const float ri = ro - rd; // radiusInner.
+		const float aeps = 0.5f / ro; // Half a pixel arc length in radians (2pi cancels out).
+		const float center[2] = { xx + widthf*0.5f, yy + heightf*0.5f };
+		const float cmx = float(m_mx) - center[0];
+		const float cmy = float(m_my) - center[1];
+
+		const float aa[2] = { ri - 6.0f, 0.0f }; // Hue point.
+		const float bb[2] = { cosf(-120.0f/180.0f*NVG_PI) * aa[0], sinf(-120.0f/180.0f*NVG_PI) * aa[0] }; // Black point.
+		const float cc[2] = { cosf( 120.0f/180.0f*NVG_PI) * aa[0], sinf( 120.0f/180.0f*NVG_PI) * aa[0] }; // White point.
+
+		const float ca[2] = { aa[0] - cc[0], aa[1] - cc[1] };
+		const float lenCa = sqrtf(ca[0]*ca[0]+ca[1]*ca[1]);
+		const float invLenCa = 1.0f/lenCa;
+		const float dirCa[2] = { ca[0]*invLenCa, ca[1]*invLenCa };
+
+		float sel[2];
+
+		float hsv[3];
+		rgbToHsv(hsv, _color);
+
+		if (_enabled)
+		{
+			if (m_leftPressed)
+			{
+				const float len = sqrtf(cmx*cmx+cmy*cmy);
+				if (len > ri)
+				{
+					if (len < ro)
+					{
+						setActive(wheelId);
+					}
+				}
+				else
+				{
+					setActive(triangleId);
+				}
+			}
+
+			if (m_leftReleased
+			&& (isActive(wheelId) || isActive(triangleId) ) )
+			{
+				clearActive();
+			}
+
+			// Set hue.
+			if (m_left && isActive(wheelId))
+			{
+				hsv[0] = atan2f(cmy, cmx)/NVG_PI*0.5f;
+				if (hsv[0] < 0.0f)
+				{
+					hsv[0]+=1.0f;
+				}
+			}
+
+		}
+
+		if (_enabled && m_left && isActive(triangleId))
+		{
+			float an = -hsv[0]*NVG_PI*2.0f;
+			float tmx = (cmx*cosf(an)-cmy*sinf(an));
+			float tmy = (cmx*sinf(an)+cmy*cosf(an));
+
+			if (pointInTriangle(tmx, tmy, aa[0], aa[1], bb[0], bb[1], cc[0], cc[1]))
+			{
+				sel[0] = tmx;
+				sel[1] = tmy;
+			}
+			else
+			{
+				closestPointOnTriangle(sel[0], sel[1], tmx, tmy, aa[0], aa[1], bb[0], bb[1], cc[0], cc[1]);
+			}
+		}
+		else
+		{
+			///
+			///                  bb (black)
+			///                 /\
+			///                /  \
+			///               /    \
+			///              /      \
+			///             /        \
+			///            /    .sel  \
+			///           /            \
+			/// cc(white)/____.ss_______\aa (hue)
+			///
+			const float ss[2] =
+			{
+				cc[0] + dirCa[0]*lenCa*hsv[1],
+				cc[1] + dirCa[1]*lenCa*hsv[1],
+			};
+
+			const float sb[2] = { bb[0]-ss[0], bb[1]-ss[1] };
+			const float lenSb = sqrtf(sb[0]*sb[0]+sb[1]*sb[1]);
+			const float invLenSb = 1.0f/lenSb;
+			const float dirSb[2] = { sb[0]*invLenSb, sb[1]*invLenSb };
+
+			sel[0] = cc[0] + dirCa[0]*lenCa*hsv[1] + dirSb[0]*lenSb*(1.0f - hsv[2]);
+			sel[1] = cc[1] + dirCa[1]*lenCa*hsv[1] + dirSb[1]*lenSb*(1.0f - hsv[2]);
+		}
+
+		float uu, vv, ww;
+		barycentric(uu, vv, ww
+				  , aa[0], aa[1]
+				  , bb[0], bb[1]
+				  , cc[0], cc[1]
+				  , sel[0], sel[1]
+				  );
+
+		const float val = clampf(1.0f-vv, 0.0001f, 1.0f);
+		const float sat = clampf(uu/val,  0.0001f, 1.0f);
+
+		const float out[3] = { hsv[0], sat, val };
+		hsvToRgb(_color, out);
+
+		// Draw widget.
+		nvgSave(m_nvg);
+		const float drawSaturation = _enabled ? 1.0f : 0.0f;
+
+		// Circle.
+		for (uint8_t ii = 0; ii < 6; ii++)
+		{
+			const float a0 = float(ii)/6.0f      * 2.0f*NVG_PI - aeps;
+			const float a1 = float(ii+1.0f)/6.0f * 2.0f*NVG_PI + aeps;
+			nvgBeginPath(m_nvg);
+			nvgArc(m_nvg, center[0], center[1], ri, a0, a1, NVG_CW);
+			nvgArc(m_nvg, center[0], center[1], ro, a1, a0, NVG_CCW);
+			nvgClosePath(m_nvg);
+
+			const float ax = center[0] + cosf(a0) * (ri+ro)*0.5f;
+			const float ay = center[1] + sinf(a0) * (ri+ro)*0.5f;
+			const float bx = center[0] + cosf(a1) * (ri+ro)*0.5f;
+			const float by = center[1] + sinf(a1) * (ri+ro)*0.5f;
+			NVGpaint paint = nvgLinearGradient(m_nvg
+											 , ax, ay
+											 , bx, by
+											 , nvgHSLA(a0/NVG_PI*0.5f,drawSaturation,0.55f,255)
+											 , nvgHSLA(a1/NVG_PI*0.5f,drawSaturation,0.55f,255)
+											 );
+
+			nvgFillPaint(m_nvg, paint);
+			nvgFill(m_nvg);
+		}
+
+		// Circle stroke.
+		nvgBeginPath(m_nvg);
+		nvgCircle(m_nvg, center[0], center[1], ri-0.5f);
+		nvgCircle(m_nvg, center[0], center[1], ro+0.5f);
+		nvgStrokeColor(m_nvg, nvgRGBA(0,0,0,64));
+		nvgStrokeWidth(m_nvg, 1.0f);
+		nvgStroke(m_nvg);
+
+		nvgSave(m_nvg);
+		{
+			// Hue selector.
+			nvgTranslate(m_nvg, center[0], center[1]);
+			nvgRotate(m_nvg, hsv[0]*NVG_PI*2.0f);
+			nvgStrokeWidth(m_nvg, 2.0f);
+			nvgBeginPath(m_nvg);
+			nvgRect(m_nvg, ri-1.0f,-3.0f,rd+2.0f,6.0f);
+			nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192));
+			nvgStroke(m_nvg);
+
+			// Hue selector drop shadow.
+			NVGpaint paint = nvgBoxGradient(m_nvg, ri-3.0f,-5.0f,ro-ri+6.0f,10.0f, 2.0f,4.0f, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
+			nvgBeginPath(m_nvg);
+			nvgRect(m_nvg, ri-2.0f-10.0f,-4.0f-10.0f,ro-ri+4.0f+20.0f,8.0f+20.0f);
+			nvgRect(m_nvg, ri-2.0f,-4.0f,ro-ri+4.0f,8.0f);
+			nvgPathWinding(m_nvg, NVG_HOLE);
+			nvgFillPaint(m_nvg, paint);
+			nvgFill(m_nvg);
+
+			// Center triangle stroke.
+			nvgBeginPath(m_nvg);
+			nvgMoveTo(m_nvg, aa[0], aa[1]);
+			nvgLineTo(m_nvg, bb[0], bb[1]);
+			nvgLineTo(m_nvg, cc[0], cc[1]);
+			nvgClosePath(m_nvg);
+			nvgStrokeColor(m_nvg, nvgRGBA(0,0,0,64));
+			nvgStroke(m_nvg);
+
+			// Center triangle fill.
+			paint = nvgLinearGradient(m_nvg, aa[0], aa[1], bb[0], bb[1], nvgHSL(hsv[0],drawSaturation,0.5f), nvgRGBA(0,0,0,255));
+			nvgFillPaint(m_nvg, paint);
+			nvgFill(m_nvg);
+			paint = nvgLinearGradient(m_nvg, (aa[0]+bb[0])*0.5f, (aa[1]+bb[1])*0.5f, cc[0], cc[1], nvgRGBA(0,0,0,0), nvgRGBA(255,255,255,255));
+			nvgFillPaint(m_nvg, paint);
+			nvgFill(m_nvg);
+
+			// Color selector.
+			nvgStrokeWidth(m_nvg, 2.0f);
+			nvgBeginPath(m_nvg);
+			nvgCircle(m_nvg, sel[0], sel[1], 5);
+			nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192));
+			nvgStroke(m_nvg);
+
+			// Color selector stroke.
+			paint = nvgRadialGradient(m_nvg, sel[0], sel[1], 7.0f, 9.0f, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0));
+			nvgBeginPath(m_nvg);
+			nvgRect(m_nvg, sel[0]-20.0f, sel[1]-20.0f, 40.0f, 40.0f);
+			nvgCircle(m_nvg, sel[0], sel[1], 7.0f);
+			nvgPathWinding(m_nvg, NVG_HOLE);
+			nvgFillPaint(m_nvg, paint);
+			nvgFill(m_nvg);
+		}
+		nvgRestore(m_nvg);
+
+		nvgRestore(m_nvg);
+	}
+
 	int32_t m_mx;
 	int32_t m_my;
 	int32_t m_scroll;
@@ -1402,6 +1834,8 @@ struct Imgui
 	int32_t m_scrollBottom;
 	int32_t m_scrollRight;
 	int32_t m_scrollAreaTop;
+	int32_t m_scrollAreaWidth;
+	int32_t m_scrollAreaX;
 	int32_t* m_scrollVal;
 	int32_t m_focusTop;
 	int32_t m_focusBottom;
@@ -1415,6 +1849,8 @@ struct Imgui
 	float m_invTextureWidth;
 	float m_invTextureHeight;
 	float m_halfTexel;
+
+	NVGcontext* m_nvg;
 
 	uint8_t m_view;
 	bgfx::UniformHandle u_texColor;
@@ -1445,9 +1881,9 @@ void imguiEndFrame()
 	s_imgui.endFrame();
 }
 
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll)
+bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, NVGcontext* _nvg)
 {
-	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll);
+	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _nvg);
 }
 
 void imguiEndScrollArea()
@@ -1558,4 +1994,16 @@ void imguiDrawRoundedRect(float _x, float _y, float _width, float _height, float
 void imguiDrawRect(float _x, float _y, float _width, float _height, uint32_t _argb)
 {
 	s_imgui.drawRect(_x, _y, _width, _height, _argb);
+}
+
+int imguiReserve(int _y)
+{
+	const int yy = s_imgui.m_widgetY;
+	s_imgui.m_widgetY += _y;
+	return yy;
+}
+
+void imguiColorWheel(float _color[3], bool _respectIndentation, bool _enabled)
+{
+	s_imgui.colorWheelWidget(_color, _respectIndentation, _enabled);
 }

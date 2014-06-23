@@ -265,8 +265,6 @@ namespace
 			gl->u_halfTexel.idx = bgfx::invalidHandle;
 		}
 
-		gl->viewid = 0;
-
 		s_nvgDecl
 			.begin()
 			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
@@ -274,7 +272,7 @@ namespace
 			.end();
 
 		int align = 1;
-		gl->fragSize = sizeof(struct GLNVGfragUniforms) + align - sizeof(struct GLNVGfragUniforms) % align; 
+		gl->fragSize = sizeof(struct GLNVGfragUniforms) + align - sizeof(struct GLNVGfragUniforms) % align;
 
 		return 1;
 	}
@@ -979,7 +977,7 @@ namespace
 
 } // namespace
 
-struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa)
+struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa, unsigned char viewid)
 {
 	struct NVGparams params;
 	struct NVGcontext* ctx = NULL;
@@ -1005,6 +1003,7 @@ struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa)
 	params.edgeAntiAlias = edgeaa;
 
 	gl->edgeAntiAlias = edgeaa;
+	gl->viewid = uint8_t(viewid);
 
 	ctx = nvgCreateInternal(&params);
 	if (ctx == NULL) goto error;
