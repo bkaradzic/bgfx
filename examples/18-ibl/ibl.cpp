@@ -14,9 +14,6 @@
 #include <vector>
 #include <string>
 
-#define IMGUI_VIEWID  30
-#define NANOVG_VIEWID 31
-
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
 
@@ -447,9 +444,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	imguiCreate(data);
 	free(data);
 
-	NVGcontext* nvg = nvgCreate(512, 512, 1, NANOVG_VIEWID);
-	bgfx::setViewSeq(NANOVG_VIEWID, true);
-
 	// Uniforms.
 	s_uniforms.init();
 
@@ -563,13 +557,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, 0
 			, width
 			, height
-			, IMGUI_VIEWID
 			);
 
-		nvgBeginFrame(nvg, int32_t(width), int32_t(height), 1.0f, NVG_STRAIGHT_ALPHA);
-
 		static int32_t rightScrollArea = 0;
-		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 426, &rightScrollArea, nvg);
+		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 426, &rightScrollArea);
 
 		imguiLabel("Shade:");
 		imguiSeparator();
@@ -596,7 +587,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiEndScrollArea();
 
 		static int32_t leftScrollArea = 0;
-		imguiBeginScrollArea("Settings", 10, 70, 256, 576, &leftScrollArea, nvg);
+		imguiBeginScrollArea("Settings", 10, 70, 256, 576, &leftScrollArea);
 
 		imguiLabel("Material properties:");
 		imguiSeparator();
@@ -670,7 +661,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		imguiEndScrollArea();
 
-		nvgEndFrame(nvg);
 		imguiEndFrame();
 
 		s_uniforms.m_glossiness = settings.m_glossiness;
@@ -723,7 +713,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setViewRect(0, 0, 0, width, height);
 		bgfx::setViewRect(1, 0, 0, width, height);
-		bgfx::setViewRect(NANOVG_VIEWID, 0, 0, width, height);
 
 		// View 0.
 		bgfx::setTexture(4, u_texCube, lightProbes[currentLightProbe].m_tex);
@@ -778,7 +767,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_uniforms.destroy();
 
-	nvgDelete(nvg);
 	imguiDestroy();
 
 	// Shutdown bgfx.

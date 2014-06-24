@@ -169,6 +169,8 @@ struct Imgui
 
 	bool create(const void* _data)
 	{
+		m_nvg = nvgCreate(512, 512, 1, m_view);
+
 		for (int32_t ii = 0; ii < NUM_CIRCLE_VERTS; ++ii)
 		{
 			float a = (float)ii / (float)NUM_CIRCLE_VERTS * (float)(M_PI * 2.0);
@@ -239,6 +241,7 @@ struct Imgui
 		bgfx::destroyTexture(m_fontTexture);
 		bgfx::destroyProgram(m_colorProgram);
 		bgfx::destroyProgram(m_textureProgram);
+		nvgDelete(m_nvg);
 	}
 
 	bool anyActive() const
@@ -350,6 +353,8 @@ struct Imgui
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view)
 	{
+		nvgBeginFrame(m_nvg, _width, _height, 1.0f, NVG_STRAIGHT_ALPHA);
+
 		m_view = _view;
 		bgfx::setViewSeq(_view, true);
 		bgfx::setViewRect(_view, 0, 0, _width, _height);
@@ -378,9 +383,10 @@ struct Imgui
 	void endFrame()
 	{
 		clearInput();
+		nvgEndFrame(m_nvg);
 	}
 
-	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, NVGcontext* _nvg)
+	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll)
 	{
 		m_areaId++;
 		m_widgetId = 0;
@@ -419,16 +425,12 @@ struct Imgui
 			, imguiRGBA(255, 255, 255, 128)
 			);
 
-		if (NULL != _nvg)
-		{
-			m_nvg = _nvg;
-			nvgScissor(m_nvg
-					 , float(_x + SCROLL_AREA_PADDING)
-					 , float(_y + SCROLL_AREA_PADDING)
-					 , float(_width - SCROLL_AREA_PADDING * 4)
-					 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
-					 );
-		}
+		nvgScissor(m_nvg
+				 , float(_x + SCROLL_AREA_PADDING)
+				 , float(_y + SCROLL_AREA_PADDING)
+				 , float(_width - SCROLL_AREA_PADDING * 4)
+				 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
+				 );
 
 		m_scissor = bgfx::setScissor(uint16_t(_x + SCROLL_AREA_PADDING)
 								   , uint16_t(_y + SCROLL_AREA_PADDING)
@@ -443,11 +445,7 @@ struct Imgui
 	{
 		// Disable scissoring.
 		m_scissor = UINT16_MAX;
-		if (NULL != m_nvg)
-		{
-			nvgResetScissor(m_nvg);
-			m_nvg = NULL;
-		}
+		nvgResetScissor(m_nvg);
 
 		// Draw scroll bar
 		int32_t xx = m_scrollRight + SCROLL_AREA_PADDING / 2;
@@ -1881,9 +1879,9 @@ void imguiEndFrame()
 	s_imgui.endFrame();
 }
 
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, NVGcontext* _nvg)
+bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll)
 {
-	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _nvg);
+	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll);
 }
 
 void imguiEndScrollArea()
