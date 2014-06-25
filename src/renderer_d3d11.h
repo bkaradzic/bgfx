@@ -52,15 +52,9 @@ namespace bgfx
 		{
 			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
+				DX_CHECK_REFCOUNT(it->second, 1);
 				it->second->Release();
 			}
-
-#if BGFX_CONFIG_DEBUG
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				DX_CHECK_REFCOUNT(it->second, 0);
-			}
-#endif // BGFX_CONFIG_DEBUG
 
 			m_hashMap.clear();
 		}
