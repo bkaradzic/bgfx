@@ -176,6 +176,8 @@ PP_EXPORT const void* PPP_GetInterface(const char* _name)
 
 PP_EXPORT int32_t PPP_InitializeModule(PP_Module _module, PPB_GetInterface _interface)
 {
+	DBG("PPAPI version: %d", PPAPI_RELEASE);
+
 	BX_UNUSED(_module);
 	bool result = true;
 	result &= initializeInterface(_interface, PPB_CORE_INTERFACE,            g_coreInterface);
