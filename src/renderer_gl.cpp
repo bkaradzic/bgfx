@@ -3117,6 +3117,12 @@ namespace bgfx
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 				&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 				{
+					writeString(&writer
+						, "#define flat\n"
+						  "#define smooth\n"
+						  "#define noperspective\n"
+						);
+
 					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
 						&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
 						;
@@ -3257,6 +3263,9 @@ namespace bgfx
 							, "#define lowp\n"
 							  "#define mediump\n"
 							  "#define highp\n"
+							  "#define flat\n"
+							  "#define smooth\n"
+							  "#define noperspective\n"
 							);
 
 					bx::write(&writer, code, codeLen);

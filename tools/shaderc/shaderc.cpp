@@ -4,29 +4,29 @@
  */
 
 #define _BX_TRACE(_format, ...) \
-				do { \
+				BX_MACRO_BLOCK_BEGIN \
 					if (g_verbose) \
 					{ \
 						fprintf(stderr, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
 					} \
-				} while(0)
+				BX_MACRO_BLOCK_END
 
 #define _BX_WARN(_condition, _format, ...) \
-				do { \
+				BX_MACRO_BLOCK_BEGIN \
 					if (!(_condition) ) \
 					{ \
 						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
 					} \
-				} while(0)
+				BX_MACRO_BLOCK_END
 
 #define _BX_CHECK(_condition, _format, ...) \
-				do { \
+				BX_MACRO_BLOCK_BEGIN \
 					if (!(_condition) ) \
 					{ \
 						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
 						bx::debugBreak(); \
 					} \
-				} while(0)
+				BX_MACRO_BLOCK_END
 
 #define BX_TRACE _BX_TRACE
 #define BX_WARN  _BX_WARN
@@ -249,6 +249,20 @@ struct Uniform
 	uint16_t regCount;
 };
 typedef std::vector<Uniform> UniformArray;
+
+const char* interpolationDx11(const char* _glsl)
+{
+	if (0 == strcmp(_glsl, "smooth") )
+	{
+		return "linear";
+	}
+	else if (0 == strcmp(_glsl, "flat") )
+	{
+		return "nointerpolation";
+	}
+
+	return _glsl; // noperspective
+}
 
 #if BX_PLATFORM_WINDOWS
 struct UniformRemapDx9
@@ -485,6 +499,7 @@ private:
 struct Varying
 {
 	std::string m_precision;
+	std::string m_interpolation;
 	std::string m_name;
 	std::string m_type;
 	std::string m_init;
@@ -1668,6 +1683,7 @@ void help(const char* _error = NULL)
 		  "           nacl\n"
 		  "           osx\n"
 		  "           windows\n"
+		  "      --preprocess              Preprocess only.\n"
 		  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
 		  "      --type <type>             Shader type (vertex, fragment)\n"
 		  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
@@ -1915,6 +1931,7 @@ int main(int _argc, const char* _argv[])
 			if (NULL != eol)
 			{
 				const char* precision = NULL;
+				const char* interpolation = NULL;
 				const char* type = parse;
 
 				if (0 == strncmp(type, "lowp", 4)
@@ -1924,11 +1941,20 @@ int main(int _argc, const char* _argv[])
 					precision = type;
 					type = parse = bx::strws(bx::strword(parse) );
 				}
-				const char* name = parse = bx::strws(bx::strword(parse) );
-				const char* column = parse = bx::strws(bx::strword(parse) );
-				const char* semantics = parse = bx::strws(bx::strnws(parse) );
-				const char* assign = parse = bx::strws(bx::strword(parse) );
-				const char* init = parse = bx::strws(bx::strnws(parse) );
+
+				if (0 == strncmp(type, "flat", 4)
+				||  0 == strncmp(type, "smooth", 6)
+				||  0 == strncmp(type, "noperspective", 13) )
+				{
+					interpolation = type;
+					type = parse = bx::strws(bx::strword(parse) );
+				}
+
+				const char* name      = parse = bx::strws(bx::strword(parse) );
+				const char* column    = parse = bx::strws(bx::strword(parse) );
+				const char* semantics = parse = bx::strws(bx::strnws (parse) );
+				const char* assign    = parse = bx::strws(bx::strword(parse) );
+				const char* init      = parse = bx::strws(bx::strnws (parse) );
 
 				if (type < eol
 				&&  name < eol
@@ -1941,6 +1967,12 @@ int main(int _argc, const char* _argv[])
 					{
 						var.m_precision.assign(precision, bx::strword(precision)-precision);
 					}
+
+					if (NULL != interpolation)
+					{
+						var.m_interpolation.assign(interpolation, bx::strword(interpolation)-interpolation);
+					}
+
 					var.m_type.assign(type, bx::strword(type)-type);
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
@@ -1958,6 +1990,8 @@ int main(int _argc, const char* _argv[])
 				parse = bx::strnl(eol);
 			}
 		}
+
+BX_TRACE("1");
 
 		InOut shaderInputs;
 		InOut shaderOutputs;
@@ -2021,6 +2055,8 @@ int main(int _argc, const char* _argv[])
 				input = data;
 			}
 		}
+
+BX_TRACE("2");
 
 		if (raw)
 		{
@@ -2122,18 +2158,21 @@ int main(int _argc, const char* _argv[])
 						{
 							const Varying& var = varyingIt->second;
 							const char* name = var.m_name.c_str();
+
 							if (0 == strncmp(name, "a_", 2)
 							||  0 == strncmp(name, "i_", 2) )
 							{
-								preprocessor.writef("attribute %s %s %s;\n"
+								preprocessor.writef("attribute %s %s %s %s;\n"
 										, var.m_precision.c_str()
+										, var.m_interpolation.c_str()
 										, var.m_type.c_str()
 										, name
 										);
 							}
 							else
 							{
-								preprocessor.writef("varying %s %s %s;\n"
+								preprocessor.writef("%s varying %s %s %s;\n"
+										, var.m_interpolation.c_str()
 										, var.m_precision.c_str()
 										, var.m_type.c_str()
 										, name
@@ -2148,7 +2187,11 @@ int main(int _argc, const char* _argv[])
 						if (varyingIt != varyingMap.end() )
 						{
 							const Varying& var = varyingIt->second;
-							preprocessor.writef("varying %s %s;\n", var.m_type.c_str(), var.m_name.c_str() );
+							preprocessor.writef("%s varying %s %s;\n"
+								, var.m_interpolation.c_str()
+								, var.m_type.c_str()
+								, var.m_name.c_str()
+								);
 						}
 					}
 				}
@@ -2168,6 +2211,15 @@ int main(int _argc, const char* _argv[])
 						"#define mat3 float3x3\n"
 						"#define mat4 float4x4\n"
 						);
+
+					if (hlsl < 4)
+					{
+						preprocessor.writef(
+							"#define flat\n"
+							"#define smooth\n"
+							"#define noperspective\n"
+							);
+					}
 
 					entry[4] = '_';
 
@@ -2208,7 +2260,13 @@ int main(int _argc, const char* _argv[])
 							if (varyingIt != varyingMap.end() )
 							{
 								const Varying& var = varyingIt->second;
-								preprocessor.writef(" \\\n\t%s%s %s : %s", arg++ > 0 ? ", " : "  ", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
+								preprocessor.writef(" \\\n\t%s%s %s %s : %s"
+									, arg++ > 0 ? ", " : "  "
+									, interpolationDx11(var.m_interpolation.c_str() )
+									, var.m_type.c_str()
+									, var.m_name.c_str()
+									, var.m_semantics.c_str()
+									);
 							}
 						}
 
@@ -2427,9 +2485,9 @@ int main(int _argc, const char* _argv[])
 										  "#define texture2DLod texture2DLodEXT\n"
 										  "#define texture2DProjLod texture2DProjLodEXT\n"
 										  "#define textureCubeLod textureCubeLodEXT\n"
-	//									  "#define texture2DGrad texture2DGradEXT\n"
-	//									  "#define texture2DProjGrad texture2DProjGradEXT\n"
-	//									  "#define textureCubeGrad textureCubeGradEXT\n"
+//										  "#define texture2DGrad texture2DGradEXT\n"
+//										  "#define texture2DProjGrad texture2DProjGradEXT\n"
+//										  "#define textureCubeGrad textureCubeGradEXT\n"
 										);
 								}
 
