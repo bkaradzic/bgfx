@@ -81,7 +81,7 @@ namespace
 		const bool b2 = sign(px, py, bx, by, cx, cy) < 0.0f;
 		const bool b3 = sign(px, py, cx, cy, ax, ay) < 0.0f;
 
-		return ((b1 == b2) && (b2 == b3));
+		return ( (b1 == b2) && (b2 == b3) );
 	}
 
 	void closestPointOnLine(float& ox, float &oy, float px, float py, float ax, float ay, float bx, float by)
@@ -196,7 +196,7 @@ namespace
 		const float vv = _hsv[2];
 		const float pp = vv * (1.0f - _hsv[1]);
 		const float qq = vv * (1.0f - _hsv[1]*ff);
-		const float tt = vv * (1.0f - _hsv[1]*(1.0f-ff));
+		const float tt = vv * (1.0f - _hsv[1]*(1.0f-ff) );
 
 		switch (ii)
 		{
@@ -704,7 +704,7 @@ struct Imgui
 			}
 
 			// Handle mouse scrolling.
-			if (m_insideScrollArea) // && !anyActive())
+			if (m_insideScrollArea) // && !anyActive() )
 			{
 				if (m_scroll)
 				{
@@ -1558,7 +1558,7 @@ struct Imgui
 		}
 	}
 
-	void colorWheelWidget(float _color[3], bool _respectIndentation, bool _enabled)
+	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
 	{
 		m_widgetId++;
 		const uint32_t wheelId = (m_areaId << 16) | m_widgetId;
@@ -1593,7 +1593,7 @@ struct Imgui
 		float sel[2];
 
 		float hsv[3];
-		rgbToHsv(hsv, _color);
+		rgbToHsv(hsv, _rgb);
 
 		if (_enabled)
 		{
@@ -1621,7 +1621,7 @@ struct Imgui
 
 			// Set hue.
 			if (m_left
-			&&  isActive(wheelId))
+			&&  isActive(wheelId) )
 			{
 				hsv[0] = atan2f(cmy, cmx)/NVG_PI*0.5f;
 				if (hsv[0] < 0.0f)
@@ -1634,13 +1634,13 @@ struct Imgui
 
 		if (_enabled
 		&&  m_left
-		&&  isActive(triangleId))
+		&&  isActive(triangleId) )
 		{
 			float an = -hsv[0]*NVG_PI*2.0f;
-			float tmx = (cmx*cosf(an)-cmy*sinf(an));
-			float tmy = (cmx*sinf(an)+cmy*cosf(an));
+			float tmx = (cmx*cosf(an)-cmy*sinf(an) );
+			float tmy = (cmx*sinf(an)+cmy*cosf(an) );
 
-			if (pointInTriangle(tmx, tmy, aa[0], aa[1], bb[0], bb[1], cc[0], cc[1]))
+			if (pointInTriangle(tmx, tmy, aa[0], aa[1], bb[0], bb[1], cc[0], cc[1]) )
 			{
 				sel[0] = tmx;
 				sel[1] = tmy;
@@ -1690,7 +1690,7 @@ struct Imgui
 		const float sat = bx::fclamp(uu/val,  0.0001f, 1.0f);
 
 		const float out[3] = { hsv[0], sat, val };
-		hsvToRgb(_color, out);
+		hsvToRgb(_rgb, out);
 
 		// Draw widget.
 		nvgSave(m_nvg);
@@ -1726,7 +1726,7 @@ struct Imgui
 			nvgBeginPath(m_nvg);
 			nvgCircle(m_nvg, center[0], center[1], ri-0.5f);
 			nvgCircle(m_nvg, center[0], center[1], ro+0.5f);
-			nvgStrokeColor(m_nvg, nvgRGBA(0,0,0,64));
+			nvgStrokeColor(m_nvg, nvgRGBA(0,0,0,64) );
 			nvgStrokeWidth(m_nvg, 1.0f);
 			nvgStroke(m_nvg);
 
@@ -1738,11 +1738,11 @@ struct Imgui
 				nvgStrokeWidth(m_nvg, 2.0f);
 				nvgBeginPath(m_nvg);
 				nvgRect(m_nvg, ri-1.0f,-3.0f,rd+2.0f,6.0f);
-				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192));
+				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192) );
 				nvgStroke(m_nvg);
 
 				// Hue selector drop shadow.
-				NVGpaint paint = nvgBoxGradient(m_nvg, ri-3.0f,-5.0f,ro-ri+6.0f,10.0f, 2.0f,4.0f, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
+				NVGpaint paint = nvgBoxGradient(m_nvg, ri-3.0f,-5.0f,ro-ri+6.0f,10.0f, 2.0f,4.0f, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0) );
 				nvgBeginPath(m_nvg);
 				nvgRect(m_nvg, ri-2.0f-10.0f,-4.0f-10.0f,ro-ri+4.0f+20.0f,8.0f+20.0f);
 				nvgRect(m_nvg, ri-2.0f,-4.0f,ro-ri+4.0f,8.0f);
@@ -1756,14 +1756,14 @@ struct Imgui
 				nvgLineTo(m_nvg, bb[0], bb[1]);
 				nvgLineTo(m_nvg, cc[0], cc[1]);
 				nvgClosePath(m_nvg);
-				nvgStrokeColor(m_nvg, nvgRGBA(0,0,0,64));
+				nvgStrokeColor(m_nvg, nvgRGBA(0,0,0,64) );
 				nvgStroke(m_nvg);
 
 				// Center triangle fill.
-				paint = nvgLinearGradient(m_nvg, aa[0], aa[1], bb[0], bb[1], nvgHSL(hsv[0],drawSaturation,0.5f), nvgRGBA(0,0,0,255));
+				paint = nvgLinearGradient(m_nvg, aa[0], aa[1], bb[0], bb[1], nvgHSL(hsv[0],drawSaturation,0.5f), nvgRGBA(0,0,0,255) );
 				nvgFillPaint(m_nvg, paint);
 				nvgFill(m_nvg);
-				paint = nvgLinearGradient(m_nvg, (aa[0]+bb[0])*0.5f, (aa[1]+bb[1])*0.5f, cc[0], cc[1], nvgRGBA(0,0,0,0), nvgRGBA(255,255,255,255));
+				paint = nvgLinearGradient(m_nvg, (aa[0]+bb[0])*0.5f, (aa[1]+bb[1])*0.5f, cc[0], cc[1], nvgRGBA(0,0,0,0), nvgRGBA(255,255,255,255) );
 				nvgFillPaint(m_nvg, paint);
 				nvgFill(m_nvg);
 
@@ -1771,11 +1771,11 @@ struct Imgui
 				nvgStrokeWidth(m_nvg, 2.0f);
 				nvgBeginPath(m_nvg);
 				nvgCircle(m_nvg, sel[0], sel[1], 5);
-				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192));
+				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192) );
 				nvgStroke(m_nvg);
 
 				// Color selector stroke.
-				paint = nvgRadialGradient(m_nvg, sel[0], sel[1], 7.0f, 9.0f, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0));
+				paint = nvgRadialGradient(m_nvg, sel[0], sel[1], 7.0f, 9.0f, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0) );
 				nvgBeginPath(m_nvg);
 				nvgRect(m_nvg, sel[0]-20.0f, sel[1]-20.0f, 40.0f, 40.0f);
 				nvgCircle(m_nvg, sel[0], sel[1], 7.0f);
@@ -1950,7 +1950,7 @@ uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)
 	va_start(argList, _selected);
 
 	const char* str = va_arg(argList, const char*);
-	for (uint32_t ii = 0; str != NULL; ++ii, str = va_arg(argList, const char*))
+	for (uint32_t ii = 0; str != NULL; ++ii, str = va_arg(argList, const char*) )
 	{
 		if (imguiCheck(str, ii == _selected) )
 		{
