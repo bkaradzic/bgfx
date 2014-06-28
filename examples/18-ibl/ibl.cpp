@@ -382,29 +382,6 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 	}
 }
 
-void imguiBool(const char* _str, bool& _flag, bool _enabled = true)
-{
-	if (imguiCheck(_str, _flag, _enabled) )
-	{
-		_flag = !_flag;
-	}
-}
-
-void imguiColorWheel(const char* _str, float _color[3], bool* _activated, bool _enabled = true)
-{
-	char buf[128];
-	bx::snprintf(buf, 127, "%s [RGB %-2.2f %-2.2f %-2.2f]", _str, _color[0], _color[1], _color[2]);
-	if (imguiButton(buf, true))
-	{
-	    *_activated = !*_activated;
-	}
-
-	if (*_activated)
-	{
-	    imguiColorWheel(_color, false, _enabled);
-	}
-}
-
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -595,9 +572,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiSlider("Glossiness"        , &settings.m_glossiness, 0.0f, 1.0f, 0.01f);
 		imguiSeparator();
 
-		imguiColorWheel("Diffuse color:", &settings.m_rgbDiff[0], &settings.m_showDiffColorWheel);
+		imguiColorWheel("Diffuse color:", &settings.m_rgbDiff[0], settings.m_showDiffColorWheel);
 		imguiSeparator();
-		imguiColorWheel("Specular color:", &settings.m_rgbSpec[0], &settings.m_showSpecColorWheel);
+		imguiColorWheel("Specular color:", &settings.m_rgbSpec[0], settings.m_showSpecColorWheel);
 
 		imguiSeparator();
 		imguiLabel("Predefined materials:");

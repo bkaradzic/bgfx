@@ -83,6 +83,8 @@ void imguiDrawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint
 void imguiDrawRect(float _x, float _y, float _w, float _h, uint32_t _argb);
 
 int imguiReserve(int _y);
-void imguiColorWheel(float _color[3], bool _respectIndentation = false, bool _enabled = true);
+void imguiBool(const char* _text, bool& _flag, bool _enabled = true);
+void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enabled = true);
+void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);
 
 #endif // IMGUI_H_HEADER_GUARD

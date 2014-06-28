@@ -206,14 +206,6 @@ void imguiEnum(LightType::Enum& _enum)
 			);
 }
 
-void imguiBool(const char* _str, bool& _flag, bool _enabled = true)
-{
-	if (imguiCheck(_str, _flag, _enabled) )
-	{
-		_flag = !_flag;
-	}
-}
-
 struct PosNormalTexcoordVertex
 {
 	float    m_x;
