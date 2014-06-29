@@ -156,59 +156,6 @@ namespace
 		}
 	}
 
-	/// Reference: http://codeitdown.com/hsl-hsb-hsv-color/
-	void rgbToHsv(float _hsv[3], const float _rgb[3])
-	{
-		const float min = bx::fmin3(_rgb[0], _rgb[1], _rgb[2]);
-		const float max = bx::fmax3(_rgb[0], _rgb[1], _rgb[2]);
-		const float delta = max - min;
-
-		if (0.0f == delta)
-		{
-			_hsv[0] = 0.0f; // Achromatic.
-		}
-		else
-		{
-			if (max == _rgb[0])
-			{
-				_hsv[0] = (_rgb[1]-_rgb[2])/delta + (_rgb[1]<_rgb[2]?6.0f:0.0f); // Between yellow and magenta.
-			}
-			else if(max == _rgb[1])
-			{
-				_hsv[0] = (_rgb[2]-_rgb[0])/delta + 2.0f; // Between cyan and yellow.
-			}
-			else //if(max == _rgb[2]).
-			{
-				_hsv[0] = (_rgb[0]-_rgb[1])/delta + 4.0f; // Between magenta and cyan.
-			}
-
-			_hsv[0] /= 6.0f;
-		}
-		_hsv[1] = max == 0.0f ? 0.0f : delta/max;
-		_hsv[2] = max;
-	}
-
-	/// Reference: http://codeitdown.com/hsl-hsb-hsv-color/
-	void hsvToRgb(float _rgb[3], const float _hsv[3])
-	{
-		const int32_t ii = int32_t(_hsv[0]*6.0f);
-		const float ff = _hsv[0]*6.0f - float(ii);
-		const float vv = _hsv[2];
-		const float pp = vv * (1.0f - _hsv[1]);
-		const float qq = vv * (1.0f - _hsv[1]*ff);
-		const float tt = vv * (1.0f - _hsv[1]*(1.0f-ff) );
-
-		switch (ii)
-		{
-		case 0: _rgb[0] = vv; _rgb[1] = tt; _rgb[2] = pp; break;
-		case 1: _rgb[0] = qq; _rgb[1] = vv; _rgb[2] = pp; break;
-		case 2: _rgb[0] = pp; _rgb[1] = vv; _rgb[2] = tt; break;
-		case 3: _rgb[0] = pp; _rgb[1] = qq; _rgb[2] = vv; break;
-		case 4: _rgb[0] = tt; _rgb[1] = pp; _rgb[2] = vv; break;
-		case 5: _rgb[0] = vv; _rgb[1] = pp; _rgb[2] = qq; break;
-		}
-	}
-
 	inline float vec2Dot(const float* __restrict _a, const float* __restrict _b)
 	{
 		return _a[0]*_b[0] + _a[1]*_b[1];
@@ -623,18 +570,9 @@ struct Imgui
 
 		float barHeight = (float)height / (float)sh;
 
-		if (barHeight < 1)
+		if (barHeight < 1.0f)
 		{
-			float barY = (float)(yy - stop) / (float)sh;
-			if (barY < 0)
-			{
-				barY = 0;
-			}
-
-			if (barY > 1)
-			{
-				barY = 1;
-			}
+			float barY = bx::fsaturate( (float)(yy - stop) / (float)sh);
 
 			// Handle scroll bar logic.
 			uint32_t hid = m_scrollId;
@@ -657,17 +595,7 @@ struct Imgui
 
 				if (m_dragY != m_my)
 				{
-					u = m_dragOrig + (m_my - m_dragY) / (float)range;
-					if (u < 0)
-					{
-						u = 0;
-					}
-
-					if (u > 1)
-					{
-						u = 1;
-					}
-
+					u = bx::fsaturate(m_dragOrig + (m_my - m_dragY) / (float)range);
 					*m_scrollVal = (int)(u * (height - sh) );
 				}
 			}
@@ -708,16 +636,7 @@ struct Imgui
 			{
 				if (m_scroll)
 				{
-					*m_scrollVal += 20 * m_scroll;
-					if (*m_scrollVal < 0)
-					{
-						*m_scrollVal = 0;
-					}
-
-					if (*m_scrollVal > (sh - height) )
-					{
-						*m_scrollVal = (sh - height);
-					}
+					*m_scrollVal += bx::uint32_clamp(20 * m_scroll, 0, sh - height);
 				}
 			}
 		}
@@ -1009,17 +928,7 @@ struct Imgui
 
 		const int32_t range = width - SLIDER_MARKER_WIDTH;
 
-		float uu = (*_val - _vmin) / (_vmax - _vmin);
-		if (uu < 0)
-		{
-			uu = 0;
-		}
-
-		if (uu > 1)
-		{
-			uu = 1;
-		}
-
+		float uu = bx::fsaturate( (*_val - _vmin) / (_vmax - _vmin) );
 		int32_t m = (int)(uu * range);
 
 		bool over = _enabled && inRect(xx + m, yy, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
@@ -1036,16 +945,7 @@ struct Imgui
 
 			if (m_dragX != m_mx)
 			{
-				uu = m_dragOrig + (float)(m_mx - m_dragX) / (float)range;
-				if (uu < 0)
-				{
-					uu = 0;
-				}
-
-				if (uu > 1)
-				{
-					uu = 1;
-				}
+				uu = bx::fsaturate(m_dragOrig + (float)(m_mx - m_dragX) / (float)range);
 
 				*_val = _vmin + uu * (_vmax - _vmin);
 				*_val = floorf(*_val / _vinc + 0.5f) * _vinc; // Snap to vinc
@@ -1593,7 +1493,7 @@ struct Imgui
 		float sel[2];
 
 		float hsv[3];
-		rgbToHsv(hsv, _rgb);
+		bx::rgbToHsv(hsv, _rgb);
 
 		if (_enabled)
 		{
@@ -1690,7 +1590,7 @@ struct Imgui
 		const float sat = bx::fclamp(uu/val,  0.0001f, 1.0f);
 
 		const float out[3] = { hsv[0], sat, val };
-		hsvToRgb(_rgb, out);
+		bx::hsvToRgb(_rgb, out);
 
 		// Draw widget.
 		nvgSave(m_nvg);
