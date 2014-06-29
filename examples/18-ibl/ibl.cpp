@@ -382,6 +382,42 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 	}
 }
 
+struct LightProbe
+{
+	enum Enum
+	{
+		Wells,
+		Uffizi,
+		Pisa,
+		Ennis,
+		Grace,
+
+		Count
+	};
+
+	void load(const char* _name)
+	{
+		char filePath[512];
+
+		strcpy(filePath, _name);
+		strcat(filePath, "_lod.dds");
+		m_tex = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
+
+		strcpy(filePath, _name);
+		strcat(filePath, "_irr.dds");
+		m_texIrr = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
+	}
+
+	void destroy()
+	{
+		bgfx::destroyTexture(m_tex);
+		bgfx::destroyTexture(m_texIrr);
+	}
+
+	bgfx::TextureHandle m_tex;
+	bgfx::TextureHandle m_texIrr;
+};
+
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -427,49 +463,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Vertex declarations.
 	PosColorTexCoord0Vertex::init();
 
-	struct LightProbe
-	{
-		void load(const char* _name)
-		{
-			char filePath[512];
-
-			strcpy(filePath, _name);
-			strcat(filePath, "_lod.dds");
-			m_tex = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
-
-			strcpy(filePath, _name);
-			strcat(filePath, "_irr.dds");
-			m_texIrr = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
-		}
-
-		void destroy()
-		{
-			bgfx::destroyTexture(m_tex);
-			bgfx::destroyTexture(m_texIrr);
-		}
-
-		bgfx::TextureHandle m_tex;
-		bgfx::TextureHandle m_texIrr;
-	};
-
-	enum LightProbes
-	{
-		LPWells,
-		LPUffizi,
-		LPPisa,
-		LPEnnis,
-		LPGrace,
-
-		LPCount
-	};
-
-	LightProbe lightProbes[LPCount];
-	lightProbes[LPWells].load("wells");
-	lightProbes[LPUffizi].load("uffizi");
-	lightProbes[LPPisa].load("pisa");
-	lightProbes[LPEnnis].load("ennis");
-	lightProbes[LPGrace].load("grace");
-	uint8_t currentLightProbe = LPWells;
+	LightProbe lightProbes[LightProbe::Count];
+	lightProbes[LightProbe::Wells ].load("wells");
+	lightProbes[LightProbe::Uffizi].load("uffizi");
+	lightProbes[LightProbe::Pisa  ].load("pisa");
+	lightProbes[LightProbe::Ennis ].load("ennis");
+	lightProbes[LightProbe::Grace ].load("grace");
+	LightProbe::Enum currentLightProbe = LightProbe::Wells;
 
 	bgfx::UniformHandle u_time   = bgfx::createUniform("u_time",   bgfx::UniformType::Uniform1f);
 	bgfx::UniformHandle u_mtx    = bgfx::createUniform("u_mtx",    bgfx::UniformType::Uniform4x4fv);
@@ -524,6 +524,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_uniforms.submitConstUniforms();
 
+	int32_t leftScrollArea = 0;
+
 	entry::MouseState mouseState;
 	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
@@ -551,19 +553,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		imguiSeparatorLine();
 		imguiLabel("Environment:");
-		currentLightProbe = imguiChoose(currentLightProbe
-									   , "Wells"
-									   , "Uffizi"
-									   , "Pisa"
-									   , "Ennis"
-									   , "Grace"
-									   );
+		currentLightProbe = LightProbe::Enum(imguiChoose(currentLightProbe
+													   , "Wells"
+													   , "Uffizi"
+													   , "Pisa"
+													   , "Ennis"
+													   , "Grace"
+													   ) );
 
 		imguiSeparator();
 		imguiSlider("Exposure", &settings.m_exposure, -8.0f, 8.0f, 0.01f);
 		imguiEndScrollArea();
 
-		static int32_t leftScrollArea = 0;
 		imguiBeginScrollArea("Settings", 10, 70, 256, 576, &leftScrollArea);
 
 		imguiLabel("Material properties:");
@@ -737,7 +738,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyUniform(u_texCube);
 	bgfx::destroyUniform(u_texCubeIrr);
 
-	for (uint8_t ii = 0; ii < LPCount; ++ii)
+	for (uint8_t ii = 0; ii < LightProbe::Count; ++ii)
 	{
 		lightProbes[ii].destroy();
 	}
