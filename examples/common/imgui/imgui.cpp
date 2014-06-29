@@ -506,14 +506,15 @@ struct Imgui
 		m_widgetX = _x + SCROLL_AREA_PADDING;
 		m_widgetY = _y + AREA_HEADER + (*_scroll);
 		m_widgetW = _width - SCROLL_AREA_PADDING * 4;
-		m_scrollTop = _y + SCROLL_AREA_PADDING;
-		m_scrollBottom = _y - AREA_HEADER + _height;
-		m_scrollRight = _x + _width - SCROLL_AREA_PADDING * 3;
-		m_scrollVal = _scroll;
 
-		m_scrollAreaX = _x;
+		m_scrollTop    = _y + AREA_HEADER;
+		m_scrollBottom = _y + _height;
+		m_scrollRight  = _x + _width - SCROLL_AREA_PADDING * 3;
+
+		m_scrollVal = _scroll;
+		m_scrollAreaX     = _x;
 		m_scrollAreaWidth = _width;
-		m_scrollAreaTop = m_widgetY - AREA_HEADER;
+		m_scrollAreaTop   = m_widgetY + SCROLL_AREA_PADDING;
 
 		m_focusTop = _y - AREA_HEADER;
 		m_focusBottom = _y - AREA_HEADER + _height;
@@ -538,13 +539,13 @@ struct Imgui
 
 		nvgScissor(m_nvg
 				 , float(_x + SCROLL_AREA_PADDING)
-				 , float(_y + SCROLL_AREA_PADDING)
+				 , float(_y + AREA_HEADER)
 				 , float(_width - SCROLL_AREA_PADDING * 4)
 				 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
 				 );
 
 		m_scissor = bgfx::setScissor(uint16_t(_x + SCROLL_AREA_PADDING)
-								   , uint16_t(_y + SCROLL_AREA_PADDING)
+								   , uint16_t(_y + AREA_HEADER)
 								   , uint16_t(_width - SCROLL_AREA_PADDING * 4)
 								   , uint16_t(_height - AREA_HEADER - SCROLL_AREA_PADDING)
 								   );
@@ -559,14 +560,14 @@ struct Imgui
 		nvgResetScissor(m_nvg);
 
 		// Draw scroll bar
-		int32_t xx = m_scrollRight + SCROLL_AREA_PADDING / 2;
-		int32_t yy = m_scrollTop;
-		int32_t width = SCROLL_AREA_PADDING * 2;
+		int32_t xx     = m_scrollRight + SCROLL_AREA_PADDING / 2;
+		int32_t yy     = m_scrollTop;
+		int32_t width  = SCROLL_AREA_PADDING * 2;
 		int32_t height = m_scrollBottom - m_scrollTop;
 
 		int32_t stop = m_scrollAreaTop;
 		int32_t sbot = m_widgetY;
-		int32_t sh = sbot - stop; // The scrollable area height.
+		int32_t sh   = sbot - stop; // The scrollable area height.
 
 		float barHeight = (float)height / (float)sh;
 
@@ -586,17 +587,17 @@ struct Imgui
 			buttonLogic(hid, over);
 			if (isActive(hid) )
 			{
-				float u = (float)(hy - yy) / (float)range;
+				float uu = (float)(hy - yy) / (float)range;
 				if (m_wentActive)
 				{
 					m_dragY = m_my;
-					m_dragOrig = u;
+					m_dragOrig = uu;
 				}
 
 				if (m_dragY != m_my)
 				{
-					u = bx::fsaturate(m_dragOrig + (m_my - m_dragY) / (float)range);
-					*m_scrollVal = (int)(u * (height - sh) );
+					uu = bx::fsaturate(m_dragOrig + (m_my - m_dragY) / (float)range);
+					*m_scrollVal = (int)(uu * (height - sh) );
 				}
 			}
 
@@ -1499,7 +1500,7 @@ struct Imgui
 		{
 			if (m_leftPressed)
 			{
-				const float len = sqrtf(cmx*cmx+cmy*cmy);
+				const float len = sqrtf(cmx*cmx + cmy*cmy);
 				if (len > ri)
 				{
 					if (len < ro)
