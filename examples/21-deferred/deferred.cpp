@@ -411,7 +411,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			imguiBeginScrollArea("Settings", width - width / 5 - 10, 10, width / 5, height / 3, &scrollArea);
 			imguiSeparatorLine();
 
-			imguiSlider("Num lights", &numLights, 1, 2048);
+			imguiSlider("Num lights", numLights, 1, 2048);
 
 			if (imguiCheck("Show G-Buffer.", showGBuffer) )
 			{
@@ -428,7 +428,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				animateMesh = !animateMesh;
 			}
 
-			imguiSlider("Lights animation speed", &lightAnimationSpeed, 0.0f, 0.4f, 0.01f);
+			imguiSlider("Lights animation speed", lightAnimationSpeed, 0.0f, 0.4f, 0.01f);
 			
 			imguiEndScrollArea();
 			imguiEndFrame();

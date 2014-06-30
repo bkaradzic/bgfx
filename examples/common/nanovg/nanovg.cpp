@@ -300,6 +300,17 @@ struct NVGcolor nvgRGBA(unsigned char r, unsigned char g, unsigned char b, unsig
 	return color;
 }
 
+struct NVGcolor nvgRGBAu(unsigned int abgr)
+{
+	struct NVGcolor color;
+	// Use longer initialization to suppress warning.
+	color.r = ( (abgr>> 0)&0xff) / 255.0f;
+	color.g = ( (abgr>> 8)&0xff) / 255.0f;
+	color.b = ( (abgr>>16)&0xff) / 255.0f;
+	color.a = ( (abgr>>24)&0xff) / 255.0f;
+	return color;
+}
+
 struct NVGcolor nvgRGBAf(float r, float g, float b, float a)
 {
 	struct NVGcolor color;

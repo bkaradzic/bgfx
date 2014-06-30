@@ -162,7 +162,7 @@ bool mainloop()
 			autoAdjust ^= true;
 		}
 
-		imguiSlider("Dim", &dim, 5, 40);
+		imguiSlider("Dim", dim, 5, 40);
 		imguiLabel("Draw calls: %d", dim*dim*dim);
 		imguiLabel("Avg Delta Time (1 second) [ms]: %0.4f", deltaTimeAvgNs/1000.0f);
 

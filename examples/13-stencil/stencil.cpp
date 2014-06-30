@@ -1033,10 +1033,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		imguiSeparatorLine();
-		imguiSlider("Lights", &settings_numLights, 1.0f, float(MAX_NUM_LIGHTS), 1.0f);
+		imguiSlider("Lights", settings_numLights, 1.0f, float(MAX_NUM_LIGHTS), 1.0f);
 		if (scene == StencilReflectionScene)
 		{
-			imguiSlider("Reflection value", &settings_reflectionValue, 0.0f, 1.0f, 0.01f);
+			imguiSlider("Reflection value", settings_reflectionValue, 0.0f, 1.0f, 0.01f);
 		}
 
 		if (imguiCheck("Update lights", settings_updateLights) )

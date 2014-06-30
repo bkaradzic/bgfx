@@ -133,6 +133,9 @@ struct NVGcolor nvgRGBf(float r, float g, float b);
 // Returns a color value from red, green, blue and alpha values.
 struct NVGcolor nvgRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
+//
+struct NVGcolor nvgRGBAu(unsigned int abgr);
+
 // Returns a color value from red, green, blue and alpha values.
 struct NVGcolor nvgRGBAf(float r, float g, float b, float a);
 

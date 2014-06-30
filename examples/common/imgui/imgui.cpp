@@ -38,6 +38,8 @@
 #include "vs_imgui_texture.bin.h"
 #include "fs_imgui_texture.bin.h"
 
+#define USE_NANOVG_FONT 0
+
 #define MAX_TEMP_COORDS 100
 #define NUM_CIRCLE_VERTS (8 * 4)
 
@@ -273,7 +275,9 @@ struct Imgui
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
 		u_texColor.idx = bgfx::invalidHandle;
+#if !USE_NANOVG_FONT
 		m_fontTexture.idx = bgfx::invalidHandle;
+#endif // !USE_NANOVG_FONT
 		m_colorProgram.idx = bgfx::invalidHandle;
 		m_textureProgram.idx = bgfx::invalidHandle;
 	}
@@ -281,6 +285,9 @@ struct Imgui
 	bool create(const void* _data)
 	{
 		m_nvg = nvgCreate(512, 512, 1, m_view);
+		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
+		nvgFontSize(m_nvg, 15.0f);
+		nvgFontFace(m_nvg, "default");
 
 		for (int32_t ii = 0; ii < NUM_CIRCLE_VERTS; ++ii)
 		{
@@ -339,9 +346,11 @@ struct Imgui
 		bgfx::destroyShader(vsh);
 		bgfx::destroyShader(fsh);
 
+#if !USE_NANOVG_FONT
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, 15.0f, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_cdata);
 		m_fontTexture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
+#endif // !USE_NANOVG_FONT
 
 		return true;
 	}
@@ -349,7 +358,9 @@ struct Imgui
 	void destroy()
 	{
 		bgfx::destroyUniform(u_texColor);
+#if !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_fontTexture);
+#endif // !USE_NANOVG_FONT
 		bgfx::destroyProgram(m_colorProgram);
 		bgfx::destroyProgram(m_textureProgram);
 		nvgDelete(m_nvg);
@@ -514,9 +525,9 @@ struct Imgui
 		m_scrollVal = _scroll;
 		m_scrollAreaX     = _x;
 		m_scrollAreaWidth = _width;
-		m_scrollAreaTop   = m_widgetY + SCROLL_AREA_PADDING;
+		m_scrollAreaTop   = m_widgetY;
 
-		m_focusTop = _y - AREA_HEADER;
+		m_focusTop    = _y - AREA_HEADER;
 		m_focusBottom = _y - AREA_HEADER + _height;
 
 		m_insideScrollArea = inRect(_x, _y, _width, _height, false);
@@ -566,7 +577,7 @@ struct Imgui
 		int32_t height = m_scrollBottom - m_scrollTop;
 
 		int32_t stop = m_scrollAreaTop;
-		int32_t sbot = m_widgetY;
+		int32_t sbot = m_widgetY + SCROLL_AREA_PADDING;
 		int32_t sh   = sbot - stop; // The scrollable area height.
 
 		float barHeight = (float)height / (float)sh;
@@ -914,7 +925,7 @@ struct Imgui
 			);
 	}
 
-	bool slider(const char* _text, float* _val, float _vmin, float _vmax, float _vinc, bool _enabled)
+	bool slider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled)
 	{
 		m_widgetId++;
 		uint32_t id = (m_areaId << 16) | m_widgetId;
@@ -929,7 +940,7 @@ struct Imgui
 
 		const int32_t range = width - SLIDER_MARKER_WIDTH;
 
-		float uu = bx::fsaturate( (*_val - _vmin) / (_vmax - _vmin) );
+		float uu = bx::fsaturate( (_val - _vmin) / (_vmax - _vmin) );
 		int32_t m = (int)(uu * range);
 
 		bool over = _enabled && inRect(xx + m, yy, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
@@ -948,8 +959,8 @@ struct Imgui
 			{
 				uu = bx::fsaturate(m_dragOrig + (float)(m_mx - m_dragX) / (float)range);
 
-				*_val = _vmin + uu * (_vmax - _vmin);
-				*_val = floorf(*_val / _vinc + 0.5f) * _vinc; // Snap to vinc
+				_val = _vmin + uu * (_vmax - _vmin);
+				_val = floorf(_val / _vinc + 0.5f) * _vinc; // Snap to vinc
 				m = (int)(uu * range);
 				valChanged = true;
 			}
@@ -981,7 +992,7 @@ struct Imgui
 		char fmt[16];
 		bx::snprintf(fmt, 16, "%%.%df", digits >= 0 ? 0 : -digits);
 		char msg[128];
-		bx::snprintf(msg, 128, fmt, *_val);
+		bx::snprintf(msg, 128, fmt, _val);
 
 		if (_enabled)
 		{
@@ -1288,6 +1299,7 @@ struct Imgui
 		}
 	}
 
+#if !USE_NANOVG_FONT
 	void getBakedQuad(stbtt_bakedchar* _chardata, int32_t char_index, float* _xpos, float* _ypos, stbtt_aligned_quad* _quad)
 	{
 		stbtt_bakedchar* b = _chardata + char_index;
@@ -1344,6 +1356,7 @@ struct Imgui
 
 		return len;
 	}
+#endif // !USE_NANOVG_FONT
 
 	void drawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _abgr)
 	{
@@ -1352,11 +1365,20 @@ struct Imgui
 
 	void drawText(float _x, float _y, const char* _text, ImguiTextAlign::Enum _align, uint32_t _abgr)
 	{
-		if (!_text)
+#if USE_NANOVG_FONT
+		static uint32_t textAlign[ImguiTextAlign::Count] =
 		{
-			return;
-		}
+			NVG_ALIGN_LEFT,
+			NVG_ALIGN_CENTER,
+			NVG_ALIGN_RIGHT,
+		};
 
+		nvgTextAlign(m_nvg, textAlign[_align]);
+
+		nvgFontBlur(m_nvg, 0.0f);
+		nvgFillColor(m_nvg, nvgRGBAu(_abgr) );
+		nvgText(m_nvg, _x, _y, _text, NULL);
+#else
 		uint32_t numVertices = 0;
 		if (_align == ImguiTextAlign::Center)
 		{
@@ -1457,6 +1479,7 @@ struct Imgui
 			bgfx::setScissor(m_scissor);
 			bgfx::submit(m_view);
 		}
+#endif // USE_NANOVG_FONT
 	}
 
 	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
@@ -1730,8 +1753,6 @@ struct Imgui
 	uint32_t m_scrollId;
 	bool m_insideScrollArea;
 
-	stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
-
 	uint16_t m_textureWidth;
 	uint16_t m_textureHeight;
 	float m_invTextureWidth;
@@ -1742,9 +1763,13 @@ struct Imgui
 
 	uint8_t m_view;
 	bgfx::UniformHandle u_texColor;
-	bgfx::TextureHandle m_fontTexture;
 	bgfx::ProgramHandle m_colorProgram;
 	bgfx::ProgramHandle m_textureProgram;
+
+#if !USE_NANOVG_FONT
+	stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
+	bgfx::TextureHandle m_fontTexture;
+#endif // !USE_NANOVG_FONT
 };
 
 static Imgui s_imgui;
@@ -1832,16 +1857,16 @@ void imguiValue(const char* _text)
 	s_imgui.value(_text);
 }
 
-bool imguiSlider(const char* _text, float* _val, float _vmin, float _vmax, float _vinc, bool _enabled)
+bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled)
 {
 	return s_imgui.slider(_text, _val, _vmin, _vmax, _vinc, _enabled);
 }
 
-bool imguiSlider(const char* _text, int32_t* _val, int32_t _vmin, int32_t _vmax, bool _enabled)
+bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled)
 {
-	float val = (float)*_val;
-	bool result = s_imgui.slider(_text, &val, (float)_vmin, (float)_vmax, 1.0f, _enabled);
-	*_val = (int32_t)val;
+	float val = (float)_val;
+	bool result = s_imgui.slider(_text, val, (float)_vmin, (float)_vmax, 1.0f, _enabled);
+	_val = (int32_t)val;
 	return result;
 }
 

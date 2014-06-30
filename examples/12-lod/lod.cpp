@@ -134,7 +134,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		static float distance = 2.0f;
-		imguiSlider("Distance", &distance, 2.0f, 6.0f, .01f);
+		imguiSlider("Distance", distance, 2.0f, 6.0f, .01f);
 
 		imguiEndScrollArea();
 		imguiEndFrame();

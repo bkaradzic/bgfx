@@ -38,6 +38,8 @@ struct ImguiTextAlign
 		Left,
 		Center,
 		Right,
+
+		Count
 	};
 };
 
@@ -71,8 +73,8 @@ bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
 void imguiLabel(const char* _format, ...);
 void imguiValue(const char* _text);
-bool imguiSlider(const char* _text, float* _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
-bool imguiSlider(const char* _text, int32_t* _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
+bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
+bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
 #define imguiChoose(...) imguiChooseUseMacroInstead(__VA_ARGS__, NULL)

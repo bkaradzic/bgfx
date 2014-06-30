@@ -148,8 +148,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiSeparatorLine();
 
 		bool recomputeVisibleText = false;
-		recomputeVisibleText |= imguiSlider("Number of lines", &visibleLineCount, 1.0f, 177.0f , 1.0f);
-		if (imguiSlider("Font size", &textSize, 6.0f, 64.0f , 1.0f) )
+		recomputeVisibleText |= imguiSlider("Number of lines", visibleLineCount, 1.0f, 177.0f , 1.0f);
+		if (imguiSlider("Font size", textSize, 6.0f, 64.0f , 1.0f) )
 		{
 			fontManager->destroyFont(fontScaled);
 			fontScaled = fontManager->createScaledFontToPixelSize(fontSdf, (uint32_t) textSize);
@@ -157,9 +157,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			recomputeVisibleText = true;
 		}
 
-		recomputeVisibleText |= imguiSlider("Scroll", &textScroll, 0.0f, (lineCount-visibleLineCount) , 1.0f);
-		imguiSlider("Rotate", &textRotation, 0.0f, (float) M_PI *2.0f , 0.1f);
-		recomputeVisibleText |= imguiSlider("Scale", &textScale, 0.1f, 10.0f , 0.1f);
+		recomputeVisibleText |= imguiSlider("Scroll", textScroll, 0.0f, (lineCount-visibleLineCount) , 1.0f);
+		imguiSlider("Rotate", textRotation, 0.0f, (float) M_PI *2.0f , 0.1f);
+		recomputeVisibleText |= imguiSlider("Scale", textScale, 0.1f, 10.0f , 0.1f);
 
 		if (recomputeVisibleText)
 		{

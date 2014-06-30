@@ -549,7 +549,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiBool("IBL Specular", settings.m_specularIbl);
 
 		imguiSeparatorLine();
-		imguiSlider("Speed", &settings.m_speed, 0.0f, 1.0f, 0.01f);
+		imguiSlider("Speed", settings.m_speed, 0.0f, 1.0f, 0.01f);
 
 		imguiSeparatorLine();
 		imguiLabel("Environment:");
@@ -562,15 +562,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 													   ) );
 
 		imguiSeparator();
-		imguiSlider("Exposure", &settings.m_exposure, -8.0f, 8.0f, 0.01f);
+		imguiSlider("Exposure", settings.m_exposure, -8.0f, 8.0f, 0.01f);
 		imguiEndScrollArea();
 
 		imguiBeginScrollArea("Settings", 10, 70, 256, 576, &leftScrollArea);
 
 		imguiLabel("Material properties:");
 		imguiSeparator();
-		imguiSlider("Diffuse - Specular", &settings.m_diffspec,   0.0f, 1.0f, 0.01f);
-		imguiSlider("Glossiness"        , &settings.m_glossiness, 0.0f, 1.0f, 0.01f);
+		imguiSlider("Diffuse - Specular", settings.m_diffspec,   0.0f, 1.0f, 0.01f);
+		imguiSlider("Glossiness"        , settings.m_glossiness, 0.0f, 1.0f, 0.01f);
 		imguiSeparator();
 
 		imguiColorWheel("Diffuse color:", &settings.m_rgbDiff[0], settings.m_showDiffColorWheel);

@@ -262,12 +262,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiBeginScrollArea("Settings", width - width / 5 - 10, 10, width / 5, height / 3, &scrollArea);
 		imguiSeparatorLine();
 
-		imguiSlider("Speed", &speed, 0.0f, 1.0f, 0.01f);
+		imguiSlider("Speed", speed, 0.0f, 1.0f, 0.01f);
 		imguiSeparator();
 
-		imguiSlider("Middle gray", &middleGray, 0.1f, 1.0f, 0.01f);
-		imguiSlider("White point", &white, 0.1f, 2.0f, 0.01f);
-		imguiSlider("Treshold", &treshold, 0.1f, 2.0f, 0.01f);
+		imguiSlider("Middle gray", middleGray, 0.1f, 1.0f, 0.01f);
+		imguiSlider("White point", white, 0.1f, 2.0f, 0.01f);
+		imguiSlider("Treshold", treshold, 0.1f, 2.0f, 0.01f);
 
 		imguiEndScrollArea();
 		imguiEndFrame();
