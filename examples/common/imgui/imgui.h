@@ -84,7 +84,6 @@ void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_
 void imguiDrawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint32_t _argb);
 void imguiDrawRect(float _x, float _y, float _w, float _h, uint32_t _argb);
 
-int imguiReserve(int _y);
 void imguiBool(const char* _text, bool& _flag, bool _enabled = true);
 void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enabled = true);
 void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);

@@ -1909,13 +1909,6 @@ void imguiDrawRect(float _x, float _y, float _width, float _height, uint32_t _ar
 	s_imgui.drawRect(_x, _y, _width, _height, _argb);
 }
 
-int imguiReserve(int _y)
-{
-	const int yy = s_imgui.m_widgetY;
-	s_imgui.m_widgetY += _y;
-	return yy;
-}
-
 void imguiBool(const char* _text, bool& _flag, bool _enabled)
 {
 	if (imguiCheck(_text, _flag, _enabled) )
