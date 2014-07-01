@@ -58,8 +58,8 @@
 #include <bx/hash.h>
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
+#include <bx/tokenizecmd.h>
 
-#include "tokenizecmd.h"
 #include "bounds.h"
 
 struct Vector3
@@ -429,7 +429,7 @@ int main(int _argc, const char* _argv[])
 	const char* next = data;
 	do
 	{
-		next = tokenizeCommandLine(next, commandLine, len, argc, argv, BX_COUNTOF(argv), '\n');
+		next = bx::tokenizeCommandLine(next, commandLine, len, argc, argv, BX_COUNTOF(argv), '\n');
 		if (0 < argc)
 		{
 			if (0 == strcmp(argv[0], "#") )
