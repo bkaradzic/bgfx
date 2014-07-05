@@ -37,6 +37,9 @@
 #include "fs_imgui_color.bin.h"
 #include "vs_imgui_texture.bin.h"
 #include "fs_imgui_texture.bin.h"
+#include "vs_imgui_image.bin.h"
+#include "fs_imgui_image.bin.h"
+#include "dds_imgui_x_texture.h"
 
 #define USE_NANOVG_FONT 0
 
@@ -227,6 +230,27 @@ namespace
 
 	bgfx::VertexDecl PosColorUvVertex::ms_decl;
 
+	struct PosUvVertex
+	{
+		float m_x;
+		float m_y;
+		float m_u;
+		float m_v;
+
+		static void init()
+		{
+			ms_decl
+				.begin()
+				.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
+				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+				.end();
+		}
+
+		static bgfx::VertexDecl ms_decl;
+	};
+
+	bgfx::VertexDecl PosUvVertex::ms_decl;
+
 } // namespace
 
 struct Imgui
@@ -259,6 +283,7 @@ struct Imgui
 		, m_scrollRight(0)
 		, m_scrollAreaTop(0)
 		, m_scrollAreaWidth(0)
+		, m_scrollAreaInnerWidth(0)
 		, m_scrollAreaX(0)
 		, m_scrollVal(NULL)
 		, m_focusTop(0)
@@ -278,8 +303,11 @@ struct Imgui
 #if !USE_NANOVG_FONT
 		m_fontTexture.idx = bgfx::invalidHandle;
 #endif // !USE_NANOVG_FONT
+		m_xTexture.idx = bgfx::invalidHandle;
+
 		m_colorProgram.idx = bgfx::invalidHandle;
 		m_textureProgram.idx = bgfx::invalidHandle;
+		m_imageProgram.idx = bgfx::invalidHandle;
 	}
 
 	bool create(const void* _data)
@@ -298,6 +326,7 @@ struct Imgui
 
 		PosColorVertex::init();
 		PosColorUvVertex::init();
+		PosUvVertex::init();
 
 		u_texColor  = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
 
@@ -305,6 +334,8 @@ struct Imgui
 		const bgfx::Memory* fs_imgui_color;
 		const bgfx::Memory* vs_imgui_texture;
 		const bgfx::Memory* fs_imgui_texture;
+		const bgfx::Memory* vs_imgui_image;
+		const bgfx::Memory* fs_imgui_image;
 
 		switch (bgfx::getRendererType() )
 		{
@@ -313,6 +344,8 @@ struct Imgui
 			fs_imgui_color   = bgfx::makeRef(fs_imgui_color_dx9, sizeof(fs_imgui_color_dx9) );
 			vs_imgui_texture = bgfx::makeRef(vs_imgui_texture_dx9, sizeof(vs_imgui_texture_dx9) );
 			fs_imgui_texture = bgfx::makeRef(fs_imgui_texture_dx9, sizeof(fs_imgui_texture_dx9) );
+			vs_imgui_image   = bgfx::makeRef(vs_imgui_image_dx9, sizeof(vs_imgui_image_dx9) );
+			fs_imgui_image   = bgfx::makeRef(fs_imgui_image_dx9, sizeof(fs_imgui_image_dx9) );
 			m_halfTexel = 0.5f;
 			break;
 
@@ -321,6 +354,8 @@ struct Imgui
 			fs_imgui_color   = bgfx::makeRef(fs_imgui_color_dx11, sizeof(fs_imgui_color_dx11) );
 			vs_imgui_texture = bgfx::makeRef(vs_imgui_texture_dx11, sizeof(vs_imgui_texture_dx11) );
 			fs_imgui_texture = bgfx::makeRef(fs_imgui_texture_dx11, sizeof(fs_imgui_texture_dx11) );
+			vs_imgui_image   = bgfx::makeRef(vs_imgui_image_dx11, sizeof(vs_imgui_image_dx11) );
+			fs_imgui_image   = bgfx::makeRef(fs_imgui_image_dx11, sizeof(fs_imgui_image_dx11) );
 			break;
 
 		default:
@@ -328,6 +363,8 @@ struct Imgui
 			fs_imgui_color   = bgfx::makeRef(fs_imgui_color_glsl, sizeof(fs_imgui_color_glsl) );
 			vs_imgui_texture = bgfx::makeRef(vs_imgui_texture_glsl, sizeof(vs_imgui_texture_glsl) );
 			fs_imgui_texture = bgfx::makeRef(fs_imgui_texture_glsl, sizeof(fs_imgui_texture_glsl) );
+			vs_imgui_image   = bgfx::makeRef(vs_imgui_image_glsl, sizeof(vs_imgui_image_glsl) );
+			fs_imgui_image   = bgfx::makeRef(fs_imgui_image_glsl, sizeof(fs_imgui_image_glsl) );
 			break;
 		}
 
@@ -346,11 +383,19 @@ struct Imgui
 		bgfx::destroyShader(vsh);
 		bgfx::destroyShader(fsh);
 
+		vsh = bgfx::createShader(vs_imgui_image);
+		fsh = bgfx::createShader(fs_imgui_image);
+		m_imageProgram = bgfx::createProgram(vsh, fsh);
+		bgfx::destroyShader(vsh);
+		bgfx::destroyShader(fsh);
+
 #if !USE_NANOVG_FONT
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, 15.0f, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_cdata);
 		m_fontTexture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
 #endif // !USE_NANOVG_FONT
+		mem = bgfx::makeRef(s_xTexture, sizeof(s_xTexture));
+		m_xTexture = bgfx::createTexture(mem);
 
 		return true;
 	}
@@ -361,8 +406,10 @@ struct Imgui
 #if !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_fontTexture);
 #endif // !USE_NANOVG_FONT
+		bgfx::destroyTexture(m_xTexture);
 		bgfx::destroyProgram(m_colorProgram);
 		bgfx::destroyProgram(m_textureProgram);
+		bgfx::destroyProgram(m_imageProgram);
 		nvgDelete(m_nvg);
 	}
 
@@ -525,6 +572,7 @@ struct Imgui
 		m_scrollVal = _scroll;
 		m_scrollAreaX     = _x;
 		m_scrollAreaWidth = _width;
+		m_scrollAreaInnerWidth = m_widgetW;
 		m_scrollAreaTop   = m_widgetY;
 
 		m_focusTop    = _y - AREA_HEADER;
@@ -815,6 +863,37 @@ struct Imgui
 		}
 
 		return res;
+	}
+
+	void image(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+	{
+		int32_t xx;
+		if (ImguiImageAlign::Left == _align)
+		{
+			xx = m_widgetX;
+		}
+		else //if (ImguiImageAlign::Center == _align).
+		{
+			xx = m_widgetX + (m_scrollAreaInnerWidth-_width)/2;
+		}
+
+		const int32_t yy = m_widgetY;
+		m_widgetY += _height + DEFAULT_SPACING;
+
+		screenQuad(xx, yy, _width, _height);
+		bgfx::setTexture(0, u_texColor, bgfx::invalidHandle == _image.idx ? m_xTexture : _image);
+		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+		bgfx::setProgram(m_imageProgram);
+		bgfx::setScissor(m_scissor);
+		bgfx::submit(m_view);
+	}
+
+	void image(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align)
+	{
+		const float width = _width*float(m_scrollAreaInnerWidth);
+		const float height = width/_aspect;
+
+		image(_image, int32_t(width), int32_t(height), _align);
 	}
 
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -1482,6 +1561,64 @@ struct Imgui
 #endif // USE_NANOVG_FONT
 	}
 
+	void screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height)
+	{
+		if (bgfx::checkAvailTransientVertexBuffer(6, PosUvVertex::ms_decl) )
+		{
+			bgfx::TransientVertexBuffer vb;
+			bgfx::allocTransientVertexBuffer(&vb, 6, PosUvVertex::ms_decl);
+			PosUvVertex* vertex = (PosUvVertex*)vb.data;
+
+			const float widthf  = float(_width);
+			const float heightf = float(_height);
+
+			const float minx = float(_x);
+			const float miny = float(_y);
+			const float maxx = minx+widthf;
+			const float maxy = miny+heightf;
+
+			const float texelHalfW = m_halfTexel/widthf;
+			const float texelHalfH = m_halfTexel/heightf;
+			const float minu = texelHalfW;
+			const float maxu = 1.0f - texelHalfW;
+			const float minv = texelHalfH;
+			const float maxv = texelHalfH + 1.0f;
+
+			vertex[0].m_x = minx;
+			vertex[0].m_y = miny;
+			vertex[0].m_u = minu;
+			vertex[0].m_v = minv;
+
+			vertex[1].m_x = maxx;
+			vertex[1].m_y = miny;
+			vertex[1].m_u = maxu;
+			vertex[1].m_v = minv;
+
+			vertex[2].m_x = maxx;
+			vertex[2].m_y = maxy;
+			vertex[2].m_u = maxu;
+			vertex[2].m_v = maxv;
+
+			vertex[3].m_x = maxx;
+			vertex[3].m_y = maxy;
+			vertex[3].m_u = maxu;
+			vertex[3].m_v = maxv;
+
+			vertex[4].m_x = minx;
+			vertex[4].m_y = maxy;
+			vertex[4].m_u = minu;
+			vertex[4].m_v = maxv;
+
+			vertex[5].m_x = minx;
+			vertex[5].m_y = miny;
+			vertex[5].m_u = minu;
+			vertex[5].m_v = minv;
+
+			bgfx::setVertexBuffer(&vb);
+		}
+	}
+
+
 	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
 	{
 		m_widgetId++;
@@ -1746,6 +1883,7 @@ struct Imgui
 	int32_t m_scrollRight;
 	int32_t m_scrollAreaTop;
 	int32_t m_scrollAreaWidth;
+	int32_t m_scrollAreaInnerWidth;
 	int32_t m_scrollAreaX;
 	int32_t* m_scrollVal;
 	int32_t m_focusTop;
@@ -1765,11 +1903,13 @@ struct Imgui
 	bgfx::UniformHandle u_texColor;
 	bgfx::ProgramHandle m_colorProgram;
 	bgfx::ProgramHandle m_textureProgram;
+	bgfx::ProgramHandle m_imageProgram;
 
 #if !USE_NANOVG_FONT
 	stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
 	bgfx::TextureHandle m_fontTexture;
 #endif // !USE_NANOVG_FONT
+	bgfx::TextureHandle m_xTexture;
 };
 
 static Imgui s_imgui;
@@ -1941,4 +2081,14 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 	{
 		imguiColorWheel(_rgb, false, _enabled);
 	}
+}
+
+void imguiImage(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+{
+	return s_imgui.image(_image, _width, _height, _align);
+}
+
+void imguiImage(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align)
+{
+	return s_imgui.image(_image, _width, _aspect, _align);
 }
