@@ -872,9 +872,13 @@ struct Imgui
 		{
 			xx = m_widgetX;
 		}
-		else //if (ImguiImageAlign::Center == _align).
+		else if (ImguiImageAlign::Center == _align)
 		{
-			xx = m_widgetX + (m_scrollAreaInnerWidth-_width)/2;
+			xx = m_scrollAreaX + (m_scrollAreaInnerWidth-_width)/2;
+		}
+		else //if (ImguiImageAlign::CenterIndented == _align).
+		{
+			xx = (m_widgetX + m_scrollAreaInnerWidth + m_scrollAreaX - _width)/2;
 		}
 
 		const int32_t yy = m_widgetY;

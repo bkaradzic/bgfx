@@ -49,6 +49,7 @@ struct ImguiImageAlign
 	{
 		Left,
 		Center,
+		CenterIndented,
 	};
 };
 
