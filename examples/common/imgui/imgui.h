@@ -29,8 +29,6 @@
 #define IMGUI_MBUT_LEFT  0x01
 #define IMGUI_MBUT_RIGHT 0x02
 
-struct NVGcontext;
-
 struct ImguiTextAlign
 {
 	enum Enum
@@ -100,4 +98,5 @@ void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _en
 
 void imguiImage(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::Left);
 void imguiImage(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::Left); //_width is in [0.0-1.0] range.
+
 #endif // IMGUI_H_HEADER_GUARD

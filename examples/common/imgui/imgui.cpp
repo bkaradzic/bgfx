@@ -299,15 +299,15 @@ struct Imgui
 		m_invTextureWidth  = 1.0f/m_textureWidth;
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
-		u_texColor.idx = bgfx::invalidHandle;
+		u_texColor.idx       = bgfx::invalidHandle;
 #if !USE_NANOVG_FONT
-		m_fontTexture.idx = bgfx::invalidHandle;
+		m_fontTexture.idx    = bgfx::invalidHandle;
 #endif // !USE_NANOVG_FONT
-		m_xTexture.idx = bgfx::invalidHandle;
+		m_missingTexture.idx = bgfx::invalidHandle;
 
-		m_colorProgram.idx = bgfx::invalidHandle;
+		m_colorProgram.idx   = bgfx::invalidHandle;
 		m_textureProgram.idx = bgfx::invalidHandle;
-		m_imageProgram.idx = bgfx::invalidHandle;
+		m_imageProgram.idx   = bgfx::invalidHandle;
 	}
 
 	bool create(const void* _data)
@@ -395,7 +395,7 @@ struct Imgui
 		m_fontTexture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
 #endif // !USE_NANOVG_FONT
 		mem = bgfx::makeRef(s_xTexture, sizeof(s_xTexture));
-		m_xTexture = bgfx::createTexture(mem);
+		m_missingTexture = bgfx::createTexture(mem);
 
 		return true;
 	}
@@ -406,7 +406,7 @@ struct Imgui
 #if !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_fontTexture);
 #endif // !USE_NANOVG_FONT
-		bgfx::destroyTexture(m_xTexture);
+		bgfx::destroyTexture(m_missingTexture);
 		bgfx::destroyProgram(m_colorProgram);
 		bgfx::destroyProgram(m_textureProgram);
 		bgfx::destroyProgram(m_imageProgram);
@@ -885,7 +885,7 @@ struct Imgui
 		m_widgetY += _height + DEFAULT_SPACING;
 
 		screenQuad(xx, yy, _width, _height);
-		bgfx::setTexture(0, u_texColor, bgfx::invalidHandle == _image.idx ? m_xTexture : _image);
+		bgfx::setTexture(0, u_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		bgfx::setProgram(m_imageProgram);
 		bgfx::setScissor(m_scissor);
@@ -1622,7 +1622,6 @@ struct Imgui
 		}
 	}
 
-
 	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
 	{
 		m_widgetId++;
@@ -1913,7 +1912,7 @@ struct Imgui
 	stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
 	bgfx::TextureHandle m_fontTexture;
 #endif // !USE_NANOVG_FONT
-	bgfx::TextureHandle m_xTexture;
+	bgfx::TextureHandle m_missingTexture;
 };
 
 static Imgui s_imgui;
