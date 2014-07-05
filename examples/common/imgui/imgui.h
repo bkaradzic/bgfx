@@ -46,8 +46,10 @@ struct ImguiImageAlign
 	enum Enum
 	{
 		Left,
+		LeftIndented,
 		Center,
 		CenterIndented,
+		Right,
 	};
 };
 

@@ -870,15 +870,23 @@ struct Imgui
 		int32_t xx;
 		if (ImguiImageAlign::Left == _align)
 		{
+			xx = m_scrollAreaX + SCROLL_AREA_PADDING;
+		}
+		else if (ImguiImageAlign::LeftIndented == _align)
+		{
 			xx = m_widgetX;
 		}
 		else if (ImguiImageAlign::Center == _align)
 		{
 			xx = m_scrollAreaX + (m_scrollAreaInnerWidth-_width)/2;
 		}
-		else //if (ImguiImageAlign::CenterIndented == _align).
+		else if (ImguiImageAlign::CenterIndented == _align)
 		{
 			xx = (m_widgetX + m_scrollAreaInnerWidth + m_scrollAreaX - _width)/2;
+		}
+		else //if (ImguiImageAlign::Right == _align).
+		{
+			xx = m_scrollAreaX + m_scrollAreaInnerWidth - _width;
 		}
 
 		const int32_t yy = m_widgetY;
