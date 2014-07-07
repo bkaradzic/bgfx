@@ -438,14 +438,14 @@ struct Imgui
 			&& m_my <= _y + _height;
 	}
 
-	bool isEnabled(uint32_t _areaId)
+	bool isEnabled(uint8_t _areaId)
 	{
 		return (m_enabledAreaIds>>_areaId)&0x1;
 	}
 
-	void setEnabled(uint32_t _areaId)
+	void setEnabled(uint8_t _areaId)
 	{
-		m_enabledAreaIds |= (1ULL<<_areaId)&UINT64_MAX;
+		m_enabledAreaIds |= (UINT64_C(1)<<_areaId);
 	}
 
 	void clearInput()
@@ -571,7 +571,7 @@ struct Imgui
 	{
 		m_areaId++;
 		m_widgetId = 0;
-		m_scrollId = (m_areaId << 16) | m_widgetId;
+		m_scrollId = (m_areaId << 8) | m_widgetId;
 
 		if (_enabled)
 		{
@@ -724,7 +724,7 @@ struct Imgui
 	bool button(const char* _text, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -769,7 +769,7 @@ struct Imgui
 	bool item(const char* _text, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -817,7 +817,7 @@ struct Imgui
 	bool check(const char* _text, bool _checked, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -931,7 +931,7 @@ struct Imgui
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -1040,7 +1040,7 @@ struct Imgui
 	bool slider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -1655,9 +1655,9 @@ struct Imgui
 	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
 	{
 		m_widgetId++;
-		const uint32_t wheelId = (m_areaId << 16) | m_widgetId;
+		const uint16_t wheelId = (m_areaId << 8) | m_widgetId;
 		m_widgetId++;
-		const uint32_t triangleId = (m_areaId << 16) | m_widgetId;
+		const uint16_t triangleId = (m_areaId << 8) | m_widgetId;
 
 		const int32_t height = m_scrollAreaWidth - COLOR_WHEEL_PADDING;
 		const float heightf = float(height);
@@ -1917,8 +1917,8 @@ struct Imgui
 	bool m_wentActive;
 	bool m_insideCurrentScroll;
 
-	uint32_t m_areaId;
-	uint32_t m_widgetId;
+	uint8_t m_areaId;
+	uint8_t m_widgetId;
 	uint64_t m_enabledAreaIds;
 	uint16_t m_scissor;
 
@@ -1937,7 +1937,7 @@ struct Imgui
 	int32_t* m_scrollVal;
 	int32_t m_focusTop;
 	int32_t m_focusBottom;
-	uint32_t m_scrollId;
+	uint16_t m_scrollId;
 	bool m_insideScrollArea;
 
 	uint16_t m_textureWidth;
