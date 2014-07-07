@@ -69,7 +69,7 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view = 31);
 void imguiEndFrame();
 
-bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll);
+bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
 void imguiEndScrollArea();
 
 void imguiIndent();
