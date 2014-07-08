@@ -277,6 +277,7 @@ struct Imgui
 		, m_insideCurrentScroll(false)
 		, m_areaId(0)
 		, m_widgetId(0)
+		, m_enabledAreaIds(0)
 		, m_scissor(UINT16_MAX)
 		, m_scrollTop(0)
 		, m_scrollBottom(0)
@@ -437,6 +438,16 @@ struct Imgui
 			&& m_my <= _y + _height;
 	}
 
+	bool isEnabled(uint8_t _areaId)
+	{
+		return (m_enabledAreaIds>>_areaId)&0x1;
+	}
+
+	void setEnabled(uint8_t _areaId)
+	{
+		m_enabledAreaIds |= (UINT64_C(1)<<_areaId);
+	}
+
 	void clearInput()
 	{
 		m_leftPressed = false;
@@ -545,8 +556,9 @@ struct Imgui
 		m_widgetY = 0;
 		m_widgetW = 0;
 
-		m_areaId = 1;
-		m_widgetId = 1;
+		m_areaId = 0;
+		m_widgetId = 0;
+		m_enabledAreaIds = 0;
 	}
 
 	void endFrame()
@@ -555,11 +567,16 @@ struct Imgui
 		nvgEndFrame(m_nvg);
 	}
 
-	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll)
+	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)
 	{
 		m_areaId++;
 		m_widgetId = 0;
-		m_scrollId = (m_areaId << 16) | m_widgetId;
+		m_scrollId = (m_areaId << 8) | m_widgetId;
+
+		if (_enabled)
+		{
+			setEnabled(m_areaId);
+		}
 
 		m_widgetX = _x + SCROLL_AREA_PADDING;
 		m_widgetY = _y + AREA_HEADER + (*_scroll);
@@ -707,7 +724,7 @@ struct Imgui
 	bool button(const char* _text, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -715,7 +732,8 @@ struct Imgui
 		int32_t height = BUTTON_HEIGHT;
 		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 
-		bool over = _enabled	&& inRect(xx, yy, width, height);
+		bool enabled = _enabled && isEnabled(m_areaId);
+		bool over = enabled	&& inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
 		drawRoundedRect( (float)xx
@@ -726,7 +744,7 @@ struct Imgui
 			, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96)
 			);
 
-		if (_enabled)
+		if (enabled)
 		{
 			drawText(xx + BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
@@ -751,7 +769,7 @@ struct Imgui
 	bool item(const char* _text, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -759,7 +777,8 @@ struct Imgui
 		int32_t height = BUTTON_HEIGHT;
 		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 
-		bool over = _enabled && inRect(xx, yy, width, height);
+		bool enabled = _enabled && isEnabled(m_areaId);
+		bool over = enabled && inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
 		if (isHot(id) )
@@ -773,7 +792,7 @@ struct Imgui
 				);
 		}
 
-		if (_enabled)
+		if (enabled)
 		{
 			drawText(xx + BUTTON_HEIGHT / 2
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
@@ -798,7 +817,7 @@ struct Imgui
 	bool check(const char* _text, bool _checked, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -806,7 +825,8 @@ struct Imgui
 		int32_t height = BUTTON_HEIGHT;
 		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 
-		bool over = _enabled && inRect(xx, yy, width, height);
+		bool enabled = _enabled && isEnabled(m_areaId);
+		bool over = enabled && inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
 		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
@@ -821,7 +841,7 @@ struct Imgui
 
 		if (_checked)
 		{
-			if (_enabled)
+			if (enabled)
 			{
 				drawRoundedRect( (float)cx
 					, (float)cy
@@ -843,7 +863,7 @@ struct Imgui
 			}
 		}
 
-		if (_enabled)
+		if (enabled)
 		{
 			drawText(xx + BUTTON_HEIGHT
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
@@ -911,7 +931,7 @@ struct Imgui
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -922,7 +942,8 @@ struct Imgui
 		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 		const int32_t cy = yy + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 
-		bool over = _enabled && inRect(xx, yy, width, height);
+		bool enabled = _enabled && isEnabled(m_areaId);
+		bool over = enabled && inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
 		if (_checked)
@@ -946,7 +967,7 @@ struct Imgui
 				);
 		}
 
-		if (_enabled)
+		if (enabled)
 		{
 			drawText(xx + BUTTON_HEIGHT
 				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
@@ -1019,7 +1040,7 @@ struct Imgui
 	bool slider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled)
 	{
 		m_widgetId++;
-		uint32_t id = (m_areaId << 16) | m_widgetId;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
@@ -1034,7 +1055,8 @@ struct Imgui
 		float uu = bx::fsaturate( (_val - _vmin) / (_vmax - _vmin) );
 		int32_t m = (int)(uu * range);
 
-		bool over = _enabled && inRect(xx + m, yy, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
+		bool enabled = _enabled && isEnabled(m_areaId);
+		bool over = enabled && inRect(xx + m, yy, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
 		bool res = buttonLogic(id, over);
 		bool valChanged = false;
 
@@ -1085,7 +1107,7 @@ struct Imgui
 		char msg[128];
 		bx::snprintf(msg, 128, fmt, _val);
 
-		if (_enabled)
+		if (enabled)
 		{
 			drawText(xx + SLIDER_HEIGHT / 2
 				, yy + SLIDER_HEIGHT / 2 + TEXT_HEIGHT / 2
@@ -1141,7 +1163,7 @@ struct Imgui
 	void separatorLine()
 	{
 		int32_t xx = m_widgetX;
-		int32_t yy = m_widgetY;
+		int32_t yy = m_widgetY + DEFAULT_SPACING*2;
 		int32_t width = m_widgetW;
 		int32_t height = 1;
 		m_widgetY += DEFAULT_SPACING * 4;
@@ -1633,9 +1655,9 @@ struct Imgui
 	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
 	{
 		m_widgetId++;
-		const uint32_t wheelId = (m_areaId << 16) | m_widgetId;
+		const uint16_t wheelId = (m_areaId << 8) | m_widgetId;
 		m_widgetId++;
-		const uint32_t triangleId = (m_areaId << 16) | m_widgetId;
+		const uint16_t triangleId = (m_areaId << 8) | m_widgetId;
 
 		const int32_t height = m_scrollAreaWidth - COLOR_WHEEL_PADDING;
 		const float heightf = float(height);
@@ -1667,7 +1689,8 @@ struct Imgui
 		float hsv[3];
 		bx::rgbToHsv(hsv, _rgb);
 
-		if (_enabled)
+		bool enabled = _enabled && isEnabled(m_areaId);
+		if (enabled)
 		{
 			if (m_leftPressed)
 			{
@@ -1704,7 +1727,7 @@ struct Imgui
 
 		}
 
-		if (_enabled
+		if (enabled
 		&&  m_left
 		&&  isActive(triangleId) )
 		{
@@ -1767,7 +1790,21 @@ struct Imgui
 		// Draw widget.
 		nvgSave(m_nvg);
 		{
-			const float drawSaturation = _enabled ? 1.0f : 0.0f;
+			float saturation;
+			uint8_t alpha0;
+			uint8_t alpha1;
+			if (enabled)
+			{
+				saturation = 1.0f;
+				alpha0 = 255;
+				alpha1 = 192;
+			}
+			else
+			{
+				saturation = 0.0f;
+				alpha0 = 10;
+				alpha1 = 10;
+			}
 
 			// Circle.
 			for (uint8_t ii = 0; ii < 6; ii++)
@@ -1786,8 +1823,8 @@ struct Imgui
 				NVGpaint paint = nvgLinearGradient(m_nvg
 												 , ax, ay
 												 , bx, by
-												 , nvgHSLA(a0/NVG_PI*0.5f,drawSaturation,0.55f,255)
-												 , nvgHSLA(a1/NVG_PI*0.5f,drawSaturation,0.55f,255)
+												 , nvgHSLA(a0/NVG_PI*0.5f,saturation,0.55f,alpha0)
+												 , nvgHSLA(a1/NVG_PI*0.5f,saturation,0.55f,alpha0)
 												 );
 
 				nvgFillPaint(m_nvg, paint);
@@ -1810,7 +1847,7 @@ struct Imgui
 				nvgStrokeWidth(m_nvg, 2.0f);
 				nvgBeginPath(m_nvg);
 				nvgRect(m_nvg, ri-1.0f,-3.0f,rd+2.0f,6.0f);
-				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192) );
+				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,alpha1) );
 				nvgStroke(m_nvg);
 
 				// Hue selector drop shadow.
@@ -1832,10 +1869,10 @@ struct Imgui
 				nvgStroke(m_nvg);
 
 				// Center triangle fill.
-				paint = nvgLinearGradient(m_nvg, aa[0], aa[1], bb[0], bb[1], nvgHSL(hsv[0],drawSaturation,0.5f), nvgRGBA(0,0,0,255) );
+				paint = nvgLinearGradient(m_nvg, aa[0], aa[1], bb[0], bb[1], nvgHSL(hsv[0],saturation,0.5f), nvgRGBA(0,0,0,alpha0) );
 				nvgFillPaint(m_nvg, paint);
 				nvgFill(m_nvg);
-				paint = nvgLinearGradient(m_nvg, (aa[0]+bb[0])*0.5f, (aa[1]+bb[1])*0.5f, cc[0], cc[1], nvgRGBA(0,0,0,0), nvgRGBA(255,255,255,255) );
+				paint = nvgLinearGradient(m_nvg, (aa[0]+bb[0])*0.5f, (aa[1]+bb[1])*0.5f, cc[0], cc[1], nvgRGBA(0,0,0,0), nvgRGBA(255,255,255,alpha0) );
 				nvgFillPaint(m_nvg, paint);
 				nvgFill(m_nvg);
 
@@ -1843,7 +1880,7 @@ struct Imgui
 				nvgStrokeWidth(m_nvg, 2.0f);
 				nvgBeginPath(m_nvg);
 				nvgCircle(m_nvg, sel[0], sel[1], 5);
-				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,192) );
+				nvgStrokeColor(m_nvg, nvgRGBA(255,255,255,alpha1) );
 				nvgStroke(m_nvg);
 
 				// Color selector stroke.
@@ -1880,8 +1917,9 @@ struct Imgui
 	bool m_wentActive;
 	bool m_insideCurrentScroll;
 
-	uint32_t m_areaId;
-	uint32_t m_widgetId;
+	uint8_t m_areaId;
+	uint8_t m_widgetId;
+	uint64_t m_enabledAreaIds;
 	uint16_t m_scissor;
 
 	float m_tempCoords[MAX_TEMP_COORDS * 2];
@@ -1899,7 +1937,7 @@ struct Imgui
 	int32_t* m_scrollVal;
 	int32_t m_focusTop;
 	int32_t m_focusBottom;
-	uint32_t m_scrollId;
+	uint16_t m_scrollId;
 	bool m_insideScrollArea;
 
 	uint16_t m_textureWidth;
@@ -1945,9 +1983,9 @@ void imguiEndFrame()
 	s_imgui.endFrame();
 }
 
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll)
+bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)
 {
-	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll);
+	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _enabled);
 }
 
 void imguiEndScrollArea()

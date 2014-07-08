@@ -69,7 +69,7 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view = 31);
 void imguiEndFrame();
 
-bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll);
+bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
 void imguiEndScrollArea();
 
 void imguiIndent();
@@ -98,7 +98,7 @@ void imguiBool(const char* _text, bool& _flag, bool _enabled = true);
 void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enabled = true);
 void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);
 
-void imguiImage(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::Left);
-void imguiImage(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::Left); //_width is in [0.0-1.0] range.
+void imguiImage(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImage(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented); //_width is in [0.0-1.0] range.
 
 #endif // IMGUI_H_HEADER_GUARD
