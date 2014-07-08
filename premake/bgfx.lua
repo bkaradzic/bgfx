@@ -81,6 +81,9 @@ project "bgfx-shared-lib"
 		files {
 			BGFX_DIR .. "src/**.mm",
 		}
+		links {
+			"Cocoa.framework",
+		}
 
 	configuration { "osx" }
 		links {
