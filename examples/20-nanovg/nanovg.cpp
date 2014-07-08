@@ -32,6 +32,14 @@
 #include "entry/entry.h"
 #include "nanovg/nanovg.h"
 
+#ifdef BX_COMPILER_MSVC
+	#pragma warning (disable: 4305) // Switch off truncation from double to float.
+	#pragma warning (disable: 4244) // Switch off conversion from int to float, posssible loss of data.
+#endif
+
+#define BLENDISH_IMPLEMENTATION
+#include "blendish.h"
+
 #define ICON_SEARCH 0x1F50D
 #define ICON_CIRCLED_CROSS 0x2716
 #define ICON_CHEVRON_RIGHT 0xE75E
@@ -778,9 +786,158 @@ void drawLines(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	nvgRestore(vg);
 }
 
+void drawBlendish(struct NVGcontext* _vg, int _x, int _y, float _w, float _h, float _t)
+{
+	// Don't draw background.
+	//bndBackground(_vg, float(_x-10), float(_y-10), _w, _h);
+
+	int x = _x;
+	int y = _y;
+
+	bndToolButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, BND_ICONID(6,3),"Default");
+	y += 25;
+	bndToolButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, BND_ICONID(6,3),"Hovered");
+	y += 25;
+	bndToolButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, BND_ICONID(6,3),"Active");
+
+	y += 40;
+	bndRadioButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, -1,"Default");
+	y += 25;
+	bndRadioButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, -1,"Hovered");
+	y += 25;
+	bndRadioButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, -1,"Active");
+
+	y += 25;
+	bndLabel(_vg,x,y,120,BND_WIDGET_HEIGHT,-1,"Label:");
+	y += BND_WIDGET_HEIGHT;
+	bndChoiceButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, -1, "Default");
+	y += 25;
+	bndChoiceButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, -1, "Hovered");
+	y += 25;
+	bndChoiceButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, -1, "Active");
+
+	y += 25;
+	int ry = y;
+	int rx = x;
+
+	y = _y;
+	x += 130;
+	bndOptionButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_DEFAULT,"Default");
+	y += 25;
+	bndOptionButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_HOVER,"Hovered");
+	y += 25;
+	bndOptionButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_ACTIVE,"Active");
+
+	y += 40;
+	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_DOWN,BND_DEFAULT, "Top","100");
+	y += BND_WIDGET_HEIGHT-2;
+	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_ALL,BND_DEFAULT, "Center","100");
+	y += BND_WIDGET_HEIGHT-2;
+	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_TOP,BND_DEFAULT, "Bottom","100");
+
+	int mx = x-30;
+	int my = y-12;
+	int mw = 120;
+	bndMenuBackground(_vg,mx,my,mw,120,BND_CORNER_TOP);
+	bndMenuLabel(_vg,mx,my,mw,BND_WIDGET_HEIGHT,-1,"Menu Title");
+	my += BND_WIDGET_HEIGHT-2;
+	bndMenuItem(_vg,mx,my,mw,BND_WIDGET_HEIGHT,BND_DEFAULT, BND_ICONID(17,3),"Default");
+	my += BND_WIDGET_HEIGHT-2;
+	bndMenuItem(_vg,mx,my,mw,BND_WIDGET_HEIGHT,BND_HOVER, BND_ICONID(18,3),"Hovered");
+	my += BND_WIDGET_HEIGHT-2;
+	bndMenuItem(_vg,mx,my,mw,BND_WIDGET_HEIGHT,BND_ACTIVE, BND_ICONID(19,3),"Active");
+
+	y = _y;
+	x += 130;
+	int ox = x;
+	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, "Default","100");
+	y += 25;
+	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, "Hovered","100");
+	y += 25;
+	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, "Active","100");
+
+	y += 40;
+	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_RIGHT,BND_DEFAULT, -1,"One");
+	x += 60-1;
+	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_ALL,BND_DEFAULT, -1,"Two");
+	x += 60-1;
+	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_ALL,BND_DEFAULT, -1,"Three");
+	x += 60-1;
+	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_LEFT,BND_ACTIVE, -1,"Butts");
+
+	x = ox;
+	y += 40;
+	float progress_value = fmodf(_t/10.0,1.0);
+	char progress_label[32];
+	sprintf(progress_label, "%d%%", int(progress_value*100+0.5f));
+	bndSlider(_vg,x,y,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, progress_value,"Default",progress_label);
+	y += 25;
+	bndSlider(_vg,x,y,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, progress_value,"Hovered",progress_label);
+	y += 25;
+	bndSlider(_vg,x,y,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, progress_value,"Active",progress_label);
+
+	int rw = x+240-rx;
+	float s_offset = sinf(_t/2.0)*0.5+0.5;
+	float s_size = cosf(_t/3.11)*0.5+0.5;
+
+	bndScrollBar(_vg,rx,ry,rw,BND_SCROLLBAR_HEIGHT,BND_DEFAULT,s_offset,s_size);
+	ry += 20;
+	bndScrollBar(_vg,rx,ry,rw,BND_SCROLLBAR_HEIGHT,BND_HOVER,s_offset,s_size);
+	ry += 20;
+	bndScrollBar(_vg,rx,ry,rw,BND_SCROLLBAR_HEIGHT,BND_ACTIVE,s_offset,s_size);
+
+	const char edit_text[] = "The quick brown fox";
+	int textlen = int(strlen(edit_text)+1);
+	int t = int(_t*2);
+	int idx1 = (t/textlen)%textlen;
+	int idx2 = idx1 + (t%(textlen-idx1));
+
+	ry += 25;
+	bndTextField(_vg,rx,ry,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, -1, edit_text, idx1, idx2);
+	ry += 25;
+	bndTextField(_vg,rx,ry,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, -1, edit_text, idx1, idx2);
+	ry += 25;
+	bndTextField(_vg,rx,ry,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, -1, edit_text, idx1, idx2);
+
+	rx += rw + 20;
+	ry = _y;
+	bndScrollBar(_vg,rx,ry,BND_SCROLLBAR_WIDTH,240,BND_DEFAULT,s_offset,s_size);
+	rx += 20;
+	bndScrollBar(_vg,rx,ry,BND_SCROLLBAR_WIDTH,240,BND_HOVER,s_offset,s_size);
+	rx += 20;
+	bndScrollBar(_vg,rx,ry,BND_SCROLLBAR_WIDTH,240,BND_ACTIVE,s_offset,s_size);
+
+	x = ox;
+	y += 40;
+	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_RIGHT, BND_DEFAULT,BND_ICONID(0,10),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(1,10),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(2,10),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(3,10),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(4,10),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_LEFT, BND_DEFAULT,BND_ICONID(5,10),NULL);
+	x += BND_TOOL_WIDTH-1;
+	x += 5;
+	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_RIGHT, BND_DEFAULT,BND_ICONID(0,11),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(1,11),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(2,11),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(3,11),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_ACTIVE,BND_ICONID(4,11),NULL);
+	x += BND_TOOL_WIDTH-1;
+	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_LEFT, BND_DEFAULT,BND_ICONID(5,11),NULL);
+}
+
 struct DemoData
 {
-	int fontNormal, fontBold, fontIcons; 
+	int fontNormal, fontBold, fontIcons;
 	int images[12];
 };
 
@@ -983,18 +1140,16 @@ void drawWidths(struct NVGcontext* vg, float x, float y, float width)
 
 void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float height, float t, int blowup, struct DemoData* data)
 {
-	float x,y,popy;
+	float x,y,popx,popy;
 
-	drawEyes(vg, width - 250, 50, 150, 100, mx, my, t);
-	drawParagraph(vg, width - 450, 50, 150, 100, mx, my);
+	drawEyes(vg, width-800, height-280, 150, 100, mx, my, t);
+	drawParagraph(vg, width - 550, 35, 150, 100, mx, my);
 	drawGraph(vg, 0, height/2, width, height/2, t);
-	drawColorwheel(vg, width - 300, height - 300, 250.0f, 250.0f, t);
+
+	drawColorwheel(vg, width-350, 35, 250.0f, 250.0f, t);
 
 	// Line joints
-	drawLines(vg, 50, height-50, 600, 50, t);
-
-	// Line width;
-	drawWidths(vg, 10, 50, 30);
+	drawLines(vg, 50, height-50, 600, 35, t);
 
 	nvgSave(vg);
 	if (blowup)
@@ -1003,12 +1158,18 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 		nvgScale(vg, 2.0f, 2.0f);
 	}
 
-	// Widgets
-	drawWindow(vg, "Widgets `n Stuff", 50, 50, 300, 400);
-	x = 60; y = 95;
+	// Line width.
+	drawWidths(vg, width-50, 35, 30);
+
+	// Widgets.
+	x = width-520; y = height-420;
+	drawWindow(vg, "Widgets `n Stuff", x, y, 300, 400);
+	x += 10;
+	y += 45;
 	drawSearchBox(vg, "Search", x,y,280,25);
 	y += 40;
 	drawDropDown(vg, "Effects", x,y,280,28);
+	popx = x + 300;
 	popy = y + 14;
 	y += 45;
 
@@ -1034,7 +1195,10 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 	drawButton(vg, 0, "Cancel", x+170, y, 110, 28, nvgRGBA(0,0,0,0));
 
 	// Thumbnails box
-	drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
+	drawThumbnails(vg, popx, popy-30, 160, 300, data->images, 12, t);
+
+	// Blendish
+	drawBlendish(vg, 10, 62, 600.0f, 420.0f, t);
 
 	nvgRestore(vg);
 }
@@ -1066,6 +1230,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	DemoData data;
 	loadDemoData(nvg, &data);
 
+	bndSetFont(nvgCreateFont(nvg, "droidsans", "font/droidsans.ttf"));
+	bndSetIconImage(nvgCreateImage(nvg, "images/blender_icons16.png"));
+
 	int64_t timeOffset = bx::getHPCounter();
 
 	entry::MouseState mouseState;
@@ -1093,7 +1260,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		nvgEndFrame(nvg);
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
