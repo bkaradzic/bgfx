@@ -465,8 +465,11 @@ void bndUpDownArrow(NVGcontext *ctx, float x, float y, float s, NVGcolor color);
 #include <math.h>
 
 #ifdef _MSC_VER
+	#pragma warning (push)
 	#pragma warning (disable: 4996) // Switch off security warnings
 	#pragma warning (disable: 4100) // Switch off unreferenced formal parameter warnings
+	#pragma warning (disable: 4244) // warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
+	#pragma warning (disable: 4305) // warning C4305: 'initializing' : truncation from 'double' to 'float'
 	#ifdef __cplusplus
 	#define BND_INLINE inline
 	#else
@@ -1300,6 +1303,10 @@ void bndScrollHandleRect(float *x, float *y, float *w, float *h,
 
 #ifdef BND_INLINE
 #undef BND_INLINE
+#endif
+
+#ifdef _MSC_VER
+#	pragma warning (pop)
 #endif
 
 #endif // BLENDISH_IMPLEMENTATION

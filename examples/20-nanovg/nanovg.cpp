@@ -32,11 +32,6 @@
 #include "entry/entry.h"
 #include "nanovg/nanovg.h"
 
-#ifdef BX_COMPILER_MSVC
-	#pragma warning (disable: 4305) // Switch off truncation from double to float.
-	#pragma warning (disable: 4244) // Switch off conversion from int to float, posssible loss of data.
-#endif
-
 #define BLENDISH_IMPLEMENTATION
 #include "blendish.h"
 
@@ -786,153 +781,152 @@ void drawLines(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	nvgRestore(vg);
 }
 
-void drawBlendish(struct NVGcontext* _vg, int _x, int _y, float _w, float _h, float _t)
+void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h, float _t)
 {
-	// Don't draw background.
-	//bndBackground(_vg, float(_x-10), float(_y-10), _w, _h);
+	float x = _x;
+	float y = _y;
 
-	int x = _x;
-	int y = _y;
+	bndBackground(_vg, _x - 10.0f, _y - 10.0f, _w, _h);
 
-	bndToolButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, BND_ICONID(6,3),"Default");
-	y += 25;
-	bndToolButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, BND_ICONID(6,3),"Hovered");
-	y += 25;
-	bndToolButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, BND_ICONID(6,3),"Active");
+	bndToolButton(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, BND_ICONID(6, 3), "Default");
+	y += 25.0f;
+	bndToolButton(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, BND_ICONID(6, 3), "Hovered");
+	y += 25.0f;
+	bndToolButton(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, BND_ICONID(6, 3), "Active");
 
-	y += 40;
-	bndRadioButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, -1,"Default");
-	y += 25;
-	bndRadioButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, -1,"Hovered");
-	y += 25;
-	bndRadioButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, -1,"Active");
+	y += 40.0f;
+	bndRadioButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, "Default");
+	y += 25.0f;
+	bndRadioButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, "Hovered");
+	y += 25.0f;
+	bndRadioButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, "Active");
 
-	y += 25;
-	bndLabel(_vg,x,y,120,BND_WIDGET_HEIGHT,-1,"Label:");
+	y += 25.0f;
+	bndLabel(_vg, x, y, 120, BND_WIDGET_HEIGHT, -1, "Label:");
 	y += BND_WIDGET_HEIGHT;
-	bndChoiceButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, -1, "Default");
-	y += 25;
-	bndChoiceButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, -1, "Hovered");
-	y += 25;
-	bndChoiceButton(_vg,x,y,80,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, -1, "Active");
+	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, "Default");
+	y += 25.0f;
+	bndChoiceButton(_vg, x, y, 80, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, "Hovered");
+	y += 25.0f;
+	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, "Active");
 
 	y += 25;
-	int ry = y;
-	int rx = x;
-
-	y = _y;
-	x += 130;
-	bndOptionButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_DEFAULT,"Default");
-	y += 25;
-	bndOptionButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_HOVER,"Hovered");
-	y += 25;
-	bndOptionButton(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_ACTIVE,"Active");
-
-	y += 40;
-	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_DOWN,BND_DEFAULT, "Top","100");
-	y += BND_WIDGET_HEIGHT-2;
-	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_ALL,BND_DEFAULT, "Center","100");
-	y += BND_WIDGET_HEIGHT-2;
-	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_TOP,BND_DEFAULT, "Bottom","100");
-
-	int mx = x-30;
-	int my = y-12;
-	int mw = 120;
-	bndMenuBackground(_vg,mx,my,mw,120,BND_CORNER_TOP);
-	bndMenuLabel(_vg,mx,my,mw,BND_WIDGET_HEIGHT,-1,"Menu Title");
-	my += BND_WIDGET_HEIGHT-2;
-	bndMenuItem(_vg,mx,my,mw,BND_WIDGET_HEIGHT,BND_DEFAULT, BND_ICONID(17,3),"Default");
-	my += BND_WIDGET_HEIGHT-2;
-	bndMenuItem(_vg,mx,my,mw,BND_WIDGET_HEIGHT,BND_HOVER, BND_ICONID(18,3),"Hovered");
-	my += BND_WIDGET_HEIGHT-2;
-	bndMenuItem(_vg,mx,my,mw,BND_WIDGET_HEIGHT,BND_ACTIVE, BND_ICONID(19,3),"Active");
+	float ry = y;
+	float rx = x;
 
 	y = _y;
-	x += 130;
-	int ox = x;
-	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, "Default","100");
-	y += 25;
-	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, "Hovered","100");
-	y += 25;
-	bndNumberField(_vg,x,y,120,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, "Active","100");
+	x += 130.0f;
+	bndOptionButton(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_DEFAULT, "Default");
+	y += 25.0f;
+	bndOptionButton(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_HOVER, "Hovered");
+	y += 25.0f;
+	bndOptionButton(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_ACTIVE, "Active");
 
-	y += 40;
-	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_RIGHT,BND_DEFAULT, -1,"One");
-	x += 60-1;
-	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_ALL,BND_DEFAULT, -1,"Two");
-	x += 60-1;
-	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_ALL,BND_DEFAULT, -1,"Three");
-	x += 60-1;
-	bndRadioButton(_vg,x,y,60,BND_WIDGET_HEIGHT,BND_CORNER_LEFT,BND_ACTIVE, -1,"Butts");
+	y += 40.0f;
+	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_DOWN, BND_DEFAULT, "Top", "100");
+	y += BND_WIDGET_HEIGHT - 2.0f;
+	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, "Center", "100");
+	y += BND_WIDGET_HEIGHT - 2.0f;
+	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_TOP, BND_DEFAULT, "Bottom", "100");
+
+	float mx = x - 30.0f;
+	float my = y - 12.0f;
+	float mw = 120.0f;
+	bndMenuBackground(_vg, mx, my, mw, 120.0f, BND_CORNER_TOP);
+	bndMenuLabel(_vg, mx, my, mw, BND_WIDGET_HEIGHT, -1, "Menu Title");
+	my += BND_WIDGET_HEIGHT - 2.0f;
+	bndMenuItem(_vg, mx, my, mw, BND_WIDGET_HEIGHT, BND_DEFAULT, BND_ICONID(17, 3), "Default");
+	my += BND_WIDGET_HEIGHT - 2.0f;
+	bndMenuItem(_vg, mx, my, mw, BND_WIDGET_HEIGHT, BND_HOVER, BND_ICONID(18, 3), "Hovered");
+	my += BND_WIDGET_HEIGHT - 2.0f;
+	bndMenuItem(_vg, mx, my, mw, BND_WIDGET_HEIGHT, BND_ACTIVE, BND_ICONID(19, 3), "Active");
+
+	y = _y;
+	x += 130.0f;
+	float ox = x;
+	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, "Default", "100");
+	y += 25.0f;
+	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, "Hovered", "100");
+	y += 25.0f;
+	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, "Active", "100");
+
+	y += 40.0f;
+	bndRadioButton(_vg, x, y, 60.0f, BND_WIDGET_HEIGHT, BND_CORNER_RIGHT, BND_DEFAULT, -1, "One");
+	x += 60.0f - 1.0f;
+	bndRadioButton(_vg, x, y, 60.0f, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, -1, "Two");
+	x += 60.0f - 1.0f;
+	bndRadioButton(_vg, x, y, 60.0f, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, -1, "Three");
+	x += 60.0f - 1.0f;
+	bndRadioButton(_vg, x, y, 60.0f, BND_WIDGET_HEIGHT, BND_CORNER_LEFT, BND_ACTIVE, -1, "Butts");
 
 	x = ox;
 	y += 40;
-	float progress_value = fmodf(_t/10.0,1.0);
+	float progress_value = fmodf(_t / 10.0f, 1.0f);
 	char progress_label[32];
-	sprintf(progress_label, "%d%%", int(progress_value*100+0.5f));
-	bndSlider(_vg,x,y,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, progress_value,"Default",progress_label);
+	bx::snprintf(progress_label, BX_COUNTOF(progress_label), "%d%%", int(progress_value * 100 + 0.5f) );
+	bndSlider(_vg, x, y, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, progress_value, "Default", progress_label);
 	y += 25;
-	bndSlider(_vg,x,y,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, progress_value,"Hovered",progress_label);
+	bndSlider(_vg, x, y, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, progress_value, "Hovered", progress_label);
 	y += 25;
-	bndSlider(_vg,x,y,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, progress_value,"Active",progress_label);
+	bndSlider(_vg, x, y, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, progress_value, "Active", progress_label);
 
-	int rw = x+240-rx;
-	float s_offset = sinf(_t/2.0)*0.5+0.5;
-	float s_size = cosf(_t/3.11)*0.5+0.5;
+	float rw = x + 240.0f - rx;
+	float s_offset = sinf(_t / 2.0f) * 0.5f + 0.5f;
+	float s_size = cosf(_t / 3.11f) * 0.5f + 0.5f;
 
-	bndScrollBar(_vg,rx,ry,rw,BND_SCROLLBAR_HEIGHT,BND_DEFAULT,s_offset,s_size);
-	ry += 20;
-	bndScrollBar(_vg,rx,ry,rw,BND_SCROLLBAR_HEIGHT,BND_HOVER,s_offset,s_size);
-	ry += 20;
-	bndScrollBar(_vg,rx,ry,rw,BND_SCROLLBAR_HEIGHT,BND_ACTIVE,s_offset,s_size);
+	bndScrollBar(_vg, rx, ry, rw, BND_SCROLLBAR_HEIGHT, BND_DEFAULT, s_offset, s_size);
+	ry += 20.0f;
+	bndScrollBar(_vg, rx, ry, rw, BND_SCROLLBAR_HEIGHT, BND_HOVER, s_offset, s_size);
+	ry += 20.0f;
+	bndScrollBar(_vg, rx, ry, rw, BND_SCROLLBAR_HEIGHT, BND_ACTIVE, s_offset, s_size);
 
 	const char edit_text[] = "The quick brown fox";
-	int textlen = int(strlen(edit_text)+1);
-	int t = int(_t*2);
-	int idx1 = (t/textlen)%textlen;
-	int idx2 = idx1 + (t%(textlen-idx1));
+	int textlen = int(strlen(edit_text) + 1);
+	int t = int(_t * 2);
+	int idx1 = (t / textlen) % textlen;
+	int idx2 = idx1 + (t % (textlen - idx1) );
 
-	ry += 25;
-	bndTextField(_vg,rx,ry,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_DEFAULT, -1, edit_text, idx1, idx2);
-	ry += 25;
-	bndTextField(_vg,rx,ry,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_HOVER, -1, edit_text, idx1, idx2);
-	ry += 25;
-	bndTextField(_vg,rx,ry,240,BND_WIDGET_HEIGHT,BND_CORNER_NONE,BND_ACTIVE, -1, edit_text, idx1, idx2);
+	ry += 25.0f;
+	bndTextField(_vg, rx, ry, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, edit_text, idx1, idx2);
+	ry += 25.0f;
+	bndTextField(_vg, rx, ry, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, edit_text, idx1, idx2);
+	ry += 25.0f;
+	bndTextField(_vg, rx, ry, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, edit_text, idx1, idx2);
 
-	rx += rw + 20;
+	rx += rw + 20.0f;
 	ry = _y;
-	bndScrollBar(_vg,rx,ry,BND_SCROLLBAR_WIDTH,240,BND_DEFAULT,s_offset,s_size);
-	rx += 20;
-	bndScrollBar(_vg,rx,ry,BND_SCROLLBAR_WIDTH,240,BND_HOVER,s_offset,s_size);
-	rx += 20;
-	bndScrollBar(_vg,rx,ry,BND_SCROLLBAR_WIDTH,240,BND_ACTIVE,s_offset,s_size);
+	bndScrollBar(_vg, rx, ry, BND_SCROLLBAR_WIDTH, 240.0f, BND_DEFAULT, s_offset, s_size);
+	rx += 20.0f;
+	bndScrollBar(_vg, rx, ry, BND_SCROLLBAR_WIDTH, 240.0f, BND_HOVER, s_offset, s_size);
+	rx += 20.0f;
+	bndScrollBar(_vg, rx, ry, BND_SCROLLBAR_WIDTH, 240.0f, BND_ACTIVE, s_offset, s_size);
 
 	x = ox;
-	y += 40;
-	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_RIGHT, BND_DEFAULT,BND_ICONID(0,10),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(1,10),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(2,10),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(3,10),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(4,10),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndToolButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_LEFT, BND_DEFAULT,BND_ICONID(5,10),NULL);
-	x += BND_TOOL_WIDTH-1;
+	y += 40.0f;
+	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_RIGHT, BND_DEFAULT, BND_ICONID(0, 10), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(1, 10), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(2, 10), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(3, 10), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(4, 10), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_LEFT, BND_DEFAULT, BND_ICONID(5, 10), NULL);
+	x += BND_TOOL_WIDTH - 1;
 	x += 5;
-	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_RIGHT, BND_DEFAULT,BND_ICONID(0,11),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(1,11),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(2,11),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_DEFAULT,BND_ICONID(3,11),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_ALL, BND_ACTIVE,BND_ICONID(4,11),NULL);
-	x += BND_TOOL_WIDTH-1;
-	bndRadioButton(_vg,x,y,BND_TOOL_WIDTH,BND_WIDGET_HEIGHT,BND_CORNER_LEFT, BND_DEFAULT,BND_ICONID(5,11),NULL);
+	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_RIGHT, BND_DEFAULT, BND_ICONID(0, 11), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(1, 11), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(2, 11), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(3, 11), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_ACTIVE, BND_ICONID(4, 11), NULL);
+	x += BND_TOOL_WIDTH - 1;
+	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_LEFT, BND_DEFAULT, BND_ICONID(5, 11), NULL);
 }
 
 struct DemoData
@@ -1142,7 +1136,7 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 {
 	float x,y,popx,popy;
 
-	drawEyes(vg, width-800, height-280, 150, 100, mx, my, t);
+	drawEyes(vg, width-800, height-240, 150, 100, mx, my, t);
 	drawParagraph(vg, width - 550, 35, 150, 100, mx, my);
 	drawGraph(vg, 0, height/2, width, height/2, t);
 
