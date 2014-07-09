@@ -464,6 +464,12 @@ https://github.com/bkaradzic/bgfx
 All required 3rd party libraries are included in bgfx repository in [3rdparty/](https://github.com/bkaradzic/bgfx/tree/master/3rdparty)
 directory.
 
+### Blendish (MIT)
+
+Blendish - Blender 2.5 UI based theming functions for NanoVG.
+
+https://bitbucket.org/duangle/blendish
+
 ### edtaa3 (MIT)
 
 Contour Rendering by Distance Fields
