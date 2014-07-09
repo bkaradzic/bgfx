@@ -802,15 +802,15 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 	bndRadioButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, "Active");
 
 	y += 25.0f;
-	bndLabel(_vg, x, y, 120, BND_WIDGET_HEIGHT, -1, "Label:");
+	bndLabel(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, -1, "Label:");
 	y += BND_WIDGET_HEIGHT;
 	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, "Default");
 	y += 25.0f;
-	bndChoiceButton(_vg, x, y, 80, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, "Hovered");
+	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, "Hovered");
 	y += 25.0f;
 	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, "Active");
 
-	y += 25;
+	y += 25.0f;
 	float ry = y;
 	float rx = x;
 
@@ -860,14 +860,14 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 	bndRadioButton(_vg, x, y, 60.0f, BND_WIDGET_HEIGHT, BND_CORNER_LEFT, BND_ACTIVE, -1, "Butts");
 
 	x = ox;
-	y += 40;
+	y += 40.0f;
 	float progress_value = fmodf(_t / 10.0f, 1.0f);
 	char progress_label[32];
 	bx::snprintf(progress_label, BX_COUNTOF(progress_label), "%d%%", int(progress_value * 100 + 0.5f) );
 	bndSlider(_vg, x, y, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, progress_value, "Default", progress_label);
-	y += 25;
+	y += 25.0f;
 	bndSlider(_vg, x, y, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, progress_value, "Hovered", progress_label);
-	y += 25;
+	y += 25.0f;
 	bndSlider(_vg, x, y, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, progress_value, "Active", progress_label);
 
 	float rw = x + 240.0f - rx;
@@ -887,11 +887,11 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 	int idx2 = idx1 + (t % (textlen - idx1) );
 
 	ry += 25.0f;
-	bndTextField(_vg, rx, ry, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, edit_text, idx1, idx2);
+	bndTextField(_vg, rx, ry, 240.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, edit_text, idx1, idx2);
 	ry += 25.0f;
-	bndTextField(_vg, rx, ry, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, edit_text, idx1, idx2);
+	bndTextField(_vg, rx, ry, 240.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, edit_text, idx1, idx2);
 	ry += 25.0f;
-	bndTextField(_vg, rx, ry, 240, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, edit_text, idx1, idx2);
+	bndTextField(_vg, rx, ry, 240.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_ACTIVE, -1, edit_text, idx1, idx2);
 
 	rx += rw + 20.0f;
 	ry = _y;
@@ -915,7 +915,7 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 	x += BND_TOOL_WIDTH - 1;
 	bndToolButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_LEFT, BND_DEFAULT, BND_ICONID(5, 10), NULL);
 	x += BND_TOOL_WIDTH - 1;
-	x += 5;
+	x += 5.0f;
 	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_RIGHT, BND_DEFAULT, BND_ICONID(0, 11), NULL);
 	x += BND_TOOL_WIDTH - 1;
 	bndRadioButton(_vg, x, y, BND_TOOL_WIDTH, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, BND_ICONID(1, 11), NULL);
