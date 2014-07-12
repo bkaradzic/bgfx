@@ -7,12 +7,12 @@ $input v_texcoord0
 
 #include <bgfx_shader.sh>
 
+uniform float u_imageLod;
 SAMPLER2D(u_texColor, 0);
 
 void main()
 {
-    vec4 color = texture2D(u_texColor, v_texcoord0);
+    vec4 color = texture2DLod(u_texColor, v_texcoord0, u_imageLod);
 
     gl_FragColor = vec4(color.xyz, 1.0);
 }
-

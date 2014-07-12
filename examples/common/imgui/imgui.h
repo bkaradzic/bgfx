@@ -63,7 +63,12 @@ inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 		;
 }
 
-bool imguiCreate(const void* _data);
+BGFX_HANDLE(ImguiFontHandle);
+
+ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize=15.0f);
+void imguiSetFont(ImguiFontHandle _handle);
+
+ImguiFontHandle imguiCreate(const void* _data, float _fontSize=15.0f);
 void imguiDestroy();
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view = 31);
@@ -98,7 +103,7 @@ void imguiBool(const char* _text, bool& _flag, bool _enabled = true);
 void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enabled = true);
 void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);
 
-void imguiImage(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImage(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented); //_width is in [0.0-1.0] range.
+void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented); //_width is in [0.0-1.0] range.
 
 #endif // IMGUI_H_HEADER_GUARD
