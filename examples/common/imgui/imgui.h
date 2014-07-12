@@ -63,7 +63,12 @@ inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 		;
 }
 
-bool imguiCreate(const void* _data);
+BGFX_HANDLE(ImguiFontHandle);
+
+ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize=15.0f);
+void imguiSetFont(ImguiFontHandle _handle);
+
+ImguiFontHandle imguiCreate(const void* _data, float _fontSize=15.0f);
 void imguiDestroy();
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view = 31);

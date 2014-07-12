@@ -27,6 +27,7 @@
 #include <bx/string.h>
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
+#include <bx/handlealloc.h>
 #include <bgfx.h>
 
 #include "../entry/dbg.h"
@@ -42,6 +43,8 @@
 #include "dds_imgui_x_texture.h"
 
 #define USE_NANOVG_FONT 0
+
+#define IMGUI_CONFIG_MAX_FONTS 20
 
 #define MAX_TEMP_COORDS 100
 #define NUM_CIRCLE_VERTS (8 * 4)
@@ -296,15 +299,13 @@ struct Imgui
 		, m_halfTexel(0.0f)
 		, m_nvg(NULL)
 		, m_view(31)
+		, m_currentFontIdx(0)
 	{
 		m_invTextureWidth  = 1.0f/m_textureWidth;
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
 		u_imageLod.idx       = bgfx::invalidHandle;
 		u_texColor.idx       = bgfx::invalidHandle;
-#if !USE_NANOVG_FONT
-		m_fontTexture.idx    = bgfx::invalidHandle;
-#endif // !USE_NANOVG_FONT
 		m_missingTexture.idx = bgfx::invalidHandle;
 
 		m_colorProgram.idx   = bgfx::invalidHandle;
@@ -312,11 +313,32 @@ struct Imgui
 		m_imageProgram.idx   = bgfx::invalidHandle;
 	}
 
-	bool create(const void* _data)
+	ImguiFontHandle createFont(const void* _data, float _fontSize)
+	{
+#if !USE_NANOVG_FONT
+		const ImguiFontHandle handle = { m_fontHandle.alloc() };
+		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
+		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, _fontSize, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_fonts[handle.idx].m_cdata);
+		m_fonts[handle.idx].m_texture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
+#else
+		const ImguiFontHandle handle = { bgfx::invalidHandle };
+#endif // !USE_NANOVG_FONT
+		return handle;
+	}
+
+	void setFont(ImguiFontHandle _handle)
+	{
+		if (isValid(_handle) )
+		{
+			m_currentFontIdx = _handle.idx;
+		}
+	}
+
+	ImguiFontHandle create(const void* _data, float _fontSize)
 	{
 		m_nvg = nvgCreate(512, 512, 1, m_view);
 		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
-		nvgFontSize(m_nvg, 15.0f);
+		nvgFontSize(m_nvg, _fontSize);
 		nvgFontFace(m_nvg, "default");
 
 		for (int32_t ii = 0; ii < NUM_CIRCLE_VERTS; ++ii)
@@ -392,15 +414,16 @@ struct Imgui
 		bgfx::destroyShader(vsh);
 		bgfx::destroyShader(fsh);
 
-#if !USE_NANOVG_FONT
-		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
-		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, 15.0f, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_cdata);
-		m_fontTexture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
-#endif // !USE_NANOVG_FONT
-		mem = bgfx::makeRef(s_xTexture, sizeof(s_xTexture));
-		m_missingTexture = bgfx::createTexture(mem);
+		const bgfx::Memory* texMem = bgfx::makeRef(s_xTexture, sizeof(s_xTexture));
+		m_missingTexture = bgfx::createTexture(texMem);
 
-		return true;
+#if !USE_NANOVG_FONT
+		const ImguiFontHandle handle = createFont(_data, _fontSize);
+		m_currentFontIdx = handle.idx;
+#else
+		const ImguiFontHandle handle = { bgfx::invalidHandle };
+#endif // !USE_NANOVG_FONT
+		return handle;
 	}
 
 	void destroy()
@@ -408,7 +431,13 @@ struct Imgui
 		bgfx::destroyUniform(u_imageLod);
 		bgfx::destroyUniform(u_texColor);
 #if !USE_NANOVG_FONT
-		bgfx::destroyTexture(m_fontTexture);
+		for (uint16_t ii = 0; ii < IMGUI_CONFIG_MAX_FONTS; ++ii)
+		{
+			if (bgfx::isValid(m_fonts[ii].m_texture) )
+			{
+				bgfx::destroyTexture(m_fonts[ii].m_texture);
+			}
+		}
 #endif // !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_missingTexture);
 		bgfx::destroyProgram(m_colorProgram);
@@ -1499,15 +1528,15 @@ struct Imgui
 		uint32_t numVertices = 0;
 		if (_align == ImguiTextAlign::Center)
 		{
-			_x -= getTextLength(m_cdata, _text, numVertices) / 2;
+			_x -= getTextLength(m_fonts[m_currentFontIdx].m_cdata, _text, numVertices) / 2;
 		}
 		else if (_align == ImguiTextAlign::Right)
 		{
-			_x -= getTextLength(m_cdata, _text, numVertices);
+			_x -= getTextLength(m_fonts[m_currentFontIdx].m_cdata, _text, numVertices);
 		}
 		else // just count vertices
 		{
-			getTextLength(m_cdata, _text, numVertices);
+			getTextLength(m_fonts[m_currentFontIdx].m_cdata, _text, numVertices);
 		}
 
 		if (bgfx::checkAvailTransientVertexBuffer(numVertices, PosColorUvVertex::ms_decl) )
@@ -1537,7 +1566,7 @@ struct Imgui
 					 &&  ch < 128)
 				{
 					stbtt_aligned_quad quad;
-					getBakedQuad(m_cdata, ch - 32, &_x, &_y, &quad);
+					getBakedQuad(m_fonts[m_currentFontIdx].m_cdata, ch - 32, &_x, &_y, &quad);
 
 					vertex->m_x = quad.x0;
 					vertex->m_y = quad.y0;
@@ -1585,7 +1614,7 @@ struct Imgui
 				++_text;
 			}
 
-			bgfx::setTexture(0, u_texColor, m_fontTexture);
+			bgfx::setTexture(0, u_texColor, m_fonts[m_currentFontIdx].m_texture);
 			bgfx::setVertexBuffer(&tvb);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
@@ -1953,24 +1982,42 @@ struct Imgui
 	NVGcontext* m_nvg;
 
 	uint8_t m_view;
+
+#if !USE_NANOVG_FONT
+	struct Font
+	{
+		stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
+		bgfx::TextureHandle m_texture;
+	};
+
+	uint16_t m_currentFontIdx;
+	bx::HandleAllocT<IMGUI_CONFIG_MAX_FONTS> m_fontHandle;
+	Font m_fonts[IMGUI_CONFIG_MAX_FONTS];
+#endif // !USE_NANOVG_FONT
+
 	bgfx::UniformHandle u_imageLod;
 	bgfx::UniformHandle u_texColor;
 	bgfx::ProgramHandle m_colorProgram;
 	bgfx::ProgramHandle m_textureProgram;
 	bgfx::ProgramHandle m_imageProgram;
-
-#if !USE_NANOVG_FONT
-	stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
-	bgfx::TextureHandle m_fontTexture;
-#endif // !USE_NANOVG_FONT
 	bgfx::TextureHandle m_missingTexture;
 };
 
 static Imgui s_imgui;
 
-bool imguiCreate(const void* _data)
+ImguiFontHandle imguiCreate(const void* _data, float _fontSize)
 {
-	return s_imgui.create(_data);
+	return s_imgui.create(_data, _fontSize);
+}
+
+void imguiSetFont(ImguiFontHandle _handle)
+{
+	s_imgui.setFont(_handle);
+}
+
+ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize)
+{
+	return s_imgui.createFont(_data, _fontSize);
 }
 
 void imguiDestroy()
@@ -1995,7 +2042,7 @@ bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _wi
 
 void imguiEndScrollArea()
 {
-	return s_imgui.endScrollArea();
+	s_imgui.endScrollArea();
 }
 
 void imguiIndent()
