@@ -300,6 +300,7 @@ struct Imgui
 		m_invTextureWidth  = 1.0f/m_textureWidth;
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
+		u_imageLod.idx       = bgfx::invalidHandle;
 		u_texColor.idx       = bgfx::invalidHandle;
 #if !USE_NANOVG_FONT
 		m_fontTexture.idx    = bgfx::invalidHandle;
@@ -329,7 +330,8 @@ struct Imgui
 		PosColorUvVertex::init();
 		PosUvVertex::init();
 
-		u_texColor  = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
+		u_imageLod = bgfx::createUniform("u_imageLod", bgfx::UniformType::Uniform1f);
+		u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
 
 		const bgfx::Memory* vs_imgui_color;
 		const bgfx::Memory* fs_imgui_color;
@@ -403,6 +405,7 @@ struct Imgui
 
 	void destroy()
 	{
+		bgfx::destroyUniform(u_imageLod);
 		bgfx::destroyUniform(u_texColor);
 #if !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_fontTexture);
@@ -885,7 +888,7 @@ struct Imgui
 		return res;
 	}
 
-	void image(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
 	{
 		int32_t xx;
 		if (ImguiImageAlign::Left == _align)
@@ -913,6 +916,7 @@ struct Imgui
 		m_widgetY += _height + DEFAULT_SPACING;
 
 		screenQuad(xx, yy, _width, _height);
+		bgfx::setUniform(u_imageLod, &_lod);
 		bgfx::setTexture(0, u_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		bgfx::setProgram(m_imageProgram);
@@ -920,12 +924,12 @@ struct Imgui
 		bgfx::submit(m_view);
 	}
 
-	void image(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align)
+	void image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 	{
 		const float width = _width*float(m_scrollAreaInnerWidth);
 		const float height = width/_aspect;
 
-		image(_image, int32_t(width), int32_t(height), _align);
+		image(_image, _lod, int32_t(width), int32_t(height), _align);
 	}
 
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -1949,6 +1953,7 @@ struct Imgui
 	NVGcontext* m_nvg;
 
 	uint8_t m_view;
+	bgfx::UniformHandle u_imageLod;
 	bgfx::UniformHandle u_texColor;
 	bgfx::ProgramHandle m_colorProgram;
 	bgfx::ProgramHandle m_textureProgram;
@@ -2132,12 +2137,12 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 	}
 }
 
-void imguiImage(bgfx::TextureHandle _image, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
 {
-	return s_imgui.image(_image, _width, _height, _align);
+	s_imgui.image(_image, _lod, _width, _height, _align);
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _width, float _aspect, ImguiImageAlign::Enum _align)
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 {
-	return s_imgui.image(_image, _width, _aspect, _align);
+	s_imgui.image(_image, _lod, _width, _aspect, _align);
 }
