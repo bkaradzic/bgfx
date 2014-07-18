@@ -1975,8 +1975,10 @@ namespace bgfx
 
 		if (fragment)
 		{
-			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, (ID3D11PixelShader**)&m_ptr) );
-			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
+			ID3D11PixelShader* pixelShader;
+			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, &pixelShader);
+			BGFX_FATAL(NULL != pixelShader, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
+			m_ptr = pixelShader;
 		}
 		else
 		{
@@ -1984,8 +1986,10 @@ namespace bgfx
 			m_code = alloc(shaderSize);
 			memcpy(m_code->data, code, shaderSize);
 
-			DX_CHECK(s_renderD3D11->m_device->CreateVertexShader(code, shaderSize, NULL, (ID3D11VertexShader**)&m_ptr) );
-			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+			ID3D11VertexShader* vertexShader;
+			DX_CHECK(s_renderD3D11->m_device->CreateVertexShader(code, shaderSize, NULL, &vertexShader);
+			BGFX_FATAL(NULL != vertexShader, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+			m_ptr = vertexShader;
 		}
 
 		bx::read(&reader, m_attrMask, sizeof(m_attrMask) );

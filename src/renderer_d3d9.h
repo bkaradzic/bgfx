@@ -18,6 +18,7 @@
 typedef HRESULT (WINAPI *Direct3DCreate9ExFn)(UINT SDKVersion, IDirect3D9Ex**);
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
+typedef IUnknown DxShaderInterface;
 
 #elif BX_PLATFORM_XBOX360
 #	include <xgraphics.h>
@@ -27,6 +28,8 @@ typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
 #	define D3DERR_DEVICEREMOVED D3DERR_DEVICELOST // not supported on X360
 #	define D3DMULTISAMPLE_8_SAMPLES D3DMULTISAMPLE_4_SAMPLES
 #	define D3DMULTISAMPLE_16_SAMPLES D3DMULTISAMPLE_4_SAMPLES
+
+typedef IDirect3DResource9 DxShaderInterface;
 
 #	define D3DFMT_DF24 D3DFMT_D24FS8
 
@@ -239,7 +242,7 @@ namespace bgfx
 			DX_RELEASE(m_ptr, 0);
 		}
 
-		IUnknown* m_ptr;
+		DxShaderInterface* m_ptr;
 		ConstantBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;

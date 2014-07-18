@@ -1735,13 +1735,17 @@ namespace bgfx
 
 		if (fragment)
 		{
-			DX_CHECK(s_renderD3D9->m_device->CreatePixelShader(code, (IDirect3DPixelShader9**)&m_ptr) );
-			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
+			IDirect3DPixelShader9* pixelShader;
+			DX_CHECK(s_renderD3D9->m_device->CreatePixelShader(code, &pixelShader));
+			BGFX_FATAL(NULL != pixelShader, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
+			m_ptr = pixelShader;
 		}
 		else
 		{
-			DX_CHECK(s_renderD3D9->m_device->CreateVertexShader(code, (IDirect3DVertexShader9**)&m_ptr) );
-			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+			IDirect3DVertexShader9* vertexShader;
+			DX_CHECK(s_renderD3D9->m_device->CreateVertexShader(code, &vertexShader));
+			BGFX_FATAL(NULL != vertexShader, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+			m_ptr = vertexShader;
 		}
 	}
 
