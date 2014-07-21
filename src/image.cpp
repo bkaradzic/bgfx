@@ -10,7 +10,7 @@
 
 namespace bgfx
 {
-	static const ImageBlockInfo s_imageBlockInfo[TextureFormat::Count] =
+	static const ImageBlockInfo s_imageBlockInfo[] =
 	{
 		{  4, 4, 4,  8 }, // BC1
 		{  8, 4, 4, 16 }, // BC2
@@ -48,8 +48,9 @@ namespace bgfx
 		{ 32, 1, 1,  4 }, // D32F
 		{  8, 1, 1,  1 }, // D0S8
 	};
+	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_imageBlockInfo) );
 
-	static const char* s_textureFormatName[TextureFormat::Count] =
+	static const char* s_textureFormatName[] =
 	{
 		"BC1",       // BC1
 		"BC2",       // BC2
@@ -87,6 +88,7 @@ namespace bgfx
 		"D32F",      // D32F
 		"D0S8",      // D0S8
 	};
+	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormatName) );
 
 	bool isCompressed(TextureFormat::Enum _format)
 	{

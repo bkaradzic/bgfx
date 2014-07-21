@@ -197,7 +197,7 @@ namespace bgfx
 #	define DXGI_FORMAT_B4G4R4A4_UNORM DXGI_FORMAT(115)
 #endif // DXGI_FORMAT_B4G4R4A4_UNORM
 
-	static const TextureFormatInfo s_textureFormat[TextureFormat::Count] =
+	static const TextureFormatInfo s_textureFormat[] =
 	{
 		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1 
 		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC2
@@ -235,6 +235,7 @@ namespace bgfx
 		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT         }, // D32F
 		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT }, // D0S8
 	};
+	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =
 	{
@@ -548,6 +549,7 @@ namespace bgfx
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								| BGFX_CAPS_BLEND_INDEPENDENT
+								| BGFX_CAPS_COMPUTE
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 			g_caps.maxFBAttachments = bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
@@ -677,7 +679,7 @@ namespace bgfx
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) BX_OVERRIDE
 		{
-			m_program[_handle.idx].create(m_shaders[_vsh.idx], m_shaders[_fsh.idx]);
+			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) BX_OVERRIDE
@@ -847,9 +849,9 @@ namespace bgfx
 
 			ProgramD3D11& program = m_program[_blitter.m_program.idx];
 			m_currentProgram = &program;
-			deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
+			deviceCtx->VSSetShader(program.m_vsh->m_vertexShader, NULL, 0);
 			deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
-			deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
+			deviceCtx->PSSetShader(program.m_fsh->m_pixelShader, NULL, 0);
 			deviceCtx->PSSetConstantBuffers(0, 1, &program.m_fsh->m_buffer);
 
 			VertexBufferD3D11& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
@@ -1634,11 +1636,11 @@ namespace bgfx
 
 				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt].idx];
 				m_currentProgram = &program;
-				deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
+				deviceCtx->VSSetShader(program.m_vsh->m_vertexShader, NULL, 0);
 				deviceCtx->VSSetConstantBuffers(0, 0, NULL);
 				if (NULL != m_currentColor)
 				{
-					deviceCtx->PSSetShader( (ID3D11PixelShader*)program.m_fsh->m_ptr, NULL, 0);
+					deviceCtx->PSSetShader(program.m_fsh->m_pixelShader, NULL, 0);
 					deviceCtx->PSSetConstantBuffers(0, 0, NULL);
 				}
 				else
@@ -1883,6 +1885,7 @@ namespace bgfx
 
 		switch (magic)
 		{
+		case BGFX_CHUNK_MAGIC_CSH:
 		case BGFX_CHUNK_MAGIC_FSH:
 		case BGFX_CHUNK_MAGIC_VSH:
 			break;
@@ -1903,7 +1906,10 @@ namespace bgfx
 		m_numPredefined = 0;
 		m_numUniforms = count;
 
-		BX_TRACE("Shader consts %d", count);
+		BX_TRACE("%s Shader consts %d"
+			, BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
+			, count
+			);
 
 		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 
@@ -1954,10 +1960,10 @@ namespace bgfx
 					}
 				}
 
-				BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
+				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
 					, name
-					, type
+					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_FRAGMENTBIT) )
 					, num
 					, regIndex
 					, regCount
@@ -1973,19 +1979,24 @@ namespace bgfx
 		const DWORD* code = (const DWORD*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		if (fragment)
+		if (BGFX_CHUNK_MAGIC_FSH == magic)
 		{
-			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, (ID3D11PixelShader**)&m_ptr) );
+			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, &m_pixelShader) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
-		else
+		else if (BGFX_CHUNK_MAGIC_VSH == magic)
 		{
 			m_hash = bx::hashMurmur2A(code, shaderSize);
 			m_code = alloc(shaderSize);
 			memcpy(m_code->data, code, shaderSize);
 
-			DX_CHECK(s_renderD3D11->m_device->CreateVertexShader(code, shaderSize, NULL, (ID3D11VertexShader**)&m_ptr) );
+			DX_CHECK(s_renderD3D11->m_device->CreateVertexShader(code, shaderSize, NULL, &m_vertexShader) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+		}
+		else
+		{
+			DX_CHECK(s_renderD3D11->m_device->CreateComputeShader(code, shaderSize, NULL, &m_computeShader) );
+			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create compute shader.");
 		}
 
 		bx::read(&reader, m_attrMask, sizeof(m_attrMask) );
@@ -2056,8 +2067,9 @@ namespace bgfx
 			uint32_t kk = 0;
 
 			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
+			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 
-			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
+			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s%s."
 				, this - s_renderD3D11->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
@@ -2065,6 +2077,7 @@ namespace bgfx
 				, textureHeight
 				, imageContainer.m_cubeMap ? "x6" : ""
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
+				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
@@ -2095,13 +2108,18 @@ namespace bgfx
 						}
 						else if (compressed)
 						{
-							srd[kk].SysMemPitch = (mip.m_width/blockInfo.blockWidth)*mip.m_blockSize;
+							srd[kk].SysMemPitch      = (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize;
 							srd[kk].SysMemSlicePitch = (mip.m_height/blockInfo.blockHeight)*srd[kk].SysMemPitch;
 						}
 						else
 						{
 							srd[kk].SysMemPitch = mip.m_width*mip.m_bpp/8;
 						}
+
+ 						if (swizzle)
+ 						{
+// 							imageSwizzleBgra8(width, height, mip.m_width*4, data, temp);
+ 						}
 
 						srd[kk].SysMemSlicePitch = mip.m_height*srd[kk].SysMemPitch;
 						++kk;
@@ -2113,16 +2131,22 @@ namespace bgfx
 				}
 			}
 
-			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
-			memset(&srvd, 0, sizeof(srvd) );
-			srvd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
-
-			const DXGI_FORMAT format = s_textureFormat[m_textureFormat].m_fmt;
-
 			const bool bufferOnly   = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
+			memset(&srvd, 0, sizeof(srvd) );
+			srvd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
+			DXGI_FORMAT format = s_textureFormat[m_textureFormat].m_fmt;
+
+			if (swizzle)
+			{
+				format      = DXGI_FORMAT_R8G8B8A8_UNORM;
+				srvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			}
 
 			switch (m_type)
 			{
@@ -2147,6 +2171,12 @@ namespace bgfx
 					else if (renderTarget)
 					{
 						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
+
+					if (computeWrite)
+					{
+						desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 						desc.Usage = D3D11_USAGE_DEFAULT;
 					}
 
@@ -2182,6 +2212,12 @@ namespace bgfx
 					desc.CPUAccessFlags = 0;
 					desc.MiscFlags = 0;
 
+					if (computeWrite)
+					{
+						desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
+
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 					srvd.Texture3D.MipLevels = numMips;
 
@@ -2193,6 +2229,11 @@ namespace bgfx
 			if (!bufferOnly)
 			{
 				DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
+			}
+
+			if (computeWrite)
+			{
+				DX_CHECK(s_renderD3D11->m_device->CreateUnorderedAccessView(m_ptr, NULL, &m_uav) );
 			}
 
 			if (convert
@@ -2214,6 +2255,7 @@ namespace bgfx
 	void TextureD3D11::destroy()
 	{
 		DX_RELEASE(m_srv, 0);
+		DX_RELEASE(m_uav, 0);
 		DX_RELEASE(m_ptr, 0);
 	}
 
@@ -2376,8 +2418,8 @@ namespace bgfx
 
 		_render->sort();
 
-		RenderState currentState;
-		currentState.reset();
+		RenderDraw currentState;
+		currentState.clear();
 		currentState.m_flags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
@@ -2409,6 +2451,7 @@ namespace bgfx
 		PrimInfo prim = s_primInfo[primIndex];
 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
 
+		bool wasCompute = false;
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
@@ -2422,26 +2465,13 @@ namespace bgfx
 		{
 			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)
 			{
-				key.decode(_render->m_sortKeys[item]);
-				const RenderState& state = _render->m_renderState[_render->m_sortValues[item] ];
+				const bool isCompute = key.decode(_render->m_sortKeys[item]);
+				const bool viewChanged = key.m_view != view;
 
-				const uint64_t newFlags = state.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ state.m_flags;
-				currentState.m_flags = newFlags;
+				const RenderItem& renderItem = _render->m_renderItem[_render->m_sortValues[item] ];
 
-				const uint64_t newStencil = state.m_stencil;
-				uint64_t changedStencil = currentState.m_stencil ^ state.m_stencil;
-				currentState.m_stencil = newStencil;
-
-				if (key.m_view != view)
+				if (viewChanged)
 				{
-					currentState.clear();
-					currentState.m_scissor = !state.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_flags = newFlags;
-					currentState.m_stencil = newStencil;
-
 					PIX_ENDEVENT();
 					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), s_viewNameW[key.m_view]);
 
@@ -2473,7 +2503,147 @@ namespace bgfx
 					{
 						clearQuad(_clearQuad, rect, clear);
 					}
+				}
 
+				if (isCompute)
+				{
+					if (!wasCompute)
+					{
+						wasCompute = true;
+
+						ID3D11ShaderResourceView* srv[BGFX_STATE_TEX_COUNT] = {};
+						deviceCtx->VSSetShaderResources(0, BGFX_STATE_TEX_COUNT, srv);
+						deviceCtx->PSSetShaderResources(0, BGFX_STATE_TEX_COUNT, srv);
+
+						ID3D11SamplerState* sampler[BGFX_STATE_TEX_COUNT] = {};
+						deviceCtx->VSSetSamplers(0, BGFX_STATE_TEX_COUNT, sampler);
+						deviceCtx->PSSetSamplers(0, BGFX_STATE_TEX_COUNT, sampler);
+					}
+
+					const RenderCompute& compute = renderItem.compute;
+
+					bool programChanged = false;
+					bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
+					rendererUpdateUniforms(this, _render->m_constantBuffer, compute.m_constBegin, compute.m_constEnd);
+
+					if (key.m_program != programIdx)
+					{
+						programIdx = key.m_program;
+
+						ProgramD3D11& program = m_program[key.m_program];
+						m_currentProgram = &program;
+
+						deviceCtx->CSSetShader(program.m_vsh->m_computeShader, NULL, 0);
+						deviceCtx->CSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
+
+						programChanged = 
+							constantsChanged = true;
+					}
+
+					if (invalidHandle != programIdx)
+					{
+						ProgramD3D11& program = m_program[programIdx];
+
+						if (constantsChanged)
+						{
+							ConstantBuffer* vcb = program.m_vsh->m_constantBuffer;
+							if (NULL != vcb)
+							{
+								commit(*vcb);
+							}
+						}
+
+						if (constantsChanged
+						||  program.m_numPredefined > 0)
+						{
+							commitShaderConstants();
+						}
+					}
+
+					ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
+					ID3D11ShaderResourceView*  srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
+					ID3D11SamplerState*    sampler[BGFX_STATE_TEX_COUNT] = {};
+
+					for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+					{
+						const ComputeBinding& bind = compute.m_bind[ii];
+						if (invalidHandle != bind.m_idx)
+						{
+							switch (bind.m_type)
+							{
+							case ComputeBinding::Image:
+								{
+									const TextureD3D11& texture = m_textures[bind.m_idx];
+									if (Access::Read != bind.m_access)
+									{
+										uav[ii] = texture.m_uav;
+									}
+									else
+									{
+										srv[ii] = texture.m_srv;
+										sampler[ii] = texture.m_sampler;
+									}
+								}
+								break;
+
+							case ComputeBinding::Buffer:
+								{
+									const VertexBufferD3D11& vertexBuffer = m_vertexBuffers[bind.m_idx];
+									BX_UNUSED(vertexBuffer);
+								}
+								break;
+							}
+						}
+					}
+
+					deviceCtx->CSSetUnorderedAccessViews(0, BGFX_MAX_COMPUTE_BINDINGS, uav, NULL);
+					deviceCtx->CSSetShaderResources(0, BGFX_MAX_COMPUTE_BINDINGS, srv);
+					deviceCtx->CSSetSamplers(0, BGFX_MAX_COMPUTE_BINDINGS, sampler);
+
+					deviceCtx->Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
+
+					continue;
+				}
+
+				if (wasCompute)
+				{
+					wasCompute = false;
+
+					programIdx = invalidHandle;
+					m_currentProgram = NULL;
+
+					deviceCtx->CSSetShader(NULL, NULL, 0);
+
+					ID3D11UnorderedAccessView* uav[BGFX_STATE_TEX_COUNT] = {};
+					deviceCtx->CSSetUnorderedAccessViews(0, BGFX_STATE_TEX_COUNT, uav, NULL);
+
+					ID3D11ShaderResourceView* srv[BGFX_STATE_TEX_COUNT] = {};
+					deviceCtx->CSSetShaderResources(0, BGFX_STATE_TEX_COUNT, srv);
+
+					ID3D11SamplerState* samplers[BGFX_STATE_TEX_COUNT] = {};
+					m_deviceCtx->CSSetSamplers(0, BGFX_STATE_TEX_COUNT, samplers);
+				}
+
+				const RenderDraw& draw = renderItem.draw;
+
+				const uint64_t newFlags = draw.m_flags;
+				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
+				currentState.m_flags = newFlags;
+
+				const uint64_t newStencil = draw.m_stencil;
+				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
+				currentState.m_stencil = newStencil;
+
+				if (viewChanged)
+				{
+					currentState.clear();
+					currentState.m_scissor = !draw.m_scissor;
+					changedFlags = BGFX_STATE_MASK;
+					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+					currentState.m_flags = newFlags;
+					currentState.m_stencil = newStencil;
+
+					uint64_t newFlags = renderItem.draw.m_flags;
 					setBlendState(newFlags);
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
@@ -2486,7 +2656,7 @@ namespace bgfx
 					}
 				}
 
-				uint16_t scissor = state.m_scissor;
+				uint16_t scissor = draw.m_scissor;
 				if (currentState.m_scissor != scissor)
 				{
 					currentState.m_scissor = scissor;
@@ -2540,7 +2710,7 @@ namespace bgfx
 				{
 					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
-						setBlendState(newFlags, state.m_rgba);
+						setBlendState(newFlags, draw.m_rgba);
 					}
 
 					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
@@ -2564,8 +2734,8 @@ namespace bgfx
 				}
 
 				bool programChanged = false;
-				bool constantsChanged = state.m_constBegin < state.m_constEnd;
-				rendererUpdateUniforms(this, _render->m_constantBuffer, state.m_constBegin, state.m_constEnd);
+				bool constantsChanged = draw.m_constBegin < draw.m_constEnd;
+				rendererUpdateUniforms(this, _render->m_constantBuffer, draw.m_constBegin, draw.m_constEnd);
 
 				if (key.m_program != programIdx)
 				{
@@ -2583,13 +2753,14 @@ namespace bgfx
 						ProgramD3D11& program = m_program[programIdx];
 						m_currentProgram = &program;
 
-						deviceCtx->VSSetShader( (ID3D11VertexShader*)program.m_vsh->m_ptr, NULL, 0);
-						deviceCtx->VSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
+						const ShaderD3D11* vsh = program.m_vsh;
+						deviceCtx->VSSetShader(vsh->m_vertexShader, NULL, 0);
+						deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
 
 						if (NULL != m_currentColor)
 						{
 							const ShaderD3D11* fsh = program.m_fsh;
-							deviceCtx->PSSetShader( (ID3D11PixelShader*)fsh->m_ptr, NULL, 0);
+							deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
 						}
 						else
@@ -2705,15 +2876,15 @@ namespace bgfx
 
 						case PredefinedUniform::Model:
 							{
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
-								setShaderConstant(flags, predefined.m_loc, model.un.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
+								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
+								setShaderConstant(flags, predefined.m_loc, model.un.val, bx::uint32_min(draw.m_num*4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ModelView:
 							{
 								Matrix4 modelView;
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
+								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
 								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &_render->m_view[view].un.f4x4);
 								setShaderConstant(flags, predefined.m_loc, modelView.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
@@ -2722,7 +2893,7 @@ namespace bgfx
 						case PredefinedUniform::ModelViewProj:
 							{
 								Matrix4 modelViewProj;
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
+								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
 								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
 								setShaderConstant(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
@@ -2753,7 +2924,7 @@ namespace bgfx
 					uint64_t flag = BGFX_STATE_TEX0;
 					for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
 					{
-						const Sampler& sampler = state.m_sampler[stage];
+						const Sampler& sampler = draw.m_sampler[stage];
 						Sampler& current = currentState.m_sampler[stage];
 						if (current.m_idx != sampler.m_idx
 						||  current.m_flags != sampler.m_flags
@@ -2784,33 +2955,33 @@ namespace bgfx
 				}
 
 				if (programChanged
-				||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
-				||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx
-				||  currentState.m_instanceDataOffset != state.m_instanceDataOffset
-				||  currentState.m_instanceDataStride != state.m_instanceDataStride)
+				||  currentState.m_vertexBuffer.idx != draw.m_vertexBuffer.idx
+				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
+				||  currentState.m_instanceDataOffset != draw.m_instanceDataOffset
+				||  currentState.m_instanceDataStride != draw.m_instanceDataStride)
 				{
-					currentState.m_vertexBuffer = state.m_vertexBuffer;
-					currentState.m_instanceDataBuffer.idx = state.m_instanceDataBuffer.idx;
-					currentState.m_instanceDataOffset = state.m_instanceDataOffset;
-					currentState.m_instanceDataStride = state.m_instanceDataStride;
+					currentState.m_vertexBuffer = draw.m_vertexBuffer;
+					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
+					currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
+					currentState.m_instanceDataStride = draw.m_instanceDataStride;
 
-					uint16_t handle = state.m_vertexBuffer.idx;
+					uint16_t handle = draw.m_vertexBuffer.idx;
 					if (invalidHandle != handle)
 					{
 						const VertexBufferD3D11& vb = m_vertexBuffers[handle];
 
-						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
 						uint32_t stride = vertexDecl.m_stride;
 						uint32_t offset = 0;
 						deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
 
-						if (isValid(state.m_instanceDataBuffer) )
+						if (isValid(draw.m_instanceDataBuffer) )
 						{
- 							const VertexBufferD3D11& inst = m_vertexBuffers[state.m_instanceDataBuffer.idx];
-							uint32_t instStride = state.m_instanceDataStride;
-							deviceCtx->IASetVertexBuffers(1, 1, &inst.m_ptr, &instStride, &state.m_instanceDataOffset);
-							setInputLayout(vertexDecl, m_program[programIdx], state.m_instanceDataStride/16);
+ 							const VertexBufferD3D11& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
+							uint32_t instStride = draw.m_instanceDataStride;
+							deviceCtx->IASetVertexBuffers(1, 1, &inst.m_ptr, &instStride, &draw.m_instanceDataOffset);
+							setInputLayout(vertexDecl, m_program[programIdx], draw.m_instanceDataStride/16);
 						}
 						else
 						{
@@ -2824,11 +2995,11 @@ namespace bgfx
 					}
 				}
 
-				if (currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+				if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
 				{
-					currentState.m_indexBuffer = state.m_indexBuffer;
+					currentState.m_indexBuffer = draw.m_indexBuffer;
 
-					uint16_t handle = state.m_indexBuffer.idx;
+					uint16_t handle = draw.m_indexBuffer.idx;
 					if (invalidHandle != handle)
 					{
 						const IndexBufferD3D11& ib = m_indexBuffers[handle];
@@ -2842,11 +3013,11 @@ namespace bgfx
 
 				if (isValid(currentState.m_vertexBuffer) )
 				{
-					uint32_t numVertices = state.m_numVertices;
+					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX == numVertices)
 					{
 						const VertexBufferD3D11& vb = m_vertexBuffers[currentState.m_vertexBuffer.idx];
-						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_stride;
 					}
@@ -2856,33 +3027,33 @@ namespace bgfx
 					uint32_t numInstances = 0;
 					uint32_t numPrimsRendered = 0;
 
-					if (isValid(state.m_indexBuffer) )
+					if (isValid(draw.m_indexBuffer) )
 					{
-						if (UINT32_MAX == state.m_numIndices)
+						if (UINT32_MAX == draw.m_numIndices)
 						{
-							numIndices = m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+							numIndices = m_indexBuffers[draw.m_indexBuffer.idx].m_size/2;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances = state.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+							numInstances = draw.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 							deviceCtx->DrawIndexedInstanced(numIndices
-								, state.m_numInstances
+								, draw.m_numInstances
 								, 0
-								, state.m_startVertex
+								, draw.m_startVertex
 								, 0
 								);
 						}
-						else if (prim.m_min <= state.m_numIndices)
+						else if (prim.m_min <= draw.m_numIndices)
 						{
-							numIndices = state.m_numIndices;
+							numIndices = draw.m_numIndices;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances = state.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+							numInstances = draw.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 							deviceCtx->DrawIndexedInstanced(numIndices
-								, state.m_numInstances
-								, state.m_startIndex
-								, state.m_startVertex
+								, draw.m_numInstances
+								, draw.m_startIndex
+								, draw.m_startVertex
 								, 0
 								);
 						}
@@ -2890,12 +3061,12 @@ namespace bgfx
 					else
 					{
 						numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
-						numInstances = state.m_numInstances;
-						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+						numInstances = draw.m_numInstances;
+						numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 						deviceCtx->DrawInstanced(numVertices
-							, state.m_numInstances
-							, state.m_startVertex
+							, draw.m_numInstances
+							, draw.m_startVertex
 							, 0
 							);
 					}

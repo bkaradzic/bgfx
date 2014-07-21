@@ -32,13 +32,15 @@
 
 #if GL_IMPORT_TYPEDEFS
 typedef void (GL_APIENTRYP GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
-
 typedef void           (GL_APIENTRYP PFNGLACTIVETEXTUREPROC) (GLenum texture);
 typedef void           (GL_APIENTRYP PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
 typedef void           (GL_APIENTRYP PFNGLBEGINQUERYPROC) (GLenum target, GLuint id);
 typedef void           (GL_APIENTRYP PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
+typedef void           (GL_APIENTRYP PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, GLuint buffer);
+typedef void           (GL_APIENTRYP PFNGLBINDBUFFERRANGEPROC) (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 typedef void           (GL_APIENTRYP PFNGLBINDFRAGDATALOCATIONPROC) (GLuint program, GLuint color, const GLchar *name);
 typedef void           (GL_APIENTRYP PFNGLBINDFRAMEBUFFERPROC) (GLenum target, GLuint framebuffer);
+typedef void           (GL_APIENTRYP PFNGLBINDIMAGETEXTUREPROC) (GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 typedef void           (GL_APIENTRYP PFNGLBINDRENDERBUFFERPROC) (GLenum target, GLuint renderbuffer);
 typedef void           (GL_APIENTRYP PFNGLBINDSAMPLERPROC) (GLuint unit, GLuint sampler);
 typedef void           (GL_APIENTRYP PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
@@ -88,6 +90,8 @@ typedef void           (GL_APIENTRYP PFNGLDETACHSHADERPROC) (GLuint program, GLu
 typedef void           (GL_APIENTRYP PFNGLDISABLEPROC) (GLenum cap);
 typedef void           (GL_APIENTRYP PFNGLDISABLEIPROC) (GLenum cap, GLuint index);
 typedef void           (GL_APIENTRYP PFNGLDISABLEVERTEXATTRIBARRAYPROC) (GLuint index);
+typedef void           (GL_APIENTRYP PFNGLDISPATCHCOMPUTEPROC) (GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+typedef void           (GL_APIENTRYP PFNGLDISPATCHCOMPUTEINDIRECTPROC) (GLintptr indirect);
 typedef void           (GL_APIENTRYP PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
 typedef void           (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDPROC) (GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
 typedef void           (GL_APIENTRYP PFNGLDRAWBUFFERPROC) (GLenum mode);
@@ -120,6 +124,12 @@ typedef void           (GL_APIENTRYP PFNGLGETPOINTERVPROC) (GLenum pname, void *
 typedef void           (GL_APIENTRYP PFNGLGETPROGRAMBINARYPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary);
 typedef void           (GL_APIENTRYP PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 typedef void           (GL_APIENTRYP PFNGLGETPROGRAMIVPROC) (GLuint program, GLenum pname, GLint *params);
+typedef void           (GL_APIENTRYP PFNGLGETPROGRAMINTERFACEIVPROC) (GLuint program, GLenum programInterface, GLenum pname, GLint *params);
+typedef GLuint         (GL_APIENTRYP PFNGLGETPROGRAMRESOURCEINDEXPROC) (GLuint program, GLenum programInterface, const GLchar *name);
+typedef void           (GL_APIENTRYP PFNGLGETPROGRAMRESOURCEIVPROC) (GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum *props, GLsizei bufSize, GLsizei *length, GLint *params);
+typedef void           (GL_APIENTRYP PFNGLGETPROGRAMRESOURCENAMEPROC) (GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name);
+typedef GLint          (GL_APIENTRYP PFNGLGETPROGRAMRESOURCELOCATIONPROC) (GLuint program, GLenum programInterface, const GLchar *name);
+typedef GLint          (GL_APIENTRYP PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC) (GLuint program, GLenum programInterface, const GLchar *name);
 typedef void           (GL_APIENTRYP PFNGLGETQUERYIVPROC) (GLenum target, GLenum pname, GLint *params);
 typedef void           (GL_APIENTRYP PFNGLGETQUERYOBJECTIVPROC) (GLuint id, GLenum pname, GLint *params);
 typedef void           (GL_APIENTRYP PFNGLGETQUERYOBJECTI64VPROC) (GLuint id, GLenum pname, GLint64 *params);
@@ -130,6 +140,7 @@ typedef void           (GL_APIENTRYP PFNGLGETSHADERIVPROC) (GLuint shader, GLenu
 typedef const GLubyte* (GL_APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
 typedef GLint          (GL_APIENTRYP PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar *name);
 typedef void           (GL_APIENTRYP PFNGLLINKPROGRAMPROC) (GLuint program);
+typedef void           (GL_APIENTRYP PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
 typedef void           (GL_APIENTRYP PFNGLOBJECTLABELPROC) (GLenum identifier, GLuint name, GLsizei length, const GLchar *label);
 typedef void           (GL_APIENTRYP PFNGLOBJECTPTRLABELPROC) (const void *ptr, GLsizei length, const GLchar *label);
 typedef void           (GL_APIENTRYP PFNGLPIXELSTOREIPROC) (GLenum pname, GLint param);
@@ -194,8 +205,11 @@ GL_IMPORT______(false, PFNGLACTIVETEXTUREPROC,                     glActiveTextu
 GL_IMPORT______(false, PFNGLATTACHSHADERPROC,                      glAttachShader);
 GL_IMPORT______(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery);
 GL_IMPORT______(false, PFNGLBINDBUFFERPROC,                        glBindBuffer);
+GL_IMPORT______(true,  PFNGLBINDBUFFERBASEPROC,                    glBindBufferBase);
+GL_IMPORT______(true,  PFNGLBINDBUFFERRANGEPROC,                   glBindBufferRange);
 GL_IMPORT______(true,  PFNGLBINDFRAGDATALOCATIONPROC,              glBindFragDataLocation);
 GL_IMPORT______(true,  PFNGLBINDFRAMEBUFFERPROC,                   glBindFramebuffer);
+GL_IMPORT______(true,  PFNGLBINDIMAGETEXTUREPROC,                  glBindImageTexture);
 GL_IMPORT______(true,  PFNGLBINDRENDERBUFFERPROC,                  glBindRenderbuffer);
 GL_IMPORT______(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
 GL_IMPORT______(false, PFNGLBINDTEXTUREPROC,                       glBindTexture);
@@ -243,6 +257,8 @@ GL_IMPORT______(false, PFNGLDETACHSHADERPROC,                      glDetachShade
 GL_IMPORT______(false, PFNGLDISABLEPROC,                           glDisable);
 GL_IMPORT______(true,  PFNGLDISABLEIPROC,                          glDisablei);
 GL_IMPORT______(false, PFNGLDISABLEVERTEXATTRIBARRAYPROC,          glDisableVertexAttribArray);
+GL_IMPORT______(true,  PFNGLDISPATCHCOMPUTEPROC,                   glDispatchCompute);
+GL_IMPORT______(true,  PFNGLDISPATCHCOMPUTEINDIRECTPROC,           glDispatchComputeIndirect);
 GL_IMPORT______(false, PFNGLDRAWARRAYSPROC,                        glDrawArrays);
 GL_IMPORT______(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
 GL_IMPORT______(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer);
@@ -275,6 +291,12 @@ GL_IMPORT______(true,  PFNGLGETPOINTERVPROC,                       glGetPointerv
 GL_IMPORT______(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
 GL_IMPORT______(false, PFNGLGETPROGRAMIVPROC,                      glGetProgramiv);
 GL_IMPORT______(false, PFNGLGETPROGRAMINFOLOGPROC,                 glGetProgramInfoLog);
+GL_IMPORT______(true,  PFNGLGETPROGRAMINTERFACEIVPROC,             glGetProgramInterfaceiv);
+GL_IMPORT______(true,  PFNGLGETPROGRAMRESOURCEINDEXPROC,           glGetProgramResourceIndex);
+GL_IMPORT______(true,  PFNGLGETPROGRAMRESOURCEIVPROC,              glGetProgramResourceiv);
+GL_IMPORT______(true,  PFNGLGETPROGRAMRESOURCENAMEPROC,            glGetProgramResourceName);
+GL_IMPORT______(true,  PFNGLGETPROGRAMRESOURCELOCATIONPROC,        glGetProgramResourceLocation);
+GL_IMPORT______(true,  PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC,   glGetProgramResourceLocationIndex);
 GL_IMPORT______(true,  PFNGLGETQUERYIVPROC,                        glGetQueryiv);
 GL_IMPORT______(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
 GL_IMPORT______(true,  PFNGLGETQUERYOBJECTI64VPROC,                glGetQueryObjecti64v);
@@ -285,6 +307,7 @@ GL_IMPORT______(false, PFNGLGETSHADERINFOLOGPROC,                  glGetShaderIn
 GL_IMPORT______(false, PFNGLGETSTRINGPROC,                         glGetString);
 GL_IMPORT______(false, PFNGLGETUNIFORMLOCATIONPROC,                glGetUniformLocation);
 GL_IMPORT______(false, PFNGLLINKPROGRAMPROC,                       glLinkProgram);
+GL_IMPORT______(true,  PFNGLMEMORYBARRIERPROC,                     glMemoryBarrier);
 GL_IMPORT______(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
 GL_IMPORT______(true,  PFNGLOBJECTPTRLABELPROC,                    glObjectPtrLabel);
 GL_IMPORT______(false, PFNGLPIXELSTOREIPROC,                       glPixelStorei);
@@ -429,6 +452,19 @@ GL_IMPORT_____x(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSampl
 GL_IMPORT_____x(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
 GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
 GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
+
+GL_IMPORT_____x(true,  PFNGLBINDBUFFERBASEPROC,                    glBindBufferBase);
+GL_IMPORT_____x(true,  PFNGLBINDBUFFERRANGEPROC,                   glBindBufferRange);
+GL_IMPORT_____x(true,  PFNGLBINDIMAGETEXTUREPROC,                  glBindImageTexture);
+GL_IMPORT_____x(true,  PFNGLGETPROGRAMINTERFACEIVPROC,             glGetProgramInterfaceiv);
+GL_IMPORT_____x(true,  PFNGLGETPROGRAMRESOURCEINDEXPROC,           glGetProgramResourceIndex);
+GL_IMPORT_____x(true,  PFNGLGETPROGRAMRESOURCEIVPROC,              glGetProgramResourceiv);
+GL_IMPORT_____x(true,  PFNGLGETPROGRAMRESOURCENAMEPROC,            glGetProgramResourceName);
+GL_IMPORT_____x(true,  PFNGLGETPROGRAMRESOURCELOCATIONPROC,        glGetProgramResourceLocation);
+GL_IMPORT_____x(true,  PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC,   glGetProgramResourceLocationIndex);
+GL_IMPORT_____x(true,  PFNGLMEMORYBARRIERPROC,                     glMemoryBarrier);
+GL_IMPORT_____x(true,  PFNGLDISPATCHCOMPUTEPROC,                   glDispatchCompute);
+GL_IMPORT_____x(true,  PFNGLDISPATCHCOMPUTEINDIRECTPROC,           glDispatchComputeIndirect);
 
 GL_IMPORT_NV___(true,  PFNGLDRAWBUFFERSPROC,                       glDrawBuffers);
 GL_IMPORT_NV___(true,  PFNGLGENQUERIESPROC,                        glGenQueries);

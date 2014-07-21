@@ -183,7 +183,7 @@ namespace bgfx
 		D3DFORMAT m_fmt;
 	};
 
-	static TextureFormatInfo s_textureFormat[TextureFormat::Count] =
+	static TextureFormatInfo s_textureFormat[] =
 	{
 		{ D3DFMT_DXT1          }, // BC1 
 		{ D3DFMT_DXT3          }, // BC2
@@ -225,6 +225,7 @@ namespace bgfx
 		{ D3DFMT_INTZ /*D3DFMT_S8_LOCKABLE*/   }, // D0S8
 #endif // defined(D3D_DISABLE_9EX)
 	};
+	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	static ExtendedFormat s_extendedFormats[ExtendedFormat::Count] =
 	{
@@ -822,8 +823,8 @@ namespace bgfx
 			DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID) );
 
 			ProgramD3D9& program = m_program[_blitter.m_program.idx];
-			DX_CHECK(device->SetVertexShader( (IDirect3DVertexShader9*)program.m_vsh->m_ptr) );
-			DX_CHECK(device->SetPixelShader( (IDirect3DPixelShader9*)program.m_fsh->m_ptr) );
+			DX_CHECK(device->SetVertexShader(program.m_vsh->m_vertexShader) );
+			DX_CHECK(device->SetPixelShader(program.m_fsh->m_pixelShader) );
 
 			VertexBufferD3D9& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
 			VertexDeclaration& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
@@ -1735,13 +1736,15 @@ namespace bgfx
 
 		if (fragment)
 		{
-			DX_CHECK(s_renderD3D9->m_device->CreatePixelShader(code, (IDirect3DPixelShader9**)&m_ptr) );
-			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
+			m_type = 1;
+			DX_CHECK(s_renderD3D9->m_device->CreatePixelShader(code, &m_pixelShader) );
+			BGFX_FATAL(NULL != m_pixelShader, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
 		else
 		{
-			DX_CHECK(s_renderD3D9->m_device->CreateVertexShader(code, (IDirect3DVertexShader9**)&m_ptr) );
-			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
+			m_type = 0;
+			DX_CHECK(s_renderD3D9->m_device->CreateVertexShader(code, &m_vertexShader) );
+			BGFX_FATAL(NULL != m_vertexShader, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");
 		}
 	}
 
@@ -2451,8 +2454,8 @@ namespace bgfx
 
 		_render->sort();
 
-		RenderState currentState;
-		currentState.reset();
+		RenderDraw currentState;
+		currentState.clear();
 		currentState.m_flags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
@@ -2496,21 +2499,28 @@ namespace bgfx
 		{
 			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)
 			{
-				key.decode(_render->m_sortKeys[item]);
-				const RenderState& state = _render->m_renderState[_render->m_sortValues[item] ];
+				const bool isCompute = key.decode(_render->m_sortKeys[item]);
 
-				const uint64_t newFlags = state.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ state.m_flags;
+				if (isCompute)
+				{
+					BX_CHECK(false, "Compute is not supported on DirectX 9.");
+					continue;
+				}
+
+				const RenderDraw& draw = _render->m_renderItem[_render->m_sortValues[item] ].draw;
+
+				const uint64_t newFlags = draw.m_flags;
+				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
 				currentState.m_flags = newFlags;
 
-				const uint64_t newStencil = state.m_stencil;
-				uint64_t changedStencil = currentState.m_stencil ^ state.m_stencil;
+				const uint64_t newStencil = draw.m_stencil;
+				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
 				currentState.m_stencil = newStencil;
 
 				if (key.m_view != view)
 				{
 					currentState.clear();
-					currentState.m_scissor = !state.m_scissor;
+					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_flags = newFlags;
@@ -2590,7 +2600,7 @@ namespace bgfx
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
 				}
 
-				uint16_t scissor = state.m_scissor;
+				uint16_t scissor = draw.m_scissor;
 				if (currentState.m_scissor != scissor)
 				{
 					currentState.m_scissor = scissor;
@@ -2737,7 +2747,7 @@ namespace bgfx
 					}
 
 					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK) & changedFlags
-					||  blendFactor != state.m_rgba)
+					||  blendFactor != draw.m_rgba)
 					{
 						bool enabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
 						DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, enabled) );
@@ -2770,9 +2780,9 @@ namespace bgfx
 							}
 
 							if ( (s_blendFactor[srcRGB].m_factor || s_blendFactor[dstRGB].m_factor)
-							&&  blendFactor != state.m_rgba)
+							&&  blendFactor != draw.m_rgba)
 							{
-								const uint32_t rgba = state.m_rgba;
+								const uint32_t rgba = draw.m_rgba;
 								D3DCOLOR color = D3DCOLOR_RGBA(rgba>>24
 															, (rgba>>16)&0xff
 															, (rgba>> 8)&0xff
@@ -2782,7 +2792,7 @@ namespace bgfx
 							}
 						}
 
-						blendFactor = state.m_rgba;
+						blendFactor = draw.m_rgba;
 					}
 
 					const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : newFlags&BGFX_STATE_PT_MASK;
@@ -2791,8 +2801,8 @@ namespace bgfx
 				}
 
 				bool programChanged = false;
-				bool constantsChanged = state.m_constBegin < state.m_constEnd;
-				rendererUpdateUniforms(this, _render->m_constantBuffer, state.m_constBegin, state.m_constEnd);
+				bool constantsChanged = draw.m_constBegin < draw.m_constEnd;
+				rendererUpdateUniforms(this, _render->m_constantBuffer, draw.m_constBegin, draw.m_constEnd);
 
 				if (key.m_program != programIdx)
 				{
@@ -2806,8 +2816,8 @@ namespace bgfx
 					else
 					{
 						ProgramD3D9& program = m_program[programIdx];
-						device->SetVertexShader( (IDirect3DVertexShader9*)program.m_vsh->m_ptr);
-						device->SetPixelShader( (IDirect3DPixelShader9*)program.m_fsh->m_ptr);
+						device->SetVertexShader(program.m_vsh->m_vertexShader);
+						device->SetPixelShader(program.m_fsh->m_pixelShader);
 					}
 
 					programChanged = 
@@ -2917,15 +2927,15 @@ namespace bgfx
 
 						case PredefinedUniform::Model:
 							{
- 								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
-								setShaderConstantF(flags, predefined.m_loc, model.un.val, bx::uint32_min(state.m_num*4, predefined.m_count) );
+ 								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
+								setShaderConstantF(flags, predefined.m_loc, model.un.val, bx::uint32_min(draw.m_num*4, predefined.m_count) );
 							}
 							break;
 
 						case PredefinedUniform::ModelView:
 							{
 								Matrix4 modelView;
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
+								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
 								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &_render->m_view[view].un.f4x4);
 								setShaderConstantF(flags, predefined.m_loc, modelView.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
@@ -2934,7 +2944,7 @@ namespace bgfx
 						case PredefinedUniform::ModelViewProj:
 							{
 								Matrix4 modelViewProj;
-								const Matrix4& model = _render->m_matrixCache.m_cache[state.m_matrix];
+								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
 								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
 								setShaderConstantF(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
 							}
@@ -2958,7 +2968,7 @@ namespace bgfx
 					uint64_t flag = BGFX_STATE_TEX0;
 					for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
 					{
-						const Sampler& sampler = state.m_sampler[stage];
+						const Sampler& sampler = draw.m_sampler[stage];
 						Sampler& current = currentState.m_sampler[stage];
 						if (current.m_idx != sampler.m_idx
 						||  current.m_flags != sampler.m_flags
@@ -2980,34 +2990,34 @@ namespace bgfx
 				}
 
 				if (programChanged
-				||  currentState.m_vertexBuffer.idx != state.m_vertexBuffer.idx
-				||  currentState.m_instanceDataBuffer.idx != state.m_instanceDataBuffer.idx
-				||  currentState.m_instanceDataOffset != state.m_instanceDataOffset
-				||  currentState.m_instanceDataStride != state.m_instanceDataStride)
+				||  currentState.m_vertexBuffer.idx != draw.m_vertexBuffer.idx
+				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
+				||  currentState.m_instanceDataOffset != draw.m_instanceDataOffset
+				||  currentState.m_instanceDataStride != draw.m_instanceDataStride)
 				{
-					currentState.m_vertexBuffer = state.m_vertexBuffer;
-					currentState.m_instanceDataBuffer.idx = state.m_instanceDataBuffer.idx;
-					currentState.m_instanceDataOffset = state.m_instanceDataOffset;
-					currentState.m_instanceDataStride = state.m_instanceDataStride;
+					currentState.m_vertexBuffer = draw.m_vertexBuffer;
+					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
+					currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
+					currentState.m_instanceDataStride = draw.m_instanceDataStride;
 
-					uint16_t handle = state.m_vertexBuffer.idx;
+					uint16_t handle = draw.m_vertexBuffer.idx;
 					if (invalidHandle != handle)
 					{
 						const VertexBufferD3D9& vb = m_vertexBuffers[handle];
 
-						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDeclaration& vertexDecl = m_vertexDecls[decl];
 						DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
 
-						if (isValid(state.m_instanceDataBuffer)
+						if (isValid(draw.m_instanceDataBuffer)
 						&&  m_instancing)
 						{
-							const VertexBufferD3D9& inst = m_vertexBuffers[state.m_instanceDataBuffer.idx];
-							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|state.m_numInstances) );
+							const VertexBufferD3D9& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
+							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|draw.m_numInstances) );
 							DX_CHECK(device->SetStreamSourceFreq(1, UINT(D3DSTREAMSOURCE_INSTANCEDATA|1) ) );
-							DX_CHECK(device->SetStreamSource(1, inst.m_ptr, state.m_instanceDataOffset, state.m_instanceDataStride) );
+							DX_CHECK(device->SetStreamSource(1, inst.m_ptr, draw.m_instanceDataOffset, draw.m_instanceDataStride) );
 
-							IDirect3DVertexDeclaration9* ptr = createVertexDeclaration(vertexDecl.m_decl, state.m_instanceDataStride/16);
+							IDirect3DVertexDeclaration9* ptr = createVertexDeclaration(vertexDecl.m_decl, draw.m_instanceDataStride/16);
 							DX_CHECK(device->SetVertexDeclaration(ptr) );
 							DX_RELEASE(ptr, 0);
 						}
@@ -3025,11 +3035,11 @@ namespace bgfx
 					}
 				}
 
-				if (currentState.m_indexBuffer.idx != state.m_indexBuffer.idx)
+				if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
 				{
-					currentState.m_indexBuffer = state.m_indexBuffer;
+					currentState.m_indexBuffer = draw.m_indexBuffer;
 
-					uint16_t handle = state.m_indexBuffer.idx;
+					uint16_t handle = draw.m_indexBuffer.idx;
 					if (invalidHandle != handle)
 					{
 						const IndexBufferD3D9& ib = m_indexBuffers[handle];
@@ -3043,11 +3053,11 @@ namespace bgfx
 
 				if (isValid(currentState.m_vertexBuffer) )
 				{
-					uint32_t numVertices = state.m_numVertices;
+					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX == numVertices)
 					{
 						const VertexBufferD3D9& vb = m_vertexBuffers[currentState.m_vertexBuffer.idx];
-						uint16_t decl = !isValid(vb.m_decl) ? state.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
 						const VertexDeclaration& vertexDecl = m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
 					}
@@ -3057,35 +3067,35 @@ namespace bgfx
 					uint32_t numInstances = 0;
 					uint32_t numPrimsRendered = 0;
 
-					if (isValid(state.m_indexBuffer) )
+					if (isValid(draw.m_indexBuffer) )
 					{
-						if (UINT32_MAX == state.m_numIndices)
+						if (UINT32_MAX == draw.m_numIndices)
 						{
-							numIndices = m_indexBuffers[state.m_indexBuffer.idx].m_size/2;
+							numIndices = m_indexBuffers[draw.m_indexBuffer.idx].m_size/2;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances = state.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+							numInstances = draw.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 							DX_CHECK(device->DrawIndexedPrimitive(prim.m_type
-								, state.m_startVertex
+								, draw.m_startVertex
 								, 0
 								, numVertices
 								, 0
 								, numPrimsSubmitted
 								) );
 						}
-						else if (prim.m_min <= state.m_numIndices)
+						else if (prim.m_min <= draw.m_numIndices)
 						{
-							numIndices = state.m_numIndices;
+							numIndices = draw.m_numIndices;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances = state.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+							numInstances = draw.m_numInstances;
+							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 							DX_CHECK(device->DrawIndexedPrimitive(prim.m_type
-								, state.m_startVertex
+								, draw.m_startVertex
 								, 0
 								, numVertices
-								, state.m_startIndex
+								, draw.m_startIndex
 								, numPrimsSubmitted
 								) );
 						}
@@ -3093,11 +3103,11 @@ namespace bgfx
 					else
 					{
 						numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
-						numInstances = state.m_numInstances;
-						numPrimsRendered = numPrimsSubmitted*state.m_numInstances;
+						numInstances = draw.m_numInstances;
+						numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 						DX_CHECK(device->DrawPrimitive(prim.m_type
-							, state.m_startVertex
+							, draw.m_startVertex
 							, numPrimsSubmitted
 							) );
 					}

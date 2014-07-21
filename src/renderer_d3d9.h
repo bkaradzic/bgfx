@@ -218,9 +218,10 @@ namespace bgfx
 	struct ShaderD3D9
 	{
 		ShaderD3D9()
-			: m_ptr(NULL)
+			: m_vertexShader(NULL)
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
+			, m_type(0)
 		{
 		}
 
@@ -236,23 +237,33 @@ namespace bgfx
 			}
 			m_numPredefined = 0;
 
-			DX_RELEASE(m_ptr, 0);
+			switch (m_type)
+			{
+			case 0:  DX_RELEASE(m_vertexShader, 0);
+			default: DX_RELEASE(m_pixelShader,  0);
+			}
 		}
 
-		IUnknown* m_ptr;
+		union
+		{
+			// X360 doesn't have interface inheritance (can't use IUnknown*).
+			IDirect3DVertexShader9* m_vertexShader;
+			IDirect3DPixelShader9*  m_pixelShader;
+		};
 		ConstantBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
+		uint8_t m_type;
 	};
 
 	struct ProgramD3D9
 	{
 		void create(const ShaderD3D9& _vsh, const ShaderD3D9& _fsh)
 		{
-			BX_CHECK(NULL != _vsh.m_ptr, "Vertex shader doesn't exist.");
+			BX_CHECK(NULL != _vsh.m_vertexShader, "Vertex shader doesn't exist.");
 			m_vsh = &_vsh;
 
-			BX_CHECK(NULL != _fsh.m_ptr, "Fragment shader doesn't exist.");
+			BX_CHECK(NULL != _fsh.m_pixelShader, "Fragment shader doesn't exist.");
 			m_fsh = &_fsh;
 
 			memcpy(&m_predefined[0], _vsh.m_predefined, _vsh.m_numPredefined*sizeof(PredefinedUniform) );
@@ -318,10 +329,10 @@ namespace bgfx
 	
 		union
 		{
-			IDirect3DBaseTexture9* m_ptr;
-			IDirect3DTexture9* m_texture2d;
+			IDirect3DBaseTexture9*   m_ptr;
+			IDirect3DTexture9*       m_texture2d;
 			IDirect3DVolumeTexture9* m_texture3d;
-			IDirect3DCubeTexture9* m_textureCube;
+			IDirect3DCubeTexture9*   m_textureCube;
 		};
 
 		IDirect3DSurface9* m_surface;

@@ -644,11 +644,13 @@ namespace bgfx
 		}
 
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
-		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
+		|| (0 == m_draw.m_numVertices && 0 == m_draw.m_numIndices) )
 		{
 			++m_numDropped;
 			return m_num;
 		}
+
+		m_constEnd = m_constantBuffer->getPos();
 
 		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
 		if (invalidHandle != m_key.m_program)
@@ -657,18 +659,20 @@ namespace bgfx
 			m_key.m_view = _id;
 			m_key.m_seq = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
 			s_ctx->m_seq[_id]++;
-			uint64_t key = m_key.encode();
+			uint64_t key = m_key.encodeDraw();
 			m_sortKeys[m_num] = key;
-			m_sortValues[m_num] = m_numRenderStates;
+			m_sortValues[m_num] = m_numRenderItems;
 			++m_num;
 
-			m_state.m_constEnd = m_constantBuffer->getPos();
-			m_state.m_flags |= m_flags;
-			m_renderState[m_numRenderStates] = m_state;
-			++m_numRenderStates;
+			m_draw.m_constBegin = m_constBegin;
+			m_draw.m_constEnd   = m_constEnd;
+			m_draw.m_flags |= m_flags;
+			m_renderItem[m_numRenderItems].draw = m_draw;
+			++m_numRenderItems;
 		}
 
-		m_state.clear();
+		m_draw.clear();
+		m_constBegin = m_constEnd;
 		m_flags = BGFX_STATE_NONE;
 
 		return m_num;
@@ -683,11 +687,13 @@ namespace bgfx
 		}
 
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
-		|| (0 == m_state.m_numVertices && 0 == m_state.m_numIndices) )
+		|| (0 == m_draw.m_numVertices && 0 == m_draw.m_numIndices) )
 		{
 			m_numDropped += bx::uint32_cntbits(_viewMask);
 			return m_num;
 		}
+
+		m_constEnd = m_constantBuffer->getPos();
 
 		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
 		if (invalidHandle != m_key.m_program)
@@ -702,20 +708,65 @@ namespace bgfx
 				m_key.m_view = id;
 				m_key.m_seq = s_ctx->m_seq[id] & s_ctx->m_seqMask[id];
 				s_ctx->m_seq[id]++;
-				uint64_t key = m_key.encode();
+				uint64_t key = m_key.encodeDraw();
 				m_sortKeys[m_num] = key;
-				m_sortValues[m_num] = m_numRenderStates;
+				m_sortValues[m_num] = m_numRenderItems;
 				++m_num;
 			}
 
-			m_state.m_constEnd = m_constantBuffer->getPos();
-			m_state.m_flags |= m_flags;
-			m_renderState[m_numRenderStates] = m_state;
-			++m_numRenderStates;
+			m_draw.m_constBegin = m_constBegin;
+			m_draw.m_constEnd   = m_constEnd;
+			m_draw.m_flags |= m_flags;
+			m_renderItem[m_numRenderItems].draw = m_draw;
+			++m_numRenderItems;
 		}
 
-		m_state.clear();
+		m_draw.clear();
+		m_constBegin = m_constEnd;
 		m_flags = BGFX_STATE_NONE;
+
+		return m_num;
+	}
+
+	uint32_t Frame::dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ)
+	{
+		if (m_discard)
+		{
+			discard();
+			return m_num;
+		}
+
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num)
+		{
+			++m_numDropped;
+			return m_num;
+		}
+
+		m_constEnd = m_constantBuffer->getPos();
+
+		m_compute.m_numX = bx::uint16_max(_numX, 1);
+		m_compute.m_numY = bx::uint16_max(_numY, 1);
+		m_compute.m_numZ = bx::uint16_max(_numZ, 1);
+		m_key.m_program = _handle.idx;
+		if (invalidHandle != m_key.m_program)
+		{
+			m_key.m_depth = 0;
+			m_key.m_view = _id;
+			m_key.m_seq = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
+			s_ctx->m_seq[_id]++;
+			uint64_t key = m_key.encodeCompute();
+			m_sortKeys[m_num] = key;
+			m_sortValues[m_num] = m_numRenderItems;
+			++m_num;
+
+			m_compute.m_constBegin = m_constBegin;
+			m_compute.m_constEnd   = m_constEnd;
+			m_renderItem[m_numRenderItems].compute = m_compute;
+			++m_numRenderItems;
+		}
+
+		m_compute.clear();
+		m_constBegin = m_constEnd;
 
 		return m_num;
 	}
@@ -821,6 +872,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_RENDERER_MULTITHREADED),
 		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_DEPTH),
 		CAPS_FLAGS(BGFX_CAPS_BLEND_INDEPENDENT),
+		CAPS_FLAGS(BGFX_CAPS_COMPUTE),
 #undef CAPS_FLAGS
 	};
 
@@ -2113,6 +2165,19 @@ again:
 		return handle;
 	}
 
+	ProgramHandle createProgram(ShaderHandle _vsh, bool _destroyShaders)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		ProgramHandle handle = s_ctx->createProgram(_vsh);
+
+		if (_destroyShaders)
+		{
+			destroyShader(_vsh);
+		}
+
+		return handle;
+	}
+
 	void destroyProgram(ProgramHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -2590,6 +2655,24 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		return s_ctx->submitMask(_viewMask, _depth);
+	}
+
+	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setImage(_stage, _sampler, _handle, _mip, _format, _access);
+	}
+
+	void setImage(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, TextureFormat::Enum _format, Access::Enum _access)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setImage(_stage, _sampler, _handle, _attachment, _format, _access);
+	}
+
+	void dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->dispatch(_id, _handle, _numX, _numY, _numZ);
 	}
 
 	void discard()

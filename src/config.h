@@ -135,6 +135,7 @@
 #endif //  BGFX_CONFIG_MAX_RECT_CACHE
 
 #ifndef BGFX_CONFIG_MAX_VIEWS
+// Do not change. Must be power of 2.
 #	define BGFX_CONFIG_MAX_VIEWS 32
 #endif // BGFX_CONFIG_MAX_VIEWS
 
@@ -171,6 +172,7 @@
 #endif // BGFX_CONFIG_MAX_FRAGMENT_SHADERS
 
 #ifndef BGFX_CONFIG_MAX_PROGRAMS
+// Must be power of 2.
 #	define BGFX_CONFIG_MAX_PROGRAMS 512
 #endif // BGFX_CONFIG_MAX_PROGRAMS
 

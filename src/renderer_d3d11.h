@@ -156,7 +156,13 @@ namespace bgfx
 			}
 		}
 
-		IUnknown* m_ptr;
+		union
+		{
+			ID3D11ComputeShader* m_computeShader;
+			ID3D11PixelShader*   m_pixelShader;
+			ID3D11VertexShader*  m_vertexShader;
+			IUnknown*            m_ptr;
+		};
 		const Memory* m_code;
 		ID3D11Buffer* m_buffer;
 		ConstantBuffer* m_constantBuffer;
@@ -178,17 +184,20 @@ namespace bgfx
 		{
 		}
 
-		void create(const ShaderD3D11& _vsh, const ShaderD3D11& _fsh)
+		void create(const ShaderD3D11* _vsh, const ShaderD3D11* _fsh)
 		{
-			BX_CHECK(NULL != _vsh.m_ptr, "Vertex shader doesn't exist.");
-			m_vsh = &_vsh;
-			memcpy(&m_predefined[0], _vsh.m_predefined, _vsh.m_numPredefined*sizeof(PredefinedUniform) );
-			m_numPredefined = _vsh.m_numPredefined;
+			BX_CHECK(NULL != _vsh->m_ptr, "Vertex shader doesn't exist.");
+			m_vsh = _vsh;
+			memcpy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform) );
+			m_numPredefined = _vsh->m_numPredefined;
 
-			BX_CHECK(NULL != _fsh.m_ptr, "Fragment shader doesn't exist.");
-			m_fsh = &_fsh;
-			memcpy(&m_predefined[m_numPredefined], _fsh.m_predefined, _fsh.m_numPredefined*sizeof(PredefinedUniform) );
-			m_numPredefined += _fsh.m_numPredefined;
+			if (NULL != _fsh)
+			{
+				BX_CHECK(NULL != _fsh->m_ptr, "Fragment shader doesn't exist.");
+				m_fsh = _fsh;
+				memcpy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform) );
+				m_numPredefined += _fsh->m_numPredefined;
+			}
 		}
 
 		void destroy()
@@ -217,6 +226,7 @@ namespace bgfx
 		TextureD3D11()
 			: m_ptr(NULL)
 			, m_srv(NULL)
+			, m_uav(NULL)
 			, m_sampler(NULL)
 			, m_numMips(0)
 		{
@@ -236,6 +246,7 @@ namespace bgfx
 		};
 
 		ID3D11ShaderResourceView* m_srv;
+		ID3D11UnorderedAccessView* m_uav;
 		ID3D11SamplerState* m_sampler;
 		uint32_t m_flags;
 		uint8_t m_type;

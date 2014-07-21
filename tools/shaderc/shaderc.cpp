@@ -1651,6 +1651,7 @@ void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _
 // 4.1    410
 // 4.2    420               11.0     vhdgf+c  5.0
 // 4.3    430      vhdgf+c
+// 4.4    440
 
 void help(const char* _error = NULL)
 {
@@ -1991,8 +1992,6 @@ int main(int _argc, const char* _argv[])
 			}
 		}
 
-BX_TRACE("1");
-
 		InOut shaderInputs;
 		InOut shaderOutputs;
 		uint32_t inputHash = 0;
@@ -2056,75 +2055,255 @@ BX_TRACE("1");
 			}
 		}
 
-BX_TRACE("2");
-
 		if (raw)
 		{
+			bx::CrtFileWriter* writer = NULL;
+
+			if (NULL != bin2c)
 			{
-				bx::CrtFileWriter* writer = NULL;
+				writer = new Bin2cWriter(bin2c);
+			}
+			else
+			{
+				writer = new bx::CrtFileWriter;
+			}
 
-				if (NULL != bin2c)
+			if (0 != writer->open(outFilePath) )
+			{
+				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+				return EXIT_FAILURE;
+			}
+
+			uint32_t inputHash = 0;
+			uint32_t outputHash = 0;
+
+			if ('f' == shaderType)
+			{
+				bx::write(writer, BGFX_CHUNK_MAGIC_FSH);
+				bx::write(writer, inputHash);
+			}
+			else if ('v' == shaderType)
+			{
+				bx::write(writer, BGFX_CHUNK_MAGIC_VSH);
+				bx::write(writer, outputHash);
+			}
+			else
+			{
+				bx::write(writer, BGFX_CHUNK_MAGIC_CSH);
+				bx::write(writer, outputHash);
+			}
+
+			if (glsl)
+			{
+				bx::write(writer, uint16_t(0) );
+
+				uint32_t shaderSize = (uint32_t)strlen(input);
+				bx::write(writer, shaderSize);
+				bx::write(writer, input, shaderSize);
+				bx::write(writer, uint8_t(0) );
+
+				compiled = true;
+			}
+			else
+			{
+				if (hlsl > 3)
 				{
-					writer = new Bin2cWriter(bin2c);
+					compiled = compileHLSLShaderDx11(cmdLine, input, writer);
 				}
 				else
 				{
-					writer = new bx::CrtFileWriter;
+					compiled = compileHLSLShaderDx9(cmdLine, input, writer);
 				}
+			}
 
-				if (0 != writer->open(outFilePath) )
-				{
-					fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-					return EXIT_FAILURE;
-				}
-
-				uint32_t inputHash = 0;
-				uint32_t outputHash = 0;
-
-				if ('f' == shaderType)
-				{
-					bx::write(writer, BGFX_CHUNK_MAGIC_FSH);
-					bx::write(writer, inputHash);
-				}
-				else if ('v' == shaderType)
-				{
-					bx::write(writer, BGFX_CHUNK_MAGIC_VSH);
-					bx::write(writer, outputHash);
-				}
-				else
-				{
-					bx::write(writer, BGFX_CHUNK_MAGIC_CSH);
-					bx::write(writer, outputHash);
-				}
-
+			writer->close();
+			delete writer;
+		}
+		else if ('c' == shaderType) // Compute
+		{
+			char* entry = strstr(input, "void main()");
+			if (NULL == entry)
+			{
+				fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
+			}
+			else
+			{
 				if (glsl)
 				{
-					bx::write(writer, uint16_t(0) );
-
-					uint32_t shaderSize = (uint32_t)strlen(input);
-					bx::write(writer, shaderSize);
-					bx::write(writer, input, shaderSize);
-					bx::write(writer, uint8_t(0) );
-
-					compiled = true;
 				}
 				else
 				{
-					if (hlsl > 3)
+					preprocessor.writef(
+						"#define lowp\n"
+						"#define mediump\n"
+						"#define highp\n"
+						"#define ivec2 int2\n"
+						"#define ivec3 int3\n"
+						"#define ivec4 int4\n"
+						"#define uvec2 uint2\n"
+						"#define uvec3 uint3\n"
+						"#define uvec4 uint4\n"
+						"#define vec2 float2\n"
+						"#define vec3 float3\n"
+						"#define vec4 float4\n"
+						"#define mat2 float2x2\n"
+						"#define mat3 float3x3\n"
+						"#define mat4 float4x4\n"
+						);
+
+					entry[4] = '_';
+
+					preprocessor.writef("#define void_main()");
+					preprocessor.writef(" \\\n\tvoid main(");
+
+					uint32_t arg = 0;
+
+					const bool hasLocalInvocationID    = NULL != strstr(input, "gl_LocalInvocationID");
+					const bool hasLocalInvocationIndex = NULL != strstr(input, "gl_LocalInvocationIndex");
+					const bool hasGlobalInvocationID   = NULL != strstr(input, "gl_GlobalInvocationID");
+					const bool hasWorkGroupID          = NULL != strstr(input, "gl_WorkGroupID");
+
+					if (hasLocalInvocationID)
 					{
-						compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
+						preprocessor.writef(
+							" \\\n\t%sint3 gl_LocalInvocationID : SV_GroupThreadID"
+							, arg++ > 0 ? ", " : "  "
+							);
 					}
-					else
+
+					if (hasLocalInvocationIndex)
 					{
-						compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, writer);
+						preprocessor.writef(
+							" \\\n\t%sint gl_LocalInvocationIndex : SV_GroupIndex"
+							, arg++ > 0 ? ", " : "  "
+							);
 					}
+
+					if (hasGlobalInvocationID)
+					{
+						preprocessor.writef(
+							" \\\n\t%sint3 gl_GlobalInvocationID : SV_DispatchThreadID"
+							, arg++ > 0 ? ", " : "  "
+							);
+					}
+
+					if (hasWorkGroupID)
+					{
+						preprocessor.writef(
+							" \\\n\t%sint3 gl_WorkGroupID : SV_GroupID"
+							, arg++ > 0 ? ", " : "  "
+							);
+					}
+
+					preprocessor.writef(
+						" \\\n\t)\n"
+						);
 				}
 
-				writer->close();
-				delete writer;
+				if (preprocessor.run(input) )
+				{
+					BX_TRACE("Input file: %s", filePath);
+					BX_TRACE("Output file: %s", outFilePath);
+
+					if (preprocessOnly)
+					{
+						bx::CrtFileWriter writer;
+
+						if (0 != writer.open(outFilePath) )
+						{
+							fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+							return EXIT_FAILURE;
+						}
+
+						writer.write(preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
+						writer.close();
+
+						return EXIT_SUCCESS;
+					}
+
+					{
+						bx::CrtFileWriter* writer = NULL;
+
+						if (NULL != bin2c)
+						{
+							writer = new Bin2cWriter(bin2c);
+						}
+						else
+						{
+							writer = new bx::CrtFileWriter;
+						}
+
+						if (0 != writer->open(outFilePath) )
+						{
+							fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+							return EXIT_FAILURE;
+						}
+
+						bx::write(writer, BGFX_CHUNK_MAGIC_CSH);
+						bx::write(writer, outputHash);
+
+						if (glsl)
+						{
+							std::string code;
+
+							if (gles)
+							{
+								bx::stringPrintf(code, "#version 310 es\n");
+							}
+							else
+							{
+								int32_t version = atoi(profile);
+								bx::stringPrintf(code, "#version %d\n", version == 0 ? 430 : version);
+							}
+
+							code += preprocessor.m_preprocessed;
+#if 1
+							bx::write(writer, uint16_t(0) );
+
+							uint32_t shaderSize = (uint32_t)code.size();
+							bx::write(writer, shaderSize);
+							bx::write(writer, code.c_str(), shaderSize);
+							bx::write(writer, uint8_t(0) );
+
+							compiled = true;
+#else
+							compiled = compileGLSLShader(cmdLine, gles, code, writer);
+#endif // 0
+						}
+						else
+						{
+							if (hlsl > 3)
+							{
+								compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
+							}
+							else
+							{
+								compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, writer);
+							}
+						}
+
+						writer->close();
+						delete writer;
+					}
+
+					if (compiled)
+					{
+						if (depends)
+						{
+							std::string ofp = outFilePath;
+							ofp += ".d";
+							bx::CrtFileWriter writer;
+							if (0 == writer.open(ofp.c_str() ) )
+							{
+								writef(&writer, "%s : %s\n", outFilePath, preprocessor.m_depends.c_str() );
+								writer.close();
+							}
+						}
+					}
+				}
 			}
 		}
-		else
+		else // Vertex/Fragment
 		{
 			char* entry = strstr(input, "void main()");
 			if (NULL == entry)
@@ -2204,6 +2383,9 @@ BX_TRACE("2");
 						"#define ivec2 int2\n"
 						"#define ivec3 int3\n"
 						"#define ivec4 int4\n"
+						"#define uvec2 uint2\n"
+						"#define uvec3 uint3\n"
+						"#define uvec4 uint4\n"
 						"#define vec2 float2\n"
 						"#define vec3 float3\n"
 						"#define vec4 float4\n"

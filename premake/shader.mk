@@ -46,6 +46,7 @@ else
 ifeq ($(TARGET), 1)
 VS_FLAGS=--platform windows -p vs_4_0 -O 3
 FS_FLAGS=--platform windows -p ps_4_0 -O 3
+CS_FLAGS=--platform windows -p cs_5_0 -O 3
 SHADER_PATH=shaders/dx11
 else
 ifeq ($(TARGET), 2)
@@ -56,11 +57,13 @@ else
 ifeq ($(TARGET), 3)
 VS_FLAGS=--platform android
 FS_FLAGS=--platform android
+CS_FLAGS=--platform android
 SHADER_PATH=shaders/gles
 else
 ifeq ($(TARGET), 4)
 VS_FLAGS=--platform linux -p 120
 FS_FLAGS=--platform linux -p 120
+CS_FLAGS=--platform linux -p 430
 SHADER_PATH=shaders/glsl
 endif
 endif
@@ -71,6 +74,7 @@ endif
 THISDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 VS_FLAGS+=-i $(THISDIR)../src/
 FS_FLAGS+=-i $(THISDIR)../src/
+CS_FLAGS+=-i $(THISDIR)../src/
 
 BUILD_OUTPUT_DIR=$(addprefix ./, $(RUNTIME_DIR)/$(SHADER_PATH))
 BUILD_INTERMEDIATE_DIR=$(addprefix $(BUILD_DIR)/, $(SHADER_PATH))
@@ -81,11 +85,30 @@ VS_DEPS=$(addprefix $(BUILD_INTERMEDIATE_DIR)/,$(addsuffix .bin.d, $(basename $(
 FS_SOURCES=$(wildcard fs_*.sc)
 FS_DEPS=$(addprefix $(BUILD_INTERMEDIATE_DIR)/,$(addsuffix .bin.d, $(basename $(FS_SOURCES))))
 
+CS_SOURCES=$(wildcard cs_*.sc)
+CS_DEPS=$(addprefix $(BUILD_INTERMEDIATE_DIR)/,$(addsuffix .bin.d, $(basename $(CS_SOURCES))))
+
 VS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(VS_SOURCES))))
 FS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(FS_SOURCES))))
+CS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(CS_SOURCES))))
 
 BIN = $(VS_BIN) $(FS_BIN)
 ASM = $(VS_ASM) $(FS_ASM)
+
+ifeq ($(TARGET), 1)
+BIN += $(CS_BIN)
+ASM += $(CS_ASM)
+else
+ifeq ($(TARGET), 3)
+BIN += $(CS_BIN)
+ASM += $(CS_ASM)
+else
+ifeq ($(TARGET), 4)
+BIN += $(CS_BIN)
+ASM += $(CS_ASM)
+endif
+endif
+endif
 
 $(BUILD_INTERMEDIATE_DIR)/vs_%.bin : vs_%.sc
 	@echo [$(<)]
@@ -95,6 +118,11 @@ $(BUILD_INTERMEDIATE_DIR)/vs_%.bin : vs_%.sc
 $(BUILD_INTERMEDIATE_DIR)/fs_%.bin : fs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
+	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
+
+$(BUILD_INTERMEDIATE_DIR)/cs_%.bin : cs_%.sc
+	@echo [$(<)]
+	$(SILENT) $(SHADERC) $(CS_FLAGS) --type compute --depends -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 .PHONY: all
@@ -119,3 +147,4 @@ endif # TARGET
 
 -include $(VS_DEPS)
 -include $(FS_DEPS)
+-include $(CS_DEPS)
