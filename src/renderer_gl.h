@@ -107,9 +107,41 @@ typedef uint64_t GLuint64;
 #	define GL_R16F 0x822D
 #endif // GL_R16F
 
+#ifndef GL_R32UI
+#	define GL_R32UI 0x8236
+#endif // GL_R32UI
+
 #ifndef GL_R32F
 #	define GL_R32F 0x822E
 #endif // GL_R32F
+
+#ifndef GL_RG16
+#	define GL_RG16 0x822C
+#endif // GL_RG16
+
+#ifndef GL_RG16F
+#	define GL_RG16F 0x822F
+#endif // GL_RG16F
+
+#ifndef GL_R32UI
+#	define GL_R32UI 0x8236
+#endif // GL_R32UI
+
+#ifndef GL_RG32UI
+#	define GL_RG32UI 0x823C
+#endif // GL_RG32UI
+
+#ifndef GL_RG32F
+#	define GL_RG32F 0x8230
+#endif // GL_RG32F
+
+#ifndef GL_RGBA32UI
+#	define GL_RGBA32UI 0x8D70
+#endif // GL_RGBA32UI
+
+#ifndef GL_RGBA32F
+#	define GL_RGBA32F 0x8814
+#endif // GL_RGBA32F
 
 #ifndef GL_RED
 #	define GL_RED 0x1903
@@ -118,6 +150,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_RED_INTEGER
 #	define GL_RED_INTEGER 0x8D94
 #endif // GL_RED_INTEGER
+
+#ifndef GL_RG
+#	define GL_RG 0x8227
+#endif // GL_RG
 
 #ifndef GL_GREEN
 #	define GL_GREEN 0x1904

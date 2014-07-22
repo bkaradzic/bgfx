@@ -26,6 +26,16 @@ typedef enum bgfx_renderer_type
 
 } bgfx_renderer_type_t;
 
+typedef enum bgfx_access
+{
+	BGFX_ACCESS_READ,
+	BGFX_ACCESS_WRITE,
+	BGFX_ACCESS_READWRITE,
+
+	BGFX_ACCESS_COUNT
+
+} bgfx_access_t;
+
 typedef enum bgfx_attrib
 {
     BGFX_ATTRIB_POSITION,
@@ -82,9 +92,17 @@ typedef enum bgfx_texture_format
     BGFX_TEXTURE_FORMAT_R8,
     BGFX_TEXTURE_FORMAT_R16,
     BGFX_TEXTURE_FORMAT_R16F,
+    BGFX_TEXTURE_FORMAT_R32,
+    BGFX_TEXTURE_FORMAT_R32F,
+    BGFX_TEXTURE_FORMAT_RG16,
+    BGFX_TEXTURE_FORMAT_RG16F,
+    BGFX_TEXTURE_FORMAT_RG32,
+    BGFX_TEXTURE_FORMAT_RG32F,
     BGFX_TEXTURE_FORMAT_BGRA8,
     BGFX_TEXTURE_FORMAT_RGBA16,
     BGFX_TEXTURE_FORMAT_RGBA16F,
+    BGFX_TEXTURE_FORMAT_RGBA32,
+    BGFX_TEXTURE_FORMAT_RGBA32F,
     BGFX_TEXTURE_FORMAT_R5G6B5,
     BGFX_TEXTURE_FORMAT_RGBA4,
     BGFX_TEXTURE_FORMAT_RGB5A1,
@@ -1283,6 +1301,23 @@ BGFX_C_API uint32_t bgfx_submit(uint8_t _id, int32_t _depth);
  *  @returns Number of draw calls.
  */
 BGFX_C_API uint32_t bgfx_submit_mask(uint32_t _viewMask, int32_t _depth);
+
+
+/**
+ *
+ */
+BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_texture_format_t _format, bgfx_access_t _access);
+
+/**
+ *
+ */
+BGFX_C_API void bgfx_set_image_from_frame_buffer(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, bgfx_texture_format_t _format, bgfx_access_t _access);
+
+/**
+ * Dispatch compute.
+ */
+BGFX_C_API void bgfx_dispatch(uint8_t _id, bgfx_program_handle_t _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ);
+
 
 /**
  *  Discard all previously set state for draw call.

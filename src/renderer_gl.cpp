@@ -197,9 +197,17 @@ namespace bgfx
 		{ GL_LUMINANCE,                                GL_LUMINANCE,                                GL_UNSIGNED_BYTE,               true  }, // R8
 		{ GL_R16,                                      GL_RED,                                      GL_UNSIGNED_SHORT,              true  }, // R16
 		{ GL_R16F,                                     GL_RED,                                      GL_HALF_FLOAT,                  true  }, // R16F
+		{ GL_R32UI,                                    GL_RED,                                      GL_UNSIGNED_INT,                true  }, // R32
+		{ GL_R32F,                                     GL_RED,                                      GL_FLOAT,                       true  }, // R32F
+		{ GL_RG16,                                     GL_RG,                                       GL_UNSIGNED_SHORT,              true  }, // RG16
+		{ GL_RG16F,                                    GL_RG,                                       GL_FLOAT,                       true  }, // RG16F
+		{ GL_RG32UI,                                   GL_RG,                                       GL_UNSIGNED_INT,                true  }, // RG32
+		{ GL_RG32F,                                    GL_RG,                                       GL_FLOAT,                       true  }, // RG32F
 		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  }, // BGRA8
 		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,               true  }, // RGBA16
 		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                  true  }, // RGBA16F
+		{ GL_RGBA32UI,                                 GL_RGBA,                                     GL_UNSIGNED_INT,                true  }, // RGBA32
+		{ GL_RGBA32F,                                  GL_RGBA,                                     GL_FLOAT,                       true  }, // RGBA32F
 		{ GL_RGB565,                                   GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,        true  }, // R5G6B5
 		{ GL_RGBA4,                                    GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4,      true  }, // RGBA4
 		{ GL_RGB5_A1,                                  GL_RGBA,                                     GL_UNSIGNED_SHORT_5_5_5_1,      true  }, // RGB5A1
@@ -237,9 +245,17 @@ namespace bgfx
 		GL_R8,       // R8
 		GL_R16,      // R16
 		GL_R16F,     // R16F
+		GL_R32UI,    // R32
+		GL_R32F,     // R32F
+		GL_RG16,     // RG16
+		GL_RG16F,    // RG16F
+		GL_RG32UI,   // RG32
+		GL_RG32F,    // RG32F
 		GL_RGBA8,    // BGRA8
 		GL_RGBA16,   // RGBA16
-		GL_RGBA16,   // RGBA16F
+		GL_RGBA16F,  // RGBA16F
+		GL_RGBA32UI, // RGBA32
+		GL_RGBA32F,  // RGBA32F
 		GL_RGB565,   // R5G6B5
 		GL_RGBA4,    // RGBA4
 		GL_RGB5_A1,  // RGB5A1
