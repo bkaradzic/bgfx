@@ -1929,6 +1929,11 @@ int main(int _argc, const char* _argv[])
 		{
 			parse = bx::strws(parse);
 			const char* eol = strchr(parse, ';');
+			if (NULL == eol)
+			{
+				eol = bx::streol(parse);
+			}
+
 			if (NULL != eol)
 			{
 				const char* precision = NULL;
