@@ -72,6 +72,12 @@ project "bgfx-shared-lib"
 			"BGFX_CONFIG_DEBUG=1",
 		}
 
+	configuration { "android*" }
+		links {
+			"EGL",
+			"GLESv2",
+		}
+
 	configuration { "windows" }
 		includedirs {
 			"$(DXSDK_DIR)/include",
