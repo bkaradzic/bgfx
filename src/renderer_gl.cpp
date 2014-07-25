@@ -2461,14 +2461,56 @@ namespace bgfx
 		m_constantBuffer = ConstantBuffer::create(1024);
  		m_numSamplers = 0;
 
+		struct VariableInfo
+		{
+			GLenum type;
+			GLint  loc;
+			GLint  num;
+		};
+		VariableInfo vi;
+		GLenum props[] = { GL_TYPE, GL_LOCATION, GL_ARRAY_SIZE };
+
+		const bool piqSupported = s_extension[Extension::ARB_program_interface_query].m_supported;
+
 		BX_TRACE("Uniforms (%d):", activeUniforms);
 		for (int32_t ii = 0; ii < activeUniforms; ++ii)
 		{
-			GLint num;
 			GLenum gltype;
+			GLint num;
+			GLint loc;
 
-			GL_CHECK(glGetActiveUniform(m_id, ii, maxLength + 1, NULL, &num, &gltype, name) );
-			GLint loc = glGetUniformLocation(m_id, name);
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
+			||  piqSupported)
+			{
+				GL_CHECK(glGetProgramResourceiv(m_id
+					, GL_UNIFORM
+					, ii
+					, BX_COUNTOF(props)
+					, props
+					, BX_COUNTOF(props)
+					, NULL
+					, (GLint*)&vi
+					) );
+
+				GL_CHECK(glGetProgramResourceName(m_id
+					, GL_UNIFORM
+					, ii
+					, maxLength + 1
+					, NULL
+					, name
+					) );
+
+				gltype = vi.type;
+				loc    = vi.loc;
+				num    = vi.num;
+			}
+			else
+			{
+				GL_CHECK(glGetActiveUniform(m_id, ii, maxLength + 1, NULL, &num, &gltype, name) );
+				loc = glGetUniformLocation(m_id, name);
+			}
+
+			num = bx::uint32_max(num, 1);
 
 			int offset = 0;
 			char* array = strchr(name, '[');
@@ -2844,7 +2886,7 @@ namespace bgfx
 		{
 			uint8_t numMips = imageContainer.m_numMips;
 			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
-			numMips -= startLod;
+			numMips -= uint8_t(startLod);
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);

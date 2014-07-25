@@ -1956,7 +1956,9 @@ namespace bgfx
 
 		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl) )
 		{
-			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(_mem->size/_decl.m_stride, _decl);
+			uint32_t numVertices = _mem->size/_decl.m_stride;
+			BX_CHECK(numVertices <= UINT16_MAX, "Num vertices exceeds maximum (num %d, max %d).", numVertices, UINT16_MAX);
+			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(uint16_t(numVertices), _decl);
 			if (isValid(handle) )
 			{
 				updateDynamicVertexBuffer(handle, _mem);

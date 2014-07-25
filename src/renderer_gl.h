@@ -456,6 +456,14 @@ typedef uint64_t GLuint64;
 #	define GL_TYPE 0x92FA
 #endif // GL_TYPE
 
+#ifndef GL_ARRAY_SIZE
+#	define GL_ARRAY_SIZE 0x92FB
+#endif // GL_ARRAY_SIZE
+
+#ifndef GL_LOCATION
+#	define GL_LOCATION 0x930E
+#endif // GL_LOCATION
+
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS
