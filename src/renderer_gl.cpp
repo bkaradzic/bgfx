@@ -2580,40 +2580,9 @@ namespace bgfx
 			struct VariableInfo
 			{
 				GLenum type;
-//				GLint  loc;
 			};
 			VariableInfo vi;
 			GLenum props[] = { GL_TYPE };
-
-#if 0
-			BX_TRACE("Buffers (%d):", activeUniforms);
-			for (int32_t ii = 0; ii < activeUniforms; ++ii)
-			{
-				GL_CHECK(glGetProgramResourceiv(m_id
-					, GL_UNIFORM
-					, ii
-					, BX_COUNTOF(props)
-					, props
-					, BX_COUNTOF(props)
-					, NULL
-					, (GLint*)&vi
-					) );
-
-				GL_CHECK(glGetProgramResourceName(m_id
-					, GL_UNIFORM
-					, ii
-					, maxLength + 1
-					, NULL
-					, name
-					) );
-
-				BX_TRACE("\tuniform %s %s is at location %d"
-					, glslTypeName(vi.type)
-					, name
-					, 0 //vi.loc
-					);
-			}
-#endif // 0
 
 			BX_TRACE("Buffers (%d):", activeBuffers);
 			for (int32_t ii = 0; ii < activeBuffers; ++ii)
