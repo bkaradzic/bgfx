@@ -1780,17 +1780,17 @@ struct Imgui
 		}
 		else
 		{
-			///
-			///                  bb (black)
-			///                 /\
-			///                /  \
-			///               /    \
-			///              /      \
-			///             /        \
-			///            /    .sel  \
-			///           /            \
-			/// cc(white)/____.ss_______\aa (hue)
-			///
+			/*
+			 *                  bb (black)
+			 *                  /\
+			 *                 /  \
+			 *                /    \
+			 *               /      \
+			 *              /        \
+			 *             /    .sel  \
+			 *            /            \
+			 *  cc(white)/____.ss_______\aa (hue)
+			 */
 			const float ss[2] =
 			{
 				cc[0] + dirCa[0]*lenCa*hsv[1],

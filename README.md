@@ -173,6 +173,7 @@ draw calls per frame.
 | i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | GCC    | x64  | Linux      |  19 |  6859 |
 | i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | VS2008 | x86  | Windows7   |  18 |  5832 |
 | i7-920 2.66  | FF27-GL      | GTX650Ti  | Clang  | JIT  | W7-asm.js  |  17 |  4913 |
+| i7-4750HQ 2.0| Mesa 8.0.5   | LLVMPIPE  | GCC    | x64  | Linux      |  16 |  4096 |
 | i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | VS2008 | x86  | Windows7   |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | GCC    | x64  | NaCl 31    |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | Clang  | JIT  | PNaCl 31   |  15 |  3375 |
