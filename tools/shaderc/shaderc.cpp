@@ -558,7 +558,7 @@ void strreplace(char* _str, const char* _find, const char* _replace)
 
 	char* replace = (char*)alloca(len+1);
 	bx::strlcpy(replace, _replace, len+1);
-	for (uint32_t ii = strlen(replace); ii < len; ++ii)
+	for (size_t ii = strlen(replace); ii < len; ++ii)
 	{
 		replace[ii] = ' ';
 	}
@@ -2052,7 +2052,7 @@ int main(int _argc, const char* _argv[])
 				preprocessor.run(input);
 				delete [] data;
 
-				size = preprocessor.m_preprocessed.size();
+				size = (uint32_t)preprocessor.m_preprocessed.size();
 				data = new char[size+padding+1];
 				memcpy(data, preprocessor.m_preprocessed.c_str(), size);
 				memset(&data[size], 0, padding+1);

@@ -199,6 +199,7 @@ namespace bgfx
 		{ GL_R16F,                                     GL_RED,                                      GL_HALF_FLOAT,                  true  }, // R16F
 		{ GL_R32UI,                                    GL_RED,                                      GL_UNSIGNED_INT,                true  }, // R32
 		{ GL_R32F,                                     GL_RED,                                      GL_FLOAT,                       true  }, // R32F
+		{ GL_RG8,                                      GL_RG,                                       GL_UNSIGNED_BYTE,               true  }, // RG8
 		{ GL_RG16,                                     GL_RG,                                       GL_UNSIGNED_SHORT,              true  }, // RG16
 		{ GL_RG16F,                                    GL_RG,                                       GL_FLOAT,                       true  }, // RG16F
 		{ GL_RG32UI,                                   GL_RG,                                       GL_UNSIGNED_INT,                true  }, // RG32
@@ -247,6 +248,7 @@ namespace bgfx
 		GL_R16F,     // R16F
 		GL_R32UI,    // R32
 		GL_R32F,     // R32F
+		GL_RG8,      // RG8
 		GL_RG16,     // RG16
 		GL_RG16F,    // RG16F
 		GL_RG32UI,   // RG32
@@ -347,6 +349,7 @@ namespace bgfx
 			EXT_texture_compression_s3tc,
 			EXT_texture_filter_anisotropic,
 			EXT_texture_format_BGRA8888,
+			EXT_texture_rg,
 			EXT_texture_sRGB,
 			EXT_texture_storage,
 			EXT_texture_swizzle,
@@ -487,6 +490,7 @@ namespace bgfx
 		{ "EXT_texture_compression_s3tc",          false,                             true  },
 		{ "EXT_texture_filter_anisotropic",        false,                             true  },
 		{ "EXT_texture_format_BGRA8888",           false,                             true  },
+		{ "EXT_texture_rg",                        false,                             true  }, // GLES2 extension.
 		{ "EXT_texture_sRGB",                      false,                             true  },
 		{ "EXT_texture_storage",                   false,                             true  },
 		{ "EXT_texture_swizzle",                   false,                             true  },

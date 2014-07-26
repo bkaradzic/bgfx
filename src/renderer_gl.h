@@ -115,6 +115,10 @@ typedef uint64_t GLuint64;
 #	define GL_R32F 0x822E
 #endif // GL_R32F
 
+#ifndef GL_RG8
+#	define GL_RG8 0x822B
+#endif // GL_RG8
+
 #ifndef GL_RG16
 #	define GL_RG16 0x822C
 #endif // GL_RG16

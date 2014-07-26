@@ -126,6 +126,7 @@ namespace bgfx
 			R16F,
 			R32,
 			R32F,
+			RG8,
 			RG16,
 			RG16F,
 			RG32,
