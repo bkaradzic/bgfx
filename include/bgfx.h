@@ -100,7 +100,7 @@ namespace bgfx
 
 	struct TextureFormat
 	{
-		// Availability depends on BGFX_CAPS_TEXTURE_FORMAT_*.
+		// Availability depends on Caps (see: formats).
 		enum Enum
 		{
 			BC1,    // DXT1
@@ -257,6 +257,12 @@ namespace bgfx
 		uint16_t maxTextureSize;   ///< Maximum texture size.
 		uint16_t maxDrawCalls;     ///< Maximum draw calls.
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
+
+		/// Supported texture formats.
+		///   0 - not supported
+		///   1 - supported
+		///   2 - emulated
+		uint8_t formats[TextureFormat::Count];
 	};
 
 	struct TransientIndexBuffer

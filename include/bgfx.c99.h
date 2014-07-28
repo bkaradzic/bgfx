@@ -258,6 +258,14 @@ typedef struct bgfx_caps
     uint16_t maxDrawCalls;      /* < Maximum draw calls.               */
     uint8_t  maxFBAttachments;  /* < Maximum frame buffer attachments. */
 
+    /**
+     *  Supported texture formats.
+     *    0 - not supported
+     *    1 - supported
+     *    2 - emulated
+     */
+    uint8_t formats[BGFX_TEXTURE_FORMAT_COUNT];
+
 } bgfx_caps_t;
 
 /**

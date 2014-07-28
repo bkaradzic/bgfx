@@ -839,31 +839,6 @@ namespace bgfx
 	static const CapsFlags s_capsFlags[] =
 	{
 #define CAPS_FLAGS(_x) { _x, #_x }
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC1),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC2),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC3),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC4),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_BC5),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC1),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2A),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_ETC2A1),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC12),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC14),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC14A),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC12A),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC22),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_PTC24),
-
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D16),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24S8),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D32),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D16F),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D24F),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D32F),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_FORMAT_D0S8),
-
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_ALL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_3D),
@@ -896,8 +871,35 @@ namespace bgfx
 			}
 		}
 
+		BX_TRACE("Supported texture formats:");
+		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+		{
+			if (TextureFormat::Unknown != ii
+			&&  TextureFormat::UnknownDepth != ii)
+			{
+				uint8_t flags = g_caps.formats[ii];
+				BX_TRACE("\t[%c] %s"
+					, flags&1 ? 'x' : flags&2 ? '*' : ' '
+					, getName(TextureFormat::Enum(ii) )
+					);
+			}
+		}
+
 		BX_TRACE("Max FB attachments: %d", g_caps.maxFBAttachments);
 	}
+
+	static TextureFormat::Enum s_emulatedFormats[] =
+	{
+		TextureFormat::BC1,
+		TextureFormat::BC2,
+		TextureFormat::BC3,
+		TextureFormat::BC4,
+		TextureFormat::BC5,
+		TextureFormat::ETC1,
+		TextureFormat::ETC2,
+		TextureFormat::ETC2A,
+		TextureFormat::ETC2A1,
+	};
 
 	void Context::init(RendererType::Enum _type)
 	{
@@ -952,19 +954,14 @@ namespace bgfx
 		// g_caps is initialized and available after this point.
 		frame();
 
-		const uint64_t emulatedCaps = 0
-			| BGFX_CAPS_TEXTURE_FORMAT_BC1
-			| BGFX_CAPS_TEXTURE_FORMAT_BC2
-			| BGFX_CAPS_TEXTURE_FORMAT_BC3
-			| BGFX_CAPS_TEXTURE_FORMAT_BC4
-			| BGFX_CAPS_TEXTURE_FORMAT_BC5
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC1
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC2
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A
-			| BGFX_CAPS_TEXTURE_FORMAT_ETC2A1
-			;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_emulatedFormats); ++ii)
+		{
+			if (0 == g_caps.formats[s_emulatedFormats[ii] ])
+			{
+				g_caps.formats[s_emulatedFormats[ii] ] = 2;
+			}
+		}
 
-		g_caps.emulated |= emulatedCaps ^ (g_caps.supported & emulatedCaps);
 		g_caps.rendererType = m_renderCtx->getRendererType();
 		initAttribTypeSizeTable(g_caps.rendererType);
 
@@ -2704,6 +2701,7 @@ BX_STATIC_ASSERT(sizeof(bgfx::TransientIndexBuffer)  == sizeof(bgfx_transient_in
 BX_STATIC_ASSERT(sizeof(bgfx::TransientVertexBuffer) == sizeof(bgfx_transient_vertex_buffer_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::InstanceDataBuffer)    == sizeof(bgfx_instance_data_buffer_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::TextureInfo)           == sizeof(bgfx_texture_info_t) );
+BX_STATIC_ASSERT(sizeof(bgfx::Caps)                  == sizeof(bgfx_caps_t) );
 
 BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _decl, bgfx_renderer_type_t _renderer)
 {
