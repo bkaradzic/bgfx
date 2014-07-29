@@ -17,9 +17,6 @@
 #	define dFdy(_y) ddy(-_y)
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
-#	define vec2_splat(_x) float2(_x, _x)
-#	define vec3_splat(_x) float3(_x, _x, _x)
-#	define vec4_splat(_x) float4(_x, _x, _x, _x)
 
 #	define bvec2 bool2
 #	define bvec3 bool3
@@ -188,6 +185,10 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #		define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
 #	endif //
 
+vec2 vec2_splat(float _x) { return vec2(_x, _x); }
+vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
+vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
+
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
@@ -261,8 +262,6 @@ uniform mat4  u_invViewProj;
 uniform mat4  u_model[BGFX_CONFIG_MAX_BONES];
 uniform mat4  u_modelView;
 uniform mat4  u_modelViewProj;
-uniform mat4  u_modelViewProjX;
-uniform mat4  u_viewProjX;
 uniform float u_alphaRef;
 
 #endif // __cplusplus
