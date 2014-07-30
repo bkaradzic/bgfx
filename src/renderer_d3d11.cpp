@@ -519,25 +519,32 @@ namespace bgfx
 			{
 				ID3D11InfoQueue* infoQueue;
 				hr = m_device->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&infoQueue);
-				BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
-				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
-				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      true);
-				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
-
-				D3D11_INFO_QUEUE_FILTER filter;
-				memset(&filter, 0, sizeof(filter) );
-
-				D3D11_MESSAGE_CATEGORY categies[] =
+				if (SUCCEEDED(hr) )
 				{
-					D3D11_MESSAGE_CATEGORY_STATE_SETTING,
-					D3D11_MESSAGE_CATEGORY_EXECUTION,
-				};
-				filter.DenyList.NumCategories = BX_COUNTOF(categies);
-				filter.DenyList.pCategoryList = categies;
-				infoQueue->PushStorageFilter(&filter);
+					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      true);
+					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
 
-				DX_RELEASE(infoQueue, 3);
+					D3D11_INFO_QUEUE_FILTER filter;
+					memset(&filter, 0, sizeof(filter) );
+
+					D3D11_MESSAGE_CATEGORY categies[] =
+					{
+						D3D11_MESSAGE_CATEGORY_STATE_SETTING,
+						D3D11_MESSAGE_CATEGORY_EXECUTION,
+					};
+					filter.DenyList.NumCategories = BX_COUNTOF(categies);
+					filter.DenyList.pCategoryList = categies;
+					infoQueue->PushStorageFilter(&filter);
+
+					DX_RELEASE(infoQueue, 3);
+				}
+				else
+				{
+					// InfoQueue QueryInterface will fail when AMD GPU Perfstudio 2 is present.
+					setGraphicsDebuggerPresent(true);
+				}
 			}
 
 			UniformHandle handle = BGFX_INVALID_HANDLE;
