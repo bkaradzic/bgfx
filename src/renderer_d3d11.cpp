@@ -360,6 +360,51 @@ namespace bgfx
 		}
 	}
 
+	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
+	{
+		uint8_t temp[28];
+
+		D3D11_BUFFER_DESC desc;
+		desc.ByteWidth = sizeof(temp);
+		desc.Usage = D3D11_USAGE_STAGING;
+		desc.BindFlags = 0;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		desc.MiscFlags = 0;
+		desc.StructureByteStride = 0;
+
+		D3D11_SUBRESOURCE_DATA initData;
+		initData.pSysMem = &temp;
+		initData.SysMemPitch = sizeof(temp);
+		initData.SysMemSlicePitch = 0;
+
+		bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
+		bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
+		bx::write(&writer, UINT32_C(0x00010000) );
+		bx::write(&writer, UINT32_C(0) );
+		bx::write(&writer, UINT32_C(0) );
+
+		ID3D11Buffer* buffer;
+		HRESULT hr = _device->CreateBuffer(&desc, &initData, &buffer);
+
+		if (SUCCEEDED(hr) )
+		{
+			buffer->Release();
+
+			bx::MemoryReader reader(&temp, sizeof(temp) );
+			bx::skip(&reader, 16);
+
+			uint32_t version;
+			bx::read(&reader, version);
+
+			uint32_t driverVersion;
+			bx::read(&reader, driverVersion);
+
+			return version <= driverVersion;
+		}
+
+		return false;
+	};
+
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
@@ -561,6 +606,7 @@ namespace bgfx
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								| BGFX_CAPS_BLEND_INDEPENDENT
 								| BGFX_CAPS_COMPUTE
+								| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 			g_caps.maxFBAttachments = bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
