@@ -4424,7 +4424,7 @@ namespace bgfx
 					}
 
 					{
-						for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+						for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 						{
 							const Sampler& sampler = draw.m_sampler[stage];
 							Sampler& current = currentState.m_sampler[stage];

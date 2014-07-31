@@ -127,8 +127,6 @@ namespace stl
 #define BGFX_DEFAULT_WIDTH  1280
 #define BGFX_DEFAULT_HEIGHT 720
 
-#define BGFX_STATE_TEX_COUNT 16
-
 #define BGFX_MAX_COMPUTE_BINDINGS 8
 
 #define BGFX_SAMPLER_DEFAULT_FLAGS UINT32_C(0x10000000)
@@ -980,7 +978,7 @@ namespace bgfx
 			m_indexBuffer.idx = invalidHandle;
 			m_instanceDataBuffer.idx = invalidHandle;
 
-			for (uint32_t ii = 0; ii < BGFX_STATE_TEX_COUNT; ++ii)
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
 				m_sampler[ii].m_idx = invalidHandle;
 				m_sampler[ii].m_flags = 0;
@@ -1007,7 +1005,7 @@ namespace bgfx
 		VertexDeclHandle   m_vertexDecl;
 		IndexBufferHandle  m_indexBuffer;
 		VertexBufferHandle m_instanceDataBuffer;
-		Sampler m_sampler[BGFX_STATE_TEX_COUNT];
+		Sampler m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
 	struct ComputeBinding

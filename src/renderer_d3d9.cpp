@@ -1062,7 +1062,7 @@ namespace bgfx
 		{
 			invalidateSamplerState();
 
-			for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 			{
 				DX_CHECK(m_device->SetTexture(stage, NULL) );
 			}
@@ -1134,7 +1134,7 @@ namespace bgfx
 
 		void invalidateSamplerState()
 		{
-			for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 			{
 				m_samplerFlags[stage] = UINT32_MAX;
 			}
@@ -1416,7 +1416,7 @@ namespace bgfx
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
-		uint32_t m_samplerFlags[BGFX_STATE_TEX_COUNT];
+		uint32_t m_samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
 		TextureD3D9* m_updateTexture;
 		uint8_t* m_updateTextureBits;
@@ -2975,7 +2975,7 @@ namespace bgfx
 				}
 
 				{
-					for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
 						const Sampler& sampler = draw.m_sampler[stage];
 						Sampler& current = currentState.m_sampler[stage];

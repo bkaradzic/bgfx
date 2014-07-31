@@ -338,8 +338,8 @@ namespace bgfx
 			memset(m_sampler, 0, sizeof(m_sampler) );
 		}
 
-		ID3D11ShaderResourceView* m_srv[BGFX_STATE_TEX_COUNT];
-		ID3D11SamplerState* m_sampler[BGFX_STATE_TEX_COUNT];
+		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		ID3D11SamplerState* m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
 	static const GUID WKPDID_D3DDebugObjectName = { 0x429b8c22, 0x9188, 0x4b0c, { 0x87, 0x42, 0xac, 0xb0, 0xbf, 0x85, 0xc2, 0x00 } };
@@ -1479,8 +1479,8 @@ namespace bgfx
 
 		void commitTextureStage()
 		{
-			m_deviceCtx->PSSetShaderResources(0, BGFX_STATE_TEX_COUNT, m_textureStage.m_srv);
-			m_deviceCtx->PSSetSamplers(0, BGFX_STATE_TEX_COUNT, m_textureStage.m_sampler);
+			m_deviceCtx->PSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
+			m_deviceCtx->PSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_sampler);
 		}
 
 		void invalidateTextureStage()
@@ -2573,13 +2573,13 @@ namespace bgfx
 					{
 						wasCompute = true;
 
-						ID3D11ShaderResourceView* srv[BGFX_STATE_TEX_COUNT] = {};
-						deviceCtx->VSSetShaderResources(0, BGFX_STATE_TEX_COUNT, srv);
-						deviceCtx->PSSetShaderResources(0, BGFX_STATE_TEX_COUNT, srv);
+						ID3D11ShaderResourceView* srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+						deviceCtx->VSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, srv);
+						deviceCtx->PSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, srv);
 
-						ID3D11SamplerState* sampler[BGFX_STATE_TEX_COUNT] = {};
-						deviceCtx->VSSetSamplers(0, BGFX_STATE_TEX_COUNT, sampler);
-						deviceCtx->PSSetSamplers(0, BGFX_STATE_TEX_COUNT, sampler);
+						ID3D11SamplerState* sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+						deviceCtx->VSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, sampler);
+						deviceCtx->PSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, sampler);
 					}
 
 					const RenderCompute& compute = renderItem.compute;
@@ -2624,7 +2624,7 @@ namespace bgfx
 
 					ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
 					ID3D11ShaderResourceView*  srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
-					ID3D11SamplerState*    sampler[BGFX_STATE_TEX_COUNT] = {};
+					ID3D11SamplerState*    sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
 
 					for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 					{
@@ -2676,14 +2676,14 @@ namespace bgfx
 
 					deviceCtx->CSSetShader(NULL, NULL, 0);
 
-					ID3D11UnorderedAccessView* uav[BGFX_STATE_TEX_COUNT] = {};
-					deviceCtx->CSSetUnorderedAccessViews(0, BGFX_STATE_TEX_COUNT, uav, NULL);
+					ID3D11UnorderedAccessView* uav[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+					deviceCtx->CSSetUnorderedAccessViews(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, uav, NULL);
 
-					ID3D11ShaderResourceView* srv[BGFX_STATE_TEX_COUNT] = {};
-					deviceCtx->CSSetShaderResources(0, BGFX_STATE_TEX_COUNT, srv);
+					ID3D11ShaderResourceView* srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+					deviceCtx->CSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, srv);
 
-					ID3D11SamplerState* samplers[BGFX_STATE_TEX_COUNT] = {};
-					m_deviceCtx->CSSetSamplers(0, BGFX_STATE_TEX_COUNT, samplers);
+					ID3D11SamplerState* samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+					m_deviceCtx->CSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, samplers);
 				}
 
 				const RenderDraw& draw = renderItem.draw;
@@ -2982,7 +2982,7 @@ namespace bgfx
 
 				{
 					uint32_t changes = 0;
-					for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
+					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
 						const Sampler& sampler = draw.m_sampler[stage];
 						Sampler& current = currentState.m_sampler[stage];
