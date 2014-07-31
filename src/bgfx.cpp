@@ -882,6 +882,7 @@ namespace bgfx
 					, flags&1 ? 'x' : flags&2 ? '*' : ' '
 					, getName(TextureFormat::Enum(ii) )
 					);
+				BX_UNUSED(flags);
 			}
 		}
 
