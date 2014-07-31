@@ -127,16 +127,7 @@ namespace stl
 #define BGFX_DEFAULT_WIDTH  1280
 #define BGFX_DEFAULT_HEIGHT 720
 
-#define BGFX_STATE_TEX0      UINT64_C(0x0100000000000000)
-#define BGFX_STATE_TEX1      UINT64_C(0x0200000000000000)
-#define BGFX_STATE_TEX2      UINT64_C(0x0400000000000000)
-#define BGFX_STATE_TEX3      UINT64_C(0x0800000000000000)
-#define BGFX_STATE_TEX4      UINT64_C(0x1000000000000000)
-#define BGFX_STATE_TEX5      UINT64_C(0x2000000000000000)
-#define BGFX_STATE_TEX6      UINT64_C(0x4000000000000000)
-#define BGFX_STATE_TEX7      UINT64_C(0x8000000000000000)
-#define BGFX_STATE_TEX_MASK  UINT64_C(0xff00000000000000)
-#define BGFX_STATE_TEX_COUNT 8
+#define BGFX_STATE_TEX_COUNT 16
 
 #define BGFX_MAX_COMPUTE_BINDINGS 8
 
@@ -1274,7 +1265,6 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
-			m_flags |= BGFX_STATE_TEX0<<_stage;
 			Sampler& sampler = m_draw.m_sampler[_stage];
 			sampler.m_idx = _handle.idx;
 			sampler.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;

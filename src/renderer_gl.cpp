@@ -4423,9 +4423,7 @@ namespace bgfx
 						}
 					}
 
-//						if (BGFX_STATE_TEX_MASK & changedFlags)
 					{
-						uint64_t flag = BGFX_STATE_TEX0;
 						for (uint32_t stage = 0; stage < BGFX_STATE_TEX_COUNT; ++stage)
 						{
 							const Sampler& sampler = draw.m_sampler[stage];
@@ -4442,7 +4440,6 @@ namespace bgfx
 							}
 
 							current = sampler;
-							flag <<= 1;
 						}
 					}
 
