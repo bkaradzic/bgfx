@@ -3,116 +3,75 @@
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
-project "bgfx"
-	uuid "2dc7fd80-ed76-11e0-be50-0800200c9a66"
-	kind "StaticLib"
+function bgfxProject(_name, _uuid, _kind)
 
-	includedirs {
-		BGFX_DIR .. "../bx/include",
-	}
+	project ("bgfx" .. _name)
+		uuid (_uuid)
+		kind (_kind)
 
-	defines {
---		"BGFX_CONFIG_RENDERER_OPENGL=1",
-	}
+		if _kind == "SharedLib" then
+			defines {
+				"BGFX_SHARED_LIB_BUILD=1",
+			}
+		end
 
-	configuration { "Debug" }
+		includedirs {
+			BGFX_DIR .. "../bx/include",
+		}
+
 		defines {
-			"BGFX_CONFIG_DEBUG=1",
+	--		"BGFX_CONFIG_RENDERER_OPENGL=1",
 		}
 
-	configuration { "windows" }
+		configuration { "Debug" }
+			defines {
+				"BGFX_CONFIG_DEBUG=1",
+			}
+
+		configuration { "android*" }
+			links {
+				"EGL",
+				"GLESv2",
+			}
+
+		configuration { "windows" }
+			includedirs {
+				"$(DXSDK_DIR)/include",
+			}
+
+		configuration { "osx or ios*" }
+			files {
+				BGFX_DIR .. "src/**.mm",
+			}
+
+		configuration { "osx" }
+			links {
+				"Cocoa.framework",
+			}
+
+		configuration { "vs* or linux or mingw or osx or ios*" }
+			includedirs {
+				--nacl has GLES2 headers modified...
+				BGFX_DIR .. "3rdparty/khronos",
+			}
+
+		configuration {}
+
 		includedirs {
-			"$(DXSDK_DIR)/include",
+			BGFX_DIR .. "include",
 		}
 
-	configuration { "osx or ios*" }
 		files {
-			BGFX_DIR .. "src/**.mm",
+			BGFX_DIR .. "include/**.h",
+			BGFX_DIR .. "src/**.cpp",
+			BGFX_DIR .. "src/**.h",
 		}
 
-	configuration { "vs* or linux or mingw or osx or ios*" }
-		includedirs {
-			--nacl has GLES2 headers modified...
-			BGFX_DIR .. "3rdparty/khronos",
+		excludes {
+			BGFX_DIR .. "src/**.bin.h",
 		}
 
-	configuration {}
+		configuration {}
 
-	includedirs {
-		BGFX_DIR .. "include",
-	}
-
-	files {
-		BGFX_DIR .. "include/**.h",
-		BGFX_DIR .. "src/**.cpp",
-		BGFX_DIR .. "src/**.h",
-	}
-
-	excludes {
-		BGFX_DIR .. "src/**.bin.h",
-	}
-
-	copyLib()
-
-project "bgfx-shared-lib"
-	uuid "09986168-e9d9-11e3-9c8e-f2aef940a72a"
-	kind "SharedLib"
-
-	includedirs {
-		BGFX_DIR .. "../bx/include",
-	}
-
-	defines {
-		"BGFX_SHARED_LIB_BUILD=1",
---		"BGFX_CONFIG_RENDERER_OPENGL=1",
-	}
-
-	configuration { "Debug" }
-		defines {
-			"BGFX_CONFIG_DEBUG=1",
-		}
-
-	configuration { "android*" }
-		links {
-			"EGL",
-			"GLESv2",
-		}
-
-	configuration { "windows" }
-		includedirs {
-			"$(DXSDK_DIR)/include",
-		}
-
-	configuration { "osx or ios*" }
-		files {
-			BGFX_DIR .. "src/**.mm",
-		}
-
-	configuration { "osx" }
-		links {
-			"Cocoa.framework",
-		}
-
-	configuration { "vs* or linux or mingw or osx or ios*" }
-		includedirs {
-			--nacl has GLES2 headers modified...
-			BGFX_DIR .. "3rdparty/khronos",
-		}
-
-	configuration {}
-
-	includedirs {
-		BGFX_DIR .. "include",
-	}
-
-	files {
-		BGFX_DIR .. "include/**.h",
-		BGFX_DIR .. "src/**.cpp",
-		BGFX_DIR .. "src/**.h",
-	}
-
-	excludes {
-		BGFX_DIR .. "src/**.bin.h",
-	}
-
-	copyLib()
+		copyLib()
+end
