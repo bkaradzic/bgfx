@@ -164,6 +164,8 @@ draw calls per frame.
 | i7-920 2.66  | DX9          | GTX650Ti  | VS2008 | x86  | Windows7   |  30 | 27000 |
 | i5-4250U 1.3 | GL2.1        | HD5000    | Clang  | x64  | OSX 10.9   |  28 | 21852 |
 | Q8200 2.33   | NV 319.32    | GTX260    | GCC    | x64  | Linux      |  27 | 19683 |
+| i7-2600K 3.4 | DX9          | AMD6800   | VS2012 | x64  | Windows7   |  27 | 19683 |
+| i7-2600K 3.4 | GL2.1        | AMD6800   | VS2012 | x64  | Windows7   |  26 | 17576 |
 | i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | GCC    | x64  | SteamOS    |  25 | 15625 |
 | i7-4750HQ 2.0| Mesa 10.0.1  | HD5200    | GCC    | x64  | Linux      |  22 | 10648 |
 | i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | VS2008 | x86  | Windows7   |  21 |  9261 |
