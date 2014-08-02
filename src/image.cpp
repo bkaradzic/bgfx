@@ -17,6 +17,8 @@ namespace bgfx
 		{   8, 4, 4, 16 }, // BC3
 		{   4, 4, 4,  8 }, // BC4
 		{   8, 4, 4, 16 }, // BC5
+		{   8, 4, 4, 16 }, // BC6H
+		{   8, 4, 4, 16 }, // BC7
 		{   4, 4, 4,  8 }, // ETC1
 		{   4, 4, 4,  8 }, // ETC2
 		{   8, 4, 4, 16 }, // ETC2A
@@ -66,6 +68,8 @@ namespace bgfx
 		"BC3",       // BC3
 		"BC4",       // BC4
 		"BC5",       // BC5
+		"BC6H",      // BC6H
+		"BC7",       // BC7
 		"ETC1",      // ETC1
 		"ETC2",      // ETC2
 		"ETC2A",     // ETC2A
@@ -1141,6 +1145,10 @@ namespace bgfx
 #define KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT             0x83F3
 #define KTX_COMPRESSED_LUMINANCE_LATC1_EXT            0x8C70
 #define KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT      0x8C72
+#define KTX_COMPRESSED_RGBA_BPTC_UNORM_ARB            0x8E8C
+#define KTX_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB      0x8E8D
+#define KTX_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB      0x8E8E
+#define KTX_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB    0x8E8F
 #define KTX_RGBA16                                    0x805B
 #define KTX_RGBA16F                                   0x881A
 

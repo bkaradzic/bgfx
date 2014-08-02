@@ -108,6 +108,8 @@ namespace bgfx
 			BC3,    // DXT5
 			BC4,    // LATC1/ATI1
 			BC5,    // LATC2/ATI2
+			BC6H,   // BC6H
+			BC7,    // BC7
 			ETC1,   // ETC1 RGB8
 			ETC2,   // ETC2 RGB8
 			ETC2A,  // ETC2 RGBA8
