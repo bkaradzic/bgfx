@@ -1547,7 +1547,7 @@ namespace bgfx
 		}
 	}
 
-	static const D3DVERTEXELEMENT9 s_attrib[Attrib::Count+1] =
+	static const D3DVERTEXELEMENT9 s_attrib[] =
 	{
 		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0 },
 		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,       0 },
@@ -1566,6 +1566,7 @@ namespace bgfx
 		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     7 },
 		D3DDECL_END()
 	};
+	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib)-1);
 
 	static const D3DDECLTYPE s_attribType[AttribType::Count][4][2] =
 	{

@@ -501,11 +501,11 @@ typedef uint64_t GLuint64;
 #endif // BGFX_USE_WGL
 
 #ifndef GL_APIENTRY
-#   define GL_APIENTRY APIENTRY
+#	define GL_APIENTRY APIENTRY
 #endif // GL_APIENTRY
 
 #ifndef GL_APIENTRYP
-#   define GL_APIENTRYP GL_APIENTRY*
+#	define GL_APIENTRYP GL_APIENTRY*
 #endif // GL_APIENTRYP
 
 #if !BGFX_CONFIG_RENDERER_OPENGL

@@ -248,7 +248,7 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
-	static const D3D11_INPUT_ELEMENT_DESC s_attrib[Attrib::Count] =
+	static const D3D11_INPUT_ELEMENT_DESC s_attrib[] =
 	{
 		{ "POSITION",     0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -266,6 +266,7 @@ namespace bgfx
 		{ "TEXCOORD",     6, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",     7, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib) );
 
 	static const DXGI_FORMAT s_attribType[AttribType::Count][4][2] =
 	{
@@ -422,6 +423,7 @@ namespace bgfx
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
+#if USE_D3D11_DYNAMIC_LIB
 			m_d3d11dll = bx::dlopen("d3d11.dll");
 			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
 
@@ -432,9 +434,9 @@ namespace bgfx
 				m_d3d9dll = bx::dlopen("d3d9.dll");
 				BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
-				m_D3DPERF_SetMarker = (D3DPERF_SetMarkerFunc)bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
+				m_D3DPERF_SetMarker  = (D3DPERF_SetMarkerFunc )bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker" );
 				m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
-				m_D3DPERF_EndEvent = (D3DPERF_EndEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent");
+				m_D3DPERF_EndEvent   = (D3DPERF_EndEventFunc  )bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent"  );
 				BX_CHECK(NULL != m_D3DPERF_SetMarker
 					  && NULL != m_D3DPERF_BeginEvent
 					  && NULL != m_D3DPERF_EndEvent
@@ -450,6 +452,10 @@ namespace bgfx
 
 			PFN_CREATEDXGIFACTORY dxgiCreateDXGIFactory = (PFN_CREATEDXGIFACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
 			BGFX_FATAL(NULL != dxgiCreateDXGIFactory, Fatal::UnableToInitialize, "Function CreateDXGIFactory not found.");
+#else
+			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice     = D3D11CreateDevice;
+			PFN_CREATEDXGIFACTORY   dxgiCreateDXGIFactory = CreateDXGIFactory;
+#endif // USE_D3D11_DYNAMIC_LIB
 
 			HRESULT hr;
 
@@ -655,8 +661,10 @@ namespace bgfx
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_factory, 0);
 
+#if USE_D3D11_DYNAMIC_LIB
 			bx::dlclose(m_dxgidll);
 			bx::dlclose(m_d3d11dll);
+#endif // USE_D3D11_DYNAMIC_LIB
 		}
 
 		RendererType::Enum getRendererType() const BX_OVERRIDE
@@ -1768,8 +1776,11 @@ namespace bgfx
 		D3DPERF_BeginEventFunc m_D3DPERF_BeginEvent;
 		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
 
+#if USE_D3D11_DYNAMIC_LIB
 		void* m_d3d11dll;
 		void* m_dxgidll;
+#endif // USE_D3D11_DYNAMIC_LIB
+
 		D3D_DRIVER_TYPE m_driverType;
 		IDXGIAdapter* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;

@@ -38,7 +38,7 @@ namespace bgfx
 		"Point",
 	};
 
-	static const char* s_attribName[Attrib::Count] =
+	static const char* s_attribName[] =
 	{
 		"a_position",
 		"a_normal",
@@ -56,6 +56,7 @@ namespace bgfx
 		"a_texcoord6",
 		"a_texcoord7",
 	};
+	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attribName) );
 
 	static const char* s_instanceDataName[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT] =
 	{
