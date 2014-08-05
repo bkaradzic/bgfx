@@ -146,6 +146,11 @@ namespace entry
 
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
 
+	void setWindowSize(uint32_t _width, uint32_t _height);
+	bool setWindowTitle(const char* _title);
+	void toggleWindowFrame();
+	void setMouseLock(bool _lock);
+
 	bx::FileReaderI* getFileReader();
 	bx::FileWriterI* getFileWriter();
 
