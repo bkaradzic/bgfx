@@ -39,6 +39,7 @@
 #include "fs_imgui_texture.bin.h"
 #include "vs_imgui_image.bin.h"
 #include "fs_imgui_image.bin.h"
+#include "fs_imgui_image_swizz.bin.h"
 #include "dds_imgui_x_texture.h"
 
 #define USE_NANOVG_FONT 0
@@ -304,12 +305,14 @@ struct Imgui
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
 		u_imageLod.idx       = bgfx::invalidHandle;
+		u_imageSwizzle.idx   = bgfx::invalidHandle;
 		u_texColor.idx       = bgfx::invalidHandle;
 		m_missingTexture.idx = bgfx::invalidHandle;
 
 		m_colorProgram.idx   = bgfx::invalidHandle;
 		m_textureProgram.idx = bgfx::invalidHandle;
 		m_imageProgram.idx   = bgfx::invalidHandle;
+		m_imageSwizzProgram.idx = bgfx::invalidHandle;
 	}
 
 	ImguiFontHandle createFont(const void* _data, float _fontSize)
@@ -352,6 +355,7 @@ struct Imgui
 		PosUvVertex::init();
 
 		u_imageLod = bgfx::createUniform("u_imageLod", bgfx::UniformType::Uniform1f);
+		u_imageSwizzle = bgfx::createUniform("u_swizzle",  bgfx::UniformType::Uniform4fv);
 		u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
 
 		const bgfx::Memory* vs_imgui_color;
@@ -360,35 +364,39 @@ struct Imgui
 		const bgfx::Memory* fs_imgui_texture;
 		const bgfx::Memory* vs_imgui_image;
 		const bgfx::Memory* fs_imgui_image;
+		const bgfx::Memory* fs_imgui_image_swizz;
 
 		switch (bgfx::getRendererType() )
 		{
 		case bgfx::RendererType::Direct3D9:
-			vs_imgui_color   = bgfx::makeRef(vs_imgui_color_dx9, sizeof(vs_imgui_color_dx9) );
-			fs_imgui_color   = bgfx::makeRef(fs_imgui_color_dx9, sizeof(fs_imgui_color_dx9) );
-			vs_imgui_texture = bgfx::makeRef(vs_imgui_texture_dx9, sizeof(vs_imgui_texture_dx9) );
-			fs_imgui_texture = bgfx::makeRef(fs_imgui_texture_dx9, sizeof(fs_imgui_texture_dx9) );
-			vs_imgui_image   = bgfx::makeRef(vs_imgui_image_dx9, sizeof(vs_imgui_image_dx9) );
-			fs_imgui_image   = bgfx::makeRef(fs_imgui_image_dx9, sizeof(fs_imgui_image_dx9) );
+			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_dx9, sizeof(vs_imgui_color_dx9) );
+			fs_imgui_color       = bgfx::makeRef(fs_imgui_color_dx9, sizeof(fs_imgui_color_dx9) );
+			vs_imgui_texture     = bgfx::makeRef(vs_imgui_texture_dx9, sizeof(vs_imgui_texture_dx9) );
+			fs_imgui_texture     = bgfx::makeRef(fs_imgui_texture_dx9, sizeof(fs_imgui_texture_dx9) );
+			vs_imgui_image       = bgfx::makeRef(vs_imgui_image_dx9, sizeof(vs_imgui_image_dx9) );
+			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_dx9, sizeof(fs_imgui_image_dx9) );
+			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_dx9, sizeof(fs_imgui_image_swizz_dx9) );
 			m_halfTexel = 0.5f;
 			break;
 
 		case bgfx::RendererType::Direct3D11:
-			vs_imgui_color   = bgfx::makeRef(vs_imgui_color_dx11, sizeof(vs_imgui_color_dx11) );
-			fs_imgui_color   = bgfx::makeRef(fs_imgui_color_dx11, sizeof(fs_imgui_color_dx11) );
-			vs_imgui_texture = bgfx::makeRef(vs_imgui_texture_dx11, sizeof(vs_imgui_texture_dx11) );
-			fs_imgui_texture = bgfx::makeRef(fs_imgui_texture_dx11, sizeof(fs_imgui_texture_dx11) );
-			vs_imgui_image   = bgfx::makeRef(vs_imgui_image_dx11, sizeof(vs_imgui_image_dx11) );
-			fs_imgui_image   = bgfx::makeRef(fs_imgui_image_dx11, sizeof(fs_imgui_image_dx11) );
+			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_dx11, sizeof(vs_imgui_color_dx11) );
+			fs_imgui_color       = bgfx::makeRef(fs_imgui_color_dx11, sizeof(fs_imgui_color_dx11) );
+			vs_imgui_texture     = bgfx::makeRef(vs_imgui_texture_dx11, sizeof(vs_imgui_texture_dx11) );
+			fs_imgui_texture     = bgfx::makeRef(fs_imgui_texture_dx11, sizeof(fs_imgui_texture_dx11) );
+			vs_imgui_image       = bgfx::makeRef(vs_imgui_image_dx11, sizeof(vs_imgui_image_dx11) );
+			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_dx11, sizeof(fs_imgui_image_dx11) );
+			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_dx11, sizeof(fs_imgui_image_swizz_dx11) );
 			break;
 
 		default:
-			vs_imgui_color   = bgfx::makeRef(vs_imgui_color_glsl, sizeof(vs_imgui_color_glsl) );
-			fs_imgui_color   = bgfx::makeRef(fs_imgui_color_glsl, sizeof(fs_imgui_color_glsl) );
-			vs_imgui_texture = bgfx::makeRef(vs_imgui_texture_glsl, sizeof(vs_imgui_texture_glsl) );
-			fs_imgui_texture = bgfx::makeRef(fs_imgui_texture_glsl, sizeof(fs_imgui_texture_glsl) );
-			vs_imgui_image   = bgfx::makeRef(vs_imgui_image_glsl, sizeof(vs_imgui_image_glsl) );
-			fs_imgui_image   = bgfx::makeRef(fs_imgui_image_glsl, sizeof(fs_imgui_image_glsl) );
+			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_glsl, sizeof(vs_imgui_color_glsl) );
+			fs_imgui_color       = bgfx::makeRef(fs_imgui_color_glsl, sizeof(fs_imgui_color_glsl) );
+			vs_imgui_texture     = bgfx::makeRef(vs_imgui_texture_glsl, sizeof(vs_imgui_texture_glsl) );
+			fs_imgui_texture     = bgfx::makeRef(fs_imgui_texture_glsl, sizeof(fs_imgui_texture_glsl) );
+			vs_imgui_image       = bgfx::makeRef(vs_imgui_image_glsl, sizeof(vs_imgui_image_glsl) );
+			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_glsl, sizeof(fs_imgui_image_glsl) );
+			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_glsl, sizeof(fs_imgui_image_swizz_glsl) );
 			break;
 		}
 
@@ -410,8 +418,13 @@ struct Imgui
 		vsh = bgfx::createShader(vs_imgui_image);
 		fsh = bgfx::createShader(fs_imgui_image);
 		m_imageProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(vsh);
 		bgfx::destroyShader(fsh);
+
+		// Notice: using the same vsh.
+		fsh = bgfx::createShader(fs_imgui_image_swizz);
+		m_imageSwizzProgram = bgfx::createProgram(vsh, fsh);
+		bgfx::destroyShader(fsh);
+		bgfx::destroyShader(vsh);
 
 		const bgfx::Memory* texMem = bgfx::makeRef(s_xTexture, sizeof(s_xTexture));
 		m_missingTexture = bgfx::createTexture(texMem);
@@ -428,6 +441,7 @@ struct Imgui
 	void destroy()
 	{
 		bgfx::destroyUniform(u_imageLod);
+		bgfx::destroyUniform(u_imageSwizzle);
 		bgfx::destroyUniform(u_texColor);
 #if !USE_NANOVG_FONT
 		for (uint16_t ii = 0; ii < IMGUI_CONFIG_MAX_FONTS; ++ii)
@@ -442,6 +456,7 @@ struct Imgui
 		bgfx::destroyProgram(m_colorProgram);
 		bgfx::destroyProgram(m_textureProgram);
 		bgfx::destroyProgram(m_imageProgram);
+		bgfx::destroyProgram(m_imageSwizzProgram);
 		nvgDelete(m_nvg);
 	}
 
@@ -1083,6 +1098,51 @@ struct Imgui
 		const float height = width/_aspect;
 
 		image(_image, _lod, int32_t(width), int32_t(height), _align);
+	}
+
+	void imageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+	{
+		int32_t xx;
+		if (ImguiImageAlign::Left == _align)
+		{
+			xx = m_scrollAreaX + SCROLL_AREA_PADDING;
+		}
+		else if (ImguiImageAlign::LeftIndented == _align)
+		{
+			xx = m_widgetX;
+		}
+		else if (ImguiImageAlign::Center == _align)
+		{
+			xx = m_scrollAreaX + (m_scrollAreaInnerWidth-_width)/2;
+		}
+		else if (ImguiImageAlign::CenterIndented == _align)
+		{
+			xx = (m_widgetX + m_scrollAreaInnerWidth + m_scrollAreaX - _width)/2;
+		}
+		else //if (ImguiImageAlign::Right == _align).
+		{
+			xx = m_scrollAreaX + m_scrollAreaInnerWidth - _width;
+		}
+
+		const int32_t yy = m_widgetY;
+		m_widgetY += _height + DEFAULT_SPACING;
+
+		screenQuad(xx, yy, _width, _height);
+		bgfx::setUniform(u_imageLod, &_lod);
+		bgfx::setUniform(u_imageSwizzle, _swizzle);
+		bgfx::setTexture(0, u_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
+		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+		bgfx::setProgram(m_imageSwizzProgram);
+		bgfx::setScissor(m_scissor);
+		bgfx::submit(m_view);
+	}
+
+	void imageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
+	{
+		const float width = _width*float(m_scrollAreaInnerWidth);
+		const float height = width/_aspect;
+
+		imageSwizzle(_image, _swizzle, _lod, int32_t(width), int32_t(height), _align);
 	}
 
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -2129,10 +2189,12 @@ struct Imgui
 #endif // !USE_NANOVG_FONT
 
 	bgfx::UniformHandle u_imageLod;
+	bgfx::UniformHandle u_imageSwizzle;
 	bgfx::UniformHandle u_texColor;
 	bgfx::ProgramHandle m_colorProgram;
 	bgfx::ProgramHandle m_textureProgram;
 	bgfx::ProgramHandle m_imageProgram;
+	bgfx::ProgramHandle m_imageSwizzProgram;
 	bgfx::TextureHandle m_missingTexture;
 };
 
@@ -2329,4 +2391,14 @@ void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t 
 void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 {
 	s_imgui.image(_image, _lod, _width, _aspect, _align);
+}
+
+void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+{
+	s_imgui.imageSwizzle(_image, _swizzle, _lod, _width, _height, _align);
+}
+
+void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
+{
+	s_imgui.imageSwizzle(_image, _swizzle, _lod, _width, _aspect, _align);
 }
