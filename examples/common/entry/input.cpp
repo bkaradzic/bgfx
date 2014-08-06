@@ -204,7 +204,6 @@ void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 
 void inputSetMousePos(int32_t _mx, int32_t _my, int32_t _mz)
 {
-	DBG("%d, %d, %d", _mx, _my, _mz);
 	s_input.m_mouse.setPos(_mx, _my, _mz);
 }
 

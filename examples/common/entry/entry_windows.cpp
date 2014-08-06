@@ -380,10 +380,13 @@ namespace entry
 
 				case WM_MOUSEWHEEL:
 					{
-						int32_t mx = GET_X_LPARAM(_lparam);
-						int32_t my = GET_Y_LPARAM(_lparam);
+						POINT pt = { GET_X_LPARAM(_lparam), GET_Y_LPARAM(_lparam) };
+						ScreenToClient(m_hwnd, &pt);
+						int32_t mx = pt.x;
+						int32_t my = pt.y;
 						int32_t mz = GET_WHEEL_DELTA_WPARAM(_wparam);
 						m_eventQueue.postMouseEvent(mx, my, mz);
+						m_eventQueue.postMouseEvent(mx, my, 0);
 					}
 					break;
 
