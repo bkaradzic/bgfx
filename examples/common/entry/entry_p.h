@@ -70,10 +70,6 @@ namespace entry
 	const Event* poll();
 	void release(const Event* _event);
 
-	void setWindowSize(uint32_t _width, uint32_t _height);
-	void toggleWindowFrame();
-	void setMouseLock(bool _lock);
-
 	class EventQueue
 	{
 	public:

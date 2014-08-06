@@ -28,7 +28,6 @@
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
 #include <bx/handlealloc.h>
-#include <bgfx.h>
 
 #include "../entry/dbg.h"
 #include "imgui.h"
@@ -456,6 +455,11 @@ struct Imgui
 		return m_active == _id;
 	}
 
+	bool isActiveInputField(uint32_t _id) const
+	{
+		return m_inputField == _id;
+	}
+
 	bool isHot(uint32_t _id) const
 	{
 		return m_hot == _id;
@@ -494,10 +498,21 @@ struct Imgui
 		clearInput();
 	}
 
+	void clearActiveInputField()
+	{
+		m_inputField = 0;
+	}
+
 	void setActive(uint32_t _id)
 	{
 		m_active = _id;
 		m_wentActive = true;
+		m_inputField = 0;
+	}
+
+	void setActiveInputField(uint32_t _id)
+	{
+		m_inputField = _id;
 	}
 
 	void setHot(uint32_t _id)
@@ -551,7 +566,41 @@ struct Imgui
 		return res;
 	}
 
-	void updateInput(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll)
+	bool inputLogic(uint32_t _id, bool _over)
+	{
+		bool res = false;
+
+		if (!anyActive() )
+		{
+			if (_over)
+			{
+				setHot(_id);
+			}
+
+			if (isHot(_id)
+			&& m_leftPressed)
+			{
+				setActiveInputField(_id);
+			}
+		}
+
+		if (isHot(_id) )
+		{
+			m_isHot = true;
+		}
+
+		if (m_leftPressed
+		&&  !m_isHot
+		&&  m_inputField != 0)
+		{
+			clearActiveInputField();
+			res = true;
+		}
+
+		return res;
+	}
+
+	void updateInput(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, char _inputChar)
 	{
 		bool left = (_button & IMGUI_MBUT_LEFT) != 0;
 
@@ -561,9 +610,16 @@ struct Imgui
 		m_leftReleased = m_left && !left;
 		m_left = left;
 		m_scroll = _scroll;
+
+		if (_inputChar > 0x80)
+		{
+			_inputChar = 0;
+		}
+		m_lastChar = m_char;
+		m_char = _inputChar;
 	}
 
-	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view)
+	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 	{
 		nvgBeginFrame(m_nvg, _width, _height, 1.0f, NVG_STRAIGHT_ALPHA);
 
@@ -575,7 +631,7 @@ struct Imgui
 		bx::mtxOrtho(proj, 0.0f, (float)_width, (float)_height, 0.0f, 0.0f, 1000.0f);
 		bgfx::setViewTransform(_view, NULL, proj);
 
-		updateInput(_mx, _my, _button, _scroll);
+		updateInput(_mx, _my, _button, _scroll, _inputChar);
 
 		m_hot = m_hotToBe;
 		m_hotToBe = 0;
@@ -915,6 +971,77 @@ struct Imgui
 		}
 
 		return res;
+	}
+
+	void input(const char* _label, char* _str, uint32_t _len, bool _enabled)
+	{
+		m_widgetId++;
+		const uint16_t id = (m_areaId << 8) | m_widgetId;
+		int32_t xx = m_widgetX;
+		int32_t yy = m_widgetY;
+		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
+
+		const bool drawLabel = (NULL != _label && _label[0] != '\0');
+
+		if (drawLabel)
+		{
+			drawText(xx
+				   , yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				   , ImguiTextAlign::Left
+				   , _label
+				   , imguiRGBA(255, 255, 255, 200)
+				   );
+		}
+
+		// Handle input.
+		if (isActiveInputField(id) )
+		{
+			const size_t cursor = size_t(strlen(_str));
+
+			if (m_char == 0x08) //backspace
+			{
+				_str[cursor-1] = '\0';
+			}
+			else if (m_char == 0x0d || m_char == 0x1b) //enter or escape
+			{
+				clearActiveInputField();
+			}
+			else if (cursor < _len-1
+				 &&  0 != m_char)
+			{
+				_str[cursor] = m_char;
+				_str[cursor+1] = '\0';
+			}
+		}
+
+		// Draw input area.
+		int32_t height = BUTTON_HEIGHT;
+		int32_t width = m_widgetW - 2;
+		if (drawLabel)
+		{
+			uint32_t numVertices = 0; //unused
+			const int32_t labelWidth = int32_t(getTextLength(m_fonts[m_currentFontIdx].m_cdata, _label, numVertices));
+			xx    += (labelWidth + 6);
+			width -= (labelWidth + 6);
+		}
+		const bool enabled = _enabled && isEnabled(m_areaId);
+		const bool over = enabled && inRect(xx, yy, width, height);
+		const bool res = inputLogic(id, over);
+
+		drawRoundedRect( (float)xx
+			, (float)yy
+			, (float)width
+			, (float)height
+			, (float)BUTTON_HEIGHT / 5 - 1
+			, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
+			);
+
+		drawText(xx + 6
+			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+			, ImguiTextAlign::Left
+			, _str
+			, isActiveInputField(id)?imguiRGBA(0, 0, 0, 255):imguiRGBA(255,255,255,255)
+			);
 	}
 
 	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
@@ -1936,6 +2063,9 @@ struct Imgui
 	uint32_t m_active;
 	uint32_t m_hot;
 	uint32_t m_hotToBe;
+	char m_char;
+	char m_lastChar;
+	uint32_t m_inputField;
 	int32_t m_dragX;
 	int32_t m_dragY;
 	float m_dragOrig;
@@ -2025,9 +2155,9 @@ void imguiDestroy()
 	s_imgui.destroy();
 }
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint8_t _view)
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 {
-	s_imgui.beginFrame(_mx, _my, _button, _scroll, _width, _height, _view);
+	s_imgui.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _view);
 }
 
 void imguiEndFrame()
@@ -2109,6 +2239,11 @@ bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax,
 	bool result = s_imgui.slider(_text, val, (float)_vmin, (float)_vmax, 1.0f, _enabled);
 	_val = (int32_t)val;
 	return result;
+}
+
+void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled)
+{
+	s_imgui.input(_label, _str, _len, _enabled);
 }
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)

@@ -304,6 +304,11 @@ namespace entry
 			}
 		}
 
+		bool setWindowTitle(const char* _title)
+		{
+			SDL_WM_SetCaption(_title, NULL);
+		}
+
 		MainThreadEntry m_mte;
 		bx::Thread m_thread;
 
@@ -340,6 +345,11 @@ namespace entry
 		uev.data1 = reinterpret_cast<void*>(_width);
 		uev.data2 = reinterpret_cast<void*>(_height);
 		SDL_PushEvent(&event);
+	}
+
+	bool setWindowTitle(const char* _title)
+	{
+		s_ctx.setWindowTitle(_title);
 	}
 
 	void toggleWindowFrame()

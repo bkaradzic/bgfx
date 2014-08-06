@@ -324,7 +324,7 @@ namespace entry
 							rect.bottom = rect.top + height + m_frameHeight;
 							break;
 						}
-						
+
 						m_eventQueue.postSizeEvent(m_width, m_height);
 					}
 					return 0;
@@ -574,6 +574,11 @@ namespace entry
 			}
 		}
 
+		bool setWindowTitle(const char* _title)
+		{
+			return (1 == SetWindowText(m_hwnd, _title));
+		}
+
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
 		EventQueue m_eventQueue;
@@ -619,6 +624,11 @@ namespace entry
 	void setWindowSize(uint32_t _width, uint32_t _height)
 	{
 		PostMessage(s_ctx.m_hwnd, WM_USER_SET_WINDOW_SIZE, 0, (_height<<16) | (_width&0xffff) );
+	}
+
+	bool setWindowTitle(const char* _title)
+	{
+		return s_ctx.setWindowTitle(_title);
 	}
 
 	void toggleWindowFrame()
