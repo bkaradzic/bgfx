@@ -611,10 +611,7 @@ struct Imgui
 		m_left = left;
 		m_scroll = _scroll;
 
-		if (_inputChar > 0x80)
-		{
-			_inputChar = 0;
-		}
+		_inputChar = 0 > _inputChar ? 0 : _inputChar;
 		m_lastChar = m_char;
 		m_char = _inputChar;
 	}
