@@ -71,6 +71,7 @@ namespace entry
 			, m_mouseLock(false)
 			, m_init(false)
 			, m_exit(false)
+			, m_mz(0)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]    = Key::Esc;
@@ -384,9 +385,8 @@ namespace entry
 						ScreenToClient(m_hwnd, &pt);
 						int32_t mx = pt.x;
 						int32_t my = pt.y;
-						int32_t mz = GET_WHEEL_DELTA_WPARAM(_wparam);
-						m_eventQueue.postMouseEvent(mx, my, mz);
-						m_eventQueue.postMouseEvent(mx, my, 0);
+						m_mz += GET_WHEEL_DELTA_WPARAM(_wparam);
+						m_eventQueue.postMouseEvent(mx, my, m_mz);
 					}
 					break;
 
@@ -608,6 +608,7 @@ namespace entry
 
 		int32_t m_mx;
 		int32_t m_my;
+		int32_t m_mz;
 
 		bool m_frame;
 		bool m_mouseLock;
