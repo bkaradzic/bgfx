@@ -973,7 +973,7 @@ struct Imgui
 		return res;
 	}
 
-	void input(const char* _label, char* _str, uint32_t _len, bool /*_enabled*/)
+	void input(const char* _label, char* _str, uint32_t _len, bool _enabled)
 	{
 		m_widgetId++;
 		const uint16_t id = (m_areaId << 8) | m_widgetId;
@@ -1024,9 +1024,9 @@ struct Imgui
 			xx    += (labelWidth + 6);
 			width -= (labelWidth + 6);
 		}
-//		const bool enabled = _enabled && isEnabled(m_areaId);
-// 		const bool over = enabled && inRect(xx, yy, width, height);
-// 		const bool res = inputLogic(id, over);
+		const bool enabled = _enabled && isEnabled(m_areaId);
+		const bool over = enabled && inRect(xx, yy, width, height);
+		inputLogic(id, over);
 
 		drawRoundedRect( (float)xx
 			, (float)yy
