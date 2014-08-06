@@ -375,7 +375,7 @@ namespace entry
 							setMousePos(m_mx, m_my);
 						}
 
-						m_eventQueue.postMouseEvent(mx, my, 0);
+						m_eventQueue.postMouseEvent(mx, my, m_mz);
 					}
 					break;
 
@@ -396,7 +396,7 @@ namespace entry
 					{
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
-						m_eventQueue.postMouseEvent(mx, my, 0, MouseButton::Left, _id == WM_LBUTTONDOWN);
+						m_eventQueue.postMouseEvent(mx, my, m_mz, MouseButton::Left, _id == WM_LBUTTONDOWN);
 					}
 					break;
 
@@ -406,7 +406,7 @@ namespace entry
 					{
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
-						m_eventQueue.postMouseEvent(mx, my, 0, MouseButton::Middle, _id == WM_MBUTTONDOWN);
+						m_eventQueue.postMouseEvent(mx, my, m_mz, MouseButton::Middle, _id == WM_MBUTTONDOWN);
 					}
 					break;
 
@@ -416,7 +416,7 @@ namespace entry
 					{
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
-						m_eventQueue.postMouseEvent(mx, my, 0, MouseButton::Right, _id == WM_RBUTTONDOWN);
+						m_eventQueue.postMouseEvent(mx, my, m_mz, MouseButton::Right, _id == WM_RBUTTONDOWN);
 					}
 					break;
 
