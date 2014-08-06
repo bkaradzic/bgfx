@@ -124,6 +124,8 @@ namespace entry
 			KeyX,
 			KeyY,
 			KeyZ,
+
+			Count,
 		};
 	};
 
@@ -144,7 +146,14 @@ namespace entry
 		uint8_t m_buttons[entry::MouseButton::Count];
 	};
 
-	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
+	struct KeyState
+	{
+		uint8_t m_modifiers;
+		bool m_keysDown[entry::Key::Count];
+	};
+
+	char keyToAscii(entry::Key::Enum _key, bool _shiftModifier);
+	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL, KeyState* _keyboard = NULL);
 
 	void setWindowSize(uint32_t _width, uint32_t _height);
 	bool setWindowTitle(const char* _title);
