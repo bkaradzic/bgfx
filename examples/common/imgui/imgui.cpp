@@ -1635,6 +1635,12 @@ struct Imgui
 
 	void drawText(float _x, float _y, const char* _text, ImguiTextAlign::Enum _align, uint32_t _abgr)
 	{
+		if (NULL == _text
+		||  '\0' == _text[0])
+		{
+			return;
+		}
+
 #if USE_NANOVG_FONT
 		static uint32_t textAlign[ImguiTextAlign::Count] =
 		{
