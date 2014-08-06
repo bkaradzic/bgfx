@@ -155,13 +155,13 @@ namespace entry
 	char keyToAscii(entry::Key::Enum _key, bool _shiftModifier);
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL, KeyState* _keyboard = NULL);
 
+	bx::FileReaderI* getFileReader();
+	bx::FileWriterI* getFileWriter();
+
 	void setWindowSize(uint32_t _width, uint32_t _height);
 	bool setWindowTitle(const char* _title);
 	void toggleWindowFrame();
 	void setMouseLock(bool _lock);
-
-	bx::FileReaderI* getFileReader();
-	bx::FileWriterI* getFileWriter();
 
 } // namespace entry
 
