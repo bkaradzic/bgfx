@@ -2298,14 +2298,13 @@ void imguiColorWheel(float _rgb[3], bool _respectIndentation, bool _enabled)
 void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _enabled)
 {
 	char buf[128];
-	bx::snprintf(buf, sizeof(buf), "%s [RGB %-2.2f %-2.2f %-2.2f]"
-		, _text
+	bx::snprintf(buf, sizeof(buf), "[RGB %-2.2f %-2.2f %-2.2f]"
 		, _rgb[0]
 		, _rgb[1]
 		, _rgb[2]
 		);
 
-	if (imguiButton(buf, true) )
+	if (imguiCollapse(_text, buf, _activated, _enabled) )
 	{
 		_activated = !_activated;
 	}
