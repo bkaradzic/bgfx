@@ -26,6 +26,8 @@
 #ifndef IMGUI_H_HEADER_GUARD
 #define IMGUI_H_HEADER_GUARD
 
+#include <bgfx.h>
+
 #define IMGUI_MBUT_LEFT  0x01
 #define IMGUI_MBUT_RIGHT 0x02
 
@@ -105,6 +107,6 @@ void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enab
 void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);
 
 void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented); //_width is in [0.0-1.0] range.
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented); //_scale is in [0.0-1.0] range.
 
 #endif // IMGUI_H_HEADER_GUARD

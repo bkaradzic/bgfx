@@ -28,7 +28,6 @@
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
 #include <bx/handlealloc.h>
-#include <bgfx.h>
 
 #include "../entry/dbg.h"
 #include "imgui.h"
