@@ -283,7 +283,7 @@ namespace entry
 
 						if (mouse->m_move)
 						{
-							inputSetMousePos(mouse->m_mx, mouse->m_my);
+							inputSetMousePos(mouse->m_mx, mouse->m_my, mouse->m_mz);
 						}
 						else
 						{
@@ -297,6 +297,7 @@ namespace entry
 							{
 								_mouse->m_mx = mouse->m_mx;
 								_mouse->m_my = mouse->m_my;
+								_mouse->m_mz = mouse->m_mz;
 							}
 							else
 							{

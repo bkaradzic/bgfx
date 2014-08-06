@@ -186,7 +186,7 @@ namespace entry
 				case SDL_MOUSEMOTION:
 					{
 						const SDL_MouseMotionEvent& mev = event.motion;
-						m_eventQueue.postMouseEvent(mev.x, mev.y);
+						m_eventQueue.postMouseEvent(mev.x, mev.y, 0);
 					}
 					break;
 
@@ -194,7 +194,7 @@ namespace entry
 				case SDL_MOUSEBUTTONUP:
 					{
 						const SDL_MouseButtonEvent& mev = event.button;
-						m_eventQueue.postMouseEvent(mev.x, mev.y, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+						m_eventQueue.postMouseEvent(mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
 					}
 					break;
 

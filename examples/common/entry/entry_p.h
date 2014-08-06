@@ -56,6 +56,7 @@ namespace entry
 	{
 		int32_t m_mx;
 		int32_t m_my;
+		int32_t m_mz;
 		MouseButton::Enum m_button;
 		bool m_down;
 		bool m_move;
@@ -90,24 +91,26 @@ namespace entry
 			m_queue.push(ev);
 		}
 
-		void postMouseEvent(int32_t _mx, int32_t _my)
+		void postMouseEvent(int32_t _mx, int32_t _my, int32_t _mz)
 		{
 			MouseEvent* ev = new MouseEvent;
 			ev->m_type = Event::Mouse;
 			ev->m_mx = _mx;
 			ev->m_my = _my;
+			ev->m_mz = _mz;
 			ev->m_button = MouseButton::None;
 			ev->m_down = false;
 			ev->m_move = true;
 			m_queue.push(ev);
 		}
 
-		void postMouseEvent(int32_t _mx, int32_t _my, MouseButton::Enum _button, bool _down)
+		void postMouseEvent(int32_t _mx, int32_t _my, int32_t _mz, MouseButton::Enum _button, bool _down)
 		{
 			MouseEvent* ev = new MouseEvent;
 			ev->m_type = Event::Mouse;
 			ev->m_mx = _mx;
 			ev->m_my = _my;
+			ev->m_mz = _mz;
 			ev->m_button = _button;
 			ev->m_down = _down;
 			ev->m_move = false;

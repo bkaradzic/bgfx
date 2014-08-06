@@ -15,6 +15,7 @@ struct Mouse
 	Mouse()
 		: m_width(1280)
 		, m_height(720)
+		, m_wheelDelta(120)
 		, m_lock(false)
 	{
 	}
@@ -25,6 +26,7 @@ struct Mouse
 		{
 			m_norm[0] = 0.0f;
 			m_norm[1] = 0.0f;
+			m_norm[2] = 0.0f;
 		}
 
 		memset(m_buttons, 0, sizeof(m_buttons) );
@@ -36,12 +38,14 @@ struct Mouse
 		m_height = _height;
 	}
 
-	void setPos(int32_t _mx, int32_t _my)
+	void setPos(int32_t _mx, int32_t _my, int32_t _mz)
 	{
 		m_absolute[0] = _mx;
 		m_absolute[1] = _my;
+		m_absolute[2] = _mz;
 		m_norm[0] = float(_mx)/float(m_width);
 		m_norm[1] = float(_my)/float(m_height);
+		m_norm[2] = float(_mz)/float(m_wheelDelta);
 	}
 
 	void setButtonState(entry::MouseButton::Enum _button, uint8_t _state)
@@ -49,12 +53,13 @@ struct Mouse
 		m_buttons[_button] = _state;
 	}
 
-	int32_t m_absolute[2];
-	float m_norm[2];
+	int32_t m_absolute[3];
+	float m_norm[3];
 	int32_t m_wheel;
 	uint8_t m_buttons[entry::MouseButton::Count];
 	uint16_t m_width;
 	uint16_t m_height;
+	uint16_t m_wheelDelta;
 	bool m_lock;
 };
 
@@ -197,9 +202,10 @@ void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 	s_input.m_keyboard.setKeyState(_key, _modifiers, _down);
 }
 
-void inputSetMousePos(int32_t _mx, int32_t _my)
+void inputSetMousePos(int32_t _mx, int32_t _my, int32_t _mz)
 {
-	s_input.m_mouse.setPos(_mx, _my);
+	DBG("%d, %d, %d", _mx, _my, _mz);
+	s_input.m_mouse.setPos(_mx, _my, _mz);
 }
 
 void inputSetMouseButtonState(entry::MouseButton::Enum _button, uint8_t _state)
@@ -207,12 +213,14 @@ void inputSetMouseButtonState(entry::MouseButton::Enum _button, uint8_t _state)
 	s_input.m_mouse.setButtonState(_button, _state);
 }
 
-void inputGetMouse(float _mouse[2])
+void inputGetMouse(float _mouse[3])
 {
 	_mouse[0] = s_input.m_mouse.m_norm[0];
 	_mouse[1] = s_input.m_mouse.m_norm[1];
+	_mouse[2] = s_input.m_mouse.m_norm[2];
 	s_input.m_mouse.m_norm[0] = 0.0f;
 	s_input.m_mouse.m_norm[1] = 0.0f;
+	s_input.m_mouse.m_norm[2] = 0.0f;
 }
 
 bool inputIsMouseLocked()
@@ -230,6 +238,7 @@ void inputSetMouseLock(bool _lock)
 		{
 			s_input.m_mouse.m_norm[0] = 0.0f;
 			s_input.m_mouse.m_norm[1] = 0.0f;
+			s_input.m_mouse.m_norm[2] = 0.0f;
 		}
 	}
 }

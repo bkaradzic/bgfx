@@ -216,6 +216,7 @@ namespace entry
 								{
 									m_eventQueue.postMouseEvent(xbutton.x
 										, xbutton.y
+										, 0
 										, mb
 										, event.type == ButtonPress
 										);
@@ -228,6 +229,7 @@ namespace entry
 								const XMotionEvent& xmotion = event.xmotion;
 								m_eventQueue.postMouseEvent(xmotion.x
 										, xmotion.y
+										, 0
 										);
 							}
 							break;

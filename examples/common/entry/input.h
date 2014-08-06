@@ -38,7 +38,7 @@ void inputSetKeyState(entry::Key::Enum  _key, uint8_t _modifiers, bool _down);
 void inputSetMouseResolution(uint16_t _width, uint16_t _height);
 
 ///
-void inputSetMousePos(int32_t _mx, int32_t _my);
+void inputSetMousePos(int32_t _mx, int32_t _my, int32_t _mz);
 
 ///
 void inputSetMouseButtonState(entry::MouseButton::Enum _button, uint8_t _state);
@@ -47,7 +47,7 @@ void inputSetMouseButtonState(entry::MouseButton::Enum _button, uint8_t _state);
 void inputSetMouseLock(bool _lock);
 
 ///
-void inputGetMouse(float _mouse[2]);
+void inputGetMouse(float _mouse[3]);
 
 ///
 bool inputIsMouseLocked();
