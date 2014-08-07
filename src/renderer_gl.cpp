@@ -3612,7 +3612,8 @@ namespace bgfx
 				BGFX_FATAL(false, bgfx::Fatal::InvalidShader, "Failed to compile shader.");
 			}
 			else if (BX_ENABLED(BGFX_CONFIG_DEBUG)
-				 &&  s_extension[Extension::ANGLE_translated_shader_source].m_supported)
+				 &&  s_extension[Extension::ANGLE_translated_shader_source].m_supported
+				 &&  NULL != glGetTranslatedShaderSourceANGLE)
 			{
 				GLsizei len;
 				GL_CHECK(glGetShaderiv(m_id, GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE, &len) );
