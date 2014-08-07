@@ -22,6 +22,10 @@
 #			define GL_GLEXT_LEGACY
 #			include <GL/gl.h>
 #			undef GL_PROTOTYPES
+#		elif BX_PLATFORM_FREEBSD
+#			include <GL/glew.h>
+#			include <GL/gl.h>
+#			define glInsertEventMarker glInsertEventMarkerEXT
 #		elif BX_PLATFORM_OSX
 #			define GL_GLEXT_LEGACY
 #			define long ptrdiff_t
@@ -489,6 +493,8 @@ typedef uint64_t GLuint64;
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
 #elif BX_PLATFORM_LINUX
+#	include "glcontext_glx.h"
+#elif BX_PLATFORM_FREEBSD
 #	include "glcontext_glx.h"
 #elif BX_PLATFORM_OSX
 #	include "glcontext_nsgl.h"

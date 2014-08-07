@@ -5,10 +5,11 @@
 
 #include "entry_p.h"
 
-#if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_LINUX
+#if ENTRY_CONFIG_USE_NATIVE && (BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD)
 
 #define XK_MISCELLANY
 #define XK_LATIN1
+#include <X11/Xlib.h>
 #include <X11/keysymdef.h>
 #include <bgfxplatform.h> // will include X11 which #defines None... Don't mess with order of includes.
 
