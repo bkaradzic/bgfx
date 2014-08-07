@@ -50,7 +50,7 @@ namespace bgfx
 
 } // namespace bgfx
 
-#elif BX_PLATFORM_LINUX
+#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
 #	include <X11/Xlib.h>
 
 namespace bgfx
