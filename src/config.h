@@ -33,6 +33,7 @@
 #		define BGFX_CONFIG_RENDERER_OPENGL (0 \
 					|| BX_PLATFORM_WINDOWS \
 					|| BX_PLATFORM_LINUX \
+					|| BX_PLATFORM_FREEBSD \
 					|| BX_PLATFORM_OSX \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
@@ -114,6 +115,7 @@
 						|| BX_PLATFORM_ANDROID \
 						|| BX_PLATFORM_IOS \
 						|| BX_PLATFORM_LINUX \
+						|| BX_PLATFORM_FREEBSD \
 						|| BX_PLATFORM_NACL \
 						|| BX_PLATFORM_OSX \
 						|| BX_PLATFORM_QNX \
