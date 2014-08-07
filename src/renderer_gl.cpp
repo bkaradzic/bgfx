@@ -743,7 +743,11 @@ namespace bgfx
 		return "<unknown>";
 	}
 
+#if BX_PLATFORM_FREEBSD
+	void GL_APIENTRY debugProcCb(unsigned int _source, unsigned int _type, unsigned int _id, unsigned int _severity, int /*_length*/, const char *_message, void* /*_userParam*/)
+#else
 	void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
+#endif
 	{
 		BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
 				, toString(_source)
@@ -781,7 +785,7 @@ namespace bgfx
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
-		void* data = alloca(size);
+		void* data = alloca(size * 2);
 
 		if (isCompressed(_format) )
 		{
@@ -826,6 +830,10 @@ namespace bgfx
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
 			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+
+#if BX_PLATFORM_FREEBSD
+			glewInit();
+#endif
 
 			m_vendor = getGLString(GL_VENDOR);
 			m_renderer = getGLString(GL_RENDERER);
