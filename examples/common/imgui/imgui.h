@@ -95,8 +95,8 @@ void imguiEndScrollArea();
 
 void imguiIndent();
 void imguiUnindent();
-void imguiSeparator();
-void imguiSeparatorLine();
+void imguiSeparator(uint16_t _height = 12);
+void imguiSeparatorLine(uint16_t _height = 12);
 
 bool imguiButton(const char* _text, bool _enabled = true);
 bool imguiItem(const char* _text, bool _enabled = true);

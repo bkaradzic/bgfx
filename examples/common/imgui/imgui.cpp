@@ -1529,18 +1529,18 @@ struct Imgui
 		m_widgetW += INDENT_SIZE;
 	}
 
-	void separator()
+	void separator(uint16_t _height)
 	{
-		m_widgetY += DEFAULT_SPACING * 3;
+		m_widgetY += _height;
 	}
 
-	void separatorLine()
+	void separatorLine(uint16_t _height)
 	{
 		int32_t xx = m_widgetX;
-		int32_t yy = m_widgetY + DEFAULT_SPACING*2;
+		int32_t yy = m_widgetY + _height/2;
 		int32_t width = m_widgetW;
 		int32_t height = 1;
-		m_widgetY += DEFAULT_SPACING * 4;
+		m_widgetY += _height;
 
 		drawRect( (float)xx
 			, (float)yy
@@ -2448,14 +2448,14 @@ void imguiUnindent()
 	s_imgui.unindent();
 }
 
-void imguiSeparator()
+void imguiSeparator(uint16_t _height)
 {
-	s_imgui.separator();
+	s_imgui.separator(_height);
 }
 
-void imguiSeparatorLine()
+void imguiSeparatorLine(uint16_t _height)
 {
-	s_imgui.separatorLine();
+	s_imgui.separatorLine(_height);
 }
 
 bool imguiButton(const char* _text, bool _enabled)
