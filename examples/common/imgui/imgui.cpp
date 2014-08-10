@@ -685,7 +685,7 @@ struct Imgui
 
 		m_widgetX = _x + SCROLL_AREA_PADDING;
 		m_widgetY = _y + AREA_HEADER + (*_scroll);
-		m_widgetW = _width - SCROLL_AREA_PADDING * 4;
+		m_widgetW = _width - SCROLL_AREA_PADDING * 4 - 2;
 
 		m_scrollTop    = _y + AREA_HEADER;
 		m_scrollBottom = _y + _height;
@@ -720,14 +720,14 @@ struct Imgui
 
 		nvgScissor(m_nvg
 				 , float(_x + SCROLL_AREA_PADDING)
-				 , float(_y + AREA_HEADER)
-				 , float(_width - SCROLL_AREA_PADDING * 4)
+				 , float(_y + AREA_HEADER - 1)
+				 , float(_width - SCROLL_AREA_PADDING * 3)
 				 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
 				 );
 
 		m_scissor = bgfx::setScissor(uint16_t(_x + SCROLL_AREA_PADDING)
-								   , uint16_t(_y + AREA_HEADER)
-								   , uint16_t(_width - SCROLL_AREA_PADDING * 4)
+								   , uint16_t(_y + AREA_HEADER - 1)
+								   , uint16_t(_width - SCROLL_AREA_PADDING * 3)
 								   , uint16_t(_height - AREA_HEADER - SCROLL_AREA_PADDING)
 								   );
 
