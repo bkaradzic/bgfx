@@ -357,9 +357,9 @@ struct Imgui
 		PosColorUvVertex::init();
 		PosUvVertex::init();
 
-		u_imageLod = bgfx::createUniform("u_imageLod", bgfx::UniformType::Uniform1f);
+		u_imageLod     = bgfx::createUniform("u_imageLod", bgfx::UniformType::Uniform1f);
 		u_imageSwizzle = bgfx::createUniform("u_swizzle",  bgfx::UniformType::Uniform4fv);
-		u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
+		u_texColor     = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
 
 		const bgfx::Memory* vs_imgui_color;
 		const bgfx::Memory* fs_imgui_color;
