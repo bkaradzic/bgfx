@@ -207,7 +207,7 @@ namespace entry
 		BX_UNUSED(_width, _height);
 	}
 
-	bool setWindowTitle(const char* _title)
+	void setWindowTitle(const char* _title)
 	{
 		BX_UNUSED(_title);
 	}

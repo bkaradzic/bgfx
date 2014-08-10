@@ -55,6 +55,17 @@ struct ImguiImageAlign
 	};
 };
 
+struct ImguiBorder
+{
+	enum Enum
+	{
+		Left,
+		Right,
+		Top,
+		Bottom
+	};
+};
+
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 {
 	return 0
@@ -76,13 +87,16 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, uint8_t _view = 31);
 void imguiEndFrame();
 
+/// Notice: this function is not to be called between imguiBeginScrollArea() and imguiEndScrollArea().
+bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled = true);
+
 bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
 void imguiEndScrollArea();
 
 void imguiIndent();
 void imguiUnindent();
-void imguiSeparator();
-void imguiSeparatorLine();
+void imguiSeparator(uint16_t _height = 12);
+void imguiSeparatorLine(uint16_t _height = 12);
 
 bool imguiButton(const char* _text, bool _enabled = true);
 bool imguiItem(const char* _text, bool _enabled = true);
@@ -93,6 +107,9 @@ void imguiValue(const char* _text);
 bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
 bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
 void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true);
+
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...);
+#define imguiTabs(_selected, _enabled, ...) imguiTabsUseMacroInstead(_selected, _enabled, __VA_ARGS__, NULL)
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
 #define imguiChoose(...) imguiChooseUseMacroInstead(__VA_ARGS__, NULL)
@@ -107,6 +124,8 @@ void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enab
 void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);
 
 void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented); //_scale is in [0.0-1.0] range.
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
 
 #endif // IMGUI_H_HEADER_GUARD

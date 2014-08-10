@@ -25,7 +25,7 @@ namespace entry
 	{
 	}
 
-	bool setWindowTitle(const char* _title)
+	void setWindowTitle(const char* _title)
 	{
 		BX_UNUSED(_title);
 	}

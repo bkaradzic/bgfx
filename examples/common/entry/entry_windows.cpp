@@ -17,6 +17,7 @@
 #define WM_USER_SET_WINDOW_SIZE     (WM_USER+0)
 #define WM_USER_TOGGLE_WINDOW_FRAME (WM_USER+1)
 #define WM_USER_MOUSE_LOCK          (WM_USER+2)
+#define WM_USER_SET_WINDOW_TITLE    (WM_USER+3)
 
 namespace entry
 {
@@ -256,6 +257,12 @@ namespace entry
 						uint32_t width = GET_X_LPARAM(_lparam);
 						uint32_t height = GET_Y_LPARAM(_lparam);
 						adjust(width, height, true);
+					}
+					break;
+
+				case WM_USER_SET_WINDOW_TITLE:
+					{
+						SetWindowText(_hwnd, (const char*)_lparam);
 					}
 					break;
 
@@ -586,11 +593,6 @@ namespace entry
 			}
 		}
 
-		bool setWindowTitle(const char* _title)
-		{
-			return (1 == SetWindowText(m_hwnd, _title));
-		}
-
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
 		EventQueue m_eventQueue;
@@ -639,9 +641,9 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd, WM_USER_SET_WINDOW_SIZE, 0, (_height<<16) | (_width&0xffff) );
 	}
 
-	bool setWindowTitle(const char* _title)
+	void setWindowTitle(const char* _title)
 	{
-		return s_ctx.setWindowTitle(_title);
+		PostMessage(s_ctx.m_hwnd, WM_USER_SET_WINDOW_TITLE, 0, (LPARAM)_title);
 	}
 
 	void toggleWindowFrame()
