@@ -304,7 +304,7 @@ namespace entry
 			}
 		}
 
-		bool setWindowTitle(const char* _title)
+		void setWindowTitle(const char* _title)
 		{
 			SDL_WM_SetCaption(_title, NULL);
 		}
@@ -347,7 +347,7 @@ namespace entry
 		SDL_PushEvent(&event);
 	}
 
-	bool setWindowTitle(const char* _title)
+	void setWindowTitle(const char* _title)
 	{
 		s_ctx.setWindowTitle(_title);
 	}

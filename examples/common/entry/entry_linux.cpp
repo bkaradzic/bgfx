@@ -328,7 +328,7 @@ namespace entry
 		XSendEvent(s_ctx.m_display, s_ctx.m_window, false, ResizeRedirectMask, (XEvent*)&ev);
 	}
 
-	bool setWindowTitle(const char* _title)
+	void setWindowTitle(const char* _title)
 	{
 		BX_UNUSED(_title);
 	}

@@ -586,9 +586,9 @@ namespace entry
 			}
 		}
 
-		bool setWindowTitle(const char* _title)
+		void setWindowTitle(const char* _title)
 		{
-			return (1 == SetWindowText(m_hwnd, _title));
+			SetWindowText(m_hwnd, _title);
 		}
 
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
@@ -639,9 +639,9 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd, WM_USER_SET_WINDOW_SIZE, 0, (_height<<16) | (_width&0xffff) );
 	}
 
-	bool setWindowTitle(const char* _title)
+	void setWindowTitle(const char* _title)
 	{
-		return s_ctx.setWindowTitle(_title);
+		s_ctx.setWindowTitle(_title);
 	}
 
 	void toggleWindowFrame()

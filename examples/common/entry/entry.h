@@ -161,7 +161,7 @@ namespace entry
 	bx::FileWriterI* getFileWriter();
 
 	void setWindowSize(uint32_t _width, uint32_t _height);
-	bool setWindowTitle(const char* _title);
+	void setWindowTitle(const char* _title);
 	void toggleWindowFrame();
 	void setMouseLock(bool _lock);
 
