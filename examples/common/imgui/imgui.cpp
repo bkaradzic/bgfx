@@ -324,6 +324,7 @@ struct Imgui
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, _fontSize, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_fonts[handle.idx].m_cdata);
 		m_fonts[handle.idx].m_texture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
+		m_fonts[handle.idx].m_size = _fontSize;
 #else
 		const ImguiFontHandle handle = { bgfx::invalidHandle };
 #endif // !USE_NANOVG_FONT
@@ -1058,6 +1059,79 @@ struct Imgui
 			, _str
 			, isActiveInputField(id)?imguiRGBA(0, 0, 0, 255):imguiRGBA(255,255,255,255)
 			);
+	}
+
+	uint8_t tabs(uint8_t _selected, bool _enabled, va_list _argList)
+	{
+		uint8_t count;
+		const char* titles[16];
+		const char* str = va_arg(_argList, const char*);
+		for (count = 0; str != NULL || count >= 16; ++count, str = va_arg(_argList, const char*) )
+		{
+			titles[count] = str;
+		}
+
+		const int32_t yy = m_widgetY;
+		const int32_t height = BUTTON_HEIGHT;
+		m_widgetY += height + DEFAULT_SPACING;
+
+		uint8_t selected = _selected;
+		const int32_t tabWidth     = m_scrollAreaInnerWidth / count;
+		const int32_t tabWidthHalf = m_scrollAreaInnerWidth / (count*2);
+		const int32_t textY = yy + height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 1;
+
+		drawRoundedRect( (float)m_widgetX
+					   , (float)yy-1
+					   , (float)m_scrollAreaInnerWidth
+					   , (float)height+2
+					   , (float)BUTTON_HEIGHT / 2 - 1
+					   , imguiRGBA(128, 128, 128, 96)
+					   );
+
+		for (uint8_t ii = 0; ii < count; ++ii)
+		{
+			m_widgetId++;
+			const uint16_t id = (m_areaId << 8) | m_widgetId;
+
+			int32_t xx = m_widgetX + ii*tabWidth;
+			int32_t textX = xx + tabWidthHalf;
+
+			const bool enabled = _enabled && isEnabled(m_areaId);
+			const bool over = enabled && inRect(xx, yy, tabWidth, height);
+			const bool res = buttonLogic(id, over);
+
+			if (res)
+			{
+				selected = ii;
+			}
+
+			uint32_t textColor;
+			if (ii == selected)
+			{
+				textColor = enabled?imguiRGBA(0,0,0,255):imguiRGBA(255,255,255,100);
+
+				drawRoundedRect( (float)xx
+							   , (float)yy-1
+							   , (float)tabWidth
+							   , (float)height+2
+							   , (float)BUTTON_HEIGHT / 2 - 1
+							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+							   );
+			}
+			else
+			{
+				textColor = isHot(id) ? imguiRGBA(255, 196, 0, enabled?255:100) : imguiRGBA(255, 255, 255, enabled?200:100);
+			}
+
+			drawText(textX
+				   , textY
+				   , ImguiTextAlign::Center
+				   , titles[ii]
+				   , textColor
+				   );
+		}
+
+		return selected;
 	}
 
 	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
@@ -2299,6 +2373,7 @@ struct Imgui
 	{
 		stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
 		bgfx::TextureHandle m_texture;
+		float m_size;
 	};
 
 	uint16_t m_currentFontIdx;
@@ -2432,6 +2507,16 @@ bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax,
 void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled)
 {
 	s_imgui.input(_label, _str, _len, _enabled);
+}
+
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...)
+{
+	va_list argList;
+	va_start(argList, _enabled);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, argList);
+	va_end(argList);
+
+	return result;
 }
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)

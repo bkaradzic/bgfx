@@ -108,6 +108,9 @@ bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float
 bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
 void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true);
 
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...);
+#define imguiTabs(_selected, _enabled, ...) imguiTabsUseMacroInstead(_selected, _enabled, __VA_ARGS__, NULL)
+
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
 #define imguiChoose(...) imguiChooseUseMacroInstead(__VA_ARGS__, NULL)
 
