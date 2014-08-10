@@ -299,6 +299,8 @@ struct Imgui
 		, m_halfTexel(0.0f)
 		, m_nvg(NULL)
 		, m_view(31)
+		, m_viewWidth(0)
+		, m_viewHeight(0)
 		, m_currentFontIdx(0)
 	{
 		m_invTextureWidth  = 1.0f/m_textureWidth;
@@ -636,6 +638,8 @@ struct Imgui
 		nvgBeginFrame(m_nvg, _width, _height, 1.0f, NVG_STRAIGHT_ALPHA);
 
 		m_view = _view;
+		m_viewWidth = _width;
+		m_viewHeight = _height;
 		bgfx::setViewSeq(_view, true);
 		bgfx::setViewRect(_view, 0, 0, _width, _height);
 
@@ -1169,7 +1173,7 @@ struct Imgui
 				, cy
 				, CHECK_SIZE
 				, CHECK_SIZE
-				, 2
+				, TriangleOrientation::Up
 				, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200)
 				);
 		}
@@ -1179,7 +1183,7 @@ struct Imgui
 				, cy
 				, CHECK_SIZE
 				, CHECK_SIZE
-				, 1
+				, TriangleOrientation::Right
 				, imguiRGBA(255, 255, 255, isActive(id) ? 255 : 200)
 				);
 		}
@@ -1212,6 +1216,85 @@ struct Imgui
 				, imguiRGBA(255, 255, 255, 128)
 				);
 		}
+
+		return res;
+	}
+
+	bool borderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
+	{
+		m_widgetId++;
+		uint16_t id = (m_areaId << 8) | m_widgetId;
+
+		const int32_t triSize = 12;
+		const int32_t borderSize = 15;
+
+		int32_t xx;
+		int32_t yy;
+		int32_t width;
+		int32_t height;
+		int32_t triX;
+		int32_t triY;
+		TriangleOrientation::Enum orientation;
+
+		if (ImguiBorder::Left == _border)
+		{
+			xx = -borderSize;
+			yy = 0;
+			width = 2*borderSize;
+			height = m_viewHeight;
+			triX = 0;
+			triY = (m_viewHeight-triSize)/2;
+			orientation = _checked ? TriangleOrientation::Left : TriangleOrientation::Right;
+		}
+		else if (ImguiBorder::Right == _border)
+		{
+			xx = m_viewWidth - borderSize;
+			yy = 0;
+			width = 2*borderSize;
+			height = m_viewHeight;
+			triX = m_viewWidth - triSize - 2;
+			triY = (m_viewHeight-width)/2;
+			orientation = _checked ? TriangleOrientation::Right : TriangleOrientation::Left;
+		}
+		else if (ImguiBorder::Top == _border)
+		{
+			xx = 0;
+			yy = -borderSize;
+			width = m_viewWidth;
+			height = 2*borderSize;
+			triX = (m_viewWidth-triSize)/2;
+			triY = 0;
+			orientation = _checked ? TriangleOrientation::Up : TriangleOrientation::Down;
+		}
+		else //if (ImguiBorder::Bottom == _border).
+		{
+			xx = 0;
+			yy = m_viewHeight - borderSize;
+			width = m_viewWidth;
+			height = 2*borderSize;
+			triX = (m_viewWidth-triSize)/2;
+			triY = m_viewHeight-triSize;
+			orientation = _checked ? TriangleOrientation::Down : TriangleOrientation::Up;
+		}
+
+		const bool over = _enabled && inRect(xx, yy, width, height, false);
+		const bool res = buttonLogic(id, over);
+
+		drawRoundedRect( (float)xx
+					   , (float)yy
+					   , (float)width
+					   , (float)height
+					   , 0.0f
+					   , isActive(id) ? imguiRGBA(23, 23, 23, 192) : imguiRGBA(0, 0, 0, 222)
+					   );
+
+		drawTriangle( triX
+					, triY
+					, triSize
+					, triSize
+					, orientation
+					, isHot(id) ? imguiRGBA(255, 196, 0, 222) : imguiRGBA(255, 255, 255, 192)
+					);
 
 		return res;
 	}
@@ -1603,9 +1686,31 @@ struct Imgui
 		drawPolygon(verts, 4, _fth, _abgr);
 	}
 
-	void drawTriangle(int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t _flags, uint32_t _abgr)
+	struct TriangleOrientation
 	{
-		if (1 == _flags)
+		enum Enum
+		{
+			Left,
+			Right,
+			Up,
+			Down,
+		};
+	};
+
+	void drawTriangle(int32_t _x, int32_t _y, int32_t _width, int32_t _height, TriangleOrientation::Enum _orientation, uint32_t _abgr)
+	{
+		if (TriangleOrientation::Left == _orientation)
+		{
+			const float verts[3 * 2] =
+			{
+				(float)_x + 0.5f + (float)_width * 1.0f, (float)_y + 0.5f,
+				(float)_x + 0.5f,                        (float)_y + 0.5f + (float)_height / 2.0f - 0.5f,
+				(float)_x + 0.5f + (float)_width * 1.0f, (float)_y + 0.5f + (float)_height - 1.0f,
+			};
+
+			drawPolygon(verts, 3, 1.0f, _abgr);
+		}
+		else if (TriangleOrientation::Right == _orientation)
 		{
 			const float verts[3 * 2] =
 			{
@@ -1616,13 +1721,24 @@ struct Imgui
 
 			drawPolygon(verts, 3, 1.0f, _abgr);
 		}
-		else
+		else if (TriangleOrientation::Up == _orientation)
 		{
 			const float verts[3 * 2] =
 			{
 				(float)_x + 0.5f,                               (float)_y + 0.5f + (float)_height - 1.0f,
 				(float)_x + 0.5f + (float)_width / 2.0f - 0.5f, (float)_y + 0.5f,
 				(float)_x + 0.5f + (float)_width - 1.0f,        (float)_y + 0.5f + (float)_height - 1.0f,
+			};
+
+			drawPolygon(verts, 3, 1.0f, _abgr);
+		}
+		else //if (TriangleOrientation::Down == _orientation).
+		{
+			const float verts[3 * 2] =
+			{
+				(float)_x + 0.5f,                               (float)_y + 0.5f,
+				(float)_x + 0.5f + (float)_width / 2.0f - 0.5f, (float)_y + 0.5f + (float)_height - 1.0f,
+				(float)_x + 0.5f + (float)_width - 1.0f,        (float)_y + 0.5f,
 			};
 
 			drawPolygon(verts, 3, 1.0f, _abgr);
@@ -2175,6 +2291,8 @@ struct Imgui
 	NVGcontext* m_nvg;
 
 	uint8_t m_view;
+	uint16_t m_viewWidth;
+	uint16_t m_viewHeight;
 
 #if !USE_NANOVG_FONT
 	struct Font
@@ -2228,6 +2346,11 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame()
 {
 	s_imgui.endFrame();
+}
+
+bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
+{
+	return s_imgui.borderButton(_border, _checked, _enabled);
 }
 
 bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)

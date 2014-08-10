@@ -55,6 +55,17 @@ struct ImguiImageAlign
 	};
 };
 
+struct ImguiBorder
+{
+	enum Enum
+	{
+		Left,
+		Right,
+		Top,
+		Bottom
+	};
+};
+
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 {
 	return 0
@@ -75,6 +86,9 @@ void imguiDestroy();
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, uint8_t _view = 31);
 void imguiEndFrame();
+
+/// Notice: this function is not to be called between imguiBeginScrollArea() and imguiEndScrollArea().
+bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled = true);
 
 bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
 void imguiEndScrollArea();
