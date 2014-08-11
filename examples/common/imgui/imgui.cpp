@@ -1076,13 +1076,13 @@ struct Imgui
 		m_widgetY += height + DEFAULT_SPACING;
 
 		uint8_t selected = _selected;
-		const int32_t tabWidth     = m_scrollAreaInnerWidth / count;
-		const int32_t tabWidthHalf = m_scrollAreaInnerWidth / (count*2);
+		const int32_t tabWidth     = m_widgetW / count;
+		const int32_t tabWidthHalf = m_widgetW / (count*2);
 		const int32_t textY = yy + height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 1;
 
 		drawRoundedRect( (float)m_widgetX
 					   , (float)yy-1
-					   , (float)m_scrollAreaInnerWidth
+					   , (float)m_widgetW
 					   , (float)height+2
 					   , (float)BUTTON_HEIGHT / 2 - 1
 					   , imguiRGBA(128, 128, 128, 96)
