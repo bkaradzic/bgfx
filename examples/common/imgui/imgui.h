@@ -90,7 +90,7 @@ void imguiEndFrame();
 /// Notice: this function is not to be called between imguiBeginScrollArea() and imguiEndScrollArea().
 bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled = true);
 
-bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
+bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, int32_t _r = 6, bool _enabled = true);
 void imguiEndScrollArea();
 
 void imguiIndent(uint16_t _width = 16);

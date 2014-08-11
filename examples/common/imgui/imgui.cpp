@@ -670,7 +670,7 @@ struct Imgui
 		nvgEndFrame(m_nvg);
 	}
 
-	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)
+	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, int32_t _r, bool _enabled)
 	{
 		m_areaId++;
 		m_widgetId = 0;
@@ -681,13 +681,25 @@ struct Imgui
 			setEnabled(m_areaId);
 		}
 
-		drawRoundedRect( (float)_x
-					   , (float)_y
-					   , (float)_width
-					   , (float)_height
-					   , 6
-					   , imguiRGBA(0, 0, 0, 192)
-					   );
+		if (0 == _r)
+		{
+			drawRect( (float)_x
+				    , (float)_y
+				    , (float)_width
+				    , (float)_height + 0.3f /*border fix for seamlessly joining two scroll areas*/
+				    , imguiRGBA(0, 0, 0, 192)
+				    );
+		}
+		else
+		{
+			drawRoundedRect( (float)_x
+						   , (float)_y
+						   , (float)_width
+						   , (float)_height
+						   , (float)_r
+						   , imguiRGBA(0, 0, 0, 192)
+						   );
+		}
 
 		const bool hasTitle = (NULL != _name && '\0' != _name[0]);
 
@@ -2433,9 +2445,9 @@ bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
 	return s_imgui.borderButton(_border, _checked, _enabled);
 }
 
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)
+bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, int32_t _r, bool _enabled)
 {
-	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _enabled);
+	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _r, _enabled);
 }
 
 void imguiEndScrollArea()
