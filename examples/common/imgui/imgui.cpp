@@ -1080,7 +1080,7 @@ struct Imgui
 			);
 	}
 
-	uint8_t tabs(uint8_t _selected, bool _enabled, va_list _argList)
+	uint8_t tabs(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, va_list _argList)
 	{
 		uint8_t count;
 		const char* titles[16];
@@ -1091,21 +1091,32 @@ struct Imgui
 		}
 
 		const int32_t yy = m_widgetY;
-		const int32_t height = BUTTON_HEIGHT;
-		m_widgetY += height + DEFAULT_SPACING;
+		m_widgetY += _height + DEFAULT_SPACING;
 
 		uint8_t selected = _selected;
 		const int32_t tabWidth     = m_widgetW / count;
 		const int32_t tabWidthHalf = m_widgetW / (count*2);
-		const int32_t textY = yy + height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 2;
+		const int32_t textY = yy + _height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 2;
 
-		drawRoundedRect( (float)m_widgetX
-					   , (float)yy-1
-					   , (float)m_widgetW
-					   , (float)height+2
-					   , (float)BUTTON_HEIGHT / 2 - 1
-					   , imguiRGBA(128, 128, 128, 96)
-					   );
+		if (0 == _r)
+		{
+			drawRect( (float)m_widgetX
+				    , (float)yy-1
+				    , (float)m_widgetW
+				    , (float)_height+2
+				    , imguiRGBA(128, 128, 128, 96)
+				    );
+		}
+		else
+		{
+			drawRoundedRect( (float)m_widgetX
+						   , (float)yy-1
+						   , (float)m_widgetW
+						   , (float)_height+2
+						   , (float)_r
+						   , imguiRGBA(128, 128, 128, 96)
+						   );
+		}
 
 		for (uint8_t ii = 0; ii < count; ++ii)
 		{
@@ -1116,7 +1127,7 @@ struct Imgui
 			int32_t textX = xx + tabWidthHalf;
 
 			const bool enabled = _enabled && isEnabled(m_areaId);
-			const bool over = enabled && inRect(xx, yy, tabWidth, height);
+			const bool over = enabled && inRect(xx, yy, tabWidth, _height);
 			const bool res = buttonLogic(id, over);
 
 			if (res)
@@ -1129,13 +1140,25 @@ struct Imgui
 			{
 				textColor = enabled?imguiRGBA(0,0,0,255):imguiRGBA(255,255,255,100);
 
-				drawRoundedRect( (float)xx
-							   , (float)yy-1
-							   , (float)tabWidth
-							   , (float)height+2
-							   , (float)BUTTON_HEIGHT / 2 - 1
-							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
-							   );
+				if (0 == _r)
+				{
+					drawRect( (float)xx
+						    , (float)yy-1
+						    , (float)tabWidth
+						    , (float)_height+2
+						    , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+						    );
+				}
+				else
+				{
+					drawRoundedRect( (float)xx
+								   , (float)yy-1
+								   , (float)tabWidth
+								   , (float)_height+2
+								   , (float)_r
+								   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+								   );
+				}
 			}
 			else
 			{
@@ -2538,7 +2561,17 @@ uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...)
 {
 	va_list argList;
 	va_start(argList, _enabled);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, argList);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, BUTTON_HEIGHT, BUTTON_HEIGHT/2 - 1, argList);
+	va_end(argList);
+
+	return result;
+}
+
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, ...)
+{
+	va_list argList;
+	va_start(argList, _r);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, _height, _r, argList);
 	va_end(argList);
 
 	return result;
