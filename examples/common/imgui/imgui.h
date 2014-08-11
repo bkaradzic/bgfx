@@ -98,7 +98,7 @@ void imguiUnindent(uint16_t _width = 16);
 void imguiSeparator(uint16_t _height = 12);
 void imguiSeparatorLine(uint16_t _height = 12);
 
-bool imguiButton(const char* _text, bool _enabled = true);
+bool imguiButton(const char* _text, bool _enabled = true, int32_t _r = 9);
 bool imguiItem(const char* _text, bool _enabled = true);
 bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
