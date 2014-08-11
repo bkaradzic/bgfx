@@ -107,7 +107,7 @@ void imguiLabel(bool _enabled, const char* _format, ...);
 void imguiValue(const char* _text);
 bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
 bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
-void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true);
+void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true, int32_t _r = 4);
 
 uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...);
 uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, ...);

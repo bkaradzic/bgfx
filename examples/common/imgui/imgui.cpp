@@ -1057,7 +1057,7 @@ struct Imgui
 		return res;
 	}
 
-	void input(const char* _label, char* _str, uint32_t _len, bool _enabled)
+	void input(const char* _label, char* _str, uint32_t _len, bool _enabled, int32_t _r)
 	{
 		m_widgetId++;
 		const uint16_t id = (m_areaId << 8) | m_widgetId;
@@ -1112,13 +1112,25 @@ struct Imgui
 		const bool over = enabled && inRect(xx, yy, width, height);
 		inputLogic(id, over);
 
-		drawRoundedRect( (float)xx
-			, (float)yy
-			, (float)width
-			, (float)height
-			, (float)BUTTON_HEIGHT / 5 - 1
-			, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
-			);
+		if (0 == _r)
+		{
+			drawRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
+				);
+		}
+		else
+		{
+			drawRoundedRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, (float)_r
+				, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
+				);
+		}
 
 		drawText(xx + 6
 			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
@@ -2600,9 +2612,9 @@ bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax,
 	return result;
 }
 
-void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled)
+void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled, int32_t _r)
 {
-	s_imgui.input(_label, _str, _len, _enabled);
+	s_imgui.input(_label, _str, _len, _enabled, _r);
 }
 
 uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...)
