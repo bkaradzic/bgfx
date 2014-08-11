@@ -685,7 +685,7 @@ struct Imgui
 		{
 			drawRect( (float)_x
 				    , (float)_y
-				    , (float)_width
+				    , (float)_width  + 0.3f /*border fix for seamlessly joining two scroll areas*/
 				    , (float)_height + 0.3f /*border fix for seamlessly joining two scroll areas*/
 				    , imguiRGBA(0, 0, 0, 192)
 				    );
@@ -1052,7 +1052,7 @@ struct Imgui
 
 		// Draw input area.
 		int32_t height = BUTTON_HEIGHT;
-		int32_t width = m_widgetW - 2;
+		int32_t width = m_widgetW;
 		if (drawLabel)
 		{
 			uint32_t numVertices = 0; //unused
