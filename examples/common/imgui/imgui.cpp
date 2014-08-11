@@ -1392,7 +1392,7 @@ struct Imgui
 		return res;
 	}
 
-	void labelVargs(const char* _format, va_list _argList)
+	void labelVargs(const char* _format, va_list _argList, bool _enabled)
 	{
 		char temp[8192];
 		char* out = temp;
@@ -1411,7 +1411,7 @@ struct Imgui
 			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
 			, ImguiTextAlign::Left
 			, out
-			, imguiRGBA(255, 255, 255, 255)
+			, _enabled?imguiRGBA(255, 255, 255, 255):imguiRGBA(255, 255, 255, 128)
 			);
 	}
 
@@ -2499,7 +2499,15 @@ void imguiLabel(const char* _format, ...)
 {
 	va_list argList;
 	va_start(argList, _format);
-	s_imgui.labelVargs(_format, argList);
+	s_imgui.labelVargs(_format, argList, true);
+	va_end(argList);
+}
+
+void imguiLabel(bool _enabled, const char* _format, ...)
+{
+	va_list argList;
+	va_start(argList, _format);
+	s_imgui.labelVargs(_format, argList, _enabled);
 	va_end(argList);
 }
 
