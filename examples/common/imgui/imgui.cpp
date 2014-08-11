@@ -1517,16 +1517,16 @@ struct Imgui
 		return res || valChanged;
 	}
 
-	void indent()
+	void indent(uint16_t _width)
 	{
-		m_widgetX += INDENT_SIZE;
-		m_widgetW -= INDENT_SIZE;
+		m_widgetX += _width;
+		m_widgetW -= _width;
 	}
 
-	void unindent()
+	void unindent(uint16_t _width)
 	{
-		m_widgetX -= INDENT_SIZE;
-		m_widgetW += INDENT_SIZE;
+		m_widgetX -= _width;
+		m_widgetW += _width;
 	}
 
 	void separator(uint16_t _height)
@@ -2438,14 +2438,14 @@ void imguiEndScrollArea()
 	s_imgui.endScrollArea();
 }
 
-void imguiIndent()
+void imguiIndent(uint16_t _width)
 {
-	s_imgui.indent();
+	s_imgui.indent(_width);
 }
 
-void imguiUnindent()
+void imguiUnindent(uint16_t _width)
 {
-	s_imgui.unindent();
+	s_imgui.unindent(_width);
 }
 
 void imguiSeparator(uint16_t _height)

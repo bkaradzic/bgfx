@@ -93,8 +93,8 @@ bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled =
 bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
 void imguiEndScrollArea();
 
-void imguiIndent();
-void imguiUnindent();
+void imguiIndent(uint16_t _width = 16);
+void imguiUnindent(uint16_t _width = 16);
 void imguiSeparator(uint16_t _height = 12);
 void imguiSeparatorLine(uint16_t _height = 12);
 
