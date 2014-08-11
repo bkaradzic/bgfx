@@ -57,7 +57,7 @@ static const int32_t DEFAULT_SPACING = 4;
 static const int32_t TEXT_HEIGHT = 8;
 static const int32_t SCROLL_AREA_PADDING = 6;
 static const int32_t INDENT_SIZE = 16;
-static const int32_t AREA_HEADER = 28;
+static const int32_t AREA_HEADER = 20;
 static const int32_t COLOR_WHEEL_PADDING = 60;
 static const float s_tabStops[4] = {150, 210, 270, 330};
 
@@ -283,15 +283,13 @@ struct Imgui
 		, m_enabledAreaIds(0)
 		, m_scissor(UINT16_MAX)
 		, m_scrollTop(0)
-		, m_scrollBottom(0)
+		, m_scrollHeight(0)
 		, m_scrollRight(0)
 		, m_scrollAreaTop(0)
 		, m_scrollAreaWidth(0)
 		, m_scrollAreaInnerWidth(0)
 		, m_scrollAreaX(0)
 		, m_scrollVal(NULL)
-		, m_focusTop(0)
-		, m_focusBottom(0)
 		, m_scrollId(0)
 		, m_insideScrollArea(false)
 		, m_textureWidth(512)
@@ -683,53 +681,62 @@ struct Imgui
 			setEnabled(m_areaId);
 		}
 
-		m_widgetX = _x + SCROLL_AREA_PADDING;
-		m_widgetY = _y + AREA_HEADER + (*_scroll);
+		drawRoundedRect( (float)_x
+					   , (float)_y
+					   , (float)_width
+					   , (float)_height
+					   , 6
+					   , imguiRGBA(0, 0, 0, 192)
+					   );
+
+		const bool hasTitle = (NULL != _name && '\0' != _name[0]);
+
+		int32_t header = 0;
+		if (hasTitle)
+		{
+			drawText(_x + 10
+				   , _y + 18
+				   , ImguiTextAlign::Left
+				   , _name
+				   , imguiRGBA(255, 255, 255, 128)
+				   );
+			header = AREA_HEADER;
+		}
+
+		const int32_t contentX = _x + SCROLL_AREA_PADDING;
+		const int32_t contentY = _y + SCROLL_AREA_PADDING + header - 1;
+		const int32_t contentWidth = _width - SCROLL_AREA_PADDING * 3;
+		const int32_t contentHeight = _height - 2*SCROLL_AREA_PADDING - header + 1;
+
+		nvgScissor(m_nvg
+				 , float(contentX)
+				 , float(contentY)
+				 , float(contentWidth)
+				 , float(contentHeight)
+				 );
+
+		m_scissor = bgfx::setScissor(uint16_t(contentX)
+								   , uint16_t(contentY)
+								   , uint16_t(contentWidth)
+								   , uint16_t(contentHeight)
+								   );
+
+		m_widgetX = contentX;
+		m_widgetY = contentY + (*_scroll);
 		m_widgetW = _width - SCROLL_AREA_PADDING * 4 - 2;
 
-		m_scrollTop    = _y + AREA_HEADER;
-		m_scrollBottom = _y + _height;
+		m_scrollTop    = contentY;
+		m_scrollHeight = contentHeight;
 		m_scrollRight  = _x + _width - SCROLL_AREA_PADDING * 3;
 
 		m_scrollVal = _scroll;
-		m_scrollAreaX     = _x;
+		m_scrollAreaX = _x;
 		m_scrollAreaWidth = _width;
 		m_scrollAreaInnerWidth = m_widgetW;
-		m_scrollAreaTop   = m_widgetY;
-
-		m_focusTop    = _y - AREA_HEADER;
-		m_focusBottom = _y - AREA_HEADER + _height;
+		m_scrollAreaTop = m_widgetY;
 
 		m_insideScrollArea = inRect(_x, _y, _width, _height, false);
 		m_insideCurrentScroll = m_insideScrollArea;
-
-		drawRoundedRect( (float)_x
-			, (float)_y
-			, (float)_width
-			, (float)_height
-			, 6
-			, imguiRGBA(0, 0, 0, 192)
-			);
-
-		drawText(_x + AREA_HEADER / 2
-			, _y + AREA_HEADER / 2
-			, ImguiTextAlign::Left
-			, _name
-			, imguiRGBA(255, 255, 255, 128)
-			);
-
-		nvgScissor(m_nvg
-				 , float(_x + SCROLL_AREA_PADDING)
-				 , float(_y + AREA_HEADER - 1)
-				 , float(_width - SCROLL_AREA_PADDING * 3)
-				 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
-				 );
-
-		m_scissor = bgfx::setScissor(uint16_t(_x + SCROLL_AREA_PADDING)
-								   , uint16_t(_y + AREA_HEADER - 1)
-								   , uint16_t(_width - SCROLL_AREA_PADDING * 3)
-								   , uint16_t(_height - AREA_HEADER - SCROLL_AREA_PADDING)
-								   );
 
 		return m_insideScrollArea;
 	}
@@ -744,10 +751,10 @@ struct Imgui
 		int32_t xx     = m_scrollRight + SCROLL_AREA_PADDING / 2;
 		int32_t yy     = m_scrollTop;
 		int32_t width  = SCROLL_AREA_PADDING * 2;
-		int32_t height = m_scrollBottom - m_scrollTop;
+		int32_t height = m_scrollHeight;
 
 		int32_t stop = m_scrollAreaTop;
-		int32_t sbot = m_widgetY + SCROLL_AREA_PADDING;
+		int32_t sbot = m_widgetY - DEFAULT_SPACING;
 		int32_t sh   = sbot - stop; // The scrollable area height.
 
 		float barHeight = (float)height / (float)sh;
@@ -1078,7 +1085,7 @@ struct Imgui
 		uint8_t selected = _selected;
 		const int32_t tabWidth     = m_widgetW / count;
 		const int32_t tabWidthHalf = m_widgetW / (count*2);
-		const int32_t textY = yy + height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 1;
+		const int32_t textY = yy + height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 2;
 
 		drawRoundedRect( (float)m_widgetX
 					   , (float)yy-1
@@ -2344,15 +2351,13 @@ struct Imgui
 	float m_circleVerts[NUM_CIRCLE_VERTS * 2];
 
 	int32_t m_scrollTop;
-	int32_t m_scrollBottom;
+	int32_t m_scrollHeight;
 	int32_t m_scrollRight;
 	int32_t m_scrollAreaTop;
 	int32_t m_scrollAreaWidth;
 	int32_t m_scrollAreaInnerWidth;
 	int32_t m_scrollAreaX;
 	int32_t* m_scrollVal;
-	int32_t m_focusTop;
-	int32_t m_focusBottom;
 	uint16_t m_scrollId;
 	bool m_insideScrollArea;
 
