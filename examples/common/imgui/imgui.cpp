@@ -753,7 +753,7 @@ struct Imgui
 		return m_insideScrollArea;
 	}
 
-	void endScrollArea()
+	void endScrollArea(int32_t _r)
 	{
 		// Disable scissoring.
 		m_scissor = UINT16_MAX;
@@ -802,34 +802,70 @@ struct Imgui
 			}
 
 			// BG
-			drawRoundedRect( (float)xx
-				, (float)yy
-				, (float)width
-				, (float)height
-				, (float)width / 2 - 1
-				, imguiRGBA(0, 0, 0, 196)
-				);
-
-			// Bar
-			if (isActive(hid) )
+			if (0 == _r)
 			{
-				drawRoundedRect( (float)hx
-					, (float)hy
-					, (float)hw
-					, (float)hh
-					, (float)width / 2 - 1
-					, imguiRGBA(255, 196, 0, 196)
+				drawRect( (float)xx
+					, (float)yy
+					, (float)width
+					, (float)height
+					, imguiRGBA(0, 0, 0, 196)
 					);
 			}
 			else
 			{
-				drawRoundedRect( (float)hx
-					, (float)hy
-					, (float)hw
-					, (float)hh
-					, (float)width / 2 - 1
-					, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+				drawRoundedRect( (float)xx
+					, (float)yy
+					, (float)width
+					, (float)height
+					, (float)_r
+					, imguiRGBA(0, 0, 0, 196)
 					);
+			}
+
+			// Bar
+			if (isActive(hid) )
+			{
+				if (0 == _r)
+				{
+					drawRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, imguiRGBA(255, 196, 0, 196)
+						);
+				}
+				else
+				{
+					drawRoundedRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, (float)_r
+						, imguiRGBA(255, 196, 0, 196)
+						);
+				}
+			}
+			else
+			{
+				if (0 == _r)
+				{
+					drawRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+						);
+				}
+				else
+				{
+					drawRoundedRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, (float)_r
+						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+						);
+				}
 			}
 
 			// Handle mouse scrolling.
@@ -2485,9 +2521,9 @@ bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _wi
 	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _enabled, _r);
 }
 
-void imguiEndScrollArea()
+void imguiEndScrollArea(int32_t _r)
 {
-	s_imgui.endScrollArea();
+	s_imgui.endScrollArea(_r);
 }
 
 void imguiIndent(uint16_t _width)
