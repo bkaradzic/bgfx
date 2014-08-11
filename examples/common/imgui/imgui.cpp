@@ -670,7 +670,7 @@ struct Imgui
 		nvgEndFrame(m_nvg);
 	}
 
-	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, int32_t _r, bool _enabled)
+	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled, int32_t _r)
 	{
 		m_areaId++;
 		m_widgetId = 0;
@@ -2468,9 +2468,9 @@ bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
 	return s_imgui.borderButton(_border, _checked, _enabled);
 }
 
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, int32_t _r, bool _enabled)
+bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled, int32_t _r)
 {
-	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _r, _enabled);
+	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _enabled, _r);
 }
 
 void imguiEndScrollArea()
