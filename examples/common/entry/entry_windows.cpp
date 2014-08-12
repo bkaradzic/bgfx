@@ -637,6 +637,7 @@ namespace entry
 	void setWindowTitle(const char* _title)
 	{
 		SetWindowTextA(s_ctx.m_hwnd, _title);
+		SetWindowTextA(GetWindow(s_ctx.m_hwnd, GW_HWNDNEXT), _title);
 	}
 
 	void toggleWindowFrame()

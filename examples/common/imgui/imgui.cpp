@@ -57,7 +57,7 @@ static const int32_t DEFAULT_SPACING = 4;
 static const int32_t TEXT_HEIGHT = 8;
 static const int32_t SCROLL_AREA_PADDING = 6;
 static const int32_t INDENT_SIZE = 16;
-static const int32_t AREA_HEADER = 28;
+static const int32_t AREA_HEADER = 20;
 static const int32_t COLOR_WHEEL_PADDING = 60;
 static const float s_tabStops[4] = {150, 210, 270, 330};
 
@@ -283,15 +283,13 @@ struct Imgui
 		, m_enabledAreaIds(0)
 		, m_scissor(UINT16_MAX)
 		, m_scrollTop(0)
-		, m_scrollBottom(0)
+		, m_scrollHeight(0)
 		, m_scrollRight(0)
 		, m_scrollAreaTop(0)
 		, m_scrollAreaWidth(0)
 		, m_scrollAreaInnerWidth(0)
 		, m_scrollAreaX(0)
 		, m_scrollVal(NULL)
-		, m_focusTop(0)
-		, m_focusBottom(0)
 		, m_scrollId(0)
 		, m_insideScrollArea(false)
 		, m_textureWidth(512)
@@ -584,10 +582,8 @@ struct Imgui
 		return res;
 	}
 
-	bool inputLogic(uint32_t _id, bool _over)
+	void inputLogic(uint32_t _id, bool _over)
 	{
-		bool res = false;
-
 		if (!anyActive() )
 		{
 			if (_over)
@@ -598,7 +594,15 @@ struct Imgui
 			if (isHot(_id)
 			&& m_leftPressed)
 			{
-				setActiveInputField(_id);
+				// Toggle active input.
+				if (isActiveInputField(_id))
+				{
+					clearActiveInputField();
+				}
+				else
+				{
+					setActiveInputField(_id);
+				}
 			}
 		}
 
@@ -612,10 +616,7 @@ struct Imgui
 		&&  m_inputField != 0)
 		{
 			clearActiveInputField();
-			res = true;
 		}
-
-		return res;
 	}
 
 	void updateInput(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, char _inputChar)
@@ -672,7 +673,7 @@ struct Imgui
 		nvgEndFrame(m_nvg);
 	}
 
-	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)
+	bool beginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled, int32_t _r)
 	{
 		m_areaId++;
 		m_widgetId = 0;
@@ -683,58 +684,79 @@ struct Imgui
 			setEnabled(m_areaId);
 		}
 
-		m_widgetX = _x + SCROLL_AREA_PADDING;
-		m_widgetY = _y + AREA_HEADER + (*_scroll);
+		if (0 == _r)
+		{
+			drawRect( (float)_x
+				    , (float)_y
+				    , (float)_width  + 0.3f /*border fix for seamlessly joining two scroll areas*/
+				    , (float)_height + 0.3f /*border fix for seamlessly joining two scroll areas*/
+				    , imguiRGBA(0, 0, 0, 192)
+				    );
+		}
+		else
+		{
+			drawRoundedRect( (float)_x
+						   , (float)_y
+						   , (float)_width
+						   , (float)_height
+						   , (float)_r
+						   , imguiRGBA(0, 0, 0, 192)
+						   );
+		}
+
+		const bool hasTitle = (NULL != _name && '\0' != _name[0]);
+
+		int32_t header = 0;
+		if (hasTitle)
+		{
+			drawText(_x + 10
+				   , _y + 18
+				   , ImguiTextAlign::Left
+				   , _name
+				   , imguiRGBA(255, 255, 255, 128)
+				   );
+			header = AREA_HEADER;
+		}
+
+		const int32_t contentX = _x + SCROLL_AREA_PADDING;
+		const int32_t contentY = _y + SCROLL_AREA_PADDING + header;
+		const int32_t contentWidth = _width - SCROLL_AREA_PADDING * 3;
+		const int32_t contentHeight = _height - 2*SCROLL_AREA_PADDING - header;
+
+		nvgScissor(m_nvg
+				 , float(contentX)
+				 , float(contentY-1)
+				 , float(contentWidth)
+				 , float(contentHeight+1)
+				 );
+
+		m_scissor = bgfx::setScissor(uint16_t(contentX)
+								   , uint16_t(contentY-1)
+								   , uint16_t(contentWidth)
+								   , uint16_t(contentHeight+1)
+								   );
+
+		m_widgetX = contentX;
+		m_widgetY = contentY + (*_scroll);
 		m_widgetW = _width - SCROLL_AREA_PADDING * 4 - 2;
 
-		m_scrollTop    = _y + AREA_HEADER;
-		m_scrollBottom = _y + _height;
+		m_scrollTop    = contentY;
+		m_scrollHeight = contentHeight;
 		m_scrollRight  = _x + _width - SCROLL_AREA_PADDING * 3;
 
 		m_scrollVal = _scroll;
-		m_scrollAreaX     = _x;
+		m_scrollAreaX = _x;
 		m_scrollAreaWidth = _width;
 		m_scrollAreaInnerWidth = m_widgetW;
-		m_scrollAreaTop   = m_widgetY;
-
-		m_focusTop    = _y - AREA_HEADER;
-		m_focusBottom = _y - AREA_HEADER + _height;
+		m_scrollAreaTop = m_widgetY;
 
 		m_insideScrollArea = inRect(_x, _y, _width, _height, false);
 		m_insideCurrentScroll = m_insideScrollArea;
 
-		drawRoundedRect( (float)_x
-			, (float)_y
-			, (float)_width
-			, (float)_height
-			, 6
-			, imguiRGBA(0, 0, 0, 192)
-			);
-
-		drawText(_x + AREA_HEADER / 2
-			, _y + AREA_HEADER / 2
-			, ImguiTextAlign::Left
-			, _name
-			, imguiRGBA(255, 255, 255, 128)
-			);
-
-		nvgScissor(m_nvg
-				 , float(_x + SCROLL_AREA_PADDING)
-				 , float(_y + AREA_HEADER - 1)
-				 , float(_width - SCROLL_AREA_PADDING * 3)
-				 , float(_height - AREA_HEADER - SCROLL_AREA_PADDING)
-				 );
-
-		m_scissor = bgfx::setScissor(uint16_t(_x + SCROLL_AREA_PADDING)
-								   , uint16_t(_y + AREA_HEADER - 1)
-								   , uint16_t(_width - SCROLL_AREA_PADDING * 3)
-								   , uint16_t(_height - AREA_HEADER - SCROLL_AREA_PADDING)
-								   );
-
 		return m_insideScrollArea;
 	}
 
-	void endScrollArea()
+	void endScrollArea(int32_t _r)
 	{
 		// Disable scissoring.
 		m_scissor = UINT16_MAX;
@@ -744,13 +766,24 @@ struct Imgui
 		int32_t xx     = m_scrollRight + SCROLL_AREA_PADDING / 2;
 		int32_t yy     = m_scrollTop;
 		int32_t width  = SCROLL_AREA_PADDING * 2;
-		int32_t height = m_scrollBottom - m_scrollTop;
+		int32_t height = m_scrollHeight;
 
 		int32_t stop = m_scrollAreaTop;
-		int32_t sbot = m_widgetY + SCROLL_AREA_PADDING;
+		int32_t sbot = m_widgetY - DEFAULT_SPACING;
 		int32_t sh   = sbot - stop; // The scrollable area height.
 
 		float barHeight = (float)height / (float)sh;
+
+		// Handle m_scrollVal properly on variable scrollable area height.
+		const int32_t diff = height - sh;
+		if (diff < 0)
+		{
+			*m_scrollVal = (*m_scrollVal > diff) ? *m_scrollVal : diff; // m_scrollVal = max(diff, m_scrollVal).
+		}
+		else
+		{
+			*m_scrollVal = 0;
+		}
 
 		if (barHeight < 1.0f)
 		{
@@ -783,34 +816,70 @@ struct Imgui
 			}
 
 			// BG
-			drawRoundedRect( (float)xx
-				, (float)yy
-				, (float)width
-				, (float)height
-				, (float)width / 2 - 1
-				, imguiRGBA(0, 0, 0, 196)
-				);
-
-			// Bar
-			if (isActive(hid) )
+			if (0 == _r)
 			{
-				drawRoundedRect( (float)hx
-					, (float)hy
-					, (float)hw
-					, (float)hh
-					, (float)width / 2 - 1
-					, imguiRGBA(255, 196, 0, 196)
+				drawRect( (float)xx
+					, (float)yy
+					, (float)width
+					, (float)height
+					, imguiRGBA(0, 0, 0, 196)
 					);
 			}
 			else
 			{
-				drawRoundedRect( (float)hx
-					, (float)hy
-					, (float)hw
-					, (float)hh
-					, (float)width / 2 - 1
-					, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+				drawRoundedRect( (float)xx
+					, (float)yy
+					, (float)width
+					, (float)height
+					, (float)_r
+					, imguiRGBA(0, 0, 0, 196)
 					);
+			}
+
+			// Bar
+			if (isActive(hid) )
+			{
+				if (0 == _r)
+				{
+					drawRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, imguiRGBA(255, 196, 0, 196)
+						);
+				}
+				else
+				{
+					drawRoundedRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, (float)_r
+						, imguiRGBA(255, 196, 0, 196)
+						);
+				}
+			}
+			else
+			{
+				if (0 == _r)
+				{
+					drawRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+						);
+				}
+				else
+				{
+					drawRoundedRect( (float)hx
+						, (float)hy
+						, (float)hw
+						, (float)hh
+						, (float)_r
+						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+						);
+				}
 			}
 
 			// Handle mouse scrolling.
@@ -826,7 +895,7 @@ struct Imgui
 		m_insideCurrentScroll = false;
 	}
 
-	bool button(const char* _text, bool _enabled)
+	bool button(const char* _text, bool _enabled, uint32_t _rgb0, int32_t _r)
 	{
 		m_widgetId++;
 		uint16_t id = (m_areaId << 8) | m_widgetId;
@@ -841,13 +910,27 @@ struct Imgui
 		bool over = enabled	&& inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
-		drawRoundedRect( (float)xx
-			, (float)yy
-			, (float)width
-			, (float)height
-			, (float)BUTTON_HEIGHT / 2 - 1
-			, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96)
-			);
+		const uint32_t rgb0 = _rgb0&0x00ffffff;
+
+		if (0 == _r)
+		{
+			drawRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
+				);
+		}
+		else
+		{
+			drawRoundedRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, (float)_r
+				, rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
+				);
+		}
 
 		if (enabled)
 		{
@@ -990,7 +1073,7 @@ struct Imgui
 		return res;
 	}
 
-	void input(const char* _label, char* _str, uint32_t _len, bool _enabled)
+	void input(const char* _label, char* _str, uint32_t _len, bool _enabled, int32_t _r)
 	{
 		m_widgetId++;
 		const uint16_t id = (m_areaId << 8) | m_widgetId;
@@ -1033,7 +1116,7 @@ struct Imgui
 
 		// Draw input area.
 		int32_t height = BUTTON_HEIGHT;
-		int32_t width = m_widgetW - 2;
+		int32_t width = m_widgetW;
 		if (drawLabel)
 		{
 			uint32_t numVertices = 0; //unused
@@ -1045,23 +1128,47 @@ struct Imgui
 		const bool over = enabled && inRect(xx, yy, width, height);
 		inputLogic(id, over);
 
-		drawRoundedRect( (float)xx
-			, (float)yy
-			, (float)width
-			, (float)height
-			, (float)BUTTON_HEIGHT / 5 - 1
-			, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
-			);
+		if (0 == _r)
+		{
+			drawRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
+				);
+		}
+		else
+		{
+			drawRoundedRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, (float)_r
+				, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
+				);
+		}
 
-		drawText(xx + 6
-			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-			, ImguiTextAlign::Left
-			, _str
-			, isActiveInputField(id)?imguiRGBA(0, 0, 0, 255):imguiRGBA(255,255,255,255)
-			);
+		if (isActiveInputField(id) )
+		{
+			drawText(xx + 6
+					, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+					, ImguiTextAlign::Left
+					, _str
+					, imguiRGBA(0, 0, 0, 255)
+					);
+		}
+		else
+		{
+			drawText(xx + 6
+					, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+					, ImguiTextAlign::Left
+					, _str
+					, isHot(id) ? imguiRGBA(255,196,0,255) : imguiRGBA(255,255,255,255)
+					);
+		}
 	}
 
-	uint8_t tabs(uint8_t _selected, bool _enabled, va_list _argList)
+	uint8_t tabs(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, va_list _argList)
 	{
 		uint8_t count;
 		const char* titles[16];
@@ -1072,21 +1179,32 @@ struct Imgui
 		}
 
 		const int32_t yy = m_widgetY;
-		const int32_t height = BUTTON_HEIGHT;
-		m_widgetY += height + DEFAULT_SPACING;
+		m_widgetY += _height + DEFAULT_SPACING;
 
 		uint8_t selected = _selected;
-		const int32_t tabWidth     = m_scrollAreaInnerWidth / count;
-		const int32_t tabWidthHalf = m_scrollAreaInnerWidth / (count*2);
-		const int32_t textY = yy + height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 1;
+		const int32_t tabWidth     = m_widgetW / count;
+		const int32_t tabWidthHalf = m_widgetW / (count*2);
+		const int32_t textY = yy + _height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 2;
 
-		drawRoundedRect( (float)m_widgetX
-					   , (float)yy-1
-					   , (float)m_scrollAreaInnerWidth
-					   , (float)height+2
-					   , (float)BUTTON_HEIGHT / 2 - 1
-					   , imguiRGBA(128, 128, 128, 96)
-					   );
+		if (0 == _r)
+		{
+			drawRect( (float)m_widgetX
+				    , (float)yy
+				    , (float)m_widgetW
+				    , (float)_height
+				    , imguiRGBA(128, 128, 128, 96)
+				    );
+		}
+		else
+		{
+			drawRoundedRect( (float)m_widgetX
+						   , (float)yy
+						   , (float)m_widgetW
+						   , (float)_height
+						   , (float)_r
+						   , imguiRGBA(128, 128, 128, 96)
+						   );
+		}
 
 		for (uint8_t ii = 0; ii < count; ++ii)
 		{
@@ -1097,7 +1215,7 @@ struct Imgui
 			int32_t textX = xx + tabWidthHalf;
 
 			const bool enabled = _enabled && isEnabled(m_areaId);
-			const bool over = enabled && inRect(xx, yy, tabWidth, height);
+			const bool over = enabled && inRect(xx, yy, tabWidth, _height);
 			const bool res = buttonLogic(id, over);
 
 			if (res)
@@ -1110,13 +1228,25 @@ struct Imgui
 			{
 				textColor = enabled?imguiRGBA(0,0,0,255):imguiRGBA(255,255,255,100);
 
-				drawRoundedRect( (float)xx
-							   , (float)yy-1
-							   , (float)tabWidth
-							   , (float)height+2
-							   , (float)BUTTON_HEIGHT / 2 - 1
-							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
-							   );
+				if (0 == _r)
+				{
+					drawRect( (float)xx
+						    , (float)yy
+						    , (float)tabWidth
+						    , (float)_height
+						    , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+						    );
+				}
+				else
+				{
+					drawRoundedRect( (float)xx
+								   , (float)yy
+								   , (float)tabWidth
+								   , (float)_height
+								   , (float)_r
+								   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+								   );
+				}
 			}
 			else
 			{
@@ -1178,8 +1308,10 @@ struct Imgui
 		image(_image, _lod, int32_t(width), int32_t(height), _align);
 	}
 
-	void imageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
 	{
+		BX_CHECK(_channel < 4, "Channel param must be from 0 to 3!");
+
 		int32_t xx;
 		if (ImguiImageAlign::Left == _align)
 		{
@@ -1207,7 +1339,11 @@ struct Imgui
 
 		screenQuad(xx, yy, _width, _height);
 		bgfx::setUniform(u_imageLod, &_lod);
-		bgfx::setUniform(u_imageSwizzle, _swizzle);
+
+		float swizz[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		swizz[_channel] = 1.0f;
+		bgfx::setUniform(u_imageSwizzle, swizz);
+
 		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		bgfx::setProgram(m_imageSwizzProgram);
@@ -1215,12 +1351,12 @@ struct Imgui
 		bgfx::submit(m_view);
 	}
 
-	void imageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
+	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 	{
 		const float width = _width*float(m_scrollAreaInnerWidth);
 		const float height = width/_aspect;
 
-		imageSwizzle(_image, _swizzle, _lod, int32_t(width), int32_t(height), _align);
+		imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align);
 	}
 
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -1234,8 +1370,10 @@ struct Imgui
 		int32_t height = BUTTON_HEIGHT;
 		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 
-		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-		const int32_t cy = yy + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+		const int32_t cx = xx + BUTTON_HEIGHT/2 - CHECK_SIZE/2;
+		const int32_t cy = yy + BUTTON_HEIGHT/2 - CHECK_SIZE/2 + DEFAULT_SPACING/2;
+
+		const int32_t textY = yy + BUTTON_HEIGHT/2 + TEXT_HEIGHT/2 + DEFAULT_SPACING/2;
 
 		bool enabled = _enabled && isEnabled(m_areaId);
 		bool over = enabled && inRect(xx, yy, width, height);
@@ -1265,7 +1403,7 @@ struct Imgui
 		if (enabled)
 		{
 			drawText(xx + BUTTON_HEIGHT
-				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, textY
 				, ImguiTextAlign::Left
 				, _text
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
@@ -1274,7 +1412,7 @@ struct Imgui
 		else
 		{
 			drawText(xx + BUTTON_HEIGHT
-				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, textY
 				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
@@ -1284,7 +1422,7 @@ struct Imgui
 		if (_subtext)
 		{
 			drawText(xx + width - BUTTON_HEIGHT / 2
-				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, textY
 				, ImguiTextAlign::Right
 				, _subtext
 				, imguiRGBA(255, 255, 255, 128)
@@ -1373,7 +1511,7 @@ struct Imgui
 		return res;
 	}
 
-	void labelVargs(const char* _format, va_list _argList)
+	void labelVargs(const char* _format, va_list _argList, bool _enabled)
 	{
 		char temp[8192];
 		char* out = temp;
@@ -1389,10 +1527,10 @@ struct Imgui
 		int32_t yy = m_widgetY;
 		m_widgetY += BUTTON_HEIGHT;
 		drawText(xx
-			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+			, yy + BUTTON_HEIGHT/2 + TEXT_HEIGHT/2
 			, ImguiTextAlign::Left
 			, out
-			, imguiRGBA(255, 255, 255, 255)
+			, _enabled?imguiRGBA(255, 255, 255, 255):imguiRGBA(255, 255, 255, 128)
 			);
 	}
 
@@ -1517,16 +1655,16 @@ struct Imgui
 		return res || valChanged;
 	}
 
-	void indent()
+	void indent(uint16_t _width)
 	{
-		m_widgetX += INDENT_SIZE;
-		m_widgetW -= INDENT_SIZE;
+		m_widgetX += _width;
+		m_widgetW -= _width;
 	}
 
-	void unindent()
+	void unindent(uint16_t _width)
 	{
-		m_widgetX -= INDENT_SIZE;
-		m_widgetW += INDENT_SIZE;
+		m_widgetX -= _width;
+		m_widgetW += _width;
 	}
 
 	void separator(uint16_t _height)
@@ -1536,18 +1674,18 @@ struct Imgui
 
 	void separatorLine(uint16_t _height)
 	{
-		int32_t xx = m_widgetX;
-		int32_t yy = m_widgetY + _height/2;
-		int32_t width = m_widgetW;
-		int32_t height = 1;
+		const int32_t rectWidth = m_widgetW;
+		const int32_t rectHeight = 1;
+		const int32_t xx = m_widgetX;
+		const int32_t yy = m_widgetY + _height/2 - rectHeight;
 		m_widgetY += _height;
 
 		drawRect( (float)xx
-			, (float)yy
-			, (float)width
-			, (float)height
-			, imguiRGBA(255, 255, 255, 32)
-			);
+				, (float)yy
+				, (float)rectWidth
+				, (float)rectHeight
+				, imguiRGBA(255, 255, 255, 32)
+				);
 	}
 
 	void drawPolygon(const float* _coords, uint32_t _numCoords, float _r, uint32_t _abgr)
@@ -2344,15 +2482,13 @@ struct Imgui
 	float m_circleVerts[NUM_CIRCLE_VERTS * 2];
 
 	int32_t m_scrollTop;
-	int32_t m_scrollBottom;
+	int32_t m_scrollHeight;
 	int32_t m_scrollRight;
 	int32_t m_scrollAreaTop;
 	int32_t m_scrollAreaWidth;
 	int32_t m_scrollAreaInnerWidth;
 	int32_t m_scrollAreaX;
 	int32_t* m_scrollVal;
-	int32_t m_focusTop;
-	int32_t m_focusBottom;
 	uint16_t m_scrollId;
 	bool m_insideScrollArea;
 
@@ -2428,24 +2564,24 @@ bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
 	return s_imgui.borderButton(_border, _checked, _enabled);
 }
 
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled)
+bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled, int32_t _r)
 {
-	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _enabled);
+	return s_imgui.beginScrollArea(_name, _x, _y, _width, _height, _scroll, _enabled, _r);
 }
 
-void imguiEndScrollArea()
+void imguiEndScrollArea(int32_t _r)
 {
-	s_imgui.endScrollArea();
+	s_imgui.endScrollArea(_r);
 }
 
-void imguiIndent()
+void imguiIndent(uint16_t _width)
 {
-	s_imgui.indent();
+	s_imgui.indent(_width);
 }
 
-void imguiUnindent()
+void imguiUnindent(uint16_t _width)
 {
-	s_imgui.unindent();
+	s_imgui.unindent(_width);
 }
 
 void imguiSeparator(uint16_t _height)
@@ -2458,9 +2594,19 @@ void imguiSeparatorLine(uint16_t _height)
 	s_imgui.separatorLine(_height);
 }
 
-bool imguiButton(const char* _text, bool _enabled)
+int32_t imguiGetWidgetX()
 {
-	return s_imgui.button(_text, _enabled);
+	return s_imgui.m_widgetX;
+}
+
+int32_t imguiGetWidgetY()
+{
+	return s_imgui.m_widgetY;
+}
+
+bool imguiButton(const char* _text, bool _enabled, uint32_t _rgb0, int32_t _r)
+{
+	return s_imgui.button(_text, _enabled, _rgb0, _r);
 }
 
 bool imguiItem(const char* _text, bool _enabled)
@@ -2482,7 +2628,15 @@ void imguiLabel(const char* _format, ...)
 {
 	va_list argList;
 	va_start(argList, _format);
-	s_imgui.labelVargs(_format, argList);
+	s_imgui.labelVargs(_format, argList, true);
+	va_end(argList);
+}
+
+void imguiLabel(bool _enabled, const char* _format, ...)
+{
+	va_list argList;
+	va_start(argList, _format);
+	s_imgui.labelVargs(_format, argList, _enabled);
 	va_end(argList);
 }
 
@@ -2504,16 +2658,26 @@ bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax,
 	return result;
 }
 
-void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled)
+void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled, int32_t _r)
 {
-	s_imgui.input(_label, _str, _len, _enabled);
+	s_imgui.input(_label, _str, _len, _enabled, _r);
 }
 
 uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...)
 {
 	va_list argList;
 	va_start(argList, _enabled);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, argList);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, BUTTON_HEIGHT, BUTTON_HEIGHT/2 - 1, argList);
+	va_end(argList);
+
+	return result;
+}
+
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, ...)
+{
+	va_list argList;
+	va_start(argList, _r);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, _height, _r, argList);
 	va_end(argList);
 
 	return result;
@@ -2601,12 +2765,12 @@ void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _asp
 	s_imgui.image(_image, _lod, _width, _aspect, _align);
 }
 
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
 {
-	s_imgui.imageSwizzle(_image, _swizzle, _lod, _width, _height, _align);
+	s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align);
 }
 
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 {
-	s_imgui.imageSwizzle(_image, _swizzle, _lod, _width, _aspect, _align);
+	s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
 }

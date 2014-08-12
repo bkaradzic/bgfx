@@ -31,6 +31,44 @@
 #define IMGUI_MBUT_LEFT  0x01
 #define IMGUI_MBUT_RIGHT 0x02
 
+/// For custom values, define these macros before including imgui.h
+
+#ifndef IMGUI_SCROLL_AREA_R
+	#define IMGUI_SCROLL_AREA_R 6
+#endif //IMGUI_SCROLL_AREA_R
+
+#ifndef IMGUI_SCROLL_BAR_R
+	#define IMGUI_SCROLL_BAR_R 5
+#endif //IMGUI_SCROLL_BAR_R
+
+#ifndef IMGUI_BUTTON_R
+	#define IMGUI_BUTTON_R 9
+#endif //IMGUI_BUTTON_R
+
+#ifndef IMGUI_BUTTON_RGB0
+	#define IMGUI_BUTTON_RGB0 imguiRGBA(128, 128, 128, 0)
+#endif //IMGUI_BUTTON_RGB0
+
+#ifndef IMGUI_INPUT_R
+	#define IMGUI_INPUT_R 4
+#endif //IMGUI_INPUT_R
+
+#ifndef IMGUI_TABS_HEIGHT
+	#define IMGUI_TABS_HEIGHT 20
+#endif //IMGUI_TABS_HEIGHT
+
+#ifndef IMGUI_TABS_R
+	#define IMGUI_TABS_R 9
+#endif //IMGUI_TABS_R
+
+#ifndef IMGUI_INDENT_VALUE
+	#define IMGUI_INDENT_VALUE 16
+#endif //IMGUI_INDENT_VALUE
+
+#ifndef IMGUI_SEPARATOR_VALUE
+	#define IMGUI_SEPARATOR_VALUE 12
+#endif //IMGUI_SEPARATOR_VALUE
+
 struct ImguiTextAlign
 {
 	enum Enum
@@ -90,25 +128,31 @@ void imguiEndFrame();
 /// Notice: this function is not to be called between imguiBeginScrollArea() and imguiEndScrollArea().
 bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled = true);
 
-bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true);
-void imguiEndScrollArea();
+bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true, int32_t _r = IMGUI_SCROLL_AREA_R);
+void imguiEndScrollArea(int32_t _r = IMGUI_SCROLL_BAR_R);
 
-void imguiIndent();
-void imguiUnindent();
-void imguiSeparator(uint16_t _height = 12);
-void imguiSeparatorLine(uint16_t _height = 12);
+void imguiIndent(uint16_t _width = IMGUI_INDENT_VALUE);
+void imguiUnindent(uint16_t _width = IMGUI_INDENT_VALUE);
+void imguiSeparator(uint16_t _height = IMGUI_SEPARATOR_VALUE);
+void imguiSeparatorLine(uint16_t _height = IMGUI_SEPARATOR_VALUE);
 
-bool imguiButton(const char* _text, bool _enabled = true);
+int32_t imguiGetWidgetX();
+int32_t imguiGetWidgetY();
+
+bool imguiButton(const char* _text, bool _enabled = true, uint32_t _rgb0 = IMGUI_BUTTON_RGB0, int32_t _r = IMGUI_BUTTON_R);
 bool imguiItem(const char* _text, bool _enabled = true);
 bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
 void imguiLabel(const char* _format, ...);
+void imguiLabel(bool _enabled, const char* _format, ...);
 void imguiValue(const char* _text);
 bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
 bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
-void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true);
+void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true, int32_t _r = IMGUI_INPUT_R);
 
 uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...);
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, ...);
+// Notice: this macro can be used for both overloads.
 #define imguiTabs(_selected, _enabled, ...) imguiTabsUseMacroInstead(_selected, _enabled, __VA_ARGS__, NULL)
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
@@ -125,7 +169,7 @@ void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _en
 
 void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
 void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
 
 #endif // IMGUI_H_HEADER_GUARD
