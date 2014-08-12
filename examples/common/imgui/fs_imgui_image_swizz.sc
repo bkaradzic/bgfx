@@ -9,10 +9,10 @@ $input v_texcoord0
 
 uniform float u_imageLod;
 uniform vec4 u_swizzle;
-SAMPLER2D(u_texColor, 0);
+SAMPLER2D(s_texColor, 0);
 
 void main()
 {
-	float color = dot(texture2DLod(u_texColor, v_texcoord0, u_imageLod), u_swizzle);
+	float color = dot(texture2DLod(s_texColor, v_texcoord0, u_imageLod), u_swizzle);
 	gl_FragColor = vec4(vec3_splat(color), 1.0);
 }
