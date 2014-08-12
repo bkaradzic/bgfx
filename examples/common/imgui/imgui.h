@@ -128,6 +128,9 @@ void imguiUnindent(uint16_t _width = IMGUI_INDENT_VALUE);
 void imguiSeparator(uint16_t _height = IMGUI_SEPARATOR_VALUE);
 void imguiSeparatorLine(uint16_t _height = IMGUI_SEPARATOR_VALUE);
 
+int32_t imguiGetWidgetX();
+int32_t imguiGetWidgetY();
+
 bool imguiButton(const char* _text, bool _enabled = true, uint32_t _rgb0 = IMGUI_BUTTON_RGB0, int32_t _r = IMGUI_BUTTON_R);
 bool imguiItem(const char* _text, bool _enabled = true);
 bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);

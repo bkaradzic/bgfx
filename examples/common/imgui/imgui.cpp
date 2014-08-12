@@ -2594,6 +2594,16 @@ void imguiSeparatorLine(uint16_t _height)
 	s_imgui.separatorLine(_height);
 }
 
+int32_t imguiGetWidgetX()
+{
+	return s_imgui.m_widgetX;
+}
+
+int32_t imguiGetWidgetY()
+{
+	return s_imgui.m_widgetY;
+}
+
 bool imguiButton(const char* _text, bool _enabled, uint32_t _rgb0, int32_t _r)
 {
 	return s_imgui.button(_text, _enabled, _rgb0, _r);
