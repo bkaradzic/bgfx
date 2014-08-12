@@ -128,7 +128,7 @@ void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _en
 
 void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
 void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
 
 #endif // IMGUI_H_HEADER_GUARD

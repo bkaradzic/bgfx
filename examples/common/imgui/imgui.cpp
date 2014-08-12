@@ -1280,8 +1280,10 @@ struct Imgui
 		image(_image, _lod, int32_t(width), int32_t(height), _align);
 	}
 
-	void imageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
 	{
+		BX_CHECK(_channel < 4, "Channel param must be from 0 to 3!");
+
 		int32_t xx;
 		if (ImguiImageAlign::Left == _align)
 		{
@@ -1309,7 +1311,11 @@ struct Imgui
 
 		screenQuad(xx, yy, _width, _height);
 		bgfx::setUniform(u_imageLod, &_lod);
-		bgfx::setUniform(u_imageSwizzle, _swizzle);
+
+		float swizz[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		swizz[_channel] = 1.0f;
+		bgfx::setUniform(u_imageSwizzle, swizz);
+
 		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		bgfx::setProgram(m_imageSwizzProgram);
@@ -1317,12 +1323,12 @@ struct Imgui
 		bgfx::submit(m_view);
 	}
 
-	void imageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
+	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 	{
 		const float width = _width*float(m_scrollAreaInnerWidth);
 		const float height = width/_aspect;
 
-		imageSwizzle(_image, _swizzle, _lod, int32_t(width), int32_t(height), _align);
+		imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align);
 	}
 
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -2719,12 +2725,12 @@ void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _asp
 	s_imgui.image(_image, _lod, _width, _aspect, _align);
 }
 
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align)
 {
-	s_imgui.imageSwizzle(_image, _swizzle, _lod, _width, _height, _align);
+	s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align);
 }
 
-void imguiImageSwizzle(bgfx::TextureHandle _image, const float _swizzle[4], float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiImageAlign::Enum _align)
 {
-	s_imgui.imageSwizzle(_image, _swizzle, _lod, _width, _aspect, _align);
+	s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
 }
