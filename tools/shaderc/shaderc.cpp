@@ -944,50 +944,53 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		return false;
 	}
 
-	D3DXCONSTANTTABLE_DESC desc;
-	hr = constantTable->GetDesc(&desc);
-	if (FAILED(hr) )
-	{
-		fprintf(stderr, "Error 0x%08x\n", (uint32_t)hr);
-		return false;
-	}
-
-	BX_TRACE("Creator: %s 0x%08x", desc.Creator, (uint32_t /*mingw warning*/)desc.Version);
-	BX_TRACE("Num constants: %d", desc.Constants);
-	BX_TRACE("#   cl ty RxC   S  By Name");
-
 	UniformArray uniforms;
 
-	for (uint32_t ii = 0; ii < desc.Constants; ++ii)
+	if (NULL != constantTable)
 	{
-		D3DXHANDLE handle = constantTable->GetConstant(NULL, ii);
-		D3DXCONSTANT_DESC constDesc;
-		uint32_t count;
-		constantTable->GetConstantDesc(handle, &constDesc, &count);
-		BX_TRACE("%3d %2d %2d [%dx%d] %d %3d %s[%d] c%d (%d)"
-			, ii
-			, constDesc.Class
-			, constDesc.Type
-			, constDesc.Rows
-			, constDesc.Columns
-			, constDesc.StructMembers
-			, constDesc.Bytes
-			, constDesc.Name
-			, constDesc.Elements
-			, constDesc.RegisterIndex
-			, constDesc.RegisterCount
-			);
-
-		UniformType::Enum type = findUniformTypeDx9(constDesc);
-		if (UniformType::Count != type)
+		D3DXCONSTANTTABLE_DESC desc;
+		hr = constantTable->GetDesc(&desc);
+		if (FAILED(hr) )
 		{
-			Uniform un;
-			un.name = '$' == constDesc.Name[0] ? constDesc.Name+1 : constDesc.Name;
-			un.type = type;
-			un.num = constDesc.Elements;
-			un.regIndex = constDesc.RegisterIndex;
-			un.regCount = constDesc.RegisterCount;
-			uniforms.push_back(un);
+			fprintf(stderr, "Error 0x%08x\n", (uint32_t)hr);
+			return false;
+		}
+
+		BX_TRACE("Creator: %s 0x%08x", desc.Creator, (uint32_t /*mingw warning*/)desc.Version);
+		BX_TRACE("Num constants: %d", desc.Constants);
+		BX_TRACE("#   cl ty RxC   S  By Name");
+
+		for (uint32_t ii = 0; ii < desc.Constants; ++ii)
+		{
+			D3DXHANDLE handle = constantTable->GetConstant(NULL, ii);
+			D3DXCONSTANT_DESC constDesc;
+			uint32_t count;
+			constantTable->GetConstantDesc(handle, &constDesc, &count);
+			BX_TRACE("%3d %2d %2d [%dx%d] %d %3d %s[%d] c%d (%d)"
+				, ii
+				, constDesc.Class
+				, constDesc.Type
+				, constDesc.Rows
+				, constDesc.Columns
+				, constDesc.StructMembers
+				, constDesc.Bytes
+				, constDesc.Name
+				, constDesc.Elements
+				, constDesc.RegisterIndex
+				, constDesc.RegisterCount
+				);
+
+			UniformType::Enum type = findUniformTypeDx9(constDesc);
+			if (UniformType::Count != type)
+			{
+				Uniform un;
+				un.name = '$' == constDesc.Name[0] ? constDesc.Name+1 : constDesc.Name;
+				un.type = type;
+				un.num = constDesc.Elements;
+				un.regIndex = constDesc.RegisterIndex;
+				un.regCount = constDesc.RegisterCount;
+				uniforms.push_back(un);
+			}
 		}
 	}
 
@@ -1563,20 +1566,6 @@ struct Preprocessor
 	uint32_t m_fgetsPos;
 };
 
-const char* baseName(const char* _filePath)
-{
-	const char* bs = strrchr(_filePath, '\\');
-	const char* fs = strrchr(_filePath, '/');
-	const char* column = strrchr(_filePath, ':');
-	const char* basename = std::max(std::max(bs, fs), column);
-	if (NULL != basename)
-	{
-		return basename+1;
-	}
-
-	return _filePath;
-}
-
 typedef std::vector<std::string> InOut;
 
 uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
@@ -1749,12 +1738,18 @@ int main(int _argc, const char* _argv[])
 
 	uint32_t gles = 0;
 	uint32_t hlsl = 2;
+	uint32_t d3d  = 11;
 	const char* profile = cmdLine.findOption('p', "profile");
 	if (NULL != profile)
 	{
-		if (0 == strncmp(&profile[1], "s_3", 3) )
+		if (0 == strncmp(&profile[1], "s_4_0_level", 11) )
+		{
+			hlsl = 2;
+		}
+		else if (0 == strncmp(&profile[1], "s_3", 3) )
 		{
 			hlsl = 3;
+			d3d  = 9;
 		}
 		else if (0 == strncmp(&profile[1], "s_4", 3) )
 		{
@@ -1776,7 +1771,7 @@ int main(int _argc, const char* _argv[])
 		bin2c = cmdLine.findOption("bin2c");
 		if (NULL == bin2c)
 		{
-			bin2c = baseName(outFilePath);
+			bin2c = bx::baseName(outFilePath);
 			uint32_t len = (uint32_t)strlen(bin2c);
 			char* temp = (char*)alloca(len+1);
 			for (char *out = temp; *bin2c != '\0';)
@@ -1805,7 +1800,7 @@ int main(int _argc, const char* _argv[])
 
 	std::string dir;
 	{
-		const char* base = baseName(filePath);
+		const char* base = bx::baseName(filePath);
 
 		if (base != filePath)
 		{
@@ -2111,7 +2106,7 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				if (hlsl > 3)
+				if (d3d > 9)
 				{
 					compiled = compileHLSLShaderDx11(cmdLine, input, writer);
 				}
@@ -2277,7 +2272,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							if (hlsl > 3)
+							if (d3d > 9)
 							{
 								compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
 							}
@@ -2482,7 +2477,8 @@ int main(int _argc, const char* _argv[])
 								);
 						}
 
-						if (hasFrontFacing)
+						if (hasFrontFacing
+						&&  hlsl >= 3)
 						{
 							preprocessor.writef(
 								" \\\n\t%sfloat __vface : VFACE"
@@ -2496,9 +2492,18 @@ int main(int _argc, const char* _argv[])
 
 						if (hasFrontFacing)
 						{
-							preprocessor.writef(
-								"#define gl_FrontFacing (__vface <= 0.0)\n"
-								);
+							if (hlsl >= 3)
+							{
+								preprocessor.writef(
+									"#define gl_FrontFacing (__vface <= 0.0)\n"
+									);
+							}
+							else
+							{
+								preprocessor.writef(
+									"#define gl_FrontFacing false\n"
+									);
+							}
 						}
 					}
 					else if ('v' == shaderType)
@@ -2711,7 +2716,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							if (hlsl > 3)
+							if (d3d > 9)
 							{
 								compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
 							}
