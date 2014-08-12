@@ -53,6 +53,14 @@
 	#define IMGUI_INPUT_R 4
 #endif //IMGUI_INPUT_R
 
+#ifndef IMGUI_TABS_HEIGHT
+	#define IMGUI_TABS_HEIGHT 20
+#endif //IMGUI_TABS_HEIGHT
+
+#ifndef IMGUI_TABS_R
+	#define IMGUI_TABS_R 9
+#endif //IMGUI_TABS_R
+
 #ifndef IMGUI_INDENT_VALUE
 	#define IMGUI_INDENT_VALUE 16
 #endif //IMGUI_INDENT_VALUE
