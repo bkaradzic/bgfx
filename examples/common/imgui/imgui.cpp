@@ -716,21 +716,21 @@ struct Imgui
 		}
 
 		const int32_t contentX = _x + SCROLL_AREA_PADDING;
-		const int32_t contentY = _y + SCROLL_AREA_PADDING + header - 1;
+		const int32_t contentY = _y + SCROLL_AREA_PADDING + header;
 		const int32_t contentWidth = _width - SCROLL_AREA_PADDING * 3;
-		const int32_t contentHeight = _height - 2*SCROLL_AREA_PADDING - header + 1;
+		const int32_t contentHeight = _height - 2*SCROLL_AREA_PADDING - header;
 
 		nvgScissor(m_nvg
 				 , float(contentX)
-				 , float(contentY)
+				 , float(contentY-1)
 				 , float(contentWidth)
-				 , float(contentHeight)
+				 , float(contentHeight+1)
 				 );
 
 		m_scissor = bgfx::setScissor(uint16_t(contentX)
-								   , uint16_t(contentY)
+								   , uint16_t(contentY-1)
 								   , uint16_t(contentWidth)
-								   , uint16_t(contentHeight)
+								   , uint16_t(contentHeight+1)
 								   );
 
 		m_widgetX = contentX;
