@@ -1525,9 +1525,9 @@ struct Imgui
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
-		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
+		m_widgetY += BUTTON_HEIGHT;
 		drawText(xx
-			, yy + BUTTON_HEIGHT/2 + TEXT_HEIGHT/2 + DEFAULT_SPACING/2
+			, yy + BUTTON_HEIGHT/2 + TEXT_HEIGHT/2
 			, ImguiTextAlign::Left
 			, out
 			, _enabled?imguiRGBA(255, 255, 255, 255):imguiRGBA(255, 255, 255, 128)
