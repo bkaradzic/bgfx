@@ -582,10 +582,8 @@ struct Imgui
 		return res;
 	}
 
-	bool inputLogic(uint32_t _id, bool _over)
+	void inputLogic(uint32_t _id, bool _over)
 	{
-		bool res = false;
-
 		if (!anyActive() )
 		{
 			if (_over)
@@ -596,7 +594,15 @@ struct Imgui
 			if (isHot(_id)
 			&& m_leftPressed)
 			{
-				setActiveInputField(_id);
+				// Toggle active input.
+				if (isActiveInputField(_id))
+				{
+					clearActiveInputField();
+				}
+				else
+				{
+					setActiveInputField(_id);
+				}
 			}
 		}
 
@@ -610,10 +616,7 @@ struct Imgui
 		&&  m_inputField != 0)
 		{
 			clearActiveInputField();
-			res = true;
 		}
-
-		return res;
 	}
 
 	void updateInput(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, char _inputChar)
@@ -1145,12 +1148,24 @@ struct Imgui
 				);
 		}
 
-		drawText(xx + 6
-			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
-			, ImguiTextAlign::Left
-			, _str
-			, isActiveInputField(id)?imguiRGBA(0, 0, 0, 255):imguiRGBA(255,255,255,255)
-			);
+		if (isActiveInputField(id) )
+		{
+			drawText(xx + 6
+					, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+					, ImguiTextAlign::Left
+					, _str
+					, imguiRGBA(0, 0, 0, 255)
+					);
+		}
+		else
+		{
+			drawText(xx + 6
+					, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+					, ImguiTextAlign::Left
+					, _str
+					, isHot(id) ? imguiRGBA(255,196,0,255) : imguiRGBA(255,255,255,255)
+					);
+		}
 	}
 
 	uint8_t tabs(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, va_list _argList)
