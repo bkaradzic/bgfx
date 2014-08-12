@@ -771,12 +771,19 @@ struct Imgui
 
 		float barHeight = (float)height / (float)sh;
 
+		// Handle m_scrollVal properly on variable scrollable area height.
+		const int32_t diff = height - sh;
+		if (diff < 0)
+		{
+			*m_scrollVal = (*m_scrollVal > diff) ? *m_scrollVal : diff; // m_scrollVal = max(diff, m_scrollVal).
+		}
+		else
+		{
+			*m_scrollVal = 0;
+		}
+
 		if (barHeight < 1.0f)
 		{
-			// Handle m_scrollVal properly on variable scrollable area height.
-			const int32_t diff = height - sh;
-			*m_scrollVal = (*m_scrollVal < diff) ? diff : *m_scrollVal; // m_scrollVal = max(m_scrollVal, diff).
-
 			float barY = bx::fsaturate( (float)(yy - stop) / (float)sh);
 
 			// Handle scroll bar logic.
