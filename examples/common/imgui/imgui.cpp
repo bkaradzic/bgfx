@@ -1174,18 +1174,18 @@ struct Imgui
 		if (0 == _r)
 		{
 			drawRect( (float)m_widgetX
-				    , (float)yy-1
+				    , (float)yy
 				    , (float)m_widgetW
-				    , (float)_height+2
+				    , (float)_height
 				    , imguiRGBA(128, 128, 128, 96)
 				    );
 		}
 		else
 		{
 			drawRoundedRect( (float)m_widgetX
-						   , (float)yy-1
+						   , (float)yy
 						   , (float)m_widgetW
-						   , (float)_height+2
+						   , (float)_height
 						   , (float)_r
 						   , imguiRGBA(128, 128, 128, 96)
 						   );
@@ -1216,18 +1216,18 @@ struct Imgui
 				if (0 == _r)
 				{
 					drawRect( (float)xx
-						    , (float)yy-1
+						    , (float)yy
 						    , (float)tabWidth
-						    , (float)_height+2
+						    , (float)_height
 						    , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
 						    );
 				}
 				else
 				{
 					drawRoundedRect( (float)xx
-								   , (float)yy-1
+								   , (float)yy
 								   , (float)tabWidth
-								   , (float)_height+2
+								   , (float)_height
 								   , (float)_r
 								   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
 								   );
