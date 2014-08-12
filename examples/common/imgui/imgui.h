@@ -45,6 +45,10 @@
 	#define IMGUI_BUTTON_R 9
 #endif //IMGUI_BUTTON_R
 
+#ifndef IMGUI_BUTTON_RGB0
+	#define IMGUI_BUTTON_RGB0 imguiRGBA(128, 128, 128, 0)
+#endif //IMGUI_BUTTON_RGB0
+
 #ifndef IMGUI_INPUT_R
 	#define IMGUI_INPUT_R 4
 #endif //IMGUI_INPUT_R
@@ -124,7 +128,7 @@ void imguiUnindent(uint16_t _width = IMGUI_INDENT_VALUE);
 void imguiSeparator(uint16_t _height = IMGUI_SEPARATOR_VALUE);
 void imguiSeparatorLine(uint16_t _height = IMGUI_SEPARATOR_VALUE);
 
-bool imguiButton(const char* _text, bool _enabled = true, int32_t _r = IMGUI_BUTTON_R);
+bool imguiButton(const char* _text, bool _enabled = true, uint32_t _rgb0 = IMGUI_BUTTON_RGB0, int32_t _r = IMGUI_BUTTON_R);
 bool imguiItem(const char* _text, bool _enabled = true);
 bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);

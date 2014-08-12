@@ -885,7 +885,7 @@ struct Imgui
 		m_insideCurrentScroll = false;
 	}
 
-	bool button(const char* _text, bool _enabled, int32_t _r)
+	bool button(const char* _text, bool _enabled, uint32_t _rgb0, int32_t _r)
 	{
 		m_widgetId++;
 		uint16_t id = (m_areaId << 8) | m_widgetId;
@@ -900,13 +900,15 @@ struct Imgui
 		bool over = enabled	&& inRect(xx, yy, width, height);
 		bool res = buttonLogic(id, over);
 
+		const uint32_t rgb0 = _rgb0&0x00ffffff;
+
 		if (0 == _r)
 		{
 			drawRect( (float)xx
 				, (float)yy
 				, (float)width
 				, (float)height
-				, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96)
+				, rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
 				);
 		}
 		else
@@ -916,7 +918,7 @@ struct Imgui
 				, (float)width
 				, (float)height
 				, (float)_r
-				, imguiRGBA(128, 128, 128, isActive(id) ? 196 : 96)
+				, rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
 				);
 		}
 
@@ -2568,9 +2570,9 @@ void imguiSeparatorLine(uint16_t _height)
 	s_imgui.separatorLine(_height);
 }
 
-bool imguiButton(const char* _text, bool _enabled, int32_t _r)
+bool imguiButton(const char* _text, bool _enabled, uint32_t _rgb0, int32_t _r)
 {
-	return s_imgui.button(_text, _enabled, _r);
+	return s_imgui.button(_text, _enabled, _rgb0, _r);
 }
 
 bool imguiItem(const char* _text, bool _enabled)
