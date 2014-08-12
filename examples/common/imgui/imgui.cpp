@@ -1348,8 +1348,10 @@ struct Imgui
 		int32_t height = BUTTON_HEIGHT;
 		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 
-		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-		const int32_t cy = yy + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+		const int32_t cx = xx + BUTTON_HEIGHT/2 - CHECK_SIZE/2;
+		const int32_t cy = yy + BUTTON_HEIGHT/2 - CHECK_SIZE/2 + DEFAULT_SPACING/2;
+
+		const int32_t textY = yy + BUTTON_HEIGHT/2 + TEXT_HEIGHT/2 + DEFAULT_SPACING/2;
 
 		bool enabled = _enabled && isEnabled(m_areaId);
 		bool over = enabled && inRect(xx, yy, width, height);
@@ -1379,7 +1381,7 @@ struct Imgui
 		if (enabled)
 		{
 			drawText(xx + BUTTON_HEIGHT
-				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, textY
 				, ImguiTextAlign::Left
 				, _text
 				, isHot(id) ? imguiRGBA(255, 196, 0, 255) : imguiRGBA(255, 255, 255, 200)
@@ -1388,7 +1390,7 @@ struct Imgui
 		else
 		{
 			drawText(xx + BUTTON_HEIGHT
-				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, textY
 				, ImguiTextAlign::Left
 				, _text
 				, imguiRGBA(128, 128, 128, 200)
@@ -1398,7 +1400,7 @@ struct Imgui
 		if (_subtext)
 		{
 			drawText(xx + width - BUTTON_HEIGHT / 2
-				, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+				, textY
 				, ImguiTextAlign::Right
 				, _subtext
 				, imguiRGBA(255, 255, 255, 128)
@@ -1501,9 +1503,9 @@ struct Imgui
 
 		int32_t xx = m_widgetX;
 		int32_t yy = m_widgetY;
-		m_widgetY += BUTTON_HEIGHT;
+		m_widgetY += BUTTON_HEIGHT + DEFAULT_SPACING;
 		drawText(xx
-			, yy + BUTTON_HEIGHT / 2 + TEXT_HEIGHT / 2
+			, yy + BUTTON_HEIGHT/2 + TEXT_HEIGHT/2 + DEFAULT_SPACING/2
 			, ImguiTextAlign::Left
 			, out
 			, _enabled?imguiRGBA(255, 255, 255, 255):imguiRGBA(255, 255, 255, 128)
@@ -1650,18 +1652,18 @@ struct Imgui
 
 	void separatorLine(uint16_t _height)
 	{
-		int32_t xx = m_widgetX;
-		int32_t yy = m_widgetY + _height/2;
-		int32_t width = m_widgetW;
-		int32_t height = 1;
+		const int32_t rectWidth = m_widgetW;
+		const int32_t rectHeight = 1;
+		const int32_t xx = m_widgetX;
+		const int32_t yy = m_widgetY + _height/2 - rectHeight;
 		m_widgetY += _height;
 
 		drawRect( (float)xx
-			, (float)yy
-			, (float)width
-			, (float)height
-			, imguiRGBA(255, 255, 255, 32)
-			);
+				, (float)yy
+				, (float)rectWidth
+				, (float)rectHeight
+				, imguiRGBA(255, 255, 255, 32)
+				);
 	}
 
 	void drawPolygon(const float* _coords, uint32_t _numCoords, float _r, uint32_t _abgr)
