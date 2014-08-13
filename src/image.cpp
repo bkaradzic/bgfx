@@ -30,6 +30,7 @@ namespace bgfx
 		{   2, 8, 4,  8 }, // PTC22
 		{   4, 4, 4,  8 }, // PTC24
 		{   0, 0, 0,  0 }, // Unknown
+		{   1, 8, 1,  1 }, // R1
 		{   8, 1, 1,  1 }, // R8
 		{  16, 1, 1,  2 }, // R16
 		{  16, 1, 1,  2 }, // R16F
@@ -81,6 +82,7 @@ namespace bgfx
 		"PTC22",     // PTC22
 		"PTC24",     // PTC24
 		"<unknown>", // Unknown
+		"R1",        // R1
 		"R8",        // R8
 		"R16",       // R16
 		"R16F",      // R16F
@@ -940,7 +942,6 @@ namespace bgfx
 // DDS
 #define DDS_MAGIC             BX_MAKEFOURCC('D', 'D', 'S', ' ')
 #define DDS_HEADER_SIZE       124
-#define DDS_IMAGE_DATA_OFFSET (DDS_HEADER_SIZE + 4)
 
 #define DDS_DXT1 BX_MAKEFOURCC('D', 'X', 'T', '1')
 #define DDS_DXT2 BX_MAKEFOURCC('D', 'X', 'T', '2')
@@ -951,9 +952,51 @@ namespace bgfx
 #define DDS_BC4U BX_MAKEFOURCC('B', 'C', '4', 'U')
 #define DDS_ATI2 BX_MAKEFOURCC('A', 'T', 'I', '2')
 #define DDS_BC5U BX_MAKEFOURCC('B', 'C', '5', 'U')
+#define DDS_DX10 BX_MAKEFOURCC('D', 'X', '1', '0')
 
-#define D3DFMT_A16B16G16R16  36
-#define D3DFMT_A16B16G16R16F 113
+#define D3DFMT_A8R8G8B8       21
+#define D3DFMT_R5G6B5         23
+#define D3DFMT_A1R5G5B5       25
+#define D3DFMT_A4R4G4B4       26
+#define D3DFMT_A2B10G10R10    31
+#define D3DFMT_G16R16         34
+#define D3DFMT_A2R10G10B10    35
+#define D3DFMT_A16B16G16R16   36
+#define D3DFMT_A8L8           51
+#define D3DFMT_R16F           111
+#define D3DFMT_G16R16F        112
+#define D3DFMT_A16B16G16R16F  113
+#define D3DFMT_R32F           114
+#define D3DFMT_G32R32F        115
+#define D3DFMT_A32B32G32R32F  116
+
+#define DXGI_FORMAT_R32G32B32A32_FLOAT 2
+#define DXGI_FORMAT_R32G32B32A32_UINT  3
+#define DXGI_FORMAT_R16G16B16A16_FLOAT 10
+#define DXGI_FORMAT_R16G16B16A16_UNORM 11
+#define DXGI_FORMAT_R16G16B16A16_UINT  12
+#define DXGI_FORMAT_R32G32_FLOAT       16
+#define DXGI_FORMAT_R32G32_UINT        17
+#define DXGI_FORMAT_R10G10B10A2_UNORM  24
+#define DXGI_FORMAT_R16G16_FLOAT       34
+#define DXGI_FORMAT_R16G16_UNORM       35
+#define DXGI_FORMAT_R32_FLOAT          41
+#define DXGI_FORMAT_R32_UINT           42
+#define DXGI_FORMAT_R8G8_UNORM         49
+#define DXGI_FORMAT_R16_FLOAT          54
+#define DXGI_FORMAT_R16_UNORM          56
+#define DXGI_FORMAT_R8_UNORM           61
+#define DXGI_FORMAT_BC1_UNORM          71
+#define DXGI_FORMAT_BC2_UNORM          74
+#define DXGI_FORMAT_BC3_UNORM          77
+#define DXGI_FORMAT_BC4_UNORM          80
+#define DXGI_FORMAT_BC5_UNORM          83
+#define DXGI_FORMAT_B5G6R5_UNORM       85
+#define DXGI_FORMAT_B5G5R5A1_UNORM     86
+#define DXGI_FORMAT_B8G8R8A8_UNORM     87
+#define DXGI_FORMAT_BC6H_SF16          96
+#define DXGI_FORMAT_BC7_UNORM          98
+#define DXGI_FORMAT_B4G4R4A4_UNORM     115
 
 #define DDSD_CAPS                   0x00000001
 #define DDSD_HEIGHT                 0x00000002
@@ -990,12 +1033,14 @@ namespace bgfx
 
 #define DDSCAPS2_VOLUME             0x00200000
 
-	static struct TranslateDdsFormat
+	struct TranslateDdsFormat
 	{
 		uint32_t m_format;
 		TextureFormat::Enum m_textureFormat;
 
-	} s_translateDdsFormat[] =
+	};
+	
+	static TranslateDdsFormat s_translateDdsFormat[] =
 	{
 		{ DDS_DXT1,                  TextureFormat::BC1     },
 		{ DDS_DXT2,                  TextureFormat::BC2     },
@@ -1012,6 +1057,51 @@ namespace bgfx
 		{ DDPF_INDEXED,              TextureFormat::R8      },
 		{ DDPF_LUMINANCE,            TextureFormat::R8      },
 		{ DDPF_ALPHA,                TextureFormat::R8      },
+		{ D3DFMT_R16F,               TextureFormat::R16F    },
+		{ D3DFMT_R32F,               TextureFormat::R32F    },
+		{ D3DFMT_A8L8,               TextureFormat::RG8     },
+		{ D3DFMT_G16R16,             TextureFormat::RG16    },
+		{ D3DFMT_G16R16F,            TextureFormat::RG16F   },
+		{ D3DFMT_G32R32F,            TextureFormat::RG32F   },
+		{ D3DFMT_A8R8G8B8,           TextureFormat::BGRA8   },
+		{ D3DFMT_A16B16G16R16,       TextureFormat::RGBA16  },
+		{ D3DFMT_A16B16G16R16F,      TextureFormat::RGBA16F },
+		{ D3DFMT_A32B32G32R32F,      TextureFormat::RGBA32F },
+		{ D3DFMT_R5G6B5,             TextureFormat::R5G6B5  },
+		{ D3DFMT_A4R4G4B4,           TextureFormat::RGBA4   },
+		{ D3DFMT_A1R5G5B5,           TextureFormat::RGB5A1  },
+		{ D3DFMT_A2B10G10R10,        TextureFormat::RGB10A2 },
+	};
+
+	static TranslateDdsFormat s_translateDxgiFormat[] =
+	{
+		{ DXGI_FORMAT_BC1_UNORM,          TextureFormat::BC1     },
+		{ DXGI_FORMAT_BC2_UNORM,          TextureFormat::BC2     },
+		{ DXGI_FORMAT_BC3_UNORM,          TextureFormat::BC3     }, 
+		{ DXGI_FORMAT_BC4_UNORM,          TextureFormat::BC4     }, 
+		{ DXGI_FORMAT_BC5_UNORM,          TextureFormat::BC5     },
+		{ DXGI_FORMAT_BC6H_SF16,          TextureFormat::BC6H    },
+		{ DXGI_FORMAT_BC7_UNORM,          TextureFormat::BC7     }, 
+
+		{ DXGI_FORMAT_R8_UNORM,           TextureFormat::R8      },
+		{ DXGI_FORMAT_R16_UNORM,          TextureFormat::R16     },
+		{ DXGI_FORMAT_R16_FLOAT,          TextureFormat::R16F    },
+		{ DXGI_FORMAT_R32_UINT,           TextureFormat::R32     },
+		{ DXGI_FORMAT_R32_FLOAT,          TextureFormat::R32F    },
+		{ DXGI_FORMAT_R8G8_UNORM,         TextureFormat::RG8     },
+		{ DXGI_FORMAT_R16G16_UNORM,       TextureFormat::RG16    },
+		{ DXGI_FORMAT_R16G16_FLOAT,       TextureFormat::RG16F   },
+		{ DXGI_FORMAT_R32G32_UINT,        TextureFormat::RG32    },
+		{ DXGI_FORMAT_R32G32_FLOAT,       TextureFormat::RG32F   },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,     TextureFormat::BGRA8   },
+		{ DXGI_FORMAT_R16G16B16A16_UNORM, TextureFormat::RGBA16  },
+		{ DXGI_FORMAT_R16G16B16A16_FLOAT, TextureFormat::RGBA16F },
+		{ DXGI_FORMAT_R32G32B32A32_UINT,  TextureFormat::RGBA32  },
+		{ DXGI_FORMAT_R32G32B32A32_FLOAT, TextureFormat::RGBA32F },
+		{ DXGI_FORMAT_B5G6R5_UNORM,       TextureFormat::R5G6B5  },
+		{ DXGI_FORMAT_B4G4R4A4_UNORM,     TextureFormat::RGBA4   },
+		{ DXGI_FORMAT_B5G5R5A1_UNORM,     TextureFormat::RGB5A1  },
+		{ DXGI_FORMAT_R10G10B10A2_UNORM,  TextureFormat::RGB10A2 },
 	};
 
 	bool imageParseDds(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
@@ -1048,7 +1138,9 @@ namespace bgfx
 		bx::read(_reader, mips);
 
 		bx::skip(_reader, 44); // reserved
-		bx::skip(_reader, 4); // pixel format size
+
+		uint32_t pixelFormatSize;
+		bx::read(_reader, pixelFormatSize);
 
 		uint32_t pixelFlags;
 		bx::read(_reader, pixelFlags);
@@ -1074,6 +1166,27 @@ namespace bgfx
 		uint32_t caps[4];
 		bx::read(_reader, caps);
 
+		bx::skip(_reader, 4); // reserved
+
+		uint32_t dxgiFormat = 0;
+		if (DDPF_FOURCC == pixelFlags
+		&&  DDS_DX10 == fourcc)
+		{
+			bx::read(_reader, dxgiFormat);
+
+			uint32_t dims;
+			bx::read(_reader, dims);
+
+			uint32_t miscFlags;
+			bx::read(_reader, miscFlags);
+
+			uint32_t arraySize;
+			bx::read(_reader, arraySize);
+
+			uint32_t miscFlags2;
+			bx::read(_reader, miscFlags2);
+		}
+
 		if ( (caps[0] & DDSCAPS_TEXTURE) == 0)
 		{
 			return false;
@@ -1089,24 +1202,37 @@ namespace bgfx
 			}
 		}
 
-		bx::skip(_reader, 4); // reserved
-
 		TextureFormat::Enum format = TextureFormat::Unknown;
 		bool hasAlpha = pixelFlags & DDPF_ALPHAPIXELS;
 
-		uint32_t ddsFormat = pixelFlags & DDPF_FOURCC ? fourcc : pixelFlags;
-		for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsFormat); ++ii)
+		if (dxgiFormat == 0)
 		{
-			if (s_translateDdsFormat[ii].m_format == ddsFormat)
+			uint32_t ddsFormat = pixelFlags & DDPF_FOURCC ? fourcc : pixelFlags;
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsFormat); ++ii)
 			{
-				format = s_translateDdsFormat[ii].m_textureFormat;
-				break;
+				if (s_translateDdsFormat[ii].m_format == ddsFormat)
+				{
+					format = s_translateDdsFormat[ii].m_textureFormat;
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDxgiFormat); ++ii)
+			{
+				if (s_translateDxgiFormat[ii].m_format == dxgiFormat)
+				{
+					format = s_translateDxgiFormat[ii].m_textureFormat;
+					break;
+				}
 			}
 		}
 
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
-		_imageContainer.m_offset = DDS_IMAGE_DATA_OFFSET;
+		_imageContainer.m_offset = (uint32_t)bx::seek(_reader);
 		_imageContainer.m_width = width;
 		_imageContainer.m_height = height;
 		_imageContainer.m_depth = depth;
@@ -1149,8 +1275,25 @@ namespace bgfx
 #define KTX_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB      0x8E8D
 #define KTX_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB      0x8E8E
 #define KTX_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB    0x8E8F
+#define KTX_R8                                        0x8229
+#define KTX_R16                                       0x822A
+#define KTX_RG8                                       0x822B
+#define KTX_RG16                                      0x822C
+#define KTX_R16F                                      0x822D
+#define KTX_R32F                                      0x822E
+#define KTX_RG16F                                     0x822F
+#define KTX_RG32F                                     0x8230
 #define KTX_RGBA16                                    0x805B
 #define KTX_RGBA16F                                   0x881A
+#define KTX_R32UI                                     0x8236
+#define KTX_RG32UI                                    0x823C
+#define KTX_RGBA32UI                                  0x8D70
+#define KTX_BGRA                                      0x80E1
+#define KTX_RGBA32F                                   0x8814
+#define KTX_RGB565                                    0x8D62
+#define KTX_RGBA4                                     0x8056
+#define KTX_RGB5_A1                                   0x8057
+#define KTX_RGB10_A2                                  0x8059
 
 	static struct TranslateKtxFormat
 	{
@@ -1164,6 +1307,8 @@ namespace bgfx
 		{ KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT,             TextureFormat::BC3     },
 		{ KTX_COMPRESSED_LUMINANCE_LATC1_EXT,            TextureFormat::BC4     },
 		{ KTX_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,      TextureFormat::BC5     },
+		{ KTX_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,      TextureFormat::BC6H    },
+		{ KTX_COMPRESSED_RGBA_BPTC_UNORM_ARB,            TextureFormat::BC7     },
 		{ KTX_ETC1_RGB8_OES,                             TextureFormat::ETC1    },
 		{ KTX_COMPRESSED_RGB8_ETC2,                      TextureFormat::ETC2    },
 		{ KTX_COMPRESSED_RGBA8_ETC2_EAC,                 TextureFormat::ETC2A   },
@@ -1174,15 +1319,25 @@ namespace bgfx
 		{ KTX_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,          TextureFormat::PTC14A  },
 		{ KTX_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,          TextureFormat::PTC22   },
 		{ KTX_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,          TextureFormat::PTC24   },
+		{ KTX_R8,                                        TextureFormat::R8      },
 		{ KTX_RGBA16,                                    TextureFormat::RGBA16  },
 		{ KTX_RGBA16F,                                   TextureFormat::RGBA16F },
-		{ KTX_COMPRESSED_R11_EAC,                        TextureFormat::Unknown },
-		{ KTX_COMPRESSED_SIGNED_R11_EAC,                 TextureFormat::Unknown },
-		{ KTX_COMPRESSED_RG11_EAC,                       TextureFormat::Unknown },
-		{ KTX_COMPRESSED_SIGNED_RG11_EAC,                TextureFormat::Unknown },
-		{ KTX_COMPRESSED_SRGB8_ETC2,                     TextureFormat::Unknown },
-		{ KTX_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2, TextureFormat::Unknown },
-		{ KTX_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC,          TextureFormat::Unknown },
+		{ KTX_R32UI,                                     TextureFormat::R32     },
+		{ KTX_R32F,                                      TextureFormat::R32F    },
+		{ KTX_RG8,                                       TextureFormat::RG8     },
+		{ KTX_RG16,                                      TextureFormat::RG16    },
+		{ KTX_RG16F,                                     TextureFormat::RG16F   },
+		{ KTX_RG32UI,                                    TextureFormat::RG32    },
+		{ KTX_RG32F,                                     TextureFormat::RG32F   },
+		{ KTX_BGRA,                                      TextureFormat::BGRA8   },
+		{ KTX_RGBA16,                                    TextureFormat::RGBA16  },
+		{ KTX_RGBA16F,                                   TextureFormat::RGBA16F },
+		{ KTX_RGBA32UI,                                  TextureFormat::RGBA32  },
+		{ KTX_RGBA32F,                                   TextureFormat::RGBA32F },
+		{ KTX_RGB565,                                    TextureFormat::R5G6B5  },
+		{ KTX_RGBA4,                                     TextureFormat::RGBA4   },
+		{ KTX_RGB5_A1,                                   TextureFormat::RGB5A1  },
+		{ KTX_RGB10_A2,                                  TextureFormat::RGB10A2 },
 	};
 
 	bool imageParseKtx(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
@@ -1289,8 +1444,13 @@ namespace bgfx
 #define PVR3_BC5              13
 #define PVR3_R8               PVR3_MAKE8CC('r',   0,   0,   0,  8,  0,  0,  0)
 #define PVR3_R16              PVR3_MAKE8CC('r',   0,   0,   0, 16,  0,  0,  0)
+#define PVR3_R32              PVR3_MAKE8CC('r',   0,   0,   0, 32,  0,  0,  0)
+#define PVR3_RG8              PVR3_MAKE8CC('r', 'g',   0,   0,  8,  8,  0,  0)
+#define PVR3_RG16             PVR3_MAKE8CC('r', 'g',   0,   0, 16, 16,  0,  0)
+#define PVR3_RG32             PVR3_MAKE8CC('r', 'g',   0,   0, 32, 32,  0,  0)
 #define PVR3_BGRA8            PVR3_MAKE8CC('b', 'g', 'r', 'a',  8,  8,  8,  8)
 #define PVR3_RGBA16           PVR3_MAKE8CC('r', 'g', 'b', 'a', 16, 16, 16, 16)
+#define PVR3_RGBA32           PVR3_MAKE8CC('r', 'g', 'b', 'a', 32, 32, 32, 32)
 #define PVR3_RGB565           PVR3_MAKE8CC('r', 'g', 'b',   0,  5,  6,  5,  0)
 #define PVR3_RGBA4            PVR3_MAKE8CC('r', 'g', 'b', 'a',  4,  4,  4,  4)
 #define PVR3_RGBA51           PVR3_MAKE8CC('r', 'g', 'b', 'a',  5,  5,  5,  1)
@@ -1324,9 +1484,18 @@ namespace bgfx
 		{ PVR3_R8,               PVR3_CHANNEL_TYPE_ANY,   TextureFormat::R8      },
 		{ PVR3_R16,              PVR3_CHANNEL_TYPE_ANY,   TextureFormat::R16     },
 		{ PVR3_R16,              PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::R16F    },
+		{ PVR3_R32,              PVR3_CHANNEL_TYPE_ANY,   TextureFormat::R32     },
+		{ PVR3_R32,              PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::R32F    },
+		{ PVR3_RG8,              PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RG8     },
+		{ PVR3_RG16,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RG16    },
+		{ PVR3_RG16,             PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::RG16F   },
+		{ PVR3_RG32,             PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RG16    },
+		{ PVR3_RG32,             PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::RG32F   },
 		{ PVR3_BGRA8,            PVR3_CHANNEL_TYPE_ANY,   TextureFormat::BGRA8   },
 		{ PVR3_RGBA16,           PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RGBA16  },
 		{ PVR3_RGBA16,           PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::RGBA16F },
+		{ PVR3_RGBA32,           PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RGBA32  },
+		{ PVR3_RGBA32,           PVR3_CHANNEL_TYPE_FLOAT, TextureFormat::RGBA32F },
 		{ PVR3_RGB565,           PVR3_CHANNEL_TYPE_ANY,   TextureFormat::R5G6B5  },
 		{ PVR3_RGBA4,            PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RGBA4   },
 		{ PVR3_RGBA51,           PVR3_CHANNEL_TYPE_ANY,   TextureFormat::RGB5A1  },

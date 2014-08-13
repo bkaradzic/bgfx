@@ -47,6 +47,11 @@ typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
 
 namespace bgfx
 {
+#	if defined(D3D_DISABLE_9EX)
+#		define D3DFMT_S8_LOCKABLE D3DFORMAT( 85)
+#		define D3DFMT_A1          D3DFORMAT(118)
+#	endif // defined(D3D_DISABLE_9EX)
+
 #	ifndef D3DFMT_ATI1
 #		define D3DFMT_ATI1 ( (D3DFORMAT)BX_MAKEFOURCC('A', 'T', 'I', '1') )
 #	endif // D3DFMT_ATI1

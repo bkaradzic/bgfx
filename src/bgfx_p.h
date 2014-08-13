@@ -685,7 +685,7 @@ namespace bgfx
 		uint8_t  m_view;
 		uint8_t  m_trans;
 	};
-#undef SORT_KEY_CMD
+#undef SORT_KEY_RENDER_DRAW
 
 	BX_ALIGN_STRUCT_16(struct) Matrix4
 	{

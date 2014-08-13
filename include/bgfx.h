@@ -123,6 +123,7 @@ namespace bgfx
 
 			Unknown, // compressed formats above
 
+			R1,
 			R8,
 			R16,
 			R16F,
