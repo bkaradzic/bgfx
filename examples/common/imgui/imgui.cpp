@@ -40,7 +40,6 @@
 #include "vs_imgui_image.bin.h"
 #include "fs_imgui_image.bin.h"
 #include "fs_imgui_image_swizz.bin.h"
-#include "dds_imgui_x_texture.h"
 
 #define USE_NANOVG_FONT 0
 
@@ -337,6 +336,31 @@ struct Imgui
 		}
 	}
 
+	bgfx::TextureHandle genMissingTexture(uint32_t _width, uint32_t _height, float _lineWidth = 0.02f)
+	{
+		const bgfx::Memory* mem = bgfx::alloc(_width*_height*4);
+		uint32_t* bgra8 = (uint32_t*)mem->data;
+
+		const float sx = 0.70710677f;
+		const float cx = 0.70710677f;
+
+		for (uint32_t yy = 0; yy < _height; ++yy)
+		{
+			for (uint32_t xx = 0; xx < _width; ++xx)
+			{
+				float px = xx / float(_width)  * 2.0f - 1.0f;
+				float py = yy / float(_height) * 2.0f - 1.0f;
+
+				float sum = bx::fpulse(px * cx - py * sx, _lineWidth, -_lineWidth)
+						  + bx::fpulse(px * sx + py * cx, _lineWidth, -_lineWidth)
+						  ;
+				*bgra8++ = sum >= 1.0f ? 0xffff0000 : 0xffffffff;
+			}
+		}
+
+		return bgfx::createTexture2D(_width, _height, 0, bgfx::TextureFormat::BGRA8, 0, mem);
+	}
+
 	ImguiFontHandle create(const void* _data, float _fontSize)
 	{
 		m_nvg = nvgCreate(512, 512, 1, m_view);
@@ -427,8 +451,7 @@ struct Imgui
 		bgfx::destroyShader(fsh);
 		bgfx::destroyShader(vsh);
 
-		const bgfx::Memory* texMem = bgfx::makeRef(s_xTexture, sizeof(s_xTexture));
-		m_missingTexture = bgfx::createTexture(texMem);
+		m_missingTexture = genMissingTexture(256, 256, 0.04f);
 
 #if !USE_NANOVG_FONT
 		const ImguiFontHandle handle = createFont(_data, _fontSize);
