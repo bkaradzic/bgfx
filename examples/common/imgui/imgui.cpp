@@ -55,7 +55,6 @@ static const int32_t CHECK_SIZE = 8;
 static const int32_t DEFAULT_SPACING = 4;
 static const int32_t TEXT_HEIGHT = 8;
 static const int32_t SCROLL_AREA_PADDING = 6;
-static const int32_t INDENT_SIZE = 16;
 static const int32_t AREA_HEADER = 20;
 static const int32_t COLOR_WHEEL_PADDING = 60;
 static const float s_tabStops[4] = {150, 210, 270, 330};
