@@ -652,7 +652,7 @@ struct Imgui
 		m_left = left;
 		m_scroll = _scroll;
 
-		_inputChar = 0 > _inputChar ? 0 : _inputChar;
+		_inputChar = _inputChar & 0x7f; // ASCII of GTFO! :)
 		m_lastChar = m_char;
 		m_char = _inputChar;
 	}

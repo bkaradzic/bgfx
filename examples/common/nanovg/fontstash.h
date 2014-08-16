@@ -1207,7 +1207,7 @@ float fonsDrawText(struct FONScontext* stash,
 				   const char* str, const char* end)
 {
 	struct FONSstate* state = fons__getState(stash);
-	unsigned int codepoint;
+	unsigned int codepoint = 0;
 	unsigned int utf8state = 0;
 	struct FONSglyph* glyph = NULL;
 	struct FONSglyph* prevGlyph = NULL;
@@ -1391,7 +1391,7 @@ float fonsTextBounds(struct FONScontext* stash,
 					 float* bounds)
 {
 	struct FONSstate* state = fons__getState(stash);
-	unsigned int codepoint;
+	unsigned int codepoint = 0;
 	unsigned int utf8state = 0;
 	struct FONSquad q;
 	struct FONSglyph* glyph = NULL;
