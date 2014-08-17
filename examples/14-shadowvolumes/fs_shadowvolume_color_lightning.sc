@@ -1,4 +1,4 @@
-$input v_normal, v_view, v_pos
+$input v_normal, v_view
 
 /*
  * Copyright 2013-2014 Dario Manesku. All rights reserved.
@@ -67,8 +67,7 @@ void main()
 	vec3 viewDir = -normalize(v_view);
 	vec3 lightColor = calcLight(v_view, normal, viewDir) * u_lightningPass;
 
-	vec2 ndc = ((v_pos.xy / v_pos.w) + 1.0) / 2.0;
-	ndc += u_viewTexel.xy * u_texelHalf;
+	vec2 ndc = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * u_texelHalf;
 	vec4 texcolor = texture2D(u_texStencil, ndc);
 	float s = (texcolor.x - texcolor.y) + 2.0 * (texcolor.z - texcolor.w);
 	s *= u_useStencilTex;

@@ -109,7 +109,6 @@ static const uint16_t s_planeIndices[] =
 };
 
 static const char* s_shaderPath = NULL;
-static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
 
 static uint32_t s_viewMask = 0;
@@ -269,8 +268,6 @@ struct Uniforms
 
 		m_time = 0.0f;
 
-		m_flipV = float(s_flipV) * 2.0f - 1.0f;
-
 		m_lightPosRadius[0] = 0.0f;
 		m_lightPosRadius[1] = 0.0f;
 		m_lightPosRadius[2] = 0.0f;
@@ -294,7 +291,6 @@ struct Uniforms
 		u_fog                           = bgfx::createUniform("u_fog",                           bgfx::UniformType::Uniform4fv);
 		u_color                         = bgfx::createUniform("u_color",                         bgfx::UniformType::Uniform4fv);
 		u_time                          = bgfx::createUniform("u_time",                          bgfx::UniformType::Uniform1f );
-		u_flipV                         = bgfx::createUniform("u_flipV",                         bgfx::UniformType::Uniform1f );
 		u_lightPosRadius                = bgfx::createUniform("u_lightPosRadius",                bgfx::UniformType::Uniform4fv);
 		u_lightRgbInnerR                = bgfx::createUniform("u_lightRgbInnerR",                bgfx::UniformType::Uniform4fv);
 		u_virtualLightPos_extrusionDist = bgfx::createUniform("u_virtualLightPos_extrusionDist", bgfx::UniformType::Uniform4fv);
@@ -307,7 +303,6 @@ struct Uniforms
 		bgfx::setUniform(u_diffuse,            &m_diffuse);
 		bgfx::setUniform(u_specular_shininess, &m_specular_shininess);
 		bgfx::setUniform(u_fog,                &m_fog);
-		bgfx::setUniform(u_flipV,              &m_flipV);
 	}
 
 	//call this once per frame
@@ -337,7 +332,6 @@ struct Uniforms
 		bgfx::destroyUniform(u_fog);
 		bgfx::destroyUniform(u_color);
 		bgfx::destroyUniform(u_time);
-		bgfx::destroyUniform(u_flipV);
 		bgfx::destroyUniform(u_lightPosRadius);
 		bgfx::destroyUniform(u_lightRgbInnerR);
 		bgfx::destroyUniform(u_virtualLightPos_extrusionDist);
@@ -367,7 +361,6 @@ struct Uniforms
 	float m_fog[4];
 	float m_color[4];
 	float m_time;
-	float m_flipV;
 	float m_lightPosRadius[4];
 	float m_lightRgbInnerR[4];
 	float m_virtualLightPos_extrusionDist[4];
@@ -392,7 +385,6 @@ struct Uniforms
 	bgfx::UniformHandle u_fog;
 	bgfx::UniformHandle u_color;
 	bgfx::UniformHandle u_time;
-	bgfx::UniformHandle u_flipV;
 	bgfx::UniformHandle u_lightPosRadius;
 	bgfx::UniformHandle u_lightRgbInnerR;
 	bgfx::UniformHandle u_virtualLightPos_extrusionDist;
@@ -1910,7 +1902,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_VSYNC;
 
-	bgfx::init();
+	bgfx::init(bgfx::RendererType::OpenGL);
 	bgfx::reset(viewState.m_width, viewState.m_height, reset);
 
 	// Enable debug text.
@@ -1932,12 +1924,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	case bgfx::RendererType::OpenGL:
 		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
 		break;
 
 	case bgfx::RendererType::OpenGLES:
 		s_shaderPath = "shaders/gles/";
-		s_flipV = true;
 		break;
 	}
 
