@@ -9,13 +9,18 @@ BUILD_DIR=../../.build
 
 include $(BGFX_DIR)/premake/shader.mk
 
-geometry: ../runtime/meshes/bunny_patched.bin ../runtime/meshes/bunny_decimated.bin 
+GEOMETRY_SRC= \
+	bunny_patched \
+	bunny_decimated \
+	platform \
+	cube
 
-../runtime/meshes/bunny_patched.bin: bunny_patched.obj
-	../../tools/bin/geometryc -f bunny_patched.obj -o ../runtime/meshes/bunny_patched.bin --packnormal 1
+GEOMETRY_BIN=$(addprefix $(RUNTIME_DIR)/meshes/, $(addsuffix .bin, $(basename $(GEOMETRY_SRC))))
 
-../runtime/meshes/bunny_decimated.bin: bunny_decimated.obj
-	../../tools/bin/geometryc -f bunny_decimated.obj -o ../runtime/meshes/bunny_decimated.bin --packnormal 1
+geometry: $(GEOMETRY_BIN)
+
+$(RUNTIME_DIR)/meshes/%.bin : %.obj
+	$(SILENT) $(GEOMETRYC) -f $(<) -o $(@) --packnormal 1
 
 rebuild:
 	@make -s --no-print-directory TARGET=0 clean all

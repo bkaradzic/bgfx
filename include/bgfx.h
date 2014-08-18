@@ -68,6 +68,7 @@ namespace bgfx
 			Position,  // a_position
 			Normal,    // a_normal
 			Tangent,   // a_tangent
+			Bitangent, // a_bitangent
 			Color0,    // a_color0
 			Color1,    // a_color1
 			Indices,   // a_indices

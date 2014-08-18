@@ -8,7 +8,7 @@ project "geometryc"
 	kind "ConsoleApp"
 
 	includedirs {
-		BX_DIR .. "include",
+		BX_DIR   .. "include",
 		BGFX_DIR .. "include",
 		BGFX_DIR .. "3rdparty/forsyth-too",
 		BGFX_DIR .. "examples/common",

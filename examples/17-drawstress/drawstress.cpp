@@ -99,7 +99,7 @@ bgfx::ProgramHandle program;
 bgfx::VertexBufferHandle vbh;
 bgfx::IndexBufferHandle ibh;
 
-bool mainloop()
+BX_NO_INLINE bool mainloop()
 {
 	if (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
@@ -115,7 +115,7 @@ bool mainloop()
 
 		if (deltaTimeNs > 1000000)
 		{
-			deltaTimeAvgNs = deltaTimeNs / numFrames;
+			deltaTimeAvgNs = deltaTimeNs / bx::int64_max(1, numFrames);
 
 			if (autoAdjust)
 			{

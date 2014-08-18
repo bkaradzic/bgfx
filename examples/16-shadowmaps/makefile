@@ -9,10 +9,16 @@ BUILD_DIR=../../.build
 
 include $(BGFX_DIR)/premake/shader.mk
 
-geometry: ../runtime/meshes/column.bin
+GEOMETRY_SRC= \
+	tree \
+	hollowcube
 
-../runtime/meshes/column.bin: column.obj
-	../../tools/bin/geometryc -f column.obj -o ../runtime/meshes/column.bin --packnormal 1
+GEOMETRY_BIN=$(addprefix $(RUNTIME_DIR)/meshes/, $(addsuffix .bin, $(basename $(GEOMETRY_SRC))))
+
+geometry: $(GEOMETRY_BIN)
+
+$(RUNTIME_DIR)/meshes/%.bin : %.obj
+	$(SILENT) $(GEOMETRYC) -f $(<) -o $(@) --packnormal 1
 
 rebuild:
 	@make -s --no-print-directory TARGET=0 clean all

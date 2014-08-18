@@ -264,13 +264,21 @@ struct Group
 	PrimitiveArray m_prims;
 };
 
+namespace bgfx
+{
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl);
+}
+
 struct Mesh
 {
 	void load(bx::ReaderSeekerI* _reader)
 	{
-#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
+#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+
+		using namespace bx;
+		using namespace bgfx;
 
 		Group group;
 
@@ -281,17 +289,18 @@ struct Mesh
 			{
 			case BGFX_CHUNK_MAGIC_VB:
 				{
-					bx::read(_reader, group.m_sphere);
-					bx::read(_reader, group.m_aabb);
-					bx::read(_reader, group.m_obb);
+					read(_reader, group.m_sphere);
+					read(_reader, group.m_aabb);
+					read(_reader, group.m_obb);
 
-					bx::read(_reader, m_decl);
+					read(_reader, m_decl);
+
 					uint16_t stride = m_decl.getStride();
 
 					uint16_t numVertices;
-					bx::read(_reader, numVertices);
+					read(_reader, numVertices);
 					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-					bx::read(_reader, mem->data, mem->size);
+					read(_reader, mem->data, mem->size);
 
 					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
 				}
@@ -300,9 +309,9 @@ struct Mesh
 			case BGFX_CHUNK_MAGIC_IB:
 				{
 					uint32_t numIndices;
-					bx::read(_reader, numIndices);
+					read(_reader, numIndices);
 					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
-					bx::read(_reader, mem->data, mem->size);
+					read(_reader, mem->data, mem->size);
 					group.m_ibh = bgfx::createIndexBuffer(mem);
 				}
 				break;
@@ -310,31 +319,31 @@ struct Mesh
 			case BGFX_CHUNK_MAGIC_PRI:
 				{
 					uint16_t len;
-					bx::read(_reader, len);
+					read(_reader, len);
 
 					std::string material;
 					material.resize(len);
-					bx::read(_reader, const_cast<char*>(material.c_str() ), len);
+					read(_reader, const_cast<char*>(material.c_str() ), len);
 
 					uint16_t num;
-					bx::read(_reader, num);
+					read(_reader, num);
 
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
-						bx::read(_reader, len);
+						read(_reader, len);
 
 						std::string name;
 						name.resize(len);
-						bx::read(_reader, const_cast<char*>(name.c_str() ), len);
+						read(_reader, const_cast<char*>(name.c_str() ), len);
 
 						Primitive prim;
-						bx::read(_reader, prim.m_startIndex);
-						bx::read(_reader, prim.m_numIndices);
-						bx::read(_reader, prim.m_startVertex);
-						bx::read(_reader, prim.m_numVertices);
-						bx::read(_reader, prim.m_sphere);
-						bx::read(_reader, prim.m_aabb);
-						bx::read(_reader, prim.m_obb);
+						read(_reader, prim.m_startIndex);
+						read(_reader, prim.m_numIndices);
+						read(_reader, prim.m_startVertex);
+						read(_reader, prim.m_numVertices);
+						read(_reader, prim.m_sphere);
+						read(_reader, prim.m_aabb);
+						read(_reader, prim.m_obb);
 
 						group.m_prims.push_back(prim);
 					}

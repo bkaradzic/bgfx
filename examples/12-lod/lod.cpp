@@ -171,7 +171,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewTransform(0, view, proj);
 
 		float mtx[16];
-		bx::mtxIdentity(mtx); 
+		bx::mtxScale(mtx, 0.1f, 0.1f, 0.1f); 
 
 		float stipple[3];
 		float stippleInv[3];

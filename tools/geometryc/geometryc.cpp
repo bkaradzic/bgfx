@@ -112,8 +112,8 @@ typedef std::vector<Primitive> PrimitiveArray;
 static uint32_t s_obbSteps = 17;
 
 #define BGFX_CHUNK_MAGIC_GEO BX_MAKEFOURCC('G', 'E', 'O', 0x0)
-#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
+#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
 long int fsize(FILE* _file)
@@ -234,7 +234,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 	delete [] tangents;
 } 
 
-void writeBounds(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
+void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
 	Sphere maxSphere;
 	calcMaxBoundingSphere(maxSphere, _vertices, _numVertices, _stride);
@@ -262,34 +262,38 @@ void writeBounds(bx::WriterI* _writer, const void* _vertices, uint32_t _numVerti
 
 void write(bx::WriterI* _writer, const uint8_t* _vertices, uint32_t _numVertices, const bgfx::VertexDecl& _decl, const uint16_t* _indices, uint32_t _numIndices, const std::string& _material, const PrimitiveArray& _primitives)
 {
+	using namespace bx;
+	using namespace bgfx;
+
 	uint32_t stride = _decl.getStride();
-	bx::write(_writer, BGFX_CHUNK_MAGIC_VB);
-	writeBounds(_writer, _vertices, _numVertices, stride);
+	write(_writer, BGFX_CHUNK_MAGIC_VB);
+	write(_writer, _vertices, _numVertices, stride);
 
-	bx::write(_writer, _decl);
-	bx::write(_writer, uint16_t(_numVertices) );
-	bx::write(_writer, _vertices, _numVertices*stride);
+	write(_writer, _decl);
 
-	bx::write(_writer, BGFX_CHUNK_MAGIC_IB);
-	bx::write(_writer, _numIndices);
-	bx::write(_writer, _indices, _numIndices*2);
+	write(_writer, uint16_t(_numVertices) );
+	write(_writer, _vertices, _numVertices*stride);
 
-	bx::write(_writer, BGFX_CHUNK_MAGIC_PRI);
+	write(_writer, BGFX_CHUNK_MAGIC_IB);
+	write(_writer, _numIndices);
+	write(_writer, _indices, _numIndices*2);
+
+	write(_writer, BGFX_CHUNK_MAGIC_PRI);
 	uint16_t nameLen = uint16_t(_material.size() );
-	bx::write(_writer, nameLen);
-	bx::write(_writer, _material.c_str(), nameLen);
-	bx::write(_writer, uint16_t(_primitives.size() ) );
+	write(_writer, nameLen);
+	write(_writer, _material.c_str(), nameLen);
+	write(_writer, uint16_t(_primitives.size() ) );
 	for (PrimitiveArray::const_iterator primIt = _primitives.begin(); primIt != _primitives.end(); ++primIt)
 	{
 		const Primitive& prim = *primIt;
 		nameLen = uint16_t(prim.m_name.size() );
-		bx::write(_writer, nameLen);
-		bx::write(_writer, prim.m_name.c_str(), nameLen);
-		bx::write(_writer, prim.m_startIndex);
-		bx::write(_writer, prim.m_numIndices);
-		bx::write(_writer, prim.m_startVertex);
-		bx::write(_writer, prim.m_numVertices);
-		writeBounds(_writer, &_vertices[prim.m_startVertex*stride], prim.m_numVertices, stride);
+		write(_writer, nameLen);
+		write(_writer, prim.m_name.c_str(), nameLen);
+		write(_writer, prim.m_startIndex);
+		write(_writer, prim.m_numIndices);
+		write(_writer, prim.m_startVertex);
+		write(_writer, prim.m_numVertices);
+		write(_writer, &_vertices[prim.m_startVertex*stride], prim.m_numVertices, stride);
 	}
 }
 

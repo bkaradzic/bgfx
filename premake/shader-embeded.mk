@@ -3,24 +3,8 @@
 # License: http://www.opensource.org/licenses/BSD-2-Clause
 #
 
-ifndef VERBOSE
-SILENT = @
-endif
-
-THISDIR := $(dir $(lastword $(MAKEFILE_LIST)))
-
-UNAME := $(shell uname)
-ifeq ($(UNAME),$(filter $(UNAME),Linux))
-OS=linux
-else
-ifeq ($(UNAME),$(filter $(UNAME),Darwin))
-OS=darwin
-else
-OS=windows
-endif
-endif
-
-SHADERC="$(THISDIR)../tools/bin/$(OS)/shaderc"
+THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
+include $(THISDIR)/tools.mk
 
 VS_FLAGS+=-i $(THISDIR)../src/ --type vertex
 FS_FLAGS+=-i $(THISDIR)../src/ --type fragment

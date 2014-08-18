@@ -62,7 +62,8 @@ project "shaderc"
 	}
 
 	includedirs {
-		BX_DIR .. "include",
+		BX_DIR   .. "include",
+		BGFX_DIR .. "include",
 
 		FCPP_DIR,
 
@@ -75,6 +76,8 @@ project "shaderc"
 	files {
 		BGFX_DIR .. "tools/shaderc/**.cpp",
 		BGFX_DIR .. "tools/shaderc/**.h",
+		BGFX_DIR .. "src/vertexdecl.**",
+
 		FCPP_DIR .. "**.h",
 		FCPP_DIR .. "cpp1.c",
 		FCPP_DIR .. "cpp2.c",

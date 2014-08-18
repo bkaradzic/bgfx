@@ -9,11 +9,6 @@ BUILD_DIR=../../.build
 
 include $(BGFX_DIR)/premake/shader.mk
 
-geometry: ../runtime/meshes/column.bin
-
-../runtime/meshes/column.bin: column.obj
-	../../tools/bin/geometryc -f column.obj -o ../runtime/meshes/column.bin --packnormal 1
-
 rebuild:
 	@make -s --no-print-directory TARGET=0 clean all
 	@make -s --no-print-directory TARGET=1 clean all

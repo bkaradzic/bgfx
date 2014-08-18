@@ -54,9 +54,9 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x0)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x2)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x2)
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x1)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x3)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x3)
 
 #include <bx/commandline.h>
 #include <bx/endian.h>
@@ -66,6 +66,8 @@ extern "C"
 #include <bx/hash.h>
 
 #include "glsl_optimizer.h"
+
+#include "../../src/vertexdecl.h"
 
 #if BX_PLATFORM_WINDOWS
 #	include <sal.h>
@@ -82,30 +84,6 @@ long int fsize(FILE* _file)
 	fseek(_file, pos, SEEK_SET);
 	return size;
 }
-
-struct Attrib
-{
-	enum Enum
-	{
-		Position = 0,
-		Normal,
-		Tangent,
-		Color0,
-		Color1,
-		Indices,
-		Weight,
-		TexCoord0,
-		TexCoord1,
-		TexCoord2,
-		TexCoord3,
-		TexCoord4,
-		TexCoord5,
-		TexCoord6,
-		TexCoord7,
-
-		Count,
-	};
-};
 
 static const char* s_ARB_shader_texture_lod[] =
 {
@@ -150,34 +128,35 @@ static const char* s_OES_texture_3D[] =
 
 struct RemapInputSemantic
 {
-	Attrib::Enum m_attr;
+	bgfx::Attrib::Enum m_attr;
 	const char* m_name;
 	uint8_t m_index;
 };
 
-static const RemapInputSemantic s_remapInputSemantic[Attrib::Count+1] =
+static const RemapInputSemantic s_remapInputSemantic[bgfx::Attrib::Count+1] =
 {
-	{ Attrib::Position,  "POSITION",     0 },
-	{ Attrib::Normal,    "NORMAL",       0 },
-	{ Attrib::Tangent,   "TANGENT",      0 },
-	{ Attrib::Color0,    "COLOR",        0 },
-	{ Attrib::Color1,    "COLOR",        1 },
-	{ Attrib::Indices,   "BLENDINDICES", 0 },
-	{ Attrib::Weight,    "BLENDWEIGHT",  0 },
-	{ Attrib::TexCoord0, "TEXCOORD",     0 },
-	{ Attrib::TexCoord1, "TEXCOORD",     1 },
-	{ Attrib::TexCoord2, "TEXCOORD",     2 },
-	{ Attrib::TexCoord3, "TEXCOORD",     3 },
-	{ Attrib::TexCoord4, "TEXCOORD",     4 },
-	{ Attrib::TexCoord5, "TEXCOORD",     5 },
-	{ Attrib::TexCoord6, "TEXCOORD",     6 },
-	{ Attrib::TexCoord7, "TEXCOORD",     7 },
-	{ Attrib::Count,     "",             0 },
+	{ bgfx::Attrib::Position,  "POSITION",     0 },
+	{ bgfx::Attrib::Normal,    "NORMAL",       0 },
+	{ bgfx::Attrib::Tangent,   "TANGENT",      0 },
+	{ bgfx::Attrib::Bitangent, "BITANGENT",    0 },
+	{ bgfx::Attrib::Color0,    "COLOR",        0 },
+	{ bgfx::Attrib::Color1,    "COLOR",        1 },
+	{ bgfx::Attrib::Indices,   "BLENDINDICES", 0 },
+	{ bgfx::Attrib::Weight,    "BLENDWEIGHT",  0 },
+	{ bgfx::Attrib::TexCoord0, "TEXCOORD",     0 },
+	{ bgfx::Attrib::TexCoord1, "TEXCOORD",     1 },
+	{ bgfx::Attrib::TexCoord2, "TEXCOORD",     2 },
+	{ bgfx::Attrib::TexCoord3, "TEXCOORD",     3 },
+	{ bgfx::Attrib::TexCoord4, "TEXCOORD",     4 },
+	{ bgfx::Attrib::TexCoord5, "TEXCOORD",     5 },
+	{ bgfx::Attrib::TexCoord6, "TEXCOORD",     6 },
+	{ bgfx::Attrib::TexCoord7, "TEXCOORD",     7 },
+	{ bgfx::Attrib::Count,     "",             0 },
 };
 
 const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
 {
-	for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+	for (uint32_t ii = 0; ii < bgfx::Attrib::Count; ++ii)
 	{
 		const RemapInputSemantic& ris = s_remapInputSemantic[ii];
 		if (0 == strcmp(ris.m_name, _name)
@@ -187,7 +166,7 @@ const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
 		}
 	}
 
-	return s_remapInputSemantic[Attrib::Count];
+	return s_remapInputSemantic[bgfx::Attrib::Count];
 }
 
 struct UniformType
@@ -1186,27 +1165,31 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
 
 	BX_TRACE("Input:");
-	uint8_t attrMask[Attrib::Count];
-	memset(attrMask, 0, sizeof(attrMask) );
+	uint8_t numAttrs = 0;
+	uint16_t attrs[bgfx::Attrib::Count];
 
-	for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
+	if (profile[0] == 'v') // Only care about input semantic on vertex shaders
 	{
-		D3D11_SIGNATURE_PARAMETER_DESC spd;
-		reflect->GetInputParameterDesc(ii, &spd);
-		BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
-			, ii
-			, spd.SemanticName
-			, spd.SemanticIndex
-			, spd.SystemValueType
-			, spd.ComponentType
-			, spd.Mask
-			, spd.Register
-			);
-
-		const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, spd.SemanticIndex);
-		if (ris.m_attr != Attrib::Count)
+		for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
 		{
-			attrMask[ris.m_attr] = 0xff;
+			D3D11_SIGNATURE_PARAMETER_DESC spd;
+			reflect->GetInputParameterDesc(ii, &spd);
+			BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
+				, ii
+				, spd.SemanticName
+				, spd.SemanticIndex
+				, spd.SystemValueType
+				, spd.ComponentType
+				, spd.Mask
+				, spd.Register
+				);
+
+			const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, spd.SemanticIndex);
+			if (ris.m_attr != bgfx::Attrib::Count)
+			{
+				attrs[numAttrs] = bgfx::attribToId(ris.m_attr);
+				++numAttrs;
+			}
 		}
 	}
 
@@ -1331,7 +1314,9 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
-	bx::write(_writer, attrMask, sizeof(attrMask) );
+	bx::write(_writer, numAttrs);
+	bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );
+
 	bx::write(_writer, size);
 
 	if (_cmdLine.hasArg('\0', "disasm") )
