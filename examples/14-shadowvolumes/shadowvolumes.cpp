@@ -1902,7 +1902,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_VSYNC;
 
-	bgfx::init(bgfx::RendererType::OpenGL);
+	bgfx::init();
 	bgfx::reset(viewState.m_width, viewState.m_height, reset);
 
 	// Enable debug text.
