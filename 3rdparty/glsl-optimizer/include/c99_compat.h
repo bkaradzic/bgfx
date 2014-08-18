@@ -33,6 +33,15 @@
  * MSVC hacks.
  */
 #if defined(_MSC_VER)
+
+// BK - STFU!
+#  pragma warning(disable:4244) // warning C4244: 'function' : conversion from 'intmax_t' to 'int', possible loss of data
+#  pragma warning(disable:4267) // warning C4267: '=' : conversion from 'size_t' to 'unsigned int', possible loss of data
+#  pragma warning(disable:4351) // warning C4351: new behavior: elements of array '`anonymous-namespace'::per_vertex_accumulator::fields' will be default initialized
+#  pragma warning(disable:4345) // warning C4345: behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
+#  pragma warning(disable:4715) // warning C4715: 'write_mask_to_swizzle' : not all control paths return a value
+#  pragma warning(disable:4800) // warning C4800: 'unsigned int' : forcing value to bool 'true' or 'false' (performance warning)
+
    /*
     * Visual Studio 2012 will complain if we define the `inline` keyword, but
     * actually it only supports the keyword on C++.
