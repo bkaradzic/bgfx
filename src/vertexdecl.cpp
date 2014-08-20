@@ -83,6 +83,12 @@ namespace bgfx
 		va_end(argList);
 	}
 
+	VertexDecl::VertexDecl()
+	{
+		// BK - struct need to have ctor to qualify as non-POD data.
+		// Need this to catch programming errors when serializing struct.
+	}
+
 	VertexDecl& VertexDecl::begin(RendererType::Enum _renderer)
 	{
 		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.

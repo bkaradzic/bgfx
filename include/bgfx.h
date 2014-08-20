@@ -311,6 +311,8 @@ namespace bgfx
 	/// Vertex declaration.
 	struct VertexDecl
 	{
+		VertexDecl();
+
 		/// Start VertexDecl.
 		VertexDecl& begin(RendererType::Enum _renderer = RendererType::Null);
 
