@@ -64,6 +64,17 @@
 #  include <crtdefs.h>
 #  undef _CRTRESTRICT
 #  define _CRTRESTRICT
+#else
+// BK - STFU!
+#  pragma GCC diagnostic ignored "-Wformat="
+#  pragma GCC diagnostic ignored "-Wformat-extra-args"
+#  pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#  pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#  pragma GCC diagnostic ignored "-Wreorder"
+#  pragma GCC diagnostic ignored "-Wsign-compare"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 
