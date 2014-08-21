@@ -42,7 +42,7 @@ function bgfxProject(_name, _uuid, _kind)
 				"gdi32",
 			}
 
-		configuration { "osx or ios*" }
+		configuration { "xcode4 or osx or ios*" }
 			files {
 				BGFX_DIR .. "src/**.mm",
 			}

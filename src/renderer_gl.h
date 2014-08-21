@@ -22,6 +22,7 @@
 #			define GL_GLEXT_LEGACY
 #			include <GL/gl.h>
 #			undef GL_PROTOTYPES
+#           include <gl/glext.h>
 #		elif BX_PLATFORM_OSX
 #			define GL_GLEXT_LEGACY
 #			define long ptrdiff_t
@@ -32,11 +33,11 @@
 #			undef GL_VERSION_1_4
 #			undef GL_VERSION_1_5
 #			undef GL_VERSION_2_0
+#           include <OpenGl/glext.h>
 #		else
 #			include <GL/gl.h>
+#           include <gl/glext.h>
 #		endif // BX_PLATFORM_
-
-#		include <gl/glext.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
 #elif BGFX_CONFIG_RENDERER_OPENGLES
@@ -190,6 +191,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_RGBA16UI
 #	define GL_RGBA16UI 0x8D76
 #endif // GL_RGBA16UI
+
+#ifndef GL_RGB565
+#	define GL_RGB565 0x8D62
+#endif // GL_RGB565
 
 #ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 #	define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
@@ -484,6 +489,18 @@ typedef uint64_t GLuint64;
 #	define GL_LOCATION 0x930E
 #endif // GL_LOCATION
 
+#ifndef GL_DEBUG_SEVERITY_MEDIUM_ARB
+#	define GL_DEBUG_SEVERITY_MEDIUM_ARB 0x9147
+#endif // GL_DEBUG_SEVERITY_MEDIUM_ARB
+
+#ifndef GL_PROGRAM_BINARY_RETRIEVABLE_HINT
+#	define GL_PROGRAM_BINARY_RETRIEVABLE_HINT 0x8257
+#endif // GL_PROGRAM_BINARY_RETRIEVABLE_HINT
+
+#ifndef GL_PROGRAM_BINARY_LENGTH
+#	define GL_PROGRAM_BINARY_LENGTH 0x8741
+#endif // GL_PROGRAM_BINARY_LENGTH
+
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS
@@ -501,7 +518,11 @@ typedef uint64_t GLuint64;
 #endif // BGFX_USE_WGL
 
 #ifndef GL_APIENTRY
-#	define GL_APIENTRY APIENTRY
+#   if BX_PLATFORM_OSX
+#       define GL_APIENTRY
+#   else
+#       define GL_APIENTRY APIENTRY
+#   endif // BX_PLATFORM_OSX
 #endif // GL_APIENTRY
 
 #ifndef GL_APIENTRYP
