@@ -14,7 +14,6 @@
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 
-static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
 
 struct Uniforms
@@ -443,19 +442,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 1.0f
 		, 0
 		);
-
-	// Setup root path for binary shaders. Shader binaries are different
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-		break;
-
-	case bgfx::RendererType::OpenGL:
-	case bgfx::RendererType::OpenGLES:
-		s_flipV = true;
-		break;
-	}
 
 	// Imgui.
 	void* data = load("font/droidsans.ttf");
