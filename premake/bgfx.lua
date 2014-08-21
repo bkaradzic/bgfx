@@ -38,6 +38,9 @@ function bgfxProject(_name, _uuid, _kind)
 			includedirs {
 				"$(DXSDK_DIR)/include",
 			}
+			links {
+				"gdi32",
+			}
 
 		configuration { "osx or ios*" }
 			files {
