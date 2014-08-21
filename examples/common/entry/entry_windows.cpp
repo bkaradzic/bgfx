@@ -67,11 +67,11 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_frame(true)
+			: m_mz(0)
+			, m_frame(true)
 			, m_mouseLock(false)
 			, m_init(false)
 			, m_exit(false)
-			, m_mz(0)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]    = Key::Esc;
