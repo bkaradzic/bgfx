@@ -940,8 +940,8 @@ namespace bgfx
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			if (isValid(m_fbh)
-				&&  m_fbh.idx != _fbh.idx
-				&&  m_rtMsaa)
+			&&  m_fbh.idx != _fbh.idx
+			&&  m_rtMsaa)
 			{
 				FrameBufferD3D9& frameBuffer = m_frameBuffers[m_fbh.idx];
 				frameBuffer.resolve();
@@ -960,7 +960,7 @@ namespace bgfx
 			{
 				const FrameBufferD3D9& frameBuffer = m_frameBuffers[_fbh.idx];
 
-				// If frame buffer has only depth attachement D3DFMT_NULL
+				// If frame buffer has only depth attachment D3DFMT_NULL
 				// render target is created.
 				uint32_t fbnum = bx::uint32_max(1, frameBuffer.m_num);
 
