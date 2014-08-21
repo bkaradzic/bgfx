@@ -289,7 +289,7 @@ ReturnCode cppmain(struct Global *global)
     unget(global);                      /* Reread the char.     */
     for (;;) {                          /* For the whole line,  */
       do {                              /* Token concat. loop   */
-	for (global->chpos = counter = 0; (type[(c = get(global))] == SPA);) {
+	for (global->chpos = counter = 0; type[(c = get(global))] == SPA;) {
 #if COMMENT_INVISIBLE
 	  if (c != COM_SEP)
 	    counter++;
