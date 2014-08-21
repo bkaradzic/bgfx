@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#include <vector>
+#include <string>
+
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
@@ -10,9 +13,6 @@
 
 #include <bx/readerwriter.h>
 #include <bx/string.h>
-
-#include <vector>
-#include <string>
 
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
