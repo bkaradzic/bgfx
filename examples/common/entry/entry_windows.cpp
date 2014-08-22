@@ -152,7 +152,7 @@ namespace entry
 
 		int32_t run(int _argc, char** _argv)
 		{
-			SetDllDirectory(".");
+			SetDllDirectory(TEXT("."));
 
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
@@ -164,9 +164,9 @@ namespace entry
 			wnd.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 			wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wnd.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-			wnd.lpszClassName = "bgfx_letterbox";
+			wnd.lpszClassName = TEXT("bgfx_letterbox");
 			wnd.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-			RegisterClassExA(&wnd);
+			RegisterClassEx(&wnd);
 
 			memset(&wnd, 0, sizeof(wnd) );
 			wnd.cbSize = sizeof(wnd);
@@ -175,9 +175,9 @@ namespace entry
 			wnd.hInstance = instance;
 			wnd.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 			wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wnd.lpszClassName = "bgfx";
+			wnd.lpszClassName = TEXT("bgfx");
 			wnd.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-			RegisterClassExA(&wnd);
+			RegisterClassEx(&wnd);
 
 			HWND hwnd = CreateWindowA("bgfx_letterbox"
 				, "BGFX"
