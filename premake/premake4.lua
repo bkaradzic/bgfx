@@ -129,6 +129,20 @@ function exampleProject(_name, _uuid)
 --			"SDL2",
 		}
 
+	configuration { "xcode4" }
+		platforms {
+			"Universal"
+		}
+		files {
+			BGFX_DIR .. "examples/common/**.mm",
+		}
+		links {
+			"Cocoa.framework",
+			"Foundation.framework",
+			"OpenGL.framework",
+--			"SDL2",
+		}
+
 	configuration { "ios*" }
 		kind "ConsoleApp"
 		files {

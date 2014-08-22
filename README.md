@@ -329,6 +329,15 @@ Visual Studio 2008 IDE:
 
 	start .build/projects/vs2008/bgfx.sln
 
+Xcode 5 IDE:
+
+	start .build/projects/xcode4/bgfx.xcworkspace
+Due to [inability](http://industriousone.com/debugdir) to set working directory for an Xcode project from premake configuration file, it has to be set manually for each example project:
+
+1. Open *"Edit scheme..."* dialog for a given project.
+2. Select *"Run"* settings.
+3. Check *"Use custom working directory"* and enter following path: `${PROJECT_DIR}/../../../examples/runtime`.
+
 Linux 64-bit:
 
 	make linux-release64

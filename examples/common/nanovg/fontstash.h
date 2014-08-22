@@ -236,8 +236,15 @@ int fons__tt_getGlyphKernAdvance(struct FONSttFontImpl *font, int glyph1, int gl
 static void* fons__tmpalloc(size_t size, void* up);
 static void fons__tmpfree(void* ptr, void* up);
 #else
-#	include <malloc.h>
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif //__APPLE__
+
 #	include <string.h>
+
 #endif // 0
 
 #include <stb_truetype/stb_truetype.h>
