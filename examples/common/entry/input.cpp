@@ -5,10 +5,13 @@
 
 #include <memory.h>
 #include <string>
-#include <unordered_map>
 
 #include "entry_p.h"
 #include "input.h"
+
+#include <tinystl/allocator.h>
+#include <tinystl/unordered_map.h>
+namespace stl = tinystl;
 
 struct Mouse
 {
@@ -112,12 +115,12 @@ struct Input
 
 	void addBindings(const char* _name, const InputBinding* _bindings)
 	{
-		m_inputBindingsMap.insert(std::make_pair(_name, _bindings) );
+		m_inputBindingsMap.insert(stl::make_pair(_name, _bindings) );
 	}
 
 	void removeBindings(const char* _name)
 	{
-		m_inputBindingsMap.erase(_name);
+		m_inputBindingsMap.erase(m_inputBindingsMap.find(_name));
 	}
 
 	void process(const InputBinding* _bindings)
@@ -169,7 +172,7 @@ struct Input
 		m_keyboard.reset();
 	}
 
-	typedef std::unordered_map<std::string, const InputBinding*> InputBindingMap;
+	typedef stl::unordered_map<const char*, const InputBinding*> InputBindingMap;
 	InputBindingMap m_inputBindingsMap;
 	Mouse m_mouse;
 	Keyboard m_keyboard;
