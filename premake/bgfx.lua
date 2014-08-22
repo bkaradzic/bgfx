@@ -3,7 +3,7 @@
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
-function bgfxProject(_name, _uuid, _kind)
+function bgfxProject(_name, _uuid, _kind, _defines)
 
 	project ("bgfx" .. _name)
 		uuid (_uuid)
@@ -26,6 +26,7 @@ function bgfxProject(_name, _uuid, _kind)
 		configuration { "Debug" }
 			defines {
 				"BGFX_CONFIG_DEBUG=1",
+				_defines,
 			}
 
 		configuration { "android*" }

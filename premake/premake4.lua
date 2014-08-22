@@ -156,8 +156,8 @@ end
 
 dofile "bgfx.lua"
 dofile "example-common.lua"
-bgfxProject("",            "2dc7fd80-ed76-11e0-be50-0800200c9a66", "StaticLib")
-bgfxProject("-shared-lib", "09986168-e9d9-11e3-9c8e-f2aef940a72a", "SharedLib")
+bgfxProject("",            "2dc7fd80-ed76-11e0-be50-0800200c9a66", "StaticLib", {})
+bgfxProject("-shared-lib", "09986168-e9d9-11e3-9c8e-f2aef940a72a", "SharedLib", {})
 exampleProject("00-helloworld",        "ff2c8450-ebf4-11e0-9572-0800200c9a66")
 exampleProject("01-cubes",             "fec3bc94-e1e5-11e1-9c59-c7eeec2c1c51")
 exampleProject("02-metaballs",         "413b2cb4-f7db-11e1-bf5f-a716de6a022f")
