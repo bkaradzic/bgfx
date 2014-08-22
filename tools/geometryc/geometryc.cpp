@@ -13,7 +13,9 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <unordered_map>
+#include <tinystl/allocator.h>
+#include <tinystl/unordered_map.h>
+namespace stl = tinystl;
 
 #include <forsythtriangleorderoptimizer.h>
 
@@ -79,7 +81,7 @@ struct Index3
 	int32_t m_vertexIndex;
 };
 
-typedef std::unordered_map<uint64_t, Index3> Index3Map;
+typedef stl::unordered_map<uint64_t, Index3> Index3Map;
 
 struct Triangle
 {
@@ -478,7 +480,7 @@ int main(int _argc, const char* _argv[])
 					uint64_t hash2 = uint64_t(index.m_normal)<<40;
 					uint64_t hash = hash0^hash1^hash2;
 
-					std::pair<Index3Map::iterator, bool> result = indexMap.insert(std::make_pair(hash, index) );
+					stl::pair<Index3Map::iterator, bool> result = indexMap.insert(stl::make_pair(hash, index) );
 					if (!result.second)
 					{
 						Index3& oldIndex = result.first->second;

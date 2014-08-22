@@ -8,8 +8,10 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <map>
+#include <tinystl/allocator.h>
+#include <tinystl/unordered_map.h>
+namespace stl = tinystl;
 
 namespace std { namespace tr1 {} }
 using namespace std::tr1;
@@ -695,7 +697,7 @@ struct HalfEdges
 	{
 		m_data = (HalfEdge*)malloc(2 * _numIndices * sizeof(HalfEdge) );
 
-		std::unordered_map<uint16_t, std::vector<uint16_t> > edges;
+		stl::unordered_map<uint16_t, std::vector<uint16_t> > edges;
 		for (uint32_t ii = 0; ii < _numIndices; ii+=3)
 		{
 			uint16_t idx0 = _indices[ii];
