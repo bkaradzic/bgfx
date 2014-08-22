@@ -59,6 +59,7 @@ project "shaderc"
 		"NINCLUDE=64",
 		"NWORK=65536",
 		"NBUFF=65536",
+		"OLD_PREPROCESSOR=0",
 	}
 
 	includedirs {

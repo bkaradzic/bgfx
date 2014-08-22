@@ -71,7 +71,7 @@ glsl_strtof(const char *s, char **end)
       loc = newlocale(LC_CTYPE_MASK, "C", NULL);
    }
    return strtof_l(s, end, loc);
-#elif _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE
+#elif (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600)) || (defined(_ISOC99_SOURCE) && _ISOC99_SOURCE)
    return strtof(s, end);
 #else
    return (float) strtod(s, end);

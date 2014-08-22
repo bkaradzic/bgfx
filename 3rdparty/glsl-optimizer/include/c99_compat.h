@@ -101,7 +101,7 @@
 #    define inline __inline
 #  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
      /* C99 supports inline keyword */
-#  elif (__STDC_VERSION__ >= 199901L)
+#  elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
      /* C99 supports inline keyword */
 #  else
 #    define inline
@@ -116,7 +116,7 @@
  * - http://cellperformance.beyond3d.com/articles/2006/05/demystifying-the-restrict-keyword.html
  */
 #ifndef restrict
-#  if (__STDC_VERSION__ >= 199901L)
+#  if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
      /* C99 */
 #  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
      /* C99 */
@@ -134,7 +134,7 @@
  * C99 __func__ macro
  */
 #ifndef __func__
-#  if (__STDC_VERSION__ >= 199901L)
+#  if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
      /* C99 */
 #  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
      /* C99 */
