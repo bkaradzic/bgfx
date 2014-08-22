@@ -3,12 +3,11 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include "entry.h"
+#include "entry_p.h"
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_QNX
 
 #include <stdio.h>
-#include "entry.h"
 
 namespace entry
 {
