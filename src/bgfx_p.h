@@ -6,6 +6,13 @@
 #ifndef BGFX_P_H_HEADER_GUARD
 #define BGFX_P_H_HEADER_GUARD
 
+#if BGFX_CONFIG_DEBUG
+#	define BX_TRACE _BX_TRACE
+#	define BX_WARN  _BX_WARN
+#	define BX_CHECK _BX_CHECK
+#	define BX_CONFIG_ALLOCATOR_DEBUG 1
+#endif // BGFX_CONFIG_DEBUG
+
 #include "bgfx.h"
 #include "config.h"
 
@@ -43,13 +50,6 @@ namespace bgfx
 						bgfx::fatal(bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
 					} \
 				BX_MACRO_BLOCK_END
-
-#if BGFX_CONFIG_DEBUG
-#	define BX_TRACE _BX_TRACE
-#	define BX_WARN  _BX_WARN
-#	define BX_CHECK _BX_CHECK
-#	define BX_CONFIG_ALLOCATOR_DEBUG 1
-#endif // BGFX_CONFIG_DEBUG
 
 #define BGFX_FATAL(_condition, _err, _format, ...) \
 			BX_MACRO_BLOCK_BEGIN \
