@@ -65,7 +65,7 @@ namespace entry
 			chdir(path);
 		}
 		CFRelease(resourcesURL);
-        
+
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
 		return result;
@@ -140,7 +140,7 @@ using namespace entry;
 		m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
 		//[m_displayLink setFrameInterval:1];
 		//[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-//		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop]];
+		//		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop]];
 		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 	}
 }
@@ -161,32 +161,36 @@ using namespace entry;
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    UITouch *touch = [[event allTouches] anyObject];
-    CGPoint touchLocation = [touch locationInView:self];
-    
-    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y);
-    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, MouseButton::Left, true);
+	BX_UNUSED(touches);
+	UITouch *touch = [[event allTouches] anyObject];
+	CGPoint touchLocation = [touch locationInView:self];
+
+	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0);
+	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0, MouseButton::Left, true);
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    UITouch *touch = [[event allTouches] anyObject];
-    CGPoint touchLocation = [touch locationInView:self];
-    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, MouseButton::Left, false);
+	BX_UNUSED(touches);
+	UITouch *touch = [[event allTouches] anyObject];
+	CGPoint touchLocation = [touch locationInView:self];
+	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    UITouch *touch = [[event allTouches] anyObject];
-    CGPoint touchLocation = [touch locationInView:self];
-    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y);
+	BX_UNUSED(touches);
+	UITouch *touch = [[event allTouches] anyObject];
+	CGPoint touchLocation = [touch locationInView:self];
+	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0);
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    UITouch *touch = [[event allTouches] anyObject];
-    CGPoint touchLocation = [touch locationInView:self];
-    s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, MouseButton::Left, false);
+	BX_UNUSED(touches);
+	UITouch *touch = [[event allTouches] anyObject];
+	CGPoint touchLocation = [touch locationInView:self];
+	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
 }
 
 @end
@@ -217,10 +221,10 @@ using namespace entry;
 
 	[m_window addSubview: m_view];
 	[m_window makeKeyAndVisible];
-    
-    //float scaleFactor = [[UIScreen mainScreen] scale]; // should use this, but ui is too small on ipad retina
-    float scaleFactor = 1.0f;
-    [m_view setContentScaleFactor: scaleFactor ];
+
+	//float scaleFactor = [[UIScreen mainScreen] scale]; // should use this, but ui is too small on ipad retina
+	float scaleFactor = 1.0f;
+	[m_view setContentScaleFactor: scaleFactor ];
 
 	s_ctx = new Context((uint32_t)(scaleFactor*rect.size.width), (uint32_t)(scaleFactor*rect.size.height));
 	return YES;

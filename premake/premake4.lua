@@ -8,6 +8,11 @@ newoption {
 	description = "Enable building tools.",
 }
 
+newoption {
+	trigger = "with-shared-lib",
+	description = "Enable building shared library.",
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
@@ -156,8 +161,8 @@ end
 
 dofile "bgfx.lua"
 dofile "example-common.lua"
-bgfxProject("",            "2dc7fd80-ed76-11e0-be50-0800200c9a66", "StaticLib", {})
-bgfxProject("-shared-lib", "09986168-e9d9-11e3-9c8e-f2aef940a72a", "SharedLib", {})
+bgfxProject("", "2dc7fd80-ed76-11e0-be50-0800200c9a66", "StaticLib", {})
+
 exampleProject("00-helloworld",        "ff2c8450-ebf4-11e0-9572-0800200c9a66")
 exampleProject("01-cubes",             "fec3bc94-e1e5-11e1-9c59-c7eeec2c1c51")
 exampleProject("02-metaballs",         "413b2cb4-f7db-11e1-bf5f-a716de6a022f")
@@ -180,6 +185,10 @@ exampleProject("18-ibl",               "711bcbb0-9531-11e3-a5e2-0800200c9a66")
 exampleProject("19-oit",               "d7eca4fc-96d7-11e3-a73b-fcafdb0f677b")
 exampleProject("20-nanovg",            "359ce7c4-cd06-11e3-bb8b-6c2f9a125b5a")
 exampleProject("21-deferred",          "f89e59ec-d16b-11e3-bc9c-2dfd99125b5a")
+
+if _OPTIONS["with-shared-lib"] then
+	bgfxProject("-shared-lib", "09986168-e9d9-11e3-9c8e-f2aef940a72a", "SharedLib", {})
+end
 
 if _OPTIONS["with-tools"] then
 	dofile "makedisttex.lua"

@@ -20,7 +20,10 @@
 
 extern "C"
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <android_native_app_glue.c>
+#pragma GCC diagnostic pop
 } // extern "C"
 
 namespace entry
