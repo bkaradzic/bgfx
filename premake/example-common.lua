@@ -21,3 +21,8 @@ project ("example-common")
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
 	}
+
+	configuration { "xcode4" }
+		includedirs {
+			BX_DIR .. "include/compat/osx",
+		}
