@@ -2520,6 +2520,8 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate uniform handle.");
 			if (isValid(handle) )
 			{
+				BX_TRACE("Creating uniform (handle %3d) %s", handle.idx, _name);
+
 				UniformRef& uniform = m_uniformRef[handle.idx];
 				uniform.m_refCount = 1;
 				uniform.m_type = _type;

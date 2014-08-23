@@ -963,6 +963,11 @@ namespace
 		bgfx::destroyUniform(gl->u_params);
 		bgfx::destroyUniform(gl->s_tex);
 
+		if (bgfx::isValid(gl->u_halfTexel) )
+		{
+			bgfx::destroyUniform(gl->u_halfTexel);
+		}
+
 		for (uint32_t ii = 0, num = gl->ntextures; ii < num; ++ii)
 		{
 			if (bgfx::isValid(gl->textures[ii].id) )
