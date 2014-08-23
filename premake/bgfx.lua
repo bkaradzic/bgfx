@@ -53,7 +53,7 @@ function bgfxProject(_name, _uuid, _kind, _defines)
 				"Cocoa.framework",
 			}
 
-		configuration { "vs* or linux or mingw or osx or xcode4 or ios*" }
+		configuration { "vs* or linux or mingw or xcode4 or osx or ios*" }
 			includedirs {
 				--nacl has GLES2 headers modified...
 				BGFX_DIR .. "3rdparty/khronos",
