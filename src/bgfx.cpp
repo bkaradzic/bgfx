@@ -1369,6 +1369,7 @@ again:
 				 ||  BX_PLATFORM_EMSCRIPTEN
 				 ||  BX_PLATFORM_IOS
 				 ||  BX_PLATFORM_NACL
+				 ||  BX_PLATFORM_RPI
 				 ) )
 			{
 				_type = RendererType::OpenGLES;

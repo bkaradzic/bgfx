@@ -130,6 +130,8 @@ function exampleProject(_name, _uuid)
 			"GLESv2",
 			"EGL",
 			"bcm_host",
+			"vcos",
+			"vchiq_arm",
 			"pthread",
 		}
 

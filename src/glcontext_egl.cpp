@@ -99,13 +99,12 @@ EGL_IMPORT
 #	include "glimports.h"
 
 #	if BX_PLATFORM_RPI
-	static ::Display* s_display;
-	static ::Window s_window;
+	static EGL_DISPMANX_WINDOW_T s_dispmanWindow;
 
 	void x11SetDisplayWindow(::Display* _display, ::Window _window)
 	{
-		s_display = _display;
-		s_window = _window;
+		// Noop for now...
+		BX_UNUSED(_display, _window);
 	}
 #	endif // BX_PLATFORM_RPI
 
@@ -156,6 +155,31 @@ EGL_IMPORT
 		eglGetConfigAttrib(m_display, config, EGL_NATIVE_VISUAL_ID, &format);
 		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, _width, _height, format);
 		nwt = g_bgfxAndroidWindow;
+#	elif BX_PLATFORM_RPI
+		DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
+		DISPMANX_UPDATE_HANDLE_T  dispmanUpdate  = vc_dispmanx_update_start(0);
+
+		VC_RECT_T dstRect = { 0, 0, _width,        _height       };
+		VC_RECT_T srcRect = { 0, 0, _width  << 16, _height << 16 };
+
+		DISPMANX_ELEMENT_HANDLE_T dispmanElement = vc_dispmanx_element_add(dispmanUpdate
+			, dispmanDisplay
+			, 0
+			, &dstRect
+			, 0
+			, &srcRect
+			, DISPMANX_PROTECTION_NONE
+			, NULL
+			, NULL
+			, DISPMANX_NO_ROTATE
+			);
+
+		s_dispmanWindow.element = dispmanElement;
+		s_dispmanWindow.width   = _width;
+		s_dispmanWindow.height  = _height;
+		nwt = &s_dispmanWindow;
+
+		vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
 		m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
