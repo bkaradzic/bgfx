@@ -197,6 +197,7 @@ draw calls per frame.
 | Xperia Z     | ES2          | Adreno320 | GCC    | ARM  | Android    |  11 |  1331 |
 | iPod 4       | ES2          | PVR SGX535| Clang  | ARM  | iOS6       |   7 |   343 |
 | i7-920 2.66  | ES2-Mali     | GTX650Ti  | VS2008 | x86  | Windows7   |   6 |   216 |
+| RaspberryPi  | ES2          | VC IV     | GCC    | ARM  | Raspbian   |   6 |   216 |
 
 To test browsers in 60Hz mode following changes were made:
 
