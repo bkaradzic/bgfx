@@ -13,7 +13,7 @@ Supported rendering backends:
  * OpenGL 2.1
  * OpenGL 3.1
  * OpenGL ES 2
- * OpenGL ES 3
+ * OpenGL ES 3.1
 
 Platforms:
 
@@ -23,6 +23,7 @@ Platforms:
  * Linux
  * Native Client
  * OSX
+ * RaspberryPi
  * Windows
 
 Languages:
