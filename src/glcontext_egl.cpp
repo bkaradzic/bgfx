@@ -5,10 +5,14 @@
 
 #include "bgfx_p.h"
 
-#if (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
+#if (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 
 #	if BGFX_USE_EGL
+
+#		if BX_PLATFORM_RPI
+#			include <bcm_host.h>
+#		endif // BX_PLATFORM_RPI
 
 #ifndef EGL_CONTEXT_MAJOR_VERSION_KHR
 #	define EGL_CONTEXT_MAJOR_VERSION_KHR EGL_CONTEXT_CLIENT_VERSION
@@ -94,8 +98,23 @@ EGL_IMPORT
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
 
+#	if BX_PLATFORM_RPI
+	static ::Display* s_display;
+	static ::Window s_window;
+
+	void x11SetDisplayWindow(::Display* _display, ::Window _window)
+	{
+		s_display = _display;
+		s_window = _window;
+	}
+#	endif // BX_PLATFORM_RPI
+
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+#	if BX_PLATFORM_RPI
+		bcm_host_init();
+#	endif // BX_PLATFORM_RPI
+
 		m_eglLibrary = eglOpen();
 
 		BX_UNUSED(_width, _height);
@@ -183,6 +202,10 @@ EGL_IMPORT
 		m_context = NULL;
 
 		eglClose(m_eglLibrary);
+
+#	if BX_PLATFORM_RPI
+		bcm_host_deinit();
+#	endif // BX_PLATFORM_RPI
 	}
 
 	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
@@ -227,4 +250,4 @@ EGL_IMPORT
 } // namespace bgfx
 
 #	endif // BGFX_USE_EGL
-#endif // (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
+#endif // (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)

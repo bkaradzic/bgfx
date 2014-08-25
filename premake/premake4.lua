@@ -124,6 +124,15 @@ function exampleProject(_name, _uuid)
 			"pthread",
 		}
 
+	configuration { "rpi" }
+		links {
+			"X11",
+			"GLESv2",
+			"EGL",
+			"bcm_host",
+			"pthread",
+		}
+
 	configuration { "osx" }
 		files {
 			BGFX_DIR .. "examples/common/**.mm",

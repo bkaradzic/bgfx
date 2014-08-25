@@ -46,7 +46,7 @@ BGFX_C_API void bgfx_android_set_window(ANativeWindow* _window);
  */
 BGFX_C_API void bgfx_ios_set_eagl_layer(void* _layer);
 
-#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+#elif BX_PLATFORM_FREEBSD || BX_PLATFORM_LINUX || BX_PLATFORM_RPI
 #    include <X11/Xlib.h>
 
 /**

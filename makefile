@@ -29,11 +29,12 @@ all:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-mips gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-x86 gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=asmjs gmake
+	$(PREMAKE4) --file=premake/premake4.lua --gcc=ios-arm gmake
+	$(PREMAKE4) --file=premake/premake4.lua --gcc=ios-simulator gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl-arm gmake
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=pnacl gmake
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=ios-arm gmake
-	$(PREMAKE4) --file=premake/premake4.lua --gcc=ios-simulator gmake
+	$(PREMAKE4) --file=premake/premake4.lua --gcc=rpi gmake
 
 .build/projects/gmake-android-arm:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=android-arm gmake
@@ -164,6 +165,14 @@ ios-simulator-debug: .build/projects/gmake-ios-simulator
 ios-simulator-release: .build/projects/gmake-ios-simulator
 	make -R -C .build/projects/gmake-ios-simulator config=release
 ios-simulator: ios-simulator-debug ios-simulator-release
+
+.build/projects/gmake-rpi:
+	$(PREMAKE4) --file=premake/premake4.lua --gcc=rpi gmake
+rpi-debug: .build/projects/gmake-rpi
+	make -R -C .build/projects/gmake-rpi config=debug
+rpi-release: .build/projects/gmake-rpi
+	make -R -C .build/projects/gmake-rpi config=release
+rpi: rpi-debug rpi-release
 
 rebuild-shaders:
 	make -R -C examples rebuild
