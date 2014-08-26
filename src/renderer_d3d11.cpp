@@ -3212,10 +3212,20 @@ namespace bgfx
 				char description[BX_COUNTOF(desc.Description)];
 				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
 				tvm.printf(0, pos++, 0x0f, " Device: %s", description);
-				tvm.printf(0, pos++, 0x0f, " Memory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-					, desc.DedicatedVideoMemory
-					, desc.DedicatedSystemMemory
-					, desc.SharedSystemMemory
+
+				char dedicatedVideo[16];
+				bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
+
+				char dedicatedSystem[16];
+				bx::prettify(dedicatedSystem, BX_COUNTOF(dedicatedSystem), desc.DedicatedSystemMemory);
+
+				char sharedSystem[16];
+				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
+				
+				tvm.printf(0, pos++, 0x0f, " Memory: %s (video), %s (system), %s (shared)"
+					, dedicatedVideo
+					, dedicatedSystem
+					, sharedSystem
 					);
 
 				pos = 10;

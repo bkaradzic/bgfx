@@ -4781,9 +4781,29 @@ namespace bgfx
 
 					pos++;
 					tvm.printf(10, pos++, 0x8c, " -------------|    free|  free b|     aux|  aux fb");
-					tvm.printf(10, pos++, 0x8e, "           VBO: %7d, %7d, %7d, %7d", vboFree[0], vboFree[1], vboFree[2], vboFree[3]);
-					tvm.printf(10, pos++, 0x8e, "       Texture: %7d, %7d, %7d, %7d", texFree[0], texFree[1], texFree[2], texFree[3]);
-					tvm.printf(10, pos++, 0x8e, " Render Buffer: %7d, %7d, %7d, %7d", rbfFree[0], rbfFree[1], rbfFree[2], rbfFree[3]);
+
+					char tmp0[16];
+					char tmp1[16];
+					char tmp2[16];
+					char tmp3[16];
+
+					bx::prettify(tmp0, BX_COUNTOF(tmp0), vboFree[0]);
+					bx::prettify(tmp1, BX_COUNTOF(tmp1), vboFree[1]);
+					bx::prettify(tmp2, BX_COUNTOF(tmp2), vboFree[2]);
+					bx::prettify(tmp3, BX_COUNTOF(tmp3), vboFree[3]);
+					tvm.printf(10, pos++, 0x8e, "           VBO: %10s, %10s, %10s, %10s", tmp0, tmp1, tmp2, tmp3);
+
+					bx::prettify(tmp0, BX_COUNTOF(tmp0), texFree[0]);
+					bx::prettify(tmp1, BX_COUNTOF(tmp1), texFree[1]);
+					bx::prettify(tmp2, BX_COUNTOF(tmp2), texFree[2]);
+					bx::prettify(tmp3, BX_COUNTOF(tmp3), texFree[3]);
+					tvm.printf(10, pos++, 0x8e, "       Texture: %10s, %10s, %10s, %10s", tmp0, tmp1, tmp2, tmp3);
+
+					bx::prettify(tmp0, BX_COUNTOF(tmp0), rbfFree[0]);
+					bx::prettify(tmp1, BX_COUNTOF(tmp1), rbfFree[1]);
+					bx::prettify(tmp2, BX_COUNTOF(tmp2), rbfFree[2]);
+					bx::prettify(tmp3, BX_COUNTOF(tmp3), rbfFree[3]);
+					tvm.printf(10, pos++, 0x8e, " Render Buffer: %10s, %10s, %10s, %10s", tmp0, tmp1, tmp2, tmp3);
 				}
 				else if (s_extension[Extension::NVX_gpu_memory_info].m_supported)
 				{
@@ -4802,11 +4822,21 @@ namespace bgfx
 					GLint evictedMemory;
 					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evictedMemory) );
 
-					pos++;
-					tvm.printf(10, pos++, 0x8c, "----------|");
-					tvm.printf(10, pos++, 0x8e, " Dedicated: %7d", dedicated);
-					tvm.printf(10, pos++, 0x8e, " Available: %7d (%7d)", currAvail, totalAvail);
-					tvm.printf(10, pos++, 0x8e, "  Eviction: %7d / %7d", evictedCount, evictedMemory);
+					pos += 2;
+
+					char tmp0[16];
+					char tmp1[16];
+
+					bx::prettify(tmp0, BX_COUNTOF(tmp0), dedicated);
+					tvm.printf(10, pos++, 0x8e, " Dedicated: %10s", tmp0);
+
+					bx::prettify(tmp0, BX_COUNTOF(tmp0), currAvail);
+					bx::prettify(tmp1, BX_COUNTOF(tmp1), totalAvail);
+					tvm.printf(10, pos++, 0x8e, " Available: %10s / %10s", tmp0, tmp1);
+
+					bx::prettify(tmp0, BX_COUNTOF(tmp0), evictedCount);
+					bx::prettify(tmp1, BX_COUNTOF(tmp1), evictedMemory);
+					tvm.printf(10, pos++, 0x8e, "  Eviction: %10s / %10s", tmp0, tmp1);
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
