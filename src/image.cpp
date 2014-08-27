@@ -50,6 +50,7 @@ namespace bgfx
 		{  16, 1, 1,  2 }, // RGBA4
 		{  16, 1, 1,  2 }, // RGB5A1
 		{  32, 1, 1,  4 }, // RGB10A2
+		{  32, 1, 1,  4 }, // R11G11B10F
 		{   0, 0, 0,  0 }, // UnknownDepth
 		{  16, 1, 1,  2 }, // D16
 		{  24, 1, 1,  3 }, // D24
@@ -64,53 +65,54 @@ namespace bgfx
 
 	static const char* s_textureFormatName[] =
 	{
-		"BC1",       // BC1
-		"BC2",       // BC2
-		"BC3",       // BC3
-		"BC4",       // BC4
-		"BC5",       // BC5
-		"BC6H",      // BC6H
-		"BC7",       // BC7
-		"ETC1",      // ETC1
-		"ETC2",      // ETC2
-		"ETC2A",     // ETC2A
-		"ETC2A1",    // ETC2A1
-		"PTC12",     // PTC12
-		"PTC14",     // PTC14
-		"PTC12A",    // PTC12A
-		"PTC14A",    // PTC14A
-		"PTC22",     // PTC22
-		"PTC24",     // PTC24
-		"<unknown>", // Unknown
-		"R1",        // R1
-		"R8",        // R8
-		"R16",       // R16
-		"R16F",      // R16F
-		"R32",       // R32
-		"R32F",      // R32F
-		"RG8",       // RG8
-		"RG16",      // RG16
-		"RG16F",     // RG16F
-		"RG32",      // RG32
-		"RG32F",     // RG32F
-		"BGRA8",     // BGRA8
-		"RGBA16",    // RGBA16
-		"RGBA16F",   // RGBA16F
-		"RGBA32",    // RGBA32
-		"RGBA32F",   // RGBA32F
-		"R5G6B5",    // R5G6B5
-		"RGBA4",     // RGBA4
-		"RGB5A1",    // RGB5A1
-		"RGB10A2",   // RGB10A2
-		"<unknown>", // UnknownDepth
-		"D16",       // D16
-		"D24",       // D24
-		"D24S8",     // D24S8
-		"D32",       // D32
-		"D16F",      // D16F
-		"D24F",      // D24F
-		"D32F",      // D32F
-		"D0S8",      // D0S8
+		"BC1",        // BC1
+		"BC2",        // BC2
+		"BC3",        // BC3
+		"BC4",        // BC4
+		"BC5",        // BC5
+		"BC6H",       // BC6H
+		"BC7",        // BC7
+		"ETC1",       // ETC1
+		"ETC2",       // ETC2
+		"ETC2A",      // ETC2A
+		"ETC2A1",     // ETC2A1
+		"PTC12",      // PTC12
+		"PTC14",      // PTC14
+		"PTC12A",     // PTC12A
+		"PTC14A",     // PTC14A
+		"PTC22",      // PTC22
+		"PTC24",      // PTC24
+		"<unknown>",  // Unknown
+		"R1",         // R1
+		"R8",         // R8
+		"R16",        // R16
+		"R16F",       // R16F
+		"R32",        // R32
+		"R32F",       // R32F
+		"RG8",        // RG8
+		"RG16",       // RG16
+		"RG16F",      // RG16F
+		"RG32",       // RG32
+		"RG32F",      // RG32F
+		"BGRA8",      // BGRA8
+		"RGBA16",     // RGBA16
+		"RGBA16F",    // RGBA16F
+		"RGBA32",     // RGBA32
+		"RGBA32F",    // RGBA32F
+		"R5G6B5",     // R5G6B5
+		"RGBA4",      // RGBA4
+		"RGB5A1",     // RGB5A1
+		"RGB10A2",    // RGB10A2
+		"R11G11B10F", // R11G11B10F
+		"<unknown>",  // UnknownDepth
+		"D16",        // D16
+		"D24",        // D24
+		"D24S8",      // D24S8
+		"D32",        // D32
+		"D16F",       // D16F
+		"D24F",       // D24F
+		"D32F",       // D32F
+		"D0S8",       // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormatName) );
 
