@@ -14,7 +14,15 @@
 #endif // !USE_D3D11_DYNAMIC_LIB
 
 #define D3D11_NO_HELPERS
-#include <d3d11.h>
+#if BX_COMPILER_MSVC
+#	pragma warning(push)
+//  winerror.h and dxgitypes.h both define DXGI_ERRORs.
+#	pragma warning(disable:4005) // warning C4005: '' : macro redefinition
+#	include <d3d11.h>
+#	pragma warning(pop)
+#else
+#	include <d3d11.h>
+#endif // BX_COMPILER_MSVC
 #include "renderer_d3d.h"
 
 #define D3DCOLOR_ARGB(_a, _r, _g, _b) ( (DWORD)( ( ( (_a)&0xff)<<24)|( ( (_r)&0xff)<<16)|( ( (_g)&0xff)<<8)|( (_b)&0xff) ) )
