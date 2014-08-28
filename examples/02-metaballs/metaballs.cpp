@@ -431,7 +431,7 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 	const int8_t* indices = s_indices[cubeindex];
 	for (uint32_t ii = 0; indices[ii] != -1; ++ii)
 	{
-		const float* vertex = verts[indices[ii] ];
+		const float* vertex = verts[uint8_t(indices[ii])];
 
 		float* xyz = (float*)_result;
 		xyz[0] = _xyz[0] + vertex[0];
