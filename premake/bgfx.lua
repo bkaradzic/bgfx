@@ -35,10 +35,12 @@ function bgfxProject(_name, _uuid, _kind, _defines)
 				"GLESv2",
 			}
 
-		configuration { "windows" }
+		configuration { "windows", "not vs2012" }
 			includedirs {
 				"$(DXSDK_DIR)/include",
 			}
+
+		configuration { "windows" }
 			links {
 				"gdi32",
 			}
