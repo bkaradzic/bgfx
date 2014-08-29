@@ -113,7 +113,7 @@ namespace bgfx
 		}
 
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
-		void update(uint32_t _offset, uint32_t _size, void* _data);
+		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
 
 		void destroy()
 		{

@@ -955,11 +955,9 @@ namespace bgfx
 		{
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-			IndexBufferD3D11& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
-			ib.update(0, _numIndices*2, _blitter.m_ib->data);
-
 			uint32_t numVertices = _numIndices*4/6;
-			m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data);
+			m_indexBuffers [_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data);
+			m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
 
 			deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			deviceCtx->DrawIndexed(_numIndices, 0, 0);
@@ -1942,13 +1940,13 @@ namespace bgfx
 		}
 	}
 
-	void VertexBufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data)
+	void VertexBufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 		BX_CHECK(m_dynamic, "Must be dynamic!");
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
-		D3D11_MAP type = m_dynamic && 0 == _offset && m_size == _size ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE;
+		D3D11_MAP type = m_dynamic && ( (0 == _offset && m_size == _size) || _discard) ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE;
 		DX_CHECK(deviceCtx->Map(m_ptr, 0, type, 0, &mapped) );
 		memcpy( (uint8_t*)mapped.pData + _offset, _data, _size);
 		deviceCtx->Unmap(m_ptr, 0);
