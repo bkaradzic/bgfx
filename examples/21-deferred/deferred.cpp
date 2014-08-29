@@ -439,7 +439,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Setup views
 			float vp[16];
-			float invMvp[16];
+			float invvp[16];
 			{
 				bgfx::setViewRectMask(0
 					| RENDER_PASS_GEOMETRY_BIT
@@ -459,7 +459,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
 
 				bx::mtxMul(vp, view, proj);
-				bx::mtxInverse(invMvp, vp);
+				bx::mtxInverse(invvp, vp);
 
 				bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 				bgfx::setViewTransformMask(0
@@ -644,7 +644,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					// Draw light.
 					bgfx::setUniform(u_lightPosRadius, &lightPosRadius);
 					bgfx::setUniform(u_lightRgbInnerR, lightRgbInnerR);
-					bgfx::setUniform(u_mtx, invMvp);
+					bgfx::setUniform(u_mtx, invvp);
 					const uint16_t scissorHeight = uint16_t(y1-y0);
 					bgfx::setScissor(uint16_t(x0), height-scissorHeight-uint16_t(y0), uint16_t(x1-x0), scissorHeight);
 					bgfx::setTexture(0, s_normal, gbuffer, 1);
