@@ -397,6 +397,19 @@ Certain platforms have only single choice, for example the Native Client works
 only with OpenGL ES 2.0 renderer, using anything other than that will result in
 build errors.
 
+Debugging
+---------
+
+| Name         | OS            | DX9  | DX11 |  GL  | GLES |
+|:-------------|:--------------|:----:|:----:|:----:|:----:|
+| CodeXL       | Win/Linux     |      |      |  x   |      |
+| IntelGPA     | Win/Linux/OSX |   x  |  x   |      |   x  |
+| RenderDoc    | Win           |      |  x   |      |      |
+
+[CodeXL](http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/)  
+[IntelGPA](https://software.intel.com/en-us/vcsource/tools/intel-gpa)  
+[RenderDoc](http://cryengine.com/renderdoc)
+
 SDL, GLFW, etc.
 ---------------
 
