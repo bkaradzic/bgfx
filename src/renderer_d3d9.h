@@ -202,9 +202,9 @@ namespace bgfx
 		bool m_dynamic;
 	};
 
-	struct VertexDeclaration
+	struct VertexDeclD3D9
 	{
-		VertexDeclaration()
+		VertexDeclD3D9()
 			: m_ptr(NULL)
 		{
 		}

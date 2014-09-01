@@ -86,6 +86,8 @@ namespace bgfx
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x3)
 
+#define BGFX_CLEAR_COLOR_USE_PALETTE_BIT UINT8_C(0x80)
+
 #include <list> // mingw wants it to be before tr1/unordered_*...
 
 #if BGFX_CONFIG_USE_TINYSTL
@@ -191,8 +193,8 @@ namespace bgfx
 
 	struct Clear
 	{
-		uint32_t m_rgba;
-		float m_depth;
+		uint8_t m_index[8];
+		float   m_depth;
 		uint8_t m_stencil;
 		uint8_t m_flags;
 	};
@@ -483,7 +485,6 @@ namespace bgfx
 		void shutdown();
 
 		TransientVertexBuffer* m_vb;
-		IndexBufferHandle m_ib;
 		VertexDecl m_decl;
 		ProgramHandle m_program[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
@@ -1435,6 +1436,7 @@ namespace bgfx
 
 		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
+		float m_clearColor[BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE][4];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
@@ -1725,6 +1727,7 @@ namespace bgfx
 			, m_submit(&m_frame[1])
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
+			, m_clearColorDirty(0)
 			, m_instBufferCount(0)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
@@ -2587,6 +2590,16 @@ namespace bgfx
 			cmdbuf.write(_filePath, len);
 		}
 
+		BGFX_API_FUNC(void setClearColor(uint8_t _index, const float _rgba[4]) )
+		{
+			BX_CHECK(_index < BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE, "Clear color palette index out of bounds %d (max: %d)."
+				, _index
+				, BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE
+				);
+			memcpy(&m_clearColor[_index][0], _rgba, 16);
+			m_clearColorDirty = 2;
+		}
+
 		BGFX_API_FUNC(void setViewName(uint8_t _id, const char* _name) )
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateViewName);
@@ -2640,9 +2653,30 @@ namespace bgfx
 		{
 			Clear& clear = m_clear[_id];
 			clear.m_flags = _flags;
-			clear.m_rgba = _rgba;
-			clear.m_depth = _depth;
-			clear.m_stencil = _stencil;
+			clear.m_index[0] = _rgba>>24;
+			clear.m_index[1] = _rgba>>16;
+			clear.m_index[2] = _rgba>> 8;
+			clear.m_index[3] = _rgba>> 0;
+			clear.m_depth    = _depth;
+			clear.m_stencil  = _stencil;
+		}
+
+		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
+		{
+			Clear& clear = m_clear[_id];
+			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR_BIT)
+				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_COLOR_USE_PALETTE_BIT : 0)
+				;
+			clear.m_index[0] = _0;
+			clear.m_index[1] = _1;
+			clear.m_index[2] = _2;
+			clear.m_index[3] = _3;
+			clear.m_index[4] = _4;
+			clear.m_index[5] = _5;
+			clear.m_index[6] = _6;
+			clear.m_index[7] = _7;
+			clear.m_depth    = _depth;
+			clear.m_stencil  = _stencil;
 		}
 
 		BGFX_API_FUNC(void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
@@ -2994,12 +3028,16 @@ namespace bgfx
 
 		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
+
+		float m_clearColor[BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE][4];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_proj[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
+
+		uint8_t m_clearColorDirty;
 
 		Resolution m_resolution;
 		int32_t  m_instBufferCount;

@@ -1605,7 +1605,14 @@ void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _
 		, _idx
 		, _idx
 		);
+}
 
+void voidFragData(char* _data, uint32_t _idx)
+{
+	char find[32];
+	bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
+
+	strreplace(_data, find, "bgfx_VoidFrag");
 }
 
 // c - compute
@@ -1985,7 +1992,7 @@ int main(int _argc, const char* _argv[])
 		char* data;
 		char* input;
 		{
-			const size_t padding = 16;
+			const size_t padding = 1024;
 			uint32_t size = (uint32_t)fsize(file);
 			data = new char[size+padding+1];
 			size = (uint32_t)fread(data, 1, size, file);
@@ -2392,18 +2399,26 @@ int main(int _argc, const char* _argv[])
 
 					if ('f' == shaderType)
 					{
+						const char* brace = strstr(entry, "{");
+						if (NULL != brace)
+						{
+							strins(const_cast<char*>(brace+1), "\nvec4 bgfx_VoidFrag;\n");
+						}
+
 						const bool hasFragCoord   = NULL != strstr(input, "gl_FragCoord") || hlsl > 3;
 						const bool hasFragDepth   = NULL != strstr(input, "gl_FragDepth");
 						const bool hasFrontFacing = NULL != strstr(input, "gl_FrontFacing");
-						const bool hasFragData0   = NULL != strstr(input, "gl_FragData[0]");
-						const bool hasFragData1   = NULL != strstr(input, "gl_FragData[1]");
-						const bool hasFragData2   = NULL != strstr(input, "gl_FragData[2]");
-						const bool hasFragData3   = NULL != strstr(input, "gl_FragData[3]");
+						bool hasFragData[8] = {};
+						uint32_t numFragData = 0;
+						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
+						{
+							char temp[32];
+							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+							hasFragData[ii] = NULL != strstr(input, temp);
+							numFragData += hasFragData[ii];
+						}
 
-						if (!hasFragData0
-						&&  !hasFragData1
-						&&  !hasFragData2
-						&&  !hasFragData3)
+						if (0 == numFragData)
 						{
 							// GL errors when both gl_FragColor and gl_FragData is used.
 							// This will trigger the same error with HLSL compiler too.
@@ -2439,19 +2454,21 @@ int main(int _argc, const char* _argv[])
 
 						addFragData(preprocessor, input, 0, arg++ > 0);
 
-						if (hasFragData1)
-						{
-							addFragData(preprocessor, input, 1, arg++ > 0);
-						}
+						const uint32_t maxRT = d3d > 9 ? BX_COUNTOF(hasFragData) : 4;
 
-						if (hasFragData2)
+						for (uint32_t ii = 1; ii < BX_COUNTOF(hasFragData); ++ii)
 						{
-							addFragData(preprocessor, input, 2, arg++ > 0);
-						}
-
-						if (hasFragData3)
-						{
-							addFragData(preprocessor, input, 3, arg++ > 0);
+							if (ii < maxRT)
+							{
+								if (hasFragData[ii])
+								{
+									addFragData(preprocessor, input, ii, arg++ > 0);
+								}
+							}
+							else
+							{
+								voidFragData(input, ii);
+							}
 						}
 
 						if (hasFragDepth)

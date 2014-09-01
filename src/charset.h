@@ -531,3 +531,7 @@ static const uint8_t vga8x16[256*16] =
 #include "fs_clear1.bin.h"
 #include "fs_clear2.bin.h"
 #include "fs_clear3.bin.h"
+#include "fs_clear4.bin.h"
+#include "fs_clear5.bin.h"
+#include "fs_clear6.bin.h"
+#include "fs_clear7.bin.h"

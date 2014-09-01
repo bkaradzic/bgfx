@@ -858,6 +858,27 @@ namespace bgfx
 	/// Destroy shader uniform parameter.
 	void destroyUniform(UniformHandle _handle);
 
+	/// Set clear color palette value.
+	///
+	/// @param _index Index into palette.
+	/// @param _rgba Packed 32-bit RGBA value.
+	///
+	void setClearColor(uint8_t _index, uint32_t _rgba);
+
+	/// Set clear color palette value.
+	///
+	/// @param _index Index into palette.
+	/// @param _r, _g, _b, _a RGBA floating point values.
+	///
+	void setClearColor(uint8_t _index, float _r, float _g, float _b, float _a);
+
+	/// Set clear color palette value.
+	///
+	/// @param _index Index into palette.
+	/// @param _rgba RGBA floating point value.
+	///
+	void setClearColor(uint8_t _index, const float _rgba[4]);
+
 	/// Set view name.
 	///
 	/// @param _id View id.
@@ -920,6 +941,18 @@ namespace bgfx
 	/// @param _stencil Stencil clear value.
 	///
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
+
+	/// Set view clear flags with different clear color for each
+	/// frame buffer texture. Must use setClearColor to setup clear color
+	/// palette.
+	///
+	/// @param _id View id.
+	/// @param _flags Clear flags. Use BGFX_CLEAR_NONE to remove any clear
+	///   operation. See: BGFX_CLEAR_*.
+	/// @param _depth Depth clear value.
+	/// @param _stencil Stencil clear value.
+	///
+	void setViewClear(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0 = UINT8_MAX, uint8_t _1 = UINT8_MAX, uint8_t _2 = UINT8_MAX, uint8_t _3 = UINT8_MAX, uint8_t _4 = UINT8_MAX, uint8_t _5 = UINT8_MAX, uint8_t _6 = UINT8_MAX, uint8_t _7 = UINT8_MAX);
 
 	/// Set view clear flags for multiple views.
 	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);

@@ -26,6 +26,7 @@ namespace bgfx
 		{ D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 3, 1, 2 },
 		{ D3D11_PRIMITIVE_TOPOLOGY_LINELIST,      2, 2, 0 },
 		{ D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,     1, 1, 0 },
+		{ D3D10_PRIMITIVE_TOPOLOGY_UNDEFINED,     0, 0, 0 },
 	};
 
 	static const char* s_primName[] =
@@ -35,6 +36,7 @@ namespace bgfx
 		"Line",
 		"Point",
 	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_primInfo) == BX_COUNTOF(s_primName)+1);
 
 	static const uint32_t s_checkMsaa[] =
 	{
@@ -1163,21 +1165,37 @@ namespace bgfx
 			m_rtMsaa = _msaa;
 		}
 
-		void clear(const Clear& _clear)
+		void clear(const Clear& _clear, const float _palette[][4])
 		{
 			if (isValid(m_fbh) )
 			{
 				FrameBufferD3D11& frameBuffer = m_frameBuffers[m_fbh.idx];
-				frameBuffer.clear(_clear);
+				frameBuffer.clear(_clear, _palette);
 			}
 			else
 			{
 				if (NULL != m_currentColor
 				&&  BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
 				{
-					uint32_t rgba = _clear.m_rgba;
-					float frgba[4] = { (rgba>>24)/255.0f, ( (rgba>>16)&0xff)/255.0f, ( (rgba>>8)&0xff)/255.0f, (rgba&0xff)/255.0f };
-					m_deviceCtx->ClearRenderTargetView(m_currentColor, frgba);
+					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
+					{
+						uint8_t index = _clear.m_index[0];
+						if (UINT8_MAX != index)
+						{
+							m_deviceCtx->ClearRenderTargetView(m_currentColor, _palette[index]);
+						}
+					}
+					else
+					{
+						float frgba[4] =
+						{ 
+							_clear.m_index[0]*1.0f/255.0f,
+							_clear.m_index[1]*1.0f/255.0f,
+							_clear.m_index[2]*1.0f/255.0f,
+							_clear.m_index[3]*1.0f/255.0f,
+						};
+						m_deviceCtx->ClearRenderTargetView(m_currentColor, frgba);
+					}
 				}
 
 				if (NULL != m_currentDepthStencil
@@ -1663,18 +1681,17 @@ namespace bgfx
 			}
 		}
 
-		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, uint32_t _height = 0)
+		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
-			BX_UNUSED(_height);
 			uint32_t width  = m_scd.BufferDesc.Width;
 			uint32_t height = m_scd.BufferDesc.Height;
 
-			if (0 == _rect.m_x
-			&&  0 == _rect.m_y
-			&&  width == _rect.m_width
+			if (0      == _rect.m_x
+			&&  0      == _rect.m_y
+			&&  width  == _rect.m_width
 			&&  height == _rect.m_height)
 			{
-				clear(_clear);
+				clear(_clear, _palette);
 			}
 			else
 			{
@@ -1699,22 +1716,46 @@ namespace bgfx
 				setDepthStencilState(state, stencil);
 				setRasterizerState(state);
 
-				uint32_t numMrt = 0;
+				uint32_t numMrt = 1;
 				FrameBufferHandle fbh = m_fbh;
 				if (isValid(fbh) )
 				{
 					const FrameBufferD3D11& fb = m_frameBuffers[fbh.idx];
-					numMrt = bx::uint32_max(1, fb.m_num)-1;
+					numMrt = bx::uint32_max(1, fb.m_num);
 				}
 
-				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt].idx];
+				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				m_currentProgram = &program;
 				deviceCtx->VSSetShader(program.m_vsh->m_vertexShader, NULL, 0);
 				deviceCtx->VSSetConstantBuffers(0, 0, NULL);
 				if (NULL != m_currentColor)
 				{
-					deviceCtx->PSSetShader(program.m_fsh->m_pixelShader, NULL, 0);
-					deviceCtx->PSSetConstantBuffers(0, 0, NULL);
+					const ShaderD3D11* fsh = program.m_fsh;
+					deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
+					deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
+
+					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
+					{
+						float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
+						for (uint32_t ii = 0; ii < numMrt; ++ii)
+						{
+							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE-1, _clear.m_index[ii]);
+							memcpy(mrtClear[ii], _palette[index], 16);
+						}
+
+						deviceCtx->UpdateSubresource(fsh->m_buffer, 0, 0, mrtClear, 0, 0);
+					}
+					else
+					{
+						float rgba[4] =
+						{
+							_clear.m_index[0]*1.0f/255.0f,
+							_clear.m_index[1]*1.0f/255.0f,
+							_clear.m_index[2]*1.0f/255.0f,
+							_clear.m_index[3]*1.0f/255.0f,
+						};
+						deviceCtx->UpdateSubresource(fsh->m_buffer, 0, 0, rgba, 0, 0);
+					}
 				}
 				else
 				{
@@ -1722,9 +1763,9 @@ namespace bgfx
 				}
 
 				VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-				VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
-				uint32_t stride = vertexDecl.m_stride;
-				uint32_t offset = 0;
+				const VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
+				const uint32_t stride = vertexDecl.m_stride;
+				const uint32_t offset = 0;
 
 				{
 					struct Vertex
@@ -1732,43 +1773,36 @@ namespace bgfx
 						float m_x;
 						float m_y;
 						float m_z;
-						uint32_t m_abgr;
-					} * vertex = (Vertex*)_clearQuad.m_vb->data;
+					};
+					
+					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
 					BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
 
-					const uint32_t abgr = bx::endianSwap(_clear.m_rgba);
 					const float depth = _clear.m_depth;
 
 					vertex->m_x = -1.0f;
 					vertex->m_y = -1.0f;
 					vertex->m_z = depth;
-					vertex->m_abgr = abgr;
 					vertex++;
 					vertex->m_x =  1.0f;
 					vertex->m_y = -1.0f;
 					vertex->m_z = depth;
-					vertex->m_abgr = abgr;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-					vertex->m_abgr = abgr;
 					vertex++;
 					vertex->m_x = -1.0f;
 					vertex->m_y =  1.0f;
 					vertex->m_z = depth;
-					vertex->m_abgr = abgr;
+					vertex++;
+					vertex->m_x =  1.0f;
+					vertex->m_y =  1.0f;
+					vertex->m_z = depth;
 				}
 
 				m_vertexBuffers[_clearQuad.m_vb->handle.idx].update(0, 4*_clearQuad.m_decl.m_stride, _clearQuad.m_vb->data);
 				deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
 				setInputLayout(vertexDecl, program, 0);
 
-				IndexBufferD3D11& ib = m_indexBuffers[_clearQuad.m_ib.idx];
-				deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
-
-				deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				deviceCtx->DrawIndexed(6, 0, 0);
+				deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+				deviceCtx->Draw(4, 0);
 			}
 		}
 
@@ -2458,19 +2492,39 @@ namespace bgfx
 	{
 	}
 
-	void FrameBufferD3D11::clear(const Clear& _clear)
+	void FrameBufferD3D11::clear(const Clear& _clear, const float _palette[][4])
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
 		{
-			uint32_t rgba = _clear.m_rgba;
-			float frgba[4] = { (rgba>>24)/255.0f, ( (rgba>>16)&0xff)/255.0f, ( (rgba>>8)&0xff)/255.0f, (rgba&0xff)/255.0f };
-			for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+			if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
 			{
-				if (NULL != m_rtv[ii])
+				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 				{
-					deviceCtx->ClearRenderTargetView(m_rtv[ii], frgba);
+					uint8_t index = _clear.m_index[ii];
+					if (NULL != m_rtv[ii]
+					&&  UINT8_MAX != index)
+					{
+						deviceCtx->ClearRenderTargetView(m_rtv[ii], _palette[index]);
+					}
+				}
+			}
+			else
+			{
+				float frgba[4] =
+				{ 
+					_clear.m_index[0]*1.0f/255.0f,
+					_clear.m_index[1]*1.0f/255.0f,
+					_clear.m_index[2]*1.0f/255.0f,
+					_clear.m_index[3]*1.0f/255.0f,
+				};
+				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+				{
+					if (NULL != m_rtv[ii])
+					{
+						deviceCtx->ClearRenderTargetView(m_rtv[ii], frgba);
+					}
 				}
 			}
 		}
@@ -2593,7 +2647,8 @@ namespace bgfx
 
 					if (BGFX_CLEAR_NONE != clear.m_flags)
 					{
-						clearQuad(_clearQuad, rect, clear);
+						clearQuad(_clearQuad, rect, clear, _render->m_clearColor);
+						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 				}
 
@@ -3247,7 +3302,7 @@ namespace bgfx
 					, _render->m_num
 					, elapsedCpuMs
 					);
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primInfo); ++ii)
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
 					tvm.printf(10, pos++, 0x8e, "    %8s: %7d (#inst: %5d), submitted: %7d"
 						, s_primName[ii]

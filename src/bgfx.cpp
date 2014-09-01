@@ -492,57 +492,98 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		if (BX_ENABLED(BGFX_CONFIG_CLEAR_QUAD)
-		&&  RendererType::OpenGLES  != g_caps.rendererType
-		&&  RendererType::Direct3D9 != g_caps.rendererType
-		&&  RendererType::Null      != g_caps.rendererType)
+		if (RendererType::Null != g_caps.rendererType)
 		{
 			m_decl
 				.begin()
 				.add(Attrib::Position, 3, AttribType::Float)
-				.add(Attrib::Color0,   4, AttribType::Uint8, true)
 				.end();
 
 			ShaderHandle vsh = BGFX_INVALID_HANDLE;
 			
+			struct Mem
+			{
+				const void*  data;
+				const size_t size;
+			};
+
 			const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-			if (RendererType::Direct3D11 == g_caps.rendererType)
+			if (RendererType::Direct3D9 == g_caps.rendererType)
+			{
+				vsh = createShader(makeRef(vs_clear_dx9, sizeof(vs_clear_dx9) ) );
+
+				const Mem mem[] =
+				{
+					{ fs_clear0_dx9, sizeof(fs_clear0_dx9) },
+					{ fs_clear1_dx9, sizeof(fs_clear1_dx9) },
+					{ fs_clear2_dx9, sizeof(fs_clear2_dx9) },
+					{ fs_clear3_dx9, sizeof(fs_clear3_dx9) },
+					{ fs_clear4_dx9, sizeof(fs_clear4_dx9) },
+					{ fs_clear5_dx9, sizeof(fs_clear5_dx9) },
+					{ fs_clear6_dx9, sizeof(fs_clear6_dx9) },
+					{ fs_clear7_dx9, sizeof(fs_clear7_dx9) },
+				};
+
+				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				{
+					fragMem[ii] = makeRef(mem[ii].data, mem[ii].size);
+				}
+			}
+			else if (RendererType::Direct3D11 == g_caps.rendererType)
 			{
 				vsh = createShader(makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) ) );
-				fragMem[0] = makeRef(fs_clear0_dx11, sizeof(fs_clear0_dx11) );
-				fragMem[1] = makeRef(fs_clear1_dx11, sizeof(fs_clear1_dx11) );
-				fragMem[2] = makeRef(fs_clear2_dx11, sizeof(fs_clear2_dx11) );
-				fragMem[3] = makeRef(fs_clear3_dx11, sizeof(fs_clear3_dx11) );
+
+				const Mem mem[] =
+				{
+					{ fs_clear0_dx11, sizeof(fs_clear0_dx11) },
+					{ fs_clear1_dx11, sizeof(fs_clear1_dx11) },
+					{ fs_clear2_dx11, sizeof(fs_clear2_dx11) },
+					{ fs_clear3_dx11, sizeof(fs_clear3_dx11) },
+					{ fs_clear4_dx11, sizeof(fs_clear4_dx11) },
+					{ fs_clear5_dx11, sizeof(fs_clear5_dx11) },
+					{ fs_clear6_dx11, sizeof(fs_clear6_dx11) },
+					{ fs_clear7_dx11, sizeof(fs_clear7_dx11) },
+				};
+
+				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				{
+					fragMem[ii] = makeRef(mem[ii].data, mem[ii].size);
+				}
 			}
-			else if (RendererType::OpenGL == g_caps.rendererType)
+			else if (RendererType::OpenGLES == g_caps.rendererType
+				 ||  RendererType::OpenGL   == g_caps.rendererType)
 			{
 				vsh = createShader(makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) ) );
-				fragMem[0] = makeRef(fs_clear0_glsl, sizeof(fs_clear0_glsl) );
-				fragMem[1] = makeRef(fs_clear1_glsl, sizeof(fs_clear1_glsl) );
-				fragMem[2] = makeRef(fs_clear2_glsl, sizeof(fs_clear2_glsl) );
-				fragMem[3] = makeRef(fs_clear3_glsl, sizeof(fs_clear3_glsl) );
+
+				const Mem mem[] =
+				{
+					{ fs_clear0_glsl, sizeof(fs_clear0_glsl) },
+					{ fs_clear1_glsl, sizeof(fs_clear1_glsl) },
+					{ fs_clear2_glsl, sizeof(fs_clear2_glsl) },
+					{ fs_clear3_glsl, sizeof(fs_clear3_glsl) },
+					{ fs_clear4_glsl, sizeof(fs_clear4_glsl) },
+					{ fs_clear5_glsl, sizeof(fs_clear5_glsl) },
+					{ fs_clear6_glsl, sizeof(fs_clear6_glsl) },
+					{ fs_clear7_glsl, sizeof(fs_clear7_glsl) },
+				};
+
+				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				{
+					fragMem[ii] = makeRef(mem[ii].data, mem[ii].size);
+				}
 			}
 
 			for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 			{
 				ShaderHandle fsh = createShader(fragMem[ii]);
 				m_program[ii] = createProgram(vsh, fsh);
+				BX_CHECK(isValid(m_program[ii]), "Failed to create clear quad program.");
 				destroyShader(fsh);
 			}
 
 			destroyShader(vsh);
 
 			m_vb = s_ctx->createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
-
-			const Memory* mem = alloc(6*sizeof(uint16_t) );
-			uint16_t* indices = (uint16_t*)mem->data;
-			indices[0] = 0;
-			indices[1] = 1;
-			indices[2] = 2;
-			indices[3] = 2;
-			indices[4] = 3;
-			indices[5] = 0;
-			m_ib = s_ctx->createIndexBuffer(mem);
 		}
 	}
 
@@ -550,12 +591,9 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		if (BX_ENABLED(BGFX_CONFIG_CLEAR_QUAD)
-		&&  RendererType::OpenGLES  != g_caps.rendererType
-		&&  RendererType::Direct3D9 != g_caps.rendererType
-		&&  RendererType::Null      != g_caps.rendererType)
+		if (RendererType::Null != g_caps.rendererType)
 		{
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+			for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 			{
 				if (isValid(m_program[ii]) )
 				{
@@ -563,7 +601,7 @@ namespace bgfx
 					m_program[ii].idx = invalidHandle;
 				}
 			}
-			destroyIndexBuffer(m_ib);
+
 			s_ctx->destroyTransientVertexBuffer(m_vb);
 		}
 	}
@@ -944,6 +982,14 @@ namespace bgfx
 			m_rect[ii].m_height = 1;
 		}
 
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_clearColor); ++ii)
+		{
+			m_clearColor[ii][0] = 0.0f;
+			m_clearColor[ii][1] = 0.0f;
+			m_clearColor[ii][2] = 0.0f;
+			m_clearColor[ii][3] = 1.0f;
+		}
+
 		m_declRef.init();
 
 		CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RendererInit);
@@ -1139,6 +1185,11 @@ namespace bgfx
 		memcpy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
 		memcpy(m_submit->m_view, m_view, sizeof(m_view) );
 		memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
+		if (m_clearColorDirty > 0)
+		{
+			--m_clearColorDirty;
+			memcpy(m_submit->m_clearColor, m_clearColor, sizeof(m_clearColor) );
+		}
 		m_submit->finish();
 
 		Frame* temp = m_render;
@@ -2440,6 +2491,38 @@ again:
 		s_ctx->destroyUniform(_handle);
 	}
 
+	void setClearColor(uint8_t _index, uint32_t _rgba)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+
+		const uint8_t rr = _rgba>>24;
+		const uint8_t gg = _rgba>>16;
+		const uint8_t bb = _rgba>> 8;
+		const uint8_t aa = _rgba>> 0;
+
+		float rgba[4] =
+		{
+			rr * 1.0f/255.0f,
+			gg * 1.0f/255.0f,
+			bb * 1.0f/255.0f,
+			aa * 1.0f/255.0f,
+		};
+		s_ctx->setClearColor(_index, rgba);
+	}
+
+	void setClearColor(uint8_t _index, float _r, float _g, float _b, float _a)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		float rgba[4] = { _r, _g, _b, _a };
+		s_ctx->setClearColor(_index, rgba);
+	}
+
+	void setClearColor(uint8_t _index, const float _rgba[4])
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setClearColor(_index, _rgba);
+	}
+
 	void setViewName(uint8_t _id, const char* _name)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -2474,6 +2557,12 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setViewClear(_id, _flags, _rgba, _depth, _stencil);
+	}
+
+	void setViewClear(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 	}
 
 	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -3096,6 +3185,11 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle)
 	bgfx::destroyUniform(handle.cpp);
 }
 
+BGFX_C_API void bgfx_clear_color(uint8_t _index, const float _rgba[4])
+{
+	bgfx::setClearColor(_index, _rgba);
+}
+
 BGFX_C_API void bgfx_set_view_name(uint8_t _id, const char* _name)
 {
 	bgfx::setViewName(_id, _name);
@@ -3124,6 +3218,11 @@ BGFX_C_API void bgfx_set_view_scissor_mask(uint32_t _viewMask, uint16_t _x, uint
 BGFX_C_API void bgfx_set_view_clear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 {
 	bgfx::setViewClear(_id, _flags, _rgba, _depth, _stencil);
+}
+
+BGFX_C_API void bgfx_set_view_clear_mrt7(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
+{
+	bgfx::setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 }
 
 BGFX_C_API void bgfx_set_view_clear_mask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
