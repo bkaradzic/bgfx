@@ -232,18 +232,25 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Enable debug text.
 	bgfx::setDebug(debug);
 
-	// Set view 0 clear state.
+	// Set clear color palette for index 0
+	bgfx::setClearColor(0, UINT32_C(0x00000000) );
+
+	// Set clear color palette for index 1
+	bgfx::setClearColor(1, UINT32_C(0x303030ff) );
+
+	// Set geometry pass view clear state.
 	bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
 		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
-		, 0x303030ff
 		, 1.0f
 		, 0
+		, 1
 		);
 
+	// Set light pass view clear state.
 	bgfx::setViewClear(RENDER_PASS_LIGHT_ID
 		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
-		, 0
 		, 1.0f
+		, 0
 		, 0
 		);
 
@@ -439,7 +446,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Setup views
 			float vp[16];
-			float invvp[16];
+			float invMvp[16];
 			{
 				bgfx::setViewRectMask(0
 					| RENDER_PASS_GEOMETRY_BIT
@@ -459,7 +466,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
 
 				bx::mtxMul(vp, view, proj);
-				bx::mtxInverse(invvp, vp);
+				bx::mtxInverse(invMvp, vp);
 
 				bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 				bgfx::setViewTransformMask(0
@@ -644,7 +651,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					// Draw light.
 					bgfx::setUniform(u_lightPosRadius, &lightPosRadius);
 					bgfx::setUniform(u_lightRgbInnerR, lightRgbInnerR);
-					bgfx::setUniform(u_mtx, invvp);
+					bgfx::setUniform(u_mtx, invMvp);
 					const uint16_t scissorHeight = uint16_t(y1-y0);
 					bgfx::setScissor(uint16_t(x0), height-scissorHeight-uint16_t(y0), uint16_t(x1-x0), scissorHeight);
 					bgfx::setTexture(0, s_normal, gbuffer, 1);
