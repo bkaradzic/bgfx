@@ -776,7 +776,7 @@ namespace bgfx
 				, m_params.BackBufferHeight
 				, rect.Pitch
 				, &data[point.y*rect.Pitch+point.x*bytesPerPixel]
-			, m_params.BackBufferHeight*rect.Pitch
+				, m_params.BackBufferHeight*rect.Pitch
 				, false
 				);
 
