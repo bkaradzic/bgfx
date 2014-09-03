@@ -20,13 +20,12 @@ function bgfxProject(_name, _uuid, _kind, _defines)
 		}
 
 		defines {
-	--		"BGFX_CONFIG_RENDERER_OPENGL=1",
+			_defines,
 		}
 
 		configuration { "Debug" }
 			defines {
 				"BGFX_CONFIG_DEBUG=1",
-				_defines,
 			}
 
 		configuration { "android*" }

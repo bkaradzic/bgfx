@@ -503,8 +503,14 @@ namespace bgfx
 			
 			struct Mem
 			{
+				Mem(const void* _data, size_t _size)
+					: data(_data)
+					, size(_size)
+				{
+				}
+
 				const void*  data;
-				const size_t size;
+				size_t size;
 			};
 
 			const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
@@ -514,14 +520,14 @@ namespace bgfx
 
 				const Mem mem[] =
 				{
-					{ fs_clear0_dx9, sizeof(fs_clear0_dx9) },
-					{ fs_clear1_dx9, sizeof(fs_clear1_dx9) },
-					{ fs_clear2_dx9, sizeof(fs_clear2_dx9) },
-					{ fs_clear3_dx9, sizeof(fs_clear3_dx9) },
-					{ fs_clear4_dx9, sizeof(fs_clear4_dx9) },
-					{ fs_clear5_dx9, sizeof(fs_clear5_dx9) },
-					{ fs_clear6_dx9, sizeof(fs_clear6_dx9) },
-					{ fs_clear7_dx9, sizeof(fs_clear7_dx9) },
+					Mem(fs_clear0_dx9, sizeof(fs_clear0_dx9) ),
+					Mem(fs_clear1_dx9, sizeof(fs_clear1_dx9) ),
+					Mem(fs_clear2_dx9, sizeof(fs_clear2_dx9) ),
+					Mem(fs_clear3_dx9, sizeof(fs_clear3_dx9) ),
+					Mem(fs_clear4_dx9, sizeof(fs_clear4_dx9) ),
+					Mem(fs_clear5_dx9, sizeof(fs_clear5_dx9) ),
+					Mem(fs_clear6_dx9, sizeof(fs_clear6_dx9) ),
+					Mem(fs_clear7_dx9, sizeof(fs_clear7_dx9) ),
 				};
 
 				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
@@ -535,14 +541,14 @@ namespace bgfx
 
 				const Mem mem[] =
 				{
-					{ fs_clear0_dx11, sizeof(fs_clear0_dx11) },
-					{ fs_clear1_dx11, sizeof(fs_clear1_dx11) },
-					{ fs_clear2_dx11, sizeof(fs_clear2_dx11) },
-					{ fs_clear3_dx11, sizeof(fs_clear3_dx11) },
-					{ fs_clear4_dx11, sizeof(fs_clear4_dx11) },
-					{ fs_clear5_dx11, sizeof(fs_clear5_dx11) },
-					{ fs_clear6_dx11, sizeof(fs_clear6_dx11) },
-					{ fs_clear7_dx11, sizeof(fs_clear7_dx11) },
+					Mem(fs_clear0_dx11, sizeof(fs_clear0_dx11) ),
+					Mem(fs_clear1_dx11, sizeof(fs_clear1_dx11) ),
+					Mem(fs_clear2_dx11, sizeof(fs_clear2_dx11) ),
+					Mem(fs_clear3_dx11, sizeof(fs_clear3_dx11) ),
+					Mem(fs_clear4_dx11, sizeof(fs_clear4_dx11) ),
+					Mem(fs_clear5_dx11, sizeof(fs_clear5_dx11) ),
+					Mem(fs_clear6_dx11, sizeof(fs_clear6_dx11) ),
+					Mem(fs_clear7_dx11, sizeof(fs_clear7_dx11) ),
 				};
 
 				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
@@ -557,14 +563,14 @@ namespace bgfx
 
 				const Mem mem[] =
 				{
-					{ fs_clear0_glsl, sizeof(fs_clear0_glsl) },
-					{ fs_clear1_glsl, sizeof(fs_clear1_glsl) },
-					{ fs_clear2_glsl, sizeof(fs_clear2_glsl) },
-					{ fs_clear3_glsl, sizeof(fs_clear3_glsl) },
-					{ fs_clear4_glsl, sizeof(fs_clear4_glsl) },
-					{ fs_clear5_glsl, sizeof(fs_clear5_glsl) },
-					{ fs_clear6_glsl, sizeof(fs_clear6_glsl) },
-					{ fs_clear7_glsl, sizeof(fs_clear7_glsl) },
+					Mem(fs_clear0_glsl, sizeof(fs_clear0_glsl) ),
+					Mem(fs_clear1_glsl, sizeof(fs_clear1_glsl) ),
+					Mem(fs_clear2_glsl, sizeof(fs_clear2_glsl) ),
+					Mem(fs_clear3_glsl, sizeof(fs_clear3_glsl) ),
+					Mem(fs_clear4_glsl, sizeof(fs_clear4_glsl) ),
+					Mem(fs_clear5_glsl, sizeof(fs_clear5_glsl) ),
+					Mem(fs_clear6_glsl, sizeof(fs_clear6_glsl) ),
+					Mem(fs_clear7_glsl, sizeof(fs_clear7_glsl) ),
 				};
 
 				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
