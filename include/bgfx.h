@@ -1005,7 +1005,7 @@ namespace bgfx
 	///   BGFX_STATE_CULL_* - Backface culling mode.
 	///   BGFX_STATE_RGB_WRITE - Enable RGB write.
 	///   BGFX_STATE_MSAA - Enable MSAA.
-	///   BGFX_STATE_PT_[LINES/POINTS] - Primitive type.
+	///   BGFX_STATE_PT_[TRISTRIP/LINES/POINTS] - Primitive type.
 	///
 	/// @param _rgba Sets blend factor used by BGFX_STATE_BLEND_FACTOR and
 	///   BGFX_STATE_BLEND_INV_FACTOR blend modes.
