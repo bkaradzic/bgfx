@@ -11,7 +11,7 @@ Supported rendering backends:
  * Direct3D 9
  * Direct3D 11
  * OpenGL 2.1
- * OpenGL 3.1
+ * OpenGL 3.1+
  * OpenGL ES 2
  * OpenGL ES 3.1
 
@@ -45,6 +45,12 @@ is a powerful 2D game engine with live reloading of code and assets, a friendly
 scripting language, and an efficient command-line workflow. Here is video where
 they explain why they choose bgfx over alternatives:  
 <a href="https://www.youtube.com/watch?feature=player_embedded&v=PHY_XHkMGIM&t=1m53s" target="_blank"><img src="https://img.youtube.com/vi/PHY_XHkMGIM/0.jpg" alt="Why did you choose bgfx?" width="240" height="180" border="10" /></a>
+
+https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.
+
+https://github.com/taylor001/crown Crown is a general purpose data-driven game
+engine, written from scratch with a minimalistic and data-oriented design
+philosophy in mind.
 
 Examples
 --------
@@ -400,15 +406,18 @@ build errors.
 Debugging
 ---------
 
-| Name         | OS            | DX9  | DX11 |  GL  | GLES |
-|:-------------|:--------------|:----:|:----:|:----:|:----:|
-| CodeXL       | Win/Linux     |      |      |  x   |      |
-| IntelGPA     | Win/Linux/OSX |   x  |  x   |      |   x  |
-| RenderDoc    | Win           |      |  x   |      |      |
+| Name      | OS            | DX9  | DX11 |  GL  | GLES | Source |
+|:----------|:--------------|:----:|:----:|:----:|:----:|:------:|
+| APITrace  | Linux/OSX/Win |   x  |  x   |  x   |   x  |    x   |
+| CodeXL    | Linux/Win     |      |      |  x   |      |        |
+| IntelGPA  | Linux/OSX/Win |   x  |  x   |      |   x  |        |
+| RenderDoc | Win           |      |  x   |      |      |    x   |
 
+[APITrace](https://apitrace.github.io/)  
 [CodeXL](http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/)  
 [IntelGPA](https://software.intel.com/en-us/vcsource/tools/intel-gpa)  
 [RenderDoc](http://cryengine.com/renderdoc)
+
 
 SDL, GLFW, etc.
 ---------------
