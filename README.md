@@ -52,6 +52,10 @@ https://github.com/taylor001/crown Crown is a general purpose data-driven game
 engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.
 
+https://d-gamedev-team.github.io/gfm/ - GFM is a feature-rich library to ease
+the creation of video games / multimedia applications with the D programming
+language.
+
 Examples
 --------
 
