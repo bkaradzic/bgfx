@@ -91,11 +91,27 @@ namespace bgfx
 		BX_TRACE("resize context");
 	}
 
-	void GlContext::swap()
+	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
 	{
+		BX_CHECK(false, "Shouldn't be called!");
+		return NULL;
+	}
+
+	void GlContext::destorySwapChain(SwapChainGL*  /*_swapChain*/)
+	{
+		BX_CHECK(false, "Shouldn't be called!");
+	}
+
+	void GlContext::swap(SwapChainGL* _swapChain)
+	{
+		BX_CHECK(NULL == _swapChain, "Shouldn't be called!"); BX_UNUSED(_swapChain);
 		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
 		EAGLContext* context = (EAGLContext*)m_context;
 		[context presentRenderbuffer:GL_RENDERBUFFER];
+	}
+
+	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	{
 	}
 
 	void GlContext::import()
