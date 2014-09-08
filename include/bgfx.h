@@ -815,7 +815,13 @@ namespace bgfx
 	///
 	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures = false);
 
-	/// Create frame buffer.
+	/// Create frame buffer for multiple window rendering.
+	///
+	/// @param _nwh OS' target native window handle.
+	/// @param _width Window back buffer width.
+	/// @param _height Window back buffer height.
+	/// @param _depthFormat Window back buffer depth format.
+	///
 	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat = TextureFormat::UnknownDepth);
 
 	/// Destroy frame buffer.
