@@ -297,7 +297,7 @@ namespace bgfx
 		SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(_nwh);
 
 		int result = SetPixelFormat(swapChain->m_hdc, m_pixelFormat, &m_pfd);
-		BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() );
+		BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() ); BX_UNUSED(result);
 
 		swapChain->m_context = wglCreateContextAttribsARB(swapChain->m_hdc, m_context, m_contextAttrs);
 		BX_CHECK(NULL != swapChain->m_context, "Create swap chain failed: %x", glGetError() );
