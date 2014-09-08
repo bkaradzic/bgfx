@@ -815,6 +815,9 @@ namespace bgfx
 	///
 	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures = false);
 
+	/// Create frame buffer.
+	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat = TextureFormat::UnknownDepth);
+
 	/// Destroy frame buffer.
 	void destroyFrameBuffer(FrameBufferHandle _handle);
 
@@ -971,6 +974,9 @@ namespace bgfx
 	///   frame buffer handle will draw primitives from this view into
 	///   default back buffer.
 	///
+	/// NOTE:
+	///   Not persistent after bgfx::reset call.
+	///
 	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle);
 
 	/// Set view frame buffer for multiple views.
@@ -979,6 +985,9 @@ namespace bgfx
 	/// @param _handle Frame buffer handle. Passing BGFX_INVALID_HANDLE as
 	///   frame buffer handle will draw primitives from this view into
 	///   default back buffer.
+	///
+	/// NOTE:
+	///   Not persistent after bgfx::reset call.
 	///
 	void setViewFrameBufferMask(uint32_t _viewMask, FrameBufferHandle _handle);
 

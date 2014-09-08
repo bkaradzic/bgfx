@@ -273,18 +273,22 @@ namespace bgfx
 	struct FrameBufferD3D11
 	{
 		FrameBufferD3D11()
-			: m_num(0)
+			: m_denseIdx(UINT16_MAX)
+			, m_num(0)
 		{
 		}
 
 		void create(uint8_t _num, const TextureHandle* _handles);
-		void destroy();
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		uint16_t destroy();
 		void resolve();
 		void clear(const Clear& _clear, const float _palette[][4]);
 
 		ID3D11RenderTargetView* m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11DepthStencilView* m_dsv;
+		IDXGISwapChain* m_swapChain;
+		uint16_t m_denseIdx;
 		uint8_t m_num;
 	};
 

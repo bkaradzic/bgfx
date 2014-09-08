@@ -815,19 +815,24 @@ namespace bgfx
 	struct FrameBufferGL
 	{
 		FrameBufferGL()
-			: m_num(0)
+			: m_swapChain(NULL)
+			, m_denseIdx(UINT16_MAX)
+			, m_num(0)
 		{
 			memset(m_fbo, 0, sizeof(m_fbo) );
 		}
 
 		void create(uint8_t _num, const TextureHandle* _handles);
-		void destroy();
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		uint16_t destroy();
 		void resolve();
 
-		uint8_t m_num;
+		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];
 		uint32_t m_width;
 		uint32_t m_height;
+		uint16_t m_denseIdx;
+		uint8_t m_num;
 	};
 
 	struct ProgramGL

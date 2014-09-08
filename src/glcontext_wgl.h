@@ -15,7 +15,7 @@ namespace bgfx
 typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
 typedef BOOL (APIENTRYP PFNWGLMAKECURRENTPROC) (HDC hdc, HGLRC hglrc);
 typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTPROC) (HDC hdc);
-typedef BOOL (APIENTRYP PFNWGLDELETECONTEXTPROC) (HGLRC hglrc);
+typedef BOOL  (APIENTRYP PFNWGLDELETECONTEXTPROC) (HGLRC hglrc);
 //
 typedef GLenum (APIENTRYP PFNGLGETERRORPROC) (void);
 typedef void (APIENTRYP PFNGLREADPIXELSPROC) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
@@ -56,6 +56,8 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 	extern PFNWGLCREATECONTEXTPROC wglCreateContext;
 	extern PFNWGLDELETECONTEXTPROC wglDeleteContext;
 
+	struct SwapChainGL;
+
 	struct GlContext
 	{
 		GlContext()
@@ -68,7 +70,12 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		void create(uint32_t _width, uint32_t _height);
 		void destroy();
 		void resize(uint32_t _width, uint32_t _height, bool _vsync);
-		void swap();
+
+		SwapChainGL* createSwapChain(void* _nwh);
+		void destorySwapChain(SwapChainGL*  _swapChain);
+		void swap(SwapChainGL* _swapChain = NULL);
+		void makeCurrent(SwapChainGL* _swapChain = NULL);
+
 		void import();
 
 		bool isValid() const
@@ -76,6 +83,9 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 			return NULL != m_context;
 		}
 
+		int32_t m_contextAttrs[9];
+		int m_pixelFormat;
+		PIXELFORMATDESCRIPTOR m_pfd;
 		void* m_opengl32dll;
 		HGLRC m_context;
 		HDC m_hdc;

@@ -699,12 +699,13 @@ namespace bgfx
 		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
 		if (invalidHandle != m_key.m_program)
 		{
-			m_key.m_depth = _depth;
-			m_key.m_view = _id;
-			m_key.m_seq = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
+			m_key.m_depth  = _depth;
+			m_key.m_view   = _id;
+			m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
 			s_ctx->m_seq[_id]++;
+
 			uint64_t key = m_key.encodeDraw();
-			m_sortKeys[m_num] = key;
+			m_sortKeys[m_num]   = key;
 			m_sortValues[m_num] = m_numRenderItems;
 			++m_num;
 
@@ -749,11 +750,12 @@ namespace bgfx
 				viewMask >>= ntz;
 				id += ntz;
 
-				m_key.m_view = id;
-				m_key.m_seq = s_ctx->m_seq[id] & s_ctx->m_seqMask[id];
+				m_key.m_view   = id;
+				m_key.m_seq    = s_ctx->m_seq[id] & s_ctx->m_seqMask[id];
 				s_ctx->m_seq[id]++;
+
 				uint64_t key = m_key.encodeDraw();
-				m_sortKeys[m_num] = key;
+				m_sortKeys[m_num]   = key;
 				m_sortValues[m_num] = m_numRenderItems;
 				++m_num;
 			}
@@ -794,12 +796,13 @@ namespace bgfx
 		m_key.m_program = _handle.idx;
 		if (invalidHandle != m_key.m_program)
 		{
-			m_key.m_depth = 0;
-			m_key.m_view = _id;
-			m_key.m_seq = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
+			m_key.m_depth  = 0;
+			m_key.m_view   = _id;
+			m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
 			s_ctx->m_seq[_id]++;
+
 			uint64_t key = m_key.encodeCompute();
-			m_sortKeys[m_num] = key;
+			m_sortKeys[m_num]   = key;
 			m_sortValues[m_num] = m_numRenderItems;
 			++m_num;
 
@@ -1094,7 +1097,6 @@ namespace bgfx
 			CHECK_HANDLE_LEAK(m_textureHandle);
 			CHECK_HANDLE_LEAK(m_frameBufferHandle);
 			CHECK_HANDLE_LEAK(m_uniformHandle);
-
 #undef CHECK_HANDLE_LEAK
 		}
 	}
@@ -1781,16 +1783,38 @@ again:
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
-					uint8_t num;
-					_cmdbuf.read(num);
+					bool window;
+					_cmdbuf.read(window);
 
-					TextureHandle textureHandles[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-					for (uint32_t ii = 0; ii < num; ++ii)
+					if (window)
 					{
-						_cmdbuf.read(textureHandles[ii]);
-					}
+						void* nwh;
+						_cmdbuf.read(nwh);
 
-					m_renderCtx->createFrameBuffer(handle, num, textureHandles);
+						uint16_t width;
+						_cmdbuf.read(width);
+
+						uint16_t height;
+						_cmdbuf.read(height);
+
+						TextureFormat::Enum depthFormat;
+						_cmdbuf.read(depthFormat);
+
+						m_renderCtx->createFrameBuffer(handle, nwh, width, height, depthFormat);
+					}
+					else
+					{
+						uint8_t num;
+						_cmdbuf.read(num);
+
+						TextureHandle textureHandles[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+						for (uint32_t ii = 0; ii < num; ++ii)
+						{
+							_cmdbuf.read(textureHandles[ii]);
+						}
+
+						m_renderCtx->createFrameBuffer(handle, num, textureHandles);
+					}
 				}
 				break;
 
@@ -2477,6 +2501,12 @@ again:
 		}
 
 		return handle;
+	}
+
+	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->createFrameBuffer(_nwh, _width, _height, _depthFormat);
 	}
 
 	void destroyFrameBuffer(FrameBufferHandle _handle)

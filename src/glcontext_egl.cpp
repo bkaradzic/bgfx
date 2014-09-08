@@ -237,10 +237,26 @@ EGL_IMPORT
 		eglSwapInterval(m_display, _vsync ? 1 : 0);
 	}
 
-	void GlContext::swap()
+	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
 	{
+		BX_CHECK(false, "Shouldn't be called!");
+		return NULL;
+	}
+
+	void GlContext::destorySwapChain(SwapChainGL*  /*_swapChain*/)
+	{
+		BX_CHECK(false, "Shouldn't be called!");
+	}
+
+	void GlContext::swap(SwapChainGL* _swapChain)
+	{
+		BX_CHECK(NULL == _swapChain, "Shouldn't be called!"); BX_UNUSED(_swapChain);
 		eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 		eglSwapBuffers(m_display, m_surface);
+	}
+
+	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	{
 	}
 
 	void GlContext::import()

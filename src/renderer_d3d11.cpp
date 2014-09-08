@@ -515,7 +515,7 @@ namespace bgfx
 			};
 
 			memset(&m_scd, 0, sizeof(m_scd) );
-			m_scd.BufferDesc.Width = BGFX_DEFAULT_WIDTH;
+			m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
 			m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
 			m_scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			m_scd.BufferDesc.RefreshRate.Numerator = 60;
@@ -572,6 +572,8 @@ namespace bgfx
 										, &m_swapChain
 										);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+			m_numWindows = 1;
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
@@ -792,9 +794,26 @@ namespace bgfx
 			m_frameBuffers[_handle.idx].create(_num, _textureHandles);
 		}
 
+		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
+		{
+			uint16_t denseIdx = m_numWindows++;
+			m_windows[denseIdx] = _handle;
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat);
+		}
+
 		void destroyFrameBuffer(FrameBufferHandle _handle) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].destroy();
+			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
+			if (UINT16_MAX != denseIdx)
+			{
+				--m_numWindows;
+				if (m_numWindows > 1)
+				{
+					FrameBufferHandle handle = m_windows[m_numWindows];
+					m_windows[denseIdx] = handle;
+					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
+				}
+			}
 		}
 
 		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) BX_OVERRIDE
@@ -1013,6 +1032,10 @@ namespace bgfx
 			if (NULL != m_swapChain)
 			{
 				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
+				for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+				{
+					DX_CHECK(m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, 0) );
+				}
 				DX_CHECK(m_swapChain->Present(syncInterval, 0) );
 			}
 		}
@@ -1820,7 +1843,11 @@ namespace bgfx
 		IDXGIAdapter* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
 		IDXGIFactory* m_factory;
+
 		IDXGISwapChain* m_swapChain;
+		uint16_t m_numWindows;
+		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+
 		ID3D11Device* m_device;
 		ID3D11DeviceContext* m_deviceCtx;
 		ID3D11RenderTargetView* m_backBufferColor;
@@ -2442,7 +2469,8 @@ namespace bgfx
 		{
 			m_rtv[ii] = NULL;
 		}
-		m_dsv = NULL;
+		m_dsv       = NULL;
+		m_swapChain = NULL;
 
 		m_num = 0;
 		for (uint32_t ii = 0; ii < _num; ++ii)
@@ -2475,7 +2503,34 @@ namespace bgfx
 		}
 	}
 
-	void FrameBufferD3D11::destroy()
+	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
+	{
+		BX_UNUSED(_depthFormat);
+
+		DXGI_SWAP_CHAIN_DESC scd;
+		memcpy(&scd, &s_renderD3D11->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
+		scd.BufferDesc.Width  = _width;
+		scd.BufferDesc.Height = _height;
+		scd.OutputWindow = (HWND)_nwh;
+
+		HRESULT hr;
+		hr = s_renderD3D11->m_factory->CreateSwapChain(s_renderD3D11->m_device
+			, &scd
+			, &m_swapChain
+			);
+		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+		ID3D11Resource* ptr;
+		DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&ptr) );
+		DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(ptr, NULL, &m_rtv[0]) );
+		DX_RELEASE(ptr, 0);
+		m_srv[0]   = NULL;
+		m_dsv      = NULL;
+		m_denseIdx = _denseIdx;
+		m_num      = 1;
+	}
+
+	uint16_t FrameBufferD3D11::destroy()
 	{
 		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 		{
@@ -2484,8 +2539,14 @@ namespace bgfx
 		}
 
 		DX_RELEASE(m_dsv, 0);
+		DX_RELEASE(m_swapChain, 0);
 
 		m_num = 0;
+
+		uint16_t denseIdx = m_denseIdx;
+		m_denseIdx = UINT16_MAX;
+		
+		return denseIdx;
 	}
 
 	void FrameBufferD3D11::resolve()

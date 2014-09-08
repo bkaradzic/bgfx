@@ -640,6 +640,10 @@ namespace bgfx
 	};
 
 #define SORT_KEY_RENDER_DRAW UINT64_C(0x0000000800000000)
+
+	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS   <= 32);
+	BX_STATIC_ASSERT( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // must be power of 2
+
 	struct SortKey
 	{
 		uint64_t encodeDraw()
@@ -1422,14 +1426,14 @@ namespace bgfx
 
 		void resetFreeHandles()
 		{
-			m_numFreeIndexBufferHandles = 0;
-			m_numFreeVertexDeclHandles = 0;
+			m_numFreeIndexBufferHandles  = 0;
+			m_numFreeVertexDeclHandles   = 0;
 			m_numFreeVertexBufferHandles = 0;
-			m_numFreeShaderHandles = 0;
-			m_numFreeProgramHandles = 0;
-			m_numFreeTextureHandles = 0;
-			m_numFreeFrameBufferHandles = 0;
-			m_numFreeUniformHandles = 0;
+			m_numFreeShaderHandles       = 0;
+			m_numFreeProgramHandles      = 0;
+			m_numFreeTextureHandles      = 0;
+			m_numFreeFrameBufferHandles  = 0;
+			m_numFreeUniformHandles      = 0;
 		}
 
 		SortKey m_key;
@@ -1479,6 +1483,7 @@ namespace bgfx
 		uint16_t m_numFreeTextureHandles;
 		uint16_t m_numFreeFrameBufferHandles;
 		uint16_t m_numFreeUniformHandles;
+		uint16_t m_numFreeWindowHandles;
 
 		IndexBufferHandle m_freeIndexBufferHandle[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexDeclHandle m_freeVertexDeclHandle[BGFX_CONFIG_MAX_VERTEX_DECLS];
@@ -1696,6 +1701,7 @@ namespace bgfx
 		virtual void updateTextureEnd() = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) = 0;
+		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) = 0;
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
@@ -2464,25 +2470,50 @@ namespace bgfx
 		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles) )
 		{
 			FrameBufferHandle handle = { m_frameBufferHandle.alloc() };
-			BX_WARN(isValid(handle), "Failed to allocate render target handle.");
+			BX_WARN(isValid(handle), "Failed to allocate frame buffer handle.");
 
 			if (isValid(handle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFrameBuffer);
 				cmdbuf.write(handle);
+				cmdbuf.write(false);
 				cmdbuf.write(_num);
 
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
-				memset(ref.m_th, 0xff, sizeof(ref.m_th) );
+				ref.m_window = false;
+				memset(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
 					TextureHandle handle = _handles[ii];
 
 					cmdbuf.write(handle);
 
-					ref.m_th[ii] = handle;
+					ref.un.m_th[ii] = handle;
 					textureIncRef(handle);
 				}
+			}
+
+			return handle;
+		}
+
+		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat) )
+		{
+			FrameBufferHandle handle = { m_frameBufferHandle.alloc() };
+			BX_WARN(isValid(handle), "Failed to allocate frame buffer handle.");
+
+			if (isValid(handle) )
+			{
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFrameBuffer);
+				cmdbuf.write(handle);
+				cmdbuf.write(true);
+				cmdbuf.write(_nwh);
+				cmdbuf.write(_width);
+				cmdbuf.write(_height);
+				cmdbuf.write(_depthFormat);
+
+				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
+				ref.m_window = true;
+				ref.un.m_nwh = _nwh;
 			}
 
 			return handle;
@@ -2495,12 +2526,15 @@ namespace bgfx
 			m_submit->free(_handle);
 
 			FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
-			for (uint32_t ii = 0; ii < BX_COUNTOF(ref.m_th); ++ii)
+			if (!ref.m_window)
 			{
-				TextureHandle th = ref.m_th[ii];
-				if (isValid(th) )
+				for (uint32_t ii = 0; ii < BX_COUNTOF(ref.un.m_th); ++ii)
 				{
-					textureDecRef(th);
+					TextureHandle th = ref.un.m_th[ii];
+					if (isValid(th) )
+					{
+						textureDecRef(th);
+					}
 				}
 			}
 		}
@@ -2614,7 +2648,7 @@ namespace bgfx
 			Rect& rect = m_rect[_id];
 			rect.m_x = _x;
 			rect.m_y = _y;
-			rect.m_width = bx::uint16_max(_width, 1);
+			rect.m_width  = bx::uint16_max(_width,  1);
 			rect.m_height = bx::uint16_max(_height, 1);
 		}
 
@@ -2634,7 +2668,7 @@ namespace bgfx
 			Rect& scissor = m_scissor[_id];
 			scissor.m_x = _x;
 			scissor.m_y = _y;
-			scissor.m_width = _width;
+			scissor.m_width  = _width;
 			scissor.m_height = _height;
 		}
 
@@ -2850,7 +2884,9 @@ namespace bgfx
 			TextureHandle textureHandle = BGFX_INVALID_HANDLE;
 			if (isValid(_handle) )
 			{
-				textureHandle = m_frameBufferRef[_handle.idx].m_th[_attachment];
+				const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+				BX_CHECK(!ref.m_window, "Can't sample window frame buffer.");
+				textureHandle = ref.un.m_th[_attachment];
 				BX_CHECK(isValid(textureHandle), "Frame buffer texture %d is invalid.", _attachment);
 			}
 
@@ -2878,7 +2914,9 @@ namespace bgfx
 			TextureHandle textureHandle = BGFX_INVALID_HANDLE;
 			if (isValid(_handle) )
 			{
-				textureHandle = m_frameBufferRef[_handle.idx].m_th[_attachment];
+				const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+				BX_CHECK(!ref.m_window, "Can't sample window frame buffer.");
+				textureHandle = ref.un.m_th[_attachment];
 				BX_CHECK(isValid(textureHandle), "Frame buffer texture %d is invalid.", _attachment);
 			}
 
@@ -3014,7 +3052,12 @@ namespace bgfx
 
 		struct FrameBufferRef
 		{
-			TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			union un
+			{
+				TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+				void* m_nwh;
+			} un;
+			bool m_window;
 		};
 
 		typedef stl::unordered_map<stl::string, UniformHandle> UniformHashMap;

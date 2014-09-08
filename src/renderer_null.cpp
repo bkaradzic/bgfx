@@ -121,6 +121,10 @@ namespace bgfx
 		{
 		}
 
+		void createFrameBuffer(FrameBufferHandle /*_handle*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_depthFormat*/) BX_OVERRIDE
+		{
+		}
+
 		void destroyFrameBuffer(FrameBufferHandle /*_handle*/) BX_OVERRIDE
 		{
 		}
