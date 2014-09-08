@@ -822,6 +822,9 @@ namespace bgfx
 	/// @param _height Window back buffer height.
 	/// @param _depthFormat Window back buffer depth format.
 	///
+	/// NOTE:
+	///   Frame buffer cannnot be used for sampling.
+	///
 	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat = TextureFormat::UnknownDepth);
 
 	/// Destroy frame buffer.
