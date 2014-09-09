@@ -40,9 +40,6 @@ defines {
 dofile (BX_DIR .. "premake/toolchain.lua")
 toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
 
-function copyLib()
-end
-
 function exampleProject(_name, _uuid)
 
 	project ("example-" .. _name)
