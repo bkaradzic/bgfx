@@ -77,6 +77,4 @@ function bgfxProject(_name, _uuid, _kind, _defines)
 		}
 
 		configuration {}
-
-		copyLib()
 end
