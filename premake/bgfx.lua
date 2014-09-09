@@ -34,7 +34,7 @@ function bgfxProject(_name, _uuid, _kind, _defines)
 				"GLESv2",
 			}
 
-		configuration { "windows", "not vs2012" }
+		configuration { "windows", "not vs201*" }
 			includedirs {
 				"$(DXSDK_DIR)/include",
 			}

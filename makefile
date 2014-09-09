@@ -20,6 +20,7 @@ all:
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib vs2008
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib vs2010
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib vs2012
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib vs2013
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib --gcc=mingw gmake
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib --gcc=linux-gcc gmake
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib --gcc=osx gmake
@@ -109,6 +110,9 @@ vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
 
 .build/projects/vs2012:
 	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib vs2012
+
+.build/projects/vs2013:
+	$(PREMAKE4) --file=premake/premake4.lua --with-tools --with-shared-lib vs2013
 
 .build/projects/gmake-nacl:
 	$(PREMAKE4) --file=premake/premake4.lua --gcc=nacl gmake
