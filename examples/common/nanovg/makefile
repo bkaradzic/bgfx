@@ -3,7 +3,7 @@
 # License: http://www.opensource.org/licenses/BSD-2-Clause
 #
 
-include ../../../premake/shader-embeded.mk
+include ../../../scripts/shader-embeded.mk
 
 rebuild:
 	@make -s --no-print-directory clean all

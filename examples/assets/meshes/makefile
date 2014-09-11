@@ -7,7 +7,7 @@ BGFX_DIR=../../..
 RUNTIME_DIR=$(BGFX_DIR)/examples/runtime
 BUILD_DIR=../../.build
 
-include $(BGFX_DIR)/premake/tools.mk
+include $(BGFX_DIR)/scripts/tools.mk
 
 GEOMETRY_SRC= \
 	bunny \
