@@ -37,7 +37,7 @@ defines {
 	"BX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1"
 }
 
-dofile (BX_DIR .. "premake/toolchain.lua")
+dofile (BX_DIR .. "scripts/toolchain.lua")
 toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
 
 function copyLib()

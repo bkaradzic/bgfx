@@ -271,9 +271,6 @@ Building
 
 ### Prerequisites
 
-To generate project files you need [premake-fork](https://github.com/bkaradzic/premake-fork),
-prebuilt binaries are [part of bx](https://github.com/bkaradzic/bx/tree/master/tools/bin).
-
 Windows users download GnuWin32 utilities from:  
 [http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm)  
 [http://gnuwin32.sourceforge.net/packages/coreutils.htm](http://gnuwin32.sourceforge.net/packages/coreutils.htm)  
