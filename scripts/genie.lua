@@ -78,7 +78,7 @@ function exampleProject(_name, _uuid)
 			"DelayImp",
 		}
 
-	configuration { "vs2010" }
+	configuration { "vs201*" }
 		linkoptions { -- this is needed only for testing with GLES2/3 on Windows with VS201x
 			"/DELAYLOAD:\"libEGL.dll\"",
 			"/DELAYLOAD:\"libGLESv2.dll\"",
