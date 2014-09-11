@@ -3,10 +3,10 @@
 -- License: http://www.opensource.org/licenses/BSD-2-Clause
 --
 
-function bgfxProject(_name, _uuid, _kind, _defines)
+function bgfxProject(_name, _kind, _defines)
 
 	project ("bgfx" .. _name)
-		uuid (_uuid)
+		uuid (os.uuid("bgfx" .. _name))
 		kind (_kind)
 
 		if _kind == "SharedLib" then

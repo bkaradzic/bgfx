@@ -43,10 +43,10 @@ toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
 function copyLib()
 end
 
-function exampleProject(_name, _uuid)
+function exampleProject(_name)
 
 	project ("example-" .. _name)
-		uuid (_uuid)
+		uuid (os.uuid("example-" .. _name))
 		kind "WindowedApp"
 
 	configuration {}
@@ -185,33 +185,33 @@ end
 
 dofile "bgfx.lua"
 dofile "example-common.lua"
-bgfxProject("", "2dc7fd80-ed76-11e0-be50-0800200c9a66", "StaticLib", {})
+bgfxProject("", "StaticLib", {})
 
-exampleProject("00-helloworld",        "ff2c8450-ebf4-11e0-9572-0800200c9a66")
-exampleProject("01-cubes",             "fec3bc94-e1e5-11e1-9c59-c7eeec2c1c51")
-exampleProject("02-metaballs",         "413b2cb4-f7db-11e1-bf5f-a716de6a022f")
-exampleProject("03-raymarch",          "1cede802-0220-11e2-91ba-e108de6a022f")
-exampleProject("04-mesh",              "546bbc76-0c4a-11e2-ab09-debcdd6a022f")
-exampleProject("05-instancing",        "5d3da660-1105-11e2-aece-71e4dd6a022f")
-exampleProject("06-bump",              "ffb23e6c-167b-11e2-81df-94c4dd6a022f")
-exampleProject("07-callback",          "acc53bbc-52f0-11e2-9781-ad8edd4b7d02")
-exampleProject("08-update",            "e011e246-5862-11e2-b202-b7cb257a7926")
-exampleProject("09-hdr",               "969a4626-67ee-11e2-9726-9023267a7926")
-exampleProject("10-font" ,             "ef6fd5b3-b52a-41c2-a257-9dfe709af9e1")
-exampleProject("11-fontsdf",           "f4e6f96f-3daa-4c68-8df8-bf2a3ecd9092")
-exampleProject("12-lod",               "0512e9e6-bfd8-11e2-8e34-0291bd4c8125")
-exampleProject("13-stencil",           "d12d6522-37bc-11e3-b89c-e46428d43830")
-exampleProject("14-shadowvolumes",     "d7eb4bcc-37bc-11e3-b7a4-e46428d43830")
-exampleProject("15-shadowmaps-simple", "a10f22ab-e0ee-471a-b2b6-2f6cb1c63fdc")
-exampleProject("16-shadowmaps",        "f9a91cb0-7b1b-11e3-981f-0800200c9a66")
-exampleProject("17-drawstress",        "9aeea4c6-80dc-11e3-b3ca-4da6db0f677b")
-exampleProject("18-ibl",               "711bcbb0-9531-11e3-a5e2-0800200c9a66")
-exampleProject("19-oit",               "d7eca4fc-96d7-11e3-a73b-fcafdb0f677b")
-exampleProject("20-nanovg",            "359ce7c4-cd06-11e3-bb8b-6c2f9a125b5a")
-exampleProject("21-deferred",          "f89e59ec-d16b-11e3-bc9c-2dfd99125b5a")
+exampleProject("00-helloworld")
+exampleProject("01-cubes")
+exampleProject("02-metaballs")
+exampleProject("03-raymarch")
+exampleProject("04-mesh")
+exampleProject("05-instancing")
+exampleProject("06-bump")
+exampleProject("07-callback")
+exampleProject("08-update")
+exampleProject("09-hdr")
+exampleProject("10-font")
+exampleProject("11-fontsdf")
+exampleProject("12-lod")
+exampleProject("13-stencil")
+exampleProject("14-shadowvolumes")
+exampleProject("15-shadowmaps-simple")
+exampleProject("16-shadowmaps")
+exampleProject("17-drawstress")
+exampleProject("18-ibl")
+exampleProject("19-oit")
+exampleProject("20-nanovg")
+exampleProject("21-deferred")
 
 if _OPTIONS["with-shared-lib"] then
-	bgfxProject("-shared-lib", "09986168-e9d9-11e3-9c8e-f2aef940a72a", "SharedLib", {})
+	bgfxProject("-shared-lib", "SharedLib", {})
 end
 
 if _OPTIONS["with-tools"] then
