@@ -14,7 +14,7 @@ else
 OS=windows
 endif
 
-PREMAKE4=../bx/tools/bin/$(OS)/genie
+GENIE=../bx/tools/bin/$(OS)/genie
 
 all:
 	$(GENIE) --with-tools --with-shared-lib vs2008
