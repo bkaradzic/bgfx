@@ -772,13 +772,25 @@ namespace
 		gl->npaths += n;
 		return ret;
 	}
+	
+	// Next Largest Power of 2
+	static unsigned int nlpo2(register unsigned int x)
+	{
+		x |= (x >> 1);
+		x |= (x >> 2);
+		x |= (x >> 4);
+		x |= (x >> 8);
+		x |= (x >> 16);
+		return(x + 1);
+	}
 
 	static int glnvg__allocVerts(struct GLNVGcontext* gl, int n)
 	{
 		int ret = 0;
-		if (gl->nverts+n > gl->cverts)
+		int required = gl->nverts + n;
+		if (required > gl->cverts)
 		{
-			gl->cverts = gl->cverts == 0 ? glnvg__maxi(n, 256) : gl->cverts * 2;
+			gl->cverts = gl->cverts == 0 ? glnvg__maxi(n, 256) : nlpo2(required);
 			gl->verts = (struct NVGvertex*)realloc(gl->verts, sizeof(struct NVGvertex) * gl->cverts);
 		}
 		ret = gl->nverts;
