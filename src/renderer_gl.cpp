@@ -344,6 +344,8 @@ namespace bgfx
 
 			ATI_meminfo,
 
+			CHROMIUM_color_buffer_float_rgb,
+			CHROMIUM_color_buffer_float_rgba,
 			CHROMIUM_depth_texture,
 			CHROMIUM_framebuffer_multisample,
 			CHROMIUM_texture_compression_dxt3,
@@ -356,6 +358,7 @@ namespace bgfx
 			EXT_compressed_ETC1_RGB8_sub_texture,
 			EXT_debug_label,
 			EXT_debug_marker,
+			EXT_draw_buffers,
 			EXT_frag_depth,
 			EXT_framebuffer_blit,
 			EXT_framebuffer_object,
@@ -499,6 +502,8 @@ namespace bgfx
 
 		{ "ATI_meminfo",                           false,                             true  },
 
+		{ "CHROMIUM_color_buffer_float_rgb",       false,                             true  },
+		{ "CHROMIUM_color_buffer_float_rgba",      false,                             true  },
 		{ "CHROMIUM_depth_texture",                false,                             true  },
 		{ "CHROMIUM_framebuffer_multisample",      false,                             true  },
 		{ "CHROMIUM_texture_compression_dxt3",     false,                             true  },
@@ -511,6 +516,7 @@ namespace bgfx
 		{ "EXT_compressed_ETC1_RGB8_sub_texture",  false,                             true  }, // GLES2 extension.
 		{ "EXT_debug_label",                       false,                             true  },
 		{ "EXT_debug_marker",                      false,                             true  },
+		{ "EXT_draw_buffers",                      false,                             true  }, // GLES2 extension.
 		{ "EXT_frag_depth",                        false,                             true  }, // GLES2 extension.
 		{ "EXT_framebuffer_blit",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -1170,7 +1176,8 @@ namespace bgfx
 			g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+			||  s_extension[Extension::EXT_draw_buffers].m_supported)
 			{
 				g_caps.maxFBAttachments = bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 			}
@@ -3422,6 +3429,8 @@ namespace bgfx
 						&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
 						;
 
+					bool usesFragData  = !!bx::findIdentifierMatch(code, "gl_FragData");
+
 					bool usesFragDepth = !!bx::findIdentifierMatch(code, "gl_FragDepth");
 
 					bool usesShadowSamplers = !!bx::findIdentifierMatch(code, s_EXT_shadow_samplers);
@@ -3437,6 +3446,14 @@ namespace bgfx
 					if (usesDerivatives)
 					{
 						writeString(&writer, "#extension GL_OES_standard_derivatives : enable\n");
+					}
+
+					if (usesFragData)
+					{
+						BX_WARN(s_extension[Extension::EXT_draw_buffers].m_supported, "EXT_draw_buffers is used but not supported by GLES2 driver.");
+						writeString(&writer
+							, "#extension GL_EXT_draw_buffers : enable\n"
+							);
 					}
 
 					bool insertFragDepth = false;
