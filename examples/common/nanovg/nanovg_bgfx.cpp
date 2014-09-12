@@ -774,7 +774,7 @@ namespace
 	}
 	
 	// Next Largest Power of 2
-	unsigned int nlpo2(register unsigned int x)
+	static unsigned int nlpo2(register unsigned int x)
 	{
 		x |= (x >> 1);
 		x |= (x >> 2);
