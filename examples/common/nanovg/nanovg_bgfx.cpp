@@ -773,13 +773,17 @@ namespace
 		return ret;
 	}
 
-	static int glnvg__allocVerts(struct GLNVGcontext* gl, int n)
+	static int glnvg__allocVerts(GLNVGcontext* gl, int n)
 	{
 		int ret = 0;
 		if (gl->nverts+n > gl->cverts)
 		{
-			gl->cverts = gl->cverts == 0 ? glnvg__maxi(n, 256) : gl->cverts * 2;
-			gl->verts = (struct NVGvertex*)realloc(gl->verts, sizeof(struct NVGvertex) * gl->cverts);
+			NVGvertex* verts;
+			int cverts = glnvg__maxi(gl->nverts + n, 4096) + gl->cverts/2; // 1.5x Overallocate
+			verts = (NVGvertex*)realloc(gl->verts, sizeof(NVGvertex) * cverts);
+			if (verts == NULL) return -1;
+			gl->verts = verts;
+			gl->cverts = cverts;
 		}
 		ret = gl->nverts;
 		gl->nverts += n;
