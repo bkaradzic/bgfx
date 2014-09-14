@@ -972,6 +972,19 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer(uint16_t _width, 
 BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_handles(uint8_t _num, bgfx_texture_handle_t* _handles, bool _destroyTextures);
 
 /**
+ *  Create frame buffer for multiple window rendering.
+ *
+ *  @param _nwh OS' target native window handle.
+ *  @param _width Window back buffer width.
+ *  @param _height Window back buffer height.
+ *  @param _depthFormat Window back buffer depth format.
+ *
+ *  NOTE:
+ *    Frame buffer cannnot be used for sampling.
+ */
+BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_nwh(void* _nwh, uint16_t _width, uint16_t _height, bgfx_texture_format_t _depthFormat);
+
+/**
  *  Destroy frame buffer.
  */
 BGFX_C_API void bgfx_destroy_frame_buffer(bgfx_frame_buffer_handle_t _handle);
@@ -1107,7 +1120,7 @@ BGFX_C_API void bgfx_set_view_clear(uint8_t _id, uint8_t _flags, uint32_t _rgba,
  *  @param _depth Depth clear value.
  *  @param _stencil Stencil clear value.
  */
-BGFX_C_API void bgfx_set_view_clear_mrt7(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7);
+BGFX_C_API void bgfx_set_view_clear_mrt(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7);
 
 /**
  *  Set view clear flags for multiple views.
