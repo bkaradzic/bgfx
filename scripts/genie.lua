@@ -27,6 +27,7 @@ solution "bgfx"
 	}
 
 	language "C++"
+	startproject "example-00-helloworld"
 
 BGFX_DIR = (path.getabsolute("..") .. "/")
 local BGFX_BUILD_DIR = (BGFX_DIR .. ".build/")
