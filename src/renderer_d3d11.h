@@ -44,7 +44,7 @@ namespace bgfx
 
 		Ty* find(uint64_t _id)
 		{
-			HashMap::iterator it = m_hashMap.find(_id);
+			typename HashMap::iterator it = m_hashMap.find(_id);
 			if (it != m_hashMap.end() )
 			{
 				return it->second;
@@ -55,7 +55,7 @@ namespace bgfx
 
 		void invalidate(uint64_t _id)
 		{
-			HashMap::iterator it = m_hashMap.find(_id);
+			typename HashMap::iterator it = m_hashMap.find(_id);
 			if (it != m_hashMap.end() )
 			{
 				DX_RELEASE_WARNONLY(it->second, 0);
@@ -65,7 +65,7 @@ namespace bgfx
 
 		void invalidate()
 		{
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
 				DX_CHECK_REFCOUNT(it->second, 1);
 				it->second->Release();
