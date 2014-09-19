@@ -177,6 +177,8 @@ namespace entry
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
 
+			WindowHandle defaultWindow = { 0 };
+
 			while (!m_exit)
 			{
 				if (XPending(m_display) )
@@ -214,7 +216,8 @@ namespace entry
 
 								if (MouseButton::None != mb)
 								{
-									m_eventQueue.postMouseEvent(xbutton.x
+									m_eventQueue.postMouseEvent(defaultWindow
+										, xbutton.x
 										, xbutton.y
 										, 0
 										, mb
@@ -227,7 +230,8 @@ namespace entry
 						case MotionNotify:
 							{
 								const XMotionEvent& xmotion = event.xmotion;
-								m_eventQueue.postMouseEvent(xmotion.x
+								m_eventQueue.postMouseEvent(defaultWindow
+										, xmotion.x
 										, xmotion.y
 										, 0
 										);
@@ -255,7 +259,7 @@ namespace entry
 										Key::Enum key = fromXk(keysym);
 										if (Key::None != key)
 										{
-											m_eventQueue.postKeyEvent(key, m_modifiers, KeyPress == event.type);
+											m_eventQueue.postKeyEvent(defaultWindow, key, m_modifiers, KeyPress == event.type);
 										}
 									}
 									break;
@@ -315,8 +319,9 @@ namespace entry
 		s_ctx.m_eventQueue.release(_event);
 	}
 
-	void setWindowSize(uint32_t _width, uint32_t _height)
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_handle);
 		XResizeRequestEvent ev;
 		ev.type = ResizeRequest;
 		ev.serial = 0;
@@ -328,18 +333,19 @@ namespace entry
 		XSendEvent(s_ctx.m_display, s_ctx.m_window, false, ResizeRedirectMask, (XEvent*)&ev);
 	}
 
-	void setWindowTitle(const char* _title)
+	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		BX_UNUSED(_title);
+		BX_UNUSED(_handle, _title);
 	}
 
-	void toggleWindowFrame()
+	void toggleWindowFrame(WindowHandle _handle)
 	{
+		BX_UNUSED(_handle);
 	}
 
-	void setMouseLock(bool _lock)
+	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
-		BX_UNUSED(_lock);
+		BX_UNUSED(_handle, _lock);
 	}
 
 } // namespace entry
