@@ -1400,7 +1400,7 @@ again:
 			{
 				RendererType::Enum first  = RendererType::Direct3D9;
 				RendererType::Enum second = RendererType::Direct3D11;
-				if (0x602 == getWindowsVersion() )
+				if (0x601 == getWindowsVersion() )
 				{
 					first  = RendererType::Direct3D11;
 					second = RendererType::Direct3D9;
