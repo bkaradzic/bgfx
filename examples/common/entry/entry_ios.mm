@@ -26,6 +26,8 @@ namespace entry
 		static int32_t threadFunc(void* _userData);
 	};
 
+	static WindowHandle s_defaultWindow = { 0 };
+
 	struct Context
 	{
 		Context(uint32_t _width, uint32_t _height)
@@ -34,7 +36,7 @@ namespace entry
 			m_mte.m_argc = 1;
 			m_mte.m_argv = const_cast<char**>(argv);
 
-			m_eventQueue.postSizeEvent(_width, _height);
+			m_eventQueue.postSizeEvent(s_defaultWindow, _width, _height);
 
 			// Prevent render thread creation.
 			bgfx::renderFrame();
@@ -81,23 +83,24 @@ namespace entry
 		s_ctx->m_eventQueue.release(_event);
 	}
 
-	void setWindowSize(uint32_t _width, uint32_t _height)
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_width, _height);
+		BX_UNUSED(_handle, _width, _height);
 	}
 
-	void setWindowTitle(const char* _title)
+	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		BX_UNUSED(_title);
+		BX_UNUSED(_handle, _title);
 	}
 
-	void toggleWindowFrame()
+	void toggleWindowFrame(WindowHandle _handle)
 	{
+		BX_UNUSED(_handle);
 	}
 
-	void setMouseLock(bool _lock)
+	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
-		BX_UNUSED(_lock);
+		BX_UNUSED(_handle, _lock);
 	}
 
 } // namespace entry
@@ -165,8 +168,8 @@ using namespace entry;
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
 
-	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0);
-	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0, MouseButton::Left, true);
+	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0);
+	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0, MouseButton::Left, true);
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
@@ -174,7 +177,7 @@ using namespace entry;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
-	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
+	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
@@ -182,7 +185,7 @@ using namespace entry;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
-	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0);
+	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0);
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
@@ -190,7 +193,7 @@ using namespace entry;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
-	s_ctx->m_eventQueue.postMouseEvent(touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
+	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
 }
 
 @end
