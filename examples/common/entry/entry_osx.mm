@@ -276,23 +276,24 @@ namespace entry
 		s_ctx.m_eventQueue.release(_event);
 	}
 
-	void setWindowSize(uint32_t _width, uint32_t _height)
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_width, _height);
+		BX_UNUSED(_handle, _width, _height);
 	}
 
-	void setWindowTitle(const char* _title)
+	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		BX_UNUSED(_title);
+		BX_UNUSED(_handle, _title);
 	}
 
-	void toggleWindowFrame()
+	void toggleWindowFrame(WindowHandle _handle)
 	{
+		BX_UNUSED(_handle);
 	}
 
-	void setMouseLock(bool _lock)
+	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
-		BX_UNUSED(_lock);
+		BX_UNUSED(_handle, _lock);
 	}
 
 } // namespace entry
