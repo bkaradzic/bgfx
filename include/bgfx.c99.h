@@ -28,11 +28,11 @@ typedef enum bgfx_renderer_type
 
 typedef enum bgfx_access
 {
-	BGFX_ACCESS_READ,
-	BGFX_ACCESS_WRITE,
-	BGFX_ACCESS_READWRITE,
+    BGFX_ACCESS_READ,
+    BGFX_ACCESS_WRITE,
+    BGFX_ACCESS_READWRITE,
 
-	BGFX_ACCESS_COUNT
+    BGFX_ACCESS_COUNT
 
 } bgfx_access_t;
 
