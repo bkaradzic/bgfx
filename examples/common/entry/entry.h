@@ -16,6 +16,8 @@ extern "C" int _main_(int _argc, char** _argv);
 
 namespace entry
 {
+	struct WindowHandle { uint16_t idx; };
+
 	struct MouseButton
 	{
 		enum Enum
@@ -160,10 +162,12 @@ namespace entry
 	bx::FileReaderI* getFileReader();
 	bx::FileWriterI* getFileWriter();
 
-	void setWindowSize(uint32_t _width, uint32_t _height);
-	void setWindowTitle(const char* _title);
-	void toggleWindowFrame();
-	void setMouseLock(bool _lock);
+	WindowHandle createWindow(uint32_t _width, uint32_t _height, const char* _title);
+	void destroyWindow(WindowHandle _handle);
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height);
+	void setWindowTitle(WindowHandle _handle, const char* _title);
+	void toggleWindowFrame(WindowHandle _handle);
+	void setMouseLock(WindowHandle _handle, bool _lock);
 
 } // namespace entry
 

@@ -134,7 +134,8 @@ namespace entry
 
 		inputAddBindings("bindings", s_bindings);
 
-		entry::setWindowTitle(bx::baseName(_argv[0]));
+		entry::WindowHandle defaultWindow = { 0 };
+		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]));
 
 		int32_t result = ::_main_(_argc, _argv);
 
@@ -258,6 +259,8 @@ namespace entry
 		s_debug = _debug;
 		s_reset = _reset;
 
+		WindowHandle handle = { UINT16_MAX };
+
 		bool mouseLock = inputIsMouseLocked();
 
 		if (NULL != _keyboard)
@@ -282,6 +285,7 @@ namespace entry
 				case Event::Mouse:
 					{
 						const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
+						handle = mouse->m_handle;
 
 						if (mouse->m_move)
 						{
@@ -312,6 +316,8 @@ namespace entry
 				case Event::Key:
 					{
 						const KeyEvent* key = static_cast<const KeyEvent*>(ev);
+						handle = key->m_handle;
+
 						inputSetKeyState(key->m_key, key->m_modifiers, key->m_down);
 
 						if (NULL != _keyboard)
@@ -329,10 +335,14 @@ namespace entry
 				case Event::Size:
 					{
 						const SizeEvent* size = static_cast<const SizeEvent*>(ev);
-						_width = size->m_width;
+						handle  = size->m_handle;
+						_width  = size->m_width;
 						_height = size->m_height;
-						_reset = !s_reset; // force reset
+						_reset  = !s_reset; // force reset
 					}
+					break;
+
+				case Event::Window:
 					break;
 
 				default:
@@ -344,7 +354,8 @@ namespace entry
 
 		} while (NULL != ev);
 
-		if (_reset != s_reset)
+		if (handle.idx == 0
+		&&  _reset != s_reset)
 		{
 			_reset = s_reset;
 			bgfx::reset(_width, _height, _reset);
