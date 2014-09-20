@@ -81,7 +81,7 @@ struct ImguiTextAlign
 	};
 };
 
-struct ImguiImageAlign
+struct ImguiAlign
 {
 	enum Enum
 	{
@@ -118,6 +118,7 @@ BGFX_HANDLE(ImguiFontHandle);
 
 ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize=15.0f);
 void imguiSetFont(ImguiFontHandle _handle);
+ImguiFontHandle imguiGetCurrentFont();
 
 ImguiFontHandle imguiCreate(const void* _data, float _fontSize=15.0f);
 void imguiDestroy();
@@ -125,8 +126,13 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, uint8_t _view = 31);
 void imguiEndFrame();
 
-/// Notice: this function is not to be called between imguiBeginScrollArea() and imguiEndScrollArea().
+/// Notice: this function is not to be called between imguiBeginArea() and imguiEndArea().
 bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled = true);
+
+bool imguiBeginArea(const char* _name, int _x, int _y, int _width, int _height, bool _enabled = true, int32_t _r = IMGUI_SCROLL_AREA_R);
+void imguiEndArea();
+bool imguiBeginScroll(int32_t _height, int32_t* _scroll, bool _enabled = true);
+void imguiEndScroll(int32_t _r = IMGUI_SCROLL_BAR_R);
 
 bool imguiBeginScrollArea(const char* _name, int _x, int _y, int _width, int _height, int* _scroll, bool _enabled = true, int32_t _r = IMGUI_SCROLL_AREA_R);
 void imguiEndScrollArea(int32_t _r = IMGUI_SCROLL_BAR_R);
@@ -139,21 +145,22 @@ void imguiSeparatorLine(uint16_t _height = IMGUI_SEPARATOR_VALUE);
 int32_t imguiGetWidgetX();
 int32_t imguiGetWidgetY();
 
-bool imguiButton(const char* _text, bool _enabled = true, uint32_t _rgb0 = IMGUI_BUTTON_RGB0, int32_t _r = IMGUI_BUTTON_R);
+bool imguiButton(const char* _text, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented, uint32_t _rgb0 = IMGUI_BUTTON_RGB0, int32_t _r = IMGUI_BUTTON_R);
 bool imguiItem(const char* _text, bool _enabled = true);
 bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
 void imguiLabel(const char* _format, ...);
-void imguiLabel(bool _enabled, const char* _format, ...);
+void imguiLabel(uint32_t _rgba, const char* _format, ...);
 void imguiValue(const char* _text);
-bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled = true);
-bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true);
-void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true, int32_t _r = IMGUI_INPUT_R);
+bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented, int32_t _r = IMGUI_INPUT_R);
 
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, ...);
 uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...);
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, int32_t _height, int32_t _r, ...);
-// Notice: this macro can be used for both overloads.
-#define imguiTabs(_selected, _enabled, ...) imguiTabsUseMacroInstead(_selected, _enabled, __VA_ARGS__, NULL)
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, ...);
+uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, ...);
+#define imguiTabs(...) imguiTabsUseMacroInstead(__VA_ARGS__, NULL)
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
 #define imguiChoose(...) imguiChooseUseMacroInstead(__VA_ARGS__, NULL)
@@ -167,9 +174,12 @@ void imguiBool(const char* _text, bool& _flag, bool _enabled = true);
 void imguiColorWheel(float _rgb[3], bool _respectIndentation = false, bool _enabled = true);
 void imguiColorWheel(const char* _str, float _rgb[3], bool& _activated, bool _enabled = true);
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
-void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _scale, float _aspect, ImguiImageAlign::Enum _align = ImguiImageAlign::LeftIndented);
+void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _scale, float _aspect, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+
+bool imguiMouseOverArea();
+float imguiGetTextLength(const char* _text, ImguiFontHandle _handle);
 
 #endif // IMGUI_H_HEADER_GUARD
