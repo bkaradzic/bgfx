@@ -2649,7 +2649,7 @@ struct Imgui
 		int32_t m_widgetY;
 		int32_t m_widgetW;
 		int32_t* m_scrollVal;
-		uint16_t m_scrollId;
+		uint32_t m_scrollId;
 		bool m_inside;
 		bool m_scissorEnabled;
 	};
