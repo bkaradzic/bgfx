@@ -170,7 +170,8 @@ namespace entry
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 
 			// Force window resolution...
-			setWindowSize(m_width, m_height, true);
+			WindowHandle defaultWindow = { 0 };
+			setWindowSize(defaultWindow, m_width, m_height, true);
 
 			bool exit = false;
 			SDL_Event event;
@@ -186,7 +187,7 @@ namespace entry
 				case SDL_MOUSEMOTION:
 					{
 						const SDL_MouseMotionEvent& mev = event.motion;
-						m_eventQueue.postMouseEvent(mev.x, mev.y, 0);
+						m_eventQueue.postMouseEvent(defaultWindow, mev.x, mev.y, 0);
 					}
 					break;
 
@@ -194,7 +195,7 @@ namespace entry
 				case SDL_MOUSEBUTTONUP:
 					{
 						const SDL_MouseButtonEvent& mev = event.button;
-						m_eventQueue.postMouseEvent(mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+						m_eventQueue.postMouseEvent(defaultWindow, mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
 					}
 					break;
 
@@ -204,7 +205,7 @@ namespace entry
 						const SDL_KeyboardEvent& kev = event.key;
 						uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
 						Key::Enum key = translateKey(kev.keysym.scancode);
- 						m_eventQueue.postKeyEvent(key, modifiers, kev.state == SDL_PRESSED);
+ 						m_eventQueue.postKeyEvent(defaultWindow, key, modifiers, kev.state == SDL_PRESSED);
 					}
 					break;
 
@@ -215,7 +216,7 @@ namespace entry
 						{
 						case SDL_WINDOWEVENT_RESIZED:
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							setWindowSize(wev.data1, wev.data2);
+							setWindowSize(defaultWindow, wev.data1, wev.data2);
 							break;
 
 						case SDL_WINDOWEVENT_SHOWN:
@@ -246,7 +247,7 @@ namespace entry
 						{
 							uint32_t width = *(uint32_t*)&uev.data1;
 							uint32_t height = *(uint32_t*)&uev.data2;
-							setWindowSize(width, height);
+							setWindowSize(defaultWindow, width, height);
 						}
 						else if (SDL_USER_TOGGLE_WINDOW_FRAME == event.type)
 						{
@@ -254,7 +255,7 @@ namespace entry
 						}
 						else if (SDL_USER_MOUSE_LOCK == event.type)
 						{
-							setMouseLock(!!uev.code);
+							setMouseLock(defaultWindow, !!uev.code);
 						}
 					}
 					break;
@@ -267,17 +268,18 @@ namespace entry
 			SDL_Quit();
 		}
 
-		void setMousePos(int32_t _mx, int32_t _my)
+		void setMousePos(WindowHandle _handle, int32_t _mx, int32_t _my)
 		{
-			BX_UNUSED(_mx, _my);
+			BX_UNUSED(_handle, _mx, _my);
 		}
 
-		void setMouseLock(bool _lock)
+		void setMouseLock(WindowHandle _handle, bool _lock)
 		{
+			BX_UNUSED(_handle);
 			SDL_SetRelativeMouseMode(_lock ? SDL_TRUE : SDL_FALSE);
 		}
 
-		void setWindowSize(uint32_t _width, uint32_t _height, bool _force = false)
+		void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height, bool _force = false)
 		{
 			if (_width  != m_width
 			||  _height != m_height
@@ -300,13 +302,14 @@ namespace entry
 				}
 
 				SDL_SetWindowSize(m_window, m_width, m_height);
-				m_eventQueue.postSizeEvent(m_width, m_height);
+				m_eventQueue.postSizeEvent(_handle, m_width, m_height);
 			}
 		}
 
-		void setWindowTitle(const char* _title)
+		void setWindowTitle(WindowHandle _handle, const char* _title)
 		{
-			SDL_WM_SetCaption(_title, NULL);
+			BX_UNUSED(_handle);
+			SDL_SetWindowTitle(m_window, _title);
 		}
 
 		MainThreadEntry m_mte;
@@ -337,8 +340,9 @@ namespace entry
 		s_ctx.m_eventQueue.release(_event);
 	}
 
-	void setWindowSize(uint32_t _width, uint32_t _height)
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
+		BX_UNUSED(_handle);
 		SDL_Event event;
 		SDL_UserEvent& uev = event.user;
 		uev.type = SDL_USER_SET_WINDOW_SIZE;
@@ -347,17 +351,19 @@ namespace entry
 		SDL_PushEvent(&event);
 	}
 
-	void setWindowTitle(const char* _title)
+	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		s_ctx.setWindowTitle(_title);
+		s_ctx.setWindowTitle(_handle, _title);
 	}
 
-	void toggleWindowFrame()
+	void toggleWindowFrame(WindowHandle _handle)
 	{
+		BX_UNUSED(_handle);
 	}
 
-	void setMouseLock(bool _lock)
+	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
+		BX_UNUSED(_handle);
 		SDL_Event event;
 		SDL_UserEvent& uev = event.user;
 		uev.type = SDL_USER_MOUSE_LOCK;
