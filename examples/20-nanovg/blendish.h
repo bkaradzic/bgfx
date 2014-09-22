@@ -25,12 +25,6 @@ THE SOFTWARE.
 #ifndef BLENDISH_H
 #define BLENDISH_H
 
-#if BX_COMPILER_MSVC
-#	pragma warning(push)
-#	pragma warning(disable: 4305) // warning C4305: 'initializing' : truncation from 'double' to 'float'
-#	pragma warning(disable: 4244) // warning C4244: 'return' : conversion from 'int' to 'float', possible loss of data
-#endif // BX_COMPILER_MSVC
-
 #ifndef NANOVG_H
 #error "nanovg.h must be included first."
 #endif
@@ -1103,22 +1097,22 @@ BND_EXPORT NVGcolor bndNodeWireColor(const BNDnodeTheme *theme, BNDwidgetState s
 
 #include <float.h>
 
-inline float bnd_fminf ( float a, float b )
+static float bnd_fminf ( float a, float b )
 {
     return _isnan(a) ? b : ( _isnan(b) ? a : ((a < b) ? a : b));
 }
 
-inline float bnd_fmaxf ( float a, float b )
+static float bnd_fmaxf ( float a, float b )
 {
     return _isnan(a) ? b : ( _isnan(b) ? a : ((a > b) ? a : b));
 }
 
-inline double bnd_fmin ( double a, double b )
+static double bnd_fmin ( double a, double b )
 {
     return _isnan(a) ? b : ( _isnan(b) ? a : ((a < b) ? a : b));
 }
 
-inline double bnd_fmax ( double a, double b )
+static double bnd_fmax ( double a, double b )
 {
     return _isnan(a) ? b : ( _isnan(b) ? a : ((a > b) ? a : b));
 }
@@ -2138,7 +2132,7 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
 
 void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
     int iconid, NVGcolor color, NVGcolor shadowColor, 
-    int /*align*/, float fontsize, const char *label) {
+    int align, float fontsize, const char *label) {
     if (label && (bnd_font >= 0)) {
         nvgFontFaceId(ctx, bnd_font);
         nvgFontSize(ctx, fontsize);
@@ -2158,7 +2152,7 @@ void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
     }
 }
 
-void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float /*h*/,
+void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
     int iconid, NVGcolor color, float fontsize, const char *label, 
     NVGcolor caretcolor, int cbegin, int cend) {
     float bounds[4];
@@ -2332,9 +2326,5 @@ NVGcolor bndNodeWireColor(const BNDnodeTheme *theme, BNDwidgetState state) {
 #ifdef BND_INLINE
 #undef BND_INLINE
 #endif
-
-#if BX_COMPILER_MSVC
-#	pragma warning(pop)
-#endif // BX_COMPILER_MSVC
 
 #endif // BLENDISH_IMPLEMENTATION
