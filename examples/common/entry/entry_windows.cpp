@@ -215,6 +215,8 @@ namespace entry
 			bgfx::winSetHwnd(m_hwnd[0]);
 
 			adjust(m_hwnd[0], ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, true);
+			clear(m_hwnd[0]);
+
 			m_width = ENTRY_DEFAULT_WIDTH;
 			m_height = ENTRY_DEFAULT_HEIGHT;
 			m_oldWidth = ENTRY_DEFAULT_WIDTH;
@@ -272,6 +274,7 @@ namespace entry
 							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
 							);
+						clear(hwnd);
 
 						m_hwnd[_wparam] = hwnd;
 						WindowHandle handle = { (uint16_t)_wparam };
@@ -544,6 +547,16 @@ namespace entry
 
 			WindowHandle invalid = { UINT16_MAX };
 			return invalid;
+		}
+
+		void clear(HWND _hwnd)
+		{
+			RECT rect;
+			GetWindowRect(_hwnd, &rect);
+			HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0) );
+			HDC hdc = GetDC(_hwnd);
+			SelectObject(hdc, brush);
+			FillRect(hdc, &rect, brush);
 		}
 
 		void adjust(HWND _hwnd, uint32_t _width, uint32_t _height, bool _windowFrame)
