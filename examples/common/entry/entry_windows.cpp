@@ -16,10 +16,16 @@
 
 #include <windowsx.h>
 
-#define WM_USER_CREATE_WINDOW       (WM_USER+0)
-#define WM_USER_SET_WINDOW_SIZE     (WM_USER+1)
-#define WM_USER_TOGGLE_WINDOW_FRAME (WM_USER+2)
-#define WM_USER_MOUSE_LOCK          (WM_USER+3)
+enum
+{
+	WM_USER_WINDOW_CREATE = WM_USER,
+	WM_USER_WINDOW_DESTROY,
+	WM_USER_WINDOW_SET_TITLE,
+	WM_USER_WINDOW_SET_POS,
+	WM_USER_WINDOW_SET_SIZE,
+	WM_USER_WINDOW_TOGGLE_FRAME,
+	WM_USER_WINDOW_MOUSE_LOCK,
+};
 
 namespace entry
 {
@@ -65,6 +71,25 @@ namespace entry
 		char** m_argv;
 
 		static int32_t threadFunc(void* _userData);
+	};
+
+	struct Msg
+	{
+		Msg()
+			: m_x(0)
+			, m_y(0)
+			, m_width(0)
+			, m_height(0)
+			, m_flags(0)
+		{
+		}
+
+		int32_t  m_x;
+		int32_t  m_y;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_flags;
+		std::string m_title;
 	};
 
 	struct Context
@@ -185,6 +210,8 @@ namespace entry
 				, 0
 				);
 
+			m_flags[0] = ENTRY_WINDOW_FLAG_ASPECT_RATIO;
+
 			bgfx::winSetHwnd(m_hwnd[0]);
 
 			adjust(m_hwnd[0], ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, true);
@@ -230,18 +257,17 @@ namespace entry
 			{
 				switch (_id)
 				{
-				case WM_USER_CREATE_WINDOW:
+				case WM_USER_WINDOW_CREATE:
 					{
-						uint32_t width  = GET_X_LPARAM(_lparam);
-						uint32_t height = GET_Y_LPARAM(_lparam);
+						Msg* msg = (Msg*)_lparam;
 						HWND hwnd = CreateWindowA("bgfx"
-							, ""
+							, msg->m_title.c_str()
 							, WS_OVERLAPPEDWINDOW|WS_VISIBLE
-							, 0
-							, 0
-							, width
-							, height
-							, NULL
+							, msg->m_x
+							, msg->m_y
+							, msg->m_width
+							, msg->m_height
+							, m_hwnd[0]
 							, NULL
 							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
@@ -250,10 +276,42 @@ namespace entry
 						m_hwnd[_wparam] = hwnd;
 						WindowHandle handle = { (uint16_t)_wparam };
 						m_eventQueue.postWindowEvent(handle, hwnd);
+						m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
+
+						delete msg;
 					}
 					break;
 
-				case WM_USER_SET_WINDOW_SIZE:
+				case WM_USER_WINDOW_DESTROY:
+					{
+						WindowHandle handle = { (uint16_t)_wparam };
+						PostMessageA(m_hwnd[_wparam], WM_CLOSE, 0, 0);
+						m_eventQueue.postWindowEvent(handle);
+						m_hwnd[_wparam] = 0;
+					}
+					break;
+
+				case WM_USER_WINDOW_SET_TITLE:
+					{
+						Msg* msg = (Msg*)_lparam;
+						SetWindowTextA(m_hwnd[_wparam], msg->m_title.c_str() );
+						delete msg;
+					}
+					break;
+
+				case WM_USER_WINDOW_SET_POS:
+					{
+						Msg* msg = (Msg*)_lparam;
+						SetWindowPos(m_hwnd[_wparam], 0, msg->m_x, msg->m_y, 0, 0
+							, SWP_NOACTIVATE
+							| SWP_NOOWNERZORDER
+							| SWP_NOSIZE
+							);
+						delete msg;
+					}
+					break;
+
+				case WM_USER_WINDOW_SET_SIZE:
 					{
 						uint32_t width  = GET_X_LPARAM(_lparam);
 						uint32_t height = GET_Y_LPARAM(_lparam);
@@ -261,19 +319,19 @@ namespace entry
 					}
 					break;
 
-				case WM_USER_TOGGLE_WINDOW_FRAME:
+				case WM_USER_WINDOW_TOGGLE_FRAME:
 					{
 						if (m_frame)
 						{
-							m_oldWidth = m_width;
+							m_oldWidth  = m_width;
 							m_oldHeight = m_height;
 						}
 						adjust(m_hwnd[_wparam], m_oldWidth, m_oldHeight, !m_frame);
 					}
 					break;
 
-				case WM_USER_MOUSE_LOCK:
-					setMouseLock(_hwnd, !!_lparam);
+				case WM_USER_WINDOW_MOUSE_LOCK:
+					setMouseLock(m_hwnd[_wparam], !!_lparam);
 					break;
 
 				case WM_DESTROY:
@@ -281,69 +339,82 @@ namespace entry
 
 				case WM_QUIT:
 				case WM_CLOSE:
-					m_eventQueue.postWindowEvent(findHandle(_hwnd) );
 					if (_hwnd == m_hwnd[0])
 					{
 						m_exit = true;
 						m_eventQueue.postExitEvent();
 					}
+					else
+					{
+						destroyWindow(findHandle(_hwnd) );
+					}
 					break;
 
 				case WM_SIZING:
 					{
-						RECT& rect = *(RECT*)_lparam;
-						uint32_t width  = rect.right  - rect.left - m_frameWidth;
-						uint32_t height = rect.bottom - rect.top  - m_frameHeight;
+						WindowHandle handle = findHandle(_hwnd);
 
-						// Recalculate size according to aspect ratio
-						switch (_wparam)
+						if (isValid(handle)
+						&&  ENTRY_WINDOW_FLAG_ASPECT_RATIO & m_flags[handle.idx])
 						{
-						case WMSZ_LEFT:
-						case WMSZ_RIGHT:
+							RECT& rect = *(RECT*)_lparam;
+							uint32_t width  = rect.right  - rect.left - m_frameWidth;
+							uint32_t height = rect.bottom - rect.top  - m_frameHeight;
+
+							// Recalculate size according to aspect ratio
+							switch (_wparam)
 							{
-								float aspectRatio = 1.0f/m_aspectRatio;
-								width  = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, width);
-								height = uint32_t(float(width)*aspectRatio);
-							}
-							break;
+							case WMSZ_LEFT:
+							case WMSZ_RIGHT:
+								{
+									float aspectRatio = 1.0f/m_aspectRatio;
+									width  = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, width);
+									height = uint32_t(float(width)*aspectRatio);
+								}
+								break;
 
-						default:
+							default:
+								{
+									float aspectRatio = m_aspectRatio;
+									height = bx::uint32_max(ENTRY_DEFAULT_HEIGHT/4, height);
+									width  = uint32_t(float(height)*aspectRatio);
+								}
+								break;
+							}
+
+							// Recalculate position using different anchor points
+							switch(_wparam)
 							{
-								float aspectRatio = m_aspectRatio;
-								height = bx::uint32_max(ENTRY_DEFAULT_HEIGHT/4, height);
-								width  = uint32_t(float(height)*aspectRatio);
+							case WMSZ_LEFT:
+							case WMSZ_TOPLEFT:
+							case WMSZ_BOTTOMLEFT:
+								rect.left   = rect.right - width  - m_frameWidth;
+								rect.bottom = rect.top   + height + m_frameHeight;
+								break;
+
+							default:
+								rect.right  = rect.left + width  + m_frameWidth;
+								rect.bottom = rect.top  + height + m_frameHeight;
+								break;
 							}
-							break;
+
+							m_eventQueue.postSizeEvent(findHandle(_hwnd), width, height);
 						}
-
-						// Recalculate position using different anchor points
-						switch(_wparam)
-						{
-						case WMSZ_LEFT:
-						case WMSZ_TOPLEFT:
-						case WMSZ_BOTTOMLEFT:
-							rect.left   = rect.right - width  - m_frameWidth;
-							rect.bottom = rect.top   + height + m_frameHeight;
-							break;
-
-						default:
-							rect.right  = rect.left + width  + m_frameWidth;
-							rect.bottom = rect.top  + height + m_frameHeight;
-							break;
-						}
-
-						m_eventQueue.postSizeEvent(findHandle(_hwnd), m_width, m_height);
 					}
 					return 0;
 
 				case WM_SIZE:
 					{
-						uint32_t width  = GET_X_LPARAM(_lparam);
-						uint32_t height = GET_Y_LPARAM(_lparam);
+						WindowHandle handle = findHandle(_hwnd);
+						if (isValid(handle) )
+						{
+							uint32_t width  = GET_X_LPARAM(_lparam);
+							uint32_t height = GET_Y_LPARAM(_lparam);
 
-						m_width  = width;
-						m_height = height;
-						m_eventQueue.postSizeEvent(findHandle(_hwnd), m_width, m_height);
+							m_width  = width;
+							m_height = height;
+							m_eventQueue.postSizeEvent(handle, m_width, m_height);
+						}
 					}
 					break;
 
@@ -521,10 +592,10 @@ namespace entry
 			UpdateWindow(_hwnd);
 
 			if (rect.left == -32000
-			||  rect.top == -32000)
+			||  rect.top  == -32000)
 			{
 				rect.left = 0;
-				rect.top = 0;
+				rect.top  = 0;
 			}
 
 			int32_t left = rect.left;
@@ -619,6 +690,7 @@ namespace entry
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		HWND m_hwnd[ENTRY_CONFIG_MAX_WINDOWS];
+		uint32_t m_flags[ENTRY_CONFIG_MAX_WINDOWS];
 		RECT m_rect;
 		DWORD m_style;
 		uint32_t m_width;
@@ -652,19 +724,31 @@ namespace entry
 		return s_ctx.m_eventQueue.poll();
 	}
 
+	const Event* poll(WindowHandle _handle)
+	{
+		return s_ctx.m_eventQueue.poll(_handle);
+	}
+
 	void release(const Event* _event)
 	{
 		s_ctx.m_eventQueue.release(_event);
 	}
 
-	WindowHandle createWindow(uint32_t _width, uint32_t _height, const char* /*_title*/)
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
 		bx::LwMutexScope scope(s_ctx.m_lock);
 		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
 
 		if (UINT16_MAX != handle.idx)
 		{
-			PostMessage(s_ctx.m_hwnd[0], WM_USER_CREATE_WINDOW, handle.idx, (_height<<16) | (_width&0xffff) );
+			Msg* msg = new Msg;
+			msg->m_x      = _x;
+			msg->m_y      = _y;
+			msg->m_width  = _width;
+			msg->m_height = _height;
+			msg->m_title  = _title;
+			msg->m_flags  = _flags;
+			PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_CREATE, handle.idx, (LPARAM)msg);
 		}
 
 		return handle;
@@ -672,28 +756,43 @@ namespace entry
 
 	void destroyWindow(WindowHandle _handle)
 	{
-		PostMessage(s_ctx.m_hwnd[_handle.idx], WM_CLOSE, _handle.idx, 0);
+		if (UINT16_MAX != _handle.idx)
+		{
+			PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_DESTROY, _handle.idx, 0);
+
+			bx::LwMutexScope scope(s_ctx.m_lock);
+			s_ctx.m_windowAlloc.free(_handle.idx);
+		}
+	}
+
+	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
+	{
+		Msg* msg = new Msg;
+		msg->m_x = _x;
+		msg->m_y = _y;
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_POS, _handle.idx, (LPARAM)msg);
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		PostMessage(s_ctx.m_hwnd[_handle.idx], WM_USER_SET_WINDOW_SIZE, _handle.idx, (_height<<16) | (_width&0xffff) );
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_SIZE, _handle.idx, (_height<<16) | (_width&0xffff) );
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		SetWindowTextA(s_ctx.m_hwnd[_handle.idx], _title);
-//		SetWindowTextA(GetWindow(s_ctx.m_hwnd[_handle.idx], GW_HWNDNEXT), _title);
+		Msg* msg = new Msg;
+		msg->m_title = _title;
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
 	}
 
 	void toggleWindowFrame(WindowHandle _handle)
 	{
-		PostMessage(s_ctx.m_hwnd[_handle.idx], WM_USER_TOGGLE_WINDOW_FRAME, _handle.idx, 0);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
-		PostMessage(s_ctx.m_hwnd[_handle.idx], WM_USER_MOUSE_LOCK, _handle.idx, _lock);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
 	}
 
 	int32_t MainThreadEntry::threadFunc(void* _userData)

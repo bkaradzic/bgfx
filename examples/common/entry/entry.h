@@ -14,9 +14,13 @@ namespace bx { struct FileReaderI; struct FileWriterI; }
 
 extern "C" int _main_(int _argc, char** _argv);
 
+#define ENTRY_WINDOW_FLAG_NONE         UINT32_C(0x00000000)
+#define ENTRY_WINDOW_FLAG_ASPECT_RATIO UINT32_C(0x00000001)
+
 namespace entry
 {
-	struct WindowHandle { uint16_t idx; };
+	struct WindowHandle { uint16_t idx; static const uint16_t invalidHandle; };
+	inline bool isValid(WindowHandle _handle) { return WindowHandle::invalidHandle != _handle.idx; }
 
 	struct MouseButton
 	{
@@ -150,24 +154,36 @@ namespace entry
 		uint8_t m_buttons[entry::MouseButton::Count];
 	};
 
-	struct KeyState
-	{
-		uint8_t m_modifiers;
-		bool m_keysDown[entry::Key::Count];
-	};
-
 	char keyToAscii(entry::Key::Enum _key, bool _shiftModifier);
-	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL, KeyState* _keyboard = NULL);
+	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
 
 	bx::FileReaderI* getFileReader();
 	bx::FileWriterI* getFileWriter();
 
-	WindowHandle createWindow(uint32_t _width, uint32_t _height, const char* _title);
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags = ENTRY_WINDOW_FLAG_NONE, const char* _title = "");
 	void destroyWindow(WindowHandle _handle);
+	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y);
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height);
 	void setWindowTitle(WindowHandle _handle, const char* _title);
 	void toggleWindowFrame(WindowHandle _handle);
 	void setMouseLock(WindowHandle _handle, bool _lock);
+
+	struct WindowState
+	{
+		WindowState()
+			: m_nwh(NULL)
+		{
+			m_handle.idx = UINT16_MAX;
+		}
+
+		WindowHandle m_handle;
+		uint32_t     m_width;
+		uint32_t     m_height;
+		MouseState   m_mouse;
+		void*        m_nwh;
+	};
+
+	bool processWindowEvents(WindowState& _state, uint32_t& _debug, uint32_t& _reset);
 
 } // namespace entry
 

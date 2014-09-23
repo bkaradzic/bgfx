@@ -200,9 +200,31 @@ namespace entry
 		return s_ctx.m_eventQueue.poll();
 	}
 
+	const Event* poll(WindowHandle _handle)
+	{
+		return s_ctx.m_eventQueue.poll(_handle);
+	}
+
 	void release(const Event* _event)
 	{
 		s_ctx.m_eventQueue.release(_event);
+	}
+
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
+	{
+		BX_UNUSED(_x, _y, _width, _height, _flags, _title);
+		WindowHandle handle = { UINT16_MAX };
+		return handle;
+	}
+
+	void destroyWindow(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+	}
+
+	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
+	{
+		BX_UNUSED(_handle, _x, _y);
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)

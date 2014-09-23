@@ -103,6 +103,7 @@ namespace entry
 	};
 
 	const Event* poll();
+	const Event* poll(WindowHandle _handle);
 	void release(const Event* _event);
 
 	class EventQueue
@@ -165,6 +166,21 @@ namespace entry
 		const Event* poll()
 		{
 			return m_queue.pop();
+		}
+
+		const Event* poll(WindowHandle _handle)
+		{
+			if (isValid(_handle) )
+			{
+				Event* ev = m_queue.peek();
+				if (NULL == ev
+				||  ev->m_handle.idx != _handle.idx)
+				{
+					return NULL;
+				}
+			}
+
+			return poll();
 		}
 
 		void release(const Event* _event) const
