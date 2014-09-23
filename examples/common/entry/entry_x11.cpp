@@ -160,7 +160,12 @@ namespace entry
 									, &windowAttrs
 									);
 
-			const char *wmDeleteWindowName = "WM_DELETE_WINDOW";
+			// Clear window to black.
+			XSetWindowAttributes attr;
+			memset(&attr, 0, sizeof(attr) );
+			XChangeWindowAttributes(m_display, m_window, CWBackPixel, &attr);
+
+			const char* wmDeleteWindowName = "WM_DELETE_WINDOW";
 			Atom wmDeleteWindow;
 			XInternAtoms(m_display, (char **)&wmDeleteWindowName, 1, False, &wmDeleteWindow);
 			XSetWMProtocols(m_display, m_window, &wmDeleteWindow, 1);
@@ -168,6 +173,7 @@ namespace entry
 			XMapWindow(m_display, m_window);
 			XStoreName(m_display, m_window, "BGFX");
 
+			//
 			bgfx::x11SetDisplayWindow(m_display, m_window);
 
 			MainThreadEntry mte;
@@ -195,7 +201,7 @@ namespace entry
 							break;
 
 						case ClientMessage:
-							if((Atom)event.xclient.data.l[0] == wmDeleteWindow)
+							if ( (Atom)event.xclient.data.l[0] == wmDeleteWindow)
 							{
 								m_eventQueue.postExitEvent();
 							}
@@ -357,7 +363,8 @@ namespace entry
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		BX_UNUSED(_handle, _title);
+		BX_UNUSED(_handle);
+		XStoreName(s_ctx.m_display, s_ctx.m_window, _title);
 	}
 
 	void toggleWindowFrame(WindowHandle _handle)
