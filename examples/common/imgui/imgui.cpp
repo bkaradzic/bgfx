@@ -1456,7 +1456,7 @@ struct Imgui
 		return selected;
 	}
 
-	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
 	{
 		Area& area = getCurrentArea();
 
@@ -1485,7 +1485,7 @@ struct Imgui
 		const int32_t yy = area.m_widgetY;
 		area.m_widgetY += _height + DEFAULT_SPACING;
 
-		screenQuad(xx, yy, _width, _height);
+		screenQuad(xx, yy, _width, _height, _originBottomLeft);
 		bgfx::setUniform(u_imageLod, &_lod);
 		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
@@ -1494,12 +1494,12 @@ struct Imgui
 		bgfx::submit(m_view);
 	}
 
-	void image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+	void image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
 	{
 		const float width = _width*float(getCurrentArea().m_widgetW);
 		const float height = width/_aspect;
 
-		image(_image, _lod, int32_t(width), int32_t(height), _align);
+		image(_image, _lod, int32_t(width), int32_t(height), _align, _originBottomLeft);
 	}
 
 	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
@@ -2330,7 +2330,7 @@ struct Imgui
 #endif // USE_NANOVG_FONT
 	}
 
-	void screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height)
+	void screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, bool _originBottomLeft = false)
 	{
 		if (bgfx::checkAvailTransientVertexBuffer(6, PosUvVertex::ms_decl) )
 		{
@@ -2350,8 +2350,8 @@ struct Imgui
 			const float texelHalfH = m_halfTexel/heightf;
 			const float minu = texelHalfW;
 			const float maxu = 1.0f - texelHalfW;
-			const float minv = texelHalfH;
-			const float maxv = texelHalfH + 1.0f;
+			const float minv = _originBottomLeft ? texelHalfH+1.0f : texelHalfH     ;
+			const float maxv = _originBottomLeft ? texelHalfH      : texelHalfH+1.0f;
 
 			vertex[0].m_x = minx;
 			vertex[0].m_y = miny;
@@ -3068,14 +3068,14 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 	}
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
 {
-	s_imgui.image(_image, _lod, _width, _height, _align);
+	s_imgui.image(_image, _lod, _width, _height, _align, _originBottomLeft);
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
 {
-	s_imgui.image(_image, _lod, _width, _aspect, _align);
+	s_imgui.image(_image, _lod, _width, _aspect, _align, _originBottomLeft);
 }
 
 void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
