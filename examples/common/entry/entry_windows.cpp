@@ -278,8 +278,8 @@ namespace entry
 
 						m_hwnd[_wparam] = hwnd;
 						WindowHandle handle = { (uint16_t)_wparam };
-						m_eventQueue.postWindowEvent(handle, hwnd);
 						m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
+						m_eventQueue.postWindowEvent(handle, hwnd);
 
 						delete msg;
 					}

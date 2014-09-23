@@ -2545,13 +2545,24 @@ namespace bgfx
 
 		D3DPRESENT_PARAMETERS params;
 		memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
-		params.BackBufferWidth  = _width;
-		params.BackBufferHeight = _height;
+		params.BackBufferWidth  = bx::uint32_max(_width,  16);
+		params.BackBufferHeight = bx::uint32_max(_height, 16);
 
 		DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&params, &m_swapChain) );
 		DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_color[0]) );
+
+		DX_CHECK(s_renderD3D9->m_device->CreateDepthStencilSurface(
+			  params.BackBufferWidth
+			, params.BackBufferHeight
+			, params.AutoDepthStencilFormat
+			, params.MultiSampleType
+			, params.MultiSampleQuality
+			, FALSE
+			, &m_depthStencil
+			, NULL
+			) );
+
 		m_colorHandle[0].idx = invalidHandle;
-		m_depthStencil = NULL;
 		m_denseIdx = _denseIdx;
 		m_num = 1;
 		m_needResolve = false;
@@ -2561,8 +2572,9 @@ namespace bgfx
 	{
 		if (NULL != m_hwnd)
 		{
-			DX_RELEASE(m_color[0],  0);
-			DX_RELEASE(m_swapChain, 0);
+			DX_RELEASE(m_depthStencil, 0);
+			DX_RELEASE(m_color[0],     0);
+			DX_RELEASE(m_swapChain,    0);
 		}
 		else
 		{
