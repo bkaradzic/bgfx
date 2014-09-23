@@ -147,7 +147,7 @@ namespace entry
 		{
 		}
 
-		NSEvent* WaitEvent()
+		NSEvent* waitEvent()
 		{
 			return [NSApp
 				nextEventMatchingMask:NSAnyEventMask
@@ -157,7 +157,7 @@ namespace entry
 				];
 		}
 
-		NSEvent* PeekEvent()
+		NSEvent* peekEvent()
 		{
 			return [NSApp
 				nextEventMatchingMask:NSAnyEventMask
@@ -167,7 +167,7 @@ namespace entry
 				];
 		}
 
-		bool DispatchEvent(NSEvent* event)
+		bool dispatchEvent(NSEvent* event)
 		{
 			if (event)
 			{
@@ -228,7 +228,8 @@ namespace entry
 			[window setTitle:appName];
 			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 			[window makeKeyAndOrderFront:window];
-			[window setContentView:nil];
+//			[window setContentView:nil];
+			[window setBackgroundColor:[NSColor blackColor]];
 			[[Window sharedDelegate] windowCreated:window];
 
 			bgfx::osxSetNSWindow(window);
@@ -242,12 +243,14 @@ namespace entry
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
-				//DispatchEvent(WaitEvent() );
 				if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
 				{
 					break;
 				}
-				while (DispatchEvent(PeekEvent() ) ) {};
+
+				while (dispatchEvent(peekEvent() ) )
+				{
+				}
 			}
 
 
