@@ -94,8 +94,6 @@ static const InputBinding s_bindings[] =
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
-	inputAddBindings("22-windows", s_bindings);
-
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
@@ -103,6 +101,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::init();
 	bgfx::reset(width, height, reset);
+
+	const bgfx::Caps* caps = bgfx::getCaps();
+	bool swapChainSupported = 0 != (caps->supported & BGFX_CAPS_SWAP_CHAIN);
+
+	if (swapChainSupported)
+	{
+		inputAddBindings("22-windows", s_bindings);
+	}
 
 	// Enable debug text.
 	bgfx::setDebug(debug);
@@ -234,7 +240,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/22-windows");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering into multiple windows.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-		bgfx::dbgTextPrintf(0, 5, 0x2f, "Press 'c' to create or 'd' to destroy window.");
+		
+		if (swapChainSupported)
+		{
+			bgfx::dbgTextPrintf(0, 5, 0x2f, "Press 'c' to create or 'd' to destroy window.");
+		}
+		else
+		{
+			bool blink = uint32_t(time*3.0f)&1;
+			bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " Multiple windows is not supported by `%s` renderer. ", bgfx::getRendererName(caps->rendererType) );
+		}
 
 		uint32_t count = 0;
 

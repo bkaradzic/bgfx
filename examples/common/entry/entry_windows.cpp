@@ -276,7 +276,8 @@ namespace entry
 							);
 						clear(hwnd);
 
-						m_hwnd[_wparam] = hwnd;
+						m_hwnd[_wparam]  = hwnd;
+						m_flags[_wparam] = msg->m_flags;
 						WindowHandle handle = { (uint16_t)_wparam };
 						m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
 						m_eventQueue.postWindowEvent(handle, hwnd);

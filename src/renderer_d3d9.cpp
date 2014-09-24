@@ -432,57 +432,58 @@ namespace bgfx
 								| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
+								| BGFX_CAPS_SWAP_CHAIN
 								);
 			g_caps.maxTextureSize = bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight);
 
 			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 			g_caps.maxFBAttachments = (uint8_t)m_caps.NumSimultaneousRTs;
 
-#if BGFX_CONFIG_RENDERER_USE_EXTENSIONS
-			BX_TRACE("Extended formats:");
-			for (uint32_t ii = 0; ii < ExtendedFormat::Count; ++ii)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
-				ExtendedFormat& fmt = s_extendedFormats[ii];
-				fmt.m_supported = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, fmt.m_usage, fmt.m_type, fmt.m_fmt) );
-				const char* fourcc = (const char*)&fmt.m_fmt;
-				BX_TRACE("\t%2d: %c%c%c%c %s", ii, fourcc[0], fourcc[1], fourcc[2], fourcc[3], fmt.m_supported ? "supported" : "");
-				BX_UNUSED(fourcc);
+				BX_TRACE("Extended formats:");
+				for (uint32_t ii = 0; ii < ExtendedFormat::Count; ++ii)
+				{
+					ExtendedFormat& fmt = s_extendedFormats[ii];
+					fmt.m_supported = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, fmt.m_usage, fmt.m_type, fmt.m_fmt) );
+					const char* fourcc = (const char*)&fmt.m_fmt;
+					BX_TRACE("\t%2d: %c%c%c%c %s", ii, fourcc[0], fourcc[1], fourcc[2], fourcc[3], fmt.m_supported ? "supported" : "");
+					BX_UNUSED(fourcc);
+				}
+
+				m_instancing = false
+					|| s_extendedFormats[ExtendedFormat::Inst].m_supported
+					|| (m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) )
+					;
+
+				if (m_amd
+				&&  s_extendedFormats[ExtendedFormat::Inst].m_supported)
+				{   // AMD only
+					m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
+				}
+
+				if (s_extendedFormats[ExtendedFormat::Intz].m_supported)
+				{
+					s_textureFormat[TextureFormat::D24].m_fmt = D3DFMT_INTZ;
+					s_textureFormat[TextureFormat::D32].m_fmt = D3DFMT_INTZ;
+				}
+
+				s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
+				s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
+
+				g_caps.supported |= m_instancing ? BGFX_CAPS_INSTANCING : 0;
+
+				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+				{
+					g_caps.formats[ii] = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+						, m_deviceType
+						, adapterFormat
+						, 0
+						, D3DRTYPE_TEXTURE
+						, s_textureFormat[ii].m_fmt
+						) ) ? 1 : 0;
+				}
 			}
-
-			m_instancing = false
-				|| s_extendedFormats[ExtendedFormat::Inst].m_supported
-				|| (m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) )
-				;
-
-			if (m_amd
-			&&  s_extendedFormats[ExtendedFormat::Inst].m_supported)
-			{
-				// AMD only
-				m_device->SetRenderState(D3DRS_POINTSIZE, D3DFMT_INST);
-			}
-
-			if (s_extendedFormats[ExtendedFormat::Intz].m_supported)
-			{
-				s_textureFormat[TextureFormat::D24].m_fmt = D3DFMT_INTZ;
-				s_textureFormat[TextureFormat::D32].m_fmt = D3DFMT_INTZ;
-			}
-
-			s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
-			s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
-
-			g_caps.supported |= m_instancing ? BGFX_CAPS_INSTANCING : 0;
-
-			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
-			{
-				g_caps.formats[ii] = SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-					, m_deviceType
-					, adapterFormat
-					, 0
-					, D3DRTYPE_TEXTURE
-					, s_textureFormat[ii].m_fmt
-					) ) ? 1 : 0;
-			}
-#endif // BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 
 			uint32_t index = 1;
 			for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)

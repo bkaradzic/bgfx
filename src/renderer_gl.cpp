@@ -1187,6 +1187,8 @@ namespace bgfx
 				|| s_extension[Extension::OES_vertex_array_object].m_supported
 				;
 
+m_vaoSupport &= false;
+
 			if (BX_ENABLED(BX_PLATFORM_NACL) )
 			{
 				m_vaoSupport &= NULL != glGenVertexArrays
@@ -1237,6 +1239,11 @@ namespace bgfx
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
 				|| s_extension[Extension::ARB_compute_shader].m_supported
 				? BGFX_CAPS_COMPUTE
+				: 0
+				;
+
+			g_caps.supported |= GlContext::isSwapChainSupported()
+				? BGFX_CAPS_SWAP_CHAIN
 				: 0
 				;
 
@@ -3871,9 +3878,12 @@ namespace bgfx
 
 	uint16_t FrameBufferGL::destroy()
 	{
-		GL_CHECK(glDeleteFramebuffers(0 == m_fbo[1] ? 1 : 2, m_fbo) );
-		memset(m_fbo, 0, sizeof(m_fbo) );
-		m_num = 0;
+		if (0 != m_num)
+		{
+			GL_CHECK(glDeleteFramebuffers(0 == m_fbo[1] ? 1 : 2, m_fbo) );
+			memset(m_fbo, 0, sizeof(m_fbo) );
+			m_num = 0;
+		}
 
 		if (NULL != m_swapChain)
 		{

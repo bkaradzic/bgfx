@@ -88,6 +88,11 @@ namespace bgfx
 		[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
 	}
 
+	bool GlContext::isSwapChainSupported()
+	{
+		return false;
+	}
+
 	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
 	{
 		BX_CHECK(false, "Shouldn't be called!");

@@ -292,6 +292,11 @@ namespace bgfx
 		}
 	}
 
+	bool GlContext::isSwapChainSupported()
+	{
+		return true;
+	}
+
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
 		SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(_nwh);

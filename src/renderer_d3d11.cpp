@@ -611,6 +611,7 @@ namespace bgfx
 								| BGFX_CAPS_BLEND_INDEPENDENT
 								| BGFX_CAPS_COMPUTE
 								| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
+								| BGFX_CAPS_SWAP_CHAIN
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 			g_caps.maxFBAttachments = bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);

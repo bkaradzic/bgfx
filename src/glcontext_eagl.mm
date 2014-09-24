@@ -91,6 +91,11 @@ namespace bgfx
 		BX_TRACE("resize context");
 	}
 
+	bool GlContext::isSwapChainSupported()
+	{
+		return false;
+	}
+
 	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
 	{
 		BX_CHECK(false, "Shouldn't be called!");
