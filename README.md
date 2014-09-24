@@ -261,6 +261,10 @@ MRT rendering and deferred shading.
 
 ![example-21-deferred](https://github.com/bkaradzic/bgfx/raw/master/examples/21-deferred/screenshot.png)
 
+### [22-windows](https://github.com/bkaradzic/bgfx/tree/master/examples/22-windows)
+
+Rendering into multiple windows.
+
 Dependencies
 ------------
 
