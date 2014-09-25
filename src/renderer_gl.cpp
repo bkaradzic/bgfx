@@ -1187,8 +1187,6 @@ namespace bgfx
 				|| s_extension[Extension::OES_vertex_array_object].m_supported
 				;
 
-m_vaoSupport &= false;
-
 			if (BX_ENABLED(BX_PLATFORM_NACL) )
 			{
 				m_vaoSupport &= NULL != glGenVertexArrays
@@ -1700,6 +1698,7 @@ m_vaoSupport &= false;
 			else
 			{
 				FrameBufferGL& frameBuffer = m_frameBuffers[_fbh.idx];
+				_height = frameBuffer.m_height;
 				if (UINT16_MAX != frameBuffer.m_denseIdx)
 				{
 					m_glctx.makeCurrent(frameBuffer.m_swapChain);
@@ -1709,7 +1708,6 @@ m_vaoSupport &= false;
 				{
 					m_glctx.makeCurrent(NULL);
 					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
-					_height = frameBuffer.m_height;
 				}
 			}
 
@@ -1802,7 +1800,7 @@ m_vaoSupport &= false;
 
 		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0, bool _vsync = false)
 		{
-			if (_width != 0
+			if (_width  != 0
 			||  _height != 0)
 			{
 				if (!m_glctx.isValid() )
@@ -3923,15 +3921,25 @@ m_vaoSupport &= false;
 
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		if (1 < m_numWindows
+		&&  m_vaoSupport)
+		{
+			m_vaoSupport = false;
+			GL_CHECK(glBindVertexArray(0) );
+			GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
+			m_vao = 0;
+			m_vaoStateCache.invalidate();
+		}
+
 		m_glctx.makeCurrent(NULL);
 
-		const GLuint defaultVao = s_renderGL->m_vao;
+		const GLuint defaultVao = m_vao;
 		if (0 != defaultVao)
 		{
 			GL_CHECK(glBindVertexArray(defaultVao) );
 		}
 
-		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_backBufferFbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 
 		updateResolution(_render->m_resolution);
 
@@ -3941,19 +3949,19 @@ m_vaoSupport &= false;
 		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 		&& (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) ) )
 		{
-			s_renderGL->m_queries.begin(0, GL_TIME_ELAPSED);
+			m_queries.begin(0, GL_TIME_ELAPSED);
 		}
 
 		if (0 < _render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = _render->m_transientIb;
-			s_renderGL->m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data);
+			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = _render->m_transientVb;
-			s_renderGL->m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data);
+			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data);
 		}
 
 		_render->sort();
@@ -4006,7 +4014,7 @@ m_vaoSupport &= false;
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_msaaBackBufferFbo) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
 			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)
 			{
@@ -4025,7 +4033,7 @@ m_vaoSupport &= false;
 					if (_render->m_fb[view].idx != fbh.idx)
 					{
 						fbh = _render->m_fb[view];
-						height = s_renderGL->setFrameBuffer(fbh, _render->m_resolution.m_height);
+						height = setFrameBuffer(fbh, _render->m_resolution.m_height);
 					}
 
 					const Rect& rect = _render->m_rect[view];

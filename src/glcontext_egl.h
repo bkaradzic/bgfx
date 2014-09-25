@@ -41,6 +41,7 @@ namespace bgfx
 		}
 
 		void* m_eglLibrary;
+		EGLConfig  m_config;
 		EGLContext m_context;
 		EGLDisplay m_display;
 		EGLSurface m_surface;

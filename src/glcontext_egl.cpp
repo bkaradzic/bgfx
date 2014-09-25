@@ -35,6 +35,7 @@ namespace bgfx
 	typedef EGLSurface (EGLAPIENTRY* PFNEGLCREATEWINDOWSURFACEPROC)(EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint *attrib_list);
 	typedef EGLBoolean (EGLAPIENTRY* PFNEGLCHOOSECONFIGPROC)(EGLDisplay dpy, const EGLint *attrib_list,	EGLConfig *configs, EGLint config_size,	EGLint *num_config);
 	typedef EGLBoolean (EGLAPIENTRY* PFNEGLINITIALIZEPROC)(EGLDisplay dpy, EGLint *major, EGLint *minor);
+	typedef EGLint     (EGLAPIENTRY* PFNEGLGETERRORPROC)(void);
 	typedef EGLDisplay (EGLAPIENTRY* PFNEGLGETDISPLAYPROC)(EGLNativeDisplayType display_id);
 	typedef EGLBoolean (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
 	typedef EGLBoolean (EGLAPIENTRY* PFNEGLDESTROYSURFACEPROC)(EGLDisplay dpy, EGLSurface surface);
@@ -49,6 +50,7 @@ namespace bgfx
 			EGL_IMPORT_FUNC(PFNEGLCREATEWINDOWSURFACEPROC, eglCreateWindowSurface); \
 			EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig); \
 			EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,          eglInitialize); \
+			EGL_IMPORT_FUNC(PFNEGLGETERRORPROC,            eglGetError); \
 			EGL_IMPORT_FUNC(PFNEGLGETDISPLAYPROC,          eglGetDisplay); \
 			EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate); \
 			EGL_IMPORT_FUNC(PFNEGLDESTROYSURFACEPROC,      eglDestroySurface); \
@@ -98,6 +100,66 @@ EGL_IMPORT
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
 
+	static const EGLint s_contextAttrs[] =
+	{
+#	if BGFX_CONFIG_RENDERER_OPENGLES >= 30
+		EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
+#		if BGFX_CONFIG_RENDERER_OPENGLES >= 31
+		EGL_CONTEXT_MINOR_VERSION_KHR, 1,
+#		else
+		//			EGL_CONTEXT_MINOR_VERSION_KHR, 0,
+#		endif // BGFX_CONFIG_RENDERER_OPENGLES >= 31
+#	elif BGFX_CONFIG_RENDERER_OPENGLES
+		EGL_CONTEXT_MAJOR_VERSION_KHR, 2,
+		//			EGL_CONTEXT_MINOR_VERSION_KHR, 0,
+#	endif // BGFX_CONFIG_RENDERER_
+
+		EGL_NONE
+	};
+
+	struct SwapChainGL
+	{
+		SwapChainGL(EGLDisplay _display, EGLConfig _config, EGLContext _context, EGLNativeWindowType _nwh)
+			: m_nwh(_nwh)
+			, m_display(_display)
+		{
+			m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
+			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
+
+			m_context = eglCreateContext(m_display, _config, _context, s_contextAttrs);
+			BX_CHECK(NULL != m_context, "Create swap chain failed: %x", eglGetError() );
+
+			makeCurrent();
+			GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 0.0f) );
+			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
+			swapBuffers();
+			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
+			swapBuffers();
+		}
+
+		~SwapChainGL()
+		{
+			eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglDestroyContext(m_display, m_context);
+			eglDestroySurface(m_display, m_surface);
+		}
+
+		void makeCurrent()
+		{
+			eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+		}
+
+		void swapBuffers()
+		{
+			eglSwapBuffers(m_display, m_surface);
+		}
+
+		EGLNativeWindowType m_nwh;
+		EGLContext m_context;
+		EGLDisplay m_display;
+		EGLSurface m_surface;
+	};
+
 #	if BX_PLATFORM_RPI
 	static EGL_DISPMANX_WINDOW_T s_dispmanWindow;
 
@@ -118,10 +180,10 @@ EGL_IMPORT
 
 		BX_UNUSED(_width, _height);
 		EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
-		EGLNativeWindowType nwt = (EGLNativeWindowType)NULL;
+		EGLNativeWindowType nwh = (EGLNativeWindowType)NULL;
 #	if BX_PLATFORM_WINDOWS
 		ndt = GetDC(g_bgfxHwnd);
-		nwt = g_bgfxHwnd;
+		nwh = g_bgfxHwnd;
 #	endif // BX_PLATFORM_
 		m_display = eglGetDisplay(ndt);
 		BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
@@ -146,15 +208,14 @@ EGL_IMPORT
 		};
 
 		EGLint numConfig = 0;
-		EGLConfig config;
-		success = eglChooseConfig(m_display, attrs, &config, 1, &numConfig);
+		success = eglChooseConfig(m_display, attrs, &m_config, 1, &numConfig);
 		BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
 
 #	if BX_PLATFORM_ANDROID
 		EGLint format;
-		eglGetConfigAttrib(m_display, config, EGL_NATIVE_VISUAL_ID, &format);
+		eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
 		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, _width, _height, format);
-		nwt = g_bgfxAndroidWindow;
+		nwh = g_bgfxAndroidWindow;
 #	elif BX_PLATFORM_RPI
 		DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
 		DISPMANX_UPDATE_HANDLE_T  dispmanUpdate  = vc_dispmanx_update_start(0);
@@ -177,32 +238,15 @@ EGL_IMPORT
 		s_dispmanWindow.element = dispmanElement;
 		s_dispmanWindow.width   = _width;
 		s_dispmanWindow.height  = _height;
-		nwt = &s_dispmanWindow;
+		nwh = &s_dispmanWindow;
 
 		vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-		m_surface = eglCreateWindowSurface(m_display, config, nwt, NULL);
+		m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 		BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
-		EGLint contextAttrs[] =
-		{
-#	if BGFX_CONFIG_RENDERER_OPENGLES >= 30
-			EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
-#		if BGFX_CONFIG_RENDERER_OPENGLES >= 31
-			EGL_CONTEXT_MINOR_VERSION_KHR, 1,
-#		else
-//			EGL_CONTEXT_MINOR_VERSION_KHR, 0,
-#		endif // BGFX_CONFIG_RENDERER_OPENGLES >= 31
-#	elif BGFX_CONFIG_RENDERER_OPENGLES
-			EGL_CONTEXT_MAJOR_VERSION_KHR, 2,
-//			EGL_CONTEXT_MINOR_VERSION_KHR, 0,
-#	endif // BGFX_CONFIG_RENDERER_
-
-			EGL_NONE
-		};
-
-		m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, contextAttrs);
+		m_context = eglCreateContext(m_display, m_config, EGL_NO_CONTEXT, s_contextAttrs);
 		BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");
 
 		success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
@@ -239,29 +283,46 @@ EGL_IMPORT
 
 	bool GlContext::isSwapChainSupported()
 	{
-		return false;
+		return BX_ENABLED(0
+						| BX_PLATFORM_LINUX
+						| BX_PLATFORM_WINDOWS
+						);
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
-		BX_CHECK(false, "Shouldn't be called!");
-		return NULL;
+		return BX_NEW(g_allocator, SwapChainGL)(m_display, m_config, m_context, (EGLNativeWindowType)_nwh);
 	}
 
-	void GlContext::destorySwapChain(SwapChainGL*  /*_swapChain*/)
+	void GlContext::destorySwapChain(SwapChainGL* _swapChain)
 	{
-		BX_CHECK(false, "Shouldn't be called!");
+		BX_DELETE(g_allocator, _swapChain);
 	}
 
 	void GlContext::swap(SwapChainGL* _swapChain)
 	{
-		BX_CHECK(NULL == _swapChain, "Shouldn't be called!"); BX_UNUSED(_swapChain);
-		eglMakeCurrent(m_display, m_surface, m_surface, m_context);
-		eglSwapBuffers(m_display, m_surface);
+		if (NULL == _swapChain)
+		{
+			eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+			eglSwapBuffers(m_display, m_surface);
+		}
+		else
+		{
+			_swapChain->makeCurrent();
+			_swapChain->swapBuffers();
+		}
 	}
 
-	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	void GlContext::makeCurrent(SwapChainGL* _swapChain)
 	{
+		if (NULL == _swapChain)
+		{
+			eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+		}
+		else
+		{
+			_swapChain->makeCurrent();
+		}
 	}
 
 	void GlContext::import()
