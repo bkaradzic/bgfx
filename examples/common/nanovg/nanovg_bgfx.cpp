@@ -763,10 +763,13 @@ namespace
 	static int glnvg__allocPaths(struct GLNVGcontext* gl, int n)
 	{
 		int ret = 0;
-		if (gl->npaths+n > gl->cpaths)
-		{
-			gl->cpaths = gl->cpaths == 0 ? glnvg__maxi(n, 32) : gl->cpaths * 2;
-			gl->paths = (struct GLNVGpath*)realloc(gl->paths, sizeof(struct GLNVGpath) * gl->cpaths);
+		if (gl->npaths + n > gl->cpaths) {
+			GLNVGpath* paths;
+			int cpaths = glnvg__maxi(gl->npaths + n, 128) + gl->cpaths / 2; // 1.5x Overallocate
+			paths = (GLNVGpath*)realloc(gl->paths, sizeof(GLNVGpath) * cpaths);
+			if (paths == NULL) return -1;
+			gl->paths = paths;
+			gl->cpaths = cpaths;
 		}
 		ret = gl->npaths;
 		gl->npaths += n;
