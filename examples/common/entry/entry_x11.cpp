@@ -184,6 +184,7 @@ namespace entry
 			thread.init(mte.threadFunc, &mte);
 
 			WindowHandle defaultWindow = { 0 };
+			m_eventQueue.postSizeEvent(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 			while (!m_exit)
 			{
@@ -277,6 +278,7 @@ namespace entry
 							{
 								const XResizeRequestEvent& xresize = event.xresizerequest;
 								XResizeWindow(m_display, m_window, xresize.width, xresize.height);
+								m_eventQueue.postSizeEvent(defaultWindow, xresize.width, xresize.height);
 							}
 							break;
 					}

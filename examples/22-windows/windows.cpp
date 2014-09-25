@@ -163,7 +163,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				uint8_t viewId = (uint8_t)state.m_handle.idx;
 				entry::WindowState& win = windows[viewId];
 
- 				if (win.m_nwh    != state.m_nwh
+				if (win.m_nwh    != state.m_nwh
 				|| (win.m_width  != state.m_width
 				||  win.m_height != state.m_height) )
 				{
