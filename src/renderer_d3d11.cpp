@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
+#	include <renderdoc/renderdoc_app.h>
 
 namespace bgfx
 {
@@ -402,6 +403,78 @@ namespace bgfx
 		return false;
 	};
 
+#define RENDERDOC_IMPORT \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetLogFile); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureOptions); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetActiveWindow); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_TriggerCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_StartFrameCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_EndFrameCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetOverlayBits); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_MaskOverlayBits); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetFocusToggleKeys); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureKeys); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess);
+
+#define RENDERDOC_IMPORT_FUNC(_func) p##_func _func
+RENDERDOC_IMPORT
+#undef RENDERDOC_IMPORT_FUNC
+
+	pRENDERDOC_GetAPIVersion RENDERDOC_GetAPIVersion;
+
+	void* loadRenderDoc()
+	{
+		void* renderdocdll = bx::dlopen("renderdoc.dll");
+
+		if (NULL != renderdocdll)
+		{
+			RENDERDOC_GetAPIVersion = (pRENDERDOC_GetAPIVersion)bx::dlsym(renderdocdll, "RENDERDOC_GetAPIVersion");
+			if (NULL != RENDERDOC_GetAPIVersion
+			&&  RENDERDOC_API_VERSION == RENDERDOC_GetAPIVersion() )
+			{
+#define RENDERDOC_IMPORT_FUNC(_func) \
+			_func = (p##_func)bx::dlsym(renderdocdll, #_func); \
+			BX_TRACE("%p " #_func, _func);
+RENDERDOC_IMPORT
+#undef RENDERDOC_IMPORT_FUNC
+
+				RENDERDOC_SetLogFile(L"temp/bgfx");
+
+				RENDERDOC_SetFocusToggleKeys(NULL, 0);
+
+				KeyButton captureKey = eKey_F11;
+				RENDERDOC_SetCaptureKeys(&captureKey, 1);
+
+				CaptureOptions opt;
+				memset(&opt, 0, sizeof(opt) );
+				opt.AllowVSync      = 1;
+				opt.SaveAllInitials = 1;
+				RENDERDOC_SetCaptureOptions(&opt);
+
+				uint32_t ident = 0;
+				RENDERDOC_InitRemoteAccess(&ident);
+
+				RENDERDOC_MaskOverlayBits(eOverlay_None, eOverlay_None);
+			}
+			else
+			{
+				bx::dlclose(renderdocdll);
+				renderdocdll = NULL;
+			}
+		}
+
+		return renderdocdll;
+	}
+
+	void unloadRenderDoc(void* _renderdocdll)
+	{
+		if (NULL != _renderdocdll)
+		{
+//			bx::dlclose(_renderdocdll);
+		}
+	}
+
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
@@ -413,6 +486,8 @@ namespace bgfx
 			, m_fsChanges(0)
 			, m_rtMsaa(false)
 		{
+			m_renderdocdll = loadRenderDoc();
+
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -544,9 +619,12 @@ namespace bgfx
 			hr = device->GetParent(__uuidof(IDXGIAdapter), (void**)&adapter);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
-			// GPA increases device ref count and triggers assert in debug
-			// build. Set flag to disable reference count checks.
-			setGraphicsDebuggerPresent(3 < getRefCount(device) );
+			// GPA increases device ref count.
+			// RenderDoc makes device ref count 0 here.
+			//
+			// This causes assert in debug. When debugger is present refcount
+			// checks are off.
+			setGraphicsDebuggerPresent(2 != getRefCount(device) );
 			DX_RELEASE(device, 2);
 
 			hr = adapter->GetDesc(&m_adapterDesc);
@@ -657,6 +735,8 @@ namespace bgfx
 			DX_RELEASE(m_deviceCtx, 0);
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_factory, 0);
+
+			unloadRenderDoc(m_renderdocdll);
 
 #if USE_D3D11_DYNAMIC_LIB
 			bx::dlclose(m_dxgidll);
@@ -1828,6 +1908,8 @@ namespace bgfx
 		void* m_d3d11dll;
 		void* m_dxgidll;
 #endif // USE_D3D11_DYNAMIC_LIB
+
+		void* m_renderdocdll;
 
 		D3D_DRIVER_TYPE m_driverType;
 		IDXGIAdapter* m_adapter;
@@ -3310,7 +3392,8 @@ namespace bgfx
 
 				tvm.clear();
 				uint16_t pos = 0;
-				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f
+					, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
 					, getRendererName()
 					);
 
@@ -3362,6 +3445,11 @@ namespace bgfx
 						, statsNumInstances[ii]
 						, statsNumPrimsSubmitted[ii]
 						);
+				}
+
+				if (NULL != m_renderdocdll)
+				{
+					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
 				}
 
 				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);

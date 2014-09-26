@@ -16,6 +16,7 @@ function bgfxProject(_name, _kind, _defines)
 		end
 
 		includedirs {
+			BGFX_DIR .. "3rdparty",
 			BGFX_DIR .. "../bx/include",
 		}
 
