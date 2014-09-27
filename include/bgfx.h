@@ -911,16 +911,6 @@ namespace bgfx
 	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
-	/// Set view rectangle for multiple views.
-	///
-	/// @param _viewMask Bit mask representing affected views.
-	/// @param _x Position x from the left corner of the window.
-	/// @param _y Position y from the top corner of the window.
-	/// @param _width Width of view port region.
-	/// @param _height Height of view port region.
-	///
-	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
-
 	/// Set view scissor. Draw primitive outside view will be clipped. When
 	/// _x, _y, _width and _height are set to 0, scissor will be disabled.
 	///
@@ -930,18 +920,6 @@ namespace bgfx
 	/// @param _height Height of scissor region.
 	///
 	void setViewScissor(uint8_t _id, uint16_t _x = 0, uint16_t _y = 0, uint16_t _width = 0, uint16_t _height = 0);
-
-	/// Set view scissor for multiple views. When _x, _y, _width and _height
-	/// are set to 0, scissor will be disabled.
-	///
-	/// @param _id View id.
-	/// @param _viewMask Bit mask representing affected views.
-	/// @param _x Position x from the left corner of the window.
-	/// @param _y Position y from the top corner of the window.
-	/// @param _width Width of scissor region.
-	/// @param _height Height of scissor region.
-	///
-	void setViewScissorMask(uint32_t _viewMask, uint16_t _x = 0, uint16_t _y = 0, uint16_t _width = 0, uint16_t _height = 0);
 
 	/// Set view clear flags.
 	///
@@ -966,15 +944,9 @@ namespace bgfx
 	///
 	void setViewClear(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0 = UINT8_MAX, uint8_t _1 = UINT8_MAX, uint8_t _2 = UINT8_MAX, uint8_t _3 = UINT8_MAX, uint8_t _4 = UINT8_MAX, uint8_t _5 = UINT8_MAX, uint8_t _6 = UINT8_MAX, uint8_t _7 = UINT8_MAX);
 
-	/// Set view clear flags for multiple views.
-	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0);
-
 	/// Set view into sequential mode. Draw calls will be sorted in the same
 	/// order in which submit calls were called.
 	void setViewSeq(uint8_t _id, bool _enabled);
-
-	/// Set multiple views into sequential mode.
-	void setViewSeqMask(uint32_t _viewMask, bool _enabled);
 
 	/// Set view frame buffer.
 	///
@@ -988,24 +960,9 @@ namespace bgfx
 	///
 	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle);
 
-	/// Set view frame buffer for multiple views.
-	///
-	/// @param _viewMask View mask.
-	/// @param _handle Frame buffer handle. Passing BGFX_INVALID_HANDLE as
-	///   frame buffer handle will draw primitives from this view into
-	///   default back buffer.
-	///
-	/// NOTE:
-	///   Not persistent after bgfx::reset call.
-	///
-	void setViewFrameBufferMask(uint32_t _viewMask, FrameBufferHandle _handle);
-
 	/// Set view view and projection matrices, all draw primitives in this
 	/// view will use these matrices.
 	void setViewTransform(uint8_t _id, const void* _view, const void* _proj);
-
-	/// Set view view and projection matrices for multiple views.
-	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj);
 
 	/// Sets debug marker.
 	void setMarker(const char* _marker);
@@ -1158,14 +1115,6 @@ namespace bgfx
 	/// @returns Number of draw calls.
 	///
 	uint32_t submit(uint8_t _id, int32_t _depth = 0);
-
-	/// Submit primitive for rendering into multiple views.
-	///
-	/// @param _viewMask Mask to which views to submit draw primitive calls.
-	/// @param _depth Depth for sorting.
-	/// @returns Number of draw calls.
-	///
-	uint32_t submitMask(uint32_t _viewMask, int32_t _depth = 0);
 
 	///
 	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access);
