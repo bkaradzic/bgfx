@@ -411,6 +411,12 @@ build errors.
 Debugging
 ---------
 
+When using DX11 renderer, you can drop in `renderdoc.dll` into working
+directory, and it will be automatically loaded during bgfx initialization. This
+allows frame capture at any time by pressing **F11**.
+
+Other debuggers:
+
 | Name      | OS            | DX9  | DX11 |  GL  | GLES | Source |
 |:----------|:--------------|:----:|:----:|:----:|:----:|:------:|
 | APITrace  | Linux/OSX/Win |   x  |  x   |  x   |   x  |    x   |
