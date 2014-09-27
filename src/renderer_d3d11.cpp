@@ -471,7 +471,7 @@ RENDERDOC_IMPORT
 	{
 		if (NULL != _renderdocdll)
 		{
-//			bx::dlclose(_renderdocdll);
+			bx::dlclose(_renderdocdll);
 		}
 	}
 
