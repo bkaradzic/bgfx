@@ -37,26 +37,6 @@
 #define RENDERVIEW_DRAWDEPTH_2_ID 18
 #define RENDERVIEW_DRAWDEPTH_3_ID 19
 
-#define RENDERVIEW_SHADOWMAP_0_BIT (1<<RENDERVIEW_SHADOWMAP_0_ID)
-#define RENDERVIEW_SHADOWMAP_1_BIT (1<<RENDERVIEW_SHADOWMAP_1_ID)
-#define RENDERVIEW_SHADOWMAP_2_BIT (1<<RENDERVIEW_SHADOWMAP_2_ID)
-#define RENDERVIEW_SHADOWMAP_3_BIT (1<<RENDERVIEW_SHADOWMAP_3_ID)
-#define RENDERVIEW_SHADOWMAP_4_BIT (1<<RENDERVIEW_SHADOWMAP_4_ID)
-#define RENDERVIEW_VBLUR_0_BIT     (1<<RENDERVIEW_VBLUR_0_ID)
-#define RENDERVIEW_HBLUR_0_BIT     (1<<RENDERVIEW_HBLUR_0_ID)
-#define RENDERVIEW_VBLUR_1_BIT     (1<<RENDERVIEW_VBLUR_1_ID)
-#define RENDERVIEW_HBLUR_1_BIT     (1<<RENDERVIEW_HBLUR_1_ID)
-#define RENDERVIEW_VBLUR_2_BIT     (1<<RENDERVIEW_VBLUR_2_ID)
-#define RENDERVIEW_HBLUR_2_BIT     (1<<RENDERVIEW_HBLUR_2_ID)
-#define RENDERVIEW_VBLUR_3_BIT     (1<<RENDERVIEW_VBLUR_3_ID)
-#define RENDERVIEW_HBLUR_3_BIT     (1<<RENDERVIEW_HBLUR_3_ID)
-#define RENDERVIEW_DRAWSCENE_0_BIT (1<<RENDERVIEW_DRAWSCENE_0_ID)
-#define RENDERVIEW_DRAWSCENE_1_BIT (1<<RENDERVIEW_DRAWSCENE_1_ID)
-#define RENDERVIEW_DRAWDEPTH_0_BIT (1<<RENDERVIEW_DRAWDEPTH_0_ID)
-#define RENDERVIEW_DRAWDEPTH_1_BIT (1<<RENDERVIEW_DRAWDEPTH_1_ID)
-#define RENDERVIEW_DRAWDEPTH_2_BIT (1<<RENDERVIEW_DRAWDEPTH_2_ID)
-#define RENDERVIEW_DRAWDEPTH_3_BIT (1<<RENDERVIEW_DRAWDEPTH_3_ID)
-
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
 	union
@@ -2553,9 +2533,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Reset render targets.
-		const uint32_t viewMask = (uint32_t(1) << (RENDERVIEW_DRAWDEPTH_3_ID+1) ) - 1;
 		const bgfx::FrameBufferHandle invalidRt = BGFX_INVALID_HANDLE;
-		bgfx::setViewFrameBufferMask(viewMask, invalidRt);
+		for (uint32_t ii = 0; ii < RENDERVIEW_DRAWDEPTH_3_ID+1; ++ii)
+		{
+			bgfx::setViewFrameBuffer(ii, invalidRt);
+		}
 
 		// Determine on-screen rectangle size where depth buffer will be drawn.
 		const uint16_t depthRectHeight = uint16_t(float(viewState.m_height) / 2.5f);

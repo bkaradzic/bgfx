@@ -10,19 +10,10 @@
 #include "bounds.h"
 
 #define RENDER_PASS_GEOMETRY_ID       0
-#define RENDER_PASS_GEOMETRY_BIT      (1<<RENDER_PASS_GEOMETRY_ID)
-
 #define RENDER_PASS_LIGHT_ID          1
-#define RENDER_PASS_LIGHT_BIT         (1<<RENDER_PASS_LIGHT_ID)
-
 #define RENDER_PASS_COMBINE_ID        2
-#define RENDER_PASS_COMBINE_BIT       (1<<RENDER_PASS_COMBINE_ID)
-
 #define RENDER_PASS_DEBUG_LIGHTS_ID   3
-#define RENDER_PASS_DEBUG_LIGHTS_BIT  (1<<RENDER_PASS_DEBUG_LIGHTS_ID)
-
 #define RENDER_PASS_DEBUG_GBUFFER_ID  4
-#define RENDER_PASS_DEBUG_GBUFFER_BIT (1<<RENDER_PASS_DEBUG_GBUFFER_ID)
 
 struct PosNormalTangentTexcoordVertex
 {
@@ -448,14 +439,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			float vp[16];
 			float invMvp[16];
 			{
-				bgfx::setViewRectMask(0
-					| RENDER_PASS_GEOMETRY_BIT
-					| RENDER_PASS_LIGHT_BIT
-					| RENDER_PASS_COMBINE_BIT
-					| RENDER_PASS_DEBUG_LIGHTS_BIT
-					| RENDER_PASS_DEBUG_GBUFFER_BIT
-					, 0, 0, width, height
-					);
+				bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_LIGHT_ID,         0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_COMBINE_ID,       0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_DEBUG_LIGHTS_ID,  0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_DEBUG_GBUFFER_ID, 0, 0, width, height);
 
 				bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, lightBuffer);
 
@@ -469,11 +457,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bx::mtxInverse(invMvp, vp);
 
 				bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
-				bgfx::setViewTransformMask(0
-					| RENDER_PASS_LIGHT_BIT
-					| RENDER_PASS_COMBINE_BIT
-					, NULL, proj
-					);
+				bgfx::setViewTransform(RENDER_PASS_LIGHT_ID,   NULL, proj);
+				bgfx::setViewTransform(RENDER_PASS_COMBINE_ID, NULL, proj);
 
 				const float aspectRatio = float(height)/float(width);
 				const float size = 10.0f;

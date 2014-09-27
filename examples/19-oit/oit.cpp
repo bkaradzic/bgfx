@@ -273,7 +273,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiEndFrame();
 
 		// Set view 0 default viewport.
-		bgfx::setViewRectMask(0x3, 0, 0, width, height);
+		bgfx::setViewRect(0, 0, 0, width, height);
+		bgfx::setViewRect(1, 0, 0, width, height);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
