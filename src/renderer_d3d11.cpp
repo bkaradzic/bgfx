@@ -7,7 +7,11 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
-#	include <renderdoc/renderdoc_app.h>
+
+#	if BGFX_CONFIG_DEBUG_PIX
+#		include <psapi.h>
+#		include <renderdoc/renderdoc_app.h>
+#	endif // BGFX_CONFIG_DEBUG_PIX
 
 namespace bgfx
 {
@@ -403,6 +407,47 @@ namespace bgfx
 		return false;
 	};
 
+#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+	bool findModule(const char* _name)
+	{
+		HANDLE process = GetCurrentProcess();
+		DWORD size;
+		BOOL result = EnumProcessModules(process
+						, NULL
+						, 0
+						, &size
+						);
+		if (0 != result)
+		{
+			HMODULE* modules = (HMODULE*)alloca(size);
+			result = EnumProcessModules(process
+				, modules
+				, size
+				, &size
+				);
+
+			if (0 != result)
+			{
+				char moduleName[MAX_PATH];
+				for (uint32_t ii = 0, num = uint32_t(size/sizeof(HMODULE) ); ii < num; ++ii)
+				{
+					result = GetModuleBaseNameA(process
+								, modules[ii]
+								, moduleName
+								, BX_COUNTOF(moduleName)
+								);
+					if (0 != result
+					&&  0 == bx::stricmp(_name, moduleName) )
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 #define RENDERDOC_IMPORT \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetLogFile); \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetCapture); \
@@ -418,13 +463,19 @@ namespace bgfx
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess);
 
 #define RENDERDOC_IMPORT_FUNC(_func) p##_func _func
-RENDERDOC_IMPORT
+	RENDERDOC_IMPORT
 #undef RENDERDOC_IMPORT_FUNC
 
 	pRENDERDOC_GetAPIVersion RENDERDOC_GetAPIVersion;
 
 	void* loadRenderDoc()
 	{
+		// Skip loading RenderDoc when IntelGPA is present to avoid RenderDoc crash.
+		if (findModule(BX_ARCH_32BIT ? "shimloader32.dll" : "shimloader64.dll") )
+		{
+			return NULL;
+		}
+
 		void* renderdocdll = bx::dlopen("renderdoc.dll");
 
 		if (NULL != renderdocdll)
@@ -474,6 +525,16 @@ RENDERDOC_IMPORT
 			bx::dlclose(_renderdocdll);
 		}
 	}
+#else
+	void* loadRenderDoc()
+	{
+		return NULL;
+	}
+
+	void unloadRenderDoc(void*)
+	{
+	}
+#endif // BGFX_CONFIG_DEBUG_PIX
 
 	struct RendererContextD3D11 : public RendererContextI
 	{

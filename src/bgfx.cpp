@@ -723,57 +723,6 @@ namespace bgfx
 		return m_num;
 	}
 
-	uint32_t Frame::submitMask(uint32_t _viewMask, int32_t _depth)
-	{
-		if (m_discard)
-		{
-			discard();
-			return m_num;
-		}
-
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
-		|| (0 == m_draw.m_numVertices && 0 == m_draw.m_numIndices) )
-		{
-			m_numDropped += bx::uint32_cntbits(_viewMask);
-			return m_num;
-		}
-
-		m_constEnd = m_constantBuffer->getPos();
-
-		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
-		if (invalidHandle != m_key.m_program)
-		{
-			m_key.m_depth = _depth;
-
-			for (uint32_t id = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, id += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				id += ntz;
-
-				m_key.m_view   = id;
-				m_key.m_seq    = s_ctx->m_seq[id] & s_ctx->m_seqMask[id];
-				s_ctx->m_seq[id]++;
-
-				uint64_t key = m_key.encodeDraw();
-				m_sortKeys[m_num]   = key;
-				m_sortValues[m_num] = m_numRenderItems;
-				++m_num;
-			}
-
-			m_draw.m_constBegin = m_constBegin;
-			m_draw.m_constEnd   = m_constEnd;
-			m_draw.m_flags |= m_flags;
-			m_renderItem[m_numRenderItems].draw = m_draw;
-			++m_numRenderItems;
-		}
-
-		m_draw.clear();
-		m_constBegin = m_constEnd;
-		m_flags = BGFX_STATE_NONE;
-
-		return m_num;
-	}
-
 	uint32_t Frame::dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ)
 	{
 		if (m_discard)
@@ -2571,22 +2520,10 @@ again:
 		s_ctx->setViewRect(_id, _x, _y, _width, _height);
 	}
 
-	void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewRectMask(_viewMask, _x, _y, _width, _height);
-	}
-
 	void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setViewScissor(_id, _x, _y, _width, _height);
-	}
-
-	void setViewScissorMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewScissorMask(_viewMask, _x, _y, _width, _height);
 	}
 
 	void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -2601,22 +2538,10 @@ again:
 		s_ctx->setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 	}
 
-	void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewClearMask(_viewMask, _flags, _rgba, _depth, _stencil);
-	}
-
 	void setViewSeq(uint8_t _id, bool _enabled)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setViewSeq(_id, _enabled);
-	}
-
-	void setViewSeqMask(uint32_t _viewMask, bool _enabled)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewSeqMask(_viewMask, _enabled);
 	}
 
 	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle)
@@ -2625,22 +2550,10 @@ again:
 		s_ctx->setViewFrameBuffer(_id, _handle);
 	}
 
-	void setViewFrameBufferMask(uint32_t _mask, FrameBufferHandle _handle)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewFrameBufferMask(_mask, _handle);
-	}
-
 	void setViewTransform(uint8_t _id, const void* _view, const void* _proj)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setViewTransform(_id, _view, _proj);
-	}
-
-	void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewTransformMask(_viewMask, _view, _proj);
 	}
 
 	void setMarker(const char* _marker)
@@ -2773,12 +2686,6 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		return s_ctx->submit(_id, _depth);
-	}
-
-	uint32_t submitMask(uint32_t _viewMask, int32_t _depth)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->submitMask(_viewMask, _depth);
 	}
 
 	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access)
@@ -3243,19 +3150,9 @@ BGFX_C_API void bgfx_set_view_rect(uint8_t _id, uint16_t _x, uint16_t _y, uint16
 	bgfx::setViewRect(_id, _x, _y, _width, _height);
 }
 
-BGFX_C_API void bgfx_set_view_rect_mask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
-{
-	bgfx::setViewRectMask(_viewMask, _x, _y, _width, _height);
-}
-
 BGFX_C_API void bgfx_set_view_scissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
 	bgfx::setViewScissor(_id, _x, _y, _width, _height);
-}
-
-BGFX_C_API void bgfx_set_view_scissor_mask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
-{
-	bgfx::setViewScissorMask(_viewMask, _x, _y, _width, _height);
 }
 
 BGFX_C_API void bgfx_set_view_clear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -3268,19 +3165,9 @@ BGFX_C_API void bgfx_set_view_clear_mrt(uint8_t _id, uint8_t _flags, float _dept
 	bgfx::setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 }
 
-BGFX_C_API void bgfx_set_view_clear_mask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
-{
-	bgfx::setViewClearMask(_viewMask, _flags, _rgba, _depth, _stencil);
-}
-
 BGFX_C_API void bgfx_set_view_seq(uint8_t _id, bool _enabled)
 {
 	bgfx::setViewSeq(_id, _enabled);
-}
-
-BGFX_C_API void bgfx_set_view_seq_mask(uint32_t _viewMask, bool _enabled)
-{
-	bgfx::setViewSeqMask(_viewMask, _enabled);
 }
 
 BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle_t _handle)
@@ -3289,20 +3176,9 @@ BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle
 	bgfx::setViewFrameBuffer(_id, handle.cpp);
 }
 
-BGFX_C_API void bgfx_set_view_frame_buffer_mask(uint32_t _viewMask, bgfx_frame_buffer_handle_t _handle)
-{
-	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
-	bgfx::setViewFrameBufferMask(_viewMask, handle.cpp);
-}
-
 BGFX_C_API void bgfx_set_view_transform(uint8_t _id, const void* _view, const void* _proj)
 {
 	bgfx::setViewTransform(_id, _view, _proj);
-}
-
-BGFX_C_API void bgfx_set_view_transform_mask(uint32_t _viewMask, const void* _view, const void* _proj)
-{
-	bgfx::setViewTransformMask(_viewMask, _view, _proj);
 }
 
 BGFX_C_API void bgfx_set_marker(const char* _marker)
@@ -3408,11 +3284,6 @@ BGFX_C_API void bgfx_set_texture_from_frame_buffer(uint8_t _stage, bgfx_uniform_
 BGFX_C_API uint32_t bgfx_submit(uint8_t _id, int32_t _depth)
 {
 	return bgfx::submit(_id, _depth);
-}
-
-BGFX_C_API uint32_t bgfx_submit_mask(uint32_t _viewMask, int32_t _depth)
-{
-	return bgfx::submitMask(_viewMask, _depth);
 }
 
 BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_texture_format_t _format, bgfx_access_t _access)

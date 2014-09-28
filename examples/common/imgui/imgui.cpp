@@ -1456,7 +1456,7 @@ struct Imgui
 		return selected;
 	}
 
-	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
 	{
 		Area& area = getCurrentArea();
 
@@ -1485,7 +1485,7 @@ struct Imgui
 		const int32_t yy = area.m_widgetY;
 		area.m_widgetY += _height + DEFAULT_SPACING;
 
-		screenQuad(xx, yy, _width, _height);
+		screenQuad(xx, yy, _width, _height, _originBottomLeft);
 		bgfx::setUniform(u_imageLod, &_lod);
 		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
@@ -1494,12 +1494,12 @@ struct Imgui
 		bgfx::submit(m_view);
 	}
 
-	void image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+	void image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
 	{
 		const float width = _width*float(getCurrentArea().m_widgetW);
 		const float height = width/_aspect;
 
-		image(_image, _lod, int32_t(width), int32_t(height), _align);
+		image(_image, _lod, int32_t(width), int32_t(height), _align, _originBottomLeft);
 	}
 
 	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
@@ -2330,7 +2330,7 @@ struct Imgui
 #endif // USE_NANOVG_FONT
 	}
 
-	void screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height)
+	void screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, bool _originBottomLeft = false)
 	{
 		if (bgfx::checkAvailTransientVertexBuffer(6, PosUvVertex::ms_decl) )
 		{
@@ -2350,8 +2350,8 @@ struct Imgui
 			const float texelHalfH = m_halfTexel/heightf;
 			const float minu = texelHalfW;
 			const float maxu = 1.0f - texelHalfW;
-			const float minv = texelHalfH;
-			const float maxv = texelHalfH + 1.0f;
+			const float minv = _originBottomLeft ? texelHalfH+1.0f : texelHalfH     ;
+			const float maxv = _originBottomLeft ? texelHalfH      : texelHalfH+1.0f;
 
 			vertex[0].m_x = minx;
 			vertex[0].m_y = miny;
@@ -2796,6 +2796,16 @@ ImguiFontHandle imguiCreate(const void* _data, float _fontSize)
 	return s_imgui.create(_data, _fontSize);
 }
 
+void imguiDestroy()
+{
+	s_imgui.destroy();
+}
+
+ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize)
+{
+	return s_imgui.createFont(_data, _fontSize);
+}
+
 void imguiSetFont(ImguiFontHandle _handle)
 {
 	s_imgui.setFont(_handle);
@@ -2807,16 +2817,6 @@ ImguiFontHandle imguiGetCurrentFont()
 	return handle;
 }
 
-ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize)
-{
-	return s_imgui.createFont(_data, _fontSize);
-}
-
-void imguiDestroy()
-{
-	s_imgui.destroy();
-}
-
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 {
 	s_imgui.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _view);
@@ -2825,6 +2825,26 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame()
 {
 	s_imgui.endFrame();
+}
+
+void imguiDrawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb)
+{
+	s_imgui.drawText(_x, _y, _align, _text, _argb);
+}
+
+void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_t _argb)
+{
+	s_imgui.drawLine(_x0, _y0, _x1, _y1, _r, _argb);
+}
+
+void imguiDrawRoundedRect(float _x, float _y, float _width, float _height, float _r, uint32_t _argb)
+{
+	s_imgui.drawRoundedRect(_x, _y, _width, _height, _r, _argb);
+}
+
+void imguiDrawRect(float _x, float _y, float _width, float _height, uint32_t _argb)
+{
+	s_imgui.drawRect(_x, _y, _width, _height, _argb);
 }
 
 bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
@@ -2866,7 +2886,6 @@ void imguiEndScrollArea(int32_t _r)
 	s_imgui.endScroll(_r);
 	s_imgui.endArea();
 }
-
 
 void imguiIndent(uint16_t _width)
 {
@@ -2911,6 +2930,14 @@ bool imguiItem(const char* _text, bool _enabled)
 bool imguiCheck(const char* _text, bool _checked, bool _enabled)
 {
 	return s_imgui.check(_text, _checked, _enabled);
+}
+
+void imguiBool(const char* _text, bool& _flag, bool _enabled)
+{
+	if (imguiCheck(_text, _flag, _enabled) )
+	{
+		_flag = !_flag;
+	}
 }
 
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -3016,34 +3043,6 @@ uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)
 	return _selected;
 }
 
-void imguiDrawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb)
-{
-	s_imgui.drawText(_x, _y, _align, _text, _argb);
-}
-
-void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_t _argb)
-{
-	s_imgui.drawLine(_x0, _y0, _x1, _y1, _r, _argb);
-}
-
-void imguiDrawRoundedRect(float _x, float _y, float _width, float _height, float _r, uint32_t _argb)
-{
-	s_imgui.drawRoundedRect(_x, _y, _width, _height, _r, _argb);
-}
-
-void imguiDrawRect(float _x, float _y, float _width, float _height, uint32_t _argb)
-{
-	s_imgui.drawRect(_x, _y, _width, _height, _argb);
-}
-
-void imguiBool(const char* _text, bool& _flag, bool _enabled)
-{
-	if (imguiCheck(_text, _flag, _enabled) )
-	{
-		_flag = !_flag;
-	}
-}
-
 void imguiColorWheel(float _rgb[3], bool _respectIndentation, bool _enabled)
 {
 	s_imgui.colorWheelWidget(_rgb, _respectIndentation, _enabled);
@@ -3069,14 +3068,14 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 	}
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
 {
-	s_imgui.image(_image, _lod, _width, _height, _align);
+	s_imgui.image(_image, _lod, _width, _height, _align, _originBottomLeft);
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
 {
-	s_imgui.image(_image, _lod, _width, _aspect, _align);
+	s_imgui.image(_image, _lod, _width, _aspect, _align, _originBottomLeft);
 }
 
 void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
@@ -3089,11 +3088,6 @@ void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod,
 	s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
 }
 
-bool imguiMouseOverArea()
-{
-	return s_imgui.m_insideArea;
-}
-
 float imguiGetTextLength(const char* _text, ImguiFontHandle _handle)
 {
 #if !USE_NANOVG_FONT
@@ -3102,4 +3096,9 @@ float imguiGetTextLength(const char* _text, ImguiFontHandle _handle)
 #else
 	return 0.0f;
 #endif
+}
+
+bool imguiMouseOverArea()
+{
+	return s_imgui.m_insideArea;
 }

@@ -1331,7 +1331,6 @@ namespace bgfx
 		}
 
 		uint32_t submit(uint8_t _id, int32_t _depth);
-		uint32_t submitMask(uint32_t _viewMask, int32_t _depth);
 		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz);
 		void sort();
 
@@ -2652,17 +2651,6 @@ namespace bgfx
 			rect.m_height = bx::uint16_max(_height, 1);
 		}
 
-		BGFX_API_FUNC(void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
-		{
-			for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				view += ntz;
-
-				setViewRect( (uint8_t)view, _x, _y, _width, _height);
-			}
-		}
-
 		BGFX_API_FUNC(void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
 			Rect& scissor = m_scissor[_id];
@@ -2670,17 +2658,6 @@ namespace bgfx
 			scissor.m_y = _y;
 			scissor.m_width  = _width;
 			scissor.m_height = _height;
-		}
-
-		BGFX_API_FUNC(void setViewScissorMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
-		{
-			for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				view += ntz;
-
-				setViewScissor( (uint8_t)view, _x, _y, _width, _height);
-			}
 		}
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
@@ -2713,48 +2690,14 @@ namespace bgfx
 			clear.m_stencil  = _stencil;
 		}
 
-		BGFX_API_FUNC(void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
-		{
-			for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				view += ntz;
-
-				setViewClear( (uint8_t)view, _flags, _rgba, _depth, _stencil);
-			}
-		}
-
 		BGFX_API_FUNC(void setViewSeq(uint8_t _id, bool _enabled) )
 		{
 			m_seqMask[_id] = _enabled ? 0xffff : 0x0;
 		}
 
-		BGFX_API_FUNC(void setViewSeqMask(uint32_t _viewMask, bool _enabled) )
-		{
-			uint16_t mask = _enabled ? 0xffff : 0x0;
-			for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				view += ntz;
-
-				m_seqMask[view] = mask;
-			}
-		}
-
 		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
 		{
 			m_fb[_id] = _handle;
-		}
-
-		BGFX_API_FUNC(void setViewFrameBufferMask(uint32_t _viewMask, FrameBufferHandle _handle) )
-		{
-			for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				view += ntz;
-
-				m_fb[view] = _handle;
-			}
 		}
 
 		BGFX_API_FUNC(void setViewTransform(uint8_t _id, const void* _view, const void* _proj) )
@@ -2775,17 +2718,6 @@ namespace bgfx
 			else
 			{
 				m_proj[_id].setIdentity();
-			}
-		}
-
-		BGFX_API_FUNC(void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj) )
-		{
-			for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
-			{
-				viewMask >>= ntz;
-				view += ntz;
-
-				setViewTransform( (uint8_t)view, _view, _proj);
 			}
 		}
 
@@ -2896,11 +2828,6 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t submit(uint8_t _id, int32_t _depth) )
 		{
 			return m_submit->submit(_id, _depth);
-		}
-
-		BGFX_API_FUNC(uint32_t submitMask(uint32_t _viewMask, int32_t _depth) )
-		{
-			return m_submit->submitMask(_viewMask, _depth);
 		}
 
 		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access) )

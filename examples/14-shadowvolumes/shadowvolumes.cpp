@@ -188,6 +188,39 @@ static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 
+void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
+{
+	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	{
+		viewMask >>= ntz;
+		view += ntz;
+
+		bgfx::setViewClear( (uint8_t)view, _flags, _rgba, _depth, _stencil);
+	}
+}
+
+void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj)
+{
+	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	{
+		viewMask >>= ntz;
+		view += ntz;
+
+		bgfx::setViewTransform( (uint8_t)view, _view, _proj);
+	}
+}
+
+void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+{
+	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	{
+		viewMask >>= ntz;
+		view += ntz;
+
+		bgfx::setViewRect( (uint8_t)view, _x, _y, _width, _height);
+	}
+}
+
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
 				  , const float* __restrict _pos
@@ -617,14 +650,6 @@ void submit(uint8_t _id, int32_t _depth = 0)
 
 	// Keep track of submited view ids.
 	s_viewMask |= 1 << _id;
-}
-
-void submitMask(uint32_t _viewMask, int32_t _depth = 0)
-{
-	bgfx::submitMask(_viewMask, _depth);
-
-	// Keep track of submited view ids.
-	s_viewMask |= _viewMask;
 }
 
 struct Aabb
@@ -2866,8 +2891,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Setup view rect and transform for all used views.
-		bgfx::setViewRectMask(s_viewMask, 0, 0, viewState.m_width, viewState.m_height);
-		bgfx::setViewTransformMask(s_viewMask, viewState.m_view, viewState.m_proj);
+		setViewRectMask(s_viewMask, 0, 0, viewState.m_width, viewState.m_height);
+		setViewTransformMask(s_viewMask, viewState.m_view, viewState.m_proj);
 		s_viewMask = 0;
 
 		// Advance to next frame. Rendering thread will be kicked to
@@ -2878,7 +2903,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_svAllocator.swap();
 
 		// Reset clear values.
-		bgfx::setViewClearMask(UINT32_MAX
+		setViewClearMask(UINT32_MAX
 			, BGFX_CLEAR_NONE
 			, clearValues.m_clearRgba
 			, clearValues.m_clearDepth

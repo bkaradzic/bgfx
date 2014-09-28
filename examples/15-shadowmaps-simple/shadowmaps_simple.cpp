@@ -16,10 +16,7 @@
 #include "entry/entry.h"
 
 #define RENDER_SHADOW_PASS_ID 0
-#define RENDER_SHADOW_PASS_BIT (1<<RENDER_SHADOW_PASS_ID)
-
 #define RENDER_SCENE_PASS_ID  1
-#define RENDER_SCENE_PASS_BIT (1<<RENDER_SCENE_PASS_ID)
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -579,7 +576,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewTransform(RENDER_SCENE_PASS_ID, view, proj);
 
 		// Clear backbuffer and shadowmap framebuffer at beginning.
-		bgfx::setViewClearMask(RENDER_SHADOW_PASS_BIT|RENDER_SCENE_PASS_BIT
+		bgfx::setViewClear(RENDER_SHADOW_PASS_ID
+			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+			, 0x303030ff, 1.0f, 0
+			);
+
+		bgfx::setViewClear(RENDER_SCENE_PASS_ID
 			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
 			, 0x303030ff, 1.0f, 0
 			);
