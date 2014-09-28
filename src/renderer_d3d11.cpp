@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
+#	include <psapi.h>
 #	include <renderdoc/renderdoc_app.h>
 
 namespace bgfx
@@ -423,8 +424,54 @@ RENDERDOC_IMPORT
 
 	pRENDERDOC_GetAPIVersion RENDERDOC_GetAPIVersion;
 
+	bool findModule(const char* _name)
+	{
+		HANDLE process = GetCurrentProcess();
+		DWORD size;
+		BOOL result = EnumProcessModules(process
+						, NULL
+						, 0
+						, &size
+						);
+		if (0 != result)
+		{
+			HMODULE* modules = (HMODULE*)alloca(size);
+			result = EnumProcessModules(process
+				, modules
+				, size
+				, &size
+				);
+
+			if (0 != result)
+			{
+				char moduleName[MAX_PATH];
+				for (uint32_t ii = 0, num = uint32_t(size/sizeof(HMODULE) ); ii < num; ++ii)
+				{
+					result = GetModuleBaseNameA(process
+								, modules[ii]
+								, moduleName
+								, BX_COUNTOF(moduleName)
+								);
+					if (0 != result
+					&&  0 == bx::stricmp(_name, moduleName) )
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	void* loadRenderDoc()
 	{
+		// Skip loading RenderDoc when IntelGPA is present to avoid RenderDoc crash.
+		if (findModule(BX_ARCH_32BIT ? "shimloader32.dll" : "shimloader64.dll") )
+		{
+			return NULL;
+		}
+
 		void* renderdocdll = bx::dlopen("renderdoc.dll");
 
 		if (NULL != renderdocdll)
