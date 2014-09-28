@@ -413,9 +413,10 @@ Debugging
 
 ### RenderDoc
 
-When using DX11 renderer, you can drop in `renderdoc.dll` into working
-directory, and it will be automatically loaded during bgfx initialization. This
-allows frame capture at any time by pressing **F11**.
+Loading of RenderDoc is integrated in bgfx when using DX11 renderer. You can
+drop in `renderdoc.dll` from RenderDoc distribution into working directory,
+and it will be automatically loaded during bgfx initialization. This allows
+frame capture at any time by pressing **F11**.
 
 Download: [RenderDoc](https://renderdoc.org/builds)
 
@@ -435,10 +436,12 @@ Other debuggers:
 | CodeXL    | Linux/Win     |      |      |  x   |      |        |
 | IntelGPA  | Linux/OSX/Win |   x  |  x   |      |   x  |        |
 | RenderDoc | Win           |      |  x   |      |      |    x   |
+| vogl      | Linux         |      |      |  x   |      |    x   |
 
 Download:  
 [APITrace](https://apitrace.github.io/)  
 [CodeXL](http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/)  
+[vogl](https://github.com/ValveSoftware/vogl)--
 
 SDL, GLFW, etc.
 ---------------
