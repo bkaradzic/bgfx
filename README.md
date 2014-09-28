@@ -441,7 +441,7 @@ Other debuggers:
 Download:  
 [APITrace](https://apitrace.github.io/)  
 [CodeXL](http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/)  
-[vogl](https://github.com/ValveSoftware/vogl)--
+[vogl](https://github.com/ValveSoftware/vogl)  
 
 SDL, GLFW, etc.
 ---------------
