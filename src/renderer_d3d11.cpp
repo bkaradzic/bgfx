@@ -7,8 +7,11 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
-#	include <psapi.h>
-#	include <renderdoc/renderdoc_app.h>
+
+#	if BGFX_CONFIG_DEBUG_PIX
+#		include <psapi.h>
+#		include <renderdoc/renderdoc_app.h>
+#	endif // BGFX_CONFIG_DEBUG_PIX
 
 namespace bgfx
 {
@@ -404,26 +407,7 @@ namespace bgfx
 		return false;
 	};
 
-#define RENDERDOC_IMPORT \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetLogFile); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureOptions); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetActiveWindow); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_TriggerCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_StartFrameCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_EndFrameCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetOverlayBits); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_MaskOverlayBits); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetFocusToggleKeys); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureKeys); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess);
-
-#define RENDERDOC_IMPORT_FUNC(_func) p##_func _func
-RENDERDOC_IMPORT
-#undef RENDERDOC_IMPORT_FUNC
-
-	pRENDERDOC_GetAPIVersion RENDERDOC_GetAPIVersion;
-
+#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 	bool findModule(const char* _name)
 	{
 		HANDLE process = GetCurrentProcess();
@@ -463,6 +447,26 @@ RENDERDOC_IMPORT
 
 		return false;
 	}
+
+#define RENDERDOC_IMPORT \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetLogFile); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureOptions); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetActiveWindow); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_TriggerCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_StartFrameCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_EndFrameCapture); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetOverlayBits); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_MaskOverlayBits); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetFocusToggleKeys); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureKeys); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess);
+
+#define RENDERDOC_IMPORT_FUNC(_func) p##_func _func
+	RENDERDOC_IMPORT
+#undef RENDERDOC_IMPORT_FUNC
+
+	pRENDERDOC_GetAPIVersion RENDERDOC_GetAPIVersion;
 
 	void* loadRenderDoc()
 	{
@@ -521,6 +525,16 @@ RENDERDOC_IMPORT
 			bx::dlclose(_renderdocdll);
 		}
 	}
+#else
+	void* loadRenderDoc()
+	{
+		return NULL;
+	}
+
+	void unloadRenderDoc(void*)
+	{
+	}
+#endif // BGFX_CONFIG_DEBUG_PIX
 
 	struct RendererContextD3D11 : public RendererContextI
 	{

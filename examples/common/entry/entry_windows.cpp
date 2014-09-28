@@ -16,6 +16,9 @@
 
 #include <windowsx.h>
 
+#include <tinystl/allocator.h>
+#include <tinystl/string.h>
+
 enum
 {
 	WM_USER_WINDOW_CREATE = WM_USER,
@@ -89,7 +92,7 @@ namespace entry
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_flags;
-		std::string m_title;
+		tinystl::string m_title;
 	};
 
 	struct Context

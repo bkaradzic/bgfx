@@ -23,6 +23,7 @@
 #else
 #	include <d3d11.h>
 #endif // BX_COMPILER_MSVC
+
 #include "renderer_d3d.h"
 
 #define D3DCOLOR_ARGB(_a, _r, _g, _b) ( (DWORD)( ( ( (_a)&0xff)<<24)|( ( (_r)&0xff)<<16)|( ( (_g)&0xff)<<8)|( (_b)&0xff) ) )
