@@ -23,12 +23,40 @@ namespace bgfx
 #	include "glimports.h"
 
 	static ::Display* s_display;
-	static ::Window s_window;
+	static ::Window   s_window;
+
+	struct SwapChainGL
+	{
+		SwapChainGL(::Window _window, XVisualInfo* _visualInfo, GLXContext _context)
+			: m_window(_window)
+		{
+			m_context = glXCreateContext(s_display, _visualInfo, _context, GL_TRUE);
+		}
+
+		~SwapChainGL()
+		{
+			glXMakeCurrent(s_display, 0, 0);
+			glXDestroyContext(s_display, m_context);
+		}
+
+		void makeCurrent()
+		{
+			glXMakeCurrent(s_display, m_window, m_context);
+		}
+
+		void swapBuffers()
+		{
+			glXSwapBuffers(s_display, m_window);
+		}
+
+		Window m_window;
+		GLXContext m_context;
+	};
 
 	void x11SetDisplayWindow(::Display* _display, ::Window _window)
 	{
 		s_display = _display;
-		s_window = _window;
+		s_window  = _window;
 	}
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
@@ -74,11 +102,10 @@ namespace bgfx
 
 		BX_TRACE("glX num configs %d", numConfigs);
 
-		XVisualInfo* visualInfo = NULL;
 		for (int ii = 0; ii < numConfigs; ++ii)
 		{
-			visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
-			if (NULL != visualInfo)
+			m_visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
+			if (NULL != m_visualInfo)
 			{
 				BX_TRACE("---");
 				bool valid = true;
@@ -113,18 +140,16 @@ namespace bgfx
 				}
 			}
 
-			XFree(visualInfo);
-			visualInfo = NULL;
+			XFree(m_visualInfo);
+			m_visualInfo = NULL;
 		}
 
 		XFree(configs);
-		BGFX_FATAL(visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
+		BGFX_FATAL(m_visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
 
 		BX_TRACE("Create GL 2.1 context.");
-		m_context = glXCreateContext(s_display, visualInfo, 0, GL_TRUE);
+		m_context = glXCreateContext(s_display, m_visualInfo, 0, GL_TRUE);
 		BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
-
-		XFree(visualInfo);
 
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
 		glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
@@ -192,6 +217,7 @@ namespace bgfx
 	{
 		glXMakeCurrent(s_display, 0, 0);
 		glXDestroyContext(s_display, m_context);
+		XFree(m_visualInfo);
 	}
 
 	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
@@ -214,28 +240,43 @@ namespace bgfx
 
 	bool GlContext::isSwapChainSupported()
 	{
-		return false;
+		return true;
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
-		BX_CHECK(false, "Shouldn't be called!");
-		return NULL;
+		return BX_NEW(g_allocator, SwapChainGL)( (::Window)_nwh, m_visualInfo, m_context);
 	}
 
-	void GlContext::destorySwapChain(SwapChainGL*  /*_swapChain*/)
+	void GlContext::destorySwapChain(SwapChainGL* _swapChain)
 	{
-		BX_CHECK(false, "Shouldn't be called!");
+		BX_DELETE(g_allocator, _swapChain);
 	}
 
 	void GlContext::swap(SwapChainGL* _swapChain)
 	{
-		BX_CHECK(NULL == _swapChain, "Shouldn't be called!"); BX_UNUSED(_swapChain);
-		glXSwapBuffers(s_display, s_window);
+		if (NULL == _swapChain)
+		{
+			glXMakeCurrent(s_display, s_window, m_context);
+			glXSwapBuffers(s_display, s_window);
+		}
+		else
+		{
+			_swapChain->makeCurrent();
+			_swapChain->swapBuffers();
+		}
 	}
 
-	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	void GlContext::makeCurrent(SwapChainGL* _swapChain)
 	{
+		if (NULL == _swapChain)
+		{
+			glXMakeCurrent(s_display, s_window, m_context);
+		}
+		else
+		{
+			_swapChain->makeCurrent();
+		}
 	}
 
 	void GlContext::import()

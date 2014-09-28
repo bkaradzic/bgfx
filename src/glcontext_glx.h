@@ -19,6 +19,7 @@ namespace bgfx
 	{
 		GlContext()
 			: m_context(0)
+			, m_visualInfo(NULL)
 		{
 		}
 
@@ -40,6 +41,7 @@ namespace bgfx
 		}
 
 		GLXContext m_context;
+		XVisualInfo* m_visualInfo;
 	};
 } // namespace bgfx
 
