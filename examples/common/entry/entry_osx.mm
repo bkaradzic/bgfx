@@ -73,6 +73,7 @@
 + (Window *)sharedDelegate;
 - (id)init;
 - (void)windowCreated:(NSWindow *)window;
+- (void)windowWillClose:(NSNotification *)notification;
 - (BOOL)windowShouldClose:(NSWindow *)window;
 
 @end
@@ -107,6 +108,11 @@
 	self->windowCount += 1;
 }
 
+- (void)windowWillClose:(NSNotification *)notification
+{
+	BX_UNUSED(notification);
+}
+
 - (BOOL)windowShouldClose:(NSWindow *)window
 {
 	assert(window);
@@ -125,13 +131,6 @@
 	return true;
 }
 @end
-
-// Scan codes on Mac taken from http://boredzo.org/blog/archives/2007-05-22/virtual-key-codes
-
-#define KEY_RETURN 36
-#define KEY_TAB 48
-#define KEY_DELETE 51
-#define KEY_ESCAPE 53
 
 namespace entry
 {
@@ -155,44 +154,17 @@ namespace entry
 		Context()
 			: m_exit(false)
 		{
-			s_translateKey[KEY_ESCAPE]	 = Key::Esc;
-			s_translateKey[KEY_RETURN]	 = Key::Return;
-			s_translateKey[KEY_TAB]		 = Key::Tab;
-			s_translateKey[KEY_DELETE]	 = Key::Backspace;
-			//s_translateKey[VK_SPACE]	   = Key::Space;
-			//s_translateKey[VK_UP]		   = Key::Up;
-			//s_translateKey[VK_DOWN]	   = Key::Down;
-			//s_translateKey[VK_LEFT]	   = Key::Left;
-			//s_translateKey[VK_RIGHT]	   = Key::Right;
-			//s_translateKey[VK_PRIOR]	   = Key::PageUp;
-			//s_translateKey[VK_NEXT]	   = Key::PageUp;
-			//s_translateKey[VK_HOME]	   = Key::Home;
-			//s_translateKey[VK_END]	   = Key::End;
-			//s_translateKey[VK_SNAPSHOT]  = Key::Print;
-			//s_translateKey[VK_OEM_PLUS]  = Key::Plus;
-			//s_translateKey[VK_OEM_MINUS] = Key::Minus;
-			//s_translateKey[VK_F1]		   = Key::F1;
-			//s_translateKey[VK_F2]		   = Key::F2;
-			//s_translateKey[VK_F3]		   = Key::F3;
-			//s_translateKey[VK_F4]		   = Key::F4;
-			//s_translateKey[VK_F5]		   = Key::F5;
-			//s_translateKey[VK_F6]		   = Key::F6;
-			//s_translateKey[VK_F7]		   = Key::F7;
-			//s_translateKey[VK_F8]		   = Key::F8;
-			//s_translateKey[VK_F9]		   = Key::F9;
-			//s_translateKey[VK_F10]	   = Key::F10;
-			//s_translateKey[VK_F11]	   = Key::F11;
-			//s_translateKey[VK_F12]	   = Key::F12;
-			//s_translateKey[VK_NUMPAD0]   = Key::NumPad0;
-			//s_translateKey[VK_NUMPAD1]   = Key::NumPad1;
-			//s_translateKey[VK_NUMPAD2]   = Key::NumPad2;
-			//s_translateKey[VK_NUMPAD3]   = Key::NumPad3;
-			//s_translateKey[VK_NUMPAD4]   = Key::NumPad4;
-			//s_translateKey[VK_NUMPAD5]   = Key::NumPad5;
-			//s_translateKey[VK_NUMPAD6]   = Key::NumPad6;
-			//s_translateKey[VK_NUMPAD7]   = Key::NumPad7;
-			//s_translateKey[VK_NUMPAD8]   = Key::NumPad8;
-			//s_translateKey[VK_NUMPAD9]   = Key::NumPad9;
+			s_translateKey[27]             = Key::Esc;
+			s_translateKey[13]             = Key::Return;
+			s_translateKey[9]              = Key::Tab;
+			s_translateKey[127]            = Key::Backspace;
+			s_translateKey[uint8_t(' ')]   = Key::Space;
+
+			s_translateKey[uint8_t('+')]   =
+			s_translateKey[uint8_t('=')]   = Key::Plus;
+			s_translateKey[uint8_t('_')]   =
+			s_translateKey[uint8_t('-')]   = Key::Minus;
+
 			s_translateKey[uint8_t('0')]   = Key::Key0;
 			s_translateKey[uint8_t('1')]   = Key::Key1;
 			s_translateKey[uint8_t('2')]   = Key::Key2;
@@ -203,58 +175,12 @@ namespace entry
 			s_translateKey[uint8_t('7')]   = Key::Key7;
 			s_translateKey[uint8_t('8')]   = Key::Key8;
 			s_translateKey[uint8_t('9')]   = Key::Key9;
-			s_translateKey[uint8_t('A')]   = Key::KeyA;
-			s_translateKey[uint8_t('B')]   = Key::KeyB;
-			s_translateKey[uint8_t('C')]   = Key::KeyC;
-			s_translateKey[uint8_t('D')]   = Key::KeyD;
-			s_translateKey[uint8_t('E')]   = Key::KeyE;
-			s_translateKey[uint8_t('F')]   = Key::KeyF;
-			s_translateKey[uint8_t('G')]   = Key::KeyG;
-			s_translateKey[uint8_t('H')]   = Key::KeyH;
-			s_translateKey[uint8_t('I')]   = Key::KeyI;
-			s_translateKey[uint8_t('J')]   = Key::KeyJ;
-			s_translateKey[uint8_t('K')]   = Key::KeyK;
-			s_translateKey[uint8_t('L')]   = Key::KeyL;
-			s_translateKey[uint8_t('M')]   = Key::KeyM;
-			s_translateKey[uint8_t('N')]   = Key::KeyN;
-			s_translateKey[uint8_t('O')]   = Key::KeyO;
-			s_translateKey[uint8_t('P')]   = Key::KeyP;
-			s_translateKey[uint8_t('Q')]   = Key::KeyQ;
-			s_translateKey[uint8_t('R')]   = Key::KeyR;
-			s_translateKey[uint8_t('S')]   = Key::KeyS;
-			s_translateKey[uint8_t('T')]   = Key::KeyT;
-			s_translateKey[uint8_t('U')]   = Key::KeyU;
-			s_translateKey[uint8_t('V')]   = Key::KeyV;
-			s_translateKey[uint8_t('W')]   = Key::KeyW;
-			s_translateKey[uint8_t('X')]   = Key::KeyX;
-			s_translateKey[uint8_t('Y')]   = Key::KeyY;
-			s_translateKey[uint8_t('Z')]   = Key::KeyZ;
-			s_translateKey[uint8_t('a')]   = Key::KeyA;
-			s_translateKey[uint8_t('b')]   = Key::KeyB;
-			s_translateKey[uint8_t('c')]   = Key::KeyC;
-			s_translateKey[uint8_t('d')]   = Key::KeyD;
-			s_translateKey[uint8_t('e')]   = Key::KeyE;
-			s_translateKey[uint8_t('f')]   = Key::KeyF;
-			s_translateKey[uint8_t('g')]   = Key::KeyG;
-			s_translateKey[uint8_t('h')]   = Key::KeyH;
-			s_translateKey[uint8_t('i')]   = Key::KeyI;
-			s_translateKey[uint8_t('j')]   = Key::KeyJ;
-			s_translateKey[uint8_t('k')]   = Key::KeyK;
-			s_translateKey[uint8_t('l')]   = Key::KeyL;
-			s_translateKey[uint8_t('m')]   = Key::KeyM;
-			s_translateKey[uint8_t('n')]   = Key::KeyN;
-			s_translateKey[uint8_t('o')]   = Key::KeyO;
-			s_translateKey[uint8_t('p')]   = Key::KeyP;
-			s_translateKey[uint8_t('q')]   = Key::KeyQ;
-			s_translateKey[uint8_t('r')]   = Key::KeyR;
-			s_translateKey[uint8_t('s')]   = Key::KeyS;
-			s_translateKey[uint8_t('t')]   = Key::KeyT;
-			s_translateKey[uint8_t('u')]   = Key::KeyU;
-			s_translateKey[uint8_t('v')]   = Key::KeyV;
-			s_translateKey[uint8_t('w')]   = Key::KeyW;
-			s_translateKey[uint8_t('x')]   = Key::KeyX;
-			s_translateKey[uint8_t('y')]   = Key::KeyY;
-			s_translateKey[uint8_t('z')]   = Key::KeyZ;
+
+			for (char ch = 'a'; ch <= 'z'; ++ch)
+			{
+				s_translateKey[uint8_t(ch)]             =
+				s_translateKey[uint8_t(ch - ' ')] = Key::KeyA + (ch - 'a');
+			}
 		}
 
 		NSEvent* waitEvent()
@@ -320,20 +246,53 @@ namespace entry
 		{
 			NSString* key = [event charactersIgnoringModifiers];
 			unichar keyChar = 0;
+//DBG("keyChar %d", keyChar);
 			if ([key length] == 0)
+			{
 				return Key::None;
+			}
 
 			keyChar = [key characterAtIndex:0];
 
 			int keyCode = keyChar;
+//DBG("keyCode %d", keyCode);
 			*specialKeys = translateModifiers([event modifierFlags]);
 
 			// if this is a unhandled key just return None
+			if (keyCode < 256)
+			{
+				return (Key::Enum)s_translateKey[keyCode];
+			}
 
-			if (keyCode >= 256)
-				return Key::None;
+			switch (keyCode)
+			{
+			case NSF1FunctionKey:  return Key::F1;
+			case NSF2FunctionKey:  return Key::F2;
+			case NSF3FunctionKey:  return Key::F3;
+			case NSF4FunctionKey:  return Key::F4;
+			case NSF5FunctionKey:  return Key::F5;
+			case NSF6FunctionKey:  return Key::F6;
+			case NSF7FunctionKey:  return Key::F7;
+			case NSF8FunctionKey:  return Key::F8;
+			case NSF9FunctionKey:  return Key::F9;
+			case NSF10FunctionKey: return Key::F10;
+			case NSF11FunctionKey: return Key::F11;
+			case NSF12FunctionKey: return Key::F12;
 
-			return (Key::Enum)s_translateKey[keyCode];
+			case NSLeftArrowFunctionKey:   return Key::Left;
+			case NSRightArrowFunctionKey:  return Key::Right;
+			case NSUpArrowFunctionKey:     return Key::Up;
+			case NSDownArrowFunctionKey:   return Key::Down;
+
+			case NSPageUpFunctionKey:      return Key::PageUp;
+			case NSPageDownFunctionKey:    return Key::PageDown;
+			case NSHomeFunctionKey:        return Key::Home;
+			case NSEndFunctionKey:         return Key::End;
+
+			case NSPrintScreenFunctionKey: return Key::Print;
+			}
+
+			return Key::None;
 		}
 
 		bool dispatchEvent(NSEvent* event)
@@ -344,58 +303,43 @@ namespace entry
 
 				switch (eventType)
 				{
-					case NSMouseMoved :
+					case NSMouseMoved:
 					{
 						int x, y;
-
 						getMousePos(&x, &y);
-						
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0);
-
 						break;
 					}
 
 					case NSLeftMouseDown:
 					{
 						int x, y;
-
 						getMousePos(&x, &y);
-
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Left, true);
-
 						break;
 					}
 
 					case NSLeftMouseUp:
 					{
 						int x, y;
-
 						getMousePos(&x, &y);
-
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Left, false);
-
 						break;
 					}
 
 					case NSRightMouseDown:
 					{
 						int x, y;
-
 						getMousePos(&x, &y);
-
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Right, true);
-
 						break;
 					}
 
 					case NSRightMouseUp:
 					{
 						int x, y;
-
 						getMousePos(&x, &y);
-
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Right, false);
-
 						break;
 					}
 
@@ -406,10 +350,10 @@ namespace entry
 
 						// If KeyCode is none we don't don't handle the key and special case for cmd+q (quit)
 						// Note that return false here means that we take care of the key (instead of the default behavior)
-
 						if (key != Key::None)
 						{
-							if (key != Key::KeyQ && !((modifiers & Modifier::RightMeta)))
+							if (key != Key::KeyQ
+							&& !(modifiers & Modifier::RightMeta) )
 							{
 								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
 								return false;
@@ -433,8 +377,7 @@ namespace entry
 						break;
 					}
 				}
-				
-				
+
 				[NSApp sendEvent:event];
 				[NSApp updateWindows];
 
@@ -493,7 +436,6 @@ namespace entry
 			[window setTitle:appName];
 			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 			[window makeKeyAndOrderFront:window];
-//			[window setContentView:nil];
 			[window setAcceptsMouseMovedEvents:YES];
 			[window setBackgroundColor:[NSColor blackColor]];
 			[[Window sharedDelegate] windowCreated:window];
