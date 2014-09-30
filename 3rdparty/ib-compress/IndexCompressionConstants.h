@@ -38,6 +38,12 @@ const int IB_CODE_BITS       = 2;
 // Edge in the edge fifo.
 struct Edge
 {
+	void set(uint32_t f, uint32_t s)
+	{
+		first  = f;
+		second = s;
+	}
+
 	uint32_t first;
 	uint32_t second;
 };

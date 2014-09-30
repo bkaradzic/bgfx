@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define WRITE_BIT_STREAM_H__
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 #include <memory.h>
 
 #ifdef _MSC_VER

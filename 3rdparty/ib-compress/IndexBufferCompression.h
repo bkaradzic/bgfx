@@ -26,9 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INDEX_BUFFER_COMPRESSION_H__
 #pragma once
 
-class WriteBitstream;
-
-#include <cstdint>
+#include <stdint.h>
+#include "writebitstream.h"
 
 // Compress an index buffer, writing the results out to a bitstream and providing a vertex remapping (which will be in pre-transform cache optimised
 // order.
@@ -42,6 +41,7 @@ class WriteBitstream;
 //     [in] vertexCount     - The number of vertices in the mesh. This should be less than 0xFFFFFFFF/2^32 - 1.
 //     [in] output          - The stream that the compressed data will be written to. Note that we will not flush/finish the stream
 //                            in case something else is going to be written after, so WriteBitstream::Finish will need to be called after this.
-void CompressIndexBuffer( const uint32_t* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
+template <typename Ty>
+void CompressIndexBuffer( const Ty* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
 
 #endif // -- INDEX_BUFFER_COMPRESSION_H__

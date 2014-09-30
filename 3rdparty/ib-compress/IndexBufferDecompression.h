@@ -26,9 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INDEX_BUFFER_DECOMPRESSION_H__
 #pragma once
 
-#include <cstdint>
-
-class ReadBitstream;
+#include <stdint.h>
+#include "readbitstream.h"
 
 // Compress an index buffer, writing the results out to a bitstream and providing a vertex remapping (which will be in pre-transform cache optimised
 // order.
@@ -36,6 +35,7 @@ class ReadBitstream;
 //     [out] triangles      - Triangle list index buffer (3 indices to vertices per triangle), output from the decompression.
 //     [in]  triangle count - The number of triangles to decompress.
 //     [in]  input          - The bit stream that the compressed data will be read from.
-void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input );
+template <typename Ty>
+void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream& input );
 
 #endif // -- INDEX_BUFFER_DECOMPRESSION_H__

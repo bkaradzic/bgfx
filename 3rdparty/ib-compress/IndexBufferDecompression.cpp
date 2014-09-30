@@ -27,18 +27,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "IndexCompressionConstants.h"
 #include <assert.h>
 
-void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+template <typename Ty>
+void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
-	Edge            edgeFifo[ EDGE_FIFO_SIZE ];
-	uint32_t        vertexFifo[ VERTEX_FIFO_SIZE ];
+	Edge      edgeFifo[ EDGE_FIFO_SIZE ];
+	uint32_t  vertexFifo[ VERTEX_FIFO_SIZE ];
 
-	uint32_t        edgesRead    = 0;
-	uint32_t        verticesRead = 0;
-	uint32_t        newVertices  = 0;
-	const uint32_t* triangleEnd  = triangles + ( triangleCount * 3 );
+	uint32_t  edgesRead    = 0;
+	uint32_t  verticesRead = 0;
+	uint32_t  newVertices  = 0;
+	const Ty* triangleEnd  = triangles + ( triangleCount * 3 );
 
 	// iterate through the triangles
-	for ( uint32_t* triangle = triangles; triangle < triangleEnd; triangle += 3 )
+	for ( Ty* triangle = triangles; triangle < triangleEnd; triangle += 3 )
 	{
 		int  readVertex = 0;
 		bool skipFirstEdge = false;
@@ -120,7 +121,7 @@ void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBit
 
 		if ( !skipFirstEdge )
 		{
-			edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 0 ], triangle[ 1 ] };
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 0 ], triangle[ 1 ]);
 
 			++edgesRead;
 		}
@@ -135,12 +136,22 @@ void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBit
 			++verticesRead;
 		}
 
-		edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 1 ], triangle[ 2 ] };
+		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 1 ], triangle[ 2 ]);
 
 		++edgesRead;
 
-		edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 2 ], triangle[ 0 ] };
+		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 2 ], triangle[ 0 ]);
 
 		++edgesRead;
 	}
+}
+
+void DecompressIndexBuffer( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+{
+	DecompressIndexBuffer<uint16_t>( triangles, triangleCount, input );
+}
+
+void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+{
+	DecompressIndexBuffer<uint32_t>( triangles, triangleCount, input );
 }

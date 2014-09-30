@@ -101,33 +101,33 @@ static IBC_INLINE void OutputVertex( uint32_t vertex,
 
 }
 
-
-void CompressIndexBuffer( const uint32_t* triangles, 
+template <typename Ty>
+void CompressIndexBuffer( const Ty* triangles, 
 						  uint32_t triangleCount, 
 						  uint32_t* vertexRemap, 
 						  uint32_t vertexCount, 
 						  WriteBitstream& output )
 {
-	Edge            edgeFifo[ EDGE_FIFO_SIZE ];
-	uint32_t        vertexFifo[ VERTEX_FIFO_SIZE ];
+	Edge      edgeFifo[ EDGE_FIFO_SIZE ];
+	uint32_t  vertexFifo[ VERTEX_FIFO_SIZE ];
 
-	uint32_t        edgesRead      = 0;
-	uint32_t        verticesRead   = 0;
-	uint32_t        newVertices    = 0;
-	const uint32_t* triangleEnd    = triangles + ( triangleCount * 3 );
+	uint32_t  edgesRead      = 0;
+	uint32_t  verticesRead   = 0;
+	uint32_t  newVertices    = 0;
+	const Ty* triangleEnd    = triangles + ( triangleCount * 3 );
 
 	assert( vertexCount < 0xFFFFFFFF );
 
-	uint32_t*       vertexRemapEnd = vertexRemap + vertexCount;
+	uint32_t* vertexRemapEnd = vertexRemap + vertexCount;
 
 	// clear the vertex remapping to "not found" value of 0xFFFFFFFF - dirty, but low overhead.
-	for ( auto remappedVertex = vertexRemap; remappedVertex < vertexRemapEnd; ++remappedVertex )
+	for (uint32_t* remappedVertex = vertexRemap; remappedVertex < vertexRemapEnd; ++remappedVertex )
 	{
 		*remappedVertex = VERTEX_NOT_MAPPED;
 	}
 
 	// iterate through the triangles
-	for ( auto triangle = triangles; triangle < triangleEnd; triangle += 3 )
+	for (const Ty* triangle = triangles; triangle < triangleEnd; triangle += 3 )
 	{
 		int32_t lowestEdgeCursor = edgesRead >= EDGE_FIFO_SIZE ? edgesRead - EDGE_FIFO_SIZE : 0;
 		int32_t edgeCursor = edgesRead - 1;
@@ -189,33 +189,33 @@ void CompressIndexBuffer( const uint32_t* triangles,
 			{
 			case 0:
 
-				edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 2 ], triangle[ 0 ] };
+				edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 2 ], triangle[ 0 ]);
 
 				++edgesRead;
 
-				edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 0 ], triangle[ 1 ] };
+				edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 0 ], triangle[ 1 ]);
 
 				++edgesRead;
 				break;
 
 			case 1:
 
-				edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 0 ], triangle[ 1 ] };
+				edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 0 ], triangle[ 1 ]);
 
 				++edgesRead;
 
-				edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 1 ], triangle[ 2 ] };
+				edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 1 ], triangle[ 2 ]);
 
 				++edgesRead;
 				break;
 
 			case 2:
 
-				edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 1 ], triangle[ 2 ] };
+				edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 1 ], triangle[ 2 ]);
 
 				++edgesRead;
 
-				edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 2 ], triangle[ 0 ] };
+				edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 2 ], triangle[ 0 ]);
 
 				++edgesRead;
 				break;
@@ -229,17 +229,35 @@ void CompressIndexBuffer( const uint32_t* triangles,
 			OutputVertex( triangle[ 2 ], vertexRemap, newVertices, vertexFifo, verticesRead, output );
 
 			// populate the edge fifo with the 3 most recent edges
-			edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 0 ], triangle[ 1 ] };
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 0 ], triangle[ 1 ]);
 
 			++edgesRead;
 
-			edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 1 ], triangle[ 2 ] };
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 1 ], triangle[ 2 ]);
 
 			++edgesRead;
 
-			edgeFifo[ edgesRead & EDGE_FIFO_MASK ] = { triangle[ 2 ], triangle[ 0 ] };
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 2 ], triangle[ 0 ]);
 
 			++edgesRead;
 		}
 	}
+}
+
+void CompressIndexBuffer ( const uint16_t* triangles,
+						 uint32_t triangleCount, 
+						 uint32_t* vertexRemap, 
+						 uint32_t vertexCount, 
+						 WriteBitstream& output )
+{
+	CompressIndexBuffer<uint16_t>(triangles, triangleCount, vertexRemap, vertexCount, output);
+}
+
+void CompressIndexBuffer ( const uint32_t* triangles,
+						  uint32_t triangleCount, 
+						  uint32_t* vertexRemap, 
+						  uint32_t vertexCount, 
+						  WriteBitstream& output )
+{
+	CompressIndexBuffer<uint32_t>(triangles, triangleCount, vertexRemap, vertexCount, output);
 }
