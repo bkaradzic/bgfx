@@ -530,7 +530,7 @@ directory.
 
 Blendish - Blender 2.5 UI based theming functions for NanoVG.
 
-https://bitbucket.org/duangle/blendish
+https://bitbucket.org/duangle/oui-blendish
 
 ### edtaa3 (MIT)
 
