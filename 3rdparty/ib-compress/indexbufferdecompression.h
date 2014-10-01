@@ -27,15 +27,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <stdint.h>
-#include "readbitstream.h"
+#include "ReadBitstream.h"
 
 // Compress an index buffer, writing the results out to a bitstream and providing a vertex remapping (which will be in pre-transform cache optimised
 // order.
 // Parameters: 
-//     [out] triangles      - Triangle list index buffer (3 indices to vertices per triangle), output from the decompression.
+//     [out] triangles      - Triangle list index buffer (3 indices to vertices per triangle), output from the decompression - 16bit indices
 //     [in]  triangle count - The number of triangles to decompress.
 //     [in]  input          - The bit stream that the compressed data will be read from.
-template <typename Ty>
-void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream& input );
+void DecompressIndexBuffer( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input );
+
+// Same as above but 32 bit indices.
+void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input );
+
+
+// Compress an index buffer, writing the results out to a bitstream and providing a vertex remapping (which will be in pre-transform cache optimised
+// order.
+// Parameters: 
+//     [out] triangles      - Triangle list index buffer (3 indices to vertices per triangle), output from the decompression - 16bit indices
+//     [in]  triangle count - The number of triangles to decompress.
+//     [in]  input          - The bit stream that the compressed data will be read from.
+void DecompressIndexBuffer2( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input );
+
+// Same as above but 32bit indices
+void DecompressIndexBuffer2( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input );
 
 #endif // -- INDEX_BUFFER_DECOMPRESSION_H__

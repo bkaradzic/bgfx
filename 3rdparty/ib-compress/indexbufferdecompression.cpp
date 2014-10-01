@@ -28,6 +28,319 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 
 template <typename Ty>
+void DecompressIndexBuffer2( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
+{
+	Edge      edgeFifo[ EDGE_FIFO_SIZE ];
+	uint32_t  vertexFifo[ VERTEX_FIFO_SIZE ];
+
+	uint32_t  edgesRead = 0;
+	uint32_t  verticesRead = 0;
+	uint32_t  newVertices = 0;
+	const Ty* triangleEnd = triangles + ( triangleCount * 3 );
+
+	// iterate through the triangles
+	for ( Ty* triangle = triangles; triangle < triangleEnd; triangle += 3 )
+	{
+		IndexBufferTriangleCodes code      = static_cast< IndexBufferTriangleCodes >( input.Read( IB_TRIANGLE_CODE_BITS ) );
+
+		switch ( code )
+		{
+		case IB_EDGE_NEW:
+		{
+			uint32_t    edgeFifoIndex = input.Read( CACHED_EDGE_BITS );
+
+			const Edge& edge          = edgeFifo[ ( ( edgesRead - 1 ) - edgeFifoIndex ) & EDGE_FIFO_MASK ];
+
+			triangle[ 0 ] = static_cast< Ty >( edge.second );
+			triangle[ 1 ] = static_cast< Ty >( edge.first );
+
+			vertexFifo[ verticesRead & EDGE_FIFO_MASK ] =
+			triangle[ 2 ]                               = static_cast< Ty >( newVertices );
+
+			++newVertices;
+			++verticesRead;
+
+			break;
+		}
+
+		case IB_EDGE_CACHED:
+		{
+			uint32_t    edgeFifoIndex   = input.Read( CACHED_EDGE_BITS );
+			uint32_t    vertexFifoIndex = input.Read( CACHED_VERTEX_BITS );
+
+			const Edge& edge            = edgeFifo[ ( ( edgesRead - 1 ) - edgeFifoIndex ) & EDGE_FIFO_MASK ];
+
+			triangle[ 0 ] = static_cast< Ty >( edge.second );
+			triangle[ 1 ] = static_cast< Ty >( edge.first );
+			triangle[ 2 ] = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertexFifoIndex ) & VERTEX_FIFO_MASK ] );
+			
+			break;
+		}
+		case IB_EDGE_FREE:
+		{
+			uint32_t    edgeFifoIndex   = input.Read( CACHED_EDGE_BITS );
+			uint32_t    relativeVertex  = input.ReadVInt();
+
+			const Edge& edge            = edgeFifo[ ( ( edgesRead - 1 ) - edgeFifoIndex ) & EDGE_FIFO_MASK ];
+
+			triangle[ 0 ] = static_cast< Ty >( edge.second );
+			triangle[ 1 ] = static_cast< Ty >( edge.first );
+			
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                 = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex );
+			++verticesRead;
+			
+			break;
+		}
+		case IB_NEW_NEW_NEW:
+		{
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( newVertices );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 1 ]                                         = static_cast< Ty >( newVertices + 1 );
+			vertexFifo[ ( verticesRead + 2 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                         = static_cast< Ty >( newVertices + 2 );
+
+			newVertices  += 3;
+			verticesRead += 3;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_NEW_NEW_CACHED:
+		{
+			uint32_t vertexFifoIndex = input.Read( CACHED_VERTEX_BITS );
+
+			triangle[ 2 ]                                         = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertexFifoIndex ) & VERTEX_FIFO_MASK ] );
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( newVertices );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 1 ]                                         = static_cast< Ty >( newVertices + 1 );
+
+			verticesRead += 2;
+			newVertices  += 2;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_NEW_NEW_FREE:
+		{
+			uint32_t relativeVertex = input.ReadVInt();
+
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( newVertices );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 1 ]                                         = static_cast< Ty >( newVertices + 1 );
+			vertexFifo[ ( verticesRead + 2 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex );
+
+			newVertices  += 2;
+			verticesRead += 3;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_NEW_CACHED_CACHED:
+		{
+			uint32_t vertex1FifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t vertex2FifoIndex = input.Read( CACHED_VERTEX_BITS );
+
+			triangle[ 1 ]                                 = static_cast< Ty >(  vertexFifo[ ( ( verticesRead - 1 ) - vertex1FifoIndex ) & VERTEX_FIFO_MASK ] );
+			triangle[ 2 ]                                 = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex2FifoIndex ) & VERTEX_FIFO_MASK ] );
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] =
+			triangle[ 0 ]                                 = static_cast< Ty >( newVertices );
+
+			++verticesRead;
+			++newVertices;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_NEW_CACHED_FREE:
+		{
+			uint32_t vertexFifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t relativeVertex  = input.ReadVInt();
+
+			triangle[ 1 ]                                         = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertexFifoIndex ) & VERTEX_FIFO_MASK ] );
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( newVertices );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex );
+
+			verticesRead += 2;
+			++newVertices;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_NEW_FREE_CACHED:
+		{
+			uint32_t relativeVertex  = input.ReadVInt();
+			uint32_t vertexFifoIndex = input.Read( CACHED_VERTEX_BITS );
+
+			triangle[ 2 ]                                         = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertexFifoIndex ) & VERTEX_FIFO_MASK ] ); 
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( newVertices );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 1 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex );
+
+			verticesRead += 2;
+			++newVertices;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_NEW_FREE_FREE:
+		{
+			uint32_t relativeVertex1  = input.ReadVInt();
+			uint32_t relativeVertex2  = input.ReadVInt();
+
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( newVertices );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 1 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex1 );
+			vertexFifo[ ( verticesRead + 2 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex2 );
+
+			verticesRead += 3;
+			++newVertices;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+
+			break;
+		}
+		case IB_CACHED_CACHED_CACHED:
+		{
+			uint32_t vertex0FifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t vertex1FifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t vertex2FifoIndex = input.Read( CACHED_VERTEX_BITS );
+
+			triangle[ 0 ] = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex0FifoIndex ) & VERTEX_FIFO_MASK ] );
+			triangle[ 1 ] = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex1FifoIndex ) & VERTEX_FIFO_MASK ] );
+			triangle[ 2 ] = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex2FifoIndex ) & VERTEX_FIFO_MASK ] );
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+			break;
+		}
+		case IB_CACHED_CACHED_FREE:
+		{
+			uint32_t vertex0FifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t vertex1FifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t relativeVertex2  = input.ReadVInt();
+
+			triangle[ 0 ]                                 = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex0FifoIndex ) & VERTEX_FIFO_MASK ] );
+			triangle[ 1 ]                                 = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex1FifoIndex ) & VERTEX_FIFO_MASK ] );
+
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                 = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex2 );
+
+			++verticesRead;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+
+			break;
+		}
+		case IB_CACHED_FREE_FREE:
+		{
+			uint32_t vertex0FifoIndex = input.Read( CACHED_VERTEX_BITS );
+			uint32_t relativeVertex1  = input.ReadVInt();
+			uint32_t relativeVertex2  = input.ReadVInt();
+
+			triangle[ 0 ]                                         = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - vertex0FifoIndex ) & VERTEX_FIFO_MASK ] );
+
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 1 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex1 );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex2 );
+
+			verticesRead += 2;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+
+			break;
+		}
+		case IB_FREE_FREE_FREE:
+		{
+			uint32_t relativeVertex0 = input.ReadVInt();
+			uint32_t relativeVertex1 = input.ReadVInt();
+			uint32_t relativeVertex2 = input.ReadVInt();
+
+			vertexFifo[ verticesRead & VERTEX_FIFO_MASK ]         =
+			triangle[ 0 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex0 );
+			vertexFifo[ ( verticesRead + 1 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 1 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex1 );
+			vertexFifo[ ( verticesRead + 2 ) & VERTEX_FIFO_MASK ] =
+			triangle[ 2 ]                                         = static_cast< Ty >( ( newVertices - 1 ) - relativeVertex2 );
+
+			verticesRead += 3;
+
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
+
+			++edgesRead;
+
+			break;
+		}
+		case IB_EDGE_0_NEW:
+		{
+			const Edge& edge = edgeFifo[ ( edgesRead - 1 ) & EDGE_FIFO_MASK ];
+
+			triangle[ 0 ]                               = static_cast< Ty >( edge.second );
+			triangle[ 1 ]                               = static_cast< Ty >( edge.first );
+
+			vertexFifo[ verticesRead & EDGE_FIFO_MASK ] =
+			triangle[ 2 ]                               = static_cast< Ty >( newVertices );
+
+			++newVertices;
+			++verticesRead;
+			break;
+		}
+		case IB_EDGE_1_NEW:
+		{
+			const Edge& edge = edgeFifo[ ( ( edgesRead - 1 ) - 1 ) & EDGE_FIFO_MASK ];
+
+			triangle[ 0 ]                               = static_cast< Ty >( edge.second );
+			triangle[ 1 ]                               = static_cast< Ty >( edge.first );
+
+			vertexFifo[ verticesRead & EDGE_FIFO_MASK ] =
+			triangle[ 2 ]                               = static_cast< Ty >( newVertices );
+
+			++newVertices;
+			++verticesRead;
+			break;
+		}
+		}
+
+		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 1 ], triangle[ 2 ] );
+
+		++edgesRead;
+
+		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 2 ], triangle[ 0 ] );
+
+		++edgesRead;
+	}
+}
+
+template <typename Ty>
 void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
 	Edge      edgeFifo[ EDGE_FIFO_SIZE ];
@@ -36,7 +349,7 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 	uint32_t  edgesRead    = 0;
 	uint32_t  verticesRead = 0;
 	uint32_t  newVertices  = 0;
-	const Ty* triangleEnd  = triangles + ( triangleCount * 3 );
+	const Ty* triangleEnd = triangles + ( triangleCount * 3 );
 
 	// iterate through the triangles
 	for ( Ty* triangle = triangles; triangle < triangleEnd; triangle += 3 )
@@ -52,8 +365,8 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 			{
 			case IB_NEW_VERTEX:
 
-				triangle[ readVertex ] =
-					vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] = newVertices;
+				vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] =
+				triangle[ readVertex ]                        = static_cast< Ty >(  newVertices );
 
 				++readVertex;
 				++verticesRead;
@@ -69,8 +382,8 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 				uint32_t    fifoIndex = input.Read( CACHED_EDGE_BITS );
 				const Edge& edge      = edgeFifo[ ( ( edgesRead - 1 ) - fifoIndex ) & EDGE_FIFO_MASK ];
 
-				triangle[ 0 ] = edge.second;
-				triangle[ 1 ] = edge.first;
+				triangle[ 0 ] = static_cast< Ty >( edge.second );
+				triangle[ 1 ] = static_cast< Ty >( edge.first );
 
 				readVertex    += 2;
 				skipFirstEdge  = true;
@@ -81,9 +394,9 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 			case IB_CACHED_VERTEX:
 
 			{
-				uint32_t fifoIndex  = input.Read( CACHED_VERTEX_BITS );
+				uint32_t fifoIndex     = input.Read( CACHED_VERTEX_BITS );
 				
-				triangle[ readVertex ] = vertexFifo[ ( ( verticesRead - 1 ) - fifoIndex ) & VERTEX_FIFO_MASK ];
+				triangle[ readVertex ] = static_cast< Ty >( vertexFifo[ ( ( verticesRead - 1 ) - fifoIndex ) & VERTEX_FIFO_MASK ] );
 
 				++readVertex;
 
@@ -93,24 +406,12 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 			case IB_FREE_VERTEX:
 
 			{
-				uint32_t readByte       = 0;
-				uint32_t bitsToShift    = 0;
-				uint32_t relativeVertex = 0;
-
-				// V-int decoding, done inline.
-				do
-				{
-					readByte = input.Read( 8 );
-
-					relativeVertex |= ( readByte & 0x7F ) << bitsToShift;
-					bitsToShift += 7;
-
-				} while ( readByte & 0x80 );
+				uint32_t relativeVertex = input.ReadVInt();
 
 				uint32_t vertex = ( newVertices - 1 ) - relativeVertex;
 
-				triangle[ readVertex ] =
-					vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] = vertex;
+				vertexFifo[ verticesRead & VERTEX_FIFO_MASK ] =
+				triangle[ readVertex ]                        = static_cast< Ty >( vertex );
 
 				++verticesRead;
 				++readVertex;
@@ -121,7 +422,7 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 
 		if ( !skipFirstEdge )
 		{
-			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 0 ], triangle[ 1 ]);
+			edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 0 ], triangle[ 1 ] );
 
 			++edgesRead;
 		}
@@ -136,11 +437,11 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 			++verticesRead;
 		}
 
-		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 1 ], triangle[ 2 ]);
+		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 1 ], triangle[ 2 ] );
 
 		++edgesRead;
 
-		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set(triangle[ 2 ], triangle[ 0 ]);
+		edgeFifo[ edgesRead & EDGE_FIFO_MASK ].set( triangle[ 2 ], triangle[ 0 ] );
 
 		++edgesRead;
 	}
@@ -154,4 +455,14 @@ void DecompressIndexBuffer( uint16_t* triangles, uint32_t triangleCount, ReadBit
 void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
 	DecompressIndexBuffer<uint32_t>( triangles, triangleCount, input );
+}
+
+void DecompressIndexBuffer2( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+{
+	DecompressIndexBuffer2<uint16_t>( triangles, triangleCount, input );
+}
+
+void DecompressIndexBuffer2( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+{
+	DecompressIndexBuffer2<uint32_t>( triangles, triangleCount, input );
 }

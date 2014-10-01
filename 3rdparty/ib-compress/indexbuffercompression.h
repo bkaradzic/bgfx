@@ -27,10 +27,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <stdint.h>
-#include "writebitstream.h"
+#include "WriteBitstream.h"
 
 // Compress an index buffer, writing the results out to a bitstream and providing a vertex remapping (which will be in pre-transform cache optimised
-// order.
+// order).
+//
+// This version has slightly worse compression and the matching decompression has worse performance than CompressIndexBuffer2, but it supports degenerate triangles 
+// (that have duplicate vertex indices). Output should be decompressed with DecompressIndexBuffer. It also changes the order of the vertices in each triangle less.
+//
+// It works by outputting a code (along with any required index symbols) per vertex.
+//
+// Parameters: 
+//     [in]  triangles      - A typical triangle list index buffer (3 indices to vertices per triangle). 16 bit indices.
+//     [in]  triangle count - The number of triangles to process.
+//     [out] vertexRemap    - This will be populated with re-mappings that map old vertices to new vertices,
+//                            where indexing with the old vertex index will get you the new one. 
+//                            It should be allocated as a with at least vertexCount entries.
+//     [in] vertexCount     - The number of vertices in the mesh. This should be less than 0xFFFFFFFF/2^32 - 1.
+//     [in] output          - The stream that the compressed data will be written to. Note that we will not flush/finish the stream
+//                            in case something else is going to be written after, so WriteBitstream::Finish will need to be called after this.
+void CompressIndexBuffer( const uint16_t* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
+
+// Same as above but 32bit indices.
+void CompressIndexBuffer( const uint32_t* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
+
+
+// Compress an index buffer, writing the results out to a bitstream and providing a vertex remapping (which will be in pre-transform cache optimised
+// order).
+//
+// This version has slightly better compression and the matching decompression has better performance than CompressIndexBuffer, but it does not supports degenerate triangles 
+// (that have duplicate vertex indices). Output should be decompressed with DecompressIndexBuffer2. It changes the order of the vertices in each triangle more.
+//
+// This version also has compression optimisations that allow it to handle strip/fan cases a lot better compression wise.
+//
+// This works by outputting a code per triangle (along with the required index symbols).
 //
 // Parameters: 
 //     [in]  triangles      - A typical triangle list index buffer (3 indices to vertices per triangle).
@@ -41,7 +71,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //     [in] vertexCount     - The number of vertices in the mesh. This should be less than 0xFFFFFFFF/2^32 - 1.
 //     [in] output          - The stream that the compressed data will be written to. Note that we will not flush/finish the stream
 //                            in case something else is going to be written after, so WriteBitstream::Finish will need to be called after this.
-template <typename Ty>
-void CompressIndexBuffer( const Ty* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
+void CompressIndexBuffer2( const uint16_t* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
+
+// Same as above but 32bit indices
+void CompressIndexBuffer2( const uint32_t* triangles, uint32_t triangleCount, uint32_t* vertexRemap, uint32_t vertexCount, WriteBitstream& output );
+
 
 #endif // -- INDEX_BUFFER_COMPRESSION_H__

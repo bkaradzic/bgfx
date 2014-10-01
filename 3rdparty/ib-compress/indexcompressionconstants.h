@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INDEX_COMPRESSION_CONSTANTS_H__
 #pragma once
 
+#include <stdint.h>
+
 // Constant fifo and code sizes.
 const int VERTEX_FIFO_SIZE   = 32;
 const int VERTEX_FIFO_MASK   = VERTEX_FIFO_SIZE - 1;
@@ -35,10 +37,12 @@ const int CACHED_EDGE_BITS   = 5;
 const int CACHED_VERTEX_BITS = 5;
 const int IB_CODE_BITS       = 2;
 
+const int IB_TRIANGLE_CODE_BITS = 4;
+
 // Edge in the edge fifo.
 struct Edge
 {
-	void set(uint32_t f, uint32_t s)
+	void set( uint32_t f, uint32_t s )
 	{
 		first  = f;
 		second = s;
@@ -48,7 +52,7 @@ struct Edge
 	uint32_t second;
 };
 
-// Codes 
+// These are the vertex/edge codes for CompressIndexBuffer
 enum IndexBufferCodes
 {
 	// Represents a yet un-seen vertex.
@@ -63,6 +67,27 @@ enum IndexBufferCodes
 
 	// Represents a vertex that has been seen 
 	IB_FREE_VERTEX   = 3
+};
+
+// These are the triangle codes for CompressIndexBuffer2
+enum IndexBufferTriangleCodes
+{
+	IB_EDGE_NEW = 0,
+	IB_EDGE_CACHED = 1,
+	IB_EDGE_FREE = 2,
+	IB_NEW_NEW_NEW = 3,
+	IB_NEW_NEW_CACHED = 4,
+	IB_NEW_NEW_FREE = 5,
+	IB_NEW_CACHED_CACHED = 6,
+	IB_NEW_CACHED_FREE= 7,
+	IB_NEW_FREE_CACHED = 8,
+	IB_NEW_FREE_FREE = 9,
+	IB_CACHED_CACHED_CACHED = 10,
+	IB_CACHED_CACHED_FREE = 11,
+	IB_CACHED_FREE_FREE = 12,
+	IB_FREE_FREE_FREE = 13,
+	IB_EDGE_0_NEW = 14,
+	IB_EDGE_1_NEW = 15
 };
 
 #endif 
