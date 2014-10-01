@@ -32,6 +32,9 @@ namespace bgfx
 			InvalidShader,
 			UnableToInitialize,
 			UnableToCreateTexture,
+			DeviceLost,
+
+			Count
 		};
 	};
 

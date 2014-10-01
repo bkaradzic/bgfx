@@ -539,7 +539,8 @@ RENDERDOC_IMPORT
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
-			: m_captureTexture(NULL)
+			: m_lost(0)
+			, m_captureTexture(NULL)
 			, m_captureResolve(NULL)
 			, m_wireframe(false)
 			, m_flags(BGFX_RESET_NONE)
@@ -1158,16 +1159,42 @@ RENDERDOC_IMPORT
 			capturePostReset();
 		}
 
+		static bool isLost(HRESULT _hr)
+		{
+			return DXGI_ERROR_DEVICE_REMOVED == _hr
+				|| DXGI_ERROR_DEVICE_HUNG == _hr
+				|| DXGI_ERROR_DEVICE_RESET == _hr
+				|| DXGI_ERROR_DRIVER_INTERNAL_ERROR == _hr
+				|| DXGI_ERROR_NOT_CURRENTLY_AVAILABLE == _hr
+				;
+		}
+
 		void flip() BX_OVERRIDE
 		{
 			if (NULL != m_swapChain)
 			{
+				HRESULT hr = 0;
 				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
-				for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+				for (uint32_t ii = 1, num = m_numWindows && SUCCEEDED(hr); ii < num; ++ii)
 				{
-					DX_CHECK(m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, 0) );
+					hr = m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, 0);
 				}
-				DX_CHECK(m_swapChain->Present(syncInterval, 0) );
+
+				if (SUCCEEDED(hr) )
+				{
+					hr = m_swapChain->Present(syncInterval, 0);
+				}
+
+				if (FAILED(hr)
+				&&  isLost(hr) )
+				{
+					++m_lost;
+					BGFX_FATAL(10 > m_lost, bgfx::Fatal::DeviceLost, "Device is lost. FAILED 0x%08x", hr);
+				}
+				else
+				{
+					m_lost = 0;
+				}
 			}
 		}
 
@@ -1978,6 +2005,7 @@ RENDERDOC_IMPORT
 		IDXGIFactory* m_factory;
 
 		IDXGISwapChain* m_swapChain;
+		uint16_t m_lost;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
