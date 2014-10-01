@@ -294,6 +294,7 @@ namespace entry
 						WindowHandle handle = { (uint16_t)_wparam };
 						PostMessageA(m_hwnd[_wparam], WM_CLOSE, 0, 0);
 						m_eventQueue.postWindowEvent(handle);
+						DestroyWindow(m_hwnd[_wparam]);
 						m_hwnd[_wparam] = 0;
 					}
 					break;

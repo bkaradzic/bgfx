@@ -1175,7 +1175,7 @@ RENDERDOC_IMPORT
 			{
 				HRESULT hr = 0;
 				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
-				for (uint32_t ii = 1, num = m_numWindows && SUCCEEDED(hr); ii < num; ++ii)
+				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
 					hr = m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, 0);
 				}
