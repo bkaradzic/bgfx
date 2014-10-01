@@ -355,7 +355,8 @@ namespace entry
 					{
 						destroyWindow(findHandle(_hwnd) );
 					}
-					break;
+					// Don't process message. Window will be destroyed later.
+					return 0;
 
 				case WM_SIZING:
 					{
