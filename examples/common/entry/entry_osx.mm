@@ -14,6 +14,7 @@
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 #include <bx/os.h>
+#include <bx/handlealloc.h>
 
 #define DEFAULT_WIDTH 1280
 #define DEFAULT_HEIGHT 720
@@ -30,106 +31,18 @@
 
 @end
 
-@implementation AppDelegate
-
-+ (AppDelegate *)sharedDelegate
-{
-	static id delegate = [AppDelegate new];
-	return delegate;
-}
-
-- (id)init
-{
-	self = [super init];
-
-	if (nil == self)
-	{
-		return nil;
-	}
-
-	self->terminated = false;
-	return self;
-}
-
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
-{
-	BX_UNUSED(sender);
-	self->terminated = true;
-	return NSTerminateCancel;
-}
-
-- (bool)applicationHasTerminated
-{
-	return self->terminated;
-}
-
-@end
-
 @interface Window : NSObject<NSWindowDelegate>
 {
-	unsigned int windowCount;
+	uint32_t windowCount;
 }
 
-+ (Window *)sharedDelegate;
++ (Window*)sharedDelegate;
 - (id)init;
-- (void)windowCreated:(NSWindow *)window;
-- (void)windowWillClose:(NSNotification *)notification;
-- (BOOL)windowShouldClose:(NSWindow *)window;
+- (void)windowCreated:(NSWindow*)window;
+- (void)windowWillClose:(NSNotification*)notification;
+- (BOOL)windowShouldClose:(NSWindow*)window;
+- (void)windowDidResize:(NSNotification*)notification;
 
-@end
-
-@implementation Window
-
-+ (Window *)sharedDelegate
-{
-	static id windowDelegate = [Window new];
-	return windowDelegate;
-}
-
-- (id)init
-{
-	self = [super init];
-	if (nil == self)
-	{
-		return nil;
-	}
-
-	self->windowCount = 0;
-	return self;
-}
-
-- (void)windowCreated:(NSWindow *)window
-{
-	assert(window);
-
-	[window setDelegate:self];
-
-	assert(self->windowCount < ~0u);
-	self->windowCount += 1;
-}
-
-- (void)windowWillClose:(NSNotification *)notification
-{
-	BX_UNUSED(notification);
-}
-
-- (BOOL)windowShouldClose:(NSWindow *)window
-{
-	assert(window);
-
-	[window setDelegate:nil];
-
-	assert(self->windowCount);
-	self->windowCount -= 1;
-
-	if (self->windowCount == 0)
-	{
-		[NSApp terminate:self];
-		return false;
-	}
-
-	return true;
-}
 @end
 
 namespace entry
@@ -205,8 +118,10 @@ namespace entry
 
 		void getMousePos(int* outX, int* outY)
 		{
-			NSRect originalFrame = [m_window frame];
-			NSPoint location = [m_window mouseLocationOutsideOfEventStream];
+			WindowHandle handle = { 0 };
+			NSWindow* window = m_window[handle.idx];
+			NSRect originalFrame = [window frame];
+			NSPoint location = [window mouseLocationOutsideOfEventStream];
 			NSRect adjustFrame = [NSWindow contentRectForFrameRect: originalFrame styleMask: NSTitledWindowMask];
 
 			int x = location.x;
@@ -387,6 +302,16 @@ namespace entry
 			return false;
 		}
 
+		void windowDidResize()
+		{
+			WindowHandle handle = { 0 };
+			NSWindow* window = m_window[handle.idx];
+			NSRect rect = [window frame];
+			uint32_t width  = uint32_t(rect.size.width);
+			uint32_t height = uint32_t(rect.size.height);
+			m_eventQueue.postSizeEvent(handle, width, height);
+		}
+
 		int32_t run(int _argc, char** _argv)
 		{
 			[NSApplication sharedApplication];
@@ -421,9 +346,9 @@ namespace entry
 			[menubar addItem:appMenuItem];
 			[NSApp setMainMenu:menubar];
 
+			m_windowAlloc.alloc();
 			NSRect rect = NSMakeRect(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-			NSWindow* window = [NSWindow alloc];
-			[window
+			NSWindow* window = [[NSWindow alloc]
 				initWithContentRect:rect
 				styleMask:0
 				|NSTitledWindowMask
@@ -431,7 +356,7 @@ namespace entry
 				|NSMiniaturizableWindowMask
 				|NSResizableWindowMask
 				backing:NSBackingStoreBuffered defer:NO
-				];
+			];
 			NSString* appName = [[NSProcessInfo processInfo] processName];
 			[window setTitle:appName];
 			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
@@ -440,7 +365,7 @@ namespace entry
 			[window setBackgroundColor:[NSColor blackColor]];
 			[[Window sharedDelegate] windowCreated:window];
 
-			m_window = window;
+			m_window[0] = window;
 
 			bgfx::osxSetNSWindow(window);
 
@@ -474,8 +399,10 @@ namespace entry
 
 		EventQueue m_eventQueue;
 
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
+
 		bool m_exit;
-		NSWindow* m_window;
 	};
 
 	static Context s_ctx;
@@ -533,6 +460,102 @@ namespace entry
 	}
 
 } // namespace entry
+
+@implementation AppDelegate
+
++ (AppDelegate *)sharedDelegate
+{
+	static id delegate = [AppDelegate new];
+	return delegate;
+}
+
+- (id)init
+{
+	self = [super init];
+
+	if (nil == self)
+	{
+		return nil;
+	}
+
+	self->terminated = false;
+	return self;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+	BX_UNUSED(sender);
+	self->terminated = true;
+	return NSTerminateCancel;
+}
+
+- (bool)applicationHasTerminated
+{
+	return self->terminated;
+}
+
+@end
+
+@implementation Window
+
++ (Window*)sharedDelegate
+{
+	static id windowDelegate = [Window new];
+	return windowDelegate;
+}
+
+- (id)init
+{
+	self = [super init];
+	if (nil == self)
+	{
+		return nil;
+	}
+
+	self->windowCount = 0;
+	return self;
+}
+
+- (void)windowCreated:(NSWindow*)window
+{
+	assert(window);
+
+	[window setDelegate:self];
+
+	assert(self->windowCount < ~0u);
+	self->windowCount += 1;
+}
+
+- (void)windowWillClose:(NSNotification*)notification
+{
+	BX_UNUSED(notification);
+}
+
+- (BOOL)windowShouldClose:(NSWindow*)window
+{
+	assert(window);
+
+	[window setDelegate:nil];
+
+	assert(self->windowCount);
+	self->windowCount -= 1;
+
+	if (self->windowCount == 0)
+	{
+		[NSApp terminate:self];
+		return false;
+	}
+
+	return true;
+}
+
+- (void)windowDidResize:(NSNotification*)notification
+{
+	BX_UNUSED(notification);
+	using namespace entry;
+	s_ctx.windowDidResize();
+}
+@end
 
 int main(int _argc, char** _argv)
 {

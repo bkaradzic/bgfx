@@ -81,11 +81,12 @@ namespace bgfx
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
-		BX_UNUSED(_width, _height, _vsync);
+		BX_UNUSED(_width, _height);
 
 		GLint interval = _vsync ? 1 : 0;
 		NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
 		[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
+		[glContext update];
 	}
 
 	bool GlContext::isSwapChainSupported()
