@@ -469,7 +469,7 @@ namespace entry
 
 	void destroyWindow(WindowHandle _handle)
 	{
-		if (isValid(handle) )
+		if (isValid(_handle) )
 		{
 			s_ctx.m_eventQueue.postWindowEvent(_handle, NULL);
 			XUnmapWindow(s_ctx.m_display, s_ctx.m_window[_handle.idx]);
