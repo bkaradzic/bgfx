@@ -34,39 +34,39 @@
 /// For custom values, define these macros before including imgui.h
 
 #ifndef IMGUI_SCROLL_AREA_R
-	#define IMGUI_SCROLL_AREA_R 6
+#	define IMGUI_SCROLL_AREA_R 6
 #endif //IMGUI_SCROLL_AREA_R
 
 #ifndef IMGUI_SCROLL_BAR_R
-	#define IMGUI_SCROLL_BAR_R 5
+#	define IMGUI_SCROLL_BAR_R 5
 #endif //IMGUI_SCROLL_BAR_R
 
 #ifndef IMGUI_BUTTON_R
-	#define IMGUI_BUTTON_R 9
+#	define IMGUI_BUTTON_R 9
 #endif //IMGUI_BUTTON_R
 
 #ifndef IMGUI_BUTTON_RGB0
-	#define IMGUI_BUTTON_RGB0 imguiRGBA(128, 128, 128, 0)
+#	define IMGUI_BUTTON_RGB0 imguiRGBA(128, 128, 128, 0)
 #endif //IMGUI_BUTTON_RGB0
 
 #ifndef IMGUI_INPUT_R
-	#define IMGUI_INPUT_R 4
+#	define IMGUI_INPUT_R 4
 #endif //IMGUI_INPUT_R
 
 #ifndef IMGUI_TABS_HEIGHT
-	#define IMGUI_TABS_HEIGHT 20
+#	define IMGUI_TABS_HEIGHT 20
 #endif //IMGUI_TABS_HEIGHT
 
 #ifndef IMGUI_TABS_R
-	#define IMGUI_TABS_R 9
+#	define IMGUI_TABS_R 9
 #endif //IMGUI_TABS_R
 
 #ifndef IMGUI_INDENT_VALUE
-	#define IMGUI_INDENT_VALUE 16
+#	define IMGUI_INDENT_VALUE 16
 #endif //IMGUI_INDENT_VALUE
 
 #ifndef IMGUI_SEPARATOR_VALUE
-	#define IMGUI_SEPARATOR_VALUE 12
+#	define IMGUI_SEPARATOR_VALUE 12
 #endif //IMGUI_SEPARATOR_VALUE
 
 struct ImguiTextAlign
