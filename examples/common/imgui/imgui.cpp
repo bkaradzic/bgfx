@@ -382,7 +382,7 @@ struct Imgui
 
 		u_imageLod.idx       = bgfx::invalidHandle;
 		u_imageSwizzle.idx   = bgfx::invalidHandle;
-		u_texColor.idx       = bgfx::invalidHandle;
+		s_texColor.idx       = bgfx::invalidHandle;
 		m_missingTexture.idx = bgfx::invalidHandle;
 
 		m_colorProgram.idx      = bgfx::invalidHandle;
@@ -460,7 +460,7 @@ struct Imgui
 
 		u_imageLod     = bgfx::createUniform("u_imageLod", bgfx::UniformType::Uniform1f);
 		u_imageSwizzle = bgfx::createUniform("u_swizzle",  bgfx::UniformType::Uniform4fv);
-		u_texColor     = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1i);
+		s_texColor     = bgfx::createUniform("s_texColor", bgfx::UniformType::Uniform1i);
 
 		const bgfx::Memory* vs_imgui_color;
 		const bgfx::Memory* fs_imgui_color;
@@ -559,7 +559,7 @@ struct Imgui
 	{
 		bgfx::destroyUniform(u_imageLod);
 		bgfx::destroyUniform(u_imageSwizzle);
-		bgfx::destroyUniform(u_texColor);
+		bgfx::destroyUniform(s_texColor);
 #if !USE_NANOVG_FONT
 		for (uint16_t ii = 0; ii < IMGUI_CONFIG_MAX_FONTS; ++ii)
 		{
@@ -1551,7 +1551,7 @@ struct Imgui
 
 		screenQuad(xx, yy, _width, _height, _originBottomLeft);
 		bgfx::setUniform(u_imageLod, &_lod);
-		bgfx::setTexture(0, u_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
+		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		bgfx::setProgram(m_imageProgram);
 		setCurrentScissor();
@@ -1604,7 +1604,7 @@ struct Imgui
 		swizz[_channel] = 1.0f;
 		bgfx::setUniform(u_imageSwizzle, swizz);
 
-		bgfx::setTexture(0, u_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
+		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		bgfx::setProgram(m_imageSwizzProgram);
 		setCurrentScissor();
@@ -1724,7 +1724,7 @@ struct Imgui
 
 			bgfx::setTransform(mtx);
 			bgfx::setUniform(u_imageLod, &_lod);
-			bgfx::setTexture(0, u_texColor, _cubemap);
+			bgfx::setTexture(0, s_texColor, _cubemap);
 			bgfx::setProgram(m_cubeMapProgram);
 			bgfx::setVertexBuffer(&tvb);
 			bgfx::setIndexBuffer(&tib);
@@ -2497,7 +2497,7 @@ struct Imgui
 				++_text;
 			}
 
-			bgfx::setTexture(0, u_texColor, m_fonts[m_currentFontIdx].m_texture);
+			bgfx::setTexture(0, s_texColor, m_fonts[m_currentFontIdx].m_texture);
 			bgfx::setVertexBuffer(&tvb);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
@@ -2962,7 +2962,7 @@ struct Imgui
 
 	bgfx::UniformHandle u_imageLod;
 	bgfx::UniformHandle u_imageSwizzle;
-	bgfx::UniformHandle u_texColor;
+	bgfx::UniformHandle s_texColor;
 	bgfx::ProgramHandle m_colorProgram;
 	bgfx::ProgramHandle m_textureProgram;
 	bgfx::ProgramHandle m_cubeMapProgram;
