@@ -8,9 +8,9 @@ $input v_normal
 #include <bgfx_shader.sh>
 
 uniform float u_imageLod;
-SAMPLERCUBE(u_texColor, 0);
+SAMPLERCUBE(s_texColor, 0);
 
 void main()
 {
-	gl_FragColor = textureCubeLod(u_texColor, v_normal, u_imageLod);
+	gl_FragColor = textureCubeLod(s_texColor, v_normal, u_imageLod);
 }
