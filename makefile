@@ -186,7 +186,7 @@ analyze:
 	cppcheck examples/
 
 docs:
-	doxygen genie/bgfx.doxygen
+	doxygen scripts/bgfx.doxygen
 	markdown README.md > .build/docs/readme.html
 
 clean:
