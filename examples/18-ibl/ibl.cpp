@@ -530,7 +530,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		static int32_t rightScrollArea = 0;
-		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 500, &rightScrollArea);
+		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 520, &rightScrollArea);
 
 		imguiLabel("Shade:");
 		imguiSeparator();
@@ -551,7 +551,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 													   , "Ennis"
 													   , "Grace"
 													   ) );
-		imguiCube(lightProbes[currentLightProbe].m_tex, 0.0f, false);
+		static float lod = 0.0f;
+		imguiCube(lightProbes[currentLightProbe].m_tex, lod, false);
+		imguiSlider("Texture LOD", lod, float(0.0f), 10.1f, 0.1f);
 
 		imguiSeparator();
 		imguiSlider("Exposure", settings.m_exposure, -8.0f, 8.0f, 0.01f);
