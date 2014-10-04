@@ -27,12 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <memory.h>
 
 #ifdef _MSC_VER
 #define WBS_INLINE __forceinline
 #else
-#define WBS_INLINE __attribute__((always_inline))
+#define WBS_INLINE inline
 #endif 
 
 // Very simple bitstream for writing that will grow to accomodate written bits. 

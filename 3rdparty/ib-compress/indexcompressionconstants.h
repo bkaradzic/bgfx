@@ -29,13 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 
 // Constant fifo and code sizes.
-const int VERTEX_FIFO_SIZE   = 32;
-const int VERTEX_FIFO_MASK   = VERTEX_FIFO_SIZE - 1;
-const int EDGE_FIFO_SIZE     = 32;
-const int EDGE_FIFO_MASK     = EDGE_FIFO_SIZE - 1;
-const int CACHED_EDGE_BITS   = 5;
-const int CACHED_VERTEX_BITS = 5;
-const int IB_CODE_BITS       = 2;
+const int VERTEX_FIFO_SIZE      = 32;
+const int VERTEX_FIFO_MASK      = VERTEX_FIFO_SIZE - 1;
+const int EDGE_FIFO_SIZE        = 32;
+const int EDGE_FIFO_MASK        = EDGE_FIFO_SIZE - 1;
+const int CACHED_EDGE_BITS      = 5;
+const int CACHED_VERTEX_BITS    = 5;
+
+const int IB_VERTEX_CODE_BITS   = 2;
 
 const int IB_TRIANGLE_CODE_BITS = 4;
 

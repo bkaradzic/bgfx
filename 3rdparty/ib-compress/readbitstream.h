@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef _MSC_VER
 
@@ -34,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else
 
-#define RBS_INLINE __attribute__((always_inline))
+#define RBS_INLINE inline
 
 #endif 
 

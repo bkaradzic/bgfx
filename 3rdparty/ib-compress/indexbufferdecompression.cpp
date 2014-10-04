@@ -22,13 +22,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "IndexBufferDecompression.h"
-#include "ReadBitstream.h"
-#include "IndexCompressionConstants.h"
+#include "indexbufferdecompression.h"
+#include "readbitstream.h"
+#include "indexcompressionconstants.h"
+#include "indexbuffercompressionformat.h"
 #include <assert.h>
 
 template <typename Ty>
-void DecompressIndexBuffer2( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
+void DecompressTriangleCodes1( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
 	Edge      edgeFifo[ EDGE_FIFO_SIZE ];
 	uint32_t  vertexFifo[ VERTEX_FIFO_SIZE ];
@@ -341,7 +342,7 @@ void DecompressIndexBuffer2( Ty* triangles, uint32_t triangleCount, ReadBitstrea
 }
 
 template <typename Ty>
-void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
+void DecompressIndiceCodes1( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
 	Edge      edgeFifo[ EDGE_FIFO_SIZE ];
 	uint32_t  vertexFifo[ VERTEX_FIFO_SIZE ];
@@ -359,7 +360,7 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 
 		while ( readVertex < 3 )
 		{
-			IndexBufferCodes code = static_cast< IndexBufferCodes >( input.Read( IB_CODE_BITS ) );
+			IndexBufferCodes code = static_cast< IndexBufferCodes >( input.Read( IB_VERTEX_CODE_BITS ) );
 
 			switch ( code )
 			{
@@ -447,9 +448,24 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 	}
 }
 
-void DecompressIndexBuffer( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+template < typename Ty >
+void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
-	DecompressIndexBuffer<uint16_t>( triangles, triangleCount, input );
+	IndexBufferCompressionFormat format = static_cast< IndexBufferCompressionFormat >( input.ReadVInt() );
+
+	switch ( format )
+	{
+	case IBCF_PER_INDICE_1:
+
+		DecompressIndiceCodes1<Ty>( triangles, triangleCount, input );
+		break;
+
+	case IBCF_PER_TRIANGLE_1:
+
+		DecompressTriangleCodes1<Ty>( triangles, triangleCount, input );
+		break;
+
+	}
 }
 
 void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input )
@@ -457,12 +473,7 @@ void DecompressIndexBuffer( uint32_t* triangles, uint32_t triangleCount, ReadBit
 	DecompressIndexBuffer<uint32_t>( triangles, triangleCount, input );
 }
 
-void DecompressIndexBuffer2( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input )
+void DecompressIndexBuffer( uint16_t* triangles, uint32_t triangleCount, ReadBitstream& input )
 {
-	DecompressIndexBuffer2<uint16_t>( triangles, triangleCount, input );
-}
-
-void DecompressIndexBuffer2( uint32_t* triangles, uint32_t triangleCount, ReadBitstream& input )
-{
-	DecompressIndexBuffer2<uint32_t>( triangles, triangleCount, input );
+	DecompressIndexBuffer<uint16_t>( triangles, triangleCount, input );
 }
