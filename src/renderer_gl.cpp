@@ -59,7 +59,7 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attribName) );
 
-	static const char* s_instanceDataName[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT] =
+	static const char* s_instanceDataName[] =
 	{
 		"i_data0",
 		"i_data1",
@@ -67,21 +67,24 @@ namespace bgfx
 		"i_data3",
 		"i_data4",
 	};
+	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
-	static const GLenum s_access[Access::Count] =
+	static const GLenum s_access[] =
 	{
 		GL_READ_ONLY,
 		GL_WRITE_ONLY,
 		GL_READ_WRITE,
 	};
+	BX_STATIC_ASSERT(Access::Count == BX_COUNTOF(s_access) );
 
-	static const GLenum s_attribType[AttribType::Count] =
+	static const GLenum s_attribType[] =
 	{
 		GL_UNSIGNED_BYTE,
 		GL_SHORT,
 		GL_HALF_FLOAT,
 		GL_FLOAT,
 	};
+	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
 	struct Blend
 	{
@@ -4903,6 +4906,15 @@ namespace bgfx
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "   DVB size: %7d", _render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "   DIB size: %7d", _render->m_iboffset);
+
+				pos++;
+				tvm.printf(10, pos++, 0x8e, " State cache:     ");
+				tvm.printf(10, pos++, 0x8e, " VAO    | Sampler ");
+				tvm.printf(10, pos++, 0x8e, " %6d | %6d  "
+					, m_vaoStateCache.getCount()
+					, m_samplerStateCache.getCount()
+					);
+				pos++;
 
 				double captureMs = double(captureElapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);

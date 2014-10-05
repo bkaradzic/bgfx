@@ -31,7 +31,7 @@ namespace bgfx
 		{ D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 3, 1, 2 },
 		{ D3D11_PRIMITIVE_TOPOLOGY_LINELIST,      2, 2, 0 },
 		{ D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,     1, 1, 0 },
-		{ D3D10_PRIMITIVE_TOPOLOGY_UNDEFINED,     0, 0, 0 },
+		{ D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED,     0, 0, 0 },
 	};
 
 	static const char* s_primName[] =
@@ -267,7 +267,7 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib) );
 
-	static const DXGI_FORMAT s_attribType[AttribType::Count][4][2] =
+	static const DXGI_FORMAT s_attribType[][4][2] =
 	{
 		{
 			{ DXGI_FORMAT_R8_UINT,            DXGI_FORMAT_R8_UNORM           },
@@ -294,6 +294,7 @@ namespace bgfx
 			{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT },
 		},
 	};
+	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
 	static D3D11_INPUT_ELEMENT_DESC* fillVertexDecl(D3D11_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
 	{
@@ -3544,6 +3545,18 @@ RENDERDOC_IMPORT
 				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", _render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", _render->m_iboffset);
+
+				pos++;
+				tvm.printf(10, pos++, 0x8e, " State cache:                                ");
+				tvm.printf(10, pos++, 0x8e, " Blend  | DepthS | Input  | Raster | Sampler ");
+				tvm.printf(10, pos++, 0x8e, " %6d | %6d | %6d | %6d | %6d  "
+					, m_blendStateCache.getCount()
+					, m_depthStencilStateCache.getCount()
+					, m_inputLayoutCache.getCount()
+					, m_rasterizerStateCache.getCount()
+					, m_samplerStateCache.getCount()
+					);
+				pos++;
 
 				double captureMs = double(captureElapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);

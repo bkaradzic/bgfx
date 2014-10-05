@@ -75,6 +75,11 @@ namespace bgfx
 			m_hashMap.clear();
 		}
 
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size() );
+		}
+
 	private:
 		typedef stl::unordered_map<uint64_t, Ty*> HashMap;
 		HashMap m_hashMap;
