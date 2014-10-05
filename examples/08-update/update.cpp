@@ -342,7 +342,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set render states.
 		bgfx::setState(BGFX_STATE_DEFAULT);
 
-		// Submit primitive for rendering to view 0.
+		// Submit primitive for rendering to view 1.
 		bgfx::submit(1);
 
 
@@ -366,7 +366,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			// Set render states.
 			bgfx::setState(BGFX_STATE_DEFAULT);
 
-			// Submit primitive for rendering to view 0.
+			// Submit primitive for rendering to view 1.
 			bgfx::submit(1);
 		}
 
@@ -390,7 +390,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			// Set render states.
 			bgfx::setState(BGFX_STATE_DEFAULT);
 
-			// Submit primitive for rendering to view 0.
+			// Submit primitive for rendering to view 1.
 			bgfx::submit(1);
 		}
 
