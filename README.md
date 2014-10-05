@@ -408,8 +408,8 @@ Certain platforms have only single choice, for example the Native Client works
 only with OpenGL ES 2.0 renderer, using anything other than that will result in
 build errors.
 
-Debugging
----------
+Debugging and Profiling
+-----------------------
 
 ### RenderDoc
 
@@ -435,12 +435,16 @@ Other debuggers:
 | APITrace  | Linux/OSX/Win |   x  |  x   |  x   |   x  |    x   |
 | CodeXL    | Linux/Win     |      |      |  x   |      |        |
 | IntelGPA  | Linux/OSX/Win |   x  |  x   |      |   x  |        |
+| Nsight    | Win           |   x  |  x   |  x   |      |        |
+| PerfHUD   | Win           |   x  |  x   |      |      |        |
 | RenderDoc | Win           |      |  x   |      |      |    x   |
 | vogl      | Linux         |      |      |  x   |      |    x   |
 
 Download:  
 [APITrace](https://apitrace.github.io/)  
 [CodeXL](http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/)  
+[Nsight](https://developer.nvidia.com/nvidia-nsight-visual-studio-edition)  
+[PerfHUD](https://developer.nvidia.com/nvidia-perfhud)  
 [vogl](https://github.com/ValveSoftware/vogl)  
 
 SDL, GLFW, etc.
