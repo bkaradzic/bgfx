@@ -32,11 +32,6 @@ struct Uniforms
 		u_rgbSpec = bgfx::createUniform("u_rgbSpec",  bgfx::UniformType::Uniform3fv);
 	}
 
-	// Call this once at initialization.
-	void submitConstUniforms()
-	{
-	}
-
 	// Call this once per frame.
 	void submitPerFrameUniforms()
 	{
@@ -512,8 +507,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	settings.m_showSpecColorWheel = false;
 
 	float time = 0.0f;
-
-	s_uniforms.submitConstUniforms();
 
 	int32_t leftScrollArea = 0;
 

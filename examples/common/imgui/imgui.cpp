@@ -1732,6 +1732,7 @@ struct Imgui
 						   | BGFX_STATE_RGB_WRITE
 						   | BGFX_STATE_CULL_CW
 						   );
+			setCurrentScissor();
 			bgfx::submit(m_view);
 		}
 	}
