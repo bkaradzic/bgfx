@@ -1061,8 +1061,8 @@ RENDERDOC_IMPORT
 			D3D11_VIEWPORT vp;
 			vp.TopLeftX = 0;
 			vp.TopLeftY = 0;
-			vp.Width = (float)width;
-			vp.Height = (float)height;
+			vp.Width    = (float)width;
+			vp.Height   = (float)height;
 			vp.MinDepth = 0.0f;
 			vp.MaxDepth = 1.0f;
 			deviceCtx->RSSetViewports(1, &vp);
@@ -2862,8 +2862,8 @@ RENDERDOC_IMPORT
 					D3D11_VIEWPORT vp;
 					vp.TopLeftX = rect.m_x;
 					vp.TopLeftY = rect.m_y;
-					vp.Width = rect.m_width;
-					vp.Height = rect.m_height;
+					vp.Width    = rect.m_width;
+					vp.Height   = rect.m_height;
 					vp.MinDepth = 0.0f;
 					vp.MaxDepth = 1.0f;
 					deviceCtx->RSSetViewports(1, &vp);
@@ -3038,9 +3038,9 @@ RENDERDOC_IMPORT
 						if (viewHasScissor)
 						{
 							D3D11_RECT rc;
-							rc.left = viewScissorRect.m_x;
-							rc.top = viewScissorRect.m_y;
-							rc.right = viewScissorRect.m_x + viewScissorRect.m_width;
+							rc.left   = viewScissorRect.m_x;
+							rc.top    = viewScissorRect.m_y;
+							rc.right  = viewScissorRect.m_x + viewScissorRect.m_width;
 							rc.bottom = viewScissorRect.m_y + viewScissorRect.m_height;
 							deviceCtx->RSSetScissorRects(1, &rc);
 						}
@@ -3051,9 +3051,9 @@ RENDERDOC_IMPORT
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
 						scissorEnabled = true;
 						D3D11_RECT rc;
-						rc.left = scissorRect.m_x;
-						rc.top = scissorRect.m_y;
-						rc.right = scissorRect.m_x + scissorRect.m_width;
+						rc.left   = scissorRect.m_x;
+						rc.top    = scissorRect.m_y;
+						rc.right  = scissorRect.m_x + scissorRect.m_width;
 						rc.bottom = scissorRect.m_y + scissorRect.m_height;
 						deviceCtx->RSSetScissorRects(1, &rc);
 					}
