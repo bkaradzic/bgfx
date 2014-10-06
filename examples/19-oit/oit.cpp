@@ -83,6 +83,11 @@ static const uint16_t s_cubeIndices[36] =
 static float s_texelHalf = 0.0f;
 static bool s_flipV = false;
 
+inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
+{
+	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_flipV);
+}
+
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
 {
 	if (bgfx::checkAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
@@ -303,7 +308,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		bx::mtxLookAt(view, eye, at);
-		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		bgfx::setViewTransform(0, view, proj);
 

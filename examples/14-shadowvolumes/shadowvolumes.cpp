@@ -111,6 +111,7 @@ static const uint16_t s_planeIndices[] =
 };
 
 static const char* s_shaderPath = NULL;
+static bool s_oglNdc = false;
 static float s_texelHalf = 0.0f;
 
 static uint32_t s_viewMask = 0;
@@ -219,6 +220,11 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 
 		bgfx::setViewRect( (uint8_t)view, _x, _y, _width, _height);
 	}
+}
+
+inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
+{
+	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_oglNdc);
 }
 
 void mtxBillboard(float* __restrict _result
@@ -1951,10 +1957,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	case bgfx::RendererType::OpenGL:
 		s_shaderPath = "shaders/glsl/";
+		s_oglNdc = true;
 		break;
 
 	case bgfx::RendererType::OpenGLES:
 		s_shaderPath = "shaders/gles/";
+		s_oglNdc = true;
 		break;
 	}
 
@@ -2163,7 +2171,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
 	const float nearPlane = 1.0f;
 	const float farPlane = 1000.0f;
-	bx::mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
+	mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
 
 	float initialPos[3] = { 3.0f, 20.0f, -58.0f };
 	cameraCreate();
