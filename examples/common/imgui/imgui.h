@@ -178,7 +178,7 @@ void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t 
 void imguiImage(bgfx::TextureHandle _image, float _lod, float _scale, float _aspect, ImguiAlign::Enum _align = ImguiAlign::LeftIndented, bool _originBottomLeft = false);
 void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
 void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _scale, float _aspect, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
-void imguiCube(bgfx::TextureHandle _cubemap, float _lod = 0.0f, bool _cross = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
+bool imguiCube(bgfx::TextureHandle _cubemap, float _lod = 0.0f, bool _cross = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
 
 float imguiGetTextLength(const char* _text, ImguiFontHandle _handle);
 bool imguiMouseOverArea();

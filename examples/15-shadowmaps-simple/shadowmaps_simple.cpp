@@ -71,6 +71,11 @@ static float s_texelHalf = 0.0f;
 bgfx::FrameBufferHandle s_shadowMapFB;
 static bgfx::UniformHandle u_shadowMap;
 
+inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
+{
+	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_flipV);
+}
+
 static void shaderFilePath(char* _out, const char* _name)
 {
 	strcpy(_out, s_shaderPath);
@@ -486,7 +491,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bx::mtxLookAt(view, eye, at);
 
 	const float aspect = float(int32_t(width) ) / float(int32_t(height) );
-	bx::mtxProj(proj, 60.0f, aspect, 0.1f, 1000.0f);
+	mtxProj(proj, 60.0f, aspect, 0.1f, 1000.0f);
 
 	// Time acumulators.
 	float timeAccumulatorLight = 0.0f;

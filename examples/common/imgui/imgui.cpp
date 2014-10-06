@@ -1619,10 +1619,10 @@ struct Imgui
 		imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align);
 	}
 
-	void cubeMap(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
+	bool cubeMap(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
 	{
-		uint32_t numVertices = 14;
-		uint32_t numIndices  = 36;
+		const uint32_t numVertices = 14;
+		const uint32_t numIndices  = 36;
 		if (bgfx::checkAvailTransientBuffers(numVertices, PosNormalVertex::ms_decl, numIndices) )
 		{
 			bgfx::TransientVertexBuffer tvb;
@@ -1692,6 +1692,8 @@ struct Imgui
 				indices += quad(indices, 10, 12, 13, 11);
 			}
 
+			const uint32_t id = getId();
+
 			Area& area = getCurrentArea();
 			int32_t xx;
 			int32_t width;
@@ -1717,6 +1719,10 @@ struct Imgui
 			const int32_t yy = area.m_widgetY;
 			area.m_widgetY += height + DEFAULT_SPACING;
 
+			const bool enabled = isEnabled(m_areaId);
+			const bool over = enabled && inRect(xx, yy, width, height);
+			const bool res = buttonLogic(id, over);
+
 			const float scale = float(width/2);
 
 			float mtx[16];
@@ -1734,7 +1740,11 @@ struct Imgui
 						   );
 			setCurrentScissor();
 			bgfx::submit(m_view);
+
+			return res;
 		}
+
+		return false;
 	}
 
 	bool collapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
@@ -3271,9 +3281,9 @@ void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod,
 	s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
 }
 
-void imguiCube(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
+bool imguiCube(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
 {
-	s_imgui.cubeMap(_cubemap, _lod, _cross, _align);
+	return s_imgui.cubeMap(_cubemap, _lod, _cross, _align);
 }
 
 float imguiGetTextLength(const char* _text, ImguiFontHandle _handle)

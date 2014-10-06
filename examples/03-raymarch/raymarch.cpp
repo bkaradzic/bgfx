@@ -30,7 +30,12 @@ struct PosColorTexCoord0Vertex
 
 bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
 
-static bool s_flipV = false;
+static bool s_oglNdc = false;
+
+inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
+{
+	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_oglNdc);
+}
 
 void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
@@ -128,7 +133,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	case bgfx::RendererType::OpenGL:
 	case bgfx::RendererType::OpenGLES:
-		s_flipV = true;
+		s_oglNdc = true;
 		break;
 	}
 
@@ -175,7 +180,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float view[16];
 		float proj[16];
 		bx::mtxLookAt(view, eye, at);
-		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 		// Set view and projection matrix for view 1.
 		bgfx::setViewTransform(0, view, proj);
