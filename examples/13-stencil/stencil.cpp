@@ -151,6 +151,11 @@ static uint32_t s_viewMask = 0;
 static uint32_t s_clearMask = 0;
 static bgfx::UniformHandle u_texColor;
 
+inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
+{
+	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_flipV);
+}
+
 static void shaderFilePath(char* _out, const char* _name)
 {
 	strcpy(_out, s_shaderPath);
@@ -1004,7 +1009,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set view and projection matrices.
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
-	bx::mtxProj(viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
+	mtxProj(viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
 
 	float initialPos[3] = { 0.0f, 18.0f, -40.0f };
 	cameraCreate();
