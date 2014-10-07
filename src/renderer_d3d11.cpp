@@ -1426,7 +1426,7 @@ RENDERDOC_IMPORT
 					{
 						curr = &vertexElements[jj];
 						if (0 == strcmp(curr->SemanticName, "TEXCOORD")
-							&&  curr->SemanticIndex == index)
+						&&  curr->SemanticIndex == index)
 						{
 							break;
 						}
@@ -2287,8 +2287,7 @@ RENDERDOC_IMPORT
 		else if (BGFX_CHUNK_MAGIC_VSH == magic)
 		{
 			m_hash = bx::hashMurmur2A(code, shaderSize);
-			m_code = alloc(shaderSize);
-			memcpy(m_code->data, code, shaderSize);
+			m_code = copy(code, shaderSize);
 
 			DX_CHECK(s_renderD3D11->m_device->CreateVertexShader(code, shaderSize, NULL, &m_vertexShader) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create vertex shader.");

@@ -77,7 +77,6 @@ function exampleProject(_name)
 		}
 		links { -- this is needed only for testing with GLES2/3 on Windows with VS2008
 			"DelayImp",
-			"psapi",
 		}
 
 	configuration { "vs201*" }
