@@ -31,8 +31,6 @@
 
 namespace bgfx
 {
-	typedef HRESULT (WINAPI * PFN_CREATEDXGIFACTORY)(REFIID _riid, void** _factory);
-
 	template <typename Ty>
 	class StateCacheT
 	{

@@ -537,6 +537,14 @@ RENDERDOC_IMPORT
 	}
 #endif // BGFX_CONFIG_DEBUG_PIX
 
+#if USE_D3D11_DYNAMIC_LIB
+	static PFN_D3D11_CREATE_DEVICE D3D11CreateDevice;
+	static PFN_CREATE_DXGI_FACTORY CreateDXGIFactory;
+	static PFN_D3DPERF_SET_MARKER  D3DPERF_SetMarker;
+	static PFN_D3DPERF_BEGIN_EVENT D3DPERF_BeginEvent;
+	static PFN_D3DPERF_END_EVENT   D3DPERF_EndEvent;
+#endif // USE_D3D11_DYNAMIC_LIB
+
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
@@ -559,6 +567,8 @@ RENDERDOC_IMPORT
 			m_d3d11dll = bx::dlopen("d3d11.dll");
 			BGFX_FATAL(NULL != m_d3d11dll, Fatal::UnableToInitialize, "Failed to load d3d11.dll.");
 
+			m_d3d9dll = NULL;
+
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
 				// D3D11_1.h has ID3DUserDefinedAnnotation
@@ -566,33 +576,30 @@ RENDERDOC_IMPORT
 				m_d3d9dll = bx::dlopen("d3d9.dll");
 				BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
 
-				m_D3DPERF_SetMarker  = (D3DPERF_SetMarkerFunc )bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker" );
-				m_D3DPERF_BeginEvent = (D3DPERF_BeginEventFunc)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
-				m_D3DPERF_EndEvent   = (D3DPERF_EndEventFunc  )bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent"  );
-				BX_CHECK(NULL != m_D3DPERF_SetMarker
-					  && NULL != m_D3DPERF_BeginEvent
-					  && NULL != m_D3DPERF_EndEvent
+				D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker" );
+				D3DPERF_BeginEvent = (PFN_D3DPERF_BEGIN_EVENT)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
+				D3DPERF_EndEvent   = (PFN_D3DPERF_END_EVENT  )bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent"  );
+				BX_CHECK(NULL != D3DPERF_SetMarker
+					  && NULL != D3DPERF_BeginEvent
+					  && NULL != D3DPERF_EndEvent
 					  , "Failed to initialize PIX events."
 					  );
 			}
 
-			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
-			BGFX_FATAL(NULL != d3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
+			D3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
+			BGFX_FATAL(NULL != D3D11CreateDevice, Fatal::UnableToInitialize, "Function D3D11CreateDevice not found.");
 
 			m_dxgidll = bx::dlopen("dxgi.dll");
 			BGFX_FATAL(NULL != m_dxgidll, Fatal::UnableToInitialize, "Failed to load dxgi.dll.");
 
-			PFN_CREATEDXGIFACTORY dxgiCreateDXGIFactory = (PFN_CREATEDXGIFACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
-			BGFX_FATAL(NULL != dxgiCreateDXGIFactory, Fatal::UnableToInitialize, "Function CreateDXGIFactory not found.");
-#else
-			PFN_D3D11_CREATE_DEVICE d3D11CreateDevice     = D3D11CreateDevice;
-			PFN_CREATEDXGIFACTORY   dxgiCreateDXGIFactory = CreateDXGIFactory;
+			CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
+			BGFX_FATAL(NULL != CreateDXGIFactory, Fatal::UnableToInitialize, "Function CreateDXGIFactory not found.");
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			HRESULT hr;
 
 			IDXGIFactory* factory;
-			hr = dxgiCreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
+			hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create DXGI factory.");
 
 			m_adapter = NULL;
@@ -662,7 +669,7 @@ RENDERDOC_IMPORT
 
 			D3D_FEATURE_LEVEL featureLevel;
 
-			hr = d3D11CreateDevice(m_adapter
+			hr = D3D11CreateDevice(m_adapter
 				, m_driverType
 				, NULL
 				, flags
@@ -803,6 +810,7 @@ RENDERDOC_IMPORT
 
 #if USE_D3D11_DYNAMIC_LIB
 			bx::dlclose(m_dxgidll);
+			bx::dlclose(m_d3d9dll);
 			bx::dlclose(m_d3d11dll);
 #endif // USE_D3D11_DYNAMIC_LIB
 		}
@@ -1988,12 +1996,8 @@ RENDERDOC_IMPORT
 			}
 		}
 
-		void* m_d3d9dll;
-		D3DPERF_SetMarkerFunc m_D3DPERF_SetMarker;
-		D3DPERF_BeginEventFunc m_D3DPERF_BeginEvent;
-		D3DPERF_EndEventFunc m_D3DPERF_EndEvent;
-
 #if USE_D3D11_DYNAMIC_LIB
+		void* m_d3d9dll;
 		void* m_d3d11dll;
 		void* m_dxgidll;
 #endif // USE_D3D11_DYNAMIC_LIB

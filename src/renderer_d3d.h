@@ -57,17 +57,18 @@ namespace bgfx
 #define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
 #define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 
-	typedef int (WINAPI *D3DPERF_BeginEventFunc)(DWORD _color, LPCWSTR _wszName);
-	typedef int (WINAPI *D3DPERF_EndEventFunc)();
-	typedef void (WINAPI *D3DPERF_SetMarkerFunc)(DWORD _color, LPCWSTR _wszName);
-	typedef void (WINAPI *D3DPERF_SetRegionFunc)(DWORD _color, LPCWSTR _wszName);
-	typedef BOOL (WINAPI *D3DPERF_QueryRepeatFrameFunc)();
-	typedef void (WINAPI *D3DPERF_SetOptionsFunc)(DWORD _options);
-	typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
+	typedef int     (WINAPI* PFN_D3DPERF_BEGIN_EVENT)(DWORD _color, LPCWSTR _wszName);
+	typedef int     (WINAPI* PFN_D3DPERF_END_EVENT)();
+	typedef void    (WINAPI* PFN_D3DPERF_SET_MARKER)(DWORD _color, LPCWSTR _wszName);
+	typedef void    (WINAPI* PFN_D3DPERF_SET_REGION)(DWORD _color, LPCWSTR _wszName);
+	typedef BOOL    (WINAPI* PFN_D3DPERF_QUERY_REPEAT_FRAME)();
+	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
+	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
+	typedef HRESULT (WINAPI* PFN_CREATE_DXGI_FACTORY)(REFIID _riid, void** _factory);
 
-#define _PIX_SETMARKER(_col, _name) m_D3DPERF_SetMarker(_col, _name)
-#define _PIX_BEGINEVENT(_col, _name) m_D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT() m_D3DPERF_EndEvent()
+#define _PIX_SETMARKER(_col, _name) D3DPERF_SetMarker(_col, _name)
+#define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
+#define _PIX_ENDEVENT() D3DPERF_EndEvent()
 
 #if BGFX_CONFIG_DEBUG_PIX
 #	define PIX_SETMARKER(_color, _name) _PIX_SETMARKER(_color, _name)
