@@ -31,58 +31,6 @@
 
 namespace bgfx
 {
-	template <typename Ty>
-	class StateCacheT
-	{
-	public:
-		void add(uint64_t _id, Ty* _item)
-		{
-			invalidate(_id);
-			m_hashMap.insert(stl::make_pair(_id, _item) );
-		}
-
-		Ty* find(uint64_t _id)
-		{
-			typename HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end() )
-			{
-				return it->second;
-			}
-
-			return NULL;
-		}
-
-		void invalidate(uint64_t _id)
-		{
-			typename HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end() )
-			{
-				DX_RELEASE_WARNONLY(it->second, 0);
-				m_hashMap.erase(it);
-			}
-		}
-
-		void invalidate()
-		{
-			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				DX_CHECK_REFCOUNT(it->second, 1);
-				it->second->Release();
-			}
-
-			m_hashMap.clear();
-		}
-
-		uint32_t getCount() const
-		{
-			return uint32_t(m_hashMap.size() );
-		}
-
-	private:
-		typedef stl::unordered_map<uint64_t, Ty*> HashMap;
-		HashMap m_hashMap;
-	};
-
 	struct IndexBufferD3D11
 	{
 		IndexBufferD3D11()
