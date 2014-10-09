@@ -2555,7 +2555,6 @@ namespace bgfx
 		}
 
 		m_numPredefined = 0;
-		m_constantBuffer = ConstantBuffer::create(1024);
  		m_numSamplers = 0;
 
 		struct VariableInfo
@@ -2653,6 +2652,11 @@ namespace bgfx
 				const UniformInfo* info = s_renderGL->m_uniformReg.find(name);
 				if (NULL != info)
 				{
+					if (NULL == m_constantBuffer)
+					{
+						m_constantBuffer = ConstantBuffer::create(1024);
+					}
+
 					UniformType::Enum type = convertGlType(gltype);
 					m_constantBuffer->writeUniformHandle(type, 0, info->m_handle, num);
 					m_constantBuffer->write(loc);
@@ -2669,6 +2673,11 @@ namespace bgfx
 				, offset
 				);
 			BX_UNUSED(offset);
+		}
+
+		if (NULL != m_constantBuffer)
+		{
+			m_constantBuffer->finish();
 		}
 
 		if (s_extension[Extension::ARB_program_interface_query].m_supported
@@ -2709,8 +2718,6 @@ namespace bgfx
 					);
 			}
 		}
-
-		m_constantBuffer->finish();
 
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
 		uint32_t used = 0;

@@ -2218,8 +2218,6 @@ RENDERDOC_IMPORT
 
 		if (0 < count)
 		{
-			m_constantBuffer = ConstantBuffer::create(1024);
-
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize;
@@ -2258,6 +2256,11 @@ RENDERDOC_IMPORT
 
 					if (NULL != info)
 					{
+						if (NULL == m_constantBuffer)
+						{
+							m_constantBuffer = ConstantBuffer::create(1024);
+						}
+
 						kind = "user";
 						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
 					}
@@ -2274,7 +2277,10 @@ RENDERDOC_IMPORT
 				BX_UNUSED(kind);
 			}
 
-			m_constantBuffer->finish();
+			if (NULL != m_constantBuffer)
+			{
+				m_constantBuffer->finish();
+			}
 		}
 
 		uint16_t shaderSize;

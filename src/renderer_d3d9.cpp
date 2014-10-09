@@ -1916,8 +1916,6 @@ namespace bgfx
 
 		if (0 < count)
 		{
-			m_constantBuffer = ConstantBuffer::create(1024);
-
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize;
@@ -1956,6 +1954,11 @@ namespace bgfx
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 					if (NULL != info)
 					{
+						if (NULL == m_constantBuffer)
+						{
+							m_constantBuffer = ConstantBuffer::create(1024);
+						}
+
 						kind = "user";
 						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
 					}
@@ -1972,7 +1975,10 @@ namespace bgfx
 				BX_UNUSED(kind);
 			}
 
-			m_constantBuffer->finish();
+			if (NULL != m_constantBuffer)
+			{
+				m_constantBuffer->finish();
+			}
 		}
 
 		uint16_t shaderSize;
