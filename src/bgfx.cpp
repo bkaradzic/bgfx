@@ -2598,6 +2598,18 @@ again:
 		s_ctx->setTransform(_cache, _num);
 	}
 
+	void allocTransform(Transform* _transform, uint16_t _num)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->allocTransform(_transform, _num);
+	}
+
+	void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setTransform(_transform, _first, _num);
+	}
+
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();

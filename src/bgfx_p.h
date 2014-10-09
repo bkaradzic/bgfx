@@ -746,20 +746,36 @@ namespace bgfx
 			m_num = 1;
 		}
 
+		uint32_t reserve(uint16_t* _num)
+		{
+			BX_CHECK(m_num+_num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", m_num+_num, BGFX_CONFIG_MAX_MATRIX_CACHE);
+			uint32_t num = bx::uint32_min(BGFX_CONFIG_MAX_MATRIX_CACHE-m_num, *_num);
+			uint32_t first = m_num;
+			m_num += num;
+			*_num = (uint16_t)num;
+			return first;
+		}
+
 		uint32_t add(const void* _mtx, uint16_t _num)
 		{
 			if (NULL != _mtx)
 			{
-				BX_CHECK(m_num+_num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", m_num+_num, BGFX_CONFIG_MAX_MATRIX_CACHE);
-
-				uint32_t num = bx::uint32_min(BGFX_CONFIG_MAX_MATRIX_CACHE-m_num, _num);
-				uint32_t first = m_num;
-				memcpy(&m_cache[m_num], _mtx, sizeof(Matrix4)*num);
-				m_num += num;
+				uint32_t first = reserve(&_num);
+				memcpy(&m_cache[first], _mtx, sizeof(Matrix4)*_num);
 				return first;
 			}
 
 			return 0;
+		}
+
+		float* toPtr(uint32_t _cacheIdx)
+		{
+			return m_cache[_cacheIdx].un.val;
+		}
+
+		uint32_t fromPtr(const void* _ptr) const
+		{
+			return uint32_t( (const Matrix4*)_ptr - m_cache);
 		}
 
 		Matrix4 m_cache[BGFX_CONFIG_MAX_MATRIX_CACHE];
@@ -1226,7 +1242,7 @@ namespace bgfx
 		uint32_t setTransform(const void* _mtx, uint16_t _num)
 		{
 			m_draw.m_matrix = m_matrixCache.add(_mtx, _num);
-			m_draw.m_num = _num;
+			m_draw.m_num    = _num;
 
 			return m_draw.m_matrix;
 		}
@@ -1234,53 +1250,66 @@ namespace bgfx
 		void setTransform(uint32_t _cache, uint16_t _num)
 		{
 			m_draw.m_matrix = _cache;
-			m_draw.m_num = _num;
+			m_draw.m_num    = _num;
+		}
+
+		void allocTransform(Transform* _transform, uint16_t _num)
+		{
+			uint32_t first   = m_matrixCache.reserve(&_num);
+			_transform->data = m_matrixCache.toPtr(first);
+			_transform->num  = _num;
+		}
+
+		void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num)
+		{
+			m_draw.m_matrix = m_matrixCache.fromPtr(_transform->data) + _first;
+			m_draw.m_num    = _num;
 		}
 
 		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			m_draw.m_startIndex = _firstIndex;
-			m_draw.m_numIndices = _numIndices;
+			m_draw.m_startIndex  = _firstIndex;
+			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
 		}
 
 		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
 			m_draw.m_indexBuffer = _tib->handle;
-			m_draw.m_startIndex = _firstIndex;
-			m_draw.m_numIndices = _numIndices;
+			m_draw.m_startIndex  = _firstIndex;
+			m_draw.m_numIndices  = _numIndices;
 			m_discard = 0 == _numIndices;
 		}
 
 		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 		{
 			BX_CHECK(_handle.idx < BGFX_CONFIG_MAX_VERTEX_BUFFERS, "Invalid vertex buffer handle. %d (< %d)", _handle.idx, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
-			m_draw.m_startVertex = _startVertex;
-			m_draw.m_numVertices = _numVertices;
+			m_draw.m_startVertex  = _startVertex;
+			m_draw.m_numVertices  = _numVertices;
 			m_draw.m_vertexBuffer = _handle;
 		}
 
 		void setVertexBuffer(const DynamicVertexBuffer& _dvb, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex = _dvb.m_startVertex;
-			m_draw.m_numVertices = bx::uint32_min(_dvb.m_numVertices, _numVertices);
+			m_draw.m_startVertex  = _dvb.m_startVertex;
+			m_draw.m_numVertices  = bx::uint32_min(_dvb.m_numVertices, _numVertices);
 			m_draw.m_vertexBuffer = _dvb.m_handle;
-			m_draw.m_vertexDecl = _dvb.m_decl;
+			m_draw.m_vertexDecl   = _dvb.m_decl;
 		}
 
 		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex = _startVertex;
-			m_draw.m_numVertices = bx::uint32_min(_tvb->size/_tvb->stride, _numVertices);
+			m_draw.m_startVertex  = _startVertex;
+			m_draw.m_numVertices  = bx::uint32_min(_tvb->size/_tvb->stride, _numVertices);
 			m_draw.m_vertexBuffer = _tvb->handle;
-			m_draw.m_vertexDecl = _tvb->decl;
+			m_draw.m_vertexDecl   = _tvb->decl;
 		}
 
 		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)
 		{
  			m_draw.m_instanceDataOffset = _idb->offset;
 			m_draw.m_instanceDataStride = _idb->stride;
-			m_draw.m_numInstances = bx::uint16_min( (uint16_t)_idb->num, _num);
+			m_draw.m_numInstances       = bx::uint16_min( (uint16_t)_idb->num, _num);
 			m_draw.m_instanceDataBuffer = _idb->handle;
 			BX_FREE(g_allocator, const_cast<InstanceDataBuffer*>(_idb) );
 		}
@@ -1294,8 +1323,8 @@ namespace bgfx
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
 			Sampler& sampler = m_draw.m_sampler[_stage];
-			sampler.m_idx = _handle.idx;
-			sampler.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
+			sampler.m_idx    = _handle.idx;
+			sampler.m_flags  = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
 
 			if (isValid(_sampler)
 			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )
@@ -2754,6 +2783,16 @@ namespace bgfx
 		BGFX_API_FUNC(void setTransform(uint32_t _cache, uint16_t _num) )
 		{
 			m_submit->setTransform(_cache, _num);
+		}
+
+		BGFX_API_FUNC(void allocTransform(Transform* _transform, uint16_t _num) )
+		{
+			m_submit->allocTransform(_transform, _num);
+		}
+
+		BGFX_API_FUNC(void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num) )
+		{
+			m_submit->setTransform(_transform, _first, _num);
 		}
 
 		BGFX_API_FUNC(void setUniform(UniformHandle _handle, const void* _value, uint16_t _num) )
