@@ -4108,7 +4108,8 @@ namespace bgfx
 							bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
 							rendererUpdateUniforms(this, _render->m_constantBuffer, compute.m_constBegin, compute.m_constEnd);
 
-							if (constantsChanged)
+							if (constantsChanged
+							&&  NULL != program.m_constantBuffer)
 							{
 								commit(*program.m_constantBuffer);
 							}
@@ -4423,7 +4424,8 @@ namespace bgfx
 				{
 					ProgramGL& program = m_program[programIdx];
 
-					if (constantsChanged)
+					if (constantsChanged
+					&&  NULL != program.m_constantBuffer)
 					{
 						commit(*program.m_constantBuffer);
 					}
