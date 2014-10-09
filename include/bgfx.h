@@ -1044,9 +1044,20 @@ namespace bgfx
 	///
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
 
+	/// Reserve `_num` matrices in internal matrix cache. Pointer returned
+	/// can be modifed until `bgfx::frame` is called.
+	///
+	/// @param _transform Pointer to `Transform` structure.
+	/// @param _num Number of matrices.
 	///
 	void allocTransform(Transform* _transform, uint16_t _num);
 
+	/// Set model matrix from `Transform` structure.
+	///
+	/// @param _transform Pointer to `Transform` structure returned by
+	//    `bgfx::allocTransform`.
+	/// @param _first First matrix.
+	/// @param _num Number of matrices.
 	///
 	void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num);
 
