@@ -648,23 +648,8 @@ RENDERDOC_IMPORT
 				D3D_FEATURE_LEVEL_10_0,
 			};
 
-			memset(&m_scd, 0, sizeof(m_scd) );
-			m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
-			m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
-			m_scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			m_scd.BufferDesc.RefreshRate.Numerator = 60;
-			m_scd.BufferDesc.RefreshRate.Denominator = 1;
-			m_scd.SampleDesc.Count = 1;
-			m_scd.SampleDesc.Quality = 0;
-			m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			m_scd.BufferCount = 1;
-			m_scd.OutputWindow = g_bgfxHwnd;
-			m_scd.Windowed = true;
-
 			uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED
-#if BGFX_CONFIG_DEBUG
-				| D3D11_CREATE_DEVICE_DEBUG
-#endif // BGFX_CONFIG_DEBUG
+				| BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0
 				;
 
 			D3D_FEATURE_LEVEL featureLevel;
@@ -703,6 +688,19 @@ RENDERDOC_IMPORT
 			hr = adapter->GetParent(__uuidof(IDXGIFactory), (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 			DX_RELEASE(adapter, 2);
+
+			memset(&m_scd, 0, sizeof(m_scd) );
+			m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
+			m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
+			m_scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			m_scd.BufferDesc.RefreshRate.Numerator = 60;
+			m_scd.BufferDesc.RefreshRate.Denominator = 1;
+			m_scd.SampleDesc.Count = 1;
+			m_scd.SampleDesc.Quality = 0;
+			m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+			m_scd.BufferCount = 1;
+			m_scd.OutputWindow = g_bgfxHwnd;
+			m_scd.Windowed = true;
 
 			hr = m_factory->CreateSwapChain(m_device
 										, &m_scd
