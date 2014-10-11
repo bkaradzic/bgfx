@@ -40,13 +40,14 @@ namespace bgfx
 
 	struct RendererType
 	{
+		/// Renderer type enumeration.
 		enum Enum
 		{
-			Null,
-			Direct3D9,
-			Direct3D11,
-			OpenGLES,
-			OpenGL,
+			Null,       //< No rendering.
+			Direct3D9,  //< Direct3D 9.0
+			Direct3D11, //< Direct3D 11.0
+			OpenGLES,   //< OpenGL ES 2.0+
+			OpenGL,     //< OpenGL 2.1+
 
 			Count
 		};
@@ -211,19 +212,48 @@ namespace bgfx
 		/// If fatal code code is not Fatal::DebugCheck this callback is
 		/// called on unrecoverable error. It's not safe to continue, inform
 		/// user and terminate application from this call.
+		///
+		/// @param _code Fatal error code.
+		/// @param _str More information about error.
+		///
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 
 		/// Return size of for cached item. Return 0 if no cached item was
 		/// found.
+		///
+		/// @param _id Cache id.
+		/// @returns Number of bytes to read.
+		///
 		virtual uint32_t cacheReadSize(uint64_t _id) = 0;
 
 		/// Read cached item.
+		///
+		/// @param _id Cache id.
+		/// @param _data Buffer where to read data.
+		/// @param _size Size of data to read.
+		///
+		/// @returns True if data is read.
+		///
 		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) = 0;
 
 		/// Write cached item.
+		///
+		/// @param _id Cache id.
+		/// @param _data Data to write.
+		/// @param _size Size of data to write.
+		///
 		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) = 0;
 
 		/// Screenshot captured. Screenshot format is always 4-byte BGRA.
+		///
+		/// @param _filePath File path.
+		/// @param _width Image width.
+		/// @param _height Image height.
+		/// @param _pitch Number of bytes to skip to next line.
+		/// @param _data Image data.
+		/// @param _size Image size.
+		/// @param _yflip If true image origin is bottom left.
+		///
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) = 0;
 
 		/// Called when capture begins.
@@ -233,6 +263,10 @@ namespace bgfx
 		virtual void captureEnd() = 0;
 
 		/// Captured frame.
+		///
+		/// @param _data Image data.
+		/// @param _size Image size.
+		///
 		virtual void captureFrame(const void* _data, uint32_t _size) = 0;
 	};
 
@@ -437,20 +471,38 @@ namespace bgfx
 	///
 	/// @param _type Select rendering backend. When set to RendererType::Count
 	///   default rendering backend will be selected.
+	///   See: `bgfx::RendererType`
 	///
 	/// @param _callback Provide application specific callback interface.
-	///   See: CallbackI
+	///   See: `bgfx::CallbackI`
 	///
 	/// @param _reallocator Custom allocator. When custom allocator is not
 	///   specified, library uses default CRT allocator. The library assumes
-	///   custom allocator is thread safe.
+	///   icustom allocator is thread safe.
+	///
+	/// @attention C99 equivalent is `bgfx_init`.
 	///
 	void init(RendererType::Enum _type = RendererType::Count, CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
 
 	/// Shutdown bgfx library.
+	///
+	/// @attention C99 equivalent is `bgfx_shutdown`.
+	///
 	void shutdown();
 
 	/// Reset graphic settings.
+	///
+	/// @param _width Main window width.
+	/// @param _height Main window height.
+	/// @param _flags
+	///   - `BGFX_RESET_NONE` - No reset flags.
+	///   - `BGFX_RESET_FULLSCREEN` - Not supported yet.
+	///   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.
+	///   - `BGFX_RESET_VSYNC` - Enable V-Sync.
+	///   - `BGFX_RESET_CAPTURE` - Begin screen capture.
+	///
+	/// @attention C99 equivalent is `bgfx_reset`.
+	///
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags = BGFX_RESET_NONE);
 
 	/// Advance to next frame. When using multithreaded renderer, this call
@@ -459,7 +511,9 @@ namespace bgfx
 	///
 	/// @returns Current frame number. This might be used in conjunction with
 	///   double/multi buffering data outside the library and passing it to
-	///   library via makeRef calls.
+	///   library via `bgfx::makeRef` calls.
+	///
+	/// @attention C99 equivalent is `bgfx_frame`.
 	///
 	uint32_t frame();
 
@@ -468,12 +522,18 @@ namespace bgfx
 	/// @remarks
 	///   Library must be initialized.
 	///
+	/// @attention C99 equivalent is `bgfx_get_renderer_type`.
+	///
 	RendererType::Enum getRendererType();
 
 	/// Returns renderer capabilities.
 	///
+	/// @returns Pointer to static `bgfx::Caps` structure.
+	///
 	/// @remarks
 	///   Library must be initialized.
+	///
+	/// @attention C99 equivalent is `bgfx_get_caps`.
 	///
 	const Caps* getCaps();
 
@@ -483,9 +543,9 @@ namespace bgfx
 	/// Allocate buffer and copy data into it. Data will be freed inside bgfx.
 	const Memory* copy(const void* _data, uint32_t _size);
 
-	/// Make reference to data to pass to bgfx. Unlike bgfx::alloc this call
-	/// doesn't allocate memory for data. It just copies pointer to data.
-	/// You must make sure data is available for at least 2 bgfx::frame calls.
+	/// Make reference to data to pass to bgfx. Unlike `bgfx::alloc` this call
+	/// doesn't allocate memory for data. It just copies pointer to data. You
+	/// must make sure data is available for at least 2 `bgfx::frame` calls.
 	const Memory* makeRef(const void* _data, uint32_t _size);
 
 	/// Set debug flags.
@@ -1037,29 +1097,21 @@ namespace bgfx
 	///
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
+	/// Reserve `_num` matrices in internal matrix cache. Pointer returned
+	/// can be modifed until `bgfx::frame` is called.
+	///
+	/// @param _transform Pointer to `Transform` structure.
+	/// @param _num Number of matrices.
+	/// @returns index into matrix cache.
+	///
+	uint32_t allocTransform(Transform* _transform, uint16_t _num);
+
 	/// Set model matrix from matrix cache for draw primitive.
 	///
 	/// @param _cache Index in matrix cache.
 	/// @param _num Number of matrices from cache.
 	///
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
-
-	/// Reserve `_num` matrices in internal matrix cache. Pointer returned
-	/// can be modifed until `bgfx::frame` is called.
-	///
-	/// @param _transform Pointer to `Transform` structure.
-	/// @param _num Number of matrices.
-	///
-	void allocTransform(Transform* _transform, uint16_t _num);
-
-	/// Set model matrix from `Transform` structure.
-	///
-	/// @param _transform Pointer to `Transform` structure returned by
-	//    `bgfx::allocTransform`.
-	/// @param _first First matrix.
-	/// @param _num Number of matrices.
-	///
-	void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num);
 
 	/// Set shader uniform parameter for draw primitive.
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = 1);
@@ -1151,10 +1203,10 @@ namespace bgfx
 
 	/// Request screen shot.
 	///
-	/// @param _filePath Will be passed to CallbackI::screenShot callback.
+	/// @param _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
 	///
 	/// @remarks
-	///   CallbackI::screenShot must be implemented.
+	///   `bgfx::CallbackI::screenShot` must be implemented.
 	///
 	void saveScreenShot(const char* _filePath);
 
