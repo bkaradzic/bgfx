@@ -81,7 +81,7 @@ static void imguiFree(void* _ptr, void* /*_userptr*/)
 
 namespace
 {
-	static uint32_t quad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
+	static uint32_t addQuad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
 	{
 		_indices[0] = _idx0;
 		_indices[1] = _idx3;
@@ -1655,12 +1655,12 @@ struct Imgui
 				vertex->set( 2.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
 				vertex->set( 2.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				indices += quad(indices,  0,  3,  4,  1);
-				indices += quad(indices,  2,  6,  7,  3);
-				indices += quad(indices,  3,  7,  8,  4);
-				indices += quad(indices,  4,  8,  9,  5);
-				indices += quad(indices,  7, 10, 11,  8);
-				indices += quad(indices, 10, 12, 13, 11);
+				indices += addQuad(indices,  0,  3,  4,  1);
+				indices += addQuad(indices,  2,  6,  7,  3);
+				indices += addQuad(indices,  3,  7,  8,  4);
+				indices += addQuad(indices,  4,  8,  9,  5);
+				indices += addQuad(indices,  7, 10, 11,  8);
+				indices += addQuad(indices, 10, 12, 13, 11);
 			}
 			else
 			{
@@ -1684,12 +1684,12 @@ struct Imgui
 				vertex->set( 2.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
 				vertex->set( 2.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				indices += quad(indices,  0,  2,  3,  1);
-				indices += quad(indices,  1,  3,  6,  4);
-				indices += quad(indices,  2,  5,  6,  3);
-				indices += quad(indices,  7,  9, 12, 10);
-				indices += quad(indices,  7, 10, 11,  8);
-				indices += quad(indices, 10, 12, 13, 11);
+				indices += addQuad(indices,  0,  2,  3,  1);
+				indices += addQuad(indices,  1,  3,  6,  4);
+				indices += addQuad(indices,  2,  5,  6,  3);
+				indices += addQuad(indices,  7,  9, 12, 10);
+				indices += addQuad(indices,  7, 10, 11,  8);
+				indices += addQuad(indices, 10, 12, 13, 11);
 			}
 
 			const uint32_t id = getId();
