@@ -1,0 +1,11 @@
+#version 300 es
+layout(location=0) out mediump vec4 _colArr[2];
+layout(location=3) out mediump vec4 _colVec;
+void main ()
+{
+  _colArr[0] = vec4(0.0, 0.0, 0.0, 0.0);
+  _colVec = vec4(1.0, 1.0, 1.0, 1.0);
+}
+
+
+// stats: 2 alu 0 tex 0 flow

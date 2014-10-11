@@ -112,6 +112,16 @@ public:
       return !this->next_buffer_separator && !this->skip_components;
    }
 
+   const char *name() const
+   {
+      return this->orig_name;
+   }
+
+   unsigned get_stream_id() const
+   {
+      return this->stream_id;
+   }
+
    /**
     * The total number of varying components taken up by this variable.  Only
     * valid if assign_location() has been called.
@@ -210,6 +220,13 @@ private:
     * data structure that was found.  Otherwise NULL.
     */
    const tfeedback_candidate *matched_candidate;
+
+   /**
+    * StreamId assigned to this varying (defaults to 0). Can only be set to
+    * values other than 0 in geometry shaders that use the stream layout
+    * modifier. Accepted values must be in the range [0, MAX_VERTEX_STREAMS-1].
+    */
+   unsigned stream_id;
 };
 
 

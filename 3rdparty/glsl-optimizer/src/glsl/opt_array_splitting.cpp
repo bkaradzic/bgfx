@@ -89,8 +89,9 @@ using namespace opt_array_splitting;
  */
 class ir_array_reference_visitor : public ir_hierarchical_visitor {
 public:
-   ir_array_reference_visitor(void)
+   ir_array_reference_visitor(bool split_shader_outputs)
    {
+      this->split_shader_outputs = split_shader_outputs;
       this->mem_ctx = ralloc_context(NULL);
       this->variable_list.make_empty();
    }
@@ -113,6 +114,7 @@ public:
    exec_list variable_list;
 
    void *mem_ctx;
+   bool split_shader_outputs;
 };
 
 } /* namespace */
@@ -123,7 +125,9 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
    assert(var);
 
    if (var->data.mode != ir_var_auto &&
-       var->data.mode != ir_var_temporary)
+       var->data.mode != ir_var_temporary &&
+	   (!this->split_shader_outputs || (var->data.mode != ir_var_shader_out && var->data.mode != ir_var_shader_inout))
+	   )
       return NULL;
 
    if (!(var->type->is_array() || var->type->is_matrix()))
@@ -135,8 +139,7 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
    if (var->type->is_unsized_array())
       return NULL;
 
-   foreach_list(n, &this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &this->variable_list) {
       if (entry->var == var)
 	 return entry;
    }
@@ -213,8 +216,8 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
     * declarations, which need to be matched by name across shaders.
     */
    if (!linked) {
-      foreach_list(node, instructions) {
-	 ir_variable *var = ((ir_instruction *)node)->as_variable();
+      foreach_in_list(ir_instruction, node, instructions) {
+	 ir_variable *var = node->as_variable();
 	 if (var) {
 	    variable_entry *entry = get_variable_entry(var);
 	    if (entry)
@@ -224,9 +227,7 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
    }
 
    /* Trim out variables we found that we can't split. */
-   foreach_list_safe(n, &variable_list) {
-      variable_entry *entry = (variable_entry *) n;
-
+   foreach_in_list_safe(variable_entry, entry, &variable_list) {
       if (debug) {
 	 printf("array %s@%p: decl %d, split %d\n",
 		entry->var->name, (void *) entry->var, entry->declaration,
@@ -270,8 +271,7 @@ ir_array_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
 
-   foreach_list(n, this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, this->variable_list) {
       if (entry->var == var) {
 	 return entry;
       }
@@ -357,9 +357,9 @@ ir_array_splitting_visitor::visit_leave(ir_assignment *ir)
 }
 
 bool
-optimize_split_arrays(exec_list *instructions, bool linked)
+optimize_split_arrays(exec_list *instructions, bool linked, bool split_shader_outputs)
 {
-   ir_array_reference_visitor refs;
+   ir_array_reference_visitor refs(split_shader_outputs);
    if (!refs.get_split_list(instructions, linked))
       return false;
 
@@ -368,8 +368,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
    /* Replace the decls of the arrays to be split with their split
     * components.
     */
-   foreach_list(n, &refs.variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &refs.variable_list) {
       const struct glsl_type *type = entry->var->type;
       const struct glsl_type *subtype;
       glsl_precision subprec = (glsl_precision)entry->var->data.precision;
@@ -391,8 +390,13 @@ optimize_split_arrays(exec_list *instructions, bool linked)
 					    entry->var->name, i);
 
 	 entry->components[i] =
-	    new(entry->mem_ctx) ir_variable(subtype, name, ir_var_temporary, subprec);
+	    new(entry->mem_ctx) ir_variable(subtype, name, (ir_variable_mode)entry->var->data.mode, subprec);
 	 entry->var->insert_before(entry->components[i]);
+		  if (entry->var->data.explicit_location)
+		  {
+			  entry->components[i]->data.explicit_location = true;
+			  entry->components[i]->data.location = entry->var->data.location + i;
+		  }
       }
 
       entry->var->remove();
@@ -402,7 +406,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
    visit_list_elements(&split, instructions);
 
    if (debug)
-      _mesa_print_ir(instructions, NULL);
+      _mesa_print_ir(stdout, instructions, NULL);
 
    ralloc_free(mem_ctx);
 

@@ -13,15 +13,20 @@ void main ()
   if ((x_3 < 0.0)) {
     discard;
   };
-  vec4 tmpvar_4;
-  tmpvar_4 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
-  light_2.w = tmpvar_4.w;
-  light_2.xyz = (tmpvar_4.xyz + unity_Ambient.xyz);
-  vec4 c_5;
-  c_5.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_2.xyz);
-  c_5.w = 0.0;
-  gl_FragData[0] = c_5;
+  light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
+  light_2.xyz = (light_2.xyz + unity_Ambient.xyz);
+  vec4 c_4;
+  c_4.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_2.xyz);
+  c_4.w = 0.0;
+  gl_FragData[0] = c_4;
 }
 
 
-// inputs: 1, stats: 11 alu 3 tex 1 flow
+// stats: 11 alu 3 tex 1 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [3] loc 4
+// uniforms: 1 (total size: 0)
+//  #0: unity_Ambient (high float) 4x1 [-1]
+// textures: 2
+//  #0: _LightBuffer (high 2d) 0x0 [-1]
+//  #1: _MainTex (high 2d) 0x0 [-1]

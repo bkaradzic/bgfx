@@ -1,0 +1,21 @@
+#extension GL_EXT_shader_framebuffer_fetch : enable
+varying lowp vec4 xlv_TEXCOORD0;
+void main ()
+{
+  lowp vec4 xlt_ocol_1;
+  mediump vec4 tmpvar_2;
+  tmpvar_2 = gl_LastFragData[0];
+  xlt_ocol_1 = tmpvar_2;
+  lowp vec4 ocol_3;
+  ocol_3.w = xlt_ocol_1.w;
+  ocol_3.xy = xlv_TEXCOORD0.xy;
+  ocol_3.z = (xlt_ocol_1.z * 2.0);
+  xlt_ocol_1 = ocol_3;
+  gl_FragData[0] = ocol_3;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// inputs: 2
+//  #0: gl_LastFragData (medium float) 4x1 [4] loc 24
+//  #1: xlv_TEXCOORD0 (low float) 4x1 [-1]

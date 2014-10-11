@@ -2,6 +2,9 @@
 #define SHADER_H
 
 #include "compiler.h"
+#include <node.h>
+#include <nan.h>
+#include <glsl_optimizer.h>
 
 class Shader : public node::ObjectWrap {
 public:
@@ -21,13 +24,14 @@ private:
 	glslopt_shader* _binding;
 	bool _compiled;
 
-	static v8::Handle<v8::Value> New(const v8::Arguments& args);
-	static v8::Handle<v8::Value> Dispose(const v8::Arguments& args);
+	static NAN_METHOD(New);
+	static NAN_METHOD(Dispose);
 
-	static v8::Handle<v8::Value> Compiled(const v8::Arguments& args);
-	static v8::Handle<v8::Value> Output(const v8::Arguments& args);
-	static v8::Handle<v8::Value> RawOutput(const v8::Arguments& args);
-	static v8::Handle<v8::Value> Log(const v8::Arguments& args);
+	static NAN_METHOD(Compiled);
+	static NAN_METHOD(Output);
+	static NAN_METHOD(RawOutput);
+	static NAN_METHOD(Log);
+	static v8::Persistent<v8::Function> constructor;
 };
 
 #endif

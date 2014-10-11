@@ -1,0 +1,85 @@
+#version 300 es
+
+// Tree Creator Optimized Bark surface shader from Unity 4.x,
+// shadow caster pass. Used to not do dead code elimination
+// properly, i.e. was leaving normal map sample in the fragment shader.
+
+#define gl_FragColor _glesFragData[0]
+#define gl_FragData _glesFragData
+
+layout(location = 0) out mediump vec4 _glesFragData[4];
+float xll_saturate_f( float x) {
+  return clamp( x, 0.0, 1.0);
+}
+
+struct SurfaceOutput {
+    lowp vec3 Albedo;
+    lowp vec3 Normal;
+    lowp vec3 Emission;
+    mediump float Specular;
+    lowp float Gloss;
+    lowp float Alpha;
+};
+
+struct LeafSurfaceOutput {
+    lowp vec3 Albedo;
+    lowp vec3 Normal;
+    lowp vec3 Emission;
+    lowp float Translucency;
+    mediump float Specular;
+    lowp float Gloss;
+    lowp float Alpha;
+};
+
+struct Input {
+    highp vec2 uv_MainTex;
+    lowp vec4 color;
+};
+
+struct v2f_surf {
+    highp vec4 pos;
+};
+
+uniform lowp vec4 _Color;
+uniform lowp vec3 _TranslucencyColor;
+uniform lowp float _TranslucencyViewDependency;
+uniform mediump float _ShadowStrength;
+
+uniform sampler2D _MainTex;
+uniform sampler2D _BumpSpecMap;
+uniform sampler2D _TranslucencyMap;
+
+lowp vec3 UnpackNormalDXT5nm( in lowp vec4 packednormal ) {
+    lowp vec3 normal;
+    normal.xy = ((packednormal.wy * 2.0) - 1.0);
+    normal.z = sqrt((1.0 - xll_saturate_f(dot( normal.xy, normal.xy))));
+    return normal;
+}
+void surf( in Input IN, inout SurfaceOutput o ) {
+    lowp vec4 c = texture( _MainTex, IN.uv_MainTex);
+    o.Albedo = ((c.xyz * _Color.xyz) * IN.color.w);
+    lowp vec4 trngls = texture( _TranslucencyMap, IN.uv_MainTex);
+    o.Gloss = (trngls.w * _Color.x);
+    o.Alpha = c.w;
+    mediump vec4 norspc = texture( _BumpSpecMap, IN.uv_MainTex);
+    o.Specular = norspc.x;
+    o.Normal = UnpackNormalDXT5nm( norspc);
+}
+lowp vec4 frag_surf( in v2f_surf IN ) {
+    Input surfIN;
+    SurfaceOutput o;
+    o.Albedo = vec3(0.0);
+    o.Emission = vec3(0.0);
+    o.Specular = 0.0;
+    o.Alpha = 0.0;
+    o.Gloss = 0.0;
+    surf (surfIN, o);
+    return vec4(0.0);
+}
+void main() {
+    lowp vec4 xl_retval;
+    v2f_surf xlt_IN;
+    xlt_IN.pos = vec4(0.0);
+    xl_retval = frag_surf( xlt_IN);
+    gl_FragData[0] = vec4(xl_retval);
+}

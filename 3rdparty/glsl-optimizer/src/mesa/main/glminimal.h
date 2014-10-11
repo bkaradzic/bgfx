@@ -473,5 +473,7 @@ typedef uint64_t GLuint64;
 #define GL_RGBA16                         0x805B
 
 
+#define GL_INVALID_INDEX                  0xFFFFFFFF
+
 
 #endif /* __gl_h_ */

@@ -35,9 +35,6 @@
 #include "main/mtypes.h"
 
 extern "C" void
-_mesa_warning(struct gl_context *ctx, const char *fmtString, ... );
-
-extern "C" void
 _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh);
 

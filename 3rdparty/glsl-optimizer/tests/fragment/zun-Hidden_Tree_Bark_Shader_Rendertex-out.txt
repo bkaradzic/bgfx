@@ -8,4 +8,8 @@ void main ()
 }
 
 
-// inputs: 1, stats: 3 alu 1 tex 0 flow
+// stats: 3 alu 1 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]

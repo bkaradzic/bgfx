@@ -36,4 +36,14 @@ void main ()
 }
 
 
-// inputs: 1, stats: 11 alu 0 tex 1 flow
+// stats: 11 alu 0 tex 1 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// uniforms: 7 (total size: 0)
+//  #0: s1 (high other) 0x0 [-1]
+//  #1: fh1 (high float) 1x1 [-1]
+//  #2: fh2 (high float) 1x1 [-1]
+//  #3: fm (medium float) 1x1 [-1]
+//  #4: il1 (high int) 1x1 [-1]
+//  #5: il2 (low int) 1x1 [-1]
+//  #6: im (medium int) 1x1 [-1]

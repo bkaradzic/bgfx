@@ -13,4 +13,9 @@ void main ()
 }
 
 
-// inputs: 2, stats: 2 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
+// inputs: 2
+//  #0: normal (low float) 3x1 [-1]
+//  #1: halfDir (low float) 3x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: specPower (medium float) 1x1 [-1]

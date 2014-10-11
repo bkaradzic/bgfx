@@ -44,6 +44,8 @@
 #include <float.h>
 #include <stdarg.h>
 
+#include "util/macros.h"
+
 #include "c99_compat.h" /* inline, __func__, etc. */
 
 
@@ -130,23 +132,6 @@ extern "C" {
 #endif
 
 
-/**
- * __builtin_expect macros
- */
-#if !defined(__GNUC__)
-#  define __builtin_expect(x, y) (x)
-#endif
-
-#ifndef likely
-#  ifdef __GNUC__
-#    define likely(x)   __builtin_expect(!!(x), 1)
-#    define unlikely(x) __builtin_expect(!!(x), 0)
-#  else
-#    define likely(x)   (x)
-#    define unlikely(x) (x)
-#  endif
-#endif
-
 /* XXX: Use standard `__func__` instead */
 #ifndef __FUNCTION__
 #  define __FUNCTION__ __func__
@@ -165,8 +150,8 @@ extern "C" {
 #elif defined(__APPLE__)
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
-#elif (defined(_AIX) || defined(__blrts))
-static INLINE GLuint CPU_TO_LE32(GLuint x)
+#elif (defined(_AIX))
+static inline GLuint CPU_TO_LE32(GLuint x)
 {
    return (((x & 0x000000ff) << 24) |
            ((x & 0x0000ff00) <<  8) |
@@ -229,58 +214,21 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 /**
  * ASSERT macro
  */
-#if !defined(_WIN32_WCE)
 #if defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
 #endif
-#endif
 
 
-/**
- * Static (compile-time) assertion.
- * Basically, use COND to dimension an array.  If COND is false/zero the
- * array size will be -1 and we'll get a compilation error.
+/*
+ * A trick to suppress uninitialized variable warning without generating any
+ * code
  */
-#define STATIC_ASSERT(COND) \
-   do { \
-      (void) sizeof(char [1 - 2*!(COND)]); \
-   } while (0)
-
-/**
- * Unreachable macro. Useful for suppressing "control reaches end of non-void
- * function" warnings.
- */
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
-#define unreachable() __builtin_unreachable()
-#elif (defined(__clang__) && defined(__has_builtin))
-# if __has_builtin(__builtin_unreachable)
-#  define unreachable() __builtin_unreachable()
-# endif
-#endif
-
-#ifndef unreachable
-#define unreachable()
-#endif
-
-#if (__GNUC__ >= 3)
-#define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
-#else
-#define PRINTFLIKE(f, a)
-#endif
+#define uninitialized_var(x) x = x
 
 #ifndef NULL
 #define NULL 0
-#endif
-
-/* Used to optionally mark structures with misaligned elements or size as
- * packed, to trade off performance for space.
- */
-#if (__GNUC__ >= 3)
-#define PACKED __attribute__((__packed__))
-#else
-#define PACKED
 #endif
 
 
@@ -315,25 +263,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #define FLT_MAX_EXP 128
 #endif
 
-
-/**
- * USE_IEEE: Determine if we're using IEEE floating point
- */
-#if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
-    defined(__s390__) || defined(__s390x__) || defined(__powerpc__) || \
-    defined(__x86_64__) || \
-    defined(__m68k__) || \
-    defined(ia64) || defined(__ia64__) || \
-    defined(__hppa__) || defined(hpux) || \
-    defined(__mips) || defined(_MIPS_ARCH) || \
-    defined(__arm__) || defined(__aarch64__) || \
-    defined(__sh__) || defined(__m32r__) || \
-    (defined(__sun) && defined(_IEEE_754)) || \
-    defined(__alpha__)
-#define USE_IEEE
 #define IEEE_ONE 0x3f800000
-#endif
-
 
 /**
  * START/END_FAST_MATH macros:
@@ -416,30 +346,6 @@ do {									\
 
 #ifndef Elements
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
-#endif
-
-#ifdef __cplusplus
-/**
- * Macro function that evaluates to true if T is a trivially
- * destructible type -- that is, if its (non-virtual) destructor
- * performs no action and all member variables and base classes are
- * trivially destructible themselves.
- */
-#   if defined(__GNUC__)
-#      if ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
-#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
-#      endif
-#   elif (defined(__clang__) && defined(__has_feature))
-#      if __has_feature(has_trivial_destructor)
-#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
-#      endif
-#   endif
-#   ifndef HAS_TRIVIAL_DESTRUCTOR
-       /* It's always safe (if inefficient) to assume that a
-        * destructor is non-trivial.
-        */
-#      define HAS_TRIVIAL_DESTRUCTOR(T) (false)
-#   endif
 #endif
 
 #ifdef __cplusplus

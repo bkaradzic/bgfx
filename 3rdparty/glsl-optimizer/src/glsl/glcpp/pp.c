@@ -70,6 +70,42 @@ glcpp_warning (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 				     &parser->info_log_length, "\n");
 }
 
+/* Given str, (that's expected to start with a newline terminator of some
+ * sort), return a pointer to the first character in str after the newline.
+ *
+ * A newline terminator can be any of the following sequences:
+ *
+ *	"\r\n"
+ *	"\n\r"
+ *	"\n"
+ *	"\r"
+ *
+ * And the longest such sequence will be skipped.
+ */
+static const char *
+skip_newline (const char *str)
+{
+	const char *ret = str;
+
+	if (ret == NULL)
+		return ret;
+
+	if (*ret == '\0')
+		return ret;
+
+	if (*ret == '\r') {
+		ret++;
+		if (*ret && *ret == '\n')
+			ret++;
+	} else if (*ret == '\n') {
+		ret++;
+		if (*ret && *ret == '\r')
+			ret++;
+	}
+
+	return ret;
+}
+
 /* Remove any line continuation characters in the shader, (whether in
  * preprocessing directives or in GLSL code).
  */
@@ -78,9 +114,48 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 {
 	char *clean = ralloc_strdup(ctx, "");
 	const char *backslash, *newline, *search_start;
+        const char *cr, *lf;
+        char newline_separator[3];
 	int collapsed_newlines = 0;
 
 	search_start = shader;
+
+	/* Determine what flavor of newlines this shader is using. GLSL
+	 * provides for 4 different possible ways to separate lines, (using
+	 * one or two characters):
+	 *
+	 *	"\n" (line-feed, like Linux, Unix, and new Mac OS)
+	 *	"\r" (carriage-return, like old Mac files)
+	 *	"\r\n" (carriage-return + line-feed, like DOS files)
+	 *	"\n\r" (line-feed + carriage-return, like nothing, really)
+	 *
+	 * This code explicitly supports a shader that uses a mixture of
+	 * newline terminators and will properly handle line continuation
+	 * backslashes followed by any of the above.
+	 *
+	 * But, since we must also insert additional newlines in the output
+	 * (for any collapsed lines) we attempt to maintain consistency by
+	 * examining the first encountered newline terminator, and using the
+	 * same terminator for any newlines we insert.
+	 */
+	cr = strchr(search_start, '\r');
+	lf = strchr(search_start, '\n');
+
+	newline_separator[0] = '\n';
+	newline_separator[1] = '\0';
+	newline_separator[2] = '\0';
+
+	if (cr == NULL) {
+		/* Nothing to do. */
+	} else if (lf == NULL) {
+		newline_separator[0] = '\r';
+	} else if (lf == cr + 1) {
+		newline_separator[0] = '\r';
+		newline_separator[1] = '\n';
+	} else if (cr == lf + 1) {
+		newline_separator[0] = '\n';
+		newline_separator[1] = '\r';
+	}
 
 	while (true) {
 		backslash = strchr(search_start, '\\');
@@ -91,17 +166,24 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 		 * line numbers.
 		 */
 		if (collapsed_newlines) {
-			newline = strchr(search_start, '\n');
+			cr = strchr (search_start, '\r');
+			lf = strchr (search_start, '\n');
+			if (cr && lf)
+				newline = cr < lf ? cr : lf;
+			else if (cr)
+				newline = cr;
+			else
+				newline = lf;
 			if (newline &&
 			    (backslash == NULL || newline < backslash))
 			{
 				ralloc_strncat(&clean, shader,
 					       newline - shader + 1);
 				while (collapsed_newlines) {
-					ralloc_strcat(&clean, "\n");
+					ralloc_strcat(&clean, newline_separator);
 					collapsed_newlines--;
 				}
-				shader = newline + 1;
+				shader = skip_newline (newline);
 				search_start = shader;
 			}
 		}
@@ -116,15 +198,11 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 		 * advance the shader pointer to the character after the
 		 * newline.
 		 */
-		if (backslash[1] == '\n' ||
-		    (backslash[1] == '\r' && backslash[2] == '\n'))
+		if (backslash[1] == '\r' || backslash[1] == '\n')
 		{
 			collapsed_newlines++;
 			ralloc_strncat(&clean, shader, backslash - shader);
-			if (backslash[1] == '\n')
-				shader = backslash + 2;
-			else
-				shader = backslash + 3;
+			shader = skip_newline (backslash + 1);
 			search_start = shader;
 		}
 	}

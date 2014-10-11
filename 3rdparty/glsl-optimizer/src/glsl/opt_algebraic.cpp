@@ -45,10 +45,13 @@ namespace {
 
 class ir_algebraic_visitor : public ir_rvalue_visitor {
 public:
-   ir_algebraic_visitor()
+   ir_algebraic_visitor(bool native_integers,
+                        const struct gl_shader_compiler_options *options)
+      : options(options)
    {
       this->progress = false;
       this->mem_ctx = NULL;
+      this->native_integers = native_integers;
    }
 
    virtual ~ir_algebraic_visitor()
@@ -68,8 +71,10 @@ public:
    ir_rvalue *swizzle_if_required(ir_expression *expr,
 				  ir_rvalue *operand);
 
+   const struct gl_shader_compiler_options *options;
    void *mem_ctx;
 
+   bool native_integers;
    bool progress;
 };
 
@@ -105,6 +110,48 @@ is_vec_basis(ir_constant *ir)
    return (ir == NULL) ? false : ir->is_basis();
 }
 
+static inline bool
+is_valid_vec_const(ir_constant *ir)
+{
+   if (ir == NULL)
+      return false;
+
+   if (!ir->type->is_scalar() && !ir->type->is_vector())
+      return false;
+
+   return true;
+}
+
+static inline bool
+is_less_than_one(ir_constant *ir)
+{
+   if (!is_valid_vec_const(ir))
+      return false;
+
+   unsigned component = 0;
+   for (int c = 0; c < ir->type->vector_elements; c++) {
+      if (ir->get_float_component(c) < 1.0f)
+         component++;
+   }
+
+   return (component == ir->type->vector_elements);
+}
+
+static inline bool
+is_greater_than_zero(ir_constant *ir)
+{
+   if (!is_valid_vec_const(ir))
+      return false;
+
+   unsigned component = 0;
+   for (int c = 0; c < ir->type->vector_elements; c++) {
+      if (ir->get_float_component(c) > 0.0f)
+         component++;
+   }
+
+   return (component == ir->type->vector_elements);
+}
+
 static void
 update_type(ir_expression *ir)
 {
@@ -118,6 +165,46 @@ update_type(ir_expression *ir)
       ir->type = ir->operands[1]->type;
 	  ir->set_precision (ir->operands[1]->get_precision());
    }
+}
+
+/* Recognize (v.x + v.y) + (v.z + v.w) as dot(v, 1.0) */
+static ir_expression *
+try_replace_with_dot(ir_expression *expr0, ir_expression *expr1, void *mem_ctx)
+{
+   if (expr0 && expr0->operation == ir_binop_add &&
+       expr0->type->is_float() &&
+       expr1 && expr1->operation == ir_binop_add &&
+       expr1->type->is_float()) {
+      ir_swizzle *x = expr0->operands[0]->as_swizzle();
+      ir_swizzle *y = expr0->operands[1]->as_swizzle();
+      ir_swizzle *z = expr1->operands[0]->as_swizzle();
+      ir_swizzle *w = expr1->operands[1]->as_swizzle();
+
+      if (!x || x->mask.num_components != 1 ||
+          !y || y->mask.num_components != 1 ||
+          !z || z->mask.num_components != 1 ||
+          !w || w->mask.num_components != 1) {
+         return NULL;
+      }
+
+      bool swiz_seen[4] = {false, false, false, false};
+      swiz_seen[x->mask.x] = true;
+      swiz_seen[y->mask.x] = true;
+      swiz_seen[z->mask.x] = true;
+      swiz_seen[w->mask.x] = true;
+
+      if (!swiz_seen[0] || !swiz_seen[1] ||
+          !swiz_seen[2] || !swiz_seen[3]) {
+         return NULL;
+      }
+
+      if (x->val->equals(y->val) &&
+          x->val->equals(z->val) &&
+          x->val->equals(w->val)) {
+         return dot(x->val, new(mem_ctx) ir_constant(1.0f, 4));
+      }
+   }
+   return NULL;
 }
 
 void
@@ -284,6 +371,20 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (op_expr[0]->operation == ir_unop_log2) {
          return op_expr[0]->operands[0];
       }
+
+      if (!options->EmitNoPow && op_expr[0]->operation == ir_binop_mul) {
+         for (int log2_pos = 0; log2_pos < 2; log2_pos++) {
+            ir_expression *log2_expr =
+               op_expr[0]->operands[log2_pos]->as_expression();
+
+            if (log2_expr && log2_expr->operation == ir_unop_log2) {
+               return new(mem_ctx) ir_expression(ir_binop_pow,
+                                                 ir->type,
+                                                 log2_expr->operands[0],
+                                                 op_expr[0]->operands[1 - log2_pos]);
+            }
+         }
+      }
       break;
 
    case ir_unop_log2:
@@ -347,6 +448,14 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 		   return sub(ir->operands[0], op_expr[1]->operands[0]);
 	   }
 
+      /* Recognize (v.x + v.y) + (v.z + v.w) as dot(v, 1.0) */
+      if (options->OptimizeForAOS) {
+         ir_expression *expr = try_replace_with_dot(op_expr[0], op_expr[1],
+                                                    mem_ctx);
+         if (expr)
+            return expr;
+      }
+
       /* Replace (-x + y) * a + x and commutative variations with lrp(x, y, a).
        *
        * (-x + y) * a + x
@@ -398,6 +507,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
             }
          }
       }
+
       break;
 
    case ir_binop_sub:
@@ -462,6 +572,28 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	       component = c;
 	 }
 	 return new(mem_ctx) ir_swizzle(ir->operands[0], component, 0, 0, 0, 1);
+      }
+      break;
+
+   case ir_binop_less:
+   case ir_binop_lequal:
+   case ir_binop_greater:
+   case ir_binop_gequal:
+   case ir_binop_equal:
+   case ir_binop_nequal:
+      for (int add_pos = 0; add_pos < 2; add_pos++) {
+         ir_expression *add = op_expr[add_pos];
+
+         if (!add || add->operation != ir_binop_add)
+            continue;
+
+         ir_constant *zero = op_const[1 - add_pos];
+         if (!is_vec_zero(zero))
+            continue;
+
+         return new(mem_ctx) ir_expression(ir->operation,
+                                           add->operands[0],
+                                           neg(add->operands[1]));
       }
       break;
 
@@ -548,6 +680,70 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (is_vec_two(op_const[0]))
          return expr(ir_unop_exp2, ir->operands[1]);
 
+      if (is_vec_two(op_const[1])) {
+         ir_variable *x = new(ir) ir_variable(ir->operands[1]->type, "x",
+                                              ir_var_temporary, ir->operands[1]->get_precision());
+         base_ir->insert_before(x);
+         base_ir->insert_before(assign(x, ir->operands[0]));
+         return mul(x, x);
+      }
+
+      break;
+
+   case ir_binop_min:
+   case ir_binop_max:
+      if (ir->type->base_type != GLSL_TYPE_FLOAT)
+         break;
+
+      /* Replace min(max) operations and its commutative combinations with
+       * a saturate operation
+       */
+      for (int op = 0; op < 2; op++) {
+         ir_expression *minmax = op_expr[op];
+         ir_constant *outer_const = op_const[1 - op];
+         ir_expression_operation op_cond = (ir->operation == ir_binop_max) ?
+            ir_binop_min : ir_binop_max;
+
+         if (!minmax || !outer_const || (minmax->operation != op_cond))
+            continue;
+
+         /* Found a min(max) combination. Now try to see if its operands
+          * meet our conditions that we can do just a single saturate operation
+          */
+         for (int minmax_op = 0; minmax_op < 2; minmax_op++) {
+            ir_rvalue *inner_val_a = minmax->operands[minmax_op];
+            ir_rvalue *inner_val_b = minmax->operands[1 - minmax_op];
+
+            if (!inner_val_a || !inner_val_b)
+               continue;
+
+            /* Found a {min|max} ({max|min} (x, 0.0), 1.0) operation and its variations */
+            if ((outer_const->is_one() && inner_val_a->is_zero()) ||
+                (inner_val_a->is_one() && outer_const->is_zero()))
+               return saturate(inner_val_b);
+
+            /* Found a {min|max} ({max|min} (x, 0.0), b) where b < 1.0
+             * and its variations
+             */
+            if (is_less_than_one(outer_const) && inner_val_b->is_zero())
+               return expr(ir_binop_min, saturate(inner_val_a), outer_const);
+
+            if (!inner_val_b->as_constant())
+               continue;
+
+            if (is_less_than_one(inner_val_b->as_constant()) && outer_const->is_zero())
+               return expr(ir_binop_min, saturate(inner_val_a), inner_val_b);
+
+            /* Found a {min|max} ({max|min} (x, b), 1.0), where b > 0.0
+             * and its variations
+             */
+            if (outer_const->is_one() && is_greater_than_zero(inner_val_b->as_constant()))
+               return expr(ir_binop_max, saturate(inner_val_a), inner_val_b);
+            if (inner_val_b->as_constant()->is_one() && is_greater_than_zero(outer_const))
+               return expr(ir_binop_max, saturate(inner_val_a), outer_const);
+         }
+      }
+
       break;
 
    case ir_unop_rcp:
@@ -588,6 +784,12 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
          return ir->operands[1];
       } else if (ir->operands[0]->equals(ir->operands[1])) {
          return ir->operands[0];
+      } else if (is_vec_zero(op_const[0])) {
+         return mul(ir->operands[1], ir->operands[2]);
+      } else if (is_vec_zero(op_const[1])) {
+         unsigned op2_components = ir->operands[2]->type->vector_elements;
+         ir_constant *one = new(mem_ctx) ir_constant(1.0f, op2_components);
+         return mul(ir->operands[0], add(one, neg(ir->operands[2])));
       }
       break;
 
@@ -629,9 +831,10 @@ ir_algebraic_visitor::handle_rvalue(ir_rvalue **rvalue)
 }
 
 bool
-do_algebraic(exec_list *instructions)
+do_algebraic(exec_list *instructions, bool native_integers,
+             const struct gl_shader_compiler_options *options)
 {
-   ir_algebraic_visitor v;
+   ir_algebraic_visitor v(native_integers, options);
 
    visit_list_elements(&v, instructions);
 

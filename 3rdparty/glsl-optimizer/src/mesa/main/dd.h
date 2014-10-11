@@ -41,7 +41,6 @@ struct gl_shader;
 
 
 struct dd_function_table {
-   
 
    /**
     * \name GLSL-related functions (ARB extensions and OpenGL 2.x)

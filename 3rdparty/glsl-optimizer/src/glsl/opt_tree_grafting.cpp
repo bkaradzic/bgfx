@@ -133,12 +133,12 @@ ir_tree_grafting_visitor::do_graft(ir_rvalue **rvalue)
 	   return false;
 
    if (debug) {
-      printf("GRAFTING:\n");
-      this->graft_assign->print();
-      printf("\n");
-      printf("TO:\n");
-      (*rvalue)->print();
-      printf("\n");
+      fprintf(stderr, "GRAFTING:\n");
+      this->graft_assign->fprint(stderr);
+      fprintf(stderr, "\n");
+      fprintf(stderr, "TO:\n");
+      (*rvalue)->fprint(stderr);
+      fprintf(stderr, "\n");
    }
 
    this->graft_assign->remove();
@@ -170,9 +170,9 @@ ir_tree_grafting_visitor::check_graft(ir_instruction *ir, ir_variable *var)
 {
    if (dereferences_variable(this->graft_assign->rhs, var)) {
       if (debug) {
-	 printf("graft killed by: ");
-	 ir->print();
-	 printf("\n");
+	 fprintf(stderr, "graft killed by: ");
+	 ir->fprint(stderr);
+	 fprintf(stderr, "\n");
       }
       return visit_stop;
    }
@@ -329,9 +329,9 @@ try_tree_grafting(ir_assignment *start,
    ir_tree_grafting_visitor v(start, lhs_var);
 
    if (debug) {
-      printf("trying to graft: ");
-      lhs_var->print();
-      printf("\n");
+      fprintf(stderr, "trying to graft: ");
+      lhs_var->fprint(stderr);
+      fprintf(stderr, "\n");
    }
 
    for (ir_instruction *ir = (ir_instruction *)start->next;
@@ -339,9 +339,9 @@ try_tree_grafting(ir_assignment *start,
 	ir = (ir_instruction *)ir->next) {
 
       if (debug) {
-	 printf("- ");
-	 ir->print();
-	 printf("\n");
+	 fprintf(stderr, "- ");
+	 ir->fprint(stderr);
+	 fprintf(stderr, "\n");
       }
 
       ir_visitor_status s = ir->accept(&v);

@@ -31,7 +31,7 @@
 #include "ir_visitor.h"
 #include "ir_variable_refcount.h"
 #include "glsl_types.h"
-#include "main/hash_table.h"
+#include "util/hash_table.h"
 
 static bool debug = false;
 
@@ -71,7 +71,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 		entry->declaration ? "" : "not ");
       }
 
-      if ((entry->referenced_count > entry->assigned_count)
+      if ((entry->referenced_count_noself > entry->assigned_count)
 	  || !entry->declaration)
 	 continue;
 
@@ -99,10 +99,31 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	  * stage.  Also, once uniform locations have been assigned, the
 	  * declaration cannot be deleted.
 	  */
-	 if (entry->var->data.mode == ir_var_uniform &&
-	     (uniform_locations_assigned ||
-	      entry->var->constant_value))
-	    continue;
+         if (entry->var->data.mode == ir_var_uniform) {
+            if (uniform_locations_assigned || entry->var->constant_value)
+               continue;
+
+            /* Section 2.11.6 (Uniform Variables) of the OpenGL ES 3.0.3 spec
+             * says:
+             *
+             *     "All members of a named uniform block declared with a
+             *     shared or std140 layout qualifier are considered active,
+             *     even if they are not referenced in any shader in the
+             *     program. The uniform block itself is also considered
+             *     active, even if no member of the block is referenced."
+             *
+             * If the variable is in a uniform block with one of those
+             * layouts, do not eliminate it.
+             */
+            if (entry->var->is_in_uniform_block()) {
+               const glsl_type *const block_type =
+                  entry->var->is_interface_instance()
+                  ? entry->var->type : entry->var->get_interface_type();
+
+               if (block_type->interface_packing != GLSL_INTERFACE_PACKING_PACKED)
+                  continue;
+            }
+         }
 
 	 entry->var->remove();
 	 progress = true;
@@ -129,12 +150,10 @@ do_dead_code_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, ir, instructions) {
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_list(signode, &f->signatures) {
-	    ir_function_signature *sig = (ir_function_signature *) signode;
+	 foreach_in_list(ir_function_signature, sig, &f->signatures) {
 	    /* The setting of the uniform_locations_assigned flag here is
 	     * irrelevent.  If there is a uniform declaration encountered
 	     * inside the body of the function, something has already gone

@@ -26,9 +26,7 @@
 #define LINK_UNIFORM_BLOCK_ACTIVE_VISITOR_H
 
 #include "ir.h"
-#include "ir_visitor.h"
-#include "glsl_types.h"
-#include "main/hash_table.h"
+#include "util/hash_table.h"
 
 struct link_uniform_block_active {
    const glsl_type *type;
@@ -36,7 +34,10 @@ struct link_uniform_block_active {
    unsigned *array_elements;
    unsigned num_array_elements;
 
+   unsigned binding;
+
    bool has_instance_name;
+   bool has_binding;
 };
 
 class link_uniform_block_active_visitor : public ir_hierarchical_visitor {
@@ -50,6 +51,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
+   virtual ir_visitor_status visit(ir_variable *);
 
    bool success;
 

@@ -10,6 +10,10 @@ project "shaderc"
 	local GLSL_OPTIMIZER = (BGFX_DIR .. "3rdparty/glsl-optimizer/")
 	local FCPP_DIR = (BGFX_DIR .. "3rdparty/fcpp/")
 
+	includedirs {
+		GLSL_OPTIMIZER .. "src",
+	}
+
 	configuration { "vs*" }
 		includedirs {
 			GLSL_OPTIMIZER .. "src/glsl/msvc",
@@ -94,6 +98,8 @@ project "shaderc"
 		GLSL_OPTIMIZER .. "src/glsl/**.c",
 		GLSL_OPTIMIZER .. "src/glsl/**.cpp",
 		GLSL_OPTIMIZER .. "src/glsl/**.h",
+		GLSL_OPTIMIZER .. "src/util/**.c",
+		GLSL_OPTIMIZER .. "src/util/**.h",
 	}
 
 	excludes {

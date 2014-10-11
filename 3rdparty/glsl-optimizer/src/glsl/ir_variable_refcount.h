@@ -44,6 +44,10 @@ public:
    /** Number of times the variable is referenced, including assignments. */
    unsigned referenced_count;
 
+   /** Number of times the variable was referenced, excluding cases when it was on RHS
+    * of assignment of the same variable. */
+   unsigned referenced_count_noself;
+
    /** Number of times the variable is assigned. */
    unsigned assigned_count;
 
@@ -59,12 +63,14 @@ public:
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
    virtual ir_visitor_status visit_enter(ir_function_signature *);
+   virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
 
    ir_variable_refcount_entry *get_variable_entry(ir_variable *var);
    ir_variable_refcount_entry *find_variable_entry(ir_variable *var);
 
    struct hash_table *ht;
+   ir_variable* current_lhs;
 
    void *mem_ctx;
 };

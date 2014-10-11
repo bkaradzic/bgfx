@@ -1,0 +1,17 @@
+#version 300 es
+out lowp vec4 _fragData;
+
+uniform mediump mat4 _LightMatrix;
+uniform highp vec3 _WorldPos;
+
+void main()
+{
+    // Used to expose bug in Metal output where it was inserting cast in the wrong place,
+    // i.e. it was doing a v3 = (float4)(mat * vec).xyz
+    mediump vec3 lightCoord = vec3 ( (_LightMatrix * vec4(_WorldPos, 1.0)) );
+
+    mediump vec4 r;
+    r.xyz = lightCoord;
+    r.w = 1.0;
+    _fragData = r;
+}

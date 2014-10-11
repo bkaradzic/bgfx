@@ -12,4 +12,8 @@ void main ()
 }
 
 
-// inputs: 1, stats: 2 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
+// inputs: 1
+//  #0: _in_position (high float) 3x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: ShadowMaps (high other) 0x0 [1]

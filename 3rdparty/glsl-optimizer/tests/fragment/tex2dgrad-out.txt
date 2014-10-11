@@ -8,4 +8,9 @@ void main ()
 }
 
 
-// inputs: 1, stats: 5 alu 2 tex 0 flow
+// stats: 5 alu 2 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 3x1 [-1]
+// textures: 2
+//  #0: tex (high 2d) 0x0 [-1]
+//  #1: cub (high cube) 0x0 [-1]

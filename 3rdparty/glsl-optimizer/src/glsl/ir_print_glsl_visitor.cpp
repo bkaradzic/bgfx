@@ -29,63 +29,7 @@
 #include "loop_analysis.h"
 #include "program/hash_table.h"
 #include <math.h>
-
-
-class string_buffer
-{
-public:
-	string_buffer(void* mem_ctx)
-	{
-		m_Capacity = 512;
-		m_Ptr = (char*)ralloc_size(mem_ctx, m_Capacity);
-		m_Size = 0;
-		m_Ptr[0] = 0;
-	}
-
-	~string_buffer()
-	{
-		ralloc_free(m_Ptr);
-	}
-
-	const char* c_str() const { return m_Ptr; }
-
-	void asprintf_append(const char *fmt, ...) PRINTFLIKE(2, 3)
-	{
-		va_list args;
-		va_start(args, fmt);
-		vasprintf_append(fmt, args);
-		va_end(args);
-	}
-
-	void vasprintf_append(const char *fmt, va_list args)
-	{
-		assert (m_Ptr != NULL);
-		vasprintf_rewrite_tail (&m_Size, fmt, args);
-	}
-
-	void vasprintf_rewrite_tail (size_t *start, const char *fmt, va_list args)
-	{
-		assert (m_Ptr != NULL);
-
-		size_t new_length = printf_length(fmt, args);
-		size_t needed_length = m_Size + new_length + 1;
-
-		if (m_Capacity < needed_length)
-		{
-			m_Capacity = MAX2 (m_Capacity + m_Capacity/2, needed_length);
-			m_Ptr = (char*)reralloc_size(ralloc_parent(m_Ptr), m_Ptr, m_Capacity);
-		}
-
-		vsnprintf(m_Ptr + m_Size, new_length+1, fmt, args);
-		m_Size += new_length;
-		assert (m_Capacity >= m_Size);
-	}
-
-private:
-	char* m_Ptr;
-	size_t m_Size;
-	size_t m_Capacity;
-};
+#include <limits>
 
 
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);
@@ -186,6 +130,7 @@ public:
 	virtual void visit(ir_end_primitive *);
 	
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
+    bool can_emit_canonical_for (loop_variable_state *ls);
 	bool emit_canonical_for (ir_loop* ir);
 	bool try_print_array_assignment (ir_dereference* lhs, ir_rvalue* rhs);
 	
@@ -229,6 +174,13 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_shadow_samplers : enable\n");
 		if (state->EXT_frag_depth_enable)
 			str.asprintf_append ("#extension GL_EXT_frag_depth : enable\n");
+		if (state->es_shader && state->language_version < 300)
+		{
+			if (state->EXT_draw_buffers_enable)
+				str.asprintf_append ("#extension GL_EXT_draw_buffers : require\n");
+		}
+		if (state->EXT_shader_framebuffer_fetch_enable)
+			str.asprintf_append ("#extension GL_EXT_shader_framebuffer_fetch : enable\n");
 	}
 	
 	// remove unused struct declarations
@@ -240,9 +192,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	if (ls->loop_found)
 		set_loop_controls(instructions, ls);
 
-	foreach_list(node, instructions)
+	foreach_in_list(ir_instruction, ir, instructions)
 	{
-		ir_instruction *ir = (ir_instruction *)node;
 		if (ir->ir_type == ir_type_variable) {
 			ir_variable *var = static_cast<ir_variable*>(ir);
 			if ((strstr(var->name, "gl_") == var->name)
@@ -344,13 +295,13 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 //		this->state->stage == MESA_SHADER_FRAGMENT &&
 		!this->state->had_float_precision)
 	{
-		prec = glsl_precision_medium;
-	}		
-	
+		prec = glsl_precision_high;
+	}
+
 	// skip precision for samplers that end up being lowp (default anyway) or undefined;
 	// except always emit it for shadowmap samplers (some drivers don't implement
-	// default EXT_shadow_samplers precision)
-	if (type && type->is_sampler() && !type->sampler_shadow)
+	// default EXT_shadow_samplers precision) and 3D textures (they always require precision)
+	if (type && type->is_sampler() && !type->sampler_shadow && !(type->sampler_dimensionality > GLSL_SAMPLER_DIM_2D))
 	{
 		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
 			return;
@@ -394,9 +345,9 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	const char *const inv = (ir->data.invariant) ? "invariant " : "";
 	const char *const mode[3][ir_var_mode_count] =
 	{
-		{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
-		{ "", "uniform ", "attribute ", "varying ", "in ", "out ", "inout ", "", "", "" },
-		{ "", "uniform ", "varying ",   "out ",     "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "in ",        "out ",     "inout ", "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "attribute ", "varying ", "inout ", "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "varying ",   "out ",     "inout ", "in ", "out ", "inout ", "", "", "" },
 	};
 	
 	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
@@ -431,7 +382,8 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (!inside_loop_body)
 	{
 		loop_variable_state* inductor_state = loopstate->get_for_inductor(ir);
-		if (inductor_state && inductor_state->private_induction_variable_count == 1)
+		if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
+            can_emit_canonical_for(inductor_state))
 		{
 			skipped_this_ir = true;
 			return;
@@ -456,6 +408,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (ir->constant_value &&
 		ir->data.mode != ir_var_shader_in &&
 		ir->data.mode != ir_var_shader_out &&
+		ir->data.mode != ir_var_shader_inout &&
 		ir->data.mode != ir_var_function_in &&
 		ir->data.mode != ir_var_function_out &&
 		ir->data.mode != ir_var_function_inout)
@@ -478,9 +431,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 
 	   indentation++; previous_skipped = false;
 	   bool first = true;
-	   foreach_list(node, &ir->parameters) {
-		  ir_variable *const inst = (ir_variable *)node;
-
+	   foreach_in_list(ir_variable, inst, &ir->parameters) {
 		  if (!first)
 			  buffer.asprintf_append (",\n");
 		  indent();
@@ -510,17 +461,15 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	{
 		assert (!globals->main_function_done);
 		globals->main_function_done = true;
-		foreach_list(node, &globals->global_assignements)
+		foreach_in_list(ga_entry, node, &globals->global_assignements)
 		{
-			ir_instruction* as = ((ga_entry *)node)->ir;
+			ir_instruction* as = node->ir;
 			as->accept(this);
 			buffer.asprintf_append(";\n");
 		}
 	}
 
-   foreach_list(node, &ir->body) {
-      ir_instruction *const inst = (ir_instruction *)node;
-
+   foreach_in_list(ir_instruction, inst, &ir->body) {
       indent();
       inst->accept(this);
 	   end_statement_line();
@@ -534,8 +483,7 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
 {
    bool found_non_builtin_proto = false;
 
-   foreach_list(node, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *)node;
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       if (!sig->is_builtin())
 	 found_non_builtin_proto = true;
    }
@@ -545,9 +493,7 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
    PrintGlslMode oldMode = this->mode;
    this->mode = kPrintGlslNone;
 
-   foreach_list(node, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *)node;
-
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       indent();
       sig->accept(this);
       buffer.asprintf_append ("\n");
@@ -598,7 +544,11 @@ static const char *const operator_glsl_strs[] = {
 	"sin", // reduced
 	"cos", // reduced
 	"dFdx",
+	"dFdxCoarse",
+	"dFdxFine",
 	"dFdy",
+	"dFdyCoarse",
+	"dFdyFine",
 	"packSnorm2x16",
 	"packSnorm4x8",
 	"packUnorm2x16",
@@ -615,7 +565,9 @@ static const char *const operator_glsl_strs[] = {
 	"bitCount",
 	"findMSB",
 	"findLSB",
+	"saturate",
 	"noise",
+	"interpolateAtCentroid",
 	"+",
 	"-",
 	"*",
@@ -649,6 +601,8 @@ static const char *const operator_glsl_strs[] = {
 	"uboloadTODO",
 	"ldexp_TODO",
 	"vectorExtract_TODO",
+	"interpolateAtOffset",
+	"interpolateAtSample",
 	"fma",
 	"clamp",
 	"mix",
@@ -916,7 +870,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+   if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -927,7 +881,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 
 	ir->val->accept(this);
 	
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -1126,7 +1080,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		if (!ir->condition && whole_var)
 		{
 			loop_variable_state* inductor_state = loopstate->get_for_inductor(whole_var);
-			if (inductor_state && inductor_state->private_induction_variable_count == 1)
+			if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
+                can_emit_canonical_for(inductor_state))
 			{
 				skipped_this_ir = true;
 				return;
@@ -1200,6 +1155,18 @@ static void print_float (string_buffer& buffer, float f)
 	if (!posE)
 		posE = strchr(tmp, 'E');
 
+	// snprintf formats infinity as inf.0 or -inf.0, which isn't useful here.
+	// GLSL has no infinity constant so print an equivalent expression instead.
+	if (f == std::numeric_limits<float>::infinity())
+		strcpy(tmp, "(1.0/0.0)");
+
+	if (f == -std::numeric_limits<float>::infinity())
+		strcpy(tmp, "(-1.0/0.0)");
+	
+	// Do similar thing for NaN
+	if (f != f)
+		strcpy(tmp, "(0.0/0.0)");
+
 	#if defined(_MSC_VER)
 	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
 	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
@@ -1241,7 +1208,12 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	}
 	else if (type == glsl_type::uint_type)
 	{
-		buffer.asprintf_append ("%u", ir->value.u[0]);
+		// ES 2.0 doesn't support uints, neither does GLSL < 130
+		if ((state->es_shader && (state->language_version < 300))
+			|| (state->language_version < 130))
+			buffer.asprintf_append("%u", ir->value.u[0]);
+		else
+			buffer.asprintf_append("%uu", ir->value.u[0]);
 		return;
 	}
 
@@ -1259,11 +1231,10 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
       }
    } else if (ir->type->is_record()) {
       bool first = true;
-      foreach_list(n, &ir->components) {
+      foreach_in_list(ir_constant, inst, &ir->components) {
 	 if (!first)
 	    buffer.asprintf_append (", ");
 	 first = false;
-	 ir_constant* inst = (ir_constant*)n;
 	 inst->accept(this);
      } 
    }else {
@@ -1273,7 +1244,16 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	    buffer.asprintf_append (", ");
 	 first = false;
 	 switch (base_type->base_type) {
-	 case GLSL_TYPE_UINT:  buffer.asprintf_append ("%u", ir->value.u[i]); break;
+	 case GLSL_TYPE_UINT:
+	 {
+		 // ES 2.0 doesn't support uints, neither does GLSL < 130
+		 if ((state->es_shader && (state->language_version < 300))
+			 || (state->language_version < 130))
+			 buffer.asprintf_append("%u", ir->value.u[i]);
+		 else
+			 buffer.asprintf_append("%uu", ir->value.u[i]);
+		 break;
+	 }
 	 case GLSL_TYPE_INT:   buffer.asprintf_append ("%d", ir->value.i[i]); break;
 	 case GLSL_TYPE_FLOAT: print_float(buffer, ir->value.f[i]); break;
 	 case GLSL_TYPE_BOOL:  buffer.asprintf_append ("%d", ir->value.b[i]); break;
@@ -1305,8 +1285,7 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 	
    buffer.asprintf_append ("%s (", ir->callee_name());
    bool first = true;
-   foreach_list(node, &ir->actual_parameters) {
-      ir_instruction *const inst = (ir_instruction *)node;
+   foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)
 		  buffer.asprintf_append (", ");
       inst->accept(this);
@@ -1351,9 +1330,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	indentation++; previous_skipped = false;
 
 
-   foreach_list(n, &ir->then_instructions) {
-      ir_instruction *const inst = (ir_instruction *)n;
-
+   foreach_in_list(ir_instruction, inst, &ir->then_instructions) {
       indent();
       inst->accept(this);
 	   end_statement_line();
@@ -1368,9 +1345,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	   buffer.asprintf_append (" else {\n");
 	   indentation++; previous_skipped = false;
 
-	   foreach_list(n, &ir->else_instructions) {
-		  ir_instruction *const inst = (ir_instruction *)n;
-
+	   foreach_in_list(ir_instruction, inst, &ir->else_instructions) {
 		  indent();
 		  inst->accept(this);
 		   end_statement_line();
@@ -1381,10 +1356,8 @@ ir_print_glsl_visitor::visit(ir_if *ir)
    }
 }
 
-
-bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+bool ir_print_glsl_visitor::can_emit_canonical_for (loop_variable_state *ls)
 {
-	loop_variable_state* const ls = this->loopstate->get(ir);
 	if (ls == NULL)
 		return false;
 	
@@ -1395,12 +1368,19 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 		return false;
 	
 	// only support for loops with one terminator condition
-	int terminatorCount = 0;
-	foreach_list(node, &ls->terminators) {
-		++terminatorCount;
-	}
+	int terminatorCount = ls->terminators.length();
 	if (terminatorCount != 1)
 		return false;
+
+    return true;
+}
+
+bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+{
+	loop_variable_state* const ls = this->loopstate->get(ir);
+
+    if (!can_emit_canonical_for(ls))
+        return false;
 	
 	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
@@ -1412,9 +1392,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	// only for loops with single induction variable, to avoid cases of different types of them
 	if (ls->private_induction_variable_count == 1)
 	{
-		foreach_list(node, &ls->induction_variables)
+		foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 		{
-			loop_variable* indvar = (loop_variable *) node;
 			if (!this->loopstate->get_for_inductor(indvar->var))
 				continue;
 			
@@ -1434,9 +1413,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	buffer.asprintf_append("; ");
 	
 	// emit loop terminating conditions
-	foreach_list(node, &ls->terminators)
+	foreach_in_list(loop_terminator, term, &ls->terminators)
 	{
-		loop_terminator* term = (loop_terminator *) node;
 		hash_table_insert(terminator_hash, term, term->ir);
 		
 		// IR has conditions in the form of "if (x) break",
@@ -1487,9 +1465,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	
 	// emit loop induction variable updates
 	bool first = true;
-	foreach_list(node, &ls->induction_variables)
+	foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 	{
-		loop_variable* indvar = (loop_variable *) node;
 		hash_table_insert(induction_hash, indvar, indvar->first_assignment);
 		if (!first)
 			buffer.asprintf_append(", ");
@@ -1502,9 +1479,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	
 	// emit loop body
 	indentation++; previous_skipped = false;
-	foreach_list(node, &ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *)node;
-		
+	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
+
 		// skip termination & induction statements,
 		// they are part of "for" clause
 		if (hash_table_find(terminator_hash, inst))
@@ -1536,8 +1512,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 	
 	buffer.asprintf_append ("while (true) {\n");
 	indentation++; previous_skipped = false;
-	foreach_list(n, &ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *)n;
+	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
 		indent();
 		inst->accept(this);
 		end_statement_line();

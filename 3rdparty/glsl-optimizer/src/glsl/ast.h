@@ -75,10 +75,10 @@ public:
       struct YYLTYPE locp;
 
       locp.source = this->location.source;
-      locp.first_line = this->location.line;
-      locp.first_column = this->location.column;
-      locp.last_line = locp.first_line;
-      locp.last_column = locp.first_column;
+      locp.first_line = this->location.first_line;
+      locp.first_column = this->location.first_column;
+      locp.last_line = this->location.last_line;
+      locp.last_column = this->location.last_column;
 
       return locp;
    }
@@ -91,17 +91,35 @@ public:
    void set_location(const struct YYLTYPE &locp)
    {
       this->location.source = locp.source;
-      this->location.line = locp.first_line;
-      this->location.column = locp.first_column;
+      this->location.first_line = locp.first_line;
+      this->location.first_column = locp.first_column;
+      this->location.last_line = locp.last_line;
+      this->location.last_column = locp.last_column;
+   }
+
+   /**
+    * Set the source location range of an AST node using two location nodes
+    *
+    * \sa ast_node::set_location
+    */
+   void set_location_range(const struct YYLTYPE &begin, const struct YYLTYPE &end)
+   {
+      this->location.source = begin.source;
+      this->location.first_line = begin.first_line;
+      this->location.last_line = end.last_line;
+      this->location.first_column = begin.first_column;
+      this->location.last_column = end.last_column;
    }
 
    /**
     * Source location of the AST node.
     */
    struct {
-      unsigned source;    /**< GLSL source number. */
-      unsigned line;      /**< Line number within the source string. */
-      unsigned column;    /**< Column in the line. */
+      unsigned source;          /**< GLSL source number. */
+      unsigned first_line;      /**< First line number within the source string. */
+      unsigned first_column;    /**< First column in the first line. */
+      unsigned last_line;       /**< Last line number within the source string. */
+      unsigned last_column;     /**< Last column in the last line. */
    } location;
 
    exec_node link;
@@ -199,6 +217,13 @@ public:
    virtual ir_rvalue *hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state);
 
+   virtual void hir_no_rvalue(exec_list *instructions,
+                              struct _mesa_glsl_parse_state *state);
+
+   ir_rvalue *do_hir(exec_list *instructions,
+                     struct _mesa_glsl_parse_state *state,
+                     bool needs_rvalue);
+
    virtual void print(void) const;
 
    enum ast_operators oper;
@@ -269,6 +294,9 @@ public:
    virtual ir_rvalue *hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state);
 
+   virtual void hir_no_rvalue(exec_list *instructions,
+                              struct _mesa_glsl_parse_state *state);
+
 private:
    /**
     * Is this function call actually a constructor?
@@ -280,14 +308,14 @@ class ast_array_specifier : public ast_node {
 public:
    /** Unsized array specifier ([]) */
    explicit ast_array_specifier(const struct YYLTYPE &locp)
-     : dimension_count(1), is_unsized_array(true)
+     : is_unsized_array(true)
    {
       set_location(locp);
    }
 
    /** Sized array specifier ([dim]) */
    ast_array_specifier(const struct YYLTYPE &locp, ast_expression *dim)
-     : dimension_count(1), is_unsized_array(false)
+     : is_unsized_array(false)
    {
       set_location(locp);
       array_dimensions.push_tail(&dim->link);
@@ -296,13 +324,9 @@ public:
    void add_dimension(ast_expression *dim)
    {
       array_dimensions.push_tail(&dim->link);
-      dimension_count++;
    }
 
    virtual void print(void) const;
-
-   /* Count including sized and unsized dimensions */
-   unsigned dimension_count;
 
    /* If true, this means that the array has an unsized outermost dimension. */
    bool is_unsized_array;
@@ -345,6 +369,9 @@ public:
 
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
+
+   virtual void hir_no_rvalue(exec_list *instructions,
+                              struct _mesa_glsl_parse_state *state);
 };
 
 /**
@@ -397,6 +424,7 @@ struct ast_type_qualifier {
    union {
       struct {
 	 unsigned invariant:1;
+         unsigned precise:1;
 	 unsigned constant:1;
 	 unsigned attribute:1;
 	 unsigned varying:1;
@@ -477,6 +505,13 @@ struct ast_type_qualifier {
 	 unsigned read_only:1; /**< "readonly" qualifier. */
 	 unsigned write_only:1; /**< "writeonly" qualifier. */
 	 /** \} */
+
+         /** \name Layout qualifiers for GL_ARB_gpu_shader5 */
+         /** \{ */
+         unsigned invocations:1;
+         unsigned stream:1; /**< Has stream value assigned  */
+         unsigned explicit_stream:1; /**< stream value assigned explicitly by shader code */
+         /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -487,6 +522,9 @@ struct ast_type_qualifier {
 
    /** Precision of the type (highp/medium/lowp). */
    unsigned precision:2;
+
+   /** Geometry shader invocations for GL_ARB_gpu_shader5. */
+   int invocations;
 
    /**
     * Location specified via GL_ARB_explicit_attrib_location layout
@@ -505,6 +543,9 @@ struct ast_type_qualifier {
 
    /** Maximum output vertices in GLSL 1.50 geometry shaders. */
    int max_vertices;
+
+   /** Stream in GLSL 1.50 geometry shaders. */
+   unsigned stream;
 
    /** Input or output primitive type in GLSL 1.50 geometry shaders */
    GLenum prim_type;
@@ -587,6 +628,12 @@ struct ast_type_qualifier {
    bool merge_qualifier(YYLTYPE *loc,
 			_mesa_glsl_parse_state *state,
 			ast_type_qualifier q);
+
+   bool merge_in_qualifier(YYLTYPE *loc,
+                           _mesa_glsl_parse_state *state,
+                           ast_type_qualifier q,
+                           ast_node* &node);
+
 };
 
 class ast_declarator_list;
@@ -705,13 +752,11 @@ public:
    exec_list declarations;
 
    /**
-    * Special flag for vertex shader "invariant" declarations.
-    *
-    * Vertex shaders can contain "invariant" variable redeclarations that do
-    * not include a type.  For example, "invariant gl_Position;".  This flag
-    * is used to note these cases when no type is specified.
+    * Flags for redeclarations. In these cases, no type is specified, to
+    * `type` is allowed to be NULL. In all other cases, this would be an error.
     */
-   int invariant;
+   int invariant;     /** < `invariant` redeclaration */
+   int precise;       /** < `precise` redeclaration */
 };
 
 

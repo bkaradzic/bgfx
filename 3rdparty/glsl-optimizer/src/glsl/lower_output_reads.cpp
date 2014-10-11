@@ -52,7 +52,7 @@ public:
    output_read_remover();
    ~output_read_remover();
    virtual ir_visitor_status visit(class ir_dereference_variable *);
-   virtual ir_visitor_status visit(class ir_emit_vertex *);
+   virtual ir_visitor_status visit_leave(class ir_emit_vertex *);
    virtual ir_visitor_status visit_leave(class ir_return *);
    virtual ir_visitor_status visit_leave(class ir_function_signature *);
 };
@@ -148,7 +148,7 @@ output_read_remover::visit_leave(ir_return *ir)
 }
 
 ir_visitor_status
-output_read_remover::visit(ir_emit_vertex *ir)
+output_read_remover::visit_leave(ir_emit_vertex *ir)
 {
    hash_table_call_foreach(replacements, emit_return_copy, ir);
    hash_table_clear(replacements);

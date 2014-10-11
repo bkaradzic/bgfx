@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,15 +10,18 @@ static int printhelp(const char* msg)
 {
 	if (msg) printf("%s\n\n\n", msg);
 	printf("Usage: glslopt <-f|-v> <input shader> [<output shader>]\n");
-	printf("\t-f : fragment shader\n");
+	printf("\t-f : fragment shader (default)\n");
 	printf("\t-v : vertex shader\n");
+	printf("\t-1 : target OpenGL (default)\n");
+	printf("\t-2 : target OpenGL ES 2.0\n");
+	printf("\t-3 : target OpenGL ES 3.0\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
 }
 
-static bool init()
+static bool init(glslopt_target target)
 {
-	gContext = glslopt_initialize(kGlslTargetOpenGL);
+	gContext = glslopt_initialize(target);
 	if( !gContext )
 		return false;
 	return true;
@@ -51,7 +55,7 @@ static char* loadFile(const char* filename)
 
 static bool saveFile(const char* filename, const char* data)
 {
-	int size = (int)strlen(data)+1;
+	int size = (int)strlen(data);
 
 	FILE* file = fopen(filename, "wt");
 	if( !file )
@@ -101,6 +105,7 @@ int main(int argc, char* argv[])
 		return printhelp(NULL);
 
 	bool vertexShader = false, freename = false;
+	glslopt_target languageTarget = kGlslTargetOpenGL;
 	const char* source = 0;
 	char* dest = 0;
 
@@ -110,8 +115,14 @@ int main(int argc, char* argv[])
 		{
 			if( 0 == strcmp("-v", argv[i]) )
 				vertexShader = true;
-			if( 0 == strcmp("-f", argv[i]) )
+			else if( 0 == strcmp("-f", argv[i]) )
 				vertexShader = false;
+			else if( 0 == strcmp("-1", argv[i]) )
+				languageTarget = kGlslTargetOpenGL;
+			else if( 0 == strcmp("-2", argv[i]) )
+				languageTarget = kGlslTargetOpenGLES20;
+			else if( 0 == strcmp("-3", argv[i]) )
+				languageTarget = kGlslTargetOpenGLES30;
 		}
 		else
 		{
@@ -125,7 +136,7 @@ int main(int argc, char* argv[])
 	if( !source )
 		return printhelp("Must give a source");
 
-	if( !init() )
+	if( !init(languageTarget) )
 	{
 		printf("Failed to initialize glslopt!\n");
 		return 1;

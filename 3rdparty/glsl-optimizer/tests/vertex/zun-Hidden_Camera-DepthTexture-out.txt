@@ -10,10 +10,10 @@ void main ()
   pos_2 = gl_Vertex;
   vec2 offset_3;
   offset_3 = gl_MultiTexCoord1.xy;
-  vec3 tmpvar_4;
-  tmpvar_4 = (gl_Vertex.xyz - _TreeBillboardCameraPos.xyz);
+  vec3 treePos_4;
+  treePos_4 = (gl_Vertex.xyz - _TreeBillboardCameraPos.xyz);
   float tmpvar_5;
-  tmpvar_5 = dot (tmpvar_4, tmpvar_4);
+  tmpvar_5 = dot (treePos_4, treePos_4);
   if ((tmpvar_5 > _TreeBillboardDistances.x)) {
     offset_3 = vec2(0.0, 0.0);
   };
@@ -37,4 +37,15 @@ void main ()
 }
 
 
-// inputs: 3, stats: 23 alu 0 tex 1 flow
+// stats: 23 alu 0 tex 1 flow
+// inputs: 3
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 9
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #2: gl_Vertex (high float) 4x1 [-1] loc 0
+// uniforms: 6 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: _TreeBillboardCameraFront (high float) 4x1 [-1]
+//  #2: _TreeBillboardCameraPos (high float) 4x1 [-1]
+//  #3: _TreeBillboardCameraRight (high float) 3x1 [-1]
+//  #4: _TreeBillboardCameraUp (high float) 4x1 [-1]
+//  #5: _TreeBillboardDistances (high float) 4x1 [-1]

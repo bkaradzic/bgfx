@@ -49,8 +49,7 @@ visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
 {
    ir_instruction *prev_base_ir = v->base_ir;
 
-   foreach_list_safe(n, l) {
-      ir_instruction *const ir = (ir_instruction *) n;
+   foreach_in_list_safe(ir_instruction, ir, l) {
       if (statement_list)
          v->base_ir = ir;
       ir_visitor_status s = ir->accept(v);
@@ -393,7 +392,7 @@ ir_if::accept(ir_hierarchical_visitor *v)
 ir_visitor_status
 ir_precision_statement::accept(ir_hierarchical_visitor *v)
 {
-   return v->visit(this);
+	return v->visit(this);
 }
 
 ir_visitor_status
@@ -405,11 +404,27 @@ ir_typedecl_statement::accept(ir_hierarchical_visitor *v)
 ir_visitor_status
 ir_emit_vertex::accept(ir_hierarchical_visitor *v)
 {
-   return v->visit(this);
+	ir_visitor_status s = v->visit_enter(this);
+	if (s != visit_continue)
+		return (s == visit_continue_with_parent) ? visit_continue : s;
+	
+	s = this->stream->accept(v);
+	if (s != visit_continue)
+		return (s == visit_continue_with_parent) ? visit_continue : s;
+	
+	return (s == visit_stop) ? s : v->visit_leave(this);
 }
 
 ir_visitor_status
 ir_end_primitive::accept(ir_hierarchical_visitor *v)
 {
-   return v->visit(this);
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->stream->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   return (s == visit_stop) ? s : v->visit_leave(this);
 }

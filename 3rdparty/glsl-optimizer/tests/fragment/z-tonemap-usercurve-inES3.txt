@@ -1,0 +1,49 @@
+#version 300 es
+
+#define gl_FragColor _glesFragData[0]
+#define gl_FragData _glesFragData
+layout(location = 0) out mediump vec4 _glesFragData[4];
+
+struct v2f {
+    highp vec4 pos;
+    highp vec2 uv;
+};
+
+uniform sampler2D _MainTex;
+uniform sampler2D _Curve;
+uniform highp float _RangeScale;
+
+highp vec3 FromCIE( in highp vec3 Yxy ) {
+    highp vec3 XYZ;
+    XYZ.x = ((Yxy.x * Yxy.y) / Yxy.z);
+    XYZ.y = Yxy.x;
+    XYZ.z = ((Yxy.x * ((1.0 - Yxy.y) - Yxy.z)) / Yxy.z);
+    highp mat3 XYZ2RGB = mat3(2.5651, -1.0217, 0.0753, -1.1665, 1.9777, -0.2543, -0.3986, 0.0439, 1.1892);
+    return (XYZ2RGB * XYZ);
+}
+highp vec3 ToCIE( in highp vec3 FullScreenImage ) {
+    highp mat3 RGB2XYZ = mat3(0.514136, 0.265068, 0.0241188, 0.323879, 0.670234, 0.122818, 0.160364, 0.0640916, 0.844427);
+    highp vec3 XYZ = (RGB2XYZ * FullScreenImage.xyz);
+    highp vec3 Yxy;
+    Yxy.x = XYZ.y;
+    highp float temp = dot( vec3( 1.0, 1.0, 1.0), XYZ.xyz);
+    Yxy.yz = (XYZ.xy / temp);
+    return Yxy;
+}
+highp vec4 fragCurve( in v2f i ) {
+    highp vec4 color = texture( _MainTex, i.uv);
+    highp vec3 cie = ToCIE( color.xyz);
+    highp float newLum = texture( _Curve, vec2( (cie.x * _RangeScale), 0.5)).x;
+    cie.x = newLum;
+    color.xyz = FromCIE( cie);
+    return color;
+}
+in highp vec2 xlv_TEXCOORD0;
+void main() {
+    highp vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2(xlv_TEXCOORD0);
+    xl_retval = fragCurve(xlt_i);
+    gl_FragData[0] = vec4(xl_retval);
+}

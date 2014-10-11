@@ -10,4 +10,6 @@ void main ()
 }
 
 
-// inputs: 1, stats: 1 alu 0 tex 0 flow
+// stats: 1 alu 0 tex 0 flow
+// inputs: 1
+//  #0: xlv_VPOS (high float) 2x1 [-1]

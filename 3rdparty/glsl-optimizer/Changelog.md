@@ -1,6 +1,60 @@
 GLSL optimizer Change Log
 =========================
 
+2014 10
+-------
+
+Goodies:
+
+* Support for translating GLSL shaders into Apple Metal shading language.
+  Exactly same process; GLSL in (preferably ES3 variant), optimization passes, Metal out.
+  All uniforms currently will be put into one constant buffer.
+  Pass kGlslTargetMetal target to get Metal.
+* Shader reflection API. See glslopt_shader_get_* functions. Binding indices
+  are only automatically assigned on Metal now; on GL/ES targets the reflection API is only
+  useful to get list of inputs/uniforms, their names and types.
+* Improved dead code elimation: some cases of swizzled/masked assignments where same variable was on both sides
+  were not eliminated if that variable was totally unused later.
+* Merged with upstream Mesa, comes with new optimizations (min/max pruning, tree rebalancing, vector_insert lowering).
+
+Fixes:
+
+* sampler3D declarations were missing precision qualifier on GLES3.0.
+
+
+2014 09
+-------
+
+Goodies:
+
+* Supports GL_EXT_draw_buffers in ES2.0, for MRT.
+
+
+2014 08
+-------
+
+Goodies:
+
+* Supports GL_EXT_shader_framebuffer_fetch now, in both ES2.0 & 3.0.
+
+Fixes:
+
+* Fixed printing of infinities & NaNs.
+* Fixed vectorization pass in some cases going wrong on texture lookups.
+
+
+2014 06
+-------
+
+Goodies:
+
+* Optimization: split vectors with only some used components into scalars.
+
+Fixes:
+
+* Fixed more issues with for-loop printing.
+* Fixed printing of unsigned integer swizzled & constants.
+
 2014 03
 -------
 

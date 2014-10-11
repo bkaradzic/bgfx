@@ -1,0 +1,37 @@
+#version 300 es
+uniform highp mat4 uniMat4F;
+uniform mediump mat4 uniMat4H;
+uniform mediump mat3 uniMat3H;
+uniform highp mat2 uniMat2F;
+uniform mediump mat2 uniMat2H;
+void main ()
+{
+  highp mat2 htof2_1;
+  highp mat3 htof3_2;
+  highp mat4 htof4_3;
+  mediump mat2 ftoh2_4;
+  mediump mat4 ftoh4_5;
+  highp vec4 r_6;
+  r_6.yzw = vec3(0.0, 0.0, 0.0);
+  ftoh4_5 = uniMat4F;
+  r_6.x = ftoh4_5[0].x;
+  r_6.x = (r_6.x + ftoh4_5[0].x);
+  ftoh2_4 = uniMat2F;
+  r_6.x = (r_6.x + ftoh2_4[0].x);
+  htof4_3 = uniMat4H;
+  r_6.x = (r_6.x + htof4_3[0].x);
+  htof3_2 = uniMat3H;
+  r_6.x = (r_6.x + htof3_2[0].x);
+  htof2_1 = uniMat2H;
+  r_6.x = (r_6.x + htof2_1[0].x);
+  gl_Position = r_6;
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// uniforms: 5 (total size: 0)
+//  #0: uniMat4F (high float) 4x4 [-1]
+//  #1: uniMat4H (medium float) 4x4 [-1]
+//  #2: uniMat3H (medium float) 3x3 [-1]
+//  #3: uniMat2F (high float) 2x2 [-1]
+//  #4: uniMat2H (medium float) 2x2 [-1]

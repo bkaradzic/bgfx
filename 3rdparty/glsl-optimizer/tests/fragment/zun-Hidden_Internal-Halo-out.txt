@@ -10,4 +10,9 @@ void main ()
 }
 
 
-// inputs: 2, stats: 1 alu 1 tex 0 flow
+// stats: 1 alu 1 tex 0 flow
+// inputs: 2
+//  #0: gl_Color (high float) 4x1 [-1] loc 1
+//  #1: gl_TexCoord (high float) 4x1 [1] loc 4
+// textures: 1
+//  #0: _HaloFalloff (high 2d) 0x0 [-1]

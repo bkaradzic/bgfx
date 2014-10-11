@@ -14,14 +14,18 @@ void main ()
   colint.z = (gl_InstanceID << 2);
   colint.w = (gl_VertexID + colint.y);
   col.x = trunc(position.x);
-  float cse_2;
-  cse_2 = roundEven(position.y);
-  col.y = cse_2;
-  col.z = cse_2;
+  float tmpvar_2;
+  tmpvar_2 = roundEven(position.y);
+  col.y = tmpvar_2;
+  col.z = tmpvar_2;
   col.w = (0.5 * (exp(position.w) + exp(
     -(position.w)
   )));
 }
 
 
-// inputs: 1, stats: 12 alu 0 tex 0 flow
+// stats: 12 alu 0 tex 0 flow
+// inputs: 1
+//  #0: position (high float) 4x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: p (high float) 2x1 [-1]

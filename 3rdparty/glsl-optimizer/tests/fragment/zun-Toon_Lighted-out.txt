@@ -19,4 +19,13 @@ void main ()
 }
 
 
-// inputs: 1, stats: 10 alu 3 tex 0 flow
+// stats: 10 alu 3 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [4] loc 4
+// uniforms: 2 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+//  #1: _LightColor0 (high float) 4x1 [-1]
+// textures: 3
+//  #0: _LightTexture0 (high 2d) 0x0 [-1]
+//  #1: _MainTex (high 2d) 0x0 [-1]
+//  #2: _Ramp (high 2d) 0x0 [-1]

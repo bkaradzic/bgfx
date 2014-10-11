@@ -51,14 +51,14 @@ public:
       assert(ir);
       this->lhs = lhs;
       this->ir = ir;
-      this->available = ir->write_mask;
+      this->unused = ir->write_mask;
    }
 
    ir_variable *lhs;
    ir_assignment *ir;
 
    /* bitmask of xyzw channels written that haven't been used so far. */
-   int available;
+   int unused;
 };
 
 class kill_for_derefs_visitor : public ir_hierarchical_visitor {
@@ -68,22 +68,20 @@ public:
       this->assignments = assignments;
    }
 
-   void kill_channels(ir_variable *const var, int used)
+   void use_channels(ir_variable *const var, int used)
    {
-      foreach_list_safe(n, this->assignments) {
-	 assignment_entry *entry = (assignment_entry *) n;
-
+      foreach_in_list_safe(assignment_entry, entry, this->assignments) {
 	 if (entry->lhs == var) {
 	    if (var->type->is_scalar() || var->type->is_vector()) {
 	       if (debug)
-		  printf("kill %s (0x%01x - 0x%01x)\n", entry->lhs->name,
-			 entry->available, used);
-	       entry->available &= ~used;
-	       if (!entry->available)
+		  printf("used %s (0x%01x - 0x%01x)\n", entry->lhs->name,
+			 entry->unused, used & 0xf);
+	       entry->unused &= ~used;
+	       if (!entry->unused)
 		  entry->remove();
 	    } else {
 	       if (debug)
-		  printf("kill %s\n", entry->lhs->name);
+		  printf("used %s\n", entry->lhs->name);
 	       entry->remove();
 	    }
 	 }
@@ -92,7 +90,7 @@ public:
 
    virtual ir_visitor_status visit(ir_dereference_variable *ir)
    {
-      kill_channels(ir->var, ~0);
+      use_channels(ir->var, ~0);
 
       return visit_continue;
    }
@@ -109,18 +107,17 @@ public:
       used |= 1 << ir->mask.z;
       used |= 1 << ir->mask.w;
 
-      kill_channels(deref->var, used);
+      use_channels(deref->var, used);
 
       return visit_continue_with_parent;
    }
 
-   virtual ir_visitor_status visit(ir_emit_vertex *ir)
+   virtual ir_visitor_status visit_leave(ir_emit_vertex *)
    {
       /* For the purpose of dead code elimination, emitting a vertex counts as
        * "reading" all of the currently assigned output variables.
        */
-      foreach_list_safe(n, this->assignments) {
-         assignment_entry *entry = (assignment_entry *) n;
+      foreach_in_list_safe(assignment_entry, entry, this->assignments) {
          if (entry->lhs->data.mode == ir_var_shader_out) {
             if (debug)
                printf("kill %s\n", entry->lhs->name);
@@ -196,13 +193,11 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	    printf("looking for %s.0x%01x to remove\n", var->name,
 		   ir->write_mask);
 
-	 foreach_list_safe(n, assignments) {
-	    assignment_entry *entry = (assignment_entry *) n;
-
+	 foreach_in_list_safe(assignment_entry, entry, assignments) {
 	    if (entry->lhs != var)
 	       continue;
 
-	    int remove = entry->available & ir->write_mask;
+	    int remove = entry->unused & ir->write_mask;
 	    if (debug) {
 	       printf("%s 0x%01x - 0x%01x = 0x%01x\n",
 		      var->name,
@@ -219,7 +214,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	       }
 
 	       entry->ir->write_mask &= ~remove;
-	       entry->available &= ~remove;
+	       entry->unused &= ~remove;
 	       if (entry->ir->write_mask == 0) {
 		  /* Delete the dead assignment. */
 		  entry->ir->remove();
@@ -258,9 +253,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	  */
 	 if (debug)
 	    printf("looking for %s to remove\n", var->name);
-	 foreach_list_safe(n, assignments) {
-	    assignment_entry *entry = (assignment_entry *) n;
-
+	 foreach_in_list_safe(assignment_entry, entry, assignments) {
 	    if (entry->lhs == var) {
 	       if (debug)
 		  printf("removing %s\n", var->name);
@@ -280,10 +273,8 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
       printf("add %s\n", var->name);
 
       printf("current entries\n");
-      foreach_list(n, assignments) {
-	 assignment_entry *entry = (assignment_entry *) n;
-
-	 printf("    %s (0x%01x)\n", entry->lhs->name, entry->available);
+      foreach_in_list(assignment_entry, entry, assignments) {
+	 printf("    %s (0x%01x)\n", entry->lhs->name, entry->unused);
       }
    }
 

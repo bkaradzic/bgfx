@@ -86,6 +86,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_if *);
    virtual ir_visitor_status visit_enter(ir_loop *);
+   virtual ir_visitor_status visit_enter(ir_texture *);
 
    virtual ir_visitor_status visit_leave(ir_assignment *);
 
@@ -226,10 +227,9 @@ write_mask_to_swizzle(unsigned write_mask)
    case WRITEMASK_X: return SWIZZLE_X;
    case WRITEMASK_Y: return SWIZZLE_Y;
    case WRITEMASK_Z: return SWIZZLE_Z;
-   case WRITEMASK_W: return SWIZZLE_W;
+   case WRITEMASK_W: break;
    }
-   assert(!"not reached");
-   unreachable();
+   return SWIZZLE_W;
 }
 
 /**
@@ -261,6 +261,7 @@ ir_vectorize_visitor::visit_enter(ir_assignment *ir)
    if (ir->condition ||
        this->channels >= 4 ||
        !single_channel_write_mask(ir->write_mask) ||
+       this->assignment[write_mask_to_swizzle(ir->write_mask)] != NULL ||
        (lhs && !ir->lhs->equals(lhs)) ||
        (rhs && !ir->rhs->equals(rhs, ir_type_swizzle))) {
       try_vectorize();
@@ -292,20 +293,6 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
    return visit_continue;
 }
 
-/* Upon entering an ir_binop_dot, remove the current assignment from
- * further consideration. Dot product is "horizontal" instruction
- * that we can't vectorize.
- */
-ir_visitor_status
-ir_vectorize_visitor::visit_enter(ir_expression *ir)
-{
-   if (ir->operation == ir_binop_dot) {
-      this->current_assignment = NULL;
-      return visit_continue_with_parent;
-   }
-   return visit_continue;
-}
-
 /* Upon entering an ir_array_dereference, remove the current assignment from
  * further consideration. Since the index of an array dereference must scalar,
  * we are not able to vectorize it.
@@ -313,10 +300,24 @@ ir_vectorize_visitor::visit_enter(ir_expression *ir)
  * FINISHME: If all of scalar indices are identical we could vectorize.
  */
 ir_visitor_status
-ir_vectorize_visitor::visit_enter(ir_dereference_array *ir)
+ir_vectorize_visitor::visit_enter(ir_dereference_array *)
 {
    this->current_assignment = NULL;
    return visit_continue_with_parent;
+}
+
+/**
+ * Upon entering an ir_expression, remove the current assignment from further
+ * consideration if the expression operates horizontally on vectors.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_expression *ir)
+{
+   if (ir->is_horizontal()) {
+      this->current_assignment = NULL;
+      return visit_continue_with_parent;
+   }
+   return visit_continue;
 }
 
 /* Since there is no statement to visit between the "then" and "else"
@@ -349,6 +350,18 @@ ir_vectorize_visitor::visit_enter(ir_loop *ir)
    visit_list_elements(this, &ir->body_instructions);
    try_vectorize();
 
+   return visit_continue_with_parent;
+}
+
+/**
+ * Upon entering an ir_texture, remove the current assignment from
+ * further consideration. Vectorizing multiple texture lookups into one
+ * is wrong.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_texture *)
+{
+   this->current_assignment = NULL;
    return visit_continue_with_parent;
 }
 
