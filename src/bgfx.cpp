@@ -2592,22 +2592,16 @@ again:
 		return s_ctx->setTransform(_mtx, _num);
 	}
 
+	uint32_t allocTransform(Transform* _transform, uint16_t _num)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->allocTransform(_transform, _num);
+	}
+
 	void setTransform(uint32_t _cache, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setTransform(_cache, _num);
-	}
-
-	void allocTransform(Transform* _transform, uint16_t _num)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->allocTransform(_transform, _num);
-	}
-
-	void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setTransform(_transform, _first, _num);
 	}
 
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
@@ -3222,6 +3216,11 @@ BGFX_C_API void bgfx_set_scissor_cached(uint16_t _cache)
 BGFX_C_API uint32_t bgfx_set_transform(const void* _mtx, uint16_t _num)
 {
 	return bgfx::setTransform(_mtx, _num);
+}
+
+BGFX_C_API uint32_t bgfx_alloc_transform(bgfx_transform_t* _transform, uint16_t _num)
+{
+	return bgfx::allocTransform( (bgfx::Transform*)_transform, _num);
 }
 
 BGFX_C_API void bgfx_set_transform_cached(uint32_t _cache, uint16_t _num)
