@@ -43,11 +43,11 @@ namespace bgfx
 		/// Renderer type enumeration.
 		enum Enum
 		{
-			Null,       //< No rendering.
-			Direct3D9,  //< Direct3D 9.0
-			Direct3D11, //< Direct3D 11.0
-			OpenGLES,   //< OpenGL ES 2.0+
-			OpenGL,     //< OpenGL 2.1+
+			Null,         //< No rendering.
+			Direct3D9,    //< Direct3D 9.0
+			Direct3D11,   //< Direct3D 11.0
+			OpenGLES = 4, //< OpenGL ES 2.0+
+			OpenGL,       //< OpenGL 2.1+
 
 			Count
 		};
