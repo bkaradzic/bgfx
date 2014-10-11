@@ -43,11 +43,11 @@ namespace bgfx
 		/// Renderer type enumeration.
 		enum Enum
 		{
-			Null,         //< No rendering.
-			Direct3D9,    //< Direct3D 9.0
-			Direct3D11,   //< Direct3D 11.0
-			OpenGLES = 4, //< OpenGL ES 2.0+
-			OpenGL,       //< OpenGL 2.1+
+			Null,         //!< No rendering.
+			Direct3D9,    //!< Direct3D 9.0
+			Direct3D11,   //!< Direct3D 11.0
+			OpenGLES = 4, //!< OpenGL ES 2.0+
+			OpenGL,       //!< OpenGL 2.1+
 
 			Count
 		};
@@ -67,24 +67,25 @@ namespace bgfx
 
 	struct Attrib
 	{
-		enum Enum // corresponds to vertex shader attribute:
+		/// Corresponds to vertex shader attribute.
+		enum Enum
 		{
-			Position,  // a_position
-			Normal,    // a_normal
-			Tangent,   // a_tangent
-			Bitangent, // a_bitangent
-			Color0,    // a_color0
-			Color1,    // a_color1
-			Indices,   // a_indices
-			Weight,    // a_weight
-			TexCoord0, // a_texcoord0
-			TexCoord1, // a_texcoord1
-			TexCoord2, // a_texcoord2
-			TexCoord3, // a_texcoord3
-			TexCoord4, // a_texcoord4
-			TexCoord5, // a_texcoord5
-			TexCoord6, // a_texcoord6
-			TexCoord7, // a_texcoord7
+			Position,  //!< a_position
+			Normal,    //!< a_normal
+			Tangent,   //!< a_tangent
+			Bitangent, //!< a_bitangent
+			Color0,    //!< a_color0
+			Color1,    //!< a_color1
+			Indices,   //!< a_indices
+			Weight,    //!< a_weight
+			TexCoord0, //!< a_texcoord0
+			TexCoord1, //!< a_texcoord1
+			TexCoord2, //!< a_texcoord2
+			TexCoord3, //!< a_texcoord3
+			TexCoord4, //!< a_texcoord4
+			TexCoord5, //!< a_texcoord5
+			TexCoord6, //!< a_texcoord6
+			TexCoord7, //!< a_texcoord7
 
 			Count
 		};
@@ -341,31 +342,31 @@ namespace bgfx
 	///
 	struct InstanceDataBuffer
 	{
-		uint8_t* data;
-		uint32_t size;
-		uint32_t offset;
-		uint16_t stride;
-		uint16_t num;
-		VertexBufferHandle handle;
+		uint8_t* data;             //!< Pointer to data.
+		uint32_t size;             //!< Data size.
+		uint32_t offset;           //!< Offset in vertex buffer.
+		uint16_t stride;           //!< Vertex buffer stride.
+		uint16_t num;              //!< Number of instances.
+		VertexBufferHandle handle; //!< Vertex buffer object handle.
 	};
 
 	///
 	struct TextureInfo
 	{
-		TextureFormat::Enum format; //< Texture format.
-		uint32_t storageSize;       //< Total amount of bytes required to store texture.
-		uint16_t width;             //< Texture width.
-		uint16_t height;            //< Texture height.
-		uint16_t depth;             //< Texture depth.
-		uint8_t numMips;            //< Number of MIP maps.
-		uint8_t bitsPerPixel;       //< Format bits per pixel.
+		TextureFormat::Enum format; //!< Texture format.
+		uint32_t storageSize;       //!< Total amount of bytes required to store texture.
+		uint16_t width;             //!< Texture width.
+		uint16_t height;            //!< Texture height.
+		uint16_t depth;             //!< Texture depth.
+		uint8_t numMips;            //!< Number of MIP maps.
+		uint8_t bitsPerPixel;       //!< Format bits per pixel.
 	};
 
 	///
 	struct Transform
 	{
-		float* data;  //< Pointer to first matrix.
-		uint16_t num; //< Number of matrices.
+		float* data;  //!< Pointer to first matrix.
+		uint16_t num; //!< Number of matrices.
 	};
 
 	/// Vertex declaration.
@@ -381,7 +382,7 @@ namespace bgfx
 
 		/// Add attribute to VertexDecl.
 		///
-		/// @param _attrib Attribute semantics.
+		/// @param _attrib Attribute semantics. See: `bgfx::Attrib`
 		/// @param _num Number of elements 1, 2, 3 or 4.
 		/// @param _type Element type.
 		/// @param _normalized When using fixed point AttribType (f.e. Uint8)
@@ -901,6 +902,8 @@ namespace bgfx
 	/// @param _height Window back buffer height.
 	/// @param _depthFormat Window back buffer depth format.
 	///
+	/// @returns Handle to frame buffer object.
+	///
 	/// @remarks
 	///   Frame buffer cannnot be used for sampling.
 	///
@@ -912,41 +915,35 @@ namespace bgfx
 	/// Create shader uniform parameter.
 	///
 	/// @param _name Uniform name in shader.
-	/// @param _type Type of uniform (See: UniformType).
+	/// @param _type Type of uniform (See: `bgfx::UniformType`).
 	/// @param _num Number of elements in array.
 	///
-	/// Predefined uniforms:
+	/// @returns Handle to uniform object.
 	///
-	///   u_viewRect vec4(x, y, width, height) - view rectangle for current
+	/// @remarks
+	/// Predefined uniforms (declared in `bgfx_shader.sh`):
+	///   - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 	///     view.
-	///
-	///   u_viewTexel vec4(1.0/width, 1.0/height, undef, undef) - inverse
+	///   - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
 	///     width and height
-	///
-	///   u_view mat4 - view matrix
-	///
-	///   u_invView mat4 - inverted view matrix
-	///
-	///   u_proj mat4 - projection matrix
-	///
-	///   u_invProj mat4 - inverted projection matrix
-	///
-	///   u_viewProj mat4 - concatenated view projection matrix
-	///
-	///   u_invViewProj mat4 - concatenated inverted view projection matrix
-	///
-	///   u_model mat4[BGFX_CONFIG_MAX_BONES] - array of model matrices.
-	///
-	///   u_modelView mat4 - concatenated model view matrix, only first
+	///   - `u_view mat4` - view matrix
+	///   - `u_invView mat4` - inverted view matrix
+	///   - `u_proj mat4` - projection matrix
+	///   - `u_invProj mat4` - inverted projection matrix
+	///   - `u_viewProj mat4` - concatenated view projection matrix
+	///   - `u_invViewProj mat4` - concatenated inverted view projection matrix
+	///   - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
+	///   - `u_modelView mat4` - concatenated model view matrix, only first
 	///     model matrix from array is used.
-	///
-	///   u_modelViewProj mat4 - concatenated model view projection matrix.
-	///
-	///   u_alphaRef float - alpha reference value for alpha test.
+	///   - `u_modelViewProj mat4` - concatenated model view projection matrix.
+	///   - `u_alphaRef float` - alpha reference value for alpha test.
 	///
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
 
 	/// Destroy shader uniform parameter.
+	///
+	/// @param _handle Handle to uniform object.
+	///
 	void destroyUniform(UniformHandle _handle);
 
 	/// Set clear color palette value.
