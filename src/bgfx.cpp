@@ -1332,6 +1332,7 @@ namespace bgfx
 		VER_SET_CONDITION(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
 		return !!VerifyVersionInfoA(&ovi, VER_MAJORVERSION | VER_MINORVERSION, cond);
 #else
+		BX_UNUSED(_winver);
 		return false;
 #endif // BX_PLATFORM_WINDOWS
 	}
