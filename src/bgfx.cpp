@@ -858,15 +858,6 @@ namespace bgfx
 			}
 		}
 
-		BX_TRACE("Emulated capabilities:");
-		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
-		{
-			if (0 != (g_caps.emulated & s_capsFlags[ii].m_flag) )
-			{
-				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
-			}
-		}
-
 		BX_TRACE("Supported texture formats:");
 		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 		{
@@ -1883,7 +1874,6 @@ again:
 		g_caps.supported = 0
 			| (BGFX_CONFIG_MULTITHREADED ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
 			;
-		g_caps.emulated = 0;
 		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
 		g_caps.maxFBAttachments = 1;
 

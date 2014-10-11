@@ -261,13 +261,6 @@ typedef struct bgfx_caps
      */
     uint64_t supported;
 
-    /**
-     *  Emulated functionality. For example some texture compression
-     *  modes are not natively supported by all renderers. The library
-     *  internally decompresses texture into supported format.
-     */
-    uint64_t emulated;
-
     uint16_t maxTextureSize;    /* < Maximum texture size.             */
     uint16_t maxDrawCalls;      /* < Maximum draw calls.               */
     uint8_t  maxFBAttachments;  /* < Maximum frame buffer attachments. */

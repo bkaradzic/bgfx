@@ -284,27 +284,37 @@ namespace bgfx
 	/// Renderer capabilities.
 	struct Caps
 	{
-		/// Renderer backend type.
+		/// Renderer backend type. See: `bgfx::RendererType`
 		RendererType::Enum rendererType;
 
-		/// Supported functionality, it includes emulated functionality.
-		/// Checking supported and not emulated will give functionality
-		/// natively supported by renderer.
+		/// Supported functionality.
+		///
+		/// - `BGFX_CAPS_TEXTURE_COMPARE_LEQUAL` - Less equal texture
+		///      compare mode.
+		/// - `BGFX_CAPS_TEXTURE_COMPARE_ALL` - All texture compare modes.
+		/// - `BGFX_CAPS_TEXTURE_3D` - 3D textures.
+		/// - `BGFX_CAPS_VERTEX_ATTRIB_HALF` - AttribType::Half.
+		/// - `BGFX_CAPS_INSTANCING` - Vertex instancing.
+		/// - `BGFX_CAPS_RENDERER_MULTITHREADED` - Renderer on separate
+		///      thread.
+		/// - `BGFX_CAPS_FRAGMENT_DEPTH` - Fragment shader can modify depth
+		///      buffer value (gl_FragDepth).
+		/// - `BGFX_CAPS_BLEND_INDEPENDENT` - Multiple render targets can
+		///      have different blend mode set individually.
+		/// - `BGFX_CAPS_COMPUTE` - Renderer has compute shaders.
+		/// - `BGFX_CAPS_FRAGMENT_ORDERING` - Intel's pixel sync.
+		/// - `BGFX_CAPS_SWAP_CHAIN` - Multiple windows.
+		///
 		uint64_t supported;
-
-		/// Emulated functionality. For example some texture compression
-		/// modes are not natively supported by all renderers. The library
-		/// internally decompresses texture into supported format.
-		uint64_t emulated;
 
 		uint16_t maxTextureSize;   ///< Maximum texture size.
 		uint16_t maxDrawCalls;     ///< Maximum draw calls.
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
 
 		/// Supported texture formats.
-		///   0 - not supported
-		///   1 - supported
-		///   2 - emulated
+		///   - 0 - not supported
+		///   - 1 - supported
+		///   - 2 - emulated
 		uint8_t formats[TextureFormat::Count];
 	};
 
