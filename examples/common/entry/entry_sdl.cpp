@@ -198,6 +198,8 @@ namespace entry
 			s_userEventStart = SDL_RegisterEvents(7);
 
 			bgfx::sdlSetWindow(m_window[0]);
+			bgfx::renderFrame();
+
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 
 			// Force window resolution...
@@ -206,151 +208,157 @@ namespace entry
 
 			bool exit = false;
 			SDL_Event event;
-			while (!exit && SDL_WaitEvent(&event) )
+			while (!exit)
 			{
-				switch (event.type)
+				bgfx::renderFrame();
+
+				while (SDL_PollEvent(&event) )
 				{
-				case SDL_QUIT:
-					m_eventQueue.postExitEvent();
-					exit = true;
-					break;
-
-				case SDL_MOUSEMOTION:
+					switch (event.type)
 					{
-						const SDL_MouseMotionEvent& mev = event.motion;
-						m_eventQueue.postMouseEvent(defaultWindow, mev.x, mev.y, 0);
-					}
-					break;
+					case SDL_QUIT:
+						m_eventQueue.postExitEvent();
+						exit = true;
+						break;
 
-				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP:
-					{
-						const SDL_MouseButtonEvent& mev = event.button;
-						m_eventQueue.postMouseEvent(defaultWindow, mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
-					}
-					break;
-
-				case SDL_KEYDOWN:
-				case SDL_KEYUP:
-					{
-						const SDL_KeyboardEvent& kev = event.key;
-						uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
-						Key::Enum key = translateKey(kev.keysym.scancode);
- 						m_eventQueue.postKeyEvent(defaultWindow, key, modifiers, kev.state == SDL_PRESSED);
-					}
-					break;
-
-				case SDL_WINDOWEVENT:
-					{
-						const SDL_WindowEvent& wev = event.window;
-						switch (wev.event)
+					case SDL_MOUSEMOTION:
 						{
-						case SDL_WINDOWEVENT_RESIZED:
-						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							setWindowSize(defaultWindow, wev.data1, wev.data2);
-							break;
-
-						case SDL_WINDOWEVENT_SHOWN:
-						case SDL_WINDOWEVENT_HIDDEN:
-						case SDL_WINDOWEVENT_EXPOSED:
-						case SDL_WINDOWEVENT_MOVED:
-						case SDL_WINDOWEVENT_MINIMIZED:
-						case SDL_WINDOWEVENT_MAXIMIZED:
-						case SDL_WINDOWEVENT_RESTORED:
-						case SDL_WINDOWEVENT_ENTER:
-						case SDL_WINDOWEVENT_LEAVE:
-						case SDL_WINDOWEVENT_FOCUS_GAINED:
-						case SDL_WINDOWEVENT_FOCUS_LOST:
-							break;
-
-						case SDL_WINDOWEVENT_CLOSE:
-							m_eventQueue.postExitEvent();
-							exit = true;
-							break;
+							const SDL_MouseMotionEvent& mev = event.motion;
+							m_eventQueue.postMouseEvent(defaultWindow, mev.x, mev.y, 0);
 						}
-					}
-					break;
+						break;
 
-				default:
-					{
-						const SDL_UserEvent uev = event.user;
-						if (uev.type == SDL_USER_WINDOW_CREATE)
+					case SDL_MOUSEBUTTONDOWN:
+					case SDL_MOUSEBUTTONUP:
 						{
-							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
-							Msg* msg = (Msg*)uev.data2;
+							const SDL_MouseButtonEvent& mev = event.button;
+							m_eventQueue.postMouseEvent(defaultWindow, mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+						}
+						break;
 
-							m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
-														, msg->m_x
-														, msg->m_y
-														, msg->m_width
-														, msg->m_height
-														, SDL_WINDOW_SHOWN
-														| SDL_WINDOW_OPENGL
-														| SDL_WINDOW_RESIZABLE
-														);
+					case SDL_KEYDOWN:
+					case SDL_KEYUP:
+						{
+							const SDL_KeyboardEvent& kev = event.key;
+							uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
+							Key::Enum key = translateKey(kev.keysym.scancode);
+							m_eventQueue.postKeyEvent(defaultWindow, key, modifiers, kev.state == SDL_PRESSED);
+						}
+						break;
 
-							m_flags[handle.idx] = msg->m_flags;
-
-							SDL_SysWMinfo wmi;
-							SDL_VERSION(&wmi.version);
-							if (SDL_GetWindowWMInfo(m_window[handle.idx], &wmi) )
+					case SDL_WINDOWEVENT:
+						{
+							const SDL_WindowEvent& wev = event.window;
+							switch (wev.event)
 							{
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
-								void* nwh = wmi.info.x11.window;
-#	elif BX_PLATFORM_OSX
-								void* nwh = wmi.info.cocoa.window;
-#	elif BX_PLATFORM_WINDOWS
-								void* nwh = wmi.info.win.window;
-#	endif // BX_PLATFORM_
-								m_eventQueue.postWindowEvent(handle, nwh);
-								m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
-							}
+							case SDL_WINDOWEVENT_RESIZED:
+							case SDL_WINDOWEVENT_SIZE_CHANGED:
+								setWindowSize(defaultWindow, wev.data1, wev.data2);
+								break;
 
-							delete msg;
+							case SDL_WINDOWEVENT_SHOWN:
+							case SDL_WINDOWEVENT_HIDDEN:
+							case SDL_WINDOWEVENT_EXPOSED:
+							case SDL_WINDOWEVENT_MOVED:
+							case SDL_WINDOWEVENT_MINIMIZED:
+							case SDL_WINDOWEVENT_MAXIMIZED:
+							case SDL_WINDOWEVENT_RESTORED:
+							case SDL_WINDOWEVENT_ENTER:
+							case SDL_WINDOWEVENT_LEAVE:
+							case SDL_WINDOWEVENT_FOCUS_GAINED:
+							case SDL_WINDOWEVENT_FOCUS_LOST:
+								break;
+
+							case SDL_WINDOWEVENT_CLOSE:
+								m_eventQueue.postExitEvent();
+								exit = true;
+								break;
+							}
 						}
-						else if (uev.type == SDL_USER_WINDOW_DESTROY)
+						break;
+
+					default:
 						{
-							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
-							m_eventQueue.postWindowEvent(handle);
-							SDL_DestroyWindow(m_window[handle.idx]);
-							m_window[handle.idx] = NULL;
+							const SDL_UserEvent uev = event.user;
+							if (uev.type == SDL_USER_WINDOW_CREATE)
+							{
+								WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
+								Msg* msg = (Msg*)uev.data2;
+
+								m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
+															, msg->m_x
+															, msg->m_y
+															, msg->m_width
+															, msg->m_height
+															, SDL_WINDOW_SHOWN
+															| SDL_WINDOW_OPENGL
+															| SDL_WINDOW_RESIZABLE
+															);
+
+								m_flags[handle.idx] = msg->m_flags;
+
+								SDL_SysWMinfo wmi;
+								SDL_VERSION(&wmi.version);
+								if (SDL_GetWindowWMInfo(m_window[handle.idx], &wmi) )
+								{
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+									void* nwh = wmi.info.x11.window;
+#	elif BX_PLATFORM_OSX
+									void* nwh = wmi.info.cocoa.window;
+#	elif BX_PLATFORM_WINDOWS
+									void* nwh = wmi.info.win.window;
+#	endif // BX_PLATFORM_
+									m_eventQueue.postWindowEvent(handle, nwh);
+									m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
+								}
+
+								delete msg;
+							}
+							else if (uev.type == SDL_USER_WINDOW_DESTROY)
+							{
+								WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
+								m_eventQueue.postWindowEvent(handle);
+								SDL_DestroyWindow(m_window[handle.idx]);
+								m_window[handle.idx] = NULL;
+							}
+							else if (uev.type == SDL_USER_WINDOW_SET_TITLE)
+							{
+								WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
+								Msg* msg = (Msg*)uev.data2;
+								SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
+								delete msg;
+							}
+							else if (uev.type == SDL_USER_WINDOW_SET_POS)
+							{
+								WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
+								Msg* msg = (Msg*)uev.data2;
+								SDL_SetWindowPosition(m_window[handle.idx], msg->m_x, msg->m_y);
+								delete msg;
+							}
+							else if (uev.type == SDL_USER_WINDOW_SET_SIZE)
+							{
+								WindowHandle handle = findHandle(uev.windowID);
+								uint32_t width  = *(uint32_t*)&uev.data1;
+								uint32_t height = *(uint32_t*)&uev.data2;
+								setWindowSize(handle, width, height);
+							}
+							else if (SDL_USER_WINDOW_TOGGLE_FRAME == uev.type)
+							{
+								WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
+								m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
+								SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
+							}
+							else if (SDL_USER_WINDOW_MOUSE_LOCK == uev.type)
+							{
+								SDL_SetRelativeMouseMode(!!uev.code ? SDL_TRUE : SDL_FALSE);
+							}
 						}
-						else if (uev.type == SDL_USER_WINDOW_SET_TITLE)
-						{
-							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
-							Msg* msg = (Msg*)uev.data2;
-							SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
-							delete msg;
-						}
-						else if (uev.type == SDL_USER_WINDOW_SET_POS)
-						{
-							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
-							Msg* msg = (Msg*)uev.data2;
-							SDL_SetWindowPosition(m_window[handle.idx], msg->m_x, msg->m_y);
-							delete msg;
-						}
-						else if (uev.type == SDL_USER_WINDOW_SET_SIZE)
-						{
-							WindowHandle handle = findHandle(uev.windowID);
-							uint32_t width  = *(uint32_t*)&uev.data1;
-							uint32_t height = *(uint32_t*)&uev.data2;
-							setWindowSize(handle, width, height);
-						}
-						else if (SDL_USER_WINDOW_TOGGLE_FRAME == uev.type)
-						{
-							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
-							m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
-							SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
-						}
-						else if (SDL_USER_WINDOW_MOUSE_LOCK == uev.type)
-						{
-							SDL_SetRelativeMouseMode(!!uev.code ? SDL_TRUE : SDL_FALSE);
-						}
+						break;
 					}
-					break;
 				}
 			}
 
+			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 			m_thread.shutdown();
 
 			SDL_DestroyWindow(m_window[0]);

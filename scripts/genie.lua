@@ -13,6 +13,11 @@ newoption {
 	description = "Enable building shared library.",
 }
 
+newoption {
+	trigger = "with-sdl",
+	description = "Enable SDL entry.",
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
@@ -70,6 +75,11 @@ function exampleProject(_name)
 		"bgfx",
 		"example-common",
 	}
+
+	if _OPTIONS["with-sdl"] then
+		defines { "ENTRY_CONFIG_USE_SDL=1" }
+		links   { "SDL2" }
+	end
 
 	configuration { "vs*" }
 		linkoptions {
@@ -143,7 +153,6 @@ function exampleProject(_name)
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",
---			"SDL2",
 		}
 
 	configuration { "xcode4" }
