@@ -282,7 +282,22 @@ namespace entry
 							WindowHandle handle = findHandle(mev.windowID);
 							if (isValid(handle) )
 							{
-								m_eventQueue.postMouseEvent(handle, mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+								MouseButton::Enum button;
+								switch (mev.button)
+								{
+								default:
+								case SDL_BUTTON_LEFT:   button = MouseButton::Left;   break;
+								case SDL_BUTTON_MIDDLE: button = MouseButton::Middle; break;
+								case SDL_BUTTON_RIGHT:  button = MouseButton::Right;  break;
+								}
+
+								m_eventQueue.postMouseEvent(handle
+									, mev.x
+									, mev.y
+									, 0
+									, button
+									, mev.type == SDL_MOUSEBUTTONDOWN
+									);
 							}
 						}
 						break;
