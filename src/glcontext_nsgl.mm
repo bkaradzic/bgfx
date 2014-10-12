@@ -15,6 +15,26 @@ namespace bgfx
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
+
+	struct SwapChainGL
+	{
+		SwapChainGL(void* _nwh)
+		{
+			BX_UNUSED(_nwh);
+		}
+
+		~SwapChainGL()
+		{
+		}
+
+		void makeCurrent()
+		{
+		}
+
+		void swapBuffers()
+		{
+		}
+	};
 	
 	static void* s_opengl = NULL;
 
@@ -94,27 +114,40 @@ namespace bgfx
 		return false;
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
-		BX_CHECK(false, "Shouldn't be called!");
-		return NULL;
+		return BX_NEW(g_allocator, SwapChainGL)(_nwh);
 	}
 
-	void GlContext::destorySwapChain(SwapChainGL*  /*_swapChain*/)
+	void GlContext::destorySwapChain(SwapChainGL* _swapChain)
 	{
-		BX_CHECK(false, "Shouldn't be called!");
+		BX_DELETE(g_allocator, _swapChain);
 	}
 
 	void GlContext::swap(SwapChainGL* _swapChain)
 	{
-		BX_CHECK(NULL == _swapChain, "Shouldn't be called!"); BX_UNUSED(_swapChain);
-		NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
-		[glContext makeCurrentContext];
-		[glContext flushBuffer];
+		if (NULL == _swapChain)
+		{
+			NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
+			[glContext makeCurrentContext];
+			[glContext flushBuffer];
+		}
+		else
+		{
+			_swapChain->makeCurrent();
+			_swapChain->swapBuffers();
+		}
 	}
 
-	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	void GlContext::makeCurrent(SwapChainGL* _swapChain)
 	{
+		if (NULL == _swapChain)
+		{
+		}
+		else
+		{
+			_swapChain->makeCurrent();
+		}
 	}
 
 	void GlContext::import()
