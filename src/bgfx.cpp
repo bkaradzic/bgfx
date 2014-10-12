@@ -3144,7 +3144,7 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle)
 	bgfx::destroyUniform(handle.cpp);
 }
 
-BGFX_C_API void bgfx_clear_color(uint8_t _index, const float _rgba[4])
+BGFX_C_API void bgfx_set_clear_color(uint8_t _index, const float _rgba[4])
 {
 	bgfx::setClearColor(_index, _rgba);
 }
