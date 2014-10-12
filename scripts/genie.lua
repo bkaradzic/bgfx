@@ -79,6 +79,14 @@ function exampleProject(_name)
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
 		links   { "SDL2" }
+
+		configuration { "x32", "windows" }
+			libdirs { "$(SDL2_DIR)/lib/x86" }
+
+		configuration { "x64", "windows" }
+			libdirs { "$(SDL2_DIR)/lib/x64" }
+
+		configuration {}
 	end
 
 	configuration { "vs*" }

@@ -22,6 +22,9 @@ project ("example-common")
 		defines {
 			"ENTRY_CONFIG_USE_SDL=1",
 		}
+		includedirs {
+			"$(SDL2_DIR)/include",
+		}
 	end
 
 	configuration { "xcode4" }
