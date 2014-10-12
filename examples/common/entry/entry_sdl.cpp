@@ -16,6 +16,9 @@
 
 #include <stdio.h>
 #include <bx/thread.h>
+#include <bx/handlealloc.h>
+#include <tinystl/allocator.h>
+#include <tinystl/string.h>
 
 namespace entry
 {
@@ -56,15 +59,37 @@ namespace entry
 
 	static uint32_t s_userEventStart = SDL_USEREVENT;
 
-#define SDL_USER_SET_WINDOW_SIZE     (s_userEventStart+0)
-#define SDL_USER_TOGGLE_WINDOW_FRAME (s_userEventStart+1)
-#define SDL_USER_MOUSE_LOCK          (s_userEventStart+2)
+#define SDL_USER_WINDOW_CREATE       (s_userEventStart+0)
+#define SDL_USER_WINDOW_DESTROY      (s_userEventStart+1)
+#define SDL_USER_WINDOW_SET_TITLE    (s_userEventStart+2)
+#define SDL_USER_WINDOW_SET_POS      (s_userEventStart+3)
+#define SDL_USER_WINDOW_SET_SIZE     (s_userEventStart+4)
+#define SDL_USER_WINDOW_TOGGLE_FRAME (s_userEventStart+5)
+#define SDL_USER_WINDOW_MOUSE_LOCK   (s_userEventStart+6)
+
+	struct Msg
+	{
+		Msg()
+			: m_x(0)
+			, m_y(0)
+			, m_width(0)
+			, m_height(0)
+			, m_flags(0)
+		{
+		}
+
+		int32_t  m_x;
+		int32_t  m_y;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_flags;
+		tinystl::string m_title;
+	};
 
 	struct Context
 	{
 		Context()
-			: m_window(NULL)
-			, m_width(ENTRY_DEFAULT_WIDTH)
+			: m_width(ENTRY_DEFAULT_WIDTH)
 			, m_height(ENTRY_DEFAULT_HEIGHT)
 			, m_aspectRatio(16.0f/9.0f)
 			, m_mouseLock(false)
@@ -154,19 +179,25 @@ namespace entry
 
 			SDL_Init(SDL_INIT_VIDEO);
 
-			m_window = SDL_CreateWindow("bgfx"
+			m_windowAlloc.alloc();
+			m_window[0] = SDL_CreateWindow("bgfx"
 							, SDL_WINDOWPOS_UNDEFINED
 							, SDL_WINDOWPOS_UNDEFINED
 							, m_width
 							, m_height
 							, SDL_WINDOW_SHOWN
-							| SDL_WINDOW_OPENGL
+//							| SDL_WINDOW_OPENGL
 							| SDL_WINDOW_RESIZABLE
 							);
 
-			s_userEventStart = SDL_RegisterEvents(3);
+			m_flags[0] = 0
+				| ENTRY_WINDOW_FLAG_ASPECT_RATIO
+				| ENTRY_WINDOW_FLAG_FRAME
+				;
 
-			bgfx::sdlSetWindow(m_window);
+			s_userEventStart = SDL_RegisterEvents(7);
+
+			bgfx::sdlSetWindow(m_window[0]);
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 
 			// Force window resolution...
@@ -243,19 +274,77 @@ namespace entry
 				default:
 					{
 						const SDL_UserEvent uev = event.user;
-						if (SDL_USER_SET_WINDOW_SIZE == event.type)
+						if (uev.type == SDL_USER_WINDOW_CREATE)
 						{
-							uint32_t width = *(uint32_t*)&uev.data1;
+							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							Msg* msg = (Msg*)uev.data2;
+
+							m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
+														, msg->m_x
+														, msg->m_y
+														, msg->m_width
+														, msg->m_height
+														, SDL_WINDOW_SHOWN
+														| SDL_WINDOW_OPENGL
+														| SDL_WINDOW_RESIZABLE
+														);
+
+							m_flags[handle.idx] = msg->m_flags;
+
+							SDL_SysWMinfo wmi;
+							SDL_VERSION(&wmi.version);
+							if (SDL_GetWindowWMInfo(m_window[handle.idx], &wmi) )
+							{
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+								void* nwh = wmi.info.x11.window;
+#	elif BX_PLATFORM_OSX
+								void* nwh = wmi.info.cocoa.window;
+#	elif BX_PLATFORM_WINDOWS
+								void* nwh = wmi.info.win.window;
+#	endif // BX_PLATFORM_
+								m_eventQueue.postWindowEvent(handle, nwh);
+								m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
+							}
+
+							delete msg;
+						}
+						else if (uev.type == SDL_USER_WINDOW_DESTROY)
+						{
+							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							m_eventQueue.postWindowEvent(handle);
+							SDL_DestroyWindow(m_window[handle.idx]);
+							m_window[handle.idx] = NULL;
+						}
+						else if (uev.type == SDL_USER_WINDOW_SET_TITLE)
+						{
+							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							Msg* msg = (Msg*)uev.data2;
+							SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
+							delete msg;
+						}
+						else if (uev.type == SDL_USER_WINDOW_SET_POS)
+						{
+							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							Msg* msg = (Msg*)uev.data2;
+							SDL_SetWindowPosition(m_window[handle.idx], msg->m_x, msg->m_y);
+							delete msg;
+						}
+						else if (uev.type == SDL_USER_WINDOW_SET_SIZE)
+						{
+							WindowHandle handle = findHandle(uev.windowID);
+							uint32_t width  = *(uint32_t*)&uev.data1;
 							uint32_t height = *(uint32_t*)&uev.data2;
-							setWindowSize(defaultWindow, width, height);
+							setWindowSize(handle, width, height);
 						}
-						else if (SDL_USER_TOGGLE_WINDOW_FRAME == event.type)
+						else if (SDL_USER_WINDOW_TOGGLE_FRAME == uev.type)
 						{
-							DBG("SDL_USER_TOGGLE_WINDOW_FRAME");
+							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
+							SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
 						}
-						else if (SDL_USER_MOUSE_LOCK == event.type)
+						else if (SDL_USER_WINDOW_MOUSE_LOCK == uev.type)
 						{
-							setMouseLock(defaultWindow, !!uev.code);
+							SDL_SetRelativeMouseMode(!!uev.code ? SDL_TRUE : SDL_FALSE);
 						}
 					}
 					break;
@@ -264,19 +353,31 @@ namespace entry
 
 			m_thread.shutdown();
 
-			SDL_DestroyWindow(m_window);
+			SDL_DestroyWindow(m_window[0]);
 			SDL_Quit();
 		}
 
-		void setMousePos(WindowHandle _handle, int32_t _mx, int32_t _my)
+		WindowHandle findHandle(uint32_t _windowId)
 		{
-			BX_UNUSED(_handle, _mx, _my);
+			SDL_Window* window = SDL_GetWindowFromID(_windowId);
+			return findHandle(window);
 		}
 
-		void setMouseLock(WindowHandle _handle, bool _lock)
+		WindowHandle findHandle(SDL_Window* _window)
 		{
-			BX_UNUSED(_handle);
-			SDL_SetRelativeMouseMode(_lock ? SDL_TRUE : SDL_FALSE);
+			bx::LwMutexScope scope(m_lock);
+			for (uint32_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
+			{
+				uint16_t idx = m_windowAlloc.getHandleAt(ii);
+				if (_window == m_window[idx])
+				{
+					WindowHandle handle = { idx };
+					return handle;
+				}
+			}
+
+			WindowHandle invalid = { UINT16_MAX };
+			return invalid;
 		}
 
 		void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height, bool _force = false)
@@ -301,23 +402,20 @@ namespace entry
 					m_width = uint32_t(float(m_height)*aspectRatio);
 				}
 
-				SDL_SetWindowSize(m_window, m_width, m_height);
+				SDL_SetWindowSize(m_window[_handle.idx], m_width, m_height);
 				m_eventQueue.postSizeEvent(_handle, m_width, m_height);
 			}
-		}
-
-		void setWindowTitle(WindowHandle _handle, const char* _title)
-		{
-			BX_UNUSED(_handle);
-			SDL_SetWindowTitle(m_window, _title);
 		}
 
 		MainThreadEntry m_mte;
 		bx::Thread m_thread;
 
 		EventQueue m_eventQueue;
+		bx::LwMutex m_lock;
 
-		SDL_Window* m_window;
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		SDL_Window* m_window[ENTRY_CONFIG_MAX_WINDOWS];
+		uint32_t m_flags[ENTRY_CONFIG_MAX_WINDOWS];
 
 		uint32_t m_width;
 		uint32_t m_height;
@@ -347,27 +445,67 @@ namespace entry
 
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
-		BX_UNUSED(_x, _y, _width, _height, _flags, _title);
-		WindowHandle handle = { UINT16_MAX };
+		bx::LwMutexScope scope(s_ctx.m_lock);
+		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
+
+		if (UINT16_MAX != handle.idx)
+		{
+			Msg* msg = new Msg;
+			msg->m_x      = _x;
+			msg->m_y      = _y;
+			msg->m_width  = _width;
+			msg->m_height = _height;
+			msg->m_title  = _title;
+			msg->m_flags  = _flags;
+
+			SDL_Event event;
+			SDL_UserEvent& uev = event.user;
+			uev.type = SDL_USER_WINDOW_CREATE;
+			uev.data1 = reinterpret_cast<void*>(handle.idx);
+			uev.data2 = msg;
+			SDL_PushEvent(&event);
+		}
+
 		return handle;
 	}
 
 	void destroyWindow(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		if (UINT16_MAX != _handle.idx)
+		{
+			SDL_Event event;
+			SDL_UserEvent& uev = event.user;
+			uev.type = SDL_USER_WINDOW_DESTROY;
+			uev.data1 = reinterpret_cast<void*>(_handle.idx);
+			uev.data2 = NULL;
+			SDL_PushEvent(&event);
+
+			bx::LwMutexScope scope(s_ctx.m_lock);
+			s_ctx.m_windowAlloc.free(_handle.idx);
+		}
 	}
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		BX_UNUSED(_handle, _x, _y);
+		Msg* msg = new Msg;
+		msg->m_x = _x;
+		msg->m_y = _y;
+
+		SDL_Event event;
+		SDL_UserEvent& uev = event.user;
+		uev.type = SDL_USER_WINDOW_SET_POS;
+		uev.data1 = reinterpret_cast<void*>(_handle.idx);
+		uev.data2 = msg;
+		SDL_PushEvent(&event);
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_handle);
+
 		SDL_Event event;
 		SDL_UserEvent& uev = event.user;
-		uev.type = SDL_USER_SET_WINDOW_SIZE;
+		uev.type = SDL_USER_WINDOW_SET_SIZE;
 		uev.data1 = reinterpret_cast<void*>(_width);
 		uev.data2 = reinterpret_cast<void*>(_height);
 		SDL_PushEvent(&event);
@@ -375,12 +513,25 @@ namespace entry
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		s_ctx.setWindowTitle(_handle, _title);
+		Msg* msg = new Msg;
+		msg->m_title = _title;
+
+		SDL_Event event;
+		SDL_UserEvent& uev = event.user;
+		uev.type = SDL_USER_WINDOW_SET_TITLE;
+		uev.data1 = reinterpret_cast<void*>(_handle.idx);
+		uev.data2 = msg;
+		SDL_PushEvent(&event);
 	}
 
 	void toggleWindowFrame(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		SDL_Event event;
+		SDL_UserEvent& uev = event.user;
+		uev.type = SDL_USER_WINDOW_TOGGLE_FRAME;
+		uev.data1 = reinterpret_cast<void*>(_handle.idx);
+		uev.data2 = NULL;
+		SDL_PushEvent(&event);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
@@ -388,9 +539,8 @@ namespace entry
 		BX_UNUSED(_handle);
 		SDL_Event event;
 		SDL_UserEvent& uev = event.user;
-		uev.type = SDL_USER_MOUSE_LOCK;
+		uev.type = SDL_USER_WINDOW_MOUSE_LOCK;
 		uev.code = _lock;
-		DBG("setMouseLock %d", event.type);
 		SDL_PushEvent(&event);
 	}
 
