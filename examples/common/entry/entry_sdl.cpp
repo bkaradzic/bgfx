@@ -268,7 +268,10 @@ namespace entry
 						{
 							const SDL_MouseMotionEvent& mev = event.motion;
 							WindowHandle handle = findHandle(mev.windowID);
-							m_eventQueue.postMouseEvent(handle, mev.x, mev.y, 0);
+							if (isValid(handle) )
+							{
+								m_eventQueue.postMouseEvent(handle, mev.x, mev.y, 0);
+							}
 						}
 						break;
 
@@ -277,7 +280,10 @@ namespace entry
 						{
 							const SDL_MouseButtonEvent& mev = event.button;
 							WindowHandle handle = findHandle(mev.windowID);
-							m_eventQueue.postMouseEvent(handle, mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+							if (isValid(handle) )
+							{
+								m_eventQueue.postMouseEvent(handle, mev.x, mev.y, 0, MouseButton::Left, mev.type == SDL_MOUSEBUTTONDOWN);
+							}
 						}
 						break;
 
@@ -286,9 +292,12 @@ namespace entry
 						{
 							const SDL_KeyboardEvent& kev = event.key;
 							WindowHandle handle = findHandle(kev.windowID);
-							uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
-							Key::Enum key = translateKey(kev.keysym.scancode);
-							m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+							if (isValid(handle) )
+							{
+								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
+								Key::Enum key = translateKey(kev.keysym.scancode);
+								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+							}
 						}
 						break;
 
@@ -367,9 +376,12 @@ namespace entry
 							case SDL_USER_WINDOW_DESTROY:
 								{
 									WindowHandle handle = getWindowHandle(uev);
-									m_eventQueue.postWindowEvent(handle);
-									SDL_DestroyWindow(m_window[handle.idx]);
-									m_window[handle.idx] = NULL;
+									if (isValid(handle) )
+									{
+										m_eventQueue.postWindowEvent(handle);
+										SDL_DestroyWindow(m_window[handle.idx]);
+										m_window[handle.idx] = NULL;
+									}
 								}
 								break;
 
@@ -377,7 +389,10 @@ namespace entry
 								{
 									WindowHandle handle = getWindowHandle(uev);
 									Msg* msg = (Msg*)uev.data2;
-									SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
+									if (isValid(handle) )
+									{
+										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
+									}
 									delete msg;
 								}
 								break;
@@ -395,15 +410,22 @@ namespace entry
 								{
 									WindowHandle handle = getWindowHandle(uev);
 									Msg* msg = (Msg*)uev.data2;
-									setWindowSize(handle, msg->m_width, msg->m_height);
+									if (isValid(handle) )
+									{
+										setWindowSize(handle, msg->m_width, msg->m_height);
+									}
+									delete msg;
 								}
 								break;
 
 							case SDL_USER_WINDOW_TOGGLE_FRAME:
 								{
 									WindowHandle handle = getWindowHandle(uev);
-									m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
-									SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
+									if (isValid(handle) )
+									{
+										m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
+										SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
+									}
 								}
 								break;
 
