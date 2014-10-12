@@ -276,7 +276,7 @@ namespace entry
 						const SDL_UserEvent uev = event.user;
 						if (uev.type == SDL_USER_WINDOW_CREATE)
 						{
-							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
 							Msg* msg = (Msg*)uev.data2;
 
 							m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
@@ -310,21 +310,21 @@ namespace entry
 						}
 						else if (uev.type == SDL_USER_WINDOW_DESTROY)
 						{
-							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
 							m_eventQueue.postWindowEvent(handle);
 							SDL_DestroyWindow(m_window[handle.idx]);
 							m_window[handle.idx] = NULL;
 						}
 						else if (uev.type == SDL_USER_WINDOW_SET_TITLE)
 						{
-							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
 							Msg* msg = (Msg*)uev.data2;
 							SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
 							delete msg;
 						}
 						else if (uev.type == SDL_USER_WINDOW_SET_POS)
 						{
-							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
 							Msg* msg = (Msg*)uev.data2;
 							SDL_SetWindowPosition(m_window[handle.idx], msg->m_x, msg->m_y);
 							delete msg;
@@ -338,7 +338,7 @@ namespace entry
 						}
 						else if (SDL_USER_WINDOW_TOGGLE_FRAME == uev.type)
 						{
-							WindowHandle handle = { reinterpret_cast<uint16_t>(uev.data1) };
+							WindowHandle handle = { *reinterpret_cast<const uint16_t*>(&uev.data1) };
 							m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
 							SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
 						}
