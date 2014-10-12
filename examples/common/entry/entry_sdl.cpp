@@ -215,11 +215,10 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_Z,            Key::KeyZ);
 		}
 
-		void run()
+		void run(int _argc, char** _argv)
 		{
-			const char* argv[1] = { "sdl.so" };
-			m_mte.m_argc = 1;
-			m_mte.m_argv = const_cast<char**>(argv);
+			m_mte.m_argc = _argc;
+			m_mte.m_argv = _argv;
 
 			SDL_Init(SDL_INIT_VIDEO);
 
@@ -634,11 +633,10 @@ namespace entry
 
 } // namespace entry
 
-int main(int _argc, const char* _argv[])
+int main(int _argc, char** _argv)
 {
-	BX_UNUSED(_argc, _argv);
 	using namespace entry;
-	s_ctx.run();
+	s_ctx.run(_argc, _argv);
 	return 0;
 }
 
