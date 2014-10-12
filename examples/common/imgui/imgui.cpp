@@ -3277,7 +3277,7 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 		, _rgb[2]
 		);
 
-	if (imguiCollapse(_text, buf, _activated, _enabled) )
+	if (imguiCollapse(_text, buf, _activated) )
 	{
 		_activated = !_activated;
 	}
