@@ -557,6 +557,14 @@ RENDERDOC_IMPORT
 			, m_fsChanges(0)
 			, m_rtMsaa(false)
 		{
+		}
+
+		~RendererContextD3D11()
+		{
+		}
+
+		void init()
+		{
 			m_renderdocdll = loadRenderDoc();
 
 			m_fbh.idx = invalidHandle;
@@ -771,7 +779,7 @@ RENDERDOC_IMPORT
 			postReset();
 		}
 
-		~RendererContextD3D11()
+		void shutdown()
 		{
 			preReset();
 
@@ -2066,11 +2074,13 @@ RENDERDOC_IMPORT
 	RendererContextI* rendererCreateD3D11()
 	{
 		s_renderD3D11 = BX_NEW(g_allocator, RendererContextD3D11);
+		s_renderD3D11->init();
 		return s_renderD3D11;
 	}
 
 	void rendererDestroyD3D11()
 	{
+		s_renderD3D11->shutdown();
 		BX_DELETE(g_allocator, s_renderD3D11);
 		s_renderD3D11 = NULL;
 	}

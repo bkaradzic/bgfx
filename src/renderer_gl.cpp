@@ -853,6 +853,14 @@ namespace bgfx
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
 		{
+		}
+
+		~RendererContextGL()
+		{
+		}
+
+		void init()
+		{
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -1349,7 +1357,7 @@ namespace bgfx
 			}
 		}
 
-		~RendererContextGL()
+		void shutdown()
 		{
 			if (m_vaoSupport)
 			{
@@ -2305,11 +2313,13 @@ namespace bgfx
 	RendererContextI* rendererCreateGL()
 	{
 		s_renderGL = BX_NEW(g_allocator, RendererContextGL);
+		s_renderGL->init();
 		return s_renderGL;
 	}
 
 	void rendererDestroyGL()
 	{
+		s_renderGL->shutdown();
 		BX_DELETE(g_allocator, s_renderGL);
 		s_renderGL = NULL;
 	}
