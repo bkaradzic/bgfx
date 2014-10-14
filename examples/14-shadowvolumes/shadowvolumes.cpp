@@ -1641,7 +1641,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const float4_t onei = float4_isplat(1);
 			const float4_t tmp4 = float4_isub(tmp3, onei);
 
-			BX_ALIGN_STRUCT_16(int32_t res[4]);
+			BX_ALIGN_DECL_16(int32_t res[4]);
 			float4_st(&res, tmp4);
 
 			for (uint16_t jj = 0; jj < 2; ++jj)

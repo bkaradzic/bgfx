@@ -717,7 +717,7 @@ namespace bgfx
 	};
 #undef SORT_KEY_RENDER_DRAW
 
-	BX_ALIGN_STRUCT_16(struct) Matrix4
+	BX_ALIGN_DECL_16(struct) Matrix4
 	{
 		union
 		{
@@ -1137,10 +1137,8 @@ namespace bgfx
 		VertexDeclHandle m_decl;
 	};
 
-	struct Frame
+	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
-		BX_CACHE_LINE_ALIGN_MARKER();
-
 		Frame()
 			: m_waitSubmit(0)
 			, m_waitRender(0)
@@ -3054,9 +3052,8 @@ namespace bgfx
 		bool m_rendererInitialized;
 		bool m_exit;
 
-		BX_CACHE_LINE_ALIGN_MARKER();
 		typedef UpdateBatchT<256> TextureUpdateBatch;
-		TextureUpdateBatch m_textureUpdateBatch;
+		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);
 	};
 
 #undef BGFX_API_FUNC
