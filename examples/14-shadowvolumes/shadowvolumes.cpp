@@ -120,11 +120,6 @@ static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_texStencil;
 static bgfx::FrameBufferHandle s_stencilFb;
 
-inline uint32_t uint32_max(uint32_t _a, uint32_t _b)
-{
-	return _a > _b ? _a : _b;
-}
-
 static void shaderFilePath(char* _out, const char* _name)
 {
 	strcpy(_out, s_shaderPath);
