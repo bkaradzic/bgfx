@@ -27,6 +27,7 @@
 #define LOOP_ANALYSIS_H
 
 #include "ir.h"
+#include "glsl_types.h"
 #include "program/hash_table.h"
 
 /**
@@ -53,7 +54,8 @@ set_loop_controls(exec_list *instructions, loop_state *ls);
 
 
 extern bool
-unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations);
+unroll_loops(exec_list *instructions, loop_state *ls,
+             const struct gl_shader_compiler_options *options);
 
 ir_rvalue *
 find_initial_value(ir_loop *loop, ir_variable *var);
@@ -140,22 +142,7 @@ public:
       hash_table_dtor(this->var_hash);
    }
 
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *lvs = ralloc_size(ctx, size);
-      assert(lvs != NULL);
-
-      ralloc_set_destructor(lvs, (void (*)(void*)) destructor);
-
-      return lvs;
-   }
-
-private:
-   static void
-   destructor(loop_variable_state *lvs)
-   {
-      lvs->~loop_variable_state();
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(loop_variable_state)
 };
 
 
@@ -208,21 +195,16 @@ public:
    inline bool is_loop_constant() const
    {
       const bool is_const = (this->num_assignments == 0)
-	 || ((this->num_assignments == 1)
+         || (((this->num_assignments == 1)
 	     && !this->conditional_or_nested_assignment
 	     && !this->read_before_write
-	     && this->rhs_clean);
+             && this->rhs_clean) || this->var->data.read_only);
 
       /* If the RHS of *the* assignment is clean, then there must be exactly
        * one assignment of the variable.
        */
       assert((this->rhs_clean && (this->num_assignments == 1))
 	     || !this->rhs_clean);
-
-      /* Variables that are marked read-only *MUST* be loop constant.
-       */
-      assert(!this->var->data.read_only
-            || (this->var->data.read_only && is_const));
 
       return is_const;
    }

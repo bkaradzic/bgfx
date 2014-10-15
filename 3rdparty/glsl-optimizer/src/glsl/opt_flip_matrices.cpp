@@ -45,8 +45,7 @@ public:
       mvp_transpose = NULL;
       texmat_transpose = NULL;
 
-      foreach_list(n, instructions) {
-         ir_instruction *ir = (ir_instruction *) n;
+      foreach_in_list(ir_instruction, ir, instructions) {
          ir_variable *var = ir->as_variable();
          if (!var)
             continue;

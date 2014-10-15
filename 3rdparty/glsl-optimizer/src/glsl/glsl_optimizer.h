@@ -40,7 +40,26 @@ enum glslopt_options {
 enum glslopt_target {
 	kGlslTargetOpenGL = 0,
 	kGlslTargetOpenGLES20 = 1,
-	kGlslTargetOpenGLES30 = 2
+	kGlslTargetOpenGLES30 = 2,
+	kGlslTargetMetal = 3,
+};
+
+// Type info
+enum glslopt_basic_type {
+	kGlslTypeFloat = 0,
+	kGlslTypeInt,
+	kGlslTypeBool,
+	kGlslTypeTex2D,
+	kGlslTypeTex3D,
+	kGlslTypeTexCube,
+	kGlslTypeOther,
+	kGlslTypeCount
+};
+enum glslopt_precision {
+	kGlslPrecHigh = 0,
+	kGlslPrecMedium,
+	kGlslPrecLow,
+	kGlslPrecCount
 };
 
 glslopt_ctx* glslopt_initialize (glslopt_target target);
@@ -56,7 +75,12 @@ const char* glslopt_get_log (glslopt_shader* shader);
 void glslopt_shader_delete (glslopt_shader* shader);
 
 int glslopt_shader_get_input_count (glslopt_shader* shader);
-const char* glslopt_shader_get_input_name (glslopt_shader* shader, int index);
+void glslopt_shader_get_input_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
+int glslopt_shader_get_uniform_count (glslopt_shader* shader);
+int glslopt_shader_get_uniform_total_size (glslopt_shader* shader);
+void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
+int glslopt_shader_get_texture_count (glslopt_shader* shader);
+void glslopt_shader_get_texture_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
 
 // Get *very* approximate shader stats:
 // Number of math, texture and flow control instructions.

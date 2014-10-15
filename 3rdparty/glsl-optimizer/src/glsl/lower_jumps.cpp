@@ -510,16 +510,16 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
       /* Note: since visiting a node may change that node's next
        * pointer, we can't use visit_exec_list(), because
        * visit_exec_list() caches the node's next pointer before
-       * visiting it.  So we use foreach_list() instead.
+       * visiting it.  So we use foreach_in_list() instead.
        *
-       * foreach_list() isn't safe if the node being visited gets
+       * foreach_in_list() isn't safe if the node being visited gets
        * removed, but fortunately this visitor doesn't do that.
        */
 
       block_record saved_block = this->block;
       this->block = block_record();
-      foreach_list(node, list) {
-         ((ir_instruction *) node)->accept(this);
+      foreach_in_list(ir_instruction, node, list) {
+         node->accept(this);
       }
       block_record ret = this->block;
       this->block = saved_block;

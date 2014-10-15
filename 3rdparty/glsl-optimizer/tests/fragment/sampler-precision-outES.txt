@@ -1,7 +1,7 @@
 uniform sampler2D texlow;
 uniform mediump sampler2D texmed;
 uniform highp sampler2D texhigh;
-uniform samplerCube cubelow;
+uniform lowp samplerCube cubelow;
 uniform mediump samplerCube cubemed;
 uniform highp samplerCube cubehigh;
 varying highp vec4 varUV;
@@ -13,26 +13,30 @@ void main ()
   c_1 = tmpvar_2;
   mediump vec4 tmpvar_3;
   tmpvar_3 = texture2D (texmed, varUV.xy);
-  mediump vec4 tmpvar_4;
-  tmpvar_4 = (c_1 + tmpvar_3);
-  highp vec4 tmpvar_5;
-  tmpvar_5 = texture2D (texhigh, varUV.xy);
-  highp vec4 tmpvar_6;
-  tmpvar_6 = (tmpvar_4 + tmpvar_5);
-  c_1 = tmpvar_6;
-  lowp vec4 tmpvar_7;
-  tmpvar_7 = textureCube (cubelow, varUV.xyz);
-  mediump vec4 tmpvar_8;
-  tmpvar_8 = textureCube (cubemed, varUV.xyz);
-  mediump vec4 tmpvar_9;
-  tmpvar_9 = ((c_1 + tmpvar_7) + tmpvar_8);
-  highp vec4 tmpvar_10;
-  tmpvar_10 = textureCube (cubehigh, varUV.xyz);
-  highp vec4 tmpvar_11;
-  tmpvar_11 = (tmpvar_9 + tmpvar_10);
-  c_1 = tmpvar_11;
+  c_1 = (c_1 + tmpvar_3);
+  highp vec4 tmpvar_4;
+  tmpvar_4 = texture2D (texhigh, varUV.xy);
+  c_1 = (c_1 + tmpvar_4);
+  lowp vec4 tmpvar_5;
+  tmpvar_5 = textureCube (cubelow, varUV.xyz);
+  c_1 = (c_1 + tmpvar_5);
+  mediump vec4 tmpvar_6;
+  tmpvar_6 = textureCube (cubemed, varUV.xyz);
+  c_1 = (c_1 + tmpvar_6);
+  highp vec4 tmpvar_7;
+  tmpvar_7 = textureCube (cubehigh, varUV.xyz);
+  c_1 = (c_1 + tmpvar_7);
   gl_FragData[0] = c_1;
 }
 
 
-// inputs: 1, stats: 5 alu 6 tex 0 flow
+// stats: 5 alu 6 tex 0 flow
+// inputs: 1
+//  #0: varUV (high float) 4x1 [-1]
+// textures: 6
+//  #0: texlow (low 2d) 0x0 [-1]
+//  #1: texmed (medium 2d) 0x0 [-1]
+//  #2: texhigh (high 2d) 0x0 [-1]
+//  #3: cubelow (low cube) 0x0 [-1]
+//  #4: cubemed (medium cube) 0x0 [-1]
+//  #5: cubehigh (high cube) 0x0 [-1]

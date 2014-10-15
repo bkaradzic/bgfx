@@ -46,6 +46,14 @@ process_block(void *mem_ctx, struct hash_table *ht, ir_variable *var)
       b->type = block_type;
       b->has_instance_name = var->is_interface_instance();
 
+      if (var->data.explicit_binding) {
+         b->has_binding = true;
+         b->binding = var->data.binding;
+      } else {
+         b->has_binding = false;
+         b->binding = 0;
+      }
+
       _mesa_hash_table_insert(ht, h, var->get_interface_type()->name,
 			      (void *) b);
       return b;
@@ -62,6 +70,45 @@ process_block(void *mem_ctx, struct hash_table *ht, ir_variable *var)
 
    assert(!"Should not get here.");
    return NULL;
+}
+
+ir_visitor_status
+link_uniform_block_active_visitor::visit(ir_variable *var)
+{
+   if (!var->is_in_uniform_block())
+      return visit_continue;
+
+   const glsl_type *const block_type = var->is_interface_instance()
+      ? var->type : var->get_interface_type();
+
+   /* Section 2.11.6 (Uniform Variables) of the OpenGL ES 3.0.3 spec says:
+    *
+    *     "All members of a named uniform block declared with a shared or
+    *     std140 layout qualifier are considered active, even if they are not
+    *     referenced in any shader in the program. The uniform block itself is
+    *     also considered active, even if no member of the block is
+    *     referenced."
+    */
+   if (block_type->interface_packing == GLSL_INTERFACE_PACKING_PACKED)
+      return visit_continue;
+
+   /* Process the block.  Bail if there was an error.
+    */
+   link_uniform_block_active *const b =
+      process_block(this->mem_ctx, this->ht, var);
+   if (b == NULL) {
+      linker_error(this->prog,
+                   "uniform block `%s' has mismatching definitions",
+                   var->get_interface_type()->name);
+      this->success = false;
+      return visit_stop;
+   }
+
+   assert(b->num_array_elements == 0);
+   assert(b->array_elements == NULL);
+   assert(b->type != NULL);
+
+   return visit_continue;
 }
 
 ir_visitor_status
@@ -101,32 +148,44 @@ link_uniform_block_active_visitor::visit_enter(ir_dereference_array *ir)
    assert((b->num_array_elements == 0) == (b->array_elements == NULL));
    assert(b->type != NULL);
 
-   /* Determine whether or not this array index has already been added to the
-    * list of active array indices.  At this point all constant folding must
-    * have occured, and the array index must be a constant.
-    */
    ir_constant *c = ir->array_index->as_constant();
-   assert(c != NULL);
 
-   const unsigned idx = c->get_uint_component(0);
+   if (c) {
+      /* Index is a constant, so mark just that element used, if not already */
+      const unsigned idx = c->get_uint_component(0);
 
-   unsigned i;
-   for (i = 0; i < b->num_array_elements; i++) {
-      if (b->array_elements[i] == idx)
-	 break;
-   }
+      unsigned i;
+      for (i = 0; i < b->num_array_elements; i++) {
+         if (b->array_elements[i] == idx)
+            break;
+      }
 
-   assert(i <= b->num_array_elements);
+      assert(i <= b->num_array_elements);
 
-   if (i == b->num_array_elements) {
-      b->array_elements = reralloc(this->mem_ctx,
-				   b->array_elements,
-				   unsigned,
-				   b->num_array_elements + 1);
+      if (i == b->num_array_elements) {
+         b->array_elements = reralloc(this->mem_ctx,
+                                      b->array_elements,
+                                      unsigned,
+                                      b->num_array_elements + 1);
 
-      b->array_elements[b->num_array_elements] = idx;
+         b->array_elements[b->num_array_elements] = idx;
 
-      b->num_array_elements++;
+         b->num_array_elements++;
+      }
+   } else {
+      /* The array index is not a constant, so mark the entire array used. */
+      assert(b->type->is_array());
+      if (b->num_array_elements < b->type->length) {
+         b->num_array_elements = b->type->length;
+         b->array_elements = reralloc(this->mem_ctx,
+                                      b->array_elements,
+                                      unsigned,
+                                      b->num_array_elements);
+
+         for (unsigned i = 0; i < b->num_array_elements; i++) {
+            b->array_elements[i] = i;
+         }
+      }
    }
 
    return visit_continue_with_parent;

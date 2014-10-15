@@ -6,22 +6,29 @@ uniform vec4 unity_Ambient;
 void main ()
 {
   vec4 light_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  vec4 c_2;
+  c_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
   float x_3;
-  x_3 = (tmpvar_2.w - _Cutoff);
+  x_3 = (c_2.w - _Cutoff);
   if ((x_3 < 0.0)) {
     discard;
   };
-  vec4 tmpvar_4;
-  tmpvar_4 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light_1.w = tmpvar_4.w;
-  light_1.xyz = (tmpvar_4.xyz + unity_Ambient.xyz);
-  vec4 c_5;
-  c_5.xyz = (tmpvar_2.xyz * light_1.xyz);
-  c_5.w = tmpvar_2.w;
-  gl_FragData[0] = c_5;
+  light_1 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_1.xyz = (light_1.xyz + unity_Ambient.xyz);
+  vec4 c_4;
+  c_4.xyz = (c_2.xyz * light_1.xyz);
+  c_4.w = c_2.w;
+  gl_FragData[0] = c_4;
 }
 
 
-// inputs: 1, stats: 7 alu 3 tex 1 flow
+// stats: 7 alu 3 tex 1 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// uniforms: 3 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+//  #1: _Cutoff (high float) 1x1 [-1]
+//  #2: unity_Ambient (high float) 4x1 [-1]
+// textures: 2
+//  #0: _LightBuffer (high 2d) 0x0 [-1]
+//  #1: _MainTex (high 2d) 0x0 [-1]

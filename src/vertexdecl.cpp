@@ -23,7 +23,7 @@ namespace bgfx
 		{  4,  8, 12, 16 },
 	};
 
-	static const uint8_t s_attribTypeSizeDx11[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeDx1x[AttribType::Count][4] =
 	{
 		{  1,  2,  4,  4 },
 		{  2,  4,  8,  8 },
@@ -39,22 +39,24 @@ namespace bgfx
 		{  4,  8, 12, 16 },
 	};
 
-	static const uint8_t (*s_attribTypeSize[RendererType::Count])[AttribType::Count][4] =
+	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
 #if BGFX_CONFIG_RENDERER_DIRECT3D9
 		&s_attribTypeSizeDx9,
-#elif BGFX_CONFIG_RENDERER_DIRECT3D11
-		&s_attribTypeSizeDx11,
+#elif BGFX_CONFIG_RENDERER_DIRECT3D11 || BGFX_CONFIG_RENDERER_DIRECT3D12
+		&s_attribTypeSizeDx1x,
 #elif BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES
 		&s_attribTypeSizeGl,
 #else
 		&s_attribTypeSizeDx9,
 #endif // BGFX_CONFIG_RENDERER_
-		&s_attribTypeSizeDx9,
-		&s_attribTypeSizeDx11,
-		&s_attribTypeSizeGl,
-		&s_attribTypeSizeGl,
+		&s_attribTypeSizeDx9,  // Direct3D9
+		&s_attribTypeSizeDx1x, // Direct3D11
+		&s_attribTypeSizeDx1x, // Direct3D12
+		&s_attribTypeSizeGl,   // OpenGLES
+		&s_attribTypeSizeGl,   // OpenGL
 	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == bgfx::RendererType::Count);
 
 	void initAttribTypeSizeTable(RendererType::Enum _type)
 	{

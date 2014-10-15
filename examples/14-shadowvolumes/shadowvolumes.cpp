@@ -120,11 +120,6 @@ static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_texStencil;
 static bgfx::FrameBufferHandle s_stencilFb;
 
-inline uint32_t uint32_max(uint32_t _a, uint32_t _b)
-{
-	return _a > _b ? _a : _b;
-}
-
 static void shaderFilePath(char* _out, const char* _name)
 {
 	strcpy(_out, s_shaderPath);
@@ -1641,7 +1636,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const float4_t onei = float4_isplat(1);
 			const float4_t tmp4 = float4_isub(tmp3, onei);
 
-			BX_ALIGN_STRUCT_16(int32_t res[4]);
+			BX_ALIGN_DECL_16(int32_t res[4]);
 			float4_st(&res, tmp4);
 
 			for (uint16_t jj = 0; jj < 2; ++jj)

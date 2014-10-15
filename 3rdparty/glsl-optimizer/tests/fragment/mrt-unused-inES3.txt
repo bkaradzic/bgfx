@@ -1,0 +1,15 @@
+#version 300 es
+
+// Defines output as an array of 4 colors,
+// but writes to only one.
+#define gl_FragColor _glesFragData[0]
+#define gl_FragData _glesFragData
+layout(location = 0) out mediump vec4 _glesFragData[4];
+
+uniform highp vec4 _Color;
+in lowp vec4 xlv_COLOR0;
+
+void main() {
+    lowp vec4 c = xlv_COLOR0 * _Color;
+    gl_FragData[0] = c;
+}

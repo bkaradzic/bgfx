@@ -13,6 +13,11 @@ newoption {
 	description = "Enable building shared library.",
 }
 
+newoption {
+	trigger = "with-sdl",
+	description = "Enable SDL entry.",
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
@@ -44,6 +49,14 @@ toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
 function copyLib()
 end
 
+if _OPTIONS["with-sdl"] then
+	if os.is("windows") then
+		if not os.getenv("SDL2_DIR") then
+			print("Set SDL2_DIR enviroment variable.")
+		end
+	end
+end
+
 function exampleProject(_name)
 
 	project ("example-" .. _name)
@@ -70,6 +83,19 @@ function exampleProject(_name)
 		"bgfx",
 		"example-common",
 	}
+
+	if _OPTIONS["with-sdl"] then
+		defines { "ENTRY_CONFIG_USE_SDL=1" }
+		links   { "SDL2" }
+
+		configuration { "x32", "windows" }
+			libdirs { "$(SDL2_DIR)/lib/x86" }
+
+		configuration { "x64", "windows" }
+			libdirs { "$(SDL2_DIR)/lib/x64" }
+
+		configuration {}
+	end
 
 	configuration { "vs*" }
 		linkoptions {
@@ -143,7 +169,6 @@ function exampleProject(_name)
 		links {
 			"Cocoa.framework",
 			"OpenGL.framework",
---			"SDL2",
 		}
 
 	configuration { "xcode4" }

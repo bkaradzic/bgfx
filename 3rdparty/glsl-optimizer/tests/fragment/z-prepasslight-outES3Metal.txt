@@ -1,0 +1,189 @@
+#include <metal_stdlib>
+using namespace metal;
+struct xlatMtlShaderInput {
+  float4 xlv_TEXCOORD0;
+  float3 xlv_TEXCOORD1;
+};
+struct xlatMtlShaderOutput {
+  half4 _fragData [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float4x4 _CameraToWorld;
+  float4 _LightColor;
+  float4x4 _LightMatrix0;
+  float4 _LightPos;
+  float4 _LightPositionRange;
+  float4 _LightShadowData;
+  float4 _ProjectionParams;
+  float3 _WorldSpaceCameraPos;
+  float4 _ZBufferParams;
+  float4 unity_LightmapFade;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]]
+  ,   texture2d<half> _CameraNormalsTexture [[texture(1)]], sampler _mtlsmp__CameraNormalsTexture [[sampler(1)]]
+  ,   texturecube<half> _LightTexture0 [[texture(2)]], sampler _mtlsmp__LightTexture0 [[sampler(2)]]
+  ,   texture2d<half> _LightTextureB0 [[texture(3)]], sampler _mtlsmp__LightTextureB0 [[sampler(3)]]
+  ,   texturecube<half> _ShadowMapTexture [[texture(4)]], sampler _mtlsmp__ShadowMapTexture [[sampler(4)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  half4 res_1;
+  float spec_2;
+  half3 h_3;
+  float atten_4;
+  half3 lightDir_5;
+  float3 tolight_6;
+  float3 wpos_7;
+  float depth_8;
+  half3 normal_9;
+  half4 nspec_10;
+  float2 uv_11;
+  uv_11 = (_mtl_i.xlv_TEXCOORD0.xy / _mtl_i.xlv_TEXCOORD0.w);
+  half4 tmpvar_12;
+  tmpvar_12 = _CameraNormalsTexture.sample(_mtlsmp__CameraNormalsTexture, (float2)(uv_11));
+  nspec_10 = tmpvar_12;
+  normal_9 = ((nspec_10.xyz * (half)2.0) - (half)1.0);
+  normal_9 = normalize(normal_9);
+  half4 tmpvar_13;
+  tmpvar_13 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(uv_11));
+  depth_8 = float(tmpvar_13.x);
+  float tmpvar_14;
+  tmpvar_14 = (1.0/(((_mtl_u._ZBufferParams.x * depth_8) + _mtl_u._ZBufferParams.y)));
+  depth_8 = tmpvar_14;
+  float4 tmpvar_15;
+  tmpvar_15.w = 1.0;
+  tmpvar_15.xyz = ((_mtl_i.xlv_TEXCOORD1 * (_mtl_u._ProjectionParams.z / _mtl_i.xlv_TEXCOORD1.z)) * tmpvar_14);
+  wpos_7 = (_mtl_u._CameraToWorld * tmpvar_15).xyz;
+  tolight_6 = (wpos_7 - _mtl_u._LightPos.xyz);
+  float3 tmpvar_16;
+  tmpvar_16 = normalize(tolight_6);
+  lightDir_5 = half3(-(tmpvar_16));
+  float2 tmpvar_17;
+  tmpvar_17 = float2((dot (tolight_6, tolight_6) * _mtl_u._LightPos.w));
+  half4 tmpvar_18;
+  tmpvar_18 = _LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)(tmpvar_17));
+  atten_4 = float(tmpvar_18.w);
+  float mydist_19;
+  mydist_19 = (sqrt(dot (tolight_6, tolight_6)) * _mtl_u._LightPositionRange.w);
+  mydist_19 = (mydist_19 * 0.97);
+  half4 shadows_20;
+  float4 shadowVals_21;
+  float3 vec_22;
+  vec_22 = (tolight_6 + float3(0.0078125, 0.0078125, 0.0078125));
+  float4 packDist_23;
+  half4 tmpvar_24;
+  tmpvar_24 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_22));
+  packDist_23 = float4(tmpvar_24);
+  shadowVals_21.x = dot (packDist_23, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float3 vec_25;
+  vec_25 = (tolight_6 + float3(-0.0078125, -0.0078125, 0.0078125));
+  float4 packDist_26;
+  half4 tmpvar_27;
+  tmpvar_27 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_25));
+  packDist_26 = float4(tmpvar_27);
+  shadowVals_21.y = dot (packDist_26, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float3 vec_28;
+  vec_28 = (tolight_6 + float3(-0.0078125, 0.0078125, -0.0078125));
+  float4 packDist_29;
+  half4 tmpvar_30;
+  tmpvar_30 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_28));
+  packDist_29 = float4(tmpvar_30);
+  shadowVals_21.z = dot (packDist_29, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float3 vec_31;
+  vec_31 = (tolight_6 + float3(0.0078125, -0.0078125, -0.0078125));
+  float4 packDist_32;
+  half4 tmpvar_33;
+  tmpvar_33 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_31));
+  packDist_32 = float4(tmpvar_33);
+  shadowVals_21.w = dot (packDist_32, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  bool4 tmpvar_34;
+  tmpvar_34 = bool4((shadowVals_21 < float4(mydist_19)));
+  float4 tmpvar_35;
+  tmpvar_35 = _mtl_u._LightShadowData.xxxx;
+  float tmpvar_36;
+  if (tmpvar_34.x) {
+    tmpvar_36 = tmpvar_35.x;
+  } else {
+    tmpvar_36 = 1.0;
+  };
+  float tmpvar_37;
+  if (tmpvar_34.y) {
+    tmpvar_37 = tmpvar_35.y;
+  } else {
+    tmpvar_37 = 1.0;
+  };
+  float tmpvar_38;
+  if (tmpvar_34.z) {
+    tmpvar_38 = tmpvar_35.z;
+  } else {
+    tmpvar_38 = 1.0;
+  };
+  float tmpvar_39;
+  if (tmpvar_34.w) {
+    tmpvar_39 = tmpvar_35.w;
+  } else {
+    tmpvar_39 = 1.0;
+  };
+  float4 tmpvar_40;
+  tmpvar_40.x = tmpvar_36;
+  tmpvar_40.y = tmpvar_37;
+  tmpvar_40.z = tmpvar_38;
+  tmpvar_40.w = tmpvar_39;
+  shadows_20 = half4(tmpvar_40);
+  half tmpvar_41;
+  tmpvar_41 = dot (shadows_20, (half4)float4(0.25, 0.25, 0.25, 0.25));
+  atten_4 = (atten_4 * (float)tmpvar_41);
+  float4 tmpvar_42;
+  tmpvar_42.w = 1.0;
+  tmpvar_42.xyz = wpos_7;
+  half4 tmpvar_43;
+  float3 P_44;
+  P_44 = (_mtl_u._LightMatrix0 * tmpvar_42).xyz;
+  tmpvar_43 = _LightTexture0.sample(_mtlsmp__LightTexture0, (float3)(P_44));
+  atten_4 = (atten_4 * (float)tmpvar_43.w);
+  float3 tmpvar_45;
+  tmpvar_45 = normalize(((float3)lightDir_5 - normalize(
+    (wpos_7 - _mtl_u._WorldSpaceCameraPos)
+  )));
+  h_3 = half3(tmpvar_45);
+  half tmpvar_46;
+  tmpvar_46 = pow (max ((half)0.0, dot (h_3, normal_9)), (nspec_10.w * (half)128.0));
+  spec_2 = float(tmpvar_46);
+  spec_2 = (spec_2 * clamp (atten_4, 0.0, 1.0));
+  res_1.xyz = half3((_mtl_u._LightColor.xyz * ((float)max ((half)0.0, 
+    dot (lightDir_5, normal_9)
+  ) * atten_4)));
+  half3 c_47;
+  c_47 = half3(_mtl_u._LightColor.xyz);
+  res_1.w = half((spec_2 * (float)dot (c_47, (half3)float3(0.22, 0.707, 0.071))));
+  float tmpvar_48;
+  tmpvar_48 = clamp ((1.0 - (
+    (tmpvar_15.z * _mtl_u.unity_LightmapFade.z)
+   + _mtl_u.unity_LightmapFade.w)), 0.0, 1.0);
+  res_1 = ((half4)((float4)res_1 * tmpvar_48));
+  _mtl_o._fragData = exp2(-(res_1));
+  return _mtl_o;
+}
+
+
+// stats: 62 alu 8 tex 4 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]
+// uniforms: 10 (total size: 256)
+//  #0: _CameraToWorld (high float) 4x4 [-1] loc 0
+//  #1: _LightColor (high float) 4x1 [-1] loc 64
+//  #2: _LightMatrix0 (high float) 4x4 [-1] loc 80
+//  #3: _LightPos (high float) 4x1 [-1] loc 144
+//  #4: _LightPositionRange (high float) 4x1 [-1] loc 160
+//  #5: _LightShadowData (high float) 4x1 [-1] loc 176
+//  #6: _ProjectionParams (high float) 4x1 [-1] loc 192
+//  #7: _WorldSpaceCameraPos (high float) 3x1 [-1] loc 208
+//  #8: _ZBufferParams (high float) 4x1 [-1] loc 224
+//  #9: unity_LightmapFade (high float) 4x1 [-1] loc 240
+// textures: 5
+//  #0: _CameraDepthTexture (low 2d) 0x0 [-1] loc 0
+//  #1: _CameraNormalsTexture (low 2d) 0x0 [-1] loc 1
+//  #2: _LightTexture0 (low cube) 0x0 [-1] loc 2
+//  #3: _LightTextureB0 (low 2d) 0x0 [-1] loc 3
+//  #4: _ShadowMapTexture (low cube) 0x0 [-1] loc 4

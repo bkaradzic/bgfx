@@ -1,3 +1,4 @@
+node_modules
 *.a
 *.dll
 *.exe
@@ -74,3 +75,4 @@ glsl_compiler
 .pydevproject
 
 build
+metalTemp.metal

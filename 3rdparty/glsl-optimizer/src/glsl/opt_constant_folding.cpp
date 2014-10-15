@@ -79,6 +79,11 @@ ir_constant_folding_visitor::handle_rvalue(ir_rvalue **rvalue)
       }
    }
 
+   /* Ditto for swizzles. */
+   ir_swizzle *swiz = (*rvalue)->as_swizzle();
+   if (swiz && !swiz->val->as_constant())
+      return;
+
    ir_constant *constant = (*rvalue)->constant_expression_value();
    if (constant) {
       *rvalue = constant;

@@ -15,18 +15,25 @@ void main ()
   vec4 tmpvar_5;
   tmpvar_5 = texture2D (_DecalTex, tmpvar_1.zw);
   c_3.xyz = mix (tmpvar_4.xyz, tmpvar_5.xyz, tmpvar_5.www);
-  vec4 tmpvar_6;
-  tmpvar_6 = (c_3 * _Color);
-  c_3 = tmpvar_6;
-  vec4 c_7;
-  c_7.xyz = ((tmpvar_6.xyz * _LightColor0.xyz) * ((
+  c_3 = (c_3 * _Color);
+  vec4 c_6;
+  c_6.xyz = ((c_3.xyz * _LightColor0.xyz) * ((
     max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz))
    * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
-  c_7.w = tmpvar_6.w;
-  c_2.xyz = c_7.xyz;
+  c_6.w = c_3.w;
+  c_2.xyz = c_6.xyz;
   c_2.w = 0.0;
   gl_FragData[0] = c_2;
 }
 
 
-// inputs: 1, stats: 9 alu 3 tex 0 flow
+// stats: 9 alu 3 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [4] loc 4
+// uniforms: 2 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+//  #1: _LightColor0 (high float) 4x1 [-1]
+// textures: 3
+//  #0: _DecalTex (high 2d) 0x0 [-1]
+//  #1: _LightTexture0 (high 2d) 0x0 [-1]
+//  #2: _MainTex (high 2d) 0x0 [-1]

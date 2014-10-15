@@ -15,7 +15,7 @@ void main ()
   lowp vec3 tmpvar_1;
   lowp vec3 tmpvar_2;
   lowp vec3 tmpvar_3;
-  mat3 tmpvar_4;
+  highp mat3 tmpvar_4;
   tmpvar_4[0] = _Object2World[0].xyz;
   tmpvar_4[1] = _Object2World[1].xyz;
   tmpvar_4[2] = _Object2World[2].xyz;
@@ -24,29 +24,31 @@ void main ()
   tmpvar_3 = tmpvar_5;
   highp vec3 tmpvar_6;
   highp vec3 tmpvar_7;
+  highp vec3 tmpvar_8;
   tmpvar_6 = attrTangent.xyz;
   tmpvar_7 = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
-  highp mat3 tmpvar_8;
-  tmpvar_8[0].x = tmpvar_6.x;
-  tmpvar_8[0].y = tmpvar_7.x;
-  tmpvar_8[0].z = attrNormal.x;
-  tmpvar_8[1].x = tmpvar_6.y;
-  tmpvar_8[1].y = tmpvar_7.y;
-  tmpvar_8[1].z = attrNormal.y;
-  tmpvar_8[2].x = tmpvar_6.z;
-  tmpvar_8[2].y = tmpvar_7.z;
-  tmpvar_8[2].z = attrNormal.z;
-  highp vec3 tmpvar_9;
-  tmpvar_9 = (tmpvar_8 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  tmpvar_1 = tmpvar_9;
-  highp vec4 tmpvar_10;
-  tmpvar_10.w = 1.0;
-  tmpvar_10.xyz = _WorldSpaceCameraPos;
-  highp vec3 tmpvar_11;
-  tmpvar_11 = normalize((tmpvar_9 + normalize(
-    (tmpvar_8 * (((_World2Object * tmpvar_10).xyz * unity_Scale.w) - attrVertex.xyz))
+  tmpvar_8 = attrNormal;
+  highp mat3 tmpvar_9;
+  tmpvar_9[0].x = tmpvar_6.x;
+  tmpvar_9[0].y = tmpvar_7.x;
+  tmpvar_9[0].z = tmpvar_8.x;
+  tmpvar_9[1].x = tmpvar_6.y;
+  tmpvar_9[1].y = tmpvar_7.y;
+  tmpvar_9[1].z = tmpvar_8.y;
+  tmpvar_9[2].x = tmpvar_6.z;
+  tmpvar_9[2].y = tmpvar_7.z;
+  tmpvar_9[2].z = tmpvar_8.z;
+  highp vec3 tmpvar_10;
+  tmpvar_10 = (tmpvar_9 * (_World2Object * _WorldSpaceLightPos0).xyz);
+  tmpvar_1 = tmpvar_10;
+  highp vec4 tmpvar_11;
+  tmpvar_11.w = 1.0;
+  tmpvar_11.xyz = _WorldSpaceCameraPos;
+  highp vec3 tmpvar_12;
+  tmpvar_12 = normalize((tmpvar_10 + normalize(
+    (tmpvar_9 * (((_World2Object * tmpvar_11).xyz * unity_Scale.w) - attrVertex.xyz))
   )));
-  tmpvar_2 = tmpvar_11;
+  tmpvar_2 = tmpvar_12;
   gl_Position = (glstate_matrix_mvp * attrVertex);
   varWorldN = tmpvar_3;
   varLightDir = tmpvar_1;
@@ -54,4 +56,15 @@ void main ()
 }
 
 
-// inputs: 3, stats: 16 alu 0 tex 0 flow
+// stats: 16 alu 0 tex 0 flow
+// inputs: 3
+//  #0: attrVertex (high float) 4x1 [-1]
+//  #1: attrNormal (high float) 3x1 [-1]
+//  #2: attrTangent (high float) 4x1 [-1]
+// uniforms: 6 (total size: 0)
+//  #0: glstate_matrix_mvp (high float) 4x4 [-1]
+//  #1: _Object2World (high float) 4x4 [-1]
+//  #2: _World2Object (high float) 4x4 [-1]
+//  #3: _WorldSpaceCameraPos (high float) 3x1 [-1]
+//  #4: _WorldSpaceLightPos0 (low float) 4x1 [-1]
+//  #5: unity_Scale (high float) 4x1 [-1]

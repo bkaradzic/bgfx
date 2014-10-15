@@ -34,7 +34,7 @@
 # define YY_GLCPP_PARSER_SRC_GLSL_GLCPP_GLCPP_PARSE_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int glcpp_parser_debug;
@@ -45,41 +45,45 @@ extern int glcpp_parser_debug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    COMMA_FINAL = 258,
-    DEFINED = 259,
-    ELIF_EXPANDED = 260,
-    HASH = 261,
-    HASH_DEFINE = 262,
-    FUNC_IDENTIFIER = 263,
-    OBJ_IDENTIFIER = 264,
-    HASH_ELIF = 265,
-    HASH_ELSE = 266,
-    HASH_ENDIF = 267,
-    HASH_IF = 268,
-    HASH_IFDEF = 269,
-    HASH_IFNDEF = 270,
-    HASH_LINE = 271,
-    HASH_UNDEF = 272,
-    HASH_VERSION = 273,
-    IDENTIFIER = 274,
-    IF_EXPANDED = 275,
-    INTEGER = 276,
-    INTEGER_STRING = 277,
-    LINE_EXPANDED = 278,
-    NEWLINE = 279,
-    OTHER = 280,
-    PLACEHOLDER = 281,
-    SPACE = 282,
-    PASTE = 283,
-    OR = 284,
-    AND = 285,
-    EQUAL = 286,
-    NOT_EQUAL = 287,
-    LESS_OR_EQUAL = 288,
-    GREATER_OR_EQUAL = 289,
-    LEFT_SHIFT = 290,
-    RIGHT_SHIFT = 291,
-    UNARY = 292
+    DEFINED = 258,
+    ELIF_EXPANDED = 259,
+    HASH_TOKEN = 260,
+    DEFINE_TOKEN = 261,
+    FUNC_IDENTIFIER = 262,
+    OBJ_IDENTIFIER = 263,
+    ELIF = 264,
+    ELSE = 265,
+    ENDIF = 266,
+    ERROR_TOKEN = 267,
+    IF = 268,
+    IFDEF = 269,
+    IFNDEF = 270,
+    LINE = 271,
+    PRAGMA = 272,
+    UNDEF = 273,
+    VERSION_TOKEN = 274,
+    GARBAGE = 275,
+    IDENTIFIER = 276,
+    IF_EXPANDED = 277,
+    INTEGER = 278,
+    INTEGER_STRING = 279,
+    LINE_EXPANDED = 280,
+    NEWLINE = 281,
+    OTHER = 282,
+    PLACEHOLDER = 283,
+    SPACE = 284,
+    PLUS_PLUS = 285,
+    MINUS_MINUS = 286,
+    PASTE = 287,
+    OR = 288,
+    AND = 289,
+    EQUAL = 290,
+    NOT_EQUAL = 291,
+    LESS_OR_EQUAL = 292,
+    GREATER_OR_EQUAL = 293,
+    LEFT_SHIFT = 294,
+    RIGHT_SHIFT = 295,
+    UNARY = 296
   };
 #endif
 

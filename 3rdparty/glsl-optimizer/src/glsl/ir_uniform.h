@@ -32,12 +32,17 @@
 
 #include "program/prog_parameter.h"  /* For union gl_constant_value. */
 
+/**
+ * Used by GL_ARB_explicit_uniform_location extension code in the linker
+ * and glUniform* functions to identify inactive explicit uniform locations.
+ */
+#define INACTIVE_UNIFORM_EXPLICIT_LOCATION ((gl_uniform_storage *) -1)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum gl_uniform_driver_format {
+enum PACKED gl_uniform_driver_format {
    uniform_native = 0,          /**< Store data in the native format. */
    uniform_int_float,           /**< Store integer data as floats. */
    uniform_bool_float,          /**< Store boolean data as floats. */
@@ -66,11 +71,8 @@ struct gl_uniform_driver_storage {
 
    /**
     * Base format of the stored data.
-    *
-    * This field must have a value from \c GLSL_TYPE_UINT through \c
-    * GLSL_TYPE_SAMPLER.
     */
-   uint8_t format;
+   enum gl_uniform_driver_format format;
 
    /**
     * Pointer to the base of the data.
@@ -178,6 +180,12 @@ struct gl_uniform_storage {
     * an atomic counter.
     */
    int atomic_buffer_index;
+
+   /**
+    * The 'base location' for this uniform in the uniform remap table. For
+    * arrays this is the first element in the array.
+    */
+   unsigned remap_location;
 };
 
 #ifdef __cplusplus

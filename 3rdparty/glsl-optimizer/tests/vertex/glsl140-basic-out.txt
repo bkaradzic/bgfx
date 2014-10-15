@@ -13,4 +13,9 @@ void main ()
 }
 
 
-// inputs: 2, stats: 2 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
+// inputs: 2
+//  #0: position (high float) 4x1 [-1]
+//  #1: icol (high float) 4x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: p (high float) 2x1 [-1]

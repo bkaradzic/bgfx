@@ -13,25 +13,24 @@
 #include <bx/thread.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
-
-#include <windowsx.h>
-
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
-enum
-{
-	WM_USER_WINDOW_CREATE = WM_USER,
-	WM_USER_WINDOW_DESTROY,
-	WM_USER_WINDOW_SET_TITLE,
-	WM_USER_WINDOW_SET_POS,
-	WM_USER_WINDOW_SET_SIZE,
-	WM_USER_WINDOW_TOGGLE_FRAME,
-	WM_USER_WINDOW_MOUSE_LOCK,
-};
+#include <windowsx.h>
 
 namespace entry
 {
+	enum
+	{
+		WM_USER_WINDOW_CREATE = WM_USER,
+		WM_USER_WINDOW_DESTROY,
+		WM_USER_WINDOW_SET_TITLE,
+		WM_USER_WINDOW_SET_POS,
+		WM_USER_WINDOW_SET_SIZE,
+		WM_USER_WINDOW_TOGGLE_FRAME,
+		WM_USER_WINDOW_MOUSE_LOCK,
+	};
+
 	struct TranslateKeyModifiers
 	{
 		int m_vk;
@@ -213,7 +212,10 @@ namespace entry
 				, 0
 				);
 
-			m_flags[0] = ENTRY_WINDOW_FLAG_ASPECT_RATIO;
+			m_flags[0] = 0
+				| ENTRY_WINDOW_FLAG_ASPECT_RATIO
+				| ENTRY_WINDOW_FLAG_FRAME
+				;
 
 			bgfx::winSetHwnd(m_hwnd[0]);
 

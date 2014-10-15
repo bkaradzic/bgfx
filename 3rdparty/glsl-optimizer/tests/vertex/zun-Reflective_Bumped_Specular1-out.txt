@@ -2,17 +2,17 @@ uniform vec4 _BumpMap_ST;
 attribute vec4 TANGENT;
 void main ()
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
+  vec3 binormal_1;
+  binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_2;
   tmpvar_2[0].x = TANGENT.x;
-  tmpvar_2[0].y = tmpvar_1.x;
+  tmpvar_2[0].y = binormal_1.x;
   tmpvar_2[0].z = gl_Normal.x;
   tmpvar_2[1].x = TANGENT.y;
-  tmpvar_2[1].y = tmpvar_1.y;
+  tmpvar_2[1].y = binormal_1.y;
   tmpvar_2[1].z = gl_Normal.y;
   tmpvar_2[2].x = TANGENT.z;
-  tmpvar_2[2].y = tmpvar_1.z;
+  tmpvar_2[2].y = binormal_1.z;
   tmpvar_2[2].z = gl_Normal.z;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 tmpvar_3;
@@ -34,4 +34,13 @@ void main ()
 }
 
 
-// inputs: 4, stats: 14 alu 0 tex 0 flow
+// stats: 14 alu 0 tex 0 flow
+// inputs: 4
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #1: gl_Normal (high float) 3x1 [-1] loc 2
+//  #2: gl_Vertex (high float) 4x1 [-1] loc 0
+//  #3: TANGENT (high float) 4x1 [-1]
+// uniforms: 3 (total size: 0)
+//  #0: gl_ModelViewMatrixInverseTranspose (high float) 4x4 [-1]
+//  #1: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #2: _BumpMap_ST (high float) 4x1 [-1]

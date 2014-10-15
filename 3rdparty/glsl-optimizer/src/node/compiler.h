@@ -2,6 +2,7 @@
 #define COMPILER_H
 
 #include <node.h>
+#include <nan.h>
 #include <glsl_optimizer.h>
 
 class Compiler : public node::ObjectWrap {
@@ -13,13 +14,14 @@ public:
 	void release();
 
 private:
-	Compiler(bool essl);
+	Compiler(glslopt_target target);
 	~Compiler();
 
 	glslopt_ctx* _binding;
 
-	static v8::Handle<v8::Value> New(const v8::Arguments& args);
-	static v8::Handle<v8::Value> Dispose(const v8::Arguments& args);
+	static NAN_METHOD(New);
+	static NAN_METHOD(Dispose);
+	static v8::Persistent<v8::Function> constructor;
 };
 
 #endif

@@ -21,4 +21,12 @@ void main ()
 }
 
 
-// inputs: 2, stats: 10 alu 0 tex 0 flow
+// stats: 10 alu 0 tex 0 flow
+// inputs: 2
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #1: gl_Vertex (high float) 4x1 [-1] loc 0
+// uniforms: 4 (total size: 0)
+//  #0: gl_TextureMatrix (high float) 4x4 [16]
+//  #1: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #2: _GrainOffsetScale (high float) 4x1 [-1]
+//  #3: _ScratchOffsetScale (high float) 4x1 [-1]

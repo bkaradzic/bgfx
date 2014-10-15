@@ -358,8 +358,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 43
-#define YY_END_OF_BUFFER 44
+#define YY_NUM_RULES 52
+#define YY_END_OF_BUFFER 53
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -367,43 +367,45 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[152] =
+static yyconst flex_int16_t yy_accept[174] =
     {   0,
-        0,    0,    0,    0,    3,    3,    0,    0,    0,    0,
-        0,    0,    0,    0,   44,   39,   40,   41,   43,   38,
-       43,   38,   38,   38,   25,   24,   38,   38,   38,   37,
-       37,   38,   40,   23,    3,    4,    5,   42,   17,   17,
-       17,   21,   39,   40,   32,   35,   33,    2,    1,   25,
-       25,    0,   24,   24,   27,   29,   31,   30,   28,   37,
-       37,   34,   40,   23,   23,    0,    0,    0,    0,    0,
-        0,    0,    3,    4,    5,    6,    5,    7,    0,    0,
-        0,    0,   20,   21,    1,   26,   37,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,   26,   37,    0,
+        0,    0,    3,    3,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,   53,   48,   49,   50,   51,   50,
+       47,    8,   47,   47,   47,   47,   47,   47,   31,   30,
+       47,   47,   47,   45,   45,   47,    3,    4,    4,    5,
+       29,   27,   51,   26,   24,   23,   13,   13,   24,   24,
+       24,   24,   24,   24,   24,   24,   48,   50,   38,   43,
+       39,   41,   42,   46,    2,    1,   46,   31,   46,   31,
+       46,   30,   30,   33,   35,   37,   36,   34,   45,   45,
+       40,    3,    4,    4,    4,    5,    6,    6,    5,    7,
+       29,   27,   28,    1,   25,   26,   23,   13,    0,    0,
 
-        0,    0,    0,    0,    0,   13,    0,    0,    0,    0,
-        0,    0,   37,    0,    0,   15,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,   37,    0,   14,   16,   18,
-        0,   11,    0,   10,    0,   22,    0,   36,    0,   18,
-        0,   12,    0,    0,   19,    0,    9,    0,    0,    8,
-        0
+        0,    0,    0,    0,    0,    0,    0,    0,    1,   32,
+       32,   45,    4,    6,   28,    1,    0,    0,    0,    0,
+        0,    0,   16,    0,    0,    0,    0,    0,    0,   32,
+       45,    0,    0,   18,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,   45,    0,   17,   19,   20,    0,   14,
+        0,   12,    0,   22,    0,   45,   21,   20,    0,   15,
+       11,    0,   44,   21,    0,   11,   11,   10,    0,    0,
+        9,   11,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
-        4,    4,    4,    1,    1,    1,    1,    1,    1,    1,
+        4,    4,    5,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    2,    5,    1,    6,    1,    7,    8,    1,    9,
-        7,   10,    7,    7,    7,    7,   11,   12,   13,   13,
-       13,   13,   13,   13,   13,   14,   14,    1,    7,   15,
-       16,   17,    1,    1,   18,   18,   18,   18,   18,   18,
-       19,   19,   19,   19,   19,   19,   19,   19,   19,   19,
-       19,   19,   19,   19,   20,   19,   19,   21,   19,   19,
-        7,    1,    7,    7,   19,    1,   22,   18,   18,   23,
+        1,    2,    6,    1,    7,    1,    8,    9,    1,   10,
+        8,   11,   12,    8,   13,   14,   15,   16,   17,   17,
+       17,   17,   17,   17,   17,   18,   18,    1,    8,   19,
+       20,   21,    1,    1,   22,   22,   22,   22,   23,   22,
+       24,   24,   24,   24,   24,   24,   24,   24,   24,   25,
+       24,   24,   24,   24,   26,   24,   24,   27,   24,   24,
+        8,    1,    8,    8,   24,    1,   28,   22,   22,   29,
 
-       24,   25,   26,   19,   27,   19,   19,   28,   29,   30,
-       31,   32,   19,   33,   34,   35,   36,   37,   19,   38,
-       19,   19,    7,   39,    7,    7,    1,    1,    1,    1,
+       30,   31,   32,   24,   33,   24,   24,   34,   35,   36,
+       37,   38,   24,   39,   40,   41,   42,   43,   24,   44,
+       24,   24,    8,   45,    8,    8,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -420,144 +422,175 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[40] =
+static yyconst flex_int32_t yy_meta[46] =
     {   0,
-        1,    1,    2,    1,    1,    1,    1,    1,    3,    4,
-        1,    5,    5,    5,    1,    1,    1,    5,    6,    6,
-        6,    5,    7,    5,    5,    6,    6,    6,    6,    8,
-        6,    6,    6,    6,    6,    6,    6,    6,    1
+        1,    2,    3,    2,    3,    1,    1,    1,    1,    4,
+        5,    1,    1,    6,    1,    7,    7,    7,    1,    1,
+        1,    7,    7,    7,    7,    7,    7,    7,    8,    7,
+        7,    7,    7,    7,    7,    8,    7,    7,    7,    7,
+        7,    7,    7,    7,    1
     } ;
 
-static yyconst flex_int16_t yy_base[166] =
+static yyconst flex_int16_t yy_base[191] =
     {   0,
-        0,   38,    0,    0,   38,   39,  321,  320,  319,   44,
-       50,    0,    0,    0,  321,  319,  317,  325,  325,  302,
-      311,  325,  308,   80,   80,   83,   83,  299,   88,    0,
-      290,  274,  100,  118,  309,  325,  104,  325,  325,  106,
-      107,  302,  309,  307,  325,  325,  325,  325,    0,  113,
-      325,    0,  115,  325,  325,  325,  325,  325,  325,    0,
-      283,  325,  111,  301,  300,  281,  110,  279,  276,  269,
-      271,  276,  296,  325,  149,  325,  153,  325,  130,  120,
-      151,   15,  325,  289,    0,   74,  270,  271,   96,  272,
-      261,  258,  135,  262,  269,  267,  256,  325,  258,  260,
+        0,    0,   43,   44,   55,    0,   47,   48,   99,  141,
+      102,  103,  106,  107,  435,  433,  436,  428,  436,  429,
+      411,  423,  436,  420,  416,  414,   99,  107,  169,  198,
+      100,  406,  103,    0,  395,  379,  122,  418,  419,  144,
+        0,  419,  115,  410,  436,  417,  413,  414,  120,  386,
+      114,  384,  381,  374,  376,  381,  409,  436,  436,  436,
+      436,  436,  436,  138,  436,    0,  139,  164,  197,  126,
+      229,    0,  139,  436,  436,  436,  436,  436,    0,  378,
+      436,  131,  403,  404,  436,  186,  401,  402,  197,  436,
+        0,  402,    0,  163,  436,  393,  400,  436,  370,  133,
 
-      261,  261,  257,  252,  258,  325,  257,  257,  255,  252,
-      253,  242,  245,  231,    0,  325,  228,  219,  216,  213,
-      208,  216,  148,  151,  147,  150,  148,  325,  325,    0,
-      137,  325,  145,  167,  146,  325,  136,    0,  164,    0,
-      135,  325,    0,  131,  155,  108,    0,  135,   91,  109,
-      325,  178,  186,  194,  202,  206,  214,  222,  228,  236,
-      240,  247,  255,  259,  267
+      371,  360,  357,  169,  361,  368,  366,  355,    0,  146,
+      191,  360,  436,  436,    0,  227,  359,  360,  360,  356,
+      351,  357,  436,  356,  356,  341,  329,  319,  301,  206,
+      304,  297,    0,  436,  297,  288,  276,  280,  268,  261,
+      220,  219,  216,  218,  214,  436,  436,    0,  203,  436,
+      207,  232,  198,  436,  188,  164,  185,    0,  145,  436,
+      251,  124,    0,  155,  117,  227,  259,  436,  138,   85,
+      111,  234,  436,  264,  272,  280,  283,  285,  293,  301,
+      309,  317,  322,  330,  338,  346,  354,  362,  368,  376
     } ;
 
-static yyconst flex_int16_t yy_def[166] =
+static yyconst flex_int16_t yy_def[191] =
     {   0,
-      151,    1,  152,  152,  153,  153,  154,  154,  155,  155,
-      151,   11,  152,  152,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  156,
-      156,  151,  151,  151,  157,  151,  158,  151,  151,  151,
-      151,  159,  151,  151,  151,  151,  151,  151,  160,  151,
-      151,  161,  151,  151,  151,  151,  151,  151,  151,  156,
-      156,  151,  151,   34,   34,  151,  151,  151,  151,  151,
-      151,  151,  157,  151,  158,  151,  158,  151,  151,  151,
-      151,  151,  151,  159,  160,  161,  156,  151,  151,  151,
-      151,  151,  162,  151,  151,  151,  151,  151,  156,  151,
+      173,    1,  174,  174,  173,    5,  175,  175,  176,  176,
+      175,  175,  175,  175,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  177,  177,
+      173,  173,  173,  178,  178,  173,  179,  173,  173,  180,
+      181,  173,  182,  183,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  177,  173,  184,  177,   30,  177,   69,
+       69,   30,   69,  173,  173,  173,  173,  173,  178,  178,
+      173,  179,  173,  173,  173,  180,  173,  173,  180,  173,
+      181,  173,  185,  186,  173,  183,  173,  173,  173,  173,
 
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  156,  151,  163,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  156,  151,  151,  151,  164,
-      151,  151,  151,  151,  151,  151,  151,  156,  151,  164,
-      151,  151,  165,  151,  151,  151,  165,  151,  151,  151,
-        0,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151
+      173,  173,  173,  187,  173,  173,  173,  173,  184,   71,
+       71,  178,  173,  173,  185,  186,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,   69,
+      178,  173,  188,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  178,  173,  173,  173,  189,  173,  173,
+      173,  173,  173,  173,  173,  178,  173,  189,  173,  173,
+      190,  173,  178,  173,  173,  190,  190,  173,  173,  173,
+      173,  190,    0,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173
     } ;
 
-static yyconst flex_int16_t yy_nxt[365] =
+static yyconst flex_int16_t yy_nxt[482] =
     {   0,
-       16,   17,   18,   19,   20,   21,   22,   23,   22,   22,
-       24,   25,   26,   26,   27,   28,   29,   30,   30,   30,
-       30,   30,   31,   30,   30,   30,   30,   30,   30,   30,
-       30,   30,   30,   30,   30,   30,   30,   30,   32,   33,
-       36,   36,   89,   34,   90,   40,   18,   37,   37,   41,
-       19,   19,   19,   19,   19,   19,   19,   19,   19,   19,
-       19,   19,   19,   19,   19,   19,   19,   42,   42,   42,
-       42,   42,   42,   42,   42,   42,   42,   42,   42,   42,
-       42,   42,   42,   42,   42,   42,   42,   42,   19,   48,
-       49,   50,   50,   98,   53,   53,   53,   55,   56,   51,
+       16,   17,   18,   19,   20,   21,   22,   23,   24,   23,
+       23,   25,   26,   27,   28,   29,   30,   30,   31,   32,
+       33,   34,   34,   34,   34,   34,   34,   34,   35,   34,
+       34,   34,   34,   34,   34,   34,   34,   34,   34,   34,
+       34,   34,   34,   34,   36,   38,   38,   39,   39,   18,
+       18,   20,   20,   40,   40,   41,   42,   18,   19,   20,
+       41,   41,   41,   41,   41,   41,   41,   41,   41,   43,
+       41,   41,   41,   41,   41,   41,   44,   44,   44,   44,
+       44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
+       44,   44,   44,   44,   44,   44,   44,   44,   44,   41,
 
-       52,   63,   54,   58,   59,   64,   76,   79,   81,   98,
-      150,   80,   63,   77,   78,   51,   64,   52,   54,   65,
-      143,   81,  101,   46,   50,   50,   53,   53,   53,  102,
-       82,   79,   51,   68,   54,   80,  150,   89,  149,   90,
-       66,   67,   91,   82,   68,   69,   68,   92,   51,   70,
-       54,   76,   81,   71,   72,   76,  145,  107,  151,  151,
-      148,  146,   77,   78,  108,  145,  144,  143,  134,  142,
-      141,  139,  138,  137,   82,  136,  135,   68,   19,   19,
-       19,   19,   19,   19,   19,   19,   35,   35,   35,   35,
-       35,   35,   35,   35,   38,   38,   38,   38,   38,   38,
+       46,   47,   19,   48,   18,   18,   20,   20,   18,   18,
+       20,   20,  171,   49,   64,   64,   64,   65,   74,   75,
+      172,   66,   77,   78,   83,   65,   84,   50,   51,   94,
+       65,   52,   53,   83,   66,   84,   54,  173,  173,  171,
+       55,   56,   46,   47,   19,   48,   87,  100,   88,  101,
+      173,  173,  102,  170,   89,   49,  164,  103,   90,  169,
+       69,   69,   69,   69,  109,  118,  109,   69,   69,   50,
+       51,  130,  119,   52,   53,   69,   69,  165,   54,   68,
+       68,   67,   55,   56,   68,   68,  164,  130,   87,   70,
+       88,   69,  163,   69,   70,   71,  173,  124,   69,   87,
 
-       38,   38,   39,   39,   39,   39,   39,   39,   39,   39,
-       60,   60,   60,   60,   73,   73,   73,  134,   73,   73,
-       73,   73,   75,   75,   75,   75,   75,   75,   75,   75,
-       84,  133,   84,   84,   84,   84,   85,  132,   85,   85,
-       85,   85,   85,   85,   86,  131,   86,  106,  106,  106,
-      106,  130,  129,  106,  106,  128,  128,  128,  128,  140,
-      127,  140,  140,  140,  140,  140,  140,  147,  126,  147,
-      147,  147,  147,  147,  147,  125,  124,  123,  122,  121,
-      120,  119,  118,  117,  116,  115,  114,  113,  112,  111,
-      110,  109,  105,  104,  103,  100,   99,   83,   74,   97,
+      173,   88,   67,   67,  125,   70,   69,   89,   67,   67,
+       70,   90,   71,   72,   72,   72,  130,  173,  173,   69,
+       69,   69,   69,   73,  162,  161,   69,   69,  109,  173,
+      109,  173,  130,  152,   69,   69,  173,  160,  173,   73,
+      173,  173,  159,  157,  110,  110,  110,  156,  155,  154,
+      110,  111,  167,  168,  153,  168,  110,  110,  111,  110,
+      167,  168,  152,  168,   37,   37,   37,   37,   37,   37,
+       37,   37,   19,   19,   19,   19,   19,   19,   19,   19,
+       45,   45,   45,   45,   45,   45,   45,   45,   67,   67,
+       67,   79,   79,   82,   82,   82,   82,  151,   82,   82,
 
-       96,   95,   94,   93,   88,  151,  151,   87,   44,   43,
-       83,   74,   62,   61,   57,   47,   46,   45,   44,   43,
-      151,   18,   19,   19,   15,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151
+       82,   86,   86,   86,   86,   86,   86,   86,   86,   91,
+      150,  149,   91,   91,   91,   91,   91,   93,   93,   93,
+       93,   93,   93,   93,   93,   96,  148,  147,   96,   96,
+      109,  109,  145,  109,  109,  109,  109,  109,  115,  144,
+      143,  115,  115,  115,  115,  115,  116,  116,  142,  116,
+      116,  116,  116,  116,  123,  123,  123,  123,  123,  123,
+      141,  123,  146,  146,  146,  146,  146,  146,  158,  158,
+      140,  158,  158,  158,  158,  158,  166,  166,  166,  166,
+      166,  166,  166,  166,  139,  138,  137,  136,  135,  134,
+      133,  132,  131,  129,  128,  127,  126,  122,  121,  120,
+
+      117,   97,   95,   92,  114,  114,  113,  113,  112,   57,
+      108,  107,  106,  105,  104,   99,   98,   98,   97,   95,
+       92,   85,   85,   81,   80,   76,   63,   62,   61,   60,
+       59,   58,   58,   57,  173,   15,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173
     } ;
 
-static yyconst flex_int16_t yy_chk[365] =
+static yyconst flex_int16_t yy_chk[482] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    2,
-        5,    6,   82,    2,   82,   10,   10,    5,    6,   10,
-       11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
-       11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
-       11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
-       11,   11,   11,   11,   11,   11,   11,   11,   11,   24,
-       24,   25,   25,   86,   26,   26,   26,   27,   27,   25,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    3,    4,    3,    4,    7,
+        8,    7,    8,    3,    4,    5,    5,    5,    5,    5,
+        5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+        5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+        5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+        5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
 
-       25,   33,   26,   29,   29,   33,   37,   40,   41,   86,
-      150,   40,   63,   37,   37,   25,   63,   25,   26,   34,
-      149,   80,   89,   34,   50,   50,   53,   53,   53,   89,
-       41,   79,   50,   41,   53,   79,  148,   67,  146,   67,
-       34,   34,   67,   80,   34,   34,   80,   67,   50,   34,
-       53,   75,   81,   34,   34,   77,  145,   93,   75,   75,
-      144,  141,   77,   77,   93,  139,  137,  135,  134,  133,
-      131,  127,  126,  125,   81,  124,  123,   81,  152,  152,
-      152,  152,  152,  152,  152,  152,  153,  153,  153,  153,
-      153,  153,  153,  153,  154,  154,  154,  154,  154,  154,
+        9,    9,    9,    9,   11,   12,   11,   12,   13,   14,
+       13,   14,  171,    9,   27,   27,   27,   28,   31,   31,
+      170,   28,   33,   33,   37,   43,   37,    9,    9,   43,
+       49,    9,    9,   82,   49,   82,    9,   70,   70,  169,
+        9,    9,   10,   10,   10,   10,   40,   51,   40,   51,
+       73,   73,   51,  165,   40,   10,  164,   51,   40,  162,
+       64,   67,   64,   67,   94,  100,   94,   64,   67,   10,
+       10,  110,  100,   10,   10,   64,   67,  159,   10,   68,
+       68,   68,   10,   10,   29,   29,  157,  110,   86,   68,
+       86,   29,  156,   29,   29,   29,   86,  104,   29,   89,
 
-      154,  154,  155,  155,  155,  155,  155,  155,  155,  155,
-      156,  156,  156,  156,  157,  157,  157,  122,  157,  157,
-      157,  157,  158,  158,  158,  158,  158,  158,  158,  158,
-      159,  121,  159,  159,  159,  159,  160,  120,  160,  160,
-      160,  160,  160,  160,  161,  119,  161,  162,  162,  162,
-      162,  118,  117,  162,  162,  163,  163,  163,  163,  164,
-      114,  164,  164,  164,  164,  164,  164,  165,  113,  165,
-      165,  165,  165,  165,  165,  112,  111,  110,  109,  108,
-      107,  105,  104,  103,  102,  101,  100,   99,   97,   96,
-       95,   94,   92,   91,   90,   88,   87,   84,   73,   72,
+       86,   89,  111,  111,  104,   68,   29,   89,   69,   69,
+       29,   89,   29,   30,   30,   30,  111,  130,  130,   69,
+       30,   69,   30,   30,  155,  153,   69,   30,  116,  166,
+      116,  166,  111,  152,   69,   30,  172,  151,  172,   30,
+       71,   71,  149,  145,   71,   71,   71,  144,  143,  142,
+       71,   71,  161,  161,  141,  161,   71,   71,   71,   71,
+      167,  167,  140,  167,  174,  174,  174,  174,  174,  174,
+      174,  174,  175,  175,  175,  175,  175,  175,  175,  175,
+      176,  176,  176,  176,  176,  176,  176,  176,  177,  177,
+      177,  178,  178,  179,  179,  179,  179,  139,  179,  179,
 
-       71,   70,   69,   68,   66,   65,   64,   61,   44,   43,
-       42,   35,   32,   31,   28,   23,   21,   20,   17,   16,
-       15,    9,    8,    7,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151,  151,  151,  151,  151,  151,  151,
-      151,  151,  151,  151
+      179,  180,  180,  180,  180,  180,  180,  180,  180,  181,
+      138,  137,  181,  181,  181,  181,  181,  182,  182,  182,
+      182,  182,  182,  182,  182,  183,  136,  135,  183,  183,
+      184,  184,  132,  184,  184,  184,  184,  184,  185,  131,
+      129,  185,  185,  185,  185,  185,  186,  186,  128,  186,
+      186,  186,  186,  186,  187,  187,  187,  187,  187,  187,
+      127,  187,  188,  188,  188,  188,  188,  188,  189,  189,
+      126,  189,  189,  189,  189,  189,  190,  190,  190,  190,
+      190,  190,  190,  190,  125,  124,  122,  121,  120,  119,
+      118,  117,  112,  108,  107,  106,  105,  103,  102,  101,
+
+       99,   97,   96,   92,   88,   87,   84,   83,   80,   57,
+       56,   55,   54,   53,   52,   50,   48,   47,   46,   44,
+       42,   39,   38,   36,   35,   32,   26,   25,   24,   22,
+       21,   20,   18,   16,   15,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+      173
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -618,18 +651,115 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		if (parser->has_new_source_number)			\
 			yylloc->source = parser->new_source_number;	\
 		yylloc->first_column = yycolumn + 1;			\
-		yylloc->first_line = yylineno;				\
+		yylloc->first_line = yylloc->last_line = yylineno;	\
 		yycolumn += yyleng;					\
+		yylloc->last_column = yycolumn + 1;			\
 		parser->has_new_line_number = 0;			\
 		parser->has_new_source_number = 0;			\
- } while(0);
+	} while(0);
 
 #define YY_USER_INIT			\
 	do {				\
 		yylineno = 1;		\
-		yycolumn = 1;		\
+		yycolumn = 0;		\
 		yylloc->source = 0;	\
 	} while(0)
+
+/* It's ugly to have macros that have return statements inside of
+ * them, but flex-based lexer generation is all built around the
+ * return statement.
+ *
+ * To mitigate the ugliness, we defer as much of the logic as possible
+ * to an actual function, not a macro (see
+ * glcpplex_update_state_per_token) and we make the word RETURN
+ * prominent in all of the macros which may return.
+ *
+ * The most-commonly-used macro is RETURN_TOKEN which will perform all
+ * necessary state updates based on the provided token,, then
+ * conditionally return the token. It will not return a token if the
+ * parser is currently skipping tokens, (such as within #if
+ * 0...#else).
+ *
+ * The RETURN_TOKEN_NEVER_SKIP macro is a lower-level variant that
+ * makes the token returning unconditional. This is needed for things
+ * like #if and the tokens of its condition, (since these must be
+ * evaluated by the parser even when otherwise skipping).
+ *
+ * Finally, RETURN_STRING_TOKEN is a simple convenience wrapper on top
+ * of RETURN_TOKEN that performs a string copy of yytext before the
+ * return.
+ */
+#define RETURN_TOKEN_NEVER_SKIP(token)					\
+	do {								\
+		if (glcpp_lex_update_state_per_token (parser, token))	\
+			return token;					\
+	} while (0)
+
+#define RETURN_TOKEN(token)						\
+	do {								\
+		if (! parser->skipping) {				\
+			RETURN_TOKEN_NEVER_SKIP(token);			\
+		}							\
+	} while(0)
+
+#define RETURN_STRING_TOKEN(token)					\
+	do {								\
+		if (! parser->skipping) {				\
+			yylval->str = ralloc_strdup (yyextra, yytext);	\
+			RETURN_TOKEN_NEVER_SKIP (token);		\
+		}							\
+	} while(0)
+
+
+/* Update all state necessary for each token being returned.
+ *
+ * Here we'll be tracking newlines and spaces so that the lexer can
+ * alter its behavior as necessary, (for example, '#' has special
+ * significance if it is the first non-whitespace, non-comment token
+ * in a line, but does not otherwise).
+ *
+ * NOTE: If this function returns FALSE, then no token should be
+ * returned at all. This is used to suprress duplicate SPACE tokens.
+ */
+static int
+glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
+{
+	/* After the first non-space token in a line, we won't
+	 * allow any '#' to introduce a directive. */
+	if (token == NEWLINE) {
+		parser->first_non_space_token_this_line = 1;
+	} else if (token != SPACE) {
+		parser->first_non_space_token_this_line = 0;
+	}
+
+	/* Track newlines just to know whether a newline needs
+	 * to be inserted if end-of-file comes early. */
+	if (token == NEWLINE) {
+		parser->last_token_was_newline = 1;
+	} else {
+		parser->last_token_was_newline = 0;
+	}
+
+	/* Track spaces to avoid emitting multiple SPACE
+	 * tokens in a row. */
+	if (token == SPACE) {
+		if (! parser->last_token_was_space) {
+			parser->last_token_was_space = 1;
+			return 1;
+		} else {
+			parser->last_token_was_space = 1;
+			return 0;
+		}
+	} else {
+		parser->last_token_was_space = 0;
+		return 1;
+	}
+}
+
+
+/* Note: When adding any start conditions to this list, you must also
+* update the "Internal compiler error" catch-all rule near the end of
+* this file. */
 
 /* The OTHER class is simply a catch-all for things that the CPP
 parser just doesn't care about. Since flex regular expressions that
@@ -637,15 +767,15 @@ match longer strings take priority over those matching shorter
 strings, we have to be careful to avoid OTHER matching and hiding
 something that CPP does care about. So we simply exclude all
 characters that appear in any other expressions. */
-#line 641 "src/glsl/glcpp/glcpp-lex.c"
+#line 771 "src/glsl/glcpp/glcpp-lex.c"
 
 #define INITIAL 0
-#define DONE 1
-#define COMMENT 2
-#define UNREACHABLE 3
-#define SKIP 4
-#define DEFINE 5
-#define NEWLINE_CATCHUP 6
+#define COMMENT 1
+#define DEFINE 2
+#define DONE 3
+#define HASH 4
+#define NEWLINE_CATCHUP 5
+#define UNREACHABLE 6
 
 #define YY_EXTRA_TYPE glcpp_parser_t *
 
@@ -874,9 +1004,6 @@ extern int glcpp_lex \
 #endif
 
 #define YY_RULE_SETUP \
-	if ( yyleng > 0 ) \
-		YY_CURRENT_BUFFER_LVALUE->yy_at_bol = \
-				(yytext[yyleng - 1] == '\n'); \
 	YY_USER_ACTION
 
 /** The main scanner function which does all the work.
@@ -888,7 +1015,7 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 95 "src/glsl/glcpp/glcpp-lex.l"
+#line 195 "src/glsl/glcpp/glcpp-lex.l"
 
 
 	glcpp_parser_t *parser = yyextra;
@@ -907,52 +1034,49 @@ YY_DECL
 			parser->commented_newlines--;
 		if (parser->commented_newlines == 0)
 			BEGIN INITIAL;
-		return NEWLINE;
+		RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 	}
 
-	/* The handling of the SKIP vs INITIAL start states requires
-	 * some special handling. Typically, a lexer would change
-	 * start states with statements like "BEGIN SKIP" within the
-	 * lexer rules. We can't get away with that here, since we
-	 * need the parser to actually evaluate expressions for
-	 * directives like "#if".
+	/* Set up the parser->skipping bit here before doing any lexing.
 	 *
-	 * So, here, in code that will be executed on every call to
-	 * the lexer,and before any rules, we examine the skip_stack
-	 * as set by the parser to know whether to change from INITIAL
-	 * to SKIP or from SKIP back to INITIAL.
+	 * This bit controls whether tokens are skipped, (as implemented by
+         * RETURN_TOKEN), such as between "#if 0" and "#endif".
 	 *
-	 * Three cases cause us to switch out of the SKIP state and
-	 * back to the INITIAL state:
+	 * The parser maintains a skip_stack indicating whether we should be
+         * skipping, (and nested levels of #if/#ifdef/#ifndef/#endif) will
+         * push and pop items from the stack.
 	 *
-	 *	1. The top of the skip_stack is of type SKIP_NO_SKIP
-	 *	   This means we're still evaluating some #if
-	 *	   hierarchy, but we're on a branch of it where
-	 *	   content should not be skipped (such as "#if 1" or
-	 *	   "#else" or so).
+	 * Here are the rules for determining whether we are skipping:
 	 *
-	 *	2. The skip_stack is NULL meaning that we've reached
-	 *	   the last #endif.
+	 *	1. If the skip stack is NULL, we are outside of all #if blocks
+	 *         and we are not skipping.
 	 *
-	 *	3. The lexing_if bit is set. This indicates that we
-	 *	   are lexing the expression following an "#if" of
-	 *	   "#elif". Even inside an "#if 0" we need to lex this
-	 *	   expression so the parser can correctly update the
-	 *	   skip_stack state.
+	 *	2. If the skip stack is non-NULL, the type of the top node in
+	 *	   the stack determines whether to skip. A type of
+	 *	   SKIP_NO_SKIP is used for blocks wheere we are emitting
+	 *	   tokens, (such as between #if 1 and #endif, or after the
+	 *	   #else of an #if 0, etc.).
+	 *
+	 *	3. The lexing_directive bit overrides the skip stack. This bit
+	 *	   is set when we are actively lexing the expression for a
+	 *	   pre-processor condition, (such as #if, #elif, or #else). In
+	 *	   this case, even if otherwise skipping, we need to emit the
+	 *	   tokens for this condition so that the parser can evaluate
+	 *	   the expression. (For, #else, there's no expression, but we
+	 *	   emit tokens so the parser can generate a nice error message
+	 *	   if there are any tokens here).
 	 */
-	if (YY_START == INITIAL || YY_START == SKIP) {
-		if (parser->lexing_if ||
-		    parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			BEGIN INITIAL;
-		} else {
-			BEGIN SKIP;
-		}
+	if (parser->skip_stack &&
+	    parser->skip_stack->type != SKIP_NO_SKIP &&
+	    ! parser->lexing_directive)
+	{
+		parser->skipping = 1;
+	} else {
+		parser->skipping = 0;
 	}
 
 	/* Single-line comments */
-#line 956 "src/glsl/glcpp/glcpp-lex.c"
+#line 1080 "src/glsl/glcpp/glcpp-lex.c"
 
     yylval = yylval_param;
 
@@ -997,7 +1121,6 @@ YY_DECL
 		yy_bp = yy_cp;
 
 		yy_current_state = yyg->yy_start;
-		yy_current_state += YY_AT_BOL();
 yy_match:
 		do
 			{
@@ -1010,13 +1133,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 152 )
+				if ( yy_current_state >= 174 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 151 );
+		while ( yy_current_state != 173 );
 		yy_cp = yyg->yy_last_accepting_cpos;
 		yy_current_state = yyg->yy_last_accepting_state;
 
@@ -1038,378 +1161,512 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 158 "src/glsl/glcpp/glcpp-lex.l"
+#line 255 "src/glsl/glcpp/glcpp-lex.l"
 {
 }
 	YY_BREAK
 /* Multi-line comments */
 case 2:
 YY_RULE_SETUP
-#line 162 "src/glsl/glcpp/glcpp-lex.l"
+#line 259 "src/glsl/glcpp/glcpp-lex.l"
 { yy_push_state(COMMENT, yyscanner); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 163 "src/glsl/glcpp/glcpp-lex.l"
+#line 260 "src/glsl/glcpp/glcpp-lex.l"
 
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 164 "src/glsl/glcpp/glcpp-lex.l"
+#line 261 "src/glsl/glcpp/glcpp-lex.l"
 { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 165 "src/glsl/glcpp/glcpp-lex.l"
+#line 262 "src/glsl/glcpp/glcpp-lex.l"
 
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 166 "src/glsl/glcpp/glcpp-lex.l"
+#line 263 "src/glsl/glcpp/glcpp-lex.l"
 { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 167 "src/glsl/glcpp/glcpp-lex.l"
+#line 264 "src/glsl/glcpp/glcpp-lex.l"
 {
 	yy_pop_state(yyscanner);
-	if (yyextra->space_tokens)
-		return SPACE;
+	/* In the <HASH> start condition, we don't want any SPACE token. */
+	if (yyextra->space_tokens && YY_START != HASH)
+		RETURN_TOKEN (SPACE);
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 173 "src/glsl/glcpp/glcpp-lex.l"
+#line 271 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yylval->str = ralloc_strdup (yyextra, yytext);
+
+	/* If the '#' is the first non-whitespace, non-comment token on this
+	 * line, then it introduces a directive, switch to the <HASH> start
+	 * condition.
+	 *
+	 * Otherwise, this is just punctuation, so return the HASH_TOKEN
+         * token. */
+	if (parser->first_non_space_token_this_line) {
+		BEGIN HASH;
+	}
+
+	RETURN_TOKEN_NEVER_SKIP (HASH_TOKEN);
+}
+	YY_BREAK
+case 9:
+YY_RULE_SETUP
+#line 286 "src/glsl/glcpp/glcpp-lex.l"
+{
+	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	return HASH_VERSION;
+	RETURN_STRING_TOKEN (VERSION_TOKEN);
+}
+	YY_BREAK
+/* Swallow empty #pragma directives, (to avoid confusing the
+	 * downstream compiler).
+	 *
+	 * Note: We use a simple regular expression for the lookahead
+	 * here. Specifically, we cannot use the complete {NEWLINE} expression
+	 * since it uses alternation and we've found that there's a flex bug
+	 * where using alternation in the lookahead portion of a pattern
+	 * triggers a buffer overrun. */
+case 10:
+/* rule 10 can match eol */
+*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
+yyg->yy_c_buf_p = yy_cp -= 1;
+YY_DO_BEFORE_ACTION; /* set up yytext again */
+YY_RULE_SETUP
+#line 300 "src/glsl/glcpp/glcpp-lex.l"
+{
+	BEGIN INITIAL;
 }
 	YY_BREAK
 /* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
-case 9:
-YY_RULE_SETUP
-#line 181 "src/glsl/glcpp/glcpp-lex.l"
-{
-	if (parser->commented_newlines)
-		BEGIN NEWLINE_CATCHUP;
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	yylineno++;
-	yycolumn = 0;
-	return OTHER;
-}
-	YY_BREAK
-case 10:
-YY_RULE_SETUP
-#line 190 "src/glsl/glcpp/glcpp-lex.l"
-{
-	return HASH_LINE;
-}
-	YY_BREAK
-
 case 11:
 YY_RULE_SETUP
-#line 195 "src/glsl/glcpp/glcpp-lex.l"
+#line 306 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yyextra->lexing_if = 1;
-	yyextra->space_tokens = 0;
-	return HASH_IFDEF;
+	BEGIN INITIAL;
+	RETURN_STRING_TOKEN (PRAGMA);
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 201 "src/glsl/glcpp/glcpp-lex.l"
+#line 311 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yyextra->lexing_if = 1;
-	yyextra->space_tokens = 0;
-	return HASH_IFNDEF;
+	BEGIN INITIAL;
+	RETURN_TOKEN (LINE);
 }
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
-*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
-yyg->yy_c_buf_p = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 207 "src/glsl/glcpp/glcpp-lex.l"
+#line 316 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yyextra->lexing_if = 1;
-	yyextra->space_tokens = 0;
-	return HASH_IF;
+	BEGIN INITIAL;
+	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 }
 	YY_BREAK
+/* For the pre-processor directives, we return these tokens
+	 * even when we are otherwise skipping. */
 case 14:
-/* rule 14 can match eol */
-*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
-yyg->yy_c_buf_p = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 213 "src/glsl/glcpp/glcpp-lex.l"
+#line 323 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yyextra->lexing_if = 1;
+	BEGIN INITIAL;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_ELIF;
+	RETURN_TOKEN_NEVER_SKIP (IFDEF);
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 219 "src/glsl/glcpp/glcpp-lex.l"
+#line 330 "src/glsl/glcpp/glcpp-lex.l"
 {
+	BEGIN INITIAL;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_ELSE;
+	RETURN_TOKEN_NEVER_SKIP (IFNDEF);
 }
 	YY_BREAK
 case 16:
+/* rule 16 can match eol */
+*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
+yyg->yy_c_buf_p = yy_cp = yy_bp + 2;
+YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 224 "src/glsl/glcpp/glcpp-lex.l"
+#line 337 "src/glsl/glcpp/glcpp-lex.l"
 {
+	BEGIN INITIAL;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_ENDIF;
+	RETURN_TOKEN_NEVER_SKIP (IF);
 }
 	YY_BREAK
-
 case 17:
+/* rule 17 can match eol */
+*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
+yyg->yy_c_buf_p = yy_cp = yy_bp + 4;
+YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 230 "src/glsl/glcpp/glcpp-lex.l"
+#line 344 "src/glsl/glcpp/glcpp-lex.l"
 {
-	if (parser->commented_newlines)
-		BEGIN NEWLINE_CATCHUP;
+	BEGIN INITIAL;
+	yyextra->lexing_directive = 1;
+	yyextra->space_tokens = 0;
+	RETURN_TOKEN_NEVER_SKIP (ELIF);
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 235 "src/glsl/glcpp/glcpp-lex.l"
+#line 351 "src/glsl/glcpp/glcpp-lex.l"
 {
-	char *p;
-	for (p = yytext; !isalpha(p[0]); p++); /* skip "  #   " */
-	p += 5; /* skip "error" */
-	glcpp_error(yylloc, yyextra, "#error%s", p);
+	BEGIN INITIAL;
+	yyextra->space_tokens = 0;
+	RETURN_TOKEN_NEVER_SKIP (ELSE);
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 242 "src/glsl/glcpp/glcpp-lex.l"
+#line 357 "src/glsl/glcpp/glcpp-lex.l"
 {
+	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	yy_push_state(DEFINE, yyscanner);
-	return HASH_DEFINE;
+	RETURN_TOKEN_NEVER_SKIP (ENDIF);
 }
 	YY_BREAK
 case 20:
-*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
-yyg->yy_c_buf_p = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 248 "src/glsl/glcpp/glcpp-lex.l"
+#line 363 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yy_pop_state(yyscanner);
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return FUNC_IDENTIFIER;
+	BEGIN INITIAL;
+	RETURN_STRING_TOKEN (ERROR_TOKEN);
 }
 	YY_BREAK
+/* After we see a "#define" we enter the <DEFINE> start state
+	 * for the lexer. Within <DEFINE> we are looking for the first
+	 * identifier and specifically checking whether the identifier
+	 * is followed by a '(' or not, (to lex either a
+	 * FUNC_IDENTIFIER or an OBJ_IDENITIFIER token).
+	 *
+	 * While in the <DEFINE> state we also need to explicitly
+	 * handle a few other things that may appear before the
+	 * identifier:
+	 * 
+	 * 	* Comments, (handled above with the main support for
+	 * 	  comments).
+	 *
+	 *	* Whitespace (simply ignored)
+	 *
+	 *	* Anything else, (not an identifier, not a comment,
+	 *	  and not whitespace). This will generate an error.
+	 */
 case 21:
 YY_RULE_SETUP
-#line 254 "src/glsl/glcpp/glcpp-lex.l"
+#line 386 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yy_pop_state(yyscanner);
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return OBJ_IDENTIFIER;
+	if (! parser->skipping) {
+		BEGIN DEFINE;
+		yyextra->space_tokens = 0;
+		RETURN_TOKEN (DEFINE_TOKEN);
+	}
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 260 "src/glsl/glcpp/glcpp-lex.l"
+#line 394 "src/glsl/glcpp/glcpp-lex.l"
 {
+	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	return HASH_UNDEF;
+	RETURN_TOKEN (UNDEF);
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 265 "src/glsl/glcpp/glcpp-lex.l"
+#line 400 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yyextra->space_tokens = 0;
-	return HASH;
+	/* Nothing to do here. Importantly, don't leave the <HASH>
+	 * start condition, since it's legal to have space between the
+	 * '#' and the directive.. */
 }
 	YY_BREAK
+/* This will catch any non-directive garbage after a HASH */
 case 24:
 YY_RULE_SETUP
-#line 270 "src/glsl/glcpp/glcpp-lex.l"
+#line 407 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return INTEGER_STRING;
+	BEGIN INITIAL;
+	RETURN_TOKEN (GARBAGE);
 }
 	YY_BREAK
+/* An identifier immediately followed by '(' */
 case 25:
+*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
+yyg->yy_c_buf_p = yy_cp -= 1;
+YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 275 "src/glsl/glcpp/glcpp-lex.l"
+#line 413 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return INTEGER_STRING;
+	BEGIN INITIAL;
+	RETURN_STRING_TOKEN (FUNC_IDENTIFIER);
 }
 	YY_BREAK
+/* An identifier not immediately followed by '(' */
 case 26:
 YY_RULE_SETUP
-#line 280 "src/glsl/glcpp/glcpp-lex.l"
+#line 419 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return INTEGER_STRING;
+	BEGIN INITIAL;
+	RETURN_STRING_TOKEN (OBJ_IDENTIFIER);
 }
 	YY_BREAK
+/* Whitespace */
 case 27:
 YY_RULE_SETUP
-#line 285 "src/glsl/glcpp/glcpp-lex.l"
+#line 425 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return LEFT_SHIFT;
+	/* Just ignore it. Nothing to do here. */
 }
 	YY_BREAK
+/* '/' not followed by '*', so not a comment. This is an error. */
 case 28:
+/* rule 28 can match eol */
 YY_RULE_SETUP
-#line 289 "src/glsl/glcpp/glcpp-lex.l"
+#line 430 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return RIGHT_SHIFT;
+	BEGIN INITIAL;
+	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 	YY_BREAK
+/* A character that can't start an identifier, comment, or
+	 * space. This is an error. */
 case 29:
 YY_RULE_SETUP
-#line 293 "src/glsl/glcpp/glcpp-lex.l"
+#line 438 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return LESS_OR_EQUAL;
+	BEGIN INITIAL;
+	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 297 "src/glsl/glcpp/glcpp-lex.l"
+#line 444 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return GREATER_OR_EQUAL;
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 301 "src/glsl/glcpp/glcpp-lex.l"
+#line 448 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return EQUAL;
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 305 "src/glsl/glcpp/glcpp-lex.l"
+#line 452 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return NOT_EQUAL;
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 309 "src/glsl/glcpp/glcpp-lex.l"
+#line 456 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return AND;
+	RETURN_TOKEN (LEFT_SHIFT);
 }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 313 "src/glsl/glcpp/glcpp-lex.l"
+#line 460 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return OR;
+	RETURN_TOKEN (RIGHT_SHIFT);
 }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 317 "src/glsl/glcpp/glcpp-lex.l"
+#line 464 "src/glsl/glcpp/glcpp-lex.l"
 {
-	if (parser->is_gles)
-		glcpp_error(yylloc, yyextra, "Token pasting (##) is illegal in GLES");
-	return PASTE;
+	RETURN_TOKEN (LESS_OR_EQUAL);
 }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 323 "src/glsl/glcpp/glcpp-lex.l"
+#line 468 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return DEFINED;
+	RETURN_TOKEN (GREATER_OR_EQUAL);
 }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 327 "src/glsl/glcpp/glcpp-lex.l"
+#line 472 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
+	RETURN_TOKEN (EQUAL);
 }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 332 "src/glsl/glcpp/glcpp-lex.l"
+#line 476 "src/glsl/glcpp/glcpp-lex.l"
 {
-	return yytext[0];
+	RETURN_TOKEN (NOT_EQUAL);
 }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 336 "src/glsl/glcpp/glcpp-lex.l"
+#line 480 "src/glsl/glcpp/glcpp-lex.l"
 {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	return OTHER;
+	RETURN_TOKEN (AND);
 }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 341 "src/glsl/glcpp/glcpp-lex.l"
+#line 484 "src/glsl/glcpp/glcpp-lex.l"
 {
-	if (yyextra->space_tokens) {
-		return SPACE;
-	}
+	RETURN_TOKEN (OR);
 }
 	YY_BREAK
 case 41:
-/* rule 41 can match eol */
 YY_RULE_SETUP
-#line 347 "src/glsl/glcpp/glcpp-lex.l"
+#line 488 "src/glsl/glcpp/glcpp-lex.l"
 {
-	if (parser->commented_newlines) {
-		BEGIN NEWLINE_CATCHUP;
-	}
-	yyextra->lexing_if = 0;
-	yylineno++;
-	yycolumn = 0;
-	return NEWLINE;
+	RETURN_TOKEN (PLUS_PLUS);
 }
 	YY_BREAK
-/* Handle missing newline at EOF. */
-case YY_STATE_EOF(INITIAL):
-#line 358 "src/glsl/glcpp/glcpp-lex.l"
-{
-	BEGIN DONE; /* Don't keep matching this rule forever. */
-	yyextra->lexing_if = 0;
-	return NEWLINE;
-}
-	YY_BREAK
-/* We don't actually use the UNREACHABLE start condition. We
-	only have this action here so that we can pretend to call some
-	generated functions, (to avoid "defined but not used"
-	warnings. */
 case 42:
 YY_RULE_SETUP
-#line 368 "src/glsl/glcpp/glcpp-lex.l"
+#line 492 "src/glsl/glcpp/glcpp-lex.l"
 {
-	unput('.');
-	yy_top_state(yyextra);
+	RETURN_TOKEN (MINUS_MINUS);
 }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 373 "src/glsl/glcpp/glcpp-lex.l"
-ECHO;
+#line 496 "src/glsl/glcpp/glcpp-lex.l"
+{
+	if (! parser->skipping) {
+		if (parser->is_gles)
+			glcpp_error(yylloc, yyextra, "Token pasting (##) is illegal in GLES");
+		RETURN_TOKEN (PASTE);
+	}
+}
 	YY_BREAK
-#line 1407 "src/glsl/glcpp/glcpp-lex.c"
-case YY_STATE_EOF(DONE):
+case 44:
+YY_RULE_SETUP
+#line 504 "src/glsl/glcpp/glcpp-lex.l"
+{
+	RETURN_TOKEN (DEFINED);
+}
+	YY_BREAK
+case 45:
+YY_RULE_SETUP
+#line 508 "src/glsl/glcpp/glcpp-lex.l"
+{
+	RETURN_STRING_TOKEN (IDENTIFIER);
+}
+	YY_BREAK
+case 46:
+YY_RULE_SETUP
+#line 512 "src/glsl/glcpp/glcpp-lex.l"
+{
+	RETURN_STRING_TOKEN (OTHER);
+}
+	YY_BREAK
+case 47:
+YY_RULE_SETUP
+#line 516 "src/glsl/glcpp/glcpp-lex.l"
+{
+	RETURN_TOKEN (yytext[0]);
+}
+	YY_BREAK
+case 48:
+YY_RULE_SETUP
+#line 520 "src/glsl/glcpp/glcpp-lex.l"
+{
+	RETURN_STRING_TOKEN (OTHER);
+}
+	YY_BREAK
+case 49:
+YY_RULE_SETUP
+#line 524 "src/glsl/glcpp/glcpp-lex.l"
+{
+	if (yyextra->space_tokens) {
+		RETURN_TOKEN (SPACE);
+	}
+}
+	YY_BREAK
+/* We preserve all newlines, even between #if 0..#endif, so no
+	skipping.. */
+case 50:
+/* rule 50 can match eol */
+YY_RULE_SETUP
+#line 532 "src/glsl/glcpp/glcpp-lex.l"
+{
+	if (parser->commented_newlines) {
+		BEGIN NEWLINE_CATCHUP;
+	} else {
+		BEGIN INITIAL;
+	}
+	yyextra->space_tokens = 1;
+	yyextra->lexing_directive = 0;
+	yylineno++;
+	yycolumn = 0;
+	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
+}
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
-case YY_STATE_EOF(UNREACHABLE):
-case YY_STATE_EOF(SKIP):
 case YY_STATE_EOF(DEFINE):
+case YY_STATE_EOF(HASH):
+#line 545 "src/glsl/glcpp/glcpp-lex.l"
+{
+	if (YY_START == COMMENT)
+		glcpp_error(yylloc, yyextra, "Unterminated comment");
+	BEGIN DONE; /* Don't keep matching this rule forever. */
+	yyextra->lexing_directive = 0;
+	if (! parser->last_token_was_newline)
+		RETURN_TOKEN (NEWLINE);
+}
+	YY_BREAK
+/* This is a catch-all to avoid the annoying default flex action which
+	 * matches any character and prints it. If any input ever matches this
+	 * rule, then we have made a mistake above and need to fix one or more
+	 * of the preceding patterns to match that input. */
+case 51:
+YY_RULE_SETUP
+#line 559 "src/glsl/glcpp/glcpp-lex.l"
+{
+	glcpp_error(yylloc, yyextra, "Internal compiler error: Unexpected character: %s", yytext);
+
+	/* We don't actually use the UNREACHABLE start condition. We
+	only have this block here so that we can pretend to call some
+	generated functions, (to avoid "defined but not used"
+	warnings. */
+        if (YY_START == UNREACHABLE) {
+		unput('.');
+		yy_top_state(yyextra);
+	}
+}
+	YY_BREAK
+case 52:
+YY_RULE_SETUP
+#line 572 "src/glsl/glcpp/glcpp-lex.l"
+YY_FATAL_ERROR( "flex scanner jammed" );
+	YY_BREAK
+#line 1667 "src/glsl/glcpp/glcpp-lex.c"
+case YY_STATE_EOF(DONE):
 case YY_STATE_EOF(NEWLINE_CATCHUP):
+case YY_STATE_EOF(UNREACHABLE):
 	yyterminate();
 
 	case YY_END_OF_BUFFER:
@@ -1691,7 +1948,6 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	yy_current_state = yyg->yy_start;
-	yy_current_state += YY_AT_BOL();
 
 	for ( yy_cp = yyg->yytext_ptr + YY_MORE_ADJ; yy_cp < yyg->yy_c_buf_p; ++yy_cp )
 		{
@@ -1704,7 +1960,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 152 )
+			if ( yy_current_state >= 174 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1733,11 +1989,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 152 )
+		if ( yy_current_state >= 174 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 151);
+	yy_is_jam = (yy_current_state == 173);
 
 	return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1850,8 +2106,6 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	c = *(unsigned char *) yyg->yy_c_buf_p;	/* cast for 8-bit char's */
 	*yyg->yy_c_buf_p = '\0';	/* preserve yytext */
 	yyg->yy_hold_char = *++yyg->yy_c_buf_p;
-
-	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = (c == '\n');
 
 	return c;
 }
@@ -2627,7 +2881,7 @@ void glcpp_free (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 373 "src/glsl/glcpp/glcpp-lex.l"
+#line 572 "src/glsl/glcpp/glcpp-lex.l"
 
 
 

@@ -19,4 +19,6 @@ void main ()
 }
 
 
-// inputs: 0, stats: 7 alu 2 tex 3 flow
+// stats: 7 alu 2 tex 3 flow
+// uniforms: 1 (total size: 0)
+//  #0: uniVal (high float) 3x1 [-1]

@@ -50,7 +50,7 @@ public:
  * into expressions.
  */
 ir_visitor_status
-redundant_jumps_visitor::visit_enter(ir_assignment *ir)
+redundant_jumps_visitor::visit_enter(ir_assignment *)
 {
    return visit_continue_with_parent;
 }

@@ -49,8 +49,8 @@ public:
 
       this->current_function = NULL;
 
-      this->callback = ir_validate::validate_ir;
-      this->data = ht;
+      this->callback_enter = ir_validate::validate_ir;
+      this->data_enter = ht;
    }
 
    ~ir_validate()
@@ -100,7 +100,7 @@ ir_validate::visit(ir_dereference_variable *ir)
       abort();
    }
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    return visit_continue;
 }
@@ -167,14 +167,12 @@ ir_validate::visit_enter(ir_function *ir)
     */
    this->current_function = ir;
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    /* Verify that all of the things stored in the list of signatures are,
     * in fact, function signatures.
     */
-   foreach_list(node, &ir->signatures) {
-      ir_instruction *sig = (ir_instruction *) node;
-
+   foreach_in_list(ir_instruction, sig, &ir->signatures) {
       if (sig->ir_type != ir_type_function_signature) {
 	 printf("Non-signature in signature list of function `%s'\n",
 		ir->name);
@@ -213,7 +211,7 @@ ir_validate::visit_enter(ir_function_signature *ir)
       abort();
    }
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    return visit_continue;
 }
@@ -246,6 +244,7 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_log:
    case ir_unop_exp2:
    case ir_unop_log2:
+   case ir_unop_saturate:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->type == ir->operands[0]->type);
       break;
@@ -322,7 +321,11 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_sin_reduced:
    case ir_unop_cos_reduced:
    case ir_unop_dFdx:
+   case ir_unop_dFdx_coarse:
+   case ir_unop_dFdx_fine:
    case ir_unop_dFdy:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->operands[0]->type == ir->type);
       break;
@@ -376,6 +379,11 @@ ir_validate::visit_leave(ir_expression *ir)
       /* XXX what can we assert here? */
       break;
 
+   case ir_unop_interpolate_at_centroid:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[0]->type->is_float());
+      break;
+
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_mul:
@@ -384,6 +392,9 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_binop_min:
    case ir_binop_max:
    case ir_binop_pow:
+      assert(ir->operands[0]->type->base_type ==
+             ir->operands[1]->type->base_type);
+
       if (ir->operands[0]->type->is_scalar())
 	 assert(ir->operands[1]->type == ir->type);
       else if (ir->operands[1]->type->is_scalar())
@@ -492,7 +503,6 @@ ir_validate::visit_leave(ir_expression *ir)
       break;
 
    case ir_binop_ubo_load:
-      assert(ir->operands[0]->as_constant());
       assert(ir->operands[0]->type == glsl_type::uint_type);
 
       assert(ir->operands[1]->type == glsl_type::uint_type);
@@ -510,6 +520,19 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type->is_vector());
       assert(ir->operands[1]->type->is_scalar()
              && ir->operands[1]->type->is_integer());
+      break;
+
+   case ir_binop_interpolate_at_offset:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[0]->type->is_float());
+      assert(ir->operands[1]->type->components() == 2);
+      assert(ir->operands[1]->type->is_float());
+      break;
+
+   case ir_binop_interpolate_at_sample:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[0]->type->is_float());
+      assert(ir->operands[1]->type == glsl_type::int_type);
       break;
 
    case ir_triop_fma:
@@ -634,7 +657,7 @@ ir_validate::visit(ir_variable *ir)
     * in the ir_dereference_variable handler to ensure that a variable is
     * declared before it is dereferenced.
     */
-   if (ir->name)
+   if (ir->name && ir->is_name_ralloced())
       assert(ralloc_parent(ir->name) == ir);
 
    hash_table_insert(ht, ir, ir);
@@ -662,10 +685,15 @@ ir_validate::visit(ir_variable *ir)
          ir->get_interface_type()->fields.structure;
       for (unsigned i = 0; i < ir->get_interface_type()->length; i++) {
          if (fields[i].type->array_size() > 0) {
-            if (ir->max_ifc_array_access[i] >= fields[i].type->length) {
+            const unsigned *const max_ifc_array_access =
+               ir->get_max_ifc_array_access();
+
+            assert(max_ifc_array_access != NULL);
+
+            if (max_ifc_array_access[i] >= fields[i].type->length) {
                printf("ir_variable has maximum access out of bounds for "
                       "field %s (%d vs %d)\n", fields[i].name,
-                      ir->max_ifc_array_access[i], fields[i].type->length);
+                      max_ifc_array_access[i], fields[i].type->length);
                ir->print();
                abort();
             }
@@ -676,6 +704,14 @@ ir_validate::visit(ir_variable *ir)
    if (ir->constant_initializer != NULL && !ir->data.has_initializer) {
       printf("ir_variable didn't have an initializer, but has a constant "
 	     "initializer value.\n");
+      ir->print();
+      abort();
+   }
+
+   if (ir->data.mode == ir_var_uniform
+       && strncmp(ir->name, "gl_", 3) == 0
+       && ir->get_state_slots() == NULL) {
+      printf("built-in uniform has no state\n");
       ir->print();
       abort();
    }
@@ -710,7 +746,7 @@ ir_validate::visit_enter(ir_assignment *ir)
       }
    }
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    return visit_continue;
 }
@@ -795,7 +831,7 @@ check_node_type(ir_instruction *ir, void *data)
 {
    (void) data;
 
-   if (ir->ir_type <= ir_type_unset || ir->ir_type >= ir_type_max) {
+   if (ir->ir_type >= ir_type_max) {
       printf("Instruction node with unset type\n");
       ir->print(); printf("\n");
    }
@@ -816,9 +852,7 @@ validate_ir_tree(exec_list *instructions)
 
    v.run(instructions);
 
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
-
+   foreach_in_list(ir_instruction, ir, instructions) {
       visit_tree(ir, check_node_type, NULL);
    }
 #endif

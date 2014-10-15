@@ -13,14 +13,19 @@ project ("example-common")
 		BGFX_DIR .. "3rdparty",
 	}
 
-	defines {
---		"ENTRY_CONFIG_USE_SDL=1",
-	}
-
 	files {
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
 	}
+
+	if _OPTIONS["with-sdl"] then
+		defines {
+			"ENTRY_CONFIG_USE_SDL=1",
+		}
+		includedirs {
+			"$(SDL2_DIR)/include",
+		}
+	end
 
 	configuration { "xcode4" }
 		includedirs {

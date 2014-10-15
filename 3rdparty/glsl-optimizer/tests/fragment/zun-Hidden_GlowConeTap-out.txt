@@ -7,12 +7,18 @@ void main ()
   tmpvar_1 = gl_TexCoord[0];
   tmpvar_2 = gl_TexCoord[1];
   vec4 c_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = (((texture2D (_MainTex, tmpvar_1.xy) + texture2D (_MainTex, tmpvar_1.zw)) + texture2D (_MainTex, tmpvar_2.xy)) + texture2D (_MainTex, tmpvar_2.zw));
-  c_3.w = tmpvar_4.w;
-  c_3.xyz = (tmpvar_4.xyz * _Color.xyz);
+  c_3 = (texture2D (_MainTex, tmpvar_1.xy) + texture2D (_MainTex, tmpvar_1.zw));
+  c_3 = (c_3 + texture2D (_MainTex, tmpvar_2.xy));
+  c_3 = (c_3 + texture2D (_MainTex, tmpvar_2.zw));
+  c_3.xyz = (c_3.xyz * _Color.xyz);
   gl_FragData[0] = (c_3 * _Color.w);
 }
 
 
-// inputs: 1, stats: 5 alu 4 tex 0 flow
+// stats: 5 alu 4 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// uniforms: 1 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]

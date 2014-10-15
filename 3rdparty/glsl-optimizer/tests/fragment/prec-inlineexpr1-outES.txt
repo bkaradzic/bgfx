@@ -16,4 +16,12 @@ void main ()
 }
 
 
-// inputs: 1, stats: 6 alu 2 tex 0 flow
+// stats: 6 alu 2 tex 0 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _EmberFadeEnd (medium float) 1x1 [-1]
+//  #1: _EmberFadeStart (medium float) 1x1 [-1]
+// textures: 2
+//  #0: _MainTex (low 2d) 0x0 [-1]
+//  #1: _BurntTex (low 2d) 0x0 [-1]

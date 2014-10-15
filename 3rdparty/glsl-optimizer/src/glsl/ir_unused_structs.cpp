@@ -71,8 +71,7 @@ bool
 ir_struct_usage_visitor::has_struct_entry(const glsl_type *t) const
 {
 	assert(t);
-	foreach_list(node, &this->struct_list) {
-		struct_entry *entry = (struct_entry *)node;
+	foreach_in_list(struct_entry, entry, &this->struct_list) {
 		if (entry->type == t)
 			return true;
 	}
@@ -119,8 +118,8 @@ ir_struct_usage_visitor::ir_struct_usage_visitor()
 {
 	this->mem_ctx = ralloc_context(NULL);
 	this->struct_list.make_empty();
-	this->callback = visit_variable;
-	this->data = this;
+	this->callback_enter = visit_variable;
+	this->data_enter = this;
 }
 
 ir_struct_usage_visitor::~ir_struct_usage_visitor(void)

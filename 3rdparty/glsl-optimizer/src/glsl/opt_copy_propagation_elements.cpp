@@ -186,7 +186,7 @@ ir_copy_propagation_elements_visitor::visit_leave(ir_assignment *ir)
 }
 
 ir_visitor_status
-ir_copy_propagation_elements_visitor::visit_leave(ir_swizzle *ir)
+ir_copy_propagation_elements_visitor::visit_leave(ir_swizzle *)
 {
    /* Don't visit the values of swizzles since they are handled while
     * visiting the swizzle itself.
@@ -207,8 +207,9 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
    int swizzle_chan[4];
    ir_dereference_variable *deref_var;
    ir_variable *source[4] = {NULL, NULL, NULL, NULL};
-   int source_chan[4];
+   int source_chan[4] = {0, 0, 0, 0};
    int chans;
+   bool noop_swizzle = true;
 
    if (!*ir)
       return;
@@ -244,14 +245,15 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
    /* Try to find ACP entries covering swizzle_chan[], hoping they're
     * the same source variable.
     */
-   foreach_list(n, this->acp) {
-      acp_entry *entry = (acp_entry *) n;
-
+   foreach_in_list(acp_entry, entry, this->acp) {
       if (var == entry->lhs) {
 	 for (int c = 0; c < chans; c++) {
 	    if (entry->write_mask & (1 << swizzle_chan[c])) {
 	       source[c] = entry->rhs;
 	       source_chan[c] = entry->swizzle[swizzle_chan[c]];
+
+               if (source_chan[c] != swizzle_chan[c])
+                  noop_swizzle = false;
 	    }
 	 }
       }
@@ -268,6 +270,12 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
    if (!shader_mem_ctx)
       shader_mem_ctx = ralloc_parent(deref_var);
 
+   /* Don't pointlessly replace the rvalue with itself (or a noop swizzle
+    * of itself, which would just be deleted by opt_noop_swizzle).
+    */
+   if (source[0] == var && noop_swizzle)
+      return;
+
    if (debug) {
       printf("Copy propagation from:\n");
       (*ir)->print();
@@ -280,6 +288,7 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
 					source_chan[2],
 					source_chan[3],
 					chans);
+   progress = true;
 
    if (debug) {
       printf("to:\n");
@@ -327,8 +336,7 @@ ir_copy_propagation_elements_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a copy of the original */
-   foreach_list(n, orig_acp) {
-      acp_entry *a = (acp_entry *) n;
+   foreach_in_list(acp_entry, a, orig_acp) {
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 
@@ -346,8 +354,7 @@ ir_copy_propagation_elements_visitor::handle_if_block(exec_list *instructions)
    /* Move the new kills into the parent block's list, removing them
     * from the parent's ACP list in the process.
     */
-   foreach_list_safe(node, new_kills) {
-      kill_entry *k = (kill_entry *)node;
+   foreach_in_list_safe(kill_entry, k, new_kills) {
       kill(k);
    }
 }
@@ -390,8 +397,7 @@ ir_copy_propagation_elements_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_list_safe(node, new_kills) {
-      kill_entry *k = (kill_entry *)node;
+   foreach_in_list_safe(kill_entry, k, new_kills) {
       kill(k);
    }
 
@@ -403,9 +409,7 @@ ir_copy_propagation_elements_visitor::visit_enter(ir_loop *ir)
 void
 ir_copy_propagation_elements_visitor::kill(kill_entry *k)
 {
-   foreach_list_safe(node, acp) {
-      acp_entry *entry = (acp_entry *)node;
-
+   foreach_in_list_safe(acp_entry, entry, acp) {
       if (entry->lhs == k->var) {
 	 entry->write_mask = entry->write_mask & ~k->write_mask;
 	 if (entry->write_mask == 0) {

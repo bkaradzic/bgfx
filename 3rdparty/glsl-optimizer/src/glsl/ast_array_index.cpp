@@ -88,8 +88,14 @@ update_max_array_access(ir_rvalue *ir, unsigned idx, YYLTYPE *loc,
             unsigned field_index =
                deref_record->record->type->field_index(deref_record->field);
             assert(field_index < interface_type->length);
-            if (idx > deref_var->var->max_ifc_array_access[field_index]) {
-               deref_var->var->max_ifc_array_access[field_index] = idx;
+
+            unsigned *const max_ifc_array_access =
+               deref_var->var->get_max_ifc_array_access();
+
+            assert(max_ifc_array_access != NULL);
+
+            if (idx > max_ifc_array_access[field_index]) {
+               max_ifc_array_access[field_index] = idx;
 
                /* Check whether this access will, as a side effect, implicitly
                 * cause the size of a built-in array to be too large.
@@ -181,7 +187,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       if (array->type->is_unsized_array()) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       } else if (array->type->fields.array->is_interface()
-                 && array->variable_referenced()->data.mode == ir_var_uniform) {
+                 && array->variable_referenced()->data.mode == ir_var_uniform
+                 && !state->is_version(400, 0) && !state->ARB_gpu_shader5_enable) {
 	 /* Page 46 in section 4.3.7 of the OpenGL ES 3.00 spec says:
 	  *
 	  *     "All indexes used to index a uniform block array must be
@@ -212,6 +219,13 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        * as using a loop counter as the index to an array of samplers.  If the
        * loop in unrolled, the code should compile correctly.  Instead, emit a
        * warning.
+       *
+       * In GLSL 4.00 / ARB_gpu_shader5, this requirement is relaxed again to allow
+       * indexing with dynamically uniform expressions. Note that these are not
+       * required to be uniforms or expressions based on them, but merely that the
+       * values must not diverge between shader invocations run together. If the
+       * values *do* diverge, then the behavior of the operation requiring a
+       * dynamically uniform expression is undefined.
        */
       if (array->type->element_type()->is_sampler()) {
 	 if (!state->is_version(130, 100)) {
@@ -226,7 +240,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 				  "expressions will be forbidden in GLSL 1.30 "
 				  "and later");
 	    }
-	 } else {
+	 } else if (!state->is_version(400, 0) && !state->ARB_gpu_shader5_enable) {
 	    _mesa_glsl_error(&loc, state,
 			     "sampler arrays indexed with non-constant "
 			     "expressions is forbidden in GLSL 1.30 and "

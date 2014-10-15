@@ -23,20 +23,33 @@ void main ()
   float atten_6;
   atten_6 = (texture2D (_LightTextureB0, vec2(dot (tmpvar_2, tmpvar_2))).w * textureCube (_LightTexture0, tmpvar_2).w);
   vec4 c_7;
-  float tmpvar_8;
-  tmpvar_8 = (pow (max (0.0, 
+  float spec_8;
+  spec_8 = (pow (max (0.0, 
     dot (normal_4.xyz, normalize((tmpvar_5 + normalize(gl_TexCoord[2].xyz))))
   ), (_Shininess * 128.0)) * texture2D (_GlossMap, tmpvar_1).w);
   c_7.xyz = (((
     ((texture2D (_MainTex, tmpvar_1).xyz * gl_Color.xyz) * _LightColor0.xyz)
    * 
     max (0.0, dot (normal_4.xyz, tmpvar_5))
-  ) + (_LightColor0.xyz * tmpvar_8)) * (atten_6 * 2.0));
-  c_7.w = (((_LightColor0.w * tmpvar_8) * atten_6) * _Color.w);
+  ) + (_LightColor0.xyz * spec_8)) * (atten_6 * 2.0));
+  c_7.w = ((_LightColor0.w * spec_8) * (atten_6 * _Color.w));
   c_3.xyz = c_7.xyz;
   c_3.w = 0.0;
   gl_FragData[0] = c_3;
 }
 
 
-// inputs: 2, stats: 31 alu 5 tex 0 flow
+// stats: 31 alu 5 tex 0 flow
+// inputs: 2
+//  #0: gl_Color (high float) 4x1 [-1] loc 1
+//  #1: gl_TexCoord (high float) 4x1 [4] loc 4
+// uniforms: 3 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+//  #1: _LightColor0 (high float) 4x1 [-1]
+//  #2: _Shininess (high float) 1x1 [-1]
+// textures: 5
+//  #0: _BumpMap (high 2d) 0x0 [-1]
+//  #1: _GlossMap (high 2d) 0x0 [-1]
+//  #2: _LightTexture0 (high cube) 0x0 [-1]
+//  #3: _LightTextureB0 (high 2d) 0x0 [-1]
+//  #4: _MainTex (high 2d) 0x0 [-1]

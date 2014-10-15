@@ -16,6 +16,7 @@ extern "C" int _main_(int _argc, char** _argv);
 
 #define ENTRY_WINDOW_FLAG_NONE         UINT32_C(0x00000000)
 #define ENTRY_WINDOW_FLAG_ASPECT_RATIO UINT32_C(0x00000001)
+#define ENTRY_WINDOW_FLAG_FRAME        UINT32_C(0x00000002)
 
 namespace entry
 {

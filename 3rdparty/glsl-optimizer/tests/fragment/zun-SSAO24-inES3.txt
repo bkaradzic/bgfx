@@ -1,7 +1,7 @@
 #version 300 es
 #define gl_FragData _glesFragData
 layout(location = 0) out mediump vec4 _glesFragData[4];
-float xll_saturate_f( float x) {
+highp float xll_saturate_f( highp float x) {
   return clamp( x, 0.0, 1.0);
 }
 struct v2f_ao {
@@ -12,7 +12,7 @@ struct v2f_ao {
 uniform highp vec4 _ProjectionParams;
 uniform highp vec2 _NoiseScale;
 uniform highp vec4 _CameraDepthNormalsTexture_ST;
-uniform sampler2D _CameraDepthNormalsTexture;
+uniform highp sampler2D _CameraDepthNormalsTexture;
 uniform sampler2D _RandomTexture;
 uniform highp vec4 _Params;
 highp float DecodeFloatRG( in highp vec2 enc ) {

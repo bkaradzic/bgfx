@@ -35,11 +35,11 @@ ir_factory::emit(ir_instruction *ir)
 }
 
 ir_variable *
-ir_factory::make_temp(const glsl_type *type, const char *name)
+ir_factory::make_temp(const glsl_type *type, const char *name, glsl_precision prec)
 {
    ir_variable *var;
 
-   var = new(mem_ctx) ir_variable(type, name, ir_var_temporary, glsl_precision_undefined);
+   var = new(mem_ctx) ir_variable(type, name, ir_var_temporary, prec);
    emit(var);
 
    return var;
@@ -251,13 +251,8 @@ ir_expression *round_even(operand a)
    return expr(ir_unop_round_even, a);
 }
 
-ir_expression *dot(operand a, operand b)
-{
-   return expr(ir_binop_dot, a, b);
-}
-
 /* dot for vectors, mul for scalars */
-ir_expression *dotlike(operand a, operand b)
+ir_expression *dot(operand a, operand b)
 {
    assert(a.val->type == b.val->type);
 
@@ -276,11 +271,7 @@ clamp(operand a, operand b, operand c)
 ir_expression *
 saturate(operand a)
 {
-   void *mem_ctx = ralloc_parent(a.val);
-
-   return expr(ir_binop_max,
-	       expr(ir_binop_min, a, new(mem_ctx) ir_constant(1.0f)),
-	       new(mem_ctx) ir_constant(0.0f));
+   return expr(ir_unop_saturate, a);
 }
 
 ir_expression *
@@ -503,6 +494,24 @@ ir_expression *
 b2f(operand a)
 {
    return expr(ir_unop_b2f, a);
+}
+
+ir_expression *
+interpolate_at_centroid(operand a)
+{
+   return expr(ir_unop_interpolate_at_centroid, a);
+}
+
+ir_expression *
+interpolate_at_offset(operand a, operand b)
+{
+   return expr(ir_binop_interpolate_at_offset, a, b);
+}
+
+ir_expression *
+interpolate_at_sample(operand a, operand b)
+{
+   return expr(ir_binop_interpolate_at_sample, a, b);
 }
 
 ir_expression *

@@ -1,0 +1,9 @@
+MESA_UTIL_FILES :=	\
+	hash_table.c	\
+	ralloc.c \
+	register_allocate.c \
+	register_allocate.h \
+	rgtc.c
+
+MESA_UTIL_GENERATED_FILES = \
+	format_srgb.c

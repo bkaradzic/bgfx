@@ -162,8 +162,7 @@ void s_symbol::print()
 void s_list::print()
 {
    printf("(");
-   foreach_list(n, &this->subexpressions) {
-      s_expression *expr = (s_expression *) n;
+   foreach_in_list(s_expression, expr, &this->subexpressions) {
       expr->print();
       if (!expr->next->is_tail_sentinel())
 	 printf(" ");
@@ -201,11 +200,10 @@ s_match(s_expression *top, unsigned n, s_pattern *pattern, bool partial)
       return false;
 
    unsigned i = 0;
-   foreach_list(node, &list->subexpressions) {
+   foreach_in_list(s_expression, expr, &list->subexpressions) {
       if (i >= n)
 	 return partial; /* More actual items than the pattern expected */
 
-      s_expression *expr = (s_expression *) node;
       if (expr == NULL || !pattern[i].match(expr))
 	 return false;
 

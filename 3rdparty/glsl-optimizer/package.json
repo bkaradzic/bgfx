@@ -8,14 +8,31 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/donny-dont/glsl-optimizer.git"
+    "url": "https://github.com/aras-p/glsl-optimizer.git"
   },
   "keywords": [
     "glsl",
-    "webgl"
+    "webgl",
+    "shader",
+    "optimize",
+    "optimizer",
+    "opengl",
+    "essl",
+    "es",
+    "opengles"
   ],
-  "author": "Don Olmstead",
+  "readmeFilename": "README.md",
+  "author": "Aras Pranckevičius",
   "license": "MIT",
   "gypfile": true,
-  "readmeFilename": "README.md"
+  "bugs": {
+    "url": "https://github.com/aras-p/glsl-optimizer/issues"
+  },
+  "homepage": "https://github.com/aras-p/glsl-optimizer",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "nan": "~1.2.0"
+  }
 }

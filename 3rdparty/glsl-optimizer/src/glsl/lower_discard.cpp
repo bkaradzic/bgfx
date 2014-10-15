@@ -138,8 +138,8 @@ lower_discard(exec_list *instructions)
 static ir_discard *
 find_discard(exec_list &instructions)
 {
-   foreach_list(n, &instructions) {
-      ir_discard *ir = ((ir_instruction *) n)->as_discard();
+   foreach_in_list(ir_instruction, node, &instructions) {
+      ir_discard *ir = node->as_discard();
       if (ir != NULL)
 	 return ir;
    }

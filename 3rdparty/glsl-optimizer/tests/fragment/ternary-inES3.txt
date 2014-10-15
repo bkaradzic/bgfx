@@ -1,0 +1,18 @@
+#version 300 es
+mediump vec4 xlat_main( in highp vec4 uv ) {
+    mediump vec4 c;
+    c = vec4( 0.000000);
+    c += ( (uv.x  > 0.500000) ) ? ( 0.900000 ) : ( 0.100000 );
+    c += ( (uv.x  > 0.500000) ) ? ( vec4( 0.900000, 0.900000, 0.900000, 0.900000) ) : ( vec4( 0.100000, 0.100000, 0.100000, 0.100000) );
+    c.xyz  += ( (uv.x  > 0.500000) ) ? ( vec3( 0.900000, 0.900000, 0.900000) ) : ( vec3( 0.100000, 0.100000, 0.100000) );
+    c.xy  += ( (uv.x  > 0.500000) ) ? ( vec2( 0.900000, 0.900000) ) : ( vec2( 0.100000, 0.100000) );
+    c.x  += ( bool( fract( uv.x  ) ) ) ? ( 0.900000 ) : ( 0.100000 );
+    return c;
+}
+in highp vec4 xlv_TEXCOORD0;
+out mediump vec4 _fragData;
+void main() {
+    mediump vec4 xl_retval;
+    xl_retval = xlat_main( vec4(xlv_TEXCOORD0));
+    _fragData = vec4( xl_retval);
+}

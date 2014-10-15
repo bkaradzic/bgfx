@@ -1,0 +1,91 @@
+#version 300 es
+uniform sampler2D _CameraDepthTexture;
+uniform highp vec4 _LightShadowData;
+uniform highp vec4 _LightSplitsFar;
+uniform highp vec4 _LightSplitsNear;
+uniform sampler2D _ShadowMapTexture;
+uniform highp mat4 _View2Shadow;
+uniform highp mat4 _View2Shadow1;
+uniform highp mat4 _View2Shadow2;
+uniform highp mat4 _View2Shadow3;
+uniform highp vec4 _ZBufferParams;
+in highp vec2 xlv_TEXCOORD0;
+in highp vec3 xlv_TEXCOORD1;
+out mediump vec4 _fragData;
+void main ()
+{
+  mediump vec4 tmpvar_1;
+  highp vec4 res_2;
+  highp float depth_3;
+  lowp vec4 tmpvar_4;
+  tmpvar_4 = texture (_CameraDepthTexture, xlv_TEXCOORD0);
+  depth_3 = tmpvar_4.x;
+  highp float tmpvar_5;
+  tmpvar_5 = (1.0/(((_ZBufferParams.x * depth_3) + _ZBufferParams.y)));
+  depth_3 = tmpvar_5;
+  highp vec4 tmpvar_6;
+  tmpvar_6.w = 1.0;
+  tmpvar_6.xyz = (xlv_TEXCOORD1 * tmpvar_5);
+  mediump float shadow_7;
+  highp vec4 weights_8;
+  highp vec4 far_9;
+  highp vec4 near_10;
+  bvec4 tmpvar_11;
+  tmpvar_11 = greaterThanEqual (tmpvar_6.zzzz, _LightSplitsNear);
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = vec4(tmpvar_11);
+  near_10 = tmpvar_12;
+  bvec4 tmpvar_13;
+  tmpvar_13 = lessThan (tmpvar_6.zzzz, _LightSplitsFar);
+  lowp vec4 tmpvar_14;
+  tmpvar_14 = vec4(tmpvar_13);
+  far_9 = tmpvar_14;
+  weights_8 = (near_10 * far_9);
+  highp vec4 tmpvar_15;
+  tmpvar_15.w = 1.0;
+  tmpvar_15.xyz = (((
+    ((_View2Shadow * tmpvar_6).xyz * weights_8.x)
+   + 
+    ((_View2Shadow1 * tmpvar_6).xyz * weights_8.y)
+  ) + (
+    (_View2Shadow2 * tmpvar_6)
+  .xyz * weights_8.z)) + ((_View2Shadow3 * tmpvar_6).xyz * weights_8.w));
+  lowp vec4 tmpvar_16;
+  tmpvar_16 = texture (_ShadowMapTexture, tmpvar_15.xy);
+  highp float tmpvar_17;
+  if ((tmpvar_16.x < tmpvar_15.z)) {
+    tmpvar_17 = _LightShadowData.x;
+  } else {
+    tmpvar_17 = 1.0;
+  };
+  shadow_7 = tmpvar_17;
+  res_2.x = shadow_7;
+  res_2.y = 1.0;
+  highp vec2 enc_18;
+  enc_18 = (vec2(1.0, 255.0) * (1.0 - tmpvar_5));
+  highp vec2 tmpvar_19;
+  tmpvar_19 = fract(enc_18);
+  enc_18.y = tmpvar_19.y;
+  enc_18.x = (tmpvar_19.x - (tmpvar_19.y * 0.00392157));
+  res_2.zw = enc_18;
+  tmpvar_1 = res_2;
+  _fragData = tmpvar_1;
+}
+
+
+// stats: 30 alu 2 tex 1 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]
+// uniforms: 8 (total size: 0)
+//  #0: _LightShadowData (high float) 4x1 [-1]
+//  #1: _LightSplitsFar (high float) 4x1 [-1]
+//  #2: _LightSplitsNear (high float) 4x1 [-1]
+//  #3: _View2Shadow (high float) 4x4 [-1]
+//  #4: _View2Shadow1 (high float) 4x4 [-1]
+//  #5: _View2Shadow2 (high float) 4x4 [-1]
+//  #6: _View2Shadow3 (high float) 4x4 [-1]
+//  #7: _ZBufferParams (high float) 4x1 [-1]
+// textures: 2
+//  #0: _CameraDepthTexture (low 2d) 0x0 [-1]
+//  #1: _ShadowMapTexture (low 2d) 0x0 [-1]

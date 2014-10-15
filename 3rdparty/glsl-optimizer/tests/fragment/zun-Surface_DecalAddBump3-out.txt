@@ -25,4 +25,12 @@ void main ()
 }
 
 
-// inputs: 1, stats: 17 alu 3 tex 0 flow
+// stats: 17 alu 3 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [4] loc 4
+// uniforms: 1 (total size: 0)
+//  #0: _LightColor0 (high float) 4x1 [-1]
+// textures: 3
+//  #0: _Decal (high 2d) 0x0 [-1]
+//  #1: _DecalBump (high 2d) 0x0 [-1]
+//  #2: _ShadowMapTexture (high 2d) 0x0 [-1]

@@ -273,6 +273,14 @@ namespace bgfx
 			, m_instancing(false)
 			, m_rtMsaa(false)
 		{
+		}
+
+		~RendererContextD3D9()
+		{
+		}
+
+		void init()
+		{
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -555,7 +563,7 @@ namespace bgfx
 			m_initialized = true;
 		}
 
-		~RendererContextD3D9()
+		void shutdown()
 		{
 			preReset();
 
@@ -1667,11 +1675,13 @@ namespace bgfx
 	RendererContextI* rendererCreateD3D9()
 	{
 		s_renderD3D9 = BX_NEW(g_allocator, RendererContextD3D9);
+		s_renderD3D9->init();
 		return s_renderD3D9;
 	}
 
 	void rendererDestroyD3D9()
 	{
+		s_renderD3D9->shutdown();
 		BX_DELETE(g_allocator, s_renderD3D9);
 		s_renderD3D9 = NULL;
 	}

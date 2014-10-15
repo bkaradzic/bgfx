@@ -19,4 +19,14 @@ void main ()
 }
 
 
-// inputs: 1, stats: 11 alu 0 tex 0 flow
+// stats: 11 alu 0 tex 0 flow
+// inputs: 1
+//  #0: gl_Vertex (high float) 4x1 [-1] loc 0
+// uniforms: 7 (total size: 0)
+//  #0: mvp (high float) 4x4 [-1]
+//  #1: m3a (high float) 3x3 [-1]
+//  #2: m3b (high float) 3x3 [-1]
+//  #3: m3c (high float) 3x3 [-1]
+//  #4: v3a (high float) 4x1 [-1]
+//  #5: v3b (high float) 4x1 [-1]
+//  #6: v3c (high float) 4x1 [-1]

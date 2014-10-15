@@ -60,6 +60,9 @@
     <ClInclude Include="..\..\src\glsl\ir_print_glsl_visitor.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\glsl\ir_print_metal_visitor.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
@@ -85,9 +88,6 @@
       <Filter>src\glsl</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\glsl\program.h">
-      <Filter>src\glsl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\glsl\ralloc.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\glsl\s_expression.h">
@@ -153,9 +153,6 @@
     <ClInclude Include="..\..\src\glsl\ir_uniform.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\mesa\main\hash_table.h">
-      <Filter>src\mesa\main</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\mesa\program\hash_table.h">
       <Filter>src\mesa\program</Filter>
     </ClInclude>
@@ -173,6 +170,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\glsl\ir_stats.h">
       <Filter>src\glsl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\hash_table.h">
+      <Filter>src\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\ralloc.h">
+      <Filter>src\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -252,6 +255,9 @@
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_print_glsl_visitor.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\ir_print_metal_visitor.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_print_visitor.cpp">
@@ -389,9 +395,6 @@
     <ClCompile Include="..\..\src\glsl\opt_vectorize.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\glsl\ralloc.c">
-      <Filter>src\glsl</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\glsl\s_expression.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
@@ -415,9 +418,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\mesa\program\symbol_table.c">
       <Filter>src\mesa\program</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\mesa\main\hash_table.c">
-      <Filter>src\mesa\main</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mesa\main\imports.c">
       <Filter>src\mesa\main</Filter>
@@ -455,6 +455,9 @@
     <ClCompile Include="..\..\src\glsl\lower_named_interface_blocks.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_offset_array.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\glsl\lower_output_reads.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
@@ -464,7 +467,19 @@
     <ClCompile Include="..\..\src\glsl\lower_vector_insert.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_vertex_id.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\glsl\builtin_types.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_dead_builtin_variables.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_minmax.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_rebalance_tree.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\opt_dead_builtin_varyings.cpp">
@@ -475,6 +490,15 @@
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_stats.cpp">
       <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_vector_splitting.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\hash_table.c">
+      <Filter>src\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\ralloc.c">
+      <Filter>src\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

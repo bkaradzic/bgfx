@@ -23,6 +23,8 @@
 
 #include "glsl_types.h"
 #include "ir.h"
+#include "glsl_parser_extras.h"
+#include "main/errors.h"
 
 typedef enum {
    PARAMETER_LIST_NO_MATCH,
@@ -38,7 +40,8 @@ typedef enum {
  * \see matching_signature()
  */
 static parameter_list_match_t
-parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
+parameter_lists_match(_mesa_glsl_parse_state *state,
+                      const exec_list *list_a, const exec_list *list_b)
 {
    const exec_node *node_a = list_a->head;
    const exec_node *node_b = list_b->head;
@@ -79,12 +82,12 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
       case ir_var_const_in:
       case ir_var_function_in:
-	 if (!actual->type->can_implicitly_convert_to(param->type))
+	 if (!actual->type->can_implicitly_convert_to(param->type, state))
 	    return PARAMETER_LIST_NO_MATCH;
 	 break;
 
       case ir_var_function_out:
-	 if (!param->type->can_implicitly_convert_to(actual->type))
+	 if (!param->type->can_implicitly_convert_to(actual->type, state))
 	    return PARAMETER_LIST_NO_MATCH;
 	 break;
 
@@ -115,21 +118,188 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 }
 
 
+/* Classes of parameter match, sorted (mostly) best matches first.
+ * See is_better_parameter_match() below for the exceptions.
+ * */
+typedef enum {
+   PARAMETER_EXACT_MATCH,
+   PARAMETER_FLOAT_TO_DOUBLE,
+   PARAMETER_INT_TO_FLOAT,
+   PARAMETER_INT_TO_DOUBLE,
+   PARAMETER_OTHER_CONVERSION,
+} parameter_match_t;
+
+
+static parameter_match_t
+get_parameter_match_type(const ir_variable *param,
+                         const ir_rvalue *actual)
+{
+   const glsl_type *from_type;
+   const glsl_type *to_type;
+
+   if (param->data.mode == ir_var_function_out) {
+      from_type = param->type;
+      to_type = actual->type;
+   } else {
+      from_type = actual->type;
+      to_type = param->type;
+   }
+
+   if (from_type == to_type)
+      return PARAMETER_EXACT_MATCH;
+
+   /* XXX: When ARB_gpu_shader_fp64 support is added, check for float->double,
+    * and int/uint->double conversions
+    */
+
+   if (to_type->base_type == GLSL_TYPE_FLOAT)
+      return PARAMETER_INT_TO_FLOAT;
+
+   /* int -> uint and any other oddball conversions */
+   return PARAMETER_OTHER_CONVERSION;
+}
+
+
+static bool
+is_better_parameter_match(parameter_match_t a_match,
+                          parameter_match_t b_match)
+{
+   /* From section 6.1 of the GLSL 4.00 spec (and the ARB_gpu_shader5 spec):
+    *
+    * 1. An exact match is better than a match involving any implicit
+    * conversion.
+    *
+    * 2. A match involving an implicit conversion from float to double
+    * is better than match involving any other implicit conversion.
+    *
+    * [XXX: Not in GLSL 4.0: Only in ARB_gpu_shader5:
+    * 3. A match involving an implicit conversion from either int or uint
+    * to float is better than a match involving an implicit conversion
+    * from either int or uint to double.]
+    *
+    * If none of the rules above apply to a particular pair of conversions,
+    * neither conversion is considered better than the other.
+    *
+    * --
+    *
+    * Notably, the int->uint conversion is *not* considered to be better
+    * or worse than int/uint->float or int/uint->double.
+    */
+
+   if (a_match >= PARAMETER_INT_TO_FLOAT && b_match == PARAMETER_OTHER_CONVERSION)
+      return false;
+
+   return a_match < b_match;
+}
+
+
+static bool
+is_best_inexact_overload(const exec_list *actual_parameters,
+                         ir_function_signature **matches,
+                         int num_matches,
+                         ir_function_signature *sig)
+{
+   /* From section 6.1 of the GLSL 4.00 spec (and the ARB_gpu_shader5 spec):
+    *
+    * "A function definition A is considered a better
+    * match than function definition B if:
+    *
+    *   * for at least one function argument, the conversion for that argument
+    *     in A is better than the corresponding conversion in B; and
+    *
+    *   * there is no function argument for which the conversion in B is better
+    *     than the corresponding conversion in A.
+    *
+    * If a single function definition is considered a better match than every
+    * other matching function definition, it will be used.  Otherwise, a
+    * semantic error occurs and the shader will fail to compile."
+    */
+   for (ir_function_signature **other = matches;
+        other < matches + num_matches; other++) {
+      if (*other == sig)
+         continue;
+
+      const exec_node *node_a = sig->parameters.head;
+      const exec_node *node_b = (*other)->parameters.head;
+      const exec_node *node_p = actual_parameters->head;
+
+      bool better_for_some_parameter = false;
+
+      for (/* empty */
+           ; !node_a->is_tail_sentinel()
+           ; node_a = node_a->next,
+             node_b = node_b->next,
+             node_p = node_p->next) {
+         parameter_match_t a_match = get_parameter_match_type(
+               (const ir_variable *)node_a,
+               (const ir_rvalue *)node_p);
+         parameter_match_t b_match = get_parameter_match_type(
+               (const ir_variable *)node_b,
+               (const ir_rvalue *)node_p);
+
+         if (is_better_parameter_match(a_match, b_match))
+               better_for_some_parameter = true;
+
+         if (is_better_parameter_match(b_match, a_match))
+               return false;     /* B is better for this parameter */
+      }
+
+      if (!better_for_some_parameter)
+         return false;     /* A must be better than B for some parameter */
+
+   }
+
+   return true;
+}
+
+
+static ir_function_signature *
+choose_best_inexact_overload(_mesa_glsl_parse_state *state,
+                             const exec_list *actual_parameters,
+                             ir_function_signature **matches,
+                             int num_matches)
+{
+   if (num_matches == 0)
+      return NULL;
+
+   if (num_matches == 1)
+      return *matches;
+
+   /* Without GLSL 4.0 / ARB_gpu_shader5, there is no overload resolution
+    * among multiple inexact matches. Note that state may be NULL here if
+    * called from the linker; in that case we assume everything supported in
+    * any GLSL version is available. */
+   if (!state || state->is_version(400, 0) || state->ARB_gpu_shader5_enable) {
+      for (ir_function_signature **sig = matches; sig < matches + num_matches; sig++) {
+         if (is_best_inexact_overload(actual_parameters, matches, num_matches, *sig))
+            return *sig;
+      }
+   }
+
+   return NULL;   /* no best candidate */
+}
+
+
 ir_function_signature *
 ir_function::matching_signature(_mesa_glsl_parse_state *state,
-                                const exec_list *actual_parameters)
+                                const exec_list *actual_parameters,
+                                bool allow_builtins)
 {
    bool is_exact;
-   return matching_signature(state, actual_parameters, &is_exact);
+   return matching_signature(state, actual_parameters, allow_builtins,
+                             &is_exact);
 }
 
 ir_function_signature *
 ir_function::matching_signature(_mesa_glsl_parse_state *state,
                                 const exec_list *actual_parameters,
-			        bool *is_exact)
+                                bool allow_builtins,
+                                bool *is_exact)
 {
+   ir_function_signature **inexact_matches = NULL;
+   ir_function_signature **inexact_matches_temp;
    ir_function_signature *match = NULL;
-   bool multiple_inexact_matches = false;
+   int num_inexact_matches = 0;
 
    /* From page 42 (page 49 of the PDF) of the GLSL 1.20 spec:
     *
@@ -141,23 +311,30 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
     *  multiple ways to apply these conversions to the actual arguments of a
     *  call such that the call can be made to match multiple signatures."
     */
-   foreach_list(n, &this->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *) n;
-
+   foreach_in_list(ir_function_signature, sig, &this->signatures) {
       /* Skip over any built-ins that aren't available in this shader. */
-      if (sig->is_builtin() && !sig->is_builtin_available(state))
+      if (sig->is_builtin() && (!allow_builtins ||
+                                !sig->is_builtin_available(state)))
          continue;
 
-      switch (parameter_lists_match(& sig->parameters, actual_parameters)) {
+      switch (parameter_lists_match(state, & sig->parameters, actual_parameters)) {
       case PARAMETER_LIST_EXACT_MATCH:
-	 *is_exact = true;
-	 return sig;
+         *is_exact = true;
+         free(inexact_matches);
+         return sig;
       case PARAMETER_LIST_INEXACT_MATCH:
-	 if (match == NULL)
-	    match = sig;
-	 else
-	    multiple_inexact_matches = true;
-	 continue;
+         inexact_matches_temp = (ir_function_signature **)
+               realloc(inexact_matches,
+                       sizeof(*inexact_matches) *
+                       (num_inexact_matches + 1));
+         if (inexact_matches_temp == NULL) {
+            _mesa_error_no_memory(__func__);
+            free(inexact_matches);
+            return NULL;
+         }
+         inexact_matches = inexact_matches_temp;
+         inexact_matches[num_inexact_matches++] = sig;
+         continue;
       case PARAMETER_LIST_NO_MATCH:
 	 continue;
       default:
@@ -175,9 +352,10 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
     */
    *is_exact = false;
 
-   if (multiple_inexact_matches)
-      return NULL;
+   match = choose_best_inexact_overload(state, actual_parameters,
+                                        inexact_matches, num_inexact_matches);
 
+   free(inexact_matches);
    return match;
 }
 
@@ -211,9 +389,7 @@ ir_function_signature *
 ir_function::exact_matching_signature(_mesa_glsl_parse_state *state,
                                       const exec_list *actual_parameters)
 {
-   foreach_list(n, &this->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *) n;
-
+   foreach_in_list(ir_function_signature, sig, &this->signatures) {
       /* Skip over any built-ins that aren't available in this shader. */
       if (sig->is_builtin() && !sig->is_builtin_available(state))
          continue;

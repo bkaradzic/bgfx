@@ -13,4 +13,8 @@ void main ()
 }
 
 
-// inputs: 0, stats: 3 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
+// uniforms: 3 (total size: 0)
+//  #0: med_a (medium float) 1x1 [-1]
+//  #1: med_b (medium float) 1x1 [-1]
+//  #2: low_c (low float) 1x1 [-1]

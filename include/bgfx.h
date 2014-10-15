@@ -40,13 +40,14 @@ namespace bgfx
 
 	struct RendererType
 	{
+		/// Renderer type enumeration.
 		enum Enum
 		{
-			Null,
-			Direct3D9,
-			Direct3D11,
-			OpenGLES,
-			OpenGL,
+			Null,         //!< No rendering.
+			Direct3D9,    //!< Direct3D 9.0
+			Direct3D11,   //!< Direct3D 11.0
+			OpenGLES = 4, //!< OpenGL ES 2.0+
+			OpenGL,       //!< OpenGL 2.1+
 
 			Count
 		};
@@ -66,24 +67,25 @@ namespace bgfx
 
 	struct Attrib
 	{
-		enum Enum // corresponds to vertex shader attribute:
+		/// Corresponds to vertex shader attribute.
+		enum Enum
 		{
-			Position,  // a_position
-			Normal,    // a_normal
-			Tangent,   // a_tangent
-			Bitangent, // a_bitangent
-			Color0,    // a_color0
-			Color1,    // a_color1
-			Indices,   // a_indices
-			Weight,    // a_weight
-			TexCoord0, // a_texcoord0
-			TexCoord1, // a_texcoord1
-			TexCoord2, // a_texcoord2
-			TexCoord3, // a_texcoord3
-			TexCoord4, // a_texcoord4
-			TexCoord5, // a_texcoord5
-			TexCoord6, // a_texcoord6
-			TexCoord7, // a_texcoord7
+			Position,  //!< a_position
+			Normal,    //!< a_normal
+			Tangent,   //!< a_tangent
+			Bitangent, //!< a_bitangent
+			Color0,    //!< a_color0
+			Color1,    //!< a_color1
+			Indices,   //!< a_indices
+			Weight,    //!< a_weight
+			TexCoord0, //!< a_texcoord0
+			TexCoord1, //!< a_texcoord1
+			TexCoord2, //!< a_texcoord2
+			TexCoord3, //!< a_texcoord3
+			TexCoord4, //!< a_texcoord4
+			TexCoord5, //!< a_texcoord5
+			TexCoord6, //!< a_texcoord6
+			TexCoord7, //!< a_texcoord7
 
 			Count
 		};
@@ -211,19 +213,48 @@ namespace bgfx
 		/// If fatal code code is not Fatal::DebugCheck this callback is
 		/// called on unrecoverable error. It's not safe to continue, inform
 		/// user and terminate application from this call.
+		///
+		/// @param _code Fatal error code.
+		/// @param _str More information about error.
+		///
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 
 		/// Return size of for cached item. Return 0 if no cached item was
 		/// found.
+		///
+		/// @param _id Cache id.
+		/// @returns Number of bytes to read.
+		///
 		virtual uint32_t cacheReadSize(uint64_t _id) = 0;
 
 		/// Read cached item.
+		///
+		/// @param _id Cache id.
+		/// @param _data Buffer where to read data.
+		/// @param _size Size of data to read.
+		///
+		/// @returns True if data is read.
+		///
 		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) = 0;
 
 		/// Write cached item.
+		///
+		/// @param _id Cache id.
+		/// @param _data Data to write.
+		/// @param _size Size of data to write.
+		///
 		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) = 0;
 
 		/// Screenshot captured. Screenshot format is always 4-byte BGRA.
+		///
+		/// @param _filePath File path.
+		/// @param _width Image width.
+		/// @param _height Image height.
+		/// @param _pitch Number of bytes to skip to next line.
+		/// @param _data Image data.
+		/// @param _size Image size.
+		/// @param _yflip If true image origin is bottom left.
+		///
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) = 0;
 
 		/// Called when capture begins.
@@ -233,6 +264,10 @@ namespace bgfx
 		virtual void captureEnd() = 0;
 
 		/// Captured frame.
+		///
+		/// @param _data Image data.
+		/// @param _size Image size.
+		///
 		virtual void captureFrame(const void* _data, uint32_t _size) = 0;
 	};
 
@@ -250,27 +285,37 @@ namespace bgfx
 	/// Renderer capabilities.
 	struct Caps
 	{
-		/// Renderer backend type.
+		/// Renderer backend type. See: `bgfx::RendererType`
 		RendererType::Enum rendererType;
 
-		/// Supported functionality, it includes emulated functionality.
-		/// Checking supported and not emulated will give functionality
-		/// natively supported by renderer.
+		/// Supported functionality.
+		///
+		/// - `BGFX_CAPS_TEXTURE_COMPARE_LEQUAL` - Less equal texture
+		///      compare mode.
+		/// - `BGFX_CAPS_TEXTURE_COMPARE_ALL` - All texture compare modes.
+		/// - `BGFX_CAPS_TEXTURE_3D` - 3D textures.
+		/// - `BGFX_CAPS_VERTEX_ATTRIB_HALF` - AttribType::Half.
+		/// - `BGFX_CAPS_INSTANCING` - Vertex instancing.
+		/// - `BGFX_CAPS_RENDERER_MULTITHREADED` - Renderer on separate
+		///      thread.
+		/// - `BGFX_CAPS_FRAGMENT_DEPTH` - Fragment shader can modify depth
+		///      buffer value (gl_FragDepth).
+		/// - `BGFX_CAPS_BLEND_INDEPENDENT` - Multiple render targets can
+		///      have different blend mode set individually.
+		/// - `BGFX_CAPS_COMPUTE` - Renderer has compute shaders.
+		/// - `BGFX_CAPS_FRAGMENT_ORDERING` - Intel's pixel sync.
+		/// - `BGFX_CAPS_SWAP_CHAIN` - Multiple windows.
+		///
 		uint64_t supported;
-
-		/// Emulated functionality. For example some texture compression
-		/// modes are not natively supported by all renderers. The library
-		/// internally decompresses texture into supported format.
-		uint64_t emulated;
 
 		uint16_t maxTextureSize;   ///< Maximum texture size.
 		uint16_t maxDrawCalls;     ///< Maximum draw calls.
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
 
 		/// Supported texture formats.
-		///   0 - not supported
-		///   1 - supported
-		///   2 - emulated
+		///   - 0 - not supported
+		///   - 1 - supported
+		///   - 2 - emulated
 		uint8_t formats[TextureFormat::Count];
 	};
 
@@ -297,31 +342,31 @@ namespace bgfx
 	///
 	struct InstanceDataBuffer
 	{
-		uint8_t* data;
-		uint32_t size;
-		uint32_t offset;
-		uint16_t stride;
-		uint16_t num;
-		VertexBufferHandle handle;
+		uint8_t* data;             //!< Pointer to data.
+		uint32_t size;             //!< Data size.
+		uint32_t offset;           //!< Offset in vertex buffer.
+		uint16_t stride;           //!< Vertex buffer stride.
+		uint16_t num;              //!< Number of instances.
+		VertexBufferHandle handle; //!< Vertex buffer object handle.
 	};
 
 	///
 	struct TextureInfo
 	{
-		TextureFormat::Enum format; //< Texture format.
-		uint32_t storageSize;       //< Total amount of bytes required to store texture.
-		uint16_t width;             //< Texture width.
-		uint16_t height;            //< Texture height.
-		uint16_t depth;             //< Texture depth.
-		uint8_t numMips;            //< Number of MIP maps.
-		uint8_t bitsPerPixel;       //< Format bits per pixel.
+		TextureFormat::Enum format; //!< Texture format.
+		uint32_t storageSize;       //!< Total amount of bytes required to store texture.
+		uint16_t width;             //!< Texture width.
+		uint16_t height;            //!< Texture height.
+		uint16_t depth;             //!< Texture depth.
+		uint8_t numMips;            //!< Number of MIP maps.
+		uint8_t bitsPerPixel;       //!< Format bits per pixel.
 	};
 
 	///
 	struct Transform
 	{
-		float* data;  //< Pointer to first matrix.
-		uint16_t num; //< Number of matrices.
+		float* data;  //!< Pointer to first matrix.
+		uint16_t num; //!< Number of matrices.
 	};
 
 	/// Vertex declaration.
@@ -337,7 +382,7 @@ namespace bgfx
 
 		/// Add attribute to VertexDecl.
 		///
-		/// @param _attrib Attribute semantics.
+		/// @param _attrib Attribute semantics. See: `bgfx::Attrib`
 		/// @param _num Number of elements 1, 2, 3 or 4.
 		/// @param _type Element type.
 		/// @param _normalized When using fixed point AttribType (f.e. Uint8)
@@ -437,20 +482,38 @@ namespace bgfx
 	///
 	/// @param _type Select rendering backend. When set to RendererType::Count
 	///   default rendering backend will be selected.
+	///   See: `bgfx::RendererType`
 	///
 	/// @param _callback Provide application specific callback interface.
-	///   See: CallbackI
+	///   See: `bgfx::CallbackI`
 	///
 	/// @param _reallocator Custom allocator. When custom allocator is not
 	///   specified, library uses default CRT allocator. The library assumes
-	///   custom allocator is thread safe.
+	///   icustom allocator is thread safe.
+	///
+	/// @attention C99 equivalent is `bgfx_init`.
 	///
 	void init(RendererType::Enum _type = RendererType::Count, CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
 
 	/// Shutdown bgfx library.
+	///
+	/// @attention C99 equivalent is `bgfx_shutdown`.
+	///
 	void shutdown();
 
 	/// Reset graphic settings.
+	///
+	/// @param _width Main window width.
+	/// @param _height Main window height.
+	/// @param _flags
+	///   - `BGFX_RESET_NONE` - No reset flags.
+	///   - `BGFX_RESET_FULLSCREEN` - Not supported yet.
+	///   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.
+	///   - `BGFX_RESET_VSYNC` - Enable V-Sync.
+	///   - `BGFX_RESET_CAPTURE` - Begin screen capture.
+	///
+	/// @attention C99 equivalent is `bgfx_reset`.
+	///
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags = BGFX_RESET_NONE);
 
 	/// Advance to next frame. When using multithreaded renderer, this call
@@ -459,7 +522,9 @@ namespace bgfx
 	///
 	/// @returns Current frame number. This might be used in conjunction with
 	///   double/multi buffering data outside the library and passing it to
-	///   library via makeRef calls.
+	///   library via `bgfx::makeRef` calls.
+	///
+	/// @attention C99 equivalent is `bgfx_frame`.
 	///
 	uint32_t frame();
 
@@ -468,12 +533,18 @@ namespace bgfx
 	/// @remarks
 	///   Library must be initialized.
 	///
+	/// @attention C99 equivalent is `bgfx_get_renderer_type`.
+	///
 	RendererType::Enum getRendererType();
 
 	/// Returns renderer capabilities.
 	///
+	/// @returns Pointer to static `bgfx::Caps` structure.
+	///
 	/// @remarks
 	///   Library must be initialized.
+	///
+	/// @attention C99 equivalent is `bgfx_get_caps`.
 	///
 	const Caps* getCaps();
 
@@ -483,9 +554,9 @@ namespace bgfx
 	/// Allocate buffer and copy data into it. Data will be freed inside bgfx.
 	const Memory* copy(const void* _data, uint32_t _size);
 
-	/// Make reference to data to pass to bgfx. Unlike bgfx::alloc this call
-	/// doesn't allocate memory for data. It just copies pointer to data.
-	/// You must make sure data is available for at least 2 bgfx::frame calls.
+	/// Make reference to data to pass to bgfx. Unlike `bgfx::alloc` this call
+	/// doesn't allocate memory for data. It just copies pointer to data. You
+	/// must make sure data is available for at least 2 `bgfx::frame` calls.
 	const Memory* makeRef(const void* _data, uint32_t _size);
 
 	/// Set debug flags.
@@ -831,6 +902,8 @@ namespace bgfx
 	/// @param _height Window back buffer height.
 	/// @param _depthFormat Window back buffer depth format.
 	///
+	/// @returns Handle to frame buffer object.
+	///
 	/// @remarks
 	///   Frame buffer cannnot be used for sampling.
 	///
@@ -842,41 +915,35 @@ namespace bgfx
 	/// Create shader uniform parameter.
 	///
 	/// @param _name Uniform name in shader.
-	/// @param _type Type of uniform (See: UniformType).
+	/// @param _type Type of uniform (See: `bgfx::UniformType`).
 	/// @param _num Number of elements in array.
 	///
-	/// Predefined uniforms:
+	/// @returns Handle to uniform object.
 	///
-	///   u_viewRect vec4(x, y, width, height) - view rectangle for current
+	/// @remarks
+	/// Predefined uniforms (declared in `bgfx_shader.sh`):
+	///   - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 	///     view.
-	///
-	///   u_viewTexel vec4(1.0/width, 1.0/height, undef, undef) - inverse
+	///   - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
 	///     width and height
-	///
-	///   u_view mat4 - view matrix
-	///
-	///   u_invView mat4 - inverted view matrix
-	///
-	///   u_proj mat4 - projection matrix
-	///
-	///   u_invProj mat4 - inverted projection matrix
-	///
-	///   u_viewProj mat4 - concatenated view projection matrix
-	///
-	///   u_invViewProj mat4 - concatenated inverted view projection matrix
-	///
-	///   u_model mat4[BGFX_CONFIG_MAX_BONES] - array of model matrices.
-	///
-	///   u_modelView mat4 - concatenated model view matrix, only first
+	///   - `u_view mat4` - view matrix
+	///   - `u_invView mat4` - inverted view matrix
+	///   - `u_proj mat4` - projection matrix
+	///   - `u_invProj mat4` - inverted projection matrix
+	///   - `u_viewProj mat4` - concatenated view projection matrix
+	///   - `u_invViewProj mat4` - concatenated inverted view projection matrix
+	///   - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
+	///   - `u_modelView mat4` - concatenated model view matrix, only first
 	///     model matrix from array is used.
-	///
-	///   u_modelViewProj mat4 - concatenated model view projection matrix.
-	///
-	///   u_alphaRef float - alpha reference value for alpha test.
+	///   - `u_modelViewProj mat4` - concatenated model view projection matrix.
+	///   - `u_alphaRef float` - alpha reference value for alpha test.
 	///
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
 
 	/// Destroy shader uniform parameter.
+	///
+	/// @param _handle Handle to uniform object.
+	///
 	void destroyUniform(UniformHandle _handle);
 
 	/// Set clear color palette value.
@@ -1037,29 +1104,21 @@ namespace bgfx
 	///
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
+	/// Reserve `_num` matrices in internal matrix cache. Pointer returned
+	/// can be modifed until `bgfx::frame` is called.
+	///
+	/// @param _transform Pointer to `Transform` structure.
+	/// @param _num Number of matrices.
+	/// @returns index into matrix cache.
+	///
+	uint32_t allocTransform(Transform* _transform, uint16_t _num);
+
 	/// Set model matrix from matrix cache for draw primitive.
 	///
 	/// @param _cache Index in matrix cache.
 	/// @param _num Number of matrices from cache.
 	///
 	void setTransform(uint32_t _cache, uint16_t _num = 1);
-
-	/// Reserve `_num` matrices in internal matrix cache. Pointer returned
-	/// can be modifed until `bgfx::frame` is called.
-	///
-	/// @param _transform Pointer to `Transform` structure.
-	/// @param _num Number of matrices.
-	///
-	void allocTransform(Transform* _transform, uint16_t _num);
-
-	/// Set model matrix from `Transform` structure.
-	///
-	/// @param _transform Pointer to `Transform` structure returned by
-	//    `bgfx::allocTransform`.
-	/// @param _first First matrix.
-	/// @param _num Number of matrices.
-	///
-	void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num);
 
 	/// Set shader uniform parameter for draw primitive.
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = 1);
@@ -1151,10 +1210,10 @@ namespace bgfx
 
 	/// Request screen shot.
 	///
-	/// @param _filePath Will be passed to CallbackI::screenShot callback.
+	/// @param _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
 	///
 	/// @remarks
-	///   CallbackI::screenShot must be implemented.
+	///   `bgfx::CallbackI::screenShot` must be implemented.
 	///
 	void saveScreenShot(const char* _filePath);
 

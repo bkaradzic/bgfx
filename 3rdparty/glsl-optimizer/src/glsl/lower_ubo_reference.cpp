@@ -40,6 +40,96 @@
 
 using namespace ir_builder;
 
+/**
+ * Determine if a thing being dereferenced is row-major
+ *
+ * There is some trickery here.
+ *
+ * If the thing being dereferenced is a member of uniform block \b without an
+ * instance name, then the name of the \c ir_variable is the field name of an
+ * interface type.  If this field is row-major, then the thing referenced is
+ * row-major.
+ *
+ * If the thing being dereferenced is a member of uniform block \b with an
+ * instance name, then the last dereference in the tree will be an
+ * \c ir_dereference_record.  If that record field is row-major, then the
+ * thing referenced is row-major.
+ */
+static bool
+is_dereferenced_thing_row_major(const ir_dereference *deref)
+{
+   bool matrix = false;
+   const ir_rvalue *ir = deref;
+
+   while (true) {
+      matrix = matrix || ir->type->without_array()->is_matrix();
+
+      switch (ir->ir_type) {
+      case ir_type_dereference_array: {
+         const ir_dereference_array *const array_deref =
+            (const ir_dereference_array *) ir;
+
+         ir = array_deref->array;
+         break;
+      }
+
+      case ir_type_dereference_record: {
+         const ir_dereference_record *const record_deref =
+            (const ir_dereference_record *) ir;
+
+         ir = record_deref->record;
+
+         const int idx = ir->type->field_index(record_deref->field);
+         assert(idx >= 0);
+
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(ir->type->fields.structure[idx].matrix_layout);
+
+         switch (matrix_layout) {
+         case GLSL_MATRIX_LAYOUT_INHERITED:
+            break;
+         case GLSL_MATRIX_LAYOUT_COLUMN_MAJOR:
+            return false;
+         case GLSL_MATRIX_LAYOUT_ROW_MAJOR:
+            return matrix || deref->type->without_array()->is_record();
+         }
+
+         break;
+      }
+
+      case ir_type_dereference_variable: {
+         const ir_dereference_variable *const var_deref =
+            (const ir_dereference_variable *) ir;
+
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(var_deref->var->data.matrix_layout);
+
+         switch (matrix_layout) {
+         case GLSL_MATRIX_LAYOUT_INHERITED:
+            assert(!matrix);
+            return false;
+         case GLSL_MATRIX_LAYOUT_COLUMN_MAJOR:
+            return false;
+         case GLSL_MATRIX_LAYOUT_ROW_MAJOR:
+            return matrix || deref->type->without_array()->is_record();
+         }
+
+         unreachable("invalid matrix layout");
+         break;
+      }
+
+      default:
+         return false;
+      }
+   }
+
+   /* The tree must have ended with a dereference that wasn't an
+    * ir_dereference_variable.  That is invalid, and it should be impossible.
+    */
+   unreachable("invalid dereference tree");
+   return false;
+}
+
 namespace {
 class lower_ubo_reference_visitor : public ir_rvalue_enter_visitor {
 public:
@@ -50,14 +140,14 @@ public:
 
    void handle_rvalue(ir_rvalue **rvalue);
    void emit_ubo_loads(ir_dereference *deref, ir_variable *base_offset,
-		       unsigned int deref_offset);
+		       unsigned int deref_offset, bool row_major);
    ir_expression *ubo_load(const struct glsl_type *type,
 			   ir_rvalue *offset);
 
    void *mem_ctx;
    struct gl_shader *shader;
    struct gl_uniform_buffer_variable *ubo_var;
-   unsigned uniform_block;
+   ir_rvalue *uniform_block;
    bool progress;
 };
 
@@ -69,9 +159,11 @@ public:
  * \c UniformBlocks array.
  */
 static const char *
-interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
+interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d,
+                     ir_rvalue **nonconst_block_index)
 {
-   ir_constant *previous_index = NULL;
+   ir_rvalue *previous_index = NULL;
+   *nonconst_block_index = NULL;
 
    while (d != NULL) {
       switch (d->ir_type) {
@@ -79,13 +171,21 @@ interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
          ir_dereference_variable *v = (ir_dereference_variable *) d;
          if (previous_index
              && v->var->is_interface_instance()
-             && v->var->type->is_array())
-            return ralloc_asprintf(mem_ctx,
-                                   "%s[%d]",
-                                   base_name,
-                                   previous_index->get_uint_component(0));
-         else
+             && v->var->type->is_array()) {
+
+            ir_constant *const_index = previous_index->as_constant();
+            if (!const_index) {
+               *nonconst_block_index = previous_index;
+               return ralloc_asprintf(mem_ctx, "%s[0]", base_name);
+            } else {
+               return ralloc_asprintf(mem_ctx,
+                                      "%s[%d]",
+                                      base_name,
+                                      const_index->get_uint_component(0));
+            }
+         } else {
             return base_name;
+         }
 
          break;
       }
@@ -101,7 +201,8 @@ interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
          ir_dereference_array *a = (ir_dereference_array *) d;
 
          d = a->array->as_dereference();
-         previous_index = a->array_index->as_constant();
+         previous_index = a->array_index;
+
          break;
       }
 
@@ -131,14 +232,24 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 
    mem_ctx = ralloc_parent(*rvalue);
 
+   ir_rvalue *nonconst_block_index;
    const char *const field_name =
       interface_field_name(mem_ctx, (char *) var->get_interface_type()->name,
-                           deref);
+                           deref, &nonconst_block_index);
 
-   this->uniform_block = -1;
+   this->uniform_block = NULL;
    for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
       if (strcmp(field_name, shader->UniformBlocks[i].Name) == 0) {
-         this->uniform_block = i;
+
+         ir_constant *index = new(mem_ctx) ir_constant(i);
+
+         if (nonconst_block_index) {
+            if (nonconst_block_index->type != glsl_type::uint_type)
+               nonconst_block_index = i2u(nonconst_block_index);
+            this->uniform_block = add(nonconst_block_index, index);
+         } else {
+            this->uniform_block = index;
+         }
 
          struct gl_uniform_block *block = &shader->UniformBlocks[i];
 
@@ -149,11 +260,11 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
       }
    }
 
-   assert(this->uniform_block != (unsigned) -1);
+   assert(this->uniform_block);
 
    ir_rvalue *offset = new(mem_ctx) ir_constant(0u);
    unsigned const_offset = 0;
-   bool row_major = !!ubo_var->RowMajor;
+   bool row_major = is_dereferenced_thing_row_major(deref);
 
    /* Calculate the offset to the start of the region of the UBO
     * dereferenced by *rvalue.  This may be a variable offset if an
@@ -190,16 +301,28 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
             deref = deref_array->array->as_dereference();
             break;
 	 } else {
-	    array_stride = deref_array->type->std140_size(row_major);
+            /* Whether or not the field is row-major (because it might be a
+             * bvec2 or something) does not affect the array itself.  We need
+             * to know whether an array element in its entirety is row-major.
+             */
+            const bool array_row_major =
+               is_dereferenced_thing_row_major(deref_array);
+
+	    array_stride = deref_array->type->std140_size(array_row_major);
 	    array_stride = glsl_align(array_stride, 16);
 	 }
 
-	 ir_constant *const_index = deref_array->array_index->as_constant();
+         ir_rvalue *array_index = deref_array->array_index;
+         if (array_index->type->base_type == GLSL_TYPE_INT)
+            array_index = i2u(array_index);
+
+	 ir_constant *const_index =
+            array_index->constant_expression_value(NULL);
 	 if (const_index) {
-	    const_offset += array_stride * const_index->value.i[0];
+	    const_offset += array_stride * const_index->value.u[0];
 	 } else {
 	    offset = add(offset,
-			 mul(deref_array->array_index,
+			 mul(array_index,
 			     new(mem_ctx) ir_constant(array_stride)));
 	 }
 	 deref = deref_array->array->as_dereference();
@@ -211,20 +334,49 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 const glsl_type *struct_type = deref_record->record->type;
 	 unsigned intra_struct_offset = 0;
 
-	 unsigned max_field_align = 16;
+         /* glsl_type::std140_base_alignment doesn't grok interfaces.  Use
+          * 16-bytes for the alignment because that is the general minimum of
+          * std140.
+          */
+         const unsigned struct_alignment = struct_type->is_interface()
+            ? 16
+            : struct_type->std140_base_alignment(row_major);
+
+
 	 for (unsigned int i = 0; i < struct_type->length; i++) {
 	    const glsl_type *type = struct_type->fields.structure[i].type;
-	    unsigned field_align = type->std140_base_alignment(row_major);
-	    max_field_align = MAX2(field_align, max_field_align);
+
+            ir_dereference_record *field_deref =
+               new(mem_ctx) ir_dereference_record(deref_record->record,
+                                                  struct_type->fields.structure[i].name);
+            const bool field_row_major =
+               is_dereferenced_thing_row_major(field_deref);
+
+            ralloc_free(field_deref);
+
+            unsigned field_align = type->std140_base_alignment(field_row_major);
+
 	    intra_struct_offset = glsl_align(intra_struct_offset, field_align);
 
 	    if (strcmp(struct_type->fields.structure[i].name,
 		       deref_record->field) == 0)
 	       break;
-	    intra_struct_offset += type->std140_size(row_major);
+            intra_struct_offset += type->std140_size(field_row_major);
+
+            /* If the field just examined was itself a structure, apply rule
+             * #9:
+             *
+             *     "The structure may have padding at the end; the base offset
+             *     of the member following the sub-structure is rounded up to
+             *     the next multiple of the base alignment of the structure."
+             */
+            if (type->without_array()->is_record()) {
+               intra_struct_offset = glsl_align(intra_struct_offset,
+                                                struct_alignment);
+
+            }
 	 }
 
-	 const_offset = glsl_align(const_offset, max_field_align);
 	 const_offset += intra_struct_offset;
 
 	 deref = deref_record->record->as_dereference();
@@ -253,7 +405,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
    base_ir->insert_before(assign(load_offset, offset));
 
    deref = new(mem_ctx) ir_dereference_variable(load_var);
-   emit_ubo_loads(deref, load_offset, const_offset);
+   emit_ubo_loads(deref, load_offset, const_offset, row_major);
    *rvalue = deref;
 
    progress = true;
@@ -263,11 +415,12 @@ ir_expression *
 lower_ubo_reference_visitor::ubo_load(const glsl_type *type,
 				      ir_rvalue *offset)
 {
+   ir_rvalue *block_ref = this->uniform_block->clone(mem_ctx, NULL);
    return new(mem_ctx)
       ir_expression(ir_binop_ubo_load,
-		    type,
-		    new(mem_ctx) ir_constant(this->uniform_block),
-		    offset);
+                    type,
+                    block_ref,
+                    offset);
 
 }
 
@@ -282,7 +435,8 @@ lower_ubo_reference_visitor::ubo_load(const glsl_type *type,
 void
 lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 					    ir_variable *base_offset,
-					    unsigned int deref_offset)
+                                            unsigned int deref_offset,
+                                            bool row_major)
 {
    if (deref->type->is_record()) {
       unsigned int field_offset = 0;
@@ -296,18 +450,19 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 
 	 field_offset =
 	    glsl_align(field_offset,
-		       field->type->std140_base_alignment(!!ubo_var->RowMajor));
+                       field->type->std140_base_alignment(row_major));
 
-	 emit_ubo_loads(field_deref, base_offset, deref_offset + field_offset);
+	 emit_ubo_loads(field_deref, base_offset, deref_offset + field_offset,
+                        row_major);
 
-	 field_offset += field->type->std140_size(!!ubo_var->RowMajor);
+	 field_offset += field->type->std140_size(row_major);
       }
       return;
    }
 
    if (deref->type->is_array()) {
       unsigned array_stride =
-	 glsl_align(deref->type->fields.array->std140_size(!!ubo_var->RowMajor),
+	 glsl_align(deref->type->fields.array->std140_size(row_major),
 		    16);
 
       for (unsigned i = 0; i < deref->type->length; i++) {
@@ -316,7 +471,8 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 	    new(mem_ctx) ir_dereference_array(deref->clone(mem_ctx, NULL),
 					      element);
 	 emit_ubo_loads(element_deref, base_offset,
-			deref_offset + i * array_stride);
+			deref_offset + i * array_stride,
+                        row_major);
       }
       return;
    }
@@ -328,10 +484,19 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 	    new(mem_ctx) ir_dereference_array(deref->clone(mem_ctx, NULL),
 					      col);
 
-	 /* std140 always rounds the stride of arrays (and matrices)
-	  * to a vec4, so matrices are always 16 between columns/rows.
-	  */
-	 emit_ubo_loads(col_deref, base_offset, deref_offset + i * 16);
+         if (row_major) {
+            /* For a row-major matrix, the next column starts at the next
+             * element.
+             */
+            emit_ubo_loads(col_deref, base_offset, deref_offset + i * 4,
+                           row_major);
+         } else {
+            /* std140 always rounds the stride of arrays (and matrices) to a
+             * vec4, so matrices are always 16 between columns/rows.
+             */
+            emit_ubo_loads(col_deref, base_offset, deref_offset + i * 16,
+                           row_major);
+         }
       }
       return;
    }
@@ -339,7 +504,7 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
    assert(deref->type->is_scalar() ||
 	  deref->type->is_vector());
 
-   if (!ubo_var->RowMajor) {
+   if (!row_major) {
       ir_rvalue *offset = add(base_offset,
 			      new(mem_ctx) ir_constant(deref_offset));
       base_ir->insert_before(assign(deref->clone(mem_ctx, NULL),

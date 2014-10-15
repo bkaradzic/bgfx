@@ -11,15 +11,15 @@ void main ()
     a_2 += 2.0;
     break;
   };
-  float tmpvar_3;
-  tmpvar_3 = (a_2 + 1.0);
-  float tmpvar_4;
-  tmpvar_4 = inversesqrt((-(
-    (tmpvar_3 * tmpvar_3)
-  ) - 1.0));
-  a_2 = tmpvar_4;
-  gl_FragColor = vec4(tmpvar_4);
+  a_2 += 1.0;
+  a_2 = (a_2 * a_2);
+  a_2 = -(a_2);
+  a_2 = (a_2 - 1.0);
+  a_2 = inversesqrt(a_2);
+  gl_FragColor = vec4(a_2);
 }
 
 
-// inputs: 1, stats: 12 alu 1 tex 4 flow
+// stats: 12 alu 1 tex 4 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0

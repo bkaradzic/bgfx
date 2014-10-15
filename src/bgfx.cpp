@@ -858,15 +858,6 @@ namespace bgfx
 			}
 		}
 
-		BX_TRACE("Emulated capabilities:");
-		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
-		{
-			if (0 != (g_caps.emulated & s_capsFlags[ii].m_flag) )
-			{
-				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
-			}
-		}
-
 		BX_TRACE("Supported texture formats:");
 		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 		{
@@ -1300,6 +1291,9 @@ namespace bgfx
 	extern RendererContextI* rendererCreateD3D11();
 	extern void rendererDestroyD3D11();
 
+	extern RendererContextI* rendererCreateD3D12();
+	extern void rendererDestroyD3D12();
+
 	struct RendererCreator
 	{
 		RendererCreateFn  createFn;
@@ -1308,35 +1302,38 @@ namespace bgfx
 		bool supported;
 	};
 
-	static const RendererCreator s_rendererCreator[RendererType::Count] =
+	static const RendererCreator s_rendererCreator[] =
 	{
 		{ rendererCreateNULL,  rendererDestroyNULL,  BGFX_RENDERER_NULL_NAME,       !!BGFX_CONFIG_RENDERER_NULL       }, // Null
 		{ rendererCreateD3D9,  rendererDestroyD3D9,  BGFX_RENDERER_DIRECT3D9_NAME,  !!BGFX_CONFIG_RENDERER_DIRECT3D9  }, // Direct3D9
 		{ rendererCreateD3D11, rendererDestroyD3D11, BGFX_RENDERER_DIRECT3D11_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D11 }, // Direct3D11
+		{ rendererCreateD3D12, rendererDestroyD3D12, BGFX_RENDERER_DIRECT3D12_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D12 }, // Direct3D12
 		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
 		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
 	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
-	uint32_t getWindowsVersion()
+	static RendererDestroyFn s_rendererDestroyFn;
+
+	bool windowsVersionIsOrAbove(uint32_t _winver)
 	{
 #if BX_PLATFORM_WINDOWS
 		OSVERSIONINFOEXA ovi;
 		memset(&ovi, 0, sizeof(ovi) );
 		ovi.dwOSVersionInfoSize = sizeof(ovi);
-		if (!GetVersionExA( (LPOSVERSIONINFOA)&ovi) )
-		{
-			return 0x0501; // _WIN32_WINNT_WINXP
-		}
-
-		// _WIN32_WINNT_WINBLUE 0x0602
+		// _WIN32_WINNT_WINBLUE 0x0603
 		// _WIN32_WINNT_WIN8    0x0602
 		// _WIN32_WINNT_WIN7    0x0601
 		// _WIN32_WINNT_VISTA   0x0600
-		return (ovi.dwMajorVersion<<8)
-			 |  ovi.dwMinorVersion
-			 ;
+		ovi.dwMajorVersion = HIBYTE(_winver);
+		ovi.dwMinorVersion = LOBYTE(_winver);
+		DWORDLONG cond = 0;
+		VER_SET_CONDITION(cond, VER_MAJORVERSION, VER_GREATER_EQUAL);
+		VER_SET_CONDITION(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
+		return !!VerifyVersionInfoA(&ovi, VER_MAJORVERSION | VER_MINORVERSION, cond);
 #else
-		return 0;
+		BX_UNUSED(_winver);
+		return false;
 #endif // BX_PLATFORM_WINDOWS
 	}
 
@@ -1349,7 +1346,12 @@ again:
 			{
 				RendererType::Enum first  = RendererType::Direct3D9;
 				RendererType::Enum second = RendererType::Direct3D11;
-				if (0x601 <= getWindowsVersion() )
+				if (windowsVersionIsOrAbove(0x0603) )
+				{
+					first  = RendererType::Direct3D11 /* Direct3D12 */;
+					second = RendererType::Direct3D11;
+				}
+				else if (windowsVersionIsOrAbove(0x0601) )
 				{
 					first  = RendererType::Direct3D11;
 					second = RendererType::Direct3D9;
@@ -1400,13 +1402,14 @@ again:
 			goto again;
 		}
 
+		s_rendererDestroyFn = s_rendererCreator[_type].destroyFn;
+
 		return renderCtx;
 	}
 
 	void rendererDestroy()
 	{
-		const RendererType::Enum type = getRendererType();
-		s_rendererCreator[type].destroyFn();
+		s_rendererDestroyFn();
 	}
 
 	void Context::rendererExecCommands(CommandBuffer& _cmdbuf)
@@ -1872,7 +1875,6 @@ again:
 		g_caps.supported = 0
 			| (BGFX_CONFIG_MULTITHREADED ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
 			;
-		g_caps.emulated = 0;
 		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
 		g_caps.maxFBAttachments = 1;
 
@@ -2592,22 +2594,16 @@ again:
 		return s_ctx->setTransform(_mtx, _num);
 	}
 
+	uint32_t allocTransform(Transform* _transform, uint16_t _num)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->allocTransform(_transform, _num);
+	}
+
 	void setTransform(uint32_t _cache, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setTransform(_cache, _num);
-	}
-
-	void allocTransform(Transform* _transform, uint16_t _num)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->allocTransform(_transform, _num);
-	}
-
-	void setTransform(const Transform* _transform, uint32_t _first, uint16_t _num)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setTransform(_transform, _first, _num);
 	}
 
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
@@ -3148,7 +3144,7 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle)
 	bgfx::destroyUniform(handle.cpp);
 }
 
-BGFX_C_API void bgfx_clear_color(uint8_t _index, const float _rgba[4])
+BGFX_C_API void bgfx_set_clear_color(uint8_t _index, const float _rgba[4])
 {
 	bgfx::setClearColor(_index, _rgba);
 }
@@ -3222,6 +3218,11 @@ BGFX_C_API void bgfx_set_scissor_cached(uint16_t _cache)
 BGFX_C_API uint32_t bgfx_set_transform(const void* _mtx, uint16_t _num)
 {
 	return bgfx::setTransform(_mtx, _num);
+}
+
+BGFX_C_API uint32_t bgfx_alloc_transform(bgfx_transform_t* _transform, uint16_t _num)
+{
+	return bgfx::allocTransform( (bgfx::Transform*)_transform, _num);
 }
 
 BGFX_C_API void bgfx_set_transform_cached(uint32_t _cache, uint16_t _num)

@@ -26,6 +26,9 @@
 #ifndef GLSL_LINKER_H
 #define GLSL_LINKER_H
 
+ir_function_signature *
+link_get_main_function_signature(gl_shader *sh);
+
 extern bool
 link_function_calls(gl_shader_program *prog, gl_shader *main,
 		    gl_shader **shader_list, unsigned num_shaders);
@@ -34,19 +37,18 @@ extern void
 link_invalidate_variable_locations(exec_list *ir);
 
 extern void
-link_assign_uniform_locations(struct gl_shader_program *prog);
+link_assign_uniform_locations(struct gl_shader_program *prog,
+                              unsigned int boolean_true);
 
 extern void
-link_set_uniform_initializers(struct gl_shader_program *prog);
+link_set_uniform_initializers(struct gl_shader_program *prog,
+                              unsigned int boolean_true);
 
 extern int
 link_cross_validate_uniform_block(void *mem_ctx,
 				  struct gl_uniform_block **linked_blocks,
 				  unsigned int *num_linked_blocks,
 				  struct gl_uniform_block *new_block);
-
-void
-link_assign_uniform_block_offsets(struct gl_shader *shader);
 
 extern bool
 link_uniform_blocks_are_compatible(const gl_uniform_block *a,
@@ -138,11 +140,15 @@ protected:
     * \param name  Fully qualified name of the field.
     * \param row_major  For a matrix type, is it stored row-major.
     * \param record_type  Type of the record containing the field.
+    * \param last_field   Set if \c name is the last field of the structure
+    *                     containing it.  This will always be false for items
+    *                     not contained in a structure or interface block.
     *
     * The default implementation just calls the other \c visit_field method.
     */
    virtual void visit_field(const glsl_type *type, const char *name,
-                            bool row_major, const glsl_type *record_type);
+                            bool row_major, const glsl_type *record_type,
+                            bool last_field);
 
    /**
     * Method invoked for each leaf of the variable
@@ -168,9 +174,13 @@ private:
    /**
     * \param name_length  Length of the current name \b not including the
     *                     terminating \c NUL character.
+    * \param last_field   Set if \c name is the last field of the structure
+    *                     containing it.  This will always be false for items
+    *                     not contained in a structure or interface block.
     */
    void recursion(const glsl_type *t, char **name, size_t name_length,
-                  bool row_major, const glsl_type *record_type);
+                  bool row_major, const glsl_type *record_type,
+                  bool last_field);
 };
 
 extern struct gl_shader *
