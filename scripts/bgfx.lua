@@ -40,12 +40,6 @@ function bgfxProject(_name, _kind, _defines)
 				"$(DXSDK_DIR)/include",
 			}
 
-		configuration { "windows" }
-			links {
-				"gdi32",
-				"psapi",
-			}
-
 		configuration { "xcode4 or osx or ios*" }
 			files {
 				BGFX_DIR .. "src/**.mm",

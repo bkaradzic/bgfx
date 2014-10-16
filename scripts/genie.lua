@@ -111,6 +111,12 @@ function exampleProject(_name)
 			"/DELAYLOAD:\"libGLESv2.dll\"",
 		}
 
+	configuration { "windows" }
+		links {
+			"gdi32",
+			"psapi",
+		}
+
 	configuration { "android*" }
 		kind "ConsoleApp"
 		targetextension ".so"
