@@ -120,19 +120,6 @@ namespace bgfx
 		D3D11_CULL_BACK,
 	};
 
-	static const DXGI_FORMAT s_depthFormat[] =
-	{
-		DXGI_FORMAT_UNKNOWN,           // ignored
-		DXGI_FORMAT_D16_UNORM,         // D16
-		DXGI_FORMAT_D24_UNORM_S8_UINT, // D24
-		DXGI_FORMAT_D24_UNORM_S8_UINT, // D24S8
-		DXGI_FORMAT_D24_UNORM_S8_UINT, // D32
-		DXGI_FORMAT_D32_FLOAT,         // D16F
-		DXGI_FORMAT_D32_FLOAT,         // D24F
-		DXGI_FORMAT_D32_FLOAT,         // D32F
-		DXGI_FORMAT_D24_UNORM_S8_UINT, // D0S8
-	};
-
 	static const D3D11_TEXTURE_ADDRESS_MODE s_textureAddress[] =
 	{
 		D3D11_TEXTURE_ADDRESS_WRAP,
@@ -345,6 +332,11 @@ namespace bgfx
 		ID3D11SamplerState* m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
+#if BX_COMPILER_CLANG
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-const-variable"
+#endif // BX_COMPILER_CLANG
+
 	static const GUID WKPDID_D3DDebugObjectName = { 0x429b8c22, 0x9188, 0x4b0c, { 0x87, 0x42, 0xac, 0xb0, 0xbf, 0x85, 0xc2, 0x00 } };
 
 	template <typename Ty>
@@ -362,6 +354,10 @@ namespace bgfx
 			_interface->SetPrivateData(WKPDID_D3DDebugObjectName, size, temp);
 		}
 	}
+
+#if BX_COMPILER_CLANG
+#	pragma GCC diagnostic pop
+#endif // BX_COMPILER_CLANG
 
 	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
 	{
