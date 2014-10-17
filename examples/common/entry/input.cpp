@@ -4,7 +4,6 @@
  */
 
 #include <memory.h>
-#include <string>
 
 #include "entry_p.h"
 #include "input.h"
