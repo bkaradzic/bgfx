@@ -57,6 +57,11 @@ https://d-gamedev-team.github.io/gfm/ - GFM is a feature-rich library to ease
 the creation of video games / multimedia applications with the D programming
 language.
 
+ProDBG is a new debugger under development that will support a varaity of
+targets and operating systems. Currently it's in very early development and
+primary focusing on Mac as primary target. This is how it currently looks.  
+![mac_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
+
 Examples
 --------
 
