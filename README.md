@@ -26,6 +26,12 @@ Platforms:
  * RaspberryPi
  * Windows
 
+Compilers:
+
+ * Clang 3.3 and above
+ * GCC 4.6 and above
+ * vs2008 and above
+
 Languages:
 
  * [C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)
