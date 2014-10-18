@@ -56,7 +56,7 @@ function bgfxProject(_name, _kind, _defines)
 				BGFX_DIR .. "3rdparty/khronos",
 			}
 
-		configuration { "x64", "vs* or mingw" }
+		configuration { "x64", "vs* or mingw*" }
 			defines {
 				"_WIN32_WINNT=0x601",
 			}

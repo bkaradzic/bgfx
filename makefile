@@ -21,7 +21,7 @@ all:
 	$(GENIE) --with-tools --with-shared-lib vs2010
 	$(GENIE) --with-tools --with-shared-lib vs2012
 	$(GENIE) --with-tools --with-shared-lib vs2013
-	$(GENIE) --with-tools --with-shared-lib --gcc=mingw gmake
+	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=linux-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=osx gmake
 	$(GENIE) --with-tools --with-shared-lib xcode4
@@ -81,16 +81,16 @@ linux-release64: .build/projects/gmake-linux
 	make -R -C .build/projects/gmake-linux config=release64
 linux: linux-debug32 linux-release32 linux-debug64 linux-release64
 
-.build/projects/gmake-mingw:
-	$(GENIE) --with-tools --with-shared-lib --gcc=mingw gmake
-mingw-debug32: .build/projects/gmake-mingw
-	make -R -C .build/projects/gmake-mingw config=debug32
-mingw-release32: .build/projects/gmake-mingw
-	make -R -C .build/projects/gmake-mingw config=release32
-mingw-debug64: .build/projects/gmake-mingw
-	make -R -C .build/projects/gmake-mingw config=debug64
-mingw-release64: .build/projects/gmake-mingw
-	make -R -C .build/projects/gmake-mingw config=release64
+.build/projects/gmake-mingw-gcc:
+	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
+mingw-debug32: .build/projects/gmake-mingw-gcc
+	make -R -C .build/projects/gmake-mingw-gcc config=debug32
+mingw-release32: .build/projects/gmake-mingw-gcc
+	make -R -C .build/projects/gmake-mingw-gcc config=release32
+mingw-debug64: .build/projects/gmake-mingw-gcc
+	make -R -C .build/projects/gmake-mingw-gcc config=debug64
+mingw-release64: .build/projects/gmake-mingw-gcc
+	make -R -C .build/projects/gmake-mingw-gcc config=release64
 mingw: mingw-debug32 mingw-release32 mingw-debug64 mingw-release64
 
 .build/projects/vs2008:
@@ -214,8 +214,8 @@ EXE=
 endif
 else
 OS=windows
-BUILD_PROJECT_DIR=gmake-mingw
-BUILD_OUTPUT_DIR=win32_mingw
+BUILD_PROJECT_DIR=gmake-mingw-gcc
+BUILD_OUTPUT_DIR=win32_mingw-gcc
 BUILD_TOOLS_CONFIG=release32
 EXE=.exe
 endif

@@ -332,10 +332,9 @@ namespace bgfx
 		ID3D11SamplerState* m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
-#if BX_COMPILER_CLANG
-#	pragma GCC diagnostic push
-#	pragma GCC diagnostic ignored "-Wunused-const-variable"
-#endif // BX_COMPILER_CLANG
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunused-const-variable");
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
 
 	static const GUID WKPDID_D3DDebugObjectName = { 0x429b8c22, 0x9188, 0x4b0c, { 0x87, 0x42, 0xac, 0xb0, 0xbf, 0x85, 0xc2, 0x00 } };
 
@@ -355,9 +354,7 @@ namespace bgfx
 		}
 	}
 
-#if BX_COMPILER_CLANG
-#	pragma GCC diagnostic pop
-#endif // BX_COMPILER_CLANG
+	BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
 	{
