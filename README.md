@@ -58,7 +58,7 @@ the creation of video games / multimedia applications with the D programming
 language.
 
 https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
-that will support a varaity of targets and operating systems. Currently it's in
+that will support a variety of targets and operating systems. Currently it's in
 very early development and primary focusing on Mac as primary target. This is
 how it currently looks.  
 ![mac_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
