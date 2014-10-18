@@ -117,6 +117,9 @@ function exampleProject(_name)
 			"psapi",
 		}
 
+	configuration { "mingw-clang" }
+		kind "ConsoleApp"
+
 	configuration { "android*" }
 		kind "ConsoleApp"
 		targetextension ".so"
