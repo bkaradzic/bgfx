@@ -175,7 +175,7 @@ enum InAppOverlay
 	eOverlay_CaptureList = 0x8,
 
 	eOverlay_Default = (eOverlay_Enabled|eOverlay_FrameRate|eOverlay_FrameNumber|eOverlay_CaptureList),
-	eOverlay_All = ~0U,
+	eOverlay_All = INT32_MAX,
 	eOverlay_None = 0,
 };
 

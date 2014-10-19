@@ -13,16 +13,13 @@
 #	define BGFX_CONFIG_DEBUG_PIX 0
 #endif // !USE_D3D11_DYNAMIC_LIB
 
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas" );
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wpragmas");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinition
 #define D3D11_NO_HELPERS
-#if BX_COMPILER_MSVC
-#	pragma warning(push)
-//  winerror.h and dxgitypes.h both define DXGI_ERRORs.
-#	pragma warning(disable:4005) // warning C4005: '' : macro redefinition
-#	include <d3d11.h>
-#	pragma warning(pop)
-#else
-#	include <d3d11.h>
-#endif // BX_COMPILER_MSVC
+#include <d3d11.h>
+BX_PRAGMA_DIAGNOSTIC_POP()
 
 #include "renderer_d3d.h"
 

@@ -15,16 +15,22 @@ Supported rendering backends:
  * OpenGL ES 2
  * OpenGL ES 3.1
 
-Platforms:
+Supported platforms:
 
- * Android
- * asm.js/Emscripten
+ * Android (14+)
+ * asm.js/Emscripten (1.25.0)
  * iOS
  * Linux
- * Native Client
- * OSX
+ * Native Client (37)
+ * OSX (10.9)
  * RaspberryPi
- * Windows
+ * Windows (XP, Vista, 7, 8, 10)
+
+Supported compilers:
+
+ * Clang 3.3 and above
+ * GCC 4.6 and above
+ * vs2008 and above
 
 Languages:
 
@@ -46,7 +52,8 @@ scripting language, and an efficient command-line workflow. Here is video where
 they explain why they choose bgfx over alternatives:  
 <a href="https://www.youtube.com/watch?feature=player_embedded&v=PHY_XHkMGIM&t=1m53s" target="_blank"><img src="https://img.youtube.com/vi/PHY_XHkMGIM/0.jpg" alt="Why did you choose bgfx?" width="240" height="180" border="10" /></a>
 
-https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.
+https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.  
+![cmftStudio](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
 
 https://github.com/taylor001/crown Crown is a general purpose data-driven game
 engine, written from scratch with a minimalistic and data-oriented design
@@ -55,6 +62,12 @@ philosophy in mind.
 https://d-gamedev-team.github.io/gfm/ - GFM is a feature-rich library to ease
 the creation of video games / multimedia applications with the D programming
 language.
+
+https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
+that will support a variety of targets and operating systems. Currently it's in
+very early development and primary focusing on Mac as primary target. This is
+how it currently looks.  
+![mac_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
 
 Examples
 --------

@@ -1315,7 +1315,7 @@ namespace bgfx
 
 	static RendererDestroyFn s_rendererDestroyFn;
 
-	bool windowsVersionIsOrAbove(uint32_t _winver)
+	bool windowsVersionIsOrAbove(uint32_t _version)
 	{
 #if BX_PLATFORM_WINDOWS
 		OSVERSIONINFOEXA ovi;
@@ -1325,14 +1325,14 @@ namespace bgfx
 		// _WIN32_WINNT_WIN8    0x0602
 		// _WIN32_WINNT_WIN7    0x0601
 		// _WIN32_WINNT_VISTA   0x0600
-		ovi.dwMajorVersion = HIBYTE(_winver);
-		ovi.dwMinorVersion = LOBYTE(_winver);
+		ovi.dwMajorVersion = HIBYTE(_version);
+		ovi.dwMinorVersion = LOBYTE(_version);
 		DWORDLONG cond = 0;
 		VER_SET_CONDITION(cond, VER_MAJORVERSION, VER_GREATER_EQUAL);
 		VER_SET_CONDITION(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
 		return !!VerifyVersionInfoA(&ovi, VER_MAJORVERSION | VER_MINORVERSION, cond);
 #else
-		BX_UNUSED(_winver);
+		BX_UNUSED(_version);
 		return false;
 #endif // BX_PLATFORM_WINDOWS
 	}
@@ -1346,6 +1346,7 @@ again:
 			{
 				RendererType::Enum first  = RendererType::Direct3D9;
 				RendererType::Enum second = RendererType::Direct3D11;
+
 				if (windowsVersionIsOrAbove(0x0603) )
 				{
 					first  = RendererType::Direct3D11 /* Direct3D12 */;

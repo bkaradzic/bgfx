@@ -3,9 +3,6 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <string>
-#include <vector>
-
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"

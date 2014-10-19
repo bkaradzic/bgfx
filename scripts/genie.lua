@@ -111,6 +111,20 @@ function exampleProject(_name)
 			"/DELAYLOAD:\"libGLESv2.dll\"",
 		}
 
+	configuration { "vs20* or mingw*" }
+		links {
+			"gdi32",
+			"psapi",
+		}
+
+	configuration { "mingw*" }
+		links {
+			"dxguid",
+		}
+
+	configuration { "mingw-clang" }
+		kind "ConsoleApp"
+
 	configuration { "android*" }
 		kind "ConsoleApp"
 		targetextension ".so"

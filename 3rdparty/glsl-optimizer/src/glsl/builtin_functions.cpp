@@ -53,6 +53,7 @@
  *    name and parameters.
  */
 
+#define _USE_MATH_DEFINES
 #include <stdarg.h>
 #include <stdio.h>
 #include "main/core.h" /* for struct gl_shader */

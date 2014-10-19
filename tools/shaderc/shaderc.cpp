@@ -72,8 +72,11 @@ extern "C"
 #if BX_PLATFORM_WINDOWS
 #	include <sal.h>
 #	define __D3DX9MATH_INL__ // not used and MinGW complains about type-punning
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wundef");
 #	include <d3dx9.h>
 #	include <d3dcompiler.h>
+	BX_PRAGMA_DIAGNOSTIC_POP();
 #endif // BX_PLATFORM_WINDOWS
 
 long int fsize(FILE* _file)

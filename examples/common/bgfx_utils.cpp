@@ -3,8 +3,12 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <vector>
-#include <string>
+#include <string.h> // strlen
+
+#include <tinystl/allocator.h>
+#include <tinystl/vector.h>
+#include <tinystl/string.h>
+namespace stl = tinystl;
 
 #include <bgfx.h>
 #include <bx/readerwriter.h>
@@ -240,7 +244,7 @@ struct Primitive
 	Obb m_obb;
 };
 
-typedef std::vector<Primitive> PrimitiveArray;
+typedef stl::vector<Primitive> PrimitiveArray;
 
 struct Group
 {
@@ -321,7 +325,7 @@ struct Mesh
 					uint16_t len;
 					read(_reader, len);
 
-					std::string material;
+					stl::string material;
 					material.resize(len);
 					read(_reader, const_cast<char*>(material.c_str() ), len);
 
@@ -332,7 +336,7 @@ struct Mesh
 					{
 						read(_reader, len);
 
-						std::string name;
+						stl::string name;
 						name.resize(len);
 						read(_reader, const_cast<char*>(name.c_str() ), len);
 
@@ -404,7 +408,7 @@ struct Mesh
 	}
 
 	bgfx::VertexDecl m_decl;
-	typedef std::vector<Group> GroupArray;
+	typedef stl::vector<Group> GroupArray;
 	GroupArray m_groups;
 };
 
