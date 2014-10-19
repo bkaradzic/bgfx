@@ -15,18 +15,18 @@ Supported rendering backends:
  * OpenGL ES 2
  * OpenGL ES 3.1
 
-Platforms:
+Supported platforms:
 
- * Android
- * asm.js/Emscripten
+ * Android (14+)
+ * asm.js/Emscripten (1.25.0)
  * iOS
  * Linux
- * Native Client
- * OSX
+ * Native Client (37)
+ * OSX (10.9)
  * RaspberryPi
- * Windows
+ * Windows (XP, Vista, 7, 8, 10)
 
-Compilers:
+Supported compilers:
 
  * Clang 3.3 and above
  * GCC 4.6 and above
