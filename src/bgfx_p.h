@@ -10,7 +10,7 @@
 #	define BGFX_CONFIG_DEBUG 0
 #endif // BGFX_CONFIG_DEBUG
 
-#if BGFX_CONFIG_DEBUG
+#if BGFX_CONFIG_DEBUG || BX_COMPILER_CLANG_ANALYZER
 #	define BX_TRACE _BX_TRACE
 #	define BX_WARN  _BX_WARN
 #	define BX_CHECK _BX_CHECK
@@ -29,7 +29,12 @@
 
 namespace bgfx
 {
+#if BX_COMPILER_CLANG_ANALYZER
+	void __attribute__((analyzer_noreturn)) fatal(Fatal::Enum _code, const char* _format, ...);
+#else
 	void fatal(Fatal::Enum _code, const char* _format, ...);
+#endif // BX_COMPILER_CLANG_ANALYZER
+
 	void dbgPrintf(const char* _format, ...);
 }
 
