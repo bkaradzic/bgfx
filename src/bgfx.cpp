@@ -578,6 +578,10 @@ namespace bgfx
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
 				}
 			}
+			else
+			{
+				BGFX_FATAL(false, Fatal::UnableToInitialize, "Unknown renderer type %d", g_caps.rendererType);
+			}
 
 			for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 			{
@@ -1419,6 +1423,25 @@ again:
 
 		bool end = false;
 
+		if (NULL == m_renderCtx)
+		{
+			uint8_t command;
+			_cmdbuf.read(command);
+
+			BX_CHECK(CommandBuffer::RendererInit == command
+				, "RendererInit must be the first command in command buffer before initialization."
+				);
+			BX_CHECK(!m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
+
+			RendererType::Enum type;
+			_cmdbuf.read(type);
+
+			m_renderCtx = rendererCreate(type);
+			m_rendererInitialized = true;
+		}
+
+		BX_CHECK(NULL != m_renderCtx, "Should not be NULL at this point.");
+
 		do
 		{
 			uint8_t command;
@@ -1426,18 +1449,6 @@ again:
 
 			switch (command)
 			{
-			case CommandBuffer::RendererInit:
-				{
-					BX_CHECK(!m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
-
-					RendererType::Enum type;
-					_cmdbuf.read(type);
-
-					m_renderCtx = rendererCreate(type);
-					m_rendererInitialized = true;
-				}
-				break;
-
 			case CommandBuffer::RendererShutdownBegin:
 				{
 					BX_CHECK(m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
@@ -1452,6 +1463,10 @@ again:
 					m_renderCtx = NULL;
 					m_exit = true;
 				}
+				// fallthrough
+
+			case CommandBuffer::End:
+				end = true;
 				break;
 
 			case CommandBuffer::CreateIndexBuffer:
@@ -1832,10 +1847,6 @@ again:
 
 					m_renderCtx->updateViewName(id, name);
 				}
-				break;
-
-			case CommandBuffer::End:
-				end = true;
 				break;
 
 			default:

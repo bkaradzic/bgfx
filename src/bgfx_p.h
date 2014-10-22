@@ -6,11 +6,13 @@
 #ifndef BGFX_P_H_HEADER_GUARD
 #define BGFX_P_H_HEADER_GUARD
 
+#include <bx/platform.h>
+
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
 #endif // BGFX_CONFIG_DEBUG
 
-#if BGFX_CONFIG_DEBUG || defined(__clang_analyzer__)
+#if BGFX_CONFIG_DEBUG || BX_COMPILER_CLANG_ANALYZER
 #	define BX_TRACE _BX_TRACE
 #	define BX_WARN  _BX_WARN
 #	define BX_CHECK _BX_CHECK
@@ -29,11 +31,11 @@
 
 namespace bgfx
 {
-#if defined(__clang_analyzer__)
+#if BX_COMPILER_CLANG_ANALYZER
 	void __attribute__((analyzer_noreturn)) fatal(Fatal::Enum _code, const char* _format, ...);
 #else
 	void fatal(Fatal::Enum _code, const char* _format, ...);
-#endif // defined(__clang_analyzer__)
+#endif // BX_COMPILER_CLANG_ANALYZER
 
 	void dbgPrintf(const char* _format, ...);
 }
@@ -1766,6 +1768,7 @@ namespace bgfx
 			, m_instBufferCount(0)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
+			, m_renderCtx(NULL)
 			, m_rendererInitialized(false)
 			, m_exit(false)
 		{
