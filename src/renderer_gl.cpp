@@ -27,6 +27,7 @@ namespace bgfx
 		{ GL_TRIANGLES,      3, 3, 0 },
 		{ GL_TRIANGLE_STRIP, 3, 1, 2 },
 		{ GL_LINES,          2, 2, 0 },
+		{ GL_LINE_STRIP,     2, 1, 1 },
 		{ GL_POINTS,         1, 1, 0 },
 	};
 
@@ -35,6 +36,7 @@ namespace bgfx
 		"TriList",
 		"TriStrip",
 		"Line",
+		"LineStrip",
 		"Point",
 	};
 

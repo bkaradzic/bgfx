@@ -25,6 +25,7 @@ namespace bgfx
 		{ D3DPT_TRIANGLELIST,  3, 3, 0 },
 		{ D3DPT_TRIANGLESTRIP, 3, 1, 2 },
 		{ D3DPT_LINELIST,      2, 2, 0 },
+		{ D3DPT_LINESTRIP,     2, 1, 1 },
 		{ D3DPT_POINTLIST,     1, 1, 0 },
 		{ D3DPRIMITIVETYPE(0), 0, 0, 0 },
 	};
@@ -34,6 +35,7 @@ namespace bgfx
 		"TriList",
 		"TriStrip",
 		"Line",
+		"LineStrip",
 		"Point",
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_primInfo) == BX_COUNTOF(s_primName)+1);
