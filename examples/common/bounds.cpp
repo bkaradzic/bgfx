@@ -157,7 +157,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 	Obb best;
 	aabbToObb(best, aabb);
 
-	float angleStep = float(M_PI_2/_steps);
+	float angleStep = float(bx::piHalf/_steps);
 	float ax = 0.0f;
 	float mtx[16];
 

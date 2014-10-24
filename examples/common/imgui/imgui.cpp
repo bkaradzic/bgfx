@@ -448,7 +448,7 @@ struct Imgui
 
 		for (int32_t ii = 0; ii < NUM_CIRCLE_VERTS; ++ii)
 		{
-			float a = (float)ii / (float)NUM_CIRCLE_VERTS * (float)(M_PI * 2.0);
+			float a = (float)ii / (float)NUM_CIRCLE_VERTS * (float)(bx::pi * 2.0);
 			m_circleVerts[ii * 2 + 0] = cosf(a);
 			m_circleVerts[ii * 2 + 1] = sinf(a);
 		}
