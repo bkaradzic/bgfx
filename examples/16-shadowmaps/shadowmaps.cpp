@@ -2046,7 +2046,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const float camAspect  = float(int32_t(viewState.m_width) ) / float(int32_t(viewState.m_height) );
 	const float camNear    = 0.1f;
 	const float camFar     = 2000.0f;
-	const float projHeight = 1.0f/tanf(camFovy*( (float)M_PI/180.0f)*0.5f);
+	const float projHeight = 1.0f/tanf(camFovy*( (float)bx::pi/180.0f)*0.5f);
 	const float projWidth  = projHeight * 1.0f/camAspect;
 	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar);
 	cameraGetViewMtx(viewState.m_view);
@@ -2329,9 +2329,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, 0.0f
 				, float(ii)
 				, 0.0f
-				, sinf(float(ii)*2.0f*float(M_PI)/float(numTrees) ) * 60.0f
+				, sinf(float(ii)*2.0f*float(bx::pi)/float(numTrees) ) * 60.0f
 				, 0.0f
-				, cosf(float(ii)*2.0f*float(M_PI)/float(numTrees) ) * 60.0f
+				, cosf(float(ii)*2.0f*float(bx::pi)/float(numTrees) ) * 60.0f
 				);
 		}
 
