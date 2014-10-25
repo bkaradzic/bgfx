@@ -14,11 +14,6 @@
 #	endif // !BGFX_CONFIG_RENDERER_DIRECT3D9EX
 #	include <d3d9.h>
 
-#	if BGFX_CONFIG_RENDERER_DIRECT3D9EX
-typedef HRESULT (WINAPI *Direct3DCreate9ExFn)(UINT SDKVersion, IDirect3D9Ex**);
-#	endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
-typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
-
 #elif BX_PLATFORM_XBOX360
 #	include <xgraphics.h>
 #	define D3DUSAGE_DYNAMIC 0 // not supported on X360

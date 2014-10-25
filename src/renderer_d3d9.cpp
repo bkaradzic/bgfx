@@ -25,6 +25,7 @@ namespace bgfx
 		{ D3DPT_TRIANGLELIST,  3, 3, 0 },
 		{ D3DPT_TRIANGLESTRIP, 3, 1, 2 },
 		{ D3DPT_LINELIST,      2, 2, 0 },
+		{ D3DPT_LINESTRIP,     2, 1, 1 },
 		{ D3DPT_POINTLIST,     1, 1, 0 },
 		{ D3DPRIMITIVETYPE(0), 0, 0, 0 },
 	};
@@ -34,6 +35,7 @@ namespace bgfx
 		"TriList",
 		"TriStrip",
 		"Line",
+		"LineStrip",
 		"Point",
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_primInfo) == BX_COUNTOF(s_primName)+1);
@@ -254,8 +256,12 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 	static const GUID IID_IDirect3D9         = { 0x81bdcbca, 0x64d4, 0x426d, { 0xae, 0x8d, 0xad, 0x1, 0x47, 0xf4, 0x27, 0x5c } };
 	static const GUID IID_IDirect3DDevice9Ex = { 0xb18b10ce, 0x2649, 0x405a, { 0x87, 0xf, 0x95, 0xf7, 0x77, 0xd4, 0x31, 0x3a } };
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
+	typedef HRESULT (WINAPI *Direct3DCreate9ExFn)(UINT SDKVersion, IDirect3D9Ex**);
+	static Direct3DCreate9ExFn     Direct3DCreate9Ex;
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+	typedef IDirect3D9* (WINAPI *Direct3DCreate9Fn)(UINT SDKVersion);
+	static Direct3DCreate9Fn       Direct3DCreate9;
 	static PFN_D3DPERF_SET_MARKER  D3DPERF_SetMarker;
 	static PFN_D3DPERF_BEGIN_EVENT D3DPERF_BeginEvent;
 	static PFN_D3DPERF_END_EVENT   D3DPERF_EndEvent;
@@ -330,19 +336,19 @@ namespace bgfx
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			m_d3d9ex = NULL;
 
-			Direct3DCreate9ExFn direct3DCreate9Ex = (Direct3DCreate9ExFn)bx::dlsym(m_d3d9dll, "Direct3DCreate9Ex");
-			if (NULL != direct3DCreate9Ex)
+			Direct3DCreate9Ex = (Direct3DCreate9ExFn)bx::dlsym(m_d3d9dll, "Direct3DCreate9Ex");
+			if (NULL != Direct3DCreate9Ex)
 			{
-				direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9ex);
+				Direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9ex);
 				DX_CHECK(m_d3d9ex->QueryInterface(IID_IDirect3D9, (void**)&m_d3d9) );
 				m_pool = D3DPOOL_DEFAULT;
 			}
 			else
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			{
-				Direct3DCreate9Fn direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9dll, "Direct3DCreate9");
-				BGFX_FATAL(NULL != direct3DCreate9, Fatal::UnableToInitialize, "Function Direct3DCreate9 not found.");
-				m_d3d9 = direct3DCreate9(D3D_SDK_VERSION);
+				Direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9dll, "Direct3DCreate9");
+				BGFX_FATAL(NULL != Direct3DCreate9, Fatal::UnableToInitialize, "Function Direct3DCreate9 not found.");
+				m_d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
 				m_pool = D3DPOOL_MANAGED;
 			}
 

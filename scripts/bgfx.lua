@@ -24,6 +24,15 @@ function bgfxProject(_name, _kind, _defines)
 			_defines,
 		}
 
+		if _OPTIONS["with-ovr"] then
+			defines {
+				"BGFX_CONFIG_USE_OVR=1",
+			}
+			includedirs {
+				"$(OVR_DIR)/LibOVR/Include",
+			}
+		end
+
 		configuration { "Debug" }
 			defines {
 				"BGFX_CONFIG_DEBUG=1",
@@ -35,7 +44,7 @@ function bgfxProject(_name, _kind, _defines)
 				"GLESv2",
 			}
 
-		configuration { "mingw*", "not vs201*" }
+		configuration { "mingw* or vs2008" }
 			includedirs {
 				"$(DXSDK_DIR)/include",
 			}

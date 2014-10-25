@@ -141,9 +141,9 @@ struct Camera
 
 		float right[3] =
 		{
-			sinf(m_horizontalAngle - float(M_PI)/2.0f),
+			sinf(m_horizontalAngle - bx::piHalf),
 			0,
-			cosf(m_horizontalAngle - float(M_PI)/2.0f),
+			cosf(m_horizontalAngle - bx::piHalf),
 		};
 
 		if (m_keys & CAMERA_KEY_UP)

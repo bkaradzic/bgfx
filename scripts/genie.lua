@@ -18,6 +18,11 @@ newoption {
 	description = "Enable SDL entry.",
 }
 
+newoption {
+	trigger = "with-ovr",
+	description = "Enable OculusVR integration.",
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
@@ -97,6 +102,33 @@ function exampleProject(_name)
 		configuration {}
 	end
 
+	if _OPTIONS["with-ovr"] then
+		links   {
+			"winmm",
+			"ws2_32",
+		}
+
+		configuration { "x32" }
+			libdirs { "$(OVR_DIR)/LibOVR/Lib/Win32/" .. _ACTION }
+
+		configuration { "x64", "vs2012" }
+			libdirs { "$(OVR_DIR)/LibOVR/Lib/x64/" .. _ACTION }
+
+		configuration { "x32", "Debug" }
+			links { "libovrd" }
+
+		configuration { "x32", "Release" }
+			links { "libovr" }
+
+		configuration { "x64", "Debug" }
+			links { "libovr64d" }
+
+		configuration { "x64", "Release" }
+			links { "libovr64" }
+
+		configuration {}
+	end
+
 	configuration { "vs*" }
 		linkoptions {
 			"/ignore:4199", -- LNK4199: /DELAYLOAD:*.dll ignored; no imports found from *.dll
@@ -136,7 +168,7 @@ function exampleProject(_name)
 			"GLESv2",
 		}
 
-	configuration { "nacl or nacl-arm" }
+	configuration { "nacl*" }
 		kind "ConsoleApp"
 		targetextension ".nexe"
 		links {
