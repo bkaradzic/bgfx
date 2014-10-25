@@ -49,6 +49,11 @@ namespace entry
 			m_app->userData = (void*)this;
 			m_app->onAppCmd = onAppCmdCB;
 			m_app->onInputEvent = onInputEventCB;
+			ANativeActivity_setWindowFlags(m_app->activity, 0
+				| AWINDOW_FLAG_FULLSCREEN
+				| AWINDOW_FLAG_KEEP_SCREEN_ON
+				, 0
+				);
 
 			const char* argv[1] = { "android.so" };
 			m_mte.m_argc = 1;
