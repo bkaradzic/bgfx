@@ -3477,6 +3477,8 @@ RENDERDOC_IMPORT
 			}
 		}
 
+		PIX_ENDEVENT();
+
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
 

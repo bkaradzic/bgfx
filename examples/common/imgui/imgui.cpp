@@ -773,6 +773,7 @@ struct Imgui
 		m_view = _view;
 		m_viewWidth = _width;
 		m_viewHeight = _height;
+		bgfx::setViewName(_view, "IMGUI");
 		bgfx::setViewSeq(_view, true);
 		bgfx::setViewRect(_view, 0, 0, _width, _height);
 

@@ -3437,8 +3437,6 @@ namespace bgfx
 				}
 			}
 
-			PIX_ENDEVENT();
-
 			if (0 < _render->m_num)
 			{
 				captureElapsed = -bx::getHPCounter();
@@ -3446,6 +3444,8 @@ namespace bgfx
 				captureElapsed += bx::getHPCounter();
 			}
 		}
+
+		PIX_ENDEVENT();
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
