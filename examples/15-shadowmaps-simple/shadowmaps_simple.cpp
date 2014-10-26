@@ -539,7 +539,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float mtxBunny[16];
 		bx::mtxSRT(mtxBunny
 			, 5.0f, 5.0f, 5.0f
-			, 0.0f, float(M_PI) - timeAccumulatorScene, 0.0f
+			, 0.0f, bx::pi - timeAccumulatorScene, 0.0f
 			, 15.0f, 5.0f, 0.0f
 			);
 

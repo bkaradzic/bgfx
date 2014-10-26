@@ -158,7 +158,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		recomputeVisibleText |= imguiSlider("Scroll", textScroll, 0.0f, (lineCount-visibleLineCount) , 1.0f);
-		imguiSlider("Rotate", textRotation, 0.0f, (float) M_PI *2.0f , 0.1f);
+		imguiSlider("Rotate", textRotation, 0.0f, bx::pi*2.0f , 0.1f);
 		recomputeVisibleText |= imguiSlider("Scale", textScale, 0.1f, 10.0f , 0.1f);
 
 		if (recomputeVisibleText)

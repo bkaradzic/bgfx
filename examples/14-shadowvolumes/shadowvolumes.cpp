@@ -1813,7 +1813,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	// -1.0f - behind near plane
 	float lightSide = float( (d > delta) - (d < -delta) );
 
-	float t = tanf(_fovy*( (float)M_PI/180.0f)*0.5f) * _near;
+	float t = tanf(bx::toRad(_fovy)*0.5f) * _near;
 	float b = -t;
 	float r = t * _aspect;
 	float l = -r;
@@ -2352,9 +2352,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
-				lightPosRadius[ii][0] = cos(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][0] = cos(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][1] = 20.0f;
-				lightPosRadius[ii][2] = sin(2.0f*float(M_PI)/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][2] = sin(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
 		}
@@ -2362,9 +2362,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
-				lightPosRadius[ii][0] = cos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI) ) * 40.0f;
+				lightPosRadius[ii][0] = cos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
 				lightPosRadius[ii][1] = 20.0f;
-				lightPosRadius[ii][2] = sin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + float(M_PI) ) * 40.0f;
+				lightPosRadius[ii][2] = sin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
 		}
@@ -2495,7 +2495,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_scale[0]    = 21.0f;
 			inst.m_scale[1]    = 21.0f;
 			inst.m_scale[2]    = 21.0f;
-			inst.m_rotation[0] = float(M_PI);
+			inst.m_rotation[0] = bx::pi;
 			inst.m_rotation[1] = 0.0f;
 			inst.m_rotation[2] = 0.0f;
 			inst.m_pos[0]      = 0.0f;
@@ -2562,7 +2562,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				inst.m_scale[1]    = 5.0f;
 				inst.m_scale[2]    = 5.0f;
 				inst.m_rotation[0] = 0.0f;
-				inst.m_rotation[1] = float(M_PI);
+				inst.m_rotation[1] = bx::pi;
 				inst.m_rotation[2] = 0.0f;
 				inst.m_pos[0]      = currX;
 				inst.m_pos[1]      = 0.0f;

@@ -167,6 +167,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
+	// Set view debug names.
+	bgfx::setViewName(0, "Skybox");
+	bgfx::setViewName(1, "Mesh");
+	bgfx::setViewName(2, "Luminance");
+	bgfx::setViewName(3, "Downscale luminance 0");
+	bgfx::setViewName(4, "Downscale luminance 1");
+	bgfx::setViewName(5, "Downscale luminance 2");
+	bgfx::setViewName(6, "Downscale luminance 3");
+	bgfx::setViewName(7, "Brightness");
+	bgfx::setViewName(8, "Blur vertical");
+	bgfx::setViewName(9, "Blur horizontal + tonemap");
+
 	bgfx::TextureHandle uffizi = loadTexture("uffizi.dds", BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
 	bgfx::ProgramHandle skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
@@ -296,7 +308,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/09-hdr");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views and render targets.");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views and frame buffers.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		// Set views.

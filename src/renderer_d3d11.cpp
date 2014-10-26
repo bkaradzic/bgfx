@@ -15,7 +15,7 @@
 
 namespace bgfx
 {
-	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
+	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 	struct PrimInfo
 	{
@@ -770,6 +770,14 @@ RENDERDOC_IMPORT
 				g_caps.formats[ii] = DXGI_FORMAT_UNKNOWN == s_textureFormat[ii].m_fmt ? 0 : 1;
 			}
 
+			// Init reserved part of view name.
+			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+			{
+				char name[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1];
+				bx::snprintf(name, sizeof(name), "%3d  ", ii);
+				mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
+			}
+
 			updateMsaa();
 			postReset();
 		}
@@ -1036,7 +1044,10 @@ RENDERDOC_IMPORT
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
 		{
-			mbstowcs(&s_viewNameW[_id][0], _name, BX_COUNTOF(s_viewNameW[0]) );
+			mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				, _name
+				, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+				);
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE

@@ -699,6 +699,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set vertex and index buffer.
 		bgfx::setVertexBuffer(&tvb, 0, numVertices);
 
+		// Set render states.
+		bgfx::setState(BGFX_STATE_DEFAULT);
+
 		// Submit primitive for rendering to view 0.
 		bgfx::submit(0);
 

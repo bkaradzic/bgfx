@@ -365,7 +365,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					//mtxIdentity(mtx);
 					mtx[12] = -2.5f + float(xx)*2.5f;
 					mtx[13] = -2.5f + float(yy)*2.5f;
-					mtx[14] = -2.5f + float(zz)*2.5f; //0.0f; // sinf(time + ( (xx+1)*(yy+1)/9.0f)*float(M_PI) )*50.0f+50.0f; //90.0f - (xx+1)*(yy+1)*10.0f;
+					mtx[14] = -2.5f + float(zz)*2.5f;
 
 					// Set transform for draw call.
 					bgfx::setTransform(mtx);

@@ -701,7 +701,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, 1.0f
 				, 1.0f
 				, 0.0f
-				, (float(M_PI))+time
+				, bx::pi+time
 				, 0.0f
 				, 0.0f
 				, -1.0f

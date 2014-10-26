@@ -201,8 +201,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float lightPosRadius[4][4];
 		for (uint32_t ii = 0; ii < numLights; ++ii)
 		{
-			lightPosRadius[ii][0] = sin( (time*(0.1f + ii*0.17f) + float(ii*M_PI_2)*1.37f ) )*3.0f;
-			lightPosRadius[ii][1] = cos( (time*(0.2f + ii*0.29f) + float(ii*M_PI_2)*1.49f ) )*3.0f;
+			lightPosRadius[ii][0] = sin( (time*(0.1f + ii*0.17f) + ii*bx::piHalf*1.37f ) )*3.0f;
+			lightPosRadius[ii][1] = cos( (time*(0.2f + ii*0.29f) + ii*bx::piHalf*1.49f ) )*3.0f;
 			lightPosRadius[ii][2] = -2.5f;
 			lightPosRadius[ii][3] = 3.0f;
 		}

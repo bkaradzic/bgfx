@@ -976,13 +976,6 @@ namespace bgfx
 		m_submit->m_transientVb = createTransientVertexBuffer(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 		m_submit->m_transientIb = createTransientIndexBuffer(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 		frame();
-
-		for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			char name[256];
-			bx::snprintf(name, sizeof(name), "%02d view", ii);
-			setViewName(ii, name);
-		}
 	}
 
 	void Context::shutdown()
