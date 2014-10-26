@@ -71,12 +71,12 @@ namespace bgfx
 #define _PIX_ENDEVENT() D3DPERF_EndEvent()
 
 #if BGFX_CONFIG_DEBUG_PIX
-#	define PIX_SETMARKER(_color, _name) _PIX_SETMARKER(_color, _name)
+#	define PIX_SETMARKER(_color, _name)  _PIX_SETMARKER(_color, _name)
 #	define PIX_BEGINEVENT(_color, _name) _PIX_BEGINEVENT(_color, _name)
 #	define PIX_ENDEVENT() _PIX_ENDEVENT()
 #else
-#	define PIX_SETMARKER(_color, _name)
-#	define PIX_BEGINEVENT(_color, _name)
+#	define PIX_SETMARKER(_color, _name)  BX_UNUSED(_name)
+#	define PIX_BEGINEVENT(_color, _name) BX_UNUSED(_name)
 #	define PIX_ENDEVENT()
 #endif // BGFX_CONFIG_DEBUG_PIX
 
