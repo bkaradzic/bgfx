@@ -1112,6 +1112,7 @@ namespace bgfx { namespace d3d11
 			setFrameBuffer(fbh, false);
 
 			D3D11_VIEWPORT vp;
+			memset(&vp, 0, sizeof(vp));
 			vp.TopLeftX = 0;
 			vp.TopLeftY = 0;
 			vp.Width    = (float)width;
@@ -1199,6 +1200,7 @@ namespace bgfx { namespace d3d11
 			if (NULL == m_backBufferDepthStencil)
 			{
 				D3D11_TEXTURE2D_DESC dsd;
+				memset(&dsd, 0, sizeof(dsd));
 				dsd.Width  = getBufferWidth();
 				dsd.Height = getBufferHeight();
 				dsd.MipLevels  = 1;
@@ -1519,6 +1521,7 @@ namespace bgfx { namespace d3d11
 			if (NULL == layout)
 			{
 				D3D11_INPUT_ELEMENT_DESC vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
+				memset(vertexElements, 0, sizeof(vertexElements));
 
 				VertexDecl decl;
 				memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
@@ -1753,6 +1756,7 @@ namespace bgfx { namespace d3d11
 				uint32_t cull = (_state&BGFX_STATE_CULL_MASK)>>BGFX_STATE_CULL_SHIFT;
 
 				D3D11_RASTERIZER_DESC desc;
+				memset(&desc, 0, sizeof(desc));
 				desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
 				desc.CullMode = s_cullMode[cull];
 				desc.FrontCounterClockwise = false;
@@ -2351,6 +2355,7 @@ namespace bgfx { namespace d3d11
 		m_dynamic = NULL == _data && !needUav;
 
 		D3D11_BUFFER_DESC desc;
+		memset(&desc, 0, sizeof(desc));
 		desc.ByteWidth = _size;
 		desc.BindFlags = 0
 			| (_vertex ? D3D11_BIND_VERTEX_BUFFER    : D3D11_BIND_INDEX_BUFFER)
@@ -2439,6 +2444,7 @@ namespace bgfx { namespace d3d11
 		ID3D11Device* device = s_renderD3D11->m_device;
 
 		D3D11_BUFFER_DESC desc;
+		memset(&desc, 0, sizeof(desc));
 		desc.ByteWidth = _size;
 		desc.Usage     = D3D11_USAGE_STAGING;
 		desc.BindFlags = 0;
@@ -2794,6 +2800,7 @@ namespace bgfx { namespace d3d11
 			case TextureCube:
 				{
 					D3D11_TEXTURE2D_DESC desc;
+					memset(&desc, 0, sizeof(desc));
 					desc.Width  = textureWidth;
 					desc.Height = textureHeight;
 					desc.MipLevels  = numMips;
@@ -2842,6 +2849,7 @@ namespace bgfx { namespace d3d11
 			case Texture3D:
 				{
 					D3D11_TEXTURE3D_DESC desc;
+					memset(&desc, 0, sizeof(desc));
 					desc.Width  = textureWidth;
 					desc.Height = textureHeight;
 					desc.Depth  = imageContainer.m_depth;
@@ -3236,6 +3244,7 @@ namespace bgfx { namespace d3d11
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 
 					D3D11_VIEWPORT vp;
+					memset(&vp, 0, sizeof(vp));
 					vp.TopLeftX = viewState.m_rect.m_x;
 					vp.TopLeftY = viewState.m_rect.m_y;
 					vp.Width    = viewState.m_rect.m_width;
