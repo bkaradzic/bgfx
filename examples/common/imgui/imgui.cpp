@@ -1677,24 +1677,24 @@ struct Imgui
 
 			if (_cross)
 			{
-				vertex->set( 0.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 0.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 0.5f, 0.0f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 0.5f, 0.5f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 1.0f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 1.5f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.5f, 0.0f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(0.5f, 0.5f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 1.0f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 1.5f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 1.0f, 0.0f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 1.0f, 0.5f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 1.0f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 1.5f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(1.0f, 0.0f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(1.0f, 0.5f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 1.0f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 1.5f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 1.5f, 0.5f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 1.5f, 1.0f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 0.5f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 1.0f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 2.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 2.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
 				indices += addQuad(indices,  0,  3,  4,  1);
 				indices += addQuad(indices,  2,  6,  7,  3);
@@ -1705,25 +1705,25 @@ struct Imgui
 			}
 			else
 			{
-				vertex->set( 0.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 0.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 0.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 0.50f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 0.50f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
 
-				vertex->set( 1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
 
-				vertex->set( 1.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.5f, 0.50f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 1.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.5f, 0.50f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 2.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 2.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
 				indices += addQuad(indices,  0,  2,  3,  1);
 				indices += addQuad(indices,  1,  3,  6,  4);
