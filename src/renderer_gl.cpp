@@ -855,6 +855,7 @@ namespace bgfx
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
 		{
+			memset(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
 
 		~RendererContextGL()
@@ -1785,8 +1786,14 @@ namespace bgfx
 			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
-				GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
 				m_msaaBackBufferFbo = 0;
+
+				if (0 != m_msaaBackBufferRbos[0])
+				{
+					GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
+					m_msaaBackBufferRbos[0] = 0;
+					m_msaaBackBufferRbos[1] = 0;
+				}
 			}
 		}
 
@@ -4173,7 +4180,11 @@ namespace bgfx
 						if (viewHasScissor)
 						{
 							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-							GL_CHECK(glScissor(viewScissorRect.m_x, height-viewScissorRect.m_height-viewScissorRect.m_y, viewScissorRect.m_width, viewScissorRect.m_height) );
+							GL_CHECK(glScissor(viewScissorRect.m_x
+								, height-viewScissorRect.m_height-viewScissorRect.m_y
+								, viewScissorRect.m_width
+								, viewScissorRect.m_height
+								) );
 						}
 						else
 						{
@@ -4185,7 +4196,11 @@ namespace bgfx
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-						GL_CHECK(glScissor(scissorRect.m_x, height-scissorRect.m_height-scissorRect.m_y, scissorRect.m_width, scissorRect.m_height) );
+						GL_CHECK(glScissor(scissorRect.m_x
+							, height-scissorRect.m_height-scissorRect.m_y
+							, scissorRect.m_width
+							, scissorRect.m_height
+							) );
 					}
 				}
 
