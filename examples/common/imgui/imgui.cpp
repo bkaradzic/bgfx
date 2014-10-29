@@ -1747,7 +1747,7 @@ struct Imgui
 				 ||  ImguiAlign::Right        == _align)
 			{
 				xx = area.m_widgetX;
-				width = area.m_widgetW-1; //TODO: -1 !
+				width = area.m_widgetW;
 			}
 			else //if (ImguiAlign::Center         == _align
 				 //||  ImguiAlign::CenterIndented == _align).
@@ -1764,7 +1764,7 @@ struct Imgui
 			const bool over = enabled && inRect(xx, yy, width, height);
 			const bool res = buttonLogic(id, over);
 
-			const float scale = float(width/2);
+			const float scale = float(width/2)+0.25f;
 
 			float mtx[16];
 			bx::mtxSRT(mtx, scale, scale, 1.0f, 0.0f, 0.0f, 0.0f, float(xx), float(yy), 0.0f);
