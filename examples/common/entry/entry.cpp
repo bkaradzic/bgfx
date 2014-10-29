@@ -65,8 +65,10 @@ namespace entry
 	{
 		if (_argc > 1)
 		{
-			if (setOrToggle(s_reset, "vsync", BGFX_RESET_VSYNC,    1, _argc, _argv)
-			||  setOrToggle(s_reset, "msaa",  BGFX_RESET_MSAA_X16, 1, _argc, _argv) )
+			if (setOrToggle(s_reset, "vsync",  BGFX_RESET_VSYNC,     1, _argc, _argv)
+			||  setOrToggle(s_reset, "hmd",    BGFX_RESET_HMD,       1, _argc, _argv)
+			||  setOrToggle(s_reset, "hmddbg", BGFX_RESET_HMD_DEBUG, 1, _argc, _argv)
+			||  setOrToggle(s_reset, "msaa",   BGFX_RESET_MSAA_X16,  1, _argc, _argv) )
 			{
 				return 0;
 			}
@@ -113,6 +115,7 @@ namespace entry
 		{ entry::Key::F1,    entry::Modifier::None,      1, cmd, "graphics stats"                    },
 		{ entry::Key::F1,    entry::Modifier::LeftShift, 1, cmd, "graphics stats 0\ngraphics text 0" },
 		{ entry::Key::F3,    entry::Modifier::None,      1, cmd, "graphics wireframe"                },
+		{ entry::Key::F4,    entry::Modifier::None,      1, cmd, "graphics hmd"                      },
 		{ entry::Key::F7,    entry::Modifier::None,      1, cmd, "graphics vsync"                    },
 		{ entry::Key::F8,    entry::Modifier::None,      1, cmd, "graphics msaa"                     },
 		{ entry::Key::Print, entry::Modifier::None,      1, cmd, "graphics screenshot"               },

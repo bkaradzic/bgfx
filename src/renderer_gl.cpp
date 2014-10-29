@@ -854,6 +854,7 @@ namespace bgfx
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
+			, m_ovrFbo(0)
 		{
 			memset(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
@@ -869,6 +870,9 @@ namespace bgfx
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
 			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+
+			// Must be after context is initialized?!
+			m_ovr.init();
 
 			m_vendor = getGLString(GL_VENDOR);
 			m_renderer = getGLString(GL_RENDERER);
@@ -1364,10 +1368,15 @@ namespace bgfx
 			{
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d  ", ii);
 			}
+
+			ovrPostReset();
 		}
 
 		void shutdown()
 		{
+			ovrPreReset();
+			m_ovr.shutdown();
+
 			if (m_vaoSupport)
 			{
 				GL_CHECK(glBindVertexArray(0) );
@@ -1413,7 +1422,11 @@ namespace bgfx
 				{
 					m_glctx.swap(m_frameBuffers[m_windows[ii].idx].m_swapChain);
 				}
-				m_glctx.swap();
+
+				if (!m_ovr.swap() )
+				{
+					m_glctx.swap();
+				}
 			}
 		}
 
@@ -1575,7 +1588,7 @@ namespace bgfx
 			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
 			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 
-			uint32_t width = m_resolution.m_width;
+			uint32_t width  = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
 
 			GL_CHECK(glReadPixels(0
@@ -1630,8 +1643,12 @@ namespace bgfx
 				GL_CHECK(glBindVertexArray(m_vao) );
 			}
 
-			uint32_t width = m_resolution.m_width;
+			uint32_t width  = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
+			if (m_ovr.isEnabled() )
+			{
+				m_ovr.getSize(width, height);
+			}
 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			GL_CHECK(glViewport(0, 0, width, height) );
@@ -1685,9 +1702,9 @@ namespace bgfx
 
 		void updateResolution(const Resolution& _resolution)
 		{
-			if (m_resolution.m_width != _resolution.m_width
+			if (m_resolution.m_width  != _resolution.m_width
 			||  m_resolution.m_height != _resolution.m_height
-			||  m_resolution.m_flags != _resolution.m_flags)
+			||  m_resolution.m_flags  != _resolution.m_flags)
 			{
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
@@ -1699,6 +1716,9 @@ namespace bgfx
 				bool vsync = !!(m_resolution.m_flags&BGFX_RESET_VSYNC);
 				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa, vsync);
 				updateCapture();
+
+				ovrPreReset();
+				ovrPostReset();
 			}
 		}
 
@@ -1806,7 +1826,7 @@ namespace bgfx
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
-				uint32_t width = m_resolution.m_width;
+				uint32_t width  = m_resolution.m_width;
 				uint32_t height = m_resolution.m_height;
 				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) 
 					? GL_NEAREST 
@@ -1923,6 +1943,81 @@ namespace bgfx
 					GL_CHECK(glBindSampler(_stage, 0) );
 				}
 			}
+		}
+
+		void ovrPostReset()
+		{
+#if BGFX_CONFIG_USE_OVR
+			if (m_resolution.m_flags & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
+			{
+				ovrGLConfig config;
+				config.OGL.Header.API = ovrRenderAPI_OpenGL;
+				config.OGL.Header.RTSize.w = m_resolution.m_width;
+				config.OGL.Header.RTSize.h = m_resolution.m_height;
+				config.OGL.Header.Multisample = 0;
+				config.OGL.Window = g_bgfxHwnd;
+				config.OGL.DC = GetDC(g_bgfxHwnd);
+				if (m_ovr.postReset(g_bgfxHwnd, &config.Config, !!(m_resolution.m_flags & BGFX_RESET_HMD_DEBUG) ) )
+				{
+					uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
+					const Memory* mem = alloc(size);
+
+					bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+					uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
+					bx::write(&writer, magic);
+
+					TextureCreate tc;
+					tc.m_flags   = BGFX_TEXTURE_RT;
+					tc.m_width   = m_ovr.m_rtSize.w;
+					tc.m_height  = m_ovr.m_rtSize.h;
+					tc.m_sides   = 0;
+					tc.m_depth   = 0;
+					tc.m_numMips = 1;
+					tc.m_format  = uint8_t(bgfx::TextureFormat::BGRA8);
+					tc.m_cubeMap = false;
+					tc.m_mem = NULL;
+					bx::write(&writer, tc);
+
+					m_ovrRT.create(mem, tc.m_flags, 0);
+					release(mem);
+
+					m_ovrFbo = m_msaaBackBufferFbo;
+
+					GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
+
+					GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+						, GL_COLOR_ATTACHMENT0
+						, GL_TEXTURE_2D
+						, m_ovrRT.m_id
+						, 0
+						) );
+
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_ovrFbo) );
+
+					ovrGLTexture texture;
+					texture.OGL.Header.API         = ovrRenderAPI_OpenGL;
+					texture.OGL.Header.TextureSize = m_ovr.m_rtSize;
+					texture.OGL.TexId              = m_ovrRT.m_id;
+					m_ovr.postReset(texture.Texture);
+				}
+			}
+#endif // BGFX_CONFIG_USE_OVR
+		}
+
+		void ovrPreReset()
+		{
+#if BGFX_CONFIG_USE_OVR
+			if (m_ovr.isEnabled() )
+			{
+				m_ovr.preReset();
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
+				m_msaaBackBufferFbo = m_ovrFbo;
+				m_ovrFbo = 0;
+				m_ovrRT.destroy();
+			}
+#endif // BGFX_CONFIG_USE_OVR
 		}
 
 		void updateCapture()
@@ -2324,6 +2419,10 @@ namespace bgfx
 		const char* m_renderer;
 		const char* m_version;
 		const char* m_glslVersion;
+
+		OVR m_ovr;
+		TextureGL m_ovrRT;
+		GLint m_ovrFbo;
 	};
 
 	RendererContextGL* s_renderGL;
@@ -4009,24 +4108,73 @@ namespace bgfx
 		currentState.m_flags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
-		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
+		Matrix4  mtxViewTmp[2][BGFX_CONFIG_MAX_VIEWS];
+		Matrix4* mtxView[2] = { _render->m_view, mtxViewTmp[1] };
+		Matrix4  mtxViewProj[2][BGFX_CONFIG_MAX_VIEWS];
+
+		const bool hmdEnabled = m_ovr.isEnabled();
+		_render->m_hmdEnabled = hmdEnabled;
+
+		if (hmdEnabled)
+		{
+			HMD& hmd = _render->m_hmd;
+			m_ovr.getEyePose(hmd);
+
+			mtxView[0] = mtxViewTmp[0];
+			Matrix4 viewAdjust;
+			bx::mtxIdentity(viewAdjust.un.val);
+
+			for (uint32_t eye = 0; eye < 2; ++eye)
+			{
+				const HMD::Eye hmdEye = hmd.eye[eye];
+				viewAdjust.un.val[12] = hmdEye.adjust[0];
+				viewAdjust.un.val[13] = hmdEye.adjust[1];
+				viewAdjust.un.val[14] = hmdEye.adjust[2];
+
+				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+				{
+					if (BGFX_VIEW_STEREO == (_render->m_viewFlags[ii] & BGFX_VIEW_STEREO) )
+					{
+						bx::float4x4_mul(&mtxView[eye][ii].un.f4x4
+							, &_render->m_view[ii].un.f4x4
+							, &viewAdjust.un.f4x4
+							);
+					}
+					else
+					{
+						memcpy(&mtxView[0][ii].un.f4x4, &_render->m_view[ii].un.f4x4, sizeof(Matrix4) );
+					}
+				}
+			}
+		}
+
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			bx::float4x4_mul(&viewProj[ii].un.f4x4, &_render->m_view[ii].un.f4x4, &_render->m_proj[ii].un.f4x4);
+			for (uint32_t eye = 0; eye < uint32_t(hmdEnabled)+1; ++eye)
+			{
+				bx::float4x4_mul(&mtxViewProj[eye][ii].un.f4x4
+					, &mtxView[eye][ii].un.f4x4
+					, &_render->m_proj[eye][ii].un.f4x4
+					);
+			}
 		}
 
 		Matrix4 invView;
 		Matrix4 invProj;
 		Matrix4 invViewProj;
-		uint8_t invViewCached = 0xff;
-		uint8_t invProjCached = 0xff;
-		uint8_t invViewProjCached = 0xff;
+		uint16_t invViewCached = UINT16_MAX;
+		uint16_t invProjCached = UINT16_MAX;
+		uint16_t invViewProjCached = UINT16_MAX;
 
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-		int32_t height = _render->m_resolution.m_height;
+		int32_t height = hmdEnabled
+					? _render->m_hmd.height
+					: _render->m_resolution.m_height
+					;
+			_render->m_resolution.m_height;
 		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
 
@@ -4054,16 +4202,33 @@ namespace bgfx
 		{
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
-			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)
+			bool viewRestart = false;
+			uint8_t eye = 0;
+			uint8_t restartState = 0;
+			Rect rect = _render->m_rect[0];
+
+			int32_t numItems = _render->m_num;
+			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
 			{
 				const bool isCompute   = key.decode(_render->m_sortKeys[item]);
-				const bool viewChanged = key.m_view != view;
+				const bool viewChanged = 0
+					|| key.m_view != view
+					|| item == numItems
+					;
 
 				const RenderItem& renderItem = _render->m_renderItem[_render->m_sortValues[item] ];
+				++item;
 
 				if (viewChanged)
 				{
-					GL_CHECK(glInsertEventMarker(0, s_viewName[key.m_view]) );
+					if (1 == restartState)
+					{
+						restartState = 2;
+						item = restartItem;
+						restartItem = numItems;
+						view = 0xff;
+						continue;
+					}
 
 					view = key.m_view;
 					programIdx = invalidHandle;
@@ -4071,15 +4236,57 @@ namespace bgfx
 					if (_render->m_fb[view].idx != fbh.idx)
 					{
 						fbh = _render->m_fb[view];
-						height = setFrameBuffer(fbh, _render->m_resolution.m_height);
+						height = hmdEnabled
+							? _render->m_hmd.height
+							: _render->m_resolution.m_height
+							;
+						height = setFrameBuffer(fbh, height);
 					}
 
-					const Rect& rect = _render->m_rect[view];
+					viewRestart = ( (BGFX_VIEW_STEREO == (_render->m_viewFlags[view] & BGFX_VIEW_STEREO) ) );
+					viewRestart &= hmdEnabled;
+					if (viewRestart)
+					{
+						if (0 == restartState)
+						{
+							restartState = 1;
+							restartItem  = item - 1;
+						}
+
+						eye = (restartState - 1) & 1;
+						restartState &= 1;
+					}
+					else
+					{
+						eye = 0;
+					}
+
+					rect = _render->m_rect[view];
+					if (viewRestart)
+					{
+						char* viewName = s_viewName[view];
+						viewName[3] = eye ? 'R' : 'L';
+						GL_CHECK(glInsertEventMarker(0, viewName) );
+						
+						rect.m_x = eye * (rect.m_width+1)/2;
+						rect.m_width /= 2;
+					}
+					else
+					{
+						char* viewName = s_viewName[view];
+						viewName[3] = ' ';
+						GL_CHECK(glInsertEventMarker(0, viewName) );
+					}
+
 					const Rect& scissorRect = _render->m_scissor[view];
 					viewHasScissor = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : rect;
 
-					GL_CHECK(glViewport(rect.m_x, height-rect.m_height-rect.m_y, rect.m_width, rect.m_height) );
+					GL_CHECK(glViewport(rect.m_x
+						, height-rect.m_height-rect.m_y
+						, rect.m_width
+						, rect.m_height
+						) );
 
 					Clear& clear = _render->m_clear[view];
 
@@ -4473,28 +4680,28 @@ namespace bgfx
 						{
 						case PredefinedUniform::ViewRect:
 							{
-								float rect[4];
-								rect[0] = _render->m_rect[view].m_x;
-								rect[1] = _render->m_rect[view].m_y;
-								rect[2] = _render->m_rect[view].m_width;
-								rect[3] = _render->m_rect[view].m_height;
+								float frect[4];
+								frect[0] = rect.m_x;
+								frect[1] = rect.m_y;
+								frect[2] = rect.m_width;
+								frect[3] = rect.m_height;
 
 								GL_CHECK(glUniform4fv(predefined.m_loc
 									, 1
-									, &rect[0]
+									, &frect[0]
 								) );
 							}
 							break;
 
 						case PredefinedUniform::ViewTexel:
 							{
-								float rect[4];
-								rect[0] = 1.0f/float(_render->m_rect[view].m_width);
-								rect[1] = 1.0f/float(_render->m_rect[view].m_height);
+								float frect[4];
+								frect[0] = 1.0f/float(rect.m_width);
+								frect[1] = 1.0f/float(rect.m_height);
 
 								GL_CHECK(glUniform4fv(predefined.m_loc
 									, 1
-									, &rect[0]
+									, &frect[0]
 								) );
 							}
 							break;
@@ -4504,17 +4711,18 @@ namespace bgfx
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, _render->m_view[view].un.val
+									, mtxView[eye][view].un.val
 									) );
 							}
 							break;
 
 						case PredefinedUniform::InvView:
 							{
-								if (view != invViewCached)
+								uint16_t viewEye = (view << 1) | eye;
+								if (viewEye != invViewCached)
 								{
-									invViewCached = view;
-									bx::float4x4_inverse(&invView.un.f4x4, &_render->m_view[view].un.f4x4);
+									invViewCached = viewEye;
+									bx::float4x4_inverse(&invView.un.f4x4, &mtxView[eye][view].un.f4x4);
 								}
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
@@ -4530,17 +4738,18 @@ namespace bgfx
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, _render->m_proj[view].un.val
+									, _render->m_proj[0][view].un.val
 									) );
 							}
 							break;
 
 						case PredefinedUniform::InvProj:
 							{
-								if (view != invProjCached)
+								uint16_t viewEye = (view << 1) | eye;
+								if (viewEye != invProjCached)
 								{
-									invProjCached = view;
-									bx::float4x4_inverse(&invProj.un.f4x4, &_render->m_proj[view].un.f4x4);
+									invProjCached = viewEye;
+									bx::float4x4_inverse(&invProj.un.f4x4, &_render->m_proj[eye][view].un.f4x4);
 								}
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
@@ -4556,17 +4765,18 @@ namespace bgfx
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
 									, GL_FALSE
-									, viewProj[view].un.val
+									, mtxViewProj[eye][view].un.val
 									) );
 							}
 							break;
 
 						case PredefinedUniform::InvViewProj:
 							{
-								if (view != invViewProjCached)
+								uint16_t viewEye = (view << 1) | eye;
+								if (viewEye != invViewProjCached)
 								{
-									invViewProjCached = view;
-									bx::float4x4_inverse(&invViewProj.un.f4x4, &viewProj[view].un.f4x4);
+									invViewProjCached = viewEye;
+									bx::float4x4_inverse(&invViewProj.un.f4x4, &mtxViewProj[eye][view].un.f4x4);
 								}
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
@@ -4592,7 +4802,7 @@ namespace bgfx
 							{
 								Matrix4 modelView;
 								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &_render->m_view[view].un.f4x4);
+								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &mtxView[eye][view].un.f4x4);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
@@ -4606,7 +4816,7 @@ namespace bgfx
 							{
 								Matrix4 modelViewProj;
 								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
+								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &mtxViewProj[eye][view].un.f4x4);
 
 								GL_CHECK(glUniformMatrix4fv(predefined.m_loc
 									, 1
@@ -4924,11 +5134,15 @@ namespace bgfx
 					, freq/frameTime
 					);
 
+				char hmd[16];
+				bx::snprintf(hmd, BX_COUNTOF(hmd), ", [%c] HMD ", hmdEnabled ? '\xfe' : ' ');
+
 				const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
-				tvm.printf(10, pos++, 0x8e, "    Reset flags: [%c] vsync, [%c] MSAAx%d "
+				tvm.printf(10, pos++, 0x8e, "    Reset flags: [%c] vsync, [%c] MSAAx%d%s"
 					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
+					, m_ovr.isInitialized() ? hmd : ", no-HMD "
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;

@@ -72,6 +72,7 @@ namespace bgfx
 
 #include <bx/bx.h>
 #include <bx/debug.h>
+#include <bx/fpumath.h>
 #include <bx/float4x4_t.h>
 #include <bx/blockalloc.h>
 #include <bx/endian.h>
@@ -1149,7 +1150,13 @@ namespace bgfx
 		Frame()
 			: m_waitSubmit(0)
 			, m_waitRender(0)
+			, m_hmdEnabled(false)
 		{
+			SortKey term;
+			term.reset();
+			term.m_program = invalidHandle;
+			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw();
+			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
 		}
 
 		~Frame()
@@ -1475,11 +1482,12 @@ namespace bgfx
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4 m_proj[BGFX_CONFIG_MAX_VIEWS];
+		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
+		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
 
-		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS];
-		uint16_t m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS];
-		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS];
+		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
+		uint16_t m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
+		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderDraw m_draw;
 		RenderCompute m_compute;
 		uint64_t m_flags;
@@ -1525,6 +1533,8 @@ namespace bgfx
 		FrameBufferHandle m_freeFrameBufferHandle[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformHandle m_freeUniformHandle[BGFX_CONFIG_MAX_UNIFORMS];
 		TextVideoMem* m_textVideoMem;
+		HMD m_hmd;
+		bool m_hmdEnabled;
 
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
@@ -1823,6 +1833,16 @@ namespace bgfx
 		BGFX_API_FUNC(void dbgTextPrintfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList) )
 		{
 			m_submit->m_textVideoMem->printfVargs(_x, _y, _attr, _format, _argList);
+		}
+
+		BGFX_API_FUNC(const HMD* getHMD() )
+		{
+			if (m_submit->m_hmdEnabled)
+			{
+				return &m_submit->m_hmd;
+			}
+
+			return NULL;
 		}
 
 		BGFX_API_FUNC(IndexBufferHandle createIndexBuffer(const Memory* _mem) )
@@ -2733,8 +2753,10 @@ namespace bgfx
 			m_fb[_id] = _handle;
 		}
 
-		BGFX_API_FUNC(void setViewTransform(uint8_t _id, const void* _view, const void* _proj) )
+		BGFX_API_FUNC(void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _flags, const void* _proj1) )
 		{
+			m_viewFlags[_id] = _flags;
+
 			if (NULL != _view)
 			{
 				memcpy(m_view[_id].un.val, _view, sizeof(Matrix4) );
@@ -2746,11 +2768,20 @@ namespace bgfx
 
 			if (NULL != _proj)
 			{
-				memcpy(m_proj[_id].un.val, _proj, sizeof(Matrix4) );
+				memcpy(m_proj[0][_id].un.val, _proj, sizeof(Matrix4) );
 			}
 			else
 			{
-				m_proj[_id].setIdentity();
+				m_proj[0][_id].setIdentity();
+			}
+
+			if (NULL != _proj1)
+			{
+				memcpy(m_proj[1][_id].un.val, _proj1, sizeof(Matrix4) );
+			}
+			else
+			{
+				memcpy(m_proj[1][_id].un.val, m_proj[0][_id].un.val, sizeof(Matrix4) );
 			}
 		}
 
@@ -3041,7 +3072,8 @@ namespace bgfx
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4 m_proj[BGFX_CONFIG_MAX_VIEWS];
+		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
+		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
 

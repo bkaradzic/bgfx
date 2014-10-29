@@ -42,6 +42,8 @@ namespace bgfx
 		void makeCurrent()
 		{
 			wglMakeCurrent(m_hdc, m_context);
+			GLenum err = glGetError();
+			BX_WARN(0 == err, "wglMakeCurrent failed with GL error: 0x%04x.", err);
 		}
 
 		void swapBuffers()
@@ -319,6 +321,8 @@ namespace bgfx
 		if (NULL == _swapChain)
 		{
 			wglMakeCurrent(m_hdc, m_context);
+			GLenum err = glGetError();
+			BX_WARN(0 == err, "wglMakeCurrent failed with GL error: 0x%04x.", err);
 		}
 		else
 		{

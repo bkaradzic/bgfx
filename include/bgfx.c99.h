@@ -176,10 +176,31 @@ typedef struct bgfx_memory
  */
 typedef struct bgfx_transform
 {
-    float* data;  //< Pointer to first matrix.
-    uint16_t num; //< Number of matrices.
+    float* data;
+    uint16_t num;
 
 } bgfx_transform_t;
+
+/**
+ */
+typedef struct bgfx_hmd
+{
+    /**
+     * Eye
+     */
+    struct Eye
+    {
+        float rotation[4];
+        float translation[3];
+        float fov[4];
+        float adjust[3];
+        float pixelsPerTanAngle[2];
+    };
+
+    Eye eye[2];
+    uint16_t width;
+    uint16_t height;
+} bgfx_hmd_t;
 
 /**
  * Vertex declaration.
@@ -566,7 +587,12 @@ BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type();
  *  NOTE:
  *    Library must be initialized.
  */
-BGFX_C_API bgfx_caps_t* bgfx_get_caps();
+BGFX_C_API const bgfx_caps_t* bgfx_get_caps();
+
+/**
+ * Returns HMD info.
+ */
+BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd();
 
 /**
  *  Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
@@ -1124,6 +1150,12 @@ BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle
  *  view will use these matrices.
  */
 BGFX_C_API void bgfx_set_view_transform(uint8_t _id, const void* _view, const void* _proj);
+
+/**
+ *  Set view view and projection matrices, all draw primitives in this
+ *  view will use these matrices.
+ */
+BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR);
 
 /**
  *  Sets debug marker.

@@ -848,6 +848,9 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_DEPTH),
 		CAPS_FLAGS(BGFX_CAPS_BLEND_INDEPENDENT),
 		CAPS_FLAGS(BGFX_CAPS_COMPUTE),
+		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_ORDERING),
+		CAPS_FLAGS(BGFX_CAPS_SWAP_CHAIN),
+		CAPS_FLAGS(BGFX_CAPS_HMD),
 #undef CAPS_FLAGS
 	};
 
@@ -1130,6 +1133,7 @@ namespace bgfx
 		memcpy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
 		memcpy(m_submit->m_view, m_view, sizeof(m_view) );
 		memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
+		memcpy(m_submit->m_viewFlags, m_viewFlags, sizeof(m_viewFlags) );
 		if (m_clearColorDirty > 0)
 		{
 			--m_clearColorDirty;
@@ -1961,6 +1965,11 @@ again:
 		return &g_caps;
 	}
 
+	const HMD* getHMD()
+	{
+		return s_ctx->getHMD();
+	}
+
 	RendererType::Enum getRendererType()
 	{
 		return g_caps.rendererType;
@@ -2557,10 +2566,10 @@ again:
 		s_ctx->setViewFrameBuffer(_id, _handle);
 	}
 
-	void setViewTransform(uint8_t _id, const void* _view, const void* _proj)
+	void setViewTransform(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setViewTransform(_id, _view, _proj);
+		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
 	}
 
 	void setMarker(const char* _marker)
@@ -2853,9 +2862,14 @@ BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type()
 	return bgfx_renderer_type_t(bgfx::getRendererType() );
 }
 
-BGFX_C_API bgfx_caps_t* bgfx_get_caps()
+BGFX_C_API const bgfx_caps_t* bgfx_get_caps()
 {
-	return (bgfx_caps_t*)bgfx::getCaps();
+	return (const bgfx_caps_t*)bgfx::getCaps();
+}
+
+BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd()
+{
+	return (const bgfx_hmd_t*)bgfx::getHMD();
 }
 
 BGFX_C_API const bgfx_memory_t* bgfx_alloc(uint32_t _size)
@@ -3193,6 +3207,11 @@ BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle
 BGFX_C_API void bgfx_set_view_transform(uint8_t _id, const void* _view, const void* _proj)
 {
 	bgfx::setViewTransform(_id, _view, _proj);
+}
+
+BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
+{
+	bgfx::setViewTransform(_id, _view, _projL, _flags, _projR);
 }
 
 BGFX_C_API void bgfx_set_marker(const char* _marker)

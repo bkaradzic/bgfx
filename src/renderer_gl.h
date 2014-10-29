@@ -84,8 +84,9 @@ typedef uint64_t GLuint64;
 #	if BX_PLATFORM_EMSCRIPTEN
 #		include <emscripten/emscripten.h>
 #	endif // BX_PLATFORM_EMSCRIPTEN
-
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+
+#include "ovr.h"
 
 #ifndef GL_LUMINANCE
 #	define GL_LUMINANCE 0x1909

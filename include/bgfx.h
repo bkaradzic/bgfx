@@ -369,6 +369,24 @@ namespace bgfx
 		uint16_t num; //!< Number of matrices.
 	};
 
+	/// HMD info.
+	struct HMD
+	{
+		/// Eye
+		struct Eye
+		{
+			float rotation[4];          //!< Eye rotation represented as quaternion.
+			float translation[3];       //!< Eye translation.
+			float fov[4];               //!< Field of view (up, down, left, right).
+			float adjust[3];            //!< Eye view matrix translation adjustment.
+			float pixelsPerTanAngle[2]; //!< 
+		};
+
+		Eye eye[2];
+		uint16_t width;  //!< Framebuffer width.
+		uint16_t height; //!< Framebuffer width.
+	};
+
 	/// Vertex declaration.
 	struct VertexDecl
 	{
@@ -547,6 +565,9 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_get_caps`.
 	///
 	const Caps* getCaps();
+
+	/// Returns HMD info.
+	const HMD* getHMD();
 
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 	const Memory* alloc(uint32_t _size);
@@ -1038,7 +1059,7 @@ namespace bgfx
 
 	/// Set view view and projection matrices, all draw primitives in this
 	/// view will use these matrices.
-	void setViewTransform(uint8_t _id, const void* _view, const void* _proj);
+	void setViewTransform(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags = BGFX_VIEW_STEREO, const void* _projR = NULL);
 
 	/// Sets debug marker.
 	void setMarker(const char* _marker);

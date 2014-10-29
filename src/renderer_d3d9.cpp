@@ -2815,7 +2815,7 @@ namespace bgfx
 		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			bx::float4x4_mul(&viewProj[ii].un.f4x4, &_render->m_view[ii].un.f4x4, &_render->m_proj[ii].un.f4x4);
+			bx::float4x4_mul(&viewProj[ii].un.f4x4, &_render->m_view[ii].un.f4x4, &_render->m_proj[0][ii].un.f4x4);
 		}
 
 		Matrix4 invView;
@@ -3212,7 +3212,7 @@ namespace bgfx
 
 						case PredefinedUniform::Proj:
 							{
-								setShaderConstantF(flags, predefined.m_loc, _render->m_proj[view].un.val, bx::uint32_min(4, predefined.m_count) );
+								setShaderConstantF(flags, predefined.m_loc, _render->m_proj[0][view].un.val, bx::uint32_min(4, predefined.m_count) );
 							}
 							break;
 
@@ -3221,7 +3221,7 @@ namespace bgfx
 								if (view != invProjCached)
 								{
 									invProjCached = view;
-									bx::float4x4_inverse(&invProj.un.f4x4, &_render->m_proj[view].un.f4x4);
+									bx::float4x4_inverse(&invProj.un.f4x4, &_render->m_proj[0][view].un.f4x4);
 								}
 
 								setShaderConstantF(flags, predefined.m_loc, invProj.un.val, bx::uint32_min(4, predefined.m_count) );
