@@ -111,7 +111,7 @@ function exampleProject(_name)
 		configuration { "x32" }
 			libdirs { "$(OVR_DIR)/LibOVR/Lib/Win32/" .. _ACTION }
 
-		configuration { "x64", "vs2012" }
+		configuration { "x64" }
 			libdirs { "$(OVR_DIR)/LibOVR/Lib/x64/" .. _ACTION }
 
 		configuration { "x32", "Debug" }

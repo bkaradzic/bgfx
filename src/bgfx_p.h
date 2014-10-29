@@ -1148,9 +1148,9 @@ namespace bgfx
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
 		Frame()
-			: m_waitSubmit(0)
+			: m_hmdEnabled(false)
+			, m_waitSubmit(0)
 			, m_waitRender(0)
-			, m_hmdEnabled(false)
 		{
 			SortKey term;
 			term.reset();

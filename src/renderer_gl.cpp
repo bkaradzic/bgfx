@@ -4174,7 +4174,6 @@ namespace bgfx
 					? _render->m_hmd.height
 					: _render->m_resolution.m_height
 					;
-			_render->m_resolution.m_height;
 		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
 
