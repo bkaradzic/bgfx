@@ -2957,7 +2957,7 @@ RENDERDOC_IMPORT
 
 			for (uint32_t eye = 0; eye < 2; ++eye)
 			{
-				const HMD::Eye hmdEye = hmd.eye[eye];
+				const HMD::Eye& hmdEye = hmd.eye[eye];
 				viewAdjust.un.val[12] = hmdEye.adjust[0];
 				viewAdjust.un.val[13] = hmdEye.adjust[1];
 				viewAdjust.un.val[14] = hmdEye.adjust[2];
