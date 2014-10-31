@@ -2005,12 +2005,12 @@ int main(int _argc, const char* _argv[])
 			memset(&data[size+1], 0, padding);
 			fclose(file);
 
-			input = data;
+			input = const_cast<char*>(bx::strws(data) );
 			while (input[0] == '$')
 			{
-				const char* str = input+1;
+				const char* str = bx::strws(input+1);
 				const char* eol = bx::streol(str);
-				const char* nl = bx::strnl(eol);
+				const char* nl  = bx::strnl(eol);
 				input = const_cast<char*>(nl);
 
 				if (0 == strncmp(str, "input", 5) )
