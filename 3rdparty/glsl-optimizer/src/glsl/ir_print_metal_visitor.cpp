@@ -374,7 +374,7 @@ void ir_print_metal_visitor::newline_deindent()
 
 void ir_print_metal_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+    uintptr_t id = (uintptr_t)hash_table_find (globals->var_hash, v);
 	if (!id && v->data.mode == ir_var_temporary)
 	{
         id = ++globals->var_counter;
@@ -543,7 +543,7 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
 	{
-		long id = (long)hash_table_find (globals->var_hash, ir);
+		uintptr_t id = (uintptr_t)hash_table_find (globals->var_hash, ir);
 		if (id == 0)
 		{
 			id = ++globals->var_counter;

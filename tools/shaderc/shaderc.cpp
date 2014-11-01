@@ -2032,6 +2032,8 @@ int main(int _argc, const char* _argv[])
 					raw = true;
 					str += 3;
 				}
+
+				input = const_cast<char*>(bx::strws(input) );
 			}
 
 			if (!raw)
