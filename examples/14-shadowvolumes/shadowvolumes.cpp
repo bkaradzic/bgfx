@@ -217,11 +217,6 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 	}
 }
 
-inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
-{
-	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_oglNdc);
-}
-
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
 				  , const float* __restrict _pos
@@ -2166,7 +2161,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
 	const float nearPlane = 1.0f;
 	const float farPlane = 1000.0f;
-	mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane);
 
 	float initialPos[3] = { 3.0f, 20.0f, -58.0f };
 	cameraCreate();
@@ -2178,10 +2172,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	while (!entry::processEvents(viewState.m_width, viewState.m_height, debug, reset, &mouseState) )
 	{
 		// Respond properly on resize.
-		if (oldWidth != viewState.m_width
+		if (oldWidth  != viewState.m_width
 		||  oldHeight != viewState.m_height)
 		{
-			oldWidth = viewState.m_width;
+			oldWidth  = viewState.m_width;
 			oldHeight = viewState.m_height;
 
 			bgfx::destroyFrameBuffer(s_stencilFb);
@@ -2204,7 +2198,25 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Update camera.
 		cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
-		cameraGetViewMtx(viewState.m_view);
+
+		// Set view and projection matrix for view 0.
+		const bgfx::HMD* hmd = bgfx::getHMD();
+		if (NULL != hmd)
+		{
+			float eye[3];
+			cameraGetPosition(eye);
+
+			bx::mtxQuatTranslationHMD(viewState.m_view, hmd->eye[0].rotation, eye);
+			bx::mtxProj(viewState.m_proj, hmd->eye[0].fov, nearPlane, farPlane, s_oglNdc);
+
+			viewState.m_width  = hmd->width;
+			viewState.m_height = hmd->height;
+		}
+		else
+		{
+			cameraGetViewMtx(viewState.m_view);
+			bx::mtxProj(viewState.m_proj, fov, aspect, nearPlane, farPlane, s_oglNdc);
+		}
 
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my

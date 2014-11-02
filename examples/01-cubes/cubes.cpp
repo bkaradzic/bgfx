@@ -95,44 +95,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create program from shaders.
 	bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
 
-	float at[3] = { 0.0f, 0.0f, 0.0f };
-	float eye[3] = { 0.0f, 0.0f, -35.0f };
-
 	int64_t timeOffset = bx::getHPCounter();
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
-		float view[16];
-		bx::mtxLookAt(view, eye, at);
-
-		// Set view and projection matrix for view 0.
-		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
-		{
-			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
-			bgfx::setViewTransform(0, view, proj);
-
-			// Set view 0 default viewport.
-			//
-			// Use HMD's width/height since HMD's internal frame buffer size
-			// might be much larger than window size.
-			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-		}
-		else
-		{
-			float proj[16];
-			bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
-			bgfx::setViewTransform(0, view, proj);
-
-			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, width, height);
-		}
-
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
-
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
 		const int64_t frameTime = now - last;
@@ -148,10 +114,48 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering simple static mesh.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
+		float at[3]  = { 0.0f, 0.0f,   0.0f };
+		float eye[3] = { 0.0f, 0.0f, -35.0f };
+
+		// Set view and projection matrix for view 0.
+		const bgfx::HMD* hmd = bgfx::getHMD();
+		if (NULL != hmd)
+		{
+			float view[16];
+			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+
+			float proj[16];
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+
+			bgfx::setViewTransform(0, view, proj);
+
+			// Set view 0 default viewport.
+			//
+			// Use HMD's width/height since HMD's internal frame buffer size
+			// might be much larger than window size.
+			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+		}
+		else
+		{
+			float view[16];
+			bx::mtxLookAt(view, eye, at);
+
+			float proj[16];
+			bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+			bgfx::setViewTransform(0, view, proj);
+
+			// Set view 0 default viewport.
+			bgfx::setViewRect(0, 0, 0, width, height);
+		}
+
+		// This dummy draw call is here to make sure that view 0 is cleared
+		// if no other draw calls are submitted to view 0.
+		bgfx::submit(0);
+
 		// Submit 11x11 cubes.
 		for (uint32_t yy = 0; yy < 11; ++yy)
 		{
-			for (uint32_t xx = 0; xx < 11; ++xx)
+			for (uint32_t xx = 0; xx < yy; ++xx)
 			{
 				float mtx[16];
 				bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
