@@ -155,7 +155,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Submit 11x11 cubes.
 		for (uint32_t yy = 0; yy < 11; ++yy)
 		{
-			for (uint32_t xx = 0; xx < yy; ++xx)
+			for (uint32_t xx = 0; xx < 11; ++xx)
 			{
 				float mtx[16];
 				bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
