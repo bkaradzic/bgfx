@@ -11,5 +11,5 @@ $output v_normal
 void main()
 {
 	gl_Position = mul(u_modelViewProj, vec4(a_position, 1.0) );
-	v_normal = a_normal.xyz * 2.0f - 1.0f;
+	v_normal = a_normal.xyz;
 }
