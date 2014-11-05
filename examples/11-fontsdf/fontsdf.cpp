@@ -144,7 +144,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, height
 			);
 
-		imguiBeginScrollArea("Text Area", width - guiPanelWidth - 10, 10, guiPanelWidth, guiPanelHeight, &scrollArea);
+		imguiBeginScrollArea("Text Area"
+			, width - guiPanelWidth - 10
+			, 10
+			, guiPanelWidth
+			, guiPanelHeight
+			, &scrollArea
+			);
 		imguiSeparatorLine();
 
 		bool recomputeVisibleText = false;
@@ -192,19 +198,43 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use a single distance field font to render text of various size.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
-		float at[3] = { 0, 0, 0.0f };
+		float at[3]  = { 0, 0, 0.0f };
 		float eye[3] = {0, 0, -1.0f };
 
 		float view[16];
-		float proj[16];
 		bx::mtxLookAt(view, eye, at);
-		float centering = 0.5f;
+
+		const float centering = 0.5f;
 
 		// Setup a top-left ortho matrix for screen space drawing.
-		bx::mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
+		const bgfx::HMD* hmd = bgfx::getHMD();
+		if (NULL != hmd)
+		{
+			float proj[16];
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
 
-		// Set view and projection matrix for view 0.
-		bgfx::setViewTransform(0, view, proj);
+			static float time = 0.0f;
+			time += 0.05f;
+
+			const float dist = 10.0f;
+			const float offset0 = -proj[8] + (hmd->eye[0].adjust[0] / dist * proj[0]);
+			const float offset1 = -proj[8] + (hmd->eye[1].adjust[0] / dist * proj[0]);
+
+			float ortho[2][16];
+			const float viewOffset = width/4.0f;
+			const float viewWidth  = width/2.0f;
+			bx::mtxOrtho(ortho[0], centering + viewOffset, centering + viewOffset + viewWidth, height + centering, centering, -1.0f, 1.0f, offset0);
+			bx::mtxOrtho(ortho[1], centering + viewOffset, centering + viewOffset + viewWidth, height + centering, centering, -1.0f, 1.0f, offset1);
+			bgfx::setViewTransform(0, view, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
+			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+		}
+		else
+		{
+			float ortho[16];
+			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
+			bgfx::setViewTransform(0, view, ortho);
+			bgfx::setViewRect(0, 0, 0, width, height);
+		}
 
 		//very crude approximation :(
 		float textAreaWidth = 0.5f * 66.0f * fontManager->getFontInfo(fontScaled).maxAdvanceWidth;
