@@ -59,10 +59,6 @@ https://github.com/taylor001/crown Crown is a general purpose data-driven game
 engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.
 
-https://d-gamedev-team.github.io/gfm/ - GFM is a feature-rich library to ease
-the creation of video games / multimedia applications with the D programming
-language.
-
 https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
 that will support a variety of targets and operating systems. Currently it's in
 very early development and primary focusing on Mac as primary target. This is
