@@ -37,7 +37,7 @@ Languages:
  * [C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)
  * [C++ API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)
  * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
- * [D language API bindings](https://github.com/p0nce/DerelictBgfx)
+ * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
 
 Who is using it?

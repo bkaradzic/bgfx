@@ -165,9 +165,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
-		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
-
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
 		bgfx::submit(0);
@@ -195,19 +192,42 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		textBufferManager->appendText(transientText, visitor10, L"text buffer\n");
 		textBufferManager->appendText(transientText, visitor10, fpsText);
 
-		float at[3] = { 0, 0, 0.0f };
+		float at[3]  = { 0, 0, 0.0f };
 		float eye[3] = {0, 0, -1.0f };
 
 		float view[16];
-		float proj[16];
 		bx::mtxLookAt(view, eye, at);
 
-		// Setup a top-left ortho matrix for screen space drawing.
-		float centering = 0.5f;
-		bx::mtxOrtho(proj, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
+		const float centering = 0.5f;
 
-		// Set view and projection matrix for view 0.
-		bgfx::setViewTransform(0, view, proj);
+		// Setup a top-left ortho matrix for screen space drawing.
+		const bgfx::HMD* hmd = bgfx::getHMD();
+		if (NULL != hmd)
+		{
+			float proj[16];
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+
+			static float time = 0.0f;
+			time += 0.05f;
+
+			const float dist = 10.0f;
+			const float offset0 = -proj[8] + (hmd->eye[0].adjust[0] / dist * proj[0]);
+			const float offset1 = -proj[8] + (hmd->eye[1].adjust[0] / dist * proj[0]);
+
+			float ortho[2][16];
+			const float offsetx = width/2.0f;
+			bx::mtxOrtho(ortho[0], centering, offsetx + centering, height + centering, centering, -1.0f, 1.0f, offset0);
+			bx::mtxOrtho(ortho[1], centering, offsetx + centering, height + centering, centering, -1.0f, 1.0f, offset1);
+			bgfx::setViewTransform(0, view, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
+			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+		}
+		else
+		{
+			float ortho[16];
+			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
+			bgfx::setViewTransform(0, view, ortho);
+			bgfx::setViewRect(0, 0, 0, width, height);
+		}
 
 		// Submit the debug text.
 		textBufferManager->submitTextBuffer(transientText, 0);

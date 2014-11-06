@@ -775,11 +775,37 @@ struct Imgui
 		m_viewHeight = _height;
 		bgfx::setViewName(_view, "IMGUI");
 		bgfx::setViewSeq(_view, true);
-		bgfx::setViewRect(_view, 0, 0, _width, _height);
 
-		float proj[16];
-		bx::mtxOrtho(proj, 0.0f, (float)_width, (float)_height, 0.0f, 0.0f, 1000.0f);
-		bgfx::setViewTransform(_view, NULL, proj);
+		const bgfx::HMD* hmd = bgfx::getHMD();
+		if (NULL != hmd)
+		{
+			m_viewWidth  = _width / 2;
+
+			float proj[16];
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+
+			static float time = 0.0f;
+			time += 0.05f;
+
+			const float dist = 10.0f;
+			const float offset0 = -proj[8] + (hmd->eye[0].adjust[0] / dist * proj[0]);
+			const float offset1 = -proj[8] + (hmd->eye[1].adjust[0] / dist * proj[0]);
+
+			float ortho[2][16];
+			const float viewOffset = _width/4.0f;
+			const float viewWidth  = _width/2.0f;
+			bx::mtxOrtho(ortho[0], viewOffset, viewOffset + viewWidth, (float)m_viewHeight, 0.0f, 0.0f, 1000.0f, offset0);
+			bx::mtxOrtho(ortho[1], viewOffset, viewOffset + viewWidth, (float)m_viewHeight, 0.0f, 0.0f, 1000.0f, offset1);
+			bgfx::setViewTransform(_view, NULL, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
+			bgfx::setViewRect(_view, 0, 0, hmd->width, hmd->height);
+		}
+		else
+		{
+			float ortho[16];
+			bx::mtxOrtho(ortho, 0.0f, (float)m_viewWidth, (float)m_viewHeight, 0.0f, 0.0f, 1000.0f);
+			bgfx::setViewTransform(_view, NULL, ortho);
+			bgfx::setViewRect(_view, 0, 0, _width, _height);
+		}
 
 		updateInput(_mx, _my, _button, _scroll, _inputChar);
 

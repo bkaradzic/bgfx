@@ -1702,14 +1702,18 @@ namespace bgfx
 
 		void updateResolution(const Resolution& _resolution)
 		{
+			bool recenter  = !!(_resolution.m_flags & BGFX_RESET_HMD_RECENTER);
+			uint32_t flags = _resolution.m_flags & ~BGFX_RESET_HMD_RECENTER;
+
 			if (m_resolution.m_width  != _resolution.m_width
 			||  m_resolution.m_height != _resolution.m_height
-			||  m_resolution.m_flags  != _resolution.m_flags)
+			||  m_resolution.m_flags  != flags)
 			{
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
+				m_resolution.m_flags = flags;
 
 				uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
@@ -1719,6 +1723,11 @@ namespace bgfx
 
 				ovrPreReset();
 				ovrPostReset();
+			}
+
+			if (recenter)
+			{
+				m_ovr.recenter();
 			}
 		}
 
