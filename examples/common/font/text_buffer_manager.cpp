@@ -236,7 +236,13 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 	CodePoint codepoint = 0;
 	uint32_t state = 0;
 
-	for (; *_string && _string<_end ; ++_string)
+	if (_end == NULL)
+	{
+		_end = _string + strlen(_string);
+	}
+	BX_CHECK(_end >= _string);
+
+	for (; *_string && _string < _end ; ++_string)
 	{
 		if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT )
 		{
@@ -260,7 +266,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 
 	if (_end == NULL)
 	{
-		_end = _string + (uint32_t) wcslen(_string);
+		_end = _string + wcslen(_string);
 	}
 	BX_CHECK(_end >= _string);
 

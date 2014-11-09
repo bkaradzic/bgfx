@@ -242,12 +242,12 @@ namespace entry
 		if (_shiftModifier)
 		{
 			// Big letters.
-			if(ascii >= 'a' && ascii <= 'z')
+			if (ascii >= 'a' && ascii <= 'z')
 			{
 				ascii += 'A' - 'a';
 			}
 			// Special cases.
-			else if('-' == ascii)
+			else if ('-' == ascii)
 			{
 				ascii = '_';
 			}
@@ -319,6 +319,13 @@ namespace entry
 						handle = key->m_handle;
 
 						inputSetKeyState(key->m_key, key->m_modifiers, key->m_down);
+					}
+					break;
+
+				case Event::Char:
+					{
+						const CharEvent* chev = static_cast<const CharEvent*>(ev);
+						inputChar(chev->m_len, chev->m_char);
 					}
 					break;
 
@@ -437,6 +444,14 @@ namespace entry
 						win.m_handle = key->m_handle;
 
 						inputSetKeyState(key->m_key, key->m_modifiers, key->m_down);
+					}
+					break;
+
+				case Event::Char:
+					{
+						const CharEvent* chev = static_cast<const CharEvent*>(ev);
+						win.m_handle = chev->m_handle;
+						inputChar(chev->m_len, chev->m_char);
 					}
 					break;
 

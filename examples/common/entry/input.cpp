@@ -8,6 +8,7 @@
 #include "entry_p.h"
 #include "input.h"
 
+#include <bx/ringbuffer.h>
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
@@ -68,6 +69,7 @@ struct Mouse
 struct Keyboard
 {
 	Keyboard()
+		: m_ring(BX_COUNTOF(m_char) )
 	{
 	}
 
@@ -97,8 +99,44 @@ struct Keyboard
 		m_once[_key] = false;
 	}
 
+	void pushChar(uint8_t _len, const uint8_t _char[4])
+	{
+		for (uint32_t len = m_ring.reserve(4)
+			; len < _len
+			; len = m_ring.reserve(4)
+			)
+		{
+			popChar();
+		}
+
+		memcpy(&m_char[m_ring.m_write], _char, 4);
+		m_ring.commit(4);
+	}
+
+	const uint8_t* popChar()
+	{
+		if (0 < m_ring.available() )
+		{
+			uint8_t* utf8 = &m_char[m_ring.m_read];
+			m_ring.consume(4);
+			return utf8;
+		}
+
+		return NULL;
+	}
+
+	void charFlush()
+	{
+		m_ring.m_current = 0;
+		m_ring.m_write   = 0;
+		m_ring.m_read    = 0;
+	}
+
 	uint32_t m_key[256];
 	bool m_once[256];
+
+	bx::RingBufferControl m_ring;
+	uint8_t m_char[256];
 };
 
 struct Input
@@ -202,6 +240,21 @@ void inputSetMouseResolution(uint16_t _width, uint16_t _height)
 void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 {
 	s_input.m_keyboard.setKeyState(_key, _modifiers, _down);
+}
+
+void inputChar(uint8_t _len, const uint8_t _char[4])
+{
+	s_input.m_keyboard.pushChar(_len, _char);
+}
+
+const uint8_t* inputGetChar()
+{
+	return s_input.m_keyboard.popChar();
+}
+
+void inputCharFlush()
+{
+	s_input.m_keyboard.charFlush();
 }
 
 void inputSetMousePos(int32_t _mx, int32_t _my, int32_t _mz)

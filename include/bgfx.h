@@ -378,7 +378,7 @@ namespace bgfx
 			float rotation[4];          //!< Eye rotation represented as quaternion.
 			float translation[3];       //!< Eye translation.
 			float fov[4];               //!< Field of view (up, down, left, right).
-			float adjust[3];            //!< Eye view matrix translation adjustment.
+			float viewOffset[3];        //!< Eye view matrix translation adjustment.
 			float pixelsPerTanAngle[2]; //!< 
 		};
 

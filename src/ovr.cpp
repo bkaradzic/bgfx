@@ -153,8 +153,8 @@ ovrError:
 
 		m_timing = ovrHmd_BeginFrame(m_hmd, 0);
 
-		m_pose[0] = ovrHmd_GetEyePose(m_hmd, ovrEye_Left);
-		m_pose[1] = ovrHmd_GetEyePose(m_hmd, ovrEye_Right);
+		m_pose[0] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Left);
+		m_pose[1] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Right);
 
 		return true;
 	}
@@ -175,7 +175,7 @@ ovrError:
 			for (int ii = 0; ii < 2; ++ii)
 			{
 				ovrPosef& pose = m_pose[ii];
-				pose = ovrHmd_GetEyePose(m_hmd, eye[ii]);
+				pose = ovrHmd_GetHmdPosePerEye(m_hmd, eye[ii]);
 
 				HMD::Eye& eye = _hmd.eye[ii];
 				eye.rotation[0] = pose.Orientation.x;
@@ -191,9 +191,9 @@ ovrError:
 				eye.fov[1] = erd.Fov.DownTan;
 				eye.fov[2] = erd.Fov.LeftTan;
 				eye.fov[3] = erd.Fov.RightTan;
-				eye.adjust[0] = erd.ViewAdjust.x;
-				eye.adjust[1] = erd.ViewAdjust.y;
-				eye.adjust[2] = erd.ViewAdjust.z;
+				eye.viewOffset[0] = erd.HmdToEyeViewOffset.x;
+				eye.viewOffset[1] = erd.HmdToEyeViewOffset.y;
+				eye.viewOffset[2] = erd.HmdToEyeViewOffset.z;
 				eye.pixelsPerTanAngle[0] = erd.PixelsPerTanAngleAtCenter.x;
 				eye.pixelsPerTanAngle[1] = erd.PixelsPerTanAngleAtCenter.y;
 			}

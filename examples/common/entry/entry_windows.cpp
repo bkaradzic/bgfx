@@ -532,6 +532,26 @@ namespace entry
 					}
 					break;
 
+				case WM_CHAR:
+					{
+						uint8_t utf8[4] = {};
+						uint8_t len = (uint8_t)WideCharToMultiByte(CP_UTF8
+											, 0
+											, (LPCWSTR)&_wparam
+											, 1
+											, (LPSTR)utf8
+											, BX_COUNTOF(utf8)
+											, NULL
+											, NULL
+											);
+						if (0 != len)
+						{
+							WindowHandle handle = findHandle(_hwnd);
+							m_eventQueue.postCharEvent(handle, len, utf8);
+						}
+					}
+					break;
+
 				default:
 					break;
 				}
