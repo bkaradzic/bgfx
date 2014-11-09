@@ -5,7 +5,18 @@
 
 #define USE_EDTAA3 0
 
+#include "bx/platform.h"
+
+#if BX_PLATFORM_WINRT
+#define generic GenericFromFreeType     // WinRT language extensions see "generic" as a keyword... this is stupid
+#pragma warning(push)
+#pragma warning(disable : 4245)         // conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
 #include <freetype/freetype.h>
+#pragma warning(pop)
+#undef generic
+#else
+#include <freetype/freetype.h>
+#endif
 
 #include "../common.h"
 
