@@ -217,8 +217,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			time += 0.05f;
 
 			const float dist = 10.0f;
-			const float offset0 = -proj[8] + (hmd->eye[0].adjust[0] / dist * proj[0]);
-			const float offset1 = -proj[8] + (hmd->eye[1].adjust[0] / dist * proj[0]);
+			const float offset0 = -proj[8] + (hmd->eye[0].viewOffset[0] / dist * proj[0]);
+			const float offset1 = -proj[8] + (hmd->eye[1].viewOffset[0] / dist * proj[0]);
 
 			float ortho[2][16];
 			const float viewOffset = width/4.0f;
