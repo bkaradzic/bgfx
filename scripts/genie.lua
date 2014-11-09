@@ -149,6 +149,16 @@ function exampleProject(_name)
 			"psapi",
 		}
 
+	configuration { "winphone8*"}
+		removelinks {
+			"DelayImp",
+			"gdi32",
+			"psapi"
+		}
+		linkoptions {
+			"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
+		}
+
 	configuration { "mingw*" }
 		links {
 			"dxguid",
