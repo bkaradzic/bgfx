@@ -158,6 +158,9 @@ function exampleProject(_name)
 		linkoptions {
 			"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
 		}
+		-- WinRT targets need their own output directories are build files stomp over each other
+		targetdir (BGFX_BUILD_DIR .. "arm_" .. _ACTION .. "/bin/" .. _name)
+		objdir (BGFX_BUILD_DIR .. "arm_" .. _ACTION .. "/obj/" .. _name)
 
 	configuration { "mingw*" }
 		links {
