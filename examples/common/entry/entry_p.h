@@ -9,6 +9,7 @@
 #include <bx/spscqueue.h>
 
 #include "entry.h"
+#include <string.h> // memcpy
 
 #ifndef ENTRY_CONFIG_USE_SDL
 #	define ENTRY_CONFIG_USE_SDL 0
