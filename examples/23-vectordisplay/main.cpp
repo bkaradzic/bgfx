@@ -29,34 +29,6 @@ struct PosColorVertex
 
 bgfx::VertexDecl PosColorVertex::ms_decl;
 
-static PosColorVertex s_cubeVertices[8] =
-{
-	{-1.0f,  1.0f,  1.0f, 0xff000000 },
-	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
-	{-1.0f, -1.0f,  1.0f, 0xff00ff00 },
-	{ 1.0f, -1.0f,  1.0f, 0xff00ffff },
-	{-1.0f,  1.0f, -1.0f, 0xffff0000 },
-	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
-	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
-	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
-};
-
-static const uint16_t s_cubeIndices[36] =
-{
-	0, 1, 2, // 0
-	1, 3, 2,
-	4, 6, 5, // 2
-	5, 6, 7,
-	0, 2, 4, // 4
-	4, 2, 6,
-	1, 5, 3, // 6
-	5, 7, 3,
-	0, 4, 1, // 8
-	4, 5, 1,
-	2, 3, 6, // 10
-	6, 3, 7,
-};
-
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	uint32_t width = 1280;
@@ -71,42 +43,46 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 	bool originBottomLeft = bgfx::RendererType::OpenGL == renderer || bgfx::RendererType::OpenGLES == renderer;
 	VectorDisplay vectorDisplay(originBottomLeft, texelHalf);
-	vectorDisplay.setup(width, height);
+	vectorDisplay.setup((float)width, (float)height);
 
 	// Enable debug text.
 	bgfx::setDebug(debug);
 
 	// Set view 0 clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
+	bgfx::setViewClear(0, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT, 0x303030ff, 1.0f, 0);
 
 	// Create vertex stream declaration.
 	PosColorVertex::init();
 
-	// Create static vertex buffer.
-	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
-		  // Static data can be passed with bgfx::makeRef
-		  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-		, PosColorVertex::ms_decl
-		);
+	float at[3] = { 0.0f, 0.0f, 0.0f };
+	float eye[3] = { 0.0f, 0.0f, -35.0f };
 
-	// Create static index buffer.
-	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(
-		// Static data can be passed with bgfx::makeRef
-		bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) )
-		);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
-
-	int64_t timeOffset = bx::getHPCounter();
+	uint32_t oldWidth = width;
+	uint32_t oldHeight = height;
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
+		if((oldWidth != width) || (oldHeight != height)) 
+		{
+			oldWidth = width;
+			oldHeight = height;
+			vectorDisplay.resize((float)width, (float)height);
+		}
+
+		float view[16];
+		float proj[16];
+		bx::mtxLookAt(view, eye, at);
+		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+		// Set view and projection matrix for view 0.
+		bgfx::setViewTransform(0, view, proj);
+
+		// Set view 0 default viewport.
+		bgfx::setViewRect(0, 0, 0, width, height);
+
+		// This dummy draw call is here to make sure that view 0 is cleared
+		// if no other draw calls are submitted to view 0.
+		bgfx::submit(0);
+
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
 		const int64_t frameTime = now - last;
@@ -114,109 +90,71 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
 
-		float time = (float)( (now-timeOffset)/double(bx::getHPFrequency() ) );
-
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/01-cube");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering simple static mesh.");
+		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/23-vectordisplay");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering lines as oldschool vectors.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-		float at[3]  = { 0.0f, 0.0f,   0.0f };
-		float eye[3] = { 0.0f, 0.0f, -35.0f };
+		vectorDisplay.beginFrame();
 
-		// Set view and projection matrix for view 0.
-		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
-		{
-			float view[16];
-			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+	   //simplex test
+	   vectorDisplay.setDrawColor(0.7f, 0.7f, 1.0f);
+		vectorDisplay.drawSimplexFont(50, 80, 1.5, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+		vectorDisplay.drawSimplexFont(50, 140, 1.5, "abcdefghijklmnopqrstuvwxyz");
+		vectorDisplay.drawSimplexFont(50, 200, 1.5, "!@#$%^&*()-=<>/?;:'\"{}[]|\\+=-_");
 
-			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+		vectorDisplay.setDrawColor(1.0f, 0.7f, 0.7f);
 
-			bgfx::setViewTransform(0, view, proj);
-
-			// Set view 0 default viewport.
-			//
-			// Use HMD's width/height since HMD's internal frame buffer size
-			// might be much larger than window size.
-			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+		//test pattern for lines
+		for(int i = 0; i < 4; i++) {
+			for(int j = 0; j < i; j++) {			//draw more intensive lines
+				vectorDisplay.drawLine(50.0f,  350.0f+40*i, 200.0f, 350.0f+40*i);     
+			}
 		}
-		else
-		{
-			float view[16];
-			bx::mtxLookAt(view, eye, at);
-
-			float proj[16];
-			bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
-			bgfx::setViewTransform(0, view, proj);
-
-			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, width, height);
-		}
-
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
-
-		// Submit 11x11 cubes.
-		for (uint32_t yy = 0; yy < 11; ++yy)
-		{
-			for (uint32_t xx = 0; xx < 11; ++xx)
-			{
-				float mtx[16];
-				bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
-				mtx[12] = -15.0f + float(xx)*3.0f;
-				mtx[13] = -15.0f + float(yy)*3.0f;
-				mtx[14] = 0.0f;
-
-				// Set model matrix for rendering.
-				bgfx::setTransform(mtx);
-
-				// Set vertex and fragment shaders.
-				bgfx::setProgram(program);
-
-				// Set vertex and index buffer.
-				bgfx::setVertexBuffer(vbh);
-				bgfx::setIndexBuffer(ibh);
-
-				// Set render states.
-				bgfx::setState(BGFX_STATE_DEFAULT);
-
-				// Submit primitive for rendering to view 0.
-				bgfx::submit(0);
+		for(int i = 0; i < 4; i++) {
+			for(int j = 0; j <= i; j++) {
+				vectorDisplay.drawLine(50.0f + 40 * i, 600.0f, 50.0f + 40 * i, 700.0f);    
 			}
 		}
 
-		static int offset = 0;
-		offset += 1;
-		if(offset > 30)
-			offset = 0;
+		//
+		// test pattern for shapes
+		//
+		vectorDisplay.setDrawColor(0.7f, 0.7f, 1.0f);
+		vectorDisplay.drawCircle(250, 450, 10,  32);
+		vectorDisplay.drawCircle(300, 450, 30,  32);
+		vectorDisplay.drawCircle(400, 450, 60, 32);
+		vectorDisplay.drawCircle(500, 450, 80, 64);
 
-		vectorDisplay.clear();
-	   vectorDisplay.setColor(1.0f, 0.7f, 0.7f);
-	   for (int i = 0; i < 4; i++) {
-     	   vectorDisplay.beginDraw(50, (150 + 100 * i + 5*offset));
-		   vectorDisplay.drawTo(400, (150 + 100 * i + 5*offset));
-		   vectorDisplay.endDraw();
-	   }
-	   //vectorDisplay.drawWheel(0.0f, 200, 200, 80);
-	   //vectorDisplay.simplexDraw(100, 300, 1.0f, "Test");
- 	 	vectorDisplay.update();
+		vectorDisplay.setDrawColor(0.7f, 1.0f, 0.7f);
+		vectorDisplay.drawBox(250, 600, 10, 10);
+		vectorDisplay.drawBox(300, 600, 30, 30);
+		vectorDisplay.drawBox(350, 600, 60, 60);
+		vectorDisplay.drawBox(450, 600, 80, 80);
 
+		vectorDisplay.setDrawColor(1.0f, 0.7f, 1.0f);
+		vectorDisplay.drawWheel(bx::pi,         800,  450, 80);
+		vectorDisplay.drawWheel(3 * bx::pi / 4, 950,  450, 60);
+		vectorDisplay.drawWheel(bx::pi / 2,     1150, 450, 30);
+		vectorDisplay.drawWheel(bx::pi / 4,     1250, 450, 10);
+
+		// draw moving shape
+		static float counter = 0.0f;
+		counter += 0.01f;
+		float posX = width/2 + sin(counter*3.18378f)*(width/2);
+		float posY = height/2 + cos(counter)*(height/2);
+		vectorDisplay.drawCircle(posX, posY, 5, 10);
+
+ 	 	vectorDisplay.endFrame();
 
 		// Advance to next frame. Rendering thread will be kicked to 
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
 
-	vectorDisplay.teardown();
-
 	// Cleanup.
-	bgfx::destroyIndexBuffer(ibh);
-	bgfx::destroyVertexBuffer(vbh);
-	bgfx::destroyProgram(program);
+	vectorDisplay.teardown();
 
 	// Shutdown bgfx.
 	bgfx::shutdown();

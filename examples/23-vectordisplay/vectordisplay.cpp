@@ -14,10 +14,8 @@
 
 #include <bx/fpumath.h>
 
-//#define DEBUG_TRIANGLES 1
-
 //Config stuff
-const int cMaxNumberVertices = 2000;
+const int cMaxNumberVertices = 20000;
 
 const int cMaxDecaySteps         = 60;
 const int cDefaultDecaySteps     = 5;
@@ -55,45 +53,45 @@ struct PosColorUvVertex {
 bgfx::VertexDecl PosColorUvVertex::ms_decl;
 
 void VectorDisplay::setup(float inp_width, float inp_height, int view) {
-    mNumberDecaySteps = cDefaultDecaySteps;
-
     PosColorUvVertex::init();
 
     mDecayValue = cDefaultDecayValue;
-    setColor(1.0f, 1.0f, 1.0f);
-    mScreenWidth       = inp_width;
-    mScreenHeight      = inp_height;
-    mGlowWidth  = mScreenWidth  / 3.0;
-    mGlowHeight = mScreenHeight / 3.0;
-    mInitialDecay = cDefaultInitialDecay;
+    setDrawColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    mDrawOffsetX   = cDefaultDrawOffsetX;
-    mDrawOffsetY   = cDefaultDrawOffsetY;
+    mScreenWidth    = inp_width;
+    mScreenHeight   = inp_height;
+    mGlowWidth      = mScreenWidth  / 3.0;
+    mGlowHeight     = mScreenHeight / 3.0;
+    mInitialDecay   = cDefaultInitialDecay;
+
+    mDrawOffsetX    = cDefaultDrawOffsetX;
+    mDrawOffsetY    = cDefaultDrawOffsetY;
     mDrawScale      = cDefaultDrawScale;
-    mBrightness = cDefaultBrightness;
+    mBrightness     = cDefaultBrightness;
 
     setDefaultThickness();
 
+    setDecaySteps(cDefaultDecaySteps);
+
     mView = view;
 
-    fb_program = loadProgram("vs_fb", "fs_fb");
+    mDrawToScreenShader = loadProgram("vs_fb", "fs_fb");
     fb_uniform_alpha = bgfx::createUniform("u_alpha", bgfx::UniformType::Uniform1f);
 
-    blur_program = loadProgram("vs_fb", "fs_blur");
+    mBlurShader = loadProgram("vs_fb", "fs_blur");
     blur_uniform_scale = bgfx::createUniform("u_scale", bgfx::UniformType::Uniform2fv);
     blur_uniform_alpha = bgfx::createUniform("u_alpha", bgfx::UniformType::Uniform1f);
     blur_uniform_mult = bgfx::createUniform("u_mult", bgfx::UniformType::Uniform1f);
 
-    blit_program = loadProgram("vs_fb", "fs_blit");
+    mBlitShader = loadProgram("vs_fb", "fs_blit");
 
-    //generate uniforms for samplers
+    //generate uniforms for sampler
     u_tex1 = bgfx::createUniform("u_tex1", bgfx::UniformType::Uniform1iv);
 
     genLinetex();
 
-    bgfx::setViewClear(view, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT, 0x303030ff, 1.0f, 0);
+    bgfx::setViewClear(view, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT, 0x000000ff, 1.0f, 0);
 
-    setDecaySteps(mNumberDecaySteps);
     setupResDependent();
 }
 
@@ -104,39 +102,40 @@ void VectorDisplay::resize(float width, float height) {
     mGlowWidth = width   / 3.0;
     mGlowHeight = height / 3.0;
     setupResDependent();
-    clear();
 }
 
 void VectorDisplay::teardown() {
     teardownResDependent();
 
-    bgfx::destroyProgram(fb_program);
+    bgfx::destroyProgram(mDrawToScreenShader);
     bgfx::destroyUniform(fb_uniform_alpha);
     bgfx::destroyTexture(mLineTexId);
     bgfx::destroyUniform(u_linetexid);
 
-    bgfx::destroyProgram(blur_program);
+    bgfx::destroyProgram(mBlurShader);
     bgfx::destroyUniform(blur_uniform_scale);
     bgfx::destroyUniform(blur_uniform_alpha);
     bgfx::destroyUniform(blur_uniform_mult);
 
     bgfx::destroyUniform(u_tex1);
 
-    bgfx::destroyProgram(blit_program);
+    bgfx::destroyProgram(mBlitShader);
 }
 
-void VectorDisplay::clear() {
+void VectorDisplay::beginFrame() {
     mPoints.clear();
 }
 
-void VectorDisplay::update() {
+void VectorDisplay::endFrame() {
     float proj[16];
+    float ident[16];
+    bx::mtxIdentity(ident);
 
     bx::mtxOrtho(proj, 0.0f, (float)mScreenWidth, (float)mScreenHeight, 0.0f, 0.0f, 1000.0f);
 
     bgfx::setViewRect(mView, 0, 0, mScreenWidth, mScreenHeight);
+    bgfx::setViewFrameBuffer(mView, mSceneFrameBuffer);              //render all geometry to this framebuffer
     bgfx::setViewTransform(mView, NULL, proj);
-    bgfx::setViewFrameBuffer(mView, fb_scene);              //render all geometry to this framebuffer
 
     // advance step
     mCurrentDrawStep = (mCurrentDrawStep + 1) % mNumberDecaySteps;
@@ -145,6 +144,14 @@ void VectorDisplay::update() {
 
     bgfx::updateDynamicVertexBuffer(mVertexBuffers[mCurrentDrawStep], bgfx::copy(mPoints.data(), mPoints.size()*sizeof(point_t)));
     mVertexBuffersSize[mCurrentDrawStep] = mPoints.size();
+
+    //if the index buffer is cleared from the last "submit"-call everything is fine, but if not
+    //we clear it here again just to be sure it's not set... (the same for the Transform)
+    bgfx::IndexBufferHandle ib;
+    ib.idx = bgfx::invalidHandle;
+    bgfx::setIndexBuffer(ib);
+
+    bgfx::setTransform(ident);
 
     for(int loopvar = 0; loopvar < mNumberDecaySteps; loopvar++) {
         int stepi = mNumberDecaySteps - loopvar - 1;
@@ -161,18 +168,16 @@ void VectorDisplay::update() {
             }
             bgfx::setUniform(fb_uniform_alpha, &alpha);
 
+            bgfx::setTexture(0, u_linetexid, mLineTexId);
+            bgfx::setProgram(mDrawToScreenShader);
+
             bgfx::setVertexBuffer(mVertexBuffers[i], mVertexBuffersSize[i]);  //expicitly feed vertex number!
 
-            bgfx::IndexBufferHandle ib;
-            ib.idx = bgfx::invalidHandle;
-            bgfx::setIndexBuffer(ib);
             bgfx::setState( BGFX_STATE_RGB_WRITE 
                           | BGFX_STATE_ALPHA_WRITE 
                           | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_DST_ALPHA)
+                          | BGFX_STATE_BLEND_EQUATION_SEPARATE(0x0, BGFX_STATE_BLEND_EQUATION_MAX)                  //0x0 means ADD!
                           );
-
-            bgfx::setProgram(fb_program);
-            bgfx::setTexture(0, u_linetexid, mLineTexId);
 
             bgfx::setViewName(mView, "RenderVectorDisplay");
             bgfx::submit(mView);
@@ -184,8 +189,6 @@ void VectorDisplay::update() {
     float glow_iter_mult = 1.05 + ((mBrightness - 1.0) / 5.0);
     float glow_fin_mult  = 1.25 + ((mBrightness - 1.0) / 2.0);
 
-    float view[16];
-    bx::mtxIdentity(view);
     bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 
     if(mBrightness > 0) {
@@ -193,37 +196,34 @@ void VectorDisplay::update() {
         bgfx::setUniform(blur_uniform_alpha, &alpha);
         bgfx::setUniform(blur_uniform_mult, &glow_iter_mult);
 
-        bgfx::setTexture(0, u_tex1, fb_scene);
+        bgfx::setTexture(0, u_tex1, mSceneFrameBuffer);
 
         int npasses = (int)(mBrightness*4);
         for (int pass = 0; pass < npasses; pass++) {
             // render the glow1 texture to the glow0 buffer with horizontal blur
 
-            bgfx::setViewFrameBuffer(viewCounter, fb_glow0);            //first glow pass
+            bgfx::setViewFrameBuffer(viewCounter, mGlow0FrameBuffer);            //first glow pass
             bgfx::setViewRect(viewCounter, 0, 0, mGlowWidth, mGlowHeight);
-            //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             bgfx::setState( BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
-            //glUniform2f(blur_uniform_scale, 1.0/mGlowWidth, 0.0);
             float scale[2];
             scale[0] = 1.0f/mGlowWidth;
             scale[1] = 0.0f;
             bgfx::setUniform(blur_uniform_scale, &scale);
-            bgfx::setProgram(blur_program);
+            bgfx::setProgram(mBlurShader);
 
-            bgfx::setViewTransform(viewCounter, view, proj);
+            bgfx::setViewTransform(viewCounter, NULL, proj);
             screenSpaceQuad(mGlowWidth, mGlowHeight);
             bgfx::setViewName(viewCounter, "BlendPassA");
             bgfx::submit(viewCounter);
 
             viewCounter++;
 
-            bgfx::setViewFrameBuffer(viewCounter, fb_glow1);            //second glow pass
+            bgfx::setViewFrameBuffer(viewCounter, mGlow1FrameBuffer);            //second glow pass
             bgfx::setViewRect(viewCounter, 0, 0, mGlowWidth, mGlowHeight);
-            bgfx::setTexture(0, u_tex1, fb_glow0);
-            bgfx::setProgram(blur_program);
+            bgfx::setTexture(0, u_tex1, mGlow0FrameBuffer);
+            bgfx::setProgram(mBlurShader);
 
-            //set state
-            bgfx::setViewTransform(viewCounter, view, proj);
+            bgfx::setViewTransform(viewCounter, NULL, proj);
             screenSpaceQuad(mGlowWidth, mGlowHeight);
 
             bgfx::setUniform(blur_uniform_alpha, &alpha);
@@ -232,10 +232,6 @@ void VectorDisplay::update() {
             scale[1] = 1.0f/mGlowHeight;
             bgfx::setUniform(blur_uniform_scale, &scale);
 
-            //bgfx::setState( BGFX_STATE_RGB_WRITE 
-            //              | BGFX_STATE_ALPHA_WRITE 
-            //              | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_COLOR, BGFX_STATE_BLEND_SRC_COLOR)
-            //              );
             bgfx::setState( BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 
             bgfx::setViewName(viewCounter, "BlendPassB");
@@ -244,21 +240,19 @@ void VectorDisplay::update() {
             viewCounter++;
 
             //set for next iteration
-            bgfx::setTexture(0, u_tex1, fb_glow1);
+            bgfx::setTexture(0, u_tex1, mGlow1FrameBuffer);
         }
-        
     }
 
     //now do last pass, combination of blur and normal buffer to screen
-    bgfx::setViewTransform(viewCounter, view, proj);
+    bgfx::setViewTransform(viewCounter, NULL, proj);
     bgfx::setViewRect(viewCounter, 0, 0, mScreenWidth, mScreenHeight);
-    bgfx::setTexture(0, u_tex1, fb_scene);
-    bgfx::setProgram(blit_program);
-/*    bgfx::setState( BGFX_STATE_RGB_WRITE 
+    bgfx::setTexture(0, u_tex1, mSceneFrameBuffer);
+    bgfx::setProgram(mBlitShader);
+    bgfx::setState( BGFX_STATE_RGB_WRITE 
                   | BGFX_STATE_ALPHA_WRITE 
                   | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
                   );
-*/
 
     float tempOne = 1.0f;    
     bgfx::setUniform(blur_uniform_alpha, &tempOne);
@@ -270,10 +264,17 @@ void VectorDisplay::update() {
 
     if(mBrightness > 0) {
         // blend in the glow
+        bgfx::setViewTransform(viewCounter, NULL, proj);
         bgfx::setViewRect(viewCounter, 0, 0, mScreenWidth, mScreenHeight);
+        bgfx::setTexture(0, u_tex1, mGlow1FrameBuffer);
+        bgfx::setProgram(mBlitShader);
+        bgfx::setState( BGFX_STATE_RGB_WRITE 
+                      | BGFX_STATE_ALPHA_WRITE 
+                      | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+                      );
         bgfx::setUniform(blur_uniform_mult, &glow_fin_mult);
-        bgfx::setTexture(0, u_tex1, fb_glow1);
         bgfx::setViewName(viewCounter, "BlendBlurToDisplay");
+        screenSpaceQuad(mScreenWidth, mScreenHeight);
         bgfx::submit(viewCounter);
         viewCounter++;
     }
@@ -373,7 +374,8 @@ void VectorDisplay::endDraw() {
             }
         }
 
-        if (!line->has_prev) pline->has_next = 0;
+        if(!line->has_prev) 
+            pline->has_next = 0;
     }
 
     // compute line geometry
@@ -381,20 +383,30 @@ void VectorDisplay::endDraw() {
         line_t *line  = &lines[i];
 
         // shorten lines if needed
-        line->x0 = line->x0 + line->s0 * line->cos_a; line->y0 = line->y0 + line->s0 * line->sin_a;
-        line->x1 = line->x1 - line->s1 * line->cos_a; line->y1 = line->y1 - line->s1 * line->sin_a;
+        line->x0 = line->x0 + line->s0 * line->cos_a; 
+        line->y0 = line->y0 + line->s0 * line->sin_a;
+        line->x1 = line->x1 - line->s1 * line->cos_a;
+        line->y1 = line->y1 - line->s1 * line->sin_a;
 
         // compute initial values for left,right,leftcenter,rightcenter points
-        line->xl0 = line->x0 + line->tl0 * line->sin_a; line->yl0 = line->y0 - line->tl0 * line->cos_a;
-        line->xr0 = line->x0 - line->tr0 * line->sin_a; line->yr0 = line->y0 + line->tr0 * line->cos_a;
-        line->xl1 = line->x1 + line->tl1 * line->sin_a; line->yl1 = line->y1 - line->tl1 * line->cos_a;
-        line->xr1 = line->x1 - line->tr1 * line->sin_a; line->yr1 = line->y1 + line->tr1 * line->cos_a;
+        line->xl0 = line->x0 + line->tl0 * line->sin_a; 
+        line->yl0 = line->y0 - line->tl0 * line->cos_a;
+        line->xr0 = line->x0 - line->tr0 * line->sin_a; 
+        line->yr0 = line->y0 + line->tr0 * line->cos_a;
+        line->xl1 = line->x1 + line->tl1 * line->sin_a; 
+        line->yl1 = line->y1 - line->tl1 * line->cos_a;
+        line->xr1 = line->x1 - line->tr1 * line->sin_a; 
+        line->yr1 = line->y1 + line->tr1 * line->cos_a;
 
         // compute tips
-        line->xlt0 = line->xl0 - t * line->cos_a; line->ylt0 = line->yl0 - t * line->sin_a;
-        line->xrt0 = line->xr0 - t * line->cos_a; line->yrt0 = line->yr0 - t * line->sin_a;
-        line->xlt1 = line->xl1 + t * line->cos_a; line->ylt1 = line->yl1 + t * line->sin_a;
-        line->xrt1 = line->xr1 + t * line->cos_a; line->yrt1 = line->yr1 + t * line->sin_a;
+        line->xlt0 = line->xl0 - t * line->cos_a;
+        line->ylt0 = line->yl0 - t * line->sin_a;
+        line->xrt0 = line->xr0 - t * line->cos_a; 
+        line->yrt0 = line->yr0 - t * line->sin_a;
+        line->xlt1 = line->xl1 + t * line->cos_a; 
+        line->ylt1 = line->yl1 + t * line->sin_a;
+        line->xrt1 = line->xr1 + t * line->cos_a; 
+        line->yrt1 = line->yr1 + t * line->sin_a;
     }
 
     // draw the lines
@@ -478,7 +490,6 @@ float VectorDisplay::effectiveThickness() {
 }
 
 void VectorDisplay::setTransform(float offset_x, float offset_y, float scale) {
-    clear();
     mDrawOffsetX = offset_x;
     mDrawOffsetY = offset_y;
     mDrawScale    = scale;
@@ -504,10 +515,11 @@ void VectorDisplay::setDefaultThickness() {
     mCustomThicknessEnabled = false;
 }
 
-void VectorDisplay::setColor(float r, float g, float b) {
+void VectorDisplay::setDrawColor(float r, float g, float b, float a) {
     mDrawColorR = r * 255;
     mDrawColorG = g * 255;
     mDrawColorB = b * 255;
+    mDrawColorA = a * 255;
 }
 
 void VectorDisplay::appendTexpoint(float x, float y, float u, float v) {
@@ -550,17 +562,9 @@ void VectorDisplay::drawFan(float cx, float cy, float pa, float a, float t, floa
     }
 
     for (i = 1; i <= nsteps; i++) {
-#if DEBUG_TRIANGLES
-        a = 0.5;
-        appendTexpoint(cx + t * sin(angles[i-1]), cy - t * cos(angles[i-1]), cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(cx, cy,                                               cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(cx + t * sin(angles[i]),   cy - t * cos(angles[i]),   cHalfTextureSize, cHalfTextureSize);
-        a = 1.0;
-#else
         appendTexpoint(cx + t * sin(angles[i-1]), cy - t * cos(angles[i-1]), e, cHalfTextureSize);
         appendTexpoint(cx, cy,                                               s, cHalfTextureSize);
         appendTexpoint(cx + t * sin(angles[i]),   cy - t * cos(angles[i]),   e, cHalfTextureSize);
-#endif
     }
 }
 
@@ -587,25 +591,12 @@ void VectorDisplay::drawLines(line_t *lines, int nlines) {
         float tr0 = cHalfTextureSize + (line->tr0 / t) * cHalfTextureSize;
         float tr1 = cHalfTextureSize + (line->tr1 / t) * cHalfTextureSize;
 
-#if DEBUG_TRIANGLES
-        a = 0.5;
-        r = 1.0; g = 0.8; b = 0.8;
-        appendTexpoint(line->xr0,  line->yr0,  cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(line->xr1,  line->yr1,  cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(line->xl1,  line->yl1,  cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(line->xl0,  line->yl0,  cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(line->xr0,  line->yr0,  cHalfTextureSize, cHalfTextureSize);
-        appendTexpoint(line->xl1,  line->yl1,  cHalfTextureSize, cHalfTextureSize);
-        r = 1.0; g = 1.0; b = 1.0;
-        a = 1.0;
-#else
         appendTexpoint(line->xr0,  line->yr0,  tr0, cHalfTextureSize);
         appendTexpoint(line->xr1,  line->yr1,  tr1, cHalfTextureSize);
         appendTexpoint(line->xl1,  line->yl1,  tl1, cHalfTextureSize);
         appendTexpoint(line->xl0,  line->yl0,  tl0, cHalfTextureSize);
         appendTexpoint(line->xr0,  line->yr0,  tr0, cHalfTextureSize);
         appendTexpoint(line->xl1,  line->yl1,  tl1, cHalfTextureSize);
-#endif
 
         if (!line->has_prev) { // draw startcap
             appendTexpoint(line->xl0,  line->yl0,  tl0, cHalfTextureSize);
@@ -624,7 +615,6 @@ void VectorDisplay::drawLines(line_t *lines, int nlines) {
             appendTexpoint(line->xr1,  line->yr1,  tr1, cHalfTextureSize);
             appendTexpoint(line->xrt1, line->yrt1, tr1, 0.0f);
         }
-
     }
 }
 
@@ -730,32 +720,32 @@ void VectorDisplay::setupResDependent() {
                                 | BGFX_TEXTURE_U_CLAMP
                                 | BGFX_TEXTURE_V_CLAMP
         ; 
-    fb_scene = bgfx::createFrameBuffer(mScreenWidth, mScreenHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
+    mSceneFrameBuffer = bgfx::createFrameBuffer(mScreenWidth, mScreenHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
 
     mGlowWidth  = mScreenWidth  / 3.0;
     mGlowHeight = mScreenHeight / 3.0;
 
-    fb_glow0 = bgfx::createFrameBuffer(mGlowWidth, mGlowHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
-    fb_glow1 = bgfx::createFrameBuffer(mGlowWidth, mGlowHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
+    mGlow0FrameBuffer = bgfx::createFrameBuffer(mGlowWidth, mGlowHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
+    mGlow1FrameBuffer = bgfx::createFrameBuffer(mGlowWidth, mGlowHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
 }
 
 void VectorDisplay::teardownResDependent() {
-    bgfx::destroyFrameBuffer(fb_scene);
-    bgfx::destroyFrameBuffer(fb_glow0);
-    bgfx::destroyFrameBuffer(fb_glow1);
+    bgfx::destroyFrameBuffer(mSceneFrameBuffer);
+    bgfx::destroyFrameBuffer(mGlow0FrameBuffer);
+    bgfx::destroyFrameBuffer(mGlow1FrameBuffer);
 }
 
 void VectorDisplay::genLinetex() {                                  // generate the texture
     const bgfx::Memory* mem = bgfx::alloc(cTextureSize*cTextureSize*4);
     unsigned char *texbuf = (unsigned char*)mem->data;
 
-    memset(texbuf, 0xff, sizeof(texbuf));
+    memset(texbuf, 0xff, mem->size);
     int x,y;
     for (x = 0; x < cTextureSize; x++) {
         for (y = 0; y < cTextureSize; y++) {
-            float distance = sqrt((x-cHalfTextureSize)*(x-cHalfTextureSize) + (y-cHalfTextureSize)*(y-cHalfTextureSize)) / (float)cHalfTextureSize;
+            float distance = sqrt((float)((x-cHalfTextureSize)*(x-cHalfTextureSize) + (y-cHalfTextureSize)*(y-cHalfTextureSize))) / (float)cHalfTextureSize;
 
-            if (distance > 1.0) 
+            if (distance > 1.0)
                 distance = 1.0;
 
             float line = pow(16, -2 * distance);
@@ -1353,7 +1343,7 @@ static int simplex[95][112] = {
     //not implemented :/
 //}
 
-void VectorDisplay::simplexDraw(float x, float y, float scale, const char *s) {
+void VectorDisplay::drawSimplexFont(float x, float y, float scale, const char *s) {
     for (;;) {
         char c = *s++;
         if (!c)                break;

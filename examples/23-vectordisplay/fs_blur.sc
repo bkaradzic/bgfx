@@ -10,8 +10,7 @@ uniform float     u_alpha;
 uniform float     u_mult;
 
 void main() {
-   vec4 color = vec4(0,0,0,0);
-   color += texture2D(tex1, vec2(v_texcoord0.x-4.0*u_scale.x, v_texcoord0.y-4.0*u_scale.y))*0.05;
+   vec4 color = texture2D(tex1, vec2(v_texcoord0.x-4.0*u_scale.x, v_texcoord0.y-4.0*u_scale.y))*0.05;
    color += texture2D(tex1, vec2(v_texcoord0.x-3.0*u_scale.x, v_texcoord0.y-3.0*u_scale.y))*0.09;
    color += texture2D(tex1, vec2(v_texcoord0.x-2.0*u_scale.x, v_texcoord0.y-2.0*u_scale.y))*0.12;
    color += texture2D(tex1, vec2(v_texcoord0.x-1.0*u_scale.x, v_texcoord0.y-1.0*u_scale.y))*0.15;

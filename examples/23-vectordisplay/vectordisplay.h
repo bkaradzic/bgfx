@@ -23,8 +23,8 @@ public:
    void resize(float width, float height);
    void teardown();
 
-   void clear();
-   void update();
+   void beginFrame();
+   void endFrame();
 
    // Draw a series of connected line segments.
    void beginDraw(float x, float y);
@@ -39,10 +39,10 @@ public:
 
    //Font Stuff (Simplex)
    //void simplexMeasure(float scale, const char *string, float *out_width, float *out_height);
-   void simplexDraw(float x, float y, float scale, const char *s);
+   void drawSimplexFont(float x, float y, float scale, const char *s);
 
    // Set the current drawing color
-   void setColor(float r, float g, float b);
+   void setDrawColor(float r, float g, float b, float a=1.0f);
 
    // Set the number of frames of decay/fade to apply to the scene.
    int setDecaySteps(int steps);
@@ -140,21 +140,21 @@ protected:
    bool mOriginBottomLeft;
    float mTexelHalf;
 
-    bgfx::ProgramHandle fb_program; // program for drawing to the fb
+    bgfx::ProgramHandle mDrawToScreenShader;       // program for drawing to the framebuffer
     bgfx::UniformHandle fb_uniform_alpha;
 
-    bgfx::FrameBufferHandle fb_scene;
+    bgfx::FrameBufferHandle mSceneFrameBuffer;
 
-    bgfx::ProgramHandle blur_program;  // program for gaussian blur
+    bgfx::ProgramHandle mBlurShader;     // program for gaussian blur
     bgfx::UniformHandle blur_uniform_scale;
     bgfx::UniformHandle blur_uniform_alpha;
     bgfx::UniformHandle blur_uniform_mult;
     bgfx::UniformHandle u_tex1;           //texture handle for blur
 
-    bgfx::ProgramHandle blit_program;
+    bgfx::ProgramHandle mBlitShader;
 
-    bgfx::FrameBufferHandle fb_glow0;            // framebuffer for glow0
-    bgfx::FrameBufferHandle fb_glow1;            // framebuffer for glow1
+    bgfx::FrameBufferHandle mGlow0FrameBuffer;     // framebuffer for glow pass 0
+    bgfx::FrameBufferHandle mGlow1FrameBuffer;     // framebuffer for glow pass 1
 
     int mView;
 
