@@ -109,7 +109,7 @@ struct Keyboard
 			popChar();
 		}
 
-		memcpy(&m_char[m_ring.m_write], _char, 4);
+		memcpy(&m_char[m_ring.m_current], _char, 4);
 		m_ring.commit(4);
 	}
 
