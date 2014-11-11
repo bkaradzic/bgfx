@@ -1547,8 +1547,9 @@ struct Imgui
 		return selected;
 	}
 
-	void image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
+	bool image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
 	{
+		const uint32_t id = getId();
 		Area& area = getCurrentArea();
 
 		int32_t xx;
@@ -1575,6 +1576,10 @@ struct Imgui
 
 		const int32_t yy = area.m_widgetY;
 		area.m_widgetY += _height + DEFAULT_SPACING;
+
+		const bool enabled = isEnabled(m_areaId);
+		const bool over = enabled && inRect(xx, yy, _width, _height);
+		const bool res = buttonLogic(id, over);
 
 		screenQuad(xx, yy, _width, _height, _originBottomLeft);
 		bgfx::setUniform(u_imageLod, &_lod);
@@ -1583,20 +1588,23 @@ struct Imgui
 		bgfx::setProgram(m_imageProgram);
 		setCurrentScissor();
 		bgfx::submit(m_view);
+
+		return res;
 	}
 
-	void image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
+	bool image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
 	{
 		const float width = _width*float(getCurrentArea().m_widgetW);
 		const float height = width/_aspect;
 
-		image(_image, _lod, int32_t(width), int32_t(height), _align, _originBottomLeft);
+		return image(_image, _lod, int32_t(width), int32_t(height), _align, _originBottomLeft);
 	}
 
-	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+	bool imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
 	{
 		BX_CHECK(_channel < 4, "Channel param must be from 0 to 3!");
 
+		const uint32_t id = getId();
 		Area& area = getCurrentArea();
 
 		int32_t xx;
@@ -1623,6 +1631,10 @@ struct Imgui
 
 		const int32_t yy = area.m_widgetY;
 		area.m_widgetY += _height + DEFAULT_SPACING;
+
+		const bool enabled = isEnabled(m_areaId);
+		const bool over = enabled && inRect(xx, yy, _width, _height);
+		const bool res = buttonLogic(id, over);
 
 		screenQuad(xx, yy, _width, _height);
 		bgfx::setUniform(u_imageLod, &_lod);
@@ -1636,14 +1648,16 @@ struct Imgui
 		bgfx::setProgram(m_imageSwizzProgram);
 		setCurrentScissor();
 		bgfx::submit(m_view);
+
+		return res;
 	}
 
-	void imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+	bool imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
 	{
 		const float width = _width*float(getCurrentArea().m_widgetW);
 		const float height = width/_aspect;
 
-		imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align);
+		return imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align);
 	}
 
 	bool cubeMap(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
@@ -1663,24 +1677,24 @@ struct Imgui
 
 			if (_cross)
 			{
-				vertex->set( 0.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 0.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 0.5f, 0.0f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 0.5f, 0.5f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 1.0f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 1.5f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.5f, 0.0f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(0.5f, 0.5f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 1.0f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 1.5f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 1.0f, 0.0f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 1.0f, 0.5f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 1.0f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 1.5f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(1.0f, 0.0f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(1.0f, 0.5f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 1.0f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 1.5f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 1.5f, 0.5f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 1.5f, 1.0f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 0.5f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 1.0f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 2.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 2.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 0.5f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
 				indices += addQuad(indices,  0,  3,  4,  1);
 				indices += addQuad(indices,  2,  6,  7,  3);
@@ -1691,25 +1705,25 @@ struct Imgui
 			}
 			else
 			{
-				vertex->set( 0.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 0.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(0.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 0.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 0.50f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
-				vertex->set( 0.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(0.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 0.50f, 0.0f, -1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(0.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
 
-				vertex->set( 1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.25f, 0.0f,  1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.0f, 0.75f, 0.0f,  1.0f, -1.0f,  1.0f); ++vertex;
 
-				vertex->set( 1.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
-				vertex->set( 1.5f, 0.50f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 1.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 0.00f, 0.0f, -1.0f,  1.0f,  1.0f); ++vertex;
+				vertex->set(1.5f, 0.50f, 0.0f,  1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(1.5f, 1.00f, 0.0f,  1.0f, -1.0f, -1.0f); ++vertex;
 
-				vertex->set( 2.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
-				vertex->set( 2.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 0.25f, 0.0f, -1.0f,  1.0f, -1.0f); ++vertex;
+				vertex->set(2.0f, 0.75f, 0.0f, -1.0f, -1.0f, -1.0f); ++vertex;
 
 				indices += addQuad(indices,  0,  2,  3,  1);
 				indices += addQuad(indices,  1,  3,  6,  4);
@@ -1733,7 +1747,7 @@ struct Imgui
 				 ||  ImguiAlign::Right        == _align)
 			{
 				xx = area.m_widgetX;
-				width = area.m_widgetW-1; //TODO: -1 !
+				width = area.m_widgetW;
 			}
 			else //if (ImguiAlign::Center         == _align
 				 //||  ImguiAlign::CenterIndented == _align).
@@ -1750,7 +1764,7 @@ struct Imgui
 			const bool over = enabled && inRect(xx, yy, width, height);
 			const bool res = buttonLogic(id, over);
 
-			const float scale = float(width/2);
+			const float scale = float(width/2)+0.25f;
 
 			float mtx[16];
 			bx::mtxSRT(mtx, scale, scale, 1.0f, 0.0f, 0.0f, 0.0f, float(xx), float(yy), 0.0f);
@@ -3277,7 +3291,7 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 		, _rgb[2]
 		);
 
-	if (imguiCollapse(_text, buf, _activated, _enabled) )
+	if (imguiCollapse(_text, buf, _activated) )
 	{
 		_activated = !_activated;
 	}
@@ -3288,24 +3302,24 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 	}
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
+bool imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
 {
-	s_imgui.image(_image, _lod, _width, _height, _align, _originBottomLeft);
+	return s_imgui.image(_image, _lod, _width, _height, _align, _originBottomLeft);
 }
 
-void imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
+bool imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
 {
-	s_imgui.image(_image, _lod, _width, _aspect, _align, _originBottomLeft);
+	return s_imgui.image(_image, _lod, _width, _aspect, _align, _originBottomLeft);
 }
 
-void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
 {
-	s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align);
+	return s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align);
 }
 
-void imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
 {
-	s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
+	return s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
 }
 
 bool imguiCube(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
