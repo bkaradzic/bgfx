@@ -202,7 +202,7 @@ ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
 ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
 BUILD_PROJECT_DIR=gmake-osx
-BUILD_OUTPUT_DIR=osx64_gcc
+BUILD_OUTPUT_DIR=osx64_clang
 BUILD_TOOLS_CONFIG=release64
 EXE=
 else
