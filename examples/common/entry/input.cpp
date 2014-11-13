@@ -157,7 +157,11 @@ struct Input
 
 	void removeBindings(const char* _name)
 	{
-		m_inputBindingsMap.erase(m_inputBindingsMap.find(_name));
+		InputBindingMap::iterator it = m_inputBindingsMap.find(_name);
+		if (it != m_inputBindingsMap.end() )
+		{
+			m_inputBindingsMap.erase(it);
+		}
 	}
 
 	void process(const InputBinding* _bindings)

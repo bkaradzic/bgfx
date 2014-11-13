@@ -2223,7 +2223,12 @@ namespace bgfx
 			&&  BGFX_CHUNK_MAGIC_FSH != magic
 			&&  BGFX_CHUNK_MAGIC_VSH != magic)
 			{
-				BX_WARN(false, "Invalid shader signature! 0x%08x.", magic);
+				BX_WARN(false, "Invalid shader signature! %c%c%c%d."
+					, ( (uint8_t*)&magic)[0]
+					, ( (uint8_t*)&magic)[1]
+					, ( (uint8_t*)&magic)[2]
+					, ( (uint8_t*)&magic)[3]
+					);
 				ShaderHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
