@@ -2017,9 +2017,9 @@ namespace bgfx
 		void ovrPreReset()
 		{
 #if BGFX_CONFIG_USE_OVR
+			m_ovr.preReset();
 			if (m_ovr.isEnabled() )
 			{
-				m_ovr.preReset();
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				m_msaaBackBufferFbo = m_ovrFbo;
@@ -4121,7 +4121,7 @@ namespace bgfx
 		Matrix4* mtxView[2] = { _render->m_view, mtxViewTmp[1] };
 		Matrix4  mtxViewProj[2][BGFX_CONFIG_MAX_VIEWS];
 
-		const bool hmdEnabled = m_ovr.isEnabled();
+		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
 		if (hmdEnabled)

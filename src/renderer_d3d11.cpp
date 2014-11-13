@@ -1833,9 +1833,9 @@ RENDERDOC_IMPORT
 		void ovrPreReset()
 		{
 #if BGFX_CONFIG_USE_OVR
+			m_ovr.preReset();
 			if (NULL != m_ovrRtv)
 			{
-				m_ovr.preReset();
 				std::swap(m_ovrRtv, m_backBufferColor);
 				std::swap(m_ovrDsv, m_backBufferDepthStencil);
 				BX_CHECK(NULL == m_backBufferDepthStencil, "");
@@ -2952,7 +2952,7 @@ RENDERDOC_IMPORT
 		Matrix4* mtxView[2] = { _render->m_view, mtxViewTmp[1] };
 		Matrix4  mtxViewProj[2][BGFX_CONFIG_MAX_VIEWS];
 
-		const bool hmdEnabled = m_ovr.isEnabled();
+		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
 		if (hmdEnabled)
