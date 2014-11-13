@@ -12,6 +12,7 @@ namespace bgfx
 	OVR::OVR()
 		: m_hmd(NULL)
 		, m_initialized(false)
+		, m_debug(false)
 	{
 	}
 
@@ -36,6 +37,46 @@ namespace bgfx
 	{
 		if (!m_initialized)
 		{
+			return false;
+		}
+
+		if (_debug)
+		{
+			switch (_config->Header.API)
+			{
+#if BGFX_CONFIG_RENDERER_DIRECT3D9
+			case ovrRenderAPI_D3D9:
+				{
+					ovrD3D9ConfigData* data = (ovrD3D9ConfigData*)_config;
+					m_rtSize = data->Header.RTSize;
+				}
+				break;
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9
+
+#if BGFX_CONFIG_RENDERER_DIRECT3D11
+			case ovrRenderAPI_D3D11:
+				{
+					ovrD3D11ConfigData* data = (ovrD3D11ConfigData*)_config;
+					m_rtSize = data->Header.RTSize;
+				}
+				break;
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11
+
+#if BGFX_CONFIG_RENDERER_OPENGL
+			case ovrRenderAPI_OpenGL:
+				{
+					ovrGLConfigData* data = (ovrGLConfigData*)_config;
+					m_rtSize = data->Header.RTSize;
+				}
+				break;
+#endif // BGFX_CONFIG_RENDERER_OPENGL
+
+			default:
+				BX_CHECK(false, "You should not be here!");
+				break;
+			}
+
+			m_debug = true;
 			return false;
 		}
 
@@ -67,6 +108,7 @@ namespace bgfx
 			| ovrDistortionCap_Vignette
 			| ovrDistortionCap_TimeWarp
 			| ovrDistortionCap_Overdrive
+			| ovrDistortionCap_NoRestore
 			, eyeFov
 			, m_erd
 			);
@@ -135,6 +177,8 @@ ovrError:
 			ovrHmd_Destroy(m_hmd);
 			m_hmd = NULL;
 		}
+
+		m_debug = false;
 	}
 
 	bool OVR::swap()
@@ -197,15 +241,32 @@ ovrError:
 				eye.pixelsPerTanAngle[0] = erd.PixelsPerTanAngleAtCenter.x;
 				eye.pixelsPerTanAngle[1] = erd.PixelsPerTanAngleAtCenter.y;
 			}
-
-			_hmd.width  = uint16_t(m_rtSize.w);
-			_hmd.height = uint16_t(m_rtSize.h);
 		}
 		else
 		{
-			_hmd.width  = 0;
-			_hmd.height = 0;
+			for (int ii = 0; ii < 2; ++ii)
+			{
+				_hmd.eye[ii].rotation[0] = 0.0f;
+				_hmd.eye[ii].rotation[1] = 0.0f;
+				_hmd.eye[ii].rotation[2] = 0.0f;
+				_hmd.eye[ii].rotation[3] = 1.0f;
+				_hmd.eye[ii].translation[0] = 0.0f;
+				_hmd.eye[ii].translation[1] = 0.0f;
+				_hmd.eye[ii].translation[2] = 0.0f;
+				_hmd.eye[ii].fov[0] = 1.32928634f;
+				_hmd.eye[ii].fov[1] = 1.32928634f;
+				_hmd.eye[ii].fov[2] = 0 == ii ? 1.05865765f : 1.09236801f;
+				_hmd.eye[ii].fov[3] = 0 == ii ? 1.09236801f : 1.05865765f;
+				_hmd.eye[ii].viewOffset[0] = 0 == ii ? 0.0355070010f  : -0.0375000015f;
+				_hmd.eye[ii].viewOffset[1] = 0.0f;
+				_hmd.eye[ii].viewOffset[2] = 0 == ii ? 0.00150949787f : -0.00150949787f;
+				_hmd.eye[ii].pixelsPerTanAngle[0] = 1;
+				_hmd.eye[ii].pixelsPerTanAngle[1] = 1;
+			}
 		}
+
+		_hmd.width  = uint16_t(m_rtSize.w);
+		_hmd.height = uint16_t(m_rtSize.h);
 	}
 
 } // namespace bgfx
