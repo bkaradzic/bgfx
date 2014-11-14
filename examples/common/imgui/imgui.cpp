@@ -911,14 +911,23 @@ struct Imgui
 
 		const float barHeight = (float)height / (float)sh;
 
-		const int32_t diff = height - sh;
-		if (diff < 0)
+		// Handle mouse scrolling.
+		if (area.m_inside && !anyActive() )
 		{
-			*area.m_scrollVal = (*area.m_scrollVal > diff) ? *area.m_scrollVal : diff;
-		}
-		else
-		{
-			*area.m_scrollVal = 0;
+			const int32_t min = height - sh;
+			if (min > 0)
+			{
+				*area.m_scrollVal = 0;
+			}
+			else if (m_scroll)
+			{
+				const int32_t val = *area.m_scrollVal + 20*m_scroll;
+				const int32_t max = 0;
+				*area.m_scrollVal = ( val > max ? max
+									: val < min ? min
+									: val
+									);
+			}
 		}
 
 		if (barHeight < 1.0f)
@@ -1015,15 +1024,6 @@ struct Imgui
 						, (float)_r
 						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
 						);
-				}
-			}
-
-			// Handle mouse scrolling.
-			if (area.m_inside) // && !anyActive() )
-			{
-				if (m_scroll)
-				{
-					*area.m_scrollVal += bx::uint32_clamp(20 * m_scroll, 0, sh - height);
 				}
 			}
 		}
