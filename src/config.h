@@ -29,6 +29,7 @@
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D11
 #		define BGFX_CONFIG_RENDERER_DIRECT3D11 (0 \
 					|| (BX_PLATFORM_WINDOWS && BX_PLATFORM_WINDOWS >= 0x0601 /*_WIN32_WINNT_WIN7*/) \
+                    || BX_PLATFORM_WINRT \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D11
 
@@ -149,6 +150,7 @@
 						|| BX_PLATFORM_RPI \
 						|| BX_PLATFORM_WINDOWS \
 						|| BX_PLATFORM_XBOX360 \
+                        || BX_PLATFORM_WINRT \
 						? 1 : 0) )
 #endif // BGFX_CONFIG_MULTITHREADED
 

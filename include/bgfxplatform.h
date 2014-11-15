@@ -91,6 +91,16 @@ namespace bgfx
 
 } // namespace bgfx
 
+#elif BX_PLATFORM_WINRT
+#   include <Unknwn.h>
+
+namespace bgfx
+{
+    ///
+    void winrtSetWindow(IUnknown* _window);
+
+} // namespace bgfx
+
 #endif // BX_PLATFORM_
 
 #if defined(_SDL_H)

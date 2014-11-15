@@ -198,6 +198,8 @@ namespace bgfx
 	extern void* g_bgfxNSWindow;
 #elif BX_PLATFORM_WINDOWS
 	extern ::HWND g_bgfxHwnd;
+#elif BX_PLATFORM_WINRT
+    extern ::IUnknown* g_bgfxCoreWindow;
 #endif // BX_PLATFORM_*
 
 	struct Clear

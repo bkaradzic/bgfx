@@ -46,6 +46,13 @@ namespace bgfx
 	{
 		g_bgfxHwnd = _window;
 	}
+#elif BX_PLATFORM_WINRT
+    ::IUnknown* g_bgfxCoreWindow = NULL;
+
+    void winrtSetWindow(::IUnknown* _window)
+    {
+        g_bgfxCoreWindow = _window;
+    }
 #endif // BX_PLATFORM_*
 
 #if BGFX_CONFIG_USE_TINYSTL
@@ -1386,6 +1393,10 @@ again:
 			{
 				_type = RendererType::OpenGLES;
 			}
+            else if (BX_ENABLED(BX_PLATFORM_WINRT))
+            {
+                _type = RendererType::Direct3D11;
+            }
 			else
 			{
 				_type = RendererType::OpenGL;
