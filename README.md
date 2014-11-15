@@ -25,6 +25,7 @@ Supported platforms:
  * OSX (10.9)
  * RaspberryPi
  * Windows (XP, Vista, 7, 8, 10)
+ * WinRT (WinPhone 8.0+)
 
 Supported compilers:
 
@@ -662,7 +663,7 @@ Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil,
 James Gray ([@james4k](https://github.com/james4k)) - Go language API bindings.  
 p0nce ([@p0nce](https://github.com/p0nce)) - D language API bindings.  
 Mike Popoloski ([@MikePopoloski](https://github.com/MikePopoloski)) - C#/VB/F# 
-language API bindings  
+language API bindings, WinRT/WinPhone support.  
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------

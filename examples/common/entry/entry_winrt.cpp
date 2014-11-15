@@ -26,105 +26,109 @@ static entry::EventQueue g_eventQueue;
 
 ref class App sealed : public IFrameworkView
 {
-public:
-    App() :
-        m_windowVisible(true),
-        m_windowClosed(false)
-    {
-    }
+	public:
+		App()
+			: m_windowVisible(true)
+			, m_windowClosed(false)
+	{
+	}
 
-    // IFrameworkView Methods.
+	// IFrameworkView Methods.
 	virtual void Initialize(CoreApplicationView^ applicationView)
-    {
-        applicationView->Activated += ref new TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &App::OnActivated);
-    }
+	{
+		applicationView->Activated += ref new TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &App::OnActivated);
+	}
 
 	virtual void SetWindow(CoreWindow^ window)
-    {
-        window->VisibilityChanged += ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &App::OnVisibilityChanged);
-	    window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
+	{
+		window->VisibilityChanged += ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &App::OnVisibilityChanged);
+		window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
 
-        bgfx::winrtSetWindow(reinterpret_cast<IUnknown*>(window));
-    }
+		bgfx::winrtSetWindow(reinterpret_cast<IUnknown*>(window));
+	}
 
 	virtual void Load(String^ entryPoint)
-    {
-    }
+	{
+	}
 
 	virtual void Run()
-    {
+	{
 		bx::Thread thread;
 		thread.init(MainThreadFunc, nullptr);
 
-        CoreWindow^ window = CoreWindow::GetForCurrentThread();
-        if (window == nullptr) {
-            int i = 4;
-            i++;
-        }
+		CoreWindow^ window = CoreWindow::GetForCurrentThread();
+		if (window == nullptr) {
+			int i = 4;
+			i++;
+		}
 
-        //auto bounds = window->Bounds;
-        //g_eventQueue.postSizeEvent(g_defaultWindow, bounds.Width, bounds.Height);
+		//auto bounds = window->Bounds;
+		//g_eventQueue.postSizeEvent(g_defaultWindow, bounds.Width, bounds.Height);
 
-        while (!m_windowClosed)
-	    {
-		    if (m_windowVisible)
-			    window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
-		    else
-			    window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
-	    }
+		while (!m_windowClosed)
+		{
+			if (m_windowVisible)
+			{
+				window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
+			}
+			else
+			{
+				window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+			}
+		}
 
-        g_eventQueue.postExitEvent();
+		g_eventQueue.postExitEvent();
 
-        thread.shutdown();
-    }
+		thread.shutdown();
+	}
 
 	virtual void Uninitialize()
-    {
-    }
+	{
+	}
 
 private:
-    bool m_windowVisible;
-    bool m_windowClosed;
+	bool m_windowVisible;
+	bool m_windowClosed;
 
-    void OnActivated(CoreApplicationView^ applicationView, IActivatedEventArgs^ args)
-    {
-        CoreWindow^ window = CoreWindow::GetForCurrentThread();
-        if (window == nullptr) {
-            int i = 4;
-            i++;
-        }
+	void OnActivated(CoreApplicationView^ applicationView, IActivatedEventArgs^ args)
+	{
+		CoreWindow^ window = CoreWindow::GetForCurrentThread();
+		if (window == nullptr) {
+			int i = 4;
+			i++;
+		}
 
-        CoreWindow::GetForCurrentThread()->Activate();
-    }
+		CoreWindow::GetForCurrentThread()->Activate();
+	}
 
-    void OnVisibilityChanged(CoreWindow^ sender, VisibilityChangedEventArgs^ args)
-    {
-        m_windowVisible = args->Visible;
-    }
+	void OnVisibilityChanged(CoreWindow^ sender, VisibilityChangedEventArgs^ args)
+	{
+		m_windowVisible = args->Visible;
+	}
 
 	void OnWindowClosed(CoreWindow^ sender, CoreWindowEventArgs^ args)
-    {
-        m_windowClosed = true;
-    }
+	{
+		m_windowClosed = true;
+	}
 
-    static int32_t MainThreadFunc(void*)
-    {
-        return entry::main(0, g_emptyArgs);
-    }
+	static int32_t MainThreadFunc(void*)
+	{
+		return entry::main(0, g_emptyArgs);
+	}
 };
 
 ref class AppSource sealed : IFrameworkViewSource
 {
 public:
 	virtual IFrameworkView^ CreateView()
-    {
-        return ref new App();
-    }
+	{
+		return ref new App();
+	}
 };
 
 namespace entry
 {
-    const Event* poll()
+	const Event* poll()
 	{
 		return g_eventQueue.poll();
 	}
@@ -139,7 +143,7 @@ namespace entry
 		g_eventQueue.release(_event);
 	}
 
-    WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
 		BX_UNUSED(_x, _y, _width, _height, _flags, _title);
 		WindowHandle handle = { UINT16_MAX };
@@ -180,9 +184,9 @@ namespace entry
 [MTAThread]
 int main(Array<String^>^)
 {
-    auto appSource = ref new AppSource();
-    CoreApplication::Run(appSource);
-    return 0;
+	auto appSource = ref new AppSource();
+	CoreApplication::Run(appSource);
+	return 0;
 }
 
-#endif
+#endif // BX_PLATFORM_WINRT
