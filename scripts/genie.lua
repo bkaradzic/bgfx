@@ -71,7 +71,7 @@ function exampleProject(_name)
 	configuration {}
 
 	-- don't output debugdir for winphone builds
-	if "winphone8-1" ~= _OPTIONS["vs"] then
+	if "winphone81" ~= _OPTIONS["vs"] then
 		debugdir (BGFX_DIR .. "examples/runtime/")
 	end
 
