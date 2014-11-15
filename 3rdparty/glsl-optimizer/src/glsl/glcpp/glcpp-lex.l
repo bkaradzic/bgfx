@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <c99_compat.h>
 
 #include "glcpp.h"
 #include "glcpp-parse.h"

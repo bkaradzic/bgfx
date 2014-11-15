@@ -236,7 +236,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float speed      = 0.37f;
 	float middleGray = 0.18f;
 	float white      = 1.1f;
-	float treshold   = 1.5f;
+	float threshold  = 1.5f;
 
 	int32_t scrollArea = 0;
 
@@ -285,7 +285,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		imguiSlider("Middle gray", middleGray, 0.1f, 1.0f, 0.01f);
 		imguiSlider("White point", white, 0.1f, 2.0f, 0.01f);
-		imguiSlider("Treshold", treshold, 0.1f, 2.0f, 0.01f);
+		imguiSlider("Threshold", threshold, 0.1f, 2.0f, 0.01f);
 
 		imguiEndScrollArea();
 		imguiEndFrame();
@@ -425,10 +425,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		screenSpaceQuad(1.0f, 1.0f, s_originBottomLeft);
 		bgfx::submit(6);
 
-		float tonemap[4] = { middleGray, square(white), treshold, 0.0f };
+		float tonemap[4] = { middleGray, square(white), threshold, 0.0f };
 		bgfx::setUniform(u_tonemap, tonemap);
 
-		// Bright pass treshold is tonemap[3].
+		// Bright pass threshold is tonemap[3].
 		setOffsets4x4Lum(u_offset, width/2, height/2);
 		bgfx::setTexture(0, u_texColor, fbtextures[0]);
 		bgfx::setTexture(1, u_texLum, lum[4]);

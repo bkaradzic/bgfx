@@ -44,6 +44,11 @@ namespace bgfx
 			return NULL != m_hmd;
 		}
 
+		bool isDebug() const
+		{
+			return m_debug;
+		}
+
 		void init();
 		void shutdown();
 
@@ -68,6 +73,7 @@ namespace bgfx
 		ovrSizei m_rtSize;
 		bool m_warning;
 		bool m_initialized;
+		bool m_debug;
 	};
 
 } // namespace bgfx
@@ -100,6 +106,11 @@ namespace bgfx
 		}
 
 		bool isEnabled() const
+		{
+			return false;
+		}
+
+		bool isDebug() const
 		{
 			return false;
 		}

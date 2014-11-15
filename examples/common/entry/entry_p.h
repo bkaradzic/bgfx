@@ -9,6 +9,7 @@
 #include <bx/spscqueue.h>
 
 #include "entry.h"
+#include <string.h> // memcpy
 
 #ifndef ENTRY_CONFIG_USE_SDL
 #	define ENTRY_CONFIG_USE_SDL 0
@@ -45,6 +46,7 @@ namespace entry
 		{
 			Exit,
 			Key,
+			Char,
 			Mouse,
 			Size,
 			Window,
@@ -73,6 +75,14 @@ namespace entry
 		Key::Enum m_key;
 		uint8_t m_modifiers;
 		bool m_down;
+	};
+
+	struct CharEvent : public Event
+	{
+		ENTRY_IMPLEMENT_EVENT(CharEvent, Event::Char);
+
+		uint8_t m_len;
+		uint8_t m_char[4];
 	};
 
 	struct MouseEvent : public Event
@@ -121,6 +131,14 @@ namespace entry
 			ev->m_key       = _key;
 			ev->m_modifiers = _modifiers;
 			ev->m_down      = _down;
+			m_queue.push(ev);
+		}
+
+		void postCharEvent(WindowHandle _handle, uint8_t _len, const uint8_t _char[4])
+		{
+			CharEvent* ev = new CharEvent(_handle);
+			ev->m_len = _len;
+			memcpy(ev->m_char, _char, 4);
 			m_queue.push(ev);
 		}
 

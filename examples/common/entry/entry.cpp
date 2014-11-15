@@ -118,6 +118,7 @@ namespace entry
 		{ entry::Key::F3,    entry::Modifier::None,      1, cmd, "graphics wireframe"                },
 		{ entry::Key::F4,    entry::Modifier::None,      1, cmd, "graphics hmd"                      },
 		{ entry::Key::F4,    entry::Modifier::LeftShift, 1, cmd, "graphics hmdrecenter"              },
+		{ entry::Key::F4,    entry::Modifier::LeftCtrl,  1, cmd, "graphics hmddbg"                   },
 		{ entry::Key::F7,    entry::Modifier::None,      1, cmd, "graphics vsync"                    },
 		{ entry::Key::F8,    entry::Modifier::None,      1, cmd, "graphics msaa"                     },
 		{ entry::Key::Print, entry::Modifier::None,      1, cmd, "graphics screenshot"               },
@@ -154,110 +155,6 @@ namespace entry
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
 		return result;
-	}
-
-	char keyToAscii(entry::Key::Enum _key, bool _shiftModifier)
-	{
-		static const char s_keyToAscii[entry::Key::Count] =
-		{
-			'\0', // None
-			0x1b, // Esc
-			0x0d, // Return
-			0x09, // Tab
-			0x20, // Space
-			0x08, // Backspace
-			'\0', // Up
-			'\0', // Down
-			'\0', // Left
-			'\0', // Right
-			'\0', // PageUp
-			'\0', // PageDown
-			'\0', // Home
-			'\0', // End
-			'\0', // Print
-			0x3d, // Equals
-			0x2d, // Minus
-			'\0', // F1
-			'\0', // F2
-			'\0', // F3
-			'\0', // F4
-			'\0', // F5
-			'\0', // F6
-			'\0', // F7
-			'\0', // F8
-			'\0', // F9
-			'\0', // F10
-			'\0', // F11
-			'\0', // F12
-			0x30, // NumPad0
-			0x31, // NumPad1
-			0x32, // NumPad2
-			0x33, // NumPad3
-			0x34, // NumPad4
-			0x35, // NumPad5
-			0x36, // NumPad6
-			0x37, // NumPad7
-			0x38, // NumPad8
-			0x39, // NumPad9
-			0x30, // Key0
-			0x31, // Key1
-			0x32, // Key2
-			0x33, // Key3
-			0x34, // Key4
-			0x35, // Key5
-			0x36, // Key6
-			0x37, // Key7
-			0x38, // Key8
-			0x39, // Key9
-			0x61, // KeyA
-			0x62, // KeyB
-			0x63, // KeyC
-			0x64, // KeyD
-			0x65, // KeyE
-			0x66, // KeyF
-			0x67, // KeyG
-			0x68, // KeyH
-			0x69, // KeyI
-			0x6a, // KeyJ
-			0x6b, // KeyK
-			0x6c, // KeyL
-			0x6d, // KeyM
-			0x6e, // KeyN
-			0x6f, // KeyO
-			0x70, // KeyP
-			0x71, // KeyQ
-			0x72, // KeyR
-			0x73, // KeyS
-			0x74, // KeyT
-			0x75, // KeyU
-			0x76, // KeyV
-			0x77, // KeyW
-			0x78, // KeyX
-			0x79, // KeyY
-			0x7a, // KeyZ
-		};
-
-		char ascii = s_keyToAscii[_key];
-
-		if (_shiftModifier)
-		{
-			// Big letters.
-			if(ascii >= 'a' && ascii <= 'z')
-			{
-				ascii += 'A' - 'a';
-			}
-			// Special cases.
-			else if('-' == ascii)
-			{
-				ascii = '_';
-			}
-			else if ('=' == ascii)
-			{
-				ascii = '+';
-			}
-		}
-
-		return ascii;
 	}
 
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse)
@@ -319,6 +216,13 @@ namespace entry
 						handle = key->m_handle;
 
 						inputSetKeyState(key->m_key, key->m_modifiers, key->m_down);
+					}
+					break;
+
+				case Event::Char:
+					{
+						const CharEvent* chev = static_cast<const CharEvent*>(ev);
+						inputChar(chev->m_len, chev->m_char);
 					}
 					break;
 
@@ -437,6 +341,14 @@ namespace entry
 						win.m_handle = key->m_handle;
 
 						inputSetKeyState(key->m_key, key->m_modifiers, key->m_down);
+					}
+					break;
+
+				case Event::Char:
+					{
+						const CharEvent* chev = static_cast<const CharEvent*>(ev);
+						win.m_handle = chev->m_handle;
+						inputChar(chev->m_len, chev->m_char);
 					}
 					break;
 

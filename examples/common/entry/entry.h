@@ -155,7 +155,6 @@ namespace entry
 		uint8_t m_buttons[entry::MouseButton::Count];
 	};
 
-	char keyToAscii(entry::Key::Enum _key, bool _shiftModifier);
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
 
 	bx::FileReaderI* getFileReader();
