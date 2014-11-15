@@ -7,13 +7,13 @@
 
 #include "bx/platform.h"
 
-#if BX_PLATFORM_WINRT
+#if BX_COMPILER_MSVC
 #define generic GenericFromFreeType     // WinRT language extensions see "generic" as a keyword... this is stupid
+#define interface InterfaceFromFreeType
 #pragma warning(push)
 #pragma warning(disable : 4245)         // conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
 #include <freetype/freetype.h>
 #pragma warning(pop)
-#undef generic
 #else
 #include <freetype/freetype.h>
 #endif
