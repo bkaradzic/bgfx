@@ -41,14 +41,15 @@ struct PosColorUvVertex
 	float m_u;
 	float m_v;
 	uint32_t m_abgr;
+
 	static void init()
 	{
 		ms_decl
-		.begin()
-		.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-		.end();
+			.begin()
+			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+			.end();
 	}
 	static bgfx::VertexDecl ms_decl;
 };
@@ -235,7 +236,10 @@ void VectorDisplay::endFrame()
 
 			bgfx::setViewFrameBuffer(viewCounter, m_glow0FrameBuffer);            //first glow pass
 			bgfx::setViewRect(viewCounter, 0, 0, m_glowWidth, m_glowHeight);
-			bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				);
 			float scale[2];
 			scale[0] = 1.0f / m_glowWidth;
 			scale[1] = 0.0f;
@@ -263,7 +267,10 @@ void VectorDisplay::endFrame()
 			scale[1] = 1.0f / m_glowHeight;
 			bgfx::setUniform(u_blur_scale, &scale);
 
-			bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				);
 
 			bgfx::setViewName(viewCounter, "BlendPassB");
 			bgfx::submit(viewCounter);
@@ -280,10 +287,11 @@ void VectorDisplay::endFrame()
 	bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
 	bgfx::setTexture(0, s_textureSampler, m_sceneFrameBuffer);
 	bgfx::setProgram(m_blitShader);
-	bgfx::setState(BGFX_STATE_RGB_WRITE
-	               | BGFX_STATE_ALPHA_WRITE
-	               | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-	              );
+	bgfx::setState(0
+		| BGFX_STATE_RGB_WRITE
+		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+		);
 
 	float tempOne = 1.0f;
 	bgfx::setUniform(u_compose_alpha, &tempOne);
@@ -300,10 +308,11 @@ void VectorDisplay::endFrame()
 		bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
 		bgfx::setTexture(0, s_textureSampler, m_glow1FrameBuffer);
 		bgfx::setProgram(m_blitShader);
-		bgfx::setState(BGFX_STATE_RGB_WRITE
-		               | BGFX_STATE_ALPHA_WRITE
-		               | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-		              );
+		bgfx::setState(0
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_ALPHA_WRITE
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+			);
 		bgfx::setUniform(u_compose_mult, &glow_fin_mult);
 		bgfx::setViewName(viewCounter, "BlendBlurToDisplay");
 		screenSpaceQuad(m_screenWidth, m_screenHeight);
@@ -559,7 +568,7 @@ void VectorDisplay::setTransform(float _offsetX, float _offsetY, float _scale)
 {
 	m_drawOffsetX = _offsetX;
 	m_drawOffsetY = _offsetY;
-	m_drawScale = _scale;
+	m_drawScale   = _scale;
 }
 
 bool VectorDisplay::setInitialDecay(float _initialDecay)
@@ -708,7 +717,7 @@ void VectorDisplay::drawLines(line_t* _lines, int _numberLines)
 bool VectorDisplay::setDecaySteps(int _steps)
 {
 	if (_steps < 0
-	   || _steps > MAX_DECAY_STEPS)
+	||  _steps > MAX_DECAY_STEPS)
 	{
 		return false;
 	}
@@ -738,7 +747,7 @@ bool VectorDisplay::setDecaySteps(int _steps)
 bool VectorDisplay::setDecay(float _decay)
 {
 	if (_decay < 0.0f
-	   || _decay >= 1.0f)
+	||  _decay >= 1.0f)
 	{
 		return false;
 	}
@@ -818,13 +827,14 @@ void VectorDisplay::screenSpaceQuad(float _textureWidth, float _textureHeight, f
 
 void VectorDisplay::setupResDependent()
 {
-	const uint32_t samplerFlags = BGFX_TEXTURE_RT
-	                              | BGFX_TEXTURE_MIN_POINT
-	                              | BGFX_TEXTURE_MAG_POINT
-	                              | BGFX_TEXTURE_MIP_POINT
-	                              | BGFX_TEXTURE_U_CLAMP
-	                              | BGFX_TEXTURE_V_CLAMP
-	;
+	const uint32_t samplerFlags = 0
+		| BGFX_TEXTURE_RT
+		| BGFX_TEXTURE_MIN_POINT
+		| BGFX_TEXTURE_MAG_POINT
+		| BGFX_TEXTURE_MIP_POINT
+		| BGFX_TEXTURE_U_CLAMP
+		| BGFX_TEXTURE_V_CLAMP
+		;
 	m_sceneFrameBuffer = bgfx::createFrameBuffer(m_screenWidth, m_screenHeight, bgfx::TextureFormat::BGRA8, samplerFlags);
 
 	m_glowWidth = m_screenWidth / 3;
@@ -868,7 +878,7 @@ void VectorDisplay::genLinetex()                                    // generate 
 		}
 	}
 
-	uint32_t flags = 0
+	const uint32_t flags = 0
 		| BGFX_TEXTURE_U_CLAMP
 		| BGFX_TEXTURE_V_CLAMP
 		| BGFX_TEXTURE_MIN_POINT
