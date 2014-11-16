@@ -143,8 +143,6 @@ protected:
 
 	void appendTexpoint(float _x, float _y, float _u, float _v);
 
-	float normalizef(float _a);
-
 	void drawFan(float _cx, float _cy, float _pa, float _a, float _t, float _s, float _e);
 	void drawLines(line_t* _lines, int _numberLines);
 	void genLinetex();
