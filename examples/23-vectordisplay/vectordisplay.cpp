@@ -1,25 +1,21 @@
-
 /*
  * Copyright 2014 Kai Jourdan. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  *
- * based on code from  Brian Luczkiewicz
+ * Based on code from Brian Luczkiewicz
  * https://github.com/blucz/Vector
  *
- * uses the SIMPLEX-Font which is a variant of the Hershey font (public domain)
+ * Uses the SIMPLEX-Font which is a variant of the Hershey font (public domain)
  * http://paulbourke.net/dataformats/hershey/
  */
 
-#include "vectordisplay.h"
-
-#include "bgfx_utils.h"
-
-#include <math.h>
-#include <float.h>
-#include <malloc.h>
-#include <assert.h>
+#include <float.h>  // FLT_EPSILON
+#include <alloca.h> // alloca
 
 #include <bx/fpumath.h>
+
+#include "vectordisplay.h"
+#include "bgfx_utils.h"
 
 //Config stuff
 const int MAX_NUMBER_VERTICES = 20000;
@@ -74,16 +70,16 @@ void VectorDisplay::setup(uint16_t _width, uint16_t _height, int _view)
 	m_decayValue = DEFAULT_DECAY_VALUE;
 	setDrawColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-	m_screenWidth = _width;
+	m_screenWidth  = _width;
 	m_screenHeight = _height;
-	m_glowWidth = m_screenWidth / 3;
-	m_glowHeight = m_screenHeight / 3;
+	m_glowWidth    = m_screenWidth / 3;
+	m_glowHeight   = m_screenHeight / 3;
 	m_initialDecay = DEFAULT_INITIAL_DECAY;
 
 	m_drawOffsetX = DEFAULT_DRAW_OFFSET_X;
 	m_drawOffsetY = DEFAULT_DRAW_OFFSET_Y;
-	m_drawScale = DEFAULT_DRAW_SCALE;
-	m_brightness = DEFAULT_BRIGHTNESS;
+	m_drawScale   = DEFAULT_DRAW_SCALE;
+	m_brightness  = DEFAULT_BRIGHTNESS;
 
 	m_currentDrawStep = 0;
 
@@ -160,7 +156,7 @@ void VectorDisplay::endFrame()
 	// advance step
 	m_currentDrawStep = (m_currentDrawStep + 1) % m_numberDecaySteps;
 
-	assert(m_points.size() < MAX_NUMBER_VERTICES);
+	BX_CHECK(m_points.size() < MAX_NUMBER_VERTICES, "");
 
 	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep]
 		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(point_t) )
@@ -315,10 +311,7 @@ void VectorDisplay::endFrame()
 
 void VectorDisplay::beginDraw(float _x, float _y)
 {
-	if (m_pendingPoints.size() != 0)
-	{
-		assert(!"begin draw on already filled buffer!");
-	}
+	BX_CHECK(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
 
 	pending_point_t point;
 	point.x = _x * m_drawScale + m_drawOffsetX;
@@ -1470,10 +1463,6 @@ static int simplex[95][112] =
 	  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
 };
 
-//void VectorDisplay::simplexMeasure(float _scale, const char *_string, float *_outWidth, float *_outHeight) {
-//not implemented :/
-//}
-
 void VectorDisplay::drawSimplexFont(float _x, float _y, float _scale, const char* _string)
 {
 	for (;;)
@@ -1485,7 +1474,7 @@ void VectorDisplay::drawSimplexFont(float _x, float _y, float _scale, const char
 		}
 
 		if (c < 32
-		   || c > 126)
+		||  c > 126)
 		{
 			continue;
 		}
