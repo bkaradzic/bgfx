@@ -613,8 +613,14 @@ RENDERDOC_IMPORT
 			HRESULT hr;
 
 			IDXGIFactory* factory;
+#if BX_PLATFORM_WINRT
+            // WinRT requires the IDXGIFactory2 interface, which isn't supported on older platforms
+			hr = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&factory);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create DXGI factory.");
+#else
 			hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create DXGI factory.");
+#endif // BX_PLATFORM_WINRT
 
 			m_adapter = NULL;
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
@@ -699,6 +705,31 @@ RENDERDOC_IMPORT
 			hr = adapter->GetDesc(&m_adapterDesc);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
+#if BX_PLATFORM_WINRT
+            hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+			DX_RELEASE(adapter, 2);
+            
+			memset(&m_scd, 0, sizeof(m_scd) );
+			m_scd.Width  = BGFX_DEFAULT_WIDTH;
+			m_scd.Height = BGFX_DEFAULT_HEIGHT;
+			m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            m_scd.Stereo = false;
+			m_scd.SampleDesc.Count = 1;
+			m_scd.SampleDesc.Quality = 0;
+			m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+			m_scd.BufferCount = 2;
+            m_scd.Scaling = DXGI_SCALING_NONE;
+            m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+            m_scd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+
+            hr = m_factory->CreateSwapChainForCoreWindow(m_device
+                                                        , g_bgfxCoreWindow
+                                                        , &m_scd
+                                                        , NULL
+                                                        , &m_swapChain
+                                                        );
+#else
 			hr = adapter->GetParent(__uuidof(IDXGIFactory), (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 			DX_RELEASE(adapter, 2);
@@ -720,6 +751,7 @@ RENDERDOC_IMPORT
 										, &m_scd
 										, &m_swapChain
 										);
+#endif // BX_PLATFORM_WINRT
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 
 			m_numWindows = 1;
@@ -1085,8 +1117,8 @@ RENDERDOC_IMPORT
 		{
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-			uint32_t width  = m_scd.BufferDesc.Width;
-			uint32_t height = m_scd.BufferDesc.Height;
+			uint32_t width  = getBufferWidth();
+			uint32_t height = getBufferHeight();
 			if (m_ovr.isEnabled() )
 			{
 				m_ovr.getSize(width, height);
@@ -1175,8 +1207,8 @@ RENDERDOC_IMPORT
 			DX_RELEASE(color, 0);
 
 			D3D11_TEXTURE2D_DESC dsd;
-			dsd.Width  = m_scd.BufferDesc.Width;
-			dsd.Height = m_scd.BufferDesc.Height;
+			dsd.Width  = getBufferWidth();
+			dsd.Height = getBufferHeight();
 			dsd.MipLevels = 1;
 			dsd.ArraySize = 1;
 			dsd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -1262,7 +1294,7 @@ RENDERDOC_IMPORT
 			{
 				uint32_t msaa = s_checkMsaa[ii];
 				uint32_t quality = 0;
-				HRESULT hr = m_device->CheckMultisampleQualityLevels(m_scd.BufferDesc.Format, msaa, &quality);
+				HRESULT hr = m_device->CheckMultisampleQualityLevels(getBufferFormat(), msaa, &quality);
 
 				if (SUCCEEDED(hr)
 				&&  0 < quality)
@@ -1283,11 +1315,14 @@ RENDERDOC_IMPORT
 			bool recenter  = !!(_resolution.m_flags & BGFX_RESET_HMD_RECENTER);
 			uint32_t flags = _resolution.m_flags & ~BGFX_RESET_HMD_RECENTER;
 
-			if ( (uint32_t)m_scd.BufferDesc.Width  != _resolution.m_width
-			||   (uint32_t)m_scd.BufferDesc.Height != _resolution.m_height
+			if ( getBufferWidth()  != _resolution.m_width
+			||   getBufferHeight() != _resolution.m_height
 			||   m_flags != flags)
 			{
 				bool resize = (m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK);
+#if BX_PLATFORM_WINRT
+                resize = false;     // can't use ResizeBuffers on Windows Phone
+#endif
 				m_flags = flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
@@ -1296,17 +1331,16 @@ RENDERDOC_IMPORT
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
 
-				m_scd.BufferDesc.Width  = _resolution.m_width;
-				m_scd.BufferDesc.Height = _resolution.m_height;
+                setBufferSize(_resolution.m_width, _resolution.m_height);
 
 				preReset();
 
 				if (resize)
 				{
 					DX_CHECK(m_swapChain->ResizeBuffers(2
-						, m_scd.BufferDesc.Width
-						, m_scd.BufferDesc.Height
-						, m_scd.BufferDesc.Format
+						, getBufferWidth()
+						, getBufferHeight()
+						, getBufferFormat()
 						, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
 						) );
 				}
@@ -1317,11 +1351,21 @@ RENDERDOC_IMPORT
 
 					DX_RELEASE(m_swapChain, 0);
 
+#if BX_PLATFORM_WINRT
+                    HRESULT hr;
+					hr = m_factory->CreateSwapChainForCoreWindow(m_device
+                        , g_bgfxCoreWindow
+						, &m_scd
+                        , NULL
+						, &m_swapChain
+						);
+#else
 					HRESULT hr;
 					hr = m_factory->CreateSwapChain(m_device
 						, &m_scd
 						, &m_swapChain
 						);
+#endif
 					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 				}
 
@@ -1745,6 +1789,44 @@ RENDERDOC_IMPORT
 			return sampler;
 		}
 
+        DXGI_FORMAT getBufferFormat()
+        {
+#if BX_PLATFORM_WINRT
+            return m_scd.Format;
+#else
+            return m_scd.BufferDesc.Format;
+#endif
+        }
+
+        uint32_t getBufferWidth()
+        {
+#if BX_PLATFORM_WINRT
+            return m_scd.Width;
+#else
+            return m_scd.BufferDesc.Width;
+#endif
+        }
+
+        uint32_t getBufferHeight()
+        {
+#if BX_PLATFORM_WINRT
+            return m_scd.Height;
+#else
+            return m_scd.BufferDesc.Height;
+#endif
+        }
+
+        void setBufferSize(uint32_t _width, uint32_t _height)
+        {
+#if BX_PLATFORM_WINRT
+            m_scd.Width = _width;
+            m_scd.Height = _height;
+#else
+            m_scd.BufferDesc.Width = _width;
+            m_scd.BufferDesc.Height = _height;
+#endif
+        }
+
 		void commitTextureStage()
 		{
 			m_deviceCtx->PSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
@@ -1900,22 +1982,20 @@ RENDERDOC_IMPORT
 				ID3D11Texture2D* backBuffer;
 				DX_CHECK(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer) );
 
-				DXGI_MODE_DESC& desc = m_scd.BufferDesc;
-
 				if (NULL == m_captureResolve)
 				{
 					m_deviceCtx->CopyResource(m_captureTexture, backBuffer);
 				}
 				else
 				{
-					m_deviceCtx->ResolveSubresource(m_captureResolve, 0, backBuffer, 0, desc.Format);
+					m_deviceCtx->ResolveSubresource(m_captureResolve, 0, backBuffer, 0, getBufferFormat());
 					m_deviceCtx->CopyResource(m_captureTexture, m_captureResolve);
 				}
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
 
-				g_callback->captureFrame(mapped.pData, desc.Height*mapped.RowPitch);
+				g_callback->captureFrame(mapped.pData, getBufferHeight()*mapped.RowPitch);
 
 				m_deviceCtx->Unmap(m_captureTexture, 0);
 
@@ -2012,8 +2092,8 @@ RENDERDOC_IMPORT
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
-			uint32_t width  = m_scd.BufferDesc.Width;
-			uint32_t height = m_scd.BufferDesc.Height;
+			uint32_t width  = getBufferWidth();
+			uint32_t height = getBufferHeight();
 
 			if (0      == _rect.m_x
 			&&  0      == _rect.m_y
@@ -2146,9 +2226,14 @@ RENDERDOC_IMPORT
 		D3D_DRIVER_TYPE m_driverType;
 		IDXGIAdapter* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
+#if BX_PLATFORM_WINRT
+        IDXGIFactory2* m_factory;
+        IDXGISwapChain1* m_swapChain;
+#else
 		IDXGIFactory* m_factory;
+        IDXGISwapChain* m_swapChain;
+#endif
 
-		IDXGISwapChain* m_swapChain;
 		uint16_t m_lost;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -2166,7 +2251,11 @@ RENDERDOC_IMPORT
 		Resolution m_resolution;
 		bool m_wireframe;
 
+#if BX_PLATFORM_WINRT
+        DXGI_SWAP_CHAIN_DESC1 m_scd;
+#else
 		DXGI_SWAP_CHAIN_DESC m_scd;
+#endif
 		uint32_t m_flags;
 
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
