@@ -49,7 +49,9 @@ defines {
 }
 
 dofile (BX_DIR .. "scripts/toolchain.lua")
-toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR)
+if not toolchain(BGFX_BUILD_DIR, BGFX_THIRD_PARTY_DIR) then
+	return -- no action specified
+end
 
 function copyLib()
 end

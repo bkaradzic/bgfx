@@ -25,6 +25,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 19-oit
 #	@make -s --no-print-directory rebuild -C 20-nanovg
 	@make -s --no-print-directory rebuild -C 21-deferred
+	@make -s --no-print-directory rebuild -C 23-vectordisplay
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui
 	@make -s --no-print-directory rebuild -C common/nanovg

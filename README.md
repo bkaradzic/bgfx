@@ -275,6 +275,12 @@ MRT rendering and deferred shading.
 
 Rendering into multiple windows.
 
+### [23-vectordisplay](https://github.com/bkaradzic/bgfx/tree/master/examples/23-vectordisplay)
+
+Rendering lines as oldschool vectors.
+
+![example-23-vectordisplay](https://github.com/bkaradzic/bgfx/raw/master/examples/23-vectordisplay/screenshot.png)
+
 Dependencies
 ------------
 

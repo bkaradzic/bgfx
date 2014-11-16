@@ -14,7 +14,6 @@
 
 #include "bgfx_utils.h"
 
-#define _USE_MATH_DEFINES
 #include <math.h>
 #include <float.h>
 #include <malloc.h>
@@ -163,8 +162,10 @@ void VectorDisplay::endFrame()
 
 	assert(m_points.size() < MAX_NUMBER_VERTICES);
 
-	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep], bgfx::copy(m_points.data(), m_points.size() * sizeof(point_t) ) );
-	m_vertexBuffersSize[m_currentDrawStep] = m_points.size();
+	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep]
+		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(point_t) )
+	);
+	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
 
 	//if the index buffer is cleared from the last "submit"-call everything is fine, but if not
 	//we clear it here again just to be sure it's not set... (the same for the Transform)
@@ -342,7 +343,7 @@ void VectorDisplay::endDraw()
 	}
 
 	// from the list of points, build a list of lines
-	size_t nlines = m_pendingPoints.size() - 1;
+	uint32_t nlines = (uint32_t)m_pendingPoints.size() - 1;
 	line_t* lines = (line_t*)alloca(nlines * sizeof(line_t) );
 
 	float t = effectiveThickness();
@@ -390,12 +391,12 @@ void VectorDisplay::endDraw()
 			float a2pa = normalizef(line->a - pline->a);
 			float maxshorten = MIN(line->len, pline->len) / 2.0f;
 
-			if (MIN(a2pa, pa2a) <= (M_PI / 2 + FLT_EPSILON) )
+			if (bx::fmin(a2pa, pa2a) <= (bx::pi / 2.0f + FLT_EPSILON) )
 			{
 				if (a2pa < pa2a)
 				{
 					float shorten = t * sin(a2pa / 2) / cos(a2pa / 2);
-					float a = ( (float)M_PI - a2pa) / 2.0f;
+					float a = (bx::pi - a2pa) / 2.0f;
 					if (shorten > maxshorten)
 					{
 						line->s0 = pline->s1 = maxshorten;
@@ -410,12 +411,12 @@ void VectorDisplay::endDraw()
 				}
 				else
 				{
-					float shorten = t * sin(pa2a / 2) / cos(pa2a / 2);
-					float a = ( (float)M_PI - pa2a) / 2.0f;
+					float shorten = t * sinf(pa2a / 2.0f) / cosf(pa2a / 2.0f);
+					float a = (bx::pi - pa2a) / 2.0f;
 					if (shorten > maxshorten)
 					{
 						line->s0 = pline->s1 = maxshorten;
-						line->tl0 = pline->tl1 = maxshorten * sin(a) / cos(a);
+						line->tl0 = pline->tl1 = maxshorten * sinf(a) / cosf(a);
 					}
 					else
 					{
@@ -496,11 +497,11 @@ void VectorDisplay::drawCircle(float _x, float _y, float _radius, float _steps)
 	float edgeangle = 0.0f;
 	float angadjust = 0.0f;
 
-	float step = (float)M_PI * 2.0f / _steps;
+	float step = bx::pi * 2.0f / _steps;
 
 	beginDraw(_x + _radius * sin(edgeangle + angadjust),
 	          _y - _radius * cos(edgeangle + angadjust) );
-	for (edgeangle = 0; edgeangle < 2 * M_PI - 0.001; edgeangle += step)
+	for (edgeangle = 0; edgeangle < 2.0f * bx::pi - 0.001; edgeangle += step)
 	{
 		drawTo(_x + _radius * sin(edgeangle + step - angadjust),
 		       _y - _radius * cos(edgeangle + step - angadjust) );
@@ -517,28 +518,28 @@ void VectorDisplay::drawWheel(float _angle, float _x, float _y, float _radius)
 	         _y - spokeradius * cos(_angle),
 	         _x - spokeradius * sin(_angle),
 	         _y + spokeradius * cos(_angle) );
-	drawLine(_x + spokeradius * sin(_angle + (float)M_PI / 4.0f),
-	         _y - spokeradius * cos(_angle + (float)M_PI / 4.0f),
-	         _x - spokeradius * sin(_angle + (float)M_PI / 4.0f),
-	         _y + spokeradius * cos(_angle + (float)M_PI / 4.0f) );
-	drawLine(_x + spokeradius * sin(_angle + (float)M_PI / 2.0f),
-	         _y - spokeradius * cos(_angle + (float)M_PI / 2.0f),
-	         _x - spokeradius * sin(_angle + (float)M_PI / 2.0f),
-	         _y + spokeradius * cos(_angle + (float)M_PI / 2.0f) );
-	drawLine(_x + spokeradius * sin(_angle + 3.0f * (float)M_PI / 4.0f),
-	         _y - spokeradius * cos(_angle + 3.0f * (float)M_PI / 4.0f),
-	         _x - spokeradius * sin(_angle + 3.0f * (float)M_PI / 4.0f),
-	         _y + spokeradius * cos(_angle + 3.0f * (float)M_PI / 4.0f) );
+	drawLine(_x + spokeradius * sin(_angle + bx::pi / 4.0f),
+	         _y - spokeradius * cos(_angle + bx::pi / 4.0f),
+	         _x - spokeradius * sin(_angle + bx::pi / 4.0f),
+	         _y + spokeradius * cos(_angle + bx::pi / 4.0f) );
+	drawLine(_x + spokeradius * sin(_angle + bx::pi / 2.0f),
+	         _y - spokeradius * cos(_angle + bx::pi / 2.0f),
+	         _x - spokeradius * sin(_angle + bx::pi / 2.0f),
+	         _y + spokeradius * cos(_angle + bx::pi / 2.0f) );
+	drawLine(_x + spokeradius * sin(_angle + 3.0f * bx::pi / 4.0f),
+	         _y - spokeradius * cos(_angle + 3.0f * bx::pi / 4.0f),
+	         _x - spokeradius * sin(_angle + 3.0f * bx::pi / 4.0f),
+	         _y + spokeradius * cos(_angle + 3.0f * bx::pi / 4.0f) );
 
 	float edgeangle = 0.0f;
 	float angadjust = 0.0f;
 
 	beginDraw(_x + _radius * sin(_angle + edgeangle + angadjust),
 	          _y - _radius * cos(_angle + edgeangle + angadjust) );
-	for (edgeangle = 0; edgeangle < 2.0f * (float)M_PI - 0.001f; edgeangle += (float)M_PI / 4.0f)
+	for (edgeangle = 0; edgeangle < 2.0f * bx::pi - 0.001f; edgeangle += bx::pi / 4.0f)
 	{
-		drawTo(_x + _radius * sin(_angle + edgeangle + (float)M_PI / 4.0f - angadjust),
-		       _y - _radius * cos(_angle + edgeangle + (float)M_PI / 4.0f - angadjust) );
+		drawTo(_x + _radius * sin(_angle + edgeangle + bx::pi / 4.0f - angadjust),
+		       _y - _radius * cos(_angle + edgeangle + bx::pi / 4.0f - angadjust) );
 	}
 
 	endDraw();
@@ -616,14 +617,14 @@ void VectorDisplay::appendTexpoint(float _x, float _y, float _u, float _v)
 
 float VectorDisplay::normalizef(float _a)
 {
-	while (_a > 2.0f * M_PI + FLT_EPSILON)
+	while (_a > 2.0f * bx::pi + FLT_EPSILON)
 	{
-		_a -= 2.0f * (float)M_PI;
+		_a -= 2.0f * bx::pi;
 	}
 
 	while (_a < 0.0f - FLT_EPSILON)
 	{
-		_a += 2.0f * (float)M_PI;
+		_a += 2.0f * bx::pi;
 	}
 
 	return _a;
@@ -640,7 +641,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	if (a2pa < pa2a)
 	{
 		_t = -_t;
-		nsteps = (int)MAX(1, round(a2pa / (M_PI / 8) ) );
+		nsteps = (int)bx::fmax(1, bx::fround(a2pa / (bx::pi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
@@ -649,7 +650,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	}
 	else
 	{
-		nsteps = (int)MAX(1, round(pa2a / (M_PI / 8) ) );
+		nsteps = (int)bx::fmax(1, bx::fround(pa2a / (bx::pi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
