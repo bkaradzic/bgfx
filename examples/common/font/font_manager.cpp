@@ -5,18 +5,19 @@
 
 #define USE_EDTAA3 0
 
-#include "bx/platform.h"
+#include <bx/macros.h>
 
 #if BX_COMPILER_MSVC
-#define generic GenericFromFreeType     // WinRT language extensions see "generic" as a keyword... this is stupid
-#define interface InterfaceFromFreeType
-#pragma warning(push)
-#pragma warning(disable : 4245)         // conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
+#	define generic GenericFromFreeType // WinRT language extensions see "generic" as a keyword... this is stupid
+#endif // BX_COMPILER_MSVC
+
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4245) // error C4245: '=' : conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
+#pragma push_macro("interface")
+#undef interface
 #include <freetype/freetype.h>
-#pragma warning(pop)
-#else
-#include <freetype/freetype.h>
-#endif
+#pragma pop_macro("interface")
+BX_PRAGMA_DIAGNOSTIC_POP();
 
 #include "../common.h"
 

@@ -12,8 +12,9 @@
 
 #include "dbg.h"
 #include "cmd.h"
-#include <string>
+
 #include <tinystl/allocator.h>
+#include <tinystl/string.h>
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
 
@@ -62,14 +63,14 @@ struct CmdContext
 
 				case -1:
 					{
-						std::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
+						stl::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
 						DBG("Command '%s' doesn't exist.", tmp.c_str() );
 					}
 					break;
 
 				default:
 					{
-						std::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
+						stl::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
 						DBG("Failed '%s' err: %d.", tmp.c_str(), err);
 					}
 					break;

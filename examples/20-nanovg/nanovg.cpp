@@ -32,8 +32,11 @@
 #include "entry/entry.h"
 #include "nanovg/nanovg.h"
 
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-parameter");
 #define BLENDISH_IMPLEMENTATION
 #include "blendish.h"
+BX_PRAGMA_DIAGNOSTIC_POP();
 
 #define ICON_SEARCH 0x1F50D
 #define ICON_CIRCLED_CROSS 0x2716
@@ -941,7 +944,7 @@ int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 	{
 		char file[128];
 		bx::snprintf(file, 128, "images/image%d.jpg", ii+1);
-		data->images[ii] = nvgCreateImage(vg, file);
+		data->images[ii] = nvgCreateImage(vg, file, 0);
 		if (data->images[ii] == bgfx::invalidHandle)
 		{
 			printf("Could not load %s.\n", file);
@@ -1218,14 +1221,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	NVGcontext* nvg = nvgCreate(512, 512, 1, 0);
+	NVGcontext* nvg = nvgCreate(1, 0);
 	bgfx::setViewSeq(0, true);
 
 	DemoData data;
 	loadDemoData(nvg, &data);
 
-	bndSetFont(nvgCreateFont(nvg, "droidsans", "font/droidsans.ttf"));
-	bndSetIconImage(nvgCreateImage(nvg, "images/blender_icons16.png"));
+	bndSetFont(nvgCreateFont(nvg, "droidsans", "font/droidsans.ttf") );
+	bndSetIconImage(nvgCreateImage(nvg, "images/blender_icons16.png", 0) );
 
 	int64_t timeOffset = bx::getHPCounter();
 
@@ -1248,7 +1251,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/20-nanovg");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: NanoVG is small antialiased vector graphics rendering library.");
 
-		nvgBeginFrame(nvg, width, height, 1.0f, NVG_STRAIGHT_ALPHA);
+		nvgBeginFrame(nvg, width, height, 1.0f);
 
 		renderDemo(nvg, float(mouseState.m_mx), float(mouseState.m_my), float(width), float(height), time, 0, &data);
 

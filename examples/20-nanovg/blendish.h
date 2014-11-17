@@ -25,12 +25,6 @@ THE SOFTWARE.
 #ifndef BLENDISH_H
 #define BLENDISH_H
 
-#if BX_COMPILER_MSVC
-#	pragma warning(push)
-#	pragma warning(disable: 4305) // warning C4305: 'initializing' : truncation from 'double' to 'float'
-#	pragma warning(disable: 4244) // warning C4244: 'return' : conversion from 'int' to 'float', possible loss of data
-#endif // BX_COMPILER_MSVC
-
 #ifndef NANOVG_H
 #error "nanovg.h must be included first."
 #endif
@@ -808,6 +802,13 @@ BND_EXPORT void bndRadioButton(NVGcontext *ctx,
     float x, float y, float w, float h, int flags, BNDwidgetState state, 
     int iconid, const char *label);
     
+
+// Calculate the corresponding text position for given coordinates px/py
+// in a text field.
+// See bndTextField for more info.
+BND_EXPORT int bndTextFieldTextPosition(NVGcontext *ctx, float x, float y, float w, float h,
+    int iconid, const char *text, int px, int py);
+
 // Draw a text field with its lower left origin at (x,y) and size of (w,h),
 // where flags is one or multiple flags from BNDcornerFlags and state denotes
 // the widgets current UI state.
@@ -915,6 +916,11 @@ BND_EXPORT void bndNodePort(NVGcontext *ctx, float x, float y, BNDwidgetState st
 // BND_ACTIVE: dragged wire color
 BND_EXPORT void bndNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
     BNDwidgetState state0, BNDwidgetState state1);
+
+// Draw a node wire originating at (x0,y0) and floating to (x1,y1), with
+// a colored gradient based on the two colors color0 and color1
+BND_EXPORT void bndColoredNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
+    NVGcolor color0, NVGcolor color1);
 
 // Draw a node background with its upper left origin at (x,y) and size of (w,h)
 // where titleColor provides the base color for the title bar
@@ -1045,6 +1051,12 @@ BND_EXPORT void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, fl
 BND_EXPORT void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
     int iconid, NVGcolor color, NVGcolor shadowColor, int align, 
     float fontsize, const char *label);
+
+// Calculate the corresponding text position for given coordinates px/py
+// in an iconLabel.
+// See bndIconLabelCaret for more info.
+BND_EXPORT int bndIconLabelTextPosition(NVGcontext *ctx, float x, float y, float w, float h,
+    int iconid, float fontsize, const char *label, int px, int py);
     
 // Draw an optional icon specified by <iconid>, an optional label and 
 // a caret with given fontsize and color within a widget box.
@@ -1095,6 +1107,8 @@ BND_EXPORT NVGcolor bndNodeWireColor(const BNDnodeTheme *theme, BNDwidgetState s
 #ifdef _MSC_VER
     #pragma warning (disable: 4996) // Switch off security warnings
     #pragma warning (disable: 4100) // Switch off unreferenced formal parameter warnings
+    #pragma warning (disable: 4244)
+    #pragma warning (disable: 4305)
     #ifdef __cplusplus
     #define BND_INLINE inline
     #else
@@ -1206,6 +1220,9 @@ inline double bnd_fmax ( double a, double b )
 
 // max glyphs for position testing
 #define BND_MAX_GLYPHS 1024
+
+// max rows for position testing
+#define BND_MAX_ROWS 32
 
 // text distance from bottom
 #define BND_TEXT_PAD_DOWN 7
@@ -1444,6 +1461,12 @@ void bndRadioButton(NVGcontext *ctx,
         BND_LABEL_FONT_SIZE, label, NULL);
 }
 
+int bndTextFieldTextPosition(NVGcontext *ctx, float x, float y, float w, float h,
+    int iconid, const char *text, int px, int py) {
+    return bndIconLabelTextPosition(ctx, x, y, w, h,
+        iconid, BND_LABEL_FONT_SIZE, text, px, py);
+}
+
 void bndTextField(NVGcontext *ctx, 
     float x, float y, float w, float h, int flags, BNDwidgetState state, 
     int iconid, const char *text, int cbegin, int cend) {
@@ -1678,9 +1701,10 @@ void bndNodePort(NVGcontext *ctx, float x, float y, BNDwidgetState state,
     nvgFill(ctx);
 }
 
-void bndNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1, 
-    BNDwidgetState state0, BNDwidgetState state1) {
-    float delta = fabsf(x1 - x0)*(float)bnd_theme.nodeTheme.noodleCurving/10.0f;
+void bndColoredNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
+    NVGcolor color0, NVGcolor color1) {
+    float length = bnd_fmaxf(fabsf(x1 - x0),fabsf(y1 - y0));
+    float delta = length*(float)bnd_theme.nodeTheme.noodleCurving/10.0f;
     
     nvgBeginPath(ctx);
     nvgMoveTo(ctx, x0, y0);
@@ -1688,15 +1712,24 @@ void bndNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
         x0 + delta, y0,
         x1 - delta, y1,
         x1, y1);
-    nvgStrokeColor(ctx, bnd_theme.nodeTheme.wiresColor);
+    NVGcolor colorw = bnd_theme.nodeTheme.wiresColor;
+    colorw.a = (color0.a<color1.a)?color0.a:color1.a;
+    nvgStrokeColor(ctx, colorw);
     nvgStrokeWidth(ctx, BND_NODE_WIRE_OUTLINE_WIDTH);
     nvgStroke(ctx);
     nvgStrokePaint(ctx, nvgLinearGradient(ctx, 
         x0, y0, x1, y1, 
-        bndNodeWireColor(&bnd_theme.nodeTheme, state0),
-        bndNodeWireColor(&bnd_theme.nodeTheme, state1)));
+        color0,
+        color1));
     nvgStrokeWidth(ctx,BND_NODE_WIRE_WIDTH);
     nvgStroke(ctx);
+}
+
+void bndNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
+    BNDwidgetState state0, BNDwidgetState state1) {
+    bndColoredNodeWire(ctx, x0, y0, x1, y1,
+        bndNodeWireColor(&bnd_theme.nodeTheme, state0),
+        bndNodeWireColor(&bnd_theme.nodeTheme, state1));
 }
 
 void bndNodeBackground(NVGcontext *ctx, float x, float y, float w, float h,
@@ -1735,9 +1768,11 @@ void bndNodeBackground(NVGcontext *ctx, float x, float y, float w, float h,
     bndOutlineBox(ctx,x,y,w,h+1,
         BND_NODE_RADIUS,BND_NODE_RADIUS,BND_NODE_RADIUS,BND_NODE_RADIUS,
         bndTransparent(borderColor));
+    /*
     bndNodeArrowDown(ctx, 
         x + BND_NODE_MARGIN_SIDE, y + BND_NODE_TITLE_HEIGHT-4, 
         BND_NODE_ARROW_SIZE, arrowColor);
+    */
     bndDropShadow(ctx,x,y,w,h,BND_NODE_RADIUS,
         BND_SHADOW_FEATHER,BND_SHADOW_ALPHA);
 }
@@ -2118,17 +2153,17 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
                     + nvgTextBounds(ctx, 1, 1, value, NULL, NULL);
                 x += ((w-BND_PAD_RIGHT-pleft)-width)*0.5f;
             }
-            y += h-BND_TEXT_PAD_DOWN;
+            y += BND_WIDGET_HEIGHT-BND_TEXT_PAD_DOWN;
             nvgText(ctx, x, y, label, NULL);
             x += label_width;
             nvgText(ctx, x, y, BND_LABEL_SEPARATOR, NULL);
             x += sep_width;
-            nvgText(ctx, x, y, value, NULL);            
+            nvgText(ctx, x, y, value, NULL);
         } else {
             nvgTextAlign(ctx, 
                 (align==BND_LEFT)?(NVG_ALIGN_LEFT|NVG_ALIGN_BASELINE):
                 (NVG_ALIGN_CENTER|NVG_ALIGN_BASELINE));
-            nvgTextBox(ctx,x+pleft,y+h-BND_TEXT_PAD_DOWN,
+            nvgTextBox(ctx,x+pleft,y+BND_WIDGET_HEIGHT-BND_TEXT_PAD_DOWN,
                 w-BND_PAD_RIGHT-pleft,label, NULL);
         }
     } else if (iconid >= 0) {
@@ -2138,7 +2173,7 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
 
 void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
     int iconid, NVGcolor color, NVGcolor shadowColor, 
-    int /*align*/, float fontsize, const char *label) {
+    int align, float fontsize, const char *label) {
     if (label && (bnd_font >= 0)) {
         nvgFontFaceId(ctx, bnd_font);
         nvgFontSize(ctx, fontsize);
@@ -2158,10 +2193,70 @@ void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
     }
 }
 
-void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float /*h*/,
+int bndIconLabelTextPosition(NVGcontext *ctx, float x, float y, float w, float h,
+    int iconid, float fontsize, const char *label, int px, int py) {
+    float bounds[4];
+    float pleft = BND_TEXT_RADIUS;
+    if (!label) return -1;
+    if (iconid >= 0)
+        pleft += BND_ICON_SHEET_RES;
+
+    if (bnd_font < 0) return -1;
+
+    x += pleft;
+    y += BND_WIDGET_HEIGHT - BND_TEXT_PAD_DOWN;
+
+    nvgFontFaceId(ctx, bnd_font);
+    nvgFontSize(ctx, fontsize);
+    nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+
+    w -= BND_TEXT_RADIUS + pleft;
+
+    float asc, desc, lh;
+    static NVGtextRow rows[BND_MAX_ROWS];
+    int nrows = nvgTextBreakLines(
+        ctx, label, NULL, w, rows, BND_MAX_ROWS);
+    if (nrows == 0) return 0;
+    nvgTextBoxBounds(ctx, x, y, w, label, NULL, bounds);
+    nvgTextMetrics(ctx, &asc, &desc, &lh);
+
+    // calculate vertical position
+    int row = bnd_clamp((int)((float)(py - bounds[1]) / lh), 0, nrows - 1);
+    // search horizontal position
+    static NVGglyphPosition glyphs[BND_MAX_GLYPHS];
+    int nglyphs = nvgTextGlyphPositions(
+        ctx, x, y, rows[row].start, rows[row].end + 1, glyphs, BND_MAX_GLYPHS);
+    int col, p = 0;
+    for (col = 0; col < nglyphs && glyphs[col].x < px; ++col)
+        p = glyphs[col].str - label;
+    // see if we should move one character further
+    if (col > 0 && col < nglyphs && glyphs[col].x - px < px - glyphs[col - 1].x)
+        p = glyphs[col].str - label;
+    return p;
+}
+
+static void bndCaretPosition(NVGcontext *ctx, float x, float y,
+    float desc, float lineHeight, const char *caret, NVGtextRow *rows,int nrows,
+    int *cr, float *cx, float *cy) {
+    static NVGglyphPosition glyphs[BND_MAX_GLYPHS];
+    int r,nglyphs;
+    for (r=0; r < nrows && rows[r].end < caret; ++r);
+    *cr = r;
+    *cx = x;
+    *cy = y-lineHeight-desc + r*lineHeight;
+    if (nrows == 0) return;
+    *cx = rows[r].minx;
+    nglyphs = nvgTextGlyphPositions(
+        ctx, x, y, rows[r].start, rows[r].end+1, glyphs, BND_MAX_GLYPHS);
+    for (int i=0; i < nglyphs; ++i) {
+        *cx=glyphs[i].x;
+        if (glyphs[i].str == caret) break;
+    }
+}
+
+void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
     int iconid, NVGcolor color, float fontsize, const char *label, 
     NVGcolor caretcolor, int cbegin, int cend) {
-    float bounds[4];
     float pleft = BND_TEXT_RADIUS;
     if (!label) return;
     if (iconid >= 0) {
@@ -2181,70 +2276,37 @@ void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float /*h*/,
     w -= BND_TEXT_RADIUS+pleft;
 
     if (cend >= cbegin) {
-#if 1
-        float c0,c1;
-        const char *cb;const char *ce;
-        static NVGglyphPosition glyphs[BND_MAX_GLYPHS];
-        int nglyphs = nvgTextGlyphPositions(
-            ctx, x, y, label, label+cend+1, glyphs, BND_MAX_GLYPHS);
-        c0=glyphs[0].x;
-        c1=glyphs[nglyphs-1].x;
-        cb = label+cbegin; ce = label+cend;
-        // TODO: this is slow
-        for (int i=0; i < nglyphs; ++i) {
-            if (glyphs[i].str == cb)
-                c0 = glyphs[i].x;
-            if (glyphs[i].str == ce)
-                c1 = glyphs[i].x;
-        }
+        int c0r,c1r;
+        float c0x,c0y,c1x,c1y;
+        float desc,lh;
+        static NVGtextRow rows[BND_MAX_ROWS];
+        int nrows = nvgTextBreakLines(
+            ctx, label, label+cend+1, w, rows, BND_MAX_ROWS);
+        nvgTextMetrics(ctx, NULL, &desc, &lh);
+
+        bndCaretPosition(ctx, x, y, desc, lh, label+cbegin,
+            rows, nrows, &c0r, &c0x, &c0y);
+        bndCaretPosition(ctx, x, y, desc, lh, label+cend,
+            rows, nrows, &c1r, &c1x, &c1y);
         
-        nvgTextBounds(ctx,x,y,label,NULL, bounds);
         nvgBeginPath(ctx);
         if (cbegin == cend) {
             nvgFillColor(ctx, nvgRGBf(0.337,0.502,0.761));
-            nvgRect(ctx, c0-1, bounds[1], 2, bounds[3]-bounds[1]);
+            nvgRect(ctx, c0x-1, c0y, 2, lh+1);
         } else {
             nvgFillColor(ctx, caretcolor);
-            nvgRect(ctx, c0-1, bounds[1], c1-c0+1, bounds[3]-bounds[1]);
+            if (c0r == c1r) {
+                nvgRect(ctx, c0x-1, c0y, c1x-c0x+1, lh+1);
+            } else {
+                int blk=c1r-c0r-1;
+                nvgRect(ctx, c0x-1, c0y, x+w-c0x+1, lh+1);
+                nvgRect(ctx, x, c1y, c1x-x+1, lh+1);
+
+                if (blk)
+                    nvgRect(ctx, x, c0y+lh, w, blk*lh+1);
+            }
         }
         nvgFill(ctx);
-#else
-        float c0,c1;
-        const char *cb;
-        const char *ce;
-        const char *line;
-        int numlines;
-        cb = label+cbegin; ce = label+cend;
-        line = label;
-
-        NVGtextRow rows[2];
-        numlines = nvgTextBreakLines(ctx, line, NULL, w, rows, 2);
-
-        /*
-        int nglyphs = nvgTextGlyphPositions(
-            ctx, x, y, label, label+cend+1, glyphs, BND_MAX_GLYPHS);
-        c0=glyphs[0].x;
-        c1=glyphs[nglyphs-1].x;
-        // TODO: this is slow
-        for (int i=0; i < nglyphs; ++i) {
-            if (glyphs[i].str == cb)
-                c0 = glyphs[i].x;
-            if (glyphs[i].str == ce)
-                c1 = glyphs[i].x;
-        }
-
-        nvgTextBounds(ctx,x,y,label,NULL, bounds);
-        nvgBeginPath(ctx);
-        if (cbegin == cend) {
-            nvgFillColor(ctx, nvgRGBf(0.337,0.502,0.761));
-            nvgRect(ctx, c0-1, bounds[1], 2, bounds[3]-bounds[1]);
-        } else {
-            nvgFillColor(ctx, caretcolor);
-            nvgRect(ctx, c0-1, bounds[1], c1-c0+1, bounds[3]-bounds[1]);
-        }
-        nvgFill(ctx);
-        */
-#endif
     }
     
     nvgBeginPath(ctx);
@@ -2332,9 +2394,5 @@ NVGcolor bndNodeWireColor(const BNDnodeTheme *theme, BNDwidgetState state) {
 #ifdef BND_INLINE
 #undef BND_INLINE
 #endif
-
-#if BX_COMPILER_MSVC
-#	pragma warning(pop)
-#endif // BX_COMPILER_MSVC
 
 #endif // BLENDISH_IMPLEMENTATION

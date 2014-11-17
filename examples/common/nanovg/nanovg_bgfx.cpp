@@ -45,11 +45,17 @@ namespace
 		NSVG_SHADER_IMG
 	};
 
+	// These are additional flags on top of NVGimageFlags.
+	enum NVGimageFlagsGL {
+		NVG_IMAGE_NODELETE = 1<<16, // Do not delete GL texture handle.
+	};
+
 	struct GLNVGtexture
 	{
 		bgfx::TextureHandle id;
 		int width, height;
 		int type;
+		int flags;
 	};
 
 	enum GLNVGcallType
@@ -198,20 +204,21 @@ namespace
 
 	static int glnvg__deleteTexture(struct GLNVGcontext* gl, int id)
 	{
-		int i;
-		for (i = 0; i < gl->ntextures; i++)
+		for (int ii = 0; ii < gl->ntextures; ii++)
 		{
-			if (gl->textures[i].id.idx == id)
+			if (gl->textures[ii].id.idx == id)
 			{
-				if (bgfx::isValid(gl->textures[i].id) )
+				if (bgfx::isValid(gl->textures[ii].id)
+				&& (gl->textures[ii].flags & NVG_IMAGE_NODELETE) == 0)
 				{
-					bgfx::destroyTexture(gl->textures[i].id);
+					bgfx::destroyTexture(gl->textures[ii].id);
 				}
-				memset(&gl->textures[i], 0, sizeof(gl->textures[i]));
-				gl->textures[i].id.idx = bgfx::invalidHandle;
+				memset(&gl->textures[ii], 0, sizeof(gl->textures[ii]));
+				gl->textures[ii].id.idx = bgfx::invalidHandle;
 				return 1;
 			}
 		}
+
 		return 0;
 	}
 
@@ -277,7 +284,7 @@ namespace
 		return 1;
 	}
 
-	static int nvgRenderCreateTexture(void* _userPtr, int _type, int _width, int _height, const unsigned char* _rgba)
+	static int nvgRenderCreateTexture(void* _userPtr, int _type, int _width, int _height, int _flags, const unsigned char* _rgba)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 		struct GLNVGtexture* tex = glnvg__allocTexture(gl);
@@ -290,6 +297,7 @@ namespace
 		tex->width  = _width;
 		tex->height = _height;
 		tex->type   = _type;
+		tex->flags  = _flags;
 
 		uint32_t bytesPerPixel = NVG_TEXTURE_RGBA == tex->type ? 4 : 1;
 		uint32_t pitch = tex->width * bytesPerPixel;
@@ -505,10 +513,9 @@ namespace
 		gl->th = handle;
 	}
 
-	static void nvgRenderViewport(void* _userPtr, int width, int height, int alphaBlend)
+	static void nvgRenderViewport(void* _userPtr, int width, int height)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
-		NVG_NOTUSED(alphaBlend);
 		gl->view[0] = (float)width;
 		gl->view[1] = (float)height;
 		bgfx::setViewRect(gl->viewid, 0, 0, width, height);
@@ -672,7 +679,7 @@ namespace
 		}
 	}
 
-	static void nvgRenderFlush(void* _userPtr, int alphaBlend)
+	static void nvgRenderFlush(void* _userPtr)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 
@@ -687,14 +694,14 @@ namespace
 				| BGFX_STATE_ALPHA_WRITE
 				;
 
-			if (alphaBlend == NVG_PREMULTIPLIED_ALPHA)
-			{
-				gl->state |= BGFX_STATE_BLEND_FUNC_SEPARATE(
-								  BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA
-								, BGFX_STATE_BLEND_ONE,       BGFX_STATE_BLEND_INV_SRC_ALPHA
-								);
-			}
-			else
+// 			if (alphaBlend == NVG_PREMULTIPLIED_ALPHA)
+// 			{
+// 				gl->state |= BGFX_STATE_BLEND_FUNC_SEPARATE(
+// 								  BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA
+// 								, BGFX_STATE_BLEND_ONE,       BGFX_STATE_BLEND_INV_SRC_ALPHA
+// 								);
+// 			}
+// 			else
 			{
 				gl->state |= BGFX_STATE_BLEND_FUNC(
 								BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA
@@ -977,7 +984,8 @@ namespace
 
 		for (uint32_t ii = 0, num = gl->ntextures; ii < num; ++ii)
 		{
-			if (bgfx::isValid(gl->textures[ii].id) )
+			if (bgfx::isValid(gl->textures[ii].id)
+			&& (gl->textures[ii].flags & NVG_IMAGE_NODELETE) == 0) 
 			{
 				bgfx::destroyTexture(gl->textures[ii].id);
 			}
@@ -990,7 +998,7 @@ namespace
 
 } // namespace
 
-struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa, unsigned char viewid)
+NVGcontext* nvgCreate(int edgeaa, unsigned char viewid)
 {
 	struct NVGparams params;
 	struct NVGcontext* ctx = NULL;
@@ -1011,8 +1019,6 @@ struct NVGcontext* nvgCreate(int atlasw, int atlash, int edgeaa, unsigned char v
 	params.renderTriangles      = nvgRenderTriangles;
 	params.renderDelete         = nvgRenderDelete;
 	params.userPtr = gl;
-	params.atlasWidth = atlasw;
-	params.atlasHeight = atlash;
 	params.edgeAntiAlias = edgeaa;
 
 	gl->edgeAntiAlias = edgeaa;

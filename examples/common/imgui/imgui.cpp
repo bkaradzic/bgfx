@@ -77,7 +77,7 @@ static void imguiFree(void* _ptr, void* /*_userptr*/)
 #define STBTT_malloc(_x, _y) imguiMalloc(_x, _y)
 #define STBTT_free(_x, _y) imguiFree(_x, _y)
 #define STB_TRUETYPE_IMPLEMENTATION
-#include <stb_truetype/stb_truetype.h>
+#include <stb/stb_truetype.h>
 
 namespace
 {
@@ -441,7 +441,7 @@ struct Imgui
 
 	ImguiFontHandle create(const void* _data, float _fontSize)
 	{
-		m_nvg = nvgCreate(512, 512, 1, m_view);
+		m_nvg = nvgCreate(1, m_view);
 		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
 		nvgFontSize(m_nvg, _fontSize);
 		nvgFontFace(m_nvg, "default");
@@ -768,7 +768,7 @@ struct Imgui
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 	{
-		nvgBeginFrame(m_nvg, _width, _height, 1.0f, NVG_STRAIGHT_ALPHA);
+		nvgBeginFrame(m_nvg, _width, _height, 1.0f);
 
 		m_view = _view;
 		m_viewWidth = _width;
