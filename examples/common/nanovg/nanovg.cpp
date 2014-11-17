@@ -22,13 +22,14 @@
 
 #include <bx/macros.h>
 
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505) // error C4505: '' : unreferenced local function has been removed
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4701) // error C4701: potentially uninitialized local variable 'cint' used
-// MSVC doesn't like 4505 wrapped with warning disable push/pop.
+// -Wunused-function and 4505 must be file scope, can't be disabled between push/pop.
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505) // error C4505: '' : unreferenced local function has been removed
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-result");
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
 BX_PRAGMA_DIAGNOSTIC_POP();

@@ -33,7 +33,7 @@
 #include "nanovg/nanovg.h"
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-parameter");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter");
 #define BLENDISH_IMPLEMENTATION
 #include "blendish.h"
 BX_PRAGMA_DIAGNOSTIC_POP();
