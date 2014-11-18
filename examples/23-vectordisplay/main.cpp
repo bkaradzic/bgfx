@@ -44,8 +44,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 	bool originBottomLeft = bgfx::RendererType::OpenGL == renderer
 	                        || bgfx::RendererType::OpenGLES == renderer;
-	VectorDisplay vectorDisplay(originBottomLeft, texelHalf);
-	vectorDisplay.setup(width, height);
+	VectorDisplay vd(originBottomLeft, texelHalf);
+	vd.setup(width, height);
 
 	// Enable debug text.
 	bgfx::setDebug(debug);
@@ -64,12 +64,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
-		if ( (oldWidth != width)
-		   || (oldHeight != height) )
+		if (oldWidth  != width
+		||  oldHeight != height)
 		{
-			oldWidth = width;
+			oldWidth  = width;
 			oldHeight = height;
-			vectorDisplay.resize(width, height);
+			vd.resize(width, height);
 		}
 
 		float view[16];
@@ -99,62 +99,62 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering lines as oldschool vectors.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
-		vectorDisplay.beginFrame();
+		vd.beginFrame();
 
 		//simplex test
-		vectorDisplay.setDrawColor(0.7f, 0.7f, 1.0f);
-		vectorDisplay.drawSimplexFont(50, 80, 1.5, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-		vectorDisplay.drawSimplexFont(50, 140, 1.5, "abcdefghijklmnopqrstuvwxyz");
-		vectorDisplay.drawSimplexFont(50, 200, 1.5, "!@#$%^&*()-=<>/?;:'\"{}[]|\\+=-_");
+		vd.setDrawColor(0.7f, 0.7f, 1.0f);
+		vd.drawSimplexFont(50.0f,  80.0f, 1.5f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+		vd.drawSimplexFont(50.0f, 140.0f, 1.5f, "abcdefghijklmnopqrstuvwxyz");
+		vd.drawSimplexFont(50.0f, 200.0f, 1.5f, "!@#$%^&*()-=<>/?;:'\"{}[]|\\+=-_");
 
-		vectorDisplay.setDrawColor(1.0f, 0.7f, 0.7f);
+		vd.setDrawColor(1.0f, 0.7f, 0.7f);
 
 		//test pattern for lines
-		for (int i = 0; i < 4; i++)
+		for (int ii = 0; ii < 4; ii++)
 		{
-			for (int j = 0; j < i; j++)                      //draw more intensive lines
+			for (int jj = 0; jj < ii; jj++) //draw more intensive lines
 			{
-				vectorDisplay.drawLine(50.0f, 350.0f + 40 * i, 200.0f, 350.0f + 40 * i);
+				vd.drawLine(50.0f, 350.0f + 40 * ii, 200.0f, 350.0f + 40 * ii);
 			}
 		}
 
-		for (int i = 0; i < 4; i++)
+		for (int ii = 0; ii < 4; ii++)
 		{
-			for (int j = 0; j <= i; j++)
+			for (int jj = 0; jj <= ii; jj++)
 			{
-				vectorDisplay.drawLine(50.0f + 40 * i, 600.0f, 50.0f + 40 * i, 700.0f);
+				vd.drawLine(50.0f + 40 * ii, 600.0f, 50.0f + 40 * ii, 700.0f);
 			}
 		}
 
 		//
 		// test pattern for shapes
 		//
-		vectorDisplay.setDrawColor(0.7f, 0.7f, 1.0f);
-		vectorDisplay.drawCircle(250, 450, 10, 32);
-		vectorDisplay.drawCircle(300, 450, 30, 32);
-		vectorDisplay.drawCircle(400, 450, 60, 32);
-		vectorDisplay.drawCircle(500, 450, 80, 64);
+		vd.setDrawColor(0.7f, 0.7f, 1.0f);
+		vd.drawCircle(250.0f, 450.0f, 10.0f, 32.0f);
+		vd.drawCircle(300.0f, 450.0f, 30.0f, 32.0f);
+		vd.drawCircle(400.0f, 450.0f, 60.0f, 32.0f);
+		vd.drawCircle(500.0f, 450.0f, 80.0f, 64.0f);
 
-		vectorDisplay.setDrawColor(0.7f, 1.0f, 0.7f);
-		vectorDisplay.drawBox(250, 600, 10, 10);
-		vectorDisplay.drawBox(300, 600, 30, 30);
-		vectorDisplay.drawBox(350, 600, 60, 60);
-		vectorDisplay.drawBox(450, 600, 80, 80);
+		vd.setDrawColor(0.7f, 1.0f, 0.7f);
+		vd.drawBox(250.0f, 600.0f, 10.0f, 10.0f);
+		vd.drawBox(300.0f, 600.0f, 30.0f, 30.0f);
+		vd.drawBox(350.0f, 600.0f, 60.0f, 60.0f);
+		vd.drawBox(450.0f, 600.0f, 80.0f, 80.0f);
 
-		vectorDisplay.setDrawColor(1.0f, 0.7f, 1.0f);
-		vectorDisplay.drawWheel(bx::pi, 800, 450, 80);
-		vectorDisplay.drawWheel(3 * bx::pi / 4, 950, 450, 60);
-		vectorDisplay.drawWheel(bx::pi / 2, 1150, 450, 30);
-		vectorDisplay.drawWheel(bx::pi / 4, 1250, 450, 10);
+		vd.setDrawColor(1.0f, 0.7f, 1.0f);
+		vd.drawWheel(bx::pi, 800.0f, 450.0f, 80.0f);
+		vd.drawWheel(3.0f * bx::pi / 4.0f, 95.0f, 450.0f, 60.0f);
+		vd.drawWheel(bx::pi / 2.0f, 1150.0f, 450.0f, 30.0f);
+		vd.drawWheel(bx::pi / 4.0f, 1250.0f, 450.0f, 10.0f);
 
 		// draw moving shape
 		static float counter = 0.0f;
 		counter += 0.01f;
-		float posX = width / 2 + sin(counter * 3.18378f) * (width / 2);
-		float posY = height / 2 + cos(counter) * (height / 2);
-		vectorDisplay.drawCircle(posX, posY, 5, 10);
+		float posX = width  / 2.0f + sin(counter * 3.18378f) * (width / 2.0f);
+		float posY = height / 2.0f + cos(counter) * (height / 2.0f);
+		vd.drawCircle(posX, posY, 5.0f, 10.0f);
 
-		vectorDisplay.endFrame();
+		vd.endFrame();
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
@@ -162,7 +162,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	// Cleanup.
-	vectorDisplay.teardown();
+	vd.teardown();
 
 	// Shutdown bgfx.
 	bgfx::shutdown();

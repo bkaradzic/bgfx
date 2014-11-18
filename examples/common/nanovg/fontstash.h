@@ -137,7 +137,7 @@ void fonsDrawDebug(FONScontext* s, float x, float y);
 
 #ifdef FONTSTASH_IMPLEMENTATION
 
-#define FONS_NOTUSED(v)  (void)sizeof(v)
+#define FONS_NOTUSED(v) BX_UNUSED(v)
 
 #ifdef FONS_USE_FREETYPE
 

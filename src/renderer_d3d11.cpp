@@ -672,17 +672,21 @@ RENDERDOC_IMPORT
 
 			D3D_FEATURE_LEVEL featureLevel;
 
-			hr = D3D11CreateDevice(m_adapter
-				, m_driverType
-				, NULL
-				, flags
-				, features
-				, BX_COUNTOF(features)
-				, D3D11_SDK_VERSION
-				, &m_device
-				, &featureLevel
-				, &m_deviceCtx
-				);
+			hr = -1;
+			for (uint32_t ii = 0; ii < 3 && FAILED(hr); ++ii)
+			{
+				hr = D3D11CreateDevice(m_adapter
+					, m_driverType
+					, NULL
+					, flags
+					, &features[ii]
+					, BX_COUNTOF(features)-ii
+					, D3D11_SDK_VERSION
+					, &m_device
+					, &featureLevel
+					, &m_deviceCtx
+					);
+			}
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 			IDXGIDevice* device;
