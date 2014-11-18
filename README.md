@@ -371,6 +371,12 @@ Linux 64-bit:
 
 	make linux-release64
 
+WinRT / Windows Phone 8.1:
+
+	../bx/tools/bin/windows/genie --vs=winphone81 vs2013
+Build the resulting solution and deploy to device. Note that
+shaders will need to be compiled with the appropriate target profile for your platform.
+
 Other platforms:
 
 	make <configuration>
