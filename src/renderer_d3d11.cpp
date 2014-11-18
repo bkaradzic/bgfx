@@ -661,6 +661,10 @@ RENDERDOC_IMPORT
 			}
 			DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 
+#ifndef D3D_FEATURE_LEVEL_11_1
+#	define D3D_FEATURE_LEVEL_11_1 D3D_FEATURE_LEVEL(0xb100)
+#endif // D3D_FEATURE_LEVEL_11_1
+
 			D3D_FEATURE_LEVEL features[] =
 			{
 				D3D_FEATURE_LEVEL_11_1,
@@ -683,7 +687,7 @@ RENDERDOC_IMPORT
 				, NULL
 				, flags
 				, features
-				, ARRAYSIZE(features)
+				, BX_COUNTOF(features)
 				, D3D11_SDK_VERSION
 				, &m_device
 				, &featureLevel
@@ -710,29 +714,29 @@ RENDERDOC_IMPORT
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 #if BX_PLATFORM_WINRT
-            hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
+			hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 			DX_RELEASE(adapter, 2);
-            
+
 			memset(&m_scd, 0, sizeof(m_scd) );
 			m_scd.Width  = BGFX_DEFAULT_WIDTH;
 			m_scd.Height = BGFX_DEFAULT_HEIGHT;
 			m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            m_scd.Stereo = false;
+			m_scd.Stereo = false;
 			m_scd.SampleDesc.Count = 1;
 			m_scd.SampleDesc.Quality = 0;
 			m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 			m_scd.BufferCount = 2;
-            m_scd.Scaling = DXGI_SCALING_NONE;
-            m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-            m_scd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+			m_scd.Scaling = DXGI_SCALING_NONE;
+			m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+			m_scd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
-            hr = m_factory->CreateSwapChainForCoreWindow(m_device
-                                                        , g_bgfxCoreWindow
-                                                        , &m_scd
-                                                        , NULL
-                                                        , &m_swapChain
-                                                        );
+			hr = m_factory->CreateSwapChainForCoreWindow(m_device
+				, g_bgfxCoreWindow
+				, &m_scd
+				, NULL
+				, &m_swapChain
+				);
 #else
 			hr = adapter->GetParent(__uuidof(IDXGIFactory), (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
