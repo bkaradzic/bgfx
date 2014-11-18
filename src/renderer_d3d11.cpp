@@ -663,9 +663,13 @@ RENDERDOC_IMPORT
 
 			D3D_FEATURE_LEVEL features[] =
 			{
+                D3D_FEATURE_LEVEL_11_1,
 				D3D_FEATURE_LEVEL_11_0,
 				D3D_FEATURE_LEVEL_10_1,
 				D3D_FEATURE_LEVEL_10_0,
+                D3D_FEATURE_LEVEL_9_3,
+                D3D_FEATURE_LEVEL_9_2,
+                D3D_FEATURE_LEVEL_9_1
 			};
 
 			uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED
@@ -679,7 +683,7 @@ RENDERDOC_IMPORT
 				, NULL
 				, flags
 				, features
-				, 1
+				, ARRAYSIZE(features)
 				, D3D11_SDK_VERSION
 				, &m_device
 				, &featureLevel
@@ -1253,6 +1257,10 @@ RENDERDOC_IMPORT
 			{
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
+#if BX_PLATFORM_WINRT
+                syncInterval = 1;   // sync interval of 0 is not supported on WinRT
+#endif
+
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
 					hr = m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, 0);
