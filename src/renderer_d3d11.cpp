@@ -175,13 +175,6 @@ namespace bgfx
 		DXGI_FORMAT m_fmtDsv;
 	};
 
-#ifndef DXGI_FORMAT_B4G4R4A4_UNORM
-// Win8 only BS
-// https://blogs.msdn.com/b/chuckw/archive/2012/11/14/directx-11-1-and-windows-7.aspx?Redirected=true
-// http://msdn.microsoft.com/en-us/library/windows/desktop/bb173059%28v=vs.85%29.aspx
-#	define DXGI_FORMAT_B4G4R4A4_UNORM DXGI_FORMAT(115)
-#endif // DXGI_FORMAT_B4G4R4A4_UNORM
-
 	static const TextureFormatInfo s_textureFormat[] =
 	{
 		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1 
@@ -661,12 +654,9 @@ RENDERDOC_IMPORT
 			}
 			DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 
-#ifndef D3D_FEATURE_LEVEL_11_1
-#	define D3D_FEATURE_LEVEL_11_1 D3D_FEATURE_LEVEL(0xb100)
-#endif // D3D_FEATURE_LEVEL_11_1
-
 			D3D_FEATURE_LEVEL features[] =
 			{
+				D3D_FEATURE_LEVEL_11_2,
 				D3D_FEATURE_LEVEL_11_1,
 				D3D_FEATURE_LEVEL_11_0,
 				D3D_FEATURE_LEVEL_10_1,

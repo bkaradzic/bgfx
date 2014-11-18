@@ -36,6 +36,21 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	define D3DCOLOR_RGBA(_r, _g, _b, _a) D3DCOLOR_ARGB(_a, _r, _g, _b)
 #endif // D3DCOLOR_RGBA
 
+#ifndef DXGI_FORMAT_B4G4R4A4_UNORM
+// Win8 only BS
+// https://blogs.msdn.com/b/chuckw/archive/2012/11/14/directx-11-1-and-windows-7.aspx?Redirected=true
+// http://msdn.microsoft.com/en-us/library/windows/desktop/bb173059%28v=vs.85%29.aspx
+#	define DXGI_FORMAT_B4G4R4A4_UNORM DXGI_FORMAT(115)
+#endif // DXGI_FORMAT_B4G4R4A4_UNORM
+
+#ifndef D3D_FEATURE_LEVEL_11_1
+#	define D3D_FEATURE_LEVEL_11_1 D3D_FEATURE_LEVEL(0xb100)
+#endif // D3D_FEATURE_LEVEL_11_1
+
+#ifndef D3D_FEATURE_LEVEL_11_2
+#	define D3D_FEATURE_LEVEL_11_2 D3D_FEATURE_LEVEL(0xb200)
+#endif // D3D_FEATURE_LEVEL_11_2
+
 namespace bgfx
 {
 	struct IndexBufferD3D11
