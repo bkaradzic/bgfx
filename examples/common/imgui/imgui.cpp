@@ -1430,15 +1430,45 @@ struct Imgui
 		}
 	}
 
-	uint8_t tabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, va_list _argList)
+	uint8_t tabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, uint8_t _nEnabled, va_list _argList)
 	{
-		BX_UNUSED(_align);
-		uint8_t count;
 		const char* titles[16];
-		const char* str = va_arg(_argList, const char*);
-		for (count = 0; str != NULL || count >= 16; ++count, str = va_arg(_argList, const char*) )
+		bool tabEnabled[16];
+		const uint8_t tabCount = IMGUI_MIN(_nTabs, 16);
+		const uint8_t enabledCount = IMGUI_MIN(_nEnabled, 16);
+
+		// Read titles.
 		{
-			titles[count] = str;
+			uint8_t ii = 0;
+			for (; ii < tabCount; ++ii)
+			{
+				const char* str = va_arg(_argList, const char*);
+				titles[ii] = str;
+			}
+			for (; ii < _nTabs; ++ii)
+			{
+				const char* str = va_arg(_argList, const char*);
+				BX_UNUSED(str);
+			}
+		}
+
+		// Read enabled tabs.
+		{
+			uint8_t ii = 0;
+			for (; ii < enabledCount; ++ii)
+			{
+				bool enabled = va_arg(_argList, bool);
+				tabEnabled[ii] = enabled;
+			}
+			for (; ii < _nEnabled; ++ii)
+			{
+				bool enabled = va_arg(_argList, bool);
+				BX_UNUSED(enabled);
+			}
+			for (; ii < _nTabs; ++ii)
+			{
+				tabEnabled[ii] = true;
+			}
 		}
 
 		Area& area = getCurrentArea();
@@ -1466,8 +1496,8 @@ struct Imgui
 		}
 
 		uint8_t selected = _selected;
-		const int32_t tabWidth     = width / count;
-		const int32_t tabWidthHalf = width / (count*2);
+		const int32_t tabWidth     = width / tabCount;
+		const int32_t tabWidthHalf = width / (tabCount*2);
 		const int32_t textY = yy + _height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 2;
 
 		if (0 == _r)
@@ -1490,14 +1520,14 @@ struct Imgui
 						   );
 		}
 
-		for (uint8_t ii = 0; ii < count; ++ii)
+		for (uint8_t ii = 0; ii < tabCount; ++ii)
 		{
 			const uint32_t id = getId();
 
 			int32_t buttonX = xx + ii*tabWidth;
 			int32_t textX = buttonX + tabWidthHalf;
 
-			const bool enabled = _enabled && isEnabled(m_areaId);
+			const bool enabled = _enabled && tabEnabled[ii] && isEnabled(m_areaId);
 			const bool over = enabled && inRect(buttonX, yy, tabWidth, _height);
 			const bool res = buttonLogic(id, over);
 
@@ -3218,41 +3248,11 @@ void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled, Im
 	s_imgui.input(_label, _str, _len, _enabled, _align, _r);
 }
 
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, ...)
+uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, uint8_t _nEnabled, ...)
 {
 	va_list argList;
-	va_start(argList, _selected);
-	const uint8_t result = s_imgui.tabs(_selected, true, ImguiAlign::LeftIndented, BUTTON_HEIGHT, BUTTON_HEIGHT/2 - 1, argList);
-	va_end(argList);
-
-	return result;
-}
-
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...)
-{
-	va_list argList;
-	va_start(argList, _enabled);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, ImguiAlign::LeftIndented, BUTTON_HEIGHT, BUTTON_HEIGHT/2 - 1, argList);
-	va_end(argList);
-
-	return result;
-}
-
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, ...)
-{
-	va_list argList;
-	va_start(argList, _align);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, BUTTON_HEIGHT, BUTTON_HEIGHT/2 - 1, argList);
-	va_end(argList);
-
-	return result;
-}
-
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, ...)
-{
-	va_list argList;
-	va_start(argList, _r);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, _height, _r, argList);
+	va_start(argList, _nEnabled);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, _height, _r, _nTabs, _nEnabled, argList);
 	va_end(argList);
 
 	return result;

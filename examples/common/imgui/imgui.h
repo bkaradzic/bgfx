@@ -162,11 +162,13 @@ bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float
 bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented);
 void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented, int32_t _r = IMGUI_INPUT_R);
 
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, ...);
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ...);
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, ...);
-uint8_t imguiTabsUseMacroInstead(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, ...);
-#define imguiTabs(...) imguiTabsUseMacroInstead(__VA_ARGS__, NULL)
+/// Usage example:
+///     imguiTabs(0, true, ImguiAlign::CenterIndented, 20, 0, 3, 2, "Tab0", "Tab1", "Tab2", true, false);
+/// _nTabs    - Number of tabs (in the above example, 3, and their labes are 'Tab0', 'Tab1' and 'Tab2'.
+/// _nEnabled - Number of specified 'enabled' flags. All other unspecified tabs are considered enabled by default.
+///             In the above example, there are 2 enabled flags: 'Tab0' is specified as enabled and 'Tab1' is specified as disabled.
+///             Tab2 is unspecified and therefore is treated as enabled.
+uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, uint8_t _nEnabled, ...);
 
 uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
 #define imguiChoose(...) imguiChooseUseMacroInstead(__VA_ARGS__, NULL)
