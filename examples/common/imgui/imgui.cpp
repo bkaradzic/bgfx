@@ -1524,7 +1524,7 @@ struct Imgui
 		{
 			const uint32_t id = getId();
 
-			int32_t buttonX = xx + ii*tabWidth;
+			int32_t buttonX = xx + ii*width/tabCount;
 			int32_t textX = buttonX + tabWidthHalf;
 
 			const bool enabled = _enabled && tabEnabled[ii] && isEnabled(m_areaId);
