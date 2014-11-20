@@ -1457,12 +1457,12 @@ struct Imgui
 			uint8_t ii = 0;
 			for (; ii < enabledCount; ++ii)
 			{
-				bool enabled = va_arg(_argList, int);
+				const bool enabled = (0 != va_arg(_argList, int) );
 				tabEnabled[ii] = enabled;
 			}
 			for (; ii < _nEnabled; ++ii)
 			{
-				bool enabled = va_arg(_argList, int);
+				const int enabled = va_arg(_argList, int);
 				BX_UNUSED(enabled);
 			}
 			for (; ii < _nTabs; ++ii)
@@ -3253,6 +3253,16 @@ uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int
 	va_list argList;
 	va_start(argList, _nEnabled);
 	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, _height, _r, _nTabs, _nEnabled, argList);
+	va_end(argList);
+
+	return result;
+}
+
+uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, ...)
+{
+	va_list argList;
+	va_start(argList, _nTabs);
+	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, _height, _r, _nTabs, 0, argList);
 	va_end(argList);
 
 	return result;
