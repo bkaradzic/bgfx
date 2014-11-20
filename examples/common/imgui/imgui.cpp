@@ -1457,12 +1457,12 @@ struct Imgui
 			uint8_t ii = 0;
 			for (; ii < enabledCount; ++ii)
 			{
-				bool enabled = va_arg(_argList, bool);
+				bool enabled = va_arg(_argList, int);
 				tabEnabled[ii] = enabled;
 			}
 			for (; ii < _nEnabled; ++ii)
 			{
-				bool enabled = va_arg(_argList, bool);
+				bool enabled = va_arg(_argList, int);
 				BX_UNUSED(enabled);
 			}
 			for (; ii < _nTabs; ++ii)
