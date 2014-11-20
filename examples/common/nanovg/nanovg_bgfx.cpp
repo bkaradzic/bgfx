@@ -620,6 +620,7 @@ namespace
 
 		for (i = 0; i < npaths; i++)
 		{
+			if (paths[i].fillCount == 0) continue;
 			bgfx::setProgram(gl->prog);
 			bgfx::setState(gl->state);
 			bgfx::setVertexBuffer(&gl->tvb);
