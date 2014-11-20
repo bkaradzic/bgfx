@@ -14,14 +14,19 @@ Supported rendering backends:
  * OpenGL 3.1+
  * OpenGL ES 2
  * OpenGL ES 3.1
+ * WebGL 1.0
+
+Supported HMD:
+
+ * OculusVR (0.4.3)
 
 Supported platforms:
 
- * Android (14+)
+ * Android (14+, ARM, x86, MIPS)
  * asm.js/Emscripten (1.25.0)
  * iOS
  * Linux
- * Native Client (37)
+ * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
  * OSX (10.9)
  * RaspberryPi
  * Windows (XP, Vista, 7, 8, 10)
@@ -493,6 +498,9 @@ Using bgfx with SDL example:
 	    ...
 	    bgfx::init();
 
+**NOTE** You can use `--with-sdl` when runnning GENie to enable SDL2 integration
+with examples.
+
 Tools
 -----
 
@@ -536,12 +544,16 @@ Todo
  - Occlusion queries.
  - Fullscreen mode.
  - ETC2, PVRTC1/2 decoding fallback for targets that don't support it natively.
+ - shaderc as library for runtime shader building.
+ - texturec tool with support for all supported texture formats.
+ - Animated mesh example.
+ - Direct3D 12 renderer backend.
+ - Metal renderer backend.
 
 Contact
 -------
 
 [@bkaradzic](https://twitter.com/bkaradzic)  
-http://www.stuckingeometry.com
 
 Project page  
 https://github.com/bkaradzic/bgfx
