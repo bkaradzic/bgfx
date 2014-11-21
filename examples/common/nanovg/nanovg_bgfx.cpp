@@ -30,6 +30,8 @@
 
 #include <bgfx.h>
 
+#include <bx\bx.h>
+
 namespace
 {
 #include "vs_nanovg_fill.bin.h"
@@ -687,6 +689,14 @@ namespace
 		if (gl->ncalls > 0)
 		{
 			bgfx::allocTransientVertexBuffer(&gl->tvb, gl->nverts, s_nvgDecl);
+			
+			int allocated = gl->tvb.size/gl->tvb.stride;
+			
+			if (allocated < gl->nverts) {
+				gl->nverts = allocated;
+				BX_WARN(true, "Vertex number truncated due to transient vertex buffer overflow");
+			}
+			
 
 			memcpy(gl->tvb.data, gl->verts, gl->nverts * sizeof(struct NVGvertex) );
 
