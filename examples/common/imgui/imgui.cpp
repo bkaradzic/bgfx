@@ -2684,25 +2684,27 @@ struct Imgui
 		}
 	}
 
-	void colorWheelWidget(float _rgb[3], bool _respectIndentation, bool _enabled)
+	void colorWheelWidget(float _rgb[3], bool _respectIndentation, float _size, bool _enabled)
 	{
 		const uint32_t wheelId = getId();
 		const uint32_t triangleId = getId();
 
 		Area& area = getCurrentArea();
-		const int32_t height = area.m_contentWidth - COLOR_WHEEL_PADDING;
-		const float heightf = float(height);
-		const float widthf = float(area.m_contentWidth - COLOR_WHEEL_PADDING);
-		const float xx = float( (_respectIndentation ? area.m_widgetX-SCROLL_AREA_PADDING : area.m_contentX) + COLOR_WHEEL_PADDING/2);
-		const float yy = float(area.m_widgetY);
 
-		area.m_widgetY += height + DEFAULT_SPACING;
+		const float areaX = float(_respectIndentation ? area.m_widgetX : area.m_contentX);
+		const float areaW = float(_respectIndentation ? area.m_widgetW : area.m_contentWidth);
 
-		const float ro = (widthf < heightf ? widthf : heightf) * 0.5f - 5.0f; // radiusOuter.
-		const float rd = 20.0f; // radiusDelta.
+		const float width = areaW*_size;
+		const float xx = areaX + areaW*0.5f;
+		const float yy = float(area.m_widgetY) + width*0.5f;
+		const float center[2] = { xx, yy };
+
+		area.m_widgetY += int32_t(width) + DEFAULT_SPACING;
+
+		const float ro = width*0.5f - 5.0f; // radiusOuter.
+		const float rd = _size*25.0f; // radiusDelta.
 		const float ri = ro - rd; // radiusInner.
 		const float aeps = 0.5f / ro; // Half a pixel arc length in radians (2pi cancels out).
-		const float center[2] = { xx + widthf*0.5f, yy + heightf*0.5f };
 		const float cmx = float(m_mx) - center[0];
 		const float cmy = float(m_my) - center[1];
 
@@ -3321,12 +3323,12 @@ uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)
 	return _selected;
 }
 
-void imguiColorWheel(float _rgb[3], bool _respectIndentation, bool _enabled)
+void imguiColorWheel(float _rgb[3], bool _respectIndentation, float _size, bool _enabled)
 {
-	s_imgui.colorWheelWidget(_rgb, _respectIndentation, _enabled);
+	s_imgui.colorWheelWidget(_rgb, _respectIndentation, _size, _enabled);
 }
 
-void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _enabled)
+void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, float _size, bool _enabled)
 {
 	char buf[128];
 	bx::snprintf(buf, sizeof(buf), "[RGB %-2.2f %-2.2f %-2.2f]"
@@ -3342,7 +3344,7 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 
 	if (_activated)
 	{
-		imguiColorWheel(_rgb, false, _enabled);
+		imguiColorWheel(_rgb, false, _size, _enabled);
 	}
 }
 
