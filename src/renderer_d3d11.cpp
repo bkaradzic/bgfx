@@ -1061,7 +1061,7 @@ RENDERDOC_IMPORT
 					desc.Usage = D3D11_USAGE_DEFAULT;
 					desc.CPUAccessFlags = 0;
 					ID3D11Texture2D* resolve;
-					HRESULT hr = m_device->CreateTexture2D(&desc, NULL, &resolve);
+					hr = m_device->CreateTexture2D(&desc, NULL, &resolve);
 					if (SUCCEEDED(hr) )
 					{
 						m_deviceCtx->ResolveSubresource(resolve, 0, backBuffer, 0, desc.Format);
@@ -1639,17 +1639,17 @@ RENDERDOC_IMPORT
 						drt = &desc.RenderTarget[ii];
 						drt->BlendEnable = 0 != (rgba&0x7ff);
 
-						const uint32_t src      = (rgba   )&0xf;
-						const uint32_t dst      = (rgba>>4)&0xf;
-						const uint32_t equation = (rgba>>8)&0x7;
+						const uint32_t src			 = (rgba   )&0xf;
+						const uint32_t dst			 = (rgba>>4)&0xf;
+						const uint32_t equationIndex = (rgba>>8)&0x7;
 
 						drt->SrcBlend       = s_blendFactor[src][0];
 						drt->DestBlend      = s_blendFactor[dst][0];
-						drt->BlendOp        = s_blendEquation[equation];
+						drt->BlendOp        = s_blendEquation[equationIndex];
 
 						drt->SrcBlendAlpha  = s_blendFactor[src][1];
 						drt->DestBlendAlpha = s_blendFactor[dst][1];
-						drt->BlendOpAlpha   = s_blendEquation[equation];
+						drt->BlendOpAlpha   = s_blendEquation[equationIndex];
 
 						drt->RenderTargetWriteMask = writeMask;
 					}
@@ -2848,7 +2848,7 @@ RENDERDOC_IMPORT
 
 		if (convert)
 		{
-			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
+			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
 			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, m_requestedFormat);
 			data = temp;
 		}
@@ -3110,8 +3110,8 @@ RENDERDOC_IMPORT
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
 
-		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
 
@@ -3360,7 +3360,6 @@ RENDERDOC_IMPORT
 					currentState.m_flags = newFlags;
 					currentState.m_stencil = newStencil;
 
-					uint64_t newFlags = renderItem.draw.m_flags;
 					setBlendState(newFlags);
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
