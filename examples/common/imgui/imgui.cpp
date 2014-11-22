@@ -73,6 +73,7 @@ static void imguiFree(void* _ptr, void* /*_userptr*/)
 
 #define IMGUI_MIN(_a, _b) (_a)<(_b)?(_a):(_b)
 #define IMGUI_MAX(_a, _b) (_a)>(_b)?(_a):(_b)
+#define IMGUI_CLAMP(_a, _min, _max) IMGUI_MIN(IMGUI_MAX(_a, _min), _max)
 
 #define STBTT_malloc(_x, _y) imguiMalloc(_x, _y)
 #define STBTT_free(_x, _y) imguiFree(_x, _y)
@@ -905,37 +906,35 @@ struct Imgui
 		const int32_t width  = SCROLL_AREA_PADDING * 2;
 		const int32_t height = area.m_height;
 
+		const int32_t aa = area.m_contentY+area.m_height;
+		const int32_t bb = area.m_widgetY-DEFAULT_SPACING;
+		const int32_t sbot = IMGUI_MAX(aa, bb);
 		const int32_t stop = area.m_contentY + (*area.m_scrollVal);
-		const int32_t sbot = area.m_widgetY - DEFAULT_SPACING;
 		const int32_t sh   = IMGUI_MAX(1, sbot - stop); // The scrollable area height.
-
-		const float barHeight = (float)height / (float)sh;
 
 		// Handle mouse scrolling.
 		if (area.m_inside && !anyActive() )
 		{
-			const int32_t min = height - sh;
-			if (min > 0)
+			if (m_scroll)
 			{
-				*area.m_scrollVal = 0;
-			}
-			else if (m_scroll)
-			{
+				const int32_t diff = height - sh;
+
 				const int32_t val = *area.m_scrollVal + 20*m_scroll;
+				const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
 				const int32_t max = 0;
-				*area.m_scrollVal = ( val > max ? max
-									: val < min ? min
-									: val
-									);
+				*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
 			}
 		}
 
+		const uint32_t hid = area.m_scrollId;
+		const float barHeight = (float)height / (float)sh;
+
+		// Draw and handle scroll click.
 		if (barHeight < 1.0f)
 		{
-			float barY = bx::fsaturate( (float)(yy - stop) / (float)sh);
+			const float barY = bx::fsaturate( (float)(-(*area.m_scrollVal) ) / (float)sh);
 
 			// Handle scroll bar logic.
-			const uint32_t hid = area.m_scrollId;
 			const int32_t hx = xx;
 			const int32_t hy = yy + (int)(barY * height);
 			const int32_t hw = width;
@@ -955,8 +954,14 @@ struct Imgui
 
 				if (m_dragY != m_my)
 				{
-					uu = bx::fsaturate(m_dragOrig + (m_my - m_dragY) / (float)range);
-					*area.m_scrollVal = (int)(uu * (height - sh) );
+					const int32_t diff = height - sh;
+
+					const int32_t val = *area.m_scrollVal - (m_my - m_dragY);
+					const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
+					const int32_t max = 0;
+					*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
+
+					m_dragY = m_my;
 				}
 			}
 
@@ -1025,6 +1030,14 @@ struct Imgui
 						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
 						);
 				}
+			}
+		}
+		else
+		{
+			// Clear active if scroll is selected but not visible any more.
+			if (isActive(hid))
+			{
+				clearActive();
 			}
 		}
 
