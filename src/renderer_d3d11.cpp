@@ -177,7 +177,7 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[] =
 	{
-		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1 
+		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1
 		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC2
 		{ DXGI_FORMAT_BC3_UNORM,          DXGI_FORMAT_BC3_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC3
 		{ DXGI_FORMAT_BC4_UNORM,          DXGI_FORMAT_BC4_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC4
@@ -656,7 +656,6 @@ RENDERDOC_IMPORT
 
 			D3D_FEATURE_LEVEL features[] =
 			{
-				D3D_FEATURE_LEVEL_11_2,
 				D3D_FEATURE_LEVEL_11_1,
 				D3D_FEATURE_LEVEL_11_0,
 				D3D_FEATURE_LEVEL_10_1,
@@ -1477,7 +1476,7 @@ RENDERDOC_IMPORT
 					else
 					{
 						float frgba[4] =
-						{ 
+						{
 							_clear.m_index[0]*1.0f/255.0f,
 							_clear.m_index[1]*1.0f/255.0f,
 							_clear.m_index[2]*1.0f/255.0f,
@@ -1580,7 +1579,7 @@ RENDERDOC_IMPORT
 
 			const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
 			const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
-			bool hasFactor = f0 == (_state & f0) 
+			bool hasFactor = f0 == (_state & f0)
 				|| f1 == (_state & f1)
 				;
 
@@ -1901,7 +1900,7 @@ RENDERDOC_IMPORT
 					DX_CHECK(m_device->CreateTexture2D(&dsd, NULL, &depthStencil) );
 					DX_CHECK(m_device->CreateDepthStencilView(depthStencil, NULL, &m_ovrDsv) );
 					DX_RELEASE(depthStencil, 0);
-					
+
 					ovrD3D11Texture texture;
 					texture.D3D11.Header.API         = ovrRenderAPI_D3D11;
 					texture.D3D11.Header.TextureSize = m_ovr.m_rtSize;
@@ -2189,7 +2188,7 @@ RENDERDOC_IMPORT
 						float m_y;
 						float m_z;
 					};
-					
+
 					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
 					BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
 
@@ -2274,7 +2273,7 @@ RENDERDOC_IMPORT
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
-		
+
 		StateCacheT<ID3D11BlendState> m_blendStateCache;
 		StateCacheT<ID3D11DepthStencilState> m_depthStencilStateCache;
 		StateCacheT<ID3D11InputLayout> m_inputLayoutCache;
@@ -2866,7 +2865,7 @@ RENDERDOC_IMPORT
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
-		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
+		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
 			? s_renderD3D11->getSamplerState(_flags)
 			: m_sampler
 			;
@@ -2958,7 +2957,7 @@ RENDERDOC_IMPORT
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
-		
+
 		return denseIdx;
 	}
 
@@ -2987,7 +2986,7 @@ RENDERDOC_IMPORT
 			else
 			{
 				float frgba[4] =
-				{ 
+				{
 					_clear.m_index[0]*1.0f/255.0f,
 					_clear.m_index[1]*1.0f/255.0f,
 					_clear.m_index[2]*1.0f/255.0f,
@@ -3254,7 +3253,7 @@ RENDERDOC_IMPORT
 						deviceCtx->CSSetShader(program.m_vsh->m_computeShader, NULL, 0);
 						deviceCtx->CSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
 
-						programChanged = 
+						programChanged =
 							constantsChanged = true;
 					}
 
@@ -3487,7 +3486,7 @@ RENDERDOC_IMPORT
 						}
 					}
 
-					programChanged = 
+					programChanged =
 						constantsChanged = true;
 				}
 
@@ -3856,7 +3855,7 @@ RENDERDOC_IMPORT
 
 				char sharedSystem[16];
 				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
-				
+
 				tvm.printf(0, pos++, 0x0f, " Memory: %s (video), %s (system), %s (shared)"
 					, dedicatedVideo
 					, dedicatedSystem
