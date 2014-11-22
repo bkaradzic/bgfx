@@ -1528,7 +1528,7 @@ struct Imgui
 				    , (float)yy
 				    , (float)width
 				    , (float)_height
-				    , imguiRGBA(128, 128, 128, 96)
+				    , _enabled?imguiRGBA(128,128,128,96):imguiRGBA(128,128,128,64)
 				    );
 		}
 		else
@@ -1538,7 +1538,7 @@ struct Imgui
 						   , (float)width
 						   , (float)_height
 						   , (float)_r
-						   , imguiRGBA(128, 128, 128, 96)
+						   , _enabled?imguiRGBA(128,128,128,96):imguiRGBA(128,128,128,64)
 						   );
 		}
 
@@ -1569,7 +1569,7 @@ struct Imgui
 						    , (float)yy
 						    , (float)tabWidth
 						    , (float)_height
-						    , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+						    , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
 						    );
 				}
 				else
@@ -1579,7 +1579,7 @@ struct Imgui
 								   , (float)tabWidth
 								   , (float)_height
 								   , (float)_r
-								   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,96)
+								   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
 								   );
 				}
 			}
