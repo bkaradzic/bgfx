@@ -7,12 +7,16 @@ $input v_texcoord0
 
 #include <bgfx_shader.sh>
 
-uniform float u_imageLod;
+uniform vec4 u_imageLodEnabled;
 uniform vec4 u_swizzle;
 SAMPLER2D(s_texColor, 0);
+
+#define u_imageLod     u_imageLodEnabled.x
+#define u_imageEnabled u_imageLodEnabled.y
 
 void main()
 {
 	float color = dot(texture2DLod(s_texColor, v_texcoord0, u_imageLod), u_swizzle);
-	gl_FragColor = vec4(vec3_splat(color), 1.0);
+	float alpha = 0.2 + 0.8*u_imageEnabled;
+	gl_FragColor = vec4(vec3_splat(color), alpha);
 }
