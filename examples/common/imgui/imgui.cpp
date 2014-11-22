@@ -1875,7 +1875,7 @@ struct Imgui
 		}
 		else
 		{
-			drawTriangle(cx
+			drawTriangle(cx-1 // With -1 is more aesthetically pleasing.
 				, cy
 				, CHECK_SIZE
 				, CHECK_SIZE
