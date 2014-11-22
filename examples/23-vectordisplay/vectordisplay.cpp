@@ -352,8 +352,8 @@ void VectorDisplay::endDraw()
 	line_t* lines = (line_t*)alloca(nlines * sizeof(line_t) );
 
 	float t = effectiveThickness();
-	int first_last_same = abs(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.size() - 1].x) < 0.1
-	                      && abs(m_pendingPoints[0].y - m_pendingPoints[m_pendingPoints.size() - 1].y) < 0.1;
+	int first_last_same = bx::fabsolute(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.size() - 1].x) < 0.1
+	                      && bx::fabsolute(m_pendingPoints[0].y - m_pendingPoints[m_pendingPoints.size() - 1].y) < 0.1;
 
 	// compute basics
 	for (size_t i = 1; i < m_pendingPoints.size(); i++)
