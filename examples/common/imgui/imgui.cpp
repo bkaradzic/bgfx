@@ -891,6 +891,13 @@ struct Imgui
 			setEnabled(m_areaId);
 		}
 
+		nvgScissor(m_nvg
+				 , float(area.m_scissorX)
+				 , float(area.m_scissorY-1)
+				 , float(area.m_scissorWidth)
+				 , float(area.m_scissorHeight+1)
+				 );
+
 		m_insideArea |= area.m_inside;
 
 		return area.m_inside;
@@ -1041,6 +1048,8 @@ struct Imgui
 			}
 		}
 
+		nvgResetScissor(m_nvg);
+
 		area.m_inside = false;
 
 		m_areaId.previous();
@@ -1116,10 +1125,10 @@ struct Imgui
 		}
 
 		nvgScissor(m_nvg
-				 , float(area.m_x)
-				 , float(area.m_y-1)
-				 , float(area.m_width)
-				 , float(area.m_height+1)
+				 , float(area.m_scissorX)
+				 , float(area.m_scissorY-1)
+				 , float(area.m_scissorWidth)
+				 , float(area.m_scissorHeight+1)
 				 );
 		area.m_scissorEnabled = true;
 
