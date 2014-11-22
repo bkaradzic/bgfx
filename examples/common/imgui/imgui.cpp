@@ -381,10 +381,10 @@ struct Imgui
 		m_invTextureWidth  = 1.0f/m_textureWidth;
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
-		u_imageLod.idx       = bgfx::invalidHandle;
-		u_imageSwizzle.idx   = bgfx::invalidHandle;
-		s_texColor.idx       = bgfx::invalidHandle;
-		m_missingTexture.idx = bgfx::invalidHandle;
+		u_imageLodEnabled.idx = bgfx::invalidHandle;
+		u_imageSwizzle.idx    = bgfx::invalidHandle;
+		s_texColor.idx        = bgfx::invalidHandle;
+		m_missingTexture.idx  = bgfx::invalidHandle;
 
 		m_colorProgram.idx      = bgfx::invalidHandle;
 		m_textureProgram.idx    = bgfx::invalidHandle;
@@ -459,9 +459,9 @@ struct Imgui
 		PosUvVertex::init();
 		PosNormalVertex::init();
 
-		u_imageLod     = bgfx::createUniform("u_imageLod", bgfx::UniformType::Uniform1f);
-		u_imageSwizzle = bgfx::createUniform("u_swizzle",  bgfx::UniformType::Uniform4fv);
-		s_texColor     = bgfx::createUniform("s_texColor", bgfx::UniformType::Uniform1i);
+		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Uniform4fv);
+		u_imageSwizzle    = bgfx::createUniform("u_swizzle",         bgfx::UniformType::Uniform4fv);
+		s_texColor        = bgfx::createUniform("s_texColor",        bgfx::UniformType::Uniform1i);
 
 		const bgfx::Memory* vs_imgui_color;
 		const bgfx::Memory* fs_imgui_color;
@@ -558,7 +558,7 @@ struct Imgui
 
 	void destroy()
 	{
-		bgfx::destroyUniform(u_imageLod);
+		bgfx::destroyUniform(u_imageLodEnabled);
 		bgfx::destroyUniform(u_imageSwizzle);
 		bgfx::destroyUniform(s_texColor);
 #if !USE_NANOVG_FONT
@@ -1590,7 +1590,7 @@ struct Imgui
 		return selected;
 	}
 
-	bool image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
+	bool image(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _enabled, bool _originBottomLeft)
 	{
 		const uint32_t id = getId();
 		Area& area = getCurrentArea();
@@ -1620,14 +1620,19 @@ struct Imgui
 		const int32_t yy = area.m_widgetY;
 		area.m_widgetY += _height + DEFAULT_SPACING;
 
-		const bool enabled = isEnabled(m_areaId);
+		const bool enabled = _enabled && isEnabled(m_areaId);
 		const bool over = enabled && inRect(xx, yy, _width, _height);
 		const bool res = buttonLogic(id, over);
 
+		const float lodEnabled[4] = { _lod, float(enabled), 0.0f, 0.0f };
+
 		screenQuad(xx, yy, _width, _height, _originBottomLeft);
-		bgfx::setUniform(u_imageLod, &_lod);
+		bgfx::setUniform(u_imageLodEnabled, lodEnabled);
 		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
-		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+		bgfx::setState(BGFX_STATE_RGB_WRITE
+					  |BGFX_STATE_ALPHA_WRITE
+					  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+					  );
 		bgfx::setProgram(m_imageProgram);
 		setCurrentScissor();
 		bgfx::submit(m_view);
@@ -1635,15 +1640,15 @@ struct Imgui
 		return res;
 	}
 
-	bool image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
+	bool image(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _enabled, bool _originBottomLeft)
 	{
 		const float width = _width*float(getCurrentArea().m_widgetW);
 		const float height = width/_aspect;
 
-		return image(_image, _lod, int32_t(width), int32_t(height), _align, _originBottomLeft);
+		return image(_image, _lod, int32_t(width), int32_t(height), _align, _enabled, _originBottomLeft);
 	}
 
-	bool imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+	bool imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _enabled)
 	{
 		BX_CHECK(_channel < 4, "Channel param must be from 0 to 3!");
 
@@ -1675,19 +1680,24 @@ struct Imgui
 		const int32_t yy = area.m_widgetY;
 		area.m_widgetY += _height + DEFAULT_SPACING;
 
-		const bool enabled = isEnabled(m_areaId);
+		const bool enabled = _enabled && isEnabled(m_areaId);
 		const bool over = enabled && inRect(xx, yy, _width, _height);
 		const bool res = buttonLogic(id, over);
 
 		screenQuad(xx, yy, _width, _height);
-		bgfx::setUniform(u_imageLod, &_lod);
+
+		const float lodEnabled[4] = { _lod, float(enabled), 0.0f, 0.0f };
+		bgfx::setUniform(u_imageLodEnabled, lodEnabled);
 
 		float swizz[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		swizz[_channel] = 1.0f;
 		bgfx::setUniform(u_imageSwizzle, swizz);
 
 		bgfx::setTexture(0, s_texColor, bgfx::isValid(_image) ? _image : m_missingTexture);
-		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+		bgfx::setState(BGFX_STATE_RGB_WRITE
+					  |BGFX_STATE_ALPHA_WRITE
+					  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+					  );
 		bgfx::setProgram(m_imageSwizzProgram);
 		setCurrentScissor();
 		bgfx::submit(m_view);
@@ -1695,15 +1705,15 @@ struct Imgui
 		return res;
 	}
 
-	bool imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+	bool imageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _enabled)
 	{
 		const float width = _width*float(getCurrentArea().m_widgetW);
 		const float height = width/_aspect;
 
-		return imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align);
+		return imageChannel(_image, _channel, _lod, int32_t(width), int32_t(height), _align, _enabled);
 	}
 
-	bool cubeMap(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
+	bool cubeMap(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align, bool _enabled)
 	{
 		const uint32_t numVertices = 14;
 		const uint32_t numIndices  = 36;
@@ -1803,7 +1813,7 @@ struct Imgui
 			const int32_t yy = area.m_widgetY;
 			area.m_widgetY += height + DEFAULT_SPACING;
 
-			const bool enabled = isEnabled(m_areaId);
+			const bool enabled = _enabled && isEnabled(m_areaId);
 			const bool over = enabled && inRect(xx, yy, width, height);
 			const bool res = buttonLogic(id, over);
 
@@ -1812,16 +1822,18 @@ struct Imgui
 			float mtx[16];
 			bx::mtxSRT(mtx, scale, scale, 1.0f, 0.0f, 0.0f, 0.0f, float(xx), float(yy), 0.0f);
 
+			const float lodEnabled[4] = { _lod, float(enabled), 0.0f, 0.0f };
+			bgfx::setUniform(u_imageLodEnabled, lodEnabled);
+
 			bgfx::setTransform(mtx);
-			bgfx::setUniform(u_imageLod, &_lod);
 			bgfx::setTexture(0, s_texColor, _cubemap);
 			bgfx::setProgram(m_cubeMapProgram);
 			bgfx::setVertexBuffer(&tvb);
 			bgfx::setIndexBuffer(&tib);
-			bgfx::setState(0
-						   | BGFX_STATE_RGB_WRITE
-						   | BGFX_STATE_CULL_CW
-						   );
+			bgfx::setState(BGFX_STATE_RGB_WRITE
+						  |BGFX_STATE_ALPHA_WRITE
+						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+						  );
 			setCurrentScissor();
 			bgfx::submit(m_view);
 
@@ -3055,7 +3067,7 @@ struct Imgui
 	Font m_fonts[IMGUI_CONFIG_MAX_FONTS];
 #endif // !USE_NANOVG_FONT
 
-	bgfx::UniformHandle u_imageLod;
+	bgfx::UniformHandle u_imageLodEnabled;
 	bgfx::UniformHandle u_imageSwizzle;
 	bgfx::UniformHandle s_texColor;
 	bgfx::ProgramHandle m_colorProgram;
@@ -3325,29 +3337,29 @@ void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, bool _e
 	}
 }
 
-bool imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _originBottomLeft)
+bool imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _enabled, bool _originBottomLeft)
 {
-	return s_imgui.image(_image, _lod, _width, _height, _align, _originBottomLeft);
+	return s_imgui.image(_image, _lod, _width, _height, _align, _enabled, _originBottomLeft);
 }
 
-bool imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _originBottomLeft)
+bool imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _enabled, bool _originBottomLeft)
 {
-	return s_imgui.image(_image, _lod, _width, _aspect, _align, _originBottomLeft);
+	return s_imgui.image(_image, _lod, _width, _aspect, _align, _enabled, _originBottomLeft);
 }
 
-bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align)
+bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _enabled)
 {
-	return s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align);
+	return s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align, _enabled);
 }
 
-bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align)
+bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _enabled)
 {
-	return s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align);
+	return s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align, _enabled);
 }
 
-bool imguiCube(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align)
+bool imguiCube(bgfx::TextureHandle _cubemap, float _lod, bool _cross, ImguiAlign::Enum _align, bool _enabled)
 {
-	return s_imgui.cubeMap(_cubemap, _lod, _cross, _align);
+	return s_imgui.cubeMap(_cubemap, _lod, _cross, _align, _enabled);
 }
 
 float imguiGetTextLength(const char* _text, ImguiFontHandle _handle)
