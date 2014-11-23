@@ -3217,6 +3217,11 @@ int32_t imguiGetWidgetY()
 	return s_imgui.getCurrentArea().m_widgetY;
 }
 
+void imguiSetCurrentScissor()
+{
+	return s_imgui.setCurrentScissor();
+}
+
 bool imguiButton(const char* _text, bool _enabled, ImguiAlign::Enum _align, uint32_t _rgb0, int32_t _r)
 {
 	return s_imgui.button(_text, _enabled, _align, _rgb0, _r);
