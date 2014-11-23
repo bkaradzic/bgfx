@@ -769,8 +769,6 @@ struct Imgui
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 	{
-		nvgBeginFrame(m_nvg, _width, _height, 1.0f);
-
 		m_view = _view;
 		m_viewWidth = _width;
 		m_viewHeight = _height;
@@ -839,7 +837,6 @@ struct Imgui
 		m_checkActivePresence = (0 != m_active);
 
 		clearInput();
-		nvgEndFrame(m_nvg);
 	}
 
 	bool beginScroll(int32_t _height, int32_t* _scroll, bool _enabled)
@@ -1123,23 +1120,24 @@ struct Imgui
 				   , imguiRGBA(255, 255, 255, 128)
 				   );
 		}
+		area.m_scissorEnabled = true;
 
+		nvgBeginFrame(m_nvg, m_viewWidth, m_viewHeight, 1.0f);
 		nvgScissor(m_nvg
 				 , float(area.m_scissorX)
 				 , float(area.m_scissorY-1)
 				 , float(area.m_scissorWidth)
 				 , float(area.m_scissorHeight+1)
 				 );
-		area.m_scissorEnabled = true;
 
 		m_insideArea |= area.m_inside;
-
 		return area.m_inside;
 	}
 
 	void endArea()
 	{
 		nvgResetScissor(m_nvg);
+		nvgEndFrame(m_nvg);
 	}
 
 	bool button(const char* _text, bool _enabled, ImguiAlign::Enum _align, uint32_t _rgb0, int32_t _r)
