@@ -490,7 +490,7 @@ struct Varying
 
 typedef std::unordered_map<std::string, Varying> VaryingMap;
 
-class File 
+class File
 {
 public:
 	File(const char* _filePath)
@@ -626,7 +626,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 {
 	char ch = tolower(_cmdLine.findOption('\0', "type")[0]);
 	const glslopt_shader_type type = ch == 'f'
-		? kGlslOptShaderFragment 
+		? kGlslOptShaderFragment
 		: (ch == 'c' ? kGlslOptShaderCompute : kGlslOptShaderVertex);
 
 	glslopt_target target = kGlslTargetOpenGL;
@@ -690,7 +690,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 		strreplace(shader, "texture2DGradEXT", "texture2DGrad");
 		strreplace(shader, "texture2DProjGradEXT", "texture2DProjGrad");
 		strreplace(shader, "textureCubeGradEXT", "textureCubeGrad");
- 
+
 		strreplace(shader, "shadow2DEXT", "shadow2D");
 		strreplace(shader, "shadow2DProjEXT", "shadow2DProj");
 	}
@@ -1375,11 +1375,11 @@ struct Preprocessor
 
 		m_tagptr->tag = FPPTAG_DEPENDS;
 		m_tagptr->data = (void*)fppDepends;
-		m_tagptr++; 
+		m_tagptr++;
 
 		m_tagptr->tag = FPPTAG_INPUT;
 		m_tagptr->data = (void*)fppInput;
-		m_tagptr++; 
+		m_tagptr++;
 
 		m_tagptr->tag = FPPTAG_OUTPUT;
 		m_tagptr->data = (void*)fppOutput;
@@ -1900,7 +1900,11 @@ int main(int _argc, const char* _argv[])
 	bool compiled = false;
 
 	FILE* file = fopen(filePath, "r");
-	if (NULL != file)
+	if (NULL == file)
+	{
+		fprintf(stderr, "Unable to open file '%s'.\n", filePath);
+	}
+	else
 	{
 		VaryingMap varyingMap;
 
