@@ -177,7 +177,7 @@ namespace bgfx
 
 	static const TextureFormatInfo s_textureFormat[] =
 	{
-		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1 
+		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC1
 		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC2
 		{ DXGI_FORMAT_BC3_UNORM,          DXGI_FORMAT_BC3_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC3
 		{ DXGI_FORMAT_BC4_UNORM,          DXGI_FORMAT_BC4_UNORM,             DXGI_FORMAT_UNKNOWN           }, // BC4
@@ -656,7 +656,6 @@ RENDERDOC_IMPORT
 
 			D3D_FEATURE_LEVEL features[] =
 			{
-				D3D_FEATURE_LEVEL_11_2,
 				D3D_FEATURE_LEVEL_11_1,
 				D3D_FEATURE_LEVEL_11_0,
 				D3D_FEATURE_LEVEL_10_1,
@@ -1062,7 +1061,7 @@ RENDERDOC_IMPORT
 					desc.Usage = D3D11_USAGE_DEFAULT;
 					desc.CPUAccessFlags = 0;
 					ID3D11Texture2D* resolve;
-					HRESULT hr = m_device->CreateTexture2D(&desc, NULL, &resolve);
+					hr = m_device->CreateTexture2D(&desc, NULL, &resolve);
 					if (SUCCEEDED(hr) )
 					{
 						m_deviceCtx->ResolveSubresource(resolve, 0, backBuffer, 0, desc.Format);
@@ -1477,7 +1476,7 @@ RENDERDOC_IMPORT
 					else
 					{
 						float frgba[4] =
-						{ 
+						{
 							_clear.m_index[0]*1.0f/255.0f,
 							_clear.m_index[1]*1.0f/255.0f,
 							_clear.m_index[2]*1.0f/255.0f,
@@ -1580,7 +1579,7 @@ RENDERDOC_IMPORT
 
 			const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
 			const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
-			bool hasFactor = f0 == (_state & f0) 
+			bool hasFactor = f0 == (_state & f0)
 				|| f1 == (_state & f1)
 				;
 
@@ -1640,17 +1639,17 @@ RENDERDOC_IMPORT
 						drt = &desc.RenderTarget[ii];
 						drt->BlendEnable = 0 != (rgba&0x7ff);
 
-						const uint32_t src      = (rgba   )&0xf;
-						const uint32_t dst      = (rgba>>4)&0xf;
-						const uint32_t equation = (rgba>>8)&0x7;
+						const uint32_t src			 = (rgba   )&0xf;
+						const uint32_t dst			 = (rgba>>4)&0xf;
+						const uint32_t equationIndex = (rgba>>8)&0x7;
 
 						drt->SrcBlend       = s_blendFactor[src][0];
 						drt->DestBlend      = s_blendFactor[dst][0];
-						drt->BlendOp        = s_blendEquation[equation];
+						drt->BlendOp        = s_blendEquation[equationIndex];
 
 						drt->SrcBlendAlpha  = s_blendFactor[src][1];
 						drt->DestBlendAlpha = s_blendFactor[dst][1];
-						drt->BlendOpAlpha   = s_blendEquation[equation];
+						drt->BlendOpAlpha   = s_blendEquation[equationIndex];
 
 						drt->RenderTargetWriteMask = writeMask;
 					}
@@ -1901,7 +1900,7 @@ RENDERDOC_IMPORT
 					DX_CHECK(m_device->CreateTexture2D(&dsd, NULL, &depthStencil) );
 					DX_CHECK(m_device->CreateDepthStencilView(depthStencil, NULL, &m_ovrDsv) );
 					DX_RELEASE(depthStencil, 0);
-					
+
 					ovrD3D11Texture texture;
 					texture.D3D11.Header.API         = ovrRenderAPI_D3D11;
 					texture.D3D11.Header.TextureSize = m_ovr.m_rtSize;
@@ -2189,7 +2188,7 @@ RENDERDOC_IMPORT
 						float m_y;
 						float m_z;
 					};
-					
+
 					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
 					BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
 
@@ -2274,7 +2273,7 @@ RENDERDOC_IMPORT
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
-		
+
 		StateCacheT<ID3D11BlendState> m_blendStateCache;
 		StateCacheT<ID3D11DepthStencilState> m_depthStencilStateCache;
 		StateCacheT<ID3D11InputLayout> m_inputLayoutCache;
@@ -2849,7 +2848,7 @@ RENDERDOC_IMPORT
 
 		if (convert)
 		{
-			uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
+			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
 			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, m_requestedFormat);
 			data = temp;
 		}
@@ -2866,7 +2865,7 @@ RENDERDOC_IMPORT
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
-		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) 
+		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
 			? s_renderD3D11->getSamplerState(_flags)
 			: m_sampler
 			;
@@ -2958,7 +2957,7 @@ RENDERDOC_IMPORT
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
-		
+
 		return denseIdx;
 	}
 
@@ -2987,7 +2986,7 @@ RENDERDOC_IMPORT
 			else
 			{
 				float frgba[4] =
-				{ 
+				{
 					_clear.m_index[0]*1.0f/255.0f,
 					_clear.m_index[1]*1.0f/255.0f,
 					_clear.m_index[2]*1.0f/255.0f,
@@ -3111,8 +3110,8 @@ RENDERDOC_IMPORT
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
 
-		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
 
@@ -3254,7 +3253,7 @@ RENDERDOC_IMPORT
 						deviceCtx->CSSetShader(program.m_vsh->m_computeShader, NULL, 0);
 						deviceCtx->CSSetConstantBuffers(0, 1, &program.m_vsh->m_buffer);
 
-						programChanged = 
+						programChanged =
 							constantsChanged = true;
 					}
 
@@ -3361,7 +3360,6 @@ RENDERDOC_IMPORT
 					currentState.m_flags = newFlags;
 					currentState.m_stencil = newStencil;
 
-					uint64_t newFlags = renderItem.draw.m_flags;
 					setBlendState(newFlags);
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
@@ -3487,7 +3485,7 @@ RENDERDOC_IMPORT
 						}
 					}
 
-					programChanged = 
+					programChanged =
 						constantsChanged = true;
 				}
 
@@ -3856,7 +3854,7 @@ RENDERDOC_IMPORT
 
 				char sharedSystem[16];
 				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
-				
+
 				tvm.printf(0, pos++, 0x0f, " Memory: %s (video), %s (system), %s (shared)"
 					, dedicatedVideo
 					, dedicatedSystem

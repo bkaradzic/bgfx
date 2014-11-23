@@ -1072,7 +1072,7 @@ namespace bgfx
 		{
 			Image,
 			Buffer,
-			
+
 			Count
 		};
 
@@ -2543,12 +2543,12 @@ namespace bgfx
 				memset(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
-					TextureHandle handle = _handles[ii];
+					TextureHandle texHandle = _handles[ii];
 
-					cmdbuf.write(handle);
+					cmdbuf.write(texHandle);
 
-					ref.un.m_th[ii] = handle;
-					textureIncRef(handle);
+					ref.un.m_th[ii] = texHandle;
+					textureIncRef(texHandle);
 				}
 			}
 
@@ -3034,7 +3034,7 @@ namespace bgfx
 			int16_t  m_refCount;
 			uint16_t m_num;
 		};
-		
+
 		struct ProgramRef
 		{
 			ShaderHandle m_vsh;
