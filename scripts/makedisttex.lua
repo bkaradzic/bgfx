@@ -9,8 +9,7 @@ project "makedisttex"
 
 	includedirs {
 		BX_DIR .. "include",
-		BGFX_DIR .. "3rdparty/edtaa3",
-		BGFX_DIR .. "3rdparty/stb_image",
+		BGFX_DIR .. "3rdparty",
 	}
 
 	files {
