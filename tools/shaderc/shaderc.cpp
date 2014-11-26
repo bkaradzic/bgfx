@@ -37,7 +37,6 @@ bool g_verbose = false;
 #include <bx/bx.h>
 #include <bx/debug.h>
 
-#define NOMINMAX
 #include <alloca.h>
 #include <stdio.h>
 #include <stdint.h>
