@@ -140,7 +140,7 @@ ovrError:
 		ovrSizei sizeL = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Left,  m_hmd->DefaultEyeFov[0], 1.0f);
 		ovrSizei sizeR = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Right, m_hmd->DefaultEyeFov[1], 1.0f);
 		m_rtSize.w = sizeL.w + sizeR.w;
-		m_rtSize.h = max(sizeL.h, sizeR.h);
+		m_rtSize.h = bx::uint32_max(sizeL.h, sizeR.h);
 
 		m_warning = true;
 
