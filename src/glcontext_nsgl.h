@@ -25,7 +25,7 @@ namespace bgfx
 
 		static bool isSwapChainSupported();
 		SwapChainGL* createSwapChain(void* _nwh);
-		void destorySwapChain(SwapChainGL*  _swapChain);
+		void destroySwapChain(SwapChainGL*  _swapChain);
 		void swap(SwapChainGL* _swapChain = NULL);
 		void makeCurrent(SwapChainGL* _swapChain = NULL);
 

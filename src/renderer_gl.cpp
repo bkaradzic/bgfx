@@ -4031,7 +4031,7 @@ namespace bgfx
 
 		if (NULL != m_swapChain)
 		{
-			s_renderGL->m_glctx.destorySwapChain(m_swapChain);
+			s_renderGL->m_glctx.destroySwapChain(m_swapChain);
 			m_swapChain = NULL;
 		}
 

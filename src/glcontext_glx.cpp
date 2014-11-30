@@ -248,7 +248,7 @@ namespace bgfx
 		return BX_NEW(g_allocator, SwapChainGL)( (::Window)_nwh, m_visualInfo, m_context);
 	}
 
-	void GlContext::destorySwapChain(SwapChainGL* _swapChain)
+	void GlContext::destroySwapChain(SwapChainGL* _swapChain)
 	{
 		BX_DELETE(g_allocator, _swapChain);
 	}
