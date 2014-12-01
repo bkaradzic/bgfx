@@ -507,7 +507,7 @@ namespace bgfx
 				.end();
 
 			ShaderHandle vsh = BGFX_INVALID_HANDLE;
-			
+
 			struct Mem
 			{
 				Mem(const void* _data, size_t _size)
@@ -2245,6 +2245,7 @@ again:
 		_width   = bx::uint32_max(1, _width);
 		_height  = bx::uint32_max(1, _height);
 		_depth   = bx::uint32_max(1, _depth);
+		_numMips = bx::uint32_max(1, _numMips);
 
 		uint32_t width  = _width;
 		uint32_t height = _height;
@@ -2261,17 +2262,17 @@ again:
 
 			size += width*height*depth*bpp/8;
 
-			width >>= 1;
+			width  >>= 1;
 			height >>= 1;
-			depth >>= 1;
+			depth  >>= 1;
 		}
 
-		_info.format = _format;
-		_info.storageSize = size;
-		_info.width = _width;
-		_info.height = _height;
-		_info.depth = _depth;
+		_info.format  = _format;
+		_info.width   = _width;
+		_info.height  = _height;
+		_info.depth   = _depth;
 		_info.numMips = _numMips;
+		_info.storageSize  = size;
 		_info.bitsPerPixel = bpp;
 	}
 
