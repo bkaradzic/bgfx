@@ -959,7 +959,10 @@ struct Imgui
 				{
 					const int32_t diff = height - sh;
 
-					const int32_t val = *area.m_scrollVal - (m_my - m_dragY);
+					const int32_t drag = m_my - m_dragY;
+					const float dragFactor = float(sh)/float(height);
+
+					const int32_t val = *area.m_scrollVal - int32_t(drag*dragFactor);
 					const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
 					const int32_t max = 0;
 					*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
