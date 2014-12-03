@@ -1072,6 +1072,12 @@ RENDERDOC_IMPORT
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
+				imageSwizzleBgra8(backBufferDesc.Width
+					, backBufferDesc.Height
+					, mapped.RowPitch
+					, mapped.pData
+					, mapped.pData
+					);
 				g_callback->screenShot(_filePath
 					, backBufferDesc.Width
 					, backBufferDesc.Height
