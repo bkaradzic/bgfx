@@ -16,18 +16,18 @@ namespace bgfx
 			: m_context(0)
 		{
 		}
-        
+
 		void create(uint32_t _width, uint32_t _height);
 		void destroy();
 		void resize(uint32_t _width, uint32_t _height, bool _vsync);
 		void swap();
 		void import();
-        
+
 		bool isValid() const
 		{
 			return 0 != m_context;
 		}
-        
+
 		void* m_view;
 		void* m_context;
 	};

@@ -199,7 +199,7 @@ namespace bgfx
 #elif BX_PLATFORM_WINDOWS
 	extern ::HWND g_bgfxHwnd;
 #elif BX_PLATFORM_WINRT
-    extern ::IUnknown* g_bgfxCoreWindow;
+	extern ::IUnknown* g_bgfxCoreWindow;
 #endif // BX_PLATFORM_*
 
 	struct Clear
@@ -408,6 +408,25 @@ namespace bgfx
 			va_start(argList, _format);
 			printfVargs(_x, _y, _attr, _format, argList);
 			va_end(argList);
+		}
+
+		void image(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch)
+		{
+			if (_x < m_width && _y < m_height)
+			{
+				uint8_t* dst = &m_mem[(_y*m_width+_x)*2];
+				const uint8_t* src = (const uint8_t*)_data;
+				const uint32_t width  = (bx::uint32_min(m_width,  _width +_x)-_x)*2;
+				const uint32_t height =  bx::uint32_min(m_height, _height+_y)-_y;
+				const uint32_t dstPitch = m_width*2;
+
+				for (uint32_t yy = 0; yy < height; ++yy)
+				{
+					memcpy(dst, src, width);
+					dst += dstPitch;
+					src += _pitch;
+				}
+			}
 		}
 
 		uint8_t* m_mem;
@@ -1835,6 +1854,11 @@ namespace bgfx
 		BGFX_API_FUNC(void dbgTextPrintfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList) )
 		{
 			m_submit->m_textVideoMem->printfVargs(_x, _y, _attr, _format, _argList);
+		}
+
+		BGFX_API_FUNC(void dbgTextImage(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch) )
+		{
+			m_submit->m_textVideoMem->image(_x, _y, _width, _height, _data, _pitch);
 		}
 
 		BGFX_API_FUNC(const HMD* getHMD() )

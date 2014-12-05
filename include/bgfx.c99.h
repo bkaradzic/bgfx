@@ -640,6 +640,18 @@ BGFX_C_API void bgfx_dbg_text_clear(uint8_t _attr, bool _small);
 BGFX_C_API void bgfx_dbg_text_printf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
 
 /**
+ *  Draw image into internal debug text buffer.
+ *
+ *  @param _x      X position from top-left.
+ *  @param _y      Y position from top-left.
+ *  @param _width  Image width.
+ *  @param _height Image height.
+ *  @param _data   Raw image data (character/attribute raw encoding).
+ *  @param _pitch  Image pitch in bytes.
+ */
+BGFX_C_API void bgfx_dbg_text_image(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch);
+
+/**
  *  Create static index buffer.
  *
  *  NOTE:

@@ -47,12 +47,12 @@ namespace bgfx
 		g_bgfxHwnd = _window;
 	}
 #elif BX_PLATFORM_WINRT
-    ::IUnknown* g_bgfxCoreWindow = NULL;
+	::IUnknown* g_bgfxCoreWindow = NULL;
 
-    void winrtSetWindow(::IUnknown* _window)
-    {
-        g_bgfxCoreWindow = _window;
-    }
+	void winrtSetWindow(::IUnknown* _window)
+	{
+		g_bgfxCoreWindow = _window;
+	}
 #endif // BX_PLATFORM_*
 
 #if BGFX_CONFIG_USE_TINYSTL
@@ -426,7 +426,7 @@ namespace bgfx
 		uint32_t xx = 0;
 
 		const float texelWidth = 1.0f/2048.0f;
-		const float texelWidthHalf = texelWidth*0.5f;
+		const float texelWidthHalf = RendererType::Direct3D9 == g_caps.rendererType ? 0.0f : texelWidth*0.5f;
 		const float texelHeight = 1.0f/24.0f;
 		const float texelHeightHalf = RendererType::Direct3D9 == g_caps.rendererType ? texelHeight*0.5f : 0.0f;
 		const float utop = (_mem.m_small ? 0.0f : 8.0f)*texelHeight + texelHeightHalf;
@@ -1393,10 +1393,10 @@ again:
 			{
 				_type = RendererType::OpenGLES;
 			}
-            else if (BX_ENABLED(BX_PLATFORM_WINRT))
-            {
-                _type = RendererType::Direct3D11;
-            }
+			else if (BX_ENABLED(BX_PLATFORM_WINRT))
+			{
+				_type = RendererType::Direct3D11;
+			}
 			else
 			{
 				_type = RendererType::OpenGL;
@@ -2039,6 +2039,12 @@ again:
 		va_start(argList, _format);
 		s_ctx->dbgTextPrintfVargs(_x, _y, _attr, _format, argList);
 		va_end(argList);
+	}
+
+	void dbgTextImage(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->dbgTextImage(_x, _y, _width, _height, _data, _pitch);
 	}
 
 	IndexBufferHandle createIndexBuffer(const Memory* _mem)
@@ -2915,6 +2921,11 @@ BGFX_C_API void bgfx_dbg_text_printf(uint16_t _x, uint16_t _y, uint8_t _attr, co
 	va_start(argList, _format);
 	bgfx::dbgTextPrintfVargs(_x, _y, _attr, _format, argList);
 	va_end(argList);
+}
+
+BGFX_C_API void bgfx_dbg_text_image(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch)
+{
+	bgfx::dbgTextImage(_x, _y, _width, _height, _data, _pitch);
 }
 
 BGFX_C_API bgfx_index_buffer_handle_t bgfx_create_index_buffer(const bgfx_memory_t* _mem)
