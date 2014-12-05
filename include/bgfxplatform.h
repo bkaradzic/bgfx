@@ -96,8 +96,8 @@ namespace bgfx
 
 namespace bgfx
 {
-    ///
-    void winrtSetWindow(IUnknown* _window);
+	///
+	void winrtSetWindow(IUnknown* _window);
 
 } // namespace bgfx
 

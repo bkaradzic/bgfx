@@ -607,7 +607,7 @@ RENDERDOC_IMPORT
 
 			IDXGIFactory* factory;
 #if BX_PLATFORM_WINRT
-            // WinRT requires the IDXGIFactory2 interface, which isn't supported on older platforms
+			// WinRT requires the IDXGIFactory2 interface, which isn't supported on older platforms
 			hr = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create DXGI factory.");
 #else
@@ -1332,7 +1332,7 @@ RENDERDOC_IMPORT
 			{
 				bool resize = (m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK);
 #if BX_PLATFORM_WINRT
-                resize = false;     // can't use ResizeBuffers on Windows Phone
+				resize = false;     // can't use ResizeBuffers on Windows Phone
 #endif
 				m_flags = flags;
 
@@ -1342,7 +1342,7 @@ RENDERDOC_IMPORT
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
 
-                setBufferSize(_resolution.m_width, _resolution.m_height);
+				setBufferSize(_resolution.m_width, _resolution.m_height);
 
 				preReset();
 
@@ -1363,11 +1363,11 @@ RENDERDOC_IMPORT
 					DX_RELEASE(m_swapChain, 0);
 
 #if BX_PLATFORM_WINRT
-                    HRESULT hr;
+					HRESULT hr;
 					hr = m_factory->CreateSwapChainForCoreWindow(m_device
-                        , g_bgfxCoreWindow
+						, g_bgfxCoreWindow
 						, &m_scd
-                        , NULL
+						, NULL
 						, &m_swapChain
 						);
 #else
@@ -1800,43 +1800,43 @@ RENDERDOC_IMPORT
 			return sampler;
 		}
 
-        DXGI_FORMAT getBufferFormat()
-        {
+		DXGI_FORMAT getBufferFormat()
+		{
 #if BX_PLATFORM_WINRT
-            return m_scd.Format;
+			return m_scd.Format;
 #else
-            return m_scd.BufferDesc.Format;
+			return m_scd.BufferDesc.Format;
 #endif
-        }
+		}
 
-        uint32_t getBufferWidth()
-        {
+		uint32_t getBufferWidth()
+		{
 #if BX_PLATFORM_WINRT
-            return m_scd.Width;
+			return m_scd.Width;
 #else
-            return m_scd.BufferDesc.Width;
+			return m_scd.BufferDesc.Width;
 #endif
-        }
+		}
 
-        uint32_t getBufferHeight()
-        {
+		uint32_t getBufferHeight()
+		{
 #if BX_PLATFORM_WINRT
-            return m_scd.Height;
+			return m_scd.Height;
 #else
-            return m_scd.BufferDesc.Height;
+			return m_scd.BufferDesc.Height;
 #endif
-        }
+		}
 
-        void setBufferSize(uint32_t _width, uint32_t _height)
-        {
+		void setBufferSize(uint32_t _width, uint32_t _height)
+		{
 #if BX_PLATFORM_WINRT
-            m_scd.Width = _width;
-            m_scd.Height = _height;
+			m_scd.Width = _width;
+			m_scd.Height = _height;
 #else
-            m_scd.BufferDesc.Width = _width;
-            m_scd.BufferDesc.Height = _height;
+			m_scd.BufferDesc.Width = _width;
+			m_scd.BufferDesc.Height = _height;
 #endif
-        }
+		}
 
 		void commitTextureStage()
 		{
@@ -2238,11 +2238,11 @@ RENDERDOC_IMPORT
 		IDXGIAdapter* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
 #if BX_PLATFORM_WINRT
-        IDXGIFactory2* m_factory;
-        IDXGISwapChain1* m_swapChain;
+		IDXGIFactory2* m_factory;
+		IDXGISwapChain1* m_swapChain;
 #else
 		IDXGIFactory* m_factory;
-        IDXGISwapChain* m_swapChain;
+		IDXGISwapChain* m_swapChain;
 #endif
 
 		uint16_t m_lost;
