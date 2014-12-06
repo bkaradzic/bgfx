@@ -48,7 +48,7 @@ namespace bgfx
 			case ovrRenderAPI_D3D9:
 				{
 					ovrD3D9ConfigData* data = (ovrD3D9ConfigData*)_config;
-					m_rtSize = data->Header.RTSize;
+					m_rtSize = data->Header.BackBufferSize;
 				}
 				break;
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9
@@ -57,7 +57,7 @@ namespace bgfx
 			case ovrRenderAPI_D3D11:
 				{
 					ovrD3D11ConfigData* data = (ovrD3D11ConfigData*)_config;
-					m_rtSize = data->Header.RTSize;
+					m_rtSize = data->Header.BackBufferSize;
 				}
 				break;
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11
@@ -66,7 +66,7 @@ namespace bgfx
 			case ovrRenderAPI_OpenGL:
 				{
 					ovrGLConfigData* data = (ovrGLConfigData*)_config;
-					m_rtSize = data->Header.RTSize;
+					m_rtSize = data->Header.BackBufferSize;
 				}
 				break;
 #endif // BGFX_CONFIG_RENDERER_OPENGL

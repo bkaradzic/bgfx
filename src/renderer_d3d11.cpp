@@ -1857,8 +1857,8 @@ RENDERDOC_IMPORT
 			{
 				ovrD3D11Config config;
 				config.D3D11.Header.API = ovrRenderAPI_D3D11;
-				config.D3D11.Header.RTSize.w = m_scd.BufferDesc.Width;
-				config.D3D11.Header.RTSize.h = m_scd.BufferDesc.Height;
+				config.D3D11.Header.BackBufferSize.w = m_scd.BufferDesc.Width;
+				config.D3D11.Header.BackBufferSize.h = m_scd.BufferDesc.Height;
 				config.D3D11.Header.Multisample = 0;
 				config.D3D11.pDevice = m_device;
 				config.D3D11.pDeviceContext = m_deviceCtx;

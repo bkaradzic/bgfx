@@ -43,7 +43,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 		int32_t end = INT32_MAX;
 
 		if (3 == sscanf(log, "%u:%u(%u):", &source, &line, &column)
-			&&  0 != line)
+		&&  0 != line)
 		{
 			start = bx::uint32_imax(1, line-10);
 			end = start + 20;
@@ -95,7 +95,7 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 				parse = bx::strws(bx::strword(parse) );
 
 				if (0 == strncmp(qualifier, "attribute", 9)
-					||  0 == strncmp(qualifier, "varying", 7) )
+				||  0 == strncmp(qualifier, "varying", 7) )
 				{
 					// skip attributes and varyings.
 					parse = eol + 1;
@@ -113,8 +113,8 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 				const char* type = parse;
 
 				if (0 == strncmp(type, "lowp", 4)
-					||  0 == strncmp(type, "mediump", 7)
-					||  0 == strncmp(type, "highp", 5) )
+				||  0 == strncmp(type, "mediump", 7)
+				||  0 == strncmp(type, "highp", 5) )
 				{
 					precision = type;
 					type = parse = bx::strws(bx::strword(parse) );

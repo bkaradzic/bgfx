@@ -43,7 +43,7 @@ const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
 	{
 		const RemapInputSemantic& ris = s_remapInputSemantic[ii];
 		if (0 == strcmp(ris.m_name, _name)
-			&&  ris.m_index == _index)
+		&&  ris.m_index == _index)
 		{
 			return ris;
 		}
@@ -79,7 +79,7 @@ UniformType::Enum findUniformTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc)
 		const UniformRemapDx11& remap = s_constRemapDx11[ii];
 
 		if (remap.paramClass == constDesc.Class
-			&&  remap.paramType == constDesc.Type)
+		&&  remap.paramType == constDesc.Type)
 		{
 			if (D3D_SVC_MATRIX_COLUMNS != constDesc.Class)
 			{
@@ -87,7 +87,7 @@ UniformType::Enum findUniformTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc)
 			}
 
 			if (remap.columns == constDesc.Columns
-				&&  remap.rows    == constDesc.Rows)
+			&&  remap.rows    == constDesc.Rows)
 			{
 				return remap.id;
 			}
@@ -175,7 +175,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		, &errorMsg
 		);
 	if (FAILED(hr)
-		|| (werror && NULL != errorMsg) )
+	|| (werror && NULL != errorMsg) )
 	{
 		const char* log = (char*)errorMsg->GetBufferPointer();
 
@@ -185,7 +185,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		int32_t end = INT32_MAX;
 
 		if (2 == sscanf(log, "(%u,%u):", &line, &column)
-			&&  0 != line)
+		&&  0 != line)
 		{
 			start = bx::uint32_imax(1, line-10);
 			end = start + 20;
@@ -293,7 +293,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 						UniformType::Enum type = findUniformTypeDx11(constDesc);
 
 						if (UniformType::Count != type
-							&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
+						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 						{
 							Uniform un;
 							un.name = varDesc.Name;

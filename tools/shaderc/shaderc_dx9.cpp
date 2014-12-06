@@ -41,7 +41,7 @@ UniformType::Enum findUniformTypeDx9(const D3DXCONSTANT_DESC& constDesc)
 		const UniformRemapDx9& remap = s_constRemapDx9[ii];
 
 		if (remap.paramClass == constDesc.Class
-			&&  remap.paramType  == constDesc.Type)
+		&&  remap.paramType  == constDesc.Type)
 		{
 			if (D3DXPC_MATRIX_COLUMNS != constDesc.Class)
 			{
@@ -49,7 +49,7 @@ UniformType::Enum findUniformTypeDx9(const D3DXCONSTANT_DESC& constDesc)
 			}
 
 			if (remap.columns == constDesc.Columns
-				&&  remap.rows    == constDesc.Rows)
+			&&  remap.rows    == constDesc.Rows)
 			{
 				return remap.id;
 			}
@@ -157,7 +157,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 		int32_t end = INT32_MAX;
 
 		if (3 == sscanf(log, "%[^(](%u,%u):", source, &line, &column)
-			&&  0 != line)
+		&&  0 != line)
 		{
 			start = bx::uint32_imax(1, line-10);
 			end = start + 20;

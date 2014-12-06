@@ -1961,8 +1961,8 @@ namespace bgfx
 			{
 				ovrGLConfig config;
 				config.OGL.Header.API = ovrRenderAPI_OpenGL;
-				config.OGL.Header.RTSize.w = m_resolution.m_width;
-				config.OGL.Header.RTSize.h = m_resolution.m_height;
+				config.OGL.Header.BackBufferSize.w = m_resolution.m_width;
+				config.OGL.Header.BackBufferSize.h = m_resolution.m_height;
 				config.OGL.Header.Multisample = 0;
 				config.OGL.Window = g_bgfxHwnd;
 				config.OGL.DC = GetDC(g_bgfxHwnd);
