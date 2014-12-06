@@ -278,9 +278,14 @@ function exampleProject(_name)
 end
 
 dofile "bgfx.lua"
+
+group "examples"
 dofile "example-common.lua"
+
+group "libs"
 bgfxProject("", "StaticLib", {})
 
+group "examples"
 exampleProject("00-helloworld")
 exampleProject("01-cubes")
 exampleProject("02-metaballs")
@@ -307,10 +312,12 @@ exampleProject("22-windows")
 exampleProject("23-vectordisplay")
 
 if _OPTIONS["with-shared-lib"] then
+	group "libs"
 	bgfxProject("-shared-lib", "SharedLib", {})
 end
 
 if _OPTIONS["with-tools"] then
+	group "tools"
 	dofile "makedisttex.lua"
 	dofile "shaderc.lua"
 	dofile "texturec.lua"
