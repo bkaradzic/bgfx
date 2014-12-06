@@ -3,16 +3,16 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bgfx.h>
-#include "../../src/vertexdecl.h"
-
+#include <algorithm>
+#include <vector>
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <algorithm>
-#include <vector>
-#include <string>
+#include <bgfx.h>
+#include "../../src/vertexdecl.h"
+
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
