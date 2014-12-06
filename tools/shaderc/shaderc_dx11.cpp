@@ -366,6 +366,22 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 			);
 	}
 
+	{
+		ID3DBlob* stripped;
+		hr = D3DStripShader(code->GetBufferPointer()
+			, code->GetBufferSize()
+			, D3DCOMPILER_STRIP_REFLECTION_DATA	
+			| D3DCOMPILER_STRIP_TEST_BLOBS
+			, &stripped
+			);
+
+		if (SUCCEEDED(hr) )
+		{
+			code->Release();
+			code = stripped;
+		}
+	}
+
 	uint16_t shaderSize = (uint16_t)code->GetBufferSize();
 	bx::write(_writer, shaderSize);
 	bx::write(_writer, code->GetBufferPointer(), shaderSize);
