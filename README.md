@@ -391,6 +391,28 @@ Configuration is `<platform>-<debug/release>[32/64]`. For example:
 	linux-release32, nacl-debug64, nacl-arm-debug, pnacl-release, 
 	android-release, etc.
 
+OculusVR integration
+--------------------
+
+OculusVR support is currently experimental, and only DX11 is tested. To build
+with OculusVR HDM support enabled you must set `OVR_DIR` enviroment variable:
+
+	set OVR_DIR=<path to OculusSDK>
+
+And generate project files with `--with-ovr` option:
+
+	genie --with-ovr vs2012
+
+In `LibOVR/Include` create trampoline headers `OVR_D3D.h` and `OVR_GL.h`.
+
+`OVR_D3D.h` should contain:
+
+	#include "../Src/OVR_CAPI_D3D.h"
+
+`OVR_GL.h` should contain:
+
+	#include "../Src/OVR_CAPI_GL.h"
+
 Internals
 ---------
 
@@ -499,7 +521,9 @@ Using bgfx with SDL example:
 	    bgfx::init();
 
 **NOTE** You can use `--with-sdl` when runnning GENie to enable SDL2 integration
-with examples.
+with examples:
+
+	genie --with-sdl vs2012
 
 Tools
 -----
