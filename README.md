@@ -83,6 +83,8 @@ examples your current directory should be examples/runtime.
 
 Initialization and debug text.
 
+![example-00-helloworld](https://github.com/bkaradzic/bgfx/raw/master/examples/00-helloworld/screenshot.png)
+
 ### [01-cubes](https://github.com/bkaradzic/bgfx/blob/master/examples/01-cubes/cubes.cpp)
 
 Rendering simple static mesh.
