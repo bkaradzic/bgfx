@@ -14,8 +14,8 @@
 #define IMAGE2D_RW(_name, _reg) RWTexture2D<float4> _name : register(u[_reg])
 #define IMAGE2D_WR(_name, _reg) IMAGE2D_RW(_name, _reg)
 
-#define BUFFER_RO(_name, _struct, _reg) Buffer<_struct> _name : register(b[_reg])
-#define BUFFER_RW(_name, _struct, _reg) Buffer<_struct> _name : register(u[_reg])
+#define BUFFER_RO(_name, _struct, _reg) Buffer<_struct>   _name : register(b[_reg])
+#define BUFFER_RW(_name, _struct, _reg) RWBuffer<_struct> _name : register(u[_reg])
 #define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
 
 #define NUM_THREADS(_x, _y, _z) [numthreads(_x, _y, _z)]

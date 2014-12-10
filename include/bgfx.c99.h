@@ -245,7 +245,7 @@ typedef struct bgfx_instance_data_buffer
     uint8_t* data;
     uint32_t size;
     uint32_t offset;
-	uint32_t num;
+    uint32_t num;
     uint16_t stride;
     bgfx_vertex_buffer_handle_t handle;
 
