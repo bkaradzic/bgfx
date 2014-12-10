@@ -195,6 +195,11 @@
 #define BGFX_DEBUG_TEXT                  UINT32_C(0x00000008)
 
 ///
+#define BGFX_BUFFER_COMPUTE_NONE         UINT8_C(0x00)
+#define BGFX_BUFFER_COMPUTE_READ         UINT8_C(0x01)
+#define BGFX_BUFFER_COMPUTE_WRITE        UINT8_C(0x02)
+
+///
 #define BGFX_TEXTURE_NONE                UINT32_C(0x00000000)
 #define BGFX_TEXTURE_U_MIRROR            UINT32_C(0x00000001)
 #define BGFX_TEXTURE_U_CLAMP             UINT32_C(0x00000002)

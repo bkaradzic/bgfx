@@ -901,9 +901,9 @@ RENDERDOC_IMPORT
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t _flags) BX_OVERRIDE
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
+			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) BX_OVERRIDE
@@ -926,10 +926,10 @@ RENDERDOC_IMPORT
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
 		{
 			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
+			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) BX_OVERRIDE
@@ -1297,6 +1297,20 @@ RENDERDOC_IMPORT
 			m_depthStencilStateCache.invalidate();
 			m_rasterizerStateCache.invalidate();
 			m_samplerStateCache.invalidate();
+		}
+
+		void invalidateCompute()
+		{
+			m_deviceCtx->CSSetShader(NULL, NULL, 0);
+
+			ID3D11UnorderedAccessView* uav[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+			m_deviceCtx->CSSetUnorderedAccessViews(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, uav, NULL);
+
+			ID3D11ShaderResourceView* srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+			m_deviceCtx->CSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, srv);
+
+			ID3D11SamplerState* samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+			m_deviceCtx->CSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, samplers);
 		}
 
 		void updateMsaa()
@@ -2373,24 +2387,59 @@ RENDERDOC_IMPORT
 		deviceCtx->Unmap(m_ptr, 0);
 	}
 
-	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle)
+	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags)
 	{
+		m_uav = NULL;
 		m_size = _size;
 		m_decl = _declHandle;
-		m_dynamic = NULL == _data;
+
+		const bool needUav = 0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE);
+		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
+		m_dynamic = NULL == _data && !needUav;
 
 		D3D11_BUFFER_DESC desc;
 		desc.ByteWidth = _size;
-		desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		desc.BindFlags = 0
+			| D3D11_BIND_VERTEX_BUFFER
+			| (needUav ? D3D11_BIND_UNORDERED_ACCESS : 0)
+			| (needSrv ? D3D11_BIND_SHADER_RESOURCE  : 0)
+			;
 		desc.MiscFlags = 0;
+		desc.StructureByteStride = 0;
 
-		if (m_dynamic)
+		ID3D11Device* device = s_renderD3D11->m_device;
+
+		if (needUav)
+		{
+			desc.Usage = D3D11_USAGE_DEFAULT;
+			desc.CPUAccessFlags = 0;
+			desc.StructureByteStride = isValid(_declHandle) 
+				? s_renderD3D11->m_vertexDecls[_declHandle.idx].m_stride 
+				: 0
+				;
+
+			DX_CHECK(device->CreateBuffer(&desc
+				, NULL
+				, &m_ptr
+				) );
+
+			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd;
+			uavd.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			uavd.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+			uavd.Buffer.FirstElement = 0;
+			uavd.Buffer.NumElements  = m_size/16;
+			uavd.Buffer.Flags = 0;
+			DX_CHECK(device->CreateUnorderedAccessView(m_ptr
+				, &uavd
+				, &m_uav
+				) );
+		}
+		else if (m_dynamic)
 		{
 			desc.Usage = D3D11_USAGE_DYNAMIC;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-			desc.StructureByteStride = 0;
 
-			DX_CHECK(s_renderD3D11->m_device->CreateBuffer(&desc
+			DX_CHECK(device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
 				) );
@@ -2399,16 +2448,28 @@ RENDERDOC_IMPORT
 		{
 			desc.Usage = D3D11_USAGE_IMMUTABLE;
 			desc.CPUAccessFlags = 0;
-			desc.StructureByteStride = 0;
 
 			D3D11_SUBRESOURCE_DATA srd;
 			srd.pSysMem = _data;
 			srd.SysMemPitch = 0;
 			srd.SysMemSlicePitch = 0;
 
-			DX_CHECK(s_renderD3D11->m_device->CreateBuffer(&desc
+			DX_CHECK(device->CreateBuffer(&desc
 				, &srd
 				, &m_ptr
+				) );
+		}
+
+		if (needSrv)
+		{
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
+			srvd.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			srvd.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+			srvd.Buffer.FirstElement = 0;
+			srvd.Buffer.NumElements = m_size/16;
+			DX_CHECK(device->CreateShaderResourceView(m_ptr
+				, &srvd
+				, &m_srv
 				) );
 		}
 	}
@@ -3312,7 +3373,14 @@ RENDERDOC_IMPORT
 							case ComputeBinding::Buffer:
 								{
 									const VertexBufferD3D11& vertexBuffer = m_vertexBuffers[bind.m_idx];
-									BX_UNUSED(vertexBuffer);
+									if (Access::Read != bind.m_access)
+									{
+										uav[ii] = vertexBuffer.m_uav;
+									}
+									else
+									{
+										srv[ii] = vertexBuffer.m_srv;
+									}
 								}
 								break;
 							}
@@ -3335,16 +3403,7 @@ RENDERDOC_IMPORT
 					programIdx = invalidHandle;
 					m_currentProgram = NULL;
 
-					deviceCtx->CSSetShader(NULL, NULL, 0);
-
-					ID3D11UnorderedAccessView* uav[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
-					deviceCtx->CSSetUnorderedAccessViews(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, uav, NULL);
-
-					ID3D11ShaderResourceView* srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
-					deviceCtx->CSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, srv);
-
-					ID3D11SamplerState* samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
-					m_deviceCtx->CSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, samplers);
+					invalidateCompute();
 				}
 
 				const RenderDraw& draw = renderItem.draw;
@@ -3802,6 +3861,11 @@ RENDERDOC_IMPORT
 					statsNumInstances[primIndex]      += numInstances;
 					statsNumIndices += numIndices;
 				}
+			}
+
+			if (wasCompute)
+			{
+				invalidateCompute();
 			}
 
 			if (0 < _render->m_num)

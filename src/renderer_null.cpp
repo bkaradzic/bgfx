@@ -49,7 +49,7 @@ namespace bgfx
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -69,7 +69,7 @@ namespace bgfx
 		{
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 

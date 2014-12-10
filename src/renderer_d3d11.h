@@ -78,11 +78,13 @@ namespace bgfx
 	{
 		VertexBufferD3D11()
 			: m_ptr(NULL)
+			, m_srv(NULL)
+			, m_uav(NULL)
 			, m_dynamic(false)
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
+		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
 
 		void destroy()
@@ -92,9 +94,14 @@ namespace bgfx
 				DX_RELEASE(m_ptr, 0);
 				m_dynamic = false;
 			}
+
+			DX_RELEASE(m_srv, 0);
+			DX_RELEASE(m_uav, 0);
 		}
 
 		ID3D11Buffer* m_ptr;
+		ID3D11ShaderResourceView* m_srv;
+		ID3D11UnorderedAccessView* m_uav;
 		uint32_t m_size;
 		VertexDeclHandle m_decl;
 		bool m_dynamic;

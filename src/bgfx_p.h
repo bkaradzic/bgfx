@@ -1148,6 +1148,11 @@ namespace bgfx
 		uint32_t m_flags;
 	};
 
+	struct VertexBuffer
+	{
+		uint16_t m_stride;
+	};
+
 	struct DynamicIndexBuffer
 	{
 		IndexBufferHandle m_handle;
@@ -1162,8 +1167,9 @@ namespace bgfx
 		uint32_t m_size;
 		uint32_t m_startVertex;
 		uint32_t m_numVertices;
-		uint32_t m_stride;
+		uint16_t m_stride;
 		VertexDeclHandle m_decl;
+		uint8_t m_flags;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
@@ -1336,13 +1342,21 @@ namespace bgfx
 			m_draw.m_vertexDecl   = _tvb->decl;
 		}
 
-		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num)
+		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
 		{
  			m_draw.m_instanceDataOffset = _idb->offset;
 			m_draw.m_instanceDataStride = _idb->stride;
-			m_draw.m_numInstances       = bx::uint16_min( (uint16_t)_idb->num, _num);
+			m_draw.m_numInstances       = bx::uint32_min(_idb->num, _num);
 			m_draw.m_instanceDataBuffer = _idb->handle;
 			BX_FREE(g_allocator, const_cast<InstanceDataBuffer*>(_idb) );
+		}
+
+		void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num, uint16_t _stride)
+		{
+			m_draw.m_instanceDataOffset = _startVertex * _stride;
+			m_draw.m_instanceDataStride = _stride;
+			m_draw.m_numInstances       = _num;
+			m_draw.m_instanceDataBuffer = _handle;
 		}
 
 		void setProgram(ProgramHandle _handle)
@@ -1363,6 +1377,16 @@ namespace bgfx
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
 			}
+		}
+
+		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
+		{
+			ComputeBinding& bind = m_compute.m_bind[_stage];
+			bind.m_idx    = _handle.idx;
+			bind.m_format = 0;
+			bind.m_access = uint8_t(_access);
+			bind.m_mip    = 0;
+			bind.m_type   = uint8_t(ComputeBinding::Buffer);
 		}
 
 		void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access)
@@ -1666,7 +1690,7 @@ namespace bgfx
 					if (it->m_size != _size)
 					{
 						it->m_size -= _size;
-						it->m_ptr += _size;
+						it->m_ptr  += _size;
 					}
 					else
 					{
@@ -1745,12 +1769,12 @@ namespace bgfx
 		virtual void destroyIndexBuffer(IndexBufferHandle _handle) = 0;
 		virtual void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) = 0;
 		virtual void destroyVertexDecl(VertexDeclHandle _handle) = 0;
-		virtual void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle) = 0;
+		virtual void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t _flags) = 0;
 		virtual void destroyVertexBuffer(VertexBufferHandle _handle) = 0;
 		virtual void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size) = 0;
 		virtual void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) = 0;
 		virtual void destroyDynamicIndexBuffer(IndexBufferHandle _handle) = 0;
-		virtual void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size) = 0;
+		virtual void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t _flags) = 0;
 		virtual void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) = 0;
 		virtual void destroyDynamicVertexBuffer(VertexBufferHandle _handle) = 0;
 		virtual void createShader(ShaderHandle _handle, Memory* _mem) = 0;
@@ -1909,7 +1933,7 @@ namespace bgfx
 			return declHandle;
 		}
 
-		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl) )
+		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t flags) )
 		{
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
@@ -1919,10 +1943,13 @@ namespace bgfx
 				VertexDeclHandle declHandle = findVertexDecl(_decl);
 				m_declRef.add(handle, declHandle, _decl.m_hash);
 
+				m_vertexBuffers[handle.idx].m_stride = _decl.m_stride;
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
 				cmdbuf.write(declHandle);
+				cmdbuf.write(flags);
 			}
 
 			return handle;
@@ -2016,27 +2043,53 @@ namespace bgfx
 			m_dynamicIndexBufferHandle.free(_handle.idx);
 		}
 
-		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl) )
+		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags) )
 		{
 			DynamicVertexBufferHandle handle = BGFX_INVALID_HANDLE;
 			uint32_t size = strideAlign16(_num*_decl.m_stride, _decl.m_stride);
-			uint64_t ptr = m_dynamicVertexBufferAllocator.alloc(size);
-			if (ptr == NonLocalAllocator::invalidBlock)
+
+			uint64_t ptr = 0;
+			if (0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE) )
 			{
-				VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
-
-				BX_WARN(isValid(handle), "Failed to allocate dynamic vertex buffer handle.");
-				if (!isValid(vertexBufferHandle) )
+				ptr = m_gpuDvbAllocator.alloc(size);
+				if (ptr == NonLocalAllocator::invalidBlock)
 				{
-					return handle;
+					VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
+					if (!isValid(vertexBufferHandle) )
+					{
+						return handle;
+					}
+
+					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
+					cmdbuf.write(vertexBufferHandle);
+					cmdbuf.write(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
+					cmdbuf.write(_flags);
+
+					m_gpuDvbAllocator.add(uint64_t(vertexBufferHandle.idx)<<32, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
+					ptr = m_gpuDvbAllocator.alloc(size);
 				}
+			}
+			else
+			{
+				ptr = m_cpuDvbAllocator.alloc(size);
+				if (ptr == NonLocalAllocator::invalidBlock)
+				{
+					VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
 
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
-				cmdbuf.write(vertexBufferHandle);
-				cmdbuf.write(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
+					BX_WARN(isValid(handle), "Failed to allocate dynamic vertex buffer handle.");
+					if (!isValid(vertexBufferHandle) )
+					{
+						return handle;
+					}
 
-				m_dynamicVertexBufferAllocator.add(uint64_t(vertexBufferHandle.idx)<<32, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
-				ptr = m_dynamicVertexBufferAllocator.alloc(size);
+					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
+					cmdbuf.write(vertexBufferHandle);
+					cmdbuf.write(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
+					cmdbuf.write(_flags);
+
+					m_cpuDvbAllocator.add(uint64_t(vertexBufferHandle.idx)<<32, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE);
+					ptr = m_cpuDvbAllocator.alloc(size);
+				}
 			}
 
 			VertexDeclHandle declHandle = findVertexDecl(_decl);
@@ -2049,6 +2102,7 @@ namespace bgfx
 			dvb.m_startVertex = dvb.m_offset/_decl.m_stride;
 			dvb.m_numVertices = dvb.m_size/_decl.m_stride;
 			dvb.m_decl = declHandle;
+			dvb.m_flags = _flags;
 			m_declRef.add(dvb.m_handle, declHandle, _decl.m_hash);
 
 			return handle;
@@ -2058,7 +2112,7 @@ namespace bgfx
 		{
 			uint32_t numVertices = _mem->size/_decl.m_stride;
 			BX_CHECK(numVertices <= UINT16_MAX, "Num vertices exceeds maximum (num %d, max %d).", numVertices, UINT16_MAX);
-			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(uint16_t(numVertices), _decl);
+			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(uint16_t(numVertices), _decl, false);
 			if (isValid(handle) )
 			{
 				updateDynamicVertexBuffer(handle, _mem);
@@ -2069,6 +2123,7 @@ namespace bgfx
 		BGFX_API_FUNC(void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem) )
 		{
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
+			BX_CHECK(!dvb.m_flags, "Can't update GPU buffer from CPU.");
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateDynamicVertexBuffer);
 			cmdbuf.write(dvb.m_handle);
 			cmdbuf.write(dvb.m_offset);
@@ -2092,7 +2147,14 @@ namespace bgfx
 				cmdbuf.write(declHandle);
 			}
 
-			m_dynamicVertexBufferAllocator.free(uint64_t(dvb.m_handle.idx)<<32 | dvb.m_offset);
+			if (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_WRITE) )
+			{
+				m_gpuDvbAllocator.free(uint64_t(dvb.m_handle.idx)<<32 | dvb.m_offset);
+			}
+			else
+			{
+				m_cpuDvbAllocator.free(uint64_t(dvb.m_handle.idx)<<32 | dvb.m_offset);
+			}
 			m_dynamicVertexBufferHandle.free(_handle.idx);
 		}
 
@@ -2171,6 +2233,7 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_size);
+				cmdbuf.write(false);
 
 				vb = (TransientVertexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientVertexBuffer)+_size);
 				vb->data = (uint8_t*)&vb[1];
@@ -2216,7 +2279,7 @@ namespace bgfx
 			_tvb->startVertex = offset/_decl.m_stride;
 			_tvb->stride = _decl.m_stride;
 			_tvb->handle = dvb.handle;
-			_tvb->decl = declHandle;
+			_tvb->decl   = declHandle;
 		}
 
 		BGFX_API_FUNC(const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride) )
@@ -2228,11 +2291,11 @@ namespace bgfx
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 			InstanceDataBuffer* idb = (InstanceDataBuffer*)BX_ALLOC(g_allocator, sizeof(InstanceDataBuffer) );
-			idb->data = &dvb.data[offset];
-			idb->size = _num * stride;
+			idb->data   = &dvb.data[offset];
+			idb->size   = _num * stride;
 			idb->offset = offset;
+			idb->num    = _num;
 			idb->stride = stride;
-			idb->num = _num;
 			idb->handle = dvb.handle;
 
 			return idb;
@@ -2893,11 +2956,27 @@ namespace bgfx
 			m_submit->setVertexBuffer(_tvb, _startVertex, _numVertices);
 		}
 
-		BGFX_API_FUNC(void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num) )
+		BGFX_API_FUNC(void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num) )
 		{
 			--m_instBufferCount;
 
 			m_submit->setInstanceDataBuffer(_idb, _num);
+		}
+
+		BGFX_API_FUNC(void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num) )
+		{
+			const VertexBuffer& vb = m_vertexBuffers[_handle.idx];
+			m_submit->setInstanceDataBuffer(_handle, _startVertex, _num, vb.m_stride);
+		}
+
+		BGFX_API_FUNC(void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num) )
+		{
+			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
+			m_submit->setInstanceDataBuffer(dvb.m_handle
+				, dvb.m_startVertex + _startVertex
+				, _num
+				, dvb.m_stride
+				);
 		}
 
 		BGFX_API_FUNC(void setProgram(ProgramHandle _handle) )
@@ -2928,6 +3007,17 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t submit(uint8_t _id, int32_t _depth) )
 		{
 			return m_submit->submit(_id, _depth);
+		}
+
+		BGFX_API_FUNC(void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access) )
+		{
+			m_submit->setBuffer(_stage, _handle, _access);
+		}
+
+		BGFX_API_FUNC(void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access) )
+		{
+			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
+			m_submit->setBuffer(_stage, dvb.m_handle, _access);
 		}
 
 		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access) )
@@ -3028,6 +3118,8 @@ namespace bgfx
 		uint64_t m_tempKeys[BGFX_CONFIG_MAX_DRAW_CALLS];
 		uint16_t m_tempValues[BGFX_CONFIG_MAX_DRAW_CALLS];
 
+		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
+
 		DynamicIndexBuffer m_dynamicIndexBuffers[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
 		DynamicVertexBuffer m_dynamicVertexBuffers[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 
@@ -3038,7 +3130,8 @@ namespace bgfx
 
 		NonLocalAllocator m_dynamicIndexBufferAllocator;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS> m_dynamicIndexBufferHandle;
-		NonLocalAllocator m_dynamicVertexBufferAllocator;
+		NonLocalAllocator m_cpuDvbAllocator;
+		NonLocalAllocator m_gpuDvbAllocator;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS> m_dynamicVertexBufferHandle;
 
 		bx::HandleAllocT<BGFX_CONFIG_MAX_INDEX_BUFFERS> m_indexBufferHandle;

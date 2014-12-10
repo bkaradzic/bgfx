@@ -345,8 +345,8 @@ namespace bgfx
 		uint8_t* data;             //!< Pointer to data.
 		uint32_t size;             //!< Data size.
 		uint32_t offset;           //!< Offset in vertex buffer.
+		uint32_t num;              //!< Number of instances.
 		uint16_t stride;           //!< Vertex buffer stride.
-		uint16_t num;              //!< Number of instances.
 		VertexBufferHandle handle; //!< Vertex buffer object handle.
 	};
 
@@ -626,7 +626,7 @@ namespace bgfx
 	/// @param _decl Vertex declaration.
 	/// @returns Static vertex buffer handle.
 	///
-	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
+	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
 
 	/// Destroy static vertex buffer.
 	///
@@ -669,8 +669,9 @@ namespace bgfx
 	///
 	/// @param _num Number of vertices.
 	/// @param _decl Vertex declaration.
+	/// @param _compute True if vertex buffer will be used by compute shader.
 	///
-	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl);
+	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
 
 	/// Create dynamic vertex buffer and initialize it.
 	///
@@ -1183,7 +1184,13 @@ namespace bgfx
 	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices);
 
 	/// Set instance data buffer for draw primitive.
-	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint16_t _num = UINT16_MAX);
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num = UINT32_MAX);
+
+	/// Set instance data buffer for draw primitive.
+	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride);
+
+	/// Set instance data buffer for draw primitive.
+	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _offset, uint32_t _num);
 
 	/// Set program for draw primitive.
 	void setProgram(ProgramHandle _handle);
@@ -1227,6 +1234,12 @@ namespace bgfx
 	/// @returns Number of draw calls.
 	///
 	uint32_t submit(uint8_t _id, int32_t _depth = 0);
+
+	///
+	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access);
+
+	///
+	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);
 
 	///
 	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access);
