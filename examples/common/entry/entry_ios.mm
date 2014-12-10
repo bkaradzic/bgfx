@@ -32,7 +32,7 @@ namespace entry
 	{
 		Context(uint32_t _width, uint32_t _height)
 		{
-			const char* argv[1] = { "ios" };
+            static const char* argv[1] = { NULL /*, "ios" */ };
 			m_mte.m_argc = 1;
 			m_mte.m_argv = const_cast<char**>(argv);
 
