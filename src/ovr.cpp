@@ -147,7 +147,7 @@ ovrError:
 		return true;
 	}
 
-	void OVR::postReset(ovrTexture _texture)
+	void OVR::postReset(const ovrTexture& _texture)
 	{
 		if (NULL != m_hmd)
 		{

@@ -53,7 +53,7 @@ namespace bgfx
 		void shutdown();
 
 		bool postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug = false);
-		void postReset(ovrTexture _texture);
+		void postReset(const ovrTexture& _texture);
 		void preReset();
 		bool swap();
 		void recenter();
