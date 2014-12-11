@@ -1303,14 +1303,14 @@ RENDERDOC_IMPORT
 		{
 			m_deviceCtx->CSSetShader(NULL, NULL, 0);
 
-			ID3D11UnorderedAccessView* uav[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
-			m_deviceCtx->CSSetUnorderedAccessViews(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, uav, NULL);
+			ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
+			m_deviceCtx->CSSetUnorderedAccessViews(0, BX_COUNTOF(uav), uav, NULL);
 
-			ID3D11ShaderResourceView* srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
-			m_deviceCtx->CSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, srv);
+			ID3D11ShaderResourceView* srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
+			m_deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);
 
-			ID3D11SamplerState* samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
-			m_deviceCtx->CSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, samplers);
+			ID3D11SamplerState* samplers[BGFX_MAX_COMPUTE_BINDINGS] = {};
+			m_deviceCtx->CSSetSamplers(0, BX_COUNTOF(samplers), samplers);
 		}
 
 		void updateMsaa()
@@ -1344,10 +1344,10 @@ RENDERDOC_IMPORT
 			||   getBufferHeight() != _resolution.m_height
 			||   m_flags != flags)
 			{
-				bool resize = (m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK);
-#if BX_PLATFORM_WINRT
-				resize = false;     // can't use ResizeBuffers on Windows Phone
-#endif
+				bool resize = true
+					&& !BX_ENABLED(BX_PLATFORM_WINRT) // can't use ResizeBuffers on Windows Phone
+					&& (m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK)
+					;
 				m_flags = flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
@@ -1390,7 +1390,7 @@ RENDERDOC_IMPORT
 						, &m_scd
 						, &m_swapChain
 						);
-#endif
+#endif // BX_PLATFORM_WINRT
 					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 				}
 
@@ -3346,7 +3346,7 @@ RENDERDOC_IMPORT
 					BX_UNUSED(programChanged);
 					ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
 					ID3D11ShaderResourceView*  srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
-					ID3D11SamplerState*    sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+					ID3D11SamplerState*    sampler[BGFX_MAX_COMPUTE_BINDINGS] = {};
 
 					for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 					{
@@ -3387,9 +3387,9 @@ RENDERDOC_IMPORT
 						}
 					}
 
-					deviceCtx->CSSetUnorderedAccessViews(0, BGFX_MAX_COMPUTE_BINDINGS, uav, NULL);
-					deviceCtx->CSSetShaderResources(0, BGFX_MAX_COMPUTE_BINDINGS, srv);
-					deviceCtx->CSSetSamplers(0, BGFX_MAX_COMPUTE_BINDINGS, sampler);
+					deviceCtx->CSSetUnorderedAccessViews(0, BX_COUNTOF(uav), uav, NULL);
+					deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);
+					deviceCtx->CSSetSamplers(0, BX_COUNTOF(sampler), sampler);
 
 					deviceCtx->Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
 
@@ -3957,7 +3957,7 @@ RENDERDOC_IMPORT
 					);
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
-					tvm.printf(10, pos++, 0x8e, "    %8s: %7d (#inst: %5d), submitted: %7d"
+					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"
 						, s_primName[ii]
 						, statsNumPrimsRendered[ii]
 						, statsNumInstances[ii]
