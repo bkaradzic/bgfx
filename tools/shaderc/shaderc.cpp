@@ -1007,7 +1007,7 @@ int main(int _argc, const char* _argv[])
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = bx::strnl(eol);
+				parse = bx::strws(bx::strnl(eol) );
 			}
 		}
 
