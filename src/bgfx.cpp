@@ -2056,6 +2056,7 @@ again:
 	IndexBufferHandle createIndexBuffer(const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createIndexBuffer(_mem);
 	}
 
@@ -2068,6 +2069,7 @@ again:
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return s_ctx->createVertexBuffer(_mem, _decl, _flags);
 	}
