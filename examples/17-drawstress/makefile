@@ -5,6 +5,8 @@
 
 include ../../scripts/shader-embeded.mk
 
-rebuild:
+droidsans.ttf.h: ../runtime/font/droidsans.ttf
+	bin2c -f $(<) -o $(@) -n s_droidSansTtf
+
+rebuild: droidsans.ttf.h
 	@make -s --no-print-directory clean all
-	@bin2c -c --name s_droidSansTtf ../runtime/font/droidsans.ttf > droidsans.ttf.h
