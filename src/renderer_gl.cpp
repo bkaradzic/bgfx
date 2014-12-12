@@ -869,6 +869,8 @@ namespace bgfx
 
 		void init()
 		{
+			m_renderdocdll = loadRenderDoc();
+
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -1401,6 +1403,8 @@ namespace bgfx
 			m_glctx.destroy();
 
 			m_flip = false;
+
+			unloadRenderDoc(m_renderdocdll);
 		}
 
 		RendererType::Enum getRendererType() const BX_OVERRIDE
@@ -2383,6 +2387,8 @@ namespace bgfx
 					) );
 			}
 		}
+
+		void* m_renderdocdll;
 
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -5180,6 +5186,11 @@ namespace bgfx
 						, statsNumInstances[ii]
 						, statsNumPrimsSubmitted[ii]
 						);
+				}
+
+				if (NULL != m_renderdocdll)
+				{
+					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
 				}
 
 				tvm.printf(10, pos++, 0x8e, "    Indices: %7d", statsNumIndices);
