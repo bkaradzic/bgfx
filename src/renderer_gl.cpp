@@ -204,7 +204,7 @@ namespace bgfx
 		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                         false }, // PTC24
 		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         true  }, // Unknown
 		{ GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         true  }, // R1
-		{ GL_LUMINANCE,                                GL_LUMINANCE,                                GL_UNSIGNED_BYTE,                true  }, // R8
+		{ GL_R8,                                       GL_RED,                                      GL_UNSIGNED_BYTE,                true  }, // R8
 		{ GL_R16,                                      GL_RED,                                      GL_UNSIGNED_SHORT,               true  }, // R16
 		{ GL_R16F,                                     GL_RED,                                      GL_HALF_FLOAT,                   true  }, // R16F
 		{ GL_R32UI,                                    GL_RED,                                      GL_UNSIGNED_INT,                 true  }, // R32
@@ -808,11 +808,15 @@ namespace bgfx
 
 	bool isTextureFormatValid(TextureFormat::Enum _format)
 	{
+		const TextureFormatInfo& tfi = s_textureFormat[_format];
+		if (GL_ZERO == tfi.m_internalFmt)
+		{
+			return false;
+		}
+
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
-
-		const TextureFormatInfo& tfi = s_textureFormat[_format];
 
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
 		void* data = alloca(size);
