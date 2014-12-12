@@ -488,7 +488,7 @@ Other debuggers:
 | IntelGPA  | Linux/OSX/Win |   x  |  x   |      |   x  |        |
 | Nsight    | Win           |   x  |  x   |  x   |      |        |
 | PerfHUD   | Win           |   x  |  x   |      |      |        |
-| RenderDoc | Win           |      |  x   |      |      |    x   |
+| RenderDoc | Win           |      |  x   |  x   |      |    x   |
 | vogl      | Linux         |      |      |  x   |      |    x   |
 
 Download:  
