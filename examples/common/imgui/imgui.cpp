@@ -864,7 +864,7 @@ struct Imgui
 		area.m_scissorX     = area.m_contentX;
 		area.m_scissorWidth = area.m_contentWidth;
 
-		area.m_scissorY       = top;
+		area.m_scissorY       = top - 1;
 		area.m_scissorHeight  = bottom - top;
 		area.m_scissorEnabled = true;
 
