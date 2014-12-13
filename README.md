@@ -466,10 +466,10 @@ Debugging and Profiling
 
 ### RenderDoc
 
-Loading of RenderDoc is integrated in bgfx when using DX11 renderer. You can
-drop in `renderdoc.dll` from RenderDoc distribution into working directory,
-and it will be automatically loaded during bgfx initialization. This allows
-frame capture at any time by pressing **F11**.
+Loading of RenderDoc is integrated in bgfx when using DX11 or OpenGL renderer.
+You can drop in `renderdoc.dll` from RenderDoc distribution into working
+directory, and it will be automatically loaded during bgfx initialization. This
+allows frame capture at any time by pressing **F11**.
 
 Download: [RenderDoc](https://renderdoc.org/builds)
 
@@ -709,7 +709,7 @@ Contributors
 Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.  
 Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and
   examples.  
-Milos Tosic ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
+Miloš Tošić ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
 Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil, 
   14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
 James Gray ([@james4k](https://github.com/james4k)) - Go language API bindings.  
