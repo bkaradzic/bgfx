@@ -524,6 +524,8 @@ void CompressTriangleCodes1( const Ty* triangles,
 				verticesRead += 3;
 				break;
 			}
+
+			default: break;
 			}
 
 			// populate the edge fifo with the 3 most recent edges
