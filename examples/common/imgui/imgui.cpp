@@ -864,7 +864,7 @@ struct Imgui
 		area.m_scissorX     = area.m_contentX;
 		area.m_scissorWidth = area.m_contentWidth;
 
-		area.m_scissorY       = top;
+		area.m_scissorY       = top - 1;
 		area.m_scissorHeight  = bottom - top;
 		area.m_scissorEnabled = true;
 
@@ -879,6 +879,7 @@ struct Imgui
 							 , area.m_scissorHeight
 							 , false
 							 );
+		area.m_didScroll = false;
 
 		parentArea.m_widgetY += (_height + DEFAULT_SPACING);
 
@@ -915,8 +916,12 @@ struct Imgui
 		const int32_t stop = area.m_contentY + (*area.m_scrollVal);
 		const int32_t sh   = IMGUI_MAX(1, sbot - stop); // The scrollable area height.
 
+		const uint32_t hid = area.m_scrollId;
+		const float barHeight = (float)height / (float)sh;
+		const bool hasScrollBar = (barHeight < 1.0f);
+
 		// Handle mouse scrolling.
-		if (area.m_inside && !anyActive() )
+		if (area.m_inside && !area.m_didScroll && !anyActive() )
 		{
 			if (m_scroll)
 			{
@@ -925,17 +930,32 @@ struct Imgui
 				const int32_t val = *area.m_scrollVal + 20*m_scroll;
 				const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
 				const int32_t max = 0;
-				*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
+				const int32_t newVal = IMGUI_CLAMP(val, min, max);
+				*area.m_scrollVal = newVal;
+
+				if (hasScrollBar)
+				{
+					area.m_didScroll = true;
+				}
 			}
 		}
 
-		const uint32_t hid = area.m_scrollId;
-		const float barHeight = (float)height / (float)sh;
+		area.m_inside = false;
+
+		int32_t* scroll = area.m_scrollVal;
+
+		// This must be called here before drawing scroll bars
+		// so that scissor of parrent area applies.
+		m_areaId.pop();
+
+		// Propagate 'didScroll' to parrent area to avoid scrolling multiple areas at once.
+		Area& parentArea = getCurrentArea();
+		parentArea.m_didScroll = (parentArea.m_didScroll || area.m_didScroll);
 
 		// Draw and handle scroll click.
-		if (barHeight < 1.0f)
+		if (hasScrollBar)
 		{
-			const float barY = bx::fsaturate( (float)(-(*area.m_scrollVal) ) / (float)sh);
+			const float barY = bx::fsaturate( (float)(-(*scroll) ) / (float)sh);
 
 			// Handle scroll bar logic.
 			const int32_t hx = xx;
@@ -959,80 +979,47 @@ struct Imgui
 				{
 					const int32_t diff = height - sh;
 
-					const int32_t val = *area.m_scrollVal - (m_my - m_dragY);
-					const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
+					const int32_t drag = m_my - m_dragY;
+					const float dragFactor = float(sh)/float(height);
+
+					const int32_t val = *scroll - int32_t(drag*dragFactor);
+					const int32_t min = (diff < 0) ? diff : *scroll;
 					const int32_t max = 0;
-					*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
+					*scroll = IMGUI_CLAMP(val, min, max);
 
 					m_dragY = m_my;
 				}
 			}
 
 			// BG
-			if (0 == _r)
-			{
-				drawRect( (float)xx
-					, (float)yy
-					, (float)width
-					, (float)height
-					, imguiRGBA(0, 0, 0, 196)
-					);
-			}
-			else
-			{
-				drawRoundedRect( (float)xx
-					, (float)yy
-					, (float)width
-					, (float)height
-					, (float)_r
-					, imguiRGBA(0, 0, 0, 196)
-					);
-			}
+			drawRoundedRect( (float)xx
+						   , (float)yy
+						   , (float)width
+						   , (float)height
+						   , (float)_r
+						   , imguiRGBA(0, 0, 0, 196)
+						   );
 
 			// Bar
 			if (isActive(hid) )
 			{
-				if (0 == _r)
-				{
-					drawRect( (float)hx
-						, (float)hy
-						, (float)hw
-						, (float)hh
-						, imguiRGBA(255, 196, 0, 196)
-						);
-				}
-				else
-				{
-					drawRoundedRect( (float)hx
-						, (float)hy
-						, (float)hw
-						, (float)hh
-						, (float)_r
-						, imguiRGBA(255, 196, 0, 196)
-						);
-				}
+				drawRoundedRect( (float)hx
+							   , (float)hy
+							   , (float)hw
+							   , (float)hh
+							   , (float)_r
+							   , imguiRGBA(255, 196, 0, 196)
+							   );
 			}
 			else
 			{
-				if (0 == _r)
-				{
-					drawRect( (float)hx
-						, (float)hy
-						, (float)hw
-						, (float)hh
-						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
-						);
-				}
-				else
-				{
-					drawRoundedRect( (float)hx
-						, (float)hy
-						, (float)hw
-						, (float)hh
-						, (float)_r
-						, isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
-						);
-				}
+				drawRoundedRect( (float)hx
+							   , (float)hy
+							   , (float)hw
+							   , (float)hh
+							   , (float)_r
+							   , isHot(hid) ? imguiRGBA(255, 196, 0, 96) : imguiRGBA(255, 255, 255, 64)
+							   );
 			}
 		}
 		else
@@ -1045,10 +1032,6 @@ struct Imgui
 		}
 
 		nvgResetScissor(m_nvg);
-
-		area.m_inside = false;
-
-		m_areaId.previous();
 	}
 
 	bool beginArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, bool _enabled, int32_t _r)
@@ -1084,6 +1067,7 @@ struct Imgui
 		area.m_scrollVal = &s_zeroScroll;
 		area.m_scrollId = scrollId;
 		area.m_inside = inRect(area.m_scissorX, area.m_scissorY, area.m_scissorWidth, area.m_scissorHeight, false);
+		area.m_didScroll = false;
 
 		if (_enabled)
 		{
@@ -1174,25 +1158,13 @@ struct Imgui
 
 		const uint32_t rgb0 = _rgb0&0x00ffffff;
 
-		if (0 == _r)
-		{
-			drawRect( (float)xx
-				, (float)yy
-				, (float)width
-				, (float)height
-				, rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
-				);
-		}
-		else
-		{
-			drawRoundedRect( (float)xx
-				, (float)yy
-				, (float)width
-				, (float)height
-				, (float)_r
-				, rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
-				);
-		}
+		drawRoundedRect( (float)xx
+					   , (float)yy
+					   , (float)width
+					   , (float)height
+					   , (float)_r
+					   , rgb0 | imguiRGBA(0, 0, 0, isActive(id) ? 196 : 96)
+					   );
 
 		if (enabled)
 		{
@@ -1409,25 +1381,13 @@ struct Imgui
 		const bool over = enabled && inRect(xx, yy, width, height);
 		inputLogic(id, over);
 
-		if (0 == _r)
-		{
-			drawRect( (float)xx
-				, (float)yy
-				, (float)width
-				, (float)height
-				, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
-				);
-		}
-		else
-		{
-			drawRoundedRect( (float)xx
-				, (float)yy
-				, (float)width
-				, (float)height
-				, (float)_r
-				, isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
-				);
-		}
+		drawRoundedRect( (float)xx
+					   , (float)yy
+					   , (float)width
+					   , (float)height
+					   , (float)_r
+					   , isActiveInputField(id)?imguiRGBA(255,196,0,255):imguiRGBA(128,128,128,96)
+					   );
 
 		if (isActiveInputField(id) )
 		{
@@ -1519,25 +1479,13 @@ struct Imgui
 		const int32_t tabWidthHalf = width / (tabCount*2);
 		const int32_t textY = yy + _height/2 + int32_t(m_fonts[m_currentFontIdx].m_size)/2 - 2;
 
-		if (0 == _r)
-		{
-			drawRect( (float)xx
-				    , (float)yy
-				    , (float)width
-				    , (float)_height
-				    , _enabled?imguiRGBA(128,128,128,96):imguiRGBA(128,128,128,64)
-				    );
-		}
-		else
-		{
-			drawRoundedRect( (float)xx
-						   , (float)yy
-						   , (float)width
-						   , (float)_height
-						   , (float)_r
-						   , _enabled?imguiRGBA(128,128,128,96):imguiRGBA(128,128,128,64)
-						   );
-		}
+		drawRoundedRect( (float)xx
+					   , (float)yy
+					   , (float)width
+					   , (float)_height
+					   , (float)_r
+					   , _enabled?imguiRGBA(128,128,128,96):imguiRGBA(128,128,128,64)
+					   );
 
 		for (uint8_t ii = 0; ii < tabCount; ++ii)
 		{
@@ -1560,25 +1508,13 @@ struct Imgui
 			{
 				textColor = enabled?imguiRGBA(0,0,0,255):imguiRGBA(255,255,255,100);
 
-				if (0 == _r)
-				{
-					drawRect( (float)buttonX
-						    , (float)yy
-						    , (float)tabWidth
-						    , (float)_height
-						    , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
-						    );
-				}
-				else
-				{
-					drawRoundedRect( (float)buttonX
-								   , (float)yy
-								   , (float)tabWidth
-								   , (float)_height
-								   , (float)_r
-								   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
-								   );
-				}
+				drawRoundedRect( (float)buttonX
+							   , (float)yy
+							   , (float)tabWidth
+							   , (float)_height
+							   , (float)_r
+							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
+							   );
 			}
 			else
 			{
@@ -1984,13 +1920,12 @@ struct Imgui
 		const bool over = _enabled && inRect(xx, yy, width, height, false);
 		const bool res = buttonLogic(id, over);
 
-		drawRoundedRect( (float)xx
-					   , (float)yy
-					   , (float)width
-					   , (float)height
-					   , 0.0f
-					   , isActive(id) ? imguiRGBA(23, 23, 23, 192) : imguiRGBA(0, 0, 0, 222)
-					   );
+		drawRect( (float)xx
+				, (float)yy
+				, (float)width
+				, (float)height
+				, isActive(id) ? imguiRGBA(23, 23, 23, 192) : imguiRGBA(0, 0, 0, 222)
+				);
 
 		drawTriangle( triX
 					, triY
@@ -2322,21 +2257,26 @@ struct Imgui
 		}
 	}
 
-	void drawRect(float _x, float _y, float w, float h, uint32_t _argb, float _fth = 1.0f)
+	void drawRect(float _x, float _y, float _w, float _h, uint32_t _argb, float _fth = 1.0f)
 	{
 		float verts[4 * 2] =
 		{
-			_x + 0.5f,     _y + 0.5f,
-			_x + w - 0.5f, _y + 0.5f,
-			_x + w - 0.5f, _y + h - 0.5f,
-			_x + 0.5f,     _y + h - 0.5f,
+			_x + 0.5f,      _y + 0.5f,
+			_x + _w - 0.5f, _y + 0.5f,
+			_x + _w - 0.5f, _y + _h - 0.5f,
+			_x + 0.5f,      _y + _h - 0.5f,
 		};
 
 		drawPolygon(verts, 4, _fth, _argb);
 	}
 
-	void drawRoundedRect(float _x, float _y, float w, float h, float r, uint32_t _argb, float _fth = 1.0f)
+	void drawRoundedRect(float _x, float _y, float _w, float _h, float _r, uint32_t _argb, float _fth = 1.0f)
 	{
+		if (0.0f == _r)
+		{
+			return drawRect(_x, _y, _w, _h, _argb, _fth);
+		}
+
 		const uint32_t num = NUM_CIRCLE_VERTS / 4;
 		const float* cverts = m_circleVerts;
 		float verts[(num + 1) * 4 * 2];
@@ -2344,30 +2284,30 @@ struct Imgui
 
 		for (uint32_t ii = 0; ii <= num; ++ii)
 		{
-			*vv++ = _x + w - r + cverts[ii * 2] * r;
-			*vv++ = _y + h - r + cverts[ii * 2 + 1] * r;
+			*vv++ = _x + _w - _r + cverts[ii * 2] * _r;
+			*vv++ = _y + _h - _r + cverts[ii * 2 + 1] * _r;
 		}
 
 		for (uint32_t ii = num; ii <= num * 2; ++ii)
 		{
-			*vv++ = _x + r + cverts[ii * 2] * r;
-			*vv++ = _y + h - r + cverts[ii * 2 + 1] * r;
+			*vv++ = _x + _r + cverts[ii * 2] * _r;
+			*vv++ = _y + _h - _r + cverts[ii * 2 + 1] * _r;
 		}
 
 		for (uint32_t ii = num * 2; ii <= num * 3; ++ii)
 		{
-			*vv++ = _x + r + cverts[ii * 2] * r;
-			*vv++ = _y + r + cverts[ii * 2 + 1] * r;
+			*vv++ = _x + _r + cverts[ii * 2] * _r;
+			*vv++ = _y + _r + cverts[ii * 2 + 1] * _r;
 		}
 
 		for (uint32_t ii = num * 3; ii < num * 4; ++ii)
 		{
-			*vv++ = _x + w - r + cverts[ii * 2] * r;
-			*vv++ = _y + r + cverts[ii * 2 + 1] * r;
+			*vv++ = _x + _w - _r + cverts[ii * 2] * _r;
+			*vv++ = _y + _r + cverts[ii * 2 + 1] * _r;
 		}
 
-		*vv++ = _x + w - r + cverts[0] * r;
-		*vv++ = _y + r + cverts[1] * r;
+		*vv++ = _x + _w - _r + cverts[0] * _r;
+		*vv++ = _y + _r + cverts[1] * _r;
 
 		drawPolygon(verts, (num + 1) * 4, _fth, _argb);
 	}
@@ -2947,6 +2887,7 @@ struct Imgui
 		int32_t* m_scrollVal;
 		uint32_t m_scrollId;
 		bool m_inside;
+		bool m_didScroll;
 		bool m_scissorEnabled;
 	};
 
@@ -2994,7 +2935,7 @@ struct Imgui
 			m_ids[++m_current] = ++m_idGen;
 		}
 
-		void previous()
+		void pop()
 		{
 			m_current = m_current > 0 ? m_current-1 : 0;
 		}
