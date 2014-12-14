@@ -879,6 +879,7 @@ struct Imgui
 							 , area.m_scissorHeight
 							 , false
 							 );
+		area.m_didScroll = false;
 
 		parentArea.m_widgetY += (_height + DEFAULT_SPACING);
 
@@ -915,8 +916,12 @@ struct Imgui
 		const int32_t stop = area.m_contentY + (*area.m_scrollVal);
 		const int32_t sh   = IMGUI_MAX(1, sbot - stop); // The scrollable area height.
 
+		const uint32_t hid = area.m_scrollId;
+		const float barHeight = (float)height / (float)sh;
+		const bool hasScrollBar = (barHeight < 1.0f);
+
 		// Handle mouse scrolling.
-		if (area.m_inside && !anyActive() )
+		if (area.m_inside && !area.m_didScroll && !anyActive() )
 		{
 			if (m_scroll)
 			{
@@ -925,17 +930,32 @@ struct Imgui
 				const int32_t val = *area.m_scrollVal + 20*m_scroll;
 				const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
 				const int32_t max = 0;
-				*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
+				const int32_t newVal = IMGUI_CLAMP(val, min, max);
+				*area.m_scrollVal = newVal;
+
+				if (hasScrollBar)
+				{
+					area.m_didScroll = true;
+				}
 			}
 		}
 
-		const uint32_t hid = area.m_scrollId;
-		const float barHeight = (float)height / (float)sh;
+		area.m_inside = false;
+
+		int32_t* scroll = area.m_scrollVal;
+
+		// This must be called here before drawing scroll bars
+		// so that scissor of parrent area applies.
+		m_areaId.pop();
+
+		// Propagate 'didScroll' to parrent area to avoid scrolling multiple areas at once.
+		Area& parentArea = getCurrentArea();
+		parentArea.m_didScroll = (parentArea.m_didScroll || area.m_didScroll);
 
 		// Draw and handle scroll click.
-		if (barHeight < 1.0f)
+		if (hasScrollBar)
 		{
-			const float barY = bx::fsaturate( (float)(-(*area.m_scrollVal) ) / (float)sh);
+			const float barY = bx::fsaturate( (float)(-(*scroll) ) / (float)sh);
 
 			// Handle scroll bar logic.
 			const int32_t hx = xx;
@@ -962,10 +982,10 @@ struct Imgui
 					const int32_t drag = m_my - m_dragY;
 					const float dragFactor = float(sh)/float(height);
 
-					const int32_t val = *area.m_scrollVal - int32_t(drag*dragFactor);
-					const int32_t min = (diff < 0) ? diff : *area.m_scrollVal;
+					const int32_t val = *scroll - int32_t(drag*dragFactor);
+					const int32_t min = (diff < 0) ? diff : *scroll;
 					const int32_t max = 0;
-					*area.m_scrollVal = IMGUI_CLAMP(val, min, max);
+					*scroll = IMGUI_CLAMP(val, min, max);
 
 					m_dragY = m_my;
 				}
@@ -1012,10 +1032,6 @@ struct Imgui
 		}
 
 		nvgResetScissor(m_nvg);
-
-		area.m_inside = false;
-
-		m_areaId.previous();
 	}
 
 	bool beginArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, bool _enabled, int32_t _r)
@@ -1051,6 +1067,7 @@ struct Imgui
 		area.m_scrollVal = &s_zeroScroll;
 		area.m_scrollId = scrollId;
 		area.m_inside = inRect(area.m_scissorX, area.m_scissorY, area.m_scissorWidth, area.m_scissorHeight, false);
+		area.m_didScroll = false;
 
 		if (_enabled)
 		{
@@ -2870,6 +2887,7 @@ struct Imgui
 		int32_t* m_scrollVal;
 		uint32_t m_scrollId;
 		bool m_inside;
+		bool m_didScroll;
 		bool m_scissorEnabled;
 	};
 
@@ -2917,7 +2935,7 @@ struct Imgui
 			m_ids[++m_current] = ++m_idGen;
 		}
 
-		void previous()
+		void pop()
 		{
 			m_current = m_current > 0 ? m_current-1 : 0;
 		}
