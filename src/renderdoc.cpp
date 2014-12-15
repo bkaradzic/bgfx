@@ -6,7 +6,9 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_DEBUG_PIX
-#	include <psapi.h>
+#	if BX_PLATFORM_WINDOWS
+#		include <psapi.h>
+#	endif // BX_PLATFORM_WINDOWS
 #	include <renderdoc/renderdoc_app.h>
 
 namespace bgfx
