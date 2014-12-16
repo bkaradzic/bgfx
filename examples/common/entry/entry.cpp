@@ -157,16 +157,6 @@ namespace entry
 		return result;
 	}
 
-	static const char* s_gamepadAxisName[GamepadAxis::Count] =
-	{
-		"LeftX",
-		"LeftY",
-		"LeftZ",
-		"RightX",
-		"RightY",
-		"RightZ",
-	};
-
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse)
 	{
 		s_debug = _debug;

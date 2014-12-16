@@ -7,7 +7,7 @@
 #define ENTRY_H_HEADER_GUARD
 
 #include "dbg.h"
-
+#include <string.h> // memset
 #include <bx/bx.h>
 
 namespace bx { struct FileReaderI; struct FileWriterI; }
