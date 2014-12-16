@@ -82,7 +82,7 @@ linux-release64: .build/projects/gmake-linux
 linux: linux-debug32 linux-release32 linux-debug64 linux-release64
 
 .build/projects/gmake-mingw-gcc:
-	$(GENIE) --gcc=mingw-gcc gmake
+	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
 mingw-gcc-debug32: .build/projects/gmake-mingw-gcc
 	make -R -C .build/projects/gmake-mingw-gcc config=debug32
 mingw-gcc-release32: .build/projects/gmake-mingw-gcc
