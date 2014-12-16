@@ -20,8 +20,11 @@ extern "C" int _main_(int _argc, char** _argv);
 
 namespace entry
 {
-	struct WindowHandle { uint16_t idx; static const uint16_t invalidHandle; };
-	inline bool isValid(WindowHandle _handle) { return WindowHandle::invalidHandle != _handle.idx; }
+	struct WindowHandle  { uint16_t idx; };
+	inline bool isValid(WindowHandle _handle)  { return UINT16_MAX != _handle.idx; }
+
+	struct GamepadHandle { uint16_t idx; };
+	inline bool isValid(GamepadHandle _handle) { return UINT16_MAX != _handle.idx; }
 
 	struct MouseButton
 	{
@@ -31,6 +34,21 @@ namespace entry
 			Left,
 			Middle,
 			Right,
+
+			Count
+		};
+	};
+
+	struct GamepadAxis
+	{
+		enum Enum
+		{
+			LeftX,
+			LeftY,
+			LeftZ,
+			RightX,
+			RightY,
+			RightZ,
 
 			Count
 		};
@@ -132,7 +150,22 @@ namespace entry
 			KeyY,
 			KeyZ,
 
-			Count,
+			GamepadA,
+			GamepadB,
+			GamepadX,
+			GamepadY,
+			GamepadThumbL,
+			GamepadThumbR,
+			GamepadShoulderL,
+			GamepadShoulderR,
+			GamepadUp,
+			GamepadDown,
+			GamepadLeft,
+			GamepadRight,
+			GamepadBack,
+			GamepadStart,
+
+			Count
 		};
 	};
 
@@ -153,6 +186,16 @@ namespace entry
 		int32_t m_my;
 		int32_t m_mz;
 		uint8_t m_buttons[entry::MouseButton::Count];
+	};
+
+	struct GamepadState
+	{
+		GamepadState()
+		{
+			memset(m_axis, 0, sizeof(m_axis) );
+		}
+
+		int32_t m_axis[entry::GamepadAxis::Count];
 	};
 
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);

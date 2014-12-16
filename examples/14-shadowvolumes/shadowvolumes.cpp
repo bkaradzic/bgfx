@@ -2197,7 +2197,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_time = time;
 
 		// Update camera.
-		cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
+		cameraUpdate(deltaTime, mouseState);
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();

@@ -26,6 +26,10 @@
 #	define ENTRY_CONFIG_MAX_WINDOWS 8
 #endif // ENTRY_CONFIG_MAX_WINDOWS
 
+#ifndef ENTRY_CONFIG_MAX_GAMEPADS
+#	define ENTRY_CONFIG_MAX_GAMEPADS 4
+#endif // ENTRY_CONFIG_MAX_GAMEPADS
+
 #if !defined(ENTRY_DEFAULT_WIDTH) && !defined(ENTRY_DEFAULT_HEIGHT)
 #	define ENTRY_DEFAULT_WIDTH  1280
 #	define ENTRY_DEFAULT_HEIGHT 720
@@ -44,9 +48,10 @@ namespace entry
 	{
 		enum Enum
 		{
+			Axis,
+			Char,
 			Exit,
 			Key,
-			Char,
 			Mouse,
 			Size,
 			Window,
@@ -68,13 +73,13 @@ namespace entry
 		WindowHandle m_handle;
 	};
 
-	struct KeyEvent : public Event
+	struct AxisEvent : public Event
 	{
-		ENTRY_IMPLEMENT_EVENT(KeyEvent, Event::Key);
+		ENTRY_IMPLEMENT_EVENT(AxisEvent, Event::Axis);
 
-		Key::Enum m_key;
-		uint8_t m_modifiers;
-		bool m_down;
+		GamepadAxis::Enum m_axis;
+		int32_t m_value;
+		GamepadHandle m_gamepad;
 	};
 
 	struct CharEvent : public Event
@@ -95,6 +100,15 @@ namespace entry
 		MouseButton::Enum m_button;
 		bool m_down;
 		bool m_move;
+	};
+
+	struct KeyEvent : public Event
+	{
+		ENTRY_IMPLEMENT_EVENT(KeyEvent, Event::Key);
+
+		Key::Enum m_key;
+		uint8_t m_modifiers;
+		bool m_down;
 	};
 
 	struct SizeEvent : public Event
@@ -119,6 +133,23 @@ namespace entry
 	class EventQueue
 	{
 	public:
+		void postAxisEvent(WindowHandle _handle, GamepadHandle _gamepad, GamepadAxis::Enum _axis, int32_t _value)
+		{
+			AxisEvent* ev = new AxisEvent(_handle);
+			ev->m_gamepad = _gamepad;
+			ev->m_axis    = _axis;
+			ev->m_value   = _value;
+			m_queue.push(ev);
+		}
+
+		void postCharEvent(WindowHandle _handle, uint8_t _len, const uint8_t _char[4])
+		{
+			CharEvent* ev = new CharEvent(_handle);
+			ev->m_len = _len;
+			memcpy(ev->m_char, _char, 4);
+			m_queue.push(ev);
+		}
+
 		void postExitEvent()
 		{
 			Event* ev = new Event(Event::Exit);
@@ -131,14 +162,6 @@ namespace entry
 			ev->m_key       = _key;
 			ev->m_modifiers = _modifiers;
 			ev->m_down      = _down;
-			m_queue.push(ev);
-		}
-
-		void postCharEvent(WindowHandle _handle, uint8_t _len, const uint8_t _char[4])
-		{
-			CharEvent* ev = new CharEvent(_handle);
-			ev->m_len = _len;
-			memcpy(ev->m_char, _char, 4);
 			m_queue.push(ev);
 		}
 

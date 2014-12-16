@@ -6,7 +6,6 @@
 #ifndef INPUT_H_HEADER_GUARD
 #define INPUT_H_HEADER_GUARD
 
-#include <stdint.h>
 #include "entry.h"
 
 typedef void (*InputBindingFn)(const void* _userData);
@@ -60,5 +59,11 @@ void inputGetMouse(float _mouse[3]);
 
 ///
 bool inputIsMouseLocked();
+
+///
+void inputSetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis, int32_t _value);
+
+///
+int32_t inputGetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis);
 
 #endif // INPUT_H_HEADER_GUARD

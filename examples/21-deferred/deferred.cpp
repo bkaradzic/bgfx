@@ -439,7 +439,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			imguiEndFrame();
 
 			// Update camera.
-			cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
+			cameraUpdate(deltaTime, mouseState);
 			cameraGetViewMtx(view);
 
 			// Setup views

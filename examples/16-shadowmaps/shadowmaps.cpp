@@ -2239,7 +2239,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		// Update camera.
-		cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
+		cameraUpdate(deltaTime, mouseState);
 
 		// Update view mtx.
 		cameraGetViewMtx(viewState.m_view);

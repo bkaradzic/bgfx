@@ -139,6 +139,31 @@ struct Keyboard
 	uint8_t m_char[256];
 };
 
+struct Gamepad
+{
+	Gamepad()
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		memset(m_axis, 0, sizeof(m_axis) );
+	}
+
+	void setAxis(entry::GamepadAxis::Enum _axis, int32_t _value)
+	{
+		m_axis[_axis] = _value;
+	}
+
+	int32_t getAxis(entry::GamepadAxis::Enum _axis)
+	{
+		return m_axis[_axis];
+	}
+
+	int32_t m_axis[entry::GamepadAxis::Count];
+};
+
 struct Input
 {
 	Input()
@@ -211,12 +236,17 @@ struct Input
 	{
 		m_mouse.reset();
 		m_keyboard.reset();
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_gamepad); ++ii)
+		{
+			m_gamepad[ii].reset();
+		}
 	}
 
 	typedef stl::unordered_map<const char*, const InputBinding*> InputBindingMap;
 	InputBindingMap m_inputBindingsMap;
 	Mouse m_mouse;
 	Keyboard m_keyboard;
+	Gamepad m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 };
 
 static Input s_input;
@@ -300,4 +330,14 @@ void inputSetMouseLock(bool _lock)
 			s_input.m_mouse.m_norm[2] = 0.0f;
 		}
 	}
+}
+
+void inputSetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis, int32_t _value)
+{
+	s_input.m_gamepad[_handle.idx].setAxis(_axis, _value);
+}
+
+int32_t inputGetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis)
+{
+	return s_input.m_gamepad[_handle.idx].getAxis(_axis);
 }

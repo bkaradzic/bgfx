@@ -49,6 +49,80 @@ namespace entry
 		return (Key::Enum)s_translateKey[_sdl&0xff];
 	}
 
+	static uint8_t s_translateGamepad[256];
+
+	static void initTranslateGamepad(uint8_t _sdl, Key::Enum _button)
+	{
+		s_translateGamepad[_sdl] = _button;
+	}
+
+	static Key::Enum translateGamepad(uint8_t _sdl)
+	{
+		return Key::Enum(s_translateGamepad[_sdl]);
+	}
+
+	static uint8_t s_translateGamepadAxis[256];
+
+	static void initTranslateGamepadAxis(uint8_t _sdl, GamepadAxis::Enum _axis)
+	{
+		s_translateGamepadAxis[_sdl] = uint8_t(_axis);
+	}
+
+	static GamepadAxis::Enum translateGamepadAxis(uint8_t _sdl)
+	{
+		return GamepadAxis::Enum(s_translateGamepadAxis[_sdl]);
+	}
+
+	struct GamepadSDL
+	{
+		GamepadSDL()
+			: m_controller(NULL)
+			, m_jid(INT32_MAX)
+		{
+			memset(m_value, 0, sizeof(m_value) );
+
+			// Deadzone values from xinput.h
+			m_deadzone[GamepadAxis::LeftX ] =
+			m_deadzone[GamepadAxis::LeftY ] = 7849;
+			m_deadzone[GamepadAxis::RightX] =
+			m_deadzone[GamepadAxis::RightY] = 8689;
+			m_deadzone[GamepadAxis::LeftZ ] =
+			m_deadzone[GamepadAxis::RightZ] = 30;
+		}
+
+		void create(int32_t _jid)
+		{
+			m_controller = SDL_GameControllerOpen(_jid);
+			SDL_Joystick* joystick = SDL_GameControllerGetJoystick(m_controller);
+			m_jid = SDL_JoystickInstanceID(joystick);
+		}
+
+		void destroy()
+		{
+			SDL_GameControllerClose(m_controller);
+			m_controller = NULL;
+			m_jid = INT32_MAX;
+		}
+
+		bool filter(GamepadAxis::Enum _axis, int32_t* _value)
+		{
+			const int32_t old = m_value[_axis];
+			const int32_t deadzone = m_deadzone[_axis];
+			int32_t value = *_value;
+			value = value > deadzone || value < -deadzone ? value : 0;
+			m_value[_axis] = value;
+			*_value = value;
+			return old != value;
+		}
+
+		int32_t m_value[GamepadAxis::Count];
+		int32_t m_deadzone[GamepadAxis::Count];
+
+		SDL_GameController* m_controller;
+//		SDL_Haptic*         m_haptic;
+		SDL_JoystickID      m_jid;
+	};
+
 	struct MainThreadEntry
 	{
 		int m_argc;
@@ -213,6 +287,30 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_X,            Key::KeyX);
 			initTranslateKey(SDL_SCANCODE_Y,            Key::KeyY);
 			initTranslateKey(SDL_SCANCODE_Z,            Key::KeyZ);
+
+			memset(s_translateGamepad, uint8_t(Key::Count), sizeof(s_translateGamepad) );
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_A,             Key::GamepadA);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_B,             Key::GamepadB);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_X,             Key::GamepadX);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_Y,             Key::GamepadY);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_LEFTSTICK,     Key::GamepadThumbL);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_RIGHTSTICK,    Key::GamepadThumbR);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,  Key::GamepadShoulderL);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, Key::GamepadShoulderR);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_UP,       Key::GamepadUp);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_DOWN,     Key::GamepadDown);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_LEFT,     Key::GamepadLeft);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_RIGHT,    Key::GamepadRight);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_BACK,          Key::GamepadBack);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_START,         Key::GamepadStart);
+
+			memset(s_translateGamepadAxis, uint8_t(GamepadAxis::Count), sizeof(s_translateGamepadAxis) );
+			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTX,        GamepadAxis::LeftX);
+			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTY,        GamepadAxis::LeftY);
+			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERLEFT,  GamepadAxis::LeftZ);
+			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_RIGHTX,       GamepadAxis::RightX);
+			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_RIGHTY,       GamepadAxis::RightY);
+			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, GamepadAxis::RightZ);
 		}
 
 		void run(int _argc, char** _argv)
@@ -220,7 +318,10 @@ namespace entry
 			m_mte.m_argc = _argc;
 			m_mte.m_argv = _argv;
 
-			SDL_Init(SDL_INIT_VIDEO);
+			SDL_Init(0
+				| SDL_INIT_VIDEO
+				| SDL_INIT_GAMECONTROLLER
+				);
 
 			m_windowAlloc.alloc();
 			m_window[0] = SDL_CreateWindow("bgfx"
@@ -247,6 +348,12 @@ namespace entry
 			// Force window resolution...
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
+
+			SDL_RWops* rw = SDL_RWFromFile("gamecontrollerdb.txt", "rb");
+			if (NULL != rw)
+			{
+				SDL_GameControllerAddMappingsFromRW(rw, 1);
+			}
 
 			bool exit = false;
 			SDL_Event event;
@@ -351,6 +458,68 @@ namespace entry
 									}
 								}
 								break;
+							}
+						}
+						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+						{
+							const SDL_ControllerAxisEvent& aev = event.caxis;
+							GamepadHandle handle = findGamepad(aev.which);
+							if (isValid(handle) )
+							{
+								GamepadAxis::Enum axis = translateGamepadAxis(aev.axis);
+								int32_t value = aev.value;
+								if (m_gamepad[handle.idx].filter(axis, &value) )
+								{
+									m_eventQueue.postAxisEvent(defaultWindow, handle, axis, value);
+								}
+							}
+						}
+						break;
+
+					case SDL_CONTROLLERBUTTONDOWN:
+					case SDL_CONTROLLERBUTTONUP:
+						{
+							const SDL_ControllerButtonEvent& bev = event.cbutton;
+							GamepadHandle handle = findGamepad(bev.which);
+							if (isValid(handle) )
+							{
+								Key::Enum key = translateGamepad(bev.button);
+								if (Key::Count != key)
+								{
+									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_CONTROLLERBUTTONDOWN);
+								}
+							}
+						}
+						break;
+
+					case SDL_CONTROLLERDEVICEADDED:
+						{
+							const SDL_ControllerDeviceEvent& cev = event.cdevice;
+
+							GamepadHandle handle = { m_gamepadAlloc.alloc() };
+							if (isValid(handle) )
+							{
+								m_gamepad[handle.idx].create(cev.which);
+							}
+						}
+						break;
+
+					case SDL_CONTROLLERDEVICEREMAPPED:
+						{
+
+						}
+						break;
+
+					case SDL_CONTROLLERDEVICEREMOVED:
+						{
+							const SDL_ControllerDeviceEvent& cev = event.cdevice;
+							GamepadHandle handle = findGamepad(cev.which);
+							if (isValid(handle) )
+							{
+								m_gamepad[handle.idx].destroy();
+								m_gamepadAlloc.free(handle.idx);
 							}
 						}
 						break;
@@ -515,6 +684,22 @@ namespace entry
 			}
 		}
 
+		GamepadHandle findGamepad(SDL_JoystickID _jid)
+		{
+			for (uint32_t ii = 0, num = m_gamepadAlloc.getNumHandles(); ii < num; ++ii)
+			{
+				uint16_t idx = m_gamepadAlloc.getHandleAt(ii);
+				if (_jid == m_gamepad[idx].m_jid)
+				{
+					GamepadHandle handle = { idx };
+					return handle;
+				}
+			}
+
+			GamepadHandle invalid = { UINT16_MAX };
+			return invalid;
+		}
+
 		MainThreadEntry m_mte;
 		bx::Thread m_thread;
 
@@ -524,6 +709,9 @@ namespace entry
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		SDL_Window* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 		uint32_t m_flags[ENTRY_CONFIG_MAX_WINDOWS];
+
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_GAMEPADS> m_gamepadAlloc;
+		GamepadSDL m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
 		uint32_t m_width;
 		uint32_t m_height;
