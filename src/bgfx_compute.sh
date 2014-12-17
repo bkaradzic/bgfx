@@ -6,9 +6,16 @@
 #ifndef BGFX_COMPUTE_H_HEADER_GUARD
 #define BGFX_COMPUTE_H_HEADER_GUARD
 
+#include "bgfx_shader.sh"
+
 #ifndef __cplusplus
 
 #if BGFX_SHADER_LANGUAGE_HLSL
+
+float uintBitsToFloat(uint _x)  { return asfloat(_x); }
+uint  floatBitsToUint(float _x) { return asuint(_x);  }
+
+#define SHARED groupshared
 
 #define IMAGE2D_RO(_name, _reg) Texture2D           _name : register(t[_reg])
 #define IMAGE2D_RW(_name, _reg) RWTexture2D<float4> _name : register(u[_reg])
@@ -94,6 +101,8 @@ uint atomicCompSwap(uint _mem, uint _compare, uint _data)
 #define groupMemoryBarrier()         GroupMemoryBarrierWithGroupSync()
 
 #else
+
+#define SHARED shared
 
 #define __IMAGE2D_XX(_name, _reg, _access) \
 			layout(rgba8, binding=_reg) _access uniform highp image2D _name
