@@ -2235,14 +2235,14 @@ again:
 		return handle;
 	}
 
-	ProgramHandle createProgram(ShaderHandle _vsh, bool _destroyShaders)
+	ProgramHandle createProgram(ShaderHandle _csh, bool _destroyShader)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		ProgramHandle handle = s_ctx->createProgram(_vsh);
+		ProgramHandle handle = s_ctx->createProgram(_csh);
 
-		if (_destroyShaders)
+		if (_destroyShader)
 		{
-			destroyShader(_vsh);
+			destroyShader(_csh);
 		}
 
 		return handle;

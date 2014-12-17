@@ -790,6 +790,15 @@ namespace bgfx
 	///
 	ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders = false);
 
+	/// Create program with compute shader.
+	///
+	/// @param _csh Compute shader.
+	/// @param _destroyShader If true, shader will be destroyed when
+	///   program is destroyed.
+	/// @returns Program handle.
+	///
+	ProgramHandle createProgram(ShaderHandle _csh, bool _destroyShader = false);
+
 	/// Destroy program.
 	void destroyProgram(ProgramHandle _handle);
 

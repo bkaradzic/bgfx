@@ -2467,8 +2467,9 @@ namespace bgfx
 			{
 				shaderIncRef(_vsh);
 				shaderIncRef(_fsh);
-				m_programRef[handle.idx].m_vsh = _vsh;
-				m_programRef[handle.idx].m_fsh = _fsh;
+				ProgramRef& pr = m_programRef[handle.idx];
+				pr.m_vsh = _vsh;
+				pr.m_fsh = _fsh;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -2495,14 +2496,15 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				shaderIncRef(_vsh);
-				m_programRef[handle.idx].m_vsh = _vsh;
+				ProgramRef& pr = m_programRef[handle.idx];
+				pr.m_vsh = _vsh;
+				ShaderHandle fsh = BGFX_INVALID_HANDLE;
+				pr.m_fsh = fsh;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
 				cmdbuf.write(_vsh);
-
-				ShaderHandle invalid = BGFX_INVALID_HANDLE;
-				cmdbuf.write(invalid);
+				cmdbuf.write(fsh);
 			}
 
 			return handle;
@@ -2514,8 +2516,13 @@ namespace bgfx
 			cmdbuf.write(_handle);
 			m_submit->free(_handle);
 
-			shaderDecRef(m_programRef[_handle.idx].m_vsh);
-			shaderDecRef(m_programRef[_handle.idx].m_fsh);
+			const ProgramRef& pr = m_programRef[_handle.idx];
+			shaderDecRef(pr.m_vsh);
+
+			if (isValid(pr.m_fsh) )
+			{
+				shaderDecRef(pr.m_fsh);
+			}
 		}
 
 		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info) )
