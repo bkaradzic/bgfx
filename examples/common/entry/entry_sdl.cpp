@@ -502,6 +502,7 @@ namespace entry
 							if (isValid(handle) )
 							{
 								m_gamepad[handle.idx].create(cev.which);
+								m_eventQueue.postGamepadEvent(defaultWindow, handle, true);
 							}
 						}
 						break;
@@ -520,6 +521,7 @@ namespace entry
 							{
 								m_gamepad[handle.idx].destroy();
 								m_gamepadAlloc.free(handle.idx);
+								m_eventQueue.postGamepadEvent(defaultWindow, handle, false);
 							}
 						}
 						break;
