@@ -51,6 +51,7 @@ namespace entry
 			Axis,
 			Char,
 			Exit,
+			Gamepad,
 			Key,
 			Mouse,
 			Size,
@@ -90,6 +91,23 @@ namespace entry
 		uint8_t m_char[4];
 	};
 
+	struct GamepadEvent : public Event
+	{
+		ENTRY_IMPLEMENT_EVENT(GamepadEvent, Event::Gamepad);
+
+		GamepadHandle m_gamepad;
+		bool m_connected;
+	};
+
+	struct KeyEvent : public Event
+	{
+		ENTRY_IMPLEMENT_EVENT(KeyEvent, Event::Key);
+
+		Key::Enum m_key;
+		uint8_t m_modifiers;
+		bool m_down;
+	};
+
 	struct MouseEvent : public Event
 	{
 		ENTRY_IMPLEMENT_EVENT(MouseEvent, Event::Mouse);
@@ -100,15 +118,6 @@ namespace entry
 		MouseButton::Enum m_button;
 		bool m_down;
 		bool m_move;
-	};
-
-	struct KeyEvent : public Event
-	{
-		ENTRY_IMPLEMENT_EVENT(KeyEvent, Event::Key);
-
-		Key::Enum m_key;
-		uint8_t m_modifiers;
-		bool m_down;
 	};
 
 	struct SizeEvent : public Event
@@ -153,6 +162,14 @@ namespace entry
 		void postExitEvent()
 		{
 			Event* ev = new Event(Event::Exit);
+			m_queue.push(ev);
+		}
+
+		void postGamepadEvent(WindowHandle _handle, GamepadHandle _gamepad, bool _connected)
+		{
+			GamepadEvent* ev = new GamepadEvent(_handle);
+			ev->m_gamepad   = _gamepad;
+			ev->m_connected = _connected;
 			m_queue.push(ev);
 		}
 

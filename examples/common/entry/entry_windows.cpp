@@ -17,9 +17,202 @@
 #include <tinystl/string.h>
 
 #include <windowsx.h>
+#include <xinput.h>
 
 namespace entry
 {
+	typedef DWORD (WINAPI* PFN_XINPUT_GET_STATE)(DWORD dwUserIndex, XINPUT_STATE* pState);
+	typedef void  (WINAPI* PFN_XINPUT_ENABLE)(BOOL enable); // 1.4+
+
+	PFN_XINPUT_GET_STATE XInputGetState;
+	PFN_XINPUT_ENABLE    XInputEnable;
+
+	struct XInputRemap
+	{
+		uint16_t  m_bit;
+		Key::Enum m_key;
+	};
+
+	static XInputRemap s_xinputRemap[] =
+	{
+		{ XINPUT_GAMEPAD_DPAD_UP,        Key::GamepadUp        },
+		{ XINPUT_GAMEPAD_DPAD_DOWN,      Key::GamepadDown      },
+		{ XINPUT_GAMEPAD_DPAD_LEFT,      Key::GamepadLeft      },
+		{ XINPUT_GAMEPAD_DPAD_RIGHT,     Key::GamepadRight     },
+		{ XINPUT_GAMEPAD_START,          Key::GamepadStart     },
+		{ XINPUT_GAMEPAD_BACK,           Key::GamepadBack      },
+		{ XINPUT_GAMEPAD_LEFT_THUMB,     Key::GamepadThumbL    },
+		{ XINPUT_GAMEPAD_RIGHT_THUMB,    Key::GamepadThumbR    },
+		{ XINPUT_GAMEPAD_LEFT_SHOULDER,  Key::GamepadShoulderL },
+		{ XINPUT_GAMEPAD_RIGHT_SHOULDER, Key::GamepadShoulderR },
+		{ XINPUT_GAMEPAD_A,              Key::GamepadA         },
+		{ XINPUT_GAMEPAD_B,              Key::GamepadB         },
+		{ XINPUT_GAMEPAD_X,              Key::GamepadX         },
+		{ XINPUT_GAMEPAD_Y,              Key::GamepadY         },
+	};
+
+	struct XInput
+	{
+		XInput()
+			: m_xinputdll(NULL)
+		{
+			memset(m_connected, 0, sizeof(m_connected) );
+			memset(m_state, 0, sizeof(m_state) );
+
+			m_deadzone[GamepadAxis::LeftX ] =
+			m_deadzone[GamepadAxis::LeftY ] = XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE;
+			m_deadzone[GamepadAxis::RightX] =
+			m_deadzone[GamepadAxis::RightY] = XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE;
+			m_deadzone[GamepadAxis::LeftZ ] =
+			m_deadzone[GamepadAxis::RightZ] = XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+
+			memset(m_flip, 1, sizeof(m_flip) );
+			m_flip[GamepadAxis::LeftY ] =
+			m_flip[GamepadAxis::RightY] = -1;
+		}
+
+		BX_NO_INLINE void init()
+		{
+			m_xinputdll = bx::dlopen(XINPUT_DLL_A);
+
+			if (NULL != m_xinputdll)
+			{
+				XInputGetState = (PFN_XINPUT_GET_STATE)bx::dlsym(m_xinputdll, "XInputGetState");
+//				XInputEnable   = (PFN_XINPUT_ENABLE   )bx::dlsym(m_xinputdll, "XInputEnable"  );
+			}
+		}
+
+		void shutdown()
+		{
+			bx::dlclose(m_xinputdll);
+		}
+
+		bool filter(GamepadAxis::Enum _axis, int32_t _old, int32_t* _value)
+		{
+			const int32_t deadzone = m_deadzone[_axis];
+			int32_t value = *_value;
+			value = value > deadzone || value < -deadzone ? value : 0;
+			*_value = value * m_flip[_axis];
+			return _old != value;
+		}
+
+		void update(EventQueue& _eventQueue)
+		{
+			WindowHandle defaultWindow = { 0 };
+			GamepadHandle handle = { 0 };
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_state); ++ii)
+			{
+				XINPUT_STATE state;
+				DWORD result = XInputGetState(ii, &state);
+
+				bool connected = ERROR_SUCCESS == result;
+				if (connected != m_connected[ii])
+				{
+					_eventQueue.postGamepadEvent(defaultWindow, handle, connected);
+				}
+
+				m_connected[ii] = connected;
+
+				if (connected
+				&&  m_state[ii].dwPacketNumber != state.dwPacketNumber)
+				{
+					XINPUT_GAMEPAD& gamepad = m_state[ii].Gamepad;
+					const uint16_t changed = gamepad.wButtons ^ state.Gamepad.wButtons;
+					const uint16_t current = gamepad.wButtons;
+					if (0 != changed)
+					{
+						for (uint32_t jj = 0; jj < BX_COUNTOF(s_xinputRemap); ++jj)
+						{
+							uint16_t bit = s_xinputRemap[jj].m_bit;
+							if (bit & changed)
+							{
+								_eventQueue.postKeyEvent(defaultWindow, s_xinputRemap[jj].m_key, 0, 0 == (current & bit) );
+							}
+						}
+
+						gamepad.wButtons = state.Gamepad.wButtons;
+					}
+
+					if (gamepad.bLeftTrigger != state.Gamepad.bLeftTrigger)
+					{
+						int32_t value = state.Gamepad.bLeftTrigger;
+						if (filter(GamepadAxis::LeftZ, gamepad.bLeftTrigger, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, GamepadAxis::LeftZ, value);
+						}
+
+						gamepad.bLeftTrigger = state.Gamepad.bLeftTrigger;
+					}
+
+					if (gamepad.bRightTrigger != state.Gamepad.bRightTrigger)
+					{
+						int32_t value = state.Gamepad.bRightTrigger;
+						if (filter(GamepadAxis::RightZ, gamepad.bRightTrigger, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, GamepadAxis::RightZ, value);
+						}
+
+						gamepad.bRightTrigger = state.Gamepad.bRightTrigger;
+					}
+
+					if (gamepad.sThumbLX != state.Gamepad.sThumbLX)
+					{
+						int32_t value = state.Gamepad.sThumbLX;
+						if (filter(GamepadAxis::LeftX, gamepad.sThumbLX, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, GamepadAxis::LeftX, value);
+						}
+
+						gamepad.sThumbLX = state.Gamepad.sThumbLX;
+					}
+
+					if (gamepad.sThumbLY != state.Gamepad.sThumbLY)
+					{
+						int32_t value = state.Gamepad.sThumbLY;
+						if (filter(GamepadAxis::LeftY, gamepad.sThumbLY, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, GamepadAxis::LeftY, value);
+						}
+
+						gamepad.sThumbLY = state.Gamepad.sThumbLY;
+					}
+
+					if (gamepad.sThumbRX != state.Gamepad.sThumbRX)
+					{
+						int32_t value = state.Gamepad.sThumbRX;
+						if (filter(GamepadAxis::RightX, gamepad.sThumbRX, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, GamepadAxis::RightX, value);
+						}
+
+						gamepad.sThumbRX = state.Gamepad.sThumbRX;
+					}
+
+					if (gamepad.sThumbRY != state.Gamepad.sThumbRY)
+					{
+						int32_t value = state.Gamepad.sThumbRY;
+						if (filter(GamepadAxis::RightY, gamepad.sThumbRY, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, GamepadAxis::RightY, value);
+						}
+
+						gamepad.sThumbRY = state.Gamepad.sThumbRY;
+					}
+				}
+			}
+		}
+
+		void* m_xinputdll;
+
+		int32_t m_deadzone[GamepadAxis::Count];
+		int8_t m_flip[GamepadAxis::Count];
+		XINPUT_STATE m_state[ENTRY_CONFIG_MAX_GAMEPADS];
+		bool m_connected[ENTRY_CONFIG_MAX_GAMEPADS];
+	};
+
+	XInput s_xinput;
+
 	enum
 	{
 		WM_USER_WINDOW_CREATE = WM_USER,
@@ -184,6 +377,8 @@ namespace entry
 		{
 			SetDllDirectory(".");
 
+			s_xinput.init();
+
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
 			WNDCLASSEX wnd;
@@ -222,9 +417,9 @@ namespace entry
 			adjust(m_hwnd[0], ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, true);
 			clear(m_hwnd[0]);
 
-			m_width = ENTRY_DEFAULT_WIDTH;
-			m_height = ENTRY_DEFAULT_HEIGHT;
-			m_oldWidth = ENTRY_DEFAULT_WIDTH;
+			m_width     = ENTRY_DEFAULT_WIDTH;
+			m_height    = ENTRY_DEFAULT_HEIGHT;
+			m_oldWidth  = ENTRY_DEFAULT_WIDTH;
 			m_oldHeight = ENTRY_DEFAULT_HEIGHT;
 
 			MainThreadEntry mte;
@@ -242,7 +437,8 @@ namespace entry
 
 			while (!m_exit)
 			{
-				WaitMessage();
+				s_xinput.update(m_eventQueue);
+				WaitForInputIdle(GetCurrentProcess(), 16);
 
 				while (0 != PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE) )
 				{
@@ -254,6 +450,8 @@ namespace entry
 			thread.shutdown();
 
 			DestroyWindow(m_hwnd[0]);
+
+			s_xinput.shutdown();
 
 			return 0;
 		}
