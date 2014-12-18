@@ -12,8 +12,14 @@
 
 #if BGFX_SHADER_LANGUAGE_HLSL
 
-float uintBitsToFloat(uint _x)  { return asfloat(_x); }
+float uintBitsToFloat(uint  _x) { return asfloat(_x); }
+vec2  uintBitsToFloat(uint2 _x) { return asfloat(_x); }
+vec3  uintBitsToFloat(uint3 _x) { return asfloat(_x); }
+vec4  uintBitsToFloat(uint4 _x) { return asfloat(_x); }
 uint  floatBitsToUint(float _x) { return asuint(_x);  }
+uvec2 floatBitsToUint(vec2  _x) { return asuint(_x);  }
+uvec3 floatBitsToUint(vec3  _x) { return asuint(_x);  }
+uvec4 floatBitsToUint(vec4  _x) { return asuint(_x);  }
 
 #define SHARED groupshared
 
