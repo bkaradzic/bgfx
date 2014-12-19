@@ -71,7 +71,7 @@ namespace entry
 			m_flip[GamepadAxis::RightY] = -1;
 		}
 
-		BX_NO_INLINE void init()
+		void init()
 		{
 			m_xinputdll = bx::dlopen(XINPUT_DLL_A);
 
