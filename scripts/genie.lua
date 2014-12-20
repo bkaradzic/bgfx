@@ -310,6 +310,7 @@ exampleProject("20-nanovg")
 exampleProject("21-deferred")
 exampleProject("22-windows")
 exampleProject("23-vectordisplay")
+exampleProject("24-nbody")
 
 if _OPTIONS["with-shared-lib"] then
 	group "libs"

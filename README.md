@@ -290,6 +290,12 @@ Rendering lines as oldschool vectors.
 
 ![example-23-vectordisplay](https://github.com/bkaradzic/bgfx/raw/master/examples/23-vectordisplay/screenshot.png)
 
+### [24-nbody](https://github.com/bkaradzic/bgfx/tree/master/examples/24-nbody)
+
+N-body simulation with compute shaders using buffers.
+
+![example-24-nbody](https://github.com/bkaradzic/bgfx/raw/master/examples/24-nbody/screenshot.png)
+
 Dependencies
 ------------
 
@@ -717,6 +723,7 @@ p0nce ([@p0nce](https://github.com/p0nce)) - D language API bindings.
 Mike Popoloski ([@MikePopoloski](https://github.com/MikePopoloski)) - C#/VB/F# 
 language API bindings, WinRT/WinPhone support.  
 Kai Jourdan ([@questor](https://github.com/questor)) - 23-vectordisplay example  
+Stanlo Slasinski [@stanlo](https://github.com/stanlo) - 24-nbody example  
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------

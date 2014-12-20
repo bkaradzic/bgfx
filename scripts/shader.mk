@@ -26,7 +26,7 @@ else
 ifeq ($(TARGET), 1)
 VS_FLAGS=--platform windows -p vs_4_0 -O 3
 FS_FLAGS=--platform windows -p ps_4_0 -O 3
-CS_FLAGS=--platform windows -p cs_5_0 -O 3
+CS_FLAGS=--platform windows -p cs_5_0 -O 1
 SHADER_PATH=shaders/dx11
 else
 ifeq ($(TARGET), 2)
