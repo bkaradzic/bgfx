@@ -79,12 +79,21 @@ namespace entry
 			{
 				XInputGetState = (PFN_XINPUT_GET_STATE)bx::dlsym(m_xinputdll, "XInputGetState");
 //				XInputEnable   = (PFN_XINPUT_ENABLE   )bx::dlsym(m_xinputdll, "XInputEnable"  );
+
+				if (NULL == XInputGetState)
+				{
+					shutdown();
+				}
 			}
 		}
 
 		void shutdown()
 		{
-			bx::dlclose(m_xinputdll);
+			if (NULL != m_xinputdll)
+			{
+				bx::dlclose(m_xinputdll);
+				m_xinputdll = NULL;
+			}
 		}
 
 		bool filter(GamepadAxis::Enum _axis, int32_t _old, int32_t* _value)
@@ -98,6 +107,11 @@ namespace entry
 
 		void update(EventQueue& _eventQueue)
 		{
+			if (NULL == m_xinputdll)
+			{
+				return;
+			}
+
 			WindowHandle defaultWindow = { 0 };
 			GamepadHandle handle = { 0 };
 
