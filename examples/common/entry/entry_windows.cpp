@@ -19,6 +19,10 @@
 #include <windowsx.h>
 #include <xinput.h>
 
+#ifndef XINPUT_GAMEPAD_GUIDE
+#	define XINPUT_GAMEPAD_GUIDE 0x400
+#endif // XINPUT_GAMEPAD_GUIDE
+
 namespace entry
 {
 	typedef DWORD (WINAPI* PFN_XINPUT_GET_STATE)(DWORD dwUserIndex, XINPUT_STATE* pState);
@@ -45,6 +49,7 @@ namespace entry
 		{ XINPUT_GAMEPAD_RIGHT_THUMB,    Key::GamepadThumbR    },
 		{ XINPUT_GAMEPAD_LEFT_SHOULDER,  Key::GamepadShoulderL },
 		{ XINPUT_GAMEPAD_RIGHT_SHOULDER, Key::GamepadShoulderR },
+		{ XINPUT_GAMEPAD_GUIDE,          Key::GamepadGuide     },
 		{ XINPUT_GAMEPAD_A,              Key::GamepadA         },
 		{ XINPUT_GAMEPAD_B,              Key::GamepadB         },
 		{ XINPUT_GAMEPAD_X,              Key::GamepadX         },

@@ -303,6 +303,7 @@ namespace entry
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_RIGHT,    Key::GamepadRight);
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_BACK,          Key::GamepadBack);
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_START,         Key::GamepadStart);
+			initTranslateGamepad(SDL_CONTROLLER_BUTTON_GUIDE,         Key::GamepadGuide);
 
 			memset(s_translateGamepadAxis, uint8_t(GamepadAxis::Count), sizeof(s_translateGamepadAxis) );
 			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTX,        GamepadAxis::LeftX);

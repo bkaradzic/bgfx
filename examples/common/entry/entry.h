@@ -164,6 +164,7 @@ namespace entry
 			GamepadRight,
 			GamepadBack,
 			GamepadStart,
+			GamepadGuide,
 
 			Count
 		};
