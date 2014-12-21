@@ -306,6 +306,18 @@ namespace entry
 		tinystl::string m_title;
 	};
 
+	static void mouseCapture(HWND _hwnd, bool _capture)
+	{
+		if (_capture)
+		{
+			SetCapture(_hwnd);
+		}
+		else
+		{
+			ReleaseCapture();
+		}
+	}
+
 	struct Context
 	{
 		Context()
@@ -699,6 +711,7 @@ namespace entry
 				case WM_LBUTTONUP:
 				case WM_LBUTTONDBLCLK:
 					{
+						mouseCapture(_hwnd, _id == WM_LBUTTONDOWN);
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
 						m_eventQueue.postMouseEvent(findHandle(_hwnd), mx, my, m_mz, MouseButton::Left, _id == WM_LBUTTONDOWN);
@@ -709,16 +722,18 @@ namespace entry
 				case WM_MBUTTONUP:
 				case WM_MBUTTONDBLCLK:
 					{
+						mouseCapture(_hwnd, _id == WM_MBUTTONDOWN);
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
 						m_eventQueue.postMouseEvent(findHandle(_hwnd), mx, my, m_mz, MouseButton::Middle, _id == WM_MBUTTONDOWN);
 					}
 					break;
 
-				case WM_RBUTTONUP:
 				case WM_RBUTTONDOWN:
+				case WM_RBUTTONUP:
 				case WM_RBUTTONDBLCLK:
 					{
+						mouseCapture(_hwnd, _id == WM_RBUTTONDOWN);
 						int32_t mx = GET_X_LPARAM(_lparam);
 						int32_t my = GET_Y_LPARAM(_lparam);
 						m_eventQueue.postMouseEvent(findHandle(_hwnd), mx, my, m_mz, MouseButton::Right, _id == WM_RBUTTONDOWN);
