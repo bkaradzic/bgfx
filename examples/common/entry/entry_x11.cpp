@@ -19,8 +19,126 @@
 #include <string.h> // memset
 #include <string>
 
+#include <fcntl.h>
+
 namespace entry
 {
+#define JS_EVENT_BUTTON 0x01 /* button pressed/released */
+#define JS_EVENT_AXIS   0x02 /* joystick moved */
+#define JS_EVENT_INIT   0x80 /* initial state of device */
+
+	struct JoystickEvent
+	{
+		uint32_t time;   /* event timestamp in milliseconds */
+		int16_t  value;  /* value */
+		uint8_t  type;   /* event type */
+		uint8_t  number; /* axis/button number */
+	};
+
+	static Key::Enum s_translateButton[] =
+	{
+		Key::GamepadA,
+		Key::GamepadB,
+		Key::GamepadX,
+		Key::GamepadY,
+		Key::GamepadShoulderL,
+		Key::GamepadShoulderR,
+		Key::GamepadBack,
+		Key::GamepadStart,
+		Key::GamepadGuide,
+		Key::GamepadThumbL,
+		Key::GamepadThumbR,
+	};
+
+	static GamepadAxis::Enum s_translateAxis[] =
+	{
+		GamepadAxis::LeftX,
+		GamepadAxis::LeftY,
+		GamepadAxis::LeftZ,
+		GamepadAxis::RightX,
+		GamepadAxis::RightY,
+		GamepadAxis::RightZ,
+	};
+
+	struct Joystick
+	{
+		void init()
+		{
+			m_fd = open("/dev/input/js0", O_RDONLY | O_NONBLOCK);
+
+			memset(m_value, 0, sizeof(m_value) );
+
+			// Deadzone values from xinput.h
+			m_deadzone[GamepadAxis::LeftX ] =
+			m_deadzone[GamepadAxis::LeftY ] = 7849;
+			m_deadzone[GamepadAxis::RightX] =
+			m_deadzone[GamepadAxis::RightY] = 8689;
+			m_deadzone[GamepadAxis::LeftZ ] =
+			m_deadzone[GamepadAxis::RightZ] = 30;
+		}
+
+		void shutdown()
+		{
+			if (0 != m_fd)
+			{
+				close(m_fd);
+			}
+		}
+
+		bool filter(GamepadAxis::Enum _axis, int32_t* _value)
+		{
+			const int32_t old = m_value[_axis];
+			const int32_t deadzone = m_deadzone[_axis];
+			int32_t value = *_value;
+			value = value > deadzone || value < -deadzone ? value : 0;
+			m_value[_axis] = value;
+			*_value = value;
+			return old != value;
+		}
+
+		void update(EventQueue& _eventQueue)
+		{
+			if (0 != m_fd)
+			{
+				JoystickEvent event;
+				int32_t bytes = read(m_fd, &event, sizeof(JoystickEvent) );
+				if (bytes != sizeof(JoystickEvent) )
+				{
+					return;
+				}
+
+				WindowHandle defaultWindow = { 0 };
+				GamepadHandle handle = { 0 };
+
+				if (event.type & JS_EVENT_BUTTON)
+				{
+					if (event.number < BX_COUNTOF(s_translateButton) )
+					{
+						_eventQueue.postKeyEvent(defaultWindow, s_translateButton[event.number], 0, 0 != event.value);
+					}
+				}
+				else if (event.type & JS_EVENT_AXIS)
+				{
+					if (event.number < BX_COUNTOF(s_translateAxis) )
+					{
+						GamepadAxis::Enum axis = s_translateAxis[event.number];
+						int32_t value = event.value;
+						if (filter(axis, &value) )
+						{
+							_eventQueue.postAxisEvent(defaultWindow, handle, axis, value);
+						}
+					}
+				}
+			}
+		}
+
+		int m_fd;
+		int32_t m_value[GamepadAxis::Count];
+		int32_t m_deadzone[GamepadAxis::Count];
+	};
+
+	static Joystick s_joystick;
+
 	static uint8_t s_translateKey[512];
 
 	static void initTranslateKey(uint16_t _xk, Key::Enum _key)
@@ -209,8 +327,12 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			m_eventQueue.postSizeEvent(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
+			s_joystick.init();
+
 			while (!m_exit)
 			{
+				s_joystick.update(m_eventQueue);
+
 				if (XPending(m_display) )
 				{
 					XEvent event;
@@ -316,6 +438,8 @@ namespace entry
 			}
 
 			thread.shutdown();
+
+			s_joystick.shutdown();
 
 			XUnmapWindow(m_display, m_window[0]);
 			XDestroyWindow(m_display, m_window[0]);
