@@ -6,6 +6,8 @@ application to create distance field textures, located in
 the file "edtaa3func.c", is MIT licensed, and free to use
 under the following conditions.
 
+https://github.com/OpenGLInsights/OpenGLInsightsCode/issues/6#issuecomment-67829157
+
 ----
 
 Copyright (C) 2011 by Stefan Gustavson
