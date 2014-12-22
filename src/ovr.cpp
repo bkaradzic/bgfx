@@ -48,7 +48,11 @@ namespace bgfx
 			case ovrRenderAPI_D3D9:
 				{
 					ovrD3D9ConfigData* data = (ovrD3D9ConfigData*)_config;
+#	if OVR_VERSION > OVR_VERSION_043
 					m_rtSize = data->Header.BackBufferSize;
+#	else
+					m_rtSize = data->Header.RTSize;
+#	endif // OVR_VERSION > OVR_VERSION_043
 				}
 				break;
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9
@@ -57,7 +61,11 @@ namespace bgfx
 			case ovrRenderAPI_D3D11:
 				{
 					ovrD3D11ConfigData* data = (ovrD3D11ConfigData*)_config;
+#	if OVR_VERSION > OVR_VERSION_043
 					m_rtSize = data->Header.BackBufferSize;
+#	else
+					m_rtSize = data->Header.RTSize;
+#	endif // OVR_VERSION > OVR_VERSION_043
 				}
 				break;
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11
@@ -66,7 +74,11 @@ namespace bgfx
 			case ovrRenderAPI_OpenGL:
 				{
 					ovrGLConfigData* data = (ovrGLConfigData*)_config;
+#	if OVR_VERSION > OVR_VERSION_043
 					m_rtSize = data->Header.BackBufferSize;
+#	else
+					m_rtSize = data->Header.RTSize;
+#	endif // OVR_VERSION > OVR_VERSION_043
 				}
 				break;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
@@ -95,6 +107,13 @@ namespace bgfx
 				return false;
 			}
 		}
+
+		BX_TRACE("HMD: %s, %s, firmware: %d.%d"
+			, m_hmd->ProductName
+			, m_hmd->Manufacturer
+			, m_hmd->FirmwareMajor
+			, m_hmd->FirmwareMinor
+			);
 
 		ovrBool result;
 		result = ovrHmd_AttachToWindow(m_hmd, _nwh, NULL, NULL);
@@ -197,8 +216,13 @@ ovrError:
 
 		m_timing = ovrHmd_BeginFrame(m_hmd, 0);
 
+#if OVR_VERSION > OVR_VERSION_042
 		m_pose[0] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Left);
 		m_pose[1] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Right);
+#else
+		m_pose[0] = ovrHmd_GetEyePose(m_hmd, ovrEye_Left);
+		m_pose[1] = ovrHmd_GetEyePose(m_hmd, ovrEye_Right);
+#endif // OVR_VERSION > OVR_VERSION_042
 
 		return true;
 	}
@@ -219,7 +243,11 @@ ovrError:
 			for (int ii = 0; ii < 2; ++ii)
 			{
 				ovrPosef& pose = m_pose[ii];
+#if OVR_VERSION > OVR_VERSION_042
 				pose = ovrHmd_GetHmdPosePerEye(m_hmd, eye[ii]);
+#else
+				pose = ovrHmd_GetEyePose(m_hmd, eye[ii]);
+#endif // OVR_VERSION > OVR_VERSION_042
 
 				HMD::Eye& eye = _hmd.eye[ii];
 				eye.rotation[0] = pose.Orientation.x;
@@ -235,9 +263,15 @@ ovrError:
 				eye.fov[1] = erd.Fov.DownTan;
 				eye.fov[2] = erd.Fov.LeftTan;
 				eye.fov[3] = erd.Fov.RightTan;
+#if OVR_VERSION > OVR_VERSION_042
 				eye.viewOffset[0] = erd.HmdToEyeViewOffset.x;
 				eye.viewOffset[1] = erd.HmdToEyeViewOffset.y;
 				eye.viewOffset[2] = erd.HmdToEyeViewOffset.z;
+#else
+				eye.viewOffset[0] = erd.ViewAdjust.x;
+				eye.viewOffset[1] = erd.ViewAdjust.y;
+				eye.viewOffset[2] = erd.ViewAdjust.z;
+#endif // OVR_VERSION > OVR_VERSION_042
 				eye.pixelsPerTanAngle[0] = erd.PixelsPerTanAngleAtCenter.x;
 				eye.pixelsPerTanAngle[1] = erd.PixelsPerTanAngleAtCenter.y;
 			}

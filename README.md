@@ -18,7 +18,7 @@ Supported rendering backends:
 
 Supported HMD:
 
- * OculusVR (0.4.4)
+ * OculusVR (0.4.2+)
 
 Supported platforms:
 
