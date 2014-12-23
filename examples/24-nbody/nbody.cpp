@@ -1,7 +1,7 @@
 /*
- * Copyright 2014 Stanlo Slasinski. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
- */
+* Copyright 2014 Stanlo Slasinski. All rights reserved.
+* License: http://www.opensource.org/licenses/BSD-2-Clause
+*/
 
 #include "common.h"
 #include "bgfx_utils.h"
@@ -22,69 +22,68 @@ struct u_paramsDataStruct
 	float   initialSpeed;
 	int32_t initialShape;
 	float   maxAccel;
-
 };
 
-void InitializeParams(unsigned mode, u_paramsDataStruct * params) 
+void InitializeParams(unsigned _mode, u_paramsDataStruct* _params) 
 {
-    switch(mode) 
-    {
-    case 0:
-        params->timeStep = 0.0067f;
-        params->dispatchSize = 32;
-        params->gravity = 0.069f;
-        params->damping = 0.0f;
-        params->particleIntensity = 0.35f;
-        params->particleSize = 0.925f;
-        params->baseSeed = 0;
-        params->particlePower = 5.0f;
-        params->initialSpeed = 122.6f;
-        params->initialShape = 0;
-        params->maxAccel = 30.0;
-        break;
+	switch(_mode)
+	{
+	case 0:
+		_params->timeStep          = 0.0067f;
+		_params->dispatchSize      = 32;
+		_params->gravity           = 0.069f;
+		_params->damping           = 0.0f;
+		_params->particleIntensity = 0.35f;
+		_params->particleSize      = 0.925f;
+		_params->baseSeed          = 0;
+		_params->particlePower     = 5.0f;
+		_params->initialSpeed      = 122.6f;
+		_params->initialShape      = 0;
+		_params->maxAccel          = 30.0;
+		break;
 
-    case 1:
-        params->timeStep = 0.0157f;
-        params->dispatchSize = 32;
-        params->gravity = 0.109f;
-        params->damping = 0.25f;
-        params->particleIntensity = 0.64f;
-        params->particleSize = 0.279f;
-        params->baseSeed = 57;
-        params->particlePower = 3.5f;
-        params->initialSpeed = 3.2f;
-        params->initialShape = 1;
-        params->maxAccel = 100.0;
-        break;
+	case 1:
+		_params->timeStep          = 0.0157f;
+		_params->dispatchSize      = 32;
+		_params->gravity           = 0.109f;
+		_params->damping           = 0.25f;
+		_params->particleIntensity = 0.64f;
+		_params->particleSize      = 0.279f;
+		_params->baseSeed          = 57;
+		_params->particlePower     = 3.5f;
+		_params->initialSpeed      = 3.2f;
+		_params->initialShape      = 1;
+		_params->maxAccel          = 100.0;
+		break;
 
-    case 2:
-        params->timeStep = 0.02f;
-        params->dispatchSize = 32;
-        params->gravity = 0.24f;
-        params->damping = 0.12f;
-        params->particleIntensity = 1.0f;
-        params->particleSize = 1.0f;
-        params->baseSeed = 23;
-        params->particlePower = 4.0f;
-        params->initialSpeed = 31.1f;
-        params->initialShape = 2;
-        params->maxAccel = 39.29f;
-        break;
+	case 2:
+		_params->timeStep          = 0.02f;
+		_params->dispatchSize      = 32;
+		_params->gravity           = 0.24f;
+		_params->damping           = 0.12f;
+		_params->particleIntensity = 1.0f;
+		_params->particleSize      = 1.0f;
+		_params->baseSeed          = 23;
+		_params->particlePower     = 4.0f;
+		_params->initialSpeed      = 31.1f;
+		_params->initialShape      = 2;
+		_params->maxAccel          = 39.29f;
+		break;
 
-    case 3:
-        params->timeStep = 0.0118f;
-        params->dispatchSize = 32;
-        params->gravity = 0.141f;
-        params->damping = 1.0f;
-        params->particleIntensity = 0.64f;
-        params->particleSize = 0.28f;
-        params->baseSeed = 60;
-        params->particlePower = 1.97f;
-        params->initialSpeed = 69.7f;
-        params->initialShape = 3;
-        params->maxAccel = 3.21f;
-        break;
-    }
+	case 3:
+		_params->timeStep          = 0.0118f;
+		_params->dispatchSize      = 32;
+		_params->gravity           = 0.141f;
+		_params->damping           = 1.0f;
+		_params->particleIntensity = 0.64f;
+		_params->particleSize      = 0.28f;
+		_params->baseSeed          = 60;
+		_params->particlePower     = 1.97f;
+		_params->initialSpeed      = 69.7f;
+		_params->initialShape      = 3;
+		_params->maxAccel          = 3.21f;
+		break;
+	}
 }
 
 static const float s_quadVertices[] =
@@ -129,8 +128,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Create static vertex buffer.
 	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
-		// Static data can be passed with bgfx::makeRef
-		bgfx::makeRef(s_quadVertices, sizeof(s_quadVertices) )
+		  // Static data can be passed with bgfx::makeRef
+		  bgfx::makeRef(s_quadVertices, sizeof(s_quadVertices) )
 		, quadVertexDecl
 		);
 
@@ -150,7 +149,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		.end();
 
 	const uint32_t threadGroupUpdateSize = 512;
-    const uint32_t maxParticleCount = 32 * 1024;
+	const uint32_t maxParticleCount = 32 * 1024;
 
 	bgfx::DynamicVertexBufferHandle currPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 	bgfx::DynamicVertexBufferHandle currPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
@@ -164,8 +163,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ShaderHandle  updateInstancesShader  = loadShader("cs_update_instances");
 	bgfx::ProgramHandle updateInstancesProgram = bgfx::createProgram(updateInstancesShader, true);
 
-    u_paramsDataStruct u_paramsData;
-    InitializeParams(0, &u_paramsData);
+	u_paramsDataStruct u_paramsData;
+	InitializeParams(0, &u_paramsData);
 
 	bgfx::setUniform(u_params, &u_paramsData, 3);
 	bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Write);
@@ -225,18 +224,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiEndScrollArea();
 		imguiEndFrame();
 
-        // Modify parameters and reset if shape is changed
-        if (shape != u_paramsData.initialShape) 
-        {
-            reset = true;
-            InitializeParams(shape, &u_paramsData);
-        }
+		// Modify parameters and reset if shape is changed
+		if (shape != u_paramsData.initialShape) 
+		{
+			reset = true;
+			InitializeParams(shape, &u_paramsData);
+		}
 
 		if (reset)
 		{
 			bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Write);
 			bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Write);
-    		bgfx::setUniform(u_params, &u_paramsData, 3);
+			bgfx::setUniform(u_params, &u_paramsData, 3);
 			bgfx::dispatch(0, initInstancesProgram, maxParticleCount / threadGroupUpdateSize, 1, 1);
 		}
 

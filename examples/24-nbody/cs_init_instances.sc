@@ -7,7 +7,7 @@
 #include "uniforms.sh"
 
 BUFFER_WR(prevPositionBuffer, vec4, 0);
-BUFFER_WR(curPositionBuffer,  vec4, 1);
+BUFFER_WR(currPositionBuffer, vec4, 1);
 
 uint rotl(uint _x, uint _r)
 {
@@ -101,5 +101,5 @@ void main()
 	vec3 velocity = u_initialSpeed * randomPointOnSphere(gl_GlobalInvocationID.x, u_baseSeed * 7u + 3u);
 
 	prevPositionBuffer[gl_GlobalInvocationID.x] = vec4(position - velocity * u_timeStep, 0.0);
-	curPositionBuffer[ gl_GlobalInvocationID.x] = vec4(position, 0.0);
+	currPositionBuffer[gl_GlobalInvocationID.x] = vec4(position, 0.0);
 }
