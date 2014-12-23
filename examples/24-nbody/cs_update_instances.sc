@@ -20,7 +20,7 @@ vec3 calcAcceleration(vec3 _curPosition, vec3 _otherPosition)
 	float dist2 = dot(difference, difference);
 	float dist6 = dist2 * dist2 * dist2;
 	float invDist3 = 1.0 / (sqrt(dist6) + 0.1);
-	return u_gravity * invDist3 * difference;
+	return u_gravity * u_gravity * invDist3 * difference;
 }
 
 NUM_THREADS(GROUP_SIZE, 1, 1)
@@ -51,16 +51,6 @@ void main()
 	}
 
 	vec3 newPosition = 2.0 * curPosition - prevPosition + newAcceleration * u_timeStep;
-
-	if (any(isnan(newPosition) ) )
-	{
-		newPosition = vec3_splat(0.0);
-	}
-
-	if (any(isnan(curPosition) ) )
-	{
-		curPosition = vec3_splat(0.0);
-	}
 
 	outPrevPositionBuffer[gl_GlobalInvocationID.x] = vec4(curPosition, 0.0);
 	outCurPositionBuffer[ gl_GlobalInvocationID.x] = vec4(newPosition, color);

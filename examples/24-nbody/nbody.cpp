@@ -9,7 +9,85 @@
 #include "camera.h"
 #include <bgfx.h>
 
-static const float s_quadVertices[] = 
+struct u_paramsDataStruct
+{
+	float   timeStep;
+	int32_t dispatchSize;
+	float   gravity;
+	float   damping;
+	float   particleIntensity;
+	float   particleSize;
+	int32_t baseSeed;
+	float   particlePower;
+	float   initialSpeed;
+	int32_t initialShape;
+	float   maxAccel;
+
+};
+
+void InitializeParams(unsigned mode, u_paramsDataStruct * params) 
+{
+    switch(mode) 
+    {
+    case 0:
+        params->timeStep = 0.0067f;
+        params->dispatchSize = 32;
+        params->gravity = 0.069f;
+        params->damping = 0.0f;
+        params->particleIntensity = 0.35f;
+        params->particleSize = 0.925f;
+        params->baseSeed = 0;
+        params->particlePower = 5.0f;
+        params->initialSpeed = 122.6f;
+        params->initialShape = 0;
+        params->maxAccel = 30.0;
+        break;
+
+    case 1:
+        params->timeStep = 0.0157f;
+        params->dispatchSize = 32;
+        params->gravity = 0.109f;
+        params->damping = 0.25f;
+        params->particleIntensity = 0.64f;
+        params->particleSize = 0.279f;
+        params->baseSeed = 57;
+        params->particlePower = 3.5f;
+        params->initialSpeed = 3.2f;
+        params->initialShape = 1;
+        params->maxAccel = 100.0;
+        break;
+
+    case 2:
+        params->timeStep = 0.02f;
+        params->dispatchSize = 32;
+        params->gravity = 0.24f;
+        params->damping = 0.12f;
+        params->particleIntensity = 1.0f;
+        params->particleSize = 1.0f;
+        params->baseSeed = 23;
+        params->particlePower = 4.0f;
+        params->initialSpeed = 31.1f;
+        params->initialShape = 2;
+        params->maxAccel = 39.29f;
+        break;
+
+    case 3:
+        params->timeStep = 0.0118f;
+        params->dispatchSize = 32;
+        params->gravity = 0.141f;
+        params->damping = 1.0f;
+        params->particleIntensity = 0.64f;
+        params->particleSize = 0.28f;
+        params->baseSeed = 60;
+        params->particlePower = 1.97f;
+        params->initialSpeed = 69.7f;
+        params->initialShape = 3;
+        params->maxAccel = 3.21f;
+        break;
+    }
+}
+
+static const float s_quadVertices[] =
 { 
 	 1.0f,  1.0f,
 	-1.0f,  1.0f,
@@ -72,6 +150,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		.end();
 
 	const uint32_t threadGroupUpdateSize = 512;
+    const uint32_t maxParticleCount = 32 * 1024;
 
 	bgfx::DynamicVertexBufferHandle currPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 	bgfx::DynamicVertexBufferHandle currPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
@@ -79,48 +158,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::DynamicVertexBufferHandle prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 
 	bgfx::UniformHandle u_params = bgfx::createUniform("u_params", bgfx::UniformType::Uniform4fv, 3);
-	struct
-	{
-		float   timeStep;
-		int32_t dispatchSize;
-		float   gravity;
-		float   damping;
-		float   particleIntensity;
-		float   particleSize;
-		int32_t baseSeed;
-		float   particlePower;
-		float   initialSpeed;
-		int32_t initialShape;
-		float   maxAccel;
-
-	} u_paramsData;
-
-	u_paramsData.timeStep          = 0.0083f;
-	u_paramsData.dispatchSize      = 16;
-	u_paramsData.gravity           = 0.069f * 0.069f;
-	u_paramsData.damping           = 0.07f;
-	u_paramsData.particleIntensity = 0.35f;
-	u_paramsData.particleSize      = 0.4f;
-	u_paramsData.baseSeed          = 0;
-	u_paramsData.particlePower     = 5.0f;
-	u_paramsData.initialSpeed      = 85.0f; //112.0f;
-	u_paramsData.initialShape      = 0;
-	u_paramsData.maxAccel          = 30.0;
-
-	float uiGravity = 0.069f;
 
 	bgfx::ShaderHandle  initInstancesShader    = loadShader("cs_init_instances");
 	bgfx::ProgramHandle initInstancesProgram   = bgfx::createProgram(initInstancesShader, true);
 	bgfx::ShaderHandle  updateInstancesShader  = loadShader("cs_update_instances");
 	bgfx::ProgramHandle updateInstancesProgram = bgfx::createProgram(updateInstancesShader, true);
 
+    u_paramsDataStruct u_paramsData;
+    InitializeParams(0, &u_paramsData);
+
 	bgfx::setUniform(u_params, &u_paramsData, 3);
 	bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Write);
 	bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Write);
-	bgfx::dispatch(0, initInstancesProgram, (32 * threadGroupUpdateSize) / 1024, 1, 1);
+	bgfx::dispatch(0, initInstancesProgram, maxParticleCount / threadGroupUpdateSize, 1, 1);
 
 	float view[16];
-	float initialPos[3] = { 0.0f, 0.0f, -25.0f };
+	float initialPos[3] = { 0.0f, 0.0f, -45.0f };
 	cameraCreate();
 	cameraSetPosition(initialPos);
 	cameraSetVerticalAngle(0.0f);
@@ -156,12 +209,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 		imguiBeginScrollArea("Settings", width - width / 4 - 10, 10, width / 4, 500, &scrollArea);
 		imguiSlider("Random seed", u_paramsData.baseSeed, 0, 100);
-		u_paramsData.initialShape = imguiChoose(u_paramsData.initialShape, "Point", "Sphere", "Box", "Donut");
+		unsigned shape = imguiChoose(u_paramsData.initialShape, "Point", "Sphere", "Box", "Donut");
 		imguiSlider("Initial speed", u_paramsData.initialSpeed, 0.0f, 300.0f, 0.1f);
 		bool reset = imguiButton("Reset");
 		imguiSeparatorLine();
-		imguiSlider("Particle count (x1024)", u_paramsData.dispatchSize, 1, 32);
-		imguiSlider("Gravity", uiGravity, 0.0f, 0.3f, 0.001f);
+		imguiSlider("Particle count (x512)", u_paramsData.dispatchSize, 1, 64);
+		imguiSlider("Gravity", u_paramsData.gravity, 0.0f, 0.3f, 0.001f);
 		imguiSlider("Damping", u_paramsData.damping, 0.0f, 1.0f, 0.01f);
 		imguiSlider("Max acceleration", u_paramsData.maxAccel, 0.0f, 100.0f, 0.01f);
 		imguiSlider("Time step", u_paramsData.timeStep, 0.0f, 0.02f, 0.0001f);
@@ -172,7 +225,30 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiEndScrollArea();
 		imguiEndFrame();
 
-		u_paramsData.gravity = uiGravity * uiGravity;
+        // Modify parameters and reset if shape is changed
+        if (shape != u_paramsData.initialShape) 
+        {
+            reset = true;
+            InitializeParams(shape, &u_paramsData);
+        }
+
+		if (reset)
+		{
+			bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Write);
+			bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Write);
+    		bgfx::setUniform(u_params, &u_paramsData, 3);
+			bgfx::dispatch(0, initInstancesProgram, maxParticleCount / threadGroupUpdateSize, 1, 1);
+		}
+
+		bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Read);
+		bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Read);
+		bgfx::setBuffer(2, prevPositionBuffer1, bgfx::Access::Write);
+		bgfx::setBuffer(3, currPositionBuffer1, bgfx::Access::Write);
+		bgfx::setUniform(u_params, &u_paramsData, 3);
+		bgfx::dispatch(0, updateInstancesProgram, u_paramsData.dispatchSize, 1, 1);
+
+		bx::swap(currPositionBuffer0, currPositionBuffer1);
+		bx::swap(prevPositionBuffer0, prevPositionBuffer1);
 
 		float eye[3] = { 0.0f, 0.0f, -35.0f };
 		float view[16];
@@ -208,25 +284,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, width, height);
 		}
-
-		// Update instances
-		bgfx::setUniform(u_params, &u_paramsData, 3);
-		
-		if (reset)
-		{
-			bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Write);
-			bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Write);
-			bgfx::dispatch(0, initInstancesProgram, (32 * threadGroupUpdateSize) / 1024, 1, 1);
-		}
-
-		bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Read);
-		bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Read);
-		bgfx::setBuffer(2, prevPositionBuffer1, bgfx::Access::Write);
-		bgfx::setBuffer(3, currPositionBuffer1, bgfx::Access::Write);
-		bgfx::dispatch(0, updateInstancesProgram, u_paramsData.dispatchSize, 1, 1);
-
-		bx::swap(currPositionBuffer0, currPositionBuffer1);
-		bx::swap(prevPositionBuffer0, prevPositionBuffer1);
 
 		// Set vertex and fragment shaders.
 		bgfx::setProgram(particleProgram);
