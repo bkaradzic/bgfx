@@ -24,7 +24,7 @@ struct u_paramsDataStruct
 	float   maxAccel;
 };
 
-void InitializeParams(unsigned _mode, u_paramsDataStruct* _params) 
+void InitializeParams(int32_t _mode, u_paramsDataStruct* _params)
 {
 	switch(_mode)
 	{
@@ -87,7 +87,7 @@ void InitializeParams(unsigned _mode, u_paramsDataStruct* _params)
 }
 
 static const float s_quadVertices[] =
-{ 
+{
 	 1.0f,  1.0f,
 	-1.0f,  1.0f,
 	-1.0f, -1.0f,
@@ -208,7 +208,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 		imguiBeginScrollArea("Settings", width - width / 4 - 10, 10, width / 4, 500, &scrollArea);
 		imguiSlider("Random seed", u_paramsData.baseSeed, 0, 100);
-		unsigned shape = imguiChoose(u_paramsData.initialShape, "Point", "Sphere", "Box", "Donut");
+		int32_t shape = imguiChoose(u_paramsData.initialShape, "Point", "Sphere", "Box", "Donut");
 		imguiSlider("Initial speed", u_paramsData.initialSpeed, 0.0f, 300.0f, 0.1f);
 		bool reset = imguiButton("Reset");
 		imguiSeparatorLine();
@@ -225,7 +225,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiEndFrame();
 
 		// Modify parameters and reset if shape is changed
-		if (shape != u_paramsData.initialShape) 
+		if (shape != u_paramsData.initialShape)
 		{
 			reset = true;
 			InitializeParams(shape, &u_paramsData);
@@ -302,7 +302,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Submit primitive for rendering to view 0.
 		bgfx::submit(0);
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
