@@ -3160,6 +3160,11 @@ int32_t imguiGetWidgetY()
 	return s_imgui.getCurrentArea().m_widgetY;
 }
 
+int32_t imguiGetWidgetW()
+{
+	return s_imgui.getCurrentArea().m_widgetW;
+}
+
 void imguiSetCurrentScissor()
 {
 	return s_imgui.setCurrentScissor();
