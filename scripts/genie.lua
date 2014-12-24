@@ -171,11 +171,6 @@ function exampleProject(_name)
 		targetdir (BGFX_BUILD_DIR .. "arm_" .. _ACTION .. "/bin/" .. _name)
 		objdir (BGFX_BUILD_DIR .. "arm_" .. _ACTION .. "/obj/" .. _name)
 
-	configuration { "mingw*" }
-		links {
-			"dxguid",
-		}
-
 	configuration { "mingw-clang" }
 		kind "ConsoleApp"
 
