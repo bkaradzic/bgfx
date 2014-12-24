@@ -91,7 +91,15 @@ namespace entry
 					if (m_window == NULL)
 					{
 						m_window = m_app->window;
-						bgfx::androidSetWindow(m_app->window);
+						bgfx::androidSetWindow(m_window);
+
+						int32_t width  = ANativeWindow_getWidth(m_window);
+						int32_t height = ANativeWindow_getHeight(m_window);
+
+						DBG("ANativeWindow width %d, height %d", width, height);
+						WindowHandle defaultWindow = { 0 };
+						m_eventQueue.postSizeEvent(defaultWindow, width, height);
+
 						m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 					}
 					break;
