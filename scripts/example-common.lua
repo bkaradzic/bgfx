@@ -27,6 +27,11 @@ project ("example-common")
 		}
 	end
 
+	configuration { "mingw* or vs2008" }
+		includedirs {
+			"$(DXSDK_DIR)/include",
+		}
+
 	configuration { "xcode4" }
 		includedirs {
 			BX_DIR .. "include/compat/osx",
