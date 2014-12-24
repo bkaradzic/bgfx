@@ -14,34 +14,50 @@
  * By Stefan Gustavson (stefan.gustavson@gmail.com).
  *
  * Originally written in 1994, based on a verbal
- * description of the SSED8 algorithm published in the
- * PhD dissertation of Ingemar Ragnemalm. This is his
- * algorithm, I only implemented it in C.
+ * description of Per-Erik Danielsson's SSED8 algorithm
+ * as presented in the PhD dissertation of Ingemar
+ * Ragnemalm. This is Per-Erik Danielsson's scanline
+ * scheme from 1979 - I only implemented it in C.
  *
  * Updated in 2004 to treat border pixels correctly,
  * and cleaned up the code to improve readability.
  *
- * Updated in 2009 to handle anti-aliased edges.
+ * Updated in 2009 to handle anti-aliased edges,
+ * as published in the article "Anti-aliased Euclidean
+ * distance transform" by Stefan Gustavson and Robin Strand,
+ * Pattern Recognition Letters 32 (2011) 252–257.
  *
- * Updated in 2011 to avoid a corner case infinite loop.
+ * Updated in 2011 to avoid a corner case causing an
+ * infinite loop for some input data.
  *
 */
 
 /*
- Copyright (C) 2009 Stefan Gustavson (stefan.gustavson@gmail.com)
 
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+Copyright (C) 2011 by Stefan Gustavson
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+(stefan.gustavson@liu.se)
 
-The GNU General Public License is available on <http://www.gnu.org/licenses/>.
- */
+This code is distributed under the permissive "MIT license":
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
 
 #include <math.h>
 
@@ -60,7 +76,7 @@ void computegradient(double *img, int w, int h, double *gx, double *gy)
             k = i*w + j;
             if((img[k]>0.0) && (img[k]<1.0)) { // Compute gradient for edge pixels only
                 gx[k] = -img[k-w-1] - SQRT2*img[k-1] - img[k+w-1] + img[k-w+1] + SQRT2*img[k+1] + img[k+w+1];
-                gy[k] = -img[k-w-1] - SQRT2*img[k-w] - img[k+w-1] + img[k-w+1] + SQRT2*img[k+w] + img[k+w+1];
+                gy[k] = -img[k-w-1] - SQRT2*img[k-w] - img[k-w+1] + img[k+w-1] + SQRT2*img[k+w] + img[k+w+1];
                 glength = gx[k]*gx[k] + gy[k]*gy[k];
                 if(glength > 0.0) { // Avoid division by zero
                     glength = sqrt(glength);
@@ -146,7 +162,7 @@ double distaa3(double *img, double *gximg, double *gyimg, int w, int c, int xc, 
   return di + df; // Same metric as edtaa2, except at edges (where di=0)
 }
 
-// Shorthand macro: add ubiquitous parameters dist, gx, gy, img and w and call distaa3()
+// Shorthand macro: add ubiquitous parameters img, gx, gy and w and call distaa3()
 #define DISTAA(c,xc,yc,xi,yi) (distaa3(img, gx, gy, w, c, xc, yc, xi, yi))
 
 void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, short *disty, double *dist)
@@ -157,7 +173,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
   double olddist, newdist;
   int cdistx, cdisty, newdistx, newdisty;
   int changed;
-  double epsilon = 1e-3;
+  double epsilon = 1e-3; // Safeguard against errors due to limited precision
 
   /* Initialize index offsets for the current image width */
   offset_u = -w;
@@ -213,7 +229,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -228,7 +244,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   changed = 1;
                 }
             }
@@ -250,7 +266,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -265,7 +281,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -280,7 +296,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -295,7 +311,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   changed = 1;
                 }
             }
@@ -314,7 +330,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -329,7 +345,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -344,7 +360,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   changed = 1;
                 }
             }
@@ -369,7 +385,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   changed = 1;
                 }
             }
@@ -397,7 +413,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -412,7 +428,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   changed = 1;
                 }
             }
@@ -434,7 +450,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -449,7 +465,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
@@ -512,7 +528,7 @@ void edtaa3(double *img, double *gx, double *gy, int w, int h, short *distx, sho
                 {
                   distx[i]=newdistx;
                   disty[i]=newdisty;
-		  dist[i]=newdist;
+                  dist[i]=newdist;
                   olddist=newdist;
                   changed = 1;
                 }
