@@ -1031,7 +1031,12 @@ struct Imgui
 			}
 		}
 
-		nvgResetScissor(m_nvg);
+		nvgScissor(m_nvg
+				 , float(parentArea.m_scissorX)
+				 , float(parentArea.m_scissorY-1)
+				 , float(parentArea.m_scissorWidth)
+				 , float(parentArea.m_scissorHeight+1)
+				 );
 	}
 
 	bool beginArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, bool _enabled, int32_t _r)
@@ -3153,6 +3158,11 @@ int32_t imguiGetWidgetX()
 int32_t imguiGetWidgetY()
 {
 	return s_imgui.getCurrentArea().m_widgetY;
+}
+
+int32_t imguiGetWidgetW()
+{
+	return s_imgui.getCurrentArea().m_widgetW;
 }
 
 void imguiSetCurrentScissor()
