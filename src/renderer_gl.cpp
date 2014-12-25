@@ -3570,6 +3570,9 @@ namespace bgfx
 		bx::read(&reader, shaderSize);
 
 		m_id = glCreateShader(m_type);
+		BX_WARN(0 != m_id, "Failed to create %s shader."
+				, BGFX_CHUNK_MAGIC_FSH == magic ? "fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "vertex" : "compute"
+				);
 
 		const char* code = (const char*)reader.getDataPtr();
 

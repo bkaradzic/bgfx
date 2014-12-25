@@ -96,40 +96,44 @@ namespace entry
 			return old != value;
 		}
 
-		void update(EventQueue& _eventQueue)
+		bool update(EventQueue& _eventQueue)
 		{
-			if (0 != m_fd)
+			if (0 == m_fd)
 			{
-				JoystickEvent event;
-				int32_t bytes = read(m_fd, &event, sizeof(JoystickEvent) );
-				if (bytes != sizeof(JoystickEvent) )
-				{
-					return;
-				}
+				return false;
+			}
 
-				WindowHandle defaultWindow = { 0 };
-				GamepadHandle handle = { 0 };
+			JoystickEvent event;
+			int32_t bytes = read(m_fd, &event, sizeof(JoystickEvent) );
+			if (bytes != sizeof(JoystickEvent) )
+			{
+				return false;
+			}
 
-				if (event.type & JS_EVENT_BUTTON)
+			WindowHandle defaultWindow = { 0 };
+			GamepadHandle handle = { 0 };
+
+			if (event.type & JS_EVENT_BUTTON)
+			{
+				if (event.number < BX_COUNTOF(s_translateButton) )
 				{
-					if (event.number < BX_COUNTOF(s_translateButton) )
-					{
-						_eventQueue.postKeyEvent(defaultWindow, s_translateButton[event.number], 0, 0 != event.value);
-					}
+					_eventQueue.postKeyEvent(defaultWindow, s_translateButton[event.number], 0, 0 != event.value);
 				}
-				else if (event.type & JS_EVENT_AXIS)
+			}
+			else if (event.type & JS_EVENT_AXIS)
+			{
+				if (event.number < BX_COUNTOF(s_translateAxis) )
 				{
-					if (event.number < BX_COUNTOF(s_translateAxis) )
+					GamepadAxis::Enum axis = s_translateAxis[event.number];
+					int32_t value = event.value;
+					if (filter(axis, &value) )
 					{
-						GamepadAxis::Enum axis = s_translateAxis[event.number];
-						int32_t value = event.value;
-						if (filter(axis, &value) )
-						{
-							_eventQueue.postAxisEvent(defaultWindow, handle, axis, value);
-						}
+						_eventQueue.postAxisEvent(defaultWindow, handle, axis, value);
 					}
 				}
 			}
+
+			return true;
 		}
 
 		int m_fd;
@@ -331,9 +335,14 @@ namespace entry
 
 			while (!m_exit)
 			{
-				s_joystick.update(m_eventQueue);
+				bool joystick = s_joystick.update(m_eventQueue);
+				bool xpending = XPending(m_display);
 
-				if (XPending(m_display) )
+				if (!xpending)
+				{
+					bx::sleep(joystick ? 8 : 16);
+				}
+				else
 				{
 					XEvent event;
 					XNextEvent(m_display, &event);
