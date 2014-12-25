@@ -13,6 +13,7 @@ function bgfxProject(_name, _kind, _defines)
 			defines {
 				"BGFX_SHARED_LIB_BUILD=1",
 			}
+
 			configuration { "mingw*" }
 				linkoptions {
 					"-shared",
@@ -20,6 +21,8 @@ function bgfxProject(_name, _kind, _defines)
 				links {
 					"gdi32",
 				}
+
+			configuration {}
 		end
 
 		includedirs {
