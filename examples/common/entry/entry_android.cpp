@@ -40,6 +40,7 @@ namespace entry
 	{
 		Context()
 			: m_window(NULL)
+			, m_count(0)
 		{
 		}
 
@@ -181,7 +182,84 @@ namespace entry
 
 		int32_t onInputEvent(AInputEvent* _event)
 		{
-			BX_UNUSED(_event);
+			int32_t type = AInputEvent_getType(_event);
+
+			switch (type)
+			{
+			case AINPUT_EVENT_TYPE_MOTION:
+				{
+					float mx = AMotionEvent_getX(_event, 0);
+					float my = AMotionEvent_getY(_event, 0);
+					int32_t count = AMotionEvent_getPointerCount(_event);
+
+					int32_t actionBits = AMotionEvent_getAction(_event);
+					int32_t action     = (actionBits & AMOTION_EVENT_ACTION_MASK);
+					int32_t index      = (actionBits & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+					WindowHandle defaultWindow = { 0 };
+
+					count = m_count;
+
+					switch (action)
+					{
+					case AMOTION_EVENT_ACTION_DOWN:
+					case AMOTION_EVENT_ACTION_POINTER_DOWN:
+						m_count++;
+						break;
+
+					case AMOTION_EVENT_ACTION_UP:
+					case AMOTION_EVENT_ACTION_POINTER_UP:
+						m_count--;
+						break;
+
+					default:
+						break;
+					}
+
+					if (count != m_count)
+					{
+						m_eventQueue.postMouseEvent(defaultWindow
+							, (int32_t)mx
+							, (int32_t)my
+							, 0
+							, 1 == count ? MouseButton::Left : MouseButton::Right
+							, false
+							);
+
+						if (0 != m_count)
+						{
+							m_eventQueue.postMouseEvent(defaultWindow
+								, (int32_t)mx
+								, (int32_t)my
+								, 0
+								, 1 == m_count ? MouseButton::Left : MouseButton::Right
+								, true
+								);
+						}
+					}
+
+					switch (action)
+					{
+					case AMOTION_EVENT_ACTION_MOVE:
+						if (0 == index)
+						{
+							m_eventQueue.postMouseEvent(defaultWindow
+								, (int32_t)mx
+								, (int32_t)my
+								, 0
+								);
+						}
+						break;
+
+					default:
+						break;
+					}
+				}
+				break;
+
+			case AINPUT_EVENT_TYPE_KEY:
+				break;
+			}
 			return 0;
 		}
 
@@ -204,6 +282,8 @@ namespace entry
 
 		ANativeWindow* m_window;
 		android_app* m_app;
+
+		int32_t m_count;
 	};
 
 	static Context s_ctx;
