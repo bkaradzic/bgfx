@@ -1884,8 +1884,8 @@ struct Imgui
 		if (ImguiBorder::Left == _border)
 		{
 			xx = -borderSize;
-			yy = 0;
-			width = 2*borderSize;
+			yy = -1;
+			width = 2*borderSize+1;
 			height = m_viewHeight;
 			triX = 0;
 			triY = (m_viewHeight-triSize)/2;
@@ -1894,8 +1894,8 @@ struct Imgui
 		else if (ImguiBorder::Right == _border)
 		{
 			xx = m_viewWidth - borderSize;
-			yy = 0;
-			width = 2*borderSize;
+			yy = -1;
+			width = 2*borderSize+1;
 			height = m_viewHeight;
 			triX = m_viewWidth - triSize - 2;
 			triY = (m_viewHeight-width)/2;
