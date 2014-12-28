@@ -1056,7 +1056,7 @@ namespace bgfx
 
 			PredefinedUniform& predefined = program.m_predefined[0];
 			uint8_t flags = predefined.m_type;
-			setShaderConstant(flags, predefined.m_loc, proj, 4);
+			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 			commitShaderConstants();
 			m_textures[_blitter.m_texture.idx].commit(0);
@@ -1285,7 +1285,7 @@ namespace bgfx
 			}
 		}
 
-		void setShaderConstant(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
 		{
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
@@ -1297,6 +1297,16 @@ namespace bgfx
 				memcpy(&m_vsScratch[_regIndex], _val, _numRegs*16);
 				m_vsChanges += _numRegs;
 			}
+		}
+
+		void setShaderUniform4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		{
+			setShaderUniform(_flags, _regIndex, _val, _numRegs);
+		}
+
+		void setShaderUniform4x4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		{
+			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
 		void commitShaderConstants()
@@ -1951,7 +1961,7 @@ namespace bgfx
 		case UniformType::_uniform: \
 		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 				{ \
-					setShaderConstant(type, loc, data, num); \
+					setShaderUniform(type, loc, data, num); \
 				} \
 				break;
 
@@ -1976,7 +1986,7 @@ namespace bgfx
 							 mtx.un.val[ 9] = value[7];
 							 mtx.un.val[10] = value[8];
 							 mtx.un.val[11] = 0.0f;
-							 setShaderConstant(type, loc, &mtx.un.val[0], 3);
+							 setShaderUniform(type, loc, &mtx.un.val[0], 3);
 						 }
 					}
 					break;
@@ -2997,10 +3007,6 @@ namespace bgfx
 		currentState.m_flags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
-		Matrix4  mtxViewTmp[2][BGFX_CONFIG_MAX_VIEWS];
-		Matrix4* mtxView[2] = { _render->m_view, mtxViewTmp[1] };
-		Matrix4  mtxViewProj[2][BGFX_CONFIG_MAX_VIEWS];
-
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
@@ -3008,52 +3014,9 @@ namespace bgfx
 		{
 			HMD& hmd = _render->m_hmd;
 			m_ovr.getEyePose(hmd);
-
-			mtxView[0] = mtxViewTmp[0];
-			Matrix4 viewAdjust;
-			bx::mtxIdentity(viewAdjust.un.val);
-
-			for (uint32_t eye = 0; eye < 2; ++eye)
-			{
-				const HMD::Eye& hmdEye = hmd.eye[eye];
-				viewAdjust.un.val[12] = hmdEye.viewOffset[0];
-				viewAdjust.un.val[13] = hmdEye.viewOffset[1];
-				viewAdjust.un.val[14] = hmdEye.viewOffset[2];
-
-				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-				{
-					if (BGFX_VIEW_STEREO == (_render->m_viewFlags[ii] & BGFX_VIEW_STEREO) )
-					{
-						bx::float4x4_mul(&mtxView[eye][ii].un.f4x4
-							, &_render->m_view[ii].un.f4x4
-							, &viewAdjust.un.f4x4
-							);
-					}
-					else
-					{
-						memcpy(&mtxView[0][ii].un.f4x4, &_render->m_view[ii].un.f4x4, sizeof(Matrix4) );
-					}
-				}
-			}
 		}
 
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			for (uint32_t eye = 0; eye < uint32_t(hmdEnabled)+1; ++eye)
-			{
-				bx::float4x4_mul(&mtxViewProj[eye][ii].un.f4x4
-					, &mtxView[eye][ii].un.f4x4
-					, &_render->m_proj[eye][ii].un.f4x4
-					);
-			}
-		}
-
-		Matrix4 invView;
-		Matrix4 invProj;
-		Matrix4 invViewProj;
-		uint16_t invViewCached = UINT16_MAX;
-		uint16_t invProjCached = UINT16_MAX;
-		uint16_t invViewProjCached = UINT16_MAX;
+		ViewState viewState(_render, hmdEnabled);
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		bool scissorEnabled = false;
@@ -3063,7 +3026,6 @@ namespace bgfx
 		SortKey key;
 		uint8_t view = 0xff;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-		float alphaRef = 0.0f;
 
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
 		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
@@ -3085,7 +3047,7 @@ namespace bgfx
 			bool viewRestart = false;
 			uint8_t eye = 0;
 			uint8_t restartState = 0;
-			Rect rect = _render->m_rect[0];
+			viewState.m_rect = _render->m_rect[0];
 
 			int32_t numItems = _render->m_num;
 			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
@@ -3139,15 +3101,15 @@ namespace bgfx
 
 					PIX_ENDEVENT();
 
-					rect = _render->m_rect[view];
+					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
 					{
 						wchar_t* viewNameW = s_viewNameW[view];
 						viewNameW[3] = eye ? L'R' : L'L';
 						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
 
-						rect.m_x = eye * (rect.m_width+1)/2;
-						rect.m_width /= 2;
+						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
+						viewState.m_rect.m_width /= 2;
 					}
 					else
 					{
@@ -3158,13 +3120,13 @@ namespace bgfx
 
 					const Rect& scissorRect = _render->m_scissor[view];
 					viewHasScissor = !scissorRect.isZero();
-					viewScissorRect = viewHasScissor ? scissorRect : rect;
+					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 
 					D3D11_VIEWPORT vp;
-					vp.TopLeftX = rect.m_x;
-					vp.TopLeftY = rect.m_y;
-					vp.Width    = rect.m_width;
-					vp.Height   = rect.m_height;
+					vp.TopLeftX = viewState.m_rect.m_x;
+					vp.TopLeftY = viewState.m_rect.m_y;
+					vp.Width    = viewState.m_rect.m_width;
+					vp.Height   = viewState.m_rect.m_height;
 					vp.MinDepth = 0.0f;
 					vp.MaxDepth = 1.0f;
 					deviceCtx->RSSetViewports(1, &vp);
@@ -3172,7 +3134,7 @@ namespace bgfx
 
 					if (BGFX_CLEAR_NONE != clear.m_flags)
 					{
-						clearQuad(_clearQuad, rect, clear, _render->m_clearColor);
+						clearQuad(_clearQuad, viewState.m_rect, clear, _render->m_clearColor);
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 				}
@@ -3225,6 +3187,8 @@ namespace bgfx
 								commit(*vcb);
 							}
 						}
+
+						viewState.setPredefined<4>(this, view, eye, program, _render, compute);
 
 						if (constantsChanged
 						||  program.m_numPredefined > 0)
@@ -3392,7 +3356,7 @@ namespace bgfx
 					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
-						alphaRef = ref/255.0f;
+						viewState.m_alphaRef = ref/255.0f;
 					}
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
@@ -3463,131 +3427,7 @@ namespace bgfx
 						}
 					}
 
-					for (uint32_t ii = 0, num = program.m_numPredefined; ii < num; ++ii)
-					{
-						PredefinedUniform& predefined = program.m_predefined[ii];
-						uint8_t flags = predefined.m_type&BGFX_UNIFORM_FRAGMENTBIT;
-						switch (predefined.m_type&(~BGFX_UNIFORM_FRAGMENTBIT) )
-						{
-						case PredefinedUniform::ViewRect:
-							{
-								float frect[4];
-								frect[0] = rect.m_x;
-								frect[1] = rect.m_y;
-								frect[2] = rect.m_width;
-								frect[3] = rect.m_height;
-
-								setShaderConstant(flags, predefined.m_loc, &frect[0], 1);
-							}
-							break;
-
-						case PredefinedUniform::ViewTexel:
-							{
-								float frect[4];
-								frect[0] = 1.0f/float(rect.m_width);
-								frect[1] = 1.0f/float(rect.m_height);
-
-								setShaderConstant(flags, predefined.m_loc, &frect[0], 1);
-							}
-							break;
-
-						case PredefinedUniform::View:
-							{
-								setShaderConstant(flags
-									, predefined.m_loc
-									, mtxView[eye][view].un.val
-									, bx::uint32_min(4, predefined.m_count)
-									);
-							}
-							break;
-
-						case PredefinedUniform::InvView:
-							{
-								uint16_t viewEye = (view << 1) | eye;
-								if (viewEye != invViewCached)
-								{
-									invViewCached = viewEye;
-									bx::float4x4_inverse(&invView.un.f4x4, &mtxView[eye][view].un.f4x4);
-								}
-
-								setShaderConstant(flags, predefined.m_loc, invView.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::Proj:
-							{
-								setShaderConstant(flags, predefined.m_loc, _render->m_proj[eye][view].un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::InvProj:
-							{
-								uint16_t viewEye = (view << 1) | eye;
-								if (viewEye != invProjCached)
-								{
-									invProjCached = viewEye;
-									bx::float4x4_inverse(&invProj.un.f4x4, &_render->m_proj[eye][view].un.f4x4);
-								}
-
-								setShaderConstant(flags, predefined.m_loc, invProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ViewProj:
-							{
-								setShaderConstant(flags, predefined.m_loc, mtxViewProj[eye][view].un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::InvViewProj:
-							{
-								uint16_t viewEye = (view << 1) | eye;
-								if (viewEye != invViewProjCached)
-								{
-									invViewProjCached = viewEye;
-									bx::float4x4_inverse(&invViewProj.un.f4x4, &mtxViewProj[eye][view].un.f4x4);
-								}
-
-								setShaderConstant(flags, predefined.m_loc, invViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::Model:
-							{
-								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								setShaderConstant(flags, predefined.m_loc, model.un.val, bx::uint32_min(draw.m_num*4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ModelView:
-							{
-								Matrix4 modelView;
-								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &mtxView[eye][view].un.f4x4);
-								setShaderConstant(flags, predefined.m_loc, modelView.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ModelViewProj:
-							{
-								Matrix4 modelViewProj;
-								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &mtxViewProj[eye][view].un.f4x4);
-								setShaderConstant(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::AlphaRef:
-							{
-								setShaderConstant(flags, predefined.m_loc, &alphaRef, 1);
-							}
-							break;
-
-						default:
-							BX_CHECK(false, "predefined %d not handled", predefined.m_type);
-							break;
-						}
-					}
+					viewState.setPredefined<4>(this, view, eye, program, _render, draw);
 
 					if (constantsChanged
 					||  program.m_numPredefined > 0)

@@ -1108,9 +1108,11 @@ namespace bgfx
 		{
 			m_constBegin = 0;
 			m_constEnd   = 0;
+			m_matrix     = 0;
 			m_numX = 0;
 			m_numY = 0;
 			m_numZ = 0;
+			m_num  = 0;
 
 			for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 			{
@@ -1120,10 +1122,12 @@ namespace bgfx
 
 		uint32_t m_constBegin;
 		uint32_t m_constEnd;
+		uint32_t m_matrix;
 
 		uint16_t m_numX;
 		uint16_t m_numY;
 		uint16_t m_numZ;
+		uint16_t m_num;
 
 		ComputeBinding m_bind[BGFX_MAX_COMPUTE_BINDINGS];
 	};

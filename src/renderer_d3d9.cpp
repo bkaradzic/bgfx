@@ -914,7 +914,7 @@ namespace bgfx
 
 			PredefinedUniform& predefined = program.m_predefined[0];
 			uint8_t flags = predefined.m_type;
-			setShaderConstantF(flags, predefined.m_loc, proj, 4);
+			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 			m_textures[_blitter.m_texture.idx].commit(0);
 		}
@@ -1047,16 +1047,26 @@ namespace bgfx
 			m_rtMsaa = _msaa;
 		}
 
-		void setShaderConstantF(uint8_t _flags, uint16_t _regIndex, const float* _val, uint16_t _numRegs)
+		void setShaderUniform(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
 		{
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
-				DX_CHECK(m_device->SetPixelShaderConstantF(_regIndex, _val, _numRegs) );
+				DX_CHECK(m_device->SetPixelShaderConstantF(_regIndex, (const float*)_val, _numRegs) );
 			}
 			else
 			{
-				DX_CHECK(m_device->SetVertexShaderConstantF(_regIndex, _val, _numRegs) );
+				DX_CHECK(m_device->SetVertexShaderConstantF(_regIndex, (const float*)_val, _numRegs) );
 			}
+		}
+
+		void setShaderUniform4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		{
+			setShaderUniform(_flags, _regIndex, _val, _numRegs);
+		}
+
+		void setShaderUniform4x4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		{
+			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
 		void reset()
@@ -2812,25 +2822,13 @@ namespace bgfx
 		currentState.m_flags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
-		Matrix4 viewProj[BGFX_CONFIG_MAX_VIEWS];
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			bx::float4x4_mul(&viewProj[ii].un.f4x4, &_render->m_view[ii].un.f4x4, &_render->m_proj[0][ii].un.f4x4);
-		}
-
-		Matrix4 invView;
-		Matrix4 invProj;
-		Matrix4 invViewProj;
-		uint8_t invViewCached = 0xff;
-		uint8_t invProjCached = 0xff;
-		uint8_t invViewProjCached = 0xff;
+		ViewState viewState(_render, false);
 
 		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, _render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint8_t view = 0xff;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
 
 		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
@@ -2891,16 +2889,16 @@ namespace bgfx
 						setFrameBuffer(fbh);
 					}
 
-					const Rect& rect = _render->m_rect[view];
+					viewState.m_rect        = _render->m_rect[view];
 					const Rect& scissorRect = _render->m_scissor[view];
-					viewHasScissor = !scissorRect.isZero();
-					viewScissorRect = viewHasScissor ? scissorRect : rect;
+					viewHasScissor  = !scissorRect.isZero();
+					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 
 					D3DVIEWPORT9 vp;
-					vp.X = rect.m_x;
-					vp.Y = rect.m_y;
-					vp.Width = rect.m_width;
-					vp.Height = rect.m_height;
+					vp.X      = viewState.m_rect.m_x;
+					vp.Y      = viewState.m_rect.m_y;
+					vp.Width  = viewState.m_rect.m_width;
+					vp.Height = viewState.m_rect.m_height;
 					vp.MinZ = 0.0f;
 					vp.MaxZ = 1.0f;
 					DX_CHECK(device->SetViewport(&vp) );
@@ -2909,7 +2907,7 @@ namespace bgfx
 
 					if (BGFX_CLEAR_NONE != clear.m_flags)
 					{
-						clearQuad(_clearQuad, rect, clear, _render->m_clearColor);
+						clearQuad(_clearQuad, viewState.m_rect, clear, _render->m_clearColor);
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 
@@ -2932,9 +2930,9 @@ namespace bgfx
 						if (viewHasScissor)
 						{
 							RECT rc;
-							rc.left = viewScissorRect.m_x;
-							rc.top = viewScissorRect.m_y;
-							rc.right = viewScissorRect.m_x + viewScissorRect.m_width;
+							rc.left   = viewScissorRect.m_x;
+							rc.top    = viewScissorRect.m_y;
+							rc.right  = viewScissorRect.m_x + viewScissorRect.m_width;
 							rc.bottom = viewScissorRect.m_y + viewScissorRect.m_height;
 							DX_CHECK(device->SetScissorRect(&rc) );
 						}
@@ -2945,9 +2943,9 @@ namespace bgfx
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
 						DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, true) );
 						RECT rc;
-						rc.left = scissorRect.m_x;
-						rc.top = scissorRect.m_y;
-						rc.right = scissorRect.m_x + scissorRect.m_width;
+						rc.left   = scissorRect.m_x;
+						rc.top    = scissorRect.m_y;
+						rc.right  = scissorRect.m_x + scissorRect.m_width;
 						rc.bottom = scissorRect.m_y + scissorRect.m_height;
 						DX_CHECK(device->SetScissorRect(&rc) );
 					}
@@ -3047,7 +3045,7 @@ namespace bgfx
 					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
-						alphaRef = ref/255.0f;
+						viewState.m_alphaRef = ref/255.0f;
 					}
 
 					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
@@ -3164,124 +3162,7 @@ namespace bgfx
 						}
 					}
 
-					for (uint32_t ii = 0, num = program.m_numPredefined; ii < num; ++ii)
-					{
-						PredefinedUniform& predefined = program.m_predefined[ii];
-						uint8_t flags = predefined.m_type&BGFX_UNIFORM_FRAGMENTBIT;
-						switch (predefined.m_type&(~BGFX_UNIFORM_FRAGMENTBIT) )
-						{
-						case PredefinedUniform::ViewRect:
-							{
-								float rect[4];
-								rect[0] = _render->m_rect[view].m_x;
-								rect[1] = _render->m_rect[view].m_y;
-								rect[2] = _render->m_rect[view].m_width;
-								rect[3] = _render->m_rect[view].m_height;
-
-								setShaderConstantF(flags, predefined.m_loc, &rect[0], 1);
-							}
-							break;
-
-						case PredefinedUniform::ViewTexel:
-							{
-								float rect[4];
-								rect[0] = 1.0f/float(_render->m_rect[view].m_width);
-								rect[1] = 1.0f/float(_render->m_rect[view].m_height);
-
-								setShaderConstantF(flags, predefined.m_loc, &rect[0], 1);
-							}
-							break;
-
-						case PredefinedUniform::View:
-							{
-								setShaderConstantF(flags, predefined.m_loc, _render->m_view[view].un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::InvView:
-							{
-								if (view != invViewCached)
-								{
-									invViewCached = view;
-									bx::float4x4_inverse(&invView.un.f4x4, &_render->m_view[view].un.f4x4);
-								}
-
-								setShaderConstantF(flags, predefined.m_loc, invView.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::Proj:
-							{
-								setShaderConstantF(flags, predefined.m_loc, _render->m_proj[0][view].un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::InvProj:
-							{
-								if (view != invProjCached)
-								{
-									invProjCached = view;
-									bx::float4x4_inverse(&invProj.un.f4x4, &_render->m_proj[0][view].un.f4x4);
-								}
-
-								setShaderConstantF(flags, predefined.m_loc, invProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ViewProj:
-							{
-								setShaderConstantF(flags, predefined.m_loc, viewProj[view].un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::InvViewProj:
-							{
-								if (view != invViewProjCached)
-								{
-									invViewProjCached = view;
-									bx::float4x4_inverse(&invViewProj.un.f4x4, &viewProj[view].un.f4x4);
-								}
-
-								setShaderConstantF(flags, predefined.m_loc, invViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::Model:
-							{
- 								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								setShaderConstantF(flags, predefined.m_loc, model.un.val, bx::uint32_min(draw.m_num*4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ModelView:
-							{
-								Matrix4 modelView;
-								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								bx::float4x4_mul(&modelView.un.f4x4, &model.un.f4x4, &_render->m_view[view].un.f4x4);
-								setShaderConstantF(flags, predefined.m_loc, modelView.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::ModelViewProj:
-							{
-								Matrix4 modelViewProj;
-								const Matrix4& model = _render->m_matrixCache.m_cache[draw.m_matrix];
-								bx::float4x4_mul(&modelViewProj.un.f4x4, &model.un.f4x4, &viewProj[view].un.f4x4);
-								setShaderConstantF(flags, predefined.m_loc, modelViewProj.un.val, bx::uint32_min(4, predefined.m_count) );
-							}
-							break;
-
-						case PredefinedUniform::AlphaRef:
-							{
-								setShaderConstantF(flags, predefined.m_loc, &alphaRef, 1);
-							}
-							break;
-
-						default:
-							BX_CHECK(false, "predefined %d not handled", predefined.m_type);
-							break;
-						}
-					}
+					viewState.setPredefined<4>(this, view, 0, program, _render, draw);
 				}
 
 				{

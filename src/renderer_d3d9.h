@@ -38,6 +38,7 @@
 #	define D3DSTREAMSOURCE_INSTANCEDATA (2<<30)
 #endif // D3DSTREAMSOURCE_INSTANCEDATA
 
+#include "renderer.h"
 #include "renderer_d3d.h"
 
 namespace bgfx

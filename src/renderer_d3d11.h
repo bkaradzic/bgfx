@@ -25,6 +25,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinitio
 #endif
 BX_PRAGMA_DIAGNOSTIC_POP()
 
+#include "renderer.h"
 #include "renderer_d3d.h"
 #include "ovr.h"
 #include "renderdoc.h"

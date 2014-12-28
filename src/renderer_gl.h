@@ -86,6 +86,7 @@ typedef uint64_t GLuint64;
 #	endif // BX_PLATFORM_EMSCRIPTEN
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
+#include "renderer.h"
 #include "ovr.h"
 #include "renderdoc.h"
 

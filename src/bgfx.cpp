@@ -750,6 +750,8 @@ namespace bgfx
 
 		m_constEnd = m_constantBuffer->getPos();
 
+		m_compute.m_matrix = m_draw.m_matrix;
+		m_compute.m_num    = m_draw.m_num;
 		m_compute.m_numX = bx::uint16_max(_numX, 1);
 		m_compute.m_numY = bx::uint16_max(_numY, 1);
 		m_compute.m_numZ = bx::uint16_max(_numZ, 1);
