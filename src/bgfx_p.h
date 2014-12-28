@@ -1035,24 +1035,25 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_constBegin = 0;
-			m_constEnd   = 0;
-			m_flags = BGFX_STATE_DEFAULT;
-			m_stencil = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
-			m_rgba = 0;
-			m_matrix = 0;
-			m_startIndex = 0;
-			m_numIndices = UINT32_MAX;
+			m_constBegin  = 0;
+			m_constEnd    = 0;
+			m_flags       = BGFX_STATE_DEFAULT;
+			m_stencil     = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
+			m_rgba        = 0;
+			m_matrix      = 0;
+			m_startIndex  = 0;
+			m_numIndices  = UINT32_MAX;
 			m_startVertex = 0;
 			m_numVertices = UINT32_MAX;
 			m_instanceDataOffset = 0;
 			m_instanceDataStride = 0;
-			m_numInstances = 1;
-			m_num = 1;
+			m_numInstances       = 1;
+			m_num     = 1;
+			m_flags   = BGFX_SUBMIT_EYE_FIRST;
 			m_scissor = UINT16_MAX;
-			m_vertexBuffer.idx = invalidHandle;
-			m_vertexDecl.idx = invalidHandle;
-			m_indexBuffer.idx = invalidHandle;
+			m_vertexBuffer.idx       = invalidHandle;
+			m_vertexDecl.idx         = invalidHandle;
+			m_indexBuffer.idx        = invalidHandle;
 			m_instanceDataBuffer.idx = invalidHandle;
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
@@ -1077,6 +1078,7 @@ namespace bgfx
 		uint16_t m_numInstances;
 		uint16_t m_num;
 		uint16_t m_scissor;
+		uint8_t  m_submitFlags;
 
 		VertexBufferHandle m_vertexBuffer;
 		VertexDeclHandle   m_vertexDecl;
@@ -1106,13 +1108,14 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_constBegin = 0;
-			m_constEnd   = 0;
-			m_matrix     = 0;
-			m_numX = 0;
-			m_numY = 0;
-			m_numZ = 0;
-			m_num  = 0;
+			m_constBegin  = 0;
+			m_constEnd    = 0;
+			m_matrix      = 0;
+			m_numX        = 0;
+			m_numY        = 0;
+			m_numZ        = 0;
+			m_num         = 0;
+			m_submitFlags = BGFX_SUBMIT_EYE_FIRST;
 
 			for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 			{
@@ -1128,6 +1131,7 @@ namespace bgfx
 		uint16_t m_numY;
 		uint16_t m_numZ;
 		uint16_t m_num;
+		uint8_t  m_submitFlags;
 
 		ComputeBinding m_bind[BGFX_MAX_COMPUTE_BINDINGS];
 	};
@@ -1419,7 +1423,7 @@ namespace bgfx
 		}
 
 		uint32_t submit(uint8_t _id, int32_t _depth);
-		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz);
+		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz, uint8_t _flags);
 		void sort();
 
 		bool checkAvailTransientIndexBuffer(uint32_t _num)
@@ -3047,9 +3051,9 @@ namespace bgfx
 			setImage(_stage, _sampler, textureHandle, 0, _format, _access);
 		}
 
-		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ) )
+		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags) )
 		{
-			return m_submit->dispatch(_id, _handle, _numX, _numY, _numZ);
+			return m_submit->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
 		}
 
 		BGFX_API_FUNC(void discard() )

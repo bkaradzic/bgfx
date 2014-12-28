@@ -3157,6 +3157,12 @@ namespace bgfx
 
 					const RenderCompute& compute = renderItem.compute;
 
+					if (0 != eye
+					&&  BGFX_SUBMIT_EYE_LEFT == (compute.m_submitFlags&BGFX_SUBMIT_EYE_MASK) )
+					{
+						continue;
+					}
+
 					bool programChanged = false;
 					bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
 					rendererUpdateUniforms(this, _render->m_constantBuffer, compute.m_constBegin, compute.m_constEnd);

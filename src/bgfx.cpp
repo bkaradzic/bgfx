@@ -734,7 +734,7 @@ namespace bgfx
 		return m_num;
 	}
 
-	uint32_t Frame::dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ)
+	uint32_t Frame::dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags)
 	{
 		if (m_discard)
 		{
@@ -752,9 +752,11 @@ namespace bgfx
 
 		m_compute.m_matrix = m_draw.m_matrix;
 		m_compute.m_num    = m_draw.m_num;
-		m_compute.m_numX = bx::uint16_max(_numX, 1);
-		m_compute.m_numY = bx::uint16_max(_numY, 1);
-		m_compute.m_numZ = bx::uint16_max(_numZ, 1);
+		m_compute.m_numX   = bx::uint16_max(_numX, 1);
+		m_compute.m_numY   = bx::uint16_max(_numY, 1);
+		m_compute.m_numZ   = bx::uint16_max(_numZ, 1);
+		m_compute.m_submitFlags = _flags;
+
 		m_key.m_program = _handle.idx;
 		if (invalidHandle != m_key.m_program)
 		{
@@ -2782,10 +2784,10 @@ again:
 		s_ctx->setImage(_stage, _sampler, _handle, _attachment, _format, _access);
 	}
 
-	void dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ)
+	void dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->dispatch(_id, _handle, _numX, _numY, _numZ);
+		s_ctx->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
 	}
 
 	void discard()
