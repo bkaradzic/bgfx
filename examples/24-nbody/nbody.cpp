@@ -249,7 +249,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bx::swap(currPositionBuffer0, currPositionBuffer1);
 		bx::swap(prevPositionBuffer0, prevPositionBuffer1);
 
-		float eye[3] = { 0.0f, 0.0f, -35.0f };
 		float view[16];
 
 		// Update camera.
@@ -260,13 +259,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const bgfx::HMD* hmd = bgfx::getHMD();
 		if (NULL != hmd)
 		{
-			float view[16];
-			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+			float viewHead[16];
+			float eye[3] = {};
+			bx::mtxQuatTranslationHMD(viewHead, hmd->eye[0].rotation, eye);
+
+			float tmp[16];
+			bx::mtxMul(tmp, view, viewHead);
 
 			float proj[16];
 			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 10000.0f);
 
-			bgfx::setViewTransform(0, view, proj);
+			bgfx::setViewTransform(0, tmp, proj);
 
 			// Set view 0 default viewport.
 			//

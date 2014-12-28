@@ -35,11 +35,6 @@ namespace bgfx
 
 	bool OVR::postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug)
 	{
-		if (!m_initialized)
-		{
-			return false;
-		}
-
 		if (_debug)
 		{
 			switch (_config->Header.API)
@@ -89,6 +84,11 @@ namespace bgfx
 			}
 
 			m_debug = true;
+			return false;
+		}
+
+		if (!m_initialized)
+		{
 			return false;
 		}
 
