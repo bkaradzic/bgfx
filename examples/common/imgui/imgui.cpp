@@ -1503,16 +1503,13 @@ struct Imgui
 			const bool over = enabled && inRect(buttonX, yy, tabWidth, _height);
 			const bool res = buttonLogic(id, over);
 
-			if (res)
-			{
-				selected = ii;
-			}
+			const uint32_t textColor = (ii == selected)
+									 ? (enabled   ? imguiRGBA(0,0,0,255)                 : imguiRGBA(255,255,255,100)             )
+									 : (isHot(id) ? imguiRGBA(255,196,0,enabled?255:100) : imguiRGBA(255,255,255,enabled?200:100) )
+									 ;
 
-			uint32_t textColor;
 			if (ii == selected)
 			{
-				textColor = enabled?imguiRGBA(0,0,0,255):imguiRGBA(255,255,255,100);
-
 				drawRoundedRect( (float)buttonX
 							   , (float)yy
 							   , (float)tabWidth
@@ -1521,9 +1518,15 @@ struct Imgui
 							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
 							   );
 			}
-			else
+			else if (isActive(id))
 			{
-				textColor = isHot(id) ? imguiRGBA(255, 196, 0, enabled?255:100) : imguiRGBA(255, 255, 255, enabled?200:100);
+				drawRoundedRect( (float)buttonX
+							   , (float)yy
+							   , (float)tabWidth
+							   , (float)_height
+							   , (float)_r
+							   , imguiRGBA(128,128,128,196)
+							   );
 			}
 
 			drawText(textX
@@ -1532,6 +1535,11 @@ struct Imgui
 				   , titles[ii]
 				   , textColor
 				   );
+
+			if (res)
+			{
+				selected = ii;
+			}
 		}
 
 		return selected;
@@ -1884,8 +1892,8 @@ struct Imgui
 		if (ImguiBorder::Left == _border)
 		{
 			xx = -borderSize;
-			yy = 0;
-			width = 2*borderSize;
+			yy = -1;
+			width = 2*borderSize+1;
 			height = m_viewHeight;
 			triX = 0;
 			triY = (m_viewHeight-triSize)/2;
@@ -1894,8 +1902,8 @@ struct Imgui
 		else if (ImguiBorder::Right == _border)
 		{
 			xx = m_viewWidth - borderSize;
-			yy = 0;
-			width = 2*borderSize;
+			yy = -1;
+			width = 2*borderSize+1;
 			height = m_viewHeight;
 			triX = m_viewWidth - triSize - 2;
 			triY = (m_viewHeight-width)/2;
