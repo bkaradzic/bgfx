@@ -580,6 +580,7 @@ Todo
  - ETC2, PVRTC1/2 decoding fallback for targets that don't support it natively.
  - shaderc as library for runtime shader building.
  - texturec tool with support for all supported texture formats.
+ - Multiple vertex streams support.
  - Animated mesh example.
  - Direct3D 12 renderer backend.
  - Metal renderer backend.
