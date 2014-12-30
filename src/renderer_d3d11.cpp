@@ -1436,6 +1436,14 @@ namespace bgfx { namespace d3d11
 
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
+			if (isValid(m_fbh)
+			&&  m_fbh.idx != _fbh.idx
+			&&  m_rtMsaa)
+			{
+				FrameBufferD3D11& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.resolve();
+			}
+
 			BX_UNUSED(_msaa);
 			if (!isValid(_fbh) )
 			{
@@ -1453,14 +1461,6 @@ namespace bgfx { namespace d3d11
 
 				m_currentColor = frameBuffer.m_rtv[0];
 				m_currentDepthStencil = frameBuffer.m_dsv;
-			}
-
-			if (isValid(m_fbh)
-			&&  m_fbh.idx != _fbh.idx
-			&&  m_rtMsaa)
-			{
-				FrameBufferD3D11& frameBuffer = m_frameBuffers[m_fbh.idx];
-				frameBuffer.resolve();
 			}
 
 			m_fbh = _fbh;
