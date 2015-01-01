@@ -10,8 +10,7 @@ project "geometryc"
 	includedirs {
 		BX_DIR   .. "include",
 		BGFX_DIR .. "include",
-		BGFX_DIR .. "3rdparty/forsyth-too",
-		BGFX_DIR .. "3rdparty/ib-compress",
+		BGFX_DIR .. "3rdparty",
 		BGFX_DIR .. "examples/common",
 	}
 

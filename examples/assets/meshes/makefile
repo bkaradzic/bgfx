@@ -29,5 +29,11 @@ GEOMETRY_BIN=$(addprefix $(RUNTIME_DIR)/meshes/, $(addsuffix .bin, $(basename $(
 
 all: $(GEOMETRY_BIN)
 
+clean:
+	@echo Cleaning...
+	@-rm -vf $(GEOMETRY_BIN)
+
+rebuild: clean all
+
 $(RUNTIME_DIR)/meshes/%.bin : %.obj
 	$(SILENT) $(GEOMETRYC) -f $(<) -o $(@) --packnormal 1

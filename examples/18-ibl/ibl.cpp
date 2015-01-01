@@ -100,207 +100,8 @@ struct Uniforms
 	bgfx::UniformHandle u_rgbDiff;
 	bgfx::UniformHandle u_rgbSpec;
 };
+
 static Uniforms s_uniforms;
-
-struct Aabb
-{
-	float m_min[3];
-	float m_max[3];
-};
-
-struct Obb
-{
-	float m_mtx[16];
-};
-
-struct Sphere
-{
-	float m_center[3];
-	float m_radius;
-};
-
-struct Primitive
-{
-	uint32_t m_startIndex;
-	uint32_t m_numIndices;
-	uint32_t m_startVertex;
-	uint32_t m_numVertices;
-
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-};
-
-typedef std::vector<Primitive> PrimitiveArray;
-
-struct Group
-{
-	Group()
-	{
-		reset();
-	}
-
-	void reset()
-	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
-		m_prims.clear();
-	}
-
-	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-	PrimitiveArray m_prims;
-};
-
-namespace bgfx
-{
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl);
-}
-
-struct Mesh
-{
-	void load(const char* _filePath)
-	{
-#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
-#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
-
-		bx::CrtFileReader reader;
-		reader.open(_filePath);
-
-		Group group;
-
-		uint32_t chunk;
-		while (4 == bx::read(&reader, chunk) )
-		{
-			switch (chunk)
-			{
-			case BGFX_CHUNK_MAGIC_VB:
-				{
-					bx::read(&reader, group.m_sphere);
-					bx::read(&reader, group.m_aabb);
-					bx::read(&reader, group.m_obb);
-
-					bgfx::read(&reader, m_decl);
-					uint16_t stride = m_decl.getStride();
-
-					uint16_t numVertices;
-					bx::read(&reader, numVertices);
-					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-					bx::read(&reader, mem->data, mem->size);
-
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_IB:
-				{
-					uint32_t numIndices;
-					bx::read(&reader, numIndices);
-					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
-					bx::read(&reader, mem->data, mem->size);
-					group.m_ibh = bgfx::createIndexBuffer(mem);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_PRI:
-				{
-					uint16_t len;
-					bx::read(&reader, len);
-
-					std::string material;
-					material.resize(len);
-					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(&reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(&reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(&reader, prim.m_startIndex);
-						bx::read(&reader, prim.m_numIndices);
-						bx::read(&reader, prim.m_startVertex);
-						bx::read(&reader, prim.m_numVertices);
-						bx::read(&reader, prim.m_sphere);
-						bx::read(&reader, prim.m_aabb);
-						bx::read(&reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
-				}
-				break;
-
-			default:
-				DBG("%08x at %d", chunk, reader.seek() );
-				break;
-			}
-		}
-
-		reader.close();
-	}
-
-	void unload()
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-			bgfx::destroyVertexBuffer(group.m_vbh);
-
-			if (bgfx::isValid(group.m_ibh) )
-			{
-				bgfx::destroyIndexBuffer(group.m_ibh);
-			}
-		}
-		m_groups.clear();
-	}
-
-	void submit(uint8_t _view, bgfx::ProgramHandle _program, float* _mtx)
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-
-			// Set uniforms.
-			s_uniforms.submitPerDrawUniforms();
-
-			// Set model matrix for rendering.
-			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
-			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
-
-			// Set render states.
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CCW
-				| BGFX_STATE_MSAA
-				);
-
-			// Submit primitive for rendering to view 0.
-			bgfx::submit(_view);
-		}
-	}
-
-	bgfx::VertexDecl m_decl;
-	typedef std::vector<Group> GroupArray;
-	GroupArray m_groups;
-};
 
 struct PosColorTexCoord0Vertex
 {
@@ -469,8 +270,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ProgramHandle programMesh = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
 	bgfx::ProgramHandle programSky  = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
 
-	Mesh meshBunny;
-	meshBunny.load("meshes/bunny.bin");
+	Mesh* meshBunny;
+	meshBunny = meshLoad("meshes/pony.bin");
 
 	struct Settings
 	{
@@ -710,14 +511,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setTexture(4, u_texCube,    lightProbes[currentLightProbe].m_tex);
 		bgfx::setTexture(5, u_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
-		meshBunny.submit(1, programMesh, mtx);
+		meshSubmit(meshBunny, 1, programMesh, mtx);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
 
-	meshBunny.unload();
+	meshUnload(meshBunny);
 
 	// Cleanup.
 	bgfx::destroyProgram(programMesh);

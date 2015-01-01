@@ -15,9 +15,11 @@
 
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
+#include <tinystl/unordered_set.h>
 namespace stl = tinystl;
 
-#include <forsythtriangleorderoptimizer.h>
+#include <forsyth-too/forsythtriangleorderoptimizer.h>
+#include <ib-compress/indexbuffercompression.h>
 
 #if 0
 #	define BX_TRACE(_format, ...) \
@@ -116,6 +118,7 @@ static uint32_t s_obbSteps = 17;
 #define BGFX_CHUNK_MAGIC_GEO BX_MAKEFOURCC('G', 'E', 'O', 0x0)
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
 long int fsize(FILE* _file)
@@ -133,6 +136,36 @@ void triangleReorder(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVert
 	Forsyth::OptimizeFaces(_indices, _numIndices, _numVertices, newIndexList, _cacheSize);
 	memcpy(_indices, newIndexList, _numIndices*2);
 	delete [] newIndexList;
+}
+
+void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numIndices, uint8_t* _vertexData, uint32_t _numVertices, uint16_t _stride)
+{
+	uint32_t* vertexRemap = (uint32_t*)malloc(_numVertices*sizeof(uint32_t) );
+
+	WriteBitstream writer;
+	CompressIndexBuffer(_indices, _numIndices/3, vertexRemap, _numVertices, IBCF_PER_TRIANGLE_1, writer);
+	writer.Finish();
+	printf( "uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
+		, _numIndices * 2
+		, writer.ByteSize()
+		, 100.0f - float( writer.ByteSize() ) / float( _numIndices * 2 )*100.0f
+		);
+
+	BX_UNUSED(_vertexData, _stride);
+	uint8_t* outVertexData = (uint8_t*)malloc(_numVertices*_stride);
+	for (uint32_t ii = 0; ii < _numVertices; ++ii)
+	{
+		if (UINT32_MAX != vertexRemap[ii])
+		{
+			memcpy(&outVertexData[vertexRemap[ii]*_stride], &_vertexData[ii*_stride], _stride);
+		}
+	}
+	memcpy(_vertexData, outVertexData, _numVertices*_stride);
+	free(outVertexData);
+
+	free(vertexRemap);
+
+	bx::write(_writer, writer.RawData(), (uint32_t)writer.ByteSize() );
 }
 
 void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
@@ -262,7 +295,17 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 	bx::write(_writer, obb);
 }
 
-void write(bx::WriterI* _writer, const uint8_t* _vertices, uint32_t _numVertices, const bgfx::VertexDecl& _decl, const uint16_t* _indices, uint32_t _numIndices, const std::string& _material, const PrimitiveArray& _primitives)
+void write(bx::WriterI* _writer
+		, const uint8_t* _vertices
+		, uint32_t _numVertices
+		, const bgfx::VertexDecl& _decl
+		, const uint16_t* _indices
+		, uint32_t _numIndices
+		, const uint8_t* _compressedIndices
+		, uint32_t _compressedSize
+		, const std::string& _material
+		, const PrimitiveArray& _primitives
+		)
 {
 	using namespace bx;
 	using namespace bgfx;
@@ -276,9 +319,19 @@ void write(bx::WriterI* _writer, const uint8_t* _vertices, uint32_t _numVertices
 	write(_writer, uint16_t(_numVertices) );
 	write(_writer, _vertices, _numVertices*stride);
 
-	write(_writer, BGFX_CHUNK_MAGIC_IB);
-	write(_writer, _numIndices);
-	write(_writer, _indices, _numIndices*2);
+	if (NULL != _compressedIndices)
+	{
+		write(_writer, BGFX_CHUNK_MAGIC_IBC);
+		write(_writer, _numIndices);
+		write(_writer, _compressedSize);
+		write(_writer, _compressedIndices, _compressedSize);
+	}
+	else
+	{
+		write(_writer, BGFX_CHUNK_MAGIC_IB);
+		write(_writer, _numIndices);
+		write(_writer, _indices, _numIndices*2);
+	}
 
 	write(_writer, BGFX_CHUNK_MAGIC_PRI);
 	uint16_t nameLen = uint16_t(_material.size() );
@@ -336,6 +389,7 @@ void help(const char* _error = NULL)
 		  "           0 - unpacked 8 bytes (default).\n"
 		  "           1 - packed 4 bytes.\n"
 		  "      --tangent            Calculate tangent vectors (packing mode is the same as normal).\n"
+		  "  -c, --compress           Compress indices.\n"
 
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
@@ -383,6 +437,8 @@ int main(int _argc, const char* _argv[])
 	{
 		scale = (float)atof(scaleArg);
 	}
+
+	bool compress = cmdLine.hasArg('c', "compress");
 
 	cmdLine.hasArg(s_obbSteps, '\0', "obb");
 	s_obbSteps = bx::uint32_min(bx::uint32_max(s_obbSteps, 1), 90);
@@ -755,10 +811,13 @@ int main(int _argc, const char* _argv[])
 
 	Primitive prim;
 	prim.m_startVertex = 0;
-	prim.m_startIndex = 0;
+	prim.m_startIndex  = 0;
 
 	uint32_t positionOffset = decl.getOffset(bgfx::Attrib::Position);
-	uint32_t color0Offset = decl.getOffset(bgfx::Attrib::Color0);
+	uint32_t color0Offset   = decl.getOffset(bgfx::Attrib::Color0);
+
+	bx::CrtAllocator crtAllocator;
+	bx::MemoryBlock  memBlock(&crtAllocator);
 
 	uint32_t ii = 0;
 	for (GroupArray::const_iterator groupIt = groups.begin(); groupIt != groups.end(); ++groupIt, ++ii)
@@ -769,26 +828,48 @@ int main(int _argc, const char* _argv[])
 			||  65533 < numVertices)
 			{
 				prim.m_numVertices = numVertices - prim.m_startVertex;
-				prim.m_numIndices = numIndices - prim.m_startIndex;
+				prim.m_numIndices  = numIndices  - prim.m_startIndex;
 				if (0 < prim.m_numVertices)
 				{
 					primitives.push_back(prim);
 				}
-
-				triReorderElapsed -= bx::getHPCounter();
-				for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
-				{
-					const Primitive& prim = *primIt;
-					triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
-				}
-				triReorderElapsed += bx::getHPCounter();
 
 				if (hasTangent)
 				{
 					calcTangents(vertexData, numVertices, decl, indexData, numIndices);
 				}
 
-				write(&writer, vertexData, numVertices, decl, indexData, numIndices, material, primitives);
+				bx::MemoryWriter memWriter(&memBlock);
+
+				triReorderElapsed -= bx::getHPCounter();
+				for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
+				{
+					const Primitive& prim = *primIt;
+					triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
+					if (compress)
+					{
+						triangleCompress(&memWriter
+							, indexData  + prim.m_startIndex
+							, prim.m_numIndices
+							, vertexData + prim.m_startVertex
+							, numVertices
+							, stride
+							);
+					}
+				}
+				triReorderElapsed += bx::getHPCounter();
+
+				write(&writer
+					, vertexData
+					, numVertices
+					, decl
+					, indexData
+					, numIndices
+					, (uint8_t*)memBlock.more()
+					, memBlock.getSize()
+					, material
+					, primitives
+					);
 				primitives.clear();
 
 				for (Index3Map::iterator indexIt = indexMap.begin(); indexIt != indexMap.end(); ++indexIt)
@@ -873,20 +954,42 @@ int main(int _argc, const char* _argv[])
 
 	if (0 < primitives.size() )
 	{
-		triReorderElapsed -= bx::getHPCounter();
-		for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
-		{
-			const Primitive& prim = *primIt;
-			triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
-		}
-		triReorderElapsed += bx::getHPCounter();
-
 		if (hasTangent)
 		{
 			calcTangents(vertexData, numVertices, decl, indexData, numIndices);
 		}
 
-		write(&writer, vertexData, numVertices, decl, indexData, numIndices, material, primitives);
+		bx::MemoryWriter memWriter(&memBlock);
+
+		triReorderElapsed -= bx::getHPCounter();
+		for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
+		{
+			const Primitive& prim = *primIt;
+			triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
+			if (compress)
+			{
+				triangleCompress(&memWriter
+					, indexData  + prim.m_startIndex
+					, prim.m_numIndices
+					, vertexData + prim.m_startVertex
+					, numVertices
+					, stride
+					);
+			}
+		}
+		triReorderElapsed += bx::getHPCounter();
+
+		write(&writer
+			, vertexData
+			, numVertices
+			, decl
+			, indexData
+			, numIndices
+			, (uint8_t*)memBlock.more()
+			, memBlock.getSize()
+			, material
+			, primitives
+			);
 	}
 
 	printf("size: %d\n", uint32_t(writer.seek() ) );

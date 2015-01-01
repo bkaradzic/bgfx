@@ -14,6 +14,7 @@ namespace stl = tinystl;
 #include <bx/readerwriter.h>
 #include <bx/fpumath.h>
 #include "entry/entry.h"
+#include <ib-compress/indexbufferdecompression.h>
 
 void* load(bx::FileReaderI* _reader, const char* _filePath)
 {
@@ -279,6 +280,7 @@ struct Mesh
 	{
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
 		using namespace bx;
@@ -316,6 +318,30 @@ struct Mesh
 					read(_reader, numIndices);
 					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
 					read(_reader, mem->data, mem->size);
+					group.m_ibh = bgfx::createIndexBuffer(mem);
+				}
+				break;
+
+			case BGFX_CHUNK_MAGIC_IBC:
+				{
+					uint32_t numIndices;
+					bx::read(_reader, numIndices);
+
+					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
+
+					uint32_t compressedSize;
+					bx::read(_reader, compressedSize);
+
+					bx::CrtAllocator allocator;
+					void* compressedIndices = BX_ALLOC(&allocator, compressedSize);
+
+					bx::read(_reader, compressedIndices, compressedSize);
+
+					ReadBitstream rbs( (const uint8_t*)compressedIndices, compressedSize);
+					DecompressIndexBuffer( (uint16_t*)mem->data, numIndices / 3, rbs);
+
+					BX_FREE(&allocator, compressedIndices);
+
 					group.m_ibh = bgfx::createIndexBuffer(mem);
 				}
 				break;

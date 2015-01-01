@@ -71,8 +71,8 @@ private:
 
 inline ReadBitstream::ReadBitstream( const uint8_t* buffer, size_t bufferSize )
 {
-	m_cursor =
-		m_buffer = buffer;
+	m_cursor     =
+	m_buffer     = buffer;
 	m_bufferSize = bufferSize;
 
 	if ( bufferSize >= 8 )
@@ -98,8 +98,8 @@ inline ReadBitstream::ReadBitstream( const uint8_t* buffer, size_t bufferSize )
 
 RBS_INLINE uint32_t ReadBitstream::Read( uint32_t bitCount )
 {
-	uint64_t mask = ( 1 << bitCount ) - 1;
-	uint32_t result = static_cast< uint32_t >( ( m_bitBuffer >> ( 64 - m_bitsLeft ) ) & mask );
+	uint64_t mask   = ( uint64_t( 1 ) << bitCount ) - 1;
+	uint32_t result = static_cast< uint32_t >( ( m_bitBuffer >> ( 64 - m_bitsLeft ) & ( m_bitsLeft == 0 ? 0 : 0xFFFFFFFFFFFFFFFF ) ) & mask );
 
 	if ( m_bitsLeft < bitCount )
 	{
@@ -114,8 +114,8 @@ RBS_INLINE uint32_t ReadBitstream::Read( uint32_t bitCount )
 
 		m_cursor += 8;
 
-		result |= static_cast< uint32_t >( m_bitBuffer << m_bitsLeft ) & mask;
-		m_bitsLeft = 64 - ( bitCount - m_bitsLeft );
+		result     |= static_cast< uint32_t >( m_bitBuffer << m_bitsLeft ) & mask;
+		m_bitsLeft  = 64 - ( bitCount - m_bitsLeft );
 	}
 	else
 	{

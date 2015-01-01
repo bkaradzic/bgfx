@@ -45,11 +45,11 @@ public:
 	WriteBitstream( size_t initialBufferCapacity = 16 )
 	{
 		m_bufferCursor =
-			m_buffer = new uint8_t[ initialBufferCapacity ];
-		m_bufferEnd = m_buffer + initialBufferCapacity;
-		m_size = 0;
-		m_bitsLeft = 64;
-		m_bitBuffer = 0;
+		m_buffer       = new uint8_t[ initialBufferCapacity ];
+		m_bufferEnd    = m_buffer + initialBufferCapacity;
+		m_size         = 0;
+		m_bitsLeft     = 64;
+		m_bitBuffer    = 0;
 	}
 
 	~WriteBitstream()
@@ -96,7 +96,7 @@ private:
 
 WBS_INLINE void WriteBitstream::Write( uint32_t value, uint32_t bitCount )
 {
-	m_bitBuffer |= static_cast<uint64_t>( value ) << ( 64 - m_bitsLeft );
+    m_bitBuffer |= ( static_cast<uint64_t>( value ) << ( 64 - m_bitsLeft ) ) & ( m_bitsLeft == 0 ? 0 : 0xFFFFFFFFFFFFFFFF );
 
 	if ( bitCount > m_bitsLeft )
 	{
@@ -116,8 +116,8 @@ WBS_INLINE void WriteBitstream::Write( uint32_t value, uint32_t bitCount )
 
 		m_bufferCursor += 8;
 
-		m_bitBuffer = value >> ( m_bitsLeft );
-		m_bitsLeft = 64 - ( bitCount - m_bitsLeft );
+        m_bitBuffer = value >> ( m_bitsLeft );
+		m_bitsLeft  = 64 - ( bitCount - m_bitsLeft );
 	}
 	else
 	{
@@ -161,18 +161,18 @@ inline void WriteBitstream::Finish()
 
 WBS_INLINE void WriteBitstream::GrowBuffer()
 {
-	size_t    bufferSize = m_bufferEnd - m_buffer;
-	size_t    newBufferSize = bufferSize * 2;
+	size_t    bufferSize     = m_bufferEnd - m_buffer;
+	size_t    newBufferSize  = bufferSize * 2;
 	size_t    bufferPosition = m_bufferCursor - m_buffer;
-	uint8_t*  newBuffer = new uint8_t[ newBufferSize ];
+	uint8_t*  newBuffer      = new uint8_t[ newBufferSize ];
 
 	::memcpy( reinterpret_cast<void*>( newBuffer ), reinterpret_cast<void*>( m_buffer ), bufferSize );
 
 	delete[] m_buffer;
 
-	m_buffer = newBuffer;
+	m_buffer       = newBuffer;
 	m_bufferCursor = m_buffer + bufferPosition;
-	m_bufferEnd = m_buffer + newBufferSize;
+	m_bufferEnd    = m_buffer + newBufferSize;
 }
 
 #endif // -- WRITE_BIT_STREAM_H__
