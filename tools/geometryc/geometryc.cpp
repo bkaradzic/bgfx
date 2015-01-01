@@ -146,9 +146,9 @@ void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numInd
 	CompressIndexBuffer(_indices, _numIndices/3, vertexRemap, _numVertices, IBCF_PER_TRIANGLE_1, writer);
 	writer.Finish();
 	printf( "uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
-		, _numIndices * 2
-		, writer.ByteSize()
-		, 100.0f - float( writer.ByteSize() ) / float( _numIndices * 2 )*100.0f
+		, _numIndices*2
+		, (uint32_t)writer.ByteSize()
+		, 100.0f - float(writer.ByteSize() ) / float(_numIndices*2)*100.0f
 		);
 
 	BX_UNUSED(_vertexData, _stride);
@@ -181,7 +181,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		float m_pad1;
 		float m_pad2;
 	};
-	
+
 	float* tangents = new float[6*_numVertices];
 	memset(tangents, 0, 6*_numVertices*sizeof(float) );
 
@@ -267,7 +267,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 	}
 
 	delete [] tangents;
-} 
+}
 
 void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
@@ -448,7 +448,7 @@ int main(int _argc, const char* _argv[])
 
 	uint32_t packUv = 0;
 	cmdLine.hasArg(packUv, '\0', "packuv");
-	
+
 	bool ccw = cmdLine.hasArg("ccw");
 	bool flipV = cmdLine.hasArg("flipv");
 	bool hasTangent = cmdLine.hasArg("tangent");
