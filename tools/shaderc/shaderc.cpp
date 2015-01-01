@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -666,7 +666,7 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "shaderc, bgfx shader compiler tool\n"
-		  "Copyright 2011-2014 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2015 Branimir Karadzic. All rights reserved.\n"
 		  "License: http://www.opensource.org/licenses/BSD-2-Clause\n\n"
 		);
 
