@@ -115,7 +115,6 @@ typedef std::vector<Primitive> PrimitiveArray;
 
 static uint32_t s_obbSteps = 17;
 
-#define BGFX_CHUNK_MAGIC_GEO BX_MAKEFOURCC('G', 'E', 'O', 0x0)
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
@@ -143,7 +142,7 @@ void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numInd
 	uint32_t* vertexRemap = (uint32_t*)malloc(_numVertices*sizeof(uint32_t) );
 
 	WriteBitstream writer;
-	CompressIndexBuffer(_indices, _numIndices/3, vertexRemap, _numVertices, IBCF_PER_TRIANGLE_1, writer);
+	CompressIndexBuffer(_indices, _numIndices/3, vertexRemap, _numVertices, ICBF_AUTO, writer);
 	writer.Finish();
 	printf( "uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
 		, _numIndices * 2
@@ -155,10 +154,9 @@ void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numInd
 	uint8_t* outVertexData = (uint8_t*)malloc(_numVertices*_stride);
 	for (uint32_t ii = 0; ii < _numVertices; ++ii)
 	{
-		if (UINT32_MAX != vertexRemap[ii])
-		{
-			memcpy(&outVertexData[vertexRemap[ii]*_stride], &_vertexData[ii*_stride], _stride);
-		}
+		uint32_t remap = vertexRemap[ii];
+		remap = UINT32_MAX == remap ? ii : remap;
+		memcpy(&outVertexData[remap*_stride], &_vertexData[ii*_stride], _stride);
 	}
 	memcpy(_vertexData, outVertexData, _numVertices*_stride);
 	free(outVertexData);

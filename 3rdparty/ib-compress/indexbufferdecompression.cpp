@@ -465,6 +465,8 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
 		DecompressTriangleCodes1<Ty>( triangles, triangleCount, input );
 		break;
 
+	default: // ICBF_AUTO:
+		break;
 	}
 }
 

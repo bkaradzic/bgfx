@@ -525,8 +525,8 @@ void CompressTriangleCodes1( const Ty* triangles,
 				break;
 			}
 
-			default: // IB_EDGE_NEW, IB_EDGE_CACHED, IB_EDGE_0_NEW, IB_EDGE_1_NEW
-				break;
+            default: // IB_EDGE_NEW, IB_EDGE_CACHED, IB_EDGE_0_NEW, IB_EDGE_1_NEW
+                break;
 			}
 
 			// populate the edge fifo with the 3 most recent edges
@@ -747,6 +747,25 @@ void CompressIndiceCodes1( const Ty* triangles,
 	}
 }
 
+// Detects if there are any degenerate triangles in a set of triangles, where there is 1 or more duplicate vertices.
+template <typename Ty>
+bool ContainsDegenerates( const Ty* triangles, uint32_t triangleCount )
+{
+    const Ty* triangleEnd = triangles + ( triangleCount * 3 );
+    bool      result      = false;
+
+    for ( const Ty* triangle = triangles; triangle < triangleEnd; triangle += 3 )
+    {
+        if ( triangle[ 0 ] == triangle[ 1 ] || triangle[ 0 ] == triangle[ 2 ] || triangle[ 1 ] == triangle[ 2 ] )
+        {
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+
 template <typename Ty>
 void CompressIndexBuffer( const Ty* triangles,
 						  uint32_t triangleCount,
@@ -755,19 +774,34 @@ void CompressIndexBuffer( const Ty* triangles,
 						  IndexBufferCompressionFormat format,
 						  WriteBitstream& output )
 {
-	output.WriteVInt( format );
-
 	switch ( format )
 	{
 	case IBCF_PER_INDICE_1:
 
+        output.WriteVInt( IBCF_PER_INDICE_1 );
 		CompressIndiceCodes1<Ty>( triangles, triangleCount, vertexRemap, vertexCount, output );
 		break;
 
 	case IBCF_PER_TRIANGLE_1:
 
+        output.WriteVInt( IBCF_PER_TRIANGLE_1 );
 		CompressTriangleCodes1<Ty>( triangles, triangleCount, vertexRemap, vertexCount, output );
 		break;
+
+    case ICBF_AUTO:
+
+        if ( ContainsDegenerates( triangles, triangleCount ) )
+        {
+            output.WriteVInt( IBCF_PER_INDICE_1 );
+            CompressIndiceCodes1<Ty>( triangles, triangleCount, vertexRemap, vertexCount, output );
+        }
+        else
+        {
+            output.WriteVInt( IBCF_PER_TRIANGLE_1 );
+            CompressTriangleCodes1<Ty>( triangles, triangleCount, vertexRemap, vertexCount, output );
+        }
+
+        break;
 	}
 }
 

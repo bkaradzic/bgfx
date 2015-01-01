@@ -649,6 +649,10 @@ https://github.com/memononen/SDF
 
 http://nothings.org
 
+### Vertex Cache Optimised Index Buffer Compression
+
+https://github.com/ConorStokes/IndexBufferCompression
+
 Assets
 ------
 
