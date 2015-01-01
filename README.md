@@ -733,7 +733,7 @@ Stanlo Slasinski ([@stanlo](https://github.com/stanlo)) - 24-nbody example
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------
 
-	Copyright 2010-2014 Branimir Karadzic. All rights reserved.
+	Copyright 2010-2015 Branimir Karadzic. All rights reserved.
 	
 	https://github.com/bkaradzic/bgfx
 	
