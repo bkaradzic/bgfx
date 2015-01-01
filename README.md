@@ -649,7 +649,7 @@ https://github.com/memononen/SDF
 
 http://nothings.org
 
-### Vertex Cache Optimised Index Buffer Compression
+### Vertex Cache Optimised Index Buffer Compression (BSD)
 
 https://github.com/ConorStokes/IndexBufferCompression
 
