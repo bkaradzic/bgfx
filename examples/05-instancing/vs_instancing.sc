@@ -2,7 +2,7 @@ $input a_position, a_color0, i_data0, i_data1, i_data2, i_data3, i_data4
 $output v_color0
 
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
