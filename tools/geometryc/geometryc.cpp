@@ -142,7 +142,7 @@ void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numInd
 	uint32_t* vertexRemap = (uint32_t*)malloc(_numVertices*sizeof(uint32_t) );
 
 	WriteBitstream writer;
-	CompressIndexBuffer(_indices, _numIndices/3, vertexRemap, _numVertices, ICBF_AUTO, writer);
+	CompressIndexBuffer(_indices, _numIndices/3, vertexRemap, _numVertices, IBCF_AUTO, writer);
 	writer.Finish();
 	printf( "uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
 		, _numIndices*2

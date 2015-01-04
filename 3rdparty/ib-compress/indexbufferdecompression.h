@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Conor Stokes
+Copyright (c) 2014-2015, Conor Stokes
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Conor Stokes
+Copyright (c) 2014-2015, Conor Stokes
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -465,7 +465,7 @@ void DecompressIndexBuffer( Ty* triangles, uint32_t triangleCount, ReadBitstream
         DecompressTriangleCodes1<Ty>( triangles, triangleCount, input );
         break;
 
-    default: // ICBF_AUTO:
+    default: // IBCF_AUTO:
         break;
     }
 }

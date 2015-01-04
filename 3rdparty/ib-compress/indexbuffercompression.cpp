@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Conor Stokes
+Copyright (c) 2014-2015, Conor Stokes
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -788,7 +788,7 @@ void CompressIndexBuffer( const Ty* triangles,
         CompressTriangleCodes1<Ty>( triangles, triangleCount, vertexRemap, vertexCount, output );
         break;
 
-    case ICBF_AUTO:
+    case IBCF_AUTO:
 
         if ( ContainsDegenerates( triangles, triangleCount ) )
         {
