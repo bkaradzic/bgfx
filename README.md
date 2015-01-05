@@ -198,6 +198,7 @@ draw calls per frame.
 | i7-2600K 3.4 | DX9          | AMD6800   | VS2012 | x64  | Windows7   |  27 | 19683 |
 | i7-2600K 3.4 | GL2.1        | AMD6800   | VS2012 | x64  | Windows7   |  26 | 17576 |
 | i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | GCC    | x64  | SteamOS    |  25 | 15625 |
+| i7-920 2.66  | DX9-Wine     | GTX560Ti  | GCC    | x64  | Linux      |  24 | 13824 |
 | i7-4750HQ 2.0| Mesa 10.0.1  | HD5200    | GCC    | x64  | Linux      |  22 | 10648 |
 | i7-4750HQ 2.0| Mesa 10.1.3  | HD5200    | GCC    | x64  | Linux      |  21 |  9261 |
 | i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | VS2008 | x86  | Windows7   |  21 |  9261 |
