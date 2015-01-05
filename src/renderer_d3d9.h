@@ -88,6 +88,14 @@ namespace bgfx
 #		define D3DFMT_RAWZ ( (D3DFORMAT)BX_MAKEFOURCC('R', 'A', 'W', 'Z') )
 #	endif // D3DFMT_RAWZ
 
+#	ifndef D3DFMT_S8_LOCKABLE
+#		define D3DFMT_S8_LOCKABLE ( (D3DFORMAT)85)
+#	endif // D3DFMT_S8_LOCKABLE
+
+#	ifndef D3DFMT_A1
+#		define D3DFMT_A1 ( (D3DFORMAT)118)
+#	endif // D3DFMT_A1
+
 	struct ExtendedFormat
 	{
 		enum Enum
@@ -327,7 +335,7 @@ namespace bgfx
 
 		void preReset();
 		void postReset();
-	
+
 		union
 		{
 			IDirect3DBaseTexture9*   m_ptr;

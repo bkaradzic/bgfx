@@ -23,6 +23,10 @@
 #	define XINPUT_GAMEPAD_GUIDE 0x400
 #endif // XINPUT_GAMEPAD_GUIDE
 
+#ifndef XINPUT_DLL_A
+#	define XINPUT_DLL_A "xinput.dll"
+#endif // XINPUT_DLL_A
+
 namespace entry
 {
 	typedef DWORD (WINAPI* PFN_XINPUT_GET_STATE)(DWORD dwUserIndex, XINPUT_STATE* pState);
