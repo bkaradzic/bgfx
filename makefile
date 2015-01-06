@@ -21,7 +21,8 @@ all:
 	$(GENIE) --with-tools --with-shared-lib vs2010
 	$(GENIE) --with-tools --with-shared-lib vs2012
 	$(GENIE) --with-tools --with-shared-lib vs2013
-	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
+	$(GENIE) --with-tools --with-shared-lib --gcc=mingw32-gcc gmake
+	$(GENIE) --with-tools --with-shared-lib --gcc=mingw64-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=linux-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=osx gmake
 	$(GENIE) --with-tools --with-shared-lib xcode4
@@ -81,17 +82,21 @@ linux-release64: .build/projects/gmake-linux
 	make -R -C .build/projects/gmake-linux config=release64
 linux: linux-debug32 linux-release32 linux-debug64 linux-release64
 
-.build/projects/gmake-mingw-gcc:
-	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
-mingw-gcc-debug32: .build/projects/gmake-mingw-gcc
-	make -R -C .build/projects/gmake-mingw-gcc config=debug32
-mingw-gcc-release32: .build/projects/gmake-mingw-gcc
-	make -R -C .build/projects/gmake-mingw-gcc config=release32
-mingw-gcc-debug64: .build/projects/gmake-mingw-gcc
-	make -R -C .build/projects/gmake-mingw-gcc config=debug64
-mingw-gcc-release64: .build/projects/gmake-mingw-gcc
-	make -R -C .build/projects/gmake-mingw-gcc config=release64
-mingw-gcc: mingw-gcc-debug32 mingw-gcc-release32 mingw-gcc-debug64 mingw-gcc-release64
+.build/projects/gmake-mingw32-gcc:
+	$(GENIE) --gcc=mingw32-gcc gmake
+mingw32-gcc-debug: .build/projects/gmake-mingw32-gcc
+	make -R -C .build/projects/gmake-mingw32-gcc config=debug32
+mingw32-gcc-release: .build/projects/gmake-mingw32-gcc
+	make -R -C .build/projects/gmake-mingw32-gcc config=release32
+mingw32-gcc: mingw32-gcc-debug mingw32-gcc-release
+
+.build/projects/gmake-mingw64-gcc:
+	$(GENIE) --gcc=mingw64-gcc gmake
+mingw64-gcc-debug: .build/projects/gmake-mingw64-gcc
+	make -R -C .build/projects/gmake-mingw64-gcc config=debug64
+mingw64-gcc-release: .build/projects/gmake-mingw64-gcc
+	make -R -C .build/projects/gmake-mingw64-gcc config=release64
+mingw64-gcc: mingw64-gcc-debug mingw64-gcc-release
 
 .build/projects/gmake-mingw-clang:
 	$(GENIE) --clang=mingw-clang gmake
@@ -226,8 +231,8 @@ EXE=
 endif
 else
 OS=windows
-BUILD_PROJECT_DIR=gmake-mingw-gcc
-BUILD_OUTPUT_DIR=win32_mingw-gcc
+BUILD_PROJECT_DIR=gmake-mingw32-gcc
+BUILD_OUTPUT_DIR=win32_mingw32-gcc
 BUILD_TOOLS_CONFIG=release32
 EXE=.exe
 endif
