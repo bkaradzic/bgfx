@@ -232,7 +232,7 @@ endif
 else
 OS=windows
 BUILD_PROJECT_DIR=gmake-mingw32-gcc
-BUILD_OUTPUT_DIR=win32_mingw32-gcc
+BUILD_OUTPUT_DIR=win32_mingw-gcc
 BUILD_TOOLS_CONFIG=release32
 EXE=.exe
 endif
