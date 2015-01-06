@@ -2647,7 +2647,7 @@ namespace bgfx { namespace d3d11
 		if (0 < size)
 		{
 			D3D11_BUFFER_DESC desc;
-			desc.ByteWidth = size;
+			desc.ByteWidth = (size + 0xf) & ~0xf;
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 			desc.CPUAccessFlags = 0;
