@@ -148,6 +148,9 @@ function exampleProject(_name)
 			"/DELAYLOAD:\"libGLESv2.dll\"",
 		}
 
+	configuration { "mingw*" }
+		targetextension ".exe"
+
 	configuration { "vs20* or mingw*" }
 		links {
 			"gdi32",

@@ -653,13 +653,13 @@ namespace bgfx
 					D3D11_INFO_QUEUE_FILTER filter;
 					memset(&filter, 0, sizeof(filter) );
 
-					D3D11_MESSAGE_CATEGORY categies[] =
+					D3D11_MESSAGE_CATEGORY catlist[] =
 					{
 						D3D11_MESSAGE_CATEGORY_STATE_SETTING,
 						D3D11_MESSAGE_CATEGORY_EXECUTION,
 					};
-					filter.DenyList.NumCategories = BX_COUNTOF(categies);
-					filter.DenyList.pCategoryList = categies;
+					filter.DenyList.NumCategories = BX_COUNTOF(catlist);
+					filter.DenyList.pCategoryList = catlist;
 					infoQueue->PushStorageFilter(&filter);
 
 					DX_RELEASE(infoQueue, 3);
@@ -2311,8 +2311,8 @@ namespace bgfx
 		{
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.CPUAccessFlags = 0;
-			desc.StructureByteStride = isValid(_declHandle) 
-				? s_renderD3D11->m_vertexDecls[_declHandle.idx].m_stride 
+			desc.StructureByteStride = isValid(_declHandle)
+				? s_renderD3D11->m_vertexDecls[_declHandle.idx].m_stride
 				: 0
 				;
 
