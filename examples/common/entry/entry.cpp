@@ -22,6 +22,7 @@ namespace entry
 	static bool s_exit = false;
 	static bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
+	static bx::CrtAllocator s_allocator;
 
 	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
 	{
@@ -109,7 +110,7 @@ namespace entry
 		return 0;
 	}
 
-	static const InputBinding s_bindings[] = 
+	static const InputBinding s_bindings[] =
 	{
 		{ entry::Key::KeyQ,         entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
 		{ entry::Key::F1,           entry::Modifier::None,      1, cmd, "graphics stats"                    },
@@ -295,7 +296,7 @@ namespace entry
 					: m_ev(poll(_handle) )
 				{
 				}
-				
+
 				~SE()
 				{
 					if (NULL != m_ev)
@@ -442,6 +443,11 @@ namespace entry
 	bx::FileWriterI* getFileWriter()
 	{
 		return s_fileWriter;
+	}
+
+	bx::ReallocatorI* getAllocator()
+	{
+		return &s_allocator;
 	}
 
 } // namespace entry
