@@ -197,7 +197,7 @@ typedef struct bgfx_hmd
         float pixelsPerTanAngle[2];
     };
 
-    Eye eye[2];
+    struct Eye eye[2];
     uint16_t width;
     uint16_t height;
 } bgfx_hmd_t;
