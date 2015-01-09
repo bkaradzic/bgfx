@@ -1155,6 +1155,13 @@ namespace bgfx
 				}
 			}
 
+			if (!isTextureFormatValid(TextureFormat::R8) )
+			{
+				// GL core has to use GL_R8 Issue#208, GLES2 has to use GL_LUMINANCE issue#226
+				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_LUMINANCE;
+				s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
+			}
+
 			if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 			{
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
@@ -1253,7 +1260,7 @@ namespace bgfx
 				|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 				;
 
-			g_caps.supported |= m_depthTextureSupport 
+			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 				: 0
 				;
@@ -1316,13 +1323,6 @@ namespace bgfx
 					glDrawArraysInstanced   = stubDrawArraysInstanced;
 					glDrawElementsInstanced = stubDrawElementsInstanced;
 				}
-			}
-
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31)
-			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
-			{
-				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_R8;
-				s_textureFormat[TextureFormat::R8].m_fmt         = GL_RED;
 			}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -1819,9 +1819,9 @@ namespace bgfx
 				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
 
-				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) 
+				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 					? GL_DEPTH_STENCIL_ATTACHMENT
-					: GL_DEPTH_ATTACHMENT 
+					: GL_DEPTH_ATTACHMENT
 					;
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
 
@@ -1862,8 +1862,8 @@ namespace bgfx
 				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
 				uint32_t width  = m_resolution.m_width;
 				uint32_t height = m_resolution.m_height;
-				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) 
-					? GL_NEAREST 
+				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30)
+					? GL_NEAREST
 					: GL_LINEAR
 					;
 				GL_CHECK(glBlitFramebuffer(0
@@ -2349,7 +2349,7 @@ namespace bgfx
 						float m_y;
 						float m_z;
 					};
-					
+
 					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
 					BX_CHECK(vertexDecl.m_stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", vertexDecl.m_stride, sizeof(Vertex) );
 
@@ -2491,7 +2491,7 @@ namespace bgfx
 			GLSL_TYPE(GL_INT);
 			GLSL_TYPE(GL_INT_VEC2);
 			GLSL_TYPE(GL_INT_VEC3);
-			GLSL_TYPE(GL_INT_VEC4);		
+			GLSL_TYPE(GL_INT_VEC4);
 			GLSL_TYPE(GL_UNSIGNED_INT);
 			GLSL_TYPE(GL_UNSIGNED_INT_VEC2);
 			GLSL_TYPE(GL_UNSIGNED_INT_VEC3);
@@ -3166,7 +3166,7 @@ namespace bgfx
 			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
 			uint32_t blockWidth  = 1;
 			uint32_t blockHeight = 1;
-			
+
 			if (convert && compressed)
 			{
 				blockWidth  = blockInfo.blockWidth;
@@ -3611,7 +3611,7 @@ namespace bgfx
 						  "#define noperspective\n"
 						);
 
-					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported 
+					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported
 						&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
 						;
 
@@ -3985,7 +3985,7 @@ namespace bgfx
 						, 0
 						) );
 				}
-				
+
 				needResolve |= (0 != texture.m_rbo) && (0 != texture.m_id);
 			}
 		}
@@ -4072,7 +4072,7 @@ namespace bgfx
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
-		
+
 		return denseIdx;
 	}
 
@@ -4262,7 +4262,7 @@ namespace bgfx
 						char* viewName = s_viewName[view];
 						viewName[3] = eye ? 'R' : 'L';
 						GL_CHECK(glInsertEventMarker(0, viewName) );
-						
+
 						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
 						viewState.m_rect.m_width /= 2;
 					}
@@ -4325,7 +4325,7 @@ namespace bgfx
 								case ComputeBinding::Buffer:
 									{
 										const VertexBufferGL& vertexBuffer = m_vertexBuffers[bind.m_idx];
-										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, vertexBuffer.m_id) ); 
+										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, vertexBuffer.m_id) );
 										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
 									}
 									break;
