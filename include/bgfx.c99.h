@@ -182,24 +182,27 @@ typedef struct bgfx_transform
 } bgfx_transform_t;
 
 /**
+ * Eye
+ */
+typedef struct bgfx_hmd_eye
+{
+    float rotation[4];
+    float translation[3];
+    float fov[4];
+    float adjust[3];
+    float pixelsPerTanAngle[2];
+
+} bgfx_hmd_eye_t;
+
+/**
+ * HMD
  */
 typedef struct bgfx_hmd
 {
-    /**
-     * Eye
-     */
-    struct Eye
-    {
-        float rotation[4];
-        float translation[3];
-        float fov[4];
-        float adjust[3];
-        float pixelsPerTanAngle[2];
-    };
-
-    Eye eye[2];
+    bgfx_hmd_eye_t eye[2];
     uint16_t width;
     uint16_t height;
+
 } bgfx_hmd_t;
 
 /**
