@@ -905,6 +905,8 @@ namespace bgfx
 		TextureFormat::ETC2,
 		TextureFormat::ETC2A,
 		TextureFormat::ETC2A1,
+		TextureFormat::PTC14,
+		TextureFormat::PTC14A,
 	};
 
 	void Context::init(RendererType::Enum _type)
