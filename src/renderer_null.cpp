@@ -57,7 +57,7 @@ namespace bgfx
 		{
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_size*/) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_size*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 

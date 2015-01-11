@@ -1564,7 +1564,10 @@ again:
 					uint32_t size;
 					_cmdbuf.read(size);
 
-					m_renderCtx->createDynamicIndexBuffer(handle, size);
+					uint8_t flags;
+					_cmdbuf.read(flags);
+
+					m_renderCtx->createDynamicIndexBuffer(handle, size, flags);
 				}
 				break;
 
@@ -2086,10 +2089,10 @@ again:
 		s_ctx->destroyVertexBuffer(_handle);
 	}
 
-	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num)
+	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->createDynamicIndexBuffer(_num);
+		return s_ctx->createDynamicIndexBuffer(_num, _flags);
 	}
 
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
@@ -2762,7 +2765,19 @@ again:
 		return s_ctx->submit(_id, _depth);
 	}
 
+	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setBuffer(_stage, _handle, _access);
+	}
+
 	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setBuffer(_stage, _handle, _access);
+	}
+
+	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setBuffer(_stage, _handle, _access);

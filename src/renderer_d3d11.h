@@ -72,34 +72,9 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
 {
-	struct IndexBufferD3D11
+	struct BufferD3D11
 	{
-		IndexBufferD3D11()
-			: m_ptr(NULL)
-			, m_dynamic(false)
-		{
-		}
-
-		void create(uint32_t _size, void* _data);
-		void update(uint32_t _offset, uint32_t _size, void* _data);
-
-		void destroy()
-		{
-			if (NULL != m_ptr)
-			{
-				DX_RELEASE(m_ptr, 0);
-				m_dynamic = false;
-			}
-		}
-
-		ID3D11Buffer* m_ptr;
-		uint32_t m_size;
-		bool m_dynamic;
-	};
-
-	struct VertexBufferD3D11
-	{
-		VertexBufferD3D11()
+		BufferD3D11()
 			: m_ptr(NULL)
 			, m_srv(NULL)
 			, m_uav(NULL)
@@ -107,7 +82,7 @@ namespace bgfx
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags);
+		void create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride = 0, bool _vertex = true);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
 
 		void destroy()
@@ -123,11 +98,24 @@ namespace bgfx
 		}
 
 		ID3D11Buffer* m_ptr;
-		ID3D11ShaderResourceView* m_srv;
+		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
 		uint32_t m_size;
-		VertexDeclHandle m_decl;
 		bool m_dynamic;
+	};
+
+	typedef BufferD3D11 IndexBufferD3D11;
+
+	struct VertexBufferD3D11 : public BufferD3D11
+	{
+		VertexBufferD3D11()
+			: BufferD3D11()
+		{
+		}
+
+		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags);
+
+		VertexDeclHandle m_decl;
 	};
 
 	struct ShaderD3D11

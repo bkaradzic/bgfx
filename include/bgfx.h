@@ -161,7 +161,7 @@ namespace bgfx
 			D24F,
 			D32F,
 			D0S8,
-			
+
 			Count
 		};
 	};
@@ -379,7 +379,7 @@ namespace bgfx
 			float translation[3];       //!< Eye translation.
 			float fov[4];               //!< Field of view (up, down, left, right).
 			float viewOffset[3];        //!< Eye view matrix translation adjustment.
-			float pixelsPerTanAngle[2]; //!< 
+			float pixelsPerTanAngle[2]; //!<
 		};
 
 		Eye eye[2];
@@ -600,7 +600,7 @@ namespace bgfx
 	void dbgTextPrintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
 
 	/// Draw image into internal debug text buffer.
-	/// 
+	///
 	/// @param _x      X position from top-left.
 	/// @param _y      Y position from top-left.
 	/// @param _width  Image width.
@@ -637,11 +637,12 @@ namespace bgfx
 	/// Create empty dynamic index buffer.
 	///
 	/// @param _num Number of indices.
+	/// @param _flags `BGFX_BUFFER_*` flags.
 	///
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
 	///
-	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num);
+	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
 
 	/// Create dynamic index buffer and initialized it.
 	///
@@ -669,7 +670,7 @@ namespace bgfx
 	///
 	/// @param _num Number of vertices.
 	/// @param _decl Vertex declaration.
-	/// @param _compute True if vertex buffer will be used by compute shader.
+	/// @param _flags `BGFX_BUFFER_*` flags.
 	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
 
@@ -932,7 +933,7 @@ namespace bgfx
 	///
 	/// @param _num Number of texture attachments.
 	/// @param _handles Texture attachments.
-	/// @param _destroyTextures If true, textures will be destroyed when 
+	/// @param _destroyTextures If true, textures will be destroyed when
 	///   frame buffer is destroyed.
 	///
 	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures = false);
@@ -1245,7 +1246,13 @@ namespace bgfx
 	uint32_t submit(uint8_t _id, int32_t _depth = 0);
 
 	///
+	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access);
+
+	///
 	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access);
+
+	///
+	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access);
 
 	///
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);

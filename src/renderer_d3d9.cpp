@@ -189,7 +189,7 @@ namespace bgfx
 
 	static TextureFormatInfo s_textureFormat[] =
 	{
-		{ D3DFMT_DXT1          }, // BC1 
+		{ D3DFMT_DXT1          }, // BC1
 		{ D3DFMT_DXT3          }, // BC2
 		{ D3DFMT_DXT5          }, // BC3
 		{ D3DFMT_UNKNOWN       }, // BC4
@@ -229,11 +229,11 @@ namespace bgfx
 		{ D3DFMT_A2B10G10R10   }, // RGB10A2
 		{ D3DFMT_UNKNOWN       }, // R11G11B10F
 		{ D3DFMT_UNKNOWN       }, // UnknownDepth
-		{ D3DFMT_D16           }, // D16  
-		{ D3DFMT_D24X8         }, // D24  
+		{ D3DFMT_D16           }, // D16
+		{ D3DFMT_D24X8         }, // D24
 		{ D3DFMT_D24S8         }, // D24S8
-		{ D3DFMT_D32           }, // D32  
-		{ D3DFMT_DF16          }, // D16F 
+		{ D3DFMT_D32           }, // D32
+		{ D3DFMT_DF16          }, // D16F
 		{ D3DFMT_DF24          }, // D24F
 		{ D3DFMT_D32F_LOCKABLE }, // D32F
 		{ D3DFMT_S8_LOCKABLE   }, // D0S8
@@ -670,7 +670,7 @@ namespace bgfx
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_size, NULL);
 		}
@@ -1075,7 +1075,7 @@ namespace bgfx
 
 			HRESULT hr;
 
-			do 
+			do
 			{
 				hr = m_device->Reset(&m_params);
 			} while (FAILED(hr) );
@@ -1122,7 +1122,7 @@ namespace bgfx
 					{
 						do
 						{
-							do 
+							do
 							{
 								hr = m_device->TestCooperativeLevel();
 							}
@@ -1785,7 +1785,7 @@ namespace bgfx
 				, 0
 				, pool
 				, &m_ptr
-				, NULL 
+				, NULL
 				) );
 
 		if (NULL != _data)
@@ -1811,7 +1811,7 @@ namespace bgfx
 					, 0
 					, D3DPOOL_DEFAULT
 					, &m_ptr
-					, NULL 
+					, NULL
 					) );
 		}
 	}
@@ -2458,7 +2458,7 @@ namespace bgfx
 		uint8_t* bits = s_renderD3D9->m_updateTextureBits + _rect.m_y*dstpitch + _rect.m_x*bpp/8;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
-		
+
 		uint8_t* data = _mem->data;
 		uint8_t* temp = NULL;
 
@@ -2955,7 +2955,7 @@ namespace bgfx
 				{
 					bool enable = 0 != newStencil;
 					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, enable) );
-					
+
 					if (0 != newStencil)
 					{
 						uint32_t fstencil = unpackStencil(0, newStencil);
@@ -3027,7 +3027,7 @@ namespace bgfx
 					}
 
 					if (BGFX_STATE_DEPTH_WRITE & changedFlags)
-					{ 
+					{
 						DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, !!(BGFX_STATE_DEPTH_WRITE & newFlags) ) );
 					}
 
@@ -3139,7 +3139,7 @@ namespace bgfx
 						device->SetPixelShader(program.m_fsh->m_pixelShader);
 					}
 
-					programChanged = 
+					programChanged =
 						constantsChanged = true;
 				}
 

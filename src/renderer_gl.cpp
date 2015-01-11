@@ -1469,7 +1469,7 @@ namespace bgfx
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_size, NULL);
 		}
@@ -4322,10 +4322,18 @@ namespace bgfx
 									}
 									break;
 
-								case ComputeBinding::Buffer:
+								case ComputeBinding::IndexBuffer:
 									{
-										const VertexBufferGL& vertexBuffer = m_vertexBuffers[bind.m_idx];
-										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, vertexBuffer.m_id) );
+										const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
+										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id));
+										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
+									}
+									break;
+
+								case ComputeBinding::VertexBuffer:
+									{
+										const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
+										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id));
 										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
 									}
 									break;

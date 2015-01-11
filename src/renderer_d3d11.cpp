@@ -548,7 +548,7 @@ namespace bgfx
 			uint32_t flags = 0
 				| D3D11_CREATE_DEVICE_SINGLETHREADED
 				| D3D11_CREATE_DEVICE_BGRA_SUPPORT
-				| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
+//				| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
 				;
 
 			D3D_FEATURE_LEVEL featureLevel;
@@ -764,7 +764,7 @@ namespace bgfx
 
 		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
+			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, BGFX_BUFFER_COMPUTE_NONE);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) BX_OVERRIDE
@@ -793,9 +793,9 @@ namespace bgfx
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL);
+			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) BX_OVERRIDE
@@ -2235,61 +2235,10 @@ namespace bgfx
 		s_renderD3D11 = NULL;
 	}
 
-	void IndexBufferD3D11::create(uint32_t _size, void* _data)
+	void BufferD3D11::create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride, bool _vertex)
 	{
+		m_uav  = NULL;
 		m_size = _size;
-		m_dynamic = NULL == _data;
-
-		D3D11_BUFFER_DESC desc;
-		desc.ByteWidth = _size;
-		desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		desc.MiscFlags = 0;
-		desc.StructureByteStride = 0;
-
-		if (m_dynamic)
-		{
-			desc.Usage = D3D11_USAGE_DYNAMIC;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-			DX_CHECK(s_renderD3D11->m_device->CreateBuffer(&desc
-				, NULL
-				, &m_ptr
-				) );
-		}
-		else
-		{
-			desc.Usage = D3D11_USAGE_IMMUTABLE;
-			desc.CPUAccessFlags = 0;
-
-			D3D11_SUBRESOURCE_DATA srd;
-			srd.pSysMem = _data;
-			srd.SysMemPitch = 0;
-			srd.SysMemSlicePitch = 0;
-
-			DX_CHECK(s_renderD3D11->m_device->CreateBuffer(&desc
-				, &srd
-				, &m_ptr
-				) );
-		}
-	}
-
-	void IndexBufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data)
-	{
-		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-		BX_CHECK(m_dynamic, "Must be dynamic!");
-
-		D3D11_MAPPED_SUBRESOURCE mapped;
-		D3D11_MAP type = m_dynamic && 0 == _offset && m_size == _size ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE;
-		DX_CHECK(deviceCtx->Map(m_ptr, 0, type, 0, &mapped) );
-		memcpy( (uint8_t*)mapped.pData + _offset, _data, _size);
-		deviceCtx->Unmap(m_ptr, 0);
-	}
-
-	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags)
-	{
-		m_uav = NULL;
-		m_size = _size;
-		m_decl = _declHandle;
 
 		const bool needUav = 0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE);
 		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
@@ -2298,12 +2247,17 @@ namespace bgfx
 		D3D11_BUFFER_DESC desc;
 		desc.ByteWidth = _size;
 		desc.BindFlags = 0
-			| D3D11_BIND_VERTEX_BUFFER
+			| (_vertex ? D3D11_BIND_VERTEX_BUFFER    : D3D11_BIND_INDEX_BUFFER)
 			| (needUav ? D3D11_BIND_UNORDERED_ACCESS : 0)
 			| (needSrv ? D3D11_BIND_SHADER_RESOURCE  : 0)
 			;
 		desc.MiscFlags = 0;
 		desc.StructureByteStride = 0;
+
+		DXGI_FORMAT format = _vertex
+			? DXGI_FORMAT_R32G32B32A32_FLOAT
+			: DXGI_FORMAT_R16_UINT
+			;
 
 		ID3D11Device* device = s_renderD3D11->m_device;
 
@@ -2311,26 +2265,23 @@ namespace bgfx
 		{
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.CPUAccessFlags = 0;
-			desc.StructureByteStride = isValid(_declHandle)
-				? s_renderD3D11->m_vertexDecls[_declHandle.idx].m_stride
-				: 0
-				;
+			desc.StructureByteStride = _stride;
 
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
-				) );
+				));
 
 			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd;
-			uavd.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			uavd.Format = format;
 			uavd.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 			uavd.Buffer.FirstElement = 0;
-			uavd.Buffer.NumElements  = m_size/16;
+			uavd.Buffer.NumElements = m_size / 16;
 			uavd.Buffer.Flags = 0;
 			DX_CHECK(device->CreateUnorderedAccessView(m_ptr
 				, &uavd
 				, &m_uav
-				) );
+				));
 		}
 		else if (m_dynamic)
 		{
@@ -2340,7 +2291,7 @@ namespace bgfx
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
-				) );
+				));
 		}
 		else
 		{
@@ -2355,33 +2306,47 @@ namespace bgfx
 			DX_CHECK(device->CreateBuffer(&desc
 				, &srd
 				, &m_ptr
-				) );
+				));
 		}
 
 		if (needSrv)
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
-			srvd.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			srvd.Format = format;
 			srvd.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvd.Buffer.FirstElement = 0;
-			srvd.Buffer.NumElements = m_size/16;
+			srvd.Buffer.NumElements = m_size / 16;
 			DX_CHECK(device->CreateShaderResourceView(m_ptr
 				, &srvd
 				, &m_srv
-				) );
+				));
 		}
 	}
 
-	void VertexBufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
+	void BufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 		BX_CHECK(m_dynamic, "Must be dynamic!");
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
-		D3D11_MAP type = m_dynamic && ( (0 == _offset && m_size == _size) || _discard) ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE;
-		DX_CHECK(deviceCtx->Map(m_ptr, 0, type, 0, &mapped) );
-		memcpy( (uint8_t*)mapped.pData + _offset, _data, _size);
+		D3D11_MAP type = m_dynamic && ( (0 == _offset && m_size == _size) || _discard)
+			? D3D11_MAP_WRITE_DISCARD
+			: D3D11_MAP_WRITE_NO_OVERWRITE
+			;
+		DX_CHECK(deviceCtx->Map(m_ptr, 0, type, 0, &mapped));
+		memcpy((uint8_t*)mapped.pData + _offset, _data, _size);
 		deviceCtx->Unmap(m_ptr, 0);
+	}
+
+	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags)
+	{
+		m_decl = _declHandle;
+		uint16_t stride = isValid(_declHandle)
+			? s_renderD3D11->m_vertexDecls[_declHandle.idx].m_stride
+			: 0
+			;
+
+		BufferD3D11::create(_size, _data, _flags, stride);
 	}
 
 	void ShaderD3D11::create(const Memory* _mem)
@@ -3229,16 +3194,20 @@ namespace bgfx
 								}
 								break;
 
-							case ComputeBinding::Buffer:
+							case ComputeBinding::IndexBuffer:
+							case ComputeBinding::VertexBuffer:
 								{
-									const VertexBufferD3D11& vertexBuffer = m_vertexBuffers[bind.m_idx];
+									const BufferD3D11& buffer = ComputeBinding::IndexBuffer == bind.m_type
+										? m_indexBuffers[bind.m_idx]
+										: m_vertexBuffers[bind.m_idx]
+										;
 									if (Access::Read != bind.m_access)
 									{
-										uav[ii] = vertexBuffer.m_uav;
+										uav[ii] = buffer.m_uav;
 									}
 									else
 									{
-										srv[ii] = vertexBuffer.m_srv;
+										srv[ii] = buffer.m_srv;
 									}
 								}
 								break;
