@@ -2730,8 +2730,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Clear backbuffer at beginning.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR_BIT
-				| BGFX_CLEAR_DEPTH_BIT
+				, BGFX_CLEAR_COLOR
+				| BGFX_CLEAR_DEPTH
 				, clearValues.m_clearRgba
 				, clearValues.m_clearDepth
 				, clearValues.m_clearStencil
@@ -2741,7 +2741,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Clear shadowmap rendertarget at beginning.
 		const uint8_t flags0 = (LightType::DirectionalLight == settings.m_lightType)
 							 ? 0
-							 : BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT
+							 : BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL
 							 ;
 
 		bgfx::setViewClear(RENDERVIEW_SHADOWMAP_0_ID
@@ -2753,7 +2753,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::submit(RENDERVIEW_SHADOWMAP_0_ID);
 
 		const uint8_t flags1 = (LightType::DirectionalLight == settings.m_lightType)
-							 ? BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+							 ? BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 							 : 0
 							 ;
 

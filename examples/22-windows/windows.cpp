@@ -85,7 +85,7 @@ void cmdDestroyWindow(const void* /*_userData*/)
 	}
 }
 
-static const InputBinding s_bindings[] = 
+static const InputBinding s_bindings[] =
 {
 	{ entry::Key::KeyC, entry::Modifier::None, 1, cmdCreateWindow,  NULL },
 	{ entry::Key::KeyD, entry::Modifier::None, 1, cmdDestroyWindow, NULL },
@@ -115,7 +115,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 0x303030ff
 		, 1.0f
 		, 0
@@ -218,7 +218,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				bgfx::setViewRect(ii, 0, 0, windows[ii].m_width, windows[ii].m_height);
 				bgfx::setViewClear(ii
-					, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+					, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 					, 0x303030ff
 					, 1.0f
 					, 0
@@ -240,7 +240,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/22-windows");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering into multiple windows.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-		
+
 		if (swapChainSupported)
 		{
 			bgfx::dbgTextPrintf(0, 5, 0x2f, "Press 'c' to create or 'd' to destroy window.");
@@ -283,7 +283,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

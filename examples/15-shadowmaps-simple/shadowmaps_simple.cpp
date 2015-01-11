@@ -282,12 +282,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Clear backbuffer and shadowmap framebuffer at beginning.
 		bgfx::setViewClear(RENDER_SHADOW_PASS_ID
-			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 			, 0x303030ff, 1.0f, 0
 			);
 
 		bgfx::setViewClear(RENDER_SCENE_PASS_ID
-			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 			, 0x303030ff, 1.0f, 0
 			);
 

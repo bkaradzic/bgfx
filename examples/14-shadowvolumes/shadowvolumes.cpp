@@ -2616,9 +2616,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Make sure at the beginning everything gets cleared.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR_BIT
-				| BGFX_CLEAR_DEPTH_BIT
-				| BGFX_CLEAR_STENCIL_BIT
+				, BGFX_CLEAR_COLOR
+				| BGFX_CLEAR_DEPTH
+				| BGFX_CLEAR_STENCIL
 				, clearValues.m_clearRgba
 				, clearValues.m_clearDepth
 				, clearValues.m_clearStencil
@@ -2653,7 +2653,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Using stencil texture requires rendering to separate render target. first pass is building depth buffer.
 		if (settings_useStencilTexture)
 		{
-			bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH_BIT, 0x00000000, 1.0f, 0);
+			bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
 			bgfx::setViewFrameBuffer(VIEWID_RANGE1_RT_PASS1, s_stencilFb);
 
 			const RenderState& renderState = s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_BuildDepth];
@@ -2689,7 +2689,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setViewFrameBuffer(viewId, s_stencilFb);
 
 				bgfx::setViewClear(viewId
-						, BGFX_CLEAR_COLOR_BIT
+						, BGFX_CLEAR_COLOR
 						, 0x00000000
 						, 1.0f
 						, 0
@@ -2701,7 +2701,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setViewFrameBuffer(viewId, invalid);
 
 				bgfx::setViewClear(viewId
-						, BGFX_CLEAR_STENCIL_BIT
+						, BGFX_CLEAR_STENCIL
 						, clearValues.m_clearRgba
 						, clearValues.m_clearDepth
 						, clearValues.m_clearStencil

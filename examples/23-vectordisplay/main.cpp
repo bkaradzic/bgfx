@@ -51,7 +51,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::setDebug(debug);
 
 	// Set view 0 clear state.
-	bgfx::setViewClear(0, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT, 0x303030ff, 1.0f, 0);
+	bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 
 	// Create vertex stream declaration.
 	PosColorVertex::init();

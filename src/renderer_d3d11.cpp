@@ -1375,7 +1375,7 @@ namespace bgfx
 			else
 			{
 				if (NULL != m_currentColor
-				&&  BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+				&&  BGFX_CLEAR_COLOR & _clear.m_flags)
 				{
 					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
 					{
@@ -1399,11 +1399,11 @@ namespace bgfx
 				}
 
 				if (NULL != m_currentDepthStencil
-				&& (BGFX_CLEAR_DEPTH_BIT|BGFX_CLEAR_STENCIL_BIT) & _clear.m_flags)
+				&& (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & _clear.m_flags)
 				{
 					DWORD flags = 0;
-					flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH_BIT) ? D3D11_CLEAR_DEPTH : 0;
-					flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL_BIT) ? D3D11_CLEAR_STENCIL : 0;
+					flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH) ? D3D11_CLEAR_DEPTH : 0;
+					flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL) ? D3D11_CLEAR_STENCIL : 0;
 					m_deviceCtx->ClearDepthStencilView(m_currentDepthStencil, flags, _clear.m_depth, _clear.m_stencil);
 				}
 			}
@@ -2030,11 +2030,11 @@ namespace bgfx
 				ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
 				uint64_t state = 0;
-				state |= _clear.m_flags & BGFX_CLEAR_COLOR_BIT ? BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE : 0;
-				state |= _clear.m_flags & BGFX_CLEAR_DEPTH_BIT ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_DEPTH_WRITE : 0;
+				state |= _clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE : 0;
+				state |= _clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_DEPTH_WRITE : 0;
 
 				uint64_t stencil = 0;
-				stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL_BIT ? 0
+				stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL ? 0
 					| BGFX_STENCIL_TEST_ALWAYS
 					| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
 					| BGFX_STENCIL_FUNC_RMASK(0xff)
@@ -2899,7 +2899,7 @@ namespace bgfx
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
-		if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+		if (BGFX_CLEAR_COLOR & _clear.m_flags)
 		{
 			if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
 			{
@@ -2933,11 +2933,11 @@ namespace bgfx
 		}
 
 		if (NULL != m_dsv
-		&& (BGFX_CLEAR_DEPTH_BIT|BGFX_CLEAR_STENCIL_BIT) & _clear.m_flags)
+		&& (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & _clear.m_flags)
 		{
 			DWORD flags = 0;
-			flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH_BIT) ? D3D11_CLEAR_DEPTH : 0;
-			flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL_BIT) ? D3D11_CLEAR_STENCIL : 0;
+			flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH) ? D3D11_CLEAR_DEPTH : 0;
+			flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL) ? D3D11_CLEAR_STENCIL : 0;
 			deviceCtx->ClearDepthStencilView(m_dsv, flags, _clear.m_depth, _clear.m_stencil);
 		}
 	}

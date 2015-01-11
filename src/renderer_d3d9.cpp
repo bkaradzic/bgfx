@@ -1467,7 +1467,7 @@ namespace bgfx
 				D3DCOLOR color = 0;
 				DWORD flags    = 0;
 
-				if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_COLOR & _clear.m_flags)
 				{
 					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
 					{
@@ -1493,13 +1493,13 @@ namespace bgfx
 						) );
 				}
 
-				if (BGFX_CLEAR_DEPTH_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
 				{
 					flags |= D3DCLEAR_ZBUFFER;
 					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 				}
 
-				if (BGFX_CLEAR_STENCIL_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_STENCIL & _clear.m_flags)
 				{
 					flags |= D3DCLEAR_STENCIL;
 				}
@@ -1523,7 +1523,7 @@ namespace bgfx
 				DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
 				DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 
-				if (BGFX_CLEAR_DEPTH_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
 				{
 					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE
@@ -1542,7 +1542,7 @@ namespace bgfx
 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, FALSE) );
 				}
 
-				if (BGFX_CLEAR_STENCIL_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_STENCIL & _clear.m_flags)
 				{
 					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, TRUE) );

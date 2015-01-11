@@ -2256,7 +2256,7 @@ namespace bgfx
 			if (1 == numMrt)
 			{
 				GLuint flags = 0;
-				if (BGFX_CLEAR_COLOR_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_COLOR & _clear.m_flags)
 				{
 					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
 					{
@@ -2281,14 +2281,14 @@ namespace bgfx
 					GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
 				}
 
-				if (BGFX_CLEAR_DEPTH_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
 				{
 					flags |= GL_DEPTH_BUFFER_BIT;
 					GL_CHECK(glClearDepth(_clear.m_depth) );
 					GL_CHECK(glDepthMask(GL_TRUE) );
 				}
 
-				if (BGFX_CLEAR_STENCIL_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_STENCIL & _clear.m_flags)
 				{
 					flags |= GL_STENCIL_BUFFER_BIT;
 					GL_CHECK(glClearStencil(_clear.m_stencil) );
@@ -2314,10 +2314,10 @@ namespace bgfx
 				GL_CHECK(glDisable(GL_CULL_FACE) );
 				GL_CHECK(glDisable(GL_BLEND) );
 
-				GLboolean colorMask = !!(BGFX_CLEAR_COLOR_BIT & _clear.m_flags);
+				GLboolean colorMask = !!(BGFX_CLEAR_COLOR & _clear.m_flags);
 				GL_CHECK(glColorMask(colorMask, colorMask, colorMask, colorMask) );
 
-				if (BGFX_CLEAR_DEPTH_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
 				{
 					GL_CHECK(glEnable(GL_DEPTH_TEST) );
 					GL_CHECK(glDepthFunc(GL_ALWAYS) );
@@ -2328,7 +2328,7 @@ namespace bgfx
 					GL_CHECK(glDisable(GL_DEPTH_TEST) );
 				}
 
-				if (BGFX_CLEAR_STENCIL_BIT & _clear.m_flags)
+				if (BGFX_CLEAR_STENCIL & _clear.m_flags)
 				{
 					GL_CHECK(glEnable(GL_STENCIL_TEST) );
 					GL_CHECK(glStencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, _clear.m_stencil,  0xff) );

@@ -16,14 +16,14 @@
 #include "camera.h"
 #include "imgui/imgui.h"
 
-#define RENDER_VIEWID_RANGE1_PASS_0   1 
-#define RENDER_VIEWID_RANGE1_PASS_1   2 
-#define RENDER_VIEWID_RANGE1_PASS_2   3 
-#define RENDER_VIEWID_RANGE1_PASS_3   4 
-#define RENDER_VIEWID_RANGE1_PASS_4   5 
-#define RENDER_VIEWID_RANGE1_PASS_5   6 
+#define RENDER_VIEWID_RANGE1_PASS_0   1
+#define RENDER_VIEWID_RANGE1_PASS_1   2
+#define RENDER_VIEWID_RANGE1_PASS_2   3
+#define RENDER_VIEWID_RANGE1_PASS_3   4
+#define RENDER_VIEWID_RANGE1_PASS_4   5
+#define RENDER_VIEWID_RANGE1_PASS_5   6
 #define RENDER_VIEWID_RANGE5_PASS_6   7
-#define RENDER_VIEWID_RANGE1_PASS_7  13 
+#define RENDER_VIEWID_RANGE1_PASS_7  13
 
 #define MAX_NUM_LIGHTS 5
 
@@ -1209,7 +1209,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Make sure at the beginning everything gets cleared.
-		clearView(0, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT, clearValues);
+		clearView(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, clearValues);
 		bgfx::submit(0);
 		s_viewMask |= 1;
 
@@ -1238,7 +1238,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Second pass - Draw reflected objects.
 
 				// Clear depth from previous pass.
-				clearView(RENDER_VIEWID_RANGE1_PASS_1, BGFX_CLEAR_DEPTH_BIT, clearValues);
+				clearView(RENDER_VIEWID_RANGE1_PASS_1, BGFX_CLEAR_DEPTH, clearValues);
 
 				// Compute reflected matrix.
 				float reflectMtx[16];
@@ -1352,7 +1352,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				for (uint8_t ii = 0, viewId = RENDER_VIEWID_RANGE5_PASS_6; ii < numLights; ++ii, ++viewId)
 				{
 					// Clear stencil for this light source.
-					clearView(viewId, BGFX_CLEAR_STENCIL_BIT, clearValues);
+					clearView(viewId, BGFX_CLEAR_STENCIL, clearValues);
 
 					// Draw shadow projection of scene objects.
 

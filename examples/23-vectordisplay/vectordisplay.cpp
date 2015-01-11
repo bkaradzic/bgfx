@@ -106,7 +106,7 @@ void VectorDisplay::setup(uint16_t _width, uint16_t _height, int _view)
 
 	genLinetex();
 
-	bgfx::setViewClear(_view, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT, 0x000000ff, 1.0f, 0);
+	bgfx::setViewClear(_view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
 
 	setupResDependent();
 }

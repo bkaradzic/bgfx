@@ -2867,8 +2867,8 @@ namespace bgfx
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
 			Clear& clear = m_clear[_id];
-			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR_BIT)
-				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_COLOR_USE_PALETTE_BIT : 0)
+			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR)
+				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE_BIT : 0)
 				;
 			clear.m_index[0] = _0;
 			clear.m_index[1] = _1;

@@ -238,7 +238,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set geometry pass view clear state.
 	bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 1.0f
 		, 0
 		, 1
@@ -246,7 +246,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set light pass view clear state.
 	bgfx::setViewClear(RENDER_PASS_LIGHT_ID
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 1.0f
 		, 0
 		, 0

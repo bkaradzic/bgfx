@@ -319,7 +319,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setClearColor(1, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		bgfx::setViewClear(0
-			, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 			, 1.0f // Depth
 			, 0    // Stencil
 			, 0    // FB texture 0, color palette 0
@@ -327,7 +327,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		bgfx::setViewClear(1
-			, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 			, 1.0f // Depth
 			, 0    // Stencil
 			, 0    // Color palette 0
