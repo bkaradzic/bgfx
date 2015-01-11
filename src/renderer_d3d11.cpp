@@ -762,9 +762,9 @@ namespace bgfx
 			return BGFX_RENDERER_DIRECT3D11_NAME;
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, BGFX_BUFFER_COMPUTE_NONE);
+			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) BX_OVERRIDE

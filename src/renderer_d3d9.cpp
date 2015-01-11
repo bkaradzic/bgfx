@@ -640,7 +640,7 @@ namespace bgfx
 			return BGFX_RENDERER_DIRECT3D9_NAME;
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
 		}

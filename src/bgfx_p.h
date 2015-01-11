@@ -1784,7 +1784,7 @@ namespace bgfx
 		virtual RendererType::Enum getRendererType() const = 0;
 		virtual const char* getRendererName() const = 0;
 		virtual void flip() = 0;
-		virtual void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem) = 0;
+		virtual void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) = 0;
 		virtual void destroyIndexBuffer(IndexBufferHandle _handle) = 0;
 		virtual void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) = 0;
 		virtual void destroyVertexDecl(VertexDeclHandle _handle) = 0;
@@ -1914,7 +1914,7 @@ namespace bgfx
 			return NULL;
 		}
 
-		BGFX_API_FUNC(IndexBufferHandle createIndexBuffer(const Memory* _mem) )
+		BGFX_API_FUNC(IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags) )
 		{
 			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
 
@@ -1924,6 +1924,7 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateIndexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
+				cmdbuf.write(_flags);
 			}
 
 			return handle;
@@ -2215,7 +2216,7 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_size);
-				cmdbuf.write(BGFX_BUFFER_COMPUTE_NONE);
+				cmdbuf.write(uint8_t(BGFX_BUFFER_COMPUTE_NONE) );
 
 				ib = (TransientIndexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientIndexBuffer)+_size);
 				ib->data = (uint8_t*)&ib[1];

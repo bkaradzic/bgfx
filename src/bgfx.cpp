@@ -1477,7 +1477,7 @@ again:
 					m_renderCtx = NULL;
 					m_exit = true;
 				}
-				// fallthrough
+				// fall through
 
 			case CommandBuffer::End:
 				end = true;
@@ -1491,7 +1491,10 @@ again:
 					Memory* mem;
 					_cmdbuf.read(mem);
 
-					m_renderCtx->createIndexBuffer(handle, mem);
+					uint8_t flags;
+					_cmdbuf.read(flags);
+
+					m_renderCtx->createIndexBuffer(handle, mem, flags);
 
 					release(mem);
 				}
@@ -2062,11 +2065,11 @@ again:
 		s_ctx->dbgTextImage(_x, _y, _width, _height, _data, _pitch);
 	}
 
-	IndexBufferHandle createIndexBuffer(const Memory* _mem)
+	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createIndexBuffer(_mem);
+		return s_ctx->createIndexBuffer(_mem, _flags);
 	}
 
 	void destroyIndexBuffer(IndexBufferHandle _handle)

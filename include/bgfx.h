@@ -615,7 +615,7 @@ namespace bgfx
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
 	///
-	IndexBufferHandle createIndexBuffer(const Memory* _mem);
+	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
 
 	/// Destroy static index buffer.
 	void destroyIndexBuffer(IndexBufferHandle _handle);
