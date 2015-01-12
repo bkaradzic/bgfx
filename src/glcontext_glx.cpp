@@ -15,9 +15,9 @@ namespace bgfx
 	typedef int (*PFNGLXSWAPINTERVALMESAPROC)(uint32_t _interval);
 
 	PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB;
-	PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT;
-	PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA;
-	PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
+	PFNGLXSWAPINTERVALEXTPROC         glXSwapIntervalEXT;
+	PFNGLXSWAPINTERVALMESAPROC        glXSwapIntervalMESA;
+	PFNGLXSWAPINTERVALSGIPROC         glXSwapIntervalSGI;
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"

@@ -8,12 +8,7 @@
 #include "imgui/imgui.h"
 
 static float s_texelHalf = 0.0f;
-static bool s_originBottomLeft = false;
-
-inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
-{
-	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_originBottomLeft);
-}
+static bool  s_originBottomLeft = false;
 
 struct PosColorTexCoord0Vertex
 {
@@ -232,7 +227,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	uint32_t oldWidth  = 0;
 	uint32_t oldHeight = 0;
 	uint32_t oldReset  = reset;
- 
+
 	float speed      = 0.37f;
 	float middleGray = 0.18f;
 	float white      = 1.1f;
@@ -318,6 +313,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 		bgfx::setViewFrameBuffer(0, fbh);
 		bgfx::setViewFrameBuffer(1, fbh);
+		bgfx::setViewClear(1, BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL);
 
 		bgfx::setViewRect(2, 0, 0, 128, 128);
 		bgfx::setViewFrameBuffer(2, lum[0]);
@@ -361,7 +357,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bx::mtxRotateXY(mtx
 			, 0.0f
 			, time
-			); 
+			);
 
 		float temp[4];
 		bx::vec3MulMtx(temp, eye, mtx);
@@ -453,7 +449,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		screenSpaceQuad( (float)width, (float)height, s_originBottomLeft);
 		bgfx::submit(9);
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

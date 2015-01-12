@@ -94,7 +94,13 @@ namespace bgfx
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x3)
 
-#define BGFX_CLEAR_COLOR_USE_PALETTE_BIT UINT8_C(0x80)
+#define BGFX_CLEAR_COLOR_USE_PALETTE UINT16_C(0x8000)
+#define BGFX_CLEAR_MASK (0 \
+			| BGFX_CLEAR_COLOR \
+			| BGFX_CLEAR_DEPTH \
+			| BGFX_CLEAR_STENCIL \
+			| BGFX_CLEAR_COLOR_USE_PALETTE \
+			)
 
 #include <list> // mingw wants it to be before tr1/unordered_*...
 
@@ -204,10 +210,10 @@ namespace bgfx
 
 	struct Clear
 	{
-		uint8_t m_index[8];
-		float   m_depth;
-		uint8_t m_stencil;
-		uint8_t m_flags;
+		uint8_t  m_index[8];
+		float    m_depth;
+		uint8_t  m_stencil;
+		uint16_t m_flags;
 	};
 
 	struct Rect
@@ -2852,7 +2858,7 @@ namespace bgfx
 			scissor.m_height = _height;
 		}
 
-		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
+		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
 		{
 			Clear& clear = m_clear[_id];
 			clear.m_flags = _flags;
@@ -2864,11 +2870,11 @@ namespace bgfx
 			clear.m_stencil  = _stencil;
 		}
 
-		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint8_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
+		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
 			Clear& clear = m_clear[_id];
 			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR)
-				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE_BIT : 0)
+				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE : 0)
 				;
 			clear.m_index[0] = _0;
 			clear.m_index[1] = _1;

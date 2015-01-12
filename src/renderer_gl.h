@@ -519,8 +519,8 @@ typedef uint64_t GLuint64;
 #	define glClearDepth glClearDepthf
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
-namespace bgfx 
-{ 
+namespace bgfx
+{
 	class ConstantBuffer;
 	void dumpExtensions(const char* _extensions);
 
@@ -835,6 +835,7 @@ namespace bgfx
 		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
 		uint16_t destroy();
 		void resolve();
+		void discard(uint8_t _flags);
 
 		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];
