@@ -1377,7 +1377,7 @@ namespace bgfx
 				if (NULL != m_currentColor
 				&&  BGFX_CLEAR_COLOR & _clear.m_flags)
 				{
-					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
+					if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 					{
 						uint8_t index = _clear.m_index[0];
 						if (UINT8_MAX != index)
@@ -2066,7 +2066,7 @@ namespace bgfx
 					deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 					deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
 
-					if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
+					if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 					{
 						float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 						for (uint32_t ii = 0; ii < numMrt; ++ii)
@@ -2901,7 +2901,7 @@ namespace bgfx
 
 		if (BGFX_CLEAR_COLOR & _clear.m_flags)
 		{
-			if (BGFX_CLEAR_COLOR_USE_PALETTE_BIT & _clear.m_flags)
+			if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 			{
 				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 				{
@@ -3097,7 +3097,7 @@ namespace bgfx
 					deviceCtx->RSSetViewports(1, &vp);
 					Clear& clear = _render->m_clear[view];
 
-					if (BGFX_CLEAR_NONE != clear.m_flags)
+					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
 					{
 						clearQuad(_clearQuad, viewState.m_rect, clear, _render->m_clearColor);
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
