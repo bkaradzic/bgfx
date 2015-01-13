@@ -338,10 +338,21 @@ namespace bgfx
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
 
 	static const GUID WKPDID_D3DDebugObjectName = { 0x429b8c22, 0x9188, 0x4b0c, { 0x87, 0x42, 0xac, 0xb0, 0xbf, 0x85, 0xc2, 0x00 } };
-	static const GUID IID_ID3D11Texture2D = { 0x6f15aaf2, 0xd208, 0x4e89, { 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c } };
-	static const GUID IID_IDXGIFactory = { 0x7b7166ec, 0x21c7, 0x44ae, { 0xb2, 0x1a, 0xc9, 0xae, 0x32, 0x1a, 0xe3, 0x69 } };
-	static const GUID IID_IDXGIDevice = { 0x54ec77fa, 0x1377, 0x44e6, { 0x8c, 0x32, 0x88, 0xfd, 0x5f, 0x44, 0xc8, 0x4c } };
-	static const GUID IID_IDXGIAdapter = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
+	static const GUID IID_ID3D11Texture2D       = { 0x6f15aaf2, 0xd208, 0x4e89, { 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c } };
+	static const GUID IID_IDXGIFactory          = { 0x7b7166ec, 0x21c7, 0x44ae, { 0xb2, 0x1a, 0xc9, 0xae, 0x32, 0x1a, 0xe3, 0x69 } };
+	static const GUID IID_IDXGIDevice0          = { 0x54ec77fa, 0x1377, 0x44e6, { 0x8c, 0x32, 0x88, 0xfd, 0x5f, 0x44, 0xc8, 0x4c } };
+	static const GUID IID_IDXGIDevice1          = { 0x77db970f, 0x6276, 0x48ba, { 0xba, 0x28, 0x07, 0x01, 0x43, 0xb4, 0x39, 0x2c } };
+	static const GUID IID_IDXGIDevice2          = { 0x05008617, 0xfbfd, 0x4051, { 0xa7, 0x90, 0x14, 0x48, 0x84, 0xb4, 0xf6, 0xa9 } };
+	static const GUID IID_IDXGIDevice3          = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
+	static const GUID IID_IDXGIAdapter          = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
+
+	static const GUID s_deviceIIDs[] =
+	{
+		IID_IDXGIDevice3,
+		IID_IDXGIDevice2,
+		IID_IDXGIDevice1,
+		IID_IDXGIDevice0,
+	};
 
 	template <typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(Ty* _interface, const char* _format, ...)
@@ -548,13 +559,13 @@ namespace bgfx
 			uint32_t flags = 0
 				| D3D11_CREATE_DEVICE_SINGLETHREADED
 				| D3D11_CREATE_DEVICE_BGRA_SUPPORT
-//				| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
+				| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
 				;
 
 			D3D_FEATURE_LEVEL featureLevel;
 
-			hr = -1;
-			for (uint32_t ii = 0; ii < 3 && FAILED(hr); ++ii)
+			hr = E_FAIL;
+			for (uint32_t ii = 0; ii < 3 && FAILED(hr);)
 			{
 				hr = D3D11CreateDevice(m_adapter
 					, m_driverType
@@ -567,11 +578,26 @@ namespace bgfx
 					, &featureLevel
 					, &m_deviceCtx
 					);
+				if (FAILED(hr)
+				&&  0 != (flags & D3D11_CREATE_DEVICE_DEBUG) )
+				{
+					// Try without debug in case D3D11 SDK Layers
+					// is not present?
+					flags &= ~D3D11_CREATE_DEVICE_DEBUG;
+					continue;
+				}
+
+				++ii;
 			}
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
-			IDXGIDevice* device;
-			hr = m_device->QueryInterface(IID_IDXGIDevice, (void**)&device);
+			IDXGIDevice* device = NULL;
+			hr = E_FAIL;
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
+			{
+				hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
+				BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
+			}
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 			hr = device->GetParent(IID_IDXGIAdapter, (void**)&adapter);
