@@ -34,10 +34,6 @@ project ("example-common")
 			"$(DXSDK_DIR)/include",
 		}
 
-	configuration { "xcode4" }
-		includedirs {
-			BX_DIR .. "include/compat/osx",
-		}
 
 	configuration { "winphone8*"}
 		linkoptions {
