@@ -29,12 +29,18 @@ solution "bgfx"
 		"Release",
 	}
 
-	platforms {
-		"x32",
-		"x64",
---		"Xbox360",
-		"Native", -- for targets where bitness is not specified
+	if _ACTION == "xcode4" then
+		platforms {
+			"Universal",
 	}
+	else
+		platforms {
+			"x32",
+			"x64",
+--			"Xbox360",
+			"Native", -- for targets where bitness is not specified
+	}
+	end
 
 	language "C++"
 	startproject "example-00-helloworld"
@@ -237,19 +243,6 @@ function exampleProject(_name)
 			"OpenGL.framework",
 		}
 
-	configuration { "xcode4" }
-		platforms {
-			"Universal"
-		}
-		files {
-			BGFX_DIR .. "examples/common/**.mm",
-		}
-		links {
-			"Cocoa.framework",
-			"Foundation.framework",
-			"OpenGL.framework",
-		}
-
 	configuration { "ios*" }
 		kind "ConsoleApp"
 		files {
@@ -261,6 +254,12 @@ function exampleProject(_name)
 			"-framework OpenGLES",
 			"-framework UIKit",
 			"-framework QuartzCore",
+		}
+
+	configuration { "xcode4", "ios" }
+		kind "WindowedApp"
+		files {
+			BGFX_DIR .. "examples/runtime/iOS-Info.plist"
 		}
 
 	configuration { "qnx*" }

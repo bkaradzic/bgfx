@@ -24,7 +24,8 @@ all:
 	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=linux-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=osx gmake
-	$(GENIE) --with-tools --with-shared-lib xcode4
+	$(GENIE) --with-tools --with-shared-lib --xcode=osx xcode4
+	$(GENIE) --with-tools --with-shared-lib --xcode=ios xcode4
 	
 	$(GENIE) --gcc=android-arm gmake
 	$(GENIE) --gcc=android-mips gmake
