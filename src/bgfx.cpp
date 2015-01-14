@@ -1351,6 +1351,28 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS
 	}
 
+	bool windowsVersionIsOrBellow(uint32_t _version)
+	{
+#if BX_PLATFORM_WINDOWS
+		OSVERSIONINFOEXA ovi;
+		memset(&ovi, 0, sizeof(ovi));
+		ovi.dwOSVersionInfoSize = sizeof(ovi);
+		// _WIN32_WINNT_WINBLUE 0x0603
+		// _WIN32_WINNT_WIN8    0x0602
+		// _WIN32_WINNT_WIN7    0x0601
+		// _WIN32_WINNT_VISTA   0x0600
+		ovi.dwMajorVersion = HIBYTE(_version);
+		ovi.dwMinorVersion = LOBYTE(_version);
+		DWORDLONG cond = 0;
+		VER_SET_CONDITION(cond, VER_MAJORVERSION, VER_LESS_EQUAL);
+		VER_SET_CONDITION(cond, VER_MINORVERSION, VER_LESS_EQUAL);
+		return !!VerifyVersionInfoA(&ovi, VER_MAJORVERSION | VER_MINORVERSION, cond);
+#else
+		BX_UNUSED(_version);
+		return false;
+#endif // BX_PLATFORM_WINDOWS
+	}
+
 	RendererContextI* rendererCreate(RendererType::Enum _type)
 	{
 		if (RendererType::Count == _type)
@@ -1891,6 +1913,7 @@ again:
 		uint8_t num = 0;
 		for (uint8_t ii = 0; ii < uint8_t(RendererType::Count); ++ii)
 		{
+			if ((ii == RendererType::Direct3D11) && windowsVersionIsOrBellow(0x0502)) continue;
 			if (s_rendererCreator[ii].supported)
 			{
 				_enum[num++] = RendererType::Enum(ii);
