@@ -3168,15 +3168,15 @@ namespace bgfx
 				{
 					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
-						const Sampler& sampler = draw.m_sampler[stage];
-						Sampler& current = currentState.m_sampler[stage];
-						if (current.m_idx != sampler.m_idx
-						||  current.m_flags != sampler.m_flags
+						const Binding& sampler = draw.m_bind[stage];
+						Binding& current = currentState.m_bind[stage];
+						if (current.m_idx        != sampler.m_idx
+						||  current.m_un.m_flags != sampler.m_un.m_flags
 						||  programChanged)
 						{
 							if (invalidHandle != sampler.m_idx)
 							{
-								m_textures[sampler.m_idx].commit(stage, sampler.m_flags);
+								m_textures[sampler.m_idx].commit(stage, sampler.m_un.m_flags);
 							}
 							else
 							{

@@ -4373,20 +4373,27 @@ namespace bgfx
 						GLbitfield barrier = 0;
 						for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 						{
-							const ComputeBinding& bind = compute.m_bind[ii];
+							const Binding& bind = compute.m_bind[ii];
 							if (invalidHandle != bind.m_idx)
 							{
 								switch (bind.m_type)
 								{
-								case ComputeBinding::Image:
+								case Binding::Image:
 									{
 										const TextureGL& texture = m_textures[bind.m_idx];
-										GL_CHECK(glBindImageTexture(ii, texture.m_id, bind.m_mip, GL_FALSE, 0, s_access[bind.m_access], s_imageFormat[bind.m_format]) );
+										GL_CHECK(glBindImageTexture(ii
+											, texture.m_id
+											, bind.m_un.m_compute.m_mip
+											, GL_FALSE
+											, 0
+											, s_access[bind.m_un.m_compute.m_access]
+											, s_imageFormat[bind.m_un.m_compute.m_format])
+											);
 										barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
 									}
 									break;
 
-								case ComputeBinding::IndexBuffer:
+								case Binding::IndexBuffer:
 									{
 										const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
 										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id));
@@ -4394,7 +4401,7 @@ namespace bgfx
 									}
 									break;
 
-								case ComputeBinding::VertexBuffer:
+								case Binding::VertexBuffer:
 									{
 										const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
 										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id));
@@ -4747,16 +4754,16 @@ namespace bgfx
 					{
 						for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 						{
-							const Sampler& sampler = draw.m_sampler[stage];
-							Sampler& current = currentState.m_sampler[stage];
-							if (current.m_idx != sampler.m_idx
-							||  current.m_flags != sampler.m_flags
+							const Binding& sampler = draw.m_bind[stage];
+							Binding& current = currentState.m_bind[stage];
+							if (current.m_idx        != sampler.m_idx
+							||  current.m_un.m_flags != sampler.m_un.m_flags
 							||  programChanged)
 							{
 								if (invalidHandle != sampler.m_idx)
 								{
 									TextureGL& texture = m_textures[sampler.m_idx];
-									texture.commit(stage, sampler.m_flags);
+									texture.commit(stage, sampler.m_un.m_flags);
 								}
 							}
 

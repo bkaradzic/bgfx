@@ -1026,15 +1026,36 @@ namespace bgfx
 			return info;
 		}
 
- 	private:
- 		typedef stl::unordered_map<stl::string, UniformInfo> UniformHashMap;
- 		UniformHashMap m_uniforms;
- 	};
+	private:
+		typedef stl::unordered_map<stl::string, UniformInfo> UniformHashMap;
+		UniformHashMap m_uniforms;
+	};
 
-	struct Sampler
+	struct Binding
 	{
-		uint32_t m_flags;
+		enum Enum
+		{
+			Image,
+			IndexBuffer,
+			VertexBuffer,
+			Texture,
+
+			Count
+		};
+
 		uint16_t m_idx;
+		uint8_t  m_type;
+
+		union
+		{
+			uint32_t m_flags;
+			struct
+			{
+				uint8_t  m_format;
+				uint8_t  m_access;
+				uint8_t  m_mip;
+			} m_compute;
+		} m_un;
 	};
 
 	struct RenderDraw
@@ -1064,8 +1085,9 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
-				m_sampler[ii].m_idx = invalidHandle;
-				m_sampler[ii].m_flags = 0;
+				m_bind[ii].m_idx  = invalidHandle;
+				m_bind[ii].m_type = uint8_t(Binding::Texture);
+				m_bind[ii].m_un.m_flags = 0;
 			}
 		}
 
@@ -1090,25 +1112,7 @@ namespace bgfx
 		VertexDeclHandle   m_vertexDecl;
 		IndexBufferHandle  m_indexBuffer;
 		VertexBufferHandle m_instanceDataBuffer;
-		Sampler m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-	};
-
-	struct ComputeBinding
-	{
-		enum Enum
-		{
-			Image,
-			VertexBuffer,
-			IndexBuffer,
-
-			Count
-		};
-
-		uint16_t m_idx;
-		uint8_t  m_format;
-		uint8_t  m_access;
-		uint8_t  m_mip;
-		uint8_t  m_type;
+		Binding m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
 	struct RenderCompute
@@ -1140,7 +1144,7 @@ namespace bgfx
 		uint16_t m_num;
 		uint8_t  m_submitFlags;
 
-		ComputeBinding m_bind[BGFX_MAX_COMPUTE_BINDINGS];
+		Binding m_bind[BGFX_MAX_COMPUTE_BINDINGS];
 	};
 
 	union RenderItem
@@ -1382,9 +1386,9 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
-			Sampler& sampler = m_draw.m_sampler[_stage];
-			sampler.m_idx    = _handle.idx;
-			sampler.m_flags  = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
+			Binding& sampler     = m_draw.m_bind[_stage];
+			sampler.m_idx        = _handle.idx;
+			sampler.m_un.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
 
 			if (isValid(_sampler)
 			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )
@@ -1396,32 +1400,32 @@ namespace bgfx
 
 		void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 		{
-			ComputeBinding& bind = m_compute.m_bind[_stage];
+			Binding& bind = m_compute.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
-			bind.m_format = 0;
-			bind.m_access = uint8_t(_access);
-			bind.m_mip    = 0;
-			bind.m_type   = uint8_t(ComputeBinding::IndexBuffer);
+			bind.m_type   = uint8_t(Binding::IndexBuffer);
+			bind.m_un.m_compute.m_format = 0;
+			bind.m_un.m_compute.m_access = uint8_t(_access);
+			bind.m_un.m_compute.m_mip    = 0;
 		}
 
 		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 		{
-			ComputeBinding& bind = m_compute.m_bind[_stage];
-			bind.m_idx = _handle.idx;
-			bind.m_format = 0;
-			bind.m_access = uint8_t(_access);
-			bind.m_mip = 0;
-			bind.m_type = uint8_t(ComputeBinding::VertexBuffer);
+			Binding& bind = m_compute.m_bind[_stage];
+			bind.m_idx    = _handle.idx;
+			bind.m_type   = uint8_t(Binding::VertexBuffer);
+			bind.m_un.m_compute.m_format = 0;
+			bind.m_un.m_compute.m_access = uint8_t(_access);
+			bind.m_un.m_compute.m_mip    = 0;
 		}
 
 		void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access)
 		{
-			ComputeBinding& bind = m_compute.m_bind[_stage];
-			bind.m_idx     = _handle.idx;
-			bind.m_format  = uint8_t(_format);
-			bind.m_access  = uint8_t(_access);
-			bind.m_mip     = _mip;
-			bind.m_type    = uint8_t(ComputeBinding::Image);
+			Binding& bind = m_compute.m_bind[_stage];
+			bind.m_idx    = _handle.idx;
+			bind.m_type   = uint8_t(Binding::Image);
+			bind.m_un.m_compute.m_format = uint8_t(_format);
+			bind.m_un.m_compute.m_access = uint8_t(_access);
+			bind.m_un.m_compute.m_mip    = _mip;
 
 			if (isValid(_sampler)
 			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )

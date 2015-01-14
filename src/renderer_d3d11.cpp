@@ -3200,15 +3200,15 @@ namespace bgfx
 
 					for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 					{
-						const ComputeBinding& bind = compute.m_bind[ii];
+						const Binding& bind = compute.m_bind[ii];
 						if (invalidHandle != bind.m_idx)
 						{
 							switch (bind.m_type)
 							{
-							case ComputeBinding::Image:
+							case Binding::Image:
 								{
 									const TextureD3D11& texture = m_textures[bind.m_idx];
-									if (Access::Read != bind.m_access)
+									if (Access::Read != bind.m_un.m_compute.m_access)
 									{
 										uav[ii] = texture.m_uav;
 									}
@@ -3220,14 +3220,14 @@ namespace bgfx
 								}
 								break;
 
-							case ComputeBinding::IndexBuffer:
-							case ComputeBinding::VertexBuffer:
+							case Binding::IndexBuffer:
+							case Binding::VertexBuffer:
 								{
-									const BufferD3D11& buffer = ComputeBinding::IndexBuffer == bind.m_type
+									const BufferD3D11& buffer = Binding::IndexBuffer == bind.m_type
 										? m_indexBuffers[bind.m_idx]
 										: m_vertexBuffers[bind.m_idx]
 										;
-									if (Access::Read != bind.m_access)
+									if (Access::Read != bind.m_un.m_compute.m_access)
 									{
 										uav[ii] = buffer.m_uav;
 									}
@@ -3443,16 +3443,16 @@ namespace bgfx
 					uint32_t changes = 0;
 					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
-						const Sampler& sampler = draw.m_sampler[stage];
-						Sampler& current = currentState.m_sampler[stage];
-						if (current.m_idx != sampler.m_idx
-						||  current.m_flags != sampler.m_flags
+						const Binding& sampler = draw.m_bind[stage];
+						Binding& current = currentState.m_bind[stage];
+						if (current.m_idx        != sampler.m_idx
+						||  current.m_un.m_flags != sampler.m_un.m_flags
 						||  programChanged)
 						{
 							if (invalidHandle != sampler.m_idx)
 							{
 								TextureD3D11& texture = m_textures[sampler.m_idx];
-								texture.commit(stage, sampler.m_flags);
+								texture.commit(stage, sampler.m_un.m_flags);
 							}
 							else
 							{
