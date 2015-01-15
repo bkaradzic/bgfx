@@ -19,6 +19,12 @@
 #include <windowsx.h>
 #include <xinput.h>
 
+#ifdef UNICODE
+#define UNICODE_POSTFIX(call)  call##W
+#else
+#define UNICODE_POSTFIX(call)  call##A
+#endif
+
 #ifndef XINPUT_GAMEPAD_GUIDE
 #	define XINPUT_GAMEPAD_GUIDE 0x400
 #endif // XINPUT_GAMEPAD_GUIDE
@@ -410,7 +416,7 @@ namespace entry
 
 		int32_t run(int _argc, char** _argv)
 		{
-			SetDllDirectory(".");
+			SetDllDirectory(TEXT("."));
 
 			s_xinput.init();
 
@@ -424,13 +430,13 @@ namespace entry
 			wnd.hInstance = instance;
 			wnd.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 			wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wnd.lpszClassName = "bgfx";
+			wnd.lpszClassName = TEXT("bgfx");
 			wnd.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-			RegisterClassExA(&wnd);
+			UNICODE_POSTFIX(RegisterClassEx)(&wnd);
 
 			m_windowAlloc.alloc();
-			m_hwnd[0] = CreateWindowA("bgfx"
-				, "BGFX"
+			m_hwnd[0] = UNICODE_POSTFIX(CreateWindow)(TEXT("bgfx")
+				, TEXT("BGFX")
 				, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 				, 0
 				, 0
@@ -1082,10 +1088,53 @@ namespace entry
 
 } // namespace entry
 
+#ifndef UNICODE
 int main(int _argc, char** _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);
 }
+#else
+char *utf8_from_wstring(const WCHAR *wstring)
+{
+	int char_count;
+	char *result;
 
+	// convert UTF-16 to UTF-8 string
+	char_count = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, NULL, 0, NULL, NULL);
+	result = (char *)malloc(char_count * sizeof(*result));
+	if (result != NULL)
+		WideCharToMultiByte(CP_UTF8, 0, wstring, -1, result, char_count, NULL, NULL);
+
+	return result;
+}
+
+int wmain(int _argc, TCHAR **_argv)
+{
+	int i, rc;
+	char **utf8_argv;
+
+	/* convert arguments to UTF-8 */
+	utf8_argv = (char **)malloc(_argc * sizeof(*_argv));
+	if (utf8_argv == NULL)
+		return -1;
+	for (i = 0; i < _argc; i++)
+	{
+		utf8_argv[i] = utf8_from_wstring(_argv[i]);
+		if (utf8_argv[i] == NULL)
+			return -1;
+	}
+
+	/* run utf8_main */
+	using namespace entry;
+	rc = s_ctx.run(_argc, utf8_argv);
+
+	/* free arguments */
+	for (i = 0; i < _argc; i++)
+		free(utf8_argv[i]);
+	free(utf8_argv);
+
+	return rc;
+}
+#endif // UNICODE
 #endif // BX_PLATFORM_WINDOWS
