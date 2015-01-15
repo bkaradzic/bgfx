@@ -234,6 +234,8 @@ namespace entry
 				switch (eventType)
 				{
 					case NSMouseMoved:
+					case NSLeftMouseDragged:
+					case NSRightMouseDragged:
 					{
 						int x, y;
 						getMousePos(&x, &y);
