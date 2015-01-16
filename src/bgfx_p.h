@@ -1048,13 +1048,18 @@ namespace bgfx
 
 		union
 		{
-			uint32_t m_flags;
+			struct
+			{
+				uint32_t m_flags;
+			} m_draw;
+
 			struct
 			{
 				uint8_t  m_format;
 				uint8_t  m_access;
 				uint8_t  m_mip;
 			} m_compute;
+
 		} m_un;
 	};
 
@@ -1086,11 +1091,10 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
 				m_bind[ii].m_idx  = invalidHandle;
-				m_bind[ii].m_type = uint8_t(Binding::Texture);
-				m_bind[ii].m_un.m_flags = 0;
 			}
 		}
 
+		Binding  m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint64_t m_flags;
 		uint64_t m_stencil;
 		uint32_t m_rgba;
@@ -1112,7 +1116,6 @@ namespace bgfx
 		VertexDeclHandle   m_vertexDecl;
 		IndexBufferHandle  m_indexBuffer;
 		VertexBufferHandle m_instanceDataBuffer;
-		Binding m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
 	struct RenderCompute
@@ -1134,6 +1137,7 @@ namespace bgfx
 			}
 		}
 
+		Binding  m_bind[BGFX_MAX_COMPUTE_BINDINGS];
 		uint32_t m_constBegin;
 		uint32_t m_constEnd;
 		uint32_t m_matrix;
@@ -1143,8 +1147,6 @@ namespace bgfx
 		uint16_t m_numZ;
 		uint16_t m_num;
 		uint8_t  m_submitFlags;
-
-		Binding m_bind[BGFX_MAX_COMPUTE_BINDINGS];
 	};
 
 	union RenderItem
@@ -1386,9 +1388,9 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
-			Binding& sampler     = m_draw.m_bind[_stage];
-			sampler.m_idx        = _handle.idx;
-			sampler.m_un.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
+			Binding& sampler = m_draw.m_bind[_stage];
+			sampler.m_idx    = _handle.idx;
+			sampler.m_un.m_draw.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS) ? BGFX_SAMPLER_DEFAULT_FLAGS : _flags;
 
 			if (isValid(_sampler)
 			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )

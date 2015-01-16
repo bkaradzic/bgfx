@@ -4756,14 +4756,14 @@ namespace bgfx
 						{
 							const Binding& sampler = draw.m_bind[stage];
 							Binding& current = currentState.m_bind[stage];
-							if (current.m_idx        != sampler.m_idx
-							||  current.m_un.m_flags != sampler.m_un.m_flags
+							if (current.m_idx != sampler.m_idx
+							||  current.m_un.m_draw.m_flags != sampler.m_un.m_draw.m_flags
 							||  programChanged)
 							{
 								if (invalidHandle != sampler.m_idx)
 								{
 									TextureGL& texture = m_textures[sampler.m_idx];
-									texture.commit(stage, sampler.m_un.m_flags);
+									texture.commit(stage, sampler.m_un.m_draw.m_flags);
 								}
 							}
 
