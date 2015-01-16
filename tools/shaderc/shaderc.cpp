@@ -997,6 +997,12 @@ int main(int _argc, const char* _argv[])
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
 
+					if (d3d == 9
+					&&  var.m_semantics == "BITANGENT")
+					{
+						var.m_semantics = "BINORMAL";
+					}
+
 					if (assign < eol
 					&&  '=' == *assign
 					&&  init < eol)
