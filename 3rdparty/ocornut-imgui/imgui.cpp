@@ -658,7 +658,7 @@ static void ImConvertColorHSVtoRGB(float h, float s, float v, float& out_r, floa
 static bool ImLoadFileToMemory(const char* filename, const char* file_open_mode, void** out_file_data, size_t* out_file_size, size_t padding_bytes)
 {
     IM_ASSERT(filename && file_open_mode && out_file_data && out_file_size);
-    IM_ASSERT(padding_bytes >= 0);
+// BK - warning: comparison of unsigned expression >= 0 is always true    IM_ASSERT(padding_bytes >= 0);
     *out_file_data = NULL;
     *out_file_size = 0;
 
@@ -6312,7 +6312,7 @@ static ptrdiff_t ImTextStrFromUtf8(ImWchar* buf, size_t buf_size, const char* in
     ImWchar* buf_end = buf + buf_size;
     while (buf_out < buf_end-1 && (!in_text_end || in_text < in_text_end) && *in_text)
     {
-        unsigned int c;
+        unsigned int c = 0;
         in_text += ImTextCharFromUtf8(&c, in_text, in_text_end);
         if (c < 0x10000)    // FIXME: Losing characters that don't fit in 2 bytes
             *buf_out++ = (ImWchar)c;
