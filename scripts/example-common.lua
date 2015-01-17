@@ -16,6 +16,8 @@ project ("example-common")
 	files {
 		BGFX_DIR .. "3rdparty/ib-compress/**.cpp",
 		BGFX_DIR .. "3rdparty/ib-compress/**.h",
+		BGFX_DIR .. "3rdparty/ocornut-imgui/**.cpp",
+		BGFX_DIR .. "3rdparty/ocornut-imgui/**.h",
 		BGFX_DIR .. "examples/common/**.cpp",
 		BGFX_DIR .. "examples/common/**.h",
 	}
