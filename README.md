@@ -640,6 +640,13 @@ NanoVG is small antialiased vector graphics rendering library.
 
 https://github.com/memononen/nanovg
 
+### ImGui (MIT)
+
+Bloat-free Immediate Mode Graphical User interface for C++ with minimal
+dependencies.
+
+https://github.com/ocornut/imgui
+
 ### SDF (MIT)
 
 Sweep-and-update Euclidean distance transform of an antialised image for contour
@@ -647,7 +654,7 @@ texturing.
 
 https://github.com/memononen/SDF
 
-### stb_image, stb_truetype (Public Domain)
+### stb (Public Domain)
 
 http://nothings.org
 
@@ -723,7 +730,7 @@ Garett Bass ([@gtbass](https://github.com/gtbass)) - OSX port.
 Jeremie Roy ([@jeremieroy](https://github.com/jeremieroy)) - Font system and
   examples.  
 Miloš Tošić ([@milostosic](https://github.com/milostosic)) - 12-lod example.  
-Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil, 
+Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil,
   14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
 James Gray ([@james4k](https://github.com/james4k)) - Go language API bindings.  
 p0nce ([@p0nce](https://github.com/p0nce)) - D language API bindings.  
@@ -731,6 +738,8 @@ Mike Popoloski ([@MikePopoloski](https://github.com/MikePopoloski)) - C#/VB/F#
 language API bindings, WinRT/WinPhone support.  
 Kai Jourdan ([@questor](https://github.com/questor)) - 23-vectordisplay example  
 Stanlo Slasinski ([@stanlo](https://github.com/stanlo)) - 24-nbody example  
+Daniel Collin ([[@emoon](https://github.com/emoon)) - Port of Ocornut's ImGui
+  to bgfx.
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------
