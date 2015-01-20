@@ -28,21 +28,24 @@ struct OcornutImguiContext
 		bgfx::setViewTransform(m_viewId, NULL, ortho);
 
 		// Render command lists
-		for (int n = 0; n < _count; n++) {
+		for (int32_t ii = 0; ii < _count; ++ii)
+		{
 			bgfx::TransientVertexBuffer tvb;
 
 			uint32_t vtx_size = 0;
 
-			const ImDrawList* cmd_list = _lists[n];
+			const ImDrawList* cmd_list   = _lists[ii];
 			const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
 
 			const ImDrawCmd* pcmd_begin = cmd_list->commands.begin();
-			const ImDrawCmd* pcmd_end = cmd_list->commands.end();
-			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++) {
+			const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
+			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
+			{
 				vtx_size += (uint32_t)pcmd->vtx_count;
 			}
 
-			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl)) {
+			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl))
+			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
 			}
@@ -50,16 +53,22 @@ struct OcornutImguiContext
 			bgfx::allocTransientVertexBuffer(&tvb, vtx_size, m_decl);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
-
 			memcpy(verts, vtx_buffer, vtx_size * sizeof(ImDrawVert));
 
 			uint32_t vtx_offset = 0;
-			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++) {
+			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
+			{
 				bgfx::setState(0
 					| BGFX_STATE_RGB_WRITE
 					| BGFX_STATE_ALPHA_WRITE
 					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-					| BGFX_STATE_MSAA);
+					| BGFX_STATE_MSAA
+					);
+				bgfx::setScissor(pcmd->clip_rect.x
+						, pcmd->clip_rect.y
+						, pcmd->clip_rect.z-pcmd->clip_rect.x
+						, pcmd->clip_rect.w-pcmd->clip_rect.y
+						);
 				bgfx::setTexture(0, s_tex, m_texture);
 				bgfx::setVertexBuffer(&tvb, vtx_offset, pcmd->vtx_count);
 				bgfx::setProgram(m_program);
@@ -82,7 +91,8 @@ struct OcornutImguiContext
 		const bgfx::Memory* vsmem;
 		const bgfx::Memory* fsmem;
 
-		switch (bgfx::getRendererType()) {
+		switch (bgfx::getRendererType())
+		{
 		case bgfx::RendererType::Direct3D9:
 			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx9, sizeof(vs_ocornut_imgui_dx9));
 			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx9, sizeof(fs_ocornut_imgui_dx9));
@@ -117,7 +127,13 @@ struct OcornutImguiContext
 		ImGui::GetDefaultFontData(NULL, NULL, &png_data, &png_size);
 
 		int tex_x, tex_y, pitch, tex_comp;
-		void* tex_data = stbi_load_from_memory((const unsigned char*)png_data, (int)png_size, &tex_x, &tex_y, &tex_comp, 0);
+		void* tex_data = stbi_load_from_memory( (const unsigned char*)png_data
+				, (int)png_size
+				, &tex_x
+				, &tex_y
+				, &tex_comp
+				, 0
+				);
 
 		pitch = tex_x * 4;
 
