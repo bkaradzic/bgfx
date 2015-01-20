@@ -246,8 +246,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setUniform(u_params, &u_paramsData, 3);
 		bgfx::dispatch(0, updateInstancesProgram, u_paramsData.dispatchSize, 1, 1);
 
-		bx::swap(currPositionBuffer0, currPositionBuffer1);
-		bx::swap(prevPositionBuffer0, prevPositionBuffer1);
+		bx::xchg(currPositionBuffer0, currPositionBuffer1);
+		bx::xchg(prevPositionBuffer0, prevPositionBuffer1);
 
 		float view[16];
 
