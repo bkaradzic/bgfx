@@ -8,13 +8,9 @@
 
 #include <ocornut-imgui/imgui.h>
 
-void IMGUI_setup(int _width, int _height, uint8_t _viewId = 31);
-void IMGUI_updateSize(int width, int height);
-void IMGUI_preUpdate(float x, float y, int mouseLmb, int keyDown, int keyMod);
-void IMGUI_postUpdate();
-
-void IMGUI_setMouse(float x, float y, int mouseLmb);
-void IMGUI_setKeyDown(int key, int modifier);
-void IMGUI_setKeyUp(int key, int modifier);
+void IMGUI_create();
+void IMGUI_destroy();
+void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, uint8_t _viewId = 31);
+void IMGUI_endFrame();
 
 #endif // OCORNUT_IMGUI_H_HEADER_GUARD

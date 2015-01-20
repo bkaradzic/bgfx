@@ -6,197 +6,191 @@
 #include <bgfx.h>
 #include <bx/fpumath.h>
 #include <ocornut-imgui/imgui.h>
+#include "imgui.h"
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
 
-static bgfx::VertexDecl s_vertexDecl;
-static bgfx::ProgramHandle s_imguiProgram;
-static bgfx::TextureHandle s_textureId;
-static bgfx::UniformHandle s_tex;
-static bgfx::UniformHandle u_viewSize;
-static uint8_t s_viewId;
+static void imguiRender(ImDrawList** const _lists, int cmd_lists_count);
 
-static void imguiRender(ImDrawList** const cmd_lists, int cmd_lists_count)
+struct OcornutImguiContext
 {
-	const float width  = ImGui::GetIO().DisplaySize.x;
-	const float height = ImGui::GetIO().DisplaySize.y;
-
-	float ortho[16];
-	bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f);
-
-	bgfx::setViewTransform(0, NULL, ortho);
-
-	// Render command lists
-	for (int n = 0; n < cmd_lists_count; n++)
+	void render(ImDrawList** const _lists, int _count)
 	{
-		bgfx::TransientVertexBuffer tvb;
+		const float width  = ImGui::GetIO().DisplaySize.x;
+		const float height = ImGui::GetIO().DisplaySize.y;
 
-		uint32_t vtx_size = 0;
+		float ortho[16];
+		bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f);
 
-		const ImDrawList* cmd_list = cmd_lists[n];
-		const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
+		bgfx::setViewTransform(m_viewId, NULL, ortho);
 
-		const ImDrawCmd* pcmd_begin = cmd_list->commands.begin();
-		const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
-		for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
-		{
-			vtx_size += (uint32_t)pcmd->vtx_count;
+		// Render command lists
+		for (int n = 0; n < _count; n++) {
+			bgfx::TransientVertexBuffer tvb;
+
+			uint32_t vtx_size = 0;
+
+			const ImDrawList* cmd_list = _lists[n];
+			const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
+
+			const ImDrawCmd* pcmd_begin = cmd_list->commands.begin();
+			const ImDrawCmd* pcmd_end = cmd_list->commands.end();
+			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++) {
+				vtx_size += (uint32_t)pcmd->vtx_count;
+			}
+
+			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl)) {
+				// not enough space in transient buffer just quit drawing the rest...
+				break;
+			}
+
+			bgfx::allocTransientVertexBuffer(&tvb, vtx_size, m_decl);
+
+			ImDrawVert* verts = (ImDrawVert*)tvb.data;
+
+			memcpy(verts, vtx_buffer, vtx_size * sizeof(ImDrawVert));
+
+			uint32_t vtx_offset = 0;
+			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++) {
+				bgfx::setState(0
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+					| BGFX_STATE_MSAA);
+				bgfx::setTexture(0, s_tex, m_texture);
+				bgfx::setVertexBuffer(&tvb, vtx_offset, pcmd->vtx_count);
+				bgfx::setProgram(m_program);
+				bgfx::submit(m_viewId);
+
+				vtx_offset += pcmd->vtx_count;
+			}
 		}
+	}
 
-		if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, s_vertexDecl) )
-		{
-			// not enough space in transient buffer just quit drawing the rest...
+	void create()
+	{
+		m_viewId = 31;
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.DisplaySize = ImVec2(1280.0f, 720.0f);
+		io.DeltaTime = 1.0f / 60.0f;
+		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? -0.5f : 0.0f;
+
+		const bgfx::Memory* vsmem;
+		const bgfx::Memory* fsmem;
+
+		switch (bgfx::getRendererType()) {
+		case bgfx::RendererType::Direct3D9:
+			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx9, sizeof(vs_ocornut_imgui_dx9));
+			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx9, sizeof(fs_ocornut_imgui_dx9));
+			break;
+
+		case bgfx::RendererType::Direct3D11:
+			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx11, sizeof(vs_ocornut_imgui_dx11));
+			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx11, sizeof(fs_ocornut_imgui_dx11));
+			break;
+
+		default:
+			vsmem = bgfx::makeRef(vs_ocornut_imgui_glsl, sizeof(vs_ocornut_imgui_glsl));
+			fsmem = bgfx::makeRef(fs_ocornut_imgui_glsl, sizeof(fs_ocornut_imgui_glsl));
 			break;
 		}
 
-		bgfx::allocTransientVertexBuffer(&tvb, vtx_size, s_vertexDecl);
+		bgfx::ShaderHandle vsh = bgfx::createShader(vsmem);
+		bgfx::ShaderHandle fsh = bgfx::createShader(fsmem);
+		m_program = bgfx::createProgram(vsh, fsh, true);
 
-		ImDrawVert* verts = (ImDrawVert*)tvb.data;
+		m_decl
+			.begin()
+			.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+			.end();
 
-		memcpy(verts, vtx_buffer, vtx_size * sizeof(ImDrawVert) );
+		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Uniform1i);
 
-		uint32_t vtx_offset = 0;
-		for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
-		{
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-				| BGFX_STATE_MSAA);
-			bgfx::setTexture(0, s_tex, s_textureId);
-			bgfx::setVertexBuffer(&tvb, vtx_offset, pcmd->vtx_count);
-			bgfx::setProgram(s_imguiProgram);
-			bgfx::submit(s_viewId);
+		const void* png_data;
+		unsigned int png_size;
+		ImGui::GetDefaultFontData(NULL, NULL, &png_data, &png_size);
 
-			vtx_offset += pcmd->vtx_count;
-		}
+		int tex_x, tex_y, pitch, tex_comp;
+		void* tex_data = stbi_load_from_memory((const unsigned char*)png_data, (int)png_size, &tex_x, &tex_y, &tex_comp, 0);
+
+		pitch = tex_x * 4;
+
+		const bgfx::Memory* mem = bgfx::alloc((uint32_t)(tex_y * pitch));
+		memcpy(mem->data, tex_data, size_t(pitch * tex_y));
+
+		m_texture = bgfx::createTexture2D((uint16_t)tex_x
+			, (uint16_t)tex_y
+			, 1
+			, bgfx::TextureFormat::BGRA8
+			, BGFX_TEXTURE_MIN_POINT | BGFX_TEXTURE_MAG_POINT
+			, mem
+			);
+
+		stbi_image_free(tex_data);
+
+		io.RenderDrawListsFn = imguiRender;
 	}
-}
 
-void IMGUI_setup(int _width, int _height, uint8_t _viewId)
-{
-	s_viewId = _viewId;
-	const void* png_data;
-	unsigned int png_size;
-	ImGuiIO& io = ImGui::GetIO();
-
-	io.DisplaySize = ImVec2( (float)_width, (float)_height);
-	io.DeltaTime = 1.0f / 60.0f;
-	io.PixelCenterOffset = 0.0f;
-
-	const bgfx::Memory* vsmem;
-	const bgfx::Memory* fsmem;
-
-	switch (bgfx::getRendererType() )
+	void destroy()
 	{
-	case bgfx::RendererType::Direct3D9:
-		vsmem = bgfx::makeRef(vs_ocornut_imgui_dx9, sizeof(vs_ocornut_imgui_dx9) );
-		fsmem = bgfx::makeRef(fs_ocornut_imgui_dx9, sizeof(fs_ocornut_imgui_dx9) );
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		vsmem = bgfx::makeRef(vs_ocornut_imgui_dx11, sizeof(vs_ocornut_imgui_dx11) );
-		fsmem = bgfx::makeRef(fs_ocornut_imgui_dx11, sizeof(fs_ocornut_imgui_dx11) );
-		break;
-
-	default:
-		vsmem = bgfx::makeRef(vs_ocornut_imgui_glsl, sizeof(vs_ocornut_imgui_glsl) );
-		fsmem = bgfx::makeRef(fs_ocornut_imgui_glsl, sizeof(fs_ocornut_imgui_glsl) );
-		break;
+		bgfx::destroyUniform(s_tex);
+		bgfx::destroyTexture(m_texture);
+		bgfx::destroyProgram(m_program);
 	}
 
-	bgfx::ShaderHandle vsh;
-	bgfx::ShaderHandle fsh;
+	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, uint8_t _viewId)
+	{
+		m_viewId = _viewId;
+		ImGuiIO& io = ImGui::GetIO();
+		io.DisplaySize = ImVec2((float)_width, (float)_height);
+		io.DeltaTime = 1.0f / 60.0f;
+		io.MousePos = ImVec2((float)_mx, (float)_my);
+		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 
-	vsh = bgfx::createShader(vsmem);
-	fsh = bgfx::createShader(fsmem);
-	s_imguiProgram = bgfx::createProgram(vsh, fsh);
-	bgfx::destroyShader(vsh);
-	bgfx::destroyShader(fsh);
+		ImGui::NewFrame();
+	}
 
-	s_vertexDecl
-		.begin()
-		.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
-		.end();
+	void endFrame()
+	{
+		ImGui::Render();
+	}
 
-	u_viewSize = bgfx::createUniform("viewSize", bgfx::UniformType::Uniform2fv);
-	s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Uniform1i);
+	bgfx::VertexDecl    m_decl;
+	bgfx::ProgramHandle m_program;
+	bgfx::TextureHandle m_texture;
+	bgfx::UniformHandle s_tex;
+	uint8_t m_viewId;
+};
 
-	ImGui::GetDefaultFontData(NULL, NULL, &png_data, &png_size);
+static OcornutImguiContext s_ctx;
 
-	int tex_x, tex_y, pitch, tex_comp;
-	void* tex_data = stbi_load_from_memory( (const unsigned char*)png_data, (int)png_size, &tex_x, &tex_y, &tex_comp, 0);
-
-	pitch = tex_x * 4;
-
-	const bgfx::Memory* mem = bgfx::alloc( (uint32_t)(tex_y * pitch) );
-	memcpy(mem->data, tex_data, size_t(pitch * tex_y) );
-
-	s_textureId = bgfx::createTexture2D( (uint16_t)tex_x
-		, (uint16_t)tex_y
-		, 1
-		, bgfx::TextureFormat::BGRA8
-		, BGFX_TEXTURE_MIN_POINT | BGFX_TEXTURE_MAG_POINT
-		, mem
-		);
-
-	stbi_image_free(tex_data);
-
-	io.RenderDrawListsFn = imguiRender;
+static void imguiRender(ImDrawList** const _lists, int _count)
+{
+	s_ctx.render(_lists, _count);
 }
 
-void IMGUI_updateSize(int width, int height)
+void IMGUI_create()
 {
-	ImGuiIO& io = ImGui::GetIO();
-
-	io.DisplaySize = ImVec2( (float)width, (float)height);
-	io.DeltaTime = 1.0f / 60.0f;
-	io.PixelCenterOffset = 0.0f;
+	s_ctx.create();
 }
 
-void IMGUI_preUpdate(float x, float y, int mouseLmb, int keyDown, int keyMod)
+void IMGUI_destroy()
 {
-	(void)keyDown;
-	(void)keyMod;
-	ImGuiIO& io = ImGui::GetIO();
-	io.DeltaTime = 1.0f / 120.0f;    // TODO: Fix me
-	io.MousePos = ImVec2(x, y);
-	io.MouseDown[0] = !!mouseLmb;
-
-	ImGui::NewFrame();
+	s_ctx.destroy();
 }
 
-void IMGUI_setMouse(float x, float y, int mouseLmb)
+void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, uint8_t _viewId)
 {
-	ImGuiIO& io = ImGui::GetIO();
-	io.MousePos = ImVec2(x, y);
-	io.MouseDown[0] = !!mouseLmb;
+	s_ctx.beginFrame(_mx, _my, _button, _width, _height, _viewId);
 }
 
-void IMGUI_setKeyDown(int key, int /*modifier*/)
+void IMGUI_endFrame()
 {
-	ImGuiIO& io = ImGui::GetIO();
-//	assert(key >= 0 && key <= (int)sizeof_array(io.KeysDown) );
-	io.KeysDown[key] = true;
-// 	io.KeyCtrl = !!(modifier & PDKEY_CTRL);
-// 	io.KeyShift = !!(modifier & PDKEY_SHIFT);
-}
-
-void IMGUI_setKeyUp(int key, int /*modifier*/)
-{
-	ImGuiIO& io = ImGui::GetIO();
-//	assert(key >= 0 && key <= (int)sizeof_array(io.KeysDown) );
-	io.KeysDown[key] = false;
-// 	io.KeyCtrl = !!(modifier & PDKEY_CTRL);
-// 	io.KeyShift = !!(modifier & PDKEY_SHIFT);
-}
-
-void IMGUI_postUpdate()
-{
-	ImGui::Render();
+	s_ctx.endFrame();
 }

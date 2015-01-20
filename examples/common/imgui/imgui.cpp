@@ -31,6 +31,7 @@
 
 #include "../entry/dbg.h"
 #include "imgui.h"
+#include "ocornut_imgui.h"
 #include "../nanovg/nanovg.h"
 
 #include "vs_imgui_color.bin.h"
@@ -441,6 +442,8 @@ struct Imgui
 
 	ImguiFontHandle create(const void* _data, float _fontSize)
 	{
+		IMGUI_create();
+
 		m_nvg = nvgCreate(1, m_view);
 		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
 		nvgFontSize(m_nvg, _fontSize);
@@ -576,6 +579,8 @@ struct Imgui
 		bgfx::destroyProgram(m_imageProgram);
 		bgfx::destroyProgram(m_imageSwizzProgram);
 		nvgDelete(m_nvg);
+
+		IMGUI_destroy();
 	}
 
 	bool anyActive() const
@@ -768,6 +773,8 @@ struct Imgui
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 	{
+		IMGUI_beginFrame(_mx, _my, _button, _width, _height, _view);
+
 		m_view = _view;
 		m_viewWidth = _width;
 		m_viewHeight = _height;
@@ -836,6 +843,8 @@ struct Imgui
 		m_checkActivePresence = (0 != m_active);
 
 		clearInput();
+
+		IMGUI_endFrame();
 	}
 
 	bool beginScroll(int32_t _height, int32_t* _scroll, bool _enabled)
