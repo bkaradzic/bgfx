@@ -10,7 +10,7 @@
 
 void IMGUI_create();
 void IMGUI_destroy();
-void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, uint8_t _viewId = 31);
+void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId);
 void IMGUI_endFrame();
 
 #endif // OCORNUT_IMGUI_H_HEADER_GUARD

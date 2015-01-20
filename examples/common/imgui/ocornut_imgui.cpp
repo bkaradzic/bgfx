@@ -140,7 +140,7 @@ struct OcornutImguiContext
 		const bgfx::Memory* mem = bgfx::alloc((uint32_t)(tex_y * pitch));
 		memcpy(mem->data, tex_data, size_t(pitch * tex_y));
 
-		m_texture = bgfx::createTexture2D((uint16_t)tex_x
+		m_texture = bgfx::createTexture2D( (uint16_t)tex_x
 			, (uint16_t)tex_y
 			, 1
 			, bgfx::TextureFormat::BGRA8
@@ -160,10 +160,11 @@ struct OcornutImguiContext
 		bgfx::destroyProgram(m_program);
 	}
 
-	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, uint8_t _viewId)
+	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
 	{
 		m_viewId = _viewId;
 		ImGuiIO& io = ImGui::GetIO();
+		io.AddInputCharacter(_inputChar & 0x7f); // ASCII or GTFO! :)
 		io.DisplaySize = ImVec2((float)_width, (float)_height);
 		io.DeltaTime = 1.0f / 60.0f;
 		io.MousePos = ImVec2((float)_mx, (float)_my);
@@ -201,9 +202,9 @@ void IMGUI_destroy()
 	s_ctx.destroy();
 }
 
-void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, uint8_t _viewId)
+void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
 {
-	s_ctx.beginFrame(_mx, _my, _button, _width, _height, _viewId);
+	s_ctx.beginFrame(_mx, _my, _button, _width, _height, _inputChar, _viewId);
 }
 
 void IMGUI_endFrame()
