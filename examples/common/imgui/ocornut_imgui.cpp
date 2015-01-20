@@ -64,10 +64,10 @@ struct OcornutImguiContext
 					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 					| BGFX_STATE_MSAA
 					);
-				bgfx::setScissor(pcmd->clip_rect.x
-						, pcmd->clip_rect.y
-						, pcmd->clip_rect.z-pcmd->clip_rect.x
-						, pcmd->clip_rect.w-pcmd->clip_rect.y
+				bgfx::setScissor(uint16_t(pcmd->clip_rect.x)
+						, uint16_t(pcmd->clip_rect.y)
+						, uint16_t(pcmd->clip_rect.z-pcmd->clip_rect.x)
+						, uint16_t(pcmd->clip_rect.w-pcmd->clip_rect.y)
 						);
 				bgfx::setTexture(0, s_tex, m_texture);
 				bgfx::setVertexBuffer(&tvb, vtx_offset, pcmd->vtx_count);
