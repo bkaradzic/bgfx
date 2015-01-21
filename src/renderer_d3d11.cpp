@@ -1852,10 +1852,10 @@ namespace bgfx
 					texture.D3D11.pSRView            = m_ovrRT.m_srv;
 					m_ovr.postReset(texture.Texture);
 
-					bx::swap(m_ovrRtv, m_backBufferColor);
+					bx::xchg(m_ovrRtv, m_backBufferColor);
 
 					BX_CHECK(NULL == m_backBufferDepthStencil, "");
-					bx::swap(m_ovrDsv, m_backBufferDepthStencil);
+					bx::xchg(m_ovrDsv, m_backBufferDepthStencil);
 				}
 			}
 #endif // BGFX_CONFIG_USE_OVR
@@ -1867,8 +1867,8 @@ namespace bgfx
 			m_ovr.preReset();
 			if (NULL != m_ovrRtv)
 			{
-				bx::swap(m_ovrRtv, m_backBufferColor);
-				bx::swap(m_ovrDsv, m_backBufferDepthStencil);
+				bx::xchg(m_ovrRtv, m_backBufferColor);
+				bx::xchg(m_ovrDsv, m_backBufferDepthStencil);
 				BX_CHECK(NULL == m_backBufferDepthStencil, "");
 
 				DX_RELEASE(m_ovrRtv, 0);
