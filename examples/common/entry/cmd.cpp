@@ -10,6 +10,7 @@
 #include <bx/hash.h>
 #include <bx/tokenizecmd.h>
 
+#include "../common.h"
 #include "dbg.h"
 #include "cmd.h"
 
