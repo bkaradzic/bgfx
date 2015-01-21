@@ -5,6 +5,7 @@
 
 #include <memory.h>
 
+#include "../common.h"
 #include "entry_p.h"
 #include "input.h"
 

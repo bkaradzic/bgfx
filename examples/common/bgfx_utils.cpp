@@ -5,6 +5,8 @@
 
 #include <string.h> // strlen
 
+#include "common.h"
+
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
 #include <tinystl/string.h>
