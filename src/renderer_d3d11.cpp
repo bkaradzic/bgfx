@@ -160,17 +160,17 @@ namespace bgfx
 		{
 			0x10, // min linear
 			0x00, // min point
-			0x55, // anisotopic
+			0x55, // anisotropic
 		},
 		{
 			0x04, // mag linear
 			0x00, // mag point
-			0x55, // anisotopic
+			0x55, // anisotropic
 		},
 		{
 			0x01, // mip linear
 			0x00, // mip point
-			0x55, // anisotopic
+			0x55, // anisotropic
 		},
 	};
 
@@ -1714,7 +1714,7 @@ namespace bgfx
 				sd.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
 				sd.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
 				sd.MipLODBias = 0.0f;
-				sd.MaxAnisotropy = 1;
+				sd.MaxAnisotropy  = D3D11_REQ_MAXANISOTROPY;
 				sd.ComparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
 				sd.BorderColor[0] = 0.0f;
 				sd.BorderColor[1] = 0.0f;

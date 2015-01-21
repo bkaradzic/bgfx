@@ -459,6 +459,8 @@ namespace bgfx
 			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 			g_caps.maxFBAttachments = (uint8_t)m_caps.NumSimultaneousRTs;
 
+			m_caps.MaxAnisotropy = bx::uint32_min(m_caps.MaxAnisotropy, 1);
+
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
 				BX_TRACE("Extended formats:");
@@ -1241,12 +1243,13 @@ namespace bgfx
 				D3DTEXTUREFILTERTYPE minFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
 				D3DTEXTUREFILTERTYPE magFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
 				D3DTEXTUREFILTERTYPE mipFilter = s_textureFilter[(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
-				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSU, tau) );
-				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSV, tav) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSU,  tau) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSV,  tav) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSW,  taw) );
 				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MINFILTER, minFilter) );
 				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MAGFILTER, magFilter) );
 				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MIPFILTER, mipFilter) );
-				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_ADDRESSW, taw) );
+				DX_CHECK(device->SetSamplerState(_stage, D3DSAMP_MAXANISOTROPY, m_caps.MaxAnisotropy) );
 			}
 		}
 
