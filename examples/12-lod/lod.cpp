@@ -43,15 +43,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 1.0f
 		, 0
 		);
-	
+
 	bgfx::UniformHandle u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
 	bgfx::UniformHandle u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Uniform3fv);
 	bgfx::UniformHandle u_texStipple = bgfx::createUniform("u_texStipple", bgfx::UniformType::Uniform1iv);
 
 	bgfx::ProgramHandle program = loadProgram("vs_tree", "fs_tree");
 
-	bgfx::TextureHandle textureLeafs = loadTexture("leafs1.dds"); 
-	bgfx::TextureHandle textureBark  = loadTexture("bark1.dds"); 
+	bgfx::TextureHandle textureLeafs = loadTexture("leafs1.dds");
+	bgfx::TextureHandle textureBark  = loadTexture("bark1.dds");
 
 	bgfx::TextureHandle textureStipple;
 
@@ -62,7 +62,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{
 		stipple->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
 	}
-		
+
 	textureStipple = bgfx::createTexture2D(8, 4, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT, stipple);
 
 	Mesh* meshTop[3] =
@@ -71,7 +71,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		meshLoad("meshes/tree1b_lod1_1.bin"),
 		meshLoad("meshes/tree1b_lod2_1.bin"),
 	};
-	
+
 	Mesh* meshTrunk[3] =
 	{
 		meshLoad("meshes/tree1b_lod0_2.bin"),
@@ -80,8 +80,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	};
 
 	// Imgui.
-	void* data = load("font/droidsans.ttf");
-	imguiCreate(data);
+	uint32_t size;
+	void* data = load("font/droidsans.ttf", &size);
+	imguiCreate(data, size);
 	free(data);
 
 	const uint64_t stateCommon = 0
@@ -191,18 +192,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		float mtx[16];
-		bx::mtxScale(mtx, 0.1f, 0.1f, 0.1f); 
+		bx::mtxScale(mtx, 0.1f, 0.1f, 0.1f);
 
 		float stipple[3];
 		float stippleInv[3];
 
 		const int currentLODframe = transitions ? 32-transitionFrame : 32;
 		const int mainLOD = transitions ? currLOD : targetLOD;
-		
+
 		stipple[0] = 0.0f;
 		stipple[1] = -1.0f;
 		stipple[2] = (float(currentLODframe)*4.0f/255.0f) - (1.0f/255.0f);
-	
+
 		stippleInv[0] = (float(31)*4.0f/255.0f);
 		stippleInv[1] = 1.0f;
 		stippleInv[2] = (float(transitionFrame)*4.0f/255.0f) - (1.0f/255.0f);
@@ -217,7 +218,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setUniform(u_stipple, stipple);
 		meshSubmit(meshTop[mainLOD], 0, program, mtx, stateTransparent);
 
-		if (transitions 
+		if (transitions
 		&& (transitionFrame != 0) )
 		{
 			bgfx::setTexture(0, u_texColor, textureBark);
@@ -230,7 +231,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setUniform(u_stipple, stippleInv);
 			meshSubmit(meshTop[targetLOD], 0, program, mtx, stateTransparent);
 		}
-	
+
 		int lod = 0;
 		if (eye[2] < -2.5f)
 		{
@@ -249,7 +250,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				targetLOD = lod;
 			}
 		}
-		
+
 		if (currLOD != targetLOD)
 		{
 			transitionFrame++;
@@ -261,7 +262,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			transitionFrame = 0;
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
@@ -283,8 +284,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::destroyTexture(textureStipple);
 	bgfx::destroyTexture(textureLeafs);
-	bgfx::destroyTexture(textureBark); 
-	
+	bgfx::destroyTexture(textureBark);
+
 	// Shutdown bgfx.
 	bgfx::shutdown();
 

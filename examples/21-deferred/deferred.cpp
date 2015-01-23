@@ -300,11 +300,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::TextureHandle textureNormal = loadTexture("fieldstone-n.dds");
 
 	bgfx::TextureHandle gbufferTex[3] = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
-	bgfx::FrameBufferHandle gbuffer = BGFX_INVALID_HANDLE; 
-	bgfx::FrameBufferHandle lightBuffer = BGFX_INVALID_HANDLE; 
+	bgfx::FrameBufferHandle gbuffer = BGFX_INVALID_HANDLE;
+	bgfx::FrameBufferHandle lightBuffer = BGFX_INVALID_HANDLE;
 
-	void* data = load("font/droidsans.ttf");
-	imguiCreate(data);
+	// Imgui.
+	uint32_t size;
+	void* data = load("font/droidsans.ttf", &size);
+	imguiCreate(data, size);
 	free(data);
 
 	const int64_t timeOffset = bx::getHPCounter();
@@ -434,7 +436,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 
 			imguiSlider("Lights animation speed", lightAnimationSpeed, 0.0f, 0.4f, 0.01f);
-			
+
 			imguiEndScrollArea();
 			imguiEndFrame();
 
@@ -470,10 +472,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				const float aspectRatio = float(height)/float(width);
 				const float size = 10.0f;
 				bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
-				bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj); 
+				bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj);
 
 				bx::mtxOrtho(proj, 0.0f, (float)width, 0.0f, (float)height, 0.0f, 1000.0f);
-				bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj); 
+				bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj);
 			}
 
 			const uint32_t dim = 11;
@@ -539,7 +541,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				Aabb aabb;
 				sphereToAabb(aabb, lightPosRadius);
 
-				float box[8][3] = 
+				float box[8][3] =
 				{
 					{ aabb.m_min[0], aabb.m_min[1], aabb.m_min[2] },
 					{ aabb.m_min[0], aabb.m_min[1], aabb.m_max[2] },
@@ -633,7 +635,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					uint8_t val = light&7;
 					float lightRgbInnerR[4] =
-					{ 
+					{
 						val & 0x1 ? 1.0f : 0.25f,
 						val & 0x2 ? 1.0f : 0.25f,
 						val & 0x4 ? 1.0f : 0.25f,
@@ -695,7 +697,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

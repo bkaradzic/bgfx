@@ -41,7 +41,7 @@ enum FONSalign {
 enum FONSerrorCode {
 	// Font atlas is full.
 	FONS_ATLAS_FULL = 1,
-	// Scratch memory used to render glyphs is full, requested size reported in 'val', you may need to bump up FONS_SCRATCH_BUF_SIZE.		
+	// Scratch memory used to render glyphs is full, requested size reported in 'val', you may need to bump up FONS_SCRATCH_BUF_SIZE.
 	FONS_SCRATCH_FULL = 2,
 	// Calls to fonsPushState has craeted too large stack, if you need deep state stack bump up FONS_MAX_STATES.
 	FONS_STATES_OVERFLOW = 3,
@@ -90,7 +90,7 @@ void fonsDeleteInternal(FONScontext* s);
 void fonsSetErrorCallback(FONScontext* s, void (*callback)(void* uptr, int error, int val), void* uptr);
 // Returns current atlas size.
 void fonsGetAtlasSize(FONScontext* s, int* width, int* height);
-// Expands the atlas size. 
+// Expands the atlas size.
 int fonsExpandAtlas(FONScontext* s, int width, int height);
 // Reseta the whole stash.
 int fonsResetAtlas(FONScontext* stash, int width, int height);
@@ -154,7 +154,7 @@ typedef struct FONSttFontImpl FONSttFontImpl;
 static FT_Library ftLibrary;
 
 int fons__tt_init(FONScontext *context)
-{ 
+{
 	FT_Error ftError;
         FONS_NOTUSED(context);
 	ftError = FT_Init_FreeType(&ftLibrary);
@@ -249,6 +249,7 @@ static void fons__tmpfree(void* ptr, void* up);
 #	include <string.h>
 #endif // 0
 
+#define STBTT_DEF extern
 #include <stb/stb_truetype.h>
 
 struct FONSttFontImpl {
@@ -1409,7 +1410,7 @@ void fonsDrawDebug(FONScontext* stash, float x, float y)
 }
 
 float fonsTextBounds(FONScontext* stash,
-					 float x, float y, 
+					 float x, float y,
 					 const char* str, const char* end,
 					 float* bounds)
 {
@@ -1597,7 +1598,7 @@ int fonsExpandAtlas(FONScontext* stash, int width, int height)
 	height = fons__maxi(height, stash->params.height);
 
 	if (width == stash->params.width && height == stash->params.height)
-		return 1;	
+		return 1;
 
 	// Flush pending glyphs.
 	fons__flush(stash);

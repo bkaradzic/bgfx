@@ -79,14 +79,14 @@ struct OcornutImguiContext
 		}
 	}
 
-	void create()
+	void create(const void* _data, uint32_t _size, float _fontSize)
 	{
 		m_viewId = 31;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
 		io.DeltaTime = 1.0f / 60.0f;
-		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? -0.5f : 0.0f;
+//		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? -0.5f : 0.0f;
 
 		const bgfx::Memory* vsmem;
 		const bgfx::Memory* fsmem;
@@ -122,33 +122,22 @@ struct OcornutImguiContext
 
 		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Uniform1i);
 
-		const void* png_data;
-		unsigned int png_size;
-		ImGui::GetDefaultFontData(NULL, NULL, &png_data, &png_size);
+		uint8_t* data;
+		int32_t width;
+		int32_t height;
+		void* font = malloc(_size);
+		memcpy(font, _data, _size);
+		io.Fonts->AddFontFromMemoryTTF(const_cast<void*>(font), _size, _fontSize);
 
-		int tex_x, tex_y, pitch, tex_comp;
-		void* tex_data = stbi_load_from_memory( (const unsigned char*)png_data
-				, (int)png_size
-				, &tex_x
-				, &tex_y
-				, &tex_comp
-				, 0
-				);
+		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
-		pitch = tex_x * 4;
-
-		const bgfx::Memory* mem = bgfx::alloc((uint32_t)(tex_y * pitch));
-		memcpy(mem->data, tex_data, size_t(pitch * tex_y));
-
-		m_texture = bgfx::createTexture2D( (uint16_t)tex_x
-			, (uint16_t)tex_y
+		m_texture = bgfx::createTexture2D( (uint16_t)width
+			, (uint16_t)height
 			, 1
 			, bgfx::TextureFormat::BGRA8
 			, BGFX_TEXTURE_MIN_POINT | BGFX_TEXTURE_MAG_POINT
-			, mem
+			, bgfx::copy(data, width*height*4)
 			);
-
-		stbi_image_free(tex_data);
 
 		io.RenderDrawListsFn = imguiRender;
 	}
@@ -192,9 +181,9 @@ static void imguiRender(ImDrawList** const _lists, int _count)
 	s_ctx.render(_lists, _count);
 }
 
-void IMGUI_create()
+void IMGUI_create(const void* _data, uint32_t _size, float _fontSize)
 {
-	s_ctx.create();
+	s_ctx.create(_data, _size, _fontSize);
 }
 
 void IMGUI_destroy()

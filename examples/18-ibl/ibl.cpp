@@ -240,8 +240,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		);
 
 	// Imgui.
-	void* data = load("font/droidsans.ttf");
-	imguiCreate(data);
+	uint32_t size;
+	void* data = load("font/droidsans.ttf", &size);
+	imguiCreate(data, size);
 	free(data);
 
 	// Uniforms.

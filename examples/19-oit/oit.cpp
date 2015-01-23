@@ -166,7 +166,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Get renderer capabilities info.
 	const bgfx::Caps* caps = bgfx::getCaps();
 
-	// Setup root path for binary shaders. Shader binaries are different 
+	// Setup root path for binary shaders. Shader binaries are different
 	// for each renderer.
 	switch (caps->rendererType)
 	{
@@ -180,8 +180,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	// Imgui.
-	void* data = load("font/droidsans.ttf");
-	imguiCreate(data);
+	uint32_t size;
+	void* data = load("font/droidsans.ttf", &size);
+	imguiCreate(data, size);
 	free(data);
 
 	const bgfx::Memory* mem;
@@ -206,7 +207,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ProgramHandle wbBlit         = loadProgram("vs_oit_blit", "fs_oit_wb_blit"          );
 
 	bgfx::TextureHandle fbtextures[2] = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
-	bgfx::FrameBufferHandle fbh = BGFX_INVALID_HANDLE; 
+	bgfx::FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 	int64_t timeOffset = bx::getHPCounter();
 
@@ -302,7 +303,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -7.0f };
-	
+
 		float view[16];
 		float proj[16];
 
@@ -437,7 +438,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::submit(1);
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

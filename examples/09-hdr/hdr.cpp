@@ -216,8 +216,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::FrameBufferHandle blur;
 	blur = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
 
-	void* data = load("font/droidsans.ttf");
-	imguiCreate(data);
+	// Imgui.
+	uint32_t size;
+	void* data = load("font/droidsans.ttf", &size);
+	imguiCreate(data, size);
 	free(data);
 
 	const bgfx::RendererType::Enum renderer = bgfx::getRendererType();

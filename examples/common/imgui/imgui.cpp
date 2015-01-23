@@ -440,9 +440,9 @@ struct Imgui
 		return bgfx::createTexture2D(_width, _height, 0, bgfx::TextureFormat::BGRA8, 0, mem);
 	}
 
-	ImguiFontHandle create(const void* _data, float _fontSize)
+	ImguiFontHandle create(const void* _data, uint32_t _size, float _fontSize)
 	{
-		IMGUI_create();
+		IMGUI_create(_data, _size, _fontSize);
 
 		m_nvg = nvgCreate(1, m_view);
 		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
@@ -3051,9 +3051,9 @@ struct Imgui
 
 static Imgui s_imgui;
 
-ImguiFontHandle imguiCreate(const void* _data, float _fontSize)
+ImguiFontHandle imguiCreate(const void* _data, uint32_t _size, float _fontSize)
 {
-	return s_imgui.create(_data, _fontSize);
+	return s_imgui.create(_data, _size, _fontSize);
 }
 
 void imguiDestroy()
