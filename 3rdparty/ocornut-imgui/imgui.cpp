@@ -331,6 +331,12 @@
 #pragma clang diagnostic ignored "-Wsign-conversion"        // warning : implicit conversion chanjges signedness            //
 #endif
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 //-------------------------------------------------------------------------
 // STB libraries implementation
 //-------------------------------------------------------------------------
@@ -3615,7 +3621,6 @@ bool ImGui::SmallButton(const char* label)
 // Then you can keep 'str_id' empty or the same for all your buttons (instead of creating a string based on a non-string id)
 bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size)
 {
-    ImGuiState& g = GImGui;
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
