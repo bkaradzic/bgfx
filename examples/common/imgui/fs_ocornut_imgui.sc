@@ -9,4 +9,3 @@ void main()
 	vec4 texel = texture2D(s_tex, v_texcoord0);
 	gl_FragColor = texel * v_color0; 
 }
-

@@ -121,7 +121,7 @@ ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize=15.0f);
 void imguiSetFont(ImguiFontHandle _handle);
 ImguiFontHandle imguiGetCurrentFont();
 
-ImguiFontHandle imguiCreate(const void* _data, uint32_t _size, float _fontSize = 15.0f);
+ImguiFontHandle imguiCreate(const void* _data = NULL, uint32_t _size = 0, float _fontSize = 15.0f);
 void imguiDestroy();
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, uint8_t _view = 31);

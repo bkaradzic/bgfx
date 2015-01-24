@@ -217,10 +217,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	blur = bgfx::createFrameBuffer(width/8, height/8, bgfx::TextureFormat::BGRA8);
 
 	// Imgui.
-	uint32_t size;
-	void* data = load("font/droidsans.ttf", &size);
-	imguiCreate(data, size);
-	free(data);
+	imguiCreate();
 
 	const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
 	s_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;

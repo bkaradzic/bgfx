@@ -304,10 +304,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::FrameBufferHandle lightBuffer = BGFX_INVALID_HANDLE;
 
 	// Imgui.
-	uint32_t size;
-	void* data = load("font/droidsans.ttf", &size);
-	imguiCreate(data, size);
-	free(data);
+	imguiCreate();
 
 	const int64_t timeOffset = bx::getHPCounter();
 	const bgfx::RendererType::Enum renderer = bgfx::getRendererType();

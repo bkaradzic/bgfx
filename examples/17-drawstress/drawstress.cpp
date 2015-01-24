@@ -13,9 +13,6 @@
 #include "vs_drawstress.bin.h"
 #include "fs_drawstress.bin.h"
 
-// embedded font
-#include "droidsans.ttf.h"
-
 #if BX_PLATFORM_EMSCRIPTEN
 #	include <emscripten.h>
 #endif // BX_PLATFORM_EMSCRIPTEN
@@ -310,7 +307,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
 	ibh = bgfx::createIndexBuffer(mem);
 
-	imguiCreate(s_droidSansTtf, sizeof(s_droidSansTtf) );
+	// Imgui.
+	imguiCreate();
 
 #if BX_PLATFORM_EMSCRIPTEN
 	emscripten_set_main_loop(&loop, -1, 1);

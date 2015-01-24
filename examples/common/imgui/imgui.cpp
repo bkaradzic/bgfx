@@ -34,6 +34,7 @@
 #include "ocornut_imgui.h"
 #include "../nanovg/nanovg.h"
 
+// embedded shaders
 #include "vs_imgui_color.bin.h"
 #include "fs_imgui_color.bin.h"
 #include "vs_imgui_texture.bin.h"
@@ -43,6 +44,9 @@
 #include "vs_imgui_image.bin.h"
 #include "fs_imgui_image.bin.h"
 #include "fs_imgui_image_swizz.bin.h"
+
+// embedded font
+#include "droidsans.ttf.h"
 
 #define USE_NANOVG_FONT 0
 
@@ -442,6 +446,12 @@ struct Imgui
 
 	ImguiFontHandle create(const void* _data, uint32_t _size, float _fontSize)
 	{
+		if (NULL == _data)
+		{
+			_data = s_droidSansTtf;
+			_size = sizeof(s_droidSansTtf);
+		}
+
 		IMGUI_create(_data, _size, _fontSize);
 
 		m_nvg = nvgCreate(1, m_view);
