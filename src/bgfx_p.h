@@ -1179,6 +1179,7 @@ namespace bgfx
 		IndexBufferHandle m_handle;
 		uint32_t m_offset;
 		uint32_t m_size;
+		uint32_t m_startIndex;
 	};
 
 	struct DynamicVertexBuffer
@@ -1329,6 +1330,13 @@ namespace bgfx
 			m_draw.m_startIndex  = _firstIndex;
 			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
+		}
+
+		void setIndexBuffer(const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
+		{
+			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
+			m_draw.m_numIndices  = bx::uint32_min(_numIndices, _dib.m_size/2);
+			m_draw.m_indexBuffer = _dib.m_handle;
 		}
 
 		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
@@ -2006,7 +2014,7 @@ namespace bgfx
 			m_vertexBufferHandle.free(_handle.idx);
 		}
 
-		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags))
+		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags) )
 		{
 			DynamicIndexBufferHandle handle = BGFX_INVALID_HANDLE;
 			uint32_t size = BX_ALIGN_16(_num*2);
@@ -2058,8 +2066,9 @@ namespace bgfx
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[handle.idx];
 			dib.m_handle.idx = uint16_t(ptr>>32);
-			dib.m_offset = uint32_t(ptr);
-			dib.m_size = size;
+			dib.m_offset     = uint32_t(ptr);
+			dib.m_size       = size;
+			dib.m_startIndex = strideAlign(dib.m_offset, 2)/2;
 
 			return handle;
 		}
@@ -2099,7 +2108,7 @@ namespace bgfx
 		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags) )
 		{
 			DynamicVertexBufferHandle handle = BGFX_INVALID_HANDLE;
-			uint32_t size = strideAlign16(_num*_decl.m_stride, _decl.m_stride);
+			uint32_t size = strideAlign16( (_num+1)*_decl.m_stride, _decl.m_stride);
 
 			uint64_t ptr = 0;
 			if (0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE) )
@@ -2147,7 +2156,7 @@ namespace bgfx
 			dvb.m_handle.idx  = uint16_t(ptr>>32);
 			dvb.m_offset      = uint32_t(ptr);
 			dvb.m_size        = size;
-			dvb.m_startVertex = dvb.m_offset/_decl.m_stride;
+			dvb.m_startVertex = strideAlign(dvb.m_offset, _decl.m_stride)/_decl.m_stride;
 			dvb.m_numVertices = dvb.m_size/_decl.m_stride;
 			dvb.m_stride      = _decl.m_stride;
 			dvb.m_decl        = declHandle;
@@ -2990,11 +2999,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices) )
 		{
-			const DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
-			m_submit->setIndexBuffer(dib.m_handle
-					, dib.m_offset / 2 + _firstIndex * 2
-					, _numIndices
-					);
+			m_submit->setIndexBuffer(m_dynamicIndexBuffers[_handle.idx], _firstIndex, _numIndices);
 		}
 
 		BGFX_API_FUNC(void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices) )
@@ -3002,9 +3007,9 @@ namespace bgfx
 			m_submit->setIndexBuffer(_tib, _firstIndex, _numIndices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(VertexBufferHandle _handle, uint32_t _numVertices, uint32_t _startVertex) )
+		BGFX_API_FUNC(void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
 		{
-			m_submit->setVertexBuffer(_handle, _numVertices, _startVertex);
+			m_submit->setVertexBuffer(_handle, _startVertex, _numVertices);
 		}
 
 		BGFX_API_FUNC(void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices) )
@@ -3192,7 +3197,7 @@ namespace bgfx
 
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 
-		DynamicIndexBuffer m_dynamicIndexBuffers[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
+		DynamicIndexBuffer  m_dynamicIndexBuffers[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
 		DynamicVertexBuffer m_dynamicVertexBuffers[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 
 		uint16_t m_numFreeDynamicIndexBufferHandles;
