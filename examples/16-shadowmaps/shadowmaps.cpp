@@ -1355,10 +1355,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	}
 
 	// Imgui.
-	uint32_t size;
-	void* data = load("font/droidsans.ttf", &size);
-	imguiCreate(data, size);
-	free(data);
+	imguiCreate();
 
 	// Uniforms.
 	s_uniforms.init();
