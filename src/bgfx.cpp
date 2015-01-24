@@ -2746,7 +2746,7 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
-		s_ctx->setVertexBuffer(_tvb, _tvb->startVertex + _startVertex, _numVertices);
+		s_ctx->setVertexBuffer(_tvb, _startVertex, _numVertices);
 	}
 
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)

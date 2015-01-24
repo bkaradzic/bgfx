@@ -324,8 +324,8 @@ namespace bgfx
 	{
 		uint8_t* data;
 		uint32_t size;
-		IndexBufferHandle handle;
 		uint32_t startIndex;
+		IndexBufferHandle handle;
 	};
 
 	///

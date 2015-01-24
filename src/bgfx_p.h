@@ -1365,7 +1365,7 @@ namespace bgfx
 
 		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex  = _startVertex;
+			m_draw.m_startVertex  = _tvb->startVertex + _startVertex;
 			m_draw.m_numVertices  = bx::uint32_min(_tvb->size/_tvb->stride, _numVertices);
 			m_draw.m_vertexBuffer = _tvb->handle;
 			m_draw.m_vertexDecl   = _tvb->decl;
@@ -2017,7 +2017,7 @@ namespace bgfx
 		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags) )
 		{
 			DynamicIndexBufferHandle handle = BGFX_INVALID_HANDLE;
-			uint32_t size = BX_ALIGN_16(_num*2);
+			uint32_t size = BX_ALIGN_16( (_num+1)*2);
 
 			uint64_t ptr = 0;
 			if (0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE))
@@ -2334,8 +2334,8 @@ namespace bgfx
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _decl.m_stride);
 
 			_tvb->data = &dvb.data[offset];
-			_tvb->size = _num * _decl.m_stride;
-			_tvb->startVertex = offset/_decl.m_stride;
+			_tvb->size = (_num+1) * _decl.m_stride;
+			_tvb->startVertex = strideAlign(offset, _decl.m_stride)/_decl.m_stride;
 			_tvb->stride = _decl.m_stride;
 			_tvb->handle = dvb.handle;
 			_tvb->decl   = declHandle;
