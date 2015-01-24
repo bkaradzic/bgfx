@@ -495,6 +495,7 @@ Other debuggers:
 |:----------|:--------------|:----:|:----:|:----:|:----:|:------:|
 | APITrace  | Linux/OSX/Win |   x  |  x   |  x   |   x  |    x   |
 | CodeXL    | Linux/Win     |      |      |  x   |      |        |
+| Dissector | Win           |   x  |      |      |      |    x   |
 | IntelGPA  | Linux/OSX/Win |   x  |  x   |      |   x  |        |
 | Nsight    | Win           |   x  |  x   |  x   |      |        |
 | PerfHUD   | Win           |   x  |  x   |      |      |        |
@@ -504,6 +505,7 @@ Other debuggers:
 Download:  
 [APITrace](https://apitrace.github.io/)  
 [CodeXL](http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/)  
+[Dissector](https://github.com/imccown/Dissector)  
 [Nsight](https://developer.nvidia.com/nvidia-nsight-visual-studio-edition)  
 [PerfHUD](https://developer.nvidia.com/nvidia-perfhud)  
 [vogl](https://github.com/ValveSoftware/vogl)  
