@@ -4,6 +4,7 @@
  */
 
 #include "entry_p.h"
+#include "../common.h"
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_WINDOWS
 
