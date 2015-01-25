@@ -1,6 +1,7 @@
-.git
 .build
 .debug
+.DS_Store
+.git
 .svn
 tags
-.DS_Store
+src/renderer_d3d12.*
