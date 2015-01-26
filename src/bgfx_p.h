@@ -2088,7 +2088,7 @@ namespace bgfx
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateDynamicIndexBuffer);
 			cmdbuf.write(dib.m_handle);
-			cmdbuf.write(dib.m_offset);
+			cmdbuf.write(dib.m_startIndex*2);
 			cmdbuf.write(dib.m_size);
 			cmdbuf.write(_mem);
 		}
@@ -2133,7 +2133,7 @@ namespace bgfx
 				{
 					VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
 
-					BX_WARN(isValid(handle), "Failed to allocate dynamic vertex buffer handle.");
+					BX_WARN(isValid(vertexBufferHandle), "Failed to allocate dynamic vertex buffer handle.");
 					if (!isValid(vertexBufferHandle) )
 					{
 						return handle;
@@ -2184,7 +2184,7 @@ namespace bgfx
 			BX_CHECK(!dvb.m_flags, "Can't update GPU buffer from CPU.");
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateDynamicVertexBuffer);
 			cmdbuf.write(dvb.m_handle);
-			cmdbuf.write(dvb.m_offset);
+			cmdbuf.write(dvb.m_startVertex*dvb.m_stride);
 			cmdbuf.write(dvb.m_size);
 			cmdbuf.write(_mem);
 		}
