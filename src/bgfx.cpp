@@ -1378,7 +1378,7 @@ again:
 
 				if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
 				{
-					first  = RendererType::Enum(RendererType::Direct3D11+1) /* Direct3D12 */;
+					first  = RendererType::Direct3D11 /* Direct3D12 */;
 					second = RendererType::Direct3D11;
 					if (!s_rendererCreator[second].supported)
 						second = RendererType::Direct3D9;
