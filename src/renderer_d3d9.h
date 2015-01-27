@@ -145,7 +145,7 @@ namespace bgfx
 
 			memcpy(buffer, _data, _size);
 
-			m_ptr->Unlock();
+			DX_CHECK(m_ptr->Unlock() );
 		}
 
 		void destroy()
@@ -185,7 +185,7 @@ namespace bgfx
 
 			memcpy(buffer, _data, _size);
 
-			m_ptr->Unlock();
+			DX_CHECK(m_ptr->Unlock() );
 		}
 
 		void destroy()

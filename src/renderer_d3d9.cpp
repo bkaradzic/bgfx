@@ -924,17 +924,20 @@ namespace bgfx
 
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) BX_OVERRIDE
 		{
-			uint32_t numVertices = _numIndices*4/6;
-			m_indexBuffers [_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data, true);
-			m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
+			const uint32_t numVertices = _numIndices*4/6;
+			if (0 < numVertices)
+			{
+				m_indexBuffers[_blitter.m_ib->handle.idx].update(0, _numIndices * 2, _blitter.m_ib->data, true);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
 
-			DX_CHECK(m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST
-				, 0
-				, 0
-				, numVertices
-				, 0
-				, _numIndices/3
-				) );
+				DX_CHECK(m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST
+					, 0
+					, 0
+					, numVertices
+					, 0
+					, _numIndices / 3
+					) );
+			}
 		}
 
 		void updateMsaa()

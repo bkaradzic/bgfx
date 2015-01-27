@@ -1703,24 +1703,27 @@ namespace bgfx
 
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) BX_OVERRIDE
 		{
-			uint32_t numVertices = _numIndices*4/6;
-			m_indexBuffers[_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data);
-			m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data);
+			const uint32_t numVertices = _numIndices*4/6;
+			if (0 < numVertices)
+			{
+				m_indexBuffers[_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data);
 
-			VertexBufferGL& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+				VertexBufferGL& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
+				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
-			IndexBufferGL& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
-			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
+				IndexBufferGL& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
+				GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 
-			ProgramGL& program = m_program[_blitter.m_program.idx];
-			program.bindAttributes(_blitter.m_decl, 0);
+				ProgramGL& program = m_program[_blitter.m_program.idx];
+				program.bindAttributes(_blitter.m_decl, 0);
 
-			GL_CHECK(glDrawElements(GL_TRIANGLES
-				, _numIndices
-				, GL_UNSIGNED_SHORT
-				, (void*)0
-				) );
+				GL_CHECK(glDrawElements(GL_TRIANGLES
+					, _numIndices
+					, GL_UNSIGNED_SHORT
+					, (void*)0
+					) );
+			}
 		}
 
 		void updateResolution(const Resolution& _resolution)
