@@ -675,7 +675,7 @@ namespace bgfx
 		void operator=(const CommandBuffer&);
 	};
 
-#define SORT_KEY_RENDER_DRAW UINT64_C(0x0000000800000000)
+#define SORT_KEY_RENDER_DRAW (UINT64_C(1)<<0x2b)
 
 	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS   <= 32);
 	BX_STATIC_ASSERT( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // must be power of 2
@@ -686,17 +686,17 @@ namespace bgfx
 		{
 			// |               3               2               1               0|
 			// |fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210|
-			// |            vvvvvsssssssssssdttpppppppppdddddddddddddddddddddddd|
-			// |                ^          ^^ ^        ^                       ^|
-			// |                |          || |        |                       ||
-			// |           view-+      seq-+| +-trans  +-program         depth-+|
-			// |                            +-draw                              |
+			// |    vvvvvsssssssssssdttpppppppppdddddddddddddddddddddddddddddddd|
+			// |        ^          ^^ ^        ^                               ^|
+			// |        |          || |        |                               ||
+			// |   view-+      seq-+| +-trans  +-program                 depth-+|
+			// |                    +-draw                                      |
 
 			const uint64_t depth   = m_depth;
-			const uint64_t program = uint64_t(m_program)<<0x18;
-			const uint64_t trans   = uint64_t(m_trans  )<<0x21;
-			const uint64_t seq     = uint64_t(m_seq    )<<0x24;
-			const uint64_t view    = uint64_t(m_view   )<<0x2f;
+			const uint64_t program = uint64_t(m_program)<<0x20;
+			const uint64_t trans   = uint64_t(m_trans  )<<0x29;
+			const uint64_t seq     = uint64_t(m_seq    )<<0x2c;
+			const uint64_t view    = uint64_t(m_view   )<<0x37;
 			const uint64_t key     = depth|program|trans|SORT_KEY_RENDER_DRAW|seq|view;
 			return key;
 		}
@@ -705,15 +705,15 @@ namespace bgfx
 		{
 			// |               3               2               1               0|
 			// |fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210|
-			// |            vvvvvsssssssssssdppppppppp                          |
-			// |                ^          ^^        ^                          |
-			// |                |          ||        |                          |
-			// |           view-+      seq-+|        +-program                  |
-			// |                            +-draw                              |
+			// |    vvvvvsssssssssssdppppppppp                                  |
+			// |        ^          ^^        ^                                  |
+			// |        |          ||        |                                  |
+			// |   view-+      seq-+|        +-program                          |
+			// |                    +-draw                                      |
 
-			const uint64_t program = uint64_t(m_program)<<0x1a;
-			const uint64_t seq     = uint64_t(m_seq    )<<0x24;
-			const uint64_t view    = uint64_t(m_view   )<<0x2f;
+			const uint64_t program = uint64_t(m_program)<<0x22;
+			const uint64_t seq     = uint64_t(m_seq    )<<0x2c;
+			const uint64_t view    = uint64_t(m_view   )<<0x37;
 			const uint64_t key     = program|seq|view;
 			return key;
 		}
@@ -721,17 +721,17 @@ namespace bgfx
 		/// Returns true if item is command.
 		bool decode(uint64_t _key)
 		{
-			m_seq     = (_key>>0x24)& 0x7ff;
-			m_view    = (_key>>0x2f)&(BGFX_CONFIG_MAX_VIEWS-1);
+			m_seq     = (_key>>0x2c)& 0x7ff;
+			m_view    = (_key>>0x37)&(BGFX_CONFIG_MAX_VIEWS-1);
 			if (_key & SORT_KEY_RENDER_DRAW)
 			{
 				m_depth   =  _key       & 0xffffffff;
-				m_program = (_key>>0x18)&(BGFX_CONFIG_MAX_PROGRAMS-1);
-				m_trans   = (_key>>0x21)& 0x3;
+				m_program = (_key>>0x20)&(BGFX_CONFIG_MAX_PROGRAMS-1);
+				m_trans   = (_key>>0x29)& 0x3;
 				return false; // draw
 			}
 
-			m_program = (_key>>0x1a)&(BGFX_CONFIG_MAX_PROGRAMS-1);
+			m_program = (_key>>0x22)&(BGFX_CONFIG_MAX_PROGRAMS-1);
 			return true; // compute
 		}
 
@@ -744,7 +744,7 @@ namespace bgfx
 			m_trans   = 0;
 		}
 
-		int32_t  m_depth;
+		uint32_t m_depth;
 		uint16_t m_program;
 		uint16_t m_seq;
 		uint8_t  m_view;
