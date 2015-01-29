@@ -637,10 +637,16 @@ namespace bgfx
 	/// Create empty dynamic index buffer.
 	///
 	/// @param _num Number of indices.
-	/// @param _flags `BGFX_BUFFER_*` flags.
+	/// @param _flags Buffer creation flags.
+	///   `BGFX_BUFFER_COMPUTE_READ` - compute shader will read buffer.
+	///   `BGFX_BUFFER_COMPUTE_WRITE` - compute shader will write into buffer.
+	///   `BGFX_BUFFER_ALLOW_RESIZE` buffer can be resized if updated with different size buffer.
 	///
 	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	///   1. Only 16-bit index buffer is supported.
+	///
+	///   2. When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
+	///      from CPU.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_NONE);
 
@@ -670,7 +676,14 @@ namespace bgfx
 	///
 	/// @param _num Number of vertices.
 	/// @param _decl Vertex declaration.
-	/// @param _flags `BGFX_BUFFER_*` flags.
+	/// @param _flags Buffer creation flags.
+	///   `BGFX_BUFFER_COMPUTE_READ` - compute shader will read buffer.
+	///   `BGFX_BUFFER_COMPUTE_WRITE` - compute shader will write into buffer.
+	///   `BGFX_BUFFER_ALLOW_RESIZE` buffer can be resized if updated with different size buffer.
+	///
+	/// @remarks
+	///   When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
+	///   from CPU.
 	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_NONE);
 
