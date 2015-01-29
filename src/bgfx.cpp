@@ -1014,6 +1014,9 @@ namespace bgfx
 		getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 		frame();
 
+		m_dynVertexBufferAllocator.compact();
+		m_dynIndexBufferAllocator.compact();
+
 		m_declRef.shutdown(m_vertexDeclHandle);
 
 #if BGFX_CONFIG_MULTITHREADED
@@ -2121,11 +2124,11 @@ again:
 		return s_ctx->createDynamicIndexBuffer(_num, _flags);
 	}
 
-	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem)
+	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createDynamicIndexBuffer(_mem);
+		return s_ctx->createDynamicIndexBuffer(_mem, _flags);
 	}
 
 	void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, const Memory* _mem)

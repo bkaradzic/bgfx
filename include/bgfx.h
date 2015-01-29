@@ -615,7 +615,7 @@ namespace bgfx
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
 	///
-	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
+	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Destroy static index buffer.
 	void destroyIndexBuffer(IndexBufferHandle _handle);
@@ -626,7 +626,7 @@ namespace bgfx
 	/// @param _decl Vertex declaration.
 	/// @returns Static vertex buffer handle.
 	///
-	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
+	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Destroy static vertex buffer.
 	///
@@ -642,7 +642,7 @@ namespace bgfx
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
 	///
-	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
+	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Create dynamic index buffer and initialized it.
 	///
@@ -651,7 +651,7 @@ namespace bgfx
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
 	///
-	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem);
+	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Update dynamic index buffer.
 	///
@@ -672,7 +672,7 @@ namespace bgfx
 	/// @param _decl Vertex declaration.
 	/// @param _flags `BGFX_BUFFER_*` flags.
 	///
-	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_COMPUTE_NONE);
+	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Create dynamic vertex buffer and initialize it.
 	///
