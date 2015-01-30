@@ -1470,7 +1470,7 @@ namespace bgfx
 		uint32_t allocTransientIndexBuffer(uint32_t& _num)
 		{
 			uint32_t offset = m_iboffset;
-			m_iboffset = offset + _num*sizeof(uint16_t);
+			m_iboffset = offset + (_num+1)*sizeof(uint16_t);
 			m_iboffset = bx::uint32_min(m_iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 			_num = (m_iboffset-offset)/sizeof(uint16_t);
 			return offset;
@@ -1488,7 +1488,7 @@ namespace bgfx
 		uint32_t allocTransientVertexBuffer(uint32_t& _num, uint16_t _stride)
 		{
 			uint32_t offset = strideAlign(m_vboffset, _stride);
-			m_vboffset = offset + _num * _stride;
+			m_vboffset = offset + (_num+1) * _stride;
 			m_vboffset = bx::uint32_min(m_vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 			_num = (m_vboffset-offset)/_stride;
 			return offset;
@@ -2307,7 +2307,7 @@ namespace bgfx
 
 		TransientIndexBuffer* createTransientIndexBuffer(uint32_t _size)
 		{
-			TransientIndexBuffer* ib = NULL;
+			TransientIndexBuffer* tib = NULL;
 
 			IndexBufferHandle handle = { m_indexBufferHandle.alloc() };
 			BX_WARN(isValid(handle), "Failed to allocate transient index buffer handle.");
@@ -2318,22 +2318,22 @@ namespace bgfx
 				cmdbuf.write(_size);
 				cmdbuf.write(uint8_t(BGFX_BUFFER_NONE) );
 
-				ib = (TransientIndexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientIndexBuffer)+_size);
-				ib->data = (uint8_t*)&ib[1];
-				ib->size = _size;
-				ib->handle = handle;
+				tib = (TransientIndexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientIndexBuffer)+_size);
+				tib->data   = (uint8_t*)&tib[1];
+				tib->size   = _size;
+				tib->handle = handle;
 			}
 
-			return ib;
+			return tib;
 		}
 
-		void destroyTransientIndexBuffer(TransientIndexBuffer* _ib)
+		void destroyTransientIndexBuffer(TransientIndexBuffer* _tib)
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyDynamicIndexBuffer);
-			cmdbuf.write(_ib->handle);
+			cmdbuf.write(_tib->handle);
 
-			m_submit->free(_ib->handle);
-			BX_FREE(g_allocator, const_cast<TransientIndexBuffer*>(_ib) );
+			m_submit->free(_tib->handle);
+			BX_FREE(g_allocator, _tib);
 		}
 
 		BGFX_API_FUNC(void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num) )
@@ -2342,15 +2342,15 @@ namespace bgfx
 
 			TransientIndexBuffer& dib = *m_submit->m_transientIb;
 
-			_tib->data = &dib.data[offset];
-			_tib->size = _num * sizeof(uint16_t);
-			_tib->handle = dib.handle;
-			_tib->startIndex = offset/sizeof(uint16_t);
+			_tib->data       = &dib.data[offset];
+			_tib->size       = _num * 2;
+			_tib->handle     = dib.handle;
+			_tib->startIndex = strideAlign(offset, 2)/2;
 		}
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexDecl* _decl = NULL)
 		{
-			TransientVertexBuffer* vb = NULL;
+			TransientVertexBuffer* tvb = NULL;
 
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
@@ -2373,25 +2373,25 @@ namespace bgfx
 				cmdbuf.write(_size);
 				cmdbuf.write(false);
 
-				vb = (TransientVertexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientVertexBuffer)+_size);
-				vb->data = (uint8_t*)&vb[1];
-				vb->size = _size;
-				vb->startVertex = 0;
-				vb->stride = stride;
-				vb->handle = handle;
-				vb->decl = declHandle;
+				tvb = (TransientVertexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientVertexBuffer)+_size);
+				tvb->data = (uint8_t*)&tvb[1];
+				tvb->size = _size;
+				tvb->startVertex = 0;
+				tvb->stride = stride;
+				tvb->handle = handle;
+				tvb->decl   = declHandle;
 			}
 
-			return vb;
+			return tvb;
 		}
 
-		void destroyTransientVertexBuffer(TransientVertexBuffer* _vb)
+		void destroyTransientVertexBuffer(TransientVertexBuffer* _tvb)
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyDynamicVertexBuffer);
-			cmdbuf.write(_vb->handle);
+			cmdbuf.write(_tvb->handle);
 
-			m_submit->free(_vb->handle);
-			BX_FREE(g_allocator, const_cast<TransientVertexBuffer*>(_vb) );
+			m_submit->free(_tvb->handle);
+			BX_FREE(g_allocator, _tvb);
 		}
 
 		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl) )
@@ -2413,7 +2413,7 @@ namespace bgfx
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _decl.m_stride);
 
 			_tvb->data = &dvb.data[offset];
-			_tvb->size = (_num+1) * _decl.m_stride;
+			_tvb->size = _num * _decl.m_stride;
 			_tvb->startVertex = strideAlign(offset, _decl.m_stride)/_decl.m_stride;
 			_tvb->stride = _decl.m_stride;
 			_tvb->handle = dvb.handle;

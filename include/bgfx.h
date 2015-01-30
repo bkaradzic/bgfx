@@ -1210,10 +1210,10 @@ namespace bgfx
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num = UINT32_MAX);
 
 	/// Set instance data buffer for draw primitive.
-	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride);
+	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
 
 	/// Set instance data buffer for draw primitive.
-	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _offset, uint32_t _num);
+	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
 
 	/// Set program for draw primitive.
 	void setProgram(ProgramHandle _handle);
