@@ -2144,19 +2144,19 @@ again:
 		s_ctx->destroyDynamicIndexBuffer(_handle);
 	}
 
-	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _compute)
+	DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
-		return s_ctx->createDynamicVertexBuffer(_num, _decl, _compute);
+		return s_ctx->createDynamicVertexBuffer(_num, _decl, _flags);
 	}
 
-	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl)
+	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
-		return s_ctx->createDynamicVertexBuffer(_mem, _decl);
+		return s_ctx->createDynamicVertexBuffer(_mem, _decl, _flags);
 	}
 
 	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem)

@@ -692,7 +692,7 @@ namespace bgfx
 	/// @param _mem Vertex buffer data.
 	/// @param _decl Vertex declaration.
 	///
-	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl);
+	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Update dynamic vertex buffer.
 	void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, const Memory* _mem);
