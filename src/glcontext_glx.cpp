@@ -55,10 +55,10 @@ namespace bgfx
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);
-		XLockDisplay(s_display);
+		XLockDisplay(g_bgfxX11Display);
 
 		int major, minor;
-		bool version = glXQueryVersion(s_display, &major, &minor);
+		bool version = glXQueryVersion(g_bgfxX11Display, &major, &minor);
 		BGFX_FATAL(version, Fatal::UnableToInitialize, "Failed to query GLX version");
 		BGFX_FATAL( (major == 1 && minor >= 2) || major > 1
 				, Fatal::UnableToInitialize
@@ -67,9 +67,9 @@ namespace bgfx
 				, minor
 				);
 
-		int32_t screen = DefaultScreen(s_display);
+		int32_t screen = DefaultScreen(g_bgfxX11Display);
 
-		const char* extensions = glXQueryExtensionsString(s_display, screen);
+		const char* extensions = glXQueryExtensionsString(g_bgfxX11Display, screen);
 		BX_TRACE("GLX extensions:");
 		dumpExtensions(extensions);
 
@@ -91,13 +91,13 @@ namespace bgfx
 		GLXFBConfig bestConfig = NULL;
 
 		int numConfigs;
-		GLXFBConfig* configs = glXChooseFBConfig(s_display, screen, attrsGlx, &numConfigs);
+		GLXFBConfig* configs = glXChooseFBConfig(g_bgfxX11Display, screen, attrsGlx, &numConfigs);
 
 		BX_TRACE("glX num configs %d", numConfigs);
 
 		for (int ii = 0; ii < numConfigs; ++ii)
 		{
-			m_visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
+			m_visualInfo = glXGetVisualFromFBConfig(g_bgfxX11Display, configs[ii]);
 			if (NULL != m_visualInfo)
 			{
 				BX_TRACE("---");
@@ -105,7 +105,7 @@ namespace bgfx
 				for (uint32_t attr = 6; attr < BX_COUNTOF(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
 				{
 					int value;
-					glXGetFBConfigAttrib(s_display, configs[ii], attrsGlx[attr], &value);
+					glXGetFBConfigAttrib(g_bgfxX11Display, configs[ii], attrsGlx[attr], &value);
 					BX_TRACE("glX %d/%d %2d: %4x, %8x (%8x%s)"
 							, ii
 							, numConfigs
@@ -141,7 +141,7 @@ namespace bgfx
 		BGFX_FATAL(m_visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
 
 		BX_TRACE("Create GL 2.1 context.");
-		m_context = glXCreateContext(s_display, m_visualInfo, 0, GL_TRUE);
+		m_context = glXCreateContext(g_bgfxX11Display, m_visualInfo, 0, GL_TRUE);
 		BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
 
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
@@ -158,11 +158,11 @@ namespace bgfx
 				0,
 			};
 
-			GLXContext context = glXCreateContextAttribsARB(s_display, bestConfig, 0, true, contextAttrs);
+			GLXContext context = glXCreateContextAttribsARB(g_bgfxX11Display, bestConfig, 0, true, contextAttrs);
 
 			if (NULL != context)
 			{
-				glXDestroyContext(s_display, m_context);
+				glXDestroyContext(g_bgfxX11Display, m_context);
 				m_context = context;
 			}
 		}
@@ -170,7 +170,7 @@ namespace bgfx
 		BX_UNUSED(bestConfig);
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-		XUnlockDisplay(s_display);
+		XUnlockDisplay(g_bgfxX11Display);
 
 		import();
 
@@ -203,13 +203,13 @@ namespace bgfx
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glXSwapBuffers(s_display, g_bgfxX11Window);
+		glXSwapBuffers(g_bgfxX11Display, g_bgfxX11Window);
 	}
 
 	void GlContext::destroy()
 	{
-		glXMakeCurrent(s_display, 0, 0);
-		glXDestroyContext(s_display, m_context);
+		glXMakeCurrent(g_bgfxX11Display, 0, 0);
+		glXDestroyContext(g_bgfxX11Display, m_context);
 		XFree(m_visualInfo);
 	}
 
