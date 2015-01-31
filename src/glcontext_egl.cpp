@@ -64,7 +64,7 @@ EGL_IMPORT
 	void* eglOpen()
 	{
 		void* handle = bx::dlopen("libEGL." BX_DL_EXT);
-		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library. %s", dlerror());
+		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library.");
 
 #define EGL_IMPORT_FUNC(_proto, _func) \
 			_func = (_proto)bx::dlsym(handle, #_func); \
