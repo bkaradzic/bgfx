@@ -21,17 +21,27 @@ namespace bgfx
 
 #if BX_PLATFORM_ANDROID
 	::ANativeWindow* g_bgfxAndroidWindow = NULL;
+
 	void androidSetWindow(::ANativeWindow* _window)
 	{
 		g_bgfxAndroidWindow = _window;
 	}
 #elif BX_PLATFORM_IOS
 	void* g_bgfxEaglLayer = NULL;
+
 	void iosSetEaglLayer(void* _layer)
 	{
 		g_bgfxEaglLayer = _layer;
 	}
+#elif BX_PLATFORM_LINUX
+	::Display* g_bgfxX11Display;
+	::Window   g_bgfxX11Window;
 
+	void x11SetDisplayWindow(::Display* _display, ::Window _window)
+	{
+		g_bgfxX11Display = _display;
+		g_bgfxX11Window  = _window;
+	}
 #elif BX_PLATFORM_OSX
 	void* g_bgfxNSWindow = NULL;
 
@@ -1425,7 +1435,14 @@ again:
 			}
 			else
 			{
-				_type = RendererType::OpenGL;
+				if (s_rendererCreator[RendererType::OpenGL].supported)
+				{
+					_type = RendererType::OpenGL;
+				}
+				else if (s_rendererCreator[RendererType::OpenGLES].supported)
+				{
+					_type = RendererType::OpenGLES;
+				}
 			}
 
 			if (!s_rendererCreator[_type].supported)

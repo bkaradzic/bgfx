@@ -7,8 +7,10 @@
 
 #if (BX_PLATFORM_FREEBSD || BX_PLATFORM_LINUX) && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
-#	define GLX_GLXEXT_PROTOTYPES
-#	include <glx/glxext.h>
+
+#	if BGFX_USE_GLX
+#		define GLX_GLXEXT_PROTOTYPES
+#		include <glx/glxext.h>
 
 namespace bgfx
 {
@@ -22,42 +24,33 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
 
-	static ::Display* s_display;
-	static ::Window   s_window;
-
 	struct SwapChainGL
 	{
 		SwapChainGL(::Window _window, XVisualInfo* _visualInfo, GLXContext _context)
 			: m_window(_window)
 		{
-			m_context = glXCreateContext(s_display, _visualInfo, _context, GL_TRUE);
+			m_context = glXCreateContext(g_bgfxX11Display, _visualInfo, _context, GL_TRUE);
 		}
 
 		~SwapChainGL()
 		{
-			glXMakeCurrent(s_display, 0, 0);
-			glXDestroyContext(s_display, m_context);
+			glXMakeCurrent(g_bgfxX11Display, 0, 0);
+			glXDestroyContext(g_bgfxX11Display, m_context);
 		}
 
 		void makeCurrent()
 		{
-			glXMakeCurrent(s_display, m_window, m_context);
+			glXMakeCurrent(g_bgfxX11Display, m_window, m_context);
 		}
 
 		void swapBuffers()
 		{
-			glXSwapBuffers(s_display, m_window);
+			glXSwapBuffers(g_bgfxX11Display, m_window);
 		}
 
 		Window m_window;
 		GLXContext m_context;
 	};
-
-	void x11SetDisplayWindow(::Display* _display, ::Window _window)
-	{
-		s_display = _display;
-		s_window  = _window;
-	}
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
@@ -181,13 +174,13 @@ namespace bgfx
 
 		import();
 
-		glXMakeCurrent(s_display, s_window, m_context);
+		glXMakeCurrent(g_bgfxX11Display, g_bgfxX11Window, m_context);
 
 		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
 		if (NULL != glXSwapIntervalEXT)
 		{
 			BX_TRACE("Using glXSwapIntervalEXT.");
-			glXSwapIntervalEXT(s_display, s_window, 0);
+			glXSwapIntervalEXT(g_bgfxX11Display, g_bgfxX11Window, 0);
 		}
 		else
 		{
@@ -210,7 +203,7 @@ namespace bgfx
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glXSwapBuffers(s_display, s_window);
+		glXSwapBuffers(s_display, g_bgfxX11Window);
 	}
 
 	void GlContext::destroy()
@@ -226,7 +219,7 @@ namespace bgfx
 
 		if (NULL != glXSwapIntervalEXT)
 		{
-			glXSwapIntervalEXT(s_display, s_window, interval);
+			glXSwapIntervalEXT(g_bgfxX11Display, g_bgfxX11Window, interval);
 		}
 		else if (NULL != glXSwapIntervalMESA)
 		{
@@ -257,8 +250,8 @@ namespace bgfx
 	{
 		if (NULL == _swapChain)
 		{
-			glXMakeCurrent(s_display, s_window, m_context);
-			glXSwapBuffers(s_display, s_window);
+			glXMakeCurrent(g_bgfxX11Display, g_bgfxX11Window, m_context);
+			glXSwapBuffers(g_bgfxX11Display, g_bgfxX11Window);
 		}
 		else
 		{
@@ -271,7 +264,7 @@ namespace bgfx
 	{
 		if (NULL == _swapChain)
 		{
-			glXMakeCurrent(s_display, s_window, m_context);
+			glXMakeCurrent(g_bgfxX11Display, g_bgfxX11Window, m_context);
 		}
 		else
 		{
@@ -294,5 +287,7 @@ namespace bgfx
 	}
 
 } // namespace bgfx
+
+#	endif // BGFX_USE_GLX
 
 #endif // (BX_PLATFORM_FREEBSD || BX_PLATFORM_LINUX) && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)

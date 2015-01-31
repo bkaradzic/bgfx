@@ -63,8 +63,8 @@ EGL_IMPORT
 
 	void* eglOpen()
 	{
-		void* handle = bx::dlopen("libEGL.dll");
-		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library.");
+		void* handle = bx::dlopen("libEGL." BX_DL_EXT);
+		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library. %s", dlerror());
 
 #define EGL_IMPORT_FUNC(_proto, _func) \
 			_func = (_proto)bx::dlsym(handle, #_func); \
@@ -184,6 +184,9 @@ EGL_IMPORT
 #	if BX_PLATFORM_WINDOWS
 		ndt = GetDC(g_bgfxHwnd);
 		nwh = g_bgfxHwnd;
+#	elif BX_PLATFORM_LINUX
+		ndt = g_bgfxX11Display;
+		nwh = g_bgfxX11Window;
 #	endif // BX_PLATFORM_
 		m_display = eglGetDisplay(ndt);
 		BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
@@ -278,6 +281,7 @@ EGL_IMPORT
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
 	{
+		BX_UNUSED(_width, _height);
 #	if BX_PLATFORM_ANDROID
 		EGLint format;
 		eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
@@ -334,8 +338,8 @@ EGL_IMPORT
 	void GlContext::import()
 	{
 		BX_TRACE("Import:");
-#	if BX_PLATFORM_WINDOWS
-		void* glesv2 = bx::dlopen("libGLESv2.dll");
+#	if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
+		void* glesv2 = bx::dlopen("libGLESv2." BX_DL_EXT);
 #		define GL_EXTENSION(_optional, _proto, _func, _import) \
 					{ \
 						if (NULL == _func) \
