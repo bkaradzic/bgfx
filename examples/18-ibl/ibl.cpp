@@ -303,7 +303,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	settings.m_specular = true;
 	settings.m_diffuseIbl = true;
 	settings.m_specularIbl = true;
-	settings.m_showDiffColorWheel = false;
+	settings.m_showDiffColorWheel = true;
 	settings.m_showSpecColorWheel = false;
 	settings.m_crossCubemapPreview = false;
 
