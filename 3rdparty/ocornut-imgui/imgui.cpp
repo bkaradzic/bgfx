@@ -1,4 +1,4 @@
-// ImGui library v1.30 wip
+// ImGui library v1.30
 // See ImGui::ShowTestWindow() for sample code.
 // Read 'Programmer guide' below for notes on how to setup ImGui in your codebase.
 // Get latest version at https://github.com/ocornut/imgui
@@ -17,7 +17,7 @@
  - SAMPLE CODE
  - FONT DATA
 
-
+ 
  MISSION STATEMENT
  =================
 
@@ -35,7 +35,7 @@
  - doesn't look fancy, doesn't animate
  - limited layout features, intricate layouts are typically crafted in code
  - occasionally use statically sized buffers for string manipulations - won't crash, but some long text may be clipped
-
+ 
 
  END-USER GUIDE
  ==============
@@ -70,7 +70,7 @@
 
  - getting started:
    - initialisation: call ImGui::GetIO() and fill the 'Settings' data.
-   - every frame:
+   - every frame: 
       1/ in your mainloop or right after you got your keyboard/mouse info, call ImGui::GetIO() and fill the 'Input' data, then call ImGui::NewFrame().
       2/ use any ImGui function you want between NewFrame() and Render()
       3/ ImGui::Render() to render all the accumulated command-lists. it will call your RenderDrawListFn handler that you set in the IO structure.
@@ -91,15 +91,15 @@
         unsigned char* pixels;
         int width, height, bytes_per_pixels;
         io.Fonts->GetTexDataAsRGBA32(pixels, &width, &height, &bytes_per_pixels);
-        // TODO: copy texture to graphics memory.
+        // TODO: copy texture to graphics memory. 
         // TODO: store your texture pointer/identifier in 'io.Fonts->TexID'
 
         // Application main loop
-        while (true)
+        for (;;)
         {
             // 1) get low-level input
             // e.g. on Win32, GetKeyboardState(), or poll your events, etc.
-
+            
             // 2) TODO: fill all fields of IO structure and call NewFrame
             ImGuiIO& io = ImGui::GetIO();
             io.MousePos = ...
@@ -127,7 +127,8 @@
 
  Occasionally introducing changes that are breaking the API. The breakage are generally minor and easy to fix.
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
-
+ 
+ - 2015/01/19 (1.30) - renamed ImGuiStorage::GetIntPtr()/GetFloatPtr() to GetIntRef()/GetIntRef() because Ptr was conflicting with actual pointer storage functions.
  - 2015/01/11 (1.30) - big font/image API change! now loads TTF file. allow for multiple fonts. no need for a PNG loader.
               (1.30) - removed GetDefaultFontData(). uses io.Fonts->GetTextureData*() API to retrieve uncompressed pixels.
                        this sequence:
@@ -170,7 +171,7 @@
      to do so they need an unique ID. unique ID are typically derived from a string label, an indice or a pointer.
      when you call Button("OK") the button shows "OK" and also use "OK" as an ID.
    - ID are uniquely scoped within Windows so no conflict can happen if you have two buttons called "OK" in two different Windows.
-     within a same Window, use PushID() / PopID() to easily create scopes and avoid ID conflicts.
+     within a same Window, use PushID() / PopID() to easily create scopes and avoid ID conflicts. 
      so if you have a loop creating "multiple" items, you can use PushID() / PopID() with the index of each item, or their pointer, etc.
      some functions like TreeNode() implicitly creates a scope for you by calling PushID()
    - when dealing with trees, ID are important because you want to preserve the opened/closed state of tree nodes.
@@ -233,10 +234,11 @@
  ==================
 
  - misc: merge or clarify ImVec4 / ImGuiAabb, they are essentially duplicate containers
+!- i/o: avoid requesting mouse capture if button held and initial click was out of reach for imgui
  - window: add horizontal scroll
  - window: fix resize grip rendering scaling along with Rounding style setting
  - window: autofit feedback loop when user relies on any dynamic layout (window width multiplier, column). maybe just clearly drop manual autofit?
- - window: add a way for very transient windows (non-saved, temporary overlay over hundreds of objects) to "clean" up from the global window list.
+ - window: add a way for very transient windows (non-saved, temporary overlay over hundreds of objects) to "clean" up from the global window list. 
  - window: allow resizing of child windows (possibly given min/max for each axis?)
  - window: background options for child windows, border option (disable rounding)
  - window: resizing from any sides? + mouse cursor directives for app.
@@ -273,14 +275,14 @@
  - slider: initial absolute click is imprecise. change to relative movement slider? hide mouse cursor, allow more precise input using less screen-space.
  - text edit: clean up the mess caused by converting UTF-8 <> wchar
  - text edit: centered text for slider or input text to it matches typical positioning.
- - text edit: flag to disable live update of the user buffer.
+ - text edit: flag to disable live update of the user buffer. 
  - text edit: field resize behavior - field could stretch when being edited? hover tooltip shows more text?
  - text edit: add multi-line text edit
  - tree: add treenode/treepush int variants? because (void*) cast from int warns on some platforms/settings
  - settings: write more decent code to allow saving/loading new fields
  - settings: api for per-tool simple persistent data (bool,int,float) in .ini file
  ! style: store rounded corners in texture to use 1 quad per corner (filled and wireframe).
- - style: checkbox: padding for "active" color should be a multiplier of the
+ - style: checkbox: padding for "active" color should be a multiplier of the 
  - style: colorbox not always square?
  - log: LogButtons() options for specifying depth and/or hiding depth slider
  - log: have more control over the log scope (e.g. stop logging when leaving current tree node scope)
@@ -362,7 +364,7 @@ namespace IMGUI_STB_NAMESPACE
 #define STBRP_STATIC
 #define STB_RECT_PACK_IMPLEMENTATION
 #endif
-#include <stb/stb_rect_pack.h>
+#include "stb_rect_pack.h"
 
 #define STBTT_malloc(x,u)  ((void)(u), ImGui::MemAlloc(x))
 #define STBTT_free(x,u)    ((void)(u), ImGui::MemFree(x))
@@ -371,11 +373,11 @@ namespace IMGUI_STB_NAMESPACE
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #endif
-#include <stb/stb_truetype.h>
+#include "stb_truetype.h"
 
 #define STB_TEXTEDIT_STRING ImGuiTextEditState
 #define STB_TEXTEDIT_CHARTYPE ImWchar
-#include <stb/stb_textedit.h>
+#include "stb_textedit.h"
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -425,11 +427,6 @@ static ImU32        ImCrc32(const void* data, size_t data_size, ImU32 seed);
 static bool         ImLoadFileToMemory(const char* filename, const char* file_open_mode, void** out_file_data, size_t* out_file_size, size_t padding_bytes = 0);
 static int          ImUpperPowerOfTwo(int v) { v--; v |= v >> 1; v |= v >> 2; v |= v >> 4; v |= v >> 8; v |= v >> 16; v++; return v; }
 
-// Helpers: Color Conversion
-static ImU32        ImConvertColorFloat4ToU32(const ImVec4& in);
-static void         ImConvertColorRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v);
-static void         ImConvertColorHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b);
-
 // Helpers: UTF-8 <> wchar
 static int          ImTextCharToUtf8(char* buf, size_t buf_size, unsigned int in_char);                                // return output UTF-8 bytes count
 static ptrdiff_t    ImTextStrToUtf8(char* buf, size_t buf_size, const ImWchar* in_text, const ImWchar* in_text_end);   // return output UTF-8 bytes count
@@ -444,6 +441,17 @@ static int          ImTextCountUtf8BytesFromWchar(const ImWchar* in_text, const 
 
 static const char*  GetClipboardTextFn_DefaultImpl();
 static void         SetClipboardTextFn_DefaultImpl(const char* text);
+
+//-----------------------------------------------------------------------------
+// Texture Atlas data
+//-----------------------------------------------------------------------------
+
+// Technically we should use the rect pack API for that, but it's just simpler to hard-core the positions for now.
+// As we start using more of the texture atlas (for rounded corners) we can change that.
+static const ImVec2 TEX_ATLAS_SIZE(32, 32);
+static const ImVec2 TEX_ATLAS_POS_MOUSE_CURSOR_BLACK(1, 3);
+static const ImVec2 TEX_ATLAS_POS_MOUSE_CURSOR_WHITE(14, 3);
+static const ImVec2 TEX_ATLAS_SIZE_MOUSE_CURSOR(12, 19);
 
 //-----------------------------------------------------------------------------
 // User facing structures
@@ -512,7 +520,9 @@ static ImFontAtlas GDefaultFontAtlas;
 
 ImGuiIO::ImGuiIO()
 {
+    // Most fields are initialized with zero
     memset(this, 0, sizeof(*this));
+
     DisplaySize = ImVec2(-1.0f, -1.0f);
     DeltaTime = 1.0f/60.0f;
     IniSavingRate = 5.0f;
@@ -520,7 +530,6 @@ ImGuiIO::ImGuiIO()
     LogFilename = "imgui_log.txt";
     Fonts = &GDefaultFontAtlas;
     FontGlobalScale = 1.0f;
-    FontAllowUserScaling = false;
     MousePos = ImVec2(-1,-1);
     MousePosPrev = ImVec2(-1,-1);
     MouseDoubleClickTime = 0.30f;
@@ -651,37 +660,37 @@ static const char* ImStristr(const char* haystack, const char* needle, const cha
 }
 
 // Pass data_size==0 for zero-terminated string
-static ImU32 ImCrc32(const void* data, size_t data_size, ImU32 seed = 0)
-{
+static ImU32 ImCrc32(const void* data, size_t data_size, ImU32 seed = 0) 
+{ 
     static ImU32 crc32_lut[256] = { 0 };
     if (!crc32_lut[1])
     {
         const ImU32 polynomial = 0xEDB88320;
-        for (ImU32 i = 0; i < 256; i++)
-        {
-            ImU32 crc = i;
-            for (ImU32 j = 0; j < 8; j++)
-                crc = (crc >> 1) ^ (ImU32(-int(crc & 1)) & polynomial);
-            crc32_lut[i] = crc;
+        for (ImU32 i = 0; i < 256; i++) 
+        { 
+            ImU32 crc = i; 
+            for (ImU32 j = 0; j < 8; j++) 
+                crc = (crc >> 1) ^ (ImU32(-int(crc & 1)) & polynomial); 
+            crc32_lut[i] = crc; 
         }
     }
-    ImU32 crc = ~seed;
+    ImU32 crc = ~seed; 
     const unsigned char* current = (const unsigned char*)data;
 
     if (data_size > 0)
     {
         // Known size
-        while (data_size--)
-            crc = (crc >> 8) ^ crc32_lut[(crc & 0xFF) ^ *current++];
+        while (data_size--) 
+            crc = (crc >> 8) ^ crc32_lut[(crc & 0xFF) ^ *current++]; 
     }
     else
     {
         // Zero-terminated string
         while (unsigned char c = *current++)
-            crc = (crc >> 8) ^ crc32_lut[(crc & 0xFF) ^ c];
+            crc = (crc >> 8) ^ crc32_lut[(crc & 0xFF) ^ c]; 
     }
-    return ~crc;
-}
+    return ~crc; 
+} 
 
 static size_t ImFormatString(char* buf, size_t buf_size, const char* fmt, ...)
 {
@@ -700,7 +709,7 @@ static size_t ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_li
     return (w == -1) ? buf_size : (size_t)w;
 }
 
-static ImU32 ImConvertColorFloat4ToU32(const ImVec4& in)
+ImU32 ImGui::ColorConvertFloat4ToU32(const ImVec4& in)
 {
     ImU32 out  = ((ImU32)(ImSaturate(in.x)*255.f));
     out |= ((ImU32)(ImSaturate(in.y)*255.f) << 8);
@@ -711,7 +720,7 @@ static ImU32 ImConvertColorFloat4ToU32(const ImVec4& in)
 
 // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
 // Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
-static void ImConvertColorRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v)
+void ImGui::ColorConvertRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v)
 {
     float K = 0.f;
     if (g < b)
@@ -733,8 +742,8 @@ static void ImConvertColorRGBtoHSV(float r, float g, float b, float& out_h, floa
 
 // Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
 // also http://en.wikipedia.org/wiki/HSL_and_HSV
-static void ImConvertColorHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b)
-{
+void ImGui::ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b)
+{   
     if (s == 0.0f)
     {
         // gray
@@ -1044,9 +1053,9 @@ struct ImGuiWindow
     bool                    SkipItems;                          // == Visible && !Collapsed
     int                     AutoFitFrames;
     bool                    AutoFitOnlyGrows;
-    int                     SetWindowPosAllowFlags;             // bit ImGuiSetCondition_*** specify if SetWindowPos() call is allowed with this particular flag.
-    int                     SetWindowSizeAllowFlags;            // bit ImGuiSetCondition_*** specify if SetWindowSize() call is allowed with this particular flag.
-    int                     SetWindowCollapsedAllowFlags;       // bit ImGuiSetCondition_*** specify if SetWindowCollapsed() call is allowed with this particular flag.
+    int                     SetWindowPosAllowFlags;             // bit ImGuiSetCondition_*** specify if SetWindowPos() call is allowed with this particular flag. 
+    int                     SetWindowSizeAllowFlags;            // bit ImGuiSetCondition_*** specify if SetWindowSize() call is allowed with this particular flag. 
+    int                     SetWindowCollapsedAllowFlags;       // bit ImGuiSetCondition_*** specify if SetWindowCollapsed() call is allowed with this particular flag. 
 
     ImGuiDrawContext        DC;
     ImVector<ImGuiID>       IDStack;
@@ -1084,8 +1093,8 @@ public:
     float       TitleBarHeight() const                  { return (Flags & ImGuiWindowFlags_NoTitleBar) ? 0 : FontSize() + GImGui.Style.FramePadding.y * 2.0f; }
     ImGuiAabb   TitleBarAabb() const                    { return ImGuiAabb(Pos, Pos + ImVec2(SizeFull.x, TitleBarHeight())); }
     ImVec2      WindowPadding() const                   { return ((Flags & ImGuiWindowFlags_ChildWindow) && !(Flags & ImGuiWindowFlags_ShowBorders)) ? ImVec2(1,1) : GImGui.Style.WindowPadding; }
-    ImU32       Color(ImGuiCol idx, float a=1.f) const  { ImVec4 c = GImGui.Style.Colors[idx]; c.w *= GImGui.Style.Alpha * a; return ImConvertColorFloat4ToU32(c); }
-    ImU32       Color(const ImVec4& col) const          { ImVec4 c = col; c.w *= GImGui.Style.Alpha; return ImConvertColorFloat4ToU32(c); }
+    ImU32       Color(ImGuiCol idx, float a=1.f) const  { ImVec4 c = GImGui.Style.Colors[idx]; c.w *= GImGui.Style.Alpha * a; return ImGui::ColorConvertFloat4ToU32(c); }
+    ImU32       Color(const ImVec4& col) const          { ImVec4 c = col; c.w *= GImGui.Style.Alpha; return ImGui::ColorConvertFloat4ToU32(c); }
 };
 
 static ImGuiWindow* GetCurrentWindow()
@@ -1093,6 +1102,11 @@ static ImGuiWindow* GetCurrentWindow()
     IM_ASSERT(GImGui.CurrentWindow != NULL);    // ImGui::NewFrame() hasn't been called yet?
     GImGui.CurrentWindow->Accessed = true;
     return GImGui.CurrentWindow;
+}
+
+static void SetActiveId(ImGuiID id) 
+{
+    GImGui.ActiveId = id; 
 }
 
 static void RegisterAliveId(const ImGuiID& id)
@@ -1148,7 +1162,16 @@ float ImGuiStorage::GetFloat(ImU32 key, float default_val) const
     return it->val_f;
 }
 
-int* ImGuiStorage::GetIntPtr(ImGuiID key, int default_val)
+void* ImGuiStorage::GetVoidPtr(ImGuiID key) const
+{
+    ImVector<Pair>::iterator it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    if (it == Data.end() || it->key != key)
+        return NULL;
+    return it->val_p;
+}
+
+// References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
+int* ImGuiStorage::GetIntRef(ImGuiID key, int default_val)
 {
     ImVector<Pair>::iterator it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
@@ -1156,7 +1179,7 @@ int* ImGuiStorage::GetIntPtr(ImGuiID key, int default_val)
     return &it->val_i;
 }
 
-float* ImGuiStorage::GetFloatPtr(ImGuiID key, float default_val)
+float* ImGuiStorage::GetFloatRef(ImGuiID key, float default_val)
 {
     ImVector<Pair>::iterator it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
@@ -1186,6 +1209,17 @@ void ImGuiStorage::SetFloat(ImU32 key, float val)
         return;
     }
     it->val_f = val;
+}
+
+void ImGuiStorage::SetVoidPtr(ImU32 key, void* val)
+{
+    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    if (it == Data.end() || it->key != key)
+    {
+        Data.insert(it, Pair(key, val));
+        return;
+    }
+    it->val_p = val;
 }
 
 void ImGuiStorage::SetAllInt(int v)
@@ -1288,7 +1322,7 @@ bool ImGuiTextFilter::PassFilter(const char* val) const
 
 //-----------------------------------------------------------------------------
 
-// On some platform vsnprintf() takes va_list by reference and modifies it.
+// On some platform vsnprintf() takes va_list by reference and modifies it. 
 // va_copy is the 'correct' way to copy a va_list but Visual Studio prior to 2013 doesn't have it.
 #ifndef va_copy
 #define va_copy(dest, src) (dest = src)
@@ -1329,7 +1363,7 @@ void ImGuiTextBuffer::append(const char* fmt, ...)
 ImGuiWindow::ImGuiWindow(const char* name)
 {
     Name = ImStrdup(name);
-    ID = GetID(name);
+    ID = GetID(name); 
     IDStack.push_back(ID);
 
     PosFloat = Pos = ImVec2(0.0f, 0.0f);
@@ -1457,7 +1491,7 @@ void* ImGui::MemRealloc(void* ptr, size_t sz)
 {
     return GImGui.IO.MemReallocFn(ptr, sz);
 }
-
+    
 static ImGuiIniData* FindWindowSettings(const char* name)
 {
     ImGuiState& g = GImGui;
@@ -1503,7 +1537,7 @@ static void LoadSettings()
         const char* line_end = line_start;
         while (line_end < buf_end && *line_end != '\n' && *line_end != '\r')
             line_end++;
-
+        
         if (line_start[0] == '[' && line_end > line_start && line_end[-1] == ']')
         {
             char name[64];
@@ -1649,7 +1683,7 @@ void ImGui::NewFrame()
     // Clear reference to active widget if the widget isn't alive anymore
     g.HoveredId = 0;
     if (!g.ActiveIdIsAlive && g.ActiveIdPreviousFrame == g.ActiveId && g.ActiveId != 0)
-        g.ActiveId = 0;
+        SetActiveId(0);
     g.ActiveIdPreviousFrame = g.ActiveId;
     g.ActiveIdIsAlive = false;
 
@@ -1824,18 +1858,18 @@ void ImGui::Render()
 
     const bool first_render_of_the_frame = (g.FrameCountRendered != g.FrameCount);
     g.FrameCountRendered = g.FrameCount;
-
+    
     if (first_render_of_the_frame)
     {
         // Hide implicit window if it hasn't been used
-        IM_ASSERT(g.CurrentWindowStack.size() == 1);    // Mismatched Begin/End
+        IM_ASSERT(g.CurrentWindowStack.size() == 1);    // Mismatched Begin/End 
         if (g.CurrentWindow && !g.CurrentWindow->Accessed)
             g.CurrentWindow->Visible = false;
         ImGui::End();
 
         // Select window for move/focus when we're done with all our widgets (we only consider non-childs windows here)
         if (g.ActiveId == 0 && g.HoveredId == 0 && g.HoveredRootWindow != NULL && g.IO.MouseClicked[0])
-            g.ActiveId = g.HoveredRootWindow->GetID("#MOVE");
+            SetActiveId(g.HoveredRootWindow->GetID("#MOVE"));
 
         // Sort the window list so that all child windows are after their parent
         // We cannot do that on FocusWindow() because childs may not exist yet
@@ -1883,6 +1917,21 @@ void ImGui::Render()
             ImGuiWindow* window = g.Windows[i];
             if (window->Visible && (window->Flags & ImGuiWindowFlags_Tooltip))
                 window->AddToRenderList();
+        }
+
+        if (g.IO.MouseDrawCursor)
+        {
+            const ImVec2 pos = g.IO.MousePos;
+            const ImVec2 size = TEX_ATLAS_SIZE_MOUSE_CURSOR;
+            const ImTextureID tex_id = g.IO.Fonts->TexID;
+            const ImVec2 tex_uv_scale(1.0f/g.IO.Fonts->TexWidth, 1.0f/g.IO.Fonts->TexHeight);
+            static ImDrawList draw_list;
+            draw_list.Clear();
+            draw_list.AddImage(tex_id, pos+ImVec2(1,0), pos+ImVec2(1,0) + size, TEX_ATLAS_POS_MOUSE_CURSOR_BLACK * tex_uv_scale, (TEX_ATLAS_POS_MOUSE_CURSOR_BLACK + size) * tex_uv_scale, 0x30000000); // Shadow
+            draw_list.AddImage(tex_id, pos+ImVec2(2,0), pos+ImVec2(2,0) + size, TEX_ATLAS_POS_MOUSE_CURSOR_BLACK * tex_uv_scale, (TEX_ATLAS_POS_MOUSE_CURSOR_BLACK + size) * tex_uv_scale, 0x30000000); // Shadow
+            draw_list.AddImage(tex_id, pos,             pos + size,             TEX_ATLAS_POS_MOUSE_CURSOR_BLACK * tex_uv_scale, (TEX_ATLAS_POS_MOUSE_CURSOR_BLACK + size) * tex_uv_scale, 0xFF000000); // Black border
+            draw_list.AddImage(tex_id, pos,             pos + size,             TEX_ATLAS_POS_MOUSE_CURSOR_WHITE * tex_uv_scale, (TEX_ATLAS_POS_MOUSE_CURSOR_WHITE + size) * tex_uv_scale, 0xFFFFFFFF); // White fill
+            g.RenderDrawLists.push_back(&draw_list);
         }
 
         // Render
@@ -1981,7 +2030,7 @@ static float CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x)
         wrap_pos_x = ImGui::GetContentRegionMax().x;
     if (wrap_pos_x > 0.0f)
         wrap_pos_x += window->Pos.x; // wrap_pos_x is provided is window local space
-
+    
     const float wrap_width = wrap_pos_x > 0.0f ? ImMax(wrap_pos_x - pos.x, 0.00001f) : 0.0f;
     return wrap_width;
 }
@@ -2055,7 +2104,7 @@ static void RenderCollapseTriangle(ImVec2 p_min, bool opened, float scale, bool 
         b = center + ImVec2(-0.500f,0.866f)*r;
         c = center + ImVec2(-0.500f,-0.866f)*r;
     }
-
+    
     if (shadow && (window->Flags & ImGuiWindowFlags_ShowBorders) != 0)
         window->DrawList->AddTriangleFilled(a+ImVec2(2,2), b+ImVec2(2,2), c+ImVec2(2,2), window->Color(ImGuiCol_BorderShadow));
     window->DrawList->AddTriangleFilled(a, b, c, window->Color(ImGuiCol_Border));
@@ -2078,7 +2127,7 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, wrap_width, text, text_display_end, NULL);
 
     // Cancel out character spacing for the last character of a line (it is baked into glyph->XAdvance field)
-    const float font_scale = font_size / font->FontSize;
+    const float font_scale = font_size / font->FontSize; 
     const float character_spacing_x = 1.0f * font_scale;
     if (text_size.x > 0.0f)
         text_size.x -= character_spacing_x;
@@ -2322,7 +2371,7 @@ void ImGui::EndChild()
             sz.x = 0;
         if (window->Flags & ImGuiWindowFlags_ChildWindowAutoFitY)
             sz.y = 0;
-
+        
         ImGui::End();
         ItemSize(sz);
     }
@@ -2386,7 +2435,7 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
     return window;
 }
 
-// Push a new ImGui window to add widgets to.
+// Push a new ImGui window to add widgets to. 
 // - A default window called "Debug" is automatically stacked at the beginning of every frame.
 // - This can be called multiple times during the frame with the same window name to append content to the same window.
 // - The window name is used as a unique identifier to preserve window information across frames (and save rudimentary information to the .ini file). Note that you can use ## to append unique data that isn't displayed, e.g. "My window##1" will use "My window##1" as unique window ID but display "My window" to the user.
@@ -2431,6 +2480,9 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
         g.SetNextWindowCollapsedCond = 0;
     }
 
+    // Find parent
+    ImGuiWindow* parent_window = (flags & ImGuiWindowFlags_ChildWindow) != 0 ? g.CurrentWindowStack[g.CurrentWindowStack.size()-2] : NULL;
+
     // Find root (if we are a child window)
     size_t root_idx = g.CurrentWindowStack.size() - 1;
     while (root_idx > 0)
@@ -2451,7 +2503,6 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
     if (first_begin_of_the_frame)
     {
         window->DrawList->Clear();
-        window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
         window->Visible = true;
 
         // New windows appears in front
@@ -2463,18 +2514,26 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
 
         if (flags & ImGuiWindowFlags_ChildWindow)
         {
-            ImGuiWindow* parent_window = g.CurrentWindowStack[g.CurrentWindowStack.size()-2];
             parent_window->DC.ChildWindows.push_back(window);
             window->Pos = window->PosFloat = parent_window->DC.CursorPos;
             window->SizeFull = size;
         }
+    }
 
-        // Outer clipping rectangle
-        if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_ComboBox))
-            PushClipRect(g.CurrentWindowStack[g.CurrentWindowStack.size()-2]->ClipRectStack.back());
-        else
-            PushClipRect(ImVec4(0.0f, 0.0f, g.IO.DisplaySize.x, g.IO.DisplaySize.y));
+    // Setup texture
+    window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
 
+    // Setup outer clipping rectangle
+    if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_ComboBox))
+        PushClipRect(parent_window->ClipRectStack.back());
+    else if (g.IO.DisplayVisibleMin.x != g.IO.DisplayVisibleMax.x && g.IO.DisplayVisibleMin.y != g.IO.DisplayVisibleMax.y)
+        PushClipRect(ImVec4(g.IO.DisplayVisibleMin.x, g.IO.DisplayVisibleMin.y, g.IO.DisplayVisibleMax.x, g.IO.DisplayVisibleMax.y));
+    else
+        PushClipRect(ImVec4(0.0f, 0.0f, g.IO.DisplaySize.x, g.IO.DisplaySize.y));
+
+    // Setup and draw window
+    if (first_begin_of_the_frame)
+    {
         // Seed ID stack with our window pointer
         window->IDStack.resize(0);
         ImGui::PushID(window);
@@ -2496,7 +2555,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
             }
             else
             {
-                g.ActiveId = 0;
+                SetActiveId(0);
             }
         }
 
@@ -2509,11 +2568,14 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
         // Clamp into view
         if (!(window->Flags & ImGuiWindowFlags_ChildWindow) && !(window->Flags & ImGuiWindowFlags_Tooltip))
         {
+            // FIXME: Parameterize padding.
             const ImVec2 pad = ImVec2(window->FontSize()*2.0f, window->FontSize()*2.0f); // FIXME: Parametrize of clarify this behavior.
             if (g.IO.DisplaySize.x > 0.0f && g.IO.DisplaySize.y > 0.0f) // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
             {
-                window->PosFloat = ImMax(window->PosFloat + window->Size, pad) - window->Size;
-                window->PosFloat = ImMin(window->PosFloat, ImVec2(g.IO.DisplaySize.x, g.IO.DisplaySize.y) - pad);
+                ImVec2 clip_min = pad;
+                ImVec2 clip_max = g.IO.DisplaySize - pad;
+                window->PosFloat = ImMax(window->PosFloat + window->Size, clip_min) - window->Size;
+                window->PosFloat = ImMin(window->PosFloat, clip_max);
             }
             window->SizeFull = ImMax(window->SizeFull, style.WindowMinSize);
         }
@@ -2690,7 +2752,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
                 const float pos_y_norm = ImSaturate(window->ScrollY / ImMax(0.0f, window->SizeContentsFit.y));
                 const ImU32 grab_col = window->Color(held ? ImGuiCol_ScrollbarGrabActive : hovered ? ImGuiCol_ScrollbarGrabHovered : ImGuiCol_ScrollbarGrab);
                 window->DrawList->AddRectFilled(
-                    ImVec2(scrollbar_bb.Min.x, ImLerp(scrollbar_bb.Min.y, scrollbar_bb.Max.y, pos_y_norm)),
+                    ImVec2(scrollbar_bb.Min.x, ImLerp(scrollbar_bb.Min.y, scrollbar_bb.Max.y, pos_y_norm)), 
                     ImVec2(scrollbar_bb.Max.x, ImLerp(scrollbar_bb.Min.y, scrollbar_bb.Max.y, pos_y_norm + grab_size_y_norm)), grab_col);
             }
 
@@ -2723,7 +2785,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
         window->DC.CurrentLineHeight = window->DC.PrevLineHeight = 0.0f;
         window->DC.LogLineHeight = window->DC.CursorPos.y - 9999.0f;
         window->DC.ChildWindows.resize(0);
-        window->DC.ItemWidth.resize(0);
+        window->DC.ItemWidth.resize(0); 
         window->DC.ItemWidth.push_back(window->ItemWidthDefault);
         window->DC.AllowKeyboardFocus.resize(0);
         window->DC.AllowKeyboardFocus.push_back(true);
@@ -2759,22 +2821,6 @@ bool ImGui::Begin(const char* name, bool* p_opened, ImVec2 size, float fill_alph
             RenderText(text_min, name);
             if (clip_title)
                 PopClipRect();
-        }
-    }
-    else
-    {
-        // Short path when we do multiple Begin in the same frame.
-        window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
-
-        // Outer clipping rectangle
-        if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_ComboBox))
-        {
-            ImGuiWindow* parent_window = g.CurrentWindowStack[g.CurrentWindowStack.size()-2];
-            PushClipRect(parent_window->ClipRectStack.back());
-        }
-        else
-        {
-            PushClipRect(ImVec4(0.0f, 0.0f, g.IO.DisplaySize.x, g.IO.DisplaySize.y));
         }
     }
 
@@ -3522,7 +3568,7 @@ static bool ButtonBehaviour(const ImGuiAabb& bb, const ImGuiID& id, bool* out_ho
         {
             if (g.IO.MouseClicked[0])
             {
-                g.ActiveId = id;
+                SetActiveId(id);
                 FocusWindow(window);
             }
             else if (repeat && g.ActiveId && ImGui::IsMouseClicked(0, true))
@@ -3543,7 +3589,7 @@ static bool ButtonBehaviour(const ImGuiAabb& bb, const ImGuiID& id, bool* out_ho
         {
             if (hovered)
                 pressed = true;
-            g.ActiveId = 0;
+            SetActiveId(0);
         }
     }
 
@@ -3630,7 +3676,7 @@ bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size)
     if (!ItemAdd(bb, &id))
         return false;
 
-	bool hovered, held;
+    bool hovered, held;
     bool pressed = ButtonBehaviour(bb, id, &hovered, &held, true);
 
     return pressed;
@@ -3666,28 +3712,68 @@ static bool CloseWindowButton(bool* p_opened)
     return pressed;
 }
 
-void ImGui::Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, ImU32 tint_col, ImU32 border_col)
+void ImGui::Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
 
     ImGuiAabb bb(window->DC.CursorPos, window->DC.CursorPos + size);
-    if (border_col != 0)
+    if (border_col.w > 0.0f)
         bb.Max += ImVec2(2,2);
-    ItemSize(bb.GetSize(), &bb.Min);
+    ItemSize(bb);
     if (!ItemAdd(bb, NULL))
         return;
 
-    if (border_col != 0)
+    if (border_col.w > 0.0f)
     {
-        window->DrawList->AddRect(bb.Min, bb.Max, border_col, 0.0f);
-        window->DrawList->AddImage(user_texture_id, bb.Min+ImVec2(1,1), bb.Max-ImVec2(1,1), uv0, uv1, tint_col);
+        window->DrawList->AddRect(bb.Min, bb.Max, window->Color(border_col), 0.0f);
+        window->DrawList->AddImage(user_texture_id, bb.Min+ImVec2(1,1), bb.Max-ImVec2(1,1), uv0, uv1, window->Color(tint_col));
     }
     else
     {
-        window->DrawList->AddImage(user_texture_id, bb.Min, bb.Max, uv0, uv1, tint_col);
+        window->DrawList->AddImage(user_texture_id, bb.Min, bb.Max, uv0, uv1, window->Color(tint_col));
     }
+}
+
+// frame_padding < 0: uses FramePadding from style (default)
+// frame_padding = 0: no framing
+// frame_padding > 0: set framing size
+// The color used are the button colors.
+bool ImGui::ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, int frame_padding, const ImVec4& bg_col)
+{
+    ImGuiState& g = GImGui;
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    const ImGuiStyle& style = g.Style;
+
+    // Default to using texture ID as ID. User can still push string/integer prefixes.
+    // We could hash the size/uv to create a unique ID but that would prevent the user from animating buttons.
+    ImGui::PushID((void *)user_texture_id);
+    const ImGuiID id = window->GetID("#image");
+    ImGui::PopID();
+
+    const ImVec2 padding = (frame_padding >= 0) ? ImVec2((float)frame_padding, (float)frame_padding) : style.FramePadding;
+    const ImGuiAabb bb(window->DC.CursorPos, window->DC.CursorPos + size + padding*2);
+    const ImGuiAabb image_bb(window->DC.CursorPos + padding, window->DC.CursorPos + padding + size); 
+    ItemSize(bb);
+    if (!ItemAdd(bb, &id))
+        return false;
+
+    bool hovered, held;
+    bool pressed = ButtonBehaviour(bb, id, &hovered, &held, true);
+
+    // Render
+    const ImU32 col = window->Color((hovered && held) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+    if (padding.x > 0.0f || padding.y > 0.0f)
+        RenderFrame(bb.Min, bb.Max, col);
+    if (bg_col.w > 0.0f)
+        window->DrawList->AddRectFilled(image_bb.Min, image_bb.Max, window->Color(bg_col));
+    window->DrawList->AddImage(user_texture_id, image_bb.Min, image_bb.Max, uv0, uv1);
+
+    return pressed;
 }
 
 // Start logging ImGui output to TTY
@@ -3773,7 +3859,7 @@ void ImGui::LogButtons()
 
     ImGui::PushID("LogButtons");
     const bool log_to_tty = ImGui::Button("Log To TTY");
-    ImGui::SameLine();
+    ImGui::SameLine();      
     const bool log_to_file = ImGui::Button("Log To File");
     ImGui::SameLine();
     const bool log_to_clipboard = ImGui::Button("Log To Clipboard");
@@ -3843,7 +3929,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, const bool d
 
     // When logging is enabled, if automatically expand tree nodes (but *NOT* collapsing headers.. seems like sensible behaviour).
     // NB- If we are above max depth we still allow manually opened nodes to be logged.
-    if (!display_frame)
+    if (!display_frame) 
         if (g.LogEnabled && window->DC.TreeDepth < g.LogAutoExpandMaxDepth)
             opened = true;
 
@@ -3899,7 +3985,7 @@ void ImGui::BulletTextV(const char* fmt, va_list args)
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
-
+    
     const ImGuiStyle& style = g.Style;
 
     static char buf[1024];
@@ -4159,7 +4245,7 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
     bool start_text_input = false;
     if (tab_focus_requested || (hovered && g.IO.MouseClicked[0]))
     {
-        g.ActiveId = id;
+        SetActiveId(id);
         FocusWindow(window);
 
         const bool is_ctrl_down = g.IO.KeyCtrl;
@@ -4177,7 +4263,7 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
         char text_buf[64];
         ImFormatString(text_buf, IM_ARRAYSIZE(text_buf), "%.*f", decimal_precision, *v);
 
-        g.ActiveId = g.SliderAsInputTextId;
+        SetActiveId(g.SliderAsInputTextId);
         g.HoveredId = 0;
         window->FocusItemUnregister();      // Our replacement slider will override the focus ID (registered previously to allow for a TAB focus to happen)
         value_changed = ImGui::InputText(label, text_buf, IM_ARRAYSIZE(text_buf), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_AutoSelectAll);
@@ -4186,15 +4272,18 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
             // First frame
             IM_ASSERT(g.ActiveId == id);    // InputText ID should match the Slider ID (else we'd need to store them both which is also possible)
             g.SliderAsInputTextId = g.ActiveId;
-            g.ActiveId = id;
+            SetActiveId(id);
             g.HoveredId = id;
         }
         else
         {
             if (g.ActiveId == g.SliderAsInputTextId)
-                g.ActiveId = id;
+                SetActiveId(id);
             else
-                g.ActiveId = g.SliderAsInputTextId = 0;
+            {
+                SetActiveId(0);
+                g.SliderAsInputTextId = 0;
+            }
         }
         if (value_changed)
         {
@@ -4214,7 +4303,7 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
             if (!is_unbound)
             {
                 const float normalized_pos = ImClamp((g.IO.MousePos.x - slider_effective_x1) / slider_effective_w, 0.0f, 1.0f);
-
+                
                 // Linear slider
                 //float new_value = ImLerp(v_min, v_max, normalized_pos);
 
@@ -4258,7 +4347,7 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
         }
         else
         {
-            g.ActiveId = 0;
+            SetActiveId(0);
         }
     }
 
@@ -4474,7 +4563,7 @@ static void Plot(ImGuiPlotType plot_type, const char* label, float (*values_gett
         const float t = ImClamp((g.IO.MousePos.x - graph_bb.Min.x) / (graph_bb.Max.x - graph_bb.Min.x), 0.0f, 0.9999f);
         const int v_idx = (int)(t * (values_count + ((plot_type == ImGuiPlotType_Lines) ? -1 : 0)));
         IM_ASSERT(v_idx >= 0 && v_idx < values_count);
-
+        
         const float v0 = values_getter(data, (v_idx + values_offset) % values_count);
         const float v1 = values_getter(data, (v_idx + 1 + values_offset) % values_count);
         if (plot_type == ImGuiPlotType_Lines)
@@ -4740,15 +4829,15 @@ namespace IMGUI_STB_NAMESPACE
 {
 #endif
 #define STB_TEXTEDIT_IMPLEMENTATION
-#include <stb/stb_textedit.h>
+#include "stb_textedit.h"
 #ifdef IMGUI_STB_NAMESPACE
 }
 #endif
 
 void ImGuiTextEditState::OnKeyPressed(int key)
-{
-    stb_textedit_key(this, &StbState, key);
-    CursorAnimReset();
+{ 
+    stb_textedit_key(this, &StbState, key); 
+    CursorAnimReset(); 
 }
 
 void ImGuiTextEditState::UpdateScrollOffset()
@@ -4757,7 +4846,7 @@ void ImGuiTextEditState::UpdateScrollOffset()
     const float scroll_x_increment = Width * 0.25f;
     const float cursor_offset_x = Font->CalcTextSizeW(FontSize, FLT_MAX, Text, Text+StbState.cursor, NULL).x;
     if (ScrollX > cursor_offset_x)
-        ScrollX = ImMax(0.0f, cursor_offset_x - scroll_x_increment);
+        ScrollX = ImMax(0.0f, cursor_offset_x - scroll_x_increment);    
     else if (ScrollX < cursor_offset_x - Width)
         ScrollX = cursor_offset_x - Width + scroll_x_increment;
 }
@@ -4992,14 +5081,14 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
             ImTextStrFromUtf8(edit_state.Text, IM_ARRAYSIZE(edit_state.Text), buf, NULL);
             edit_state.ScrollX = 0.0f;
             edit_state.Width = w;
-            stb_textedit_initialize_state(&edit_state.StbState, true);
+            stb_textedit_initialize_state(&edit_state.StbState, true); 
             edit_state.CursorAnimReset();
             edit_state.LastCursorPos = ImVec2(-1.f,-1.f);
 
             if (tab_focus_requested || is_ctrl_down)
                 select_all = true;
         }
-        g.ActiveId = id;
+        SetActiveId(id);
         FocusWindow(window);
     }
     else if (io.MouseClicked[0])
@@ -5007,7 +5096,7 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
         // Release focus when we click outside
         if (g.ActiveId == id)
         {
-            g.ActiveId = 0;
+            SetActiveId(0);
         }
     }
 
@@ -5021,7 +5110,7 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
         edit_state.BufSize = buf_size < IM_ARRAYSIZE(edit_state.Text) ? buf_size : IM_ARRAYSIZE(edit_state.Text);
         edit_state.Font = window->Font();
         edit_state.FontSize = window->FontSize();
-
+    
         const float mx = g.IO.MousePos.x - frame_bb.Min.x - style.FramePadding.x;
         const float my = window->FontSize()*0.5f;   // Flatten mouse because we are doing a single-line edit
 
@@ -5045,6 +5134,25 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
         if (edit_state.SelectedAllMouseLock && !io.MouseDown[0])
              edit_state.SelectedAllMouseLock = false;
 
+        if (g.IO.InputCharacters[0])
+        {
+            // Process text input (before we check for Return because using some IME will effectively send a Return?)
+            for (int n = 0; n < IM_ARRAYSIZE(g.IO.InputCharacters) && g.IO.InputCharacters[n]; n++)
+            {
+                const ImWchar c = g.IO.InputCharacters[n];
+                if (c)
+                {
+                    // Insert character if they pass filtering
+                    if (InputTextFilterCharacter(c, flags))
+                        continue;
+                    edit_state.OnKeyPressed(c);
+                }
+            }
+
+            // Consume characters
+            memset(g.IO.InputCharacters, 0, sizeof(g.IO.InputCharacters));
+        }
+
         const int k_mask = (is_shift_down ? STB_TEXTEDIT_K_SHIFT : 0);
         if (IsKeyPressedMap(ImGuiKey_LeftArrow))                { edit_state.OnKeyPressed(is_ctrl_down ? STB_TEXTEDIT_K_WORDLEFT | k_mask : STB_TEXTEDIT_K_LEFT | k_mask); }
         else if (IsKeyPressedMap(ImGuiKey_RightArrow))          { edit_state.OnKeyPressed(is_ctrl_down ? STB_TEXTEDIT_K_WORDRIGHT | k_mask  : STB_TEXTEDIT_K_RIGHT | k_mask); }
@@ -5052,8 +5160,8 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
         else if (IsKeyPressedMap(ImGuiKey_End))                 { edit_state.OnKeyPressed(is_ctrl_down ? STB_TEXTEDIT_K_TEXTEND | k_mask : STB_TEXTEDIT_K_LINEEND | k_mask); }
         else if (IsKeyPressedMap(ImGuiKey_Delete))              { edit_state.OnKeyPressed(STB_TEXTEDIT_K_DELETE | k_mask); }
         else if (IsKeyPressedMap(ImGuiKey_Backspace))           { edit_state.OnKeyPressed(STB_TEXTEDIT_K_BACKSPACE | k_mask); }
-        else if (IsKeyPressedMap(ImGuiKey_Enter))               { g.ActiveId = 0; enter_pressed = true; }
-        else if (IsKeyPressedMap(ImGuiKey_Escape))              { g.ActiveId = 0; cancel_edit = true; }
+        else if (IsKeyPressedMap(ImGuiKey_Enter))               { SetActiveId(0); enter_pressed = true; }
+        else if (IsKeyPressedMap(ImGuiKey_Escape))              { SetActiveId(0); cancel_edit = true; }
         else if (is_ctrl_down && IsKeyPressedMap(ImGuiKey_Z))   { edit_state.OnKeyPressed(STB_TEXTEDIT_K_UNDO); }
         else if (is_ctrl_down && IsKeyPressedMap(ImGuiKey_Y))   { edit_state.OnKeyPressed(STB_TEXTEDIT_K_REDO); }
         else if (is_ctrl_down && IsKeyPressedMap(ImGuiKey_A))   { edit_state.SelectAll(); }
@@ -5105,24 +5213,6 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
                     ImGui::MemFree(clipboard_filtered);
                 }
             }
-        }
-        else if (g.IO.InputCharacters[0])
-        {
-            // Text input
-            for (int n = 0; n < IM_ARRAYSIZE(g.IO.InputCharacters) && g.IO.InputCharacters[n]; n++)
-            {
-                const ImWchar c = g.IO.InputCharacters[n];
-                if (c)
-                {
-                    // Insert character if they pass filtering
-                    if (InputTextFilterCharacter(c, flags))
-                        continue;
-                    edit_state.OnKeyPressed(c);
-                }
-            }
-
-            // Consume characters
-            memset(g.IO.InputCharacters, 0, sizeof(g.IO.InputCharacters));
         }
 
         edit_state.CursorAnim += g.IO.DeltaTime;
@@ -5196,7 +5286,7 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
             }
         }
     }
-
+    
     RenderFrame(frame_bb.Min, frame_bb.Max, window->Color(ImGuiCol_FrameBg), true, style.FrameRounding);
 
     const ImVec2 font_off_up = ImVec2(0.0f,window->FontSize()+1.0f);    // FIXME: those offsets are part of the style or font API
@@ -5225,7 +5315,7 @@ bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputT
         // Draw blinking cursor
         if (g.InputTextState.CursorIsVisible())
             window->DrawList->AddRect(cursor_pos - font_off_up + ImVec2(0,2), cursor_pos + font_off_dn - ImVec2(0,3), window->Color(ImGuiCol_Text));
-
+        
         // Notify OS of text input position
         if (io.ImeSetInputScreenPosFn && ImLengthSqr(edit_state.LastCursorPos - cursor_pos) > 0.0001f)
             io.ImeSetInputScreenPosFn((int)cursor_pos.x - 1, (int)(cursor_pos.y - window->FontSize()));   // -1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.
@@ -5394,7 +5484,7 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
                 FocusWindow(window);
         }
     }
-
+    
     if (g.ActiveComboID == id)
     {
         const ImVec2 backup_pos = ImGui::GetCursorPos();
@@ -5434,7 +5524,7 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             if (!items_getter(data, item_idx, &item_text))
                 item_text = "*Unknown item*";
             ImGui::TextUnformatted(item_text);
-
+            
             if (item_selected)
             {
                 if (menu_toggled)
@@ -5442,7 +5532,7 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             }
             if (item_pressed)
             {
-                g.ActiveId = 0;
+                SetActiveId(0);
                 g.ActiveComboID = 0;
                 value_changed = true;
                 *current_item = item_idx;
@@ -5452,7 +5542,7 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
         }
         ImGui::EndChild();
         ImGui::SetCursorPos(backup_pos);
-
+        
         if (!combo_item_active && g.ActiveId != 0)
             g.ActiveComboID = 0;
     }
@@ -5533,7 +5623,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
     const ImVec4 col_display(fx, fy, fz, 1.0f);
 
     if (edit_mode == ImGuiColorEditMode_HSV)
-        ImConvertColorRGBtoHSV(fx, fy, fz, fx, fy, fz);
+        ImGui::ColorConvertRGBtoHSV(fx, fy, fz, fx, fy, fz);
 
     int ix = (int)(fx * 255.0f + 0.5f);
     int iy = (int)(fy * 255.0f + 0.5f);
@@ -5591,7 +5681,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
             value_changed |= ImGui::InputText("##Text", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_CharsHexadecimal);
             ImGui::PopItemWidth();
             char* p = buf;
-            while (*p == '#' || *p == ' ' || *p == '\t')
+            while (*p == '#' || *p == ' ' || *p == '\t') 
                 p++;
 
             // Treat at unsigned (%X is unsigned)
@@ -5635,7 +5725,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
     fz = iz / 255.0f;
     fw = iw / 255.0f;
     if (edit_mode == 1)
-        ImConvertColorHSVtoRGB(fx, fy, fz, fx, fy, fz);
+        ImGui::ColorConvertHSVtoRGB(fx, fy, fz, fx, fy, fz);
 
     if (value_changed)
     {
@@ -5693,7 +5783,7 @@ void ImGui::Spacing()
 }
 
 // Advance cursor given item size.
-static void ItemSize(ImVec2 size, ImVec2* adjust_start_offset)
+static void ItemSize(ImVec2 size, ImVec2* adjust_vertical_offset)
 {
     ImGuiState& g = GImGui;
     ImGuiWindow* window = GetCurrentWindow();
@@ -5701,8 +5791,8 @@ static void ItemSize(ImVec2 size, ImVec2* adjust_start_offset)
         return;
 
     const float line_height = ImMax(window->DC.CurrentLineHeight, size.y);
-    if (adjust_start_offset)
-        adjust_start_offset->y = adjust_start_offset->y + (line_height - size.y) * 0.5f;
+    if (adjust_vertical_offset)
+        adjust_vertical_offset->y = adjust_vertical_offset->y + (line_height - size.y) * 0.5f;
 
     // Always align ourselves on pixel boundaries
     window->DC.CursorPosPrevLine = ImVec2(window->DC.CursorPos.x + size.x, window->DC.CursorPos.y);
@@ -5714,9 +5804,9 @@ static void ItemSize(ImVec2 size, ImVec2* adjust_start_offset)
     window->DC.CurrentLineHeight = 0.0f;
 }
 
-static void ItemSize(const ImGuiAabb& aabb, ImVec2* adjust_start_offset)
-{
-    ItemSize(aabb.GetSize(), adjust_start_offset);
+static void ItemSize(const ImGuiAabb& aabb, ImVec2* adjust_start_offset) 
+{ 
+    ItemSize(aabb.GetSize(), adjust_start_offset); 
 }
 
 static bool IsClipped(const ImGuiAabb& bb)
@@ -5760,7 +5850,7 @@ void ImGui::SameLine(int column_x, int spacing_w)
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
-
+    
     float x, y;
     if (column_x != 0)
     {
@@ -5885,7 +5975,7 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
         for (int i = 1; i < window->DC.ColumnsCount; i++)
         {
             float x = window->Pos.x + GetColumnOffset(i);
-
+            
             const ImGuiID column_id = window->DC.ColumnsSetID + ImGuiID(i);
             const ImGuiAabb column_aabb(ImVec2(x-4,y1),ImVec2(x+4,y2));
 
@@ -6021,68 +6111,84 @@ void ImDrawList::Clear()
     texture_id_stack.resize(0);
 }
 
-void ImDrawList::SetClipRect(const ImVec4& clip_rect)
+void ImDrawList::AddDrawCmd()
+{
+    ImDrawCmd draw_cmd;
+    draw_cmd.vtx_count = 0;
+    draw_cmd.clip_rect = clip_rect_stack.empty() ? GNullClipRect : clip_rect_stack.back();
+    draw_cmd.texture_id = texture_id_stack.empty() ? NULL : texture_id_stack.back();
+    draw_cmd.user_callback = NULL;
+    draw_cmd.user_callback_data = NULL;
+    commands.push_back(draw_cmd);
+}
+
+void ImDrawList::AddCallback(ImDrawCallback callback, void* callback_data)
 {
     ImDrawCmd* current_cmd = commands.empty() ? NULL : &commands.back();
-    if (current_cmd && current_cmd->vtx_count == 0)
+    if (!current_cmd || current_cmd->vtx_count != 0 || current_cmd->user_callback != NULL)
     {
-        // Reuse existing command (high-level clipping may have discarded vertices submitted earlier)
-        // FIXME-OPT: Possibly even reuse previous command.
-        current_cmd->clip_rect = clip_rect;
+        AddDrawCmd();
+        current_cmd = &commands.back();
+    }
+    current_cmd->user_callback = callback;
+    current_cmd->user_callback_data = callback_data;
+
+    // Force a new command after us
+    // We function this way so that the most common calls (AddLine, AddRect..) always have a command to add to without doing any check.
+    AddDrawCmd();
+}
+
+void ImDrawList::UpdateClipRect()
+{
+    ImDrawCmd* current_cmd = commands.empty() ? NULL : &commands.back();
+    if (!current_cmd || (current_cmd->vtx_count != 0) || current_cmd->user_callback != NULL)
+    {
+        AddDrawCmd();
     }
     else
     {
-        ImDrawCmd draw_cmd;
-        draw_cmd.vtx_count = 0;
-        draw_cmd.clip_rect = clip_rect;
-        draw_cmd.texture_id = texture_id_stack.back();
-        commands.push_back(draw_cmd);
+        current_cmd->clip_rect = clip_rect_stack.empty() ? GNullClipRect : clip_rect_stack.back();
     }
 }
 
 void ImDrawList::PushClipRect(const ImVec4& clip_rect)
 {
-    SetClipRect(clip_rect);
     clip_rect_stack.push_back(clip_rect);
+    UpdateClipRect();
 }
 
 void ImDrawList::PopClipRect()
 {
+    IM_ASSERT(clip_rect_stack.size() > 0);
     clip_rect_stack.pop_back();
-    const ImVec4 clip_rect = clip_rect_stack.empty() ? GNullClipRect : clip_rect_stack.back();
-    SetClipRect(clip_rect);
+    UpdateClipRect();
 }
 
-void ImDrawList::SetTextureID(const ImTextureID& texture_id)
+void ImDrawList::UpdateTextureID()
 {
     ImDrawCmd* current_cmd = commands.empty() ? NULL : &commands.back();
-    if (current_cmd && (current_cmd->vtx_count == 0 || current_cmd->texture_id == texture_id))
+    const ImTextureID texture_id = texture_id_stack.empty() ? NULL : texture_id_stack.back();
+    if (!current_cmd || (current_cmd->vtx_count != 0 && current_cmd->texture_id != texture_id) || current_cmd->user_callback != NULL)
     {
-        // Reuse existing command
-        // FIXME-OPT: Possibly even reuse previous command.
-        current_cmd->texture_id = texture_id;
+        AddDrawCmd();
     }
     else
     {
-        ImDrawCmd draw_cmd;
-        draw_cmd.vtx_count = 0;
-        draw_cmd.clip_rect = clip_rect_stack.empty() ? GNullClipRect: clip_rect_stack.back();
-        draw_cmd.texture_id = texture_id;
-        commands.push_back(draw_cmd);
+        current_cmd->texture_id = texture_id;
     }
 }
 
 void ImDrawList::PushTextureID(const ImTextureID& texture_id)
 {
-    SetTextureID(texture_id);
     texture_id_stack.push_back(texture_id);
+    UpdateTextureID();
 }
 
 void ImDrawList::PopTextureID()
 {
+    IM_ASSERT(texture_id_stack.size() > 0);
     texture_id_stack.pop_back();
-    const ImTextureID texture_id = texture_id_stack.empty() ? NULL : texture_id_stack.back();
-    SetTextureID(texture_id);
+    UpdateTextureID();
 }
 
 void ImDrawList::ReserveVertices(unsigned int vtx_count)
@@ -6112,6 +6218,7 @@ void ImDrawList::AddVtxUV(const ImVec2& pos, ImU32 col, const ImVec2& uv)
     vtx_write++;
 }
 
+// NB: memory should be reserved for 6 vertices by the caller.
 void ImDrawList::AddVtxLine(const ImVec2& a, const ImVec2& b, ImU32 col)
 {
     const float length = sqrtf(ImLengthSqr(b - a));
@@ -6154,7 +6261,7 @@ void ImDrawList::AddArc(const ImVec2& center, float rad, ImU32 col, int a_min, i
         }
         circle_vtx_builds = true;
     }
-
+    
     if (tris)
     {
         ReserveVertices((unsigned int)(a_max-a_min) * 3);
@@ -6234,7 +6341,7 @@ void ImDrawList::AddRectFilled(const ImVec2& a, const ImVec2& b, ImU32 col, floa
         AddVtx(ImVec2(a.x+r,a.y), col);
         AddVtx(ImVec2(b.x-r,b.y), col);
         AddVtx(ImVec2(a.x+r,b.y), col);
-
+        
         float top_y = (rounding_corners & 1) ? a.y+r : a.y;
         float bot_y = (rounding_corners & 8) ? b.y-r : b.y;
         AddVtx(ImVec2(a.x,top_y), col);
@@ -6335,7 +6442,7 @@ void ImDrawList::AddImage(ImTextureID user_texture_id, const ImVec2& a, const Im
     if ((col >> 24) == 0)
         return;
 
-    const bool push_texture_id = user_texture_id != texture_id_stack.back();
+    const bool push_texture_id = texture_id_stack.empty() || user_texture_id != texture_id_stack.back();
     if (push_texture_id)
         PushTextureID(user_texture_id);
 
@@ -6409,7 +6516,7 @@ void    ImFontAtlas::ClearTexData()
 
 void    ImFontAtlas::Clear()
 {
-    ClearInputData();
+    ClearInputData(); 
     ClearTexData();
     for (size_t i = 0; i < Fonts.size(); i++)
     {
@@ -6548,7 +6655,7 @@ bool    ImFontAtlas::Build()
         IM_ASSERT(data.OutFont && !data.OutFont->IsLoaded());
         const int font_offset = stbtt_GetFontOffsetForIndex((unsigned char*)data.TTFData, data.FontNo);
         IM_ASSERT(font_offset >= 0);
-        if (!stbtt_InitFont(&data.FontInfo, (unsigned char*)data.TTFData, font_offset))
+        if (!stbtt_InitFont(&data.FontInfo, (unsigned char*)data.TTFData, font_offset)) 
             return false;
 
         if (!data.GlyphRanges)
@@ -6571,8 +6678,8 @@ bool    ImFontAtlas::Build()
 
     // Pack our extra data rectangle first, so it will be on the upper-left corner of our texture (UV will have small values).
     stbrp_rect extra_rect;
-    extra_rect.w = 16;
-    extra_rect.h = 16;
+    extra_rect.w = (int)TEX_ATLAS_SIZE.x;
+    extra_rect.h = (int)TEX_ATLAS_SIZE.y;
     stbrp_pack_rects((stbrp_context*)spc.pack_info, &extra_rect, 1);
     TexExtraDataPos = ImVec2(extra_rect.x, extra_rect.y);
 
@@ -6582,6 +6689,7 @@ bool    ImFontAtlas::Build()
     stbrp_rect* buf_rects = (stbrp_rect*)ImGui::MemAlloc(total_glyph_count * sizeof(stbrp_rect));
     stbtt_pack_range* buf_ranges = (stbtt_pack_range*)ImGui::MemAlloc(total_glyph_range_count * sizeof(stbtt_pack_range));
     memset(buf_packedchars, 0, total_glyph_count * sizeof(stbtt_packedchar));
+    memset(buf_rects, 0, total_glyph_count * sizeof(stbrp_rect));              // Unnessary but let's clear this for the sake of sanity.
     memset(buf_ranges, 0, total_glyph_range_count * sizeof(stbtt_pack_range));
 
     // First pass: pack all glyphs (no rendering at this point, we are working with glyph sizes only)
@@ -6696,11 +6804,51 @@ bool    ImFontAtlas::Build()
     buf_ranges = NULL;
     ClearInputData();
 
+    // Render into our custom data block
+    RenderCustomTexData();
+
+    return true;
+}
+
+void ImFontAtlas::RenderCustomTexData()
+{
+    IM_ASSERT(TexExtraDataPos.x == 0.0f && TexExtraDataPos.y == 0.0f);
+
     // Draw white pixel into texture and make UV points to it
     TexPixelsAlpha8[0] = TexPixelsAlpha8[1] = TexPixelsAlpha8[TexWidth+0] = TexPixelsAlpha8[TexWidth+1] = 0xFF;
     TexUvWhitePixel = ImVec2((TexExtraDataPos.x + 0.5f) / TexWidth, (TexExtraDataPos.y + 0.5f) / TexHeight);
 
-    return true;
+    // Draw a mouse cursor into texture
+    // Because our font uses an alpha texture, we have to spread the cursor in 2 parts (black/white) which will be rendered separately.
+    const char cursor_pixels[] =
+    {
+        "X           "
+        "XX          "
+        "X.X         "
+        "X..X        "
+        "X...X       "
+        "X....X      "
+        "X.....X     "
+        "X......X    "
+        "X.......X   "
+        "X........X  "
+        "X.........X "
+        "X..........X"
+        "X......XXXXX"
+        "X...X..X    "
+        "X..X X..X   "
+        "X.X  X..X   "
+        "XX    X..X  "
+        "      X..X  "
+        "       XX   "
+    };
+    IM_ASSERT(sizeof(cursor_pixels)-1 == (int)TEX_ATLAS_SIZE_MOUSE_CURSOR.x * (int)TEX_ATLAS_SIZE_MOUSE_CURSOR.y);
+    for (int y = 0, n = 0; y < 19; y++)
+        for (int x = 0; x < 12; x++, n++)
+        {
+            TexPixelsAlpha8[((int)TEX_ATLAS_POS_MOUSE_CURSOR_BLACK.x + x) + ((int)TEX_ATLAS_POS_MOUSE_CURSOR_BLACK.y + y) * TexWidth] = (cursor_pixels[n] == 'X') ? 0xFF : 0x00;
+            TexPixelsAlpha8[((int)TEX_ATLAS_POS_MOUSE_CURSOR_WHITE.x + x) + ((int)TEX_ATLAS_POS_MOUSE_CURSOR_WHITE.y + y) * TexWidth] = (cursor_pixels[n] == '.') ? 0xFF : 0x00;
+        }
 }
 
 //-----------------------------------------------------------------------------
@@ -6752,7 +6900,7 @@ const ImWchar*  ImFontAtlas::GetGlyphRangesJapanese()
 {
     // Store the 1946 ideograms code points as successive offsets from the initial unicode codepoint 0x4E00. Each offset has an implicit +1.
     // This encoding helps us reduce the source code size.
-    static const short offsets_from_0x4E00[] =
+    static const short offsets_from_0x4E00[] = 
     {
         -1,0,1,3,0,0,0,0,1,0,5,1,1,0,7,4,6,10,0,1,9,9,7,1,3,19,1,10,7,1,0,1,0,5,1,0,6,4,2,6,0,0,12,6,8,0,3,5,0,1,0,9,0,0,8,1,1,3,4,5,13,0,0,8,2,17,
         4,3,1,1,9,6,0,0,0,2,1,3,2,22,1,9,11,1,13,1,3,12,0,5,9,2,0,6,12,5,3,12,4,1,2,16,1,1,4,6,5,3,0,6,13,15,5,12,8,14,0,0,6,15,3,6,0,18,8,1,6,14,1,
@@ -6793,7 +6941,7 @@ const ImWchar*  ImFontAtlas::GetGlyphRangesJapanese()
         0x0020, 0x00FF, // Basic Latin + Latin Supplement
         0x3040, 0x309F, // Hiragana, Katakana
         0xFF00, 0xFFEF, // Half-width characters
-        0,
+        0, 
     };
     if (!ranges_unpacked)
     {
@@ -6859,7 +7007,7 @@ static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const
             *out_char = c;
             return 1;
         }
-        if ((*str & 0xe0) == 0xc0)
+        if ((*str & 0xe0) == 0xc0) 
         {
             if (in_text_end && in_text_end - (const char*)str < 2) return -1;
             if (*str < 0xc2) return -1;
@@ -6869,7 +7017,7 @@ static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const
             *out_char = c;
             return 2;
         }
-        if ((*str & 0xf0) == 0xe0)
+        if ((*str & 0xf0) == 0xe0) 
         {
             if (in_text_end && in_text_end - (const char*)str < 3) return -1;
             if (*str == 0xe0 && (str[1] < 0xa0 || str[1] > 0xbf)) return -1;
@@ -6882,7 +7030,7 @@ static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const
             *out_char = c;
             return 3;
         }
-        if ((*str & 0xf8) == 0xf0)
+        if ((*str & 0xf8) == 0xf0) 
         {
             if (in_text_end && in_text_end - (const char*)str < 4) return -1;
             if (*str > 0xf4) return -1;
@@ -6940,13 +7088,13 @@ static int ImTextCharToUtf8(char* buf, size_t buf_size, unsigned int c)
     {
         size_t i = 0;
         size_t n = buf_size;
-        if (c < 0x80)
+        if (c < 0x80) 
         {
             if (i+1 > n) return 0;
             buf[i++] = (char)c;
             return 1;
-        }
-        else if (c < 0x800)
+        } 
+        else if (c < 0x800) 
         {
             if (i+2 > n) return 0;
             buf[i++] = (char)(0xc0 + (c >> 6));
@@ -6956,8 +7104,8 @@ static int ImTextCharToUtf8(char* buf, size_t buf_size, unsigned int c)
         else if (c >= 0xdc00 && c < 0xe000)
         {
             return 0;
-        }
-        else if (c >= 0xd800 && c < 0xdc00)
+        } 
+        else if (c >= 0xd800 && c < 0xdc00) 
         {
             if (i+4 > n) return 0;
             buf[i++] = (char)(0xf0 + (c >> 18));
@@ -7139,7 +7287,7 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
         unsigned int c;
         const int bytes_count = ImTextCharFromUtf8(&c, s, text_end);
         s += bytes_count > 0 ? bytes_count : 1;
-
+        
         if (c == '\n')
         {
             text_size.x = ImMax(text_size.x, line_width);
@@ -7147,7 +7295,7 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
             line_width = 0.0f;
             continue;
         }
-
+        
         float char_width = 0.0f;
         if (const Glyph* glyph = FindGlyph((unsigned short)c))
             char_width = glyph->XAdvance * scale;
@@ -7194,7 +7342,7 @@ ImVec2 ImFont::CalcTextSizeW(float size, float max_width, const ImWchar* text_be
             line_width = 0.0f;
             continue;
         }
-
+        
         float char_width = 0.0f;
         if (const Glyph* glyph = FindGlyph((unsigned short)c))
             char_width = glyph->XAdvance * scale;
@@ -7346,15 +7494,15 @@ static const char*  GetClipboardTextFn_DefaultImpl()
         ImGui::MemFree(buf_local);
         buf_local = NULL;
     }
-    if (!OpenClipboard(NULL))
+    if (!OpenClipboard(NULL)) 
         return NULL;
-    HANDLE buf_handle = GetClipboardData(CF_TEXT);
+    HANDLE buf_handle = GetClipboardData(CF_TEXT); 
     if (buf_handle == NULL)
         return NULL;
     if (char* buf_global = (char*)GlobalLock(buf_handle))
         buf_local = ImStrdup(buf_global);
-    GlobalUnlock(buf_handle);
-    CloseClipboard();
+    GlobalUnlock(buf_handle); 
+    CloseClipboard(); 
     return buf_local;
 }
 
@@ -7365,13 +7513,13 @@ static void SetClipboardTextFn_DefaultImpl(const char* text)
         return;
     const char* text_end = text + strlen(text);
     const int buf_length = (int)(text_end - text) + 1;
-    HGLOBAL buf_handle = GlobalAlloc(GMEM_MOVEABLE, (SIZE_T)buf_length * sizeof(char));
+    HGLOBAL buf_handle = GlobalAlloc(GMEM_MOVEABLE, (SIZE_T)buf_length * sizeof(char)); 
     if (buf_handle == NULL)
         return;
-    char* buf_global = (char *)GlobalLock(buf_handle);
+    char* buf_global = (char *)GlobalLock(buf_handle); 
     memcpy(buf_global, text, (size_t)(text_end - text));
     buf_global[text_end - text] = 0;
-    GlobalUnlock(buf_handle);
+    GlobalUnlock(buf_handle); 
     EmptyClipboard();
     SetClipboardData(CF_TEXT, buf_handle);
     CloseClipboard();
@@ -7542,7 +7690,12 @@ void ImGui::ShowTestWindow(bool* opened)
     static float fill_alpha = 0.65f;
 
     const ImGuiWindowFlags layout_flags = (no_titlebar ? ImGuiWindowFlags_NoTitleBar : 0) | (no_border ? 0 : ImGuiWindowFlags_ShowBorders) | (no_resize ? ImGuiWindowFlags_NoResize : 0) | (no_move ? ImGuiWindowFlags_NoMove : 0) | (no_scrollbar ? ImGuiWindowFlags_NoScrollbar : 0);
-    ImGui::Begin("ImGui Test", opened, ImVec2(550,680), fill_alpha, layout_flags);
+    if (!ImGui::Begin("ImGui Test", opened, ImVec2(550,680), fill_alpha, layout_flags))
+    {
+        // Early out if the window is collapsed, as an optimization.
+        ImGui::End();
+        return;
+    }
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
     ImGui::Text("ImGui says hello.");
@@ -7560,7 +7713,7 @@ void ImGui::ShowTestWindow(bool* opened)
     {
         ImGui::Checkbox("no titlebar", &no_titlebar); ImGui::SameLine(150);
         ImGui::Checkbox("no border", &no_border); ImGui::SameLine(300);
-        ImGui::Checkbox("no resize", &no_resize);
+        ImGui::Checkbox("no resize", &no_resize); 
         ImGui::Checkbox("no move", &no_move); ImGui::SameLine(150);
         ImGui::Checkbox("no scrollbar", &no_scrollbar);
         ImGui::SliderFloat("fill alpha", &fill_alpha, 0.0f, 1.0f);
@@ -7610,7 +7763,7 @@ void ImGui::ShowTestWindow(bool* opened)
         if (ImGui::Button("Button")) { printf("Clicked\n"); a ^= 1; }
         if (a)
         {
-            ImGui::SameLine();
+            ImGui::SameLine(); 
             ImGui::Text("Thanks for clicking me!");
         }
 
@@ -7679,7 +7832,8 @@ void ImGui::ShowTestWindow(bool* opened)
             // Most compiler appears to support UTF-8 in source code (with Visual Studio you need to save your file as 'UTF-8 without signature')
             // However for the sake for maximum portability here we are *not* including raw UTF-8 character in this source file, instead we encode the string with hexadecimal constants.
             // In your own application be reasonable and use UTF-8 in source or retrieve the data from file system!
-            ImGui::TextWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to specify extra character ranges. Note that characters values are preserved even if the font cannot be displayed, so you can safely copy & paste garbled characters into another application.");
+            // Note that characters values are preserved even if the font cannot be displayed, so you can safely copy & paste garbled characters into another application.
+            ImGui::TextWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to load extra character ranges.");
             ImGui::Text("Hiragana: \xe3\x81\x8b\xe3\x81\x8d\xe3\x81\x8f\xe3\x81\x91\xe3\x81\x93 (kakikukeko)");
             ImGui::Text("Kanjis: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e (nihongo)");
             static char buf[32] = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
@@ -7694,7 +7848,7 @@ void ImGui::ShowTestWindow(bool* opened)
             float tex_w = (float)ImGui::GetIO().Fonts->TexWidth;
             float tex_h = (float)ImGui::GetIO().Fonts->TexHeight;
             ImTextureID tex_id = ImGui::GetIO().Fonts->TexID;
-            ImGui::Image(tex_id, ImVec2(tex_w, tex_h), ImVec2(0,0), ImVec2(1,1), 0xFFFFFFFF, 0x999999FF);
+            ImGui::Image(tex_id, ImVec2(tex_w, tex_h), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
             if (ImGui::IsItemHovered())
             {
                 ImGui::BeginTooltip();
@@ -7705,9 +7859,22 @@ void ImGui::ShowTestWindow(bool* opened)
                 ImGui::Text("Max: (%.2f, %.2f)", focus_x + focus_sz, focus_y + focus_sz);
                 ImVec2 uv0 = ImVec2((focus_x) / tex_w, (focus_y) / tex_h);
                 ImVec2 uv1 = ImVec2((focus_x + focus_sz) / tex_w, (focus_y + focus_sz) / tex_h);
-                ImGui::Image(tex_id, ImVec2(128,128), uv0, uv1, 0xFFFFFFFF, 0x999999FF);
+                ImGui::Image(tex_id, ImVec2(128,128), uv0, uv1, ImColor(255,255,255,255), ImColor(255,255,255,128));
                 ImGui::EndTooltip();
             }
+            ImGui::TextWrapped("And now some textured buttons..");
+            static int pressed_count = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if (i > 0)
+                    ImGui::SameLine();
+                ImGui::PushID(i);
+                int frame_padding = -1 + i;     // -1 padding uses default padding
+                if (ImGui::ImageButton(tex_id, ImVec2(32,32), ImVec2(0,0), ImVec2(32.0f/tex_w,32/tex_h), frame_padding))
+                    pressed_count += 1;
+                ImGui::PopID();
+            }
+            ImGui::Text("Pressed %d times.", pressed_count);
             ImGui::TreePop();
         }
 
@@ -7719,7 +7886,20 @@ void ImGui::ShowTestWindow(bool* opened)
         ImGui::RadioButton("radio b", &e, 1); ImGui::SameLine();
         ImGui::RadioButton("radio c", &e, 2);
 
-        ImGui::Text("Hover me");
+        // Color buttons, demonstrate using PushID() to add unique identifier in the ID stack, and changing style.
+        for (int i = 0; i < 7; i++)
+        {
+            if (i > 0) ImGui::SameLine();
+            ImGui::PushID(i);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(i/7.0f, 0.6f, 0.6f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(i/7.0f, 0.7f, 0.7f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(i/7.0f, 0.8f, 0.8f));
+            ImGui::Button("Click");
+            ImGui::PopStyleColor(3);
+            ImGui::PopID();
+        }
+
+        ImGui::Text("Hover over me");
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("I am a tooltip");
 
@@ -7802,19 +7982,19 @@ void ImGui::ShowTestWindow(bool* opened)
         ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
 
         static bool pause;
-        static ImVector<float> values; if (values.empty()) { values.resize(100); memset(&values.front(), 0, values.size()*sizeof(float)); }
-        static size_t values_offset = 0;
-        if (!pause)
-        {
+        static ImVector<float> values; if (values.empty()) { values.resize(100); memset(&values.front(), 0, values.size()*sizeof(float)); } 
+        static size_t values_offset = 0; 
+        if (!pause) 
+        { 
             // create dummy data at fixed 60 hz rate
             static float refresh_time = -1.0f;
             if (ImGui::GetTime() > refresh_time + 1.0f/60.0f)
             {
                 refresh_time = ImGui::GetTime();
                 static float phase = 0.0f;
-                values[values_offset] = cosf(phase);
-                values_offset = (values_offset+1)%values.size();
-                phase += 0.10f*values_offset;
+                values[values_offset] = cosf(phase); 
+                values_offset = (values_offset+1)%values.size(); 
+                phase += 0.10f*values_offset; 
             }
         }
         ImGui::PlotLines("Frame Times", &values.front(), (int)values.size(), (int)values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,70));
@@ -7869,7 +8049,7 @@ void ImGui::ShowTestWindow(bool* opened)
         ImGui::Text("Without border");
         static int line = 50;
         bool goto_line = ImGui::Button("Goto");
-        ImGui::SameLine();
+        ImGui::SameLine(); 
         ImGui::PushItemWidth(100);
         goto_line |= ImGui::InputInt("##Line", &line, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue);
         ImGui::PopItemWidth();
@@ -7891,10 +8071,11 @@ void ImGui::ShowTestWindow(bool* opened)
         ImGui::Columns(2);
         for (int i = 0; i < 100; i++)
         {
+            if (i == 50)
+                ImGui::NextColumn();
             char buf[32];
             ImFormatString(buf, IM_ARRAYSIZE(buf), "%08x", i*5731);
             ImGui::Button(buf);
-            ImGui::NextColumn();
         }
         ImGui::EndChild();
     }
@@ -7930,17 +8111,17 @@ void ImGui::ShowTestWindow(bool* opened)
 
         // Create multiple items in a same cell because switching to next column
         static int e = 0;
-        ImGui::Text("Hello");
+        ImGui::Text("Hello"); 
         ImGui::Button("Banana");
-        ImGui::RadioButton("radio a", &e, 0);
+        ImGui::RadioButton("radio a", &e, 0); 
         ImGui::NextColumn();
 
-        ImGui::Text("ImGui");
+        ImGui::Text("ImGui"); 
         ImGui::Button("Apple");
         ImGui::RadioButton("radio b", &e, 1);
         ImGui::Text("An extra line here.");
         ImGui::NextColumn();
-
+        
         ImGui::Text("World!");
         ImGui::Button("Corniflower");
         ImGui::RadioButton("radio c", &e, 2);
@@ -7962,7 +8143,7 @@ void ImGui::ShowTestWindow(bool* opened)
         ImGui::Columns(1);
 
         ImGui::Separator();
-
+        
         ImGui::Columns(2, "word wrapping");
         ImGui::TextWrapped("The quick brown fox jumps over the lazy dog.");
         ImGui::Text("Hello Left");
@@ -8046,11 +8227,11 @@ void ImGui::ShowTestWindow(bool* opened)
             bool focus_3 = ImGui::Button("Focus on 3");
             int has_focus = 0;
             static char buf[128] = "click on a button to set focus";
-
+            
             if (focus_1) ImGui::SetKeyboardFocusHere();
             ImGui::InputText("1", buf, IM_ARRAYSIZE(buf));
             if (ImGui::IsItemActive()) has_focus = 1;
-
+            
             if (focus_2) ImGui::SetKeyboardFocusHere();
             ImGui::InputText("2", buf, IM_ARRAYSIZE(buf));
             if (ImGui::IsItemActive()) has_focus = 2;
@@ -8062,7 +8243,7 @@ void ImGui::ShowTestWindow(bool* opened)
             ImGui::PopAllowKeyboardFocus();
             if (has_focus)
                 ImGui::Text("Item with focus: %d", has_focus);
-            else
+            else 
                 ImGui::Text("Item with focus: <none>");
             ImGui::TreePop();
         }
@@ -8123,7 +8304,7 @@ static void ShowExampleAppFixedOverlay(bool* opened)
     ImGui::SetWindowPos(ImVec2(10,10));
     ImGui::Text("Simple overlay\non the top-left side of the screen.");
     ImGui::Separator();
-    ImGui::Text("Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
+    ImGui::Text("Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y); 
 
     ImGui::End();
 }
@@ -8154,7 +8335,7 @@ static void ShowExampleAppCustomRendering(bool* opened)
     // However you can draw directly and poll mouse/keyboard by yourself. You can manipulate the cursor using GetCursorPos() and SetCursorPos().
     // If you only use the ImDrawList API, you can notify the owner window of its extends by using SetCursorPos(max) followed by an empty Text("") statement.
     ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
-    ImVec2 canvas_size = ImVec2(ImMin(50.0f,ImGui::GetWindowContentRegionMax().x-ImGui::GetCursorPos().x), ImMin(50.0f,ImGui::GetWindowContentRegionMax().y-ImGui::GetCursorPos().y));    // Resize canvas what's available
+    ImVec2 canvas_size = ImVec2(ImMax(50.0f,ImGui::GetWindowContentRegionMax().x-ImGui::GetCursorPos().x), ImMax(50.0f,ImGui::GetWindowContentRegionMax().y-ImGui::GetCursorPos().y));    // Resize canvas what's available
     draw_list->AddRect(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), 0xFFFFFFFF);
     bool adding_preview = false;
     ImGui::InvisibleButton("canvas", canvas_size);
@@ -8210,14 +8391,14 @@ struct ExampleAppConsole
     ~ExampleAppConsole()
     {
         ClearLog();
-        for (size_t i = 0; i < Items.size(); i++)
-            ImGui::MemFree(History[i]);
+        for (size_t i = 0; i < Items.size(); i++) 
+            ImGui::MemFree(History[i]); 
     }
 
     void    ClearLog()
     {
-        for (size_t i = 0; i < Items.size(); i++)
-            ImGui::MemFree(Items[i]);
+        for (size_t i = 0; i < Items.size(); i++) 
+            ImGui::MemFree(Items[i]); 
         Items.clear();
         ScrollToBottom = true;
     }
@@ -8247,8 +8428,8 @@ struct ExampleAppConsole
         // TODO: display from bottom
         // TODO: clip manually
 
-        if (ImGui::SmallButton("Add Dummy Text")) AddLog("some text\nsome more text\ndisplay very important message here!\n"); ImGui::SameLine();
-        if (ImGui::SmallButton("Add Dummy Error")) AddLog("[error] something went wrong"); ImGui::SameLine();
+        if (ImGui::SmallButton("Add Dummy Text")) AddLog("some text\nsome more text\ndisplay very important message here!\n"); ImGui::SameLine(); 
+        if (ImGui::SmallButton("Add Dummy Error")) AddLog("[error] something went wrong"); ImGui::SameLine(); 
         if (ImGui::SmallButton("Clear")) ClearLog();
         ImGui::Separator();
 
@@ -8583,7 +8764,7 @@ static unsigned int stb_decompress(unsigned char *output, unsigned char *i, unsi
     i += 16;
 
     stb__dout = output;
-    for (;;) {
+    while (1) {
         unsigned char *old_i = i;
         i = stb_decompress_token(i);
         if (i == old_i) {
@@ -8598,7 +8779,7 @@ static unsigned int stb_decompress(unsigned char *output, unsigned char *i, unsi
                 return 0;
             }
         }
-        assert(stb__dout <= output + olen);
+        assert(stb__dout <= output + olen); 
         if (stb__dout > output + olen)
             return 0;
     }
@@ -8607,206 +8788,206 @@ static unsigned int stb_decompress(unsigned char *output, unsigned char *i, unsi
 static const unsigned int proggy_clean_ttf_compressed_size = 9583;
 static const unsigned int proggy_clean_ttf_compressed_data[9584/4] =
 {
-    0x0000bc57, 0x00000000, 0xf8a00000, 0x00000400, 0x00010037, 0x000c0000, 0x00030080, 0x2f534f40, 0x74eb8832, 0x01000090, 0x2c158248, 0x616d634e,
-    0x23120270, 0x03000075, 0x241382a0, 0x74766352, 0x82178220, 0xfc042102, 0x02380482, 0x66796c67, 0x5689af12, 0x04070000, 0x80920000, 0x64616568,
-    0xd36691d7, 0xcc201b82, 0x36210382, 0x27108268, 0xc3014208, 0x04010000, 0x243b0f82, 0x78746d68, 0x807e008a, 0x98010000, 0x06020000, 0x61636f6c,
-    0xd8b0738c, 0x82050000, 0x0402291e, 0x7078616d, 0xda00ae01, 0x28201f82, 0x202c1082, 0x656d616e, 0x96bb5925, 0x84990000, 0x9e2c1382, 0x74736f70,
-    0xef83aca6, 0x249b0000, 0xd22c3382, 0x70657270, 0x12010269, 0xf4040000, 0x08202f82, 0x012ecb84, 0x553c0000, 0x0f5fd5e9, 0x0300f53c, 0x00830008,
-    0x7767b722, 0x002b3f82, 0xa692bd00, 0xfe0000d7, 0x83800380, 0x21f1826f, 0x00850002, 0x41820120, 0x40fec026, 0x80030000, 0x05821083, 0x07830120,
-    0x0221038a, 0x24118200, 0x90000101, 0x82798200, 0x00022617, 0x00400008, 0x2009820a, 0x82098276, 0x82002006, 0x9001213b, 0x0223c883, 0x828a02bc,
-    0x858f2010, 0xc5012507, 0x00023200, 0x04210083, 0x91058309, 0x6c412b03, 0x40007374, 0xac200000, 0x00830008, 0x01000523, 0x834d8380, 0x80032103,
-    0x012101bf, 0x23b88280, 0x00800000, 0x0b830382, 0x07820120, 0x83800021, 0x88012001, 0x84002009, 0x2005870f, 0x870d8301, 0x2023901b, 0x83199501,
-    0x82002015, 0x84802000, 0x84238267, 0x88002027, 0x8561882d, 0x21058211, 0x13880000, 0x01800022, 0x05850d85, 0x0f828020, 0x03208384, 0x03200582,
-    0x47901b84, 0x1b850020, 0x1f821d82, 0x3f831d88, 0x3f410383, 0x84058405, 0x210982cd, 0x09830000, 0x03207789, 0xf38a1384, 0x01203782, 0x13872384,
-    0x0b88c983, 0x0d898f84, 0x00202982, 0x23900383, 0x87008021, 0x83df8301, 0x86118d03, 0x863f880d, 0x8f35880f, 0x2160820f, 0x04830300, 0x1c220382,
-    0x05820100, 0x4c000022, 0x09831182, 0x04001c24, 0x11823000, 0x0800082e, 0x00000200, 0xff007f00, 0xffffac20, 0x00220982, 0x09848100, 0xdf216682,
-    0x843586d5, 0x06012116, 0x04400684, 0xa58120d7, 0x00b127d8, 0x01b88d01, 0x2d8685ff, 0xc100c621, 0xf4be0801, 0x9e011c01, 0x88021402, 0x1403fc02,
-    0x9c035803, 0x1404de03, 0x50043204, 0xa2046204, 0x66051605, 0x1206bc05, 0xd6067406, 0x7e073807, 0x4e08ec07, 0x96086c08, 0x1009d008, 0x88094a09,
-    0x800a160a, 0x560b040b, 0x2e0cc80b, 0xea0c820c, 0xa40d5e0d, 0x500eea0d, 0x280f960e, 0x1210b00f, 0xe0107410, 0xb6115211, 0x6e120412, 0x4c13c412,
-    0xf613ac13, 0xae145814, 0x4015ea14, 0xa6158015, 0x1216b815, 0xc6167e16, 0x8e173417, 0x5618e017, 0xee18ba18, 0x96193619, 0x481ad419, 0xf01a9c1a,
-    0xc81b5c1b, 0x4c1c041c, 0xea1c961c, 0x921d2a1d, 0x401ed21d, 0xe01e8e1e, 0x761f241f, 0xa61fa61f, 0x01821020, 0x8a202e34, 0xc820b220, 0x74211421,
-    0xee219821, 0x86226222, 0x01820c23, 0x83238021, 0x23983c01, 0x24d823b0, 0x244a2400, 0x24902468, 0x250625ae, 0x25822560, 0x26f825f8, 0x82aa2658,
-    0xd8be0801, 0x9a274027, 0x68280a28, 0x0e29a828, 0xb8292029, 0x362af829, 0x602a602a, 0x2a2b022b, 0xac2b5e2b, 0x202ce62b, 0x9a2c342c, 0x5c2d282d,
-    0xaa2d782d, 0x262ee82d, 0x262fa62e, 0xf42fb62f, 0xc8305e30, 0xb4313e31, 0x9e321e32, 0x82331e33, 0x5c34ee33, 0x3a35ce34, 0xd4358635, 0x72362636,
-    0x7637e636, 0x3a38d837, 0x1239a638, 0xae397439, 0x9a3a2e3a, 0x7c3b063b, 0x3a3ce83b, 0x223d963c, 0xec3d863d, 0xc63e563e, 0x9a3f2a3f, 0x6a401240,
-    0x3641d040, 0x0842a241, 0x7a424042, 0xf042b842, 0xcc436243, 0x8a442a44, 0x5845ee44, 0xe245b645, 0xb4465446, 0x7a471447, 0x5448da47, 0x4049c648,
-    0x15462400, 0x034d0808, 0x0b000700, 0x13000f00, 0x1b001700, 0x23001f00, 0x2b002700, 0x33002f00, 0x3b003700, 0x43003f00, 0x4b004700, 0x53004f00,
-    0x5b005700, 0x63005f00, 0x6b006700, 0x73006f00, 0x7b007700, 0x83007f00, 0x8b008700, 0x00008f00, 0x15333511, 0x20039631, 0x20178205, 0xd3038221,
-    0x20739707, 0x25008580, 0x028080fc, 0x05be8080, 0x04204a85, 0x05ce0685, 0x0107002a, 0x02000080, 0x00000400, 0x250d8b41, 0x33350100, 0x03920715,
-    0x13820320, 0x858d0120, 0x0e8d0320, 0xff260d83, 0x00808000, 0x54820106, 0x04800223, 0x845b8c80, 0x41332059, 0x078b068f, 0x82000121, 0x82fe2039,
-    0x84802003, 0x83042004, 0x23598a0e, 0x00180000, 0x03210082, 0x42ab9080, 0x73942137, 0x2013bb41, 0x8f978205, 0x2027a39b, 0x20b68801, 0x84b286fd,
-    0x91c88407, 0x41032011, 0x11a51130, 0x15000027, 0x80ff8000, 0x11af4103, 0x841b0341, 0x8bd983fd, 0x9be99bc9, 0x8343831b, 0x21f1821f, 0xb58300ff,
-    0x0f84e889, 0xf78a0484, 0x8000ff22, 0x0020eeb3, 0x14200082, 0x2130ef41, 0xeb431300, 0x4133200a, 0xd7410ecb, 0x9a07200b, 0x2027871b, 0x21238221,
-    0xe7828080, 0xe784fd20, 0xe8848020, 0xfe808022, 0x08880d85, 0xba41fd20, 0x82248205, 0x85eab02a, 0x008022e7, 0x2cd74200, 0x44010021, 0xd34406eb,
-    0x44312013, 0xcf8b0eef, 0x0d422f8b, 0x82332007, 0x0001212f, 0x8023cf82, 0x83000180, 0x820583de, 0x830682d4, 0x820020d4, 0x82dc850a, 0x20e282e9,
-    0xb2ff85fe, 0x010327e9, 0x02000380, 0x0f440400, 0x0c634407, 0x68825982, 0x85048021, 0x260a825d, 0x010b0000, 0x4400ff00, 0x2746103f, 0x08d74209,
-    0x4d440720, 0x0eaf4406, 0xc3441d20, 0x23078406, 0xff800002, 0x04845b83, 0x8d05b241, 0x1781436f, 0x6b8c87a5, 0x1521878e, 0x06474505, 0x01210783,
-    0x84688c00, 0x8904828e, 0x441e8cf7, 0x0b270cff, 0x80008000, 0x45030003, 0xfb430fab, 0x080f4107, 0x410bf942, 0xd34307e5, 0x070d4207, 0x80800123,
-    0x205d85fe, 0x849183fe, 0x20128404, 0x82809702, 0x00002217, 0x41839a09, 0x6b4408cf, 0x0733440f, 0x3b460720, 0x82798707, 0x97802052, 0x0000296f,
-    0xff800004, 0x01800100, 0x0021ef89, 0x0a914625, 0x410a4d41, 0x00250ed4, 0x00050000, 0x056d4280, 0x210a7b46, 0x21481300, 0x46ed8512, 0x00210bd1,
-    0x89718202, 0x21738877, 0x2b850001, 0x00220582, 0x87450a00, 0x0ddb4606, 0x41079b42, 0x9d420c09, 0x0b09420b, 0x8d820720, 0x9742fc84, 0x42098909,
-    0x00241e0f, 0x00800014, 0x0b47da82, 0x0833442a, 0x49078d41, 0x2f450f13, 0x42278f17, 0x01200751, 0x22063742, 0x44808001, 0x20450519, 0x88068906,
-    0x83fe2019, 0x4203202a, 0x1a941a58, 0x00820020, 0xe7a40e20, 0x420ce146, 0x854307e9, 0x0fcb4713, 0xff20a182, 0xfe209b82, 0x0c867f8b, 0x0021aea4,
-    0x219fa40f, 0x7d41003b, 0x07194214, 0xbf440520, 0x071d4206, 0x6941a590, 0x80802309, 0x028900ff, 0xa9a4b685, 0xc5808021, 0x449b82ab, 0x152007eb,
-    0x42134d46, 0x61440a15, 0x051e4208, 0x222b0442, 0x47001100, 0xfd412913, 0x17194714, 0x410f5b41, 0x02220773, 0x09428080, 0x21a98208, 0xd4420001,
-    0x481c840d, 0x00232bc9, 0x42120000, 0xe74c261b, 0x149d4405, 0x07209d87, 0x410db944, 0x14421c81, 0x42fd2005, 0x80410bd2, 0x203d8531, 0x06874100,
-    0x48256f4a, 0xcb420c95, 0x13934113, 0x44075d44, 0x044c0855, 0x00ff2105, 0xfe228185, 0x45448000, 0x22c5b508, 0x410c0000, 0x7b412087, 0x1bb74514,
-    0x32429c85, 0x0a574805, 0x21208943, 0x8ba01300, 0x440dfb4e, 0x77431437, 0x245b4113, 0x200fb145, 0x41108ffe, 0x80203562, 0x00200082, 0x46362b42,
-    0x1742178d, 0x4527830f, 0x0f830b2f, 0x4a138146, 0x802409a1, 0xfe8000ff, 0x94419982, 0x09294320, 0x04000022, 0x49050f4f, 0xcb470a63, 0x48032008,
-    0x2b48067b, 0x85022008, 0x82638338, 0x00002209, 0x05af4806, 0x900e9f49, 0x84c5873f, 0x214285bd, 0x064900ff, 0x0c894607, 0x00000023, 0x4903820a,
-    0x714319f3, 0x0749410c, 0x8a07a145, 0x02152507, 0xfe808000, 0x74490386, 0x8080211b, 0x0c276f82, 0x00018000, 0x48028003, 0x2b2315db, 0x43002f00,
-    0x6f82142f, 0x44011521, 0x93510da7, 0x20e68508, 0x06494d80, 0x8e838020, 0x06821286, 0x124bff20, 0x25f3830c, 0x03800080, 0xe74a0380, 0x207b8715,
-    0x876b861d, 0x4a152007, 0x07870775, 0xf6876086, 0x8417674a, 0x0a0021f2, 0x431c9743, 0x8d421485, 0x200b830b, 0x06474d03, 0x71828020, 0x04510120,
-    0x42da8606, 0x1f831882, 0x001a0022, 0xff4d0082, 0x0b0f532c, 0x0d449b94, 0x4e312007, 0x074f12e7, 0x0bf3490b, 0xbb412120, 0x413f820a, 0xef490857,
-    0x80002313, 0xe2830001, 0x6441fc20, 0x8b802006, 0x00012108, 0xfd201582, 0x492c9b48, 0x802014ff, 0x51084347, 0x0f4327f3, 0x17bf4a14, 0x201b7944,
-    0x06964201, 0x134ffe20, 0x20d6830b, 0x25d78280, 0xfd800002, 0x05888000, 0x9318dc41, 0x21d282d4, 0xdb481800, 0x0dff542a, 0x45107743, 0xe14813f5,
-    0x0f034113, 0x83135d45, 0x47b28437, 0xe4510e73, 0x21f58e06, 0x2b8400fd, 0x1041fcac, 0x08db4b0b, 0x421fdb41, 0xdf4b18df, 0x011d210a, 0x420af350,
-    0x6e8308af, 0xac85cb86, 0x1e461082, 0x82b7a407, 0x411420a3, 0xa34130ab, 0x178f4124, 0x41139741, 0x86410d93, 0x82118511, 0x057243d8, 0x8941d9a4,
-    0x3093480c, 0x4a13474f, 0xfb5016a9, 0x07ad4108, 0x4a0f9d42, 0xfe200fad, 0x4708aa41, 0x83482dba, 0x288f4d06, 0xb398c3bb, 0x44267b41, 0xb34439d7,
-    0x0755410f, 0x200ebb45, 0x0f5f4215, 0x20191343, 0x06df5301, 0xf04c0220, 0x2ba64d07, 0x82050841, 0x430020ce, 0xa78f3627, 0x5213ff42, 0x2f970bc1,
-    0x4305ab55, 0xa084111b, 0x450bac45, 0x5f4238b8, 0x010c2106, 0x0220ed82, 0x441bb344, 0x875010af, 0x0737480f, 0x490c5747, 0x0c840c03, 0x4c204b42,
-    0x8ba905d7, 0x8b948793, 0x510c0c51, 0xfb4b24b9, 0x1b174107, 0x5709d74c, 0xd1410ca5, 0x079d480f, 0x201ff541, 0x06804780, 0x7d520120, 0x80002205,
-    0x20a983fe, 0x47bb83fe, 0x1b8409b4, 0x81580220, 0x4e00202c, 0x4f41282f, 0x0eab4f17, 0x57471520, 0x0e0f4808, 0x8221e041, 0x3e1b4a8b, 0x4407175d,
-    0x1b4b071f, 0x4a0f8b07, 0x174a0703, 0x0ba5411b, 0x430fb141, 0x0120057b, 0xfc20dd82, 0x4a056047, 0xf4850c0c, 0x01221982, 0x02828000, 0x1a5d088b,
-    0x20094108, 0x8c0e3941, 0x4900200e, 0x7744434f, 0x200b870b, 0x0e4b5a33, 0x2b41f78b, 0x8b138307, 0x0b9f450b, 0x2406f741, 0xfd808001, 0x09475a00,
-    0x84000121, 0x5980200e, 0x85450e5d, 0x832c8206, 0x4106831e, 0x00213814, 0x28b34810, 0x410c2f4b, 0x5f4a13d7, 0x0b2b4113, 0x6e43a883, 0x11174b05,
-    0x4b066a45, 0xcc470541, 0x5000202b, 0xcb472f4b, 0x44b59f0f, 0xc5430b5b, 0x0d654907, 0x21065544, 0xd6828080, 0xfe201982, 0x8230ec4a, 0x120025c2,
-    0x80ff8000, 0x4128d74d, 0x3320408b, 0x410a9f50, 0xdb822793, 0x822bd454, 0x61134b2e, 0x410b214a, 0xad4117c9, 0x0001211f, 0x4206854f, 0x4b430596,
-    0x06bb5530, 0x2025cf46, 0x0ddd5747, 0x500ea349, 0x0f840fa7, 0x5213c153, 0x634e08d1, 0x0bbe4809, 0x59316e4d, 0x5b50053f, 0x203f6323, 0x5117eb46,
-    0x94450a63, 0x246e410a, 0x63410020, 0x0bdb5f2f, 0x4233ab44, 0x39480757, 0x112d4a07, 0x7241118f, 0x000e2132, 0x9f286f41, 0x0f8762c3, 0x33350723,
-    0x094e6415, 0x2010925f, 0x067252fe, 0xd0438020, 0x63a68225, 0x11203a4f, 0x480e6360, 0x5748131f, 0x079b521f, 0x200e2f43, 0x864b8315, 0x113348e7,
-    0x85084e48, 0x06855008, 0x5880fd21, 0x7c420925, 0x0c414824, 0x37470c86, 0x1b8b422b, 0x5b0a8755, 0x23410c21, 0x0b83420b, 0x5a082047, 0xf482067f,
-    0xa80b4c47, 0x0c0021cf, 0x20207b42, 0x0fb74100, 0x420b8744, 0xeb43076f, 0x0f6f420b, 0x4261fe20, 0x439aa00c, 0x215034e3, 0x0ff9570f, 0x4b1f2d5d,
-    0x2d5d0c6f, 0x09634d0b, 0x1f51b8a0, 0x620f200c, 0xaf681e87, 0x24f94d07, 0x4e0f4945, 0xfe200c05, 0x22139742, 0x57048080, 0x23950c20, 0x97601585,
-    0x4813201f, 0xad620523, 0x200f8f0f, 0x9e638f15, 0x00002181, 0x41342341, 0x0f930f0b, 0x210b4b62, 0x978f0001, 0xfe200f84, 0x8425c863, 0x2704822b,
-    0x80000a00, 0x00038001, 0x610e9768, 0x834514bb, 0x0bc3430f, 0x2107e357, 0x80848080, 0x4400fe21, 0x2e410983, 0x00002a1a, 0x00000700, 0x800380ff,
-    0x0fdf5800, 0x59150021, 0xd142163d, 0x0c02410c, 0x01020025, 0x65800300, 0x00240853, 0x1d333501, 0x15220382, 0x35420001, 0x44002008, 0x376406d7,
-    0x096f6b19, 0x480bc142, 0x8f4908a7, 0x211f8b1f, 0x9e830001, 0x0584fe20, 0x4180fd21, 0x11850910, 0x8d198259, 0x000021d4, 0x5a08275d, 0x275d1983,
-    0x06d9420e, 0x9f08b36a, 0x0f7d47b5, 0x8d8a2f8b, 0x4c0e0b57, 0xe7410e17, 0x42d18c1a, 0xb351087a, 0x1ac36505, 0x4b4a2f20, 0x0b9f450d, 0x430beb53,
-    0xa7881015, 0xa5826a83, 0x80200f82, 0x86185a65, 0x4100208e, 0x176c3367, 0x0fe7650b, 0x4a17ad4b, 0x0f4217ed, 0x112e4206, 0x41113a42, 0xf7423169,
-    0x0cb34737, 0x560f8b46, 0xa75407e5, 0x5f01200f, 0x31590c48, 0x80802106, 0x42268841, 0x0020091e, 0x4207ef64, 0x69461df7, 0x138d4114, 0x820f5145,
-    0x53802090, 0xff200529, 0xb944b183, 0x417e8505, 0x00202561, 0x15210082, 0x42378200, 0x9b431cc3, 0x004f220d, 0x0dd54253, 0x4213f149, 0x7d41133b,
-    0x42c9870b, 0x802010f9, 0x420b2c42, 0x8f441138, 0x267c4408, 0x600cb743, 0x8f4109d3, 0x05ab701d, 0x83440020, 0x3521223f, 0x0b794733, 0xfb62fe20,
-    0x4afd2010, 0xaf410ae7, 0x25ce8525, 0x01080000, 0x7b6b0000, 0x0973710b, 0x82010021, 0x49038375, 0x33420767, 0x052c4212, 0x58464b85, 0x41fe2005,
-    0x50440c27, 0x000c2209, 0x1cb36b80, 0x9b06df44, 0x0f93566f, 0x52830220, 0xfe216e8d, 0x200f8200, 0x0fb86704, 0xb057238d, 0x050b5305, 0x7217eb47,
-    0xbd410b6b, 0x0f214610, 0x871f9956, 0x1e91567e, 0x2029b741, 0x20008200, 0x18b7410a, 0x27002322, 0x41095543, 0x0f8f0fb3, 0x41000121, 0x889d111c,
-    0x14207b82, 0x00200382, 0x73188761, 0x475013a7, 0x6e33200c, 0x234e0ea3, 0x9b138313, 0x08e54d17, 0x9711094e, 0x2ee74311, 0x4908875e, 0xd75d1f1f,
-    0x19ab5238, 0xa2084d48, 0x63a7a9b3, 0x55450b83, 0x0fd74213, 0x440d814c, 0x4f481673, 0x05714323, 0x13000022, 0x412e1f46, 0xdf493459, 0x21c7550f,
-    0x8408215f, 0x201d49cb, 0xb1103043, 0x0f0d65d7, 0x452b8d41, 0x594b0f8d, 0x0b004605, 0xb215eb46, 0x000a24d7, 0x47000080, 0x002118cf, 0x06436413,
-    0x420bd750, 0x2b500743, 0x076a470c, 0x4105c050, 0xd942053f, 0x0d00211a, 0x5f44779c, 0x0ce94805, 0x51558186, 0x14a54c0b, 0x49082b41, 0x0a4b0888,
-    0x8080261f, 0x0d000000, 0x20048201, 0x1deb6a03, 0x420cb372, 0x07201783, 0x4306854d, 0x8b830c59, 0x59093c74, 0x0020250f, 0x67070f4a, 0x2341160b,
-    0x00372105, 0x431c515d, 0x554e17ef, 0x0e5d6b05, 0x41115442, 0xb74a1ac1, 0x2243420a, 0x5b4f878f, 0x7507200f, 0x384b086f, 0x09d45409, 0x0020869a,
-    0x12200082, 0xab460382, 0x10075329, 0x54138346, 0xaf540fbf, 0x1ea75413, 0x9a0c9e54, 0x0f6b44c1, 0x41000021, 0x47412a4f, 0x07374907, 0x5310bf76,
-    0xff2009b4, 0x9a09a64c, 0x8200208d, 0x34c34500, 0x970fe141, 0x1fd74b0f, 0x440a3850, 0x206411f0, 0x27934609, 0x470c5d41, 0x555c2947, 0x1787540f,
-    0x6e0f234e, 0x7d540a1b, 0x1d736b08, 0x0026a088, 0x80000e00, 0x9b5200ff, 0x08ef4318, 0x450bff77, 0x1d4d0b83, 0x081f7006, 0xcb691b86, 0x4b022008,
-    0xc34b0b33, 0x1d0d4a0c, 0x8025a188, 0x0b000000, 0x52a38201, 0xbf7d0873, 0x0c234511, 0x8f0f894a, 0x4101200f, 0x0c880c9d, 0x2b418ea1, 0x06c74128,
-    0x66181341, 0x7b4c0bb9, 0x0c06630b, 0xfe200c87, 0x9ba10882, 0x27091765, 0x01000008, 0x02800380, 0x48113f4e, 0x29430cf5, 0x09a75a0b, 0x31618020,
-    0x6d802009, 0x61840e33, 0x8208bf51, 0x0c637d61, 0x7f092379, 0x4f470f4b, 0x1797510c, 0x46076157, 0xf5500fdf, 0x0f616910, 0x1171fe20, 0x82802006,
-    0x08696908, 0x41127a4c, 0x3f4a15f3, 0x01042607, 0x0200ff00, 0x1cf77700, 0xff204185, 0x00235b8d, 0x43100000, 0x3b22243f, 0x3b4d3f00, 0x0b937709,
-    0xad42f18f, 0x0b1f420f, 0x51084b43, 0x8020104a, 0xb557ff83, 0x052b7f2a, 0x0280ff22, 0x250beb78, 0x00170013, 0xbf6d2500, 0x07db760e, 0x410e2b7f,
-    0x00230e4f, 0x49030000, 0x0582055b, 0x07000326, 0x00000b00, 0x580bcd46, 0x00200cdd, 0x57078749, 0x8749160f, 0x0f994f0a, 0x41134761, 0x01200b31,
-    0xeb796883, 0x0b41500b, 0x0e90b38e, 0x202e7b51, 0x05d95801, 0x41080570, 0x1d530fc9, 0x0b937a0f, 0xaf8eb387, 0xf743b98f, 0x07c74227, 0x80000523,
-    0x0fcb4503, 0x430ca37b, 0x7782077f, 0x8d0a9947, 0x08af4666, 0xeb798020, 0x6459881e, 0xc3740bbf, 0x0feb6f0b, 0x20072748, 0x052b6102, 0x435e0584,
-    0x7d088308, 0x03200afd, 0x92109e41, 0x28aa8210, 0x80001500, 0x80030000, 0x0fdb5805, 0x209f4018, 0xa7418d87, 0x0aa3440f, 0x20314961, 0x073a52ff,
-    0x6108505d, 0x43181051, 0x00223457, 0xe7820500, 0x50028021, 0x81410d33, 0x063d7108, 0xdb41af84, 0x4d888205, 0x00201198, 0x463d835f, 0x152106d7,
-    0x0a355a33, 0x6917614e, 0x75411f4d, 0x184b8b07, 0x1809c344, 0x21091640, 0x0b828000, 0x42808021, 0x26790519, 0x86058605, 0x2428422d, 0x22123b42,
-    0x42000080, 0xf587513b, 0x7813677b, 0xaf4d139f, 0x00ff210c, 0x5e0a1d57, 0x3b421546, 0x01032736, 0x02000380, 0x41180480, 0x2f420f07, 0x0c624807,
-    0x00000025, 0x18000103, 0x83153741, 0x430120c3, 0x042106b2, 0x088d4d00, 0x2f830620, 0x1810434a, 0x18140345, 0x8507fb41, 0x5ee582ea, 0x0023116c,
-    0x8d000600, 0x053b56af, 0xa6554fa2, 0x0d704608, 0x40180d20, 0x47181a43, 0xd37b07ff, 0x0b79500c, 0x420fd745, 0x47450bd9, 0x8471830a, 0x095a777e,
-    0x84137542, 0x82002013, 0x2f401800, 0x0007213b, 0x4405e349, 0x0d550ff3, 0x16254c0c, 0x820ffe4a, 0x0400218a, 0x89066f41, 0x106b414f, 0xc84d0120,
-    0x80802206, 0x0c9a4b03, 0x00100025, 0x68000200, 0x9d8c2473, 0x44134344, 0xf36a0f33, 0x4678860f, 0x1b440a25, 0x41988c0a, 0x80201879, 0x43079b5e,
-    0x4a18080b, 0x0341190b, 0x1259530c, 0x43251552, 0x908205c8, 0x0cac4018, 0x86000421, 0x0e504aa2, 0x0020b891, 0xfb450082, 0x51132014, 0x8f5205f3,
-    0x35052108, 0x8505cb59, 0x0f6d4f70, 0x82150021, 0x29af5047, 0x4f004b24, 0x75795300, 0x1b595709, 0x460b6742, 0xbf4b0f0d, 0x5743870b, 0xcb6d1461,
-    0x08f64505, 0x4e05ab6c, 0x334126c3, 0x0bcb6b0d, 0x1811034d, 0x4111ef4b, 0x814f1ce5, 0x20af8227, 0x07fd7b80, 0x41188e84, 0xef410f33, 0x80802429,
-    0x410d0000, 0xa34205ab, 0x76b7881c, 0xff500b89, 0x0741430f, 0x20086f4a, 0x209d8200, 0x234c18fd, 0x05d4670a, 0x4509af51, 0x9642078d, 0x189e831d,
-    0x7c1cc74b, 0xcd4c07b9, 0x0e7c440f, 0x8b7b0320, 0x21108210, 0xc76c8080, 0x03002106, 0x6b23bf41, 0xc549060b, 0x7946180b, 0x0ff7530f, 0x17ad4618,
-    0x200ecd45, 0x208c83fd, 0x5e0488fe, 0x032009c6, 0x420d044e, 0x0d8f0d7f, 0x00820020, 0x18001021, 0x6d273b45, 0xfd4c0c93, 0xcf451813, 0x0fe5450f,
-    0x5a47c382, 0x820a8b0a, 0x282b4998, 0x410a8b5b, 0x4b232583, 0x54004f00, 0x978f0ce3, 0x500f1944, 0xa95f1709, 0x0280220b, 0x05ba7080, 0xa1530682,
-    0x06324c13, 0x91412582, 0x05536e2c, 0x63431020, 0x0f434706, 0x8c11374c, 0x176143d7, 0x4d0f454c, 0xd3680bed, 0x0bee4d17, 0x212b9a41, 0x0f530a00,
-    0x140d531c, 0x43139143, 0x95610e8d, 0x0f094415, 0x4205fb56, 0x1b4205cf, 0x17015225, 0x5e0c477f, 0xaf6e0aeb, 0x0ff36218, 0x04849a84, 0x0a454218,
-    0x9c430420, 0x23c6822b, 0x04000102, 0x45091b4b, 0xf05f0955, 0x82802007, 0x421c2023, 0x5218282b, 0x7b53173f, 0x0fe7480c, 0x74173b7f, 0x47751317,
-    0x634d1807, 0x0f6f430f, 0x24086547, 0xfc808002, 0x0b3c7f80, 0x10840120, 0x188d1282, 0x20096b43, 0x0fc24403, 0x00260faf, 0x0180000b, 0x3f500280,
-    0x18002019, 0x450b4941, 0xf3530fb9, 0x18002010, 0x8208a551, 0x06234d56, 0xcb58a39b, 0xc3421805, 0x1313461e, 0x0f855018, 0xd34b0120, 0x6cfe2008,
-    0x574f0885, 0x09204114, 0x07000029, 0x00008000, 0x44028002, 0x01420f57, 0x10c95c10, 0x11184c18, 0x80221185, 0x7f421e00, 0x00732240, 0x09cd4977,
-    0x6d0b2b42, 0x4f180f8f, 0x8f5a0bcb, 0x9b0f830f, 0x0fb9411f, 0x230b5756, 0x00fd8080, 0x82060745, 0x000121d5, 0x8e0fb277, 0x4a8d4211, 0x24061c53,
-    0x04000007, 0x12275280, 0x430c954c, 0x80201545, 0x200f764f, 0x20008200, 0x20ce8308, 0x09534f02, 0x660edf64, 0x73731771, 0xe7411807, 0x20a2820c,
-    0x13b64404, 0x8f5d6682, 0x1d6b4508, 0x0cff4d18, 0x3348c58f, 0x0fc34c07, 0x31558b84, 0x8398820f, 0x17514712, 0x240b0e46, 0x80000a00, 0x093b4502,
-    0x420f9759, 0xa54c0bf1, 0x0f2b470c, 0x410d314b, 0x2584170c, 0x73b30020, 0xb55fe782, 0x204d8410, 0x08e043fe, 0x4f147e41, 0x022008ab, 0x4b055159,
-    0x2950068f, 0x00022208, 0x48511880, 0x82002009, 0x00112300, 0x634dff00, 0x24415f27, 0x180f6d43, 0x4d0b5d45, 0x4d5f05ef, 0x01802317, 0x56188000,
-    0xa7840807, 0xc6450220, 0x21ca8229, 0x4b781a00, 0x3359182c, 0x0cf3470f, 0x180bef46, 0x420b0354, 0xff470b07, 0x4515200a, 0x9758239b, 0x4a80200c,
-    0xd2410a26, 0x05fb4a08, 0x4b05e241, 0x03200dc9, 0x92290941, 0x00002829, 0x00010900, 0x5b020001, 0x23201363, 0x460d776a, 0xef530fdb, 0x209a890c,
-    0x13fc4302, 0x00008024, 0xc4820104, 0x08820220, 0x20086b5b, 0x18518700, 0x8408d349, 0x0da449a1, 0x00080024, 0x7b690280, 0x4c438b1a, 0x01220f63,
-    0x4c878000, 0x5c149c53, 0xfb430868, 0x2f56181e, 0x0ccf7b1b, 0x0f075618, 0x2008e347, 0x14144104, 0x00207f83, 0x00207b82, 0x201adf47, 0x16c35a13,
-    0x540fdf47, 0x802006c8, 0x5418f185, 0x29430995, 0x00002419, 0x58001600, 0x5720316f, 0x4d051542, 0x4b7b1b03, 0x138f4707, 0xb747b787, 0x4aab8213,
-    0x058305fc, 0x20115759, 0x82128401, 0x0a0b44e8, 0x46800121, 0xe64210d0, 0x82129312, 0x4bffdffe, 0x3b41171b, 0x9b27870f, 0x808022ff, 0x085c68fe,
-    0x41800021, 0x01410b20, 0x001a213a, 0x47480082, 0x11374e12, 0x56130b4c, 0xdf4b0c65, 0x0b0f590b, 0x0f574c18, 0x830feb4b, 0x075f480f, 0x480b4755,
-    0x40490b73, 0x80012206, 0x09d74280, 0x80fe8022, 0x80210e86, 0x056643ff, 0x10820020, 0x420b2646, 0x0b58391a, 0xd74c1808, 0x078b4e22, 0x2007f55f,
-    0x4b491807, 0x83802017, 0x65aa82a7, 0x3152099e, 0x068b7616, 0x9b431220, 0x09bb742c, 0x500e376c, 0x8342179b, 0x0a4d5d0f, 0x8020a883, 0x180cd349,
-    0x2016bb4b, 0x14476004, 0x84136c43, 0x08cf7813, 0x4f4c0520, 0x156f420f, 0x20085f42, 0x6fd3be03, 0xd4d30803, 0xa7411420, 0x004b222c, 0x0d3b614f,
-    0x3f702120, 0x1393410a, 0x8f132745, 0x47421827, 0x41e08209, 0xb05e2bb9, 0x18b7410c, 0x18082647, 0x4107a748, 0xeb8826bf, 0x0ca76018, 0x733ecb41,
-    0xd0410d83, 0x43ebaf2a, 0x0420067f, 0x721dab4c, 0x472005bb, 0x4105d341, 0x334844cb, 0x20dba408, 0x47d6ac00, 0x034e3aef, 0x0f8f421b, 0x930f134d,
-    0x3521231f, 0xb7421533, 0x42f5ad0a, 0x1e961eaa, 0x17000022, 0x4c367b50, 0x7d491001, 0x0bf5520f, 0x4c18fda7, 0xb8460c55, 0x83fe2005, 0x00fe25b9,
-    0x80000180, 0x9e751085, 0x261b5c12, 0x82110341, 0x001123fb, 0x4518fe80, 0xf38c2753, 0x6d134979, 0x295107a7, 0xaf5f180f, 0x0fe3660c, 0x180b6079,
-    0x2007bd5f, 0x9aab9103, 0x2f4d1811, 0x05002109, 0x44254746, 0x1d200787, 0x450bab75, 0x4f180f57, 0x4f181361, 0x3b831795, 0xeb4b0120, 0x0b734805,
-    0x84078f48, 0x2e1b47bc, 0x00203383, 0xaf065f45, 0x831520d7, 0x130f51a7, 0x1797bf97, 0x2b47d783, 0x18fe2005, 0x4a18a44f, 0xa64d086d, 0x1ab0410d,
-    0x6205a258, 0xdbab069f, 0x4f06f778, 0xa963081d, 0x133b670a, 0x8323d141, 0x13195b23, 0x530f5e70, 0xe5ad0824, 0x58001421, 0x1f472b4b, 0x47bf410c,
-    0x82000121, 0x83fe20cb, 0x07424404, 0x68068243, 0xd7ad0d3d, 0x00010d26, 0x80020000, 0x4a1c6f43, 0x23681081, 0x10a14f13, 0x8a070e57, 0x430a848f,
-    0x7372243e, 0x4397a205, 0xb56c1021, 0x43978f0f, 0x64180505, 0x99aa0ff2, 0x0e000022, 0x20223341, 0x094b4f37, 0x074a3320, 0x2639410a, 0xfe208e84,
-    0x8b0e0048, 0x508020a3, 0x9e4308fe, 0x073f4115, 0xe3480420, 0x0c9b5f1b, 0x7c137743, 0x9a95185b, 0x6122b148, 0x979b08df, 0x0fe36c18, 0x48109358,
-    0x23441375, 0x0ffd5c0b, 0x180fc746, 0x2011d157, 0x07e95702, 0x58180120, 0x18770ac3, 0x51032008, 0x7d4118e3, 0x80802315, 0x3b4c1900, 0xbb5a1830,
-    0x0ceb6109, 0x5b0b3d42, 0x4f181369, 0x4f180b8d, 0x4f180f75, 0x355a1b81, 0x200d820d, 0x18e483fd, 0x4528854f, 0x89420846, 0x1321411f, 0x44086b60,
-    0x07421d77, 0x107d4405, 0x4113fd41, 0x5a181bf1, 0x4f180db3, 0x8021128f, 0x20f68280, 0x44a882fe, 0x334d249a, 0x052f6109, 0x1520c3a7, 0xef4eb783,
-    0x4ec39b1b, 0xc4c90ee7, 0x20060b4d, 0x256f4905, 0x4d0cf761, 0xcf9b1f13, 0xa213d74e, 0x0e1145d4, 0x50135b42, 0xcb4e398f, 0x20d79f27, 0x08865d80,
-    0x186d5018, 0xa90f7142, 0x067342d7, 0x3f450420, 0x65002021, 0xe3560771, 0x24d38f23, 0x15333531, 0x0eb94d01, 0x451c9f41, 0x384322fb, 0x00092108,
-    0x19af6b18, 0x6e0c6f5a, 0xbd770bfb, 0x22bb7718, 0x20090f57, 0x25e74204, 0x4207275a, 0xdb5408ef, 0x1769450f, 0x1b1b5518, 0x210b1f57, 0x5e4c8001,
-    0x55012006, 0x802107f1, 0x0a306a80, 0x45808021, 0x0d850b88, 0x31744f18, 0x1808ec54, 0x2009575b, 0x45ffa505, 0x1b420c73, 0x180f9f0f, 0x4a0cf748,
-    0x501805b2, 0x00210f40, 0x4d118f80, 0xd6823359, 0x072b5118, 0x314ad7aa, 0x8fc79f08, 0x45d78b1f, 0xfe20058f, 0x23325118, 0x7b54d9b5, 0x9fc38f46,
-    0x10bb410f, 0x41077b42, 0xc1410faf, 0x27cf441d, 0x46051b4f, 0x04200683, 0x2121d344, 0x8f530043, 0x8fcf9f0e, 0x21df8c1f, 0x50188000, 0x5d180e52,
-    0xfd201710, 0x4405c341, 0xd68528e3, 0x20071f6b, 0x1b734305, 0x6b080957, 0x7d422b1f, 0x67002006, 0x7f8317b1, 0x2024cb48, 0x08676e00, 0x8749a39b,
-    0x18132006, 0x410a6370, 0x8f490b47, 0x7e1f8f13, 0x551805c3, 0x4c180915, 0xfe200e2f, 0x244d5d18, 0x270bcf44, 0xff000019, 0x04800380, 0x5f253342,
-    0xff520df7, 0x13274c18, 0x5542dd93, 0x0776181b, 0xf94a1808, 0x084a4c0c, 0x4308ea5b, 0xde831150, 0x7900fd21, 0x00492c1e, 0x060f4510, 0x17410020,
-    0x0ce74526, 0x6206b341, 0x1f561083, 0x9d6c181b, 0x08a0500e, 0x112e4118, 0x60000421, 0xbf901202, 0x4408e241, 0xc7ab0513, 0xb40f0950, 0x055943c7,
-    0x4f18ff20, 0xc9ae1cad, 0x32b34f18, 0x7a180120, 0x3d520a05, 0x53d1b40a, 0x80200813, 0x1b815018, 0x832bf86f, 0x67731847, 0x297f4308, 0x6418d54e,
-    0x734213f7, 0x056b4b27, 0xdba5fe20, 0x1828aa4e, 0x2031a370, 0x06cb6101, 0x2040ad41, 0x07365300, 0x2558d985, 0x83fe200c, 0x0380211c, 0x542c4743,
-    0x052006b7, 0x6021df45, 0x897b0707, 0x18d3c010, 0x20090e70, 0x1d5843ff, 0x540a0e44, 0x002126c5, 0x322f7416, 0x636a5720, 0x0f317409, 0x610fe159,
-    0x294617e7, 0x08555213, 0x2006a75d, 0x6cec84fd, 0xfb5907be, 0x3a317405, 0x83808021, 0x180f20ea, 0x4626434a, 0x531818e3, 0xdb59172d, 0x0cbb460c,
-    0x2013d859, 0x18b94502, 0x8f46188d, 0x77521842, 0x0a184e38, 0x9585fd20, 0x6a180684, 0xc64507e9, 0x51cbb230, 0xd3440cf3, 0x17ff6a0f, 0x450f5b42,
-    0x276407c1, 0x4853180a, 0x21ccb010, 0xcf580013, 0x0c15442d, 0x410a1144, 0x1144359d, 0x5cfe2006, 0xa1410a43, 0x2bb64519, 0x2f5b7618, 0xb512b745,
-    0x0cfd6fd1, 0x42089f59, 0xb8450c70, 0x0000232d, 0x50180900, 0xb9491ae3, 0x0fc37610, 0x01210f83, 0x0f3b4100, 0xa01b2742, 0x0ccd426f, 0x6e8f6f94,
-    0x9c808021, 0xc7511870, 0x17c74b08, 0x9b147542, 0x44fe2079, 0xd5480c7e, 0x95ef861d, 0x101b597b, 0xf5417594, 0x9f471808, 0x86868d0e, 0x3733491c,
-    0x690f4d6d, 0x43440b83, 0x1ba94c0b, 0x660cd16b, 0x802008ae, 0x74126448, 0xcb4f38a3, 0x2cb74b0b, 0x47137755, 0xe3971777, 0x1b5d0120, 0x057a4108,
-    0x6e08664d, 0x17421478, 0x11af4208, 0x850c3f42, 0x08234f0c, 0x4321eb4a, 0xf3451095, 0x0f394e0f, 0x4310eb45, 0xc09707b1, 0x54431782, 0xaec08d1d,
-    0x0f434dbb, 0x9f0c0b45, 0x0a3b4dbb, 0x4618bdc7, 0x536032eb, 0x17354213, 0x4d134169, 0xc7a30c2f, 0x4e254342, 0x174332cf, 0x43cdae17, 0x6b4706e4,
-    0x0e16430d, 0x530b5542, 0x2f7c26bb, 0x13075f31, 0x43175342, 0x60181317, 0x6550114e, 0x28624710, 0x58070021, 0x59181683, 0x2d540cf5, 0x05d5660c,
-    0x20090c7b, 0x0e157e02, 0x8000ff2b, 0x14000080, 0x80ff8000, 0x27137e03, 0x336a4b20, 0x0f817107, 0x13876e18, 0x730f2f7e, 0x2f450b75, 0x6d02200b,
-    0x6d66094c, 0x4b802009, 0x15820a02, 0x2f45fe20, 0x5e032006, 0x00202fd9, 0x450af741, 0xeb412e0f, 0x0ff3411f, 0x420a8b65, 0xf7410eae, 0x1c664810,
-    0x540e1145, 0xbfa509f3, 0x42302f58, 0x80200c35, 0xcb066c47, 0x4b1120c1, 0x41492abb, 0x34854110, 0xa7097b72, 0x251545c7, 0x4b2c7f56, 0xc5b40bab,
-    0x940cd54e, 0x2e6151c8, 0x09f35f18, 0x4b420420, 0x09677121, 0x8f24f357, 0x1b5418e1, 0x08915a1f, 0x3143d894, 0x22541805, 0x1b9b4b0e, 0x8c0d3443,
-    0x1400240d, 0x18ff8000, 0x582e6387, 0xf99b2b3b, 0x8807a550, 0x17a14790, 0x2184fd20, 0x5758fe20, 0x2354882c, 0x15000080, 0x5e056751, 0x334c2c2f,
-    0x97c58f0c, 0x1fd7410f, 0x0d4d4018, 0x4114dc41, 0x04470ed6, 0x0dd54128, 0x00820020, 0x02011523, 0x22008700, 0x86480024, 0x0001240a, 0x8682001a,
-    0x0002240b, 0x866c000e, 0x8a03200b, 0x8a042017, 0x0005220b, 0x22218614, 0x84060000, 0x86012017, 0x8212200f, 0x250b8519, 0x000d0001, 0x0b850031,
-    0x07000224, 0x0b862600, 0x11000324, 0x0b862d00, 0x238a0420, 0x0a000524, 0x17863e00, 0x17840620, 0x01000324, 0x57820904, 0x0b85a783, 0x0b85a785,
-    0x0b85a785, 0x22000325, 0x85007a00, 0x85a7850b, 0x85a7850b, 0x22a7850b, 0x82300032, 0x00342201, 0x0805862f, 0x35003131, 0x54207962, 0x74736972,
-    0x47206e61, 0x6d6d6972, 0x65527265, 0x616c7567, 0x58545472, 0x6f725020, 0x43796767, 0x6e61656c, 0x30325454, 0x822f3430, 0x35313502, 0x79006200,
-    0x54002000, 0x69007200, 0x74007300, 0x6e006100, 0x47200f82, 0x6d240f84, 0x65006d00, 0x52200982, 0x67240582, 0x6c007500, 0x72201d82, 0x54222b82,
-    0x23825800, 0x19825020, 0x67006f22, 0x79220182, 0x1b824300, 0x3b846520, 0x1f825420, 0x41000021, 0x1422099b, 0x0b410000, 0x87088206, 0x01012102,
-    0x78080982, 0x01020101, 0x01040103, 0x01060105, 0x01080107, 0x010a0109, 0x010c010b, 0x010e010d, 0x0110010f, 0x01120111, 0x01140113, 0x01160115,
-    0x01180117, 0x011a0119, 0x011c011b, 0x011e011d, 0x0020011f, 0x00040003, 0x00060005, 0x00080007, 0x000a0009, 0x000c000b, 0x000e000d, 0x0010000f,
-    0x00120011, 0x00140013, 0x00160015, 0x00180017, 0x001a0019, 0x001c001b, 0x001e001d, 0x08bb821f, 0x22002142, 0x24002300, 0x26002500, 0x28002700,
-    0x2a002900, 0x2c002b00, 0x2e002d00, 0x30002f00, 0x32003100, 0x34003300, 0x36003500, 0x38003700, 0x3a003900, 0x3c003b00, 0x3e003d00, 0x40003f00,
-    0x42004100, 0x4b09f382, 0x00450044, 0x00470046, 0x00490048, 0x004b004a, 0x004d004c, 0x004f004e, 0x00510050, 0x00530052, 0x00550054, 0x00570056,
-    0x00590058, 0x005b005a, 0x005d005c, 0x005f005e, 0x01610060, 0x01220121, 0x01240123, 0x01260125, 0x01280127, 0x012a0129, 0x012c012b, 0x012e012d,
-    0x0130012f, 0x01320131, 0x01340133, 0x01360135, 0x01380137, 0x013a0139, 0x013c013b, 0x013e013d, 0x0140013f, 0x00ac0041, 0x008400a3, 0x00bd0085,
-    0x00e80096, 0x008e0086, 0x009d008b, 0x00a400a9, 0x008a00ef, 0x008300da, 0x00f20093, 0x008d00f3, 0x00880097, 0x00de00c3, 0x009e00f1, 0x00f500aa,
-    0x00f600f4, 0x00ad00a2, 0x00c700c9, 0x006200ae, 0x00900063, 0x00cb0064, 0x00c80065, 0x00cf00ca, 0x00cd00cc, 0x00e900ce, 0x00d30066, 0x00d100d0,
-    0x006700af, 0x009100f0, 0x00d400d6, 0x006800d5, 0x00ed00eb, 0x006a0089, 0x006b0069, 0x006c006d, 0x00a0006e, 0x0071006f, 0x00720070, 0x00750073,
-    0x00760074, 0x00ea0077, 0x007a0078, 0x007b0079, 0x007c007d, 0x00a100b8, 0x007e007f, 0x00810080, 0x00ee00ec, 0x6e750eba, 0x646f6369, 0x78302365,
-    0x31303030, 0x32200e8d, 0x33200e8d, 0x34200e8d, 0x35200e8d, 0x36200e8d, 0x37200e8d, 0x38200e8d, 0x39200e8d, 0x61200e8d, 0x62200e8d, 0x63200e8d,
-    0x64200e8d, 0x65200e8d, 0x66200e8d, 0x31210e8c, 0x8d0e8d30, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef,
-    0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x66312def, 0x6c656406, 0x04657465, 0x6f727545, 0x3820ec8c, 0x3820ec8d,
-    0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d,
-    0x3820ec8d, 0x200ddc41, 0x0ddc4139, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920,
-    0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0x00663923, 0x48fa0500, 0x00f762f9,
+    0x0000bc57, 0x00000000, 0xf8a00000, 0x00000400, 0x00010037, 0x000c0000, 0x00030080, 0x2f534f40, 0x74eb8832, 0x01000090, 0x2c158248, 0x616d634e, 
+    0x23120270, 0x03000075, 0x241382a0, 0x74766352, 0x82178220, 0xfc042102, 0x02380482, 0x66796c67, 0x5689af12, 0x04070000, 0x80920000, 0x64616568, 
+    0xd36691d7, 0xcc201b82, 0x36210382, 0x27108268, 0xc3014208, 0x04010000, 0x243b0f82, 0x78746d68, 0x807e008a, 0x98010000, 0x06020000, 0x61636f6c, 
+    0xd8b0738c, 0x82050000, 0x0402291e, 0x7078616d, 0xda00ae01, 0x28201f82, 0x202c1082, 0x656d616e, 0x96bb5925, 0x84990000, 0x9e2c1382, 0x74736f70, 
+    0xef83aca6, 0x249b0000, 0xd22c3382, 0x70657270, 0x12010269, 0xf4040000, 0x08202f82, 0x012ecb84, 0x553c0000, 0x0f5fd5e9, 0x0300f53c, 0x00830008, 
+    0x7767b722, 0x002b3f82, 0xa692bd00, 0xfe0000d7, 0x83800380, 0x21f1826f, 0x00850002, 0x41820120, 0x40fec026, 0x80030000, 0x05821083, 0x07830120, 
+    0x0221038a, 0x24118200, 0x90000101, 0x82798200, 0x00022617, 0x00400008, 0x2009820a, 0x82098276, 0x82002006, 0x9001213b, 0x0223c883, 0x828a02bc, 
+    0x858f2010, 0xc5012507, 0x00023200, 0x04210083, 0x91058309, 0x6c412b03, 0x40007374, 0xac200000, 0x00830008, 0x01000523, 0x834d8380, 0x80032103, 
+    0x012101bf, 0x23b88280, 0x00800000, 0x0b830382, 0x07820120, 0x83800021, 0x88012001, 0x84002009, 0x2005870f, 0x870d8301, 0x2023901b, 0x83199501, 
+    0x82002015, 0x84802000, 0x84238267, 0x88002027, 0x8561882d, 0x21058211, 0x13880000, 0x01800022, 0x05850d85, 0x0f828020, 0x03208384, 0x03200582, 
+    0x47901b84, 0x1b850020, 0x1f821d82, 0x3f831d88, 0x3f410383, 0x84058405, 0x210982cd, 0x09830000, 0x03207789, 0xf38a1384, 0x01203782, 0x13872384, 
+    0x0b88c983, 0x0d898f84, 0x00202982, 0x23900383, 0x87008021, 0x83df8301, 0x86118d03, 0x863f880d, 0x8f35880f, 0x2160820f, 0x04830300, 0x1c220382, 
+    0x05820100, 0x4c000022, 0x09831182, 0x04001c24, 0x11823000, 0x0800082e, 0x00000200, 0xff007f00, 0xffffac20, 0x00220982, 0x09848100, 0xdf216682, 
+    0x843586d5, 0x06012116, 0x04400684, 0xa58120d7, 0x00b127d8, 0x01b88d01, 0x2d8685ff, 0xc100c621, 0xf4be0801, 0x9e011c01, 0x88021402, 0x1403fc02, 
+    0x9c035803, 0x1404de03, 0x50043204, 0xa2046204, 0x66051605, 0x1206bc05, 0xd6067406, 0x7e073807, 0x4e08ec07, 0x96086c08, 0x1009d008, 0x88094a09, 
+    0x800a160a, 0x560b040b, 0x2e0cc80b, 0xea0c820c, 0xa40d5e0d, 0x500eea0d, 0x280f960e, 0x1210b00f, 0xe0107410, 0xb6115211, 0x6e120412, 0x4c13c412, 
+    0xf613ac13, 0xae145814, 0x4015ea14, 0xa6158015, 0x1216b815, 0xc6167e16, 0x8e173417, 0x5618e017, 0xee18ba18, 0x96193619, 0x481ad419, 0xf01a9c1a, 
+    0xc81b5c1b, 0x4c1c041c, 0xea1c961c, 0x921d2a1d, 0x401ed21d, 0xe01e8e1e, 0x761f241f, 0xa61fa61f, 0x01821020, 0x8a202e34, 0xc820b220, 0x74211421, 
+    0xee219821, 0x86226222, 0x01820c23, 0x83238021, 0x23983c01, 0x24d823b0, 0x244a2400, 0x24902468, 0x250625ae, 0x25822560, 0x26f825f8, 0x82aa2658, 
+    0xd8be0801, 0x9a274027, 0x68280a28, 0x0e29a828, 0xb8292029, 0x362af829, 0x602a602a, 0x2a2b022b, 0xac2b5e2b, 0x202ce62b, 0x9a2c342c, 0x5c2d282d, 
+    0xaa2d782d, 0x262ee82d, 0x262fa62e, 0xf42fb62f, 0xc8305e30, 0xb4313e31, 0x9e321e32, 0x82331e33, 0x5c34ee33, 0x3a35ce34, 0xd4358635, 0x72362636, 
+    0x7637e636, 0x3a38d837, 0x1239a638, 0xae397439, 0x9a3a2e3a, 0x7c3b063b, 0x3a3ce83b, 0x223d963c, 0xec3d863d, 0xc63e563e, 0x9a3f2a3f, 0x6a401240, 
+    0x3641d040, 0x0842a241, 0x7a424042, 0xf042b842, 0xcc436243, 0x8a442a44, 0x5845ee44, 0xe245b645, 0xb4465446, 0x7a471447, 0x5448da47, 0x4049c648, 
+    0x15462400, 0x034d0808, 0x0b000700, 0x13000f00, 0x1b001700, 0x23001f00, 0x2b002700, 0x33002f00, 0x3b003700, 0x43003f00, 0x4b004700, 0x53004f00, 
+    0x5b005700, 0x63005f00, 0x6b006700, 0x73006f00, 0x7b007700, 0x83007f00, 0x8b008700, 0x00008f00, 0x15333511, 0x20039631, 0x20178205, 0xd3038221, 
+    0x20739707, 0x25008580, 0x028080fc, 0x05be8080, 0x04204a85, 0x05ce0685, 0x0107002a, 0x02000080, 0x00000400, 0x250d8b41, 0x33350100, 0x03920715, 
+    0x13820320, 0x858d0120, 0x0e8d0320, 0xff260d83, 0x00808000, 0x54820106, 0x04800223, 0x845b8c80, 0x41332059, 0x078b068f, 0x82000121, 0x82fe2039, 
+    0x84802003, 0x83042004, 0x23598a0e, 0x00180000, 0x03210082, 0x42ab9080, 0x73942137, 0x2013bb41, 0x8f978205, 0x2027a39b, 0x20b68801, 0x84b286fd, 
+    0x91c88407, 0x41032011, 0x11a51130, 0x15000027, 0x80ff8000, 0x11af4103, 0x841b0341, 0x8bd983fd, 0x9be99bc9, 0x8343831b, 0x21f1821f, 0xb58300ff, 
+    0x0f84e889, 0xf78a0484, 0x8000ff22, 0x0020eeb3, 0x14200082, 0x2130ef41, 0xeb431300, 0x4133200a, 0xd7410ecb, 0x9a07200b, 0x2027871b, 0x21238221, 
+    0xe7828080, 0xe784fd20, 0xe8848020, 0xfe808022, 0x08880d85, 0xba41fd20, 0x82248205, 0x85eab02a, 0x008022e7, 0x2cd74200, 0x44010021, 0xd34406eb, 
+    0x44312013, 0xcf8b0eef, 0x0d422f8b, 0x82332007, 0x0001212f, 0x8023cf82, 0x83000180, 0x820583de, 0x830682d4, 0x820020d4, 0x82dc850a, 0x20e282e9, 
+    0xb2ff85fe, 0x010327e9, 0x02000380, 0x0f440400, 0x0c634407, 0x68825982, 0x85048021, 0x260a825d, 0x010b0000, 0x4400ff00, 0x2746103f, 0x08d74209, 
+    0x4d440720, 0x0eaf4406, 0xc3441d20, 0x23078406, 0xff800002, 0x04845b83, 0x8d05b241, 0x1781436f, 0x6b8c87a5, 0x1521878e, 0x06474505, 0x01210783, 
+    0x84688c00, 0x8904828e, 0x441e8cf7, 0x0b270cff, 0x80008000, 0x45030003, 0xfb430fab, 0x080f4107, 0x410bf942, 0xd34307e5, 0x070d4207, 0x80800123, 
+    0x205d85fe, 0x849183fe, 0x20128404, 0x82809702, 0x00002217, 0x41839a09, 0x6b4408cf, 0x0733440f, 0x3b460720, 0x82798707, 0x97802052, 0x0000296f, 
+    0xff800004, 0x01800100, 0x0021ef89, 0x0a914625, 0x410a4d41, 0x00250ed4, 0x00050000, 0x056d4280, 0x210a7b46, 0x21481300, 0x46ed8512, 0x00210bd1, 
+    0x89718202, 0x21738877, 0x2b850001, 0x00220582, 0x87450a00, 0x0ddb4606, 0x41079b42, 0x9d420c09, 0x0b09420b, 0x8d820720, 0x9742fc84, 0x42098909, 
+    0x00241e0f, 0x00800014, 0x0b47da82, 0x0833442a, 0x49078d41, 0x2f450f13, 0x42278f17, 0x01200751, 0x22063742, 0x44808001, 0x20450519, 0x88068906, 
+    0x83fe2019, 0x4203202a, 0x1a941a58, 0x00820020, 0xe7a40e20, 0x420ce146, 0x854307e9, 0x0fcb4713, 0xff20a182, 0xfe209b82, 0x0c867f8b, 0x0021aea4, 
+    0x219fa40f, 0x7d41003b, 0x07194214, 0xbf440520, 0x071d4206, 0x6941a590, 0x80802309, 0x028900ff, 0xa9a4b685, 0xc5808021, 0x449b82ab, 0x152007eb, 
+    0x42134d46, 0x61440a15, 0x051e4208, 0x222b0442, 0x47001100, 0xfd412913, 0x17194714, 0x410f5b41, 0x02220773, 0x09428080, 0x21a98208, 0xd4420001, 
+    0x481c840d, 0x00232bc9, 0x42120000, 0xe74c261b, 0x149d4405, 0x07209d87, 0x410db944, 0x14421c81, 0x42fd2005, 0x80410bd2, 0x203d8531, 0x06874100, 
+    0x48256f4a, 0xcb420c95, 0x13934113, 0x44075d44, 0x044c0855, 0x00ff2105, 0xfe228185, 0x45448000, 0x22c5b508, 0x410c0000, 0x7b412087, 0x1bb74514, 
+    0x32429c85, 0x0a574805, 0x21208943, 0x8ba01300, 0x440dfb4e, 0x77431437, 0x245b4113, 0x200fb145, 0x41108ffe, 0x80203562, 0x00200082, 0x46362b42, 
+    0x1742178d, 0x4527830f, 0x0f830b2f, 0x4a138146, 0x802409a1, 0xfe8000ff, 0x94419982, 0x09294320, 0x04000022, 0x49050f4f, 0xcb470a63, 0x48032008, 
+    0x2b48067b, 0x85022008, 0x82638338, 0x00002209, 0x05af4806, 0x900e9f49, 0x84c5873f, 0x214285bd, 0x064900ff, 0x0c894607, 0x00000023, 0x4903820a, 
+    0x714319f3, 0x0749410c, 0x8a07a145, 0x02152507, 0xfe808000, 0x74490386, 0x8080211b, 0x0c276f82, 0x00018000, 0x48028003, 0x2b2315db, 0x43002f00, 
+    0x6f82142f, 0x44011521, 0x93510da7, 0x20e68508, 0x06494d80, 0x8e838020, 0x06821286, 0x124bff20, 0x25f3830c, 0x03800080, 0xe74a0380, 0x207b8715, 
+    0x876b861d, 0x4a152007, 0x07870775, 0xf6876086, 0x8417674a, 0x0a0021f2, 0x431c9743, 0x8d421485, 0x200b830b, 0x06474d03, 0x71828020, 0x04510120, 
+    0x42da8606, 0x1f831882, 0x001a0022, 0xff4d0082, 0x0b0f532c, 0x0d449b94, 0x4e312007, 0x074f12e7, 0x0bf3490b, 0xbb412120, 0x413f820a, 0xef490857, 
+    0x80002313, 0xe2830001, 0x6441fc20, 0x8b802006, 0x00012108, 0xfd201582, 0x492c9b48, 0x802014ff, 0x51084347, 0x0f4327f3, 0x17bf4a14, 0x201b7944, 
+    0x06964201, 0x134ffe20, 0x20d6830b, 0x25d78280, 0xfd800002, 0x05888000, 0x9318dc41, 0x21d282d4, 0xdb481800, 0x0dff542a, 0x45107743, 0xe14813f5, 
+    0x0f034113, 0x83135d45, 0x47b28437, 0xe4510e73, 0x21f58e06, 0x2b8400fd, 0x1041fcac, 0x08db4b0b, 0x421fdb41, 0xdf4b18df, 0x011d210a, 0x420af350, 
+    0x6e8308af, 0xac85cb86, 0x1e461082, 0x82b7a407, 0x411420a3, 0xa34130ab, 0x178f4124, 0x41139741, 0x86410d93, 0x82118511, 0x057243d8, 0x8941d9a4, 
+    0x3093480c, 0x4a13474f, 0xfb5016a9, 0x07ad4108, 0x4a0f9d42, 0xfe200fad, 0x4708aa41, 0x83482dba, 0x288f4d06, 0xb398c3bb, 0x44267b41, 0xb34439d7, 
+    0x0755410f, 0x200ebb45, 0x0f5f4215, 0x20191343, 0x06df5301, 0xf04c0220, 0x2ba64d07, 0x82050841, 0x430020ce, 0xa78f3627, 0x5213ff42, 0x2f970bc1, 
+    0x4305ab55, 0xa084111b, 0x450bac45, 0x5f4238b8, 0x010c2106, 0x0220ed82, 0x441bb344, 0x875010af, 0x0737480f, 0x490c5747, 0x0c840c03, 0x4c204b42, 
+    0x8ba905d7, 0x8b948793, 0x510c0c51, 0xfb4b24b9, 0x1b174107, 0x5709d74c, 0xd1410ca5, 0x079d480f, 0x201ff541, 0x06804780, 0x7d520120, 0x80002205, 
+    0x20a983fe, 0x47bb83fe, 0x1b8409b4, 0x81580220, 0x4e00202c, 0x4f41282f, 0x0eab4f17, 0x57471520, 0x0e0f4808, 0x8221e041, 0x3e1b4a8b, 0x4407175d, 
+    0x1b4b071f, 0x4a0f8b07, 0x174a0703, 0x0ba5411b, 0x430fb141, 0x0120057b, 0xfc20dd82, 0x4a056047, 0xf4850c0c, 0x01221982, 0x02828000, 0x1a5d088b, 
+    0x20094108, 0x8c0e3941, 0x4900200e, 0x7744434f, 0x200b870b, 0x0e4b5a33, 0x2b41f78b, 0x8b138307, 0x0b9f450b, 0x2406f741, 0xfd808001, 0x09475a00, 
+    0x84000121, 0x5980200e, 0x85450e5d, 0x832c8206, 0x4106831e, 0x00213814, 0x28b34810, 0x410c2f4b, 0x5f4a13d7, 0x0b2b4113, 0x6e43a883, 0x11174b05, 
+    0x4b066a45, 0xcc470541, 0x5000202b, 0xcb472f4b, 0x44b59f0f, 0xc5430b5b, 0x0d654907, 0x21065544, 0xd6828080, 0xfe201982, 0x8230ec4a, 0x120025c2, 
+    0x80ff8000, 0x4128d74d, 0x3320408b, 0x410a9f50, 0xdb822793, 0x822bd454, 0x61134b2e, 0x410b214a, 0xad4117c9, 0x0001211f, 0x4206854f, 0x4b430596, 
+    0x06bb5530, 0x2025cf46, 0x0ddd5747, 0x500ea349, 0x0f840fa7, 0x5213c153, 0x634e08d1, 0x0bbe4809, 0x59316e4d, 0x5b50053f, 0x203f6323, 0x5117eb46, 
+    0x94450a63, 0x246e410a, 0x63410020, 0x0bdb5f2f, 0x4233ab44, 0x39480757, 0x112d4a07, 0x7241118f, 0x000e2132, 0x9f286f41, 0x0f8762c3, 0x33350723, 
+    0x094e6415, 0x2010925f, 0x067252fe, 0xd0438020, 0x63a68225, 0x11203a4f, 0x480e6360, 0x5748131f, 0x079b521f, 0x200e2f43, 0x864b8315, 0x113348e7, 
+    0x85084e48, 0x06855008, 0x5880fd21, 0x7c420925, 0x0c414824, 0x37470c86, 0x1b8b422b, 0x5b0a8755, 0x23410c21, 0x0b83420b, 0x5a082047, 0xf482067f, 
+    0xa80b4c47, 0x0c0021cf, 0x20207b42, 0x0fb74100, 0x420b8744, 0xeb43076f, 0x0f6f420b, 0x4261fe20, 0x439aa00c, 0x215034e3, 0x0ff9570f, 0x4b1f2d5d, 
+    0x2d5d0c6f, 0x09634d0b, 0x1f51b8a0, 0x620f200c, 0xaf681e87, 0x24f94d07, 0x4e0f4945, 0xfe200c05, 0x22139742, 0x57048080, 0x23950c20, 0x97601585, 
+    0x4813201f, 0xad620523, 0x200f8f0f, 0x9e638f15, 0x00002181, 0x41342341, 0x0f930f0b, 0x210b4b62, 0x978f0001, 0xfe200f84, 0x8425c863, 0x2704822b, 
+    0x80000a00, 0x00038001, 0x610e9768, 0x834514bb, 0x0bc3430f, 0x2107e357, 0x80848080, 0x4400fe21, 0x2e410983, 0x00002a1a, 0x00000700, 0x800380ff, 
+    0x0fdf5800, 0x59150021, 0xd142163d, 0x0c02410c, 0x01020025, 0x65800300, 0x00240853, 0x1d333501, 0x15220382, 0x35420001, 0x44002008, 0x376406d7, 
+    0x096f6b19, 0x480bc142, 0x8f4908a7, 0x211f8b1f, 0x9e830001, 0x0584fe20, 0x4180fd21, 0x11850910, 0x8d198259, 0x000021d4, 0x5a08275d, 0x275d1983, 
+    0x06d9420e, 0x9f08b36a, 0x0f7d47b5, 0x8d8a2f8b, 0x4c0e0b57, 0xe7410e17, 0x42d18c1a, 0xb351087a, 0x1ac36505, 0x4b4a2f20, 0x0b9f450d, 0x430beb53, 
+    0xa7881015, 0xa5826a83, 0x80200f82, 0x86185a65, 0x4100208e, 0x176c3367, 0x0fe7650b, 0x4a17ad4b, 0x0f4217ed, 0x112e4206, 0x41113a42, 0xf7423169, 
+    0x0cb34737, 0x560f8b46, 0xa75407e5, 0x5f01200f, 0x31590c48, 0x80802106, 0x42268841, 0x0020091e, 0x4207ef64, 0x69461df7, 0x138d4114, 0x820f5145, 
+    0x53802090, 0xff200529, 0xb944b183, 0x417e8505, 0x00202561, 0x15210082, 0x42378200, 0x9b431cc3, 0x004f220d, 0x0dd54253, 0x4213f149, 0x7d41133b, 
+    0x42c9870b, 0x802010f9, 0x420b2c42, 0x8f441138, 0x267c4408, 0x600cb743, 0x8f4109d3, 0x05ab701d, 0x83440020, 0x3521223f, 0x0b794733, 0xfb62fe20, 
+    0x4afd2010, 0xaf410ae7, 0x25ce8525, 0x01080000, 0x7b6b0000, 0x0973710b, 0x82010021, 0x49038375, 0x33420767, 0x052c4212, 0x58464b85, 0x41fe2005, 
+    0x50440c27, 0x000c2209, 0x1cb36b80, 0x9b06df44, 0x0f93566f, 0x52830220, 0xfe216e8d, 0x200f8200, 0x0fb86704, 0xb057238d, 0x050b5305, 0x7217eb47, 
+    0xbd410b6b, 0x0f214610, 0x871f9956, 0x1e91567e, 0x2029b741, 0x20008200, 0x18b7410a, 0x27002322, 0x41095543, 0x0f8f0fb3, 0x41000121, 0x889d111c, 
+    0x14207b82, 0x00200382, 0x73188761, 0x475013a7, 0x6e33200c, 0x234e0ea3, 0x9b138313, 0x08e54d17, 0x9711094e, 0x2ee74311, 0x4908875e, 0xd75d1f1f, 
+    0x19ab5238, 0xa2084d48, 0x63a7a9b3, 0x55450b83, 0x0fd74213, 0x440d814c, 0x4f481673, 0x05714323, 0x13000022, 0x412e1f46, 0xdf493459, 0x21c7550f, 
+    0x8408215f, 0x201d49cb, 0xb1103043, 0x0f0d65d7, 0x452b8d41, 0x594b0f8d, 0x0b004605, 0xb215eb46, 0x000a24d7, 0x47000080, 0x002118cf, 0x06436413, 
+    0x420bd750, 0x2b500743, 0x076a470c, 0x4105c050, 0xd942053f, 0x0d00211a, 0x5f44779c, 0x0ce94805, 0x51558186, 0x14a54c0b, 0x49082b41, 0x0a4b0888, 
+    0x8080261f, 0x0d000000, 0x20048201, 0x1deb6a03, 0x420cb372, 0x07201783, 0x4306854d, 0x8b830c59, 0x59093c74, 0x0020250f, 0x67070f4a, 0x2341160b, 
+    0x00372105, 0x431c515d, 0x554e17ef, 0x0e5d6b05, 0x41115442, 0xb74a1ac1, 0x2243420a, 0x5b4f878f, 0x7507200f, 0x384b086f, 0x09d45409, 0x0020869a, 
+    0x12200082, 0xab460382, 0x10075329, 0x54138346, 0xaf540fbf, 0x1ea75413, 0x9a0c9e54, 0x0f6b44c1, 0x41000021, 0x47412a4f, 0x07374907, 0x5310bf76, 
+    0xff2009b4, 0x9a09a64c, 0x8200208d, 0x34c34500, 0x970fe141, 0x1fd74b0f, 0x440a3850, 0x206411f0, 0x27934609, 0x470c5d41, 0x555c2947, 0x1787540f, 
+    0x6e0f234e, 0x7d540a1b, 0x1d736b08, 0x0026a088, 0x80000e00, 0x9b5200ff, 0x08ef4318, 0x450bff77, 0x1d4d0b83, 0x081f7006, 0xcb691b86, 0x4b022008, 
+    0xc34b0b33, 0x1d0d4a0c, 0x8025a188, 0x0b000000, 0x52a38201, 0xbf7d0873, 0x0c234511, 0x8f0f894a, 0x4101200f, 0x0c880c9d, 0x2b418ea1, 0x06c74128, 
+    0x66181341, 0x7b4c0bb9, 0x0c06630b, 0xfe200c87, 0x9ba10882, 0x27091765, 0x01000008, 0x02800380, 0x48113f4e, 0x29430cf5, 0x09a75a0b, 0x31618020, 
+    0x6d802009, 0x61840e33, 0x8208bf51, 0x0c637d61, 0x7f092379, 0x4f470f4b, 0x1797510c, 0x46076157, 0xf5500fdf, 0x0f616910, 0x1171fe20, 0x82802006, 
+    0x08696908, 0x41127a4c, 0x3f4a15f3, 0x01042607, 0x0200ff00, 0x1cf77700, 0xff204185, 0x00235b8d, 0x43100000, 0x3b22243f, 0x3b4d3f00, 0x0b937709, 
+    0xad42f18f, 0x0b1f420f, 0x51084b43, 0x8020104a, 0xb557ff83, 0x052b7f2a, 0x0280ff22, 0x250beb78, 0x00170013, 0xbf6d2500, 0x07db760e, 0x410e2b7f, 
+    0x00230e4f, 0x49030000, 0x0582055b, 0x07000326, 0x00000b00, 0x580bcd46, 0x00200cdd, 0x57078749, 0x8749160f, 0x0f994f0a, 0x41134761, 0x01200b31, 
+    0xeb796883, 0x0b41500b, 0x0e90b38e, 0x202e7b51, 0x05d95801, 0x41080570, 0x1d530fc9, 0x0b937a0f, 0xaf8eb387, 0xf743b98f, 0x07c74227, 0x80000523, 
+    0x0fcb4503, 0x430ca37b, 0x7782077f, 0x8d0a9947, 0x08af4666, 0xeb798020, 0x6459881e, 0xc3740bbf, 0x0feb6f0b, 0x20072748, 0x052b6102, 0x435e0584, 
+    0x7d088308, 0x03200afd, 0x92109e41, 0x28aa8210, 0x80001500, 0x80030000, 0x0fdb5805, 0x209f4018, 0xa7418d87, 0x0aa3440f, 0x20314961, 0x073a52ff, 
+    0x6108505d, 0x43181051, 0x00223457, 0xe7820500, 0x50028021, 0x81410d33, 0x063d7108, 0xdb41af84, 0x4d888205, 0x00201198, 0x463d835f, 0x152106d7, 
+    0x0a355a33, 0x6917614e, 0x75411f4d, 0x184b8b07, 0x1809c344, 0x21091640, 0x0b828000, 0x42808021, 0x26790519, 0x86058605, 0x2428422d, 0x22123b42, 
+    0x42000080, 0xf587513b, 0x7813677b, 0xaf4d139f, 0x00ff210c, 0x5e0a1d57, 0x3b421546, 0x01032736, 0x02000380, 0x41180480, 0x2f420f07, 0x0c624807, 
+    0x00000025, 0x18000103, 0x83153741, 0x430120c3, 0x042106b2, 0x088d4d00, 0x2f830620, 0x1810434a, 0x18140345, 0x8507fb41, 0x5ee582ea, 0x0023116c, 
+    0x8d000600, 0x053b56af, 0xa6554fa2, 0x0d704608, 0x40180d20, 0x47181a43, 0xd37b07ff, 0x0b79500c, 0x420fd745, 0x47450bd9, 0x8471830a, 0x095a777e, 
+    0x84137542, 0x82002013, 0x2f401800, 0x0007213b, 0x4405e349, 0x0d550ff3, 0x16254c0c, 0x820ffe4a, 0x0400218a, 0x89066f41, 0x106b414f, 0xc84d0120, 
+    0x80802206, 0x0c9a4b03, 0x00100025, 0x68000200, 0x9d8c2473, 0x44134344, 0xf36a0f33, 0x4678860f, 0x1b440a25, 0x41988c0a, 0x80201879, 0x43079b5e, 
+    0x4a18080b, 0x0341190b, 0x1259530c, 0x43251552, 0x908205c8, 0x0cac4018, 0x86000421, 0x0e504aa2, 0x0020b891, 0xfb450082, 0x51132014, 0x8f5205f3, 
+    0x35052108, 0x8505cb59, 0x0f6d4f70, 0x82150021, 0x29af5047, 0x4f004b24, 0x75795300, 0x1b595709, 0x460b6742, 0xbf4b0f0d, 0x5743870b, 0xcb6d1461, 
+    0x08f64505, 0x4e05ab6c, 0x334126c3, 0x0bcb6b0d, 0x1811034d, 0x4111ef4b, 0x814f1ce5, 0x20af8227, 0x07fd7b80, 0x41188e84, 0xef410f33, 0x80802429, 
+    0x410d0000, 0xa34205ab, 0x76b7881c, 0xff500b89, 0x0741430f, 0x20086f4a, 0x209d8200, 0x234c18fd, 0x05d4670a, 0x4509af51, 0x9642078d, 0x189e831d, 
+    0x7c1cc74b, 0xcd4c07b9, 0x0e7c440f, 0x8b7b0320, 0x21108210, 0xc76c8080, 0x03002106, 0x6b23bf41, 0xc549060b, 0x7946180b, 0x0ff7530f, 0x17ad4618, 
+    0x200ecd45, 0x208c83fd, 0x5e0488fe, 0x032009c6, 0x420d044e, 0x0d8f0d7f, 0x00820020, 0x18001021, 0x6d273b45, 0xfd4c0c93, 0xcf451813, 0x0fe5450f, 
+    0x5a47c382, 0x820a8b0a, 0x282b4998, 0x410a8b5b, 0x4b232583, 0x54004f00, 0x978f0ce3, 0x500f1944, 0xa95f1709, 0x0280220b, 0x05ba7080, 0xa1530682, 
+    0x06324c13, 0x91412582, 0x05536e2c, 0x63431020, 0x0f434706, 0x8c11374c, 0x176143d7, 0x4d0f454c, 0xd3680bed, 0x0bee4d17, 0x212b9a41, 0x0f530a00, 
+    0x140d531c, 0x43139143, 0x95610e8d, 0x0f094415, 0x4205fb56, 0x1b4205cf, 0x17015225, 0x5e0c477f, 0xaf6e0aeb, 0x0ff36218, 0x04849a84, 0x0a454218, 
+    0x9c430420, 0x23c6822b, 0x04000102, 0x45091b4b, 0xf05f0955, 0x82802007, 0x421c2023, 0x5218282b, 0x7b53173f, 0x0fe7480c, 0x74173b7f, 0x47751317, 
+    0x634d1807, 0x0f6f430f, 0x24086547, 0xfc808002, 0x0b3c7f80, 0x10840120, 0x188d1282, 0x20096b43, 0x0fc24403, 0x00260faf, 0x0180000b, 0x3f500280, 
+    0x18002019, 0x450b4941, 0xf3530fb9, 0x18002010, 0x8208a551, 0x06234d56, 0xcb58a39b, 0xc3421805, 0x1313461e, 0x0f855018, 0xd34b0120, 0x6cfe2008, 
+    0x574f0885, 0x09204114, 0x07000029, 0x00008000, 0x44028002, 0x01420f57, 0x10c95c10, 0x11184c18, 0x80221185, 0x7f421e00, 0x00732240, 0x09cd4977, 
+    0x6d0b2b42, 0x4f180f8f, 0x8f5a0bcb, 0x9b0f830f, 0x0fb9411f, 0x230b5756, 0x00fd8080, 0x82060745, 0x000121d5, 0x8e0fb277, 0x4a8d4211, 0x24061c53, 
+    0x04000007, 0x12275280, 0x430c954c, 0x80201545, 0x200f764f, 0x20008200, 0x20ce8308, 0x09534f02, 0x660edf64, 0x73731771, 0xe7411807, 0x20a2820c, 
+    0x13b64404, 0x8f5d6682, 0x1d6b4508, 0x0cff4d18, 0x3348c58f, 0x0fc34c07, 0x31558b84, 0x8398820f, 0x17514712, 0x240b0e46, 0x80000a00, 0x093b4502, 
+    0x420f9759, 0xa54c0bf1, 0x0f2b470c, 0x410d314b, 0x2584170c, 0x73b30020, 0xb55fe782, 0x204d8410, 0x08e043fe, 0x4f147e41, 0x022008ab, 0x4b055159, 
+    0x2950068f, 0x00022208, 0x48511880, 0x82002009, 0x00112300, 0x634dff00, 0x24415f27, 0x180f6d43, 0x4d0b5d45, 0x4d5f05ef, 0x01802317, 0x56188000, 
+    0xa7840807, 0xc6450220, 0x21ca8229, 0x4b781a00, 0x3359182c, 0x0cf3470f, 0x180bef46, 0x420b0354, 0xff470b07, 0x4515200a, 0x9758239b, 0x4a80200c, 
+    0xd2410a26, 0x05fb4a08, 0x4b05e241, 0x03200dc9, 0x92290941, 0x00002829, 0x00010900, 0x5b020001, 0x23201363, 0x460d776a, 0xef530fdb, 0x209a890c, 
+    0x13fc4302, 0x00008024, 0xc4820104, 0x08820220, 0x20086b5b, 0x18518700, 0x8408d349, 0x0da449a1, 0x00080024, 0x7b690280, 0x4c438b1a, 0x01220f63, 
+    0x4c878000, 0x5c149c53, 0xfb430868, 0x2f56181e, 0x0ccf7b1b, 0x0f075618, 0x2008e347, 0x14144104, 0x00207f83, 0x00207b82, 0x201adf47, 0x16c35a13, 
+    0x540fdf47, 0x802006c8, 0x5418f185, 0x29430995, 0x00002419, 0x58001600, 0x5720316f, 0x4d051542, 0x4b7b1b03, 0x138f4707, 0xb747b787, 0x4aab8213, 
+    0x058305fc, 0x20115759, 0x82128401, 0x0a0b44e8, 0x46800121, 0xe64210d0, 0x82129312, 0x4bffdffe, 0x3b41171b, 0x9b27870f, 0x808022ff, 0x085c68fe, 
+    0x41800021, 0x01410b20, 0x001a213a, 0x47480082, 0x11374e12, 0x56130b4c, 0xdf4b0c65, 0x0b0f590b, 0x0f574c18, 0x830feb4b, 0x075f480f, 0x480b4755, 
+    0x40490b73, 0x80012206, 0x09d74280, 0x80fe8022, 0x80210e86, 0x056643ff, 0x10820020, 0x420b2646, 0x0b58391a, 0xd74c1808, 0x078b4e22, 0x2007f55f, 
+    0x4b491807, 0x83802017, 0x65aa82a7, 0x3152099e, 0x068b7616, 0x9b431220, 0x09bb742c, 0x500e376c, 0x8342179b, 0x0a4d5d0f, 0x8020a883, 0x180cd349, 
+    0x2016bb4b, 0x14476004, 0x84136c43, 0x08cf7813, 0x4f4c0520, 0x156f420f, 0x20085f42, 0x6fd3be03, 0xd4d30803, 0xa7411420, 0x004b222c, 0x0d3b614f, 
+    0x3f702120, 0x1393410a, 0x8f132745, 0x47421827, 0x41e08209, 0xb05e2bb9, 0x18b7410c, 0x18082647, 0x4107a748, 0xeb8826bf, 0x0ca76018, 0x733ecb41, 
+    0xd0410d83, 0x43ebaf2a, 0x0420067f, 0x721dab4c, 0x472005bb, 0x4105d341, 0x334844cb, 0x20dba408, 0x47d6ac00, 0x034e3aef, 0x0f8f421b, 0x930f134d, 
+    0x3521231f, 0xb7421533, 0x42f5ad0a, 0x1e961eaa, 0x17000022, 0x4c367b50, 0x7d491001, 0x0bf5520f, 0x4c18fda7, 0xb8460c55, 0x83fe2005, 0x00fe25b9, 
+    0x80000180, 0x9e751085, 0x261b5c12, 0x82110341, 0x001123fb, 0x4518fe80, 0xf38c2753, 0x6d134979, 0x295107a7, 0xaf5f180f, 0x0fe3660c, 0x180b6079, 
+    0x2007bd5f, 0x9aab9103, 0x2f4d1811, 0x05002109, 0x44254746, 0x1d200787, 0x450bab75, 0x4f180f57, 0x4f181361, 0x3b831795, 0xeb4b0120, 0x0b734805, 
+    0x84078f48, 0x2e1b47bc, 0x00203383, 0xaf065f45, 0x831520d7, 0x130f51a7, 0x1797bf97, 0x2b47d783, 0x18fe2005, 0x4a18a44f, 0xa64d086d, 0x1ab0410d, 
+    0x6205a258, 0xdbab069f, 0x4f06f778, 0xa963081d, 0x133b670a, 0x8323d141, 0x13195b23, 0x530f5e70, 0xe5ad0824, 0x58001421, 0x1f472b4b, 0x47bf410c, 
+    0x82000121, 0x83fe20cb, 0x07424404, 0x68068243, 0xd7ad0d3d, 0x00010d26, 0x80020000, 0x4a1c6f43, 0x23681081, 0x10a14f13, 0x8a070e57, 0x430a848f, 
+    0x7372243e, 0x4397a205, 0xb56c1021, 0x43978f0f, 0x64180505, 0x99aa0ff2, 0x0e000022, 0x20223341, 0x094b4f37, 0x074a3320, 0x2639410a, 0xfe208e84, 
+    0x8b0e0048, 0x508020a3, 0x9e4308fe, 0x073f4115, 0xe3480420, 0x0c9b5f1b, 0x7c137743, 0x9a95185b, 0x6122b148, 0x979b08df, 0x0fe36c18, 0x48109358, 
+    0x23441375, 0x0ffd5c0b, 0x180fc746, 0x2011d157, 0x07e95702, 0x58180120, 0x18770ac3, 0x51032008, 0x7d4118e3, 0x80802315, 0x3b4c1900, 0xbb5a1830, 
+    0x0ceb6109, 0x5b0b3d42, 0x4f181369, 0x4f180b8d, 0x4f180f75, 0x355a1b81, 0x200d820d, 0x18e483fd, 0x4528854f, 0x89420846, 0x1321411f, 0x44086b60, 
+    0x07421d77, 0x107d4405, 0x4113fd41, 0x5a181bf1, 0x4f180db3, 0x8021128f, 0x20f68280, 0x44a882fe, 0x334d249a, 0x052f6109, 0x1520c3a7, 0xef4eb783, 
+    0x4ec39b1b, 0xc4c90ee7, 0x20060b4d, 0x256f4905, 0x4d0cf761, 0xcf9b1f13, 0xa213d74e, 0x0e1145d4, 0x50135b42, 0xcb4e398f, 0x20d79f27, 0x08865d80, 
+    0x186d5018, 0xa90f7142, 0x067342d7, 0x3f450420, 0x65002021, 0xe3560771, 0x24d38f23, 0x15333531, 0x0eb94d01, 0x451c9f41, 0x384322fb, 0x00092108, 
+    0x19af6b18, 0x6e0c6f5a, 0xbd770bfb, 0x22bb7718, 0x20090f57, 0x25e74204, 0x4207275a, 0xdb5408ef, 0x1769450f, 0x1b1b5518, 0x210b1f57, 0x5e4c8001, 
+    0x55012006, 0x802107f1, 0x0a306a80, 0x45808021, 0x0d850b88, 0x31744f18, 0x1808ec54, 0x2009575b, 0x45ffa505, 0x1b420c73, 0x180f9f0f, 0x4a0cf748, 
+    0x501805b2, 0x00210f40, 0x4d118f80, 0xd6823359, 0x072b5118, 0x314ad7aa, 0x8fc79f08, 0x45d78b1f, 0xfe20058f, 0x23325118, 0x7b54d9b5, 0x9fc38f46, 
+    0x10bb410f, 0x41077b42, 0xc1410faf, 0x27cf441d, 0x46051b4f, 0x04200683, 0x2121d344, 0x8f530043, 0x8fcf9f0e, 0x21df8c1f, 0x50188000, 0x5d180e52, 
+    0xfd201710, 0x4405c341, 0xd68528e3, 0x20071f6b, 0x1b734305, 0x6b080957, 0x7d422b1f, 0x67002006, 0x7f8317b1, 0x2024cb48, 0x08676e00, 0x8749a39b, 
+    0x18132006, 0x410a6370, 0x8f490b47, 0x7e1f8f13, 0x551805c3, 0x4c180915, 0xfe200e2f, 0x244d5d18, 0x270bcf44, 0xff000019, 0x04800380, 0x5f253342, 
+    0xff520df7, 0x13274c18, 0x5542dd93, 0x0776181b, 0xf94a1808, 0x084a4c0c, 0x4308ea5b, 0xde831150, 0x7900fd21, 0x00492c1e, 0x060f4510, 0x17410020, 
+    0x0ce74526, 0x6206b341, 0x1f561083, 0x9d6c181b, 0x08a0500e, 0x112e4118, 0x60000421, 0xbf901202, 0x4408e241, 0xc7ab0513, 0xb40f0950, 0x055943c7, 
+    0x4f18ff20, 0xc9ae1cad, 0x32b34f18, 0x7a180120, 0x3d520a05, 0x53d1b40a, 0x80200813, 0x1b815018, 0x832bf86f, 0x67731847, 0x297f4308, 0x6418d54e, 
+    0x734213f7, 0x056b4b27, 0xdba5fe20, 0x1828aa4e, 0x2031a370, 0x06cb6101, 0x2040ad41, 0x07365300, 0x2558d985, 0x83fe200c, 0x0380211c, 0x542c4743, 
+    0x052006b7, 0x6021df45, 0x897b0707, 0x18d3c010, 0x20090e70, 0x1d5843ff, 0x540a0e44, 0x002126c5, 0x322f7416, 0x636a5720, 0x0f317409, 0x610fe159, 
+    0x294617e7, 0x08555213, 0x2006a75d, 0x6cec84fd, 0xfb5907be, 0x3a317405, 0x83808021, 0x180f20ea, 0x4626434a, 0x531818e3, 0xdb59172d, 0x0cbb460c, 
+    0x2013d859, 0x18b94502, 0x8f46188d, 0x77521842, 0x0a184e38, 0x9585fd20, 0x6a180684, 0xc64507e9, 0x51cbb230, 0xd3440cf3, 0x17ff6a0f, 0x450f5b42, 
+    0x276407c1, 0x4853180a, 0x21ccb010, 0xcf580013, 0x0c15442d, 0x410a1144, 0x1144359d, 0x5cfe2006, 0xa1410a43, 0x2bb64519, 0x2f5b7618, 0xb512b745, 
+    0x0cfd6fd1, 0x42089f59, 0xb8450c70, 0x0000232d, 0x50180900, 0xb9491ae3, 0x0fc37610, 0x01210f83, 0x0f3b4100, 0xa01b2742, 0x0ccd426f, 0x6e8f6f94, 
+    0x9c808021, 0xc7511870, 0x17c74b08, 0x9b147542, 0x44fe2079, 0xd5480c7e, 0x95ef861d, 0x101b597b, 0xf5417594, 0x9f471808, 0x86868d0e, 0x3733491c, 
+    0x690f4d6d, 0x43440b83, 0x1ba94c0b, 0x660cd16b, 0x802008ae, 0x74126448, 0xcb4f38a3, 0x2cb74b0b, 0x47137755, 0xe3971777, 0x1b5d0120, 0x057a4108, 
+    0x6e08664d, 0x17421478, 0x11af4208, 0x850c3f42, 0x08234f0c, 0x4321eb4a, 0xf3451095, 0x0f394e0f, 0x4310eb45, 0xc09707b1, 0x54431782, 0xaec08d1d, 
+    0x0f434dbb, 0x9f0c0b45, 0x0a3b4dbb, 0x4618bdc7, 0x536032eb, 0x17354213, 0x4d134169, 0xc7a30c2f, 0x4e254342, 0x174332cf, 0x43cdae17, 0x6b4706e4, 
+    0x0e16430d, 0x530b5542, 0x2f7c26bb, 0x13075f31, 0x43175342, 0x60181317, 0x6550114e, 0x28624710, 0x58070021, 0x59181683, 0x2d540cf5, 0x05d5660c, 
+    0x20090c7b, 0x0e157e02, 0x8000ff2b, 0x14000080, 0x80ff8000, 0x27137e03, 0x336a4b20, 0x0f817107, 0x13876e18, 0x730f2f7e, 0x2f450b75, 0x6d02200b, 
+    0x6d66094c, 0x4b802009, 0x15820a02, 0x2f45fe20, 0x5e032006, 0x00202fd9, 0x450af741, 0xeb412e0f, 0x0ff3411f, 0x420a8b65, 0xf7410eae, 0x1c664810, 
+    0x540e1145, 0xbfa509f3, 0x42302f58, 0x80200c35, 0xcb066c47, 0x4b1120c1, 0x41492abb, 0x34854110, 0xa7097b72, 0x251545c7, 0x4b2c7f56, 0xc5b40bab, 
+    0x940cd54e, 0x2e6151c8, 0x09f35f18, 0x4b420420, 0x09677121, 0x8f24f357, 0x1b5418e1, 0x08915a1f, 0x3143d894, 0x22541805, 0x1b9b4b0e, 0x8c0d3443, 
+    0x1400240d, 0x18ff8000, 0x582e6387, 0xf99b2b3b, 0x8807a550, 0x17a14790, 0x2184fd20, 0x5758fe20, 0x2354882c, 0x15000080, 0x5e056751, 0x334c2c2f, 
+    0x97c58f0c, 0x1fd7410f, 0x0d4d4018, 0x4114dc41, 0x04470ed6, 0x0dd54128, 0x00820020, 0x02011523, 0x22008700, 0x86480024, 0x0001240a, 0x8682001a, 
+    0x0002240b, 0x866c000e, 0x8a03200b, 0x8a042017, 0x0005220b, 0x22218614, 0x84060000, 0x86012017, 0x8212200f, 0x250b8519, 0x000d0001, 0x0b850031, 
+    0x07000224, 0x0b862600, 0x11000324, 0x0b862d00, 0x238a0420, 0x0a000524, 0x17863e00, 0x17840620, 0x01000324, 0x57820904, 0x0b85a783, 0x0b85a785, 
+    0x0b85a785, 0x22000325, 0x85007a00, 0x85a7850b, 0x85a7850b, 0x22a7850b, 0x82300032, 0x00342201, 0x0805862f, 0x35003131, 0x54207962, 0x74736972, 
+    0x47206e61, 0x6d6d6972, 0x65527265, 0x616c7567, 0x58545472, 0x6f725020, 0x43796767, 0x6e61656c, 0x30325454, 0x822f3430, 0x35313502, 0x79006200, 
+    0x54002000, 0x69007200, 0x74007300, 0x6e006100, 0x47200f82, 0x6d240f84, 0x65006d00, 0x52200982, 0x67240582, 0x6c007500, 0x72201d82, 0x54222b82, 
+    0x23825800, 0x19825020, 0x67006f22, 0x79220182, 0x1b824300, 0x3b846520, 0x1f825420, 0x41000021, 0x1422099b, 0x0b410000, 0x87088206, 0x01012102, 
+    0x78080982, 0x01020101, 0x01040103, 0x01060105, 0x01080107, 0x010a0109, 0x010c010b, 0x010e010d, 0x0110010f, 0x01120111, 0x01140113, 0x01160115, 
+    0x01180117, 0x011a0119, 0x011c011b, 0x011e011d, 0x0020011f, 0x00040003, 0x00060005, 0x00080007, 0x000a0009, 0x000c000b, 0x000e000d, 0x0010000f, 
+    0x00120011, 0x00140013, 0x00160015, 0x00180017, 0x001a0019, 0x001c001b, 0x001e001d, 0x08bb821f, 0x22002142, 0x24002300, 0x26002500, 0x28002700, 
+    0x2a002900, 0x2c002b00, 0x2e002d00, 0x30002f00, 0x32003100, 0x34003300, 0x36003500, 0x38003700, 0x3a003900, 0x3c003b00, 0x3e003d00, 0x40003f00, 
+    0x42004100, 0x4b09f382, 0x00450044, 0x00470046, 0x00490048, 0x004b004a, 0x004d004c, 0x004f004e, 0x00510050, 0x00530052, 0x00550054, 0x00570056, 
+    0x00590058, 0x005b005a, 0x005d005c, 0x005f005e, 0x01610060, 0x01220121, 0x01240123, 0x01260125, 0x01280127, 0x012a0129, 0x012c012b, 0x012e012d, 
+    0x0130012f, 0x01320131, 0x01340133, 0x01360135, 0x01380137, 0x013a0139, 0x013c013b, 0x013e013d, 0x0140013f, 0x00ac0041, 0x008400a3, 0x00bd0085, 
+    0x00e80096, 0x008e0086, 0x009d008b, 0x00a400a9, 0x008a00ef, 0x008300da, 0x00f20093, 0x008d00f3, 0x00880097, 0x00de00c3, 0x009e00f1, 0x00f500aa, 
+    0x00f600f4, 0x00ad00a2, 0x00c700c9, 0x006200ae, 0x00900063, 0x00cb0064, 0x00c80065, 0x00cf00ca, 0x00cd00cc, 0x00e900ce, 0x00d30066, 0x00d100d0, 
+    0x006700af, 0x009100f0, 0x00d400d6, 0x006800d5, 0x00ed00eb, 0x006a0089, 0x006b0069, 0x006c006d, 0x00a0006e, 0x0071006f, 0x00720070, 0x00750073, 
+    0x00760074, 0x00ea0077, 0x007a0078, 0x007b0079, 0x007c007d, 0x00a100b8, 0x007e007f, 0x00810080, 0x00ee00ec, 0x6e750eba, 0x646f6369, 0x78302365, 
+    0x31303030, 0x32200e8d, 0x33200e8d, 0x34200e8d, 0x35200e8d, 0x36200e8d, 0x37200e8d, 0x38200e8d, 0x39200e8d, 0x61200e8d, 0x62200e8d, 0x63200e8d, 
+    0x64200e8d, 0x65200e8d, 0x66200e8d, 0x31210e8c, 0x8d0e8d30, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 
+    0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x8d3120ef, 0x66312def, 0x6c656406, 0x04657465, 0x6f727545, 0x3820ec8c, 0x3820ec8d, 
+    0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 0x3820ec8d, 
+    0x3820ec8d, 0x200ddc41, 0x0ddc4139, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 
+    0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0xef8d3920, 0x00663923, 0x48fa0500, 0x00f762f9, 
 };
 
 static void GetDefaultCompressedFontDataTTF(const void** ttf_compressed_data, unsigned int* ttf_compressed_size)

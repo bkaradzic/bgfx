@@ -139,6 +139,9 @@ struct OcornutImguiContext
 			, bgfx::copy(data, width*height*4)
 			);
 
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.FrameRounding = 4.0f;
+
 		io.RenderDrawListsFn = imguiRender;
 	}
 
@@ -160,6 +163,8 @@ struct OcornutImguiContext
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 
 		ImGui::NewFrame();
+
+		ImGui::ShowTestWindow();
 	}
 
 	void endFrame()
