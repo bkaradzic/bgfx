@@ -43,6 +43,8 @@ namespace bgfx
 		uint8_t blockWidth;
 		uint8_t blockHeight;
 		uint8_t blockSize;
+		uint8_t minBlockX;
+		uint8_t minBlockY;
 	};
 
 	///
