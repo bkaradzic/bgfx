@@ -54,9 +54,7 @@ strategy video game developed and published by Carbon Games.
 
 http://theengine.co/ Loom Game Engine developed by The Engine Company. Loom
 is a powerful 2D game engine with live reloading of code and assets, a friendly
-scripting language, and an efficient command-line workflow. Here is video where
-they explain why they choose bgfx over alternatives:  
-<a href="https://www.youtube.com/watch?feature=player_embedded&v=PHY_XHkMGIM&t=1m53s" target="_blank"><img src="https://img.youtube.com/vi/PHY_XHkMGIM/0.jpg" alt="Why did you choose bgfx?" width="240" height="180" border="10" /></a>
+scripting language, and an efficient command-line workflow.
 
 https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.  
 ![cmftStudio](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
