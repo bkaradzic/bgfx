@@ -2311,22 +2311,24 @@ again:
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format)
 	{
-		_width   = bx::uint32_max(1, _width);
-		_height  = bx::uint32_max(1, _height);
-		_depth   = bx::uint32_max(1, _depth);
+		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
+		const uint8_t  bpp         = blockInfo.bitsPerPixel;
+		const uint32_t blockWidth  = blockInfo.blockWidth;
+		const uint32_t blockHeight = blockInfo.blockHeight;
+		const uint32_t minBlockX   = blockInfo.minBlockX;
+		const uint32_t minBlockY   = blockInfo.minBlockY;
+
 		_numMips = bx::uint32_max(1, _numMips);
 
-		uint32_t width  = _width;
-		uint32_t height = _height;
-		uint32_t depth  = _depth;
-
-		uint32_t bpp = getBitsPerPixel(_format);
+		uint32_t width  = bx::uint32_max(1, _width);
+		uint32_t height = bx::uint32_max(1, _height);
+		uint32_t depth  = bx::uint32_max(1, _depth);
 		uint32_t size = 0;
 
 		for (uint32_t lod = 0; lod < _numMips; ++lod)
 		{
-			width  = bx::uint32_max(1, width);
-			height = bx::uint32_max(1, height);
+			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
+			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
 			depth  = bx::uint32_max(1, depth);
 
 			size += width*height*depth*bpp/8;
