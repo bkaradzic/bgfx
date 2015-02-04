@@ -6,7 +6,7 @@
 #ifndef BGFX_GLCONTEXT_GLX_H_HEADER_GUARD
 #define BGFX_GLCONTEXT_GLX_H_HEADER_GUARD
 
-#if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+#if BGFX_USE_GLX
 
 #	include <X11/Xlib.h>
 #	include <GL/glx.h>
@@ -45,6 +45,6 @@ namespace bgfx
 	};
 } // namespace bgfx
 
-#endif // BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+#endif // BGFX_USE_GLX
 
 #endif // BGFX_GLCONTEXT_GLX_H_HEADER_GUARD

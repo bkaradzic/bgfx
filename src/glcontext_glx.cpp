@@ -7,8 +7,10 @@
 
 #if (BX_PLATFORM_FREEBSD || BX_PLATFORM_LINUX) && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
-#	define GLX_GLXEXT_PROTOTYPES
-#	include <glx/glxext.h>
+
+#	if BGFX_USE_GLX
+#		define GLX_GLXEXT_PROTOTYPES
+#		include <glx/glxext.h>
 
 namespace bgfx
 {
@@ -22,50 +24,41 @@ namespace bgfx
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
 
-	static ::Display* s_display;
-	static ::Window   s_window;
-
 	struct SwapChainGL
 	{
 		SwapChainGL(::Window _window, XVisualInfo* _visualInfo, GLXContext _context)
 			: m_window(_window)
 		{
-			m_context = glXCreateContext(s_display, _visualInfo, _context, GL_TRUE);
+			m_context = glXCreateContext(g_bgfxX11Display, _visualInfo, _context, GL_TRUE);
 		}
 
 		~SwapChainGL()
 		{
-			glXMakeCurrent(s_display, 0, 0);
-			glXDestroyContext(s_display, m_context);
+			glXMakeCurrent(g_bgfxX11Display, 0, 0);
+			glXDestroyContext(g_bgfxX11Display, m_context);
 		}
 
 		void makeCurrent()
 		{
-			glXMakeCurrent(s_display, m_window, m_context);
+			glXMakeCurrent(g_bgfxX11Display, m_window, m_context);
 		}
 
 		void swapBuffers()
 		{
-			glXSwapBuffers(s_display, m_window);
+			glXSwapBuffers(g_bgfxX11Display, m_window);
 		}
 
 		Window m_window;
 		GLXContext m_context;
 	};
 
-	void x11SetDisplayWindow(::Display* _display, ::Window _window)
-	{
-		s_display = _display;
-		s_window  = _window;
-	}
-
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);
-		XLockDisplay(s_display);
+		XLockDisplay(g_bgfxX11Display);
 
 		int major, minor;
-		bool version = glXQueryVersion(s_display, &major, &minor);
+		bool version = glXQueryVersion(g_bgfxX11Display, &major, &minor);
 		BGFX_FATAL(version, Fatal::UnableToInitialize, "Failed to query GLX version");
 		BGFX_FATAL( (major == 1 && minor >= 2) || major > 1
 				, Fatal::UnableToInitialize
@@ -74,9 +67,9 @@ namespace bgfx
 				, minor
 				);
 
-		int32_t screen = DefaultScreen(s_display);
+		int32_t screen = DefaultScreen(g_bgfxX11Display);
 
-		const char* extensions = glXQueryExtensionsString(s_display, screen);
+		const char* extensions = glXQueryExtensionsString(g_bgfxX11Display, screen);
 		BX_TRACE("GLX extensions:");
 		dumpExtensions(extensions);
 
@@ -98,13 +91,13 @@ namespace bgfx
 		GLXFBConfig bestConfig = NULL;
 
 		int numConfigs;
-		GLXFBConfig* configs = glXChooseFBConfig(s_display, screen, attrsGlx, &numConfigs);
+		GLXFBConfig* configs = glXChooseFBConfig(g_bgfxX11Display, screen, attrsGlx, &numConfigs);
 
 		BX_TRACE("glX num configs %d", numConfigs);
 
 		for (int ii = 0; ii < numConfigs; ++ii)
 		{
-			m_visualInfo = glXGetVisualFromFBConfig(s_display, configs[ii]);
+			m_visualInfo = glXGetVisualFromFBConfig(g_bgfxX11Display, configs[ii]);
 			if (NULL != m_visualInfo)
 			{
 				BX_TRACE("---");
@@ -112,7 +105,7 @@ namespace bgfx
 				for (uint32_t attr = 6; attr < BX_COUNTOF(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
 				{
 					int value;
-					glXGetFBConfigAttrib(s_display, configs[ii], attrsGlx[attr], &value);
+					glXGetFBConfigAttrib(g_bgfxX11Display, configs[ii], attrsGlx[attr], &value);
 					BX_TRACE("glX %d/%d %2d: %4x, %8x (%8x%s)"
 							, ii
 							, numConfigs
@@ -148,7 +141,7 @@ namespace bgfx
 		BGFX_FATAL(m_visualInfo, Fatal::UnableToInitialize, "Failed to find a suitable X11 display configuration.");
 
 		BX_TRACE("Create GL 2.1 context.");
-		m_context = glXCreateContext(s_display, m_visualInfo, 0, GL_TRUE);
+		m_context = glXCreateContext(g_bgfxX11Display, m_visualInfo, 0, GL_TRUE);
 		BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
 
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
@@ -165,11 +158,11 @@ namespace bgfx
 				0,
 			};
 
-			GLXContext context = glXCreateContextAttribsARB(s_display, bestConfig, 0, true, contextAttrs);
+			GLXContext context = glXCreateContextAttribsARB(g_bgfxX11Display, bestConfig, 0, true, contextAttrs);
 
 			if (NULL != context)
 			{
-				glXDestroyContext(s_display, m_context);
+				glXDestroyContext(g_bgfxX11Display, m_context);
 				m_context = context;
 			}
 		}
@@ -177,17 +170,17 @@ namespace bgfx
 		BX_UNUSED(bestConfig);
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-		XUnlockDisplay(s_display);
+		XUnlockDisplay(g_bgfxX11Display);
 
 		import();
 
-		glXMakeCurrent(s_display, s_window, m_context);
+		glXMakeCurrent(g_bgfxX11Display, g_bgfxX11Window, m_context);
 
 		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
 		if (NULL != glXSwapIntervalEXT)
 		{
 			BX_TRACE("Using glXSwapIntervalEXT.");
-			glXSwapIntervalEXT(s_display, s_window, 0);
+			glXSwapIntervalEXT(g_bgfxX11Display, g_bgfxX11Window, 0);
 		}
 		else
 		{
@@ -210,13 +203,13 @@ namespace bgfx
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glXSwapBuffers(s_display, s_window);
+		glXSwapBuffers(g_bgfxX11Display, g_bgfxX11Window);
 	}
 
 	void GlContext::destroy()
 	{
-		glXMakeCurrent(s_display, 0, 0);
-		glXDestroyContext(s_display, m_context);
+		glXMakeCurrent(g_bgfxX11Display, 0, 0);
+		glXDestroyContext(g_bgfxX11Display, m_context);
 		XFree(m_visualInfo);
 	}
 
@@ -226,7 +219,7 @@ namespace bgfx
 
 		if (NULL != glXSwapIntervalEXT)
 		{
-			glXSwapIntervalEXT(s_display, s_window, interval);
+			glXSwapIntervalEXT(g_bgfxX11Display, g_bgfxX11Window, interval);
 		}
 		else if (NULL != glXSwapIntervalMESA)
 		{
@@ -257,8 +250,8 @@ namespace bgfx
 	{
 		if (NULL == _swapChain)
 		{
-			glXMakeCurrent(s_display, s_window, m_context);
-			glXSwapBuffers(s_display, s_window);
+			glXMakeCurrent(g_bgfxX11Display, g_bgfxX11Window, m_context);
+			glXSwapBuffers(g_bgfxX11Display, g_bgfxX11Window);
 		}
 		else
 		{
@@ -271,7 +264,7 @@ namespace bgfx
 	{
 		if (NULL == _swapChain)
 		{
-			glXMakeCurrent(s_display, s_window, m_context);
+			glXMakeCurrent(g_bgfxX11Display, g_bgfxX11Window, m_context);
 		}
 		else
 		{
@@ -294,5 +287,7 @@ namespace bgfx
 	}
 
 } // namespace bgfx
+
+#	endif // BGFX_USE_GLX
 
 #endif // (BX_PLATFORM_FREEBSD || BX_PLATFORM_LINUX) && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)

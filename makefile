@@ -26,7 +26,7 @@ all:
 	$(GENIE) --with-tools --with-shared-lib --gcc=osx gmake
 	$(GENIE) --with-tools --with-shared-lib --xcode=osx xcode4
 	$(GENIE) --with-tools --with-shared-lib --xcode=ios xcode4
-	
+
 	$(GENIE) --gcc=android-arm gmake
 	$(GENIE) --gcc=android-mips gmake
 	$(GENIE) --gcc=android-x86 gmake
@@ -95,7 +95,7 @@ mingw-gcc-release64: .build/projects/gmake-mingw-gcc
 mingw-gcc: mingw-gcc-debug32 mingw-gcc-release32 mingw-gcc-debug64 mingw-gcc-release64
 
 .build/projects/gmake-mingw-clang:
-	$(GENIE) --clang=mingw-clang gmake
+	$(GENIE) --gcc=mingw-clang gmake
 mingw-clang-debug32: .build/projects/gmake-mingw-clang
 	make -R -C .build/projects/gmake-mingw-clang config=debug32
 mingw-clang-release32: .build/projects/gmake-mingw-clang
