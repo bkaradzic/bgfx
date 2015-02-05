@@ -345,6 +345,7 @@ namespace bgfx
 	static const GUID IID_IDXGIDevice2          = { 0x05008617, 0xfbfd, 0x4051, { 0xa7, 0x90, 0x14, 0x48, 0x84, 0xb4, 0xf6, 0xa9 } };
 	static const GUID IID_IDXGIDevice3          = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
 	static const GUID IID_IDXGIAdapter          = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
+	static const GUID IID_ID3D11InfoQueue       = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
 
 	static const GUID s_deviceIIDs[] =
 	{
@@ -669,7 +670,7 @@ namespace bgfx
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				ID3D11InfoQueue* infoQueue;
-				hr = m_device->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&infoQueue);
+				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&infoQueue);
 
 				if (SUCCEEDED(hr) )
 				{
