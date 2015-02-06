@@ -57,21 +57,21 @@ namespace entry
 
 		static int32_t threadFunc(void* _userData)
 		{
-            CFBundleRef mainBundle = CFBundleGetMainBundle();
-            if ( mainBundle != nil )
-            {
-                CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
-                if ( resourcesURL != nil )
-                {
-                    char path[PATH_MAX];
-                    if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX) )
-                    {
-                        chdir(path);
-                    }
-                    CFRelease(resourcesURL);
-                }
-            }
-            
+			CFBundleRef mainBundle = CFBundleGetMainBundle();
+			if ( mainBundle != nil )
+			{
+				CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+				if ( resourcesURL != nil )
+				{
+					char path[PATH_MAX];
+					if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX) )
+					{
+						chdir(path);
+					}
+					CFRelease(resourcesURL);
+				}
+			}
+
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
 			return main(self->m_argc, self->m_argv);
 		}
