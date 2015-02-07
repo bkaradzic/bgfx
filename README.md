@@ -308,6 +308,9 @@ Dependencies
 Building
 --------
 
+Steps bellow are for default build system inside bgfx repository. There is
+alterative way to build bgfx and examples with [fips](https://github.com/floooh/fips-bgfx/#fips-bgfx).
+
 ### Prerequisites
 
 Windows users download GnuWin32 utilities from:  
