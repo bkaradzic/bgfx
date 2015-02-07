@@ -747,6 +747,8 @@ Kai Jourdan ([@questor](https://github.com/questor)) - 23-vectordisplay example
 Stanlo Slasinski ([@stanlo](https://github.com/stanlo)) - 24-nbody example  
 Daniel Collin ([@emoon](https://github.com/emoon)) - Port of Ocornut's ImGui
   to bgfx.
+Andre Weissflog ([@floooh](https://github.com/floooh)) - Alternative build
+system fips.
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------
