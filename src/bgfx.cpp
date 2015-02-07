@@ -34,10 +34,10 @@ namespace bgfx
 		g_bgfxEaglLayer = _layer;
 	}
 #elif BX_PLATFORM_LINUX
-	::Display* g_bgfxX11Display;
-	::Window   g_bgfxX11Window;
+	void*    g_bgfxX11Display;
+	uint32_t g_bgfxX11Window;
 
-	void x11SetDisplayWindow(::Display* _display, ::Window _window)
+	void x11SetDisplayWindow(void* _display, uint32_t _window)
 	{
 		g_bgfxX11Display = _display;
 		g_bgfxX11Window  = _window;

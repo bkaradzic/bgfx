@@ -185,8 +185,8 @@ EGL_IMPORT
 		ndt = GetDC(g_bgfxHwnd);
 		nwh = g_bgfxHwnd;
 #	elif BX_PLATFORM_LINUX
-		ndt = g_bgfxX11Display;
-		nwh = g_bgfxX11Window;
+		ndt = (EGLNativeDisplayType)g_bgfxX11Display;
+		nwh = (EGLNativeWindowType)g_bgfxX11Window;
 #	endif // BX_PLATFORM_
 		m_display = eglGetDisplay(ndt);
 		BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
