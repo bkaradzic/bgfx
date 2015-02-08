@@ -12,6 +12,7 @@
 
 #include "dbg.h"
 #include "cmd.h"
+#include "entry.h" //TinyStlCustomAllocator
 
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>

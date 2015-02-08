@@ -65,15 +65,25 @@ static const int32_t SCROLL_AREA_PADDING = 6;
 static const int32_t AREA_HEADER = 20;
 static const float s_tabStops[4] = {150, 210, 270, 330};
 
-static void* imguiMalloc(size_t size, void* /*_userptr*/)
-{
-	return malloc(size);
-}
+// For a custom allocator, define this and implement imguiMalloc and imguiFree somewhere in the project.
+#ifndef IMGUI_CONFIG_CUSTOM_ALLOCATOR
+#	define IMGUI_CONFIG_CUSTOM_ALLOCATOR 0
+#endif // ENTRY_CONFIG_USE_TINYSTL
 
-static void imguiFree(void* _ptr, void* /*_userptr*/)
-{
-	free(_ptr);
-}
+#if IMGUI_CONFIG_CUSTOM_ALLOCATOR
+	void* imguiMalloc(size_t size, void* /*_userptr*/);
+	void imguiFree(void* _ptr, void* /*_userptr*/);
+#else
+	static void* imguiMalloc(size_t _size, void* /*_userptr*/)
+	{
+		return malloc(_size);
+	}
+
+	static void imguiFree(void* _ptr, void* /*_userptr*/)
+	{
+		free(_ptr);
+	}
+#endif //IMGUI_CONFIG_CUSTOM_ALLOCATOR
 
 #define IMGUI_MIN(_a, _b) (_a)<(_b)?(_a):(_b)
 #define IMGUI_MAX(_a, _b) (_a)>(_b)?(_a):(_b)
