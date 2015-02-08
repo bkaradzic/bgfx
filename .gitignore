@@ -4,4 +4,3 @@
 .git
 .svn
 tags
-src/renderer_d3d12.*

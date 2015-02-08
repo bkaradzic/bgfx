@@ -5,6 +5,10 @@
 
 #include "bgfx_p.h"
 
+#if BGFX_CONFIG_RENDERER_DIRECT3D12
+#	include "../../d3d12/src/renderer_d3d12.cpp"
+#else
+
 namespace bgfx
 {
 	RendererContextI* rendererCreateD3D12()
@@ -16,3 +20,5 @@ namespace bgfx
 	{
 	}
 } // namespace bgfx
+
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D12
