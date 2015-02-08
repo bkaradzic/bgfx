@@ -6,6 +6,8 @@
 #ifndef ENTRY_PRIVATE_H_HEADER_GUARD
 #define ENTRY_PRIVATE_H_HEADER_GUARD
 
+#define TINYSTL_ALLOCATOR entry::TinyStlAllocator
+
 #include <bx/spscqueue.h>
 
 #include "entry.h"
@@ -42,6 +44,12 @@
 
 namespace entry
 {
+	struct TinyStlAllocator
+	{
+		static void* static_allocate(size_t _bytes);
+		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
+	};
+
 	int main(int _argc, char** _argv);
 
 	struct Event

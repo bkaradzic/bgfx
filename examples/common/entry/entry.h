@@ -18,20 +18,6 @@ extern "C" int _main_(int _argc, char** _argv);
 #define ENTRY_WINDOW_FLAG_ASPECT_RATIO UINT32_C(0x00000001)
 #define ENTRY_WINDOW_FLAG_FRAME        UINT32_C(0x00000002)
 
-// For a custom tinystl allocator, define this and implement TinyStlCustomAllocator somewhere in the project.
-#ifndef ENTRY_CONFIG_USE_TINYSTL_CUSTOM_ALLOCATOR
-#	define ENTRY_CONFIG_USE_TINYSTL_CUSTOM_ALLOCATOR 0
-#endif // ENTRY_CONFIG_USE_TINYSTL
-
-#if ENTRY_CONFIG_USE_TINYSTL_CUSTOM_ALLOCATOR
-	struct TinyStlCustomAllocator
-	{
-		static void* static_allocate(size_t _bytes);
-		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
-	};
-#	define TINYSTL_ALLOCATOR TinyStlCustomAllocator
-#endif //ENTRY_CONFIG_USE_TINYSTL_CUSTOM_ALLOCATOR
-
 namespace entry
 {
 	struct WindowHandle  { uint16_t idx; };
