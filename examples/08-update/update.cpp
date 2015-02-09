@@ -84,7 +84,7 @@ static const uint16_t s_cubeIndices[36] =
 	 9, 10, 11,
 
 	12, 14, 13, // 6
-	14, 15, 13, 
+	14, 15, 13,
 
 	16, 18, 17, // 8
 	18, 19, 17,
@@ -96,7 +96,7 @@ static const uint16_t s_cubeIndices[36] =
 static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
 {
 	bgfx::TextureInfo ti;
-	bgfx::calcTextureSize(ti, _width, _height, 1, 1, bgfx::TextureFormat::BGRA8);
+	bgfx::calcTextureSize(ti, _width, _height, 1, 1, false, bgfx::TextureFormat::BGRA8);
 
 	const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
 	uint8_t* data = (uint8_t*)mem->data;
@@ -285,7 +285,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -5.0f };
-		
+
 		float view[16];
 		float proj[16];
 		bx::mtxLookAt(view, eye, at);
@@ -394,7 +394,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::submit(1);
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

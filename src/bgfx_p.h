@@ -2681,6 +2681,7 @@ namespace bgfx
 						, (uint16_t)imageContainer.m_width
 						, (uint16_t)imageContainer.m_height
 						, (uint16_t)imageContainer.m_depth
+						, imageContainer.m_cubeMap
 						, imageContainer.m_numMips
 						, TextureFormat::Enum(imageContainer.m_format)
 						);
@@ -2689,11 +2690,12 @@ namespace bgfx
 				{
 					_info->format = TextureFormat::Unknown;
 					_info->storageSize = 0;
-					_info->width = 0;
-					_info->height = 0;
-					_info->depth = 0;
+					_info->width   = 0;
+					_info->height  = 0;
+					_info->depth   = 0;
 					_info->numMips = 0;
 					_info->bitsPerPixel = 0;
+					_info->cubeMap = false;
 				}
 			}
 

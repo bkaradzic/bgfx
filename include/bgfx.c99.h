@@ -265,6 +265,7 @@ typedef struct bgfx_texture_info
     uint16_t depth;
     uint8_t numMips;
     uint8_t bitsPerPixel;
+    bool    cubeMap;
 
 } bgfx_texture_info_t;
 
@@ -870,7 +871,7 @@ BGFX_C_API void bgfx_destroy_program(bgfx_program_handle_t _handle);
 /**
  *  Calculate amount of memory required for texture.
  */
-BGFX_C_API void bgfx_calc_texture_size(bgfx_texture_info_t* _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, bgfx_texture_format_t _format);
+BGFX_C_API void bgfx_calc_texture_size(bgfx_texture_info_t* _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, uint8_t _numMips, bgfx_texture_format_t _format);
 
 /**
  *  Create texture from memory buffer.

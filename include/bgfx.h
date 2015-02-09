@@ -360,6 +360,7 @@ namespace bgfx
 		uint16_t depth;             //!< Texture depth.
 		uint8_t numMips;            //!< Number of MIP maps.
 		uint8_t bitsPerPixel;       //!< Format bits per pixel.
+		bool    cubeMap;            //!< Texture is cubemap.
 	};
 
 	///
@@ -817,7 +818,7 @@ namespace bgfx
 	void destroyProgram(ProgramHandle _handle);
 
 	/// Calculate amount of memory required for texture.
-	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format);
+	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, uint8_t _numMips, TextureFormat::Enum _format);
 
 	/// Create texture from memory buffer.
 	///
