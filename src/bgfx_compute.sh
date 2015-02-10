@@ -20,6 +20,10 @@ uint  floatBitsToUint(float _x) { return asuint(_x);  }
 uvec2 floatBitsToUint(vec2  _x) { return asuint(_x);  }
 uvec3 floatBitsToUint(vec3  _x) { return asuint(_x);  }
 uvec4 floatBitsToUint(vec4  _x) { return asuint(_x);  }
+int   floatBitsToInt(float _x)  { return asint(_x);   }
+ivec2 floatBitsToInt(vec2  _x)  { return asint(_x);   }
+ivec3 floatBitsToInt(vec3  _x)  { return asint(_x);   }
+ivec4 floatBitsToInt(vec4  _x)  { return asint(_x);   }
 
 #define SHARED groupshared
 
@@ -38,6 +42,16 @@ vec4 imageLoad(Texture2D _image, ivec2 _uv)
 	return _image.Load(uint3(_uv.xy, 0) );
 }
 
+uint imageLoad(Texture2D<uint> _image, ivec2 _uv)
+{
+	return _image.Load(uint3(_uv.xy, 0) );
+}
+
+uint imageLoad(RWTexture2D<uint> _image, ivec2 _uv)
+{
+	return _image[_uv.xy];
+}
+
 ivec2 imageSize(Texture2D _image)
 {
 	ivec2 result;
@@ -45,12 +59,14 @@ ivec2 imageSize(Texture2D _image)
 	return result;
 }
 
-//vec4 imageLoad(RWTexture2D<float4> _image, ivec2 _uv)
-//{
-//	return _image[_uv];
-//}
-
 ivec2 imageSize(RWTexture2D<float4> _image)
+{
+	ivec2 result;
+	_image.GetDimensions(result.x, result.y);
+	return result;
+}
+
+ivec2 imageSize(RWTexture2D<uint> _image)
 {
 	ivec2 result;
 	_image.GetDimensions(result.x, result.y);
@@ -60,6 +76,11 @@ ivec2 imageSize(RWTexture2D<float4> _image)
 void imageStore(RWTexture2D<float4> _image, ivec2 _uv, vec4 _rgba)
 {
 	_image[_uv] = _rgba;
+}
+
+void imageStore(RWTexture2D<uint> _image, ivec2 _uv, uvec4 _r)
+{
+	_image[_uv] = _r.x;
 }
 
 #define __ATOMIC_IMPL_TYPE(_genType, _glFunc, _dxFunc) \

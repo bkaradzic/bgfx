@@ -2178,7 +2178,7 @@ namespace bgfx
 			return ptr;
 		}
 
-		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint16_t _num, const VertexDecl& _decl, uint8_t _flags) )
+		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexDecl& _decl, uint8_t _flags) )
 		{
 			DynamicVertexBufferHandle handle = BGFX_INVALID_HANDLE;
 			uint32_t size = strideAlign16( (_num+1)*_decl.m_stride, _decl.m_stride);
