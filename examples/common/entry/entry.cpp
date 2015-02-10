@@ -137,16 +137,23 @@ namespace entry
 		s_fileWriter = new bx::CrtFileWriter;
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
+		cmdInit();
 		cmdAdd("mouselock", cmdMouseLock);
 		cmdAdd("graphics",  cmdGraphics );
 		cmdAdd("exit",      cmdExit     );
 
+		inputInit();
 		inputAddBindings("bindings", s_bindings);
 
 		entry::WindowHandle defaultWindow = { 0 };
 		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]));
 
 		int32_t result = ::_main_(_argc, _argv);
+
+		inputRemoveBindings("bindings");
+		inputShutdown();
+
+		cmdShutdown();
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
 		delete s_fileReader;

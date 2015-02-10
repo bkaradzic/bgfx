@@ -8,6 +8,7 @@
 #include "entry_p.h"
 #include "input.h"
 
+#include <bx/allocator.h>
 #include <bx/ringbuffer.h>
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
@@ -249,95 +250,105 @@ struct Input
 	Gamepad m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 };
 
-static Input s_input;
+static Input* s_input;
+
+void inputInit()
+{
+	s_input = BX_NEW(entry::getAllocator(), Input);
+}
+
+void inputShutdown()
+{
+	BX_DELETE(entry::getAllocator(), s_input);
+}
 
 void inputAddBindings(const char* _name, const InputBinding* _bindings)
 {
-	s_input.addBindings(_name, _bindings);
+	s_input->addBindings(_name, _bindings);
 }
 
 void inputRemoveBindings(const char* _name)
 {
-	s_input.removeBindings(_name);
+	s_input->removeBindings(_name);
 }
 
 void inputProcess()
 {
-	s_input.process();
+	s_input->process();
 }
 
 void inputSetMouseResolution(uint16_t _width, uint16_t _height)
 {
-	s_input.m_mouse.setResolution(_width, _height);
+	s_input->m_mouse.setResolution(_width, _height);
 }
 
 void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 {
-	s_input.m_keyboard.setKeyState(_key, _modifiers, _down);
+	s_input->m_keyboard.setKeyState(_key, _modifiers, _down);
 }
 
 void inputChar(uint8_t _len, const uint8_t _char[4])
 {
-	s_input.m_keyboard.pushChar(_len, _char);
+	s_input->m_keyboard.pushChar(_len, _char);
 }
 
 const uint8_t* inputGetChar()
 {
-	return s_input.m_keyboard.popChar();
+	return s_input->m_keyboard.popChar();
 }
 
 void inputCharFlush()
 {
-	s_input.m_keyboard.charFlush();
+	s_input->m_keyboard.charFlush();
 }
 
 void inputSetMousePos(int32_t _mx, int32_t _my, int32_t _mz)
 {
-	s_input.m_mouse.setPos(_mx, _my, _mz);
+	s_input->m_mouse.setPos(_mx, _my, _mz);
 }
 
 void inputSetMouseButtonState(entry::MouseButton::Enum _button, uint8_t _state)
 {
-	s_input.m_mouse.setButtonState(_button, _state);
+	s_input->m_mouse.setButtonState(_button, _state);
 }
 
 void inputGetMouse(float _mouse[3])
 {
-	_mouse[0] = s_input.m_mouse.m_norm[0];
-	_mouse[1] = s_input.m_mouse.m_norm[1];
-	_mouse[2] = s_input.m_mouse.m_norm[2];
-	s_input.m_mouse.m_norm[0] = 0.0f;
-	s_input.m_mouse.m_norm[1] = 0.0f;
-	s_input.m_mouse.m_norm[2] = 0.0f;
+	_mouse[0] = s_input->m_mouse.m_norm[0];
+	_mouse[1] = s_input->m_mouse.m_norm[1];
+	_mouse[2] = s_input->m_mouse.m_norm[2];
+	s_input->m_mouse.m_norm[0] = 0.0f;
+	s_input->m_mouse.m_norm[1] = 0.0f;
+	s_input->m_mouse.m_norm[2] = 0.0f;
 }
 
 bool inputIsMouseLocked()
 {
-	return s_input.m_mouse.m_lock;
+	return s_input->m_mouse.m_lock;
 }
 
 void inputSetMouseLock(bool _lock)
 {
-	if (s_input.m_mouse.m_lock != _lock)
+	if (s_input->m_mouse.m_lock != _lock)
 	{
-		s_input.m_mouse.m_lock = _lock;
+		s_input->m_mouse.m_lock = _lock;
 		entry::WindowHandle defaultWindow = { 0 };
 		entry::setMouseLock(defaultWindow, _lock);
 		if (_lock)
 		{
-			s_input.m_mouse.m_norm[0] = 0.0f;
-			s_input.m_mouse.m_norm[1] = 0.0f;
-			s_input.m_mouse.m_norm[2] = 0.0f;
+			s_input->m_mouse.m_norm[0] = 0.0f;
+			s_input->m_mouse.m_norm[1] = 0.0f;
+			s_input->m_mouse.m_norm[2] = 0.0f;
 		}
 	}
 }
 
 void inputSetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis, int32_t _value)
 {
-	s_input.m_gamepad[_handle.idx].setAxis(_axis, _value);
+	s_input->m_gamepad[_handle.idx].setAxis(_axis, _value);
 }
 
 int32_t inputGetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis)
 {
-	return s_input.m_gamepad[_handle.idx].getAxis(_axis);
+	return s_input->m_gamepad[_handle.idx].getAxis(_axis);
 }

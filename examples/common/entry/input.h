@@ -22,6 +22,12 @@ struct InputBinding
 #define INPUT_BINDING_END { entry::Key::None, entry::Modifier::None, 0, NULL, NULL }
 
 ///
+void inputInit();
+
+///
+void inputShutdown();
+
+///
 void inputAddBindings(const char* _name, const InputBinding* _bindings);
 
 ///
