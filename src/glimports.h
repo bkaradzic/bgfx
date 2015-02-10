@@ -230,7 +230,7 @@ GL_IMPORT______(false, PFNGLBUFFERDATAPROC,                        glBufferData)
 GL_IMPORT______(false, PFNGLBUFFERSUBDATAPROC,                     glBufferSubData);
 GL_IMPORT______(true,  PFNGLCHECKFRAMEBUFFERSTATUSPROC,            glCheckFramebufferStatus);
 GL_IMPORT______(false, PFNGLCLEARPROC,                             glClear);
-GL_IMPORT______(false, PFNGLCLEARBUFFERFVPROC,                     glClearBufferfv);
+GL_IMPORT______(true,  PFNGLCLEARBUFFERFVPROC,                     glClearBufferfv);
 GL_IMPORT______(false, PFNGLCLEARCOLORPROC,                        glClearColor);
 GL_IMPORT______(false, PFNGLCLEARSTENCILPROC,                      glClearStencil);
 GL_IMPORT______(false, PFNGLCOLORMASKPROC,                         glColorMask);
