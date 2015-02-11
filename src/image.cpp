@@ -1309,10 +1309,9 @@ namespace bgfx
 	{
 		uint32_t m_format;
 		TextureFormat::Enum m_textureFormat;
-
 	};
 
-	static TranslateDdsFormat s_translateDdsFormat[] =
+	static TranslateDdsFormat s_translateDdsFourccFormat[] =
 	{
 		{ DDS_DXT1,                  TextureFormat::BC1     },
 		{ DDS_DXT2,                  TextureFormat::BC2     },
@@ -1376,6 +1375,19 @@ namespace bgfx
 		{ DXGI_FORMAT_R10G10B10A2_UNORM,  TextureFormat::RGB10A2 },
 	};
 
+	struct TranslateDdsPixelFormat
+	{
+		uint32_t m_bitCount;
+		uint32_t m_bitmask[4];
+		TextureFormat::Enum m_textureFormat;
+	};
+
+	static TranslateDdsPixelFormat s_translateDdsPixelFormat[] =
+	{
+		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, TextureFormat::BGRA8 },
+		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, TextureFormat::BGRA8 },
+	};
+
 	bool imageParseDds(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
 	{
 		uint32_t headerSize;
@@ -1420,20 +1432,11 @@ namespace bgfx
 		uint32_t fourcc;
 		bx::read(_reader, fourcc);
 
-		uint32_t rgbCount;
-		bx::read(_reader, rgbCount);
+		uint32_t bitCount;
+		bx::read(_reader, bitCount);
 
-		uint32_t rbitmask;
-		bx::read(_reader, rbitmask);
-
-		uint32_t gbitmask;
-		bx::read(_reader, gbitmask);
-
-		uint32_t bbitmask;
-		bx::read(_reader, bbitmask);
-
-		uint32_t abitmask;
-		bx::read(_reader, abitmask);
+		uint32_t bitmask[4];
+		bx::read(_reader, bitmask, sizeof(bitmask) );
 
 		uint32_t caps[4];
 		bx::read(_reader, caps);
@@ -1479,14 +1482,31 @@ namespace bgfx
 
 		if (dxgiFormat == 0)
 		{
-			uint32_t ddsFormat = pixelFlags & DDPF_FOURCC ? fourcc : pixelFlags;
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsFormat); ++ii)
+			if (DDPF_FOURCC == (pixelFlags & DDPF_FOURCC) )
 			{
-				if (s_translateDdsFormat[ii].m_format == ddsFormat)
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsFourccFormat); ++ii)
 				{
-					format = s_translateDdsFormat[ii].m_textureFormat;
-					break;
+					if (s_translateDdsFourccFormat[ii].m_format == fourcc)
+					{
+						format = s_translateDdsFourccFormat[ii].m_textureFormat;
+						break;
+					}
+				}
+			}
+			else
+			{
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateDdsPixelFormat); ++ii)
+				{
+					const TranslateDdsPixelFormat& pf = s_translateDdsPixelFormat[ii];
+					if (pf.m_bitCount   == bitCount
+					&&  pf.m_bitmask[0] == bitmask[0]
+					&&  pf.m_bitmask[1] == bitmask[1]
+					&&  pf.m_bitmask[2] == bitmask[2]
+					&&  pf.m_bitmask[3] == bitmask[3])
+					{
+						format = pf.m_textureFormat;
+						break;
+					}
 				}
 			}
 		}
