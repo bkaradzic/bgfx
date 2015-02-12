@@ -274,8 +274,7 @@ namespace entry
 		if (handle.idx == 0
 		&&  _reset != s_reset)
 		{
-			_reset = s_reset;
-			bgfx::reset(_width, _height, _reset);
+			_reset = s_reset; bgfx::reset(_width, _height, _reset);
 			inputSetMouseResolution(_width, _height);
 		}
 

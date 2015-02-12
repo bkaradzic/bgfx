@@ -285,7 +285,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bool m_specularIbl;
 		bool m_showDiffColorWheel;
 		bool m_showSpecColorWheel;
-		bool m_crossCubemapPreview;
+		ImguiCubemap::Enum m_crossCubemapPreview;
 	};
 
 	Settings settings;
@@ -305,7 +305,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	settings.m_specularIbl = true;
 	settings.m_showDiffColorWheel = true;
 	settings.m_showSpecColorWheel = false;
-	settings.m_crossCubemapPreview = false;
+	settings.m_crossCubemapPreview = ImguiCubemap::Cross;
 
 	float time = 0.0f;
 
@@ -324,7 +324,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		static int32_t rightScrollArea = 0;
-		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 590, &rightScrollArea);
+		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 540, &rightScrollArea);
 
 		imguiLabel("Shade:");
 		imguiSeparator();
@@ -350,9 +350,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 													   , "Grace"
 													   ) );
 		static float lod = 0.0f;
-		if (imguiCube(lightProbes[currentLightProbe].m_tex, lod, settings.m_crossCubemapPreview))
+		if (imguiCube(lightProbes[currentLightProbe].m_tex, lod, settings.m_crossCubemapPreview, true) )
 		{
-			settings.m_crossCubemapPreview = !settings.m_crossCubemapPreview;
+			settings.m_crossCubemapPreview = ImguiCubemap::Enum( (settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
 		}
 		imguiSlider("Texture LOD", lod, float(0.0f), 10.1f, 0.1f);
 
