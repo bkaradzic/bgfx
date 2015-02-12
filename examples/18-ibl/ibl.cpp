@@ -324,7 +324,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			);
 
 		static int32_t rightScrollArea = 0;
-		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 590, &rightScrollArea);
+		imguiBeginScrollArea("Settings", width - 256 - 10, 10, 256, 540, &rightScrollArea);
 
 		imguiLabel("Shade:");
 		imguiSeparator();
