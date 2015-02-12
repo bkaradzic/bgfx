@@ -14,12 +14,15 @@ function bgfxProject(_name, _kind, _defines)
 				"BGFX_SHARED_LIB_BUILD=1",
 			}
 
+			configuration { "vs20* or mingw*" }
+				links {
+					"gdi32",
+					"psapi",
+				}
+
 			configuration { "mingw*" }
 				linkoptions {
 					"-shared",
-				}
-				links {
-					"gdi32",
 				}
 
 			configuration {}
