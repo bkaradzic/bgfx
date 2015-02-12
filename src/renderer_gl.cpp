@@ -3759,7 +3759,9 @@ namespace bgfx
 						}
 					}
 
-					writeString(&writer, "precision mediump float;\n");
+					writeStringf(&writer, "precision %s float;\n"
+							, m_type == GL_FRAGMENT_SHADER ? "mediump" : "highp"
+							);
 
 					bx::write(&writer, code, codeLen);
 					bx::write(&writer, '\0');
