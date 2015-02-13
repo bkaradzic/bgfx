@@ -22,7 +22,17 @@ namespace entry
 	static bool s_exit = false;
 	static bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
-	static ENTRY_CONFIG_ALLOCATOR s_allocator;
+
+	extern bx::ReallocatorI* getDefaultAllocator();
+	static bx::ReallocatorI* s_allocator = getDefaultAllocator();
+
+#if ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
+	bx::ReallocatorI* getDefaultAllocator()
+	{
+		static bx::CrtAllocator s_allocator;
+		return &s_allocator;
+	}
+#endif // ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 
 	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
 	{
@@ -455,7 +465,7 @@ namespace entry
 
 	bx::ReallocatorI* getAllocator()
 	{
-		return &s_allocator;
+		return s_allocator;
 	}
 
 	void* TinyStlAllocator::static_allocate(size_t _bytes)

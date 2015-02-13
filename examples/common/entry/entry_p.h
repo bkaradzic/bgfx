@@ -39,9 +39,9 @@
 #	error "Both ENTRY_DEFAULT_WIDTH and ENTRY_DEFAULT_HEIGHT must be defined."
 #endif // ENTRY_DEFAULT_WIDTH
 
-#ifndef ENTRY_CONFIG_ALLOCATOR
-#	define ENTRY_CONFIG_ALLOCATOR bx::CrtAllocator
-#endif // ENTRY_CONFIG_ALLOCATOR
+#ifndef ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
+#	define ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR 1
+#endif // ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 
 #define ENTRY_IMPLEMENT_EVENT(_class, _type) \
 			_class(WindowHandle _handle) : Event(_type, _handle) {}
