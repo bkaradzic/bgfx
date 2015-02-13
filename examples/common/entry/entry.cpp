@@ -22,7 +22,7 @@ namespace entry
 	static bool s_exit = false;
 	static bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
-	static bx::CrtAllocator s_allocator;
+	static ENTRY_CONFIG_ALLOCATOR s_allocator;
 
 	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
 	{
