@@ -12,6 +12,13 @@ namespace bgfx
 {
 	static const ImageBlockInfo s_imageBlockInfo[] =
 	{
+		//  +------------------ bits per pixel
+		//  |  +--------------- block width
+		//  |  |  +------------ block height
+		//  |  |  |   +-------- block size
+		//  |  |  |   |  +----- min blocks x
+		//  |  |  |   |  |  +-- min blocks y
+		//  |  |  |   |  |  |
 		{   4, 4, 4,  8, 1, 1 }, // BC1
 		{   8, 4, 4, 16, 1, 1 }, // BC2
 		{   8, 4, 4, 16, 1, 1 }, // BC3
@@ -1384,8 +1391,11 @@ namespace bgfx
 
 	static TranslateDdsPixelFormat s_translateDdsPixelFormat[] =
 	{
-		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, TextureFormat::BGRA8 },
-		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, TextureFormat::BGRA8 },
+		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, TextureFormat::BGRA8   },
+		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, TextureFormat::BGRA8   },
+		{ 32, { 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 }, TextureFormat::RGB10A2 },
+		{ 32, { 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 }, TextureFormat::RG16    },
+		{ 32, { 0xffffffff, 0x00000000, 0x00000000, 0x00000000 }, TextureFormat::R32     },
 	};
 
 	bool imageParseDds(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
