@@ -95,11 +95,10 @@ inline ReadBitstream::ReadBitstream( const uint8_t* buffer, size_t bufferSize )
     }
 }
 
-
 RBS_INLINE uint32_t ReadBitstream::Read( uint32_t bitCount )
 {
     uint64_t mask   = ( uint64_t( 1 ) << bitCount ) - 1;
-    uint32_t result = static_cast< uint32_t >( ( m_bitBuffer >> ( 64 - m_bitsLeft ) & ( m_bitsLeft == 0 ? 0 : 0xFFFFFFFFFFFFFFFF ) ) & mask );
+    uint32_t result = static_cast< uint32_t >( ( m_bitBuffer >> ( 64 - m_bitsLeft ) & ( m_bitsLeft == 0 ? 0 : UINT64_C(0xFFFFFFFFFFFFFFFF) ) ) & mask );
 
     if ( m_bitsLeft < bitCount )
     {
