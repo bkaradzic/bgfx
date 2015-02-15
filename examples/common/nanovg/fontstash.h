@@ -428,6 +428,7 @@ struct FONScontext
 	void* errorUptr;
 };
 
+#if 0
 static void* fons__tmpalloc(size_t size, void* up)
 {
 	unsigned char* ptr;
@@ -453,6 +454,7 @@ static void fons__tmpfree(void* ptr, void* up)
 	// empty
 }
 
+#endif
 // Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
