@@ -13,12 +13,12 @@
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4245) // error C4245: '=' : conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
-#if defined(_MSC_VER) || (defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ >= 3))
+#if BX_COMPILER_MSVC || BX_COMPILER_GCC >= 40300
 #pragma push_macro("interface")
 #endif
 #undef interface
 #include <freetype/freetype.h>
-#if defined(_MSC_VER) || (defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ >= 3))
+#if BX_COMPILER_MSVC || BX_COMPILER_GCC >= 40300
 #pragma pop_macro("interface")
 #endif
 BX_PRAGMA_DIAGNOSTIC_POP();
