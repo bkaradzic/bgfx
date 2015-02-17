@@ -495,6 +495,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		break;
 
 	case bgfx::RendererType::Direct3D11:
+	case bgfx::RendererType::Direct3D12:
 		vs_metaballs = bgfx::makeRef(vs_metaballs_dx11, sizeof(vs_metaballs_dx11) );
 		fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
 		break;
@@ -544,7 +545,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		float at[3]  = { 0.0f, 0.0f,   0.0f };
 		float eye[3] = { 0.0f, 0.0f, -50.0f };
-		
+
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
 		if (NULL != hmd)
@@ -598,7 +599,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		profUpdate = bx::getHPCounter();
-		
+
 		for (uint32_t zz = 0; zz < DIMS; ++zz)
 		{
 			for (uint32_t yy = 0; yy < DIMS; ++yy)
@@ -690,7 +691,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						-DIMS*0.5f + float(zz)
 					};
 
-					const Grid* val[8] = { 
+					const Grid* val[8] = {
 						&grid[xoffset+zpitch+ypitch  ],
 						&grid[xoffset+zpitch+ypitch+1],
 						&grid[xoffset+ypitch+1       ],
@@ -735,7 +736,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(1, 7, 0x0f, " Triangulate: % 7.3f[ms]", double(profTriangulate)*toMs);
 		bgfx::dbgTextPrintf(1, 8, 0x0f, "       Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

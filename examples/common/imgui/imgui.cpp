@@ -468,9 +468,9 @@ struct Imgui
 		IMGUI_create(_data, _size, _fontSize);
 
 		m_nvg = nvgCreate(1, m_view);
-		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
-		nvgFontSize(m_nvg, _fontSize);
-		nvgFontFace(m_nvg, "default");
+ 		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
+ 		nvgFontSize(m_nvg, _fontSize);
+ 		nvgFontFace(m_nvg, "default");
 
 		for (int32_t ii = 0; ii < NUM_CIRCLE_VERTS; ++ii)
 		{
@@ -518,6 +518,7 @@ struct Imgui
 			break;
 
 		case bgfx::RendererType::Direct3D11:
+		case bgfx::RendererType::Direct3D12:
 			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_dx11, sizeof(vs_imgui_color_dx11) );
 			fs_imgui_color       = bgfx::makeRef(fs_imgui_color_dx11, sizeof(fs_imgui_color_dx11) );
 			vs_imgui_texture     = bgfx::makeRef(vs_imgui_texture_dx11, sizeof(vs_imgui_texture_dx11) );
