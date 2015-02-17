@@ -856,13 +856,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// for each renderer.
 	switch (bgfx::getRendererType() )
 	{
-	default:
 	case bgfx::RendererType::OpenGL:
 	case bgfx::RendererType::OpenGLES:
 		s_flipV = true;
 		break;
 
-	default:8
+	default:
 		break;
 	}
 

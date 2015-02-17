@@ -1871,7 +1871,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// for each renderer.
 	switch (bgfx::getRendererType() )
 	{
-	default:
 	case bgfx::RendererType::Direct3D9:
 		s_texelHalf = 0.5f;
 		break;
