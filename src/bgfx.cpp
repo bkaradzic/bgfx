@@ -355,6 +355,7 @@ namespace bgfx
 			break;
 
 		case RendererType::Direct3D11:
+		case RendererType::Direct3D12:
 			mem = makeRef(vs_debugfont_dx11, sizeof(vs_debugfont_dx11) );
 			break;
 
@@ -372,6 +373,7 @@ namespace bgfx
 			break;
 
 		case RendererType::Direct3D11:
+		case RendererType::Direct3D12:
 			mem = makeRef(fs_debugfont_dx11, sizeof(fs_debugfont_dx11) );
 			break;
 
@@ -552,7 +554,8 @@ namespace bgfx
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
 				}
 			}
-			else if (RendererType::Direct3D11 == g_caps.rendererType)
+			else if (RendererType::Direct3D11 == g_caps.rendererType
+				 ||  RendererType::Direct3D12 == g_caps.rendererType)
 			{
 				vsh = createShader(makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) ) );
 
@@ -1928,7 +1931,7 @@ again:
 		uint8_t num = 0;
 		for (uint8_t ii = 0; ii < uint8_t(RendererType::Count); ++ii)
 		{
-			if (RendererType::Direct3D11 == ii
+			if ( (RendererType::Direct3D11 == ii || RendererType::Direct3D12 == ii)
 			&&  windowsVersionIs(Condition::LessEqual, 0x0502) )
 			{
 				continue;
