@@ -184,7 +184,7 @@ namespace bgfx
 
 				int result;
 				uint32_t numFormats = 0;
-				do 
+				do
 				{
 					result = wglChoosePixelFormatARB(m_hdc, attrs, NULL, 1, &m_pixelFormat, &numFormats);
 					if (0 == result
@@ -259,6 +259,7 @@ namespace bgfx
 
 			int result = wglMakeCurrent(m_hdc, m_context);
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
+			m_current = NULL;
 
 			if (NULL != wglSwapIntervalEXT)
 			{
@@ -316,34 +317,39 @@ namespace bgfx
 		BX_DELETE(g_allocator, _swapChain);
 	}
 
-	void GlContext::makeCurrent(SwapChainGL* _swapChain)
-	{
-		if (NULL == _swapChain)
-		{
-			wglMakeCurrent(m_hdc, m_context);
-			GLenum err = glGetError();
-			BX_WARN(0 == err, "wglMakeCurrent failed with GL error: 0x%04x.", err); BX_UNUSED(err);
-		}
-		else
-		{
-			_swapChain->makeCurrent();
-		}
-	}
-
 	void GlContext::swap(SwapChainGL* _swapChain)
 	{
+		makeCurrent(_swapChain);
+
 		if (NULL == _swapChain)
 		{
 			if (NULL != g_bgfxHwnd)
 			{
-				wglMakeCurrent(m_hdc, m_context);
 				SwapBuffers(m_hdc);
 			}
 		}
 		else
 		{
-			_swapChain->makeCurrent();
 			_swapChain->swapBuffers();
+		}
+	}
+
+	void GlContext::makeCurrent(SwapChainGL* _swapChain)
+	{
+		if (m_current != _swapChain)
+		{
+			m_current = _swapChain;
+
+			if (NULL == _swapChain)
+			{
+				wglMakeCurrent(m_hdc, m_context);
+				GLenum err = glGetError();
+				BX_WARN(0 == err, "wglMakeCurrent failed with GL error: 0x%04x.", err); BX_UNUSED(err);
+			}
+			else
+			{
+				_swapChain->makeCurrent();
+			}
 		}
 	}
 

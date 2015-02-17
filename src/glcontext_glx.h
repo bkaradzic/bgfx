@@ -18,7 +18,8 @@ namespace bgfx
 	struct GlContext
 	{
 		GlContext()
-			: m_context(0)
+			: m_current(NULL)
+			, m_context(0)
 			, m_visualInfo(NULL)
 		{
 		}
@@ -40,6 +41,7 @@ namespace bgfx
 			return 0 != m_context;
 		}
 
+		SwapChainGL* m_current;
 		GLXContext m_context;
 		XVisualInfo* m_visualInfo;
 	};

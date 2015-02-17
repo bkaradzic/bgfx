@@ -175,6 +175,7 @@ namespace bgfx
 		import();
 
 		glXMakeCurrent( (::Display*)g_bgfxX11Display, (::Window)g_bgfxX11Window, m_context);
+		m_current = NULL;
 
 		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
 		if (NULL != glXSwapIntervalEXT)
@@ -248,27 +249,32 @@ namespace bgfx
 
 	void GlContext::swap(SwapChainGL* _swapChain)
 	{
+		makeCurrent(_swapChain);
+
 		if (NULL == _swapChain)
 		{
-			glXMakeCurrent( (::Display*)g_bgfxX11Display, (::Window)g_bgfxX11Window, m_context);
 			glXSwapBuffers( (::Display*)g_bgfxX11Display, (::Window)g_bgfxX11Window);
 		}
 		else
 		{
-			_swapChain->makeCurrent();
 			_swapChain->swapBuffers();
 		}
 	}
 
 	void GlContext::makeCurrent(SwapChainGL* _swapChain)
 	{
-		if (NULL == _swapChain)
+		if (m_current != _swapChain)
 		{
-			glXMakeCurrent( (::Display*)g_bgfxX11Display, (::Window)g_bgfxX11Window, m_context);
-		}
-		else
-		{
-			_swapChain->makeCurrent();
+			m_current = _swapChain;
+
+			if (NULL == _swapChain)
+			{
+				glXMakeCurrent( (::Display*)g_bgfxX11Display, (::Window)g_bgfxX11Window, m_context);
+			}
+			else
+			{
+				_swapChain->makeCurrent();
+			}
 		}
 	}
 
