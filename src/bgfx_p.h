@@ -2906,6 +2906,15 @@ namespace bgfx
 
 			if (0 == refs)
 			{
+				for (UniformHashMap::iterator it = m_uniformHashMap.begin(), itEnd = m_uniformHashMap.end(); it != itEnd; ++it)
+				{
+					if (it->second.idx == _handle.idx)
+					{
+						m_uniformHashMap.erase(it);
+						break;
+					}
+				}
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyUniform);
 				cmdbuf.write(_handle);
 				m_submit->free(_handle);
