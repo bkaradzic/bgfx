@@ -775,7 +775,7 @@ namespace bgfx
 		{
 			m_key.m_depth  = 0;
 			m_key.m_view   = _id;
-			m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
+			m_key.m_seq    = s_ctx->m_seq[_id];
 			s_ctx->m_seq[_id]++;
 
 			uint64_t key = m_key.encodeCompute();
