@@ -69,9 +69,9 @@ very early development and primary focusing on Mac as primary target. This is
 how it currently looks.  
 ![mac_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
 
-
 http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
-focusing on racing games.
+focusing on racing games.  
+![ios](http://www.dogbytegames.com/bgfx/offroadlegends2_bgfx_ipad2.jpg)
 
 Examples
 --------
