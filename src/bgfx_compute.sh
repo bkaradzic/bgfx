@@ -25,6 +25,16 @@ ivec2 floatBitsToInt(vec2  _x)  { return asint(_x);   }
 ivec3 floatBitsToInt(vec3  _x)  { return asint(_x);   }
 ivec4 floatBitsToInt(vec4  _x)  { return asint(_x);   }
 
+uint packHalf2x16(vec2 _x)
+{
+	return (f32tof16(_x.x)<<16) | f32tof16(_x.y);
+}
+
+vec2 unpackHalf2x16(uint _x)
+{
+	return vec2(f16tof32(_x >> 16), f16tof32(_x) );
+}
+
 #define SHARED groupshared
 
 #define IMAGE2D_RO(_name, _reg) Texture2D           _name : register(t[_reg])
