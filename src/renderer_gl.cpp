@@ -1165,7 +1165,8 @@ namespace bgfx
 				}
 			}
 
-			if (!isTextureFormatValid(TextureFormat::R8) )
+			if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
+			||  !isTextureFormatValid(TextureFormat::R8) )
 			{
 				// GL core has to use GL_R8 Issue#208, GLES2 has to use GL_LUMINANCE issue#226
 				s_textureFormat[TextureFormat::R8].m_internalFmt = GL_LUMINANCE;
