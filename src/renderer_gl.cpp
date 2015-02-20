@@ -2640,6 +2640,10 @@ namespace bgfx
 		case GL_IMAGE_2D:
 		case GL_IMAGE_3D:
 		case GL_IMAGE_CUBE:
+		case GL_UNSIGNED_INT_IMAGE_1D:
+		case GL_UNSIGNED_INT_IMAGE_2D:
+		case GL_UNSIGNED_INT_IMAGE_3D:
+		case GL_UNSIGNED_INT_IMAGE_CUBE:
 			return UniformType::Uniform1iv;
 		};
 
@@ -2837,6 +2841,10 @@ namespace bgfx
 			case GL_IMAGE_2D:
 			case GL_IMAGE_3D:
 			case GL_IMAGE_CUBE:
+			case GL_UNSIGNED_INT_IMAGE_1D:
+			case GL_UNSIGNED_INT_IMAGE_2D:
+			case GL_UNSIGNED_INT_IMAGE_3D:
+			case GL_UNSIGNED_INT_IMAGE_CUBE:
 				BX_TRACE("Sampler #%d at location %d.", m_numSamplers, loc);
 				m_sampler[m_numSamplers] = loc;
 				m_numSamplers++;
