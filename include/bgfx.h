@@ -1098,6 +1098,15 @@ namespace bgfx
 	/// view will use these matrices.
 	void setViewTransform(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags = BGFX_VIEW_STEREO, const void* _projR = NULL);
 
+	/// Post submit view reordering.
+	///
+	/// @param _id First view id.
+	/// @param _num Number of views to remap.
+	/// @param _remap View remap id table. Passing `NULL` will reset view ids
+	///   to default state.
+	///
+	void setViewRemap(uint8_t _id = 0, uint8_t _num = UINT8_MAX, const void* _remap = NULL);
+
 	/// Sets debug marker.
 	void setMarker(const char* _marker);
 

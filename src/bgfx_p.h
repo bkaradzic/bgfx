@@ -679,8 +679,10 @@ namespace bgfx
 	};
 
 #define SORT_KEY_RENDER_DRAW (UINT64_C(1)<<0x2b)
+#define SORT_KEY_VIEW_SHIFT  UINT8_C(0x37)
+#define SORT_KEY_VIEW_MASK   ( (uint64_t(BGFX_CONFIG_MAX_VIEWS-1) )<<SORT_KEY_VIEW_SHIFT)
 
-	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS   <= 32);
+	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS <= 256);
 	BX_STATIC_ASSERT( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // must be power of 2
 
 	struct SortKey
@@ -689,7 +691,7 @@ namespace bgfx
 		{
 			// |               3               2               1               0|
 			// |fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210|
-			// |    vvvvvsssssssssssdttpppppppppdddddddddddddddddddddddddddddddd|
+			// | vvvvvvvvsssssssssssdttpppppppppdddddddddddddddddddddddddddddddd|
 			// |        ^          ^^ ^        ^                               ^|
 			// |        |          || |        |                               ||
 			// |   view-+      seq-+| +-trans  +-program                 depth-+|
@@ -699,7 +701,7 @@ namespace bgfx
 			const uint64_t program = uint64_t(m_program)<<0x20;
 			const uint64_t trans   = uint64_t(m_trans  )<<0x29;
 			const uint64_t seq     = uint64_t(m_seq    )<<0x2c;
-			const uint64_t view    = uint64_t(m_view   )<<0x37;
+			const uint64_t view    = uint64_t(m_view   )<<SORT_KEY_VIEW_SHIFT;
 			const uint64_t key     = depth|program|trans|SORT_KEY_RENDER_DRAW|seq|view;
 			return key;
 		}
@@ -708,7 +710,7 @@ namespace bgfx
 		{
 			// |               3               2               1               0|
 			// |fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210|
-			// |    vvvvvsssssssssssdppppppppp                                  |
+			// | vvvvvvvvsssssssssssdppppppppp                                  |
 			// |        ^          ^^        ^                                  |
 			// |        |          ||        |                                  |
 			// |   view-+      seq-+|        +-program                          |
@@ -716,7 +718,7 @@ namespace bgfx
 
 			const uint64_t program = uint64_t(m_program)<<0x22;
 			const uint64_t seq     = uint64_t(m_seq    )<<0x2c;
-			const uint64_t view    = uint64_t(m_view   )<<0x37;
+			const uint64_t view    = uint64_t(m_view   )<<SORT_KEY_VIEW_SHIFT;
 			const uint64_t key     = program|seq|view;
 			return key;
 		}
@@ -725,7 +727,7 @@ namespace bgfx
 		bool decode(uint64_t _key)
 		{
 			m_seq     = (_key>>0x2c)& 0x7ff;
-			m_view    = (_key>>0x37)&(BGFX_CONFIG_MAX_VIEWS-1);
+			m_view    = uint8_t( (_key&SORT_KEY_VIEW_MASK)>>SORT_KEY_VIEW_SHIFT);
 			if (_key & SORT_KEY_RENDER_DRAW)
 			{
 				m_depth   =  _key       & 0xffffffff;
@@ -736,6 +738,21 @@ namespace bgfx
 
 			m_program = (_key>>0x22)&(BGFX_CONFIG_MAX_PROGRAMS-1);
 			return true; // compute
+		}
+
+		bool decode(uint64_t _key, uint8_t _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		{
+			bool compute = decode(_key);
+			m_view = _viewRemap[m_view];
+			return compute;
+		}
+
+		static uint64_t remapView(uint64_t _key, uint8_t _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		{
+			const uint8_t  oldView  = uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
+			const uint64_t view     = uint64_t(_viewRemap[oldView])        << SORT_KEY_VIEW_SHIFT;
+			const uint64_t key      = (_key & ~SORT_KEY_VIEW_MASK) | view;
+			return key;
 		}
 
 		void reset()
@@ -1564,6 +1581,7 @@ namespace bgfx
 
 		SortKey m_key;
 
+		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 		float m_clearColor[BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE][4];
@@ -3038,6 +3056,23 @@ namespace bgfx
 			}
 		}
 
+		BGFX_API_FUNC(void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap) )
+		{
+			const uint32_t num = bx::uint32_min( (BGFX_CONFIG_MAX_VIEWS - _id) + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
+			if (NULL == _remap)
+			{
+				for (uint32_t ii = 0; ii < num; ++ii)
+				{
+					uint8_t id = uint8_t(ii+_id);
+					m_viewRemap[id] = id;
+				}
+			}
+			else
+			{
+				memcpy(&m_viewRemap[_id], _remap, num);
+			}
+		}
+
 		BGFX_API_FUNC(void setMarker(const char* _marker) )
 		{
 			m_submit->setMarker(_marker);
@@ -3358,6 +3393,7 @@ namespace bgfx
 		FrameBufferRef m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		VertexDeclRef m_declRef;
 
+		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 

@@ -570,7 +570,7 @@ namespace bgfx
 			}
 
 			// Init reserved part of view name.
-			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
 				char name[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1];
 				bx::snprintf(name, sizeof(name), "%3d  ", ii);
@@ -2864,7 +2864,7 @@ namespace bgfx
 		{
 			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)
 			{
-				const bool isCompute = key.decode(_render->m_sortKeys[item]);
+				const bool isCompute = key.decode(_render->m_sortKeys[item], _render->m_viewRemap);
 
 				if (isCompute)
 				{

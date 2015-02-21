@@ -4292,7 +4292,7 @@ namespace bgfx
 			int32_t numItems = _render->m_num;
 			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
 			{
-				const bool isCompute   = key.decode(_render->m_sortKeys[item]);
+				const bool isCompute   = key.decode(_render->m_sortKeys[item], _render->m_viewRemap);
 				const bool viewChanged = 0
 					|| key.m_view != view
 					|| item == numItems

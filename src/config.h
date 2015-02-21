@@ -168,7 +168,7 @@
 
 #ifndef BGFX_CONFIG_MAX_VIEWS
 // Do not change. Must be power of 2.
-#	define BGFX_CONFIG_MAX_VIEWS 32
+#	define BGFX_CONFIG_MAX_VIEWS 256
 #endif // BGFX_CONFIG_MAX_VIEWS
 
 #define BGFX_CONFIG_MAX_VIEW_NAME_RESERVED 5

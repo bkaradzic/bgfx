@@ -797,6 +797,10 @@ namespace bgfx
 
 	void Frame::sort()
 	{
+		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewRemap);
+		}
 		bx::radixSort64(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
 	}
 
@@ -950,6 +954,11 @@ namespace bgfx
 #else
 		BX_TRACE("Multithreaded renderer is disabled.");
 #endif // BGFX_CONFIG_MULTITHREADED
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_viewRemap); ++ii)
+		{
+			m_viewRemap[ii] = ii;
+		}
 
 		memset(m_fb, 0xff, sizeof(m_fb) );
 		memset(m_clear, 0, sizeof(m_clear) );
@@ -1156,6 +1165,8 @@ namespace bgfx
 		freeDynamicBuffers();
 		m_submit->m_resolution = m_resolution;
 		m_submit->m_debug = m_debug;
+
+		memcpy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
 		memcpy(m_submit->m_fb, m_fb, sizeof(m_fb) );
 		memcpy(m_submit->m_clear, m_clear, sizeof(m_clear) );
 		memcpy(m_submit->m_rect, m_rect, sizeof(m_rect) );
@@ -2671,6 +2682,13 @@ again:
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
+	}
+
+	void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		s_ctx->setViewRemap(_id, _num, _remap);
 	}
 
 	void setMarker(const char* _marker)
