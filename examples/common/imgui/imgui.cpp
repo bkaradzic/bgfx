@@ -387,7 +387,7 @@ struct Imgui
 		, m_textureHeight(512)
 		, m_halfTexel(0.0f)
 		, m_nvg(NULL)
-		, m_view(31)
+		, m_view(255)
 		, m_viewWidth(0)
 		, m_viewHeight(0)
 		, m_currentFontIdx(0)

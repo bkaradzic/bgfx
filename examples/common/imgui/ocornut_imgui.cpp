@@ -81,7 +81,7 @@ struct OcornutImguiContext
 
 	void create(const void* _data, uint32_t _size, float _fontSize)
 	{
-		m_viewId = 31;
+		m_viewId = 255;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
