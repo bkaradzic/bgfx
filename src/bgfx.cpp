@@ -2631,63 +2631,63 @@ again:
 	void setViewName(uint8_t _id, const char* _name)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewName(_id, _name);
 	}
 
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewRect(_id, _x, _y, _width, _height);
 	}
 
 	void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewScissor(_id, _x, _y, _width, _height);
 	}
 
 	void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewClear(_id, _flags, _rgba, _depth, _stencil);
 	}
 
 	void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 	}
 
 	void setViewSeq(uint8_t _id, bool _enabled)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewSeq(_id, _enabled);
 	}
 
 	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewFrameBuffer(_id, _handle);
 	}
 
 	void setViewTransform(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
 	}
 
 	void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
+		BX_CHECK(BGFX_CONFIG_MAX_VIEWS == 256 || _id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", _id);
 		s_ctx->setViewRemap(_id, _num, _remap);
 	}
 
