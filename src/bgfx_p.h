@@ -1738,6 +1738,20 @@ namespace bgfx
 			m_free.push_back(Free(_ptr, _size) );
 		}
 
+		uint64_t remove()
+		{
+			BX_CHECK(0 == m_used.size(), "");
+
+			if (0 < m_free.size() )
+			{
+				Free free = m_free.front();
+				m_free.pop_front();
+				return free.m_ptr;
+			}
+
+			return 0;
+		}
+
 		uint64_t alloc(uint32_t _size)
 		{
 			for (FreeList::iterator it = m_free.begin(), itEnd = m_free.end(); it != itEnd; ++it)
@@ -1776,7 +1790,7 @@ namespace bgfx
 			}
 		}
 
-		void compact()
+		bool compact()
 		{
 			m_free.sort();
 
@@ -1793,6 +1807,8 @@ namespace bgfx
 					++next;
 				}
 			}
+
+			return 0 == m_used.size();
 		}
 
 	private:
@@ -2165,7 +2181,14 @@ namespace bgfx
 			else
 			{
 				m_dynIndexBufferAllocator.free(uint64_t(dib.m_handle.idx)<<32 | dib.m_offset);
-				m_dynIndexBufferAllocator.compact();
+				if (m_dynIndexBufferAllocator.compact() )
+				{
+					for (uint64_t ptr = m_dynIndexBufferAllocator.remove(); 0 != ptr; ptr = m_dynIndexBufferAllocator.remove() )
+					{
+						IndexBufferHandle handle = { uint16_t(ptr>>32) };
+						destroyIndexBuffer(handle);
+					}
+				}
 			}
 
 			m_dynamicIndexBufferHandle.free(_handle.idx);
@@ -2310,7 +2333,14 @@ namespace bgfx
 			else
 			{
 				m_dynVertexBufferAllocator.free(uint64_t(dvb.m_handle.idx)<<32 | dvb.m_offset);
-				m_dynVertexBufferAllocator.compact();
+				if (m_dynVertexBufferAllocator.compact() )
+				{
+					for (uint64_t ptr = m_dynVertexBufferAllocator.remove(); 0 != ptr; ptr = m_dynVertexBufferAllocator.remove() )
+					{
+						VertexBufferHandle handle = { uint16_t(ptr>>32) };
+						destroyVertexBuffer(handle);
+					}
+				}
 			}
 
 			m_dynamicVertexBufferHandle.free(_handle.idx);

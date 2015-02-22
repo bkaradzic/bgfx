@@ -123,6 +123,11 @@ void VectorDisplay::resize(uint16_t _width, uint16_t _height)
 
 void VectorDisplay::teardown()
 {
+	for (size_t i = 0; i < m_vertexBuffers.size(); ++i)
+	{
+		bgfx::destroyDynamicVertexBuffer(m_vertexBuffers[i]);
+	}
+
 	teardownResDependent();
 
 	bgfx::destroyProgram(m_drawToScreenShader);
@@ -728,7 +733,7 @@ bool VectorDisplay::setDecaySteps(int _steps)
 	{
 		for (size_t i = 0; i < m_vertexBuffers.size(); ++i)
 		{
-			destroyDynamicVertexBuffer(m_vertexBuffers[i]);
+			bgfx::destroyDynamicVertexBuffer(m_vertexBuffers[i]);
 		}
 
 		m_vertexBuffers.clear();
