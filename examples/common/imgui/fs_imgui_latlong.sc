@@ -21,9 +21,9 @@ vec3 vecFromLatLong(vec2 _uv)
 	float theta = _uv.y * pi;
 
 	vec3 result;
-	result.x = sin(theta)*cos(phi);
+	result.x = -sin(theta)*sin(phi);
 	result.y = cos(theta);
-	result.z = -sin(theta)*sin(phi);
+	result.z = -sin(theta)*cos(phi);
 
 	return result;
 }
