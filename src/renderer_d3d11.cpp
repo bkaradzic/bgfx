@@ -665,6 +665,11 @@ namespace bgfx
 #endif // BX_PLATFORM_WINRT
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 
+			DX_CHECK(m_factory->MakeWindowAssociation(g_bgfxHwnd, 0
+				| DXGI_MWA_NO_WINDOW_CHANGES
+				| DXGI_MWA_NO_ALT_ENTER
+				) );
+
 			m_numWindows = 1;
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
