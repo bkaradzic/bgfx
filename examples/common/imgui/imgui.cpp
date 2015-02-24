@@ -2023,7 +2023,7 @@ struct Imgui
 			xx = -borderSize;
 			yy = -1;
 			width = 2*borderSize+1;
-			height = m_viewHeight;
+			height = m_viewHeight+1;
 			triX = 0;
 			triY = (m_viewHeight-triSize)/2;
 			orientation = _checked ? TriangleOrientation::Left : TriangleOrientation::Right;
@@ -2033,7 +2033,7 @@ struct Imgui
 			xx = m_viewWidth - borderSize;
 			yy = -1;
 			width = 2*borderSize+1;
-			height = m_viewHeight;
+			height = m_viewHeight+1;
 			triX = m_viewWidth - triSize - 2;
 			triY = (m_viewHeight-width)/2;
 			orientation = _checked ? TriangleOrientation::Right : TriangleOrientation::Left;
