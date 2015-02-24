@@ -1809,7 +1809,7 @@ void ImGui::NewFrame()
     g.CurrentWindowStack.resize(0);
 
     // Create implicit window - we will only render it if the user has added something to it.
-    ImGui::Begin("Debug", NULL, ImVec2(400,400));
+    ImGui::Begin("Debug", NULL, ImVec2(400,400), -1.0f, ImGuiWindowFlags_NoSavedSettings);
 }
 
 // NB: behaviour of ImGui after Shutdown() is not tested/guaranteed at the moment. This function is merely here to free heap allocations.
