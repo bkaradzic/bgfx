@@ -189,6 +189,10 @@ vec2 vec2_splat(float _x) { return vec2(_x, _x); }
 vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
 vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
 
+uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
+uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
+uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
+
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
@@ -239,6 +243,9 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define vec2_splat(_x) vec2(_x)
 #	define vec3_splat(_x) vec3(_x)
 #	define vec4_splat(_x) vec4(_x)
+#	define uvec2_splat(_x) uvec2(_x)
+#	define uvec3_splat(_x) uvec3(_x)
+#	define uvec4_splat(_x) uvec4(_x)
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }

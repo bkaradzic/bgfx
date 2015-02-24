@@ -1449,7 +1449,7 @@ namespace bgfx
 			bind.m_un.m_compute.m_mip    = 0;
 		}
 
-		void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access)
+		void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
 			Binding& bind = m_compute.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
@@ -2720,31 +2720,34 @@ namespace bgfx
 
 		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info) )
 		{
-			if (NULL != _info)
+			TextureInfo ti;
+			if (NULL == _info)
 			{
-				ImageContainer imageContainer;
-				if (imageParse(imageContainer, _mem->data, _mem->size) )
-				{
-					calcTextureSize(*_info
-						, (uint16_t)imageContainer.m_width
-						, (uint16_t)imageContainer.m_height
-						, (uint16_t)imageContainer.m_depth
-						, imageContainer.m_cubeMap
-						, imageContainer.m_numMips
-						, TextureFormat::Enum(imageContainer.m_format)
-						);
-				}
-				else
-				{
-					_info->format = TextureFormat::Unknown;
-					_info->storageSize = 0;
-					_info->width   = 0;
-					_info->height  = 0;
-					_info->depth   = 0;
-					_info->numMips = 0;
-					_info->bitsPerPixel = 0;
-					_info->cubeMap = false;
-				}
+				_info = &ti;
+			}
+
+			ImageContainer imageContainer;
+			if (imageParse(imageContainer, _mem->data, _mem->size) )
+			{
+				calcTextureSize(*_info
+					, (uint16_t)imageContainer.m_width
+					, (uint16_t)imageContainer.m_height
+					, (uint16_t)imageContainer.m_depth
+					, imageContainer.m_cubeMap
+					, imageContainer.m_numMips
+					, TextureFormat::Enum(imageContainer.m_format)
+					);
+			}
+			else
+			{
+				_info->format = TextureFormat::Unknown;
+				_info->storageSize = 0;
+				_info->width   = 0;
+				_info->height  = 0;
+				_info->depth   = 0;
+				_info->numMips = 0;
+				_info->bitsPerPixel = 0;
+				_info->cubeMap = false;
 			}
 
 			TextureHandle handle = { m_textureHandle.alloc() };
@@ -2753,6 +2756,7 @@ namespace bgfx
 			{
 				TextureRef& ref = m_textureRef[handle.idx];
 				ref.m_refCount = 1;
+				ref.m_format   = uint8_t(_info->format);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
 				cmdbuf.write(handle);
@@ -3255,12 +3259,13 @@ namespace bgfx
 			m_submit->setBuffer(_stage, dvb.m_handle, _access);
 		}
 
-		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, TextureFormat::Enum _format, Access::Enum _access) )
+		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format) )
 		{
-			m_submit->setImage(_stage, _sampler, _handle, _mip, _format, _access);
+			_format = TextureFormat::Count == _format ? TextureFormat::Enum(m_textureRef[_handle.idx].m_format) : _format;
+			m_submit->setImage(_stage, _sampler, _handle, _mip, _access, _format);
 		}
 
-		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, TextureFormat::Enum _format, Access::Enum _access) )
+		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, Access::Enum _access, TextureFormat::Enum _format) )
 		{
 			BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 			TextureHandle textureHandle = BGFX_INVALID_HANDLE;
@@ -3272,7 +3277,7 @@ namespace bgfx
 				BX_CHECK(isValid(textureHandle), "Frame buffer texture %d is invalid.", _attachment);
 			}
 
-			setImage(_stage, _sampler, textureHandle, 0, _format, _access);
+			setImage(_stage, _sampler, textureHandle, 0, _access, _format);
 		}
 
 		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags) )
@@ -3402,6 +3407,7 @@ namespace bgfx
 		struct TextureRef
 		{
 			int16_t m_refCount;
+			uint8_t m_format;
 		};
 
 		struct FrameBufferRef
