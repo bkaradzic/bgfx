@@ -2823,24 +2823,28 @@ again:
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(NULL != _idb, "_idb can't be NULL");
 		s_ctx->setInstanceDataBuffer(_idb, _num);
 	}
 
 	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS);
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
 	void setProgram(ProgramHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_PROGRAMS);
 		s_ctx->setProgram(_handle);
 	}
 
@@ -2865,24 +2869,28 @@ again:
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_INDEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
 	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
 	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 

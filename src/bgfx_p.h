@@ -1410,7 +1410,6 @@ namespace bgfx
 
 		void setProgram(ProgramHandle _handle)
 		{
-			BX_CHECK(isValid(_handle), "Can't set program with invalid handle.");
 			m_key.m_program = _handle.idx;
 		}
 
