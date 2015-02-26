@@ -1370,7 +1370,6 @@ namespace bgfx
 
 		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			BX_CHECK(_handle.idx < BGFX_CONFIG_MAX_VERTEX_BUFFERS, "Invalid vertex buffer handle. %d (< %d)", _handle.idx, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 			m_draw.m_startVertex  = _startVertex;
 			m_draw.m_numVertices  = _numVertices;
 			m_draw.m_vertexBuffer = _handle;
