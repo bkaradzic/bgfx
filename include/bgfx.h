@@ -310,6 +310,7 @@ namespace bgfx
 		uint64_t supported;
 
 		uint16_t maxTextureSize;   ///< Maximum texture size.
+		uint16_t maxViews;         ///< Maximum views.
 		uint16_t maxDrawCalls;     ///< Maximum draw calls.
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
 

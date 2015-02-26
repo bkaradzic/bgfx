@@ -1980,6 +1980,7 @@ again:
 		g_caps.supported = 0
 			| (BGFX_CONFIG_MULTITHREADED ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
 			;
+		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
 		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
 		g_caps.maxFBAttachments = 1;
 
