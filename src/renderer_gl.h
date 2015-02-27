@@ -167,6 +167,10 @@ typedef uint64_t GLuint64;
 #	define GL_RGBA32F 0x8814
 #endif // GL_RGBA32F
 
+#ifndef GL_STENCIL_INDEX
+#	define GL_STENCIL_INDEX 0x1901
+#endif // GL_STENCIL_INDEX
+
 #ifndef GL_RED
 #	define GL_RED 0x1903
 #endif // GL_RED

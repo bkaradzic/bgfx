@@ -232,7 +232,7 @@ namespace bgfx
 		{ GL_DEPTH_COMPONENT32F,                       GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false }, // D16F
 		{ GL_DEPTH_COMPONENT32F,                       GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false }, // D24F
 		{ GL_DEPTH_COMPONENT32F,                       GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false }, // D32F
-		{ GL_STENCIL_INDEX8,                           GL_DEPTH_STENCIL,                            GL_UNSIGNED_BYTE,                false }, // D0S8
+		{ GL_STENCIL_INDEX8,                           GL_STENCIL_INDEX,                            GL_UNSIGNED_BYTE,                false }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
@@ -430,6 +430,7 @@ namespace bgfx
 			OES_texture_npot,
 			OES_texture_half_float,
 			OES_texture_half_float_linear,
+			OES_texture_stencil8,
 			OES_vertex_array_object,
 			OES_vertex_half_float,
 			OES_vertex_type_10_10_10_2,
@@ -590,6 +591,7 @@ namespace bgfx
 		{ "OES_texture_npot",                      false,                             true  },
 		{ "OES_texture_half_float",                false,                             true  },
 		{ "OES_texture_half_float_linear",         false,                             true  },
+		{ "OES_texture_stencil8",                  false,                             true  },
 		{ "OES_vertex_array_object",               false,                             !BX_PLATFORM_IOS },
 		{ "OES_vertex_half_float",                 false,                             true  },
 		{ "OES_vertex_type_10_10_10_2",            false,                             true  },
