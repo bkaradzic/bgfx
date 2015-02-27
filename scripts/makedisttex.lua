@@ -8,12 +8,12 @@ project "makedisttex"
 	kind "ConsoleApp"
 
 	includedirs {
-		BX_DIR .. "include",
-		BGFX_DIR .. "3rdparty",
+		path.join(BX_DIR, "include"),
+		path.join(BGFX_DIR, "3rdparty"),
 	}
 
 	files {
-		BGFX_DIR .. "3rdparty/edtaa3/**.cpp",
-		BGFX_DIR .. "3rdparty/edtaa3/**.h",
-		BGFX_DIR .. "tools/makedisttex.cpp",
+		path.join(BGFX_DIR, "3rdparty/edtaa3/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/edtaa3/**.h"),
+		path.join(BGFX_DIR, "tools/makedisttex.cpp"),
 	}

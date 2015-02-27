@@ -8,18 +8,18 @@ project ("example-common")
 	kind "StaticLib"
 
 	includedirs {
-		BX_DIR .. "include",
-		BGFX_DIR .. "include",
-		BGFX_DIR .. "3rdparty",
+		path.join(BX_DIR, "include"),
+		path.join(BGFX_DIR, "include"),
+		path.join(BGFX_DIR, "3rdparty"),
 	}
 
 	files {
-		BGFX_DIR .. "3rdparty/ib-compress/**.cpp",
-		BGFX_DIR .. "3rdparty/ib-compress/**.h",
-		BGFX_DIR .. "3rdparty/ocornut-imgui/**.cpp",
-		BGFX_DIR .. "3rdparty/ocornut-imgui/**.h",
-		BGFX_DIR .. "examples/common/**.cpp",
-		BGFX_DIR .. "examples/common/**.h",
+		path.join(BGFX_DIR, "3rdparty/ib-compress/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/ib-compress/**.h"),
+		path.join(BGFX_DIR, "3rdparty/ocornut-imgui/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/ocornut-imgui/**.h"),
+		path.join(BGFX_DIR, "examples/common/**.cpp"),
+		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
 	if _OPTIONS["with-sdl"] then
