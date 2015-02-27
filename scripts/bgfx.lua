@@ -29,8 +29,8 @@ function bgfxProject(_name, _kind, _defines)
 		end
 
 		includedirs {
-			BGFX_DIR .. "3rdparty",
-			BGFX_DIR .. "../bx/include",
+			path.join(BGFX_DIR, "3rdparty"),
+			path.join(BGFX_DIR, "../bx/include"),
 		}
 
 		defines {
@@ -69,7 +69,7 @@ function bgfxProject(_name, _kind, _defines)
 
 		configuration { "xcode4 or osx or ios*" }
 			files {
-				BGFX_DIR .. "src/**.mm",
+				path.join(BGFX_DIR, "src/**.mm"),
 			}
 
 		configuration { "osx" }
@@ -80,7 +80,7 @@ function bgfxProject(_name, _kind, _defines)
 		configuration { "not nacl" }
 			includedirs {
 				--nacl has GLES2 headers modified...
-				BGFX_DIR .. "3rdparty/khronos",
+				path.join(BGFX_DIR, "3rdparty/khronos"),
 			}
 
 		configuration { "x64", "vs* or mingw*" }
@@ -91,17 +91,17 @@ function bgfxProject(_name, _kind, _defines)
 		configuration {}
 
 		includedirs {
-			BGFX_DIR .. "include",
+			path.join(BGFX_DIR, "include"),
 		}
 
 		files {
-			BGFX_DIR .. "include/**.h",
-			BGFX_DIR .. "src/**.cpp",
-			BGFX_DIR .. "src/**.h",
+			path.join(BGFX_DIR, "include/**.h"),
+			path.join(BGFX_DIR, "src/**.cpp"),
+			path.join(BGFX_DIR, "src/**.h"),
 		}
 
 		excludes {
-			BGFX_DIR .. "src/**.bin.h",
+			path.join(BGFX_DIR, "src/**.bin.h"),
 		}
 
 		configuration {}

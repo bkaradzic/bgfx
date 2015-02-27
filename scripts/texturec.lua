@@ -8,15 +8,15 @@ project "texturec"
 	kind "ConsoleApp"
 
 	includedirs {
-		BX_DIR .. "include",
-		BGFX_DIR .. "include",
-		BGFX_DIR .. "src",
+		path.join(BX_DIR, "include"),
+		path.join(BGFX_DIR, "include"),
+		path.join(BGFX_DIR, "src"),
 	}
 
 	files {
-		BGFX_DIR .. "src/image.*",
-		BGFX_DIR .. "tools/texturec/**.cpp",
-		BGFX_DIR .. "tools/texturec/**.h",
+		path.join(BGFX_DIR, "src/image.*"),
+		path.join(BGFX_DIR, "tools/texturec/**.cpp"),
+		path.join(BGFX_DIR, "tools/texturec/**.h"),
 	}
 
 	links {
