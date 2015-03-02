@@ -315,9 +315,10 @@ namespace bgfx
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
 
 		/// Supported texture formats.
-		///   - 0 - not supported
-		///   - 1 - supported
-		///   - 2 - emulated
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_COLOR` - supported
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_EMULATED` - emulated
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - supported vertex texture
 		uint8_t formats[TextureFormat::Count];
 	};
 

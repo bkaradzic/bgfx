@@ -902,14 +902,18 @@ namespace bgfx
 		}
 
 		BX_TRACE("Supported texture formats:");
+		BX_TRACE("\t +------ x = supported / * = emulated");
+		BX_TRACE("\t |+----- vertex format");
+		BX_TRACE("\t ||  +-- name");
 		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 		{
 			if (TextureFormat::Unknown != ii
 			&&  TextureFormat::UnknownDepth != ii)
 			{
 				uint8_t flags = g_caps.formats[ii];
-				BX_TRACE("\t[%c] %s"
-					, flags&1 ? 'x' : flags&2 ? '*' : ' '
+				BX_TRACE("\t[%c%c] %s"
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR  ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_EMULATED ? '*' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX ? 'v' : ' '
 					, getName(TextureFormat::Enum(ii) )
 					);
 				BX_UNUSED(flags);
@@ -938,11 +942,11 @@ namespace bgfx
 	{
 		BX_CHECK(!m_rendererInitialized, "Already initialized?");
 
-		m_exit = false;
+		m_exit   = false;
 		m_frames = 0;
 		m_render = &m_frame[0];
 		m_submit = &m_frame[1];
-		m_debug = BGFX_DEBUG_NONE;
+		m_debug  = BGFX_DEBUG_NONE;
 
 		m_submit->create();
 		m_render->create();
@@ -1002,9 +1006,9 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_emulatedFormats); ++ii)
 		{
-			if (0 == g_caps.formats[s_emulatedFormats[ii] ])
+			if (0 == (g_caps.formats[s_emulatedFormats[ii] ] & BGFX_CAPS_FORMAT_TEXTURE_COLOR) )
 			{
-				g_caps.formats[s_emulatedFormats[ii] ] = 2;
+				g_caps.formats[s_emulatedFormats[ii] ] |= BGFX_CAPS_FORMAT_TEXTURE_EMULATED;
 			}
 		}
 
