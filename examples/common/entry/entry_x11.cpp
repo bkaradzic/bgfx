@@ -267,6 +267,10 @@ namespace entry
 			initTranslateKey('x',             Key::KeyX);
 			initTranslateKey('y',             Key::KeyY);
 			initTranslateKey('z',             Key::KeyZ);
+
+			m_mx = 0;
+			m_my = 0;
+			m_mz = 0;
 		}
 
 		int32_t run(int _argc, char** _argv)
@@ -367,18 +371,19 @@ namespace entry
 						case ButtonRelease:
 							{
 								const XButtonEvent& xbutton = event.xbutton;
-								MouseButton::Enum mb;
+								MouseButton::Enum mb = MouseButton::None;
 								switch (xbutton.button)
 								{
 									case Button1: mb = MouseButton::Left;   break;
 									case Button2: mb = MouseButton::Middle; break;
 									case Button3: mb = MouseButton::Right;  break;
-									default:      mb = MouseButton::None;   break;
+									case Button4: ++m_mz; break;
+									case Button5: --m_mz; break;
 								}
 
+								WindowHandle handle = findHandle(xbutton.window);
 								if (MouseButton::None != mb)
 								{
-									WindowHandle handle = findHandle(xbutton.window);
 									m_eventQueue.postMouseEvent(handle
 										, xbutton.x
 										, xbutton.y
@@ -387,6 +392,14 @@ namespace entry
 										, event.type == ButtonPress
 										);
 								}
+								else
+								{
+									m_eventQueue.postMouseEvent(handle
+											, m_mx
+											, m_my
+											, m_mz
+											);
+								}
 							}
 							break;
 
@@ -394,10 +407,14 @@ namespace entry
 							{
 								const XMotionEvent& xmotion = event.xmotion;
 								WindowHandle handle = findHandle(xmotion.window);
+
+								m_mx = xmotion.x;
+								m_my = xmotion.y;
+
 								m_eventQueue.postMouseEvent(handle
-										, xmotion.x
-										, xmotion.y
-										, 0
+										, m_mx
+										, m_my
+										, m_mz
 										);
 							}
 							break;
@@ -542,6 +559,10 @@ namespace entry
 
 		uint8_t m_modifiers;
 		bool m_exit;
+
+		int32_t m_mx;
+		int32_t m_my;
+		int32_t m_mz;
 
 		EventQueue m_eventQueue;
 		bx::LwMutex m_lock;
