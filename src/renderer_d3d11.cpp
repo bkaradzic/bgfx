@@ -2392,6 +2392,14 @@ namespace bgfx
 		ID3D11Buffer* ptr;
 		DX_CHECK(device->CreateBuffer(&desc, &srd, &ptr) );
 
+		D3D11_BOX box;
+		box.left   = 0;
+		box.top    = 0;
+		box.front  = 0;
+		box.right  = _size;
+		box.bottom = 1;
+		box.back   = 1;
+
 		deviceCtx->CopySubresourceRegion(m_ptr
 			, 0
 			, _offset
@@ -2399,7 +2407,7 @@ namespace bgfx
 			, 0
 			, ptr
 			, 0
-			, NULL
+			, &box
 			);
 
 		DX_RELEASE(ptr, 0);
