@@ -54,16 +54,29 @@ vec2 unpackHalf2x16(uint _x)
 
 #define NUM_THREADS(_x, _y, _z) [numthreads(_x, _y, _z)]
 
-vec4 imageLoad(Texture2D _image, ivec2 _uv)
-{
-	return _image.Load(uint3(_uv.xy, 0) );
-}
+#define __IMAGE_IMPL(_textureType, _storeComponents, _type, _loadComponents) \
+			_type imageLoad(Texture2D<_textureType> _image, ivec2 _uv) \
+			{ \
+				return _image[_uv]._loadComponents; \
+			} \
+			\
+			void imageStore(RWTexture2D<_textureType> _image, ivec2 _uv, _type _value) \
+			{ \
+				_image[_uv] = _value._storeComponents; \
+			}
 
-uint4 imageLoad(Texture2D<uint> _image, ivec2 _uv)
-{
-	uint rr = _image.Load(uint3(_uv.xy, 0) );
-	return uint4(rr, rr, rr, rr);
-}
+__IMAGE_IMPL(float, x,    vec4,  xxxx)
+__IMAGE_IMPL(vec2,  xy,   vec4,  xyyy)
+__IMAGE_IMPL(vec3,  xyz,  vec4,  xyzz)
+__IMAGE_IMPL(vec4,  xyzw, vec4,  xyzw)
+__IMAGE_IMPL(uint,  x,    uvec4, xxxx)
+__IMAGE_IMPL(uvec2, xy,   uvec4, xyyy)
+__IMAGE_IMPL(uvec3, xyz,  uvec4, xyzz)
+__IMAGE_IMPL(uvec4, xyzw, uvec4, xyzw)
+__IMAGE_IMPL(int,   x,    ivec4, xxxx)
+__IMAGE_IMPL(ivec2, xy,   ivec4, xyyy)
+__IMAGE_IMPL(ivec3, xyz,  ivec4, xyzz)
+__IMAGE_IMPL(ivec4, xyzw, ivec4, xyzw)
 
 uint4 imageLoad(RWTexture2D<uint> _image, ivec2 _uv)
 {
@@ -90,16 +103,6 @@ ivec2 imageSize(RWTexture2D<uint> _image)
 	ivec2 result;
 	_image.GetDimensions(result.x, result.y);
 	return result;
-}
-
-void imageStore(RWTexture2D<float4> _image, ivec2 _uv, vec4 _rgba)
-{
-	_image[_uv] = _rgba;
-}
-
-void imageStore(RWTexture2D<uint> _image, ivec2 _uv, uvec4 _r)
-{
-	_image[_uv] = _r.x;
 }
 
 #define __ATOMIC_IMPL_TYPE(_genType, _glFunc, _dxFunc) \
@@ -153,6 +156,7 @@ uint atomicCompSwap(uint _mem, uint _compare, uint _data)
 #define __IMAGE2D_XX(_name, _reg, _access) \
 			layout(rgba8, binding=_reg) _access uniform highp image2D _name
 
+#define readwrite
 #define IMAGE2D_RO(_name, _reg) __IMAGE2D_XX(_name, _reg, readonly)
 #define IMAGE2D_RW(_name, _reg) __IMAGE2D_XX(_name, _reg, readwrite)
 #define IMAGE2D_WR(_name, _reg) __IMAGE2D_XX(_name, _reg, writeonly)
