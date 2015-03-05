@@ -171,20 +171,19 @@ namespace entry
 			return mask;
 		}
 
-		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys)
+		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys, uint8_t* _pressedChar)
 		{
 			NSString* key = [event charactersIgnoringModifiers];
 			unichar keyChar = 0;
-//DBG("keyChar %d", keyChar);
 			if ([key length] == 0)
 			{
 				return Key::None;
 			}
 
 			keyChar = [key characterAtIndex:0];
+			*_pressedChar = (uint8_t)keyChar;
 
 			int keyCode = keyChar;
-//DBG("keyCode %d", keyCode);
 			*specialKeys = translateModifiers([event modifierFlags]);
 
 			// if this is a unhandled key just return None
@@ -311,14 +310,20 @@ namespace entry
 					case NSKeyDown:
 					{
 						uint8_t modifiers = 0;
-						Key::Enum key = handleKeyEvent(event, &modifiers);
+						uint8_t pressedChar[4];
+						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
 
 						// If KeyCode is none we don't don't handle the key and special case for cmd+q (quit)
 						// Note that return false here means that we take care of the key (instead of the default behavior)
 						if (key != Key::None)
 						{
-							if (key != Key::KeyQ
-							&& !(modifiers & Modifier::RightMeta) )
+							if ( (Key::Key0 <= key && key <= Key::KeyZ)
+							  || (Key::Esc  <= key && key <= Key::Minus) )
+							{
+								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
+							}
+							else if (key != Key::KeyQ
+								&& !(modifiers & Modifier::RightMeta) )
 							{
 								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
 								return false;
@@ -331,7 +336,10 @@ namespace entry
 					case NSKeyUp:
 					{
 						uint8_t modifiers  = 0;
-						Key::Enum key = handleKeyEvent(event, &modifiers);
+						uint8_t pressedChar[4];
+						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
+
+						BX_UNUSED(pressedChar);
 
 						if (key != Key::None)
 						{
