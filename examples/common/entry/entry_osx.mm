@@ -247,7 +247,12 @@ namespace entry
 					{
 						int x, y;
 						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, true);
+
+						// TODO: remove!
+						// Shift + Left Mouse Button acts as middle! This just a temporary solution!
+						// This is becase the average OSX user doesn't have middle mouse click.
+						MouseButton::Enum mb = ([event modifierFlags] & NSShiftKeyMask) ? MouseButton::Middle : MouseButton::Left;
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, mb, true);
 						break;
 					}
 
@@ -256,6 +261,7 @@ namespace entry
 						int x, y;
 						getMousePos(&x, &y);
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, false); // TODO: remove!
 						break;
 					}
 
