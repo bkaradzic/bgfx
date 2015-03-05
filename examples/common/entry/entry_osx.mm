@@ -77,7 +77,8 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_scroll(0)
+			: m_scrollf(0.0f)
+			, m_scroll(0)
 			, m_exit(false)
 		{
 			s_translateKey[27]             = Key::Esc;
@@ -292,9 +293,11 @@ namespace entry
 
 					case NSScrollWheel:
 					{
+						m_scrollf += [event deltaY];
+
 						int x, y;
 						getMousePos(&x, &y);
-						m_scroll += ([event deltaY] > 0.0f) ? 1 : -1;
+						m_scroll = (int32_t)m_scrollf;
 						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
 						break;
 					}
@@ -443,8 +446,9 @@ namespace entry
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 
+		float   m_scrollf;
 		int32_t m_scroll;
-		bool m_exit;
+		bool    m_exit;
 	};
 
 	static Context s_ctx;
