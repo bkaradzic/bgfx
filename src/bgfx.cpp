@@ -972,16 +972,16 @@ namespace bgfx
 			m_viewRemap[ii] = ii;
 		}
 
-		memset(m_fb, 0xff, sizeof(m_fb) );
-		memset(m_clear, 0, sizeof(m_clear) );
-		memset(m_rect, 0, sizeof(m_rect) );
+		memset(m_fb,   0xff, sizeof(m_fb) );
+		memset(m_clear,   0, sizeof(m_clear) );
+		memset(m_rect,    0, sizeof(m_rect) );
 		memset(m_scissor, 0, sizeof(m_scissor) );
-		memset(m_seq, 0, sizeof(m_seq) );
+		memset(m_seq,     0, sizeof(m_seq) );
 		memset(m_seqMask, 0, sizeof(m_seqMask) );
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rect); ++ii)
 		{
-			m_rect[ii].m_width = 1;
+			m_rect[ii].m_width  = 1;
 			m_rect[ii].m_height = 1;
 		}
 
@@ -1449,6 +1449,10 @@ again:
 				else if (s_rendererCreator[RendererType::OpenGLES].supported)
 				{
 					_type = RendererType::OpenGLES;
+				}
+				else if (s_rendererCreator[RendererType::Vulkan].supported)
+				{
+					_type = RendererType::Vulkan;
 				}
 			}
 			else if (BX_ENABLED(0
