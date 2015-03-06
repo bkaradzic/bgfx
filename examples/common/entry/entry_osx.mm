@@ -78,6 +78,8 @@ namespace entry
 	{
 		Context()
 			: m_scrollf(0.0f)
+			, m_mx(0)
+			, m_my(0)
 			, m_scroll(0)
 			, m_exit(false)
 		{
@@ -236,63 +238,49 @@ namespace entry
 					case NSRightMouseDragged:
 					case NSOtherMouseDragged:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
+						getMousePos(&m_mx, &m_my);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
 						break;
 					}
 
 					case NSLeftMouseDown:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-
 						// TODO: remove!
 						// Shift + Left Mouse Button acts as middle! This just a temporary solution!
 						// This is becase the average OSX user doesn't have middle mouse click.
 						MouseButton::Enum mb = ([event modifierFlags] & NSShiftKeyMask) ? MouseButton::Middle : MouseButton::Left;
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, mb, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
 						break;
 					}
 
 					case NSLeftMouseUp:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, false);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, false); // TODO: remove!
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false); // TODO: remove!
 						break;
 					}
 
 					case NSRightMouseDown:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, true);
 						break;
 					}
 
 					case NSRightMouseUp:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 						break;
 					}
 
 					case NSOtherMouseDown:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, true);
 						break;
 					}
 
 					case NSOtherMouseUp:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
 						break;
 					}
 
@@ -300,10 +288,8 @@ namespace entry
 					{
 						m_scrollf += [event deltaY];
 
-						int x, y;
-						getMousePos(&x, &y);
 						m_scroll = (int32_t)m_scrollf;
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
 						break;
 					}
 
@@ -374,10 +360,8 @@ namespace entry
 			m_eventQueue.postSizeEvent(handle, width, height);
 
 			// Make sure mouse button state is 'up' after resize.
-			int x, y;
-			getMousePos(&x, &y);
-			m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left,  false);
-			m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, false);
+			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left,  false);
+			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 		}
 
 		int32_t run(int _argc, char** _argv)
@@ -470,6 +454,8 @@ namespace entry
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 
 		float   m_scrollf;
+		int32_t m_mx;
+		int32_t m_my;
 		int32_t m_scroll;
 		bool    m_exit;
 	};
