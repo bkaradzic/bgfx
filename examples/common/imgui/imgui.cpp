@@ -1405,7 +1405,7 @@ struct Imgui
 		{
 			const size_t cursor = size_t(strlen(_str));
 
-			if (m_char == 0x08) //backspace
+			if (m_char == 0x08 || m_char == 0x7f) //backspace or delete
 			{
 				_str[cursor-1] = '\0';
 			}

@@ -77,7 +77,10 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_scroll(0)
+			: m_scrollf(0.0f)
+			, m_mx(0)
+			, m_my(0)
+			, m_scroll(0)
 			, m_exit(false)
 		{
 			s_translateKey[27]             = Key::Esc;
@@ -170,20 +173,19 @@ namespace entry
 			return mask;
 		}
 
-		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys)
+		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys, uint8_t* _pressedChar)
 		{
 			NSString* key = [event charactersIgnoringModifiers];
 			unichar keyChar = 0;
-//DBG("keyChar %d", keyChar);
 			if ([key length] == 0)
 			{
 				return Key::None;
 			}
 
 			keyChar = [key characterAtIndex:0];
+			*_pressedChar = (uint8_t)keyChar;
 
 			int keyCode = keyChar;
-//DBG("keyCode %d", keyCode);
 			*specialKeys = translateModifiers([event modifierFlags]);
 
 			// if this is a unhandled key just return None
@@ -236,80 +238,81 @@ namespace entry
 					case NSRightMouseDragged:
 					case NSOtherMouseDragged:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
+						getMousePos(&m_mx, &m_my);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
 						break;
 					}
 
 					case NSLeftMouseDown:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, true);
+						// TODO: remove!
+						// Shift + Left Mouse Button acts as middle! This just a temporary solution!
+						// This is becase the average OSX user doesn't have middle mouse click.
+						MouseButton::Enum mb = ([event modifierFlags] & NSShiftKeyMask) ? MouseButton::Middle : MouseButton::Left;
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
 						break;
 					}
 
 					case NSLeftMouseUp:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false); // TODO: remove!
 						break;
 					}
 
 					case NSRightMouseDown:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, true);
 						break;
 					}
 
 					case NSRightMouseUp:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 						break;
 					}
 
 					case NSOtherMouseDown:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, true);
 						break;
 					}
 
 					case NSOtherMouseUp:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
 						break;
 					}
 
 					case NSScrollWheel:
 					{
-						int x, y;
-						getMousePos(&x, &y);
-						m_scroll += ([event deltaY] > 0.0f) ? 1 : -1;
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
+						m_scrollf += [event deltaY];
+
+						m_scroll = (int32_t)m_scrollf;
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
 						break;
 					}
 
 					case NSKeyDown:
 					{
 						uint8_t modifiers = 0;
-						Key::Enum key = handleKeyEvent(event, &modifiers);
+						uint8_t pressedChar[4];
+						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
 
-						// If KeyCode is none we don't don't handle the key and special case for cmd+q (quit)
-						// Note that return false here means that we take care of the key (instead of the default behavior)
+						// Returning false means that we take care of the key (instead of the default behavior)
 						if (key != Key::None)
 						{
-							if (key != Key::KeyQ
-							&& !(modifiers & Modifier::RightMeta) )
+							if (key == Key::KeyQ && (modifiers & Modifier::RightMeta) )
+							{
+								m_eventQueue.postExitEvent();
+							}
+							else if ( (Key::Key0 <= key && key <= Key::KeyZ)
+							     ||   (Key::Esc  <= key && key <= Key::Minus) )
+							{
+								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
+								return false;
+							}
+							else
 							{
 								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
 								return false;
@@ -322,7 +325,10 @@ namespace entry
 					case NSKeyUp:
 					{
 						uint8_t modifiers  = 0;
-						Key::Enum key = handleKeyEvent(event, &modifiers);
+						uint8_t pressedChar[4];
+						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
+
+						BX_UNUSED(pressedChar);
 
 						if (key != Key::None)
 						{
@@ -347,10 +353,15 @@ namespace entry
 		{
 			WindowHandle handle = { 0 };
 			NSWindow* window = m_window[handle.idx];
-			NSRect rect = [window frame];
+			NSRect originalFrame = [window frame];
+			NSRect rect = [NSWindow contentRectForFrameRect: originalFrame styleMask: NSTitledWindowMask];
 			uint32_t width  = uint32_t(rect.size.width);
 			uint32_t height = uint32_t(rect.size.height);
 			m_eventQueue.postSizeEvent(handle, width, height);
+
+			// Make sure mouse button state is 'up' after resize.
+			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left,  false);
+			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 		}
 
 		int32_t run(int _argc, char** _argv)
@@ -429,7 +440,6 @@ namespace entry
 				}
 			}
 
-
 			m_eventQueue.postExitEvent();
 
 			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
@@ -443,8 +453,11 @@ namespace entry
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 
+		float   m_scrollf;
+		int32_t m_mx;
+		int32_t m_my;
 		int32_t m_scroll;
-		bool m_exit;
+		bool    m_exit;
 	};
 
 	static Context s_ctx;
