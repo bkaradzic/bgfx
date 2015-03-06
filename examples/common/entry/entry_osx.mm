@@ -372,6 +372,12 @@ namespace entry
 			uint32_t width  = uint32_t(rect.size.width);
 			uint32_t height = uint32_t(rect.size.height);
 			m_eventQueue.postSizeEvent(handle, width, height);
+
+			// Make sure mouse button state is 'up' after resize.
+			int x, y;
+			getMousePos(&x, &y);
+			m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left,  false);
+			m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, false);
 		}
 
 		int32_t run(int _argc, char** _argv)
