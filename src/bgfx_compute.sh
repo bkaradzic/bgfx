@@ -44,9 +44,17 @@ vec2 unpackHalf2x16(uint _x)
 
 #define SHARED groupshared
 
-#define IMAGE2D_RO(_name, _reg) Texture2D           _name : register(t[_reg])
-#define IMAGE2D_RW(_name, _reg) RWTexture2D<float4> _name : register(u[_reg])
-#define IMAGE2D_WR(_name, _reg) IMAGE2D_RW(_name, _reg)
+#define r32ui  uint
+#define r32f   float
+#define rg16f  float2
+#define rgba8  float4
+
+#define IMAGE2D_RO( _name, _format, _reg) Texture2D<_format>   _name : register(t[_reg])
+#define UIMAGE2D_RO(_name, _format, _reg) Texture2D<_format>   _name : register(t[_reg])
+#define IMAGE2D_WR( _name, _format, _reg) RWTexture2D<_format> _name : register(u[_reg])
+#define UIMAGE2D_WR(_name, _format, _reg) RWTexture2D<_format> _name : register(u[_reg])
+#define IMAGE2D_RW( _name, _reg) RWTexture2D<float> _name : register(u[_reg])
+#define UIMAGE2D_RW(_name, _reg) RWTexture2D<uint>  _name : register(u[_reg])
 
 #define BUFFER_RO(_name, _struct, _reg) Buffer<_struct>   _name : register(b[_reg])
 #define BUFFER_RW(_name, _struct, _reg) RWBuffer<_struct> _name : register(u[_reg])
@@ -153,13 +161,16 @@ uint atomicCompSwap(uint _mem, uint _compare, uint _data)
 
 #define SHARED shared
 
-#define __IMAGE2D_XX(_name, _reg, _access) \
-			layout(rgba8, binding=_reg) _access uniform highp image2D _name
+#define __IMAGE_XX(_name, _format, _reg, _image, _access) \
+			layout(_format, binding=_reg) _access uniform highp _image _name
 
 #define readwrite
-#define IMAGE2D_RO(_name, _reg) __IMAGE2D_XX(_name, _reg, readonly)
-#define IMAGE2D_RW(_name, _reg) __IMAGE2D_XX(_name, _reg, readwrite)
-#define IMAGE2D_WR(_name, _reg) __IMAGE2D_XX(_name, _reg, writeonly)
+#define IMAGE2D_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  readonly)
+#define UIMAGE2D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, readonly)
+#define IMAGE2D_WR( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  writeonly)
+#define UIMAGE2D_WR(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, writeonly)
+#define IMAGE2D_RW( _name, _reg) __IMAGE_XX(_name, r32f,  _reg, image2D,  readwrite)
+#define UIMAGE2D_RW(_name, _reg) __IMAGE_XX(_name, r32ui, _reg, uimage2D, readwrite)
 
 #define __BUFFER_XX(_name, _type, _reg, _access) \
 			layout(std430, binding=_reg) _access buffer _name ## Buffer \

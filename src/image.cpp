@@ -49,6 +49,7 @@ namespace bgfx
 		{  64, 1, 1,  8, 1, 1 }, // RG32
 		{  64, 1, 1,  8, 1, 1 }, // RG32F
 		{  32, 1, 1,  4, 1, 1 }, // BGRA8
+		{  32, 1, 1,  4, 1, 1 }, // RGBA8
 		{  64, 1, 1,  8, 1, 1 }, // RGBA16
 		{  64, 1, 1,  8, 1, 1 }, // RGBA16F
 		{ 128, 1, 1, 16, 1, 1 }, // RGBA32
@@ -102,6 +103,7 @@ namespace bgfx
 		"RG32",       // RG32
 		"RG32F",      // RG32F
 		"BGRA8",      // BGRA8
+		"RGBA8",      // RGBA8
 		"RGBA16",     // RGBA16
 		"RGBA16F",    // RGBA16F
 		"RGBA32",     // RGBA32

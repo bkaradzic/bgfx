@@ -215,6 +215,7 @@ namespace bgfx
 		{ GL_RG32UI,                                   GL_RG,                                       GL_UNSIGNED_INT,                 true  }, // RG32
 		{ GL_RG32F,                                    GL_RG,                                       GL_FLOAT,                        true  }, // RG32F
 		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                true  }, // BGRA8
+		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                true  }, // RGBA8
 		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,                true  }, // RGBA16
 		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                   true  }, // RGBA16F
 		{ GL_RGBA32UI,                                 GL_RGBA,                                     GL_UNSIGNED_INT,                 true  }, // RGBA32
@@ -268,6 +269,7 @@ namespace bgfx
 		GL_RG32UI,             // RG32
 		GL_RG32F,              // RG32F
 		GL_RGBA8,              // BGRA8
+		GL_RGBA8,              // RGBA8
 		GL_RGBA16,             // RGBA16
 		GL_RGBA16F,            // RGBA16F
 		GL_RGBA32UI,           // RGBA32
@@ -321,6 +323,7 @@ namespace bgfx
 		GL_RG32UI,         // RG32
 		GL_RG32F,          // RG32F
 		GL_RGBA8,          // BGRA8
+		GL_RGBA8,          // RGBA8
 		GL_RGBA16,         // RGBA16
 		GL_RGBA16F,        // RGBA16F
 		GL_RGBA32UI,       // RGBA32

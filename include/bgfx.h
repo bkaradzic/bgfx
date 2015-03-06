@@ -142,6 +142,7 @@ namespace bgfx
 			RG32,
 			RG32F,
 			BGRA8,
+			RGBA8,
 			RGBA16,
 			RGBA16F,
 			RGBA32,
