@@ -3260,6 +3260,9 @@ namespace bgfx
 		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format) )
 		{
 			_format = TextureFormat::Count == _format ? TextureFormat::Enum(m_textureRef[_handle.idx].m_format) : _format;
+			BX_CHECK(_format != TextureFormat::BGRA8
+					, "Can't use TextureFormat::BGRA8 with compute, use TextureFormat::RGBA8 instead."
+					);
 			m_submit->setImage(_stage, _sampler, _handle, _mip, _access, _format);
 		}
 
