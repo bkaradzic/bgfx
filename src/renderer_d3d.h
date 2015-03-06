@@ -138,6 +138,50 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
+	class StateCache
+	{
+	public:
+		void add(uint64_t _id, uint16_t _item)
+		{
+			invalidate(_id);
+			m_hashMap.insert(stl::make_pair(_id, _item));
+		}
+
+		uint16_t find(uint64_t _id)
+		{
+			HashMap::iterator it = m_hashMap.find(_id);
+			if (it != m_hashMap.end())
+			{
+				return it->second;
+			}
+
+			return UINT16_MAX;
+		}
+
+		void invalidate(uint64_t _id)
+		{
+			HashMap::iterator it = m_hashMap.find(_id);
+			if (it != m_hashMap.end())
+			{
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidate()
+		{
+			m_hashMap.clear();
+		}
+
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size());
+		}
+
+	private:
+		typedef stl::unordered_map<uint64_t, uint16_t> HashMap;
+		HashMap m_hashMap;
+	};
+
 } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D_H_HEADER_GUARD

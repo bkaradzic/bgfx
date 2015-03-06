@@ -14,6 +14,7 @@ namespace bgfx
 	{
 		return NULL;
 	}
+
 	void rendererDestroyVK()
 	{
 	}
