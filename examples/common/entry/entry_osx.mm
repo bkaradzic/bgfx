@@ -313,17 +313,20 @@ namespace entry
 						uint8_t pressedChar[4];
 						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
 
-						// If KeyCode is none we don't don't handle the key and special case for cmd+q (quit)
-						// Note that return false here means that we take care of the key (instead of the default behavior)
+						// Returning false means that we take care of the key (instead of the default behavior)
 						if (key != Key::None)
 						{
-							if ( (Key::Key0 <= key && key <= Key::KeyZ)
-							  || (Key::Esc  <= key && key <= Key::Minus) )
+							if (key == Key::KeyQ && (modifiers & Modifier::RightMeta) )
+							{
+								m_eventQueue.postExitEvent();
+							}
+							else if ( (Key::Key0 <= key && key <= Key::KeyZ)
+							     ||   (Key::Esc  <= key && key <= Key::Minus) )
 							{
 								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
+								return false;
 							}
-							else if (key != Key::KeyQ
-								&& !(modifiers & Modifier::RightMeta) )
+							else
 							{
 								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
 								return false;
@@ -445,7 +448,6 @@ namespace entry
 				{
 				}
 			}
-
 
 			m_eventQueue.postExitEvent();
 
