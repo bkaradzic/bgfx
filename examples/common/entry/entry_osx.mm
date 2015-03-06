@@ -16,9 +16,6 @@
 #include <bx/os.h>
 #include <bx/handlealloc.h>
 
-#define DEFAULT_WIDTH 1280
-#define DEFAULT_HEIGHT 720
-
 @interface AppDelegate : NSObject<NSApplicationDelegate>
 {
 	bool terminated;
@@ -80,7 +77,8 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_exit(false)
+			: m_scroll(0)
+			, m_exit(false)
 		{
 			s_translateKey[27]             = Key::Esc;
 			s_translateKey[13]             = Key::Return;
@@ -106,7 +104,7 @@ namespace entry
 
 			for (char ch = 'a'; ch <= 'z'; ++ch)
 			{
-				s_translateKey[uint8_t(ch)]             =
+				s_translateKey[uint8_t(ch)]       =
 				s_translateKey[uint8_t(ch - ' ')] = Key::KeyA + (ch - 'a');
 			}
 		}
@@ -236,10 +234,11 @@ namespace entry
 					case NSMouseMoved:
 					case NSLeftMouseDragged:
 					case NSRightMouseDragged:
+					case NSOtherMouseDragged:
 					{
 						int x, y;
 						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
 						break;
 					}
 
@@ -247,7 +246,7 @@ namespace entry
 					{
 						int x, y;
 						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Left, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, true);
 						break;
 					}
 
@@ -255,7 +254,7 @@ namespace entry
 					{
 						int x, y;
 						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Left, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Left, false);
 						break;
 					}
 
@@ -263,7 +262,7 @@ namespace entry
 					{
 						int x, y;
 						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Right, true);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, true);
 						break;
 					}
 
@@ -271,7 +270,32 @@ namespace entry
 					{
 						int x, y;
 						getMousePos(&x, &y);
-						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, 0, MouseButton::Right, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Right, false);
+						break;
+					}
+
+					case NSOtherMouseDown:
+					{
+						int x, y;
+						getMousePos(&x, &y);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, true);
+						break;
+					}
+
+					case NSOtherMouseUp:
+					{
+						int x, y;
+						getMousePos(&x, &y);
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll, MouseButton::Middle, false);
+						break;
+					}
+
+					case NSScrollWheel:
+					{
+						int x, y;
+						getMousePos(&x, &y);
+						m_scroll += ([event deltaY] > 0.0f) ? 1 : -1;
+						m_eventQueue.postMouseEvent(s_defaultWindow, x, y, m_scroll);
 						break;
 					}
 
@@ -364,7 +388,7 @@ namespace entry
 			[NSApp setMainMenu:menubar];
 
 			m_windowAlloc.alloc();
-			NSRect rect = NSMakeRect(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+			NSRect rect = NSMakeRect(0, 0, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 			NSWindow* window = [[NSWindow alloc]
 				initWithContentRect:rect
 				styleMask:0
@@ -419,6 +443,7 @@ namespace entry
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 
+		int32_t m_scroll;
 		bool m_exit;
 	};
 

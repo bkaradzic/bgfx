@@ -152,9 +152,6 @@ void VectorDisplay::beginFrame()
 void VectorDisplay::endFrame()
 {
 	float proj[16];
-	float ident[16];
-	bx::mtxIdentity(ident);
-
 	bx::mtxOrtho(proj, 0.0f, (float)m_screenWidth, (float)m_screenHeight, 0.0f, 0.0f, 1000.0f);
 
 	bgfx::setViewRect(m_view, 0, 0, m_screenWidth, m_screenHeight);
@@ -170,14 +167,6 @@ void VectorDisplay::endFrame()
 		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(point_t) )
 	);
 	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
-
-	//if the index buffer is cleared from the last "submit"-call everything is fine, but if not
-	//we clear it here again just to be sure it's not set... (the same for the Transform)
-	bgfx::IndexBufferHandle ib;
-	ib.idx = bgfx::invalidHandle;
-	bgfx::setIndexBuffer(ib);
-
-	bgfx::setTransform(ident);
 
 	for (int loopvar = 0; loopvar < m_numberDecaySteps; loopvar++)
 	{

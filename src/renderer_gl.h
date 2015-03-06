@@ -143,6 +143,10 @@ typedef uint64_t GLuint64;
 #	define GL_RG16 0x822C
 #endif // GL_RG16
 
+#ifndef GL_RG16UI
+#	define GL_RG16UI 0x823A
+#endif // GL_RG16UI
+
 #ifndef GL_RG16F
 #	define GL_RG16F 0x822F
 #endif // GL_RG16F
@@ -182,6 +186,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_RG
 #	define GL_RG 0x8227
 #endif // GL_RG
+
+#ifndef GL_RG_INTEGER
+#	define GL_RG_INTEGER 0x8228
+#endif // GL_RG_INTEGER
 
 #ifndef GL_GREEN
 #	define GL_GREEN 0x1904
