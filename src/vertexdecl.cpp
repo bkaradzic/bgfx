@@ -45,7 +45,7 @@ namespace bgfx
 		&s_attribTypeSizeDx9,
 #elif BGFX_CONFIG_RENDERER_DIRECT3D11 || BGFX_CONFIG_RENDERER_DIRECT3D12
 		&s_attribTypeSizeDx1x,
-#elif BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES
+#elif BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_VULKAN
 		&s_attribTypeSizeGl,
 #else
 		&s_attribTypeSizeDx9,
@@ -55,6 +55,7 @@ namespace bgfx
 		&s_attribTypeSizeDx1x, // Direct3D12
 		&s_attribTypeSizeGl,   // OpenGLES
 		&s_attribTypeSizeGl,   // OpenGL
+		&s_attribTypeSizeGl,   // Vulkan
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == bgfx::RendererType::Count);
 
@@ -140,7 +141,7 @@ namespace bgfx
 		_asInt      = !!(val&(1<<7) );
 	}
 
-	static const char* s_attrName[] = 
+	static const char* s_attrName[] =
 	{
 		"Attrib::Position",
 		"Attrib::Normal",

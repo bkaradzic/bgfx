@@ -1347,6 +1347,9 @@ namespace bgfx
 	extern RendererContextI* rendererCreateD3D12();
 	extern void rendererDestroyD3D12();
 
+	extern RendererContextI* rendererCreateVK();
+	extern void rendererDestroyVK();
+
 	struct RendererCreator
 	{
 		RendererCreateFn  createFn;
@@ -1363,6 +1366,7 @@ namespace bgfx
 		{ rendererCreateD3D12, rendererDestroyD3D12, BGFX_RENDERER_DIRECT3D12_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D12 }, // Direct3D12
 		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
 		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
+		{ rendererCreateVK,    rendererDestroyVK,    BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
