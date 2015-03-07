@@ -248,9 +248,9 @@ namespace entry
 					case NSLeftMouseDown:
 					{
 						// TODO: remove!
-						// Shift + Left Mouse Button acts as middle! This just a temporary solution!
+						// Command + Left Mouse Button acts as middle! This just a temporary solution!
 						// This is becase the average OSX user doesn't have middle mouse click.
-						MouseButton::Enum mb = ([event modifierFlags] & NSShiftKeyMask) ? MouseButton::Middle : MouseButton::Left;
+						MouseButton::Enum mb = ([event modifierFlags] & NSCommandKeyMask) ? MouseButton::Middle : MouseButton::Left;
 						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
 						break;
 					}
