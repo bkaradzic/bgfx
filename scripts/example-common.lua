@@ -35,7 +35,12 @@ project ("example-common")
 		includedirs {
 			"$(DXSDK_DIR)/include",
 		}
-
+	if (_OPTIONS["vs"] == "vs2012-xp") or (_OPTIONS["vs"] == "vs2013-xp") then
+	configuration { "vs201*" }
+		includedirs {
+			"$(DXSDK_DIR)/include",
+		}
+	end
 
 	configuration { "winphone8*"}
 		linkoptions {
