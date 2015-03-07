@@ -81,7 +81,9 @@ namespace entry
 			, m_mx(0)
 			, m_my(0)
 			, m_scroll(0)
+			, m_style(0)
 			, m_exit(false)
+			, m_fullscreen(false)
 		{
 			s_translateKey[27]             = Key::Esc;
 			s_translateKey[13]             = Key::Return;
@@ -354,7 +356,7 @@ namespace entry
 			WindowHandle handle = { 0 };
 			NSWindow* window = m_window[handle.idx];
 			NSRect originalFrame = [window frame];
-			NSRect rect = [NSWindow contentRectForFrameRect: originalFrame styleMask: NSTitledWindowMask];
+			NSRect rect = [NSWindow contentRectForFrameRect: originalFrame styleMask: m_style];
 			uint32_t width  = uint32_t(rect.size.width);
 			uint32_t height = uint32_t(rect.size.height);
 			m_eventQueue.postSizeEvent(handle, width, height);
@@ -398,15 +400,18 @@ namespace entry
 			[menubar addItem:appMenuItem];
 			[NSApp setMainMenu:menubar];
 
+			m_style = 0
+					| NSTitledWindowMask
+					| NSClosableWindowMask
+					| NSMiniaturizableWindowMask
+					| NSResizableWindowMask
+					;
+
 			m_windowAlloc.alloc();
 			NSRect rect = NSMakeRect(0, 0, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 			NSWindow* window = [[NSWindow alloc]
 				initWithContentRect:rect
-				styleMask:0
-				|NSTitledWindowMask
-				|NSClosableWindowMask
-				|NSMiniaturizableWindowMask
-				|NSResizableWindowMask
+				styleMask:m_style
 				backing:NSBackingStoreBuffered defer:NO
 			];
 			NSString* appName = [[NSProcessInfo processInfo] processName];
@@ -418,6 +423,7 @@ namespace entry
 			[[Window sharedDelegate] windowCreated:window];
 
 			m_window[0] = window;
+			m_windowFrame = [window frame];
 
 			bgfx::osxSetNSWindow(window);
 
@@ -448,16 +454,24 @@ namespace entry
 			return 0;
 		}
 
+		bool isValid(WindowHandle _handle)
+		{
+			return m_windowAlloc.isValid(_handle.idx);
+		}
+
 		EventQueue m_eventQueue;
 
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
+		NSRect m_windowFrame;
 
 		float   m_scrollf;
 		int32_t m_mx;
 		int32_t m_my;
 		int32_t m_scroll;
+		int32_t m_style;
 		bool    m_exit;
+		bool    m_fullscreen;
 	};
 
 	static Context s_ctx;
@@ -486,27 +500,104 @@ namespace entry
 
 	void destroyWindow(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		if (s_ctx.isValid(_handle) )
+		{
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] performClose: nil];
+			});
+		}
 	}
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		BX_UNUSED(_handle, _x, _y);
+		if (s_ctx.isValid(_handle) )
+		{
+			NSWindow* window = s_ctx.m_window[_handle.idx];
+			NSScreen* screen = [window screen];
+
+			NSRect screenRect = [screen frame];
+			CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+
+			NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
+
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[window setFrameTopLeftPoint: position];
+			});
+		}
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_handle, _width, _height);
+		if (s_ctx.isValid(_handle) )
+		{
+			NSSize size = { float(_width), float(_height) };
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] setContentSize: size];
+			});
+		}
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		BX_UNUSED(_handle, _title);
+		if (s_ctx.isValid(_handle) )
+		{
+			NSString* title = [[NSString alloc] initWithCString:_title encoding:1];
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] setTitle: title];
+			});
+			[title release];
+		}
 	}
 
 	void toggleWindowFrame(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		if (s_ctx.isValid(_handle) )
+		{
+			s_ctx.m_style ^= NSTitledWindowMask;
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] setStyleMask: s_ctx.m_style];
+			});
+		}
+	}
+
+	void toggleFullscreen(WindowHandle _handle)
+	{
+		if (s_ctx.isValid(_handle) )
+		{
+			NSWindow* window = s_ctx.m_window[_handle.idx];
+			NSScreen* screen = [window screen];
+			NSRect screenRect = [screen frame];
+
+			if (!s_ctx.m_fullscreen)
+			{
+				[NSMenu setMenuBarVisible: false];
+				s_ctx.m_style &= ~NSTitledWindowMask;
+				dispatch_async(dispatch_get_main_queue()
+				, ^{
+					[window setStyleMask: s_ctx.m_style];
+					[window setFrame:screenRect display:YES];
+				});
+
+				s_ctx.m_fullscreen = true;
+			}
+			else
+			{
+				[NSMenu setMenuBarVisible: true];
+				s_ctx.m_style |= NSTitledWindowMask;
+				dispatch_async(dispatch_get_main_queue()
+				, ^{
+					[window setStyleMask: s_ctx.m_style];
+					[window setFrame:s_ctx.m_windowFrame display:YES];
+				});
+
+				s_ctx.m_fullscreen = false;
+			}
+		}
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
@@ -610,6 +701,7 @@ namespace entry
 	using namespace entry;
 	s_ctx.windowDidResize();
 }
+
 @end
 
 int main(int _argc, char** _argv)

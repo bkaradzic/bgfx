@@ -179,6 +179,7 @@ namespace entry
 		SDL_USER_WINDOW_SET_POS,
 		SDL_USER_WINDOW_SET_SIZE,
 		SDL_USER_WINDOW_TOGGLE_FRAME,
+		SDL_USER_WINDOW_TOGGLE_FULL_SCREEN,
 		SDL_USER_WINDOW_MOUSE_LOCK,
 	};
 
@@ -211,6 +212,7 @@ namespace entry
 			, m_height(ENTRY_DEFAULT_HEIGHT)
 			, m_aspectRatio(16.0f/9.0f)
 			, m_mouseLock(false)
+			, m_fullscreen(false)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(SDL_SCANCODE_ESCAPE,       Key::Esc);
@@ -615,6 +617,13 @@ namespace entry
 								}
 								break;
 
+							case SDL_USER_WINDOW_TOGGLE_FULL_SCREEN:
+								{
+									m_fullscreen = !m_fullscreen;
+									SDL_SetWindowFullscreen(m_window[handle.idx], m_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+								}
+								break;
+
 							case SDL_USER_WINDOW_MOUSE_LOCK:
 								{
 									SDL_SetRelativeMouseMode(!!uev.code ? SDL_TRUE : SDL_FALSE);
@@ -723,6 +732,7 @@ namespace entry
 		int32_t m_mx;
 		int32_t m_my;
 		bool m_mouseLock;
+		bool m_fullscreen;
 	};
 
 	static Context s_ctx;
@@ -803,6 +813,11 @@ namespace entry
 	void toggleWindowFrame(WindowHandle _handle)
 	{
 		sdlPostEvent(SDL_USER_WINDOW_TOGGLE_FRAME, _handle);
+	}
+
+	void toggleFullscreen(WindowHandle _handle)
+	{
+		sdlPostEvent(SDL_USER_WINDOW_TOGGLE_FULL_SCREEN, _handle);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
