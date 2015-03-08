@@ -1067,6 +1067,11 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
 	}
 
+	void toggleFullscreen(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+	}
+
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
