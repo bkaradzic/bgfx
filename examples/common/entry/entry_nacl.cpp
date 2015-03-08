@@ -94,6 +94,11 @@ namespace entry
 		BX_UNUSED(_handle);
 	}
 
+	void toggleFullscreen(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+	}
+
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
 		BX_UNUSED(_handle, _lock);
