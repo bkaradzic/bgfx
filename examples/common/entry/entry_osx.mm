@@ -413,8 +413,12 @@ namespace entry
 					| NSResizableWindowMask
 					;
 
+			NSRect screenRect = [[NSScreen mainScreen] frame];
+			const float centerX = (screenRect.size.width  - (float)ENTRY_DEFAULT_WIDTH )*0.5f;
+			const float centerY = (screenRect.size.height - (float)ENTRY_DEFAULT_HEIGHT)*0.5f;
+
 			m_windowAlloc.alloc();
-			NSRect rect = NSMakeRect(0, 0, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+			NSRect rect = NSMakeRect(centerX, centerY, (float)ENTRY_DEFAULT_WIDTH, (float)ENTRY_DEFAULT_HEIGHT);
 			NSWindow* window = [[NSWindow alloc]
 				initWithContentRect:rect
 				styleMask:m_style
@@ -422,7 +426,6 @@ namespace entry
 			];
 			NSString* appName = [[NSProcessInfo processInfo] processName];
 			[window setTitle:appName];
-			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 			[window makeKeyAndOrderFront:window];
 			[window setAcceptsMouseMovedEvents:YES];
 			[window setBackgroundColor:[NSColor blackColor]];
