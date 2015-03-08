@@ -362,7 +362,7 @@ namespace entry
 			WindowHandle handle = { 0 };
 			NSWindow* window = m_window[handle.idx];
 			NSRect originalFrame = [window frame];
-			NSRect rect = [NSWindow contentRectForFrameRect: originalFrame styleMask: m_style];
+			NSRect rect = [window contentRectForFrameRect: originalFrame];
 			uint32_t width  = uint32_t(rect.size.width);
 			uint32_t height = uint32_t(rect.size.height);
 			m_eventQueue.postSizeEvent(handle, width, height);
@@ -585,10 +585,8 @@ namespace entry
 			if (!s_ctx.m_fullscreen)
 			{
 				[NSMenu setMenuBarVisible: false];
-				s_ctx.m_style &= ~NSTitledWindowMask;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
-					[window setStyleMask: s_ctx.m_style];
 					[window setFrame:screenRect display:YES];
 				});
 
