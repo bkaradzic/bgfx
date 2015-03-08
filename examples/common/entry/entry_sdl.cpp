@@ -192,7 +192,7 @@ namespace entry
 		union { void* p; WindowHandle h; } cast;
 		cast.h = _handle;
 		uev.data1 = cast.p;
-		
+
 		uev.data2 = _msg;
 		uev.code = _code;
 		SDL_PushEvent(&event);
@@ -619,6 +619,7 @@ namespace entry
 
 							case SDL_USER_WINDOW_TOGGLE_FULL_SCREEN:
 								{
+									WindowHandle handle = getWindowHandle(uev);
 									m_fullscreen = !m_fullscreen;
 									SDL_SetWindowFullscreen(m_window[handle.idx], m_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 								}
