@@ -308,16 +308,22 @@ namespace entry
 							{
 								m_eventQueue.postExitEvent();
 							}
-							else if (0 != (modifiers & (Modifier::LeftShift|Modifier::RightShift) )
-								 && ( (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc  <= key && key <= Key::Minus) ) )
-							{
-								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
-								return false;
-							}
 							else
 							{
-								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
-								return false;
+								enum { ShiftMask = Modifier::LeftShift|Modifier::RightShift };
+								const bool nonShiftModifiers = (0 != (modifiers&(~ShiftMask) ) );
+								const bool isCharPressed = (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc  <= key && key <= Key::Minus) ;
+								const bool isText = isCharPressed && !nonShiftModifiers;
+								if (isText)
+								{
+									m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
+									return false;
+								}
+								else
+								{
+									m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
+									return false;
+								}
 							}
 						}
 
