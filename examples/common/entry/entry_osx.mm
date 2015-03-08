@@ -308,8 +308,8 @@ namespace entry
 							{
 								m_eventQueue.postExitEvent();
 							}
-							else if ( (Key::Key0 <= key && key <= Key::KeyZ)
-							     ||   (Key::Esc  <= key && key <= Key::Minus) )
+							else if (0 != (modifiers & (Modifier::LeftShift|Modifier::RightShift) )
+								 && ( (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc  <= key && key <= Key::Minus) ) )
 							{
 								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
 								return false;
