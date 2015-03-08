@@ -73,6 +73,14 @@ http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
 focusing on racing games.  
 ![ios](http://www.dogbytegames.com/bgfx/offroadlegends2_bgfx_ipad2.jpg)
 
+https://github.com/andr3wmac/Torque6 Torque 6 is an MIT licensed 3D engine
+loosely based on Torque2D. Being neither Torque2D or Torque3D it is the 6th
+derivative of the original Torque Engine.
+
+https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
+JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
+deployment model of web with the performance of native code and GPU acceleration.
+
 Examples
 --------
 
