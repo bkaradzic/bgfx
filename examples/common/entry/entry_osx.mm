@@ -312,7 +312,7 @@ namespace entry
 							{
 								enum { ShiftMask = Modifier::LeftShift|Modifier::RightShift };
 								const bool nonShiftModifiers = (0 != (modifiers&(~ShiftMask) ) );
-								const bool isCharPressed = (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc  <= key && key <= Key::Minus) ;
+								const bool isCharPressed = (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc <= key && key <= Key::Minus);
 								const bool isText = isCharPressed && !nonShiftModifiers;
 								if (isText)
 								{

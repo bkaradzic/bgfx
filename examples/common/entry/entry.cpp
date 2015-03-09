@@ -34,6 +34,43 @@ namespace entry
 	}
 #endif // ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 
+	char keyToAscii(Key::Enum _key, uint8_t _modifiers)
+	{
+		const bool isAscii = (Key::Key0 <= _key && _key <= Key::KeyZ)
+						  || (Key::Esc  <= _key && _key <= Key::Minus);
+		if (!isAscii)
+		{
+			return '\0';
+		}
+
+		const bool isNumber = (Key::Key0 <= _key && _key <= Key::Key9);
+		if (isNumber)
+		{
+			return '0' + (_key - Key::Key0);
+		}
+
+		const bool isChar = (Key::KeyA <= _key && _key <= Key::KeyZ);
+		if (isChar)
+		{
+			enum { ShiftMask = Modifier::LeftShift|Modifier::RightShift };
+
+			const bool shift = !!(_modifiers&ShiftMask);
+			return (shift ? 'A' : 'a') + (_key - Key::KeyA);
+		}
+
+		switch (_key)
+		{
+		case Key::Esc:       { return 0x1b; } break;
+		case Key::Return:    { return 0x0d; } break;
+		case Key::Tab:       { return 0x09; } break;
+		case Key::Space:     { return 0xa0; } break;
+		case Key::Backspace: { return 0x08; } break;
+		case Key::Plus:      { return 0x2b; } break;
+		case Key::Minus:     { return 0x2d; } break;
+		default:        { return '\0'; } break;
+		}
+	}
+
 	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
 	{
 		if (0 == strcmp(_argv[_first], _name) )

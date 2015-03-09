@@ -412,6 +412,32 @@ namespace entry
 						break;
 
 					case SDL_KEYDOWN:
+						{
+							const SDL_KeyboardEvent& kev = event.key;
+							WindowHandle handle = findHandle(kev.windowID);
+							if (isValid(handle) )
+							{
+								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
+								Key::Enum key = translateKey(kev.keysym.scancode);
+
+								const uint8_t shiftMask = Modifier::LeftShift|Modifier::RightShift;
+								const bool nonShiftModifiers = (0 != (modifiers&(~shiftMask) ) );
+								const bool isCharPressed = (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc <= key && key <= Key::Minus);
+								const bool isText = isCharPressed && !nonShiftModifiers;
+
+								if (isText)
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = keyToAscii(key, modifiers);
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else
+								{
+									m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+								}
+							}
+						}
+						break;
 					case SDL_KEYUP:
 						{
 							const SDL_KeyboardEvent& kev = event.key;
@@ -678,19 +704,6 @@ namespace entry
 			{
 				m_width  = _width;
 				m_height = _height;
-
-				if (m_width < m_height)
-				{
-					float aspectRatio = 1.0f/m_aspectRatio;
-					m_width = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, m_width);
-					m_height = uint32_t(float(m_width)*aspectRatio);
-				}
-				else
-				{
-					float aspectRatio = m_aspectRatio;
-					m_height = bx::uint32_max(ENTRY_DEFAULT_HEIGHT/4, m_height);
-					m_width = uint32_t(float(m_height)*aspectRatio);
-				}
 
 				SDL_SetWindowSize(m_window[_handle.idx], m_width, m_height);
 				m_eventQueue.postSizeEvent(_handle, m_width, m_height);
