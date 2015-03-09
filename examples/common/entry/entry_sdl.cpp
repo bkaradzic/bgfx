@@ -705,19 +705,6 @@ namespace entry
 				m_width  = _width;
 				m_height = _height;
 
-				if (m_width < m_height)
-				{
-					float aspectRatio = 1.0f/m_aspectRatio;
-					m_width = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, m_width);
-					m_height = uint32_t(float(m_width)*aspectRatio);
-				}
-				else
-				{
-					float aspectRatio = m_aspectRatio;
-					m_height = bx::uint32_max(ENTRY_DEFAULT_HEIGHT/4, m_height);
-					m_width = uint32_t(float(m_height)*aspectRatio);
-				}
-
 				SDL_SetWindowSize(m_window[_handle.idx], m_width, m_height);
 				m_eventQueue.postSizeEvent(_handle, m_width, m_height);
 			}
