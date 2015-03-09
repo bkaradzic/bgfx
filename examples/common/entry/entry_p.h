@@ -56,6 +56,8 @@ namespace entry
 
 	int main(int _argc, char** _argv);
 
+	char keyToAscii(Key::Enum _key, uint8_t _modifiers);
+
 	struct Event
 	{
 		enum Enum
