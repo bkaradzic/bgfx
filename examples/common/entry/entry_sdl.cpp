@@ -412,6 +412,32 @@ namespace entry
 						break;
 
 					case SDL_KEYDOWN:
+						{
+							const SDL_KeyboardEvent& kev = event.key;
+							WindowHandle handle = findHandle(kev.windowID);
+							if (isValid(handle) )
+							{
+								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
+								Key::Enum key = translateKey(kev.keysym.scancode);
+
+								const uint8_t shiftMask = Modifier::LeftShift|Modifier::RightShift;
+								const bool nonShiftModifiers = (0 != (modifiers&(~shiftMask) ) );
+								const bool isCharPressed = (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc <= key && key <= Key::Minus);
+								const bool isText = isCharPressed && !nonShiftModifiers;
+
+								if (isText)
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = keyToAscii(key, modifiers);
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else
+								{
+									m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+								}
+							}
+						}
+						break;
 					case SDL_KEYUP:
 						{
 							const SDL_KeyboardEvent& kev = event.key;
