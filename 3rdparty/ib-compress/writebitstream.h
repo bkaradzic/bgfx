@@ -34,14 +34,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define WBS_INLINE __forceinline
 #else
 #define WBS_INLINE inline
-#endif 
+#endif
 
-// Very simple bitstream for writing that will grow to accomodate written bits. 
+// Very simple bitstream for writing that will grow to accomodate written bits.
 class WriteBitstream
 {
 public:
 
-    // Construct the bit stream with an initial buffer capacity - should be a multiple of 8 and > 0 
+    // Construct the bit stream with an initial buffer capacity - should be a multiple of 8 and > 0
     WriteBitstream( size_t initialBufferCapacity = 16 )
     {
         m_bufferCursor =
@@ -66,7 +66,7 @@ public:
     // Write a V int to the stream.
     void WriteVInt( uint32_t value );
 
-    // Get the size in bytes 
+    // Get the size in bytes
     size_t ByteSize() const { return ( m_size + 7 ) >> 3; }
 
     // Finish writing by flushing the buffer.
@@ -80,7 +80,7 @@ private:
     // If we need to grow the buffer.
     void GrowBuffer();
 
-    // Not copyable 
+    // Not copyable
     WriteBitstream( const WriteBitstream& );
 
     // Not assignable
@@ -96,7 +96,7 @@ private:
 
 WBS_INLINE void WriteBitstream::Write( uint32_t value, uint32_t bitCount )
 {
-    m_bitBuffer |= ( static_cast<uint64_t>( value ) << ( 64 - m_bitsLeft ) ) & ( m_bitsLeft == 0 ? 0 : 0xFFFFFFFFFFFFFFFF );
+    m_bitBuffer |= ( static_cast<uint64_t>( value ) << ( 64 - m_bitsLeft ) ) & ( m_bitsLeft == 0 ? 0 : UINT64_C(0xFFFFFFFFFFFFFFFF) );
 
     if ( bitCount > m_bitsLeft )
     {
