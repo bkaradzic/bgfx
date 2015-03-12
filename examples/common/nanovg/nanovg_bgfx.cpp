@@ -1051,6 +1051,13 @@ error:
 	return NULL;
 }
 
+void nvgViewId(struct NVGcontext* ctx, unsigned char viewid)
+{
+	struct NVGparams* params = nvgInternalParams(ctx);
+	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
+	gl->viewid = uint8_t(viewid);
+}
+
 void nvgDelete(struct NVGcontext* ctx)
 {
 	nvgDeleteInternal(ctx);

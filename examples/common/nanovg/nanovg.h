@@ -599,6 +599,7 @@ struct NVGparams {
 typedef struct NVGparams NVGparams;
 
 NVGcontext* nvgCreate(int edgeaa, unsigned char viewid);
+void nvgViewId(struct NVGcontext* ctx, unsigned char viewid);
 void nvgDelete(struct NVGcontext* ctx);
 
 // Contructor and destructor, called by the render back-end.
