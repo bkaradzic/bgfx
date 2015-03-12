@@ -61,12 +61,12 @@ namespace entry
 		switch (_key)
 		{
 		case Key::Esc:       return 0x1b;
-		case Key::Return:    return 0x0d;
-		case Key::Tab:       return 0x09;
-		case Key::Space:     return (char)0xa0;
+		case Key::Return:    return '\n';
+		case Key::Tab:       return '\t';
+		case Key::Space:     return ' ';
 		case Key::Backspace: return 0x08;
-		case Key::Plus:      return 0x2b;
-		case Key::Minus:     return 0x2d;
+		case Key::Plus:      return '+';
+		case Key::Minus:     return '-';
 		default:             break;
 		}
 
