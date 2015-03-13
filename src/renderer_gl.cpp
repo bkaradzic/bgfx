@@ -4074,7 +4074,15 @@ namespace bgfx
 				GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
 				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 				{
-					attachment = GL_DEPTH_ATTACHMENT;
+					if (TextureFormat::D24S8 == texture.m_textureFormat
+					||  TextureFormat::D0S8  == texture.m_textureFormat)
+					{
+						attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+					}
+					else
+					{
+						attachment = GL_DEPTH_ATTACHMENT;
+					}
 				}
 				else
 				{
