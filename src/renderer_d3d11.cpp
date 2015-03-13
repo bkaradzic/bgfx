@@ -737,7 +737,7 @@ namespace bgfx
 					data.InFormat = s_textureFormat[ii].m_fmt;
 					DX_CHECK(m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) ) );
 					support |= 0 != (data.OutFormatSupport & (0
-							| D3D11_FORMAT_SUPPORT_TEXTURE3D
+							| D3D11_FORMAT_SUPPORT_TEXTURE2D
 							| D3D11_FORMAT_SUPPORT_TEXTURE3D
 							| D3D11_FORMAT_SUPPORT_TEXTURECUBE
 							) )
