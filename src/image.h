@@ -45,6 +45,8 @@ namespace bgfx
 		uint8_t blockSize;
 		uint8_t minBlockX;
 		uint8_t minBlockY;
+		uint8_t depthBits;
+		uint8_t stencilBits;
 	};
 
 	///
