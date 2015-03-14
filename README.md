@@ -319,6 +319,25 @@ Building
 Steps bellow are for default build system inside bgfx repository. There is
 alterative way to build bgfx and examples with [fips](https://github.com/floooh/fips-bgfx/#fips-bgfx).
 
+### Quick start (Windows)
+
+Clone repositories:
+
+	git clone git://github.com/bkaradzic/bx.git
+	git clone git://github.com/bkaradzic/bgfx.git
+
+Enter bgfx directory:
+
+	cd bgfx
+
+Generate Visual Studio 2013 project files:
+
+	genie vs2013
+
+Open bgfx solution in Visual Studio 2013:
+
+	start .build/projects/vs2013/bgfx.sln
+
 ### Prerequisites
 
 Windows users download GnuWin32 utilities from:  
