@@ -332,11 +332,11 @@ Enter bgfx directory:
 
 Generate Visual Studio 2013 project files:
 
-	../bx/tools/bin/windows/genie vs2013
+	..\bx\tools\bin\windows\genie vs2013
 
 Open bgfx solution in Visual Studio 2013:
 
-	start .build/projects/vs2013/bgfx.sln
+	start .build\projects\vs2013\bgfx.sln
 
 ### Generating project files for all targets
 
