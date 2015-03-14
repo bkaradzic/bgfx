@@ -1173,6 +1173,7 @@ struct Imgui
 
 	void endArea()
 	{
+		m_areaId.pop();
 		nvgResetScissor(m_nvg);
 		nvgEndFrame(m_nvg);
 	}
