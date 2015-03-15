@@ -11,7 +11,7 @@
 #	define SDL_MAIN_HANDLED
 #endif // BX_PLATFORM_WINDOWS
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <bgfxplatform.h>
 
 #include <stdio.h>
