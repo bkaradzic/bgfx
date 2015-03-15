@@ -29,6 +29,12 @@ project ("example-common")
 		includedirs {
 			"$(SDL2_DIR)/include",
 		}
+		if not os.is("windows") then
+			includedirs {
+				"/usr/include/SDL2",
+				"/usr/local/include/SDL2"
+			}
+		end
 	end
 
 	configuration { "mingw* or vs2008" }
