@@ -211,6 +211,9 @@ namespace entry
 			: m_width(ENTRY_DEFAULT_WIDTH)
 			, m_height(ENTRY_DEFAULT_HEIGHT)
 			, m_aspectRatio(16.0f/9.0f)
+			, m_mx(0)
+			, m_my(0)
+			, m_mz(0)
 			, m_mouseLock(false)
 			, m_fullscreen(false)
 		{
@@ -376,10 +379,13 @@ namespace entry
 					case SDL_MOUSEMOTION:
 						{
 							const SDL_MouseMotionEvent& mev = event.motion;
+							m_mx = mev.x;
+							m_my = mev.y;
+
 							WindowHandle handle = findHandle(mev.windowID);
 							if (isValid(handle) )
 							{
-								m_eventQueue.postMouseEvent(handle, mev.x, mev.y, 0);
+								m_eventQueue.postMouseEvent(handle, m_mx, m_my, m_mz);
 							}
 						}
 						break;
@@ -407,6 +413,19 @@ namespace entry
 									, button
 									, mev.type == SDL_MOUSEBUTTONDOWN
 									);
+							}
+						}
+						break;
+
+					case SDL_MOUSEWHEEL:
+						{
+							const SDL_MouseWheelEvent& mev = event.wheel;
+							m_mz += mev.y;
+
+							WindowHandle handle = findHandle(mev.windowID);
+							if (isValid(handle) )
+							{
+								m_eventQueue.postMouseEvent(handle, m_mx, m_my, m_mz);
 							}
 						}
 						break;
@@ -745,6 +764,7 @@ namespace entry
 
 		int32_t m_mx;
 		int32_t m_my;
+		int32_t m_mz;
 		bool m_mouseLock;
 		bool m_fullscreen;
 	};
