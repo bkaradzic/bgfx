@@ -296,7 +296,7 @@ void nvgDeleteInternal(NVGcontext* ctx)
 	free(ctx);
 }
 
-void nvgBeginFrame(NVGcontext* ctx, int windowWidth, int windowHeight, float devicePixelRatio)
+void nvgBeginFrameScaled(NVGcontext* ctx, int windowWidth, int windowHeight, int surfaceWidth, int surfaceHeight, float devicePixelRatio)
 {
 /*	printf("Tris: draws:%d  fill:%d  stroke:%d  text:%d  TOT:%d\n",
 		ctx->drawCallCount, ctx->fillTriCount, ctx->strokeTriCount, ctx->textTriCount,
@@ -307,13 +307,18 @@ void nvgBeginFrame(NVGcontext* ctx, int windowWidth, int windowHeight, float dev
 	nvgReset(ctx);
 
 	nvg__setDevicePixelRatio(ctx, devicePixelRatio);
-	
-	ctx->params.renderViewport(ctx->params.userPtr, windowWidth, windowHeight);
+
+	ctx->params.renderViewport(ctx->params.userPtr, windowWidth, windowHeight, surfaceWidth, surfaceHeight);
 
 	ctx->drawCallCount = 0;
 	ctx->fillTriCount = 0;
 	ctx->strokeTriCount = 0;
 	ctx->textTriCount = 0;
+}
+
+void nvgBeginFrame(NVGcontext* ctx, int windowWidth, int windowHeight, float devicePixelRatio)
+{
+	nvgBeginFrameScaled(ctx, windowWidth, windowHeight, windowWidth, windowHeight, devicePixelRatio);
 }
 
 void nvgCancelFrame(NVGcontext* ctx)
