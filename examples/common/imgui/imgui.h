@@ -159,7 +159,7 @@ void imguiEndScrollArea(int32_t _r = IMGUI_SCROLL_BAR_R);
 void imguiIndent(uint16_t _width = IMGUI_INDENT_VALUE);
 void imguiUnindent(uint16_t _width = IMGUI_INDENT_VALUE);
 void imguiSeparator(uint16_t _height = IMGUI_SEPARATOR_VALUE);
-void imguiSeparatorLine(uint16_t _height = IMGUI_SEPARATOR_VALUE);
+void imguiSeparatorLine(uint16_t _height = IMGUI_SEPARATOR_VALUE, ImguiAlign::Enum = ImguiAlign::LeftIndented);
 
 int32_t imguiGetWidgetX();
 int32_t imguiGetWidgetY();

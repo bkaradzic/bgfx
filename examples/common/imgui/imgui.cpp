@@ -2262,19 +2262,40 @@ struct Imgui
 		area.m_widgetY += _height;
 	}
 
-	void separatorLine(uint16_t _height)
+	void separatorLine(uint16_t _height, ImguiAlign::Enum _align)
 	{
 		Area& area = getCurrentArea();
-		const int32_t rectWidth = area.m_widgetW;
-		const int32_t rectHeight = 1;
-		const int32_t xx = area.m_widgetX;
-		const int32_t yy = area.m_widgetY + _height/2 - rectHeight;
+		//const int32_t width = area.m_widgetW;
+		const int32_t height = 1;
+		//const int32_t xx = area.m_widgetX;
+		const int32_t yy = area.m_widgetY + _height/2 - height;
+
+		int32_t xx;
+		int32_t width;
+		if (ImguiAlign::Left == _align)
+		{
+			xx = area.m_contentX + SCROLL_AREA_PADDING;
+			width = area.m_widgetW;
+		}
+		else if (ImguiAlign::LeftIndented == _align
+			 ||  ImguiAlign::Right        == _align)
+		{
+			xx = area.m_widgetX;
+			width = area.m_widgetW;
+		}
+		else //if (ImguiAlign::Center         == _align
+			 //||  ImguiAlign::CenterIndented == _align).
+		{
+			xx = area.m_widgetX;
+			width = area.m_widgetW - (area.m_widgetX-area.m_contentX) + 1;
+		}
+
 		area.m_widgetY += _height;
 
 		drawRect( (float)xx
 				, (float)yy
-				, (float)rectWidth
-				, (float)rectHeight
+				, (float)width
+				, (float)height
 				, imguiRGBA(255, 255, 255, 32)
 				);
 	}
@@ -3315,9 +3336,9 @@ void imguiSeparator(uint16_t _height)
 	s_imgui.separator(_height);
 }
 
-void imguiSeparatorLine(uint16_t _height)
+void imguiSeparatorLine(uint16_t _height, ImguiAlign::Enum _align)
 {
-	s_imgui.separatorLine(_height);
+	s_imgui.separatorLine(_height, _align);
 }
 
 int32_t imguiGetWidgetX()
