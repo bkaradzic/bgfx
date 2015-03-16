@@ -584,10 +584,10 @@ namespace entry
 
 			if (!s_ctx.m_fullscreen)
 			{
-				[NSMenu setMenuBarVisible: false];
 				s_ctx.m_style &= ~NSTitledWindowMask;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
+					[NSMenu setMenuBarVisible: false];
 					[window setStyleMask: s_ctx.m_style];
 					[window setFrame:screenRect display:YES];
 				});
@@ -596,10 +596,10 @@ namespace entry
 			}
 			else
 			{
-				[NSMenu setMenuBarVisible: true];
 				s_ctx.m_style |= NSTitledWindowMask;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
+					[NSMenu setMenuBarVisible: true];
 					[window setStyleMask: s_ctx.m_style];
 					[window setFrame:s_ctx.m_windowFrame display:YES];
 				});
