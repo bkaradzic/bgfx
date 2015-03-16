@@ -25,6 +25,11 @@ function bgfxProject(_name, _kind, _defines)
 					"-shared",
 				}
 
+			configuration { "linux-*" }
+				buildoptions { 
+					"-fPIC",
+				}
+
 			configuration {}
 		end
 
