@@ -149,6 +149,31 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		loadTexture("texture_compression_ptc24.pvr"),
 	};
 
+	const bgfx::Memory* mem8   = bgfx::alloc(32*32*32);
+	const bgfx::Memory* mem16f = bgfx::alloc(32*32*32*2);
+	const bgfx::Memory* mem32f = bgfx::alloc(32*32*32*4);
+	for (uint8_t zz = 0; zz < 32; ++zz)
+	{
+		for (uint8_t yy = 0; yy < 32; ++yy)
+		{
+			for (uint8_t xx = 0; xx < 32; ++xx)
+			{
+				const uint32_t offset = ( (zz*32+yy)*32+xx);
+				const uint32_t val = xx ^ yy ^ zz;
+				mem8->data[offset] = val<<3;
+				*(uint16_t*)&mem16f->data[offset*2] = bx::halfFromFloat( (float)val/32.0f);
+				*(float*)&mem32f->data[offset*4] = (float)val/32.0f;
+			}
+		}
+	}
+
+	bgfx::TextureHandle textures3d[] =
+	{
+		bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8),
+		bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f),
+		bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f),
+	};
+
 	// Create static vertex buffer.
 	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_decl);
 
@@ -156,12 +181,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
-	bgfx::UniformHandle u_texCube = bgfx::createUniform("u_texCube", bgfx::UniformType::Uniform1iv);
-
+	bgfx::UniformHandle u_texCube  = bgfx::createUniform("u_texCube",  bgfx::UniformType::Uniform1iv);
 	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
 
-	bgfx::ProgramHandle program    = loadProgram("vs_update", "fs_update");
-	bgfx::ProgramHandle programCmp = loadProgram("vs_update", "fs_update_cmp");
+	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Uniform1f);
+
+	bgfx::ProgramHandle program     = loadProgram("vs_update", "fs_update");
+	bgfx::ProgramHandle programCmp  = loadProgram("vs_update", "fs_update_cmp");
+	bgfx::ProgramHandle program3d   = loadProgram("vs_update", "fs_update_3d");
 
 	const uint32_t textureSide = 2048;
 
@@ -210,6 +237,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const int64_t freq = bx::getHPFrequency();
 		const double toMs = 1000.0/double(freq);
 		float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
+		bgfx::setUniform(u_time, &time);
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -345,10 +373,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Submit primitive for rendering to view 1.
 		bgfx::submit(1);
 
+		const float xpos = -8.0f - BX_COUNTOF(textures)*0.1f*0.5f;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(textures); ++ii)
 		{
-			bx::mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + ii*2.1f, 4.0f, 0.0f);
+			bx::mtxTranslate(mtx, xpos + ii*2.1f, 4.0f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -370,9 +399,33 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::submit(1);
 		}
 
+		for (uint32_t ii = 0; ii < BX_COUNTOF(textures3d); ++ii)
+		{
+			bx::mtxTranslate(mtx, xpos + ii*2.1f, -4.0f, 0.0f);
+
+			// Set model matrix for rendering.
+			bgfx::setTransform(mtx);
+
+			// Set vertex and fragment shaders.
+			bgfx::setProgram(program3d);
+
+			// Set vertex and index buffer.
+			bgfx::setVertexBuffer(vbh);
+			bgfx::setIndexBuffer(ibh, 0, 6);
+
+			// Bind texture.
+			bgfx::setTexture(0, u_texColor, textures3d[ii]);
+
+			// Set render states.
+			bgfx::setState(BGFX_STATE_DEFAULT);
+
+			// Submit primitive for rendering to view 1.
+			bgfx::submit(1);
+		}
+
 		for (uint32_t ii = 0; ii < 3; ++ii)
 		{
-			bx::mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f + 8*2.1f, -4.0f + ii*2.1f, 0.0f);
+			bx::mtxTranslate(mtx, xpos + 8*2.1f, -4.0f + ii*2.1f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -416,8 +469,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyTexture(textureCube);
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
+	bgfx::destroyProgram(program3d);
 	bgfx::destroyProgram(programCmp);
 	bgfx::destroyProgram(program);
+	bgfx::destroyUniform(u_time);
 	bgfx::destroyUniform(u_texColor);
 	bgfx::destroyUniform(u_texCube);
 
