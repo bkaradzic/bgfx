@@ -465,6 +465,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::destroyTexture(textures[ii]);
 	}
 
+	for (uint32_t ii = 0; ii < BX_COUNTOF(textures3d); ++ii)
+	{
+		bgfx::destroyTexture(textures3d[ii]);
+	}
+
 	bgfx::destroyTexture(texture2d);
 	bgfx::destroyTexture(textureCube);
 	bgfx::destroyIndexBuffer(ibh);
