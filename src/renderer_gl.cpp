@@ -721,6 +721,7 @@ namespace bgfx
 		"usampler3D",
 		"isamplerCube",
 		"usamplerCube",
+		NULL
 	};
 
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
