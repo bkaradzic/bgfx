@@ -3188,10 +3188,10 @@ struct Imgui
 	NVGcontext* m_nvg;
 
 	uint8_t m_view;
-	uint16_t m_viewWidth;
-	uint16_t m_viewHeight;
 	uint16_t m_surfaceWidth;
 	uint16_t m_surfaceHeight;
+	uint16_t m_viewWidth;
+	uint16_t m_viewHeight;
 
 #if !USE_NANOVG_FONT
 	struct Font
