@@ -430,6 +430,17 @@ namespace entry
 						}
 						break;
 
+					case SDL_TEXTINPUT:
+						{
+							const SDL_TextInputEvent& tev = event.text;
+							WindowHandle handle = findHandle(tev.windowID);
+							if (isValid(handle) )
+							{
+								m_eventQueue.postCharEvent(handle, 1, (const uint8_t*)tev.text);
+							}
+						}
+						break;
+
 					case SDL_KEYDOWN:
 						{
 							const SDL_KeyboardEvent& kev = event.key;
