@@ -713,6 +713,16 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_uisamplers[] =
+	{
+		"isampler2D",
+		"usampler2D",
+		"isampler3D",
+		"usampler3D",
+		"isamplerCube",
+		"usamplerCube",
+	};
+
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -2603,25 +2613,35 @@ namespace bgfx
 			GLSL_TYPE(GL_FLOAT_MAT2);
 			GLSL_TYPE(GL_FLOAT_MAT3);
 			GLSL_TYPE(GL_FLOAT_MAT4);
-// 			GLSL_TYPE(GL_FLOAT_MAT2x3);
-// 			GLSL_TYPE(GL_FLOAT_MAT2x4);
-// 			GLSL_TYPE(GL_FLOAT_MAT3x2);
-// 			GLSL_TYPE(GL_FLOAT_MAT3x4);
-// 			GLSL_TYPE(GL_FLOAT_MAT4x2);
-// 			GLSL_TYPE(GL_FLOAT_MAT4x3);
-// 			GLSL_TYPE(GL_SAMPLER_1D);
- 			GLSL_TYPE(GL_SAMPLER_2D);
+
+			GLSL_TYPE(GL_SAMPLER_2D);
+			GLSL_TYPE(GL_INT_SAMPLER_2D);
+			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_2D);
+
 			GLSL_TYPE(GL_SAMPLER_3D);
+			GLSL_TYPE(GL_INT_SAMPLER_3D);
+			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_3D);
+
 			GLSL_TYPE(GL_SAMPLER_CUBE);
-// 			GLSL_TYPE(GL_SAMPLER_1D_SHADOW);
+			GLSL_TYPE(GL_INT_SAMPLER_CUBE);
+			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_CUBE);
+
 			GLSL_TYPE(GL_SAMPLER_2D_SHADOW);
+
 			GLSL_TYPE(GL_IMAGE_1D);
-			GLSL_TYPE(GL_IMAGE_2D);
-			GLSL_TYPE(GL_IMAGE_3D);
-			GLSL_TYPE(GL_IMAGE_CUBE);
+			GLSL_TYPE(GL_INT_IMAGE_1D);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_1D);
+
+			GLSL_TYPE(GL_IMAGE_2D);
+			GLSL_TYPE(GL_INT_IMAGE_2D);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_2D);
+
+			GLSL_TYPE(GL_IMAGE_3D);
+			GLSL_TYPE(GL_INT_IMAGE_3D);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_3D);
+
+			GLSL_TYPE(GL_IMAGE_CUBE);
+			GLSL_TYPE(GL_INT_IMAGE_CUBE);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_CUBE);
 		}
 
@@ -2687,27 +2707,34 @@ namespace bgfx
 		case GL_FLOAT_MAT4:
 			return UniformType::Uniform4x4fv;
 
-// 		case GL_FLOAT_MAT2x3:
-// 		case GL_FLOAT_MAT2x4:
-// 		case GL_FLOAT_MAT3x2:
-// 		case GL_FLOAT_MAT3x4:
-// 		case GL_FLOAT_MAT4x2:
-// 		case GL_FLOAT_MAT4x3:
-// 			break;
-
-// 		case GL_SAMPLER_1D:
 		case GL_SAMPLER_2D:
+		case GL_INT_SAMPLER_2D:
+		case GL_UNSIGNED_INT_SAMPLER_2D:
+
 		case GL_SAMPLER_3D:
+		case GL_INT_SAMPLER_3D:
+		case GL_UNSIGNED_INT_SAMPLER_3D:
+
 		case GL_SAMPLER_CUBE:
-// 		case GL_SAMPLER_1D_SHADOW:
- 		case GL_SAMPLER_2D_SHADOW:
+		case GL_INT_SAMPLER_CUBE:
+		case GL_UNSIGNED_INT_SAMPLER_CUBE:
+
+		case GL_SAMPLER_2D_SHADOW:
+
 		case GL_IMAGE_1D:
-		case GL_IMAGE_2D:
-		case GL_IMAGE_3D:
-		case GL_IMAGE_CUBE:
+		case GL_INT_IMAGE_1D:
 		case GL_UNSIGNED_INT_IMAGE_1D:
+
+		case GL_IMAGE_2D:
+		case GL_INT_IMAGE_2D:
 		case GL_UNSIGNED_INT_IMAGE_2D:
+
+		case GL_IMAGE_3D:
+		case GL_INT_IMAGE_3D:
 		case GL_UNSIGNED_INT_IMAGE_3D:
+
+		case GL_IMAGE_CUBE:
+		case GL_INT_IMAGE_CUBE:
 		case GL_UNSIGNED_INT_IMAGE_CUBE:
 			return UniformType::Uniform1iv;
 		};
@@ -2899,16 +2926,33 @@ namespace bgfx
 			switch (gltype)
 			{
 			case GL_SAMPLER_2D:
+			case GL_INT_SAMPLER_2D:
+			case GL_UNSIGNED_INT_SAMPLER_2D:
+
 			case GL_SAMPLER_3D:
+			case GL_INT_SAMPLER_3D:
+			case GL_UNSIGNED_INT_SAMPLER_3D:
+
 			case GL_SAMPLER_CUBE:
+			case GL_INT_SAMPLER_CUBE:
+			case GL_UNSIGNED_INT_SAMPLER_CUBE:
+
 			case GL_SAMPLER_2D_SHADOW:
+
 			case GL_IMAGE_1D:
-			case GL_IMAGE_2D:
-			case GL_IMAGE_3D:
-			case GL_IMAGE_CUBE:
+			case GL_INT_IMAGE_1D:
 			case GL_UNSIGNED_INT_IMAGE_1D:
+
+			case GL_IMAGE_2D:
+			case GL_INT_IMAGE_2D:
 			case GL_UNSIGNED_INT_IMAGE_2D:
+
+			case GL_IMAGE_3D:
+			case GL_INT_IMAGE_3D:
 			case GL_UNSIGNED_INT_IMAGE_3D:
+
+			case GL_IMAGE_CUBE:
+			case GL_INT_IMAGE_CUBE:
 			case GL_UNSIGNED_INT_IMAGE_CUBE:
 				BX_TRACE("Sampler #%d at location %d.", m_numSamplers, loc);
 				m_sampler[m_numSamplers] = loc;
@@ -3285,13 +3329,14 @@ namespace bgfx
 				blockHeight = blockInfo.blockHeight;
 			}
 
-			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
+			BX_TRACE("Texture%-4s %3d: %s (requested: %s), %dx%dx%d%s."
+				, imageContainer.m_cubeMap ? "Cube" : (1 < imageContainer.m_depth ? "3D" : "2D")
 				, this - s_renderGL->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, textureWidth
 				, textureHeight
-				, imageContainer.m_cubeMap ? "x6" : ""
+				, imageContainer.m_cubeMap ? 6 : (1 < imageContainer.m_depth ? imageContainer.m_depth : 0)
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 				);
 
@@ -3871,14 +3916,22 @@ namespace bgfx
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 					 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
 				{
-					bool usesTextureLod = s_extension[Extension::ARB_shader_texture_lod].m_supported
+					bool usesTextureLod = true
+						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
 						&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
 						;
 
+					bool usesIUsamplers = bx::findIdentifierMatch(code, s_uisamplers);
+
+					uint32_t version = usesIUsamplers ? 130 : (usesTextureLod ? 120 : 0);
+
+					if (0 != version)
+					{
+						writeStringf(&writer, "#version %d\n", version);
+					}
+
 					if (usesTextureLod)
 					{
-						writeString(&writer, "#version 120\n");
-
 						if (m_type == GL_FRAGMENT_SHADER)
 						{
 							writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
