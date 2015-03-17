@@ -3921,7 +3921,7 @@ namespace bgfx
 						&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
 						;
 
-					bool usesIUsamplers = bx::findIdentifierMatch(code, s_uisamplers);
+					bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
 
 					uint32_t version = usesIUsamplers ? 130 : (usesTextureLod ? 120 : 0);
 
