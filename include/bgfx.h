@@ -51,7 +51,8 @@ namespace bgfx
 			OpenGL,       //!< OpenGL 2.1+
 			Vulkan,       //!< Vulkan
 
-			Count
+			Count,
+			Default=Count
 		};
 	};
 

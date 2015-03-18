@@ -94,6 +94,11 @@ namespace bgfx
 
 	VertexDecl& VertexDecl::begin(RendererType::Enum _renderer)
 	{
+		if (RendererType::Count == _renderer)
+		{
+			_renderer = RendererType::Null;
+		}
+
 		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.
 		m_stride = 0;
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
