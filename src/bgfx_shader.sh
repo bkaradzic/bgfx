@@ -74,6 +74,16 @@ struct BgfxSampler3D
 	Texture3D m_texture;
 };
 
+struct BgfxISampler3D
+{
+	Texture3D<ivec4> m_texture;
+};
+
+struct BgfxUSampler3D
+{
+	Texture3D<uvec4> m_texture;
+};
+
 vec4 bgfxTexture3D(BgfxSampler3D _sampler, vec3 _coord)
 {
 	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
@@ -82,6 +92,20 @@ vec4 bgfxTexture3D(BgfxSampler3D _sampler, vec3 _coord)
 vec4 bgfxTexture3DLod(BgfxSampler3D _sampler, vec3 _coord, float _level)
 {
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
+}
+
+ivec4 bgfxTexture3D(BgfxISampler3D _sampler, vec3 _coord)
+{
+	ivec3 size;
+	_sampler.m_texture.GetDimensions(size.x, size.y, size.z);
+	return _sampler.m_texture.Load(ivec4(_coord * size, 0) );
+}
+
+uvec4 bgfxTexture3D(BgfxUSampler3D _sampler, vec3 _coord)
+{
+	uvec3 size;
+	_sampler.m_texture.GetDimensions(size.x, size.y, size.z);
+	return _sampler.m_texture.Load(uvec4(_coord * size, 0) );
 }
 
 struct BgfxSamplerCube
@@ -121,6 +145,12 @@ vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform Texture3D _name ## Texture : register(t[_reg]); \
 			static BgfxSampler3D _name = { _name ## Sampler, _name ## Texture }
+#		define ISAMPLER3D(_name, _reg) \
+			uniform Texture3D<ivec4> _name ## Texture : register(t[_reg]); \
+			static BgfxISampler3D _name = { _name ## Texture }
+#		define USAMPLER3D(_name, _reg) \
+			uniform Texture3D<uvec4> _name ## Texture : register(t[_reg]); \
+			static BgfxUSampler3D _name = { _name ## Texture }
 #		define sampler3D BgfxSampler3D
 #		define texture3D(_sampler, _coord) bgfxTexture3D(_sampler, _coord)
 #		define texture3DLod(_sampler, _coord, _level) bgfxTexture3DLod(_sampler, _coord, _level)
@@ -246,6 +276,13 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define uvec2_splat(_x) uvec2(_x)
 #	define uvec3_splat(_x) uvec3(_x)
 #	define uvec4_splat(_x) uvec4(_x)
+
+#	if BGFX_SHADER_LANGUAGE_GLSL >= 130
+#		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
+#		define USAMPLER3D(_name, _reg) uniform usampler3D _name
+ivec4 texture3D(isampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
+uvec4 texture3D(usampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
+#	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }

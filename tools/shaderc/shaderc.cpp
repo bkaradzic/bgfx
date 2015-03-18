@@ -751,7 +751,8 @@ int main(int _argc, const char* _argv[])
 
 	bool raw = cmdLine.hasArg('\0', "raw");
 
-	uint32_t gles = 0;
+	uint32_t glsl = 0;
+	uint32_t essl = 0;
 	uint32_t hlsl = 2;
 	uint32_t d3d  = 11;
 	const char* profile = cmdLine.findOption('p', "profile");
@@ -774,10 +775,14 @@ int main(int _argc, const char* _argv[])
 		{
 			hlsl = 5;
 		}
+		else
+		{
+			glsl = atoi(profile);
+		}
 	}
 	else
 	{
-		gles = 2;
+		essl = 2;
 	}
 
 	const char* bin2c = NULL;
@@ -811,7 +816,7 @@ int main(int _argc, const char* _argv[])
 	bool preprocessOnly = cmdLine.hasArg("preprocess");
 	const char* includeDir = cmdLine.findOption('i');
 
-	Preprocessor preprocessor(filePath, 0 != gles, includeDir);
+	Preprocessor preprocessor(filePath, 0 != essl, includeDir);
 
 	std::string dir;
 	{
@@ -839,43 +844,38 @@ int main(int _argc, const char* _argv[])
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
 
-	bool glsl = false;
+	char glslDefine[128];
+	bx::snprintf(glslDefine, BX_COUNTOF(glslDefine), "BGFX_SHADER_LANGUAGE_GLSL=%d", glsl);
 
 	if (0 == bx::stricmp(platform, "android") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_ANDROID=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
-		glsl = true;
 	}
 	else if (0 == bx::stricmp(platform, "asm.js") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_EMSCRIPTEN=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
-		glsl = true;
 	}
 	else if (0 == bx::stricmp(platform, "ios") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_IOS=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
-		glsl = true;
 	}
 	else if (0 == bx::stricmp(platform, "linux") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_LINUX=1");
-		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
-		glsl = true;
+		preprocessor.setDefine(glslDefine);
 	}
 	else if (0 == bx::stricmp(platform, "nacl") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_NACL=1");
 		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
-		glsl = true;
 	}
 	else if (0 == bx::stricmp(platform, "osx") )
 	{
 		preprocessor.setDefine("BX_PLATFORM_OSX=1");
-		preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
-		glsl = true;
+		preprocessor.setDefine(glslDefine);
 	}
 	else if (0 == bx::stricmp(platform, "windows") )
 	{
@@ -1120,7 +1120,7 @@ int main(int _argc, const char* _argv[])
 				bx::write(writer, outputHash);
 			}
 
-			if (glsl)
+			if (0 != glsl)
 			{
 				bx::write(writer, uint16_t(0) );
 
@@ -1155,7 +1155,7 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				if (glsl)
+				if (0 != glsl)
 				{
 				}
 				else
@@ -1269,18 +1269,17 @@ int main(int _argc, const char* _argv[])
 						bx::write(writer, BGFX_CHUNK_MAGIC_CSH);
 						bx::write(writer, outputHash);
 
-						if (glsl)
+						if (0 != glsl)
 						{
 							std::string code;
 
-							if (gles)
+							if (essl)
 							{
 								bx::stringPrintf(code, "#version 310 es\n");
 							}
 							else
 							{
-								int32_t version = atoi(profile);
-								bx::stringPrintf(code, "#version %d\n", version == 0 ? 430 : version);
+								bx::stringPrintf(code, "#version %d\n", glsl == 0 ? 430 : glsl);
 							}
 
 							code += preprocessor.m_preprocessed;
@@ -1294,7 +1293,7 @@ int main(int _argc, const char* _argv[])
 
 							compiled = true;
 #else
-							compiled = compileGLSLShader(cmdLine, gles, code, writer);
+							compiled = compileGLSLShader(cmdLine, essl, code, writer);
 #endif // 0
 						}
 						else
@@ -1339,15 +1338,19 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				if (glsl)
+				if (0 != glsl)
 				{
-					preprocessor.writef(
-						"#define ivec2 vec2\n"
-						"#define ivec3 vec3\n"
-						"#define ivec4 vec4\n"
-						);
+					if (120 == glsl
+					||  essl)
+					{
+						preprocessor.writef(
+							"#define ivec2 vec2\n"
+							"#define ivec3 vec3\n"
+							"#define ivec4 vec4\n"
+							);
+					}
 
-					if (0 == gles)
+					if (0 == essl)
 					{
 						// bgfx shadow2D/Proj behave like EXT_shadow_samplers
 						// not as GLSL language 1.2 specs shadow2D/Proj.
@@ -1645,7 +1648,7 @@ int main(int _argc, const char* _argv[])
 							return EXIT_FAILURE;
 						}
 
-						if (glsl)
+						if (0 != glsl)
 						{
 							const char* profile = cmdLine.findOption('p', "profile");
 							if (NULL == profile)
@@ -1697,16 +1700,15 @@ int main(int _argc, const char* _argv[])
 							bx::write(writer, outputHash);
 						}
 
-						if (glsl)
+						if (0 != glsl)
 						{
 							std::string code;
 
 							bool hasTextureLod = NULL != bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
 
-							if (0 == gles)
+							if (0 == essl)
 							{
 								bx::stringPrintf(code, "#version %s\n", profile);
-								int32_t version = atoi(profile);
 
 								bx::stringPrintf(code
 									, "#define bgfxShadow2D shadow2D\n"
@@ -1714,7 +1716,7 @@ int main(int _argc, const char* _argv[])
 									);
 
 								if (hasTextureLod
-								&&  130 > version)
+								&&  130 > glsl)
 								{
 									bx::stringPrintf(code
 										, "#extension GL_ARB_shader_texture_lod : enable\n"
@@ -1767,7 +1769,7 @@ int main(int _argc, const char* _argv[])
 							}
 
 							code += preprocessor.m_preprocessed;
-							compiled = compileGLSLShader(cmdLine, gles, code, writer);
+							compiled = compileGLSLShader(cmdLine, essl, code, writer);
 						}
 						else
 						{
