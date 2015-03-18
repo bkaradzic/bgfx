@@ -84,13 +84,14 @@ function exampleProject(_name)
 	end
 
 	includedirs {
-		path.join(BX_DIR, "include"),
+		path.join(BX_DIR,   "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
 		path.join(BGFX_DIR, "examples/common"),
 	}
 
 	files {
+		path.join(BGFX_DIR, "examples", _name, "**.c"),
 		path.join(BGFX_DIR, "examples", _name, "**.cpp"),
 		path.join(BGFX_DIR, "examples", _name, "**.h"),
 	}
@@ -308,6 +309,7 @@ exampleProject("21-deferred")
 exampleProject("22-windows")
 exampleProject("23-vectordisplay")
 exampleProject("24-nbody")
+exampleProject("25-c99")
 
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
