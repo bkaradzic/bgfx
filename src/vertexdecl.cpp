@@ -41,27 +41,21 @@ namespace bgfx
 
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
-#if BGFX_CONFIG_RENDERER_DIRECT3D9
-		&s_attribTypeSizeDx9,
-#elif BGFX_CONFIG_RENDERER_DIRECT3D11 || BGFX_CONFIG_RENDERER_DIRECT3D12
-		&s_attribTypeSizeDx1x,
-#elif BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_VULKAN
-		&s_attribTypeSizeGl,
-#else
-		&s_attribTypeSizeDx9,
-#endif // BGFX_CONFIG_RENDERER_
+		&s_attribTypeSizeDx9,  // Null
 		&s_attribTypeSizeDx9,  // Direct3D9
 		&s_attribTypeSizeDx1x, // Direct3D11
 		&s_attribTypeSizeDx1x, // Direct3D12
 		&s_attribTypeSizeGl,   // OpenGLES
 		&s_attribTypeSizeGl,   // OpenGL
 		&s_attribTypeSizeGl,   // Vulkan
+		&s_attribTypeSizeDx9,  // Count
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == bgfx::RendererType::Count);
+	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
 
 	void initAttribTypeSizeTable(RendererType::Enum _type)
 	{
-		s_attribTypeSize[0] = s_attribTypeSize[_type];
+		s_attribTypeSize[0]                   = s_attribTypeSize[_type];
+		s_attribTypeSize[RendererType::Count] = s_attribTypeSize[_type];
 	}
 
 	void dbgPrintfVargs(const char* _format, va_list _argList)
