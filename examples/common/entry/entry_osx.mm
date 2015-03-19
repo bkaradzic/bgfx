@@ -314,16 +314,9 @@ namespace entry
 								const bool nonShiftModifiers = (0 != (modifiers&(~ShiftMask) ) );
 								const bool isCharPressed = (Key::Key0 <= key && key <= Key::KeyZ) || (Key::Esc <= key && key <= Key::Minus);
 								const bool isText = isCharPressed && !nonShiftModifiers;
-								if (isText)
-								{
-									m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
-									return false;
-								}
-								else
-								{
-									m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
-									return false;
-								}
+								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
+								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
+								return false;
 							}
 						}
 
