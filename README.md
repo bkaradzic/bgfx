@@ -4,7 +4,8 @@
 What is it?
 -----------
 
-Cross-platform rendering library.
+Cross-platform and API agnostic "Bring Your Own Engine/Framework" style rendering
+library.
 
 Supported rendering backends:
 
