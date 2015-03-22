@@ -1332,41 +1332,21 @@ namespace bgfx
 	typedef RendererContextI* (*RendererCreateFn)();
 	typedef void (*RendererDestroyFn)();
 
-	namespace noop
-	{
-		extern RendererContextI* rendererCreate();
-		extern void rendererDestroy();
-	} // namespace noop
+#define BGFX_RENDERER_CONTEXT(_namespace) \
+			namespace _namespace \
+			{ \
+				extern RendererContextI* rendererCreate(); \
+				extern void rendererDestroy(); \
+			}
 
-	namespace gl
-	{
-		extern RendererContextI* rendererCreate();
-		extern void rendererDestroy();
-	} // namespace gl
+	BGFX_RENDERER_CONTEXT(noop);
+	BGFX_RENDERER_CONTEXT(d3d9);
+	BGFX_RENDERER_CONTEXT(d3d11);
+	BGFX_RENDERER_CONTEXT(d3d12);
+	BGFX_RENDERER_CONTEXT(gl);
+	BGFX_RENDERER_CONTEXT(vk);
 
-	namespace d3d9
-	{
-		extern RendererContextI* rendererCreate();
-		extern void rendererDestroy();
-	} // namespace d3d9
-
-	namespace d3d11
-	{
-		extern RendererContextI* rendererCreate();
-		extern void rendererDestroy();
-	} // namespace d3d11
-
-	namespace d3d12
-	{
-		extern RendererContextI* rendererCreate();
-		extern void rendererDestroy();
-	} // namespace d3d12
-
-	namespace vk
-	{
-		extern RendererContextI* rendererCreate();
-		extern void rendererDestroy();
-	}
+#undef BGFX_RENDERER_CONTEXT
 
 	struct RendererCreator
 	{
