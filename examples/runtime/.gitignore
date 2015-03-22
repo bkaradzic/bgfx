@@ -1,3 +1,4 @@
 *.dll
+*.so
 *.pdb
 imgui*
