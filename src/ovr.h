@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#ifndef BGFX_OVR_H_HEADER_GUARD
+#define BGFX_OVR_H_HEADER_GUARD
+
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_USE_OVR
@@ -146,3 +149,5 @@ namespace bgfx
 } // namespace bgfx
 
 #endif // BGFX_CONFIG_USE_OVR
+
+#endif // BGFX_OVR_H_HEADER_GUARD
