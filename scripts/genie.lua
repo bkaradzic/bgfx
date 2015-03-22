@@ -4,13 +4,13 @@
 --
 
 newoption {
-	trigger = "with-tools",
-	description = "Enable building tools.",
+	trigger = "with-amalgamated",
+	description = "Enable amalgamated build.",
 }
 
 newoption {
-	trigger = "with-shared-lib",
-	description = "Enable building shared library.",
+	trigger = "with-ovr",
+	description = "Enable OculusVR integration.",
 }
 
 newoption {
@@ -19,8 +19,13 @@ newoption {
 }
 
 newoption {
-	trigger = "with-ovr",
-	description = "Enable OculusVR integration.",
+	trigger = "with-shared-lib",
+	description = "Enable building shared library.",
+}
+
+newoption {
+	trigger = "with-tools",
+	description = "Enable building tools.",
 }
 
 solution "bgfx"
@@ -32,14 +37,14 @@ solution "bgfx"
 	if _ACTION == "xcode4" then
 		platforms {
 			"Universal",
-	}
+		}
 	else
 		platforms {
 			"x32",
 			"x64",
 --			"Xbox360",
 			"Native", -- for targets where bitness is not specified
-	}
+		}
 	end
 
 	language "C++"
@@ -94,6 +99,10 @@ function exampleProject(_name)
 		path.join(BGFX_DIR, "examples", _name, "**.c"),
 		path.join(BGFX_DIR, "examples", _name, "**.cpp"),
 		path.join(BGFX_DIR, "examples", _name, "**.h"),
+	}
+
+	removefiles {
+		path.join(BGFX_DIR, "examples", _name, "**.bin.h"),
 	}
 
 	links {

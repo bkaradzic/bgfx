@@ -113,9 +113,33 @@ function bgfxProject(_name, _kind, _defines)
 			path.join(BGFX_DIR, "src/**.h"),
 		}
 
-		excludes {
+		removefiles {
 			path.join(BGFX_DIR, "src/**.bin.h"),
 		}
+
+		if _OPTIONS["with-amalgamated"] then
+			excludes {
+				path.join(BGFX_DIR, "src/bgfx.cpp"),
+				path.join(BGFX_DIR, "src/glcontext_egl.cpp"),
+				path.join(BGFX_DIR, "src/glcontext_glx.cpp"),
+				path.join(BGFX_DIR, "src/glcontext_ppapi.cpp"),
+				path.join(BGFX_DIR, "src/glcontext_wgl.cpp"),
+				path.join(BGFX_DIR, "src/image.cpp"),
+				path.join(BGFX_DIR, "src/ovr.cpp"),
+				path.join(BGFX_DIR, "src/renderdoc.cpp"),
+				path.join(BGFX_DIR, "src/renderer_d3d9.cpp"),
+				path.join(BGFX_DIR, "src/renderer_d3d11.cpp"),
+				path.join(BGFX_DIR, "src/renderer_d3d12.cpp"),
+				path.join(BGFX_DIR, "src/renderer_null.cpp"),
+				path.join(BGFX_DIR, "src/renderer_gl.cpp"),
+				path.join(BGFX_DIR, "src/renderer_vk.cpp"),
+				path.join(BGFX_DIR, "src/vertexdecl.cpp"),
+			}
+		else
+			excludes {
+				path.join(BGFX_DIR, "src/amalgamated.cpp"),
+			}
+		end
 
 		configuration {}
 

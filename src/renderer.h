@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#ifndef BGFX_RENDERER_H_HEADER_GUARD
+#define BGFX_RENDERER_H_HEADER_GUARD
+
 #include "bgfx_p.h"
 
 namespace bgfx
@@ -262,3 +265,5 @@ namespace bgfx
 	};
 
 } // namespace bgfx
+
+#endif // BGFX_RENDERER_H_HEADER_GUARD
