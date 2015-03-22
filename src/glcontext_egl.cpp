@@ -22,7 +22,7 @@
 #	define EGL_CONTEXT_MINOR_VERSION_KHR 0x30FB
 #endif // EGL_CONTEXT_MINOR_VERSION_KHR
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 #if BGFX_USE_GL_DYNAMIC_LIB
 
@@ -369,7 +369,7 @@ EGL_IMPORT
 #	include "glimports.h"
 	}
 
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #	endif // BGFX_USE_EGL
 #endif // (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)

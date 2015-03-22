@@ -8,7 +8,7 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 
-namespace bgfx
+namespace bgfx { namespace d3d11
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
@@ -2299,14 +2299,14 @@ namespace bgfx
 
 	static RendererContextD3D11* s_renderD3D11;
 
-	RendererContextI* rendererCreateD3D11()
+	RendererContextI* rendererCreate()
 	{
 		s_renderD3D11 = BX_NEW(g_allocator, RendererContextD3D11);
 		s_renderD3D11->init();
 		return s_renderD3D11;
 	}
 
-	void rendererDestroyD3D11()
+	void rendererDestroy()
 	{
 		s_renderD3D11->shutdown();
 		BX_DELETE(g_allocator, s_renderD3D11);
@@ -3839,20 +3839,20 @@ namespace bgfx
 			PIX_ENDEVENT();
 		}
 	}
-} // namespace bgfx
+} /* namespace d3d11 */ } // namespace bgfx
 
 #else
 
-namespace bgfx
+namespace bgfx { namespace d3d11
 {
-	RendererContextI* rendererCreateD3D11()
+	RendererContextI* rendererCreate()
 	{
 		return NULL;
 	}
 
-	void rendererDestroyD3D11()
+	void rendererDestroy()
 	{
 	}
-} // namespace bgfx
+} /* namespace d3d11 */ } // namespace bgfx
 
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11

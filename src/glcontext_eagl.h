@@ -8,7 +8,7 @@
 
 #if BX_PLATFORM_IOS
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	struct SwapChainGL;
 
@@ -48,7 +48,7 @@ namespace bgfx
 		GLuint m_colorRbo;
 		GLuint m_depthStencilRbo;
 	};
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_IOS
 

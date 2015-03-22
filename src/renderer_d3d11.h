@@ -70,7 +70,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	define D3D11_APPEND_ALIGNED_ELEMENT UINT32_MAX
 #endif // D3D11_APPEND_ALIGNED_ELEMENT
 
-namespace bgfx
+namespace bgfx { namespace d3d11
 {
 	struct BufferD3D11
 	{
@@ -280,6 +280,6 @@ namespace bgfx
 		uint8_t m_num;
 	};
 
-} // namespace bgfx
+} /*  namespace d3d11 */ } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D11_H_HEADER_GUARD

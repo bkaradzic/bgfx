@@ -13,7 +13,7 @@
 #	include <ppapi/c/ppb_instance.h>
 #	include <ppapi/c/ppb_graphics_3d.h>
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	struct SwapChainGL;
 
@@ -36,7 +36,7 @@ namespace bgfx
 		void import();
 		bool isValid() const;
 	};
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_NACL
 

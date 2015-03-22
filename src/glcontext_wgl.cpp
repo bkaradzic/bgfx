@@ -10,7 +10,7 @@
 
 #	if BGFX_USE_WGL
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	PFNWGLGETPROCADDRESSPROC wglGetProcAddress;
 	PFNWGLMAKECURRENTPROC wglMakeCurrent;
@@ -376,7 +376,7 @@ namespace bgfx
 #	include "glimports.h"
 	}
 
-} // namespace bgfx
+} } // namespace bgfx
 
 #	endif // BGFX_USE_WGL
 #endif // (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)

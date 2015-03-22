@@ -8,16 +8,16 @@
 #	include "../../vk/src/renderer_vk.cpp"
 #else
 
-namespace bgfx
+namespace bgfx { namespace vk
 {
-	RendererContextI* rendererCreateVK()
+	RendererContextI* rendererCreate()
 	{
 		return NULL;
 	}
 
-	void rendererDestroyVK()
+	void rendererDestroy()
 	{
 	}
-} // namespace bgfx
+} /* namespace vk */ } // namespace bgfx
 
 #endif // BGFX_CONFIG_RENDERER_VULKAN

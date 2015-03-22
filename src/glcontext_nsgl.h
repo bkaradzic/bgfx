@@ -8,7 +8,7 @@
 
 #if BX_PLATFORM_OSX
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	struct SwapChainGL;
 
@@ -39,7 +39,7 @@ namespace bgfx
 		void* m_view;
 		void* m_context;
 	};
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_OSX
 

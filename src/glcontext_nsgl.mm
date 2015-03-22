@@ -10,7 +10,7 @@
 #	include <Cocoa/Cocoa.h>
 #	include <bx/os.h>
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
@@ -165,6 +165,6 @@ namespace bgfx
 #	include "glimports.h"
 	}
 
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_OSX && (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)

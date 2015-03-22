@@ -1332,23 +1332,41 @@ namespace bgfx
 	typedef RendererContextI* (*RendererCreateFn)();
 	typedef void (*RendererDestroyFn)();
 
-	extern RendererContextI* rendererCreateNULL();
-	extern void rendererDestroyNULL();
+	namespace noop
+	{
+		extern RendererContextI* rendererCreate();
+		extern void rendererDestroy();
+	} // namespace noop
 
-	extern RendererContextI* rendererCreateGL();
-	extern void rendererDestroyGL();
+	namespace gl
+	{
+		extern RendererContextI* rendererCreate();
+		extern void rendererDestroy();
+	} // namespace gl
 
-	extern RendererContextI* rendererCreateD3D9();
-	extern void rendererDestroyD3D9();
+	namespace d3d9
+	{
+		extern RendererContextI* rendererCreate();
+		extern void rendererDestroy();
+	} // namespace d3d9
 
-	extern RendererContextI* rendererCreateD3D11();
-	extern void rendererDestroyD3D11();
+	namespace d3d11
+	{
+		extern RendererContextI* rendererCreate();
+		extern void rendererDestroy();
+	} // namespace d3d11
 
-	extern RendererContextI* rendererCreateD3D12();
-	extern void rendererDestroyD3D12();
+	namespace d3d12
+	{
+		extern RendererContextI* rendererCreate();
+		extern void rendererDestroy();
+	} // namespace d3d12
 
-	extern RendererContextI* rendererCreateVK();
-	extern void rendererDestroyVK();
+	namespace vk
+	{
+		extern RendererContextI* rendererCreate();
+		extern void rendererDestroy();
+	}
 
 	struct RendererCreator
 	{
@@ -1360,13 +1378,13 @@ namespace bgfx
 
 	static const RendererCreator s_rendererCreator[] =
 	{
-		{ rendererCreateNULL,  rendererDestroyNULL,  BGFX_RENDERER_NULL_NAME,       !!BGFX_CONFIG_RENDERER_NULL       }, // Null
-		{ rendererCreateD3D9,  rendererDestroyD3D9,  BGFX_RENDERER_DIRECT3D9_NAME,  !!BGFX_CONFIG_RENDERER_DIRECT3D9  }, // Direct3D9
-		{ rendererCreateD3D11, rendererDestroyD3D11, BGFX_RENDERER_DIRECT3D11_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D11 }, // Direct3D11
-		{ rendererCreateD3D12, rendererDestroyD3D12, BGFX_RENDERER_DIRECT3D12_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D12 }, // Direct3D12
-		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
-		{ rendererCreateGL,    rendererDestroyGL,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
-		{ rendererCreateVK,    rendererDestroyVK,    BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
+		{ noop::rendererCreate,  noop::rendererDestroy,  BGFX_RENDERER_NULL_NAME,       !!BGFX_CONFIG_RENDERER_NULL       }, // Null
+		{ d3d9::rendererCreate,  d3d9::rendererDestroy,  BGFX_RENDERER_DIRECT3D9_NAME,  !!BGFX_CONFIG_RENDERER_DIRECT3D9  }, // Direct3D9
+		{ d3d11::rendererCreate, d3d11::rendererDestroy, BGFX_RENDERER_DIRECT3D11_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D11 }, // Direct3D11
+		{ d3d12::rendererCreate, d3d12::rendererDestroy, BGFX_RENDERER_DIRECT3D12_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D12 }, // Direct3D12
+		{ gl::rendererCreate,    gl::rendererDestroy,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
+		{ gl::rendererCreate,    gl::rendererDestroy,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
+		{ vk::rendererCreate,    vk::rendererDestroy,    BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 

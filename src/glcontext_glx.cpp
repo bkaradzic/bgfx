@@ -12,7 +12,7 @@
 #		define GLX_GLXEXT_PROTOTYPES
 #		include <glx/glxext.h>
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	typedef int (*PFNGLXSWAPINTERVALMESAPROC)(uint32_t _interval);
 
@@ -292,7 +292,7 @@ namespace bgfx
 #	include "glimports.h"
 	}
 
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #	endif // BGFX_USE_GLX
 

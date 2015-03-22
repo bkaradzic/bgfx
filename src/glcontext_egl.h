@@ -10,7 +10,7 @@
 
 #include <EGL/egl.h>
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	struct SwapChainGL;
 
@@ -48,7 +48,7 @@ namespace bgfx
 		EGLDisplay m_display;
 		EGLSurface m_surface;
 	};
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BGFX_USE_EGL
 

@@ -9,14 +9,14 @@
 #	include <bgfxplatform.h>
 #	include "renderer_gl.h"
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
 
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/);
 
-	PP_CompletionCallback naclSwapComplete = 
+	PP_CompletionCallback naclSwapComplete =
 	{
 		naclSwapCompleteCb,
 		NULL,
@@ -62,7 +62,7 @@ namespace bgfx
 		PostSwapBuffersFn m_postSwapBuffers;
 		bool m_forceSwap;
 	};
-	
+
 	static Ppapi s_ppapi;
 
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/)
@@ -192,6 +192,6 @@ namespace bgfx
 		return s_ppapi.isValid();
 	}
 
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_NACL && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)

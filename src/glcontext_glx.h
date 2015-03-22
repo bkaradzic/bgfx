@@ -11,7 +11,7 @@
 #	include <X11/Xlib.h>
 #	include <GL/glx.h>
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 	struct SwapChainGL;
 
@@ -45,7 +45,7 @@ namespace bgfx
 		GLXContext m_context;
 		XVisualInfo* m_visualInfo;
 	};
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BGFX_USE_GLX
 

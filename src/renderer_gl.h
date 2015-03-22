@@ -611,6 +611,10 @@ typedef uint64_t GLuint64;
 namespace bgfx
 {
 	class ConstantBuffer;
+} // namespace bgfx
+
+namespace bgfx { namespace gl
+{
 	void dumpExtensions(const char* _extensions);
 
 	const char* glEnumName(GLenum _enum);
@@ -1001,6 +1005,6 @@ namespace bgfx
 		GLuint m_queries[64];
 	};
 
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BGFX_RENDERER_GL_H_HEADER_GUARD

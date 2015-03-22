@@ -10,7 +10,7 @@
 
 #include <wgl/wglext.h>
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
 typedef BOOL (APIENTRYP PFNWGLMAKECURRENTPROC) (HDC hdc, HGLRC hglrc);
@@ -93,7 +93,7 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		HGLRC m_context;
 		HDC m_hdc;
 	};
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BGFX_USE_WGL
 
