@@ -845,7 +845,7 @@ int main(int _argc, const char* _argv[])
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
 
 	char glslDefine[128];
-	bx::snprintf(glslDefine, BX_COUNTOF(glslDefine), "BGFX_SHADER_LANGUAGE_GLSL=%d", glsl);
+	bx::snprintf(glslDefine, BX_COUNTOF(glslDefine), "BGFX_SHADER_LANGUAGE_GLSL=%d", essl ? 1 : glsl);
 
 	if (0 == bx::stricmp(platform, "android") )
 	{
@@ -1155,7 +1155,8 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				if (0 != glsl)
+				if (0 != glsl
+				||  0 != essl)
 				{
 				}
 				else
@@ -1269,7 +1270,8 @@ int main(int _argc, const char* _argv[])
 						bx::write(writer, BGFX_CHUNK_MAGIC_CSH);
 						bx::write(writer, outputHash);
 
-						if (0 != glsl)
+						if (0 != glsl
+						||  0 != essl)
 						{
 							std::string code;
 
