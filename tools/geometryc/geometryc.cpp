@@ -504,6 +504,9 @@ int main(int _argc, const char* _argv[])
 				Triangle triangle;
 				memset(&triangle, 0, sizeof(Triangle) );
 
+				const int numNormals   = (int)normals.size();
+				const int numTexcoords = (int)texcoords.size();
+				const int numPositions = (int)positions.size();
 				for (uint32_t edge = 0, numEdges = argc-1; edge < numEdges; ++edge)
 				{
 					Index3 index;
@@ -522,15 +525,15 @@ int main(int _argc, const char* _argv[])
 						{
 							*normal++ = '\0';
 							const int nn = atoi(normal);
-							index.m_normal = (nn < 0) ? nn+(int)normals.size() : nn-1;
+							index.m_normal = (nn < 0) ? nn+numNormals : nn-1;
 						}
 
 						const int tex = atoi(texcoord);
-						index.m_texcoord = (tex < 0) ? tex+(int)texcoords.size() : tex-1;
+						index.m_texcoord = (tex < 0) ? tex+numTexcoords : tex-1;
 					}
 
 					const int pos = atoi(vertex);
-					index.m_position = (pos < 0) ? pos+(int)positions.size() : pos-1;
+					index.m_position = (pos < 0) ? pos+numPositions : pos-1;
 
 					uint64_t hash0 = index.m_position;
 					uint64_t hash1 = uint64_t(index.m_texcoord)<<20;
