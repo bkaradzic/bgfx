@@ -972,9 +972,9 @@ int main(int _argc, const char* _argv[])
 
 				const char* name      = parse = bx::strws(bx::strword(parse) );
 				const char* column    = parse = bx::strws(bx::strword(parse) );
-				const char* semantics = parse = bx::strws(bx::strnws (parse) );
+				const char* semantics = parse = bx::strws((*parse == ':' ? ++parse : parse));
 				const char* assign    = parse = bx::strws(bx::strword(parse) );
-				const char* init      = parse = bx::strws(bx::strnws (parse) );
+				const char* init      = parse = bx::strws((*parse == '=' ? ++parse : parse));
 
 				if (type < eol
 				&&  name < eol
@@ -1338,10 +1338,11 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				if (0 != glsl)
+				if (0 != glsl
+				||  0 != essl)
 				{
 					if (120 == glsl
-					||  essl)
+					||  0   != essl)
 					{
 						preprocessor.writef(
 							"#define ivec2 vec2\n"
@@ -1700,7 +1701,8 @@ int main(int _argc, const char* _argv[])
 							bx::write(writer, outputHash);
 						}
 
-						if (0 != glsl)
+						if (0 != glsl
+						||  0 != essl)
 						{
 							std::string code;
 
