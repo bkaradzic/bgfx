@@ -3091,7 +3091,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap) )
 		{
-			const uint32_t num = bx::uint32_min( (BGFX_CONFIG_MAX_VIEWS - _id) + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
+			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
 			if (NULL == _remap)
 			{
 				for (uint32_t ii = 0; ii < num; ++ii)
