@@ -204,6 +204,7 @@ namespace bgfx
 #elif BX_PLATFORM_LINUX
 	extern void*    g_bgfxX11Display;
 	extern uint32_t g_bgfxX11Window;
+	extern void*    g_bgfxGLX;
 #elif BX_PLATFORM_OSX
 	extern void* g_bgfxNSWindow;
 	extern void* g_bgfxNSGL;

@@ -44,11 +44,13 @@ namespace bgfx
 #elif BX_PLATFORM_LINUX
 	void*    g_bgfxX11Display;
 	uint32_t g_bgfxX11Window;
+	void*    g_bgfxGLX;
 
-	void x11SetDisplayWindow(void* _display, uint32_t _window)
+	void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx)
 	{
 		g_bgfxX11Display = _display;
 		g_bgfxX11Window  = _window;
+		g_bgfxGLX        = _glx;
 	}
 #elif BX_PLATFORM_OSX
 	void* g_bgfxNSWindow = NULL;

@@ -134,6 +134,15 @@ function exampleProject(_name)
 			"glfw3"
 		}
 
+		configuration { "linux" }
+			links {
+				"Xrandr",
+				"Xinerama",
+				"Xi",
+				"Xxf86vm",
+				"Xcursor",
+			}
+
 		configuration { "osx" }
 			linkoptions {
 				"-framework CoreVideo",
