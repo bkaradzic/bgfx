@@ -163,7 +163,7 @@ namespace bgfx
 #	elif BX_PLATFORM_WINDOWS
 		HWND hwnd = glfwGetWin32Window(_window);
 		winSetHwnd(hwnd);
-#	endif BX_PLATFORM_WINDOWS
+#	endif // BX_PLATFORM_WINDOWS
 	}
 
 } // namespace bgfx

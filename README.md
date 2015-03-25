@@ -575,6 +575,11 @@ with examples:
 
 	genie --with-sdl vs2012
 
+**NOTE** Special care is necessary to make custom windowing to work with
+multithreaded renderer. Each platform has rules about where renderer can be and
+how multithreading interacts with context/device. To disable multithreaded
+render use `BGFX_CONFIG_MULTITHREDED=0` preprocessor define.
+
 Tools
 -----
 
