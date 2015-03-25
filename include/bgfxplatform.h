@@ -76,7 +76,7 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void osxSetNSWindow(void* _window);
+	void osxSetNSWindow(void* _window, void* _nsgl = NULL);
 
 } // namespace bgfx
 
@@ -155,11 +155,12 @@ namespace bgfx
 	{
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
 		::Display* display = glfwGetX11Display();
-		::Window window = glfwGetX11Window(_window);
+		::Window window    = glfwGetX11Window(_window);
 		x11SetDisplayWindow(display, window);
 #	elif BX_PLATFORM_OSX
-		void* id = glfwGetCocoaWindow(_window);
-		osxSetNSWindow(id);
+		void* window = glfwGetCocoaWindow(_window);
+		void* nsgl   = glfwGetNSGLContext(_window);
+		osxSetNSWindow(window, nsgl);
 #	elif BX_PLATFORM_WINDOWS
 		HWND hwnd = glfwGetWin32Window(_window);
 		winSetHwnd(hwnd);

@@ -19,6 +19,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-glfw",
+	description = "Enable GLFW entry.",
+}
+
+newoption {
 	trigger = "with-shared-lib",
 	description = "Enable building shared library.",
 }
@@ -119,6 +124,21 @@ function exampleProject(_name)
 
 		configuration { "x64", "windows" }
 			libdirs { "$(SDL2_DIR)/lib/x64" }
+
+		configuration {}
+	end
+
+	if _OPTIONS["with-glfw"] then
+		defines { "ENTRY_CONFIG_USE_GLFW=1" }
+		links   {
+			"glfw3"
+		}
+
+		configuration { "osx" }
+			linkoptions {
+				"-framework CoreVideo",
+				"-framework IOKit",
+			}
 
 		configuration {}
 	end
