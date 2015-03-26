@@ -19,14 +19,6 @@ namespace bgfx
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
 
-#define BGFX_CHECK_HANDLE(_handle, _max) \
-			BX_CHECK(isValid(_handle) \
-				&& _handle.idx < _max \
-				, "Invalid handle. %d (< %d " #_max ")" \
-				, _handle.idx \
-				, _max \
-				);
-
 #if BX_PLATFORM_ANDROID
 	::ANativeWindow* g_bgfxAndroidWindow = NULL;
 
@@ -2772,21 +2764,18 @@ again:
 	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_UNIFORMS);
 		s_ctx->setUniform(_handle, _value, _num);
 	}
 
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_INDEX_BUFFERS);
 		s_ctx->setIndexBuffer(_handle, _firstIndex, _numIndices);
 	}
 
 	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS);
 		s_ctx->setIndexBuffer(_handle, _firstIndex, _numIndices);
 	}
 
@@ -2811,14 +2800,12 @@ again:
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 		s_ctx->setVertexBuffer(_handle, _startVertex, _numVertices);
 	}
 
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS);
 		s_ctx->setVertexBuffer(_handle, _numVertices);
 	}
 
@@ -2844,21 +2831,18 @@ again:
 	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS);
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
 	void setProgram(ProgramHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_PROGRAMS);
 		s_ctx->setProgram(_handle);
 	}
 
@@ -2883,28 +2867,24 @@ again:
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_INDEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
 	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
 	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_HANDLE(_handle, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS);
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
