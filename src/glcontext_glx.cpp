@@ -58,7 +58,7 @@ namespace bgfx { namespace gl
 
 		m_context = (GLXContext)g_bgfxGLX;
 
-		if (NULL == m_context)
+		if (NULL == g_bgfxGLX)
 		{
 			XLockDisplay( (::Display*)g_bgfxX11Display);
 
@@ -216,8 +216,13 @@ namespace bgfx { namespace gl
 	void GlContext::destroy()
 	{
 		glXMakeCurrent( (::Display*)g_bgfxX11Display, 0, 0);
-		glXDestroyContext( (::Display*)g_bgfxX11Display, m_context);
-		XFree(m_visualInfo);
+		if (NULL == g_bgfxGLX)
+		{
+			glXDestroyContext( (::Display*)g_bgfxX11Display, m_context);
+			XFree(m_visualInfo);
+		}
+		m_context    = NULL;
+		m_visualInfo = NULL;
 	}
 
 	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
