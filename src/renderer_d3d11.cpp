@@ -513,7 +513,10 @@ namespace bgfx { namespace d3d11
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
 
 			IDXGIAdapter* adapter;
-			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters(ii, &adapter); ++ii)
+			for (uint32_t ii = 0
+				; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters(ii, &adapter) && ii < BX_COUNTOF(g_caps.gpu)
+				; ++ii
+				)
 			{
 				DXGI_ADAPTER_DESC desc;
 				hr = adapter->GetDesc(&desc);
@@ -535,6 +538,19 @@ namespace bgfx { namespace d3d11
 						, desc.DedicatedSystemMemory
 						, desc.SharedSystemMemory
 						);
+
+					g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
+					g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
+					++g_caps.numGPUs;
+
+					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
+					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
+					&&   (               0 == g_caps.deviceId || desc.DeviceId == g_caps.deviceId) )
+					{
+						m_adapter = adapter;
+						m_adapter->AddRef();
+						m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+					}
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
 					&&  0 != strstr(description, "PerfHUD") )
@@ -594,6 +610,11 @@ namespace bgfx { namespace d3d11
 			}
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
+			if (NULL != m_adapter)
+			{
+				DX_RELEASE(m_adapter, 2);
+			}
+
 			IDXGIDevice* device = NULL;
 			hr = E_FAIL;
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
@@ -616,6 +637,8 @@ namespace bgfx { namespace d3d11
 
 			hr = adapter->GetDesc(&m_adapterDesc);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
+			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
+			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
 
 #if BX_PLATFORM_WINRT
 			hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);

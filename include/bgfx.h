@@ -315,6 +315,18 @@ namespace bgfx
 		uint16_t maxViews;         ///< Maximum views.
 		uint16_t maxDrawCalls;     ///< Maximum draw calls.
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
+		uint8_t  numGPUs; ///<
+
+		uint16_t vendorId; ///<
+		uint16_t deviceId; ///<
+
+		struct GPU
+		{
+			uint16_t vendorId;
+			uint16_t deviceId;
+		};
+
+		GPU gpu[4];      ///<
 
 		/// Supported texture formats.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
@@ -517,7 +529,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_init`.
 	///
-	void init(RendererType::Enum _type = RendererType::Count, CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
+	void init(RendererType::Enum _type = RendererType::Count, uint16_t _vendorId = BGFX_PCI_ID_NONE, uint16_t _deviceId = 0, CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
 
 	/// Shutdown bgfx library.
 	///

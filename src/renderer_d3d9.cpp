@@ -359,26 +359,36 @@ namespace bgfx { namespace d3d9
 			m_adapter = D3DADAPTER_DEFAULT;
 			m_deviceType = D3DDEVTYPE_HAL;
 
-			uint32_t adapterCount = m_d3d9->GetAdapterCount();
-			for (uint32_t ii = 0; ii < adapterCount; ++ii)
+			uint8_t numGPUs = bx::uint32_min(BX_COUNTOF(g_caps.gpu), m_d3d9->GetAdapterCount() );
+			for (uint32_t ii = 0; ii < numGPUs; ++ii)
 			{
-				D3DADAPTER_IDENTIFIER9 identifier;
-				HRESULT hr = m_d3d9->GetAdapterIdentifier(ii, 0, &identifier);
+				D3DADAPTER_IDENTIFIER9 desc;
+				HRESULT hr = m_d3d9->GetAdapterIdentifier(ii, 0, &desc);
 				if (SUCCEEDED(hr) )
 				{
 					BX_TRACE("Adapter #%d", ii);
-					BX_TRACE("\tDriver: %s", identifier.Driver);
-					BX_TRACE("\tDescription: %s", identifier.Description);
-					BX_TRACE("\tDeviceName: %s", identifier.DeviceName);
+					BX_TRACE("\tDriver: %s", desc.Driver);
+					BX_TRACE("\tDescription: %s", desc.Description);
+					BX_TRACE("\tDeviceName: %s", desc.DeviceName);
 					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-						, identifier.VendorId
-						, identifier.DeviceId
-						, identifier.SubSysId
-						, identifier.Revision
+						, desc.VendorId
+						, desc.DeviceId
+						, desc.SubSysId
+						, desc.Revision
 						);
 
+					g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
+					g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
+
+					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
+					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
+					&&   (               0 == g_caps.deviceId || desc.DeviceId == g_caps.deviceId) )
+					{
+						m_adapter = ii;
+					}
+
 #if BGFX_CONFIG_DEBUG_PERFHUD
-					if (0 != strstr(identifier.Description, "PerfHUD") )
+					if (0 != strstr(desc.Description, "PerfHUD") )
 					{
 						m_adapter = ii;
 						m_deviceType = D3DDEVTYPE_REF;
@@ -388,8 +398,10 @@ namespace bgfx { namespace d3d9
 			}
 
 			DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &m_identifier) );
-			m_amd = m_identifier.VendorId == 0x1002;
-			m_nvidia = m_identifier.VendorId == 0x10de;
+			m_amd    = m_identifier.VendorId == BGFX_PCI_ID_AMD;
+			m_nvidia = m_identifier.VendorId == BGFX_PCI_ID_NVIDIA;
+			g_caps.vendorId = (uint16_t)m_identifier.VendorId;
+			g_caps.deviceId = (uint16_t)m_identifier.DeviceId;
 
 			uint32_t behaviorFlags[] =
 			{

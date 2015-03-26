@@ -273,6 +273,15 @@ typedef struct bgfx_texture_info
 } bgfx_texture_info_t;
 
 /**
+ */
+typedef struct bgfx_caps_gpu
+{
+    uint16_t vendorId;
+    uint16_t deviceId;
+
+} bgfx_caps_gpu_t;
+
+/**
  *  Renderer capabilities.
  */
 typedef struct bgfx_caps
@@ -293,6 +302,11 @@ typedef struct bgfx_caps
     uint16_t maxViews;          /* < Maximum views.                    */
     uint16_t maxDrawCalls;      /* < Maximum draw calls.               */
     uint8_t  maxFBAttachments;  /* < Maximum frame buffer attachments. */
+    uint8_t  numGPUs;           /* <                                   */
+
+    uint16_t vendorId;          /* <                                   */
+    uint16_t deviceId;          /* <                                   */
+    bgfx_caps_gpu_t gpu[4];     /* <                                   */
 
     /**
      *  Supported texture formats.
