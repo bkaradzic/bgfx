@@ -48,7 +48,7 @@ namespace bgfx { namespace gl
 		NSWindow* nsWindow = (NSWindow*)g_bgfxNSWindow;
 		m_context = g_bgfxNSGL;
 
-		if (NULL == m_context)
+		if (NULL == g_bgfxNSGL)
 		{
 			NSOpenGLPixelFormatAttribute profile =
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
@@ -95,11 +95,14 @@ namespace bgfx { namespace gl
 
 	void GlContext::destroy()
 	{
-		NSOpenGLView* glView = (NSOpenGLView*)m_view;
-		m_view = 0;
-		m_context = 0;
-		[glView release];
+		if (NULL == g_bgfxNSGL)
+		{
+			NSOpenGLView* glView = (NSOpenGLView*)m_view;
+			[glView release];
+		}
 
+		m_view    = 0;
+		m_context = 0;
 		bx::dlclose(s_opengl);
 	}
 
