@@ -520,6 +520,15 @@ namespace bgfx
 	///   default rendering backend will be selected.
 	///   See: `bgfx::RendererType`
 	///
+	/// @param _vendorId Vendor PCI id. If set to BGFX_PCI_ID_NONE it will select the first device.
+	///   - `BGFX_PCI_ID_NONE` - autoselect.
+	///   - `BGFX_PCI_ID_AMD` - AMD.
+	///   - `BGFX_PCI_ID_INTEL` - Intel.
+	///   - `BGFX_PCI_ID_NVIDIA` - nVidia.
+	///
+	/// @param _deviceId Device id. If set to 0 it will select first device, or device with
+	///   matching id.
+	///
 	/// @param _callback Provide application specific callback interface.
 	///   See: `bgfx::CallbackI`
 	///
