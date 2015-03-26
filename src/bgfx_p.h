@@ -29,6 +29,7 @@
 #include <string.h>
 #include <alloca.h>
 
+// Check handle, cannot be bgfx::invalidHandle and must be valid.
 #define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle) \
 			BX_CHECK(isValid(_handle) \
 				&& _handleAlloc.isValid(_handle.idx) \
@@ -36,7 +37,17 @@
 				, _desc \
 				, _handle.idx \
 				, _handleAlloc.getMaxHandles() \
-				);
+				)
+
+// Check handle, it's ok to be bgfx::invalidHandle or must be valid.
+#define BGFX_CHECK_HANDLE_INVALID_OK(_desc, _handleAlloc, _handle) \
+			BX_CHECK(!isValid(_handle) \
+				|| _handleAlloc.isValid(_handle.idx) \
+				, "Invalid handle. %s handle: %d (max %d)" \
+				, _desc \
+				, _handle.idx \
+				, _handleAlloc.getMaxHandles() \
+				)
 
 namespace bgfx
 {
@@ -3091,7 +3102,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
 		{
-			BGFX_CHECK_HANDLE("setViewFrameBuffer", m_frameBufferHandle, _handle);
+			BGFX_CHECK_HANDLE_INVALID_OK("setViewFrameBuffer", m_frameBufferHandle, _handle);
 			m_fb[_id] = _handle;
 		}
 
