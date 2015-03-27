@@ -888,7 +888,11 @@ namespace bgfx
 
 	static void dumpCaps()
 	{
-		BX_TRACE("Supported capabilities (%s):", s_ctx->m_renderCtx->getRendererName() );
+		BX_TRACE("Supported capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
+				, s_ctx->m_renderCtx->getRendererName()
+				, g_caps.vendorId
+				, g_caps.deviceId
+				);
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
 		{
 			if (0 != (g_caps.supported & s_capsFlags[ii].m_flag) )
