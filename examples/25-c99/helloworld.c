@@ -15,12 +15,12 @@ uint16_t uint16_max(uint16_t _a, uint16_t _b)
 
 int _main_(int _argc, char** _argv)
 {
-	(void)_argc;
-	(void)_argv;
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_VSYNC;
+	(void)_argc;
+	(void)_argv;
 
 	bgfx_init(BGFX_RENDERER_TYPE_COUNT, NULL, NULL);
 	bgfx_reset(width, height, reset);
