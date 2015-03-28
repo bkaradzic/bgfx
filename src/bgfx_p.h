@@ -3270,12 +3270,13 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags) )
 		{
-			BGFX_CHECK_HANDLE("setTexture", m_textureHandle, _handle);
+			BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", m_textureHandle, _handle);
 			m_submit->setTexture(_stage, _sampler, _handle, _flags);
 		}
 
 		BGFX_API_FUNC(void setTexture(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, uint32_t _flags) )
 		{
+			BGFX_CHECK_HANDLE_INVALID_OK("setTexture/FrameBufferHandle", m_frameBufferHandle, _handle);
 			BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 			TextureHandle textureHandle = BGFX_INVALID_HANDLE;
 			if (isValid(_handle) )
