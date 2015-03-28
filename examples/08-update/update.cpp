@@ -167,12 +167,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 	}
 
-	bgfx::TextureHandle textures3d[] =
+	const bgfx::Caps* caps = bgfx::getCaps();
+	const bool texture3DSupported = !!(caps->supported & BGFX_CAPS_TEXTURE_3D);
+
+	uint32_t numTextures3d = 0;
+	bgfx::TextureHandle textures3d[3] = {};
+
+	if (texture3DSupported)
 	{
-		bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8),
-		bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f),
-		bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f),
-	};
+		textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);
+		textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f);
+		textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f);
+	}
 
 	// Create static vertex buffer.
 	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_decl);
@@ -188,7 +194,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::ProgramHandle program     = loadProgram("vs_update", "fs_update");
 	bgfx::ProgramHandle programCmp  = loadProgram("vs_update", "fs_update_cmp");
-	bgfx::ProgramHandle program3d   = loadProgram("vs_update", "fs_update_3d");
+	bgfx::ProgramHandle program3d   = BGFX_INVALID_HANDLE;
+	if (texture3DSupported)
+	{
+		program3d = loadProgram("vs_update", "fs_update_3d");
+	}
 
 	const uint32_t textureSide = 2048;
 
@@ -399,7 +409,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::submit(1);
 		}
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(textures3d); ++ii)
+		for (uint32_t ii = 0; ii < numTextures3d; ++ii)
 		{
 			bx::mtxTranslate(mtx, xpos + ii*2.1f, -4.0f, 0.0f);
 
@@ -465,7 +475,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::destroyTexture(textures[ii]);
 	}
 
-	for (uint32_t ii = 0; ii < BX_COUNTOF(textures3d); ++ii)
+	for (uint32_t ii = 0; ii < numTextures3d; ++ii)
 	{
 		bgfx::destroyTexture(textures3d[ii]);
 	}
