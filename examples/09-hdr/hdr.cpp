@@ -174,7 +174,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::setViewName(8, "Blur vertical");
 	bgfx::setViewName(9, "Blur horizontal + tonemap");
 
-	bgfx::TextureHandle uffizi = loadTexture("uffizi.dds", BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
+	bgfx::TextureHandle uffizi = loadTexture("uffizi_lod.dds", BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
 	bgfx::ProgramHandle skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
 	bgfx::ProgramHandle lumProgram     = loadProgram("vs_hdr_lum",     "fs_hdr_lum");
