@@ -161,6 +161,14 @@ namespace entry
 	class EventQueue
 	{
 	public:
+		~EventQueue()
+		{
+			for (const Event* ev = poll(); NULL != ev; ev = poll() )
+			{
+				release(ev);
+			}
+		}
+
 		void postAxisEvent(WindowHandle _handle, GamepadHandle _gamepad, GamepadAxis::Enum _axis, int32_t _value)
 		{
 			AxisEvent* ev = new AxisEvent(_handle);
