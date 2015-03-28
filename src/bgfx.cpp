@@ -3018,11 +3018,11 @@ BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type)
 	return bgfx::getRendererName(bgfx::RendererType::Enum(_type) );
 }
 
-BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, struct bgfx_callback_interface* _callback, struct bgfx_reallocator_interface* _allocator)
+BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_reallocator_interface_t* _allocator)
 {
 	return bgfx::init(bgfx::RendererType::Enum(_type)
-		, BGFX_PCI_ID_NONE
-		, 0
+		, _vendorId
+		, _deviceId
 		, reinterpret_cast<bgfx::CallbackI*>(_callback)
 		, reinterpret_cast<bx::ReallocatorI*>(_allocator)
 		);

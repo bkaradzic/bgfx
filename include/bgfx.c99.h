@@ -573,7 +573,7 @@ BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type);
  *    specified, library uses default CRT allocator. The library assumes
  *    custom allocator is thread safe.
  */
-BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, bgfx_callback_interface_t* _callback, bgfx_reallocator_interface_t* _allocator);
+BGFX_C_API void bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_reallocator_interface_t* _allocator);
 
 /**
  *  Shutdown bgfx library.
