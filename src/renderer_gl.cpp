@@ -1212,9 +1212,17 @@ namespace bgfx { namespace gl
 					||  s_extension[Extension::OES_texture_float     ].m_supported)
 					{
 						// https://www.khronos.org/registry/gles/extensions/OES/OES_texture_float.txt
-						// When RGBA16F is available via extensions texture will be marked as
+						// When half/float is available via extensions texture will be marked as
 						// incomplete if it uses anything other than nearest filter.
-						s_textureFilter[TextureFormat::RGBA16F] = false;
+						const bool linear16F = s_extension[Extension::OES_texture_half_float_linear].m_supported;
+						const bool linear32F = s_extension[Extension::OES_texture_float_linear     ].m_supported;
+
+						s_textureFilter[TextureFormat::R16F]    = linear16F;
+						s_textureFilter[TextureFormat::RG16F]   = linear16F;
+						s_textureFilter[TextureFormat::RGBA16F] = linear16F;
+						s_textureFilter[TextureFormat::R32F]    = linear32F;
+						s_textureFilter[TextureFormat::RG32F]   = linear32F;
+						s_textureFilter[TextureFormat::RGBA32F] = linear32F;
 					}
 
 					if (BX_ENABLED(BX_PLATFORM_IOS) )
