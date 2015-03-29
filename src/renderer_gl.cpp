@@ -237,6 +237,8 @@ namespace bgfx { namespace gl
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
+	static bool s_textureFilter[TextureFormat::Count+1];
+
 	static GLenum s_rboFormat[] =
 	{
 		GL_ZERO,               // BC1
@@ -921,6 +923,15 @@ namespace bgfx { namespace gl
 		return 0 == err;
 	}
 
+	static void getFilters(uint32_t _flags, bool _hasMips, GLenum& _magFilter, GLenum& _minFilter)
+	{
+		const uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
+		const uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
+		const uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
+		_magFilter = s_textureFilterMag[mag];
+		_minFilter = s_textureFilterMin[min][_hasMips ? mip+1 : 0];
+	}
+
 	struct RendererContextGL : public RendererContextI
 	{
 		RendererContextGL()
@@ -1100,6 +1111,9 @@ namespace bgfx { namespace gl
 				}
 			}
 
+			// Allow all texture filters.
+			memset(s_textureFilter, true, BX_COUNTOF(s_textureFilter) );
+
 			bool bc123Supported = 0
 				|| s_extension[Extension::EXT_texture_compression_s3tc        ].m_supported
 				|| s_extension[Extension::MOZ_WEBGL_compressed_texture_s3tc   ].m_supported
@@ -1191,6 +1205,15 @@ namespace bgfx { namespace gl
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 				{
 					setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
+
+					if (s_extension[Extension::OES_texture_half_float].m_supported
+					||  s_extension[Extension::OES_texture_float     ].m_supported)
+					{
+						// https://www.khronos.org/registry/gles/extensions/OES/OES_texture_float.txt
+						// When RGBA16F is available via extensions texture will be marked as
+						// incomplete if it uses anything other than nearest filter.
+						s_textureFilter[TextureFormat::RGBA16F] = false;
+					}
 
 					if (BX_ENABLED(BX_PLATFORM_IOS) )
 					{
@@ -2054,16 +2077,25 @@ namespace bgfx { namespace gl
 					{
 						sampler = m_samplerStateCache.add(_flags);
 
-						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
-						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
-						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
+						GL_CHECK(glSamplerParameteri(sampler
+							, GL_TEXTURE_WRAP_S
+							, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]
+							) );
+						GL_CHECK(glSamplerParameteri(sampler
+							, GL_TEXTURE_WRAP_T
+							, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]
+							) );
+						GL_CHECK(glSamplerParameteri(sampler
+							, GL_TEXTURE_WRAP_R
+							, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]
+							) );
 
-						const uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
-						const uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
-						const uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
-						GLenum minFilter = s_textureFilterMin[min][1 < _numMips ? mip+1 : 0];
-						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
+						GLenum minFilter;
+						GLenum magFilter;
+						getFilters(_flags, 1 < _numMips, magFilter, minFilter);
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
+
 						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 						&&  0.0f < m_maxAnisotropy)
 						{
@@ -3210,10 +3242,8 @@ namespace bgfx { namespace gl
 			BX_CHECK(0 != m_id, "Failed to generate texture id.");
 			GL_CHECK(glBindTexture(_target, m_id) );
 
-			setSamplerState(_flags);
-
 			const TextureFormatInfo& tfi = s_textureFormat[_format];
-			m_fmt = tfi.m_fmt;
+			m_fmt  = tfi.m_fmt;
 			m_type = tfi.m_type;
 
 			const bool compressed = isCompressed(TextureFormat::Enum(_format) );
@@ -3223,9 +3253,11 @@ namespace bgfx { namespace gl
 			{
 				m_textureFormat = (uint8_t)TextureFormat::BGRA8;
 				const TextureFormatInfo& tfi = s_textureFormat[TextureFormat::BGRA8];
-				m_fmt = tfi.m_fmt;
+				m_fmt  = tfi.m_fmt;
 				m_type = tfi.m_type;
 			}
+
+			setSamplerState(_flags);
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			&&  TextureFormat::BGRA8 == m_textureFormat
@@ -3591,6 +3623,21 @@ namespace bgfx { namespace gl
 
 	void TextureGL::setSamplerState(uint32_t _flags)
 	{
+		if (!s_textureFilter[m_textureFormat])
+		{
+			// Force point sampling when texture format doesn't support linear sampling.
+			_flags &= 0
+				| BGFX_TEXTURE_MIN_MASK
+				| BGFX_TEXTURE_MAG_MASK
+				| BGFX_TEXTURE_MIP_MASK
+				;
+			_flags |= 0
+				| BGFX_TEXTURE_MIN_POINT
+				| BGFX_TEXTURE_MAG_POINT
+				| BGFX_TEXTURE_MIP_POINT
+				;
+		}
+
 		const uint32_t flags = (0 != (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) ? m_flags : _flags) & BGFX_TEXTURE_SAMPLER_BITS_MASK;
 		if (flags != m_currentFlags)
 		{
@@ -3611,11 +3658,10 @@ namespace bgfx { namespace gl
 				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
 			}
 
-			const uint32_t mag = (flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
-			const uint32_t min = (flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
-			const uint32_t mip = (flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
-			const GLenum minFilter = s_textureFilterMin[min][1 < numMips ? mip+1 : 0];
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, s_textureFilterMag[mag]) );
+			GLenum magFilter;
+			GLenum minFilter;
+			getFilters(flags, 1 < numMips, magFilter, minFilter);
+			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
 			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 			&&  0.0f < s_renderGL->m_maxAnisotropy)
