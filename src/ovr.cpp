@@ -123,7 +123,9 @@ namespace bgfx
 		result = ovrHmd_ConfigureRendering(m_hmd
 			, _config
 			, 0
-			| ovrDistortionCap_Chromatic
+#if OVR_VERSION < OVR_VERSION_050
+			| ovrDistortionCap_Chromatic // permanently enabled >= v5.0
+#endif
 			| ovrDistortionCap_Vignette
 			| ovrDistortionCap_TimeWarp
 			| ovrDistortionCap_Overdrive
