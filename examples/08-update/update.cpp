@@ -175,9 +175,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	if (texture3DSupported)
 	{
-		textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);
-		textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f);
-		textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f);
+		if (0 != (BGFX_CAPS_FORMAT_TEXTURE_COLOR & caps->formats[bgfx::TextureFormat::R8]) )
+		{
+			textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);
+		}
+
+		if (0 != (BGFX_CAPS_FORMAT_TEXTURE_COLOR & caps->formats[bgfx::TextureFormat::R16F]) )
+		{
+			textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f);
+		}
+
+		if (0 != (BGFX_CAPS_FORMAT_TEXTURE_COLOR & caps->formats[bgfx::TextureFormat::R32F]) )
+		{
+			textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f);
+		}
 	}
 
 	// Create static vertex buffer.
