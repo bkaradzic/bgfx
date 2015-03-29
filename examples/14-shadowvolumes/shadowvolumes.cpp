@@ -2276,9 +2276,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
-				lightPosRadius[ii][0] = cos(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][0] = cosf(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][1] = 20.0f;
-				lightPosRadius[ii][2] = sin(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][2] = sinf(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
 		}
@@ -2286,9 +2286,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
-				lightPosRadius[ii][0] = cos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
+				lightPosRadius[ii][0] = cosf(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
 				lightPosRadius[ii][1] = 20.0f;
-				lightPosRadius[ii][2] = sin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
+				lightPosRadius[ii][2] = sinf(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
 		}
@@ -2362,9 +2362,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_rotation[0] = 0.0f;
 			inst.m_rotation[1] = 0.0f;
 			inst.m_rotation[2] = 0.0f;
-			inst.m_pos[0]      = sin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[0]      = sinf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_pos[1]      = 6.0f;
-			inst.m_pos[2]      = cos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[2]      = cosf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_model       = &cubeModel;
 		}
 
@@ -2379,9 +2379,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			inst.m_rotation[0] = 0.0f;
 			inst.m_rotation[1] = 0.0f;
 			inst.m_rotation[2] = 0.0f;
-			inst.m_pos[0]      = sin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[0]      = sinf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_pos[1]      = 22.0f;
-			inst.m_pos[2]      = cos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[2]      = cosf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_model       = &cubeModel;
 		}
 

@@ -192,7 +192,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		float at[3]  = { 0.0f, 0.0f,  0.0f };
 		float eye[3] = { 0.0f, 0.0f, -7.0f };
-		
+
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
 		if (NULL != hmd)
@@ -227,8 +227,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float lightPosRadius[4][4];
 		for (uint32_t ii = 0; ii < numLights; ++ii)
 		{
-			lightPosRadius[ii][0] = sin( (time*(0.1f + ii*0.17f) + ii*bx::piHalf*1.37f ) )*3.0f;
-			lightPosRadius[ii][1] = cos( (time*(0.2f + ii*0.29f) + ii*bx::piHalf*1.49f ) )*3.0f;
+			lightPosRadius[ii][0] = sinf( (time*(0.1f + ii*0.17f) + ii*bx::piHalf*1.37f ) )*3.0f;
+			lightPosRadius[ii][1] = cosf( (time*(0.2f + ii*0.29f) + ii*bx::piHalf*1.49f ) )*3.0f;
 			lightPosRadius[ii][2] = -2.5f;
 			lightPosRadius[ii][3] = 3.0f;
 		}
@@ -338,7 +338,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

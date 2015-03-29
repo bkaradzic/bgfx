@@ -2165,16 +2165,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		if (settings.m_updateScene)  { timeAccumulatorScene += deltaTime; }
 
 		// Setup lights.
-		pointLight.m_position.m_x = cos(timeAccumulatorLight) * 20.0f;
+		pointLight.m_position.m_x = cosf(timeAccumulatorLight) * 20.0f;
 		pointLight.m_position.m_y = 26.0f;
-		pointLight.m_position.m_z = sin(timeAccumulatorLight) * 20.0f;
+		pointLight.m_position.m_z = sinf(timeAccumulatorLight) * 20.0f;
 		pointLight.m_spotDirectionInner.m_x = -pointLight.m_position.m_x;
 		pointLight.m_spotDirectionInner.m_y = -pointLight.m_position.m_y;
 		pointLight.m_spotDirectionInner.m_z = -pointLight.m_position.m_z;
 
-		directionalLight.m_position.m_x = -cos(timeAccumulatorLight);
+		directionalLight.m_position.m_x = -cosf(timeAccumulatorLight);
 		directionalLight.m_position.m_y = -1.0f;
-		directionalLight.m_position.m_z = -sin(timeAccumulatorLight);
+		directionalLight.m_position.m_z = -sinf(timeAccumulatorLight);
 
 		// Setup instance matrices.
 		float mtxFloor[16];

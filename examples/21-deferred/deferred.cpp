@@ -529,10 +529,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				Sphere lightPosRadius;
 
-				float lightTime = time * lightAnimationSpeed * (sin(light/float(numLights) * bx::piHalf ) * 0.5f + 0.5f);
-				lightPosRadius.m_center[0] = sin( ( (lightTime + light*0.47f) + bx::piHalf*1.37f ) )*offset;
-				lightPosRadius.m_center[1] = cos( ( (lightTime + light*0.69f) + bx::piHalf*1.49f ) )*offset;
-				lightPosRadius.m_center[2] = sin( ( (lightTime + light*0.37f) + bx::piHalf*1.57f ) )*2.0f;
+				float lightTime = time * lightAnimationSpeed * (sinf(light/float(numLights) * bx::piHalf ) * 0.5f + 0.5f);
+				lightPosRadius.m_center[0] = sinf( ( (lightTime + light*0.47f) + bx::piHalf*1.37f ) )*offset;
+				lightPosRadius.m_center[1] = cosf( ( (lightTime + light*0.69f) + bx::piHalf*1.49f ) )*offset;
+				lightPosRadius.m_center[2] = sinf( ( (lightTime + light*0.37f) + bx::piHalf*1.57f ) )*2.0f;
 				lightPosRadius.m_radius = 2.0f;
 
 				Aabb aabb;

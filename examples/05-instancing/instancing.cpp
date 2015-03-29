@@ -182,9 +182,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						mtx[14] = 0.0f;
 
 						float* color = (float*)&data[64];
-						color[0] = sin(time+float(xx)/11.0f)*0.5f+0.5f;
-						color[1] = cos(time+float(yy)/11.0f)*0.5f+0.5f;
-						color[2] = sin(time*3.0f)*0.5f+0.5f;
+						color[0] = sinf(time+float(xx)/11.0f)*0.5f+0.5f;
+						color[1] = cosf(time+float(yy)/11.0f)*0.5f+0.5f;
+						color[2] = sinf(time*3.0f)*0.5f+0.5f;
 						color[3] = 1.0f;
 
 						data += instanceStride;

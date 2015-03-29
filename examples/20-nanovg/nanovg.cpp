@@ -387,7 +387,7 @@ void drawEyes(struct NVGcontext* vg, float x, float y, float w, float h, float m
 	float ry = y + ey;
 	float dx,dy,d;
 	float br = (ex < ey ? ex : ey) * 0.5f;
-	float blink = 1 - pow(sinf(t*0.5f),200)*0.8f;
+	float blink = 1 - powf(sinf(t*0.5f),200)*0.8f;
 
 	bg = nvgLinearGradient(vg, x,y+h*0.5f,x+w*0.1f,y+h, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,16));
 	nvgBeginPath(vg);
@@ -1075,11 +1075,11 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 		nvgBeginPath(vg);
 		nvgFillColor(vg, nvgRGBA(255,192,0,255));
 		nvgRoundedRect(vg
-			, round(bounds[0])-4.0f
-			, round(bounds[1])-2.0f
-			, round(bounds[2]-bounds[0])+8.0f
-			, round(bounds[3]-bounds[1])+4.0f
-			, (round(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
+			, roundf(bounds[0])-4.0f
+			, roundf(bounds[1])-2.0f
+			, roundf(bounds[2]-bounds[0])+8.0f
+			, roundf(bounds[3]-bounds[1])+4.0f
+			, (roundf(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
 			);
 		nvgFill(vg);
 
@@ -1097,10 +1097,10 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 	nvgBeginPath(vg);
 	nvgFillColor(vg, nvgRGBA(220,220,220,255));
 	nvgRoundedRect(vg
-		, round(bounds[0]-2.0f)
-		, round(bounds[1]-2.0f)
-		, round(bounds[2]-bounds[0])+4.0f
-		, round(bounds[3]-bounds[1])+4.0f
+		, roundf(bounds[0]-2.0f)
+		, roundf(bounds[1]-2.0f)
+		, roundf(bounds[2]-bounds[0])+4.0f
+		, roundf(bounds[3]-bounds[1])+4.0f
 		, 3.0f
 		);
 	px = float( (int)((bounds[2]+bounds[0])/2) );

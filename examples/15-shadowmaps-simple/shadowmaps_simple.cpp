@@ -221,9 +221,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup lights.
 		float lightPos[4];
-		lightPos[0] = -cos(timeAccumulatorLight);
+		lightPos[0] = -cosf(timeAccumulatorLight);
 		lightPos[1] = -1.0f;
-		lightPos[2] = -sin(timeAccumulatorLight);
+		lightPos[2] = -sinf(timeAccumulatorLight);
 		lightPos[3] = 0.0f;
 
 		bgfx::setUniform(u_lightPos, lightPos);
