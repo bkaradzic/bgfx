@@ -420,6 +420,7 @@ namespace bgfx { namespace gl
 			EXT_blend_minmax,
 			EXT_blend_subtract,
 			EXT_color_buffer_half_float,
+			EXT_color_buffer_float,
 			EXT_compressed_ETC1_RGB8_sub_texture,
 			EXT_debug_label,
 			EXT_debug_marker,
@@ -584,6 +585,7 @@ namespace bgfx { namespace gl
 		{ "EXT_blend_minmax",                      BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "EXT_blend_subtract",                    BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "EXT_color_buffer_half_float",           false,                             true  }, // GLES2 extension.
+		{ "EXT_color_buffer_float",                false,                             true  }, // GLES2 extension.
 		{ "EXT_compressed_ETC1_RGB8_sub_texture",  false,                             true  }, // GLES2 extension.
 		{ "EXT_debug_label",                       false,                             true  },
 		{ "EXT_debug_marker",                      false,                             true  },
