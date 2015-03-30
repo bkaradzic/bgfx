@@ -704,24 +704,6 @@ namespace bgfx { namespace gl
 	class VaoCacheRef
 	{
 	public:
-#if BX_COMPILER_MSVC >= 1900
-		void add(uint32_t _hash)
-		{
-			m_vaoSet.insert(stl::make_pair(_hash, _hash) );
-		}
-
-		void invalidate(VaoStateCache& _vaoCache)
-		{
-			for (VaoSet::iterator it = m_vaoSet.begin(), itEnd = m_vaoSet.end(); it != itEnd; ++it)
-			{
-				_vaoCache.invalidate(it->first);
-			}
-
-			m_vaoSet.clear();
-		}
-
-		typedef stl::unordered_map<uint32_t, uint32_t> VaoSet;
-#else
 		void add(uint32_t _hash)
 		{
 			m_vaoSet.insert(_hash);
@@ -738,7 +720,6 @@ namespace bgfx { namespace gl
 		}
 
 		typedef stl::unordered_set<uint32_t> VaoSet;
-#endif //
 		VaoSet m_vaoSet;
 	};
 
