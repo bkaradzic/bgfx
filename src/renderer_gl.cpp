@@ -360,6 +360,7 @@ namespace bgfx { namespace gl
 			ANGLE_texture_compression_dxt1,
 			ANGLE_texture_compression_dxt3,
 			ANGLE_texture_compression_dxt5,
+			ANGLE_timer_query,
 			ANGLE_translated_shader_source,
 
 			APPLE_texture_format_BGRA8888,
@@ -425,6 +426,7 @@ namespace bgfx { namespace gl
 			EXT_debug_label,
 			EXT_debug_marker,
 			EXT_discard_framebuffer,
+			EXT_disjoint_timer_query,
 			EXT_draw_buffers,
 			EXT_frag_depth,
 			EXT_framebuffer_blit,
@@ -514,7 +516,7 @@ namespace bgfx { namespace gl
 		bool m_initialize;
 	};
 
-	static Extension s_extension[Extension::Count] =
+	static Extension s_extension[] =
 	{
 		{ "AMD_conservative_depth",                false,                             true  },
 
@@ -525,6 +527,7 @@ namespace bgfx { namespace gl
 		{ "ANGLE_texture_compression_dxt1",        false,                             true  },
 		{ "ANGLE_texture_compression_dxt3",        false,                             true  },
 		{ "ANGLE_texture_compression_dxt5",        false,                             true  },
+		{ "ANGLE_timer_query",                     false,                             true  },
 		{ "ANGLE_translated_shader_source",        false,                             true  },
 
 		{ "APPLE_texture_format_BGRA8888",         false,                             true  },
@@ -590,6 +593,7 @@ namespace bgfx { namespace gl
 		{ "EXT_debug_label",                       false,                             true  },
 		{ "EXT_debug_marker",                      false,                             true  },
 		{ "EXT_discard_framebuffer",               false,                             true  }, // GLES2 extension.
+		{ "EXT_disjoint_timer_query",              false,                             true  }, // GLES2 extension.
 		{ "EXT_draw_buffers",                      false,                             true  }, // GLES2 extension.
 		{ "EXT_frag_depth",                        false,                             true  }, // GLES2 extension.
 		{ "EXT_framebuffer_blit",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -613,7 +617,7 @@ namespace bgfx { namespace gl
 		{ "EXT_texture_storage",                   false,                             true  },
 		{ "EXT_texture_swizzle",                   false,                             true  },
 		{ "EXT_texture_type_2_10_10_10_REV",       false,                             true  },
-		{ "EXT_timer_query",                       false,                             true  },
+		{ "EXT_timer_query",                       BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_unpack_subimage",                   false,                             true  },
 
 		{ "GOOGLE_depth_texture",                  false,                             true  },
@@ -671,6 +675,7 @@ namespace bgfx { namespace gl
 		{ "WEBKIT_WEBGL_compressed_texture_s3tc",  false,                             true  },
 		{ "WEBKIT_WEBGL_depth_texture",            false,                             true  },
 	};
+	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
 	static const char* s_ARB_shader_texture_lod[] =
 	{
@@ -952,6 +957,7 @@ namespace bgfx { namespace gl
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_depthTextureSupport(false)
+			, m_timerQuerySupport(false)
 			, m_flip(false)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
@@ -1386,6 +1392,13 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 				;
 
+			m_timerQuerySupport = 0
+				|| s_extension[Extension::ANGLE_timer_query       ].m_supported
+				|| s_extension[Extension::ARB_timer_query         ].m_supported
+				|| s_extension[Extension::EXT_disjoint_timer_query].m_supported
+				|| s_extension[Extension::EXT_timer_query         ].m_supported
+				;
+
 			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 				: 0
@@ -1495,7 +1508,8 @@ namespace bgfx { namespace gl
 				glInvalidateFramebuffer = stubInvalidateFramebuffer;
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			&&  m_timerQuerySupport)
 			{
 				m_queries.create();
 			}
@@ -1525,7 +1539,8 @@ namespace bgfx { namespace gl
 
 			invalidateCache();
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			&&  m_timerQuerySupport)
 			{
 				m_queries.destroy();
 			}
@@ -2606,6 +2621,7 @@ namespace bgfx { namespace gl
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
 		bool m_depthTextureSupport;
+		bool m_timerQuerySupport;
 		bool m_flip;
 
 		uint64_t m_hash;
@@ -4414,7 +4430,8 @@ namespace bgfx { namespace gl
 		int64_t captureElapsed = 0;
 
 		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-		&& (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) ) )
+		&& (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
+		&&  m_timerQuerySupport)
 		{
 			m_queries.begin(0, GL_TIME_ELAPSED);
 		}
@@ -5250,11 +5267,14 @@ namespace bgfx { namespace gl
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 			double elapsedGpuMs = 0.0;
-#if BGFX_CONFIG_RENDERER_OPENGL
-			m_queries.end(GL_TIME_ELAPSED);
-			uint64_t elapsedGl = m_queries.getResult(0);
-			elapsedGpuMs = double(elapsedGl)/1e6;
-#endif // BGFX_CONFIG_RENDERER_OPENGL
+			uint64_t elapsedGl  = 0;
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			&&  m_timerQuerySupport)
+			{
+				m_queries.end(GL_TIME_ELAPSED);
+				elapsedGl    = m_queries.getResult(0);
+				elapsedGpuMs = double(elapsedGl)/1e6;
+			}
 
 			TextVideoMem& tvm = m_textVideoMem;
 
