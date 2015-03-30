@@ -361,10 +361,10 @@ void VectorDisplay::endDraw()
 		line->y0 = m_pendingPoints[i - 1].y;
 		line->x1 = m_pendingPoints[i].x;
 		line->y1 = m_pendingPoints[i].y;
-		line->a = atan2(line->y1 - line->y0, line->x1 - line->x0);                  // angle from positive x axis, increasing ccw, [-pi, pi]
+		line->a = atan2f(line->y1 - line->y0, line->x1 - line->x0); // angle from positive x axis, increasing ccw, [-pi, pi]
 		line->sin_a = sinf(line->a);
 		line->cos_a = cosf(line->a);
-		line->len = sqrt( (line->x1 - line->x0) * (line->x1 - line->x0) + (line->y1 - line->y0) * (line->y1 - line->y0) );
+		line->len = sqrtf( (line->x1 - line->x0) * (line->x1 - line->x0) + (line->y1 - line->y0) * (line->y1 - line->y0) );
 
 		// figure out what connections we have
 		line->has_prev = (!line->is_first
