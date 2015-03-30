@@ -23,7 +23,7 @@
 #		include <OVR.h>
 #	else
 #		include <OVR_CAPI.h>
-#	endif
+#	endif // OVR_VERSION < OVR_VERSION_050
 
 #	if BGFX_CONFIG_RENDERER_DIRECT3D9
 #		define OVR_D3D_VERSION 9
