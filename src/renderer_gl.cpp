@@ -1352,7 +1352,8 @@ namespace bgfx { namespace gl
 
 			if (BX_ENABLED(BX_PLATFORM_NACL) )
 			{
-				m_vaoSupport &= NULL != glGenVertexArrays
+				m_vaoSupport &= true
+					&& NULL != glGenVertexArrays
 					&& NULL != glDeleteVertexArrays
 					&& NULL != glBindVertexArray
 					;
@@ -1398,6 +1399,8 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::EXT_disjoint_timer_query].m_supported
 				|| s_extension[Extension::EXT_timer_query         ].m_supported
 				;
+
+			m_timerQuerySupport &= NULL != glGetQueryObjectui64v;
 
 			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
