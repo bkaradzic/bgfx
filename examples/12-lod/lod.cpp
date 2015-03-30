@@ -20,7 +20,7 @@ KnightPos knightTour[8*4] =
 	{0,0}, {1,2}, {3,3}, {4,1}, {5,3}, {7,2}, {6,0}, {5,2},
 	{7,3}, {6,1}, {4,0}, {3,2}, {2,0}, {0,1}, {1,3}, {2,1},
 	{0,2}, {1,0}, {2,2}, {0,3}, {1,1}, {3,0}, {4,2}, {5,0},
-	{7,1}, {6,3}, {5,1}, {7,0}, {6,2}, {4,3}, {3,1}, {2,3}
+	{7,1}, {6,3}, {5,1}, {7,0}, {6,2}, {4,3}, {3,1}, {2,3},
 };
 
 int _main_(int /*_argc*/, char** /*_argv*/)
@@ -55,15 +55,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::TextureHandle textureStipple;
 
-	const bgfx::Memory* stipple = bgfx::alloc(8*4);
-	memset(stipple->data, 0, stipple->size);
+	const bgfx::Memory* stippleTex = bgfx::alloc(8*4);
+	memset(stippleTex->data, 0, stippleTex->size);
 
 	for (uint32_t ii = 0; ii < 32; ++ii)
 	{
-		stipple->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
+		stippleTex->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
 	}
 
-	textureStipple = bgfx::createTexture2D(8, 4, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT, stipple);
+	textureStipple = bgfx::createTexture2D(8, 4, 1
+			, bgfx::TextureFormat::R8
+			, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT
+			, stippleTex
+			);
 
 	Mesh* meshTop[3] =
 	{

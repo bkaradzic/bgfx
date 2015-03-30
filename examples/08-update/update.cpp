@@ -292,8 +292,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				for (uint32_t ii = 0, num = bx::uint32_min(10, (uint32_t)quads.size() ); ii < num; ++ii)
 				{
-					const PackCube& face = quads.front();
-					cube.clear(face);
+					cube.clear(quads.front() );
 					quads.pop_front();
 				}
 			}

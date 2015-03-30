@@ -1319,10 +1319,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						);
 
 					// Cubes.
-					for (uint8_t ii = 0; ii < numCubes; ++ii)
+					for (uint8_t jj = 0; jj < numCubes; ++jj)
 					{
 						cubeMesh.submit(viewId
-							, cubeMtx[ii]
+							, cubeMtx[jj]
 							, programTextureLightning
 							, s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
 							, figureTex

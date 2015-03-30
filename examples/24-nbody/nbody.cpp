@@ -209,7 +209,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		imguiSlider("Random seed", u_paramsData.baseSeed, 0, 100);
 		int32_t shape = imguiChoose(u_paramsData.initialShape, "Point", "Sphere", "Box", "Donut");
 		imguiSlider("Initial speed", u_paramsData.initialSpeed, 0.0f, 300.0f, 0.1f);
-		bool reset = imguiButton("Reset");
+		bool defaults = imguiButton("Reset");
 		imguiSeparatorLine();
 		imguiSlider("Particle count (x512)", u_paramsData.dispatchSize, 1, 64);
 		imguiSlider("Gravity", u_paramsData.gravity, 0.0f, 0.3f, 0.001f);
@@ -226,11 +226,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Modify parameters and reset if shape is changed
 		if (shape != u_paramsData.initialShape)
 		{
-			reset = true;
+			defaults = true;
 			InitializeParams(shape, &u_paramsData);
 		}
 
-		if (reset)
+		if (defaults)
 		{
 			bgfx::setBuffer(0, prevPositionBuffer0, bgfx::Access::Write);
 			bgfx::setBuffer(1, currPositionBuffer0, bgfx::Access::Write);
@@ -247,8 +247,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bx::xchg(currPositionBuffer0, currPositionBuffer1);
 		bx::xchg(prevPositionBuffer0, prevPositionBuffer1);
-
-		float view[16];
 
 		// Update camera.
 		cameraUpdate(deltaTime, mouseState);
