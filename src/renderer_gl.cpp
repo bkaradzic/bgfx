@@ -2911,20 +2911,20 @@ namespace bgfx { namespace gl
 		m_numPredefined = 0;
  		m_numSamplers = 0;
 
-		struct VariableInfo
-		{
-			GLenum type;
-			GLint  loc;
-			GLint  num;
-		};
-		VariableInfo vi;
-		GLenum props[] = { GL_TYPE, GL_LOCATION, GL_ARRAY_SIZE };
-
 		const bool piqSupported = s_extension[Extension::ARB_program_interface_query].m_supported;
 
 		BX_TRACE("Uniforms (%d):", activeUniforms);
 		for (int32_t ii = 0; ii < activeUniforms; ++ii)
 		{
+			struct VariableInfo
+			{
+				GLenum type;
+				GLint  loc;
+				GLint  num;
+			};
+			VariableInfo vi;
+			GLenum props[] ={ GL_TYPE, GL_LOCATION, GL_ARRAY_SIZE };
+
 			GLenum gltype;
 			GLint num;
 			GLint loc;
@@ -3262,9 +3262,9 @@ namespace bgfx { namespace gl
 			if (decompress)
 			{
 				m_textureFormat = (uint8_t)TextureFormat::BGRA8;
-				const TextureFormatInfo& tfi = s_textureFormat[TextureFormat::BGRA8];
-				m_fmt  = tfi.m_fmt;
-				m_type = tfi.m_type;
+				const TextureFormatInfo& tfiBgra8 = s_textureFormat[TextureFormat::BGRA8];
+				m_fmt  = tfiBgra8.m_fmt;
+				m_type = tfiBgra8.m_type;
 			}
 
 			setSamplerState(_flags);
@@ -4062,9 +4062,9 @@ namespace bgfx { namespace gl
 						{
 							for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 							{
-								char temp[16];
-								bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == strstr(code, temp) ? 0 : ii+1);
+								char tmpFragData[16];
+								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
+								fragData = bx::uint32_max(fragData, NULL == strstr(code, tmpFragData) ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
@@ -4264,7 +4264,8 @@ namespace bgfx { namespace gl
 			GL_CHECK(glGenFramebuffers(1, &m_fbo[1]) );
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[1]) );
 
-			for (uint32_t ii = 0, colorIdx = 0; ii < _num; ++ii)
+			colorIdx = 0;
+			for (uint32_t ii = 0; ii < _num; ++ii)
 			{
 				TextureHandle handle = _handles[ii];
 				if (isValid(handle) )
@@ -4457,8 +4458,11 @@ namespace bgfx { namespace gl
 					;
 		uint32_t blendFactor = 0;
 
-		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+		uint8_t primIndex;
+		{
+			const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+			primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+		}
 		PrimInfo prim = s_primInfo[primIndex];
 
 		uint32_t baseVertex = 0;
@@ -4853,16 +4857,15 @@ namespace bgfx { namespace gl
 								&& blendIndependentSupported
 								;
 
-							const uint32_t blend    = uint32_t( (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
-							const uint32_t equation = uint32_t( (newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
+							const uint32_t blend  = uint32_t( (newFlags&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
+							const uint32_t srcRGB = (blend    )&0xf;
+							const uint32_t dstRGB = (blend>> 4)&0xf;
+							const uint32_t srcA   = (blend>> 8)&0xf;
+							const uint32_t dstA   = (blend>>12)&0xf;
 
-							const uint32_t srcRGB  = (blend    )&0xf;
-							const uint32_t dstRGB  = (blend>> 4)&0xf;
-							const uint32_t srcA    = (blend>> 8)&0xf;
-							const uint32_t dstA    = (blend>>12)&0xf;
-
-							const uint32_t equRGB = (equation   )&0x7;
-							const uint32_t equA   = (equation>>3)&0x7;
+							const uint32_t equ    = uint32_t((newFlags&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
+							const uint32_t equRGB = (equ   )&0x7;
+							const uint32_t equA   = (equ>>3)&0x7;
 
 							const uint32_t numRt = getNumRt();
 
@@ -5044,7 +5047,7 @@ namespace bgfx { namespace gl
 								currentVao = id;
 								GL_CHECK(glBindVertexArray(id) );
 
-								ProgramGL& program = m_program[programIdx];
+								program = m_program[programIdx];
 								program.add(hash);
 
 								if (isValid(draw.m_vertexBuffer) )
@@ -5142,7 +5145,7 @@ namespace bgfx { namespace gl
 								baseVertex = draw.m_startVertex;
 								const VertexBufferGL& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
 								uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
-								const ProgramGL& program = m_program[programIdx];
+								program = m_program[programIdx];
 								program.bindAttributes(m_vertexDecls[decl], draw.m_startVertex);
 
 								if (isValid(draw.m_instanceDataBuffer) )

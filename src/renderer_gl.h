@@ -623,9 +623,9 @@ namespace bgfx { namespace gl
 				BX_MACRO_BLOCK_BEGIN \
 					/*BX_TRACE(#_call);*/ \
 					_call; \
-					GLenum err = glGetError(); \
-					_check(0 == err, #_call "; GL error 0x%x: %s", err, glEnumName(err) ); \
-					BX_UNUSED(err); \
+					GLenum gl_err = glGetError(); \
+					_check(0 == gl_err, #_call "; GL error 0x%x: %s", gl_err, glEnumName(gl_err) ); \
+					BX_UNUSED(gl_err); \
 				BX_MACRO_BLOCK_END
 
 #define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
@@ -704,6 +704,24 @@ namespace bgfx { namespace gl
 	class VaoCacheRef
 	{
 	public:
+#if BX_COMPILER_MSVC >= 1900
+		void add(uint32_t _hash)
+		{
+			m_vaoSet.insert(stl::make_pair(_hash, _hash) );
+		}
+
+		void invalidate(VaoStateCache& _vaoCache)
+		{
+			for (VaoSet::iterator it = m_vaoSet.begin(), itEnd = m_vaoSet.end(); it != itEnd; ++it)
+			{
+				_vaoCache.invalidate(it->first);
+			}
+
+			m_vaoSet.clear();
+		}
+
+		typedef stl::unordered_map<uint32_t, uint32_t> VaoSet;
+#else
 		void add(uint32_t _hash)
 		{
 			m_vaoSet.insert(_hash);
@@ -720,6 +738,7 @@ namespace bgfx { namespace gl
 		}
 
 		typedef stl::unordered_set<uint32_t> VaoSet;
+#endif //
 		VaoSet m_vaoSet;
 	};
 
