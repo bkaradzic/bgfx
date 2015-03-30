@@ -495,7 +495,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyTexture(textureCube);
 	bgfx::destroyIndexBuffer(ibh);
 	bgfx::destroyVertexBuffer(vbh);
-	bgfx::destroyProgram(program3d);
+	if (bgfx::isValid(program3d) )
+	{
+		bgfx::destroyProgram(program3d);
+	}
 	bgfx::destroyProgram(programCmp);
 	bgfx::destroyProgram(program);
 	bgfx::destroyUniform(u_time);
