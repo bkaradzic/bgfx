@@ -3633,7 +3633,8 @@ namespace bgfx { namespace gl
 
 	void TextureGL::setSamplerState(uint32_t _flags)
 	{
-		if (!s_textureFilter[m_textureFormat])
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30)
+		&&  !s_textureFilter[m_textureFormat])
 		{
 			// Force point sampling when texture format doesn't support linear sampling.
 			_flags &= 0
@@ -5047,7 +5048,6 @@ namespace bgfx { namespace gl
 								currentVao = id;
 								GL_CHECK(glBindVertexArray(id) );
 
-								program = m_program[programIdx];
 								program.add(hash);
 
 								if (isValid(draw.m_vertexBuffer) )
@@ -5145,7 +5145,6 @@ namespace bgfx { namespace gl
 								baseVertex = draw.m_startVertex;
 								const VertexBufferGL& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
 								uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
-								program = m_program[programIdx];
 								program.bindAttributes(m_vertexDecls[decl], draw.m_startVertex);
 
 								if (isValid(draw.m_instanceDataBuffer) )
