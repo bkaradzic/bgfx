@@ -516,6 +516,26 @@ namespace bgfx { namespace gl
 		bool m_initialize;
 	};
 
+	// Extension registry
+	//
+	// ANGLE:
+	// https://github.com/google/angle/tree/master/extensions
+	//
+	// CHROMIUM:
+	// https://chromium.googlesource.com/chromium/src.git/+/refs/heads/git-svn/gpu/GLES2/extensions/CHROMIUM
+	//
+	// EGL:
+	// https://www.khronos.org/registry/egl/extensions/
+	//
+	// GL:
+	// https://www.opengl.org/registry/
+	//
+	// GLES:
+	// https://www.khronos.org/registry/gles/extensions/
+	//
+	// WEBGL:
+	// https://www.khronos.org/registry/webgl/extensions/
+	//
 	static Extension s_extension[] =
 	{
 		{ "AMD_conservative_depth",                false,                             true  },

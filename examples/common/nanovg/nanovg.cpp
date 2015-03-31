@@ -412,7 +412,7 @@ NVGcolor nvgLerpRGBA(NVGcolor c0, NVGcolor c1, float u)
 	{
 		cint.rgba[i] = c0.rgba[i] * oneminu + c1.rgba[i] * u;
 	}
-	 
+
 	return cint;
 }
 
@@ -934,7 +934,7 @@ void nvgIntersectScissor(NVGcontext* ctx, float x, float y, float w, float h)
 	}
 
 	// Transform the current scissor rect into current transform space.
-	// If there is difference in rotation, this will be approximation. 
+	// If there is difference in rotation, this will be approximation.
 	memcpy(pxform, state->scissor.xform, sizeof(float)*6);
 	ex = state->scissor.extent[0];
 	ey = state->scissor.extent[1];
@@ -1194,7 +1194,7 @@ static void nvg__tesselateBezier(NVGcontext* ctx,
 {
 	float x12,y12,x23,y23,x34,y34,x123,y123,x234,y234,x1234,y1234;
 	float dx,dy,d2,d3;
-	
+
 	if (level > 10) return;
 
 	x12 = (x1+x2)*0.5f;
@@ -1226,8 +1226,8 @@ static void nvg__tesselateBezier(NVGcontext* ctx,
 	x1234 = (x123+x234)*0.5f;
 	y1234 = (y123+y234)*0.5f;
 
-	nvg__tesselateBezier(ctx, x1,y1, x12,y12, x123,y123, x1234,y1234, level+1, 0); 
-	nvg__tesselateBezier(ctx, x1234,y1234, x234,y234, x34,y34, x4,y4, level+1, type); 
+	nvg__tesselateBezier(ctx, x1,y1, x12,y12, x123,y123, x1234,y1234, level+1, 0);
+	nvg__tesselateBezier(ctx, x1234,y1234, x234,y234, x34,y34, x4,y4, level+1, type);
 }
 
 static void nvg__flattenPaths(NVGcontext* ctx)
@@ -1625,7 +1625,7 @@ static void nvg__calculateJoins(NVGcontext* ctx, float w, int lineJoin, float mi
 
 
 static int nvg__expandStroke(NVGcontext* ctx, float w, int lineCap, int lineJoin, float miterLimit)
-{	
+{
 	NVGpathCache* cache = ctx->cache;
 	NVGvertex* verts;
 	NVGvertex* dst;
@@ -1889,7 +1889,7 @@ void nvgQuadTo(NVGcontext* ctx, float cx, float cy, float x, float y)
 {
     float x0 = ctx->commandx;
     float y0 = ctx->commandy;
-    float vals[] = { NVG_BEZIERTO, 
+    float vals[] = { NVG_BEZIERTO,
         x0 + 2.0f/3.0f*(cx - x0), y0 + 2.0f/3.0f*(cy - y0),
         x + 2.0f/3.0f*(cx - x), y + 2.0f/3.0f*(cy - y),
         x, y };
@@ -1971,7 +1971,7 @@ void nvgArc(NVGcontext* ctx, float cx, float cy, float r, float a0, float a1, in
 	float px = 0, py = 0, ptanx = 0, ptany = 0;
 	float vals[3 + 5*7 + 100];
 	int i, ndivs, nvals;
-	int move = ctx->ncommands > 0 ? NVG_LINETO : NVG_MOVETO; 
+	int move = ctx->ncommands > 0 ? NVG_LINETO : NVG_MOVETO;
 
 	// Clamp angles
 	da = a1 - a0;
@@ -2364,7 +2364,7 @@ float nvgText(NVGcontext* ctx, float x, float y, const char* string, const char*
 		}
 	}
 
-	// TODO: add back-end bit to do this just once per frame. 
+	// TODO: add back-end bit to do this just once per frame.
 	nvg__flushTextTexture(ctx);
 
 	nvg__renderText(ctx, verts, nverts);
