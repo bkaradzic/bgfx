@@ -1109,6 +1109,7 @@ BND_EXPORT NVGcolor bndNodeWireColor(const BNDnodeTheme *theme, BNDwidgetState s
     #pragma warning (disable: 4100) // Switch off unreferenced formal parameter warnings
     #pragma warning (disable: 4244)
     #pragma warning (disable: 4305)
+    #pragma warning (disable: 4838) // warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
     #ifdef __cplusplus
     #define BND_INLINE inline
     #else

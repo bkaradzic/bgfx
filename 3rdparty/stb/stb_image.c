@@ -187,10 +187,15 @@
 
 #ifndef STBI_NO_STDIO
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(_CRT_SECURE_NO_WARNINGS)
-#define _CRT_SECURE_NO_WARNINGS // suppress warnings about fopen()
-#pragma warning(push)
-#pragma warning(disable:4996)   // suppress even more warnings about fopen()
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+#	if !defined(_CRT_SECURE_NO_WARNINGS)
+#		define _CRT_SECURE_NO_WARNINGS // suppress warnings about fopen()
+#	endif
+#	pragma warning(push)
+#	pragma warning(disable:4996)   // suppress even more warnings about fopen()
+#	pragma warning(disable:4312)   // warning C4312: 'type cast': conversion from 'int' to 'unsigned char *' of greater size
+#	pragma warning(disable:4456)   // warning C4456: declaration of 'k' hides previous local declaration
+#	pragma warning(disable:4457)   // warning C4457: declaration of 'y' hides function parameter
 #endif
 #include <stdio.h>
 #endif // STBI_NO_STDIO

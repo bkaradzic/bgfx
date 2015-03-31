@@ -1042,10 +1042,10 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 				for (j = 0; j < nglyphs; j++) {
 					float x0 = glyphs[j].x;
 					float x1 = (j+1 < nglyphs) ? glyphs[j+1].x : x+row->width;
-					float gx = x0 * 0.3f + x1 * 0.7f;
-					if (mx >= px && mx < gx)
+					float tgx = x0 * 0.3f + x1 * 0.7f;
+					if (mx >= px && mx < tgx)
 						caretx = glyphs[j].x;
-					px = gx;
+					px = tgx;
 				}
 				nvgBeginPath(vg);
 				nvgFillColor(vg, nvgRGBA(255,192,0,255));
