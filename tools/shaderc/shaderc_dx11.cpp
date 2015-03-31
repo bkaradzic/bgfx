@@ -8,6 +8,13 @@
 #if SHADERC_CONFIG_DIRECT3D11
 
 #include <d3dcompiler.h>
+#include <d3d11shader.h>
+
+#ifndef D3D_SVF_USED
+#	define D3D_SVF_USED 2
+#endif // D3D_SVF_USED
+
+static const GUID GUID_ID3D11ShaderReflection = { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } };
 
 struct RemapInputSemantic
 {
@@ -202,7 +209,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	ID3D11ShaderReflection* reflect = NULL;
 	hr = D3DReflect(code->GetBufferPointer()
 		, code->GetBufferSize()
-		, IID_ID3D11ShaderReflection
+		, GUID_ID3D11ShaderReflection
 		, (void**)&reflect
 		);
 	if (FAILED(hr) )
@@ -370,7 +377,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		ID3DBlob* stripped;
 		hr = D3DStripShader(code->GetBufferPointer()
 			, code->GetBufferSize()
-			, D3DCOMPILER_STRIP_REFLECTION_DATA	
+			, D3DCOMPILER_STRIP_REFLECTION_DATA
 			| D3DCOMPILER_STRIP_TEST_BLOBS
 			, &stripped
 			);

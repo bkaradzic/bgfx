@@ -217,12 +217,14 @@ OS=darwin
 BUILD_PROJECT_DIR=gmake-osx
 BUILD_OUTPUT_DIR=osx64_clang
 BUILD_TOOLS_CONFIG=release64
+BUILD_TOOLS_SUFFIX=Release
 EXE=
 else
 OS=linux
 BUILD_PROJECT_DIR=gmake-linux
 BUILD_OUTPUT_DIR=linux64_gcc
 BUILD_TOOLS_CONFIG=release64
+BUILD_TOOLS_SUFFIX=Release
 EXE=
 endif
 else
@@ -230,19 +232,16 @@ OS=windows
 BUILD_PROJECT_DIR=gmake-mingw-gcc
 BUILD_OUTPUT_DIR=win32_mingw-gcc
 BUILD_TOOLS_CONFIG=release32
+BUILD_TOOLS_SUFFIX=Release
 EXE=.exe
 endif
 
-.build/$(BUILD_OUTPUT_DIR)/bin/shadercRelease$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
+tools/bin/$(OS)/shaderc$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
 	$(SILENT) make -C .build/projects/$(BUILD_PROJECT_DIR) -f shaderc.make config=$(BUILD_TOOLS_CONFIG)
+	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/shaderc$(BUILD_TOOLS_SUFFIX)$(EXE) $(@)
 
-tools/bin/$(OS)/shaderc$(EXE): .build/$(BUILD_OUTPUT_DIR)/bin/shadercRelease$(EXE)
-	$(SILENT) cp $(<) $(@)
-
-.build/$(BUILD_OUTPUT_DIR)/bin/geometrycRelease$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
+tools/bin/$(OS)/geometryc$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
 	$(SILENT) make -C .build/projects/$(BUILD_PROJECT_DIR) -f geometryc.make config=$(BUILD_TOOLS_CONFIG)
-
-tools/bin/$(OS)/geometryc$(EXE): .build/$(BUILD_OUTPUT_DIR)/bin/geometrycRelease$(EXE)
-	$(SILENT) cp $(<) $(@)
+	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/geometryc$(BUILD_TOOLS_SUFFIX)$(EXE) $(@)
 
 tools: tools/bin/$(OS)/shaderc$(EXE) tools/bin/$(OS)/geometryc$(EXE)
