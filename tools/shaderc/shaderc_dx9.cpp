@@ -250,6 +250,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
+	#if !defined(__MINGW32__)
 	if (_cmdLine.hasArg('\0', "disasm") )
 	{
 		LPD3DXBUFFER disasm;
@@ -268,7 +269,7 @@ bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, b
 			disasm->Release();
 		}
 	}
-
+	#endif
 	if (NULL != code)
 	{
 		code->Release();
