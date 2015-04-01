@@ -51,6 +51,7 @@ project "shaderc"
 			"$(DXSDK_DIR)/include",
 		}
 
+	configuration { "vs*" }
 		links {
 			"d3dx9",
 			"d3dcompiler",

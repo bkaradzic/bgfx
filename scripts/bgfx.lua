@@ -76,7 +76,7 @@ function bgfxProject(_name, _kind, _defines)
 				"GLESv2",
 			}
 
-		configuration { "mingw* or vs2008" }
+		configuration { "vs2008" }
 			includedirs {
 				"$(DXSDK_DIR)/include",
 			}
