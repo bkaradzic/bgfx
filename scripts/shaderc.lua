@@ -46,12 +46,13 @@ project "shaderc"
 			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
 
-	configuration { "windows" }
+	configuration { "vs*" }
 		includedirs {
 			"$(DXSDK_DIR)/include",
 		}
 
-	configuration { "vs*" }
+	
+	configuration { "windows" }
 		links {
 			"d3dx9",
 			"d3dcompiler",
