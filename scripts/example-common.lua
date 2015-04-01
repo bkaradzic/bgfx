@@ -37,7 +37,7 @@ project ("example-common")
 		}
 	end
 
-	configuration { "mingw* or vs2008" }
+	configuration { "vs2008" }
 		includedirs {
 			"$(DXSDK_DIR)/include",
 		}
