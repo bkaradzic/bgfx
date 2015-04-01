@@ -2099,18 +2099,41 @@ again:
 		return mem;
 	}
 
-	const Memory* makeRef(const void* _data, uint32_t _size)
+	struct MemoryRef
 	{
-		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) );
-		mem->size = _size;
-		mem->data = (uint8_t*)_data;
-		return mem;
+		Memory mem;
+		ReleaseFn releaseFn;
+		void* userData;
+	};
+
+	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn, void* _userData)
+	{
+		MemoryRef* memRef = (MemoryRef*)BX_ALLOC(g_allocator, sizeof(MemoryRef) );
+		memRef->mem.size  = _size;
+		memRef->mem.data  = (uint8_t*)_data;
+		memRef->releaseFn = _releaseFn;
+		memRef->userData  = _userData;
+		return &memRef->mem;
+	}
+
+	bool isMemoryRef(const Memory* _mem)
+	{
+		return _mem->data != (uint8_t*)_mem + sizeof(Memory);
 	}
 
 	void release(const Memory* _mem)
 	{
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		BX_FREE(g_allocator, const_cast<Memory*>(_mem) );
+		Memory* mem = const_cast<Memory*>(_mem);
+		if (isMemoryRef(mem) )
+		{
+			MemoryRef* memRef = reinterpret_cast<MemoryRef*>(mem);
+			if (NULL != memRef->releaseFn)
+			{
+				memRef->releaseFn(mem->data, memRef->userData);
+			}
+		}
+		BX_FREE(g_allocator, mem);
 	}
 
 	void setDebug(uint32_t _debug)

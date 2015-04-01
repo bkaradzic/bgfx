@@ -279,6 +279,9 @@ namespace bgfx
 	}
 
 	///
+	typedef void (*ReleaseFn)(void* _ptr, void* _userData);
+
+	///
 	struct Memory
 	{
 		uint8_t* data;
@@ -604,8 +607,11 @@ namespace bgfx
 
 	/// Make reference to data to pass to bgfx. Unlike `bgfx::alloc` this call
 	/// doesn't allocate memory for data. It just copies pointer to data. You
-	/// must make sure data is available for at least 2 `bgfx::frame` calls.
-	const Memory* makeRef(const void* _data, uint32_t _size);
+	/// can pass `ReleaseFn` function pointer to release this memory after it's
+	/// consumed, or you must make sure data is available for at least 2
+	/// `bgfx::frame` calls. `ReleaseFn` function must be able to be called
+	/// called from any thread.
+	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn = NULL, void* _userData = NULL);
 
 	/// Set debug flags.
 	///
