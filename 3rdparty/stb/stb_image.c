@@ -3254,7 +3254,7 @@ static stbi_uc *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int 
    unsigned char *tga_data;
    unsigned char *tga_palette = NULL;
    int i, j;
-   unsigned char raw_data[4];
+   unsigned char raw_data[4] = {};
    int RLE_count = 0;
    int RLE_repeating = 0;
    int read_next_pixel = 1;
