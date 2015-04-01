@@ -696,6 +696,7 @@ namespace bgfx { namespace d3d11
 
 			m_numWindows = 1;
 
+#if !defined(__MINGW32__)
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				ID3D11InfoQueue* infoQueue;
@@ -727,6 +728,7 @@ namespace bgfx { namespace d3d11
 					setGraphicsDebuggerPresent(true);
 				}
 			}
+#endif // __MINGW__
 
 			UniformHandle handle = BGFX_INVALID_HANDLE;
 			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
