@@ -701,7 +701,7 @@ namespace bgfx
 		void operator=(const CommandBuffer&);
 	};
 
-#define SORT_KEY_RENDER_DRAW (UINT64_C(1)<<0x2b)
+#define SORT_KEY_RENDER_DRAW (UINT64_C(1)<<0x36)
 #define SORT_KEY_VIEW_SHIFT  UINT8_C(0x37)
 #define SORT_KEY_VIEW_MASK   ( (uint64_t(BGFX_CONFIG_MAX_VIEWS-1) )<<SORT_KEY_VIEW_SHIFT)
 
@@ -714,16 +714,16 @@ namespace bgfx
 		{
 			// |               3               2               1               0|
 			// |fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210|
-			// | vvvvvvvvsssssssssssdttpppppppppdddddddddddddddddddddddddddddddd|
-			// |        ^          ^^ ^        ^                               ^|
-			// |        |          || |        |                               ||
-			// |   view-+      seq-+| +-trans  +-program                 depth-+|
-			// |                    +-draw                                      |
+			// | vvvvvvvvdsssssssssssttpppppppppdddddddddddddddddddddddddddddddd|
+			// |        ^^          ^ ^        ^                               ^|
+			// |        ||          | |        |                               ||
+			// |   view-+|      seq-+ +-trans  +-program                 depth-+|
+			// |         +-draw                                                 |
 
 			const uint64_t depth   = m_depth;
 			const uint64_t program = uint64_t(m_program)<<0x20;
 			const uint64_t trans   = uint64_t(m_trans  )<<0x29;
-			const uint64_t seq     = uint64_t(m_seq    )<<0x2c;
+			const uint64_t seq     = uint64_t(m_seq    )<<0x2b;
 			const uint64_t view    = uint64_t(m_view   )<<SORT_KEY_VIEW_SHIFT;
 			const uint64_t key     = depth|program|trans|SORT_KEY_RENDER_DRAW|seq|view;
 			return key;
@@ -733,14 +733,14 @@ namespace bgfx
 		{
 			// |               3               2               1               0|
 			// |fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210|
-			// | vvvvvvvvsssssssssssdppppppppp                                  |
-			// |        ^          ^^        ^                                  |
-			// |        |          ||        |                                  |
-			// |   view-+      seq-+|        +-program                          |
-			// |                    +-draw                                      |
+			// | vvvvvvvvdsssssssssssppppppppp                                  |
+			// |        ^^          ^        ^                                  |
+			// |        ||          |        |                                  |
+			// |   view-+|      seq-+        +-program                          |
+			// |         +-draw                                                 |
 
 			const uint64_t program = uint64_t(m_program)<<0x22;
-			const uint64_t seq     = uint64_t(m_seq    )<<0x2c;
+			const uint64_t seq     = uint64_t(m_seq    )<<0x2b;
 			const uint64_t view    = uint64_t(m_view   )<<SORT_KEY_VIEW_SHIFT;
 			const uint64_t key     = program|seq|view;
 			return key;
