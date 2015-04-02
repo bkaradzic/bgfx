@@ -796,7 +796,7 @@ namespace bgfx { namespace d3d11
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
 				char name[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1];
-				bx::snprintf(name, sizeof(name), "%3d  ", ii);
+				bx::snprintf(name, sizeof(name), "%3d   ", ii);
 				mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 			}
 
@@ -1073,10 +1073,13 @@ namespace bgfx { namespace d3d11
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
 		{
-			mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, _name
-				, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				);
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			{
+				mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					, _name
+					, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+					);
+			}
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
@@ -3217,18 +3220,26 @@ namespace bgfx { namespace d3d11
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
 					{
-						wchar_t* viewNameW = s_viewNameW[view];
-						viewNameW[3] = eye ? L'R' : L'L';
-						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							wchar_t* viewNameW = s_viewNameW[view];
+							viewNameW[3] = L' ';
+							viewNameW[4] = eye ? L'R' : L'L';
+							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+						}
 
 						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
 						viewState.m_rect.m_width /= 2;
 					}
 					else
 					{
-						wchar_t* viewNameW = s_viewNameW[view];
-						viewNameW[3] = L' ';
-						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							wchar_t* viewNameW = s_viewNameW[view];
+							viewNameW[3] = L' ';
+							viewNameW[4] = L' ';
+							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+						}
 					}
 
 					const Rect& scissorRect = _render->m_scissor[view];
@@ -3257,6 +3268,14 @@ namespace bgfx { namespace d3d11
 					if (!wasCompute)
 					{
 						wasCompute = true;
+
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							wchar_t* viewNameW = s_viewNameW[view];
+							viewNameW[3] = L'C';
+							PIX_ENDEVENT();
+							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+						}
 
 						deviceCtx->IASetVertexBuffers(0, 2, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
 						deviceCtx->IASetIndexBuffer(NULL, DXGI_FORMAT_R16_UINT, 0);
@@ -3376,6 +3395,14 @@ namespace bgfx { namespace d3d11
 
 				if (wasCompute)
 				{
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					{
+						wchar_t* viewNameW = s_viewNameW[view];
+						viewNameW[3] = L' ';
+						PIX_ENDEVENT();
+						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+					}
+
 					wasCompute = false;
 
 					programIdx = invalidHandle;
@@ -3722,6 +3749,14 @@ namespace bgfx { namespace d3d11
 
 			if (wasCompute)
 			{
+				if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+				{
+					wchar_t* viewNameW = s_viewNameW[view];
+					viewNameW[3] = L'C';
+					PIX_ENDEVENT();
+					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+				}
+
 				invalidateCompute();
 			}
 

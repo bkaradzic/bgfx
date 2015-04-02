@@ -1540,7 +1540,7 @@ namespace bgfx { namespace gl
 			// Init reserved part of view name.
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
-				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d  ", ii);
+				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
 			ovrPostReset();
@@ -1795,10 +1795,13 @@ namespace bgfx { namespace gl
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
 		{
-			bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, _name
-				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				);
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			{
+				bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					, _name
+					, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+					);
+			}
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
@@ -4508,6 +4511,7 @@ namespace bgfx { namespace gl
 
 		uint32_t baseVertex = 0;
 		GLuint currentVao = 0;
+		bool wasCompute = false;
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
@@ -4592,18 +4596,26 @@ namespace bgfx { namespace gl
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
 					{
-						char* viewName = s_viewName[view];
-						viewName[3] = eye ? 'R' : 'L';
-						GL_CHECK(glInsertEventMarker(0, viewName) );
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							char* viewName = s_viewName[view];
+							viewName[3] = ' ';
+							viewName[4] = eye ? 'R' : 'L';
+							GL_CHECK(glInsertEventMarker(0, viewName) );
+						}
 
 						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
 						viewState.m_rect.m_width /= 2;
 					}
 					else
 					{
-						char* viewName = s_viewName[view];
-						viewName[3] = ' ';
-						GL_CHECK(glInsertEventMarker(0, viewName) );
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							char* viewName = s_viewName[view];
+							viewName[3] = ' ';
+							viewName[4] = ' ';
+							GL_CHECK(glInsertEventMarker(0, viewName) );
+						}
 					}
 
 					const Rect& scissorRect = _render->m_scissor[view];
@@ -4633,6 +4645,18 @@ namespace bgfx { namespace gl
 
 				if (isCompute)
 				{
+					if (!wasCompute)
+					{
+						wasCompute = true;
+
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							char* viewName = s_viewName[view];
+							viewName[3] = 'C';
+							GL_CHECK(glInsertEventMarker(0, viewName) );
+						}
+					}
+
 					if (computeSupported)
 					{
 						const RenderCompute& compute = renderItem.compute;
@@ -4701,6 +4725,18 @@ namespace bgfx { namespace gl
 					}
 
 					continue;
+				}
+
+				if (wasCompute)
+				{
+					wasCompute = false;
+
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					{
+						char* viewName = s_viewName[view];
+						viewName[3] = ' ';
+						GL_CHECK(glInsertEventMarker(0, viewName) );
+					}
 				}
 
 				const RenderDraw& draw = renderItem.draw;

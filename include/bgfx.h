@@ -1064,6 +1064,14 @@ namespace bgfx
 	/// @remarks
 	///   This is debug only feature.
 	///
+	///   In graphics debugger view name will appear as:
+	///
+	///     "nnnce <view name>"
+	///      ^  ^^ ^
+	///      |  |+-- eye (L/R)
+	///      |  +-- compute (C)
+	///      +-- view id
+	///
 	void setViewName(uint8_t _id, const char* _name);
 
 	/// Set view rectangle. Draw primitive outside view will be clipped.
