@@ -7,6 +7,7 @@
 
 #if BX_PLATFORM_OSX && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
+#	include <AvailabilityMacros.h>
 #	include <Cocoa/Cocoa.h>
 #	include <bx/os.h>
 
@@ -36,6 +37,24 @@ namespace bgfx { namespace gl
 		}
 	};
 
+	class AutoreleasePoolHolder
+	{
+	public:
+		AutoreleasePoolHolder() : m_pool([[NSAutoreleasePool alloc] init])
+		{
+		}
+
+		~AutoreleasePoolHolder()
+		{
+			[m_pool release];
+		}
+
+	private:
+		AutoreleasePoolHolder(AutoreleasePoolHolder const&);
+
+		NSAutoreleasePool* const m_pool;
+	};
+
 	static void* s_opengl = NULL;
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
@@ -45,11 +64,13 @@ namespace bgfx { namespace gl
 		s_opengl = bx::dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL");
 		BX_CHECK(NULL != s_opengl, "OpenGL dynamic library is not found!");
 
+		const AutoreleasePoolHolder pool;
 		NSWindow* nsWindow = (NSWindow*)g_bgfxNSWindow;
 		m_context = g_bgfxNSGL;
 
 		if (NULL == g_bgfxNSGL)
 		{
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 			NSOpenGLPixelFormatAttribute profile =
 #if BGFX_CONFIG_RENDERER_OPENGL >= 31
 				NSOpenGLProfileVersion3_2Core
@@ -57,9 +78,12 @@ namespace bgfx { namespace gl
 				NSOpenGLProfileVersionLegacy
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 				;
+#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 
 			NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 				NSOpenGLPFAOpenGLProfile, profile,
+#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 				NSOpenGLPFAColorSize,     24,
 				NSOpenGLPFAAlphaSize,     8,
 				NSOpenGLPFADepthSize,     24,
