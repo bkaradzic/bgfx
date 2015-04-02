@@ -3096,6 +3096,11 @@ BGFX_C_API const bgfx_memory_t* bgfx_make_ref(const void* _data, uint32_t _size)
 	return (const bgfx_memory_t*)bgfx::makeRef(_data, _size);
 }
 
+BGFX_C_API const bgfx_memory_t* bgfx_make_ref_release(const void* _data, uint32_t _size, bgfx_release_fn_t _releaseFn, void* _userData)
+{
+	return (const bgfx_memory_t*)bgfx::makeRef(_data, _size, _releaseFn, _userData);
+}
+
 BGFX_C_API void bgfx_set_debug(uint32_t _debug)
 {
 	bgfx::setDebug(_debug);

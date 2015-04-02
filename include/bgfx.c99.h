@@ -167,6 +167,12 @@ BGFX_HANDLE_T(bgfx_vertex_decl_handle);
 #undef BGFX_HANDLE_T
 
 /**
+ *
+ */
+typedef void (*bgfx_release_fn_t)(void* _ptr, void* _userData);
+
+/**
+ *
  */
 typedef struct bgfx_memory
 {
@@ -176,6 +182,7 @@ typedef struct bgfx_memory
 } bgfx_memory_t;
 
 /**
+ *
  */
 typedef struct bgfx_transform
 {
@@ -633,6 +640,11 @@ BGFX_C_API const bgfx_memory_t* bgfx_copy(const void* _data, uint32_t _size);
  *  You must make sure data is available for at least 2 bgfx::frame calls.
  */
 BGFX_C_API const bgfx_memory_t* bgfx_make_ref(const void* _data, uint32_t _size);
+
+/**
+ *
+ */
+BGFX_C_API const bgfx_memory_t* bgfx_make_ref_release(const void* _data, uint32_t _size, bgfx_release_fn_t _releaseFn, void* _userData);
 
 /**
  *  Set debug flags.
