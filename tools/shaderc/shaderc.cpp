@@ -952,22 +952,22 @@ int main(int _argc, const char* _argv[])
 			{
 				const char* precision = NULL;
 				const char* interpolation = NULL;
-				const char* type = parse;
+				const char* typen = parse;
 
-				if (0 == strncmp(type, "lowp", 4)
-				||  0 == strncmp(type, "mediump", 7)
-				||  0 == strncmp(type, "highp", 5) )
+				if (0 == strncmp(typen, "lowp", 4)
+				||  0 == strncmp(typen, "mediump", 7)
+				||  0 == strncmp(typen, "highp", 5) )
 				{
-					precision = type;
-					type = parse = bx::strws(bx::strword(parse) );
+					precision = typen;
+					typen = parse = bx::strws(bx::strword(parse) );
 				}
 
-				if (0 == strncmp(type, "flat", 4)
-				||  0 == strncmp(type, "smooth", 6)
-				||  0 == strncmp(type, "noperspective", 13) )
+				if (0 == strncmp(typen, "flat", 4)
+				||  0 == strncmp(typen, "smooth", 6)
+				||  0 == strncmp(typen, "noperspective", 13) )
 				{
-					interpolation = type;
-					type = parse = bx::strws(bx::strword(parse) );
+					interpolation = typen;
+					typen = parse = bx::strws(bx::strword(parse) );
 				}
 
 				const char* name      = parse = bx::strws(bx::strword(parse) );
@@ -976,7 +976,7 @@ int main(int _argc, const char* _argv[])
 				const char* assign    = parse = bx::strws(bx::strword(parse) );
 				const char* init      = parse = bx::strws((*parse == '=' ? ++parse : parse));
 
-				if (type < eol
+				if (typen < eol
 				&&  name < eol
 				&&  column < eol
 				&&  ':' == *column
@@ -993,7 +993,7 @@ int main(int _argc, const char* _argv[])
 						var.m_interpolation.assign(interpolation, bx::strword(interpolation)-interpolation);
 					}
 
-					var.m_type.assign(type, bx::strword(type)-type);
+					var.m_type.assign(typen, bx::strword(typen)-typen);
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
 
@@ -1100,9 +1100,6 @@ int main(int _argc, const char* _argv[])
 				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
 				return EXIT_FAILURE;
 			}
-
-			uint32_t inputHash = 0;
-			uint32_t outputHash = 0;
 
 			if ('f' == shaderType)
 			{
@@ -1653,7 +1650,6 @@ int main(int _argc, const char* _argv[])
 
 						if (0 != glsl)
 						{
-							const char* profile = cmdLine.findOption('p', "profile");
 							if (NULL == profile)
 							{
 								writef(&writer

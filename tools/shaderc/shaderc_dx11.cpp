@@ -297,14 +297,14 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 					hr = type->GetDesc(&constDesc);
 					if (SUCCEEDED(hr) )
 					{
-						UniformType::Enum type = findUniformTypeDx11(constDesc);
+						UniformType::Enum uniformType = findUniformTypeDx11(constDesc);
 
-						if (UniformType::Count != type
+						if (UniformType::Count != uniformType
 						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 						{
 							Uniform un;
 							un.name = varDesc.Name;
-							un.type = type;
+							un.type = uniformType;
 							un.num = constDesc.Elements;
 							un.regIndex = varDesc.StartOffset;
 							un.regCount = BX_ALIGN_16(varDesc.Size)/16;
@@ -315,7 +315,7 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 								, varDesc.StartOffset
 								, varDesc.Size
 								, varDesc.uFlags
-								, type
+								, uniformType
 								);
 						}
 						else

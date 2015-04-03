@@ -65,18 +65,18 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 
 	if (0 != _gles)
 	{
-		char* shader = const_cast<char*>(optimizedShader);
-		strreplace(shader, "gl_FragDepthEXT", "gl_FragDepth");
+		char* code = const_cast<char*>(optimizedShader);
+		strreplace(code, "gl_FragDepthEXT", "gl_FragDepth");
 
-		strreplace(shader, "texture2DLodEXT", "texture2DLod");
-		strreplace(shader, "texture2DProjLodEXT", "texture2DProjLod");
-		strreplace(shader, "textureCubeLodEXT", "textureCubeLod");
-		strreplace(shader, "texture2DGradEXT", "texture2DGrad");
-		strreplace(shader, "texture2DProjGradEXT", "texture2DProjGrad");
-		strreplace(shader, "textureCubeGradEXT", "textureCubeGrad");
+		strreplace(code, "texture2DLodEXT", "texture2DLod");
+		strreplace(code, "texture2DProjLodEXT", "texture2DProjLod");
+		strreplace(code, "textureCubeLodEXT", "textureCubeLod");
+		strreplace(code, "texture2DGradEXT", "texture2DGrad");
+		strreplace(code, "texture2DProjGradEXT", "texture2DProjGrad");
+		strreplace(code, "textureCubeGradEXT", "textureCubeGrad");
 
-		strreplace(shader, "shadow2DEXT", "shadow2D");
-		strreplace(shader, "shadow2DProjEXT", "shadow2DProj");
+		strreplace(code, "shadow2DEXT", "shadow2D");
+		strreplace(code, "shadow2DProjEXT", "shadow2DProj");
 	}
 
 	UniformArray uniforms;
@@ -110,14 +110,14 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 				}
 
 				const char* precision = NULL;
-				const char* type = parse;
+				const char* typen = parse;
 
-				if (0 == strncmp(type, "lowp", 4)
-				||  0 == strncmp(type, "mediump", 7)
-				||  0 == strncmp(type, "highp", 5) )
+				if (0 == strncmp(typen, "lowp", 4)
+				||  0 == strncmp(typen, "mediump", 7)
+				||  0 == strncmp(typen, "highp", 5) )
 				{
-					precision = type;
-					type = parse = bx::strws(bx::strword(parse) );
+					precision = typen;
+					typen = parse = bx::strws(bx::strword(parse) );
 				}
 
 				BX_UNUSED(precision);
@@ -125,13 +125,13 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 				char uniformType[256];
 				parse = bx::strword(parse);
 
-				if (0 == strncmp(type, "sampler", 7) )
+				if (0 == strncmp(typen, "sampler", 7) )
 				{
 					strcpy(uniformType, "int");
 				}
 				else
 				{
-					bx::strlcpy(uniformType, type, parse-type+1);
+					bx::strlcpy(uniformType, typen, parse-typen+1);
 				}
 
 				const char* name = parse = bx::strws(parse);
@@ -181,8 +181,8 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 		uint8_t nameSize = (uint8_t)un.name.size();
 		bx::write(_writer, nameSize);
 		bx::write(_writer, un.name.c_str(), nameSize);
-		uint8_t type = un.type;
-		bx::write(_writer, type);
+		uint8_t uniformType = un.type;
+		bx::write(_writer, uniformType);
 		bx::write(_writer, un.num);
 		bx::write(_writer, un.regIndex);
 		bx::write(_writer, un.regCount);
