@@ -2,7 +2,7 @@ void main ()
 {
   highp float f_1;
   f_1 = 0.0;
-  for (int i_2 = 0; i_2 < 32; i_2++) {
+  for (highp int i_2 = 0; i_2 < 32; i_2++) {
     f_1 = (f_1 + (gl_FragCoord.x * float(i_2)));
   };
   highp vec4 tmpvar_3;

@@ -99,4 +99,7 @@ private:
 };
 
 
+extern void print_float (string_buffer& buffer, float f);
+
+
 #endif /* IR_PRINT_GLSL_VISITOR_H */

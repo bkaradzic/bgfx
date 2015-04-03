@@ -30,7 +30,7 @@ void main ()
   tmpvar_8.xyz = tmpvar_1;
   viewpos_7 = (glstate_matrix_modelview0 * tmpvar_8).xyz;
   highp mat3 tmpvar_9;
-  tmpvar_9[0u] = glstate_matrix_invtrans_modelview0[0u].xyz;
+  tmpvar_9[uint(0)] = glstate_matrix_invtrans_modelview0[uint(0)].xyz;
   tmpvar_9[1u] = glstate_matrix_invtrans_modelview0[1u].xyz;
   tmpvar_9[2u] = glstate_matrix_invtrans_modelview0[2u].xyz;
   viewN_6 = (tmpvar_9 * n_2);

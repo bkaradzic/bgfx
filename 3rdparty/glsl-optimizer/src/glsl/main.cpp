@@ -40,11 +40,11 @@
 
 static int glsl_version = 330;
 
-extern "C" void
-_mesa_error_no_memory(const char *caller)
-{
-   fprintf(stderr, "Mesa error: out of memory in %s", caller);
-}
+//extern "C" void
+//_mesa_error_no_memory(const char *caller)
+//{
+//   fprintf(stderr, "Mesa error: out of memory in %s", caller);
+//}
 
 static void
 initialize_context(struct gl_context *ctx, gl_api api)

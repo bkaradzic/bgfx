@@ -1,0 +1,86 @@
+#version 300 es
+
+// This was produced at one point from Unity's Reflect/VertexLit
+// shader's "Vertex Lit, emulated in shaders" pass by hlslcc.
+// Loop analysis was not detecting that Temp_int[0] is used as
+// both a loop induction variable (.w component) and for other uses
+// outside the loop.
+
+precision highp float;
+
+uniform     vec4 unity_LightColor[8];
+uniform     vec4 unity_LightPosition[8];
+uniform     vec4 unity_LightAtten[8];
+uniform     vec4 unity_SpotDirection[8];
+uniform     mat4 glstate_matrix_mvp;
+uniform     mat4 glstate_matrix_modelview0;
+uniform     mat4 glstate_matrix_invtrans_modelview0;
+uniform     mat4 _Object2World;
+uniform     mat4 _World2Object;
+uniform     vec4 glstate_lightmodel_ambient;
+uniform     vec4 _MainTex_ST;
+uniform     vec4 _Color;
+uniform     vec4 _ReflectColor;
+ in highp vec4 in_POSITION0;
+vec4 Input0;
+ in highp vec4 in_NORMAL0;
+vec4 Input1;
+ in highp vec4 in_TEXCOORD0;
+vec4 Input2;
+ out highp vec4 TEXCOORD0;
+#define Output0 TEXCOORD0
+ out highp vec4 COLOR0;
+#define Output1 COLOR0
+#undef Output2
+#define Output2 phase0_Output2
+vec4 phase0_Output2;
+vec4 Temp[4];
+ivec4 Temp_int[4];
+void main()
+{
+    Input0 = in_POSITION0;
+    Input1 = in_NORMAL0;
+    Input2 = in_TEXCOORD0;
+    Temp_int[0] = floatBitsToInt(Input0.yyyy * glstate_matrix_mvp[1]);
+    Temp_int[0] = floatBitsToInt(glstate_matrix_mvp[0] * Input0.xxxx + intBitsToFloat(Temp_int[0]));
+    Temp_int[0] = floatBitsToInt(glstate_matrix_mvp[2] * Input0.zzzz + intBitsToFloat(Temp_int[0]));
+    Output2 = glstate_matrix_mvp[3] * Input0.wwww + intBitsToFloat(Temp_int[0]);
+    Output0.xy = Input2.xy * _MainTex_ST.xy + _MainTex_ST.zw;
+    Temp_int[0].xyz = floatBitsToInt(Input0.yyy * glstate_matrix_modelview0[1].xyz);
+    Temp_int[0].xyz = floatBitsToInt(glstate_matrix_modelview0[0].xyz * Input0.xxx + intBitsToFloat(Temp_int[0]).xyz);
+    Temp_int[0].xyz = floatBitsToInt(glstate_matrix_modelview0[2].xyz * Input0.zzz + intBitsToFloat(Temp_int[0]).xyz);
+    Temp_int[0].xyz = floatBitsToInt(glstate_matrix_modelview0[3].xyz * Input0.www + intBitsToFloat(Temp_int[0]).xyz);
+    Temp_int[1].xyz = floatBitsToInt(Input1.yyy * glstate_matrix_invtrans_modelview0[1].xyz);
+    Temp_int[1].xyz = floatBitsToInt(glstate_matrix_invtrans_modelview0[0].xyz * Input1.xxx + intBitsToFloat(Temp_int[1]).xyz);
+    Temp_int[1].xyz = floatBitsToInt(glstate_matrix_invtrans_modelview0[2].xyz * Input1.zzz + intBitsToFloat(Temp_int[1]).xyz);
+    Temp_int[0].w = floatBitsToInt(dot(intBitsToFloat(Temp_int[1]).xyz, intBitsToFloat(Temp_int[1]).xyz));
+    Temp_int[0].w = floatBitsToInt(inversesqrt(intBitsToFloat(Temp_int[0]).w));
+    Temp_int[1].xyz = floatBitsToInt(intBitsToFloat(Temp_int[0]).www * intBitsToFloat(Temp_int[1]).xyz);
+    Temp[2].xyz = glstate_lightmodel_ambient.xyz;
+    Temp_int[0].w = 0x0;
+    while(true){
+        if ((Temp_int[0].w>= 0x4)) { break; }
+        Temp_int[1].w = int((Temp_int[0].w>=0x4) ? 0xFFFFFFFFu : 0u);
+        Temp[3].xyz = (-intBitsToFloat(Temp_int[0]).xyz) * unity_LightPosition[Temp_int[0].w + 0].www + unity_LightPosition[Temp_int[0].w + 0].xyz;
+        Temp_int[1].w = floatBitsToInt(dot(Temp[3].xyz, Temp[3].xyz));
+        Temp[2].w = inversesqrt(intBitsToFloat(Temp_int[1]).w);
+        Temp[3].xyz = Temp[2].www * Temp[3].xyz;
+        Temp_int[1].w = floatBitsToInt(intBitsToFloat(Temp_int[1]).w * unity_LightAtten[Temp_int[0].w + 0].z + intBitsToFloat(0x3F800000));
+        Temp_int[1].w = floatBitsToInt(float(intBitsToFloat(0x3F800000)) / intBitsToFloat(Temp_int[1]).w);
+        Temp[2].w = dot(Temp[3].xyz, unity_SpotDirection[Temp_int[0].w + 0].xyz);
+        Temp[2].w = max(Temp[2].w, intBitsToFloat(0x0));
+        Temp[2].w = Temp[2].w + (-unity_LightAtten[Temp_int[0].w + 0].x);
+        Temp[2].w = Temp[2].w * unity_LightAtten[Temp_int[0].w + 0].y;
+        Temp[2].w = clamp(Temp[2].w, 0.0, 1.0);
+        Temp_int[1].w = floatBitsToInt(intBitsToFloat(Temp_int[1]).w * Temp[2].w);
+        Temp[2].w = dot(intBitsToFloat(Temp_int[1]).xyz, Temp[3].xyz);
+        Temp[2].w = max(Temp[2].w, intBitsToFloat(0x0));
+        Temp_int[1].w = floatBitsToInt(intBitsToFloat(Temp_int[1]).w * Temp[2].w);
+        Temp[2].xyz = unity_LightColor[Temp_int[0].w + 0].xyz * intBitsToFloat(Temp_int[1]).www + Temp[2].xyz;
+        Temp_int[0].w = Temp_int[0].w + 0x1;
+    }
+    Output1.xyz = Temp[2].xyz * _Color.xyz;
+    Output1.w = _Color.w * _ReflectColor.w;
+    gl_Position = vec4(phase0_Output2);
+    return;
+}

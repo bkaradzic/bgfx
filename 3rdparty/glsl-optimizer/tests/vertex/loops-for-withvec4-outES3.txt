@@ -40,13 +40,13 @@ vec4 Temp_0;
 vec4 Temp_1;
 vec4 Temp_2;
 vec4 Temp_3;
-int tmpvar_1;
+highp int tmpvar_1;
 void main ()
 {
   Temp_0 = (dcl_Input0_POSITION0.yyyy * glstate_matrix_mvp[1]);
   Temp_0 = ((glstate_matrix_mvp[0] * dcl_Input0_POSITION0.xxxx) + Temp_0);
   Temp_0 = ((glstate_matrix_mvp[2] * dcl_Input0_POSITION0.zzzz) + Temp_0);
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = ((glstate_matrix_mvp[3] * dcl_Input0_POSITION0.wwww) + Temp_0);
   VtxGeoOutput1_TEXCOORD0.xy = ((dcl_Input2_TEXCOORD0.xyxx * _MainTex_ST.xyxx) + _MainTex_ST.zwzz).xy;
   Temp_0.xyz = (dcl_Input0_POSITION0.yyyy * glstate_matrix_modelview0[1].xyzx).xyz;

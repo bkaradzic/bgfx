@@ -1,7 +1,7 @@
 varying vec3 var_a;
 void main ()
 {
-  gl_Position = (gl_Vertex * vec4(0.182574, 0.365148, 0.547723, 0.730297));
+  gl_Position = (gl_Vertex * vec4(0.1825742, 0.3651484, 0.5477225, 0.7302967));
   var_a = (gl_Vertex.xyz * normalize(vec3(0.0, 0.0, 0.0)));
 }
 

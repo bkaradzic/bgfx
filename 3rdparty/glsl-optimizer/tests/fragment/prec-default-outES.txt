@@ -8,20 +8,20 @@ uniform MyStruct s1;
 uniform float fh1;
 uniform highp float fh2;
 uniform mediump float fm;
-uniform int il1;
-uniform int il2;
-uniform int im;
+uniform highp int il1;
+uniform lowp int il2;
+uniform mediump int im;
 void main ()
 {
-  int i_1;
+  highp int i_1;
   lowp float f_2;
   highp float tmpvar_3;
   tmpvar_3 = (((fh1 + fh2) + fm) + s1.f);
   f_2 = tmpvar_3;
-  int tmpvar_4;
+  mediump int tmpvar_4;
   tmpvar_4 = (((il1 + il2) + im) + s1.i);
   i_1 = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   if ((gl_FragCoord.x > 0.5)) {
     tmpvar_5 = 0.9;
   } else {

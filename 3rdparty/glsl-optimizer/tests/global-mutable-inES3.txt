@@ -1,0 +1,68 @@
+#version 300 es
+
+uniform highp float uni1;
+uniform mediump vec4 uni4;
+uniform sampler2D tex1;
+uniform lowp vec4 unity_ColorSpaceDouble;
+uniform mediump vec3 _SkyTint;
+uniform mediump float _AtmosphereThickness;
+
+
+// global variables that aren't uniforms
+highp float mut_uni1;
+mediump vec4 mut_uni4;
+// global variables that are modified in complex chains of assignments/branches
+highp vec3 kSkyTintInGammaSpace;
+highp float kKrESun;
+highp float kKr4PI;
+
+
+highp vec3 SampleDiffuse(in highp vec2 uv)
+{
+    mut_uni4.xy = uv;
+    return vec3(texture(tex1, mut_uni4.xy));
+}
+lowp vec4 xlat_main(in highp vec4 uv)
+{
+    lowp vec4 c = vec4(0.0);
+    c.x += mut_uni4.x;
+    c.xyz += SampleDiffuse(uv.xy);
+    c.z += mut_uni1;
+    mut_uni1 += 2.0;
+    c.w += mut_uni1;
+
+    mediump vec3 tmpvar_1;
+    if ((unity_ColorSpaceDouble.x > 2.0)) {
+        tmpvar_1 = pow (_SkyTint, vec3(0.454545, 0.454545, 0.454545));
+    } else {
+        tmpvar_1 = _SkyTint;
+    };
+    kSkyTintInGammaSpace = tmpvar_1;
+    highp vec3 tmpvar_2;
+    tmpvar_2 = (1.0/(pow (mix (vec3(0.5, 0.42, 0.325), vec3(0.8, 0.72, 0.625), 
+        (vec3(1.0, 1.0, 1.0) - kSkyTintInGammaSpace)
+        ), vec3(4.0, 4.0, 4.0))));
+    mediump float tmpvar_3;
+    mediump float cse_4;
+    cse_4 = pow (_AtmosphereThickness, 2.5);
+    tmpvar_3 = (mix (0.0, 0.0025, cse_4) * 20.0);
+    kKrESun = tmpvar_3;
+    mediump float tmpvar_5;
+    tmpvar_5 = (12.5664 * mix (0.0, 0.0025, cse_4));
+    kKr4PI = tmpvar_5;
+
+    if (uv.x > 0.5)
+    {
+        c.x += pow(kKrESun, kKr4PI);
+    }
+    return c;
+}
+in highp vec4 var_uv;
+out mediump vec4 out_data;
+void main()
+{
+    mut_uni1 = uni1;
+    mut_uni4 = uni4;
+    lowp vec4 r = xlat_main(var_uv);
+    out_data = r;
+}

@@ -6,9 +6,9 @@ uniform lowp sampler3D vol;
 void main ()
 {
   lowp vec4 c_1;
-  c_1 = (textureOffset (tex, uv.xy, ivec2(-2, -3)) + textureOffset (tex, uv.xy, 0.5, ivec2(4, 5)));
+  c_1 = (textureOffset (tex, uv.xy, ivec2(-2, -3)) + textureOffset (tex, uv.xy, ivec2(4, 5), 0.5));
   c_1 = (c_1 + textureOffset (vol, uv, ivec3(-2, -3, -4)));
-  c_1 = (c_1 + textureOffset (vol, uv, -0.5, ivec3(4, 5, 6)));
+  c_1 = (c_1 + textureOffset (vol, uv, ivec3(4, 5, 6), -0.5));
   c_1 = (c_1 + texelFetch (tex, ivec2(1, 2), 1));
   c_1 = (c_1 + texelFetch (vol, ivec3(1, 2, 3), 2));
   c_1 = (c_1 + texelFetchOffset (tex, ivec2(1, 2), 3, ivec2(-2, -3)));

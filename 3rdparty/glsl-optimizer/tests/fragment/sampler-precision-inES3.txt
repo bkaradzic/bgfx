@@ -9,12 +9,12 @@ uniform highp samplerCube cubehigh;
 
 mediump vec4 xlat_main(in highp vec4 uv) {
     mediump vec4 c;
-    c = texture2D(texlow, uv.xy);
-    c += texture2D(texmed, uv.xy);
-    c += texture2D(texhigh, uv.xy);
-    c += textureCube(cubelow, uv.xyz);
-    c += textureCube(cubemed, uv.xyz);
-    c += textureCube(cubehigh, uv.xyz);
+    c = texture(texlow, uv.xy);
+    c += texture(texmed, uv.xy);
+    c += texture(texhigh, uv.xy);
+    c += texture(cubelow, uv.xyz);
+    c += texture(cubemed, uv.xyz);
+    c += texture(cubehigh, uv.xyz);
     return c;
 }
 in highp vec4 varUV;

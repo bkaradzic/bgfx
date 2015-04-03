@@ -1,4 +1,13 @@
 #extension GL_EXT_shader_texture_lod : enable
+lowp vec4 impl_low_texture2DLodEXT(lowp sampler2D sampler, highp vec2 coord, mediump float lod)
+{
+#if defined(GL_EXT_shader_texture_lod)
+	return texture2DLodEXT(sampler, coord, lod);
+#else
+	return texture2D(sampler, coord, lod);
+#endif
+}
+
 uniform sampler2D _MainTex;
 uniform highp vec4 _MainTex_TexelSize;
 varying highp vec2 xlv_TEXCOORD0;
@@ -48,13 +57,13 @@ void main ()
   highp vec2 posM_41;
   posM_41 = xlv_TEXCOORD0;
   lowp vec4 tmpvar_42;
-  tmpvar_42 = texture2DLodEXT (_MainTex, xlv_TEXCOORD0, 0.0);
+  tmpvar_42 = impl_low_texture2DLodEXT (_MainTex, xlv_TEXCOORD0, 0.0);
   rgbyM_40 = tmpvar_42;
   highp vec4 tmpvar_43;
   tmpvar_43.zw = vec2(0.0, 0.0);
   tmpvar_43.xy = (xlv_TEXCOORD0 + (vec2(0.0, 1.0) * _MainTex_TexelSize.xy));
   lowp vec4 tmpvar_44;
-  tmpvar_44 = texture2DLodEXT (_MainTex, tmpvar_43.xy, 0.0);
+  tmpvar_44 = impl_low_texture2DLodEXT (_MainTex, tmpvar_43.xy, 0.0);
   highp vec4 rgba_45;
   rgba_45 = tmpvar_44;
   lumaS_39 = rgba_45.w;
@@ -62,7 +71,7 @@ void main ()
   tmpvar_46.zw = vec2(0.0, 0.0);
   tmpvar_46.xy = (xlv_TEXCOORD0 + (vec2(1.0, 0.0) * _MainTex_TexelSize.xy));
   lowp vec4 tmpvar_47;
-  tmpvar_47 = texture2DLodEXT (_MainTex, tmpvar_46.xy, 0.0);
+  tmpvar_47 = impl_low_texture2DLodEXT (_MainTex, tmpvar_46.xy, 0.0);
   highp float tmpvar_48;
   highp vec4 rgba_49;
   rgba_49 = tmpvar_47;
@@ -71,7 +80,7 @@ void main ()
   tmpvar_50.zw = vec2(0.0, 0.0);
   tmpvar_50.xy = (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy));
   lowp vec4 tmpvar_51;
-  tmpvar_51 = texture2DLodEXT (_MainTex, tmpvar_50.xy, 0.0);
+  tmpvar_51 = impl_low_texture2DLodEXT (_MainTex, tmpvar_50.xy, 0.0);
   highp vec4 rgba_52;
   rgba_52 = tmpvar_51;
   lumaN_38 = rgba_52.w;
@@ -79,7 +88,7 @@ void main ()
   tmpvar_53.zw = vec2(0.0, 0.0);
   tmpvar_53.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 0.0) * _MainTex_TexelSize.xy));
   lowp vec4 tmpvar_54;
-  tmpvar_54 = texture2DLodEXT (_MainTex, tmpvar_53.xy, 0.0);
+  tmpvar_54 = impl_low_texture2DLodEXT (_MainTex, tmpvar_53.xy, 0.0);
   highp float tmpvar_55;
   highp vec4 rgba_56;
   rgba_56 = tmpvar_54;
@@ -96,28 +105,28 @@ void main ()
     tmpvar_58.zw = vec2(0.0, 0.0);
     tmpvar_58.xy = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
     lowp vec4 tmpvar_59;
-    tmpvar_59 = texture2DLodEXT (_MainTex, tmpvar_58.xy, 0.0);
+    tmpvar_59 = impl_low_texture2DLodEXT (_MainTex, tmpvar_58.xy, 0.0);
     highp vec4 rgba_60;
     rgba_60 = tmpvar_59;
     highp vec4 tmpvar_61;
     tmpvar_61.zw = vec2(0.0, 0.0);
     tmpvar_61.xy = (xlv_TEXCOORD0 + _MainTex_TexelSize.xy);
     lowp vec4 tmpvar_62;
-    tmpvar_62 = texture2DLodEXT (_MainTex, tmpvar_61.xy, 0.0);
+    tmpvar_62 = impl_low_texture2DLodEXT (_MainTex, tmpvar_61.xy, 0.0);
     highp vec4 rgba_63;
     rgba_63 = tmpvar_62;
     highp vec4 tmpvar_64;
     tmpvar_64.zw = vec2(0.0, 0.0);
     tmpvar_64.xy = (xlv_TEXCOORD0 + (vec2(1.0, -1.0) * _MainTex_TexelSize.xy));
     lowp vec4 tmpvar_65;
-    tmpvar_65 = texture2DLodEXT (_MainTex, tmpvar_64.xy, 0.0);
+    tmpvar_65 = impl_low_texture2DLodEXT (_MainTex, tmpvar_64.xy, 0.0);
     highp vec4 rgba_66;
     rgba_66 = tmpvar_65;
     highp vec4 tmpvar_67;
     tmpvar_67.zw = vec2(0.0, 0.0);
     tmpvar_67.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 1.0) * _MainTex_TexelSize.xy));
     lowp vec4 tmpvar_68;
-    tmpvar_68 = texture2DLodEXT (_MainTex, tmpvar_67.xy, 0.0);
+    tmpvar_68 = impl_low_texture2DLodEXT (_MainTex, tmpvar_67.xy, 0.0);
     highp vec4 rgba_69;
     rgba_69 = tmpvar_68;
     lumaNS_36 = (rgba_52.w + rgba_45.w);
@@ -187,13 +196,13 @@ void main ()
     posP_20.y = (posB_22.y + tmpvar_73);
     subpixD_19 = ((-2.0 * tmpvar_71) + 3.0);
     lowp vec4 tmpvar_74;
-    tmpvar_74 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+    tmpvar_74 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
     highp vec4 rgba_75;
     rgba_75 = tmpvar_74;
     lumaEndN_18 = rgba_75.w;
     subpixE_17 = (tmpvar_71 * tmpvar_71);
     lowp vec4 tmpvar_76;
-    tmpvar_76 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+    tmpvar_76 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
     highp vec4 rgba_77;
     rgba_77 = tmpvar_76;
     lumaEndP_16 = rgba_77.w;
@@ -223,14 +232,14 @@ void main ()
     if (doneNP_10) {
       if (!(doneN_12)) {
         lowp vec4 tmpvar_78;
-        tmpvar_78 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+        tmpvar_78 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
         highp vec4 rgba_79;
         rgba_79 = tmpvar_78;
         lumaEndN_18 = rgba_79.w;
       };
       if (!(doneP_11)) {
         lowp vec4 tmpvar_80;
-        tmpvar_80 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+        tmpvar_80 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
         highp vec4 rgba_81;
         rgba_81 = tmpvar_80;
         lumaEndP_16 = rgba_81.w;
@@ -259,14 +268,14 @@ void main ()
       if (doneNP_10) {
         if (!(doneN_12)) {
           lowp vec4 tmpvar_82;
-          tmpvar_82 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+          tmpvar_82 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
           highp vec4 rgba_83;
           rgba_83 = tmpvar_82;
           lumaEndN_18 = rgba_83.w;
         };
         if (!(doneP_11)) {
           lowp vec4 tmpvar_84;
-          tmpvar_84 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+          tmpvar_84 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
           highp vec4 rgba_85;
           rgba_85 = tmpvar_84;
           lumaEndP_16 = rgba_85.w;
@@ -295,14 +304,14 @@ void main ()
         if (doneNP_10) {
           if (!(doneN_12)) {
             lowp vec4 tmpvar_86;
-            tmpvar_86 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+            tmpvar_86 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
             highp vec4 rgba_87;
             rgba_87 = tmpvar_86;
             lumaEndN_18 = rgba_87.w;
           };
           if (!(doneP_11)) {
             lowp vec4 tmpvar_88;
-            tmpvar_88 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+            tmpvar_88 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
             highp vec4 rgba_89;
             rgba_89 = tmpvar_88;
             lumaEndP_16 = rgba_89.w;
@@ -331,14 +340,14 @@ void main ()
           if (doneNP_10) {
             if (!(doneN_12)) {
               lowp vec4 tmpvar_90;
-              tmpvar_90 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+              tmpvar_90 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
               highp vec4 rgba_91;
               rgba_91 = tmpvar_90;
               lumaEndN_18 = rgba_91.w;
             };
             if (!(doneP_11)) {
               lowp vec4 tmpvar_92;
-              tmpvar_92 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+              tmpvar_92 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
               highp vec4 rgba_93;
               rgba_93 = tmpvar_92;
               lumaEndP_16 = rgba_93.w;
@@ -367,14 +376,14 @@ void main ()
             if (doneNP_10) {
               if (!(doneN_12)) {
                 lowp vec4 tmpvar_94;
-                tmpvar_94 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+                tmpvar_94 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
                 highp vec4 rgba_95;
                 rgba_95 = tmpvar_94;
                 lumaEndN_18 = rgba_95.w;
               };
               if (!(doneP_11)) {
                 lowp vec4 tmpvar_96;
-                tmpvar_96 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+                tmpvar_96 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
                 highp vec4 rgba_97;
                 rgba_97 = tmpvar_96;
                 lumaEndP_16 = rgba_97.w;
@@ -403,14 +412,14 @@ void main ()
               if (doneNP_10) {
                 if (!(doneN_12)) {
                   lowp vec4 tmpvar_98;
-                  tmpvar_98 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+                  tmpvar_98 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
                   highp vec4 rgba_99;
                   rgba_99 = tmpvar_98;
                   lumaEndN_18 = rgba_99.w;
                 };
                 if (!(doneP_11)) {
                   lowp vec4 tmpvar_100;
-                  tmpvar_100 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+                  tmpvar_100 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
                   highp vec4 rgba_101;
                   rgba_101 = tmpvar_100;
                   lumaEndP_16 = rgba_101.w;
@@ -439,14 +448,14 @@ void main ()
                 if (doneNP_10) {
                   if (!(doneN_12)) {
                     lowp vec4 tmpvar_102;
-                    tmpvar_102 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+                    tmpvar_102 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
                     highp vec4 rgba_103;
                     rgba_103 = tmpvar_102;
                     lumaEndN_18 = rgba_103.w;
                   };
                   if (!(doneP_11)) {
                     lowp vec4 tmpvar_104;
-                    tmpvar_104 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+                    tmpvar_104 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
                     highp vec4 rgba_105;
                     rgba_105 = tmpvar_104;
                     lumaEndP_16 = rgba_105.w;
@@ -475,14 +484,14 @@ void main ()
                   if (doneNP_10) {
                     if (!(doneN_12)) {
                       lowp vec4 tmpvar_106;
-                      tmpvar_106 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+                      tmpvar_106 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
                       highp vec4 rgba_107;
                       rgba_107 = tmpvar_106;
                       lumaEndN_18 = rgba_107.w;
                     };
                     if (!(doneP_11)) {
                       lowp vec4 tmpvar_108;
-                      tmpvar_108 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+                      tmpvar_108 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
                       highp vec4 rgba_109;
                       rgba_109 = tmpvar_108;
                       lumaEndP_16 = rgba_109.w;
@@ -511,14 +520,14 @@ void main ()
                     if (doneNP_10) {
                       if (!(doneN_12)) {
                         lowp vec4 tmpvar_110;
-                        tmpvar_110 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+                        tmpvar_110 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
                         highp vec4 rgba_111;
                         rgba_111 = tmpvar_110;
                         lumaEndN_18 = rgba_111.w;
                       };
                       if (!(doneP_11)) {
                         lowp vec4 tmpvar_112;
-                        tmpvar_112 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+                        tmpvar_112 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
                         highp vec4 rgba_113;
                         rgba_113 = tmpvar_112;
                         lumaEndP_16 = rgba_113.w;
@@ -547,14 +556,14 @@ void main ()
                       if (doneNP_10) {
                         if (!(doneN_12)) {
                           lowp vec4 tmpvar_114;
-                          tmpvar_114 = texture2DLodEXT (_MainTex, posN_21, 0.0);
+                          tmpvar_114 = impl_low_texture2DLodEXT (_MainTex, posN_21, 0.0);
                           highp vec4 rgba_115;
                           rgba_115 = tmpvar_114;
                           lumaEndN_18 = rgba_115.w;
                         };
                         if (!(doneP_11)) {
                           lowp vec4 tmpvar_116;
-                          tmpvar_116 = texture2DLodEXT (_MainTex, posP_20, 0.0);
+                          tmpvar_116 = impl_low_texture2DLodEXT (_MainTex, posP_20, 0.0);
                           highp vec4 rgba_117;
                           rgba_117 = tmpvar_116;
                           lumaEndP_16 = rgba_117.w;
@@ -626,7 +635,7 @@ void main ()
       posM_41.y = (xlv_TEXCOORD0.y + (tmpvar_121 * lengthSign_31));
     };
     lowp vec4 tmpvar_122;
-    tmpvar_122 = texture2DLodEXT (_MainTex, posM_41, 0.0);
+    tmpvar_122 = impl_low_texture2DLodEXT (_MainTex, posM_41, 0.0);
     highp vec4 tmpvar_123;
     tmpvar_123.xyz = tmpvar_122.xyz;
     tmpvar_123.w = rgbyM_40.w;

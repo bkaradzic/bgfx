@@ -69,7 +69,7 @@ highp float DecodeFloatRGBA( in highp vec4 enc ) {
 }
 highp float SampleCubeDistance( in highp vec3 vec ) {
     highp vec4 packDist;
-    packDist = textureCube( _ShadowMapTexture, vec);
+    packDist = texture( _ShadowMapTexture, vec);
     return DecodeFloatRGBA( packDist);
 }
 mediump float unitySampleShadow( in highp vec3 vec, in highp float mydist ) {
@@ -111,19 +111,19 @@ mediump vec4 xlat_main( in v2f i ) {
     highp float fade;
     i.ray = (i.ray * (_ProjectionParams.z  / i.ray.z ));
     uv = (i.uv.xy  / i.uv.w );
-    nspec = texture2D( _CameraNormalsTexture, uv);
+    nspec = texture( _CameraNormalsTexture, uv);
     normal = ((nspec.xyz  * 2.00000) - 1.00000);
     normal = normalize( normal );
-    depth = texture2D( _CameraDepthTexture, uv).x ;
+    depth = texture( _CameraDepthTexture, uv).x ;
     depth = Linear01Depth( depth);
     vpos = vec4( (i.ray * depth), 1.00000);
     wpos = ( _CameraToWorld * vpos ).xyz ;
     tolight = (wpos - _LightPos.xyz );
     lightDir = ( -normalize( tolight ) );
     att = (dot( tolight, tolight) * _LightPos.w );
-    atten = texture2D( _LightTextureB0, vec2( vec2( att))).w ;
+    atten = texture( _LightTextureB0, vec2( vec2( att))).w ;
     atten *= ComputeShadow( tolight, vpos.z , uv);
-    atten *= textureCube( _LightTexture0, ( _LightMatrix0 * vec4( wpos, 1.00000) ).xyz ).w ;
+    atten *= texture( _LightTexture0, ( _LightMatrix0 * vec4( wpos, 1.00000) ).xyz ).w ;
     diff = max( 0.000000, dot( lightDir, normal));
     h = normalize( (lightDir - normalize( (wpos - _WorldSpaceCameraPos) )) );
     spec = pow( max( 0.000000, dot( h, normal)), (nspec.w  * 128.000));

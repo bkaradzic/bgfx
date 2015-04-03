@@ -1,6 +1,38 @@
 GLSL optimizer Change Log
 =========================
 
+2015 04
+-------
+
+Fixes:
+
+* Metal: fixed some bugs with translation of weird loops.
+
+
+2015 02
+-------
+
+Tweaks:
+
+* Texture LOD sampling functions on GLES2.0 now produce a wrapper call, that does approximation
+  (mip bias) on devices that don't support GL_EXT_shader_texture_lod.
+* Undefined precision integers on GLES now default to highp.
+
+
+2015 01
+-------
+
+Fixes:
+
+* Float literals are printed with 7 significant digits now.
+* Metal: GLSL mod() is properly translated into Metal's fmod().
+* Metal: Fixed some cases of reciprocal (1/x) printing missing half precision cast.
+* GLES3: textureOffset with a mipmap bias is printed correctly now.
+* Fixed a bug with loop inductor detection if the inductor was used before the loop for some things.
+* Fixed printing of int/float bitcast operations.
+* Improved precision determination of some constructs.
+
+
 2014 10
 -------
 

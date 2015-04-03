@@ -1,7 +1,7 @@
 #version 300 es
 out lowp vec4 _fragData;
 vec4 xll_tex2Dlod(sampler2D s, vec4 coord) {
-   return texture2DLod( s, coord.xy, coord.w);
+   return textureLod( s, coord.xy, coord.w);
 }
 uniform sampler2D _MainTex;
 uniform vec4 _MainTex_TexelSize;

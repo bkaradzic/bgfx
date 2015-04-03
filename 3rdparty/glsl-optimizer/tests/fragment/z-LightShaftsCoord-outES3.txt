@@ -19,7 +19,7 @@ void main ()
   highp float tmpvar_5;
   tmpvar_5 = clamp (sampleOnEpipolarLine_3, 0.0, 1.0);
   sampleOnEpipolarLine_3 = tmpvar_5;
-  int tmpvar_6;
+  highp int tmpvar_6;
   tmpvar_6 = int(clamp (floor(
     (tmpvar_4 * 4.0)
   ), 0.0, 3.0));

@@ -113,31 +113,51 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_23 = (_mtl_i.xlv_TEXCOORD0.x - (float)ip_24);
   c_1.x = ((half)((float)c_1.x + tmpvar_23));
   float2 tmpvar_26;
-  half2 ip_27;
-  float2 tmpvar_28;
-  tmpvar_28 = float2(int2(_mtl_i.xlv_TEXCOORD0.xy));
-  ip_27 = half2(tmpvar_28);
-  tmpvar_26 = (_mtl_i.xlv_TEXCOORD0.xy - (float2)ip_27);
+  int2 tmpvar_27;
+  tmpvar_27 = int2(_mtl_i.xlv_TEXCOORD0.xy);
+  half2 tmpvar_28;
+  tmpvar_28 = half2(float2(tmpvar_27));
+  tmpvar_26 = (_mtl_i.xlv_TEXCOORD0.xy - (float2)tmpvar_28);
   c_1.xy = ((half2)((float2)c_1.xy + tmpvar_26));
   float3 tmpvar_29;
-  half3 ip_30;
-  float3 tmpvar_31;
-  tmpvar_31 = float3(int3(_mtl_i.xlv_TEXCOORD0.xyz));
-  ip_30 = half3(tmpvar_31);
-  tmpvar_29 = (_mtl_i.xlv_TEXCOORD0.xyz - (float3)ip_30);
+  int3 tmpvar_30;
+  tmpvar_30 = int3(_mtl_i.xlv_TEXCOORD0.xyz);
+  half3 tmpvar_31;
+  tmpvar_31 = half3(float3(tmpvar_30));
+  tmpvar_29 = (_mtl_i.xlv_TEXCOORD0.xyz - (float3)tmpvar_31);
   c_1.xyz = ((half3)((float3)c_1.xyz + tmpvar_29));
   float4 tmpvar_32;
-  half4 ip_33;
-  float4 tmpvar_34;
-  tmpvar_34 = float4(int4(_mtl_i.xlv_TEXCOORD0));
-  ip_33 = half4(tmpvar_34);
-  tmpvar_32 = (_mtl_i.xlv_TEXCOORD0 - (float4)ip_33);
+  int4 tmpvar_33;
+  tmpvar_33 = int4(_mtl_i.xlv_TEXCOORD0);
+  half4 tmpvar_34;
+  tmpvar_34 = half4(float4(tmpvar_33));
+  tmpvar_32 = (_mtl_i.xlv_TEXCOORD0 - (float4)tmpvar_34);
   c_1 = ((half4)((float4)c_1 + tmpvar_32));
+  float tmpvar_35;
+  tmpvar_35 = (float(fmod (_mtl_i.xlv_TEXCOORD0.x, (float)tmpvar_34.x)));
+  c_1.x = half(((float)c_1.x + tmpvar_35));
+  float2 tmpvar_36;
+  tmpvar_36 = (float2(fmod (_mtl_i.xlv_TEXCOORD0.xy, (float2)tmpvar_34.xy)));
+  c_1.xy = half2(((float2)c_1.xy + tmpvar_36));
+  float3 tmpvar_37;
+  tmpvar_37 = (float3(fmod (_mtl_i.xlv_TEXCOORD0.xyz, (float3)tmpvar_34.xyz)));
+  c_1.xyz = half3(((float3)c_1.xyz + tmpvar_37));
+  float tmpvar_38;
+  tmpvar_38 = (1.0/(_mtl_i.xlv_TEXCOORD0.x));
+  c_1.x = half(((float)c_1.x + tmpvar_38));
+  float tmpvar_39;
+  tmpvar_39 = max (0.0, tmpvar_38);
+  c_1.x = half(((float)c_1.x + tmpvar_39));
+  c_1.y = (c_1.y + ((half)1.0/(c_1.z)));
+  c_1.y = (c_1.y + max ((half)0.0, ((half)1.0/(c_1.w))));
+  float tmpvar_40;
+  tmpvar_40 = max (_mtl_i.xlv_TEXCOORD0.x, (float)c_1.z);
+  c_1.x = half(((float)c_1.x + tmpvar_40));
   _mtl_o._fragData = c_1;
   return _mtl_o;
 }
 
 
-// stats: 56 alu 0 tex 10 flow
+// stats: 73 alu 0 tex 10 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

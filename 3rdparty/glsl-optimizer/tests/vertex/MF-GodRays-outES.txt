@@ -54,7 +54,7 @@ void main ()
   dir_15 = (localDir_9 / tmpvar_14);
   highp float tmpvar_16;
   tmpvar_16 = abs(dir_15.y);
-  vec3 tmpvar_17;
+  highp vec3 tmpvar_17;
   if ((tmpvar_16 > 0.999)) {
     tmpvar_17 = vec3(0.0, 0.0, 1.0);
   } else {

@@ -43,16 +43,16 @@ void main ()
   lowp vec4 tmpvar_24;
   tmpvar_24 = textureLod (_MainTex, tmpvar_23.xy, 0.0);
   lowp float tmpvar_25;
-  tmpvar_25 = ((tmpvar_17.y * 1.96321) + tmpvar_17.x);
+  tmpvar_25 = ((tmpvar_17.y * 1.963211) + tmpvar_17.x);
   lumaN_15 = tmpvar_25;
   lowp float tmpvar_26;
-  tmpvar_26 = ((tmpvar_19.y * 1.96321) + tmpvar_19.x);
+  tmpvar_26 = ((tmpvar_19.y * 1.963211) + tmpvar_19.x);
   lowp float tmpvar_27;
-  tmpvar_27 = ((tmpvar_20.y * 1.96321) + tmpvar_20.x);
+  tmpvar_27 = ((tmpvar_20.y * 1.963211) + tmpvar_20.x);
   lowp float tmpvar_28;
-  tmpvar_28 = ((tmpvar_22.y * 1.96321) + tmpvar_22.x);
+  tmpvar_28 = ((tmpvar_22.y * 1.963211) + tmpvar_22.x);
   lowp float tmpvar_29;
-  tmpvar_29 = ((tmpvar_24.y * 1.96321) + tmpvar_24.x);
+  tmpvar_29 = ((tmpvar_24.y * 1.963211) + tmpvar_24.x);
   lumaS_14 = tmpvar_29;
   lowp float tmpvar_30;
   tmpvar_30 = max (max (tmpvar_27, tmpvar_25), max (max (tmpvar_26, tmpvar_29), tmpvar_28));
@@ -61,7 +61,7 @@ void main ()
     min (tmpvar_26, tmpvar_29)
   , tmpvar_28)));
   lowp float tmpvar_32;
-  tmpvar_32 = max (0.0416667, (tmpvar_30 * 0.125));
+  tmpvar_32 = max (0.04166667, (tmpvar_30 * 0.125));
   if ((tmpvar_31 < tmpvar_32)) {
     tmpvar_2 = tmpvar_20.xyz;
   } else {
@@ -70,7 +70,7 @@ void main ()
       ((abs((
         (((tmpvar_25 + tmpvar_26) + (tmpvar_28 + tmpvar_29)) * 0.25)
        - tmpvar_27)) / tmpvar_31) - 0.25)
-    ) * 1.33333));
+    ) * 1.333333));
     highp vec4 tmpvar_34;
     tmpvar_34.zw = vec2(0.0, 0.0);
     tmpvar_34.xy = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
@@ -94,15 +94,15 @@ void main ()
     rgbL_13 = (((tmpvar_17.xyz + tmpvar_19.xyz) + (tmpvar_20.xyz + tmpvar_22.xyz)) + ((tmpvar_24.xyz + tmpvar_35.xyz) + (
       (tmpvar_37.xyz + tmpvar_39.xyz)
      + tmpvar_41.xyz)));
-    rgbL_13 = (rgbL_13 * vec3(0.111111, 0.111111, 0.111111));
+    rgbL_13 = (rgbL_13 * vec3(0.1111111, 0.1111111, 0.1111111));
     lowp float tmpvar_42;
-    tmpvar_42 = ((tmpvar_35.y * 1.96321) + tmpvar_35.x);
+    tmpvar_42 = ((tmpvar_35.y * 1.963211) + tmpvar_35.x);
     lowp float tmpvar_43;
-    tmpvar_43 = ((tmpvar_37.y * 1.96321) + tmpvar_37.x);
+    tmpvar_43 = ((tmpvar_37.y * 1.963211) + tmpvar_37.x);
     lowp float tmpvar_44;
-    tmpvar_44 = ((tmpvar_39.y * 1.96321) + tmpvar_39.x);
+    tmpvar_44 = ((tmpvar_39.y * 1.963211) + tmpvar_39.x);
     lowp float tmpvar_45;
-    tmpvar_45 = ((tmpvar_41.y * 1.96321) + tmpvar_41.x);
+    tmpvar_45 = ((tmpvar_41.y * 1.963211) + tmpvar_41.x);
     bool tmpvar_46;
     tmpvar_46 = (((
       abs((((0.25 * tmpvar_42) + (-0.5 * tmpvar_26)) + (0.25 * tmpvar_44)))
@@ -183,16 +183,16 @@ void main ()
     doneP_4 = bool(0);
     posN_10 = (posN_10 - tmpvar_53);
     posP_9 = (posP_9 + tmpvar_53);
-    for (int i_3 = 0; i_3 < 16; i_3++) {
+    for (highp int i_3 = 0; i_3 < 16; i_3++) {
       if (!(doneN_5)) {
         lowp vec4 tmpvar_56;
         tmpvar_56 = textureLod (_MainTex, posN_10, 0.0);
-        lumaEndN_7 = ((tmpvar_56.y * 1.96321) + tmpvar_56.x);
+        lumaEndN_7 = ((tmpvar_56.y * 1.963211) + tmpvar_56.x);
       };
       if (!(doneP_4)) {
         lowp vec4 tmpvar_57;
         tmpvar_57 = textureLod (_MainTex, posP_9, 0.0);
-        lumaEndP_6 = ((tmpvar_57.y * 1.96321) + tmpvar_57.x);
+        lumaEndP_6 = ((tmpvar_57.y * 1.963211) + tmpvar_57.x);
       };
       bool tmpvar_58;
       if (doneN_5) {

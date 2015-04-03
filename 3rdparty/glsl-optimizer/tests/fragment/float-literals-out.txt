@@ -1,0 +1,23 @@
+varying vec2 uv;
+void main ()
+{
+  float b_1;
+  float a_2;
+  vec4 c_3;
+  c_3.w = 0.0;
+  a_2 = (uv.y * 1111111.0);
+  b_1 = (uv.y * 1111110.0);
+  c_3.x = (a_2 - b_1);
+  a_2 = (uv.y * 1.234568);
+  b_1 = (uv.y * 1.234568);
+  c_3.y = (a_2 - b_1);
+  a_2 = (uv.y * -1.234567e-06);
+  b_1 = (uv.y * -1.234565e-06);
+  c_3.z = (a_2 - b_1);
+  gl_FragColor = c_3;
+}
+
+
+// stats: 10 alu 0 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]

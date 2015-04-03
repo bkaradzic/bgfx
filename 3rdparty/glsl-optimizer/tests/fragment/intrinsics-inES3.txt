@@ -55,8 +55,9 @@ vec4 xll_modf( vec4 x, out vec4 ip) {
   ip = vec4(i);
   return x-ip;
 }
-mediump vec4 xlat_main( in highp vec4 uv );
-mediump vec4 xlat_main( in highp vec4 uv ) {
+
+mediump vec4 xlat_main (in highp vec4 uv)
+{
     mediump vec4 c;
     mediump vec4 d;
     c = vec4( 0.000000);
@@ -68,8 +69,25 @@ mediump vec4 xlat_main( in highp vec4 uv ) {
     c.xy  += xll_modf( uv.xy , d.xy );
     c.xyz  += xll_modf( uv.xyz , d.xyz );
     c.xyzw  += xll_modf( uv.xyzw , d.xyzw );
+
+    // GLSL mod function
+    c.x += mod(uv.x, d.x);
+    c.xy += mod(uv.xy, d.xy);
+    c.xyz += mod(uv.xyz, d.xyz);
+
+    // inverse
+    c.x += 1.0/uv.x; // float
+    c.x += max(0.0, 1.0/uv.x);
+
+    c.y += 1.0/c.z; // half
+    c.y += max(0.0, 1.0/c.w);
+
+    // max with different precision arguments
+    c.x += max(uv.x, c.z);
+
     return c;
 }
+
 in highp vec4 xlv_TEXCOORD0;
 out mediump vec4 _fragData;
 void main() {

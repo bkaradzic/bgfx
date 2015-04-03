@@ -44,13 +44,13 @@ _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
 }
 
 void
-_mesa_shader_debug(struct gl_context *, GLenum, GLuint *,
+_mesa_shader_debug(struct gl_context *, GLenum, GLuint *id,
                    const char *, int)
 {
 }
 
 extern "C" void
-_mesa_error_no_memory(const char *)
+_mesa_error_no_memory(const char *caller)
 {
 }
 

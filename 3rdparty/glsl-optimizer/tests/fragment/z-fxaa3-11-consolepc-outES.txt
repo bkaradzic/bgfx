@@ -1,4 +1,13 @@
 #extension GL_EXT_shader_texture_lod : enable
+lowp vec4 impl_low_texture2DLodEXT(lowp sampler2D sampler, highp vec2 coord, mediump float lod)
+{
+#if defined(GL_EXT_shader_texture_lod)
+	return texture2DLodEXT(sampler, coord, lod);
+#else
+	return texture2D(sampler, coord, lod);
+#endif
+}
+
 uniform sampler2D _MainTex;
 uniform highp vec4 _MainTex_TexelSize;
 varying highp vec2 xlv_TEXCOORD0;
@@ -19,23 +28,23 @@ void main ()
   highp float lumaM_10;
   highp float lumaNe_11;
   lowp vec4 tmpvar_12;
-  tmpvar_12 = texture2DLodEXT (_MainTex, xlv_TEXCOORD1.xy, 0.0);
+  tmpvar_12 = impl_low_texture2DLodEXT (_MainTex, xlv_TEXCOORD1.xy, 0.0);
   highp float tmpvar_13;
   tmpvar_13 = tmpvar_12.y;
   lowp vec4 tmpvar_14;
-  tmpvar_14 = texture2DLodEXT (_MainTex, xlv_TEXCOORD1.xw, 0.0);
+  tmpvar_14 = impl_low_texture2DLodEXT (_MainTex, xlv_TEXCOORD1.xw, 0.0);
   highp float tmpvar_15;
   tmpvar_15 = tmpvar_14.y;
   lowp vec4 tmpvar_16;
-  tmpvar_16 = texture2DLodEXT (_MainTex, xlv_TEXCOORD1.zy, 0.0);
+  tmpvar_16 = impl_low_texture2DLodEXT (_MainTex, xlv_TEXCOORD1.zy, 0.0);
   highp float tmpvar_17;
   tmpvar_17 = tmpvar_16.y;
   lowp vec4 tmpvar_18;
-  tmpvar_18 = texture2DLodEXT (_MainTex, xlv_TEXCOORD1.zw, 0.0);
+  tmpvar_18 = impl_low_texture2DLodEXT (_MainTex, xlv_TEXCOORD1.zw, 0.0);
   highp float tmpvar_19;
   tmpvar_19 = tmpvar_18.y;
   lowp vec4 tmpvar_20;
-  tmpvar_20 = texture2DLodEXT (_MainTex, xlv_TEXCOORD0, 0.0);
+  tmpvar_20 = impl_low_texture2DLodEXT (_MainTex, xlv_TEXCOORD0, 0.0);
   lumaM_10 = tmpvar_20.y;
   lumaNe_11 = (tmpvar_17 + 0.00260417);
   highp float tmpvar_21;
@@ -70,8 +79,8 @@ void main ()
     highp vec4 tmpvar_29;
     tmpvar_29.zw = vec2(0.0, 0.0);
     tmpvar_29.xy = (xlv_TEXCOORD0 + (tmpvar_27 * fxaaConsoleRcpFrameOpt2_2.zw));
-    rgbyA_5 = (texture2DLodEXT (_MainTex, tmpvar_25.xy, 0.0) + texture2DLodEXT (_MainTex, tmpvar_26.xy, 0.0));
-    rgbyB_4 = (((texture2DLodEXT (_MainTex, tmpvar_28.xy, 0.0) + texture2DLodEXT (_MainTex, tmpvar_29.xy, 0.0)) * 0.25) + (rgbyA_5 * 0.25));
+    rgbyA_5 = (impl_low_texture2DLodEXT (_MainTex, tmpvar_25.xy, 0.0) + impl_low_texture2DLodEXT (_MainTex, tmpvar_26.xy, 0.0));
+    rgbyB_4 = (((impl_low_texture2DLodEXT (_MainTex, tmpvar_28.xy, 0.0) + impl_low_texture2DLodEXT (_MainTex, tmpvar_29.xy, 0.0)) * 0.25) + (rgbyA_5 * 0.25));
     if (((rgbyB_4.y < tmpvar_22) || (rgbyB_4.y > tmpvar_21))) {
       rgbyB_4.xyz = (rgbyA_5.xyz * 0.5);
     };

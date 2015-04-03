@@ -256,8 +256,11 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 			src += "#define gl_LastFragData _glesLastFragData\n";
 			src += "varying lowp vec4 _glesLastFragData[4];\n";
 		}
-		src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
-		src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
+		if (!need3)
+		{
+			src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
+			src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
+		}
 	}
 	src += source;
 	if (gles)
@@ -274,8 +277,11 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "precision ", "// precision ", 0);
 		replace_string (src, "#version 300 es", "", 0);
 	}
-	replace_string (src, "#extension GL_EXT_shader_framebuffer_fetch : require", "", 0);
-	replace_string (src, "#extension GL_EXT_shader_framebuffer_fetch : enable", "", 0);
+	
+	// can't check FB fetch on PC
+	if (src.find("#extension GL_EXT_shader_framebuffer_fetch") != std::string::npos)
+		return true;
+
 	if (gles && need3)
 	{
 		src = "#version 330\n" + src;
@@ -283,22 +289,24 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	const char* sourcePtr = src.c_str();
 
 	
-	GLhandleARB shader = glCreateShaderObjectARB (vertex ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
-	glShaderSourceARB (shader, 1, &sourcePtr, NULL);
-	glCompileShaderARB (shader);
+	GLuint shader = glCreateShader (vertex ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+	glShaderSource (shader, 1, &sourcePtr, NULL);
+	glCompileShader (shader);
 	GLint status;
-	glGetObjectParameterivARB (shader, GL_OBJECT_COMPILE_STATUS_ARB, &status);
+	
+	glGetShaderiv (shader, GL_COMPILE_STATUS, &status);
+	
 	bool res = true;
-	if (status == 0)
+	if (status != GL_TRUE)
 	{
 		char log[20000];
 		log[0] = 0;
 		GLsizei logLength;
-		glGetInfoLogARB (shader, sizeof(log), &logLength, log);
+		glGetShaderInfoLog (shader, sizeof(log), &logLength, log);
 		printf ("\n  %s: real glsl compiler error on %s:\n%s\n", testName.c_str(), prefix, log);
 		res = false;
 	}
-	glDeleteObjectARB (shader);
+	glDeleteShader (shader);
 	return res;
 }
 
@@ -312,13 +320,16 @@ static bool CheckMetal (bool vertex, bool gles, const std::string& testName, con
 	FILE* f = fopen ("metalTemp.metal", "wb");
 	fwrite (source.c_str(), source.size(), 1, f);
 	fclose (f);
-	
+
+#if defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__)
 	int res = system("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin/metal metalTemp.metal -o metalTemp.o -std=ios-metal1.0 -Wno-parentheses-equality");
 	if (res != 0)
 	{
 		printf ("\n  %s: Metal compiler failed\n", testName.c_str());
 		return false;
 	}
+#endif //
+
 	return true;
 }
 

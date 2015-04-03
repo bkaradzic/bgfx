@@ -43,7 +43,7 @@ void main ()
   depth_8 = (dot (depthnormal_10.zw, vec2(1.0, 0.00392157)) * _ProjectionParams.z);
   scale_7 = (_Params.x / depth_8);
   occ_6 = 0.0;
-  for (int s_5 = 0; s_5 < 8; s_5++) {
+  for (highp int s_5 = 0; s_5 < 8; s_5++) {
     highp vec4 sampleND_17;
     mediump vec3 randomDir_18;
     highp vec3 tmpvar_19;
@@ -55,7 +55,7 @@ void main ()
     randomDir_18 = tmpvar_19;
     highp float tmpvar_21;
     tmpvar_21 = dot (viewNorm_9, randomDir_18);
-    highp float tmpvar_22;
+    mediump float tmpvar_22;
     if ((tmpvar_21 < 0.0)) {
       tmpvar_22 = 1.0;
     } else {

@@ -55,7 +55,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   c_8.w = (tmpvar_3 + ((_mtl_u._LightColor0.w * _mtl_u._SpecColor.w) * spec_9));
   c_1.xyz = (c_8.xyz + (tmpvar_2 * _mtl_i._uv3));
   c_1.w = tmpvar_3;
-  _mtl_o._fragData = c_1;
+  half4 tmpvar_12;
+  tmpvar_12 = c_1;
+  _mtl_o._fragData = tmpvar_12;
   return _mtl_o;
 }
 

@@ -33,9 +33,9 @@ void main ()
   tmpvar_3 = xlv_TEXCOORD3.xyz;
   tmpvar_4 = (((xlv_TEXCOORD2.yzx * xlv_TEXCOORD3.zxy) - (xlv_TEXCOORD2.zxy * xlv_TEXCOORD3.yzx)) * xlv_TEXCOORD3.www);
   highp mat3 tmpvar_5;
-  tmpvar_5[0u].x = tmpvar_3.x;
-  tmpvar_5[0u].y = tmpvar_4.x;
-  tmpvar_5[0u].z = xlv_TEXCOORD2.x;
+  tmpvar_5[uint(0)].x = tmpvar_3.x;
+  tmpvar_5[uint(0)].y = tmpvar_4.x;
+  tmpvar_5[uint(0)].z = xlv_TEXCOORD2.x;
   tmpvar_5[1u].x = tmpvar_3.y;
   tmpvar_5[1u].y = tmpvar_4.y;
   tmpvar_5[1u].z = xlv_TEXCOORD2.y;
@@ -89,9 +89,9 @@ void main ()
   lowp vec4 tmpvar_20;
   tmpvar_20 = texture (unity_LightmapInd, xlv_TEXCOORD4.xy);
   highp mat3 tmpvar_21;
-  tmpvar_21[0u].x = 0.816497;
-  tmpvar_21[0u].y = -0.408248;
-  tmpvar_21[0u].z = -0.408248;
+  tmpvar_21[uint(0)].x = 0.816497;
+  tmpvar_21[uint(0)].y = -0.408248;
+  tmpvar_21[uint(0)].z = -0.408248;
   tmpvar_21[1u].x = 0.0;
   tmpvar_21[1u].y = 0.707107;
   tmpvar_21[1u].z = -0.707107;
@@ -171,7 +171,9 @@ void main ()
     (((1.0 - dot (tmpvar_12.xyz, vec3(0.299, 0.587, 0.114))) * (1.0 - tmpvar_14)) * pow (abs((1.0 - tmpvar_32)), 5.0))
    * env_2)) + (texture (_SelfIllum, xlv_TEXCOORD0.xy).xyz * _SelfIllumScale));
   tmpvar_38.w = (texture (_AlphaMap, xlv_TEXCOORD0.xy).w * _Color.w);
-  _fragData = tmpvar_38;
+  mediump vec4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  _fragData = tmpvar_39;
 }
 
 

@@ -52,13 +52,13 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     randomDir_14 = half3(tmpvar_15);
     float tmpvar_17;
     tmpvar_17 = dot (viewNorm_7, (float3)randomDir_14);
-    float tmpvar_18;
+    half tmpvar_18;
     if ((tmpvar_17 < 0.0)) {
-      tmpvar_18 = 1.0;
+      tmpvar_18 = half(1.0);
     } else {
-      tmpvar_18 = -1.0;
+      tmpvar_18 = half(-1.0);
     };
-    randomDir_14 = (randomDir_14 * ((half)-(tmpvar_18)));
+    randomDir_14 = (randomDir_14 * -(tmpvar_18));
     randomDir_14 = half3(((float3)randomDir_14 + (viewNorm_7 * 0.3)));
     float4 tmpvar_19;
     tmpvar_19 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)((tmpvar_2 + ((float2)randomDir_14.xy * scale_5)))));

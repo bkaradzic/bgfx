@@ -934,25 +934,19 @@ builtin_variable_generator::generate_fs_special_vars()
       if (state->AMD_shader_stencil_export_warn)
          var->enable_extension_warning("GL_AMD_shader_stencil_export");
    }
-
+	
 	if (state->EXT_frag_depth_enable) {
 		ir_variable *const var =
 		add_output(FRAG_RESULT_DEPTH, float_t, "gl_FragDepthEXT", glsl_precision_high);
 		if (state->EXT_frag_depth_warn)
 			var->enable_extension_warning("GL_EXT_frag_depth");
 	}
-
+	
 	if (state->EXT_shader_framebuffer_fetch_enable) {
 		ir_variable *const var =
 			add_input(VARYING_SLOT_VAR0, array(vec4_t, state->Const.MaxDrawBuffers), "gl_LastFragData", glsl_precision_medium);
 		if (state->EXT_shader_framebuffer_fetch_warn)
 			var->enable_extension_warning("GL_EXT_shader_framebuffer_fetch");
-	}
-
-	{
-		ir_variable *var;
-		var = add_output(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID", glsl_precision_high);
-		var->data.interpolation = INTERP_QUALIFIER_FLAT;
 	}
 
    if (state->ARB_sample_shading_enable) {

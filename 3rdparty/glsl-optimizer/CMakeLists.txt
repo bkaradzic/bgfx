@@ -4,6 +4,7 @@ include_directories(include)
 include_directories(src/mesa)
 include_directories(src/mapi)
 include_directories(src/glsl)
+include_directories(src)
 
 option (DEBUG "Enable debugging" FALSE)
 
@@ -16,7 +17,7 @@ else()
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -s")
 endif()
 
-file(GLOB glcpp-library_sources src/glsl/glcpp/*.c)
+file(GLOB glcpp-library_sources src/glsl/glcpp/*.c src/util/*.c)
 #file(GLOB glcpp-library_sources_remove src/glsl/glcpp/glcpp.c)
 #list(REMOVE_ITEM glcpp-library_sources ${glcpp-library_sources_remove})
 add_library(glcpp-library ${glcpp-library_sources})

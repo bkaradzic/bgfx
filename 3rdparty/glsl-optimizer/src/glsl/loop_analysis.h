@@ -58,7 +58,7 @@ unroll_loops(exec_list *instructions, loop_state *ls,
              const struct gl_shader_compiler_options *options);
 
 ir_rvalue *
-find_initial_value(ir_loop *loop, ir_variable *var);
+find_initial_value(ir_loop *loop, ir_variable *var, ir_instruction **out_containing_ir);
 
 int
 calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
@@ -168,6 +168,8 @@ public:
 
    /** Reference to initial value outside of the loop. */
    ir_rvalue *initial_value;
+   /** IR that assigned the initial value. */
+   ir_instruction *initial_value_ir;
 
    /** Number of assignments to the variable in the loop body. */
    unsigned num_assignments;
@@ -247,7 +249,7 @@ public:
    loop_variable_state *insert(ir_loop *ir);
 	
    loop_variable_state* get_for_inductor (const ir_variable*);
-   void insert_inductor(ir_variable* var, loop_variable_state* state, ir_loop* loop);
+   void insert_inductor(loop_variable* loopvar, loop_variable_state* state, ir_loop* loop);
 
    bool loop_found;
 

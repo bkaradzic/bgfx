@@ -19,7 +19,7 @@ void main ()
   lowp vec3 tmpvar_4;
   lowp vec3 tmpvar_5;
   highp mat3 tmpvar_6;
-  tmpvar_6[0u] = _Object2World[0].xyz;
+  tmpvar_6[uint(0)] = _Object2World[0].xyz;
   tmpvar_6[1u] = _Object2World[1].xyz;
   tmpvar_6[2u] = _Object2World[2].xyz;
   mediump vec3 tmpvar_7;
@@ -31,9 +31,9 @@ void main ()
   tmpvar_8 = attrTangent.xyz;
   tmpvar_9 = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
   mediump mat3 tmpvar_10;
-  tmpvar_10[0u].x = tmpvar_8.x;
-  tmpvar_10[0u].y = tmpvar_9.x;
-  tmpvar_10[0u].z = attrNormal.x;
+  tmpvar_10[uint(0)].x = tmpvar_8.x;
+  tmpvar_10[uint(0)].y = tmpvar_9.x;
+  tmpvar_10[uint(0)].z = attrNormal.x;
   tmpvar_10[1u].x = tmpvar_8.y;
   tmpvar_10[1u].y = tmpvar_9.y;
   tmpvar_10[1u].z = attrNormal.y;

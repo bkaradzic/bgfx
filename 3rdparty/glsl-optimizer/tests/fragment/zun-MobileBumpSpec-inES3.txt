@@ -32,12 +32,12 @@ lowp vec3 UnpackNormal( in lowp vec4 packednormal ) {
 }
 void surf( in Input IN, inout SurfaceOutput o ) {
     lowp vec4 tex;
-    tex = texture2D( _MainTex, IN.uv_MainTex);
+    tex = texture( _MainTex, IN.uv_MainTex);
     o.Albedo = tex.xyz ;
     o.Gloss = tex.w ;
     o.Alpha = tex.w ;
     o.Specular = _Shininess;
-    o.Normal = UnpackNormal( texture2D( _BumpMap, IN.uv_MainTex));
+    o.Normal = UnpackNormal( texture( _BumpMap, IN.uv_MainTex));
 }
 lowp vec4 LightingMobileBlinnPhong( in SurfaceOutput s, in lowp vec3 lightDir, in lowp vec3 halfDir, in lowp float atten ) {
     lowp float diff;

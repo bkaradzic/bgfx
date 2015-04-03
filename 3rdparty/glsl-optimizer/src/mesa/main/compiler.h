@@ -248,11 +248,11 @@ static inline GLuint CPU_TO_LE32(GLuint x)
 #endif
 
 #ifndef M_PI_2
-#define M_PI_2 1.57079632679489661923
+#define M_PI_2 (1.57079632679489661923)
 #endif
 
 #ifndef M_PI_4
-#define M_PI_4 0.78539816339744830962
+#define M_PI_4 (0.785398163397448309616)
 #endif
 
 #ifndef M_E

@@ -149,7 +149,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half VdotH_34;
   VdotH_34 = (tmpvar_33 + (half)1e-05);
   half tmpvar_35;
-  tmpvar_35 = ((1.0/((
+  tmpvar_35 = (((half)1.0/((
     pow (tmpvar_14, (half)4.0)
    + (half)1e-05))) - (half)2.0);
   half tmpvar_36;
@@ -179,7 +179,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     ((((half)1.0 - dot (tmpvar_12.xyz, (half3)float3(0.299, 0.587, 0.114))) * ((half)1.0 - tmpvar_14)) * pow (abs(((half)1.0 - tmpvar_32)), (half)5.0))
    * env_2)) + ((half3)((float3)_SelfIllum.sample(_mtlsmp__SelfIllum, (float2)(_mtl_i.xlv_TEXCOORD0.xy)).xyz * _mtl_u._SelfIllumScale)));
   tmpvar_38.w = ((half)((float)_AlphaMap.sample(_mtlsmp__AlphaMap, (float2)(_mtl_i.xlv_TEXCOORD0.xy)).w * _mtl_u._Color.w));
-  _mtl_o._fragData = tmpvar_38;
+  half4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  _mtl_o._fragData = tmpvar_39;
   return _mtl_o;
 }
 

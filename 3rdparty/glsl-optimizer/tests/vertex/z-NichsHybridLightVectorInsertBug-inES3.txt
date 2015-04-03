@@ -1,0 +1,134 @@
+#version 300 es
+
+// stripped down version of Nicholas' Static Sky
+// hybrid lighting shader that exposed vector_insert_todo
+// bug
+
+#define gl_Vertex _glesVertex
+in vec4 _glesVertex;
+#define gl_Color _glesColor
+in vec4 _glesColor;
+#define gl_Normal _glesNormal
+in vec3 _glesNormal;
+#define gl_MultiTexCoord0 _glesMultiTexCoord0
+in vec4 _glesMultiTexCoord0;
+#define gl_MultiTexCoord1 _glesMultiTexCoord1
+in vec4 _glesMultiTexCoord1;
+#define TANGENT _glesTANGENT
+in vec4 _glesTANGENT;
+vec4 xll_tex2Dlod(sampler2D s, vec4 coord) {
+   return textureLod( s, coord.xy, coord.w);
+}
+struct Lamp {
+    mediump vec4 posRange;
+    mediump vec4 colorImp;
+};
+struct v2f {
+    highp vec4 pos;
+    mediump vec3 diffuse;
+};
+struct HybridAppData {
+    highp vec4 vertex;
+    highp vec4 tangent;
+    highp vec3 normal;
+    highp vec4 texcoord;
+    lowp vec4 bakedCol;
+    mediump vec2 bakedDir;
+};
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp vec4 _ProjectionParams;
+uniform highp vec4 _ScreenParams;
+uniform highp vec4 _ZBufferParams;
+uniform highp vec4 _WorldSpaceLightPos0;
+uniform highp mat4 glstate_matrix_mvp;
+uniform highp mat4 glstate_matrix_modelview0;
+uniform highp mat4 glstate_matrix_invtrans_modelview0;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp mat4 glstate_matrix_transpose_modelview0;
+uniform highp mat4 glstate_matrix_projection;
+uniform lowp vec4 glstate_lightmodel_ambient;
+uniform highp float _RenderExposure;
+uniform mediump vec2 _DynLampInfo_bufferSize;
+uniform sampler2D _DynLampInfo;
+uniform highp float LightVertOffset;
+uniform sampler2D LightVertTexture;
+uniform highp vec4 LightVertTextureSize;
+void CalcDynamicLight( in highp vec3 worldVert, in highp vec3 worldNorm, in Lamp lamp[4], inout mediump vec3 hybridDir, inout mediump vec3 hybridCol ) {
+    mediump vec4 atten;
+    highp int i = 0;
+    for ( ; (i < 4); (i++)) {
+    
+        highp vec3 lightToVert = (lamp[i].posRange.xyz - worldVert);
+        highp float lengthSq = dot( lightToVert, lightToVert);
+        highp vec3 lightToVertNorm = (lightToVert * inversesqrt(lengthSq));
+    
+        atten[i] = (lengthSq * lamp[i].posRange.w);
+        mediump float nDotL = dot( lightToVertNorm, worldNorm);
+        mediump float weight = (atten[i] * nDotL);
+    }
+
+    highp int j = 0;
+    for ( ; (j < 4); (j++)) {
+        hybridCol += (lamp[j].colorImp.xyz * atten[j]);
+    }
+}
+void LoadBakedLight( out mediump vec3 hybridCol, out mediump vec3 hybridDir ) {
+}
+mediump vec4 DoSampleGPUBuffer( in sampler2D buffer, in mediump vec2 coord, in mediump vec2 dimensions ) {
+    return xll_tex2Dlod( buffer, vec4( (coord / dimensions), 0.0, 0.0));
+}
+void ReadLightArray3( in highp ivec4 lightIdx, out Lamp l0, out Lamp l1, out Lamp l2, out Lamp l3 ) {
+
+    l0.posRange = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.x), 1.0), _DynLampInfo_bufferSize);
+    l0.colorImp = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.x), 2.0), _DynLampInfo_bufferSize);
+    l1.posRange = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.y), 1.0), _DynLampInfo_bufferSize);
+
+    l1.colorImp = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.y), 2.0), _DynLampInfo_bufferSize);
+    l2.posRange = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.z), 1.0), _DynLampInfo_bufferSize);
+    l2.colorImp = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.z), 2.0), _DynLampInfo_bufferSize);
+
+    l3.posRange = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.w), 1.0), _DynLampInfo_bufferSize);
+    l3.colorImp = DoSampleGPUBuffer( _DynLampInfo, vec2( float(lightIdx.w), 2.0), _DynLampInfo_bufferSize);
+}
+void DoCalcHybridLight2( in highp vec3 worldVert, in highp vec3 worldNorm, out mediump vec3 hybridCol, in lowp vec4 bakedColor, in mediump vec2 bakedDir ) {
+    mediump vec3 hybridDir;
+    LoadBakedLight( hybridCol, hybridDir);
+
+    highp ivec4 lightIdx = ivec4( int(worldVert.x), int(worldVert.y), int(worldVert.z), int((-worldVert.x)));
+    Lamp l[4];
+    ReadLightArray3( lightIdx, l[0], l[1], l[2], l[3]);
+
+    CalcDynamicLight( worldVert, worldNorm, l, hybridDir, hybridCol);
+}
+highp vec3 CalcDiffuseHybridLight( in highp vec3 worldVert, in highp vec3 worldNorm, in mediump vec4 bakedColor, in mediump vec2 bakedDir ) {
+    mediump vec3 hybridCol;
+    DoCalcHybridLight2( worldVert, worldNorm, hybridCol, bakedColor, bakedDir);
+
+    return hybridCol;
+}
+v2f vert( in HybridAppData v ) {
+    v2f o;
+
+    highp vec3 worldVert = (_Object2World * v.vertex).xyz;
+    highp vec3 worldNorm = normalize((mat3( _Object2World) * v.normal.xyz));
+    o.diffuse = CalcDiffuseHybridLight( worldVert, worldNorm, v.bakedCol, v.bakedDir);
+
+    o.pos = (glstate_matrix_mvp * v.vertex);
+    return o;
+}
+
+out mediump vec3 xlv_TEXCOORD2;
+void main() {
+    v2f xl_retval;
+    HybridAppData xlt_v;
+    xlt_v.vertex = vec4(gl_Vertex);
+    xlt_v.tangent = vec4(TANGENT);
+    xlt_v.normal = vec3(gl_Normal);
+    xlt_v.texcoord = vec4(gl_MultiTexCoord0);
+    xlt_v.bakedCol = vec4(gl_Color);
+    xlt_v.bakedDir = vec2(gl_MultiTexCoord1);
+    xl_retval = vert( xlt_v);
+    gl_Position = vec4(xl_retval.pos);
+    xlv_TEXCOORD2 = vec3(xl_retval.diffuse);
+}

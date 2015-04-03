@@ -66,101 +66,99 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   float mydist_19;
   mydist_19 = (sqrt(dot (tolight_6, tolight_6)) * _mtl_u._LightPositionRange.w);
   mydist_19 = (mydist_19 * 0.97);
-  half4 shadows_20;
-  float4 shadowVals_21;
-  float3 vec_22;
-  vec_22 = (tolight_6 + float3(0.0078125, 0.0078125, 0.0078125));
-  float4 packDist_23;
-  half4 tmpvar_24;
-  tmpvar_24 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_22));
-  packDist_23 = float4(tmpvar_24);
-  shadowVals_21.x = dot (packDist_23, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  float3 vec_25;
-  vec_25 = (tolight_6 + float3(-0.0078125, -0.0078125, 0.0078125));
-  float4 packDist_26;
-  half4 tmpvar_27;
-  tmpvar_27 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_25));
-  packDist_26 = float4(tmpvar_27);
-  shadowVals_21.y = dot (packDist_26, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  float3 vec_28;
-  vec_28 = (tolight_6 + float3(-0.0078125, 0.0078125, -0.0078125));
-  float4 packDist_29;
-  half4 tmpvar_30;
-  tmpvar_30 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_28));
-  packDist_29 = float4(tmpvar_30);
-  shadowVals_21.z = dot (packDist_29, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  float3 vec_31;
-  vec_31 = (tolight_6 + float3(0.0078125, -0.0078125, -0.0078125));
-  float4 packDist_32;
-  half4 tmpvar_33;
-  tmpvar_33 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_31));
-  packDist_32 = float4(tmpvar_33);
-  shadowVals_21.w = dot (packDist_32, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  bool4 tmpvar_34;
-  tmpvar_34 = bool4((shadowVals_21 < float4(mydist_19)));
-  float4 tmpvar_35;
-  tmpvar_35 = _mtl_u._LightShadowData.xxxx;
+  float4 shadowVals_20;
+  float3 vec_21;
+  vec_21 = (tolight_6 + float3(0.0078125, 0.0078125, 0.0078125));
+  float4 packDist_22;
+  half4 tmpvar_23;
+  tmpvar_23 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_21));
+  packDist_22 = float4(tmpvar_23);
+  shadowVals_20.x = dot (packDist_22, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float3 vec_24;
+  vec_24 = (tolight_6 + float3(-0.0078125, -0.0078125, 0.0078125));
+  float4 packDist_25;
+  half4 tmpvar_26;
+  tmpvar_26 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_24));
+  packDist_25 = float4(tmpvar_26);
+  shadowVals_20.y = dot (packDist_25, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float3 vec_27;
+  vec_27 = (tolight_6 + float3(-0.0078125, 0.0078125, -0.0078125));
+  float4 packDist_28;
+  half4 tmpvar_29;
+  tmpvar_29 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_27));
+  packDist_28 = float4(tmpvar_29);
+  shadowVals_20.z = dot (packDist_28, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float3 vec_30;
+  vec_30 = (tolight_6 + float3(0.0078125, -0.0078125, -0.0078125));
+  float4 packDist_31;
+  half4 tmpvar_32;
+  tmpvar_32 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_30));
+  packDist_31 = float4(tmpvar_32);
+  shadowVals_20.w = dot (packDist_31, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  bool4 tmpvar_33;
+  tmpvar_33 = bool4((shadowVals_20 < float4(mydist_19)));
+  float4 tmpvar_34;
+  tmpvar_34 = _mtl_u._LightShadowData.xxxx;
+  float tmpvar_35;
+  if (tmpvar_33.x) {
+    tmpvar_35 = tmpvar_34.x;
+  } else {
+    tmpvar_35 = 1.0;
+  };
   float tmpvar_36;
-  if (tmpvar_34.x) {
-    tmpvar_36 = tmpvar_35.x;
+  if (tmpvar_33.y) {
+    tmpvar_36 = tmpvar_34.y;
   } else {
     tmpvar_36 = 1.0;
   };
   float tmpvar_37;
-  if (tmpvar_34.y) {
-    tmpvar_37 = tmpvar_35.y;
+  if (tmpvar_33.z) {
+    tmpvar_37 = tmpvar_34.z;
   } else {
     tmpvar_37 = 1.0;
   };
   float tmpvar_38;
-  if (tmpvar_34.z) {
-    tmpvar_38 = tmpvar_35.z;
+  if (tmpvar_33.w) {
+    tmpvar_38 = tmpvar_34.w;
   } else {
     tmpvar_38 = 1.0;
   };
-  float tmpvar_39;
-  if (tmpvar_34.w) {
-    tmpvar_39 = tmpvar_35.w;
-  } else {
-    tmpvar_39 = 1.0;
-  };
-  float4 tmpvar_40;
-  tmpvar_40.x = tmpvar_36;
-  tmpvar_40.y = tmpvar_37;
-  tmpvar_40.z = tmpvar_38;
-  tmpvar_40.w = tmpvar_39;
-  shadows_20 = half4(tmpvar_40);
-  half tmpvar_41;
-  tmpvar_41 = dot (shadows_20, (half4)float4(0.25, 0.25, 0.25, 0.25));
-  atten_4 = (atten_4 * (float)tmpvar_41);
-  float4 tmpvar_42;
-  tmpvar_42.w = 1.0;
-  tmpvar_42.xyz = wpos_7;
-  half4 tmpvar_43;
-  float3 P_44;
-  P_44 = (_mtl_u._LightMatrix0 * tmpvar_42).xyz;
-  tmpvar_43 = _LightTexture0.sample(_mtlsmp__LightTexture0, (float3)(P_44));
-  atten_4 = (atten_4 * (float)tmpvar_43.w);
-  float3 tmpvar_45;
-  tmpvar_45 = normalize(((float3)lightDir_5 - normalize(
+  half4 tmpvar_39;
+  tmpvar_39.x = half(tmpvar_35);
+  tmpvar_39.y = half(tmpvar_36);
+  tmpvar_39.z = half(tmpvar_37);
+  tmpvar_39.w = half(tmpvar_38);
+  half tmpvar_40;
+  tmpvar_40 = dot (tmpvar_39, (half4)float4(0.25, 0.25, 0.25, 0.25));
+  atten_4 = (atten_4 * (float)tmpvar_40);
+  float4 tmpvar_41;
+  tmpvar_41.w = 1.0;
+  tmpvar_41.xyz = wpos_7;
+  half4 tmpvar_42;
+  float3 P_43;
+  P_43 = (_mtl_u._LightMatrix0 * tmpvar_41).xyz;
+  tmpvar_42 = _LightTexture0.sample(_mtlsmp__LightTexture0, (float3)(P_43));
+  atten_4 = (atten_4 * (float)tmpvar_42.w);
+  float3 tmpvar_44;
+  tmpvar_44 = normalize(((float3)lightDir_5 - normalize(
     (wpos_7 - _mtl_u._WorldSpaceCameraPos)
   )));
-  h_3 = half3(tmpvar_45);
-  half tmpvar_46;
-  tmpvar_46 = pow (max ((half)0.0, dot (h_3, normal_9)), (nspec_10.w * (half)128.0));
-  spec_2 = float(tmpvar_46);
+  h_3 = half3(tmpvar_44);
+  half tmpvar_45;
+  tmpvar_45 = pow (max ((half)0.0, dot (h_3, normal_9)), (nspec_10.w * (half)128.0));
+  spec_2 = float(tmpvar_45);
   spec_2 = (spec_2 * clamp (atten_4, 0.0, 1.0));
   res_1.xyz = half3((_mtl_u._LightColor.xyz * ((float)max ((half)0.0, 
     dot (lightDir_5, normal_9)
   ) * atten_4)));
-  half3 c_47;
-  c_47 = half3(_mtl_u._LightColor.xyz);
-  res_1.w = half((spec_2 * (float)dot (c_47, (half3)float3(0.22, 0.707, 0.071))));
-  float tmpvar_48;
-  tmpvar_48 = clamp ((1.0 - (
+  half3 c_46;
+  c_46 = half3(_mtl_u._LightColor.xyz);
+  res_1.w = half((spec_2 * (float)dot (c_46, (half3)float3(0.22, 0.707, 0.071))));
+  float tmpvar_47;
+  tmpvar_47 = clamp ((1.0 - (
     (tmpvar_15.z * _mtl_u.unity_LightmapFade.z)
    + _mtl_u.unity_LightmapFade.w)), 0.0, 1.0);
-  res_1 = ((half4)((float4)res_1 * tmpvar_48));
+  res_1 = ((half4)((float4)res_1 * tmpvar_47));
   _mtl_o._fragData = exp2(-(res_1));
   return _mtl_o;
 }

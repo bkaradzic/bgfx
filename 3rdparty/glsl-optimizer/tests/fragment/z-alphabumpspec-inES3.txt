@@ -60,12 +60,12 @@ mediump vec4 UnpackNormal( in mediump vec4 packednormal ) {
 }
 void surf( in Input IN, inout SurfaceOutput o ) {
     vec4 tex;
-    tex = texture2D( _MainTex, IN.uv_MainTex);
+    tex = texture( _MainTex, IN.uv_MainTex);
     o.Albedo = (tex.xyz  * _Color.xyz );
     o.Gloss = tex.w ;
     o.Alpha = (tex.w  * _Color.w );
     o.Specular = _Shininess;
-    o.Normal = vec3( UnpackNormal( texture2D( _BumpMap, IN.uv_BumpMap)));
+    o.Normal = vec3( UnpackNormal( texture( _BumpMap, IN.uv_BumpMap)));
 }
 vec4 LightingBlinnPhong( in SurfaceOutput s, in vec3 lightDir, in vec3 viewDir, in float atten ) {
     vec3 h;

@@ -58,101 +58,99 @@ void main ()
   highp float mydist_19;
   mydist_19 = (sqrt(dot (tolight_6, tolight_6)) * _LightPositionRange.w);
   mydist_19 = (mydist_19 * 0.97);
-  mediump vec4 shadows_20;
-  highp vec4 shadowVals_21;
-  highp vec3 vec_22;
-  vec_22 = (tolight_6 + vec3(0.0078125, 0.0078125, 0.0078125));
-  highp vec4 packDist_23;
-  lowp vec4 tmpvar_24;
-  tmpvar_24 = texture (_ShadowMapTexture, vec_22);
-  packDist_23 = tmpvar_24;
-  shadowVals_21.x = dot (packDist_23, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  highp vec3 vec_25;
-  vec_25 = (tolight_6 + vec3(-0.0078125, -0.0078125, 0.0078125));
-  highp vec4 packDist_26;
-  lowp vec4 tmpvar_27;
-  tmpvar_27 = texture (_ShadowMapTexture, vec_25);
-  packDist_26 = tmpvar_27;
-  shadowVals_21.y = dot (packDist_26, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  highp vec3 vec_28;
-  vec_28 = (tolight_6 + vec3(-0.0078125, 0.0078125, -0.0078125));
-  highp vec4 packDist_29;
-  lowp vec4 tmpvar_30;
-  tmpvar_30 = texture (_ShadowMapTexture, vec_28);
-  packDist_29 = tmpvar_30;
-  shadowVals_21.z = dot (packDist_29, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  highp vec3 vec_31;
-  vec_31 = (tolight_6 + vec3(0.0078125, -0.0078125, -0.0078125));
-  highp vec4 packDist_32;
-  lowp vec4 tmpvar_33;
-  tmpvar_33 = texture (_ShadowMapTexture, vec_31);
-  packDist_32 = tmpvar_33;
-  shadowVals_21.w = dot (packDist_32, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  bvec4 tmpvar_34;
-  tmpvar_34 = lessThan (shadowVals_21, vec4(mydist_19));
-  highp vec4 tmpvar_35;
-  tmpvar_35 = _LightShadowData.xxxx;
+  highp vec4 shadowVals_20;
+  highp vec3 vec_21;
+  vec_21 = (tolight_6 + vec3(0.0078125, 0.0078125, 0.0078125));
+  highp vec4 packDist_22;
+  lowp vec4 tmpvar_23;
+  tmpvar_23 = texture (_ShadowMapTexture, vec_21);
+  packDist_22 = tmpvar_23;
+  shadowVals_20.x = dot (packDist_22, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  highp vec3 vec_24;
+  vec_24 = (tolight_6 + vec3(-0.0078125, -0.0078125, 0.0078125));
+  highp vec4 packDist_25;
+  lowp vec4 tmpvar_26;
+  tmpvar_26 = texture (_ShadowMapTexture, vec_24);
+  packDist_25 = tmpvar_26;
+  shadowVals_20.y = dot (packDist_25, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  highp vec3 vec_27;
+  vec_27 = (tolight_6 + vec3(-0.0078125, 0.0078125, -0.0078125));
+  highp vec4 packDist_28;
+  lowp vec4 tmpvar_29;
+  tmpvar_29 = texture (_ShadowMapTexture, vec_27);
+  packDist_28 = tmpvar_29;
+  shadowVals_20.z = dot (packDist_28, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  highp vec3 vec_30;
+  vec_30 = (tolight_6 + vec3(0.0078125, -0.0078125, -0.0078125));
+  highp vec4 packDist_31;
+  lowp vec4 tmpvar_32;
+  tmpvar_32 = texture (_ShadowMapTexture, vec_30);
+  packDist_31 = tmpvar_32;
+  shadowVals_20.w = dot (packDist_31, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  bvec4 tmpvar_33;
+  tmpvar_33 = lessThan (shadowVals_20, vec4(mydist_19));
+  highp vec4 tmpvar_34;
+  tmpvar_34 = _LightShadowData.xxxx;
+  highp float tmpvar_35;
+  if (tmpvar_33.x) {
+    tmpvar_35 = tmpvar_34.x;
+  } else {
+    tmpvar_35 = 1.0;
+  };
   highp float tmpvar_36;
-  if (tmpvar_34.x) {
-    tmpvar_36 = tmpvar_35.x;
+  if (tmpvar_33.y) {
+    tmpvar_36 = tmpvar_34.y;
   } else {
     tmpvar_36 = 1.0;
   };
   highp float tmpvar_37;
-  if (tmpvar_34.y) {
-    tmpvar_37 = tmpvar_35.y;
+  if (tmpvar_33.z) {
+    tmpvar_37 = tmpvar_34.z;
   } else {
     tmpvar_37 = 1.0;
   };
   highp float tmpvar_38;
-  if (tmpvar_34.z) {
-    tmpvar_38 = tmpvar_35.z;
+  if (tmpvar_33.w) {
+    tmpvar_38 = tmpvar_34.w;
   } else {
     tmpvar_38 = 1.0;
   };
-  highp float tmpvar_39;
-  if (tmpvar_34.w) {
-    tmpvar_39 = tmpvar_35.w;
-  } else {
-    tmpvar_39 = 1.0;
-  };
-  highp vec4 tmpvar_40;
-  tmpvar_40.x = tmpvar_36;
-  tmpvar_40.y = tmpvar_37;
-  tmpvar_40.z = tmpvar_38;
-  tmpvar_40.w = tmpvar_39;
-  shadows_20 = tmpvar_40;
-  mediump float tmpvar_41;
-  tmpvar_41 = dot (shadows_20, vec4(0.25, 0.25, 0.25, 0.25));
-  atten_4 = (atten_4 * tmpvar_41);
-  highp vec4 tmpvar_42;
-  tmpvar_42.w = 1.0;
-  tmpvar_42.xyz = wpos_7;
-  lowp vec4 tmpvar_43;
-  highp vec3 P_44;
-  P_44 = (_LightMatrix0 * tmpvar_42).xyz;
-  tmpvar_43 = texture (_LightTexture0, P_44);
-  atten_4 = (atten_4 * tmpvar_43.w);
-  highp vec3 tmpvar_45;
-  tmpvar_45 = normalize((lightDir_5 - normalize(
+  mediump vec4 tmpvar_39;
+  tmpvar_39.x = tmpvar_35;
+  tmpvar_39.y = tmpvar_36;
+  tmpvar_39.z = tmpvar_37;
+  tmpvar_39.w = tmpvar_38;
+  mediump float tmpvar_40;
+  tmpvar_40 = dot (tmpvar_39, vec4(0.25, 0.25, 0.25, 0.25));
+  atten_4 = (atten_4 * tmpvar_40);
+  highp vec4 tmpvar_41;
+  tmpvar_41.w = 1.0;
+  tmpvar_41.xyz = wpos_7;
+  lowp vec4 tmpvar_42;
+  highp vec3 P_43;
+  P_43 = (_LightMatrix0 * tmpvar_41).xyz;
+  tmpvar_42 = texture (_LightTexture0, P_43);
+  atten_4 = (atten_4 * tmpvar_42.w);
+  highp vec3 tmpvar_44;
+  tmpvar_44 = normalize((lightDir_5 - normalize(
     (wpos_7 - _WorldSpaceCameraPos)
   )));
-  h_3 = tmpvar_45;
-  mediump float tmpvar_46;
-  tmpvar_46 = pow (max (0.0, dot (h_3, normal_9)), (nspec_10.w * 128.0));
-  spec_2 = tmpvar_46;
+  h_3 = tmpvar_44;
+  mediump float tmpvar_45;
+  tmpvar_45 = pow (max (0.0, dot (h_3, normal_9)), (nspec_10.w * 128.0));
+  spec_2 = tmpvar_45;
   spec_2 = (spec_2 * clamp (atten_4, 0.0, 1.0));
   res_1.xyz = (_LightColor.xyz * (max (0.0, 
     dot (lightDir_5, normal_9)
   ) * atten_4));
-  mediump vec3 c_47;
-  c_47 = _LightColor.xyz;
-  res_1.w = (spec_2 * dot (c_47, vec3(0.22, 0.707, 0.071)));
-  highp float tmpvar_48;
-  tmpvar_48 = clamp ((1.0 - (
+  mediump vec3 c_46;
+  c_46 = _LightColor.xyz;
+  res_1.w = (spec_2 * dot (c_46, vec3(0.22, 0.707, 0.071)));
+  highp float tmpvar_47;
+  tmpvar_47 = clamp ((1.0 - (
     (tmpvar_15.z * unity_LightmapFade.z)
    + unity_LightmapFade.w)), 0.0, 1.0);
-  res_1 = (res_1 * tmpvar_48);
+  res_1 = (res_1 * tmpvar_47);
   _fragData = exp2(-(res_1));
 }
 

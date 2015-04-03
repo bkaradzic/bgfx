@@ -206,6 +206,14 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 	#endif
 }
 
+
+struct precision_ctx
+{
+	exec_list* root_ir;
+	bool res;
+};
+
+
 static void propagate_precision_deref(ir_instruction *ir, void *data)
 {
 	// variable deref with undefined precision: take from variable itself
@@ -213,7 +221,7 @@ static void propagate_precision_deref(ir_instruction *ir, void *data)
 	if (der && der->get_precision() == glsl_precision_undefined && der->var->data.precision != glsl_precision_undefined)
 	{
 		der->set_precision ((glsl_precision)der->var->data.precision);
-		*(bool*)data = true;
+		((precision_ctx*)data)->res = true;
 	}
 	
 	// array deref with undefined precision: take from array itself
@@ -221,7 +229,7 @@ static void propagate_precision_deref(ir_instruction *ir, void *data)
 	if (der_arr && der_arr->get_precision() == glsl_precision_undefined && der_arr->array->get_precision() != glsl_precision_undefined)
 	{
 		der_arr->set_precision (der_arr->array->get_precision());
-		*(bool*)data = true;
+		((precision_ctx*)data)->res = true;
 	}
 	
 	// swizzle with undefined precision: take from swizzle argument
@@ -229,7 +237,7 @@ static void propagate_precision_deref(ir_instruction *ir, void *data)
 	if (swz && swz->get_precision() == glsl_precision_undefined && swz->val->get_precision() != glsl_precision_undefined)
 	{
 		swz->set_precision (swz->val->get_precision());
-		*(bool*)data = true;
+		((precision_ctx*)data)->res = true;
 	}
 	
 }
@@ -252,31 +260,87 @@ static void propagate_precision_expr(ir_instruction *ir, void *data)
 	if (expr->get_precision() != prec_params_max)
 	{
 		expr->set_precision (prec_params_max);
-		*(bool*)data = true;
+		((precision_ctx*)data)->res = true;
 	}
 	
+}
+
+struct undefined_ass_ctx
+{
+	ir_variable* var;
+	bool res;
+};
+
+static void has_only_undefined_precision_assignments(ir_instruction *ir, void *data)
+{
+	ir_assignment* ass = ir->as_assignment();
+	if (!ass)
+		return;
+	undefined_ass_ctx* ctx = (undefined_ass_ctx*)data;
+	if (ass->whole_variable_written() != ctx->var)
+		return;
+	glsl_precision prec = ass->rhs->get_precision();
+	if (prec == glsl_precision_undefined)
+		return;
+	ctx->res = false;
 }
 
 
 static void propagate_precision_assign(ir_instruction *ir, void *data)
 {
 	ir_assignment* ass = ir->as_assignment();
-	if (ass && ass->lhs && ass->rhs)
+	if (!ass || !ass->lhs || !ass->rhs)
+		return;
+
+	glsl_precision lp = ass->lhs->get_precision();
+	glsl_precision rp = ass->rhs->get_precision();
+
+	// for assignments with LHS having undefined precision, take it from RHS
+	if (rp != glsl_precision_undefined)
 	{
-		glsl_precision lp = ass->lhs->get_precision();
-		glsl_precision rp = ass->rhs->get_precision();
-		if (rp == glsl_precision_undefined)
-			return;
 		ir_variable* lhs_var = ass->lhs->variable_referenced();
 		if (lp == glsl_precision_undefined)
 		{		
 			if (lhs_var)
 				lhs_var->data.precision = rp;
 			ass->lhs->set_precision (rp);
-			*(bool*)data = true;
+			((precision_ctx*)data)->res = true;
 		}
+		return;
+	}
+	
+	// for assignments where LHS has precision, but RHS is a temporary variable
+	// with undefined precision that's only assigned from other undefined precision
+	// sources -> make the RHS variable take LHS precision
+	if (lp != glsl_precision_undefined && rp == glsl_precision_undefined)
+	{
+		ir_dereference* deref = ass->rhs->as_dereference();
+		if (deref)
+		{
+			ir_variable* rhs_var = deref->variable_referenced();
+			if (rhs_var && rhs_var->data.mode == ir_var_temporary && rhs_var->data.precision == glsl_precision_undefined)
+			{
+				undefined_ass_ctx ctx;
+				ctx.var = rhs_var;
+				// find if we only assign to it from undefined precision sources
+				ctx.res = true;
+				exec_list* root_ir = ((precision_ctx*)data)->root_ir;
+				foreach_in_list(ir_instruction, inst, root_ir)
+				{
+					visit_tree (ir, has_only_undefined_precision_assignments, &ctx);
+				}
+				if (ctx.res)
+				{
+					rhs_var->data.precision = lp;
+					ass->rhs->set_precision(lp);
+					((precision_ctx*)data)->res = true;
+				}
+			}
+		}
+		return;
 	}
 }
+
 
 static void propagate_precision_call(ir_instruction *ir, void *data)
 {
@@ -302,28 +366,29 @@ static void propagate_precision_call(ir_instruction *ir, void *data)
 		if (call->return_deref->get_precision() != prec_params_max)
 		{
 			call->return_deref->set_precision (prec_params_max);
-			*(bool*)data = true;
+			((precision_ctx*)data)->res = true;
 		}
 	}
 }
 
-
 static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 {
 	bool anyProgress = false;
-	bool res;
+	precision_ctx ctx;
+	
 	do {
-		res = false;
+		ctx.res = false;
+		ctx.root_ir = list;
 		foreach_in_list(ir_instruction, ir, list)
 		{
-			visit_tree (ir, propagate_precision_deref, &res);
-			visit_tree (ir, propagate_precision_assign, &res);
-			visit_tree (ir, propagate_precision_call, &res);
-			visit_tree (ir, propagate_precision_expr, &res);
+			visit_tree (ir, propagate_precision_deref, &ctx);
+			visit_tree (ir, propagate_precision_assign, &ctx);
+			visit_tree (ir, propagate_precision_call, &ctx);
+			visit_tree (ir, propagate_precision_expr, &ctx);
 		}
-		anyProgress |= res;
-	} while (res);
-	anyProgress |= res;
+		anyProgress |= ctx.res;
+	} while (ctx.res);
+	anyProgress |= ctx.res;
 	
 	// for globals that have undefined precision, set it to highp
 	if (assign_high_to_undefined)

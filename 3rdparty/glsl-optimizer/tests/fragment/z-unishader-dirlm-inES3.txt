@@ -85,12 +85,12 @@ uniform float _SelfIllumScale;
 uniform sampler2D _SelfIllum;
 
 vec3 Albedo( in vec4 texcoords ) {
-    vec3 albedo = (_Color.xyz * texture2D( _MainTex, texcoords.xy).xyz);
-    albedo *= (2.0 * texture2D( _DetailAlbedoMap, texcoords.zw).xyz);
+    vec3 albedo = (_Color.xyz * texture( _MainTex, texcoords.xy).xyz);
+    albedo *= (2.0 * texture( _DetailAlbedoMap, texcoords.zw).xyz);
     return albedo;
 }
 float Alpha( in vec2 uv ) {
-    return (texture2D( _AlphaMap, uv).w * _Color.w);
+    return (texture( _AlphaMap, uv).w * _Color.w);
 }
 float BlinnPhongTerm( in float roughness, in float NdotH ) {
     float m = (pow( roughness, 4.0) + 1e-05);
@@ -177,10 +177,10 @@ vec3 EnvMap( in vec4 worldNormal ) {
     return fromRGBM( envTexel);
 }
 float Occlusion( in vec2 uv ) {
-    return texture2D( _Occlusion, uv).x;
+    return texture( _Occlusion, uv).x;
 }
 vec4 SpecularGloss( in vec2 uv ) {
-    vec4 specGloss = texture2D( _SpecGlossMap, uv);
+    vec4 specGloss = texture( _SpecGlossMap, uv);
     return vec4( specGloss.xyz, specGloss.w);
 }
 vec3 BlendNormals( in vec3 n1, in vec3 n2 ) {
@@ -194,8 +194,8 @@ vec3 UnpackScaleNormal( in vec4 packednormal, in float bumpScale ) {
     return normal;
 }
 vec3 TangentNormal( in vec4 texcoords ) {
-    vec3 normalTangent = UnpackScaleNormal( texture2D( _BumpMap, texcoords.xy), _BumpScale);
-    vec3 detailNormalTangent = UnpackScaleNormal( texture2D( _DetailNormalMap, texcoords.zw), _DetailNormalMapScale);
+    vec3 normalTangent = UnpackScaleNormal( texture( _BumpMap, texcoords.xy), _BumpScale);
+    vec3 detailNormalTangent = UnpackScaleNormal( texture( _DetailNormalMap, texcoords.zw), _DetailNormalMapScale);
     normalTangent = BlendNormals( normalTangent, detailNormalTangent);
     return normalTangent;
 }
@@ -204,7 +204,7 @@ mat3 TangentToWorld( in vec3 normal, in vec3 tangent, in vec3 flip ) {
     return xll_transpose_mf3x3(mat3( tangent, binormal, normal));
 }
 float unitySampleShadow( in vec4 shadowCoord ) {
-    float shadow = texture2DProj( _ShadowMapTexture, shadowCoord).x;
+    float shadow = textureProj( _ShadowMapTexture, shadowCoord).x;
     return shadow;
 }
 vec4 frag( in VertexOutput i ) {
@@ -224,15 +224,15 @@ vec4 frag( in VertexOutput i ) {
     vec3 lightDir = _WorldSpaceLightPos0.xyz;
     float subsurface = 1.0;
     vec3 ambient = vec3( 0.0);
-    vec4 lmtex = texture2D( unity_Lightmap, i.extra.xy);
-    vec4 lmIndTex = texture2D( unity_LightmapInd, i.extra.xy);
+    vec4 lmtex = texture( unity_Lightmap, i.extra.xy);
+    vec4 lmIndTex = texture( unity_LightmapInd, i.extra.xy);
     vec3 lightDirTangent;
     DecodeDirLightmap( normalTangent, lmtex, lmIndTex, lightColor, lightDirTangent);
     lightDir = (lightDirTangent * tanToWorld);
     lightDir = normalize(lightDir);
     vec3 baseColor = EnergyCalculator( specColor, specular, Albedo( i.tex));
     vec3 color = BRDF_Disney_PBS( baseColor, (atten * lightColor), specColor, specular, roughness, normalWorld, lightDir, (-eyeVec), ambient, env);
-    color += (texture2D( _SelfIllum, i.tex.xy).xyz * _SelfIllumScale);
+    color += (texture( _SelfIllum, i.tex.xy).xyz * _SelfIllumScale);
     float alpha = Alpha( i.tex.xy);
     return vec4( color, alpha);
 }

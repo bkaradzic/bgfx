@@ -103,9 +103,9 @@ void main ()
   tmpvar_6.xyz = normalize(tmpvar_14.xyz);
   binormal_4 = (((tmpvar_26.yzx * tmpvar_6.zxy) - (tmpvar_26.zxy * tmpvar_6.yzx)) * tmpvar_14.w);
   highp mat3 tmpvar_27;
-  tmpvar_27[0u].x = tmpvar_6.x;
-  tmpvar_27[0u].y = binormal_4.x;
-  tmpvar_27[0u].z = tmpvar_26.x;
+  tmpvar_27[uint(0)].x = tmpvar_6.x;
+  tmpvar_27[uint(0)].y = binormal_4.x;
+  tmpvar_27[uint(0)].z = tmpvar_26.x;
   tmpvar_27[1u].x = tmpvar_6.y;
   tmpvar_27[1u].y = binormal_4.y;
   tmpvar_27[1u].z = tmpvar_26.y;

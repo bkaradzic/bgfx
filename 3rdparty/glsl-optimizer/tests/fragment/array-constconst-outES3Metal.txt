@@ -12,7 +12,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   xlatMtlShaderOutput _mtl_o;
   half4 c_1;
   c_1.zw = half2(float2(0.0, 0.0));
-  c_1.xy = half2(float2(-0.34413, 0.050045));
+  c_1.xy = half2(float2(-0.3441301, 0.05004501));
   _mtl_o._fragData = c_1;
   return _mtl_o;
 }

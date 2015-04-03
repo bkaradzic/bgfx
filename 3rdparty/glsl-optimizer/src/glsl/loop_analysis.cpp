@@ -121,8 +121,10 @@ loop_state::get_for_inductor(const ir_variable *ir)
 }
 
 void
-loop_state::insert_inductor(ir_variable* var, loop_variable_state* state, ir_loop* loop)
+loop_state::insert_inductor(loop_variable* loopvar, loop_variable_state* state, ir_loop* loop)
 {
+	ir_variable* var = loopvar->var;
+
 	// Check if this variable is already marked as "sure can't be a private inductor variable"
 	if (hash_table_find(this->ht_non_inductors, var))
 		return;
@@ -135,6 +137,29 @@ loop_state::insert_inductor(ir_variable* var, loop_variable_state* state, ir_loo
 		 node = node->next)
 	{
 		ir_instruction *ir = (ir_instruction *) node;
+		ir->accept (&refs);
+		if (refs.find_variable_entry(var))
+		{
+			// add to list of "non inductors", so that next loop does not try
+			// to add it as inductor again
+			hash_table_insert(this->ht_non_inductors, state, var);
+			return;
+		}
+	}
+
+	// Check if this variable is used before the loop anywhere. If it is, it can't be a
+	// variable that's private to the loop.
+	// Skip over the IR that declared the variable or assigned the initial value though.
+	for (exec_node* node = loop->prev;
+		 !node->is_head_sentinel();
+		 node = node->prev)
+	{
+		ir_instruction *ir = (ir_instruction *) node;
+		if (ir == loopvar->initial_value_ir)
+			continue;
+		if (ir->ir_type == ir_type_variable)
+			continue;
+
 		ir->accept (&refs);
 		if (refs.find_variable_entry(var))
 		{
@@ -345,7 +370,7 @@ loop_analysis::visit_leave(ir_loop *ir)
    foreach_in_list_safe(loop_variable, lv, &ls->variables) {
        ir_variable *var = lv->var;
        if (var != NULL) {
-           lv->initial_value = find_initial_value(ir, var);
+           lv->initial_value = find_initial_value(ir, var, &lv->initial_value_ir);
        }
       /* Move variables that are already marked as being loop constant to
        * a separate list.  These trivially don't need to be tested.
@@ -430,7 +455,7 @@ loop_analysis::visit_leave(ir_loop *ir)
 
 	 lv->remove();
 	 ls->induction_variables.push_tail(lv);
-	 loops->insert_inductor(lv->var, ls, ir);
+	 loops->insert_inductor(lv, ls, ir);
       }
    }
 
