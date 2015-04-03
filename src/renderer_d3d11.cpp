@@ -1447,7 +1447,6 @@ namespace bgfx { namespace d3d11
 				frameBuffer.resolve();
 			}
 
-			BX_UNUSED(_msaa);
 			if (!isValid(_fbh) )
 			{
 				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
