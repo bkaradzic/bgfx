@@ -44,7 +44,7 @@ typedef int ImGuiColorEditMode;     // enum ImGuiColorEditMode_
 typedef int ImGuiWindowFlags;       // enum ImGuiWindowFlags_
 typedef int ImGuiSetCond;           // enum ImGuiSetCondition_
 typedef int ImGuiInputTextFlags;    // enum ImGuiInputTextFlags_
-struct ImGuiTextEditCallbackData;   // for advanced uses of InputText() 
+struct ImGuiTextEditCallbackData;   // for advanced uses of InputText()
 typedef int (*ImGuiTextEditCallback)(ImGuiTextEditCallbackData *data);
 
 struct ImVec2
@@ -76,7 +76,7 @@ namespace ImGui
     IMGUI_API void        MemFree(void* ptr);
 }
 
-// std::vector<> like class to avoid dragging dependencies (also: windows implementation of STL with debug enabled is absurdly slow, so let's bypass it so our code runs fast in debug). 
+// std::vector<> like class to avoid dragging dependencies (also: windows implementation of STL with debug enabled is absurdly slow, so let's bypass it so our code runs fast in debug).
 // Use '#define ImVector std::vector' if you want to use the STL type or your own type.
 // Our implementation does NOT call c++ constructors! because the data types we use don't need them (but that could be added as well). Only provide the minimum functionalities we need.
 #ifndef ImVector
@@ -117,14 +117,14 @@ public:
     inline void                 swap(ImVector<T>& rhs)          { const size_t rhs_size = rhs.Size; rhs.Size = Size; Size = rhs_size; const size_t rhs_cap = rhs.Capacity; rhs.Capacity = Capacity; Capacity = rhs_cap; value_type* rhs_data = rhs.Data; rhs.Data = Data; Data = rhs_data; }
 
     inline void                 resize(size_t new_size)         { if (new_size > Capacity) reserve(new_size); Size = new_size; }
-    inline void                 reserve(size_t new_capacity)    
-    { 
+    inline void                 reserve(size_t new_capacity)
+    {
         if (new_capacity <= Capacity) return;
         T* new_data = (value_type*)ImGui::MemAlloc(new_capacity * sizeof(value_type));
         memcpy(new_data, Data, Size * sizeof(value_type));
         ImGui::MemFree(Data);
         Data = new_data;
-        Capacity = new_capacity; 
+        Capacity = new_capacity;
     }
 
     inline void                 push_back(const value_type& v)  { if (Size == Capacity) reserve(Capacity ? Capacity * 2 : 4); Data[Size++] = v; }
@@ -262,7 +262,7 @@ namespace ImGui
     IMGUI_API void          TextWrapped(const char* fmt, ...);                                  // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();
     IMGUI_API void          TextWrappedV(const char* fmt, va_list args);
     IMGUI_API void          TextUnformatted(const char* text, const char* text_end = NULL);     // doesn't require null terminated string if 'text_end' is specified. no copy done to any bounded stack buffer, recommended for long chunks of text.
-    IMGUI_API void          LabelText(const char* label, const char* fmt, ...);                 // display text+label aligned the same way as value+label widgets 
+    IMGUI_API void          LabelText(const char* label, const char* fmt, ...);                 // display text+label aligned the same way as value+label widgets
     IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args);
     IMGUI_API void          Bullet();
     IMGUI_API void          BulletText(const char* fmt, ...);
@@ -343,7 +343,7 @@ namespace ImGui
     // Utilities
     IMGUI_API bool          IsItemHovered();                                                    // was the last item hovered by mouse?
     IMGUI_API bool          IsItemActive();                                                     // was the last item active? (e.g. button being held, text field being edited- items that don't interact will always return false)
-    IMGUI_API bool          IsAnyItemActive();                                                  // 
+    IMGUI_API bool          IsAnyItemActive();                                                  //
     IMGUI_API ImVec2        GetItemBoxMin();                                                    // get bounding box of last item
     IMGUI_API ImVec2        GetItemBoxMax();                                                    // get bounding box of last item
     IMGUI_API bool          IsClipped(const ImVec2& item_size);                                 // to perform coarse clipping on user's side (as an optimization)
@@ -569,9 +569,9 @@ struct ImGuiIO
     // User Functions
     //------------------------------------------------------------------
 
-    // REQUIRED: rendering function. 
+    // REQUIRED: rendering function.
     // See example code if you are unsure of how to implement this.
-    void        (*RenderDrawListsFn)(ImDrawList** const draw_lists, int count);      
+    void        (*RenderDrawListsFn)(ImDrawList** const draw_lists, int count);
 
     // Optional: access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
@@ -594,7 +594,7 @@ struct ImGuiIO
 
     ImVec2      MousePos;                   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
     bool        MouseDown[5];               // Mouse buttons. ImGui itself only uses button 0 (left button). Others buttons allows to track if mouse is being used by your application + available to user as a convenience via IsMouse** API.
-    float       MouseWheel;                 // Mouse wheel: 1 unit scrolls about 5 lines text. 
+    float       MouseWheel;                 // Mouse wheel: 1 unit scrolls about 5 lines text.
     bool        MouseDrawCursor;            // Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor).
     bool        KeyCtrl;                    // Keyboard modifier pressed: Control
     bool        KeyShift;                   // Keyboard modifier pressed: Shift
@@ -706,13 +706,13 @@ struct ImGuiTextBuffer
 // - You want to store custom debug data easily without adding or editing structures in your code.
 struct ImGuiStorage
 {
-    struct Pair 
-    { 
-        ImGuiID key; 
-        union { int val_i; float val_f; void* val_p; };        
-        Pair(ImGuiID _key, int _val_i) { key = _key; val_i = _val_i; } 
-        Pair(ImGuiID _key, float _val_f) { key = _key; val_f = _val_f; } 
-        Pair(ImGuiID _key, void* _val_p) { key = _key; val_p = _val_p; } 
+    struct Pair
+    {
+        ImGuiID key;
+        union { int val_i; float val_f; void* val_p; };
+        Pair(ImGuiID _key, int _val_i) { key = _key; val_i = _val_i; }
+        Pair(ImGuiID _key, float _val_f) { key = _key; val_f = _val_f; }
+        Pair(ImGuiID _key, void* _val_p) { key = _key; val_p = _val_p; }
     };
     ImVector<Pair>    Data;
 
@@ -727,7 +727,7 @@ struct ImGuiStorage
     IMGUI_API void*   GetVoidPtr(ImGuiID key) const; // default_val is NULL
     IMGUI_API void    SetVoidPtr(ImGuiID key, void* val);
 
-    // - Get***Ref() functions finds pair, insert on demand if missing, return pointer. Useful if you intend to do Get+Set. 
+    // - Get***Ref() functions finds pair, insert on demand if missing, return pointer. Useful if you intend to do Get+Set.
     // - References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
     // - A typical use case where this is convenient:
     //      float* pvar = ImGui::GetFloatRef(key); ImGui::SliderFloat("var", pvar, 0, 100.0f); some_var += *pvar;
@@ -833,7 +833,7 @@ struct ImDrawList
 
     // [Internal to ImGui]
     ImVector<ImVec4>        clip_rect_stack;    // [Internal]
-    ImVector<ImTextureID>   texture_id_stack;   // [Internal] 
+    ImVector<ImTextureID>   texture_id_stack;   // [Internal]
     ImDrawVert*             vtx_write;          // [Internal] point within vtx_buffer after each add command (to avoid using the ImVector<> operators too much)
 
     ImDrawList() { Clear(); }
@@ -843,7 +843,7 @@ struct ImDrawList
     IMGUI_API void  PushTextureID(const ImTextureID& texture_id);
     IMGUI_API void  PopTextureID();
 
-    // Primitives   
+    // Primitives
     IMGUI_API void  AddLine(const ImVec2& a, const ImVec2& b, ImU32 col);
     IMGUI_API void  AddRect(const ImVec2& a, const ImVec2& b, ImU32 col, float rounding = 0.0f, int rounding_corners=0x0F);
     IMGUI_API void  AddRectFilled(const ImVec2& a, const ImVec2& b, ImU32 col, float rounding = 0.0f, int rounding_corners=0x0F);

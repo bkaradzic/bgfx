@@ -86,6 +86,7 @@ struct OcornutImguiContext
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
 		io.DeltaTime = 1.0f / 60.0f;
+		io.IniFilename = NULL;
 //		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? -0.5f : 0.0f;
 
 		const bgfx::Memory* vsmem;
