@@ -309,6 +309,10 @@ N-body simulation with compute shaders using buffers.
 
 ![example-24-nbody](https://github.com/bkaradzic/bgfx/raw/master/examples/24-nbody/screenshot.png)
 
+### [25-c99](https://github.com/bkaradzic/bgfx/tree/master/examples/25-c99)
+
+Initialization and debug text with C99 API.
+
 Dependencies
 ------------
 
