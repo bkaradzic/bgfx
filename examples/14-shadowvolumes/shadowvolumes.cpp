@@ -880,9 +880,9 @@ struct Group
 		for (uint32_t ii = 0, size = m_numIndices/3; ii < size; ++ii)
 		{
 			const uint16_t* indices = &m_indices[ii*3];
-			const uint16_t i0 = indices[0];
-			const uint16_t i1 = indices[1];
-			const uint16_t i2 = indices[2];
+			uint16_t i0 = indices[0];
+			uint16_t i1 = indices[1];
+			uint16_t i2 = indices[2];
 			const float* v0 = (float*)&m_vertices[i0*stride];
 			const float* v1 = (float*)&m_vertices[i1*stride];
 			const float* v2 = (float*)&m_vertices[i2*stride];
@@ -899,15 +899,15 @@ struct Group
 
 			//Use unique indices for EdgeMap.
 			const uint16_t* uindices = &uniqueIndices[ii*3];
-			const uint16_t ui0 = uindices[0];
-			const uint16_t ui1 = uindices[1];
-			const uint16_t ui2 = uindices[2];
+			i0 = uindices[0];
+			i1 = uindices[1];
+			i2 = uindices[2];
 
 			const uint16_t triangleEdge[3][2] =
 			{
-				{ui0, ui1},
-				{ui1, ui2},
-				{ui2, ui0},
+				{ i0, i1 },
+				{ i1, i2 },
+				{ i2, i0 },
 			};
 
 			for (uint8_t jj = 0; jj < 3; ++jj)
@@ -1511,80 +1511,119 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	}
 	else // ShadowVolumeAlgorithm::EdgeBased:
 	{
-		uint32_t ii = 0;
+		{
+			uint32_t ii = 0;
 
 #if SV_USE_SIMD
-		uint32_t numEdgesRounded = numEdges & (~0x1);
+			uint32_t numEdgesRounded = numEdges & (~0x1);
 
-		using namespace bx;
+			using namespace bx;
 
-		const float4_t lx = float4_splat(_light[0]);
-		const float4_t ly = float4_splat(_light[1]);
-		const float4_t lz = float4_splat(_light[2]);
+			const float4_t lx = float4_splat(_light[0]);
+			const float4_t ly = float4_splat(_light[1]);
+			const float4_t lz = float4_splat(_light[2]);
 
-		for (; ii < numEdgesRounded; ii+=2)
-		{
-			const Edge& edge0 = edges[ii];
-			const Edge& edge1 = edges[ii+1];
-			const Plane* edgePlane0 = &edgePlanes[ii*2];
-			const Plane* edgePlane1 = &edgePlanes[ii*2 + 2];
-
-			const float4_t reverse = float4_ild(edge0.m_faceReverseOrder[0]
-						 , edge1.m_faceReverseOrder[0]
-						 , edge0.m_faceReverseOrder[1]
-						 , edge1.m_faceReverseOrder[1]
-						 );
-
-			const float4_t v0 = float4_ld(edgePlane0[0].m_plane);
-			const float4_t v1 = float4_ld(edgePlane1[0].m_plane);
-			const float4_t v2 = float4_ld(edgePlane0[1].m_plane);
-			const float4_t v3 = float4_ld(edgePlane1[1].m_plane);
-
-			const float4_t xxyy0 = float4_shuf_xAyB(v0, v2);
-			const float4_t zzww0 = float4_shuf_zCwD(v0, v2);
-			const float4_t xxyy1 = float4_shuf_xAyB(v1, v3);
-			const float4_t zzww1 = float4_shuf_zCwD(v1, v3);
-
-			const float4_t vX = float4_shuf_xAyB(xxyy0, xxyy1);
-			const float4_t vY = float4_shuf_zCwD(xxyy0, xxyy1);
-			const float4_t vZ = float4_shuf_xAyB(zzww0, zzww1);
-			const float4_t vW = float4_shuf_zCwD(zzww0, zzww1);
-
-			const float4_t r0 = float4_mul(vX, lx);
-			const float4_t r1 = float4_mul(vY, ly);
-			const float4_t r2 = float4_mul(vZ, lz);
-
-			const float4_t dot = float4_add(r0, float4_add(r1, r2));
-			const float4_t f = float4_add(dot, vW);
-
-			const float4_t zero = float4_zero();
-			const float4_t mask = float4_cmpgt(f, zero);
-			const float4_t onef = float4_splat(1.0f);
-			const float4_t tmp0 = float4_and(mask, onef);
-			const float4_t tmp1 = float4_ftoi(tmp0);
-			const float4_t tmp2 = float4_xor(tmp1, reverse);
-			const float4_t tmp3 = float4_sll(tmp2, 1);
-			const float4_t onei = float4_isplat(1);
-			const float4_t tmp4 = float4_isub(tmp3, onei);
-
-			BX_ALIGN_DECL_16(int32_t res[4]);
-			float4_st(&res, tmp4);
-
-			for (uint16_t jj = 0; jj < 2; ++jj)
+			for (; ii < numEdgesRounded; ii+=2)
 			{
-				int16_t k = res[jj] + res[jj+2];
-				if (k != 0)
-				{
-					float* v0 = (float*)&vertices[edges[ii+jj].m_i0*_stride];
-					float* v1 = (float*)&vertices[edges[ii+jj].m_i1*_stride];
-					verticesSide[vsideI++] = VertexData(v0, 0.0f, float(k));
-					verticesSide[vsideI++] = VertexData(v0, 1.0f, float(k));
-					verticesSide[vsideI++] = VertexData(v1, 0.0f, float(k));
-					verticesSide[vsideI++] = VertexData(v1, 1.0f, float(k));
+				const Edge& edge0 = edges[ii];
+				const Edge& edge1 = edges[ii+1];
+				const Plane* edgePlane0 = &edgePlanes[ii*2];
+				const Plane* edgePlane1 = &edgePlanes[ii*2 + 2];
 
-					k = _textureAsStencil ? 1 : k;
-					uint16_t winding = uint16_t(k > 0);
-					for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
+				const float4_t reverse =
+					float4_ild(edge0.m_faceReverseOrder[0]
+							, edge1.m_faceReverseOrder[0]
+							, edge0.m_faceReverseOrder[1]
+							, edge1.m_faceReverseOrder[1]
+							);
+
+				const float4_t p00 = float4_ld(edgePlane0[0].m_plane);
+				const float4_t p10 = float4_ld(edgePlane1[0].m_plane);
+				const float4_t p01 = float4_ld(edgePlane0[1].m_plane);
+				const float4_t p11 = float4_ld(edgePlane1[1].m_plane);
+
+				const float4_t xxyy0 = float4_shuf_xAyB(p00, p01);
+				const float4_t zzww0 = float4_shuf_zCwD(p00, p01);
+				const float4_t xxyy1 = float4_shuf_xAyB(p10, p11);
+				const float4_t zzww1 = float4_shuf_zCwD(p10, p11);
+
+				const float4_t vX = float4_shuf_xAyB(xxyy0, xxyy1);
+				const float4_t vY = float4_shuf_zCwD(xxyy0, xxyy1);
+				const float4_t vZ = float4_shuf_xAyB(zzww0, zzww1);
+				const float4_t vW = float4_shuf_zCwD(zzww0, zzww1);
+
+				const float4_t r0 = float4_mul(vX, lx);
+				const float4_t r1 = float4_mul(vY, ly);
+				const float4_t r2 = float4_mul(vZ, lz);
+
+				const float4_t dot = float4_add(r0, float4_add(r1, r2));
+				const float4_t f = float4_add(dot, vW);
+
+				const float4_t zero = float4_zero();
+				const float4_t mask = float4_cmpgt(f, zero);
+				const float4_t onef = float4_splat(1.0f);
+				const float4_t tmp0 = float4_and(mask, onef);
+				const float4_t tmp1 = float4_ftoi(tmp0);
+				const float4_t tmp2 = float4_xor(tmp1, reverse);
+				const float4_t tmp3 = float4_sll(tmp2, 1);
+				const float4_t onei = float4_isplat(1);
+				const float4_t tmp4 = float4_isub(tmp3, onei);
+
+				BX_ALIGN_DECL_16(int32_t res[4]);
+				float4_st(&res, tmp4);
+
+				for (uint16_t jj = 0; jj < 2; ++jj)
+				{
+					int16_t kk = res[jj] + res[jj+2];
+					if (kk != 0)
+					{
+						float* v0 = (float*)&vertices[edges[ii+jj].m_i0*_stride];
+						float* v1 = (float*)&vertices[edges[ii+jj].m_i1*_stride];
+						verticesSide[vsideI++] = VertexData(v0, 0.0f, float(kk) );
+						verticesSide[vsideI++] = VertexData(v0, 1.0f, float(kk) );
+						verticesSide[vsideI++] = VertexData(v1, 0.0f, float(kk) );
+						verticesSide[vsideI++] = VertexData(v1, 1.0f, float(kk) );
+
+						kk = _textureAsStencil ? 1 : kk;
+						uint16_t winding = uint16_t(kk > 0);
+						for (uint8_t ll = 0, end = abs(kk); ll < end; ++ll)
+						{
+							indicesSide[sideI++] = indexSide;
+							indicesSide[sideI++] = indexSide + 2 - winding;
+							indicesSide[sideI++] = indexSide + 1 + winding;
+
+							indicesSide[sideI++] = indexSide + 2;
+							indicesSide[sideI++] = indexSide + 3 - winding*2;
+							indicesSide[sideI++] = indexSide + 1 + winding*2;
+						}
+
+						indexSide += 4;
+					}
+				}
+			}
+#endif
+
+			for (; ii < numEdges; ++ii)
+			{
+				const Edge& edge = edges[ii];
+				const Plane* edgePlane = &edgePlanes[ii*2];
+
+				int16_t s0 = ( (vec3Dot(edgePlane[0].m_plane, _light) + edgePlane[0].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
+				int16_t s1 = ( (vec3Dot(edgePlane[1].m_plane, _light) + edgePlane[1].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
+				int16_t kk = ( (s0 + s1) << 1) - 2;
+
+				if (kk != 0)
+				{
+					float* v0 = (float*)&vertices[edge.m_i0*_stride];
+					float* v1 = (float*)&vertices[edge.m_i1*_stride];
+					verticesSide[vsideI++] = VertexData(v0, 0.0f, kk);
+					verticesSide[vsideI++] = VertexData(v0, 1.0f, kk);
+					verticesSide[vsideI++] = VertexData(v1, 0.0f, kk);
+					verticesSide[vsideI++] = VertexData(v1, 1.0f, kk);
+
+					kk = _textureAsStencil ? 1 : kk;
+					uint16_t winding = uint16_t(kk > 0);
+					for (uint8_t jj = 0, end = abs(kk); jj < end; ++jj)
 					{
 						indicesSide[sideI++] = indexSide;
 						indicesSide[sideI++] = indexSide + 2 - winding;
@@ -1599,42 +1638,6 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				}
 			}
 		}
-#endif
-
-		for (; ii < numEdges; ++ii)
-		{
-			const Edge& edge = edges[ii];
-			const Plane* edgePlane = &edgePlanes[ii*2];
-
-			int16_t s0 = ( (vec3Dot(edgePlane[0].m_plane, _light) + edgePlane[0].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
-			int16_t s1 = ( (vec3Dot(edgePlane[1].m_plane, _light) + edgePlane[1].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
-			int16_t k = ( (s0 + s1) << 1) - 2;
-
-			if (k != 0)
-			{
-				float* v0 = (float*)&vertices[edge.m_i0*_stride];
-				float* v1 = (float*)&vertices[edge.m_i1*_stride];
-				verticesSide[vsideI++] = VertexData(v0, 0.0f, k);
-				verticesSide[vsideI++] = VertexData(v0, 1.0f, k);
-				verticesSide[vsideI++] = VertexData(v1, 0.0f, k);
-				verticesSide[vsideI++] = VertexData(v1, 1.0f, k);
-
-				k = _textureAsStencil ? 1 : k;
-				uint16_t winding = uint16_t(k > 0);
-				for (uint8_t ii = 0, end = abs(k); ii < end; ++ii)
-				{
-					indicesSide[sideI++] = indexSide;
-					indicesSide[sideI++] = indexSide + 2 - winding;
-					indicesSide[sideI++] = indexSide + 1 + winding;
-
-					indicesSide[sideI++] = indexSide + 2;
-					indicesSide[sideI++] = indexSide + 3 - winding*2;
-					indicesSide[sideI++] = indexSide + 1 + winding*2;
-				}
-
-				indexSide += 4;
-			}
-		}
 
 		if (cap)
 		{
@@ -1643,10 +1646,10 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			{
 				const Face& face = *iter;
 
-				float f = vec3Dot(face.m_plane, _light) + face.m_plane[3];
+				float f = bx::vec3Dot(face.m_plane, _light) + face.m_plane[3];
 				bool frontFacing = (f > 0.0f);
 
-				for (uint8_t ii = 0, end = 1 + uint8_t(!_textureAsStencil); ii < end; ++ii)
+				for (uint8_t ii = 0, num = 1 + uint8_t(!_textureAsStencil); ii < num; ++ii)
 				{
 					if (frontFacing)
 					{
@@ -2791,15 +2794,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			viewId += uint8_t(settings_useStencilTexture);
 
 			// Draw shadow casters.
-			for (uint8_t ii = 0; ii < shadowCastersCount[currentScene]; ++ii)
+			for (uint8_t jj = 0; jj < shadowCastersCount[currentScene]; ++jj)
 			{
-				shadowCasters[currentScene][ii].submit(viewId, drawDiffuse);
+				shadowCasters[currentScene][jj].submit(viewId, drawDiffuse);
 			}
 
 			// Draw shadow receivers.
-			for (uint8_t ii = 0; ii < shadowReceiversCount[currentScene]; ++ii)
+			for (uint8_t jj = 0; jj < shadowReceiversCount[currentScene]; ++jj)
 			{
-				shadowReceivers[currentScene][ii].submit(viewId, drawDiffuse);
+				shadowReceivers[currentScene][jj].submit(viewId, drawDiffuse);
 			}
 		}
 
