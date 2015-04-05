@@ -35,6 +35,9 @@ project "shaderc"
 		buildoptions {
 			"-fno-strict-aliasing" -- glsl-optimizer has bugs if strict aliasing is used.
 		}
+		removebuildoptions {
+			"-Wshadow", -- glsl-optimizer is full of -Wshadow warnings ignore it.
+		}
 
 	configuration { "osx" }
 		links {
@@ -51,7 +54,7 @@ project "shaderc"
 			"$(DXSDK_DIR)/include",
 		}
 
-	
+
 	configuration { "windows" }
 		links {
 			"d3dx9",

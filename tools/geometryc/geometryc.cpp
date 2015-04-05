@@ -724,9 +724,9 @@ int main(int _argc, const char* _argv[])
 		{
 			hasTexcoord = true;
 
-			for (Index3Map::iterator it = indexMap.begin(), itEnd = indexMap.end(); it != itEnd; ++it)
+			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
 			{
-				it->second.m_texcoord = it->second.m_position;
+				jt->second.m_texcoord = jt->second.m_position;
 			}
 		}
 
@@ -735,9 +735,9 @@ int main(int _argc, const char* _argv[])
 		{
 			hasNormal = true;
 
-			for (Index3Map::iterator it = indexMap.begin(), itEnd = indexMap.end(); it != itEnd; ++it)
+			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
 			{
-				it->second.m_normal = it->second.m_position;
+				jt->second.m_normal = jt->second.m_position;
 			}
 		}
 	}
@@ -848,14 +848,14 @@ int main(int _argc, const char* _argv[])
 				triReorderElapsed -= bx::getHPCounter();
 				for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
 				{
-					const Primitive& prim = *primIt;
-					triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
+					const Primitive& prim1 = *primIt;
+					triangleReorder(indexData + prim1.m_startIndex, prim1.m_numIndices, numVertices, 32);
 					if (compress)
 					{
 						triangleCompress(&memWriter
-							, indexData  + prim.m_startIndex
-							, prim.m_numIndices
-							, vertexData + prim.m_startVertex
+							, indexData  + prim1.m_startIndex
+							, prim1.m_numIndices
+							, vertexData + prim1.m_startVertex
 							, numVertices
 							, stride
 							);
@@ -968,14 +968,14 @@ int main(int _argc, const char* _argv[])
 		triReorderElapsed -= bx::getHPCounter();
 		for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
 		{
-			const Primitive& prim = *primIt;
-			triangleReorder(indexData + prim.m_startIndex, prim.m_numIndices, numVertices, 32);
+			const Primitive& prim1 = *primIt;
+			triangleReorder(indexData + prim1.m_startIndex, prim1.m_numIndices, numVertices, 32);
 			if (compress)
 			{
 				triangleCompress(&memWriter
-					, indexData  + prim.m_startIndex
-					, prim.m_numIndices
-					, vertexData + prim.m_startVertex
+					, indexData  + prim1.m_startIndex
+					, prim1.m_numIndices
+					, vertexData + prim1.m_startVertex
 					, numVertices
 					, stride
 					);

@@ -36,21 +36,20 @@
 
 
 void
-_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
+_mesa_reference_shader(struct gl_context *, struct gl_shader **ptr,
                        struct gl_shader *sh)
 {
-   (void) ctx;
    *ptr = sh;
 }
 
 void
-_mesa_shader_debug(struct gl_context *, GLenum, GLuint *id,
+_mesa_shader_debug(struct gl_context *, GLenum, GLuint *,
                    const char *, int)
 {
 }
 
 extern "C" void
-_mesa_error_no_memory(const char *caller)
+_mesa_error_no_memory(const char *)
 {
 }
 
