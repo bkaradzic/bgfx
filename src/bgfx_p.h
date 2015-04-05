@@ -1768,9 +1768,9 @@ namespace bgfx
 
 			if (0 < m_free.size() )
 			{
-				Free free = m_free.front();
+				Free freeBlock = m_free.front();
 				m_free.pop_front();
-				return free.m_ptr;
+				return freeBlock.m_ptr;
 			}
 
 			return 0;

@@ -186,8 +186,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	float view[16];
 	float proj[16];
 
-	const float eye[3] = { 0.0f, 30.0f, -60.0f };
-	const float at[3]  = { 0.0f, 5.0f, 0.0f };
+	float eye[3] = { 0.0f, 30.0f, -60.0f };
+	float at[3]  = { 0.0f,  5.0f,   0.0f };
 	bx::mtxLookAt(view, eye, at);
 
 	const float aspect = float(int32_t(width) ) / float(int32_t(height) );
@@ -261,13 +261,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float lightView[16];
 		float lightProj[16];
 
-		const float eye[3] =
-		{
-			-lightPos[0],
-			-lightPos[1],
-			-lightPos[2],
-		};
-		const float at[3] = { 0.0f, 0.0f, 0.0f };
+		eye[0] = -lightPos[0];
+		eye[0] = -lightPos[1];
+		eye[0] = -lightPos[2];
+
+		at[0] = 0.0f;
+		at[1] = 0.0f;
+		at[2] = 0.0f;
+
 		bx::mtxLookAt(lightView, eye, at);
 
 		const float area = 30.0f;

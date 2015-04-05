@@ -29,11 +29,12 @@ namespace entry
 #if ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 	bx::ReallocatorI* getDefaultAllocator()
 	{
-BX_PRAGMA_DIAGNOSTIC_PUSH_MSVC();
+BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4459); // warning C4459: declaration of 's_allocator' hides global declaration
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
 		static bx::CrtAllocator s_allocator;
 		return &s_allocator;
-BX_PRAGMA_DIAGNOSTIC_POP_MSVC();
+BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 #endif // ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 

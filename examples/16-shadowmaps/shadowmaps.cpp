@@ -2452,10 +2452,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Determine on-screen rectangle size where depth buffer will be drawn.
-		const uint16_t depthRectHeight = uint16_t(float(viewState.m_height) / 2.5f);
-		const uint16_t depthRectWidth  = depthRectHeight;
-		const uint16_t depthRectX = 0;
-		const uint16_t depthRectY = viewState.m_height - depthRectHeight;
+		uint16_t depthRectHeight = uint16_t(float(viewState.m_height) / 2.5f);
+		uint16_t depthRectWidth  = depthRectHeight;
+		uint16_t depthRectX = 0;
+		uint16_t depthRectY = viewState.m_height - depthRectHeight;
 
 		// Setup views and render targets.
 		bgfx::setViewRect(0, 0, 0, viewState.m_width, viewState.m_height);
@@ -2583,10 +2583,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			 * RENDERVIEW_DRAWDEPTH_3_ID - Draw depth buffer for fourth split.
 			 */
 
-			const uint16_t depthRectHeight = viewState.m_height / 3;
-			const uint16_t depthRectWidth  = depthRectHeight;
-			const uint16_t depthRectX = 0;
-			const uint16_t depthRectY = viewState.m_height - depthRectHeight;
+			depthRectHeight = viewState.m_height / 3;
+			depthRectWidth  = depthRectHeight;
+			depthRectX = 0;
+			depthRectY = viewState.m_height - depthRectHeight;
 
 			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
 			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_2_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
@@ -2795,10 +2795,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						);
 
 				// Trees.
-				for (uint8_t ii = 0; ii < numTrees; ++ii)
+				for (uint8_t jj = 0; jj < numTrees; ++jj)
 				{
 					treeMesh.submit(viewId
-							, mtxTrees[ii]
+							, mtxTrees[jj]
 							, *currentSmSettings->m_progPack
 							, s_renderStates[renderStateIndex]
 							);
@@ -2851,7 +2851,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			float mtxShadow[16];
 
 			const float ymul = (s_flipV) ? 0.5f : -0.5f;
-			const float zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
+			float zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
 
 			const float mtxBias[16] =
 			{
@@ -2870,7 +2870,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			else if (LightType::PointLight == settings.m_lightType)
 			{
 				const float s = (s_flipV) ? 1.0f : -1.0f; //sign
-				const float zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
+				zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
 
 				const float mtxCropBias[2][TetrahedronFaces::Count][16] =
 				{

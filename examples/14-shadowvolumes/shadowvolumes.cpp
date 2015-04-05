@@ -675,7 +675,7 @@ struct HalfEdges
 			m_offsets[ii] = uint32_t(he - m_data);
 
 			std::vector<uint16_t>& row = edges[ii];
-			for (uint32_t jj = 0, end = (uint32_t)row.size(); jj < end; ++jj)
+			for (uint32_t jj = 0, size = (uint32_t)row.size(); jj < size; ++jj)
 			{
 				he->m_secondIndex = row[jj];
 				he->m_marked = false;
