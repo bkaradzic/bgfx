@@ -33,7 +33,8 @@ project "shaderc"
 
 	configuration { "mingw* or linux or osx" }
 		buildoptions {
-			"-fno-strict-aliasing" -- glsl-optimizer has bugs if strict aliasing is used.
+			"-fno-strict-aliasing", -- glsl-optimizer has bugs if strict aliasing is used.
+			"-Wno-unused-parameter",
 		}
 		removebuildoptions {
 			"-Wshadow", -- glsl-optimizer is full of -Wshadow warnings ignore it.
