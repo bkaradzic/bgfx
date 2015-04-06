@@ -1732,7 +1732,7 @@ namespace bgfx { namespace d3d9
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
-		uint32_t m_samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS][1];
+		uint32_t m_samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS][2];
 
 		TextureD3D9* m_updateTexture;
 		uint8_t* m_updateTextureBits;
