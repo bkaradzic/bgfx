@@ -108,7 +108,7 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src/util/**.h"),
 	}
 
-	excludes {
+	removefiles {
 		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/glcpp.c"),
 		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/tests/**"),
 		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/**.l"),
