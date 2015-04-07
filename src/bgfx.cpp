@@ -819,6 +819,10 @@ namespace bgfx
 		BGFX_CHECK_RENDER_THREAD();
 		if (s_ctx->renderFrame() )
 		{
+			Context* ctx = s_ctx;
+			ctx->gameSemWait();
+			s_ctx = NULL;
+			ctx->renderSemPost();
 			return RenderFrame::Exiting;
 		}
 
@@ -1054,14 +1058,17 @@ namespace bgfx
 		m_declRef.shutdown(m_vertexDeclHandle);
 
 #if BGFX_CONFIG_MULTITHREADED
+		// Render thread shutdown sequence.
+		renderSemWait(); // Wait for previous frame.
+		gameSemPost();   // OK to set context to NULL.
+		// s_ctx is NULL here.
+		renderSemWait(); // In RenderFrame::Exiting state.
+
 		if (m_thread.isRunning() )
 		{
 			m_thread.shutdown();
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
-
-		s_ctx = NULL; // Can't be used by renderFrame at this point.
-		renderSemWait();
 
 		m_submit->destroy();
 		m_render->destroy();
