@@ -465,7 +465,7 @@ GLAPI void APIENTRY glBlendEquation (GLenum mode);
 #ifndef GL_VERSION_1_5
 #define GL_VERSION_1_5 1
 #include <stddef.h>
-#if 0 //defined(__APPLE__) && defined(__i386__)
+#if defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > 1090)
 typedef long GLsizeiptr;
 typedef long GLintptr;
 #else
@@ -4135,7 +4135,7 @@ GLAPI void APIENTRY glVertexBlendARB (GLint count);
 
 #ifndef GL_ARB_vertex_buffer_object
 #define GL_ARB_vertex_buffer_object 1
-#if 0 // defined(__APPLE__) && defined(__i386__)
+#if defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > 1090)
 typedef long GLsizeiptrARB;
 typedef long GLintptrARB;
 #else
