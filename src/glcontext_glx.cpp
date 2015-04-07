@@ -225,9 +225,10 @@ namespace bgfx { namespace gl
 		m_visualInfo = NULL;
 	}
 
-	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, bool _vsync)
+	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t _flags)
 	{
-		int32_t interval = _vsync ? 1 : 0;
+		bool vsync = !!(_flags&BGFX_RESET_VSYNC);
+		int32_t interval = vsync ? 1 : 0;
 
 		if (NULL != glXSwapIntervalEXT)
 		{

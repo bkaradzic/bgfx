@@ -38,7 +38,7 @@ namespace bgfx { namespace gl
 
 		bool setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers);
 
-		void resize(uint32_t _width, uint32_t _height, bool /*_vsync*/)
+		void resize(uint32_t _width, uint32_t _height, uint32_t /*_flags*/)
 		{
 			m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
 		}
@@ -147,10 +147,10 @@ namespace bgfx { namespace gl
 	{
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
+	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		s_ppapi.m_forceSwap = false;
-		s_ppapi.resize(_width, _height, _vsync);
+		s_ppapi.resize(_width, _height, _flags);
 	}
 
 	bool GlContext::isSwapChainSupported()

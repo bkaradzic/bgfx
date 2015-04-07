@@ -1902,10 +1902,10 @@ namespace bgfx { namespace gl
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
 
-				uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
-				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
-				bool vsync = !!(m_resolution.m_flags&BGFX_RESET_VSYNC);
-				setRenderContextSize(_resolution.m_width, _resolution.m_height, msaa, vsync);
+				setRenderContextSize(m_resolution.m_width
+						, m_resolution.m_height
+						, m_resolution.m_flags
+						);
 				updateCapture();
 
 				ovrPreReset();
@@ -2071,7 +2071,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _msaa = 0, bool _vsync = false)
+		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _flags = 0)
 		{
 			if (_width  != 0
 			||  _height != 0)
@@ -2089,9 +2089,12 @@ namespace bgfx { namespace gl
 				{
 					destroyMsaaFbo();
 
-					m_glctx.resize(_width, _height, _vsync);
+					m_glctx.resize(_width, _height, _flags);
 
-					createMsaaFbo(_width, _height, _msaa);
+					uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+					msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+
+					createMsaaFbo(_width, _height, msaa);
 				}
 			}
 

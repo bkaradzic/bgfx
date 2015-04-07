@@ -280,7 +280,7 @@ EGL_IMPORT
 #	endif // BX_PLATFORM_RPI
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
+	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		BX_UNUSED(_width, _height);
 #	if BX_PLATFORM_ANDROID
@@ -289,7 +289,8 @@ EGL_IMPORT
 		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, _width, _height, format);
 #	endif // BX_PLATFORM_ANDROID
 
-		eglSwapInterval(m_display, _vsync ? 1 : 0);
+		bool vsync = !!(_flags&BGFX_RESET_VSYNC);
+		eglSwapInterval(m_display, vsync ? 1 : 0);
 	}
 
 	bool GlContext::isSwapChainSupported()
