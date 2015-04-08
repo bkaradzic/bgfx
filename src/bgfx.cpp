@@ -2259,11 +2259,11 @@ again:
 		s_ctx->destroyDynamicVertexBuffer(_handle);
 	}
 
-	bool checkAvailTransientIndexBuffer(uint32_t _num)
+	bool checkAvailTransientIndexBuffer(uint32_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
-		return s_ctx->checkAvailTransientIndexBuffer(_num);
+		return s_ctx->checkAvailTransientIndexBuffer(_num, _flags);
 	}
 
 	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
@@ -2281,20 +2281,20 @@ again:
 		return s_ctx->checkAvailTransientVertexBuffer(_num, _stride);
 	}
 
-	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
+	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices, uint8_t _flags)
 	{
 		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
 		return checkAvailTransientVertexBuffer(_numVertices, _decl)
-			&& checkAvailTransientIndexBuffer(_numIndices)
+			&& checkAvailTransientIndexBuffer(_numIndices, _flags)
 			;
 	}
 
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
-		return s_ctx->allocTransientIndexBuffer(_tib, _num);
+		return s_ctx->allocTransientIndexBuffer(_tib, _num, _flags);
 	}
 
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
@@ -2307,12 +2307,12 @@ again:
 		return s_ctx->allocTransientVertexBuffer(_tvb, _num, _decl);
 	}
 
-	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices)
+	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices, uint8_t _flags)
 	{
-		if (checkAvailTransientBuffers(_numVertices, _decl, _numIndices) )
+		if (checkAvailTransientBuffers(_numVertices, _decl, _numIndices, _flags) )
 		{
 			allocTransientVertexBuffer(_tvb, _numVertices, _decl);
-			allocTransientIndexBuffer(_tib, _numIndices);
+			allocTransientIndexBuffer(_tib, _numIndices, _flags);
 			return true;
 		}
 
