@@ -928,7 +928,7 @@ namespace bgfx { namespace gl
 		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
 		uint16_t destroy();
 		void resolve();
-		void discard(uint8_t _flags);
+		void discard(uint16_t _flags);
 
 		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];

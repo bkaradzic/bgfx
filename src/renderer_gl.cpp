@@ -1355,14 +1355,14 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
-			g_caps.maxTextureSize = glGet(GL_MAX_TEXTURE_SIZE);
+			g_caps.maxTextureSize = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_extension[Extension::EXT_draw_buffers  ].m_supported
 			||  s_extension[Extension::WEBGL_draw_buffers].m_supported)
 			{
-				g_caps.maxFBAttachments = bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 			}
 
 			m_vaoSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
@@ -1918,7 +1918,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setShaderUniform4f(uint8_t /*_flags*/, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			GL_CHECK(glUniform4fv(_regIndex
 				, _numRegs
@@ -1926,7 +1926,7 @@ namespace bgfx { namespace gl
 				) );
 		}
 
-		void setShaderUniform4x4f(uint8_t /*_flags*/, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4x4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			GL_CHECK(glUniformMatrix4fv(_regIndex
 				, _numRegs
@@ -1935,7 +1935,7 @@ namespace bgfx { namespace gl
 				) );
 		}
 
-		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, uint8_t _discard = BGFX_CLEAR_NONE, bool _msaa = true)
+		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, uint16_t _discard = BGFX_CLEAR_NONE, bool _msaa = true)
 		{
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx
@@ -2635,7 +2635,7 @@ namespace bgfx { namespace gl
 		bool m_rtMsaa;
 
 		FrameBufferHandle m_fbh;
-		uint32_t m_fbDiscard;
+		uint16_t m_fbDiscard;
 
 		Resolution m_resolution;
 		void* m_capture;
@@ -3062,9 +3062,9 @@ namespace bgfx { namespace gl
 			PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 			if (PredefinedUniform::Count != predefined)
 			{
-				m_predefined[m_numPredefined].m_loc = loc;
-				m_predefined[m_numPredefined].m_type = predefined;
-				m_predefined[m_numPredefined].m_count = num;
+				m_predefined[m_numPredefined].m_loc   = loc;
+				m_predefined[m_numPredefined].m_count = uint16_t(num);
+				m_predefined[m_numPredefined].m_type  = uint8_t(predefined);
 				m_numPredefined++;
 			}
 			else
@@ -3078,7 +3078,7 @@ namespace bgfx { namespace gl
 					}
 
 					UniformType::Enum type = convertGlType(gltype);
-					m_constantBuffer->writeUniformHandle(type, 0, info->m_handle, num);
+					m_constantBuffer->writeUniformHandle(type, 0, info->m_handle, uint16_t(num) );
 					m_constantBuffer->write(loc);
 					BX_TRACE("store %s %d", name, info->m_handle);
 				}
@@ -3141,7 +3141,7 @@ namespace bgfx { namespace gl
 
 		memset(m_attributes, 0xff, sizeof(m_attributes) );
 		uint32_t used = 0;
-		for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+		for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
 		{
 			GLint loc = glGetAttribLocation(m_id, s_attribName[ii]);
 			if (-1 != loc)
@@ -3378,8 +3378,8 @@ namespace bgfx { namespace gl
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
-			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
-			numMips -= uint8_t(startLod);
+			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
+			numMips -= startLod;
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
@@ -3456,7 +3456,7 @@ namespace bgfx { namespace gl
 				uint32_t height = textureHeight;
 				uint32_t depth  = imageContainer.m_depth;
 
-				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
 				{
 					width  = bx::uint32_max(blockWidth,  width);
 					height = bx::uint32_max(blockHeight, height);
@@ -4284,7 +4284,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		m_num = colorIdx;
+		m_num = uint8_t(colorIdx);
 
 		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 		{
@@ -4395,7 +4395,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void FrameBufferGL::discard(uint8_t _flags)
+	void FrameBufferGL::discard(uint16_t _flags)
 	{
 		GLenum buffers[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS+2];
 		uint32_t idx = 0;
@@ -4518,7 +4518,7 @@ namespace bgfx { namespace gl
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
-		uint8_t discardFlags = BGFX_CLEAR_NONE;
+		uint16_t discardFlags = BGFX_CLEAR_NONE;
 
 		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
 		const bool computeSupported = (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_extension[Extension::ARB_compute_shader].m_supported)
@@ -4803,7 +4803,7 @@ namespace bgfx { namespace gl
 						GL_CHECK(glEnable(GL_STENCIL_TEST) );
 
 						uint32_t bstencil = unpackStencil(1, newStencil);
-						uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != unpackStencil(0, newStencil);
+						uint8_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != unpackStencil(0, newStencil);
 
 // 						uint32_t bchanged = unpackStencil(1, changedStencil);
 // 						if (BGFX_STENCIL_FUNC_RMASK_MASK & bchanged)
@@ -4812,7 +4812,7 @@ namespace bgfx { namespace gl
 // 							GL_CHECK(glStencilMask(wmask) );
 // 						}
 
-						for (uint32_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
+						for (uint8_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
 						{
 							uint32_t stencil = unpackStencil(ii, newStencil);
 							uint32_t changed = unpackStencil(ii, changedStencil);

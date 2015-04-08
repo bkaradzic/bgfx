@@ -359,7 +359,7 @@ namespace bgfx { namespace d3d9
 			m_adapter = D3DADAPTER_DEFAULT;
 			m_deviceType = D3DDEVTYPE_HAL;
 
-			uint8_t numGPUs = bx::uint32_min(BX_COUNTOF(g_caps.gpu), m_d3d9->GetAdapterCount() );
+			uint8_t numGPUs = uint8_t(bx::uint32_min(BX_COUNTOF(g_caps.gpu), m_d3d9->GetAdapterCount() ) );
 			for (uint32_t ii = 0; ii < numGPUs; ++ii)
 			{
 				D3DADAPTER_IDENTIFIER9 desc;
@@ -470,10 +470,10 @@ namespace bgfx { namespace d3d9
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								| BGFX_CAPS_SWAP_CHAIN
 								);
-			g_caps.maxTextureSize = bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight);
+			g_caps.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 
-			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-			g_caps.maxFBAttachments = (uint8_t)m_caps.NumSimultaneousRTs;
+			m_caps.NumSimultaneousRTs = uint8_t(bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+			g_caps.maxFBAttachments   = uint8_t(m_caps.NumSimultaneousRTs);
 
 			m_caps.MaxAnisotropy = bx::uint32_min(m_caps.MaxAnisotropy, 1);
 
@@ -1087,7 +1087,7 @@ namespace bgfx { namespace d3d9
 			m_rtMsaa = _msaa;
 		}
 
-		void setShaderUniform(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
@@ -1099,12 +1099,12 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
-		void setShaderUniform4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4f(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void setShaderUniform4x4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4x4f(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
@@ -1885,7 +1885,7 @@ namespace bgfx { namespace d3d9
 	};
 	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib)-1);
 
-	static const D3DDECLTYPE s_attribType[][4][2] =
+	static const uint8_t s_attribType[][4][2] =
 	{
 		{
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
@@ -1939,17 +1939,17 @@ namespace bgfx { namespace d3d9
 		return elem;
 	}
 
-	static IDirect3DVertexDeclaration9* createVertexDeclaration(const VertexDecl& _decl, uint8_t _numInstanceData)
+	static IDirect3DVertexDeclaration9* createVertexDeclaration(const VertexDecl& _decl, uint16_t _numInstanceData)
 	{
 		D3DVERTEXELEMENT9 vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 		D3DVERTEXELEMENT9* elem = fillVertexDecl(vertexElements, _decl);
 
 		const D3DVERTEXELEMENT9 inst = { 1, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 };
 
-		for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
+		for (uint8_t ii = 0; ii < _numInstanceData; ++ii)
 		{
 			memcpy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
-			elem->UsageIndex = 8-_numInstanceData+ii;
+			elem->UsageIndex = uint8_t(8-_numInstanceData+ii);
 			elem->Offset = ii*16;
 			++elem;
 		}
@@ -2029,9 +2029,9 @@ namespace bgfx { namespace d3d9
 				if (PredefinedUniform::Count != predefined)
 				{
 					kind = "predefined";
-					m_predefined[m_numPredefined].m_loc = regIndex;
+					m_predefined[m_numPredefined].m_loc   = regIndex;
 					m_predefined[m_numPredefined].m_count = regCount;
-					m_predefined[m_numPredefined].m_type = predefined|fragmentBit;
+					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
 				else
@@ -2365,7 +2365,7 @@ namespace bgfx { namespace d3d9
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
-			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
+			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
@@ -2428,7 +2428,7 @@ namespace bgfx { namespace d3d9
 				uint32_t mipWidth  = imageContainer.m_width;
 				uint32_t mipHeight = imageContainer.m_height;
 
-				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
 				{
 					width     = bx::uint32_max(1, width);
 					height    = bx::uint32_max(1, height);
@@ -3015,7 +3015,7 @@ namespace bgfx { namespace d3d9
 					{
 						uint32_t fstencil = unpackStencil(0, newStencil);
 						uint32_t bstencil = unpackStencil(1, newStencil);
-						uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
+						uint8_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
 						DX_CHECK(device->SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, 0 != frontAndBack) );
 
 						uint32_t fchanged = unpackStencil(0, changedStencil);
@@ -3035,7 +3035,7 @@ namespace bgfx { namespace d3d9
 // 							DX_CHECK(device->SetRenderState(D3DRS_STENCILWRITEMASK, wmask) );
 // 						}
 
-						for (uint32_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
+						for (uint8_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
 						{
 							uint32_t stencil = unpackStencil(ii, newStencil);
 							uint32_t changed = unpackStencil(ii, changedStencil);
@@ -3221,7 +3221,7 @@ namespace bgfx { namespace d3d9
 				}
 
 				{
-					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
 						const Binding& sampler = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];

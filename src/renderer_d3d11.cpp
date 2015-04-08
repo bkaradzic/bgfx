@@ -155,7 +155,7 @@ namespace bgfx { namespace d3d11
 	 * 0x01 // MIP_LINEAR
 	 */
 
-	static const uint32_t s_textureFilter[3][3] =
+	static const uint8_t s_textureFilter[3][3] =
 	{
 		{
 			0x10, // min linear
@@ -752,7 +752,7 @@ namespace bgfx { namespace d3d11
 								| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-			g_caps.maxFBAttachments = bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+			g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
@@ -1390,7 +1390,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void setShaderUniform(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
@@ -1404,12 +1404,12 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void setShaderUniform4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4f(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void setShaderUniform4x4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4x4f(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
@@ -1513,7 +1513,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void setInputLayout(const VertexDecl& _vertexDecl, const ProgramD3D11& _program, uint8_t _numInstanceData)
+		void setInputLayout(const VertexDecl& _vertexDecl, const ProgramD3D11& _program, uint16_t _numInstanceData)
 		{
 			uint64_t layoutHash = (uint64_t(_vertexDecl.m_hash)<<32) | _program.m_vsh->m_hash;
 			layoutHash ^= _numInstanceData;
@@ -1643,7 +1643,7 @@ namespace bgfx { namespace d3d11
 				drt->DestBlendAlpha = s_blendFactor[dstA][1];
 				drt->BlendOpAlpha   = s_blendEquation[equA];
 
-				uint32_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0;
+				uint8_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0;
 				writeMask |= (_state&BGFX_STATE_RGB_WRITE) ? D3D11_COLOR_WRITE_ENABLE_RED|D3D11_COLOR_WRITE_ENABLE_GREEN|D3D11_COLOR_WRITE_ENABLE_BLUE : 0;
 
 				drt->RenderTargetWriteMask = writeMask;
@@ -2068,11 +2068,11 @@ namespace bgfx { namespace d3d11
 		case UniformType::_uniform: \
 		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 				{ \
-					setShaderUniform(type, loc, data, num); \
+					setShaderUniform(uint8_t(type), loc, data, num); \
 				} \
 				break;
 
-				switch ( (int32_t)type)
+				switch ( (uint32_t)type)
 				{
 				case UniformType::Uniform3x3fv:
 				case UniformType::Uniform3x3fv|BGFX_UNIFORM_FRAGMENTBIT: \
@@ -2093,7 +2093,7 @@ namespace bgfx { namespace d3d11
 							 mtx.un.val[ 9] = value[7];
 							 mtx.un.val[10] = value[8];
 							 mtx.un.val[11] = 0.0f;
-							 setShaderUniform(type, loc, &mtx.un.val[0], 3);
+							 setShaderUniform(uint8_t(type), loc, &mtx.un.val[0], 3);
 						 }
 					}
 					break;
@@ -2564,7 +2564,7 @@ namespace bgfx { namespace d3d11
 					kind = "predefined";
 					m_predefined[m_numPredefined].m_loc   = regIndex;
 					m_predefined[m_numPredefined].m_count = regCount;
-					m_predefined[m_numPredefined].m_type  = predefined|fragmentBit;
+					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
 				else
@@ -2668,7 +2668,7 @@ namespace bgfx { namespace d3d11
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
-			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
+			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
@@ -2728,7 +2728,7 @@ namespace bgfx { namespace d3d11
 				uint32_t height = textureHeight;
 				uint32_t depth  = imageContainer.m_depth;
 
-				for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
 				{
 					width  = bx::uint32_max(1, width);
 					height = bx::uint32_max(1, height);
@@ -3589,7 +3589,7 @@ namespace bgfx { namespace d3d11
 
 				{
 					uint32_t changes = 0;
-					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
 						const Binding& sampler = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];

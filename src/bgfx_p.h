@@ -379,7 +379,7 @@ namespace bgfx
 			BX_FREE(g_allocator, m_mem);
 		}
 
-		void resize(bool _small = false, uint16_t _width = BGFX_DEFAULT_WIDTH, uint16_t _height = BGFX_DEFAULT_HEIGHT)
+		void resize(bool _small = false, uint32_t _width = BGFX_DEFAULT_WIDTH, uint32_t _height = BGFX_DEFAULT_HEIGHT)
 		{
 			uint32_t width = bx::uint32_max(1, _width/8);
 			uint32_t height = bx::uint32_max(1, _height/(_small ? 8 : 16) );
@@ -389,8 +389,8 @@ namespace bgfx
 			||  m_height != height
 			||  m_small != _small)
 			{
-				m_small = _small;
-				m_width = (uint16_t)width;
+				m_small  = _small;
+				m_width  = (uint16_t)width;
 				m_height = (uint16_t)height;
 
 				uint32_t size = m_size;
@@ -1418,7 +1418,7 @@ namespace bgfx
 		{
  			m_draw.m_instanceDataOffset = _idb->offset;
 			m_draw.m_instanceDataStride = _idb->stride;
-			m_draw.m_numInstances       = bx::uint32_min(_idb->num, _num);
+			m_draw.m_numInstances       = uint16_t(bx::uint32_min(_idb->num, _num) );
 			m_draw.m_instanceDataBuffer = _idb->handle;
 			BX_FREE(g_allocator, const_cast<InstanceDataBuffer*>(_idb) );
 		}
@@ -1427,7 +1427,7 @@ namespace bgfx
 		{
 			m_draw.m_instanceDataOffset = _startVertex * _stride;
 			m_draw.m_instanceDataStride = _stride;
-			m_draw.m_numInstances       = _num;
+			m_draw.m_numInstances       = uint16_t(_num);
 			m_draw.m_instanceDataBuffer = _handle;
 		}
 
@@ -3068,10 +3068,10 @@ namespace bgfx
 		{
 			Clear& clear = m_clear[_id];
 			clear.m_flags = _flags;
-			clear.m_index[0] = _rgba>>24;
-			clear.m_index[1] = _rgba>>16;
-			clear.m_index[2] = _rgba>> 8;
-			clear.m_index[3] = _rgba>> 0;
+			clear.m_index[0] = uint8_t(_rgba>>24);
+			clear.m_index[1] = uint8_t(_rgba>>16);
+			clear.m_index[2] = uint8_t(_rgba>> 8);
+			clear.m_index[3] = uint8_t(_rgba>> 0);
 			clear.m_depth    = _depth;
 			clear.m_stencil  = _stencil;
 		}

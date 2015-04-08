@@ -436,7 +436,7 @@ namespace bgfx
 		}
 	}
 
-	uint32_t bitRangeConvert(uint32_t _in, uint32_t _from, uint32_t _to)
+	uint8_t bitRangeConvert(uint32_t _in, uint32_t _from, uint32_t _to)
 	{
 		using namespace bx;
 		uint32_t tmp0   = uint32_sll(1, _to);
@@ -449,7 +449,7 @@ namespace bgfx
 		uint32_t tmp7   = uint32_add(tmp5, tmp6);
 		uint32_t result = uint32_srl(tmp7, _from);
 
-		return result;
+		return uint8_t(result);
 	}
 
 	void decodeBlockDxt(uint8_t _dst[16*4], const uint8_t _src[8])
@@ -986,7 +986,7 @@ namespace bgfx
 		{ 0, 8, 0, 8 },
 	};
 
-	uint32_t morton2d(uint16_t _x, uint16_t _y)
+	uint32_t morton2d(uint32_t _x, uint32_t _y)
 	{
 		using namespace bx;
 		const uint32_t tmpx   = uint32_part1by1(_x);
@@ -1099,9 +1099,9 @@ namespace bgfx
 				const uint8_t wa = weight[0];
 				const uint8_t wb = weight[1];
 
-				_dst[(yy*4 + xx)*4+0] = (ab * wa + bb * wb) >> 7;
-				_dst[(yy*4 + xx)*4+1] = (ag * wa + bg * wb) >> 7;
-				_dst[(yy*4 + xx)*4+2] = (ar * wa + br * wb) >> 7;
+				_dst[(yy*4 + xx)*4+0] = uint8_t( (ab * wa + bb * wb) >> 7);
+				_dst[(yy*4 + xx)*4+1] = uint8_t( (ag * wa + bg * wb) >> 7);
+				_dst[(yy*4 + xx)*4+2] = uint8_t( (ar * wa + br * wb) >> 7);
 				_dst[(yy*4 + xx)*4+3] = 255;
 
 				mod >>= 2;
@@ -1209,10 +1209,10 @@ namespace bgfx
 				const uint8_t wc = weight[2];
 				const uint8_t wd = weight[3];
 
-				_dst[(yy*4 + xx)*4+0] = (ab * wa + bb * wb) >> 7;
-				_dst[(yy*4 + xx)*4+1] = (ag * wa + bg * wb) >> 7;
-				_dst[(yy*4 + xx)*4+2] = (ar * wa + br * wb) >> 7;
-				_dst[(yy*4 + xx)*4+3] = (aa * wc + ba * wd) >> 7;
+				_dst[(yy*4 + xx)*4+0] = uint8_t( (ab * wa + bb * wb) >> 7);
+				_dst[(yy*4 + xx)*4+1] = uint8_t( (ag * wa + bg * wb) >> 7);
+				_dst[(yy*4 + xx)*4+2] = uint8_t( (ar * wa + br * wb) >> 7);
+				_dst[(yy*4 + xx)*4+3] = uint8_t( (aa * wc + ba * wd) >> 7);
 
 				mod >>= 2;
 				factorTable += 4;
@@ -1542,13 +1542,13 @@ namespace bgfx
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)bx::seek(_reader);
-		_imageContainer.m_width = width;
+		_imageContainer.m_width  = width;
 		_imageContainer.m_height = height;
-		_imageContainer.m_depth = depth;
-		_imageContainer.m_format = format;
-		_imageContainer.m_numMips = (caps[0] & DDSCAPS_MIPMAP) ? mips : 1;
+		_imageContainer.m_depth  = depth;
+		_imageContainer.m_format   = uint8_t(format);
+		_imageContainer.m_numMips  = uint8_t( (caps[0] & DDSCAPS_MIPMAP) ? mips : 1);
 		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap = cubeMap;
+		_imageContainer.m_cubeMap  = cubeMap;
 		_imageContainer.m_ktx = false;
 
 		return TextureFormat::Unknown != format;
@@ -1719,13 +1719,13 @@ namespace bgfx
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)offset;
-		_imageContainer.m_width = width;
+		_imageContainer.m_width  = width;
 		_imageContainer.m_height = height;
-		_imageContainer.m_depth = depth;
-		_imageContainer.m_format = format;
-		_imageContainer.m_numMips = numMips;
+		_imageContainer.m_depth  = depth;
+		_imageContainer.m_format = uint8_t(format);
+		_imageContainer.m_numMips  = uint8_t(numMips);
 		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap = numFaces > 1;
+		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx = true;
 
 		return TextureFormat::Unknown != format;
@@ -1865,13 +1865,13 @@ namespace bgfx
 		_imageContainer.m_data = NULL;
 		_imageContainer.m_size = 0;
 		_imageContainer.m_offset = (uint32_t)offset;
-		_imageContainer.m_width = width;
+		_imageContainer.m_width  = width;
 		_imageContainer.m_height = height;
-		_imageContainer.m_depth = depth;
-		_imageContainer.m_format = format;
-		_imageContainer.m_numMips = numMips;
+		_imageContainer.m_depth  = depth;
+		_imageContainer.m_format = uint8_t(format);
+		_imageContainer.m_numMips  = uint8_t(numMips);
 		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap = numFaces > 1;
+		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx = false;
 
 		return TextureFormat::Unknown != format;
@@ -2175,13 +2175,13 @@ namespace bgfx
 				if (side == _side
 				&&  lod == _lod)
 				{
-					_mip.m_width = width;
-					_mip.m_height = height;
+					_mip.m_width     = width;
+					_mip.m_height    = height;
 					_mip.m_blockSize = blockSize;
 					_mip.m_size = size;
 					_mip.m_data = (const uint8_t*)_data + offset;
-					_mip.m_bpp = bpp;
-					_mip.m_format = type;
+					_mip.m_bpp  = bpp;
+					_mip.m_format   = uint8_t(type);
 					_mip.m_hasAlpha = hasAlpha;
 					return true;
 				}
