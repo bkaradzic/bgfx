@@ -101,6 +101,7 @@ namespace bgfx { namespace d3d11
 			, m_srv(NULL)
 			, m_uav(NULL)
 			, m_dynamic(false)
+			, m_32bit(false)
 		{
 		}
 
@@ -124,6 +125,7 @@ namespace bgfx { namespace d3d11
 		ID3D11UnorderedAccessView* m_uav;
 		uint32_t m_size;
 		bool m_dynamic;
+		bool m_32bit;
 	};
 
 	typedef BufferD3D11 IndexBufferD3D11;

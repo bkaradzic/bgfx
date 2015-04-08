@@ -1502,21 +1502,23 @@ namespace bgfx
 		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz, uint8_t _flags);
 		void sort();
 
-		bool checkAvailTransientIndexBuffer(uint32_t _num)
+		bool checkAvailTransientIndexBuffer(uint32_t _num, uint8_t _flags)
 		{
-			uint32_t offset = m_iboffset;
-			uint32_t iboffset = offset + _num*sizeof(uint16_t);
+			const uint32_t offset = m_iboffset;
+			const uint32_t stride = !!(_flags & BGFX_BUFFER_32BIT) ? 4 : 2;
+			uint32_t iboffset = offset + _num*stride;
 			iboffset = bx::uint32_min(iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
-			uint32_t num = (iboffset-offset)/sizeof(uint16_t);
+			uint32_t num = (iboffset-offset)/stride;
 			return num == _num;
 		}
 
-		uint32_t allocTransientIndexBuffer(uint32_t& _num)
+		uint32_t allocTransientIndexBuffer(uint32_t& _num, uint8_t _flags)
 		{
-			uint32_t offset = m_iboffset;
-			m_iboffset = offset + (_num+1)*sizeof(uint16_t);
+			const uint32_t offset = m_iboffset;
+			const uint32_t stride = !!(_flags & BGFX_BUFFER_32BIT) ? 4 : 2;
+			m_iboffset = offset + (_num+1)*stride;
 			m_iboffset = bx::uint32_min(m_iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
-			_num = (m_iboffset-offset)/sizeof(uint16_t);
+			_num = (m_iboffset-offset)/stride;
 			return offset;
 		}
 
@@ -2381,9 +2383,9 @@ namespace bgfx
 			m_dynamicVertexBufferHandle.free(_handle.idx);
 		}
 
-		BGFX_API_FUNC(bool checkAvailTransientIndexBuffer(uint32_t _num) const)
+		BGFX_API_FUNC(bool checkAvailTransientIndexBuffer(uint32_t _num, uint8_t _flags) const)
 		{
-			return m_submit->checkAvailTransientIndexBuffer(_num);
+			return m_submit->checkAvailTransientIndexBuffer(_num, _flags);
 		}
 
 		BGFX_API_FUNC(bool checkAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride) const)
@@ -2422,16 +2424,17 @@ namespace bgfx
 			BX_FREE(g_allocator, _tib);
 		}
 
-		BGFX_API_FUNC(void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num) )
+		BGFX_API_FUNC(void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, uint8_t _flags) )
 		{
-			uint32_t offset = m_submit->allocTransientIndexBuffer(_num);
+			const uint32_t offset = m_submit->allocTransientIndexBuffer(_num, _flags);
+			const uint32_t stride = !!(_flags & BGFX_BUFFER_32BIT) ? 4 : 2;
 
 			TransientIndexBuffer& dib = *m_submit->m_transientIb;
 
 			_tib->data       = &dib.data[offset];
-			_tib->size       = _num * 2;
+			_tib->size       = _num * stride;
 			_tib->handle     = dib.handle;
-			_tib->startIndex = strideAlign(offset, 2)/2;
+			_tib->startIndex = strideAlign(offset, stride)/stride;
 		}
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexDecl* _decl = NULL)

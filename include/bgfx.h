@@ -311,6 +311,8 @@ namespace bgfx
 		/// - `BGFX_CAPS_COMPUTE` - Renderer has compute shaders.
 		/// - `BGFX_CAPS_FRAGMENT_ORDERING` - Intel's pixel sync.
 		/// - `BGFX_CAPS_SWAP_CHAIN` - Multiple windows.
+		/// - `BGFX_CAPS_32BIT_INDEXBUFFER` - Renderer supports creating
+		///      32bit index buffers.
 		///
 		uint64_t supported;
 
@@ -645,8 +647,8 @@ namespace bgfx
 
 	/// Create static index buffer.
 	///
-	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
@@ -673,12 +675,11 @@ namespace bgfx
 	/// @param _flags Buffer creation flags.
 	///   `BGFX_BUFFER_COMPUTE_READ` - compute shader will read buffer.
 	///   `BGFX_BUFFER_COMPUTE_WRITE` - compute shader will write into buffer.
-	///   `BGFX_BUFFER_ALLOW_RESIZE` buffer can be resized if updated with different size buffer.
+	///   `BGFX_BUFFER_ALLOW_RESIZE` - buffer can be resized if updated with different size buffer.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	/// @remarks
-	///   1. Only 16-bit index buffer is supported.
-	///
-	///   2. When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
+	///   1. When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
 	///      from CPU.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_NONE);
@@ -686,9 +687,8 @@ namespace bgfx
 	/// Create dynamic index buffer and initialized it.
 	///
 	/// @param _mem Index buffer data.
-	///
-	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
@@ -736,8 +736,10 @@ namespace bgfx
 	/// Returns true if internal transient index buffer has enough space.
 	///
 	/// @param _num Number of indices.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - For 32-bit index buffer. Ommiting this flag assumes a 16-bit index buffer.
 	///
-	bool checkAvailTransientIndexBuffer(uint32_t _num);
+	bool checkAvailTransientIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Returns true if internal transient vertex buffer has enough space.
 	///
@@ -759,8 +761,10 @@ namespace bgfx
 	/// @param _numVertices Number of vertices.
 	/// @param _decl Vertex declaration.
 	/// @param _numIndices Number of indices.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - For 32-bit index buffer. Ommiting this flag assumes a 16-bit index buffer.
 	///
-	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices);
+	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Allocate transient index buffer.
 	///
@@ -768,13 +772,14 @@ namespace bgfx
 	///   for the duration of frame, and it can be reused for multiple draw
 	///   calls.
 	/// @param _num Number of indices to allocate.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	/// @remarks
 	///   1. You must call setIndexBuffer after alloc in order to avoid memory
 	///      leak.
-	///   2. Only 16-bit index buffer is supported.
 	///
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num);
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Allocate transient vertex buffer.
 	///
@@ -795,9 +800,9 @@ namespace bgfx
 	/// true.
 	///
 	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	///   By default 16-bit index buffer is created. For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
 	///
-	bool allocTransientBuffers(TransientVertexBuffer* _tvb, const VertexDecl& _decl, uint32_t _numVertices, TransientIndexBuffer* _tib, uint32_t _numIndices);
+	bool allocTransientBuffers(TransientVertexBuffer* _tvb, const VertexDecl& _decl, uint32_t _numVertices, TransientIndexBuffer* _tib, uint32_t _numIndices, uint8_t _flags = BGFX_BUFFER_NONE);
 
 	/// Allocate instance data buffer.
 	///
