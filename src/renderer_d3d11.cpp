@@ -624,10 +624,25 @@ namespace bgfx { namespace d3d11
 			{
 				hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
 				BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
-			}
-			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
-			hr = device->GetParent(IID_IDXGIAdapter, (void**)&adapter);
+				if (SUCCEEDED(hr) )
+				{
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+					try
+					{
+						// QueryInterface above can succeed, but getting adapter call might crash on Win7.
+						hr = device->GetAdapter(&adapter);
+					}
+					catch (...)
+					{
+						BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_deviceIIDs)-1-ii);
+						DX_RELEASE(device, 0);
+						hr = E_FAIL;
+					}
+BX_PRAGMA_DIAGNOSTIC_POP();
+				}
+			}
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
 			// GPA increases device ref count.
