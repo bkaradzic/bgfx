@@ -647,9 +647,8 @@ namespace bgfx
 
 	/// Create static index buffer.
 	///
-	/// @remarks
-	///   By default 16-bit index buffer is created.
-	///   For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
@@ -676,12 +675,11 @@ namespace bgfx
 	/// @param _flags Buffer creation flags.
 	///   `BGFX_BUFFER_COMPUTE_READ` - compute shader will read buffer.
 	///   `BGFX_BUFFER_COMPUTE_WRITE` - compute shader will write into buffer.
-	///   `BGFX_BUFFER_ALLOW_RESIZE` buffer can be resized if updated with different size buffer.
+	///   `BGFX_BUFFER_ALLOW_RESIZE` - buffer can be resized if updated with different size buffer.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	/// @remarks
-	///   1. By default 16-bit index buffer is created. For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
-	///
-	///   2. When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
+	///   1. When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
 	///      from CPU.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags = BGFX_BUFFER_NONE);
@@ -689,9 +687,8 @@ namespace bgfx
 	/// Create dynamic index buffer and initialized it.
 	///
 	/// @param _mem Index buffer data.
-	///
-	/// @remarks
-	///   By default 16-bit index buffer is created. For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
+	/// @param _flags Index buffer flags.
+	///   `BGFX_BUFFER_32BIT` - create 32-bit index buffer. Ommiting this flag creates 16-bit index buffer.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
