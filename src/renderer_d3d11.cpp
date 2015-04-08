@@ -627,6 +627,7 @@ namespace bgfx { namespace d3d11
 
 				if (SUCCEEDED(hr) )
 				{
+#if BX_COMPILER_MSVC
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 					try
@@ -641,6 +642,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler 
 						hr = E_FAIL;
 					}
 BX_PRAGMA_DIAGNOSTIC_POP();
+#else
+					hr = device->GetAdapter(&adapter);
+#endif // BX_COMPILER_MSVC
 				}
 			}
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");

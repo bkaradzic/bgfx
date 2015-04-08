@@ -50,6 +50,8 @@
 // embedded font
 #include "droidsans.ttf.h"
 
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
+
 #define USE_NANOVG_FONT 0
 
 #define IMGUI_CONFIG_MAX_FONTS 20

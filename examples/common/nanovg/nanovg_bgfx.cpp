@@ -32,6 +32,8 @@
 
 #include <bx/bx.h>
 
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
+
 namespace
 {
 #include "vs_nanovg_fill.bin.h"
