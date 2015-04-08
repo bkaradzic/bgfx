@@ -462,6 +462,7 @@ namespace bgfx { namespace d3d9
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 			BX_TRACE("Num simultaneous render targets: %d", m_caps.NumSimultaneousRTs);
+			BX_TRACE("Max vertex index: %d", m_caps.MaxVertexIndex);
 
 			g_caps.supported |= ( 0
 								| BGFX_CAPS_TEXTURE_3D
@@ -469,6 +470,7 @@ namespace bgfx { namespace d3d9
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								| BGFX_CAPS_SWAP_CHAIN
+								| (m_caps.MaxVertexIndex > UINT16_MAX ? BGFX_CAPS_32BIT_INDEXBUFFER : 0)
 								);
 			g_caps.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 
@@ -668,9 +670,9 @@ namespace bgfx { namespace d3d9
 			return BGFX_RENDERER_DIRECT3D9_NAME;
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t /*_flags*/) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
+			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, !!(_flags&BGFX_BUFFER_32BIT) );
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) BX_OVERRIDE
@@ -698,9 +700,9 @@ namespace bgfx { namespace d3d9
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL);
+			m_indexBuffers[_handle.idx].create(_size, NULL, !!(_flags&BGFX_BUFFER_32BIT) );
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) BX_OVERRIDE
@@ -1762,10 +1764,11 @@ namespace bgfx { namespace d3d9
 		s_renderD3D9 = NULL;
 	}
 
-	void IndexBufferD3D9::create(uint32_t _size, void* _data)
+	void IndexBufferD3D9::create(uint32_t _size, void* _data, bool _32bit)
 	{
 		m_size = _size;
 		m_dynamic = NULL == _data;
+		m_32bit = _32bit;
 
 		uint32_t usage = D3DUSAGE_WRITEONLY;
 		D3DPOOL pool = s_renderD3D9->m_pool;
@@ -1778,7 +1781,7 @@ namespace bgfx { namespace d3d9
 
 		DX_CHECK(s_renderD3D9->m_device->CreateIndexBuffer(m_size
 			, usage
-			, D3DFMT_INDEX16
+			, m_32bit ? D3DFMT_INDEX32 : D3DFMT_INDEX16
 			, pool
 			, &m_ptr
 			, NULL
@@ -1804,7 +1807,7 @@ namespace bgfx { namespace d3d9
 		{
 			DX_CHECK(s_renderD3D9->m_device->CreateIndexBuffer(m_size
 				, D3DUSAGE_WRITEONLY|D3DUSAGE_DYNAMIC
-				, D3DFMT_INDEX16
+				, m_32bit ? D3DFMT_INDEX32 : D3DFMT_INDEX16
 				, D3DPOOL_DEFAULT
 				, &m_ptr
 				, NULL

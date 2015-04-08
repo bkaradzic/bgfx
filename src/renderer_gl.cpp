@@ -1346,6 +1346,10 @@ namespace bgfx { namespace gl
 				? BGFX_CAPS_FRAGMENT_DEPTH
 				: 0
 				;
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				? BGFX_CAPS_32BIT_INDEXBUFFER
+				: 0
+				;
 			g_caps.supported |= s_extension[Extension::ARB_draw_buffers_blend].m_supported
 				? BGFX_CAPS_BLEND_INDEPENDENT
 				: 0
@@ -1607,9 +1611,9 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t /*_flags*/) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
+			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, !!(_flags&BGFX_BUFFER_32BIT) );
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) BX_OVERRIDE
@@ -1638,9 +1642,9 @@ namespace bgfx { namespace gl
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL);
+			m_indexBuffers[_handle.idx].create(_size, NULL, !!(_flags&BGFX_BUFFER_32BIT) );
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) BX_OVERRIDE
@@ -1877,7 +1881,7 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glDrawElements(GL_TRIANGLES
 					, _numIndices
-					, GL_UNSIGNED_SHORT
+					, ib.m_32bit ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT
 					, (void*)0
 					) );
 			}
@@ -5253,16 +5257,17 @@ namespace bgfx { namespace gl
 
 						if (isValid(draw.m_indexBuffer) )
 						{
+							const IndexBufferGL& idxBuffer = m_indexBuffers[draw.m_indexBuffer.idx];
 							if (UINT32_MAX == draw.m_numIndices)
 							{
-								numIndices = m_indexBuffers[draw.m_indexBuffer.idx].m_size/2;
+								numIndices = idxBuffer.m_size/2;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances = draw.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
-									, GL_UNSIGNED_SHORT
+									, idxBuffer.m_32bit ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT
 									, (void*)0
 									, draw.m_numInstances
 									) );
@@ -5276,7 +5281,7 @@ namespace bgfx { namespace gl
 
 								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
-									, GL_UNSIGNED_SHORT
+									, idxBuffer.m_32bit ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT
 									, (void*)(uintptr_t)(draw.m_startIndex*2)
 									, draw.m_numInstances
 									) );

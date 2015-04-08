@@ -765,6 +765,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 								| BGFX_CAPS_SWAP_CHAIN
 								| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
+								| BGFX_CAPS_32BIT_INDEXBUFFER
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 			g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
@@ -1162,7 +1163,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			setInputLayout(vertexDecl, program, 0);
 
 			IndexBufferD3D11& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
-			deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
+			deviceCtx->IASetIndexBuffer(ib.m_ptr, ib.m_32bit?DXGI_FORMAT_R32_UINT:DXGI_FORMAT_R16_UINT, 0);
 
 			float proj[16];
 			mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
@@ -2362,6 +2363,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		m_uav  = NULL;
 		m_size = _size;
+		m_32bit = !!(_flags&BGFX_BUFFER_32BIT);
 
 		const bool needUav = 0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE);
 		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
@@ -3686,7 +3688,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					if (invalidHandle != handle)
 					{
 						const IndexBufferD3D11& ib = m_indexBuffers[handle];
-						deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
+						deviceCtx->IASetIndexBuffer(ib.m_ptr, ib.m_32bit?DXGI_FORMAT_R32_UINT:DXGI_FORMAT_R16_UINT, 0);
 					}
 					else
 					{

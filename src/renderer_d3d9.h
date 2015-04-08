@@ -130,10 +130,11 @@ namespace bgfx { namespace d3d9
 		IndexBufferD3D9()
 			: m_ptr(NULL)
 			, m_dynamic(false)
+			, m_32bit(false)
 		{
 		}
 
-		void create(uint32_t _size, void* _data);
+		void create(uint32_t _size, void* _data, bool _32bit = false);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
 			void* buffer;
@@ -163,6 +164,7 @@ namespace bgfx { namespace d3d9
 		IDirect3DIndexBuffer9* m_ptr;
 		uint32_t m_size;
 		bool m_dynamic;
+		bool m_32bit;
 	};
 
 	struct VertexBufferD3D9

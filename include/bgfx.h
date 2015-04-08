@@ -311,6 +311,8 @@ namespace bgfx
 		/// - `BGFX_CAPS_COMPUTE` - Renderer has compute shaders.
 		/// - `BGFX_CAPS_FRAGMENT_ORDERING` - Intel's pixel sync.
 		/// - `BGFX_CAPS_SWAP_CHAIN` - Multiple windows.
+		/// - `BGFX_CAPS_32BIT_INDEXBUFFER` - Renderer supports creating
+		///      32bit index buffers.
 		///
 		uint64_t supported;
 
@@ -646,7 +648,8 @@ namespace bgfx
 	/// Create static index buffer.
 	///
 	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	///   By default 16-bit index buffer is created.
+	///   For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
 	///
 	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 
@@ -676,7 +679,7 @@ namespace bgfx
 	///   `BGFX_BUFFER_ALLOW_RESIZE` buffer can be resized if updated with different size buffer.
 	///
 	/// @remarks
-	///   1. Only 16-bit index buffer is supported.
+	///   1. By default 16-bit index buffer is created. For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
 	///
 	///   2. When buffer is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated
 	///      from CPU.
@@ -688,7 +691,7 @@ namespace bgfx
 	/// @param _mem Index buffer data.
 	///
 	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	///   By default 16-bit index buffer is created. For a 32-bit index buffer, use flag `BGFX_BUFFER_32BIT`.
 	///
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint8_t _flags = BGFX_BUFFER_NONE);
 

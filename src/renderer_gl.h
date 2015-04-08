@@ -780,9 +780,10 @@ namespace bgfx { namespace gl
 
 	struct IndexBufferGL
 	{
-		void create(uint32_t _size, void* _data)
+		void create(uint32_t _size, void* _data, bool _32bit = false)
 		{
 			m_size = _size;
+			m_32bit = _32bit;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
 			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
@@ -817,6 +818,7 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		uint32_t m_size;
 		VaoCacheRef m_vcref;
+		bool m_32bit;
 	};
 
 	struct VertexBufferGL
