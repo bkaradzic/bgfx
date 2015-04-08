@@ -2377,6 +2377,8 @@ namespace bgfx { namespace d3d9
 			m_requestedFormat = imageContainer.m_format;
 			m_textureFormat   = imageContainer.m_format;
 
+			const bool swizzle = TextureFormat::RGBA8 == imageContainer.m_format;
+
 			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
 			const bool convert = D3DFMT_UNKNOWN == tfi.m_fmt;
 
@@ -2470,6 +2472,32 @@ namespace bgfx { namespace d3d9
 							else
 							{
 								imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, pitch, mip.m_format);
+							}
+						}
+						else if (swizzle)
+						{
+							if (width  != mipWidth
+							||  height != mipHeight)
+							{
+								uint32_t srcpitch = mipWidth*bpp/8;
+
+								uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mipHeight);
+								imageSwizzleBgra8(mip.m_width, mip.m_height, srcpitch, mip.m_data, temp);
+
+								uint32_t dstpitch = pitch;
+								for (uint32_t yy = 0; yy < height; ++yy)
+								{
+									uint8_t* src = &temp[yy*srcpitch];
+									uint8_t* dst = &bits[yy*dstpitch];
+									memcpy(dst, src, dstpitch);
+								}
+
+								BX_FREE(g_allocator, temp);
+							}
+							else
+							{
+								uint32_t srcpitch = mipWidth*bpp/8;
+								imageSwizzleBgra8(mip.m_width, mip.m_height, srcpitch, mip.m_data, bits);
 							}
 						}
 						else
