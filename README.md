@@ -447,7 +447,7 @@ OculusVR integration
 --------------------
 
 OculusVR support is currently experimental, and only DX11 is tested. To build
-with OculusVR HDM support enabled you must set `OVR_DIR` enviroment variable:
+with OculusVR HMD support enabled you must set `OVR_DIR` enviroment variable:
 
 	set OVR_DIR=<path to OculusSDK>
 
@@ -578,6 +578,9 @@ Using bgfx with SDL example:
 with examples:
 
 	genie --with-sdl vs2012
+
+**NOTE** `--with-glfw` is also available, but it's just simple stub to be used
+to test GLFW integration API.
 
 **NOTE** Special care is necessary to make custom windowing to work with
 multithreaded renderer. Each platform has rules about where renderer can be and
