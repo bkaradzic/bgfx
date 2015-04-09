@@ -2122,6 +2122,10 @@ namespace bgfx
 			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffffff), _dst);
 			break;
 
+		case TextureFormat::RGBA8:
+			imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+			break;
+
 		default:
 			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
 			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);

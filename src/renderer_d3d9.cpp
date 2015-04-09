@@ -2389,10 +2389,8 @@ namespace bgfx { namespace d3d9
 			m_textureFormat   = imageContainer.m_format;
 
 			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
-			const bool convert = D3DFMT_UNKNOWN == tfi.m_fmt;
-
 			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
-			if (convert)
+			if (D3DFMT_UNKNOWN == tfi.m_fmt)
 			{
 				m_textureFormat = (uint8_t)TextureFormat::BGRA8;
 				bpp = 32;
@@ -2434,6 +2432,8 @@ namespace bgfx { namespace d3d9
 							&& imageContainer.m_format != TextureFormat::BC5
 							;
 
+			const bool convert = m_textureFormat != m_requestedFormat;
+
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
 				uint32_t width     = textureWidth;
@@ -2466,7 +2466,13 @@ namespace bgfx { namespace d3d9
 								uint32_t srcpitch = mipWidth*bpp/8;
 
 								uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mipHeight);
-								imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, srcpitch, mip.m_format);
+								imageDecodeToBgra8(temp
+										, mip.m_data
+										, mip.m_width
+										, mip.m_height
+										, srcpitch
+										, mip.m_format
+										);
 
 								uint32_t dstpitch = pitch;
 								for (uint32_t yy = 0; yy < height; ++yy)
