@@ -6,28 +6,116 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-struct PosColorVertex
+/*********************************************************************************************/
+
+#define VSH_HEADER "VSH\3\0\0\0\0\0\0\0\0\0\0"
+#define FSH_HEADER "FSH\3\0\0\0\0\0\0\0\0\0\0"
+
+static const uint8_t vs_txt[] = VSH_HEADER
+"layout(location = 0) in vec3 a_position;									  \n"
+"layout(location = 1) in vec3 a_normal;										  \n"
+"layout(location = 2) in ivec2 a_texcoord0;									  \n"
+"																			  \n"
+"out vec2 v_texture0;														  \n"
+"																			  \n"
+"uniform mat4  u_modelViewProj;												  \n"
+"																			  \n"
+"void main()																  \n"
+"{																			  \n"
+"	gl_Position = u_modelViewProj * vec4(a_position,1.0);					  \n"
+"	v_texture0 = a_texcoord0;												  \n"
+"}					 														  \n";
+
+
+static const uint8_t fs_txt[] = FSH_HEADER
+"in vec2 v_texture0;													      \n"
+"out vec4 outputColor;														  \n"
+"																			  \n"
+"uniform sampler2D s0;														  \n"
+"																			  \n"
+"void main()																  \n"
+"{																			  \n"
+"	vec4 coltex = texture(s0,v_texture0);									  \n"
+"	outputColor = coltex * 1.2;										          \n"
+"}																			  \n";
+	
+/*********************************************************************************************/
+
+
+struct VertexPNT
 {
-	float m_x;
-	float m_y;
-	float m_z;
-	uint32_t m_abgr;
+	float px,py,pz;
+	float nx,ny,nz;
+	//float u0,v0;
+	int16_t u0,v0;
 
 	static void init()
 	{
 		ms_decl
 			.begin()
-			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
+			.add(bgfx::Attrib::Position,3,bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Normal,3,bgfx::AttribType::Float)
+			//.add(bgfx::Attrib::TexCoord0,2,bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0,2,bgfx::AttribType::Int16,true,true)
 			.end();
 	};
 
 	static bgfx::VertexDecl ms_decl;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexDecl VertexPNT::ms_decl;
 
-static PosColorVertex s_cubeVertices[8] =
+static const VertexPNT s_cubeVertices[] =
+{
+	{ -1,1,-1,0,0,-1,0,0,},
+	{ 1,1,-1,0,0,-1,1,0,},
+	{ 1,-1,-1,0,0,-1,1,1,},
+	{ -1,-1,-1,0,0,-1,0,1,},
+
+	{ -1,-1,1,0,0,1,0,0,},
+	{ 1,-1,1,0,0,1,1,0,},
+	{ 1,1,1,0,0,1,1,1,},
+	{ -1,1,1,0,0,1,0,1,},
+
+	{ -1,-1,-1,0,-1,0,0,0,},
+	{ 1,-1,-1,0,-1,0,1,0,},
+	{ 1,-1,1,0,-1,0,1,1,},
+	{ -1,-1,1,0,-1,0,0,1,},
+
+	{ 1,-1,-1,1,0,0,0,0,},
+	{ 1,1,-1,1,0,0,1,0,},
+	{ 1,1,1,1,0,0,1,1,},
+	{ 1,-1,1,1,0,0,0,1,},
+
+	{ 1,1,-1,0,1,0,0,0,},
+	{ -1,1,-1,0,1,0,1,0,},
+	{ -1,1,1,0,1,0,1,1,},
+	{ 1,1,1,0,1,0,0,1,},
+
+	{ -1,1,-1,-1,0,0,0,0,},
+	{ -1,-1,-1,-1,0,0,1,0,},
+	{ -1,-1,1,-1,0,0,1,1,},
+	{ -1,1,1,-1,0,0,0,1,},
+};
+
+
+static const uint16_t s_cubeIndices[] =
+{
+	0,1,2,
+	0,2,3,
+	4,5,6,
+	4,6,7,
+	8,9,10,
+	8,10,11,
+	12,13,14,
+	12,14,15,
+	16,17,18,
+	16,18,19,
+	20,21,22,
+	20,22,23,
+};
+
+/*static PosColorVertex s_cubeVertices[8] =
 {
 	{-1.0f,  1.0f,  1.0f, 0xff000000 },
 	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
@@ -53,7 +141,7 @@ static const uint16_t s_cubeIndices[36] =
 	4, 5, 1,
 	2, 3, 6, // 10
 	6, 3, 7,
-};
+};*/
 
 int _main_(int /*_argc*/, char** /*_argv*/)
 {
@@ -77,13 +165,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		);
 
 	// Create vertex stream declaration.
-	PosColorVertex::init();
+	VertexPNT::init();
 
 	// Create static vertex buffer.
 	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
 		  // Static data can be passed with bgfx::makeRef
 		  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-		, PosColorVertex::ms_decl
+		  ,VertexPNT::ms_decl
 		);
 
 	// Create static index buffer.
@@ -93,7 +181,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		);
 
 	// Create program from shaders.
-	bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
+	//bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
+
+	// Create program from shaders text.
+	const bgfx::Memory* memvs = bgfx::makeRef(vs_txt,sizeof(vs_txt));
+	bgfx::ShaderHandle vsh = bgfx::createShader(memvs);
+	const bgfx::Memory* memfs = bgfx::makeRef(fs_txt,sizeof(fs_txt));
+	bgfx::ShaderHandle fsh = bgfx::createShader(memfs);
+	bgfx::ProgramHandle program = bgfx::createProgram(vsh,fsh,true);
+
+	// Load diffuse texture.
+	bgfx::UniformHandle u_texColor = bgfx::createUniform("u_texColor",bgfx::UniformType::Uniform1iv);
+	bgfx::TextureHandle textureColor = loadTexture("fieldstone-rgba.dds");
+
 
 	int64_t timeOffset = bx::getHPCounter();
 
@@ -173,8 +273,20 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setVertexBuffer(vbh);
 				bgfx::setIndexBuffer(ibh);
 
+				// Bind textures.
+				bgfx::setTexture(0,u_texColor,textureColor);
+
 				// Set render states.
-				bgfx::setState(BGFX_STATE_DEFAULT);
+				//bgfx::setState(BGFX_STATE_DEFAULT);
+
+				// Set render states.
+				bgfx::setState(0
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_DEPTH_WRITE
+					| BGFX_STATE_DEPTH_TEST_LESS
+					| BGFX_STATE_MSAA
+					);
 
 				// Submit primitive for rendering to view 0.
 				bgfx::submit(0);
