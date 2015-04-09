@@ -3278,11 +3278,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					vp.MinDepth = 0.0f;
 					vp.MaxDepth = 1.0f;
 					deviceCtx->RSSetViewports(1, &vp);
-					Clear& clear = _render->m_clear[view];
+					Clear& clr = _render->m_clear[view];
 
-					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
+					if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) )
 					{
-						clearQuad(_clearQuad, viewState.m_rect, clear, _render->m_clearColor);
+						clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_clearColor);
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 				}
