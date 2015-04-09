@@ -5274,10 +5274,10 @@ namespace bgfx { namespace gl
 							if (UINT32_MAX == draw.m_numIndices)
 							{
 								const uint32_t indexSize = hasIndex16 ? 2 : 4;
-								numIndices = ib.m_size/indexSize;
+								numIndices        = ib.m_size/indexSize;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-								numInstances = draw.m_numInstances;
-								numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+								numInstances      = draw.m_numInstances;
+								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
