@@ -769,6 +769,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 								| BGFX_CAPS_SWAP_CHAIN
 								| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
+								| BGFX_CAPS_INDEX32
 								);
 			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 			g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
@@ -2364,8 +2365,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void BufferD3D11::create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride, bool _vertex)
 	{
-		m_uav  = NULL;
-		m_size = _size;
+		m_uav   = NULL;
+		m_size  = _size;
+		m_flags = _flags;
 
 		const bool needUav = 0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE);
 		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
@@ -2381,9 +2383,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		desc.MiscFlags = 0;
 		desc.StructureByteStride = 0;
 
-		DXGI_FORMAT format = _vertex
+		const DXGI_FORMAT indexFormat = 0 == (_flags & BGFX_BUFFER_INDEX32)
+			? DXGI_FORMAT_R16_UINT
+			: DXGI_FORMAT_R32_UINT
+			;
+		const DXGI_FORMAT format = _vertex
 			? DXGI_FORMAT_R32G32B32A32_FLOAT
-			: DXGI_FORMAT_R16_UINT
+			: indexFormat
 			;
 
 		ID3D11Device* device = s_renderD3D11->m_device;
@@ -2512,7 +2518,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			: 0
 			;
 
-		BufferD3D11::create(_size, _data, _flags, stride);
+		BufferD3D11::create(_size, _data, _flags, stride, true);
 	}
 
 	void ShaderD3D11::create(const Memory* _mem)
@@ -3690,7 +3696,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					if (invalidHandle != handle)
 					{
 						const IndexBufferD3D11& ib = m_indexBuffers[handle];
-						deviceCtx->IASetIndexBuffer(ib.m_ptr, DXGI_FORMAT_R16_UINT, 0);
+						deviceCtx->IASetIndexBuffer(ib.m_ptr
+							, 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT
+							, 0
+							);
 					}
 					else
 					{

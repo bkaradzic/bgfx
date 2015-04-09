@@ -479,6 +479,7 @@ namespace bgfx { namespace gl
 			OES_depth24,
 			OES_depth32,
 			OES_depth_texture,
+			OES_element_index_uint,
 			OES_fragment_precision_high,
 			OES_get_program_binary,
 			OES_required_internalformat,
@@ -666,6 +667,7 @@ namespace bgfx { namespace gl
 		{ "OES_depth24",                           false,                             true  },
 		{ "OES_depth32",                           false,                             true  },
 		{ "OES_depth_texture",                     false,                             true  },
+		{ "OES_element_index_uint",                false,                             true  },
 		{ "OES_fragment_precision_high",           false,                             true  },
 		{ "OES_get_program_binary",                false,                             true  },
 		{ "OES_required_internalformat",           false,                             true  },
@@ -1330,19 +1332,23 @@ namespace bgfx { namespace gl
 				g_caps.formats[ii] = s_textureFormat[ii].m_supported ? 1 : 0;
 			}
 
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::OES_texture_3D].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| s_extension[Extension::OES_texture_3D].m_supported
 				? BGFX_CAPS_TEXTURE_3D
 				: 0
 				;
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_shadow_samplers].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| s_extension[Extension::EXT_shadow_samplers].m_supported
 				? BGFX_CAPS_TEXTURE_COMPARE_ALL
 				: 0
 				;
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::OES_vertex_half_float].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| s_extension[Extension::OES_vertex_half_float].m_supported
 				? BGFX_CAPS_VERTEX_ATTRIB_HALF
 				: 0
 				;
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_frag_depth].m_supported
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| s_extension[Extension::EXT_frag_depth].m_supported
 				? BGFX_CAPS_FRAGMENT_DEPTH
 				: 0
 				;
@@ -1352,6 +1358,11 @@ namespace bgfx { namespace gl
 				;
 			g_caps.supported |= s_extension[Extension::INTEL_fragment_shader_ordering].m_supported
 				? BGFX_CAPS_FRAGMENT_ORDERING
+				: 0
+				;
+			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| s_extension[Extension::OES_element_index_uint].m_supported
+				? BGFX_CAPS_INDEX32
 				: 0
 				;
 
@@ -1607,9 +1618,9 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t /*_flags*/) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data);
+			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) BX_OVERRIDE
@@ -1638,9 +1649,9 @@ namespace bgfx { namespace gl
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL);
+			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) BX_OVERRIDE
@@ -5253,16 +5264,24 @@ namespace bgfx { namespace gl
 
 						if (isValid(draw.m_indexBuffer) )
 						{
+							const IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
+							const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
+							const GLenum indexFormat = hasIndex16
+								? GL_UNSIGNED_SHORT
+								: GL_UNSIGNED_INT
+								;
+
 							if (UINT32_MAX == draw.m_numIndices)
 							{
-								numIndices = m_indexBuffers[draw.m_indexBuffer.idx].m_size/2;
+								const uint32_t indexSize = hasIndex16 ? 2 : 4;
+								numIndices = ib.m_size/indexSize;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances = draw.m_numInstances;
 								numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
 								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
-									, GL_UNSIGNED_SHORT
+									, indexFormat
 									, (void*)0
 									, draw.m_numInstances
 									) );
@@ -5276,7 +5295,7 @@ namespace bgfx { namespace gl
 
 								GL_CHECK(glDrawElementsInstanced(prim.m_type
 									, numIndices
-									, GL_UNSIGNED_SHORT
+									, indexFormat
 									, (void*)(uintptr_t)(draw.m_startIndex*2)
 									, draw.m_numInstances
 									) );

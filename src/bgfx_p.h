@@ -1378,8 +1378,9 @@ namespace bgfx
 
 		void setIndexBuffer(const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
+			const uint32_t indexSize = 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
-			m_draw.m_numIndices  = bx::uint32_min(_numIndices, _dib.m_size/2);
+			m_draw.m_numIndices  = bx::uint32_min(_numIndices, _dib.m_size/indexSize);
 			m_draw.m_indexBuffer = _dib.m_handle;
 		}
 
@@ -2106,7 +2107,8 @@ namespace bgfx
 		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(uint32_t _num, uint8_t _flags) )
 		{
 			DynamicIndexBufferHandle handle = BGFX_INVALID_HANDLE;
-			uint32_t size = BX_ALIGN_16( (_num+1)*2);
+			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+			uint32_t size = BX_ALIGN_16( (_num+1)*indexSize);
 
 			uint64_t ptr = 0;
 			if (0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE) )
@@ -2144,7 +2146,7 @@ namespace bgfx
 			dib.m_handle.idx = uint16_t(ptr>>32);
 			dib.m_offset     = uint32_t(ptr);
 			dib.m_size       = size;
-			dib.m_startIndex = strideAlign(dib.m_offset, 2)/2;
+			dib.m_startIndex = strideAlign(dib.m_offset, indexSize)/indexSize;
 			dib.m_flags      = _flags;
 
 			return handle;
@@ -2153,7 +2155,8 @@ namespace bgfx
 		BGFX_API_FUNC(DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint8_t _flags) )
 		{
 			BX_CHECK(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
-			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/2, _flags);
+			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/indexSize, _flags);
 			if (isValid(handle) )
 			{
 				updateDynamicIndexBuffer(handle, _mem);
@@ -2167,6 +2170,7 @@ namespace bgfx
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
 			BX_CHECK(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Can't update GPU buffer from CPU.");
+			const uint32_t indexSize = 0 == (dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 
 			if (dib.m_size < _mem->size
 			&&  0 != (dib.m_flags & BGFX_BUFFER_ALLOW_RESIZE) )
@@ -2178,10 +2182,10 @@ namespace bgfx
 				dib.m_handle.idx = uint16_t(ptr>>32);
 				dib.m_offset     = uint32_t(ptr);
 				dib.m_size       = _mem->size;
-				dib.m_startIndex = strideAlign(dib.m_offset, 2)/2;
+				dib.m_startIndex = strideAlign(dib.m_offset, indexSize)/indexSize;
 			}
 
-			uint32_t offset = dib.m_startIndex*2;
+			uint32_t offset = dib.m_startIndex*indexSize;
 			uint32_t size   = bx::uint32_min(dib.m_size, _mem->size);
 			BX_CHECK(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
 				, size
@@ -2426,11 +2430,11 @@ namespace bgfx
 		{
 			uint32_t offset = m_submit->allocTransientIndexBuffer(_num);
 
-			TransientIndexBuffer& dib = *m_submit->m_transientIb;
+			TransientIndexBuffer& tib = *m_submit->m_transientIb;
 
-			_tib->data       = &dib.data[offset];
+			_tib->data       = &tib.data[offset];
 			_tib->size       = _num * 2;
-			_tib->handle     = dib.handle;
+			_tib->handle     = tib.handle;
 			_tib->startIndex = strideAlign(offset, 2)/2;
 		}
 

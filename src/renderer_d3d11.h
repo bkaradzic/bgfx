@@ -100,11 +100,12 @@ namespace bgfx { namespace d3d11
 			: m_ptr(NULL)
 			, m_srv(NULL)
 			, m_uav(NULL)
+			, m_flags(BGFX_BUFFER_NONE)
 			, m_dynamic(false)
 		{
 		}
 
-		void create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride = 0, bool _vertex = true);
+		void create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride = 0, bool _vertex = false);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
 
 		void destroy()
@@ -123,6 +124,7 @@ namespace bgfx { namespace d3d11
 		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
 		uint32_t m_size;
+		uint8_t m_flags;
 		bool m_dynamic;
 	};
 

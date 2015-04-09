@@ -780,9 +780,10 @@ namespace bgfx { namespace gl
 
 	struct IndexBufferGL
 	{
-		void create(uint32_t _size, void* _data)
+		void create(uint32_t _size, void* _data, uint8_t _flags)
 		{
-			m_size = _size;
+			m_size  = _size;
+			m_flags = _flags;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
 			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
@@ -790,7 +791,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER
 				, _size
 				, _data
-				, (NULL==_data)?GL_DYNAMIC_DRAW:GL_STATIC_DRAW
+				, (NULL==_data) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 				) );
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 		}
@@ -817,6 +818,7 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		uint32_t m_size;
 		VaoCacheRef m_vcref;
+		uint8_t m_flags;
 	};
 
 	struct VertexBufferGL
@@ -832,7 +834,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glBufferData(GL_ARRAY_BUFFER
 				, _size
 				, _data
-				, (NULL==_data)?GL_DYNAMIC_DRAW:GL_STATIC_DRAW
+				, (NULL==_data) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 				) );
 			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 		}
