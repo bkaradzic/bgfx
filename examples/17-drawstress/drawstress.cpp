@@ -74,6 +74,7 @@ uint32_t reset = BGFX_RESET_NONE;
 bool autoAdjust = true;
 int32_t scrollArea = 0;
 int32_t dim = 16;
+int32_t maxDim = 40;
 uint32_t transform = 0;
 
 entry::MouseState mouseState;
@@ -118,7 +119,7 @@ BX_NO_INLINE bool mainloop()
 			{
 				if (deltaTimeAvgNs < highwm)
 				{
-					dim = bx::uint32_min(dim + 2, 40);
+					dim = bx::uint32_min(dim + 2, maxDim);
 				}
 				else if (deltaTimeAvgNs > lowwm)
 				{
@@ -159,7 +160,7 @@ BX_NO_INLINE bool mainloop()
 			autoAdjust ^= true;
 		}
 
-		imguiSlider("Dim", dim, 5, 40);
+		imguiSlider("Dim", dim, 5, maxDim);
 		imguiLabel("Draw calls: %d", dim*dim*dim);
 		imguiLabel("Avg Delta Time (1 second) [ms]: %0.4f", deltaTimeAvgNs/1000.0f);
 
@@ -254,6 +255,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 {
 	bgfx::init();
 	bgfx::reset(width, height, reset);
+
+	const bgfx::Caps* caps = bgfx::getCaps();
+	maxDim = (int32_t)powf(caps->maxDrawCalls, 1.0/3.0);
 
 	// Enable debug text.
 	bgfx::setDebug(debug);
