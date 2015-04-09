@@ -4073,7 +4073,7 @@ namespace bgfx { namespace gl
 					}
 					else
 					{
-						writeString(&writer, "#version 140\n");
+						writeStringf(&writer,"#version %d0\n",BGFX_CONFIG_RENDERER_OPENGL);
 					}
 
 					if (m_type == GL_FRAGMENT_SHADER)
