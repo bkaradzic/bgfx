@@ -25,6 +25,7 @@ Supported platforms:
 
  * Android (14+, ARM, x86, MIPS)
  * asm.js/Emscripten (1.25.0)
+ * FreeBSD
  * iOS
  * Linux
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
