@@ -33,7 +33,7 @@ namespace bgfx
 	{
 		g_bgfxEaglLayer = _layer;
 	}
-#elif BX_PLATFORM_LINUX
+#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
 	void*    g_bgfxX11Display;
 	uint32_t g_bgfxX11Window;
 	void*    g_bgfxGLX;
