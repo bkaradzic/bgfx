@@ -18,7 +18,7 @@ else
 OS=windows
 endif
 
-$(info $(OS))
+# $(info $(OS))
 
 GENIE=../bx/tools/bin/$(OS)/genie
 
