@@ -257,7 +257,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::reset(width, height, reset);
 
 	const bgfx::Caps* caps = bgfx::getCaps();
-	maxDim = (int32_t)powf(caps->maxDrawCalls, 1.0/3.0);
+	maxDim = (int32_t)powf(float(caps->maxDrawCalls), 1.0f/3.0f);
 
 	// Enable debug text.
 	bgfx::setDebug(debug);
