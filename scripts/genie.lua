@@ -134,7 +134,7 @@ function exampleProject(_name)
 			"glfw3"
 		}
 
-		configuration { "linux" }
+		configuration { "linux or freebsd" }
 			links {
 				"Xrandr",
 				"Xinerama",
@@ -274,7 +274,7 @@ function exampleProject(_name)
 		kind "ConsoleApp"
 		targetextension ".bc"
 
-	configuration { "linux-*" }
+	configuration { "linux-* or freebsd" }
 		links {
 			"X11",
 			"GL",
