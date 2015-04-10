@@ -686,6 +686,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, NULL
 				, &m_swapChain
 				);
+			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+			DX_CHECK(m_factory->MakeWindowAssociation(g_bgfxHwnd, 0
+				| DXGI_MWA_NO_WINDOW_CHANGES
+				| DXGI_MWA_NO_ALT_ENTER
+				) );
 #else
 			hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
@@ -708,13 +714,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, &m_scd
 				, &m_swapChain
 				);
-#endif // BX_PLATFORM_WINRT
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
-
-			DX_CHECK(m_factory->MakeWindowAssociation(g_bgfxHwnd, 0
-				| DXGI_MWA_NO_WINDOW_CHANGES
-				| DXGI_MWA_NO_ALT_ENTER
-				) );
+#endif // BX_PLATFORM_WINRT
 
 			m_numWindows = 1;
 
