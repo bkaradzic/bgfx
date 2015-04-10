@@ -189,12 +189,14 @@ Shadow volumes.
 #### 60Hz
 
 Draw stress is CPU stress test to show what is the maximimum number of draw
-calls while maintaining 60Hz frame rate. bgfx currently has limit of maximum 64K
-draw calls per frame.
+calls while maintaining 60Hz frame rate. bgfx currently has default limit of 64K
+draw calls per frame. You can increase this limit by changing
+`BGFX_CONFIG_MAX_DRAW_CALLS`.
 
 | CPU          | Renderer     | GPU       |Compiler| Arch | OS         | Dim | Calls |
 |:-------------|:-------------|:----------|:------:|:----:|:----------:|----:|------:|
-| i7-4790K 4.0 | DX9          | GTX970    | VS2013 | x64  | Windows10  |  40 | 64000+|
+| i7-4790K 4.0 | GL2.1        | GTX970    | VS2015 | x64  | Windows10  |  47 |103823 |
+| i7-4790K 4.0 | DX9          | GTX970    | VS2013 | x64  | Windows10  |  40 | 64000 |
 | i5-3570 3.8  | NV 331.49    | GTX560Ti  | GCC    | x64  | Linux      |  40 | 64000+|
 | i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x64  | Windows7   |  38 | 54872 |
 | i7-920 2.66  | GL2.1        | GTX650Ti  | VS2008 | x86  | Windows7   |  38 | 54872 |
