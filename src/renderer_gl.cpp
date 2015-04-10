@@ -2861,7 +2861,7 @@ namespace bgfx { namespace gl
 		if (!cached)
 		{
 			GLint linked = 0;
-			if (0 == _vsh.m_id)
+			if (0 != _vsh.m_id)
 			{
 				GL_CHECK(glAttachShader(m_id, _vsh.m_id) );
 
