@@ -221,7 +221,7 @@ namespace bgfx
 	extern ::ANativeWindow* g_bgfxAndroidWindow;
 #elif BX_PLATFORM_IOS
 	extern void* g_bgfxEaglLayer;
-#elif BX_PLATFORM_LINUX
+#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
 	extern void*    g_bgfxX11Display;
 	extern uint32_t g_bgfxX11Window;
 	extern void*    g_bgfxGLX;
