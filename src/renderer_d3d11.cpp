@@ -2932,15 +2932,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		D3D11_BOX box;
-		box.left = _rect.m_x;
-		box.top = _rect.m_y;
-		box.right = box.left + _rect.m_width;
+		box.left   = _rect.m_x;
+		box.top    = _rect.m_y;
+		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top + _rect.m_height;
-		box.front = _z;
-		box.back = box.front + _depth;
+		box.front  = _z;
+		box.back   = box.front + _depth;
 
 		const uint32_t subres = _mip + (_side * m_numMips);
-		const uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t bpp    = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 
