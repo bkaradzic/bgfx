@@ -215,12 +215,6 @@ namespace stl
 #	define BGFX_RENDERER_OPENGL_NAME "OpenGL"
 #endif //
 
-#if BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
-typedef uint16_t DrawCountType;
-#else
-typedef uint32_t DrawCountType;
-#endif
-
 namespace bgfx
 {
 #if BX_PLATFORM_ANDROID
@@ -239,6 +233,12 @@ namespace bgfx
 #elif BX_PLATFORM_WINRT
 	extern ::IUnknown* g_bgfxCoreWindow;
 #endif // BX_PLATFORM_*
+
+#if BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
+	typedef uint16_t RenderItemCount;
+#else
+	typedef uint32_t RenderItemCount;
+#endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
 	struct Clear
 	{
@@ -1623,7 +1623,7 @@ namespace bgfx
 		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
 
 		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
-		DrawCountType m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
+		RenderItemCount m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderDraw m_draw;
 		RenderCompute m_compute;
@@ -1633,9 +1633,9 @@ namespace bgfx
 
 		ConstantBuffer* m_constantBuffer;
 
-		DrawCountType m_num;
-		DrawCountType m_numRenderItems;
-		DrawCountType m_numDropped;
+		RenderItemCount m_num;
+		RenderItemCount m_numRenderItems;
+		RenderItemCount m_numDropped;
 
 		MatrixCache m_matrixCache;
 		RectCache m_rectCache;
@@ -3430,7 +3430,7 @@ namespace bgfx
 		Frame* m_submit;
 
 		uint64_t m_tempKeys[BGFX_CONFIG_MAX_DRAW_CALLS];
-		DrawCountType m_tempValues[BGFX_CONFIG_MAX_DRAW_CALLS];
+		RenderItemCount m_tempValues[BGFX_CONFIG_MAX_DRAW_CALLS];
 
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 
