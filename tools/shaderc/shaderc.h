@@ -35,13 +35,9 @@
 #define BX_WARN  _BX_WARN
 #define BX_CHECK _BX_CHECK
 
-#ifndef SHADERC_CONFIG_DIRECT3D9
-#	define SHADERC_CONFIG_DIRECT3D9 BX_PLATFORM_WINDOWS
-#endif // SHADERC_CONFIG_DIRECT3D9
-
-#ifndef SHADERC_CONFIG_DIRECT3D11
-#	define SHADERC_CONFIG_DIRECT3D11 BX_PLATFORM_WINDOWS
-#endif // SHADERC_CONFIG_DIRECT3D11
+#ifndef SHADERC_CONFIG_HLSL
+#	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
+#endif // SHADERC_CONFIG_HLSL
 
 extern bool g_verbose;
 
@@ -106,8 +102,7 @@ void strreplace(char* _str, const char* _find, const char* _replace);
 int32_t writef(bx::WriterI* _writer, const char* _format, ...);
 void writeFile(const char* _filePath, const void* _data, int32_t _size);
 
-bool compileHLSLShaderDx9(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer);
-bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer);
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer);
 bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer);
 
 #endif // SHADERC_H_HEADER_GUARD
