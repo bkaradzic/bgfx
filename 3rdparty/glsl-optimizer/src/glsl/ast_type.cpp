@@ -349,14 +349,14 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
       node = new(mem_ctx) ast_gs_input_layout(*loc, q.prim_type);
    } else if (create_cs_ast) {
       /* Infer a local_size of 1 for every unspecified dimension */
-      unsigned local_size[3];
+      unsigned layout_local_size[3];
       for (int i = 0; i < 3; i++) {
          if (q.flags.q.local_size & (1 << i))
-            local_size[i] = q.local_size[i];
+            layout_local_size[i] = q.local_size[i];
          else
-            local_size[i] = 1;
+            layout_local_size[i] = 1;
       }
-      node = new(mem_ctx) ast_cs_input_layout(*loc, local_size);
+      node = new(mem_ctx) ast_cs_input_layout(*loc, layout_local_size);
    }
 
    return true;

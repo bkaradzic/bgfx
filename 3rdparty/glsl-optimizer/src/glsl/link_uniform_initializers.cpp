@@ -278,9 +278,9 @@ link_set_uniform_initializers(struct gl_shader_program *prog,
                 * type->is_array(), but it will fail is_interface_instance().
                 */
                if (var->is_interface_instance() && var->type->is_array()) {
-                  for (unsigned i = 0; i < var->type->length; i++) {
+                  for (unsigned j = 0; j < var->type->length; j++) {
                      const char *name =
-                        ralloc_asprintf(mem_ctx, "%s[%u]", iface_type->name, i);
+                        ralloc_asprintf(mem_ctx, "%s[%u]", iface_type->name, j);
 
                      /* Section 4.4.3 (Uniform Block Layout Qualifiers) of the
                       * GLSL 4.20 spec says:
@@ -292,7 +292,7 @@ link_set_uniform_initializers(struct gl_shader_program *prog,
                       *     uniform block binding point."
                       */
                      linker::set_block_binding(prog, name,
-                                               var->data.binding + i);
+                                               var->data.binding + j);
                   }
                } else {
                   linker::set_block_binding(prog, iface_type->name,

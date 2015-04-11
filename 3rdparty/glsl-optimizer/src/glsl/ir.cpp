@@ -86,18 +86,18 @@ update_rhs_swizzle(ir_swizzle_mask &m, unsigned from, unsigned to)
 }
 
 void
-ir_assignment::set_lhs(ir_rvalue *lhs)
+ir_assignment::set_lhs(ir_rvalue *_lhs)
 {
    void *mem_ctx = this;
    bool swizzled = false;
 
-   while (lhs != NULL) {
-      ir_swizzle *swiz = lhs->as_swizzle();
+   while (_lhs != NULL) {
+      ir_swizzle *swiz = _lhs->as_swizzle();
 
       if (swiz == NULL)
 	 break;
 
-      unsigned write_mask = 0;
+      unsigned new_write_mask = 0;
       ir_swizzle_mask rhs_swiz = { 0, 0, 0, 0, 0, 0 };
 
       for (unsigned i = 0; i < swiz->mask.num_components; i++) {
@@ -111,12 +111,12 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
 	 default: assert(!"Should not get here.");
 	 }
 
-	 write_mask |= (((this->write_mask >> i) & 1) << c);
+	 new_write_mask |= (((this->write_mask >> i) & 1) << c);
 	 update_rhs_swizzle(rhs_swiz, i, c);
       }
 
-      this->write_mask = write_mask;
-      lhs = swiz->val;
+      this->write_mask = new_write_mask;
+      _lhs = swiz->val;
 
       this->rhs = new(mem_ctx) ir_swizzle(this->rhs, rhs_swiz);
       swizzled = true;
@@ -135,9 +135,9 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
       this->rhs = new(mem_ctx) ir_swizzle(this->rhs, rhs_swiz);
    }
 
-   assert((lhs == NULL) || lhs->as_dereference());
+   assert((_lhs == NULL) || _lhs->as_dereference());
 
-   this->lhs = (ir_dereference *) lhs;
+   this->lhs = (ir_dereference *)_lhs;
 }
 
 ir_variable *
@@ -482,7 +482,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
 
    if (op <= ir_last_binop)
       return 2;
-	
+
    if (op <= ir_last_triop)
       return 3;
 
@@ -734,10 +734,10 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
    if (type->is_array()) {
       this->array_elements = ralloc_array(this, ir_constant *, type->length);
       unsigned i = 0;
-      foreach_in_list(ir_constant, value, value_list) {
-	 assert(value->as_constant() != NULL);
+      foreach_in_list(ir_constant, constant_value, value_list) {
+	 assert(constant_value->as_constant() != NULL);
 
-	 this->array_elements[i++] = value;
+	 this->array_elements[i++] = constant_value;
       }
       return;
    }
@@ -760,34 +760,34 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
       this->value.u[i] = 0;
    }
 
-   ir_constant *value = (ir_constant *) (value_list->head);
+   ir_constant *constant_value = (ir_constant *) (value_list->head);
 
    /* Constructors with exactly one scalar argument are special for vectors
     * and matrices.  For vectors, the scalar value is replicated to fill all
     * the components.  For matrices, the scalar fills the components of the
     * diagonal while the rest is filled with 0.
     */
-   if (value->type->is_scalar() && value->next->is_tail_sentinel()) {
+   if (constant_value->type->is_scalar() && constant_value->next->is_tail_sentinel()) {
       if (type->is_matrix()) {
 	 /* Matrix - fill diagonal (rest is already set to 0) */
 	 assert(type->base_type == GLSL_TYPE_FLOAT);
 	 for (unsigned i = 0; i < type->matrix_columns; i++)
-	    this->value.f[i * type->vector_elements + i] = value->value.f[0];
+	    this->value.f[i * type->vector_elements + i] = constant_value->value.f[0];
       } else {
 	 /* Vector or scalar - fill all components */
 	 switch (type->base_type) {
 	 case GLSL_TYPE_UINT:
 	 case GLSL_TYPE_INT:
 	    for (unsigned i = 0; i < type->components(); i++)
-	       this->value.u[i] = value->value.u[0];
+	       this->value.u[i] = constant_value->value.u[0];
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    for (unsigned i = 0; i < type->components(); i++)
-	       this->value.f[i] = value->value.f[0];
+	       this->value.f[i] = constant_value->value.f[0];
 	    break;
 	 case GLSL_TYPE_BOOL:
 	    for (unsigned i = 0; i < type->components(); i++)
-	       this->value.b[i] = value->value.b[0];
+	       this->value.b[i] = constant_value->value.b[0];
 	    break;
 	 default:
 	    assert(!"Should not get here.");
@@ -797,21 +797,21 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
       return;
    }
 
-   if (type->is_matrix() && value->type->is_matrix()) {
-      assert(value->next->is_tail_sentinel());
+   if (type->is_matrix() && constant_value->type->is_matrix()) {
+      assert(constant_value->next->is_tail_sentinel());
 
       /* From section 5.4.2 of the GLSL 1.20 spec:
        * "If a matrix is constructed from a matrix, then each component
        *  (column i, row j) in the result that has a corresponding component
        *  (column i, row j) in the argument will be initialized from there."
        */
-      unsigned cols = MIN2(type->matrix_columns, value->type->matrix_columns);
-      unsigned rows = MIN2(type->vector_elements, value->type->vector_elements);
+      unsigned cols = MIN2(type->matrix_columns, constant_value->type->matrix_columns);
+      unsigned rows = MIN2(type->vector_elements, constant_value->type->vector_elements);
       for (unsigned i = 0; i < cols; i++) {
 	 for (unsigned j = 0; j < rows; j++) {
-	    const unsigned src = i * value->type->vector_elements + j;
+	    const unsigned src = i * constant_value->type->vector_elements + j;
 	    const unsigned dst = i * type->vector_elements + j;
-	    this->value.f[dst] = value->value.f[src];
+	    this->value.f[dst] = constant_value->value.f[src];
 	 }
       }
 
@@ -826,22 +826,22 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
     * component of the constant being constructed.
     */
    for (unsigned i = 0; i < type->components(); /* empty */) {
-      assert(value->as_constant() != NULL);
-      assert(!value->is_tail_sentinel());
+      assert(constant_value->as_constant() != NULL);
+      assert(!constant_value->is_tail_sentinel());
 
-      for (unsigned j = 0; j < value->type->components(); j++) {
+      for (unsigned j = 0; j < constant_value->type->components(); j++) {
 	 switch (type->base_type) {
 	 case GLSL_TYPE_UINT:
-	    this->value.u[i] = value->get_uint_component(j);
+	    this->value.u[i] = constant_value->get_uint_component(j);
 	    break;
 	 case GLSL_TYPE_INT:
-	    this->value.i[i] = value->get_int_component(j);
+	    this->value.i[i] = constant_value->get_int_component(j);
 	    break;
 	 case GLSL_TYPE_FLOAT:
-	    this->value.f[i] = value->get_float_component(j);
+	    this->value.f[i] = constant_value->get_float_component(j);
 	    break;
 	 case GLSL_TYPE_BOOL:
-	    this->value.b[i] = value->get_bool_component(j);
+	    this->value.b[i] = constant_value->get_bool_component(j);
 	    break;
 	 default:
 	    /* FINISHME: What to do?  Exceptions are not the answer.
@@ -854,7 +854,7 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 	    break;
       }
 
-      value = (ir_constant *) value->next;
+      constant_value = (ir_constant *)constant_value->next;
    }
 }
 
@@ -1388,24 +1388,24 @@ ir_texture::get_opcode(const char *str)
 
 
 void
-ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
+ir_texture::set_sampler(ir_dereference *_sampler, const glsl_type *_type)
 {
-   assert(sampler != NULL);
-   assert(type != NULL);
-   this->sampler = sampler;
-   this->type = type;
+   assert(_sampler != NULL);
+   assert(_type != NULL);
+   this->sampler = _sampler;
+   this->type = _type;
 
    if (this->op == ir_txs || this->op == ir_query_levels) {
-      assert(type->base_type == GLSL_TYPE_INT);
+      assert(_type->base_type == GLSL_TYPE_INT);
    } else if (this->op == ir_lod) {
-      assert(type->vector_elements == 2);
-      assert(type->base_type == GLSL_TYPE_FLOAT);
+      assert(_type->vector_elements == 2);
+      assert(_type->base_type == GLSL_TYPE_FLOAT);
    } else {
-      assert(sampler->type->sampler_type == (int) type->base_type);
-      if (sampler->type->sampler_shadow)
-	 assert(type->vector_elements == 4 || type->vector_elements == 1);
+      assert(_sampler->type->sampler_type == (int)_type->base_type);
+      if (_sampler->type->sampler_shadow)
+	 assert(_type->vector_elements == 4 || _type->vector_elements == 1);
       else
-	 assert(type->vector_elements == 4);
+	 assert(_type->vector_elements == 4);
    }
 }
 

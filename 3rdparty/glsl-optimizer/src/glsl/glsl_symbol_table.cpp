@@ -170,7 +170,7 @@ bool glsl_symbol_table::add_interface(const char *name, const glsl_type *i,
    assert(i->is_interface());
    symbol_table_entry *entry = get_entry(name);
    if (entry == NULL) {
-      symbol_table_entry *entry =
+      entry =
          new(mem_ctx) symbol_table_entry(i, mode);
       bool add_interface_symbol_result =
          _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;

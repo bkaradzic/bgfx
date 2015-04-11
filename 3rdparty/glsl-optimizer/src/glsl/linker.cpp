@@ -1089,7 +1089,7 @@ move_non_declarations(exec_list *instructions, exec_node *last,
    foreach_in_list_safe(ir_instruction, inst, instructions) {
       if (inst->as_function())
 	 continue;
-	   
+
       if (inst->ir_type == ir_type_precision)
          continue;
       if (inst->ir_type == ir_type_typedecl)
@@ -2311,13 +2311,13 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 		      prog->NumUniformBlocks,
 		      ctx->Const.MaxCombinedUniformBlocks);
       } else {
-	 for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+	 for (unsigned j = 0; j < MESA_SHADER_STAGES; j++) {
             const unsigned max_uniform_blocks =
-               ctx->Const.Program[i].MaxUniformBlocks;
-	    if (blocks[i] > max_uniform_blocks) {
+               ctx->Const.Program[j].MaxUniformBlocks;
+	    if (blocks[j] > max_uniform_blocks) {
 	       linker_error(prog, "Too many %s uniform blocks (%d/%d)",
-			    _mesa_shader_stage_to_string(i),
-			    blocks[i],
+			    _mesa_shader_stage_to_string(j),
+			    blocks[j],
 			    max_uniform_blocks);
 	       break;
 	    }
@@ -2531,7 +2531,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       }
 
       prog->ARB_fragment_coord_conventions_enable |=
-         prog->Shaders[i]->ARB_fragment_coord_conventions_enable;
+         (GLboolean)prog->Shaders[i]->ARB_fragment_coord_conventions_enable;
 
       gl_shader_stage shader_type = prog->Shaders[i]->Stage;
       shader_list[shader_type][num_shaders[shader_type]] = prog->Shaders[i];

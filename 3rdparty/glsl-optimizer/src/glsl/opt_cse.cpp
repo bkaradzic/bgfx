@@ -273,16 +273,16 @@ cse_visitor::try_cse(ir_rvalue *rvalue)
       }
 
       if (!entry->var) {
-         ir_instruction *base_ir = entry->base_ir;
+         ir_instruction *base_ir_inst = entry->base_ir;
 
          ir_variable *var = new(rvalue) ir_variable(rvalue->type,
                                                     "cse",
                                                     ir_var_temporary, rvalue->get_precision());
 
          /* Write the previous expression result into a new variable. */
-         base_ir->insert_before(var);
+         base_ir_inst->insert_before(var);
          ir_assignment *assignment = assign(var, *entry->val);
-         base_ir->insert_before(assignment);
+         base_ir_inst->insert_before(assignment);
 
          /* Replace the expression in the original tree with a deref of the
           * variable, but keep tracking the expression for further reuse.

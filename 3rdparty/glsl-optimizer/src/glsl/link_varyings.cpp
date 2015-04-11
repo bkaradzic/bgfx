@@ -383,7 +383,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       /* Array variable */
       const unsigned matrix_cols =
          this->matched_candidate->type->fields.array->matrix_columns;
-      const unsigned vector_elements =
+      const unsigned vector_elems =
          this->matched_candidate->type->fields.array->vector_elements;
       unsigned actual_array_size = this->is_clip_distance_mesa ?
          prog->LastClipDistanceArraySize :
@@ -399,13 +399,13 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
             return false;
          }
          unsigned array_elem_size = this->is_clip_distance_mesa ?
-            1 : vector_elements * matrix_cols;
+            1 : vector_elems * matrix_cols;
          fine_location += array_elem_size * this->array_subscript;
          this->size = 1;
       } else {
          this->size = actual_array_size;
       }
-      this->vector_elements = vector_elements;
+      this->vector_elements = vector_elems;
       this->matrix_columns = matrix_cols;
       if (this->is_clip_distance_mesa)
          this->type = GL_FLOAT;
@@ -498,14 +498,14 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
       return false;
    }
 
-   unsigned location = this->location;
-   unsigned location_frac = this->location_frac;
+   unsigned loc = this->location;
+   unsigned loc_frac = this->location_frac;
    unsigned num_components = this->num_components();
    while (num_components > 0) {
-      unsigned output_size = MIN2(num_components, 4 - location_frac);
+      unsigned output_size = MIN2(num_components, 4 - loc_frac);
       assert(info->NumOutputs < max_outputs);
-      info->Outputs[info->NumOutputs].ComponentOffset = location_frac;
-      info->Outputs[info->NumOutputs].OutputRegister = location;
+      info->Outputs[info->NumOutputs].ComponentOffset = loc_frac;
+      info->Outputs[info->NumOutputs].OutputRegister = loc;
       info->Outputs[info->NumOutputs].NumComponents = output_size;
       info->Outputs[info->NumOutputs].StreamId = stream_id;
       info->Outputs[info->NumOutputs].OutputBuffer = buffer;
@@ -513,8 +513,8 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
       ++info->NumOutputs;
       info->BufferStride[buffer] += output_size;
       num_components -= output_size;
-      location++;
-      location_frac = 0;
+	  loc++;
+	  loc_frac = 0;
    }
 
    info->Varyings[info->NumVarying].Name = ralloc_strdup(prog, this->orig_name);

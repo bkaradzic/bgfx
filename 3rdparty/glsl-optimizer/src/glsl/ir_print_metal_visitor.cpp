@@ -537,7 +537,7 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 {
 	const char *const cent = (ir->data.centroid) ? "centroid " : "";
 	const char *const inv = (ir->data.invariant) ? "invariant " : "";
-	const char *const mode[ir_var_mode_count] = { "", "  ", "  ", "  ", "  ", "in ", "out ", "inout ", "", "", "" };
+	const char *const mode_table[ir_var_mode_count] = { "", "  ", "  ", "  ", "  ", "in ", "out ", "inout ", "", "", "" };
 
 	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 
@@ -575,7 +575,7 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	}
 
 	buffer.asprintf_append ("%s%s%s%s",
-							cent, inv, interp[ir->data.interpolation], mode[ir->data.mode]);
+							cent, inv, interp[ir->data.interpolation], mode_table[ir->data.mode]);
 	print_type(buffer, ir, ir->type, false);
 	buffer.asprintf_append (" ");
 	print_var_name (ir);

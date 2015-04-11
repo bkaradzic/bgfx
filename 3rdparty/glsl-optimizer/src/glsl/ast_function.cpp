@@ -94,11 +94,11 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, glsl
 {
 	if (sig->precision != glsl_precision_undefined)
 		return sig->precision;
-	
+
 	// if return type is boolean, treat as lowp
 	if (sig->return_type->base_type == GLSL_TYPE_BOOL)
 		return glsl_precision_low;
-	
+
 	// if it's a built-in texture function, precision comes from sampler (1st param) precision
 	if (sig->is_builtin())
 	{
@@ -107,13 +107,13 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, glsl
 		if (strncmp (sig->function_name(), "shadow", 6) == 0)
 			return first_prec;
 	}
-	
+
 	// other built-in: max precision of parameters
 	if (sig->is_builtin())
 		return max_prec;
-	
+
 	// otherwise: undefined
-	return glsl_precision_undefined;	
+	return glsl_precision_undefined;
 }
 
 
@@ -122,7 +122,7 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, exec
 	glsl_precision prec_params_max = glsl_precision_undefined;
 	glsl_precision prec_params_first = glsl_precision_undefined;
 	int params_counter = 0;
-	
+
 	foreach_two_lists(formal_node, &sig->parameters,
 					  actual_node, actual_parameters) {
 		ir_rvalue *actual = (ir_rvalue *) actual_node;
@@ -135,10 +135,10 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, exec
 		prec_params_max = higher_precision (prec_params_max, param_prec);
 		if (params_counter == 0)
 			prec_params_first = param_prec;
-		
+
 		++params_counter;
 	}
-	
+
 	return precision_for_call (sig, prec_params_max, prec_params_first);
 }
 
@@ -1264,8 +1264,8 @@ emit_inline_matrix_constructor(const glsl_type *type, int ast_precision,
 	 ir_constant *const col_idx = new(ctx) ir_constant(i);
 	 ir_rvalue *const col_ref = new(ctx) ir_dereference_array(var, col_idx);
 
-	 ir_rvalue *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
-	 ir_rvalue *const rhs = new(ctx) ir_swizzle(rhs_ref, rhs_swiz[i],
+	 ir_rvalue *const rhs_ref_value = new(ctx) ir_dereference_variable(rhs_var);
+	 ir_rvalue *const rhs = new(ctx) ir_swizzle(rhs_ref_value, rhs_swiz[i],
 						    type->vector_elements);
 
 	 inst = new(ctx) ir_assignment(col_ref, rhs, NULL);
@@ -1276,8 +1276,8 @@ emit_inline_matrix_constructor(const glsl_type *type, int ast_precision,
 	 ir_constant *const col_idx = new(ctx) ir_constant(i);
 	 ir_rvalue *const col_ref = new(ctx) ir_dereference_array(var, col_idx);
 
-	 ir_rvalue *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
-	 ir_rvalue *const rhs = new(ctx) ir_swizzle(rhs_ref, 1, 1, 1, 1,
+	 ir_rvalue *const rhs_ref_value = new(ctx) ir_dereference_variable(rhs_var);
+	 ir_rvalue *const rhs = new(ctx) ir_swizzle(rhs_ref_value, 1, 1, 1, 1,
 						    type->vector_elements);
 
 	 inst = new(ctx) ir_assignment(col_ref, rhs, NULL);
@@ -1379,9 +1379,9 @@ emit_inline_matrix_constructor(const glsl_type *type, int ast_precision,
 	    rhs = rhs_col;
 	 }
 
-	 ir_instruction *inst =
+	 ir_instruction *inst2 =
 	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
-	 instructions->push_tail(inst);
+	 instructions->push_tail(inst2);
       }
    } else {
       const unsigned cols = type->matrix_columns;
@@ -1418,7 +1418,7 @@ emit_inline_matrix_constructor(const glsl_type *type, int ast_precision,
 
 	    rhs_var_ref = new(ctx) ir_dereference_variable(rhs_var);
 
-	    ir_instruction *inst = assign_to_matrix_column(var, col_idx,
+	    inst = assign_to_matrix_column(var, col_idx,
 							   row_idx,
 							   rhs_var_ref, 0,
 							   count, ctx);
@@ -1442,7 +1442,7 @@ emit_inline_matrix_constructor(const glsl_type *type, int ast_precision,
 
 	    rhs_var_ref = new(ctx) ir_dereference_variable(rhs_var);
 
-	    ir_instruction *inst = assign_to_matrix_column(var, col_idx,
+	    inst = assign_to_matrix_column(var, col_idx,
 							   row_idx,
 							   rhs_var_ref,
 							   rhs_base,
@@ -1823,7 +1823,7 @@ ast_aggregate_initializer::hir(exec_list *instructions,
       _mesa_glsl_error(&loc, state, "type of C-style initializer unknown");
       return ir_rvalue::error_value(ctx);
    }
-   const glsl_type *const constructor_type = this->constructor_type;
+   const glsl_type *const ctype = this->constructor_type;
 
    if (!state->ARB_shading_language_420pack_enable) {
       _mesa_glsl_error(&loc, state, "C-style initialization requires the "
@@ -1831,16 +1831,16 @@ ast_aggregate_initializer::hir(exec_list *instructions,
       return ir_rvalue::error_value(ctx);
    }
 
-   if (constructor_type->is_array()) {
-      return process_array_constructor(instructions, constructor_type, &loc,
+   if (ctype->is_array()) {
+      return process_array_constructor(instructions, ctype, &loc,
                                        &this->expressions, state);
    }
 
-   if (constructor_type->is_record()) {
-      return process_record_constructor(instructions, constructor_type, &loc,
+   if (ctype->is_record()) {
+      return process_record_constructor(instructions, ctype, &loc,
                                         &this->expressions, state);
    }
 
-   return process_vec_mat_constructor(instructions, constructor_type, &loc,
+   return process_vec_mat_constructor(instructions, ctype, &loc,
                                       &this->expressions, state);
 }
