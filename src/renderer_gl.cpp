@@ -3320,7 +3320,6 @@ namespace bgfx { namespace gl
 			m_fmt  = tfi.m_fmt;
 			m_type = tfi.m_type;
 
-			const bool compressed = isCompressed(TextureFormat::Enum(_format) );
 			const bool convert = !tfi.m_supported;
 
 			if (convert)
