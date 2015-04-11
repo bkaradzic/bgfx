@@ -922,6 +922,8 @@ namespace bgfx
 		TextureFormat::ETC2A1,
 		TextureFormat::PTC14,
 		TextureFormat::PTC14A,
+		TextureFormat::BGRA8, // GL doesn't support BGRA8 without extensions.
+		TextureFormat::RGBA8, // D3D9 doesn't support RGBA8
 	};
 
 	void Context::init(RendererType::Enum _type)
