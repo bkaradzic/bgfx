@@ -155,7 +155,7 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 	// parse the shader blob for the constant table
 	const size_t codeSize = _code->GetBufferSize();
 	const uint32_t* ptr = (const uint32_t*)_code->GetBufferPointer();
-	const uint32_t* end = (const uint32_t*)((const uint8_t*)ptr + codeSize);
+	const uint32_t* end = (const uint32_t*)( (const uint8_t*)ptr + codeSize);
 	const CTHeader* header = NULL;
 
 	ptr++;	// first byte is shader type / version; skip it since we already know
@@ -163,8 +163,10 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 	while (ptr < end && *ptr != D3DSIO_END)
 	{
 		uint32_t cur = *ptr++;
-		if ((cur & D3DSI_OPCODE_MASK) != D3DSIO_COMMENT)
+		if ( (cur & D3DSI_OPCODE_MASK) != D3DSIO_COMMENT)
+		{
 			continue;
+		}
 
 		// try to find CTAB comment block
 		uint32_t commentSize = (cur & D3DSI_COMMENTSIZE_MASK) >> 16;
@@ -174,7 +176,7 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 			// found the constant table data
 			header = (const CTHeader*)(ptr + 1);
 			uint32_t tableSize = (commentSize - 1) * 4;
-			if (tableSize < sizeof(CTHeader) || header->Size != sizeof(CTHeader))
+			if (tableSize < sizeof(CTHeader) || header->Size != sizeof(CTHeader) )
 			{
 				fprintf(stderr, "Error: Invalid constant table data\n");
 				return false;
@@ -200,7 +202,7 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 	BX_TRACE("#   cl ty RxC   S  By Name");
 
 	const CTInfo* ctInfoArray = (const CTInfo*)(headerBytePtr + header->ConstantInfo);
-	for (uint32_t ii = 0; ii < header->Constants; ii++)
+	for (uint32_t ii = 0; ii < header->Constants; ++ii)
 	{
 		const CTInfo& ctInfo = ctInfoArray[ii];
 		const CTType& ctType = *(const CTType*)(headerBytePtr + ctInfo.TypeInfo);
@@ -249,7 +251,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 		, IID_ID3D11ShaderReflection
 		, (void**)&reflect
 		);
-	if (FAILED(hr))
+	if (FAILED(hr) )
 	{
 		fprintf(stderr, "Error: 0x%08x\n", (uint32_t)hr);
 		return false;
@@ -257,7 +259,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 
 	D3D11_SHADER_DESC desc;
 	hr = reflect->GetDesc(&desc);
-	if (FAILED(hr))
+	if (FAILED(hr) )
 	{
 		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x\n", (uint32_t)hr);
 		return false;
@@ -309,7 +311,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 
 		_size = (uint16_t)bufferDesc.Size;
 
-		if (SUCCEEDED(hr))
+		if (SUCCEEDED(hr) )
 		{
 			BX_TRACE("%s, %d, vars %d, size %d"
 				, bufferDesc.Name
@@ -324,16 +326,16 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 				ID3D11ShaderReflectionType* type = var->GetType();
 				D3D11_SHADER_VARIABLE_DESC varDesc;
 				hr = var->GetDesc(&varDesc);
-				if (SUCCEEDED(hr))
+				if (SUCCEEDED(hr) )
 				{
 					D3D11_SHADER_TYPE_DESC constDesc;
 					hr = type->GetDesc(&constDesc);
-					if (SUCCEEDED(hr))
+					if (SUCCEEDED(hr) )
 					{
 						UniformType::Enum uniformType = findUniformType(constDesc);
 
 						if (UniformType::Count != uniformType
-							&& 0 != (varDesc.uFlags & D3D_SVF_USED))
+						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 						{
 							Uniform un;
 							un.name = varDesc.Name;
@@ -367,7 +369,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
 
 		hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
-		if (SUCCEEDED(hr))
+		if (SUCCEEDED(hr) )
 		{
 			//			if (bindDesc.Type == D3D_SIT_SAMPLER)
 			{
@@ -488,12 +490,12 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 
 	if (_d3d == 9)
 	{
-		if (!getReflectionDataDx9(code, uniforms))
+		if (!getReflectionDataDx9(code, uniforms) )
 			return false;
 	}
 	else
 	{
-		if (!getReflectionDataDx11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size))
+		if (!getReflectionDataDx11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size) )
 			return false;
 	}
 
@@ -547,12 +549,12 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 	if (_d3d > 9)
 	{
 		bx::write(_writer, numAttrs);
-		bx::write(_writer, attrs, numAttrs*sizeof(uint16_t));
+		bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );
 
 		bx::write(_writer, size);
 	}
 
-	if (_cmdLine.hasArg('\0', "disasm"))
+	if (_cmdLine.hasArg('\0', "disasm") )
 	{
 		ID3DBlob* disasm;
 		D3DDisassemble(code->GetBufferPointer()
@@ -584,9 +586,9 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 
 #else
 
-bool compileHLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer)
 {
-	BX_UNUSED(_cmdLine, _code, _writer);
+	BX_UNUSED(_cmdLine, _d3d, _code, _writer);
 	fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
 	return false;
 }
