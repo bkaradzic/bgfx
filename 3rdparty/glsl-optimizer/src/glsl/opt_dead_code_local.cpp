@@ -266,8 +266,8 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
    }
 
    /* Add this instruction to the assignment list available to be removed. */
-   assignment_entry *entry = new(ctx) assignment_entry(var, ir);
-   assignments->push_tail(entry);
+   assignment_entry *ass_entry = new(ctx) assignment_entry(var, ir);
+   assignments->push_tail(ass_entry);
 
    if (debug) {
       printf("add %s\n", var->name);

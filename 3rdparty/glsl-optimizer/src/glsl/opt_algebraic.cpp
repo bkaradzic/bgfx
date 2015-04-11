@@ -129,7 +129,7 @@ is_less_than_one(ir_constant *ir)
       return false;
 
    unsigned component = 0;
-   for (int c = 0; c < ir->type->vector_elements; c++) {
+   for (unsigned c = 0; c < ir->type->vector_elements; c++) {
       if (ir->get_float_component(c) < 1.0f)
          component++;
    }
@@ -144,7 +144,7 @@ is_greater_than_zero(ir_constant *ir)
       return false;
 
    unsigned component = 0;
-   for (int c = 0; c < ir->type->vector_elements; c++) {
+   for (unsigned c = 0; c < ir->type->vector_elements; c++) {
       if (ir->get_float_component(c) > 0.0f)
          component++;
    }
@@ -441,7 +441,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 reassociate_constant(ir, 0, op_const[0], op_expr[1]);
       if (op_const[1] && !op_const[0])
 	 reassociate_constant(ir, 1, op_const[1], op_expr[0]);
-		   
+
 		// A + (-B) => A-B
 	   if (op_expr[1] && op_expr[1]->operation == ir_unop_neg) {
 		   this->progress = true;
@@ -650,8 +650,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       } else if (is_vec_one(op_const[0]) || is_vec_one(op_const[1])) {
 	 ir_constant_data data;
 
-	 for (unsigned i = 0; i < 16; i++)
-	    data.b[i] = true;
+	 for (unsigned j = 0; j < 16; j++)
+	    data.b[j] = true;
 
 	 return new(mem_ctx) ir_constant(ir->type, &data);
       } else if (op_expr[0] && op_expr[0]->operation == ir_unop_logic_not &&

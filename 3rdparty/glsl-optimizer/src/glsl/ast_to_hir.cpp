@@ -1601,9 +1601,9 @@ ast_expression::do_hir(exec_list *instructions,
       if ((!apply_implicit_conversion(op[1]->type, op[2], state)
           && !apply_implicit_conversion(op[2]->type, op[1], state))
           || (op[1]->type != op[2]->type)) {
-         YYLTYPE loc = this->subexpressions[1]->get_location();
+         YYLTYPE subloc = this->subexpressions[1]->get_location();
 
-         _mesa_glsl_error(& loc, state, "second and third operands of ?: "
+         _mesa_glsl_error(&subloc, state, "second and third operands of ?: "
                           "operator must have matching types");
          error_emitted = true;
          type = glsl_type::error_type;
@@ -1743,7 +1743,7 @@ ast_expression::do_hir(exec_list *instructions,
        * tree.  This particular use must be at location specified in the grammar
        * as 'variable_identifier'.
        */
-      ir_variable *var = 
+      ir_variable *var =
          state->symbols->get_variable(this->primary_expression.identifier);
 
       if (var != NULL) {
@@ -3697,11 +3697,11 @@ ast_declarator_list::hir(exec_list *instructions,
           ((state->stage == MESA_SHADER_FRAGMENT && var->data.mode == ir_var_shader_in)
            || (state->stage == MESA_SHADER_VERTEX && var->data.mode == ir_var_shader_out
                && state->es_shader))) {
-         const char *var_type = (state->stage == MESA_SHADER_VERTEX) ?
+         const char *var_type_str = (state->stage == MESA_SHADER_VERTEX) ?
             "vertex output" : "fragment input";
          _mesa_glsl_error(&loc, state, "if a %s is (or contains) "
                           "an integer, then it must be qualified with 'flat'",
-                          var_type);
+                          var_type_str);
       }
 
 
@@ -3894,8 +3894,8 @@ ast_declarator_list::hir(exec_list *instructions,
           *     being declared if not."
           */
          if (!state->symbols->add_variable(var)) {
-            YYLTYPE loc = this->get_location();
-            _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
+            YYLTYPE subloc = this->get_location();
+            _mesa_glsl_error(&subloc, state, "name `%s' already taken in the "
                              "current scope", decl->identifier);
             continue;
          }
@@ -3939,13 +3939,13 @@ ast_parameter_declarator::hir(exec_list *instructions,
                               struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
-   const struct glsl_type *type;
+   const struct glsl_type *subtype;
    const char *name = NULL;
    YYLTYPE loc = this->get_location();
 
-   type = this->type->glsl_type(& name, state);
+   subtype = this->type->glsl_type(& name, state);
 
-   if (type == NULL) {
+   if (subtype == NULL) {
       if (name != NULL) {
          _mesa_glsl_error(& loc, state,
                           "invalid type `%s' in declaration of `%s'",
@@ -3956,7 +3956,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
                           this->identifier);
       }
 
-      type = glsl_type::error_type;
+      subtype = glsl_type::error_type;
    }
 
    /* From page 62 (page 68 of the PDF) of the GLSL 1.50 spec:
@@ -3971,7 +3971,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * for a function, which avoids tripping up checks for main taking
     * parameters and lookups of an unnamed symbol.
     */
-   if (type->is_void()) {
+   if (subtype->is_void()) {
       if (this->identifier != NULL)
          _mesa_glsl_error(& loc, state,
                           "named parameter cannot have type `void'");
@@ -3988,17 +3988,17 @@ ast_parameter_declarator::hir(exec_list *instructions,
    /* This only handles "vec4 foo[..]".  The earlier specifier->glsl_type(...)
     * call already handled the "vec4[..] foo" case.
     */
-   type = process_array_type(&loc, type, this->array_specifier, state);
+   subtype = process_array_type(&loc, subtype, this->array_specifier, state);
 
-   if (!type->is_error() && type->is_unsized_array()) {
+   if (!subtype->is_error() && subtype->is_unsized_array()) {
       _mesa_glsl_error(&loc, state, "arrays passed as parameters must have "
                        "a declared size");
-      type = glsl_type::error_type;
+      subtype = glsl_type::error_type;
    }
 
    is_void = false;
    ir_variable *var = new(ctx)
-      ir_variable(type, this->identifier, ir_var_function_in, (glsl_precision)this->type->qualifier.precision);
+      ir_variable(subtype, this->identifier, ir_var_function_in, (glsl_precision)this->type->qualifier.precision);
 
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
@@ -4014,10 +4014,10 @@ ast_parameter_declarator::hir(exec_list *instructions,
     *    assigned into."
     */
    if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
-       && type->contains_opaque()) {
+       && subtype->contains_opaque()) {
       _mesa_glsl_error(&loc, state, "out and inout parameters cannot "
                        "contain opaque variables");
-      type = glsl_type::error_type;
+      subtype = glsl_type::error_type;
    }
 
    /* From page 39 (page 45 of the PDF) of the GLSL 1.10 spec:
@@ -4035,10 +4035,10 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * allowed.  This restriction is removed in GLSL 1.20, and in GLSL ES.
     */
    if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
-       && type->is_array()
+       && subtype->is_array()
        && !state->check_version(120, 100, &loc,
                                 "arrays cannot be out or inout parameters")) {
-      type = glsl_type::error_type;
+       subtype = glsl_type::error_type;
    }
 
    instructions->push_tail(var);
@@ -4139,15 +4139,15 @@ ast_function::hir(exec_list *instructions,
                                                & hir_parameters, state);
 
    const char *return_type_name;
-   const glsl_type *return_type =
+   const glsl_type *specified_type =
       this->return_type->glsl_type(& return_type_name, state);
 
-   if (!return_type) {
+   if (!specified_type) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "function `%s' has undeclared return type `%s'",
                        name, return_type_name);
-      return_type = glsl_type::error_type;
+      specified_type = glsl_type::error_type;
    }
 
    /* From page 56 (page 62 of the PDF) of the GLSL 1.30 spec:
@@ -4164,7 +4164,7 @@ ast_function::hir(exec_list *instructions,
     *     "Arrays are allowed as arguments and as the return type. In both
     *     cases, the array must be explicitly sized."
     */
-   if (return_type->is_unsized_array()) {
+   if (specified_type->is_unsized_array()) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(& loc, state,
                        "function `%s' return type array must be explicitly "
@@ -4176,7 +4176,7 @@ ast_function::hir(exec_list *instructions,
     *    "[Opaque types] can only be declared as function parameters
     *     or uniform-qualified variables."
     */
-   if (return_type->contains_opaque()) {
+   if (specified_type->contains_opaque()) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "function `%s' return type can't contain an opaque type",
@@ -4214,7 +4214,7 @@ ast_function::hir(exec_list *instructions,
                              "qualifiers don't match prototype", name, badvar);
          }
 
-         if (sig->return_type != return_type) {
+         if (sig->return_type != specified_type) {
             YYLTYPE loc = this->get_location();
 
             _mesa_glsl_error(&loc, state, "function `%s' return type doesn't "
@@ -4238,7 +4238,7 @@ ast_function::hir(exec_list *instructions,
 
    /* Verify the return type of main() */
    if (strcmp(name, "main") == 0) {
-      if (! return_type->is_void()) {
+      if (!specified_type->is_void()) {
          YYLTYPE loc = this->get_location();
 
          _mesa_glsl_error(& loc, state, "main() must return void");
@@ -4254,7 +4254,7 @@ ast_function::hir(exec_list *instructions,
    /* Finish storing the information about this new function in its signature.
     */
    if (sig == NULL) {
-      sig = new(ctx) ir_function_signature(return_type, (glsl_precision)this->return_type->qualifier.precision);
+      sig = new(ctx) ir_function_signature(specified_type, (glsl_precision)this->return_type->qualifier.precision);
       f->add_signature(sig);
    }
 
@@ -4460,7 +4460,7 @@ ast_jump_statement::hir(exec_list *instructions,
             ir_constant *const true_val = new(ctx) ir_constant(true);
             ir_assignment *const set_break_var =
                new(ctx) ir_assignment(deref_is_break_var, true_val);
-	    
+
             instructions->push_tail(set_break_var);
          }
          else {
@@ -4487,7 +4487,7 @@ ast_selection_statement::hir(exec_list *instructions,
 {
    void *ctx = state;
 
-   ir_rvalue *const condition = this->condition->hir(instructions, state);
+   ir_rvalue *const condition_ir = this->condition->hir(instructions, state);
 
    /* From page 66 (page 72 of the PDF) of the GLSL 1.50 spec:
     *
@@ -4498,14 +4498,14 @@ ast_selection_statement::hir(exec_list *instructions,
     * The checks are separated so that higher quality diagnostics can be
     * generated for cases where both rules are violated.
     */
-   if (!condition->type->is_boolean() || !condition->type->is_scalar()) {
+   if (!condition_ir->type->is_boolean() || !condition_ir->type->is_scalar()) {
       YYLTYPE loc = this->condition->get_location();
 
       _mesa_glsl_error(& loc, state, "if-statement condition must be scalar "
                        "boolean");
    }
 
-   ir_if *const stmt = new(ctx) ir_if(condition);
+   ir_if *const stmt = new(ctx) ir_if(condition_ir);
 
    if (then_statement != NULL) {
       state->symbols->push_scope();
@@ -4533,16 +4533,16 @@ ast_switch_statement::hir(exec_list *instructions,
 {
    void *ctx = state;
 
-   ir_rvalue *const test_expression =
+   ir_rvalue *const test_expression_ir =
       this->test_expression->hir(instructions, state);
 
    /* From page 66 (page 55 of the PDF) of the GLSL 1.50 spec:
     *
-    *    "The type of init-expression in a switch statement must be a 
-    *     scalar integer." 
+    *    "The type of init-expression in a switch statement must be a
+    *     scalar integer."
     */
-   if (!test_expression->type->is_scalar() ||
-       !test_expression->type->is_integer()) {
+   if (!test_expression_ir->type->is_scalar() ||
+       !test_expression_ir->type->is_integer()) {
       YYLTYPE loc = this->test_expression->get_location();
 
       _mesa_glsl_error(& loc,
@@ -5077,7 +5077,7 @@ ast_type_specifier::hir(exec_list *instructions,
          char* precision_statement = ralloc_asprintf(ctx, "precision %s %s", precision_type, this->type_name);
 
          ir_precision_statement *const stmt = new(ctx) ir_precision_statement(precision_statement);
-		  
+
          instructions->push_head(stmt);
       }
 
@@ -5224,8 +5224,8 @@ ast_process_structure_or_interface_block(exec_list *instructions,
             decl_type != NULL ? decl_type : glsl_type::error_type;
 
          if (is_interface && field_type->contains_opaque()) {
-            YYLTYPE loc = decl_list->get_location();
-            _mesa_glsl_error(&loc, state,
+            YYLTYPE subloc = decl_list->get_location();
+            _mesa_glsl_error(&subloc, state,
                              "uniform in non-default uniform block contains "
                              "opaque variable");
          }
@@ -5236,8 +5236,8 @@ ast_process_structure_or_interface_block(exec_list *instructions,
              * FINISHME: on whether atomic counters are allowed in
              * FINISHME: structures.
              */
-            YYLTYPE loc = decl_list->get_location();
-            _mesa_glsl_error(&loc, state, "atomic counter in structure or "
+            YYLTYPE subloc = decl_list->get_location();
+            _mesa_glsl_error(&subloc, state, "atomic counter in structure or "
                              "uniform block");
          }
 
@@ -5246,8 +5246,8 @@ ast_process_structure_or_interface_block(exec_list *instructions,
              * FINISHME: Request clarification from Khronos and add
              * FINISHME: spec quotation here.
              */
-            YYLTYPE loc = decl_list->get_location();
-            _mesa_glsl_error(&loc, state,
+            YYLTYPE subloc = decl_list->get_location();
+            _mesa_glsl_error(&subloc, state,
                              "image in structure or uniform block");
          }
 
@@ -5395,7 +5395,7 @@ ast_struct_specifier::hir(exec_list *instructions,
          state->user_structures = s;
          state->num_user_structures++;
          ir_typedecl_statement* stmt = new(state) ir_typedecl_statement(t);
-      
+
          /* Push the struct declarations to the top.
           * However, do not insert declarations before default precision
           * statements or other declarations
@@ -5627,8 +5627,8 @@ ast_interface_block::hir(exec_list *instructions,
                                         this->block_name);
 
    if (!state->symbols->add_interface(block_type->name, block_type, var_mode)) {
-      YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(&loc, state, "interface block `%s' with type `%s' "
+      YYLTYPE subloc = this->get_location();
+      _mesa_glsl_error(&subloc, state, "interface block `%s' with type `%s' "
                        "already taken in the current scope",
                        this->block_name, iface_type_name);
    }

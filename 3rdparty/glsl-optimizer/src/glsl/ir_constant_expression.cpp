@@ -420,11 +420,11 @@ constant_referenced(const ir_dereference *deref,
       ir_constant *substore;
       int suboffset;
 
-      const ir_dereference *const deref = da->array->as_dereference();
-      if (!deref)
+      const ir_dereference *const subderef = da->array->as_dereference();
+      if (!subderef)
          break;
 
-      if (!constant_referenced(deref, variable_context, substore, suboffset))
+      if (!constant_referenced(subderef, variable_context, substore, suboffset))
          break;
 
       const glsl_type *const vt = da->array->type;
@@ -446,14 +446,14 @@ constant_referenced(const ir_dereference *deref,
       const ir_dereference_record *const dr =
          (const ir_dereference_record *) deref;
 
-      const ir_dereference *const deref = dr->record->as_dereference();
-      if (!deref)
+      const ir_dereference *const subderef = dr->record->as_dereference();
+      if (!subderef)
          break;
 
       ir_constant *substore;
       int suboffset;
 
-      if (!constant_referenced(deref, variable_context, substore, suboffset))
+      if (!constant_referenced(subderef, variable_context, substore, suboffset))
          break;
 
       /* Since we're dropping it on the floor...
@@ -711,7 +711,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
 			data.f[c] = op[0]->value.f[c] / mag;
 		}
 	}
-	break;      
+	break;
 
    case ir_unop_fract:
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
@@ -1724,17 +1724,17 @@ ir_dereference_variable::constant_expression_value(struct hash_table *variable_c
 ir_constant *
 ir_dereference_array::constant_expression_value(struct hash_table *variable_context)
 {
-   ir_constant *array = this->array->constant_expression_value(variable_context);
+   ir_constant *array_ir = this->array->constant_expression_value(variable_context);
    ir_constant *idx = this->array_index->constant_expression_value(variable_context);
 
-   if ((array != NULL) && (idx != NULL)) {
+   if ((array_ir != NULL) && (idx != NULL)) {
       void *ctx = ralloc_parent(this);
       if (array->type->is_matrix()) {
 	 /* Array access of a matrix results in a vector.
 	  */
 	 const unsigned column = idx->value.u[0];
 
-	 const glsl_type *const column_type = array->type->column_type();
+	 const glsl_type *const column_type = array_ir->type->column_type();
 
 	 /* Offset in the constant matrix to the first element of the column
 	  * to be extracted.
@@ -1747,13 +1747,13 @@ ir_dereference_array::constant_expression_value(struct hash_table *variable_cont
 	 case GLSL_TYPE_UINT:
 	 case GLSL_TYPE_INT:
 	    for (unsigned i = 0; i < column_type->vector_elements; i++)
-	       data.u[i] = array->value.u[mat_idx + i];
+	       data.u[i] = array_ir->value.u[mat_idx + i];
 
 	    break;
 
 	 case GLSL_TYPE_FLOAT:
 	    for (unsigned i = 0; i < column_type->vector_elements; i++)
-	       data.f[i] = array->value.f[mat_idx + i];
+	       data.f[i] = array_ir->value.f[mat_idx + i];
 
 	    break;
 
@@ -1763,13 +1763,13 @@ ir_dereference_array::constant_expression_value(struct hash_table *variable_cont
 	 }
 
 	 return new(ctx) ir_constant(column_type, &data);
-      } else if (array->type->is_vector()) {
+      } else if (array_ir->type->is_vector()) {
 	 const unsigned component = idx->value.u[0];
 
-	 return new(ctx) ir_constant(array, component);
+	 return new(ctx) ir_constant(array_ir, component);
       } else {
 	 const unsigned index = idx->value.u[0];
-	 return array->get_array_element(index)->clone(ctx, NULL);
+	 return array_ir->get_array_element(index)->clone(ctx, NULL);
       }
    }
    return NULL;
@@ -1807,11 +1807,11 @@ ir_call::constant_expression_value(struct hash_table *variable_context)
 }
 
 
-bool ir_function_signature::constant_expression_evaluate_expression_list(const struct exec_list &body,
+bool ir_function_signature::constant_expression_evaluate_expression_list(const struct exec_list &_body,
 									 struct hash_table *variable_context,
 									 ir_constant **result)
 {
-   foreach_in_list(ir_instruction, inst, &body) {
+   foreach_in_list(ir_instruction, inst, &_body) {
       switch(inst->ir_type) {
 
 	 /* (declare () type symbol) */

@@ -379,9 +379,9 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
     * If the block ends in a conditional or unconditional break, lower
     * it, even though should_lower_jump() says it needn't be lowered.
     */
-   void lower_final_breaks(exec_list *block)
+   void lower_final_breaks(exec_list *_block)
    {
-      ir_instruction *ir = (ir_instruction *) block->get_tail();
+      ir_instruction *ir = (ir_instruction *)_block->get_tail();
       lower_break_unconditionally(ir);
       ir_if *ir_if = ir->as_if();
       if (ir_if) {
@@ -447,7 +447,7 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
        */
       (void) ir;
    }
-	
+
    virtual void visit(class ir_precision_statement * ir)
    {
       /* Nothing needs to be done. */
@@ -786,9 +786,9 @@ lower_continue:
                 * block_records[move_into] with the result of this
                 * analysis.
                 */
-               exec_list list;
-               list.head = next;
-               block_records[move_into] = visit_block(&list);
+               exec_list sublist;
+               sublist.head = next;
+               block_records[move_into] = visit_block(&sublist);
 
                /*
                 * Then we need to re-start our jump lowering, since one

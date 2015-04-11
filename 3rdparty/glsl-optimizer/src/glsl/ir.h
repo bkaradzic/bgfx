@@ -1062,7 +1062,7 @@ private:
     * Returns false if the expression is not constant, true otherwise,
     * and the value in *result if result is non-NULL.
     */
-   bool constant_expression_evaluate_expression_list(const struct exec_list &body,
+   bool constant_expression_evaluate_expression_list(const struct exec_list &_body,
 						     struct hash_table *variable_context,
 						     ir_constant **result);
 };
@@ -1920,7 +1920,7 @@ public:
    const char *opcode_string();
 
    /** Set the sampler and type. */
-   void set_sampler(ir_dereference *sampler, const glsl_type *type);
+   void set_sampler(ir_dereference *sampler, const glsl_type *_type);
 
    /**
     * Do a reverse-lookup to translate a string into an ir_texture_opcode.
@@ -2328,16 +2328,16 @@ public:
 		this->ir_type = ir_type_typedecl;
 		this->type_decl = type_decl;
 	}
-	
+
 	virtual ir_typedecl_statement *clone(void *mem_ctx, struct hash_table *) const;
-	
+
 	virtual void accept(ir_visitor *v)
 	{
 		v->visit(this);
 	}
-	
+
 	virtual ir_visitor_status accept(ir_hierarchical_visitor *);
-	
+
 	const glsl_type* type_decl;
 };
 

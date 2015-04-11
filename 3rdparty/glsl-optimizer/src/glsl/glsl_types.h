@@ -257,7 +257,7 @@ struct glsl_type {
     */
    static const glsl_type *get_record_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
-					       const char *name);
+					       const char *_name);
 
    /**
     * Get the instance of an interface block type
@@ -576,15 +576,15 @@ struct glsl_type {
     * Pointer to the type of the named field.  If the type is not a structure
     * or the named field does not exist, \c glsl_type::error_type is returned.
     */
-   const glsl_type *field_type(const char *name) const;
+   const glsl_type *field_type(const char *_name) const;
 
-   glsl_precision field_precision(const char *name) const;
+   glsl_precision field_precision(const char *_name) const;
 
 
    /**
     * Get the location of a filed within a record type
     */
-   int field_index(const char *name) const;
+   int field_index(const char *_name) const;
 
    /**
     * Query the number of elements in an array type

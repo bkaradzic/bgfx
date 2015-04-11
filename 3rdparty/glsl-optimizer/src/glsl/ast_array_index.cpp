@@ -72,7 +72,7 @@ update_max_array_access(ir_rvalue *ir, unsigned idx, YYLTYPE *loc,
        * - Accessing an element of an array that is a member of a named
        *   interface block array (e.g. ifc[j].foo[i]).
        */
-      ir_dereference_variable *deref_var =
+      deref_var =
          deref_record->record->as_dereference_variable();
       if (deref_var == NULL) {
          if (ir_dereference_array *deref_array =
@@ -139,7 +139,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
     */
    ir_constant *const const_index = idx->constant_expression_value();
    if (const_index != NULL && idx->type->is_integer()) {
-      const int idx = const_index->value.i[0];
+      const int index = const_index->value.i[0];
       const char *type_name = "error";
       unsigned bound = 0;
 
@@ -152,12 +152,12 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        *    negative constant expression."
        */
       if (array->type->is_matrix()) {
-	 if (array->type->row_type()->vector_elements <= (unsigned)idx) {
+	 if (array->type->row_type()->vector_elements <= (unsigned)index) {
 	    type_name = "matrix";
 	    bound = array->type->row_type()->vector_elements;
 	 }
       } else if (array->type->is_vector()) {
-	 if (array->type->vector_elements <= (unsigned)idx) {
+	 if (array->type->vector_elements <= (unsigned)index) {
 	    type_name = "vector";
 	    bound = array->type->vector_elements;
 	 }
@@ -167,7 +167,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	  * doing the bounds checking.
 	  */
 	 if ((array->type->array_size() > 0)
-	     && (array->type->array_size() <= idx)) {
+	     && (array->type->array_size() <= index)) {
 	    type_name = "array";
 	    bound = array->type->array_size();
 	 }
@@ -176,13 +176,13 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       if (bound > 0) {
 	 _mesa_glsl_error(& loc, state, "%s index must be < %u",
 			  type_name, bound);
-      } else if (idx < 0) {
+      } else if (index < 0) {
 	 _mesa_glsl_error(& loc, state, "%s index must be >= 0",
 			  type_name);
       }
 
       if (array->type->is_array())
-         update_max_array_access(array, idx, &loc, state);
+         update_max_array_access(array, index, &loc, state);
    } else if (const_index == NULL && array->type->is_array()) {
       if (array->type->is_unsized_array()) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");

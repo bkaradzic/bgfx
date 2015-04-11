@@ -628,14 +628,14 @@ glsl_type::get_interface_instance(const glsl_struct_field *fields,
 
 
 const glsl_type *
-glsl_type::field_type(const char *name) const
+glsl_type::field_type(const char *_name) const
 {
    if (this->base_type != GLSL_TYPE_STRUCT
        && this->base_type != GLSL_TYPE_INTERFACE)
       return error_type;
 
    for (unsigned i = 0; i < this->length; i++) {
-      if (strcmp(name, this->fields.structure[i].name) == 0)
+      if (strcmp(_name, this->fields.structure[i].name) == 0)
 	 return this->fields.structure[i].type;
    }
 
@@ -643,13 +643,13 @@ glsl_type::field_type(const char *name) const
 }
 
 glsl_precision
-glsl_type::field_precision(const char *name) const
+glsl_type::field_precision(const char *_name) const
 {
    if (this->base_type != GLSL_TYPE_STRUCT)
       return glsl_precision_undefined;
 
    for (unsigned i = 0; i < this->length; i++) {
-      if (strcmp(name, this->fields.structure[i].name) == 0)
+      if (strcmp(_name, this->fields.structure[i].name) == 0)
 	 return this->fields.structure[i].precision;
    }
 
@@ -658,14 +658,14 @@ glsl_type::field_precision(const char *name) const
 
 
 int
-glsl_type::field_index(const char *name) const
+glsl_type::field_index(const char *_name) const
 {
    if (this->base_type != GLSL_TYPE_STRUCT
        && this->base_type != GLSL_TYPE_INTERFACE)
       return -1;
 
    for (unsigned i = 0; i < this->length; i++) {
-      if (strcmp(name, this->fields.structure[i].name) == 0)
+      if (strcmp(_name, this->fields.structure[i].name) == 0)
 	 return i;
    }
 

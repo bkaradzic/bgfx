@@ -305,10 +305,10 @@ ir_copy_propagation_elements_visitor::visit_enter(ir_call *ir)
    foreach_two_lists(formal_node, &ir->callee->parameters,
                      actual_node, &ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *) formal_node;
-      ir_rvalue *ir = (ir_rvalue *) actual_node;
+      ir_rvalue *ir_value = (ir_rvalue *) actual_node;
       if (sig_param->data.mode != ir_var_function_out
           && sig_param->data.mode != ir_var_function_inout) {
-         ir->accept(this);
+         ir_value->accept(this);
       }
    }
 
@@ -472,7 +472,7 @@ ir_copy_propagation_elements_visitor::add_copy(ir_assignment *ir)
       if (ir->write_mask & (1 << i))
 	 swizzle[i] = orig_swizzle[j++];
    }
-	
+
    if (lhs->var->data.precision != rhs->var->data.precision && lhs->var->data.precision!=glsl_precision_undefined && rhs->var->data.precision!=glsl_precision_undefined)
       return;
 

@@ -752,11 +752,11 @@ _mesa_ast_set_aggregate_type(const glsl_type *type,
       for (exec_node *expr_node = ai->expressions.head;
            !expr_node->is_tail_sentinel();
            expr_node = expr_node->next) {
-         ast_expression *expr = exec_node_data(ast_expression, expr_node,
+         ast_expression *subexpr = exec_node_data(ast_expression, expr_node,
                                                link);
 
-         if (expr->oper == ast_aggregate)
-            _mesa_ast_set_aggregate_type(type->element_type(), expr);
+         if (subexpr->oper == ast_aggregate)
+            _mesa_ast_set_aggregate_type(type->element_type(), subexpr);
       }
 
    /* If the aggregate is a struct, recursively set its fields' types. */
@@ -766,11 +766,11 @@ _mesa_ast_set_aggregate_type(const glsl_type *type,
       /* Iterate through the struct's fields. */
       for (unsigned i = 0; !expr_node->is_tail_sentinel() && i < type->length;
            i++, expr_node = expr_node->next) {
-         ast_expression *expr = exec_node_data(ast_expression, expr_node,
+         ast_expression *subexpr = exec_node_data(ast_expression, expr_node,
                                                link);
 
-         if (expr->oper == ast_aggregate) {
-            _mesa_ast_set_aggregate_type(type->fields.structure[i].type, expr);
+         if (subexpr->oper == ast_aggregate) {
+            _mesa_ast_set_aggregate_type(type->fields.structure[i].type, subexpr);
          }
       }
    /* If the aggregate is a matrix, set its columns' types. */
@@ -778,11 +778,11 @@ _mesa_ast_set_aggregate_type(const glsl_type *type,
       for (exec_node *expr_node = ai->expressions.head;
            !expr_node->is_tail_sentinel();
            expr_node = expr_node->next) {
-         ast_expression *expr = exec_node_data(ast_expression, expr_node,
+         ast_expression *subexpr = exec_node_data(ast_expression, expr_node,
                                                link);
 
-         if (expr->oper == ast_aggregate)
-            _mesa_ast_set_aggregate_type(type->column_type(), expr);
+         if (subexpr->oper == ast_aggregate)
+            _mesa_ast_set_aggregate_type(type->column_type(), subexpr);
       }
    }
 }
@@ -857,7 +857,7 @@ void
 ast_compound_statement::print(void) const
 {
    printf("{\n");
-   
+
    foreach_list_typed(ast_node, ast, link, &this->statements) {
       ast->print();
    }
@@ -1179,7 +1179,7 @@ ast_selection_statement::print(void) const
       printf("else ");
       else_statement->print();
    }
-   
+
 }
 
 

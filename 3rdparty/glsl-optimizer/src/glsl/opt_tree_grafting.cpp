@@ -222,18 +222,18 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
    foreach_two_lists(formal_node, &ir->callee->parameters,
                      actual_node, &ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *) formal_node;
-      ir_rvalue *ir = (ir_rvalue *) actual_node;
-      ir_rvalue *new_ir = ir;
+      ir_rvalue *ir_value = (ir_rvalue *) actual_node;
+      ir_rvalue *new_ir = ir_value;
 
       if (sig_param->data.mode != ir_var_function_in
           && sig_param->data.mode != ir_var_const_in) {
-	 if (check_graft(ir, sig_param) == visit_stop)
+	 if (check_graft(ir_value, sig_param) == visit_stop)
 	    return visit_stop;
 	 continue;
       }
 
       if (do_graft(&new_ir)) {
-	 ir->replace_with(new_ir);
+	 ir_value->replace_with(new_ir);
 	 return visit_stop;
       }
    }

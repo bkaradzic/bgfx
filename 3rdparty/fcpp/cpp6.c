@@ -429,7 +429,7 @@ ReturnCode scannumber(struct Global *global,
      * dotflag signals "saw 'L'", and
      * expseen signals "saw 'U'".
      */
-    char done=TRUE;
+    done=TRUE;
     while(done) {
       switch (c) {
       case 'l':

@@ -875,9 +875,9 @@ link_assign_uniform_locations(struct gl_shader_program *prog,
       sh->num_uniform_components = uniform_size.num_shader_uniform_components;
 
       sh->num_combined_uniform_components = sh->num_uniform_components;
-      for (unsigned i = 0; i < sh->NumUniformBlocks; i++) {
+      for (unsigned j = 0; j < sh->NumUniformBlocks; j++) {
 	 sh->num_combined_uniform_components +=
-	    sh->UniformBlocks[i].UniformBufferSize / 4;
+	    sh->UniformBlocks[j].UniformBufferSize / 4;
       }
    }
 
