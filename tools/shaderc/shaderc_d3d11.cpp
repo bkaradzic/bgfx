@@ -5,7 +5,7 @@
 
 #include "shaderc.h"
 
-#if SHADERC_CONFIG_DIRECT3D11
+#if SHADERC_CONFIG_HLSL
 
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -18,6 +18,39 @@
 static const GUID GUID_ID3D11ShaderReflection = { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } };
 #	define IID_ID3D11ShaderReflection GUID_ID3D11ShaderReflection
 #endif // IID_ID3D11ShaderReflection
+
+struct CTHeader
+{
+	uint32_t Size;
+	uint32_t Creator;
+	uint32_t Version;
+	uint32_t Constants;
+	uint32_t ConstantInfo;
+	uint32_t Flags;
+	uint32_t Target;
+};
+
+struct CTInfo
+{
+	uint32_t Name;
+	uint16_t RegisterSet;
+	uint16_t RegisterIndex;
+	uint16_t RegisterCount;
+	uint16_t Reserved;
+	uint32_t TypeInfo;
+	uint32_t DefaultValue;
+};
+
+struct CTType
+{
+	uint16_t Class;
+	uint16_t Type;
+	uint16_t Rows;
+	uint16_t Columns;
+	uint16_t Elements;
+	uint16_t StructMembers;
+	uint32_t StructMemberInfo;
+};
 
 struct RemapInputSemantic
 {
@@ -62,7 +95,7 @@ const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
 	return s_remapInputSemantic[bgfx::Attrib::Count];
 }
 
-struct UniformRemapDx11
+struct UniformRemap
 {
 	UniformType::Enum id;
 	D3D_SHADER_VARIABLE_CLASS paramClass;
@@ -71,7 +104,7 @@ struct UniformRemapDx11
 	uint8_t rows;
 };
 
-static const UniformRemapDx11 s_constRemapDx11[7] =
+static const UniformRemap s_constRemap[7] =
 {
 	{ UniformType::Uniform1iv,   D3D_SVC_SCALAR,         D3D_SVT_INT,   0, 0 },
 	{ UniformType::Uniform1fv,   D3D_SVC_SCALAR,         D3D_SVT_FLOAT, 0, 0 },
@@ -82,11 +115,11 @@ static const UniformRemapDx11 s_constRemapDx11[7] =
 	{ UniformType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 4, 4 },
 };
 
-UniformType::Enum findUniformTypeDx11(const D3D11_SHADER_TYPE_DESC& constDesc)
+UniformType::Enum findUniformType(const D3D11_SHADER_TYPE_DESC& constDesc)
 {
-	for (uint32_t ii = 0; ii < BX_COUNTOF(s_constRemapDx11); ++ii)
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_constRemap); ++ii)
 	{
-		const UniformRemapDx11& remap = s_constRemapDx11[ii];
+		const UniformRemap& remap = s_constRemap[ii];
 
 		if (remap.paramClass == constDesc.Class
 		&&  remap.paramType == constDesc.Type)
@@ -115,7 +148,253 @@ static uint32_t s_optimizationLevelDx11[4] =
 	D3DCOMPILE_OPTIMIZATION_LEVEL3,
 };
 
-bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
+bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
+{
+	// see reference for magic values: https://msdn.microsoft.com/en-us/library/ff552891(VS.85).aspx
+	const uint32_t D3DSIO_COMMENT = 0x0000FFFE;
+	const uint32_t D3DSIO_END = 0x0000FFFF;
+	const uint32_t D3DSI_OPCODE_MASK = 0x0000FFFF;
+	const uint32_t D3DSI_COMMENTSIZE_MASK = 0x7FFF0000;
+	const uint32_t CTAB_CONSTANT = MAKEFOURCC('C','T','A','B');
+
+	// parse the shader blob for the constant table
+	const size_t codeSize = _code->GetBufferSize();
+	const uint32_t* ptr = (const uint32_t*)_code->GetBufferPointer();
+	const uint32_t* end = (const uint32_t*)((const uint8_t*)ptr + codeSize);
+	const CTHeader* header = NULL;
+
+	ptr++;	// first byte is shader type / version; skip it since we already know
+
+	while (ptr < end && *ptr != D3DSIO_END)
+	{
+		uint32_t cur = *ptr++;
+		if (cur & D3DSI_OPCODE_MASK != D3DSIO_COMMENT)
+			continue;
+
+		// try to find CTAB comment block
+		uint32_t commentSize = (cur & D3DSI_COMMENTSIZE_MASK) >> 16;
+		uint32_t fourcc = *ptr;
+		if (fourcc == CTAB_CONSTANT)
+		{
+			// found the constant table data
+			header = (const CTHeader*)(ptr + 1);
+			uint32_t tableSize = (commentSize - 1) * 4;
+			if (tableSize < sizeof(CTHeader) || header->Size != sizeof(CTHeader))
+			{
+				fprintf(stderr, "Error: Invalid constant table data\n");
+				return false;
+			}
+			break;
+		}
+
+		// this is a different kind of comment section, so skip over it
+		ptr += commentSize - 1;
+	}
+
+	if (!header)
+	{
+		fprintf(stderr, "Error: Could not find constant table data\n");
+		return false;
+	}
+
+	const uint8_t* headerBytePtr = (const uint8_t*)header;
+	const char* creator = (const char*)(headerBytePtr + header->Creator);
+
+	BX_TRACE("Creator: %s 0x%08x", creator, header->Version);
+	BX_TRACE("Num constants: %d", header->Constants);
+	BX_TRACE("#   cl ty RxC   S  By Name");
+
+	const CTInfo* ctInfoArray = (const CTInfo*)(headerBytePtr + header->ConstantInfo);
+	for (uint32_t ii = 0; ii < header->Constants; ii++)
+	{
+		const CTInfo& ctInfo = ctInfoArray[ii];
+		const CTType& ctType = *(const CTType*)(headerBytePtr + ctInfo.TypeInfo);
+		const char* name = (const char*)(headerBytePtr + ctInfo.Name);
+
+		BX_TRACE("%3d %2d %2d [%dx%d] %d %s[%d] c%d (%d)"
+			, ii
+			, ctType.Class
+			, ctType.Type
+			, ctType.Rows
+			, ctType.Columns
+			, ctType.StructMembers
+			, name
+			, ctType.Elements
+			, ctInfo.RegisterIndex
+			, ctInfo.RegisterCount
+			);
+
+		D3D11_SHADER_TYPE_DESC desc;
+		desc.Class = (D3D_SHADER_VARIABLE_CLASS)ctType.Class;
+		desc.Type = (D3D_SHADER_VARIABLE_TYPE)ctType.Type;
+		desc.Rows = ctType.Rows;
+		desc.Columns = ctType.Columns;
+
+		UniformType::Enum type = findUniformType(desc);
+		if (UniformType::Count != type)
+		{
+			Uniform un;
+			un.name = '$' == name[0] ? name + 1 : name;
+			un.type = type;
+			un.num = ctType.Elements;
+			un.regIndex = ctInfo.RegisterIndex;
+			un.regCount = ctInfo.RegisterCount;
+			_uniforms.push_back(un);
+		}
+	}
+
+	return true;
+}
+
+bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size)
+{
+	ID3D11ShaderReflection* reflect = NULL;
+	HRESULT hr = D3DReflect(_code->GetBufferPointer()
+		, _code->GetBufferSize()
+		, IID_ID3D11ShaderReflection
+		, (void**)&reflect
+		);
+	if (FAILED(hr))
+	{
+		fprintf(stderr, "Error: 0x%08x\n", (uint32_t)hr);
+		return false;
+	}
+
+	D3D11_SHADER_DESC desc;
+	hr = reflect->GetDesc(&desc);
+	if (FAILED(hr))
+	{
+		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x\n", (uint32_t)hr);
+		return false;
+	}
+
+	BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
+	BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
+
+	BX_TRACE("Input:");
+
+	if (_vshader) // Only care about input semantic on vertex shaders
+	{
+		for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
+		{
+			D3D11_SIGNATURE_PARAMETER_DESC spd;
+			reflect->GetInputParameterDesc(ii, &spd);
+			BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
+				, ii
+				, spd.SemanticName
+				, spd.SemanticIndex
+				, spd.SystemValueType
+				, spd.ComponentType
+				, spd.Mask
+				, spd.Register
+				);
+
+			const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, spd.SemanticIndex);
+			if (ris.m_attr != bgfx::Attrib::Count)
+			{
+				_attrs[_numAttrs] = bgfx::attribToId(ris.m_attr);
+				++_numAttrs;
+			}
+		}
+	}
+
+	BX_TRACE("Output:");
+	for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
+	{
+		D3D11_SIGNATURE_PARAMETER_DESC spd;
+		reflect->GetOutputParameterDesc(ii, &spd);
+		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
+	}
+
+	for (uint32_t ii = 0; ii < bx::uint32_min(1, desc.ConstantBuffers); ++ii)
+	{
+		ID3D11ShaderReflectionConstantBuffer* cbuffer = reflect->GetConstantBufferByIndex(ii);
+		D3D11_SHADER_BUFFER_DESC bufferDesc;
+		hr = cbuffer->GetDesc(&bufferDesc);
+
+		_size = (uint16_t)bufferDesc.Size;
+
+		if (SUCCEEDED(hr))
+		{
+			BX_TRACE("%s, %d, vars %d, size %d"
+				, bufferDesc.Name
+				, bufferDesc.Type
+				, bufferDesc.Variables
+				, bufferDesc.Size
+				);
+
+			for (uint32_t jj = 0; jj < bufferDesc.Variables; ++jj)
+			{
+				ID3D11ShaderReflectionVariable* var = cbuffer->GetVariableByIndex(jj);
+				ID3D11ShaderReflectionType* type = var->GetType();
+				D3D11_SHADER_VARIABLE_DESC varDesc;
+				hr = var->GetDesc(&varDesc);
+				if (SUCCEEDED(hr))
+				{
+					D3D11_SHADER_TYPE_DESC constDesc;
+					hr = type->GetDesc(&constDesc);
+					if (SUCCEEDED(hr))
+					{
+						UniformType::Enum uniformType = findUniformType(constDesc);
+
+						if (UniformType::Count != uniformType
+							&& 0 != (varDesc.uFlags & D3D_SVF_USED))
+						{
+							Uniform un;
+							un.name = varDesc.Name;
+							un.type = uniformType;
+							un.num = constDesc.Elements;
+							un.regIndex = varDesc.StartOffset;
+							un.regCount = BX_ALIGN_16(varDesc.Size) / 16;
+							_uniforms.push_back(un);
+
+							BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d"
+								, varDesc.Name
+								, varDesc.StartOffset
+								, varDesc.Size
+								, varDesc.uFlags
+								, uniformType
+								);
+						}
+						else
+						{
+							BX_TRACE("\t%s, unknown type", varDesc.Name);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	BX_TRACE("Bound:");
+	for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
+	{
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+
+		hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
+		if (SUCCEEDED(hr))
+		{
+			//			if (bindDesc.Type == D3D_SIT_SAMPLER)
+			{
+				BX_TRACE("\t%s, %d, %d, %d"
+					, bindDesc.Name
+					, bindDesc.Type
+					, bindDesc.BindPoint
+					, bindDesc.BindCount
+					);
+			}
+		}
+	}
+
+	if (NULL != reflect)
+	{
+		reflect->Release();
+	}
+
+	return true;
+}
+
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer)
 {
 	BX_TRACE("DX11");
 
@@ -208,147 +487,19 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	}
 
 	UniformArray uniforms;
-
-	ID3D11ShaderReflection* reflect = NULL;
-	hr = D3DReflect(code->GetBufferPointer()
-		, code->GetBufferSize()
-		, IID_ID3D11ShaderReflection
-		, (void**)&reflect
-		);
-	if (FAILED(hr) )
-	{
-		fprintf(stderr, "Error: 0x%08x\n", (uint32_t)hr);
-		return false;
-	}
-
-	D3D11_SHADER_DESC desc;
-	hr = reflect->GetDesc(&desc);
-	if (FAILED(hr) )
-	{
-		fprintf(stderr, BX_FILE_LINE_LITERAL "Error: 0x%08x\n", (uint32_t)hr);
-		return false;
-	}
-
-	BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
-	BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
-
-	BX_TRACE("Input:");
 	uint8_t numAttrs = 0;
 	uint16_t attrs[bgfx::Attrib::Count];
-
-	if (profile[0] == 'v') // Only care about input semantic on vertex shaders
-	{
-		for (uint32_t ii = 0; ii < desc.InputParameters; ++ii)
-		{
-			D3D11_SIGNATURE_PARAMETER_DESC spd;
-			reflect->GetInputParameterDesc(ii, &spd);
-			BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
-				, ii
-				, spd.SemanticName
-				, spd.SemanticIndex
-				, spd.SystemValueType
-				, spd.ComponentType
-				, spd.Mask
-				, spd.Register
-				);
-
-			const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, spd.SemanticIndex);
-			if (ris.m_attr != bgfx::Attrib::Count)
-			{
-				attrs[numAttrs] = bgfx::attribToId(ris.m_attr);
-				++numAttrs;
-			}
-		}
-	}
-
-	BX_TRACE("Output:");
-	for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
-	{
-		D3D11_SIGNATURE_PARAMETER_DESC spd;
-		reflect->GetOutputParameterDesc(ii, &spd);
-		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
-	}
-
 	uint16_t size = 0;
 
-	for (uint32_t ii = 0; ii < bx::uint32_min(1, desc.ConstantBuffers); ++ii)
+	if (_d3d == 9)
 	{
-		ID3D11ShaderReflectionConstantBuffer* cbuffer = reflect->GetConstantBufferByIndex(ii);
-		D3D11_SHADER_BUFFER_DESC bufferDesc;
-		hr = cbuffer->GetDesc(&bufferDesc);
-
-		size = (uint16_t)bufferDesc.Size;
-
-		if (SUCCEEDED(hr) )
-		{
-			BX_TRACE("%s, %d, vars %d, size %d"
-				, bufferDesc.Name
-				, bufferDesc.Type
-				, bufferDesc.Variables
-				, bufferDesc.Size
-				);
-
-			for (uint32_t jj = 0; jj < bufferDesc.Variables; ++jj)
-			{
-				ID3D11ShaderReflectionVariable* var = cbuffer->GetVariableByIndex(jj);
-				ID3D11ShaderReflectionType* type = var->GetType();
-				D3D11_SHADER_VARIABLE_DESC varDesc;
-				hr = var->GetDesc(&varDesc);
-				if (SUCCEEDED(hr) )
-				{
-					D3D11_SHADER_TYPE_DESC constDesc;
-					hr = type->GetDesc(&constDesc);
-					if (SUCCEEDED(hr) )
-					{
-						UniformType::Enum uniformType = findUniformTypeDx11(constDesc);
-
-						if (UniformType::Count != uniformType
-						&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
-						{
-							Uniform un;
-							un.name = varDesc.Name;
-							un.type = uniformType;
-							un.num = constDesc.Elements;
-							un.regIndex = varDesc.StartOffset;
-							un.regCount = BX_ALIGN_16(varDesc.Size)/16;
-							uniforms.push_back(un);
-
-							BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d"
-								, varDesc.Name
-								, varDesc.StartOffset
-								, varDesc.Size
-								, varDesc.uFlags
-								, uniformType
-								);
-						}
-						else
-						{
-							BX_TRACE("\t%s, unknown type", varDesc.Name);
-						}
-					}
-				}
-			}
-		}
+		if (!getReflectionDataDx9(code, uniforms))
+			return false;
 	}
-
-	BX_TRACE("Bound:");
-	for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
+	else
 	{
-		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-
-		hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
-		if (SUCCEEDED(hr) )
-		{
-			//			if (bindDesc.Type == D3D_SIT_SAMPLER)
-			{
-				BX_TRACE("\t%s, %d, %d, %d"
-					, bindDesc.Name
-					, bindDesc.Type
-					, bindDesc.BindPoint
-					, bindDesc.BindCount
-					);
-			}
-		}
+		if (!getReflectionDataDx11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size))
+			return false;
 	}
 
 	uint16_t count = (uint16_t)uniforms.size();
@@ -398,12 +549,15 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 	uint8_t nul = 0;
 	bx::write(_writer, nul);
 
-	bx::write(_writer, numAttrs);
-	bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );
+	if (_d3d > 9)
+	{
+		bx::write(_writer, numAttrs);
+		bx::write(_writer, attrs, numAttrs*sizeof(uint16_t));
 
-	bx::write(_writer, size);
+		bx::write(_writer, size);
+	}
 
-	if (_cmdLine.hasArg('\0', "disasm") )
+	if (_cmdLine.hasArg('\0', "disasm"))
 	{
 		ID3DBlob* disasm;
 		D3DDisassemble(code->GetBufferPointer()
@@ -423,11 +577,6 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 		}
 	}
 
-	if (NULL != reflect)
-	{
-		reflect->Release();
-	}
-
 	if (NULL != errorMsg)
 	{
 		errorMsg->Release();
@@ -440,11 +589,11 @@ bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, 
 
 #else
 
-bool compileHLSLShaderDx11(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
+bool compileHLSLShader(bx::CommandLine& _cmdLine, const std::string& _code, bx::WriterI* _writer)
 {
 	BX_UNUSED(_cmdLine, _code, _writer);
 	fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
 	return false;
 }
 
-#endif // SHADERC_CONFIG_DIRECT3D11
+#endif // SHADERC_CONFIG_HLSL

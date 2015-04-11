@@ -1130,14 +1130,7 @@ int main(int _argc, const char* _argv[])
 			}
 			else
 			{
-				if (d3d > 9)
-				{
-					compiled = compileHLSLShaderDx11(cmdLine, input, writer);
-				}
-				else
-				{
-					compiled = compileHLSLShaderDx9(cmdLine, input, writer);
-				}
+				compiled = compileHLSLShader(cmdLine, d3d, input, writer);
 			}
 
 			writer->close();
@@ -1297,14 +1290,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							if (d3d > 9)
-							{
-								compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
-							}
-							else
-							{
-								compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, writer);
-							}
+							compiled = compileHLSLShader(cmdLine, d3d, preprocessor.m_preprocessed, writer);
 						}
 
 						writer->close();
@@ -1773,14 +1759,7 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							if (d3d > 9)
-							{
-								compiled = compileHLSLShaderDx11(cmdLine, preprocessor.m_preprocessed, writer);
-							}
-							else
-							{
-								compiled = compileHLSLShaderDx9(cmdLine, preprocessor.m_preprocessed, writer);
-							}
+							compiled = compileHLSLShader(cmdLine, d3d, preprocessor.m_preprocessed, writer);
 						}
 
 						writer->close();
