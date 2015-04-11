@@ -507,6 +507,8 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 
 		if (firstPass && unusedUniforms.size() > 0)
 		{
+			const size_t strLength = strlen("uniform");
+
 			// first time through, we just find unused uniforms and get rid of them
 			std::stringstream output;
 			LineReader reader(_code.c_str());
@@ -519,24 +521,20 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 					if (index == std::string::npos)
 						continue;
 
-					size_t index2 = line.find_first_not_of(' ', index);
-					if (index2 == std::string::npos)
-						continue;
-
 					// matching lines like:  uniform u_name;
 					// we want to replace "uniform" with "static" so that it's no longer
 					// included in the uniform blob that the application must upload
 					// we can't just remove them, because unused functions might still reference
 					// them and cause a compile error when they're gone
-					if (line.find(*it, index2) == index2)
+					if (line.find(*it) != std::string::npos)
 					{
-						line = line.replace(index, 7, "static");
+						line = line.replace(index, strLength, "static");
 						unusedUniforms.erase(it);
 						break;
 					}
 				}
 
-				output << line << std::endl;
+				output << line;
 			}
 
 			// recompile with the unused uniforms converted to statics
