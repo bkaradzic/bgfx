@@ -168,7 +168,7 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 	while (ptr < end && *ptr != D3DSIO_END)
 	{
 		uint32_t cur = *ptr++;
-		if (cur & D3DSI_OPCODE_MASK != D3DSIO_COMMENT)
+		if ((cur & D3DSI_OPCODE_MASK) != D3DSIO_COMMENT)
 			continue;
 
 		// try to find CTAB comment block
@@ -236,7 +236,7 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 			Uniform un;
 			un.name = '$' == name[0] ? name + 1 : name;
 			un.type = type;
-			un.num = ctType.Elements;
+			un.num = (uint8_t)ctType.Elements;
 			un.regIndex = ctInfo.RegisterIndex;
 			un.regCount = ctInfo.RegisterCount;
 			_uniforms.push_back(un);

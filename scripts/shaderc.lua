@@ -58,7 +58,6 @@ project "shaderc"
 
 	configuration { "windows" }
 		links {
-			"d3dx9",
 			"d3dcompiler",
 			"dxguid",
 		}
