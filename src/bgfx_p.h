@@ -816,8 +816,6 @@ namespace bgfx
 		}
 	};
 
-	void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far);
-
 	struct MatrixCache
 	{
 		MatrixCache()

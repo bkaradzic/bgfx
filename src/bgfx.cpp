@@ -278,25 +278,6 @@ namespace bgfx
 		g_callback->fatal(_code, temp);
 	}
 
-	void mtxOrtho(float* _result, float _left, float _right, float _bottom, float _top, float _near, float _far)
-	{
-		const float aa = 2.0f/(_right - _left);
-		const float bb = 2.0f/(_top - _bottom);
-		const float cc = 1.0f/(_far - _near);
-		const float dd = (_left + _right)/(_left - _right);
-		const float ee = (_top + _bottom)/(_bottom - _top);
-		const float ff = _near / (_near - _far);
-
-		memset(_result, 0, sizeof(float)*16);
-		_result[0] = aa;
-		_result[5] = bb;
-		_result[10] = cc;
-		_result[12] = dd;
-		_result[13] = ee;
-		_result[14] = ff;
-		_result[15] = 1.0f;
-	}
-
 #include "charset.h"
 
 	void charsetFillTexture(const uint8_t* _charset, uint8_t* _rgba, uint32_t _height, uint32_t _pitch, uint32_t _bpp)
