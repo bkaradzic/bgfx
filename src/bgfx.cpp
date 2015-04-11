@@ -26,6 +26,13 @@ namespace bgfx
 	{
 		g_bgfxAndroidWindow = _window;
 	}
+	
+	void* g_bgfxAndroidEGLSurface = NULL;
+	void androidSetWindowAndEGLSurface(::ANativeWindow* _window, void* _surface)
+	{
+		androidSetWindow(_window);
+		g_bgfxAndroidEGLSurface = _surface;
+	}
 #elif BX_PLATFORM_IOS
 	void* g_bgfxEaglLayer = NULL;
 

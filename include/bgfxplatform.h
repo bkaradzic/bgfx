@@ -39,6 +39,7 @@ namespace bgfx
 {
 	///
 	void androidSetWindow(::ANativeWindow* _window);
+	void androidSetWindowAndEGLSurface(::ANativeWindow* _window, void* _surface);
 
 } // namespace bgfx
 
@@ -106,7 +107,9 @@ namespace bgfx
 // If SDL.h is included before bgfxplatform.h we can enable SDL window
 // interop convenience code.
 
+#if !defined(_SDL_syswm_h)
 #	include <SDL2/SDL_syswm.h>
+#endif
 
 namespace bgfx
 {
@@ -126,6 +129,8 @@ namespace bgfx
 		osxSetNSWindow(wmi.info.cocoa.window);
 #	elif BX_PLATFORM_WINDOWS
 		winSetHwnd(wmi.info.win.window);
+#	elif BX_PLATFORM_ANDROID
+		androidSetWindowAndEGLSurface(wmi.info.android.window, wmi.info.android.surface);
 #	endif // BX_PLATFORM_
 
 		return true;
