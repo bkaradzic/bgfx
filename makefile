@@ -146,6 +146,9 @@ vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
 .build/projects/vs2013:
 	$(GENIE) --with-tools --with-shared-lib vs2013
 
+.build/projects/vs2015:
+	$(GENIE) --with-tools --with-shared-lib vs2015
+
 .build/projects/gmake-nacl:
 	$(GENIE) --gcc=nacl gmake
 nacl-debug32: .build/projects/gmake-nacl
