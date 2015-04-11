@@ -214,7 +214,7 @@ namespace bgfx { namespace gl
 		{ GL_RG16F,                                    GL_RG,                                       GL_FLOAT,                        false }, // RG16F
 		{ GL_RG32UI,                                   GL_RG,                                       GL_UNSIGNED_INT,                 false }, // RG32
 		{ GL_RG32F,                                    GL_RG,                                       GL_FLOAT,                        false }, // RG32F
-		{ GL_BGRA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
+		{ GL_RGBA,                                     GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
 		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
 		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA16
 		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                   false }, // RGBA16F
@@ -1282,8 +1282,6 @@ namespace bgfx { namespace gl
 					m_readPixelsFmt = GL_BGRA;
 				}
 
-				s_textureFormat[TextureFormat::BGRA8].m_fmt = GL_BGRA;
-
 				// Mixing GLES and GL extensions here. OpenGL EXT_bgra and
 				// APPLE_texture_format_BGRA8888 wants
 				// format to be BGRA but internal format to stay RGBA, but
@@ -1303,7 +1301,7 @@ namespace bgfx { namespace gl
 				if (!isTextureFormatValid(TextureFormat::BGRA8) )
 				{
 					// Revert back to RGBA if texture can't be created.
-					setTextureFormat(TextureFormat::BGRA8, GL_BGRA, GL_BGRA, GL_UNSIGNED_BYTE);
+					setTextureFormat(TextureFormat::BGRA8, GL_RGBA, GL_BGRA, GL_UNSIGNED_BYTE);
 				}
 			}
 
@@ -3320,8 +3318,16 @@ namespace bgfx { namespace gl
 			m_fmt  = tfi.m_fmt;
 			m_type = tfi.m_type;
 
-			const bool compressed = isCompressed(TextureFormat::Enum(_format) );
-			const bool convert = !tfi.m_supported;
+			const bool swizzle = true
+				&& TextureFormat::BGRA8 == m_requestedFormat
+				&& !s_textureFormat[m_requestedFormat].m_supported
+				&& !s_renderGL->m_textureSwizzleSupport
+				;
+			const bool compressed = isCompressed(TextureFormat::Enum(m_requestedFormat) );
+			const bool convert    = false
+				|| (compressed && m_textureFormat != m_requestedFormat)
+				|| swizzle
+				;
 
 			if (convert)
 			{
