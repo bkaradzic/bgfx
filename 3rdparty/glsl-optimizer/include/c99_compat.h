@@ -41,6 +41,11 @@
 #  pragma warning(disable:4345) // warning C4345: behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
 #  pragma warning(disable:4715) // warning C4715: 'write_mask_to_swizzle' : not all control paths return a value
 #  pragma warning(disable:4800) // warning C4800: 'unsigned int' : forcing value to bool 'true' or 'false' (performance warning)
+#  pragma warning(disable:4456) // warning C4456: declaration of 'deref_var' hides previous local declaration
+#  pragma warning(disable:4457) // warning C4457: declaration of 'idx' hides function parameter
+#  pragma warning(disable:4458) // warning C4458: declaration of 'type' hides class member
+#  pragma warning(disable:4018) // warning C4018: '<': signed / unsigned mismatch
+#  pragma warning(disable:4805) // warning C4805: '|=': unsafe mix of type 'GLboolean' and type 'bool' in operation
 
    /*
     * Visual Studio 2012 will complain if we define the `inline` keyword, but
