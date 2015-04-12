@@ -621,7 +621,7 @@ namespace bgfx
 		}
 	}
 
-	const char* s_uniformTypeName[UniformType::Count] =
+	const char* s_uniformTypeName[] =
 	{
 		"int",
 		"float",
@@ -634,9 +634,11 @@ namespace bgfx
 		"mat3",
 		"mat4",
 	};
+	BX_STATIC_ASSERT(UniformType::Count == BX_COUNTOF(s_uniformTypeName) );
 
 	const char* getUniformTypeName(UniformType::Enum _enum)
 	{
+		BX_CHECK(_enum < UniformType::Count, "%d < UniformType::Count %d", _enum, UniformType::Count);
 		return s_uniformTypeName[_enum];
 	}
 
