@@ -61,6 +61,45 @@ extern bool g_verbose;
 #include <bx/hash.h>
 #include "../../src/vertexdecl.h"
 
+class LineReader
+{
+public:
+	LineReader(const char* _str)
+		: m_str(_str)
+		, m_pos(0)
+		, m_size((uint32_t)strlen(_str))
+	{
+	}
+
+	std::string getLine()
+	{
+		const char* str = &m_str[m_pos];
+		skipLine();
+
+		const char* eol = &m_str[m_pos];
+
+		std::string tmp;
+		tmp.assign(str, eol - str);
+		return tmp;
+	}
+
+	bool isEof() const
+	{
+		return m_str[m_pos] == '\0';
+	}
+
+	void skipLine()
+	{
+		const char* str = &m_str[m_pos];
+		const char* nl = bx::strnl(str);
+		m_pos += (uint32_t)(nl - str);
+	}
+
+	const char* m_str;
+	uint32_t m_pos;
+	uint32_t m_size;
+};
+
 struct UniformType
 {
 	enum Enum
@@ -102,7 +141,7 @@ void strreplace(char* _str, const char* _find, const char* _replace);
 int32_t writef(bx::WriterI* _writer, const char* _format, ...);
 void writeFile(const char* _filePath, const void* _data, int32_t _size);
 
-bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer);
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool firstPass = true);
 bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer);
 
 #endif // SHADERC_H_HEADER_GUARD

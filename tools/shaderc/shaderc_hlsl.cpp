@@ -7,6 +7,7 @@
 
 #if SHADERC_CONFIG_HLSL
 
+#include <sstream>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
 
@@ -143,6 +144,8 @@ static uint32_t s_optimizationLevelDx11[4] =
 	D3DCOMPILE_OPTIMIZATION_LEVEL3,
 };
 
+typedef std::vector<std::string> UniformNameList;
+
 bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 {
 	// see reference for magic values: https://msdn.microsoft.com/en-us/library/ff552891(VS.85).aspx
@@ -243,7 +246,7 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 	return true;
 }
 
-bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size)
+bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size, UniformNameList& unusedUniforms)
 {
 	ID3D11ShaderReflection* reflect = NULL;
 	HRESULT hr = D3DReflect(_code->GetBufferPointer()
@@ -355,6 +358,9 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 						}
 						else
 						{
+							if (0 == (varDesc.uFlags & D3D_SVF_USED))
+								unusedUniforms.push_back(varDesc.Name);
+
 							BX_TRACE("\t%s, unknown type", varDesc.Name);
 						}
 					}
@@ -391,7 +397,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 	return true;
 }
 
-bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer)
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool firstPass)
 {
 	BX_TRACE("DX11");
 
@@ -495,8 +501,45 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 	}
 	else
 	{
-		if (!getReflectionDataDx11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size) )
+		UniformNameList unusedUniforms;
+		if (!getReflectionDataDx11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms) )
 			return false;
+
+		if (firstPass && unusedUniforms.size() > 0)
+		{
+			const size_t strLength = strlen("uniform");
+
+			// first time through, we just find unused uniforms and get rid of them
+			std::stringstream output;
+			LineReader reader(_code.c_str());
+			while (!reader.isEof() )
+			{
+				std::string line = reader.getLine();
+				for (UniformNameList::const_iterator it = unusedUniforms.begin(); it != unusedUniforms.end(); ++it)
+				{
+					size_t index = line.find("uniform ");
+					if (index == std::string::npos)
+						continue;
+
+					// matching lines like:  uniform u_name;
+					// we want to replace "uniform" with "static" so that it's no longer
+					// included in the uniform blob that the application must upload
+					// we can't just remove them, because unused functions might still reference
+					// them and cause a compile error when they're gone
+					if (line.find(*it) != std::string::npos)
+					{
+						line = line.replace(index, strLength, "static");
+						unusedUniforms.erase(it);
+						break;
+					}
+				}
+
+				output << line;
+			}
+
+			// recompile with the unused uniforms converted to statics
+			return compileHLSLShader(_cmdLine, _d3d, output.str(), _writer, false);
+		}
 	}
 
 	uint16_t count = (uint16_t)uniforms.size();
