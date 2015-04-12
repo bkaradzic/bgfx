@@ -397,7 +397,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 	return true;
 }
 
-bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool firstPass)
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 {
 	BX_TRACE("DX11");
 
@@ -497,15 +497,20 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 	if (_d3d == 9)
 	{
 		if (!getReflectionDataDx9(code, uniforms) )
+		{
 			return false;
+		}
 	}
 	else
 	{
 		UniformNameList unusedUniforms;
 		if (!getReflectionDataDx11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms) )
+		{
 			return false;
+		}
 
-		if (firstPass && unusedUniforms.size() > 0)
+		if (_firstPass
+		&&  unusedUniforms.size() > 0)
 		{
 			const size_t strLength = strlen("uniform");
 
@@ -629,9 +634,9 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 
 #else
 
-bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer)
+bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 {
-	BX_UNUSED(_cmdLine, _d3d, _code, _writer);
+	BX_UNUSED(_cmdLine, _d3d, _code, _writer, _firstPass);
 	fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
 	return false;
 }
