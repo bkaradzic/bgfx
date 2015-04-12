@@ -196,36 +196,38 @@ draw calls per frame. You can increase this limit by changing
 
 | CPU          | Renderer     | GPU       |Arch/Compiler| OS         | Dim | Calls |
 |:-------------|:-------------|:----------|:-----------:|:----------:|----:|------:|
-| i7-4790K 4.0 | GL2.1        | GTX970    | x64/VS2015  | Windows10  |  47 |103823 |
-| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2015  | Windows10  |  45 | 91125 |
-| i7-4790K 4.0 | DX9          | GTX970    | x64/VS2013  | Windows10  |  40 | 64000 |
+| i7-4770K 4.2 | GL2.1        | 2xGTX780  | x64/VS2013  | Win 8.1    |  51 |132651 |
+| i7-4770K 4.2 | DX11         | 2xGTX780  | x64/VS2013  | Win 8.1    |  50 |125000 |
+| i7-4790K 4.0 | GL2.1        | GTX970    | x64/VS2015  | Win 10     |  47 |103823 |
+| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2015  | Win 10     |  45 | 91125 |
+| i7-4790K 4.0 | DX9          | GTX970    | x64/VS2013  | Win 10     |  40 | 64000 |
 | i5-3570 3.8  | NV 331.49    | GTX560Ti  | x64/GCC     | Linux      |  40 | 64000+|
-| i7-920 2.66  | GL2.1        | GTX650Ti  | x64/VS2008  | Windows7   |  38 | 54872 |
-| i7-920 2.66  | GL2.1        | GTX650Ti  | x86/VS2008  | Windows7   |  38 | 54872 |
+| i7-920 2.66  | GL2.1        | GTX650Ti  | x64/VS2008  | Win 7      |  38 | 54872 |
+| i7-920 2.66  | GL2.1        | GTX650Ti  | x86/VS2008  | Win 7      |  38 | 54872 |
 | i7-920 2.66  | NV 331.113   | GTX650Ti  | x64/GCC     | Linux      |  34 | 39304 |
-| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2013  | Windows10  |  33 | 35937 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x64/GCC     | Windows7   |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x64/VS2008  | Windows7   |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x86/GCC     | Windows7   |  30 | 27000 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x86/VS2008  | Windows7   |  30 | 27000 |
+| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2013  | Win 10     |  33 | 35937 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x64/GCC     | Win 7      |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x64/VS2008  | Win 7      |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x86/GCC     | Win 7      |  30 | 27000 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x86/VS2008  | Win 7      |  30 | 27000 |
 | i5-4250U 1.3 | GL2.1        | HD5000    | x64/Clang   | OSX 10.9   |  28 | 21852 |
 | Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC     | Linux      |  27 | 19683 |
-| i7-2600K 3.4 | DX9          | AMD6800   | x64/VS2012  | Windows7   |  27 | 19683 |
-| i7-2600K 3.4 | GL2.1        | AMD6800   | x64/VS2012  | Windows7   |  26 | 17576 |
+| i7-2600K 3.4 | DX9          | AMD6800   | x64/VS2012  | Win 7      |  27 | 19683 |
+| i7-2600K 3.4 | GL2.1        | AMD6800   | x64/VS2012  | Win 7      |  26 | 17576 |
 | i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | x64/GCC     | SteamOS    |  25 | 15625 |
 | i7-920 2.66  | DX9-Wine     | GTX650Ti  | x64/GCC     | Linux      |  24 | 13824 |
 | i7-4750HQ 2.0| Mesa 10.0.1  | HD5200    | x64/GCC     | Linux      |  22 | 10648 |
 | i7-4750HQ 2.0| Mesa 10.1.3  | HD5200    | x64/GCC     | Linux      |  21 |  9261 |
-| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | x86/VS2008  | Windows7   |  21 |  9261 |
+| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | x86/VS2008  | Win 7      |  21 |  9261 |
 | Q8200 2.33   | Gallium 0.4  | AMD5770   | x64/GCC     | Linux      |  21 |  9261 |
 | i5-4250U 1.3 | ES2          | HD5000    | JIT/Clang   | PNaCl 31   |  21 |  9261 |
 | i5-4250U 1.3 | ES2          | HD5000    | x86/GCC     | NaCl 31    |  20 |  8000 |
 | Q8200 2.33   | Gallium 0.4  | GTX260    | x64/GCC     | Linux      |  19 |  6859 |
 | i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | x64/GCC     | Linux      |  19 |  6859 |
-| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | x86/VS2008  | Windows7   |  18 |  5832 |
+| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | x86/VS2008  | Win 7      |  18 |  5832 |
 | i7-920 2.66  | FF27-GL      | GTX650Ti  | JIT/Clang   | W7-asm.js  |  17 |  4913 |
 | i7-4750HQ 2.0| Mesa 8.0.5   | LLVMPIPE  | x64/GCC     | Linux      |  16 |  4096 |
-| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | x86/VS2008  | Windows7   |  15 |  3375 |
+| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | x86/VS2008  | Win 7      |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | x64/GCC     | NaCl 31    |  15 |  3375 |
 | i7-920 2.66  | ES2          | GTX650Ti  | JIT/Clang   | PNaCl 31   |  15 |  3375 |
 | Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC     | NaCl 31    |  15 |  3375 |
