@@ -7,7 +7,6 @@
 
 #if SHADERC_CONFIG_HLSL
 
-#include <sstream>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
 
@@ -100,12 +99,10 @@ struct UniformRemap
 	uint8_t rows;
 };
 
-static const UniformRemap s_constRemap[7] =
+static const UniformRemap s_uniformRemap[7] =
 {
 	{ UniformType::Uniform1iv,   D3D_SVC_SCALAR,         D3D_SVT_INT,   0, 0 },
 	{ UniformType::Uniform1fv,   D3D_SVC_SCALAR,         D3D_SVT_FLOAT, 0, 0 },
-	{ UniformType::Uniform2fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 0, 0 },
-	{ UniformType::Uniform3fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 0, 0 },
 	{ UniformType::Uniform4fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 0, 0 },
 	{ UniformType::Uniform3x3fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 3 },
 	{ UniformType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 4, 4 },
@@ -113,9 +110,9 @@ static const UniformRemap s_constRemap[7] =
 
 UniformType::Enum findUniformType(const D3D11_SHADER_TYPE_DESC& constDesc)
 {
-	for (uint32_t ii = 0; ii < BX_COUNTOF(s_constRemap); ++ii)
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_uniformRemap); ++ii)
 	{
-		const UniformRemap& remap = s_constRemap[ii];
+		const UniformRemap& remap = s_uniformRemap[ii];
 
 		if (remap.paramClass == constDesc.Class
 		&&  remap.paramType == constDesc.Type)
@@ -306,7 +303,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 		BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
 	}
 
-	for (uint32_t ii = 0; ii < bx::uint32_min(1, desc.ConstantBuffers); ++ii)
+	for (uint32_t ii = 0, num = bx::uint32_min(1, desc.ConstantBuffers); ii < num; ++ii)
 	{
 		ID3D11ShaderReflectionConstantBuffer* cbuffer = reflect->GetConstantBufferByIndex(ii);
 		D3D11_SHADER_BUFFER_DESC bufferDesc;
@@ -515,8 +512,8 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 			const size_t strLength = strlen("uniform");
 
 			// first time through, we just find unused uniforms and get rid of them
-			std::stringstream output;
-			LineReader reader(_code.c_str());
+			std::string output;
+			LineReader reader(_code.c_str() );
 			while (!reader.isEof() )
 			{
 				std::string line = reader.getLine();
@@ -539,11 +536,11 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 					}
 				}
 
-				output << line;
+				output += line;
 			}
 
 			// recompile with the unused uniforms converted to statics
-			return compileHLSLShader(_cmdLine, _d3d, output.str(), _writer, false);
+			return compileHLSLShader(_cmdLine, _d3d, output.c_str(), _writer, false);
 		}
 	}
 
