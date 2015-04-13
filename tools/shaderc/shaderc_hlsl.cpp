@@ -14,6 +14,12 @@
 #	define D3D_SVF_USED 2
 #endif // D3D_SVF_USED
 
+#ifndef IID_ID3D11ShaderReflection
+// In case MinGW is missing IID...
+static const GUID GUID_ID3D11ShaderReflection = { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } };
+#	define IID_ID3D11ShaderReflection GUID_ID3D11ShaderReflection
+#endif // IID_ID3D11ShaderReflection
+
 struct CTHeader
 {
 	uint32_t Size;
@@ -345,7 +351,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 							un.regCount = BX_ALIGN_16(varDesc.Size) / 16;
 							_uniforms.push_back(un);
 
-							BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d"
+							BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
 								, varDesc.Name
 								, varDesc.StartOffset
 								, varDesc.Size
@@ -355,8 +361,10 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 						}
 						else
 						{
-							if (0 == (varDesc.uFlags & D3D_SVF_USED))
+							if (0 == (varDesc.uFlags & D3D_SVF_USED) )
+							{
 								unusedUniforms.push_back(varDesc.Name);
+							}
 
 							BX_TRACE("\t%s, unknown type", varDesc.Name);
 						}
@@ -517,18 +525,21 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 			while (!reader.isEof() )
 			{
 				std::string line = reader.getLine();
-				for (UniformNameList::const_iterator it = unusedUniforms.begin(); it != unusedUniforms.end(); ++it)
+				for (UniformNameList::const_iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
 				{
 					size_t index = line.find("uniform ");
 					if (index == std::string::npos)
+					{
 						continue;
+					}
 
 					// matching lines like:  uniform u_name;
 					// we want to replace "uniform" with "static" so that it's no longer
-					// included in the uniform blob that the application must upload
+					// included in the uniform blob that the application must upload	x
 					// we can't just remove them, because unused functions might still reference
 					// them and cause a compile error when they're gone
-					if (line.find(*it) != std::string::npos)
+					;
+					if (!!bx::findIdentifierMatch(line.c_str(), it->c_str() ) )
 					{
 						line = line.replace(index, strLength, "static");
 						unusedUniforms.erase(it);
