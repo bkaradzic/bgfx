@@ -194,59 +194,59 @@ calls while maintaining 60Hz frame rate. bgfx currently has default limit of 64K
 draw calls per frame. You can increase this limit by changing
 `BGFX_CONFIG_MAX_DRAW_CALLS`.
 
-| CPU          | Renderer     | GPU       |Arch/Compiler| OS         | Dim | Calls |
-|:-------------|:-------------|:----------|:-----------:|:----------:|----:|------:|
-| i7-4770K 4.2 | GL2.1        | 2xGTX780  | x64/VS2013  | Win 8.1    |  51 |132651 |
-| i7-4770K 4.2 | DX11         | 2xGTX780  | x64/VS2013  | Win 8.1    |  50 |125000 |
-| i7-4790K 4.0 | GL2.1        | GTX970    | x64/VS2015  | Win 10     |  47 |103823 |
-| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2015  | Win 10     |  45 | 91125 |
-| i7-4790K 4.0 | DX9          | GTX970    | x64/VS2013  | Win 10     |  40 | 64000 |
-| i5-3570 3.8  | NV 331.49    | GTX560Ti  | x64/GCC     | Linux      |  40 | 64000+|
-| i7-920 2.66  | GL2.1        | GTX650Ti  | x64/VS2008  | Win 7      |  38 | 54872 |
-| i7-920 2.66  | GL2.1        | GTX650Ti  | x86/VS2008  | Win 7      |  38 | 54872 |
-| i7-4790K 4.0 | DX11         | R7 240    | x64/VS2015  | Win 10     |  36 | 46656 |
-| i7-920 2.66  | NV 331.113   | GTX650Ti  | x64/GCC     | Linux      |  34 | 39304 |
-| i7-4790K 4.0 | DX9          | R7 240    | x64/VS2015  | Win 10     |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x64/GCC     | Win 7      |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x64/VS2008  | Win 7      |  32 | 32768 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x86/GCC     | Win 7      |  30 | 27000 |
-| i7-920 2.66  | DX9          | GTX650Ti  | x86/VS2008  | Win 7      |  30 | 27000 |
-| i5-4250U 1.3 | GL2.1        | HD5000    | x64/Clang   | OSX 10.9   |  28 | 21852 |
-| Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC     | Linux      |  27 | 19683 |
-| i7-2600K 3.4 | DX9          | AMD6800   | x64/VS2012  | Win 7      |  27 | 19683 |
-| i7-2600K 3.4 | GL2.1        | AMD6800   | x64/VS2012  | Win 7      |  26 | 17576 |
-| i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | x64/GCC     | SteamOS    |  25 | 15625 |
-| i7-920 2.66  | DX9-Wine     | GTX650Ti  | x64/GCC     | Linux      |  24 | 13824 |
-| i7-4750HQ 2.0| Mesa 10.0.1  | HD5200    | x64/GCC     | Linux      |  22 | 10648 |
-| i7-4750HQ 2.0| Mesa 10.1.3  | HD5200    | x64/GCC     | Linux      |  21 |  9261 |
-| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | x86/VS2008  | Win 7      |  21 |  9261 |
-| Q8200 2.33   | Gallium 0.4  | AMD5770   | x64/GCC     | Linux      |  21 |  9261 |
-| i5-4250U 1.3 | ES2          | HD5000    | JIT/Clang   | PNaCl 31   |  21 |  9261 |
-| i5-4250U 1.3 | ES2          | HD5000    | x86/GCC     | NaCl 31    |  20 |  8000 |
-| Q8200 2.33   | Gallium 0.4  | GTX260    | x64/GCC     | Linux      |  19 |  6859 |
-| i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | x64/GCC     | Linux      |  19 |  6859 |
-| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | x86/VS2008  | Win 7      |  18 |  5832 |
-| i7-920 2.66  | FF27-GL      | GTX650Ti  | JIT/Clang   | W7-asm.js  |  17 |  4913 |
-| i7-4750HQ 2.0| Mesa 8.0.5   | LLVMPIPE  | x64/GCC     | Linux      |  16 |  4096 |
-| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | x86/VS2008  | Win 7      |  15 |  3375 |
-| i7-920 2.66  | ES2          | GTX650Ti  | x64/GCC     | NaCl 31    |  15 |  3375 |
-| i7-920 2.66  | ES2          | GTX650Ti  | JIT/Clang   | PNaCl 31   |  15 |  3375 |
-| Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC     | NaCl 31    |  15 |  3375 |
-| Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC     | PNaCl 31   |  15 |  3375 |
-| '12 Nexus 7  | ES2          | Tegra3    | ARM/GCC     | Android    |  15 |  3375 |
-| i5-4250U 1.3 | ES2-FF27     | HD5000    | JIT/Clang   | OSX-asm.js |  15 |  3375 |
-| i5-4250U 1.3 | Chrome33     | HD5000    | JIT/Clang   | OSX-asm.js |  15 |  3375 |
-| iPad mini 2  | ES2          | PVR G6430 | ARM64/Clang | iOS7       |  15 |  3375 |
-| i7-920 2.66  | Chrome33     | GTX650Ti  | JIT/Clang   | W7-asm.js  |  14 |  2744 |
-| i7-920 2.66  | FF27-ANGLE   | GTX650Ti  | JIT/Clang   | W7-asm.js  |  12 |  2744 |
-| '13 Nexus 10 | ES2          | Mali T604 | ARM/GCC     | Android    |  13 |  2197 |
-| iPhone 5     | ES2          | PVR SGX543| ARM/Clang   | iOS7       |  13 |  2197 |
-| '13 Nexus 7  | ES2          | S4 Pro    | ARM/GCC     | Android    |  12 |  1728 |
-| iPad 2       | ES2          | PVR SGX543| ARM/Clang   | iOS6       |  12 |  1728 |
-| Xperia Z     | ES2          | Adreno320 | ARM/GCC     | Android    |  11 |  1331 |
-| iPod 4       | ES2          | PVR SGX535| ARM/Clang   | iOS6       |   7 |   343 |
-| i7-920 2.66  | ES2-Mali     | GTX650Ti  | x86/VS2008  | Windows7   |   6 |   216 |
-| RaspberryPi  | ES2          | VC IV     | ARM/GCC     | Raspbian   |   6 |   216 |
+| CPU          | Renderer     | GPU       | Arch/Compiler/OS     | Dim | Calls |
+|:-------------|:-------------|:----------|:--------------------:|----:|------:|
+| i7-4770K 4.2 | GL2.1        | 2xGTX780  | x64/VS2013/Win 8.1   |  51 |132651 |
+| i7-4770K 4.2 | DX11         | 2xGTX780  | x64/VS2013/Win 8.1   |  50 |125000 |
+| i7-4790K 4.0 | GL2.1        | GTX970    | x64/VS2015/Win 10    |  47 |103823 |
+| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2015/Win 10    |  45 | 91125 |
+| i7-4790K 4.0 | DX9          | GTX970    | x64/VS2013/Win 10    |  40 | 64000 |
+| i5-3570 3.8  | NV 331.49    | GTX560Ti  | x64/GCC/Linux        |  40 | 64000+|
+| i7-920 2.66  | GL2.1        | GTX650Ti  | x64/VS2008/Win 7     |  38 | 54872 |
+| i7-920 2.66  | GL2.1        | GTX650Ti  | x86/VS2008/Win 7     |  38 | 54872 |
+| i7-4790K 4.0 | DX11         | R7 240    | x64/VS2015/Win 10    |  36 | 46656 |
+| i7-920 2.66  | NV 331.113   | GTX650Ti  | x64/GCC/Linux        |  34 | 39304 |
+| i7-4790K 4.0 | DX9          | R7 240    | x64/VS2015/Win 10    |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x64/GCC/Win 7        |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x64/VS2008/Win 7     |  32 | 32768 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x86/GCC/Win 7        |  30 | 27000 |
+| i7-920 2.66  | DX9          | GTX650Ti  | x86/VS2008/Win 7     |  30 | 27000 |
+| i5-4250U 1.3 | GL2.1        | HD5000    | x64/Clang/OSX 10.9   |  28 | 21852 |
+| Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC/Linux        |  27 | 19683 |
+| i7-2600K 3.4 | DX9          | AMD6800   | x64/VS2012/Win 7     |  27 | 19683 |
+| i7-2600K 3.4 | GL2.1        | AMD6800   | x64/VS2012/Win 7     |  26 | 17576 |
+| i7-4770R 3.2 | Mesa 10.0.1  | HD5200    | x64/GCC/SteamOS      |  25 | 15625 |
+| i7-920 2.66  | DX9-Wine     | GTX650Ti  | x64/GCC/Linux        |  24 | 13824 |
+| i7-4750HQ 2.0| Mesa 10.0.1  | HD5200    | x64/GCC/Linux        |  22 | 10648 |
+| i7-4750HQ 2.0| Mesa 10.1.3  | HD5200    | x64/GCC/Linux        |  21 |  9261 |
+| i7-920 2.66  | ES2-ANGLE    | GTX650Ti  | x86/VS2008/Win 7     |  21 |  9261 |
+| Q8200 2.33   | Gallium 0.4  | AMD5770   | x64/GCC/Linux        |  21 |  9261 |
+| i5-4250U 1.3 | ES2          | HD5000    | JIT/Clang/PNaCl 31   |  21 |  9261 |
+| i5-4250U 1.3 | ES2          | HD5000    | x86/GCC/NaCl 31      |  20 |  8000 |
+| Q8200 2.33   | Gallium 0.4  | GTX260    | x64/GCC/Linux        |  19 |  6859 |
+| i5-2450M 2.5 | Mesa 10.2.0  | HD3000    | x64/GCC/Linux        |  19 |  6859 |
+| i7-920 2.66  | ES2-PowerVR  | GTX650Ti  | x86/VS2008/Win 7     |  18 |  5832 |
+| i7-920 2.66  | FF27-GL      | GTX650Ti  | JIT/Clang/W7-asm.js  |  17 |  4913 |
+| i7-4750HQ 2.0| Mesa 8.0.5   | LLVMPIPE  | x64/GCC/Linux        |  16 |  4096 |
+| i7-920 2.66  | ES2-Qualcomm | GTX650Ti  | x86/VS2008/Win 7     |  15 |  3375 |
+| i7-920 2.66  | ES2          | GTX650Ti  | x64/GCC/NaCl 31      |  15 |  3375 |
+| i7-920 2.66  | ES2          | GTX650Ti  | JIT/Clang/PNaCl 31   |  15 |  3375 |
+| Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC/NaCl 31      |  15 |  3375 |
+| Q8200 2.33   | NV 319.32    | GTX260    | x64/GCC/PNaCl 31     |  15 |  3375 |
+| '12 Nexus 7  | ES2          | Tegra3    | ARM/GCC/Android      |  15 |  3375 |
+| i5-4250U 1.3 | ES2-FF27     | HD5000    | JIT/Clang/OSX-asm.js |  15 |  3375 |
+| i5-4250U 1.3 | Chrome33     | HD5000    | JIT/Clang/OSX-asm.js |  15 |  3375 |
+| iPad mini 2  | ES2          | PVR G6430 | ARM64/Clang/iOS7     |  15 |  3375 |
+| i7-920 2.66  | Chrome33     | GTX650Ti  | JIT/Clang/W7-asm.js  |  14 |  2744 |
+| i7-920 2.66  | FF27-ANGLE   | GTX650Ti  | JIT/Clang/W7-asm.js  |  12 |  2744 |
+| '13 Nexus 10 | ES2          | Mali T604 | ARM/GCC/Android      |  13 |  2197 |
+| iPhone 5     | ES2          | PVR SGX543| ARM/Clang/iOS7       |  13 |  2197 |
+| '13 Nexus 7  | ES2          | S4 Pro    | ARM/GCC/Android      |  12 |  1728 |
+| iPad 2       | ES2          | PVR SGX543| ARM/Clang/iOS6       |  12 |  1728 |
+| Xperia Z     | ES2          | Adreno320 | ARM/GCC/Android      |  11 |  1331 |
+| iPod 4       | ES2          | PVR SGX535| ARM/Clang/iOS6       |   7 |   343 |
+| i7-920 2.66  | ES2-Mali     | GTX650Ti  | x86/VS2008/Windows7  |   6 |   216 |
+| RaspberryPi  | ES2          | VC IV     | ARM/GCC/Raspbian     |   6 |   216 |
 
 To test browsers in 60Hz mode following changes were made:
 
@@ -259,23 +259,23 @@ To test browsers in 60Hz mode following changes were made:
 By default browsers are using vsync, and don't have option to turn it off
 programatically.
 
-| CPU          | Renderer | GPU       |Arch/Compiler| OS           | Dim | Calls |
-|:-------------|:---------|:----------|:-----------:|:------------:|----:|------:|
-| i7-920 2.66  | GL2.1    | GTX650Ti  | x64/VS2008  | Win7         |  38 | 64000+|
-| i5-4250U 1.3 | GL2.1    | HD5000    | x64/Clang   | OSX 10.9     |  36 | 46656 |
-| i5-4250U 1.3 | Chrome34 | HD5000    | JIT/Clang   | OSX-PNaCl 31 |  28 | 21952 |
-| i5-4250U 1.3 | Chrome33 | HD5000    | JIT/Clang   | OSX-PNaCl 31 |  27 | 19683 |
-| i5-4250U 1.3 | FF28     | HD5000    | JIT/Clang   | OSX-asm.js   |  25 | 15625 |
-| i5-4250U 1.3 | FF36     | HD5000    | JIT/Clang   | OSX-asm.js   |  25 | 15625 |
-| i5-4250U 1.3 | Chrome41 | HD5000    | x64/NaCl    | OSX-NaCl 41  |  24 | 13824 |
-| i5-4250U 1.3 | FF37     | HD5000    | JIT/Clang   | OSX-asm.js   |  23 | 12167 |
-| i5-4250U 1.3 | FF27     | HD5000    | JIT/Clang   | OSX-asm.js   |  20 |  8000 |
-| i7-920 2.66  | Chrome33 | GTX650Ti  | JIT/Clang   | W7-PNaCl 31  |  20 |  8000 |
-| i7-920 2.66  | Chrome34 | GTX650Ti  | JIT/Clang   | W7-asm.js    |  18 |  5832 |
-| i7-920 2.66  | Chrome33 | GTX650Ti  | JIT/Clang   | W7-asm.js    |  18 |  5832 |
-| i7-920 2.66  | FF28     | GTX650Ti  | JIT/Clang   | W7-asm.js    |  18 |  5832 |
-| i7-920 2.66  | FF27     | GTX650Ti  | JIT/Clang   | W7-asm.js    |  18 |  5832 |
-| i5-4250U 1.3 | Safari7  | HD5000    | JIT/Clang   | OSX-asm.js   |  15 |  3375 |
+| CPU          | Renderer | GPU       | Arch/Compiler/OS       | Dim | Calls |
+|:-------------|:---------|:----------|:----------------------:|----:|------:|
+| i7-920 2.66  | GL2.1    | GTX650Ti  | x64/VS2008/Win7        |  38 | 64000+|
+| i5-4250U 1.3 | GL2.1    | HD5000    | x64/Clang/OSX 10.9     |  36 | 46656 |
+| i5-4250U 1.3 | Chrome34 | HD5000    | JIT/Clang/OSX-PNaCl 31 |  28 | 21952 |
+| i5-4250U 1.3 | Chrome33 | HD5000    | JIT/Clang/OSX-PNaCl 31 |  27 | 19683 |
+| i5-4250U 1.3 | FF28     | HD5000    | JIT/Clang/OSX-asm.js   |  25 | 15625 |
+| i5-4250U 1.3 | FF36     | HD5000    | JIT/Clang/OSX-asm.js   |  25 | 15625 |
+| i5-4250U 1.3 | Chrome41 | HD5000    | x64/GCC/OSX-NaCl 41    |  24 | 13824 |
+| i5-4250U 1.3 | FF37     | HD5000    | JIT/Clang/OSX-asm.js   |  23 | 12167 |
+| i5-4250U 1.3 | FF27     | HD5000    | JIT/Clang/OSX-asm.js   |  20 |  8000 |
+| i7-920 2.66  | Chrome33 | GTX650Ti  | JIT/Clang/W7-PNaCl 31  |  20 |  8000 |
+| i7-920 2.66  | Chrome34 | GTX650Ti  | JIT/Clang/W7-asm.js    |  18 |  5832 |
+| i7-920 2.66  | Chrome33 | GTX650Ti  | JIT/Clang/W7-asm.js    |  18 |  5832 |
+| i7-920 2.66  | FF28     | GTX650Ti  | JIT/Clang/W7-asm.js    |  18 |  5832 |
+| i7-920 2.66  | FF27     | GTX650Ti  | JIT/Clang/W7-asm.js    |  18 |  5832 |
+| i5-4250U 1.3 | Safari7  | HD5000    | JIT/Clang/OSX-asm.js   |  15 |  3375 |
 
 
  * [JavaScript+WebGL port](https://github.com/djg/webgl-drawstress-js)
