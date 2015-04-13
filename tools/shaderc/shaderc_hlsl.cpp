@@ -535,10 +535,9 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 
 					// matching lines like:  uniform u_name;
 					// we want to replace "uniform" with "static" so that it's no longer
-					// included in the uniform blob that the application must upload	x
+					// included in the uniform blob that the application must upload
 					// we can't just remove them, because unused functions might still reference
 					// them and cause a compile error when they're gone
-					;
 					if (!!bx::findIdentifierMatch(line.c_str(), it->c_str() ) )
 					{
 						line = line.replace(index, strLength, "static");
