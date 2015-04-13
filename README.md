@@ -204,8 +204,9 @@ draw calls per frame. You can increase this limit by changing
 | i5-3570 3.8  | NV 331.49    | GTX560Ti  | x64/GCC     | Linux      |  40 | 64000+|
 | i7-920 2.66  | GL2.1        | GTX650Ti  | x64/VS2008  | Win 7      |  38 | 54872 |
 | i7-920 2.66  | GL2.1        | GTX650Ti  | x86/VS2008  | Win 7      |  38 | 54872 |
+| i7-4790K 4.0 | DX11         | R7 240    | x64/VS2015  | Win 10     |  36 | 46656 |
 | i7-920 2.66  | NV 331.113   | GTX650Ti  | x64/GCC     | Linux      |  34 | 39304 |
-| i7-4790K 4.0 | DX11         | GTX970    | x64/VS2013  | Win 10     |  33 | 35937 |
+| i7-4790K 4.0 | DX9          | R7 240    | x64/VS2015  | Win 10     |  32 | 32768 |
 | i7-920 2.66  | DX9          | GTX650Ti  | x64/GCC     | Win 7      |  32 | 32768 |
 | i7-920 2.66  | DX9          | GTX650Ti  | x64/VS2008  | Win 7      |  32 | 32768 |
 | i7-920 2.66  | DX9          | GTX650Ti  | x86/GCC     | Win 7      |  30 | 27000 |
