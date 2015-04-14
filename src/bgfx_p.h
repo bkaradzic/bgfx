@@ -1936,7 +1936,10 @@ namespace bgfx
 				if (BackbufferRatio::None != textureRef.m_bbRatio)
 				{
 					TextureHandle handle = { textureIdx };
-					resizeTexture(handle, uint16_t(m_resolution.m_width), uint16_t(m_resolution.m_height) );
+					resizeTexture(handle
+						, uint16_t(m_resolution.m_width)
+						, uint16_t(m_resolution.m_height)
+						);
 				}
 			}
 		}
