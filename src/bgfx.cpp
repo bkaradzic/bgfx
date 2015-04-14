@@ -1830,6 +1830,21 @@ again:
 				}
 				break;
 
+			case CommandBuffer::ResizeTexture:
+				{
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					uint16_t width;
+					_cmdbuf.read(width);
+
+					uint16_t height;
+					_cmdbuf.read(height);
+
+					m_renderCtx->resizeTexture(handle, width, height);
+				}
+				break;
+
 			case CommandBuffer::DestroyTexture:
 				{
 					TextureHandle handle;
@@ -2412,10 +2427,28 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createTexture(_mem, _flags, _skip, _info);
+		return s_ctx->createTexture(_mem, _flags, _skip, _info, BackbufferRatio::None);
 	}
 
-	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
+	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height)
+	{
+		switch (_ratio)
+		{
+		case BackbufferRatio::Half:      _width /=  2; _height /=  2; break;
+		case BackbufferRatio::Quarter:   _width /=  4; _height /=  4; break;
+		case BackbufferRatio::Eighth:    _width /=  8; _height /=  8; break;
+		case BackbufferRatio::Sixteenth: _width /= 16; _height /= 16; break;
+		case BackbufferRatio::Double:    _width *=  2; _height *=  2; break;
+
+		default:
+			break;
+		}
+
+		_width  = bx::uint16_max(1, _width);
+		_height = bx::uint16_max(1, _height);
+	}
+
+	TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
@@ -2440,19 +2473,36 @@ again:
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
 		bx::write(&writer, magic);
 
+		if (BackbufferRatio::None != _ratio)
+		{
+			_width  = uint16_t(s_ctx->m_frame->m_resolution.m_width);
+			_height = uint16_t(s_ctx->m_frame->m_resolution.m_height);
+			getTextureSizeFromRatio(_ratio, _width, _height);
+		}
+
 		TextureCreate tc;
-		tc.m_flags = _flags;
-		tc.m_width = _width;
-		tc.m_height = _height;
-		tc.m_sides = 0;
-		tc.m_depth = 0;
+		tc.m_flags   = _flags;
+		tc.m_width   = _width;
+		tc.m_height  = _height;
+		tc.m_sides   = 0;
+		tc.m_depth   = 0;
 		tc.m_numMips = _numMips;
-		tc.m_format = uint8_t(_format);
+		tc.m_format  = uint8_t(_format);
 		tc.m_cubeMap = false;
-		tc.m_mem = _mem;
+		tc.m_mem     = _mem;
 		bx::write(&writer, tc);
 
-		return s_ctx->createTexture(mem, _flags, 0, NULL);
+		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio);
+	}
+
+	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
+	{
+		return createTexture2D(BackbufferRatio::None, _width, _height, _numMips, _format, _flags, _mem);
+	}
+
+	TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags)
+	{
+		return createTexture2D(_ratio, 0, 0, _numMips, _format, _flags, NULL);
 	}
 
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
@@ -2493,7 +2543,7 @@ again:
 		tc.m_mem = _mem;
 		bx::write(&writer, tc);
 
-		return s_ctx->createTexture(mem, _flags, 0, NULL);
+		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::None);
 	}
 
 	TextureHandle createTextureCube(uint16_t _size, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
@@ -2533,7 +2583,7 @@ again:
 		tc.m_mem     = _mem;
 		bx::write(&writer, tc);
 
-		return s_ctx->createTexture(mem, _flags, 0, NULL);
+		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::None);
 	}
 
 	void destroyTexture(TextureHandle _handle)
@@ -2593,6 +2643,13 @@ again:
 	{
 		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
 		TextureHandle th = createTexture2D(_width, _height, 1, _format, _textureFlags);
+		return createFrameBuffer(1, &th, true);
+	}
+
+	FrameBufferHandle createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint32_t _textureFlags)
+	{
+		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
+		TextureHandle th = createTexture2D(_ratio, 1, _format, _textureFlags);
 		return createFrameBuffer(1, &th, true);
 	}
 

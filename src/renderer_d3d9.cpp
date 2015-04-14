@@ -774,6 +774,13 @@ namespace bgfx { namespace d3d9
 			m_updateTexture = NULL;
 		}
 
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
+		{
+			TextureD3D9& texture = m_textures[_handle.idx];
+			texture.m_width  = _width;
+			texture.m_height = _height;
+		}
+
 		void destroyTexture(TextureHandle _handle) BX_OVERRIDE
 		{
 			m_textures[_handle.idx].destroy();

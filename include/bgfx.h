@@ -189,6 +189,20 @@ namespace bgfx
 		};
 	};
 
+	struct BackbufferRatio
+	{
+		enum Enum
+		{
+			None,
+			Equal,
+			Half,
+			Quarter,
+			Eighth,
+			Sixteenth,
+			Double,
+		};
+	};
+
 	static const uint16_t invalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle);
@@ -318,10 +332,9 @@ namespace bgfx
 		uint16_t maxTextureSize;   ///< Maximum texture size.
 		uint16_t maxViews;         ///< Maximum views.
 		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
-		uint8_t  numGPUs; ///<
-
-		uint16_t vendorId; ///<
-		uint16_t deviceId; ///<
+		uint8_t  numGPUs;          ///< Number of enumerated GPUs.
+		uint16_t vendorId;         ///< Selected GPU vendor id.
+		uint16_t deviceId;         ///< Selected GPU device id.
 
 		struct GPU
 		{
@@ -329,7 +342,7 @@ namespace bgfx
 			uint16_t deviceId;
 		};
 
-		GPU gpu[4];      ///<
+		GPU gpu[4]; ///< Enumerated GPUs.
 
 		/// Supported texture formats.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
@@ -549,16 +562,19 @@ namespace bgfx
 	///
 	void shutdown();
 
-	/// Reset graphic settings.
+	/// Reset graphic settings and back-buffer size.
 	///
-	/// @param _width Main window width.
-	/// @param _height Main window height.
+	/// @param _width Back-buffer width.
+	/// @param _height Back-buffer height.
 	/// @param _flags
 	///   - `BGFX_RESET_NONE` - No reset flags.
 	///   - `BGFX_RESET_FULLSCREEN` - Not supported yet.
 	///   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.
 	///   - `BGFX_RESET_VSYNC` - Enable V-Sync.
 	///   - `BGFX_RESET_CAPTURE` - Begin screen capture.
+	///
+	/// @attention This call doesn't actually change window size, it just
+	///   resizes back-buffer. Windowing code has to change window size.
 	///
 	/// @attention C99 equivalent is `bgfx_reset`.
 	///
@@ -917,6 +933,9 @@ namespace bgfx
 	///
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
+	///
+	TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE);
+
 	/// Create 3D texture.
 	///
 	/// @param _width
@@ -1012,6 +1031,9 @@ namespace bgfx
 	/// @param _textureFlags Texture flags.
 	///
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
+
+	///
+	FrameBufferHandle createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
 
 	/// Create frame buffer.
 	///

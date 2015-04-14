@@ -305,6 +305,7 @@ namespace bgfx
 	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
+	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
 
 	inline uint32_t castfu(float _value)
 	{
@@ -568,6 +569,7 @@ namespace bgfx
 			CreateProgram,
 			CreateTexture,
 			UpdateTexture,
+			ResizeTexture,
 			CreateFrameBuffer,
 			CreateUniform,
 			UpdateViewName,
@@ -1849,6 +1851,7 @@ namespace bgfx
 		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
 		virtual void updateTextureEnd() = 0;
+		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) = 0;
@@ -1925,6 +1928,17 @@ namespace bgfx
 			m_resolution.m_flags  = _flags;
 
 			memset(m_fb, 0xff, sizeof(m_fb) );
+
+			for (uint16_t ii = 0, num = m_textureHandle.getNumHandles(); ii < num; ++ii)
+			{
+				uint16_t textureIdx = m_textureHandle.getHandleAt(ii);
+				const TextureRef& textureRef = m_textureRef[textureIdx];
+				if (BackbufferRatio::None != textureRef.m_bbRatio)
+				{
+					TextureHandle handle = { textureIdx };
+					resizeTexture(handle, uint16_t(m_resolution.m_width), uint16_t(m_resolution.m_height) );
+				}
+			}
 		}
 
 		BGFX_API_FUNC(void setDebug(uint32_t _debug) )
@@ -2723,7 +2737,7 @@ namespace bgfx
 			}
 		}
 
-		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info) )
+		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info, BackbufferRatio::Enum _ratio) )
 		{
 			TextureInfo ti;
 			if (NULL == _info)
@@ -2761,6 +2775,7 @@ namespace bgfx
 			{
 				TextureRef& ref = m_textureRef[handle.idx];
 				ref.m_refCount = 1;
+				ref.m_bbRatio  = uint8_t(_ratio);
 				ref.m_format   = uint8_t(_info->format);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
@@ -2784,6 +2799,26 @@ namespace bgfx
 			}
 
 			textureDecRef(_handle);
+		}
+
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height)
+		{
+			const TextureRef& textureRef = m_textureRef[_handle.idx];
+			BX_CHECK(BackbufferRatio::None != textureRef.m_bbRatio, "");
+
+			getTextureSizeFromRatio(BackbufferRatio::Enum(textureRef.m_bbRatio), _width, _height);
+
+			BX_TRACE("Resize %3d: %4dx%d %s"
+				, _handle.idx
+				, _width
+				, _height
+				, getName(TextureFormat::Enum(textureRef.m_format) )
+				);
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ResizeTexture);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_width);
+			cmdbuf.write(_height);
 		}
 
 		void textureIncRef(TextureHandle _handle)
@@ -3437,6 +3472,7 @@ namespace bgfx
 		struct TextureRef
 		{
 			int16_t m_refCount;
+			uint8_t m_bbRatio;
 			uint8_t m_format;
 		};
 
