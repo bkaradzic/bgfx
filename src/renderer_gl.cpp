@@ -1948,8 +1948,7 @@ namespace bgfx { namespace gl
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 				{
-					FrameBufferGL& frameBuffer = m_frameBuffers[ii];
-					frameBuffer.postReset();
+					m_frameBuffers[ii].postReset();
 				}
 
 				ovrPreReset();
@@ -4273,11 +4272,10 @@ namespace bgfx { namespace gl
 	void FrameBufferGL::create(uint8_t _num, const TextureHandle* _handles)
 	{
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
-		for (uint32_t ii = 0; ii < _num; ++ii)
-		{
-			m_th[ii] = _handles[ii];
-		}
+
 		m_numTh = _num;
+		memcpy(m_th, _handles, _num*sizeof(TextureHandle) );
+
 		postReset();
 	}
 
