@@ -1162,6 +1162,12 @@ namespace bgfx
 
 #if !BGFX_CONFIG_MULTITHREADED
 		renderFrame();
+		if (m_resolution.m_flags & BGFX_RESET_HMD)
+		{
+			// Update the current frame with the current HMD pose. This must be done after rendering
+			// because the pose is only updated after rendering finishes for the previous frame.
+			m_renderCtx->getHMDPose(&m_submit->m_hmd);
+		}
 #endif // BGFX_CONFIG_MULTITHREADED
 	}
 
@@ -1192,7 +1198,17 @@ namespace bgfx
 
 		m_frames++;
 		m_submit->start();
-
+#if BGFX_CONFIG_MULTITHREADED
+		// We need to get HMD pose for the next frame here, but the renderer is just starting the previous
+		// frame and so the only pose available is for the previous frame. We can still use it but this
+		// introduces extra latency which is likely to make users sick!
+		// In non-multithreaded mode we can wait to update the HMD pose until after the previous frame
+		// finishes rendering.
+		if (m_rendererInitialized && m_resolution.m_flags & BGFX_RESET_HMD)
+		{
+			m_renderCtx->getHMDPose(&m_submit->m_hmd);
+		}
+#endif
 		memset(m_seq, 0, sizeof(m_seq) );
 		freeAllHandles(m_submit);
 

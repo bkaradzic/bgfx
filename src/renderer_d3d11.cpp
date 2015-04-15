@@ -1333,6 +1333,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 		}
 
+		void getHMDPose(HMD *hmd)
+		{
+			if (m_ovr.isEnabled() || m_ovr.isDebug())
+			{
+				m_ovr.getEyePose(*hmd);
+			}
+		}
+
 		void invalidateCache()
 		{
 			m_inputLayoutCache.invalidate();
@@ -3204,12 +3212,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
-
-		if (hmdEnabled)
-		{
-			HMD& hmd = _render->m_hmd;
-			m_ovr.getEyePose(hmd);
-		}
 
 		ViewState viewState(_render, hmdEnabled);
 

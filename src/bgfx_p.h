@@ -1865,6 +1865,7 @@ namespace bgfx
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
 		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
+		virtual void getHMDPose(HMD *hmd) = 0;
 	};
 
 	inline RendererContextI::~RendererContextI()
@@ -1928,7 +1929,18 @@ namespace bgfx
 			m_resolution.m_height = bx::uint32_max(1, _height);
 			m_resolution.m_flags  = _flags;
 
+			if ((_flags & BGFX_RESET_HMD) && !(_flags & BGFX_RESET_FLIP_AFTER_RENDER))
+			{
+				BX_WARN(false, "Automatically enabling BGFX_RESET_FLIP_AFTER_RENDER to reduce latency when BGFX_RESET_HMD is enabled.");
+				_flags |= BGFX_RESET_FLIP_AFTER_RENDER;
+			}
 			m_flipAfterRender = !!(_flags & BGFX_RESET_FLIP_AFTER_RENDER);
+
+#if BGFX_CONFIG_MULTITHREADED
+			if (_flags & BGFX_RESET_HMD) {
+				BX_WARN(false, "Multithreaded mode introduces 1 extra frame of latency. For HMD mode please #define BGFX_CONFIG_MULTITHREADED 0 to avoid making your users sick.")
+			}
+#endif
 
 			memset(m_fb, 0xff, sizeof(m_fb) );
 

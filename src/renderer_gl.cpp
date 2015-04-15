@@ -1616,6 +1616,13 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		void getHMDPose(HMD *hmd)
+		{
+			if (m_ovr.isEnabled() || m_ovr.isDebug()) {
+				m_ovr.getEyePose(*hmd);
+			}
+		}
+
 		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
@@ -4552,12 +4559,6 @@ namespace bgfx { namespace gl
 
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
-
-		if (hmdEnabled)
-		{
-			HMD& hmd = _render->m_hmd;
-			m_ovr.getEyePose(hmd);
-		}
 
 		ViewState viewState(_render, hmdEnabled);
 

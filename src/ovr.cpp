@@ -241,24 +241,16 @@ ovrError:
 	{
 		if (NULL != m_hmd)
 		{
-			ovrEyeType eye[2] = { ovrEye_Left, ovrEye_Right };
 			for (int ii = 0; ii < 2; ++ii)
 			{
-				ovrPosef& pose = m_pose[ii];
-#if OVR_VERSION > OVR_VERSION_042
-				pose = ovrHmd_GetHmdPosePerEye(m_hmd, eye[ii]);
-#else
-				pose = ovrHmd_GetEyePose(m_hmd, eye[ii]);
-#endif // OVR_VERSION > OVR_VERSION_042
-
 				HMD::Eye& eye = _hmd.eye[ii];
-				eye.rotation[0] = pose.Orientation.x;
-				eye.rotation[1] = pose.Orientation.y;
-				eye.rotation[2] = pose.Orientation.z;
-				eye.rotation[3] = pose.Orientation.w;
-				eye.translation[0] = pose.Position.x;
-				eye.translation[1] = pose.Position.y;
-				eye.translation[2] = pose.Position.z;
+				eye.rotation[0] = m_pose[ii].Orientation.x;
+				eye.rotation[1] = m_pose[ii].Orientation.y;
+				eye.rotation[2] = m_pose[ii].Orientation.z;
+				eye.rotation[3] = m_pose[ii].Orientation.w;
+				eye.translation[0] = m_pose[ii].Position.x;
+				eye.translation[1] = m_pose[ii].Position.y;
+				eye.translation[2] = m_pose[ii].Position.z;
 
 				const ovrEyeRenderDesc& erd = m_erd[ii];
 				eye.fov[0] = erd.Fov.UpTan;

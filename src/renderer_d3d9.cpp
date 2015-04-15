@@ -1194,6 +1194,11 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
+		void getHMDPose(HMD *)
+		{
+			BX_WARN(false, "D3D9 renderer does not support HMDs.");
+		}
+
 		void preReset()
 		{
 			invalidateSamplerState();
