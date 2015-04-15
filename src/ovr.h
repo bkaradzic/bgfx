@@ -25,27 +25,21 @@
 #		include <OVR_CAPI.h>
 #	endif // OVR_VERSION < OVR_VERSION_050
 
-#	if BGFX_CONFIG_RENDERER_DIRECT3D9
-#		define OVR_D3D_VERSION 9
-#		if OVR_VERSION < OVR_VERSION_050
-#			include <OVR_D3D.h>
-#		else
-#			include <OVR_CAPI_D3D.h>
-#		endif
-#	endif // BGFX_CONFIG_RENDERER_DIRECT3D9
-
 #	if BGFX_CONFIG_RENDERER_DIRECT3D11
-#		ifdef OVR_CAPI_D3D_h
-#			undef OVR_CAPI_D3D_h
-#			undef OVR_D3D_VERSION
-#		endif // OVR_CAPI_D3D_h
 #		define OVR_D3D_VERSION 11
 #		if OVR_VERSION < OVR_VERSION_050
 #			include <OVR_D3D.h>
 #		else
 #			include <OVR_CAPI_D3D.h>
 #		endif
-#	endif // BGFX_CONFIG_RENDERER_DIRECT3D11
+#	elif BGFX_CONFIG_RENDERER_DIRECT3D9
+#		define OVR_D3D_VERSION 9
+#		if OVR_VERSION < OVR_VERSION_050
+#			include <OVR_D3D.h>
+#		else
+#			include <OVR_CAPI_D3D.h>
+#		endif
+#	endif // BGFX_CONFIG_RENDERER_DIRECT3D
 
 #	if BGFX_CONFIG_RENDERER_OPENGL
 #		if OVR_VERSION < OVR_VERSION_050
