@@ -1206,7 +1206,7 @@ namespace bgfx
 	bool Context::renderFrame()
 	{
 		if (m_rendererInitialized
-		&&  !m_flipAfterSubmit)
+		&&  !m_flipAfterRender)
 		{
 			m_renderCtx->flip();
 		}
@@ -1223,7 +1223,7 @@ namespace bgfx
 		renderSemPost();
 
 		if (m_rendererInitialized
-		&&  m_flipAfterSubmit)
+		&&  m_flipAfterRender)
 		{
 			m_renderCtx->flip();
 		}

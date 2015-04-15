@@ -124,7 +124,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			||  setOrToggle(s_reset, "hmddbg",      BGFX_RESET_HMD_DEBUG,         1, _argc, _argv)
 			||  setOrToggle(s_reset, "hmdrecenter", BGFX_RESET_HMD_RECENTER,      1, _argc, _argv)
 			||  setOrToggle(s_reset, "msaa",        BGFX_RESET_MSAA_X16,          1, _argc, _argv)
-			||  setOrToggle(s_reset, "flip",        BGFX_RESET_FLIP_AFTER_SUBMIT, 1, _argc, _argv)
+			||  setOrToggle(s_reset, "flip",        BGFX_RESET_FLIP_AFTER_RENDER, 1, _argc, _argv)
 			   )
 			{
 				return 0;

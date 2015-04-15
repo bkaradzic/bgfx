@@ -1893,7 +1893,7 @@ namespace bgfx
 			, m_renderCtx(NULL)
 			, m_rendererInitialized(false)
 			, m_exit(false)
-			, m_flipAfterSubmit(false)
+			, m_flipAfterRender(false)
 		{
 		}
 
@@ -1928,7 +1928,7 @@ namespace bgfx
 			m_resolution.m_height = bx::uint32_max(1, _height);
 			m_resolution.m_flags  = _flags;
 
-			m_flipAfterSubmit = !!(_flags & BGFX_RESET_FLIP_AFTER_SUBMIT);
+			m_flipAfterRender = !!(_flags & BGFX_RESET_FLIP_AFTER_RENDER);
 
 			memset(m_fb, 0xff, sizeof(m_fb) );
 
@@ -2884,6 +2884,7 @@ namespace bgfx
 					TextureHandle texHandle = _handles[ii];
 					BGFX_CHECK_HANDLE("createFrameBuffer texture handle", m_textureHandle, texHandle);
 					BX_CHECK(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
+					BX_UNUSED(bbRatio);
 
 					cmdbuf.write(texHandle);
 
@@ -3530,7 +3531,7 @@ namespace bgfx
 
 		bool m_rendererInitialized;
 		bool m_exit;
-		bool m_flipAfterSubmit;
+		bool m_flipAfterRender;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);
