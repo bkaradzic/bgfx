@@ -1970,7 +1970,7 @@ namespace bgfx { namespace d3d9
 		for (uint8_t ii = 0; ii < _numInstanceData; ++ii)
 		{
 			memcpy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
-			elem->UsageIndex = uint8_t(8-_numInstanceData+ii);
+			elem->UsageIndex = uint8_t(7-ii); // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
 			elem->Offset = ii*16;
 			++elem;
 		}
