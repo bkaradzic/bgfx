@@ -1190,6 +1190,8 @@ namespace bgfx
 		m_render = m_submit;
 		m_submit = temp;
 
+		memcpy(&m_submit->m_hmd, &m_render->m_hmd, sizeof(HMD) );
+
 		m_frames++;
 		m_submit->start();
 
@@ -1205,7 +1207,8 @@ namespace bgfx
 
 	bool Context::renderFrame()
 	{
-		if (m_rendererInitialized)
+		if (m_rendererInitialized
+		&&  !m_flipAfterSubmit)
 		{
 			m_renderCtx->flip();
 		}
@@ -1220,6 +1223,12 @@ namespace bgfx
 		rendererExecCommands(m_render->m_cmdPost);
 
 		renderSemPost();
+
+		if (m_rendererInitialized
+		&&  m_flipAfterSubmit)
+		{
+			m_renderCtx->flip();
+		}
 
 		return m_exit;
 	}

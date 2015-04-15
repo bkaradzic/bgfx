@@ -1893,6 +1893,7 @@ namespace bgfx
 			, m_renderCtx(NULL)
 			, m_rendererInitialized(false)
 			, m_exit(false)
+			, m_flipAfterSubmit(false)
 		{
 		}
 
@@ -1926,6 +1927,8 @@ namespace bgfx
 			m_resolution.m_width  = bx::uint32_max(1, _width);
 			m_resolution.m_height = bx::uint32_max(1, _height);
 			m_resolution.m_flags  = _flags;
+
+			m_flipAfterSubmit = !!(_flags & BGFX_RESET_FLIP_AFTER_SUBMIT);
 
 			memset(m_fb, 0xff, sizeof(m_fb) );
 
@@ -3527,6 +3530,7 @@ namespace bgfx
 
 		bool m_rendererInitialized;
 		bool m_exit;
+		bool m_flipAfterSubmit;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);
