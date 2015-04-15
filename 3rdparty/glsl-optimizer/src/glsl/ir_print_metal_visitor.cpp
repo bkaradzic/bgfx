@@ -375,7 +375,7 @@ void ir_print_metal_visitor::newline_deindent()
 
 void ir_print_metal_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+    uintptr_t id = (uintptr_t)hash_table_find (globals->var_hash, v);
 	if (!id && v->data.mode == ir_var_temporary)
 	{
         id = ++globals->var_counter;
@@ -544,14 +544,14 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
 	{
-		long id = (long)hash_table_find (globals->var_hash, ir);
+		uintptr_t id = (uintptr_t)hash_table_find (globals->var_hash, ir);
 		if (id == 0)
 		{
 			id = ++globals->var_counter;
 			hash_table_insert (globals->var_hash, (void*)id, ir);
 		}
 	}
-	
+
 	// auto/temp variables in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone && (ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary))
 	{
@@ -955,14 +955,14 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 		arg_prec = ir->operands[1]->get_precision();
 		op0cast = ir->operands[0] && is_different_precision(arg_prec, ir->operands[0]->get_precision());
 	}
-	
+
 	const bool rescast = is_different_precision(arg_prec, res_prec) && !ir->type->is_boolean();
 	if (rescast)
 	{
 		buffer.asprintf_append ("(");
 		print_cast (buffer, res_prec, ir);
 	}
-	
+
 	if (ir->get_num_operands() == 1)
 	{
 		if (op0cast)
@@ -990,7 +990,7 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	else if (ir->operation == ir_binop_vector_extract)
 	{
 		// a[b]
-		
+
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
 		buffer.asprintf_append ("[");
@@ -1007,7 +1007,7 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			buffer.asprintf_append ("(");
 		}
 		buffer.asprintf_append ("%s (", operator_glsl_strs[ir->operation]);
-		
+
 		if (ir->operands[0])
 		{
 			if (op0cast)
@@ -1071,13 +1071,13 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 		}
 		buffer.asprintf_append (")");
 	}
-	
+
 	if (rescast)
 	{
 		buffer.asprintf_append (")");
 	}
-	
-	
+
+
 	newline_deindent();
 	--this->expression_depth;
 }
@@ -1145,7 +1145,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	if (is_shadow)
 		sampler_uv_dim += 1;
 	const bool is_proj = (uv_dim > sampler_uv_dim);
-	
+
 	// texture name & call to sample
 	ir->sampler->accept(this);
 	if (is_shadow)
@@ -1175,7 +1175,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		ir->lod_info.bias->accept(this);
 		buffer.asprintf_append (")");
 	}
-	
+
 	// lod
 	if (ir->op == ir_txl)
 	{
@@ -1183,7 +1183,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		ir->lod_info.lod->accept(this);
 		buffer.asprintf_append (")");
 	}
-	
+
 	// grad
 	if (ir->op == ir_txd)
 	{
@@ -1202,7 +1202,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		ir->lod_info.grad.dPdy->accept(this);
 		buffer.asprintf_append ("))");
 	}
-	
+
 	//@TODO: texelFetch
 	//@TODO: projected
 	//@TODO: shadowmaps
@@ -1231,7 +1231,7 @@ void ir_print_metal_visitor::visit(ir_swizzle *ir)
 	}
 
 	ir->val->accept(this);
-	
+
 	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
 	{
 		if (ir->mask.num_components != 1)
@@ -1311,11 +1311,11 @@ void ir_print_metal_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalu
 			dstIndex->accept(this);
 			buffer.asprintf_append ("]");
 		}
-		
+
 		if (lhsType->matrix_columns <= 1 && lhsType->vector_elements > 1)
 			lhsType = glsl_type::get_instance(lhsType->base_type, 1, 1);
 	}
-	
+
 	char mask[5];
 	unsigned j = 0;
 	const glsl_type* rhsType = rhs->type;
@@ -1336,11 +1336,11 @@ void ir_print_metal_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalu
 		buffer.asprintf_append (".%s", mask);
 		hasWriteMask = true;
 	}
-	
+
 	buffer.asprintf_append (" = ");
-	
+
 	const bool typeMismatch = !dstIndex && (lhsType != rhsType);
-	
+
 	const bool precMismatch = is_different_precision (lhs->get_precision(), rhs->get_precision());
 	const bool addSwizzle = hasWriteMask && typeMismatch;
 	if (typeMismatch || precMismatch)
@@ -1369,9 +1369,9 @@ void ir_print_metal_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalu
 		}
 		buffer.asprintf_append ("(");
 	}
-	
+
 	rhs->accept(this);
-	
+
 	if (typeMismatch || precMismatch)
 	{
 		buffer.asprintf_append (")");
@@ -1421,11 +1421,11 @@ static bool try_print_increment (ir_print_metal_visitor* vis, ir_assignment* ir)
 	// print variable name
 	const bool prev_lhs_flag = vis->inside_lhs;
 	vis->inside_lhs = true;
-	
+
 	ir->lhs->accept (vis);
-	
+
 	vis->inside_lhs = prev_lhs_flag;
-	
+
 
 	// print ++ or +=const
 	if (ir->lhs->type->base_type <= GLSL_TYPE_INT && rhsConst->is_one())
@@ -1708,7 +1708,7 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 
 	if (!can_emit_canonical_for(ls))
 		return false;
-	
+
 	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 

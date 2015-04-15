@@ -219,7 +219,7 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // RG32
 		{ D3DFMT_G32R32F       }, // RG32F
 		{ D3DFMT_A8R8G8B8      }, // BGRA8
-		{ D3DFMT_A8R8G8B8      }, // RGBA8
+		{ D3DFMT_UNKNOWN       }, // RGBA8
 		{ D3DFMT_A16B16G16R16  }, // RGBA16
 		{ D3DFMT_A16B16G16R16F }, // RGBA16F
 		{ D3DFMT_UNKNOWN       }, // RGBA32
@@ -772,6 +772,13 @@ namespace bgfx { namespace d3d9
 		{
 			m_updateTexture->updateEnd();
 			m_updateTexture = NULL;
+		}
+
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
+		{
+			TextureD3D9& texture = m_textures[_handle.idx];
+			texture.m_width  = _width;
+			texture.m_height = _height;
 		}
 
 		void destroyTexture(TextureHandle _handle) BX_OVERRIDE

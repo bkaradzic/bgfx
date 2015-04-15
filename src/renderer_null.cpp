@@ -113,6 +113,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/) BX_OVERRIDE
+		{
+		}
+
 		void destroyTexture(TextureHandle /*_handle*/) BX_OVERRIDE
 		{
 		}

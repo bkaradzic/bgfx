@@ -2126,9 +2126,32 @@ namespace bgfx
 			imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
 			break;
 
+		case TextureFormat::BGRA8:
+			memcpy(_dst, _src, _pitch*_height);
+			break;
+
 		default:
 			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
 			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+			break;
+		}
+	}
+
+	void imageDecodeToRgba8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint32_t _pitch, uint8_t _type)
+	{
+		switch (_type)
+		{
+		case TextureFormat::RGBA8:
+			memcpy(_dst, _src, _pitch*_height);
+			break;
+
+		case TextureFormat::BGRA8:
+			imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+			break;
+
+		default:
+			imageDecodeToBgra8(_dst, _src, _width, _height, _pitch, _type);
+			imageSwizzleBgra8(_width, _height, _pitch, _dst, _dst);
 			break;
 		}
 	}

@@ -27,6 +27,7 @@ all:
 	$(GENIE) --with-tools --with-shared-lib vs2010
 	$(GENIE) --with-tools --with-shared-lib vs2012
 	$(GENIE) --with-tools --with-shared-lib vs2013
+	$(GENIE) --with-tools --with-shared-lib vs2015
 	$(GENIE) --with-tools --with-shared-lib --gcc=mingw-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=linux-gcc gmake
 	$(GENIE) --with-tools --with-shared-lib --gcc=osx gmake
@@ -127,13 +128,13 @@ mingw-clang: mingw-clang-debug32 mingw-clang-release32 mingw-clang-debug64 mingw
 
 .build/projects/vs2008:
 	$(GENIE) --with-tools --with-shared-lib vs2008
-vs2008-debug32:
+vs2008-debug32: .build/projects/vs2008
 	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|Win32"
-vs2008-release32:
+vs2008-release32: .build/projects/vs2008
 	devenv .build/projects/vs2008/bgfx.sln /Build "Release|Win32"
-vs2008-debug64:
+vs2008-debug64: .build/projects/vs2008
 	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|x64"
-vs2008-release64:
+vs2008-release64: .build/projects/vs2008
 	devenv .build/projects/vs2008/bgfx.sln /Build "Release|x64"
 vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
 
@@ -145,6 +146,9 @@ vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64
 
 .build/projects/vs2013:
 	$(GENIE) --with-tools --with-shared-lib vs2013
+
+.build/projects/vs2015:
+	$(GENIE) --with-tools --with-shared-lib vs2015
 
 .build/projects/gmake-nacl:
 	$(GENIE) --gcc=nacl gmake

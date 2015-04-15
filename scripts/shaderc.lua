@@ -14,6 +14,11 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src"),
 	}
 
+	removeflags {
+		-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
+		"OptimizeSpeed",
+	}
+
 	configuration { "vs*" }
 		includedirs {
 			path.join(GLSL_OPTIMIZER, "src/glsl/msvc"),
@@ -58,7 +63,6 @@ project "shaderc"
 
 	configuration { "windows" }
 		links {
-			"d3dx9",
 			"d3dcompiler",
 			"dxguid",
 		}

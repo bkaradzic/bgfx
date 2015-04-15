@@ -287,12 +287,16 @@ namespace bgfx { namespace d3d11
 		FrameBufferD3D11()
 			: m_denseIdx(UINT16_MAX)
 			, m_num(0)
+			, m_numTh(0)
+			, m_dsv(NULL)
 		{
 		}
 
 		void create(uint8_t _num, const TextureHandle* _handles);
 		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
 		uint16_t destroy();
+		void preReset();
+		void postReset();
 		void resolve();
 		void clear(const Clear& _clear, const float _palette[][4]);
 
@@ -302,6 +306,8 @@ namespace bgfx { namespace d3d11
 		IDXGISwapChain* m_swapChain;
 		uint16_t m_denseIdx;
 		uint8_t m_num;
+		uint8_t m_numTh;
+		TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
 } /*  namespace d3d11 */ } // namespace bgfx

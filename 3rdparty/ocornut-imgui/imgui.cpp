@@ -338,6 +338,7 @@
 #include <new>          // new (ptr)
 
 #ifdef _MSC_VER
+#pragma warning (disable: 4100) // unreferenced formal parameter
 #pragma warning (disable: 4505) // unreferenced local function has been removed (stb stuff)
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
 #endif

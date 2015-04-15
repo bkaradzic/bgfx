@@ -56,7 +56,7 @@ vec2 unpackHalf2x16(uint _x)
 #define IMAGE2D_RW( _name, _reg) RWTexture2D<float> _name : register(u[_reg])
 #define UIMAGE2D_RW(_name, _reg) RWTexture2D<uint>  _name : register(u[_reg])
 
-#define BUFFER_RO(_name, _struct, _reg) Buffer<_struct>   _name : register(b[_reg])
+#define BUFFER_RO(_name, _struct, _reg) Buffer<_struct>   _name : register(t[_reg])
 #define BUFFER_RW(_name, _struct, _reg) RWBuffer<_struct> _name : register(u[_reg])
 #define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
 
