@@ -1190,8 +1190,6 @@ namespace bgfx
 		m_render = m_submit;
 		m_submit = temp;
 
-		memcpy(&m_submit->m_hmd, &m_render->m_hmd, sizeof(HMD) );
-
 		m_frames++;
 		m_submit->start();
 
