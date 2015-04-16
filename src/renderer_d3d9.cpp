@@ -1144,7 +1144,7 @@ namespace bgfx { namespace d3d9
 				;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 			if (NULL != m_device)
 			{

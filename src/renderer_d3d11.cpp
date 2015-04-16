@@ -1297,7 +1297,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD& _hmd) BX_OVERRIDE
 		{
 			if (NULL != m_swapChain)
 			{
@@ -1314,7 +1314,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (SUCCEEDED(hr) )
 				{
-					if (!m_ovr.swap() )
+					if (!m_ovr.swap(_hmd) )
 					{
 						hr = m_swapChain->Present(syncInterval, 0);
 					}
@@ -3205,11 +3205,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
-		if (hmdEnabled)
-		{
-			HMD& hmd = _render->m_hmd;
-			m_ovr.getEyePose(hmd);
-		}
+// 		if (hmdEnabled)
+// 		{
+// 			HMD& hmd = _render->m_hmd;
+// 			m_ovr.getEyePose(hmd);
+// 		}
 
 		ViewState viewState(_render, hmdEnabled);
 

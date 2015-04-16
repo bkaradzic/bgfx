@@ -1600,7 +1600,7 @@ namespace bgfx { namespace gl
 			return BGFX_RENDERER_OPENGL_NAME;
 		}
 
-		void flip()
+		void flip(HMD& _hmd)
 		{
 			if (m_flip)
 			{
@@ -1609,7 +1609,7 @@ namespace bgfx { namespace gl
 					m_glctx.swap(m_frameBuffers[m_windows[ii].idx].m_swapChain);
 				}
 
-				if (!m_ovr.swap() )
+				if (!m_ovr.swap(_hmd) )
 				{
 					m_glctx.swap();
 				}
@@ -4553,11 +4553,11 @@ namespace bgfx { namespace gl
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
-		if (hmdEnabled)
-		{
-			HMD& hmd = _render->m_hmd;
-			m_ovr.getEyePose(hmd);
-		}
+// 		if (hmdEnabled)
+// 		{
+// 			HMD& hmd = _render->m_hmd;
+// 			m_ovr.getEyePose(hmd);
+// 		}
 
 		ViewState viewState(_render, hmdEnabled);
 

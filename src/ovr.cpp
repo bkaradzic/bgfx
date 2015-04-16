@@ -39,19 +39,6 @@ namespace bgfx
 		{
 			switch (_config->Header.API)
 			{
-#if BGFX_CONFIG_RENDERER_DIRECT3D9
-			case ovrRenderAPI_D3D9:
-				{
-					ovrD3D9ConfigData* data = (ovrD3D9ConfigData*)_config;
-#	if OVR_VERSION > OVR_VERSION_043
-					m_rtSize = data->Header.BackBufferSize;
-#	else
-					m_rtSize = data->Header.RTSize;
-#	endif // OVR_VERSION > OVR_VERSION_043
-				}
-				break;
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D9
-
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 			case ovrRenderAPI_D3D11:
 				{
@@ -202,7 +189,7 @@ ovrError:
 		m_debug = false;
 	}
 
-	bool OVR::swap()
+	bool OVR::swap(HMD& _hmd)
 	{
 		if (NULL == m_hmd)
 		{
@@ -215,6 +202,8 @@ ovrError:
 		{
 			m_warning = !ovrHmd_DismissHSWDisplay(m_hmd);
 		}
+
+		getEyePose(_hmd);
 
 		m_timing = ovrHmd_BeginFrame(m_hmd, 0);
 
