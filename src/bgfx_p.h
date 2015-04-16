@@ -1830,7 +1830,7 @@ namespace bgfx
 		virtual ~RendererContextI() = 0;
 		virtual RendererType::Enum getRendererType() const = 0;
 		virtual const char* getRendererName() const = 0;
-		virtual void flip() = 0;
+		virtual void flip(HMD *_updatedHMDPose) = 0;
 		virtual void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) = 0;
 		virtual void destroyIndexBuffer(IndexBufferHandle _handle) = 0;
 		virtual void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) = 0;
@@ -1928,7 +1928,18 @@ namespace bgfx
 			m_resolution.m_height = bx::uint32_max(1, _height);
 			m_resolution.m_flags  = _flags;
 
+			if ((_flags & BGFX_RESET_HMD) && !(_flags & BGFX_RESET_FLIP_AFTER_RENDER))
+			{
+				BX_WARN(false, "Automatically enabling BGFX_RESET_FLIP_AFTER_RENDER to reduce latency when BGFX_RESET_HMD is enabled.");
+				_flags |= BGFX_RESET_FLIP_AFTER_RENDER;
+			}
 			m_flipAfterRender = !!(_flags & BGFX_RESET_FLIP_AFTER_RENDER);
+
+#if BGFX_CONFIG_MULTITHREADED
+			if (_flags & BGFX_RESET_HMD) {
+				BX_WARN(false, "Multithreaded mode introduces 1 extra frame of latency. For HMD mode please #define BGFX_CONFIG_MULTITHREADED 0 to avoid making your users sick.")
+			}
+#endif
 
 			memset(m_fb, 0xff, sizeof(m_fb) );
 

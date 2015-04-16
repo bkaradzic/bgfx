@@ -1205,10 +1205,19 @@ namespace bgfx
 
 	bool Context::renderFrame()
 	{
+		// In single threaded mode we can update m_submit so that the app gets the updated
+		// HMD pose immediately. In multithreaded mode this wouldn't be thread safe, so we
+		// can only update the HMD pose in m_render, and the app won't see it until the
+		// next call to Context::swap(). This introduces an extra frame of latency.
+		HMD *hmdToUpdate = &m_render->m_hmd;
+#if !BGFX_CONFIG_MULTITHREADED
+		hmdToUpdate = &m_submit->m_hmd;
+#endif // !BGFX_CONFIG_MULTITHREADED
+
 		if (m_rendererInitialized
 		&&  !m_flipAfterRender)
 		{
-			m_renderCtx->flip();
+			m_renderCtx->flip(hmdToUpdate);
 		}
 
 		gameSemWait();
@@ -1225,7 +1234,7 @@ namespace bgfx
 		if (m_rendererInitialized
 		&&  m_flipAfterRender)
 		{
-			m_renderCtx->flip();
+			m_renderCtx->flip(hmdToUpdate);
 		}
 
 		return m_exit;
