@@ -285,10 +285,10 @@ namespace bgfx { namespace d3d11
 	struct FrameBufferD3D11
 	{
 		FrameBufferD3D11()
-			: m_denseIdx(UINT16_MAX)
+			: m_dsv(NULL)
+			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_numTh(0)
-			, m_dsv(NULL)
 		{
 		}
 
