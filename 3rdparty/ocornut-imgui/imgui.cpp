@@ -8453,7 +8453,7 @@ void ImFontAtlas::RenderCustomTexData(int pass, void* p_rects)
     ImVector<stbrp_rect>& rects = *(ImVector<stbrp_rect>*)p_rects;
     if (pass == 0)
     {
-        stbrp_rect r = { 0 };
+        stbrp_rect r = {};
         r.w = (TEX_DATA_W*2)+1;
         r.h = TEX_DATA_H+1;
         rects.push_back(r);
@@ -10490,9 +10490,9 @@ void ImGui::ShowTestWindow(bool* opened)
     ImGui::End();
 }
 
-void ImGui::ShowMetricsWindow(bool* opened)
+void ImGui::ShowMetricsWindow(bool* opened1)
 {
-    if (ImGui::Begin("ImGui Metrics", opened))
+    if (ImGui::Begin("ImGui Metrics", opened1))
     {
         ImGui::Text("ImGui %s", ImGui::GetVersion());
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
