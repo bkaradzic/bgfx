@@ -20,6 +20,7 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/src/amalgamated.cpp
 
 LOCAL_CFLAGS += -Wshadow -fPIC -no-canonical-prefixes -Wa,--noexecstack -fstack-protector -ffunction-sections -Wno-psabi -Wunused-value -Wundef
 LOCAL_CFLAGS += -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
+LOCAL_CFLAGS += -DBGFX_CONFIG_MULTITHREADED=0
 
 ifeq ($(APP_OPTIM),debug)
   LOCAL_CFLAGS += -DBGFX_CONFIG_DEBUG=1
@@ -27,6 +28,7 @@ else
 endif
 
 LOCAL_EXPORT_CFLAGS += -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
+LOCAL_EXPORT_CFLAGS += -DBGFX_CONFIG_MULTITHREADED=0
 
 LOCAL_LDLIBS :=-lEGL -lGLESv2 -landroid
 

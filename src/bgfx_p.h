@@ -219,7 +219,6 @@ namespace bgfx
 {
 #if BX_PLATFORM_ANDROID
 	extern ::ANativeWindow* g_bgfxAndroidWindow;
-	extern void* g_bgfxAndroidEGLSurface;
 #elif BX_PLATFORM_IOS
 	extern void* g_bgfxEaglLayer;
 #elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
