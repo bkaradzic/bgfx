@@ -1144,7 +1144,7 @@ namespace bgfx { namespace d3d9
 				;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD *) BX_OVERRIDE
 		{
 			if (NULL != m_device)
 			{
@@ -1192,11 +1192,6 @@ namespace bgfx { namespace d3d9
 #endif // BX_PLATFORM_
 				}
 			}
-		}
-
-		void getHMDPose(HMD *)
-		{
-			BX_WARN(false, "D3D9 renderer does not support HMDs.");
 		}
 
 		void preReset()

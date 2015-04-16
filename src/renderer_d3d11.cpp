@@ -1297,7 +1297,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD *_updatedHMDPose) BX_OVERRIDE
 		{
 			if (NULL != m_swapChain)
 			{
@@ -1314,7 +1314,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (SUCCEEDED(hr) )
 				{
-					if (!m_ovr.swap() )
+					if (m_ovr.swap() )
+					{
+						m_ovr.getEyePose(*_updatedHMDPose);
+					}
+					else
 					{
 						hr = m_swapChain->Present(syncInterval, 0);
 					}
@@ -1330,14 +1334,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 					m_lost = 0;
 				}
-			}
-		}
-
-		void getHMDPose(HMD *hmd)
-		{
-			if (m_ovr.isEnabled() || m_ovr.isDebug())
-			{
-				m_ovr.getEyePose(*hmd);
 			}
 		}
 

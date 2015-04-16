@@ -1600,7 +1600,7 @@ namespace bgfx { namespace gl
 			return BGFX_RENDERER_OPENGL_NAME;
 		}
 
-		void flip()
+		void flip(HMD *_updatedHMDPose)
 		{
 			if (m_flip)
 			{
@@ -1609,17 +1609,14 @@ namespace bgfx { namespace gl
 					m_glctx.swap(m_frameBuffers[m_windows[ii].idx].m_swapChain);
 				}
 
-				if (!m_ovr.swap() )
+				if (m_ovr.swap() )
+				{
+					m_ovr.getEyePose(*_updatedHMDPose);
+				}
+				else
 				{
 					m_glctx.swap();
 				}
-			}
-		}
-
-		void getHMDPose(HMD *hmd)
-		{
-			if (m_ovr.isEnabled() || m_ovr.isDebug()) {
-				m_ovr.getEyePose(*hmd);
 			}
 		}
 
