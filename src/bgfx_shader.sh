@@ -199,7 +199,6 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
 #		define texture2D(_sampler, _coord) tex2D(_sampler, _coord)
-#		define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec4( (_coord).xy, 0.0, _level) )
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 
 #		define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name : register(s ## _reg)
@@ -208,11 +207,20 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #		define SAMPLER3D(_name, _reg) uniform sampler3D _name : register(s ## _reg)
 #		define texture3D(_sampler, _coord) tex3D(_sampler, _coord)
-#		define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
 
 #		define SAMPLERCUBE(_name, _reg) uniform samplerCUBE _name : register(s[_reg])
 #		define textureCube(_sampler, _coord) texCUBE(_sampler, _coord)
-#		define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
+
+#		if BGFX_SHADER_LANGUAGE_HLSL == 2
+#			define texture2DLod(_sampler, _coord, _level) tex2D(_sampler, (_coord).xy)
+#			define texture3DLod(_sampler, _coord, _level) tex3D(_sampler, (_coord).xyz)
+#			define textureCubeLod(_sampler, _coord, _level) texCUBE(_sampler, (_coord).xyz)
+#		else
+#			define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec4( (_coord).xy, 0.0, _level) )
+#			define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
+#			define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
+#		endif
+
 #	endif //
 
 vec2 vec2_splat(float _x) { return vec2(_x, _x); }
