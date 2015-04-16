@@ -4790,6 +4790,8 @@ namespace bgfx { namespace gl
 					continue;
 				}
 
+				bool resetState = viewChanged || wasCompute;
+
 				if (wasCompute)
 				{
 					wasCompute = false;
@@ -4812,7 +4814,7 @@ namespace bgfx { namespace gl
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
 				currentState.m_stencil = newStencil;
 
-				if (viewChanged)
+				if (resetState)
 				{
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
