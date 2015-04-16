@@ -24,13 +24,16 @@
 #define IMGUI_DISABLE_STB_RECT_PACK_IMPLEMENTATION
 #define IMGUI_DISABLE_STB_TRUETYPE_IMPLEMENTATION
 
+//---- Don't implement help and test window functionality (ShowUserGuide()/ShowStyleEditor()/ShowTestWindow() methods will be empty)
+//#define IMGUI_DISABLE_TEST_WINDOWS
+
 //---- Include imgui_user.inl at the end of imgui.cpp so you can include code that extends ImGui using its private data/functions.
 //#define IMGUI_INCLUDE_IMGUI_USER_INL
 
 //---- Include imgui_user.h at the end of imgui.h
 //#define IMGUI_INCLUDE_IMGUI_USER_H
 
-//---- Define implicit cast operators to convert back<>forth from your math types and ImVec2/ImVec4.
+//---- Define constructor and implicit cast operators to convert back<>forth from your math types and ImVec2/ImVec4.
 /*
 #define IM_VEC2_CLASS_EXTRA                                                 \
         ImVec2(const MyVec2& f) { x = f.x; y = f.y; }                       \
