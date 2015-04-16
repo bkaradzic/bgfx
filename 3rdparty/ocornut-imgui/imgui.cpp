@@ -1070,7 +1070,7 @@ struct ImGuiState
     int                     FramerateSecPerFrameIdx;
     float                   FramerateSecPerFrameAccum;
 
-    ImGuiState()
+    void Clear()
     {
         Initialized = false;
         Font = NULL;
@@ -1117,6 +1117,26 @@ struct ImGuiState
         memset(FramerateSecPerFrame, 0, sizeof(FramerateSecPerFrame));
         FramerateSecPerFrameIdx = 0;
         FramerateSecPerFrameAccum = 0.0f;
+
+        Windows.clear();
+        RenderSortedWindows.clear();
+        CurrentWindowStack.clear();
+        Settings.clear();
+        ColorEditModeStorage.Clear();
+        ColorModifiers.clear();
+        StyleModifiers.clear();
+        FontStack.clear();
+        RenderDrawLists.clear();
+    }
+
+    ImGuiState()
+    {
+        Clear();
+    }
+
+    ~ImGuiState()
+    {
+        Clear();
     }
 };
 
@@ -1926,6 +1946,7 @@ void ImGui::Shutdown()
         ImGui::MemFree(g.Windows[i]);
     }
     g.Windows.clear();
+    g.RenderSortedWindows.clear();
     g.CurrentWindowStack.clear();
     g.RenderDrawLists.clear();
     g.FocusedWindow = NULL;
@@ -1959,6 +1980,8 @@ void ImGui::Shutdown()
         g.LogClipboard->~ImGuiTextBuffer();
         ImGui::MemFree(g.LogClipboard);
     }
+
+    GDefaultFontAtlas.Clear();
 
     g.Initialized = false;
 }
