@@ -4,6 +4,7 @@
  */
 
 #include <bgfx.h>
+#include <bx/allocator.h>
 #include <bx/fpumath.h>
 #include <ocornut-imgui/imgui.h>
 #include "imgui.h"
@@ -13,10 +14,12 @@
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
 
-static void imguiRender(ImDrawList** const _lists, int cmd_lists_count);
-
 struct OcornutImguiContext
 {
+	static void* memAlloc(size_t _size);
+	static void memFree(void* _ptr);
+	static void renderDrawLists(ImDrawList** const _lists, int _count);
+
 	void render(ImDrawList** const _lists, int _count)
 	{
 		const float width  = ImGui::GetIO().DisplaySize.x;
@@ -79,11 +82,18 @@ struct OcornutImguiContext
 		}
 	}
 
-	void create(const void* _data, uint32_t _size, float _fontSize)
+	void create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
 	{
 		m_viewId = 255;
+		m_allocator = _allocator;
 
 		ImGuiIO& io = ImGui::GetIO();
+		io.RenderDrawListsFn = renderDrawLists;
+		if (NULL != m_allocator)
+		{
+			io.MemAllocFn = memAlloc;
+			io.MemFreeFn  = memFree;
+		}
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
 		io.DeltaTime = 1.0f / 60.0f;
 		io.IniFilename = NULL;
@@ -143,15 +153,17 @@ struct OcornutImguiContext
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.FrameRounding = 4.0f;
-
-		io.RenderDrawListsFn = imguiRender;
 	}
 
 	void destroy()
 	{
+		ImGui::Shutdown();
+
 		bgfx::destroyUniform(s_tex);
 		bgfx::destroyTexture(m_texture);
 		bgfx::destroyProgram(m_program);
+
+		m_allocator = NULL;
 	}
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
@@ -174,6 +186,7 @@ struct OcornutImguiContext
 		ImGui::Render();
 	}
 
+	bx::AllocatorI*     m_allocator;
 	bgfx::VertexDecl    m_decl;
 	bgfx::ProgramHandle m_program;
 	bgfx::TextureHandle m_texture;
@@ -183,14 +196,24 @@ struct OcornutImguiContext
 
 static OcornutImguiContext s_ctx;
 
-static void imguiRender(ImDrawList** const _lists, int _count)
+void* OcornutImguiContext::memAlloc(size_t _size)
+{
+	return BX_ALLOC(s_ctx.m_allocator, _size);
+}
+
+void OcornutImguiContext::memFree(void* _ptr)
+{
+	BX_FREE(s_ctx.m_allocator, _ptr);
+}
+
+void OcornutImguiContext::renderDrawLists(ImDrawList** const _lists, int _count)
 {
 	s_ctx.render(_lists, _count);
 }
 
-void IMGUI_create(const void* _data, uint32_t _size, float _fontSize)
+void IMGUI_create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
 {
-	s_ctx.create(_data, _size, _fontSize);
+	s_ctx.create(_data, _size, _fontSize, _allocator);
 }
 
 void IMGUI_destroy()

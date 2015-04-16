@@ -69,34 +69,22 @@ static const int32_t SCROLL_AREA_PADDING = 6;
 static const int32_t AREA_HEADER = 20;
 static const float s_tabStops[4] = {150, 210, 270, 330};
 
-// For a custom allocator, define this and implement imguiMalloc and imguiFree somewhere in the project.
-#ifndef IMGUI_CONFIG_CUSTOM_ALLOCATOR
-#	define IMGUI_CONFIG_CUSTOM_ALLOCATOR 0
-#endif // ENTRY_CONFIG_USE_TINYSTL
-
-#if IMGUI_CONFIG_CUSTOM_ALLOCATOR
-	void* imguiMalloc(size_t size, void* /*_userptr*/);
-	void imguiFree(void* _ptr, void* /*_userptr*/);
-#else
-	static void* imguiMalloc(size_t _size, void* /*_userptr*/)
-	{
-		return malloc(_size);
-	}
-
-	static void imguiFree(void* _ptr, void* /*_userptr*/)
-	{
-		free(_ptr);
-	}
-#endif //IMGUI_CONFIG_CUSTOM_ALLOCATOR
+void* imguiMalloc(size_t _size, void*);
+void  imguiFree(void* _ptr, void*);
 
 #define IMGUI_MIN(_a, _b) (_a)<(_b)?(_a):(_b)
 #define IMGUI_MAX(_a, _b) (_a)>(_b)?(_a):(_b)
 #define IMGUI_CLAMP(_a, _min, _max) IMGUI_MIN(IMGUI_MAX(_a, _min), _max)
 
-#define STBTT_malloc(_x, _y) imguiMalloc(_x, _y)
-#define STBTT_free(_x, _y) imguiFree(_x, _y)
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+#define STBTT_malloc(_size, _userData) imguiMalloc(_size, _userData)
+#define STBTT_free(_ptr, _userData) imguiFree(_ptr, _userData)
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <stb/stb_rect_pack.h>
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb/stb_truetype.h>
+BX_PRAGMA_DIAGNOSTIC_POP();
 
 namespace
 {
@@ -461,15 +449,23 @@ struct Imgui
 		return bgfx::createTexture2D(uint16_t(_width), uint16_t(_height), 0, bgfx::TextureFormat::BGRA8, 0, mem);
 	}
 
-	ImguiFontHandle create(const void* _data, uint32_t _size, float _fontSize)
+	ImguiFontHandle create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
 	{
+		m_allocator = _allocator;
+
+		if (NULL == m_allocator)
+		{
+			static bx::CrtAllocator allocator;
+			m_allocator = &allocator;
+		}
+
 		if (NULL == _data)
 		{
 			_data = s_droidSansTtf;
 			_size = sizeof(s_droidSansTtf);
 		}
 
-		IMGUI_create(_data, _size, _fontSize);
+		IMGUI_create(_data, _size, _fontSize, _allocator);
 
 		m_nvg = nvgCreate(1, m_view);
  		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
@@ -3150,6 +3146,7 @@ struct Imgui
 		Ty m_ids[Max];
 	};
 
+	bx::AllocatorI* m_allocator;
 	int32_t m_mx;
 	int32_t m_my;
 	int32_t m_scroll;
@@ -3222,9 +3219,19 @@ struct Imgui
 
 static Imgui s_imgui;
 
-ImguiFontHandle imguiCreate(const void* _data, uint32_t _size, float _fontSize)
+void* imguiMalloc(size_t _size, void*)
 {
-	return s_imgui.create(_data, _size, _fontSize);
+	return BX_ALLOC(s_imgui.m_allocator, _size);
+}
+
+void imguiFree(void* _ptr, void*)
+{
+	BX_FREE(s_imgui.m_allocator, _ptr);
+}
+
+ImguiFontHandle imguiCreate(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
+{
+	return s_imgui.create(_data, _size, _fontSize, _allocator);
 }
 
 void imguiDestroy()
