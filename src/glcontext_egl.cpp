@@ -180,7 +180,11 @@ EGL_IMPORT
 
 
 #	if BX_PLATFORM_ANDROID
-		if (g_bgfxAndroidWindow)
+		if (!g_bgfxAndroidWindow)
+		{
+			BX_TRACE("androidSetWindow() was not called, assuming EGLContext and buffer-swapping are managed outside bgfx.");
+		}
+		else
 		{
 #	endif
 		BX_UNUSED(_width, _height);
