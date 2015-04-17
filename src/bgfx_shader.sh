@@ -219,9 +219,9 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #			define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec4( (_coord).xy, 0.0, _level) )
 #			define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
 #			define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
-#		endif
+#		endif // BGFX_SHADER_LANGUAGE_HLSL == 2
 
-#	endif //
+#	endif // BGFX_SHADER_LANGUAGE_HLSL > 3
 
 vec2 vec2_splat(float _x) { return vec2(_x, _x); }
 vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
