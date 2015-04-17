@@ -262,8 +262,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float lightProj[16];
 
 		eye[0] = -lightPos[0];
-		eye[0] = -lightPos[1];
-		eye[0] = -lightPos[2];
+		eye[1] = -lightPos[1];
+		eye[2] = -lightPos[2];
 
 		at[0] = 0.0f;
 		at[1] = 0.0f;
