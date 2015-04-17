@@ -942,8 +942,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
-			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_factory, 0);
+			DX_RELEASE(m_device, 0);
 
 			unloadRenderDoc(m_renderdocdll);
 
