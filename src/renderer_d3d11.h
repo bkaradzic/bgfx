@@ -74,36 +74,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	ifndef D3D11_REQ_MAXANISOTROPY
 #		define	D3D11_REQ_MAXANISOTROPY	16
 #	endif // D3D11_REQ_MAXANISOTROPY
-
-struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
-{
-	DXGI_FORMAT InFormat;
-	UINT OutFormatSupport;
-};
-
-struct D3D11_FEATURE_DATA_FORMAT_SUPPORT2
-{
-	DXGI_FORMAT InFormat;
-	UINT OutFormatSupport2;
-};
-
-struct D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS
-{
-	BOOL ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
-};
-
-#define D3D11_FEATURE_D3D9_SHADOW_SUPPORT D3D11_FEATURE(9)
-struct D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT
-{
-	BOOL SupportsDepthAsTextureWithLessEqualComparisonFilter;
-};
-
-#define D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT D3D11_FEATURE(11)
-struct D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT
-{
-	BOOL SimpleInstancingSupported;
-};
-
 #endif // __MINGW32__
 
 namespace bgfx { namespace d3d11

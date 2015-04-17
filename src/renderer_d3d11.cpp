@@ -799,6 +799,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (m_featureLevel == D3D_FEATURE_LEVEL_10_0
 			||  m_featureLevel == D3D_FEATURE_LEVEL_10_1)
 			{
+				struct D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS
+				{
+					BOOL ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
+				};
+
 				D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
 				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
 				if (SUCCEEDED(hr)
@@ -819,8 +824,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 			else
 			{
+				struct D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT
+				{
+					BOOL SimpleInstancingSupported;
+				};
+
 				D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
-				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &data, sizeof(data) );
+				hr = m_device->CheckFeatureSupport(D3D11_FEATURE(11) /*D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT*/, &data, sizeof(data) );
 				if (SUCCEEDED(hr)
 				&&  data.SimpleInstancingSupported)
 				{
@@ -831,8 +841,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			// shadow compare is optional on 9_1 through 9_3 targets
 			if (m_featureLevel <= D3D_FEATURE_LEVEL_9_3)
 			{
+				struct D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT
+				{
+					BOOL SupportsDepthAsTextureWithLessEqualComparisonFilter;
+				};
+
 				D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT data;
-				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SHADOW_SUPPORT, &data, sizeof(data) );
+				hr = m_device->CheckFeatureSupport(D3D11_FEATURE(9) /*D3D11_FEATURE_D3D9_SHADOW_SUPPORT*/, &data, sizeof(data) );
 				if (SUCCEEDED(hr)
 				&&  data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
 				{
@@ -846,6 +861,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (DXGI_FORMAT_UNKNOWN != s_textureFormat[ii].m_fmt)
 				{
+					struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
+					{
+						DXGI_FORMAT InFormat;
+						UINT OutFormatSupport;
+					};
+
 					D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
 					data.InFormat = s_textureFormat[ii].m_fmt;
 					hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
