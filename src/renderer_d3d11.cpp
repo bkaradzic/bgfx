@@ -768,39 +768,41 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
 			{
-				g_caps.maxTextureSize = D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.maxTextureSize   = D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
 			}
 			else if (m_featureLevel == D3D_FEATURE_LEVEL_9_3)
 			{
-				g_caps.maxTextureSize = D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+				g_caps.maxTextureSize   = D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 			}
 			else
 			{
 				g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
 				g_caps.maxTextureSize = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 			}
 
-			// 32-bit indices only supported on 9_2+
+			// 32-bit indices only supported on 9_2+.
 			if (m_featureLevel >= D3D_FEATURE_LEVEL_9_2)
 			{
 				g_caps.supported |= BGFX_CAPS_INDEX32;
 			}
 
-			// independent blend only supported on 10_1+
+			// Independent blend only supported on 10_1+.
 			if (m_featureLevel >= D3D_FEATURE_LEVEL_10_1)
 			{
 				g_caps.supported |= BGFX_CAPS_BLEND_INDEPENDENT;
 			}
 
-			// compute support is optional on 10_0 and 10_1 targets
-			if (m_featureLevel == D3D_FEATURE_LEVEL_10_0 || m_featureLevel == D3D_FEATURE_LEVEL_10_1)
+			// Compute support is optional on 10_0 and 10_1 targets.
+			if (m_featureLevel == D3D_FEATURE_LEVEL_10_0
+			||  m_featureLevel == D3D_FEATURE_LEVEL_10_1)
 			{
 				D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
 				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
-				if (SUCCEEDED(hr) && data.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x)
+				if (SUCCEEDED(hr)
+				&&  data.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x)
 				{
 					g_caps.supported |= BGFX_CAPS_COMPUTE;
 				}
@@ -810,7 +812,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				g_caps.supported |= BGFX_CAPS_COMPUTE;
 			}
 
-			// instancing fully supported on 9_3+, optionally partially supported at lower levels
+			// Instancing fully supported on 9_3+, optionally partially supported at lower levels.
 			if (m_featureLevel >= D3D_FEATURE_LEVEL_9_3)
 			{
 				g_caps.supported |= BGFX_CAPS_INSTANCING;
@@ -819,7 +821,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
 				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &data, sizeof(data) );
-				if (SUCCEEDED(hr) && data.SimpleInstancingSupported)
+				if (SUCCEEDED(hr)
+				&&  data.SimpleInstancingSupported)
 				{
 					g_caps.supported |= BGFX_CAPS_INSTANCING;
 				}
@@ -830,7 +833,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT data;
 				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SHADOW_SUPPORT, &data, sizeof(data) );
-				if (SUCCEEDED(hr) && data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
+				if (SUCCEEDED(hr)
+				&&  data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
 				{
 					g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_LEQUAL;
 				}
