@@ -26,7 +26,6 @@ namespace bgfx
 	{
 		g_bgfxAndroidWindow = _window;
 	}
-
 #elif BX_PLATFORM_IOS
 	void* g_bgfxEaglLayer = NULL;
 
