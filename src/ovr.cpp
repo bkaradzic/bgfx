@@ -117,6 +117,7 @@ namespace bgfx
 			| ovrDistortionCap_TimeWarp
 			| ovrDistortionCap_Overdrive
 			| ovrDistortionCap_NoRestore
+			| ovrDistortionCap_HqDistortion
 			, eyeFov
 			, m_erd
 			);
