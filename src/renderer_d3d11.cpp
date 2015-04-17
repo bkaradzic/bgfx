@@ -817,12 +817,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 			else
 			{
+#if BX_PLATFORM_WINRT
 				D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
 				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &data, sizeof(data) );
 				if (SUCCEEDED(hr) && data.SimpleInstancingSupported)
 				{
 					g_caps.supported |= BGFX_CAPS_INSTANCING;
 				}
+#endif
 			}
 
 			// shadow compare is optional on 9_1 through 9_3 targets
