@@ -1600,7 +1600,7 @@ namespace bgfx { namespace gl
 			return BGFX_RENDERER_OPENGL_NAME;
 		}
 
-		void flip()
+		void flip(HMD& _hmd)
 		{
 			if (m_flip)
 			{
@@ -1609,7 +1609,7 @@ namespace bgfx { namespace gl
 					m_glctx.swap(m_frameBuffers[m_windows[ii].idx].m_swapChain);
 				}
 
-				if (!m_ovr.swap() )
+				if (!m_ovr.swap(_hmd) )
 				{
 					m_glctx.swap();
 				}
@@ -4553,12 +4553,6 @@ namespace bgfx { namespace gl
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
-		if (hmdEnabled)
-		{
-			HMD& hmd = _render->m_hmd;
-			m_ovr.getEyePose(hmd);
-		}
-
 		ViewState viewState(_render, hmdEnabled);
 
 		uint16_t programIdx = invalidHandle;
@@ -4796,6 +4790,8 @@ namespace bgfx { namespace gl
 					continue;
 				}
 
+				bool resetState = viewChanged || wasCompute;
+
 				if (wasCompute)
 				{
 					wasCompute = false;
@@ -4818,7 +4814,7 @@ namespace bgfx { namespace gl
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
 				currentState.m_stencil = newStencil;
 
-				if (viewChanged)
+				if (resetState)
 				{
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;

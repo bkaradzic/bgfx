@@ -74,22 +74,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	ifndef D3D11_REQ_MAXANISOTROPY
 #		define	D3D11_REQ_MAXANISOTROPY	16
 #	endif // D3D11_REQ_MAXANISOTROPY
-
-#	ifndef D3D11_FEATURE_DATA_FORMAT_SUPPORT
-typedef struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
-{
-	DXGI_FORMAT InFormat;
-	UINT OutFormatSupport;
-} D3D11_FEATURE_DATA_FORMAT_SUPPORT;
-#	endif // D3D11_FEATURE_DATA_FORMAT_SUPPORT
-
-#	ifndef D3D11_FEATURE_DATA_FORMAT_SUPPORT2
-typedef struct D3D11_FEATURE_DATA_FORMAT_SUPPORT2
-{
-	DXGI_FORMAT InFormat;
-	UINT OutFormatSupport2;
-} D3D11_FEATURE_DATA_FORMAT_SUPPORT2;
-#	endif // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
 #endif // __MINGW32__
 
 namespace bgfx { namespace d3d11
@@ -285,10 +269,10 @@ namespace bgfx { namespace d3d11
 	struct FrameBufferD3D11
 	{
 		FrameBufferD3D11()
-			: m_denseIdx(UINT16_MAX)
+			: m_dsv(NULL)
+			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_numTh(0)
-			, m_dsv(NULL)
 		{
 		}
 

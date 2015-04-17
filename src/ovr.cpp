@@ -39,19 +39,6 @@ namespace bgfx
 		{
 			switch (_config->Header.API)
 			{
-#if BGFX_CONFIG_RENDERER_DIRECT3D9
-			case ovrRenderAPI_D3D9:
-				{
-					ovrD3D9ConfigData* data = (ovrD3D9ConfigData*)_config;
-#	if OVR_VERSION > OVR_VERSION_043
-					m_rtSize = data->Header.BackBufferSize;
-#	else
-					m_rtSize = data->Header.RTSize;
-#	endif // OVR_VERSION > OVR_VERSION_043
-				}
-				break;
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D9
-
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 			case ovrRenderAPI_D3D11:
 				{
@@ -202,7 +189,7 @@ ovrError:
 		m_debug = false;
 	}
 
-	bool OVR::swap()
+	bool OVR::swap(HMD& _hmd)
 	{
 		if (NULL == m_hmd)
 		{
@@ -226,6 +213,8 @@ ovrError:
 		m_pose[1] = ovrHmd_GetEyePose(m_hmd, ovrEye_Right);
 #endif // OVR_VERSION > OVR_VERSION_042
 
+		getEyePose(_hmd);
+
 		return true;
 	}
 
@@ -241,16 +230,9 @@ ovrError:
 	{
 		if (NULL != m_hmd)
 		{
-			ovrEyeType eye[2] = { ovrEye_Left, ovrEye_Right };
 			for (int ii = 0; ii < 2; ++ii)
 			{
-				ovrPosef& pose = m_pose[ii];
-#if OVR_VERSION > OVR_VERSION_042
-				pose = ovrHmd_GetHmdPosePerEye(m_hmd, eye[ii]);
-#else
-				pose = ovrHmd_GetEyePose(m_hmd, eye[ii]);
-#endif // OVR_VERSION > OVR_VERSION_042
-
+				const ovrPosef& pose = m_pose[ii];
 				HMD::Eye& eye = _hmd.eye[ii];
 				eye.rotation[0] = pose.Orientation.x;
 				eye.rotation[1] = pose.Orientation.y;

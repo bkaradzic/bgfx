@@ -29,7 +29,7 @@ namespace bgfx { namespace noop
 			return BGFX_RENDERER_NULL_NAME;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 		}
 

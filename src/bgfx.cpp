@@ -935,14 +935,13 @@ namespace bgfx
 
 		m_exit   = false;
 		m_frames = 0;
-		m_render = &m_frame[0];
-		m_submit = &m_frame[1];
 		m_debug  = BGFX_DEBUG_NONE;
 
 		m_submit->create();
-		m_render->create();
 
 #if BGFX_CONFIG_MULTITHREADED
+		m_render->create();
+
 		if (s_renderFrameCalled)
 		{
 			// When bgfx::renderFrame is called before init render thread
@@ -1030,9 +1029,12 @@ namespace bgfx
 		m_clearQuad.shutdown();
 		frame();
 
-		destroyTransientVertexBuffer(m_submit->m_transientVb);
-		destroyTransientIndexBuffer(m_submit->m_transientIb);
-		frame();
+		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
+		{
+			destroyTransientVertexBuffer(m_submit->m_transientVb);
+			destroyTransientIndexBuffer(m_submit->m_transientIb);
+			frame();
+		}
 
 		frame(); // If any VertexDecls needs to be destroyed.
 
@@ -1055,10 +1057,11 @@ namespace bgfx
 		{
 			m_thread.shutdown();
 		}
+
+		m_render->destroy();
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		m_submit->destroy();
-		m_render->destroy();
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
@@ -1160,10 +1163,6 @@ namespace bgfx
 
 		// release render thread
 		gameSemPost();
-
-#if !BGFX_CONFIG_MULTITHREADED
-		renderFrame();
-#endif // BGFX_CONFIG_MULTITHREADED
 	}
 
 	void Context::swap()
@@ -1187,9 +1186,12 @@ namespace bgfx
 		}
 		m_submit->finish();
 
-		Frame* temp = m_render;
-		m_render = m_submit;
-		m_submit = temp;
+		bx::xchg(m_render, m_submit);
+
+		if (!BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
+		{
+			renderFrame();
+		}
 
 		m_frames++;
 		m_submit->start();
@@ -1207,9 +1209,9 @@ namespace bgfx
 	bool Context::renderFrame()
 	{
 		if (m_rendererInitialized
-		&&  !m_flipAfterSubmit)
+		&&  !m_flipAfterRender)
 		{
-			m_renderCtx->flip();
+			m_renderCtx->flip(m_render->m_hmd);
 		}
 
 		gameSemWait();
@@ -1224,9 +1226,9 @@ namespace bgfx
 		renderSemPost();
 
 		if (m_rendererInitialized
-		&&  m_flipAfterSubmit)
+		&&  m_flipAfterRender)
 		{
-			m_renderCtx->flip();
+			m_renderCtx->flip(m_render->m_hmd);
 		}
 
 		return m_exit;

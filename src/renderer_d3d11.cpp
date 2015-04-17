@@ -584,8 +584,6 @@ namespace bgfx { namespace d3d11
 				| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
 				;
 
-			D3D_FEATURE_LEVEL featureLevel;
-
 			hr = E_FAIL;
 			for (uint32_t ii = 0; ii < 3 && FAILED(hr);)
 			{
@@ -597,7 +595,7 @@ namespace bgfx { namespace d3d11
 					, BX_COUNTOF(features)-ii
 					, D3D11_SDK_VERSION
 					, &m_device
-					, &featureLevel
+					, &m_featureLevel
 					, &m_deviceCtx
 					);
 				if (FAILED(hr)
@@ -687,11 +685,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, &m_swapChain
 				);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
-
-			DX_CHECK(m_factory->MakeWindowAssociation(g_bgfxHwnd, 0
-				| DXGI_MWA_NO_WINDOW_CHANGES
-				| DXGI_MWA_NO_ALT_ENTER
-				) );
 #else
 			hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
@@ -715,6 +708,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, &m_swapChain
 				);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+			DX_CHECK(m_factory->MakeWindowAssociation(g_bgfxHwnd, 0
+				| DXGI_MWA_NO_WINDOW_CHANGES
+				| DXGI_MWA_NO_ALT_ENTER
+				) );
 #endif // BX_PLATFORM_WINRT
 
 			m_numWindows = 1;
@@ -759,21 +757,103 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_uniformReg.add(handle, getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
 			}
 
-			g_caps.supported |= ( 0
-								| BGFX_CAPS_TEXTURE_3D
-								| BGFX_CAPS_TEXTURE_COMPARE_ALL
-								| BGFX_CAPS_INSTANCING
-								| BGFX_CAPS_VERTEX_ATTRIB_HALF
-								| BGFX_CAPS_FRAGMENT_DEPTH
-								| BGFX_CAPS_BLEND_INDEPENDENT
-								| BGFX_CAPS_COMPUTE
-								| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
-								| BGFX_CAPS_SWAP_CHAIN
-								| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
-								| BGFX_CAPS_INDEX32
-								);
-			g_caps.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-			g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+			g_caps.supported |= (0
+				| BGFX_CAPS_TEXTURE_3D
+				| BGFX_CAPS_VERTEX_ATTRIB_HALF
+				| BGFX_CAPS_FRAGMENT_DEPTH
+				| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
+				| BGFX_CAPS_SWAP_CHAIN
+				| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
+				);
+
+			if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
+			{
+				g_caps.maxTextureSize   = D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+			}
+			else if (m_featureLevel == D3D_FEATURE_LEVEL_9_3)
+			{
+				g_caps.maxTextureSize   = D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+			}
+			else
+			{
+				g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
+				g_caps.maxTextureSize = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+			}
+
+			// 32-bit indices only supported on 9_2+.
+			if (m_featureLevel >= D3D_FEATURE_LEVEL_9_2)
+			{
+				g_caps.supported |= BGFX_CAPS_INDEX32;
+			}
+
+			// Independent blend only supported on 10_1+.
+			if (m_featureLevel >= D3D_FEATURE_LEVEL_10_1)
+			{
+				g_caps.supported |= BGFX_CAPS_BLEND_INDEPENDENT;
+			}
+
+			// Compute support is optional on 10_0 and 10_1 targets.
+			if (m_featureLevel == D3D_FEATURE_LEVEL_10_0
+			||  m_featureLevel == D3D_FEATURE_LEVEL_10_1)
+			{
+				struct D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS
+				{
+					BOOL ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
+				};
+
+				D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
+				hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
+				if (SUCCEEDED(hr)
+				&&  data.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x)
+				{
+					g_caps.supported |= BGFX_CAPS_COMPUTE;
+				}
+			}
+			else if (m_featureLevel >= D3D_FEATURE_LEVEL_11_0)
+			{
+				g_caps.supported |= BGFX_CAPS_COMPUTE;
+			}
+
+			// Instancing fully supported on 9_3+, optionally partially supported at lower levels.
+			if (m_featureLevel >= D3D_FEATURE_LEVEL_9_3)
+			{
+				g_caps.supported |= BGFX_CAPS_INSTANCING;
+			}
+			else
+			{
+				struct D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT
+				{
+					BOOL SimpleInstancingSupported;
+				};
+
+				D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
+				hr = m_device->CheckFeatureSupport(D3D11_FEATURE(11) /*D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT*/, &data, sizeof(data) );
+				if (SUCCEEDED(hr)
+				&&  data.SimpleInstancingSupported)
+				{
+					g_caps.supported |= BGFX_CAPS_INSTANCING;
+				}
+			}
+
+			// shadow compare is optional on 9_1 through 9_3 targets
+			if (m_featureLevel <= D3D_FEATURE_LEVEL_9_3)
+			{
+				struct D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT
+				{
+					BOOL SupportsDepthAsTextureWithLessEqualComparisonFilter;
+				};
+
+				D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT data;
+				hr = m_device->CheckFeatureSupport(D3D11_FEATURE(9) /*D3D11_FEATURE_D3D9_SHADOW_SUPPORT*/, &data, sizeof(data) );
+				if (SUCCEEDED(hr)
+				&&  data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
+				{
+					g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_LEQUAL;
+				}
+			}
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
@@ -781,6 +861,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (DXGI_FORMAT_UNKNOWN != s_textureFormat[ii].m_fmt)
 				{
+					struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
+					{
+						DXGI_FORMAT InFormat;
+						UINT OutFormatSupport;
+					};
+
 					D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
 					data.InFormat = s_textureFormat[ii].m_fmt;
 					hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
@@ -1297,7 +1383,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD& _hmd) BX_OVERRIDE
 		{
 			if (NULL != m_swapChain)
 			{
@@ -1314,7 +1400,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (SUCCEEDED(hr) )
 				{
-					if (!m_ovr.swap() )
+					if (!m_ovr.swap(_hmd) )
 					{
 						hr = m_swapChain->Present(syncInterval, 0);
 					}
@@ -1381,10 +1467,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void updateResolution(const Resolution& _resolution)
 		{
 			bool recenter   = !!(_resolution.m_flags & BGFX_RESET_HMD_RECENTER);
-			m_maxAnisotropy = !!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY)
-				? D3D11_REQ_MAXANISOTROPY
-				: 1
+
+			if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
+			{
+				m_maxAnisotropy = (m_featureLevel == D3D_FEATURE_LEVEL_9_1)
+				? D3D_FL9_1_DEFAULT_MAX_ANISOTROPY
+				: D3D11_REQ_MAXANISOTROPY
 				;
+			}
+			else
+			{
+				m_maxAnisotropy = 1;
+			}
+
 			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY);
 
 			if ( getBufferWidth()  != _resolution.m_width
@@ -1600,7 +1695,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
 				{
-					uint32_t index = 8-_numInstanceData+ii;
+					uint32_t index = 7-ii; // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
 
 					uint32_t jj;
 					D3D11_INPUT_ELEMENT_DESC* curr = vertexElements;
@@ -1821,7 +1916,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				desc.DepthBias = 0;
 				desc.DepthBiasClamp = 0.0f;
 				desc.SlopeScaledDepthBias = 0.0f;
-				desc.DepthClipEnable = false;
+				desc.DepthClipEnable = m_featureLevel <= D3D_FEATURE_LEVEL_9_3;	// disabling depth clip is only supported on 10_0+
 				desc.ScissorEnable = _scissor;
 				desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
 				desc.AntialiasedLineEnable = false;
@@ -1910,8 +2005,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void commitTextureStage()
 		{
-			m_deviceCtx->VSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
-			m_deviceCtx->VSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_sampler);
+			// vertex texture fetch not supported on 9_1 through 9_3
+			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
+			{
+				m_deviceCtx->VSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
+				m_deviceCtx->VSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_sampler);
+			}
 
 			m_deviceCtx->PSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
 			m_deviceCtx->PSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_sampler);
@@ -2314,6 +2413,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_renderdocdll;
 
 		D3D_DRIVER_TYPE m_driverType;
+		D3D_FEATURE_LEVEL m_featureLevel;
 		IDXGIAdapter* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
 #if BX_PLATFORM_WINRT
@@ -3205,12 +3305,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
-		if (hmdEnabled)
-		{
-			HMD& hmd = _render->m_hmd;
-			m_ovr.getEyePose(hmd);
-		}
-
 		ViewState viewState(_render, hmdEnabled);
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
@@ -3792,12 +3886,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							numInstances      = draw.m_numInstances;
 							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-							deviceCtx->DrawIndexedInstanced(numIndices
-								, draw.m_numInstances
-								, 0
-								, draw.m_startVertex
-								, 0
-								);
+							if (numInstances > 1)
+							{
+								deviceCtx->DrawIndexedInstanced(numIndices
+									, draw.m_numInstances
+									, 0
+									, draw.m_startVertex
+									, 0
+									);
+							}
+							else
+							{
+								deviceCtx->DrawIndexed(numIndices
+									, 0
+									, draw.m_startVertex
+									);
+							}
 						}
 						else if (prim.m_min <= draw.m_numIndices)
 						{
@@ -3806,12 +3910,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							numInstances = draw.m_numInstances;
 							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
-							deviceCtx->DrawIndexedInstanced(numIndices
-								, draw.m_numInstances
-								, draw.m_startIndex
-								, draw.m_startVertex
-								, 0
-								);
+							if (numInstances > 1)
+							{
+								deviceCtx->DrawIndexedInstanced(numIndices
+									, draw.m_numInstances
+									, draw.m_startIndex
+									, draw.m_startVertex
+									, 0
+									);
+							}
+							else
+							{
+								deviceCtx->DrawIndexed(numIndices
+									, draw.m_startIndex
+									, draw.m_startVertex
+									);
+							}
 						}
 					}
 					else
@@ -3820,11 +3934,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						numInstances = draw.m_numInstances;
 						numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
-						deviceCtx->DrawInstanced(numVertices
-							, draw.m_numInstances
-							, draw.m_startVertex
-							, 0
-							);
+						if (numInstances > 1)
+						{
+							deviceCtx->DrawInstanced(numVertices
+								, draw.m_numInstances
+								, draw.m_startVertex
+								, 0
+								);
+						}
+						else
+						{
+							deviceCtx->Draw(numVertices
+								, draw.m_startVertex
+								);
+						}
 					}
 
 					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;

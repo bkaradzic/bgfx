@@ -576,7 +576,9 @@ namespace bgfx
 	///   - `BGFX_RESET_HMD` - HMD stereo rendering.
 	///   - `BGFX_RESET_HMD_DEBUG` - HMD stereo rendering debug mode.
 	///   - `BGFX_RESET_HMD_RECENTER` - HMD calibration.
-	///   - `BGFX_RESET_FLIP_AFTER_SUBMIT` - Flip back buffer after submit.
+	///   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
+	///     occurs. Default behavior is that flip occurs before rendering new
+	///     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	///
 	/// @attention This call doesn't actually change window size, it just
 	///   resizes back-buffer. Windowing code has to change window size.
