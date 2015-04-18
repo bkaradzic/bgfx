@@ -12,12 +12,19 @@ namespace bgfx
 {
 	struct ViewState
 	{
+		ViewState() { }
 		ViewState(Frame* _render, bool _hmdEnabled)
-			: m_alphaRef(0.0f)
-			, m_invViewCached(UINT16_MAX)
-			, m_invProjCached(UINT16_MAX)
-			, m_invViewProjCached(UINT16_MAX)
 		{
+			reset(_render, _hmdEnabled);
+		}
+
+		void reset(Frame* _render, bool _hmdEnabled)
+		{
+			m_alphaRef = 0.0f;
+			m_invViewCached = UINT16_MAX;
+			m_invProjCached = UINT16_MAX;
+			m_invViewProjCached = UINT16_MAX;
+
 			m_view[0] = _render->m_view;
 			m_view[1] = m_viewTmp[1];
 
