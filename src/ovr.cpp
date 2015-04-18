@@ -117,6 +117,7 @@ namespace bgfx
 			| ovrDistortionCap_TimeWarp
 			| ovrDistortionCap_Overdrive
 			| ovrDistortionCap_NoRestore
+			| ovrDistortionCap_HqDistortion
 			, eyeFov
 			, m_erd
 			);
@@ -174,6 +175,13 @@ ovrError:
 			m_texture[1].Header.RenderViewport = rect;
 
 			m_timing = ovrHmd_BeginFrame(m_hmd, 0);
+#if OVR_VERSION > OVR_VERSION_042
+			m_pose[0] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Left);
+			m_pose[1] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Right);
+#else
+			m_pose[0] = ovrHmd_GetEyePose(m_hmd, ovrEye_Left);
+			m_pose[1] = ovrHmd_GetEyePose(m_hmd, ovrEye_Right);
+#endif // OVR_VERSION > OVR_VERSION_042
 		}
 	}
 

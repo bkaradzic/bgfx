@@ -942,8 +942,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
-			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_factory, 0);
+			DX_RELEASE(m_device, 0);
 
 			unloadRenderDoc(m_renderdocdll);
 
@@ -2459,6 +2459,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
+		ViewState m_viewState;
 
 		StateCacheT<ID3D11BlendState> m_blendStateCache;
 		StateCacheT<ID3D11DepthStencilState> m_depthStencilStateCache;
@@ -3305,7 +3306,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
 		_render->m_hmdEnabled = hmdEnabled;
 
-		ViewState viewState(_render, hmdEnabled);
+		ViewState& viewState = m_viewState;
+		viewState.reset(_render, hmdEnabled);
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		bool scissorEnabled = false;
