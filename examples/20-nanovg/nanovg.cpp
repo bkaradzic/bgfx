@@ -30,6 +30,7 @@
 #include <bx/string.h>
 #include <bx/timer.h>
 #include "entry/entry.h"
+#include "imgui/imgui.h"
 #include "nanovg/nanovg.h"
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
@@ -1221,6 +1222,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
+	imguiCreate();
+
 	NVGcontext* nvg = nvgCreate(1, 0);
 	bgfx::setViewSeq(0, true);
 
@@ -1265,6 +1268,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	freeDemoData(nvg, &data);
 
 	nvgDelete(nvg);
+
+	imguiDestroy();
 
 	// Shutdown bgfx.
 	bgfx::shutdown();
