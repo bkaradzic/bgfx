@@ -178,97 +178,91 @@ EGL_IMPORT
 
 		m_eglLibrary = eglOpen();
 
+		if (NULL == g_platformData.context)
+		{
+			BX_UNUSED(_width, _height);
+			EGLNativeDisplayType ndt = (EGLNativeDisplayType)g_platformData.ndt;
+			EGLNativeWindowType  nwh = (EGLNativeWindowType )g_platformData.nwh;
 
-#	if BX_PLATFORM_ANDROID
-		if (!g_bgfxAndroidWindow)
-		{
-			BX_TRACE("androidSetWindow() was not called, assuming EGLContext and buffer-swapping are managed outside bgfx.");
-		}
-		else
-		{
-#	endif
-		BX_UNUSED(_width, _height);
-		EGLNativeDisplayType ndt = EGL_DEFAULT_DISPLAY;
-		EGLNativeWindowType nwh = (EGLNativeWindowType)NULL;
 #	if BX_PLATFORM_WINDOWS
-		ndt = GetDC(g_bgfxHwnd);
-		nwh = g_bgfxHwnd;
-#	elif BX_PLATFORM_LINUX
-		ndt = (EGLNativeDisplayType)g_bgfxX11Display;
-		nwh = (EGLNativeWindowType)g_bgfxX11Window;
-#	endif // BX_PLATFORM_
-		m_display = eglGetDisplay(ndt);
-		BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
+			if (NULL == g_platformData.ndt)
+			{
+				ndt = GetDC( (HWND)g_platformData.nwh);
+			}
+#	endif // BX_PLATFORM_WINDOWS
 
-		EGLint major = 0;
-		EGLint minor = 0;
-		EGLBoolean success = eglInitialize(m_display, &major, &minor);
-		BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize %d.%d", major, minor);
+			m_display = eglGetDisplay(ndt);
+			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
 
-		EGLint attrs[] =
-		{
-			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+			EGLint major = 0;
+			EGLint minor = 0;
+			EGLBoolean success = eglInitialize(m_display, &major, &minor);
+			BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize %d.%d", major, minor);
+
+			EGLint attrs[] =
+			{
+				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 
 #	if BX_PLATFORM_ANDROID
-			EGL_DEPTH_SIZE, 16,
+				EGL_DEPTH_SIZE, 16,
 #	else
-			EGL_DEPTH_SIZE, 24,
+				EGL_DEPTH_SIZE, 24,
 #	endif // BX_PLATFORM_
-			EGL_STENCIL_SIZE, 8,
+				EGL_STENCIL_SIZE, 8,
 
-			EGL_NONE
-		};
+				EGL_NONE
+			};
 
-		EGLint numConfig = 0;
-		success = eglChooseConfig(m_display, attrs, &m_config, 1, &numConfig);
-		BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
+			EGLint numConfig = 0;
+			success = eglChooseConfig(m_display, attrs, &m_config, 1, &numConfig);
+			BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
 
 #	if BX_PLATFORM_ANDROID
-		EGLint format;
-		eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
-		ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, _width, _height, format);
-		nwh = g_bgfxAndroidWindow;
+
+			EGLint format;
+			eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
+			ANativeWindow_setBuffersGeometry( (ANativeWindow*)g_platformData.nwh, _width, _height, format);
+
 #	elif BX_PLATFORM_RPI
-		DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
-		DISPMANX_UPDATE_HANDLE_T  dispmanUpdate  = vc_dispmanx_update_start(0);
+			DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
+			DISPMANX_UPDATE_HANDLE_T  dispmanUpdate  = vc_dispmanx_update_start(0);
 
-		VC_RECT_T dstRect = { 0, 0, _width,        _height       };
-		VC_RECT_T srcRect = { 0, 0, _width  << 16, _height << 16 };
+			VC_RECT_T dstRect = { 0, 0, _width,        _height       };
+			VC_RECT_T srcRect = { 0, 0, _width  << 16, _height << 16 };
 
-		DISPMANX_ELEMENT_HANDLE_T dispmanElement = vc_dispmanx_element_add(dispmanUpdate
-			, dispmanDisplay
-			, 0
-			, &dstRect
-			, 0
-			, &srcRect
-			, DISPMANX_PROTECTION_NONE
-			, NULL
-			, NULL
-			, DISPMANX_NO_ROTATE
-			);
+			DISPMANX_ELEMENT_HANDLE_T dispmanElement = vc_dispmanx_element_add(dispmanUpdate
+				, dispmanDisplay
+				, 0
+				, &dstRect
+				, 0
+				, &srcRect
+				, DISPMANX_PROTECTION_NONE
+				, NULL
+				, NULL
+				, DISPMANX_NO_ROTATE
+				);
 
-		s_dispmanWindow.element = dispmanElement;
-		s_dispmanWindow.width   = _width;
-		s_dispmanWindow.height  = _height;
-		nwh = &s_dispmanWindow;
+			s_dispmanWindow.element = dispmanElement;
+			s_dispmanWindow.width   = _width;
+			s_dispmanWindow.height  = _height;
+			nwh = &s_dispmanWindow;
 
-		vc_dispmanx_update_submit_sync(dispmanUpdate);
+			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-		m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
-		BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
+			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
-		m_context = eglCreateContext(m_display, m_config, EGL_NO_CONTEXT, s_contextAttrs);
-		BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");
+			m_context = eglCreateContext(m_display, m_config, EGL_NO_CONTEXT, s_contextAttrs);
+			BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");
 
-		success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
-		BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
-		m_current = NULL;
+			success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
+			m_current = NULL;
 
-		eglSwapInterval(m_display, 0);
-#	if BX_PLATFORM_ANDROID
+			eglSwapInterval(m_display, 0);
 		}
-#	endif
+
 #	if BX_PLATFORM_EMSCRIPTEN
 		emscripten_set_canvas_size(_width, _height);
 #	endif // BX_PLATFORM_EMSCRIPTEN
@@ -303,7 +297,7 @@ EGL_IMPORT
 		{
 			EGLint format;
 			eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
-			ANativeWindow_setBuffersGeometry(g_bgfxAndroidWindow, _width, _height, format);
+			ANativeWindow_setBuffersGeometry( (ANativeWindow*)g_platformData.nwh, _width, _height, format);
 		}
 #	endif // BX_PLATFORM_ANDROID
 

@@ -30,7 +30,18 @@ namespace bgfx
 	/// allow creating separate rendering thread. If it is called before
 	/// to bgfx::init, render thread won't be created by bgfx::init call.
 	RenderFrame::Enum renderFrame();
-}
+
+	struct PlatformData
+	{
+		void* ndt;        //< Native display type
+		void* nwh;        //< Native window handle
+		void* context;    //< GL context, or D3D device
+		void* backbuffer; //< GL backbuffer, or D3D render target view
+	};
+
+	void setPlatformData(const PlatformData& _hooks);
+
+} // namespace bgfx
 
 #if BX_PLATFORM_ANDROID
 #	include <android/native_window.h>
@@ -38,7 +49,13 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void androidSetWindow(::ANativeWindow* _window);
+	inline void androidSetWindow(::ANativeWindow* _window)
+	{
+		PlatformData pd;
+		memset(&pd, 0, sizeof(pd) );
+		pd.nwh = _window;
+		setPlatformData(pd);
+	}
 
 } // namespace bgfx
 
@@ -46,7 +63,13 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void iosSetEaglLayer(void* _layer);
+	inline void iosSetEaglLayer(void* _window)
+	{
+		PlatformData pd;
+		memset(&pd, 0, sizeof(pd) );
+		pd.nwh = _window;
+		setPlatformData(pd);
+	}
 
 } // namespace bgfx
 
@@ -55,7 +78,15 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL);
+	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL);
+	{
+		PlatformData pd;
+		memset(&pd, 0, sizeof(pd) );
+		pd.ndt     = _display;
+		pd.nwh     = _window;
+		pd.context = _glx;
+		setPlatformData(pd);
+	}
 
 } // namespace bgfx
 
@@ -76,7 +107,14 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void osxSetNSWindow(void* _window, void* _nsgl = NULL);
+	inline void osxSetNSWindow(void* _window, void* _nsgl = NULL)
+	{
+		PlatformData pd;
+		memset(&pd, 0, sizeof(pd) );
+		pd.nwh     = _window;
+		pd.context = _nsgl;
+		setPlatformData(pd);
+	}
 
 } // namespace bgfx
 
@@ -86,7 +124,13 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void winSetHwnd(::HWND _window);
+	inline void winSetHwnd(::HWND _window)
+	{
+		PlatformData pd;
+		memset(&pd, 0, sizeof(pd) );
+		pd.nwh = _window;
+		setPlatformData(pd);
+	}
 
 } // namespace bgfx
 
@@ -96,7 +140,13 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	void winrtSetWindow(IUnknown* _window);
+	inline void winrtSetWindow(::IUnknown* _window)
+	{
+		PlatformData pd;
+		memset(&pd, 0, sizeof(pd) );
+		pd.nwh = _window;
+		setPlatformData(pd);
+	}
 
 } // namespace bgfx
 

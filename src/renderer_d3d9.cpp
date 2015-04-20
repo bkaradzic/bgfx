@@ -272,6 +272,7 @@ namespace bgfx { namespace d3d9
 		RendererContextD3D9()
 			: m_d3d9(NULL)
 			, m_device(NULL)
+			, m_swapChain(NULL)
 			, m_captureTexture(NULL)
 			, m_captureSurface(NULL)
 			, m_captureResolve(NULL)
@@ -316,7 +317,7 @@ namespace bgfx { namespace d3d9
 			m_params.Windowed = true;
 
 			RECT rect;
-			GetWindowRect(g_bgfxHwnd, &rect);
+			GetWindowRect( (HWND)g_platformData.nwh, &rect);
 			m_params.BackBufferWidth = rect.right-rect.left;
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
@@ -417,7 +418,7 @@ namespace bgfx { namespace d3d9
 #if 0 // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
 						, m_deviceType
-						, g_bgfxHwnd
+						, g_platformHooks.nwh
 						, behaviorFlags[ii]
 						, &m_params
 						, NULL
@@ -426,7 +427,7 @@ namespace bgfx { namespace d3d9
 #else
 				DX_CHECK(m_d3d9->CreateDevice(m_adapter
 					, m_deviceType
-					, g_bgfxHwnd
+					, (HWND)g_platformData.nwh
 					, behaviorFlags[ii]
 					, &m_params
 					, &m_device
@@ -860,11 +861,11 @@ namespace bgfx { namespace d3d9
 				) );
 
 			RECT rc;
-			GetClientRect(g_bgfxHwnd, &rc);
+			GetClientRect( (HWND)g_platformData.nwh, &rc);
 			POINT point;
 			point.x = rc.left;
 			point.y = rc.top;
-			ClientToScreen(g_bgfxHwnd, &point);
+			ClientToScreen( (HWND)g_platformData.nwh, &point);
 			uint8_t* data = (uint8_t*)rect.pBits;
 			uint32_t bytesPerPixel = rect.Pitch/dm.Width;
 
@@ -1146,7 +1147,7 @@ namespace bgfx { namespace d3d9
 
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
-			if (NULL != m_device)
+			if (NULL != m_swapChain)
 			{
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				if (NULL != m_deviceEx)
@@ -1160,7 +1161,7 @@ namespace bgfx { namespace d3d9
 					HRESULT hr;
 					if (0 == ii)
 					{
-						hr = m_swapChain->Present(NULL, NULL, g_bgfxHwnd, NULL, 0);
+						hr = m_swapChain->Present(NULL, NULL, (HWND)g_platformData.nwh, NULL, 0);
 					}
 					else
 					{

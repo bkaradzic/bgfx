@@ -217,22 +217,7 @@ namespace stl
 
 namespace bgfx
 {
-#if BX_PLATFORM_ANDROID
-	extern ::ANativeWindow* g_bgfxAndroidWindow;
-#elif BX_PLATFORM_IOS
-	extern void* g_bgfxEaglLayer;
-#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
-	extern void*    g_bgfxX11Display;
-	extern uint32_t g_bgfxX11Window;
-	extern void*    g_bgfxGLX;
-#elif BX_PLATFORM_OSX
-	extern void* g_bgfxNSWindow;
-	extern void* g_bgfxNSGL;
-#elif BX_PLATFORM_WINDOWS
-	extern ::HWND g_bgfxHwnd;
-#elif BX_PLATFORM_WINRT
-	extern ::IUnknown* g_bgfxCoreWindow;
-#endif // BX_PLATFORM_*
+	extern PlatformData g_platformData;
 
 #if BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 	typedef uint16_t RenderItemCount;

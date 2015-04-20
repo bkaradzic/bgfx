@@ -18,7 +18,7 @@ namespace bgfx { namespace gl
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);
-		CAEAGLLayer* layer = (CAEAGLLayer*)g_bgfxEaglLayer;
+		CAEAGLLayer* layer = (CAEAGLLayer*)g_platformData.nwh;
 		layer.opaque = true;
 
 		layer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys

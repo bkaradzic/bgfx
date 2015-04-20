@@ -19,56 +19,6 @@ namespace bgfx
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
 
-#if BX_PLATFORM_ANDROID
-	::ANativeWindow* g_bgfxAndroidWindow = NULL;
-
-	void androidSetWindow(::ANativeWindow* _window)
-	{
-		g_bgfxAndroidWindow = _window;
-	}
-#elif BX_PLATFORM_IOS
-	void* g_bgfxEaglLayer = NULL;
-
-	void iosSetEaglLayer(void* _layer)
-	{
-		g_bgfxEaglLayer = _layer;
-	}
-#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
-	void*    g_bgfxX11Display;
-	uint32_t g_bgfxX11Window;
-	void*    g_bgfxGLX;
-
-	void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx)
-	{
-		g_bgfxX11Display = _display;
-		g_bgfxX11Window  = _window;
-		g_bgfxGLX        = _glx;
-	}
-#elif BX_PLATFORM_OSX
-	void* g_bgfxNSWindow = NULL;
-	void* g_bgfxNSGL = NULL;
-
-	void osxSetNSWindow(void* _window, void* _nsgl)
-	{
-		g_bgfxNSWindow = _window;
-		g_bgfxNSGL     = _nsgl;
-	}
-#elif BX_PLATFORM_WINDOWS
-	::HWND g_bgfxHwnd = NULL;
-
-	void winSetHwnd(::HWND _window)
-	{
-		g_bgfxHwnd = _window;
-	}
-#elif BX_PLATFORM_WINRT
-	::IUnknown* g_bgfxCoreWindow = NULL;
-
-	void winrtSetWindow(::IUnknown* _window)
-	{
-		g_bgfxCoreWindow = _window;
-	}
-#endif // BX_PLATFORM_*
-
 #if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
@@ -252,6 +202,13 @@ namespace bgfx
 	static BX_THREAD uint32_t s_threadIndex = 0;
 	static Context* s_ctx = NULL;
 	static bool s_renderFrameCalled = false;
+	PlatformData g_platformData;
+
+	void setPlatformData(const PlatformData& _pd)
+	{
+		BGFX_FATAL(NULL == s_ctx, Fatal::UnableToInitialize, "Must be set prior to initialization!");
+		memcpy(&g_platformData, &_pd, sizeof(PlatformData) );
+	}
 
 	void setGraphicsDebuggerPresent(bool _present)
 	{
@@ -3033,6 +2990,7 @@ BX_STATIC_ASSERT(sizeof(bgfx::TransientVertexBuffer) == sizeof(bgfx_transient_ve
 BX_STATIC_ASSERT(sizeof(bgfx::InstanceDataBuffer)    == sizeof(bgfx_instance_data_buffer_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::TextureInfo)           == sizeof(bgfx_texture_info_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::Caps)                  == sizeof(bgfx_caps_t) );
+BX_STATIC_ASSERT(sizeof(bgfx::PlatformData)          == sizeof(bgfx_platform_data_t) );
 
 BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _decl, bgfx_renderer_type_t _renderer)
 {
@@ -3645,40 +3603,7 @@ BGFX_C_API bgfx_render_frame_t bgfx_render_frame()
 	return bgfx_render_frame_t(bgfx::renderFrame() );
 }
 
-#if BX_PLATFORM_ANDROID
-BGFX_C_API void bgfx_android_set_window(ANativeWindow* _window)
+BGFX_C_API void bgfx_set_platform_data(bgfx_platform_data_t* _pd)
 {
-	bgfx::androidSetWindow(_window);
+	bgfx::setPlatformData(*(bgfx::PlatformData*)_pd);
 }
-
-#elif BX_PLATFORM_IOS
-BGFX_C_API void bgfx_ios_set_eagl_layer(void* _layer)
-{
-	bgfx::iosSetEaglLayer(_layer);
-}
-
-#elif BX_PLATFORM_FREEBSD || BX_PLATFORM_LINUX || BX_PLATFORM_RPI
-BGFX_C_API void bgfx_x11_set_display_window(::Display* _display, ::Window _window)
-{
-	bgfx::x11SetDisplayWindow(_display, _window);
-}
-
-#elif BX_PLATFORM_NACL
-BGFX_C_API bool bgfx_nacl_set_interfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, bgfx_post_swap_buffers_fn _postSwapBuffers)
-{
-	return bgfx::naclSetInterfaces(_instance, _instInterface, _graphicsInterface, _postSwapBuffers);
-}
-
-#elif BX_PLATFORM_OSX
-BGFX_C_API void bgfx_osx_set_ns_window(void* _window)
-{
-	bgfx::osxSetNSWindow(_window);
-}
-
-#elif BX_PLATFORM_WINDOWS
-BGFX_C_API void bgfx_win_set_hwnd(HWND _window)
-{
-	bgfx::winSetHwnd(_window);
-}
-
-#endif // BX_PLATFORM_*

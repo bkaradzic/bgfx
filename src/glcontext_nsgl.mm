@@ -65,10 +65,10 @@ namespace bgfx { namespace gl
 		BX_CHECK(NULL != s_opengl, "OpenGL dynamic library is not found!");
 
 		const AutoreleasePoolHolder pool;
-		NSWindow* nsWindow = (NSWindow*)g_bgfxNSWindow;
-		m_context = g_bgfxNSGL;
+		NSWindow* nsWindow = (NSWindow*)g_platformData.nwh;
+		m_context = g_platformData.context;
 
-		if (NULL == g_bgfxNSGL)
+		if (NULL == g_platformData.context)
 		{
 #if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 			NSOpenGLPixelFormatAttribute profile =
@@ -120,7 +120,7 @@ namespace bgfx { namespace gl
 
 	void GlContext::destroy()
 	{
-		if (NULL == g_bgfxNSGL)
+		if (NULL == g_platformData.context)
 		{
 			NSOpenGLView* glView = (NSOpenGLView*)m_view;
 			[glView release];
