@@ -926,10 +926,37 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								? BGFX_CAPS_FORMAT_TEXTURE_VERTEX
 								: BGFX_CAPS_FORMAT_TEXTURE_NONE
 								;
+
+						support |= 0 != (data.OutFormatSupport & (0
+								| D3D11_FORMAT_SUPPORT_SHADER_LOAD
+								) )
+								? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+								: BGFX_CAPS_FORMAT_TEXTURE_NONE
+								;
 					}
 					else
 					{
 						BX_TRACE("CheckFeatureSupport failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii) ) );
+					}
+
+					if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE) )
+					{
+						// clear image flag for additional testing
+						support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE;
+
+						D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
+						data.InFormat = s_textureFormat[ii].m_fmt;
+						hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data, sizeof(data) );
+						if (SUCCEEDED(hr) )
+						{
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD
+									| D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+						}
 					}
 				}
 

@@ -1325,9 +1325,26 @@ namespace bgfx { namespace gl
 				}
 			}
 
+			const bool computeSupport = false
+				|| !!(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
+				|| s_extension[Extension::ARB_compute_shader].m_supported
+				;
+
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				g_caps.formats[ii] = s_textureFormat[ii].m_supported ? 1 : 0;
+				uint8_t supported = 0;
+				supported |= s_textureFormat[ii].m_supported
+					? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
+
+				supported |= computeSupport
+					&& GL_ZERO != s_imageFormat[ii]
+					? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
+
+				g_caps.formats[ii] = supported;
 			}
 
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
@@ -1436,8 +1453,7 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
-			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
-				|| s_extension[Extension::ARB_compute_shader].m_supported
+			g_caps.supported |= computeSupport
 				? BGFX_CAPS_COMPUTE
 				: 0
 				;
