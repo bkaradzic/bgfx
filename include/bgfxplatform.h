@@ -52,8 +52,10 @@ namespace bgfx
 	inline void androidSetWindow(::ANativeWindow* _window)
 	{
 		PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
-		pd.nwh = _window;
+		pd.ndt        = NULL;
+		pd.nwh        = _window;
+		pd.context    = NULL;
+		pd.backbuffer = NULL;
 		setPlatformData(pd);
 	}
 
@@ -66,8 +68,10 @@ namespace bgfx
 	inline void iosSetEaglLayer(void* _window)
 	{
 		PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
-		pd.nwh = _window;
+		pd.ndt        = NULL;
+		pd.nwh        = _window;
+		pd.context    = NULL;
+		pd.backbuffer = NULL;
 		setPlatformData(pd);
 	}
 
@@ -81,10 +85,10 @@ namespace bgfx
 	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
 	{
 		PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
-		pd.ndt     = _display;
-		pd.nwh     = (void*)(uintptr_t)_window;
-		pd.context = _glx;
+		pd.ndt        = _display;
+		pd.nwh        = (void*)(uintptr_t)_window;
+		pd.context    = _glx;
+		pd.backbuffer = NULL;
 		setPlatformData(pd);
 	}
 
@@ -110,9 +114,10 @@ namespace bgfx
 	inline void osxSetNSWindow(void* _window, void* _nsgl = NULL)
 	{
 		PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
-		pd.nwh     = _window;
-		pd.context = _nsgl;
+		pd.ndt        = NULL;
+		pd.nwh        = _window;
+		pd.context    = _nsgl;
+		pd.backbuffer = NULL;
 		setPlatformData(pd);
 	}
 
@@ -127,8 +132,10 @@ namespace bgfx
 	inline void winSetHwnd(::HWND _window)
 	{
 		PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
-		pd.nwh = _window;
+		pd.ndt        = NULL;
+		pd.nwh        = _window;
+		pd.context    = NULL;
+		pd.backbuffer = NULL;
 		setPlatformData(pd);
 	}
 
@@ -143,8 +150,10 @@ namespace bgfx
 	inline void winrtSetWindow(::IUnknown* _window)
 	{
 		PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
-		pd.nwh = _window;
+		pd.ndt        = NULL;
+		pd.nwh        = _window;
+		pd.context    = NULL;
+		pd.backbuffer = NULL;
 		setPlatformData(pd);
 	}
 
