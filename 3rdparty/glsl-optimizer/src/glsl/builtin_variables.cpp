@@ -949,6 +949,13 @@ builtin_variable_generator::generate_fs_special_vars()
 			var->enable_extension_warning("GL_EXT_shader_framebuffer_fetch");
 	}
 
+	{
+		// BK - gl_PrimitiveID
+		ir_variable *var;
+		var = add_output(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID", glsl_precision_high);
+		var->data.interpolation = INTERP_QUALIFIER_FLAT;
+	}
+
    if (state->ARB_sample_shading_enable) {
       add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, "gl_SampleID", glsl_precision_high);
       add_system_value(SYSTEM_VALUE_SAMPLE_POS, vec2_t, "gl_SamplePosition", glsl_precision_high);
