@@ -44,10 +44,11 @@ vec2 unpackHalf2x16(uint _x)
 
 #define SHARED groupshared
 
-#define r32ui  uint
-#define r32f   float
-#define rg16f  float2
-#define rgba8  float4
+#define r32ui   uint
+#define r32f    float
+#define rg16f   float2
+#define rgba16f float4
+#define rgba8   float4
 
 #define IMAGE2D_RO( _name, _format, _reg) Texture2D<_format>   _name : register(t[_reg])
 #define UIMAGE2D_RO(_name, _format, _reg) Texture2D<_format>   _name : register(t[_reg])
