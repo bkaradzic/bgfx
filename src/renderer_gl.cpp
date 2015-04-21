@@ -4133,11 +4133,14 @@ namespace bgfx { namespace gl
 						writeString(&writer, "#version 140\n");
 					}
 
+					writeString(&writer, "#define texture2DLod textureLod\n");
+					writeString(&writer, "#define texture3DLod textureLod\n");
+					writeString(&writer, "#define textureCubeLod textureLod\n");
+
 					if (m_type == GL_FRAGMENT_SHADER)
 					{
 						writeString(&writer, "#define varying in\n");
 						writeString(&writer, "#define texture2D texture\n");
-						writeString(&writer, "#define texture2DLod textureLod\n");
 						writeString(&writer, "#define texture2DProj textureProj\n");
 
 						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
@@ -4152,9 +4155,7 @@ namespace bgfx { namespace gl
 						}
 
 						writeString(&writer, "#define texture3D texture\n");
-						writeString(&writer, "#define texture3DLod textureLod\n");
 						writeString(&writer, "#define textureCube texture\n");
-						writeString(&writer, "#define textureCubeLod textureLod\n");
 
 						uint32_t fragData = 0;
 
