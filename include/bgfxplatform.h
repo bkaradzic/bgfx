@@ -78,12 +78,12 @@ namespace bgfx
 namespace bgfx
 {
 	///
-	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL);
+	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
 	{
 		PlatformData pd;
 		memset(&pd, 0, sizeof(pd) );
 		pd.ndt     = _display;
-		pd.nwh     = _window;
+		pd.nwh     = (void*)(uintptr_t)_window;
 		pd.context = _glx;
 		setPlatformData(pd);
 	}
