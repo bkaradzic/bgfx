@@ -9,6 +9,7 @@
 #if BGFX_USE_EGL
 
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 namespace bgfx { namespace gl
 {

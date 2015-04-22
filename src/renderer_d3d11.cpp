@@ -1579,7 +1579,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				preReset();
 
-				if (NULL != m_swapChain)
+				if (NULL == m_swapChain)
+				{
+					// Updated backbuffer if it changed in PlatformData.
+					m_backBufferColor = (ID3D11RenderTargetView*)g_platformData.backbuffer;
+				}
+				else
 				{
 					if (resize)
 					{

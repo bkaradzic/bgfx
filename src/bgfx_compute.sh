@@ -100,6 +100,13 @@ ivec2 imageSize(Texture2D _image)
 	return result;
 }
 
+ivec2 imageSize(Texture2D<uint> _image)
+{
+	ivec2 result;
+	_image.GetDimensions(result.x, result.y);
+	return result;
+}
+
 ivec2 imageSize(RWTexture2D<float4> _image)
 {
 	ivec2 result;

@@ -206,7 +206,16 @@ namespace bgfx
 
 	void setPlatformData(const PlatformData& _pd)
 	{
-		BGFX_FATAL(NULL == s_ctx, Fatal::UnableToInitialize, "Must be set prior to initialization!");
+		if (NULL != s_ctx)
+		{
+			BGFX_FATAL(true
+				&& g_platformData.ndt     == _pd.ndt
+				&& g_platformData.nwh     == _pd.nwh
+				&& g_platformData.context == _pd.context
+				, Fatal::UnableToInitialize
+				, "Only backbuffer pointer can be changed after initialization!"
+				);
+		}
 		memcpy(&g_platformData, &_pd, sizeof(PlatformData) );
 	}
 

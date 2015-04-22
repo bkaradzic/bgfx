@@ -14,14 +14,6 @@
 #			include <bcm_host.h>
 #		endif // BX_PLATFORM_RPI
 
-#ifndef EGL_CONTEXT_MAJOR_VERSION_KHR
-#	define EGL_CONTEXT_MAJOR_VERSION_KHR EGL_CONTEXT_CLIENT_VERSION
-#endif // EGL_CONTEXT_MAJOR_VERSION_KHR
-
-#ifndef EGL_CONTEXT_MINOR_VERSION_KHR
-#	define EGL_CONTEXT_MINOR_VERSION_KHR 0x30FB
-#endif // EGL_CONTEXT_MINOR_VERSION_KHR
-
 namespace bgfx { namespace gl
 {
 #if BGFX_USE_GL_DYNAMIC_LIB
@@ -100,22 +92,7 @@ EGL_IMPORT
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
 
-	static const EGLint s_contextAttrs[] =
-	{
-#	if BGFX_CONFIG_RENDERER_OPENGLES >= 30
-		EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
-#		if BGFX_CONFIG_RENDERER_OPENGLES >= 31
-		EGL_CONTEXT_MINOR_VERSION_KHR, 1,
-#		else
-		//			EGL_CONTEXT_MINOR_VERSION_KHR, 0,
-#		endif // BGFX_CONFIG_RENDERER_OPENGLES >= 31
-#	elif BGFX_CONFIG_RENDERER_OPENGLES
-		EGL_CONTEXT_MAJOR_VERSION_KHR, 2,
-		//			EGL_CONTEXT_MINOR_VERSION_KHR, 0,
-#	endif // BGFX_CONFIG_RENDERER_
-
-		EGL_NONE
-	};
+	static EGLint s_contextAttrs[16];
 
 	struct SwapChainGL
 	{
@@ -252,6 +229,27 @@ EGL_IMPORT
 
 			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
+
+			{
+				bx::StaticMemoryBlockWriter writer(s_contextAttrs, sizeof(s_contextAttrs) );
+
+				bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
+				bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES / 10) );
+
+				bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR) );
+				bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES % 10) );
+
+				bx::write(&writer, EGLint(EGL_CONTEXT_FLAGS_KHR) );
+
+				EGLint flags = BGFX_CONFIG_DEBUG ? 0
+					| EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR
+//					| EGL_OPENGL_ES3_BIT_KHR
+					: 0
+					;
+				bx::write(&writer, flags);
+
+				bx::write(&writer, EGLint(EGL_NONE) );
+			}
 
 			m_context = eglCreateContext(m_display, m_config, EGL_NO_CONTEXT, s_contextAttrs);
 			BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");

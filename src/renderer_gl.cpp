@@ -214,8 +214,8 @@ namespace bgfx { namespace gl
 		{ GL_RG16F,                                    GL_RG,                                       GL_FLOAT,                        false }, // RG16F
 		{ GL_RG32UI,                                   GL_RG,                                       GL_UNSIGNED_INT,                 false }, // RG32
 		{ GL_RG32F,                                    GL_RG,                                       GL_FLOAT,                        false }, // RG32F
-		{ GL_RGBA,                                     GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
-		{ GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
+		{ GL_RGBA8,                                    GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
+		{ GL_RGBA8,                                    GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
 		{ GL_RGBA16,                                   GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA16
 		{ GL_RGBA16F,                                  GL_RGBA,                                     GL_HALF_FLOAT,                   false }, // RGBA16F
 		{ GL_RGBA32UI,                                 GL_RGBA,                                     GL_UNSIGNED_INT,                 false }, // RGBA32
@@ -1511,14 +1511,20 @@ namespace bgfx { namespace gl
 			if (s_extension[Extension::ARB_debug_output].m_supported
 			||  s_extension[Extension::KHR_debug].m_supported)
 			{
-				GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
-				GL_CHECK(glDebugMessageControl(GL_DONT_CARE
-						, GL_DONT_CARE
-						, GL_DEBUG_SEVERITY_MEDIUM
-						, 0
-						, NULL
-						, GL_TRUE
-						) );
+				if (NULL != glDebugMessageControl
+				&&  NULL != glDebugMessageInsert
+				&&  NULL != glDebugMessageCallback
+				&&  NULL != glGetDebugMessageLog)
+				{
+					GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
+					GL_CHECK(glDebugMessageControl(GL_DONT_CARE
+							, GL_DONT_CARE
+							, GL_DEBUG_SEVERITY_MEDIUM
+							, 0
+							, NULL
+							, GL_TRUE
+							) );
+				}
 			}
 
 			if (s_extension[Extension::ARB_seamless_cube_map].m_supported)
@@ -3356,7 +3362,8 @@ namespace bgfx { namespace gl
 		m_requestedFormat = _format;
 		m_textureFormat   = _format;
 
-		const bool bufferOnly = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+		const bool bufferOnly   = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
 
 		if (!bufferOnly)
 		{
@@ -3377,6 +3384,7 @@ namespace bgfx { namespace gl
 			const bool convert    = false
 				|| (compressed && m_textureFormat != m_requestedFormat)
 				|| swizzle
+				|| !s_textureFormat[m_requestedFormat].m_supported
 				;
 
 			if (convert)
@@ -3385,6 +3393,11 @@ namespace bgfx { namespace gl
 				const TextureFormatInfo& tfiRgba8 = s_textureFormat[TextureFormat::RGBA8];
 				m_fmt  = tfiRgba8.m_fmt;
 				m_type = tfiRgba8.m_type;
+			}
+
+			if (computeWrite)
+			{
+				GL_CHECK(glTexStorage2D(_target, _numMips, s_textureFormat[m_textureFormat].m_internalFmt, m_width, m_height));
 			}
 
 			setSamplerState(_flags);
@@ -3479,6 +3492,8 @@ namespace bgfx { namespace gl
 			{
 				return;
 			}
+
+			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 
 			target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
@@ -3579,7 +3594,7 @@ namespace bgfx { namespace gl
 								);
 						}
 					}
-					else
+					else if (!computeWrite)
 					{
 						if (compressed)
 						{
