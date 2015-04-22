@@ -1224,22 +1224,6 @@ namespace bgfx { namespace gl
 			s_textureFormat[TextureFormat::PTC22].m_supported |= ptc2Supported;
 			s_textureFormat[TextureFormat::PTC24].m_supported |= ptc2Supported;
 
-			if (s_extension[Extension::ARB_debug_output].m_supported
-			||  s_extension[Extension::KHR_debug].m_supported)
-			{
-				GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
-				GL_CHECK(glDebugMessageControl(GL_DONT_CARE
-						, GL_DONT_CARE
-						, GL_DEBUG_SEVERITY_MEDIUM
-						, 0
-						, NULL
-						, GL_TRUE
-						) );
-			}
-
-
-
-
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 			{
 				setTextureFormat(TextureFormat::D32, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
