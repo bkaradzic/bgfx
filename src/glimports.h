@@ -478,11 +478,6 @@ GL_IMPORT_____x(true,  PFNGLMEMORYBARRIERPROC,                     glMemoryBarri
 GL_IMPORT_____x(true,  PFNGLDISPATCHCOMPUTEPROC,                   glDispatchCompute);
 GL_IMPORT_____x(true,  PFNGLDISPATCHCOMPUTEINDIRECTPROC,           glDispatchComputeIndirect);
 
-GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGECONTROLPROC,               glDebugMessageControl);
-GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessageInsert);
-GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGECALLBACKPROC,              glDebugMessageCallback);
-GL_IMPORT_KHR__(true,  PFNGLGETDEBUGMESSAGELOGPROC,                glGetDebugMessageLog);
-
 GL_IMPORT_NV___(true,  PFNGLDRAWBUFFERSPROC,                       glDrawBuffers);
 GL_IMPORT_NV___(true,  PFNGLGENQUERIESPROC,                        glGenQueries);
 GL_IMPORT_NV___(true,  PFNGLDELETEQUERIESPROC,                     glDeleteQueries);
