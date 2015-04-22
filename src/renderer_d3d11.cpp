@@ -749,6 +749,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			else
 			{
 				memset(&m_scd, 0, sizeof(m_scd) );
+				m_scd.SampleDesc.Count   = 1;
+				m_scd.SampleDesc.Quality = 0;
+				setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
 				m_backBufferColor = (ID3D11RenderTargetView*)g_platformData.backbuffer;
 			}
 
