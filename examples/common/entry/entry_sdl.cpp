@@ -12,6 +12,7 @@
 #endif // BX_PLATFORM_WINDOWS
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 #include <bgfxplatform.h>
 
 #include <stdio.h>

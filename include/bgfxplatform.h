@@ -161,11 +161,9 @@ namespace bgfx
 
 #endif // BX_PLATFORM_
 
-#if defined(_SDL_H)
-// If SDL.h is included before bgfxplatform.h we can enable SDL window
+#if defined(_SDL_syswm_h)
+// If SDL_syswm.h is included before bgfxplatform.h we can enable SDL window
 // interop convenience code.
-
-#	include <SDL2/SDL_syswm.h>
 
 namespace bgfx
 {
@@ -179,13 +177,20 @@ namespace bgfx
 			return false;
 		}
 
+		PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
-		x11SetDisplayWindow(wmi.info.x11.display, wmi.info.x11.window);
+		pd.ndt        = wmi.info.x11.display;
+		pd.nwh        = (void*)(uintptr_t)wmi.info.x11.window;
 #	elif BX_PLATFORM_OSX
-		osxSetNSWindow(wmi.info.cocoa.window);
+		pd.ndt        = NULL;
+		pd.nwh        = wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
-		winSetHwnd(wmi.info.win.window);
+		pd.ndt        = NULL;
+		pd.nwh        = wmi.info.win.window;
 #	endif // BX_PLATFORM_
+		pd.context    = NULL;
+		pd.backbuffer = NULL;
+		setPlatformData(pd);
 
 		return true;
 	}
@@ -212,19 +217,22 @@ namespace bgfx
 {
 	inline void glfwSetWindow(GLFWwindow* _window)
 	{
+		PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
-		::Display* display = glfwGetX11Display();
-		::Window   window  = glfwGetX11Window(_window);
-		void* glx          = glfwGetGLXContext(_window);
-		x11SetDisplayWindow(display, window, glx);
+		pd.ndt        = glfwGetX11Display();
+		pd.nwh        = (void*)(uintptr_t)glfwGetX11Window(_window);
+		pd.context    = glfwGetGLXContext(_window);
 #	elif BX_PLATFORM_OSX
-		void* window = glfwGetCocoaWindow(_window);
-		void* nsgl   = glfwGetNSGLContext(_window);
-		osxSetNSWindow(window, nsgl);
+		pd.ndt        = NULL;
+		pd.nwh        = glfwGetCocoaWindow(_window);
+		pd.context    = glfwGetNSGLContext(_window);
 #	elif BX_PLATFORM_WINDOWS
-		HWND hwnd = glfwGetWin32Window(_window);
-		winSetHwnd(hwnd);
+		pd.ndt        = NULL;
+		pd.nwh        = glfwGetWin32Window(_window);
+		pd.context    = NULL;
 #	endif // BX_PLATFORM_WINDOWS
+		pd.backbuffer = NULL;
+		setPlatformData(pd);
 	}
 
 } // namespace bgfx
