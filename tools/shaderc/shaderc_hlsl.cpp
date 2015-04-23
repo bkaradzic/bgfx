@@ -519,7 +519,7 @@ bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::stri
 			while (!reader.isEof() )
 			{
 				std::string line = reader.getLine();
-				for (UniformNameList::const_iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
+				for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
 				{
 					size_t index = line.find("uniform ");
 					if (index == std::string::npos)
