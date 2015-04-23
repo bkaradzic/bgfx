@@ -645,7 +645,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			IDXGIDevice*  device = NULL;
-			IDXGIAdapter* adapter;
+			IDXGIAdapter* adapter = NULL;
 			hr = E_FAIL;
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
 			{
