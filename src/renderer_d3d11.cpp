@@ -538,7 +538,10 @@ namespace bgfx { namespace d3d11
 			if (NULL == m_device)
 			{
 				m_adapter    = NULL;
-				m_driverType = D3D_DRIVER_TYPE_HARDWARE;
+				m_driverType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
+					? D3D_DRIVER_TYPE_WARP
+					: D3D_DRIVER_TYPE_HARDWARE
+					;
 
 				IDXGIAdapter* adapter;
 				for (uint32_t ii = 0
@@ -606,36 +609,49 @@ namespace bgfx { namespace d3d11
 					D3D_FEATURE_LEVEL_9_1,
 				};
 
-				uint32_t flags = 0
-					| D3D11_CREATE_DEVICE_SINGLETHREADED
-					| D3D11_CREATE_DEVICE_BGRA_SUPPORT
-					| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
-					;
-
-				hr = E_FAIL;
-				for (uint32_t ii = 0; ii < 3 && FAILED(hr);)
+				for (;;)
 				{
-					hr = D3D11CreateDevice(m_adapter
-						, m_driverType
-						, NULL
-						, flags
-						, &features[ii]
-						, BX_COUNTOF(features)-ii
-						, D3D11_SDK_VERSION
-						, &m_device
-						, &m_featureLevel
-						, &m_deviceCtx
-						);
-					if (FAILED(hr)
-					&&  0 != (flags & D3D11_CREATE_DEVICE_DEBUG) )
+					uint32_t flags = 0
+						| D3D11_CREATE_DEVICE_SINGLETHREADED
+						| D3D11_CREATE_DEVICE_BGRA_SUPPORT
+						| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
+						;
+
+					hr = E_FAIL;
+					for (uint32_t ii = 0; ii < 3 && FAILED(hr);)
 					{
-						// Try without debug in case D3D11 SDK Layers
-						// is not present?
-						flags &= ~D3D11_CREATE_DEVICE_DEBUG;
+						hr = D3D11CreateDevice(m_adapter
+							, m_driverType
+							, NULL
+							, flags
+							, &features[ii]
+							, BX_COUNTOF(features)-ii
+							, D3D11_SDK_VERSION
+							, &m_device
+							, &m_featureLevel
+							, &m_deviceCtx
+							);
+						if (FAILED(hr)
+						&&  0 != (flags & D3D11_CREATE_DEVICE_DEBUG) )
+						{
+							// Try without debug in case D3D11 SDK Layers
+							// is not present?
+							flags &= ~D3D11_CREATE_DEVICE_DEBUG;
+							continue;
+						}
+
+						++ii;
+					}
+
+					if (FAILED(hr)
+					&&  D3D_DRIVER_TYPE_WARP != m_driverType)
+					{
+						// Try with WARP
+						m_driverType = D3D_DRIVER_TYPE_WARP;
 						continue;
 					}
 
-					++ii;
+					break;
 				}
 				BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
 
@@ -692,7 +708,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			hr = adapter->GetDesc(&m_adapterDesc);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");
-			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
+			g_caps.vendorId = 0 == m_adapterDesc.VendorId
+				? BGFX_PCI_ID_SOFTWARE_RASTERIZER
+				: (uint16_t)m_adapterDesc.VendorId
+				;
 			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
 
 			if (NULL == g_platformData.backbuffer)

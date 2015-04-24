@@ -357,8 +357,11 @@ namespace bgfx { namespace d3d9
 
 			BGFX_FATAL(m_d3d9, Fatal::UnableToInitialize, "Unable to create Direct3D.");
 
-			m_adapter = D3DADAPTER_DEFAULT;
-			m_deviceType = D3DDEVTYPE_HAL;
+			m_adapter    = D3DADAPTER_DEFAULT;
+			m_deviceType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
+				? D3DDEVTYPE_REF
+				: D3DDEVTYPE_HAL
+				;
 
 			uint8_t numGPUs = uint8_t(bx::uint32_min(BX_COUNTOF(g_caps.gpu), m_d3d9->GetAdapterCount() ) );
 			for (uint32_t ii = 0; ii < numGPUs; ++ii)
@@ -403,7 +406,10 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &m_identifier) );
 			m_amd    = m_identifier.VendorId == BGFX_PCI_ID_AMD;
 			m_nvidia = m_identifier.VendorId == BGFX_PCI_ID_NVIDIA;
-			g_caps.vendorId = (uint16_t)m_identifier.VendorId;
+			g_caps.vendorId = 0 == m_identifier.VendorId
+				? BGFX_PCI_ID_SOFTWARE_RASTERIZER
+				: (uint16_t)m_identifier.VendorId
+				;
 			g_caps.deviceId = (uint16_t)m_identifier.DeviceId;
 
 			uint32_t behaviorFlags[] =
