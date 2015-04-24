@@ -204,4 +204,16 @@ bool imguiCube(bgfx::TextureHandle _cubemap, float _lod = 0.0f, ImguiCubemap::En
 float imguiGetTextLength(const char* _text, ImguiFontHandle _handle);
 bool imguiMouseOverArea();
 
+namespace ImGui
+{
+	// Helper function for passing bgfx::TextureHandle to ImGui::Image.
+	inline void Image(bgfx::TextureHandle _handle, const ImVec2& _size, const ImVec2& _uv0 = ImVec2(0, 0), const ImVec2& _uv1 = ImVec2(1, 1), const ImVec4& _tint_col = ImVec4(1, 1, 1, 1), const ImVec4& _border_col = ImVec4(0, 0, 0, 0))
+	{
+		union { bgfx::TextureHandle handle; ImTextureID ptr; } texture;
+		texture.handle = _handle;
+		Image(texture.ptr, _size, _uv0, _uv1, _tint_col, _border_col);
+	}
+
+} // namespace ImGui
+
 #endif // IMGUI_H_HEADER_GUARD

@@ -72,7 +72,13 @@ struct OcornutImguiContext
 						, uint16_t(pcmd->clip_rect.z-pcmd->clip_rect.x)
 						, uint16_t(pcmd->clip_rect.w-pcmd->clip_rect.y)
 						);
-				bgfx::setTexture(0, s_tex, m_texture);
+				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->texture_id };
+
+				bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
+					? texture.handle
+					: m_texture
+					);
+
 				bgfx::setVertexBuffer(&tvb, vtx_offset, pcmd->vtx_count);
 				bgfx::setProgram(m_program);
 				bgfx::submit(m_viewId);
