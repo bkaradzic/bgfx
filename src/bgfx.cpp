@@ -1026,6 +1026,8 @@ namespace bgfx
 		}
 
 		m_render->destroy();
+#else
+		s_ctx = NULL;
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		m_submit->destroy();
@@ -2020,6 +2022,7 @@ again:
 		BGFX_CHECK_MAIN_THREAD();
 		Context* ctx = s_ctx; // it's going to be NULLd inside shutdown.
 		ctx->shutdown();
+		BX_CHECK(NULL == s_ctx, "bgfx is should be uninitialized here.");
 
 		BX_ALIGNED_DELETE(g_allocator, ctx, 16);
 
