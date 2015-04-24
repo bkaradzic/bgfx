@@ -348,6 +348,12 @@ namespace bgfx { namespace d3d11
 	static const GUID IID_IDXGIAdapter          = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
 	static const GUID IID_ID3D11InfoQueue       = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
 
+	enum D3D11_FORMAT_SUPPORT2
+	{
+		D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD  = 0x40,
+		D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE = 0x80,
+	};
+
 	static const GUID s_deviceIIDs[] =
 	{
 		IID_IDXGIDevice3,
@@ -947,7 +953,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						// clear image flag for additional testing
 						support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE;
 
-						D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
 						data.InFormat = s_textureFormat[ii].m_fmt;
 						hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data, sizeof(data) );
 						if (SUCCEEDED(hr) )
