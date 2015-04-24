@@ -27,11 +27,11 @@ Supported platforms:
  * asm.js/Emscripten (1.25.0)
  * FreeBSD
  * iOS
- * Linux
+ * Linux ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Linux)/statusIcon)
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
  * OSX (10.9)
  * RaspberryPi
- * Windows (XP, Vista, 7, 8, 10)
+ * Windows (XP, Vista, 7, 8, 10) ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Windows)/statusIco
  * WinRT (WinPhone 8.0+)
 
 Supported compilers:
@@ -47,6 +47,11 @@ Languages:
  * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
  * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
+
+Build status
+------------
+
+https://tc27.draster.com/guestAuth/overview.html
 
 Who is using it?
 ----------------
@@ -803,7 +808,8 @@ Stanlo Slasinski ([@stanlo](https://github.com/stanlo)) - 24-nbody example
 Daniel Collin ([@emoon](https://github.com/emoon)) - Port of Ocornut's ImGui
   to bgfx.  
 Andre Weissflog ([@floooh](https://github.com/floooh)) - Alternative build
-system fips.
+system fips.  
+Andrew Johnson  ([@ajohnson23](https://github.com/ajohnson23)) - TeamCity build.
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------
