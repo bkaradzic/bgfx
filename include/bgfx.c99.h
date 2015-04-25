@@ -150,6 +150,17 @@ typedef enum bgfx_uniform_type
 
 } bgfx_uniform_type_t;
 
+typedef enum bgfx_backbuffer_ratio
+{
+    BGFX_BACKBUFFER_RATIO_NONE,
+    BGFX_BACKBUFFER_RATIO_EQUAL,
+    BGFX_BACKBUFFER_RATIO_HALF,
+    BGFX_BACKBUFFER_RATIO_QUARTER,
+    BGFX_BACKBUFFER_RATIO_EIGHTH,
+    BGFX_BACKBUFFER_RATIO_SIXTEENTH,
+    BGFX_BACKBUFFER_RATIO_DOUBLE
+} bgfx_backbuffer_ratio_t;
+
 #define BGFX_HANDLE_T(_name) \
     typedef struct _name { uint16_t idx; } _name##_t;
 
@@ -936,6 +947,16 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture(const bgfx_memory_t* _mem, 
 BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_2d(uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags, const bgfx_memory_t* _mem);
 
 /**
+*  Create 2D texture that scales with backbuffer size.
+*
+*  @param _ratio
+*  @param _numMips
+*  @param _format
+*  @param _flags
+*/
+BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_2d_scaled(bgfx_backbuffer_ratio_t _ratio, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags);
+
+/**
  *  Create 3D texture.
  *
  *  @param _width
@@ -1038,6 +1059,15 @@ BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle);
  *  @param _textureFlags Texture flags.
  */
 BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer(uint16_t _width, uint16_t _height, bgfx_texture_format_t _format, uint32_t _textureFlags);
+
+/**
+*  Create frame buffer that scales with backbuffer size.
+*
+*  @param _ratio Backbuffer ratio.
+*  @param _format Texture format.
+*  @param _textureFlags Texture flags.
+*/
+BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_scaled(bgfx_backbuffer_ratio_t _ratio, bgfx_texture_format_t _format, uint32_t _textureFlags);
 
 /**
  *  Create frame buffer.
