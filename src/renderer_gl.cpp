@@ -2261,8 +2261,8 @@ namespace bgfx { namespace gl
 				config.OGL.Header.RTSize.h = m_resolution.m_height;
 #	endif // OVR_VERSION > OVR_VERSION_043
 				config.OGL.Header.Multisample = 0;
-				config.OGL.Window = g_platformData.nwh;
-				config.OGL.DC = GetDC(g_platformData.nwh);
+				config.OGL.Window = (HWND)g_platformData.nwh;
+				config.OGL.DC = GetDC(config.OGL.Window);
 				if (m_ovr.postReset(g_platformData.nwh, &config.Config, !!(m_resolution.m_flags & BGFX_RESET_HMD_DEBUG) ) )
 				{
 					uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
