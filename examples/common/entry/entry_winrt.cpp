@@ -26,10 +26,10 @@ static entry::EventQueue g_eventQueue;
 
 ref class App sealed : public IFrameworkView
 {
-	public:
-		App()
-			: m_windowVisible(true)
-			, m_windowClosed(false)
+public:
+	App()
+		: m_windowVisible(true)
+		, m_windowClosed(false)
 	{
 	}
 
@@ -57,13 +57,14 @@ ref class App sealed : public IFrameworkView
 		thread.init(MainThreadFunc, nullptr);
 
 		CoreWindow^ window = CoreWindow::GetForCurrentThread();
-		if (window == nullptr) {
-			int i = 4;
-			i++;
-		}
+		auto bounds = window->Bounds;
+		auto dpi = DisplayInformation::GetForCurrentView()->LogicalDpi;
 
-		//auto bounds = window->Bounds;
-		//g_eventQueue.postSizeEvent(g_defaultWindow, bounds.Width, bounds.Height);
+		static const float dipsPerInch = 96.0f;
+		g_eventQueue.postSizeEvent(g_defaultWindow
+			, lround(floorf(bounds.Width * dpi / dipsPerInch + 0.5f))
+			, lround(floorf(bounds.Height * dpi / dipsPerInch + 0.5f))
+			);
 
 		while (!m_windowClosed)
 		{
@@ -92,12 +93,6 @@ private:
 
 	void OnActivated(CoreApplicationView^ applicationView, IActivatedEventArgs^ args)
 	{
-		CoreWindow^ window = CoreWindow::GetForCurrentThread();
-		if (window == nullptr) {
-			int i = 4;
-			i++;
-		}
-
 		CoreWindow::GetForCurrentThread()->Activate();
 	}
 
