@@ -340,6 +340,8 @@ Building
 Steps bellow are for default build system inside bgfx repository. There is
 alterative way to build bgfx and examples with [fips](https://github.com/floooh/fips-bgfx/#fips-bgfx).
 
+Binary builds (for Windows and Linux) are also available [here](https://tc27.draster.com/bgfx-bins/).
+
 ### Getting source
 
 	git clone git://github.com/bkaradzic/bx.git
