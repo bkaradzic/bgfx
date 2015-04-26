@@ -1321,6 +1321,15 @@ namespace bgfx { namespace gl
 				}
 			}
 
+			if (BX_ENABLED(0) )
+			{
+				// Disable all compressed texture formats. For testing only.
+				for (uint32_t ii = 0; ii < TextureFormat::Unknown; ++ii)
+				{
+					s_textureFormat[ii].m_supported = false;
+				}
+			}
+
 			const bool computeSupport = false
 				|| !!(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
 				|| s_extension[Extension::ARB_compute_shader].m_supported
@@ -3468,9 +3477,13 @@ namespace bgfx { namespace gl
 			uint8_t numMips = imageContainer.m_numMips;
 			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
-			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
-			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
-			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
+			uint32_t textureWidth;
+			uint32_t textureHeight;
+			{
+				const ImageBlockInfo& ibi = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
+				textureWidth  = bx::uint32_max(ibi.blockWidth,  imageContainer.m_width >>startLod);
+				textureHeight = bx::uint32_max(ibi.blockHeight, imageContainer.m_height>>startLod);
+			}
 
 			GLenum target = GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
@@ -3506,17 +3519,9 @@ namespace bgfx { namespace gl
 				;
 			const bool compressed = isCompressed(TextureFormat::Enum(m_requestedFormat) );
 			const bool convert    = false
-				|| (compressed && m_textureFormat != m_requestedFormat)
+				|| m_textureFormat != m_requestedFormat
 				|| swizzle
 				;
-			uint32_t blockWidth  = 1;
-			uint32_t blockHeight = 1;
-
-			if (convert && compressed)
-			{
-				blockWidth  = blockInfo.blockWidth;
-				blockHeight = blockInfo.blockHeight;
-			}
 
 			BX_TRACE("Texture%-4s %3d: %s (requested: %s), %dx%dx%d%s."
 				, imageContainer.m_cubeMap ? "Cube" : (1 < imageContainer.m_depth ? "3D" : "2D")
@@ -3551,14 +3556,15 @@ namespace bgfx { namespace gl
 
 				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
 				{
-					width  = bx::uint32_max(blockWidth,  width);
-					height = bx::uint32_max(blockHeight, height);
+					width  = bx::uint32_max(1, width);
+					height = bx::uint32_max(1, height);
 					depth  = bx::uint32_max(1, depth);
 
 					ImageMip mip;
 					if (imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
-						if (compressed)
+						if (compressed
+						&& !convert)
 						{
 							compressedTexImage(target+side
 								, lod
@@ -3577,7 +3583,13 @@ namespace bgfx { namespace gl
 
 							if (convert)
 							{
-								imageDecodeToRgba8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_width*4, mip.m_format);
+								imageDecodeToRgba8(temp
+										, mip.m_data
+										, mip.m_width
+										, mip.m_height
+										, mip.m_width*4
+										, mip.m_format
+										);
 								data = temp;
 							}
 
