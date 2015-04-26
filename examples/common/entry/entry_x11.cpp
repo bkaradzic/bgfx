@@ -294,7 +294,6 @@ namespace entry
 					| KeyPressMask
 					| KeyReleaseMask
 					| PointerMotionMask
-					| ResizeRedirectMask
 					| StructureNotifyMask
 					;
 
@@ -355,9 +354,6 @@ namespace entry
 					switch (event.type)
 					{
 						case Expose:
-							break;
-
-						case ConfigureNotify:
 							break;
 
 						case ClientMessage:
@@ -449,14 +445,13 @@ namespace entry
 							}
 							break;
 
-						case ResizeRequest:
+						case ConfigureNotify:
 							{
-								const XResizeRequestEvent& xresize = event.xresizerequest;
-								XResizeWindow(xresize.display, xresize.window, xresize.width, xresize.height);
-								WindowHandle handle = findHandle(xresize.window);
+								const XConfigureEvent& xev = event.xconfigure;
+								WindowHandle handle = findHandle(xev.window);
 								if (isValid(handle) )
 								{
-									m_eventQueue.postSizeEvent(handle, xresize.width, xresize.height);
+									m_eventQueue.postSizeEvent(handle, xev.width, xev.height);
 								}
 							}
 							break;
