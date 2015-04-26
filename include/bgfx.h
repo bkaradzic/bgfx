@@ -193,13 +193,14 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			None,
 			Equal,
 			Half,
 			Quarter,
 			Eighth,
 			Sixteenth,
 			Double,
+
+			Count
 		};
 	};
 

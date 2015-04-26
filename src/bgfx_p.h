@@ -1921,7 +1921,7 @@ namespace bgfx
 			{
 				uint16_t textureIdx = m_textureHandle.getHandleAt(ii);
 				const TextureRef& textureRef = m_textureRef[textureIdx];
-				if (BackbufferRatio::None != textureRef.m_bbRatio)
+				if (BackbufferRatio::Count != textureRef.m_bbRatio)
 				{
 					TextureHandle handle = { textureIdx };
 					resizeTexture(handle
@@ -2795,7 +2795,7 @@ namespace bgfx
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height)
 		{
 			const TextureRef& textureRef = m_textureRef[_handle.idx];
-			BX_CHECK(BackbufferRatio::None != textureRef.m_bbRatio, "");
+			BX_CHECK(BackbufferRatio::Count != textureRef.m_bbRatio, "");
 
 			getTextureSizeFromRatio(BackbufferRatio::Enum(textureRef.m_bbRatio), _width, _height);
 
