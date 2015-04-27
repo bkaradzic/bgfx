@@ -802,7 +802,7 @@ Miloš Tošić ([@milostosic](https://github.com/milostosic)) - 12-lod example.
 Dario Manesku ([@dariomanesku](https://github.com/dariomanesku)) - 13-stencil,
   14-shadowvolumes, 15-shadowmaps-simple, 16-shadowmaps, 18-ibl  
 James Gray ([@james4k](https://github.com/james4k)) - Go language API bindings.  
-p0nce ([@p0nce](https://github.com/p0nce)) - D language API bindings.  
+Guillaume Piolat ([@p0nce](https://github.com/p0nce)) - D language API bindings.  
 Mike Popoloski ([@MikePopoloski](https://github.com/MikePopoloski)) - C#/VB/F# 
 language API bindings, WinRT/WinPhone support.  
 Kai Jourdan ([@questor](https://github.com/questor)) - 23-vectordisplay example  
