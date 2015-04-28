@@ -65,6 +65,7 @@ namespace bgfx
 				break;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
+			case ovrRenderAPI_None:
 			default:
 				BX_CHECK(false, "You should not be here!");
 				break;
