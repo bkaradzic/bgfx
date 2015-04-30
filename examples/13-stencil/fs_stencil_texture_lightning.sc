@@ -18,12 +18,12 @@ uniform vec4 u_lightPosRadius[MAX_NUM_LIGHTS];
 uniform vec4 u_lightRgbInnerR[MAX_NUM_LIGHTS];
 SAMPLER2D(u_texColor, 0);
 
-#define u_ambientPass   u_params.x
-#define u_lightningPass u_params.y
-#define u_lightCount    u_params.z
-#define u_lightIndex    u_params.w
-#define u_specular      u_specular_shininess.xyz
-#define u_shininess     u_specular_shininess.w
+#define u_ambientPass  u_params.x
+#define u_lightingPass u_params.y
+#define u_lightCount   u_params.z
+#define u_lightIndex   u_params.w
+#define u_specular     u_specular_shininess.xyz
+#define u_shininess    u_specular_shininess.w
 
 vec2 blinn(vec3 _lightDir, vec3 _normal, vec3 _viewDir)
 {
@@ -67,17 +67,18 @@ void main()
 	for(int ii = 0; ii < MAX_NUM_LIGHTS; ++ii)
 	{
 		float condition = 0.0;
-		if (u_lightCount > 1.0)
+		if (u_lightCount > 1.0) // Stencil Reflection Scene.
 		{
-			condition = 1.0 - step(u_lightCount, float(ii));
+			condition = 1.0 - step(u_lightCount, float(ii)); // True for every light up to u_lightCount.
 		}
-		else
+		else // Projection Shadows Scene.
 		{
-			condition = float(float(ii) == u_lightIndex);
+			condition = float(float(ii) == u_lightIndex); // True only for current light.
 		}
+
 		lightColor += calcLight(ii, v_view, normal, viewDir) * condition;
 	}
-	lightColor *= u_lightningPass;
+	lightColor *= u_lightingPass;
 
 	vec3 color = toLinear(texture2D(u_texColor, v_texcoord0)).xyz;
 
