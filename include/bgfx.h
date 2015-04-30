@@ -1210,6 +1210,17 @@ namespace bgfx
 
 	/// Set view view and projection matrices, all draw primitives in this
 	/// view will use these matrices.
+	///
+	/// @param _id View id.
+	/// @param _view View matrix.
+	/// @param _projL Projection matrix. When using stereo rendering this projection matrix
+	///   represent projection matrix for left eye.
+	/// @param _flags View flags. Use
+	///   - `BGFX_VIEW_NONE` - View will be rendered only once if stereo mode is enabled.
+	///   - `BGFX_VIEW_STEREO` - View will be rendered for both eyes if stereo mode is enabled. When
+	///     stereo mode is disabled this flag doesn't have effect.
+	/// @param _projR Projection matrix for right eye in stereo mode.
+	///
 	void setViewTransform(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags = BGFX_VIEW_STEREO, const void* _projR = NULL);
 
 	/// Post submit view reordering.
