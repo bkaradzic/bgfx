@@ -352,6 +352,7 @@ namespace bgfx { namespace gl
 		enum Enum
 		{
 			AMD_conservative_depth,
+			AMD_multi_draw_indirect,
 
 			ANGLE_depth_texture,
 			ANGLE_framebuffer_blit,
@@ -373,6 +374,7 @@ namespace bgfx { namespace gl
 			ARB_depth_buffer_float,
 			ARB_depth_clamp,
 			ARB_draw_buffers_blend,
+			ARB_draw_indirect,
 			ARB_draw_instanced,
 			ARB_ES3_compatibility,
 			ARB_framebuffer_object,
@@ -383,6 +385,7 @@ namespace bgfx { namespace gl
 			ARB_instanced_arrays,
 			ARB_invalidate_subdata,
 			ARB_map_buffer_range,
+			ARB_multi_draw_indirect,
 			ARB_multisample,
 			ARB_occlusion_query,
 			ARB_occlusion_query2,
@@ -432,6 +435,7 @@ namespace bgfx { namespace gl
 			EXT_framebuffer_blit,
 			EXT_framebuffer_object,
 			EXT_framebuffer_sRGB,
+			EXT_multi_draw_indirect,
 			EXT_occlusion_query_boolean,
 			EXT_packed_float,
 			EXT_read_format_bgra,
@@ -540,6 +544,7 @@ namespace bgfx { namespace gl
 	static Extension s_extension[] =
 	{
 		{ "AMD_conservative_depth",                false,                             true  },
+		{ "AMD_multi_draw_indirect",               false,                             true  },
 
 		{ "ANGLE_depth_texture",                   false,                             true  },
 		{ "ANGLE_framebuffer_blit",                false,                             true  },
@@ -561,6 +566,7 @@ namespace bgfx { namespace gl
 		{ "ARB_depth_buffer_float",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_depth_clamp",                       BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "ARB_draw_buffers_blend",                BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
+		{ "ARB_draw_indirect",                     BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
 		{ "ARB_draw_instanced",                    BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_ES3_compatibility",                 BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -571,6 +577,7 @@ namespace bgfx { namespace gl
 		{ "ARB_instanced_arrays",                  BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_invalidate_subdata",                BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_map_buffer_range",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "ARB_multi_draw_indirect",               BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_multisample",                       false,                             true  },
 		{ "ARB_occlusion_query",                   BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_occlusion_query2",                  BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
@@ -620,6 +627,7 @@ namespace bgfx { namespace gl
 		{ "EXT_framebuffer_blit",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_sRGB",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
+		{ "EXT_multi_draw_indirect",               false,                             true  }, // GLES3.1 extension.
 		{ "EXT_occlusion_query_boolean",           false,                             true  },
 		{ "EXT_packed_float",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_read_format_bgra",                  false,                             true  },
@@ -1383,6 +1391,18 @@ namespace bgfx { namespace gl
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::OES_element_index_uint].m_supported
 				? BGFX_CAPS_INDEX32
+				: 0
+				;
+
+			const bool drawIndirectSupported = false
+				|| s_extension[Extension::AMD_multi_draw_indirect].m_supported
+				|| s_extension[Extension::ARB_draw_indirect      ].m_supported
+				|| s_extension[Extension::ARB_multi_draw_indirect].m_supported
+				|| s_extension[Extension::EXT_multi_draw_indirect].m_supported
+				;
+
+			g_caps.supported |= drawIndirectSupported
+				? 0 //BGFX_CAPS_DRAW_INDIRECT
 				: 0
 				;
 
