@@ -1001,11 +1001,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 			}
 
+#if !defined(__MINGW32__)
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 			&&  NULL != m_infoQueue)
 			{
 				m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
 			}
+#endif // !defined(__MINGW32__)
 
 			updateMsaa();
 			postReset();
@@ -4005,37 +4007,30 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					if (isValid(draw.m_drawIndirectBuffer) )
 					{
+						const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
+						ID3D11Buffer* ptr = vb.m_ptr;
+
 						if (isValid(draw.m_indexBuffer) )
 						{
-							const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
-							ID3D11Buffer* ptr = vb.m_ptr;
-
 							const uint32_t commandSize = 5 * sizeof(uint32_t);
 							numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
 
 							uint32_t args = draw.m_startDrawIndirect * commandSize;
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								deviceCtx->DrawIndexedInstancedIndirect(ptr
-									, args
-									);
+								deviceCtx->DrawIndexedInstancedIndirect(ptr, args);
 								args += commandSize;
 							}
 						}
 						else
 						{
-							const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
-							ID3D11Buffer* ptr = vb.m_ptr;
-
 							const uint32_t commandSize = 4 * sizeof(uint32_t);
 							numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
 
 							uint32_t args = draw.m_startDrawIndirect * commandSize;
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								deviceCtx->DrawInstancedIndirect(ptr
-									, args
-									);
+								deviceCtx->DrawInstancedIndirect(ptr, args);
 								args += commandSize;
 							}
 						}

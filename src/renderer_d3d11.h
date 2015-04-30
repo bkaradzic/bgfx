@@ -74,6 +74,8 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	ifndef D3D11_REQ_MAXANISOTROPY
 #		define	D3D11_REQ_MAXANISOTROPY	16
 #	endif // D3D11_REQ_MAXANISOTROPY
+
+typedef void ID3D11InfoQueue;
 #endif // __MINGW32__
 
 namespace bgfx { namespace d3d11
