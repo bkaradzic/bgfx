@@ -837,6 +837,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_SWAP_CHAIN),
 		CAPS_FLAGS(BGFX_CAPS_HMD),
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
+		CAPS_FLAGS(BGFX_CAPS_DRAW_INDIRECT),
 #undef CAPS_FLAGS
 	};
 
@@ -2308,6 +2309,18 @@ again:
 		return s_ctx->allocInstanceDataBuffer(_num, _stride);
 	}
 
+	DrawIndirectBufferHandle createDrawIndirectBuffer(uint32_t _num)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->createDrawIndirectBuffer(_num);
+	}
+
+	void destroyDrawIndirectBuffer(DrawIndirectBufferHandle _handle)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->destroyDrawIndirectBuffer(_handle);
+	}
+
 	ShaderHandle createShader(const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -2909,6 +2922,12 @@ again:
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
+	void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start, uint16_t _num)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setDrawIndirectBuffer(_handle, _start, _num);
+	}
+
 	void setProgram(ProgramHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -2952,6 +2971,12 @@ again:
 	}
 
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setBuffer(_stage, _handle, _access);
+	}
+
+	void setBuffer(uint8_t _stage, DrawIndirectBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setBuffer(_stage, _handle, _access);

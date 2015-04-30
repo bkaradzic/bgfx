@@ -206,6 +206,7 @@ namespace bgfx
 
 	static const uint16_t invalidHandle = UINT16_MAX;
 
+	BGFX_HANDLE(DrawIndirectBufferHandle);
 	BGFX_HANDLE(DynamicIndexBufferHandle);
 	BGFX_HANDLE(DynamicVertexBufferHandle);
 	BGFX_HANDLE(FrameBufferHandle);
@@ -869,6 +870,12 @@ namespace bgfx
 	///
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
+	///
+	DrawIndirectBufferHandle createDrawIndirectBuffer(uint32_t _num);
+
+	///
+	void destroyDrawIndirectBuffer(DrawIndirectBufferHandle _handle);
+
 	/// Create shader from memory buffer.
 	ShaderHandle createShader(const Memory* _mem);
 
@@ -1332,6 +1339,9 @@ namespace bgfx
 
 	/// Set instance data buffer for draw primitive.
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
+
+	///
+	void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start = 0, uint16_t _num = UINT16_MAX);
 
 	/// Set program for draw primitive.
 	void setProgram(ProgramHandle _handle);

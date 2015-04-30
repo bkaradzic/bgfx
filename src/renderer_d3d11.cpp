@@ -449,6 +449,7 @@ namespace bgfx { namespace d3d11
 			, m_numWindows(0)
 			, m_device(NULL)
 			, m_deviceCtx(NULL)
+			, m_infoQueue(NULL)
 			, m_backBufferColor(NULL)
 			, m_backBufferDepthStencil(NULL)
 			, m_currentColor(NULL)
@@ -640,6 +641,8 @@ namespace bgfx { namespace d3d11
 							continue;
 						}
 
+						// Enable debug flags.
+						flags |= (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0);
 						++ii;
 					}
 
@@ -785,14 +788,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #if !defined(__MINGW32__)
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
-				ID3D11InfoQueue* infoQueue;
-				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&infoQueue);
+				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&m_infoQueue);
 
 				if (SUCCEEDED(hr) )
 				{
-					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
-					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      true);
-					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      false);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
 
 					D3D11_INFO_QUEUE_FILTER filter;
 					memset(&filter, 0, sizeof(filter) );
@@ -804,9 +806,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					};
 					filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 					filter.DenyList.pCategoryList = catlist;
-					infoQueue->PushStorageFilter(&filter);
+					m_infoQueue->PushStorageFilter(&filter);
 
-					DX_RELEASE(infoQueue, 3);
+					DX_RELEASE(m_infoQueue, 3);
 				}
 				else
 				{
@@ -829,6 +831,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 				| BGFX_CAPS_SWAP_CHAIN
 				| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
+				| BGFX_CAPS_DRAW_INDIRECT
 				);
 
 			if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
@@ -996,6 +999,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				char name[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1];
 				bx::snprintf(name, sizeof(name), "%3d   ", ii);
 				mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
+			}
+
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+			&&  NULL != m_infoQueue)
+			{
+				m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
 			}
 
 			updateMsaa();
@@ -2540,6 +2549,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		ID3D11Device*           m_device;
 		ID3D11DeviceContext*    m_deviceCtx;
+		ID3D11InfoQueue*        m_infoQueue;
+
 		ID3D11RenderTargetView* m_backBufferColor;
 		ID3D11DepthStencilView* m_backBufferDepthStencil;
 		ID3D11RenderTargetView* m_currentColor;
@@ -2620,8 +2631,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_size  = _size;
 		m_flags = _flags;
 
-		const bool needUav = 0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE);
+		const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE|BGFX_BUFFER_DRAW_INDIRECT) );
 		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
+		const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
 		m_dynamic = NULL == _data && !needUav;
 
 		D3D11_BUFFER_DESC desc;
@@ -2631,7 +2643,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			| (needUav ? D3D11_BIND_UNORDERED_ACCESS : 0)
 			| (needSrv ? D3D11_BIND_SHADER_RESOURCE  : 0)
 			;
-		desc.MiscFlags = 0;
+		desc.MiscFlags = 0
+			| (drawIndirect ? D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS : 0)
+			;
 		desc.StructureByteStride = 0;
 
 		const DXGI_FORMAT indexFormat = 0 == (_flags & BGFX_BUFFER_INDEX32)
@@ -2654,7 +2668,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
-				));
+				) );
 
 			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd;
 			uavd.Format = format;
@@ -2665,7 +2679,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_CHECK(device->CreateUnorderedAccessView(m_ptr
 				, &uavd
 				, &m_uav
-				));
+				) );
 		}
 		else if (m_dynamic)
 		{
@@ -2675,7 +2689,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
-				));
+				) );
 		}
 		else
 		{
@@ -2690,7 +2704,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_CHECK(device->CreateBuffer(&desc
 				, &srd
 				, &m_ptr
-				));
+				) );
 		}
 
 		if (needSrv)
@@ -2703,7 +2717,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_CHECK(device->CreateShaderResourceView(m_ptr
 				, &srvd
 				, &m_srv
-				));
+				) );
 		}
 	}
 
@@ -3441,6 +3455,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
+		uint32_t statsNumDrawIndirect[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
@@ -3982,90 +3997,132 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						numVertices = vb.m_size/vertexDecl.m_stride;
 					}
 
-					uint32_t numIndices = 0;
+					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
-					uint32_t numInstances = 0;
-					uint32_t numPrimsRendered = 0;
+					uint32_t numInstances      = 0;
+					uint32_t numPrimsRendered  = 0;
+					uint32_t numDrawIndirect   = 0;
 
-					if (isValid(draw.m_indexBuffer) )
+					if (isValid(draw.m_drawIndirectBuffer) )
 					{
-						if (UINT32_MAX == draw.m_numIndices)
+						if (isValid(draw.m_indexBuffer) )
 						{
-							const IndexBufferD3D11& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
-							numIndices        = ib.m_size/indexSize;
-							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances      = draw.m_numInstances;
-							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
+							const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
+							ID3D11Buffer* ptr = vb.m_ptr;
 
-							if (numInstances > 1)
+							const uint32_t commandSize = 5 * sizeof(uint32_t);
+							numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+
+							uint32_t args = draw.m_startDrawIndirect * commandSize;
+							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								deviceCtx->DrawIndexedInstanced(numIndices
-									, draw.m_numInstances
-									, 0
-									, draw.m_startVertex
-									, 0
+								deviceCtx->DrawIndexedInstancedIndirect(ptr
+									, args
 									);
-							}
-							else
-							{
-								deviceCtx->DrawIndexed(numIndices
-									, 0
-									, draw.m_startVertex
-									);
+								args += commandSize;
 							}
 						}
-						else if (prim.m_min <= draw.m_numIndices)
+						else
 						{
-							numIndices = draw.m_numIndices;
-							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances = draw.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+							const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
+							ID3D11Buffer* ptr = vb.m_ptr;
 
-							if (numInstances > 1)
+							const uint32_t commandSize = 4 * sizeof(uint32_t);
+							numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+
+							uint32_t args = draw.m_startDrawIndirect * commandSize;
+							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								deviceCtx->DrawIndexedInstanced(numIndices
-									, draw.m_numInstances
-									, draw.m_startIndex
-									, draw.m_startVertex
-									, 0
+								deviceCtx->DrawInstancedIndirect(ptr
+									, args
 									);
-							}
-							else
-							{
-								deviceCtx->DrawIndexed(numIndices
-									, draw.m_startIndex
-									, draw.m_startVertex
-									);
+								args += commandSize;
 							}
 						}
 					}
 					else
 					{
-						numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
-						numInstances = draw.m_numInstances;
-						numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
-
-						if (numInstances > 1)
+						if (isValid(draw.m_indexBuffer) )
 						{
-							deviceCtx->DrawInstanced(numVertices
-								, draw.m_numInstances
-								, draw.m_startVertex
-								, 0
-								);
+							if (UINT32_MAX == draw.m_numIndices)
+							{
+								const IndexBufferD3D11& ib = m_indexBuffers[draw.m_indexBuffer.idx];
+								const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+								numIndices        = ib.m_size/indexSize;
+								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
+								numInstances      = draw.m_numInstances;
+								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
+
+								if (numInstances > 1)
+								{
+									deviceCtx->DrawIndexedInstanced(numIndices
+										, draw.m_numInstances
+										, 0
+										, draw.m_startVertex
+										, 0
+										);
+								}
+								else
+								{
+									deviceCtx->DrawIndexed(numIndices
+										, 0
+										, draw.m_startVertex
+										);
+								}
+							}
+							else if (prim.m_min <= draw.m_numIndices)
+							{
+								numIndices        = draw.m_numIndices;
+								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
+								numInstances      = draw.m_numInstances;
+								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
+
+								if (numInstances > 1)
+								{
+									deviceCtx->DrawIndexedInstanced(numIndices
+										, draw.m_numInstances
+										, draw.m_startIndex
+										, draw.m_startVertex
+										, 0
+										);
+								}
+								else
+								{
+									deviceCtx->DrawIndexed(numIndices
+										, draw.m_startIndex
+										, draw.m_startVertex
+										);
+								}
+							}
 						}
 						else
 						{
-							deviceCtx->Draw(numVertices
-								, draw.m_startVertex
-								);
+							numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
+							numInstances      = draw.m_numInstances;
+							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
+
+							if (numInstances > 1)
+							{
+								deviceCtx->DrawInstanced(numVertices
+									, draw.m_numInstances
+									, draw.m_startVertex
+									, 0
+									);
+							}
+							else
+							{
+								deviceCtx->Draw(numVertices
+									, draw.m_startVertex
+									);
+							}
 						}
 					}
 
 					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
 					statsNumPrimsRendered[primIndex]  += numPrimsRendered;
 					statsNumInstances[primIndex]      += numInstances;
-					statsNumIndices += numIndices;
+					statsNumDrawIndirect[primIndex]   += numDrawIndirect;
+					statsNumIndices                   += numIndices;
 				}
 			}
 
@@ -4174,11 +4231,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					);
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
-					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"
+					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d, indirect %7d"
 						, s_primName[ii]
 						, statsNumPrimsRendered[ii]
 						, statsNumInstances[ii]
 						, statsNumPrimsSubmitted[ii]
+						, statsNumDrawIndirect[ii]
 						);
 				}
 

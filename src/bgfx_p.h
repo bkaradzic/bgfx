@@ -1072,6 +1072,8 @@ namespace bgfx
 			m_instanceDataOffset = 0;
 			m_instanceDataStride = 0;
 			m_numInstances       = 1;
+			m_startDrawIndirect  = 0;
+			m_numDrawIndirect    = UINT16_MAX;
 			m_num     = 1;
 			m_flags   = BGFX_SUBMIT_EYE_FIRST;
 			m_scissor = UINT16_MAX;
@@ -1079,6 +1081,7 @@ namespace bgfx
 			m_vertexDecl.idx         = invalidHandle;
 			m_indexBuffer.idx        = invalidHandle;
 			m_instanceDataBuffer.idx = invalidHandle;
+			m_drawIndirectBuffer.idx = invalidHandle;
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
@@ -1100,6 +1103,8 @@ namespace bgfx
 		uint32_t m_instanceDataOffset;
 		uint16_t m_instanceDataStride;
 		uint16_t m_numInstances;
+		uint16_t m_startDrawIndirect;
+		uint16_t m_numDrawIndirect;
 		uint16_t m_num;
 		uint16_t m_scissor;
 		uint8_t  m_submitFlags;
@@ -1108,6 +1113,7 @@ namespace bgfx
 		VertexDeclHandle   m_vertexDecl;
 		IndexBufferHandle  m_indexBuffer;
 		VertexBufferHandle m_instanceDataBuffer;
+		DrawIndirectBufferHandle m_drawIndirectBuffer;
 	};
 
 	struct RenderCompute
@@ -1379,6 +1385,13 @@ namespace bgfx
 			m_draw.m_instanceDataStride = _stride;
 			m_draw.m_numInstances       = uint16_t(_num);
 			m_draw.m_instanceDataBuffer = _handle;
+		}
+
+		void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start, uint16_t _num)
+		{
+			m_draw.m_startDrawIndirect  = _start;
+			m_draw.m_numDrawIndirect    = _num;
+			m_draw.m_drawIndirectBuffer = _handle;
 		}
 
 		void setProgram(ProgramHandle _handle)
@@ -2496,6 +2509,36 @@ namespace bgfx
 			return idb;
 		}
 
+		DrawIndirectBufferHandle createDrawIndirectBuffer(uint32_t _num)
+		{
+			BX_UNUSED(_num);
+			DrawIndirectBufferHandle handle = { m_vertexBufferHandle.alloc() };
+
+			BX_WARN(isValid(handle), "Failed to allocate draw indirect buffer handle.");
+			if (isValid(handle) )
+			{
+				uint32_t size = _num * sizeof(uint32_t) * 5;
+				uint8_t flags = BGFX_BUFFER_DRAW_INDIRECT;
+
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
+				cmdbuf.write(handle);
+				cmdbuf.write(size);
+				cmdbuf.write(flags);
+			}
+
+			return handle;
+		}
+
+		void destroyDrawIndirectBuffer(DrawIndirectBufferHandle _handle)
+		{
+			VertexBufferHandle handle = { _handle.idx };
+			BGFX_CHECK_HANDLE("destroyDrawIndirectBuffer", m_vertexBufferHandle, handle);
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyDynamicVertexBuffer);
+			cmdbuf.write(handle);
+			m_submit->free(handle);
+		}
+
 		BGFX_API_FUNC(ShaderHandle createShader(const Memory* _mem) )
 		{
 			bx::MemoryReader reader(_mem->data, _mem->size);
@@ -3256,6 +3299,12 @@ namespace bgfx
 				);
 		}
 
+		BGFX_API_FUNC(void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start, uint16_t _num) )
+		{
+			BGFX_CHECK_HANDLE("setDrawIndirectBuffer", m_vertexBufferHandle, _handle);
+			m_submit->setDrawIndirectBuffer(_handle, _start, _num);
+		}
+
 		BGFX_API_FUNC(void setProgram(ProgramHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("setProgram", m_programHandle, _handle);
@@ -3313,6 +3362,13 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("setBuffer", m_dynamicVertexBufferHandle, _handle);
 			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 			m_submit->setBuffer(_stage, dvb.m_handle, _access);
+		}
+
+		BGFX_API_FUNC(void setBuffer(uint8_t _stage, DrawIndirectBufferHandle _handle, Access::Enum _access) )
+		{
+			BGFX_CHECK_HANDLE("setBuffer", m_vertexBufferHandle, _handle);
+			VertexBufferHandle handle = { _handle.idx };
+			m_submit->setBuffer(_stage, handle, _access);
 		}
 
 		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format) )
