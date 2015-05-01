@@ -178,13 +178,13 @@ EGL_IMPORT
 
 			BX_TRACE("EGL info:");
 			const char* clientApis = eglQueryString(m_display, EGL_CLIENT_APIS);
-			BX_TRACE("   APIs: %s", clientApis);
+			BX_TRACE("   APIs: %s", clientApis); BX_UNUSED(clientApis);
 
 			const char* vendor = eglQueryString(m_display, EGL_VENDOR);
-			BX_TRACE(" Vendor: %s", vendor);
+			BX_TRACE(" Vendor: %s", vendor); BX_UNUSED(vendor);
 
 			const char* version = eglQueryString(m_display, EGL_VERSION);
-			BX_TRACE("Version: %s", version);
+			BX_TRACE("Version: %s", version); BX_UNUSED(version);
 
 			const char* extensions = eglQueryString(m_display, EGL_EXTENSIONS);
 			BX_TRACE("Supported EGL extensions:");
