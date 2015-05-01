@@ -5433,7 +5433,7 @@ namespace bgfx { namespace gl
 								const uint32_t commandSize = 5 * sizeof(uint32_t);
 								numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
 
-								uint32_t args = draw.m_startDrawIndirect * commandSize;
+								uintptr_t args = draw.m_startDrawIndirect * commandSize;
 								GL_CHECK(glMultiDrawElementsIndirect(prim.m_type, indexFormat, (void*)args, numDrawIndirect, commandSize) );
 							}
 							else
@@ -5441,7 +5441,7 @@ namespace bgfx { namespace gl
 								const uint32_t commandSize = 4 * sizeof(uint32_t);
 								numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
 
-								uint32_t args = draw.m_startDrawIndirect * commandSize;
+								uintptr_t args = draw.m_startDrawIndirect * commandSize;
 								GL_CHECK(glMultiDrawArraysIndirect(prim.m_type, (void*)args, numDrawIndirect, commandSize) );
 							}
 						}
