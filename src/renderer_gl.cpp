@@ -813,6 +813,26 @@ namespace bgfx { namespace gl
 	{
 	}
 
+	static void GL_APIENTRY stubMultiDrawArraysIndirect(GLenum _mode, const void* _indirect, GLsizei _drawcount, GLsizei _stride)
+	{
+		const uint8_t* args = (const uint8_t*)_indirect;
+		for (GLsizei ii = 0; ii < _drawcount; ++ii)
+		{
+			GL_CHECK(glDrawArraysIndirect(_mode, (void*)args) );
+			args += _stride;
+		}
+	}
+
+	static void GL_APIENTRY stubMultiDrawElementsIndirect(GLenum _mode, GLenum _type, const void* _indirect, GLsizei _drawcount, GLsizei _stride)
+	{
+		const uint8_t* args = (const uint8_t*)_indirect;
+		for (GLsizei ii = 0; ii < _drawcount; ++ii)
+		{
+			GL_CHECK(glDrawElementsIndirect(_mode, _type, (void*)args) );
+			args += _stride;
+		}
+	}
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	static const char* getGLString(GLenum _name)
@@ -1401,8 +1421,18 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::EXT_multi_draw_indirect].m_supported
 				;
 
+			if (drawIndirectSupported)
+			{
+				if (NULL == glMultiDrawArraysIndirect
+				||  NULL == glMultiDrawElementsIndirect)
+				{
+					glMultiDrawArraysIndirect   = stubMultiDrawArraysIndirect;
+					glMultiDrawElementsIndirect = stubMultiDrawElementsIndirect;
+				}
+			}
+
 			g_caps.supported |= drawIndirectSupported
-				? 0 //BGFX_CAPS_DRAW_INDIRECT
+				? BGFX_CAPS_DRAW_INDIRECT
 				: 0
 				;
 
@@ -1688,9 +1718,9 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t /*_flags*/) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t _flags) BX_OVERRIDE
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
+			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) BX_OVERRIDE
@@ -1713,10 +1743,10 @@ namespace bgfx { namespace gl
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
 		{
 			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
+			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, Memory* _mem) BX_OVERRIDE
@@ -5376,61 +5406,104 @@ namespace bgfx { namespace gl
 							numVertices = vb.m_size/vertexDecl.m_stride;
 						}
 
-						uint32_t numIndices = 0;
+						uint32_t numIndices        = 0;
 						uint32_t numPrimsSubmitted = 0;
-						uint32_t numInstances = 0;
-						uint32_t numPrimsRendered = 0;
+						uint32_t numInstances      = 0;
+						uint32_t numPrimsRendered  = 0;
+						uint32_t numDrawIndirect   = 0;
 
-						if (isValid(draw.m_indexBuffer) )
+						if (isValid(draw.m_drawIndirectBuffer) )
 						{
-							const IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-							const GLenum indexFormat = hasIndex16
-								? GL_UNSIGNED_SHORT
-								: GL_UNSIGNED_INT
-								;
-
-							if (UINT32_MAX == draw.m_numIndices)
+							const VertexBufferGL& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
+							if (currentState.m_drawIndirectBuffer.idx != draw.m_drawIndirectBuffer.idx)
 							{
-								const uint32_t indexSize = hasIndex16 ? 2 : 4;
-								numIndices        = ib.m_size/indexSize;
-								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-								numInstances      = draw.m_numInstances;
-								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
-
-								GL_CHECK(glDrawElementsInstanced(prim.m_type
-									, numIndices
-									, indexFormat
-									, (void*)0
-									, draw.m_numInstances
-									) );
+								currentState.m_drawIndirectBuffer = draw.m_drawIndirectBuffer;
+								GL_CHECK(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, vb.m_id) );
 							}
-							else if (prim.m_min <= draw.m_numIndices)
-							{
-								numIndices = draw.m_numIndices;
-								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-								numInstances = draw.m_numInstances;
-								numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
 
-								GL_CHECK(glDrawElementsInstanced(prim.m_type
-									, numIndices
-									, indexFormat
-									, (void*)(uintptr_t)(draw.m_startIndex*2)
-									, draw.m_numInstances
-									) );
+							if (isValid(draw.m_indexBuffer) )
+							{
+								const IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
+								const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
+								const GLenum indexFormat = hasIndex16
+									? GL_UNSIGNED_SHORT
+									: GL_UNSIGNED_INT
+									;
+
+								const uint32_t commandSize = 5 * sizeof(uint32_t);
+								numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+
+								uint32_t args = draw.m_startDrawIndirect * commandSize;
+								GL_CHECK(glMultiDrawElementsIndirect(prim.m_type, indexFormat, (void*)args, numDrawIndirect, commandSize) );
+							}
+							else
+							{
+								const uint32_t commandSize = 4 * sizeof(uint32_t);
+								numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+
+								uint32_t args = draw.m_startDrawIndirect * commandSize;
+								GL_CHECK(glMultiDrawArraysIndirect(prim.m_type, (void*)args, numDrawIndirect, commandSize) );
 							}
 						}
 						else
 						{
-							numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
-							numInstances = draw.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+							if (isValid(currentState.m_drawIndirectBuffer) )
+							{
+								currentState.m_drawIndirectBuffer.idx = invalidHandle;
+								GL_CHECK(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0) );
+							}
 
-							GL_CHECK(glDrawArraysInstanced(prim.m_type
-								, 0
-								, numVertices
-								, draw.m_numInstances
-								) );
+							if (isValid(draw.m_indexBuffer) )
+							{
+								const IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
+								const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
+								const GLenum indexFormat = hasIndex16
+									? GL_UNSIGNED_SHORT
+									: GL_UNSIGNED_INT
+									;
+
+								if (UINT32_MAX == draw.m_numIndices)
+								{
+									const uint32_t indexSize = hasIndex16 ? 2 : 4;
+									numIndices        = ib.m_size/indexSize;
+									numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
+									numInstances      = draw.m_numInstances;
+									numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
+
+									GL_CHECK(glDrawElementsInstanced(prim.m_type
+										, numIndices
+										, indexFormat
+										, (void*)0
+										, draw.m_numInstances
+										) );
+								}
+								else if (prim.m_min <= draw.m_numIndices)
+								{
+									numIndices = draw.m_numIndices;
+									numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
+									numInstances = draw.m_numInstances;
+									numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+
+									GL_CHECK(glDrawElementsInstanced(prim.m_type
+										, numIndices
+										, indexFormat
+										, (void*)(uintptr_t)(draw.m_startIndex*2)
+										, draw.m_numInstances
+										) );
+								}
+							}
+							else
+							{
+								numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
+								numInstances = draw.m_numInstances;
+								numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+
+								GL_CHECK(glDrawArraysInstanced(prim.m_type
+									, 0
+									, numVertices
+									, draw.m_numInstances
+									) );
+							}
 						}
 
 						statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;

@@ -1410,6 +1410,9 @@ namespace bgfx
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);
 
 	///
+	void setBuffer(uint8_t _stage, DrawIndirectBufferHandle _handle, Access::Enum _access);
+
+	///
 	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format = TextureFormat::Count);
 
 	///
