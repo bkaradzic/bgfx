@@ -4876,7 +4876,38 @@ namespace bgfx { namespace gl
 
 							viewState.setPredefined<1>(this, view, eye, program, _render, compute);
 
-							GL_CHECK(glDispatchCompute(compute.m_numX, compute.m_numY, compute.m_numZ) );
+							if (isValid(compute.m_indirectBuffer) )
+							{
+								const VertexBufferGL& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
+								if (currentState.m_indirectBuffer.idx != compute.m_indirectBuffer.idx)
+								{
+									currentState.m_indirectBuffer = compute.m_indirectBuffer;
+									GL_CHECK(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, vb.m_id) );
+								}
+
+								uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+									? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									: compute.m_numIndirect
+									;
+
+								uintptr_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+								for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
+								{
+									GL_CHECK(glDispatchComputeIndirect(args) );
+									args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+								}
+							}
+							else
+							{
+								if (isValid(currentState.m_indirectBuffer) )
+								{
+									currentState.m_indirectBuffer.idx = invalidHandle;
+									GL_CHECK(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0) );
+								}
+
+								GL_CHECK(glDispatchCompute(compute.m_numX, compute.m_numY, compute.m_numZ) );
+							}
+
 							GL_CHECK(glMemoryBarrier(barrier) );
 						}
 					}
@@ -5412,12 +5443,12 @@ namespace bgfx { namespace gl
 						uint32_t numPrimsRendered  = 0;
 						uint32_t numDrawIndirect   = 0;
 
-						if (isValid(draw.m_drawIndirectBuffer) )
+						if (isValid(draw.m_indirectBuffer) )
 						{
-							const VertexBufferGL& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
-							if (currentState.m_drawIndirectBuffer.idx != draw.m_drawIndirectBuffer.idx)
+							const VertexBufferGL& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
+							if (currentState.m_indirectBuffer.idx != draw.m_indirectBuffer.idx)
 							{
-								currentState.m_drawIndirectBuffer = draw.m_drawIndirectBuffer;
+								currentState.m_indirectBuffer = draw.m_indirectBuffer;
 								GL_CHECK(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, vb.m_id) );
 							}
 
@@ -5430,26 +5461,38 @@ namespace bgfx { namespace gl
 									: GL_UNSIGNED_INT
 									;
 
-								const uint32_t commandSize = 5 * sizeof(uint32_t);
-								numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+								numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+									? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									: draw.m_numIndirect
+									;
 
-								uintptr_t args = draw.m_startDrawIndirect * commandSize;
-								GL_CHECK(glMultiDrawElementsIndirect(prim.m_type, indexFormat, (void*)args, numDrawIndirect, commandSize) );
+								uintptr_t args = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+								GL_CHECK(glMultiDrawElementsIndirect(prim.m_type, indexFormat
+									, (void*)args
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									) );
 							}
 							else
 							{
-								const uint32_t commandSize = 4 * sizeof(uint32_t);
-								numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+								numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+									? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									: draw.m_numIndirect
+									;
 
-								uintptr_t args = draw.m_startDrawIndirect * commandSize;
-								GL_CHECK(glMultiDrawArraysIndirect(prim.m_type, (void*)args, numDrawIndirect, commandSize) );
+								uintptr_t args = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+								GL_CHECK(glMultiDrawArraysIndirect(prim.m_type
+									, (void*)args
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									) );
 							}
 						}
 						else
 						{
-							if (isValid(currentState.m_drawIndirectBuffer) )
+							if (isValid(currentState.m_indirectBuffer) )
 							{
-								currentState.m_drawIndirectBuffer.idx = invalidHandle;
+								currentState.m_indirectBuffer.idx = invalidHandle;
 								GL_CHECK(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0) );
 							}
 

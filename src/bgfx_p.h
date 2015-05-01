@@ -1072,8 +1072,8 @@ namespace bgfx
 			m_instanceDataOffset = 0;
 			m_instanceDataStride = 0;
 			m_numInstances       = 1;
-			m_startDrawIndirect  = 0;
-			m_numDrawIndirect    = UINT16_MAX;
+			m_startIndirect  = 0;
+			m_numIndirect    = UINT16_MAX;
 			m_num     = 1;
 			m_flags   = BGFX_SUBMIT_EYE_FIRST;
 			m_scissor = UINT16_MAX;
@@ -1081,7 +1081,7 @@ namespace bgfx
 			m_vertexDecl.idx         = invalidHandle;
 			m_indexBuffer.idx        = invalidHandle;
 			m_instanceDataBuffer.idx = invalidHandle;
-			m_drawIndirectBuffer.idx = invalidHandle;
+			m_indirectBuffer.idx = invalidHandle;
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
@@ -1103,8 +1103,8 @@ namespace bgfx
 		uint32_t m_instanceDataOffset;
 		uint16_t m_instanceDataStride;
 		uint16_t m_numInstances;
-		uint16_t m_startDrawIndirect;
-		uint16_t m_numDrawIndirect;
+		uint16_t m_startIndirect;
+		uint16_t m_numIndirect;
 		uint16_t m_num;
 		uint16_t m_scissor;
 		uint8_t  m_submitFlags;
@@ -1113,7 +1113,7 @@ namespace bgfx
 		VertexDeclHandle   m_vertexDecl;
 		IndexBufferHandle  m_indexBuffer;
 		VertexBufferHandle m_instanceDataBuffer;
-		DrawIndirectBufferHandle m_drawIndirectBuffer;
+		IndirectBufferHandle m_indirectBuffer;
 	};
 
 	struct RenderCompute
@@ -1129,6 +1129,10 @@ namespace bgfx
 			m_num         = 0;
 			m_submitFlags = BGFX_SUBMIT_EYE_FIRST;
 
+			m_indirectBuffer.idx = invalidHandle;
+			m_startIndirect      = 0;
+			m_numIndirect        = UINT16_MAX;
+
 			for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 			{
 				m_bind[ii].m_idx = invalidHandle;
@@ -1139,10 +1143,13 @@ namespace bgfx
 		uint32_t m_constBegin;
 		uint32_t m_constEnd;
 		uint32_t m_matrix;
+		IndirectBufferHandle m_indirectBuffer;
 
 		uint16_t m_numX;
 		uint16_t m_numY;
 		uint16_t m_numZ;
+		uint16_t m_startIndirect;
+		uint16_t m_numIndirect;
 		uint16_t m_num;
 		uint8_t  m_submitFlags;
 	};
@@ -1387,13 +1394,6 @@ namespace bgfx
 			m_draw.m_instanceDataBuffer = _handle;
 		}
 
-		void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start, uint16_t _num)
-		{
-			m_draw.m_startDrawIndirect  = _start;
-			m_draw.m_numDrawIndirect    = _num;
-			m_draw.m_drawIndirectBuffer = _handle;
-		}
-
 		void setProgram(ProgramHandle _handle)
 		{
 			m_key.m_program = _handle.idx;
@@ -1462,7 +1462,25 @@ namespace bgfx
 		}
 
 		uint32_t submit(uint8_t _id, int32_t _depth);
+
+		uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+		{
+			m_draw.m_startIndirect  = _start;
+			m_draw.m_numIndirect    = _num;
+			m_draw.m_indirectBuffer = _indirectHandle;
+			return submit(_id, _depth);
+		}
+
 		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz, uint8_t _flags);
+
+		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+		{
+			m_compute.m_indirectBuffer = _indirectHandle;
+			m_compute.m_startIndirect  = _start;
+			m_compute.m_numIndirect    = _num;
+			return dispatch(_id, _handle, 0, 0, 0, _flags);
+		}
+
 		void sort();
 
 		bool checkAvailTransientIndexBuffer(uint32_t _num)
@@ -2509,15 +2527,15 @@ namespace bgfx
 			return idb;
 		}
 
-		DrawIndirectBufferHandle createDrawIndirectBuffer(uint32_t _num)
+		IndirectBufferHandle createIndirectBuffer(uint32_t _num)
 		{
 			BX_UNUSED(_num);
-			DrawIndirectBufferHandle handle = { m_vertexBufferHandle.alloc() };
+			IndirectBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
 			BX_WARN(isValid(handle), "Failed to allocate draw indirect buffer handle.");
 			if (isValid(handle) )
 			{
-				uint32_t size = _num * sizeof(uint32_t) * 5;
+				uint32_t size = _num * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 				uint8_t flags = BGFX_BUFFER_DRAW_INDIRECT;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
@@ -2529,7 +2547,7 @@ namespace bgfx
 			return handle;
 		}
 
-		void destroyDrawIndirectBuffer(DrawIndirectBufferHandle _handle)
+		void destroyIndirectBuffer(IndirectBufferHandle _handle)
 		{
 			VertexBufferHandle handle = { _handle.idx };
 			BGFX_CHECK_HANDLE("destroyDrawIndirectBuffer", m_vertexBufferHandle, handle);
@@ -3299,12 +3317,6 @@ namespace bgfx
 				);
 		}
 
-		BGFX_API_FUNC(void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start, uint16_t _num) )
-		{
-			BGFX_CHECK_HANDLE("setDrawIndirectBuffer", m_vertexBufferHandle, _handle);
-			m_submit->setDrawIndirectBuffer(_handle, _start, _num);
-		}
-
 		BGFX_API_FUNC(void setProgram(ProgramHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("setProgram", m_programHandle, _handle);
@@ -3338,6 +3350,12 @@ namespace bgfx
 			return m_submit->submit(_id, _depth);
 		}
 
+		BGFX_API_FUNC(uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth) )
+		{
+			BGFX_CHECK_HANDLE("submit", m_vertexBufferHandle, _indirectHandle);
+			return m_submit->submit(_id, _indirectHandle, _start, _num, _depth);
+		}
+
 		BGFX_API_FUNC(void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access) )
 		{
 			BGFX_CHECK_HANDLE("setBuffer", m_indexBufferHandle, _handle);
@@ -3364,7 +3382,7 @@ namespace bgfx
 			m_submit->setBuffer(_stage, dvb.m_handle, _access);
 		}
 
-		BGFX_API_FUNC(void setBuffer(uint8_t _stage, DrawIndirectBufferHandle _handle, Access::Enum _access) )
+		BGFX_API_FUNC(void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access) )
 		{
 			BGFX_CHECK_HANDLE("setBuffer", m_vertexBufferHandle, _handle);
 			VertexBufferHandle handle = { _handle.idx };
@@ -3398,6 +3416,11 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags) )
 		{
 			return m_submit->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
+		}
+
+		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags) )
+		{
+			return m_submit->dispatch(_id, _handle, _indirectHandle, _start, _num, _flags);
 		}
 
 		BGFX_API_FUNC(void discard() )

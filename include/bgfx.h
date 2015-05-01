@@ -206,7 +206,7 @@ namespace bgfx
 
 	static const uint16_t invalidHandle = UINT16_MAX;
 
-	BGFX_HANDLE(DrawIndirectBufferHandle);
+	BGFX_HANDLE(IndirectBufferHandle);
 	BGFX_HANDLE(DynamicIndexBufferHandle);
 	BGFX_HANDLE(DynamicVertexBufferHandle);
 	BGFX_HANDLE(FrameBufferHandle);
@@ -871,10 +871,10 @@ namespace bgfx
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
 	///
-	DrawIndirectBufferHandle createDrawIndirectBuffer(uint32_t _num);
+	IndirectBufferHandle createIndirectBuffer(uint32_t _num);
 
 	///
-	void destroyDrawIndirectBuffer(DrawIndirectBufferHandle _handle);
+	void destroyIndirectBuffer(IndirectBufferHandle _handle);
 
 	/// Create shader from memory buffer.
 	ShaderHandle createShader(const Memory* _mem);
@@ -1351,9 +1351,6 @@ namespace bgfx
 	/// Set instance data buffer for draw primitive.
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
 
-	///
-	void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start = 0, uint16_t _num = UINT16_MAX);
-
 	/// Set program for draw primitive.
 	void setProgram(ProgramHandle _handle);
 
@@ -1398,6 +1395,9 @@ namespace bgfx
 	uint32_t submit(uint8_t _id, int32_t _depth = 0);
 
 	///
+	uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, int32_t _depth = 0);
+
+	///
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access);
 
 	///
@@ -1410,7 +1410,7 @@ namespace bgfx
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);
 
 	///
-	void setBuffer(uint8_t _stage, DrawIndirectBufferHandle _handle, Access::Enum _access);
+	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access);
 
 	///
 	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format = TextureFormat::Count);
@@ -1419,7 +1419,10 @@ namespace bgfx
 	void setImage(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, Access::Enum _access, TextureFormat::Enum _format = TextureFormat::Count);
 
 	/// Dispatch compute.
-	void dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX = 1, uint16_t _numY = 1, uint16_t _numZ = 1, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST);
+	uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX = 1, uint16_t _numY = 1, uint16_t _numZ = 1, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST);
+
+	///
+	uint32_t dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST);
 
 	/// Discard all previously set state for draw or compute call.
 	void discard();

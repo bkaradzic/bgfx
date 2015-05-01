@@ -3691,7 +3691,27 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);
 					deviceCtx->CSSetSamplers(0, BX_COUNTOF(sampler), sampler);
 
-					deviceCtx->Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
+					if (isValid(compute.m_indirectBuffer) )
+					{
+						const VertexBufferD3D11& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
+						ID3D11Buffer* ptr = vb.m_ptr;
+
+						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+							? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+							: compute.m_numIndirect
+							;
+
+						uint32_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+						for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
+						{
+							deviceCtx->DispatchIndirect(ptr, args);
+							args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+						}
+					}
+					else
+					{
+						deviceCtx->Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
+					}
 
 					continue;
 				}
@@ -4005,33 +4025,37 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					uint32_t numPrimsRendered  = 0;
 					uint32_t numDrawIndirect   = 0;
 
-					if (isValid(draw.m_drawIndirectBuffer) )
+					if (isValid(draw.m_indirectBuffer) )
 					{
-						const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_drawIndirectBuffer.idx];
+						const VertexBufferD3D11& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
 						ID3D11Buffer* ptr = vb.m_ptr;
 
 						if (isValid(draw.m_indexBuffer) )
 						{
-							const uint32_t commandSize = 5 * sizeof(uint32_t);
-							numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								: draw.m_numIndirect
+								;
 
-							uint32_t args = draw.m_startDrawIndirect * commandSize;
+							uint32_t args = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
 								deviceCtx->DrawIndexedInstancedIndirect(ptr, args);
-								args += commandSize;
+								args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 							}
 						}
 						else
 						{
-							const uint32_t commandSize = 4 * sizeof(uint32_t);
-							numDrawIndirect = UINT16_MAX == draw.m_numDrawIndirect ? vb.m_size/commandSize : draw.m_numDrawIndirect;
+							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								: draw.m_numIndirect
+								;
 
-							uint32_t args = draw.m_startDrawIndirect * commandSize;
+							uint32_t args = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
 								deviceCtx->DrawInstancedIndirect(ptr, args);
-								args += commandSize;
+								args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 							}
 						}
 					}

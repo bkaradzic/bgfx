@@ -194,6 +194,34 @@ uint atomicCompSwap(uint _mem, uint _compare, uint _data)
 
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 
+#define dispatchIndirect(_buffer \
+			, _offset \
+			, _numX \
+			, _numY \
+			, _numZ \
+			) \
+			_buffer[_offset*2+0] = uvec4(_numX, _numY, _numZ, 0u)
+
+#define drawIndirect(_buffer \
+			, _offset \
+			, _numVertices \
+			, _numInstances \
+			, _startVertex \
+			, _startInstance \
+			) \
+			_buffer[_offset*2+0] = uvec4(_numVertices, _numInstances, _startVertex, _startInstance)
+
+#define drawIndexedIndirect(_buffer \
+			, _offset \
+			, _numIndices \
+			, _numInstances \
+			, _startIndex \
+			, _startVertex \
+			, _startInstance \
+			) \
+			_buffer[_offset*2+0] = uvec4(_numIndices, _numInstances, _startIndex, _startInstance); \
+			_buffer[_offset*2+1] = uvec4(_startInstance, 0u, 0u, 0u)
+
 #endif // __cplusplus
 
 #endif // BGFX_COMPUTE_H_HEADER_GUARD

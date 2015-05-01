@@ -2309,16 +2309,16 @@ again:
 		return s_ctx->allocInstanceDataBuffer(_num, _stride);
 	}
 
-	DrawIndirectBufferHandle createDrawIndirectBuffer(uint32_t _num)
+	IndirectBufferHandle createIndirectBuffer(uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->createDrawIndirectBuffer(_num);
+		return s_ctx->createIndirectBuffer(_num);
 	}
 
-	void destroyDrawIndirectBuffer(DrawIndirectBufferHandle _handle)
+	void destroyIndirectBuffer(IndirectBufferHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->destroyDrawIndirectBuffer(_handle);
+		s_ctx->destroyIndirectBuffer(_handle);
 	}
 
 	ShaderHandle createShader(const Memory* _mem)
@@ -2922,12 +2922,6 @@ again:
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
-	void setDrawIndirectBuffer(DrawIndirectBufferHandle _handle, uint16_t _start, uint16_t _num)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setDrawIndirectBuffer(_handle, _start, _num);
-	}
-
 	void setProgram(ProgramHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -2950,6 +2944,12 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		return s_ctx->submit(_id, _depth);
+	}
+
+	uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->submit(_id, _indirectHandle, _start, _num, _depth);
 	}
 
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
@@ -2976,7 +2976,7 @@ again:
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
-	void setBuffer(uint8_t _stage, DrawIndirectBufferHandle _handle, Access::Enum _access)
+	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->setBuffer(_stage, _handle, _access);
@@ -2994,10 +2994,16 @@ again:
 		s_ctx->setImage(_stage, _sampler, _handle, _attachment, _access, _format);
 	}
 
-	void dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags)
+	uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
+		return s_ctx->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
+	}
+
+	uint32_t dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->dispatch(_id, _handle, _indirectHandle, _start, _num, _flags);
 	}
 
 	void discard()
