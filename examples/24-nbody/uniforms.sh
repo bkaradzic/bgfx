@@ -5,6 +5,8 @@
 
 uniform vec4 u_params[3];
 
+#define threadGroupUpdateSize 512
+
 #define u_timeStep          u_params[0].x
 #define u_dispatchSize      floatBitsToUint(u_params[0].y)
 #define u_gravity           u_params[0].z
