@@ -23,6 +23,7 @@ namespace bgfx
 		bool m_hasAlpha;
 		bool m_cubeMap;
 		bool m_ktx;
+		bool m_srgb;
 	};
 
 	struct ImageMip
