@@ -450,7 +450,30 @@ namespace entry
 							{
 								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
 								Key::Enum key = translateKey(kev.keysym.scancode);
-								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+
+								// TODO: These keys are not captured by SDL_TEXTINPUT. Should be probably handled by SDL_TEXTEDITING. This is a workaround for now.
+								if (key == 1) // Escape
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = 0x1b;
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else if (key == 2) // Enter
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = 0x0d;
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else if (key == 5) // Backspace
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = 0x08;
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else
+								{
+								    m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+								}
 							}
 						}
 						break;
