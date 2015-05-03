@@ -1895,6 +1895,7 @@ namespace bgfx
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx = false;
+		_imageContainer.m_srgb = colorSpace > 0;
 
 		return TextureFormat::Unknown != format;
 	}
