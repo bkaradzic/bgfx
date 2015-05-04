@@ -717,7 +717,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
 
-			if (NULL == g_platformData.backbuffer)
+			if (NULL == g_platformData.backBuffer)
 			{
 #if BX_PLATFORM_WINRT
 				hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
@@ -780,7 +780,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_scd.SampleDesc.Count   = 1;
 				m_scd.SampleDesc.Quality = 0;
 				setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
-				m_backBufferColor = (ID3D11RenderTargetView*)g_platformData.backbuffer;
+				m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
+				m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
 			}
 
 			m_numWindows = 1;
@@ -1424,7 +1425,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			ovrPreReset();
 
-			DX_RELEASE(m_backBufferDepthStencil, 0);
+			if (NULL == g_platformData.backBufferDS)
+			{
+				DX_RELEASE(m_backBufferDepthStencil, 0);
+			}
 
 			if (NULL != m_swapChain)
 			{
@@ -1620,7 +1624,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				if (NULL == m_swapChain)
 				{
 					// Updated backbuffer if it changed in PlatformData.
-					m_backBufferColor = (ID3D11RenderTargetView*)g_platformData.backbuffer;
+					m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
+					m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
 				}
 				else
 				{
