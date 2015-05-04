@@ -15,7 +15,7 @@ int cmdMove(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const
 	{
 		if (0 == strcmp(_argv[1], "forward") )
 		{
-			cameraSetKeyState(CAMERA_KEY_UP, true);
+			cameraSetKeyState(CAMERA_KEY_FORWARD, true);
 			return 0;
 		}
 		else if (0 == strcmp(_argv[1], "left") )
@@ -29,6 +29,16 @@ int cmdMove(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const
 			return 0;
 		}
 		else if (0 == strcmp(_argv[1], "backward") )
+		{
+			cameraSetKeyState(CAMERA_KEY_BACKWARD, true);
+			return 0;
+		}
+		else if (0 == strcmp(_argv[1], "up") )
+		{
+			cameraSetKeyState(CAMERA_KEY_UP, true);
+			return 0;
+		}
+		else if (0 == strcmp(_argv[1], "down") )
 		{
 			cameraSetKeyState(CAMERA_KEY_DOWN, true);
 			return 0;
@@ -45,10 +55,16 @@ static void cmd(const void* _userData)
 
 static const InputBinding s_camBindings[] = 
 {
-	{ entry::Key::KeyW, entry::Modifier::None, 0, cmd, "move forward"  },
-	{ entry::Key::KeyA, entry::Modifier::None, 0, cmd, "move left"     },
-	{ entry::Key::KeyS, entry::Modifier::None, 0, cmd, "move backward" },
-	{ entry::Key::KeyD, entry::Modifier::None, 0, cmd, "move right"    },
+	{ entry::Key::KeyW,             entry::Modifier::None, 0, cmd, "move forward"  },
+	{ entry::Key::GamepadUp,        entry::Modifier::None, 0, cmd, "move forward"  },
+	{ entry::Key::KeyA,             entry::Modifier::None, 0, cmd, "move left"     },
+	{ entry::Key::GamepadLeft,      entry::Modifier::None, 0, cmd, "move left"     },
+	{ entry::Key::KeyS,             entry::Modifier::None, 0, cmd, "move backward" },
+	{ entry::Key::GamepadDown,      entry::Modifier::None, 0, cmd, "move backward" },
+	{ entry::Key::KeyD,             entry::Modifier::None, 0, cmd, "move right"    },
+	{ entry::Key::GamepadRight,     entry::Modifier::None, 0, cmd, "move right"    },
+	{ entry::Key::GamepadShoulderL, entry::Modifier::None, 0, cmd, "move down"     },
+	{ entry::Key::GamepadShoulderR, entry::Modifier::None, 0, cmd, "move up"       },
 
 	INPUT_BINDING_END
 };
@@ -64,7 +80,8 @@ struct Camera
 	Camera()
 	{
 		reset();
-		update(0.0f, 0, 0, false);
+		entry::MouseState mouseState;
+		update(0.0f, mouseState);
 
 		cmdAdd("move", cmdMove);
 		inputAddBindings("camBindings", s_camBindings);
@@ -77,22 +94,23 @@ struct Camera
 
 	void reset()
 	{
-		m_mouseNow.m_mx = 0;
-		m_mouseNow.m_my = 0;
+		m_mouseNow.m_mx  = 0;
+		m_mouseNow.m_my  = 0;
 		m_mouseLast.m_mx = 0;
 		m_mouseLast.m_my = 0;
-		m_eye[0] = 0.0f;
-		m_eye[1] = 0.0f;
+		m_eye[0] =   0.0f;
+		m_eye[1] =   0.0f;
 		m_eye[2] = -35.0f;
-		m_at[0] = 0.0f;
-		m_at[1] = 0.0f;
-		m_at[2] = -1.0f;
-		m_up[0] = 0.0f;
-		m_up[1] = 1.0f;
-		m_up[2] = 0.0f;
+		m_at[0]  =   0.0f;
+		m_at[1]  =   0.0f;
+		m_at[2]  =  -1.0f;
+		m_up[0]  =   0.0f;
+		m_up[1]  =   1.0f;
+		m_up[2]  =   0.0f;
 		m_horizontalAngle = 0.01f;
 		m_verticalAngle = 0.0f;
 		m_mouseSpeed = 0.0020f;
+		m_gamepadSpeed = 0.04f;
 		m_moveSpeed = 30.0f;
 		m_keys = 0;
 		m_mouseDown = false;
@@ -104,20 +122,20 @@ struct Camera
 		m_keys |= _down ? _key : 0;
 	}
 
-	void update(float _deltaTime, uint32_t _mx, uint32_t _my, bool _move)
+	void update(float _deltaTime, const entry::MouseState& _mouseState)
 	{
 		if (!m_mouseDown)
 		{
-			m_mouseLast.m_mx = _mx;
-			m_mouseLast.m_my = _my;
+			m_mouseLast.m_mx = _mouseState.m_mx;
+			m_mouseLast.m_my = _mouseState.m_my;
 		}
 
-		m_mouseDown = _move;
+		m_mouseDown = !!_mouseState.m_buttons[entry::MouseButton::Right];
 
-		if (_move)
+		if (m_mouseDown)
 		{
-			m_mouseNow.m_mx = _mx;
-			m_mouseNow.m_my = _my;
+			m_mouseNow.m_mx = _mouseState.m_mx;
+			m_mouseNow.m_my = _mouseState.m_my;
 		}
 
 		if (m_mouseDown)
@@ -132,6 +150,16 @@ struct Camera
 			m_mouseLast.m_my = m_mouseNow.m_my;
 		}
 
+		entry::GamepadHandle handle = { 0 };
+		m_horizontalAngle += m_gamepadSpeed * inputGetGamepadAxis(handle, entry::GamepadAxis::RightX)/32768.0f;
+		m_verticalAngle   -= m_gamepadSpeed * inputGetGamepadAxis(handle, entry::GamepadAxis::RightY)/32768.0f;
+		const int32_t gpx = inputGetGamepadAxis(handle, entry::GamepadAxis::LeftX);
+		const int32_t gpy = inputGetGamepadAxis(handle, entry::GamepadAxis::LeftY);
+		m_keys |= gpx < -16834 ? CAMERA_KEY_LEFT     : 0;
+		m_keys |= gpx >  16834 ? CAMERA_KEY_RIGHT    : 0;
+		m_keys |= gpy < -16834 ? CAMERA_KEY_FORWARD  : 0;
+		m_keys |= gpy >  16834 ? CAMERA_KEY_BACKWARD : 0;
+
 		float direction[3] =
 		{
 			cosf(m_verticalAngle) * sinf(m_horizontalAngle),
@@ -141,53 +169,84 @@ struct Camera
 
 		float right[3] =
 		{
-			sinf(m_horizontalAngle - float(M_PI)/2.0f),
+			sinf(m_horizontalAngle - bx::piHalf),
 			0,
-			cosf(m_horizontalAngle - float(M_PI)/2.0f),
+			cosf(m_horizontalAngle - bx::piHalf),
 		};
 
-		if (m_keys & CAMERA_KEY_UP)
+		float up[3];
+		bx::vec3Cross(up, right, direction);
+
+		if (m_keys & CAMERA_KEY_FORWARD)
 		{
-			// m_eye += direction * _deltaTime * m_moveSpeed
-			float tmpRhs[3];
-			float tmpPos[3];
-			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			bx::vec3Mul(tmpRhs, direction, _deltaTime * m_moveSpeed);
-			bx::vec3Add(m_eye, tmpPos, tmpRhs);
-			setKeyState(CAMERA_KEY_UP, false);
+			float pos[3];
+			bx::vec3Move(pos, m_eye);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, direction, _deltaTime * m_moveSpeed);
+
+			bx::vec3Add(m_eye, pos, tmp);
+			setKeyState(CAMERA_KEY_FORWARD, false);
 		}
 
-		if (m_keys & CAMERA_KEY_DOWN)
+		if (m_keys & CAMERA_KEY_BACKWARD)
 		{
-			// m_eye -= direction * _deltaTime * m_moveSpeed
-			float tmpRhs[3];
-			float tmpPos[3];
-			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			bx::vec3Mul(tmpRhs, direction, _deltaTime * m_moveSpeed);
-			bx::vec3Sub(m_eye, tmpPos, tmpRhs);
-			setKeyState(CAMERA_KEY_DOWN, false);
+			float pos[3];
+			bx::vec3Move(pos, m_eye);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, direction, _deltaTime * m_moveSpeed);
+
+			bx::vec3Sub(m_eye, pos, tmp);
+			setKeyState(CAMERA_KEY_BACKWARD, false);
 		}
 
 		if (m_keys & CAMERA_KEY_LEFT)
 		{
-			// m_eye += right * _deltaTime * m_moveSpeed
-			float tmpRhs[3];
-			float tmpPos[3];
-			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			bx::vec3Mul(tmpRhs, right, _deltaTime * m_moveSpeed);
-			bx::vec3Add(m_eye, tmpPos, tmpRhs);
+			float pos[3];
+			bx::vec3Move(pos, m_eye);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, right, _deltaTime * m_moveSpeed);
+
+			bx::vec3Add(m_eye, pos, tmp);
 			setKeyState(CAMERA_KEY_LEFT, false);
 		}
 
 		if (m_keys & CAMERA_KEY_RIGHT)
 		{
-			// m_eye -= right * _deltaTime * m_moveSpeed
-			float tmpRhs[3];
-			float tmpPos[3];
-			memcpy(tmpPos, m_eye, sizeof(float)*3);
-			bx::vec3Mul(tmpRhs, right, _deltaTime * m_moveSpeed);
-			bx::vec3Sub(m_eye, tmpPos, tmpRhs);
+			float pos[3];
+			bx::vec3Move(pos, m_eye);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, right, _deltaTime * m_moveSpeed);
+
+			bx::vec3Sub(m_eye, pos, tmp);
 			setKeyState(CAMERA_KEY_RIGHT, false);
+		}
+
+		if (m_keys & CAMERA_KEY_UP)
+		{
+			float pos[3];
+			bx::vec3Move(pos, m_eye);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, up, _deltaTime * m_moveSpeed);
+
+			bx::vec3Add(m_eye, pos, tmp);
+			setKeyState(CAMERA_KEY_UP, false);
+		}
+
+		if (m_keys & CAMERA_KEY_DOWN)
+		{
+			float pos[3];
+			bx::vec3Move(pos, m_eye);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, up, _deltaTime * m_moveSpeed);
+
+			bx::vec3Sub(m_eye, pos, tmp);
+			setKeyState(CAMERA_KEY_DOWN, false);
 		}
 
 		bx::vec3Add(m_at, m_eye, direction);
@@ -214,14 +273,19 @@ struct Camera
 		m_horizontalAngle = _horizontalAngle;
 	}
 
-	MouseCoords m_mouseNow, m_mouseLast;
+	MouseCoords m_mouseNow;
+	MouseCoords m_mouseLast;
+
 	float m_eye[3];
 	float m_at[3];
 	float m_up[3];
 	float m_horizontalAngle;
 	float m_verticalAngle;
+
 	float m_mouseSpeed;
+	float m_gamepadSpeed;
 	float m_moveSpeed;
+
 	uint8_t m_keys;
 	bool m_mouseDown;
 };
@@ -274,7 +338,7 @@ void cameraGetAt(float* _at)
 	memcpy(_at, s_camera->m_at, 3*sizeof(float));
 }
 
-void cameraUpdate(float _deltaTime, uint32_t _mx, uint32_t _my, bool _move)
+void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState)
 {
-	s_camera->update(_deltaTime, _mx, _my, _move);
+	s_camera->update(_deltaTime, _mouseState);
 }

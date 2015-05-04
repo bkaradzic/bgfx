@@ -4,11 +4,12 @@ void main ()
 {
   mediump vec4 c_1;
   c_1 = xlv_COLOR;
-  highp vec2 tmpvar_2;
-  tmpvar_2 = (c_1.xy + xlv_TEXCOORD0);
-  c_1.xy = tmpvar_2;
+  c_1.xy = (c_1.xy + xlv_TEXCOORD0);
   gl_FragData[0] = c_1;
 }
 
 
-// inputs: 2, stats: 1 alu 0 tex 0 flow
+// stats: 1 alu 0 tex 0 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_COLOR (high float) 4x1 [-1]

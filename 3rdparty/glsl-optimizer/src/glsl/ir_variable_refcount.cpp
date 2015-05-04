@@ -33,12 +33,13 @@
 #include "ir_visitor.h"
 #include "ir_variable_refcount.h"
 #include "glsl_types.h"
-#include "main/hash_table.h"
+#include "util/hash_table.h"
 
 ir_variable_refcount_visitor::ir_variable_refcount_visitor()
 {
    this->mem_ctx = ralloc_context(NULL);
    this->ht = _mesa_hash_table_create(NULL, _mesa_key_pointer_equal);
+   this->current_lhs = NULL;
 }
 
 static void
@@ -62,6 +63,7 @@ ir_variable_refcount_entry::ir_variable_refcount_entry(ir_variable *var)
    assigned_count = 0;
    declaration = false;
    referenced_count = 0;
+   referenced_count_noself = 0;
 }
 
 
@@ -114,10 +116,11 @@ ir_variable_refcount_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *const var = ir->variable_referenced();
    ir_variable_refcount_entry *entry = this->get_variable_entry(var);
-
-   if (entry)
+   if (entry) {
       entry->referenced_count++;
-
+      if (this->in_assignee || var != this->current_lhs)
+         entry->referenced_count_noself++;
+   }
    return visit_continue;
 }
 
@@ -132,10 +135,19 @@ ir_variable_refcount_visitor::visit_enter(ir_function_signature *ir)
    return visit_continue_with_parent;
 }
 
+ir_visitor_status
+ir_variable_refcount_visitor::visit_enter(ir_assignment *ir)
+{
+   assert(this->current_lhs == NULL);
+   this->current_lhs = ir->lhs->variable_referenced();
+   return visit_continue;
+}
+
 
 ir_visitor_status
 ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
 {
+	this->current_lhs = NULL;
    ir_variable_refcount_entry *entry;
    entry = this->get_variable_entry(ir->lhs->variable_referenced());
    if (entry) {

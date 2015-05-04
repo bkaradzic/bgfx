@@ -8,12 +8,12 @@ void main ()
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_CameraDepthNormalsTexture, tmpvar_1);
   vec3 n_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = ((tmpvar_3.xyz * vec3(3.5554, 3.5554, 0.0)) + vec3(-1.7777, -1.7777, 1.0));
-  float tmpvar_6;
-  tmpvar_6 = (2.0 / dot (tmpvar_5, tmpvar_5));
-  n_4.xy = (tmpvar_6 * tmpvar_5.xy);
-  n_4.z = (tmpvar_6 - 1.0);
+  float g_5;
+  vec3 nn_6;
+  nn_6 = ((tmpvar_3.xyz * vec3(3.5554, 3.5554, 0.0)) + vec3(-1.7777, -1.7777, 1.0));
+  g_5 = (2.0 / dot (nn_6, nn_6));
+  n_4.xy = (g_5 * nn_6.xy);
+  n_4.z = (g_5 - 1.0);
   col_2.x = dot (tmpvar_3.zw, vec2(1.0, 0.00392157));
   col_2.y = ((n_4.x * 0.5) + 0.5);
   col_2.z = ((n_4.y * 0.5) + 0.5);
@@ -22,4 +22,9 @@ void main ()
 }
 
 
-// inputs: 1, stats: 11 alu 2 tex 0 flow
+// stats: 11 alu 2 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [1] loc 4
+// textures: 2
+//  #0: _CameraDepthNormalsTexture (high 2d) 0x0 [-1]
+//  #1: _MainTex (high 2d) 0x0 [-1]

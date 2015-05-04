@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -7,15 +7,25 @@
 #define ENTRY_H_HEADER_GUARD
 
 #include "dbg.h"
-
+#include <string.h> // memset
 #include <bx/bx.h>
 
-namespace bx { struct FileReaderI; struct FileWriterI; }
+namespace bx { struct FileReaderI; struct FileWriterI; struct ReallocatorI; }
 
 extern "C" int _main_(int _argc, char** _argv);
 
+#define ENTRY_WINDOW_FLAG_NONE         UINT32_C(0x00000000)
+#define ENTRY_WINDOW_FLAG_ASPECT_RATIO UINT32_C(0x00000001)
+#define ENTRY_WINDOW_FLAG_FRAME        UINT32_C(0x00000002)
+
 namespace entry
 {
+	struct WindowHandle  { uint16_t idx; };
+	inline bool isValid(WindowHandle _handle)  { return UINT16_MAX != _handle.idx; }
+
+	struct GamepadHandle { uint16_t idx; };
+	inline bool isValid(GamepadHandle _handle) { return UINT16_MAX != _handle.idx; }
+
 	struct MouseButton
 	{
 		enum Enum
@@ -24,6 +34,21 @@ namespace entry
 			Left,
 			Middle,
 			Right,
+
+			Count
+		};
+	};
+
+	struct GamepadAxis
+	{
+		enum Enum
+		{
+			LeftX,
+			LeftY,
+			LeftZ,
+			RightX,
+			RightY,
+			RightZ,
 
 			Count
 		};
@@ -124,6 +149,24 @@ namespace entry
 			KeyX,
 			KeyY,
 			KeyZ,
+
+			GamepadA,
+			GamepadB,
+			GamepadX,
+			GamepadY,
+			GamepadThumbL,
+			GamepadThumbR,
+			GamepadShoulderL,
+			GamepadShoulderR,
+			GamepadUp,
+			GamepadDown,
+			GamepadLeft,
+			GamepadRight,
+			GamepadBack,
+			GamepadStart,
+			GamepadGuide,
+
+			Count
 		};
 	};
 
@@ -132,6 +175,7 @@ namespace entry
 		MouseState()
 			: m_mx(0)
 			, m_my(0)
+			, m_mz(0)
 		{
 			for (uint32_t ii = 0; ii < entry::MouseButton::Count; ++ii)
 			{
@@ -139,15 +183,53 @@ namespace entry
 			}
 		}
 
-		uint32_t m_mx;
-		uint32_t m_my;
+		int32_t m_mx;
+		int32_t m_my;
+		int32_t m_mz;
 		uint8_t m_buttons[entry::MouseButton::Count];
+	};
+
+	struct GamepadState
+	{
+		GamepadState()
+		{
+			memset(m_axis, 0, sizeof(m_axis) );
+		}
+
+		int32_t m_axis[entry::GamepadAxis::Count];
 	};
 
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse = NULL);
 
 	bx::FileReaderI* getFileReader();
 	bx::FileWriterI* getFileWriter();
+	bx::ReallocatorI* getAllocator();
+
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags = ENTRY_WINDOW_FLAG_NONE, const char* _title = "");
+	void destroyWindow(WindowHandle _handle);
+	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y);
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height);
+	void setWindowTitle(WindowHandle _handle, const char* _title);
+	void toggleWindowFrame(WindowHandle _handle);
+	void toggleFullscreen(WindowHandle _handle);
+	void setMouseLock(WindowHandle _handle, bool _lock);
+
+	struct WindowState
+	{
+		WindowState()
+			: m_nwh(NULL)
+		{
+			m_handle.idx = UINT16_MAX;
+		}
+
+		WindowHandle m_handle;
+		uint32_t     m_width;
+		uint32_t     m_height;
+		MouseState   m_mouse;
+		void*        m_nwh;
+	};
+
+	bool processWindowEvents(WindowState& _state, uint32_t& _debug, uint32_t& _reset);
 
 } // namespace entry
 

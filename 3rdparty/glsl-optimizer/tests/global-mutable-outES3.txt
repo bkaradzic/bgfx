@@ -1,0 +1,54 @@
+#version 300 es
+uniform highp float uni1;
+uniform mediump vec4 uni4;
+uniform sampler2D tex1;
+uniform mediump float _AtmosphereThickness;
+highp float mut_uni1;
+mediump vec4 mut_uni4;
+highp float kKrESun;
+highp float kKr4PI;
+in highp vec4 var_uv;
+out mediump vec4 out_data;
+void main ()
+{
+  mut_uni4.zw = uni4.zw;
+  mediump float tmpvar_5_1;
+  mediump float tmpvar_3_2;
+  lowp vec4 c_3;
+  c_3.yzw = vec3(0.0, 0.0, 0.0);
+  c_3.x = uni4.x;
+  highp vec3 tmpvar_4;
+  highp vec2 uv_5;
+  uv_5 = var_uv.xy;
+  mut_uni4.xy = uv_5;
+  lowp vec3 tmpvar_6;
+  tmpvar_6 = texture (tex1, mut_uni4.xy).xyz;
+  tmpvar_4 = tmpvar_6;
+  c_3.xyz = (c_3.xyz + tmpvar_4);
+  c_3.z = (c_3.z + uni1);
+  mut_uni1 = (uni1 + 2.0);
+  c_3.w = mut_uni1;
+  mediump float tmpvar_7;
+  tmpvar_7 = pow (_AtmosphereThickness, 2.5);
+  tmpvar_3_2 = (0.05 * tmpvar_7);
+  kKrESun = tmpvar_3_2;
+  tmpvar_5_1 = (tmpvar_7 * 0.031416);
+  kKr4PI = tmpvar_5_1;
+  if ((var_uv.x > 0.5)) {
+    highp float tmpvar_8;
+    tmpvar_8 = pow (kKrESun, kKr4PI);
+    c_3.x = (c_3.x + tmpvar_8);
+  };
+  out_data = c_3;
+}
+
+
+// stats: 10 alu 1 tex 1 flow
+// inputs: 1
+//  #0: var_uv (high float) 4x1 [-1]
+// uniforms: 3 (total size: 0)
+//  #0: uni1 (high float) 1x1 [-1]
+//  #1: uni4 (medium float) 4x1 [-1]
+//  #2: _AtmosphereThickness (medium float) 1x1 [-1]
+// textures: 1
+//  #0: tex1 (low 2d) 0x0 [-1]

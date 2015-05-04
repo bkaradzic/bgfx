@@ -4,6 +4,7 @@ include_directories(include)
 include_directories(src/mesa)
 include_directories(src/mapi)
 include_directories(src/glsl)
+include_directories(src)
 
 option (DEBUG "Enable debugging" FALSE)
 
@@ -16,7 +17,7 @@ else()
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -s")
 endif()
 
-file(GLOB glcpp-library_sources src/glsl/glcpp/*.c)
+file(GLOB glcpp-library_sources src/glsl/glcpp/*.c src/util/*.c)
 #file(GLOB glcpp-library_sources_remove src/glsl/glcpp/glcpp.c)
 #list(REMOVE_ITEM glcpp-library_sources ${glcpp-library_sources_remove})
 add_library(glcpp-library ${glcpp-library_sources})
@@ -36,6 +37,11 @@ target_link_libraries(glsl_compiler glsl_optimizer)
 file(GLOB glsl_test_sources tests/*.cpp)
 add_executable(glsl_test ${glsl_test_sources})
 target_link_libraries(glsl_test glsl_optimizer)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # OSX-specific build requirements
+    find_library(OpenGL_LIBRARY OpenGL )
+    target_link_libraries(glsl_test ${OpenGL_LIBRARY})
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 file(GLOB glslopt_sources contrib/glslopt/*.cpp)
 add_executable(glslopt ${glslopt_sources})

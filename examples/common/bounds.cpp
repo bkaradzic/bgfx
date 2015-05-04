@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -157,7 +157,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 	Obb best;
 	aabbToObb(best, aabb);
 
-	float angleStep = float(M_PI_2/_steps);
+	float angleStep = float(bx::piHalf/_steps);
 	float ax = 0.0f;
 	float mtx[16];
 
@@ -264,9 +264,9 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 		{
 			position = (float*)&vertex[index*_stride];
 
-			float xx = position[0] - center[0];
-			float yy = position[1] - center[1];
-			float zz = position[2] - center[2];
+			xx = position[0] - center[0];
+			yy = position[1] - center[1];
+			zz = position[2] - center[2];
 			float distSq = xx*xx + yy*yy + zz*zz;
 
 			if (distSq > maxDistSq)

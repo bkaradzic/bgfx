@@ -22,9 +22,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include "main/core.h" /* for Elements */
-#include "glsl_symbol_table.h"
+#include "main/core.h" /* for Elements, MAX2 */
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
 #include "main/glminimal.h"
@@ -112,7 +110,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].interpolation = fields[i].interpolation;
       this->fields.structure[i].centroid = fields[i].centroid;
       this->fields.structure[i].sample = fields[i].sample;
-      this->fields.structure[i].row_major = fields[i].row_major;
+      this->fields.structure[i].matrix_layout = fields[i].matrix_layout;
    }
 }
 
@@ -141,7 +139,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].interpolation = fields[i].interpolation;
       this->fields.structure[i].centroid = fields[i].centroid;
       this->fields.structure[i].sample = fields[i].sample;
-      this->fields.structure[i].row_major = fields[i].row_major;
+      this->fields.structure[i].matrix_layout = fields[i].matrix_layout;
    }
 }
 
@@ -495,14 +493,28 @@ glsl_type::record_compare(const glsl_type *b) const
    if (this->interface_packing != b->interface_packing)
       return false;
 
+   /* From the GLSL 4.20 specification (Sec 4.2):
+    *
+    *     "Structures must have the same name, sequence of type names, and
+    *     type definitions, and field names to be considered the same type."
+    *
+    * GLSL ES behaves the same (Ver 1.00 Sec 4.2.4, Ver 3.00 Sec 4.2.5).
+    *
+    * Note that we cannot force type name check when comparing unnamed
+    * structure types, these have a unique name assigned during parsing.
+    */
+   if (!this->is_anonymous() && !b->is_anonymous())
+      if (strcmp(this->name, b->name) != 0)
+         return false;
+
    for (unsigned i = 0; i < this->length; i++) {
       if (this->fields.structure[i].type != b->fields.structure[i].type)
 	 return false;
       if (strcmp(this->fields.structure[i].name,
 		 b->fields.structure[i].name) != 0)
 	 return false;
-      if (this->fields.structure[i].row_major
-         != b->fields.structure[i].row_major)
+      if (this->fields.structure[i].matrix_layout
+         != b->fields.structure[i].matrix_layout)
         return false;
       if (this->fields.structure[i].location
           != b->fields.structure[i].location)
@@ -630,7 +642,7 @@ glsl_type::field_type(const char *name) const
    return error_type;
 }
 
-const glsl_precision
+glsl_precision
 glsl_type::field_precision(const char *name) const
 {
    if (this->base_type != GLSL_TYPE_STRUCT)
@@ -697,8 +709,35 @@ glsl_type::component_slots() const
    return 0;
 }
 
+unsigned
+glsl_type::uniform_locations() const
+{
+   unsigned size = 0;
+
+   switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_IMAGE:
+      return 1;
+
+   case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE:
+      for (unsigned i = 0; i < this->length; i++)
+         size += this->fields.structure[i].type->uniform_locations();
+      return size;
+   case GLSL_TYPE_ARRAY:
+      return this->length * this->fields.array->uniform_locations();
+   default:
+      return 0;
+   }
+}
+
 bool
-glsl_type::can_implicitly_convert_to(const glsl_type *desired) const
+glsl_type::can_implicitly_convert_to(const glsl_type *desired,
+                                     _mesa_glsl_parse_state *state) const
 {
    if (this == desired)
       return true;
@@ -707,10 +746,23 @@ glsl_type::can_implicitly_convert_to(const glsl_type *desired) const
    if (this->matrix_columns > 1 || desired->matrix_columns > 1)
       return false;
 
+   /* Vector size must match. */
+   if (this->vector_elements != desired->vector_elements)
+      return false;
+
    /* int and uint can be converted to float. */
-   return desired->is_float()
-          && this->is_integer()
-          && this->vector_elements == desired->vector_elements;
+   if (desired->is_float() && this->is_integer())
+      return true;
+
+   /* With GLSL 4.0 / ARB_gpu_shader5, int can be converted to uint.
+    * Note that state may be NULL here, when resolving function calls in the
+    * linker. By this time, all the state-dependent checks have already
+    * happened though, so allow anything that's allowed in any shader version. */
+   if ((!state || state->is_version(400, 0) || state->ARB_gpu_shader5_enable) &&
+         desired->base_type == GLSL_TYPE_UINT && this->base_type == GLSL_TYPE_INT)
+      return true;
+
+   return false;
 }
 
 unsigned
@@ -808,9 +860,18 @@ glsl_type::std140_base_alignment(bool row_major) const
    if (this->is_record()) {
       unsigned base_alignment = 16;
       for (unsigned i = 0; i < this->length; i++) {
+         bool field_row_major = row_major;
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(this->fields.structure[i].matrix_layout);
+         if (matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR) {
+            field_row_major = true;
+         } else if (matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR) {
+            field_row_major = false;
+         }
+
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
 	 base_alignment = MAX2(base_alignment,
-			       field_type->std140_base_alignment(row_major));
+			       field_type->std140_base_alignment(field_row_major));
       }
       return base_alignment;
    }
@@ -854,8 +915,7 @@ glsl_type::std140_size(bool row_major) const
     *     and <R> rows, the matrix is stored identically to a row of <S>*<R>
     *     row vectors with <C> components each, according to rule (4).
     */
-   if (this->is_matrix() || (this->is_array() &&
-			     this->fields.array->is_matrix())) {
+   if (this->without_array()->is_matrix()) {
       const struct glsl_type *element_type;
       const struct glsl_type *vec_type;
       unsigned int array_len;
@@ -917,14 +977,29 @@ glsl_type::std140_size(bool row_major) const
     */
    if (this->is_record()) {
       unsigned size = 0;
+      unsigned max_align = 0;
+
       for (unsigned i = 0; i < this->length; i++) {
+         bool field_row_major = row_major;
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(this->fields.structure[i].matrix_layout);
+         if (matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR) {
+            field_row_major = true;
+         } else if (matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR) {
+            field_row_major = false;
+         }
+
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
-	 unsigned align = field_type->std140_base_alignment(row_major);
+	 unsigned align = field_type->std140_base_alignment(field_row_major);
 	 size = glsl_align(size, align);
-	 size += field_type->std140_size(row_major);
+	 size += field_type->std140_size(field_row_major);
+
+         max_align = MAX2(align, max_align);
+
+         if (field_type->is_record() && (i + 1 < this->length))
+            size = glsl_align(size, 16);
       }
-      size = glsl_align(size,
-			this->fields.structure[0].type->std140_base_alignment(row_major));
+      size = glsl_align(size, MAX2(max_align, 16));
       return size;
    }
 

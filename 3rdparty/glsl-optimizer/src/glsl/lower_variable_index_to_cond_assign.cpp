@@ -76,7 +76,7 @@ compare_index_block(exec_list *instructions, ir_variable *index,
    ir_rvalue *broadcast_index = new(mem_ctx) ir_dereference_variable(index);
 
    assert(index->type->is_scalar());
-   assert(index->type->base_type == GLSL_TYPE_INT);
+   assert(index->type->base_type == GLSL_TYPE_INT || index->type->base_type == GLSL_TYPE_UINT);
    assert(components >= 1 && components <= 4);
 
    if (components > 1) {
@@ -379,6 +379,7 @@ public:
       case ir_var_function_out:
          return this->lower_temps;
       case ir_var_shader_out:
+	  case ir_var_shader_inout:
          return this->lower_outputs;
       case ir_var_function_inout:
 	 return this->lower_temps;

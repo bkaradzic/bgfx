@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "common.h"
+#include "bgfx_utils.h"
 
 #include <bgfx.h>
 #include <bx/timer.h>
@@ -36,26 +37,6 @@
 #define RENDERVIEW_DRAWDEPTH_1_ID 17
 #define RENDERVIEW_DRAWDEPTH_2_ID 18
 #define RENDERVIEW_DRAWDEPTH_3_ID 19
-
-#define RENDERVIEW_SHADOWMAP_0_BIT (1<<RENDERVIEW_SHADOWMAP_0_ID)
-#define RENDERVIEW_SHADOWMAP_1_BIT (1<<RENDERVIEW_SHADOWMAP_1_ID)
-#define RENDERVIEW_SHADOWMAP_2_BIT (1<<RENDERVIEW_SHADOWMAP_2_ID)
-#define RENDERVIEW_SHADOWMAP_3_BIT (1<<RENDERVIEW_SHADOWMAP_3_ID)
-#define RENDERVIEW_SHADOWMAP_4_BIT (1<<RENDERVIEW_SHADOWMAP_4_ID)
-#define RENDERVIEW_VBLUR_0_BIT     (1<<RENDERVIEW_VBLUR_0_ID)
-#define RENDERVIEW_HBLUR_0_BIT     (1<<RENDERVIEW_HBLUR_0_ID)
-#define RENDERVIEW_VBLUR_1_BIT     (1<<RENDERVIEW_VBLUR_1_ID)
-#define RENDERVIEW_HBLUR_1_BIT     (1<<RENDERVIEW_HBLUR_1_ID)
-#define RENDERVIEW_VBLUR_2_BIT     (1<<RENDERVIEW_VBLUR_2_ID)
-#define RENDERVIEW_HBLUR_2_BIT     (1<<RENDERVIEW_HBLUR_2_ID)
-#define RENDERVIEW_VBLUR_3_BIT     (1<<RENDERVIEW_VBLUR_3_ID)
-#define RENDERVIEW_HBLUR_3_BIT     (1<<RENDERVIEW_HBLUR_3_ID)
-#define RENDERVIEW_DRAWSCENE_0_BIT (1<<RENDERVIEW_DRAWSCENE_0_ID)
-#define RENDERVIEW_DRAWSCENE_1_BIT (1<<RENDERVIEW_DRAWSCENE_1_ID)
-#define RENDERVIEW_DRAWDEPTH_0_BIT (1<<RENDERVIEW_DRAWDEPTH_0_ID)
-#define RENDERVIEW_DRAWDEPTH_1_BIT (1<<RENDERVIEW_DRAWDEPTH_1_ID)
-#define RENDERVIEW_DRAWDEPTH_2_BIT (1<<RENDERVIEW_DRAWDEPTH_2_ID)
-#define RENDERVIEW_DRAWDEPTH_3_BIT (1<<RENDERVIEW_DRAWDEPTH_3_ID)
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -217,8 +198,7 @@ struct PosNormalTexcoordVertex
 };
 
 static const float s_texcoord = 5.0f;
-static const uint32_t s_numHPlaneVertices = 4;
-static PosNormalTexcoordVertex s_hplaneVertices[s_numHPlaneVertices] =
+static PosNormalTexcoordVertex s_hplaneVertices[] =
 {
 	{ -1.0f, 0.0f,  1.0f, packF4u(0.0f, 1.0f, 0.0f), s_texcoord, s_texcoord },
 	{  1.0f, 0.0f,  1.0f, packF4u(0.0f, 1.0f, 0.0f), s_texcoord, 0.0f       },
@@ -226,8 +206,7 @@ static PosNormalTexcoordVertex s_hplaneVertices[s_numHPlaneVertices] =
 	{  1.0f, 0.0f, -1.0f, packF4u(0.0f, 1.0f, 0.0f), 0.0f,       0.0f       },
 };
 
-static const uint32_t s_numVPlaneVertices = 4;
-static PosNormalTexcoordVertex s_vplaneVertices[s_numVPlaneVertices] =
+static PosNormalTexcoordVertex s_vplaneVertices[] =
 {
 	{ -1.0f,  1.0f, 0.0f, packF4u(0.0f, 0.0f, -1.0f), 1.0f, 1.0f },
 	{  1.0f,  1.0f, 0.0f, packF4u(0.0f, 0.0f, -1.0f), 1.0f, 0.0f },
@@ -235,14 +214,12 @@ static PosNormalTexcoordVertex s_vplaneVertices[s_numVPlaneVertices] =
 	{  1.0f, -1.0f, 0.0f, packF4u(0.0f, 0.0f, -1.0f), 0.0f, 0.0f },
 };
 
-static const uint32_t s_numPlaneIndices = 6;
-static const uint16_t s_planeIndices[s_numPlaneIndices] =
+static const uint16_t s_planeIndices[] =
 {
 	0, 1, 2,
 	1, 3, 2,
 };
 
-static const char* s_shaderPath = NULL;
 static bool s_flipV = false;
 static float s_texelHalf = 0.0f;
 
@@ -250,70 +227,6 @@ static bgfx::UniformHandle u_texColor;
 static bgfx::UniformHandle u_shadowMap[ShadowMapRenderTargets::Count];
 static bgfx::FrameBufferHandle s_rtShadowMap[ShadowMapRenderTargets::Count];
 static bgfx::FrameBufferHandle s_rtBlur;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static const bgfx::Memory* loadTexture(const char* _name)
-{
-	char filePath[512];
-	strcpy(filePath, "textures/");
-	strcat(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
-{
-	const bgfx::Memory* mem;
-
-	// Load vertex shader.
-	mem = loadShader(_vsName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader(_fsName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	// Create program from shaders.
-	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
-}
 
 void mtxBillboard(float* __restrict _result
 				  , const float* __restrict _view
@@ -941,6 +854,11 @@ struct Group
 	PrimitiveArray m_prims;
 };
 
+namespace bgfx
+{
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl);
+}
+
 struct Mesh
 {
 	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
@@ -968,8 +886,8 @@ struct Mesh
 
 	void load(const char* _filePath)
 	{
-#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
+#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
+#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
 		bx::CrtFileReader reader;
@@ -988,7 +906,7 @@ struct Mesh
 					bx::read(&reader, group.m_aabb);
 					bx::read(&reader, group.m_obb);
 
-					bx::read(&reader, m_decl);
+					bgfx::read(&reader, m_decl);
 					uint16_t stride = m_decl.getStride();
 
 					uint16_t numVertices;
@@ -1414,38 +1332,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// for each renderer.
 	switch (bgfx::getRendererType() )
 	{
-	default:
 	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
 		s_texelHalf = 0.5f;
 		break;
 
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
 	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
+	case bgfx::RendererType::OpenGLES:
 		s_flipV = true;
 		break;
 
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		s_flipV = true;
+	default:
 		break;
 	}
 
 	// Imgui.
-	FILE* file = fopen("font/droidsans.ttf", "rb");
-	uint32_t size = (uint32_t)fsize(file);
-	void* data = malloc(size);
-	size_t ignore = fread(data, 1, size, file);
-	BX_UNUSED(ignore);
-	fclose(file);
-
-	imguiCreate(data);
-
-	free(data);
+	imguiCreate();
 
 	// Uniforms.
 	s_uniforms.init();
@@ -1474,16 +1375,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	PosColorTexCoord0Vertex::init();
 
 	// Textures.
-	const bgfx::Memory* mem;
-
-	mem = loadTexture("figure-rgba.dds");
-	bgfx::TextureHandle texFigure = bgfx::createTexture(mem);
-
-	mem = loadTexture("flare.dds");
-	bgfx::TextureHandle texFlare = bgfx::createTexture(mem);
-
-	mem = loadTexture("fieldstone-rgba.dds");
-	bgfx::TextureHandle texFieldstone = bgfx::createTexture(mem);
+	bgfx::TextureHandle texFigure     = loadTexture("figure-rgba.dds");
+	bgfx::TextureHandle texFlare      = loadTexture("flare.dds");
+	bgfx::TextureHandle texFieldstone = loadTexture("fieldstone-rgba.dds");
 
 	// Meshes.
 	Mesh bunnyMesh;
@@ -1496,8 +1390,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	treeMesh.load("meshes/tree.bin");
 	cubeMesh.load("meshes/cube.bin");
 	hollowcubeMesh.load("meshes/hollowcube.bin");
-	hplaneMesh.load(s_hplaneVertices, s_numHPlaneVertices, PosNormalTexcoordDecl, s_planeIndices, s_numPlaneIndices);
-	vplaneMesh.load(s_vplaneVertices, s_numVPlaneVertices, PosNormalTexcoordDecl, s_planeIndices, s_numPlaneIndices);
+	hplaneMesh.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordDecl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
+	vplaneMesh.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordDecl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
 
 	// Materials.
 	Material defaultMaterial =
@@ -2064,7 +1958,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const float camAspect  = float(int32_t(viewState.m_width) ) / float(int32_t(viewState.m_height) );
 	const float camNear    = 0.1f;
 	const float camFar     = 2000.0f;
-	const float projHeight = 1.0f/tanf(camFovy*( (float)M_PI/180.0f)*0.5f);
+	const float projHeight = 1.0f/tanf(bx::toRad(camFovy)*0.5f);
 	const float projWidth  = projHeight * 1.0f/camAspect;
 	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar);
 	cameraGetViewMtx(viewState.m_view);
@@ -2257,7 +2151,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		// Update camera.
-		cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
+		cameraUpdate(deltaTime, mouseState);
 
 		// Update view mtx.
 		cameraGetViewMtx(viewState.m_view);
@@ -2271,16 +2165,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		if (settings.m_updateScene)  { timeAccumulatorScene += deltaTime; }
 
 		// Setup lights.
-		pointLight.m_position.m_x = cos(timeAccumulatorLight) * 20.0f;
+		pointLight.m_position.m_x = cosf(timeAccumulatorLight) * 20.0f;
 		pointLight.m_position.m_y = 26.0f;
-		pointLight.m_position.m_z = sin(timeAccumulatorLight) * 20.0f;
+		pointLight.m_position.m_z = sinf(timeAccumulatorLight) * 20.0f;
 		pointLight.m_spotDirectionInner.m_x = -pointLight.m_position.m_x;
 		pointLight.m_spotDirectionInner.m_y = -pointLight.m_position.m_y;
 		pointLight.m_spotDirectionInner.m_z = -pointLight.m_position.m_z;
 
-		directionalLight.m_position.m_x = -cos(timeAccumulatorLight);
+		directionalLight.m_position.m_x = -cosf(timeAccumulatorLight);
 		directionalLight.m_position.m_y = -1.0f;
-		directionalLight.m_position.m_z = -sin(timeAccumulatorLight);
+		directionalLight.m_position.m_z = -sinf(timeAccumulatorLight);
 
 		// Setup instance matrices.
 		float mtxFloor[16];
@@ -2347,9 +2241,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, 0.0f
 				, float(ii)
 				, 0.0f
-				, sinf(float(ii)*2.0f*float(M_PI)/float(numTrees) ) * 60.0f
+				, sinf(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
 				, 0.0f
-				, cosf(float(ii)*2.0f*float(M_PI)/float(numTrees) ) * 60.0f
+				, cosf(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
 				);
 		}
 
@@ -2551,15 +2445,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		}
 
 		// Reset render targets.
-		const uint32_t viewMask = (uint32_t(1) << (RENDERVIEW_DRAWDEPTH_3_ID+1) ) - 1;
 		const bgfx::FrameBufferHandle invalidRt = BGFX_INVALID_HANDLE;
-		bgfx::setViewFrameBufferMask(viewMask, invalidRt);
+		for (uint32_t ii = 0; ii < RENDERVIEW_DRAWDEPTH_3_ID+1; ++ii)
+		{
+			bgfx::setViewFrameBuffer(ii, invalidRt);
+		}
 
 		// Determine on-screen rectangle size where depth buffer will be drawn.
-		const uint16_t depthRectHeight = uint16_t(float(viewState.m_height) / 2.5f);
-		const uint16_t depthRectWidth  = depthRectHeight;
-		const uint16_t depthRectX = 0;
-		const uint16_t depthRectY = viewState.m_height - depthRectHeight;
+		uint16_t depthRectHeight = uint16_t(float(viewState.m_height) / 2.5f);
+		uint16_t depthRectWidth  = depthRectHeight;
+		uint16_t depthRectX = 0;
+		uint16_t depthRectY = viewState.m_height - depthRectHeight;
 
 		// Setup views and render targets.
 		bgfx::setViewRect(0, 0, 0, viewState.m_width, viewState.m_height);
@@ -2687,10 +2583,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			 * RENDERVIEW_DRAWDEPTH_3_ID - Draw depth buffer for fourth split.
 			 */
 
-			const uint16_t depthRectHeight = viewState.m_height / 3;
-			const uint16_t depthRectWidth  = depthRectHeight;
-			const uint16_t depthRectX = 0;
-			const uint16_t depthRectY = viewState.m_height - depthRectHeight;
+			depthRectHeight = viewState.m_height / 3;
+			depthRectWidth  = depthRectHeight;
+			depthRectX = 0;
+			depthRectY = viewState.m_height - depthRectHeight;
 
 			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
 			bgfx::setViewRect(RENDERVIEW_SHADOWMAP_2_ID, 0, 0, currentShadowMapSize, currentShadowMapSize);
@@ -2746,8 +2642,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Clear backbuffer at beginning.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR_BIT
-				| BGFX_CLEAR_DEPTH_BIT
+				, BGFX_CLEAR_COLOR
+				| BGFX_CLEAR_DEPTH
 				, clearValues.m_clearRgba
 				, clearValues.m_clearDepth
 				, clearValues.m_clearStencil
@@ -2757,7 +2653,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Clear shadowmap rendertarget at beginning.
 		const uint8_t flags0 = (LightType::DirectionalLight == settings.m_lightType)
 							 ? 0
-							 : BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT | BGFX_CLEAR_STENCIL_BIT
+							 : BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL
 							 ;
 
 		bgfx::setViewClear(RENDERVIEW_SHADOWMAP_0_ID
@@ -2769,7 +2665,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::submit(RENDERVIEW_SHADOWMAP_0_ID);
 
 		const uint8_t flags1 = (LightType::DirectionalLight == settings.m_lightType)
-							 ? BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+							 ? BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 							 : 0
 							 ;
 
@@ -2899,10 +2795,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						);
 
 				// Trees.
-				for (uint8_t ii = 0; ii < numTrees; ++ii)
+				for (uint8_t jj = 0; jj < numTrees; ++jj)
 				{
 					treeMesh.submit(viewId
-							, mtxTrees[ii]
+							, mtxTrees[jj]
 							, *currentSmSettings->m_progPack
 							, s_renderStates[renderStateIndex]
 							);
@@ -2955,7 +2851,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			float mtxShadow[16];
 
 			const float ymul = (s_flipV) ? 0.5f : -0.5f;
-			const float zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
+			float zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
 
 			const float mtxBias[16] =
 			{
@@ -2974,7 +2870,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			else if (LightType::PointLight == settings.m_lightType)
 			{
 				const float s = (s_flipV) ? 1.0f : -1.0f; //sign
-				const float zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
+				zadd = (DepthImpl::Linear == settings.m_depthImpl) ? 0.0f : 0.5f;
 
 				const float mtxCropBias[2][TetrahedronFaces::Count][16] =
 				{

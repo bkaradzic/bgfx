@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
 #ifndef BGFX_RENDERER_D3D_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D_H_HEADER_GUARD
 
-#if BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9 && !(BX_COMPILER_GCC || BX_COMPILER_CLANG)
+#if 0 // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9 && !(BX_COMPILER_GCC || BX_COMPILER_CLANG)
 #	include <sal.h>
 #	include <dxerr.h>
 #	if BX_COMPILER_MSVC
@@ -57,25 +57,26 @@ namespace bgfx
 #define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
 #define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 
-	typedef int (WINAPI *D3DPERF_BeginEventFunc)(DWORD _color, LPCWSTR _wszName);
-	typedef int (WINAPI *D3DPERF_EndEventFunc)();
-	typedef void (WINAPI *D3DPERF_SetMarkerFunc)(DWORD _color, LPCWSTR _wszName);
-	typedef void (WINAPI *D3DPERF_SetRegionFunc)(DWORD _color, LPCWSTR _wszName);
-	typedef BOOL (WINAPI *D3DPERF_QueryRepeatFrameFunc)();
-	typedef void (WINAPI *D3DPERF_SetOptionsFunc)(DWORD _options);
-	typedef DWORD (WINAPI *D3DPERF_GetStatusFunc)();
+	typedef int     (WINAPI* PFN_D3DPERF_BEGIN_EVENT)(DWORD _color, LPCWSTR _wszName);
+	typedef int     (WINAPI* PFN_D3DPERF_END_EVENT)();
+	typedef void    (WINAPI* PFN_D3DPERF_SET_MARKER)(DWORD _color, LPCWSTR _wszName);
+	typedef void    (WINAPI* PFN_D3DPERF_SET_REGION)(DWORD _color, LPCWSTR _wszName);
+	typedef BOOL    (WINAPI* PFN_D3DPERF_QUERY_REPEAT_FRAME)();
+	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
+	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
+	typedef HRESULT (WINAPI* PFN_CREATE_DXGI_FACTORY)(REFIID _riid, void** _factory);
 
-#define _PIX_SETMARKER(_col, _name) m_D3DPERF_SetMarker(_col, _name)
-#define _PIX_BEGINEVENT(_col, _name) m_D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT() m_D3DPERF_EndEvent()
+#define _PIX_SETMARKER(_col, _name) D3DPERF_SetMarker(_col, _name)
+#define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
+#define _PIX_ENDEVENT() D3DPERF_EndEvent()
 
 #if BGFX_CONFIG_DEBUG_PIX
-#	define PIX_SETMARKER(_color, _name) _PIX_SETMARKER(_color, _name)
+#	define PIX_SETMARKER(_color, _name)  _PIX_SETMARKER(_color, _name)
 #	define PIX_BEGINEVENT(_color, _name) _PIX_BEGINEVENT(_color, _name)
 #	define PIX_ENDEVENT() _PIX_ENDEVENT()
 #else
-#	define PIX_SETMARKER(_color, _name)
-#	define PIX_BEGINEVENT(_color, _name)
+#	define PIX_SETMARKER(_color, _name)  BX_UNUSED(_name)
+#	define PIX_BEGINEVENT(_color, _name) BX_UNUSED(_name)
 #	define PIX_ENDEVENT()
 #endif // BGFX_CONFIG_DEBUG_PIX
 
@@ -84,6 +85,102 @@ namespace bgfx
 		_interface->AddRef();
 		return _interface->Release();
 	}
+
+	template <typename Ty>
+	class StateCacheT
+	{
+	public:
+		void add(uint64_t _id, Ty* _item)
+		{
+			invalidate(_id);
+			m_hashMap.insert(stl::make_pair(_id, _item) );
+		}
+
+		Ty* find(uint64_t _id)
+		{
+			typename HashMap::iterator it = m_hashMap.find(_id);
+			if (it != m_hashMap.end() )
+			{
+				return it->second;
+			}
+
+			return NULL;
+		}
+
+		void invalidate(uint64_t _id)
+		{
+			typename HashMap::iterator it = m_hashMap.find(_id);
+			if (it != m_hashMap.end() )
+			{
+				DX_RELEASE_WARNONLY(it->second, 0);
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidate()
+		{
+			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			{
+				DX_CHECK_REFCOUNT(it->second, 1);
+				it->second->Release();
+			}
+
+			m_hashMap.clear();
+		}
+
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size() );
+		}
+
+	private:
+		typedef stl::unordered_map<uint64_t, Ty*> HashMap;
+		HashMap m_hashMap;
+	};
+
+	class StateCache
+	{
+	public:
+		void add(uint64_t _id, uint16_t _item)
+		{
+			invalidate(_id);
+			m_hashMap.insert(stl::make_pair(_id, _item));
+		}
+
+		uint16_t find(uint64_t _id)
+		{
+			HashMap::iterator it = m_hashMap.find(_id);
+			if (it != m_hashMap.end())
+			{
+				return it->second;
+			}
+
+			return UINT16_MAX;
+		}
+
+		void invalidate(uint64_t _id)
+		{
+			HashMap::iterator it = m_hashMap.find(_id);
+			if (it != m_hashMap.end())
+			{
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidate()
+		{
+			m_hashMap.clear();
+		}
+
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size());
+		}
+
+	private:
+		typedef stl::unordered_map<uint64_t, uint16_t> HashMap;
+		HashMap m_hashMap;
+	};
 
 } // namespace bgfx
 

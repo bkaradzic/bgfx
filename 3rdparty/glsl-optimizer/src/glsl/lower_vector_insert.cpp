@@ -76,7 +76,7 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
        * where mask is the component selected by index.
        */
       ir_variable *const temp =
-         factory.make_temp(expr->operands[0]->type, "vec_tmp");
+         factory.make_temp(expr->operands[0]->type, "vec_tmp", expr->operands[0]->get_precision());
 
       const int mask = 1 << idx->value.i[0];
 
@@ -100,10 +100,10 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
        *         t.w = scalar
        */
       ir_variable *const temp =
-         factory.make_temp(expr->operands[0]->type, "vec_tmp");
+         factory.make_temp(expr->operands[0]->type, "vec_tmp", expr->operands[0]->get_precision());
 
       ir_variable *const src_temp =
-         factory.make_temp(expr->operands[1]->type, "src_temp");
+         factory.make_temp(expr->operands[1]->type, "src_temp", expr->operands[1]->get_precision());
 
       factory.emit(assign(temp, expr->operands[0]));
       factory.emit(assign(src_temp, expr->operands[1]));
@@ -113,7 +113,7 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
             new(factory.mem_ctx) ir_constant(int(i));
 
          ir_variable *const cmp_result =
-            factory.make_temp(glsl_type::bool_type, "index_condition");
+            factory.make_temp(glsl_type::bool_type, "index_condition", glsl_precision_low);
 
          factory.emit(assign(cmp_result,
                              equal(expr->operands[2]->clone(factory.mem_ctx,

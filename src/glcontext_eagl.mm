@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -10,7 +10,7 @@
 #	include <QuartzCore/CAEAGLLayer.h>
 #	include "renderer_gl.h"
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
@@ -18,7 +18,7 @@ namespace bgfx
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);
-		CAEAGLLayer* layer = (CAEAGLLayer*)g_bgfxEaglLayer;
+		CAEAGLLayer* layer = (CAEAGLLayer*)g_platformData.nwh;
 		layer.opaque = true;
 
 		layer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys
@@ -54,7 +54,7 @@ namespace bgfx
 		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height) ); // from OES_packed_depth_stencil
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
-        
+
 		BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 			, "glCheckFramebufferStatus failed 0x%08x"
 			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
@@ -85,23 +85,44 @@ namespace bgfx
 		[context release];
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
+	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
-		BX_UNUSED(_width, _height, _vsync);
+		BX_UNUSED(_width, _height, _flags);
 		BX_TRACE("resize context");
 	}
 
-	void GlContext::swap()
+	bool GlContext::isSwapChainSupported()
 	{
+		return false;
+	}
+
+	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
+	{
+		BX_CHECK(false, "Shouldn't be called!");
+		return NULL;
+	}
+
+	void GlContext::destroySwapChain(SwapChainGL*  /*_swapChain*/)
+	{
+		BX_CHECK(false, "Shouldn't be called!");
+	}
+
+	void GlContext::swap(SwapChainGL* _swapChain)
+	{
+		BX_CHECK(NULL == _swapChain, "Shouldn't be called!"); BX_UNUSED(_swapChain);
 		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
 		EAGLContext* context = (EAGLContext*)m_context;
 		[context presentRenderbuffer:GL_RENDERBUFFER];
+	}
+
+	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	{
 	}
 
 	void GlContext::import()
 	{
 	}
 
-} // namespace bgfx
+} /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_IOS && (BGFX_CONFIG_RENDERER_OPENGLES2|BGFX_CONFIG_RENDERER_OPENGLES3|BGFX_CONFIG_RENDERER_OPENGL)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -30,10 +30,14 @@
 #include <bx/string.h>
 #include <bx/timer.h>
 #include "entry/entry.h"
+#include "imgui/imgui.h"
 #include "nanovg/nanovg.h"
 
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter");
 #define BLENDISH_IMPLEMENTATION
 #include "blendish.h"
+BX_PRAGMA_DIAGNOSTIC_POP();
 
 #define ICON_SEARCH 0x1F50D
 #define ICON_CIRCLED_CROSS 0x2716
@@ -384,7 +388,7 @@ void drawEyes(struct NVGcontext* vg, float x, float y, float w, float h, float m
 	float ry = y + ey;
 	float dx,dy,d;
 	float br = (ex < ey ? ex : ey) * 0.5f;
-	float blink = 1 - pow(sinf(t*0.5f),200)*0.8f;
+	float blink = 1 - powf(sinf(t*0.5f),200)*0.8f;
 
 	bg = nvgLinearGradient(vg, x,y+h*0.5f,x+w*0.1f,y+h, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,16));
 	nvgBeginPath(vg);
@@ -941,7 +945,7 @@ int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 	{
 		char file[128];
 		bx::snprintf(file, 128, "images/image%d.jpg", ii+1);
-		data->images[ii] = nvgCreateImage(vg, file);
+		data->images[ii] = nvgCreateImage(vg, file, 0);
 		if (data->images[ii] == bgfx::invalidHandle)
 		{
 			printf("Could not load %s.\n", file);
@@ -984,7 +988,7 @@ void freeDemoData(struct NVGcontext* vg, struct DemoData* data)
 		nvgDeleteImage(vg, data->images[i]);
 }
 
-#if _MSC_VER < 1800
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
 inline float round(float _f)
 {
 	return float(int(_f) );
@@ -1039,10 +1043,10 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 				for (j = 0; j < nglyphs; j++) {
 					float x0 = glyphs[j].x;
 					float x1 = (j+1 < nglyphs) ? glyphs[j+1].x : x+row->width;
-					float gx = x0 * 0.3f + x1 * 0.7f;
-					if (mx >= px && mx < gx)
+					float tgx = x0 * 0.3f + x1 * 0.7f;
+					if (mx >= px && mx < tgx)
 						caretx = glyphs[j].x;
-					px = gx;
+					px = tgx;
 				}
 				nvgBeginPath(vg);
 				nvgFillColor(vg, nvgRGBA(255,192,0,255));
@@ -1072,11 +1076,11 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 		nvgBeginPath(vg);
 		nvgFillColor(vg, nvgRGBA(255,192,0,255));
 		nvgRoundedRect(vg
-			, round(bounds[0])-4.0f
-			, round(bounds[1])-2.0f
-			, round(bounds[2]-bounds[0])+8.0f
-			, round(bounds[3]-bounds[1])+4.0f
-			, (round(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
+			, roundf(bounds[0])-4.0f
+			, roundf(bounds[1])-2.0f
+			, roundf(bounds[2]-bounds[0])+8.0f
+			, roundf(bounds[3]-bounds[1])+4.0f
+			, (roundf(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
 			);
 		nvgFill(vg);
 
@@ -1094,10 +1098,10 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 	nvgBeginPath(vg);
 	nvgFillColor(vg, nvgRGBA(220,220,220,255));
 	nvgRoundedRect(vg
-		, round(bounds[0]-2.0f)
-		, round(bounds[1]-2.0f)
-		, round(bounds[2]-bounds[0])+4.0f
-		, round(bounds[3]-bounds[1])+4.0f
+		, roundf(bounds[0]-2.0f)
+		, roundf(bounds[1]-2.0f)
+		, roundf(bounds[2]-bounds[0])+4.0f
+		, roundf(bounds[3]-bounds[1])+4.0f
 		, 3.0f
 		);
 	px = float( (int)((bounds[2]+bounds[0])/2) );
@@ -1212,20 +1216,22 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 0x303030ff
 		, 1.0f
 		, 0
 		);
 
-	NVGcontext* nvg = nvgCreate(512, 512, 1, 0);
+	imguiCreate();
+
+	NVGcontext* nvg = nvgCreate(1, 0);
 	bgfx::setViewSeq(0, true);
 
 	DemoData data;
 	loadDemoData(nvg, &data);
 
-	bndSetFont(nvgCreateFont(nvg, "droidsans", "font/droidsans.ttf"));
-	bndSetIconImage(nvgCreateImage(nvg, "images/blender_icons16.png"));
+	bndSetFont(nvgCreateFont(nvg, "droidsans", "font/droidsans.ttf") );
+	bndSetIconImage(nvgCreateImage(nvg, "images/blender_icons16.png", 0) );
 
 	int64_t timeOffset = bx::getHPCounter();
 
@@ -1248,7 +1254,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/20-nanovg");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: NanoVG is small antialiased vector graphics rendering library.");
 
-		nvgBeginFrame(nvg, width, height, 1.0f, NVG_STRAIGHT_ALPHA);
+		nvgBeginFrame(nvg, width, height, 1.0f);
 
 		renderDemo(nvg, float(mouseState.m_mx), float(mouseState.m_my), float(width), float(height), time, 0, &data);
 
@@ -1262,6 +1268,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	freeDemoData(nvg, &data);
 
 	nvgDelete(nvg);
+
+	imguiDestroy();
 
 	// Shutdown bgfx.
 	bgfx::shutdown();

@@ -36,6 +36,7 @@
 
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
+#include "util/macros.h"
 
 /**
  * Declarations of type flyweights (glsl_type::_foo_type) and
@@ -48,69 +49,69 @@
 
 #define STRUCT_TYPE(NAME)                                       \
    const glsl_type glsl_type::_struct_##NAME##_type =           \
-      glsl_type(NAME##_fields, Elements(NAME##_fields), #NAME); \
+      glsl_type(NAME##_fields, ARRAY_SIZE(NAME##_fields), #NAME); \
    const glsl_type *const glsl_type::struct_##NAME##_type =     \
       &glsl_type::_struct_##NAME##_type;
 
 static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
-   { glsl_type::float_type, "near", false, glsl_precision_high, -1 },
-   { glsl_type::float_type, "far",  false, glsl_precision_high, -1 },
-   { glsl_type::float_type, "diff", false, glsl_precision_high, -1 },
+   { glsl_type::float_type, "near", glsl_precision_high, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "far",  glsl_precision_high, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "diff", glsl_precision_high, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_PointParameters_fields[] = {
-   { glsl_type::float_type, "size", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "sizeMin", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "sizeMax", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "fadeThresholdSize", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "distanceConstantAttenuation", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "distanceLinearAttenuation", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "distanceQuadraticAttenuation", false, glsl_precision_undefined, -1 },
+   { glsl_type::float_type, "size", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "sizeMin", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "sizeMax", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "fadeThresholdSize", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "distanceConstantAttenuation", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "distanceLinearAttenuation", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "distanceQuadraticAttenuation", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_MaterialParameters_fields[] = {
-   { glsl_type::vec4_type, "emission", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "ambient", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "diffuse", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "specular", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "shininess", false, glsl_precision_undefined, -1 },
+   { glsl_type::vec4_type, "emission", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "ambient", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "diffuse", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "specular", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "shininess", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightSourceParameters_fields[] = {
-   { glsl_type::vec4_type, "ambient", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "diffuse", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "specular", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "position", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "halfVector", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec3_type, "spotDirection", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "spotExponent", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "spotCutoff", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "spotCosCutoff", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "constantAttenuation", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "linearAttenuation", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "quadraticAttenuation", false, glsl_precision_undefined, -1 },
+   { glsl_type::vec4_type, "ambient", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "diffuse", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "specular", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "position", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "halfVector", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec3_type, "spotDirection", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "spotExponent", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "spotCutoff", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "spotCosCutoff", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "constantAttenuation", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "linearAttenuation", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "quadraticAttenuation", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightModelParameters_fields[] = {
-   { glsl_type::vec4_type, "ambient", false, glsl_precision_undefined, -1 },
+   { glsl_type::vec4_type, "ambient", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightModelProducts_fields[] = {
-   { glsl_type::vec4_type, "sceneColor", false, glsl_precision_undefined, -1 },
+   { glsl_type::vec4_type, "sceneColor", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightProducts_fields[] = {
-   { glsl_type::vec4_type, "ambient", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "diffuse", false, glsl_precision_undefined, -1 },
-   { glsl_type::vec4_type, "specular", false, glsl_precision_undefined, -1 },
+   { glsl_type::vec4_type, "ambient", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "diffuse", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "specular", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_FogParameters_fields[] = {
-   { glsl_type::vec4_type, "color", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "density", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "start", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "end", false, glsl_precision_undefined, -1 },
-   { glsl_type::float_type, "scale", false, glsl_precision_undefined, -1 },
+   { glsl_type::vec4_type, "color", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "density", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "start", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "end", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "scale", glsl_precision_undefined, -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 #include "builtin_type_macros.h"
@@ -241,7 +242,7 @@ const static struct builtin_type_versions {
    T(atomic_uint,                     420, 999)
 };
 
-const glsl_type *const deprecated_types[] = {
+static const glsl_type *const deprecated_types[] = {
    glsl_type::struct_gl_PointParameters_type,
    glsl_type::struct_gl_MaterialParameters_type,
    glsl_type::struct_gl_LightSourceParameters_type,
@@ -265,7 +266,7 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    struct glsl_symbol_table *symbols = state->symbols;
 
-   for (unsigned i = 0; i < Elements(builtin_type_versions); i++) {
+   for (unsigned i = 0; i < ARRAY_SIZE(builtin_type_versions); i++) {
       const struct builtin_type_versions *const t = &builtin_type_versions[i];
       if (state->is_version(t->min_gl, t->min_es)) {
          add_type(symbols, t->type);
@@ -276,7 +277,7 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
     * they're still present.  We've removed them in 1.40+ (OpenGL 3.1+).
     */
    if (!state->es_shader && state->language_version < 140) {
-      for (unsigned i = 0; i < Elements(deprecated_types); i++) {
+      for (unsigned i = 0; i < ARRAY_SIZE(deprecated_types); i++) {
          add_type(symbols, deprecated_types[i]);
       }
    }

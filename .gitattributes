@@ -1,7 +1,10 @@
+*.c   eol=lf
 *.cpp eol=lf
 *.h   eol=lf
 *.sc  eol=lf
 *.sh  eol=lf
+*.m   eol=lf
+*.mm  eol=lf
 *.md  eol=lf
 *.lua eol=lf
 *.mk  eol=lf

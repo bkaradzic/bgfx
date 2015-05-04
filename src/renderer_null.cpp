@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -7,7 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_NULL
 
-namespace bgfx
+namespace bgfx { namespace noop
 {
 	struct RendererContextNULL : public RendererContextI
 	{
@@ -29,11 +29,11 @@ namespace bgfx
 			return BGFX_RENDERER_NULL_NAME;
 		}
 
-		void flip() BX_OVERRIDE
+		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 		}
 
-		void createIndexBuffer(IndexBufferHandle /*_handle*/, Memory* /*_mem*/) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle /*_handle*/, Memory* /*_mem*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -49,7 +49,7 @@ namespace bgfx
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -57,7 +57,7 @@ namespace bgfx
 		{
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_size*/) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_size*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -69,7 +69,7 @@ namespace bgfx
 		{
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/, uint8_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -113,11 +113,19 @@ namespace bgfx
 		{
 		}
 
+		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/) BX_OVERRIDE
+		{
+		}
+
 		void destroyTexture(TextureHandle /*_handle*/) BX_OVERRIDE
 		{
 		}
 
 		void createFrameBuffer(FrameBufferHandle /*_handle*/, uint8_t /*_num*/, const TextureHandle* /*_textureHandles*/) BX_OVERRIDE
+		{
+		}
+
+		void createFrameBuffer(FrameBufferHandle /*_handle*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_depthFormat*/) BX_OVERRIDE
 		{
 		}
 
@@ -164,31 +172,31 @@ namespace bgfx
 
 	static RendererContextNULL* s_renderNULL;
 
-	RendererContextI* rendererCreateNULL()
+	RendererContextI* rendererCreate()
 	{
 		s_renderNULL = BX_NEW(g_allocator, RendererContextNULL);
 		return s_renderNULL;
 	}
 
-	void rendererDestroyNULL()
+	void rendererDestroy()
 	{
 		BX_DELETE(g_allocator, s_renderNULL);
 		s_renderNULL = NULL;
 	}
-} // namespace bgfx
+} /* namespace noop */ } // namespace bgfx
 
 #else
 
-namespace bgfx
+namespace bgfx { namespace noop
 {
-	RendererContextI* rendererCreateNULL()
+	RendererContextI* rendererCreate()
 	{
 		return NULL;
 	}
 
-	void rendererDestroyNULL()
+	void rendererDestroy()
 	{
 	}
-} // namespace bgfx
+} /* namespace noop */ } // namespace bgfx
 
 #endif // BGFX_CONFIG_RENDERER_NULL

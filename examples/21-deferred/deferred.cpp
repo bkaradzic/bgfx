@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -10,19 +10,17 @@
 #include "bounds.h"
 
 #define RENDER_PASS_GEOMETRY_ID       0
-#define RENDER_PASS_GEOMETRY_BIT      (1<<RENDER_PASS_GEOMETRY_ID)
-
 #define RENDER_PASS_LIGHT_ID          1
-#define RENDER_PASS_LIGHT_BIT         (1<<RENDER_PASS_LIGHT_ID)
-
 #define RENDER_PASS_COMBINE_ID        2
-#define RENDER_PASS_COMBINE_BIT       (1<<RENDER_PASS_COMBINE_ID)
-
 #define RENDER_PASS_DEBUG_LIGHTS_ID   3
-#define RENDER_PASS_DEBUG_LIGHTS_BIT  (1<<RENDER_PASS_DEBUG_LIGHTS_ID)
-
 #define RENDER_PASS_DEBUG_GBUFFER_ID  4
-#define RENDER_PASS_DEBUG_GBUFFER_BIT (1<<RENDER_PASS_DEBUG_GBUFFER_ID)
+
+static bool s_originBottomLeft = false;
+
+inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
+{
+	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_originBottomLeft);
+}
 
 struct PosNormalTangentTexcoordVertex
 {
@@ -155,7 +153,7 @@ static const uint16_t s_cubeIndices[36] =
 
 	 8, 10,  9,
 	 9, 10, 11,
-    12, 13, 14,
+	12, 13, 14,
 	13, 15, 14,
 
 	16, 18, 17,
@@ -232,18 +230,25 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Enable debug text.
 	bgfx::setDebug(debug);
 
-	// Set view 0 clear state.
+	// Set clear color palette for index 0
+	bgfx::setClearColor(0, UINT32_C(0x00000000) );
+
+	// Set clear color palette for index 1
+	bgfx::setClearColor(1, UINT32_C(0x303030ff) );
+
+	// Set geometry pass view clear state.
 	bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
-		, 0x303030ff
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 1.0f
 		, 0
+		, 1
 		);
 
+	// Set light pass view clear state.
 	bgfx::setViewClear(RENDER_PASS_LIGHT_ID
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
-		, 0
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 1.0f
+		, 0
 		, 0
 		);
 
@@ -295,17 +300,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::TextureHandle textureNormal = loadTexture("fieldstone-n.dds");
 
 	bgfx::TextureHandle gbufferTex[3] = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
-	bgfx::FrameBufferHandle gbuffer = BGFX_INVALID_HANDLE; 
-	bgfx::FrameBufferHandle lightBuffer = BGFX_INVALID_HANDLE; 
+	bgfx::FrameBufferHandle gbuffer = BGFX_INVALID_HANDLE;
+	bgfx::FrameBufferHandle lightBuffer = BGFX_INVALID_HANDLE;
 
-	void* data = load("font/droidsans.ttf");
-	imguiCreate(data);
-	free(data);
+	// Imgui.
+	imguiCreate();
 
 	const int64_t timeOffset = bx::getHPCounter();
 	const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
 	const float texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
-	const bool  originBottomLeft = bgfx::RendererType::OpenGL == renderer || bgfx::RendererType::OpenGLES == renderer;
+	s_originBottomLeft = bgfx::RendererType::OpenGL == renderer || bgfx::RendererType::OpenGLES == renderer;
 
 	// Get renderer capabilities info.
 	const bgfx::Caps* caps = bgfx::getCaps();
@@ -429,31 +433,28 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 
 			imguiSlider("Lights animation speed", lightAnimationSpeed, 0.0f, 0.4f, 0.01f);
-			
+
 			imguiEndScrollArea();
 			imguiEndFrame();
 
 			// Update camera.
-			cameraUpdate(deltaTime, mouseState.m_mx, mouseState.m_my, !!mouseState.m_buttons[entry::MouseButton::Right]);
+			cameraUpdate(deltaTime, mouseState);
 			cameraGetViewMtx(view);
 
 			// Setup views
 			float vp[16];
 			float invMvp[16];
 			{
-				bgfx::setViewRectMask(0
-					| RENDER_PASS_GEOMETRY_BIT
-					| RENDER_PASS_LIGHT_BIT
-					| RENDER_PASS_COMBINE_BIT
-					| RENDER_PASS_DEBUG_LIGHTS_BIT
-					| RENDER_PASS_DEBUG_GBUFFER_BIT
-					, 0, 0, width, height
-					);
+				bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_LIGHT_ID,         0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_COMBINE_ID,       0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_DEBUG_LIGHTS_ID,  0, 0, width, height);
+				bgfx::setViewRect(RENDER_PASS_DEBUG_GBUFFER_ID, 0, 0, width, height);
 
 				bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, lightBuffer);
 
 				float proj[16];
-				bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+				mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 
 				bgfx::setViewFrameBuffer(RENDER_PASS_GEOMETRY_ID, gbuffer);
 				bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
@@ -462,19 +463,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bx::mtxInverse(invMvp, vp);
 
 				bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
-				bgfx::setViewTransformMask(0
-					| RENDER_PASS_LIGHT_BIT
-					| RENDER_PASS_COMBINE_BIT
-					, NULL, proj
-					);
+				bgfx::setViewTransform(RENDER_PASS_LIGHT_ID,   NULL, proj);
+				bgfx::setViewTransform(RENDER_PASS_COMBINE_ID, NULL, proj);
 
 				const float aspectRatio = float(height)/float(width);
 				const float size = 10.0f;
 				bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
-				bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj); 
+				bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj);
 
 				bx::mtxOrtho(proj, 0.0f, (float)width, 0.0f, (float)height, 0.0f, 1000.0f);
-				bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj); 
+				bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj);
 			}
 
 			const uint32_t dim = 11;
@@ -531,16 +529,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			{
 				Sphere lightPosRadius;
 
-				float lightTime = time * lightAnimationSpeed * (sin(light/float(numLights) * float(M_PI_2) ) * 0.5f + 0.5f);
-				lightPosRadius.m_center[0] = sin( ( (lightTime + light*0.47f) + float(M_PI_2)*1.37f ) )*offset;
-				lightPosRadius.m_center[1] = cos( ( (lightTime + light*0.69f) + float(M_PI_2)*1.49f ) )*offset;
-				lightPosRadius.m_center[2] = sin( ( (lightTime + light*0.37f) + float(M_PI_2)*1.57f ) )*2.0f;
+				float lightTime = time * lightAnimationSpeed * (sinf(light/float(numLights) * bx::piHalf ) * 0.5f + 0.5f);
+				lightPosRadius.m_center[0] = sinf( ( (lightTime + light*0.47f) + bx::piHalf*1.37f ) )*offset;
+				lightPosRadius.m_center[1] = cosf( ( (lightTime + light*0.69f) + bx::piHalf*1.49f ) )*offset;
+				lightPosRadius.m_center[2] = sinf( ( (lightTime + light*0.37f) + bx::piHalf*1.57f ) )*2.0f;
 				lightPosRadius.m_radius = 2.0f;
 
 				Aabb aabb;
 				sphereToAabb(aabb, lightPosRadius);
 
-				float box[8][3] = 
+				float box[8][3] =
 				{
 					{ aabb.m_min[0], aabb.m_min[1], aabb.m_min[2] },
 					{ aabb.m_min[0], aabb.m_min[1], aabb.m_max[2] },
@@ -634,7 +632,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 					uint8_t val = light&7;
 					float lightRgbInnerR[4] =
-					{ 
+					{
 						val & 0x1 ? 1.0f : 0.25f,
 						val & 0x2 ? 1.0f : 0.25f,
 						val & 0x4 ? 1.0f : 0.25f,
@@ -655,7 +653,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						| BGFX_STATE_ALPHA_WRITE
 						| BGFX_STATE_BLEND_ADD
 						);
-					screenSpaceQuad( (float)width, (float)height, texelHalf, originBottomLeft);
+					screenSpaceQuad( (float)width, (float)height, texelHalf, s_originBottomLeft);
 					bgfx::submit(RENDER_PASS_LIGHT_ID);
 				}
 			}
@@ -668,7 +666,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
 				);
-			screenSpaceQuad( (float)width, (float)height, texelHalf, originBottomLeft);
+			screenSpaceQuad( (float)width, (float)height, texelHalf, s_originBottomLeft);
 			bgfx::submit(RENDER_PASS_COMBINE_ID);
 
 			if (showGBuffer)
@@ -696,7 +694,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

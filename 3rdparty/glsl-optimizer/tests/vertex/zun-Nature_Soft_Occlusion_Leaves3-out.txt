@@ -35,4 +35,17 @@ void main ()
 }
 
 
-// inputs: 3, stats: 18 alu 0 tex 0 flow
+// stats: 18 alu 0 tex 0 flow
+// inputs: 3
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #1: gl_Color (high float) 4x1 [-1] loc 3
+//  #2: gl_Vertex (high float) 4x1 [-1] loc 0
+// uniforms: 8 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: _LightPositionRange (high float) 4x1 [-1]
+//  #2: _MainTex_ST (high float) 4x1 [-1]
+//  #3: _Object2World (high float) 4x4 [-1]
+//  #4: _Scale (high float) 4x1 [-1]
+//  #5: _SquashAmount (high float) 1x1 [-1]
+//  #6: _SquashPlaneNormal (high float) 4x1 [-1]
+//  #7: _TerrainEngineBendTree (high float) 4x4 [-1]

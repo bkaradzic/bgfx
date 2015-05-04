@@ -3,11 +3,14 @@
 using namespace v8;
 using namespace node;
 
+
+Persistent<Function> Compiler::constructor;
+
 //----------------------------------------------------------------------
 
-Compiler::Compiler(bool essl)
+Compiler::Compiler(glslopt_target target)
 {
-	_binding = glslopt_initialize(essl);
+	_binding = glslopt_initialize(target);
 }
 
 //----------------------------------------------------------------------
@@ -33,42 +36,52 @@ void Compiler::release()
 
 void Compiler::Init(Handle<Object> exports)
 {
+	NanScope();
+
 	// Prepare constructor template
-	Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-	tpl->SetClassName(String::NewSymbol("Compiler"));
+	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
+	
+	tpl->SetClassName(NanNew<String>("Compiler"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 	// Prototype
-	SetPrototypeMethod(tpl, "dispose", Dispose);
+	NanSetPrototypeTemplate(tpl, "dispose", NanNew<FunctionTemplate>(Dispose));
 
 	// Export the class
-	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
-	exports->Set(String::NewSymbol("Compiler"), constructor);
+	NanAssignPersistent<Function>(constructor, tpl->GetFunction());
+	exports->Set(NanNew<String>("Compiler"), tpl->GetFunction());
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Compiler::New(const Arguments& args)
+NAN_METHOD(Compiler::New)
 {
-	HandleScope scope;
+	NanScope();
 
-	bool essl = args[0]->IsUndefined() ? true : args[0]->BooleanValue();
+	if (args.IsConstructCall()) {
+		glslopt_target target = kGlslTargetOpenGL;
+		if (args[0]->IsInt32()) 
+			target = (glslopt_target)args[0]->Int32Value();
+		else if (args[0]->IsBoolean())
+			target = (glslopt_target)( (int)args[0]->BooleanValue() );
 
-	Compiler* obj = new Compiler(essl);
-
-	obj->Wrap(args.This());
-
-	return args.This();
+		Compiler* obj = new Compiler(target);
+		obj->Wrap(args.This());
+		NanReturnValue(args.This());
+	} else {
+		Local<Function> cons = NanNew<Function>(constructor);
+		NanReturnValue(cons->NewInstance());
+	}
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Compiler::Dispose(const Arguments& args)
+NAN_METHOD(Compiler::Dispose)
 {
-	HandleScope scope;
+	NanScope();
 
 	Compiler* obj = ObjectWrap::Unwrap<Compiler>(args.This());
 	obj->release();
 
-	return scope.Close(Undefined());
+	NanReturnUndefined();
 }

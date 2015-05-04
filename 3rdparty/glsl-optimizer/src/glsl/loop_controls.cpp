@@ -44,8 +44,9 @@
  * \c NULL if no initializer can be found.
  */
 ir_rvalue *
-find_initial_value(ir_loop *loop, ir_variable *var)
+find_initial_value(ir_loop *loop, ir_variable *var, ir_instruction **out_containing_ir)
 {
+   *out_containing_ir = NULL;
    ir_variable_refcount_visitor refs;
    
    for (exec_node *node = loop->prev;
@@ -74,7 +75,10 @@ find_initial_value(ir_loop *loop, ir_variable *var)
 	 ir_variable *assignee = assign->lhs->whole_variable_referenced();
 
 	 if (assignee == var)
+	 {
+	    *out_containing_ir = assign;
 	    return (assign->condition != NULL) ? NULL : assign->rhs;
+	 }
 
 	 break;
       }
@@ -130,9 +134,20 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
    bool valid_loop = false;
 
    for (unsigned i = 0; i < Elements(bias); i++) {
-      iter = (increment->type->is_integer())
-	 ? new(mem_ctx) ir_constant(iter_value + bias[i])
-	 : new(mem_ctx) ir_constant(float(iter_value + bias[i]));
+      /* Increment may be of type int, uint or float. */
+      switch (increment->type->base_type) {
+      case GLSL_TYPE_INT:
+         iter = new(mem_ctx) ir_constant(iter_value + bias[i]);
+         break;
+      case GLSL_TYPE_UINT:
+         iter = new(mem_ctx) ir_constant(unsigned(iter_value + bias[i]));
+         break;
+      case GLSL_TYPE_FLOAT:
+         iter = new(mem_ctx) ir_constant(float(iter_value + bias[i]));
+         break;
+      default:
+          unreachable(!"Unsupported type for loop iterator.");
+      }
 
       ir_expression *const mul =
 	 new(mem_ctx) ir_expression(ir_binop_mul, increment->type, iter,
@@ -209,9 +224,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
     * bound, then that terminates the loop, so we don't even need the limiting
     * terminator.
     */
-   foreach_list(node, &ls->terminators) {
-      loop_terminator *t = (loop_terminator *) node;
-
+   foreach_in_list(loop_terminator, t, &ls->terminators) {
       if (t->iterations < 0)
          continue;
 

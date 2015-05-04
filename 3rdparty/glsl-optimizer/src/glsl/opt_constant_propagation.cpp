@@ -172,8 +172,7 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 channel = i;
       }
 
-      foreach_list(n, this->acp) {
-	 acp_entry *entry = (acp_entry *) n;
+      foreach_in_list(acp_entry, entry, this->acp) {
 	 if (entry->var == deref->var && entry->write_mask & (1 << channel)) {
 	    found = entry;
 	    break;
@@ -320,8 +319,7 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a constant of the original */
-   foreach_list(n, orig_acp) {
-      acp_entry *a = (acp_entry *) n;
+   foreach_in_list(acp_entry, a, orig_acp) {
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 
@@ -336,8 +334,7 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_list(n, new_kills) {
-      kill_entry *k = (kill_entry *) n;
+   foreach_in_list(kill_entry, k, new_kills) {
       kill(k->var, k->write_mask);
    }
 }
@@ -381,8 +378,7 @@ ir_constant_propagation_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_list(n, new_kills) {
-      kill_entry *k = (kill_entry *) n;
+   foreach_in_list(kill_entry, k, new_kills) {
       kill(k->var, k->write_mask);
    }
 
@@ -400,9 +396,7 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
       return;
 
    /* Remove any entries currently in the ACP for this kill. */
-   foreach_list_safe(n, this->acp) {
-      acp_entry *entry = (acp_entry *) n;
-
+   foreach_in_list_safe(acp_entry, entry, this->acp) {
       if (entry->var == var) {
 	 entry->write_mask &= ~write_mask;
 	 if (entry->write_mask == 0)
@@ -413,9 +407,7 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
    /* Add this writemask of the variable to the list of killed
     * variables in this block.
     */
-   foreach_list(n, this->kills) {
-      kill_entry *entry = (kill_entry *) n;
-
+   foreach_in_list(kill_entry, entry, this->kills) {
       if (entry->var == var) {
 	 entry->write_mask |= write_mask;
 	 return;

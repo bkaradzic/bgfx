@@ -6,4 +6,6 @@ void main ()
 }
 
 
-// inputs: 1, stats: 6 alu 0 tex 0 flow
+// stats: 6 alu 0 tex 0 flow
+// inputs: 1
+//  #0: gl_Vertex (high float) 4x1 [-1] loc 0

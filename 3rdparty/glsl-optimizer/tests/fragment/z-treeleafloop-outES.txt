@@ -29,71 +29,59 @@ void main ()
   if ((x_11 < 0.0)) {
     discard;
   };
-  highp vec3 tmpvar_12;
-  tmpvar_12 = (tmpvar_10.xyz * xlv_TEXCOORD1);
-  albedo_9 = tmpvar_12;
-  lowp float tmpvar_13;
-  tmpvar_13 = (texture2D (_BumpSpecMap, xlv_TEXCOORD0).x * 128.0);
-  specular_8 = tmpvar_13;
-  lowp vec4 tmpvar_14;
-  tmpvar_14 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
-  lowp float tmpvar_15;
-  tmpvar_15 = tmpvar_14.w;
-  gloss_7 = tmpvar_15;
-  lowp vec3 tmpvar_16;
-  tmpvar_16 = (UNITY_LIGHTMODEL_AMBIENT.xyz * albedo_9);
-  light_6 = tmpvar_16;
-  highp vec3 tmpvar_17;
-  tmpvar_17 = (xlv_TEXCOORD2 * tmpvar_14.z);
-  backContribs_5 = tmpvar_17;
-  highp vec3 tmpvar_18;
-  tmpvar_18 = _TerrainTreeLightColors[0].xyz;
-  lightColor_4 = tmpvar_18;
-  highp float tmpvar_19;
-  tmpvar_19 = xlv_TEXCOORD3.x;
-  nl_3 = tmpvar_19;
-  highp float tmpvar_20;
-  tmpvar_20 = xlv_TEXCOORD4.x;
-  nh_2 = tmpvar_20;
+  albedo_9 = (tmpvar_10.xyz * xlv_TEXCOORD1);
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = texture2D (_BumpSpecMap, xlv_TEXCOORD0);
+  specular_8 = (tmpvar_12.x * 128.0);
+  lowp vec4 tmpvar_13;
+  tmpvar_13 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
+  gloss_7 = tmpvar_13.w;
+  light_6 = (UNITY_LIGHTMODEL_AMBIENT.xyz * albedo_9);
+  backContribs_5 = (xlv_TEXCOORD2 * tmpvar_13.z);
+  lightColor_4 = _TerrainTreeLightColors[0].xyz;
+  nl_3 = xlv_TEXCOORD3.x;
+  nh_2 = xlv_TEXCOORD4.x;
   light_6 = (light_6 + ((
     (albedo_9 * ((backContribs_5.x * _TranslucencyColor) + nl_3))
    + 
     (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
   ) * lightColor_4));
-  highp vec3 tmpvar_21;
-  tmpvar_21 = _TerrainTreeLightColors[1].xyz;
-  lightColor_4 = tmpvar_21;
-  highp float tmpvar_22;
-  tmpvar_22 = xlv_TEXCOORD3.y;
-  nl_3 = tmpvar_22;
-  highp float tmpvar_23;
-  tmpvar_23 = xlv_TEXCOORD4.y;
-  nh_2 = tmpvar_23;
+  lightColor_4 = _TerrainTreeLightColors[1].xyz;
+  nl_3 = xlv_TEXCOORD3.y;
+  nh_2 = xlv_TEXCOORD4.y;
   light_6 = (light_6 + ((
     (albedo_9 * ((backContribs_5.y * _TranslucencyColor) + nl_3))
    + 
     (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
   ) * lightColor_4));
-  highp vec3 tmpvar_24;
-  tmpvar_24 = _TerrainTreeLightColors[2].xyz;
-  lightColor_4 = tmpvar_24;
-  highp float tmpvar_25;
-  tmpvar_25 = xlv_TEXCOORD3.z;
-  nl_3 = tmpvar_25;
-  highp float tmpvar_26;
-  tmpvar_26 = xlv_TEXCOORD4.z;
-  nh_2 = tmpvar_26;
+  lightColor_4 = _TerrainTreeLightColors[2].xyz;
+  nl_3 = xlv_TEXCOORD3.z;
+  nh_2 = xlv_TEXCOORD4.z;
   light_6 = (light_6 + ((
     (albedo_9 * ((backContribs_5.z * _TranslucencyColor) + nl_3))
    + 
     (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
   ) * lightColor_4));
-  mediump vec3 tmpvar_27;
-  tmpvar_27 = (light_6 * 2.0);
-  c_1.xyz = tmpvar_27;
+  c_1.xyz = (light_6 * 2.0);
   c_1.w = 1.0;
   gl_FragData[0] = c_1;
 }
 
 
-// inputs: 5, stats: 35 alu 4 tex 1 flow
+// stats: 35 alu 4 tex 1 flow
+// inputs: 5
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]
+//  #2: xlv_TEXCOORD2 (high float) 3x1 [-1]
+//  #3: xlv_TEXCOORD3 (high float) 3x1 [-1]
+//  #4: xlv_TEXCOORD4 (high float) 3x1 [-1]
+// uniforms: 5 (total size: 0)
+//  #0: UNITY_LIGHTMODEL_AMBIENT (low float) 4x1 [-1]
+//  #1: _Cutoff (low float) 1x1 [-1]
+//  #2: _SpecColor (low float) 4x1 [-1]
+//  #3: _TerrainTreeLightColors (high float) 4x1 [4]
+//  #4: _TranslucencyColor (low float) 3x1 [-1]
+// textures: 3
+//  #0: _BumpSpecMap (low 2d) 0x0 [-1]
+//  #1: _MainTex (low 2d) 0x0 [-1]
+//  #2: _TranslucencyMap (low 2d) 0x0 [-1]

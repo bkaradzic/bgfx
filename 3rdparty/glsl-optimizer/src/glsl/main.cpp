@@ -40,6 +40,12 @@
 
 static int glsl_version = 330;
 
+//extern "C" void
+//_mesa_error_no_memory(const char *caller)
+//{
+//   fprintf(stderr, "Mesa error: out of memory in %s", caller);
+//}
+
 static void
 initialize_context(struct gl_context *ctx, gl_api api)
 {
@@ -204,6 +210,7 @@ initialize_context(struct gl_context *ctx, gl_api api)
       break;
    }
 
+   ctx->Const.GenerateTemporaryNames = true;
    ctx->Driver.NewShader = _mesa_new_shader;
 }
 
@@ -294,7 +301,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 
    /* Print out the resulting IR */
    if (!state->error && dump_lir) {
-      _mesa_print_ir(shader->ir, state);
+      _mesa_print_ir(stdout, shader->ir, state);
    }
 
    return;

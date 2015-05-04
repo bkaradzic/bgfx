@@ -74,7 +74,7 @@ public:
 	/// Append a wide char unicode string to the buffer using current pen
 	/// position and color.
 	void appendText(FontHandle _fontHandle, const wchar_t* _string, const wchar_t* _end = NULL);
-	
+
 	/// Append a whole face of the atlas cube, mostly used for debugging
 	/// and visualizing atlas.
 	void appendAtlasFace(uint16_t _faceIndex);
@@ -236,7 +236,13 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 	CodePoint codepoint = 0;
 	uint32_t state = 0;
 
-	for (; *_string && _string<_end ; ++_string)
+	if (_end == NULL)
+	{
+		_end = _string + strlen(_string);
+	}
+	BX_CHECK(_end >= _string);
+
+	for (; *_string && _string < _end ; ++_string)
 	{
 		if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT )
 		{
@@ -244,7 +250,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 		}
 	}
 
-	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");	
+	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
 }
 
 void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, const wchar_t* _end)
@@ -260,7 +266,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 
 	if (_end == NULL)
 	{
-		_end = _string + (uint32_t) wcslen(_string);
+		_end = _string + wcslen(_string);
 	}
 	BX_CHECK(_end >= _string);
 
@@ -360,7 +366,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 
 		float txtDecals = (font.ascender - m_lineAscender);
 		m_lineAscender = font.ascender;
-		m_lineGap = font.lineGap;		
+		m_lineGap = font.lineGap;
 		verticalCenterLastLine( (txtDecals), (m_penY - m_lineAscender), (m_penY + m_lineAscender - m_lineDescender + m_lineGap) );
 	}
 
@@ -569,6 +575,7 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		break;
 
 	case bgfx::RendererType::Direct3D11:
+	case bgfx::RendererType::Direct3D12:
 		vs_font_basic = bgfx::makeRef(vs_font_basic_dx11, sizeof(vs_font_basic_dx11) );
 		fs_font_basic = bgfx::makeRef(fs_font_basic_dx11, sizeof(fs_font_basic_dx11) );
 		vs_font_distance_field = bgfx::makeRef(vs_font_distance_field_dx11, sizeof(vs_font_distance_field_dx11) );

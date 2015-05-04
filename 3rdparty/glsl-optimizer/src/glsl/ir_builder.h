@@ -90,7 +90,7 @@ public:
    }
 
    void emit(ir_instruction *ir);
-   ir_variable *make_temp(const glsl_type *type, const char *name);
+   ir_variable *make_temp(const glsl_type *type, const char *name, glsl_precision prec = glsl_precision_undefined);
 
    ir_constant*
    constant(float f)
@@ -139,7 +139,6 @@ ir_expression *carry(operand a, operand b);
 ir_expression *borrow(operand a, operand b);
 ir_expression *round_even(operand a);
 ir_expression *dot(operand a, operand b);
-ir_expression *dotlike(operand a, operand b);
 ir_expression *clamp(operand a, operand b, operand c);
 ir_expression *saturate(operand a);
 ir_expression *abs(operand a);
@@ -186,6 +185,10 @@ ir_expression *b2f(operand a);
 
 ir_expression *min2(operand a, operand b);
 ir_expression *max2(operand a, operand b);
+
+ir_expression *interpolate_at_centroid(operand a);
+ir_expression *interpolate_at_offset(operand a, operand b);
+ir_expression *interpolate_at_sample(operand a, operand b);
 
 ir_expression *fma(operand a, operand b, operand c);
 ir_expression *lrp(operand x, operand y, operand a);

@@ -14,12 +14,10 @@
 #include <bx/readerwriter.h>
 #include <bx/fpumath.h>
 #include "entry/entry.h"
+#include "bgfx_utils.h"
 
 #define RENDER_SHADOW_PASS_ID 0
-#define RENDER_SHADOW_PASS_BIT (1<<RENDER_SHADOW_PASS_ID)
-
 #define RENDER_SCENE_PASS_ID  1
-#define RENDER_SCENE_PASS_BIT (1<<RENDER_SCENE_PASS_ID)
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -54,8 +52,7 @@ struct PosNormalVertex
 	uint32_t m_normal;
 };
 
-static const uint32_t s_numHPlaneVertices = 4;
-static PosNormalVertex s_hplaneVertices[s_numHPlaneVertices] =
+static PosNormalVertex s_hplaneVertices[] =
 {
 	{ -1.0f, 0.0f,  1.0f, packF4u(0.0f, 1.0f, 0.0f) },
 	{  1.0f, 0.0f,  1.0f, packF4u(0.0f, 1.0f, 0.0f) },
@@ -63,319 +60,10 @@ static PosNormalVertex s_hplaneVertices[s_numHPlaneVertices] =
 	{  1.0f, 0.0f, -1.0f, packF4u(0.0f, 1.0f, 0.0f) },
 };
 
-static const uint32_t s_numPlaneIndices = 6;
-static const uint16_t s_planeIndices[s_numPlaneIndices] =
+static const uint16_t s_planeIndices[] =
 {
 	0, 1, 2,
 	1, 3, 2,
-};
-
-static const char* s_shaderPath = NULL;
-static bool s_flipV = false;
-static float s_texelHalf = 0.0f;
-bgfx::FrameBufferHandle s_shadowMapFB;
-static bgfx::UniformHandle u_shadowMap;
-
-static void shaderFilePath(char* _out, const char* _name)
-{
-	strcpy(_out, s_shaderPath);
-	strcat(_out, _name);
-	strcat(_out, ".bin");
-}
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
-static const bgfx::Memory* load(const char* _filePath)
-{
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
-	{
-		uint32_t size = (uint32_t)fsize(file);
-		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		size_t ignore = fread(mem->data, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem->data[mem->size-1] = '\0';
-		return mem;
-	}
-
-	return NULL;
-}
-
-static const bgfx::Memory* loadShader(const char* _name)
-{
-	char filePath[512];
-	shaderFilePath(filePath, _name);
-	return load(filePath);
-}
-
-static bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
-{
-	const bgfx::Memory* mem;
-
-	// Load vertex shader.
-	mem = loadShader(_vsName);
-	bgfx::ShaderHandle vsh = bgfx::createShader(mem);
-
-	// Load fragment shader.
-	mem = loadShader(_fsName);
-	bgfx::ShaderHandle fsh = bgfx::createShader(mem);
-
-	// Create program from shaders.
-	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
-}
-
-struct Aabb
-{
-	float m_min[3];
-	float m_max[3];
-};
-
-struct Obb
-{
-	float m_mtx[16];
-};
-
-struct Sphere
-{
-	float m_center[3];
-	float m_radius;
-};
-
-struct Primitive
-{
-	uint32_t m_startIndex;
-	uint32_t m_numIndices;
-	uint32_t m_startVertex;
-	uint32_t m_numVertices;
-
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-};
-
-typedef std::vector<Primitive> PrimitiveArray;
-
-struct Group
-{
-	Group()
-	{
-		reset();
-	}
-
-	void reset()
-	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
-		m_prims.clear();
-	}
-
-	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-	PrimitiveArray m_prims;
-};
-;
-
-struct Mesh
-{
-	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
-	{
-		Group group;
-		const bgfx::Memory* mem;
-		uint32_t size;
-
-		size = _numVertices*_decl.getStride();
-		mem = bgfx::makeRef(_vertices, size);
-		group.m_vbh = bgfx::createVertexBuffer(mem, _decl);
-
-		size = _numIndices*2;
-		mem = bgfx::makeRef(_indices, size);
-		group.m_ibh = bgfx::createIndexBuffer(mem);
-
-		//TODO:
-		// group.m_sphere = ...
-		// group.m_aabb = ...
-		// group.m_obb = ...
-		// group.m_prims = ...
-
-		m_groups.push_back(group);
-	}
-
-	void load(const char* _filePath)
-	{
-#define BGFX_CHUNK_MAGIC_VB BX_MAKEFOURCC('V', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IB BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
-
-		bx::CrtFileReader reader;
-		reader.open(_filePath);
-
-		Group group;
-
-		uint32_t chunk;
-		while (4 == bx::read(&reader, chunk) )
-		{
-			switch (chunk)
-			{
-			case BGFX_CHUNK_MAGIC_VB:
-				{
-					bx::read(&reader, group.m_sphere);
-					bx::read(&reader, group.m_aabb);
-					bx::read(&reader, group.m_obb);
-
-					bx::read(&reader, m_decl);
-					uint16_t stride = m_decl.getStride();
-
-					uint16_t numVertices;
-					bx::read(&reader, numVertices);
-					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-					bx::read(&reader, mem->data, mem->size);
-
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_IB:
-				{
-					uint32_t numIndices;
-					bx::read(&reader, numIndices);
-					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
-					bx::read(&reader, mem->data, mem->size);
-					group.m_ibh = bgfx::createIndexBuffer(mem);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_PRI:
-				{
-					uint16_t len;
-					bx::read(&reader, len);
-
-					std::string material;
-					material.resize(len);
-					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(&reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(&reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(&reader, prim.m_startIndex);
-						bx::read(&reader, prim.m_numIndices);
-						bx::read(&reader, prim.m_startVertex);
-						bx::read(&reader, prim.m_numVertices);
-						bx::read(&reader, prim.m_sphere);
-						bx::read(&reader, prim.m_aabb);
-						bx::read(&reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
-				}
-				break;
-
-			default:
-				DBG("%08x at %d", chunk, reader.seek() );
-				break;
-			}
-		}
-
-		reader.close();
-	}
-
-	void unload()
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-			bgfx::destroyVertexBuffer(group.m_vbh);
-
-			if (bgfx::isValid(group.m_ibh) )
-			{
-				bgfx::destroyIndexBuffer(group.m_ibh);
-			}
-		}
-		m_groups.clear();
-	}
-
-	void submit(uint8_t _view, float* _mtx, bgfx::ProgramHandle _program)
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-
-			// Set model matrix for rendering.
-			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
-			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
-
-			// Set shadow map.
-			bgfx::setTexture(4, u_shadowMap, s_shadowMapFB);
-
-			// Set render states.
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CCW
-				| BGFX_STATE_MSAA
-				);
-
-			// Submit primitive for rendering.
-			bgfx::submit(_view);
-		}
-	}
-
-	void submitShadow(uint8_t _view, float* _mtx, bgfx::ProgramHandle _program)
-	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
-		{
-			const Group& group = *it;
-
-			// Set model matrix for rendering.
-			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
-			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
-
-			// Set render states.
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CCW
-				| BGFX_STATE_MSAA
-				);
-
-			// Submit primitive for rendering.
-			bgfx::submit(_view);
-		}
-	}
-
-	bgfx::VertexDecl m_decl;
-	typedef std::vector<Group> GroupArray;
-	GroupArray m_groups;
 };
 
 int _main_(int /*_argc*/, char** /*_argv*/)
@@ -388,39 +76,19 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::init();
 	bgfx::reset(width, height, reset);
 
+	bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+	bool flipV = false
+		|| renderer == bgfx::RendererType::OpenGL
+		|| renderer == bgfx::RendererType::OpenGLES
+		;
+
 	// Enable debug text.
 	bgfx::setDebug(debug);
 
-	// Setup root path for binary shaders. Shader binaries are different
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	default:
-	case bgfx::RendererType::Direct3D9:
-		s_shaderPath = "shaders/dx9/";
-		s_texelHalf = 0.5f;
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-		s_shaderPath = "shaders/dx11/";
-		break;
-
-	case bgfx::RendererType::OpenGL:
-		s_shaderPath = "shaders/glsl/";
-		s_flipV = true;
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		s_shaderPath = "shaders/gles/";
-		s_flipV = true;
-		break;
-	}
-
 	// Uniforms.
-	u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Uniform1iv);
-
-	bgfx::UniformHandle u_lightPos = bgfx::createUniform("u_lightPos", bgfx::UniformType::Uniform4fv);
-	bgfx::UniformHandle u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Uniform4x4fv);
+	bgfx::UniformHandle u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Uniform4fv);
+	bgfx::UniformHandle u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Uniform4x4fv);
 
 	// Vertex declarations.
 	bgfx::VertexDecl PosNormalDecl;
@@ -430,14 +98,18 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		.end();
 
 	// Meshes.
-	Mesh bunnyMesh;
-	Mesh cubeMesh;
-	Mesh hollowcubeMesh;
-	Mesh hplaneMesh;
-	bunnyMesh.load("meshes/bunny.bin");
-	cubeMesh.load("meshes/cube.bin");
-	hollowcubeMesh.load("meshes/hollowcube.bin");
-	hplaneMesh.load(s_hplaneVertices, s_numHPlaneVertices, PosNormalDecl, s_planeIndices, s_numPlaneIndices);
+	Mesh* bunny      = meshLoad("meshes/bunny.bin");
+	Mesh* cube       = meshLoad("meshes/cube.bin");
+	Mesh* hollowcube = meshLoad("meshes/hollowcube.bin");
+
+	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
+			  bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
+			, PosNormalDecl
+			);
+
+	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(
+			bgfx::makeRef(s_planeIndices, sizeof(s_planeIndices) )
+			);
 
 	// Render targets.
 	uint16_t shadowMapSize = 512;
@@ -450,6 +122,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::ProgramHandle progShadow;
 	bgfx::ProgramHandle progMesh;
+	bgfx::TextureHandle shadowMapTexture;
+	bgfx::FrameBufferHandle shadowMapFB;
 
 	if (shadowSamplerSupported)
 	{
@@ -457,11 +131,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
 		progMesh   = loadProgram("vs_sms_mesh",   "fs_sms_mesh");
 
-		bgfx::TextureHandle fbtextures[] =
-		{
-			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_COMPARE_LEQUAL),
-		};
-		s_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+		shadowMapTexture = bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_COMPARE_LEQUAL);
+		bgfx::TextureHandle fbtextures[] = { shadowMapTexture };
+		shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 	}
 	else
 	{
@@ -470,24 +142,56 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
 		progMesh   = loadProgram("vs_sms_mesh",      "fs_sms_mesh_pd");
 
+		shadowMapTexture = bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
 		bgfx::TextureHandle fbtextures[] =
 		{
-			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+			shadowMapTexture,
 			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
 		};
-		s_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+		shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 	}
+
+	MeshState* state[2];
+	state[0] = meshStateCreate();
+	state[0]->m_state = 0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_DEPTH_WRITE
+				| BGFX_STATE_DEPTH_TEST_LESS
+				| BGFX_STATE_CULL_CCW
+				| BGFX_STATE_MSAA
+				;
+	state[0]->m_program = progShadow;
+	state[0]->m_viewId  = RENDER_SHADOW_PASS_ID;
+	state[0]->m_numTextures = 0;
+
+	state[1] = meshStateCreate();
+	state[1]->m_state = 0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_DEPTH_WRITE
+				| BGFX_STATE_DEPTH_TEST_LESS
+				| BGFX_STATE_CULL_CCW
+				| BGFX_STATE_MSAA
+				;
+	state[1]->m_program = progMesh;
+	state[1]->m_viewId  = RENDER_SCENE_PASS_ID;
+	state[1]->m_numTextures = 1;
+	state[1]->m_textures[0].m_flags = UINT32_MAX;
+	state[1]->m_textures[0].m_stage = 4;
+	state[1]->m_textures[0].m_sampler = u_shadowMap;
+	state[1]->m_textures[0].m_texture = shadowMapTexture;
 
 	// Set view and projection matrices.
 	float view[16];
 	float proj[16];
 
-	const float eye[3] = { 0.0f, 30.0f, -60.0f };
-	const float at[3]  = { 0.0f, 5.0f, 0.0f };
+	float eye[3] = { 0.0f, 30.0f, -60.0f };
+	float at[3]  = { 0.0f,  5.0f,   0.0f };
 	bx::mtxLookAt(view, eye, at);
 
 	const float aspect = float(int32_t(width) ) / float(int32_t(height) );
-	bx::mtxProj(proj, 60.0f, aspect, 0.1f, 1000.0f);
+	bx::mtxProj(proj, 60.0f, aspect, 0.1f, 1000.0f, flipV);
 
 	// Time acumulators.
 	float timeAccumulatorLight = 0.0f;
@@ -517,9 +221,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup lights.
 		float lightPos[4];
-		lightPos[0] = -cos(timeAccumulatorLight);
+		lightPos[0] = -cosf(timeAccumulatorLight);
 		lightPos[1] = -1.0f;
-		lightPos[2] = -sin(timeAccumulatorLight);
+		lightPos[2] = -sinf(timeAccumulatorLight);
 		lightPos[3] = 0.0f;
 
 		bgfx::setUniform(u_lightPos, lightPos);
@@ -535,7 +239,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float mtxBunny[16];
 		bx::mtxSRT(mtxBunny
 			, 5.0f, 5.0f, 5.0f
-			, 0.0f, float(M_PI) - timeAccumulatorScene, 0.0f
+			, 0.0f, bx::pi - timeAccumulatorScene, 0.0f
 			, 15.0f, 5.0f, 0.0f
 			);
 
@@ -557,28 +261,34 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float lightView[16];
 		float lightProj[16];
 
-		const float eye[3] =
-		{
-			-lightPos[0],
-			-lightPos[1],
-			-lightPos[2],
-		};
-		const float at[3] = { 0.0f, 0.0f, 0.0f };
+		eye[0] = -lightPos[0];
+		eye[1] = -lightPos[1];
+		eye[2] = -lightPos[2];
+
+		at[0] = 0.0f;
+		at[1] = 0.0f;
+		at[2] = 0.0f;
+
 		bx::mtxLookAt(lightView, eye, at);
 
 		const float area = 30.0f;
 		bx::mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f);
 
 		bgfx::setViewRect(RENDER_SHADOW_PASS_ID, 0, 0, shadowMapSize, shadowMapSize);
-		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, s_shadowMapFB);
+		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, shadowMapFB);
 		bgfx::setViewTransform(RENDER_SHADOW_PASS_ID, lightView, lightProj);
 
 		bgfx::setViewRect(RENDER_SCENE_PASS_ID, 0, 0, width, height);
 		bgfx::setViewTransform(RENDER_SCENE_PASS_ID, view, proj);
 
 		// Clear backbuffer and shadowmap framebuffer at beginning.
-		bgfx::setViewClearMask(RENDER_SHADOW_PASS_BIT|RENDER_SCENE_PASS_BIT
-			, BGFX_CLEAR_COLOR_BIT | BGFX_CLEAR_DEPTH_BIT
+		bgfx::setViewClear(RENDER_SHADOW_PASS_ID
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+			, 0x303030ff, 1.0f, 0
+			);
+
+		bgfx::setViewClear(RENDER_SCENE_PASS_ID
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 			, 0x303030ff, 1.0f, 0
 			);
 
@@ -586,7 +296,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		float mtxShadow[16];
 		float lightMtx[16];
 
-		const float sy = s_flipV ? 0.5f : -0.5f;
+		const float sy = flipV ? 0.5f : -0.5f;
 		const float mtxCrop[16] =
 		{
 			0.5f, 0.0f, 0.0f, 0.0f,
@@ -596,47 +306,71 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		};
 
 		float mtxTmp[16];
-		bx::mtxMul(mtxTmp, lightProj, mtxCrop);
+		bx::mtxMul(mtxTmp,    lightProj, mtxCrop);
 		bx::mtxMul(mtxShadow, lightView, mtxTmp);
 
 		// Floor.
 		bx::mtxMul(lightMtx, mtxFloor, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		hplaneMesh.submit(RENDER_SCENE_PASS_ID, mtxFloor, progMesh);
-		hplaneMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxFloor, progShadow);
+		uint32_t cached = bgfx::setTransform(mtxFloor);
+		for (uint32_t pass = 0; pass < 2; ++pass)
+		{
+			const MeshState& st = *state[pass];
+			bgfx::setTransform(cached);
+			for (uint8_t tex = 0; tex < st.m_numTextures; ++tex)
+			{
+				const MeshState::Texture& texture = st.m_textures[tex];
+				bgfx::setTexture(texture.m_stage
+						, texture.m_sampler
+						, texture.m_texture
+						, texture.m_flags
+						);
+			}
+			bgfx::setUniform(u_lightMtx, lightMtx);
+			bgfx::setProgram(st.m_program);
+			bgfx::setIndexBuffer(ibh);
+			bgfx::setVertexBuffer(vbh);
+			bgfx::setState(st.m_state);
+			bgfx::submit(st.m_viewId);
+		}
 
 		// Bunny.
 		bx::mtxMul(lightMtx, mtxBunny, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		bunnyMesh.submit(RENDER_SCENE_PASS_ID, mtxBunny, progMesh);
-		bunnyMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxBunny, progShadow);
+		meshSubmit(bunny, &state[0], 1, mtxBunny);
+		meshSubmit(bunny, &state[1], 1, mtxBunny);
 
 		// Hollow cube.
 		bx::mtxMul(lightMtx, mtxHollowcube, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		hollowcubeMesh.submit(RENDER_SCENE_PASS_ID, mtxHollowcube, progMesh);
-		hollowcubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxHollowcube, progShadow);
+		meshSubmit(hollowcube, &state[0], 1, mtxHollowcube);
+		meshSubmit(hollowcube, &state[1], 1, mtxHollowcube);
 
 		// Cube.
 		bx::mtxMul(lightMtx, mtxCube, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
-		cubeMesh.submit(RENDER_SCENE_PASS_ID, mtxCube, progMesh);
-		cubeMesh.submitShadow(RENDER_SHADOW_PASS_ID, mtxCube, progShadow);
+		meshSubmit(cube, &state[0], 1, mtxCube);
+		meshSubmit(cube, &state[1], 1, mtxCube);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
 
-	bunnyMesh.unload();
-	cubeMesh.unload();
-	hollowcubeMesh.unload();
-	hplaneMesh.unload();
+	meshUnload(bunny);
+	meshUnload(cube);
+	meshUnload(hollowcube);
+
+	meshStateDestroy(state[0]);
+	meshStateDestroy(state[1]);
+
+	bgfx::destroyVertexBuffer(vbh);
+	bgfx::destroyIndexBuffer(ibh);
 
 	bgfx::destroyProgram(progShadow);
 	bgfx::destroyProgram(progMesh);
 
-	bgfx::destroyFrameBuffer(s_shadowMapFB);
+	bgfx::destroyFrameBuffer(shadowMapFB);
 
 	bgfx::destroyUniform(u_shadowMap);
 	bgfx::destroyUniform(u_lightPos);

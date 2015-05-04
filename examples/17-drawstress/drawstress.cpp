@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -11,10 +11,7 @@
 
 // embedded shaders
 #include "vs_drawstress.bin.h"
-#include "fs_drawstress.bin.h" 
-
-// embedded font
-#include "droidsans.ttf.h"
+#include "fs_drawstress.bin.h"
 
 #if BX_PLATFORM_EMSCRIPTEN
 #	include <emscripten.h>
@@ -77,6 +74,7 @@ uint32_t reset = BGFX_RESET_NONE;
 bool autoAdjust = true;
 int32_t scrollArea = 0;
 int32_t dim = 16;
+int32_t maxDim = 40;
 uint32_t transform = 0;
 
 entry::MouseState mouseState;
@@ -99,7 +97,7 @@ bgfx::ProgramHandle program;
 bgfx::VertexBufferHandle vbh;
 bgfx::IndexBufferHandle ibh;
 
-bool mainloop()
+BX_NO_INLINE bool mainloop()
 {
 	if (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
@@ -115,13 +113,13 @@ bool mainloop()
 
 		if (deltaTimeNs > 1000000)
 		{
-			deltaTimeAvgNs = deltaTimeNs / numFrames;
+			deltaTimeAvgNs = deltaTimeNs / bx::int64_max(1, numFrames);
 
 			if (autoAdjust)
 			{
 				if (deltaTimeAvgNs < highwm)
 				{
-					dim = bx::uint32_min(dim + 2, 40);
+					dim = bx::uint32_min(dim + 2, maxDim);
 				}
 				else if (deltaTimeAvgNs > lowwm)
 				{
@@ -162,7 +160,7 @@ bool mainloop()
 			autoAdjust ^= true;
 		}
 
-		imguiSlider("Dim", dim, 5, 40);
+		imguiSlider("Dim", dim, 5, maxDim);
 		imguiLabel("Draw calls: %d", dim*dim*dim);
 		imguiLabel("Avg Delta Time (1 second) [ms]: %0.4f", deltaTimeAvgNs/1000.0f);
 
@@ -238,7 +236,7 @@ bool mainloop()
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 
@@ -258,12 +256,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::init();
 	bgfx::reset(width, height, reset);
 
+	const bgfx::Caps* caps = bgfx::getCaps();
+	maxDim = (int32_t)powf(float(caps->maxDrawCalls), 1.0f/3.0f);
+
 	// Enable debug text.
 	bgfx::setDebug(debug);
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(0
-			, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 			, 0x303030ff
 			, 1.0f
 			, 0
@@ -283,6 +284,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			break;
 
 		case bgfx::RendererType::Direct3D11:
+		case bgfx::RendererType::Direct3D12:
 			vs_drawstress = bgfx::makeRef(vs_drawstress_dx11, sizeof(vs_drawstress_dx11) );
 			fs_drawstress = bgfx::makeRef(fs_drawstress_dx11, sizeof(fs_drawstress_dx11) );
 			break;
@@ -310,7 +312,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
 	ibh = bgfx::createIndexBuffer(mem);
 
-	imguiCreate(s_droidSansTtf);
+	// Imgui.
+	imguiCreate();
 
 #if BX_PLATFORM_EMSCRIPTEN
 	emscripten_set_main_loop(&loop, -1, 1);

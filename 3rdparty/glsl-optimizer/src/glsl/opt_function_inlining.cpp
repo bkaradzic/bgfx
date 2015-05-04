@@ -114,16 +114,13 @@ ir_call::generate_inline(ir_instruction *next_ir)
 {
    void *ctx = ralloc_parent(this);
    ir_variable **parameters;
-   int num_parameters;
+   unsigned num_parameters;
    int i;
    struct hash_table *ht;
 
    ht = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 
-   num_parameters = 0;
-   foreach_list(n, &this->callee->parameters)
-      num_parameters++;
-
+   num_parameters = this->callee->parameters.length();
    parameters = new ir_variable *[num_parameters];
 
    /* Generate the declarations for the parameters to our inlined code,
@@ -179,8 +176,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    exec_list new_instructions;
 
    /* Generate the inlined body of the function to a new list */
-   foreach_list(n, &callee->body) {
-      ir_instruction *ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, ir, &callee->body) {
       ir_instruction *new_ir = ir->clone(ctx, ht);
 
       new_instructions.push_tail(new_ir);
@@ -362,8 +358,7 @@ ir_variable_replacement_visitor::visit_leave(ir_dereference_record *ir)
 ir_visitor_status
 ir_variable_replacement_visitor::visit_leave(ir_call *ir)
 {
-   foreach_list_safe(n, &ir->actual_parameters) {
-      ir_rvalue *param = (ir_rvalue *) n;
+   foreach_in_list_safe(ir_rvalue, param, &ir->actual_parameters) {
       ir_rvalue *new_param = param;
       replace_rvalue(&new_param);
 

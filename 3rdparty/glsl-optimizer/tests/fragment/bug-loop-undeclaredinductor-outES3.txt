@@ -1,0 +1,88 @@
+#version 300 es
+out mediump vec4 _fragData;
+uniform sampler2D _MainTex;
+uniform mediump float _NumPasses;
+uniform mediump vec4 _ContrastShift;
+uniform mediump vec4 _SaturationShift;
+uniform lowp vec4 _HueShift;
+uniform lowp vec4 _LuminosityShift;
+in mediump vec2 xlv_TEXCOORD0;
+void main ()
+{
+  lowp vec4 t_1;
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = texture (_MainTex, xlv_TEXCOORD0);
+  t_1 = tmpvar_2;
+  if ((_NumPasses > 0.0)) {
+    mediump float passes_3;
+    passes_3 = _NumPasses;
+    highp float i_4;
+    lowp vec3 res_5;
+    res_5 = tmpvar_2.xyz;
+    i_4 = 0.0;
+    while (true) {
+      if ((i_4 >= 4.0)) {
+        break;
+      };
+      if ((i_4 == passes_3)) {
+        break;
+      };
+      if ((i_4 == 0.0)) {
+        lowp vec3 tmpvar_6;
+        mediump float val_7;
+        val_7 = ((_ContrastShift.x * 3.0) + 12.0);
+        mediump float tmpvar_8;
+        tmpvar_8 = pow ((cos(val_7) + 1.0), val_7);
+        tmpvar_6 = ((res_5 - 0.5) * tmpvar_8);
+        res_5 = tmpvar_6;
+      } else {
+        if ((i_4 == 1.0)) {
+          lowp vec3 tmpvar_9;
+          mediump float val_10;
+          val_10 = ((_SaturationShift.y * 3.0) + 12.0);
+          mediump float tmpvar_11;
+          tmpvar_11 = pow ((cos(val_10) + 1.0), val_10);
+          tmpvar_9 = ((res_5 - 0.5) * tmpvar_11);
+          res_5 = tmpvar_9;
+        } else {
+          if ((i_4 == 2.0)) {
+            lowp vec3 tmpvar_12;
+            mediump float val_13;
+            val_13 = ((_HueShift.z * 3.0) + 12.0);
+            mediump float tmpvar_14;
+            tmpvar_14 = pow ((cos(val_13) + 1.0), val_13);
+            tmpvar_12 = ((res_5 - 0.5) * tmpvar_14);
+            res_5 = tmpvar_12;
+          } else {
+            lowp vec3 tmpvar_15;
+            mediump float val_16;
+            val_16 = ((_LuminosityShift.x * 3.0) + 12.0);
+            mediump float tmpvar_17;
+            tmpvar_17 = pow ((cos(val_16) + 1.0), val_16);
+            tmpvar_15 = ((res_5 - 0.5) * tmpvar_17);
+            res_5 = tmpvar_15;
+          };
+        };
+      };
+      i_4 += 1.0;
+    };
+    t_1.xyz = res_5;
+  };
+  lowp vec4 tmpvar_18;
+  tmpvar_18.w = 1.0;
+  tmpvar_18.xyz = t_1.xyz;
+  _fragData = tmpvar_18;
+}
+
+
+// stats: 37 alu 1 tex 7 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
+// uniforms: 5 (total size: 0)
+//  #0: _NumPasses (medium float) 1x1 [-1]
+//  #1: _ContrastShift (medium float) 4x1 [-1]
+//  #2: _SaturationShift (medium float) 4x1 [-1]
+//  #3: _HueShift (low float) 4x1 [-1]
+//  #4: _LuminosityShift (low float) 4x1 [-1]
+// textures: 1
+//  #0: _MainTex (low 2d) 0x0 [-1]

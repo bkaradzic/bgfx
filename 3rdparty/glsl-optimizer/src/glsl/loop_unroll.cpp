@@ -25,15 +25,18 @@
 #include "loop_analysis.h"
 #include "ir_hierarchical_visitor.h"
 
+#include "main/mtypes.h"
+
 namespace {
 
 class loop_unroll_visitor : public ir_hierarchical_visitor {
 public:
-   loop_unroll_visitor(loop_state *state, unsigned max_iterations)
+   loop_unroll_visitor(loop_state *state,
+                       const struct gl_shader_compiler_options *options)
    {
       this->state = state;
       this->progress = false;
-      this->max_iterations = max_iterations;
+      this->options = options;
    }
 
    virtual ir_visitor_status visit_leave(ir_loop *ir);
@@ -45,7 +48,7 @@ public:
    loop_state *state;
 
    bool progress;
-   unsigned max_iterations;
+   const struct gl_shader_compiler_options *options;
 };
 
 } /* anonymous namespace */
@@ -60,33 +63,86 @@ is_break(ir_instruction *ir)
 class loop_unroll_count : public ir_hierarchical_visitor {
 public:
    int nodes;
-   bool fail;
+   bool unsupported_variable_indexing;
+   /* If there are nested loops, the node count will be inaccurate. */
+   bool nested_loop;
 
-   loop_unroll_count(exec_list *list)
+   loop_unroll_count(exec_list *list, loop_variable_state *ls,
+                     const struct gl_shader_compiler_options *options)
+      : ls(ls), options(options)
    {
       nodes = 0;
-      fail = false;
+      nested_loop = false;
+      unsupported_variable_indexing = false;
 
       run(list);
    }
 
-   virtual ir_visitor_status visit_enter(ir_assignment *ir)
+   virtual ir_visitor_status visit_enter(ir_assignment *)
    {
       nodes++;
       return visit_continue;
    }
 
-   virtual ir_visitor_status visit_enter(ir_expression *ir)
+   virtual ir_visitor_status visit_enter(ir_expression *)
    {
       nodes++;
       return visit_continue;
    }
 
-   virtual ir_visitor_status visit_enter(ir_loop *ir)
+   virtual ir_visitor_status visit_enter(ir_loop *)
    {
-      fail = true;
+      nested_loop = true;
       return visit_continue;
    }
+
+   virtual ir_visitor_status visit_enter(ir_dereference_array *ir)
+   {
+      /* Check for arrays variably-indexed by a loop induction variable.
+       * Unrolling the loop may convert that access into constant-indexing.
+       *
+       * Many drivers don't support particular kinds of variable indexing,
+       * and have to resort to using lower_variable_index_to_cond_assign to
+       * handle it.  This results in huge amounts of horrible code, so we'd
+       * like to avoid that if possible.  Here, we just note that it will
+       * happen.
+       */
+      if ((ir->array->type->is_array() || ir->array->type->is_matrix()) &&
+          !ir->array_index->as_constant()) {
+         ir_variable *array = ir->array->variable_referenced();
+         loop_variable *lv = ls->get(ir->array_index->variable_referenced());
+         if (array && lv && lv->is_induction_var()) {
+            switch (array->data.mode) {
+            case ir_var_auto:
+            case ir_var_temporary:
+            case ir_var_const_in:
+            case ir_var_function_in:
+            case ir_var_function_out:
+            case ir_var_function_inout:
+               if (options->EmitNoIndirectTemp)
+                  unsupported_variable_indexing = true;
+               break;
+            case ir_var_uniform:
+               if (options->EmitNoIndirectUniform)
+                  unsupported_variable_indexing = true;
+               break;
+            case ir_var_shader_in:
+               if (options->EmitNoIndirectInput)
+                  unsupported_variable_indexing = true;
+               break;
+            case ir_var_shader_out:
+               if (options->EmitNoIndirectOutput)
+                  unsupported_variable_indexing = true;
+               break;
+            }
+         }
+      }
+      return visit_continue;
+   }
+
+private:
+   loop_variable_state *ls;
+   const struct gl_shader_compiler_options *options;
 };
 
 
@@ -244,16 +300,21 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
    iterations = ls->limiting_terminator->iterations;
 
+   const int max_iterations = options->MaxUnrollIterations;
+
    /* Don't try to unroll loops that have zillions of iterations either.
     */
-   if (iterations > (int) max_iterations)
+   if (iterations > max_iterations)
       return visit_continue;
 
    /* Don't try to unroll nested loops and loops with a huge body.
     */
-   loop_unroll_count count(&ir->body_instructions);
+   loop_unroll_count count(&ir->body_instructions, ls, options);
 
-   if (count.fail || count.nodes * iterations > (int)max_iterations * 25)
+   bool loop_too_large =
+      count.nested_loop || count.nodes * iterations > (int)max_iterations * 25;
+
+   if (loop_too_large && !count.unsupported_variable_indexing)
       return visit_continue;
 
    /* Note: the limiting terminator contributes 1 to ls->num_loop_jumps.
@@ -286,10 +347,8 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   foreach_list(node, &ir->body_instructions) {
-      /* recognize loops in the form produced by ir_lower_jumps */
-      ir_instruction *cur_ir = (ir_instruction *) node;
-
+   /* recognize loops in the form produced by ir_lower_jumps */
+   foreach_in_list(ir_instruction, cur_ir, &ir->body_instructions) {
       /* Skip the limiting terminator, since it will go away when we
        * unroll.
        */
@@ -338,9 +397,10 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
 
 bool
-unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations)
+unroll_loops(exec_list *instructions, loop_state *ls,
+             const struct gl_shader_compiler_options *options)
 {
-   loop_unroll_visitor v(ls, max_iterations);
+   loop_unroll_visitor v(ls, options);
 
    v.run(instructions);
 

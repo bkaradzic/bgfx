@@ -1,0 +1,128 @@
+#version 300 es
+layout(location=0) out mediump vec4 _glesFragData[4];
+uniform highp vec4 _ZBufferParams;
+uniform highp vec4 _LightPos;
+uniform highp mat4 _FrustumRays;
+uniform highp vec4 _CameraPosLocal;
+uniform highp vec4 _CoordTexDim;
+uniform highp vec4 _ScreenTexDim;
+uniform sampler2D _CameraDepthTexture;
+in highp vec2 xlv_TEXCOORD0;
+void main ()
+{
+  highp vec4 depth_1;
+  highp vec2 coordTemp_2;
+  highp float sampleOnEpipolarLine_3;
+  highp float tmpvar_4;
+  tmpvar_4 = clamp ((xlv_TEXCOORD0.y - (0.5 / _CoordTexDim.y)), 0.0, 1.0);
+  sampleOnEpipolarLine_3 = ((xlv_TEXCOORD0.x - (0.5 / _CoordTexDim.x)) * (_CoordTexDim.x / (_CoordTexDim.x - 1.0)));
+  highp float tmpvar_5;
+  tmpvar_5 = clamp (sampleOnEpipolarLine_3, 0.0, 1.0);
+  sampleOnEpipolarLine_3 = tmpvar_5;
+  highp int tmpvar_6;
+  tmpvar_6 = int(clamp (floor(
+    (tmpvar_4 * 4.0)
+  ), 0.0, 3.0));
+  highp float tmpvar_7;
+  tmpvar_7 = (-1.0 + (2.0 * fract(
+    (tmpvar_4 * 4.0)
+  )));
+  highp vec4 tmpvar_8;
+  tmpvar_8.xz = vec2(-1.0, 1.0);
+  tmpvar_8.y = tmpvar_7;
+  tmpvar_8.w = -(tmpvar_7);
+  highp vec4 tmpvar_9;
+  tmpvar_9.yw = vec2(-1.0, 1.0);
+  tmpvar_9.x = -(tmpvar_7);
+  tmpvar_9.z = tmpvar_7;
+  bvec4 tmpvar_10;
+  tmpvar_10 = equal (ivec4(tmpvar_6), ivec4(0, 1, 2, 3));
+  lowp vec4 tmpvar_11;
+  tmpvar_11 = vec4(tmpvar_10);
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = vec4(tmpvar_10);
+  highp vec2 tmpvar_13;
+  tmpvar_13.x = dot (tmpvar_9, tmpvar_11);
+  tmpvar_13.y = dot (tmpvar_8, tmpvar_12);
+  coordTemp_2 = ((mix (_LightPos.xy, 
+    -(tmpvar_13)
+  , vec2(tmpvar_5)) * 0.5) + 0.5);
+  highp vec4 tmpvar_14;
+  tmpvar_14.zw = vec2(0.0, 0.0);
+  tmpvar_14.xy = coordTemp_2;
+  coordTemp_2 = ((floor(
+    (coordTemp_2 * _ScreenTexDim.xy)
+  ) + 0.5) * _ScreenTexDim.zw);
+  lowp vec4 tmpvar_15;
+  tmpvar_15 = texture (_CameraDepthTexture, coordTemp_2);
+  highp float tmpvar_16;
+  highp float z_17;
+  z_17 = tmpvar_15.x;
+  tmpvar_16 = (1.0/(((_ZBufferParams.x * z_17) + _ZBufferParams.y)));
+  depth_1 = vec4(tmpvar_16);
+  highp vec4 v_18;
+  v_18.x = _FrustumRays[0].x;
+  v_18.y = _FrustumRays[1].x;
+  v_18.z = _FrustumRays[2].x;
+  v_18.w = _FrustumRays[3].x;
+  highp vec4 v_19;
+  v_19.x = _FrustumRays[0].y;
+  v_19.y = _FrustumRays[1].y;
+  v_19.z = _FrustumRays[2].y;
+  v_19.w = _FrustumRays[3].y;
+  highp vec4 v_20;
+  v_20.x = _FrustumRays[0].w;
+  v_20.y = _FrustumRays[1].w;
+  v_20.z = _FrustumRays[2].w;
+  v_20.w = _FrustumRays[3].w;
+  highp vec4 v_21;
+  v_21.x = _FrustumRays[0].z;
+  v_21.y = _FrustumRays[1].z;
+  v_21.z = _FrustumRays[2].z;
+  v_21.w = _FrustumRays[3].z;
+  highp vec3 tmpvar_22;
+  tmpvar_22 = mix (mix (v_18.xyz, v_19.xyz, tmpvar_14.xxx), mix (v_20.xyz, v_21.xyz, tmpvar_14.xxx), tmpvar_14.yyy);
+  highp float tmpvar_23;
+  tmpvar_23 = sqrt(dot (tmpvar_22, tmpvar_22));
+  bool tmpvar_24;
+  highp vec3 tmpvar_25;
+  tmpvar_25 = (1.0/((tmpvar_22 / tmpvar_23)));
+  highp vec3 tmpvar_26;
+  tmpvar_26 = (tmpvar_25 * (-0.5 - _CameraPosLocal.xyz));
+  highp vec3 tmpvar_27;
+  tmpvar_27 = (tmpvar_25 * (0.5 - _CameraPosLocal.xyz));
+  highp vec3 tmpvar_28;
+  tmpvar_28 = min (tmpvar_27, tmpvar_26);
+  highp vec3 tmpvar_29;
+  tmpvar_29 = max (tmpvar_27, tmpvar_26);
+  highp vec2 tmpvar_30;
+  tmpvar_30 = max (tmpvar_28.xx, tmpvar_28.yz);
+  highp float tmpvar_31;
+  tmpvar_31 = max (tmpvar_30.x, tmpvar_30.y);
+  highp vec2 tmpvar_32;
+  tmpvar_32 = min (tmpvar_29.xx, tmpvar_29.yz);
+  highp float tmpvar_33;
+  tmpvar_33 = min (tmpvar_32.x, tmpvar_32.y);
+  tmpvar_24 = ((tmpvar_31 < tmpvar_33) && (tmpvar_33 > 0.0));
+  if ((!(tmpvar_24) || (tmpvar_16 < (tmpvar_31 / tmpvar_23)))) {
+    depth_1 = -(vec4(tmpvar_16));
+  } else {
+    depth_1 = min (depth_1, vec4((tmpvar_33 / tmpvar_23)));
+  };
+  _glesFragData[0] = tmpvar_14;
+  _glesFragData[1] = depth_1;
+}
+
+
+// stats: 65 alu 1 tex 1 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+// uniforms: 6 (total size: 0)
+//  #0: _ZBufferParams (high float) 4x1 [-1]
+//  #1: _LightPos (high float) 4x1 [-1]
+//  #2: _FrustumRays (high float) 4x4 [-1]
+//  #3: _CameraPosLocal (high float) 4x1 [-1]
+//  #4: _CoordTexDim (high float) 4x1 [-1]
+//  #5: _ScreenTexDim (high float) 4x1 [-1]
+// textures: 1
+//  #0: _CameraDepthTexture (low 2d) 0x0 [-1]

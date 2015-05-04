@@ -34,8 +34,8 @@ vec3 fresnel(vec3 _cspec, float _dot)
 
 void main()
 {
-	vec3 light = vec3(0.0f, 0.0f, -1.0f);
-	vec3 clight = vec3(1.0f, 1.0f, 1.0f);
+	vec3 light  = vec3(0.0, 0.0, -1.0);
+	vec3 clight = vec3(1.0, 1.0,  1.0);
 
 	vec3 v = v_view;
 	vec3 n = normalize(v_normal);

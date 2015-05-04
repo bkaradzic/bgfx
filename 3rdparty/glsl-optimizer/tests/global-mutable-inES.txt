@@ -1,0 +1,31 @@
+uniform highp float uni1;
+uniform mediump vec4 uni4;
+uniform sampler2D tex1;
+
+// global variables that aren't uniforms
+highp float mut_uni1;
+mediump vec4 mut_uni4;
+
+highp vec3 SampleDiffuse(in highp vec2 uv)
+{
+    mut_uni4.xy = uv;
+    return vec3(texture2D(tex1,mut_uni4.xy));
+}
+lowp vec4 xlat_main(in highp vec4 uv)
+{
+    lowp vec4 c = vec4(0.0);
+    c.x += mut_uni4.x;
+    c.xyz += SampleDiffuse(uv.xy);
+    c.z += mut_uni1;
+    mut_uni1 += 2.0;
+    c.w += mut_uni1;
+    return c;
+}
+varying highp vec4 var_uv;
+void main()
+{
+    mut_uni1 = uni1;
+    mut_uni4 = uni4;
+    lowp vec4 r = xlat_main(var_uv);
+    gl_FragData[0] = r;
+}

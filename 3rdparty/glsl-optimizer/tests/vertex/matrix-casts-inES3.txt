@@ -1,0 +1,32 @@
+#version 300 es
+
+uniform highp mat4 uniMat4F;
+uniform mediump mat4 uniMat4H;
+uniform highp mat3 uniMat3F;
+uniform mediump mat3 uniMat3H;
+uniform highp mat2 uniMat2F;
+uniform mediump mat2 uniMat2H;
+
+in highp vec4 inf;
+in mediump vec4 inh;
+
+void main()
+{
+    highp vec4 r = vec4(0.0);
+
+    mediump mat4 ftoh4 = uniMat4F;
+    r.x += ftoh4[0][0];
+    mediump mat3 ftoh3 = uniMat3F;
+    r.x += ftoh4[0][0];
+    mediump mat2 ftoh2 = uniMat2F;
+    r.x += ftoh2[0][0];
+
+    highp mat4 htof4 = uniMat4H;
+    r.x += htof4[0][0];
+    highp mat3 htof3 = uniMat3H;
+    r.x += htof3[0][0];
+    highp mat2 htof2 = uniMat2H;
+    r.x += htof2[0][0];
+
+    gl_Position = r;
+}

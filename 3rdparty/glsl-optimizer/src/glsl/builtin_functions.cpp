@@ -62,6 +62,10 @@
 #include "program/prog_instruction.h"
 #include <limits>
 
+#define M_PIf   ((float) M_PI)
+#define M_PI_2f ((float) M_PI_2)
+#define M_PI_4f ((float) M_PI_4)
+
 using namespace ir_builder;
 
 /**
@@ -69,7 +73,7 @@ using namespace ir_builder;
  *  @{
  */
 static bool
-always_available(const _mesa_glsl_parse_state *state)
+always_available(const _mesa_glsl_parse_state *)
 {
    return true;
 }
@@ -168,7 +172,8 @@ es_lod_exists_in_stage(const _mesa_glsl_parse_state *state)
 	 * is enabled.
 	 */
 	return
-		state->stage == MESA_SHADER_FRAGMENT &&
+// BK - EXT_shader_texture_lod is available in vertex and fragment shaders.
+//		state->stage == MESA_SHADER_FRAGMENT &&
 		state->es_shader &&
 		state->is_version(110, 100) &&
 		state->EXT_shader_texture_lod_enable;
@@ -220,16 +225,17 @@ shader_integer_mix(const _mesa_glsl_parse_state *state)
 }
 
 static bool
-shader_packing(const _mesa_glsl_parse_state *state)
-{
-   return state->ARB_shading_language_packing_enable ||
-          state->is_version(400, 0);
-}
-
-static bool
 shader_packing_or_es3(const _mesa_glsl_parse_state *state)
 {
    return state->ARB_shading_language_packing_enable ||
+          state->is_version(400, 300);
+}
+
+static bool
+shader_packing_or_es3_or_gpu_shader5(const _mesa_glsl_parse_state *state)
+{
+   return state->ARB_shading_language_packing_enable ||
+          state->ARB_gpu_shader5_enable ||
           state->is_version(400, 300);
 }
 
@@ -238,6 +244,21 @@ gpu_shader5(const _mesa_glsl_parse_state *state)
 {
    return state->is_version(400, 0) || state->ARB_gpu_shader5_enable;
 }
+
+static bool
+shader_packing_or_gpu_shader5(const _mesa_glsl_parse_state *state)
+{
+   return state->ARB_shading_language_packing_enable ||
+          gpu_shader5(state);
+}
+
+static bool
+fs_gpu_shader5(const _mesa_glsl_parse_state *state)
+{
+   return state->stage == MESA_SHADER_FRAGMENT &&
+          (state->is_version(400, 0) || state->ARB_gpu_shader5_enable);
+}
+
 
 static bool
 texture_array_lod(const _mesa_glsl_parse_state *state)
@@ -324,6 +345,14 @@ fs_oes_derivatives(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+fs_derivative_control(const _mesa_glsl_parse_state *state)
+{
+   return state->stage == MESA_SHADER_FRAGMENT &&
+          (state->is_version(450, 0) ||
+           state->ARB_derivative_control_enable);
+}
+
+static bool
 tex1d_lod(const _mesa_glsl_parse_state *state)
 {
    return !state->es_shader && lod_exists_in_stage(state);
@@ -371,6 +400,12 @@ shader_image_load_store(const _mesa_glsl_parse_state *state)
 {
    return (state->is_version(420, 0) ||
            state->ARB_shader_image_load_store_enable);
+}
+
+static bool
+gs_streams(const _mesa_glsl_parse_state *state)
+{
+   return gpu_shader5(state) && gs_only(state);
 }
 
 /** @} */
@@ -434,6 +469,7 @@ private:
    ir_swizzle *matrix_elt(ir_variable *var, int col, int row);
 
    ir_expression *asin_expr(ir_variable *x);
+   void do_atan(ir_factory &body, const glsl_type *type, ir_variable *res, operand y_over_x);
 
    /**
     * Call function \param f with parameters specified as the linked
@@ -608,12 +644,22 @@ private:
 
    B0(EmitVertex)
    B0(EndPrimitive)
+   ir_function_signature *_EmitStreamVertex(builtin_available_predicate avail,
+                                            const glsl_type *stream_type);
+   ir_function_signature *_EndStreamPrimitive(builtin_available_predicate avail,
+                                              const glsl_type *stream_type);
 
    B2(textureQueryLod);
    B1(textureQueryLevels);
    B1(dFdx);
    B1(dFdy);
    B1(fwidth);
+   B1(dFdxCoarse);
+   B1(dFdyCoarse);
+   B1(fwidthCoarse);
+   B1(dFdxFine);
+   B1(dFdyFine);
+   B1(fwidthFine);
    B1(noise1);
    B1(noise2);
    B1(noise3);
@@ -631,6 +677,9 @@ private:
    B1(uaddCarry)
    B1(usubBorrow)
    B1(mulExtended)
+   B1(interpolateAtCentroid)
+   B1(interpolateAtOffset)
+   B1(interpolateAtSample)
 
    ir_function_signature *_atomic_intrinsic(builtin_available_predicate avail);
    ir_function_signature *_atomic_op(const char *intrinsic,
@@ -699,7 +748,8 @@ builtin_builder::find(_mesa_glsl_parse_state *state,
    if (f == NULL)
       return NULL;
 
-   ir_function_signature *sig = f->matching_signature(state, actual_parameters);
+   ir_function_signature *sig =
+      f->matching_signature(state, actual_parameters, true);
    if (sig == NULL)
       return NULL;
 
@@ -1017,16 +1067,16 @@ builtin_builder::create_builtins()
                 _uintBitsToFloat(glsl_type::uvec4_type),
                 NULL);
 
-   add_function("packUnorm2x16",   _packUnorm2x16(shader_packing_or_es3),   NULL);
-   add_function("packSnorm2x16",   _packSnorm2x16(shader_packing_or_es3),   NULL);
-   add_function("packUnorm4x8",    _packUnorm4x8(shader_packing),           NULL);
-   add_function("packSnorm4x8",    _packSnorm4x8(shader_packing),           NULL);
-   add_function("unpackUnorm2x16", _unpackUnorm2x16(shader_packing_or_es3), NULL);
-   add_function("unpackSnorm2x16", _unpackSnorm2x16(shader_packing_or_es3), NULL);
-   add_function("unpackUnorm4x8",  _unpackUnorm4x8(shader_packing),         NULL);
-   add_function("unpackSnorm4x8",  _unpackSnorm4x8(shader_packing),         NULL);
-   add_function("packHalf2x16",    _packHalf2x16(shader_packing_or_es3),    NULL);
-   add_function("unpackHalf2x16",  _unpackHalf2x16(shader_packing_or_es3),  NULL);
+   add_function("packUnorm2x16",   _packUnorm2x16(shader_packing_or_es3_or_gpu_shader5),   NULL);
+   add_function("packSnorm2x16",   _packSnorm2x16(shader_packing_or_es3),                  NULL);
+   add_function("packUnorm4x8",    _packUnorm4x8(shader_packing_or_gpu_shader5),           NULL);
+   add_function("packSnorm4x8",    _packSnorm4x8(shader_packing_or_gpu_shader5),           NULL);
+   add_function("unpackUnorm2x16", _unpackUnorm2x16(shader_packing_or_es3_or_gpu_shader5), NULL);
+   add_function("unpackSnorm2x16", _unpackSnorm2x16(shader_packing_or_es3),                NULL);
+   add_function("unpackUnorm4x8",  _unpackUnorm4x8(shader_packing_or_gpu_shader5),         NULL);
+   add_function("unpackSnorm4x8",  _unpackSnorm4x8(shader_packing_or_gpu_shader5),         NULL);
+   add_function("packHalf2x16",    _packHalf2x16(shader_packing_or_es3),                   NULL);
+   add_function("unpackHalf2x16",  _unpackHalf2x16(shader_packing_or_es3),                 NULL);
 
    F(length)
    F(distance)
@@ -1722,6 +1772,14 @@ builtin_builder::create_builtins()
 
    add_function("EmitVertex",   _EmitVertex(),   NULL);
    add_function("EndPrimitive", _EndPrimitive(), NULL);
+   add_function("EmitStreamVertex",
+                _EmitStreamVertex(gs_streams, glsl_type::uint_type),
+                _EmitStreamVertex(gs_streams, glsl_type::int_type),
+                NULL);
+   add_function("EndStreamPrimitive",
+                _EndStreamPrimitive(gs_streams, glsl_type::uint_type),
+                _EndStreamPrimitive(gs_streams, glsl_type::int_type),
+                NULL);
 
    add_function("textureQueryLOD",
                 _textureQueryLod(glsl_type::sampler1D_type,  glsl_type::float_type),
@@ -1852,8 +1910,8 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture2DProjLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture3D",
@@ -1880,7 +1938,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("textureCubeLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture2DRect",
@@ -2160,6 +2218,12 @@ builtin_builder::create_builtins()
    F(dFdx)
    F(dFdy)
    F(fwidth)
+   F(dFdxCoarse)
+   F(dFdyCoarse)
+   F(fwidthCoarse)
+   F(dFdxFine)
+   F(dFdyFine)
+   F(fwidthFine)
    F(noise1)
    F(noise2)
    F(noise3)
@@ -2209,6 +2273,24 @@ builtin_builder::create_builtins()
                 _mulExtended(glsl_type::uvec2_type),
                 _mulExtended(glsl_type::uvec3_type),
                 _mulExtended(glsl_type::uvec4_type),
+                NULL);
+   add_function("interpolateAtCentroid",
+                _interpolateAtCentroid(glsl_type::float_type),
+                _interpolateAtCentroid(glsl_type::vec2_type),
+                _interpolateAtCentroid(glsl_type::vec3_type),
+                _interpolateAtCentroid(glsl_type::vec4_type),
+                NULL);
+   add_function("interpolateAtOffset",
+                _interpolateAtOffset(glsl_type::float_type),
+                _interpolateAtOffset(glsl_type::vec2_type),
+                _interpolateAtOffset(glsl_type::vec3_type),
+                _interpolateAtOffset(glsl_type::vec4_type),
+                NULL);
+   add_function("interpolateAtSample",
+                _interpolateAtSample(glsl_type::float_type),
+                _interpolateAtSample(glsl_type::vec2_type),
+                _interpolateAtSample(glsl_type::vec3_type),
+                _interpolateAtSample(glsl_type::vec4_type),
                 NULL);
 
    add_function("atomicCounter",
@@ -2584,11 +2666,11 @@ ir_expression *
 builtin_builder::asin_expr(ir_variable *x)
 {
    return mul(sign(x),
-              sub(imm(1.5707964f),
+              sub(imm(M_PI_2f),
                   mul(sqrt(sub(imm(1.0f), abs(x))),
-                      add(imm(1.5707964f),
+                      add(imm(M_PI_2f),
                           mul(abs(x),
-                              add(imm(-0.21460183f),
+                              add(imm(M_PI_4f - 1.0f),
                                   mul(abs(x),
                                       add(imm(0.086566724f),
                                           mul(abs(x), imm(-0.03102955f))))))))));
@@ -2599,8 +2681,7 @@ builtin_builder::call(ir_function *f, ir_variable *ret, exec_list params)
 {
    exec_list actual_params;
 
-   foreach_list(node, &params) {
-      ir_variable *var = (ir_variable *) node;
+   foreach_in_list(ir_variable, var, &params) {
       actual_params.push_tail(var_ref(var));
    }
 
@@ -2632,7 +2713,7 @@ builtin_builder::_acos(const glsl_type *type)
    ir_variable *x = in_var(type, "x");
    MAKE_SIG(type, always_available, 1, x);
 
-   body.emit(ret(sub(imm(1.5707964f), asin_expr(x))));
+   body.emit(ret(sub(imm(M_PI_2f), asin_expr(x))));
 
    return sig;
 }
@@ -2659,23 +2740,19 @@ builtin_builder::_atan2(const glsl_type *type)
       ir_factory outer_then(&outer_if->then_instructions, mem_ctx);
 
       /* Then...call atan(y/x) */
-      ir_variable *y_over_x = outer_then.make_temp(glsl_type::float_type, "y_over_x");
-      outer_then.emit(assign(y_over_x, div(y, x)));
-      outer_then.emit(assign(r, mul(y_over_x, rsq(add(mul(y_over_x, y_over_x),
-                                                      imm(1.0f))))));
-      outer_then.emit(assign(r, asin_expr(r)));
+      do_atan(body, glsl_type::float_type, r, div(y, x));
 
       /*     ...and fix it up: */
       ir_if *inner_if = new(mem_ctx) ir_if(less(x, imm(0.0f)));
       inner_if->then_instructions.push_tail(
          if_tree(gequal(y, imm(0.0f)),
-                 assign(r, add(r, imm(3.141593f))),
-                 assign(r, sub(r, imm(3.141593f)))));
+                 assign(r, add(r, imm(M_PIf))),
+                 assign(r, sub(r, imm(M_PIf)))));
       outer_then.emit(inner_if);
 
       /* Else... */
       outer_if->else_instructions.push_tail(
-         assign(r, mul(sign(y), imm(1.5707965f))));
+         assign(r, mul(sign(y), imm(M_PI_2f))));
 
       body.emit(outer_if);
 
@@ -2686,17 +2763,65 @@ builtin_builder::_atan2(const glsl_type *type)
    return sig;
 }
 
+void
+builtin_builder::do_atan(ir_factory &body, const glsl_type *type, ir_variable *res, operand y_over_x)
+{
+   /*
+    * range-reduction, first step:
+    *
+    *      / y_over_x         if |y_over_x| <= 1.0;
+    * x = <
+    *      \ 1.0 / y_over_x   otherwise
+    */
+   ir_variable *x = body.make_temp(type, "atan_x");
+   body.emit(assign(x, div(min2(abs(y_over_x),
+                                imm(1.0f)),
+                           max2(abs(y_over_x),
+                                imm(1.0f)))));
+
+   /*
+    * approximate atan by evaluating polynomial:
+    *
+    * x   * 0.9999793128310355 - x^3  * 0.3326756418091246 +
+    * x^5 * 0.1938924977115610 - x^7  * 0.1173503194786851 +
+    * x^9 * 0.0536813784310406 - x^11 * 0.0121323213173444
+    */
+   ir_variable *tmp = body.make_temp(type, "atan_tmp");
+   body.emit(assign(tmp, mul(x, x)));
+   body.emit(assign(tmp, mul(add(mul(sub(mul(add(mul(sub(mul(add(mul(imm(-0.0121323213173444f),
+                                                                     tmp),
+                                                                 imm(0.0536813784310406f)),
+                                                             tmp),
+                                                         imm(0.1173503194786851f)),
+                                                     tmp),
+                                                 imm(0.1938924977115610f)),
+                                             tmp),
+                                         imm(0.3326756418091246f)),
+                                     tmp),
+                                 imm(0.9999793128310355f)),
+                             x)));
+
+   /* range-reduction fixup */
+   body.emit(assign(tmp, add(tmp,
+                             mul(b2f(greater(abs(y_over_x),
+                                          imm(1.0f, type->components()))),
+                                  add(mul(tmp,
+                                          imm(-2.0f)),
+                                      imm(M_PI_2f))))));
+
+   /* sign fixup */
+   body.emit(assign(res, mul(tmp, sign(y_over_x))));
+}
+
 ir_function_signature *
 builtin_builder::_atan(const glsl_type *type)
 {
    ir_variable *y_over_x = in_var(type, "y_over_x");
    MAKE_SIG(type, always_available, 1, y_over_x);
 
-   ir_variable *t = body.make_temp(type, "t");
-   body.emit(assign(t, mul(y_over_x, rsq(add(mul(y_over_x, y_over_x),
-                                             imm(1.0f))))));
-
-   body.emit(ret(asin_expr(t)));
+   ir_variable *tmp = body.make_temp(type, "tmp");
+   do_atan(body, type, tmp, y_over_x);
+   body.emit(ret(tmp));
 
    return sig;
 }
@@ -3095,7 +3220,7 @@ builtin_builder::_length(const glsl_type *type)
    ir_variable *x = in_var(type, "x");
    MAKE_SIG(glsl_type::float_type, always_available, 1, x);
 
-   body.emit(ret(sqrt(dotlike(x, x))));
+   body.emit(ret(sqrt(dot(x, x))));
 
    return sig;
 }
@@ -3185,7 +3310,7 @@ builtin_builder::_faceforward(const glsl_type *type)
    ir_variable *Nref = in_var(type, "Nref");
    MAKE_SIG(type, always_available, 3, N, I, Nref);
 
-   body.emit(if_tree(less(dotlike(Nref, I), imm(0.0f)),
+   body.emit(if_tree(less(dot(Nref, I), imm(0.0f)),
                      ret(N), ret(neg(N))));
 
    return sig;
@@ -3199,7 +3324,7 @@ builtin_builder::_reflect(const glsl_type *type)
    MAKE_SIG(type, always_available, 2, I, N);
 
    /* I - 2 * dot(N, I) * N */
-   body.emit(ret(sub(I, mul(imm(2.0f), mul(dotlike(N, I), N)))));
+   body.emit(ret(sub(I, mul(imm(2.0f), mul(dot(N, I), N)))));
 
    return sig;
 }
@@ -3213,7 +3338,7 @@ builtin_builder::_refract(const glsl_type *type)
    MAKE_SIG(type, always_available, 3, I, N, eta);
 
    ir_variable *n_dot_i = body.make_temp(glsl_type::float_type, "n_dot_i");
-   body.emit(assign(n_dot_i, dotlike(N, I)));
+   body.emit(assign(n_dot_i, dot(N, I)));
 
    /* From the GLSL 1.10 specification:
     * k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I))
@@ -3917,7 +4042,28 @@ builtin_builder::_EmitVertex()
 {
    MAKE_SIG(glsl_type::void_type, gs_only, 0);
 
-   body.emit(new(mem_ctx) ir_emit_vertex());
+   ir_rvalue *stream = new(mem_ctx) ir_constant(0, 1);
+   body.emit(new(mem_ctx) ir_emit_vertex(stream));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_EmitStreamVertex(builtin_available_predicate avail,
+                                   const glsl_type *stream_type)
+{
+   /* Section 8.12 (Geometry Shader Functions) of the GLSL 4.0 spec says:
+    *
+    *     "Emit the current values of output variables to the current output
+    *     primitive on stream stream. The argument to stream must be a constant
+    *     integral expression."
+    */
+   ir_variable *stream =
+      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in, glsl_precision_undefined);
+
+   MAKE_SIG(glsl_type::void_type, avail, 1, stream);
+
+   body.emit(new(mem_ctx) ir_emit_vertex(var_ref(stream)));
 
    return sig;
 }
@@ -3927,7 +4073,28 @@ builtin_builder::_EndPrimitive()
 {
    MAKE_SIG(glsl_type::void_type, gs_only, 0);
 
-   body.emit(new(mem_ctx) ir_end_primitive());
+   ir_rvalue *stream = new(mem_ctx) ir_constant(0, 1);
+   body.emit(new(mem_ctx) ir_end_primitive(stream));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_EndStreamPrimitive(builtin_available_predicate avail,
+                                     const glsl_type *stream_type)
+{
+   /* Section 8.12 (Geometry Shader Functions) of the GLSL 4.0 spec says:
+    *
+    *     "Completes the current output primitive on stream stream and starts
+    *     a new one. The argument to stream must be a constant integral
+    *     expression."
+    */
+   ir_variable *stream =
+      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in, glsl_precision_undefined);
+
+   MAKE_SIG(glsl_type::void_type, avail, 1, stream);
+
+   body.emit(new(mem_ctx) ir_end_primitive(var_ref(stream)));
 
    return sig;
 }
@@ -3966,7 +4133,11 @@ builtin_builder::_textureQueryLevels(const glsl_type *sampler_type)
 }
 
 UNOP(dFdx, ir_unop_dFdx, fs_oes_derivatives)
+UNOP(dFdxCoarse, ir_unop_dFdx_coarse, fs_derivative_control)
+UNOP(dFdxFine, ir_unop_dFdx_fine, fs_derivative_control)
 UNOP(dFdy, ir_unop_dFdy, fs_oes_derivatives)
+UNOP(dFdyCoarse, ir_unop_dFdy_coarse, fs_derivative_control)
+UNOP(dFdyFine, ir_unop_dFdy_fine, fs_derivative_control)
 
 ir_function_signature *
 builtin_builder::_fwidth(const glsl_type *type)
@@ -3975,6 +4146,30 @@ builtin_builder::_fwidth(const glsl_type *type)
    MAKE_SIG(type, fs_oes_derivatives, 1, p);
 
    body.emit(ret(add(abs(expr(ir_unop_dFdx, p)), abs(expr(ir_unop_dFdy, p)))));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_fwidthCoarse(const glsl_type *type)
+{
+   ir_variable *p = in_var(type, "p");
+   MAKE_SIG(type, fs_derivative_control, 1, p);
+
+   body.emit(ret(add(abs(expr(ir_unop_dFdx_coarse, p)),
+                     abs(expr(ir_unop_dFdy_coarse, p)))));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_fwidthFine(const glsl_type *type)
+{
+   ir_variable *p = in_var(type, "p");
+   MAKE_SIG(type, fs_derivative_control, 1, p);
+
+   body.emit(ret(add(abs(expr(ir_unop_dFdx_fine, p)),
+                     abs(expr(ir_unop_dFdy_fine, p)))));
 
    return sig;
 }
@@ -4246,6 +4441,44 @@ builtin_builder::_mulExtended(const glsl_type *type)
 }
 
 ir_function_signature *
+builtin_builder::_interpolateAtCentroid(const glsl_type *type)
+{
+   ir_variable *interpolant = in_var(type, "interpolant");
+   interpolant->data.must_be_shader_input = 1;
+   MAKE_SIG(type, fs_gpu_shader5, 1, interpolant);
+
+   body.emit(ret(interpolate_at_centroid(interpolant)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtOffset(const glsl_type *type)
+{
+   ir_variable *interpolant = in_var(type, "interpolant");
+   interpolant->data.must_be_shader_input = 1;
+   ir_variable *offset = in_var(glsl_type::vec2_type, "offset");
+   MAKE_SIG(type, fs_gpu_shader5, 2, interpolant, offset);
+
+   body.emit(ret(interpolate_at_offset(interpolant, offset)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtSample(const glsl_type *type)
+{
+   ir_variable *interpolant = in_var(type, "interpolant");
+   interpolant->data.must_be_shader_input = 1;
+   ir_variable *sample_num = in_var(glsl_type::int_type, "sample_num");
+   MAKE_SIG(type, fs_gpu_shader5, 2, interpolant, sample_num);
+
+   body.emit(ret(interpolate_at_sample(interpolant, sample_num)));
+
+   return sig;
+}
+
+ir_function_signature *
 builtin_builder::_atomic_intrinsic(builtin_available_predicate avail)
 {
    ir_variable *counter = in_var(glsl_type::atomic_uint_type, "counter");
@@ -4335,9 +4568,11 @@ builtin_builder::_image_prototype(const glsl_type *image_type,
       sig->parameters.push_tail(in_var(glsl_type::int_type, "sample"));
 
    /* Data arguments. */
-   for (unsigned i = 0; i < num_arguments; ++i)
-      sig->parameters.push_tail(in_var(data_type,
-                                       ralloc_asprintf(NULL, "arg%d", i)));
+   for (unsigned i = 0; i < num_arguments; ++i) {
+      char *arg_name = ralloc_asprintf(NULL, "arg%d", i);
+      sig->parameters.push_tail(in_var(data_type, arg_name));
+      ralloc_free(arg_name);
+   }
 
    /* Set the maximal set of qualifiers allowed for this image
     * built-in.  Function calls with arguments having fewer
@@ -4346,11 +4581,11 @@ builtin_builder::_image_prototype(const glsl_type *image_type,
     * accept everything that needs to be accepted, and reject cases
     * like loads from write-only or stores to read-only images.
     */
-   image->data.image.read_only = flags & IMAGE_FUNCTION_READ_ONLY;
-   image->data.image.write_only = flags & IMAGE_FUNCTION_WRITE_ONLY;
-   image->data.image.coherent = true;
-   image->data.image._volatile = true;
-   image->data.image.restrict_flag = true;
+   image->data.image_read_only = (flags & IMAGE_FUNCTION_READ_ONLY) != 0;
+   image->data.image_write_only = (flags & IMAGE_FUNCTION_WRITE_ONLY) != 0;
+   image->data.image_coherent = true;
+   image->data.image_volatile = true;
+   image->data.image_restrict = true;
 
    return sig;
 }
@@ -4407,14 +4642,15 @@ builtin_builder::_memory_barrier(builtin_available_predicate avail)
 /******************************************************************************/
 
 //@TODO: implement
-#define _glthread_DECLARE_STATIC_MUTEX(name)
-#define _glthread_LOCK_MUTEX(name)
-#define _glthread_UNLOCK_MUTEX(name)
+typedef int mtx_t;
+#define _MTX_INITIALIZER_NP 0
+#define mtx_lock(name)
+#define mtx_unlock(name)
 
 
 /* The singleton instance of builtin_builder. */
 static builtin_builder builtins;
-_glthread_DECLARE_STATIC_MUTEX(builtins_lock);
+static mtx_t builtins_lock = _MTX_INITIALIZER_NP;
 
 /**
  * External API (exposing the built-in module to the rest of the compiler):
@@ -4423,17 +4659,17 @@ _glthread_DECLARE_STATIC_MUTEX(builtins_lock);
 void
 _mesa_glsl_initialize_builtin_functions()
 {
-   _glthread_LOCK_MUTEX(builtins_lock);
+   mtx_lock(&builtins_lock);
    builtins.initialize();
-   _glthread_UNLOCK_MUTEX(builtins_lock);
+   mtx_unlock(&builtins_lock);
 }
 
 void
 _mesa_glsl_release_builtin_functions()
 {
-   _glthread_LOCK_MUTEX(builtins_lock);
+   mtx_lock(&builtins_lock);
    builtins.release();
-   _glthread_UNLOCK_MUTEX(builtins_lock);
+   mtx_unlock(&builtins_lock);
 }
 
 ir_function_signature *
@@ -4441,9 +4677,9 @@ _mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
                                  const char *name, exec_list *actual_parameters)
 {
    ir_function_signature * s;
-   _glthread_LOCK_MUTEX(builtins_lock);
+   mtx_lock(&builtins_lock);
    s = builtins.find(state, name, actual_parameters);
-   _glthread_UNLOCK_MUTEX(builtins_lock);
+   mtx_unlock(&builtins_lock);
    return s;
 }
 

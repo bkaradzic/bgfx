@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -43,6 +43,10 @@ namespace bgfx
 		uint8_t blockWidth;
 		uint8_t blockHeight;
 		uint8_t blockSize;
+		uint8_t minBlockX;
+		uint8_t minBlockY;
+		uint8_t depthBits;
+		uint8_t stencilBits;
 	};
 
 	///
@@ -88,7 +92,10 @@ namespace bgfx
 	bool imageParse(ImageContainer& _imageContainer, const void* _data, uint32_t _size);
 
 	///
-	void imageDecodeToBgra8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint32_t _srcPitch, uint8_t _type);
+	void imageDecodeToBgra8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint32_t _pitch, uint8_t _type);
+
+	///
+	void imageDecodeToRgba8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint32_t _pitch, uint8_t _type);
 
 	///
 	bool imageGetRawData(const ImageContainer& _dds, uint8_t _side, uint8_t _index, const void* _data, uint32_t _size, ImageMip& _mip);

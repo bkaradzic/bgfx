@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -9,7 +9,16 @@
 struct CmdContext;
 typedef int (*ConsoleFn)(CmdContext* _context, void* _userData, int _argc, char const* const* _argv);
 
+///
+void cmdInit();
+
+///
+void cmdShutdown();
+
+///
 void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData = NULL);
+
+///
 void cmdExec(const char* _cmd);
 
 #endif // CMD_H_HEADER_GUARD

@@ -1,16 +1,34 @@
-Anti-aliased Euclidean distance transform
-http://webstaff.itn.liu.se/~stegu/edtaa/
+https://github.com/OpenGLInsights/OpenGLInsightsCode/blob/master/Chapter%2012%202D%20Shape%20Rendering%20by%20Distance%20Fields/LICENSE.txt
 
-Copyright (C) 2009 Stefan Gustavson (stefan.gustavson@gmail.com)
+The C code and the GLSL code for the OpenGL demo is public
+domain code. The distance transform code in the console
+application to create distance field textures, located in
+the file "edtaa3func.c", is MIT licensed, and free to use
+under the following conditions.
 
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+https://github.com/OpenGLInsights/OpenGLInsightsCode/issues/6#issuecomment-67829157
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+----
 
-The GNU General Public License is available on <http://www.gnu.org/licenses/>.
+Copyright (C) 2011 by Stefan Gustavson
+(stefan.gustavson@liu.se)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+----

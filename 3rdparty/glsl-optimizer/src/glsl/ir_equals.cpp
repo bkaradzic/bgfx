@@ -41,13 +41,13 @@ possibly_null_equals(ir_instruction *a, ir_instruction *b, enum ir_node_type ign
  * about.
  */
 bool
-ir_instruction::equals(ir_instruction *ir, enum ir_node_type)
+ir_instruction::equals(ir_instruction *, enum ir_node_type)
 {
    return false;
 }
 
 bool
-ir_constant::equals(ir_instruction *ir, enum ir_node_type ignore)
+ir_constant::equals(ir_instruction *ir, enum ir_node_type)
 {
    const ir_constant *other = ir->as_constant();
    if (!other)
@@ -65,7 +65,7 @@ ir_constant::equals(ir_instruction *ir, enum ir_node_type ignore)
 }
 
 bool
-ir_dereference_variable::equals(ir_instruction *ir, enum ir_node_type ignore)
+ir_dereference_variable::equals(ir_instruction *ir, enum ir_node_type)
 {
    const ir_dereference_variable *other = ir->as_dereference_variable();
    if (!other)

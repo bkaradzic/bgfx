@@ -180,6 +180,20 @@ static void CleanupGL()
 #endif // #if GOT_GFX
 }
 
+
+static bool InitializeMetal ()
+{
+	bool hasMetal = false;
+	
+#if defined(__APPLE__)
+
+	hasMetal = true; //@TODO: detect metal compiler presence
+	
+#endif
+	
+	return hasMetal;
+}
+
 static void replace_string (std::string& target, const std::string& search, const std::string& replace, size_t startPos)
 {
 	if (search.empty())
@@ -203,13 +217,14 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	if (source.find("#version 140") != std::string::npos)
 		return true;
 	#endif
+
+	const bool need3 =
+		(source.find("#version 150") != std::string::npos) ||
+		(source.find("#version 300") != std::string::npos);
 	
 #	ifdef __APPLE__
 	// Mac core context does not accept any older shader versions, so need to switch to
 	// either legacy context or core one.
-	const bool need3 =
-		(source.find("#version 150") != std::string::npos) ||
-		(source.find("#version 300") != std::string::npos);
 	if (need3)
 	{
 		if (!s_GL3Active)
@@ -236,8 +251,16 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		src += "#define texture2DGradEXT texture2DGradARB\n";
 		src += "#define textureCubeGradEXT textureCubeGradARB\n";
 		src += "#define gl_FragDepthEXT gl_FragDepth\n";
-		src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
-		src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
+		if (!need3)
+		{
+			src += "#define gl_LastFragData _glesLastFragData\n";
+			src += "varying lowp vec4 _glesLastFragData[4];\n";
+		}
+		if (!need3)
+		{
+			src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
+			src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
+		}
 	}
 	src += source;
 	if (gles)
@@ -249,28 +272,65 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "#extension GL_OES_standard_derivatives : enable", "", 0);
 		replace_string (src, "#extension GL_EXT_shadow_samplers : enable", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : enable", "", 0);
+		replace_string (src, "#extension GL_EXT_draw_buffers : enable", "", 0);
+		replace_string (src, "#extension GL_EXT_draw_buffers : require", "", 0);
 		replace_string (src, "precision ", "// precision ", 0);
-		replace_string (src, "#version 300 es", "#version 330", 0);
+		replace_string (src, "#version 300 es", "", 0);
+	}
+	
+	// can't check FB fetch on PC
+	if (src.find("#extension GL_EXT_shader_framebuffer_fetch") != std::string::npos)
+		return true;
+
+	if (gles && need3)
+	{
+		src = "#version 330\n" + src;
 	}
 	const char* sourcePtr = src.c_str();
 
 	
-	GLhandleARB shader = glCreateShaderObjectARB (vertex ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
-	glShaderSourceARB (shader, 1, &sourcePtr, NULL);
-	glCompileShaderARB (shader);
+	GLuint shader = glCreateShader (vertex ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+	glShaderSource (shader, 1, &sourcePtr, NULL);
+	glCompileShader (shader);
 	GLint status;
-	glGetObjectParameterivARB (shader, GL_OBJECT_COMPILE_STATUS_ARB, &status);
+	
+	glGetShaderiv (shader, GL_COMPILE_STATUS, &status);
+	
 	bool res = true;
-	if (status == 0)
+	if (status != GL_TRUE)
 	{
-		char log[4096];
+		char log[20000];
+		log[0] = 0;
 		GLsizei logLength;
-		glGetInfoLogARB (shader, sizeof(log), &logLength, log);
+		glGetShaderInfoLog (shader, sizeof(log), &logLength, log);
 		printf ("\n  %s: real glsl compiler error on %s:\n%s\n", testName.c_str(), prefix, log);
 		res = false;
 	}
-	glDeleteObjectARB (shader);
+	glDeleteShader (shader);
 	return res;
+}
+
+
+static bool CheckMetal (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
+{
+#if !GOT_GFX
+	return true; // just assume it's ok
+#endif
+	
+	FILE* f = fopen ("metalTemp.metal", "wb");
+	fwrite (source.c_str(), source.size(), 1, f);
+	fclose (f);
+
+#if defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__)
+	int res = system("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin/metal metalTemp.metal -o metalTemp.o -std=ios-metal1.0 -Wno-parentheses-equality");
+	if (res != 0)
+	{
+		printf ("\n  %s: Metal compiler failed\n", testName.c_str());
+		return false;
+	}
+#endif //
+
+	return true;
 }
 
 
@@ -358,13 +418,31 @@ static void DeleteFile (const std::string& path)
 
 static void MassageVertexForGLES (std::string& s)
 {
+	if (s.find ("_glesVertex") != std::string::npos)
+		return;
 	std::string pre;
-	pre += "#define gl_Vertex _glesVertex\nattribute highp vec4 _glesVertex;\n";
-	pre += "#define gl_Normal _glesNormal\nattribute mediump vec3 _glesNormal;\n";
-	pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nattribute highp vec4 _glesMultiTexCoord0;\n";
-	pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nattribute highp vec4 _glesMultiTexCoord1;\n";
-	pre += "#define gl_Color _glesColor\nattribute lowp vec4 _glesColor;\n";
-	s = pre + s;
+	std::string version = "#version 300 es\n";
+	size_t insertPoint = s.find(version);
+	if (insertPoint != std::string::npos)
+	{
+		insertPoint += version.size();
+		pre += "#define gl_Vertex _glesVertex\nin highp vec4 _glesVertex;\n";
+		pre += "#define gl_Normal _glesNormal\nin mediump vec3 _glesNormal;\n";
+		pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nin highp vec4 _glesMultiTexCoord0;\n";
+		pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nin highp vec4 _glesMultiTexCoord1;\n";
+		pre += "#define gl_Color _glesColor\nin lowp vec4 _glesColor;\n";
+	}
+	else
+	{
+		insertPoint = 0;
+		pre += "#define gl_Vertex _glesVertex\nattribute highp vec4 _glesVertex;\n";
+		pre += "#define gl_Normal _glesNormal\nattribute mediump vec3 _glesNormal;\n";
+		pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nattribute highp vec4 _glesMultiTexCoord0;\n";
+		pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nattribute highp vec4 _glesMultiTexCoord1;\n";
+		pre += "#define gl_Color _glesColor\nattribute lowp vec4 _glesColor;\n";
+	}
+	
+	s.insert (insertPoint, pre);
 }
 
 static void MassageFragmentForGLES (std::string& s)
@@ -373,13 +451,29 @@ static void MassageFragmentForGLES (std::string& s)
 	s = pre + s;
 }
 
+static const char* kGlslTypeNames[kGlslTypeCount] = {
+	"float",
+	"int",
+	"bool",
+	"2d",
+	"3d",
+	"cube",
+	"other",
+};
+static const char* kGlslPrecNames[kGlslPrecCount] = {
+	"high",
+	"medium",
+	"low",
+};
+
+
 static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	const std::string& testName,
 	const std::string& inputPath,
-	const std::string& hirPath,
 	const std::string& outputPath,
 	bool gles,
-	bool doCheckGLSL)
+	bool doCheckGLSL,
+	bool doCheckMetal)
 {
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
@@ -412,35 +506,81 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		std::string textHir = glslopt_get_raw_output (shader);
 		std::string textOpt = glslopt_get_output (shader);
 
-		char buffer[200];
+		// append stats
+		char buffer[1000];
 		int statsAlu, statsTex, statsFlow;
 		glslopt_shader_get_stats (shader, &statsAlu, &statsTex, &statsFlow);
-		int inputCount = glslopt_shader_get_input_count (shader);
-		sprintf(buffer, "\n// inputs: %i, stats: %i alu %i tex %i flow\n", inputCount, statsAlu, statsTex, statsFlow);
+		sprintf(buffer, "\n// stats: %i alu %i tex %i flow\n", statsAlu, statsTex, statsFlow);
 		textOpt += buffer;
+		
+		// append inputs
+		const int inputCount = glslopt_shader_get_input_count (shader);
+		if (inputCount > 0)
+		{
+			sprintf(buffer, "// inputs: %i\n", inputCount);
+			textOpt += buffer;
+		}
+		for (int i = 0; i < inputCount; ++i)
+		{
+			const char* parName;
+			glslopt_basic_type parType;
+			glslopt_precision parPrec;
+			int parVecSize, parMatSize, parArrSize, location;
+			glslopt_shader_get_input_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
+			if (location >= 0)
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
+			else
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			textOpt += buffer;
+		}
+		// append uniforms
+		const int uniformCount = glslopt_shader_get_uniform_count (shader);
+		const int uniformSize = glslopt_shader_get_uniform_total_size (shader);
+		if (uniformCount > 0)
+		{
+			sprintf(buffer, "// uniforms: %i (total size: %i)\n", uniformCount, uniformSize);
+			textOpt += buffer;
+		}
+		for (int i = 0; i < uniformCount; ++i)
+		{
+			const char* parName;
+			glslopt_basic_type parType;
+			glslopt_precision parPrec;
+			int parVecSize, parMatSize, parArrSize, location;
+			glslopt_shader_get_uniform_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
+			if (location >= 0)
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
+			else
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			textOpt += buffer;
+		}
+		// append textures
+		const int textureCount = glslopt_shader_get_texture_count (shader);
+		if (textureCount > 0)
+		{
+			sprintf(buffer, "// textures: %i\n", textureCount);
+			textOpt += buffer;
+		}
+		for (int i = 0; i < textureCount; ++i)
+		{
+			const char* parName;
+			glslopt_basic_type parType;
+			glslopt_precision parPrec;
+			int parVecSize, parMatSize, parArrSize, location;
+			glslopt_shader_get_texture_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
+			if (location >= 0)
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
+			else
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			textOpt += buffer;
+		}
 
-		std::string outputHir;
-		ReadStringFromFile (hirPath.c_str(), outputHir);
 		std::string outputOpt;
 		ReadStringFromFile (outputPath.c_str(), outputOpt);
 
-		if (textHir != outputHir)
-		{
-			// write output
-			FILE* f = fopen (hirPath.c_str(), "wb");
-			if (!f)
-			{
-				printf ("\n  %s: can't write to IR file!\n", testName.c_str());
-			}
-			else
-			{
-				fwrite (textHir.c_str(), 1, textHir.size(), f);
-				fclose (f);
-			}
-			printf ("\n  %s: does not match raw output\n", testName.c_str());
+		if (res && doCheckMetal && !CheckMetal (vertex, gles, testName, "metal", textOpt.c_str()))
 			res = false;
-		}
-
+		
 		if (textOpt != outputOpt)
 		{
 			// write output
@@ -483,11 +623,13 @@ int main (int argc, const char** argv)
 	}
 
 	bool hasOpenGL = InitializeOpenGL ();
+	bool hasMetal = InitializeMetal ();
 	glslopt_ctx* ctx[3] = {
 		glslopt_initialize(kGlslTargetOpenGLES20),
 		glslopt_initialize(kGlslTargetOpenGLES30),
 		glslopt_initialize(kGlslTargetOpenGL),
 	};
+	glslopt_ctx* ctxMetal = glslopt_initialize(kGlslTargetMetal);
 
 	std::string baseFolder = argv[1];
 
@@ -505,8 +647,8 @@ int main (int argc, const char** argv)
 
 		static const char* kAPIName[3] = { "OpenGL ES 2.0", "OpenGL ES 3.0", "OpenGL" };
 		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
-		static const char* kApiIR [3] = {"-irES.txt", "-irES3.txt", "-ir.txt"};
 		static const char* kApiOut[3] = {"-outES.txt", "-outES3.txt", "-out.txt"};
+		static const char* kApiOutMetal[3] = {"-outESMetal.txt", "-outES3Metal.txt", "-outMetal.txt"};
 		for (int api = 0; api < 3; ++api)
 		{
 			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
@@ -518,12 +660,21 @@ int main (int argc, const char** argv)
 				std::string inname = inputFiles[i];
 				//if (inname != "ast-in.txt")
 				//	continue;
-				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api==0, hasOpenGL);
+				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
+				const bool useMetal = (api == 1);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, api<=1, hasOpenGL, false);
 				if (!ok)
 				{
 					++errors;
+				}
+				if (useMetal)
+				{
+					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, api==0, false, hasMetal);
+					if (!ok)
+					{
+						++errors;
+					}
 				}
 				++tests;
 			}
@@ -542,6 +693,7 @@ int main (int argc, const char** argv)
 
 	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
+	glslopt_cleanup (ctxMetal);
 	CleanupGL();
 
 	return errors ? 1 : 0;

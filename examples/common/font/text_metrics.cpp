@@ -162,9 +162,9 @@ void TextLineMetrics::getSubText(const char* _string, uint32_t _firstLine, uint3
 	{
 		for (; *_string; ++_string)
 		{	
-			if(utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT)
+			if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT)
 			{
-				if(codepoint == L'\n')
+				if (codepoint == L'\n')
 				{
 					++currentLine;
 					++_string;

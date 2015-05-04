@@ -10,17 +10,26 @@ void main ()
     discard;
   };
   vec4 enc_3;
-  enc_3.xy = (((
-    (tmpvar_1.xy / (tmpvar_1.z + 1.0))
-   / 1.7777) * 0.5) + 0.5);
   vec2 enc_4;
-  vec2 tmpvar_5;
-  tmpvar_5 = fract((vec2(1.0, 255.0) * tmpvar_1.w));
-  enc_4.y = tmpvar_5.y;
-  enc_4.x = (tmpvar_5.x - (tmpvar_5.y * 0.00392157));
-  enc_3.zw = enc_4;
+  enc_4 = (tmpvar_1.xy / (tmpvar_1.z + 1.0));
+  enc_4 = (enc_4 / 1.7777);
+  enc_4 = ((enc_4 * 0.5) + 0.5);
+  enc_3.xy = enc_4;
+  vec2 enc_5;
+  enc_5 = (vec2(1.0, 255.0) * tmpvar_1.w);
+  vec2 tmpvar_6;
+  tmpvar_6 = fract(enc_5);
+  enc_5.y = tmpvar_6.y;
+  enc_5.x = (tmpvar_6.x - (tmpvar_6.y * 0.00392157));
+  enc_3.zw = enc_5;
   gl_FragData[0] = enc_3;
 }
 
 
-// inputs: 1, stats: 11 alu 2 tex 1 flow
+// stats: 11 alu 2 tex 1 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// uniforms: 1 (total size: 0)
+//  #0: _Cutoff (high float) 1x1 [-1]
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]

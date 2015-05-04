@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -14,9 +14,7 @@
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 #include <bx/os.h>
-
-#define DEFAULT_WIDTH 1280
-#define DEFAULT_HEIGHT 720
+#include <bx/handlealloc.h>
 
 @interface AppDelegate : NSObject<NSApplicationDelegate>
 {
@@ -30,104 +28,25 @@
 
 @end
 
-@implementation AppDelegate
-
-+ (AppDelegate *)sharedDelegate
-{
-	static id delegate = [AppDelegate new];
-	return delegate;
-}
-
-- (id)init
-{
-	self = [super init];
-
-	if (nil == self)
-	{
-		return nil;
-	}
-
-	self->terminated = false;
-	return self;
-}
-
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
-{
-	BX_UNUSED(sender);
-	self->terminated = true;
-	return NSTerminateCancel;
-}
-
-- (bool)applicationHasTerminated
-{
-	return self->terminated;
-}
-
-@end
-
 @interface Window : NSObject<NSWindowDelegate>
 {
-	unsigned int windowCount;
+	uint32_t windowCount;
 }
 
-+ (Window *)sharedDelegate;
++ (Window*)sharedDelegate;
 - (id)init;
-- (void)windowCreated:(NSWindow *)window;
-- (BOOL)windowShouldClose:(NSWindow *)window;
+- (void)windowCreated:(NSWindow*)window;
+- (void)windowWillClose:(NSNotification*)notification;
+- (BOOL)windowShouldClose:(NSWindow*)window;
+- (void)windowDidResize:(NSNotification*)notification;
 
-@end
-
-@implementation Window
-
-+ (Window *)sharedDelegate
-{
-	static id windowDelegate = [Window new];
-	return windowDelegate;
-}
-
-- (id)init
-{
-	self = [super init];
-	if (nil == self)
-	{
-		return nil;
-	}
-
-	self->windowCount = 0;
-	return self;
-}
-
-- (void)windowCreated:(NSWindow *)window
-{
-	assert(window);
-
-	[window setDelegate:self];
-
-	assert(self->windowCount < ~0u);
-	self->windowCount += 1;
-}
-
-- (BOOL)windowShouldClose:(NSWindow *)window
-{
-	assert(window);
-
-	[window setDelegate:nil];
-
-	assert(self->windowCount);
-	self->windowCount -= 1;
-
-	if (self->windowCount == 0)
-	{
-		[NSApp terminate:self];
-		return false;
-	}
-
-	return true;
-}
 @end
 
 namespace entry
 {
+	static WindowHandle s_defaultWindow = { 0 };	// TODO: Add support for more windows
+	static uint8_t s_translateKey[256];
+
 	struct MainThreadEntry
 	{
 		int m_argc;
@@ -135,6 +54,21 @@ namespace entry
 
 		static int32_t threadFunc(void* _userData)
 		{
+			CFBundleRef mainBundle = CFBundleGetMainBundle();
+			if ( mainBundle != nil )
+			{
+				CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+				if ( resourcesURL != nil )
+				{
+					char path[PATH_MAX];
+					if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX) )
+					{
+						chdir(path);
+					}
+					CFRelease(resourcesURL);
+				}
+			}
+
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
 			return main(self->m_argc, self->m_argv);
 		}
@@ -143,11 +77,44 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_exit(false)
+			: m_scrollf(0.0f)
+			, m_mx(0)
+			, m_my(0)
+			, m_scroll(0)
+			, m_style(0)
+			, m_exit(false)
+			, m_fullscreen(false)
 		{
+			s_translateKey[27]             = Key::Esc;
+			s_translateKey[13]             = Key::Return;
+			s_translateKey[9]              = Key::Tab;
+			s_translateKey[127]            = Key::Backspace;
+			s_translateKey[uint8_t(' ')]   = Key::Space;
+
+			s_translateKey[uint8_t('+')]   =
+			s_translateKey[uint8_t('=')]   = Key::Plus;
+			s_translateKey[uint8_t('_')]   =
+			s_translateKey[uint8_t('-')]   = Key::Minus;
+
+			s_translateKey[uint8_t('0')]   = Key::Key0;
+			s_translateKey[uint8_t('1')]   = Key::Key1;
+			s_translateKey[uint8_t('2')]   = Key::Key2;
+			s_translateKey[uint8_t('3')]   = Key::Key3;
+			s_translateKey[uint8_t('4')]   = Key::Key4;
+			s_translateKey[uint8_t('5')]   = Key::Key5;
+			s_translateKey[uint8_t('6')]   = Key::Key6;
+			s_translateKey[uint8_t('7')]   = Key::Key7;
+			s_translateKey[uint8_t('8')]   = Key::Key8;
+			s_translateKey[uint8_t('9')]   = Key::Key9;
+
+			for (char ch = 'a'; ch <= 'z'; ++ch)
+			{
+				s_translateKey[uint8_t(ch)]       =
+				s_translateKey[uint8_t(ch - ' ')] = Key::KeyA + (ch - 'a');
+			}
 		}
 
-		NSEvent* WaitEvent()
+		NSEvent* waitEvent()
 		{
 			return [NSApp
 				nextEventMatchingMask:NSAnyEventMask
@@ -157,7 +124,7 @@ namespace entry
 				];
 		}
 
-		NSEvent* PeekEvent()
+		NSEvent* peekEvent()
 		{
 			return [NSApp
 				nextEventMatchingMask:NSAnyEventMask
@@ -167,16 +134,232 @@ namespace entry
 				];
 		}
 
-		bool DispatchEvent(NSEvent* event)
+		void getMousePos(int* outX, int* outY)
+		{
+			WindowHandle handle = { 0 };
+			NSWindow* window = m_window[handle.idx];
+			NSRect originalFrame = [window frame];
+			NSPoint location = [window mouseLocationOutsideOfEventStream];
+			NSRect adjustFrame = [window contentRectForFrameRect: originalFrame];
+
+			int x = location.x;
+			int y = (int)adjustFrame.size.height - (int)location.y;
+
+			// clamp within the range of the window
+
+			if (x < 0) x = 0;
+			if (y < 0) y = 0;
+			if (x > (int)adjustFrame.size.width) x = (int)adjustFrame.size.width;
+			if (y > (int)adjustFrame.size.height) y = (int)adjustFrame.size.height;
+
+			*outX = x;
+			*outY = y;
+		}
+
+		uint8_t translateModifiers(int flags)
+		{
+			uint8_t mask = 0;
+
+			if (flags & NSShiftKeyMask)
+				mask |= Modifier::LeftShift | Modifier::RightShift;
+
+			if (flags & NSAlternateKeyMask)
+				mask |= Modifier::LeftAlt | Modifier::RightAlt;
+
+			if (flags & NSControlKeyMask)
+				mask |= Modifier::LeftCtrl | Modifier::RightCtrl;
+
+			if (flags & NSCommandKeyMask)
+				mask |= Modifier::LeftMeta | Modifier::RightMeta;
+
+			return mask;
+		}
+
+		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys, uint8_t* _pressedChar)
+		{
+			NSString* key = [event charactersIgnoringModifiers];
+			unichar keyChar = 0;
+			if ([key length] == 0)
+			{
+				return Key::None;
+			}
+
+			keyChar = [key characterAtIndex:0];
+			*_pressedChar = (uint8_t)keyChar;
+
+			int keyCode = keyChar;
+			*specialKeys = translateModifiers([event modifierFlags]);
+
+			// if this is a unhandled key just return None
+			if (keyCode < 256)
+			{
+				return (Key::Enum)s_translateKey[keyCode];
+			}
+
+			switch (keyCode)
+			{
+			case NSF1FunctionKey:  return Key::F1;
+			case NSF2FunctionKey:  return Key::F2;
+			case NSF3FunctionKey:  return Key::F3;
+			case NSF4FunctionKey:  return Key::F4;
+			case NSF5FunctionKey:  return Key::F5;
+			case NSF6FunctionKey:  return Key::F6;
+			case NSF7FunctionKey:  return Key::F7;
+			case NSF8FunctionKey:  return Key::F8;
+			case NSF9FunctionKey:  return Key::F9;
+			case NSF10FunctionKey: return Key::F10;
+			case NSF11FunctionKey: return Key::F11;
+			case NSF12FunctionKey: return Key::F12;
+
+			case NSLeftArrowFunctionKey:   return Key::Left;
+			case NSRightArrowFunctionKey:  return Key::Right;
+			case NSUpArrowFunctionKey:     return Key::Up;
+			case NSDownArrowFunctionKey:   return Key::Down;
+
+			case NSPageUpFunctionKey:      return Key::PageUp;
+			case NSPageDownFunctionKey:    return Key::PageDown;
+			case NSHomeFunctionKey:        return Key::Home;
+			case NSEndFunctionKey:         return Key::End;
+
+			case NSPrintScreenFunctionKey: return Key::Print;
+			}
+
+			return Key::None;
+		}
+
+		bool dispatchEvent(NSEvent* event)
 		{
 			if (event)
 			{
+				NSEventType eventType = [event type];
+
+				switch (eventType)
+				{
+					case NSMouseMoved:
+					case NSLeftMouseDragged:
+					case NSRightMouseDragged:
+					case NSOtherMouseDragged:
+					{
+						getMousePos(&m_mx, &m_my);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
+						break;
+					}
+
+					case NSLeftMouseDown:
+					{
+						// TODO: remove!
+						// Command + Left Mouse Button acts as middle! This just a temporary solution!
+						// This is becase the average OSX user doesn't have middle mouse click.
+						MouseButton::Enum mb = ([event modifierFlags] & NSCommandKeyMask) ? MouseButton::Middle : MouseButton::Left;
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
+						break;
+					}
+
+					case NSLeftMouseUp:
+					{
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left, false);
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false); // TODO: remove!
+						break;
+					}
+
+					case NSRightMouseDown:
+					{
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, true);
+						break;
+					}
+
+					case NSRightMouseUp:
+					{
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
+						break;
+					}
+
+					case NSOtherMouseDown:
+					{
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, true);
+						break;
+					}
+
+					case NSOtherMouseUp:
+					{
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
+						break;
+					}
+
+					case NSScrollWheel:
+					{
+						m_scrollf += [event deltaY];
+
+						m_scroll = (int32_t)m_scrollf;
+						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
+						break;
+					}
+
+					case NSKeyDown:
+					{
+						uint8_t modifiers = 0;
+						uint8_t pressedChar[4];
+						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
+
+						// Returning false means that we take care of the key (instead of the default behavior)
+						if (key != Key::None)
+						{
+							if (key == Key::KeyQ && (modifiers & Modifier::RightMeta) )
+							{
+								m_eventQueue.postExitEvent();
+							}
+							else
+							{
+								enum { ShiftMask = Modifier::LeftShift|Modifier::RightShift };
+								m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
+								m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
+								return false;
+							}
+						}
+
+						break;
+					}
+
+					case NSKeyUp:
+					{
+						uint8_t modifiers  = 0;
+						uint8_t pressedChar[4];
+						Key::Enum key = handleKeyEvent(event, &modifiers, &pressedChar[0]);
+
+						BX_UNUSED(pressedChar);
+
+						if (key != Key::None)
+						{
+							m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, false);
+							return false;
+						}
+
+						break;
+					}
+				}
+
 				[NSApp sendEvent:event];
 				[NSApp updateWindows];
+
 				return true;
 			}
 
 			return false;
+		}
+
+		void windowDidResize()
+		{
+			WindowHandle handle = { 0 };
+			NSWindow* window = m_window[handle.idx];
+			NSRect originalFrame = [window frame];
+			NSRect rect = [window contentRectForFrameRect: originalFrame];
+			uint32_t width  = uint32_t(rect.size.width);
+			uint32_t height = uint32_t(rect.size.height);
+			m_eventQueue.postSizeEvent(handle, width, height);
+
+			// Make sure mouse button state is 'up' after resize.
+			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left,  false);
+			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 		}
 
 		int32_t run(int _argc, char** _argv)
@@ -213,23 +396,33 @@ namespace entry
 			[menubar addItem:appMenuItem];
 			[NSApp setMainMenu:menubar];
 
-			NSRect rect = NSMakeRect(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-			NSWindow* window = [NSWindow alloc];
-			[window
+			m_style = 0
+					| NSTitledWindowMask
+					| NSClosableWindowMask
+					| NSMiniaturizableWindowMask
+					| NSResizableWindowMask
+					;
+
+			NSRect screenRect = [[NSScreen mainScreen] frame];
+			const float centerX = (screenRect.size.width  - (float)ENTRY_DEFAULT_WIDTH )*0.5f;
+			const float centerY = (screenRect.size.height - (float)ENTRY_DEFAULT_HEIGHT)*0.5f;
+
+			m_windowAlloc.alloc();
+			NSRect rect = NSMakeRect(centerX, centerY, (float)ENTRY_DEFAULT_WIDTH, (float)ENTRY_DEFAULT_HEIGHT);
+			NSWindow* window = [[NSWindow alloc]
 				initWithContentRect:rect
-				styleMask:0
-				|NSTitledWindowMask
-				|NSClosableWindowMask
-				|NSMiniaturizableWindowMask
-				|NSResizableWindowMask
+				styleMask:m_style
 				backing:NSBackingStoreBuffered defer:NO
-				];
+			];
 			NSString* appName = [[NSProcessInfo processInfo] processName];
 			[window setTitle:appName];
-			[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 			[window makeKeyAndOrderFront:window];
-			[window setContentView:nil];
+			[window setAcceptsMouseMovedEvents:YES];
+			[window setBackgroundColor:[NSColor blackColor]];
 			[[Window sharedDelegate] windowCreated:window];
+
+			m_window[0] = window;
+			m_windowFrame = [window frame];
 
 			bgfx::osxSetNSWindow(window);
 
@@ -242,14 +435,15 @@ namespace entry
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
-				//DispatchEvent(WaitEvent() );
 				if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
 				{
 					break;
 				}
-				while (DispatchEvent(PeekEvent() ) ) {};
-			}
 
+				while (dispatchEvent(peekEvent() ) )
+				{
+				}
+			}
 
 			m_eventQueue.postExitEvent();
 
@@ -259,9 +453,24 @@ namespace entry
 			return 0;
 		}
 
+		bool isValid(WindowHandle _handle)
+		{
+			return m_windowAlloc.isValid(_handle.idx);
+		}
+
 		EventQueue m_eventQueue;
 
-		bool m_exit;
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
+		NSRect m_windowFrame;
+
+		float   m_scrollf;
+		int32_t m_mx;
+		int32_t m_my;
+		int32_t m_scroll;
+		int32_t m_style;
+		bool    m_exit;
+		bool    m_fullscreen;
 	};
 
 	static Context s_ctx;
@@ -271,26 +480,228 @@ namespace entry
 		return s_ctx.m_eventQueue.poll();
 	}
 
+	const Event* poll(WindowHandle _handle)
+	{
+		return s_ctx.m_eventQueue.poll(_handle);
+	}
+
 	void release(const Event* _event)
 	{
 		s_ctx.m_eventQueue.release(_event);
 	}
 
-	void setWindowSize(uint32_t _width, uint32_t _height)
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
-		BX_UNUSED(_width, _height);
+		BX_UNUSED(_x, _y, _width, _height, _flags, _title);
+		WindowHandle handle = { UINT16_MAX };
+		return handle;
 	}
 
-	void toggleWindowFrame()
+	void destroyWindow(WindowHandle _handle)
 	{
+		if (s_ctx.isValid(_handle) )
+		{
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] performClose: nil];
+			});
+		}
 	}
 
-	void setMouseLock(bool _lock)
+	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		BX_UNUSED(_lock);
+		if (s_ctx.isValid(_handle) )
+		{
+			NSWindow* window = s_ctx.m_window[_handle.idx];
+			NSScreen* screen = [window screen];
+
+			NSRect screenRect = [screen frame];
+			CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+
+			NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
+
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[window setFrameTopLeftPoint: position];
+			});
+		}
+	}
+
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
+	{
+		if (s_ctx.isValid(_handle) )
+		{
+			NSSize size = { float(_width), float(_height) };
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] setContentSize: size];
+			});
+		}
+	}
+
+	void setWindowTitle(WindowHandle _handle, const char* _title)
+	{
+		if (s_ctx.isValid(_handle) )
+		{
+			NSString* title = [[NSString alloc] initWithCString:_title encoding:1];
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] setTitle: title];
+			});
+			[title release];
+		}
+	}
+
+	void toggleWindowFrame(WindowHandle _handle)
+	{
+		if (s_ctx.isValid(_handle) )
+		{
+			s_ctx.m_style ^= NSTitledWindowMask;
+			dispatch_async(dispatch_get_main_queue()
+			, ^{
+				[s_ctx.m_window[_handle.idx] setStyleMask: s_ctx.m_style];
+			});
+		}
+	}
+
+	void toggleFullscreen(WindowHandle _handle)
+	{
+		if (s_ctx.isValid(_handle) )
+		{
+			NSWindow* window = s_ctx.m_window[_handle.idx];
+			NSScreen* screen = [window screen];
+			NSRect screenRect = [screen frame];
+
+			if (!s_ctx.m_fullscreen)
+			{
+				s_ctx.m_style &= ~NSTitledWindowMask;
+				dispatch_async(dispatch_get_main_queue()
+				, ^{
+					[NSMenu setMenuBarVisible: false];
+					[window setStyleMask: s_ctx.m_style];
+					[window setFrame:screenRect display:YES];
+				});
+
+				s_ctx.m_fullscreen = true;
+			}
+			else
+			{
+				s_ctx.m_style |= NSTitledWindowMask;
+				dispatch_async(dispatch_get_main_queue()
+				, ^{
+					[NSMenu setMenuBarVisible: true];
+					[window setStyleMask: s_ctx.m_style];
+					[window setFrame:s_ctx.m_windowFrame display:YES];
+				});
+
+				s_ctx.m_fullscreen = false;
+			}
+		}
+	}
+
+	void setMouseLock(WindowHandle _handle, bool _lock)
+	{
+		BX_UNUSED(_handle, _lock);
 	}
 
 } // namespace entry
+
+@implementation AppDelegate
+
++ (AppDelegate *)sharedDelegate
+{
+	static id delegate = [AppDelegate new];
+	return delegate;
+}
+
+- (id)init
+{
+	self = [super init];
+
+	if (nil == self)
+	{
+		return nil;
+	}
+
+	self->terminated = false;
+	return self;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+	BX_UNUSED(sender);
+	self->terminated = true;
+	return NSTerminateCancel;
+}
+
+- (bool)applicationHasTerminated
+{
+	return self->terminated;
+}
+
+@end
+
+@implementation Window
+
++ (Window*)sharedDelegate
+{
+	static id windowDelegate = [Window new];
+	return windowDelegate;
+}
+
+- (id)init
+{
+	self = [super init];
+	if (nil == self)
+	{
+		return nil;
+	}
+
+	self->windowCount = 0;
+	return self;
+}
+
+- (void)windowCreated:(NSWindow*)window
+{
+	assert(window);
+
+	[window setDelegate:self];
+
+	assert(self->windowCount < ~0u);
+	self->windowCount += 1;
+}
+
+- (void)windowWillClose:(NSNotification*)notification
+{
+	BX_UNUSED(notification);
+}
+
+- (BOOL)windowShouldClose:(NSWindow*)window
+{
+	assert(window);
+
+	[window setDelegate:nil];
+
+	assert(self->windowCount);
+	self->windowCount -= 1;
+
+	if (self->windowCount == 0)
+	{
+		[NSApp terminate:self];
+		return false;
+	}
+
+	return true;
+}
+
+- (void)windowDidResize:(NSNotification*)notification
+{
+	BX_UNUSED(notification);
+	using namespace entry;
+	s_ctx.windowDidResize();
+}
+
+@end
 
 int main(int _argc, char** _argv)
 {

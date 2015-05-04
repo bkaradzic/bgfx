@@ -38,7 +38,7 @@ extern "C" {
  */
 class ir_print_visitor : public ir_visitor {
 public:
-   ir_print_visitor();
+   ir_print_visitor(FILE *f);
    virtual ~ir_print_visitor();
 
    void indent(void);
@@ -89,6 +89,7 @@ private:
    _mesa_symbol_table *symbols;
 
    void *mem_ctx;
+   FILE *f;
 
    int indentation;
 };

@@ -1,7 +1,10 @@
 #include "shader.h"
+#include <nan.h>
 
 using namespace v8;
 using namespace node;
+
+Persistent<Function> Shader::constructor;
 
 //----------------------------------------------------------------------
 
@@ -63,28 +66,30 @@ const char* Shader::getLog() const
 
 void Shader::Init(Handle<Object> exports)
 {
+	NanScope();
+
 	// Prepare constructor template
-	Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-	tpl->SetClassName(String::NewSymbol("Shader"));
+	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
+	tpl->SetClassName(NanNew<String>("Shader"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 	// Prototype
-	SetPrototypeMethod(tpl, "dispose", Dispose);
-	SetPrototypeMethod(tpl, "compiled", Compiled);
-	SetPrototypeMethod(tpl, "output", Output);
-	SetPrototypeMethod(tpl, "rawOutput", RawOutput);
-	SetPrototypeMethod(tpl, "log", Log);
+	NanSetPrototypeTemplate(tpl, "dispose", NanNew<FunctionTemplate>(Dispose));
+	NanSetPrototypeTemplate(tpl, "compiled", NanNew<FunctionTemplate>(Compiled));
+	NanSetPrototypeTemplate(tpl, "output", NanNew<FunctionTemplate>(Output));
+	NanSetPrototypeTemplate(tpl, "rawOutput", NanNew<FunctionTemplate>(RawOutput));
+	NanSetPrototypeTemplate(tpl, "log", NanNew<FunctionTemplate>(Log));
 
 	// Export the class
-	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
-	exports->Set(String::NewSymbol("Shader"), constructor);
+	NanAssignPersistent<Function>(constructor, tpl->GetFunction());
+	exports->Set(NanNew<String>("Shader"), tpl->GetFunction());
 }
 
 //----------------------------------------------------------------------
 
 Handle<Value> Shader::New(const Arguments& args)
 {
-	HandleScope scope;
+	NanScope();
 
 	if (args.Length() == 3)
 	{
@@ -117,61 +122,61 @@ Handle<Value> Shader::New(const Arguments& args)
 	}
 
 	// Couldn't create the Shader
-	return ThrowException(String::New("Invalid arguments"));
+	NanThrowError("Invalid arguments");
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Shader::Dispose(const Arguments& args)
+NAN_METHOD(Shader::Dispose)
 {
-	HandleScope scope;
+	NanScope();
 
 	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
 	obj->release();
 
-	return scope.Close(Undefined());
+	NanReturnUndefined();
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Shader::Compiled(const Arguments& args)
+NAN_METHOD(Shader::Compiled)
 {
-	HandleScope scope;
+	NanScope();
 
 	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
 
-	return scope.Close(Boolean::New(obj->isCompiled()));
+	NanReturnValue(NanNew<Boolean>(obj->isCompiled()));
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Shader::Output(const Arguments& args)
+NAN_METHOD(Shader::Output)
 {
-	HandleScope scope;
+	NanScope();
 
 	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
 
-	return scope.Close(String::New(obj->getOutput()));
+	NanReturnValue(NanNew<String>(obj->getOutput()));
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Shader::RawOutput(const Arguments& args)
+NAN_METHOD(Shader::RawOutput)
 {
-	HandleScope scope;
+	NanScope();
 
 	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
 
-	return scope.Close(String::New(obj->getRawOutput()));
+	NanReturnValue(NanNew<String>(obj->getRawOutput()));
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Shader::Log(const Arguments& args)
+NAN_METHOD(Shader::Log)
 {
-	HandleScope scope;
+	NanScope();
 
 	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
 
-	return scope.Close(String::New(obj->getLog()));
+	NanReturnValue(NanNew<String>(obj->getLog()));
 }

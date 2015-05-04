@@ -281,6 +281,25 @@
 #define MAX_VERTEX_STREAMS                  4
 /*@}*/
 
+/** For GL_INTEL_performance_query */
+/*@{*/
+#define MAX_PERFQUERY_QUERY_NAME_LENGTH     256
+#define MAX_PERFQUERY_COUNTER_NAME_LENGTH   256
+#define MAX_PERFQUERY_COUNTER_DESC_LENGTH   1024
+#define PERFQUERY_HAVE_GPA_EXTENDED_COUNTERS 0
+/*@}*/
+
+/** For GL_ARB_compute_shader */
+/*@{*/
+#define MAX_COMPUTE_UNIFORM_BLOCKS          12
+#define MAX_COMPUTE_TEXTURE_IMAGE_UNITS     16
+#define MAX_COMPUTE_ATOMIC_COUNTER_BUFFERS  8
+#define MAX_COMPUTE_ATOMIC_COUNTERS         8
+#define MAX_COMPUTE_SHARED_MEMORY_SIZE      32768
+#define MAX_COMPUTE_UNIFORM_COMPONENTS      512
+#define MAX_COMPUTE_IMAGE_UNIFORMS          8
+/*@}*/
+
 /*
  * Color channel component order
  * 

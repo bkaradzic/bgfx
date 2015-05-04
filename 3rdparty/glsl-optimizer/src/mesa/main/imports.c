@@ -45,8 +45,6 @@
 
 
 #include "imports.h"
-#include "context.h"
-#include "mtypes.h"
 
 #ifdef _GNU_SOURCE
 #include <locale.h>
@@ -208,20 +206,6 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
 #endif
 }
 
-
-
-/** Reallocate memory */
-void *
-_mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
-{
-   const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
-   void *newBuffer = malloc(newSize);
-   if (newBuffer && oldBuffer && copySize > 0)
-      memcpy(newBuffer, oldBuffer, copySize);
-   free(oldBuffer);
-   return newBuffer;
-}
-
 /*@}*/
 
 
@@ -230,7 +214,7 @@ _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
 /*@{*/
 
 
-#ifndef __GNUC__
+#ifndef HAVE___BUILTIN_FFS
 /**
  * Find the first bit set in a word.
  */
@@ -259,8 +243,9 @@ ffs(int i)
    }
    return bit;
 }
+#endif
 
-
+#ifndef HAVE___BUILTIN_FFSLL
 /**
  * Find position of first bit set in given value.
  * XXX Warning: this function can only be used on 64-bit systems!
@@ -284,11 +269,10 @@ ffsll(long long int val)
 
    return 0;
 }
-#endif /* __GNUC__ */
+#endif
 
 
-#if !defined(__GNUC__) ||\
-   ((__GNUC__ * 100 + __GNUC_MINOR__) < 304) /* Not gcc 3.4 or later */
+#ifndef HAVE___BUILTIN_POPCOUNT
 /**
  * Return number of bits set in given GLuint.
  */
@@ -301,7 +285,9 @@ _mesa_bitcount(unsigned int n)
    }
    return bits;
 }
+#endif
 
+#ifndef HAVE___BUILTIN_POPCOUNTLL
 /**
  * Return number of bits set in given 64-bit uint.
  */
@@ -482,60 +468,6 @@ _mesa_half_to_float(GLhalfARB val)
    fi.i = (flt_s << 31) | (flt_e << 23) | flt_m;
    result = fi.f;
    return result;
-}
-
-/*@}*/
-
-
-/**********************************************************************/
-/** \name Sort & Search */
-/*@{*/
-
-/**
- * Wrapper for bsearch().
- */
-void *
-_mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
-               int (*compar)(const void *, const void *) )
-{
-#if defined(_WIN32_WCE)
-   void *mid;
-   int cmp;
-   while (nmemb) {
-      nmemb >>= 1;
-      mid = (char *)base + nmemb * size;
-      cmp = (*compar)(key, mid);
-      if (cmp == 0)
-	 return mid;
-      if (cmp > 0) {
-	 base = (char *)mid + size;
-	 --nmemb;
-      }
-   }
-   return NULL;
-#else
-   return bsearch(key, base, nmemb, size, compar);
-#endif
-}
-
-/*@}*/
-
-
-/**********************************************************************/
-/** \name Environment vars */
-/*@{*/
-
-/**
- * Wrapper for getenv().
- */
-char *
-_mesa_getenv( const char *var )
-{
-#if defined(_XBOX) || defined(_WIN32_WCE)
-   return NULL;
-#else
-   return getenv(var);
-#endif
 }
 
 /*@}*/

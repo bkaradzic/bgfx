@@ -1,0 +1,73 @@
+#version 300 es
+uniform mat4 glstate_matrix_mvp;
+in highp vec4 attrVertex;
+in mediump vec3 attrNormal;
+in mediump vec4 attrTangent;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform lowp vec4 _WorldSpaceLightPos0;
+uniform highp vec4 unity_Scale;
+out lowp vec3 varWorldN;
+out lowp vec3 varLightDir;
+out lowp vec3 varViewDir;
+void main ()
+{
+  mediump vec3 lightDir_1;
+  highp vec3 worldN_2;
+  lowp vec3 tmpvar_3;
+  lowp vec3 tmpvar_4;
+  lowp vec3 tmpvar_5;
+  highp mat3 tmpvar_6;
+  tmpvar_6[uint(0)] = _Object2World[0].xyz;
+  tmpvar_6[1u] = _Object2World[1].xyz;
+  tmpvar_6[2u] = _Object2World[2].xyz;
+  mediump vec3 tmpvar_7;
+  tmpvar_7 = (tmpvar_6 * attrNormal);
+  worldN_2 = tmpvar_7;
+  tmpvar_5 = worldN_2;
+  mediump vec3 tmpvar_8;
+  mediump vec3 tmpvar_9;
+  tmpvar_8 = attrTangent.xyz;
+  tmpvar_9 = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
+  mediump mat3 tmpvar_10;
+  tmpvar_10[uint(0)].x = tmpvar_8.x;
+  tmpvar_10[uint(0)].y = tmpvar_9.x;
+  tmpvar_10[uint(0)].z = attrNormal.x;
+  tmpvar_10[1u].x = tmpvar_8.y;
+  tmpvar_10[1u].y = tmpvar_9.y;
+  tmpvar_10[1u].z = attrNormal.y;
+  tmpvar_10[2u].x = tmpvar_8.z;
+  tmpvar_10[2u].y = tmpvar_9.z;
+  tmpvar_10[2u].z = attrNormal.z;
+  highp vec3 tmpvar_11;
+  tmpvar_11 = (tmpvar_10 * (_World2Object * _WorldSpaceLightPos0).xyz);
+  lightDir_1 = tmpvar_11;
+  tmpvar_3 = lightDir_1;
+  highp vec4 tmpvar_12;
+  tmpvar_12.w = 1.0;
+  tmpvar_12.xyz = _WorldSpaceCameraPos;
+  highp vec3 tmpvar_13;
+  tmpvar_13 = normalize((lightDir_1 + normalize(
+    (tmpvar_10 * (((_World2Object * tmpvar_12).xyz * unity_Scale.w) - attrVertex.xyz))
+  )));
+  tmpvar_4 = tmpvar_13;
+  gl_Position = (glstate_matrix_mvp * attrVertex);
+  varWorldN = tmpvar_5;
+  varLightDir = tmpvar_3;
+  varViewDir = tmpvar_4;
+}
+
+
+// stats: 16 alu 0 tex 0 flow
+// inputs: 3
+//  #0: attrVertex (high float) 4x1 [-1]
+//  #1: attrNormal (medium float) 3x1 [-1]
+//  #2: attrTangent (medium float) 4x1 [-1]
+// uniforms: 6 (total size: 0)
+//  #0: glstate_matrix_mvp (high float) 4x4 [-1]
+//  #1: _Object2World (high float) 4x4 [-1]
+//  #2: _World2Object (high float) 4x4 [-1]
+//  #3: _WorldSpaceCameraPos (high float) 3x1 [-1]
+//  #4: _WorldSpaceLightPos0 (low float) 4x1 [-1]
+//  #5: unity_Scale (high float) 4x1 [-1]

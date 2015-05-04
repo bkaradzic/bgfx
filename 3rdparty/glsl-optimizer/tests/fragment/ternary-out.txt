@@ -16,34 +16,34 @@ void main ()
   } else {
     tmpvar_3 = vec4(0.1, 0.1, 0.1, 0.1);
   };
-  vec4 tmpvar_4;
-  tmpvar_4 = (vec4(tmpvar_2) + tmpvar_3);
-  c_1 = tmpvar_4;
-  vec3 tmpvar_5;
+  c_1 = (vec4(tmpvar_2) + tmpvar_3);
+  vec3 tmpvar_4;
   if ((xlv_TEXCOORD0.x > 0.5)) {
-    tmpvar_5 = vec3(0.9, 0.9, 0.9);
+    tmpvar_4 = vec3(0.9, 0.9, 0.9);
   } else {
-    tmpvar_5 = vec3(0.1, 0.1, 0.1);
+    tmpvar_4 = vec3(0.1, 0.1, 0.1);
   };
-  c_1.xyz = (tmpvar_4.xyz + tmpvar_5);
-  vec2 tmpvar_6;
+  c_1.xyz = (c_1.xyz + tmpvar_4);
+  vec2 tmpvar_5;
   if ((xlv_TEXCOORD0.x > 0.5)) {
-    tmpvar_6 = vec2(0.9, 0.9);
+    tmpvar_5 = vec2(0.9, 0.9);
   } else {
-    tmpvar_6 = vec2(0.1, 0.1);
+    tmpvar_5 = vec2(0.1, 0.1);
   };
-  c_1.xy = (c_1.xy + tmpvar_6);
+  c_1.xy = (c_1.xy + tmpvar_5);
+  float tmpvar_6;
+  tmpvar_6 = fract(xlv_TEXCOORD0.x);
   float tmpvar_7;
-  tmpvar_7 = fract(xlv_TEXCOORD0.x);
-  float tmpvar_8;
-  if (bool(tmpvar_7)) {
-    tmpvar_8 = 0.9;
+  if (bool(tmpvar_6)) {
+    tmpvar_7 = 0.9;
   } else {
-    tmpvar_8 = 0.1;
+    tmpvar_7 = 0.1;
   };
-  c_1.x = (c_1.x + tmpvar_8);
+  c_1.x = (c_1.x + tmpvar_7);
   gl_FragData[0] = c_1;
 }
 
 
-// inputs: 1, stats: 21 alu 0 tex 5 flow
+// stats: 21 alu 0 tex 5 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

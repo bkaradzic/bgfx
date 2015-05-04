@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -7,13 +7,19 @@
 #include <stdint.h>
 #include <stdlib.h> // size_t
 #include <string.h> // strlen
+
+#include <bx/allocator.h>
 #include <bx/hash.h>
 #include <bx/tokenizecmd.h>
 
 #include "dbg.h"
 #include "cmd.h"
-#include <string>
-#include <unordered_map>
+#include "entry_p.h"
+
+#include <tinystl/allocator.h>
+#include <tinystl/string.h>
+#include <tinystl/unordered_map.h>
+namespace stl = tinystl;
 
 struct CmdContext
 {
@@ -30,7 +36,7 @@ struct CmdContext
 		uint32_t cmd = bx::hashMurmur2A(_name, (uint32_t)strlen(_name) );
 		BX_CHECK(m_lookup.end() == m_lookup.find(cmd), "Command \"%s\" already exist.", _name);
 		Func fn = { _fn, _userData };
-		m_lookup.insert(std::make_pair(cmd, fn) );
+		m_lookup.insert(stl::make_pair(cmd, fn) );
 	}
 
 	void exec(const char* _cmd)
@@ -60,14 +66,14 @@ struct CmdContext
 
 				case -1:
 					{
-						std::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
+						stl::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
 						DBG("Command '%s' doesn't exist.", tmp.c_str() );
 					}
 					break;
 
 				default:
 					{
-						std::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
+						stl::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
 						DBG("Failed '%s' err: %d.", tmp.c_str(), err);
 					}
 					break;
@@ -82,18 +88,28 @@ struct CmdContext
 		void* m_userData;
 	};
 
-	typedef std::unordered_map<uint32_t, Func> CmdLookup;
+	typedef stl::unordered_map<uint32_t, Func> CmdLookup;
 	CmdLookup m_lookup;
 };
 
-static CmdContext s_cmdContext;
+static CmdContext* s_cmdContext;
+
+void cmdInit()
+{
+	s_cmdContext = BX_NEW(entry::getAllocator(), CmdContext);
+}
+
+void cmdShutdown()
+{
+	BX_DELETE(entry::getAllocator(), s_cmdContext);
+}
 
 void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData)
 {
-	s_cmdContext.add(_name, _fn, _userData);
+	s_cmdContext->add(_name, _fn, _userData);
 }
 
 void cmdExec(const char* _cmd)
 {
-	s_cmdContext.exec(_cmd);
+	s_cmdContext->exec(_cmd);
 }

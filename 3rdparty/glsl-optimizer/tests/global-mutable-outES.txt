@@ -1,0 +1,35 @@
+uniform highp float uni1;
+uniform mediump vec4 uni4;
+uniform sampler2D tex1;
+highp float mut_uni1;
+mediump vec4 mut_uni4;
+varying highp vec4 var_uv;
+void main ()
+{
+  mut_uni4.zw = uni4.zw;
+  lowp vec4 c_1;
+  c_1.yzw = vec3(0.0, 0.0, 0.0);
+  c_1.x = uni4.x;
+  highp vec3 tmpvar_2;
+  highp vec2 uv_3;
+  uv_3 = var_uv.xy;
+  mut_uni4.xy = uv_3;
+  lowp vec3 tmpvar_4;
+  tmpvar_4 = texture2D (tex1, mut_uni4.xy).xyz;
+  tmpvar_2 = tmpvar_4;
+  c_1.xyz = (c_1.xyz + tmpvar_2);
+  c_1.z = (c_1.z + uni1);
+  mut_uni1 = (uni1 + 2.0);
+  c_1.w = mut_uni1;
+  gl_FragData[0] = c_1;
+}
+
+
+// stats: 4 alu 1 tex 0 flow
+// inputs: 1
+//  #0: var_uv (high float) 4x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: uni1 (high float) 1x1 [-1]
+//  #1: uni4 (medium float) 4x1 [-1]
+// textures: 1
+//  #0: tex1 (low 2d) 0x0 [-1]

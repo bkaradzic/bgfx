@@ -1,0 +1,13 @@
+#version 300 es
+void xlat_main( out lowp vec4 ocol, out mediump float oz ) {
+    ocol = vec4( 0.5);
+    oz = 0.9;
+}
+out lowp vec4 _fragData;
+void main() {
+    lowp vec4 xlt_ocol;
+    mediump float xlt_oz;
+    xlat_main( xlt_ocol, xlt_oz);
+    _fragData = vec4(xlt_ocol);
+    gl_FragDepth = float(xlt_oz);
+}

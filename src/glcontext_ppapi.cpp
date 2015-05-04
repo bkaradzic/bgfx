@@ -1,22 +1,22 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
 #include "bgfx_p.h"
 
-#if BX_PLATFORM_NACL & (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
+#if BX_PLATFORM_NACL && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include <bgfxplatform.h>
 #	include "renderer_gl.h"
 
-namespace bgfx
+namespace bgfx { namespace gl
 {
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
 
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/);
 
-	PP_CompletionCallback naclSwapComplete = 
+	PP_CompletionCallback naclSwapComplete =
 	{
 		naclSwapCompleteCb,
 		NULL,
@@ -38,7 +38,7 @@ namespace bgfx
 
 		bool setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers);
 
-		void resize(uint32_t _width, uint32_t _height, bool /*_vsync*/)
+		void resize(uint32_t _width, uint32_t _height, uint32_t /*_flags*/)
 		{
 			m_graphicsInterface->ResizeBuffers(m_context, _width, _height);
 		}
@@ -62,7 +62,7 @@ namespace bgfx
 		PostSwapBuffersFn m_postSwapBuffers;
 		bool m_forceSwap;
 	};
-	
+
 	static Ppapi s_ppapi;
 
 	void naclSwapCompleteCb(void* /*_data*/, int32_t /*_result*/)
@@ -93,11 +93,6 @@ namespace bgfx
 	static void GL_APIENTRY naclDrawElementsInstanced(GLenum _mode, GLsizei _count, GLenum _type, const GLvoid* _indices, GLsizei _primcount)
 	{
 		s_ppapi.m_instancedArrays->DrawElementsInstancedANGLE(s_ppapi.m_context, _mode, _count, _type, _indices, _primcount);
-	}
-
-	bool naclSetInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
-	{
-		return s_ppapi.setInterfaces( _instance, _instInterface, _graphicsInterface, _postSwapBuffers);
 	}
 
 	bool Ppapi::setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
@@ -152,15 +147,35 @@ namespace bgfx
 	{
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height, bool _vsync)
+	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		s_ppapi.m_forceSwap = false;
-		s_ppapi.resize(_width, _height, _vsync);
+		s_ppapi.resize(_width, _height, _flags);
 	}
 
-	void GlContext::swap()
+	bool GlContext::isSwapChainSupported()
+	{
+		return false;
+	}
+
+	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
+	{
+		BX_CHECK(false, "Shouldn't be called!");
+		return NULL;
+	}
+
+	void GlContext::destroySwapChain(SwapChainGL*  /*_swapChain*/)
+	{
+		BX_CHECK(false, "Shouldn't be called!");
+	}
+
+	void GlContext::swap(SwapChainGL* /*_swapChain*/)
 	{
 		s_ppapi.swap();
+	}
+
+	void GlContext::makeCurrent(SwapChainGL* /*_swapChain*/)
+	{
 	}
 
 	void GlContext::import()
@@ -172,6 +187,14 @@ namespace bgfx
 		return s_ppapi.isValid();
 	}
 
+} /* namespace gl */ } // namespace bgfx
+
+namespace bgfx
+{
+	bool naclSetInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
+	{
+		return gl::s_ppapi.setInterfaces( _instance, _instInterface, _graphicsInterface, _postSwapBuffers);
+	}
 } // namespace bgfx
 
-#endif // BX_PLATFORM_NACL & (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)
+#endif // BX_PLATFORM_NACL && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)

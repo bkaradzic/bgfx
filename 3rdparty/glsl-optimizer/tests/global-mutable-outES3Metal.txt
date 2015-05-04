@@ -1,0 +1,63 @@
+#include <metal_stdlib>
+using namespace metal;
+struct xlatMtlShaderInput {
+  float4 var_uv;
+};
+struct xlatMtlShaderOutput {
+  half4 out_data [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float uni1;
+  half4 uni4;
+  half _AtmosphereThickness;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> tex1 [[texture(0)]], sampler _mtlsmp_tex1 [[sampler(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+float mut_uni1_1;
+half4 mut_uni4_2;
+float kKrESun_3;
+float kKr4PI_4;
+  mut_uni4_2.zw = _mtl_u.uni4.zw;
+  half tmpvar_5_5;
+  half tmpvar_3_6;
+  half4 c_7;
+  c_7.yzw = half3(float3(0.0, 0.0, 0.0));
+  c_7.x = _mtl_u.uni4.x;
+  float3 tmpvar_8;
+  float2 uv_9;
+  uv_9 = _mtl_i.var_uv.xy;
+  mut_uni4_2.xy = half2(uv_9);
+  half3 tmpvar_10;
+  tmpvar_10 = tex1.sample(_mtlsmp_tex1, (float2)(mut_uni4_2.xy)).xyz;
+  tmpvar_8 = float3(tmpvar_10);
+  c_7.xyz = half3(((float3)c_7.xyz + tmpvar_8));
+  c_7.z = half(((float)c_7.z + _mtl_u.uni1));
+  mut_uni1_1 = (_mtl_u.uni1 + 2.0);
+  c_7.w = half(mut_uni1_1);
+  half tmpvar_11;
+  tmpvar_11 = pow (_mtl_u._AtmosphereThickness, (half)2.5);
+  tmpvar_3_6 = ((half)0.05 * tmpvar_11);
+  kKrESun_3 = float(tmpvar_3_6);
+  tmpvar_5_5 = (tmpvar_11 * (half)0.031416);
+  kKr4PI_4 = float(tmpvar_5_5);
+  if ((_mtl_i.var_uv.x > 0.5)) {
+    float tmpvar_12;
+    tmpvar_12 = pow (kKrESun_3, kKr4PI_4);
+    c_7.x = half(((float)c_7.x + tmpvar_12));
+  };
+  _mtl_o.out_data = c_7;
+  return _mtl_o;
+}
+
+
+// stats: 10 alu 1 tex 1 flow
+// inputs: 1
+//  #0: var_uv (high float) 4x1 [-1]
+// uniforms: 3 (total size: 18)
+//  #0: uni1 (high float) 1x1 [-1] loc 0
+//  #1: uni4 (medium float) 4x1 [-1] loc 8
+//  #2: _AtmosphereThickness (medium float) 1x1 [-1] loc 16
+// textures: 1
+//  #0: tex1 (low 2d) 0x0 [-1] loc 0

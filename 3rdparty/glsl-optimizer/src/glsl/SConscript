@@ -8,11 +8,14 @@ env = env.Clone()
 
 env.Prepend(CPPPATH = [
     '#include',
+    '#src',
     '#src/mapi',
     '#src/mesa',
     '#src/glsl',
     '#src/glsl/glcpp',
 ])
+
+env.Prepend(LIBS = [mesautil])
 
 # Make glcpp-parse.h and glsl_parser.h reachable from the include path.
 env.Append(CPPPATH = [Dir('.').abspath, Dir('glcpp').abspath])
@@ -55,7 +58,6 @@ if env['msvc']:
 
 # Copy these files to avoid generation object files into src/mesa/program
 env.Prepend(CPPPATH = ['#src/mesa/main'])
-env.Command('hash_table.c', '#src/mesa/main/hash_table.c', Copy('$TARGET', '$SOURCE'))
 env.Command('imports.c', '#src/mesa/main/imports.c', Copy('$TARGET', '$SOURCE'))
 # Copy these files to avoid generation object files into src/mesa/program
 env.Prepend(CPPPATH = ['#src/mesa/program'])
@@ -65,7 +67,6 @@ env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET'
 compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_FILES'])
 
 mesa_objs = env.StaticObject([
-    'hash_table.c',
     'imports.c',
     'prog_hash_table.c',
     'symbol_table.c',
@@ -106,6 +107,6 @@ env.Alias('glsl_compiler', glsl_compiler)
 
 glcpp = env.Program(
     target = 'glcpp/glcpp',
-    source = ['glcpp/glcpp.c'] + mesa_objs,
+    source = ['glcpp/glcpp.c', 'tests/common.c'] + mesa_objs,
 )
 env.Alias('glcpp', glcpp)

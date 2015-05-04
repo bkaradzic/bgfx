@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -94,7 +94,7 @@ static const uint16_t s_cubeIndices[36] =
 
 	 8, 10,  9,
 	 9, 10, 11,
-    12, 13, 14,
+	12, 13, 14,
 	13, 15, 14,
 
 	16, 18, 17,
@@ -118,7 +118,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR_BIT|BGFX_CLEAR_DEPTH_BIT
+		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 		, 0x303030ff
 		, 1.0f
 		, 0
@@ -190,19 +190,45 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Loading textures.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-		float at[3] = { 0.0f, 0.0f, 0.0f };
+		float at[3]  = { 0.0f, 0.0f,  0.0f };
 		float eye[3] = { 0.0f, 0.0f, -7.0f };
-		
-		float view[16];
-		float proj[16];
-		bx::mtxLookAt(view, eye, at);
-		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+
+		// Set view and projection matrix for view 0.
+		const bgfx::HMD* hmd = bgfx::getHMD();
+		if (NULL != hmd)
+		{
+			float view[16];
+			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+
+			float proj[16];
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+
+			bgfx::setViewTransform(0, view, proj);
+
+			// Set view 0 default viewport.
+			//
+			// Use HMD's width/height since HMD's internal frame buffer size
+			// might be much larger than window size.
+			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+		}
+		else
+		{
+			float view[16];
+			bx::mtxLookAt(view, eye, at);
+
+			float proj[16];
+			bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
+			bgfx::setViewTransform(0, view, proj);
+
+			// Set view 0 default viewport.
+			bgfx::setViewRect(0, 0, 0, width, height);
+		}
 
 		float lightPosRadius[4][4];
 		for (uint32_t ii = 0; ii < numLights; ++ii)
 		{
-			lightPosRadius[ii][0] = sin( (time*(0.1f + ii*0.17f) + float(ii*M_PI_2)*1.37f ) )*3.0f;
-			lightPosRadius[ii][1] = cos( (time*(0.2f + ii*0.29f) + float(ii*M_PI_2)*1.49f ) )*3.0f;
+			lightPosRadius[ii][0] = sinf( (time*(0.1f + ii*0.17f) + ii*bx::piHalf*1.37f ) )*3.0f;
+			lightPosRadius[ii][1] = cosf( (time*(0.2f + ii*0.29f) + ii*bx::piHalf*1.49f ) )*3.0f;
 			lightPosRadius[ii][2] = -2.5f;
 			lightPosRadius[ii][3] = 3.0f;
 		}
@@ -218,9 +244,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		};
 
 		bgfx::setUniform(u_lightRgbInnerR, lightRgbInnerR, numLights);
-
-		// Set view and projection matrix for view 0.
-		bgfx::setViewTransform(0, view, proj);
 
 		const uint16_t instanceStride = 64;
 		const uint16_t numInstances = 3;
@@ -315,7 +338,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

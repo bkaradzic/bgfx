@@ -22,4 +22,11 @@ void main ()
 }
 
 
-// inputs: 1, stats: 18 alu 3 tex 0 flow
+// stats: 18 alu 3 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [3] loc 4
+// uniforms: 1 (total size: 0)
+//  #0: _horizonColor (high float) 4x1 [-1]
+// textures: 2
+//  #0: _BumpMap (high 2d) 0x0 [-1]
+//  #1: _ColorControl (high 2d) 0x0 [-1]

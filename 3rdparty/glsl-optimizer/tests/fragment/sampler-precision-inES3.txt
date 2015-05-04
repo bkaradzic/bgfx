@@ -1,0 +1,25 @@
+#version 300 es
+out lowp vec4 _fragData;
+uniform sampler2D texlow;
+uniform mediump sampler2D texmed;
+uniform highp sampler2D texhigh;
+uniform samplerCube cubelow;
+uniform mediump samplerCube cubemed;
+uniform highp samplerCube cubehigh;
+
+mediump vec4 xlat_main(in highp vec4 uv) {
+    mediump vec4 c;
+    c = texture(texlow, uv.xy);
+    c += texture(texmed, uv.xy);
+    c += texture(texhigh, uv.xy);
+    c += texture(cubelow, uv.xyz);
+    c += texture(cubemed, uv.xyz);
+    c += texture(cubehigh, uv.xyz);
+    return c;
+}
+in highp vec4 varUV;
+void main() {
+    mediump vec4 r;
+    r = xlat_main(varUV);
+    _fragData = r;
+}

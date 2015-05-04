@@ -20,4 +20,6 @@ void main ()
 }
 
 
-// inputs: 0, stats: 13 alu 0 tex 4 flow
+// stats: 13 alu 0 tex 4 flow
+// uniforms: 1 (total size: 0)
+//  #0: loopNum (high int) 1x1 [-1]

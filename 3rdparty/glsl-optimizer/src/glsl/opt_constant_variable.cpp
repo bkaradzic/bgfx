@@ -166,8 +166,7 @@ ir_visitor_status
 ir_constant_variable_visitor::visit_enter(ir_function_signature *ir)
 {
    /* Mark any in parameters as assigned to */
-   foreach_list(n, &ir->parameters) {
-      ir_variable *var = (ir_variable *)n;
+   foreach_in_list(ir_variable, var, &ir->parameters) {
       if (var->data.mode == ir_var_function_in || var->data.mode == ir_var_const_in || var->data.mode == ir_var_function_inout) {
          struct assignment_entry *entry;
          entry = get_assignment_entry(var, &this->list);
@@ -211,12 +210,10 @@ do_constant_variable_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, ir, instructions) {
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_list(signode, &f->signatures) {
-	    ir_function_signature *sig = (ir_function_signature *) signode;
+	 foreach_in_list(ir_function_signature, sig, &f->signatures) {
 	    if (do_constant_variable(&sig->body))
 	       progress = true;
 	 }

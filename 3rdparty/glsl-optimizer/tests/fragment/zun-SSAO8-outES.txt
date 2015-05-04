@@ -40,55 +40,57 @@ void main ()
   n_14.xy = (tmpvar_16 * tmpvar_15.xy);
   n_14.z = (tmpvar_16 - 1.0);
   viewNorm_9 = n_14;
-  highp float tmpvar_17;
-  tmpvar_17 = (dot (depthnormal_10.zw, vec2(1.0, 0.00392157)) * _ProjectionParams.z);
-  depth_8 = tmpvar_17;
-  scale_7 = (_Params.x / tmpvar_17);
+  depth_8 = (dot (depthnormal_10.zw, vec2(1.0, 0.00392157)) * _ProjectionParams.z);
+  scale_7 = (_Params.x / depth_8);
   occ_6 = 0.0;
-  for (int s_5 = 0; s_5 < 8; s_5++) {
-    highp vec4 sampleND_18;
-    mediump vec3 randomDir_19;
-    highp vec3 tmpvar_20;
-    highp vec3 I_21;
-    I_21 = samples_4[s_5];
-    tmpvar_20 = (I_21 - (2.0 * (
-      dot (randN_11, I_21)
+  for (highp int s_5 = 0; s_5 < 8; s_5++) {
+    highp vec4 sampleND_17;
+    mediump vec3 randomDir_18;
+    highp vec3 tmpvar_19;
+    highp vec3 I_20;
+    I_20 = samples_4[s_5];
+    tmpvar_19 = (I_20 - (2.0 * (
+      dot (randN_11, I_20)
      * randN_11)));
-    randomDir_19 = tmpvar_20;
-    highp float tmpvar_22;
-    tmpvar_22 = dot (viewNorm_9, randomDir_19);
-    mediump float tmpvar_23;
-    if ((tmpvar_22 < 0.0)) {
-      tmpvar_23 = 1.0;
+    randomDir_18 = tmpvar_19;
+    highp float tmpvar_21;
+    tmpvar_21 = dot (viewNorm_9, randomDir_18);
+    mediump float tmpvar_22;
+    if ((tmpvar_21 < 0.0)) {
+      tmpvar_22 = 1.0;
     } else {
-      tmpvar_23 = -1.0;
+      tmpvar_22 = -1.0;
     };
-    mediump vec3 tmpvar_24;
-    tmpvar_24 = (randomDir_19 * -(tmpvar_23));
-    highp vec3 tmpvar_25;
-    tmpvar_25 = (tmpvar_24 + (viewNorm_9 * 0.3));
-    randomDir_19 = tmpvar_25;
-    lowp vec4 tmpvar_26;
-    highp vec2 P_27;
-    P_27 = (tmpvar_3 + (randomDir_19.xy * scale_7));
-    tmpvar_26 = texture2D (_CameraDepthNormalsTexture, P_27);
-    sampleND_18 = tmpvar_26;
-    highp float tmpvar_28;
-    tmpvar_28 = clamp (((depth_8 - 
-      (randomDir_19.z * _Params.x)
+    randomDir_18 = (randomDir_18 * -(tmpvar_22));
+    randomDir_18 = (randomDir_18 + (viewNorm_9 * 0.3));
+    lowp vec4 tmpvar_23;
+    highp vec2 P_24;
+    P_24 = (tmpvar_3 + (randomDir_18.xy * scale_7));
+    tmpvar_23 = texture2D (_CameraDepthNormalsTexture, P_24);
+    sampleND_17 = tmpvar_23;
+    highp float tmpvar_25;
+    tmpvar_25 = clamp (((depth_8 - 
+      (randomDir_18.z * _Params.x)
     ) - (
-      dot (sampleND_18.zw, vec2(1.0, 0.00392157))
+      dot (sampleND_17.zw, vec2(1.0, 0.00392157))
      * _ProjectionParams.z)), 0.0, 1.0);
-    if ((tmpvar_28 > _Params.y)) {
-      occ_6 = (occ_6 + pow ((1.0 - tmpvar_28), _Params.z));
+    if ((tmpvar_25 > _Params.y)) {
+      occ_6 = (occ_6 + pow ((1.0 - tmpvar_25), _Params.z));
     };
   };
-  highp float tmpvar_29;
-  tmpvar_29 = (occ_6 / 8.0);
-  occ_6 = tmpvar_29;
-  tmpvar_2 = (1.0 - tmpvar_29);
+  occ_6 = (occ_6 / 8.0);
+  tmpvar_2 = (1.0 - occ_6);
   gl_FragData[0] = vec4(tmpvar_2);
 }
 
 
-// inputs: 2, stats: 49 alu 3 tex 4 flow
+// stats: 49 alu 3 tex 4 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 2x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _Params (high float) 4x1 [-1]
+//  #1: _ProjectionParams (high float) 4x1 [-1]
+// textures: 2
+//  #0: _CameraDepthNormalsTexture (low 2d) 0x0 [-1]
+//  #1: _RandomTexture (low 2d) 0x0 [-1]

@@ -5,4 +5,6 @@ void main ()
 }
 
 
-// inputs: 1, stats: 2 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
+// inputs: 1
+//  #0: vv (high float) 1x1 [-1]

@@ -1,0 +1,109 @@
+uniform mat4 _Object2World;
+uniform vec2 _DynLampInfo_bufferSize;
+uniform sampler2D _DynLampInfo;
+varying vec3 xlv_TEXCOORD2;
+void main ()
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = (_Object2World * gl_Vertex).xyz;
+  vec3 hybridCol_2;
+  ivec4 tmpvar_3;
+  tmpvar_3.xyz = ivec3(tmpvar_1);
+  tmpvar_3.w = int(-(tmpvar_1.x));
+  vec4 tmpvar_4;
+  vec4 tmpvar_5;
+  vec4 tmpvar_6;
+  vec4 tmpvar_7;
+  vec2 tmpvar_8;
+  tmpvar_8.y = 1.0;
+  tmpvar_8.x = float(tmpvar_3.x);
+  vec4 tmpvar_9;
+  tmpvar_9.zw = vec2(0.0, 0.0);
+  tmpvar_9.xy = (tmpvar_8 / _DynLampInfo_bufferSize);
+  tmpvar_4 = texture2DLod (_DynLampInfo, tmpvar_9.xy, 0.0);
+  vec2 tmpvar_10;
+  tmpvar_10.y = 2.0;
+  tmpvar_10.x = float(tmpvar_3.x);
+  vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
+  tmpvar_11.xy = (tmpvar_10 / _DynLampInfo_bufferSize);
+  vec2 tmpvar_12;
+  tmpvar_12.y = 1.0;
+  tmpvar_12.x = float(tmpvar_3.y);
+  vec4 tmpvar_13;
+  tmpvar_13.zw = vec2(0.0, 0.0);
+  tmpvar_13.xy = (tmpvar_12 / _DynLampInfo_bufferSize);
+  tmpvar_5 = texture2DLod (_DynLampInfo, tmpvar_13.xy, 0.0);
+  vec2 tmpvar_14;
+  tmpvar_14.y = 2.0;
+  tmpvar_14.x = float(tmpvar_3.y);
+  vec4 tmpvar_15;
+  tmpvar_15.zw = vec2(0.0, 0.0);
+  tmpvar_15.xy = (tmpvar_14 / _DynLampInfo_bufferSize);
+  vec2 tmpvar_16;
+  tmpvar_16.y = 1.0;
+  tmpvar_16.x = float(tmpvar_3.z);
+  vec4 tmpvar_17;
+  tmpvar_17.zw = vec2(0.0, 0.0);
+  tmpvar_17.xy = (tmpvar_16 / _DynLampInfo_bufferSize);
+  tmpvar_6 = texture2DLod (_DynLampInfo, tmpvar_17.xy, 0.0);
+  vec2 tmpvar_18;
+  tmpvar_18.y = 2.0;
+  tmpvar_18.x = float(tmpvar_3.z);
+  vec4 tmpvar_19;
+  tmpvar_19.zw = vec2(0.0, 0.0);
+  tmpvar_19.xy = (tmpvar_18 / _DynLampInfo_bufferSize);
+  vec2 tmpvar_20;
+  tmpvar_20.y = 1.0;
+  tmpvar_20.x = float(tmpvar_3.w);
+  vec4 tmpvar_21;
+  tmpvar_21.zw = vec2(0.0, 0.0);
+  tmpvar_21.xy = (tmpvar_20 / _DynLampInfo_bufferSize);
+  tmpvar_7 = texture2DLod (_DynLampInfo, tmpvar_21.xy, 0.0);
+  vec2 tmpvar_22;
+  tmpvar_22.y = 2.0;
+  tmpvar_22.x = float(tmpvar_3.w);
+  vec4 tmpvar_23;
+  tmpvar_23.zw = vec2(0.0, 0.0);
+  tmpvar_23.xy = (tmpvar_22 / _DynLampInfo_bufferSize);
+  vec3 hybridCol_24;
+  vec4 atten_25;
+  vec3 tmpvar_26;
+  tmpvar_26 = (tmpvar_4.xyz - tmpvar_1);
+  vec4 tmpvar_27;
+  tmpvar_27.yzw = atten_25.yzw;
+  tmpvar_27.x = (dot (tmpvar_26, tmpvar_26) * tmpvar_4.w);
+  vec3 tmpvar_28;
+  tmpvar_28 = (tmpvar_5.xyz - tmpvar_1);
+  vec4 tmpvar_29;
+  tmpvar_29.xzw = tmpvar_27.xzw;
+  tmpvar_29.y = (dot (tmpvar_28, tmpvar_28) * tmpvar_5.w);
+  vec3 tmpvar_30;
+  tmpvar_30 = (tmpvar_6.xyz - tmpvar_1);
+  vec4 tmpvar_31;
+  tmpvar_31.xyw = tmpvar_29.xyw;
+  tmpvar_31.z = (dot (tmpvar_30, tmpvar_30) * tmpvar_6.w);
+  vec3 tmpvar_32;
+  tmpvar_32 = (tmpvar_7.xyz - tmpvar_1);
+  vec4 tmpvar_33;
+  tmpvar_33.xyz = tmpvar_31.xyz;
+  tmpvar_33.w = (dot (tmpvar_32, tmpvar_32) * tmpvar_7.w);
+  atten_25 = tmpvar_33;
+  hybridCol_24 = (hybridCol_2 + (texture2DLod (_DynLampInfo, tmpvar_11.xy, 0.0).xyz * tmpvar_27.x));
+  hybridCol_24 = (hybridCol_24 + (texture2DLod (_DynLampInfo, tmpvar_15.xy, 0.0).xyz * tmpvar_29.y));
+  hybridCol_24 = (hybridCol_24 + (texture2DLod (_DynLampInfo, tmpvar_19.xy, 0.0).xyz * tmpvar_31.z));
+  hybridCol_24 = (hybridCol_24 + (texture2DLod (_DynLampInfo, tmpvar_23.xy, 0.0).xyz * tmpvar_33.w));
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  xlv_TEXCOORD2 = hybridCol_24;
+}
+
+
+// stats: 57 alu 8 tex 0 flow
+// inputs: 1
+//  #0: gl_Vertex (high float) 4x1 [-1] loc 0
+// uniforms: 3 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: _Object2World (high float) 4x4 [-1]
+//  #2: _DynLampInfo_bufferSize (high float) 2x1 [-1]
+// textures: 1
+//  #0: _DynLampInfo (high 2d) 0x0 [-1]

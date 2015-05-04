@@ -11,12 +11,23 @@ void main ()
   if ((x_2 < 0.0)) {
     discard;
   };
-  vec4 tmpvar_3;
-  tmpvar_3 = fract((vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (
-    sqrt(dot (tmpvar_1, tmpvar_1))
-   * _LightPositionRange.w)));
-  gl_FragData[0] = (tmpvar_3 - (tmpvar_3.yzww * 0.00392157));
+  vec4 enc_3;
+  enc_3 = (vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (sqrt(
+    dot (tmpvar_1, tmpvar_1)
+  ) * _LightPositionRange.w));
+  vec4 tmpvar_4;
+  tmpvar_4 = fract(enc_3);
+  enc_3 = (tmpvar_4 - (tmpvar_4.yzww * 0.00392157));
+  gl_FragData[0] = enc_3;
 }
 
 
-// inputs: 1, stats: 10 alu 2 tex 1 flow
+// stats: 10 alu 2 tex 1 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// uniforms: 3 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+//  #1: _Cutoff (high float) 1x1 [-1]
+//  #2: _LightPositionRange (high float) 4x1 [-1]
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]

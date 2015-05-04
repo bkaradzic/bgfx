@@ -1,20 +1,25 @@
 /*
- * Copyright 2010-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
 #include <memory.h>
-#include <string>
-#include <unordered_map>
 
 #include "entry_p.h"
 #include "input.h"
+
+#include <bx/allocator.h>
+#include <bx/ringbuffer.h>
+#include <tinystl/allocator.h>
+#include <tinystl/unordered_map.h>
+namespace stl = tinystl;
 
 struct Mouse
 {
 	Mouse()
 		: m_width(1280)
 		, m_height(720)
+		, m_wheelDelta(120)
 		, m_lock(false)
 	{
 	}
@@ -25,6 +30,7 @@ struct Mouse
 		{
 			m_norm[0] = 0.0f;
 			m_norm[1] = 0.0f;
+			m_norm[2] = 0.0f;
 		}
 
 		memset(m_buttons, 0, sizeof(m_buttons) );
@@ -36,12 +42,14 @@ struct Mouse
 		m_height = _height;
 	}
 
-	void setPos(int32_t _mx, int32_t _my)
+	void setPos(int32_t _mx, int32_t _my, int32_t _mz)
 	{
 		m_absolute[0] = _mx;
 		m_absolute[1] = _my;
+		m_absolute[2] = _mz;
 		m_norm[0] = float(_mx)/float(m_width);
 		m_norm[1] = float(_my)/float(m_height);
+		m_norm[2] = float(_mz)/float(m_wheelDelta);
 	}
 
 	void setButtonState(entry::MouseButton::Enum _button, uint8_t _state)
@@ -49,18 +57,20 @@ struct Mouse
 		m_buttons[_button] = _state;
 	}
 
-	int32_t m_absolute[2];
-	float m_norm[2];
+	int32_t m_absolute[3];
+	float m_norm[3];
 	int32_t m_wheel;
 	uint8_t m_buttons[entry::MouseButton::Count];
 	uint16_t m_width;
 	uint16_t m_height;
+	uint16_t m_wheelDelta;
 	bool m_lock;
 };
 
 struct Keyboard
 {
 	Keyboard()
+		: m_ring(BX_COUNTOF(m_char) )
 	{
 	}
 
@@ -90,8 +100,69 @@ struct Keyboard
 		m_once[_key] = false;
 	}
 
+	void pushChar(uint8_t _len, const uint8_t _char[4])
+	{
+		for (uint32_t len = m_ring.reserve(4)
+			; len < _len
+			; len = m_ring.reserve(4)
+			)
+		{
+			popChar();
+		}
+
+		memcpy(&m_char[m_ring.m_current], _char, 4);
+		m_ring.commit(4);
+	}
+
+	const uint8_t* popChar()
+	{
+		if (0 < m_ring.available() )
+		{
+			uint8_t* utf8 = &m_char[m_ring.m_read];
+			m_ring.consume(4);
+			return utf8;
+		}
+
+		return NULL;
+	}
+
+	void charFlush()
+	{
+		m_ring.m_current = 0;
+		m_ring.m_write   = 0;
+		m_ring.m_read    = 0;
+	}
+
 	uint32_t m_key[256];
 	bool m_once[256];
+
+	bx::RingBufferControl m_ring;
+	uint8_t m_char[256];
+};
+
+struct Gamepad
+{
+	Gamepad()
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		memset(m_axis, 0, sizeof(m_axis) );
+	}
+
+	void setAxis(entry::GamepadAxis::Enum _axis, int32_t _value)
+	{
+		m_axis[_axis] = _value;
+	}
+
+	int32_t getAxis(entry::GamepadAxis::Enum _axis)
+	{
+		return m_axis[_axis];
+	}
+
+	int32_t m_axis[entry::GamepadAxis::Count];
 };
 
 struct Input
@@ -107,12 +178,16 @@ struct Input
 
 	void addBindings(const char* _name, const InputBinding* _bindings)
 	{
-		m_inputBindingsMap.insert(std::make_pair(_name, _bindings) );
+		m_inputBindingsMap.insert(stl::make_pair(_name, _bindings) );
 	}
 
 	void removeBindings(const char* _name)
 	{
-		m_inputBindingsMap.erase(_name);
+		InputBindingMap::iterator it = m_inputBindingsMap.find(_name);
+		if (it != m_inputBindingsMap.end() )
+		{
+			m_inputBindingsMap.erase(it);
+		}
 	}
 
 	void process(const InputBinding* _bindings)
@@ -162,74 +237,118 @@ struct Input
 	{
 		m_mouse.reset();
 		m_keyboard.reset();
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_gamepad); ++ii)
+		{
+			m_gamepad[ii].reset();
+		}
 	}
 
-	typedef std::unordered_map<std::string, const InputBinding*> InputBindingMap;
+	typedef stl::unordered_map<const char*, const InputBinding*> InputBindingMap;
 	InputBindingMap m_inputBindingsMap;
 	Mouse m_mouse;
 	Keyboard m_keyboard;
+	Gamepad m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 };
 
-static Input s_input;
+static Input* s_input;
+
+void inputInit()
+{
+	s_input = BX_NEW(entry::getAllocator(), Input);
+}
+
+void inputShutdown()
+{
+	BX_DELETE(entry::getAllocator(), s_input);
+}
 
 void inputAddBindings(const char* _name, const InputBinding* _bindings)
 {
-	s_input.addBindings(_name, _bindings);
+	s_input->addBindings(_name, _bindings);
 }
 
 void inputRemoveBindings(const char* _name)
 {
-	s_input.removeBindings(_name);
+	s_input->removeBindings(_name);
 }
 
 void inputProcess()
 {
-	s_input.process();
+	s_input->process();
 }
 
 void inputSetMouseResolution(uint16_t _width, uint16_t _height)
 {
-	s_input.m_mouse.setResolution(_width, _height);
+	s_input->m_mouse.setResolution(_width, _height);
 }
 
 void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 {
-	s_input.m_keyboard.setKeyState(_key, _modifiers, _down);
+	s_input->m_keyboard.setKeyState(_key, _modifiers, _down);
 }
 
-void inputSetMousePos(int32_t _mx, int32_t _my)
+void inputChar(uint8_t _len, const uint8_t _char[4])
 {
-	s_input.m_mouse.setPos(_mx, _my);
+	s_input->m_keyboard.pushChar(_len, _char);
+}
+
+const uint8_t* inputGetChar()
+{
+	return s_input->m_keyboard.popChar();
+}
+
+void inputCharFlush()
+{
+	s_input->m_keyboard.charFlush();
+}
+
+void inputSetMousePos(int32_t _mx, int32_t _my, int32_t _mz)
+{
+	s_input->m_mouse.setPos(_mx, _my, _mz);
 }
 
 void inputSetMouseButtonState(entry::MouseButton::Enum _button, uint8_t _state)
 {
-	s_input.m_mouse.setButtonState(_button, _state);
+	s_input->m_mouse.setButtonState(_button, _state);
 }
 
-void inputGetMouse(float _mouse[2])
+void inputGetMouse(float _mouse[3])
 {
-	_mouse[0] = s_input.m_mouse.m_norm[0];
-	_mouse[1] = s_input.m_mouse.m_norm[1];
-	s_input.m_mouse.m_norm[0] = 0.0f;
-	s_input.m_mouse.m_norm[1] = 0.0f;
+	_mouse[0] = s_input->m_mouse.m_norm[0];
+	_mouse[1] = s_input->m_mouse.m_norm[1];
+	_mouse[2] = s_input->m_mouse.m_norm[2];
+	s_input->m_mouse.m_norm[0] = 0.0f;
+	s_input->m_mouse.m_norm[1] = 0.0f;
+	s_input->m_mouse.m_norm[2] = 0.0f;
 }
 
 bool inputIsMouseLocked()
 {
-	return s_input.m_mouse.m_lock;
+	return s_input->m_mouse.m_lock;
 }
 
 void inputSetMouseLock(bool _lock)
 {
-	if (s_input.m_mouse.m_lock != _lock)
+	if (s_input->m_mouse.m_lock != _lock)
 	{
-		s_input.m_mouse.m_lock = _lock;
-		entry::setMouseLock(_lock);
+		s_input->m_mouse.m_lock = _lock;
+		entry::WindowHandle defaultWindow = { 0 };
+		entry::setMouseLock(defaultWindow, _lock);
 		if (_lock)
 		{
-			s_input.m_mouse.m_norm[0] = 0.0f;
-			s_input.m_mouse.m_norm[1] = 0.0f;
+			s_input->m_mouse.m_norm[0] = 0.0f;
+			s_input->m_mouse.m_norm[1] = 0.0f;
+			s_input->m_mouse.m_norm[2] = 0.0f;
 		}
 	}
+}
+
+void inputSetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis, int32_t _value)
+{
+	s_input->m_gamepad[_handle.idx].setAxis(_axis, _value);
+}
+
+int32_t inputGetGamepadAxis(entry::GamepadHandle _handle, entry::GamepadAxis::Enum _axis)
+{
+	return s_input->m_gamepad[_handle.idx].getAxis(_axis);
 }

@@ -1,0 +1,188 @@
+#version 140
+#ifndef SHADER_API_D3D11
+    #define SHADER_API_D3D11 1
+#endif
+#ifndef SHADER_API_D3D11
+    #define SHADER_API_D3D11 1
+#endif
+struct vec1 {
+	float x;
+};
+struct uvec1 {
+	uint x;
+};
+struct ivec1 {
+	int x;
+};
+uniform Globals {
+ 	vec4 unity_ColorSpaceGrey;
+	vec4 _MainTex_ST;
+};
+uniform UnityLighting {
+ 	vec4 _WorldSpaceLightPos0;
+	vec4 _LightPositionRange;
+	vec4 unity_4LightPosX0;
+	vec4 unity_4LightPosY0;
+	vec4 unity_4LightPosZ0;
+	vec4 unity_4LightAtten0;
+	vec4 unity_LightColor[8];
+	vec4 unity_LightPosition[8];
+	vec4 unity_LightAtten[8];
+	vec4 unity_SpotDirection[8];
+	vec4 unity_SHAr;
+	vec4 unity_SHAg;
+	vec4 unity_SHAb;
+	vec4 unity_SHBr;
+	vec4 unity_SHBg;
+	vec4 unity_SHBb;
+	vec4 unity_SHC;
+};
+uniform UnityPerDraw {
+ 	vec4 glstate_matrix_mvp[4];
+	vec4 glstate_matrix_modelview0[4];
+	vec4 glstate_matrix_invtrans_modelview0[4];
+	vec4 _Object2World[4];
+	vec4 _World2Object[4];
+	vec4 unity_Scale;
+	vec4 unity_LODFade;
+};
+uniform UnityPerFrame {
+ 	vec4 glstate_matrix_projection[4];
+	vec4 glstate_lightmodel_ambient;
+	vec4 unity_MatrixV[4];
+	vec4 unity_MatrixVP[4];
+	vec4 unity_AmbientSky;
+	vec4 unity_AmbientGround;
+};
+in  vec4 dcl_Input0_POSITION0;
+vec4 Input0;
+in  vec4 dcl_Input1_NORMAL0;
+vec4 Input1;
+in  vec4 dcl_Input2_TEXCOORD0;
+vec4 Input2;
+#undef Output0
+#define Output0 phase0_Output0
+vec4 phase0_Output0;
+ out  vec4 VtxGeoOutput1_TEXCOORD0;
+#define Output1 VtxGeoOutput1_TEXCOORD0
+ out  vec4 VtxGeoOutput2_COLOR0;
+#define Output2 VtxGeoOutput2_COLOR0
+vec4 Temp[4];
+ivec4 Temp_int[4];
+uvec4 Temp_uint[4];
+void main()
+{
+    //--- Start Early Main ---
+    Input0 = dcl_Input0_POSITION0;
+    Input1 = dcl_Input1_NORMAL0;
+    Input2 = dcl_Input2_TEXCOORD0;
+    //--- End Early Main ---
+    //Instruction 0
+    //MUL
+    Temp[0] = vec4(Input0.yyyy * glstate_matrix_mvp[1]);
+    //Instruction 1
+    //MAD
+    Temp[0] = vec4(glstate_matrix_mvp[0] * Input0.xxxx + Temp[0]);
+    //Instruction 2
+    //MAD
+    Temp[0] = vec4(glstate_matrix_mvp[2] * Input0.zzzz + Temp[0]);
+    //Instruction 3
+    //MAD
+    Output0 = vec4(glstate_matrix_mvp[3] * Input0.wwww + Temp[0]);
+    //Instruction 4
+    //MAD
+    Output1.xy = vec4(Input2.xyxx * _MainTex_ST.xyxx + _MainTex_ST.zwzz).xy;
+    //Instruction 5
+    //MUL
+    Temp[0].xyz = vec4(Input0.yyyy * glstate_matrix_modelview0[1].xyzx).xyz;
+    //Instruction 6
+    //MAD
+    Temp[0].xyz = vec4(glstate_matrix_modelview0[0].xyzx * Input0.xxxx + Temp[0].xyzx).xyz;
+    //Instruction 7
+    //MAD
+    Temp[0].xyz = vec4(glstate_matrix_modelview0[2].xyzx * Input0.zzzz + Temp[0].xyzx).xyz;
+    //Instruction 8
+    //MAD
+    Temp[0].xyz = vec4(glstate_matrix_modelview0[3].xyzx * Input0.wwww + Temp[0].xyzx).xyz;
+    //Instruction 9
+    //MUL
+    Temp[1].xyz = vec4(Input1.yyyy * glstate_matrix_invtrans_modelview0[1].xyzx).xyz;
+    //Instruction 10
+    //MAD
+    Temp[1].xyz = vec4(glstate_matrix_invtrans_modelview0[0].xyzx * Input1.xxxx + Temp[1].xyzx).xyz;
+    //Instruction 11
+    //MAD
+    Temp[1].xyz = vec4(glstate_matrix_invtrans_modelview0[2].xyzx * Input1.zzzz + Temp[1].xyzx).xyz;
+    //Instruction 12
+    //DP3
+    Temp[0].w = vec4(dot((Temp[1].xyzx).xyz, (Temp[1].xyzx).xyz)).w;
+    //Instruction 13
+    //RSQ
+    Temp[0].w = vec4(inversesqrt(Temp[0].w)).w;
+    //Instruction 14
+    //MUL
+    Temp[1].xyz = vec4(Temp[0].wwww * Temp[1].xyzx).xyz;
+    //Instruction 15
+    //MOV
+    Temp[2].xyz = vec4(glstate_lightmodel_ambient.xyzx).xyz;
+    //Instruction 16
+    //MOV
+    Temp_int[0].w = ivec4(0).w;
+    //Instruction 17
+    //LOOP
+    while(true){
+        //Instruction 18
+        //IGE
+        // IGE+BREAKC opt
+        if (((Temp_int[0].w)>= (4))) { break; }
+        Temp_uint[1].w = ((Temp_int[0].w)>= (4)) ? 0xFFFFFFFFu : uint(0);
+        //Instruction 19
+        //Instruction 20
+        //MAD
+        Temp[3].xyz = vec4(-Temp[0].xyzx * unity_LightPosition[Temp_int[0].w + 0].wwww + unity_LightPosition[Temp_int[0].w + 0].xyzx).xyz;
+        //Instruction 21
+        //DP3
+        Temp[1].w = vec4(dot((Temp[3].xyzx).xyz, (Temp[3].xyzx).xyz)).w;
+        //Instruction 22
+        //MAD
+        Temp[2].w = Temp[1].w * unity_LightAtten[Temp_int[0].w + 0].z + 1.000000;
+        //Instruction 23
+        //DIV
+        Temp[2].w = vec4(vec4(1.000000, 1.000000, 1.000000, 1.000000) / Temp[2].w).w;
+        //Instruction 24
+        //RSQ
+        Temp[1].w = vec4(inversesqrt(Temp[1].w)).w;
+        //Instruction 25
+        //MUL
+        Temp[3].xyz = vec4(Temp[1].wwww * Temp[3].xyzx).xyz;
+        //Instruction 26
+        //DP3
+        Temp[1].w = vec4(dot((Temp[1].xyzx).xyz, (Temp[3].xyzx).xyz)).w;
+        //Instruction 27
+        //MAX
+        Temp[1].w = vec4(max(Temp[1].w, 0.000000)).w;
+        //Instruction 28
+        //MUL
+        Temp[1].w *= Temp[2].w;
+        //Instruction 29
+        //MAD
+        Temp[2].xyz = vec4(unity_LightColor[Temp_int[0].w + 0].xyzx * Temp[1].wwww + Temp[2].xyzx).xyz;
+        //Instruction 30
+        //IADD
+        Temp_int[0].w += 1;
+        //Instruction 31
+    //ENDLOOP
+    }
+    //Instruction 32
+    //ADD
+    Output2.xyz = vec4(Temp[2].xyzx + Temp[2].xyzx).xyz;
+    //Instruction 33
+    //MOV
+    Output2.w = vec4(1.000000).w;
+    //Instruction 34
+    //RET
+    //--- Post shader code ---
+    gl_Position = vec4(phase0_Output0);
+    //--- End post shader code ---
+    return;
+}

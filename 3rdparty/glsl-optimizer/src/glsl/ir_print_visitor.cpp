@@ -27,52 +27,65 @@
 #include "main/macros.h"
 #include "program/hash_table.h"
 
-static void print_type(const glsl_type *t);
+static void print_type(FILE *f, const glsl_type *t);
 
 void
 ir_instruction::print(void) const
 {
+   this->fprint(stdout);
+}
+
+void
+ir_instruction::fprint(FILE *f) const
+{
    ir_instruction *deconsted = const_cast<ir_instruction *>(this);
 
-   ir_print_visitor v;
+   ir_print_visitor v(f);
    deconsted->accept(&v);
 }
 
 extern "C" {
 void
-_mesa_print_ir(exec_list *instructions,
+_mesa_print_ir(FILE *f, exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
    if (state) {
       for (unsigned i = 0; i < state->num_user_structures; i++) {
 	 const glsl_type *const s = state->user_structures[i];
 
-	 printf("(structure (%s) (%s@%p) (%u) (\n",
-		s->name, s->name, (void *) s, s->length);
+	 fprintf(f, "(structure (%s) (%s@%p) (%u) (\n",
+                 s->name, s->name, (void *) s, s->length);
 
 	 for (unsigned j = 0; j < s->length; j++) {
-	    printf("\t((");
-	    print_type(s->fields.structure[j].type);
-	    printf(")(%s))\n", s->fields.structure[j].name);
+	    fprintf(f, "\t((");
+	    print_type(f, s->fields.structure[j].type);
+	    fprintf(f, ")(%s))\n", s->fields.structure[j].name);
 	 }
 
-	 printf(")\n");
+	 fprintf(f, ")\n");
       }
    }
 
-   printf("(\n");
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
-      ir->print();
+   fprintf(f, "(\n");
+   foreach_in_list(ir_instruction, ir, instructions) {
+      ir->fprint(f);
       if (ir->ir_type != ir_type_function)
-	 printf("\n");
+	 fprintf(f, "\n");
    }
-   printf("\n)");
+   fprintf(f, "\n)");
+}
+
+void
+fprint_ir(FILE *f, const void *instruction)
+{
+   const ir_instruction *ir = (const ir_instruction *)instruction;
+   ir->fprint(f);
 }
 
 } /* extern "C" */
 
-ir_print_visitor::ir_print_visitor()
+ir_print_visitor::ir_print_visitor(FILE *f)
+   : f(f)
 {
    indentation = 0;
    printable_names =
@@ -91,7 +104,7 @@ ir_print_visitor::~ir_print_visitor()
 void ir_print_visitor::indent(void)
 {
    for (int i = 0; i < indentation; i++)
-      printf("  ");
+      fprintf(f, "  ");
 }
 
 const char *
@@ -125,87 +138,86 @@ ir_print_visitor::unique_name(ir_variable *var)
 }
 
 static void
-print_type(const glsl_type *t)
+print_type(FILE *f, const glsl_type *t)
 {
    if (t->base_type == GLSL_TYPE_ARRAY) {
-      printf("(array ");
-      print_type(t->fields.array);
-      printf(" %u)", t->length);
+      fprintf(f, "(array ");
+      print_type(f, t->fields.array);
+      fprintf(f, " %u)", t->length);
    } else if ((t->base_type == GLSL_TYPE_STRUCT)
-	      && (strncmp("gl_", t->name, 3) != 0)) {
-      printf("%s@%p", t->name, (void *) t);
+              && !is_gl_identifier(t->name)) {
+      fprintf(f, "%s@%p", t->name, (void *) t);
    } else {
-      printf("%s", t->name);
+      fprintf(f, "%s", t->name);
    }
 }
 
-void ir_print_visitor::visit(ir_rvalue *ir)
+void ir_print_visitor::visit(ir_rvalue *)
 {
-   printf("error");
+   fprintf(f, "error");
 }
 
 void ir_print_visitor::visit(ir_variable *ir)
 {
-   printf("(declare ");
+   fprintf(f, "(declare ");
 
    const char *const cent = (ir->data.centroid) ? "centroid " : "";
    const char *const samp = (ir->data.sample) ? "sample " : "";
    const char *const inv = (ir->data.invariant) ? "invariant " : "";
-   const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
+   const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ", "shader_inout ",
                                 "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
    STATIC_ASSERT(ARRAY_SIZE(mode) == ir_var_mode_count);
+   const char *const stream [] = {"", "stream1 ", "stream2 ", "stream3 "};
    const char *const interp[] = { "", "smooth", "flat", "noperspective" };
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
-   printf("(%s%s%s%s%s) ",
-	  cent, samp, inv, mode[ir->data.mode], interp[ir->data.interpolation]);
+   fprintf(f, "(%s%s%s%s%s%s) ",
+           cent, samp, inv, mode[ir->data.mode],
+           stream[ir->data.stream],
+           interp[ir->data.interpolation]);
 
-   print_type(ir->type);
-   printf(" %s)", unique_name(ir));
+   print_type(f, ir->type);
+   fprintf(f, " %s)", unique_name(ir));
 }
 
 
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
    _mesa_symbol_table_push_scope(symbols);
-   printf("(signature ");
+   fprintf(f, "(signature ");
    indentation++;
 
-   print_type(ir->return_type);
-   printf("\n");
+   print_type(f, ir->return_type);
+   fprintf(f, "\n");
    indent();
 
-   printf("(parameters\n");
+   fprintf(f, "(parameters\n");
    indentation++;
 
-   foreach_list(n, &ir->parameters) {
-      ir_variable *const inst = (ir_variable *) n;
-
+   foreach_in_list(ir_variable, inst, &ir->parameters) {
       indent();
       inst->accept(this);
-      printf("\n");
+      fprintf(f, "\n");
    }
    indentation--;
 
    indent();
-   printf(")\n");
+   fprintf(f, ")\n");
 
    indent();
 
-   printf("(\n");
+   fprintf(f, "(\n");
    indentation++;
 
-   foreach_list(n, &ir->body) {
-      ir_instruction *const inst = (ir_instruction *) n;
-
+   foreach_in_list(ir_instruction, inst, &ir->body) {
       indent();
       inst->accept(this);
-      printf("\n");
+      fprintf(f, "\n");
    }
    indentation--;
    indent();
-   printf("))\n");
+   fprintf(f, "))\n");
    indentation--;
    _mesa_symbol_table_pop_scope(symbols);
 }
@@ -213,61 +225,60 @@ void ir_print_visitor::visit(ir_function_signature *ir)
 
 void ir_print_visitor::visit(ir_function *ir)
 {
-   printf("(function %s\n", ir->name);
+   fprintf(f, "(function %s\n", ir->name);
    indentation++;
-   foreach_list(n, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *) n;
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       indent();
       sig->accept(this);
-      printf("\n");
+      fprintf(f, "\n");
    }
    indentation--;
    indent();
-   printf(")\n\n");
+   fprintf(f, ")\n\n");
 }
 
 
 void ir_print_visitor::visit(ir_expression *ir)
 {
-   printf("(expression ");
+   fprintf(f, "(expression ");
 
-   print_type(ir->type);
+   print_type(f, ir->type);
 
-   printf(" %s ", ir->operator_string());
+   fprintf(f, " %s ", ir->operator_string());
 
    for (unsigned i = 0; i < ir->get_num_operands(); i++) {
       ir->operands[i]->accept(this);
    }
 
-   printf(") ");
+   fprintf(f, ") ");
 }
 
 
 void ir_print_visitor::visit(ir_texture *ir)
 {
-   printf("(%s ", ir->opcode_string());
+   fprintf(f, "(%s ", ir->opcode_string());
 
-   print_type(ir->type);
-   printf(" ");
+   print_type(f, ir->type);
+   fprintf(f, " ");
 
    ir->sampler->accept(this);
-   printf(" ");
+   fprintf(f, " ");
 
    if (ir->op != ir_txs && ir->op != ir_query_levels) {
       ir->coordinate->accept(this);
 
-      printf(" ");
+      fprintf(f, " ");
 
       if (ir->offset != NULL) {
 	 ir->offset->accept(this);
       } else {
-	 printf("0");
+	 fprintf(f, "0");
       }
 
-      printf(" ");
+      fprintf(f, " ");
    }
 
-   printf(" ");
+   fprintf(f, " ");
    switch (ir->op)
    {
    case ir_tex:
@@ -286,17 +297,17 @@ void ir_print_visitor::visit(ir_texture *ir)
       ir->lod_info.sample_index->accept(this);
       break;
    case ir_txd:
-      printf("(");
+      fprintf(f, "(");
       ir->lod_info.grad.dPdx->accept(this);
-      printf(" ");
+      fprintf(f, " ");
       ir->lod_info.grad.dPdy->accept(this);
-      printf(")");
+      fprintf(f, ")");
       break;
    case ir_tg4:
       ir->lod_info.component->accept(this);
       break;
    };
-   printf(")");
+   fprintf(f, ")");
 }
 
 
@@ -309,43 +320,43 @@ void ir_print_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-   printf("(swiz ");
+   fprintf(f, "(swiz ");
    for (unsigned i = 0; i < ir->mask.num_components; i++) {
-      printf("%c", "xyzw"[swiz[i]]);
+      fprintf(f, "%c", "xyzw"[swiz[i]]);
    }
-   printf(" ");
+   fprintf(f, " ");
    ir->val->accept(this);
-   printf(")");
+   fprintf(f, ")");
 }
 
 
 void ir_print_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   printf("(var_ref %s) ", unique_name(var));
+   fprintf(f, "(var_ref %s) ", unique_name(var));
 }
 
 
 void ir_print_visitor::visit(ir_dereference_array *ir)
 {
-   printf("(array_ref ");
+   fprintf(f, "(array_ref ");
    ir->array->accept(this);
    ir->array_index->accept(this);
-   printf(") ");
+   fprintf(f, ") ");
 }
 
 
 void ir_print_visitor::visit(ir_dereference_record *ir)
 {
-   printf("(record_ref ");
+   fprintf(f, "(record_ref ");
    ir->record->accept(this);
-   printf(" %s) ", ir->field);
+   fprintf(f, " %s) ", ir->field);
 }
 
 
 void ir_print_visitor::visit(ir_assignment *ir)
 {
-   printf("(assign ");
+   fprintf(f, "(assign ");
 
    if (ir->condition)
       ir->condition->accept(this);
@@ -361,22 +372,22 @@ void ir_print_visitor::visit(ir_assignment *ir)
    }
    mask[j] = '\0';
 
-   printf(" (%s) ", mask);
+   fprintf(f, " (%s) ", mask);
 
    ir->lhs->accept(this);
 
-   printf(" ");
+   fprintf(f, " ");
 
    ir->rhs->accept(this);
-   printf(") ");
+   fprintf(f, ") ");
 }
 
 
 void ir_print_visitor::visit(ir_constant *ir)
 {
-   printf("(constant ");
-   print_type(ir->type);
-   printf(" (");
+   fprintf(f, "(constant ");
+   print_type(f, ir->type);
+   fprintf(f, " (");
 
    if (ir->type->is_array()) {
       for (unsigned i = 0; i < ir->type->length; i++)
@@ -384,122 +395,116 @@ void ir_print_visitor::visit(ir_constant *ir)
    } else if (ir->type->is_record()) {
       ir_constant *value = (ir_constant *) ir->components.get_head();
       for (unsigned i = 0; i < ir->type->length; i++) {
-	 printf("(%s ", ir->type->fields.structure[i].name);
+	 fprintf(f, "(%s ", ir->type->fields.structure[i].name);
 	 value->accept(this);
-	 printf(")");
+	 fprintf(f, ")");
 
 	 value = (ir_constant *) value->next;
       }
    } else {
       for (unsigned i = 0; i < ir->type->components(); i++) {
 	 if (i != 0)
-	    printf(" ");
+	    fprintf(f, " ");
 	 switch (ir->type->base_type) {
-	 case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
-	 case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
+	 case GLSL_TYPE_UINT:  fprintf(f, "%u", ir->value.u[i]); break;
+	 case GLSL_TYPE_INT:   fprintf(f, "%d", ir->value.i[i]); break;
 	 case GLSL_TYPE_FLOAT:
             if (ir->value.f[i] == 0.0f)
                /* 0.0 == -0.0, so print with %f to get the proper sign. */
-               printf("%.1f", ir->value.f[i]);
+               fprintf(f, "%f", ir->value.f[i]);
             else if (fabs(ir->value.f[i]) < 0.000001f)
-               printf("%a", ir->value.f[i]);
+               fprintf(f, "%a", ir->value.f[i]);
             else if (fabs(ir->value.f[i]) > 1000000.0f)
-               printf("%e", ir->value.f[i]);
+               fprintf(f, "%e", ir->value.f[i]);
             else
-               printf("%f", ir->value.f[i]);
+               fprintf(f, "%f", ir->value.f[i]);
             break;
-	 case GLSL_TYPE_BOOL:  printf("%d", ir->value.b[i]); break;
+	 case GLSL_TYPE_BOOL:  fprintf(f, "%d", ir->value.b[i]); break;
 	 default: assert(0);
 	 }
       }
    }
-   printf(")) ");
+   fprintf(f, ")) ");
 }
 
 
 void
 ir_print_visitor::visit(ir_call *ir)
 {
-   printf("(call %s ", ir->callee_name());
+   fprintf(f, "(call %s ", ir->callee_name());
    if (ir->return_deref)
       ir->return_deref->accept(this);
-   printf(" (");
-   foreach_list(n, &ir->actual_parameters) {
-      ir_rvalue *const param = (ir_rvalue *) n;
-
+   fprintf(f, " (");
+   foreach_in_list(ir_rvalue, param, &ir->actual_parameters) {
       param->accept(this);
    }
-   printf("))\n");
+   fprintf(f, "))\n");
 }
 
 
 void
 ir_print_visitor::visit(ir_return *ir)
 {
-   printf("(return");
+   fprintf(f, "(return");
 
    ir_rvalue *const value = ir->get_value();
    if (value) {
-      printf(" ");
+      fprintf(f, " ");
       value->accept(this);
    }
 
-   printf(")");
+   fprintf(f, ")");
 }
 
 
 void
 ir_print_visitor::visit(ir_discard *ir)
 {
-   printf("(discard ");
+   fprintf(f, "(discard ");
 
    if (ir->condition != NULL) {
-      printf(" ");
+      fprintf(f, " ");
       ir->condition->accept(this);
    }
 
-   printf(")");
+   fprintf(f, ")");
 }
 
 
 void
 ir_print_visitor::visit(ir_if *ir)
 {
-   printf("(if ");
+   fprintf(f, "(if ");
    ir->condition->accept(this);
 
-   printf("(\n");
+   fprintf(f, "(\n");
    indentation++;
 
-   foreach_list(n, &ir->then_instructions) {
-      ir_instruction *const inst = (ir_instruction *) n;
-
+   foreach_in_list(ir_instruction, inst, &ir->then_instructions) {
       indent();
       inst->accept(this);
-      printf("\n");
+      fprintf(f, "\n");
    }
 
    indentation--;
    indent();
-   printf(")\n");
+   fprintf(f, ")\n");
 
    indent();
    if (!ir->else_instructions.is_empty()) {
-      printf("(\n");
+      fprintf(f, "(\n");
       indentation++;
 
-      foreach_list(n, &ir->else_instructions) {
-	 ir_instruction *const inst = (ir_instruction *) n;
-
+      foreach_in_list(ir_instruction, inst, &ir->else_instructions) {
 	 indent();
 	 inst->accept(this);
-	 printf("\n");
+	 fprintf(f, "\n");
       }
       indentation--;
       indent();
-      printf("))\n");
+      fprintf(f, "))\n");
    } else {
-      printf("())\n");
+      fprintf(f, "())\n");
    }
 }
 
@@ -507,26 +512,24 @@ ir_print_visitor::visit(ir_if *ir)
 void
 ir_print_visitor::visit(ir_loop *ir)
 {
-   printf("(loop (\n");
+   fprintf(f, "(loop (\n");
    indentation++;
 
-   foreach_list(n, &ir->body_instructions) {
-      ir_instruction *const inst = (ir_instruction *) n;
-
+   foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
       indent();
       inst->accept(this);
-      printf("\n");
+      fprintf(f, "\n");
    }
    indentation--;
    indent();
-   printf("))\n");
+   fprintf(f, "))\n");
 }
 
 
 void
 ir_print_visitor::visit(ir_loop_jump *ir)
 {
-   printf("%s", ir->is_break() ? "break" : "continue");
+   fprintf(f, "%s", ir->is_break() ? "break" : "continue");
 }
 
 void
@@ -543,11 +546,16 @@ ir_print_visitor::visit(ir_typedecl_statement *ir)
 void
 ir_print_visitor::visit(ir_emit_vertex *ir)
 {
-   printf("(emit-vertex)");
+   fprintf(f, "(emit-vertex ");
+   ir->stream->accept(this);
+   fprintf(f, ")\n");
 }
 
 void
 ir_print_visitor::visit(ir_end_primitive *ir)
 {
-   printf("(end-primitive)");
+   fprintf(f, "(end-primitive ");
+   ir->stream->accept(this);
+   fprintf(f, ")\n");
+
 }

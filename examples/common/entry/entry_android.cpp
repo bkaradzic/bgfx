@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -20,11 +20,56 @@
 
 extern "C"
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <android_native_app_glue.c>
+#pragma GCC diagnostic pop
 } // extern "C"
 
 namespace entry
 {
+	struct GamepadRemap
+	{
+		uint16_t  m_keyCode;
+		Key::Enum m_key;
+	};
+
+	static GamepadRemap s_gamepadRemap[] =
+	{
+		{ AKEYCODE_DPAD_UP,       Key::GamepadUp        },
+		{ AKEYCODE_DPAD_DOWN,     Key::GamepadDown      },
+		{ AKEYCODE_DPAD_LEFT,     Key::GamepadLeft      },
+		{ AKEYCODE_DPAD_RIGHT,    Key::GamepadRight     },
+		{ AKEYCODE_BUTTON_START,  Key::GamepadStart     },
+		{ AKEYCODE_BACK,          Key::GamepadBack      },
+		{ AKEYCODE_BUTTON_THUMBL, Key::GamepadThumbL    },
+		{ AKEYCODE_BUTTON_THUMBR, Key::GamepadThumbR    },
+		{ AKEYCODE_BUTTON_L1,     Key::GamepadShoulderL },
+		{ AKEYCODE_BUTTON_R1,     Key::GamepadShoulderR },
+		{ AKEYCODE_GUIDE,         Key::GamepadGuide     },
+		{ AKEYCODE_BUTTON_A,      Key::GamepadA         },
+		{ AKEYCODE_BUTTON_B,      Key::GamepadB         },
+		{ AKEYCODE_BUTTON_X,      Key::GamepadX         },
+		{ AKEYCODE_BUTTON_Y,      Key::GamepadY         },
+	};
+
+	struct GamepadAxisRemap
+	{
+		int32_t m_event;
+		GamepadAxis::Enum m_axis;
+		bool m_convert;
+	};
+
+	static GamepadAxisRemap s_translateAxis[] =
+	{
+		{ AMOTION_EVENT_AXIS_X,        GamepadAxis::LeftX,  false },
+		{ AMOTION_EVENT_AXIS_Y,        GamepadAxis::LeftY,  false },
+		{ AMOTION_EVENT_AXIS_LTRIGGER, GamepadAxis::LeftZ,  false },
+		{ AMOTION_EVENT_AXIS_Z,        GamepadAxis::RightX, true  },
+		{ AMOTION_EVENT_AXIS_RZ,       GamepadAxis::RightY, false },
+		{ AMOTION_EVENT_AXIS_RTRIGGER, GamepadAxis::RightZ, false },
+	};
+
 	struct MainThreadEntry
 	{
 		int m_argc;
@@ -37,7 +82,17 @@ namespace entry
 	{
 		Context()
 			: m_window(NULL)
+			, m_count(0)
 		{
+			memset(m_value, 0, sizeof(m_value) );
+
+			// Deadzone values from xinput.h
+			m_deadzone[GamepadAxis::LeftX ] =
+			m_deadzone[GamepadAxis::LeftY ] = 7849;
+			m_deadzone[GamepadAxis::RightX] =
+			m_deadzone[GamepadAxis::RightY] = 8689;
+			m_deadzone[GamepadAxis::LeftZ ] =
+			m_deadzone[GamepadAxis::RightZ] = 30;
 		}
 
 		void run(android_app* _app)
@@ -46,6 +101,11 @@ namespace entry
 			m_app->userData = (void*)this;
 			m_app->onAppCmd = onAppCmdCB;
 			m_app->onInputEvent = onInputEventCB;
+			ANativeActivity_setWindowFlags(m_app->activity, 0
+				| AWINDOW_FLAG_FULLSCREEN
+				| AWINDOW_FLAG_KEEP_SCREEN_ON
+				, 0
+				);
 
 			const char* argv[1] = { "android.so" };
 			m_mte.m_argc = 1;
@@ -83,7 +143,15 @@ namespace entry
 					if (m_window == NULL)
 					{
 						m_window = m_app->window;
-						bgfx::androidSetWindow(m_app->window);
+						bgfx::androidSetWindow(m_window);
+
+						int32_t width  = ANativeWindow_getWidth(m_window);
+						int32_t height = ANativeWindow_getHeight(m_window);
+
+						DBG("ANativeWindow width %d, height %d", width, height);
+						WindowHandle defaultWindow = { 0 };
+						m_eventQueue.postSizeEvent(defaultWindow, width, height);
+
 						m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 					}
 					break;
@@ -163,9 +231,138 @@ namespace entry
 			}
 		}
 
+		bool filter(GamepadAxis::Enum _axis, int32_t* _value)
+		{
+			const int32_t old = m_value[_axis];
+			const int32_t deadzone = m_deadzone[_axis];
+			int32_t value = *_value;
+			value = value > deadzone || value < -deadzone ? value : 0;
+			m_value[_axis] = value;
+			*_value = value;
+			return old != value;
+		}
+
 		int32_t onInputEvent(AInputEvent* _event)
 		{
-			BX_UNUSED(_event);
+			WindowHandle  defaultWindow = { 0 };
+			GamepadHandle handle        = { 0 };
+			const int32_t type       = AInputEvent_getType(_event);
+			const int32_t source     = AInputEvent_getSource(_event);
+			const int32_t actionBits = AMotionEvent_getAction(_event);
+
+			switch (type)
+			{
+			case AINPUT_EVENT_TYPE_MOTION:
+				{
+					if (0 != (source & (AINPUT_SOURCE_GAMEPAD|AINPUT_SOURCE_JOYSTICK) ) )
+					{
+						for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateAxis); ++ii)
+						{
+							const float fval = AMotionEvent_getAxisValue(_event, s_translateAxis[ii].m_event, 0);
+							int32_t value = int32_t( (s_translateAxis[ii].m_convert ? fval * 2.0f + 1.0f : fval) * INT16_MAX);
+							GamepadAxis::Enum axis = s_translateAxis[ii].m_axis;
+							if (filter(axis, &value) )
+							{
+								m_eventQueue.postAxisEvent(defaultWindow, handle, axis, value);
+							}
+						}
+
+						return 1;
+					}
+					else
+					{
+						float mx = AMotionEvent_getX(_event, 0);
+						float my = AMotionEvent_getY(_event, 0);
+						int32_t count = AMotionEvent_getPointerCount(_event);
+
+						int32_t action = (actionBits & AMOTION_EVENT_ACTION_MASK);
+						int32_t index  = (actionBits & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+						count = m_count;
+
+						switch (action)
+						{
+						case AMOTION_EVENT_ACTION_DOWN:
+						case AMOTION_EVENT_ACTION_POINTER_DOWN:
+							m_count++;
+							break;
+
+						case AMOTION_EVENT_ACTION_UP:
+						case AMOTION_EVENT_ACTION_POINTER_UP:
+							m_count--;
+							break;
+
+						default:
+							break;
+						}
+
+						if (count != m_count)
+						{
+							m_eventQueue.postMouseEvent(defaultWindow
+								, (int32_t)mx
+								, (int32_t)my
+								, 0
+								, 1 == count ? MouseButton::Left : MouseButton::Right
+								, false
+								);
+
+							if (0 != m_count)
+							{
+								m_eventQueue.postMouseEvent(defaultWindow
+									, (int32_t)mx
+									, (int32_t)my
+									, 0
+									, 1 == m_count ? MouseButton::Left : MouseButton::Right
+									, true
+									);
+							}
+						}
+
+						switch (action)
+						{
+						case AMOTION_EVENT_ACTION_MOVE:
+							if (0 == index)
+							{
+								m_eventQueue.postMouseEvent(defaultWindow
+									, (int32_t)mx
+									, (int32_t)my
+									, 0
+									);
+							}
+							break;
+
+						default:
+							break;
+						}
+					}
+				}
+				break;
+
+			case AINPUT_EVENT_TYPE_KEY:
+				{
+					int32_t keyCode = AKeyEvent_getKeyCode(_event);
+
+					if (0 != (source & (AINPUT_SOURCE_GAMEPAD|AINPUT_SOURCE_JOYSTICK) ) )
+					{
+						for (uint32_t jj = 0; jj < BX_COUNTOF(s_gamepadRemap); ++jj)
+						{
+							if (keyCode == s_gamepadRemap[jj].m_keyCode)
+							{
+								m_eventQueue.postKeyEvent(defaultWindow, s_gamepadRemap[jj].m_key, 0, actionBits == AKEY_EVENT_ACTION_DOWN);
+								break;
+							}
+						}
+					}
+
+					return 1;
+				}
+				break;
+
+			default:
+				DBG("type %d", type);
+				break;
+			}
+
 			return 0;
 		}
 
@@ -188,6 +385,10 @@ namespace entry
 
 		ANativeWindow* m_window;
 		android_app* m_app;
+
+		int32_t m_count;
+		int32_t m_value[GamepadAxis::Count];
+		int32_t m_deadzone[GamepadAxis::Count];
 	};
 
 	static Context s_ctx;
@@ -197,23 +398,56 @@ namespace entry
 		return s_ctx.m_eventQueue.poll();
 	}
 
+	const Event* poll(WindowHandle _handle)
+	{
+		return s_ctx.m_eventQueue.poll(_handle);
+	}
+
 	void release(const Event* _event)
 	{
 		s_ctx.m_eventQueue.release(_event);
 	}
 
-	void setWindowSize(uint32_t _width, uint32_t _height)
+	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
-		BX_UNUSED(_width, _height);
+		BX_UNUSED(_x, _y, _width, _height, _flags, _title);
+		WindowHandle handle = { UINT16_MAX };
+		return handle;
 	}
 
-	void toggleWindowFrame()
+	void destroyWindow(WindowHandle _handle)
 	{
+		BX_UNUSED(_handle);
 	}
 
-	void setMouseLock(bool _lock)
+	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		BX_UNUSED(_lock);
+		BX_UNUSED(_handle, _x, _y);
+	}
+
+	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
+	{
+		BX_UNUSED(_handle, _width, _height);
+	}
+
+	void setWindowTitle(WindowHandle _handle, const char* _title)
+	{
+		BX_UNUSED(_handle, _title);
+	}
+
+	void toggleWindowFrame(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+	}
+
+	void toggleFullscreen(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+	}
+
+	void setMouseLock(WindowHandle _handle, bool _lock)
+	{
+		BX_UNUSED(_handle, _lock);
 	}
 
 	int32_t MainThreadEntry::threadFunc(void* _userData)

@@ -92,7 +92,7 @@ static float sdf__edgedf(float gx, float gy, float a)
 		} else if (a < (1.0-a1)) { // a1 <= a <= 1-a1
 			df = (0.5f-a)*gx;
 		} else { // 1-a1 < a <= 1
-			df = -0.5f*(gx + gy) + sqrt(2.0f*gx*gy*(1.0f-a));
+			df = -0.5f*(gx + gy) + sqrtf(2.0f*gx*gy*(1.0f-a));
 		}
 	}    
 	return df;

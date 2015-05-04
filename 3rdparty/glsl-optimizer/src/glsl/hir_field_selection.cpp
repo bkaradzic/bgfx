@@ -22,7 +22,6 @@
  */
 
 #include "ir.h"
-#include "program/symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"
 #include "glsl_types.h"

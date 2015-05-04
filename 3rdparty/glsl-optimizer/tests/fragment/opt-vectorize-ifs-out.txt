@@ -22,4 +22,10 @@ void main ()
 }
 
 
-// inputs: 1, stats: 5 alu 1 tex 2 flow
+// stats: 5 alu 1 tex 2 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: factor (high float) 1x1 [-1]
+// textures: 1
+//  #0: maintex (high 2d) 0x0 [-1]

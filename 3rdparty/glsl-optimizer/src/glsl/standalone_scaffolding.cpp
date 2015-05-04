@@ -31,39 +31,28 @@
 
 #include <assert.h>
 #include <string.h>
-#include "ralloc.h"
+#include <limits.h>
+#include "util/ralloc.h"
+
 
 void
-_mesa_warning(struct gl_context *ctx, const char *fmt, ...)
-{
-    va_list vargs;
-    (void) ctx;
-
-    va_start(vargs, fmt);
-
-    /* This output is not thread-safe, but that's good enough for the
-     * standalone compiler.
-     */
-    fprintf(stderr, "Mesa warning: ");
-    vfprintf(stderr, fmt, vargs);
-    fprintf(stderr, "\n");
-
-    va_end(vargs);
-}
-
-void
-_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
+_mesa_reference_shader(struct gl_context *, struct gl_shader **ptr,
                        struct gl_shader *sh)
 {
-   (void) ctx;
    *ptr = sh;
 }
 
 void
-_mesa_shader_debug(struct gl_context *, GLenum, GLuint *id,
+_mesa_shader_debug(struct gl_context *, GLenum, GLuint *,
                    const char *, int)
 {
 }
+
+extern "C" void
+_mesa_error_no_memory(const char *)
+{
+}
+
 
 struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
@@ -98,6 +87,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_ES3_compatibility = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
    ctx->Extensions.ARB_fragment_coord_conventions = true;
+   ctx->Extensions.ARB_fragment_layer_viewport = true;
    ctx->Extensions.ARB_gpu_shader5 = true;
    ctx->Extensions.ARB_sample_shading = true;
    ctx->Extensions.ARB_shader_bit_encoding = true;
@@ -119,6 +109,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.EXT_shader_integer_mix = true;
    ctx->Extensions.EXT_texture3D = true;
    ctx->Extensions.EXT_texture_array = true;
+   ctx->Extensions.EXT_draw_buffers = true;
 
    ctx->Extensions.NV_texture_rectangle = true;
 
@@ -156,12 +147,12 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    /* Set up default shader compiler options. */
    struct gl_shader_compiler_options options;
    memset(&options, 0, sizeof(options));
-   options.MaxUnrollIterations = 32;
+   options.MaxUnrollIterations = 8;
    options.MaxIfDepth = UINT_MAX;
 
    /* Default pragma settings */
    options.DefaultPragmas.Optimize = true;
 
    for (int sh = 0; sh < MESA_SHADER_STAGES; ++sh)
-      memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
+      memcpy(&ctx->Const.ShaderCompilerOptions[sh], &options, sizeof(options));
 }

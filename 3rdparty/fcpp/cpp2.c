@@ -629,19 +629,11 @@ ReturnCode openinclude( struct Global *global,
     char tmpname[NWORK]; /* Filename work area    */
     size_t len;
 
-    #if HOST == SYS_AMIGADOS
-    if( strchr (filename, ':') != NULL )
-        {
-        if( ! openfile( global, filename ) )
-            return(FPP_OK);
-        }
-    #else
     if( filename[0] == '/' )
         {
         if( ! openfile( global, filename ) )
             return(FPP_OK);
         }
-    #endif
 
     if( searchlocal )
         {
@@ -678,30 +670,11 @@ ReturnCode openinclude( struct Global *global,
             }
         else
             {
-            #if HOST == SYS_AMIGADOS
-            if( (*incptr)[len-1] != '/' && (*incptr)[len-1] != ':' )
-	            sprintf( tmpname, "%s/%s", *incptr, filename );
-            #else
             if( (*incptr)[len-1] != '/' )
                 sprintf( tmpname, "%s/%s", *incptr, filename );
-            #endif
             else
                 sprintf( tmpname, "%s%s", *incptr, filename );
 
-            #if HOST == SYS_AMIGADOS
-            //
-            //  amp July 9, 1997
-            //
-            //  OK, hack in multiassign support for the buitin
-            //  search directories...
-            //
-            if( (*incptr)[len-1] == ':' )
-                {
-                if( ! MultiAssignLoad( global, *incptr, filename, tmpname ) )
-                    return(FPP_OK);
-                }
-            else
-            #endif
             if( !openfile( global, tmpname ) )
                 return(FPP_OK);
             }
@@ -722,22 +695,8 @@ int hasdirectory( char *source,   /* Directory to examine         */
 
     char *tp2;
 
-    #if HOST == SYS_AMIGADOS
-    char *tp1;
-
-    if( (tp1 = strrchr( source, ':' ) ) == NULL )
-        tp1 = source;
-
-    if( (tp2 = strrchr( tp1, '/' ) ) == NULL )
-        tp2 = tp1;
-
-    if( tp2 == source )
-        return (FALSE);
-
-    #else
     if( (tp2 = strrchr( source, '/' ) ) == NULL )
         return(FALSE);
-    #endif
 
     strncpy( result, source, tp2 - source + 1 );
 

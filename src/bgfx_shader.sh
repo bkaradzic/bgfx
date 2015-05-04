@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -17,9 +17,6 @@
 #	define dFdy(_y) ddy(-_y)
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
-#	define vec2_splat(_x) float2(_x, _x)
-#	define vec3_splat(_x) float3(_x, _x, _x)
-#	define vec4_splat(_x) float4(_x, _x, _x, _x)
 
 #	define bvec2 bool2
 #	define bvec3 bool3
@@ -77,6 +74,16 @@ struct BgfxSampler3D
 	Texture3D m_texture;
 };
 
+struct BgfxISampler3D
+{
+	Texture3D<ivec4> m_texture;
+};
+
+struct BgfxUSampler3D
+{
+	Texture3D<uvec4> m_texture;
+};
+
 vec4 bgfxTexture3D(BgfxSampler3D _sampler, vec3 _coord)
 {
 	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
@@ -85,6 +92,20 @@ vec4 bgfxTexture3D(BgfxSampler3D _sampler, vec3 _coord)
 vec4 bgfxTexture3DLod(BgfxSampler3D _sampler, vec3 _coord, float _level)
 {
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
+}
+
+ivec4 bgfxTexture3D(BgfxISampler3D _sampler, vec3 _coord)
+{
+	ivec3 size;
+	_sampler.m_texture.GetDimensions(size.x, size.y, size.z);
+	return _sampler.m_texture.Load(ivec4(_coord * size, 0) );
+}
+
+uvec4 bgfxTexture3D(BgfxUSampler3D _sampler, vec3 _coord)
+{
+	uvec3 size;
+	_sampler.m_texture.GetDimensions(size.x, size.y, size.z);
+	return _sampler.m_texture.Load(uvec4(_coord * size, 0) );
 }
 
 struct BgfxSamplerCube
@@ -124,6 +145,12 @@ vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform Texture3D _name ## Texture : register(t[_reg]); \
 			static BgfxSampler3D _name = { _name ## Sampler, _name ## Texture }
+#		define ISAMPLER3D(_name, _reg) \
+			uniform Texture3D<ivec4> _name ## Texture : register(t[_reg]); \
+			static BgfxISampler3D _name = { _name ## Texture }
+#		define USAMPLER3D(_name, _reg) \
+			uniform Texture3D<uvec4> _name ## Texture : register(t[_reg]); \
+			static BgfxUSampler3D _name = { _name ## Texture }
 #		define sampler3D BgfxSampler3D
 #		define texture3D(_sampler, _coord) bgfxTexture3D(_sampler, _coord)
 #		define texture3DLod(_sampler, _coord, _level) bgfxTexture3DLod(_sampler, _coord, _level)
@@ -172,7 +199,6 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
 #		define texture2D(_sampler, _coord) tex2D(_sampler, _coord)
-#		define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec4( (_coord).xy, _level, 0.0) )
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 
 #		define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name : register(s ## _reg)
@@ -181,12 +207,29 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #		define SAMPLER3D(_name, _reg) uniform sampler3D _name : register(s ## _reg)
 #		define texture3D(_sampler, _coord) tex3D(_sampler, _coord)
-#		define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
 
 #		define SAMPLERCUBE(_name, _reg) uniform samplerCUBE _name : register(s[_reg])
 #		define textureCube(_sampler, _coord) texCUBE(_sampler, _coord)
-#		define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
-#	endif //
+
+#		if BGFX_SHADER_LANGUAGE_HLSL == 2
+#			define texture2DLod(_sampler, _coord, _level) tex2D(_sampler, (_coord).xy)
+#			define texture3DLod(_sampler, _coord, _level) tex3D(_sampler, (_coord).xyz)
+#			define textureCubeLod(_sampler, _coord, _level) texCUBE(_sampler, (_coord).xyz)
+#		else
+#			define texture2DLod(_sampler, _coord, _level) tex2Dlod(_sampler, vec4( (_coord).xy, 0.0, _level) )
+#			define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
+#			define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
+#		endif // BGFX_SHADER_LANGUAGE_HLSL == 2
+
+#	endif // BGFX_SHADER_LANGUAGE_HLSL > 3
+
+vec2 vec2_splat(float _x) { return vec2(_x, _x); }
+vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
+vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
+
+uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
+uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
+uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
@@ -238,6 +281,16 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define vec2_splat(_x) vec2(_x)
 #	define vec3_splat(_x) vec3(_x)
 #	define vec4_splat(_x) vec4(_x)
+#	define uvec2_splat(_x) uvec2(_x)
+#	define uvec3_splat(_x) uvec3(_x)
+#	define uvec4_splat(_x) uvec4(_x)
+
+#	if BGFX_SHADER_LANGUAGE_GLSL >= 130
+#		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
+#		define USAMPLER3D(_name, _reg) uniform usampler3D _name
+ivec4 texture3D(isampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
+uvec4 texture3D(usampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
+#	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
@@ -261,8 +314,6 @@ uniform mat4  u_invViewProj;
 uniform mat4  u_model[BGFX_CONFIG_MAX_BONES];
 uniform mat4  u_modelView;
 uniform mat4  u_modelViewProj;
-uniform mat4  u_modelViewProjX;
-uniform mat4  u_viewProjX;
 uniform float u_alphaRef;
 
 #endif // __cplusplus

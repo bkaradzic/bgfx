@@ -1,0 +1,88 @@
+#version 300 es
+in highp vec4 _glesVertex;
+in mediump vec3 _glesNormal;
+in highp vec4 _glesMultiTexCoord0;
+uniform mediump vec4 unity_LightColor[8];
+uniform highp vec4 unity_LightPosition[8];
+uniform mediump vec4 unity_LightAtten[8];
+uniform highp mat4 glstate_matrix_mvp;
+uniform highp mat4 glstate_matrix_modelview0;
+uniform highp mat4 glstate_matrix_invtrans_modelview0;
+uniform highp vec4 glstate_lightmodel_ambient;
+uniform mediump vec4 _Color;
+out lowp vec4 xlv_COLOR0;
+out highp vec2 xlv_TEXCOORD0;
+void main ()
+{
+  highp vec3 tmpvar_1;
+  tmpvar_1 = _glesVertex.xyz;
+  highp vec3 n_2;
+  n_2 = _glesNormal;
+  lowp vec4 tmpvar_3;
+  highp vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = tmpvar_1;
+  highp vec3 lightColor_5;
+  highp vec3 viewN_6;
+  highp vec3 viewpos_7;
+  highp vec4 tmpvar_8;
+  tmpvar_8.w = 1.0;
+  tmpvar_8.xyz = tmpvar_1;
+  viewpos_7 = (glstate_matrix_modelview0 * tmpvar_8).xyz;
+  highp mat3 tmpvar_9;
+  tmpvar_9[uint(0)] = glstate_matrix_invtrans_modelview0[uint(0)].xyz;
+  tmpvar_9[1u] = glstate_matrix_invtrans_modelview0[1u].xyz;
+  tmpvar_9[2u] = glstate_matrix_invtrans_modelview0[2u].xyz;
+  viewN_6 = (tmpvar_9 * n_2);
+  highp vec3 tmpvar_10;
+  tmpvar_10 = (unity_LightPosition[0].xyz - (viewpos_7 * unity_LightPosition[0].w));
+  lightColor_5 = (glstate_lightmodel_ambient.xyz + (unity_LightColor[0].xyz * (
+    max (0.0, dot (viewN_6, normalize(tmpvar_10)))
+   * 
+    (1.0/((1.0 + (dot (tmpvar_10, tmpvar_10) * unity_LightAtten[0].z))))
+  )));
+  highp vec3 tmpvar_11;
+  tmpvar_11 = (unity_LightPosition[1].xyz - (viewpos_7 * unity_LightPosition[1].w));
+  lightColor_5 = (lightColor_5 + (unity_LightColor[1].xyz * (
+    max (0.0, dot (viewN_6, normalize(tmpvar_11)))
+   * 
+    (1.0/((1.0 + (dot (tmpvar_11, tmpvar_11) * unity_LightAtten[1].z))))
+  )));
+  highp vec3 tmpvar_12;
+  tmpvar_12 = (unity_LightPosition[2].xyz - (viewpos_7 * unity_LightPosition[2].w));
+  lightColor_5 = (lightColor_5 + (unity_LightColor[2].xyz * (
+    max (0.0, dot (viewN_6, normalize(tmpvar_12)))
+   * 
+    (1.0/((1.0 + (dot (tmpvar_12, tmpvar_12) * unity_LightAtten[2].z))))
+  )));
+  highp vec3 tmpvar_13;
+  tmpvar_13 = (unity_LightPosition[3].xyz - (viewpos_7 * unity_LightPosition[3].w));
+  lightColor_5 = (lightColor_5 + (unity_LightColor[3].xyz * (
+    max (0.0, dot (viewN_6, normalize(tmpvar_13)))
+   * 
+    (1.0/((1.0 + (dot (tmpvar_13, tmpvar_13) * unity_LightAtten[3].z))))
+  )));
+  highp vec4 tmpvar_14;
+  tmpvar_14.w = 1.0;
+  tmpvar_14.xyz = ((lightColor_5 * _Color.xyz) * 2.0);
+  tmpvar_3 = tmpvar_14;
+  gl_Position = (glstate_matrix_mvp * tmpvar_4);
+  xlv_COLOR0 = tmpvar_3;
+  xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;
+}
+
+
+// stats: 56 alu 0 tex 0 flow
+// inputs: 3
+//  #0: _glesVertex (high float) 4x1 [-1]
+//  #1: _glesNormal (medium float) 3x1 [-1]
+//  #2: _glesMultiTexCoord0 (high float) 4x1 [-1]
+// uniforms: 8 (total size: 0)
+//  #0: unity_LightColor (medium float) 4x1 [8]
+//  #1: unity_LightPosition (high float) 4x1 [8]
+//  #2: unity_LightAtten (medium float) 4x1 [8]
+//  #3: glstate_matrix_mvp (high float) 4x4 [-1]
+//  #4: glstate_matrix_modelview0 (high float) 4x4 [-1]
+//  #5: glstate_matrix_invtrans_modelview0 (high float) 4x4 [-1]
+//  #6: glstate_lightmodel_ambient (high float) 4x1 [-1]
+//  #7: _Color (medium float) 4x1 [-1]

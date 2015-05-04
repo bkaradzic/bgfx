@@ -1,0 +1,24 @@
+#version 300 es
+#extension GL_EXT_shader_framebuffer_fetch : require
+#define gl_FragColor _glesFragData[0]
+#define gl_FragData _glesFragData
+layout(location = 0) inout mediump vec4 _glesFragData[4];
+
+struct v2f {
+    highp vec4 vertex;
+    lowp vec4 color;
+};
+void frag (in v2f i, inout lowp vec4 ocol)
+{
+    ocol.xy = i.color.xy;
+    ocol.z *= 2.0;
+}
+in lowp vec4 xlv_TEXCOORD0;
+void main() {
+    v2f xlt_i;
+    xlt_i.vertex = vec4(0.0);
+    xlt_i.color = vec4(xlv_TEXCOORD0);
+    lowp vec4 xlt_ocol = vec4(gl_FragData[0]);
+    frag (xlt_i, xlt_ocol);
+    gl_FragData[0] = vec4(xlt_ocol);
+}

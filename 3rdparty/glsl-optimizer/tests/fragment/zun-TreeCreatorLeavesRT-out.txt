@@ -17,32 +17,32 @@ void main ()
   vec3 backContribs_5;
   vec3 light_6;
   float specular_7;
-  vec4 tmpvar_8;
-  tmpvar_8 = texture2D (_MainTex, tmpvar_1);
-  float x_9;
-  x_9 = (tmpvar_8.w - _Cutoff);
-  if ((x_9 < 0.0)) {
+  vec3 albedo_8;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, tmpvar_1);
+  float x_10;
+  x_10 = (tmpvar_9.w - _Cutoff);
+  if ((x_10 < 0.0)) {
     discard;
   };
-  vec3 tmpvar_10;
-  tmpvar_10 = (tmpvar_8.xyz * gl_TexCoord[1].xyz);
+  albedo_8 = (tmpvar_9.xyz * gl_TexCoord[1].xyz);
   specular_7 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.0);
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_TranslucencyMap, tmpvar_1);
-  light_6 = (gl_LightModel.ambient.xyz * tmpvar_10);
+  light_6 = (gl_LightModel.ambient.xyz * albedo_8);
   backContribs_5 = (gl_TexCoord[2].xyz * tmpvar_11.z);
   light_6 = (light_6 + ((
-    (tmpvar_10 * ((backContribs_5.x * _TranslucencyColor) + tmpvar_2.x))
+    (albedo_8 * ((backContribs_5.x * _TranslucencyColor) + tmpvar_2.x))
    + 
     (_SpecColor.xyz * (pow (tmpvar_3.x, specular_7) * tmpvar_11.w))
   ) * _TerrainTreeLightColors[0].xyz));
   light_6 = (light_6 + ((
-    (tmpvar_10 * ((backContribs_5.y * _TranslucencyColor) + tmpvar_2.y))
+    (albedo_8 * ((backContribs_5.y * _TranslucencyColor) + tmpvar_2.y))
    + 
     (_SpecColor.xyz * (pow (tmpvar_3.y, specular_7) * tmpvar_11.w))
   ) * _TerrainTreeLightColors[1].xyz));
   light_6 = (light_6 + ((
-    (tmpvar_10 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z))
+    (albedo_8 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z))
    + 
     (_SpecColor.xyz * (pow (tmpvar_3.z, specular_7) * tmpvar_11.w))
   ) * _TerrainTreeLightColors[2].xyz));
@@ -52,4 +52,16 @@ void main ()
 }
 
 
-// inputs: 1, stats: 35 alu 4 tex 1 flow
+// stats: 35 alu 4 tex 1 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [5] loc 4
+// uniforms: 5 (total size: 0)
+//  #0: gl_LightModel (high other) 0x0 [-1]
+//  #1: _Cutoff (high float) 1x1 [-1]
+//  #2: _SpecColor (high float) 4x1 [-1]
+//  #3: _TerrainTreeLightColors (high float) 4x1 [4]
+//  #4: _TranslucencyColor (high float) 3x1 [-1]
+// textures: 3
+//  #0: _BumpSpecMap (high 2d) 0x0 [-1]
+//  #1: _MainTex (high 2d) 0x0 [-1]
+//  #2: _TranslucencyMap (high 2d) 0x0 [-1]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
@@ -8,8 +8,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <edtaa3func.h>
-#include <stb_image.c>
+#include <edtaa3/edtaa3func.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.c>
 
 #define BX_NAMESPACE 1
 #include <bx/bx.h>
@@ -64,14 +66,14 @@ void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t 
 		putc(0, file);
 		putc(0, file);
 		putc(type, file);
-		putc(0, file); 
-		putc(0, file);
-		putc(0, file); 
 		putc(0, file);
 		putc(0, file);
-		putc(0, file); 
+		putc(0, file);
+		putc(0, file);
+		putc(0, file);
+		putc(0, file);
 		putc(xorig, file);
-		putc(0, file); 
+		putc(0, file);
 		putc(yorig, file);
 		putc(_width&0xff, file);
 		putc( (_width>>8)&0xff, file);

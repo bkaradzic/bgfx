@@ -198,8 +198,7 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
 ir_visitor_status
 ir_vec_index_to_cond_assign_visitor::visit_enter(ir_call *ir)
 {
-   foreach_list_safe(n, &ir->actual_parameters) {
-      ir_rvalue *param = (ir_rvalue *) n;
+   foreach_in_list_safe(ir_rvalue, param, &ir->actual_parameters) {
       ir_rvalue *new_param = convert_vector_extract_to_cond_assign(param);
 
       if (new_param != param) {

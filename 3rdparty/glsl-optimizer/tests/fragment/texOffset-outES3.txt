@@ -2,13 +2,24 @@
 in mediump vec3 uv;
 out lowp vec4 outColor;
 uniform sampler2D tex;
-uniform sampler3D vol;
+uniform lowp sampler3D vol;
 void main ()
 {
-  outColor = (((
-    ((((textureOffset (tex, uv.xy, ivec2(-2, -3)) + textureOffset (tex, uv.xy, 0.5, ivec2(4, 5))) + textureOffset (vol, uv, ivec3(-2, -3, -4))) + textureOffset (vol, uv, -0.5, ivec3(4, 5, 6))) + texelFetch (tex, ivec2(1, 2), 1))
-   + texelFetch (vol, ivec3(1, 2, 3), 2)) + texelFetchOffset (tex, ivec2(1, 2), 3, ivec2(-2, -3))) + texelFetchOffset (vol, ivec3(1, 2, 3), 0, ivec3(-2, -3, -4)));
+  lowp vec4 c_1;
+  c_1 = (textureOffset (tex, uv.xy, ivec2(-2, -3)) + textureOffset (tex, uv.xy, ivec2(4, 5), 0.5));
+  c_1 = (c_1 + textureOffset (vol, uv, ivec3(-2, -3, -4)));
+  c_1 = (c_1 + textureOffset (vol, uv, ivec3(4, 5, 6), -0.5));
+  c_1 = (c_1 + texelFetch (tex, ivec2(1, 2), 1));
+  c_1 = (c_1 + texelFetch (vol, ivec3(1, 2, 3), 2));
+  c_1 = (c_1 + texelFetchOffset (tex, ivec2(1, 2), 3, ivec2(-2, -3)));
+  c_1 = (c_1 + texelFetchOffset (vol, ivec3(1, 2, 3), 0, ivec3(-2, -3, -4)));
+  outColor = c_1;
 }
 
 
-// inputs: 1, stats: 7 alu 8 tex 0 flow
+// stats: 7 alu 8 tex 0 flow
+// inputs: 1
+//  #0: uv (medium float) 3x1 [-1]
+// textures: 2
+//  #0: tex (low 2d) 0x0 [-1]
+//  #1: vol (low 3d) 0x0 [-1]

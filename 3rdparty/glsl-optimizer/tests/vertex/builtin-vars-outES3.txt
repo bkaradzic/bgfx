@@ -1,0 +1,22 @@
+#version 300 es
+in highp vec3 _inPos;
+in highp vec3 _inNor;
+void main ()
+{
+  highp vec3 p_1;
+  p_1.z = _inPos.z;
+  p_1.x = (_inPos.x + float(gl_VertexID));
+  p_1.y = (_inPos.y + float(gl_InstanceID));
+  p_1 = (p_1 + _inNor);
+  highp vec4 tmpvar_2;
+  tmpvar_2.w = 1.0;
+  tmpvar_2.xyz = p_1;
+  gl_Position = tmpvar_2;
+  gl_PointSize = p_1.x;
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// inputs: 2
+//  #0: _inPos (high float) 3x1 [-1]
+//  #1: _inNor (high float) 3x1 [-1]

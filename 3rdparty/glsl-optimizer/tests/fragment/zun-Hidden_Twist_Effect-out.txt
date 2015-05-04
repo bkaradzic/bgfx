@@ -6,25 +6,29 @@ void main ()
   vec2 tmpvar_1;
   tmpvar_1 = gl_TexCoord[1].xy;
   vec2 uv_2;
-  vec2 x_3;
-  x_3 = (tmpvar_1 / _CenterRadius.zw);
-  float tmpvar_4;
-  tmpvar_4 = max (0.0, (1.0 - sqrt(
-    dot (x_3, x_3)
-  )));
+  float angle_3;
+  vec2 x_4;
+  x_4 = (tmpvar_1 / _CenterRadius.zw);
+  angle_3 = (1.0 - sqrt(dot (x_4, x_4)));
   float tmpvar_5;
-  tmpvar_5 = ((tmpvar_4 * tmpvar_4) * _Angle);
+  tmpvar_5 = max (0.0, angle_3);
+  angle_3 = ((tmpvar_5 * tmpvar_5) * _Angle);
   float tmpvar_6;
-  tmpvar_6 = sin(tmpvar_5);
+  tmpvar_6 = sin(angle_3);
   float tmpvar_7;
-  tmpvar_7 = cos(tmpvar_5);
+  tmpvar_7 = cos(angle_3);
   uv_2.x = ((tmpvar_7 * tmpvar_1.x) - (tmpvar_6 * tmpvar_1.y));
   uv_2.y = ((tmpvar_6 * tmpvar_1.x) + (tmpvar_7 * tmpvar_1.y));
-  vec2 tmpvar_8;
-  tmpvar_8 = (uv_2 + _CenterRadius.xy);
-  uv_2 = tmpvar_8;
-  gl_FragData[0] = texture2D (_MainTex, tmpvar_8);
+  uv_2 = (uv_2 + _CenterRadius.xy);
+  gl_FragData[0] = texture2D (_MainTex, uv_2);
 }
 
 
-// inputs: 1, stats: 16 alu 1 tex 0 flow
+// stats: 16 alu 1 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// uniforms: 2 (total size: 0)
+//  #0: _Angle (high float) 1x1 [-1]
+//  #1: _CenterRadius (high float) 4x1 [-1]
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]
