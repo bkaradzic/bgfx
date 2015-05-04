@@ -56,6 +56,7 @@ namespace bgfx
 	}
 
 #define RENDERDOC_IMPORT \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_Shutdown); \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetLogFile); \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetCapture); \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureOptions); \
@@ -67,7 +68,8 @@ namespace bgfx
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_MaskOverlayBits); \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetFocusToggleKeys); \
 			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureKeys); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess);
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess); \
+			RENDERDOC_IMPORT_FUNC(RENDERDOC_UnloadCrashHandler);
 
 #define RENDERDOC_IMPORT_FUNC(_func) p##_func _func
 	RENDERDOC_IMPORT
@@ -129,6 +131,7 @@ RENDERDOC_IMPORT
 	{
 		if (NULL != _renderdocdll)
 		{
+			RENDERDOC_Shutdown();
 			bx::dlclose(_renderdocdll);
 		}
 	}
