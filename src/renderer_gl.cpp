@@ -3567,10 +3567,14 @@ namespace bgfx { namespace gl
 			}
 
 			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB);
 
 			target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
-			const GLenum internalFmt = s_textureFormat[m_textureFormat].m_internalFmt;
+			const GLenum internalFmt = srgb
+				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
+				: s_textureFormat[m_textureFormat].m_internalFmt
+				;
 
 			const bool swizzle = true
 				&& TextureFormat::BGRA8 == m_requestedFormat

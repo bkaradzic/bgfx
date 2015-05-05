@@ -1487,7 +1487,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				D3D11_RENDER_TARGET_VIEW_DESC desc;
 				desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 				desc.Texture2D.MipSlice = 0;
-				desc.Format = (m_flags & BGFX_RESET_SRGB_BACKBUFFER) ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
+				desc.Format = (m_flags & BGFX_RESET_SRGB_BACKBUFFER)
+					? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+					: DXGI_FORMAT_R8G8B8A8_UNORM
+					;
 
 				DX_CHECK(m_device->CreateRenderTargetView(color, &desc, &m_backBufferColor) );
 				DX_RELEASE(color, 0);
