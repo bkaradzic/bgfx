@@ -348,6 +348,7 @@ namespace bgfx { namespace d3d11
 	static const GUID IID_IDXGIDevice3          = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
 	static const GUID IID_IDXGIAdapter          = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
 	static const GUID IID_ID3D11InfoQueue       = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
+	static const GUID IID_IDXGIDeviceRenderDoc  = { 0xa7aa6116, 0x9c8d, 0x4bba, { 0x90, 0x83, 0xb4, 0xd8, 0x16, 0xb7, 0x1b, 0x78 } };
 
 	enum D3D11_FORMAT_SUPPORT2
 	{
@@ -707,8 +708,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			//
 			// This causes assert in debug. When debugger is present refcount
 			// checks are off.
-			setGraphicsDebuggerPresent(2 != getRefCount(device) );
-			DX_RELEASE(device, 2);
+			IDXGIDevice* renderdoc;
+			hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
+			if (SUCCEEDED(hr) )
+			{
+				setGraphicsDebuggerPresent(true);
+				DX_RELEASE(renderdoc, 0);
+			}
+			else
+			{
+				setGraphicsDebuggerPresent(2 != getRefCount(device) );
+				DX_RELEASE(device, 2);
+			}
 
 			hr = adapter->GetDesc(&m_adapterDesc);
 			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 device.");

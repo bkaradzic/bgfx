@@ -429,6 +429,7 @@ namespace bgfx { namespace gl
 			EXT_compressed_ETC1_RGB8_sub_texture,
 			EXT_debug_label,
 			EXT_debug_marker,
+			EXT_debug_tool,
 			EXT_discard_framebuffer,
 			EXT_disjoint_timer_query,
 			EXT_draw_buffers,
@@ -621,6 +622,7 @@ namespace bgfx { namespace gl
 		{ "EXT_compressed_ETC1_RGB8_sub_texture",  false,                             true  }, // GLES2 extension.
 		{ "EXT_debug_label",                       false,                             true  },
 		{ "EXT_debug_marker",                      false,                             true  },
+		{ "EXT_debug_tool",                        false,                             true  }, // RenderDoc extension.
 		{ "EXT_discard_framebuffer",               false,                             true  }, // GLES2 extension.
 		{ "EXT_disjoint_timer_query",              false,                             true  }, // GLES2 extension.
 		{ "EXT_draw_buffers",                      false,                             true  }, // GLES2 extension.
@@ -1620,6 +1622,8 @@ namespace bgfx { namespace gl
 					: stubInsertEventMarker
 					;
 			}
+
+			setGraphicsDebuggerPresent(s_extension[Extension::EXT_debug_tool].m_supported);
 
 			if (NULL == glObjectLabel)
 			{
