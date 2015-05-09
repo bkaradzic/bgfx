@@ -75,7 +75,11 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #		define	D3D11_REQ_MAXANISOTROPY	16
 #	endif // D3D11_REQ_MAXANISOTROPY
 
+// MinGW64 on Windows has this defined in d3d11sdklayers.h.
+#ifndef __MINGW64_VERSION_MAJOR
 typedef void ID3D11InfoQueue;
+#endif // __MINGW64_VERSION_MAJYOR
+
 #endif // __MINGW32__
 
 namespace bgfx { namespace d3d11
