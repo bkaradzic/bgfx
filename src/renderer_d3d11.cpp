@@ -1496,7 +1496,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&color));
 
 				D3D11_RENDER_TARGET_VIEW_DESC desc;
-				desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+				desc.ViewDimension = (m_flags & BGFX_RESET_MSAA_MASK)
+					? D3D11_RTV_DIMENSION_TEXTURE2DMS
+					: D3D11_RTV_DIMENSION_TEXTURE2D
+					;
 				desc.Texture2D.MipSlice = 0;
 				desc.Format = (m_flags & BGFX_RESET_SRGB_BACKBUFFER)
 					? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
