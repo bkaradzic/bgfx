@@ -474,6 +474,7 @@ namespace bgfx { namespace gl
 			INTEL_fragment_shader_ordering,
 
 			KHR_debug,
+			KHR_no_error,
 
 			MOZ_WEBGL_compressed_texture_s3tc,
 			MOZ_WEBGL_depth_texture,
@@ -667,6 +668,7 @@ namespace bgfx { namespace gl
 		{ "INTEL_fragment_shader_ordering",        false,                             true  },
 
 		{ "KHR_debug",                             BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "KHR_no_error",                          false,                             true  },
 
 		{ "MOZ_WEBGL_compressed_texture_s3tc",     false,                             true  },
 		{ "MOZ_WEBGL_depth_texture",               false,                             true  },
