@@ -33,10 +33,11 @@ BGFX_C_API bgfx_render_frame_t bgfx_render_frame();
 
 typedef struct bgfx_platform_data
 {
-	void* ndt;
-	void* nwh;
-	void* context;
-	void* backbuffer;
+    void* ndt;
+    void* nwh;
+    void* context;
+    void* backBuffer;
+    void* backBufferDS;
 
 } bgfx_platform_data_t;
 

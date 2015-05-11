@@ -16,6 +16,10 @@
 
 namespace bgfx { namespace gl
 {
+#ifndef EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
+#	define EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR 0x00000008
+#endif // EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
+
 #if BGFX_USE_GL_DYNAMIC_LIB
 
 	typedef void (*EGLPROC)(void);
@@ -245,30 +249,43 @@ EGL_IMPORT
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			const bool hasEglKhrCreateContext = !!bx::findIdentifierMatch(extensions, "EGL_KHR_create_context");
+			const bool hasEglKhrNoError       = !!bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error");
 
 			for (uint32_t ii = 0; ii < 2; ++ii)
 			{
 				bx::StaticMemoryBlockWriter writer(s_contextAttrs, sizeof(s_contextAttrs) );
 
-				bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
-				bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES / 10) );
-
-				bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR) );
-				bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES % 10) );
-
-				EGLint flags = 0;
-
-				if (hasEglKhrCreateContext
-				&&  0 == ii)
+				if (hasEglKhrCreateContext)
 				{
-					flags = BGFX_CONFIG_DEBUG ? 0
-						| EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR
-//						| EGL_OPENGL_ES3_BIT_KHR
+					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
+					bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES / 10) );
+
+					bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR) );
+					bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES % 10) );
+
+					EGLint flags = 0;
+
+					flags |= BGFX_CONFIG_DEBUG && hasEglKhrNoError ? 0
+						| EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
 						: 0
 						;
 
-					bx::write(&writer, EGLint(EGL_CONTEXT_FLAGS_KHR) );
-					bx::write(&writer, flags);
+					if (0 == ii)
+					{
+						flags |= BGFX_CONFIG_DEBUG ? 0
+							| EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR
+//							| EGL_OPENGL_ES3_BIT_KHR
+							: 0
+							;
+
+						bx::write(&writer, EGLint(EGL_CONTEXT_FLAGS_KHR) );
+						bx::write(&writer, flags);
+					}
+				}
+				else
+				{
+					bx::write(&writer, EGLint(EGL_CONTEXT_CLIENT_VERSION) );
+					bx::write(&writer, 2);
 				}
 
 				bx::write(&writer, EGLint(EGL_NONE) );
