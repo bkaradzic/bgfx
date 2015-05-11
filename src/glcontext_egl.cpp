@@ -255,6 +255,8 @@ EGL_IMPORT
 			{
 				bx::StaticMemoryBlockWriter writer(s_contextAttrs, sizeof(s_contextAttrs) );
 
+				EGLint flags = 0;
+
 				if (hasEglKhrCreateContext)
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
@@ -262,8 +264,6 @@ EGL_IMPORT
 
 					bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR) );
 					bx::write(&writer, EGLint(BGFX_CONFIG_RENDERER_OPENGLES % 10) );
-
-					EGLint flags = 0;
 
 					flags |= BGFX_CONFIG_DEBUG && hasEglKhrNoError ? 0
 						| EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
