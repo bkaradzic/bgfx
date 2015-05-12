@@ -3837,6 +3837,12 @@ namespace bgfx { namespace gl
 				) );
 		}
 
+		if (!convert
+		&&  unpackRowLength)
+		{
+			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0) );
+		}
+
 		if (NULL != temp)
 		{
 			BX_FREE(g_allocator, temp);
