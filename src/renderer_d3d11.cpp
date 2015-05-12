@@ -713,7 +713,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (SUCCEEDED(hr) )
 			{
 				setGraphicsDebuggerPresent(true);
-				DX_RELEASE(renderdoc, 0);
+//				DX_RELEASE(renderdoc, 0);
 			}
 			else
 			{
