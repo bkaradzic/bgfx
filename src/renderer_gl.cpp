@@ -1268,6 +1268,12 @@ namespace bgfx { namespace gl
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 				{
 					setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
+					// internalFormat and format must match:
+					// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml
+					setTextureFormat(TextureFormat::RGBA8, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+					setTextureFormat(TextureFormat::R5G6B5, GL_RGB, GL_RGB, GL_UNSIGNED_SHORT_5_6_5);
+					setTextureFormat(TextureFormat::RGBA4, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
+					setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
 
 					if (s_extension[Extension::OES_texture_half_float].m_supported
 					||  s_extension[Extension::OES_texture_float     ].m_supported)
@@ -1346,7 +1352,7 @@ namespace bgfx { namespace gl
 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
 			}
 
-			if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+			//if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 			{
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
