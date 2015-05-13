@@ -206,11 +206,11 @@ namespace bgfx
 
 	static const uint16_t invalidHandle = UINT16_MAX;
 
-	BGFX_HANDLE(IndirectBufferHandle);
 	BGFX_HANDLE(DynamicIndexBufferHandle);
 	BGFX_HANDLE(DynamicVertexBufferHandle);
 	BGFX_HANDLE(FrameBufferHandle);
 	BGFX_HANDLE(IndexBufferHandle);
+	BGFX_HANDLE(IndirectBufferHandle);
 	BGFX_HANDLE(ProgramHandle);
 	BGFX_HANDLE(ShaderHandle);
 	BGFX_HANDLE(TextureHandle);
