@@ -1352,15 +1352,12 @@ namespace bgfx { namespace gl
 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
 			}
 
-			if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+				if (TextureFormat::Unknown != ii
+				&&  TextureFormat::UnknownDepth != ii)
 				{
-					if (TextureFormat::Unknown != ii
-					&&  TextureFormat::UnknownDepth != ii)
-					{
-						s_textureFormat[ii].m_supported = isTextureFormatValid(TextureFormat::Enum(ii) );
-					}
+					s_textureFormat[ii].m_supported = isTextureFormatValid(TextureFormat::Enum(ii) );
 				}
 			}
 
@@ -1386,7 +1383,7 @@ namespace bgfx { namespace gl
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
-				supported |= !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) && isTextureFormatValid(TextureFormat::Enum(ii), true)
+				supported |= isTextureFormatValid(TextureFormat::Enum(ii), true)
 					? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
