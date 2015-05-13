@@ -297,6 +297,33 @@ namespace bgfx { namespace d3d11
 		TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
+	struct TimerQueryD3D11
+	{
+		TimerQueryD3D11()
+			: m_control(BX_COUNTOF(m_frame) )
+		{
+		}
+
+		void create();
+		void destroy();
+		void begin();
+		void end();
+		bool get();
+
+		struct Frame
+		{
+			ID3D11Query* m_disjoint;
+			ID3D11Query* m_start;
+			ID3D11Query* m_end;
+		};
+
+		uint64_t m_elapsed;
+		uint64_t m_frequency;
+
+		Frame m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
 } /*  namespace d3d11 */ } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D11_H_HEADER_GUARD

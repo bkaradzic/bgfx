@@ -5661,6 +5661,7 @@ namespace bgfx { namespace gl
 					, elapsedCpuMs > elapsedGpuMs ? '>' : '<'
 					, elapsedGpuMs
 					);
+
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primInfo); ++ii)
 				{
 					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"

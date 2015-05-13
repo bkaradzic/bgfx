@@ -389,6 +389,34 @@ namespace bgfx { namespace d3d9
 		bool m_needResolve;
 	};
 
+	struct TimerQueryD3D9
+	{
+		TimerQueryD3D9()
+			: m_control(BX_COUNTOF(m_frame) )
+		{
+		}
+
+		void create();
+		void destroy();
+		void begin();
+		void end();
+		bool get();
+
+		struct Frame
+		{
+			IDirect3DQuery9* m_disjoint;
+			IDirect3DQuery9* m_start;
+			IDirect3DQuery9* m_end;
+			IDirect3DQuery9* m_freq;
+		};
+
+		uint64_t m_elapsed;
+		uint64_t m_frequency;
+
+		Frame m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
 } /* namespace d3d9 */ } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D9_H_HEADER_GUARD

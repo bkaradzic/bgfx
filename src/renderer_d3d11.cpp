@@ -1468,6 +1468,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			ovrPreReset();
 
+			m_gpuTimer.destroy();
+
 			if (NULL == g_platformData.backBufferDS)
 			{
 				DX_RELEASE(m_backBufferDepthStencil, 0);
@@ -1509,6 +1511,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_CHECK(m_device->CreateRenderTargetView(color, &desc, &m_backBufferColor) );
 				DX_RELEASE(color, 0);
 			}
+
+			m_gpuTimer.create();
 
 			ovrPostReset();
 
@@ -2608,9 +2612,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		ID3D11Device*           m_device;
-		ID3D11DeviceContext*    m_deviceCtx;
-		ID3D11InfoQueue*        m_infoQueue;
+		ID3D11Device*        m_device;
+		ID3D11DeviceContext* m_deviceCtx;
+		ID3D11InfoQueue*     m_infoQueue;
+		TimerQueryD3D11      m_gpuTimer;
 
 		ID3D11RenderTargetView* m_backBufferColor;
 		ID3D11DepthStencilView* m_backBufferDepthStencil;
@@ -3471,6 +3476,88 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
+	void TimerQueryD3D11::create()
+	{
+		ID3D11Device* device = s_renderD3D11->m_device;
+
+		D3D11_QUERY_DESC query;
+		query.MiscFlags = 0;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		{
+			Frame& frame = m_frame[ii];
+
+			query.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+			DX_CHECK(device->CreateQuery(&query, &frame.m_disjoint) );
+
+			query.Query = D3D11_QUERY_TIMESTAMP;
+			DX_CHECK(device->CreateQuery(&query, &frame.m_start) );
+			DX_CHECK(device->CreateQuery(&query, &frame.m_end) );
+		}
+
+		m_elapsed   = 0;
+		m_frequency = 1;
+	}
+
+	void TimerQueryD3D11::destroy()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		{
+			Frame& frame = m_frame[ii];
+			DX_RELEASE(frame.m_disjoint, 0);
+			DX_RELEASE(frame.m_start, 0);
+			DX_RELEASE(frame.m_end, 0);
+		}
+	}
+
+	void TimerQueryD3D11::begin()
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+
+		while (0 == m_control.reserve(1) )
+		{
+			get();
+		}
+
+		Frame& frame = m_frame[m_control.m_current];
+		deviceCtx->Begin(frame.m_disjoint);
+		deviceCtx->End(frame.m_start);
+	}
+
+	void TimerQueryD3D11::end()
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		Frame& frame = m_frame[m_control.m_current];
+		deviceCtx->End(frame.m_end);
+		deviceCtx->End(frame.m_disjoint);
+		m_control.commit(1);
+	}
+
+	bool TimerQueryD3D11::get()
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		Frame& frame = m_frame[m_control.m_read];
+
+		uint64_t end;
+		HRESULT hr = deviceCtx->GetData(frame.m_end, &end, sizeof(end), 0);
+		if (S_OK == hr)
+		{
+			m_control.consume(1);
+
+			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
+			deviceCtx->GetData(frame.m_disjoint, &disjoint, sizeof(disjoint), 0);
+
+			uint64_t start;
+			deviceCtx->GetData(frame.m_start, &start, sizeof(start), 0);
+
+			m_frequency = disjoint.Frequency;
+			m_elapsed   = end - start;
+
+			return true;
+		}
+
+		return false;
+	}
+
 	void RendererContextD3D11::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
@@ -3481,6 +3568,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
+
+		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
+		{
+			m_gpuTimer.begin();
+		}
 
 		if (0 < _render->m_iboffset)
 		{
@@ -4256,6 +4348,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
 
+			static uint32_t maxGpuLatency = 0;
+			static double   maxGpuElapsed = 0.0f;
+			double elapsedGpuMs = 0.0;
+
+			m_gpuTimer.end();
+
+			while (m_gpuTimer.get() )
+			{
+				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			}
+			maxGpuLatency = bx::uint32_max(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;
@@ -4314,12 +4420,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms]"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
 					, elapsedCpuMs
+					, elapsedCpuMs > maxGpuElapsed ? '>' : '<'
+					, maxGpuElapsed
+					, maxGpuLatency
 					);
+				maxGpuLatency = 0;
+				maxGpuElapsed = 0.0;
+
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
 					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d, indirect %7d"
