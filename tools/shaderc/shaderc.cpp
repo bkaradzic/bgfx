@@ -640,7 +640,7 @@ void help(const char* _error = NULL)
 		  "  -i <include path>             Include path (for multiple paths use semicolon).\n"
 		  "  -o <file path>                Output file path.\n"
 		  "      --bin2c <file path>       Generate C header file.\n"
-		  "      --depends <file path>     Generate makefile style depends file.\n"
+		  "      --depends                 Generate makefile style depends file.\n"
 		  "      --platform <platform>     Target platform.\n"
 		  "           android\n"
 		  "           asm.js\n"
