@@ -2737,33 +2737,41 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		DXGI_FORMAT format;
 		uint32_t    stride;
 
-		uint32_t uavFormat = (_flags & BGFX_BUFFER_COMPUTE_FORMAT_MASK) >> BGFX_BUFFER_COMPUTE_FORMAT_SHIFT;
-		if (0 == uavFormat)
+		if (drawIndirect)
 		{
-			if (_vertex)
-			{
-				format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-				stride = 16;
-			}
-			else
-			{
-				if (0 == (_flags & BGFX_BUFFER_INDEX32) )
-				{
-					format = DXGI_FORMAT_R16_UINT;
-					stride = 2;
-				}
-				else
-				{
-					format = DXGI_FORMAT_R32_UINT;
-					stride = 4;
-				}
-			}
+			format = DXGI_FORMAT_R32G32B32A32_UINT;
+			stride = 16;
 		}
 		else
 		{
-			const uint32_t uavType = bx::uint32_satsub( (_flags & BGFX_BUFFER_COMPUTE_TYPE_MASK  ) >> BGFX_BUFFER_COMPUTE_TYPE_SHIFT, 1);
-			format = s_uavFormat[uavFormat].format[uavType];
-			stride = s_uavFormat[uavFormat].stride;
+			uint32_t uavFormat = (_flags & BGFX_BUFFER_COMPUTE_FORMAT_MASK) >> BGFX_BUFFER_COMPUTE_FORMAT_SHIFT;
+			if (0 == uavFormat)
+			{
+				if (_vertex)
+				{
+					format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+					stride = 16;
+				}
+				else
+				{
+					if (0 == (_flags & BGFX_BUFFER_INDEX32) )
+					{
+						format = DXGI_FORMAT_R16_UINT;
+						stride = 2;
+					}
+					else
+					{
+						format = DXGI_FORMAT_R32_UINT;
+						stride = 4;
+					}
+				}
+			}
+			else
+			{
+				const uint32_t uavType = bx::uint32_satsub( (_flags & BGFX_BUFFER_COMPUTE_TYPE_MASK  ) >> BGFX_BUFFER_COMPUTE_TYPE_SHIFT, 1);
+				format = s_uavFormat[uavFormat].format[uavType];
+				stride = s_uavFormat[uavFormat].stride;
+			}
 		}
 
 		ID3D11Device* device = s_renderD3D11->m_device;
