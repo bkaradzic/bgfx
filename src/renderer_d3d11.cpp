@@ -1110,7 +1110,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			return BGFX_RENDERER_DIRECT3D11_NAME;
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint16_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
 		}
@@ -1131,7 +1131,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t _flags) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint16_t _flags) BX_OVERRIDE
 		{
 			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
 		}
@@ -1141,7 +1141,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
 		}
@@ -1156,7 +1156,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) BX_OVERRIDE
 		{
 			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
 			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
@@ -1468,7 +1468,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			ovrPreReset();
 
-			m_gpuTimer.destroy();
+			m_gpuTimer.preReset();
 
 			if (NULL == g_platformData.backBufferDS)
 			{
@@ -1512,7 +1512,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_RELEASE(color, 0);
 			}
 
-			m_gpuTimer.create();
+			m_gpuTimer.postReset();
 
 			ovrPostReset();
 
@@ -2691,7 +2691,27 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		s_renderD3D11 = NULL;
 	}
 
-	void BufferD3D11::create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride, bool _vertex)
+	struct UavFormat
+	{
+		DXGI_FORMAT format[3];
+		uint32_t    stride;
+	};
+
+	static const UavFormat s_uavFormat[] =
+	{	//  BGFX_BUFFER_COMPUTE_TYPE_UINT, BGFX_BUFFER_COMPUTE_TYPE_INT,   BGFX_BUFFER_COMPUTE_TYPE_FLOAT
+		{ { DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN            },  0 }, // ignored
+		{ { DXGI_FORMAT_R8_SINT,           DXGI_FORMAT_R8_UINT,            DXGI_FORMAT_UNKNOWN            },  1 }, // BGFX_BUFFER_COMPUTE_FORMAT_8x1
+		{ { DXGI_FORMAT_R8G8_SINT,         DXGI_FORMAT_R8G8_UINT,          DXGI_FORMAT_UNKNOWN            },  2 }, // BGFX_BUFFER_COMPUTE_FORMAT_8x2
+		{ { DXGI_FORMAT_R8G8B8A8_SINT,     DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_UNKNOWN            },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_8x4
+		{ { DXGI_FORMAT_R16_SINT,          DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_FLOAT          },  2 }, // BGFX_BUFFER_COMPUTE_FORMAT_16x1
+		{ { DXGI_FORMAT_R16G16_SINT,       DXGI_FORMAT_R16G16_UINT,        DXGI_FORMAT_R16G16_FLOAT       },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_16x2
+		{ { DXGI_FORMAT_R16G16B16A16_SINT, DXGI_FORMAT_R16G16B16A16_UINT,  DXGI_FORMAT_R16G16B16A16_FLOAT },  8 }, // BGFX_BUFFER_COMPUTE_FORMAT_16x4
+		{ { DXGI_FORMAT_R32_SINT,          DXGI_FORMAT_R32_UINT,           DXGI_FORMAT_R32_FLOAT          },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_32x1
+		{ { DXGI_FORMAT_R32G32_SINT,       DXGI_FORMAT_R32G32_UINT,        DXGI_FORMAT_R32G32_FLOAT       },  8 }, // BGFX_BUFFER_COMPUTE_FORMAT_32x2
+		{ { DXGI_FORMAT_R32G32B32A32_SINT, DXGI_FORMAT_R32G32B32A32_UINT,  DXGI_FORMAT_R32G32B32A32_FLOAT }, 16 }, // BGFX_BUFFER_COMPUTE_FORMAT_32x4
+	};
+
+	void BufferD3D11::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
 		m_uav   = NULL;
 		m_size  = _size;
@@ -2714,14 +2734,37 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			;
 		desc.StructureByteStride = 0;
 
-		const DXGI_FORMAT indexFormat = 0 == (_flags & BGFX_BUFFER_INDEX32)
-			? DXGI_FORMAT_R16_UINT
-			: DXGI_FORMAT_R32_UINT
-			;
-		const DXGI_FORMAT format = _vertex
-			? DXGI_FORMAT_R32G32B32A32_FLOAT
-			: indexFormat
-			;
+		DXGI_FORMAT format;
+		uint32_t    stride;
+
+		uint32_t uavFormat = (_flags & BGFX_BUFFER_COMPUTE_FORMAT_MASK) >> BGFX_BUFFER_COMPUTE_FORMAT_SHIFT;
+		if (0 == uavFormat)
+		{
+			if (_vertex)
+			{
+				format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				stride = 16;
+			}
+			else
+			{
+				if (0 == (_flags & BGFX_BUFFER_INDEX32) )
+				{
+					format = DXGI_FORMAT_R16_UINT;
+					stride = 2;
+				}
+				else
+				{
+					format = DXGI_FORMAT_R32_UINT;
+					stride = 4;
+				}
+			}
+		}
+		else
+		{
+			const uint32_t uavType = bx::uint32_satsub( (_flags & BGFX_BUFFER_COMPUTE_TYPE_MASK  ) >> BGFX_BUFFER_COMPUTE_TYPE_SHIFT, 1);
+			format = s_uavFormat[uavFormat].format[uavType];
+			stride = s_uavFormat[uavFormat].stride;
+		}
 
 		ID3D11Device* device = s_renderD3D11->m_device;
 
@@ -2740,7 +2783,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			uavd.Format = format;
 			uavd.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 			uavd.Buffer.FirstElement = 0;
-			uavd.Buffer.NumElements = m_size / 16;
+			uavd.Buffer.NumElements = m_size / stride;
 			uavd.Buffer.Flags = 0;
 			DX_CHECK(device->CreateUnorderedAccessView(m_ptr
 				, &uavd
@@ -2779,7 +2822,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			srvd.Format = format;
 			srvd.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvd.Buffer.FirstElement = 0;
-			srvd.Buffer.NumElements = m_size / 16;
+			srvd.Buffer.NumElements = m_size / stride;
 			DX_CHECK(device->CreateShaderResourceView(m_ptr
 				, &srvd
 				, &m_srv
@@ -2841,7 +2884,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #endif // 0
 	}
 
-	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags)
+	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
 	{
 		m_decl = _declHandle;
 		uint16_t stride = isValid(_declHandle)
@@ -3476,7 +3519,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
-	void TimerQueryD3D11::create()
+	void TimerQueryD3D11::postReset()
 	{
 		ID3D11Device* device = s_renderD3D11->m_device;
 
@@ -3496,9 +3539,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		m_elapsed   = 0;
 		m_frequency = 1;
+		m_control.reset();
 	}
 
-	void TimerQueryD3D11::destroy()
+	void TimerQueryD3D11::preReset()
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
 		{
@@ -4143,13 +4187,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						}
 						else
 						{
-							deviceCtx->IASetVertexBuffers(1, 0, NULL, NULL, NULL);
+							deviceCtx->IASetVertexBuffers(1, 1, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
 							setInputLayout(vertexDecl, m_program[programIdx], 0);
 						}
 					}
 					else
 					{
-						deviceCtx->IASetVertexBuffers(0, 0, NULL, NULL, NULL);
+						deviceCtx->IASetVertexBuffers(0, 1, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
 					}
 				}
 

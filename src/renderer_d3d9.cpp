@@ -686,7 +686,7 @@ namespace bgfx { namespace d3d9
 			return BGFX_RENDERER_DIRECT3D9_NAME;
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint16_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
 		}
@@ -706,7 +706,7 @@ namespace bgfx { namespace d3d9
 			m_vertexDecls[_handle.idx].destroy();
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t /*_flags*/) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
 		}
@@ -716,7 +716,7 @@ namespace bgfx { namespace d3d9
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
 		}
@@ -731,7 +731,7 @@ namespace bgfx { namespace d3d9
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
 			m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
@@ -1239,7 +1239,7 @@ namespace bgfx { namespace d3d9
 
 			capturePreReset();
 
-			m_gpuTimer.destroy();
+			m_gpuTimer.preReset();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
@@ -1268,7 +1268,7 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_backBufferColor) );
 			DX_CHECK(m_device->GetDepthStencilSurface(&m_backBufferDepthStencil) );
 
-			m_gpuTimer.create();
+			m_gpuTimer.postReset();
 
 			capturePostReset();
 
@@ -1797,7 +1797,7 @@ namespace bgfx { namespace d3d9
 		s_renderD3D9 = NULL;
 	}
 
-	void IndexBufferD3D9::create(uint32_t _size, void* _data, uint8_t _flags)
+	void IndexBufferD3D9::create(uint32_t _size, void* _data, uint16_t _flags)
 	{
 		m_size    = _size;
 		m_flags   = _flags;
@@ -2897,7 +2897,7 @@ namespace bgfx { namespace d3d9
 			) );
 	}
 
-	void TimerQueryD3D9::create()
+	void TimerQueryD3D9::postReset()
 	{
 		IDirect3DDevice9* device = s_renderD3D9->m_device;
 
@@ -2912,9 +2912,10 @@ namespace bgfx { namespace d3d9
 
 		m_elapsed   = 0;
 		m_frequency = 1;
+		m_control.reset();
 	}
 
-	void TimerQueryD3D9::destroy()
+	void TimerQueryD3D9::preReset()
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
 		{
