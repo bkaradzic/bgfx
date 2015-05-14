@@ -15,6 +15,7 @@ namespace stl = tinystl;
 #include <bgfx.h>
 #include <bx/readerwriter.h>
 #include <bx/fpumath.h>
+#include <bx/string.h>
 #include "entry/entry.h"
 #include <ib-compress/indexbufferdecompression.h>
 
@@ -57,6 +58,26 @@ static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePa
 		bx::close(_reader);
 		mem->data[mem->size-1] = '\0';
 		return mem;
+	}
+
+	return NULL;
+}
+
+static void* loadMem(bx::FileReaderI* _reader, bx::ReallocatorI* _allocator, const char* _filePath, uint32_t* _size)
+{
+	if (0 == bx::open(_reader, _filePath) )
+	{
+		uint32_t size = (uint32_t)bx::getSize(_reader);
+		void* data = BX_ALLOC(_allocator, size);
+		bx::read(_reader, data, size);
+		bx::close(_reader);
+
+		if (NULL != _size)
+		{
+			*_size = size;
+		}
+
+		return data;
 	}
 
 	return NULL;
@@ -112,15 +133,58 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return loadProgram(entry::getFileReader(), _vsName, _fsName);
 }
 
+typedef unsigned char stbi_uc;
+extern "C" stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp);
+
 bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
 	char filePath[512];
 	strcpy(filePath, "textures/");
 	strcat(filePath, _name);
 
-	const bgfx::Memory* mem = loadMem(_reader, filePath);
+	if (NULL != bx::stristr(_name, ".dds")
+	||  NULL != bx::stristr(_name, ".pvr")
+	||  NULL != bx::stristr(_name, ".ktx") )
+	{
+		const bgfx::Memory* mem = loadMem(_reader, filePath);
+		return bgfx::createTexture(mem, _flags, _skip, _info);
+	}
 
-	return bgfx::createTexture(mem, _flags, _skip, _info);
+	bx::ReallocatorI* allocator = entry::getAllocator();
+
+	uint32_t size;
+	void* data = loadMem(_reader, allocator, filePath, &size);
+
+	int width;
+	int height;
+	int comp;
+
+	uint8_t* img = NULL;
+	img = stbi_load_from_memory( (uint8_t*)data, size, &width, &height, &comp, 4);
+
+	BX_FREE(allocator, data);
+
+	bgfx::TextureHandle handle = bgfx::createTexture2D(uint16_t(width), uint16_t(height), 1
+									, bgfx::TextureFormat::RGBA8
+									, _flags
+									, bgfx::copy(img, width*height*4)
+									);
+
+	free(img);
+
+	if (NULL != _info)
+	{
+		bgfx::calcTextureSize(*_info
+			, uint16_t(width)
+			, uint16_t(height)
+			, 0
+			, false
+			, 1
+			, bgfx::TextureFormat::RGBA8
+			);
+	}
+
+	return handle;
 }
 
 bgfx::TextureHandle loadTexture(const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
