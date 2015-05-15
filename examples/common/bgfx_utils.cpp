@@ -152,12 +152,12 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 
 	bx::ReallocatorI* allocator = entry::getAllocator();
 
-	uint32_t size;
+	uint32_t size = 0;
 	void* data = loadMem(_reader, allocator, filePath, &size);
 
-	int width;
-	int height;
-	int comp;
+	int width  = 0;
+	int height = 0;
+	int comp   = 0;
 
 	uint8_t* img = NULL;
 	img = stbi_load_from_memory( (uint8_t*)data, size, &width, &height, &comp, 4);
