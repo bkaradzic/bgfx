@@ -272,6 +272,7 @@ namespace bgfx { namespace d3d9
 		RendererContextD3D9()
 			: m_d3d9(NULL)
 			, m_device(NULL)
+			, m_flushQuery(NULL)
 			, m_swapChain(NULL)
 			, m_captureTexture(NULL)
 			, m_captureSurface(NULL)
@@ -1239,6 +1240,7 @@ namespace bgfx { namespace d3d9
 
 			capturePreReset();
 
+			DX_RELEASE(m_flushQuery, 0);
 			m_gpuTimer.preReset();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
@@ -1268,6 +1270,7 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_backBufferColor) );
 			DX_CHECK(m_device->GetDepthStencilSurface(&m_backBufferDepthStencil) );
 
+			DX_CHECK(m_device->CreateQuery(D3DQUERYTYPE_EVENT, &m_flushQuery) );
 			m_gpuTimer.postReset();
 
 			capturePostReset();
@@ -1725,6 +1728,7 @@ namespace bgfx { namespace d3d9
 
 		IDirect3D9*       m_d3d9;
 		IDirect3DDevice9* m_device;
+		IDirect3DQuery9*  m_flushQuery;
 		TimerQueryD3D9    m_gpuTimer;
 		D3DPOOL m_pool;
 
@@ -3514,6 +3518,12 @@ namespace bgfx { namespace d3d9
 
 			if (0 < _render->m_num)
 			{
+				if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
+				{
+					m_flushQuery->Issue(D3DISSUE_END);
+					m_flushQuery->GetData(NULL, 0, D3DGETDATA_FLUSH);
+				}
+
 				captureElapsed = -bx::getHPCounter();
 				capture();
 				captureElapsed += bx::getHPCounter();

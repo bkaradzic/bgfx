@@ -118,13 +118,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		if (_argc > 1)
 		{
-			if (setOrToggle(s_reset, "vsync",       BGFX_RESET_VSYNC,             1, _argc, _argv)
-			||  setOrToggle(s_reset, "maxaniso",    BGFX_RESET_MAXANISOTROPY,     1, _argc, _argv)
-			||  setOrToggle(s_reset, "hmd",         BGFX_RESET_HMD,               1, _argc, _argv)
-			||  setOrToggle(s_reset, "hmddbg",      BGFX_RESET_HMD_DEBUG,         1, _argc, _argv)
-			||  setOrToggle(s_reset, "hmdrecenter", BGFX_RESET_HMD_RECENTER,      1, _argc, _argv)
-			||  setOrToggle(s_reset, "msaa",        BGFX_RESET_MSAA_X16,          1, _argc, _argv)
-			||  setOrToggle(s_reset, "flip",        BGFX_RESET_FLIP_AFTER_RENDER, 1, _argc, _argv)
+			if (setOrToggle(s_reset, "vsync",       BGFX_RESET_VSYNC,              1, _argc, _argv)
+			||  setOrToggle(s_reset, "maxaniso",    BGFX_RESET_MAXANISOTROPY,      1, _argc, _argv)
+			||  setOrToggle(s_reset, "hmd",         BGFX_RESET_HMD,                1, _argc, _argv)
+			||  setOrToggle(s_reset, "hmddbg",      BGFX_RESET_HMD_DEBUG,          1, _argc, _argv)
+			||  setOrToggle(s_reset, "hmdrecenter", BGFX_RESET_HMD_RECENTER,       1, _argc, _argv)
+			||  setOrToggle(s_reset, "msaa",        BGFX_RESET_MSAA_X16,           1, _argc, _argv)
+			||  setOrToggle(s_reset, "flush",       BGFX_RESET_FLUSH_AFTER_RENDER, 1, _argc, _argv)
+			||  setOrToggle(s_reset, "flip",        BGFX_RESET_FLIP_AFTER_RENDER,  1, _argc, _argv)
 			   )
 			{
 				return 0;
@@ -178,7 +179,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{ entry::Key::F4,           entry::Modifier::LeftCtrl,  1, cmd, "graphics hmddbg"                   },
 		{ entry::Key::F7,           entry::Modifier::None,      1, cmd, "graphics vsync"                    },
 		{ entry::Key::F8,           entry::Modifier::None,      1, cmd, "graphics msaa"                     },
-		{ entry::Key::F9,           entry::Modifier::None,      1, cmd, "graphics flip"                     },
+		{ entry::Key::F9,           entry::Modifier::None,      1, cmd, "graphics flush"                    },
 		{ entry::Key::Print,        entry::Modifier::None,      1, cmd, "graphics screenshot"               },
 
 		INPUT_BINDING_END
