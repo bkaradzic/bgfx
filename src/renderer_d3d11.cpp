@@ -3586,25 +3586,28 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	bool TimerQueryD3D11::get()
 	{
-		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-		Frame& frame = m_frame[m_control.m_read];
-
-		uint64_t end;
-		HRESULT hr = deviceCtx->GetData(frame.m_end, &end, sizeof(end), 0);
-		if (S_OK == hr)
+		if (0 != m_control.available() )
 		{
-			m_control.consume(1);
+			ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+			Frame& frame = m_frame[m_control.m_read];
 
-			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
-			deviceCtx->GetData(frame.m_disjoint, &disjoint, sizeof(disjoint), 0);
+			uint64_t end;
+			HRESULT hr = deviceCtx->GetData(frame.m_end, &end, sizeof(end), 0);
+			if (S_OK == hr)
+			{
+				m_control.consume(1);
 
-			uint64_t start;
-			deviceCtx->GetData(frame.m_start, &start, sizeof(start), 0);
+				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
+				deviceCtx->GetData(frame.m_disjoint, &disjoint, sizeof(disjoint), 0);
 
-			m_frequency = disjoint.Frequency;
-			m_elapsed   = end - start;
+				uint64_t start;
+				deviceCtx->GetData(frame.m_start, &start, sizeof(start), 0);
 
-			return true;
+				m_frequency = disjoint.Frequency;
+				m_elapsed   = end - start;
+
+				return true;
+			}
 		}
 
 		return false;
@@ -4417,7 +4420,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
 				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 			}
-			maxGpuLatency = bx::uint32_max(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 			TextVideoMem& tvm = m_textVideoMem;
 

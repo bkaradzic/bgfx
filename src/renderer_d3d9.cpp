@@ -2953,24 +2953,27 @@ namespace bgfx { namespace d3d9
 
 	bool TimerQueryD3D9::get()
 	{
-		Frame& frame = m_frame[m_control.m_read];
-
-		uint64_t freq;
-		HRESULT hr = frame.m_freq->GetData(&freq, sizeof(freq), 0);
-		if (S_OK == hr)
+		if (0 != m_control.available() )
 		{
-			m_control.consume(1);
+			Frame& frame = m_frame[m_control.m_read];
 
-			uint64_t start;
-			DX_CHECK(frame.m_start->GetData(&start, sizeof(start), 0) );
+			uint64_t freq;
+			HRESULT hr = frame.m_freq->GetData(&freq, sizeof(freq), 0);
+			if (S_OK == hr)
+			{
+				m_control.consume(1);
 
-			uint64_t end;
-			DX_CHECK(frame.m_end->GetData(&end, sizeof(end), 0) );
+				uint64_t start;
+				DX_CHECK(frame.m_start->GetData(&start, sizeof(start), 0) );
 
-			m_frequency = freq;
-			m_elapsed   = end - start;
+				uint64_t end;
+				DX_CHECK(frame.m_end->GetData(&end, sizeof(end), 0) );
 
-			return true;
+				m_frequency = freq;
+				m_elapsed   = end - start;
+
+				return true;
+			}
 		}
 
 		return false;
@@ -3560,7 +3563,7 @@ namespace bgfx { namespace d3d9
 				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
 				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 			}
-			maxGpuLatency = bx::uint32_max(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 			TextVideoMem& tvm = m_textVideoMem;
 
