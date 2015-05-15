@@ -180,14 +180,10 @@ BGFX_HANDLE_T(bgfx_vertex_decl_handle);
 
 #undef BGFX_HANDLE_T
 
-/**
- *
- */
+/**/
 typedef void (*bgfx_release_fn_t)(void* _ptr, void* _userData);
 
-/**
- *
- */
+/**/
 typedef struct bgfx_memory
 {
     uint8_t* data;
@@ -195,9 +191,7 @@ typedef struct bgfx_memory
 
 } bgfx_memory_t;
 
-/**
- *
- */
+/**/
 typedef struct bgfx_transform
 {
     float* data;
@@ -205,9 +199,7 @@ typedef struct bgfx_transform
 
 } bgfx_transform_t;
 
-/**
- * Eye
- */
+/**/
 typedef struct bgfx_hmd_eye
 {
     float rotation[4];
@@ -218,9 +210,7 @@ typedef struct bgfx_hmd_eye
 
 } bgfx_hmd_eye_t;
 
-/**
- * HMD
- */
+/**/
 typedef struct bgfx_hmd
 {
     bgfx_hmd_eye_t eye[2];
@@ -229,9 +219,7 @@ typedef struct bgfx_hmd
 
 } bgfx_hmd_t;
 
-/**
- * Vertex declaration.
- */
+/**/
 typedef struct bgfx_vertex_decl
 {
     uint32_t hash;
@@ -241,8 +229,7 @@ typedef struct bgfx_vertex_decl
 
 } bgfx_vertex_decl_t;
 
-/**
- */
+/**/
 typedef struct bgfx_transient_index_buffer
 {
     uint8_t* data;
@@ -252,8 +239,7 @@ typedef struct bgfx_transient_index_buffer
 
 } bgfx_transient_index_buffer_t;
 
-/**
- */
+/**/
 typedef struct bgfx_transient_vertex_buffer
 {
     uint8_t* data;
@@ -265,8 +251,7 @@ typedef struct bgfx_transient_vertex_buffer
 
 } bgfx_transient_vertex_buffer_t;
 
-/**
- */
+/**/
 typedef struct bgfx_instance_data_buffer
 {
     uint8_t* data;
@@ -278,8 +263,7 @@ typedef struct bgfx_instance_data_buffer
 
 } bgfx_instance_data_buffer_t;
 
-/**
- */
+/**/
 typedef struct bgfx_texture_info
 {
     bgfx_texture_format_t format;
@@ -293,8 +277,7 @@ typedef struct bgfx_texture_info
 
 } bgfx_texture_info_t;
 
-/**
- */
+/**/
 typedef struct bgfx_caps_gpu
 {
     uint16_t vendorId;
@@ -302,46 +285,28 @@ typedef struct bgfx_caps_gpu
 
 } bgfx_caps_gpu_t;
 
-/**
- *  Renderer capabilities.
- */
+/**/
 typedef struct bgfx_caps
 {
-    /**
-     *  Renderer backend type.
-     */
     bgfx_renderer_type_t rendererType;
 
-    /**
-     *  Supported functionality, it includes emulated functionality.
-     *  Checking supported and not emulated will give functionality
-     *  natively supported by renderer.
-     */
     uint64_t supported;
 
-    uint32_t maxDrawCalls;      /* < Maximum draw calls.               */
-    uint16_t maxTextureSize;    /* < Maximum texture size.             */
-    uint16_t maxViews;          /* < Maximum views.                    */
-    uint8_t  maxFBAttachments;  /* < Maximum frame buffer attachments. */
-    uint8_t  numGPUs;           /* <                                   */
+    uint32_t maxDrawCalls;
+    uint16_t maxTextureSize;
+    uint16_t maxViews;
+    uint8_t  maxFBAttachments;
+    uint8_t  numGPUs;
 
-    uint16_t vendorId;          /* <                                   */
-    uint16_t deviceId;          /* <                                   */
-    bgfx_caps_gpu_t gpu[4];     /* <                                   */
+    uint16_t vendorId;
+    uint16_t deviceId;
+    bgfx_caps_gpu_t gpu[4];
 
-    /**
-     *  Supported texture formats.
-     *   `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
-     *   `BGFX_CAPS_FORMAT_TEXTURE_COLOR` - supported
-     *   `BGFX_CAPS_FORMAT_TEXTURE_EMULATED` - emulated
-     *   `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - supported vertex texture
-     */
     uint8_t formats[BGFX_TEXTURE_FORMAT_COUNT];
 
 } bgfx_caps_t;
 
-/**
- */
+/**/
 typedef enum bgfx_fatal
 {
     BGFX_FATAL_DEBUG_CHECK,
