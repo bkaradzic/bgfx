@@ -9,7 +9,7 @@
 #	include "renderer_d3d11.h"
 
 #	if !defined(BGFX_D3D11_MAP_CONSTANT_BUFFERS)
-#		define BGFX_D3D11_MAP_CONSTANT_BUFFERS 1
+#		define BGFX_D3D11_MAP_CONSTANT_BUFFERS 0
 #	endif
 
 namespace bgfx { namespace d3d11
