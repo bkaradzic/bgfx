@@ -994,7 +994,7 @@ namespace bgfx
 	///   program is destroyed.
 	/// @returns Program handle.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_create_compute_program`.
 	///
 	ProgramHandle createProgram(ShaderHandle _csh, bool _destroyShader = false);
 
@@ -1545,13 +1545,13 @@ namespace bgfx
 
 	/// Set instance data buffer for draw primitive.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_instance_data_from_vertex_buffer`.
 	///
 	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
 
 	/// Set instance data buffer for draw primitive.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_instance_data_from_dynamic_vertex_buffer`.
 	///
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
 
@@ -1616,31 +1616,31 @@ namespace bgfx
 
 	///
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_compute_index_buffer`.
 	///
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access);
 
 	///
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_compute_vertex_buffer`.
 	///
 	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access);
 
 	///
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_compute_dynamic_index_buffer`.
 	///
 	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access);
 
 	///
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_compute_dynamic_vertex_buffer`.
 	///
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);
 
 	///
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_compute_indirect_buffer`.
 	///
 	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access);
 
