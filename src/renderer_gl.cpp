@@ -970,7 +970,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	bool isTextureFormatValid(TextureFormat::Enum _format, bool srgb = false)
+	static bool isTextureFormatValid(TextureFormat::Enum _format, bool srgb = false)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 		GLenum internalFmt = srgb
@@ -985,7 +985,6 @@ namespace bgfx { namespace gl
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
-
 		initTestTexture(_format);
 
 		GLenum err = glGetError();
@@ -996,7 +995,34 @@ namespace bgfx { namespace gl
 		return 0 == err;
 	}
 
-	bool isFramebufferFormatValid(TextureFormat::Enum _format, bool srgb = false)
+	static bool isImageFormatValid(TextureFormat::Enum _format)
+	{
+		if (GL_ZERO == s_imageFormat[_format])
+		{
+			return false;
+		}
+
+		GLuint id;
+		GL_CHECK(glGenTextures(1, &id) );
+		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
+		initTestTexture(_format);
+
+		glBindImageTexture(0
+			, id
+			, 0
+			, GL_FALSE
+			, 0
+			, GL_READ_WRITE
+			, s_imageFormat[_format]
+			);
+		GLenum err = glGetError();
+
+		GL_CHECK(glDeleteTextures(1, &id) );
+
+		return 0 == err;
+	}
+
+	static bool isFramebufferFormatValid(TextureFormat::Enum _format, bool srgb = false)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 		GLenum internalFmt = srgb
@@ -1468,7 +1494,7 @@ namespace bgfx { namespace gl
 					;
 
 				supported |= computeSupport
-					&& GL_ZERO != s_imageFormat[ii]
+					&& isImageFormatValid(TextureFormat::Enum(ii) )
 					? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
