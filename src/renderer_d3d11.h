@@ -92,7 +92,7 @@ namespace bgfx { namespace d3d11
 		{
 		}
 
-		void create(uint32_t _size, void* _data, uint8_t _flags, uint16_t _stride = 0, bool _vertex = false);
+		void create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride = 0, bool _vertex = false);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
 
 		void destroy()
@@ -111,7 +111,7 @@ namespace bgfx { namespace d3d11
 		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
 		uint32_t m_size;
-		uint8_t m_flags;
+		uint16_t m_flags;
 		bool m_dynamic;
 	};
 
@@ -124,7 +124,7 @@ namespace bgfx { namespace d3d11
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags);
+		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags);
 
 		VertexDeclHandle m_decl;
 	};
@@ -295,6 +295,33 @@ namespace bgfx { namespace d3d11
 		uint8_t m_num;
 		uint8_t m_numTh;
 		TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+	};
+
+	struct TimerQueryD3D11
+	{
+		TimerQueryD3D11()
+			: m_control(BX_COUNTOF(m_frame) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin();
+		void end();
+		bool get();
+
+		struct Frame
+		{
+			ID3D11Query* m_disjoint;
+			ID3D11Query* m_start;
+			ID3D11Query* m_end;
+		};
+
+		uint64_t m_elapsed;
+		uint64_t m_frequency;
+
+		Frame m_frame[4];
+		bx::RingBufferControl m_control;
 	};
 
 } /*  namespace d3d11 */ } // namespace bgfx

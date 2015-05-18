@@ -135,7 +135,7 @@ namespace bgfx { namespace d3d9
 		{
 		}
 
-		void create(uint32_t _size, void* _data, uint8_t _flags);
+		void create(uint32_t _size, void* _data, uint16_t _flags);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
 			void* buffer;
@@ -164,7 +164,7 @@ namespace bgfx { namespace d3d9
 
 		IDirect3DIndexBuffer9* m_ptr;
 		uint32_t m_size;
-		uint8_t  m_flags;
+		uint16_t m_flags;
 		bool m_dynamic;
 	};
 
@@ -387,6 +387,34 @@ namespace bgfx { namespace d3d9
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		bool m_needResolve;
+	};
+
+	struct TimerQueryD3D9
+	{
+		TimerQueryD3D9()
+			: m_control(BX_COUNTOF(m_frame) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin();
+		void end();
+		bool get();
+
+		struct Frame
+		{
+			IDirect3DQuery9* m_disjoint;
+			IDirect3DQuery9* m_start;
+			IDirect3DQuery9* m_end;
+			IDirect3DQuery9* m_freq;
+		};
+
+		uint64_t m_elapsed;
+		uint64_t m_frequency;
+
+		Frame m_frame[4];
+		bx::RingBufferControl m_control;
 	};
 
 } /* namespace d3d9 */ } // namespace bgfx

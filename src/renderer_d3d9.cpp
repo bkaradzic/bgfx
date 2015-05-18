@@ -272,6 +272,7 @@ namespace bgfx { namespace d3d9
 		RendererContextD3D9()
 			: m_d3d9(NULL)
 			, m_device(NULL)
+			, m_flushQuery(NULL)
 			, m_swapChain(NULL)
 			, m_captureTexture(NULL)
 			, m_captureSurface(NULL)
@@ -686,7 +687,7 @@ namespace bgfx { namespace d3d9
 			return BGFX_RENDERER_DIRECT3D9_NAME;
 		}
 
-		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint8_t _flags) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint16_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
 		}
@@ -706,7 +707,7 @@ namespace bgfx { namespace d3d9
 			m_vertexDecls[_handle.idx].destroy();
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint8_t /*_flags*/) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle);
 		}
@@ -716,7 +717,7 @@ namespace bgfx { namespace d3d9
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint8_t _flags) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) BX_OVERRIDE
 		{
 			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
 		}
@@ -731,7 +732,7 @@ namespace bgfx { namespace d3d9
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
 			m_vertexBuffers[_handle.idx].create(_size, NULL, decl);
@@ -1239,6 +1240,9 @@ namespace bgfx { namespace d3d9
 
 			capturePreReset();
 
+			DX_RELEASE(m_flushQuery, 0);
+			m_gpuTimer.preReset();
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].preReset();
@@ -1265,6 +1269,9 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(m_device->GetSwapChain(0, &m_swapChain) );
 			DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_backBufferColor) );
 			DX_CHECK(m_device->GetDepthStencilSurface(&m_backBufferDepthStencil) );
+
+			DX_CHECK(m_device->CreateQuery(D3DQUERYTYPE_EVENT, &m_flushQuery) );
+			m_gpuTimer.postReset();
 
 			capturePostReset();
 
@@ -1719,8 +1726,10 @@ namespace bgfx { namespace d3d9
 		IDirect3DDevice9Ex* m_deviceEx;
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 
-		IDirect3D9* m_d3d9;
+		IDirect3D9*       m_d3d9;
 		IDirect3DDevice9* m_device;
+		IDirect3DQuery9*  m_flushQuery;
+		TimerQueryD3D9    m_gpuTimer;
 		D3DPOOL m_pool;
 
 		IDirect3DSwapChain9* m_swapChain;
@@ -1792,7 +1801,7 @@ namespace bgfx { namespace d3d9
 		s_renderD3D9 = NULL;
 	}
 
-	void IndexBufferD3D9::create(uint32_t _size, void* _data, uint8_t _flags)
+	void IndexBufferD3D9::create(uint32_t _size, void* _data, uint16_t _flags)
 	{
 		m_size    = _size;
 		m_flags   = _flags;
@@ -2892,6 +2901,84 @@ namespace bgfx { namespace d3d9
 			) );
 	}
 
+	void TimerQueryD3D9::postReset()
+	{
+		IDirect3DDevice9* device = s_renderD3D9->m_device;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		{
+			Frame& frame = m_frame[ii];
+			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMPDISJOINT, &frame.m_disjoint) );
+			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMP,         &frame.m_start) );
+			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMP,         &frame.m_end) );
+			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMPFREQ,     &frame.m_freq) );
+		}
+
+		m_elapsed   = 0;
+		m_frequency = 1;
+		m_control.reset();
+	}
+
+	void TimerQueryD3D9::preReset()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		{
+			Frame& frame = m_frame[ii];
+			DX_RELEASE(frame.m_disjoint, 0);
+			DX_RELEASE(frame.m_start, 0);
+			DX_RELEASE(frame.m_end, 0);
+			DX_RELEASE(frame.m_freq, 0);
+		}
+	}
+
+	void TimerQueryD3D9::begin()
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			get();
+		}
+
+		Frame& frame = m_frame[m_control.m_current];
+		frame.m_disjoint->Issue(D3DISSUE_BEGIN);
+		frame.m_start->Issue(D3DISSUE_END);
+	}
+
+	void TimerQueryD3D9::end()
+	{
+		Frame& frame = m_frame[m_control.m_current];
+		frame.m_end->Issue(D3DISSUE_END);
+		frame.m_freq->Issue(D3DISSUE_END);
+		m_control.commit(1);
+	}
+
+	bool TimerQueryD3D9::get()
+	{
+		if (0 != m_control.available() )
+		{
+			Frame& frame = m_frame[m_control.m_read];
+
+			uint64_t freq;
+			HRESULT hr = frame.m_freq->GetData(&freq, sizeof(freq), 0);
+			if (S_OK == hr)
+			{
+				m_control.consume(1);
+
+				uint64_t start;
+				DX_CHECK(frame.m_start->GetData(&start, sizeof(start), 0) );
+
+				uint64_t end;
+				DX_CHECK(frame.m_end->GetData(&end, sizeof(end), 0) );
+
+				m_frequency = freq;
+				m_elapsed   = end - start;
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	void RendererContextD3D9::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		IDirect3DDevice9* device = m_device;
@@ -2904,6 +2991,11 @@ namespace bgfx { namespace d3d9
 		int64_t captureElapsed = 0;
 
 		device->BeginScene();
+
+		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
+		{
+			m_gpuTimer.begin();
+		}
 
 		if (0 < _render->m_iboffset)
 		{
@@ -3429,6 +3521,12 @@ namespace bgfx { namespace d3d9
 
 			if (0 < _render->m_num)
 			{
+				if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
+				{
+					m_flushQuery->Issue(D3DISSUE_END);
+					m_flushQuery->GetData(NULL, 0, D3DGETDATA_FLUSH);
+				}
+
 				captureElapsed = -bx::getHPCounter();
 				capture();
 				captureElapsed += bx::getHPCounter();
@@ -3452,6 +3550,20 @@ namespace bgfx { namespace d3d9
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
+
+			static uint32_t maxGpuLatency = 0;
+			static double   maxGpuElapsed = 0.0f;
+			double elapsedGpuMs = 0.0;
+
+			m_gpuTimer.end();
+
+			while (m_gpuTimer.get() )
+			{
+				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			}
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 			TextVideoMem& tvm = m_textVideoMem;
 
@@ -3490,12 +3602,18 @@ namespace bgfx { namespace d3d9
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms]"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
 					, elapsedCpuMs
+					, elapsedCpuMs > maxGpuElapsed ? '>' : '<'
+					, maxGpuElapsed
+					, maxGpuLatency
 					);
+				maxGpuLatency = 0;
+				maxGpuElapsed = 0.0;
+
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
 					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"

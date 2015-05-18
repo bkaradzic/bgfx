@@ -869,7 +869,7 @@ namespace bgfx { namespace gl
 
 	struct IndexBufferGL
 	{
-		void create(uint32_t _size, void* _data, uint8_t _flags)
+		void create(uint32_t _size, void* _data, uint16_t _flags)
 		{
 			m_size  = _size;
 			m_flags = _flags;
@@ -907,12 +907,12 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		uint32_t m_size;
 		VaoCacheRef m_vcref;
-		uint8_t m_flags;
+		uint16_t m_flags;
 	};
 
 	struct VertexBufferGL
 	{
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint8_t _flags)
+		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
 		{
 			m_size = _size;
 			m_decl = _declHandle;
