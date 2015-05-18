@@ -3166,8 +3166,11 @@ namespace bgfx { namespace gl
 				*array = '\0';
 				array++;
 				char* end = strchr(array, ']');
-				*end = '\0';
-				offset = atoi(array);
+				if (NULL != end)
+				{
+					*end = '\0';
+					offset = atoi(array);
+				}
 			}
 
 			switch (gltype)
