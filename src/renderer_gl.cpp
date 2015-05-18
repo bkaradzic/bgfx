@@ -949,6 +949,27 @@ namespace bgfx { namespace gl
 		tfi.m_type        = _type;
 	}
 
+	void initTestTexture(TextureFormat::Enum _format, bool srgb = false)
+	{
+		const TextureFormatInfo& tfi = s_textureFormat[_format];
+		GLenum internalFmt = srgb
+			? tfi.m_internalFmtSrgb
+			: tfi.m_internalFmt
+			;
+
+		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
+		void* data = alloca(size);
+
+		if (isCompressed(_format) )
+		{
+			glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, size, data);
+		}
+		else
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, data);
+		}
+	}
+
 	bool isTextureFormatValid(TextureFormat::Enum _format, bool srgb = false)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
@@ -965,17 +986,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
 
-		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
-		void* data = alloca(size);
-
-		if (isCompressed(_format) )
-		{
-			glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, size, data);
-		}
-		else
-		{
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, data);
-		}
+		initTestTexture(_format);
 
 		GLenum err = glGetError();
 		BX_WARN(0 == err, "TextureFormat::%s is not supported (%x: %s).", getName(_format), err, glEnumName(err) );
@@ -983,6 +994,74 @@ namespace bgfx { namespace gl
 		GL_CHECK(glDeleteTextures(1, &id) );
 
 		return 0 == err;
+	}
+
+	bool isFramebufferFormatValid(TextureFormat::Enum _format, bool srgb = false)
+	{
+		const TextureFormatInfo& tfi = s_textureFormat[_format];
+		GLenum internalFmt = srgb
+			? tfi.m_internalFmtSrgb
+			: tfi.m_internalFmt
+			;
+		if (GL_ZERO == internalFmt
+		||  !tfi.m_supported)
+		{
+			return false;
+		}
+
+		GLuint fbo;
+		GL_CHECK(glGenFramebuffers(1, &fbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+
+		GLuint id;
+		GL_CHECK(glGenTextures(1, &id) );
+		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
+
+		initTestTexture(_format);
+
+		GLenum err = glGetError();
+
+		GLenum attachment;
+		if (isDepth(_format) )
+		{
+			const ImageBlockInfo& info = getBlockInfo(_format);
+			if (0 < info.stencilBits)
+			{
+				attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+			}
+			else if (0 == info.depthBits)
+			{
+				attachment = GL_STENCIL_ATTACHMENT;
+			}
+			else
+			{
+				attachment = GL_DEPTH_ATTACHMENT;
+			}
+		}
+		else
+		{
+			attachment = GL_COLOR_ATTACHMENT0;
+		}
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER
+				, attachment
+				, GL_TEXTURE_2D
+				, id
+				, 0
+				);
+		err = glGetError();
+
+		if (0 == err)
+		{
+			err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		}
+
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+		GL_CHECK(glDeleteFramebuffers(1, &fbo) );
+
+		GL_CHECK(glDeleteTextures(1, &id) );
+
+		return GL_FRAMEBUFFER_COMPLETE == err;
 	}
 
 	static void getFilters(uint32_t _flags, bool _hasMips, GLenum& _magFilter, GLenum& _minFilter)
@@ -1391,6 +1470,11 @@ namespace bgfx { namespace gl
 				supported |= computeSupport
 					&& GL_ZERO != s_imageFormat[ii]
 					? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
+
+				supported |= isFramebufferFormatValid(TextureFormat::Enum(ii) )
+					? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 

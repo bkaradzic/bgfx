@@ -949,7 +949,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				uint8_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-				const DXGI_FORMAT fmt     = s_textureFormat[ii].m_fmt;
+				const DXGI_FORMAT fmt = isDepth(TextureFormat::Enum(ii) )
+					? s_textureFormat[ii].m_fmtDsv
+					: s_textureFormat[ii].m_fmt
+					;
 				const DXGI_FORMAT fmtSrgb = s_textureFormat[ii].m_fmtSrgb;
 
 				if (DXGI_FORMAT_UNKNOWN != fmt)
@@ -987,6 +990,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								| D3D11_FORMAT_SUPPORT_SHADER_LOAD
 								) )
 								? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+								: BGFX_CAPS_FORMAT_TEXTURE_NONE
+								;
+
+						support |= 0 != (data.OutFormatSupport & (0
+								| D3D11_FORMAT_SUPPORT_RENDER_TARGET
+								| D3D11_FORMAT_SUPPORT_DEPTH_STENCIL
+								) )
+								? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 								: BGFX_CAPS_FORMAT_TEXTURE_NONE
 								;
 					}

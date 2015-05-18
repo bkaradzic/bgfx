@@ -548,6 +548,14 @@ namespace bgfx { namespace d3d9
 						, s_textureFormat[ii].m_fmt
 						) ) ? BGFX_CAPS_FORMAT_TEXTURE_VERTEX : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
+					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+						, m_deviceType
+						, adapterFormat
+						, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
+						, D3DRTYPE_TEXTURE
+						, s_textureFormat[ii].m_fmt
+						) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
 					g_caps.formats[ii] = support;
 				}
 			}
