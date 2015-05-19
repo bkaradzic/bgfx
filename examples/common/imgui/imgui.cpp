@@ -604,12 +604,11 @@ struct Imgui
 		bgfx::destroyUniform(u_imageSwizzle);
 		bgfx::destroyUniform(s_texColor);
 #if !USE_NANOVG_FONT
-		for (uint16_t ii = 0; ii < IMGUI_CONFIG_MAX_FONTS; ++ii)
+		for (uint16_t ii = 0, num = m_fontHandle.getNumHandles(); ii < num; ++ii)
 		{
-			if (bgfx::isValid(m_fonts[ii].m_texture) )
-			{
-				bgfx::destroyTexture(m_fonts[ii].m_texture);
-			}
+			uint16_t idx = m_fontHandle.getHandleAt(0);
+			bgfx::destroyTexture(m_fonts[idx].m_texture);
+			m_fontHandle.free(idx);
 		}
 #endif // !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_missingTexture);
