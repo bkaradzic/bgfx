@@ -1012,7 +1012,7 @@ namespace bgfx { namespace gl
 			, 0
 			, GL_FALSE
 			, 0
-			, GL_WRITE_ONLY
+			, GL_READ_WRITE
 			, s_imageFormat[_format]
 			);
 		GLenum err = glGetError();
