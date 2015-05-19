@@ -1005,14 +1005,14 @@ namespace bgfx { namespace gl
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
-		initTestTexture(_format);
+		GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, s_imageFormat[_format], 16, 16) );
 
 		glBindImageTexture(0
 			, id
 			, 0
 			, GL_FALSE
 			, 0
-			, GL_READ_WRITE
+			, GL_WRITE_ONLY
 			, s_imageFormat[_format]
 			);
 		GLenum err = glGetError();
@@ -3539,14 +3539,15 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint8_t _format, uint8_t _numMips, uint32_t _flags)
+	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _format, uint8_t _numMips, uint32_t _flags)
 	{
-		m_target = _target;
+		m_target  = _target;
 		m_numMips = _numMips;
-		m_flags = _flags;
-		m_currentFlags = UINT32_MAX;
-		m_width = _width;
-		m_height = _height;
+		m_flags   = _flags;
+		m_width   = _width;
+		m_height  = _height;
+		m_depth   = _depth;
+		m_currentFlags    = UINT32_MAX;
 		m_requestedFormat = _format;
 		m_textureFormat   = _format;
 
@@ -3585,7 +3586,25 @@ namespace bgfx { namespace gl
 
 			if (computeWrite)
 			{
-				GL_CHECK(glTexStorage2D(_target, _numMips, s_textureFormat[m_textureFormat].m_internalFmt, m_width, m_height));
+				if (_target == GL_TEXTURE_3D)
+				{
+					GL_CHECK(glTexStorage3D(_target
+							, _numMips
+							, s_textureFormat[m_textureFormat].m_internalFmt
+							, m_width
+							, m_height
+							, _depth
+							) );
+				}
+				else
+				{
+					GL_CHECK(glTexStorage2D(_target
+							, _numMips
+							, s_textureFormat[m_textureFormat].m_internalFmt
+							, m_width
+							, m_height
+							) );
+				}
 			}
 
 			setSamplerState(_flags);
@@ -3658,10 +3677,12 @@ namespace bgfx { namespace gl
 			numMips -= startLod;
 			uint32_t textureWidth;
 			uint32_t textureHeight;
+			uint32_t textureDepth;
 			{
 				const ImageBlockInfo& ibi = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 				textureWidth  = bx::uint32_max(ibi.blockWidth,  imageContainer.m_width >>startLod);
 				textureHeight = bx::uint32_max(ibi.blockHeight, imageContainer.m_height>>startLod);
+				textureDepth  = imageContainer.m_depth;
 			}
 
 			GLenum target = GL_TEXTURE_2D;
@@ -3677,6 +3698,7 @@ namespace bgfx { namespace gl
 			if (!init(target
 					, textureWidth
 					, textureHeight
+					, textureDepth
 					, imageContainer.m_format
 					, numMips
 					, _flags
