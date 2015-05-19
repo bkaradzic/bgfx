@@ -94,7 +94,6 @@ namespace bgfx
 #include <bx/debug.h>
 #include <bx/fpumath.h>
 #include <bx/float4x4_t.h>
-#include <bx/blockalloc.h>
 #include <bx/endian.h>
 #include <bx/handlealloc.h>
 #include <bx/hash.h>
@@ -2142,7 +2141,7 @@ namespace bgfx
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[handle.idx];
 			dib.m_handle.idx = uint16_t(ptr>>32);
-			dib.m_offset     = uint32_t(ptr);
+			dib.m_offset     = uint32_t(ptr & 0xffffffff);
 			dib.m_size       = size;
 			dib.m_startIndex = bx::strideAlign(dib.m_offset, indexSize)/indexSize;
 			dib.m_flags      = _flags;
@@ -2178,7 +2177,7 @@ namespace bgfx
 
 				uint64_t ptr = allocDynamicIndexBuffer(_mem->size, dib.m_flags);
 				dib.m_handle.idx = uint16_t(ptr>>32);
-				dib.m_offset     = uint32_t(ptr);
+				dib.m_offset     = uint32_t(ptr & 0xffffffff);
 				dib.m_size       = _mem->size;
 				dib.m_startIndex = bx::strideAlign(dib.m_offset, indexSize)/indexSize;
 			}
@@ -2287,7 +2286,7 @@ namespace bgfx
 			handle.idx = m_dynamicVertexBufferHandle.alloc();
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[handle.idx];
 			dvb.m_handle.idx  = uint16_t(ptr>>32);
-			dvb.m_offset      = uint32_t(ptr);
+			dvb.m_offset      = uint32_t(ptr & 0xffffffff);
 			dvb.m_size        = size;
 			dvb.m_startVertex = bx::strideAlign(dvb.m_offset, _decl.m_stride)/_decl.m_stride;
 			dvb.m_numVertices = dvb.m_size/_decl.m_stride;
@@ -2326,7 +2325,7 @@ namespace bgfx
 
 				uint64_t ptr = allocDynamicVertexBuffer(_mem->size, dvb.m_flags);
 				dvb.m_handle.idx  = uint16_t(ptr>>32);
-				dvb.m_offset      = uint32_t(ptr);
+				dvb.m_offset      = uint32_t(ptr & 0xffffffff);
 				dvb.m_size        = _mem->size;
 				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
 			}
@@ -3127,9 +3126,9 @@ namespace bgfx
 			Clear& clear = m_clear[_id];
 			clear.m_flags = _flags;
 			clear.m_index[0] = uint8_t(_rgba>>24);
-			clear.m_index[1] = uint8_t(_rgba>>16);
-			clear.m_index[2] = uint8_t(_rgba>> 8);
-			clear.m_index[3] = uint8_t(_rgba>> 0);
+			clear.m_index[1] = uint8_t(_rgba>>16 & 0xff);
+			clear.m_index[2] = uint8_t(_rgba>> 8 & 0xff);
+			clear.m_index[3] = uint8_t(_rgba>> 0 & 0xff);
 			clear.m_depth    = _depth;
 			clear.m_stencil  = _stencil;
 		}
