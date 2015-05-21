@@ -919,7 +919,10 @@ namespace bgfx
 			// When bgfx::renderFrame is called before init render thread
 			// should not be created.
 			BX_TRACE("Application called bgfx::renderFrame directly, not creating render thread.");
-			m_singleThreaded = ~BGFX_MAIN_THREAD_MAGIC == s_threadIndex;
+			m_singleThreaded = true
+				&& !BX_ENABLED(BX_PLATFORM_OSX || BX_PLATFORM_IOS)
+				&& ~BGFX_MAIN_THREAD_MAGIC == s_threadIndex
+				;
 		}
 		else
 		{
@@ -931,6 +934,8 @@ namespace bgfx
 		BX_TRACE("Multithreaded renderer is disabled.");
 		m_singleThreaded = true;
 #endif // BGFX_CONFIG_MULTITHREADED
+
+		BX_TRACE("Running in %s-threaded mode", m_singleThreaded ? "single" : "multi");
 
 		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
