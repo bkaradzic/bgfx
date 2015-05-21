@@ -1910,6 +1910,7 @@ namespace bgfx
 			, m_rendererInitialized(false)
 			, m_exit(false)
 			, m_flipAfterRender(false)
+			, m_singleThreaded(false)
 		{
 		}
 
@@ -3446,28 +3447,40 @@ namespace bgfx
 #if BGFX_CONFIG_MULTITHREADED
 		void gameSemPost()
 		{
-			m_gameSem.post();
+			if (!m_singleThreaded)
+			{
+				m_gameSem.post();
+			}
 		}
 
 		void gameSemWait()
 		{
-			int64_t start = bx::getHPCounter();
-			bool ok = m_gameSem.wait();
-			BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
-			m_render->m_waitSubmit = bx::getHPCounter()-start;
+			if (!m_singleThreaded)
+			{
+				int64_t start = bx::getHPCounter();
+				bool ok = m_gameSem.wait();
+				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				m_render->m_waitSubmit = bx::getHPCounter()-start;
+			}
 		}
 
 		void renderSemPost()
 		{
-			m_renderSem.post();
+			if (!m_singleThreaded)
+			{
+				m_renderSem.post();
+			}
 		}
 
 		void renderSemWait()
 		{
-			int64_t start = bx::getHPCounter();
-			bool ok = m_renderSem.wait();
-			BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
-			m_submit->m_waitRender = bx::getHPCounter() - start;
+			if (!m_singleThreaded)
+			{
+				int64_t start = bx::getHPCounter();
+				bool ok = m_renderSem.wait();
+				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				m_submit->m_waitRender = bx::getHPCounter() - start;
+			}
 		}
 
 		bx::Semaphore m_renderSem;
@@ -3598,6 +3611,7 @@ namespace bgfx
 		bool m_rendererInitialized;
 		bool m_exit;
 		bool m_flipAfterRender;
+		bool m_singleThreaded;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);

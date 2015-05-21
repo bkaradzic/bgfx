@@ -7,7 +7,7 @@
 
 namespace bgfx
 {
-#define BGFX_MAIN_THREAD_MAGIC 0x78666762
+#define BGFX_MAIN_THREAD_MAGIC UINT32_C(0x78666762)
 
 #if BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
 #	define BGFX_CHECK_MAIN_THREAD() \
@@ -353,7 +353,6 @@ namespace bgfx
 
 	void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem)
 	{
-		BGFX_CHECK_RENDER_THREAD();
 		struct Vertex
 		{
 			float m_x;
@@ -762,6 +761,7 @@ namespace bgfx
 		if (NULL == s_ctx)
 		{
 			s_renderFrameCalled = true;
+			s_threadIndex = ~BGFX_MAIN_THREAD_MAGIC;
 			return RenderFrame::NoContext;
 		}
 
@@ -919,15 +919,20 @@ namespace bgfx
 			// When bgfx::renderFrame is called before init render thread
 			// should not be created.
 			BX_TRACE("Application called bgfx::renderFrame directly, not creating render thread.");
+			m_singleThreaded = ~BGFX_MAIN_THREAD_MAGIC == s_threadIndex;
 		}
 		else
 		{
 			BX_TRACE("Creating rendering thread.");
 			m_thread.init(renderThread, this);
+			m_singleThreaded = false;
 		}
 #else
 		BX_TRACE("Multithreaded renderer is disabled.");
+		m_singleThreaded = true;
 #endif // BGFX_CONFIG_MULTITHREADED
+
+		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_viewRemap); ++ii)
 		{
@@ -976,6 +981,10 @@ namespace bgfx
 
 		g_caps.rendererType = m_renderCtx->getRendererType();
 		initAttribTypeSizeTable(g_caps.rendererType);
+
+		g_caps.supported |= 0
+			| (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) && !m_singleThreaded ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
+			;
 
 		dumpCaps();
 
@@ -1166,7 +1175,8 @@ namespace bgfx
 
 		bx::xchg(m_render, m_submit);
 
-		if (!BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
+		if (!BX_ENABLED(BGFX_CONFIG_MULTITHREADED)
+		||  m_singleThreaded)
 		{
 			renderFrame();
 		}
@@ -1986,9 +1996,6 @@ again:
 		BX_TRACE("Init...");
 
 		memset(&g_caps, 0, sizeof(g_caps) );
-		g_caps.supported = 0
-			| (BGFX_CONFIG_MULTITHREADED ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
-			;
 		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
 		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
 		g_caps.maxFBAttachments = 1;
@@ -2015,8 +2022,6 @@ again:
 			g_callback =
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
 		}
-
-		s_threadIndex = BGFX_MAIN_THREAD_MAGIC;
 
 		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 16);
 		s_ctx->init(_type);
