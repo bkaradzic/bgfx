@@ -1614,22 +1614,29 @@ namespace bgfx { namespace d3d9
 				DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
 				DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 
-				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+				if (BGFX_CLEAR_COLOR & _clear.m_flags)
 				{
-					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE
 						, D3DCOLORWRITEENABLE_RED
 						| D3DCOLORWRITEENABLE_GREEN
 						| D3DCOLORWRITEENABLE_BLUE
 						| D3DCOLORWRITEENABLE_ALPHA
 						) );
+				}
+				else
+				{
+					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, 0) );
+				}
+
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+				{
+					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS) );
 				}
 				else
 				{
 					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE) );
-					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, 0) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, FALSE) );
 				}
 
