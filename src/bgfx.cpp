@@ -1049,9 +1049,9 @@ namespace bgfx
 		}
 
 		m_render->destroy();
-#else
-		s_ctx = NULL;
 #endif // BGFX_CONFIG_MULTITHREADED
+
+		s_ctx = NULL;
 
 		m_submit->destroy();
 
