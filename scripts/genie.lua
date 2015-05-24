@@ -88,10 +88,7 @@ function exampleProject(_name)
 
 	configuration {}
 
-	-- don't output debugdir for winphone builds
-	if "winphone81" ~= _OPTIONS["vs"] then
-		debugdir (path.join(BGFX_DIR, "examples/runtime"))
-	end
+	debugdir (path.join(BGFX_DIR, "examples/runtime"))
 
 	includedirs {
 		path.join(BX_DIR,   "include"),
@@ -221,7 +218,7 @@ function exampleProject(_name)
 			"psapi",
 		}
 
-	configuration { "winphone8*"}
+	configuration { "winphone8* or winstore8*" }
 		removelinks {
 			"DelayImp",
 			"gdi32",
@@ -234,7 +231,17 @@ function exampleProject(_name)
 		linkoptions {
 			"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
 		}
-		-- WinRT targets need their own output directories are build files stomp over each other
+
+	-- WinRT targets need their own output directories or build files stomp over each other
+	configuration { "x32", "winphone8* or winstore8*" }
+		targetdir (path.join(BGFX_BUILD_DIR, "win32_" .. _ACTION, "bin", _name))
+		objdir (path.join(BGFX_BUILD_DIR, "win32_" .. _ACTION, "obj", _name))
+
+	configuration { "x64", "winphone8* or winstore8*" }
+		targetdir (path.join(BGFX_BUILD_DIR, "win64_" .. _ACTION, "bin", _name))
+		objdir (path.join(BGFX_BUILD_DIR, "win64_" .. _ACTION, "obj", _name))
+
+	configuration { "ARM", "winphone8* or winstore8*" }
 		targetdir (path.join(BGFX_BUILD_DIR, "arm_" .. _ACTION, "bin", _name))
 		objdir (path.join(BGFX_BUILD_DIR, "arm_" .. _ACTION, "obj", _name))
 
@@ -366,7 +373,11 @@ exampleProject("21-deferred")
 exampleProject("22-windows")
 exampleProject("23-vectordisplay")
 exampleProject("24-nbody")
-exampleProject("25-c99")
+
+-- C99 source doesn't compile under WinRT settings
+if not premake.vstudio.iswinrt() then
+	exampleProject("25-c99")
+end
 
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
