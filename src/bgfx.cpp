@@ -2508,6 +2508,7 @@ again:
 
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
+		BX_CHECK(_width > 0 && _height > 0, "Invalid texture size (width %d, height %d).", _width, _height);
 		return createTexture2D(BackbufferRatio::Count, _width, _height, _numMips, _format, _flags, _mem);
 	}
 
