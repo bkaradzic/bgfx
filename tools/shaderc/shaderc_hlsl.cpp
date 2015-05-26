@@ -7,6 +7,7 @@
 
 #if SHADERC_CONFIG_HLSL
 
+#define INITGUID
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
 
