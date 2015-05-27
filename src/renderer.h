@@ -92,7 +92,7 @@ namespace bgfx
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc
 							, &frect[0]
-							, 1
+							, predefined.m_count
 							);
 					}
 					break;
@@ -106,7 +106,7 @@ namespace bgfx
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc
 							, &frect[0]
-							, 1
+							, predefined.m_count
 							);
 					}
 					break;
@@ -246,7 +246,7 @@ namespace bgfx
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc
 							, &m_alphaRef
-							, 1
+							, predefined.m_count
 							);
 					}
 					break;
