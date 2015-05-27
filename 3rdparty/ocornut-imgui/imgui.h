@@ -73,73 +73,8 @@ struct ImVec4
 #endif
 };
 
-namespace ImGui
-{
-    // Proxy functions to access the MemAllocFn/MemFreeFn pointers in ImGui::GetIO(). The only reason they exist here is to allow ImVector<> to compile inline.
-    IMGUI_API void*       MemAlloc(size_t sz);
-    IMGUI_API void        MemFree(void* ptr);
-}
-
-// Lightweight std::vector<> like class to avoid dragging dependencies (also: windows implementation of STL with debug enabled is absurdly slow, so let's bypass it so our code runs fast in debug). 
-// Use '#define ImVector std::vector' if you want to use the STL type or your own type.
-// Our implementation does NOT call c++ constructors because we don't use them in ImGui. Don't use this class as a straight std::vector replacement in your code!
-#ifndef ImVector
-template<typename T>
-class ImVector
-{
-protected:
-    size_t                      Size;
-    size_t                      Capacity;
-    T*                          Data;
-
-public:
-    typedef T                   value_type;
-    typedef value_type*         iterator;
-    typedef const value_type*   const_iterator;
-
-    ImVector()                  { Size = Capacity = 0; Data = NULL; }
-    ~ImVector()                 { if (Data) ImGui::MemFree(Data); }
-
-    inline bool                 empty() const                   { return Size == 0; }
-    inline size_t               size() const                    { return Size; }
-    inline size_t               capacity() const                { return Capacity; }
-
-    inline value_type&          at(size_t i)                    { IM_ASSERT(i < Size); return Data[i]; }
-    inline const value_type&    at(size_t i) const              { IM_ASSERT(i < Size); return Data[i]; }
-    inline value_type&          operator[](size_t i)            { IM_ASSERT(i < Size); return Data[i]; }
-    inline const value_type&    operator[](size_t i) const      { IM_ASSERT(i < Size); return Data[i]; }
-
-    inline void                 clear()                         { if (Data) { Size = Capacity = 0; ImGui::MemFree(Data); Data = NULL; } }
-    inline iterator             begin()                         { return Data; }
-    inline const_iterator       begin() const                   { return Data; }
-    inline iterator             end()                           { return Data + Size; }
-    inline const_iterator       end() const                     { return Data + Size; }
-    inline value_type&          front()                         { IM_ASSERT(Size > 0); return Data[0]; }
-    inline const value_type&    front() const                   { IM_ASSERT(Size > 0); return Data[0]; }
-    inline value_type&          back()                          { IM_ASSERT(Size > 0); return Data[Size-1]; }
-    inline const value_type&    back() const                    { IM_ASSERT(Size > 0); return Data[Size-1]; }
-    inline void                 swap(ImVector<T>& rhs)          { const size_t rhs_size = rhs.Size; rhs.Size = Size; Size = rhs_size; const size_t rhs_cap = rhs.Capacity; rhs.Capacity = Capacity; Capacity = rhs_cap; value_type* rhs_data = rhs.Data; rhs.Data = Data; Data = rhs_data; }
-
-    inline void                 resize(size_t new_size)         { if (new_size > Capacity) reserve(new_size); Size = new_size; }
-    inline void                 reserve(size_t new_capacity)    
-    { 
-        if (new_capacity <= Capacity) return;
-        T* new_data = (value_type*)ImGui::MemAlloc(new_capacity * sizeof(value_type));
-        memcpy(new_data, Data, Size * sizeof(value_type));
-        ImGui::MemFree(Data);
-        Data = new_data;
-        Capacity = new_capacity; 
-    }
-
-    inline void                 push_back(const value_type& v)  { if (Size == Capacity) reserve(Capacity ? Capacity * 2 : 4); Data[Size++] = v; }
-    inline void                 pop_back()                      { IM_ASSERT(Size > 0); Size--; }
-
-    inline iterator             erase(const_iterator it)        { IM_ASSERT(it >= begin() && it < end()); const ptrdiff_t off = it - begin(); memmove(Data + off, Data + off + 1, (Size - (size_t)off - 1) * sizeof(value_type)); Size--; return Data + off; }
-    inline iterator             insert(const_iterator it, const value_type& v)  { IM_ASSERT(it >= begin() && it <= end()); const ptrdiff_t off = it - begin(); if (Size == Capacity) reserve(Capacity ? Capacity * 2 : 4); if (off < (int)Size) memmove(Data + off + 1, Data + off, (Size - (size_t)off) * sizeof(value_type)); Data[off] = v; Size++; return Data + off; }
-};
-#endif // #ifndef ImVector
-
 // Helpers at bottom of the file:
+// - class ImVector<>                   // Lightweight std::vector like class. Use '#define ImVector std::vector' if you want to use the STL type or your own type.
 // - IMGUI_ONCE_UPON_A_FRAME            // Execute a block of code once per frame only (convenient for creating UI within deep-nested code that runs multiple times)
 // - struct ImGuiTextFilter             // Parse and apply text filters. In format "aaaaa[,bbbb][,ccccc]"
 // - struct ImGuiTextBuffer             // Text buffer for logging/accumulating text
@@ -222,6 +157,8 @@ namespace ImGui
     IMGUI_API void          PopAllowKeyboardFocus();
     IMGUI_API void          PushTextWrapPos(float wrap_pos_x = 0.0f);                           // word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column); > 0.0f: wrap at 'wrap_pos_x' position in window local space
     IMGUI_API void          PopTextWrapPos();
+    IMGUI_API void          PushButtonRepeat(bool repeat);                                      // in 'repeat' mode, Button*() functions return true multiple times as you hold them (uses io.KeyRepeatDelay/io.KeyRepeatRate for now)
+    IMGUI_API void          PopButtonRepeat();
 
     // Tooltip
     IMGUI_API void          SetTooltip(const char* fmt, ...);                                   // set tooltip under mouse-cursor, typically use with ImGui::IsHovered(). last call wins
@@ -230,15 +167,18 @@ namespace ImGui
     IMGUI_API void          EndTooltip();
 
     // Popup
-    IMGUI_API void          BeginPopup(bool* p_opened);
+    IMGUI_API void          OpenPopup(const char* str_id);                                      // mark popup as open. popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup needs to be at the same level). close childs popups if any. will close popup when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block.
+    IMGUI_API bool          BeginPopup(const char* str_id);                                     // return true if popup if opened and start outputting to it. only call EndPopup() if BeginPopup() returned true!
     IMGUI_API void          EndPopup();
+    IMGUI_API void          CloseCurrentPopup();                                                // close the popup we have begin-ed into. clicking on a MenuItem or Selectable automatically close the current popup.
 
     // Layout
-    IMGUI_API void          BeginGroup();
+    IMGUI_API void          BeginGroup();                                                       // once closing a group it is seen as a single item (so you can use IsItemHovered() on a group, SameLine() between groups, etc. 
     IMGUI_API void          EndGroup();
     IMGUI_API void          Separator();                                                        // horizontal line
     IMGUI_API void          SameLine(int column_x = 0, int spacing_w = -1);                     // call between widgets or groups to layout them horizontally
-    IMGUI_API void          Spacing();                                                          // add vertical spacing
+    IMGUI_API void          Spacing();                                                          // add spacing
+    IMGUI_API void          Dummy(const ImVec2& size);                                          // add a dummy item of given size
     IMGUI_API void          Indent();                                                           // move content position toward the right by style.IndentSpacing pixels
     IMGUI_API void          Unindent();                                                         // move content position back to the left (cancel Indent)
     IMGUI_API void          Columns(int count = 1, const char* id = NULL, bool border=true);    // setup number of columns. use an identifier to distinguish multiple column sets. close with Columns(1).
@@ -277,7 +217,9 @@ namespace ImGui
     IMGUI_API void          TextV(const char* fmt, va_list args);
     IMGUI_API void          TextColored(const ImVec4& col, const char* fmt, ...);               // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
     IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args);
-    IMGUI_API void          TextWrapped(const char* fmt, ...);                                  // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();
+    IMGUI_API void          TextDisabled(const char* fmt, ...);                                 // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt, ...); PopStyleColor();
+    IMGUI_API void          TextDisabledV(const char* fmt, va_list args);
+    IMGUI_API void          TextWrapped(const char* fmt, ...);                                  // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using SetNextWindowSize().
     IMGUI_API void          TextWrappedV(const char* fmt, va_list args);
     IMGUI_API void          TextUnformatted(const char* text, const char* text_end = NULL);     // doesn't require null terminated string if 'text_end' is specified. no copy done to any bounded stack buffer, recommended for long chunks of text
     IMGUI_API void          LabelText(const char* label, const char* fmt, ...);                 // display text+label aligned the same way as value+label widgets 
@@ -285,7 +227,7 @@ namespace ImGui
     IMGUI_API void          Bullet();
     IMGUI_API void          BulletText(const char* fmt, ...);
     IMGUI_API void          BulletTextV(const char* fmt, va_list args);
-    IMGUI_API bool          Button(const char* label, const ImVec2& size = ImVec2(0,0), bool repeat_when_held = false);
+    IMGUI_API bool          Button(const char* label, const ImVec2& size = ImVec2(0,0));
     IMGUI_API bool          SmallButton(const char* label);
     IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
     IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
@@ -362,9 +304,14 @@ namespace ImGui
     IMGUI_API void          ListBoxFooter();                                                    // terminate the scrolling region
 
     // Widgets: Menus
-    // FIXME-WIP: v1.39 in development
-    IMGUI_API bool          MenuItem(const char* label, const char* shortcut = NULL, bool selected = false); // bool enabled = true
-    IMGUI_API bool          MenuItem(const char* label, const char* shortcut, bool* p_selected); // bool enabled = true
+    IMGUI_API bool          BeginMainMenuBar();                                                 // create and append to a full screen menu-bar. only call EndMainMenuBar() if this returns true!
+    IMGUI_API void          EndMainMenuBar();
+    IMGUI_API bool          BeginMenuBar();                                                     // append to menu-bar of current window. only call EndMenuBar() if this returns true!
+    IMGUI_API void          EndMenuBar();
+    IMGUI_API bool          BeginMenu(const char* label, bool enabled = true);                  // create a sub-menu entry. only call EndMenu() if this returns true!
+    IMGUI_API void          EndMenu();
+    IMGUI_API bool          MenuItem(const char* label, const char* shortcut = NULL, bool selected = false, bool enabled = true);  // return true when activated. shortcuts are displayed for convenience but not processed by ImGui
+    IMGUI_API bool          MenuItem(const char* label, const char* shortcut, bool* p_selected, bool enabled = true);              // return true when activated + toggle (*p_selected) if p_selected != NULL
 
     // Widgets: Value() Helpers. Output single value in "name: value" format (tip: freely declare your own within the ImGui namespace!)
     IMGUI_API void          Value(const char* prefix, bool b);
@@ -424,6 +371,10 @@ namespace ImGui
     IMGUI_API void          ColorConvertRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v);
     IMGUI_API void          ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b);
 
+    // Proxy functions to access the MemAllocFn/MemFreeFn pointers in ImGui::GetIO()
+    IMGUI_API void*         MemAlloc(size_t sz);
+    IMGUI_API void          MemFree(void* ptr);
+
     // Internal state access - if you want to share ImGui state between modules (e.g. DLL) or allocate it yourself
     IMGUI_API const char*   GetVersion();
     IMGUI_API void*         GetInternalState();
@@ -454,13 +405,15 @@ enum ImGuiWindowFlags_
     ImGuiWindowFlags_AlwaysAutoResize       = 1 << 6,   // Resize every window to its content every frame
     ImGuiWindowFlags_ShowBorders            = 1 << 7,   // Show borders around windows and items
     ImGuiWindowFlags_NoSavedSettings        = 1 << 8,   // Never load/save settings in .ini file
+    ImGuiWindowFlags_MenuBar                = 1 << 9,   // Has a menubar
     // [Internal]
-    ImGuiWindowFlags_ChildWindow            = 1 << 9,   // For internal use by BeginChild()
-    ImGuiWindowFlags_ChildWindowAutoFitX    = 1 << 10,  // For internal use by BeginChild()
-    ImGuiWindowFlags_ChildWindowAutoFitY    = 1 << 11,  // For internal use by BeginChild()
-    ImGuiWindowFlags_ComboBox               = 1 << 12,  // For internal use by ComboBox()
-    ImGuiWindowFlags_Tooltip                = 1 << 13,  // For internal use by BeginTooltip()
-    ImGuiWindowFlags_Popup                  = 1 << 14   // For internal use by BeginPopup()
+    ImGuiWindowFlags_ChildWindow            = 1 << 20,  // Don't use! For internal use by BeginChild()
+    ImGuiWindowFlags_ChildWindowAutoFitX    = 1 << 21,  // Don't use! For internal use by BeginChild()
+    ImGuiWindowFlags_ChildWindowAutoFitY    = 1 << 22,  // Don't use! For internal use by BeginChild()
+    ImGuiWindowFlags_ComboBox               = 1 << 23,  // Don't use! For internal use by ComboBox()
+    ImGuiWindowFlags_Tooltip                = 1 << 24,  // Don't use! For internal use by BeginTooltip()
+    ImGuiWindowFlags_Popup                  = 1 << 25,  // Don't use! For internal use by BeginPopup()
+    ImGuiWindowFlags_ChildMenu              = 1 << 26   // Don't use! For internal use by BeginMenu()
 };
 
 // Flags for ImGui::InputText()
@@ -506,6 +459,7 @@ enum ImGuiKey_
 enum ImGuiCol_
 {
     ImGuiCol_Text,
+    ImGuiCol_TextDisabled,
     ImGuiCol_WindowBg,
     ImGuiCol_ChildWindowBg,
     ImGuiCol_Border,
@@ -515,6 +469,7 @@ enum ImGuiCol_
     ImGuiCol_FrameBgActive,
     ImGuiCol_TitleBg,
     ImGuiCol_TitleBgCollapsed,
+    ImGuiCol_MenuBarBg,
     ImGuiCol_ScrollbarBg,
     ImGuiCol_ScrollbarGrab,
     ImGuiCol_ScrollbarGrabHovered,
@@ -554,6 +509,7 @@ enum ImGuiStyleVar_
     ImGuiStyleVar_Alpha,               // float
     ImGuiStyleVar_WindowPadding,       // ImVec2
     ImGuiStyleVar_WindowRounding,      // float
+    ImGuiStyleVar_WindowMinSize,       // ImVec2
     ImGuiStyleVar_ChildWindowRounding, // float
     ImGuiStyleVar_FramePadding,        // ImVec2
     ImGuiStyleVar_FrameRounding,       // float
@@ -568,7 +524,9 @@ enum ImGuiAlign_
     ImGuiAlign_Left     = 1 << 0,
     ImGuiAlign_Center   = 1 << 1,
     ImGuiAlign_Right    = 1 << 2,
-    ImGuiAlign_Default  = ImGuiAlign_Left,
+    ImGuiAlign_Top      = 1 << 3,
+    ImGuiAlign_VCenter  = 1 << 4,
+    ImGuiAlign_Default  = ImGuiAlign_Left | ImGuiAlign_Top,
 };
 
 // Enumeration for ColorEditMode()
@@ -647,6 +605,8 @@ struct ImGuiIO
     float         MouseDoubleClickMaxDist;  // = 6.0f               // Distance threshold to stay in to validate a double-click, in pixels.
     float         MouseDragThreshold;       // = 6.0f               // Distance threshold before considering we are dragging
     int           KeyMap[ImGuiKey_COUNT];   // <unset>              // Map of indices into the KeysDown[512] entries array
+    float         KeyRepeatDelay;           // = 0.250f             // When holding a key/button, time before it starts repeating, in seconds. (for actions where 'repeat' is active)
+    float         KeyRepeatRate;            // = 0.020f             // When holding a key/button, rate at which it repeats, in seconds.
     void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
     ImFontAtlas*  Fonts;                    // <auto>               // Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.
@@ -702,6 +662,7 @@ struct ImGuiIO
     bool        WantCaptureMouse;           // Mouse is hovering a window or widget is active (= ImGui will use your mouse input)
     bool        WantCaptureKeyboard;        // Widget is active (= ImGui will use your keyboard input)
     float       Framerate;                  // Framerate estimation, in frame per second. Rolling average estimation based on IO.DeltaTime over 120 frames
+    int         MetricsAllocs;              // Number of active memory allocations
     int         MetricsRenderVertices;      // Vertices processed during last call to Render()
     int         MetricsActiveWindows;       // Number of visible windows (exclude child windows)
 
@@ -726,6 +687,67 @@ struct ImGuiIO
 //-----------------------------------------------------------------------------
 // Helpers
 //-----------------------------------------------------------------------------
+
+// Lightweight std::vector<> like class to avoid dragging dependencies (also: windows implementation of STL with debug enabled is absurdly slow, so let's bypass it so our code runs fast in debug). 
+// Use '#define ImVector std::vector' if you want to use the STL type or your own type.
+// Our implementation does NOT call c++ constructors because we don't use them in ImGui. Don't use this class as a straight std::vector replacement in your code!
+#ifndef ImVector
+template<typename T>
+class ImVector
+{
+protected:
+    size_t                      Size;
+    size_t                      Capacity;
+    T*                          Data;
+
+public:
+    typedef T                   value_type;
+    typedef value_type*         iterator;
+    typedef const value_type*   const_iterator;
+
+    ImVector()                  { Size = Capacity = 0; Data = NULL; }
+    ~ImVector()                 { if (Data) ImGui::MemFree(Data); }
+
+    inline bool                 empty() const                   { return Size == 0; }
+    inline size_t               size() const                    { return Size; }
+    inline size_t               capacity() const                { return Capacity; }
+
+    inline value_type&          at(size_t i)                    { IM_ASSERT(i < Size); return Data[i]; }
+    inline const value_type&    at(size_t i) const              { IM_ASSERT(i < Size); return Data[i]; }
+    inline value_type&          operator[](size_t i)            { IM_ASSERT(i < Size); return Data[i]; }
+    inline const value_type&    operator[](size_t i) const      { IM_ASSERT(i < Size); return Data[i]; }
+
+    inline void                 clear()                         { if (Data) { Size = Capacity = 0; ImGui::MemFree(Data); Data = NULL; } }
+    inline iterator             begin()                         { return Data; }
+    inline const_iterator       begin() const                   { return Data; }
+    inline iterator             end()                           { return Data + Size; }
+    inline const_iterator       end() const                     { return Data + Size; }
+    inline value_type&          front()                         { IM_ASSERT(Size > 0); return Data[0]; }
+    inline const value_type&    front() const                   { IM_ASSERT(Size > 0); return Data[0]; }
+    inline value_type&          back()                          { IM_ASSERT(Size > 0); return Data[Size-1]; }
+    inline const value_type&    back() const                    { IM_ASSERT(Size > 0); return Data[Size-1]; }
+    inline void                 swap(ImVector<T>& rhs)          { const size_t rhs_size = rhs.Size; rhs.Size = Size; Size = rhs_size; const size_t rhs_cap = rhs.Capacity; rhs.Capacity = Capacity; Capacity = rhs_cap; value_type* rhs_data = rhs.Data; rhs.Data = Data; Data = rhs_data; }
+
+    inline size_t               _grow_capacity(size_t new_size) { size_t new_capacity = Capacity ? (Capacity + Capacity/2) : 8; return new_capacity > new_size ? new_capacity : new_size; }
+
+    inline void                 resize(size_t new_size)         { if (new_size > Capacity) reserve(_grow_capacity(new_size)); Size = new_size; }
+    inline void                 reserve(size_t new_capacity)    
+    { 
+        if (new_capacity <= Capacity) return;
+        T* new_data = (value_type*)ImGui::MemAlloc(new_capacity * sizeof(value_type));
+        memcpy(new_data, Data, Size * sizeof(value_type));
+        ImGui::MemFree(Data);
+        Data = new_data;
+        Capacity = new_capacity; 
+    }
+
+    inline void                 push_back(const value_type& v)  { if (Size == Capacity) reserve(_grow_capacity(Size+1)); Data[Size++] = v; }
+    inline void                 pop_back()                      { IM_ASSERT(Size > 0); Size--; }
+
+    inline iterator             erase(const_iterator it)        { IM_ASSERT(it >= begin() && it < end()); const ptrdiff_t off = it - begin(); memmove(Data + off, Data + off + 1, (Size - (size_t)off - 1) * sizeof(value_type)); Size--; return Data + off; }
+    inline iterator             insert(const_iterator it, const value_type& v)  { IM_ASSERT(it >= begin() && it <= end()); const ptrdiff_t off = it - begin(); if (Size == Capacity) reserve(Capacity ? Capacity * 2 : 4); if (off < (int)Size) memmove(Data + off + 1, Data + off, (Size - (size_t)off) * sizeof(value_type)); Data[off] = v; Size++; return Data + off; }
+};
+#endif // #ifndef ImVector
 
 // Helper: execute a block of code once a frame only
 // Convenient if you want to quickly create an UI within deep-nested code that runs multiple times every frame.
