@@ -2986,10 +2986,14 @@ bool ImGui::IsItemActive()
     return false;
 }
 
+bool ImGui::IsAnyItemHovered()
+{
+    return GImGui->HoveredId != 0 || GImGui->HoveredIdPreviousFrame != 0;
+}
+
 bool ImGui::IsAnyItemActive()
 {
-    ImGuiState& g = *GImGui;
-    return g.ActiveId != 0;
+    return GImGui->ActiveId != 0;
 }
 
 bool ImGui::IsItemVisible()
@@ -3129,7 +3133,7 @@ static void ClearSetNextWindowData()
 static bool BeginPopupEx(const char* str_id, ImGuiWindowFlags extra_flags)
 {
     ImGuiState& g = *GImGui;
-    ImGuiWindow* window = GetCurrentWindow();
+    ImGuiWindow* window = g.CurrentWindow;
     const ImGuiID id = window->GetID(str_id);
     if (!IsPopupOpen(id))
     {
@@ -3167,6 +3171,21 @@ void ImGui::EndPopup()
     IM_ASSERT(GImGui->CurrentPopupStack.size() > 0);
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+bool ImGui::BeginPopupContextItem(const char* str_id, int button)
+{
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(button))
+        ImGui::OpenPopup(str_id);
+    return ImGui::BeginPopup(str_id);
+}
+
+bool ImGui::BeginPopupContextWindow(const char* str_id, bool void_only, int button)
+{
+    if (ImGui::IsMouseHoveringWindow() && ImGui::IsMouseClicked(button))
+        if (!void_only || !ImGui::IsAnyItemHovered())
+            ImGui::OpenPopup(str_id);
+    return ImGui::BeginPopup(str_id);
 }
 
 bool ImGui::BeginChild(const char* str_id, const ImVec2& size_arg, bool border, ImGuiWindowFlags extra_flags)
@@ -3576,7 +3595,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         }
 
         // Minimum window size
-        if (!(flags & (ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_ChildMenu | ImGuiWindowFlags_Tooltip)))
+        if (!(flags & (ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_Popup | ImGuiWindowFlags_ChildMenu | ImGuiWindowFlags_Tooltip)))
         {
             window->SizeFull = ImMax(window->SizeFull, style.WindowMinSize);
             if (!window->Collapsed)
@@ -5452,20 +5471,17 @@ void ImGui::PopID()
 
 ImGuiID ImGui::GetID(const char* str_id)
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    return window->GetID(str_id);
+    return GImGui->CurrentWindow->GetID(str_id);
 }
 
 ImGuiID ImGui::GetID(const char* str_id_begin, const char* str_id_end)
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    return window->GetID(str_id_begin, str_id_end);
+    return GImGui->CurrentWindow->GetID(str_id_begin, str_id_end);
 }
 
 ImGuiID ImGui::GetID(const void* ptr_id)
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    return window->GetID(ptr_id);
+    return GImGui->CurrentWindow->GetID(ptr_id);
 }
 
 // User can input math operators (e.g. +100) to edit a numerical values.
@@ -10611,12 +10627,25 @@ void ImGui::ShowTestWindow(bool* opened)
             }
 
             if (ImGui::Button("Popup Menu.."))
-                ImGui::OpenPopup("context menu");
-            if (ImGui::BeginPopup("context menu"))
+                ImGui::OpenPopup("popup from button");
+            if (ImGui::BeginPopup("popup from button"))
             {
                 ShowExampleMenuFile();
                 ImGui::EndPopup();
             }
+
+            static float value = 0.5f;
+            ImGui::Text("Value = %.3f", value);
+            if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1))
+                ImGui::OpenPopup("context menu");
+            ImGui::SameLine(); ImGui::Text("<-- right-click");
+            if (ImGui::BeginPopup("context menu"))
+            {
+                if (ImGui::Selectable("Set to zero")) value = 0.0f; 
+                if (ImGui::Selectable("Set to PI")) value = PI; 
+                ImGui::EndPopup();
+            }
+
             ImGui::TreePop();
         }
 
@@ -11682,6 +11711,11 @@ struct ExampleAppConsole
         // NB- if you have thousands of entries this approach may be too inefficient. You can seek and display only the lines that are visible - CalcListClipping() is a helper to compute this information.
         // If your items are of variable size you may want to implement code similar to what CalcListClipping() does. Or split your data into fixed height items to allow random-seeking into your list.
         ImGui::BeginChild("ScrollingRegion", ImVec2(0,-ImGui::GetTextLineHeightWithSpacing()*2));
+        if (ImGui::BeginPopupContextWindow())
+        {
+            if (ImGui::Selectable("Clear")) ClearLog();
+            ImGui::EndPopup();
+        }
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4,1)); // Tighten spacing
         for (size_t i = 0; i < Items.size(); i++)
         {
