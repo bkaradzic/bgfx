@@ -3684,6 +3684,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				m_control.consume(1);
 
+				struct D3D11_QUERY_DATA_TIMESTAMP_DISJOINT
+				{
+					UINT64 Frequency;
+					BOOL Disjoint;
+				};
+
 				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
 				deviceCtx->GetData(frame.m_disjoint, &disjoint, sizeof(disjoint), 0);
 
