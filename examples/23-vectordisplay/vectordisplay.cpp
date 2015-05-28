@@ -93,16 +93,11 @@ void VectorDisplay::setup(uint16_t _width, uint16_t _height, int _view)
 	m_view = _view;
 
 	m_drawToScreenShader = loadProgram("vs_vectordisplay_fb", "fs_vectordisplay_fb");
-	u_compose_alpha = bgfx::createUniform("u_compose_alpha", bgfx::UniformType::Uniform1f);
+	m_blurShader         = loadProgram("vs_vectordisplay_fb", "fs_vectordisplay_blur");
+	m_blitShader         = loadProgram("vs_vectordisplay_fb", "fs_vectordisplay_blit");
 
-	m_blurShader = loadProgram("vs_vectordisplay_fb", "fs_vectordisplay_blur");
-	u_blur_scale = bgfx::createUniform("u_blur_scale", bgfx::UniformType::Uniform2fv);
-	u_compose_mult = bgfx::createUniform("u_compose_mult", bgfx::UniformType::Uniform1f);
-
-	m_blitShader = loadProgram("vs_vectordisplay_fb", "fs_vectordisplay_blit");
-
-	//generate uniforms for sampler
-	s_textureSampler = bgfx::createUniform("u_tex1", bgfx::UniformType::Uniform1iv);
+	u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
+	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 
 	genLinetex();
 
@@ -131,17 +126,13 @@ void VectorDisplay::teardown()
 	teardownResDependent();
 
 	bgfx::destroyProgram(m_drawToScreenShader);
-	bgfx::destroyUniform(u_compose_alpha);
-	bgfx::destroyTexture(m_lineTexId);
-	bgfx::destroyUniform(s_lineTexture);
-
 	bgfx::destroyProgram(m_blurShader);
-	bgfx::destroyUniform(u_blur_scale);
-	bgfx::destroyUniform(u_compose_mult);
-
-	bgfx::destroyUniform(s_textureSampler);
-
 	bgfx::destroyProgram(m_blitShader);
+
+	bgfx::destroyUniform(u_params);
+	bgfx::destroyUniform(s_texColor);
+
+	bgfx::destroyTexture(m_lineTexId);
 }
 
 void VectorDisplay::beginFrame()
@@ -189,9 +180,10 @@ void VectorDisplay::endFrame()
 				alpha = powf(m_decayValue, stepi - 1.0f) * m_initialDecay;
 			}
 
-			bgfx::setUniform(u_compose_alpha, &alpha);
+			float params[4] = { 0.0f, 0.0f, 0.0f, alpha };
+			bgfx::setUniform(u_params, &params);
 
-			bgfx::setTexture(0, s_lineTexture, m_lineTexId);
+			bgfx::setTexture(0, s_texColor, m_lineTexId);
 			bgfx::setProgram(m_drawToScreenShader);
 
 			bgfx::setVertexBuffer(m_vertexBuffers[i], m_vertexBuffersSize[i]); // explicitly feed vertex number!
@@ -210,18 +202,17 @@ void VectorDisplay::endFrame()
 
 	int viewCounter = m_view + 1;
 
+	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+
 	float glow_iter_mult = 1.05f + ( (m_brightness - 1.0f) / 5.0f);
 	float glow_fin_mult  = 1.25f + ( (m_brightness - 1.0f) / 2.0f);
-
-	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+	float params[4] =  { 0.0f, 0.0f, glow_iter_mult, 1.0f };
 
 	if (m_brightness > 0)
 	{
-		float alpha = 1.0f;
-		bgfx::setUniform(u_compose_alpha, &alpha);
-		bgfx::setUniform(u_compose_mult, &glow_iter_mult);
+		bgfx::setUniform(u_params, params);
 
-		bgfx::setTexture(0, s_textureSampler, m_sceneFrameBuffer);
+		bgfx::setTexture(0, s_texColor, m_sceneFrameBuffer);
 
 		int npasses = (int)(m_brightness * 4);
 		for (int pass = 0; pass < npasses; pass++)
@@ -234,10 +225,9 @@ void VectorDisplay::endFrame()
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
 				);
-			float scale[2];
-			scale[0] = 1.0f / m_glowWidth;
-			scale[1] = 0.0f;
-			bgfx::setUniform(u_blur_scale, &scale);
+			params[0] = 1.0f / m_glowWidth;
+			params[1] = 0.0f;
+			bgfx::setUniform(u_params, &params);
 			bgfx::setProgram(m_blurShader);
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
@@ -249,17 +239,17 @@ void VectorDisplay::endFrame()
 
 			bgfx::setViewFrameBuffer(viewCounter, m_glow1FrameBuffer);            //second glow pass
 			bgfx::setViewRect(viewCounter, 0, 0, m_glowWidth, m_glowHeight);
-			bgfx::setTexture(0, s_textureSampler, m_glow0FrameBuffer);
+			bgfx::setTexture(0, s_texColor, m_glow0FrameBuffer);
 			bgfx::setProgram(m_blurShader);
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
 			screenSpaceQuad(m_glowWidth, m_glowHeight);
 
-			bgfx::setUniform(u_compose_alpha, &alpha);
-			bgfx::setUniform(u_compose_mult, &glow_iter_mult);
-			scale[0] = 0.0f;
-			scale[1] = 1.0f / m_glowHeight;
-			bgfx::setUniform(u_blur_scale, &scale);
+			params[0] = 0.0f;
+			params[1] = 1.0f / m_glowHeight;
+			params[2] = glow_iter_mult;
+			params[3] = 1.0f;
+			bgfx::setUniform(u_params, params);
 
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
@@ -272,14 +262,14 @@ void VectorDisplay::endFrame()
 			viewCounter++;
 
 			//set for next iteration
-			bgfx::setTexture(0, s_textureSampler, m_glow1FrameBuffer);
+			bgfx::setTexture(0, s_texColor, m_glow1FrameBuffer);
 		}
 	}
 
 	//now do last pass, combination of blur and normal buffer to screen
 	bgfx::setViewTransform(viewCounter, NULL, proj);
 	bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
-	bgfx::setTexture(0, s_textureSampler, m_sceneFrameBuffer);
+	bgfx::setTexture(0, s_texColor, m_sceneFrameBuffer);
 	bgfx::setProgram(m_blitShader);
 	bgfx::setState(0
 		| BGFX_STATE_RGB_WRITE
@@ -287,9 +277,9 @@ void VectorDisplay::endFrame()
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 		);
 
-	float tempOne = 1.0f;
-	bgfx::setUniform(u_compose_alpha, &tempOne);
-	bgfx::setUniform(u_compose_mult, &tempOne);
+	params[2] = 1.0f;
+	params[3] = 1.0f;
+	bgfx::setUniform(u_params, params);
 	bgfx::setViewName(viewCounter, "BlendVectorToDisplay");
 	screenSpaceQuad(m_screenWidth, m_screenHeight);
 	bgfx::submit(viewCounter);
@@ -300,14 +290,16 @@ void VectorDisplay::endFrame()
 		// blend in the glow
 		bgfx::setViewTransform(viewCounter, NULL, proj);
 		bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
-		bgfx::setTexture(0, s_textureSampler, m_glow1FrameBuffer);
+		bgfx::setTexture(0, s_texColor, m_glow1FrameBuffer);
 		bgfx::setProgram(m_blitShader);
 		bgfx::setState(0
 			| BGFX_STATE_RGB_WRITE
 			| BGFX_STATE_ALPHA_WRITE
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 			);
-		bgfx::setUniform(u_compose_mult, &glow_fin_mult);
+
+		params[2] = glow_fin_mult;
+		bgfx::setUniform(u_params, params);
 		bgfx::setViewName(viewCounter, "BlendBlurToDisplay");
 		screenSpaceQuad(m_screenWidth, m_screenHeight);
 		bgfx::submit(viewCounter);
@@ -880,7 +872,6 @@ void VectorDisplay::genLinetex()                                    // generate 
 		;
 
 	m_lineTexId = bgfx::createTexture2D(TEXTURE_SIZE, TEXTURE_SIZE, 1, bgfx::TextureFormat::BGRA8, flags, mem);
-	s_lineTexture = bgfx::createUniform("s_lineTexture", bgfx::UniformType::Uniform1iv);
 }
 
 static const int8_t simplex[95][112] =

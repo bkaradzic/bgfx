@@ -316,14 +316,13 @@ struct Uniforms
 			m_lightRgbInnerR[ii][3] = 1.0f;
 		}
 
-		u_params             = bgfx::createUniform("u_params",              bgfx::UniformType::Uniform4fv);
-		u_ambient            = bgfx::createUniform("u_ambient",             bgfx::UniformType::Uniform4fv);
-		u_diffuse            = bgfx::createUniform("u_diffuse",             bgfx::UniformType::Uniform4fv);
-		u_specular_shininess = bgfx::createUniform("u_specular_shininess",  bgfx::UniformType::Uniform4fv);
-		u_color              = bgfx::createUniform("u_color",               bgfx::UniformType::Uniform4fv);
-		u_time               = bgfx::createUniform("u_time",                bgfx::UniformType::Uniform1f );
-		u_lightPosRadius     = bgfx::createUniform("u_lightPosRadius",      bgfx::UniformType::Uniform4fv, MAX_NUM_LIGHTS);
-		u_lightRgbInnerR     = bgfx::createUniform("u_lightRgbInnerR",      bgfx::UniformType::Uniform4fv, MAX_NUM_LIGHTS);
+		u_params             = bgfx::createUniform("u_params",              bgfx::UniformType::Vec4);
+		u_ambient            = bgfx::createUniform("u_ambient",             bgfx::UniformType::Vec4);
+		u_diffuse            = bgfx::createUniform("u_diffuse",             bgfx::UniformType::Vec4);
+		u_specular_shininess = bgfx::createUniform("u_specular_shininess",  bgfx::UniformType::Vec4);
+		u_color              = bgfx::createUniform("u_color",               bgfx::UniformType::Vec4);
+		u_lightPosRadius     = bgfx::createUniform("u_lightPosRadius",      bgfx::UniformType::Vec4, MAX_NUM_LIGHTS);
+		u_lightRgbInnerR     = bgfx::createUniform("u_lightRgbInnerR",      bgfx::UniformType::Vec4, MAX_NUM_LIGHTS);
 	}
 
 	//call this once at initialization
@@ -332,12 +331,6 @@ struct Uniforms
 		bgfx::setUniform(u_ambient,            &m_ambient);
 		bgfx::setUniform(u_diffuse,            &m_diffuse);
 		bgfx::setUniform(u_specular_shininess, &m_specular_shininess);
-	}
-
-	//call this once per frame
-	void submitPerFrameUniforms()
-	{
-		bgfx::setUniform(u_time, &m_time);
 	}
 
 	//call this before each draw call
@@ -356,7 +349,6 @@ struct Uniforms
 		bgfx::destroyUniform(u_diffuse);
 		bgfx::destroyUniform(u_specular_shininess);
 		bgfx::destroyUniform(u_color);
-		bgfx::destroyUniform(u_time);
 		bgfx::destroyUniform(u_lightPosRadius);
 		bgfx::destroyUniform(u_lightRgbInnerR);
 	}
@@ -399,7 +391,6 @@ struct Uniforms
 	bgfx::UniformHandle u_diffuse;
 	bgfx::UniformHandle u_specular_shininess;
 	bgfx::UniformHandle u_color;
-	bgfx::UniformHandle u_time;
 	bgfx::UniformHandle u_lightPosRadius;
 	bgfx::UniformHandle u_lightRgbInnerR;
 };
@@ -873,7 +864,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	s_uniforms.init();
 	s_uniforms.submitConstUniforms();
 
-	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
+	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Int1);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_stencil_texture_lightning", "fs_stencil_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_stencil_color_lightning",   "fs_stencil_color_lightning"  );
@@ -1001,7 +992,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_params.m_lightCount      = settings_numLights;
 		s_uniforms.m_params.m_lightIndex      = 0.0f;
 		s_uniforms.m_color[3]                 = settings_reflectionValue;
-		s_uniforms.submitPerFrameUniforms();
 
 		// Time.
 		int64_t now = bx::getHPCounter();

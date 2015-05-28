@@ -27,7 +27,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Uniform1f);
+	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Vec4);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = loadProgram("vs_mesh", "fs_mesh");
@@ -98,11 +98,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bx::mtxRotateXY(mtx
 			, 0.0f
 			, time*0.37f
-			); 
+			);
 
 		meshSubmit(mesh, 0, program, mtx);
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

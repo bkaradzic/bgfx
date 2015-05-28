@@ -138,7 +138,7 @@ struct OcornutImguiContext
 			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
 			.end();
 
-		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Uniform1i);
+		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Int1);
 
 		uint8_t* data;
 		int32_t width;

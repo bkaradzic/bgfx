@@ -8,9 +8,8 @@ $input v_normal, v_view, v_texcoord0
 #include "../common/common.sh"
 uniform vec4 u_params;
 uniform vec4 u_svparams;
-uniform vec3 u_ambient;
-uniform vec3 u_diffuse;
-uniform vec4 u_color;
+uniform vec4 u_ambient;
+uniform vec4 u_diffuse;
 uniform vec4 u_specular_shininess;
 uniform vec4 u_fog;
 uniform vec4 u_lightPosRadius;
@@ -55,14 +54,14 @@ vec3 calcLight(vec3 _view, vec3 _normal, vec3 _viewDir)
 
 	float dist = max(length(toLight), u_lightPosRadius.w);
 	float attn = 50.0 * pow(dist, -2.0);
-	vec3 rgb = (lc.y * u_diffuse + lc.z * u_specular) * u_lightRgbInnerR.rgb * attn;
+	vec3 rgb = (lc.y * u_diffuse.xyz + lc.z * u_specular) * u_lightRgbInnerR.rgb * attn;
 
 	return rgb;
 }
 
 void main()
 {
-	vec3 ambientColor = u_ambient * u_ambientPass;
+	vec3 ambientColor = u_ambient.xyz * u_ambientPass;
 
 	vec3 normal = normalize(v_normal);
 	vec3 viewDir = -normalize(v_view);

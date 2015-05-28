@@ -161,7 +161,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::DynamicVertexBufferHandle prevPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 		bgfx::DynamicVertexBufferHandle prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 
-		bgfx::UniformHandle u_params = bgfx::createUniform("u_params", bgfx::UniformType::Uniform4fv, 3);
+		bgfx::UniformHandle u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 3);
 
 		bgfx::ProgramHandle initInstancesProgram   = bgfx::createProgram(loadShader("cs_init_instances"), true);
 		bgfx::ProgramHandle updateInstancesProgram = bgfx::createProgram(loadShader("cs_update_instances"), true);

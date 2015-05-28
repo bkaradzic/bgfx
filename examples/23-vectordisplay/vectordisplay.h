@@ -150,20 +150,16 @@ protected:
 	bool m_originBottomLeft;
 	float m_texelHalf;
 
-	bgfx::ProgramHandle m_drawToScreenShader;          // program for drawing to the framebuffer
-	bgfx::UniformHandle u_compose_alpha;
-
-	bgfx::FrameBufferHandle m_sceneFrameBuffer;
-
-	bgfx::ProgramHandle m_blurShader;        // program for gaussian blur
-	bgfx::UniformHandle u_blur_scale;
-	bgfx::UniformHandle u_compose_mult;
-	bgfx::UniformHandle s_textureSampler;              //texture handle for blur
-
+	bgfx::ProgramHandle m_drawToScreenShader;   // program for drawing to the framebuffer
+	bgfx::ProgramHandle m_blurShader;           // program for gaussian blur
 	bgfx::ProgramHandle m_blitShader;
 
-	bgfx::FrameBufferHandle m_glow0FrameBuffer;        // framebuffer for glow pass 0
-	bgfx::FrameBufferHandle m_glow1FrameBuffer;        // framebuffer for glow pass 1
+	bgfx::UniformHandle u_params;
+	bgfx::UniformHandle s_texColor;
+
+	bgfx::FrameBufferHandle m_sceneFrameBuffer;
+	bgfx::FrameBufferHandle m_glow0FrameBuffer; // framebuffer for glow pass 0
+	bgfx::FrameBufferHandle m_glow1FrameBuffer; // framebuffer for glow pass 1
 
 	int m_view;
 
@@ -182,7 +178,6 @@ protected:
 	stl::vector<int> m_vertexBuffersSize;
 
 	bgfx::TextureHandle m_lineTexId;
-	bgfx::UniformHandle s_lineTexture;
 
 	float m_initialDecay;
 

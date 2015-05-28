@@ -588,13 +588,8 @@ namespace bgfx
 
 	const char* s_uniformTypeName[] =
 	{
-		"int",
-		"float",
+		"int1",
 		NULL,
-		"int",
-		"float",
-		"vec2",
-		"vec3",
 		"vec4",
 		"mat3",
 		"mat4",
@@ -781,12 +776,7 @@ namespace bgfx
 	const uint32_t g_uniformTypeSize[UniformType::Count+1] =
 	{
 		sizeof(int32_t),
-		sizeof(float),
 		0,
-		1*sizeof(int32_t),
-		1*sizeof(float),
-		2*sizeof(float),
-		3*sizeof(float),
 		4*sizeof(float),
 		3*3*sizeof(float),
 		4*4*sizeof(float),

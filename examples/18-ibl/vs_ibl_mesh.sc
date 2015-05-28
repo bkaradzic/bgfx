@@ -8,7 +8,7 @@ $output v_view, v_normal
 
 #include "../common/common.sh"
 
-uniform vec3 u_camPos;
+uniform vec4 u_camPos;
 
 void main()
 {
@@ -16,5 +16,5 @@ void main()
 
 	vec3 normal = a_normal * 2.0 - 1.0;
 	v_normal = mul(u_model[0], vec4(normal, 0.0) ).xyz;
-	v_view = normalize(u_camPos - mul(u_model[0], vec4(a_position, 1.0)).xyz);
+	v_view = normalize(u_camPos.xyz - mul(u_model[0], vec4(a_position, 1.0)).xyz);
 }

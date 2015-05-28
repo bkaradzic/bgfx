@@ -7,8 +7,6 @@ $input v_k
 
 #include "../common/common.sh"
 
-uniform vec3 u_color;
-
 void main()
 {
 	float k = v_k;

@@ -7,13 +7,11 @@ $input v_view, v_normal
 
 #include "../common/common.sh"
 
-uniform float u_time;
 uniform vec4 u_params;
 uniform mat4 u_mtx;
 uniform vec4 u_flags;
-uniform vec3 u_camPos;
-uniform vec3 u_rgbDiff;
-uniform vec3 u_rgbSpec;
+uniform vec4 u_rgbDiff;
+uniform vec4 u_rgbSpec;
 
 SAMPLERCUBE(u_texCube, 4);
 SAMPLERCUBE(u_texCubeIrr, 5);
@@ -55,8 +53,8 @@ void main()
 	float mipLevel = min((1.0 - u_glossiness)*11.0 + 1.0, 8.0);
 	vec3 cenv = textureCubeLod(u_texCube, cubeR, mipLevel).xyz;
 
-	vec3 kd = u_rgbDiff;
-	vec3 ks = u_rgbSpec;
+	vec3 kd = u_rgbDiff.xyz;
+	vec3 ks = u_rgbSpec.xyz;
 
 	vec3 cs = ks * u_diffspec;
 	vec3 cd = kd * (1.0 - cs);

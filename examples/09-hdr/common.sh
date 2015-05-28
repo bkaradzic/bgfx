@@ -7,6 +7,7 @@
 
 uniform vec4 u_offset[16];
 uniform vec4 u_tonemap;
+#define u_time u_tonemap.w
 
 float reinhard(float _x)
 {

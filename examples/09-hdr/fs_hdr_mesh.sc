@@ -7,8 +7,7 @@ $input v_pos, v_view, v_normal
 
 #include "common.sh"
 
-uniform float u_time;
-SAMPLERCUBE(u_texCube, 0);
+SAMPLERCUBE(s_texCube, 0);
 
 vec2 blinn(vec3 _lightDir, vec3 _normal, vec3 _viewDir)
 {
@@ -50,7 +49,7 @@ void main()
 					, sin(index*2.0)*0.4 + 0.6
 					);
 
-	color *= textureCube(u_texCube, reflect(view, -normal) ).xyz;
+	color *= textureCube(s_texCube, reflect(view, -normal) ).xyz;
 
 	gl_FragColor = encodeRGBE8(color.xyz*lc.y + fres*pow(lc.z, 128.0) );
 }

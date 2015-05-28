@@ -13,9 +13,9 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x1)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x3)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x3)
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
 
 long int fsize(FILE* _file)
 {
@@ -70,12 +70,7 @@ static const char* s_OES_texture_3D[] =
 const char* s_uniformTypeName[UniformType::Count] =
 {
 	"int",
-	"float",
 	NULL,
-	"int",
-	"float",
-	"vec2",
-	"vec3",
 	"vec4",
 	"mat3",
 	"mat4",
