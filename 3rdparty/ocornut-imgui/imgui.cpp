@@ -2209,45 +2209,6 @@ void ImGui::NewFrame()
     ImGui::Begin("Debug");
 }
 
-static void CloseInactivePopups()
-{
-    ImGuiState& g = *GImGui;
-    if (g.OpenedPopupStack.empty())
-        return;
-
-    // User has clicked outside of a popup
-    if (!g.FocusedWindow)
-    {
-        g.OpenedPopupStack.resize(0);
-        return;
-    }
-
-    // When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it
-    // Don't close our own child popup windows
-    int n;
-    for (n = 0; n < (int)g.OpenedPopupStack.size(); n++)
-    {
-        ImGuiPopupRef& popup = g.OpenedPopupStack[n];
-        if (!popup.Window)
-            continue;
-        IM_ASSERT((popup.Window->Flags & ImGuiWindowFlags_Popup) != 0);
-        if (popup.Window->Flags & ImGuiWindowFlags_ChildWindow)
-        {
-            if (g.FocusedWindow->RootWindow != popup.Window->RootWindow)
-                break;
-        }
-        else
-        {
-            bool has_focus = false;
-            for (int m = n; m < (int)g.OpenedPopupStack.size() && !has_focus; m++)
-                has_focus = (g.OpenedPopupStack[m].Window && g.OpenedPopupStack[m].Window->RootWindow == g.FocusedWindow->RootWindow);
-            if (!has_focus)
-                break;
-        }
-    }
-    g.OpenedPopupStack.resize(n);
-}
-
 // NB: behavior of ImGui after Shutdown() is not tested/guaranteed at the moment. This function is merely here to free heap allocations.
 void ImGui::Shutdown()
 {
@@ -3093,9 +3054,50 @@ void ImGui::OpenPopup(const char* str_id)
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
     const ImGuiID id = window->GetID(str_id);
-    g.OpenedPopupStack.resize(g.CurrentPopupStack.size() + 1);
-    if (g.OpenedPopupStack.back().PopupID != id)
-        g.OpenedPopupStack.back() = ImGuiPopupRef(id, window, window->GetID("##menus"));
+    size_t current_stack_size = g.CurrentPopupStack.size();
+    ImGuiPopupRef popup_ref = ImGuiPopupRef(id, window, window->GetID("##menus")); // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
+    if (g.OpenedPopupStack.size() < current_stack_size + 1)
+        g.OpenedPopupStack.push_back(popup_ref);
+    else if (g.OpenedPopupStack[current_stack_size].PopupID != id)
+    {
+        g.OpenedPopupStack.resize(current_stack_size+1);
+        g.OpenedPopupStack[current_stack_size] = popup_ref;
+    }
+}
+
+static void CloseInactivePopups()
+{
+    ImGuiState& g = *GImGui;
+    if (g.OpenedPopupStack.empty())
+        return;
+
+    // When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it
+    // Don't close our own child popup windows
+    int n = 0;
+    if (g.FocusedWindow)
+    {
+        for (n = 0; n < (int)g.OpenedPopupStack.size(); n++)
+        {
+            ImGuiPopupRef& popup = g.OpenedPopupStack[n];
+            if (!popup.Window)
+                continue;
+            IM_ASSERT((popup.Window->Flags & ImGuiWindowFlags_Popup) != 0);
+            if (popup.Window->Flags & ImGuiWindowFlags_ChildWindow)
+            {
+                if (g.FocusedWindow->RootWindow != popup.Window->RootWindow)
+                    break;
+            }
+            else
+            {
+                bool has_focus = false;
+                for (int m = n; m < (int)g.OpenedPopupStack.size() && !has_focus; m++)
+                    has_focus = (g.OpenedPopupStack[m].Window && g.OpenedPopupStack[m].Window->RootWindow == g.FocusedWindow->RootWindow);
+                if (!has_focus)
+                    break;
+            }
+        }
+    }
+    g.OpenedPopupStack.resize(n);
 }
 
 static void ClosePopupToLevel(int remaining)
@@ -3106,15 +3108,6 @@ static void ClosePopupToLevel(int remaining)
     else
         FocusWindow(g.OpenedPopupStack[0].ParentWindow);
     g.OpenedPopupStack.resize(remaining);
-}
-
-static void ClosePopup(const char* str_id) // not exposed because 'id' scope is misleading
-{
-    ImGuiState& g = *GImGui;
-    ImGuiWindow* window = GetCurrentWindow();
-    const ImGuiID id = window->GetID(str_id);
-    if (IsPopupOpen(id))
-        ClosePopupToLevel((int)g.CurrentPopupStack.size());
 }
 
 // Close the popup we have begin-ed into.
@@ -3411,9 +3404,9 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
 }
 
 // Push a new ImGui window to add widgets to. 
-// - 'size' for a regular window denote the initial size for first-time creation (no saved data) and isn't that useful. Use SetNextWindowSize() prior to calling Begin() for more flexible window manipulation.
 // - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use widgets without explicitly calling a Begin/End pair.
 // - Begin/End can be called multiple times during the frame with the same window name to append content.
+// - 'size_on_first_use' for a regular window denote the initial size for first-time creation (no saved data) and isn't that useful. Use SetNextWindowSize() prior to calling Begin() for more flexible window manipulation.
 // - The window name is used as a unique identifier to preserve window information across frames (and save rudimentary information to the .ini file). 
 //   You can use the "##" or "###" markers to use the same label with different id, or same id with different label. See documentation at the top of this file.
 // - Return false when window is collapsed, so you can early out in your code. You always need to call ImGui::End() even if false is returned.
@@ -7694,7 +7687,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
     if (menuset_opened)
         g.FocusedWindow = backed_focused_window;
 
-    bool want_open = false;
+    bool want_open = false, want_close = false;
     if (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
     {
         // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers so menus feel more reactive.
@@ -7716,17 +7709,19 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
             }
         }
             
-        if (opened && !hovered && g.HoveredWindow == window && g.HoveredIdPreviousFrame != 0 && g.HoveredIdPreviousFrame != id && !moving_within_opened_triangle)
-            ClosePopup(label);
+        want_close = (opened && !hovered && g.HoveredWindow == window && g.HoveredIdPreviousFrame != 0 && g.HoveredIdPreviousFrame != id && !moving_within_opened_triangle);
         want_open = (!opened && hovered && !moving_within_opened_triangle) || (!opened && hovered && pressed);
     }
     else if (opened && pressed && menuset_opened) // menu-bar: click open menu to close
     {
-        ClosePopup(label);
+        want_close = true;
         want_open = opened = false;
     }
     else if (pressed || (hovered && menuset_opened && !opened)) // menu-bar: first click to open, then hover to open others
         want_open = true;
+
+    if (want_close && IsPopupOpen(id))
+        ClosePopupToLevel((int)GImGui->CurrentPopupStack.size());
 
     if (!opened && want_open && g.OpenedPopupStack.size() > g.CurrentPopupStack.size())
     {
