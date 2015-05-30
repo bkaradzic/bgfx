@@ -86,8 +86,8 @@ namespace entry
 			, m_fullscreen(false)
 		{
 			s_translateKey[27]             = Key::Esc;
-			s_translateKey[13]             = Key::Return;
-			s_translateKey[9]              = Key::Tab;
+			s_translateKey[uint8_t('\n')]  = Key::Return;
+			s_translateKey[uint8_t('\t')]  = Key::Tab;
 			s_translateKey[127]            = Key::Backspace;
 			s_translateKey[uint8_t(' ')]   = Key::Space;
 
@@ -95,6 +95,28 @@ namespace entry
 			s_translateKey[uint8_t('=')]   = Key::Plus;
 			s_translateKey[uint8_t('_')]   =
 			s_translateKey[uint8_t('-')]   = Key::Minus;
+
+			s_translateKey[uint8_t('~')]   =
+			s_translateKey[uint8_t('`')]   = Key::Tilda;
+
+			s_translateKey[uint8_t(':')]   =
+			s_translateKey[uint8_t(';')]   = Key::Semicolon;
+			s_translateKey[uint8_t('"')]   =
+			s_translateKey[uint8_t('\'')]  = Key::Quote;
+
+			s_translateKey[uint8_t('{')]   =
+			s_translateKey[uint8_t('[')]   = Key::LeftBracket;
+			s_translateKey[uint8_t('}')]   =
+			s_translateKey[uint8_t(']')]   = Key::RightBracket;
+
+			s_translateKey[uint8_t('<')]   =
+			s_translateKey[uint8_t(',')]   = Key::Comma;
+			s_translateKey[uint8_t('>')]   =
+			s_translateKey[uint8_t('.')]   = Key::Period;
+			s_translateKey[uint8_t('?')]   =
+			s_translateKey[uint8_t('/')]   = Key::Slash;
+			s_translateKey[uint8_t('|')]   =
+			s_translateKey[uint8_t('\\')]  = Key::Backslash;
 
 			s_translateKey[uint8_t('0')]   = Key::Key0;
 			s_translateKey[uint8_t('1')]   = Key::Key1;
