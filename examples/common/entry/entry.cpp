@@ -67,7 +67,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		"Period",
 		"Slash",
 		"Backslash",
-		"Tilda",
+		"Tilde",
 		"F1",
 		"F2",
 		"F3",

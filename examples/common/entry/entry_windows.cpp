@@ -358,7 +358,7 @@ namespace entry
 			s_translateKey[VK_OEM_PERIOD] = Key::Period;
 			s_translateKey[VK_OEM_2]      = Key::Slash;
 			s_translateKey[VK_OEM_5]      = Key::Backslash;
-			s_translateKey[VK_OEM_3]      = Key::Tilda;
+			s_translateKey[VK_OEM_3]      = Key::Tilde;
 			s_translateKey[VK_F1]         = Key::F1;
 			s_translateKey[VK_F2]         = Key::F2;
 			s_translateKey[VK_F3]         = Key::F3;

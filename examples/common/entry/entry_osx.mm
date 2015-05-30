@@ -97,7 +97,7 @@ namespace entry
 			s_translateKey[uint8_t('-')]   = Key::Minus;
 
 			s_translateKey[uint8_t('~')]   =
-			s_translateKey[uint8_t('`')]   = Key::Tilda;
+			s_translateKey[uint8_t('`')]   = Key::Tilde;
 
 			s_translateKey[uint8_t(':')]   =
 			s_translateKey[uint8_t(';')]   = Key::Semicolon;

@@ -101,7 +101,7 @@ namespace entry
 			Period,
 			Slash,
 			Backslash,
-			Tilda,
+			Tilde,
 			F1,
 			F2,
 			F3,
