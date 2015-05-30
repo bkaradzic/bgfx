@@ -4337,8 +4337,8 @@ namespace bgfx { namespace gl
 
 					bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
 
-					uint32_t version = usesIUsamplers 
-						? 130 
+					uint32_t version = usesIUsamplers
+						? 130
 						: (usesTextureLod ? 120 : 0)
 						;
 
@@ -4503,7 +4503,6 @@ namespace bgfx { namespace gl
 				code = temp;
 			}
 
-BX_TRACE("%s", code);
 			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
 			GL_CHECK(glCompileShader(m_id) );
 
