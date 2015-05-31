@@ -207,7 +207,7 @@ namespace entry
 			initTranslateKey(XK_Home,         Key::Home);
 			initTranslateKey(XK_KP_End,       Key::End);
 			initTranslateKey(XK_Page_Up,      Key::PageUp);
-			initTranslateKey(XK_Page_Down,    Key::PageUp);
+			initTranslateKey(XK_Page_Down,    Key::PageDown);
 			initTranslateKey(XK_Print,        Key::Print);
 			initTranslateKey(XK_equal,        Key::Plus);
 			initTranslateKey(XK_minus,        Key::Minus);
