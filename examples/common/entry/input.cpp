@@ -7,6 +7,7 @@
 
 #include "entry_p.h"
 #include "input.h"
+#include "cmd.h"
 
 #include <bx/allocator.h>
 #include <bx/ringbuffer.h>
@@ -205,7 +206,14 @@ struct Input
 					if (modifiers == binding->m_modifiers
 					&&  !m_keyboard.m_once[binding->m_key])
 					{
-						binding->m_fn(binding->m_userData);
+						if (NULL == binding->m_fn)
+						{
+							cmdExec( (const char*)binding->m_userData);
+						}
+						else
+						{
+							binding->m_fn(binding->m_userData);
+						}
 						m_keyboard.m_once[binding->m_key] = true;
 					}
 				}
@@ -219,7 +227,14 @@ struct Input
 				if (down
 				&&  modifiers == binding->m_modifiers)
 				{
-					binding->m_fn(binding->m_userData);
+					if (NULL == binding->m_fn)
+					{
+						cmdExec( (const char*)binding->m_userData);
+					}
+					else
+					{
+						binding->m_fn(binding->m_userData);
+					}
 				}
 			}
 		}

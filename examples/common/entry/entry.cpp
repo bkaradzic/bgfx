@@ -210,11 +210,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return false;
 	}
 
-	void cmd(const void* _userData)
-	{
-		cmdExec( (const char*)_userData);
-	}
-
 	int cmdMouseLock(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
 	{
 		if (_argc > 1)
@@ -281,18 +276,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static const InputBinding s_bindings[] =
 	{
-		{ entry::Key::KeyQ,         entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
-		{ entry::Key::F1,           entry::Modifier::None,      1, cmd, "graphics stats"                    },
-		{ entry::Key::GamepadStart, entry::Modifier::None,      1, cmd, "graphics stats"                    },
-		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, cmd, "graphics stats 0\ngraphics text 0" },
-		{ entry::Key::F3,           entry::Modifier::None,      1, cmd, "graphics wireframe"                },
-		{ entry::Key::F4,           entry::Modifier::None,      1, cmd, "graphics hmd"                      },
-		{ entry::Key::F4,           entry::Modifier::LeftShift, 1, cmd, "graphics hmdrecenter"              },
-		{ entry::Key::F4,           entry::Modifier::LeftCtrl,  1, cmd, "graphics hmddbg"                   },
-		{ entry::Key::F7,           entry::Modifier::None,      1, cmd, "graphics vsync"                    },
-		{ entry::Key::F8,           entry::Modifier::None,      1, cmd, "graphics msaa"                     },
-		{ entry::Key::F9,           entry::Modifier::None,      1, cmd, "graphics flush"                    },
-		{ entry::Key::Print,        entry::Modifier::None,      1, cmd, "graphics screenshot"               },
+		{ entry::Key::KeyQ,         entry::Modifier::LeftCtrl,  1, NULL, "exit"                              },
+		{ entry::Key::F1,           entry::Modifier::None,      1, NULL, "graphics stats"                    },
+		{ entry::Key::GamepadStart, entry::Modifier::None,      1, NULL, "graphics stats"                    },
+		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, NULL, "graphics stats 0\ngraphics text 0" },
+		{ entry::Key::F3,           entry::Modifier::None,      1, NULL, "graphics wireframe"                },
+		{ entry::Key::F4,           entry::Modifier::None,      1, NULL, "graphics hmd"                      },
+		{ entry::Key::F4,           entry::Modifier::LeftShift, 1, NULL, "graphics hmdrecenter"              },
+		{ entry::Key::F4,           entry::Modifier::LeftCtrl,  1, NULL, "graphics hmddbg"                   },
+		{ entry::Key::F7,           entry::Modifier::None,      1, NULL, "graphics vsync"                    },
+		{ entry::Key::F8,           entry::Modifier::None,      1, NULL, "graphics msaa"                     },
+		{ entry::Key::F9,           entry::Modifier::None,      1, NULL, "graphics flush"                    },
+		{ entry::Key::Print,        entry::Modifier::None,      1, NULL, "graphics screenshot"               },
 
 		INPUT_BINDING_END
 	};
