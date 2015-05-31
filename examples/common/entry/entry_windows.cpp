@@ -1080,7 +1080,7 @@ namespace entry
 
 	void toggleFullscreen(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
