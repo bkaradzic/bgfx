@@ -1745,9 +1745,9 @@ namespace bgfx
 
 		uint64_t remove()
 		{
-			BX_CHECK(0 == m_used.size(), "");
+			BX_CHECK(m_used.empty(), "");
 
-			if (0 < m_free.size() )
+			if (!m_free.empty())
 			{
 				Free freeBlock = m_free.front();
 				m_free.pop_front();
@@ -1813,7 +1813,7 @@ namespace bgfx
 				}
 			}
 
-			return 0 == m_used.size();
+			return m_used.empty();
 		}
 
 	private:
