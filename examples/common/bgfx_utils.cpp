@@ -21,12 +21,12 @@ namespace stl = tinystl;
 
 #include "bgfx_utils.h"
 
-void* load(bx::FileReaderI* _reader, const char* _filePath, uint32_t* _size)
+void* load(bx::FileReaderI* _reader, bx::ReallocatorI* _allocator, const char* _filePath, uint32_t* _size)
 {
 	if (0 == bx::open(_reader, _filePath) )
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
-		void* data = malloc(size);
+		void* data = BX_ALLOC(_allocator, size);
 		bx::read(_reader, data, size);
 		bx::close(_reader);
 		if (NULL != _size)
@@ -45,7 +45,12 @@ void* load(bx::FileReaderI* _reader, const char* _filePath, uint32_t* _size)
 
 void* load(const char* _filePath, uint32_t* _size)
 {
-	return load(entry::getFileReader(), _filePath, _size);
+	return load(entry::getFileReader(), entry::getAllocator(), _filePath, _size);
+}
+
+void unload(void* _ptr)
+{
+	BX_FREE(entry::getAllocator(), _ptr);
 }
 
 static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath)
