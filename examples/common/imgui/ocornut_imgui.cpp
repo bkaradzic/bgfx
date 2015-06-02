@@ -7,6 +7,7 @@
 #include <bx/allocator.h>
 #include <bx/fpumath.h>
 #include <ocornut-imgui/imgui.h>
+#include "../entry/input.h"
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
@@ -61,6 +62,11 @@ struct OcornutImguiContext
 			uint32_t vtx_offset = 0;
 			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
 			{
+				if (0 == pcmd->vtx_count)
+				{
+					continue;
+				}
+
 				bgfx::setState(0
 					| BGFX_STATE_RGB_WRITE
 					| BGFX_STATE_ALPHA_WRITE
@@ -104,6 +110,11 @@ struct OcornutImguiContext
 		io.DeltaTime = 1.0f / 60.0f;
 		io.IniFilename = NULL;
 //		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? -0.5f : 0.0f;
+
+		for (uint32_t ii = 0; ii < ImGuiKey_COUNT; ++ii)
+		{
+			io.KeyMap[ii] = ImGuiKey_(ii);
+		}
 
 		const bgfx::Memory* vsmem;
 		const bgfx::Memory* fsmem;
@@ -181,6 +192,24 @@ struct OcornutImguiContext
 		io.DeltaTime = 1.0f / 60.0f;
 		io.MousePos = ImVec2((float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
+
+		io.KeysDown[ImGuiKey_Tab]        = inputGetKeyState(entry::Key::Tab);
+		io.KeysDown[ImGuiKey_LeftArrow]  = inputGetKeyState(entry::Key::Left);
+		io.KeysDown[ImGuiKey_RightArrow] = inputGetKeyState(entry::Key::Right);
+		io.KeysDown[ImGuiKey_UpArrow]    = inputGetKeyState(entry::Key::Up);
+		io.KeysDown[ImGuiKey_DownArrow]  = inputGetKeyState(entry::Key::Down);
+		io.KeysDown[ImGuiKey_Home]       = inputGetKeyState(entry::Key::Home);
+		io.KeysDown[ImGuiKey_End]        = inputGetKeyState(entry::Key::End);
+		io.KeysDown[ImGuiKey_Delete]     = inputGetKeyState(entry::Key::Delete);
+		io.KeysDown[ImGuiKey_Backspace]  = inputGetKeyState(entry::Key::Backspace);
+		io.KeysDown[ImGuiKey_Enter]      = inputGetKeyState(entry::Key::Return);
+		io.KeysDown[ImGuiKey_Escape]     = inputGetKeyState(entry::Key::Esc);
+		io.KeysDown[ImGuiKey_A]          = inputGetKeyState(entry::Key::KeyA);
+		io.KeysDown[ImGuiKey_C]          = inputGetKeyState(entry::Key::KeyC);
+		io.KeysDown[ImGuiKey_V]          = inputGetKeyState(entry::Key::KeyV);
+		io.KeysDown[ImGuiKey_X]          = inputGetKeyState(entry::Key::KeyX);
+		io.KeysDown[ImGuiKey_Y]          = inputGetKeyState(entry::Key::KeyY);
+		io.KeysDown[ImGuiKey_Z]          = inputGetKeyState(entry::Key::KeyZ);
 
 		ImGui::NewFrame();
 
