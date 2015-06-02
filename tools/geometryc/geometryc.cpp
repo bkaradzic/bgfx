@@ -510,8 +510,8 @@ int main(int _argc, const char* _argv[])
 				for (uint32_t edge = 0, numEdges = argc-1; edge < numEdges; ++edge)
 				{
 					Index3 index;
-					index.m_texcoord = 0;
-					index.m_normal = 0;
+					index.m_texcoord = -1;
+					index.m_normal = -1;
 					index.m_vertexIndex = -1;
 
 					char* vertex = argv[edge+1];
@@ -528,8 +528,12 @@ int main(int _argc, const char* _argv[])
 							index.m_normal = (nn < 0) ? nn+numNormals : nn-1;
 						}
 
-						const int tex = atoi(texcoord);
-						index.m_texcoord = (tex < 0) ? tex+numTexcoords : tex-1;
+						// https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
+						if(*texcoord != '\0')
+						{
+							const int tex = atoi(texcoord);
+							index.m_texcoord = (tex < 0) ? tex+numTexcoords : tex-1;
+						}
 					}
 
 					const int pos = atoi(vertex);
@@ -716,8 +720,8 @@ int main(int _argc, const char* _argv[])
 	bool hasTexcoord;
 	{
 		Index3Map::const_iterator it = indexMap.begin();
-		hasNormal   = 0 != it->second.m_normal;
-		hasTexcoord = 0 != it->second.m_texcoord;
+		hasNormal   = -1 != it->second.m_normal;
+		hasTexcoord = -1 != it->second.m_texcoord;
 
 		if (!hasTexcoord
 		&&  texcoords.size() == positions.size() )
