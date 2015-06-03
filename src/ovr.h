@@ -51,12 +51,12 @@ namespace bgfx
 
 		bool isInitialized() const
 		{
-			return m_initialized;
+			return NULL != m_hmd;
 		}
 
 		bool isEnabled() const
 		{
-			return NULL != m_hmd;
+			return m_isenabled;
 		}
 
 		bool isDebug() const
@@ -87,7 +87,7 @@ namespace bgfx
 		ovrTexture m_texture[2];
 		ovrSizei m_rtSize;
 		bool m_warning;
-		bool m_initialized;
+		bool m_isenabled;
 		bool m_debug;
 	};
 
@@ -132,6 +132,7 @@ namespace bgfx
 
 		bool swap(HMD& _hmd)
 		{
+			_hmd.flags = BGFX_HMD_NONE;
 			getEyePose(_hmd);
 			return false;
 		}

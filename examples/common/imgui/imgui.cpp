@@ -832,7 +832,7 @@ struct Imgui
 		bgfx::setViewSeq(_view, true);
 
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
 		{
 			m_viewWidth = _width / 2;
 			m_surfaceWidth = _surfaceWidth / 2;
