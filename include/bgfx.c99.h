@@ -211,6 +211,9 @@ typedef struct bgfx_hmd
     bgfx_hmd_eye_t eye[2];
     uint16_t width;
     uint16_t height;
+    uint32_t deviceWidth;
+    uint32_t deviceHeight;
+    uint8_t flags;
 
 } bgfx_hmd_t;
 

@@ -370,4 +370,9 @@
 #define BGFX_PCI_ID_INTEL               UINT16_C(0x8086)
 #define BGFX_PCI_ID_NVIDIA              UINT16_C(0x10de)
 
+///
+#define BGFX_HMD_NONE              UINT8_C(0x00)
+#define BGFX_HMD_DEVICE_RESOLUTION UINT8_C(0x01)
+#define BGFX_HMD_RENDERING         UINT8_C(0x02)
+
 #endif // BGFX_DEFINES_H_HEADER_GUARD
