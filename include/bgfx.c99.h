@@ -206,9 +206,18 @@ typedef struct bgfx_hmd_eye
 } bgfx_hmd_eye_t;
 
 /**/
+typedef struct bgfx_hmd_renderdesc
+{
+    uint32_t width;
+    uint32_t height;
+
+} bgfx_hmd_renderdesc_t;
+
+/**/
 typedef struct bgfx_hmd
 {
     bgfx_hmd_eye_t eye[2];
+    bgfx_hmd_renderdesc_t render;
     uint16_t width;
     uint16_t height;
 

@@ -413,9 +413,16 @@ namespace bgfx
 			float pixelsPerTanAngle[2]; //!<
 		};
 
+		struct RenderDesc
+		{
+			uint32_t width;
+			uint32_t height;
+		};
+
 		Eye eye[2];
-		uint16_t width;  //!< Framebuffer width.
-		uint16_t height; //!< Framebuffer width.
+		RenderDesc render; //!< Device render description
+		uint16_t width;    //!< Eye framebuffer width.
+		uint16_t height;   //!< Eye framebuffer width.
 	};
 
 	/// Vertex declaration.
