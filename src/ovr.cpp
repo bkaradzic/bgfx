@@ -294,6 +294,8 @@ ovrError:
 
 		_hmd.width  = uint16_t(m_rtSize.w);
 		_hmd.height = uint16_t(m_rtSize.h);
+		_hmd.render.width  = m_hmd->Resolution.w;
+		_hmd.render.height = m_hmd->Resolution.h;
 	}
 
 } // namespace bgfx
