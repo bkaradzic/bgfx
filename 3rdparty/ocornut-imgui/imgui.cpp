@@ -658,6 +658,7 @@ ImGuiIO::ImGuiIO()
     DisplaySize = ImVec2(-1.0f, -1.0f);
     DeltaTime = 1.0f/60.0f;
     IniSavingRate = 5.0f;
+    PixelCenterOffset = 0.5f;
     IniFilename = "imgui.ini";
     LogFilename = "imgui_log.txt";
     Fonts = &GDefaultFontAtlas;
@@ -9180,6 +9181,9 @@ bool    ImFontAtlas::Build()
     ImGui::MemFree(buf_rects);
     buf_rects = NULL;
 
+    ImGuiIO& io = ImGui::GetIO();
+    const float PixelCenterOffset = io.PixelCenterOffset;
+
     // Third pass: setup ImFont and glyphs for runtime
     for (size_t input_i = 0; input_i < InputData.size(); input_i++)
     {
@@ -9213,10 +9217,10 @@ bool    ImFontAtlas::Build()
                 glyph.XOffset = (signed short)(pc.xoff);
                 glyph.YOffset = (signed short)(pc.yoff + (int)(font_ascent * font_scale));
                 glyph.XAdvance = (signed short)(pc.xadvance + character_spacing_x);  // Bake spacing into XAdvance
-                glyph.U0 = ((float)pc.x0 - 0.5f) * uv_scale_x;
-                glyph.V0 = ((float)pc.y0 - 0.5f) * uv_scale_y;
-                glyph.U1 = ((float)pc.x0 - 0.5f + glyph.Width) * uv_scale_x;
-                glyph.V1 = ((float)pc.y0 - 0.5f + glyph.Height) * uv_scale_y;
+                glyph.U0 = ((float)pc.x0 - PixelCenterOffset) * uv_scale_x;
+                glyph.V0 = ((float)pc.y0 - PixelCenterOffset) * uv_scale_y;
+                glyph.U1 = ((float)pc.x0 - PixelCenterOffset + glyph.Width) * uv_scale_x;
+                glyph.V1 = ((float)pc.y0 - PixelCenterOffset + glyph.Height) * uv_scale_y;
             }
         }
 
