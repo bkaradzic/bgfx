@@ -7,7 +7,6 @@
 #include <bx/allocator.h>
 #include <bx/fpumath.h>
 #include <ocornut-imgui/imgui.h>
-#include "../entry/input.h"
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
@@ -193,6 +192,7 @@ struct OcornutImguiContext
 		io.MousePos = ImVec2((float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 
+#if 0
 		io.KeysDown[ImGuiKey_Tab]        = inputGetKeyState(entry::Key::Tab);
 		io.KeysDown[ImGuiKey_LeftArrow]  = inputGetKeyState(entry::Key::Left);
 		io.KeysDown[ImGuiKey_RightArrow] = inputGetKeyState(entry::Key::Right);
@@ -210,6 +210,7 @@ struct OcornutImguiContext
 		io.KeysDown[ImGuiKey_X]          = inputGetKeyState(entry::Key::KeyX);
 		io.KeysDown[ImGuiKey_Y]          = inputGetKeyState(entry::Key::KeyY);
 		io.KeysDown[ImGuiKey_Z]          = inputGetKeyState(entry::Key::KeyZ);
+#endif // 0
 
 		ImGui::NewFrame();
 
