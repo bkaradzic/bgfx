@@ -2150,13 +2150,11 @@ namespace bgfx { namespace gl
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
 
-				uint32_t flags = m_resolution.m_flags;
-#if BGFX_CONFIG_USE_OVR
-				if ((flags & BGFX_RESET_HMD) && m_ovr.isInitialized())
+				if ( (flags & BGFX_RESET_HMD)
+				&&  m_ovr.isInitialized() )
 				{
 					flags &= ~BGFX_RESET_MSAA_MASK;
 				}
-#endif // BGFX_CONFIG_OVR
 
 				setRenderContextSize(m_resolution.m_width
 						, m_resolution.m_height
