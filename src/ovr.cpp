@@ -69,6 +69,14 @@ namespace bgfx
 		ovr_Shutdown();
 	}
 
+	void OVR::getViewport(uint8_t _eye, Rect* _viewport)
+	{
+		_viewport->m_width = (m_rtSize.w - s_eyeBuffer)/2;
+		_viewport->m_height = m_rtSize.h;
+		_viewport->m_x = _eye * (m_rtSize.w + s_eyeBuffer + 1)/2;
+		_viewport->m_y = 0;
+	}
+
 	bool OVR::postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug)
 	{
 		if (_debug)

@@ -67,6 +67,7 @@ namespace bgfx
 		void init();
 		void shutdown();
 
+		void getViewport(uint8_t _eye, Rect* _viewport);
 		bool postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug = false);
 		void postReset(const ovrTexture& _texture);
 		void preReset();

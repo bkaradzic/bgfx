@@ -4955,8 +4955,17 @@ namespace bgfx { namespace gl
 							GL_CHECK(glInsertEventMarker(0, viewName) );
 						}
 
-						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
-						viewState.m_rect.m_width /= 2;
+#if BGFX_CONFIG_USE_OVR
+						if (m_ovr.isEnabled())
+						{
+							m_ovr.getViewport(eye, &viewState.m_rect);
+						}
+						else
+#endif // BGFX_CONFIG_USE_OVR
+						{
+							viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
+							viewState.m_rect.m_width /= 2;
+						}
 					}
 					else
 					{
