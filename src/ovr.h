@@ -108,14 +108,6 @@ namespace bgfx
 		{
 		}
 
-		void init()
-		{
-		}
-
-		void shutdown()
-		{
-		}
-
 		bool isInitialized() const
 		{
 			return false;
@@ -129,6 +121,22 @@ namespace bgfx
 		bool isDebug() const
 		{
 			return false;
+		}
+
+		void init()
+		{
+		}
+
+		void shutdown()
+		{
+		}
+
+		void getViewport(uint8_t /*_eye*/, Rect* _viewport)
+		{
+			_viewport->m_x      = 0;
+			_viewport->m_y      = 0;
+			_viewport->m_width  = 0;
+			_viewport->m_height = 0;
 		}
 
 		bool swap(HMD& _hmd)

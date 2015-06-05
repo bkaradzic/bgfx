@@ -10,9 +10,9 @@
 namespace bgfx
 {
 #if OVR_VERSION <= OVR_VERSION_050
-	static const int s_eyeBuffer = 100;
+#	define OVR_EYE_BUFFER 100
 #else
-	static const int s_eyeBuffer = 8;
+#	define OVR_EYE_BUFFER 8
 #endif // OVR_VERSION...
 
 	OVR::OVR()
@@ -56,7 +56,7 @@ namespace bgfx
 
 		ovrSizei sizeL = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Left,  m_hmd->DefaultEyeFov[0], 1.0f);
 		ovrSizei sizeR = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Right, m_hmd->DefaultEyeFov[1], 1.0f);
-		m_rtSize.w = sizeL.w + sizeR.w + s_eyeBuffer;
+		m_rtSize.w = sizeL.w + sizeR.w + OVR_EYE_BUFFER;
 		m_rtSize.h = bx::uint32_max(sizeL.h, sizeR.h);
 		m_warning = true;
 	}
@@ -71,10 +71,10 @@ namespace bgfx
 
 	void OVR::getViewport(uint8_t _eye, Rect* _viewport)
 	{
-		_viewport->m_width = (m_rtSize.w - s_eyeBuffer)/2;
+		_viewport->m_x      = _eye * (m_rtSize.w + OVR_EYE_BUFFER + 1)/2;
+		_viewport->m_y      = 0;
+		_viewport->m_width  = (m_rtSize.w - OVR_EYE_BUFFER)/2;
 		_viewport->m_height = m_rtSize.h;
-		_viewport->m_x = _eye * (m_rtSize.w + s_eyeBuffer + 1)/2;
-		_viewport->m_y = 0;
 	}
 
 	bool OVR::postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug)
@@ -183,12 +183,12 @@ ovrError:
 			ovrRecti rect;
 			rect.Pos.x  = 0;
 			rect.Pos.y  = 0;
-			rect.Size.w = (m_rtSize.w - s_eyeBuffer)/2;
+			rect.Size.w = (m_rtSize.w - OVR_EYE_BUFFER)/2;
 			rect.Size.h = m_rtSize.h;
 
 			m_texture[0].Header.RenderViewport = rect;
 
-			rect.Pos.x += rect.Size.w + s_eyeBuffer;
+			rect.Pos.x += rect.Size.w + OVR_EYE_BUFFER;
 			m_texture[1].Header.RenderViewport = rect;
 
 			m_timing = ovrHmd_BeginFrame(m_hmd, 0);

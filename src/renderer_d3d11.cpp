@@ -1725,16 +1725,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 						DX_RELEASE(m_swapChain, 0);
 
-						SWAP_CHAIN_DESC_TYPE* scd = &m_scd;
-#if BGFX_CONFIG_USE_OVR
-						SWAP_CHAIN_DESC_TYPE swapChainScd;
-						if ((m_flags & BGFX_RESET_HMD) && m_ovr.isInitialized())
+						SwapChainDesc* scd = &m_scd;
+						SwapChainDesc swapChainScd;
+						if (0 != (m_flags & BGFX_RESET_HMD)
+						&&  m_ovr.isInitialized())
 						{
 							swapChainScd = m_scd;
 							swapChainScd.SampleDesc = s_msaa[0];
 							scd = &swapChainScd;
 						}
-#endif // BGFX_CONFIG_USE_OVR
 
 #if BX_PLATFORM_WINRT
 						HRESULT hr;
@@ -2713,11 +2712,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		bool m_wireframe;
 
 #if BX_PLATFORM_WINRT
-		typedef DXGI_SWAP_CHAIN_DESC1 SWAP_CHAIN_DESC_TYPE;
+		typedef DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
 #else
-		typedef DXGI_SWAP_CHAIN_DESC SWAP_CHAIN_DESC_TYPE;
-#endif
-		SWAP_CHAIN_DESC_TYPE m_scd;
+		typedef DXGI_SWAP_CHAIN_DESC  SwapChainDesc;
+#endif // BX_PLATFORM_WINRT
+
+		SwapChainDesc m_scd;
 		uint32_t m_flags;
 		uint32_t m_maxAnisotropy;
 
@@ -3856,13 +3856,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
 						}
 
-#if BGFX_CONFIG_USE_OVR
-						if (m_ovr.isEnabled())
+						if (m_ovr.isEnabled() )
 						{
 							m_ovr.getViewport(eye, &viewState.m_rect);
 						}
 						else
-#endif // BGFX_CONFIG_USE_OVR
 						{
 							viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
 							viewState.m_rect.m_width /= 2;
