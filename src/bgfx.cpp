@@ -753,24 +753,30 @@ namespace bgfx
 
 	RenderFrame::Enum renderFrame()
 	{
-		if (NULL == s_ctx)
+		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
-			s_renderFrameCalled = true;
-			s_threadIndex = ~BGFX_MAIN_THREAD_MAGIC;
-			return RenderFrame::NoContext;
+			if (NULL == s_ctx)
+			{
+				s_renderFrameCalled = true;
+				s_threadIndex = ~BGFX_MAIN_THREAD_MAGIC;
+				return RenderFrame::NoContext;
+			}
+
+			BGFX_CHECK_RENDER_THREAD();
+			if (s_ctx->renderFrame() )
+			{
+				Context* ctx = s_ctx;
+				ctx->gameSemWait();
+				s_ctx = NULL;
+				ctx->renderSemPost();
+				return RenderFrame::Exiting;
+			}
+
+			return RenderFrame::Render;
 		}
 
-		BGFX_CHECK_RENDER_THREAD();
-		if (s_ctx->renderFrame() )
-		{
-			Context* ctx = s_ctx;
-			ctx->gameSemWait();
-			s_ctx = NULL;
-			ctx->renderSemPost();
-			return RenderFrame::Exiting;
-		}
-
-		return RenderFrame::Render;
+		BX_CHECK(false, "This call only makes sense if used with multi-threaded renderer.");
+		return RenderFrame::NoContext;
 	}
 
 	const uint32_t g_uniformTypeSize[UniformType::Count+1] =
