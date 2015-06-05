@@ -109,6 +109,16 @@ struct Keyboard
 		return decodeKeyState(m_key[_key], *_modifiers);
 	}
 
+	uint8_t getModifiersState()
+	{
+		uint8_t modifiers = 0;
+		for (uint32_t ii = 0; ii < entry::Key::Count; ++ii)
+		{
+			modifiers |= (m_key[ii]>>16)&0xff;
+		}
+		return modifiers;
+	}
+
 	void pushChar(uint8_t _len, const uint8_t _char[4])
 	{
 		for (uint32_t len = m_ring.reserve(4)
@@ -312,6 +322,11 @@ void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 bool inputGetKeyState(entry::Key::Enum _key, uint8_t* _modifiers)
 {
 	return s_input->m_keyboard.getKeyState(_key, _modifiers);
+}
+
+uint8_t inputGetModifiersState()
+{
+	return s_input->m_keyboard.getModifiersState();
 }
 
 void inputChar(uint8_t _len, const uint8_t _char[4])
