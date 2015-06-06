@@ -118,7 +118,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const bgfx::Caps* caps = bgfx::getCaps();
 	// Shadow samplers are supported at least partially supported if texture
 	// compare less equal feature is supported.
-	bool shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
+	bool shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL) && false;
 
 	bgfx::ProgramHandle progShadow;
 	bgfx::ProgramHandle progMesh;
@@ -178,7 +178,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	state[1]->m_viewId  = RENDER_SCENE_PASS_ID;
 	state[1]->m_numTextures = 1;
 	state[1]->m_textures[0].m_flags = UINT32_MAX;
-	state[1]->m_textures[0].m_stage = 4;
+	state[1]->m_textures[0].m_stage = 0;
 	state[1]->m_textures[0].m_sampler = u_shadowMap;
 	state[1]->m_textures[0].m_texture = shadowMapTexture;
 
