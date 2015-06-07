@@ -118,7 +118,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	const bgfx::Caps* caps = bgfx::getCaps();
 	// Shadow samplers are supported at least partially supported if texture
 	// compare less equal feature is supported.
-	bool shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL) && false;
+	bool shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
 
 	bgfx::ProgramHandle progShadow;
 	bgfx::ProgramHandle progMesh;
