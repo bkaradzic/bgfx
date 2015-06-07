@@ -13,8 +13,8 @@ uniform vec4 u_flags;
 uniform vec4 u_rgbDiff;
 uniform vec4 u_rgbSpec;
 
-SAMPLERCUBE(u_texCube, 4);
-SAMPLERCUBE(u_texCubeIrr, 5);
+SAMPLERCUBE(s_texCube, 0);
+SAMPLERCUBE(s_texCubeIrr, 1);
 
 #define u_glossiness u_params.x
 #define u_exposure   u_params.y
@@ -51,7 +51,7 @@ void main()
 	vec3 cubeN = normalize(mul(u_mtx, vec4(n, 0.0)).xyz);
 
 	float mipLevel = min((1.0 - u_glossiness)*11.0 + 1.0, 8.0);
-	vec3 cenv = textureCubeLod(u_texCube, cubeR, mipLevel).xyz;
+	vec3 cenv = textureCubeLod(s_texCube, cubeR, mipLevel).xyz;
 
 	vec3 kd = u_rgbDiff.xyz;
 	vec3 ks = u_rgbSpec.xyz;
@@ -64,7 +64,7 @@ void main()
 	vec3 spec = cs * pow(ndoth, pwr) * ( (pwr + 8.0)/8.0) * fresnel(cs, vdoth);
 
 	vec3 ambspec = fresnel(cs, ndotv) * cenv;
-	vec3 ambdiff = cd * textureCube(u_texCubeIrr, cubeN).xyz;
+	vec3 ambdiff = cd * textureCube(s_texCubeIrr, cubeN).xyz;
 
 	vec3 lc = (   diff * u_doDiffuse    +    spec * u_doSpecular   ) * ndotl * clight;
 	vec3 ec = (ambdiff * u_doDiffuseIbl + ambspec * u_doSpecularIbl);

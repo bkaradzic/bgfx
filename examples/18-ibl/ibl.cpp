@@ -347,7 +347,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			settings.m_crossCubemapPreview = ImguiCubemap::Enum( (settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
 		}
-		imguiSlider("Texture LOD", lod, float(0.0f), 10.1f, 0.1f);
+		imguiSlider("Texture LOD", lod, 0.0f, 10.1f, 0.1f);
 
 		imguiEndScrollArea();
 
