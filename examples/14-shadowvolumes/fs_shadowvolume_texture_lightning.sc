@@ -14,8 +14,8 @@ uniform vec4 u_specular_shininess;
 uniform vec4 u_fog;
 uniform vec4 u_lightPosRadius;
 uniform vec4 u_lightRgbInnerR;
-SAMPLER2D(u_texColor, 0);
-SAMPLER2D(u_texStencil, 7);
+SAMPLER2D(s_texColor,   0);
+SAMPLER2D(s_texStencil, 1);
 
 #define u_ambientPass   u_params.x
 #define u_lightningPass u_params.y
@@ -68,7 +68,7 @@ void main()
 	vec3 lightColor = calcLight(v_view, normal, viewDir) * u_lightningPass;
 
 	vec2 ndc = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * u_texelHalf;
-	vec4 texcolor = texture2D(u_texStencil, ndc);
+	vec4 texcolor = texture2D(s_texStencil, ndc);
 	float s = (texcolor.x - texcolor.y) + 2.0 * (texcolor.z - texcolor.w);
 	s *= u_useStencilTex;
 
@@ -77,7 +77,7 @@ void main()
 	float fogFactor = 1.0/exp2(u_fogDensity*u_fogDensity*z*z*LOG2);
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-	vec3 color = toLinear(texture2D(u_texColor, v_texcoord0)).xyz;
+	vec3 color = toLinear(texture2D(s_texColor, v_texcoord0)).xyz;
 
 	vec3 ambient = toGamma(ambientColor * color);
 	vec3 diffuse = toGamma(lightColor * color);

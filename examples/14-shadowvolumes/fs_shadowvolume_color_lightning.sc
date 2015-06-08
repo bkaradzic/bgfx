@@ -15,7 +15,7 @@ uniform vec4 u_specular_shininess;
 uniform vec4 u_fog;
 uniform vec4 u_lightPosRadius;
 uniform vec4 u_lightRgbInnerR;
-SAMPLER2D(u_texStencil, 7);
+SAMPLER2D(s_texStencil, 1);
 
 #define u_ambientPass   u_params.x
 #define u_lightningPass u_params.y
@@ -68,7 +68,7 @@ void main()
 	vec3 lightColor = calcLight(v_view, normal, viewDir) * u_lightningPass;
 
 	vec2 ndc = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * u_texelHalf;
-	vec4 texcolor = texture2D(u_texStencil, ndc);
+	vec4 texcolor = texture2D(s_texStencil, ndc);
 	float s = (texcolor.x - texcolor.y) + 2.0 * (texcolor.z - texcolor.w);
 	s *= u_useStencilTex;
 

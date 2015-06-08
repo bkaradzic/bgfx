@@ -116,8 +116,8 @@ static float s_texelHalf = 0.0f;
 
 static uint32_t s_viewMask = 0;
 
-static bgfx::UniformHandle u_texColor;
-static bgfx::UniformHandle u_texStencil;
+static bgfx::UniformHandle s_texColor;
+static bgfx::UniformHandle s_texStencil;
 static bgfx::FrameBufferHandle s_stencilFb;
 
 void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -1175,9 +1175,9 @@ struct Model
 			// Set textures
 			if (bgfx::invalidHandle != m_texture.idx)
 			{
-				bgfx::setTexture(0, u_texColor, m_texture);
+				bgfx::setTexture(0, s_texColor, m_texture);
 			}
-			bgfx::setTexture(7, u_texStencil, s_stencilFb);
+			bgfx::setTexture(1, s_texStencil, s_stencilFb);
 
 			// Apply render state
 			::setRenderState(_renderState);
@@ -1897,8 +1897,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	};
 	s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
-	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Int1);
-	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Int1);
+	s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
+	s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Int1);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_shadowvolume_texture_lightning", "fs_shadowvolume_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_shadowvolume_color_lightning",   "fs_shadowvolume_color_lightning"  );
@@ -2843,8 +2843,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_uniforms.destroy();
 
-	bgfx::destroyUniform(u_texColor);
-	bgfx::destroyUniform(u_texStencil);
+	bgfx::destroyUniform(s_texColor);
+	bgfx::destroyUniform(s_texStencil);
 	bgfx::destroyFrameBuffer(s_stencilFb);
 
 	bgfx::destroyTexture(figureTex);

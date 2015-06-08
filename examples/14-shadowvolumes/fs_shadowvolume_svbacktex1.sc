@@ -11,14 +11,16 @@ vec4 stencilColor(float _k)
 			  , float(abs(_k + 1.0) < 0.0001)/255.0
 			  , float(abs(_k - 2.0) < 0.0001)/255.0
 			  , float(abs(_k + 2.0) < 0.0001)/255.0
-			  ); 
+			  );
 }
 
 void main()
 {
 	float k = 1.0;
 	if (!gl_FrontFacing)
+	{
 		k = -k;
+	}
 
 	gl_FragColor = stencilColor(k);
 }
