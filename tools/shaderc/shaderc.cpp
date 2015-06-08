@@ -568,6 +568,56 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 	return hash;
 }
 
+// horrible syntax to produce a string->string map
+const std::map<const std::string, const std::string>::value_type temp_map[] = { 
+	std::make_pair("a_POSITION", "a_position"),
+	std::make_pair("a_NORMAL", "a_normal"),
+	std::make_pair("a_TANGENT", "a_tangent"),
+	std::make_pair("a_BITANGENT", "a_bitangent"), 
+	std::make_pair("a_COLOR0", "a_color0"),
+	std::make_pair("a_COLOR1", "a_color1"),
+	std::make_pair("a_INDICES", "a_indices"),
+	std::make_pair("a_WEIGHT", "a_weight"),
+	std::make_pair("a_TEXCOORD0", "a_texcoord0"),
+	std::make_pair("a_TEXCOORD1", "a_texcoord1"),
+	std::make_pair("a_TEXCOORD2", "a_texcoord2"),
+	std::make_pair("a_TEXCOORD3", "a_texcoord3"),
+	std::make_pair("a_TEXCOORD4", "a_texcoord4"),
+	std::make_pair("a_TEXCOORD5", "a_texcoord5"),
+	std::make_pair("a_TEXCOORD6", "a_texcoord6"),
+	std::make_pair("a_TEXCOORD7", "a_texcoord7"),
+	std::make_pair("i_TEXCOORD7", "i_data0"),
+	std::make_pair("i_TEXCOORD6", "i_data1"),
+	std::make_pair("i_TEXCOORD5", "i_data2"),
+	std::make_pair("i_TEXCOORD4", "i_data3"),
+	std::make_pair("i_TEXCOORD3", "i_data4")
+	//std::make_pair("i_TEXCOORD2", "i_data5"),
+	//std::make_pair("i_TEXCOORD1", "i_data6"),
+	//std::make_pair("i_TEXCOORD0", "i_data7")
+};
+// if we want to use the [] map syntax, we can't actually have the map
+// be const, but the alternative map.find syntax is too horrible to consider
+std::map<const std::string, const std::string> canonAttrTable(temp_map, temp_map + sizeof temp_map / sizeof temp_map[0]);
+
+bool isAttributeCanonical(const std::string& name, const std::string& semantic) {
+	std::string prefixedSemantic = name.substr(0, 2) + semantic; // e.g., a_TEXCOORD0
+	if (canonAttrTable.count(prefixedSemantic) > 0)
+	{
+		if (name != canonAttrTable[prefixedSemantic])
+		{
+			fprintf(stderr, "Attribute name error: expected [%s] for semantic [%s], got [%s]", 
+				canonAttrTable[prefixedSemantic].c_str(), semantic.c_str(), name.c_str());
+			return false;
+		}
+		return true;
+	}
+	else
+	{
+		fprintf(stderr, "Attribute error: Unknown semantic [%s]\n", semantic.c_str());
+		return false;
+	}
+}
+
 void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
 {
 	char find[32];
@@ -952,6 +1002,12 @@ int main(int _argc, const char* _argv[])
 					var.m_type.assign(typen, bx::strword(typen)-typen);
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
+
+					bool isAttribute = (0 == strncmp(name, "a_", 2) || 0 == strncmp(name, "i_", 2));
+					if (isAttribute && !isAttributeCanonical(var.m_name, var.m_semantics))
+					{
+						return EXIT_FAILURE;
+					}
 
 					if (d3d == 9
 					&&  var.m_semantics == "BITANGENT")
