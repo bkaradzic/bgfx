@@ -590,10 +590,10 @@ const std::map<const std::string, const std::string>::value_type temp_map[] = {
 	std::make_pair("i_TEXCOORD6", "i_data1"),
 	std::make_pair("i_TEXCOORD5", "i_data2"),
 	std::make_pair("i_TEXCOORD4", "i_data3"),
-	std::make_pair("i_TEXCOORD3", "i_data4"),
-	std::make_pair("i_TEXCOORD2", "i_data5"),
-	std::make_pair("i_TEXCOORD1", "i_data6"),
-	std::make_pair("i_TEXCOORD0", "i_data7")
+	std::make_pair("i_TEXCOORD3", "i_data4")
+	//std::make_pair("i_TEXCOORD2", "i_data5"),
+	//std::make_pair("i_TEXCOORD1", "i_data6"),
+	//std::make_pair("i_TEXCOORD0", "i_data7")
 };
 // if we want to use the [] map syntax, we can't actually have the map
 // be const, but the alternative map.find syntax is too horrible to consider
