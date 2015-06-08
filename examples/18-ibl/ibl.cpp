@@ -479,7 +479,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewRect(1, 0, 0, width, height);
 
 		// View 0.
-		bgfx::setTexture(4, s_texCube, lightProbes[currentLightProbe].m_tex);
+		bgfx::setTexture(0, s_texCube, lightProbes[currentLightProbe].m_tex);
 		bgfx::setProgram(programSky);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, true);
@@ -500,8 +500,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, 0.0f
 				);
 
-		bgfx::setTexture(4, s_texCube,    lightProbes[currentLightProbe].m_tex);
-		bgfx::setTexture(5, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
+		bgfx::setTexture(0, s_texCube,    lightProbes[currentLightProbe].m_tex);
+		bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
 		meshSubmit(meshBunny, 1, programMesh, mtx);
 
 		// Advance to next frame. Rendering thread will be kicked to
