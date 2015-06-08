@@ -7,11 +7,11 @@ $input v_texcoord0
 
 #include "../common/common.sh"
 
-SAMPLER3D(u_texColor, 0);
-uniform float u_time;
+SAMPLER3D(s_texColor, 0);
+uniform vec4 u_time;
 
 void main()
 {
-	vec3 uvw = vec3(v_texcoord0.xy*0.5+0.5,	sin(u_time)*0.5+0.5);
-	gl_FragColor = vec4_splat(texture3D(u_texColor, uvw).x);
+	vec3 uvw = vec3(v_texcoord0.xy*0.5+0.5,	sin(u_time.x)*0.5+0.5);
+	gl_FragColor = vec4_splat(texture3D(s_texColor, uvw).x);
 }

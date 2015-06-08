@@ -250,17 +250,16 @@ struct Uniforms
 		m_virtualLightPos_extrusionDist[2] = 0.0f;
 		m_virtualLightPos_extrusionDist[3] = 100.0f;
 
-		u_params                        = bgfx::createUniform("u_params",                        bgfx::UniformType::Uniform4fv);
-		u_svparams                      = bgfx::createUniform("u_svparams",                      bgfx::UniformType::Uniform4fv);
-		u_ambient                       = bgfx::createUniform("u_ambient",                       bgfx::UniformType::Uniform4fv);
-		u_diffuse                       = bgfx::createUniform("u_diffuse",                       bgfx::UniformType::Uniform4fv);
-		u_specular_shininess            = bgfx::createUniform("u_specular_shininess",            bgfx::UniformType::Uniform4fv);
-		u_fog                           = bgfx::createUniform("u_fog",                           bgfx::UniformType::Uniform4fv);
-		u_color                         = bgfx::createUniform("u_color",                         bgfx::UniformType::Uniform4fv);
-		u_time                          = bgfx::createUniform("u_time",                          bgfx::UniformType::Uniform1f );
-		u_lightPosRadius                = bgfx::createUniform("u_lightPosRadius",                bgfx::UniformType::Uniform4fv);
-		u_lightRgbInnerR                = bgfx::createUniform("u_lightRgbInnerR",                bgfx::UniformType::Uniform4fv);
-		u_virtualLightPos_extrusionDist = bgfx::createUniform("u_virtualLightPos_extrusionDist", bgfx::UniformType::Uniform4fv);
+		u_params                        = bgfx::createUniform("u_params",                        bgfx::UniformType::Vec4);
+		u_svparams                      = bgfx::createUniform("u_svparams",                      bgfx::UniformType::Vec4);
+		u_ambient                       = bgfx::createUniform("u_ambient",                       bgfx::UniformType::Vec4);
+		u_diffuse                       = bgfx::createUniform("u_diffuse",                       bgfx::UniformType::Vec4);
+		u_specular_shininess            = bgfx::createUniform("u_specular_shininess",            bgfx::UniformType::Vec4);
+		u_fog                           = bgfx::createUniform("u_fog",                           bgfx::UniformType::Vec4);
+		u_color                         = bgfx::createUniform("u_color",                         bgfx::UniformType::Vec4);
+		u_lightPosRadius                = bgfx::createUniform("u_lightPosRadius",                bgfx::UniformType::Vec4);
+		u_lightRgbInnerR                = bgfx::createUniform("u_lightRgbInnerR",                bgfx::UniformType::Vec4);
+		u_virtualLightPos_extrusionDist = bgfx::createUniform("u_virtualLightPos_extrusionDist", bgfx::UniformType::Vec4);
 	}
 
 	//call this once at initialization
@@ -270,12 +269,6 @@ struct Uniforms
 		bgfx::setUniform(u_diffuse,            &m_diffuse);
 		bgfx::setUniform(u_specular_shininess, &m_specular_shininess);
 		bgfx::setUniform(u_fog,                &m_fog);
-	}
-
-	//call this once per frame
-	void submitPerFrameUniforms()
-	{
-		bgfx::setUniform(u_time, &m_time);
 	}
 
 	//call this before each draw call
@@ -298,7 +291,6 @@ struct Uniforms
 		bgfx::destroyUniform(u_specular_shininess);
 		bgfx::destroyUniform(u_fog);
 		bgfx::destroyUniform(u_color);
-		bgfx::destroyUniform(u_time);
 		bgfx::destroyUniform(u_lightPosRadius);
 		bgfx::destroyUniform(u_lightRgbInnerR);
 		bgfx::destroyUniform(u_virtualLightPos_extrusionDist);
@@ -351,7 +343,6 @@ struct Uniforms
 	bgfx::UniformHandle u_specular_shininess;
 	bgfx::UniformHandle u_fog;
 	bgfx::UniformHandle u_color;
-	bgfx::UniformHandle u_time;
 	bgfx::UniformHandle u_lightPosRadius;
 	bgfx::UniformHandle u_lightRgbInnerR;
 	bgfx::UniformHandle u_virtualLightPos_extrusionDist;
@@ -1906,8 +1897,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	};
 	s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
-	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
-	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
+	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Int1);
+	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Int1);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_shadowvolume_texture_lightning", "fs_shadowvolume_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_shadowvolume_color_lightning",   "fs_shadowvolume_color_lightning"  );
@@ -2116,7 +2107,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
 		{
 			float eye[3];
 			cameraGetPosition(eye);
@@ -2255,7 +2246,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_params.m_lightningPass   = 1.0f;
 		s_uniforms.m_params.m_texelHalf       = s_texelHalf;
 		s_uniforms.m_svparams.m_useStencilTex = float(settings_useStencilTexture);
-		s_uniforms.submitPerFrameUniforms();
 
 		//set picked bunny model
 		Model* bunnyModel = BunnyLowPoly == currentMesh ? &bunnyLowPolyModel : &bunnyHighPolyModel;

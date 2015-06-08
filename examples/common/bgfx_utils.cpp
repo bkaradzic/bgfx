@@ -21,12 +21,12 @@ namespace stl = tinystl;
 
 #include "bgfx_utils.h"
 
-void* load(bx::FileReaderI* _reader, const char* _filePath, uint32_t* _size)
+void* load(bx::FileReaderI* _reader, bx::ReallocatorI* _allocator, const char* _filePath, uint32_t* _size)
 {
 	if (0 == bx::open(_reader, _filePath) )
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
-		void* data = malloc(size);
+		void* data = BX_ALLOC(_allocator, size);
 		bx::read(_reader, data, size);
 		bx::close(_reader);
 		if (NULL != _size)
@@ -45,7 +45,12 @@ void* load(bx::FileReaderI* _reader, const char* _filePath, uint32_t* _size)
 
 void* load(const char* _filePath, uint32_t* _size)
 {
-	return load(entry::getFileReader(), _filePath, _size);
+	return load(entry::getFileReader(), entry::getAllocator(), _filePath, _size);
+}
+
+void unload(void* _ptr)
+{
+	BX_FREE(entry::getAllocator(), _ptr);
 }
 
 static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath)
@@ -76,7 +81,6 @@ static void* loadMem(bx::FileReaderI* _reader, bx::ReallocatorI* _allocator, con
 		{
 			*_size = size;
 		}
-
 		return data;
 	}
 
@@ -138,8 +142,12 @@ extern "C" stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x
 
 bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
-	char filePath[512];
-	strcpy(filePath, "textures/");
+	char filePath[512] = { '\0' };
+	if (NULL == strchr(_name, '/') )
+	{
+		strcpy(filePath, "textures/");
+	}
+
 	strcat(filePath, _name);
 
 	if (NULL != bx::stristr(_name, ".dds")
@@ -147,41 +155,58 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 	||  NULL != bx::stristr(_name, ".ktx") )
 	{
 		const bgfx::Memory* mem = loadMem(_reader, filePath);
-		return bgfx::createTexture(mem, _flags, _skip, _info);
+		if (NULL != mem)
+		{
+			return bgfx::createTexture(mem, _flags, _skip, _info);
+		}
+
+		bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+		DBG("Failed to load %s.", filePath);
+		return handle;
 	}
 
+	bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
 	bx::ReallocatorI* allocator = entry::getAllocator();
 
 	uint32_t size = 0;
 	void* data = loadMem(_reader, allocator, filePath, &size);
-
-	int width  = 0;
-	int height = 0;
-	int comp   = 0;
-
-	uint8_t* img = NULL;
-	img = stbi_load_from_memory( (uint8_t*)data, size, &width, &height, &comp, 4);
-
-	BX_FREE(allocator, data);
-
-	bgfx::TextureHandle handle = bgfx::createTexture2D(uint16_t(width), uint16_t(height), 1
-									, bgfx::TextureFormat::RGBA8
-									, _flags
-									, bgfx::copy(img, width*height*4)
-									);
-
-	free(img);
-
-	if (NULL != _info)
+	if (NULL != data)
 	{
-		bgfx::calcTextureSize(*_info
-			, uint16_t(width)
-			, uint16_t(height)
-			, 0
-			, false
-			, 1
-			, bgfx::TextureFormat::RGBA8
-			);
+		int width  = 0;
+		int height = 0;
+		int comp   = 0;
+
+		uint8_t* img = NULL;
+		img = stbi_load_from_memory( (uint8_t*)data, size, &width, &height, &comp, 4);
+
+		BX_FREE(allocator, data);
+
+		if (NULL != img)
+		{
+			handle = bgfx::createTexture2D(uint16_t(width), uint16_t(height), 1
+											, bgfx::TextureFormat::RGBA8
+											, _flags
+											, bgfx::copy(img, width*height*4)
+											);
+
+			free(img);
+
+			if (NULL != _info)
+			{
+				bgfx::calcTextureSize(*_info
+					, uint16_t(width)
+					, uint16_t(height)
+					, 0
+					, false
+					, 1
+					, bgfx::TextureFormat::RGBA8
+					);
+			}
+		}
+	}
+	else
+	{
+		DBG("Failed to load %s.", filePath);
 	}
 
 	return handle;

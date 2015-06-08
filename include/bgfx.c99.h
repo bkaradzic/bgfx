@@ -134,17 +134,12 @@ typedef enum bgfx_texture_format
 
 typedef enum bgfx_uniform_type
 {
-    BGFX_UNIFORM_TYPE_UNIFORM1I,
-    BGFX_UNIFORM_TYPE_UNIFORM1F,
+    BGFX_UNIFORM_TYPE_INT1,
     BGFX_UNIFORM_TYPE_END,
 
-    BGFX_UNIFORM_TYPE_UNIFORM1IV,
-    BGFX_UNIFORM_TYPE_UNIFORM1FV,
-    BGFX_UNIFORM_TYPE_UNIFORM2FV,
-    BGFX_UNIFORM_TYPE_UNIFORM3FV,
-    BGFX_UNIFORM_TYPE_UNIFORM4FV,
-    BGFX_UNIFORM_TYPE_UNIFORM3X3FV,
-    BGFX_UNIFORM_TYPE_UNIFORM4X4FV,
+    BGFX_UNIFORM_TYPE_VEC4,
+    BGFX_UNIFORM_TYPE_MAT3,
+    BGFX_UNIFORM_TYPE_MAT4,
 
     BGFX_UNIFORM_TYPE_COUNT
 
@@ -216,6 +211,9 @@ typedef struct bgfx_hmd
     bgfx_hmd_eye_t eye[2];
     uint16_t width;
     uint16_t height;
+    uint32_t deviceWidth;
+    uint32_t deviceHeight;
+    uint8_t flags;
 
 } bgfx_hmd_t;
 

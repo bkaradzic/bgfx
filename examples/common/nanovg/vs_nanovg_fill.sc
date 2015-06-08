@@ -5,7 +5,7 @@ $output v_position, v_texcoord0
 
 #define NEED_HALF_TEXEL (BGFX_SHADER_LANGUAGE_HLSL < 4)
 
-uniform vec2 u_viewSize;
+uniform vec4 u_viewSize;
 
 #if NEED_HALF_TEXEL
 uniform vec4 u_halfTexel;

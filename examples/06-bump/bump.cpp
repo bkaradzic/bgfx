@@ -148,12 +148,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
-	bgfx::UniformHandle u_texColor  = bgfx::createUniform("u_texColor",  bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle u_texNormal = bgfx::createUniform("u_texNormal", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle u_texColor  = bgfx::createUniform("u_texColor",  bgfx::UniformType::Int1);
+	bgfx::UniformHandle u_texNormal = bgfx::createUniform("u_texNormal", bgfx::UniformType::Int1);
 
 	uint16_t numLights = 4;
-	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Uniform4fv, numLights);
-	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Uniform4fv, numLights);
+	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Vec4, numLights);
+	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Vec4, numLights);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle program = loadProgram(instancingSupported ? "vs_bump_instanced" : "vs_bump", "fs_bump");
@@ -195,7 +195,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
 		{
 			float view[16];
 			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);

@@ -109,10 +109,10 @@ namespace bgfx
 #include "bgfxplatform.h"
 #include "image.h"
 
-#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x1)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x3)
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x3)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
 
 #define BGFX_CLEAR_COLOR_USE_PALETTE UINT16_C(0x8000)
 #define BGFX_CLEAR_MASK (0 \
@@ -1203,7 +1203,7 @@ namespace bgfx
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
 		Frame()
-			: m_hmdEnabled(false)
+			: m_hmdInitialized(false)
 			, m_waitSubmit(0)
 			, m_waitRender(0)
 		{
@@ -1645,7 +1645,7 @@ namespace bgfx
 		UniformHandle m_freeUniformHandle[BGFX_CONFIG_MAX_UNIFORMS];
 		TextVideoMem* m_textVideoMem;
 		HMD m_hmd;
-		bool m_hmdEnabled;
+		bool m_hmdInitialized;
 
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
@@ -1910,6 +1910,7 @@ namespace bgfx
 			, m_rendererInitialized(false)
 			, m_exit(false)
 			, m_flipAfterRender(false)
+			, m_singleThreaded(false)
 		{
 		}
 
@@ -1986,7 +1987,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(const HMD* getHMD() )
 		{
-			if (m_submit->m_hmdEnabled)
+			if (m_submit->m_hmdInitialized)
 			{
 				return &m_submit->m_hmd;
 			}
@@ -3446,28 +3447,40 @@ namespace bgfx
 #if BGFX_CONFIG_MULTITHREADED
 		void gameSemPost()
 		{
-			m_gameSem.post();
+			if (!m_singleThreaded)
+			{
+				m_gameSem.post();
+			}
 		}
 
 		void gameSemWait()
 		{
-			int64_t start = bx::getHPCounter();
-			bool ok = m_gameSem.wait();
-			BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
-			m_render->m_waitSubmit = bx::getHPCounter()-start;
+			if (!m_singleThreaded)
+			{
+				int64_t start = bx::getHPCounter();
+				bool ok = m_gameSem.wait();
+				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				m_render->m_waitSubmit = bx::getHPCounter()-start;
+			}
 		}
 
 		void renderSemPost()
 		{
-			m_renderSem.post();
+			if (!m_singleThreaded)
+			{
+				m_renderSem.post();
+			}
 		}
 
 		void renderSemWait()
 		{
-			int64_t start = bx::getHPCounter();
-			bool ok = m_renderSem.wait();
-			BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
-			m_submit->m_waitRender = bx::getHPCounter() - start;
+			if (!m_singleThreaded)
+			{
+				int64_t start = bx::getHPCounter();
+				bool ok = m_renderSem.wait();
+				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				m_submit->m_waitRender = bx::getHPCounter() - start;
+			}
 		}
 
 		bx::Semaphore m_renderSem;
@@ -3598,6 +3611,7 @@ namespace bgfx
 		bool m_rendererInitialized;
 		bool m_exit;
 		bool m_flipAfterRender;
+		bool m_singleThreaded;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);

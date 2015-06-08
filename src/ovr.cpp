@@ -9,28 +9,72 @@
 
 namespace bgfx
 {
+#if OVR_VERSION <= OVR_VERSION_050
+#	define OVR_EYE_BUFFER 100
+#else
+#	define OVR_EYE_BUFFER 8
+#endif // OVR_VERSION...
+
 	OVR::OVR()
 		: m_hmd(NULL)
-		, m_initialized(false)
+		, m_isenabled(false)
 		, m_debug(false)
 	{
 	}
 
 	OVR::~OVR()
 	{
-		BX_CHECK(!m_initialized, "OVR not shutdown properly.");
+		BX_CHECK(NULL == m_hmd, "OVR not shutdown properly.");
 	}
 
 	void OVR::init()
 	{
-		m_initialized = !!ovr_Initialize();
+		bool initialized = !!ovr_Initialize();
+		BX_WARN(initialized, "Unable to create OVR device.");
+		if (!initialized)
+		{
+			return;
+		}
+
+		m_hmd = ovrHmd_Create(0);
+		if (NULL == m_hmd)
+		{
+			m_hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
+			BX_WARN(NULL != m_hmd, "Unable to create OVR device.");
+			if (NULL == m_hmd)
+			{
+				return;
+			}
+		}
+
+		BX_TRACE("HMD: %s, %s, firmware: %d.%d"
+			, m_hmd->ProductName
+			, m_hmd->Manufacturer
+			, m_hmd->FirmwareMajor
+			, m_hmd->FirmwareMinor
+			);
+
+		ovrSizei sizeL = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Left,  m_hmd->DefaultEyeFov[0], 1.0f);
+		ovrSizei sizeR = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Right, m_hmd->DefaultEyeFov[1], 1.0f);
+		m_rtSize.w = sizeL.w + sizeR.w + OVR_EYE_BUFFER;
+		m_rtSize.h = bx::uint32_max(sizeL.h, sizeR.h);
+		m_warning = true;
 	}
 
 	void OVR::shutdown()
 	{
-		BX_CHECK(NULL == m_hmd, "HMD not destroyed.");
+		BX_CHECK(!m_isenabled, "HMD not disabled.");
+		ovrHmd_Destroy(m_hmd);
+		m_hmd = NULL;
 		ovr_Shutdown();
-		m_initialized = false;
+	}
+
+	void OVR::getViewport(uint8_t _eye, Rect* _viewport)
+	{
+		_viewport->m_x      = _eye * (m_rtSize.w + OVR_EYE_BUFFER + 1)/2;
+		_viewport->m_y      = 0;
+		_viewport->m_width  = (m_rtSize.w - OVR_EYE_BUFFER)/2;
+		_viewport->m_height = m_rtSize.h;
 	}
 
 	bool OVR::postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug)
@@ -75,33 +119,12 @@ namespace bgfx
 			return false;
 		}
 
-		if (!m_initialized)
+		if (NULL == m_hmd)
 		{
 			return false;
 		}
 
-		if (!_debug)
-		{
-			m_hmd = ovrHmd_Create(0);
-		}
-
-		if (NULL == m_hmd)
-		{
-			m_hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
-			BX_WARN(NULL != m_hmd, "Unable to initialize OVR.");
-
-			if (NULL == m_hmd)
-			{
-				return false;
-			}
-		}
-
-		BX_TRACE("HMD: %s, %s, firmware: %d.%d"
-			, m_hmd->ProductName
-			, m_hmd->Manufacturer
-			, m_hmd->FirmwareMajor
-			, m_hmd->FirmwareMinor
-			);
+		m_isenabled = true;
 
 		ovrBool result;
 		result = ovrHmd_AttachToWindow(m_hmd, _nwh, NULL, NULL);
@@ -142,18 +165,11 @@ namespace bgfx
 		{
 ovrError:
 			BX_TRACE("Failed to initialize OVR.");
-			ovrHmd_Destroy(m_hmd);
-			m_hmd = NULL;
+			m_isenabled = false;
 			return false;
 		}
 
-		ovrSizei sizeL = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Left,  m_hmd->DefaultEyeFov[0], 1.0f);
-		ovrSizei sizeR = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Right, m_hmd->DefaultEyeFov[1], 1.0f);
-		m_rtSize.w = sizeL.w + sizeR.w;
-		m_rtSize.h = bx::uint32_max(sizeL.h, sizeR.h);
-
 		m_warning = true;
-
 		return true;
 	}
 
@@ -167,12 +183,12 @@ ovrError:
 			ovrRecti rect;
 			rect.Pos.x  = 0;
 			rect.Pos.y  = 0;
-			rect.Size.w = m_rtSize.w/2;
+			rect.Size.w = (m_rtSize.w - OVR_EYE_BUFFER)/2;
 			rect.Size.h = m_rtSize.h;
 
 			m_texture[0].Header.RenderViewport = rect;
 
-			rect.Pos.x += rect.Size.w;
+			rect.Pos.x += rect.Size.w + OVR_EYE_BUFFER;
 			m_texture[1].Header.RenderViewport = rect;
 
 			m_timing = ovrHmd_BeginFrame(m_hmd, 0);
@@ -188,11 +204,12 @@ ovrError:
 
 	void OVR::preReset()
 	{
-		if (NULL != m_hmd)
+		if (m_isenabled)
 		{
 			ovrHmd_EndFrame(m_hmd, m_pose, m_texture);
-			ovrHmd_Destroy(m_hmd);
-			m_hmd = NULL;
+			ovrHmd_AttachToWindow(m_hmd, NULL, NULL, NULL);
+			ovrHmd_ConfigureRendering(m_hmd, NULL, 0, NULL, NULL);
+			m_isenabled = false;
 		}
 
 		m_debug = false;
@@ -200,11 +217,21 @@ ovrError:
 
 	bool OVR::swap(HMD& _hmd)
 	{
-		if (NULL == m_hmd)
+		_hmd.flags = BGFX_HMD_NONE;
+
+		if (NULL != m_hmd)
+		{
+			_hmd.flags |= BGFX_HMD_DEVICE_RESOLUTION;
+			_hmd.deviceWidth  = m_hmd->Resolution.w;
+			_hmd.deviceHeight = m_hmd->Resolution.h;
+		}
+
+		if (!m_isenabled)
 		{
 			return false;
 		}
 
+		_hmd.flags |= BGFX_HMD_RENDERING;
 		ovrHmd_EndFrame(m_hmd, m_pose, m_texture);
 
 		if (m_warning)

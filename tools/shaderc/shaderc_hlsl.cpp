@@ -7,6 +7,7 @@
 
 #if SHADERC_CONFIG_HLSL
 
+#define INITGUID
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
 
@@ -101,11 +102,10 @@ struct UniformRemap
 
 static const UniformRemap s_uniformRemap[7] =
 {
-	{ UniformType::Uniform1iv,   D3D_SVC_SCALAR,         D3D_SVT_INT,   0, 0 },
-	{ UniformType::Uniform1fv,   D3D_SVC_SCALAR,         D3D_SVT_FLOAT, 0, 0 },
-	{ UniformType::Uniform4fv,   D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 0, 0 },
-	{ UniformType::Uniform3x3fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 3 },
-	{ UniformType::Uniform4x4fv, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 4, 4 },
+	{ UniformType::Int1, D3D_SVC_SCALAR,         D3D_SVT_INT,   0, 0 },
+	{ UniformType::Vec4, D3D_SVC_VECTOR,         D3D_SVT_FLOAT, 0, 0 },
+	{ UniformType::Mat3, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 3 },
+	{ UniformType::Mat4, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 4, 4 },
 };
 
 UniformType::Enum findUniformType(const D3D11_SHADER_TYPE_DESC& constDesc)

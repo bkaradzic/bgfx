@@ -486,9 +486,9 @@ struct Imgui
 		PosUvVertex::init();
 		PosNormalVertex::init();
 
-		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Uniform4fv);
-		u_imageSwizzle    = bgfx::createUniform("u_swizzle",         bgfx::UniformType::Uniform4fv);
-		s_texColor        = bgfx::createUniform("s_texColor",        bgfx::UniformType::Uniform1i);
+		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
+		u_imageSwizzle    = bgfx::createUniform("u_swizzle",         bgfx::UniformType::Vec4);
+		s_texColor        = bgfx::createUniform("s_texColor",        bgfx::UniformType::Int1);
 
 		const bgfx::Memory* vs_imgui_color;
 		const bgfx::Memory* fs_imgui_color;
@@ -604,12 +604,11 @@ struct Imgui
 		bgfx::destroyUniform(u_imageSwizzle);
 		bgfx::destroyUniform(s_texColor);
 #if !USE_NANOVG_FONT
-		for (uint16_t ii = 0; ii < IMGUI_CONFIG_MAX_FONTS; ++ii)
+		for (uint16_t ii = 0, num = m_fontHandle.getNumHandles(); ii < num; ++ii)
 		{
-			if (bgfx::isValid(m_fonts[ii].m_texture) )
-			{
-				bgfx::destroyTexture(m_fonts[ii].m_texture);
-			}
+			uint16_t idx = m_fontHandle.getHandleAt(0);
+			bgfx::destroyTexture(m_fonts[idx].m_texture);
+			m_fontHandle.free(idx);
 		}
 #endif // !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_missingTexture);
@@ -833,7 +832,7 @@ struct Imgui
 		bgfx::setViewSeq(_view, true);
 
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
 		{
 			m_viewWidth = _width / 2;
 			m_surfaceWidth = _surfaceWidth / 2;

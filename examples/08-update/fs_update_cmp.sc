@@ -7,9 +7,9 @@ $input v_texcoord0
 
 #include "../common/common.sh"
 
-SAMPLER2D(u_texColor, 0);
+SAMPLER2D(s_texColor, 0);
 
 void main()
 {
-	gl_FragColor = texture2D(u_texColor, v_texcoord0.xy*0.5+0.5);
+	gl_FragColor = texture2D(s_texColor, v_texcoord0.xy*0.5+0.5);
 }

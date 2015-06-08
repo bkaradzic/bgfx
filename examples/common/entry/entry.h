@@ -84,13 +84,24 @@ namespace entry
 			Down,
 			Left,
 			Right,
-			PageUp,
-			PageDown,
+			Insert,
+			Delete,
 			Home,
 			End,
+			PageUp,
+			PageDown,
 			Print,
 			Plus,
 			Minus,
+			LeftBracket,
+			RightBracket,
+			Semicolon,
+			Quote,
+			Comma,
+			Period,
+			Slash,
+			Backslash,
+			Tilde,
 			F1,
 			F2,
 			F3,
@@ -169,6 +180,8 @@ namespace entry
 			Count
 		};
 	};
+
+	const char* getName(Key::Enum _key);
 
 	struct MouseState
 	{

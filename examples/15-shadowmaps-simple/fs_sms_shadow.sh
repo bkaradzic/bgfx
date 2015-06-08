@@ -7,10 +7,10 @@
 
 uniform vec4 u_lightPos;
 #if SHADOW_PACKED_DEPTH
-SAMPLER2D(u_shadowMap, 4);
+SAMPLER2D(u_shadowMap, 0);
 #	define Sampler sampler2D
 #else
-SAMPLER2DSHADOW(u_shadowMap, 4);
+SAMPLER2DSHADOW(u_shadowMap, 0);
 #	define Sampler sampler2DShadow
 #endif // SHADOW_PACKED_DEPTH
 

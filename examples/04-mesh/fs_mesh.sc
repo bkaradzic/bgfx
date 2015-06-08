@@ -7,7 +7,7 @@ $input v_pos, v_view, v_normal, v_color0
 
 #include "../common/common.sh"
 
-uniform float u_time;
+uniform vec4 u_time;
 
 vec2 blinn(vec3 _lightDir, vec3 _normal, vec3 _viewDir)
 {
@@ -39,9 +39,9 @@ void main()
 	vec4 lc = lit(bln.x, bln.y, 1.0);
 	float fres = fresnel(bln.x, 0.2, 5.0);
 
-	float index = ( (sin(v_pos.x*3.0+u_time)*0.3+0.7)
-				+ (  cos(v_pos.y*3.0+u_time)*0.4+0.6)
-				+ (  cos(v_pos.z*3.0+u_time)*0.2+0.8)
+	float index = ( (sin(v_pos.x*3.0+u_time.x)*0.3+0.7)
+				+ (  cos(v_pos.y*3.0+u_time.x)*0.4+0.6)
+				+ (  cos(v_pos.z*3.0+u_time.x)*0.2+0.8)
 				)*M_PI;
 
 	vec3 color = vec3(sin(index*8.0)*0.4 + 0.6

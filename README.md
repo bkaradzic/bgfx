@@ -59,10 +59,6 @@ Who is using it?
 http://airmech.com/ AirMech is a free-to-play futuristic action real-time
 strategy video game developed and published by Carbon Games.
 
-http://loomsdk.com/ Loom Game Engine developed by The Engine Company. Loom
-is a powerful 2D game engine with live reloading of code and assets, a friendly
-scripting language, and an efficient command-line workflow.
-
 https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.  
 ![cmftStudio](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
 

@@ -86,9 +86,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::setDebug(debug);
 
 	// Uniforms.
-	bgfx::UniformHandle u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Uniform4fv);
-	bgfx::UniformHandle u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Uniform4x4fv);
+	bgfx::UniformHandle u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Int1);
+	bgfx::UniformHandle u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Mat4);
 
 	// Vertex declarations.
 	bgfx::VertexDecl PosNormalDecl;
@@ -178,7 +178,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	state[1]->m_viewId  = RENDER_SCENE_PASS_ID;
 	state[1]->m_numTextures = 1;
 	state[1]->m_textures[0].m_flags = UINT32_MAX;
-	state[1]->m_textures[0].m_stage = 4;
+	state[1]->m_textures[0].m_stage = 0;
 	state[1]->m_textures[0].m_sampler = u_shadowMap;
 	state[1]->m_textures[0].m_texture = shadowMapTexture;
 

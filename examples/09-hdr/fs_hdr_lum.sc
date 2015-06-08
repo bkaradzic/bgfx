@@ -7,21 +7,21 @@ $input v_texcoord0
 
 #include "common.sh"
 
-SAMPLER2D(u_texColor, 0);
+SAMPLER2D(s_texColor, 0);
 
 void main()
 {
 	float delta = 0.0001;
 
-	vec3 rgb0 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[0].xy) );
-	vec3 rgb1 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[1].xy) );
-	vec3 rgb2 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[2].xy) );
-	vec3 rgb3 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[3].xy) );
-	vec3 rgb4 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[4].xy) );
-	vec3 rgb5 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[5].xy) );
-	vec3 rgb6 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[6].xy) );
-	vec3 rgb7 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[7].xy) );
-	vec3 rgb8 = decodeRGBE8(texture2D(u_texColor, v_texcoord0+u_offset[8].xy) );
+	vec3 rgb0 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[0].xy) );
+	vec3 rgb1 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[1].xy) );
+	vec3 rgb2 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[2].xy) );
+	vec3 rgb3 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[3].xy) );
+	vec3 rgb4 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[4].xy) );
+	vec3 rgb5 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[5].xy) );
+	vec3 rgb6 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[6].xy) );
+	vec3 rgb7 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[7].xy) );
+	vec3 rgb8 = decodeRGBE8(texture2D(s_texColor, v_texcoord0+u_offset[8].xy) );
 	float avg = luma(rgb0).x
 			  + luma(rgb1).x
 			  + luma(rgb2).x

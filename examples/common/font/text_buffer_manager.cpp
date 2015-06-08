@@ -619,7 +619,7 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
 		.end();
 
-	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
+	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Int1);
 }
 
 TextBufferManager::~TextBufferManager()

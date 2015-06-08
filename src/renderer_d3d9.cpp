@@ -548,6 +548,14 @@ namespace bgfx { namespace d3d9
 						, s_textureFormat[ii].m_fmt
 						) ) ? BGFX_CAPS_FORMAT_TEXTURE_VERTEX : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
+					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+						, m_deviceType
+						, adapterFormat
+						, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
+						, D3DRTYPE_TEXTURE
+						, s_textureFormat[ii].m_fmt
+						) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
 					g_caps.formats[ii] = support;
 				}
 			}
@@ -1466,7 +1474,7 @@ namespace bgfx { namespace d3d9
 
 				switch ( (int32_t)type)
 				{
-				case UniformType::Uniform3x3fv:
+				case UniformType::Mat3:
 					{
 						float* value = (float*)data;
 						for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3, value += 9)
@@ -1489,7 +1497,7 @@ namespace bgfx { namespace d3d9
 					}
 					break;
 
-				case UniformType::Uniform3x3fv|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT:
 					{
 						float* value = (float*)data;
 						for (uint32_t ii = 0, count = num/3; ii < count; ++ii, loc += 3, value += 9)
@@ -1512,14 +1520,9 @@ namespace bgfx { namespace d3d9
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Uniform1i,    I, int);
-				CASE_IMPLEMENT_UNIFORM(Uniform1f,    F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform1iv,   I, int);
-				CASE_IMPLEMENT_UNIFORM(Uniform1fv,   F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform2fv,   F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform3fv,   F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform4fv,   F, float);
-				CASE_IMPLEMENT_UNIFORM(Uniform4x4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM(Int1, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4, F, float);
+				CASE_IMPLEMENT_UNIFORM(Mat4, F, float);
 
 				case UniformType::End:
 					break;
@@ -1606,22 +1609,29 @@ namespace bgfx { namespace d3d9
 				DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
 				DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 
-				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+				if (BGFX_CLEAR_COLOR & _clear.m_flags)
 				{
-					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE
 						, D3DCOLORWRITEENABLE_RED
 						| D3DCOLORWRITEENABLE_GREEN
 						| D3DCOLORWRITEENABLE_BLUE
 						| D3DCOLORWRITEENABLE_ALPHA
 						) );
+				}
+				else
+				{
+					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, 0) );
+				}
+
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+				{
+					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, TRUE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS) );
 				}
 				else
 				{
 					DX_CHECK(device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE) );
-					DX_CHECK(device->SetRenderState(D3DRS_COLORWRITEENABLE, 0) );
 					DX_CHECK(device->SetRenderState(D3DRS_ZENABLE, FALSE) );
 				}
 

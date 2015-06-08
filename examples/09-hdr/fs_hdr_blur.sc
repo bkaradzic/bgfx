@@ -7,9 +7,9 @@ $input v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
 
 #include "common.sh"
 
-SAMPLER2D(u_texColor, 0);
+SAMPLER2D(s_texColor, 0);
 
 void main()
 {
-	gl_FragColor = blur9(u_texColor, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4);
+	gl_FragColor = blur9(s_texColor, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4);
 }

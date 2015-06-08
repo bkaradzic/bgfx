@@ -50,7 +50,7 @@ project "shaderc"
 			"Cocoa.framework",
 		}
 
-	configuration { "windows", "vs*" }
+	configuration { "vs*" }
 		includedirs {
 			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
@@ -61,10 +61,9 @@ project "shaderc"
 		}
 
 
-	configuration { "windows" }
+	configuration { "vs* or mingw*" }
 		links {
 			"d3dcompiler",
-			"dxguid",
 		}
 
 	configuration {}

@@ -44,9 +44,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	bgfx::UniformHandle u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Uniform3fv);
-	bgfx::UniformHandle u_texStipple = bgfx::createUniform("u_texStipple", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Int1);
+	bgfx::UniformHandle u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Vec4);
 
 	bgfx::ProgramHandle program = loadProgram("vs_tree", "fs_tree");
 
@@ -163,7 +163,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
 		{
 			float view[16];
 			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
@@ -209,26 +209,26 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		stippleInv[1] = 1.0f;
 		stippleInv[2] = (float(transitionFrame)*4.0f/255.0f) - (1.0f/255.0f);
 
-		bgfx::setTexture(0, u_texColor, textureBark);
-		bgfx::setTexture(1, u_texStipple, textureStipple);
+		bgfx::setTexture(0, s_texColor, textureBark);
+		bgfx::setTexture(1, s_texStipple, textureStipple);
 		bgfx::setUniform(u_stipple, stipple);
 		meshSubmit(meshTrunk[mainLOD], 0, program, mtx, stateOpaque);
 
-		bgfx::setTexture(0, u_texColor, textureLeafs);
-		bgfx::setTexture(1, u_texStipple, textureStipple);
+		bgfx::setTexture(0, s_texColor, textureLeafs);
+		bgfx::setTexture(1, s_texStipple, textureStipple);
 		bgfx::setUniform(u_stipple, stipple);
 		meshSubmit(meshTop[mainLOD], 0, program, mtx, stateTransparent);
 
 		if (transitions
 		&& (transitionFrame != 0) )
 		{
-			bgfx::setTexture(0, u_texColor, textureBark);
-			bgfx::setTexture(1, u_texStipple, textureStipple);
+			bgfx::setTexture(0, s_texColor, textureBark);
+			bgfx::setTexture(1, s_texStipple, textureStipple);
 			bgfx::setUniform(u_stipple, stippleInv);
 			meshSubmit(meshTrunk[targetLOD], 0, program, mtx, stateOpaque);
 
-			bgfx::setTexture(0, u_texColor, textureLeafs);
-			bgfx::setTexture(1, u_texStipple, textureStipple);
+			bgfx::setTexture(0, s_texColor, textureLeafs);
+			bgfx::setTexture(1, s_texStipple, textureStipple);
 			bgfx::setUniform(u_stipple, stippleInv);
 			meshSubmit(meshTop[targetLOD], 0, program, mtx, stateTransparent);
 		}
@@ -279,9 +279,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Cleanup.
 	bgfx::destroyProgram(program);
 
-	bgfx::destroyUniform(u_texColor);
+	bgfx::destroyUniform(s_texColor);
+	bgfx::destroyUniform(s_texStipple);
 	bgfx::destroyUniform(u_stipple);
-	bgfx::destroyUniform(u_texStipple);
 
 	bgfx::destroyTexture(textureStipple);
 	bgfx::destroyTexture(textureLeafs);

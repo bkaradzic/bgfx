@@ -38,6 +38,118 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 #endif // ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 
+	static const char* s_keyName[] =
+	{
+		"None",
+		"Esc",
+		"Return",
+		"Tab",
+		"Space",
+		"Backspace",
+		"Up",
+		"Down",
+		"Left",
+		"Right",
+		"Insert",
+		"Delete",
+		"Home",
+		"End",
+		"PageUp",
+		"PageDown",
+		"Print",
+		"Plus",
+		"Minus",
+		"LeftBracket",
+		"RightBracket",
+		"Semicolon",
+		"Quote",
+		"Comma",
+		"Period",
+		"Slash",
+		"Backslash",
+		"Tilde",
+		"F1",
+		"F2",
+		"F3",
+		"F4",
+		"F5",
+		"F6",
+		"F7",
+		"F8",
+		"F9",
+		"F10",
+		"F11",
+		"F12",
+		"NumPad0",
+		"NumPad1",
+		"NumPad2",
+		"NumPad3",
+		"NumPad4",
+		"NumPad5",
+		"NumPad6",
+		"NumPad7",
+		"NumPad8",
+		"NumPad9",
+		"Key0",
+		"Key1",
+		"Key2",
+		"Key3",
+		"Key4",
+		"Key5",
+		"Key6",
+		"Key7",
+		"Key8",
+		"Key9",
+		"KeyA",
+		"KeyB",
+		"KeyC",
+		"KeyD",
+		"KeyE",
+		"KeyF",
+		"KeyG",
+		"KeyH",
+		"KeyI",
+		"KeyJ",
+		"KeyK",
+		"KeyL",
+		"KeyM",
+		"KeyN",
+		"KeyO",
+		"KeyP",
+		"KeyQ",
+		"KeyR",
+		"KeyS",
+		"KeyT",
+		"KeyU",
+		"KeyV",
+		"KeyW",
+		"KeyX",
+		"KeyY",
+		"KeyZ",
+		"GamepadA",
+		"GamepadB",
+		"GamepadX",
+		"GamepadY",
+		"GamepadThumbL",
+		"GamepadThumbR",
+		"GamepadShoulderL",
+		"GamepadShoulderR",
+		"GamepadUp",
+		"GamepadDown",
+		"GamepadLeft",
+		"GamepadRight",
+		"GamepadBack",
+		"GamepadStart",
+		"GamepadGuide",
+	};
+	BX_STATIC_ASSERT(Key::Count == BX_COUNTOF(s_keyName) );
+
+	const char* getName(Key::Enum _key)
+	{
+		BX_CHECK(_key < Key::Count, "Invalid key %d.", _key);
+		return s_keyName[_key];
+	}
+
 	char keyToAscii(Key::Enum _key, uint8_t _modifiers)
 	{
 		const bool isAscii = (Key::Key0 <= _key && _key <= Key::KeyZ)
@@ -98,11 +210,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return false;
 	}
 
-	void cmd(const void* _userData)
-	{
-		cmdExec( (const char*)_userData);
-	}
-
 	int cmdMouseLock(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
 	{
 		if (_argc > 1)
@@ -156,6 +263,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				return 0;
 			}
+			else if (0 == strcmp(_argv[1], "fullscreen") )
+			{
+				WindowHandle window = { 0 };
+				toggleFullscreen(window);
+				return 0;
+			}
 		}
 
 		return 1;
@@ -169,18 +282,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static const InputBinding s_bindings[] =
 	{
-		{ entry::Key::KeyQ,         entry::Modifier::LeftCtrl,  1, cmd, "exit"                              },
-		{ entry::Key::F1,           entry::Modifier::None,      1, cmd, "graphics stats"                    },
-		{ entry::Key::GamepadStart, entry::Modifier::None,      1, cmd, "graphics stats"                    },
-		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, cmd, "graphics stats 0\ngraphics text 0" },
-		{ entry::Key::F3,           entry::Modifier::None,      1, cmd, "graphics wireframe"                },
-		{ entry::Key::F4,           entry::Modifier::None,      1, cmd, "graphics hmd"                      },
-		{ entry::Key::F4,           entry::Modifier::LeftShift, 1, cmd, "graphics hmdrecenter"              },
-		{ entry::Key::F4,           entry::Modifier::LeftCtrl,  1, cmd, "graphics hmddbg"                   },
-		{ entry::Key::F7,           entry::Modifier::None,      1, cmd, "graphics vsync"                    },
-		{ entry::Key::F8,           entry::Modifier::None,      1, cmd, "graphics msaa"                     },
-		{ entry::Key::F9,           entry::Modifier::None,      1, cmd, "graphics flush"                    },
-		{ entry::Key::Print,        entry::Modifier::None,      1, cmd, "graphics screenshot"               },
+		{ entry::Key::KeyQ,         entry::Modifier::LeftCtrl,  1, NULL, "exit"                              },
+		{ entry::Key::KeyQ,         entry::Modifier::RightCtrl, 1, NULL, "exit"                              },
+		{ entry::Key::KeyF,         entry::Modifier::LeftCtrl,  1, NULL, "graphics fullscreen"               },
+		{ entry::Key::KeyF,         entry::Modifier::RightCtrl, 1, NULL, "graphics fullscreen"               },
+		{ entry::Key::F11,          entry::Modifier::None,      1, NULL, "graphics fullscreen"               },
+		{ entry::Key::F1,           entry::Modifier::None,      1, NULL, "graphics stats"                    },
+		{ entry::Key::GamepadStart, entry::Modifier::None,      1, NULL, "graphics stats"                    },
+		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, NULL, "graphics stats 0\ngraphics text 0" },
+		{ entry::Key::F3,           entry::Modifier::None,      1, NULL, "graphics wireframe"                },
+		{ entry::Key::F4,           entry::Modifier::None,      1, NULL, "graphics hmd"                      },
+		{ entry::Key::F4,           entry::Modifier::LeftShift, 1, NULL, "graphics hmdrecenter"              },
+		{ entry::Key::F4,           entry::Modifier::LeftCtrl,  1, NULL, "graphics hmddbg"                   },
+		{ entry::Key::F7,           entry::Modifier::None,      1, NULL, "graphics vsync"                    },
+		{ entry::Key::F8,           entry::Modifier::None,      1, NULL, "graphics msaa"                     },
+		{ entry::Key::F9,           entry::Modifier::None,      1, NULL, "graphics flush"                    },
+		{ entry::Key::Print,        entry::Modifier::None,      1, NULL, "graphics screenshot"               },
 
 		INPUT_BINDING_END
 	};

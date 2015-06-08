@@ -448,34 +448,34 @@ struct Uniforms
 		m_XOffset = 10.0f/512.0f;
 		m_YOffset = 10.0f/512.0f;
 
-		u_params0          = bgfx::createUniform("u_params0",          bgfx::UniformType::Uniform4fv);
-		u_params1          = bgfx::createUniform("u_params1",          bgfx::UniformType::Uniform4fv);
-		u_params2          = bgfx::createUniform("u_params2",          bgfx::UniformType::Uniform4fv);
-		u_color            = bgfx::createUniform("u_color",            bgfx::UniformType::Uniform4fv);
-		u_smSamplingParams = bgfx::createUniform("u_smSamplingParams", bgfx::UniformType::Uniform4fv);
-		u_csmFarDistances  = bgfx::createUniform("u_csmFarDistances",  bgfx::UniformType::Uniform4fv);
-		u_lightMtx         = bgfx::createUniform("u_lightMtx",         bgfx::UniformType::Uniform4x4fv);
+		u_params0          = bgfx::createUniform("u_params0",          bgfx::UniformType::Vec4);
+		u_params1          = bgfx::createUniform("u_params1",          bgfx::UniformType::Vec4);
+		u_params2          = bgfx::createUniform("u_params2",          bgfx::UniformType::Vec4);
+		u_color            = bgfx::createUniform("u_color",            bgfx::UniformType::Vec4);
+		u_smSamplingParams = bgfx::createUniform("u_smSamplingParams", bgfx::UniformType::Vec4);
+		u_csmFarDistances  = bgfx::createUniform("u_csmFarDistances",  bgfx::UniformType::Vec4);
+		u_lightMtx         = bgfx::createUniform("u_lightMtx",         bgfx::UniformType::Mat4);
 
-		u_tetraNormalGreen  = bgfx::createUniform("u_tetraNormalGreen",  bgfx::UniformType::Uniform3fv);
-		u_tetraNormalYellow = bgfx::createUniform("u_tetraNormalYellow", bgfx::UniformType::Uniform3fv);
-		u_tetraNormalBlue   = bgfx::createUniform("u_tetraNormalBlue",   bgfx::UniformType::Uniform3fv);
-		u_tetraNormalRed    = bgfx::createUniform("u_tetraNormalRed",    bgfx::UniformType::Uniform3fv);
+		u_tetraNormalGreen  = bgfx::createUniform("u_tetraNormalGreen",  bgfx::UniformType::Vec4);
+		u_tetraNormalYellow = bgfx::createUniform("u_tetraNormalYellow", bgfx::UniformType::Vec4);
+		u_tetraNormalBlue   = bgfx::createUniform("u_tetraNormalBlue",   bgfx::UniformType::Vec4);
+		u_tetraNormalRed    = bgfx::createUniform("u_tetraNormalRed",    bgfx::UniformType::Vec4);
 
-		u_shadowMapMtx0 = bgfx::createUniform("u_shadowMapMtx0", bgfx::UniformType::Uniform4x4fv);
-		u_shadowMapMtx1 = bgfx::createUniform("u_shadowMapMtx1", bgfx::UniformType::Uniform4x4fv);
-		u_shadowMapMtx2 = bgfx::createUniform("u_shadowMapMtx2", bgfx::UniformType::Uniform4x4fv);
-		u_shadowMapMtx3 = bgfx::createUniform("u_shadowMapMtx3", bgfx::UniformType::Uniform4x4fv);
+		u_shadowMapMtx0 = bgfx::createUniform("u_shadowMapMtx0", bgfx::UniformType::Mat4);
+		u_shadowMapMtx1 = bgfx::createUniform("u_shadowMapMtx1", bgfx::UniformType::Mat4);
+		u_shadowMapMtx2 = bgfx::createUniform("u_shadowMapMtx2", bgfx::UniformType::Mat4);
+		u_shadowMapMtx3 = bgfx::createUniform("u_shadowMapMtx3", bgfx::UniformType::Mat4);
 
-		u_lightPosition             = bgfx::createUniform("u_lightPosition",              bgfx::UniformType::Uniform4fv);
-		u_lightAmbientPower         = bgfx::createUniform("u_lightAmbientPower",          bgfx::UniformType::Uniform4fv);
-		u_lightDiffusePower         = bgfx::createUniform("u_lightDiffusePower",          bgfx::UniformType::Uniform4fv);
-		u_lightSpecularPower        = bgfx::createUniform("u_lightSpecularPower",         bgfx::UniformType::Uniform4fv);
-		u_lightSpotDirectionInner   = bgfx::createUniform("u_lightSpotDirectionInner",    bgfx::UniformType::Uniform4fv);
-		u_lightAttenuationSpotOuter = bgfx::createUniform("u_lightAttenuationSpotOuter",  bgfx::UniformType::Uniform4fv);
+		u_lightPosition             = bgfx::createUniform("u_lightPosition",              bgfx::UniformType::Vec4);
+		u_lightAmbientPower         = bgfx::createUniform("u_lightAmbientPower",          bgfx::UniformType::Vec4);
+		u_lightDiffusePower         = bgfx::createUniform("u_lightDiffusePower",          bgfx::UniformType::Vec4);
+		u_lightSpecularPower        = bgfx::createUniform("u_lightSpecularPower",         bgfx::UniformType::Vec4);
+		u_lightSpotDirectionInner   = bgfx::createUniform("u_lightSpotDirectionInner",    bgfx::UniformType::Vec4);
+		u_lightAttenuationSpotOuter = bgfx::createUniform("u_lightAttenuationSpotOuter",  bgfx::UniformType::Vec4);
 
-		u_materialKa = bgfx::createUniform("u_materialKa", bgfx::UniformType::Uniform4fv);
-		u_materialKd = bgfx::createUniform("u_materialKd", bgfx::UniformType::Uniform4fv);
-		u_materialKs = bgfx::createUniform("u_materialKs", bgfx::UniformType::Uniform4fv);
+		u_materialKa = bgfx::createUniform("u_materialKa", bgfx::UniformType::Vec4);
+		u_materialKd = bgfx::createUniform("u_materialKd", bgfx::UniformType::Vec4);
+		u_materialKs = bgfx::createUniform("u_materialKs", bgfx::UniformType::Vec4);
 
 	}
 
@@ -1350,11 +1350,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	// Uniforms.
 	s_uniforms.init();
-	u_texColor = bgfx::createUniform("u_texColor",  bgfx::UniformType::Uniform1iv);
-	u_shadowMap[0] = bgfx::createUniform("u_shadowMap0", bgfx::UniformType::Uniform1iv);
-	u_shadowMap[1] = bgfx::createUniform("u_shadowMap1", bgfx::UniformType::Uniform1iv);
-	u_shadowMap[2] = bgfx::createUniform("u_shadowMap2", bgfx::UniformType::Uniform1iv);
-	u_shadowMap[3] = bgfx::createUniform("u_shadowMap3", bgfx::UniformType::Uniform1iv);
+	u_texColor = bgfx::createUniform("u_texColor",  bgfx::UniformType::Int1);
+	u_shadowMap[0] = bgfx::createUniform("u_shadowMap0", bgfx::UniformType::Int1);
+	u_shadowMap[1] = bgfx::createUniform("u_shadowMap1", bgfx::UniformType::Int1);
+	u_shadowMap[2] = bgfx::createUniform("u_shadowMap2", bgfx::UniformType::Int1);
+	u_shadowMap[3] = bgfx::createUniform("u_shadowMap3", bgfx::UniformType::Int1);
 
 	// Programs.
 	s_programs.init();

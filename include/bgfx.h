@@ -173,17 +173,12 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			Uniform1i,
-			Uniform1f,
+			Int1,
 			End,
 
-			Uniform1iv,
-			Uniform1fv,
-			Uniform2fv,
-			Uniform3fv,
-			Uniform4fv,
-			Uniform3x3fv,
-			Uniform4x4fv,
+			Vec4,
+			Mat3,
+			Mat4,
 
 			Count
 		};
@@ -419,8 +414,11 @@ namespace bgfx
 		};
 
 		Eye eye[2];
-		uint16_t width;  //!< Framebuffer width.
-		uint16_t height; //!< Framebuffer width.
+		uint16_t width;        //!< Framebuffer width.
+		uint16_t height;       //!< Framebuffer width.
+		uint32_t deviceWidth;  //!< Device resolution width
+		uint32_t deviceHeight; //!< Device resolution height
+		uint8_t flags;         //!< Status flags
 	};
 
 	/// Vertex declaration.

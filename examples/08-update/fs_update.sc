@@ -7,9 +7,9 @@ $input v_texcoord0
 
 #include "../common/common.sh"
 
-SAMPLERCUBE(u_texCube, 0);
+SAMPLERCUBE(s_texCube, 0);
 
 void main()
 {
-	gl_FragColor = textureCube(u_texCube, v_texcoord0);
+	gl_FragColor = textureCube(s_texCube, v_texcoord0);
 }
