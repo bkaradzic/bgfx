@@ -7,8 +7,8 @@ $input v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0 // in...
 
 #include "../common/common.sh"
 
-SAMPLER2D(u_texColor, 0);
-SAMPLER2D(u_texNormal, 1);
+SAMPLER2D(s_texColor,  0);
+SAMPLER2D(s_texNormal, 1);
 uniform vec4 u_lightPosRadius[4];
 uniform vec4 u_lightRgbInnerR[4];
 
@@ -61,7 +61,7 @@ void main()
 				);
 
 	vec3 normal;
-	normal.xy = texture2D(u_texNormal, v_texcoord0).xy * 2.0 - 1.0;
+	normal.xy = texture2D(s_texNormal, v_texcoord0).xy * 2.0 - 1.0;
 	normal.z = sqrt(1.0 - dot(normal.xy, normal.xy) );
 	vec3 view = -normalize(v_view);
 
@@ -71,7 +71,7 @@ void main()
 	lightColor += calcLight(2, tbn, v_wpos, normal, view);
 	lightColor += calcLight(3, tbn, v_wpos, normal, view);
 
-	vec4 color = toLinear(texture2D(u_texColor, v_texcoord0) );
+	vec4 color = toLinear(texture2D(s_texColor, v_texcoord0) );
 
 	gl_FragColor.xyz = max(vec3_splat(0.05), lightColor.xyz)*color.xyz;
 	gl_FragColor.w = 1.0;

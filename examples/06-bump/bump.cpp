@@ -148,8 +148,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
-	bgfx::UniformHandle u_texColor  = bgfx::createUniform("u_texColor",  bgfx::UniformType::Int1);
-	bgfx::UniformHandle u_texNormal = bgfx::createUniform("u_texNormal", bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Int1);
 
 	uint16_t numLights = 4;
 	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Vec4, numLights);
@@ -280,8 +280,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					bgfx::setIndexBuffer(ibh);
 
 					// Bind textures.
-					bgfx::setTexture(0, u_texColor, textureColor);
-					bgfx::setTexture(1, u_texNormal, textureNormal);
+					bgfx::setTexture(0, s_texColor, textureColor);
+					bgfx::setTexture(1, s_texNormal, textureNormal);
 
 					// Set render states.
 					bgfx::setState(0
@@ -320,8 +320,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					bgfx::setIndexBuffer(ibh);
 
 					// Bind textures.
-					bgfx::setTexture(0, u_texColor, textureColor);
-					bgfx::setTexture(1, u_texNormal, textureNormal);
+					bgfx::setTexture(0, s_texColor, textureColor);
+					bgfx::setTexture(1, s_texNormal, textureNormal);
 
 					// Set render states.
 					bgfx::setState(0
@@ -349,8 +349,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyProgram(program);
 	bgfx::destroyTexture(textureColor);
 	bgfx::destroyTexture(textureNormal);
-	bgfx::destroyUniform(u_texColor);
-	bgfx::destroyUniform(u_texNormal);
+	bgfx::destroyUniform(s_texColor);
+	bgfx::destroyUniform(s_texNormal);
 	bgfx::destroyUniform(u_lightPosRadius);
 	bgfx::destroyUniform(u_lightRgbInnerR);
 
