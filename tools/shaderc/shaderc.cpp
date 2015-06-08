@@ -568,6 +568,47 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 	return hash;
 }
 
+// horrible syntax to produce a string->string map
+const std::map<const std::string, const std::string>::value_type temp_map[] = { 
+	std::make_pair("POSITION", "a_position"),
+	std::make_pair("NORMAL", "a_normal"),
+	std::make_pair("TANGENT", "a_tangent"),
+	std::make_pair("BITANGENT", "a_bitangent"), 
+	std::make_pair("COLOR0", "a_color0"),
+	std::make_pair("COLOR1", "a_color1"),
+	std::make_pair("INDICES", "a_indices"),
+	std::make_pair("WEIGHT", "a_weight"),
+	std::make_pair("TEXCOORD0", "a_texcoord0"),
+	std::make_pair("TEXCOORD1", "a_texcoord1"),
+	std::make_pair("TEXCOORD2", "a_texcoord2"),
+	std::make_pair("TEXCOORD3", "a_texcoord3"),
+	std::make_pair("TEXCOORD4", "a_texcoord4"),
+	std::make_pair("TEXCOORD5", "a_texcoord5"),
+	std::make_pair("TEXCOORD6", "a_texcoord6"),
+	std::make_pair("TEXCOORD7", "a_texcoord7")
+};
+// if we want to use the [] map syntax, we can't actually have the map
+// be const, but the alternative map.find syntax is too horrible to consider
+std::map<const std::string, const std::string> canonAttrTable(temp_map, temp_map + sizeof temp_map / sizeof temp_map[0]);
+
+bool isAttributeCanonical(const std::string& name, const std::string& semantic) {
+	if (canonAttrTable.count(semantic) > 0)
+	{
+		if (name != canonAttrTable[semantic])
+		{
+			fprintf(stderr, "Attribute name error: expected [%s] for semantic [%s], got [%s]", 
+					canonAttrTable[semantic].c_str(), semantic.c_str(), name.c_str());
+			return false;
+		}
+		return true;
+	}
+	else
+	{
+		fprintf(stderr, "Attribute error: Unknown semantic [%s]\n", semantic.c_str());
+		return false;
+	}
+}
+
 void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
 {
 	char find[32];
@@ -952,6 +993,12 @@ int main(int _argc, const char* _argv[])
 					var.m_type.assign(typen, bx::strword(typen)-typen);
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
+
+					bool isAttribute = (0 == strncmp(name, "a_", 2) || 0 == strncmp(name, "i_", 2));
+					if (isAttribute && !isAttributeCanonical(var.m_name, var.m_semantics))
+					{
+						return EXIT_FAILURE;
+					}
 
 					if (d3d == 9
 					&&  var.m_semantics == "BITANGENT")
