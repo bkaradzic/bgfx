@@ -532,7 +532,7 @@ struct Preprocessor
 
 typedef std::vector<std::string> InOut;
 
-uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
+uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol, std::map<std::string, std::string>& replacements)
 {
 	uint32_t hash = 0;
 	_str = bx::strws(_str);
@@ -548,6 +548,10 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 				delim = delim > _eol ? _eol : delim;
 				std::string token;
 				token.assign(_str, delim-_str);
+				if (replacements.count(token) > 0)
+				{
+					token = replacements[token];
+				}
 				_inout.push_back(token);
 				_str = bx::strws(delim + 1);
 			}
@@ -566,6 +570,55 @@ uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 	}
 
 	return hash;
+}
+
+// horrible syntax to produce a string->string map
+const std::map<const std::string, const std::string>::value_type temp_map[] = { 
+	std::make_pair("POSITION", "position"),
+	std::make_pair("NORMAL", "normal"),
+	std::make_pair("TANGENT", "tangent"),
+	std::make_pair("BITANGENT", "bitangent"), 
+	std::make_pair("COLOR0", "color0"),
+	std::make_pair("COLOR1", "color1"),
+	std::make_pair("INDICES", "indices"),
+	std::make_pair("WEIGHT", "weight"),
+	std::make_pair("TEXCOORD0", "texcoord0"),
+	std::make_pair("TEXCOORD1", "texcoord1"),
+	std::make_pair("TEXCOORD2", "texcoord2"),
+	std::make_pair("TEXCOORD3", "texcoord3"),
+	std::make_pair("TEXCOORD4", "texcoord4"),
+	std::make_pair("TEXCOORD5", "texcoord5"),
+	std::make_pair("TEXCOORD6", "texcoord6"),
+	std::make_pair("TEXCOORD7", "texcoord7")
+};
+// if we want to use the [] map syntax, we can't actually have the map
+// be const, but the alternative map.find syntax is too horrible to consider
+std::map<const std::string, const std::string> canonAttrTable(temp_map, temp_map + sizeof temp_map / sizeof temp_map[0]);
+
+std::string makeAttributeCanonicalName(const std::string& name, const std::string& semantic, 
+										std::map<std::string, std::string>& replacementMap) {
+	std::string prefix = name.substr(0, 2); // either i_ or a_
+	std::string body = "";
+	if (canonAttrTable.count(semantic) > 0)
+	{
+		body = canonAttrTable[semantic];
+	}
+	else
+	{
+		fprintf(stderr, "Attribute rename error: Unknown semantic [%s]\n", semantic.c_str());
+		// Not sure what to do in case of error, so just leave name unchanged
+		return name;
+	}
+	std::string ret = prefix + body;
+	if (ret != name)
+	{
+		if (g_verbose)
+		{
+			fprintf(stdout, "Renaming [%s] --> [%s]\n", name.c_str(), ret.c_str());
+		}
+		replacementMap[name] = ret;
+	}
+	return ret;
 }
 
 void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
@@ -646,6 +699,7 @@ void help(const char* _error = NULL)
 		  "           windows\n"
 		  "      --preprocess              Preprocess only.\n"
 		  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
+		  "      --rename                  Rename attributes to their canonical OpenGL names based on their semantics.\n"
 		  "      --type <type>             Shader type (vertex, fragment)\n"
 		  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
 		  "      --verbose                 Verbose.\n"
@@ -769,6 +823,7 @@ int main(int _argc, const char* _argv[])
 	}
 
 	bool depends = cmdLine.hasArg("depends");
+	bool renameAttributes = cmdLine.hasArg("rename");
 	bool preprocessOnly = cmdLine.hasArg("preprocess");
 	const char* includeDir = cmdLine.findOption('i');
 
@@ -883,6 +938,7 @@ int main(int _argc, const char* _argv[])
 	else
 	{
 		VaryingMap varyingMap;
+		std::map<std::string, std::string> replacementMap;
 
 		std::string defaultVarying = dir + "varying.def.sc";
 		const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
@@ -953,6 +1009,14 @@ int main(int _argc, const char* _argv[])
 					var.m_name.assign(name, bx::strword(name)-name);
 					var.m_semantics.assign(semantics, bx::strword(semantics)-semantics);
 
+					bool isAttribute = (0 == strncmp(name, "a_", 2) || 0 == strncmp(name, "i_", 2));
+					if (renameAttributes && isAttribute) 
+					{
+						std::string canonicalName = makeAttributeCanonicalName(var.m_name, var.m_semantics, replacementMap);
+						preprocessor.writef("#define %s %s\n", var.m_name.c_str(), canonicalName.c_str());
+						var.m_name = canonicalName;
+					}
+
 					if (d3d == 9
 					&&  var.m_semantics == "BITANGENT")
 					{
@@ -1004,14 +1068,14 @@ int main(int _argc, const char* _argv[])
 					str += 5;
 					const char* comment = strstr(str, "//");
 					eol = NULL != comment && comment < eol ? comment : eol;
-					inputHash = parseInOut(shaderInputs, str, eol);
+					inputHash = parseInOut(shaderInputs, str, eol, replacementMap);
 				}
 				else if (0 == strncmp(str, "output", 6) )
 				{
 					str += 6;
 					const char* comment = strstr(str, "//");
 					eol = NULL != comment && comment < eol ? comment : eol;
-					outputHash = parseInOut(shaderOutputs, str, eol);
+					outputHash = parseInOut(shaderOutputs, str, eol, replacementMap);
 				}
 				else if (0 == strncmp(str, "raw", 3) )
 				{

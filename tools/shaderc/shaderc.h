@@ -50,6 +50,7 @@ extern bool g_verbose;
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 #include <bx/bx.h>
 #include <bx/debug.h>
