@@ -25,6 +25,7 @@ project ("example-common")
 	if _OPTIONS["with-scintilla"] then
 		defines {
 			"SCI_NAMESPACE",
+			"SCI_LEXER",
 		}
 
 		includedirs {
