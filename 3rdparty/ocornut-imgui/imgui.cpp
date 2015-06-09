@@ -8895,6 +8895,12 @@ struct ImFontAtlas::ImFontAtlasData
     int                 RangesCount;
 };
 
+const stbtt_fontinfo& getFontInfo(int index)
+{
+    const ImGuiIO& io = ImGui::GetIO();
+    return io.Fonts[index].InputData[0]->FontInfo;
+}
+
 ImFontAtlas::ImFontAtlas()
 {
     TexID = NULL;

@@ -22,6 +22,25 @@ project ("example-common")
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
+	if _OPTIONS["with-scintilla"] then
+		defines {
+			"SCI_NAMESPACE",
+		}
+
+		includedirs {
+			path.join(BGFX_DIR, "3rdparty/scintilla/include"),
+			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib"),
+		}
+
+		files {
+			path.join(BGFX_DIR, "3rdparty/scintilla/src/**.cxx"),
+			path.join(BGFX_DIR, "3rdparty/scintilla/src/**.h"),
+			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib/**.cxx"),
+			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib/**.h"),
+			path.join(BGFX_DIR, "3rdparty/scintilla/lexers/**.cxx"),
+		}
+	end
+
 	if _OPTIONS["with-sdl"] then
 		defines {
 			"ENTRY_CONFIG_USE_SDL=1",
