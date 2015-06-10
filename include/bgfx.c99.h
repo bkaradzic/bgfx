@@ -327,9 +327,6 @@ typedef enum bgfx_fatal
 #endif // BGFX_SHARED_LIB_USE
 
 #if defined(_MSC_VER)
-#   define BGFX_VTBL_CALL __stdcall
-#   define BGFX_VTBL_THIS  // passed via ecx
-#   define BGFX_VTBL_THIS_ // passed via ecx
 #   if BGFX_SHARED_LIB_BUILD
 #       define BGFX_SHARED_LIB_API __declspec(dllexport)
 #   elif BGFX_SHARED_LIB_USE
@@ -338,9 +335,6 @@ typedef enum bgfx_fatal
 #       define BGFX_SHARED_LIB_API
 #   endif // BGFX_SHARED_LIB_*
 #else
-#   define BGFX_VTBL_CALL
-#   define BGFX_VTBL_THIS  BGFX_VTBL_INTEFRACE _this
-#   define BGFX_VTBL_THIS_ BGFX_VTBL_INTEFRACE _this,
 #   define BGFX_SHARED_LIB_API
 #endif // defined(_MSC_VER)
 
@@ -360,19 +354,14 @@ typedef struct bgfx_callback_interface
 /**/
 typedef struct bgfx_callback_vtbl
 {
-#   define BGFX_VTBL_INTEFRACE bgfx_callback_interface_t
-
-    void* ctor;
-    void (BGFX_VTBL_CALL *fatal)(BGFX_VTBL_THIS_ bgfx_fatal_t _code, const char* _str);
-    uint32_t (BGFX_VTBL_CALL *cache_read_size)(BGFX_VTBL_THIS_ uint64_t _id);
-    bool (BGFX_VTBL_CALL *cache_read)(BGFX_VTBL_THIS_ uint64_t _id, void* _data, uint32_t _size);
-    void (BGFX_VTBL_CALL *cache_write)(BGFX_VTBL_THIS_ uint64_t _id, const void* _data, uint32_t _size);
-    void (BGFX_VTBL_CALL *screen_shot)(BGFX_VTBL_THIS_ const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip);
-    void (BGFX_VTBL_CALL *capture_begin)(BGFX_VTBL_THIS_ uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
-    void (BGFX_VTBL_CALL *capture_end)(BGFX_VTBL_THIS);
-    void (BGFX_VTBL_CALL *capture_frame)(BGFX_VTBL_THIS_ const void* _data, uint32_t _size);
-
-#   undef BGFX_VTBL_INTEFRACE
+    void (*fatal)(bgfx_callback_interface_t* _this, bgfx_fatal_t _code, const char* _str);
+    uint32_t (*cache_read_size)(bgfx_callback_interface_t* _this, uint64_t _id);
+    bool (*cache_read)(bgfx_callback_interface_t* _this, uint64_t _id, void* _data, uint32_t _size);
+    void (*cache_write)(bgfx_callback_interface_t* _this, uint64_t _id, const void* _data, uint32_t _size);
+    void (*screen_shot)(bgfx_callback_interface_t* _this, const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip);
+    void (*capture_begin)(bgfx_callback_interface_t* _this, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
+    void (*capture_end)(bgfx_callback_interface_t* _this);
+    void (*capture_frame)(bgfx_callback_interface_t* _this, const void* _data, uint32_t _size);
 
 } bgfx_callback_vtbl_t;
 
@@ -386,14 +375,9 @@ typedef struct bgfx_reallocator_interface
 /**/
 typedef struct bgfx_reallocator_vtbl
 {
-#   define BGFX_VTBL_INTEFRACE bgfx_reallocator_interface_t
-
-    void* ctor;
-    void* (BGFX_VTBL_CALL *alloc)(BGFX_VTBL_THIS_ size_t _size, size_t _align, const char* _file, uint32_t _line);
-    void  (BGFX_VTBL_CALL *free)(BGFX_VTBL_THIS_ void* _ptr, size_t _align, const char* _file, uint32_t _line);
-    void* (BGFX_VTBL_CALL *realloc)(BGFX_VTBL_THIS_ void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
-
-#   undef BGFX_VTBL_INTEFRACE
+    void* (*alloc)(bgfx_reallocator_interface_t* _this, size_t _size, size_t _align, const char* _file, uint32_t _line);
+    void  (*free)(bgfx_reallocator_interface_t* _this, void* _ptr, size_t _align, const char* _file, uint32_t _line);
+    void* (*realloc)(bgfx_reallocator_interface_t* _this, void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
 
 } bgfx_reallocator_vtbl_t;
 
