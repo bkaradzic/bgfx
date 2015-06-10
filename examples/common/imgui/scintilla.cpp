@@ -669,71 +669,71 @@ public:
 		const bool ctrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
 		const bool alt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
 
-		if (ImGui::IsKeyPressed(ImGuiKey_Tab) )
+		if (ImGui::IsKeyPressed(entry::Key::Tab) )
 		{
 			Editor::KeyDown(SCK_TAB, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Left) )
 		{
 			Editor::KeyDown(SCK_LEFT, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Right) )
 		{
 			Editor::KeyDown(SCK_RIGHT, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Up) )
 		{
 			Editor::KeyDown(SCK_UP, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Down) )
 		{
 			Editor::KeyDown(SCK_DOWN, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Home) )
+		else if (ImGui::IsKeyPressed(entry::Key::Home) )
 		{
 			Editor::KeyDown(SCK_HOME, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_End) )
+		else if (ImGui::IsKeyPressed(entry::Key::End) )
 		{
 			Editor::KeyDown(SCK_END, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Delete) )
+		else if (ImGui::IsKeyPressed(entry::Key::Delete) )
 		{
 			Editor::KeyDown(SCK_DELETE, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+		else if (ImGui::IsKeyPressed(entry::Key::Backspace) )
 		{
 			Editor::KeyDown(SCK_BACK, shift, ctrl, alt); inputGetChar();
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Enter) )
+		else if (ImGui::IsKeyPressed(entry::Key::Return) )
 		{
 			Editor::KeyDown(SCK_RETURN, shift, ctrl, alt); inputGetChar();
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Escape) )
+		else if (ImGui::IsKeyPressed(entry::Key::Esc) )
 		{
 			Editor::KeyDown(SCK_ESCAPE, shift, ctrl, alt);
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_A) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyA) )
 		{
 			Editor::KeyDown('A', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_C) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyC) )
 		{
 			Editor::KeyDown('C', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_V) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyV) )
 		{
 			Editor::KeyDown('V', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_X) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyX) )
 		{
 			Editor::KeyDown('X', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Y) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyY) )
 		{
 			Editor::KeyDown('Y', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Z) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyZ) )
 		{
 			Editor::KeyDown('Z', shift, ctrl, alt);	inputGetChar();
 		}
