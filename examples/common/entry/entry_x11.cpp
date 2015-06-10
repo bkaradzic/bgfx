@@ -477,7 +477,7 @@ namespace entry
 			XUnmapWindow(m_display, m_window[0]);
 			XDestroyWindow(m_display, m_window[0]);
 
-			return EXIT_SUCCESS;
+			return thread.getExitCode();
 		}
 
 		void setModifier(Modifier::Enum _modifier, bool _set)

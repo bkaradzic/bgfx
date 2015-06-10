@@ -499,7 +499,7 @@ namespace entry
 
 			s_xinput.shutdown();
 
-			return 0;
+			return thread.getExitCode();
 		}
 
 		LRESULT process(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
