@@ -35,7 +35,6 @@ struct OcornutImguiContext
 		{
 			bgfx::TransientVertexBuffer tvb;
 
-
 			const ImDrawList* cmd_list   = _lists[ii];
 			const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
             uint32_t vtx_size = (uint32_t)cmd_list->vtx_buffer.size();
@@ -56,6 +55,12 @@ struct OcornutImguiContext
             const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
 			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
 			{
+                if (pcmd->user_callback)
+                {
+                    pcmd->user_callback(cmd_list, pcmd);
+                    vtx_offset += pcmd->vtx_count;
+                    continue;
+                }
 				if (0 == pcmd->vtx_count)
 				{
 					continue;
@@ -92,6 +97,7 @@ struct OcornutImguiContext
 	{
 		m_viewId = 255;
 		m_allocator = _allocator;
+        m_lastScroll = 0;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.RenderDrawListsFn = renderDrawLists;
@@ -177,15 +183,19 @@ struct OcornutImguiContext
 		m_allocator = NULL;
 	}
 
-	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
+	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
 	{
 		m_viewId = _viewId;
 		ImGuiIO& io = ImGui::GetIO();
-		io.AddInputCharacter(_inputChar & 0x7f); // ASCII or GTFO! :)
+        if (_inputChar < 0x7f)
+		    io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
 		io.DisplaySize = ImVec2((float)_width, (float)_height);
 		io.DeltaTime = 1.0f / 60.0f;
 		io.MousePos = ImVec2((float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
+        io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
+        io.MouseWheel = (float)(_scroll - m_lastScroll);
+        m_lastScroll = _scroll;
 
 #if 0
 		io.KeysDown[ImGuiKey_Tab]        = inputGetKeyState(entry::Key::Tab);
@@ -223,6 +233,7 @@ struct OcornutImguiContext
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
 	uint8_t m_viewId;
+    int32_t m_lastScroll;
 };
 
 static OcornutImguiContext s_ctx;
@@ -252,9 +263,9 @@ void IMGUI_destroy()
 	s_ctx.destroy();
 }
 
-void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
+void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
 {
-	s_ctx.beginFrame(_mx, _my, _button, _width, _height, _inputChar, _viewId);
+	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }
 
 void IMGUI_endFrame()

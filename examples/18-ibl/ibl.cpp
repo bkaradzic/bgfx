@@ -311,7 +311,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, mouseState.m_my
 			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-			, 0
+			, mouseState.m_mz
 			, width
 			, height
 			);
