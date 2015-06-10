@@ -10,7 +10,10 @@
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
-#include "../entry/input.h"
+
+#if defined(SCI_NAMESPACE)
+#	include "../entry/input.h"
+#endif // defined(SCI_NAMESPACE)
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
@@ -112,23 +115,25 @@ struct OcornutImguiContext
 		io.IniFilename = NULL;
 		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? 0.0f : 0.5f;
 
-        io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;
-        io.KeyMap[ImGuiKey_LeftArrow]  = (int)entry::Key::Left;
-        io.KeyMap[ImGuiKey_RightArrow] = (int)entry::Key::Right;
-        io.KeyMap[ImGuiKey_UpArrow]    = (int)entry::Key::Up;
-        io.KeyMap[ImGuiKey_DownArrow]  = (int)entry::Key::Down;
-        io.KeyMap[ImGuiKey_Home]       = (int)entry::Key::Home;
-        io.KeyMap[ImGuiKey_End]        = (int)entry::Key::End;
-        io.KeyMap[ImGuiKey_Delete]     = (int)entry::Key::Delete;
-        io.KeyMap[ImGuiKey_Backspace]  = (int)entry::Key::Backspace;
-        io.KeyMap[ImGuiKey_Enter]      = (int)entry::Key::Return;
-        io.KeyMap[ImGuiKey_Escape]     = (int)entry::Key::Esc;
-        io.KeyMap[ImGuiKey_A]          = (int)entry::Key::KeyA;
-        io.KeyMap[ImGuiKey_C]          = (int)entry::Key::KeyC;
-        io.KeyMap[ImGuiKey_V]          = (int)entry::Key::KeyV;
-        io.KeyMap[ImGuiKey_X]          = (int)entry::Key::KeyX;
-        io.KeyMap[ImGuiKey_Y]          = (int)entry::Key::KeyY;
-        io.KeyMap[ImGuiKey_Z]          = (int)entry::Key::KeyZ;
+#if defined(SCI_NAMESPACE)
+		io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;
+		io.KeyMap[ImGuiKey_LeftArrow]  = (int)entry::Key::Left;
+		io.KeyMap[ImGuiKey_RightArrow] = (int)entry::Key::Right;
+		io.KeyMap[ImGuiKey_UpArrow]    = (int)entry::Key::Up;
+		io.KeyMap[ImGuiKey_DownArrow]  = (int)entry::Key::Down;
+		io.KeyMap[ImGuiKey_Home]       = (int)entry::Key::Home;
+		io.KeyMap[ImGuiKey_End]        = (int)entry::Key::End;
+		io.KeyMap[ImGuiKey_Delete]     = (int)entry::Key::Delete;
+		io.KeyMap[ImGuiKey_Backspace]  = (int)entry::Key::Backspace;
+		io.KeyMap[ImGuiKey_Enter]      = (int)entry::Key::Return;
+		io.KeyMap[ImGuiKey_Escape]     = (int)entry::Key::Esc;
+		io.KeyMap[ImGuiKey_A]          = (int)entry::Key::KeyA;
+		io.KeyMap[ImGuiKey_C]          = (int)entry::Key::KeyC;
+		io.KeyMap[ImGuiKey_V]          = (int)entry::Key::KeyV;
+		io.KeyMap[ImGuiKey_X]          = (int)entry::Key::KeyX;
+		io.KeyMap[ImGuiKey_Y]          = (int)entry::Key::KeyY;
+		io.KeyMap[ImGuiKey_Z]          = (int)entry::Key::KeyZ;
+#endif // defined(SCI_NAMESPACE)
 
 		const bgfx::Memory* vsmem;
 		const bgfx::Memory* fsmem;
@@ -202,21 +207,28 @@ struct OcornutImguiContext
 		m_viewId = _viewId;
 		ImGuiIO& io = ImGui::GetIO();
         if (_inputChar < 0x7f)
+		{
 		    io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
+		}
+
 		io.DisplaySize = ImVec2((float)_width, (float)_height);
 		io.DeltaTime = 1.0f / 60.0f;
 		io.MousePos = ImVec2((float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
-        io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
-        io.MouseWheel = (float)(_scroll - m_lastScroll);
-        m_lastScroll = _scroll;
+		io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
+		io.MouseWheel = (float)(_scroll - m_lastScroll);
+		m_lastScroll = _scroll;
 
-        uint8_t modifiers = inputGetModifiersState();
-        io.KeyShift = 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) );
-        io.KeyCtrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
-        io.KeyAlt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
-        for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
-            io.KeysDown[ii] = inputGetKeyState((entry::Key::Enum)ii);
+#if defined(SCI_NAMESPACE)
+		uint8_t modifiers = inputGetModifiersState();
+		io.KeyShift = 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) );
+		io.KeyCtrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
+		io.KeyAlt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
+		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
+		{
+			io.KeysDown[ii] = inputGetKeyState(entry::Key::Enum(ii) );
+		}
+#endif // defined(SCI_NAMESPACE)
 
 		ImGui::NewFrame();
 

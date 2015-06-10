@@ -29,7 +29,6 @@
 #include <bx/fpumath.h>
 #include <bx/handlealloc.h>
 
-#include "../entry/dbg.h"
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include "../nanovg/nanovg.h"
