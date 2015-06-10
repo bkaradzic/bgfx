@@ -10,6 +10,7 @@
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
+#include "../entry/input.h"
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
@@ -35,7 +36,6 @@ struct OcornutImguiContext
 		{
 			bgfx::TransientVertexBuffer tvb;
 
-
 			const ImDrawList* cmd_list   = _lists[ii];
 			const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
             uint32_t vtx_size = (uint32_t)cmd_list->vtx_buffer.size();
@@ -56,6 +56,12 @@ struct OcornutImguiContext
             const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
 			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
 			{
+                if (pcmd->user_callback)
+                {
+                    pcmd->user_callback(cmd_list, pcmd);
+                    vtx_offset += pcmd->vtx_count;
+                    continue;
+                }
 				if (0 == pcmd->vtx_count)
 				{
 					continue;
@@ -92,6 +98,7 @@ struct OcornutImguiContext
 	{
 		m_viewId = 255;
 		m_allocator = _allocator;
+        m_lastScroll = 0;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.RenderDrawListsFn = renderDrawLists;
@@ -105,10 +112,23 @@ struct OcornutImguiContext
 		io.IniFilename = NULL;
 		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? 0.0f : 0.5f;
 
-		for (uint32_t ii = 0; ii < ImGuiKey_COUNT; ++ii)
-		{
-			io.KeyMap[ii] = ImGuiKey_(ii);
-		}
+        io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;
+        io.KeyMap[ImGuiKey_LeftArrow]  = (int)entry::Key::Left;
+        io.KeyMap[ImGuiKey_RightArrow] = (int)entry::Key::Right;
+        io.KeyMap[ImGuiKey_UpArrow]    = (int)entry::Key::Up;
+        io.KeyMap[ImGuiKey_DownArrow]  = (int)entry::Key::Down;
+        io.KeyMap[ImGuiKey_Home]       = (int)entry::Key::Home;
+        io.KeyMap[ImGuiKey_End]        = (int)entry::Key::End;
+        io.KeyMap[ImGuiKey_Delete]     = (int)entry::Key::Delete;
+        io.KeyMap[ImGuiKey_Backspace]  = (int)entry::Key::Backspace;
+        io.KeyMap[ImGuiKey_Enter]      = (int)entry::Key::Return;
+        io.KeyMap[ImGuiKey_Escape]     = (int)entry::Key::Esc;
+        io.KeyMap[ImGuiKey_A]          = (int)entry::Key::KeyA;
+        io.KeyMap[ImGuiKey_C]          = (int)entry::Key::KeyC;
+        io.KeyMap[ImGuiKey_V]          = (int)entry::Key::KeyV;
+        io.KeyMap[ImGuiKey_X]          = (int)entry::Key::KeyX;
+        io.KeyMap[ImGuiKey_Y]          = (int)entry::Key::KeyY;
+        io.KeyMap[ImGuiKey_Z]          = (int)entry::Key::KeyZ;
 
 		const bgfx::Memory* vsmem;
 		const bgfx::Memory* fsmem;
@@ -177,35 +197,26 @@ struct OcornutImguiContext
 		m_allocator = NULL;
 	}
 
-	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
+	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
 	{
 		m_viewId = _viewId;
 		ImGuiIO& io = ImGui::GetIO();
-		io.AddInputCharacter(_inputChar & 0x7f); // ASCII or GTFO! :)
+        if (_inputChar < 0x7f)
+		    io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
 		io.DisplaySize = ImVec2((float)_width, (float)_height);
 		io.DeltaTime = 1.0f / 60.0f;
 		io.MousePos = ImVec2((float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
+        io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
+        io.MouseWheel = (float)(_scroll - m_lastScroll);
+        m_lastScroll = _scroll;
 
-#if 0
-		io.KeysDown[ImGuiKey_Tab]        = inputGetKeyState(entry::Key::Tab);
-		io.KeysDown[ImGuiKey_LeftArrow]  = inputGetKeyState(entry::Key::Left);
-		io.KeysDown[ImGuiKey_RightArrow] = inputGetKeyState(entry::Key::Right);
-		io.KeysDown[ImGuiKey_UpArrow]    = inputGetKeyState(entry::Key::Up);
-		io.KeysDown[ImGuiKey_DownArrow]  = inputGetKeyState(entry::Key::Down);
-		io.KeysDown[ImGuiKey_Home]       = inputGetKeyState(entry::Key::Home);
-		io.KeysDown[ImGuiKey_End]        = inputGetKeyState(entry::Key::End);
-		io.KeysDown[ImGuiKey_Delete]     = inputGetKeyState(entry::Key::Delete);
-		io.KeysDown[ImGuiKey_Backspace]  = inputGetKeyState(entry::Key::Backspace);
-		io.KeysDown[ImGuiKey_Enter]      = inputGetKeyState(entry::Key::Return);
-		io.KeysDown[ImGuiKey_Escape]     = inputGetKeyState(entry::Key::Esc);
-		io.KeysDown[ImGuiKey_A]          = inputGetKeyState(entry::Key::KeyA);
-		io.KeysDown[ImGuiKey_C]          = inputGetKeyState(entry::Key::KeyC);
-		io.KeysDown[ImGuiKey_V]          = inputGetKeyState(entry::Key::KeyV);
-		io.KeysDown[ImGuiKey_X]          = inputGetKeyState(entry::Key::KeyX);
-		io.KeysDown[ImGuiKey_Y]          = inputGetKeyState(entry::Key::KeyY);
-		io.KeysDown[ImGuiKey_Z]          = inputGetKeyState(entry::Key::KeyZ);
-#endif // 0
+        uint8_t modifiers = inputGetModifiersState();
+        io.KeyShift = 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) );
+        io.KeyCtrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
+        io.KeyAlt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
+        for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
+            io.KeysDown[ii] = inputGetKeyState((entry::Key::Enum)ii);
 
 		ImGui::NewFrame();
 
@@ -223,6 +234,7 @@ struct OcornutImguiContext
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
 	uint8_t m_viewId;
+    int32_t m_lastScroll;
 };
 
 static OcornutImguiContext s_ctx;
@@ -252,9 +264,9 @@ void IMGUI_destroy()
 	s_ctx.destroy();
 }
 
-void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int _width, int _height, char _inputChar, uint8_t _viewId)
+void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
 {
-	s_ctx.beginFrame(_mx, _my, _button, _width, _height, _inputChar, _viewId);
+	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }
 
 void IMGUI_endFrame()

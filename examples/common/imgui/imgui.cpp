@@ -824,7 +824,7 @@ struct Imgui
 		const int32_t mx = int32_t(float(_mx)*xscale);
 		const int32_t my = int32_t(float(_my)*yscale);
 
-		IMGUI_beginFrame(mx, my, _button, _width, _height, _inputChar, _view);
+		IMGUI_beginFrame(mx, my, _button, _scroll, _width, _height, _inputChar, _view);
 		nvgBeginFrameScaled(m_nvg, m_viewWidth, m_viewHeight, m_surfaceWidth, m_surfaceHeight, 1.0f);
 		nvgViewId(m_nvg, _view);
 
