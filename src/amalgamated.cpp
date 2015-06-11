@@ -14,6 +14,7 @@
 #include "renderer_d3d9.cpp"
 #include "renderer_d3d11.cpp"
 #include "renderer_d3d12.cpp"
+#include "renderer_mtl.cpp"
 #include "renderer_null.cpp"
 #include "renderer_gl.cpp"
 #include "renderer_vk.cpp"

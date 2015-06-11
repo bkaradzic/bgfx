@@ -136,6 +136,7 @@ function bgfxProject(_name, _kind, _defines)
 				path.join(BGFX_DIR, "src/renderer_d3d9.cpp"),
 				path.join(BGFX_DIR, "src/renderer_d3d11.cpp"),
 				path.join(BGFX_DIR, "src/renderer_d3d12.cpp"),
+				path.join(BGFX_DIR, "src/renderer_mtl.cpp"),
 				path.join(BGFX_DIR, "src/renderer_null.cpp"),
 				path.join(BGFX_DIR, "src/renderer_gl.cpp"),
 				path.join(BGFX_DIR, "src/renderer_vk.cpp"),
