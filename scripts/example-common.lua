@@ -28,6 +28,10 @@ project ("example-common")
 			"SCI_LEXER",
 		}
 
+		buildoptions {
+--			"-Wno-missing-field-initializers",
+		}
+
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty/scintilla/include"),
 			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib"),

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <map>
 #include <vector>
+#include <string.h>
 
 #include "scintilla/include/Platform.h"
 #include "scintilla/include/Scintilla.h"
@@ -351,16 +352,16 @@ inline WindowInt* GetWindow(Scintilla::WindowID id)
 class ListBoxInt : public Scintilla::ListBox
 {
 public:
-	ListBoxInt::ListBoxInt()
-		: m_lineHeight(10)
-		, m_unicodeMode(false)
+	ListBoxInt()
+		: m_maxStrWidth(0)
+		, m_lineHeight(10)
 		, m_desiredVisibleRows(5)
 		, m_aveCharWidth(8)
-		, m_maxStrWidth(0)
+		, m_unicodeMode(false)
 	{
 	}
 
-	ListBoxInt::~ListBoxInt()
+	~ListBoxInt()
 	{
 	}
 
@@ -468,16 +469,14 @@ private:
 	bool   m_unicodeMode;
 };
 
-struct ScEditor : public Scintilla::ScintillaBase
+struct Editor : public Scintilla::ScintillaBase
 {
 public:
-	ScEditor()
+	Editor()
 		: m_width(0)
 		, m_height(0)
 		, m_wheelVRotation(0)
 		, m_wheelHRotation(0)
-		, m_foreground(0xffffffff)
-		, m_lineNumber(0xff00ffff)
 		, m_searchResultIndication(0xff5A5A5A)
 		, m_filteredSearchResultIndication(0xff5a5a5a)
 		, m_occurrenceIndication(0xff5a5a5a)
@@ -508,10 +507,12 @@ public:
 		, m_staticField(0xff4b9ce9)
 		, m_staticFinalField(0xff4b9ce9)
 		, m_deprecatedMember(0xfff9f9f9)
+		, m_foreground(0xffffffff)
+		, m_lineNumber(0xff00ffff)
 	{
 	}
 
-	virtual ~ScEditor()
+	virtual ~Editor()
 	{
 	}
 
@@ -668,71 +669,71 @@ public:
 		const bool ctrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
 		const bool alt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
 
-		if (ImGui::IsKeyPressed(ImGuiKey_Tab) )
+		if (ImGui::IsKeyPressed(entry::Key::Tab) )
 		{
 			Editor::KeyDown(SCK_TAB, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Left) )
 		{
 			Editor::KeyDown(SCK_LEFT, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Right) )
 		{
 			Editor::KeyDown(SCK_RIGHT, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Up) )
 		{
 			Editor::KeyDown(SCK_UP, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) )
+		else if (ImGui::IsKeyPressed(entry::Key::Down) )
 		{
 			Editor::KeyDown(SCK_DOWN, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Home) )
+		else if (ImGui::IsKeyPressed(entry::Key::Home) )
 		{
 			Editor::KeyDown(SCK_HOME, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_End) )
+		else if (ImGui::IsKeyPressed(entry::Key::End) )
 		{
 			Editor::KeyDown(SCK_END, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Delete) )
+		else if (ImGui::IsKeyPressed(entry::Key::Delete) )
 		{
 			Editor::KeyDown(SCK_DELETE, shift, ctrl, alt);
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+		else if (ImGui::IsKeyPressed(entry::Key::Backspace) )
 		{
 			Editor::KeyDown(SCK_BACK, shift, ctrl, alt); inputGetChar();
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Enter) )
+		else if (ImGui::IsKeyPressed(entry::Key::Return) )
 		{
 			Editor::KeyDown(SCK_RETURN, shift, ctrl, alt); inputGetChar();
 		}
-		else if (ImGui::IsKeyPressed(ImGuiKey_Escape) )
+		else if (ImGui::IsKeyPressed(entry::Key::Esc) )
 		{
 			Editor::KeyDown(SCK_ESCAPE, shift, ctrl, alt);
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_A) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyA) )
 		{
 			Editor::KeyDown('A', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_C) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyC) )
 		{
 			Editor::KeyDown('C', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_V) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyV) )
 		{
 			Editor::KeyDown('V', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_X) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyX) )
 		{
 			Editor::KeyDown('X', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Y) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyY) )
 		{
 			Editor::KeyDown('Y', shift, ctrl, alt); inputGetChar();
 		}
-		else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Z) )
+		else if (ctrl && ImGui::IsKeyPressed(entry::Key::KeyZ) )
 		{
 			Editor::KeyDown('Z', shift, ctrl, alt);	inputGetChar();
 		}
@@ -833,7 +834,7 @@ private:
 
 ScintillaEditor* ScintillaEditor::create(int _width, int _height)
 {
-	ScEditor* editor = IMGUI_NEW(ScEditor);
+	Editor* editor = IMGUI_NEW(Editor);
 
 	editor->Initialise();
 	editor->Resize(0, 0, _width, _height);
@@ -843,18 +844,18 @@ ScintillaEditor* ScintillaEditor::create(int _width, int _height)
 
 void ScintillaEditor::destroy(ScintillaEditor* _scintilla)
 {
-	IMGUI_DELETE(ScEditor, _scintilla);
+	IMGUI_DELETE(Editor, _scintilla);
 }
 
 intptr_t ScintillaEditor::command(unsigned int _msg, uintptr_t _p0, intptr_t _p1)
 {
-	ScEditor* editor = reinterpret_cast<ScEditor*>(this);
+	Editor* editor = reinterpret_cast<Editor*>(this);
 	return editor->command(_msg, _p0, _p1);
 }
 
 void ScintillaEditor::draw()
 {
-	ScEditor* editor = reinterpret_cast<ScEditor*>(this);
+	Editor* editor = reinterpret_cast<Editor*>(this);
 	return editor->draw();
 }
 
@@ -1019,9 +1020,9 @@ namespace Scintilla
 		GetWindow(wid)->position = rc;
 	}
 
-	void Window::SetPositionRelative(PRectangle rc, Window w)
+	void Window::SetPositionRelative(PRectangle _rc, Window /*_w*/)
 	{
-		SetPosition(rc);
+		SetPosition(_rc);
 	}
 
 	PRectangle Window::GetClientPosition()

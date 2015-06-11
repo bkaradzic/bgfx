@@ -15,8 +15,13 @@ namespace bgfx { namespace gl
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
 
+	static void* s_opengles = NULL;
+	
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
+		s_opengles = bx::dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES");
+		BX_CHECK(NULL != s_opengles, "OpenGLES dynamic library is not found!");
+		
 		BX_UNUSED(_width, _height);
 		CAEAGLLayer* layer = (CAEAGLLayer*)g_platformData.nwh;
 		layer.opaque = true;
@@ -59,6 +64,8 @@ namespace bgfx { namespace gl
 			, "glCheckFramebufferStatus failed 0x%08x"
 			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
 			);
+		
+		import();
 	}
 
 	void GlContext::destroy()
@@ -83,6 +90,8 @@ namespace bgfx { namespace gl
 
 		EAGLContext* context = (EAGLContext*)m_context;
 		[context release];
+		
+		bx::dlclose(s_opengles);
 	}
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
@@ -121,6 +130,17 @@ namespace bgfx { namespace gl
 
 	void GlContext::import()
 	{
+		BX_TRACE("Import:");
+#	define GL_EXTENSION(_optional, _proto, _func, _import) \
+		{ \
+			if (_func == NULL) \
+			{ \
+				_func = (_proto)bx::dlsym(s_opengles, #_import); \
+				BX_TRACE("%p " #_func " (" #_import ")", _func); \
+			} \
+			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. EAGLGetProcAddress(\"%s\")", #_import); \
+		}
+#	include "glimports.h"
 	}
 
 } /* namespace gl */ } // namespace bgfx
