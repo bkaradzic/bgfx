@@ -45,6 +45,7 @@ namespace bgfx
 		&s_attribTypeSizeDx9,  // Direct3D9
 		&s_attribTypeSizeDx1x, // Direct3D11
 		&s_attribTypeSizeDx1x, // Direct3D12
+		&s_attribTypeSizeGl,   // Metal
 		&s_attribTypeSizeGl,   // OpenGLES
 		&s_attribTypeSizeGl,   // OpenGL
 		&s_attribTypeSizeGl,   // Vulkan

@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 #if BGFX_CONFIG_RENDERER_VULKAN
-#	include "../../vk/src/renderer_vk.cpp"
+#	include "../../bgfx-ext/src/renderer_vk.cpp"
 #else
 
 namespace bgfx { namespace vk

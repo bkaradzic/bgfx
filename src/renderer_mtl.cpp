@@ -4,12 +4,11 @@
  */
 
 #include "bgfx_p.h"
-
-#if BGFX_CONFIG_RENDERER_DIRECT3D12
-#	include "../../bgfx-ext/src/renderer_d3d12.cpp"
+#if BGFX_CONFIG_RENDERER_METAL
+#	include "../../bgfx-ext/src/renderer_mtl.cpp"
 #else
 
-namespace bgfx { namespace d3d12
+namespace bgfx { namespace mtl
 {
 	RendererContextI* rendererCreate()
 	{
@@ -19,6 +18,6 @@ namespace bgfx { namespace d3d12
 	void rendererDestroy()
 	{
 	}
-} /* namespace d3d12 */ } // namespace bgfx
+} /* namespace mtl */ } // namespace bgfx
 
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D12
+#endif // BGFX_CONFIG_RENDERER_METAL
