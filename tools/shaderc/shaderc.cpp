@@ -1290,7 +1290,8 @@ int main(int _argc, const char* _argv[])
 			else
 			{
 				if (0 != glsl
-				||  0 != essl)
+				||  0 != essl
+				||  0 != metal)
 				{
 					if (120 == glsl
 					||  0   != essl)
@@ -1355,9 +1356,6 @@ int main(int _argc, const char* _argv[])
 								);
 						}
 					}
-				}
-				else if (0 != metal)
-				{
 				}
 				else
 				{
