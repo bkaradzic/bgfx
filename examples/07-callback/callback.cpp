@@ -139,7 +139,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE
 	{
 		char filePath[256];
-		bx::snprintf(filePath, sizeof(filePath), "%016" PRIx64, _id);
+		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
 
 		// Use cache id as filename.
 		FILE* file = fopen(filePath, "rb");
