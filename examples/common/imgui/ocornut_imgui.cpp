@@ -41,7 +41,7 @@ struct OcornutImguiContext
 
 			const ImDrawList* cmd_list   = _lists[ii];
 			const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
-            uint32_t vtx_size = (uint32_t)cmd_list->vtx_buffer.size();
+			uint32_t vtx_size = (uint32_t)cmd_list->vtx_buffer.size();
 
 			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl))
 			{
@@ -55,16 +55,16 @@ struct OcornutImguiContext
 			memcpy(verts, vtx_buffer, vtx_size * sizeof(ImDrawVert));
 
 			uint32_t vtx_offset = 0;
-            const ImDrawCmd* pcmd_begin = cmd_list->commands.begin();
-            const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
+			const ImDrawCmd* pcmd_begin = cmd_list->commands.begin();
+			const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
 			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
 			{
-                if (pcmd->user_callback)
-                {
-                    pcmd->user_callback(cmd_list, pcmd);
-                    vtx_offset += pcmd->vtx_count;
-                    continue;
-                }
+				if (pcmd->user_callback)
+				{
+					pcmd->user_callback(cmd_list, pcmd);
+					vtx_offset += pcmd->vtx_count;
+					continue;
+				}
 				if (0 == pcmd->vtx_count)
 				{
 					continue;
@@ -77,11 +77,11 @@ struct OcornutImguiContext
 					| BGFX_STATE_MSAA
 					);
 				bgfx::setScissor(uint16_t(bx::fmax(pcmd->clip_rect.x, 0.0f))
-						, uint16_t(bx::fmax(pcmd->clip_rect.y, 0.0f))
-						, uint16_t(bx::fmin(pcmd->clip_rect.z, 65535.0f)-bx::fmax(pcmd->clip_rect.x, 0.0f))
-						, uint16_t(bx::fmin(pcmd->clip_rect.w, 65535.0f)-bx::fmax(pcmd->clip_rect.y, 0.0f))
-						);
-				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->texture_id };
+					, uint16_t(bx::fmax(pcmd->clip_rect.y, 0.0f))
+					, uint16_t(bx::fmin(pcmd->clip_rect.z, 65535.0f)-bx::fmax(pcmd->clip_rect.x, 0.0f))
+					, uint16_t(bx::fmin(pcmd->clip_rect.w, 65535.0f)-bx::fmax(pcmd->clip_rect.y, 0.0f))
+					);
+				union { void* ptr; bgfx::TextureHandle handle; } texture ={ pcmd->texture_id };
 
 				bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
 					? texture.handle
@@ -101,7 +101,7 @@ struct OcornutImguiContext
 	{
 		m_viewId = 255;
 		m_allocator = _allocator;
-        m_lastScroll = 0;
+		m_lastScroll = 0;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.RenderDrawListsFn = renderDrawLists;
@@ -179,7 +179,7 @@ struct OcornutImguiContext
 
 		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
-		m_texture = bgfx::createTexture2D( (uint16_t)width
+		m_texture = bgfx::createTexture2D((uint16_t)width
 			, (uint16_t)height
 			, 1
 			, bgfx::TextureFormat::BGRA8
@@ -206,9 +206,9 @@ struct OcornutImguiContext
 	{
 		m_viewId = _viewId;
 		ImGuiIO& io = ImGui::GetIO();
-        if (_inputChar < 0x7f)
+		if (_inputChar < 0x7f)
 		{
-		    io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
+			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
 		}
 
 		io.DisplaySize = ImVec2((float)_width, (float)_height);
@@ -246,7 +246,7 @@ struct OcornutImguiContext
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
 	uint8_t m_viewId;
-    int32_t m_lastScroll;
+	int32_t m_lastScroll;
 };
 
 static OcornutImguiContext s_ctx;

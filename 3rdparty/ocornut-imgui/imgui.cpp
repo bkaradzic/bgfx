@@ -3131,7 +3131,7 @@ static void ClosePopup(ImGuiID id)
     if (!IsPopupOpen(id))
         return;
     ImGuiState& g = *GImGui;
-    ClosePopupToLevel(g.OpenedPopupStack.size() - 1);
+    ClosePopupToLevel( int(g.OpenedPopupStack.size() - 1) );
 }
 
 // Close the popup we have begin-ed into.
