@@ -1988,13 +1988,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void setBlendState(uint64_t _state, uint32_t _rgba = 0)
 		{
-			_state &= 0
-				| BGFX_STATE_BLEND_MASK
-				| BGFX_STATE_BLEND_EQUATION_MASK
-				| BGFX_STATE_BLEND_INDEPENDENT
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_RGB_WRITE
-				;
+			_state &= BGFX_D3D11_BLEND_STATE_MASK;
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -2095,7 +2089,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
 		{
-			_state &= BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK;
+			_state &= BGFX_D3D11_DEPTH_STENCIL_MASK;
 
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
@@ -4070,10 +4064,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				const uint64_t newFlags = draw.m_flags;
 				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
+				changedFlags |= currentState.m_rgba != draw.m_rgba ? BGFX_D3D11_BLEND_STATE_MASK : 0;
 				currentState.m_flags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
+				changedFlags |= 0 != changedStencil ? BGFX_D3D11_DEPTH_STENCIL_MASK : 0;
 				currentState.m_stencil = newStencil;
 
 				if (resetState)
@@ -4132,29 +4128,25 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					setRasterizerState(newFlags, wireframe, scissorEnabled);
 				}
 
-				if ( (BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags
-				|| 0 != changedStencil)
+				if (BGFX_D3D11_DEPTH_STENCIL_MASK & changedFlags)
 				{
 					setDepthStencilState(newFlags, newStencil);
 				}
 
+				if (BGFX_D3D11_BLEND_STATE_MASK & changedFlags)
+				{
+					setBlendState(newFlags, draw.m_rgba);
+					currentState.m_rgba = draw.m_rgba;
+				}
+
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
-					 | BGFX_STATE_RGB_WRITE
-					 | BGFX_STATE_ALPHA_WRITE
-					 | BGFX_STATE_BLEND_MASK
-					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
 					 | BGFX_STATE_POINT_SIZE_MASK
 					 | BGFX_STATE_MSAA
 					 ) & changedFlags)
 				{
-					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
-					{
-						setBlendState(newFlags, draw.m_rgba);
-					}
-
 					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
 					{
 						setRasterizerState(newFlags, wireframe, scissorEnabled);
