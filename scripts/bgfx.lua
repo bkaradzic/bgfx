@@ -144,6 +144,9 @@ function bgfxProject(_name, _kind, _defines)
 					path.join(BGFX_DIR, "src/renderer_mtl.mm"),
 					path.join(BGFX_DIR, "src/amalgamated.cpp"),
 				}
+
+			configuration {}
+
 		else
 			configuration { "xcode4 or osx or ios*" }
 				files {
@@ -152,9 +155,10 @@ function bgfxProject(_name, _kind, _defines)
 					path.join(BGFX_DIR, "src/renderer_mtl.mm"),
 				}
 
+			configuration {}
+
 			excludes {
-				path.join(BGFX_DIR, "src/amalgamated.mm"),
-				path.join(BGFX_DIR, "src/amalgamated.cpp"),
+				path.join(BGFX_DIR, "src/amalgamated.**"),
 			}
 		end
 
