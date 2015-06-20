@@ -138,6 +138,10 @@ function bgfxProject(_name, _kind, _defines)
 			}
 
 			configuration { "xcode4 or osx or ios*" }
+				files {
+					path.join(BGFX_DIR, "src/amalgamated.mm"),
+				}
+
 				excludes {
 					path.join(BGFX_DIR, "src/glcontext_eagl.mm"),
 					path.join(BGFX_DIR, "src/glcontext_nsgl.mm"),
