@@ -1659,9 +1659,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
 			{
 				m_maxAnisotropy = (m_featureLevel == D3D_FEATURE_LEVEL_9_1)
-				? D3D_FL9_1_DEFAULT_MAX_ANISOTROPY
-				: D3D11_REQ_MAXANISOTROPY
-				;
+								? D3D_FL9_1_DEFAULT_MAX_ANISOTROPY
+								: D3D11_REQ_MAXANISOTROPY
+								;
 			}
 			else
 			{
