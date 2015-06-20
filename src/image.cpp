@@ -382,17 +382,22 @@ namespace bgfx
 		}
 	}
 
-	void imageCopy(uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _srcPitch, const void* _src, void* _dst)
+	void imageCopy(uint32_t _height, uint32_t _srcPitch, const void* _src, uint32_t _dstPitch, void* _dst)
 	{
-		const uint32_t pitch = _width*_bpp/8;
-		const uint8_t* src = (uint8_t*) _src;
-		const uint8_t* next = src + _srcPitch;
+		const uint32_t pitch = bx::uint32_min(_srcPitch, _dstPitch);
+		const uint8_t* src = (uint8_t*)_src;
 		uint8_t* dst = (uint8_t*)_dst;
 
-		for (uint32_t yy = 0; yy < _height; ++yy, src = next, next += _srcPitch, dst += pitch)
+		for (uint32_t yy = 0; yy < _height; ++yy, src += _srcPitch, dst += _dstPitch)
 		{
 			memcpy(dst, src, pitch);
 		}
+	}
+
+	void imageCopy(uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _srcPitch, const void* _src, void* _dst)
+	{
+		const uint32_t dstPitch = _width*_bpp/8;
+		imageCopy(_height, _srcPitch, _src, dstPitch, _dst);
 	}
 
 	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
