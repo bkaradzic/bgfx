@@ -149,7 +149,7 @@ static const uint16_t s_planeIndices[] =
 static bool s_flipV = false;
 static uint32_t s_viewMask = 0;
 static uint32_t s_clearMask = 0;
-static bgfx::UniformHandle u_texColor;
+static bgfx::UniformHandle s_texColor;
 
 inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
 {
@@ -809,7 +809,7 @@ struct Mesh
 			// Set texture
 			if (bgfx::invalidHandle != _texture.idx)
 			{
-				bgfx::setTexture(0, u_texColor, _texture);
+				bgfx::setTexture(0, s_texColor, _texture);
 			}
 
 			// Apply render state
@@ -864,7 +864,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	s_uniforms.init();
 	s_uniforms.submitConstUniforms();
 
-	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Int1);
+	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_stencil_texture_lightning", "fs_stencil_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_stencil_color_lightning",   "fs_stencil_color_lightning"  );
@@ -1397,7 +1397,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyProgram(programColorBlack);
 	bgfx::destroyProgram(programTexture);
 
-	bgfx::destroyUniform(u_texColor);
+	bgfx::destroyUniform(s_texColor);
 
 	s_uniforms.destroy();
 
