@@ -2973,14 +2973,14 @@ namespace bgfx { namespace d3d9
 			{
 				m_control.consume(1);
 
-				uint64_t start;
-				DX_CHECK(frame.m_start->GetData(&start, sizeof(start), 0) );
+				uint64_t timeStart;
+				DX_CHECK(frame.m_start->GetData(&timeStart, sizeof(timeStart), 0) );
 
-				uint64_t end;
-				DX_CHECK(frame.m_end->GetData(&end, sizeof(end), 0) );
+				uint64_t timeEnd;
+				DX_CHECK(frame.m_end->GetData(&timeEnd, sizeof(timeEnd), 0) );
 
 				m_frequency = freq;
-				m_elapsed   = end - start;
+				m_elapsed   = timeEnd - timeStart;
 
 				return true;
 			}
