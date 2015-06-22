@@ -1983,13 +1983,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				const uint32_t blend    = uint32_t( (_state&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
 				const uint32_t equation = uint32_t( (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
 
-				const uint32_t srcRGB = (blend    )&0xf;
-				const uint32_t dstRGB = (blend>> 4)&0xf;
-				const uint32_t srcA   = (blend>> 8)&0xf;
-				const uint32_t dstA   = (blend>>12)&0xf;
+				const uint32_t srcRGB = (blend      ) & 0xf;
+				const uint32_t dstRGB = (blend >>  4) & 0xf;
+				const uint32_t srcA   = (blend >>  8) & 0xf;
+				const uint32_t dstA   = (blend >> 12) & 0xf;
 
-				const uint32_t equRGB = (equation   )&0x7;
-				const uint32_t equA   = (equation>>3)&0x7;
+				const uint32_t equRGB = (equation     ) & 0x7;
+				const uint32_t equA   = (equation >> 3) & 0x7;
 
 				drt->SrcBlend       = s_blendFactor[srcRGB][0];
 				drt->DestBlend      = s_blendFactor[dstRGB][0];
@@ -1999,8 +1999,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				drt->DestBlendAlpha = s_blendFactor[dstA][1];
 				drt->BlendOpAlpha   = s_blendEquation[equA];
 
-				uint8_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0;
-				writeMask |= (_state&BGFX_STATE_RGB_WRITE) ? D3D11_COLOR_WRITE_ENABLE_RED|D3D11_COLOR_WRITE_ENABLE_GREEN|D3D11_COLOR_WRITE_ENABLE_BLUE : 0;
+				uint8_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) 
+					? D3D11_COLOR_WRITE_ENABLE_ALPHA 
+					: 0
+					;
+				writeMask |= (_state&BGFX_STATE_RGB_WRITE)
+					? D3D11_COLOR_WRITE_ENABLE_RED
+					| D3D11_COLOR_WRITE_ENABLE_GREEN
+					| D3D11_COLOR_WRITE_ENABLE_BLUE
+					: 0
+					;
 
 				drt->RenderTargetWriteMask = writeMask;
 
@@ -2009,19 +2017,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					for (uint32_t ii = 1, rgba = _rgba; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii, rgba >>= 11)
 					{
 						drt = &desc.RenderTarget[ii];
-						drt->BlendEnable = 0 != (rgba&0x7ff);
+						drt->BlendEnable = 0 != (rgba & 0x7ff);
 
-						const uint32_t src			 = (rgba   )&0xf;
-						const uint32_t dst			 = (rgba>>4)&0xf;
-						const uint32_t equationIndex = (rgba>>8)&0x7;
+						const uint32_t src      = (rgba     ) & 0xf;
+						const uint32_t dst      = (rgba >> 4) & 0xf;
+						const uint32_t equation = (rgba >> 8) & 0x7;
 
 						drt->SrcBlend       = s_blendFactor[src][0];
 						drt->DestBlend      = s_blendFactor[dst][0];
-						drt->BlendOp        = s_blendEquation[equationIndex];
+						drt->BlendOp        = s_blendEquation[equation];
 
 						drt->SrcBlendAlpha  = s_blendFactor[src][1];
 						drt->DestBlendAlpha = s_blendFactor[dst][1];
-						drt->BlendOpAlpha   = s_blendEquation[equationIndex];
+						drt->BlendOpAlpha   = s_blendEquation[equation];
 
 						drt->RenderTargetWriteMask = writeMask;
 					}
