@@ -793,10 +793,12 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 				vbh.idx = bc.vertexBufferHandleIdx;
 
 				bgfx::updateDynamicIndexBuffer(ibh
+						, 0
 						, bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
 						);
 
 				bgfx::updateDynamicVertexBuffer(vbh
+						, 0
 						, bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
 						);
 			}
