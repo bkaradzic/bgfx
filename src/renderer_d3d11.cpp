@@ -49,7 +49,7 @@ namespace bgfx { namespace d3d11
 		uint32_t                   m_zero[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	};
 
-	static Zero s_zero;
+	static const Zero s_zero;
 
 	static const uint32_t s_checkMsaa[] =
 	{
