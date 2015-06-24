@@ -49,7 +49,10 @@ namespace bgfx { namespace d3d11
 		uint32_t                   m_zero[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	};
 
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4268) // warning C4268: '' : 'const' static/global data initialized with compiler generated default constructor fills the object with zeros
 	static const Zero s_zero;
+	BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static const uint32_t s_checkMsaa[] =
 	{
@@ -1999,8 +2002,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				drt->DestBlendAlpha = s_blendFactor[dstA][1];
 				drt->BlendOpAlpha   = s_blendEquation[equA];
 
-				uint8_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE) 
-					? D3D11_COLOR_WRITE_ENABLE_ALPHA 
+				uint8_t writeMask = (_state&BGFX_STATE_ALPHA_WRITE)
+					? D3D11_COLOR_WRITE_ENABLE_ALPHA
 					: 0
 					;
 				writeMask |= (_state&BGFX_STATE_RGB_WRITE)
