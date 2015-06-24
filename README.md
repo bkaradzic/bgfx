@@ -455,6 +455,7 @@ Amalgamated build
 
 For ease of integration to other build system bgfx library can be built with
 single .cpp file. It's only necessary to build [src/amalgamated.cpp](https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp)
+or on OSX/iOS [src/amalgamated.mm](https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.mm)
 inside different build system.
 
 OculusVR integration
