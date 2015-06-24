@@ -155,6 +155,7 @@ void VectorDisplay::endFrame()
 	BX_CHECK(m_points.size() < MAX_NUMBER_VERTICES, "");
 
 	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep]
+		, 0
 		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(point_t) )
 	);
 	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
