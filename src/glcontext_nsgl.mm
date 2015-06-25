@@ -176,6 +176,8 @@ namespace bgfx { namespace gl
 	{
 		if (NULL == _swapChain)
 		{
+			NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
+			[glContext makeCurrentContext];
 		}
 		else
 		{
