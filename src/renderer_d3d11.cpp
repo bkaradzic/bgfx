@@ -42,6 +42,11 @@ namespace bgfx { namespace d3d11
 
 	union Zero
 	{
+		Zero()
+		{
+			memset(this, 0, sizeof(Zero) );
+		}
+
 		ID3D11Buffer*              m_buffer[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 		ID3D11UnorderedAccessView* m_uav[D3D11_PS_CS_UAV_REGISTER_COUNT];
 		ID3D11ShaderResourceView*  m_srv[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
