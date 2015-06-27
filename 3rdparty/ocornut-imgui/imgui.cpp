@@ -7264,7 +7264,7 @@ static bool InputTextEx(const char* label, char* buf, size_t buf_size, const ImV
             // Count lines + find lines numbers of cursor and select_start
             int matches_remaining = 0;
             int matches_line_no[2] = { -1, -999 };
-            const ImWchar* matches_ptr[2];
+            const ImWchar* matches_ptr[2] = {};
             matches_ptr[0] = text_begin + edit_state.StbState.cursor; matches_remaining++;
             if (edit_state.StbState.select_start != edit_state.StbState.select_end)
             {
