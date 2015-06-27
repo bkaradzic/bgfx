@@ -1242,7 +1242,7 @@ namespace bgfx
 	/// @param _index Index into palette.
 	/// @param _rgba Packed 32-bit RGBA value.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_clear_color`.
 	///
 	void setClearColor(uint8_t _index, uint32_t _rgba);
 
@@ -1251,7 +1251,7 @@ namespace bgfx
 	/// @param _index Index into palette.
 	/// @param _r, _g, _b, _a RGBA floating point values.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_clear_color`.
 	///
 	void setClearColor(uint8_t _index, float _r, float _g, float _b, float _a);
 
@@ -1380,7 +1380,7 @@ namespace bgfx
 	/// @param _remap View remap id table. Passing `NULL` will reset view ids
 	///   to default state.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_view_remap`.
 	///
 	void setViewRemap(uint8_t _id = 0, uint8_t _num = UINT8_MAX, const void* _remap = NULL);
 
@@ -1501,7 +1501,7 @@ namespace bgfx
 
 	/// Set index buffer for draw primitive.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_transient_index_buffer`.
 	///
 	void setIndexBuffer(const TransientIndexBuffer* _tib);
 
@@ -1513,7 +1513,7 @@ namespace bgfx
 
 	/// Set vertex buffer for draw primitive.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
 	///
 	void setVertexBuffer(VertexBufferHandle _handle);
 
@@ -1531,7 +1531,7 @@ namespace bgfx
 
 	/// Set vertex buffer for draw primitive.
 	///
-	/// @attention C99 equivalent is ``.
+	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
 	void setVertexBuffer(const TransientVertexBuffer* _tvb);
 

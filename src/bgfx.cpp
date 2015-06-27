@@ -3645,6 +3645,11 @@ BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, c
 	bgfx::setViewTransform(_id, _view, _projL, _flags, _projR);
 }
 
+BGFX_C_API void bgfx_set_view_remap(uint8_t _id, uint8_t _num, const void* _remap)
+{
+	bgfx::setViewRemap(_id, _num, _remap);
+}
+
 BGFX_C_API void bgfx_set_marker(const char* _marker)
 {
 	bgfx::setMarker(_marker);
