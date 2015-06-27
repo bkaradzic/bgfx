@@ -12,6 +12,12 @@
 
 #include <bx/platform.h>
 
+#if defined(BX_PLATFORM_WINDOWS)
+#   define BGFX_SHARED_LIB_API __declspec(dllexport)
+#else
+#   define BGFX_SHARED_LIB_API
+#endif // defined(BX_PLATFORM_WINDOWS)
+
 namespace bgfx
 {
 	struct RenderFrame
@@ -40,7 +46,7 @@ namespace bgfx
 		void* backBufferDS; //< Backbuffer depth/stencil.
 	};
 
-	void setPlatformData(const PlatformData& _hooks);
+	BGFX_SHARED_LIB_API 
 
 } // namespace bgfx
 
