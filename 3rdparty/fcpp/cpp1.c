@@ -143,7 +143,7 @@ int fppPreProcess(struct fppTag *tags)
 #endif
   }
   fflush(stdout);
-  fclose(stdout);
+// BK -  fclose(stdout);
 
   if (global->errors > 0 && !global->eflag)
     return(IO_ERROR);
