@@ -725,7 +725,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 			else
 			{
-				setGraphicsDebuggerPresent(2 != getRefCount(device) );
+				setGraphicsDebuggerPresent(3 != getRefCount(device) );
 				DX_RELEASE(device, 2);
 			}
 
@@ -830,11 +830,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					m_infoQueue->PushStorageFilter(&filter);
 
 					DX_RELEASE(m_infoQueue, 3);
-				}
-				else
-				{
-					// InfoQueue QueryInterface will fail when AMD GPU Perfstudio 2 is present.
-					setGraphicsDebuggerPresent(true);
 				}
 			}
 #endif // __MINGW__
@@ -1107,8 +1102,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
-			DX_RELEASE(m_factory, 0);
 			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_factory,0);
 
 			unloadRenderDoc(m_renderdocdll);
 
