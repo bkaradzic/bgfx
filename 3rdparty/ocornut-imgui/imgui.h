@@ -1,4 +1,4 @@
-// ImGui library v1.41
+// ImGui library v1.42 wip
 // See .cpp file for documentation.
 // See ImGui::ShowTestWindow() for sample code.
 // Read 'Programmer guide' in .cpp for notes on how to setup ImGui in your codebase.
@@ -13,7 +13,7 @@
 #include <stdlib.h>         // NULL, malloc, free, qsort, atoi
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.41"
+#define IMGUI_VERSION       "1.42 wip"
 
 // Define assertion handler.
 #ifndef IM_ASSERT
@@ -499,6 +499,7 @@ enum ImGuiCol_
     ImGuiCol_FrameBgActive,
     ImGuiCol_TitleBg,
     ImGuiCol_TitleBgCollapsed,
+    ImGuiCol_TitleBgActive,
     ImGuiCol_MenuBarBg,
     ImGuiCol_ScrollbarBg,
     ImGuiCol_ScrollbarGrab,
