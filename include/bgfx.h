@@ -1034,12 +1034,18 @@ namespace bgfx
 
 	/// Create 2D texture.
 	///
-	/// @param _width
-	/// @param _height
-	/// @param _numMips
-	/// @param _format
-	/// @param _flags
-	/// @param _mem
+	/// @param[in] _width Width.
+	/// @param[in] _height Height.
+	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///     mode.
+	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///     sampling.
+	///
+	/// @param[in] _mem Texture data.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_2d`.
 	///
@@ -1052,13 +1058,19 @@ namespace bgfx
 
 	/// Create 3D texture.
 	///
-	/// @param _width
-	/// @param _height
-	/// @param _depth
-	/// @param _numMips
-	/// @param _format
-	/// @param _flags
-	/// @param _mem
+	/// @param[in] _width Width.
+	/// @param[in] _height Height.
+	/// @param[in] _depth Depth.
+	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///     mode.
+	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///     sampling.
+	///
+	/// @param[in] _mem Texture data.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_3d`.
 	///
@@ -1066,11 +1078,17 @@ namespace bgfx
 
 	/// Create Cube texture.
 	///
-	/// @param _size
-	/// @param _numMips
-	/// @param _format
-	/// @param _flags
-	/// @param _mem
+	/// @param[in] _size Cube side size.
+	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///     mode.
+	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///     sampling.
+	///
+	/// @param[in] _mem Texture data.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_cube`.
 	///
@@ -1078,14 +1096,14 @@ namespace bgfx
 
 	/// Update 2D texture.
 	///
-	/// @param _handle
-	/// @param _mip
-	/// @param _x
-	/// @param _y
-	/// @param _width
-	/// @param _height
-	/// @param _mem
-	/// @param _pitch Pitch of input image (bytes). When _pitch is set to
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _mip Mip level.
+	/// @param[in] _x X offset in texture.
+	/// @param[in] _y Y offset in texture.
+	/// @param[in] _width Width of texture block.
+	/// @param[in] _height Height of texture block.
+	/// @param[in] _mem Texture update data.
+	/// @param[in] _pitch Pitch of input image (bytes). When _pitch is set to
 	///   UINT16_MAX, it will be calculated internally based on _width.
 	///
 	/// @attention C99 equivalent is `bgfx_update_texture_2d`.
@@ -1094,15 +1112,15 @@ namespace bgfx
 
 	/// Update 3D texture.
 	///
-	/// @param _handle
-	/// @param _mip
-	/// @param _x
-	/// @param _y
-	/// @param _z
-	/// @param _width
-	/// @param _height
-	/// @param _depth
-	/// @param _mem
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _mip Mip level.
+	/// @param[in] _x X offset in texture.
+	/// @param[in] _y Y offset in texture.
+	/// @param[in] _z Z offset in texture.
+	/// @param[in] _width Width of texture block.
+	/// @param[in] _height Height of texture block.
+	/// @param[in] _depth Depth of texture block.
+	/// @param[in] _mem Texture update data.
 	///
 	/// @attention C99 equivalent is `bgfx_update_texture_3d`.
 	///
@@ -1110,8 +1128,8 @@ namespace bgfx
 
 	/// Update Cube texture.
 	///
-	/// @param _handle
-	/// @param _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
 	///   -Y, 4 is +Z, and 5 is -Z.
 	///
 	///              +----------+
@@ -1131,13 +1149,13 @@ namespace bgfx
 	///              | +---->+x |
 	///              +----------+
 	///
-	/// @param _mip
-	/// @param _x
-	/// @param _y
-	/// @param _width
-	/// @param _height
-	/// @param _mem
-	/// @param _pitch Pitch of input image (bytes). When _pitch is set to
+	/// @param[in] _mip Mip level.
+	/// @param[in] _x X offset in texture.
+	/// @param[in] _y Y offset in texture.
+	/// @param[in] _width Width of texture block.
+	/// @param[in] _height Height of texture block.
+	/// @param[in] _mem Texture update data.
+	/// @param[in] _pitch Pitch of input image (bytes). When _pitch is set to
 	///   UINT16_MAX, it will be calculated internally based on _width.
 	///
 	/// @attention C99 equivalent is `bgfx_update_texture_cube`.
@@ -1152,15 +1170,22 @@ namespace bgfx
 
 	/// Create frame buffer (simple).
 	///
-	/// @param _width Texture width.
-	/// @param _height Texture height.
-	/// @param _format Texture format.
-	/// @param _textureFlags Texture flags.
+	/// @param[in] _width Texture width.
+	/// @param[in] _height Texture height.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///     mode.
+	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///     sampling.
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer`.
 	///
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
 
+	/// Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
+	/// if back buffer resolution changes.
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_scaled`.
 	///
