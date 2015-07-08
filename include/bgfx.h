@@ -1643,31 +1643,31 @@ namespace bgfx
 	///
 	uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, int32_t _depth = 0);
 
-	///
+	/// Set compute index buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_index_buffer`.
 	///
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access);
 
-	///
+	/// Set compute vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_vertex_buffer`.
 	///
 	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access);
 
-	///
+	/// Set compute dynamic index buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_dynamic_index_buffer`.
 	///
 	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access);
 
-	///
+	/// Set compute dynamic vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_dynamic_vertex_buffer`.
 	///
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);
 
-	///
+	/// Set compute indirect buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_indirect_buffer`.
 	///
