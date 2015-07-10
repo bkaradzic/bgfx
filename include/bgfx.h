@@ -1645,11 +1645,19 @@ namespace bgfx
 
 	/// Set compute index buffer.
 	///
+	/// @param[in] _stage Compute stage.
+	/// @param[in] _handle Index buffer handle.
+	/// @param[in] _access Buffer access. See `Access::Enum`.
+	///
 	/// @attention C99 equivalent is `bgfx_set_compute_index_buffer`.
 	///
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access);
 
 	/// Set compute vertex buffer.
+	///
+	/// @param[in] _stage Compute stage.
+	/// @param[in] _handle Vertex buffer handle.
+	/// @param[in] _access Buffer access. See `Access::Enum`.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_vertex_buffer`.
 	///
@@ -1657,11 +1665,19 @@ namespace bgfx
 
 	/// Set compute dynamic index buffer.
 	///
+	/// @param[in] _stage Compute stage.
+	/// @param[in] _handle Dynamic index buffer handle.
+	/// @param[in] _access Buffer access. See `Access::Enum`.
+	///
 	/// @attention C99 equivalent is `bgfx_set_compute_dynamic_index_buffer`.
 	///
 	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access);
 
 	/// Set compute dynamic vertex buffer.
+	///
+	/// @param[in] _stage Compute stage.
+	/// @param[in] _handle Dynamic vertex buffer handle.
+	/// @param[in] _access Buffer access. See `Access::Enum`.
 	///
 	/// @attention C99 equivalent is `bgfx_set_compute_dynamic_vertex_buffer`.
 	///
@@ -1669,17 +1685,36 @@ namespace bgfx
 
 	/// Set compute indirect buffer.
 	///
+	/// @param[in] _stage Compute stage.
+	/// @param[in] _handle Indirect buffer handle.
+	/// @param[in] _access Buffer access. See `Access::Enum`.
+	///
 	/// @attention C99 equivalent is `bgfx_set_compute_indirect_buffer`.
 	///
 	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access);
 
 	/// Set compute image from texture.
 	///
+	/// @param[in] _stage Texture unit.
+	/// @param[in] _sampler Program sampler.
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _mip Mip level.
+	/// @param[in] _access Texture access. See `Access::Enum`.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	///
 	/// @attention C99 equivalent is `bgfx_set_image`.
 	///
 	void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format = TextureFormat::Count);
 
 	/// Set compute image from frame buffer texture.
+	///
+	/// @param[in] _stage Texture unit.
+	/// @param[in] _sampler Program sampler.
+	/// @param[in] _handle Frame buffer handle.
+	/// @param[in] _attachment Attachment index.
+	/// @param[in] _mip Mip level.
+	/// @param[in] _access Texture access. See `Access::Enum`.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	///
 	/// @attention C99 equivalent is `bgfx_set_image_from_frame_buffer`.
 	///
