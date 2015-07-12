@@ -9203,10 +9203,10 @@ void ImDrawList::AddRect(const ImVec2& a, const ImVec2& b, ImU32 col, float roun
     if (r == 0.0f || rounding_corners == 0)
     {
         PrimReserve(4*6);
-        PrimLine(ImVec2(a.x,a.y), ImVec2(b.x,a.y), col);
-        PrimLine(ImVec2(b.x,a.y), ImVec2(b.x,b.y), col);
-        PrimLine(ImVec2(b.x,b.y), ImVec2(a.x,b.y), col);
-        PrimLine(ImVec2(a.x,b.y), ImVec2(a.x,a.y), col);
+        PrimLine(a,               ImVec2(b.x,a.y), col);
+        PrimLine(ImVec2(b.x,a.y), b,               col);
+        PrimLine(b,               ImVec2(a.x,b.y), col);
+        PrimLine(ImVec2(a.x,b.y), a,               col);
     }
     else
     {
@@ -9256,6 +9256,21 @@ void ImDrawList::AddRectFilled(const ImVec2& a, const ImVec2& b, ImU32 col, floa
         if (rounding_corners & 4) AddArcFast(ImVec2(b.x-r,b.y-r), r, col, 6, 9, true);
         if (rounding_corners & 8) AddArcFast(ImVec2(a.x+r,b.y-r), r, col, 9, 12, true);
     }
+}
+
+void ImDrawList::AddRectFilledMultiColor(const ImVec2& a, const ImVec2& b, ImU32 col_upr_left, ImU32 col_upr_right, ImU32 col_bot_right, ImU32 col_bot_left)
+{
+    if (((col_upr_left | col_upr_right | col_bot_right | col_bot_left) >> 24) == 0)
+        return;
+
+    const ImVec2 uv = GImGui->FontTexUvWhitePixel;
+    PrimReserve(6);
+    PrimVtx(a,               uv, col_upr_left);
+    PrimVtx(ImVec2(b.x,a.y), uv, col_upr_right);
+    PrimVtx(ImVec2(b.x,b.y), uv, col_bot_right);
+    PrimVtx(a,               uv, col_upr_left);
+    PrimVtx(b,               uv, col_bot_right);
+    PrimVtx(ImVec2(a.x,b.y), uv, col_bot_left);
 }
 
 void ImDrawList::AddTriangleFilled(const ImVec2& a, const ImVec2& b, const ImVec2& c, ImU32 col)
@@ -12267,7 +12282,8 @@ static void ShowExampleAppCustomRendering(bool* opened)
     // If you only use the ImDrawList API, you can notify the owner window of its extends by using SetCursorPos(max).
     ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
     ImVec2 canvas_size = ImVec2(ImMax(50.0f,ImGui::GetWindowContentRegionMax().x-ImGui::GetCursorPos().x), ImMax(50.0f,ImGui::GetWindowContentRegionMax().y-ImGui::GetCursorPos().y));    // Resize canvas what's available
-    draw_list->AddRect(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), 0xFFFFFFFF);
+    draw_list->AddRectFilledMultiColor(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), ImColor(0,0,0), ImColor(255,0,0), ImColor(255,255,0), ImColor(0,255,0));
+    draw_list->AddRect(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), ImColor(255,255,255));
     bool adding_preview = false;
     ImGui::InvisibleButton("canvas", canvas_size);
     if (ImGui::IsItemHovered())
