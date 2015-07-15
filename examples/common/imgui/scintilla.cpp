@@ -80,8 +80,8 @@ static inline uint32_t makeRgba(uint32_t r, uint32_t g, uint32_t b, uint32_t a =
 
 struct FontInt
 {
-	ImFont* m_font;
-	float m_scale;
+    ImFont* m_font;
+    float m_scale;
 	float m_fontSize;
 };
 
@@ -236,7 +236,7 @@ public:
 	virtual Scintilla::XYPOSITION WidthChar(Scintilla::Font& _font, char ch) BX_OVERRIDE
 	{
 		FontInt* fi = (FontInt*)_font.GetID();
-		return fi->m_font->GetCharAdvance((unsigned int)ch) * fi->m_scale;
+        return fi->m_font->GetCharAdvance((unsigned int)ch) * fi->m_scale;
 	}
 
 	virtual Scintilla::XYPOSITION Ascent(Scintilla::Font& _font) BX_OVERRIDE
@@ -251,14 +251,14 @@ public:
 		return -fi->m_font->Descent * fi->m_scale;
 	}
 
-		virtual Scintilla::XYPOSITION InternalLeading(Scintilla::Font& /*_font*/) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION InternalLeading(Scintilla::Font& /*_font*/) BX_OVERRIDE
 	{
 		return 0;
 	}
 
 	virtual Scintilla::XYPOSITION ExternalLeading(Scintilla::Font& /*_font*/) BX_OVERRIDE
 	{
-		return 0;
+        return 0;
 	}
 
 	virtual Scintilla::XYPOSITION Height(Scintilla::Font& _font) BX_OVERRIDE
@@ -633,7 +633,7 @@ public:
 		return 0;
 	}
 
-	intptr_t command(unsigned int _msg, uintptr_t _p0 = 0, intptr_t _p1 = 0)
+    intptr_t command(unsigned int _msg, uintptr_t _p0 = 0, intptr_t _p1 = 0)
 	{
 		return WndProc(_msg, _p0, _p1);
 	}
@@ -741,7 +741,7 @@ public:
 			ImGuiIO& io = ImGui::GetIO();
 			Scintilla::Point pt = Scintilla::Point::FromInts( (int)io.MouseClickedPos[0].x, (int)io.MouseClickedPos[0].y);
 
-			ButtonDown(pt, (unsigned int)io.MouseDownTime[0], false, false, false);
+			ButtonDown(pt, (unsigned int)io.MouseDownDuration[0], false, false, false);
 		}
 
 		Tick();
@@ -854,7 +854,7 @@ namespace Scintilla
 	}
 
 	void Font::Create(const FontParameters& fp)
-	{
+    {
 		FontInt* newFont = (FontInt*)ImGui::MemAlloc(sizeof(FontInt) );
 		fid = newFont;
 		newFont->m_font = ImGui::GetIO().Fonts->Fonts[0];
@@ -1062,29 +1062,5 @@ namespace Scintilla
 	}
 
 } // namespace Scintilla
-
-ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& _size)
-{
-	ScintillaEditor* sci = NULL;
-
-	if (ImGui::Begin(_name, _opened, _size) )
-	{
-		ImGuiStorage* storage = ImGui::GetStateStorage();
-
-		ImGuiID id = ImGui::GetID(_name);
-		sci = (ScintillaEditor*)storage->GetVoidPtr(id);
-		if (NULL == sci)
-		{
-			ImVec2 size = ImGui::GetWindowSize();
-			sci = ScintillaEditor::create(size.x, size.y);
-			storage->SetVoidPtr(id, (void*)sci);
-		}
-
-		sci->draw();
-	}
-
-	ImGui::End();
-	return sci;
-}
 
 #endif // defined(SCI_NAMESPACE)
