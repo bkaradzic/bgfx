@@ -741,7 +741,7 @@ public:
 			ImGuiIO& io = ImGui::GetIO();
 			Scintilla::Point pt = Scintilla::Point::FromInts( (int)io.MouseClickedPos[0].x, (int)io.MouseClickedPos[0].y);
 
-			ButtonDown(pt, (unsigned int)io.MouseDownTime[0], false, false, false);
+			ButtonDown(pt, (unsigned int)io.MouseDownDuration[0], false, false, false);
 		}
 
 		Tick();

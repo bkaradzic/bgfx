@@ -22,9 +22,9 @@ struct OcornutImguiContext
 {
 	static void* memAlloc(size_t _size);
 	static void memFree(void* _ptr);
-	static void renderDrawLists(ImDrawList** const _lists, int _count);
+	static void renderDrawLists(ImDrawData* draw_data);
 
-	void render(ImDrawList** const _lists, int _count)
+	void render(ImDrawData* draw_data)
 	{
 		const float width  = ImGui::GetIO().DisplaySize.x;
 		const float height = ImGui::GetIO().DisplaySize.y;
@@ -35,37 +35,42 @@ struct OcornutImguiContext
 		bgfx::setViewTransform(m_viewId, NULL, ortho);
 
 		// Render command lists
-		for (int32_t ii = 0; ii < _count; ++ii)
+		for (int32_t ii = 0; ii < draw_data->CmdListsCount; ++ii)
 		{
 			bgfx::TransientVertexBuffer tvb;
+            bgfx::TransientIndexBuffer tib;
 
-			const ImDrawList* cmd_list   = _lists[ii];
-			const ImDrawVert* vtx_buffer = cmd_list->vtx_buffer.begin();
-            uint32_t vtx_size = (uint32_t)cmd_list->vtx_buffer.size();
+			const ImDrawList* cmd_list   = draw_data->CmdLists[ii];
+            uint32_t vtx_size = (uint32_t)cmd_list->VtxBuffer.size();
+            uint32_t idx_size = (uint32_t)cmd_list->IdxBuffer.size();
 
-			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl))
+			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl) || !bgfx::checkAvailTransientIndexBuffer(idx_size))
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
 			}
 
 			bgfx::allocTransientVertexBuffer(&tvb, vtx_size, m_decl);
+            bgfx::allocTransientIndexBuffer(&tib, idx_size);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
-			memcpy(verts, vtx_buffer, vtx_size * sizeof(ImDrawVert));
+ 			memcpy(verts, cmd_list->VtxBuffer.begin(), vtx_size * sizeof(ImDrawVert));
 
-			uint32_t vtx_offset = 0;
-            const ImDrawCmd* pcmd_begin = cmd_list->commands.begin();
-            const ImDrawCmd* pcmd_end   = cmd_list->commands.end();
+            ImDrawIdx* indices = (ImDrawIdx*)tib.data;
+            memcpy(indices, cmd_list->IdxBuffer.begin(), idx_size * sizeof(ImDrawIdx));
+
+			uint32_t elem_offset = 0;
+            const ImDrawCmd* pcmd_begin = cmd_list->CmdBuffer.begin();
+            const ImDrawCmd* pcmd_end   = cmd_list->CmdBuffer.end();
 			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
 			{
-                if (pcmd->user_callback)
+                if (pcmd->UserCallback)
                 {
-                    pcmd->user_callback(cmd_list, pcmd);
-                    vtx_offset += pcmd->vtx_count;
+                    pcmd->UserCallback(cmd_list, pcmd);
+                    elem_offset += pcmd->ElemCount;
                     continue;
                 }
-				if (0 == pcmd->vtx_count)
+				if (0 == pcmd->ElemCount)
 				{
 					continue;
 				}
@@ -76,23 +81,24 @@ struct OcornutImguiContext
 					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 					| BGFX_STATE_MSAA
 					);
-				bgfx::setScissor(uint16_t(bx::fmax(pcmd->clip_rect.x, 0.0f))
-						, uint16_t(bx::fmax(pcmd->clip_rect.y, 0.0f))
-						, uint16_t(bx::fmin(pcmd->clip_rect.z, 65535.0f)-bx::fmax(pcmd->clip_rect.x, 0.0f))
-						, uint16_t(bx::fmin(pcmd->clip_rect.w, 65535.0f)-bx::fmax(pcmd->clip_rect.y, 0.0f))
+				bgfx::setScissor(uint16_t(bx::fmax(pcmd->ClipRect.x, 0.0f))
+						, uint16_t(bx::fmax(pcmd->ClipRect.y, 0.0f))
+						, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f))
+						, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f))
 						);
-				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->texture_id };
+				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->TextureId };
 
 				bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
 					? texture.handle
 					: m_texture
 					);
 
-				bgfx::setVertexBuffer(&tvb, vtx_offset, pcmd->vtx_count);
+				bgfx::setVertexBuffer(&tvb, 0, vtx_size);
+                bgfx::setIndexBuffer(&tib, elem_offset, pcmd->ElemCount);
 				bgfx::setProgram(m_program);
 				bgfx::submit(m_viewId);
 
-				vtx_offset += pcmd->vtx_count;
+				elem_offset += pcmd->ElemCount;
 			}
 		}
 	}
@@ -183,7 +189,7 @@ struct OcornutImguiContext
 			, (uint16_t)height
 			, 1
 			, bgfx::TextureFormat::BGRA8
-			, BGFX_TEXTURE_MIN_POINT | BGFX_TEXTURE_MAG_POINT
+			, 0
 			, bgfx::copy(data, width*height*4)
 			);
 
@@ -261,9 +267,9 @@ void OcornutImguiContext::memFree(void* _ptr)
 	BX_FREE(s_ctx.m_allocator, _ptr);
 }
 
-void OcornutImguiContext::renderDrawLists(ImDrawList** const _lists, int _count)
+void OcornutImguiContext::renderDrawLists(ImDrawData* draw_data)
 {
-	s_ctx.render(_lists, _count);
+	s_ctx.render(draw_data);
 }
 
 void IMGUI_create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
