@@ -38,11 +38,11 @@ struct OcornutImguiContext
 		for (int32_t ii = 0; ii < draw_data->CmdListsCount; ++ii)
 		{
 			bgfx::TransientVertexBuffer tvb;
-            bgfx::TransientIndexBuffer tib;
+			bgfx::TransientIndexBuffer tib;
 
 			const ImDrawList* cmd_list   = draw_data->CmdLists[ii];
-            uint32_t vtx_size = (uint32_t)cmd_list->VtxBuffer.size();
-            uint32_t idx_size = (uint32_t)cmd_list->IdxBuffer.size();
+			uint32_t vtx_size = (uint32_t)cmd_list->VtxBuffer.size();
+			uint32_t idx_size = (uint32_t)cmd_list->IdxBuffer.size();
 
 			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl) || !bgfx::checkAvailTransientIndexBuffer(idx_size))
 			{
@@ -51,25 +51,25 @@ struct OcornutImguiContext
 			}
 
 			bgfx::allocTransientVertexBuffer(&tvb, vtx_size, m_decl);
-            bgfx::allocTransientIndexBuffer(&tib, idx_size);
+			bgfx::allocTransientIndexBuffer(&tib, idx_size);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
- 			memcpy(verts, cmd_list->VtxBuffer.begin(), vtx_size * sizeof(ImDrawVert));
+			memcpy(verts, cmd_list->VtxBuffer.begin(), vtx_size * sizeof(ImDrawVert));
 
-            ImDrawIdx* indices = (ImDrawIdx*)tib.data;
-            memcpy(indices, cmd_list->IdxBuffer.begin(), idx_size * sizeof(ImDrawIdx));
+			ImDrawIdx* indices = (ImDrawIdx*)tib.data;
+			memcpy(indices, cmd_list->IdxBuffer.begin(), idx_size * sizeof(ImDrawIdx));
 
 			uint32_t elem_offset = 0;
-            const ImDrawCmd* pcmd_begin = cmd_list->CmdBuffer.begin();
-            const ImDrawCmd* pcmd_end   = cmd_list->CmdBuffer.end();
+			const ImDrawCmd* pcmd_begin = cmd_list->CmdBuffer.begin();
+			const ImDrawCmd* pcmd_end   = cmd_list->CmdBuffer.end();
 			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
 			{
-                if (pcmd->UserCallback)
-                {
-                    pcmd->UserCallback(cmd_list, pcmd);
-                    elem_offset += pcmd->ElemCount;
-                    continue;
-                }
+				if (pcmd->UserCallback)
+				{
+					pcmd->UserCallback(cmd_list, pcmd);
+					elem_offset += pcmd->ElemCount;
+					continue;
+				}
 				if (0 == pcmd->ElemCount)
 				{
 					continue;
@@ -82,11 +82,11 @@ struct OcornutImguiContext
 					| BGFX_STATE_MSAA
 					);
 				bgfx::setScissor(uint16_t(bx::fmax(pcmd->ClipRect.x, 0.0f))
-						, uint16_t(bx::fmax(pcmd->ClipRect.y, 0.0f))
-						, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f))
-						, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f))
-						);
-				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->TextureId };
+					, uint16_t(bx::fmax(pcmd->ClipRect.y, 0.0f))
+					, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f))
+					, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f))
+					);
+				union { void* ptr; bgfx::TextureHandle handle; } texture ={ pcmd->TextureId };
 
 				bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
 					? texture.handle
@@ -94,7 +94,7 @@ struct OcornutImguiContext
 					);
 
 				bgfx::setVertexBuffer(&tvb, 0, vtx_size);
-                bgfx::setIndexBuffer(&tib, elem_offset, pcmd->ElemCount);
+				bgfx::setIndexBuffer(&tib, elem_offset, pcmd->ElemCount);
 				bgfx::setProgram(m_program);
 				bgfx::submit(m_viewId);
 
@@ -107,7 +107,7 @@ struct OcornutImguiContext
 	{
 		m_viewId = 255;
 		m_allocator = _allocator;
-        m_lastScroll = 0;
+		m_lastScroll = 0;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.RenderDrawListsFn = renderDrawLists;
@@ -185,7 +185,7 @@ struct OcornutImguiContext
 
 		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
-		m_texture = bgfx::createTexture2D( (uint16_t)width
+		m_texture = bgfx::createTexture2D((uint16_t)width
 			, (uint16_t)height
 			, 1
 			, bgfx::TextureFormat::BGRA8
@@ -212,9 +212,9 @@ struct OcornutImguiContext
 	{
 		m_viewId = _viewId;
 		ImGuiIO& io = ImGui::GetIO();
-        if (_inputChar < 0x7f)
+		if (_inputChar < 0x7f)
 		{
-		    io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
+			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
 		}
 
 		io.DisplaySize = ImVec2((float)_width, (float)_height);
@@ -252,7 +252,7 @@ struct OcornutImguiContext
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
 	uint8_t m_viewId;
-    int32_t m_lastScroll;
+	int32_t m_lastScroll;
 };
 
 static OcornutImguiContext s_ctx;
