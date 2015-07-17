@@ -136,6 +136,11 @@ struct BgfxCallback : public bgfx::CallbackI
 		abort();
 	}
 
+	virtual void trace(const char* _str) BX_OVERRIDE
+	{
+		dbgPrintf("%s", _str);
+	}
+
 	virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE
 	{
 		char filePath[256];

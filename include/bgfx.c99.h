@@ -356,6 +356,7 @@ typedef struct bgfx_callback_interface
 typedef struct bgfx_callback_vtbl
 {
     void (*fatal)(bgfx_callback_interface_t* _this, bgfx_fatal_t _code, const char* _str);
+    void (*trace)(bgfx_callback_interface_t* _this, const char* _str);
     uint32_t (*cache_read_size)(bgfx_callback_interface_t* _this, uint64_t _id);
     bool (*cache_read)(bgfx_callback_interface_t* _this, uint64_t _id, void* _data, uint32_t _size);
     void (*cache_write)(bgfx_callback_interface_t* _this, uint64_t _id, const void* _data, uint32_t _size);

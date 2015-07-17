@@ -40,6 +40,11 @@ namespace bgfx
 		{
 		}
 
+		virtual void trace(const char* _str) BX_OVERRIDE
+		{
+			bx::debugOutput(_str);
+		}
+
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
 		{
 			if (Fatal::DebugCheck == _code)
@@ -236,12 +241,36 @@ namespace bgfx
 
 		va_list argList;
 		va_start(argList, _format);
-		bx::vsnprintf(temp, sizeof(temp), _format, argList);
+		char* out = temp;
+		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
+		if ( (int32_t)sizeof(temp) < len)
+		{
+			out = (char*)alloca(len+1);
+			len = bx::vsnprintf(out, len, _format, argList);
+		}
+		out[len] = '\0';
 		va_end(argList);
 
-		temp[sizeof(temp)-1] = '\0';
+		g_callback->fatal(_code, out);
+	}
 
-		g_callback->fatal(_code, temp);
+	void trace(const char* _format, ...)
+	{
+		char temp[8192];
+
+		va_list argList;
+		va_start(argList, _format);
+		char* out = temp;
+		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
+		if ( (int32_t)sizeof(temp) < len)
+		{
+			out = (char*)alloca(len+1);
+			len = bx::vsnprintf(out, len, _format, argList);
+		}
+		out[len] = '\0';
+		va_end(argList);
+
+		g_callback->trace(out);
 	}
 
 #include "charset.h"
@@ -2000,7 +2029,6 @@ again:
 	void init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::ReallocatorI* _allocator)
 	{
 		BX_CHECK(NULL == s_ctx, "bgfx is already initialized.");
-		BX_TRACE("Init...");
 
 		memset(&g_caps, 0, sizeof(g_caps) );
 		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
@@ -2029,6 +2057,8 @@ again:
 			g_callback =
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
 		}
+
+		BX_TRACE("Init...");
 
 		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 16);
 		s_ctx->init(_type);
@@ -2063,10 +2093,11 @@ again:
 		}
 
 		s_threadIndex = 0;
-		g_callback = NULL;
-		g_allocator = NULL;
 
 		BX_TRACE("Shutdown complete.");
+
+		g_callback  = NULL;
+		g_allocator = NULL;
 	}
 
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags)
@@ -3071,6 +3102,11 @@ namespace bgfx
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
 		{
 			m_interface->vtbl->fatal(m_interface, (bgfx_fatal_t)_code, _str);
+		}
+
+		virtual void trace(const char* _str) BX_OVERRIDE
+		{
+			m_interface->vtbl->trace(m_interface, _str);
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE

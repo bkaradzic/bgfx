@@ -234,6 +234,12 @@ namespace bgfx
 		///
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 
+		/// Print debug message.
+		///
+		/// @param[in] _str Message.
+		///
+		virtual void trace(const char* _str) = 0;
+
 		/// Return size of for cached item. Return 0 if no cached item was
 		/// found.
 		///
