@@ -86,7 +86,7 @@ struct OcornutImguiContext
 					, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f))
 					, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f))
 					);
-				union { void* ptr; bgfx::TextureHandle handle; } texture ={ pcmd->TextureId };
+				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->TextureId };
 
 				bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
 					? texture.handle
