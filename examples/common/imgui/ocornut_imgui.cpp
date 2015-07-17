@@ -44,7 +44,7 @@ struct OcornutImguiContext
 			uint32_t vtx_size = (uint32_t)cmd_list->VtxBuffer.size();
 			uint32_t idx_size = (uint32_t)cmd_list->IdxBuffer.size();
 
-			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl) || !bgfx::checkAvailTransientIndexBuffer(idx_size))
+			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl) || !bgfx::checkAvailTransientIndexBuffer(idx_size) )
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
@@ -54,10 +54,10 @@ struct OcornutImguiContext
 			bgfx::allocTransientIndexBuffer(&tib, idx_size);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
-			memcpy(verts, cmd_list->VtxBuffer.begin(), vtx_size * sizeof(ImDrawVert));
+			memcpy(verts, cmd_list->VtxBuffer.begin(), vtx_size * sizeof(ImDrawVert) );
 
 			ImDrawIdx* indices = (ImDrawIdx*)tib.data;
-			memcpy(indices, cmd_list->IdxBuffer.begin(), idx_size * sizeof(ImDrawIdx));
+			memcpy(indices, cmd_list->IdxBuffer.begin(), idx_size * sizeof(ImDrawIdx) );
 
 			uint32_t elem_offset = 0;
 			const ImDrawCmd* pcmd_begin = cmd_list->CmdBuffer.begin();
@@ -81,10 +81,10 @@ struct OcornutImguiContext
 					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 					| BGFX_STATE_MSAA
 					);
-				bgfx::setScissor(uint16_t(bx::fmax(pcmd->ClipRect.x, 0.0f))
-					, uint16_t(bx::fmax(pcmd->ClipRect.y, 0.0f))
-					, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f))
-					, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f))
+				bgfx::setScissor(uint16_t(bx::fmax(pcmd->ClipRect.x, 0.0f) )
+					, uint16_t(bx::fmax(pcmd->ClipRect.y, 0.0f) )
+					, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f) )
+					, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f) )
 					);
 				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->TextureId };
 
@@ -144,22 +144,22 @@ struct OcornutImguiContext
 		const bgfx::Memory* vsmem;
 		const bgfx::Memory* fsmem;
 
-		switch (bgfx::getRendererType())
+		switch (bgfx::getRendererType() )
 		{
 		case bgfx::RendererType::Direct3D9:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx9, sizeof(vs_ocornut_imgui_dx9));
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx9, sizeof(fs_ocornut_imgui_dx9));
+			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx9, sizeof(vs_ocornut_imgui_dx9) );
+			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx9, sizeof(fs_ocornut_imgui_dx9) );
 			break;
 
 		case bgfx::RendererType::Direct3D11:
 		case bgfx::RendererType::Direct3D12:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx11, sizeof(vs_ocornut_imgui_dx11));
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx11, sizeof(fs_ocornut_imgui_dx11));
+			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx11, sizeof(vs_ocornut_imgui_dx11) );
+			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx11, sizeof(fs_ocornut_imgui_dx11) );
 			break;
 
 		default:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_glsl, sizeof(vs_ocornut_imgui_glsl));
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_glsl, sizeof(fs_ocornut_imgui_glsl));
+			vsmem = bgfx::makeRef(vs_ocornut_imgui_glsl, sizeof(vs_ocornut_imgui_glsl) );
+			fsmem = bgfx::makeRef(fs_ocornut_imgui_glsl, sizeof(fs_ocornut_imgui_glsl) );
 			break;
 		}
 
@@ -185,7 +185,7 @@ struct OcornutImguiContext
 
 		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
-		m_texture = bgfx::createTexture2D((uint16_t)width
+		m_texture = bgfx::createTexture2D( (uint16_t)width
 			, (uint16_t)height
 			, 1
 			, bgfx::TextureFormat::BGRA8
@@ -217,9 +217,9 @@ struct OcornutImguiContext
 			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
 		}
 
-		io.DisplaySize = ImVec2((float)_width, (float)_height);
+		io.DisplaySize = ImVec2( (float)_width, (float)_height);
 		io.DeltaTime = 1.0f / 60.0f;
-		io.MousePos = ImVec2((float)_mx, (float)_my);
+		io.MousePos = ImVec2( (float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 		io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
 		io.MouseWheel = (float)(_scroll - m_lastScroll);

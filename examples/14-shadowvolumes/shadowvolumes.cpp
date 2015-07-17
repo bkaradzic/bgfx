@@ -843,7 +843,7 @@ struct Group
 
 		//Init faces and edges.
 		m_faces.reserve(m_numIndices/3); //1 face = 3 indices
-		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge)); //1 triangle = 3 indices = 3 edges.
+		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge) ); //1 triangle = 3 indices = 3 edges.
 		m_edgePlanesUnalignedPtr = (Plane*)malloc(m_numIndices * sizeof(Plane) + 15);
 		m_edgePlanes = (Plane*)bx::alignPtr(m_edgePlanesUnalignedPtr, 0, 16);
 
@@ -910,7 +910,7 @@ struct Group
 				std::pair<uint16_t, uint16_t> keyInv = std::make_pair(ui1, ui0);
 
 				EdgeMap::iterator iter = edgeMap.find(keyInv);
-				if (iter != edgeMap.end())
+				if (iter != edgeMap.end() )
 				{
 					EdgeAndPlane& ep = iter->second;
 					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
@@ -935,8 +935,8 @@ struct Group
 			Edge* edge = &m_edges[m_numEdges];
 			Plane* plane = &m_edgePlanes[index];
 
-			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge));
-			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane));
+			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
+			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
 
 			m_numEdges++;
 			index += 2;
@@ -1547,7 +1547,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				const float4_t r1 = float4_mul(vY, ly);
 				const float4_t r2 = float4_mul(vZ, lz);
 
-				const float4_t dot = float4_add(r0, float4_add(r1, r2));
+				const float4_t dot = float4_add(r0, float4_add(r1, r2) );
 				const float4_t f = float4_add(dot, vW);
 
 				const float4_t zero = float4_zero();
@@ -2107,7 +2107,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float eye[3];
 			cameraGetPosition(eye);

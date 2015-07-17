@@ -54,12 +54,12 @@ class Atlas
 {
 public:
 	/// create an empty dynamic atlas (region can be updated and added)
-	/// @param textureSize an atlas creates a texture cube of 6 faces with size equal to (textureSize*textureSize * sizeof(RGBA))
+	/// @param textureSize an atlas creates a texture cube of 6 faces with size equal to (textureSize*textureSize * sizeof(RGBA) )
 	/// @param maxRegionCount maximum number of region allowed in the atlas
 	Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount = 4096);
 
 	/// initialize a static atlas with serialized data	(region can be updated but not added)
-	/// @param textureSize an atlas creates a texture cube of 6 faces with size equal to (textureSize*textureSize * sizeof(RGBA))
+	/// @param textureSize an atlas creates a texture cube of 6 faces with size equal to (textureSize*textureSize * sizeof(RGBA) )
 	/// @param textureBuffer buffer of size 6*textureSize*textureSize*sizeof(uint32_t) (will be copied)
 	/// @param regionCount number of region in the Atlas
 	/// @param regionBuffer buffer containing the region (will be copied)

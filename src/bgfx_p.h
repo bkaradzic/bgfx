@@ -52,7 +52,7 @@
 namespace bgfx
 {
 #if BX_COMPILER_CLANG_ANALYZER
-	void __attribute__((analyzer_noreturn)) fatal(Fatal::Enum _code, const char* _format, ...);
+	void __attribute__( (analyzer_noreturn) ) fatal(Fatal::Enum _code, const char* _format, ...);
 #else
 	void fatal(Fatal::Enum _code, const char* _format, ...);
 #endif // BX_COMPILER_CLANG_ANALYZER
@@ -2090,7 +2090,7 @@ namespace bgfx
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
 				BX_WARN(isValid(indexBufferHandle), "Failed to allocate index buffer handle.");
-				if (!isValid(indexBufferHandle))
+				if (!isValid(indexBufferHandle) )
 				{
 					return ptr;
 				}
@@ -2117,7 +2117,7 @@ namespace bgfx
 			if (0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE) )
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
-				if (!isValid(indexBufferHandle))
+				if (!isValid(indexBufferHandle) )
 				{
 					return handle;
 				}

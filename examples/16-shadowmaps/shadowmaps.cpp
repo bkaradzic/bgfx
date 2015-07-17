@@ -1985,9 +1985,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 #define IMGUI_FLOAT_SLIDER(_name, _val) \
 			imguiSlider(_name \
 					, _val \
-					, *(((float*)&_val)+1) \
-					, *(((float*)&_val)+2) \
-					, *(((float*)&_val)+3) \
+					, *( ((float*)&_val)+1) \
+					, *( ((float*)&_val)+2) \
+					, *( ((float*)&_val)+3) \
 					)
 
 		imguiBool("Update lights", settings.m_updateLights);

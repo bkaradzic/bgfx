@@ -330,12 +330,12 @@ void cameraGetViewMtx(float* _viewMtx)
 
 void cameraGetPosition(float* _pos)
 {
-	memcpy(_pos, s_camera->m_eye, 3*sizeof(float));
+	memcpy(_pos, s_camera->m_eye, 3*sizeof(float) );
 }
 
 void cameraGetAt(float* _at)
 {
-	memcpy(_at, s_camera->m_at, 3*sizeof(float));
+	memcpy(_at, s_camera->m_at, 3*sizeof(float) );
 }
 
 void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState)

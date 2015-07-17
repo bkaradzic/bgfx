@@ -294,7 +294,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set view and projection matrix for view 0.
 			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
+			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 			{
 				float viewHead[16];
 				float eye[3] = {};

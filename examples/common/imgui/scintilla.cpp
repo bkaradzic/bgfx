@@ -236,7 +236,7 @@ public:
 	virtual Scintilla::XYPOSITION WidthChar(Scintilla::Font& _font, char ch) BX_OVERRIDE
 	{
 		FontInt* fi = (FontInt*)_font.GetID();
-		return fi->m_font->GetCharAdvance((unsigned int)ch) * fi->m_scale;
+		return fi->m_font->GetCharAdvance( (unsigned int)ch) * fi->m_scale;
 	}
 
 	virtual Scintilla::XYPOSITION Ascent(Scintilla::Font& _font) BX_OVERRIDE

@@ -144,13 +144,13 @@ namespace bgfx
 		void add(uint64_t _id, uint16_t _item)
 		{
 			invalidate(_id);
-			m_hashMap.insert(stl::make_pair(_id, _item));
+			m_hashMap.insert(stl::make_pair(_id, _item) );
 		}
 
 		uint16_t find(uint64_t _id)
 		{
 			HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end())
+			if (it != m_hashMap.end() )
 			{
 				return it->second;
 			}
@@ -161,7 +161,7 @@ namespace bgfx
 		void invalidate(uint64_t _id)
 		{
 			HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end())
+			if (it != m_hashMap.end() )
 			{
 				m_hashMap.erase(it);
 			}
@@ -174,7 +174,7 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size());
+			return uint32_t(m_hashMap.size() );
 		}
 
 	private:
