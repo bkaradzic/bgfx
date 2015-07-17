@@ -318,7 +318,7 @@ void Atlas::init()
 {
 	m_texelSize = float(UINT16_MAX) / float(m_textureSize);
 	float texelHalf = m_texelSize/2.0f;
-	switch (bgfx::getRendererType())
+	switch (bgfx::getRendererType() )
 	{
 	case bgfx::RendererType::Direct3D9:
 		m_texelOffset[0] = 0.0f;

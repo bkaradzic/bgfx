@@ -770,7 +770,7 @@ struct Imgui
 			&& m_leftPressed)
 			{
 				// Toggle active input.
-				if (isActiveInputField(_id))
+				if (isActiveInputField(_id) )
 				{
 					clearActiveInputField();
 				}
@@ -831,7 +831,7 @@ struct Imgui
 		bgfx::setViewSeq(_view, true);
 
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			m_viewWidth = _width / 2;
 			m_surfaceWidth = _surfaceWidth / 2;
@@ -1080,7 +1080,7 @@ struct Imgui
 		else
 		{
 			// Clear active if scroll is selected but not visible any more.
-			if (isActive(hid))
+			if (isActive(hid) )
 			{
 				clearActive();
 			}
@@ -1399,7 +1399,7 @@ struct Imgui
 		// Handle input.
 		if (isActiveInputField(id) )
 		{
-			const size_t cursor = size_t(strlen(_str));
+			const size_t cursor = size_t(strlen(_str) );
 
 			if (m_char == 0x08 || m_char == 0x7f) //backspace or delete
 			{
@@ -1422,7 +1422,7 @@ struct Imgui
 		if (drawLabel)
 		{
 			uint32_t numVertices = 0; //unused
-			const int32_t labelWidth = int32_t(getTextLength(m_fonts[m_currentFontIdx].m_cdata, _label, numVertices));
+			const int32_t labelWidth = int32_t(getTextLength(m_fonts[m_currentFontIdx].m_cdata, _label, numVertices) );
 			xx    += (labelWidth + 6);
 			width -= (labelWidth + 6);
 		}
@@ -1562,7 +1562,7 @@ struct Imgui
 							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
 							   );
 			}
-			else if (isActive(id))
+			else if (isActive(id) )
 			{
 				drawRoundedRect( (float)buttonX
 							   , (float)yy

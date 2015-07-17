@@ -320,7 +320,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		inputAddBindings("bindings", s_bindings);
 
 		entry::WindowHandle defaultWindow = { 0 };
-		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]));
+		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]) );
 
 		int32_t result = ::_main_(_argc, _argv);
 

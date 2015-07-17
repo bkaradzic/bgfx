@@ -1493,7 +1493,7 @@ again:
 			{
 				_type = RendererType::OpenGLES;
 			}
-			else if (BX_ENABLED(BX_PLATFORM_WINRT))
+			else if (BX_ENABLED(BX_PLATFORM_WINRT) )
 			{
 				_type = RendererType::Direct3D11;
 			}
@@ -2077,6 +2077,8 @@ again:
 
 		BX_ALIGNED_DELETE(g_allocator, ctx, 16);
 
+		BX_TRACE("Shutdown complete.");
+
 		if (NULL != s_callbackStub)
 		{
 			BX_DELETE(g_allocator, s_callbackStub);
@@ -2093,11 +2095,8 @@ again:
 		}
 
 		s_threadIndex = 0;
-
-		BX_TRACE("Shutdown complete.");
-
-		g_callback  = NULL;
-		g_allocator = NULL;
+		g_callback    = NULL;
+		g_allocator   = NULL;
 	}
 
 	void reset(uint32_t _width, uint32_t _height, uint32_t _flags)

@@ -434,8 +434,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_flags[1] = float(settings.m_specular);
 		s_uniforms.m_flags[2] = float(settings.m_diffuseIbl);
 		s_uniforms.m_flags[3] = float(settings.m_specularIbl);
-		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float));
-		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float));
+		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float) );
+		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float) );
 
 		s_uniforms.submitPerFrameUniforms();
 

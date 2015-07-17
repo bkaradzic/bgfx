@@ -135,7 +135,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set view and projection matrix for view 0.
 			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
+			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 			{
 				float view[16];
 				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);

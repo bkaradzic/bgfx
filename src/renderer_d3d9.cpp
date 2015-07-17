@@ -395,7 +395,7 @@ namespace bgfx { namespace d3d9
 						}
 
 						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-						&&  0 != strstr(desc.Description, "PerfHUD"))
+						&&  0 != strstr(desc.Description, "PerfHUD") )
 						{
 							m_adapter = ii;
 							m_deviceType = D3DDEVTYPE_REF;
@@ -1095,7 +1095,7 @@ namespace bgfx { namespace d3d9
 				}
 				DX_CHECK(m_device->SetDepthStencilSurface(m_backBufferDepthStencil) );
 
-				DX_CHECK(m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, 0 != (m_flags & BGFX_RESET_SRGB_BACKBUFFER) ));
+				DX_CHECK(m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, 0 != (m_flags & BGFX_RESET_SRGB_BACKBUFFER) ) );
 			}
 			else
 			{
@@ -1337,7 +1337,7 @@ namespace bgfx { namespace d3d9
 				DX_CHECK(device->SetSamplerState(stage, D3DSAMP_MAGFILTER, magFilter) );
 				DX_CHECK(device->SetSamplerState(stage, D3DSAMP_MIPFILTER, mipFilter) );
 				DX_CHECK(device->SetSamplerState(stage, D3DSAMP_MAXANISOTROPY, m_maxAnisotropy) );
-				DX_CHECK(device->SetSamplerState(stage, D3DSAMP_SRGBTEXTURE, 0 != (flags & BGFX_TEXTURE_SRGB)) );
+				DX_CHECK(device->SetSamplerState(stage, D3DSAMP_SRGBTEXTURE, 0 != (flags & BGFX_TEXTURE_SRGB) ) );
 			}
 		}
 
