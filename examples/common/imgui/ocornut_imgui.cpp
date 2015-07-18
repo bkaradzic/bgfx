@@ -246,7 +246,7 @@ struct OcornutImguiContext
 
 		ImGui::NewFrame();
 
-		ImGui::ShowTestWindow(); //Debug only.
+		//ImGui::ShowTestWindow(); //Debug only.
 	}
 
 	void endFrame()
