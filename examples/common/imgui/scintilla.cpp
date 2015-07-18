@@ -217,12 +217,7 @@ public:
 
 		while (_len--)
 		{
-			int advance;
-
-			const ImFont::Glyph* glyph = imFont->FindGlyph( (unsigned short)*_str++);
-			advance = glyph->XAdvance;
-
-			position     += advance;
+			position     += imFont->GetCharAdvance( (unsigned short)*_str++);
 			*_positions++ = position;
 		}
 	}
