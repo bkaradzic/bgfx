@@ -117,9 +117,8 @@ struct OcornutImguiContext
 			io.MemFreeFn  = memFree;
 		}
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
-		io.DeltaTime = 1.0f / 60.0f;
+		io.DeltaTime   = 1.0f / 60.0f;
 		io.IniFilename = NULL;
-		io.PixelCenterOffset = bgfx::RendererType::Direct3D9 == bgfx::getRendererType() ? 0.0f : 0.5f;
 
 #if defined(SCI_NAMESPACE)
 		io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;

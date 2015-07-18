@@ -1,4 +1,4 @@
-// ImGui library v1.43 WIP
+// ImGui library v1.44
 // See .cpp file for documentation.
 // See ImGui::ShowTestWindow() for sample code.
 // Read 'Programmer guide' in .cpp for notes on how to setup ImGui in your codebase.
@@ -15,7 +15,7 @@
 #include <stdlib.h>         // NULL, malloc, free, qsort, atoi
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.43 WIP"
+#define IMGUI_VERSION       "1.44 WIP"
 
 // Define assertion handler.
 #ifndef IM_ASSERT
@@ -434,7 +434,8 @@ enum ImGuiWindowFlags_
     ImGuiWindowFlags_AlwaysAutoResize       = 1 << 6,   // Resize every window to its content every frame
     ImGuiWindowFlags_ShowBorders            = 1 << 7,   // Show borders around windows and items
     ImGuiWindowFlags_NoSavedSettings        = 1 << 8,   // Never load/save settings in .ini file
-    ImGuiWindowFlags_MenuBar                = 1 << 9,   // Has a menu-bar
+    ImGuiWindowFlags_NoInputs               = 1 << 9,   // Disable catching mouse or keyboard inputs
+    ImGuiWindowFlags_MenuBar                = 1 << 10,  // Has a menu-bar
     // [Internal]
     ImGuiWindowFlags_ChildWindow            = 1 << 20,  // Don't use! For internal use by BeginChild()
     ImGuiWindowFlags_ChildWindowAutoFitX    = 1 << 21,  // Don't use! For internal use by BeginChild()
@@ -650,7 +651,6 @@ struct ImGuiIO
     ImVec2        DisplaySize;              // <unset>              // Display size, in pixels. For clamping windows positions.
     float         DeltaTime;                // = 1.0f/60.0f         // Time elapsed since last frame, in seconds.
     float         IniSavingRate;            // = 5.0f               // Maximum time between saving positions/sizes to .ini file, in seconds.
-    float         PixelCenterOffset;        // = 0.5f;              // Pixel center offset for font texture.
     const char*   IniFilename;              // = "imgui.ini"        // Path to .ini file. NULL to disable .ini saving.
     const char*   LogFilename;              // = "imgui_log.txt"    // Path to .log file (default parameter to ImGui::LogToFile when no file is specified).
     float         MouseDoubleClickTime;     // = 0.30f              // Time for a double-click, in seconds.
@@ -704,8 +704,9 @@ struct ImGuiIO
     bool        KeysDown[512];              // Keyboard keys that are pressed (in whatever storage order you naturally have access to keyboard data)
     ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
 
-    // Function
-    IMGUI_API void AddInputCharacter(ImWchar c); // Helper to add a new character into InputCharacters[]
+    // Functions
+    IMGUI_API void AddInputCharacter(ImWchar c);                    // Helper to add a new character into InputCharacters[]
+    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);  // Helper to add new characters into InputCharacters[] from an UTF-8 string
 
     //------------------------------------------------------------------
     // Output - Retrieve after calling NewFrame(), you can use them to discard inputs or hide them from the rest of your application
@@ -1123,7 +1124,7 @@ struct ImFontConfig
     bool            FontDataOwnedByAtlas;       // true     // TTF data ownership taken by the container ImFontAtlas (will delete memory itself). Set to true 
     int             FontNo;                     // 0        // Index of font within TTF file
     float           SizePixels;                 //          // Size in pixels for rasterizer
-    int             OversampleH, OversampleV;   // 3, 1     // Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.
+    int             OversampleH, OversampleV;   // 2, 2     // Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.
     bool            PixelSnapH;                 // false    // Align every character to pixel boundary (if enabled, set OversampleH/V to 1)
     ImVec2          GlyphExtraSpacing;          // 0, 0     // Extra spacing (in pixels) between glyphs
     const ImWchar*  GlyphRanges;                //          // List of Unicode range (2 value per range, values are inclusive, zero-terminated list)

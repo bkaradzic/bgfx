@@ -1,4 +1,4 @@
-﻿// ImGui library v1.43 WIP
+﻿// ImGui library v1.44 WIP
 // See ImGui::ShowTestWindow() for sample code.
 // Read 'Programmer guide' below for notes on how to setup ImGui in your codebase.
 // Get latest version at https://github.com/ocornut/imgui
@@ -21,7 +21,7 @@
  - ISSUES & TODO-LIST
  - CODE
  - SAMPLE CODE
- - FONT DATA
+ - DEFAULT FONT DATA
 
  
  MISSION STATEMENT
@@ -427,7 +427,6 @@
  - text edit: centered text for slider as input text so it matches typical positioning.
  - text edit: flag to disable live update of the user buffer. 
  - text edit: field resize behavior - field could stretch when being edited? hover tooltip shows more text?
- - text edit: add multi-line text edit
  - tree: add treenode/treepush int variants? because (void*) cast from int warns on some platforms/settings
  - textwrapped: figure out better way to use TextWrapped() in an always auto-resize context (tooltip, etc.) (git issue #249)
  - settings: write more decent code to allow saving/loading new fields
@@ -455,7 +454,6 @@
  - misc: double-clicking on title bar to minimize isn't consistent, perhaps move to single-click on left-most collapse icon?
  - style editor: have a more global HSV setter (e.g. alter hue on all elements). consider replacing active/hovered by offset in HSV space?
  - style editor: color child window height expressed in multiple of line height.
- - optimization/render: use indexed rendering to reduce vertex data cost (e.g. for remote/networked imgui)
  - optimization/render: merge command-lists with same clip-rect into one even if they aren't sequential? (as long as in-between clip rectangle don't overlap)?
  - optimization: turn some the various stack vectors into statically-sized arrays
  - optimization: better clipping for multi-component widgets
@@ -470,7 +468,7 @@
 #include <math.h>       // sqrtf, fabsf, fmodf, powf, cosf, sinf, floorf, ceilf
 #include <stdio.h>      // vsnprintf, sscanf, printf
 #include <new>          // new (ptr)
-#if defined(_MSC_VER) 
+#if defined(_MSC_VER) || defined(__MINGW32__) 
 #include <malloc.h>     // alloca
 #else
 #include <alloca.h>     // alloca
@@ -720,7 +718,6 @@ ImGuiIO::ImGuiIO()
     DisplaySize = ImVec2(-1.0f, -1.0f);
     DeltaTime = 1.0f/60.0f;
     IniSavingRate = 5.0f;
-    PixelCenterOffset = 0.5f;
     IniFilename = "imgui.ini";
     LogFilename = "imgui_log.txt";
     Fonts = &GDefaultFontAtlas;
@@ -779,6 +776,16 @@ void ImGuiIO::AddInputCharacter(ImWchar c)
         InputCharacters[n] = c;
         InputCharacters[n+1] = '\0';
     }
+}
+
+void ImGuiIO::AddInputCharactersUTF8(const char* utf8_chars)
+{
+    // We can't pass more wchars than ImGuiIO::InputCharacters[] can hold so don't convert more
+    const int wchars_buf_len = sizeof(ImGuiIO::InputCharacters) / sizeof(ImWchar);
+    ImWchar wchars[wchars_buf_len];
+    ImTextStrFromUtf8(wchars, wchars_buf_len, utf8_chars, NULL);
+    for (int i = 0; wchars[i] != 0 && i < wchars_buf_len; i++)
+        AddInputCharacter(wchars[i]);
 }
 
 // Math bits
@@ -2815,7 +2822,7 @@ static void RenderCheckMark(ImVec2 pos, ImU32 col)
     a.x = pos.x + 0.5f + start_x;
     b.x = a.x + rem_third;
     c.x = a.x + rem_third * 3.0f;
-    b.y = pos.y + 0.5f + (float)(int)(g.Font->Ascent * (g.FontSize / g.Font->FontSize) + 0.5f) + (float)(int)(g.Font->DisplayOffset.y);
+    b.y = pos.y - 1.0f + (float)(int)(g.Font->Ascent * (g.FontSize / g.Font->FontSize) + 0.5f) + (float)(int)(g.Font->DisplayOffset.y);
     a.y = b.y - rem_third;
     c.y = b.y - rem_third * 2.0f;
 
@@ -2894,6 +2901,8 @@ static ImGuiWindow* FindHoveredWindow(ImVec2 pos, bool excluding_childs)
     {
         ImGuiWindow* window = g.Windows[i];
         if (!window->Active)
+            continue;
+        if (window->Flags & ImGuiWindowFlags_NoInputs)
             continue;
         if (excluding_childs && (window->Flags & ImGuiWindowFlags_ChildWindow) != 0)
             continue;
@@ -3623,6 +3632,9 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
     const ImGuiStyle& style = g.Style;
     IM_ASSERT(g.Initialized);                       // Forgot to call ImGui::NewFrame()
     IM_ASSERT(name != NULL);                        // Must pass a name
+
+    if (flags & ImGuiWindowFlags_NoInputs)
+        flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 
     // Find or create
     bool window_is_new = false;
@@ -4748,14 +4760,9 @@ ImVec2 ImGui::GetContentRegionMax()
     ImGuiWindow* window = GetCurrentWindow();
     ImVec2 mx = window->Size - window->WindowPadding;
     if (window->DC.ColumnsCount != 1)
-    {
-        mx.x = ImGui::GetColumnOffset(window->DC.ColumnsCurrent + 1);
-        mx.x -= window->WindowPadding.x;
-    }
+        mx.x = ImGui::GetColumnOffset(window->DC.ColumnsCurrent + 1) - window->WindowPadding.x;
     else
-    {
         mx.x -= window->ScrollbarWidth();
-    }
     return mx;
 }
 
@@ -5238,6 +5245,19 @@ static bool ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
     return pressed;
 }
 
+static inline ImVec2 CalcItemSize(ImVec2 size, float default_x, float default_y)
+{
+    ImGuiState& g = *GImGui;
+    ImVec2 content_max;
+    if (size.x < 0.0f || size.y < 0.0f)
+        content_max = g.CurrentWindow->Pos + ImGui::GetContentRegionMax();
+    if (size.x <= 0.0f)
+        size.x = (size.x == 0.0f) ? default_x : ImMax(content_max.x - g.CurrentWindow->DC.CursorPos.x, 4.0f) + size.x;
+    if (size.y <= 0.0f)
+        size.y = (size.y == 0.0f) ? default_y : ImMax(content_max.y - g.CurrentWindow->DC.CursorPos.y, 4.0f) + size.y;
+    return size;
+}
+
 static bool ButtonEx(const char* label, const ImVec2& size_arg = ImVec2(0,0), ImGuiButtonFlags flags = 0)
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -5252,7 +5272,7 @@ static bool ButtonEx(const char* label, const ImVec2& size_arg = ImVec2(0,0), Im
     ImVec2 pos = window->DC.CursorPos;
     if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrentLineTextBaseOffset)
         pos.y += window->DC.CurrentLineTextBaseOffset - style.FramePadding.y;
-    const ImVec2 size(size_arg.x != 0.0f ? size_arg.x : (label_size.x + style.FramePadding.x*2), size_arg.y != 0.0f ? size_arg.y : (label_size.y + style.FramePadding.y*2));
+    ImVec2 size = CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
 
     const ImRect bb(pos, pos + size);
     ItemSize(bb, style.FramePadding.y);
@@ -7091,10 +7111,7 @@ static bool InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
     const bool is_multiline = (flags & ImGuiInputTextFlags_Multiline) != 0;
 
     ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
-    ImVec2 size;
-    size.x = (size_arg.x != 0.0f) ? size_arg.x : ImGui::CalcItemWidth();
-    size.y = (size_arg.y != 0.0f) ? size_arg.y : is_multiline ? ImGui::GetTextLineHeight() * 8.0f : label_size.y; // Arbitrary default of 8 lines high for multi-line
-
+    ImVec2 size = CalcItemSize(size_arg, ImGui::CalcItemWidth(), is_multiline ? ImGui::GetTextLineHeight() * 8.0f : label_size.y); // Arbitrary default of 8 lines high for multi-line
     const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + size + style.FramePadding*2.0f);
     const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? (style.ItemInnerSpacing.x + label_size.x) : 0.0f, 0.0f));
 
@@ -7434,7 +7451,7 @@ static bool InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             // Count lines + find lines numbers of cursor and select_start
             int matches_remaining = 0;
             int matches_line_no[2] = { -1, -999 };
-            const ImWchar* matches_ptr[2] = {};
+            const ImWchar* matches_ptr[2] = { NULL, NULL };
             matches_ptr[0] = text_begin + edit_state.StbState.cursor; matches_remaining++;
             if (edit_state.StbState.select_start != edit_state.StbState.select_end)
             {
@@ -7859,8 +7876,9 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
         if (height_in_items < 0)
             height_in_items = 7;
 
-        const float popup_height = (label_size.y + style.ItemSpacing.y) * ImMin(items_count, height_in_items) + (style.FramePadding.y * 3);
-        const ImRect popup_rect(ImVec2(frame_bb.Min.x, frame_bb.Max.y), ImVec2(frame_bb.Max.x, frame_bb.Max.y + popup_height));
+        float popup_height = (label_size.y + style.ItemSpacing.y) * ImMin(items_count, height_in_items) + (style.FramePadding.y * 3);
+        ImRect popup_rect(ImVec2(frame_bb.Min.x, frame_bb.Max.y), ImVec2(frame_bb.Max.x, frame_bb.Max.y + popup_height));
+        popup_rect.Max.y = ImMin(popup_rect.Max.y, g.IO.DisplaySize.y - style.DisplaySafeAreaPadding.y); // Adhoc height limit for Combo. Ideally should be handled in Begin() along with other popups size, we want to have the possibility of moving the popup above as well.
         ImGui::SetNextWindowPos(popup_rect.Min);
         ImGui::SetNextWindowSize(popup_rect.GetSize());
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.FramePadding);
@@ -7995,14 +8013,7 @@ bool ImGui::ListBoxHeader(const char* label, const ImVec2& size_arg)
     const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
 
     // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
-    const ImVec2 content_max = window->Pos + ImGui::GetContentRegionMax();
-    const ImVec2 cursor_pos = window->Pos + ImGui::GetCursorPos();
-    // FIXME: Wrap this pattern for re-use
-    ImVec2 size = size_arg;
-    if (size.x <= 0.0f)
-        size.x = (size.x == 0.0f) ? ImGui::CalcItemWidth() + style.FramePadding.x * 2.0f : ImMax(content_max.x - cursor_pos.x, 4.0f) - fabsf(size.x);
-    if (size.y <= 0.0f)
-        size.y = (size.y == 0.0f) ? ImGui::GetTextLineHeightWithSpacing() * 7.4f + style.ItemSpacing.y : ImMax(content_max.y - cursor_pos.y, 4.0f) - fabsf(size.y);
+    ImVec2 size = CalcItemSize(size_arg, ImGui::CalcItemWidth() + style.FramePadding.x * 2.0f, ImGui::GetTextLineHeightWithSpacing() * 7.4f + style.ItemSpacing.y);
     ImVec2 frame_size = ImVec2(size.x, ImMax(size.y, label_size.y));
     ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + frame_size);
     ImRect bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
@@ -9708,6 +9719,13 @@ void    ImFontAtlas::ClearInputData()
             ConfigData[i].FontData = NULL;
         }
 
+    // When clearing this we lose access to the font name and other information used to build the font.
+    for (int i = 0; i < Fonts.Size; i++)
+        if (Fonts[i]->ConfigData >= ConfigData.Data && Fonts[i]->ConfigData < ConfigData.Data + ConfigData.Size)
+        {
+            Fonts[i]->ConfigData = NULL;
+            Fonts[i]->ConfigDataCount = 0;
+        }
     ConfigData.clear();
 }
 
@@ -10001,9 +10019,6 @@ bool    ImFontAtlas::Build()
     ImGui::MemFree(buf_rects);
     buf_rects = NULL;
 
-//    ImGuiIO& io = ImGui::GetIO();
-//    const float PixelCenterOffset = io.PixelCenterOffset;
-
     // Third pass: setup ImFont and glyphs for runtime
     for (int input_i = 0; input_i < ConfigData.Size; input_i++)
     {
@@ -10051,7 +10066,7 @@ bool    ImFontAtlas::Build()
                 dst_font->Glyphs.resize(dst_font->Glyphs.Size + 1);
                 ImFont::Glyph& glyph = dst_font->Glyphs.back();
                 glyph.Codepoint = (ImWchar)codepoint;
-                glyph.X0 = q.x0; glyph.Y0 = q.y0; glyph.X1 = q.x1; glyph.Y1 = q.y1;
+                glyph.X0 = q.x0; glyph.Y0 = q.y0; glyph.X1 = q.x1; glyph.Y1 = q.y1;                
                 glyph.U0 = q.s0; glyph.V0 = q.t0; glyph.U1 = q.s1; glyph.V1 = q.t1;
                 glyph.Y0 += (float)(int)(dst_font->Ascent + off_y + 0.5f);
                 glyph.Y1 += (float)(int)(dst_font->Ascent + off_y + 0.5f);
@@ -10800,7 +10815,6 @@ void ImFont::RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_re
                 if (!word_wrap_enabled && y + line_height < clip_rect.y)
                     while (s < text_end && *s != '\n')  // Fast-forward to next line
                         s++;
-
                 continue;
             }
             if (c == '\r')
@@ -10851,6 +10865,11 @@ void ImFont::RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_re
                         {
                             v2 = v1 + ((clip_rect.w - y1) / (y2 - y1)) * (v2 - v1);
                             y2 = clip_rect.w;
+                        }
+                        if (y1 >= y2)
+                        {
+                            x += char_width;
+                            continue;
                         }
                     }
 
@@ -11102,6 +11121,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
         filter.Draw("Filter colors", 200);
 
         ImGui::BeginChild("#colors", ImVec2(0, 300), true);
+        ImGui::PushItemWidth(-160);
         ImGui::ColorEditMode(edit_mode);
         for (int i = 0; i < ImGuiCol_COUNT; i++)
         {
@@ -11117,6 +11137,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
             }
             ImGui::PopID();
         }
+        ImGui::PopItemWidth();
         ImGui::EndChild();
 
         ImGui::TreePop();
@@ -11159,6 +11180,7 @@ void ImGui::ShowTestWindow(bool* opened)
     static bool show_app_fixed_overlay = false;
     static bool show_app_custom_rendering = false;
     static bool show_app_manipulating_window_title = false;
+    static bool show_app_about = false;
     if (show_app_metrics) ImGui::ShowMetricsWindow(&show_app_metrics);
     if (show_app_main_menu_bar) ShowExampleAppMainMenuBar();
     if (show_app_console) ShowExampleAppConsole(&show_app_console);
@@ -11168,6 +11190,15 @@ void ImGui::ShowTestWindow(bool* opened)
     if (show_app_fixed_overlay) ShowExampleAppFixedOverlay(&show_app_fixed_overlay);
     if (show_app_manipulating_window_title) ShowExampleAppManipulatingWindowTitle(&show_app_manipulating_window_title);
     if (show_app_custom_rendering) ShowExampleAppCustomRendering(&show_app_custom_rendering);
+    if (show_app_about)
+    {
+        ImGui::Begin("About ImGui", &show_app_about, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("ImGui %s", ImGui::GetVersion());
+        ImGui::Separator();
+        ImGui::Text("By Omar Cornut and all github contributors.");
+        ImGui::Text("ImGui is licensed under the MIT License, see LICENSE for more information.");
+        ImGui::End();
+    }
 
     static bool no_titlebar = false;
     static bool no_border = true;
@@ -11209,7 +11240,6 @@ void ImGui::ShowTestWindow(bool* opened)
         }
         if (ImGui::BeginMenu("Examples"))
         {
-            ImGui::MenuItem("Metrics", NULL, &show_app_metrics);
             ImGui::MenuItem("Main menu bar", NULL, &show_app_main_menu_bar);
             ImGui::MenuItem("Console", NULL, &show_app_console);
             ImGui::MenuItem("Simple layout", NULL, &show_app_layout);
@@ -11218,6 +11248,12 @@ void ImGui::ShowTestWindow(bool* opened)
             ImGui::MenuItem("Simple overlay", NULL, &show_app_fixed_overlay);
             ImGui::MenuItem("Manipulating window title", NULL, &show_app_manipulating_window_title);
             ImGui::MenuItem("Custom rendering", NULL, &show_app_custom_rendering);
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Help"))
+        {
+            ImGui::MenuItem("Metrics", NULL, &show_app_metrics);
+            ImGui::MenuItem("About ImGui", NULL, &show_app_about);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -11261,7 +11297,7 @@ void ImGui::ShowTestWindow(bool* opened)
             for (int i = 0; i < atlas->Fonts.Size; i++)
             {
                 ImFont* font = atlas->Fonts[i];
-                ImGui::BulletText("Font %d: \'%s\', %.2f px, %d glyphs", i, font->ConfigData[0].Name, font->FontSize, font->Glyphs.Size);
+                ImGui::BulletText("Font %d: \'%s\', %.2f px, %d glyphs", i, font->ConfigData ? font->ConfigData[0].Name : "", font->FontSize, font->Glyphs.Size);
                 ImGui::TreePush((void*)i);
                 if (i > 0) { ImGui::SameLine(); if (ImGui::SmallButton("Set as default")) { atlas->Fonts[i] = atlas->Fonts[0]; atlas->Fonts[0] = font; } }
                 ImGui::PushFont(font);
@@ -11272,8 +11308,8 @@ void ImGui::ShowTestWindow(bool* opened)
                     ImGui::DragFloat("font scale", &font->Scale, 0.005f, 0.3f, 2.0f, "%.1f");             // scale only this font
                     ImGui::Text("Ascent: %f, Descent: %f, Height: %f", font->Ascent, font->Descent, font->Ascent - font->Descent);
                     ImGui::Text("Fallback character: '%c' (%d)", font->FallbackChar, font->FallbackChar);
-                    for (int j = 0; j < font->ConfigDataCount; j++)
-                        ImGui::BulletText("Input %d: \'%s\'", j, font->ConfigData[j].Name);
+                    for (int config_i = 0; config_i < font->ConfigDataCount; config_i++)
+                        ImGui::BulletText("Input %d: \'%s\'", config_i, font->ConfigData[config_i].Name);
                     ImGui::TreePop();
                 }
                 ImGui::TreePop();
@@ -11288,7 +11324,7 @@ void ImGui::ShowTestWindow(bool* opened)
 
         if (ImGui::TreeNode("Logging"))
         {
-            ImGui::TextWrapped("The logging API redirects all text output of ImGui so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded. You can also call ImGui::LogText() to output directly to the log without a visual output.");
+            ImGui::TextWrapped("The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded. You can also call ImGui::LogText() to output directly to the log without a visual output.");
             ImGui::LogButtons();
             ImGui::TreePop();
         }
@@ -11296,14 +11332,6 @@ void ImGui::ShowTestWindow(bool* opened)
 
     if (ImGui::CollapsingHeader("Widgets"))
     {
-        static bool a=false;
-        if (ImGui::Button("Button")) { printf("Clicked\n"); a ^= 1; }
-        if (a)
-        {
-            ImGui::SameLine(); 
-            ImGui::Text("Thanks for clicking me!");
-        }
-
         if (ImGui::TreeNode("Tree"))
         {
             for (int i = 0; i < 5; i++)
@@ -11380,20 +11408,6 @@ void ImGui::ShowTestWindow(bool* opened)
             ImGui::TreePop();
         }
 
-        if (ImGui::TreeNode("Clipping"))
-        {
-            static ImVec2 size(100, 100), offset(50, 20);
-            ImGui::TextWrapped("On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. The system is designed to try minimizing both execution and CPU/GPU rendering cost.");
-            ImGui::DragFloat2("size", (float*)&size, 0.5f, 0.0f, 200.0f, "%.0f");
-            ImGui::DragFloat2("offset", (float*)&offset, 0.5f, -200, 200.0f, "%.0f");
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec4 clip_rect(pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(pos, pos+size, ImColor(90,90,120,255));
-            ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, pos+offset, ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
-            ImGui::Dummy(size);
-            ImGui::TreePop();
-        }
-
         if (ImGui::TreeNode("Images"))
         {
             ImGui::TextWrapped("Below we are displaying the font texture (which is the only texture we have access to in this demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover the texture for a zoomed view!");
@@ -11401,6 +11415,7 @@ void ImGui::ShowTestWindow(bool* opened)
             float tex_w = (float)ImGui::GetIO().Fonts->TexWidth;
             float tex_h = (float)ImGui::GetIO().Fonts->TexHeight;
             ImTextureID tex_id = ImGui::GetIO().Fonts->TexID;
+            ImGui::Text("%.0fx%.0f", tex_w, tex_h);
             ImGui::Image(tex_id, ImVec2(tex_w, tex_h), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
             if (ImGui::IsItemHovered())
             {
@@ -11487,29 +11502,16 @@ void ImGui::ShowTestWindow(bool* opened)
         if (ImGui::TreeNode("Multi-line Text Input"))
         {
             static char text[1024*16] = "// F00F bug\nlabel:\n\tlock cmpxchg8b eax\n";
-            ImGui::PushItemWidth(-1.0f);
-            ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(0.f, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
-            ImGui::PopItemWidth();
+            ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
             ImGui::TreePop();
         }
 
-        if (ImGui::TreeNode("Dragging"))
+        static bool a=false;
+        if (ImGui::Button("Button")) { printf("Clicked\n"); a ^= 1; }
+        if (a)
         {
-            ImGui::TextWrapped("You can use ImGui::GetItemActiveDragDelta() to query for the dragged amount on any widget.");
-            ImGui::Button("Drag Me");
-            if (ImGui::IsItemActive())
-            {
-                // Draw a line between the button and the mouse cursor
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                draw_list->PushClipRectFullScreen();
-                draw_list->AddLine(ImGui::CalcItemRectClosestPoint(ImGui::GetIO().MousePos, true, -2.0f), ImGui::GetIO().MousePos, ImColor(ImGui::GetStyle().Colors[ImGuiCol_Button]), 4.0f);
-                draw_list->PopClipRect();
-                ImVec2 value_raw = ImGui::GetMouseDragDelta(0, 0.0f);
-                ImVec2 value_with_lock_threshold = ImGui::GetMouseDragDelta(0);
-                ImGui::SameLine(); ImGui::Text("Raw (%.1f, %.1f), WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y, value_with_lock_threshold.x, value_with_lock_threshold.y);
-            }
-
-            ImGui::TreePop();
+            ImGui::SameLine(); 
+            ImGui::Text("Thanks for clicking me!");
         }
 
         static bool check = true;
@@ -11587,7 +11589,7 @@ void ImGui::ShowTestWindow(bool* opened)
         {
             static int i1=50, i2=42;
             ImGui::DragInt("drag int", &i1, 1);
-            ImGui::SameLine(); ShowHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input text.");
+            ImGui::SameLine(); ShowHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.");
 
             ImGui::DragInt("drag int 0..100", &i2, 1, 0, 100, "%.0f%%");
 
@@ -11624,7 +11626,7 @@ void ImGui::ShowTestWindow(bool* opened)
         //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
         //ImGui::PopItemWidth();
 
-        if (ImGui::TreeNode("Ranges"))
+        if (ImGui::TreeNode("Range Widgets"))
         {
             ImGui::Unindent();
 
@@ -11801,7 +11803,7 @@ void ImGui::ShowTestWindow(bool* opened)
                     ImGui::NextColumn();
                 char buf[32];
                 sprintf(buf, "%08x", i*5731);
-                ImGui::Button(buf);
+                ImGui::Button(buf, ImVec2(ImGui::GetContentRegionMax().x - ImGui::GetCursorPosX(), 0.0f));
             }
             ImGui::EndChild();
             ImGui::PopStyleVar();
@@ -12012,6 +12014,20 @@ void ImGui::ShowTestWindow(bool* opened)
                 ImGui::EndChild();
                 ImGui::EndGroup();
             }
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Clipping"))
+        {
+            static ImVec2 size(100, 100), offset(50, 20);
+            ImGui::TextWrapped("On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. The system is designed to try minimizing both execution and CPU/GPU rendering cost.");
+            ImGui::DragFloat2("size", (float*)&size, 0.5f, 0.0f, 200.0f, "%.0f");
+            ImGui::DragFloat2("offset", (float*)&offset, 0.5f, -200, 200.0f, "%.0f");
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec4 clip_rect(pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+            ImGui::GetWindowDrawList()->AddRectFilled(pos, pos+size, ImColor(90,90,120,255));
+            ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, pos+offset, ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
+            ImGui::Dummy(size);
             ImGui::TreePop();
         }
     }
@@ -12368,6 +12384,24 @@ void ImGui::ShowTestWindow(bool* opened)
             else 
                 ImGui::Text("Item with focus: <none>");
             ImGui::TextWrapped("Cursor & selection are preserved when refocusing last used item in code.");
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Dragging"))
+        {
+            ImGui::TextWrapped("You can use ImGui::GetItemActiveDragDelta() to query for the dragged amount on any widget.");
+            ImGui::Button("Drag Me");
+            if (ImGui::IsItemActive())
+            {
+                // Draw a line between the button and the mouse cursor
+                ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                draw_list->PushClipRectFullScreen();
+                draw_list->AddLine(ImGui::CalcItemRectClosestPoint(ImGui::GetIO().MousePos, true, -2.0f), ImGui::GetIO().MousePos, ImColor(ImGui::GetStyle().Colors[ImGuiCol_Button]), 4.0f);
+                draw_list->PopClipRect();
+                ImVec2 value_raw = ImGui::GetMouseDragDelta(0, 0.0f);
+                ImVec2 value_with_lock_threshold = ImGui::GetMouseDragDelta(0);
+                ImGui::SameLine(); ImGui::Text("Raw (%.1f, %.1f), WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y, value_with_lock_threshold.x, value_with_lock_threshold.y);
+            }
             ImGui::TreePop();
         }
 
@@ -13075,7 +13109,7 @@ static void ShowExampleAppLongText(bool* opened)
 #endif
 
 //-----------------------------------------------------------------------------
-// FONT DATA
+// DEFAULT FONT DATA
 //-----------------------------------------------------------------------------
 // Compressed with stb_compress() then converted to a C array.
 // Use the program in extra_fonts/binary_to_compressed_c.cpp to create the array from a TTF file.
