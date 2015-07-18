@@ -666,6 +666,14 @@ public:
 		{
 			Editor::KeyDown(SCK_DOWN, shift, ctrl, alt);
 		}
+		else if (ImGui::IsKeyPressed(entry::Key::PageUp) )
+		{
+			Editor::KeyDown(SCK_PRIOR, shift, ctrl, alt);
+		}
+		else if (ImGui::IsKeyPressed(entry::Key::PageDown) )
+		{
+			Editor::KeyDown(SCK_NEXT, shift, ctrl, alt);
+		}
 		else if (ImGui::IsKeyPressed(entry::Key::Home) )
 		{
 			Editor::KeyDown(SCK_HOME, shift, ctrl, alt);

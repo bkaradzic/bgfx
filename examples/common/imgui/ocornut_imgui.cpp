@@ -14,6 +14,7 @@
 
 #if defined(SCI_NAMESPACE)
 #	include "../entry/input.h"
+#	include "scintilla.h"
 #endif // defined(SCI_NAMESPACE)
 
 #include "vs_ocornut_imgui.bin.h"
@@ -247,6 +248,11 @@ struct OcornutImguiContext
 		ImGui::NewFrame();
 
 		//ImGui::ShowTestWindow(); //Debug only.
+		//
+#if defined(SCI_NAMESPACE) && 0
+		bool opened = true;
+		ImGuiScintilla("Scintilla Editor", &opened, ImVec2(640.0f, 480.0f) );
+#endif // 0
 	}
 
 	void endFrame()
