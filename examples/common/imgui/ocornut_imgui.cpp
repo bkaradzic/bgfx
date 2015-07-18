@@ -6,6 +6,7 @@
 #include <bgfx.h>
 #include <bx/allocator.h>
 #include <bx/fpumath.h>
+#include <bx/timer.h>
 #include <ocornut-imgui/imgui.h>
 #include "imgui.h"
 #include "ocornut_imgui.h"
@@ -108,6 +109,7 @@ struct OcornutImguiContext
 		m_viewId = 255;
 		m_allocator = _allocator;
 		m_lastScroll = 0;
+		m_last = bx::getHPCounter();
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.RenderDrawListsFn = renderDrawLists;
@@ -116,6 +118,7 @@ struct OcornutImguiContext
 			io.MemAllocFn = memAlloc;
 			io.MemFreeFn  = memFree;
 		}
+
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
 		io.DeltaTime   = 1.0f / 60.0f;
 		io.IniFilename = NULL;
@@ -217,7 +220,13 @@ struct OcornutImguiContext
 		}
 
 		io.DisplaySize = ImVec2( (float)_width, (float)_height);
-		io.DeltaTime = 1.0f / 60.0f;
+
+		const int64_t now = bx::getHPCounter();
+		const int64_t frameTime = now - m_last;
+		m_last = now;
+		const double freq = double(bx::getHPFrequency() );
+		io.DeltaTime = float(frameTime/freq);
+
 		io.MousePos = ImVec2( (float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 		io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
@@ -237,7 +246,7 @@ struct OcornutImguiContext
 
 		ImGui::NewFrame();
 
-		//ImGui::ShowTestWindow(); //Debug only.
+		ImGui::ShowTestWindow(); //Debug only.
 	}
 
 	void endFrame()
@@ -250,8 +259,9 @@ struct OcornutImguiContext
 	bgfx::ProgramHandle m_program;
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
-	uint8_t m_viewId;
+	int64_t m_last;
 	int32_t m_lastScroll;
+	uint8_t m_viewId;
 };
 
 static OcornutImguiContext s_ctx;
