@@ -260,6 +260,7 @@ int RunStyles::Find(int value, int start) const {
 }
 
 void RunStyles::Check() const {
+#if defined(__EXCEPTIONS)
 	if (Length() < 0) {
 		throw std::runtime_error("RunStyles: Length can not be negative.");
 	}
@@ -285,4 +286,5 @@ void RunStyles::Check() const {
 			throw std::runtime_error("RunStyles: Style of a partition same as previous.");
 		}
 	}
+#endif // defined(__EXCEPTIONS)
 }
