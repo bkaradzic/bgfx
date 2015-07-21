@@ -637,7 +637,9 @@ public:
 	{
 		ImVec2 cursorPos = ImGui::GetCursorPos();
 		ImVec2 regionMax = ImGui::GetWindowContentRegionMax();
-		ImVec2 size = ImVec2(regionMax.x - cursorPos.x, regionMax.y - cursorPos.y);
+		ImVec2 size = ImVec2( regionMax.x - cursorPos.x - 32
+							, regionMax.y - cursorPos.y
+							);
 
 		Resize(0, 0, (int)size.x, (int)size.y);
 
@@ -739,6 +741,10 @@ public:
 			}
 		}
 
+		int32_t lineCount = int32_t(command(SCI_GETLINECOUNT) );
+		int32_t firstVisibleLine = int32_t(command(SCI_GETFIRSTVISIBLELINE) );
+		float fontHeight = ImGui::GetWindowFontSize();
+
 		if (ImGui::IsMouseClicked(0) )
 		{
 			ImGuiIO& io = ImGui::GetIO();
@@ -749,12 +755,36 @@ public:
 
 		Tick();
 
-		Scintilla::AutoSurface surfaceWindow(this);
-		if (surfaceWindow)
-		{
-			Paint(surfaceWindow, GetClientRectangle() );
-			surfaceWindow->Release();
-		}
+		ImGui::BeginGroup();
+			ImGui::BeginChild("##editor", ImVec2(size.x, size.y-20) );
+				Scintilla::AutoSurface surfaceWindow(this);
+				if (surfaceWindow)
+				{
+					Paint(surfaceWindow, GetClientRectangle() );
+					surfaceWindow->Release();
+				}
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			ImGui::BeginChild("##scroll");
+				ImGuiListClipper clipper;
+				clipper.Begin(lineCount, fontHeight*2.0f);
+
+				if (m_lastFirstVisibleLine != firstVisibleLine)
+				{
+					m_lastFirstVisibleLine = firstVisibleLine;
+					ImGui::SetScrollY(firstVisibleLine * fontHeight*2.0f);
+				}
+				else if (firstVisibleLine != clipper.DisplayStart)
+				{
+					command(SCI_SETFIRSTVISIBLELINE, clipper.DisplayStart);
+				}
+
+				clipper.End();
+			ImGui::EndChild();
+
+		ImGui::EndGroup();
 	}
 
 	void setStyle(int style, Scintilla::ColourDesired fore, Scintilla::ColourDesired back = UINT32_MAX, int size = -1, const char* face = NULL)
@@ -778,6 +808,7 @@ private:
 	int m_height;
 	int m_wheelVRotation;
 	int m_wheelHRotation;
+	int m_lastFirstVisibleLine;
 
 	Scintilla::ColourDesired m_searchResultIndication;
 	Scintilla::ColourDesired m_filteredSearchResultIndication;
