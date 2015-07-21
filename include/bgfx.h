@@ -218,8 +218,8 @@ namespace bgfx
 	/// Cached items are currently used only for OpenGL binary shaders.
 	///
 	/// @remarks
-	///   'fatal' callback can be called from any thread. Other callbacks
-	///   are called from the render thread.
+	///   'fatal' and 'trace' callbacks can be called from any thread. Other
+	///   callbacks are called from the render thread.
 	///
 	struct CallbackI
 	{
@@ -232,11 +232,17 @@ namespace bgfx
 		/// @param[in] _code Fatal error code.
 		/// @param[in] _str More information about error.
 		///
+		/// @remarks
+		///   Not thread safe and it can be called from any thread.
+		///
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 
 		/// Print debug message.
 		///
 		/// @param[in] _str Message.
+		///
+		/// @remarks
+		///   Not thread safe and it can be called from any thread.
 		///
 		virtual void trace(const char* _str) = 0;
 
