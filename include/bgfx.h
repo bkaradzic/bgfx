@@ -14,7 +14,7 @@
 ///
 #define BGFX_HANDLE(_name) \
 			struct _name { uint16_t idx; }; \
-			inline bool isValid(_name _handle)   { return bgfx::invalidHandle != _handle.idx; }
+			inline bool isValid(_name _handle) { return bgfx::invalidHandle != _handle.idx; }
 
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 

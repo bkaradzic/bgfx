@@ -99,7 +99,7 @@ namespace bgfx { namespace gl
 		BX_UNUSED(_width, _height, _flags);
 		BX_TRACE("resize context");
 
-        if (0 != m_fbo)
+		if (0 != m_fbo)
 		{
 			GL_CHECK(glDeleteFramebuffers(1, &m_fbo) );
 			m_fbo = 0;
@@ -117,7 +117,7 @@ namespace bgfx { namespace gl
 			m_depthStencilRbo = 0;
 		}
 
-        GL_CHECK(glGenFramebuffers(1, &m_fbo) );
+		GL_CHECK(glGenFramebuffers(1, &m_fbo) );
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo) );
 
 		GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
