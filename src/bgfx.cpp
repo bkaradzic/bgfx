@@ -679,7 +679,7 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	uint32_t Frame::submit(uint8_t _id, int32_t _depth)
+	uint32_t Frame::submit(uint8_t _id, ProgramHandle _handle, int32_t _depth)
 	{
 		if (m_discard)
 		{
@@ -696,25 +696,26 @@ namespace bgfx
 
 		m_constEnd = m_constantBuffer->getPos();
 
-		BX_WARN(invalidHandle != m_key.m_program, "Program with invalid handle");
-		if (invalidHandle != m_key.m_program)
-		{
-			m_key.m_depth  = (uint32_t)_depth;
-			m_key.m_view   = _id;
-			m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
-			s_ctx->m_seq[_id]++;
+		m_key.m_program = invalidHandle == _handle.idx
+			? 0
+			: _handle.idx
+			;
 
-			uint64_t key = m_key.encodeDraw();
-			m_sortKeys[m_num]   = key;
-			m_sortValues[m_num] = m_numRenderItems;
-			++m_num;
+		m_key.m_depth  = (uint32_t)_depth;
+		m_key.m_view   = _id;
+		m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
+		s_ctx->m_seq[_id]++;
 
-			m_draw.m_constBegin = m_constBegin;
-			m_draw.m_constEnd   = m_constEnd;
-			m_draw.m_flags |= m_flags;
-			m_renderItem[m_numRenderItems].draw = m_draw;
-			++m_numRenderItems;
-		}
+		uint64_t key = m_key.encodeDraw();
+		m_sortKeys[m_num]   = key;
+		m_sortValues[m_num] = m_numRenderItems;
+		++m_num;
+
+		m_draw.m_constBegin = m_constBegin;
+		m_draw.m_constEnd   = m_constEnd;
+		m_draw.m_flags |= m_flags;
+		m_renderItem[m_numRenderItems].draw = m_draw;
+		++m_numRenderItems;
 
 		m_draw.clear();
 		m_constBegin = m_constEnd;
@@ -747,23 +748,20 @@ namespace bgfx
 		m_compute.m_submitFlags = _flags;
 
 		m_key.m_program = _handle.idx;
-		if (invalidHandle != m_key.m_program)
-		{
-			m_key.m_depth  = 0;
-			m_key.m_view   = _id;
-			m_key.m_seq    = s_ctx->m_seq[_id];
-			s_ctx->m_seq[_id]++;
+		m_key.m_depth   = 0;
+		m_key.m_view    = _id;
+		m_key.m_seq     = s_ctx->m_seq[_id];
+		s_ctx->m_seq[_id]++;
 
-			uint64_t key = m_key.encodeCompute();
-			m_sortKeys[m_num]   = key;
-			m_sortValues[m_num] = m_numRenderItems;
-			++m_num;
+		uint64_t key = m_key.encodeCompute();
+		m_sortKeys[m_num]   = key;
+		m_sortValues[m_num] = m_numRenderItems;
+		++m_num;
 
-			m_compute.m_constBegin = m_constBegin;
-			m_compute.m_constEnd   = m_constEnd;
-			m_renderItem[m_numRenderItems].compute = m_compute;
-			++m_numRenderItems;
-		}
+		m_compute.m_constBegin = m_constBegin;
+		m_compute.m_constEnd   = m_constEnd;
+		m_renderItem[m_numRenderItems].compute = m_compute;
+		++m_numRenderItems;
 
 		m_compute.clear();
 		m_constBegin = m_constEnd;
@@ -2121,6 +2119,11 @@ again:
 		return s_ctx->getHMD();
 	}
 
+	const Stats* getStats()
+	{
+		return s_ctx->getPerfStats();
+	}
+
 	RendererType::Enum getRendererType()
 	{
 		return g_caps.rendererType;
@@ -2973,12 +2976,6 @@ again:
 		s_ctx->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
-	void setProgram(ProgramHandle _handle)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setProgram(_handle);
-	}
-
 	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -2991,16 +2988,22 @@ again:
 		s_ctx->setTexture(_stage, _sampler, _handle, _attachment, _flags);
 	}
 
-	uint32_t submit(uint8_t _id, int32_t _depth)
+	uint32_t touch(uint8_t _id)
 	{
-		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->submit(_id, _depth);
+		ProgramHandle handle = BGFX_INVALID_HANDLE;
+		return submit(_id, handle);
 	}
 
-	uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+	uint32_t submit(uint8_t _id, ProgramHandle _handle, int32_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->submit(_id, _indirectHandle, _start, _num, _depth);
+		return s_ctx->submit(_id, _handle, _depth);
+	}
+
+	uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->submit(_id, _handle, _indirectHandle, _start, _num, _depth);
 	}
 
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
@@ -3291,6 +3294,11 @@ BGFX_C_API const bgfx_caps_t* bgfx_get_caps()
 BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd()
 {
 	return (const bgfx_hmd_t*)bgfx::getHMD();
+}
+
+BGFX_C_API const bgfx_stats_t* bgfx_get_stats()
+{
+	return (const bgfx_stats_t*)bgfx::getStats();
 }
 
 BGFX_C_API const bgfx_memory_t* bgfx_alloc(uint32_t _size)
@@ -3782,12 +3790,6 @@ BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_v
 	bgfx::setInstanceDataBuffer(handle.cpp, _startVertex, _num);
 }
 
-BGFX_C_API void bgfx_set_program(bgfx_program_handle_t _handle)
-{
-	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
-	bgfx::setProgram(handle.cpp);
-}
-
 BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags)
 {
 	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
@@ -3802,15 +3804,22 @@ BGFX_C_API void bgfx_set_texture_from_frame_buffer(uint8_t _stage, bgfx_uniform_
 	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _attachment, _flags);
 }
 
-BGFX_C_API uint32_t bgfx_submit(uint8_t _id, int32_t _depth)
+BGFX_C_API uint32_t bgfx_touch(uint8_t _id)
 {
-	return bgfx::submit(_id, _depth);
+	return bgfx::touch(_id);
 }
 
-BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+BGFX_C_API uint32_t bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth)
 {
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
+	return bgfx::submit(_id, handle.cpp, _depth);
+}
+
+BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
-	return bgfx::submit(_id, indirectHandle.cpp, _start, _num, _depth);
+	return bgfx::submit(_id, handle.cpp, indirectHandle.cpp, _start, _num, _depth);
 }
 
 BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format)

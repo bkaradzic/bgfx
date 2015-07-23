@@ -249,7 +249,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -348,9 +348,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtx);
 
-		// Set vertex and fragment shaders.
-		bgfx::setProgram(program);
-
 		// Set vertex and index buffer.
 		bgfx::setVertexBuffer(vbh);
 		bgfx::setIndexBuffer(ibh);
@@ -362,7 +359,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setState(BGFX_STATE_DEFAULT);
 
 		// Submit primitive for rendering to view 0.
-		bgfx::submit(0);
+		bgfx::submit(0, program);
 
 
 		// Set view and projection matrix for view 1.
@@ -377,9 +374,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtx);
 
-		// Set vertex and fragment shaders.
-		bgfx::setProgram(programCmp);
-
 		// Set vertex and index buffer.
 		bgfx::setVertexBuffer(vbh);
 		bgfx::setIndexBuffer(ibh);
@@ -391,7 +385,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setState(BGFX_STATE_DEFAULT);
 
 		// Submit primitive for rendering to view 1.
-		bgfx::submit(1);
+		bgfx::submit(1, programCmp);
 
 		const float xpos = -8.0f - BX_COUNTOF(textures)*0.1f*0.5f;
 
@@ -401,9 +395,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
-
-			// Set vertex and fragment shaders.
-			bgfx::setProgram(programCmp);
 
 			// Set vertex and index buffer.
 			bgfx::setVertexBuffer(vbh);
@@ -416,7 +407,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setState(BGFX_STATE_DEFAULT);
 
 			// Submit primitive for rendering to view 1.
-			bgfx::submit(1);
+			bgfx::submit(1, programCmp);
 		}
 
 		for (uint32_t ii = 0; ii < numTextures3d; ++ii)
@@ -425,9 +416,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
-
-			// Set vertex and fragment shaders.
-			bgfx::setProgram(program3d);
 
 			// Set vertex and index buffer.
 			bgfx::setVertexBuffer(vbh);
@@ -440,7 +428,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setState(BGFX_STATE_DEFAULT);
 
 			// Submit primitive for rendering to view 1.
-			bgfx::submit(1);
+			bgfx::submit(1, program3d);
 		}
 
 		for (uint32_t ii = 0; ii < 3; ++ii)
@@ -449,9 +437,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
-
-			// Set vertex and fragment shaders.
-			bgfx::setProgram(programCmp);
 
 			// Set vertex and index buffer.
 			bgfx::setVertexBuffer(vbh, 24, 4);
@@ -464,7 +449,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::setState(BGFX_STATE_DEFAULT);
 
 			// Submit primitive for rendering to view 1.
-			bgfx::submit(1);
+			bgfx::submit(1, programCmp);
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to

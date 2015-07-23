@@ -183,7 +183,7 @@ BX_NO_INLINE bool mainloop()
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -220,9 +220,6 @@ BX_NO_INLINE bool mainloop()
 					// Set model matrix for rendering.
 					bgfx::setTransform(mtx);
 
-					// Set vertex and fragment shaders.
-					bgfx::setProgram(program);
-
 					// Set vertex and index buffer.
 					bgfx::setVertexBuffer(vbh);
 					bgfx::setIndexBuffer(ibh);
@@ -231,7 +228,7 @@ BX_NO_INLINE bool mainloop()
 					bgfx::setState(BGFX_STATE_DEFAULT);
 
 					// Submit primitive for rendering to view 0.
-					bgfx::submit(0);
+					bgfx::submit(0, program);
 				}
 			}
 		}

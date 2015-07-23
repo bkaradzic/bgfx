@@ -285,7 +285,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -369,10 +369,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Render skybox into view 0.
 		bgfx::setTexture(0, s_texCube, uffizi);
 
-		bgfx::setProgram(skyProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, true);
-		bgfx::submit(0);
+		bgfx::submit(0, skyProgram);
 
 		// Render mesh into view 1
 		bgfx::setTexture(0, s_texCube, uffizi);
@@ -381,42 +380,37 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Calculate luminance.
 		setOffsets2x2Lum(u_offset, 128, 128);
 		bgfx::setTexture(0, s_texColor, fbtextures[0]);
-		bgfx::setProgram(lumProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad(128.0f, 128.0f, s_originBottomLeft);
-		bgfx::submit(2);
+		bgfx::submit(2, lumProgram);
 
 		// Downscale luminance 0.
 		setOffsets4x4Lum(u_offset, 128, 128);
 		bgfx::setTexture(0, s_texColor, lum[0]);
-		bgfx::setProgram(lumAvgProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad(64.0f, 64.0f, s_originBottomLeft);
-		bgfx::submit(3);
+		bgfx::submit(3, lumAvgProgram);
 
 		// Downscale luminance 1.
 		setOffsets4x4Lum(u_offset, 64, 64);
 		bgfx::setTexture(0, s_texColor, lum[1]);
-		bgfx::setProgram(lumAvgProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad(16.0f, 16.0f, s_originBottomLeft);
-		bgfx::submit(4);
+		bgfx::submit(4, lumAvgProgram);
 
 		// Downscale luminance 2.
 		setOffsets4x4Lum(u_offset, 16, 16);
 		bgfx::setTexture(0, s_texColor, lum[2]);
-		bgfx::setProgram(lumAvgProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad(4.0f, 4.0f, s_originBottomLeft);
-		bgfx::submit(5);
+		bgfx::submit(5, lumAvgProgram);
 
 		// Downscale luminance 3.
 		setOffsets4x4Lum(u_offset, 4, 4);
 		bgfx::setTexture(0, s_texColor, lum[3]);
-		bgfx::setProgram(lumAvgProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad(1.0f, 1.0f, s_originBottomLeft);
-		bgfx::submit(6);
+		bgfx::submit(6, lumAvgProgram);
 
 		float tonemap[4] = { middleGray, square(white), threshold, time };
 		bgfx::setUniform(u_tonemap, tonemap);
@@ -425,26 +419,23 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		setOffsets4x4Lum(u_offset, width/2, height/2);
 		bgfx::setTexture(0, s_texColor, fbtextures[0]);
 		bgfx::setTexture(1, s_texLum, lum[4]);
-		bgfx::setProgram(brightProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width/2.0f, (float)height/2.0f, s_originBottomLeft);
-		bgfx::submit(7);
+		bgfx::submit(7, brightProgram);
 
 		// Blur bright pass vertically.
 		bgfx::setTexture(0, s_texColor, bright);
-		bgfx::setProgram(blurProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width/8.0f, (float)height/8.0f, s_originBottomLeft);
-		bgfx::submit(8);
+		bgfx::submit(8, blurProgram);
 
 		// Blur bright pass horizontally, do tonemaping and combine.
 		bgfx::setTexture(0, s_texColor, fbtextures[0]);
 		bgfx::setTexture(1, s_texLum, lum[4]);
 		bgfx::setTexture(2, s_texBlur, blur);
-		bgfx::setProgram(tonemapProgram);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, s_originBottomLeft);
-		bgfx::submit(9);
+		bgfx::submit(9, tonemapProgram);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.

@@ -802,7 +802,6 @@ struct Mesh
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(group.m_vbh);
 
@@ -817,7 +816,7 @@ struct Mesh
 			bgfx::setState(_renderState.m_state, _renderState.m_blendFactorRgba);
 
 			// Submit
-			bgfx::submit(_viewId);
+			bgfx::submit(_viewId, _program);
 
 			// Keep track of submited view ids
 			s_viewMask |= 1 << _viewId;
@@ -1110,7 +1109,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Make sure at the beginning everything gets cleared.
 		clearView(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, clearValues);
-		bgfx::submit(0);
+		bgfx::touch(0);
 		s_viewMask |= 1;
 
 		// Bunny and columns color.

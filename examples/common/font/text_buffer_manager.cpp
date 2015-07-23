@@ -708,10 +708,11 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 
 	bgfx::setTexture(0, u_texColor, m_fontManager->getAtlas()->getTextureHandle() );
 
+	bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
 	switch (bc.fontType)
 	{
 	case FONT_TYPE_ALPHA:
-		bgfx::setProgram(m_basicProgram);
+		program = m_basicProgram;
 		bgfx::setState(0
 			| BGFX_STATE_RGB_WRITE
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
@@ -719,7 +720,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		break;
 
 	case FONT_TYPE_DISTANCE:
-		bgfx::setProgram(m_distanceProgram);
+		program = m_distanceProgram;
 		bgfx::setState(0
 			| BGFX_STATE_RGB_WRITE
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
@@ -727,7 +728,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		break;
 
 	case FONT_TYPE_DISTANCE_SUBPIXEL:
-		bgfx::setProgram(m_distanceSubpixelProgram);
+		program = m_distanceSubpixelProgram;
 		bgfx::setState(0
 			| BGFX_STATE_RGB_WRITE
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
@@ -822,7 +823,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 		break;
 	}
 
-	bgfx::submit(_id, _depth);
+	bgfx::submit(_id, program, _depth);
 }
 
 void TextBufferManager::setStyle(TextBufferHandle _handle, uint32_t _flags)

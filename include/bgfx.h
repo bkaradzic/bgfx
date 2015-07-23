@@ -434,6 +434,15 @@ namespace bgfx
 		uint8_t flags;         //!< Status flags
 	};
 
+	struct Stats
+	{
+		uint64_t cpuTime;      //!< CPU frame time.
+		uint64_t cpuTimerFreq; //!< CPU timer frequency.
+
+		uint64_t gpuTime;      //!< GPU frame time.
+		uint64_t gpuTimerFreq; //!< GPU timer frequency.
+	};
+
 	/// Vertex declaration.
 	struct VertexDecl
 	{
@@ -637,6 +646,10 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_get_hmd`.
 	///
 	const HMD* getHMD();
+
+	/// Returns performance counters.
+	///
+	const Stats* getStats();
 
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 	///
@@ -1629,14 +1642,6 @@ namespace bgfx
 	///
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num);
 
-	/// Set program for draw primitive.
-	///
-	/// @param[in] _handle Program.
-	///
-	/// @attention C99 equivalent is `bgfx_set_program`.
-	///
-	void setProgram(ProgramHandle _handle);
-
 	/// Set texture stage for draw primitive.
 	///
 	/// @param[in] _stage Texture unit.
@@ -1673,22 +1678,33 @@ namespace bgfx
 	///
 	void setTexture(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment = 0, uint32_t _flags = UINT32_MAX);
 
+	/// Touch view.
+	uint32_t touch(uint8_t _id);
+
 	/// Submit primitive for rendering.
 	///
 	/// @param[in] _id View id.
+	/// @param[in] _handle Program.
 	/// @param[in] _depth Depth for sorting.
 	/// @returns Number of draw calls.
 	///
 	/// @attention C99 equivalent is `bgfx_submit`.
 	///
-	uint32_t submit(uint8_t _id, int32_t _depth = 0);
+	uint32_t submit(uint8_t _id, ProgramHandle _handle, int32_t _depth = 0);
 
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
 	///
+	/// @param[in] _id View id.
+	/// @param[in] _handle Program.
+	/// @param[in] _indirectHandle Indirect buffer.
+	/// @param[in] _start First element in indirect buffer.
+	/// @param[in] _num Number of dispatches.
+	/// @param[in] _depth Depth for sorting.
+	///
 	/// @attention C99 equivalent is `bgfx_submit_indirect`.
 	///
-	uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, int32_t _depth = 0);
+	uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, int32_t _depth = 0);
 
 	/// Set compute index buffer.
 	///

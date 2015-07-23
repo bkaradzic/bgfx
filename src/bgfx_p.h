@@ -1398,11 +1398,6 @@ namespace bgfx
 			m_draw.m_instanceDataBuffer = _handle;
 		}
 
-		void setProgram(ProgramHandle _handle)
-		{
-			m_key.m_program = _handle.idx;
-		}
-
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
 			Binding& sampler = m_draw.m_bind[_stage];
@@ -1465,14 +1460,14 @@ namespace bgfx
 			m_flags = BGFX_STATE_NONE;
 		}
 
-		uint32_t submit(uint8_t _id, int32_t _depth);
+		uint32_t submit(uint8_t _id, ProgramHandle _handle, int32_t _depth);
 
-		uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+		uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
 		{
 			m_draw.m_startIndirect  = _start;
 			m_draw.m_numIndirect    = _num;
 			m_draw.m_indirectBuffer = _indirectHandle;
-			return submit(_id, _depth);
+			return submit(_id, _handle, _depth);
 		}
 
 		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz, uint8_t _flags);
@@ -1649,6 +1644,7 @@ namespace bgfx
 		UniformHandle m_freeUniformHandle[BGFX_CONFIG_MAX_UNIFORMS];
 		TextVideoMem* m_textVideoMem;
 		HMD m_hmd;
+		Stats m_perfStats;
 		bool m_hmdInitialized;
 
 		int64_t m_waitSubmit;
@@ -1997,6 +1993,11 @@ namespace bgfx
 			}
 
 			return NULL;
+		}
+
+		BGFX_API_FUNC(const Stats* getPerfStats() )
+		{
+			return &m_submit->m_perfStats;
 		}
 
 		BGFX_API_FUNC(IndexBufferHandle createIndexBuffer(const Memory* _mem, uint16_t _flags) )
@@ -3324,12 +3325,6 @@ namespace bgfx
 				);
 		}
 
-		BGFX_API_FUNC(void setProgram(ProgramHandle _handle) )
-		{
-			BGFX_CHECK_HANDLE("setProgram", m_programHandle, _handle);
-			m_submit->setProgram(_handle);
-		}
-
 		BGFX_API_FUNC(void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", m_textureHandle, _handle);
@@ -3352,15 +3347,17 @@ namespace bgfx
 			m_submit->setTexture(_stage, _sampler, textureHandle, _flags);
 		}
 
-		BGFX_API_FUNC(uint32_t submit(uint8_t _id, int32_t _depth) )
+		BGFX_API_FUNC(uint32_t submit(uint8_t _id, ProgramHandle _handle, int32_t _depth) )
 		{
-			return m_submit->submit(_id, _depth);
+			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _handle);
+			return m_submit->submit(_id, _handle, _depth);
 		}
 
-		BGFX_API_FUNC(uint32_t submit(uint8_t _id, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth) )
+		BGFX_API_FUNC(uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth) )
 		{
+			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _handle);
 			BGFX_CHECK_HANDLE("submit", m_vertexBufferHandle, _indirectHandle);
-			return m_submit->submit(_id, _indirectHandle, _start, _num, _depth);
+			return m_submit->submit(_id, _handle, _indirectHandle, _start, _num, _depth);
 		}
 
 		BGFX_API_FUNC(void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access) )

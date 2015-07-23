@@ -150,7 +150,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		// Submit 11x11 cubes.
 		for (uint32_t yy = 0; yy < 11; ++yy)
@@ -166,9 +166,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);
 
-				// Set vertex and fragment shaders.
-				bgfx::setProgram(program);
-
 				// Set vertex and index buffer.
 				bgfx::setVertexBuffer(vbh);
 				bgfx::setIndexBuffer(ibh);
@@ -177,11 +174,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setState(BGFX_STATE_DEFAULT);
 
 				// Submit primitive for rendering to view 0.
-				bgfx::submit(0);
+				bgfx::submit(0, program);
 			}
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

@@ -95,11 +95,10 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 		indices[4] = 3;
 		indices[5] = 2;
 
-		bgfx::setProgram(_program);
 		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::setIndexBuffer(&tib);
 		bgfx::setVertexBuffer(&tvb);
-		bgfx::submit(_view);
+		bgfx::submit(_view, _program);
 	}
 }
 
@@ -158,7 +157,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to viewZ 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;

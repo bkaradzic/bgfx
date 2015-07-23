@@ -47,7 +47,7 @@ int _main_(int _argc, char** _argv)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx_submit(0, 0);
+		bgfx_touch(0);
 
 		// Use debug font to print information about this example.
 		bgfx_dbg_text_clear(0, false);

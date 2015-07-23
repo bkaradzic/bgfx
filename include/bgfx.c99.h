@@ -219,6 +219,17 @@ typedef struct bgfx_hmd
 } bgfx_hmd_t;
 
 /**/
+typedef struct bgfx_stats
+{
+    uint64_t cpuTime;
+    uint64_t cpuTimerFreq;
+
+    uint64_t gpuTime;
+    uint64_t gpuTimerFreq;
+
+} bgfx_stats_t;
+
+/**/
 typedef struct bgfx_vertex_decl
 {
     uint32_t hash;
@@ -439,6 +450,9 @@ BGFX_C_API const bgfx_caps_t* bgfx_get_caps();
 
 /**/
 BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd();
+
+/**/
+BGFX_C_API const bgfx_stats_t* bgfx_get_stats();
 
 /**/
 BGFX_C_API const bgfx_memory_t* bgfx_alloc(uint32_t _size);
@@ -687,19 +701,19 @@ BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_han
 BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
 
 /**/
-BGFX_C_API void bgfx_set_program(bgfx_program_handle_t _handle);
-
-/**/
 BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
 
 /**/
 BGFX_C_API void bgfx_set_texture_from_frame_buffer(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, uint32_t _flags);
 
 /**/
-BGFX_C_API uint32_t bgfx_submit(uint8_t _id, int32_t _depth);
+BGFX_C_API uint32_t bgfx_touch(uint8_t _id);
 
 /**/
-BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth);
+BGFX_C_API uint32_t bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth);
+
+/**/
+BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth);
 
 /**/
 BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);

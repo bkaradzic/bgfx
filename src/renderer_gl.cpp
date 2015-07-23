@@ -4826,9 +4826,7 @@ namespace bgfx { namespace gl
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-		&& (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
-		&&  m_timerQuerySupport)
+		if (m_timerQuerySupport)
 		{
 			m_queries.begin(0, GL_TIME_ELAPSED);
 		}
@@ -5800,26 +5798,33 @@ namespace bgfx { namespace gl
 		min = min > frameTime ? frameTime : min;
 		max = max < frameTime ? frameTime : max;
 
+		double elapsedGpuMs = 0.0;
+		uint64_t elapsedGl  = 0;
+		if (m_timerQuerySupport)
+		{
+			m_queries.end(GL_TIME_ELAPSED);
+			elapsedGl    = m_queries.getResult(0);
+			elapsedGpuMs = double(elapsedGl)/1e6;
+		}
+
+		const int64_t timerFreq = bx::getHPFrequency();
+
+		Stats& perfStats   = _render->m_perfStats;
+		perfStats.cpuTime      = frameTime;
+		perfStats.cpuTimerFreq = timerFreq;
+		perfStats.gpuTime      = elapsedGl;
+		perfStats.gpuTimerFreq = 100000000;
+
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			double elapsedGpuMs = 0.0;
-			uint64_t elapsedGl  = 0;
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			&&  m_timerQuerySupport)
-			{
-				m_queries.end(GL_TIME_ELAPSED);
-				elapsedGl    = m_queries.getResult(0);
-				elapsedGpuMs = double(elapsedGl)/1e6;
-			}
-
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;
 
 			if (now >= next)
 			{
-				next = now + bx::getHPFrequency();
-				double freq = double(bx::getHPFrequency() );
+				next = now + timerFreq;
+				double freq = double(timerFreq);
 				double toMs = 1000.0/freq;
 
 				tvm.clear();

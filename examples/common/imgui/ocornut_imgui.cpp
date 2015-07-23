@@ -97,8 +97,7 @@ struct OcornutImguiContext
 
 				bgfx::setVertexBuffer(&tvb, 0, vtx_size);
 				bgfx::setIndexBuffer(&tib, elem_offset, pcmd->ElemCount);
-				bgfx::setProgram(m_program);
-				bgfx::submit(m_viewId);
+				bgfx::submit(m_viewId, m_program);
 
 				elem_offset += pcmd->ElemCount;
 			}

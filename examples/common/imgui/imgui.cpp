@@ -1632,9 +1632,8 @@ struct Imgui
 						   |BGFX_STATE_ALPHA_WRITE
 						   |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
-			bgfx::setProgram(m_imageProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_imageProgram);
 
 			return res;
 		}
@@ -1700,9 +1699,8 @@ struct Imgui
 						  |BGFX_STATE_ALPHA_WRITE
 						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
-			bgfx::setProgram(m_imageSwizzProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_imageSwizzProgram);
 
 			return res;
 		}
@@ -1761,9 +1759,8 @@ struct Imgui
 						  |BGFX_STATE_ALPHA_WRITE
 						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
-			bgfx::setProgram(m_latlongProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_latlongProgram);
 
 			return res;
 		}
@@ -1894,7 +1891,6 @@ struct Imgui
 
 			bgfx::setTransform(mtx);
 			bgfx::setTexture(0, s_texColor, _cubemap);
-			bgfx::setProgram(m_cubeMapProgram);
 			bgfx::setVertexBuffer(&tvb);
 			bgfx::setIndexBuffer(&tib);
 			bgfx::setState(BGFX_STATE_RGB_WRITE
@@ -1902,7 +1898,7 @@ struct Imgui
 						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_cubeMapProgram);
 
 			return res;
 		}
@@ -2410,9 +2406,8 @@ struct Imgui
 				| BGFX_STATE_ALPHA_WRITE
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 				);
-			bgfx::setProgram(m_colorProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_colorProgram);
 		}
 	}
 
@@ -2716,9 +2711,8 @@ struct Imgui
 				| BGFX_STATE_ALPHA_WRITE
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 				);
-			bgfx::setProgram(m_textureProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_textureProgram);
 		}
 #endif // USE_NANOVG_FONT
 	}
