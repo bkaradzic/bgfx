@@ -23,6 +23,10 @@ namespace bx { struct ReallocatorI; }
 /// BGFX
 namespace bgfx
 {
+	/// Fatal error enum.
+	///
+	/// @attention C99 equivalent is `bgfx_fatal_t`.
+	///
 	struct Fatal
 	{
 		enum Enum
@@ -38,6 +42,10 @@ namespace bgfx
 		};
 	};
 
+	/// Renderer backend type enum.
+	///
+	/// @attention C99 equivalent is `bgfx_renderer_type_t`.
+	///
 	struct RendererType
 	{
 		/// Renderer type enumeration.
@@ -56,6 +64,10 @@ namespace bgfx
 		};
 	};
 
+	/// Access mode enum.
+	///
+	/// @attention C99 equivalent is `bgfx_access_t`.
+	///
 	struct Access
 	{
 		enum Enum
@@ -68,6 +80,10 @@ namespace bgfx
 		};
 	};
 
+	/// Vertex attribute enum.
+	///
+	/// @attention C99 equivalent is `bgfx_attrib_t`.
+	///
 	struct Attrib
 	{
 		/// Corresponds to vertex shader attribute.
@@ -94,6 +110,10 @@ namespace bgfx
 		};
 	};
 
+	/// Vertex attribute type enum.
+	///
+	/// @attention C99 equivalent is `bgfx_attrib_type_t`.
+	///
 	struct AttribType
 	{
 		enum Enum
@@ -107,6 +127,10 @@ namespace bgfx
 		};
 	};
 
+	/// Texture format enum.
+	///
+	/// @attention C99 equivalent is `bgfx_texture_format_t`.
+	///
 	struct TextureFormat
 	{
 		// Availability depends on Caps (see: formats).
@@ -170,6 +194,10 @@ namespace bgfx
 		};
 	};
 
+	/// Uniform type enum.
+	///
+	/// @attention C99 equivalent is `bgfx_uniform_type_t`.
+	///
 	struct UniformType
 	{
 		enum Enum
@@ -185,6 +213,10 @@ namespace bgfx
 		};
 	};
 
+	/// Backbuffer ratio enum.
+	///
+	/// @attention C99 equivalent is `bgfx_backbuffer_ratio_t`.
+	///
 	struct BackbufferRatio
 	{
 		enum Enum
@@ -221,6 +253,8 @@ namespace bgfx
 	///   'fatal' and 'trace' callbacks can be called from any thread. Other
 	///   callbacks are called from the render thread.
 	///
+	/// @attention C99 equivalent is `bgfx_callback_interface_t`.
+	///
 	struct CallbackI
 	{
 		virtual ~CallbackI() = 0;
@@ -235,6 +269,8 @@ namespace bgfx
 		/// @remarks
 		///   Not thread safe and it can be called from any thread.
 		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.fatal`.
+		///
 		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
 
 		/// Print debug message.
@@ -244,6 +280,8 @@ namespace bgfx
 		/// @remarks
 		///   Not thread safe and it can be called from any thread.
 		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.trace`.
+		///
 		virtual void trace(const char* _str) = 0;
 
 		/// Return size of for cached item. Return 0 if no cached item was
@@ -251,6 +289,8 @@ namespace bgfx
 		///
 		/// @param[in] _id Cache id.
 		/// @returns Number of bytes to read.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.cache_read_size`.
 		///
 		virtual uint32_t cacheReadSize(uint64_t _id) = 0;
 
@@ -262,6 +302,8 @@ namespace bgfx
 		///
 		/// @returns True if data is read.
 		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.cache_read`.
+		///
 		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) = 0;
 
 		/// Write cached item.
@@ -269,6 +311,8 @@ namespace bgfx
 		/// @param[in] _id Cache id.
 		/// @param[in] _data Data to write.
 		/// @param[in] _size Size of data to write.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.cache_write`.
 		///
 		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) = 0;
 
@@ -282,18 +326,28 @@ namespace bgfx
 		/// @param[in] _size Image size.
 		/// @param[in] _yflip If true image origin is bottom left.
 		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.screen_shot`.
+		///
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) = 0;
 
 		/// Called when capture begins.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.capture_begin`.
+		///
 		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, bool _yflip) = 0;
 
 		/// Called when capture ends.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.capture_end`.
+		///
 		virtual void captureEnd() = 0;
 
 		/// Captured frame.
 		///
 		/// @param[in] _data Image data.
 		/// @param[in] _size Image size.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.capture_frame`.
 		///
 		virtual void captureFrame(const void* _data, uint32_t _size) = 0;
 	};
@@ -302,9 +356,15 @@ namespace bgfx
 	{
 	}
 
+	/// Memory release callback.
+	///
+	/// @attention C99 equivalent is `bgfx_release_fn_t`.
 	///
 	typedef void (*ReleaseFn)(void* _ptr, void* _userData);
 
+	/// Memory obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
+	///
+	/// @attention C99 equivalent is `bgfx_memory_t`.
 	///
 	struct Memory
 	{
@@ -313,6 +373,9 @@ namespace bgfx
 	};
 
 	/// Renderer capabilities.
+	///
+	/// @attention C99 equivalent is `bgfx_caps_t`.
+	///
 	struct Caps
 	{
 		/// Renderer backend type. See: `bgfx::RendererType`
@@ -338,21 +401,25 @@ namespace bgfx
 		///
 		uint64_t supported;
 
-		uint32_t maxDrawCalls;     ///< Maximum draw calls.
-		uint16_t maxTextureSize;   ///< Maximum texture size.
-		uint16_t maxViews;         ///< Maximum views.
-		uint8_t  maxFBAttachments; ///< Maximum frame buffer attachments.
-		uint8_t  numGPUs;          ///< Number of enumerated GPUs.
-		uint16_t vendorId;         ///< Selected GPU vendor id.
-		uint16_t deviceId;         ///< Selected GPU device id.
+		uint32_t maxDrawCalls;     //!< Maximum draw calls.
+		uint16_t maxTextureSize;   //!< Maximum texture size.
+		uint16_t maxViews;         //!< Maximum views.
+		uint8_t  maxFBAttachments; //!< Maximum frame buffer attachments.
+		uint8_t  numGPUs;          //!< Number of enumerated GPUs.
+		uint16_t vendorId;         //!< Selected GPU vendor id.
+		uint16_t deviceId;         //!< Selected GPU device id.
 
+		/// GPU info.
+		///
+		/// @attention C99 equivalent is `bgfx_caps_gpu_t`.
+		///
 		struct GPU
 		{
 			uint16_t vendorId;
 			uint16_t deviceId;
 		};
 
-		GPU gpu[4]; ///< Enumerated GPUs.
+		GPU gpu[4]; //!< Enumerated GPUs.
 
 		/// Supported texture formats.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
@@ -362,26 +429,35 @@ namespace bgfx
 		uint8_t formats[TextureFormat::Count];
 	};
 
+	/// Transient index buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_transient_index_buffer_t`.
 	///
 	struct TransientIndexBuffer
 	{
-		uint8_t* data;
-		uint32_t size;
-		uint32_t startIndex;
-		IndexBufferHandle handle;
+		uint8_t* data;            //!< Pointer to data.
+		uint32_t size;            //!< Data size.
+		uint32_t startIndex;      //!< First index.
+		IndexBufferHandle handle; //!< Index buffer handle.
 	};
 
+	/// Transient vertex buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_transient_vertex_buffer_t`.
 	///
 	struct TransientVertexBuffer
 	{
-		uint8_t* data;
-		uint32_t size;
-		uint32_t startVertex;
-		uint16_t stride;
-		VertexBufferHandle handle;
-		VertexDeclHandle decl;
+		uint8_t* data;             //!< Pointer to data.
+		uint32_t size;             //!< Data size.
+		uint32_t startVertex;      //!< First vertex.
+		uint16_t stride;           //!< Vertex stride.
+		VertexBufferHandle handle; //!< Vertex buffer handle.
+		VertexDeclHandle decl;     //!< Vertex declaration handle.
 	};
 
+	/// Instance data buffer info.
+	///
+	/// @attention C99 equivalent is `bgfx_texture_info_t`.
 	///
 	struct InstanceDataBuffer
 	{
@@ -393,6 +469,9 @@ namespace bgfx
 		VertexBufferHandle handle; //!< Vertex buffer object handle.
 	};
 
+	/// Texture info.
+	///
+	/// @attention C99 equivalent is `bgfx_texture_info_t`.
 	///
 	struct TextureInfo
 	{
@@ -406,6 +485,9 @@ namespace bgfx
 		bool    cubeMap;            //!< Texture is cubemap.
 	};
 
+	/// Transform data.
+	///
+	/// @attention C99 equivalent is `bgfx_transform_t`.
 	///
 	struct Transform
 	{
@@ -414,9 +496,15 @@ namespace bgfx
 	};
 
 	/// HMD info.
+	///
+	/// @attention C99 equivalent is `bgfx_hmd_t`.
+	///
 	struct HMD
 	{
 		/// Eye
+		///
+		/// @attention C99 equivalent is `bgfx_hmd_eye_t`.
+		///
 		struct Eye
 		{
 			float rotation[4];          //!< Eye rotation represented as quaternion.
@@ -434,6 +522,10 @@ namespace bgfx
 		uint8_t flags;         //!< Status flags
 	};
 
+	/// Renderer statistics data.
+	///
+	/// @attention C99 equivalent is `bgfx_stats_t`.
+	///
 	struct Stats
 	{
 		uint64_t cpuTime;      //!< CPU frame time.
@@ -444,14 +536,23 @@ namespace bgfx
 	};
 
 	/// Vertex declaration.
+	///
+	/// @attention C99 equivalent is `bgfx_vertex_decl_t`.
+	///
 	struct VertexDecl
 	{
 		VertexDecl();
 
 		/// Start VertexDecl.
+		///
+		/// @attention C99 equivalent is `bgfx_vertex_decl_begin`.
+		///
 		VertexDecl& begin(RendererType::Enum _renderer = RendererType::Null);
 
 		/// End VertexDecl.
+		///
+		/// @attention C99 equivalent is `bgfx_vertex_decl_begin`.
+		///
 		void end();
 
 		/// Add attribute to VertexDecl.
@@ -470,12 +571,20 @@ namespace bgfx
 		/// @remarks
 		///   Must be called between begin/end.
 		///
+		/// @attention C99 equivalent is `bgfx_vertex_decl_add`.
+		///
 		VertexDecl& add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized = false, bool _asInt = false);
 
 		/// Skip _num bytes in vertex stream.
+		///
+		/// @attention C99 equivalent is `bgfx_vertex_decl_skip`.
+		///
 		VertexDecl& skip(uint8_t _num);
 
 		/// Decode attribute.
+		///
+		/// @attention C99 equivalent is ``.
+		///
 		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const;
 
 		/// Returns true if VertexDecl contains attribute.
@@ -497,9 +606,15 @@ namespace bgfx
 	};
 
 	/// Pack vec4 into vertex stream format.
+	///
+	/// @attention C99 equivalent is `bgfx_vertex_pack`.
+	///
 	void vertexPack(const float _input[4], bool _inputNormalized, Attrib::Enum _attr, const VertexDecl& _decl, void* _data, uint32_t _index = 0);
 
 	/// Unpack vec4 from vertex stream format.
+	///
+	/// @attention C99 equivalent is `bgfx_vertex_unpack`.
+	///
 	void vertexUnpack(float _output[4], Attrib::Enum _attr, const VertexDecl& _decl, const void* _data, uint32_t _index = 0);
 
 	/// Converts vertex stream data from one vertex stream format to another.
@@ -509,6 +624,8 @@ namespace bgfx
 	/// @param[in] _srcDecl Source vertex stream declaration.
 	/// @param[in] _srcData Source vertex stream data.
 	/// @param[in] _num Number of vertices to convert from source to destination.
+	///
+	/// @attention C99 equivalent is `bgfx_vertex_convert`.
 	///
 	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num = 1);
 
@@ -522,6 +639,8 @@ namespace bgfx
 	/// @param[in] _epsilon Error tolerance for vertex position comparison.
 	/// @returns Number of unique vertices after vertex welding.
 	///
+	/// @attention C99 equivalent is `bgfx_weld_vertices`.
+	///
 	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon = 0.001f);
 
 	/// Swizzle RGBA8 image to BGRA8.
@@ -532,6 +651,8 @@ namespace bgfx
 	/// @param[in] _src Source image.
 	/// @param[in] _dst Destination image. Must be the same size as input image.
 	///   _dst might be pointer to the same memory as _src.
+	///
+	/// @attention C99 equivalent is `bgfx_image_swizzle_bgra8`.
 	///
 	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
@@ -544,12 +665,20 @@ namespace bgfx
 	/// @param[in] _dst Destination image. Must be at least quarter size of
 	///   input image. _dst might be pointer to the same memory as _src.
 	///
+	/// @attention C99 equivalent is `bgfx_image_rgba8_downsample_2x2`.
+	///
 	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
 	/// Returns supported backend API renderers.
+	///
+	/// @attention C99 equivalent is `bgfx_get_supported_renderers`.
+	///
 	uint8_t getSupportedRenderers(RendererType::Enum _enum[RendererType::Count]);
 
 	/// Returns name of renderer.
+	///
+	/// @attention C99 equivalent is `bgfx_get_renderer_name`.
+	///
 	const char* getRendererName(RendererType::Enum _type);
 
 	/// Initialize bgfx library.
