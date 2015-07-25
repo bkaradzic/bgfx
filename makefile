@@ -225,6 +225,16 @@ docs:
 	doxygen scripts/bgfx.doxygen
 	markdown README.md > .build/docs/readme.html
 
+publish_docs:
+	-@rm -rf .build/docs/html
+	make docs
+	git init .build/docs/html/
+	git --git-dir .build/docs/html/.git --work-tree .build/docs/html/ remote add origin git@github.com:bkaradzic/bgfx.git
+	git --git-dir .build/docs/html/.git --work-tree .build/docs/html/ add .
+	git --git-dir .build/docs/html/.git --work-tree .build/docs/html/ checkout -b gh-pages
+	-git --git-dir .build/docs/html/.git --work-tree .build/docs/html/ commit -m "Update documentation."
+	git --git-dir .build/docs/html/.git --work-tree .build/docs/html/ push -u origin gh-pages -f
+
 clean:
 	@echo Cleaning...
 	-@rm -rf .build
