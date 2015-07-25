@@ -40,9 +40,10 @@ namespace bgfx
 		{
 		}
 
-		virtual void trace(const char* _str) BX_OVERRIDE
+		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
 		{
-			bx::debugOutput(_str);
+			dbgPrintf("%s (%d): ", _filePath, _line);
+			dbgPrintfVargs(_format, _argList);
 		}
 
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
@@ -254,23 +255,13 @@ namespace bgfx
 		g_callback->fatal(_code, out);
 	}
 
-	void trace(const char* _format, ...)
+	void trace(const char* _filePath, uint16_t _line, const char* _format, ...)
 	{
-		char temp[8192];
-
 		va_list argList;
 		va_start(argList, _format);
-		char* out = temp;
-		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
-		if ( (int32_t)sizeof(temp) < len)
-		{
-			out = (char*)alloca(len+1);
-			len = bx::vsnprintf(out, len, _format, argList);
-		}
-		out[len] = '\0';
+		g_callback->traceVargs(_filePath, _line, _format, argList);
 		va_end(argList);
 
-		g_callback->trace(out);
 	}
 
 #include "charset.h"
@@ -3106,9 +3097,9 @@ namespace bgfx
 			m_interface->vtbl->fatal(m_interface, (bgfx_fatal_t)_code, _str);
 		}
 
-		virtual void trace(const char* _str) BX_OVERRIDE
+		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
 		{
-			m_interface->vtbl->trace(m_interface, _str);
+			m_interface->vtbl->trace_vargs(m_interface, _filePath, _line, _format, _argList);
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE

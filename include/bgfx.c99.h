@@ -8,6 +8,7 @@
 #ifndef BGFX_C99_H_HEADER_GUARD
 #define BGFX_C99_H_HEADER_GUARD
 
+#include <stdarg.h>  // va_list
 #include <stdbool.h> // bool
 #include <stdint.h>  // uint32_t
 #include <stdlib.h>  // size_t
@@ -367,7 +368,7 @@ typedef struct bgfx_callback_interface
 typedef struct bgfx_callback_vtbl
 {
     void (*fatal)(bgfx_callback_interface_t* _this, bgfx_fatal_t _code, const char* _str);
-    void (*trace)(bgfx_callback_interface_t* _this, const char* _str);
+    void (*trace_vargs)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, const char* _format, va_list _argList);
     uint32_t (*cache_read_size)(bgfx_callback_interface_t* _this, uint64_t _id);
     bool (*cache_read)(bgfx_callback_interface_t* _this, uint64_t _id, void* _data, uint32_t _size);
     void (*cache_write)(bgfx_callback_interface_t* _this, uint64_t _id, const void* _data, uint32_t _size);

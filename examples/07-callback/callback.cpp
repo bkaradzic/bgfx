@@ -136,9 +136,10 @@ struct BgfxCallback : public bgfx::CallbackI
 		abort();
 	}
 
-	virtual void trace(const char* _str) BX_OVERRIDE
+	virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
 	{
-		dbgPrintf("%s", _str);
+		dbgPrintf("%s (%d): ", _filePath, _line);
+		dbgPrintfVargs(_format, _argList);
 	}
 
 	virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE

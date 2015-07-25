@@ -6,6 +6,7 @@
 #ifndef BGFX_H_HEADER_GUARD
 #define BGFX_H_HEADER_GUARD
 
+#include <stdarg.h> // va_list
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // size_t
 
@@ -275,14 +276,18 @@ namespace bgfx
 
 		/// Print debug message.
 		///
-		/// @param[in] _str Message.
+		/// @param[in] _filePath File path where debug message was generated.
+		/// @param[in] _line Line where debug message was generated.
+		/// @param[in] _format `printf` style format.
+		/// @param[in] _argList Variable arguments list initialized with
+		///   `va_start`.
 		///
 		/// @remarks
 		///   Not thread safe and it can be called from any thread.
 		///
-		/// @attention C99 equivalent is `bgfx_callback_vtbl.trace`.
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.trace_vargs`.
 		///
-		virtual void trace(const char* _str) = 0;
+		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) = 0;
 
 		/// Return size of for cached item. Return 0 if no cached item was
 		/// found.
