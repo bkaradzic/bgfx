@@ -7,12 +7,12 @@
 #define BGFX_DEFINES_H_HEADER_GUARD
 
 ///
-#define BGFX_STATE_RGB_WRITE             UINT64_C(0x0000000000000001)
-#define BGFX_STATE_ALPHA_WRITE           UINT64_C(0x0000000000000002)
-#define BGFX_STATE_DEPTH_WRITE           UINT64_C(0x0000000000000004)
+#define BGFX_STATE_RGB_WRITE             UINT64_C(0x0000000000000001) //!< Enable RGB write.
+#define BGFX_STATE_ALPHA_WRITE           UINT64_C(0x0000000000000002) //!< Enable alpha write.
+#define BGFX_STATE_DEPTH_WRITE           UINT64_C(0x0000000000000004) //!< Enable depth write.
 
-#define BGFX_STATE_DEPTH_TEST_LESS       UINT64_C(0x0000000000000010)
-#define BGFX_STATE_DEPTH_TEST_LEQUAL     UINT64_C(0x0000000000000020)
+#define BGFX_STATE_DEPTH_TEST_LESS       UINT64_C(0x0000000000000010) //!< Enable depth test, less.
+#define BGFX_STATE_DEPTH_TEST_LEQUAL     UINT64_C(0x0000000000000020) //!< Enable depth test, less equal.
 #define BGFX_STATE_DEPTH_TEST_EQUAL      UINT64_C(0x0000000000000030)
 #define BGFX_STATE_DEPTH_TEST_GEQUAL     UINT64_C(0x0000000000000040)
 #define BGFX_STATE_DEPTH_TEST_GREATER    UINT64_C(0x0000000000000050)
@@ -20,7 +20,7 @@
 #define BGFX_STATE_DEPTH_TEST_NEVER      UINT64_C(0x0000000000000070)
 #define BGFX_STATE_DEPTH_TEST_ALWAYS     UINT64_C(0x0000000000000080)
 #define BGFX_STATE_DEPTH_TEST_SHIFT      4
-#define BGFX_STATE_DEPTH_TEST_MASK       UINT64_C(0x00000000000000f0)
+#define BGFX_STATE_DEPTH_TEST_MASK       UINT64_C(0x00000000000000f0) //!< Depth test state bit mask.
 
 #define BGFX_STATE_BLEND_ZERO            UINT64_C(0x0000000000001000)
 #define BGFX_STATE_BLEND_ONE             UINT64_C(0x0000000000002000)
@@ -35,43 +35,48 @@
 #define BGFX_STATE_BLEND_SRC_ALPHA_SAT   UINT64_C(0x000000000000b000)
 #define BGFX_STATE_BLEND_FACTOR          UINT64_C(0x000000000000c000)
 #define BGFX_STATE_BLEND_INV_FACTOR      UINT64_C(0x000000000000d000)
-#define BGFX_STATE_BLEND_SHIFT           12
-#define BGFX_STATE_BLEND_MASK            UINT64_C(0x000000000ffff000)
+#define BGFX_STATE_BLEND_SHIFT           12                           //!< Blend state bit shift.
+#define BGFX_STATE_BLEND_MASK            UINT64_C(0x000000000ffff000) //!< Blend state bit mask.
 
 #define BGFX_STATE_BLEND_EQUATION_ADD    UINT64_C(0x0000000000000000)
 #define BGFX_STATE_BLEND_EQUATION_SUB    UINT64_C(0x0000000010000000)
 #define BGFX_STATE_BLEND_EQUATION_REVSUB UINT64_C(0x0000000020000000)
 #define BGFX_STATE_BLEND_EQUATION_MIN    UINT64_C(0x0000000030000000)
 #define BGFX_STATE_BLEND_EQUATION_MAX    UINT64_C(0x0000000040000000)
-#define BGFX_STATE_BLEND_EQUATION_SHIFT  28
-#define BGFX_STATE_BLEND_EQUATION_MASK   UINT64_C(0x00000003f0000000)
+#define BGFX_STATE_BLEND_EQUATION_SHIFT  28                           //!< Blend equation bit shift.
+#define BGFX_STATE_BLEND_EQUATION_MASK   UINT64_C(0x00000003f0000000) //!< Blend equation bit mask.
 
-#define BGFX_STATE_BLEND_INDEPENDENT     UINT64_C(0x0000000400000000)
+#define BGFX_STATE_BLEND_INDEPENDENT     UINT64_C(0x0000000400000000) //!< Enable blend independent.
 
-#define BGFX_STATE_CULL_CW               UINT64_C(0x0000001000000000)
-#define BGFX_STATE_CULL_CCW              UINT64_C(0x0000002000000000)
-#define BGFX_STATE_CULL_SHIFT            36
-#define BGFX_STATE_CULL_MASK             UINT64_C(0x0000003000000000)
+#define BGFX_STATE_CULL_CW               UINT64_C(0x0000001000000000) //!< Cull clockwise triangles.
+#define BGFX_STATE_CULL_CCW              UINT64_C(0x0000002000000000) //!< Cull counter-clockwise triangles.
+#define BGFX_STATE_CULL_SHIFT            36                           //!< Culling mode bit shift.
+#define BGFX_STATE_CULL_MASK             UINT64_C(0x0000003000000000) //!< Culling mode bit mask.
 
 #define BGFX_STATE_ALPHA_REF_SHIFT       40
 #define BGFX_STATE_ALPHA_REF_MASK        UINT64_C(0x0000ff0000000000)
 
-#define BGFX_STATE_PT_TRISTRIP           UINT64_C(0x0001000000000000)
-#define BGFX_STATE_PT_LINES              UINT64_C(0x0002000000000000)
-#define BGFX_STATE_PT_LINESTRIP          UINT64_C(0x0003000000000000)
-#define BGFX_STATE_PT_POINTS             UINT64_C(0x0004000000000000)
-#define BGFX_STATE_PT_SHIFT              48
-#define BGFX_STATE_PT_MASK               UINT64_C(0x0007000000000000)
+#define BGFX_STATE_PT_TRISTRIP           UINT64_C(0x0001000000000000) //!< Tristrip.
+#define BGFX_STATE_PT_LINES              UINT64_C(0x0002000000000000) //!< Lines.
+#define BGFX_STATE_PT_LINESTRIP          UINT64_C(0x0003000000000000) //!< Line strip.
+#define BGFX_STATE_PT_POINTS             UINT64_C(0x0004000000000000) //!< Points.
+#define BGFX_STATE_PT_SHIFT              48                           //!< Primitive type bit shift.
+#define BGFX_STATE_PT_MASK               UINT64_C(0x0007000000000000) //!< Primitive type bit mask.
 
 #define BGFX_STATE_POINT_SIZE_SHIFT      52
 #define BGFX_STATE_POINT_SIZE_MASK       UINT64_C(0x0ff0000000000000)
 
+/// Enable MSAA write when writing into MSAA frame buffer. This flag is ignored when not writing into
+/// MSAA frame buffer.
 #define BGFX_STATE_MSAA                  UINT64_C(0x1000000000000000)
 
 #define BGFX_STATE_RESERVED_MASK         UINT64_C(0xe000000000000000)
 
 #define BGFX_STATE_NONE                  UINT64_C(0x0000000000000000)
 #define BGFX_STATE_MASK                  UINT64_C(0xffffffffffffffff)
+
+/// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
+/// culling and MSAA (when writting into MSAA frame buffer, otherwise this flag is ignored).
 #define BGFX_STATE_DEFAULT (0 \
 					| BGFX_STATE_RGB_WRITE \
 					| BGFX_STATE_ALPHA_WRITE \
@@ -130,7 +135,7 @@
 #define BGFX_STENCIL_FUNC_RMASK_SHIFT    8
 #define BGFX_STENCIL_FUNC_RMASK_MASK     UINT32_C(0x0000ff00)
 
-#define BGFX_STENCIL_TEST_LESS           UINT32_C(0x00010000)
+#define BGFX_STENCIL_TEST_LESS           UINT32_C(0x00010000) //!< Enable stencil test, less.
 #define BGFX_STENCIL_TEST_LEQUAL         UINT32_C(0x00020000)
 #define BGFX_STENCIL_TEST_EQUAL          UINT32_C(0x00030000)
 #define BGFX_STENCIL_TEST_GEQUAL         UINT32_C(0x00040000)
@@ -213,12 +218,11 @@
 			| BGFX_CLEAR_DISCARD_STENCIL \
 			)
 
-///
-#define BGFX_DEBUG_NONE                  UINT32_C(0x00000000)
-#define BGFX_DEBUG_WIREFRAME             UINT32_C(0x00000001)
-#define BGFX_DEBUG_IFH                   UINT32_C(0x00000002)
-#define BGFX_DEBUG_STATS                 UINT32_C(0x00000004)
-#define BGFX_DEBUG_TEXT                  UINT32_C(0x00000008)
+#define BGFX_DEBUG_NONE                  UINT32_C(0x00000000) //!< No debug.
+#define BGFX_DEBUG_WIREFRAME             UINT32_C(0x00000001) //!< Enable wireframe for all primitives.
+#define BGFX_DEBUG_IFH                   UINT32_C(0x00000002) //!< Enable infinitely fast hardware test. No draw calls will be submitted to driver. It’s useful when profiling to quickly assess bottleneck between CPU and GPU.
+#define BGFX_DEBUG_STATS                 UINT32_C(0x00000004) //!< Enable statistics display.
+#define BGFX_DEBUG_TEXT                  UINT32_C(0x00000008) //!< Enable debug text display.
 
 ///
 #define BGFX_BUFFER_NONE                 UINT16_C(0x0000)
@@ -329,20 +333,20 @@
 #define BGFX_RESET_SRGB_BACKBUFFER       UINT32_C(0x00008000)
 
 ///
-#define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL UINT64_C(0x0000000000000001)
-#define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000000003)
-#define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000000004)
-#define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000000000008)
-#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000000010)
-#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000000000020)
-#define BGFX_CAPS_FRAGMENT_DEPTH         UINT64_C(0x0000000000000040)
-#define BGFX_CAPS_BLEND_INDEPENDENT      UINT64_C(0x0000000000000080)
-#define BGFX_CAPS_COMPUTE                UINT64_C(0x0000000000000100)
-#define BGFX_CAPS_FRAGMENT_ORDERING      UINT64_C(0x0000000000000200)
-#define BGFX_CAPS_SWAP_CHAIN             UINT64_C(0x0000000000000400)
-#define BGFX_CAPS_HMD                    UINT64_C(0x0000000000000800)
-#define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000001000)
-#define BGFX_CAPS_DRAW_INDIRECT          UINT64_C(0x0000000000002000)
+#define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL UINT64_C(0x0000000000000001) //!< Texture compare less equal mode is supported.
+#define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000000003) //!< All texture compare modes are supported.
+#define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000000004) //!< 3D textures are supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000000000008) //!< Vertex attribute half-float is supported.
+#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000000010) //!< Instancing is supported.
+#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000000000020) //!< Renderer is on separate thread.
+#define BGFX_CAPS_FRAGMENT_DEPTH         UINT64_C(0x0000000000000040) //!< Fragment depth is accessible in fragment shader.
+#define BGFX_CAPS_BLEND_INDEPENDENT      UINT64_C(0x0000000000000080) //!< Blend independent is supported.
+#define BGFX_CAPS_COMPUTE                UINT64_C(0x0000000000000100) //!< Compute shaders are supported.
+#define BGFX_CAPS_FRAGMENT_ORDERING      UINT64_C(0x0000000000000200) //!< Fragment ordering is available in fragment shader.
+#define BGFX_CAPS_SWAP_CHAIN             UINT64_C(0x0000000000000400) //!< Multiple windows are supported.
+#define BGFX_CAPS_HMD                    UINT64_C(0x0000000000000800) //!< Head Mounted Display is available.
+#define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000001000) //!< 32-bit indices are supported.
+#define BGFX_CAPS_DRAW_INDIRECT          UINT64_C(0x0000000000002000) //!< Draw indirect is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE        UINT8_C(0x00)
@@ -364,15 +368,15 @@
 #define BGFX_SUBMIT_EYE_FIRST BGFX_SUBMIT_EYE_LEFT
 
 ///
-#define BGFX_PCI_ID_NONE                UINT16_C(0x0000)
-#define BGFX_PCI_ID_SOFTWARE_RASTERIZER UINT16_C(0x0001)
-#define BGFX_PCI_ID_AMD                 UINT16_C(0x1002)
-#define BGFX_PCI_ID_INTEL               UINT16_C(0x8086)
-#define BGFX_PCI_ID_NVIDIA              UINT16_C(0x10de)
+#define BGFX_PCI_ID_NONE                UINT16_C(0x0000) //!< Autoselect adapter.
+#define BGFX_PCI_ID_SOFTWARE_RASTERIZER UINT16_C(0x0001) //!< Software rasterizer.
+#define BGFX_PCI_ID_AMD                 UINT16_C(0x1002) //!< AMD adapter.
+#define BGFX_PCI_ID_INTEL               UINT16_C(0x8086) //!< Intel adapter.
+#define BGFX_PCI_ID_NVIDIA              UINT16_C(0x10de) //!< nVidia adapter.
 
 ///
-#define BGFX_HMD_NONE              UINT8_C(0x00)
-#define BGFX_HMD_DEVICE_RESOLUTION UINT8_C(0x01)
-#define BGFX_HMD_RENDERING         UINT8_C(0x02)
+#define BGFX_HMD_NONE              UINT8_C(0x00) //!< None.
+#define BGFX_HMD_DEVICE_RESOLUTION UINT8_C(0x01) //!< Has HMD native resolution.
+#define BGFX_HMD_RENDERING         UINT8_C(0x02) //!< Rendering to HMD.
 
 #endif // BGFX_DEFINES_H_HEADER_GUARD

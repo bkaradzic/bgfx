@@ -1657,7 +1657,7 @@ namespace bgfx
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil = BGFX_STENCIL_NONE);
 
 	/// Set scissor for draw primitive. For scissor for all primitives in
-	/// view see setViewScissor.
+	/// view see `bgfx::setViewScissor`.
 	///
 	/// @param[in] _x Position x from the left corner of the window.
 	/// @param[in] _y Position y from the top corner of the window.
