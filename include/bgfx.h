@@ -1357,7 +1357,7 @@ namespace bgfx
 	/// @param[in] _width Texture width.
 	/// @param[in] _height Texture height.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	/// @param[in] _textureFlags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
 	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
@@ -1374,7 +1374,7 @@ namespace bgfx
 	/// @param[in] _ratio Frame buffer size in respect to back-buffer size. See:
 	///   `BackbufferRatio::Enum`.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	/// @param[in] _textureFlags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
 	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
@@ -1953,7 +1953,6 @@ namespace bgfx
 	/// @param[in] _sampler Program sampler.
 	/// @param[in] _handle Frame buffer handle.
 	/// @param[in] _attachment Attachment index.
-	/// @param[in] _mip Mip level.
 	/// @param[in] _access Texture access. See `Access::Enum`.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	///
