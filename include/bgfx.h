@@ -692,7 +692,8 @@ namespace bgfx
 	///   default rendering backend will be selected.
 	///   See: `bgfx::RendererType`
 	///
-	/// @param[in] _vendorId Vendor PCI id. If set to BGFX_PCI_ID_NONE it will select the first device.
+	/// @param[in] _vendorId Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
+	///   device.
 	///   - `BGFX_PCI_ID_NONE` - autoselect.
 	///   - `BGFX_PCI_ID_AMD` - AMD.
 	///   - `BGFX_PCI_ID_INTEL` - Intel.
@@ -1316,22 +1317,22 @@ namespace bgfx
 	/// @param[in] _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
 	///   -Y, 4 is +Z, and 5 is -Z.
 	///
-	///              +----------+
-	///              |-z       2|
-	///              | ^  +y    |
-	///              | |        |
-	///              | +---->+x |
-	///   +----------+----------+----------+----------+
-	///   |+y       1|+y       4|+y       0|+y       5|
-	///   | ^  -x    | ^  +z    | ^  +x    | ^  -z    |
-	///   | |        | |        | |        | |        |
-	///   | +---->+z | +---->+x | +---->-z | +---->-x |
-	///   +----------+----------+----------+----------+
-	///              |+z       3|
-	///              | ^  -y    |
-	///              | |        |
-	///              | +---->+x |
-	///              +----------+
+	///                  +----------+
+	///                  |-z       2|
+	///                  | ^  +y    |
+	///                  | |        |
+	///                  | +---->+x |
+	///       +----------+----------+----------+----------+
+	///       |+y       1|+y       4|+y       0|+y       5|
+	///       | ^  -x    | ^  +z    | ^  +x    | ^  -z    |
+	///       | |        | |        | |        | |        |
+	///       | +---->+z | +---->+x | +---->-z | +---->-x |
+	///       +----------+----------+----------+----------+
+	///                  |+z       3|
+	///                  | ^  -y    |
+	///                  | |        |
+	///                  | +---->+x |
+	///                  +----------+
 	///
 	/// @param[in] _mip Mip level.
 	/// @param[in] _x X offset in texture.
