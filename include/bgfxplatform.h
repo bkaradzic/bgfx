@@ -14,6 +14,10 @@
 
 namespace bgfx
 {
+	/// Render frame enum.
+	///
+	/// @attention C99 equivalent is `bgfx_render_frame_t`.
+	///
 	struct RenderFrame
 	{
 		enum Enum
@@ -26,20 +30,34 @@ namespace bgfx
 		};
 	};
 
-	/// WARNING: This call should be only used on platforms that don't
-	/// allow creating separate rendering thread. If it is called before
-	/// to bgfx::init, render thread won't be created by bgfx::init call.
+	/// Render frame.
+	///
+	/// @returns Current renderer state. See: `bgfx::RenderFrame`.
+	///
+	/// @warning This call should be only used on platforms that don't
+	///   allow creating separate rendering thread. If it is called before
+	///   to bgfx::init, render thread won't be created by bgfx::init call.
 	RenderFrame::Enum renderFrame();
 
+	/// Platform data.
+	///
+	/// @attention C99 equivalent is `bgfx_platform_data_t`.
+	///
 	struct PlatformData
 	{
-		void* ndt;          //< Native display type
-		void* nwh;          //< Native window handle
-		void* context;      //< GL context, or D3D device
-		void* backBuffer;   //< GL backbuffer, or D3D render target view
-		void* backBufferDS; //< Backbuffer depth/stencil.
+		void* ndt;          //!< Native display type
+		void* nwh;          //!< Native window handle
+		void* context;      //!< GL context, or D3D device
+		void* backBuffer;   //!< GL backbuffer, or D3D render target view
+		void* backBufferDS; //!< Backbuffer depth/stencil.
 	};
 
+	/// Set platform data.
+	///
+	/// @warning Must be called before `bgfx::init`.
+	///
+	/// @attention C99 equivalent is `bgfx_set_platform_data`.
+	///
 	void setPlatformData(const PlatformData& _hooks);
 
 } // namespace bgfx
