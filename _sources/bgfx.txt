@@ -1,0 +1,263 @@
+bgfx - Documentation
+====================
+
+bgfx is Cross-platform, graphics API agnostic, "Bring Your Own Engine/Framework" style
+rendering library.
+
+https://github.com/bkaradzic/bgfx
+
+General
+-------
+
+Initialization
+~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::init
+
+.. doxygenstruct:: bgfx::CallbackI
+    :members:
+
+.. doxygenfunction:: bgfx::shutdown
+
+Updating
+~~~~~~~~
+
+.. doxygenfunction:: bgfx::reset
+.. doxygenfunction:: bgfx::frame
+
+Debug
+~~~~~
+
+.. doxygenfunction:: bgfx::setDebug
+.. doxygenfunction:: bgfx::dbgTextClear
+.. doxygenfunction:: bgfx::dbgTextPrintf
+
+Quering information
+~~~~~~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::getRendererType
+
+.. doxygenstruct:: bgfx::RendererType
+    :members:
+
+.. doxygenfunction:: bgfx::getCaps
+
+.. doxygenstruct:: bgfx::Caps
+    :members:
+
+.. doxygenfunction:: bgfx::getStats
+
+.. doxygenstruct:: bgfx::Stats
+    :members:
+
+.. doxygenfunction:: bgfx::getHMD
+
+.. doxygenstruct:: bgfx::HMD
+    :members:
+
+Platform specific
+~~~~~~~~~~~~~~~~~
+
+These are platform specific APIs. It is only necessary to use these APIs in conjunction with
+creating windows.
+
+.. doxygenfunction:: bgfx::renderFrame
+
+.. doxygenstruct:: bgfx::RenderFrame
+    :members:
+
+.. doxygenfunction:: bgfx::setPlatformData
+
+.. doxygenstruct:: bgfx::PlatformData
+    :members:
+
+Miscelaneous
+~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::discard
+.. doxygenfunction:: bgfx::touch
+.. doxygenfunction:: bgfx::setClearColor(uint8_t, uint32_t)
+.. doxygenfunction:: bgfx::setClearColor(uint8_t, const float)
+.. doxygenfunction:: bgfx::setClearColor(uint8_t, float, float, float, float)
+.. doxygenfunction:: bgfx::saveScreenShot
+
+Views
+-----
+
+.. doxygenfunction:: bgfx::setViewName
+.. doxygenfunction:: bgfx::setViewRect
+.. doxygenfunction:: bgfx::setViewScissor
+.. doxygenfunction:: bgfx::setViewClear(uint8_t, uint16_t, uint32_t, float, uint8_t)
+.. doxygenfunction:: bgfx::setViewClear(uint8_t, uint16_t, float, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)
+.. doxygenfunction:: bgfx::setViewSeq
+.. doxygenfunction:: bgfx::setViewTransform
+.. doxygenfunction:: bgfx::setViewRemap
+
+
+.. doxygenfunction:: bgfx::setViewFrameBuffer
+
+Draw
+----
+
+State
+~~~~~
+
+.. doxygenfunction:: bgfx::setMarker
+.. doxygenfunction:: bgfx::setState
+.. doxygenfunction:: bgfx::setStencil
+.. doxygenfunction:: bgfx::setScissor(uint16_t, uint16_t, uint16_t, uint16_t)
+.. doxygenfunction:: bgfx::setScissor(uint16_t)
+.. doxygenfunction:: bgfx::allocTransform
+.. doxygenfunction:: bgfx::setTransform(const void *, uint16_t)
+.. doxygenfunction:: bgfx::setTransform(uint32_t, uint16_t)
+
+Buffers
+~~~~~~~
+
+.. doxygenfunction:: bgfx::setIndexBuffer(IndexBufferHandle, uint32_t, uint32_t)
+.. doxygenfunction:: bgfx::setIndexBuffer(DynamicIndexBufferHandle, uint32_t, uint32_t)
+.. doxygenfunction:: bgfx::setIndexBuffer(const TransientIndexBuffer *, uint32_t, uint32_t)
+.. doxygenfunction:: bgfx::setIndexBuffer(const TransientIndexBuffer *)
+
+.. doxygenfunction:: bgfx::setVertexBuffer(VertexBufferHandle)
+.. doxygenfunction:: bgfx::setVertexBuffer(VertexBufferHandle, uint32_t, uint32_t)
+.. doxygenfunction:: bgfx::setVertexBuffer(DynamicVertexBufferHandle, uint32_t)
+.. doxygenfunction:: bgfx::setVertexBuffer(const TransientVertexBuffer *)
+.. doxygenfunction:: bgfx::setVertexBuffer(const TransientVertexBuffer *, uint32_t, uint32_t)
+
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(const InstanceDataBuffer *, uint32_t)
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(VertexBufferHandle, uint32_t, uint32_t)
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(DynamicVertexBufferHandle, uint32_t, uint32_t)
+
+Textures
+~~~~~~~~
+
+.. doxygenfunction:: bgfx::setTexture(uint8_t, UniformHandle, TextureHandle, uint32_t)
+.. doxygenfunction:: bgfx::setTexture(uint8_t, UniformHandle, FrameBufferHandle, uint8_t, uint32_t)
+
+Submit
+~~~~~~
+
+.. doxygenfunction:: bgfx::submit(uint8_t, ProgramHandle, int32_t)
+.. doxygenfunction:: bgfx::submit(uint8_t, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, int32_t)
+
+Compute
+-------
+
+Buffers
+~~~~~~~
+
+.. doxygenfunction:: bgfx::setBuffer(uint8_t, IndexBufferHandle, Access::Enum)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t, VertexBufferHandle, Access::Enum)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t, DynamicIndexBufferHandle, Access::Enum)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t, DynamicVertexBufferHandle, Access::Enum)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t, IndirectBufferHandle, Access::Enum)
+
+Images
+~~~~~~
+
+.. doxygenfunction:: bgfx::setImage(uint8_t, UniformHandle, TextureHandle, uint8_t, Access::Enum, TextureFormat::Enum)
+.. doxygenfunction:: bgfx::setImage(uint8_t, UniformHandle, FrameBufferHandle, uint8_t, Access::Enum, TextureFormat::Enum)
+
+Dispatch
+~~~~~~~~
+
+.. doxygenfunction:: bgfx::dispatch(uint8_t, ProgramHandle, uint16_t, uint16_t, uint16_t, uint8_t)
+.. doxygenfunction:: bgfx::dispatch(uint8_t, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint8_t)
+
+Resources
+---------
+
+.. doxygenfunction:: bgfx::alloc
+.. doxygenfunction:: bgfx::copy
+.. doxygenfunction:: bgfx::makeRef
+
+.. doxygenstruct:: bgfx::Memory
+    :members:
+
+Frame buffers
+~~~~~~~~~~~~~
+
+.. doxygenfunction:: createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint32_t)
+.. doxygenfunction:: createFrameBuffer(uint8_t, TextureHandle *, bool)
+.. doxygenfunction:: createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum)
+.. doxygenfunction:: destroyFrameBuffer
+
+
+Index Buffers
+~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::createIndexBuffer
+.. doxygenfunction:: bgfx::destroyIndexBuffer
+.. doxygenfunction:: bgfx::createDynamicIndexBuffer(uint32_t, uint16_t)
+.. doxygenfunction:: bgfx::createDynamicIndexBuffer(const Memory *, uint16_t)
+.. doxygenfunction:: bgfx::updateDynamicIndexBuffer(DynamicIndexBufferHandle, uint32_t, const Memory *)
+.. doxygenfunction:: bgfx::destroyDynamicIndexBuffer(DynamicIndexBufferHandle)
+
+.. doxygenfunction:: bgfx::checkAvailTransientIndexBuffer
+.. doxygenfunction:: bgfx::allocTransientIndexBuffer
+
+Vertex Buffers
+~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::createVertexBuffer
+.. doxygenfunction:: bgfx::destroyVertexBuffer
+
+.. doxygenstruct:: bgfx::VertexDecl
+    :members:
+
+.. doxygenstruct:: bgfx::Attrib
+    :members:
+
+.. doxygenfunction:: bgfx::createDynamicVertexBuffer(uint32_t, const VertexDecl&, uint16_t)
+.. doxygenfunction:: bgfx::createDynamicVertexBuffer(const Memory *, const VertexDecl&, uint16_t)
+.. doxygenfunction:: bgfx::updateDynamicVertexBuffer(DynamicVertexBufferHandle, uint32_t, const Memory *)
+.. doxygenfunction:: bgfx::destroyDynamicVertexBuffer(DynamicVertexBufferHandle)
+
+.. doxygenfunction:: bgfx::checkAvailTransientVertexBuffer
+.. doxygenfunction:: bgfx::allocTransientVertexBuffer
+
+Instance Buffer
+~~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::checkAvailInstanceDataBuffer
+.. doxygenfunction:: bgfx::allocInstanceDataBuffer
+
+Indirect Buffer
+~~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::createIndirectBuffer
+.. doxygenfunction:: bgfx::destroyIndirectBuffer
+
+Shaders and Programs
+~~~~~~~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::createShader
+.. doxygenfunction:: bgfx::getShaderUniforms
+.. doxygenfunction:: bgfx::destroyShader
+.. doxygenfunction:: bgfx::createProgram(ShaderHandle, ShaderHandle, bool)
+.. doxygenfunction:: bgfx::createProgram(ShaderHandle, bool)
+.. doxygenfunction:: bgfx::destroyProgram
+
+Textures
+~~~~~~~~
+
+.. doxygenfunction:: bgfx::calcTextureSize
+.. doxygenfunction:: bgfx::createTexture
+.. doxygenfunction:: bgfx::createTexture2D(uint16_t, uint16_t, uint8_t, TextureFormat::Enum, uint32_t, const Memory *)
+.. doxygenfunction:: bgfx::createTexture2D(BackbufferRatio::Enum, uint8_t, TextureFormat::Enum, uint32_t)
+.. doxygenfunction:: bgfx::updateTexture2D
+.. doxygenfunction:: bgfx::createTexture3D
+.. doxygenfunction:: bgfx::updateTexture3D
+.. doxygenfunction:: bgfx::createTextureCube
+.. doxygenfunction:: bgfx::updateTextureCube
+.. doxygenfunction:: bgfx::destroyTexture
+
+Uniforms
+~~~~~~~~
+
+.. doxygenfunction:: bgfx::createUniform
+.. doxygenfunction:: bgfx::destroyUniform
+
+.. doxygenstruct:: bgfx::UniformType
+    :members:

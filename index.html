@@ -1,0 +1,261 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bgfx - Documentation &mdash; bgfx 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="bgfx 1.0 documentation" href="#"/>
+        <link rel="next" title="bgfx - Documentation" href="bgfx.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="#" class="icon icon-home"> bgfx
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization">Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#quering-information">Quering information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#platform-specific">Platform specific</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#miscelaneous">Miscelaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id1">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id2">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">bgfx</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>bgfx - Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="bgfx-documentation">
+<h1>bgfx - Documentation<a class="headerlink" href="#bgfx-documentation" title="Permalink to this headline">¶</a></h1>
+<p>bgfx is Cross-platform, graphics API agnostic, &#8220;Bring Your Own Engine/Framework&#8221; style
+rendering library.</p>
+<p><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization">Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#quering-information">Quering information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#platform-specific">Platform specific</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#miscelaneous">Miscelaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id1">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id2">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="bgfx.html" class="btn btn-neutral float-right" title="bgfx - Documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Branimir Karadžić.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
