@@ -54,8 +54,8 @@ Debug Text Display
 .. doxygenfunction:: bgfx::dbgTextClear
 .. doxygenfunction:: bgfx::dbgTextPrintf
 
-Quering information
-~~~~~~~~~~~~~~~~~~~
+Querying information
+~~~~~~~~~~~~~~~~~~~~
 
 Renderer
 ********
@@ -124,8 +124,8 @@ creating windows.
 .. doxygenstruct:: bgfx::PlatformData
     :members:
 
-Miscelaneous
-~~~~~~~~~~~~
+Miscellaneous
+~~~~~~~~~~~~~
 
 .. doxygenfunction:: bgfx::discard
 .. doxygenfunction:: bgfx::touch
