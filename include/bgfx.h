@@ -878,6 +878,18 @@ namespace bgfx
 	///
 	/// @param[in] _mem Vertex buffer data.
 	/// @param[in] _decl Vertex declaration.
+	/// @param[in] _flags Buffer creation flags.
+	///   - `BGFX_BUFFER_NONE` - No flags.
+	///   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
+	///   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
+	///       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
+	///   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
+	///   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if different amount of
+	///       data is passed. If this flag is not specified if more data is passed on update buffer
+	///       will be trimmed to fit existing buffer size. This flag has effect only on dynamic
+	///       buffers.
+	///   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
+	///       index buffers.
 	/// @returns Static vertex buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_create_vertex_buffer`.
@@ -1210,6 +1222,19 @@ namespace bgfx
 	///
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE, const Memory* _mem = NULL);
 
+	/// Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
+	/// if back buffer resolution changes.
+	///
+	/// @param[in] _ratio Frame buffer size in respect to back-buffer size. See:
+	///   `BackbufferRatio::Enum`.
+	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///     mode.
+	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///     sampling.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_2d_scaled`.
 	///
@@ -1345,6 +1370,16 @@ namespace bgfx
 
 	/// Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
 	/// if back buffer resolution changes.
+	///
+	/// @param[in] _ratio Frame buffer size in respect to back-buffer size. See:
+	///   `BackbufferRatio::Enum`.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
+	///   is repeat.
+	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///     mode.
+	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///     sampling.
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_scaled`.
 	///
@@ -1483,6 +1518,7 @@ namespace bgfx
 	/// Set view scissor. Draw primitive outside view will be clipped. When
 	/// _x, _y, _width and _height are set to 0, scissor will be disabled.
 	///
+	/// @param[in] _id View id.
 	/// @param[in] _x Position x from the left corner of the window.
 	/// @param[in] _y Position y from the top corner of the window.
 	/// @param[in] _width Width of scissor region.
@@ -1514,6 +1550,14 @@ namespace bgfx
 	///   operation. See: `BGFX_CLEAR_*`.
 	/// @param[in] _depth Depth clear value.
 	/// @param[in] _stencil Stencil clear value.
+	/// @param[in] _0 Palette index for frame buffer attachment 0.
+	/// @param[in] _1 Palette index for frame buffer attachment 1.
+	/// @param[in] _2 Palette index for frame buffer attachment 2.
+	/// @param[in] _3 Palette index for frame buffer attachment 3.
+	/// @param[in] _4 Palette index for frame buffer attachment 4.
+	/// @param[in] _5 Palette index for frame buffer attachment 5.
+	/// @param[in] _6 Palette index for frame buffer attachment 6.
+	/// @param[in] _7 Palette index for frame buffer attachment 7.
 	///
 	/// @attention C99 equivalent is `bgfx_set_view_clear_mrt`.
 	///
