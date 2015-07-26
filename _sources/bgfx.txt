@@ -9,10 +9,16 @@ https://github.com/bkaradzic/bgfx
 General
 -------
 
-Initialization
-~~~~~~~~~~~~~~
+Initialization and Shutdown
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. doxygenfunction:: bgfx::init
+
+.. doxygendefine:: BGFX_PCI_ID_NONE
+.. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER
+.. doxygendefine:: BGFX_PCI_ID_AMD
+.. doxygendefine:: BGFX_PCI_ID_INTEL
+.. doxygendefine:: BGFX_PCI_ID_NVIDIA
 
 .. doxygenstruct:: bgfx::CallbackI
     :members:
@@ -28,32 +34,79 @@ Updating
 Debug
 ~~~~~
 
+Debug Features
+**************
+
 .. doxygenfunction:: bgfx::setDebug
+
+Debug Flags
+***********
+
+.. doxygendefine:: BGFX_DEBUG_NONE
+.. doxygendefine:: BGFX_DEBUG_WIREFRAME
+.. doxygendefine:: BGFX_DEBUG_IFH
+.. doxygendefine:: BGFX_DEBUG_STATS
+.. doxygendefine:: BGFX_DEBUG_TEXT
+
+Debug Text Display
+******************
+
 .. doxygenfunction:: bgfx::dbgTextClear
 .. doxygenfunction:: bgfx::dbgTextPrintf
 
 Quering information
 ~~~~~~~~~~~~~~~~~~~
 
+Renderer
+********
+
 .. doxygenfunction:: bgfx::getRendererType
 
 .. doxygenstruct:: bgfx::RendererType
     :members:
+
+Capabilities
+************
 
 .. doxygenfunction:: bgfx::getCaps
 
 .. doxygenstruct:: bgfx::Caps
     :members:
 
+.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
+.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_ALL
+.. doxygendefine:: BGFX_CAPS_TEXTURE_3D
+.. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_HALF
+.. doxygendefine:: BGFX_CAPS_INSTANCING
+.. doxygendefine:: BGFX_CAPS_RENDERER_MULTITHREADED
+.. doxygendefine:: BGFX_CAPS_FRAGMENT_DEPTH
+.. doxygendefine:: BGFX_CAPS_BLEND_INDEPENDENT
+.. doxygendefine:: BGFX_CAPS_COMPUTE
+.. doxygendefine:: BGFX_CAPS_FRAGMENT_ORDERING
+.. doxygendefine:: BGFX_CAPS_SWAP_CHAIN
+.. doxygendefine:: BGFX_CAPS_HMD
+.. doxygendefine:: BGFX_CAPS_INDEX32
+.. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT
+
+Statistics
+**********
+
 .. doxygenfunction:: bgfx::getStats
 
 .. doxygenstruct:: bgfx::Stats
     :members:
 
+Head Mounted Display
+********************
+
 .. doxygenfunction:: bgfx::getHMD
 
 .. doxygenstruct:: bgfx::HMD
     :members:
+
+.. doxygendefine:: BGFX_HMD_NONE
+.. doxygendefine:: BGFX_HMD_DEVICE_RESOLUTION
+.. doxygendefine:: BGFX_HMD_RENDERING
 
 Platform specific
 ~~~~~~~~~~~~~~~~~
@@ -102,11 +155,47 @@ Draw
 State
 ~~~~~
 
+Debug
+*****
+
 .. doxygenfunction:: bgfx::setMarker
+
+State
+*****
+
 .. doxygenfunction:: bgfx::setState
+
+State Flags
+***********
+
+.. doxygendefine:: BGFX_STATE_RGB_WRITE
+.. doxygendefine:: BGFX_STATE_ALPHA_WRITE
+.. doxygendefine:: BGFX_STATE_DEPTH_WRITE
+
+.. doxygendefine:: BGFX_STATE_DEFAULT
+
+Stencil
+*******
+
 .. doxygenfunction:: bgfx::setStencil
+
+Stencil Flags
+*************
+
+.. doxygendefine:: BGFX_STENCIL_TEST_LESS
+
+Scissor
+*******
+
+When scissor rectangle is changing per draw call inside the same view use `bgfx::setScissor`,
+otherwise prefer `bgfx::setViewScissor`.
+
 .. doxygenfunction:: bgfx::setScissor(uint16_t, uint16_t, uint16_t, uint16_t)
 .. doxygenfunction:: bgfx::setScissor(uint16_t)
+
+Transform
+*********
+
 .. doxygenfunction:: bgfx::allocTransform
 .. doxygenfunction:: bgfx::setTransform(const void *, uint16_t)
 .. doxygenfunction:: bgfx::setTransform(uint32_t, uint16_t)

@@ -73,24 +73,44 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization">Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#quering-information">Quering information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-features">Debug Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-flags">Debug Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-text-display">Debug Text Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#quering-information">Quering information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#renderer">Renderer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#capabilities">Capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#statistics">Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#head-mounted-display">Head Mounted Display</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#platform-specific">Platform specific</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#miscelaneous">Miscelaneous</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id1">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id2">State</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#state-flags">State Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil">Stencil</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil-flags">Stencil Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#scissor">Scissor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#transform">Transform</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id1">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id3">Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
 </ul>
@@ -102,7 +122,7 @@
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id2">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 </ul>
 </li>
@@ -485,8 +505,6 @@
   <dt><a href="bgfx.html#_CPPv2N4bgfx15getRendererTypeEv">bgfx::getRendererType (C++ function)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="bgfx.html#_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t">bgfx::getShaderUniforms (C++ function)</a>
   </dt>
@@ -551,6 +569,8 @@
   <dt><a href="bgfx.html#_CPPv2N4bgfx6MemoryE">bgfx::Memory (C++ class)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="bgfx.html#_CPPv2N4bgfx12PlatformDataE">bgfx::PlatformData (C++ class)</a>
   </dt>
@@ -817,6 +837,134 @@
 
       
   <dt><a href="bgfx.html#_CPPv2N4bgfx10VertexDecl4skipE7uint8_t">bgfx::VertexDecl::skip (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_BLEND_INDEPENDENT">BGFX_CAPS_BLEND_INDEPENDENT (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_COMPUTE">BGFX_CAPS_COMPUTE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_DRAW_INDIRECT">BGFX_CAPS_DRAW_INDIRECT (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_FRAGMENT_DEPTH">BGFX_CAPS_FRAGMENT_DEPTH (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_FRAGMENT_ORDERING">BGFX_CAPS_FRAGMENT_ORDERING (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_HMD">BGFX_CAPS_HMD (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_INDEX32">BGFX_CAPS_INDEX32 (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_INSTANCING">BGFX_CAPS_INSTANCING (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_RENDERER_MULTITHREADED">BGFX_CAPS_RENDERER_MULTITHREADED (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_SWAP_CHAIN">BGFX_CAPS_SWAP_CHAIN (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_3D">BGFX_CAPS_TEXTURE_3D (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_COMPARE_ALL">BGFX_CAPS_TEXTURE_COMPARE_ALL (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_CAPS_VERTEX_ATTRIB_HALF">BGFX_CAPS_VERTEX_ATTRIB_HALF (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_DEBUG_IFH">BGFX_DEBUG_IFH (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_DEBUG_NONE">BGFX_DEBUG_NONE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_DEBUG_STATS">BGFX_DEBUG_STATS (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_DEBUG_TEXT">BGFX_DEBUG_TEXT (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_DEBUG_WIREFRAME">BGFX_DEBUG_WIREFRAME (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_HMD_DEVICE_RESOLUTION">BGFX_HMD_DEVICE_RESOLUTION (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_HMD_NONE">BGFX_HMD_NONE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_HMD_RENDERING">BGFX_HMD_RENDERING (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_PCI_ID_AMD">BGFX_PCI_ID_AMD (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_PCI_ID_INTEL">BGFX_PCI_ID_INTEL (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_PCI_ID_NONE">BGFX_PCI_ID_NONE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_PCI_ID_NVIDIA">BGFX_PCI_ID_NVIDIA (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_PCI_ID_SOFTWARE_RASTERIZER">BGFX_PCI_ID_SOFTWARE_RASTERIZER (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_STATE_ALPHA_WRITE">BGFX_STATE_ALPHA_WRITE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_STATE_DEFAULT">BGFX_STATE_DEFAULT (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_STATE_DEPTH_WRITE">BGFX_STATE_DEPTH_WRITE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_STATE_RGB_WRITE">BGFX_STATE_RGB_WRITE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_STENCIL_TEST_LESS">BGFX_STENCIL_TEST_LESS (C macro)</a>
   </dt>
 
   </dl></td>

@@ -73,24 +73,44 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="">bgfx - Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#general">General</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initialization-and-shutdown">Initialization and Shutdown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#updating">Updating</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#debug">Debug</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#quering-information">Quering information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug">Debug</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#debug-features">Debug Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debug-flags">Debug Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debug-text-display">Debug Text Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#quering-information">Quering information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#renderer">Renderer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#capabilities">Capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#statistics">Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#head-mounted-display">Head Mounted Display</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#platform-specific">Platform specific</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#miscelaneous">Miscelaneous</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#views">Views</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#draw">Draw</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#state">State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#state">State</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">State</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#state-flags">State Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stencil">Stencil</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stencil-flags">Stencil Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scissor">Scissor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transform">Transform</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#buffers">Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#textures">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#submit">Submit</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#compute">Compute</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#images">Images</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dispatch">Dispatch</a></li>
 </ul>
@@ -102,7 +122,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#indirect-buffer">Indirect Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#shaders-and-programs">Shaders and Programs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a></li>
 </ul>
 </li>
@@ -150,8 +170,8 @@ rendering library.</p>
 <p><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></p>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="initialization">
-<h3>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="initialization-and-shutdown">
+<h3>Initialization and Shutdown<a class="headerlink" href="#initialization-and-shutdown" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx12ReallocatorIE">
 <span id="bgfx::init__RendererType::Enum.uint16_t.uint16_t.CallbackIP.bx::ReallocatorIP"></span><span class="target" id="project0namespacebgfx_1a5307f4c3c25dfa81b4f37d7afd4cc281"></span>void <code class="descclassname">bgfx::</code><code class="descname">init</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_type</em>, uint16_t <em>_vendorId</em>, uint16_t <em>_deviceId</em>, <a class="reference internal" href="#_CPPv2N4bgfx9CallbackIE" title="bgfx::CallbackI">CallbackI</a> *<em>_callback</em>, bx::ReallocatorI *<em>_reallocator</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx12ReallocatorIE" title="Permalink to this definition">¶</a></dt>
@@ -181,6 +201,36 @@ rendering library.</p>
 </dd>
 </dl>
 </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_PCI_ID_NONE">
+<span class="target" id="project0bgfxdefines_8h_1a92e8db81cd0b751a6abecfd7c1977b61"></span><code class="descname">BGFX_PCI_ID_NONE</code><a class="headerlink" href="#c.BGFX_PCI_ID_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Autoselect adapter. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_PCI_ID_SOFTWARE_RASTERIZER">
+<span class="target" id="project0bgfxdefines_8h_1af687d309fb08a21af41cb61dcc17663f"></span><code class="descname">BGFX_PCI_ID_SOFTWARE_RASTERIZER</code><a class="headerlink" href="#c.BGFX_PCI_ID_SOFTWARE_RASTERIZER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Software rasterizer. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_PCI_ID_AMD">
+<span class="target" id="project0bgfxdefines_8h_1a98a003376c4fac2e111a2778578660cb"></span><code class="descname">BGFX_PCI_ID_AMD</code><a class="headerlink" href="#c.BGFX_PCI_ID_AMD" title="Permalink to this definition">¶</a></dt>
+<dd><p>AMD adapter. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_PCI_ID_INTEL">
+<span class="target" id="project0bgfxdefines_8h_1a2f3ca85ec971d2a6e98f63b60de61755"></span><code class="descname">BGFX_PCI_ID_INTEL</code><a class="headerlink" href="#c.BGFX_PCI_ID_INTEL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Intel adapter. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_PCI_ID_NVIDIA">
+<span class="target" id="project0bgfxdefines_8h_1a19a4997d1bcf83055bfd3bf8274b593b"></span><code class="descname">BGFX_PCI_ID_NVIDIA</code><a class="headerlink" href="#c.BGFX_PCI_ID_NVIDIA" title="Permalink to this definition">¶</a></dt>
+<dd><p>nVidia adapter. </p>
 </dd></dl>
 
 <dl class="class">
@@ -443,6 +493,8 @@ rendering library.</p>
 </div>
 <div class="section" id="debug">
 <h3>Debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="debug-features">
+<h4>Debug Features<a class="headerlink" href="#debug-features" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setDebugE8uint32_t">
 <span id="bgfx::setDebug__uint32_t"></span><span class="target" id="project0namespacebgfx_1ae785eb08ff2f48a96b84d2a37cb6f594"></span>void <code class="descclassname">bgfx::</code><code class="descname">setDebug</code><span class="sig-paren">(</span>uint32_t <em>_debug</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setDebugE8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -466,6 +518,42 @@ rendering library.</p>
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="debug-flags">
+<h4>Debug Flags<a class="headerlink" href="#debug-flags" title="Permalink to this headline">¶</a></h4>
+<dl class="macro">
+<dt id="c.BGFX_DEBUG_NONE">
+<span class="target" id="project0bgfxdefines_8h_1abcdfdffe5c52e7ff366087466c515ea5"></span><code class="descname">BGFX_DEBUG_NONE</code><a class="headerlink" href="#c.BGFX_DEBUG_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>No debug. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_DEBUG_WIREFRAME">
+<span class="target" id="project0bgfxdefines_8h_1ae489c12ff4b561a2f68ddb0bf727049c"></span><code class="descname">BGFX_DEBUG_WIREFRAME</code><a class="headerlink" href="#c.BGFX_DEBUG_WIREFRAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable wireframe for all primitives. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_DEBUG_IFH">
+<span class="target" id="project0bgfxdefines_8h_1a01a6722a2d1b1c1948b44191b2dddf48"></span><code class="descname">BGFX_DEBUG_IFH</code><a class="headerlink" href="#c.BGFX_DEBUG_IFH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable infinitely fast hardware test. No draw calls will be submitted to driver. It’s useful when profiling to quickly assess bottleneck between CPU and GPU. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_DEBUG_STATS">
+<span class="target" id="project0bgfxdefines_8h_1a337fe1eece8a5d2c6c8e4067541d84b8"></span><code class="descname">BGFX_DEBUG_STATS</code><a class="headerlink" href="#c.BGFX_DEBUG_STATS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable statistics display. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_DEBUG_TEXT">
+<span class="target" id="project0bgfxdefines_8h_1a3a0974b7626334233233d24027b7fd8a"></span><code class="descname">BGFX_DEBUG_TEXT</code><a class="headerlink" href="#c.BGFX_DEBUG_TEXT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable debug text display. </p>
+</dd></dl>
+
+</div>
+<div class="section" id="debug-text-display">
+<h4>Debug Text Display<a class="headerlink" href="#debug-text-display" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx12dbgTextClearE7uint8_tb">
 <span id="bgfx::dbgTextClear__uint8_t.b"></span><span class="target" id="project0namespacebgfx_1ac7c16eafe7657464ed6fef8eca0c4c2a"></span>void <code class="descclassname">bgfx::</code><code class="descname">dbgTextClear</code><span class="sig-paren">(</span>uint8_t <em>_attr</em>, bool <em>_small</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12dbgTextClearE7uint8_tb" title="Permalink to this definition">¶</a></dt>
@@ -489,8 +577,11 @@ rendering library.</p>
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="quering-information">
 <h3>Quering information<a class="headerlink" href="#quering-information" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="renderer">
+<h4>Renderer<a class="headerlink" href="#renderer" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx15getRendererTypeEv">
 <span id="bgfx::getRendererType"></span><span class="target" id="project0namespacebgfx_1ab0c1e47f7ebc790794c0161abaaebc8a"></span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <code class="descclassname">bgfx::</code><code class="descname">getRendererType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15getRendererTypeEv" title="Permalink to this definition">¶</a></dt>
@@ -578,6 +669,9 @@ rendering library.</p>
 </div>
 </dd></dl>
 
+</div>
+<div class="section" id="capabilities">
+<h4>Capabilities<a class="headerlink" href="#capabilities" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx7getCapsEv">
 <span id="bgfx::getCaps"></span><span class="target" id="project0namespacebgfx_1a6ff11d29a4f9646ee6e8ec07454fb2ea"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx4CapsE" title="bgfx::Caps">Caps</a> *<code class="descclassname">bgfx::</code><code class="descname">getCaps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7getCapsEv" title="Permalink to this definition">¶</a></dt>
@@ -705,6 +799,93 @@ rendering library.</p>
 
 </dd></dl>
 
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">
+<span class="target" id="project0bgfxdefines_8h_1a1316712571960b2e3c9daf12723041d7"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture compare less equal mode is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_COMPARE_ALL">
+<span class="target" id="project0bgfxdefines_8h_1a9ebaab5c7f3b4b3289bb6b6b7bae9511"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_ALL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_ALL" title="Permalink to this definition">¶</a></dt>
+<dd><p>All texture compare modes are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_3D">
+<span class="target" id="project0bgfxdefines_8h_1ad5f6d21a544dec64de111514b463566b"></span><code class="descname">BGFX_CAPS_TEXTURE_3D</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_3D" title="Permalink to this definition">¶</a></dt>
+<dd><p>3D textures are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_VERTEX_ATTRIB_HALF">
+<span class="target" id="project0bgfxdefines_8h_1ac7de569a09f05f83052c6b77c99db7fc"></span><code class="descname">BGFX_CAPS_VERTEX_ATTRIB_HALF</code><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ATTRIB_HALF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vertex attribute half-float is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_INSTANCING">
+<span class="target" id="project0bgfxdefines_8h_1a8fa31bcef4c9038b65a7e6e198792e04"></span><code class="descname">BGFX_CAPS_INSTANCING</code><a class="headerlink" href="#c.BGFX_CAPS_INSTANCING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instancing is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_RENDERER_MULTITHREADED">
+<span class="target" id="project0bgfxdefines_8h_1a7a915158233262d1e3efe18a12b4c3a6"></span><code class="descname">BGFX_CAPS_RENDERER_MULTITHREADED</code><a class="headerlink" href="#c.BGFX_CAPS_RENDERER_MULTITHREADED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renderer is on separate thread. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_FRAGMENT_DEPTH">
+<span class="target" id="project0bgfxdefines_8h_1ad6427441adff7f8672d4f90eaa40698d"></span><code class="descname">BGFX_CAPS_FRAGMENT_DEPTH</code><a class="headerlink" href="#c.BGFX_CAPS_FRAGMENT_DEPTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fragment depth is accessible in fragment shader. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_BLEND_INDEPENDENT">
+<span class="target" id="project0bgfxdefines_8h_1ac50a011626842799ca8e2041a4760e9f"></span><code class="descname">BGFX_CAPS_BLEND_INDEPENDENT</code><a class="headerlink" href="#c.BGFX_CAPS_BLEND_INDEPENDENT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend independent is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_COMPUTE">
+<span class="target" id="project0bgfxdefines_8h_1ae843b1802f7876c50ffbd3c5def8a1b4"></span><code class="descname">BGFX_CAPS_COMPUTE</code><a class="headerlink" href="#c.BGFX_CAPS_COMPUTE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute shaders are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_FRAGMENT_ORDERING">
+<span class="target" id="project0bgfxdefines_8h_1ae63f3a67435d3ab926ef8d7fd19ffe07"></span><code class="descname">BGFX_CAPS_FRAGMENT_ORDERING</code><a class="headerlink" href="#c.BGFX_CAPS_FRAGMENT_ORDERING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fragment ordering is available in fragment shader. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_SWAP_CHAIN">
+<span class="target" id="project0bgfxdefines_8h_1afda15c358cd389b8ba58a31bf4406c75"></span><code class="descname">BGFX_CAPS_SWAP_CHAIN</code><a class="headerlink" href="#c.BGFX_CAPS_SWAP_CHAIN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiple windows are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_HMD">
+<span class="target" id="project0bgfxdefines_8h_1a90daba42512c59b433058031335c0c47"></span><code class="descname">BGFX_CAPS_HMD</code><a class="headerlink" href="#c.BGFX_CAPS_HMD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Head Mounted Display is available. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_INDEX32">
+<span class="target" id="project0bgfxdefines_8h_1ab334337b725ebcfa588afc00ab838e77"></span><code class="descname">BGFX_CAPS_INDEX32</code><a class="headerlink" href="#c.BGFX_CAPS_INDEX32" title="Permalink to this definition">¶</a></dt>
+<dd><p>32-bit indices are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_DRAW_INDIRECT">
+<span class="target" id="project0bgfxdefines_8h_1aa82d6cbe876706321923461ff8973679"></span><code class="descname">BGFX_CAPS_DRAW_INDIRECT</code><a class="headerlink" href="#c.BGFX_CAPS_DRAW_INDIRECT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw indirect is supported. </p>
+</dd></dl>
+
+</div>
+<div class="section" id="statistics">
+<h4>Statistics<a class="headerlink" href="#statistics" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8getStatsEv">
 <span id="bgfx::getStats"></span><span class="target" id="project0namespacebgfx_1a404b74593c7c8fd8e591703ec7e8bd4e"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx5StatsE" title="bgfx::Stats">Stats</a> *<code class="descclassname">bgfx::</code><code class="descname">getStats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8getStatsEv" title="Permalink to this definition">¶</a></dt>
@@ -749,6 +930,9 @@ rendering library.</p>
 </div>
 </dd></dl>
 
+</div>
+<div class="section" id="head-mounted-display">
+<h4>Head Mounted Display<a class="headerlink" href="#head-mounted-display" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx6getHMDEv">
 <span id="bgfx::getHMD"></span><span class="target" id="project0namespacebgfx_1a4da6ccef4febaf717d877852ac6b2b25"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx3HMDE" title="bgfx::HMD">HMD</a> *<code class="descclassname">bgfx::</code><code class="descname">getHMD</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6getHMDEv" title="Permalink to this definition">¶</a></dt>
@@ -842,6 +1026,25 @@ rendering library.</p>
 
 </dd></dl>
 
+<dl class="macro">
+<dt id="c.BGFX_HMD_NONE">
+<span class="target" id="project0bgfxdefines_8h_1a3ac67824cc42497782025993b6bb54f3"></span><code class="descname">BGFX_HMD_NONE</code><a class="headerlink" href="#c.BGFX_HMD_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>None. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_HMD_DEVICE_RESOLUTION">
+<span class="target" id="project0bgfxdefines_8h_1a3d7805ee1a27ac0d128e245e2d9639d7"></span><code class="descname">BGFX_HMD_DEVICE_RESOLUTION</code><a class="headerlink" href="#c.BGFX_HMD_DEVICE_RESOLUTION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Has HMD native resolution. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_HMD_RENDERING">
+<span class="target" id="project0bgfxdefines_8h_1a28f6309e935fdd3919402a3622aba5eb"></span><code class="descname">BGFX_HMD_RENDERING</code><a class="headerlink" href="#c.BGFX_HMD_RENDERING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rendering to HMD. </p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="platform-specific">
 <h3>Platform specific<a class="headerlink" href="#platform-specific" title="Permalink to this headline">¶</a></h3>
@@ -1255,6 +1458,8 @@ In graphics debugger view name will appear as:<dl class="docutils">
 <h2>Draw<a class="headerlink" href="#draw" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="state">
 <h3>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h4>Debug<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setMarkerEPKc">
 <span id="bgfx::setMarker__cCP"></span><span class="target" id="project0namespacebgfx_1a826b5408b0fe0e104625e179e115576b"></span>void <code class="descclassname">bgfx::</code><code class="descname">setMarker</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_marker</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setMarkerEPKc" title="Permalink to this definition">¶</a></dt>
@@ -1266,6 +1471,9 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="id2">
+<h4>State<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setStateE8uint64_t8uint32_t">
 <span id="bgfx::setState__uint64_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1a3e5edf50886f88e8f022e18a3e53ba4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setState</code><span class="sig-paren">(</span>uint64_t <em>_state</em>, uint32_t <em>_rgba</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setStateE8uint64_t8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -1302,6 +1510,36 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="state-flags">
+<h4>State Flags<a class="headerlink" href="#state-flags" title="Permalink to this headline">¶</a></h4>
+<dl class="macro">
+<dt id="c.BGFX_STATE_RGB_WRITE">
+<span class="target" id="project0bgfxdefines_8h_1aff0cc52a35c2c01f874bb283a6103f03"></span><code class="descname">BGFX_STATE_RGB_WRITE</code><a class="headerlink" href="#c.BGFX_STATE_RGB_WRITE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable RGB write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_ALPHA_WRITE">
+<span class="target" id="project0bgfxdefines_8h_1aa6611f657f8f1b311dfc466b79c9290e"></span><code class="descname">BGFX_STATE_ALPHA_WRITE</code><a class="headerlink" href="#c.BGFX_STATE_ALPHA_WRITE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable alpha write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_WRITE">
+<span class="target" id="project0bgfxdefines_8h_1acf5681b2e7477ac01186cc535ea59213"></span><code class="descname">BGFX_STATE_DEPTH_WRITE</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_WRITE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEFAULT">
+<span class="target" id="project0bgfxdefines_8h_1a7f87ba52187999ca674a61ccc27170db"></span><code class="descname">BGFX_STATE_DEFAULT</code><a class="headerlink" href="#c.BGFX_STATE_DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise culling and MSAA (when writting into MSAA frame buffer, otherwise this flag is ignored). </p>
+</dd></dl>
+
+</div>
+<div class="section" id="stencil">
+<h4>Stencil<a class="headerlink" href="#stencil" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10setStencilE8uint32_t8uint32_t">
 <span id="bgfx::setStencil__uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1aec7be9fc28858c7cdcc78a8e9f504434"></span>void <code class="descclassname">bgfx::</code><code class="descname">setStencil</code><span class="sig-paren">(</span>uint32_t <em>_fstencil</em>, uint32_t <em>_bstencil</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10setStencilE8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -1321,10 +1559,24 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="stencil-flags">
+<h4>Stencil Flags<a class="headerlink" href="#stencil-flags" title="Permalink to this headline">¶</a></h4>
+<dl class="macro">
+<dt id="c.BGFX_STENCIL_TEST_LESS">
+<span class="target" id="project0bgfxdefines_8h_1ad5a495c48408fb31c50a8fd8872c6efe"></span><code class="descname">BGFX_STENCIL_TEST_LESS</code><a class="headerlink" href="#c.BGFX_STENCIL_TEST_LESS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable stencil test, less. </p>
+</dd></dl>
+
+</div>
+<div class="section" id="scissor">
+<h4>Scissor<a class="headerlink" href="#scissor" title="Permalink to this headline">¶</a></h4>
+<p>When scissor rectangle is changing per draw call inside the same view use <cite>bgfx::setScissor</cite>,
+otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::setScissor__uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a044469089552c76b36ec5e5ac57cf695"></span>uint16_t <code class="descclassname">bgfx::</code><code class="descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see setViewScissor. </p>
+<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"><span><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Scissor cache index.</dd>
@@ -1363,6 +1615,9 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="transform">
+<h4>Transform<a class="headerlink" href="#transform" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx14allocTransformEP9Transform8uint16_t">
 <span id="bgfx::allocTransform__TransformP.uint16_t"></span><span class="target" id="project0namespacebgfx_1a659b2048c1d0720027307fcdc5ce65e5"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">allocTransform</code><span class="sig-paren">(</span>Transform *<em>_transform</em>, uint16_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14allocTransformEP9Transform8uint16_t" title="Permalink to this definition">¶</a></dt>
@@ -1424,6 +1679,7 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
+</div>
 </div>
 <div class="section" id="buffers">
 <h3>Buffers<a class="headerlink" href="#buffers" title="Permalink to this headline">¶</a></h3>
@@ -1753,8 +2009,8 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </div>
 <div class="section" id="compute">
 <h2>Compute<a class="headerlink" href="#compute" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id1">
-<h3>Buffers<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3>Buffers<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE">
 <span id="bgfx::setBuffer__uint8_t.IndexBufferHandle.Access::Enum"></span><span class="target" id="project0namespacebgfx_1a94c3195ced868b94a232428561a21d56"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndexBufferHandle <em>_handle</em>, Access::Enum <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
@@ -2871,8 +3127,8 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </dd></dl>
 
 </div>
-<div class="section" id="id2">
-<h3>Textures<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3>Textures<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE">
 <span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.uint8_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ab76d05a11b3698b0bd14a6c264e5b71d"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, uint8_t <em>_numMips</em>, TextureFormat::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
