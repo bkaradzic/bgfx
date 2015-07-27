@@ -723,7 +723,7 @@ namespace bgfx
 	///
 	/// @param[in] _width Back-buffer width.
 	/// @param[in] _height Back-buffer height.
-	/// @param[in] _flags
+	/// @param[in] _flags See: `BGFX_RESET_*` for more info.
 	///   - `BGFX_RESET_NONE` - No reset flags.
 	///   - `BGFX_RESET_FULLSCREEN` - Not supported yet.
 	///   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.
@@ -733,9 +733,11 @@ namespace bgfx
 	///   - `BGFX_RESET_HMD` - HMD stereo rendering.
 	///   - `BGFX_RESET_HMD_DEBUG` - HMD stereo rendering debug mode.
 	///   - `BGFX_RESET_HMD_RECENTER` - HMD calibration.
+	///   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
 	///   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 	///     occurs. Default behavior is that flip occurs before rendering new
 	///     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	///   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
 	///
 	/// @attention This call doesn't actually change window size, it just
 	///   resizes back-buffer. Windowing code has to change window size.
