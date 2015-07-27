@@ -71,10 +71,14 @@
           
           
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - Documentation</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#reset">Reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#frame">Frame</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-features">Debug Features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-flags">Debug Flags</a></li>
@@ -116,14 +120,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 </ul>
 </li>
 </ul>
@@ -569,8 +573,6 @@
   <dt><a href="bgfx.html#_CPPv2N4bgfx6MemoryE">bgfx::Memory (C++ class)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="bgfx.html#_CPPv2N4bgfx12PlatformDataE">bgfx::PlatformData (C++ class)</a>
   </dt>
@@ -603,6 +605,8 @@
   <dt><a href="bgfx.html#_CPPv2N4bgfx12RendererType5CountE">bgfx::RendererType::Count (C++ class)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="bgfx.html#_CPPv2N4bgfx12RendererType10Direct3D11E">bgfx::RendererType::Direct3D11 (C++ class)</a>
   </dt>
@@ -948,6 +952,66 @@
   </dt>
 
       
+  <dt><a href="bgfx.html#c.BGFX_RESET_CAPTURE">BGFX_RESET_CAPTURE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_FLIP_AFTER_RENDER">BGFX_RESET_FLIP_AFTER_RENDER (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_FLUSH_AFTER_RENDER">BGFX_RESET_FLUSH_AFTER_RENDER (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_FULLSCREEN">BGFX_RESET_FULLSCREEN (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_HMD">BGFX_RESET_HMD (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_HMD_DEBUG">BGFX_RESET_HMD_DEBUG (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_HMD_RECENTER">BGFX_RESET_HMD_RECENTER (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_MAXANISOTROPY">BGFX_RESET_MAXANISOTROPY (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_MSAA_X16">BGFX_RESET_MSAA_X16 (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_MSAA_X2">BGFX_RESET_MSAA_X2 (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_MSAA_X4">BGFX_RESET_MSAA_X4 (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_MSAA_X8">BGFX_RESET_MSAA_X8 (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_NONE">BGFX_RESET_NONE (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_SRGB_BACKBUFFER">BGFX_RESET_SRGB_BACKBUFFER (C macro)</a>
+  </dt>
+
+      
+  <dt><a href="bgfx.html#c.BGFX_RESET_VSYNC">BGFX_RESET_VSYNC (C macro)</a>
+  </dt>
+
+      
   <dt><a href="bgfx.html#c.BGFX_STATE_ALPHA_WRITE">BGFX_STATE_ALPHA_WRITE (C macro)</a>
   </dt>
 
@@ -983,7 +1047,6 @@
         &copy; Copyright 2015, Branimir Karadžić.
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 
 </footer>
 

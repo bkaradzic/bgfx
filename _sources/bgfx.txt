@@ -1,4 +1,4 @@
-bgfx - Documentation
+bgfx - API Reference
 ====================
 
 bgfx is Cross-platform, graphics API agnostic, "Bring Your Own Engine/Framework" style
@@ -28,7 +28,30 @@ Initialization and Shutdown
 Updating
 ~~~~~~~~
 
+Reset
+*****
+
 .. doxygenfunction:: bgfx::reset
+
+.. doxygendefine:: BGFX_RESET_NONE
+.. doxygendefine:: BGFX_RESET_FULLSCREEN
+.. doxygendefine:: BGFX_RESET_MSAA_X2
+.. doxygendefine:: BGFX_RESET_MSAA_X4
+.. doxygendefine:: BGFX_RESET_MSAA_X8
+.. doxygendefine:: BGFX_RESET_MSAA_X16
+.. doxygendefine:: BGFX_RESET_VSYNC
+.. doxygendefine:: BGFX_RESET_MAXANISOTROPY
+.. doxygendefine:: BGFX_RESET_CAPTURE
+.. doxygendefine:: BGFX_RESET_HMD
+.. doxygendefine:: BGFX_RESET_HMD_DEBUG
+.. doxygendefine:: BGFX_RESET_HMD_RECENTER
+.. doxygendefine:: BGFX_RESET_FLUSH_AFTER_RENDER
+.. doxygendefine:: BGFX_RESET_FLIP_AFTER_RENDER
+.. doxygendefine:: BGFX_RESET_SRGB_BACKBUFFER
+
+Frame
+*****
+
 .. doxygenfunction:: bgfx::frame
 
 Debug
@@ -152,6 +175,9 @@ Views
 Draw
 ----
 
+Draw state is not preserved between two draw calls. All state is cleared after calling
+`bgfx::submit`.
+
 State
 ~~~~~
 
@@ -233,6 +259,9 @@ Submit
 Compute
 -------
 
+Compute state is not preserved between two compute dispatches. All state is cleared after calling
+`bgfx::dispatch`.
+
 Buffers
 ~~~~~~~
 
@@ -264,27 +293,24 @@ Resources
 .. doxygenstruct:: bgfx::Memory
     :members:
 
-Frame buffers
-~~~~~~~~~~~~~
+Shaders and Programs
+~~~~~~~~~~~~~~~~~~~~
 
-.. doxygenfunction:: createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint32_t)
-.. doxygenfunction:: createFrameBuffer(uint8_t, TextureHandle *, bool)
-.. doxygenfunction:: createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum)
-.. doxygenfunction:: destroyFrameBuffer
+.. doxygenfunction:: bgfx::createShader
+.. doxygenfunction:: bgfx::getShaderUniforms
+.. doxygenfunction:: bgfx::destroyShader
+.. doxygenfunction:: bgfx::createProgram(ShaderHandle, ShaderHandle, bool)
+.. doxygenfunction:: bgfx::createProgram(ShaderHandle, bool)
+.. doxygenfunction:: bgfx::destroyProgram
 
+Uniforms
+~~~~~~~~
 
-Index Buffers
-~~~~~~~~~~~~~
+.. doxygenfunction:: bgfx::createUniform
+.. doxygenfunction:: bgfx::destroyUniform
 
-.. doxygenfunction:: bgfx::createIndexBuffer
-.. doxygenfunction:: bgfx::destroyIndexBuffer
-.. doxygenfunction:: bgfx::createDynamicIndexBuffer(uint32_t, uint16_t)
-.. doxygenfunction:: bgfx::createDynamicIndexBuffer(const Memory *, uint16_t)
-.. doxygenfunction:: bgfx::updateDynamicIndexBuffer(DynamicIndexBufferHandle, uint32_t, const Memory *)
-.. doxygenfunction:: bgfx::destroyDynamicIndexBuffer(DynamicIndexBufferHandle)
-
-.. doxygenfunction:: bgfx::checkAvailTransientIndexBuffer
-.. doxygenfunction:: bgfx::allocTransientIndexBuffer
+.. doxygenstruct:: bgfx::UniformType
+    :members:
 
 Vertex Buffers
 ~~~~~~~~~~~~~~
@@ -306,27 +332,18 @@ Vertex Buffers
 .. doxygenfunction:: bgfx::checkAvailTransientVertexBuffer
 .. doxygenfunction:: bgfx::allocTransientVertexBuffer
 
-Instance Buffer
-~~~~~~~~~~~~~~~
+Index Buffers
+~~~~~~~~~~~~~
 
-.. doxygenfunction:: bgfx::checkAvailInstanceDataBuffer
-.. doxygenfunction:: bgfx::allocInstanceDataBuffer
+.. doxygenfunction:: bgfx::createIndexBuffer
+.. doxygenfunction:: bgfx::destroyIndexBuffer
+.. doxygenfunction:: bgfx::createDynamicIndexBuffer(uint32_t, uint16_t)
+.. doxygenfunction:: bgfx::createDynamicIndexBuffer(const Memory *, uint16_t)
+.. doxygenfunction:: bgfx::updateDynamicIndexBuffer(DynamicIndexBufferHandle, uint32_t, const Memory *)
+.. doxygenfunction:: bgfx::destroyDynamicIndexBuffer(DynamicIndexBufferHandle)
 
-Indirect Buffer
-~~~~~~~~~~~~~~~
-
-.. doxygenfunction:: bgfx::createIndirectBuffer
-.. doxygenfunction:: bgfx::destroyIndirectBuffer
-
-Shaders and Programs
-~~~~~~~~~~~~~~~~~~~~
-
-.. doxygenfunction:: bgfx::createShader
-.. doxygenfunction:: bgfx::getShaderUniforms
-.. doxygenfunction:: bgfx::destroyShader
-.. doxygenfunction:: bgfx::createProgram(ShaderHandle, ShaderHandle, bool)
-.. doxygenfunction:: bgfx::createProgram(ShaderHandle, bool)
-.. doxygenfunction:: bgfx::destroyProgram
+.. doxygenfunction:: bgfx::checkAvailTransientIndexBuffer
+.. doxygenfunction:: bgfx::allocTransientIndexBuffer
 
 Textures
 ~~~~~~~~
@@ -342,11 +359,22 @@ Textures
 .. doxygenfunction:: bgfx::updateTextureCube
 .. doxygenfunction:: bgfx::destroyTexture
 
-Uniforms
-~~~~~~~~
+Frame Buffers
+~~~~~~~~~~~~~
 
-.. doxygenfunction:: bgfx::createUniform
-.. doxygenfunction:: bgfx::destroyUniform
+.. doxygenfunction:: createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint32_t)
+.. doxygenfunction:: createFrameBuffer(uint8_t, TextureHandle *, bool)
+.. doxygenfunction:: createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum)
+.. doxygenfunction:: destroyFrameBuffer
 
-.. doxygenstruct:: bgfx::UniformType
-    :members:
+Instance Buffer
+~~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::checkAvailInstanceDataBuffer
+.. doxygenfunction:: bgfx::allocInstanceDataBuffer
+
+Indirect Buffer
+~~~~~~~~~~~~~~~
+
+.. doxygenfunction:: bgfx::createIndirectBuffer
+.. doxygenfunction:: bgfx::destroyIndirectBuffer

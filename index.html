@@ -31,7 +31,7 @@
 
   
     <link rel="top" title="bgfx 1.0 documentation" href="#"/>
-        <link rel="next" title="bgfx - Documentation" href="bgfx.html"/> 
+        <link rel="next" title="bgfx - API Reference" href="bgfx.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -71,10 +71,14 @@
           
           
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - Documentation</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#reset">Reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#frame">Frame</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-features">Debug Features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-flags">Debug Flags</a></li>
@@ -116,14 +120,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 </ul>
 </li>
 </ul>
@@ -171,7 +175,7 @@ rendering library.</p>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - Documentation</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
@@ -196,14 +200,14 @@ rendering library.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 </ul>
 </li>
 </ul>
@@ -218,7 +222,7 @@ rendering library.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="bgfx.html" class="btn btn-neutral float-right" title="bgfx - Documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="bgfx.html" class="btn btn-neutral float-right" title="bgfx - API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>
@@ -231,7 +235,6 @@ rendering library.</p>
         &copy; Copyright 2015, Branimir Karadžić.
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 
 </footer>
 

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>bgfx - Documentation &mdash; bgfx 1.0 documentation</title>
+  <title>bgfx - API Reference &mdash; bgfx 1.0 documentation</title>
   
 
   
@@ -71,10 +71,14 @@
           
           
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">bgfx - Documentation</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="">bgfx - API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#initialization-and-shutdown">Initialization and Shutdown</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#updating">Updating</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updating">Updating</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#reset">Reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#frame">Frame</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#debug">Debug</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#debug-features">Debug Features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#debug-flags">Debug Flags</a></li>
@@ -116,14 +120,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#resources">Resources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#frame-buffers">Frame buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#indirect-buffer">Indirect Buffer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#shaders-and-programs">Shaders and Programs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">Textures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a></li>
 </ul>
 </li>
 </ul>
@@ -152,7 +156,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>bgfx - Documentation</li>
+    <li>bgfx - API Reference</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -163,8 +167,8 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="bgfx-documentation">
-<h1>bgfx - Documentation<a class="headerlink" href="#bgfx-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="bgfx-api-reference">
+<h1>bgfx - API Reference<a class="headerlink" href="#bgfx-api-reference" title="Permalink to this headline">¶</a></h1>
 <p>bgfx is Cross-platform, graphics API agnostic, &#8220;Bring Your Own Engine/Framework&#8221; style
 rendering library.</p>
 <p><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></p>
@@ -442,6 +446,8 @@ rendering library.</p>
 </div>
 <div class="section" id="updating">
 <h3>Updating<a class="headerlink" href="#updating" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="reset">
+<h4>Reset<a class="headerlink" href="#reset" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx5resetE8uint32_t8uint32_t8uint32_t">
 <span id="bgfx::reset__uint32_t.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1ab2506f91853a4c3bb0f25b581638291c"></span>void <code class="descclassname">bgfx::</code><code class="descname">reset</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5resetE8uint32_t8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -457,7 +463,7 @@ rendering library.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Back-buffer height. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p><ul class="simple">
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>See: <code class="docutils literal"><span class="pre">BGFX_RESET_*</span></code> for more info.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_NONE</span></code> - No reset flags.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_FULLSCREEN</span></code> - Not supported yet.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_MSAA_X[2/4/8/16]</span></code> - Enable 2, 4, 8 or 16 x MSAA.</li>
@@ -467,7 +473,9 @@ rendering library.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_HMD</span></code> - <a class="reference internal" href="#project0structbgfx_1_1_h_m_d"><span>HMD</span></a> stereo rendering.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_HMD_DEBUG</span></code> - <a class="reference internal" href="#project0structbgfx_1_1_h_m_d"><span>HMD</span></a> stereo rendering debug mode.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_HMD_RECENTER</span></code> - <a class="reference internal" href="#project0structbgfx_1_1_h_m_d"><span>HMD</span></a> calibration.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_RESET_FLUSH_AFTER_RENDER</span></code> - Flush rendering after submitting to GPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_FLIP_AFTER_RENDER</span></code> - This flag specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREADED=0</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_RESET_SRGB_BACKBUFFER</span></code> - Enable sRGB backbuffer.</li>
 </ul>
 </p>
 </li>
@@ -477,6 +485,99 @@ rendering library.</p>
 </p>
 </dd></dl>
 
+<dl class="macro">
+<dt id="c.BGFX_RESET_NONE">
+<span class="target" id="project0bgfxdefines_8h_1ab4f97fa0a40e27db79f7a778c3da268f"></span><code class="descname">BGFX_RESET_NONE</code><a class="headerlink" href="#c.BGFX_RESET_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>No reset flags. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_FULLSCREEN">
+<span class="target" id="project0bgfxdefines_8h_1a7a573880db4afc7107e36ea61dc36586"></span><code class="descname">BGFX_RESET_FULLSCREEN</code><a class="headerlink" href="#c.BGFX_RESET_FULLSCREEN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not supported yet. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_MSAA_X2">
+<span class="target" id="project0bgfxdefines_8h_1a11369bfec092c6aecb55c344696cffa8"></span><code class="descname">BGFX_RESET_MSAA_X2</code><a class="headerlink" href="#c.BGFX_RESET_MSAA_X2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable 2x MSAA. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_MSAA_X4">
+<span class="target" id="project0bgfxdefines_8h_1a6288443c87929696f539c60245b59acb"></span><code class="descname">BGFX_RESET_MSAA_X4</code><a class="headerlink" href="#c.BGFX_RESET_MSAA_X4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable 4x MSAA. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_MSAA_X8">
+<span class="target" id="project0bgfxdefines_8h_1a0d9452be0acc82cd9b0921b061abe007"></span><code class="descname">BGFX_RESET_MSAA_X8</code><a class="headerlink" href="#c.BGFX_RESET_MSAA_X8" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable 8x MSAA. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_MSAA_X16">
+<span class="target" id="project0bgfxdefines_8h_1a7fc0d9a43da20edb2670854c393127c7"></span><code class="descname">BGFX_RESET_MSAA_X16</code><a class="headerlink" href="#c.BGFX_RESET_MSAA_X16" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable 16x MSAA. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_VSYNC">
+<span class="target" id="project0bgfxdefines_8h_1abe5909f7f2d02137660385500409ffd5"></span><code class="descname">BGFX_RESET_VSYNC</code><a class="headerlink" href="#c.BGFX_RESET_VSYNC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable V-Sync. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_MAXANISOTROPY">
+<span class="target" id="project0bgfxdefines_8h_1a94fe821218b7426466f11acf3925a629"></span><code class="descname">BGFX_RESET_MAXANISOTROPY</code><a class="headerlink" href="#c.BGFX_RESET_MAXANISOTROPY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turn on/off max anisotropy. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_CAPTURE">
+<span class="target" id="project0bgfxdefines_8h_1a3342824f93a57411568f665744c1a515"></span><code class="descname">BGFX_RESET_CAPTURE</code><a class="headerlink" href="#c.BGFX_RESET_CAPTURE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin screen capture. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_HMD">
+<span class="target" id="project0bgfxdefines_8h_1a10365b783e6435920a2a4e107d3cf0af"></span><code class="descname">BGFX_RESET_HMD</code><a class="headerlink" href="#c.BGFX_RESET_HMD" title="Permalink to this definition">¶</a></dt>
+<dd><p>HMD stereo rendering. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_HMD_DEBUG">
+<span class="target" id="project0bgfxdefines_8h_1a35ee9c476985f91c2cedef68e1ffdd6e"></span><code class="descname">BGFX_RESET_HMD_DEBUG</code><a class="headerlink" href="#c.BGFX_RESET_HMD_DEBUG" title="Permalink to this definition">¶</a></dt>
+<dd><p>HMD stereo rendering debug mode. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_HMD_RECENTER">
+<span class="target" id="project0bgfxdefines_8h_1ab078d316ca2bc294a5661b9a7d99910c"></span><code class="descname">BGFX_RESET_HMD_RECENTER</code><a class="headerlink" href="#c.BGFX_RESET_HMD_RECENTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>HMD calibration. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_FLUSH_AFTER_RENDER">
+<span class="target" id="project0bgfxdefines_8h_1ae01ca78b058a1f7bf2358d61f7b52b03"></span><code class="descname">BGFX_RESET_FLUSH_AFTER_RENDER</code><a class="headerlink" href="#c.BGFX_RESET_FLUSH_AFTER_RENDER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flush rendering after submitting to GPU. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_FLIP_AFTER_RENDER">
+<span class="target" id="project0bgfxdefines_8h_1a1685b3f0489fc8465f3d3c5b70424e38"></span><code class="descname">BGFX_RESET_FLIP_AFTER_RENDER</code><a class="headerlink" href="#c.BGFX_RESET_FLIP_AFTER_RENDER" title="Permalink to this definition">¶</a></dt>
+<dd><p>This flag specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREADED=0</span></code>. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_SRGB_BACKBUFFER">
+<span class="target" id="project0bgfxdefines_8h_1a74813007bb4401a669842d101bc5da25"></span><code class="descname">BGFX_RESET_SRGB_BACKBUFFER</code><a class="headerlink" href="#c.BGFX_RESET_SRGB_BACKBUFFER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable sRGB backbuffer. </p>
+</dd></dl>
+
+</div>
+<div class="section" id="frame">
+<h4>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx5frameEv">
 <span id="bgfx::frame"></span><span class="target" id="project0namespacebgfx_1afdc2d817c439383ffffdc0a7610e2fa1"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">frame</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5frameEv" title="Permalink to this definition">¶</a></dt>
@@ -490,6 +591,7 @@ rendering library.</p>
 </p>
 </dd></dl>
 
+</div>
 </div>
 <div class="section" id="debug">
 <h3>Debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
@@ -1456,6 +1558,8 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </div>
 <div class="section" id="draw">
 <h2>Draw<a class="headerlink" href="#draw" title="Permalink to this headline">¶</a></h2>
+<p>Draw state is not preserved between two draw calls. All state is cleared after calling
+<cite>bgfx::submit</cite>.</p>
 <div class="section" id="state">
 <h3>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="id1">
@@ -2009,6 +2113,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="compute">
 <h2>Compute<a class="headerlink" href="#compute" title="Permalink to this headline">¶</a></h2>
+<p>Compute state is not preserved between two compute dispatches. All state is cleared after calling
+<cite>bgfx::dispatch</cite>.</p>
 <div class="section" id="id3">
 <h3>Buffers<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
@@ -2286,74 +2392,37 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<div class="section" id="frame-buffers">
-<h3>Frame buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="shaders-and-programs">
+<h3>Shaders and Programs<a class="headerlink" href="#shaders-and-programs" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
+<dt id="_CPPv2N4bgfx12createShaderEPK6Memory">
+<span id="bgfx::createShader__MemoryCP"></span><span class="target" id="project0namespacebgfx_1af575a29f8b3e555cb1b13f01fadbeb37"></span>ShaderHandle <code class="descclassname">bgfx::</code><code class="descname">createShader</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12createShaderEPK6Memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create shader from memory buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_scaled</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_ratio</span></code> - <p>Frame buffer size in respect to back-buffer size. See: <code class="docutils literal"><span class="pre">BackbufferRatio::Enum</span></code>. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_textureFlags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
-</ul>
-</p>
-</li>
-</ul>
-</dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_shader</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tP13TextureHandleb">
-<span id="bgfx::createFrameBuffer__uint8_t.TextureHandleP.b"></span><span class="target" id="project0namespacebgfx_1a0449c456fc8ccff699b0a16a050d5ba1"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tP13TextureHandleb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_handles</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of texture attachments. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_handles</span></code> - <p>Texture attachments. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_destroyTextures</span></code> - <p>If true, textures will be destroyed when frame buffer is destroyed.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE">
-<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, TextureFormat::Enum <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer for multiple window rendering. </p>
+<dt id="_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t">
+<span id="bgfx::getShaderUniforms__ShaderHandle.UniformHandleP.uint16_t"></span><span class="target" id="project0namespacebgfx_1a2e9de394b0d4aac971efa7b7f2fa3d3e"></span>uint16_t <code class="descclassname">bgfx::</code><code class="descname">getShaderUniforms</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em>, UniformHandle *<em>_uniforms</em>, uint16_t <em>_max</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns num of uniforms, and uniform handles used inside shader. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd>Handle to frame buffer object.</dd>
+<dd>Number of uniforms used by shader.</dd>
 <dt><strong>Remark</strong></dt>
-<dd>Frame buffer cannnot be used for sampling.</dd>
+<dd>Only non-predefined uniforms are returned.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_nwh</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_shader_uniforms</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_nwh</span></code> - <p>OS&#8217; target native window handle. </p>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Shader handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Window back buffer width. </p>
+<li><code class="first docutils literal"><span class="pre">_uniforms</span></code> - <p>UniformHandle array where data will be stored. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Window back buffer height. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_depthFormat</span></code> - <p>Window back buffer depth format.</p>
+<li><code class="first docutils literal"><span class="pre">_max</span></code> - <p>Maximum capacity of array. </p>
 </li>
 </ul>
 </dd>
@@ -2362,187 +2431,137 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle">
-<span id="bgfx::destroyFrameBuffer__FrameBufferHandle"></span><span class="target" id="project0namespacebgfx_1a17b93a8b3a39ae31081bcdde3f971674"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyFrameBuffer</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy frame buffer. </p>
+<dt id="_CPPv2N4bgfx13destroyShaderE12ShaderHandle">
+<span id="bgfx::destroyShader__ShaderHandle"></span><span class="target" id="project0namespacebgfx_1ac36f39b0ae8cadbb4dfd2f9219561196"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyShader</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13destroyShaderE12ShaderHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy shader. Once program is created with shader it is safe to destroy shader. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_frame_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_shader</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx13createProgramE12ShaderHandle12ShaderHandleb">
+<span id="bgfx::createProgram__ShaderHandle.ShaderHandle.b"></span><span class="target" id="project0namespacebgfx_1a5b3bafcd7948f54136c7b731236e3b7a"></span>ProgramHandle <code class="descclassname">bgfx::</code><code class="descname">createProgram</code><span class="sig-paren">(</span>ShaderHandle <em>_vsh</em>, ShaderHandle <em>_fsh</em>, bool <em>_destroyShaders</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createProgramE12ShaderHandle12ShaderHandleb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create program with vertex and fragment shaders. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Program handle if vertex shader output and fragment shader input are matching, otherwise returns invalid program handle.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_program</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_vsh</span></code> - <p>Vertex shader. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_fsh</span></code> - <p>Fragment shader. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_destroyShaders</span></code> - <p>If true, shaders will be destroyed when program is destroyed. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx13createProgramE12ShaderHandleb">
+<span id="bgfx::createProgram__ShaderHandle.b"></span><span class="target" id="project0namespacebgfx_1aca7241539155409a3aaa0f81e2a9c7ff"></span>ProgramHandle <code class="descclassname">bgfx::</code><code class="descname">createProgram</code><span class="sig-paren">(</span>ShaderHandle <em>_csh</em>, bool <em>_destroyShader</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createProgramE12ShaderHandleb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create program with compute shader. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Program handle.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_compute_program</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_csh</span></code> - <p>Compute shader. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_destroyShader</span></code> - <p>If true, shader will be destroyed when program is destroyed. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx14destroyProgramE13ProgramHandle">
+<span id="bgfx::destroyProgram__ProgramHandle"></span><span class="target" id="project0namespacebgfx_1aebae6a593fbc016c512cffd01ae48d5b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyProgram</code><span class="sig-paren">(</span>ProgramHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyProgramE13ProgramHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy program. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_program</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
 
 </div>
-<div class="section" id="index-buffers">
-<h3>Index Buffers<a class="headerlink" href="#index-buffers" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="uniforms">
+<h3>Uniforms<a class="headerlink" href="#uniforms" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx17createIndexBufferEPK6Memory8uint16_t">
-<span id="bgfx::createIndexBuffer__MemoryCP.uint16_t"></span><span class="target" id="project0namespacebgfx_1aee241406cd5d456d3e0a1fdb7da18309"></span>IndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint16_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createIndexBufferEPK6Memory8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create static index buffer. </p>
+<dt id="_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t">
+<span id="bgfx::createUniform__cCP.UniformType::Enum.uint16_t"></span><span class="target" id="project0namespacebgfx_1a45614b96172b438fd644c858e2c434b2"></span>UniformHandle <code class="descclassname">bgfx::</code><code class="descname">createUniform</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_name</em>, <a class="reference internal" href="#_CPPv2N4bgfx11UniformTypeE" title="bgfx::UniformType">UniformType</a>::Enum <em>_type</em>, uint16_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create shader uniform parameter. </p>
 <p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_index_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Index buffer data. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Buffer creation flags.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
-</ul>
-</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx18destroyIndexBufferE17IndexBufferHandle">
-<span id="bgfx::destroyIndexBuffer__IndexBufferHandle"></span><span class="target" id="project0namespacebgfx_1ac9cc26d628a53a75c54098be95c91008"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy static index buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_index_buffer</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx24createDynamicIndexBufferE8uint32_t8uint16_t">
-<span id="bgfx::createDynamicIndexBuffer__uint32_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1abc0f27b5cc29b3fb0c5f3c2fe9571429"></span>DynamicIndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24createDynamicIndexBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create empty dynamic index buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_index_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Buffer creation flags.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
-</ul>
-</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx24createDynamicIndexBufferEPK6Memory8uint16_t">
-<span id="bgfx::createDynamicIndexBuffer__MemoryCP.uint16_t"></span><span class="target" id="project0namespacebgfx_1a5d05655535947b053858b2abed7e3cb9"></span>DynamicIndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint16_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24createDynamicIndexBufferEPK6Memory8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create dynamic index buffer and initialized it. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_index_buffer_mem</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Index buffer data. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Buffer creation flags.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
-</ul>
-</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx24updateDynamicIndexBufferE24DynamicIndexBufferHandle8uint32_tPK6Memory">
-<span id="bgfx::updateDynamicIndexBuffer__DynamicIndexBufferHandle.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1a94bc9d8f473817a271846bc17e321d11"></span>void <code class="descclassname">bgfx::</code><code class="descname">updateDynamicIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_startIndex</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24updateDynamicIndexBufferE24DynamicIndexBufferHandle8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update dynamic index buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_update_dynamic_index_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_startIndex</span></code> - <p>Start index. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Index buffer data.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx25destroyDynamicIndexBufferE24DynamicIndexBufferHandle">
-<span id="bgfx::destroyDynamicIndexBuffer__DynamicIndexBufferHandle"></span><span class="target" id="project0namespacebgfx_1a3eafa9fd7f732e27f84edab6e96c42ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyDynamicIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25destroyDynamicIndexBufferE24DynamicIndexBufferHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy dynamic index buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_dynamic_index_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer handle.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx30checkAvailTransientIndexBufferE8uint32_t">
-<span id="bgfx::checkAvailTransientIndexBuffer__uint32_t"></span><span class="target" id="project0namespacebgfx_1a911a3c697fd9f340278419b3387034e2"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx30checkAvailTransientIndexBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if internal transient index buffer has enough space. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_transient_index_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_t">
-<span id="bgfx::allocTransientIndexBuffer__TransientIndexBufferP.uint32_t"></span><span class="target" id="project0namespacebgfx_1a9526c5d498cfacda5d1a0008d3f61f1e"></span>void <code class="descclassname">bgfx::</code><code class="descname">allocTransientIndexBuffer</code><span class="sig-paren">(</span>TransientIndexBuffer *<em>_tib</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Allocate transient index buffer. </p>
-<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to uniform object.</dd>
 <dt><strong>Remark</strong></dt>
-<dd><ol class="arabic simple">
-<li>You must call setIndexBuffer after alloc in order to avoid memory leak.</li>
-<li>Only 16-bit index buffer is supported.</li>
-</ol>
+<dd>Predefined uniforms (declared in <code class="docutils literal"><span class="pre">bgfx_shader.sh</span></code>):<ul class="simple">
+<li><code class="docutils literal"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view.</li>
+<li><code class="docutils literal"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</li>
+<li><code class="docutils literal"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</li>
+<li><code class="docutils literal"><span class="pre">u_invView</span> <span class="pre">mat4</span></code> - inverted view matrix</li>
+<li><code class="docutils literal"><span class="pre">u_proj</span> <span class="pre">mat4</span></code> - projection matrix</li>
+<li><code class="docutils literal"><span class="pre">u_invProj</span> <span class="pre">mat4</span></code> - inverted projection matrix</li>
+<li><code class="docutils literal"><span class="pre">u_viewProj</span> <span class="pre">mat4</span></code> - concatenated view projection matrix</li>
+<li><code class="docutils literal"><span class="pre">u_invViewProj</span> <span class="pre">mat4</span></code> - concatenated inverted view projection matrix</li>
+<li><code class="docutils literal"><span class="pre">u_model</span> <span class="pre">mat4[BGFX_CONFIG_MAX_BONES]</span></code> - array of model matrices.</li>
+<li><code class="docutils literal"><span class="pre">u_modelView</span> <span class="pre">mat4</span></code> - concatenated model view matrix, only first model matrix from array is used.</li>
+<li><code class="docutils literal"><span class="pre">u_modelViewProj</span> <span class="pre">mat4</span></code> - concatenated model view projection matrix.</li>
+<li><code class="docutils literal"><span class="pre">u_alphaRef</span> <span class="pre">float</span></code> - alpha reference value for alpha test.</li>
+</ul>
 </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_transient_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_uniform</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls. </p>
+<li><code class="first docutils literal"><span class="pre">_name</span></code> - <p>Uniform name in shader. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices to allocate.</p>
+<li><code class="first docutils literal"><span class="pre">_type</span></code> - <p>Type of uniform (See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_uniform_type"><span><span class="pre">bgfx::UniformType</span></span></a></code>). </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of elements in array.</p>
 </li>
 </ul>
 </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx14destroyUniformE13UniformHandle">
+<span id="bgfx::destroyUniform__UniformHandle"></span><span class="target" id="project0namespacebgfx_1a55c0d21cc00b4d7f8a05879e2114d37b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyUniform</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyUniformE13UniformHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy shader uniform parameter. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_uniform</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Handle to uniform object.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx11UniformTypeE">
+<span id="bgfx::UniformType"></span><span class="target" id="project0structbgfx_1_1_uniform_type"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">UniformType</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformTypeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniform type enum. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_uniform_type_t</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -2962,20 +2981,28 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="instance-buffer">
-<h3>Instance Buffer<a class="headerlink" href="#instance-buffer" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="index-buffers">
+<h3>Index Buffers<a class="headerlink" href="#index-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx28checkAvailInstanceDataBufferE8uint32_t8uint16_t">
-<span id="bgfx::checkAvailInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a38f2fee92a6561565993968a371d990f"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx28checkAvailInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if internal instance data buffer has enough space. </p>
+<dt id="_CPPv2N4bgfx17createIndexBufferEPK6Memory8uint16_t">
+<span id="bgfx::createIndexBuffer__MemoryCP.uint16_t"></span><span class="target" id="project0namespacebgfx_1aee241406cd5d456d3e0a1fdb7da18309"></span>IndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint16_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createIndexBufferEPK6Memory8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create static index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_instance_data_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of instances. </p>
+<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Index buffer data. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_stride</span></code> - <p>Stride per instance.</p>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Buffer creation flags.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+</ul>
+</p>
 </li>
 </ul>
 </dd>
@@ -2984,144 +3011,146 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx23allocInstanceDataBufferE8uint32_t8uint16_t">
-<span id="bgfx::allocInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a61a8b2b96c02f6d2d447fbce2b9e6896"></span><em class="property">const</em> InstanceDataBuffer *<code class="descclassname">bgfx::</code><code class="descname">allocInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx23allocInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Allocate instance data buffer. </p>
+<dt id="_CPPv2N4bgfx18destroyIndexBufferE17IndexBufferHandle">
+<span id="bgfx::destroyIndexBuffer__IndexBufferHandle"></span><span class="target" id="project0namespacebgfx_1ac9cc26d628a53a75c54098be95c91008"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy static index buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_index_buffer</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx24createDynamicIndexBufferE8uint32_t8uint16_t">
+<span id="bgfx::createDynamicIndexBuffer__uint32_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1abc0f27b5cc29b3fb0c5f3c2fe9571429"></span>DynamicIndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24createDynamicIndexBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create empty dynamic index buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Buffer creation flags.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx24createDynamicIndexBufferEPK6Memory8uint16_t">
+<span id="bgfx::createDynamicIndexBuffer__MemoryCP.uint16_t"></span><span class="target" id="project0namespacebgfx_1a5d05655535947b053858b2abed7e3cb9"></span>DynamicIndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint16_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24createDynamicIndexBufferEPK6Memory8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create dynamic index buffer and initialized it. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_index_buffer_mem</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Index buffer data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Buffer creation flags.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx24updateDynamicIndexBufferE24DynamicIndexBufferHandle8uint32_tPK6Memory">
+<span id="bgfx::updateDynamicIndexBuffer__DynamicIndexBufferHandle.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1a94bc9d8f473817a271846bc17e321d11"></span>void <code class="descclassname">bgfx::</code><code class="descname">updateDynamicIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_startIndex</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24updateDynamicIndexBufferE24DynamicIndexBufferHandle8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update dynamic index buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_update_dynamic_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_startIndex</span></code> - <p>Start index. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Index buffer data.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx25destroyDynamicIndexBufferE24DynamicIndexBufferHandle">
+<span id="bgfx::destroyDynamicIndexBuffer__DynamicIndexBufferHandle"></span><span class="target" id="project0namespacebgfx_1a3eafa9fd7f732e27f84edab6e96c42ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyDynamicIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25destroyDynamicIndexBufferE24DynamicIndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy dynamic index buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_dynamic_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer handle.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx30checkAvailTransientIndexBufferE8uint32_t">
+<span id="bgfx::checkAvailTransientIndexBuffer__uint32_t"></span><span class="target" id="project0namespacebgfx_1a911a3c697fd9f340278419b3387034e2"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx30checkAvailTransientIndexBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if internal transient index buffer has enough space. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_transient_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_t">
+<span id="bgfx::allocTransientIndexBuffer__TransientIndexBufferP.uint32_t"></span><span class="target" id="project0namespacebgfx_1a9526c5d498cfacda5d1a0008d3f61f1e"></span>void <code class="descclassname">bgfx::</code><code class="descname">allocTransientIndexBuffer</code><span class="sig-paren">(</span>TransientIndexBuffer *<em>_tib</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate transient index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd>You must call setInstanceDataBuffer after alloc in order to avoid memory leak.</dd>
+<dd><ol class="arabic simple">
+<li>You must call setIndexBuffer after alloc in order to avoid memory leak.</li>
+<li>Only 16-bit index buffer is supported.</li>
+</ol>
+</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_instance_data_buffer</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-</div>
-<div class="section" id="indirect-buffer">
-<h3>Indirect Buffer<a class="headerlink" href="#indirect-buffer" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="_CPPv2N4bgfx20createIndirectBufferE8uint32_t">
-<span id="bgfx::createIndirectBuffer__uint32_t"></span><span class="target" id="project0namespacebgfx_1a8a3c563fcf814144a76360b17b60f7e8"></span>IndirectBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createIndirectBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx20createIndirectBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create draw indirect buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_indirect_buffer</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx21destroyIndirectBufferE20IndirectBufferHandle">
-<span id="bgfx::destroyIndirectBuffer__IndirectBufferHandle"></span><span class="target" id="project0namespacebgfx_1ad32cac7107eeffd862221b9bd0922110"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyIndirectBuffer</code><span class="sig-paren">(</span>IndirectBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21destroyIndirectBufferE20IndirectBufferHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy draw indirect buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_indirect_buffer</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-</div>
-<div class="section" id="shaders-and-programs">
-<h3>Shaders and Programs<a class="headerlink" href="#shaders-and-programs" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="_CPPv2N4bgfx12createShaderEPK6Memory">
-<span id="bgfx::createShader__MemoryCP"></span><span class="target" id="project0namespacebgfx_1af575a29f8b3e555cb1b13f01fadbeb37"></span>ShaderHandle <code class="descclassname">bgfx::</code><code class="descname">createShader</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12createShaderEPK6Memory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create shader from memory buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_shader</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t">
-<span id="bgfx::getShaderUniforms__ShaderHandle.UniformHandleP.uint16_t"></span><span class="target" id="project0namespacebgfx_1a2e9de394b0d4aac971efa7b7f2fa3d3e"></span>uint16_t <code class="descclassname">bgfx::</code><code class="descname">getShaderUniforms</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em>, UniformHandle *<em>_uniforms</em>, uint16_t <em>_max</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns num of uniforms, and uniform handles used inside shader. </p>
-<p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Number of uniforms used by shader.</dd>
-<dt><strong>Remark</strong></dt>
-<dd>Only non-predefined uniforms are returned.</dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_shader_uniforms</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Shader handle. </p>
+<li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_uniforms</span></code> - <p>UniformHandle array where data will be stored. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_max</span></code> - <p>Maximum capacity of array. </p>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices to allocate.</p>
 </li>
 </ul>
 </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx13destroyShaderE12ShaderHandle">
-<span id="bgfx::destroyShader__ShaderHandle"></span><span class="target" id="project0namespacebgfx_1ac36f39b0ae8cadbb4dfd2f9219561196"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyShader</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13destroyShaderE12ShaderHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy shader. Once program is created with shader it is safe to destroy shader. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_shader</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx13createProgramE12ShaderHandle12ShaderHandleb">
-<span id="bgfx::createProgram__ShaderHandle.ShaderHandle.b"></span><span class="target" id="project0namespacebgfx_1a5b3bafcd7948f54136c7b731236e3b7a"></span>ProgramHandle <code class="descclassname">bgfx::</code><code class="descname">createProgram</code><span class="sig-paren">(</span>ShaderHandle <em>_vsh</em>, ShaderHandle <em>_fsh</em>, bool <em>_destroyShaders</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createProgramE12ShaderHandle12ShaderHandleb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create program with vertex and fragment shaders. </p>
-<p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Program handle if vertex shader output and fragment shader input are matching, otherwise returns invalid program handle.</dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_program</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_vsh</span></code> - <p>Vertex shader. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_fsh</span></code> - <p>Fragment shader. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_destroyShaders</span></code> - <p>If true, shaders will be destroyed when program is destroyed. </p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx13createProgramE12ShaderHandleb">
-<span id="bgfx::createProgram__ShaderHandle.b"></span><span class="target" id="project0namespacebgfx_1aca7241539155409a3aaa0f81e2a9c7ff"></span>ProgramHandle <code class="descclassname">bgfx::</code><code class="descname">createProgram</code><span class="sig-paren">(</span>ShaderHandle <em>_csh</em>, bool <em>_destroyShader</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createProgramE12ShaderHandleb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create program with compute shader. </p>
-<p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Program handle.</dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_compute_program</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_csh</span></code> - <p>Compute shader. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_destroyShader</span></code> - <p>If true, shader will be destroyed when program is destroyed. </p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx14destroyProgramE13ProgramHandle">
-<span id="bgfx::destroyProgram__ProgramHandle"></span><span class="target" id="project0namespacebgfx_1aebae6a593fbc016c512cffd01ae48d5b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyProgram</code><span class="sig-paren">(</span>ProgramHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyProgramE13ProgramHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy program. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_program</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -3416,40 +3445,74 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="uniforms">
-<h3>Uniforms<a class="headerlink" href="#uniforms" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="frame-buffers">
+<h3>Frame Buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t">
-<span id="bgfx::createUniform__cCP.UniformType::Enum.uint16_t"></span><span class="target" id="project0namespacebgfx_1a45614b96172b438fd644c858e2c434b2"></span>UniformHandle <code class="descclassname">bgfx::</code><code class="descname">createUniform</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_name</em>, <a class="reference internal" href="#_CPPv2N4bgfx11UniformTypeE" title="bgfx::UniformType">UniformType</a>::Enum <em>_type</em>, uint16_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create shader uniform parameter. </p>
+<dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t">
+<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_scaled</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_ratio</span></code> - <p>Frame buffer size in respect to back-buffer size. See: <code class="docutils literal"><span class="pre">BackbufferRatio::Enum</span></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_textureFlags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tP13TextureHandleb">
+<span id="bgfx::createFrameBuffer__uint8_t.TextureHandleP.b"></span><span class="target" id="project0namespacebgfx_1a0449c456fc8ccff699b0a16a050d5ba1"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tP13TextureHandleb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_handles</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of texture attachments. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handles</span></code> - <p>Texture attachments. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_destroyTextures</span></code> - <p>If true, textures will be destroyed when frame buffer is destroyed.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE">
+<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, TextureFormat::Enum <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer for multiple window rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd>Handle to uniform object.</dd>
+<dd>Handle to frame buffer object.</dd>
 <dt><strong>Remark</strong></dt>
-<dd>Predefined uniforms (declared in <code class="docutils literal"><span class="pre">bgfx_shader.sh</span></code>):<ul class="simple">
-<li><code class="docutils literal"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view.</li>
-<li><code class="docutils literal"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</li>
-<li><code class="docutils literal"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</li>
-<li><code class="docutils literal"><span class="pre">u_invView</span> <span class="pre">mat4</span></code> - inverted view matrix</li>
-<li><code class="docutils literal"><span class="pre">u_proj</span> <span class="pre">mat4</span></code> - projection matrix</li>
-<li><code class="docutils literal"><span class="pre">u_invProj</span> <span class="pre">mat4</span></code> - inverted projection matrix</li>
-<li><code class="docutils literal"><span class="pre">u_viewProj</span> <span class="pre">mat4</span></code> - concatenated view projection matrix</li>
-<li><code class="docutils literal"><span class="pre">u_invViewProj</span> <span class="pre">mat4</span></code> - concatenated inverted view projection matrix</li>
-<li><code class="docutils literal"><span class="pre">u_model</span> <span class="pre">mat4[BGFX_CONFIG_MAX_BONES]</span></code> - array of model matrices.</li>
-<li><code class="docutils literal"><span class="pre">u_modelView</span> <span class="pre">mat4</span></code> - concatenated model view matrix, only first model matrix from array is used.</li>
-<li><code class="docutils literal"><span class="pre">u_modelViewProj</span> <span class="pre">mat4</span></code> - concatenated model view projection matrix.</li>
-<li><code class="docutils literal"><span class="pre">u_alphaRef</span> <span class="pre">float</span></code> - alpha reference value for alpha test.</li>
-</ul>
-</dd>
+<dd>Frame buffer cannnot be used for sampling.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_uniform</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_nwh</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_name</span></code> - <p>Uniform name in shader. </p>
+<li><code class="first docutils literal"><span class="pre">_nwh</span></code> - <p>OS&#8217; target native window handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_type</span></code> - <p>Type of uniform (See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_uniform_type"><span><span class="pre">bgfx::UniformType</span></span></a></code>). </p>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Window back buffer width. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of elements in array.</p>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Window back buffer height. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depthFormat</span></code> - <p>Window back buffer depth format.</p>
 </li>
 </ul>
 </dd>
@@ -3458,15 +3521,31 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14destroyUniformE13UniformHandle">
-<span id="bgfx::destroyUniform__UniformHandle"></span><span class="target" id="project0namespacebgfx_1a55c0d21cc00b4d7f8a05879e2114d37b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyUniform</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyUniformE13UniformHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy shader uniform parameter. </p>
+<dt id="_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle">
+<span id="bgfx::destroyFrameBuffer__FrameBufferHandle"></span><span class="target" id="project0namespacebgfx_1a17b93a8b3a39ae31081bcdde3f971674"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyFrameBuffer</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy frame buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_uniform</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_frame_buffer</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="section" id="instance-buffer">
+<h3>Instance Buffer<a class="headerlink" href="#instance-buffer" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="_CPPv2N4bgfx28checkAvailInstanceDataBufferE8uint32_t8uint16_t">
+<span id="bgfx::checkAvailInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a38f2fee92a6561565993968a371d990f"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx28checkAvailInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if internal instance data buffer has enough space. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_instance_data_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Handle to uniform object.</p>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of instances. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_stride</span></code> - <p>Stride per instance.</p>
 </li>
 </ul>
 </dd>
@@ -3474,13 +3553,40 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="class">
-<dt id="_CPPv2N4bgfx11UniformTypeE">
-<span id="bgfx::UniformType"></span><span class="target" id="project0structbgfx_1_1_uniform_type"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">UniformType</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformTypeE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uniform type enum. </p>
+<dl class="function">
+<dt id="_CPPv2N4bgfx23allocInstanceDataBufferE8uint32_t8uint16_t">
+<span id="bgfx::allocInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a61a8b2b96c02f6d2d447fbce2b9e6896"></span><em class="property">const</em> InstanceDataBuffer *<code class="descclassname">bgfx::</code><code class="descname">allocInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx23allocInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate instance data buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>You must call setInstanceDataBuffer after alloc in order to avoid memory leak.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_instance_data_buffer</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="section" id="indirect-buffer">
+<h3>Indirect Buffer<a class="headerlink" href="#indirect-buffer" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="_CPPv2N4bgfx20createIndirectBufferE8uint32_t">
+<span id="bgfx::createIndirectBuffer__uint32_t"></span><span class="target" id="project0namespacebgfx_1a8a3c563fcf814144a76360b17b60f7e8"></span>IndirectBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createIndirectBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx20createIndirectBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create draw indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_uniform_type_t</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_indirect_buffer</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx21destroyIndirectBufferE20IndirectBufferHandle">
+<span id="bgfx::destroyIndirectBuffer__IndirectBufferHandle"></span><span class="target" id="project0namespacebgfx_1ad32cac7107eeffd862221b9bd0922110"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyIndirectBuffer</code><span class="sig-paren">(</span>IndirectBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21destroyIndirectBufferE20IndirectBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy draw indirect buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_indirect_buffer</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -3508,7 +3614,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
         &copy; Copyright 2015, Branimir Karadžić.
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 
 </footer>
 
