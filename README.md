@@ -42,7 +42,7 @@ Supported compilers:
 
 Languages:
 
- * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/index.html)
+ * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
  * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
  * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
@@ -649,7 +649,7 @@ Todo
  - Multiple vertex streams support.
  - Animated mesh example.
  - Direct3D 12 renderer backend.
- - Metal renderer backend.
+ - Metal renderer backend (you can follow progress [here](https://github.com/attilaz/bgfx/tree/metal)).
  - Vulkan renderer backend.
 
 Contact
