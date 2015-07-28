@@ -136,8 +136,9 @@
  Occasionally introducing changes that are breaking the API. The breakage are generally minor and easy to fix.
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  
+ - 2015/07/18 (1.44) - fixed angles in ImDrawList::PathArcTo(), PathArcToFast() (introduced in 1.43) being off by an extra PI for no justifiable reason
  - 2015/07/14 (1.43) - add new ImFontAtlas::AddFont() API. For the old AddFont***, moved the 'font_no' parameter of ImFontAtlas::AddFont** functions to the ImFontConfig structure.
-                       you need to render your textured triangles with bilinear filtering to benefit from subpixel positioning of text.
+                       you need to render your textured triangles with bilinear filtering to benefit from sub-pixel positioning of text.
  - 2015/07/08 (1.43) - switched rendering data to use indexed rendering. this is saving a fair amount of CPU/GPU and enables us to get anti-aliasing for a marginal cost.
                        this necessary change will break your rendering function! the fix should be very easy. sorry for that :(
                      - if you are using a vanilla copy of one of the imgui_impl_XXXX.cpp provided in the example, you just need to update your copy and you can ignore the rest.
@@ -482,6 +483,7 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4505) // unreferenced local function has been removed (stb stuff)
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+#define snprintf _snprintf
 #endif
 
 // Clang warnings with -Weverything
@@ -743,7 +745,7 @@ ImGuiIO::ImGuiIO()
 }
 
 //-----------------------------------------------------------------------------
-// Helpers
+// HELPERS
 //-----------------------------------------------------------------------------
 
 #define IM_ARRAYSIZE(_ARR)          ((int)(sizeof(_ARR)/sizeof(*_ARR)))
@@ -794,8 +796,8 @@ static inline ImVec2 operator*(const ImVec2& lhs, const float rhs)              
 //static inline ImVec2 operator/(const ImVec2& lhs, const float rhs)            { return ImVec2(lhs.x/rhs, lhs.y/rhs); }
 static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x+rhs.x, lhs.y+rhs.y); }
 static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x-rhs.x, lhs.y-rhs.y); }
-static inline ImVec2 operator*(const ImVec2& lhs, const ImVec2 rhs)             { return ImVec2(lhs.x*rhs.x, lhs.y*rhs.y); }
-static inline ImVec2 operator/(const ImVec2& lhs, const ImVec2 rhs)             { return ImVec2(lhs.x/rhs.x, lhs.y/rhs.y); }
+static inline ImVec2 operator*(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x*rhs.x, lhs.y*rhs.y); }
+static inline ImVec2 operator/(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x/rhs.x, lhs.y/rhs.y); }
 static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
 //static inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)              { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
 static inline ImVec2& operator*=(ImVec2& lhs, const float rhs)                  { lhs.x *= rhs; lhs.y *= rhs; return lhs; }
@@ -1075,7 +1077,6 @@ enum ImGuiSelectableFlagsPrivate_
     ImGuiSelectableFlags_Disabled           = 1 << 4,
     ImGuiSelectableFlags_DrawFillAvailWidth = 1 << 5
 };
-
 
 struct ImGuiColMod       // Color modifier, backup of modified data so we can restore it
 {
@@ -4050,7 +4051,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
                 const ImVec2 br = window->Rect().GetBR();
                 window->DrawList->PathLineTo(br + ImVec2(-corner_size, 0.0f));
                 window->DrawList->PathLineTo(br + ImVec2(0.0f, -corner_size));
-                window->DrawList->PathArcToFast(ImVec2(br.x - window_rounding, br.y - window_rounding), window_rounding, 6, 9);
+                window->DrawList->PathArcToFast(ImVec2(br.x - window_rounding, br.y - window_rounding), window_rounding, 0, 3);
                 window->DrawList->PathFill(resize_col);
             }
         }
@@ -9264,20 +9265,15 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
         const int idx_count = count*12;
         const int vtx_count = points_count*3;
         PrimReserve(idx_count, vtx_count);
-        unsigned int vtx_inner_idx = _VtxCurrentIdx+1;
-        unsigned int vtx_outer_idx = _VtxCurrentIdx+2;
 
         // Temporary buffer
-        ImVec2* temp_inner = (ImVec2*)alloca(points_count * 3 * sizeof(ImVec2));
-        ImVec2* temp_outer = temp_inner + points_count;
-        ImVec2* temp_normals = temp_inner + points_count * 2;
+        ImVec2* temp_points = (ImVec2*)alloca(points_count * 3 * sizeof(ImVec2));
+        ImVec2* temp_normals = temp_points + points_count * 2;
 
         for (int i1 = 0; i1 < count; i1++)
         {
             const int i2 = (i1+1) == points_count ? 0 : i1+1; 
-            const ImVec2& p1 = points[i1];
-            const ImVec2& p2 = points[i2];
-            ImVec2 diff = p2 - p1;
+            ImVec2 diff = points[i2] - points[i1];
             diff *= ImInvLength(diff, 1.0f);
             temp_normals[i1].x = diff.y;
             temp_normals[i1].y = -diff.x;
@@ -9286,21 +9282,21 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
         if (!closed)
         {
             temp_normals[points_count-1] = temp_normals[points_count-2];
-            temp_outer[0] = points[0] + temp_normals[0] * AA_SIZE;
-            temp_inner[0] = points[0] - temp_normals[0] * AA_SIZE;
-            temp_outer[points_count-1] = points[points_count-1] + temp_normals[points_count-1] * AA_SIZE;
-            temp_inner[points_count-1] = points[points_count-1] - temp_normals[points_count-1] * AA_SIZE;
+            temp_points[0] = points[0] + temp_normals[0] * AA_SIZE;
+            temp_points[1] = points[0] - temp_normals[0] * AA_SIZE;
+            temp_points[(points_count-1)*2+0] = points[points_count-1] + temp_normals[points_count-1] * AA_SIZE;
+            temp_points[(points_count-1)*2+1] = points[points_count-1] - temp_normals[points_count-1] * AA_SIZE;
         }
 
         // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
+        unsigned int idx1 = _VtxCurrentIdx;
         for (int i1 = 0; i1 < count; i1++)
         {
-            const int i2 = (i1+1) == points_count ? 0 : i1+1; 
+            const int i2 = (i1+1) == points_count ? 0 : i1+1;
+            unsigned int idx2 = (i1+1) == points_count ? _VtxCurrentIdx : idx1+3;
 
             // Average normals
-            const ImVec2& n1 = temp_normals[i1];
-            const ImVec2& n2 = temp_normals[i2];
-            ImVec2 dm = (n1 + n2) * 0.5f;
+            ImVec2 dm = (temp_normals[i1] + temp_normals[i2]) * 0.5f;
             float dmr2 = dm.x*dm.x + dm.y*dm.y;
             if (dmr2 > 0.000001f)
             {
@@ -9309,23 +9305,25 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
                 dm *= scale;
             }
             dm *= AA_SIZE;
-            temp_outer[i2] = points[i2] + dm;
-            temp_inner[i2] = points[i2] - dm;
+            temp_points[i2*2+0] = points[i2] + dm;
+            temp_points[i2*2+1] = points[i2] - dm;
 
             // Add indexes
-            _IdxWritePtr[0] = (ImDrawIdx)(_VtxCurrentIdx + i2*3); _IdxWritePtr[1] = (ImDrawIdx)(_VtxCurrentIdx + i1*3); _IdxWritePtr[2] = (ImDrawIdx)(vtx_outer_idx  + i1*3);
-            _IdxWritePtr[3] = (ImDrawIdx)(vtx_outer_idx  + i1*3); _IdxWritePtr[4] = (ImDrawIdx)(vtx_outer_idx  + i2*3); _IdxWritePtr[5] = (ImDrawIdx)(_VtxCurrentIdx + i2*3);
-            _IdxWritePtr[6] = (ImDrawIdx)(vtx_inner_idx  + i2*3); _IdxWritePtr[7] = (ImDrawIdx)(vtx_inner_idx  + i1*3); _IdxWritePtr[8] = (ImDrawIdx)(_VtxCurrentIdx + i1*3);
-            _IdxWritePtr[9] = (ImDrawIdx)(_VtxCurrentIdx + i1*3); _IdxWritePtr[10]= (ImDrawIdx)(_VtxCurrentIdx + i2*3); _IdxWritePtr[11]= (ImDrawIdx)(vtx_inner_idx  + i2*3);
+            _IdxWritePtr[0] = (ImDrawIdx)(idx2+0); _IdxWritePtr[1] = (ImDrawIdx)(idx1+0); _IdxWritePtr[2] = (ImDrawIdx)(idx1+2);
+            _IdxWritePtr[3] = (ImDrawIdx)(idx1+2); _IdxWritePtr[4] = (ImDrawIdx)(idx2+2); _IdxWritePtr[5] = (ImDrawIdx)(idx2+0);
+            _IdxWritePtr[6] = (ImDrawIdx)(idx2+1); _IdxWritePtr[7] = (ImDrawIdx)(idx1+1); _IdxWritePtr[8] = (ImDrawIdx)(idx1+0);
+            _IdxWritePtr[9] = (ImDrawIdx)(idx1+0); _IdxWritePtr[10]= (ImDrawIdx)(idx2+0); _IdxWritePtr[11]= (ImDrawIdx)(idx2+1);
             _IdxWritePtr += 12;
+
+            idx1 = idx2;
         }
 
         // Add vertexes
         for (int i = 0; i < points_count; i++)
         {
-            _VtxWritePtr[0].pos = points[i];     _VtxWritePtr[0].uv = uv; _VtxWritePtr[0].col = col;
-            _VtxWritePtr[1].pos = temp_inner[i]; _VtxWritePtr[1].uv = uv; _VtxWritePtr[1].col = col_trans;
-            _VtxWritePtr[2].pos = temp_outer[i]; _VtxWritePtr[2].uv = uv; _VtxWritePtr[2].col = col_trans;
+            _VtxWritePtr[0].pos = points[i];          _VtxWritePtr[0].uv = uv; _VtxWritePtr[0].col = col;
+            _VtxWritePtr[1].pos = temp_points[i*2+0]; _VtxWritePtr[1].uv = uv; _VtxWritePtr[1].col = col_trans;
+            _VtxWritePtr[2].pos = temp_points[i*2+1]; _VtxWritePtr[2].uv = uv; _VtxWritePtr[2].col = col_trans;
             _VtxWritePtr += 3;
         }
         _VtxCurrentIdx += (ImDrawIdx)vtx_count;
@@ -9454,8 +9452,8 @@ void ImDrawList::PathArcToFast(const ImVec2& centre, float radius, int amin, int
         for (int i = 0; i < circle_vtx_count; i++)
         {
             const float a = ((float)i / (float)circle_vtx_count) * 2*IM_PI;
-            circle_vtx[i].x = cosf(a + IM_PI);
-            circle_vtx[i].y = sinf(a + IM_PI);
+            circle_vtx[i].x = cosf(a);
+            circle_vtx[i].y = sinf(a);
         }
         circle_vtx_builds = true;
     }
@@ -9484,7 +9482,7 @@ void ImDrawList::PathArcTo(const ImVec2& centre, float radius, float amin, float
     for (int i = 0; i <= num_segments; i++)
     {
         const float a = amin + ((float)i / (float)num_segments) * (amax - amin);
-        _Path.push_back(ImVec2(centre.x + cosf(a + IM_PI) * radius, centre.y + sinf(a + IM_PI) * radius));
+        _Path.push_back(ImVec2(centre.x + cosf(a) * radius, centre.y + sinf(a) * radius));
     }
 }
 
@@ -9507,10 +9505,10 @@ void ImDrawList::PathRect(const ImVec2& a, const ImVec2& b, float rounding, int 
         const float r1 = (rounding_corners & 2) ? r : 0.0f;
         const float r2 = (rounding_corners & 4) ? r : 0.0f;
         const float r3 = (rounding_corners & 8) ? r : 0.0f;
-        PathArcToFast(ImVec2(a.x+r0,a.y+r0), r0, 0, 3);
-        PathArcToFast(ImVec2(b.x-r1,a.y+r1), r1, 3, 6);
-        PathArcToFast(ImVec2(b.x-r2,b.y-r2), r2, 6, 9);
-        PathArcToFast(ImVec2(a.x+r3,b.y-r3), r3, 9, 12);
+        PathArcToFast(ImVec2(a.x+r0,a.y+r0), r0, 6, 9);
+        PathArcToFast(ImVec2(b.x-r1,a.y+r1), r1, 9, 12);
+        PathArcToFast(ImVec2(b.x-r2,b.y-r2), r2, 0, 3);
+        PathArcToFast(ImVec2(a.x+r3,b.y-r3), r3, 3, 6);
     }
 }
 
@@ -9632,6 +9630,14 @@ void ImDrawList::AddText(const ImFont* font, float font_size, const ImVec2& pos,
     _VtxWritePtr -= vtx_unused;
     _IdxWritePtr -= idx_unused;
     _VtxCurrentIdx = (ImDrawIdx)VtxBuffer.Size;
+}
+
+// This is one of the few function breaking the encapsulation of ImDrawLst, but it is just so useful.
+void ImDrawList::AddText(const ImVec2& pos, ImU32 col, const char* text_begin, const char* text_end)
+{
+    if ((col >> 24) == 0)
+        return;
+    AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize(), pos, col, text_begin, text_end);
 }
 
 void ImDrawList::AddImage(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& uv0, const ImVec2& uv1, ImU32 col)
@@ -9866,7 +9872,7 @@ ImFont* ImFontAtlas::AddFontFromFileTTF(const char* filename, float size_pixels,
 ImFont* ImFontAtlas::AddFontFromMemoryTTF(void* ttf_data, int ttf_size, float size_pixels, const ImFontConfig* font_cfg_template, const ImWchar* glyph_ranges)
 {
     ImFontConfig font_cfg = font_cfg_template ? *font_cfg_template : ImFontConfig();
-	IM_ASSERT(font_cfg.FontData == NULL); 
+    IM_ASSERT(font_cfg.FontData == NULL); 
     font_cfg.FontData = ttf_data;
     font_cfg.FontDataSize = ttf_size;
     font_cfg.SizePixels = size_pixels;
@@ -9882,7 +9888,7 @@ ImFont* ImFontAtlas::AddFontFromMemoryCompressedTTF(const void* compressed_ttf_d
     stb_decompress(buf_decompressed_data, (unsigned char*)compressed_ttf_data, (unsigned int)compressed_ttf_size);
 
     ImFontConfig font_cfg = font_cfg_template ? *font_cfg_template : ImFontConfig();
-	IM_ASSERT(font_cfg.FontData == NULL); 
+    IM_ASSERT(font_cfg.FontData == NULL); 
     font_cfg.FontDataOwnedByAtlas = true;
     return AddFontFromMemoryTTF(buf_decompressed_data, (int)buf_decompressed_size, size_pixels, font_cfg_template, glyph_ranges);
 }
@@ -10034,7 +10040,7 @@ bool    ImFontAtlas::Build()
         float descent = unscaled_descent * font_scale;
         if (!cfg.MergeMode)
         {
-	        dst_font->ContainerAtlas = this;
+            dst_font->ContainerAtlas = this;
             dst_font->ConfigData = &cfg;
             dst_font->ConfigDataCount = 0;
             dst_font->FontSize = cfg.SizePixels;
@@ -10058,7 +10064,7 @@ bool    ImFontAtlas::Build()
                 const int codepoint = range.first_unicode_char_in_range + char_idx;
                 if (cfg.MergeMode && dst_font->FindGlyph((unsigned short)codepoint))
                     continue;
- 
+
                 stbtt_aligned_quad q;
                 float dummy_x = 0.0f, dummy_y = 0.0f;
                 stbtt_GetPackedQuad(range.chardata_for_range, TexWidth, TexHeight, char_idx, &dummy_x, &dummy_y, &q, 0);
@@ -10700,7 +10706,7 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
             if (c == 0)
                 break;
         }
-        
+
         if (c < 32)
         {
             if (c == '\n')
@@ -10713,7 +10719,7 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
             if (c == '\r')
                 continue;
         }
-        
+
         const float char_width = ((int)c < IndexXAdvance.Size ? IndexXAdvance[(int)c] : FallbackXAdvance) * scale;
         if (line_width + char_width >= max_width)
         {
@@ -10825,7 +10831,7 @@ void ImFont::RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_re
         if (const Glyph* glyph = FindGlyph((unsigned short)c))
         {
             char_width = glyph->XAdvance * scale;
-            
+
             // Clipping on Y is more likely
             if (c != ' ' && c != '\t')
             {
@@ -11009,18 +11015,102 @@ static void ImeSetInputScreenPosFn_DefaultImpl(int, int)
 
 #endif
 
-#ifdef IMGUI_DISABLE_TEST_WINDOWS
-
-void ImGui::ShowUserGuide() {}
-void ImGui::ShowStyleEditor(ImGuiStyle*) {}
-void ImGui::ShowTestWindow(bool*) {}
-void ImGui::ShowMetricsWindow(bool*) {}
-
-#else
-
 //-----------------------------------------------------------------------------
 // HELP
 //-----------------------------------------------------------------------------
+
+void ImGui::ShowMetricsWindow(bool* opened)
+{
+    if (ImGui::Begin("ImGui Metrics", opened))
+    {
+        ImGui::Text("ImGui %s", ImGui::GetVersion());
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("%d vertices, %d triangles", ImGui::GetIO().MetricsRenderVertices, ImGui::GetIO().MetricsRenderIndices / 3);
+        ImGui::Text("%d allocations", ImGui::GetIO().MetricsAllocs);
+        static bool show_clip_rects = true;
+        ImGui::Checkbox("Show clipping rectangles when hovering ImDrawList", &show_clip_rects);
+        ImGui::Separator();
+
+        struct Funcs
+        {
+            static void NodeDrawList(ImDrawList* draw_list, const char* label)
+            {
+                bool node_opened = ImGui::TreeNode(draw_list, "%s: '%s' %d vtx, %d indices, %d cmds", label, draw_list->_OwnerName ? draw_list->_OwnerName : "", draw_list->VtxBuffer.Size, draw_list->IdxBuffer.Size, draw_list->CmdBuffer.Size);
+                if (draw_list == ImGui::GetWindowDrawList())
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImColor(255,100,100), "CURRENTLY APPENDING"); // Can't display stats for active draw list! (we don't have the data double-buffered)
+                }
+                if (!node_opened)
+                    return;
+
+                int elem_offset = 0;
+                for (const ImDrawCmd* pcmd = draw_list->CmdBuffer.begin(); pcmd < draw_list->CmdBuffer.end(); elem_offset += pcmd->ElemCount, pcmd++)
+                {
+                    if (pcmd->UserCallback)
+                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData);
+                    else
+                    {
+                        ImGui::BulletText("Draw %d indexed vtx, tex = %p, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)", pcmd->ElemCount, pcmd->TextureId, pcmd->ClipRect.x, pcmd->ClipRect.y, pcmd->ClipRect.z, pcmd->ClipRect.w);
+                        if (show_clip_rects && ImGui::IsItemHovered())
+                        {
+                            ImRect clip_rect = pcmd->ClipRect;
+                            ImRect vtxs_rect;
+                            for (int i = elem_offset; i < elem_offset + (int)pcmd->ElemCount; i++)
+                                vtxs_rect.Add(draw_list->VtxBuffer[draw_list->IdxBuffer[i]].pos);
+                            GImGui->OverlayDrawList.PushClipRectFullScreen();
+                            clip_rect.Round(); GImGui->OverlayDrawList.AddRect(clip_rect.Min, clip_rect.Max, ImColor(255,255,0)); 
+                            vtxs_rect.Round(); GImGui->OverlayDrawList.AddRect(vtxs_rect.Min, vtxs_rect.Max, ImColor(255,0,255)); 
+                            GImGui->OverlayDrawList.PopClipRect();
+                        }
+                    }
+                }
+                ImGui::TreePop();
+            }
+
+            static void NodeWindows(ImVector<ImGuiWindow*>& windows, const char* label)
+            {
+                if (!ImGui::TreeNode(label, "%s (%d)", label, windows.Size))
+                    return;
+                for (int i = 0; i < windows.Size; i++)
+                    Funcs::NodeWindow(windows[i], "Window");
+                ImGui::TreePop();
+            }
+
+            static void NodeWindow(ImGuiWindow* window, const char* label)
+            {
+                if (!ImGui::TreeNode(window, "%s '%s', %d @ 0x%p", label, window->Name, window->Active || window->WasActive, window))
+                    return;
+                NodeDrawList(window->DrawList, "DrawList");
+                if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
+                if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
+                ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * sizeof(ImGuiStorage::Pair));
+                ImGui::TreePop();
+            }
+        };
+
+        ImGuiState& g = *GImGui;                // Access private state
+        g.DisableHideTextAfterDoubleHash++;     // Not exposed (yet). Disable processing that hides text after '##' markers.
+        Funcs::NodeWindows(g.Windows, "Windows");
+        if (ImGui::TreeNode("DrawList", "Active DrawLists (%d)", g.RenderDrawLists[0].Size))
+        {
+            for (int i = 0; i < g.RenderDrawLists[0].Size; i++)
+                Funcs::NodeDrawList(g.RenderDrawLists[0][i], "DrawList");
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Popups", "Opened Popups Stack (%d)", g.OpenedPopupStack.Size))
+        {
+            for (int i = 0; i < g.OpenedPopupStack.Size; i++)
+            {
+                ImGuiWindow* window = g.OpenedPopupStack[i].Window;
+                ImGui::BulletText("PopupID: %08x, Window: '%s'%s%s", g.OpenedPopupStack[i].PopupID, window ? window->Name : "NULL", window && (window->Flags & ImGuiWindowFlags_ChildWindow) ? " ChildWindow" : "", window && (window->Flags & ImGuiWindowFlags_ChildMenu) ? " ChildMenu" : "");
+            }
+            ImGui::TreePop();
+        }
+        g.DisableHideTextAfterDoubleHash--;
+    }
+    ImGui::End();
+}
 
 void ImGui::ShowUserGuide()
 {
@@ -11149,6 +11239,8 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
 //-----------------------------------------------------------------------------
 // SAMPLE CODE
 //-----------------------------------------------------------------------------
+
+#ifndef IMGUI_DISABLE_TEST_WINDOWS
 
 static void ShowExampleAppConsole(bool* opened);
 static void ShowExampleAppLayout(bool* opened);
@@ -11376,14 +11468,16 @@ void ImGui::ShowTestWindow(bool* opened)
             ImGui::SliderFloat("Wrap width", &wrap_width, -20, 600, "%.0f");
 
             ImGui::Text("Test paragraph 1:");
-            ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetCursorScreenPos() + ImVec2(wrap_width, 0.0f), ImGui::GetCursorScreenPos() + ImVec2(wrap_width+10, ImGui::GetTextLineHeight()), 0xFFFF00FF);
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pos.x + wrap_width, pos.y), ImVec2(pos.x + wrap_width + 10, pos.y + ImGui::GetTextLineHeight()), 0xFFFF00FF);
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrap_width);
             ImGui::Text("lazy dog. This paragraph is made to fit within %.0f pixels. The quick brown fox jumps over the lazy dog.", wrap_width);
             ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), 0xFF00FFFF);
             ImGui::PopTextWrapPos();
 
             ImGui::Text("Test paragraph 2:");
-            ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetCursorScreenPos() + ImVec2(wrap_width, 0.0f), ImGui::GetCursorScreenPos() + ImVec2(wrap_width+10, ImGui::GetTextLineHeight()), 0xFFFF00FF);
+            pos = ImGui::GetCursorScreenPos();
+            ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pos.x + wrap_width, pos.y), ImVec2(pos.x + wrap_width + 10, pos.y + ImGui::GetTextLineHeight()), 0xFFFF00FF);
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrap_width);
             ImGui::Text("aaaaaaaa bbbbbbbb, cccccccc,dddddddd. eeeeeeee   ffffffff. gggggggg!hhhhhhhh");
             ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), 0xFF00FFFF);
@@ -12025,8 +12119,8 @@ void ImGui::ShowTestWindow(bool* opened)
             ImGui::DragFloat2("offset", (float*)&offset, 0.5f, -200, 200.0f, "%.0f");
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec4 clip_rect(pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(pos, pos+size, ImColor(90,90,120,255));
-            ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, pos+offset, ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
+            ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x+size.x,pos.y+size.y), ImColor(90,90,120,255));
+            ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, ImVec2(pos.x+offset.x,pos.y+offset.y), ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
             ImGui::Dummy(size);
             ImGui::TreePop();
         }
@@ -12450,97 +12544,6 @@ void ImGui::ShowTestWindow(bool* opened)
     ImGui::End();
 }
 
-void ImGui::ShowMetricsWindow(bool* opened)
-{
-    if (ImGui::Begin("ImGui Metrics", opened))
-    {
-        ImGui::Text("ImGui %s", ImGui::GetVersion());
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("%d vertices, %d triangles", ImGui::GetIO().MetricsRenderVertices, ImGui::GetIO().MetricsRenderIndices / 3);
-        ImGui::Text("%d allocations", ImGui::GetIO().MetricsAllocs);
-        static bool show_clip_rects = true;
-        ImGui::Checkbox("Show clipping rectangles when hovering ImDrawList", &show_clip_rects);
-        ImGui::Separator();
-
-        struct Funcs
-        {
-            static void NodeDrawList(ImDrawList* draw_list, const char* label)
-            {
-                bool node_opened = ImGui::TreeNode(draw_list, "%s: '%s' %d vtx, %d indices, %d cmds", label, draw_list->_OwnerName ? draw_list->_OwnerName : "", draw_list->VtxBuffer.Size, draw_list->IdxBuffer.Size, draw_list->CmdBuffer.Size);
-                if (draw_list == ImGui::GetWindowDrawList())
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImColor(255,100,100), "CURRENTLY APPENDING"); // Can't display stats for active draw list! (we don't have the data double-buffered)
-                }
-                if (!node_opened)
-                    return;
-
-                int elem_offset = 0;
-                for (const ImDrawCmd* pcmd = draw_list->CmdBuffer.begin(); pcmd < draw_list->CmdBuffer.end(); elem_offset += pcmd->ElemCount, pcmd++)
-                    if (pcmd->UserCallback)
-                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData);
-                    else
-                    {
-                        ImGui::BulletText("Draw %d indexed vtx, tex = %p, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)", pcmd->ElemCount, pcmd->TextureId, pcmd->ClipRect.x, pcmd->ClipRect.y, pcmd->ClipRect.z, pcmd->ClipRect.w);
-                        if (show_clip_rects && ImGui::IsItemHovered())
-                        {
-                            ImRect clip_rect = pcmd->ClipRect;
-                            ImRect vtxs_rect;
-                            for (int i = elem_offset; i < elem_offset + (int)pcmd->ElemCount; i++)
-                                vtxs_rect.Add(draw_list->VtxBuffer[draw_list->IdxBuffer[i]].pos);
-                            GImGui->OverlayDrawList.PushClipRectFullScreen();
-                            clip_rect.Round(); GImGui->OverlayDrawList.AddRect(clip_rect.Min, clip_rect.Max, ImColor(255,255,0)); 
-                            vtxs_rect.Round(); GImGui->OverlayDrawList.AddRect(vtxs_rect.Min, vtxs_rect.Max, ImColor(255,0,255)); 
-                            GImGui->OverlayDrawList.PopClipRect();
-                        }
-                    }
-                ImGui::TreePop();
-            }
-
-            static void NodeWindows(ImVector<ImGuiWindow*>& windows, const char* label)
-            {
-                if (!ImGui::TreeNode(label, "%s (%d)", label, windows.Size))
-                    return;
-                for (int i = 0; i < windows.Size; i++)
-                    Funcs::NodeWindow(windows[i], "Window");
-                ImGui::TreePop();
-            }
-
-            static void NodeWindow(ImGuiWindow* window, const char* label)
-            {
-                if (!ImGui::TreeNode(window, "%s '%s', %d @ 0x%p", label, window->Name, window->Active || window->WasActive, window))
-                    return;
-                NodeDrawList(window->DrawList, "DrawList");
-                if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
-                if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
-                ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * sizeof(ImGuiStorage::Pair));
-                ImGui::TreePop();
-            }
-        };
-
-        ImGuiState& g = *GImGui;                // Access private state
-        g.DisableHideTextAfterDoubleHash++;     // Not exposed (yet). Disable processing that hides text after '##' markers.
-        Funcs::NodeWindows(g.Windows, "Windows");
-        if (ImGui::TreeNode("DrawList", "Active DrawLists (%d)", g.RenderDrawLists[0].Size))
-        {
-            for (int i = 0; i < g.RenderDrawLists[0].Size; i++)
-                Funcs::NodeDrawList(g.RenderDrawLists[0][i], "DrawList");
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("Popups", "Opened Popups Stack (%d)", g.OpenedPopupStack.Size))
-        {
-            for (int i = 0; i < g.OpenedPopupStack.Size; i++)
-            {
-                ImGuiWindow* window = g.OpenedPopupStack[i].Window;
-                ImGui::BulletText("PopupID: %08x, Window: '%s'%s%s", g.OpenedPopupStack[i].PopupID, window ? window->Name : "NULL", window && (window->Flags & ImGuiWindowFlags_ChildWindow) ? " ChildWindow" : "", window && (window->Flags & ImGuiWindowFlags_ChildMenu) ? " ChildMenu" : "");
-            }
-            ImGui::TreePop();
-        }
-        g.DisableHideTextAfterDoubleHash--;
-    }
-    ImGui::End();
-}
-
 static void ShowExampleAppMainMenuBar()
 {
     if (ImGui::BeginMainMenuBar())
@@ -12669,7 +12672,7 @@ static void ShowExampleAppManipulatingWindowTitle(bool* opened)
 
     // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
     char buf[128];
-    ImFormatString(buf, IM_ARRAYSIZE(buf), "Animated title %c %d###AnimatedTitle", "|/-\\"[(int)(ImGui::GetTime()/0.25f)&3], rand());
+    sprintf(buf, "Animated title %c %d###AnimatedTitle", "|/-\\"[(int)(ImGui::GetTime()/0.25f)&3], rand());
     ImGui::SetNextWindowPos(ImVec2(100,300), ImGuiSetCond_FirstUseEver);
     ImGui::Begin(buf);
     ImGui::Text("This window has a changing title.");
@@ -12778,7 +12781,8 @@ struct ExampleAppConsole
         char buf[1024];
         va_list args;
         va_start(args, fmt);
-        ImFormatStringV(buf, IM_ARRAYSIZE(buf), fmt, args);
+        vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
+        buf[IM_ARRAYSIZE(buf)-1] = 0;
         va_end(args);
         Items.push_back(strdup(buf));
         ScrollToBottom = true;
@@ -12915,7 +12919,7 @@ struct ExampleAppConsole
                 while (word_start > data->Buf)
                 {
                     const char c = word_start[-1];
-                    if (ImCharIsSpace(c) || c == ',' || c == ';')
+                    if (c == ' ' || c == '\t' || c == ',' || c == ';')
                         break;
                     word_start--;
                 }
@@ -12991,7 +12995,7 @@ struct ExampleAppConsole
                 // A better implementation would preserve the data on the current input line along with cursor position.
                 if (prev_history_pos != HistoryPos)
                 {
-                    ImFormatString(data->Buf, data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
+                    snprintf(data->Buf, data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
                     data->BufDirty = true;
                     data->CursorPos = data->SelectionStart = data->SelectionEnd = (int)strlen(data->Buf);
                 }
@@ -13106,6 +13110,10 @@ static void ShowExampleAppLongText(bool* opened)
 }
 
 // End of Sample code
+#else
+
+void ImGui::ShowTestWindow(bool*) {}
+
 #endif
 
 //-----------------------------------------------------------------------------
