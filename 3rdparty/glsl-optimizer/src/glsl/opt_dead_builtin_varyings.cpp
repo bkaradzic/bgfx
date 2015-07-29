@@ -35,7 +35,7 @@
  * the built-in varyings have pre-assigned locations. Also, the elimination
  * of unused gl_TexCoord elements requires its own lowering pass anyway.
  *
- * It's implemented by replacing all occurences of dead varyings with
+ * It's implemented by replacing all occurrences of dead varyings with
  * temporary variables, which creates dead code. It is recommended to run
  * a dead-code elimination pass after this.
  *
@@ -280,7 +280,7 @@ public:
        *
        * We're going to break down the gl_TexCoord array into separate
        * variables. First, add declarations of the new variables all
-       * occurences of gl_TexCoord will be replaced with.
+       * occurrences of gl_TexCoord will be replaced with.
        */
       if (info->lower_texcoord_array) {
          prepare_array(ir, this->new_texcoord, ARRAY_SIZE(this->new_texcoord),
@@ -411,7 +411,7 @@ public:
        * variable dereference representing gl_TexCoord[i].
        */
       if (this->info->lower_texcoord_array) {
-         /* gl_TexCoord[i] occurence */
+         /* gl_TexCoord[i] occurrence */
          ir_dereference_array *const da = (*rvalue)->as_dereference_array();
 
          if (da && da->variable_referenced() ==
@@ -425,7 +425,7 @@ public:
 
       /* Same for gl_FragData. */
       if (this->info->lower_fragdata_array) {
-         /* gl_FragData[i] occurence */
+         /* gl_FragData[i] occurrence */
          ir_dereference_array *const da = (*rvalue)->as_dereference_array();
 
          if (da && da->variable_referenced() == this->info->fragdata_array) {

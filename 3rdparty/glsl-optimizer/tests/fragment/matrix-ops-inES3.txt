@@ -1,0 +1,30 @@
+#version 300 es
+out mediump vec4 _fragData;
+uniform highp float _Speed;
+uniform highp vec4 _Time;
+highp vec4 func( in highp vec2 uv )
+{
+    highp float s = sin(_Speed * _Time.x);
+    highp float c = cos(_Speed * _Time.x);
+
+    highp mat2 rotationMatrix = mat2(c, s, -s, c);
+    // various operations on a matrix
+    rotationMatrix = rotationMatrix * 2.0;
+    rotationMatrix = rotationMatrix - 1.0;
+    rotationMatrix = s - rotationMatrix;
+    rotationMatrix = c + rotationMatrix;
+    rotationMatrix /= s;
+
+    mediump mat2 halfMatrix = mat2(c, s, -s, c);
+    halfMatrix = halfMatrix * 2.0;
+    halfMatrix = halfMatrix - 1.0;
+    halfMatrix = s - halfMatrix;
+    halfMatrix = c + halfMatrix;
+    halfMatrix /= s;
+
+    return vec4((rotationMatrix * uv), (halfMatrix * uv));
+}
+in highp vec2 uv;
+void main() {
+    _fragData = func(uv);
+}

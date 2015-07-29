@@ -1,0 +1,17 @@
+#version 300 es
+uniform highp sampler2D _CameraDepthTexture;
+in highp vec2 varUV;
+out mediump vec4 _fragData;
+void main ()
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1 = textureLod (_CameraDepthTexture, varUV, 0.0).xxxx;
+  _fragData = tmpvar_1;
+}
+
+
+// stats: 0 alu 1 tex 0 flow
+// inputs: 1
+//  #0: varUV (high float) 2x1 [-1]
+// textures: 1
+//  #0: _CameraDepthTexture (high 2d) 0x0 [-1]

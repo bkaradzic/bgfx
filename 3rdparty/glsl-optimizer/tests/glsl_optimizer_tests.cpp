@@ -19,23 +19,23 @@
 #include <windows.h>
 #include <gl/GL.h>
 extern "C" {
-typedef char GLcharARB;		/* native character */
-typedef unsigned int GLhandleARB;	/* shader object handle */
-#define GL_VERTEX_SHADER_ARB              0x8B31
-#define GL_FRAGMENT_SHADER_ARB            0x8B30
-#define GL_OBJECT_COMPILE_STATUS_ARB      0x8B81
-typedef void (WINAPI * PFNGLDELETEOBJECTARBPROC) (GLhandleARB obj);
-typedef GLhandleARB (WINAPI * PFNGLCREATESHADEROBJECTARBPROC) (GLenum shaderType);
-typedef void (WINAPI * PFNGLSHADERSOURCEARBPROC) (GLhandleARB shaderObj, GLsizei count, const GLcharARB* *string, const GLint *length);
-typedef void (WINAPI * PFNGLCOMPILESHADERARBPROC) (GLhandleARB shaderObj);
-typedef void (WINAPI * PFNGLGETINFOLOGARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog);
-typedef void (WINAPI * PFNGLGETOBJECTPARAMETERIVARBPROC) (GLhandleARB obj, GLenum pname, GLint *params);
-static PFNGLDELETEOBJECTARBPROC glDeleteObjectARB;
-static PFNGLCREATESHADEROBJECTARBPROC glCreateShaderObjectARB;
-static PFNGLSHADERSOURCEARBPROC glShaderSourceARB;
-static PFNGLCOMPILESHADERARBPROC glCompileShaderARB;
-static PFNGLGETINFOLOGARBPROC glGetInfoLogARB;
-static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
+typedef char GLchar;		/* native character */
+typedef unsigned int GLuint;	/* shader object handle */
+#define GL_VERTEX_SHADER              0x8B31
+#define GL_FRAGMENT_SHADER            0x8B30
+#define GL_COMPILE_STATUS             0x8B81
+typedef void (WINAPI * PFNGLDELETESHADERPROC) (GLuint shader);
+typedef GLuint (WINAPI * PFNGLCREATESHADERPROC) (GLenum type);
+typedef void (WINAPI * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
+typedef void (WINAPI * PFNGLCOMPILESHADERPROC) (GLuint shader);
+typedef void (WINAPI * PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef void (WINAPI * PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint *params);
+static PFNGLDELETESHADERPROC glDeleteShader;
+static PFNGLCREATESHADERPROC glCreateShader;
+static PFNGLSHADERSOURCEPROC glShaderSource;
+static PFNGLCOMPILESHADERPROC glCompileShader;
+static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+static PFNGLGETSHADERIVPROC glGetShaderiv;
 }
 #endif // #ifdef _MSC_VER
 
@@ -154,12 +154,12 @@ static bool InitializeOpenGL ()
 #ifdef _MSC_VER
 	if (hasGLSL)
 	{
-		glDeleteObjectARB = (PFNGLDELETEOBJECTARBPROC)wglGetProcAddress("glDeleteObjectARB");
-		glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)wglGetProcAddress("glCreateShaderObjectARB");
-		glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)wglGetProcAddress("glShaderSourceARB");
-		glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)wglGetProcAddress("glCompileShaderARB");
-		glGetInfoLogARB = (PFNGLGETINFOLOGARBPROC)wglGetProcAddress("glGetInfoLogARB");
-		glGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)wglGetProcAddress("glGetObjectParameterivARB");
+		glDeleteShader = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
+		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
+		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
+		glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
+		glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
+		glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
 	}
 #endif
 
@@ -266,6 +266,8 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	if (gles)
 	{
 		replace_string (src, "GL_EXT_shader_texture_lod", "GL_ARB_shader_texture_lod", 0);
+		replace_string (src, "GL_EXT_draw_instanced", "GL_ARB_draw_instanced", 0);
+		replace_string (src, "gl_InstanceIDEXT", "gl_InstanceIDARB	", 0);
 		replace_string (src, "#extension GL_OES_standard_derivatives : require", "", 0);
 		replace_string (src, "#extension GL_EXT_shadow_samplers : require", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : require", "", 0);

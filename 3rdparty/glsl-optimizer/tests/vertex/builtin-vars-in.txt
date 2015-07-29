@@ -1,0 +1,16 @@
+#extension GL_ARB_draw_instanced : require
+#extension GL_EXT_gpu_shader4 : require
+
+attribute vec3 _inPos;
+attribute vec3 _inNor;
+
+void main()
+{
+	vec3 p;
+	p = _inPos;
+	p.y += float(gl_VertexID);
+	p.y += float(gl_InstanceIDARB);
+	p += _inNor;
+	gl_Position = vec4(p,1.0);
+	gl_PointSize = p.x;
+}
