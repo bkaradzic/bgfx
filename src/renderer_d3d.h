@@ -40,11 +40,13 @@ namespace bgfx
 				} \
 			BX_MACRO_BLOCK_END
 
-#	define _DX_CHECK_REFCOUNT(_ptr, _expected) \
+#define _DX_CHECK_REFCOUNT(_ptr, _expected) \
 			BX_MACRO_BLOCK_BEGIN \
 				ULONG count = getRefCount(_ptr); \
 				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
 			BX_MACRO_BLOCK_END
+
+#define _DX_NAME(_ptr, _format, ...) setDebugObjectName(_ptr, _format, ##__VA_ARGS__)
 
 #if BGFX_CONFIG_DEBUG
 #	define DX_CHECK(_call) _DX_CHECK(_call)
@@ -53,6 +55,12 @@ namespace bgfx
 #	define DX_CHECK(_call) _call
 #	define DX_CHECK_REFCOUNT(_ptr, _expected)
 #endif // BGFX_CONFIG_DEBUG
+
+#if BGFX_CONFIG_DEBUG_OBJECT_NAME
+#	define DX_NAME(_ptr, _format, ...) _DX_NAME(_ptr, _format, ##__VA_ARGS__)
+#else
+#	define DX_NAME(_ptr, _format, ...)
+#endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
 
 #define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
 #define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
