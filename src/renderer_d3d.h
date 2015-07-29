@@ -73,6 +73,8 @@ namespace bgfx
 	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
 	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
 	typedef HRESULT (WINAPI* PFN_CREATE_DXGI_FACTORY)(REFIID _riid, void** _factory);
+	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE)(REFIID _riid, void** _debug);
+	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE1)(UINT _flags, REFIID _riid, void** _debug);
 
 #define _PIX_SETMARKER(_col, _name) D3DPERF_SetMarker(_col, _name)
 #define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
