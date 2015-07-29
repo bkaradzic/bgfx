@@ -642,7 +642,7 @@ glsl_type::field_type(const char *name) const
    return error_type;
 }
 
-const glsl_precision
+glsl_precision
 glsl_type::field_precision(const char *name) const
 {
    if (this->base_type != GLSL_TYPE_STRUCT)
