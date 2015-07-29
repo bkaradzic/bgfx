@@ -116,8 +116,8 @@ extern void hash_table_insert(struct hash_table *ht, void *data,
  * Add an element to a hash table with replacement
  *
  * \return
- * 1 if it did replace the the value (in which case the old key is kept), 0 if
- * it did not replace the value (in which case the new key is kept).
+ * 1 if it did replace the value (in which case the old key is kept), 0 if it
+ * did not replace the value (in which case the new key is kept).
  *
  * \warning
  * If \c key is already in the hash table, \c data will \b replace the most

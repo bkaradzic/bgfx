@@ -830,10 +830,12 @@ void
 builtin_variable_generator::generate_vs_special_vars()
 {
 
-   if (state->is_version(130, 300))
+   if (state->is_version(130, 300) || state->EXT_gpu_shader4_enable)
       add_system_value(SYSTEM_VALUE_VERTEX_ID, state->metal_target ? uint_t : int_t, "gl_VertexID", glsl_precision_high);
    if (state->ARB_draw_instanced_enable)
       add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceIDARB", glsl_precision_high);
+   if (state->EXT_draw_instanced_enable)
+      add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceIDEXT", glsl_precision_high);
    if (state->ARB_draw_instanced_enable || state->is_version(140, 300))
 	   add_system_value(SYSTEM_VALUE_INSTANCE_ID, state->metal_target ? uint_t : int_t, "gl_InstanceID", glsl_precision_high);
    if (state->AMD_vertex_shader_layer_enable)

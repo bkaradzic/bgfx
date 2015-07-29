@@ -12,7 +12,8 @@ void main ()
     discard;
   };
   c_1 = 0.0;
-  for (highp int i_2 = tmpvar_3; i_2 < 4; i_2++, c_1 = (c_1 + xx)) {
+  for (highp int i_2 = tmpvar_3; i_2 < 4; i_2++) {
+    c_1 = (c_1 + xx);
   };
   lowp vec4 tmpvar_4;
   tmpvar_4 = vec4(c_1);

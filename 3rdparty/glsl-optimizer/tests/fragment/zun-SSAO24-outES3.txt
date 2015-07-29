@@ -51,16 +51,14 @@ void main ()
     };
     randomDir_14 = (randomDir_14 * -(tmpvar_18));
     randomDir_14 = (randomDir_14 + (viewNorm_7 * 0.3));
-    highp vec4 tmpvar_19;
-    tmpvar_19 = texture (_CameraDepthNormalsTexture, (tmpvar_2 + (randomDir_14.xy * scale_5)));
-    highp float tmpvar_20;
-    tmpvar_20 = clamp (((depth_6 - 
+    highp float tmpvar_19;
+    tmpvar_19 = clamp (((depth_6 - 
       (randomDir_14.z * _Params.x)
     ) - (
-      dot (tmpvar_19.zw, vec2(1.0, 0.00392157))
+      dot (texture (_CameraDepthNormalsTexture, (tmpvar_2 + (randomDir_14.xy * scale_5))).zw, vec2(1.0, 0.00392157))
      * _ProjectionParams.z)), 0.0, 1.0);
-    if ((tmpvar_20 > _Params.y)) {
-      occ_4 = (occ_4 + pow ((1.0 - tmpvar_20), _Params.z));
+    if ((tmpvar_19 > _Params.y)) {
+      occ_4 = (occ_4 + pow ((1.0 - tmpvar_19), _Params.z));
     };
   };
   occ_4 = (occ_4 / 8.0);

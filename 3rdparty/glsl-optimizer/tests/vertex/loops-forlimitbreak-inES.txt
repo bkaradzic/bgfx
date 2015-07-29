@@ -1,0 +1,63 @@
+#line 1
+attribute vec4 _glesVertex;
+attribute vec3 _glesNormal;
+struct v2f {
+    lowp vec4 color;
+    highp vec4 pos;
+};
+struct appdata {
+    highp vec3 pos;
+    highp vec3 normal;
+};
+uniform mediump vec4 unity_LightColor[8];
+uniform highp vec4 unity_LightPosition[8];
+uniform highp ivec4 unity_VertexLightParams;
+mediump vec3 computeLighting(in highp int idx, in mediump vec3 dirToLight, in mediump vec3 eyeNormal, in mediump float atten)
+{
+    mediump float NdotL = max( dot( eyeNormal, dirToLight), 0.0);
+    mediump vec3 color = NdotL * unity_LightColor[idx].xyz;
+    return color * atten;
+}
+mediump vec3 computeOneLight( in highp int idx, in mediump vec3 eyeNormal)
+{
+    highp vec3 dirToLight = unity_LightPosition[idx].xyz;
+    mediump float att = 1.0;
+   
+    att *= 0.5;
+    return min( computeLighting( idx, dirToLight, eyeNormal, att), vec3(1.0));
+}
+v2f vert( in appdata IN )
+{
+    v2f o;
+    mediump vec4 color = vec4(0.0, 0.0, 0.0, 1.1);
+   
+    mediump vec3 eyeNormal = IN.normal;
+   
+    mediump vec3 lcolor = vec3(0.0);
+
+    // loop doing up to N lights, with max cap
+    highp int il = 0;
+    for ( ; (float(il) < min( 8.0, float(unity_VertexLightParams.x))); (++il))
+    {
+        lcolor += computeOneLight(il, eyeNormal);
+    }
+    color.xyz = lcolor.xyz;
+
+    // other forms of a similar loop
+    for (int j = 0; j < int(min(float(unity_VertexLightParams.y),4.0)); ++j)
+    	color.xyz += unity_LightColor[j].xyz;
+
+    o.color = color;   
+    o.pos = vec4(IN.pos,1.0);
+    return o;
+}
+varying lowp vec4 xlv_COLOR0;
+void main() {
+    v2f xl_retval;
+    appdata xlt_IN;
+    xlt_IN.pos = _glesVertex.xyz;
+    xlt_IN.normal = _glesNormal;
+    xl_retval = vert(xlt_IN);
+    xlv_COLOR0 = vec4(xl_retval.color);
+    gl_Position = vec4(xl_retval.pos);
+}

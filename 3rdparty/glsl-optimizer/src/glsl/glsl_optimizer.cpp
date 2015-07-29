@@ -265,6 +265,21 @@ static void propagate_precision_expr(ir_instruction *ir, void *data)
 	
 }
 
+static void propagate_precision_texture(ir_instruction *ir, void *data)
+{
+	ir_texture* tex = ir->as_texture();
+	if (!tex)
+		return;
+
+	glsl_precision sampler_prec = tex->sampler->get_precision();
+	if (tex->get_precision() == sampler_prec || sampler_prec == glsl_precision_undefined)
+		return;
+
+	// set precision of ir_texture node to that of the sampler itself
+	tex->set_precision(sampler_prec);
+	((precision_ctx*)data)->res = true;
+}
+
 struct undefined_ass_ctx
 {
 	ir_variable* var;
@@ -381,8 +396,19 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 		ctx.root_ir = list;
 		foreach_in_list(ir_instruction, ir, list)
 		{
+			visit_tree (ir, propagate_precision_texture, &ctx);
 			visit_tree (ir, propagate_precision_deref, &ctx);
+			bool hadProgress = ctx.res;
+			ctx.res = false;
 			visit_tree (ir, propagate_precision_assign, &ctx);
+			if (ctx.res)
+			{
+				// assignment precision propagation might have added precision
+				// to some variables; need to propagate dereference precision right
+				// after that too.
+				visit_tree (ir, propagate_precision_deref, &ctx);
+			}
+			ctx.res |= hadProgress;
 			visit_tree (ir, propagate_precision_call, &ctx);
 			visit_tree (ir, propagate_precision_expr, &ctx);
 		}

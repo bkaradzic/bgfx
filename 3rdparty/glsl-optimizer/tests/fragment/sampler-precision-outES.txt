@@ -11,21 +11,17 @@ void main ()
   lowp vec4 tmpvar_2;
   tmpvar_2 = texture2D (texlow, varUV.xy);
   c_1 = tmpvar_2;
-  mediump vec4 tmpvar_3;
-  tmpvar_3 = texture2D (texmed, varUV.xy);
+  c_1 = (c_1 + texture2D (texmed, varUV.xy));
+  highp vec4 tmpvar_3;
+  tmpvar_3 = texture2D (texhigh, varUV.xy);
   c_1 = (c_1 + tmpvar_3);
-  highp vec4 tmpvar_4;
-  tmpvar_4 = texture2D (texhigh, varUV.xy);
+  lowp vec4 tmpvar_4;
+  tmpvar_4 = textureCube (cubelow, varUV.xyz);
   c_1 = (c_1 + tmpvar_4);
-  lowp vec4 tmpvar_5;
-  tmpvar_5 = textureCube (cubelow, varUV.xyz);
+  c_1 = (c_1 + textureCube (cubemed, varUV.xyz));
+  highp vec4 tmpvar_5;
+  tmpvar_5 = textureCube (cubehigh, varUV.xyz);
   c_1 = (c_1 + tmpvar_5);
-  mediump vec4 tmpvar_6;
-  tmpvar_6 = textureCube (cubemed, varUV.xyz);
-  c_1 = (c_1 + tmpvar_6);
-  highp vec4 tmpvar_7;
-  tmpvar_7 = textureCube (cubehigh, varUV.xyz);
-  c_1 = (c_1 + tmpvar_7);
   gl_FragData[0] = c_1;
 }
 

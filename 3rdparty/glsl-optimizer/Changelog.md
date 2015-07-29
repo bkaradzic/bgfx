@@ -1,8 +1,30 @@
 GLSL optimizer Change Log
 =========================
 
+2015 06
+-------
+
+Fixes:
+
+* Fixed some cases of different precision matrix assignments being miscompiled on Metal.
+* Fixed yet more issues with translation of weird loops.
+* Fixed translation of matrix+scalar, matrix-scalar, matrix/scalar operations on Metal.
+
+
+2015 05
+-------
+
+Fixes:
+
+* Fixes some cases of highp/mediump sampler sampling resulting in resulting temporaries wrongly being lowp.
+
+
 2015 04
 -------
+
+Goodies:
+* GLES2: support EXT_draw_instanced / gl_InstanceIDEXT.
+* Support gl_VertexID in GLSL < 1.30 when EXT_gpu_shader4 is used.
 
 Fixes:
 
