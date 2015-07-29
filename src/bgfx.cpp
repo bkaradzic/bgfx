@@ -2122,6 +2122,7 @@ again:
 
 	const Memory* alloc(uint32_t _size)
 	{
+		BX_CHECK(0 < _size, "Invalid memory operation. _size is 0.");
 		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) + _size);
 		mem->size = _size;
 		mem->data = (uint8_t*)mem + sizeof(Memory);
@@ -2130,6 +2131,7 @@ again:
 
 	const Memory* copy(const void* _data, uint32_t _size)
 	{
+		BX_CHECK(0 < _size, "Invalid memory operation. _size is 0.");
 		const Memory* mem = alloc(_size);
 		memcpy(mem->data, _data, _size);
 		return mem;
