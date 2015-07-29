@@ -4278,7 +4278,8 @@ namespace bgfx { namespace gl
 					if (usesTextureLod)
 					{
 						BX_WARN(s_extension[Extension::EXT_shader_texture_lod].m_supported, "EXT_shader_texture_lod is used but not supported by GLES2 driver.");
-						if (s_extension[Extension::EXT_shader_texture_lod].m_supported)
+						if (s_extension[Extension::EXT_shader_texture_lod].m_supported
+						/*&&  GL_VERTEX_SHADER == m_type*/)
 						{
 							writeString(&writer
 								, "#extension GL_EXT_shader_texture_lod : enable\n"
