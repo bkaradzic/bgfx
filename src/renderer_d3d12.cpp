@@ -24,7 +24,7 @@ namespace bgfx { namespace d3d12
 		uint32_t m_div;
 		uint32_t m_sub;
 	};
-	
+
 	static const PrimInfo s_primInfo[] =
 	{
 		{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,  D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,  3, 3, 0 },
@@ -3687,7 +3687,7 @@ data.NumQualityLevels = 0;
 					const VertexDecl& vertexDecl = m_vertexDecls[declIdx];
 
 					const uint64_t state = draw.m_flags;
-					ID3D12PipelineState* pso = 
+					ID3D12PipelineState* pso =
 						getPipelineState(state
 							, draw.m_stencil
 							, declIdx
@@ -3997,7 +3997,7 @@ data.NumQualityLevels = 0;
 
 #else
 
-namespace bgfx
+namespace bgfx { namespace d3d12
 {
 	RendererContextI* rendererCreate()
 	{
