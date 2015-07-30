@@ -716,12 +716,12 @@ namespace bgfx
 		{
 			SpirvInstruction instruction;
 			uint32_t size = read(&reader, instruction);
-
 			BX_CHECK(size/4 == instruction.length, "read %d, expected %d, %s"
 					, size/4
 					, instruction.length
 					, getName(instruction.opcode)
 					);
+			BX_UNUSED(size);
 
 			_fn(token * sizeof(uint32_t), instruction, _userData);
 

@@ -588,7 +588,7 @@ namespace bgfx { namespace d3d12
 				if (SUCCEEDED(hr) )
 				{
 					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,      false);
+					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,      true);
 					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING,    false);
 
 					D3D12_INFO_QUEUE_FILTER filter;

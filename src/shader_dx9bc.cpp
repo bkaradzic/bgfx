@@ -682,6 +682,7 @@ namespace bgfx
 		bool pixelShader = (0xffff0000 == (_bc.version & 0xffff0000) );
 		uint32_t versionMajor = (_bc.version>>8)&0xff;
 		uint32_t versionMinor = _bc.version&0xff;
+		BX_UNUSED(pixelShader, versionMajor, versionMinor);
 		BX_TRACE("%s shader %d.%d"
 			, pixelShader ? "pixel" : "vertex"
 			, versionMajor
@@ -709,8 +710,7 @@ namespace bgfx
 		{
 			Dx9bcInstruction instruction;
 			uint32_t size = read(&reader, instruction);
-
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length);
+			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			_fn(token * sizeof(uint32_t), instruction, _userData);
 
@@ -730,7 +730,7 @@ namespace bgfx
 		{
 			Dx9bcInstruction instruction;
 			uint32_t size = read(&reader, instruction);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length);
+			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			_fn(instruction, _userData);
 
