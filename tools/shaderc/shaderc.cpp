@@ -902,7 +902,11 @@ int main(int _argc, const char* _argv[])
 		{
 			preprocessor.addDependency(varyingdef);
 		}
-
+        else
+        {
+            fprintf(stderr, "ERROR: Failed to parse varying def file: \"%s\" No input/output semantics will be generated in the code!\n", varyingdef);
+        }
+        
 		while (NULL != parse
 		   &&  *parse != '\0')
 		{
