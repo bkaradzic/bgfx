@@ -284,7 +284,7 @@ namespace bgfx
 		_subOperand.type        =   Dx9bcOperandType::Enum( ( (token & UINT32_C(0x70000000) ) >> 28)
 														  | ( (token & UINT32_C(0x00001800) ) >>  8) );
 		_subOperand.regIndex    =                             (token & UINT32_C(0x000007ff) );
-		_subOperand.swizzleBits =                           ( (token & UINT32_C(0x00ff0000) ) >> 16);
+		_subOperand.swizzleBits =                      uint8_t( (token & UINT32_C(0x00ff0000) ) >> 16);
 
 		return size;
 	}
@@ -320,10 +320,10 @@ namespace bgfx
 			// Destination Parameter Token
 			// https://msdn.microsoft.com/en-us/library/ff552738.aspx
 
-			_operand.writeMask        =    ( (token & UINT32_C(0x000f0000) ) >> 16);
-			_operand.saturate         = 0 != (token & UINT32_C(0x00100000) );
-			_operand.partialPrecision = 0 != (token & UINT32_C(0x00200000) );
-			_operand.centroid         = 0 != (token & UINT32_C(0x00400000) );
+			_operand.writeMask        = uint8_t( (token & UINT32_C(0x000f0000) ) >> 16);
+			_operand.saturate         =     0 != (token & UINT32_C(0x00100000) );
+			_operand.partialPrecision =     0 != (token & UINT32_C(0x00200000) );
+			_operand.centroid         =     0 != (token & UINT32_C(0x00400000) );
 		}
 		else
 		{
@@ -334,7 +334,7 @@ namespace bgfx
 			_operand.saturate         = false;
 			_operand.partialPrecision = false;
 			_operand.centroid         = false;
-			_operand.swizzleBits      = ( (token & UINT32_C(0x00ff0000) ) >> 16);
+			_operand.swizzleBits      = uint8_t( (token & UINT32_C(0x00ff0000) ) >> 16);
 		}
 
 		if (Dx9bcOperandAddrMode::Relative == _operand.addrMode)

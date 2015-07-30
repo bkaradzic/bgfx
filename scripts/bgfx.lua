@@ -129,6 +129,9 @@ function bgfxProject(_name, _kind, _defines)
 				path.join(BGFX_DIR, "src/renderer_null.cpp"),
 				path.join(BGFX_DIR, "src/renderer_gl.cpp"),
 				path.join(BGFX_DIR, "src/renderer_vk.cpp"),
+				path.join(BGFX_DIR, "src/shader_dx9bc.cpp"),
+				path.join(BGFX_DIR, "src/shader_dxbc.cpp"),
+				path.join(BGFX_DIR, "src/shader_spirv.cpp"),
 				path.join(BGFX_DIR, "src/vertexdecl.cpp"),
 			}
 

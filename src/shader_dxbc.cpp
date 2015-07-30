@@ -1203,9 +1203,9 @@ namespace bgfx
 				//            |   +----------------- y
 				//            +--------------------- z
 
-				_instruction.sampleOffsets[0] = (extBits & UINT32_C(0x00001e00) ) >>  9;
-				_instruction.sampleOffsets[1] = (extBits & UINT32_C(0x0001e000) ) >> 13;
-				_instruction.sampleOffsets[2] = (extBits & UINT32_C(0x001e0000) ) >> 17;
+				_instruction.sampleOffsets[0] = uint8_t( (extBits & UINT32_C(0x00001e00) ) >>  9);
+				_instruction.sampleOffsets[1] = uint8_t( (extBits & UINT32_C(0x0001e000) ) >> 13);
+				_instruction.sampleOffsets[2] = uint8_t( (extBits & UINT32_C(0x001e0000) ) >> 17);
 				break;
 
 			case DxbcInstruction::ExtendedType::ResourceDim:
@@ -1214,8 +1214,8 @@ namespace bgfx
 				// .                          .....
 				//
 
-				_instruction.resourceTarget = DxbcResourceDim::Enum( (extBits & UINT32_C(0x000003e0) ) >>  6);
-				_instruction.resourceStride =                        (extBits & UINT32_C(0x0000f800) ) >> 11;
+				_instruction.resourceTarget = uint8_t( (extBits & UINT32_C(0x000003e0) ) >>  6);
+				_instruction.resourceStride = uint8_t( (extBits & UINT32_C(0x0000f800) ) >> 11);
 				break;
 
 			case DxbcInstruction::ExtendedType::ResourceReturnType:
