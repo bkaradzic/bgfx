@@ -11,6 +11,7 @@ Supported rendering backends:
 
  * Direct3D 9
  * Direct3D 11
+ * Direct3D 12 (WIP)
  * OpenGL 2.1
  * OpenGL 3.1+
  * OpenGL ES 2
@@ -648,7 +649,6 @@ Todo
  - texturec tool with support for all supported texture formats.
  - Multiple vertex streams support.
  - Animated mesh example.
- - Direct3D 12 renderer backend.
  - Metal renderer backend (you can follow progress [here](https://github.com/attilaz/bgfx/tree/metal)).
  - Vulkan renderer backend.
 
