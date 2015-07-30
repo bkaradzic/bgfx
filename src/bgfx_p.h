@@ -140,11 +140,13 @@ namespace bgfx
 #	include <tinystl/string.h>
 #	include <tinystl/unordered_map.h>
 #	include <tinystl/unordered_set.h>
+#	include <tinystl/vector.h>
 namespace stl = tinystl;
 #else
 #	include <string>
 #	include <unordered_map>
 #	include <unordered_set>
+#	include <vector>
 namespace stl
 {
 	using namespace std;
