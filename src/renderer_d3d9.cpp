@@ -291,8 +291,10 @@ namespace bgfx { namespace d3d9
 		{
 		}
 
-		void init()
+		bool init()
 		{
+			uint32_t errorState = 0;
+
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -323,7 +325,14 @@ namespace bgfx { namespace d3d9
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
 			m_d3d9dll = bx::dlopen("d3d9.dll");
-			BGFX_FATAL(NULL != m_d3d9dll, Fatal::UnableToInitialize, "Failed to load d3d9.dll.");
+			BX_WARN(NULL != m_d3d9dll, "Failed to load d3d9.dll.");
+
+			if (NULL == m_d3d9dll)
+			{
+				goto error;
+			}
+
+			errorState = 1;
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
@@ -351,12 +360,25 @@ namespace bgfx { namespace d3d9
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			{
 				Direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9dll, "Direct3DCreate9");
-				BGFX_FATAL(NULL != Direct3DCreate9, Fatal::UnableToInitialize, "Function Direct3DCreate9 not found.");
+				BX_WARN(NULL != Direct3DCreate9, "Function Direct3DCreate9 not found.");
+
+				if (NULL == Direct3DCreate9)
+				{
+					goto error;
+				}
+
 				m_d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
 				m_pool = D3DPOOL_MANAGED;
 			}
 
-			BGFX_FATAL(m_d3d9, Fatal::UnableToInitialize, "Unable to create Direct3D.");
+			BX_WARN(NULL != m_d3d9, "Unable to create Direct3D.");
+
+			if (NULL == m_d3d9)
+			{
+				goto error;
+			}
+
+			errorState = 2;
 
 			m_adapter    = D3DADAPTER_DEFAULT;
 			m_deviceType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
@@ -442,7 +464,14 @@ namespace bgfx { namespace d3d9
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
 			}
 
-			BGFX_FATAL(m_device, Fatal::UnableToInitialize, "Unable to create Direct3D9 device.");
+			BX_WARN(NULL != m_device, "Unable to create Direct3D9 device.");
+
+			if (NULL == m_device)
+			{
+				goto error;
+			}
+
+			errorState = 3;
 
 			m_numWindows = 1;
 
@@ -456,15 +485,23 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(m_device->GetDeviceCaps(&m_caps) );
 
 			// For shit GPUs that can create DX9 device but can't do simple stuff. GTFO!
-			BGFX_FATAL( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) == 0, Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_SQUAREONLY");
-			BGFX_FATAL( (D3DPTEXTURECAPS_MIPMAP & m_caps.TextureCaps) == D3DPTEXTURECAPS_MIPMAP, Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_MIPMAP");
-			BGFX_FATAL( (D3DPTEXTURECAPS_ALPHA & m_caps.TextureCaps) == D3DPTEXTURECAPS_ALPHA, Fatal::MinimumRequiredSpecs, "D3DPTEXTURECAPS_ALPHA");
-			BGFX_FATAL(m_caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(2, 1)
-					  , Fatal::MinimumRequiredSpecs
+			BX_WARN( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) == 0, "D3DPTEXTURECAPS_SQUAREONLY");
+			BX_WARN( (D3DPTEXTURECAPS_MIPMAP     & m_caps.TextureCaps) == D3DPTEXTURECAPS_MIPMAP, "D3DPTEXTURECAPS_MIPMAP");
+			BX_WARN( (D3DPTEXTURECAPS_ALPHA      & m_caps.TextureCaps) == D3DPTEXTURECAPS_ALPHA, "D3DPTEXTURECAPS_ALPHA");
+			BX_WARN(m_caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(2, 1)
 					  , "Shader Model Version (vs: %x, ps: %x)."
 					  , m_caps.VertexShaderVersion
 					  , m_caps.PixelShaderVersion
 					  );
+
+			if ( (D3DPTEXTURECAPS_SQUAREONLY & m_caps.TextureCaps) != 0
+			||   (D3DPTEXTURECAPS_MIPMAP     & m_caps.TextureCaps) != D3DPTEXTURECAPS_MIPMAP
+			||   (D3DPTEXTURECAPS_ALPHA      & m_caps.TextureCaps) != D3DPTEXTURECAPS_ALPHA
+			||   !(m_caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(2, 1) ) )
+			{
+				goto error;
+			}
+
 			BX_TRACE("Max vertex shader 3.0 instr. slots: %d", m_caps.MaxVertexShader30InstructionSlots);
 			BX_TRACE("Max vertex shader constants: %d", m_caps.MaxVertexShaderConst);
 			BX_TRACE("Max fragment shader 2.0 instr. slots: %d", m_caps.PS20Caps.NumInstructionSlots);
@@ -632,6 +669,50 @@ namespace bgfx { namespace d3d9
 			postReset();
 
 			m_initialized = true;
+
+			return true;
+
+		error:
+			switch (errorState)
+			{
+			default:
+
+			case 3:
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
+				if (NULL != m_d3d9ex)
+				{
+					DX_RELEASE(m_deviceEx, 1);
+					DX_RELEASE(m_device, 0);
+				}
+				else
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+				{
+					DX_RELEASE(m_device, 0);
+				}
+
+			case 2:
+#if BGFX_CONFIG_RENDERER_DIRECT3D9EX
+				if (NULL != m_d3d9ex)
+				{
+					DX_RELEASE(m_d3d9, 1);
+					DX_RELEASE(m_d3d9ex, 0);
+				}
+				else
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+				{
+					DX_RELEASE(m_d3d9, 0);
+				}
+
+#if BX_PLATFORM_WINDOWS
+			case 1:
+				bx::dlclose(m_d3d9dll);
+#endif // BX_PLATFORM_WINDOWS
+
+			case 0:
+				break;
+			}
+
+			return false;
 		}
 
 		void shutdown()
@@ -1800,7 +1881,11 @@ namespace bgfx { namespace d3d9
 	RendererContextI* rendererCreate()
 	{
 		s_renderD3D9 = BX_NEW(g_allocator, RendererContextD3D9);
-		s_renderD3D9->init();
+		if (!s_renderD3D9->init() )
+		{
+			BX_DELETE(g_allocator, s_renderD3D9);
+			s_renderD3D9 = NULL;
+		}
 		return s_renderD3D9;
 	}
 

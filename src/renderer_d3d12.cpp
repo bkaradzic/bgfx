@@ -413,36 +413,77 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		void init()
+		~RendererContextD3D12()
 		{
+		}
+
+		bool init()
+		{
+			uint32_t errorState = 0;
+			LUID luid;
+
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
 #if USE_D3D12_DYNAMIC_LIB
 			m_d3d12dll = bx::dlopen("d3d12.dll");
-			BGFX_FATAL(NULL != m_d3d12dll, Fatal::UnableToInitialize, "Failed to load d3d12.dll.");
+			BX_WARN(NULL != m_d3d12dll, "Failed to load d3d12.dll.");
+			if (NULL == m_d3d12dll)
+			{
+				goto error;
+			}
+
+			errorState = 1;
 
 			D3D12CreateDevice = (PFN_D3D12_CREATE_DEVICE)bx::dlsym(m_d3d12dll, "D3D12CreateDevice");
-			BGFX_FATAL(NULL != D3D12CreateDevice, Fatal::UnableToInitialize, "Function D3D12CreateDevice not found.");
+			BX_WARN(NULL != D3D12CreateDevice, "Function D3D12CreateDevice not found.");
 
 			D3D12GetDebugInterface = (PFN_D3D12_GET_DEBUG_INTERFACE)bx::dlsym(m_d3d12dll, "D3D12GetDebugInterface");
-			BGFX_FATAL(NULL != D3D12GetDebugInterface, Fatal::UnableToInitialize, "Function D3D12GetDebugInterface not found.");
+			BX_WARN(NULL != D3D12GetDebugInterface, "Function D3D12GetDebugInterface not found.");
 
 			D3D12SerializeRootSignature = (PFN_D3D12_SERIALIZE_ROOT_SIGNATURE)bx::dlsym(m_d3d12dll, "D3D12SerializeRootSignature");
-			BGFX_FATAL(NULL != D3D12SerializeRootSignature, Fatal::UnableToInitialize, "Function D3D12SerializeRootSignature not found.");
+			BX_WARN(NULL != D3D12SerializeRootSignature, "Function D3D12SerializeRootSignature not found.");
+
+			if (NULL == D3D12CreateDevice
+			||  NULL == D3D12GetDebugInterface
+			||  NULL == D3D12SerializeRootSignature)
+			{
+				goto error;
+			}
 
 			m_dxgidll = bx::dlopen("dxgi.dll");
-			BGFX_FATAL(NULL != m_dxgidll, Fatal::UnableToInitialize, "Failed to load dxgi.dll.");
+			BX_WARN(NULL != m_dxgidll, "Failed to load dxgi.dll.");
+
+			if (NULL == m_dxgidll)
+			{
+				goto error;
+			}
+
+			errorState = 2;
 
 			CreateDXGIFactory1 = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory1");
-			BGFX_FATAL(NULL != CreateDXGIFactory1, Fatal::UnableToInitialize, "Function CreateDXGIFactory1 not found.");
+			BX_WARN(NULL != CreateDXGIFactory1, "Function CreateDXGIFactory1 not found.");
+
+			if (NULL == CreateDXGIFactory1)
+			{
+				goto error;
+			}
+#else
+			errorState = 2;
 #endif // USE_D3D12_DYNAMIC_LIB
 
 			HRESULT hr;
 
 			hr = CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&m_factory);
-			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create DXGI factory.");
+			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
+
+			if (FAILED(hr) )
+			{
+				goto error;
+			}
+
+			errorState = 3;
 
 			m_adapter = NULL;
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
@@ -511,15 +552,22 @@ namespace bgfx { namespace d3d12
 					, __uuidof(ID3D12Device)
 					, (void**)&m_device
 					);
-			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D12 device.");
+			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 
 			if (NULL != m_adapter)
 			{
 				DX_RELEASE(m_adapter, 2);
 			}
 
+			if (FAILED(hr) )
+			{
+				goto error;
+			}
+
+			errorState = 4;
+
 			memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
-			LUID luid = m_device->GetAdapterLuid();
+			luid = m_device->GetAdapterLuid();
 			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, &adapter); ++ii)
 			{
 				adapter->GetDesc(&m_adapterDesc);
@@ -569,206 +617,235 @@ namespace bgfx { namespace d3d12
 					, &m_scd
 					, &m_swapChain
 					);
-			BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
-			m_resolution.m_width  = BGFX_DEFAULT_WIDTH;
-			m_resolution.m_height = BGFX_DEFAULT_HEIGHT;
-
-			DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
-					, 0
-					| DXGI_MWA_NO_WINDOW_CHANGES
-					| DXGI_MWA_NO_ALT_ENTER
-					) );
-
-			m_numWindows = 1;
-
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
+			if (FAILED(hr) )
 			{
-				hr = m_device->QueryInterface(__uuidof(ID3D12InfoQueue), (void**)&m_infoQueue);
+				goto error;
+			}
 
-				if (SUCCEEDED(hr) )
+			{
+				m_resolution.m_width  = BGFX_DEFAULT_WIDTH;
+				m_resolution.m_height = BGFX_DEFAULT_HEIGHT;
+
+				DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
+						, 0
+						| DXGI_MWA_NO_WINDOW_CHANGES
+						| DXGI_MWA_NO_ALT_ENTER
+						) );
+
+				m_numWindows = 1;
+
+				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
-					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,      true);
-					m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING,    false);
+					hr = m_device->QueryInterface(__uuidof(ID3D12InfoQueue), (void**)&m_infoQueue);
 
-					D3D12_INFO_QUEUE_FILTER filter;
-					memset(&filter, 0, sizeof(filter) );
-
-					D3D12_MESSAGE_CATEGORY catlist[] =
-					{
-						D3D12_MESSAGE_CATEGORY_STATE_SETTING,
-						D3D12_MESSAGE_CATEGORY_EXECUTION,
-					};
-					filter.DenyList.NumCategories = BX_COUNTOF(catlist);
-					filter.DenyList.pCategoryList = catlist;
-					m_infoQueue->PushStorageFilter(&filter);
-
-					DX_RELEASE(m_infoQueue, 19);
-				}
-			}
-
-			D3D12_DESCRIPTOR_HEAP_DESC rtvDescHeap;
-			rtvDescHeap.NumDescriptors = 0
-					+ BX_COUNTOF(m_backBufferColor)
-					+ BGFX_CONFIG_MAX_FRAME_BUFFERS*BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
-					;
-			rtvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-			rtvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-			rtvDescHeap.NodeMask = 0;
-			DX_CHECK(m_device->CreateDescriptorHeap(&rtvDescHeap
-					, __uuidof(ID3D12DescriptorHeap)
-					, (void**)&m_rtvDescriptorHeap
-					) );
-
-			D3D12_DESCRIPTOR_HEAP_DESC dsvDescHeap;
-			dsvDescHeap.NumDescriptors = 0
-					+ 1 // reserved for depth backbuffer.
-					+ BGFX_CONFIG_MAX_FRAME_BUFFERS
-					;
-			dsvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-			dsvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-			dsvDescHeap.NodeMask = 0;
-			DX_CHECK(m_device->CreateDescriptorHeap(&dsvDescHeap
-					, __uuidof(ID3D12DescriptorHeap)
-					, (void**)&m_dsvDescriptorHeap
-					) );
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
-			{
-				m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_DRAW_CALLS*1024
-						, BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
-						);
-			}
-			m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-					, 1024
-					, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
-					);
-
-			D3D12_DESCRIPTOR_RANGE descRange[] =
-			{
-				{ D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
-				{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV,     BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
-				{ D3D12_DESCRIPTOR_RANGE_TYPE_CBV,     1,                                0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
-				{ D3D12_DESCRIPTOR_RANGE_TYPE_UAV,     BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
-			};
-			BX_STATIC_ASSERT(BX_COUNTOF(descRange) == Rdt::Count);
-
-			D3D12_ROOT_PARAMETER rootParameter[] =
-			{
-				{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::Sampler] }, D3D12_SHADER_VISIBILITY_ALL    },
-				{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::SRV]     }, D3D12_SHADER_VISIBILITY_ALL    },
-				{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::CBV]     }, D3D12_SHADER_VISIBILITY_ALL    },
-//				{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL    },
-				{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::UAV]     }, D3D12_SHADER_VISIBILITY_ALL    },
-			};
-// 			rootParameter[Rdt::CBV].Constants.ShaderRegister = 0;
-// 			rootParameter[Rdt::CBV].Constants.RegisterSpace  = 100;
-// 			rootParameter[Rdt::CBV].Constants.Num32BitValues = 0;
-
-			D3D12_ROOT_SIGNATURE_DESC descRootSignature;
-			descRootSignature.NumParameters = BX_COUNTOF(rootParameter);
-			descRootSignature.pParameters   = rootParameter;
-			descRootSignature.NumStaticSamplers = 0;
-			descRootSignature.pStaticSamplers   = NULL;
-			descRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-			ID3DBlob* outBlob;
-			ID3DBlob* errorBlob;
-			DX_CHECK(D3D12SerializeRootSignature(&descRootSignature
-					, D3D_ROOT_SIGNATURE_VERSION_1
-					, &outBlob
-					, &errorBlob
-					) );
-
-			DX_CHECK(m_device->CreateRootSignature(0
-					, outBlob->GetBufferPointer()
-					, outBlob->GetBufferSize()
-					, __uuidof(ID3D12RootSignature)
-					, (void**)&m_rootSignature
-					) );
-
-			UniformHandle handle = BGFX_INVALID_HANDLE;
-			for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
-			{
-				m_uniformReg.add(handle, getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
-			}
-
-			g_caps.supported |= ( 0
-								| BGFX_CAPS_TEXTURE_3D
-								| BGFX_CAPS_TEXTURE_COMPARE_ALL
-								| BGFX_CAPS_INSTANCING
-								| BGFX_CAPS_VERTEX_ATTRIB_HALF
-								| BGFX_CAPS_FRAGMENT_DEPTH
-								| BGFX_CAPS_BLEND_INDEPENDENT
-								| BGFX_CAPS_COMPUTE
-								| BGFX_CAPS_FRAGMENT_ORDERING
-//								| BGFX_CAPS_SWAP_CHAIN
-								);
-			g_caps.maxTextureSize   = 16384;
-			g_caps.maxFBAttachments = bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-
-			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
-			{
-				uint8_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
-
-				const DXGI_FORMAT fmt = isDepth(TextureFormat::Enum(ii) )
-					? s_textureFormat[ii].m_fmtDsv
-					: s_textureFormat[ii].m_fmt
-					;
-
-				if (DXGI_FORMAT_UNKNOWN != fmt)
-				{
-					D3D12_FEATURE_DATA_FORMAT_SUPPORT data;
-					data.Format = fmt;
-					hr = m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
 					if (SUCCEEDED(hr) )
 					{
-						support |= 0 != (data.Support1 & (0
-								| D3D12_FORMAT_SUPPORT1_TEXTURE2D
-								| D3D12_FORMAT_SUPPORT1_TEXTURE3D
-								| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
-								) )
-								? BGFX_CAPS_FORMAT_TEXTURE_COLOR
-								: BGFX_CAPS_FORMAT_TEXTURE_NONE
-								;
+						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,      true);
+						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING,    false);
 
-						support |= 0 != (data.Support1 & (0
-								| D3D12_FORMAT_SUPPORT1_BUFFER
-								| D3D12_FORMAT_SUPPORT1_IA_VERTEX_BUFFER
-								| D3D12_FORMAT_SUPPORT1_IA_INDEX_BUFFER
-								) )
-								? BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-								: BGFX_CAPS_FORMAT_TEXTURE_NONE
-								;
+						D3D12_INFO_QUEUE_FILTER filter;
+						memset(&filter, 0, sizeof(filter) );
 
-						support |= 0 != (data.Support1 & (0
-								| D3D12_FORMAT_SUPPORT1_SHADER_LOAD
-								) )
-								? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
-								: BGFX_CAPS_FORMAT_TEXTURE_NONE
-								;
+						D3D12_MESSAGE_CATEGORY catlist[] =
+						{
+							D3D12_MESSAGE_CATEGORY_STATE_SETTING,
+							D3D12_MESSAGE_CATEGORY_EXECUTION,
+						};
+						filter.DenyList.NumCategories = BX_COUNTOF(catlist);
+						filter.DenyList.pCategoryList = catlist;
+						m_infoQueue->PushStorageFilter(&filter);
 
-						support |= 0 != (data.Support1 & (0
-								| D3D12_FORMAT_SUPPORT1_RENDER_TARGET
-								| D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL
-								) )
-								? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-								: BGFX_CAPS_FORMAT_TEXTURE_NONE
-								;
-					}
-					else
-					{
-						BX_TRACE("CheckFeatureSupport failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii) ) );
+						DX_RELEASE(m_infoQueue, 19);
 					}
 				}
 
-				g_caps.formats[ii] = support;
+				D3D12_DESCRIPTOR_HEAP_DESC rtvDescHeap;
+				rtvDescHeap.NumDescriptors = 0
+						+ BX_COUNTOF(m_backBufferColor)
+						+ BGFX_CONFIG_MAX_FRAME_BUFFERS*BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+						;
+				rtvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+				rtvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+				rtvDescHeap.NodeMask = 0;
+				DX_CHECK(m_device->CreateDescriptorHeap(&rtvDescHeap
+						, __uuidof(ID3D12DescriptorHeap)
+						, (void**)&m_rtvDescriptorHeap
+						) );
+
+				D3D12_DESCRIPTOR_HEAP_DESC dsvDescHeap;
+				dsvDescHeap.NumDescriptors = 0
+						+ 1 // reserved for depth backbuffer.
+						+ BGFX_CONFIG_MAX_FRAME_BUFFERS
+						;
+				dsvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+				dsvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+				dsvDescHeap.NodeMask = 0;
+				DX_CHECK(m_device->CreateDescriptorHeap(&dsvDescHeap
+						, __uuidof(ID3D12DescriptorHeap)
+						, (void**)&m_dsvDescriptorHeap
+						) );
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
+				{
+					m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_DRAW_CALLS*1024
+							, BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
+							);
+				}
+				m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
+						, 1024
+						, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
+						);
+
+				D3D12_DESCRIPTOR_RANGE descRange[] =
+				{
+					{ D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+					{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV,     BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+					{ D3D12_DESCRIPTOR_RANGE_TYPE_CBV,     1,                                0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+					{ D3D12_DESCRIPTOR_RANGE_TYPE_UAV,     BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+				};
+				BX_STATIC_ASSERT(BX_COUNTOF(descRange) == Rdt::Count);
+
+				D3D12_ROOT_PARAMETER rootParameter[] =
+				{
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::Sampler] }, D3D12_SHADER_VISIBILITY_ALL    },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::SRV]     }, D3D12_SHADER_VISIBILITY_ALL    },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::CBV]     }, D3D12_SHADER_VISIBILITY_ALL    },
+	//				{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL    },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::UAV]     }, D3D12_SHADER_VISIBILITY_ALL    },
+				};
+	// 			rootParameter[Rdt::CBV].Constants.ShaderRegister = 0;
+	// 			rootParameter[Rdt::CBV].Constants.RegisterSpace  = 100;
+	// 			rootParameter[Rdt::CBV].Constants.Num32BitValues = 0;
+
+				D3D12_ROOT_SIGNATURE_DESC descRootSignature;
+				descRootSignature.NumParameters = BX_COUNTOF(rootParameter);
+				descRootSignature.pParameters   = rootParameter;
+				descRootSignature.NumStaticSamplers = 0;
+				descRootSignature.pStaticSamplers   = NULL;
+				descRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+				ID3DBlob* outBlob;
+				ID3DBlob* errorBlob;
+				DX_CHECK(D3D12SerializeRootSignature(&descRootSignature
+						, D3D_ROOT_SIGNATURE_VERSION_1
+						, &outBlob
+						, &errorBlob
+						) );
+
+				DX_CHECK(m_device->CreateRootSignature(0
+						, outBlob->GetBufferPointer()
+						, outBlob->GetBufferSize()
+						, __uuidof(ID3D12RootSignature)
+						, (void**)&m_rootSignature
+						) );
+
+				UniformHandle handle = BGFX_INVALID_HANDLE;
+				for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
+				{
+					m_uniformReg.add(handle, getPredefinedUniformName(PredefinedUniform::Enum(ii) ), &m_predefinedUniforms[ii]);
+				}
+
+				g_caps.supported |= ( 0
+									| BGFX_CAPS_TEXTURE_3D
+									| BGFX_CAPS_TEXTURE_COMPARE_ALL
+									| BGFX_CAPS_INSTANCING
+									| BGFX_CAPS_VERTEX_ATTRIB_HALF
+									| BGFX_CAPS_FRAGMENT_DEPTH
+									| BGFX_CAPS_BLEND_INDEPENDENT
+									| BGFX_CAPS_COMPUTE
+									| BGFX_CAPS_FRAGMENT_ORDERING
+	//								| BGFX_CAPS_SWAP_CHAIN
+									);
+				g_caps.maxTextureSize   = 16384;
+				g_caps.maxFBAttachments = bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+
+				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+				{
+					uint8_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
+					const DXGI_FORMAT fmt = isDepth(TextureFormat::Enum(ii) )
+						? s_textureFormat[ii].m_fmtDsv
+						: s_textureFormat[ii].m_fmt
+						;
+
+					if (DXGI_FORMAT_UNKNOWN != fmt)
+					{
+						D3D12_FEATURE_DATA_FORMAT_SUPPORT data;
+						data.Format = fmt;
+						hr = m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
+						if (SUCCEEDED(hr) )
+						{
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_TEXTURE2D
+									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
+									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_BUFFER
+									| D3D12_FORMAT_SUPPORT1_IA_VERTEX_BUFFER
+									| D3D12_FORMAT_SUPPORT1_IA_INDEX_BUFFER
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_VERTEX
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_SHADER_LOAD
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_RENDER_TARGET
+									| D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+						}
+						else
+						{
+							BX_TRACE("CheckFeatureSupport failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii) ) );
+						}
+					}
+
+					g_caps.formats[ii] = support;
+				}
+
+				postReset();
+			}
+			return true;
+
+		error:
+			switch (errorState)
+			{
+			default:
+			case 4:
+				m_cmd.shutdown();
+				DX_RELEASE(m_device, 0);
+			case 3:
+				DX_RELEASE(m_factory, 0);
+#if USE_D3D12_DYNAMIC_LIB
+			case 2:
+				bx::dlclose(m_dxgidll);
+			case 1:
+				bx::dlclose(m_d3d12dll);
+#endif // USE_D3D12_DYNAMIC_LIB
+			case 0:
+				break;
 			}
 
-			postReset();
+			return false;
 		}
 
-		~RendererContextD3D12()
+		void shutdown()
 		{
 			preReset();
 
@@ -811,6 +888,7 @@ namespace bgfx { namespace d3d12
 			m_cmd.shutdown();
 
 			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_factory, 0);
 
 #if USE_D3D12_DYNAMIC_LIB
 			bx::dlclose(m_d3d12dll);
@@ -2188,12 +2266,17 @@ data.NumQualityLevels = 0;
 	RendererContextI* rendererCreate()
 	{
 		s_renderD3D12 = BX_NEW(g_allocator, RendererContextD3D12);
-		s_renderD3D12->init();
+		if (!s_renderD3D12->init() )
+		{
+			BX_DELETE(g_allocator, s_renderD3D12);
+			s_renderD3D12 = NULL;
+		}
 		return s_renderD3D12;
 	}
 
 	void rendererDestroy()
 	{
+		s_renderD3D12->shutdown();
 		BX_DELETE(g_allocator, s_renderD3D12);
 		s_renderD3D12 = NULL;
 	}
