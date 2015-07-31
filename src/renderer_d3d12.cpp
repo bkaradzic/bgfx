@@ -571,6 +571,7 @@ namespace bgfx { namespace d3d12
 			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, &adapter); ++ii)
 			{
 				adapter->GetDesc(&m_adapterDesc);
+				DX_RELEASE(adapter, 0);
 				if (m_adapterDesc.AdapterLuid.LowPart  == luid.LowPart
 				&&  m_adapterDesc.AdapterLuid.HighPart == luid.HighPart)
 				{
