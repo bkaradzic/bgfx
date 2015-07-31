@@ -808,7 +808,9 @@ Daniel Collin ([@emoon](https://github.com/emoon)) - Port of Ocornut's ImGui
   to bgfx.  
 Andre Weissflog ([@floooh](https://github.com/floooh)) - Alternative build
 system fips.  
-Andrew Johnson  ([@ajohnson23](https://github.com/ajohnson23)) - TeamCity build.
+Andrew Johnson  ([@ajohnson23](https://github.com/ajohnson23)) - TeamCity build.  
+Tony McCrary ([@enleeten](https://github.com/enleeten)] - Java language API
+bindings
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------
