@@ -70,48 +70,62 @@ struct CaptureOptions
 
 	// Whether or not to allow the application to enable vsync
 	//
-	// Enabled - allows the application to enable or disable vsync at will
-	// Disabled - vsync is force disabled
+	// 1 - allows the application to enable or disable vsync at will
+	// 0 - vsync is force disabled
 	uint32_t AllowVSync;
 	
 	// Whether or not to allow the application to enable fullscreen
 	//
-	// Enabled - allows the application to enable or disable fullscreen at will
-	// Disabled - fullscreen is force disabled
+	// 1 - allows the application to enable or disable fullscreen at will
+	// 0 - fullscreen is force disabled
 	uint32_t AllowFullscreen;
 
-	// Enables in-built API debugging features and records the results into the
-	// capture logfile, which is matched up with events on replay
+	// 1 - in-built API debugging features and records the results into the
+	//     capture logfile, which is matched up with events on replay
+	// 0 - no API debugging is enabled
 	uint32_t DebugDeviceMode;
 
-	// Captures callstacks for every API event during capture
+	// 1 - Captures callstacks for every API event during capture
+	// 0 - no callstacks are captured
 	uint32_t CaptureCallstacks;
 
-	// Only captures callstacks for drawcall type API events.
-	// Ignored if CaptureCallstacks is disabled
+	// 1 - Only captures callstacks for drawcall type API events.
+	//     Ignored if CaptureCallstacks is disabled
+	// 0 - Callstacks, if enabled, are captured for every event.
 	uint32_t CaptureCallstacksOnlyDraws;
 
 	// Specify a delay in seconds to wait for a debugger to attach after
 	// creating or injecting into a process, before continuing to allow it to run.
+	// 0 indicates no delay, and the process will run immediately after injection
 	uint32_t DelayForDebugger;
 
-	// Verify any writes to mapped buffers, to check that they don't overwrite the
-	// bounds of the pointer returned.
+	// 1 - Verify any writes to mapped buffers, to check that they don't overwrite the
+	//     bounds of the pointer returned.
+	// 0 - No verification is performed, and overwriting bounds may cause crashes or
+	//     corruption in RenderDoc
 	uint32_t VerifyMapWrites;
 
-	// Hooks any system API events that create child processes, and injects
-	// renderdoc into them recursively with the same options.
+	// 1 - Hooks any system API events that create child processes, and injects
+	//     renderdoc into them recursively with the same options.
+	// 0 - Child processes are not hooked by RenderDoc
 	uint32_t HookIntoChildren;
 
 	// By default renderdoc only includes resources in the final logfile necessary
 	// for that frame, this allows you to override that behaviour
 	//
-	// Enabled - all live resources at the time of capture are included in the log
-	//           and available for inspection
-	// Disabled - only the resources referenced by the captured frame are included
+	// 1 - all live resources at the time of capture are included in the log
+	//     and available for inspection
+	// 0 - only the resources referenced by the captured frame are included
 	uint32_t RefAllResources;
 
-	// By default renderdoc skips saving initial states for
+	// By default renderdoc skips saving initial states for resources where the
+	// previous contents don't appear to be used, assuming that writes before
+	// reads indicate previous contents aren't used.
+	//
+	// 1 - initial contents at the start of each captured frame are saved, even if
+	//     they are later overwritten or cleared before being used.
+	// 0 - unless a read is detected, initial contents will not be saved and will
+	//     appear as black or empty data.
 	uint32_t SaveAllInitials;
 
 	// In APIs that allow for the recording of command lists to be replayed later,
@@ -120,9 +134,14 @@ struct CaptureOptions
 	// and replayed many times will not be available and may cause a failure to
 	// capture.
 	//
-	// Enabled - All command lists are captured from the start of the application
-	// Disabled - Command lists are only captured if their recording begins during
-	//            the period when a frame capture is in progress.
+	// Note this is typically only true for APIs where multithreading is difficult
+	// or discouraged. Newer APIs like Vulkan and D3D12 will ignore this option and
+	// always capture all command lists since the API is heavily oriented around it,
+	// and the overheads have been reduced by API design.
+	//
+	// 1 - All command lists are captured from the start of the application
+	// 0 - Command lists are only captured if their recording begins during
+	//     the period when a frame capture is in progress.
 	uint32_t CaptureAllCmdLists;
 };
 
@@ -176,9 +195,20 @@ enum InAppOverlay
 	eOverlay_CaptureList = 0x8,
 
 	eOverlay_Default = (eOverlay_Enabled|eOverlay_FrameRate|eOverlay_FrameNumber|eOverlay_CaptureList),
-	eOverlay_All = INT32_MAX,
+	eOverlay_All = ~0U,
 	eOverlay_None = 0,
 };
+
+////////////////////////////////////////////////
+//          !!!! IMPORTANT NOTE !!!!          //
+//                                            //
+// This API is pretty much experimental and   //
+// still in flux. The only thing guaranteed   //
+// to remain compatible is a call to          //
+// RENDERDOC_GetAPIVersion which must exactly //
+// match the version you expect.              //
+// It will be bumped on breaking changes.     //
+////////////////////////////////////////////////
 
 // API breaking change history:
 // Version 1 -> 2 - strings changed from wchar_t* to char* (UTF-8)
@@ -205,17 +235,35 @@ typedef void (RENDERDOC_CC *pRENDERDOC_SetLogFile)(const char *logfile);
 extern "C" RENDERDOC_API const char* RENDERDOC_CC RENDERDOC_GetLogFile();
 typedef const char* (RENDERDOC_CC *pRENDERDOC_GetLogFile)();
 
+extern "C" RENDERDOC_API uint32_t RENDERDOC_CC RENDERDOC_GetNumCaptures();
+typedef uint32_t (RENDERDOC_CC *pRENDERDOC_GetNumCaptures)();
+
 extern "C" RENDERDOC_API uint32_t RENDERDOC_CC RENDERDOC_GetCapture(uint32_t idx, char *logfile, uint32_t *pathlength, uint64_t *timestamp);
 typedef uint32_t (RENDERDOC_CC *pRENDERDOC_GetCapture)(uint32_t idx, char *logfile, uint32_t *pathlength, uint64_t *timestamp);
 
 extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_SetCaptureOptions(const CaptureOptions *opts);
 typedef void (RENDERDOC_CC *pRENDERDOC_SetCaptureOptions)(const CaptureOptions *opts);
 
+extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_TriggerCapture();
+typedef void (RENDERDOC_CC *pRENDERDOC_TriggerCapture)();
+
+// In the below functions 'device pointer' corresponds to the API specific handle, e.g.
+// ID3D11Device, or the GL context pointer.
+// The 'window handle' is the OS's native window handle (HWND or GLXDrawable).
+
+// This must match precisely to a pair, and it sets the RenderDoc in-app overlay to select that
+// window as 'active' and respond to keypresses.
 extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_SetActiveWindow(void *device, void *wndHandle);
 typedef void (RENDERDOC_CC *pRENDERDOC_SetActiveWindow)(void *device, void *wndHandle);
 
-extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_TriggerCapture();
-typedef void (RENDERDOC_CC *pRENDERDOC_TriggerCapture)();
+// Either parameter can be NULL to wild-card match, such that you can capture from any
+// device to a particular window, or a particular device to any window.
+// In either case, if there are two or more possible matching (device,window) pairs it
+// is undefined which one will be captured.
+// You can pass (NULL, NULL) if you know you only have one device and one window, and
+// it will match. Likewise if you have not created a window at all (only off-screen
+// rendering), then NULL window pointer will capture, whether you pass a NULL device
+// or specify a device among multiple.
 
 extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_StartFrameCapture(void *device, void *wndHandle);
 typedef void (RENDERDOC_CC *pRENDERDOC_StartFrameCapture)(void *device, void *wndHandle);
@@ -237,6 +285,12 @@ typedef void (RENDERDOC_CC *pRENDERDOC_SetCaptureKeys)(KeyButton *keys, int num)
 
 extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_InitRemoteAccess(uint32_t *ident);
 typedef void (RENDERDOC_CC *pRENDERDOC_InitRemoteAccess)(uint32_t *ident);
+
+extern "C" RENDERDOC_API uint32_t RENDERDOC_CC RENDERDOC_IsRemoteAccessConnected();
+typedef uint32_t (RENDERDOC_CC *pRENDERDOC_IsRemoteAccessConnected)();
+
+extern "C" RENDERDOC_API uint32_t RENDERDOC_CC RENDERDOC_LaunchReplayUI(uint32_t connectRemoteAccess, const char *cmdline);
+typedef uint32_t (RENDERDOC_CC *pRENDERDOC_LaunchReplayUI)(uint32_t connectRemoteAccess, const char *cmdline);
 
 extern "C" RENDERDOC_API void RENDERDOC_CC RENDERDOC_UnloadCrashHandler();
 typedef void (RENDERDOC_CC *pRENDERDOC_UnloadCrashHandler)();

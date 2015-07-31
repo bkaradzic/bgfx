@@ -200,7 +200,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewRect(0, 0, 0, width, height);
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		// Set view and projection matrix for view 0.
 		for (uint32_t ii = 1; ii < MAX_WINDOWS; ++ii)
@@ -267,9 +267,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);
 
-				// Set vertex and fragment shaders.
-				bgfx::setProgram(program);
-
 				// Set vertex and index buffer.
 				bgfx::setVertexBuffer(vbh);
 				bgfx::setIndexBuffer(ibh);
@@ -277,8 +274,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				// Set render states.
 				bgfx::setState(BGFX_STATE_DEFAULT);
 
-				// Submit primitive for rendering to view 0.
-				bgfx::submit(count%MAX_WINDOWS);
+				// Submit primitive for rendering.
+				bgfx::submit(count%MAX_WINDOWS, program);
 				++count;
 			}
 		}

@@ -176,7 +176,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -201,7 +201,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup a top-left ortho matrix for screen space drawing.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float proj[16];
 			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);

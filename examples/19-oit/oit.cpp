@@ -380,11 +380,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						| BGFX_STATE_MSAA
 						;
 
+					bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
 					switch (mode)
 					{
 						case 0:
 							// Set vertex and fragment shaders.
-							bgfx::setProgram(blend);
+							program = blend;
 
 							// Set render states.
 							bgfx::setState(state
@@ -394,7 +395,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 						case 1:
 							// Set vertex and fragment shaders.
-							bgfx::setProgram(wbSeparatePass);
+							program = wbSeparatePass;
 
 							// Set render states.
 							bgfx::setState(state
@@ -404,7 +405,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 						default:
 							// Set vertex and fragment shaders.
-							bgfx::setProgram(wbPass);
+							program = wbPass;
 
 							// Set render states.
 							bgfx::setState(state
@@ -417,7 +418,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					}
 
 					// Submit primitive for rendering to view 0.
-					bgfx::submit(0);
+					bgfx::submit(0, program);
 				}
 			}
 		}
@@ -426,13 +427,14 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			bgfx::setTexture(0, s_texColor0, fbtextures[0]);
 			bgfx::setTexture(1, s_texColor1, fbtextures[1]);
-			bgfx::setProgram(1 == mode ? wbSeparateBlit : wbBlit);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_SRC_ALPHA, BGFX_STATE_BLEND_SRC_ALPHA)
 				);
 			screenSpaceQuad( (float)width, (float)height, s_flipV);
-			bgfx::submit(1);
+			bgfx::submit(1
+				, 1 == mode ? wbSeparateBlit : wbBlit
+				);
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to

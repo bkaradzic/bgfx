@@ -5,13 +5,13 @@ uniform mediump float _EmberFadeStart;
 varying mediump vec2 xlv_TEXCOORD0;
 void main ()
 {
-  mediump float x_1;
-  x_1 = ((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd));
-  lowp float tmpvar_2;
-  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  lowp float tmpvar_1;
+  mediump float tmpvar_2;
+  tmpvar_2 = clamp (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)), 0.0, 1.0);
+  tmpvar_1 = tmpvar_2;
   lowp vec4 tmpvar_3;
   tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = mix (texture2D (_MainTex, xlv_TEXCOORD0).xyz, texture2D (_BurntTex, xlv_TEXCOORD0).xyz, vec3(tmpvar_2));
+  tmpvar_3.xyz = mix (texture2D (_MainTex, xlv_TEXCOORD0).xyz, texture2D (_BurntTex, xlv_TEXCOORD0).xyz, vec3(tmpvar_1));
   gl_FragColor = tmpvar_3;
 }
 

@@ -24,6 +24,8 @@
 #include "LexerBase.h"
 #include "LexerNoExceptions.h"
 
+#include "Platform.h"
+
 #ifdef SCI_NAMESPACE
 using namespace Scintilla;
 #endif

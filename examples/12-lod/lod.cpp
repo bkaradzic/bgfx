@@ -143,7 +143,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -163,7 +163,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float view[16];
 			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);

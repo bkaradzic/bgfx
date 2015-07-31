@@ -36,7 +36,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -50,7 +50,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/00-helloworld");
 		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Initialization and debug text.");
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}

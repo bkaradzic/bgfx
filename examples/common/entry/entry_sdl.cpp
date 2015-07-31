@@ -644,7 +644,7 @@ namespace entry
 									Msg* msg = (Msg*)uev.data2;
 									if (isValid(handle) )
 									{
-										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
+										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str() );
 									}
 									delete msg;
 								}

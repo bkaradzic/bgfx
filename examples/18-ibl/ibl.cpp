@@ -434,8 +434,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_flags[1] = float(settings.m_specular);
 		s_uniforms.m_flags[2] = float(settings.m_diffuseIbl);
 		s_uniforms.m_flags[3] = float(settings.m_specularIbl);
-		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float));
-		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float));
+		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float) );
+		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float) );
 
 		s_uniforms.submitPerFrameUniforms();
 
@@ -480,11 +480,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// View 0.
 		bgfx::setTexture(0, s_texCube, lightProbes[currentLightProbe].m_tex);
-		bgfx::setProgram(programSky);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, true);
 		s_uniforms.submitPerDrawUniforms();
-		bgfx::submit(0);
+		bgfx::submit(0, programSky);
 
 		// View 1.
 		float mtx[16];

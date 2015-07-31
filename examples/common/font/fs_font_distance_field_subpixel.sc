@@ -2,7 +2,7 @@ $input v_color0, v_texcoord0
 
 #include "../../common/common.sh"
 
-SAMPLERCUBE(u_texColor, 0);
+SAMPLERCUBE(s_texColor, 0);
 
 void main()
 {
@@ -13,8 +13,8 @@ void main()
 	vec3 sampleLeft = v_texcoord0.xyz - decal;
 	vec3 sampleRight = v_texcoord0.xyz + decal;
 
-	float left_dist = textureCube(u_texColor, sampleLeft).zyxw[index];
-	float right_dist = textureCube(u_texColor, sampleRight).zyxw[index];
+	float left_dist  = textureCube(s_texColor, sampleLeft).zyxw[index];
+	float right_dist = textureCube(s_texColor, sampleRight).zyxw[index];
 
 	float dist = 0.5 * (left_dist + right_dist);
 

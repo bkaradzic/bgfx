@@ -270,7 +270,7 @@ vec2  mod(vec2  _a, vec2  _b) { return _a - _b * floor(_a / _b); }
 vec3  mod(vec3  _a, vec3  _b) { return _a - _b * floor(_a / _b); }
 vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 
-#elif BGFX_SHADER_LANGUAGE_GLSL
+#else
 #	define atan2(_x, _y) atan(_x, _y)
 #	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
@@ -301,7 +301,7 @@ float rcp(float _a) { return 1.0/_a; }
 vec2  rcp(vec2  _a) { return vec2(1.0)/_a; }
 vec3  rcp(vec3  _a) { return vec3(1.0)/_a; }
 vec4  rcp(vec4  _a) { return vec4(1.0)/_a; }
-#endif // BGFX_SHADER_LANGUAGE_HLSL
+#endif // BGFX_SHADER_LANGUAGE_*
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;

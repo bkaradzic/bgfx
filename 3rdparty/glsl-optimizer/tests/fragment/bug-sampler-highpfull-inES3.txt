@@ -1,0 +1,118 @@
+#version 300 es
+
+// There was a bug where due to xll_tex2Dlod sampling of a _CameraDepthTexture (that is a highp sampler)
+// was producing a missing cast between half4 and float4 on Metal output.
+// Shader is part of Unity's camera motion blur shader.
+
+vec4 xll_tex2Dlod(sampler2D s, vec4 coord) { return textureLod( s, coord.xy, coord.w); }
+struct v2f {
+    highp vec4 pos;
+    highp vec2 uv;
+};
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp vec4 _ProjectionParams;
+uniform highp vec4 _ScreenParams;
+uniform highp vec4 _ZBufferParams;
+uniform highp vec4 _WorldSpaceLightPos0;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp float _MaxRadiusOrKInPaper;
+const highp int SmallDiscKernelSamples = 12;
+const highp vec2[12] SmallDiscKernel = vec2[12]( vec2( -0.326212, -0.40581), vec2( -0.840144, -0.07358), vec2( -0.695914, 0.457137), vec2( -0.203345, 0.620716), vec2( 0.96234, -0.194983), vec2( 0.473434, -0.480026), vec2( 0.519456, 0.767022), vec2( 0.185461, -0.893124), vec2( 0.507431, 0.064425), vec2( 0.89642, 0.412458), vec2( -0.32194, -0.932615), vec2( -0.791559, -0.59771));
+uniform sampler2D _MainTex;
+uniform highp sampler2D _CameraDepthTexture;
+uniform sampler2D _VelTex;
+uniform sampler2D _NeighbourMaxTex;
+uniform sampler2D _NoiseTex;
+uniform sampler2D _TileTexDebug;
+uniform highp vec4 _MainTex_TexelSize;
+uniform highp vec4 _CameraDepthTexture_TexelSize;
+uniform highp vec4 _VelTex_TexelSize;
+uniform highp mat4 _InvViewProj;
+uniform highp mat4 _PrevViewProj;
+uniform highp mat4 _ToPrevViewProjCombined;
+uniform highp float _Jitter;
+uniform highp float _VelocityScale;
+uniform highp float _DisplayVelocityScale;
+uniform highp float _MaxVelocity;
+uniform highp float _MinVelocity;
+uniform highp vec4 _BlurDirectionPacked;
+uniform highp float _SoftZDistance;
+highp float Linear01Depth( in highp float z )
+{
+    return (1.0 / ((_ZBufferParams.x * z) + _ZBufferParams.y));
+}
+highp float cone( in highp vec2 px, in highp vec2 py, in highp vec2 v )
+{
+    return clamp( (1.0 - (length((px - py)) / length(v))), 0.0, 1.0);
+}
+highp float cylinder( in highp vec2 x, in highp vec2 y, in highp vec2 v )
+{
+    highp float lv = length(v);
+    return (1.0 - smoothstep( (0.95 * lv), (1.05 * lv), length((x - y))));
+}
+highp float softDepthCompare( in highp float za, in highp float zb )
+{
+    return clamp( (1.0 - ((za - zb) / _SoftZDistance)), 0.0, 1.0);
+}
+highp vec4 ReconstructionDiscBlur( in v2f i )
+{
+    highp vec2 xf = i.uv;
+    highp vec2 x = i.uv;
+   
+    if ((_MainTex_TexelSize.y < 0.0))
+    {
+        xf.y = (1.0 - xf.y);
+    }
+   
+    highp vec2 x2 = xf;
+    highp vec2 vn = xll_tex2Dlod(_NeighbourMaxTex, vec4(x2, 0.0, 0.0)).xy;
+    highp vec4 cx = xll_tex2Dlod(_MainTex, vec4(x, 0.0, 0.0));
+   
+    highp vec2 vx = xll_tex2Dlod(_VelTex, vec4(xf, 0.0, 0.0)).xy;
+    highp vec4 noise = ((xll_tex2Dlod( _NoiseTex, (vec4(i.uv, 0.0, 0.0) * 11.0)) * 2.0) - 1.0);
+    highp float zx = xll_tex2Dlod(_CameraDepthTexture, vec4(x, 0.0, 0.0)).x;
+   
+    zx = (-Linear01Depth( zx));
+    noise *= (_MainTex_TexelSize.xyxy * _Jitter);
+   
+    highp float weight = 1.0;
+    highp vec4 sum = (cx * weight);
+    highp vec4 jitteredDir = (vn.xyxy + noise.xyyz);
+   
+    jitteredDir = ((max( abs(jitteredDir.xyxy), ((_MainTex_TexelSize.xyxy * _MaxVelocity) * 0.15)) * sign(jitteredDir.xyxy)) * vec4( 1.0, 1.0, -1.0, -1.0));
+    highp int l = 0;
+    for ( ; (l < 12); (l++)) {
+       
+        highp vec4 y = (i.uv.xyxy + ((jitteredDir.xyxy * SmallDiscKernel[l].xyxy) * vec4( 1.0, 1.0, -1.0, -1.0)));
+        highp vec4 yf = y;
+       
+        if ((_MainTex_TexelSize.y < 0.0)){
+            yf.yw = (1.0 - yf.yw);
+        }
+       
+        highp vec2 vy = xll_tex2Dlod( _VelTex, vec4( yf.xy, 0.0, 0.0)).xy;
+        highp float zy = xll_tex2Dlod( _CameraDepthTexture, vec4( y.xy, 0.0, 0.0)).x;
+        zy = (-Linear01Depth( zy));
+       
+        highp float f = softDepthCompare( zx, zy);
+        highp float b = softDepthCompare( zy, zx);
+        highp float alphay = (((b * cone( x, y.xy, vx)) + (f * cone( y.xy, x, vy))) + ((cylinder( y.xy, x, vy) * cylinder( x, y.xy, vx)) * 2.0));
+       
+        highp vec4 cy = xll_tex2Dlod( _MainTex, vec4( y.xy, 0.0, 0.0));
+        sum += (cy * alphay);
+        weight += alphay;
+    }
+   
+    return (sum / weight);
+}
+in highp vec2 xlv_TEXCOORD0;
+out mediump vec4 _fragData;
+void main() {
+    highp vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2(xlv_TEXCOORD0);
+    xl_retval = ReconstructionDiscBlur(xlt_i);
+    _fragData = vec4(xl_retval);
+}

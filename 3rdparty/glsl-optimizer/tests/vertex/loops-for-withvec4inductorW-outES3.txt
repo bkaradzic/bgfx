@@ -40,7 +40,10 @@ void main ()
   Temp_int_1.xyz = floatBitsToInt((intBitsToFloat(Temp_int_0).www * intBitsToFloat(Temp_int_1).xyz));
   Temp_2.xyz = glstate_lightmodel_ambient.xyz;
   Temp_int_0.w = 0;
-  for (; Temp_int_0.w < 4; Temp_int_0.w = (Temp_int_0.w + 1)) {
+  while (true) {
+    if ((Temp_int_0.w >= 4)) {
+      break;
+    };
     Temp_3.xyz = ((-(
       intBitsToFloat(Temp_int_0)
     .xyz) * unity_LightPosition[Temp_int_0.w].www) + unity_LightPosition[Temp_int_0.w].xyz);
@@ -61,6 +64,7 @@ void main ()
     Temp_2.w = max (Temp_2.w, 0.0);
     Temp_int_1.w = floatBitsToInt((intBitsToFloat(Temp_int_1).w * Temp_2.w));
     Temp_2.xyz = ((unity_LightColor[Temp_int_0.w].xyz * intBitsToFloat(Temp_int_1).www) + Temp_2.xyz);
+    Temp_int_0.w = (Temp_int_0.w + 1);
   };
   COLOR0.xyz = (Temp_2.xyz * _Color.xyz);
   COLOR0.w = (_Color.w * _ReflectColor.w);

@@ -13,21 +13,17 @@ void main ()
   lowp vec4 tmpvar_2;
   tmpvar_2 = texture (texlow, varUV.xy);
   c_1 = tmpvar_2;
-  mediump vec4 tmpvar_3;
-  tmpvar_3 = texture (texmed, varUV.xy);
+  c_1 = (c_1 + texture (texmed, varUV.xy));
+  highp vec4 tmpvar_3;
+  tmpvar_3 = texture (texhigh, varUV.xy);
   c_1 = (c_1 + tmpvar_3);
-  highp vec4 tmpvar_4;
-  tmpvar_4 = texture (texhigh, varUV.xy);
+  lowp vec4 tmpvar_4;
+  tmpvar_4 = texture (cubelow, varUV.xyz);
   c_1 = (c_1 + tmpvar_4);
-  lowp vec4 tmpvar_5;
-  tmpvar_5 = texture (cubelow, varUV.xyz);
+  c_1 = (c_1 + texture (cubemed, varUV.xyz));
+  highp vec4 tmpvar_5;
+  tmpvar_5 = texture (cubehigh, varUV.xyz);
   c_1 = (c_1 + tmpvar_5);
-  mediump vec4 tmpvar_6;
-  tmpvar_6 = texture (cubemed, varUV.xyz);
-  c_1 = (c_1 + tmpvar_6);
-  highp vec4 tmpvar_7;
-  tmpvar_7 = texture (cubehigh, varUV.xyz);
-  c_1 = (c_1 + tmpvar_7);
   _fragData = c_1;
 }
 

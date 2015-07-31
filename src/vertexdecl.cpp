@@ -131,7 +131,7 @@ namespace bgfx
 	{
 		uint8_t val = m_attributes[_attrib];
 		_num        = (val&3)+1;
-		_type       = AttribType::Enum((val>>3)&3);
+		_type       = AttribType::Enum( (val>>3)&3);
 		_normalized = !!(val&(1<<6) );
 		_asInt      = !!(val&(1<<7) );
 	}

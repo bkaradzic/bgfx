@@ -15,9 +15,11 @@ struct ScintillaEditor
 	static ScintillaEditor* create(int _width, int _height);
 	static void destroy(ScintillaEditor* _scintilla);
 
-    intptr_t command(unsigned int _message, uintptr_t _p0 = 0, intptr_t _p1 = 0);
+	intptr_t command(unsigned int _message, uintptr_t _p0 = 0, intptr_t _p1 = 0);
 	void draw();
 };
+
+ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& _size);
 
 #endif // defined(SCI_NAMESPACE)
 

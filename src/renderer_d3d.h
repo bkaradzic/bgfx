@@ -40,11 +40,13 @@ namespace bgfx
 				} \
 			BX_MACRO_BLOCK_END
 
-#	define _DX_CHECK_REFCOUNT(_ptr, _expected) \
+#define _DX_CHECK_REFCOUNT(_ptr, _expected) \
 			BX_MACRO_BLOCK_BEGIN \
 				ULONG count = getRefCount(_ptr); \
 				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
 			BX_MACRO_BLOCK_END
+
+#define _DX_NAME(_ptr, _format, ...) setDebugObjectName(_ptr, _format, ##__VA_ARGS__)
 
 #if BGFX_CONFIG_DEBUG
 #	define DX_CHECK(_call) _DX_CHECK(_call)
@@ -53,6 +55,12 @@ namespace bgfx
 #	define DX_CHECK(_call) _call
 #	define DX_CHECK_REFCOUNT(_ptr, _expected)
 #endif // BGFX_CONFIG_DEBUG
+
+#if BGFX_CONFIG_DEBUG_OBJECT_NAME
+#	define DX_NAME(_ptr, _format, ...) _DX_NAME(_ptr, _format, ##__VA_ARGS__)
+#else
+#	define DX_NAME(_ptr, _format, ...)
+#endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
 
 #define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
 #define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
@@ -65,6 +73,8 @@ namespace bgfx
 	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
 	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
 	typedef HRESULT (WINAPI* PFN_CREATE_DXGI_FACTORY)(REFIID _riid, void** _factory);
+	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE)(REFIID _riid, void** _debug);
+	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE1)(UINT _flags, REFIID _riid, void** _debug);
 
 #define _PIX_SETMARKER(_col, _name) D3DPERF_SetMarker(_col, _name)
 #define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
@@ -144,13 +154,13 @@ namespace bgfx
 		void add(uint64_t _id, uint16_t _item)
 		{
 			invalidate(_id);
-			m_hashMap.insert(stl::make_pair(_id, _item));
+			m_hashMap.insert(stl::make_pair(_id, _item) );
 		}
 
 		uint16_t find(uint64_t _id)
 		{
 			HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end())
+			if (it != m_hashMap.end() )
 			{
 				return it->second;
 			}
@@ -161,7 +171,7 @@ namespace bgfx
 		void invalidate(uint64_t _id)
 		{
 			HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end())
+			if (it != m_hashMap.end() )
 			{
 				m_hashMap.erase(it);
 			}
@@ -174,7 +184,7 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size());
+			return uint32_t(m_hashMap.size() );
 		}
 
 	private:

@@ -16,6 +16,10 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 	glslopt_target target = kGlslTargetOpenGL;
 	switch (_gles)
 	{
+	case BX_MAKEFOURCC('M', 'T', 'L', 0):
+		target = kGlslTargetMetal;
+		break;
+
 	case 2:
 		target = kGlslTargetOpenGLES20;
 		break;

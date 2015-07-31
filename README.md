@@ -11,6 +11,7 @@ Supported rendering backends:
 
  * Direct3D 9
  * Direct3D 11
+ * Direct3D 12 (WIP)
  * OpenGL 2.1
  * OpenGL 3.1+
  * OpenGL ES 2
@@ -42,11 +43,11 @@ Supported compilers:
 
 Languages:
 
- * [C99 API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.c99.h)
- * [C++ API documentation](https://github.com/bkaradzic/bgfx/blob/master/include/bgfx.h)
+ * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
  * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
  * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
+ * [Java language API bindings](https://github.com/enleeten/twilight-bgfx)
 
 Build status
 ------------
@@ -455,7 +456,8 @@ Amalgamated build
 
 For ease of integration to other build system bgfx library can be built with
 single .cpp file. It's only necessary to build [src/amalgamated.cpp](https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp)
-inside different build system.
+(for OSX/iOS use [src/amalgamated.mm](https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.mm)
+instead) inside different build system.
 
 OculusVR integration
 --------------------
@@ -648,8 +650,7 @@ Todo
  - texturec tool with support for all supported texture formats.
  - Multiple vertex streams support.
  - Animated mesh example.
- - Direct3D 12 renderer backend.
- - Metal renderer backend.
+ - Metal renderer backend (you can follow progress [here](https://github.com/attilaz/bgfx/tree/metal)).
  - Vulkan renderer backend.
 
 Contact
@@ -807,7 +808,9 @@ Daniel Collin ([@emoon](https://github.com/emoon)) - Port of Ocornut's ImGui
   to bgfx.  
 Andre Weissflog ([@floooh](https://github.com/floooh)) - Alternative build
 system fips.  
-Andrew Johnson  ([@ajohnson23](https://github.com/ajohnson23)) - TeamCity build.
+Andrew Johnson  ([@ajohnson23](https://github.com/ajohnson23)) - TeamCity build.  
+Tony McCrary ([@enleeten](https://github.com/enleeten)] - Java language API
+bindings
 
 [License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
 -------------------------------------------------------------------------------

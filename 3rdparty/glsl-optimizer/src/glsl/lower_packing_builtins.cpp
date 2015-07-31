@@ -569,8 +569,8 @@ private:
        *     return pack_uvec2_to_uint(uvec2(
        *                round(clamp(VEC2_RVALUE, 0.0f, 1.0f) * 65535.0f)));
        *
-       * Here it is safe to directly convert the vec2 to uvec2 because the the
-       * vec2 has been clamped to a non-negative range.
+       * Here it is safe to directly convert the vec2 to uvec2 because the vec2
+       * has been clamped to a non-negative range.
        */
 
       assert(vec2_rval->type == glsl_type::vec2_type);

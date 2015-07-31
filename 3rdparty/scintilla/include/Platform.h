@@ -65,7 +65,7 @@
 #undef PLAT_MACOSX
 #define PLAT_MACOSX 1
 
-#else
+#elif defined(__WIN32__) || defined(_WIN32) || defined(_WIN64)
 #undef PLAT_WIN
 #define PLAT_WIN 1
 
@@ -526,8 +526,14 @@ public:
 }
 #endif
 
-#if defined(__GNUC__) && defined(SCINTILLA_QT)
+#if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
+
+#if defined(__EXCEPTIONS)
+#else
+#	define try if (1)
+#	define catch(...) else if (0)
 #endif
 
 #endif

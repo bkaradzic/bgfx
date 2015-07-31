@@ -155,6 +155,7 @@ void VectorDisplay::endFrame()
 	BX_CHECK(m_points.size() < MAX_NUMBER_VERTICES, "");
 
 	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep]
+		, 0
 		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(point_t) )
 	);
 	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
@@ -184,7 +185,6 @@ void VectorDisplay::endFrame()
 			bgfx::setUniform(u_params, &params);
 
 			bgfx::setTexture(0, s_texColor, m_lineTexId);
-			bgfx::setProgram(m_drawToScreenShader);
 
 			bgfx::setVertexBuffer(m_vertexBuffers[i], m_vertexBuffersSize[i]); // explicitly feed vertex number!
 
@@ -196,7 +196,7 @@ void VectorDisplay::endFrame()
 				);
 
 			bgfx::setViewName(m_view, "RenderVectorDisplay");
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_drawToScreenShader);
 		}
 	}
 
@@ -228,19 +228,17 @@ void VectorDisplay::endFrame()
 			params[0] = 1.0f / m_glowWidth;
 			params[1] = 0.0f;
 			bgfx::setUniform(u_params, &params);
-			bgfx::setProgram(m_blurShader);
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
 			screenSpaceQuad(m_glowWidth, m_glowHeight);
 			bgfx::setViewName(viewCounter, "BlendPassA");
-			bgfx::submit(viewCounter);
+			bgfx::submit(viewCounter, m_blurShader);
 
 			viewCounter++;
 
 			bgfx::setViewFrameBuffer(viewCounter, m_glow1FrameBuffer);            //second glow pass
 			bgfx::setViewRect(viewCounter, 0, 0, m_glowWidth, m_glowHeight);
 			bgfx::setTexture(0, s_texColor, m_glow0FrameBuffer);
-			bgfx::setProgram(m_blurShader);
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
 			screenSpaceQuad(m_glowWidth, m_glowHeight);
@@ -257,7 +255,7 @@ void VectorDisplay::endFrame()
 				);
 
 			bgfx::setViewName(viewCounter, "BlendPassB");
-			bgfx::submit(viewCounter);
+			bgfx::submit(viewCounter, m_blurShader);
 
 			viewCounter++;
 
@@ -270,7 +268,6 @@ void VectorDisplay::endFrame()
 	bgfx::setViewTransform(viewCounter, NULL, proj);
 	bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
 	bgfx::setTexture(0, s_texColor, m_sceneFrameBuffer);
-	bgfx::setProgram(m_blitShader);
 	bgfx::setState(0
 		| BGFX_STATE_RGB_WRITE
 		| BGFX_STATE_ALPHA_WRITE
@@ -282,7 +279,7 @@ void VectorDisplay::endFrame()
 	bgfx::setUniform(u_params, params);
 	bgfx::setViewName(viewCounter, "BlendVectorToDisplay");
 	screenSpaceQuad(m_screenWidth, m_screenHeight);
-	bgfx::submit(viewCounter);
+	bgfx::submit(viewCounter, m_blitShader);
 	viewCounter++;
 
 	if (m_brightness > 0)
@@ -291,7 +288,6 @@ void VectorDisplay::endFrame()
 		bgfx::setViewTransform(viewCounter, NULL, proj);
 		bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
 		bgfx::setTexture(0, s_texColor, m_glow1FrameBuffer);
-		bgfx::setProgram(m_blitShader);
 		bgfx::setState(0
 			| BGFX_STATE_RGB_WRITE
 			| BGFX_STATE_ALPHA_WRITE
@@ -302,7 +298,7 @@ void VectorDisplay::endFrame()
 		bgfx::setUniform(u_params, params);
 		bgfx::setViewName(viewCounter, "BlendBlurToDisplay");
 		screenSpaceQuad(m_screenWidth, m_screenHeight);
-		bgfx::submit(viewCounter);
+		bgfx::submit(viewCounter, m_blitShader);
 		viewCounter++;
 	}
 }

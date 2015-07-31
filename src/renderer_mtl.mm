@@ -5,7 +5,7 @@
 
 #include "bgfx_p.h"
 #if BGFX_CONFIG_RENDERER_METAL
-#	include "../../bgfx-ext/src/renderer_mtl.cpp"
+#	include "../../bgfx-ext/src/renderer_mtl.mm"
 #else
 
 namespace bgfx { namespace mtl

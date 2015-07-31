@@ -63,6 +63,11 @@ namespace entry
 
 	struct Joystick
 	{
+		Joystick()
+			: m_fd(-1)
+		{
+		}
+
 		void init()
 		{
 			m_fd = open("/dev/input/js0", O_RDONLY | O_NONBLOCK);
@@ -80,7 +85,7 @@ namespace entry
 
 		void shutdown()
 		{
-			if (0 != m_fd)
+			if (-1 != m_fd)
 			{
 				close(m_fd);
 			}
@@ -99,7 +104,7 @@ namespace entry
 
 		bool update(EventQueue& _eventQueue)
 		{
-			if (0 == m_fd)
+			if (-1 == m_fd)
 			{
 				return false;
 			}
