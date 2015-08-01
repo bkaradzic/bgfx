@@ -742,152 +742,155 @@ namespace bgfx { namespace d3d11
 				errorState = 4;
 			}
 
-			IDXGIDevice*  device = NULL;
-			IDXGIAdapter* adapter = NULL;
-			hr = E_FAIL;
-			for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
 			{
-				hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
-				BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
-
-				if (SUCCEEDED(hr) )
+				IDXGIDevice*  device = NULL;
+				IDXGIAdapter* adapter = NULL;
+				hr = E_FAIL;
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
 				{
+					hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
+					BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
+
+					if (SUCCEEDED(hr) )
+					{
 #if BX_COMPILER_MSVC
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-					try
-					{
-						// QueryInterface above can succeed, but getting adapter call might crash on Win7.
-						hr = device->GetAdapter(&adapter);
-					}
-					catch (...)
-					{
-						BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_deviceIIDs)-1-ii);
-						DX_RELEASE(device, 0);
-						hr = E_FAIL;
-					}
+						try
+						{
+							// QueryInterface above can succeed, but getting adapter call might crash on Win7.
+							hr = device->GetAdapter(&adapter);
+						}
+						catch (...)
+						{
+							BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_deviceIIDs)-1-ii);
+							DX_RELEASE(device, 0);
+							hr = E_FAIL;
+						}
 BX_PRAGMA_DIAGNOSTIC_POP();
 #else
-					hr = device->GetAdapter(&adapter);
+						hr = device->GetAdapter(&adapter);
 #endif // BX_COMPILER_MSVC
+					}
 				}
-			}
-			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-			if (FAILED(hr) )
-			{
-				goto error;
-			}
 
-			// GPA increases device ref count.
-			// RenderDoc makes device ref count 0 here.
-			//
-			// This causes assert in debug. When debugger is present refcount
-			// checks are off.
-			IDXGIDevice* renderdoc;
-			hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
-			if (SUCCEEDED(hr) )
-			{
-				setGraphicsDebuggerPresent(true);
-				DX_RELEASE(renderdoc, 2);
-			}
-			else
-			{
-				setGraphicsDebuggerPresent(3 != getRefCount(device) );
-				DX_RELEASE(device, 2);
-			}
+				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+				if (FAILED(hr) )
+				{
+					goto error;
+				}
 
-			hr = adapter->GetDesc(&m_adapterDesc);
-			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-			if (FAILED(hr) )
-			{
-				DX_RELEASE(adapter, 2);
-				goto error;
-			}
+				// GPA increases device ref count.
+				// RenderDoc makes device ref count 0 here.
+				//
+				// This causes assert in debug. When debugger is present refcount
+				// checks are off.
+				IDXGIDevice* renderdoc;
+				hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
+				if (SUCCEEDED(hr) )
+				{
+					setGraphicsDebuggerPresent(true);
+					DX_RELEASE(renderdoc, 2);
+				}
+				else
+				{
+					setGraphicsDebuggerPresent(3 != getRefCount(device) );
+					DX_RELEASE(device, 2);
+				}
 
-			g_caps.vendorId = 0 == m_adapterDesc.VendorId
-				? BGFX_PCI_ID_SOFTWARE_RASTERIZER
-				: (uint16_t)m_adapterDesc.VendorId
-				;
-			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+				hr = adapter->GetDesc(&m_adapterDesc);
+				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+				if (FAILED(hr) )
+				{
+					DX_RELEASE(adapter, 2);
+					goto error;
+				}
 
-			if (NULL == g_platformData.backBuffer)
-			{
+				g_caps.vendorId = 0 == m_adapterDesc.VendorId
+					? BGFX_PCI_ID_SOFTWARE_RASTERIZER
+					: (uint16_t)m_adapterDesc.VendorId
+					;
+				g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+
+				if (NULL == g_platformData.backBuffer)
+				{
 #if BX_PLATFORM_WINRT
-				hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-				DX_RELEASE(adapter, 2);
-				if (FAILED(hr) )
-				{
-					goto error;
-				}
+					hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
+					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+					DX_RELEASE(adapter, 2);
+					if (FAILED(hr) )
+					{
+						goto error;
+					}
 
-				memset(&m_scd, 0, sizeof(m_scd) );
-				m_scd.Width  = BGFX_DEFAULT_WIDTH;
-				m_scd.Height = BGFX_DEFAULT_HEIGHT;
-				m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				m_scd.Stereo = false;
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.BufferCount = 2;
-				m_scd.Scaling     = DXGI_SCALING_NONE;
-				m_scd.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-				m_scd.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
+					memset(&m_scd, 0, sizeof(m_scd) );
+					m_scd.Width  = BGFX_DEFAULT_WIDTH;
+					m_scd.Height = BGFX_DEFAULT_HEIGHT;
+					m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+					m_scd.Stereo = false;
+					m_scd.SampleDesc.Count   = 1;
+					m_scd.SampleDesc.Quality = 0;
+					m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+					m_scd.BufferCount = 2;
+					m_scd.Scaling     = DXGI_SCALING_NONE;
+					m_scd.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+					m_scd.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
 
-				hr = m_factory->CreateSwapChainForCoreWindow(m_device
-					, (::IUnknown*)g_platformData.nwh
-					, &m_scd
-					, NULL
-					, &m_swapChain
-					);
+					hr = m_factory->CreateSwapChainForCoreWindow(m_device
+						, (::IUnknown*)g_platformData.nwh
+						, &m_scd
+						, NULL
+						, &m_swapChain
+						);
 #else
-				hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-				DX_RELEASE(adapter, 2);
-				if (FAILED(hr) )
-				{
-					goto error;
-				}
+					hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
+					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+					DX_RELEASE(adapter, 2);
+					if (FAILED(hr) )
+					{
+						goto error;
+					}
 
-				memset(&m_scd, 0, sizeof(m_scd) );
-				m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
-				m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
-				m_scd.BufferDesc.RefreshRate.Numerator   = 60;
-				m_scd.BufferDesc.RefreshRate.Denominator = 1;
-				m_scd.BufferDesc.Format  = DXGI_FORMAT_R8G8B8A8_UNORM;
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.BufferCount  = 1;
-				m_scd.OutputWindow = (HWND)g_platformData.nwh;
-				m_scd.Windowed     = true;
+					memset(&m_scd, 0, sizeof(m_scd) );
+					m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
+					m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
+					m_scd.BufferDesc.RefreshRate.Numerator   = 60;
+					m_scd.BufferDesc.RefreshRate.Denominator = 1;
+					m_scd.BufferDesc.Format  = DXGI_FORMAT_R8G8B8A8_UNORM;
+					m_scd.SampleDesc.Count   = 1;
+					m_scd.SampleDesc.Quality = 0;
+					m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+					m_scd.BufferCount  = 1;
+					m_scd.OutputWindow = (HWND)g_platformData.nwh;
+					m_scd.Windowed     = true;
 
-				hr = m_factory->CreateSwapChain(m_device
-					, &m_scd
-					, &m_swapChain
-					);
+					hr = m_factory->CreateSwapChain(m_device
+						, &m_scd
+						, &m_swapChain
+						);
 
-				DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh, 0
-					| DXGI_MWA_NO_WINDOW_CHANGES
-					| DXGI_MWA_NO_ALT_ENTER
-					) );
+					DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh, 0
+						| DXGI_MWA_NO_WINDOW_CHANGES
+						| DXGI_MWA_NO_ALT_ENTER
+						) );
 #endif // BX_PLATFORM_WINRT
-				BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
-				if (FAILED(hr) )
-				{
-					goto error;
-				}
+					BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
+					if (FAILED(hr) )
+					{
+						goto error;
+					}
 
-				errorState = 5;
-			}
-			else
-			{
-				memset(&m_scd, 0, sizeof(m_scd) );
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
-				m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
-				m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
+					errorState = 5;
+				}
+				else
+				{
+					memset(&m_scd, 0, sizeof(m_scd) );
+					m_scd.SampleDesc.Count   = 1;
+					m_scd.SampleDesc.Quality = 0;
+					setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+					m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
+					m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
+				}
 			}
 
 			m_numWindows = 1;
