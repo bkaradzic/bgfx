@@ -1,6 +1,8 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
+[Documentation](https://bkaradzic.github.io/bgfx/index.html)
+
 What is it?
 -----------
 
