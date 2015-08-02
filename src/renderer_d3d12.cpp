@@ -1243,7 +1243,7 @@ namespace bgfx { namespace d3d12
 
 		void preReset()
 		{
-			finish();
+			finishAll();
 
 			for (uint32_t ii = 0, num = m_scd.BufferCount; ii < num; ++ii)
 			{
@@ -2188,6 +2188,13 @@ data.NumQualityLevels = 0;
 		{
 			m_cmd.kick();
 			m_cmd.finish();
+			m_commandList = NULL;
+		}
+
+		void finishAll()
+		{
+			uint64_t fence = m_cmd.kick();
+			m_cmd.finish(fence, true);
 			m_commandList = NULL;
 		}
 

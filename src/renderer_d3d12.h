@@ -366,6 +366,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			CommandList& commandList = m_commandList[m_control.m_current];
+			DX_CHECK(commandList.m_commandAllocator->Reset() );
 			DX_CHECK(commandList.m_commandList->Reset(commandList.m_commandAllocator, NULL) );
 			return commandList.m_commandList;
 		}
@@ -388,7 +389,7 @@ namespace bgfx { namespace d3d12
 			return fence;
 		}
 
-		void finish(uint64_t _waitFence = UINT64_MAX)
+		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false)
 		{
 			while (0 < m_control.available() )
 			{
@@ -401,7 +402,8 @@ namespace bgfx { namespace d3d12
 
 				m_control.consume(1);
 
-				if (_waitFence <= m_completedFence)
+				if (!_finishAll
+				&&  _waitFence <= m_completedFence)
 				{
 					return;
 				}
