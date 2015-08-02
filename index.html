@@ -31,7 +31,7 @@
 
   
     <link rel="top" title="bgfx 1.0 documentation" href="#"/>
-        <link rel="next" title="bgfx - API Reference" href="bgfx.html"/> 
+        <link rel="next" title="Overview" href="overview.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -71,7 +71,42 @@
           
           
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - API Reference</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#renderdoc">RenderDoc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#intelgpa">IntelGPA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="build.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#getting-source">Getting source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#android">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#linux">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#native-client">Native Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#build">Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id1">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#xcode-5">Xcode 5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a><ul>
@@ -132,6 +167,12 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+</ul>
+</li>
 </ul>
 
           
@@ -175,7 +216,42 @@ rendering library.</p>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="bgfx.html">bgfx - API Reference</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#renderdoc">RenderDoc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#intelgpa">IntelGPA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="build.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#getting-source">Getting source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#android">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#linux">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#native-client">Native Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#build">Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id1">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#xcode-5">Xcode 5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a></li>
@@ -212,6 +288,12 @@ rendering library.</p>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -222,7 +304,7 @@ rendering library.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="bgfx.html" class="btn btn-neutral float-right" title="bgfx - API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="overview.html" class="btn btn-neutral float-right" title="Overview" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

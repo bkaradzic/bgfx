@@ -1,0 +1,473 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Building &mdash; bgfx 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
+        <link rel="next" title="API Reference" href="bgfx.html"/>
+        <link rel="prev" title="Overview" href="overview.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> bgfx
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#renderdoc">RenderDoc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#intelgpa">IntelGPA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Building</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-source">Getting source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#android">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#linux">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#native-client">Native Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#build">Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xcode-5">Xcode 5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#amalgamated-build">Amalgamated build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#reset">Reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#frame">Frame</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-features">Debug Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-flags">Debug Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-text-display">Debug Text Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#querying-information">Querying information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#renderer">Renderer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#capabilities">Capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#statistics">Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#head-mounted-display">Head Mounted Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#platform-specific">Platform specific</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id1">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id2">State</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#state-flags">State Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil">Stencil</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil-flags">Stencil Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#scissor">Scissor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#transform">Transform</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id3">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">bgfx</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Building</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="building">
+<h1>Building<a class="headerlink" href="#building" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://github.com/bkaradzic/bx">https://github.com/bkaradzic/bx</a></p>
+</div>
+<div class="section" id="getting-source">
+<h2>Getting source<a class="headerlink" href="#getting-source" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>git clone git://github.com/bkaradzic/bx.git
+git clone git://github.com/bkaradzic/bgfx.git
+</pre></div>
+</div>
+</div>
+<div class="section" id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<p>These are step for users who use Windows with Visual Studio.</p>
+<p>Enter bgfx directory:</p>
+<div class="highlight-python"><div class="highlight"><pre>cd bgfx
+</pre></div>
+</div>
+<p>Generate Visual Studio 2013 project files:</p>
+<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie vs2013
+</pre></div>
+</div>
+<p>Open bgfx solution in Visual Studio 2013:</p>
+<div class="highlight-python"><div class="highlight"><pre>start .build\projects\vs2013\bgfx.sln
+</pre></div>
+</div>
+</div>
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="android">
+<h3>Android<a class="headerlink" href="#android" title="Permalink to this headline">¶</a></h3>
+<p>Download AndroidNDK:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://developer.android.com/tools/sdk/ndk/index.html">https://developer.android.com/tools/sdk/ndk/index.html</a></li>
+</ul>
+</div></blockquote>
+<p>Set following enironment variables:</p>
+<div class="highlight-python"><div class="highlight"><pre>setx ANDROID_NDK_ROOT &lt;path to AndroidNDK directory&gt;
+setx ANDROID_NDK_ARM &lt;path to AndroidNDK directory&gt;\toolchains\arm-linux-androideabi-4.7\prebuilt\windows-x86_64
+setx ANDROID_NDK_MIPS &lt;path to AndroidNDK directory&gt;\toolchains\mipsel-linux-android-4.7\prebuilt\windows-x86_64
+setx ANDROID_NDK_X86 &lt;path to AndroidNDK directory&gt;\toolchains\x86-4.7\prebuilt\windows-x86_64
+</pre></div>
+</div>
+</div>
+<div class="section" id="linux">
+<h3>Linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre>sudo apt-get install libgl1-mesa-dev
+</pre></div>
+</div>
+</div>
+<div class="section" id="native-client">
+<h3>Native Client<a class="headerlink" href="#native-client" title="Permalink to this headline">¶</a></h3>
+<p>Download Native Client SDK:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://developers.google.com/native-client/sdk/download">https://developers.google.com/native-client/sdk/download</a></li>
+</ul>
+</div></blockquote>
+<p>Set following enironment variables:</p>
+<div class="highlight-python"><div class="highlight"><pre>setx NACL_SDK_ROOT &lt;path to Native Client SDK directory&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
+<p>Windows users download GnuWin32 utilities:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="http://gnuwin32.sourceforge.net/packages/make.htm">http://gnuwin32.sourceforge.net/packages/make.htm</a></li>
+<li><a class="reference external" href="http://gnuwin32.sourceforge.net/packages/coreutils.htm">http://gnuwin32.sourceforge.net/packages/coreutils.htm</a></li>
+<li><a class="reference external" href="http://gnuwin32.sourceforge.net/packages/libiconv.htm">http://gnuwin32.sourceforge.net/packages/libiconv.htm</a></li>
+<li><a class="reference external" href="http://gnuwin32.sourceforge.net/packages/libintl.htm">http://gnuwin32.sourceforge.net/packages/libintl.htm</a></li>
+</ul>
+</div></blockquote>
+<p>When building on Windows, you have to set DXSDK_DIR environment
+variable to point to DirectX SDK directory.</p>
+<div class="highlight-python"><div class="highlight"><pre>setx DXSDK_DIR &lt;path to DirectX SDK directory&gt;
+</pre></div>
+</div>
+<p>If you&#8217;re building with Visual Studio 2008, you&#8217;ll need TR1 support
+from:
+<a class="reference external" href="https://www.microsoft.com/en-us/download/details.aspx?id=6922">Visual C++ 2008 Feature Pack
+Release</a></p>
+<p>If you&#8217;re building with MinGW/TDM compiler on Windows make DirectX SDK
+directory link to directory without spaces in the path.</p>
+<div class="highlight-python"><div class="highlight"><pre>mklink /D c:\dxsdk &lt;path to DirectX SDK directory&gt;
+setx DXSDK_DIR c:\dxsdk
+</pre></div>
+</div>
+<p>Apply this
+<a class="reference external" href="https://github.com/bkaradzic/bx/blob/master/include/compat/mingw/dxsdk.patch">patch</a>
+to DXSDK from June 2010 to be able to use it with MinGW/TDM.</p>
+</div>
+</div>
+<div class="section" id="build">
+<h2>Build<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h2>
+<p>bgfx uses <a class="reference external" href="https://github.com/bkaradzic/genie#genie---project-generator-tool">GENie - Project generator tool</a>
+to generate project files for various platform. Binaries for Linux, OSX, and Windows are included in
+bx repository.</p>
+<div class="section" id="general">
+<h3>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre>cd bgfx
+make
+</pre></div>
+</div>
+<p>After calling <code class="docutils literal"><span class="pre">make</span></code>, .build/projects/* directory will be generated.
+All intermediate files generated by compiler will be inside .build
+directory structure. Deleting .build directory at any time is safe.</p>
+<div class="highlight-python"><div class="highlight"><pre>make &lt;configuration&gt;
+</pre></div>
+</div>
+<p>Configuration is <code class="docutils literal"><span class="pre">&lt;platform&gt;-&lt;debug/release&gt;[32/64]</span></code>. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>linux-release32, nacl-debug64, nacl-arm-debug, pnacl-release,
+android-release, etc.
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>Windows<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Visual Studio 2008 command line:</p>
+<div class="highlight-python"><div class="highlight"><pre>make vs2008-release64
+</pre></div>
+</div>
+<p>Visual Studio 2008 IDE:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2008</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="xcode-5">
+<h3>Xcode 5<a class="headerlink" href="#xcode-5" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="nb">open</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">xcode4</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">xcworkspace</span>
+</pre></div>
+</div>
+<p>Due to <a class="reference external" href="https://github.com/bkaradzic/genie/blob/master/docs/scripting-reference.md#debugdirpath">inability</a>
+to set working directory for an Xcode project from <a class="reference external" href="https://github.com/bkaradzic/genie#genie---project-generator-tool">GENie</a>
+configuration file, it has to be set manually for each example project:</p>
+<ol class="arabic simple">
+<li>Open <em>&#8220;Edit scheme...&#8221;</em> dialog for a given project.</li>
+<li>Select <em>&#8220;Run&#8221;</em> settings.</li>
+<li>Check <em>&#8220;Use custom working directory&#8221;</em> and enter following path:
+<code class="docutils literal"><span class="pre">${PROJECT_DIR}/../../../examples/runtime</span></code>.</li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h3>Linux<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre>make linux-release64
+</pre></div>
+</div>
+</div>
+<div class="section" id="winrt-windows-phone-8-1">
+<h3>WinRT / Windows Phone 8.1<a class="headerlink" href="#winrt-windows-phone-8-1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre>../bx/tools/bin/windows/genie --vs=winphone81 vs2013
+</pre></div>
+</div>
+<p>Build the resulting solution and deploy to device. Note that shaders
+will need to be compiled with the appropriate target profile for your
+platform.</p>
+</div>
+</div>
+<div class="section" id="amalgamated-build">
+<h2>Amalgamated build<a class="headerlink" href="#amalgamated-build" title="Permalink to this headline">¶</a></h2>
+<p>For ease of integration to other build system bgfx library can be built
+with single .cpp file. It&#8217;s only necessary to build
+<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp">src/amalgamated.cpp</a>
+(for OSX/iOS use
+<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.mm">src/amalgamated.mm</a>
+instead) inside different build system.</p>
+</div>
+<div class="section" id="oculusvr-integration">
+<h2>OculusVR integration<a class="headerlink" href="#oculusvr-integration" title="Permalink to this headline">¶</a></h2>
+<p>OculusVR support is currently experimental, and only DX11 is tested. To
+build with OculusVR HMD support enabled you must set <code class="docutils literal"><span class="pre">OVR_DIR</span></code>
+enviroment variable:</p>
+<div class="highlight-python"><div class="highlight"><pre>set OVR_DIR=&lt;path to OculusSDK&gt;
+</pre></div>
+</div>
+<p>And generate project files with <code class="docutils literal"><span class="pre">--with-ovr</span></code> option:</p>
+<div class="highlight-python"><div class="highlight"><pre>genie --with-ovr vs2012
+</pre></div>
+</div>
+<p>In <code class="docutils literal"><span class="pre">LibOVR/Include</span></code> create trampoline headers <code class="docutils literal"><span class="pre">OVR_D3D.h</span></code> and
+<code class="docutils literal"><span class="pre">OVR_GL.h</span></code>.</p>
+<p><code class="docutils literal"><span class="pre">OVR_D3D.h</span></code> should contain:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#include &quot;../Src/OVR_CAPI_D3D.h&quot;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">OVR_GL.h</span></code> should contain:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#include &quot;../Src/OVR_CAPI_GL.h&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="bgfx.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="overview.html" class="btn btn-neutral" title="Overview" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Branimir Karadžić.
+    </p>
+  </div>
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  false
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

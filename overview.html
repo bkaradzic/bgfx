@@ -1,0 +1,529 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Overview &mdash; bgfx 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
+        <link rel="next" title="Building" href="build.html"/>
+        <link rel="prev" title="bgfx - Documentation" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> bgfx
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-is-it">What is it?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#customization">Customization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#debugging-and-profiling">Debugging and Profiling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#renderdoc">RenderDoc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#intelgpa">IntelGPA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="build.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#getting-source">Getting source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#android">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#linux">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#native-client">Native Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#build">Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id1">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#xcode-5">Xcode 5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#reset">Reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#frame">Frame</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-features">Debug Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-flags">Debug Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-text-display">Debug Text Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#querying-information">Querying information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#renderer">Renderer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#capabilities">Capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#statistics">Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#head-mounted-display">Head Mounted Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#platform-specific">Platform specific</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id1">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id2">State</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#state-flags">State Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil">Stencil</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil-flags">Stencil Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#scissor">Scissor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#transform">Transform</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id3">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">bgfx</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Overview</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-is-it">
+<h2>What is it?<a class="headerlink" href="#what-is-it" title="Permalink to this headline">¶</a></h2>
+<p>Cross-platform, graphics API agnostic, &#8220;Bring Your Own Engine/Framework&#8221;
+style rendering library.</p>
+<p>Supported rendering backends:</p>
+<ul class="simple">
+<li>Direct3D 9</li>
+<li>Direct3D 11</li>
+<li>Direct3D 12 (WIP)</li>
+<li>OpenGL 2.1</li>
+<li>OpenGL 3.1+</li>
+<li>OpenGL ES 2</li>
+<li>OpenGL ES 3.1</li>
+<li>WebGL 1.0</li>
+</ul>
+<p>Supported HMD:</p>
+<ul class="simple">
+<li>OculusVR (0.4.2+)</li>
+</ul>
+<p>Supported platforms:</p>
+<ul class="simple">
+<li>Android (14+, ARM, x86, MIPS)</li>
+<li>asm.js/Emscripten (1.25.0)</li>
+<li>FreeBSD</li>
+<li>iOS</li>
+<li>Linux</li>
+<li>Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)</li>
+<li>OSX (10.9)</li>
+<li>RaspberryPi</li>
+<li>Windows (XP, Vista, 7, 8, 10)</li>
+<li>WinRT (WinPhone 8.0+)</li>
+</ul>
+<p>Supported compilers:</p>
+<ul class="simple">
+<li>Clang 3.3 and above</li>
+<li>GCC 4.6 and above</li>
+<li>vs2008 and above</li>
+</ul>
+<p>Languages:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://bkaradzic.github.io/bgfx/bgfx.html">C/C++ API
+documentation</a></li>
+<li><a class="reference external" href="https://github.com/MikePopoloski/SharpBgfx">C#/VB/F# language API
+bindings</a></li>
+<li><a class="reference external" href="https://github.com/DerelictOrg/DerelictBgfx">D language API
+bindings</a></li>
+<li><a class="reference external" href="https://github.com/james4k/go-bgfx">Go language API bindings</a></li>
+<li><a class="reference external" href="https://github.com/enleeten/twilight-bgfx">Java language API
+bindings</a></li>
+</ul>
+</div>
+<div class="section" id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
+<p>bgfx is using sort-based draw call bucketing. This means that submission
+order doesn&#8217;t necessarily match the rendering order, but on the
+low-level they will be sorted and ordered correctly. On the high level
+this allows more optimal way of submitting draw calls for all passes at
+one place, and on the low-level this allows better optimization of
+rendering order. This sometimes creates undesired results usually for
+GUI rendering, where draw order should usually match submit order. bgfx
+provides way to enable sequential rendering for these cases (see
+<code class="docutils literal"><span class="pre">bgfx::setViewSeq</span></code>).</p>
+<p>Internally all low-level rendering draw calls are issued inside single
+function <code class="docutils literal"><span class="pre">Context::rendererSubmit</span></code>. This function exist inside each
+renderer backend implementation.</p>
+<div class="line-block">
+<div class="line">More detailed description of sort-based draw call bucketing can be</div>
+</div>
+<p>found at:
+| <a class="reference external" href="http://realtimecollisiondetection.net/blog/?p=86">Order your graphics draw calls
+around!</a></p>
+</div>
+<div class="section" id="customization">
+<h2>Customization<a class="headerlink" href="#customization" title="Permalink to this headline">¶</a></h2>
+<p>By default each platform has sane default values. For example on Windows
+default renderer is DirectX9, and on Linux it is OpenGL 2.1. On Windows
+platform all rendering backends are available. For OpenGL ES on desktop
+you can find more information at:- <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES 2.0 and EGL on
+desktop</a></p>
+<p>If you&#8217;re targeting specific mobile hardware, you can find GLES support
+in their official SDKs: <a class="reference external" href="http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources">Adreno
+SDK</a>,
+<a class="reference external" href="http://www.malideveloper.com/">Mali SDK</a>, <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/">PowerVR
+SDK</a>.</p>
+<p>All configuration settings are located inside
+<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/config.h">src/config.h</a>.</p>
+<p>Every <code class="docutils literal"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines thru
+compiler switches. For example setting preprocessor define
+<code class="docutils literal"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change backend renderer to OpenGL
+2.1. on Windows. Since rendering APIs are platform specific, this
+obviously won&#8217;t work nor make sense in all cases. Certain platforms have
+only single choice, for example the Native Client works only with OpenGL
+ES 2.0 renderer, using anything other than that will result in build
+errors.</p>
+</div>
+<div class="section" id="debugging-and-profiling">
+<h2>Debugging and Profiling<a class="headerlink" href="#debugging-and-profiling" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="renderdoc">
+<h3>RenderDoc<a class="headerlink" href="#renderdoc" title="Permalink to this headline">¶</a></h3>
+<p>Loading of RenderDoc is integrated in bgfx when using DX11 or OpenGL
+renderer. You can drop in <code class="docutils literal"><span class="pre">renderdoc.dll</span></code> from RenderDoc distribution
+into working directory, and it will be automatically loaded during bgfx
+initialization. This allows frame capture at any time by pressing
+<strong>F11</strong>.</p>
+<p>Download: <a class="reference external" href="https://renderdoc.org/builds">RenderDoc</a></p>
+</div>
+<div class="section" id="intelgpa">
+<h3>IntelGPA<a class="headerlink" href="#intelgpa" title="Permalink to this headline">¶</a></h3>
+<p>Right click <strong>Intel GPA Monitor</strong> tray icon, choose preferences, check
+&#8220;Auto-detect launched applications&#8221; option. Find <code class="docutils literal"><span class="pre">InjectionList.txt</span></code>
+in GPA directory and add <code class="docutils literal"><span class="pre">examples-*</span></code> to the list.</p>
+<p>Download:
+<a class="reference external" href="https://software.intel.com/en-us/vcsource/tools/intel-gpa">IntelGPA</a></p>
+<p>Other debuggers:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="25%" />
+<col width="10%" />
+<col width="12%" />
+<col width="9%" />
+<col width="12%" />
+<col width="14%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">OS</th>
+<th class="head">DX9</th>
+<th class="head">DX11</th>
+<th class="head">GL</th>
+<th class="head">GLES</th>
+<th class="head">Source</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>APITrace</td>
+<td>Linux/OSX/Win</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+</tr>
+<tr class="row-odd"><td>CodeXL</td>
+<td>Linux/Win</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Dissector</td>
+<td>Win</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>x</td>
+</tr>
+<tr class="row-odd"><td>IntelGPA</td>
+<td>Linux/OSX/Win</td>
+<td>x</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>x</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Nsight</td>
+<td>Win</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>PerfHUD</td>
+<td>Win</td>
+<td>x</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>RenderDoc</td>
+<td>Win</td>
+<td>&nbsp;</td>
+<td>x</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>x</td>
+</tr>
+<tr class="row-odd"><td>vogl</td>
+<td>Linux</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>x</td>
+<td>&nbsp;</td>
+<td>x</td>
+</tr>
+</tbody>
+</table>
+<div class="line-block">
+<div class="line">Download:</div>
+<div class="line"><a class="reference external" href="https://apitrace.github.io/">APITrace</a></div>
+<div class="line"><a class="reference external" href="http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/">CodeXL</a></div>
+<div class="line"><a class="reference external" href="https://github.com/imccown/Dissector">Dissector</a></div>
+<div class="line"><a class="reference external" href="https://developer.nvidia.com/nvidia-nsight-visual-studio-edition">Nsight</a></div>
+<div class="line"><a class="reference external" href="https://developer.nvidia.com/nvidia-perfhud">PerfHUD</a></div>
+<div class="line"><a class="reference external" href="https://github.com/ValveSoftware/vogl">vogl</a></div>
+</div>
+</div>
+</div>
+<div class="section" id="sdl-glfw-etc">
+<h2>SDL, GLFW, etc.<a class="headerlink" href="#sdl-glfw-etc" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to use bgfx with SDL, GLFW and similar cross platform
+windowing libraries. The main requirement is that windowing library
+provides access to native window handle that&#8217;s used to create Direct3D
+device or OpenGL context.</p>
+<p>Using bgfx with SDL example:</p>
+<div class="highlight-python"><div class="highlight"><pre>#include &lt;SDL.h&gt;
+#include &lt;bgfxplatform.h&gt; // it must be included after SDL to enable SDL
+                          // integration code path.
+
+#include &lt;bgfx.h&gt;
+...
+
+int main(...
+{
+    SDL_window* window = SDL_CreateWindow(...
+    bgfx::sdlSetWindow(window);
+
+    ...
+    bgfx::init();
+</pre></div>
+</div>
+<p><strong>NOTE</strong> You can use <code class="docutils literal"><span class="pre">--with-sdl</span></code> when runnning GENie to enable SDL2
+integration with examples:</p>
+<div class="highlight-python"><div class="highlight"><pre>genie --with-sdl vs2012
+</pre></div>
+</div>
+<p><strong>NOTE</strong> <code class="docutils literal"><span class="pre">--with-glfw</span></code> is also available, but it&#8217;s just simple stub to
+be used to test GLFW integration API.</p>
+<p><strong>NOTE</strong> Special care is necessary to make custom windowing to work with
+multithreaded renderer. Each platform has rules about where renderer can
+be and how multithreading interacts with context/device. To disable
+multithreaded render use <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREDED=0</span></code> preprocessor
+define.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="build.html" class="btn btn-neutral float-right" title="Building" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="bgfx - Documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Branimir Karadžić.
+    </p>
+  </div>
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  false
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

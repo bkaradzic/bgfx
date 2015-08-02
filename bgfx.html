@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>bgfx - API Reference &mdash; bgfx 1.0 documentation</title>
+  <title>API Reference &mdash; bgfx 1.0 documentation</title>
   
 
   
@@ -31,7 +31,8 @@
 
   
     <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
-        <link rel="prev" title="bgfx - Documentation" href="index.html"/> 
+        <link rel="next" title="Tools" href="tools.html"/>
+        <link rel="prev" title="Building" href="build.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -71,7 +72,42 @@
           
           
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">bgfx - API Reference</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#renderdoc">RenderDoc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#intelgpa">IntelGPA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="build.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#getting-source">Getting source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#android">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#linux">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#native-client">Native Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#build">Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id1">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#xcode-5">Xcode 5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#general">General</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#initialization-and-shutdown">Initialization and Shutdown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#updating">Updating</a><ul>
@@ -132,6 +168,12 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+</ul>
+</li>
 </ul>
 
           
@@ -156,7 +198,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>bgfx - API Reference</li>
+    <li>API Reference</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -167,11 +209,8 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="bgfx-api-reference">
-<h1>bgfx - API Reference<a class="headerlink" href="#bgfx-api-reference" title="Permalink to this headline">¶</a></h1>
-<p>bgfx is Cross-platform, graphics API agnostic, &#8220;Bring Your Own Engine/Framework&#8221; style
-rendering library.</p>
-<p><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></p>
+  <div class="section" id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="initialization-and-shutdown">
@@ -456,9 +495,9 @@ rendering library.</p>
 <dd><p>Reset graphic settings and back-buffer size. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>This call doesn&#8217;t actually change window size, it just resizes back-buffer. Windowing code has to change window size.</dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_reset</span></code>. </dd>
+<dd><p class="first">This call doesn&#8217;t actually change window size, it just resizes back-buffer. Windowing code has to change window size.</p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_reset</span></code>. </p>
+</dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Back-buffer width. </p>
@@ -3603,8 +3642,10 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="tools.html" class="btn btn-neutral float-right" title="Tools" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-        <a href="index.html" class="btn btn-neutral" title="bgfx - Documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+        <a href="build.html" class="btn btn-neutral" title="Building" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
