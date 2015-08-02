@@ -3125,7 +3125,7 @@ data.NumQualityLevels = 0;
 					, numSrd
 					, srd
 					);
-				BX_CHECK(0 != result, "Invalid size");
+				BX_CHECK(0 != result, "Invalid size"); BX_UNUSED(result);
 				BX_TRACE("Update subresource %" PRId64, result);
 
 				setState(commandList, state);
