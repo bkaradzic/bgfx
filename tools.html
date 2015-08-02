@@ -31,6 +31,7 @@
 
   
     <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
+        <link rel="next" title="License" href="license.html"/>
         <link rel="prev" title="API Reference" href="bgfx.html"/> 
 
   
@@ -72,7 +73,16 @@
           
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-rendering-backends">Supported rendering backends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-hmd">Supported HMD</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-platforms">Supported platforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-compilers">Supported compilers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-languages">Supported languages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#project-page">Project page</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#contact">Contact</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
@@ -81,6 +91,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#todo">Todo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#getting-involved">Getting involved</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
@@ -104,6 +116,38 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#helloworld">00-helloworld</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#cubes">01-cubes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#metaballs">02-metaballs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#raymarch">03-raymarch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#mesh">04-mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#instancing">05-instancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#bump">06-bump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#callback">07-callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#update">08-update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#hdr">09-hdr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#font">10-font</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#fontsdf">11-fontsdf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#lod">12-lod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#stencil">13-stencil</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#shadowvolumes">14-shadowvolumes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#shadowmaps-simple">15-shadowmaps-simple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#shadowmaps">16-shadowmaps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#drawstress">17-drawstress</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples.html#hz">60Hz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html#hz-test-for-browsers">30Hz (test for browsers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ibl">18-ibl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#oit">19-oit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#nanovg">20-nanovg</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#deferred">21-deferred</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#windows">22-windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#vectordisplay">23-vectordisplay</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#nbody">24-nbody</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
@@ -173,6 +217,25 @@
 <li class="toctree-l2"><a class="reference internal" href="#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="license.html#license-bsd-2-clause">License (BSD 2-clause)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="license.html#rd-party-libraries">3rd Party Libraries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="license.html#blendish-mit">Blendish (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#edtaa3-mit">edtaa3 (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#fcpp-bsd">fcpp (BSD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#forsyth-triangle-order-optimizer-public-domain">Forsyth Triangle Order Optimizer (Public Domain)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#freetype">FreeType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#glsl-optimizer-mit">glsl-optimizer (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#nanovg-zlib">NanoVG (ZLIB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#imgui-mit">ImGui (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#sdf-mit">SDF (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#stb-public-domain">stb (Public Domain)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#vertex-cache-optimised-index-buffer-compression-bsd">Vertex Cache Optimised Index Buffer Compression (BSD)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="license.html#assets">Assets</a></li>
+</ul>
+</li>
 </ul>
 
           
@@ -237,14 +300,13 @@ macros</a>.</p>
 <h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this headline">¶</a></h2>
 <p>This tool doesn&#8217;t currently exist. To produce DDS, KTX or PVR textures
 use:</p>
-<div class="line-block">
-<div class="line"><a href="#id1"><span class="problematic" id="id2">`</span></a>.dds - nVidia Texture Tools - DDS</div>
-</div>
-<p>Utilities &lt;<a class="reference external" href="https://developer.nvidia.com/legacy-texture-tools">https://developer.nvidia.com/legacy-texture-tools</a>&gt;`__
-| <a class="reference external" href="http://malideveloper.arm.com/develop-for-mali/mali-gpu-texture-compression-tool/">.ktx - Mali GPU Texture Compression
-Tool</a>
-| <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/index.asp">.pvr - PowerVR Insider
-SDK</a></p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://developer.nvidia.com/legacy-texture-tools">.dds - nVidia Texture Tools - DDS Utilities</a></li>
+<li><a class="reference external" href="http://malideveloper.arm.com/develop-for-mali/mali-gpu-texture-compression-tool/">.ktx - Mali GPU Texture Compression Tool</a></li>
+<li><a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/index.asp">.pvr - PowerVR Insider SDK</a></li>
+</ul>
+</div></blockquote>
 </div>
 <div class="section" id="geometry-compiler-geometryc">
 <h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Permalink to this headline">¶</a></h2>
@@ -257,6 +319,8 @@ SDK</a></p>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="license.html" class="btn btn-neutral float-right" title="License" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="bgfx.html" class="btn btn-neutral" title="API Reference" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

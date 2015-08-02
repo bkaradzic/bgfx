@@ -1,0 +1,1031 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Examples &mdash; bgfx 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
+        <link rel="next" title="API Reference" href="bgfx.html"/>
+        <link rel="prev" title="Building" href="build.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> bgfx
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-it">What is it?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-rendering-backends">Supported rendering backends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-hmd">Supported HMD</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-platforms">Supported platforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-compilers">Supported compilers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#supported-languages">Supported languages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#project-page">Project page</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#contact">Contact</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#renderdoc">RenderDoc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#intelgpa">IntelGPA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#todo">Todo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#getting-involved">Getting involved</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="build.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#getting-source">Getting source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#android">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#linux">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#native-client">Native Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#build">Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="build.html#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id1">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#xcode-5">Xcode 5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#oculusvr-integration">OculusVR integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#helloworld">00-helloworld</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cubes">01-cubes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metaballs">02-metaballs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#raymarch">03-raymarch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mesh">04-mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#instancing">05-instancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bump">06-bump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#callback">07-callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#update">08-update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hdr">09-hdr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#font">10-font</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fontsdf">11-fontsdf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lod">12-lod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stencil">13-stencil</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shadowvolumes">14-shadowvolumes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shadowmaps-simple">15-shadowmaps-simple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shadowmaps">16-shadowmaps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#drawstress">17-drawstress</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hz">60Hz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hz-test-for-browsers">30Hz (test for browsers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ibl">18-ibl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oit">19-oit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nanovg">20-nanovg</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deferred">21-deferred</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#windows">22-windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vectordisplay">23-vectordisplay</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nbody">24-nbody</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#general">General</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#initialization-and-shutdown">Initialization and Shutdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#updating">Updating</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#reset">Reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#frame">Frame</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#debug">Debug</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-features">Debug Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-flags">Debug Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#debug-text-display">Debug Text Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#querying-information">Querying information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#renderer">Renderer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#capabilities">Capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#statistics">Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#head-mounted-display">Head Mounted Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#platform-specific">Platform specific</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id1">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#id2">State</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#state-flags">State Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil">Stencil</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#stencil-flags">Stencil Flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#scissor">Scissor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bgfx.html#transform">Transform</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id3">Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="license.html#license-bsd-2-clause">License (BSD 2-clause)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="license.html#rd-party-libraries">3rd Party Libraries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="license.html#blendish-mit">Blendish (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#edtaa3-mit">edtaa3 (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#fcpp-bsd">fcpp (BSD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#forsyth-triangle-order-optimizer-public-domain">Forsyth Triangle Order Optimizer (Public Domain)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#freetype">FreeType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#glsl-optimizer-mit">glsl-optimizer (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#nanovg-zlib">NanoVG (ZLIB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#imgui-mit">ImGui (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#sdf-mit">SDF (MIT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#stb-public-domain">stb (Public Domain)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html#vertex-cache-optimised-index-buffer-compression-bsd">Vertex Cache Optimised Index Buffer Compression (BSD)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="license.html#assets">Assets</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">bgfx</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Examples</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<p>Most of the examples require shader/texture/mesh data to be loaded. When
+running examples your current directory should be examples/runtime.</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;bgfx_path&gt;/examples/runtime $ ../../.build/&lt;config&gt;/bin/example-00-helloworldDebug
+</pre></div>
+</div>
+<div class="section" id="helloworld">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/00-helloworld">00-helloworld</a><a class="headerlink" href="#helloworld" title="Permalink to this headline">¶</a></h2>
+<p>Initialization and debug text.</p>
+<div class="figure">
+<img alt="example-00-helloworld" src="https://github.com/bkaradzic/bgfx/raw/master/examples/00-helloworld/screenshot.png" />
+</div>
+</div>
+<div class="section" id="cubes">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/01-cubes/cubes.cpp">01-cubes</a><a class="headerlink" href="#cubes" title="Permalink to this headline">¶</a></h2>
+<p>Rendering simple static mesh.</p>
+<div class="figure">
+<img alt="example-01-cubes" src="https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png" />
+</div>
+</div>
+<div class="section" id="metaballs">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/02-metaballs">02-metaballs</a><a class="headerlink" href="#metaballs" title="Permalink to this headline">¶</a></h2>
+<p>Rendering with transient buffers and embedding shaders.</p>
+<div class="figure">
+<img alt="example-02-metaballs" src="https://github.com/bkaradzic/bgfx/raw/master/examples/02-metaballs/screenshot.png" />
+</div>
+</div>
+<div class="section" id="raymarch">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/03-raymarch">03-raymarch</a><a class="headerlink" href="#raymarch" title="Permalink to this headline">¶</a></h2>
+<p>Updating shader uniforms.</p>
+<div class="figure">
+<img alt="example-03-raymarch" src="https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png" />
+</div>
+</div>
+<div class="section" id="mesh">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/04-mesh">04-mesh</a><a class="headerlink" href="#mesh" title="Permalink to this headline">¶</a></h2>
+<p>Loading meshes.</p>
+<div class="figure">
+<img alt="example-04-mesh" src="https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png" />
+</div>
+</div>
+<div class="section" id="instancing">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/05-instancing">05-instancing</a><a class="headerlink" href="#instancing" title="Permalink to this headline">¶</a></h2>
+<p>Geometry instancing.</p>
+<div class="figure">
+<img alt="example-05-instancing" src="https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png" />
+</div>
+</div>
+<div class="section" id="bump">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/06-bump">06-bump</a><a class="headerlink" href="#bump" title="Permalink to this headline">¶</a></h2>
+<p>Loading textures.</p>
+<div class="figure">
+<img alt="example-06-bump" src="https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png" />
+</div>
+</div>
+<div class="section" id="callback">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/07-callback">07-callback</a><a class="headerlink" href="#callback" title="Permalink to this headline">¶</a></h2>
+<p>Implementing application specific callbacks for taking screen shots,
+caching OpenGL binary shaders, and video capture.</p>
+</div>
+<div class="section" id="update">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/08-update">08-update</a><a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h2>
+<p>Updating textures.</p>
+</div>
+<div class="section" id="hdr">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/09-hdr">09-hdr</a><a class="headerlink" href="#hdr" title="Permalink to this headline">¶</a></h2>
+<p>Using multiple views and render targets.</p>
+<div class="figure">
+<img alt="example-09-hdr" src="https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png" />
+</div>
+</div>
+<div class="section" id="font">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/10-font">10-font</a><a class="headerlink" href="#font" title="Permalink to this headline">¶</a></h2>
+<p>Use the font system to display text and styled text.</p>
+<div class="figure">
+<img alt="example-10-font" src="https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png" />
+</div>
+</div>
+<div class="section" id="fontsdf">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/11-fontsdf">11-fontsdf</a><a class="headerlink" href="#fontsdf" title="Permalink to this headline">¶</a></h2>
+<p>Use a single distance field font to render text of various size.</p>
+<div class="figure">
+<img alt="example-11-fontsdf" src="https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png" />
+</div>
+</div>
+<div class="section" id="lod">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/12-lod">12-lod</a><a class="headerlink" href="#lod" title="Permalink to this headline">¶</a></h2>
+<p>Mesh LOD transitions.</p>
+<div class="figure">
+<img alt="example-12-lod" src="https://github.com/bkaradzic/bgfx/raw/master/examples/12-lod/screenshot.png" />
+</div>
+</div>
+<div class="section" id="stencil">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/13-stencil">13-stencil</a><a class="headerlink" href="#stencil" title="Permalink to this headline">¶</a></h2>
+<p>Stencil reflections and shadows.</p>
+<div class="figure">
+<img alt="example-13-stencil" src="https://github.com/bkaradzic/bgfx/raw/master/examples/13-stencil/screenshot.png" />
+</div>
+</div>
+<div class="section" id="shadowvolumes">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/14-shadowvolumes">14-shadowvolumes</a><a class="headerlink" href="#shadowvolumes" title="Permalink to this headline">¶</a></h2>
+<p>Shadow volumes.</p>
+<div class="figure">
+<img alt="example-14-shadowvolumes" src="https://github.com/bkaradzic/bgfx/raw/master/examples/14-shadowvolumes/screenshot.png" />
+</div>
+</div>
+<div class="section" id="shadowmaps-simple">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/15-shadowmaps-simple">15-shadowmaps-simple</a><a class="headerlink" href="#shadowmaps-simple" title="Permalink to this headline">¶</a></h2>
+<div class="figure">
+<img alt="example-15-shadowmaps-simple" src="https://github.com/bkaradzic/bgfx/raw/master/examples/15-shadowmaps-simple/screenshot.png" />
+</div>
+</div>
+<div class="section" id="shadowmaps">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/16-shadowmaps">16-shadowmaps</a><a class="headerlink" href="#shadowmaps" title="Permalink to this headline">¶</a></h2>
+<div class="figure">
+<img alt="example-16-shadowmaps" src="https://github.com/bkaradzic/bgfx/raw/master/examples/16-shadowmaps/screenshot.png" />
+</div>
+</div>
+<div class="section" id="drawstress">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/17-drawstress">17-drawstress</a><a class="headerlink" href="#drawstress" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hz">
+<h3>60Hz<a class="headerlink" href="#hz" title="Permalink to this headline">¶</a></h3>
+<p>Draw stress is CPU stress test to show what is the maximimum number of
+draw calls while maintaining 60Hz frame rate. bgfx currently has default
+limit of 64K draw calls per frame. You can increase this limit by
+changing <code class="docutils literal"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="18%" />
+<col width="16%" />
+<col width="27%" />
+<col width="8%" />
+<col width="11%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CPU</th>
+<th class="head">Renderer</th>
+<th class="head">GPU</th>
+<th class="head">Arch/Compiler/OS</th>
+<th class="head">Dim</th>
+<th class="head">Calls</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>i7-4770K 4.2</td>
+<td>GL2.1</td>
+<td>2xGTX780</td>
+<td>x64/VS2013/Win 8.1</td>
+<td>51</td>
+<td>132651</td>
+</tr>
+<tr class="row-odd"><td>i7-4770K 4.2</td>
+<td>DX11</td>
+<td>2xGTX780</td>
+<td>x64/VS2013/Win 8.1</td>
+<td>50</td>
+<td>125000</td>
+</tr>
+<tr class="row-even"><td>i7-4790K 4.0</td>
+<td>GL2.1</td>
+<td>GTX970</td>
+<td>x64/VS2015/Win 10</td>
+<td>47</td>
+<td>103823</td>
+</tr>
+<tr class="row-odd"><td>i7-4790K 4.0</td>
+<td>DX11</td>
+<td>GTX970</td>
+<td>x64/VS2015/Win 10</td>
+<td>45</td>
+<td>91125</td>
+</tr>
+<tr class="row-even"><td>i7-4790K 4.0</td>
+<td>DX9</td>
+<td>GTX970</td>
+<td>x64/VS2013/Win 10</td>
+<td>40</td>
+<td>64000</td>
+</tr>
+<tr class="row-odd"><td>i5-3570 3.8</td>
+<td>NV 331.49</td>
+<td>GTX560Ti</td>
+<td>x64/GCC/Linux</td>
+<td>40</td>
+<td>64000+</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>GL2.1</td>
+<td>GTX650Ti</td>
+<td>x64/VS2008/Win 7</td>
+<td>38</td>
+<td>54872</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>GL2.1</td>
+<td>GTX650Ti</td>
+<td>x86/VS2008/Win 7</td>
+<td>38</td>
+<td>54872</td>
+</tr>
+<tr class="row-even"><td>i7-4790K 4.0</td>
+<td>DX11</td>
+<td>R7 240</td>
+<td>x64/VS2015/Win 10</td>
+<td>36</td>
+<td>46656</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>NV 331.113</td>
+<td>GTX650Ti</td>
+<td>x64/GCC/Linux</td>
+<td>34</td>
+<td>39304</td>
+</tr>
+<tr class="row-even"><td>i7-4790K 4.0</td>
+<td>DX9</td>
+<td>R7 240</td>
+<td>x64/VS2015/Win 10</td>
+<td>32</td>
+<td>32768</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>DX9</td>
+<td>GTX650Ti</td>
+<td>x64/GCC/Win 7</td>
+<td>32</td>
+<td>32768</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>DX9</td>
+<td>GTX650Ti</td>
+<td>x64/VS2008/Win 7</td>
+<td>32</td>
+<td>32768</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>DX9</td>
+<td>GTX650Ti</td>
+<td>x86/GCC/Win 7</td>
+<td>30</td>
+<td>27000</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>DX9</td>
+<td>GTX650Ti</td>
+<td>x86/VS2008/Win 7</td>
+<td>30</td>
+<td>27000</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>GL2.1</td>
+<td>HD5000</td>
+<td>x64/Clang/OSX 10.9</td>
+<td>28</td>
+<td>21852</td>
+</tr>
+<tr class="row-even"><td>Q8200 2.33</td>
+<td>NV 319.32</td>
+<td>GTX260</td>
+<td>x64/GCC/Linux</td>
+<td>27</td>
+<td>19683</td>
+</tr>
+<tr class="row-odd"><td>i7-2600K 3.4</td>
+<td>DX9</td>
+<td>AMD6800</td>
+<td>x64/VS2012/Win 7</td>
+<td>27</td>
+<td>19683</td>
+</tr>
+<tr class="row-even"><td>i7-2600K 3.4</td>
+<td>GL2.1</td>
+<td>AMD6800</td>
+<td>x64/VS2012/Win 7</td>
+<td>26</td>
+<td>17576</td>
+</tr>
+<tr class="row-odd"><td>i7-4770R 3.2</td>
+<td>Mesa 10.0.1</td>
+<td>HD5200</td>
+<td>x64/GCC/SteamOS</td>
+<td>25</td>
+<td>15625</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>DX9-Wine</td>
+<td>GTX650Ti</td>
+<td>x64/GCC/Linux</td>
+<td>24</td>
+<td>13824</td>
+</tr>
+<tr class="row-odd"><td>i7-4750HQ 2.0</td>
+<td>Mesa 10.0.1</td>
+<td>HD5200</td>
+<td>x64/GCC/Linux</td>
+<td>22</td>
+<td>10648</td>
+</tr>
+<tr class="row-even"><td>i7-4750HQ 2.0</td>
+<td>Mesa 10.1.3</td>
+<td>HD5200</td>
+<td>x64/GCC/Linux</td>
+<td>21</td>
+<td>9261</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>ES2-ANGLE</td>
+<td>GTX650Ti</td>
+<td>x86/VS2008/Win 7</td>
+<td>21</td>
+<td>9261</td>
+</tr>
+<tr class="row-even"><td>Q8200 2.33</td>
+<td>Gallium 0.4</td>
+<td>AMD5770</td>
+<td>x64/GCC/Linux</td>
+<td>21</td>
+<td>9261</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>ES2</td>
+<td>HD5000</td>
+<td>JIT/Clang/PNaCl 31</td>
+<td>21</td>
+<td>9261</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>ES2</td>
+<td>HD5000</td>
+<td>x86/GCC/NaCl 31</td>
+<td>20</td>
+<td>8000</td>
+</tr>
+<tr class="row-odd"><td>Q8200 2.33</td>
+<td>Gallium 0.4</td>
+<td>GTX260</td>
+<td>x64/GCC/Linux</td>
+<td>19</td>
+<td>6859</td>
+</tr>
+<tr class="row-even"><td>i5-2450M 2.5</td>
+<td>Mesa 10.2.0</td>
+<td>HD3000</td>
+<td>x64/GCC/Linux</td>
+<td>19</td>
+<td>6859</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>ES2-PowerVR</td>
+<td>GTX650Ti</td>
+<td>x86/VS2008/Win 7</td>
+<td>18</td>
+<td>5832</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>FF27-GL</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>17</td>
+<td>4913</td>
+</tr>
+<tr class="row-odd"><td>i7-4750HQ 2.0</td>
+<td>Mesa 8.0.5</td>
+<td>LLVMPIPE</td>
+<td>x64/GCC/Linux</td>
+<td>16</td>
+<td>4096</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>ES2-Qualcomm</td>
+<td>GTX650Ti</td>
+<td>x86/VS2008/Win 7</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>ES2</td>
+<td>GTX650Ti</td>
+<td>x64/GCC/NaCl 31</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>ES2</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/PNaCl 31</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-odd"><td>Q8200 2.33</td>
+<td>NV 319.32</td>
+<td>GTX260</td>
+<td>x64/GCC/NaCl 31</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-even"><td>Q8200 2.33</td>
+<td>NV 319.32</td>
+<td>GTX260</td>
+<td>x64/GCC/PNaCl 31</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-odd"><td>&#8216;12 Nexus 7</td>
+<td>ES2</td>
+<td>Tegra3</td>
+<td>ARM/GCC/Android</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>ES2-FF27</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>Chrome33</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-even"><td>iPad mini 2</td>
+<td>ES2</td>
+<td>PVR G6430</td>
+<td>ARM64/Clang/iOS7</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>Chrome33</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>14</td>
+<td>2744</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>FF27-ANGLE</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>12</td>
+<td>2744</td>
+</tr>
+<tr class="row-odd"><td>&#8216;13 Nexus 10</td>
+<td>ES2</td>
+<td>Mali T604</td>
+<td>ARM/GCC/Android</td>
+<td>13</td>
+<td>2197</td>
+</tr>
+<tr class="row-even"><td>iPhone 5</td>
+<td>ES2</td>
+<td>PVR SGX543</td>
+<td>ARM/Clang/iOS7</td>
+<td>13</td>
+<td>2197</td>
+</tr>
+<tr class="row-odd"><td>&#8216;13 Nexus 7</td>
+<td>ES2</td>
+<td>S4 Pro</td>
+<td>ARM/GCC/Android</td>
+<td>12</td>
+<td>1728</td>
+</tr>
+<tr class="row-even"><td>iPad 2</td>
+<td>ES2</td>
+<td>PVR SGX543</td>
+<td>ARM/Clang/iOS6</td>
+<td>12</td>
+<td>1728</td>
+</tr>
+<tr class="row-odd"><td>Xperia Z</td>
+<td>ES2</td>
+<td>Adreno320</td>
+<td>ARM/GCC/Android</td>
+<td>11</td>
+<td>1331</td>
+</tr>
+<tr class="row-even"><td>iPod 4</td>
+<td>ES2</td>
+<td>PVR SGX535</td>
+<td>ARM/Clang/iOS6</td>
+<td>7</td>
+<td>343</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>ES2-Mali</td>
+<td>GTX650Ti</td>
+<td>x86/VS2008/Windows7</td>
+<td>6</td>
+<td>216</td>
+</tr>
+<tr class="row-even"><td>RaspberryPi</td>
+<td>ES2</td>
+<td>VC IV</td>
+<td>ARM/GCC/Raspbian</td>
+<td>6</td>
+<td>216</td>
+</tr>
+</tbody>
+</table>
+<p>To test browsers in 60Hz mode following changes were made:</p>
+<ul class="simple">
+<li>Firefox 27 <a class="reference external" href="about:config">about:config</a> adjustments: <code class="docutils literal"><span class="pre">webgl.prefer-native-gl</span> <span class="pre">true</span></code>
+(on Windows), and <code class="docutils literal"><span class="pre">layout.frame_rate</span> <span class="pre">500</span></code>.</li>
+<li>Chrome 33 command line option: <code class="docutils literal"><span class="pre">--disable-gpu-vsync</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="hz-test-for-browsers">
+<h3>30Hz (test for browsers)<a class="headerlink" href="#hz-test-for-browsers" title="Permalink to this headline">¶</a></h3>
+<p>By default browsers are using vsync, and don&#8217;t have option to turn it
+off programatically.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="14%" />
+<col width="14%" />
+<col width="31%" />
+<col width="8%" />
+<col width="12%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CPU</th>
+<th class="head">Renderer</th>
+<th class="head">GPU</th>
+<th class="head">Arch/Compiler/OS</th>
+<th class="head">Dim</th>
+<th class="head">Calls</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>GL2.1</td>
+<td>GTX650Ti</td>
+<td>x64/VS2008/Win7</td>
+<td>38</td>
+<td>64000+</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>GL2.1</td>
+<td>HD5000</td>
+<td>x64/Clang/OSX 10.9</td>
+<td>36</td>
+<td>46656</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>Chrome34</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-PNaCl 31</td>
+<td>28</td>
+<td>21952</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>Chrome33</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-PNaCl 31</td>
+<td>27</td>
+<td>19683</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>FF28</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>25</td>
+<td>15625</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>FF36</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>25</td>
+<td>15625</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>Chrome41</td>
+<td>HD5000</td>
+<td>x64/GCC/OSX-NaCl 41</td>
+<td>24</td>
+<td>13824</td>
+</tr>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
+<td>FF37</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>23</td>
+<td>12167</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>FF27</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>20</td>
+<td>8000</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>Chrome33</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-PNaCl 31</td>
+<td>20</td>
+<td>8000</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>Chrome34</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>18</td>
+<td>5832</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>Chrome33</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>18</td>
+<td>5832</td>
+</tr>
+<tr class="row-even"><td>i7-920 2.66</td>
+<td>FF28</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>18</td>
+<td>5832</td>
+</tr>
+<tr class="row-odd"><td>i7-920 2.66</td>
+<td>FF27</td>
+<td>GTX650Ti</td>
+<td>JIT/Clang/W7-asm.js</td>
+<td>18</td>
+<td>5832</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
+<td>Safari7</td>
+<td>HD5000</td>
+<td>JIT/Clang/OSX-asm.js</td>
+<td>15</td>
+<td>3375</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="ibl">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl">18-ibl</a><a class="headerlink" href="#ibl" title="Permalink to this headline">¶</a></h2>
+<p>Image based lighting.</p>
+<div class="figure">
+<img alt="example-18-ibl" src="https://github.com/bkaradzic/bgfx/raw/master/examples/18-ibl/screenshot.png" />
+</div>
+</div>
+<div class="section" id="oit">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/19-oit">19-oit</a><a class="headerlink" href="#oit" title="Permalink to this headline">¶</a></h2>
+<p>Weighted, Blended Order-Independent Transparency</p>
+<div class="figure">
+<img alt="example-19-oit" src="https://github.com/bkaradzic/bgfx/raw/master/examples/19-oit/screenshot.png" />
+</div>
+</div>
+<div class="section" id="nanovg">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/20-nanovg">20-nanovg</a><a class="headerlink" href="#nanovg" title="Permalink to this headline">¶</a></h2>
+<p>NanoVG is small antialiased vector graphics rendering library.</p>
+<div class="figure">
+<img alt="example-20-nanovg" src="https://github.com/bkaradzic/bgfx/raw/master/examples/20-nanovg/screenshot.png" />
+</div>
+</div>
+<div class="section" id="deferred">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/21-deferred">21-deferred</a><a class="headerlink" href="#deferred" title="Permalink to this headline">¶</a></h2>
+<p>MRT rendering and deferred shading.</p>
+<div class="figure">
+<img alt="example-21-deferred" src="https://github.com/bkaradzic/bgfx/raw/master/examples/21-deferred/screenshot.png" />
+</div>
+</div>
+<div class="section" id="windows">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/22-windows">22-windows</a><a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h2>
+<p>Rendering into multiple windows.</p>
+</div>
+<div class="section" id="vectordisplay">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/23-vectordisplay">23-vectordisplay</a><a class="headerlink" href="#vectordisplay" title="Permalink to this headline">¶</a></h2>
+<p>Rendering lines as oldschool vectors.</p>
+<div class="figure">
+<img alt="example-23-vectordisplay" src="https://github.com/bkaradzic/bgfx/raw/master/examples/23-vectordisplay/screenshot.png" />
+</div>
+</div>
+<div class="section" id="nbody">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/24-nbody">24-nbody</a><a class="headerlink" href="#nbody" title="Permalink to this headline">¶</a></h2>
+<p>N-body simulation with compute shaders using buffers.</p>
+<div class="figure">
+<img alt="example-24-nbody" src="https://github.com/bkaradzic/bgfx/raw/master/examples/24-nbody/screenshot.png" />
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="bgfx.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="build.html" class="btn btn-neutral" title="Building" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Branimir Karadžić.
+    </p>
+  </div>
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  false
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
