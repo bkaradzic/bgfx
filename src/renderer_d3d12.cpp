@@ -327,6 +327,7 @@ namespace bgfx { namespace d3d12
 		{
 			Default,
 			Upload,
+			ReadBack,
 
 			Count
 		};
@@ -337,8 +338,9 @@ namespace bgfx { namespace d3d12
 
 	static const HeapProperty s_heapProperties[] =
 	{
-		{ { D3D12_HEAP_TYPE_DEFAULT, D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_COMMON       },
-		{ { D3D12_HEAP_TYPE_UPLOAD,  D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_GENERIC_READ },
+		{ { D3D12_HEAP_TYPE_DEFAULT,  D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_COMMON       },
+		{ { D3D12_HEAP_TYPE_UPLOAD,   D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_GENERIC_READ },
+		{ { D3D12_HEAP_TYPE_READBACK, D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_COPY_DEST    },
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_heapProperties) == HeapProperty::Count);
 
@@ -1128,8 +1130,45 @@ namespace bgfx { namespace d3d12
 			m_uniforms[_handle.idx] = NULL;
 		}
 
-		void saveScreenShot(const char* /*_filePath*/) BX_OVERRIDE
+		void saveScreenShot(const char* _filePath) BX_OVERRIDE
 		{
+			uint32_t idx = (m_backBufferColorIdx-1) % m_scd.BufferCount;
+			m_cmd.finish(m_backBufferColorFence[idx]);
+			ID3D12Resource* backBuffer = m_backBufferColor[idx];
+
+			D3D12_RESOURCE_DESC backBufferDesc = backBuffer->GetDesc();
+
+			const uint32_t width  = (uint32_t)backBufferDesc.Width;
+			const uint32_t height = (uint32_t)backBufferDesc.Height;
+			const uint32_t pitch  = bx::strideAlign(width  * 4,     D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+			const uint32_t slice  = bx::strideAlign(height * pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+			ID3D12Resource* staging = createCommittedResource(m_device, HeapProperty::ReadBack, slice);
+
+			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			m_commandList->CopyResource(staging, backBuffer);
+			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
+			finish();
+			m_commandList = m_cmd.alloc();
+
+			void* data;
+			staging->Map(0, NULL, (void**)&data);
+			imageSwizzleBgra8(width
+				, height
+				, pitch
+				, data
+				, data
+				);
+			g_callback->screenShot(_filePath
+				, width
+				, height
+				, pitch
+				, data
+				, slice
+				, false
+				);
+			staging->Unmap(0, NULL);
+
+			DX_RELEASE(staging, 0);
 		}
 
 		void updateViewName(uint8_t /*_id*/, const char* /*_name*/) BX_OVERRIDE
@@ -2597,7 +2636,7 @@ data.NumQualityLevels = 0;
 
 		if (!needUav)
 		{
-			m_staging = createCommittedResource(device, HeapProperty::Upload,  _size);
+			m_staging = createCommittedResource(device, HeapProperty::Upload, _size);
 		}
 
 		if (m_dynamic)
