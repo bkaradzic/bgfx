@@ -1516,10 +1516,7 @@ data.NumQualityLevels = 0;
 					const bool bufferOnly = 0 != (texture.m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 					if (!bufferOnly)
 					{
-						texture.setState(m_commandList, D3D12_RESOURCE_STATES(0)
-							| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-//							| D3D12_RESOURCE_STATE_DEPTH_READ
-							);
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_READ);
 					}
 				}
 			}
