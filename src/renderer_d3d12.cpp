@@ -673,7 +673,7 @@ namespace bgfx { namespace d3d12
 						;
 				rtvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 				rtvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-				rtvDescHeap.NodeMask = 0;
+				rtvDescHeap.NodeMask = 1;
 				DX_CHECK(m_device->CreateDescriptorHeap(&rtvDescHeap
 						, __uuidof(ID3D12DescriptorHeap)
 						, (void**)&m_rtvDescriptorHeap
@@ -686,7 +686,7 @@ namespace bgfx { namespace d3d12
 						;
 				dsvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 				dsvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-				dsvDescHeap.NodeMask = 0;
+				dsvDescHeap.NodeMask = 1;
 				DX_CHECK(m_device->CreateDescriptorHeap(&dsvDescHeap
 						, __uuidof(ID3D12DescriptorHeap)
 						, (void**)&m_dsvDescriptorHeap
@@ -2349,7 +2349,7 @@ data.NumQualityLevels = 0;
 		desc.NumDescriptors = _maxDescriptors;
 		desc.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		desc.NodeMask = 0;
+		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
 				, __uuidof(ID3D12DescriptorHeap)
 				, (void**)&m_heap
@@ -2466,7 +2466,7 @@ data.NumQualityLevels = 0;
 		desc.NumDescriptors = _maxDescriptors;
 		desc.Type     = _type;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		desc.NodeMask = 0;
+		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
 				, __uuidof(ID3D12DescriptorHeap)
 				, (void**)&m_heap
