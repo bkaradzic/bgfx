@@ -1143,39 +1143,62 @@ namespace bgfx { namespace d3d12
 			m_cmd.finish(m_backBufferColorFence[idx]);
 			ID3D12Resource* backBuffer = m_backBufferColor[idx];
 
-			D3D12_RESOURCE_DESC backBufferDesc = backBuffer->GetDesc();
+			D3D12_RESOURCE_DESC desc = backBuffer->GetDesc();
 
-			const uint32_t width  = (uint32_t)backBufferDesc.Width;
-			const uint32_t height = (uint32_t)backBufferDesc.Height;
-			const uint32_t pitch  = bx::strideAlign(width  * 4,     D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-			const uint32_t slice  = bx::strideAlign(height * pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-			ID3D12Resource* staging = createCommittedResource(m_device, HeapProperty::ReadBack, slice);
+			const uint32_t width  = (uint32_t)desc.Width;
+			const uint32_t height = (uint32_t)desc.Height;
+
+			D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+			uint32_t numRows;
+			uint64_t total;
+			uint64_t pitch;
+			m_device->GetCopyableFootprints(&desc
+				, 0
+				, 1
+				, 0
+				, &layout
+				, &numRows
+				, &pitch
+				, &total
+				);
+
+			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
+
+			D3D12_BOX box;
+			box.left   = 0;
+			box.top    = 0;
+			box.right  = width;
+			box.bottom = height;
+			box.front  = 0;
+			box.back   = 1;
 
 			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-			m_commandList->CopyResource(staging, backBuffer);
+			D3D12_TEXTURE_COPY_LOCATION dst = { readback,   D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout };
+			D3D12_TEXTURE_COPY_LOCATION src = { backBuffer, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 }  };
+			m_commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
 			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
 			finish();
 			m_commandList = m_cmd.alloc();
 
 			void* data;
-			staging->Map(0, NULL, (void**)&data);
+			readback->Map(0, NULL, (void**)&data);
 			imageSwizzleBgra8(width
 				, height
-				, pitch
+				, (uint32_t)pitch
 				, data
 				, data
 				);
 			g_callback->screenShot(_filePath
 				, width
 				, height
-				, pitch
+				, (uint32_t)pitch
 				, data
-				, slice
+				, (uint32_t)total
 				, false
 				);
-			staging->Unmap(0, NULL);
+			readback->Unmap(0, NULL);
 
-			DX_RELEASE(staging, 0);
+			DX_RELEASE(readback, 0);
 		}
 
 		void updateViewName(uint8_t /*_id*/, const char* /*_name*/) BX_OVERRIDE
@@ -1516,10 +1539,7 @@ data.NumQualityLevels = 0;
 					const bool bufferOnly = 0 != (texture.m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 					if (!bufferOnly)
 					{
-						texture.setState(m_commandList, D3D12_RESOURCE_STATES(0)
-							| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-//							| D3D12_RESOURCE_STATE_DEPTH_READ
-							);
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_READ);
 					}
 				}
 			}

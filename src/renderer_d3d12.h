@@ -341,7 +341,7 @@ namespace bgfx { namespace d3d12
 
 		void shutdown()
 		{
-			finish();
+			finish(UINT64_MAX, true);
 
 			DX_RELEASE(m_fence, 0);
 
