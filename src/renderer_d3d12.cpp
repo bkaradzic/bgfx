@@ -626,6 +626,8 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
+			m_presentElapsed = 0;
+
 			{
 				m_resolution.m_width  = BGFX_DEFAULT_WIDTH;
 				m_resolution.m_height = BGFX_DEFAULT_HEIGHT;
@@ -712,15 +714,15 @@ namespace bgfx { namespace d3d12
 
 				D3D12_ROOT_PARAMETER rootParameter[] =
 				{
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::Sampler] }, D3D12_SHADER_VISIBILITY_ALL    },
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::SRV]     }, D3D12_SHADER_VISIBILITY_ALL    },
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::CBV]     }, D3D12_SHADER_VISIBILITY_ALL    },
-	//				{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL    },
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::UAV]     }, D3D12_SHADER_VISIBILITY_ALL    },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::Sampler] }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::SRV]     }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::CBV]     }, D3D12_SHADER_VISIBILITY_ALL },
+//					{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::UAV]     }, D3D12_SHADER_VISIBILITY_ALL },
 				};
-	// 			rootParameter[Rdt::CBV].Constants.ShaderRegister = 0;
-	// 			rootParameter[Rdt::CBV].Constants.RegisterSpace  = 100;
-	// 			rootParameter[Rdt::CBV].Constants.Num32BitValues = 0;
+//				rootParameter[Rdt::CBV].Constants.ShaderRegister = 0;
+//				rootParameter[Rdt::CBV].Constants.RegisterSpace  = 100;
+//				rootParameter[Rdt::CBV].Constants.Num32BitValues = 0;
 
 				D3D12_ROOT_SIGNATURE_DESC descRootSignature;
 				descRootSignature.NumParameters = BX_COUNTOF(rootParameter);
@@ -923,7 +925,7 @@ namespace bgfx { namespace d3d12
 		{
 			if (NULL != m_swapChain)
 			{
-				int64_t elapsed = -bx::getHPCounter();
+				int64_t start = bx::getHPCounter();
 
 				HRESULT hr = 0;
 				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
@@ -939,14 +941,7 @@ namespace bgfx { namespace d3d12
 				}
 
 				int64_t now = bx::getHPCounter();
-				elapsed += now;
-
-				double freq = double(bx::getHPFrequency() );
-				double toMs = 1000.0 / freq;
-				double elapsedCpuMs = double(elapsed)*toMs;
-				BX_UNUSED(elapsedCpuMs);
-
-				//BX_TRACE("%f ms", elapsedCpuMs);
+				m_presentElapsed = now - start;
 
 				if (FAILED(hr)
 				&&  isLost(hr) )
@@ -2262,6 +2257,7 @@ data.NumQualityLevels = 0;
 		IDXGIFactory1* m_factory;
 
 		IDXGISwapChain* m_swapChain;
+		int64_t m_presentElapsed;
 		uint16_t m_lost;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -4003,8 +3999,13 @@ data.NumQualityLevels = 0;
 
 		static int64_t min = frameTime;
 		static int64_t max = frameTime;
-		min = min > frameTime ? frameTime : min;
-		max = max < frameTime ? frameTime : max;
+		min = bx::int64_min(min, frameTime);
+		max = bx::int64_max(max, frameTime);
+
+		static int64_t presentMin = m_presentElapsed;
+		static int64_t presentMax = m_presentElapsed;
+		presentMin = bx::int64_min(presentMin, m_presentElapsed);
+		presentMax = bx::int64_max(presentMax, m_presentElapsed);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH | BGFX_DEBUG_STATS) )
 		{
@@ -4048,11 +4049,16 @@ data.NumQualityLevels = 0;
 					);
 
 				pos = 10;
-				tvm.printf(10, pos++, 0x8e, "       Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
+				tvm.printf(10, pos++, 0x8e, "       Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
 					, double(frameTime)*toMs
 					, double(min)*toMs
 					, double(max)*toMs
 					, freq/frameTime
+					);
+				tvm.printf(10, pos++, 0x8e, "     Present: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms]"
+					, double(m_presentElapsed)*toMs
+					, double(presentMin)*toMs
+					, double(presentMax)*toMs
 					);
 
 				char hmd[16];
