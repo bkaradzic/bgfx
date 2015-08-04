@@ -1051,17 +1051,17 @@ namespace bgfx { namespace gl
 		if (isDepth(_format) )
 		{
 			const ImageBlockInfo& info = getBlockInfo(_format);
-			if (0 < info.stencilBits)
-			{
-				attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-			}
-			else if (0 == info.depthBits)
+			if (0 == info.depthBits)
 			{
 				attachment = GL_STENCIL_ATTACHMENT;
 			}
-			else
+			else if (0 == info.stencilBits)
 			{
 				attachment = GL_DEPTH_ATTACHMENT;
+			}
+			else
+			{
+				attachment = GL_DEPTH_STENCIL_ATTACHMENT;
 			}
 		}
 		else
