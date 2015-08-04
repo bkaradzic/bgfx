@@ -4141,6 +4141,8 @@ data.NumQualityLevels = 0;
 
 				min = frameTime;
 				max = frameTime;
+				presentMin = m_presentElapsed;
+				presentMax = m_presentElapsed;
 			}
 
 			blit(this, _textVideoMemBlitter, tvm);
