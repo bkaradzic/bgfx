@@ -17,26 +17,29 @@ namespace bgfx
 {
 	static const uint8_t s_attribTypeSizeDx9[AttribType::Count][4] =
 	{
-		{  4,  4,  4,  4 },
-		{  4,  4,  8,  8 },
-		{  4,  4,  8,  8 },
-		{  4,  8, 12, 16 },
+		{  4,  4,  4,  4 }, // Uint8
+		{  4,  4,  4,  4 }, // Uint10
+		{  4,  4,  8,  8 }, // Int16
+		{  4,  4,  8,  8 }, // Half
+		{  4,  8, 12, 16 }, // Float
 	};
 
 	static const uint8_t s_attribTypeSizeDx1x[AttribType::Count][4] =
 	{
-		{  1,  2,  4,  4 },
-		{  2,  4,  8,  8 },
-		{  2,  4,  8,  8 },
-		{  4,  8, 12, 16 },
+		{  1,  2,  4,  4 }, // Uint8
+		{  4,  4,  4,  4 }, // Uint10
+		{  2,  4,  8,  8 }, // Int16
+		{  2,  4,  8,  8 }, // Half
+		{  4,  8, 12, 16 }, // Float
 	};
 
 	static const uint8_t s_attribTypeSizeGl[AttribType::Count][4] =
 	{
-		{  1,  2,  4,  4 },
-		{  2,  4,  6,  8 },
-		{  2,  4,  6,  8 },
-		{  4,  8, 12, 16 },
+		{  1,  2,  4,  4 }, // Uint8
+		{  4,  4,  4,  4 }, // Uint10
+		{  2,  4,  6,  8 }, // Int16
+		{  2,  4,  6,  8 }, // Half
+		{  4,  8, 12, 16 }, // Float
 	};
 
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
@@ -108,10 +111,10 @@ namespace bgfx
 
 	VertexDecl& VertexDecl::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
 	{
-		const uint8_t encodedNorm = (_normalized&1)<<6;
-		const uint8_t encodedType = (_type&3)<<3;
+		const uint8_t encodedNorm = (_normalized&1)<<7;
+		const uint8_t encodedType = (_type&7)<<3;
 		const uint8_t encodedNum  = (_num-1)&3;
-		const uint8_t encodeAsInt = (_asInt&(!!"\x1\x1\x0\x0"[_type]) )<<7;
+		const uint8_t encodeAsInt = (_asInt&(!!"\x1\x1\x0\x0"[_type]) )<<8;
 		m_attributes[_attrib] = encodedNorm|encodedType|encodedNum|encodeAsInt;
 
 		m_offset[_attrib] = m_stride;
@@ -129,11 +132,11 @@ namespace bgfx
 
 	void VertexDecl::decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const
 	{
-		uint8_t val = m_attributes[_attrib];
+		uint16_t val = m_attributes[_attrib];
 		_num        = (val&3)+1;
-		_type       = AttribType::Enum( (val>>3)&3);
-		_normalized = !!(val&(1<<6) );
-		_asInt      = !!(val&(1<<7) );
+		_type       = AttribType::Enum( (val>>3)&7);
+		_normalized = !!(val&(1<<7) );
+		_asInt      = !!(val&(1<<8) );
 	}
 
 	static const char* s_attrName[] =
@@ -256,10 +259,11 @@ namespace bgfx
 		// AttribType must be in order how it appears in AttribType::Enum!
 		// id is unique and should not be changed if new AttribTypes are
 		// added.
-		{ AttribType::Uint8, 0x0001 },
-		{ AttribType::Int16, 0x0002 },
-		{ AttribType::Half,  0x0003 },
-		{ AttribType::Float, 0x0004 },
+		{ AttribType::Uint8,  0x0001 },
+		{ AttribType::Uint10, 0x0005 },
+		{ AttribType::Int16,  0x0002 },
+		{ AttribType::Half,   0x0003 },
+		{ AttribType::Float,  0x0004 },
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeToId) == AttribType::Count);
 
@@ -288,7 +292,7 @@ namespace bgfx
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			numAttrs += 0xff == _decl.m_attributes[attr] ? 0 : 1;
+			numAttrs += UINT16_MAX == _decl.m_attributes[attr] ? 0 : 1;
 		}
 
 		total += bx::write(_writer, numAttrs);
@@ -296,7 +300,7 @@ namespace bgfx
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (0xff != _decl.m_attributes[attr])
+			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				uint8_t num;
 				AttribType::Enum type;
@@ -349,7 +353,7 @@ namespace bgfx
 
 			Attrib::Enum     attr = idToAttrib(attribId);
 			AttribType::Enum type = idToAttribType(attribTypeId);
-			if (Attrib::Count != attr
+			if (Attrib::Count     != attr
 			&&  AttribType::Count != type)
 			{
 				_decl.add(attr, num, type, normalized, asInt);

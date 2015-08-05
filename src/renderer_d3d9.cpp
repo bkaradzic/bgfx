@@ -515,6 +515,7 @@ namespace bgfx { namespace d3d9
 								| BGFX_CAPS_TEXTURE_3D
 								| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
+								| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								| BGFX_CAPS_SWAP_CHAIN
 								| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
@@ -2036,25 +2037,31 @@ namespace bgfx { namespace d3d9
 
 	static const uint8_t s_attribType[][4][2] =
 	{
-		{
+		{ // Uint8
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 		},
-		{
+		{ // Uint10
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+		},
+		{ // Int16
 			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
 			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
 			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
 			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
 		},
-		{
+		{ // Half
 			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
 			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
 			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
 			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
 		},
-		{
+		{ // Float
 			{ D3DDECLTYPE_FLOAT1,    D3DDECLTYPE_FLOAT1    },
 			{ D3DDECLTYPE_FLOAT2,    D3DDECLTYPE_FLOAT2    },
 			{ D3DDECLTYPE_FLOAT3,    D3DDECLTYPE_FLOAT3    },
@@ -2069,7 +2076,7 @@ namespace bgfx { namespace d3d9
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (0xff != _decl.m_attributes[attr])
+			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				uint8_t num;
 				AttribType::Enum type;

@@ -120,8 +120,9 @@ namespace bgfx
 		enum Enum
 		{
 			Uint8,
+			Uint10, //!< Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
 			Int16,
-			Half, // Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+			Half,   //!< Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
 			Float,
 
 			Count
@@ -607,7 +608,7 @@ namespace bgfx
 		uint32_t m_hash;
 		uint16_t m_stride;
 		uint16_t m_offset[Attrib::Count];
-		uint8_t m_attributes[Attrib::Count];
+		uint16_t m_attributes[Attrib::Count];
 	};
 
 	/// Pack vec4 into vertex stream format.

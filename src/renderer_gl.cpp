@@ -81,10 +81,11 @@ namespace bgfx { namespace gl
 
 	static const GLenum s_attribType[] =
 	{
-		GL_UNSIGNED_BYTE,
-		GL_SHORT,
-		GL_HALF_FLOAT,
-		GL_FLOAT,
+		GL_UNSIGNED_BYTE,            // Uint8
+		GL_UNSIGNED_INT_10_10_10_2,  // Uint10
+		GL_SHORT,                    // Int16
+		GL_HALF_FLOAT,               // Half
+		GL_FLOAT,                    // Float
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
@@ -1520,6 +1521,12 @@ namespace bgfx { namespace gl
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::OES_vertex_half_float].m_supported
 				? BGFX_CAPS_VERTEX_ATTRIB_HALF
+				: 0
+				;
+			g_caps.supported |= false
+				|| s_extension[Extension::ARB_vertex_type_2_10_10_10_rev].m_supported
+				|| s_extension[Extension::OES_vertex_type_10_10_10_2].m_supported
+				? BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				: 0
 				;
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
