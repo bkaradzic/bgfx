@@ -425,6 +425,46 @@ namespace bgfx
 			}
 			break;
 
+		case AttribType::Uint10:
+			{
+				uint32_t packed = 0;
+				if (_inputNormalized)
+				{
+					if (asInt)
+					{
+						switch (num)
+						{
+						default:
+						case 3:                packed |= uint32_t(*_input++ * 511.0f + 512.0f);
+						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f);
+						case 1: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f);
+						}
+					}
+					else
+					{
+						switch (num)
+						{
+						default:
+						case 3:                packed |= uint32_t(*_input++ * 1023.0f);
+						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f);
+						case 1: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f);
+						}
+					}
+				}
+				else
+				{
+					switch (num)
+					{
+					default:
+					case 3:                packed |= uint32_t(*_input++);
+					case 2: packed <<= 10; packed |= uint32_t(*_input++);
+					case 1: packed <<= 10; packed |= uint32_t(*_input++);
+					}
+				}
+				*(uint32_t*)data = packed;
+			}
+			break;
+
 		case AttribType::Int16:
 			{
 				int16_t* packed = (int16_t*)data;
@@ -524,6 +564,32 @@ namespace bgfx
 					case 3:  *_output++ = float(*packed++)*1.0f/255.0f;
 					case 2:  *_output++ = float(*packed++)*1.0f/255.0f;
 					case 1:  *_output++ = float(*packed++)*1.0f/255.0f;
+					}
+				}
+			}
+			break;
+
+		case AttribType::Uint10:
+			{
+				uint32_t packed = *(uint32_t*)data;
+				if (asInt)
+				{
+					switch (num)
+					{
+					default:
+					case 3: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f; packed >>= 10;
+					case 2: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f; packed >>= 10;
+					case 1: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f;
+					}
+				}
+				else
+				{
+					switch (num)
+					{
+					default:
+					case 3: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f; packed >>= 10;
+					case 2: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f; packed >>= 10;
+					case 1: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f;
 					}
 				}
 			}

@@ -590,15 +590,32 @@ namespace bgfx { namespace d3d12
 			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
 			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
 
-			m_architecture.NodeIndex = 0;
-			DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &m_architecture, sizeof(m_architecture) ) );
-			BX_TRACE("GPU Architecture, TileBasedRenderer %d, UMA %d, CacheCoherentUMA %d"
-					, m_architecture.TileBasedRenderer
-					, m_architecture.UMA
-					, m_architecture.CacheCoherentUMA
-					);
+			uint32_t numNodes = m_device->GetNodeCount();
+			BX_TRACE("D3D12 GPU Architecture (num nodes: %d):", numNodes);
+			for (uint32_t ii = 0; ii < numNodes; ++ii)
+			{
+				D3D12_FEATURE_DATA_ARCHITECTURE architecture;
+				architecture.NodeIndex = ii;
+				DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture) ) );
+				BX_TRACE("\tNode % 2d: TileBasedRenderer %d, UMA %d, CacheCoherentUMA %d"
+						, ii
+						, architecture.TileBasedRenderer
+						, architecture.UMA
+						, architecture.CacheCoherentUMA
+						);
+				if (0 == ii)
+				{
+					memcpy(&m_architecture, &architecture, sizeof(architecture) );
+				}
+			}
 
 			DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_options, sizeof(m_options) ) );
+			BX_TRACE("D3D12 options:")
+			BX_TRACE("\tTiledResourcesTier %d", m_options.TiledResourcesTier);
+			BX_TRACE("\tResourceBindingTier %d", m_options.ResourceBindingTier);
+			BX_TRACE("\tConservativeRasterizationTier %d", m_options.ConservativeRasterizationTier);
+			BX_TRACE("\tCrossNodeSharingTier %d", m_options.CrossNodeSharingTier);
+			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
 
 			m_cmd.init(m_device);
 
