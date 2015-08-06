@@ -2818,10 +2818,13 @@ namespace bgfx { namespace d3d9
 
 		m_hwnd = (HWND)_nwh;
 
+		m_width  = bx::uint32_max(_width,  16);
+		m_height = bx::uint32_max(_height, 16);
+
 		D3DPRESENT_PARAMETERS params;
 		memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
-		params.BackBufferWidth  = bx::uint32_max(_width,  16);
-		params.BackBufferHeight = bx::uint32_max(_height, 16);
+		params.BackBufferWidth  = m_width;
+		params.BackBufferHeight = m_height;
 
 		DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&params, &m_swapChain) );
 		DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_color[0]) );
@@ -2919,9 +2922,9 @@ namespace bgfx { namespace d3d9
 	{
 		if (NULL != m_hwnd)
 		{
-			DX_RELEASE(m_color[0],  0);
-			DX_RELEASE(m_swapChain, 0);
+			DX_RELEASE(m_color[0], 0);
 			DX_RELEASE(m_depthStencil, 0);
+			DX_RELEASE(m_swapChain, 0);
 		}
 		else
 		{
@@ -2949,18 +2952,22 @@ namespace bgfx { namespace d3d9
 	{
 		if (NULL != m_hwnd)
 		{
-			DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&s_renderD3D9->m_params, &m_swapChain) );
+			D3DPRESENT_PARAMETERS params;
+			memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
+			params.BackBufferWidth  = m_width;
+			params.BackBufferHeight = m_height;
+
+			DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&params, &m_swapChain) );
 			DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_color[0]) );
-			DX_CHECK(s_renderD3D9->m_device->CreateDepthStencilSurface(
-				s_renderD3D9->m_params.BackBufferWidth
-				, s_renderD3D9->m_params.BackBufferHeight
-				, s_renderD3D9->m_params.AutoDepthStencilFormat
-				, s_renderD3D9->m_params.MultiSampleType
-				, s_renderD3D9->m_params.MultiSampleQuality
-				, FALSE
-				, &m_depthStencil
-				, NULL
-				));
+			DX_CHECK(s_renderD3D9->m_device->CreateDepthStencilSurface(params.BackBufferWidth
+					, params.BackBufferHeight
+					, params.AutoDepthStencilFormat
+					, params.MultiSampleType
+					, params.MultiSampleQuality
+					, FALSE
+					, &m_depthStencil
+					, NULL
+					) );
 		}
 		else
 		{
