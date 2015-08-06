@@ -2921,6 +2921,7 @@ namespace bgfx { namespace d3d9
 		{
 			DX_RELEASE(m_color[0],  0);
 			DX_RELEASE(m_swapChain, 0);
+			DX_RELEASE(m_depthStencil, 0);
 		}
 		else
 		{
@@ -2950,6 +2951,16 @@ namespace bgfx { namespace d3d9
 		{
 			DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&s_renderD3D9->m_params, &m_swapChain) );
 			DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_color[0]) );
+			DX_CHECK(s_renderD3D9->m_device->CreateDepthStencilSurface(
+				s_renderD3D9->m_params.BackBufferWidth
+				, s_renderD3D9->m_params.BackBufferHeight
+				, s_renderD3D9->m_params.AutoDepthStencilFormat
+				, s_renderD3D9->m_params.MultiSampleType
+				, s_renderD3D9->m_params.MultiSampleQuality
+				, FALSE
+				, &m_depthStencil
+				, NULL
+				));
 		}
 		else
 		{
