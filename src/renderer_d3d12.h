@@ -183,7 +183,7 @@ namespace bgfx { namespace d3d12
 		ConstantBuffer* m_constantBuffer;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
-		uint8_t m_attrMask[Attrib::Count];
+		uint16_t m_attrMask[Attrib::Count];
 
 		uint32_t m_hash;
 		uint16_t m_numUniforms;

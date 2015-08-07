@@ -306,7 +306,7 @@ namespace bgfx { namespace d3d11
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (0xff != _decl.m_attributes[attr])
+			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				memcpy(elem, &s_attrib[attr], sizeof(D3D11_INPUT_ELEMENT_DESC) );
 
@@ -2049,13 +2049,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				VertexDecl decl;
 				memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
-				const uint8_t* attrMask = _program.m_vsh->m_attrMask;
+				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
-					uint8_t mask = attrMask[ii];
-					uint8_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 ? 0xff : attr == 0xff ? 0 : attr;
+					uint16_t mask = attrMask[ii];
+					uint16_t attr = (decl.m_attributes[ii] & mask);
+					decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 				}
 
 				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, decl);
@@ -3234,7 +3234,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (Attrib::Count != attr)
 			{
-				m_attrMask[attr] = 0xff;
+				m_attrMask[attr] = UINT16_MAX;
 			}
 		}
 

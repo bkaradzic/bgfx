@@ -3455,7 +3455,7 @@ namespace bgfx { namespace gl
 
 			if (-1 != loc)
 			{
-				if (0xff != _vertexDecl.m_attributes[attr])
+				if (UINT16_MAX != _vertexDecl.m_attributes[attr])
 				{
 					GL_CHECK(glEnableVertexAttribArray(loc) );
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
