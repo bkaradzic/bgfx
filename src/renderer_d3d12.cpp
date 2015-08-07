@@ -739,13 +739,11 @@ namespace bgfx { namespace d3d12
 				{
 					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::Sampler] }, D3D12_SHADER_VISIBILITY_ALL },
 					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::SRV]     }, D3D12_SHADER_VISIBILITY_ALL },
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::CBV]     }, D3D12_SHADER_VISIBILITY_ALL },
-//					{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL },
 					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::UAV]     }, D3D12_SHADER_VISIBILITY_ALL },
 				};
-//				rootParameter[Rdt::CBV].Constants.ShaderRegister = 0;
-//				rootParameter[Rdt::CBV].Constants.RegisterSpace  = 100;
-//				rootParameter[Rdt::CBV].Constants.Num32BitValues = 0;
+				rootParameter[Rdt::CBV].Descriptor.RegisterSpace  = 0;
+				rootParameter[Rdt::CBV].Descriptor.ShaderRegister = 0;
 
 				D3D12_ROOT_SIGNATURE_DESC descRootSignature;
 				descRootSignature.NumParameters = BX_COUNTOF(rootParameter);
@@ -767,6 +765,68 @@ namespace bgfx { namespace d3d12
 						, outBlob->GetBufferSize()
 						, __uuidof(ID3D12RootSignature)
 						, (void**)&m_rootSignature
+						) );
+
+				D3D12_INDIRECT_ARGUMENT_DESC drawArgDesc[] =
+				{
+//					{ D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW, { Rdt::SRV } },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 0            },
+				};
+
+				struct DrawIndirectCommand
+				{
+//					D3D12_GPU_VIRTUAL_ADDRESS srv;
+					D3D12_GPU_VIRTUAL_ADDRESS cbv;
+					D3D12_VERTEX_BUFFER_VIEW vbv;
+					D3D12_DRAW_ARGUMENTS draw;
+				};
+
+				D3D12_COMMAND_SIGNATURE_DESC drawCommandSignature =
+				{
+					sizeof(DrawIndirectCommand),
+					BX_COUNTOF(drawArgDesc),
+					drawArgDesc,
+					1,
+				};
+
+				DX_CHECK(m_device->CreateCommandSignature(&drawCommandSignature
+						, m_rootSignature
+						, __uuidof(ID3D12CommandSignature)
+						, (void**)&m_commandSignature[0]
+						) );
+
+				D3D12_INDIRECT_ARGUMENT_DESC drawIndexedArgDesc[] =
+				{
+//					{ D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW, { Rdt::SRV } },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    0            },
+					{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         0            },
+				};
+
+				struct DrawIndexedIndirectCommand
+				{
+//					D3D12_GPU_VIRTUAL_ADDRESS srv;
+					D3D12_GPU_VIRTUAL_ADDRESS cbv;
+					D3D12_VERTEX_BUFFER_VIEW vbv;
+					D3D12_INDEX_BUFFER_VIEW ibv;
+					D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
+				};
+
+				D3D12_COMMAND_SIGNATURE_DESC drawIndexedCommandSignature =
+				{
+					sizeof(DrawIndexedIndirectCommand),
+					BX_COUNTOF(drawIndexedArgDesc),
+					drawIndexedArgDesc,
+					1,
+				};
+
+				DX_CHECK(m_device->CreateCommandSignature(&drawIndexedCommandSignature
+						, m_rootSignature
+						, __uuidof(ID3D12CommandSignature)
+						, (void**)&m_commandSignature[1]
 						) );
 
 				UniformHandle handle = BGFX_INVALID_HANDLE;
@@ -910,6 +970,8 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
 
+			DX_RELEASE(m_commandSignature[0], 0);
+			DX_RELEASE(m_commandSignature[1], 0);
 			DX_RELEASE(m_rootSignature, 0);
 
 			DX_RELEASE(m_swapChain, 0);
@@ -1280,8 +1342,8 @@ namespace bgfx { namespace d3d12
 			uint8_t flags = predefined.m_type;
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
-			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-			commitShaderConstants(gpuHandle);
+			D3D12_GPU_VIRTUAL_ADDRESS gpuAddress;
+			commitShaderConstants(gpuAddress);
 
 			ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 			ID3D12DescriptorHeap* heaps[] =
@@ -1290,7 +1352,7 @@ namespace bgfx { namespace d3d12
 				scratchBuffer.getHeap(),
 			};
 			m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
-			m_commandList->SetGraphicsRootDescriptorTable(Rdt::CBV, gpuHandle);
+			m_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, gpuAddress);
 
 			TextureD3D12& texture = m_textures[_blitter.m_texture.idx];
 			uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = { texture.m_flags & BGFX_TEXTURE_SAMPLER_BITS_MASK };
@@ -1519,14 +1581,14 @@ data.NumQualityLevels = 0;
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void commitShaderConstants(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle)
+		void commitShaderConstants(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress)
 		{
 			uint32_t total = bx::strideAlign(0
 				+ m_currentProgram->m_vsh->m_size
 				+ (NULL != m_currentProgram->m_fsh ? m_currentProgram->m_fsh->m_size : 0)
 				, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT
 				);
-			uint8_t* data = (uint8_t*)m_scratchBuffer[m_backBufferColorIdx].alloc(gpuHandle, total);
+			uint8_t* data = (uint8_t*)m_scratchBuffer[m_backBufferColorIdx].alloc(_gpuAddress, total);
 
 			{
 				uint32_t size = m_currentProgram->m_vsh->m_size;
@@ -2323,6 +2385,7 @@ data.NumQualityLevels = 0;
 		DescriptorAllocator m_samplerAllocator;
 
 		ID3D12RootSignature* m_rootSignature;
+		ID3D12CommandSignature* m_commandSignature[2];
 
 		CommandQueue m_cmd;
 		ID3D12GraphicsCommandList* m_commandList;
@@ -2421,10 +2484,11 @@ data.NumQualityLevels = 0;
 		gpuHandle = m_gpuHandle;
 	}
 
-	void* ScratchBufferD3D12::alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, uint32_t _size)
+	void* ScratchBufferD3D12::alloc(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size)
 	{
+		_gpuAddress = m_upload->GetGPUVirtualAddress() + m_pos;
 		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
-		desc.BufferLocation = m_upload->GetGPUVirtualAddress() + m_pos;
+		desc.BufferLocation = _gpuAddress;
 		desc.SizeInBytes    = _size;
 
 		void* data = &m_data[m_pos];
@@ -2436,8 +2500,6 @@ data.NumQualityLevels = 0;
 			, m_cpuHandle
 			);
 		m_cpuHandle.ptr += m_incrementSize;
-
-		gpuHandle = m_gpuHandle;
 		m_gpuHandle.ptr += m_incrementSize;
 
 		return data;
@@ -3539,16 +3601,18 @@ data.NumQualityLevels = 0;
 // 		setDebugWireframe(wireframe);
 
 		uint16_t programIdx = invalidHandle;
+		uint16_t currentSamplerStateIdx = invalidHandle;
+		uint32_t currentBindHash = 0;
 		ID3D12PipelineState* currentPso = NULL;
 		SortKey key;
 		uint8_t view = 0xff;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
+		uint32_t blendFactor = 0;
 
-// 		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-// 		uint8_t primIndex = uint8_t(pt >> BGFX_STATE_PT_SHIFT);
-// 		PrimInfo prim = s_primInfo[primIndex];
-// 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
+		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+		uint8_t primIndex = uint8_t(pt >> BGFX_STATE_PT_SHIFT);
+		PrimInfo prim = s_primInfo[primIndex];
 
 		bool wasCompute = false;
 		bool viewHasScissor = false;
@@ -3572,6 +3636,8 @@ data.NumQualityLevels = 0;
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 		scratchBuffer.reset(gpuHandle);
+
+		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = {};
 
 		setResourceBarrier(m_commandList
 			, m_backBufferColor[m_backBufferColorIdx]
@@ -3654,6 +3720,8 @@ data.NumQualityLevels = 0;
 						clearRect.intersect(rect, viewScissorRect);
 						clearQuad(_clearQuad, clearRect, clear, _render->m_clearColor);
 					}
+
+					prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update.
 				}
 
 				if (isCompute)
@@ -3697,7 +3765,7 @@ data.NumQualityLevels = 0;
 						if (constantsChanged
 						||  program.m_numPredefined > 0)
 						{
-							commitShaderConstants(gpuHandle);
+							commitShaderConstants(gpuAddress);
 						}
 					}
 
@@ -3757,7 +3825,7 @@ data.NumQualityLevels = 0;
 					uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS);
 					m_commandList->SetComputeRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx));
 					m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, srvHandle[0]);
-					m_commandList->SetComputeRootDescriptorTable(Rdt::CBV, gpuHandle);
+					m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 					m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, srvHandle[0]);
 
 					if (isValid(compute.m_indirectBuffer) )
@@ -3784,7 +3852,7 @@ data.NumQualityLevels = 0;
 					continue;
 				}
 
-//				bool resetState = viewChanged || wasCompute;
+				bool resetState = viewChanged || wasCompute;
 
 				if (wasCompute)
 				{
@@ -3800,6 +3868,7 @@ data.NumQualityLevels = 0;
 
 					programIdx = invalidHandle;
 					m_currentProgram = NULL;
+					currentSamplerStateIdx = invalidHandle;
 
 					m_commandList->SetGraphicsRootSignature(m_rootSignature);
 					ID3D12DescriptorHeap* heaps[] = {
@@ -3813,8 +3882,66 @@ data.NumQualityLevels = 0;
 
 				const RenderDraw& draw = renderItem.draw;
 
+				const uint64_t newFlags = draw.m_flags;
+				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
+				currentState.m_flags = newFlags;
+
+				const uint64_t newStencil = draw.m_stencil;
+				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
+				currentState.m_stencil = newStencil;
+
+				if (resetState)
+				{
+					currentState.clear();
+					currentState.m_scissor = !draw.m_scissor;
+					changedFlags = BGFX_STATE_MASK;
+					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+					currentState.m_flags = newFlags;
+					currentState.m_stencil = newStencil;
+
+					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+				}
+
 				bool constantsChanged = draw.m_constBegin < draw.m_constEnd;
 				rendererUpdateUniforms(this, _render->m_constantBuffer, draw.m_constBegin, draw.m_constEnd);
+
+				if (0 != changedStencil)
+				{
+					const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
+					const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+					m_commandList->OMSetStencilRef(ref);
+				}
+
+				const uint64_t state = draw.m_flags;
+				bool hasFactor = 0
+					|| f0 == (state & f0)
+					|| f1 == (state & f1)
+					;
+
+				if (hasFactor
+				&&  blendFactor != draw.m_rgba)
+				{
+					blendFactor = draw.m_rgba;
+
+					float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+					blendFactor[0] = ( (draw.m_rgba>>24)     )/255.0f;
+					blendFactor[1] = ( (draw.m_rgba>>16)&0xff)/255.0f;
+					blendFactor[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
+					blendFactor[3] = ( (draw.m_rgba    )&0xff)/255.0f;
+					m_commandList->OMSetBlendFactor(blendFactor);
+				}
+
+				if (BGFX_STATE_PT_MASK & changedFlags)
+				{
+					const uint64_t pt = draw.m_flags&BGFX_STATE_PT_MASK;
+					primIndex = uint8_t(pt >> BGFX_STATE_PT_SHIFT);
+					if (prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
+					{
+						prim = s_primInfo[primIndex];
+						m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
+					}
+				}
 
 				if (isValid(draw.m_vertexBuffer) )
 				{
@@ -3859,10 +3986,11 @@ data.NumQualityLevels = 0;
 
 						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
 
-						if (constantsChanged
-						||  program.m_numPredefined > 0)
+						constantsChanged |= program.m_numPredefined > 0;
+
+						if (constantsChanged)
 						{
-							commitShaderConstants(gpuHandle);
+							commitShaderConstants(gpuAddress);
 						}
 					}
 
@@ -3870,7 +3998,6 @@ data.NumQualityLevels = 0;
 					uint16_t declIdx = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
 					const VertexDecl& vertexDecl = m_vertexDecls[declIdx];
 
-					const uint64_t state = draw.m_flags;
 					ID3D12PipelineState* pso =
 						getPipelineState(state
 							, draw.m_stencil
@@ -3882,59 +4009,56 @@ data.NumQualityLevels = 0;
 					{
 						currentPso = pso;
 						m_commandList->SetPipelineState(pso);
+						currentBindHash = 0;
 					}
 
-					const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
-					const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
-					m_commandList->OMSetStencilRef(ref);
-
-					bool hasFactor = 0
-						|| f0 == (state & f0)
-						|| f1 == (state & f1)
-						;
-
-					if (hasFactor)
+					for (uint32_t bindHash = bx::hashMurmur2A(draw.m_bind, sizeof(draw.m_bind) )
+						; currentBindHash != bindHash
+						; currentBindHash  = bindHash
+						)
 					{
-						float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-						blendFactor[0] = ( (draw.m_rgba>>24)     )/255.0f;
-						blendFactor[1] = ( (draw.m_rgba>>16)&0xff)/255.0f;
-						blendFactor[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
-						blendFactor[3] = ( (draw.m_rgba    )&0xff)/255.0f;
-						m_commandList->OMSetBlendFactor(blendFactor);
-					}
-
-					D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-					uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-					{
-						srvHandle[0].ptr = 0;
-						for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+						D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+						uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 						{
-							const Binding& sampler = draw.m_bind[stage];
-							if (invalidHandle != sampler.m_idx)
+							srvHandle[0].ptr = 0;
+							for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 							{
-								TextureD3D12& texture = m_textures[sampler.m_idx];
-								scratchBuffer.alloc(srvHandle[stage], texture);
-								samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & sampler.m_un.m_draw.m_flags)
-									? sampler.m_un.m_draw.m_flags
-									: texture.m_flags
-									) & BGFX_TEXTURE_SAMPLER_BITS_MASK
-									;
+								const Binding& sampler = draw.m_bind[stage];
+								if (invalidHandle != sampler.m_idx)
+								{
+									TextureD3D12& texture = m_textures[sampler.m_idx];
+									scratchBuffer.alloc(srvHandle[stage], texture);
+									samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & sampler.m_un.m_draw.m_flags)
+										? sampler.m_un.m_draw.m_flags
+										: texture.m_flags
+										) & BGFX_TEXTURE_SAMPLER_BITS_MASK
+										;
+								}
+								else
+								{
+									memcpy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
+									samplerFlags[stage] = 0;
+								}
 							}
-							else
-							{
-								memcpy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
-								samplerFlags[stage] = 0;
-							}
+						}
+
+						uint16_t samplerStateIdx = getSamplerState(samplerFlags);
+						if (samplerStateIdx != currentSamplerStateIdx)
+						{
+							currentSamplerStateIdx = samplerStateIdx;
+							m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
+						}
+
+						if (srvHandle[0].ptr != 0)
+						{
+							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
 						}
 					}
 
-					uint16_t samplerStateIdx = getSamplerState(samplerFlags);
-					m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
-					if (srvHandle[0].ptr != 0)
+					if (constantsChanged)
 					{
-						m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
+						m_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, gpuAddress);
 					}
-					m_commandList->SetGraphicsRootDescriptorTable(Rdt::CBV, gpuHandle);
 
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX == numVertices)
@@ -3942,46 +4066,59 @@ data.NumQualityLevels = 0;
 						numVertices = vb.m_size / vertexDecl.m_stride;
 					}
 
-					D3D12_VERTEX_BUFFER_VIEW vbView[2];
-					uint32_t numVertexBuffers = 1;
-					vbView[0].BufferLocation = vb.m_ptr->GetGPUVirtualAddress();
-					vbView[0].StrideInBytes  = vertexDecl.m_stride;
-					vbView[0].SizeInBytes    = vb.m_size;
-
-					if (isValid(draw.m_instanceDataBuffer) )
+					if (currentState.m_vertexDecl.idx         != draw.m_vertexDecl.idx
+					||  currentState.m_vertexBuffer.idx       != draw.m_vertexBuffer.idx
+					||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
+					||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
+					||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 					{
-						const VertexBufferD3D12& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-						vbView[1].BufferLocation = inst.m_ptr->GetGPUVirtualAddress() + draw.m_instanceDataOffset;
-						vbView[1].StrideInBytes  = draw.m_instanceDataStride;
-						vbView[1].SizeInBytes    = draw.m_numInstances * draw.m_instanceDataStride;
-						++numVertexBuffers;
-					}
+						currentState.m_vertexDecl             = draw.m_vertexDecl;
+						currentState.m_vertexBuffer           = draw.m_vertexBuffer;
+						currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
+						currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
+						currentState.m_instanceDataStride     = draw.m_instanceDataStride;
 
-					m_commandList->IASetVertexBuffers(0, numVertexBuffers, vbView);
+						D3D12_VERTEX_BUFFER_VIEW vbView[2];
+						uint32_t numVertexBuffers = 1;
+						vbView[0].BufferLocation = vb.m_ptr->GetGPUVirtualAddress();
+						vbView[0].StrideInBytes  = vertexDecl.m_stride;
+						vbView[0].SizeInBytes    = vb.m_size;
+
+						if (isValid(draw.m_instanceDataBuffer) )
+						{
+							const VertexBufferD3D12& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
+							vbView[1].BufferLocation = inst.m_ptr->GetGPUVirtualAddress() + draw.m_instanceDataOffset;
+							vbView[1].StrideInBytes  = draw.m_instanceDataStride;
+							vbView[1].SizeInBytes    = draw.m_numInstances * draw.m_instanceDataStride;
+							++numVertexBuffers;
+						}
+
+						m_commandList->IASetVertexBuffers(0, numVertexBuffers, vbView);
+					}
 
 					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numInstances      = 0;
 					uint32_t numPrimsRendered  = 0;
 
-					const uint64_t pt = draw.m_flags&BGFX_STATE_PT_MASK;
-					uint8_t primIdx = uint8_t(pt >> BGFX_STATE_PT_SHIFT);
-					PrimInfo prim = s_primInfo[primIdx];
-					m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
-
 					if (isValid(draw.m_indexBuffer) )
 					{
 						const BufferD3D12& ib = m_indexBuffers[draw.m_indexBuffer.idx];
 						const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
 
-						D3D12_INDEX_BUFFER_VIEW ibv;
-						ibv.Format = hasIndex16
-							? DXGI_FORMAT_R16_UINT
-							: DXGI_FORMAT_R32_UINT
-							;
-						ibv.BufferLocation = ib.m_ptr->GetGPUVirtualAddress();
-						ibv.SizeInBytes    = ib.m_size;
-						m_commandList->IASetIndexBuffer(&ibv);
+						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
+						{
+							currentState.m_indexBuffer = draw.m_indexBuffer;
+
+							D3D12_INDEX_BUFFER_VIEW ibv;
+							ibv.Format = hasIndex16
+								? DXGI_FORMAT_R16_UINT
+								: DXGI_FORMAT_R32_UINT
+								;
+							ibv.BufferLocation = ib.m_ptr->GetGPUVirtualAddress();
+							ibv.SizeInBytes    = ib.m_size;
+							m_commandList->IASetIndexBuffer(&ibv);
+						}
 
 						if (UINT32_MAX == draw.m_numIndices)
 						{
@@ -4026,10 +4163,10 @@ data.NumQualityLevels = 0;
 							);
 					}
 
-					statsNumPrimsSubmitted[primIdx] += numPrimsSubmitted;
-					statsNumPrimsRendered[primIdx]  += numPrimsRendered;
-					statsNumInstances[primIdx]      += numInstances;
-					statsNumIndices                 += numIndices;
+					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
+					statsNumPrimsRendered[primIndex]  += numPrimsRendered;
+					statsNumInstances[primIndex]      += numInstances;
+					statsNumIndices                   += numIndices;
 				}
 			}
 		}
@@ -4124,6 +4261,7 @@ data.NumQualityLevels = 0;
 					, statsKeyType[1]
 					, elapsedCpuMs
 					);
+				dbgPrintf("_render->m_num %d", _render->m_num);
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{

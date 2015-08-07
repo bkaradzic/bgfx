@@ -45,7 +45,7 @@ namespace bgfx { namespace d3d12
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
 		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle);
-		void* alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, uint32_t _size);
+		void* alloc(D3D12_GPU_VIRTUAL_ADDRESS& gpuAddress, uint32_t _size);
 		void  alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture);
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture);
 
