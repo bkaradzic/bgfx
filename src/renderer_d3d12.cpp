@@ -4261,7 +4261,6 @@ data.NumQualityLevels = 0;
 					, statsKeyType[1]
 					, elapsedCpuMs
 					);
-				dbgPrintf("_render->m_num %d", _render->m_num);
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
