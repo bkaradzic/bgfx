@@ -2778,16 +2778,7 @@ again:
 			, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
 			);
 		BX_CHECK(NULL != _handles, "_handles can't be NULL");
-		FrameBufferHandle handle = s_ctx->createFrameBuffer(_num, _handles);
-		if (_destroyTextures)
-		{
-			for (uint32_t ii = 0; ii < _num; ++ii)
-			{
-				destroyTexture(_handles[ii]);
-			}
-		}
-
-		return handle;
+		return s_ctx->createFrameBuffer(_num, _handles, _destroyTextures);
 	}
 
 	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat)
