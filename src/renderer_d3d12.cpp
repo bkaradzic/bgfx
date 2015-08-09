@@ -43,6 +43,23 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_primInfo) == BX_COUNTOF(s_primName)+1);
 
+	struct DrawIndirectCommand
+	{
+//		D3D12_GPU_VIRTUAL_ADDRESS srv;
+		D3D12_GPU_VIRTUAL_ADDRESS cbv;
+		D3D12_VERTEX_BUFFER_VIEW vbv;
+		D3D12_DRAW_ARGUMENTS draw;
+	};
+
+	struct DrawIndexedIndirectCommand
+	{
+//		D3D12_GPU_VIRTUAL_ADDRESS srv;
+		D3D12_GPU_VIRTUAL_ADDRESS cbv;
+		D3D12_VERTEX_BUFFER_VIEW vbv;
+		D3D12_INDEX_BUFFER_VIEW ibv;
+		D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
+	};
+
 	static const uint32_t s_checkMsaa[] =
 	{
 		0,
@@ -775,14 +792,6 @@ namespace bgfx { namespace d3d12
 					{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 0            },
 				};
 
-				struct DrawIndirectCommand
-				{
-//					D3D12_GPU_VIRTUAL_ADDRESS srv;
-					D3D12_GPU_VIRTUAL_ADDRESS cbv;
-					D3D12_VERTEX_BUFFER_VIEW vbv;
-					D3D12_DRAW_ARGUMENTS draw;
-				};
-
 				D3D12_COMMAND_SIGNATURE_DESC drawCommandSignature =
 				{
 					sizeof(DrawIndirectCommand),
@@ -804,15 +813,6 @@ namespace bgfx { namespace d3d12
 					{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
 					{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    0            },
 					{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         0            },
-				};
-
-				struct DrawIndexedIndirectCommand
-				{
-//					D3D12_GPU_VIRTUAL_ADDRESS srv;
-					D3D12_GPU_VIRTUAL_ADDRESS cbv;
-					D3D12_VERTEX_BUFFER_VIEW vbv;
-					D3D12_INDEX_BUFFER_VIEW ibv;
-					D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
 				};
 
 				D3D12_COMMAND_SIGNATURE_DESC drawIndexedCommandSignature =
@@ -2673,7 +2673,7 @@ data.NumQualityLevels = 0;
 		{ { DXGI_FORMAT_R32G32B32A32_SINT, DXGI_FORMAT_R32G32B32A32_UINT,  DXGI_FORMAT_R32G32B32A32_FLOAT }, 16 }, // BGFX_BUFFER_COMPUTE_FORMAT_32x4
 	};
 
-	void BufferD3D12::create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex)
+	void BufferD3D12::create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
 	{
 		m_size    = _size;
 		m_flags   = _flags;
@@ -2728,6 +2728,8 @@ data.NumQualityLevels = 0;
 			}
 		}
 
+		stride = 0 == _stride ? stride : _stride;
+
 		m_srvd.Format                      = format;
 		m_srvd.ViewDimension               = D3D12_SRV_DIMENSION_BUFFER;
 		m_srvd.Shader4ComponentMapping     = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -2749,16 +2751,7 @@ data.NumQualityLevels = 0;
 
 		m_ptr = createCommittedResource(device, HeapProperty::Default, _size, flags);
 
-		if (!needUav)
-		{
-			m_staging = createCommittedResource(device, HeapProperty::Upload, _size);
-		}
-
-		if (m_dynamic)
-		{
-			setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-		}
-		else
+		if (!m_dynamic)
 		{
 			setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -2767,41 +2760,39 @@ data.NumQualityLevels = 0;
 			subresource.RowPitch   = _size;
 			subresource.SlicePitch = subresource.RowPitch;
 
+			ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
+
 			UpdateSubresources<1>(commandList
 				, m_ptr
-				, m_staging
+				, staging
 				, 0
 				, 0
 				, 1
 				, &subresource
 				);
 
-			setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+			s_renderD3D12->m_cmd.release(staging);
 		}
+
+		setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
 
-	void BufferD3D12::update(ID3D12GraphicsCommandList* _commandList, uint32_t /*_offset*/, uint32_t _size, void* _data, bool /*_discard*/)
+	void BufferD3D12::update(ID3D12GraphicsCommandList* _commandList, uint32_t _offset, uint32_t _size, void* _data, bool /*_discard*/)
 	{
-		setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
+		uint8_t* data;
+		DX_CHECK(staging->Map(0, nullptr, (void**)&data) );
+		memcpy(data, _data, _size);
+		staging->Unmap(0, NULL);
 
-		D3D12_SUBRESOURCE_DATA subresource;
-		subresource.pData      = _data;
-		subresource.RowPitch   = _size;
-		subresource.SlicePitch = subresource.RowPitch;
+		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+		_commandList->CopyBufferRegion(m_ptr, _offset, staging, _offset, _size);
+		setState(_commandList, state);
 
-		UpdateSubresources<1>(_commandList
-			, m_ptr
-			, m_staging
-			, 0
-			, 0
-			, 1
-			, &subresource
-			);
-
-		setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+		s_renderD3D12->m_cmd.release(staging);
 	}
 
-	void BufferD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
+	D3D12_RESOURCE_STATES BufferD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
 	{
 		if (m_state != _state)
 		{
@@ -2811,8 +2802,10 @@ data.NumQualityLevels = 0;
 				, _state
 				);
 
-			m_state = _state;
+			bx::xchg(m_state, _state);
 		}
+
+		return _state;
 	}
 
 	void VertexBufferD3D12::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
@@ -3267,13 +3260,13 @@ data.NumQualityLevels = 0;
 
 			if (kk != 0)
 			{
-				m_staging = createCommittedResource(device, HeapProperty::Upload, totalSize);
+				ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalSize);
 
 				setState(commandList,D3D12_RESOURCE_STATE_COPY_DEST);
 
 				uint64_t result = UpdateSubresources(commandList
 					, m_ptr
-					, m_staging
+					, staging
 					, 0
 					, 0
 					, numSrd
@@ -3283,11 +3276,11 @@ data.NumQualityLevels = 0;
 				BX_TRACE("Update subresource %" PRId64, result);
 
 				setState(commandList, state);
+
+				s_renderD3D12->m_cmd.release(staging);
 			}
 			else
 			{
-				m_staging = NULL;
-
 				setState(commandList, state);
 			}
 
@@ -3312,9 +3305,6 @@ data.NumQualityLevels = 0;
 		{
 			DX_RELEASE(m_ptr, 0);
 			m_ptr = NULL;
-
-			DX_RELEASE(m_staging, 0);
-			m_staging = NULL;
 		}
 	}
 
@@ -3326,12 +3316,6 @@ data.NumQualityLevels = 0;
 		const uint32_t bpp    = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
-
-		s_renderD3D12->m_cmd.finish(s_renderD3D12->m_cmd.kick() );
-		s_renderD3D12->m_commandList = s_renderD3D12->m_cmd.alloc();
-		_commandList = s_renderD3D12->m_commandList;
-
-		DX_RELEASE(m_staging, 0);
 
 		D3D12_RESOURCE_DESC desc = m_ptr->GetDesc();
 
@@ -3351,17 +3335,16 @@ data.NumQualityLevels = 0;
 			, &totalBytes
 			);
 
-		m_staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
-		DX_NAME(m_staging, "texture %4d: staging, update", this - s_renderD3D12->m_textures);
+		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
 
 		uint8_t* data;
 
-		DX_CHECK(m_staging->Map(0, NULL, (void**)&data) );
+		DX_CHECK(staging->Map(0, NULL, (void**)&data) );
 		for (uint32_t ii = 0, height = _rect.m_height; ii < height; ++ii)
 		{
 			memcpy(&data[ii*rowPitch], &_mem->data[ii*srcpitch], srcpitch);
 		}
-		m_staging->Unmap(0, NULL);
+		staging->Unmap(0, NULL);
 
 		D3D12_BOX box;
 		box.left   = 0;
@@ -3371,11 +3354,13 @@ data.NumQualityLevels = 0;
 		box.front  = _z;
 		box.back   = _z+_depth;
 
-		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,     D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { subres } };
-		D3D12_TEXTURE_COPY_LOCATION src = { m_staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout     };
+		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { subres } };
+		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout     };
 		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, 0, &src, &box);
 
 		setState(_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+		s_renderD3D12->m_cmd.release(staging);
 	}
 
 	void TextureD3D12::commit(uint8_t _stage, uint32_t _flags)
@@ -3387,7 +3372,7 @@ data.NumQualityLevels = 0;
 	{
 	}
 
-	void TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
+	D3D12_RESOURCE_STATES TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
 	{
 		if (m_state != _state)
 		{
@@ -3397,8 +3382,10 @@ data.NumQualityLevels = 0;
 				, _state
 				);
 
-			m_state = _state;
+			bx::xchg(m_state, _state);
 		}
+
+		return _state;
 	}
 
 	void FrameBufferD3D12::create(uint8_t _num, const TextureHandle* _handles)

@@ -32,9 +32,9 @@ namespace bgfx
 
 #define _DX_RELEASE(_ptr, _expected, _check) \
 			BX_MACRO_BLOCK_BEGIN \
-				if (NULL != _ptr) \
+				if (NULL != (_ptr) ) \
 				{ \
-					ULONG count = _ptr->Release(); \
+					ULONG count = (_ptr)->Release(); \
 					_check(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); BX_UNUSED(count); \
 					_ptr = NULL; \
 				} \
