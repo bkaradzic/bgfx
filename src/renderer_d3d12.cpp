@@ -2767,7 +2767,7 @@ data.NumQualityLevels = 0;
 		staging->Unmap(0, NULL);
 
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
-		_commandList->CopyBufferRegion(m_ptr, _offset, staging, _offset, _size);
+		_commandList->CopyBufferRegion(m_ptr, _offset, staging, 0, _size);
 		setState(_commandList, state);
 
 		s_renderD3D12->m_cmd.release(staging);
