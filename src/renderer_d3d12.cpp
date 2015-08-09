@@ -2750,31 +2750,12 @@ data.NumQualityLevels = 0;
 		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
 
 		m_ptr = createCommittedResource(device, HeapProperty::Default, _size, flags);
+		setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 		if (!m_dynamic)
 		{
-			setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-			D3D12_SUBRESOURCE_DATA subresource;
-			subresource.pData      = _data;
-			subresource.RowPitch   = _size;
-			subresource.SlicePitch = subresource.RowPitch;
-
-			ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
-
-			UpdateSubresources<1>(commandList
-				, m_ptr
-				, staging
-				, 0
-				, 0
-				, 1
-				, &subresource
-				);
-
-			s_renderD3D12->m_cmd.release(staging);
+			update(commandList, 0, _size, _data);
 		}
-
-		setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
 
 	void BufferD3D12::update(ID3D12GraphicsCommandList* _commandList, uint32_t _offset, uint32_t _size, void* _data, bool /*_discard*/)
