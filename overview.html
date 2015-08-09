@@ -364,7 +364,7 @@ GUI rendering, where draw order should usually match submit order. bgfx
 provides way to enable sequential rendering for these cases (see
 <code class="docutils literal"><span class="pre">bgfx::setViewSeq</span></code>).</p>
 <p>Internally all low-level rendering draw calls are issued inside single
-function <code class="docutils literal"><span class="pre">Context::rendererSubmit</span></code>. This function exist inside each
+function <code class="docutils literal"><span class="pre">`RendererContextI::submit</span></code>. This function exist inside each
 renderer backend implementation.</p>
 <div class="line-block">
 <div class="line">More detailed description of sort-based draw call bucketing can be</div>
