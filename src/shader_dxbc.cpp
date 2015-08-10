@@ -1191,6 +1191,7 @@ namespace bgfx
 			size += bx::read(_reader, extBits);
 			extended = 0 != (extBits & UINT32_C(0x80000000) );
 			_instruction.extended[ii] = DxbcInstruction::ExtendedType::Enum(extBits & UINT32_C(0x0000001f) );
+			_instruction.extended[ii+1] = DxbcInstruction::ExtendedType::Count;
 
 			switch (_instruction.extended[ii])
 			{
@@ -1365,6 +1366,69 @@ namespace bgfx
 
 		uint32_t size =0;
 		size += bx::write(_writer, token);
+;
+		for (uint32_t ii = 0; _instruction.extended[ii] != DxbcInstruction::ExtendedType::Count; ++ii)
+		{
+			// 0       1       2       3
+			// 76543210765432107654321076543210
+			// e..........................ttttt
+			// ^                          ^
+			// |                          +----- type
+			// +-------------------------------- extended
+
+			token = _instruction.extended[ii+1] == DxbcInstruction::ExtendedType::Count
+				? 0
+				: UINT32_C(0x80000000)
+				;
+			token |= uint8_t(_instruction.extended[ii]);
+
+			switch (_instruction.extended[ii])
+			{
+			case DxbcInstruction::ExtendedType::SampleControls:
+				// 0       1       2       3
+				// 76543210765432107654321076543210
+				// .          zzzzyyyyxxxx    .....
+				//            ^   ^   ^
+				//            |   |   +------------- x
+				//            |   +----------------- y
+				//            +--------------------- z
+
+				token |= (uint32_t(_instruction.sampleOffsets[0]) <<  9) & UINT32_C(0x00001e00);
+				token |= (uint32_t(_instruction.sampleOffsets[1]) << 13) & UINT32_C(0x0001e000);
+				token |= (uint32_t(_instruction.sampleOffsets[2]) << 17) & UINT32_C(0x001e0000);
+				break;
+
+			case DxbcInstruction::ExtendedType::ResourceDim:
+				// 0       1       2       3
+				// 76543210765432107654321076543210
+				// .                          .....
+				//
+
+				token |= (uint32_t(_instruction.resourceTarget <<  6) & UINT32_C(0x000003e0) );
+				token |= (uint32_t(_instruction.resourceStride << 11) & UINT32_C(0x0000f800) );
+				break;
+
+			case DxbcInstruction::ExtendedType::ResourceReturnType:
+				// 0       1       2       3
+				// 76543210765432107654321076543210
+				// .          3333222211110000.....
+				//            ^   ^   ^
+				//            |   |   +------------- x
+				//            |   +----------------- y
+				//            +--------------------- z
+
+				token |= (uint32_t(_instruction.resourceReturnTypes[0]) <<  6) & UINT32_C(0x000001e0);
+				token |= (uint32_t(_instruction.resourceReturnTypes[1]) <<  9) & UINT32_C(0x00001e00);
+				token |= (uint32_t(_instruction.resourceReturnTypes[2]) << 13) & UINT32_C(0x0001e000);
+				token |= (uint32_t(_instruction.resourceReturnTypes[3]) << 17) & UINT32_C(0x001e0000);
+				break;
+
+			default:
+				break;
+			}
+
+			size += bx::write(_writer, token);
+		}
 
 		for (uint32_t ii = 0; ii < _instruction.numOperands; ++ii)
 		{
