@@ -695,8 +695,7 @@ namespace bgfx { namespace d3d12
 
 						D3D12_MESSAGE_CATEGORY catlist[] =
 						{
-							D3D12_MESSAGE_CATEGORY_STATE_SETTING,
-							D3D12_MESSAGE_CATEGORY_EXECUTION,
+							D3D12_MESSAGE_CATEGORY_STATE_CREATION,
 						};
 						filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 						filter.DenyList.pCategoryList = catlist;
