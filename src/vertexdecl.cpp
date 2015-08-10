@@ -177,7 +177,7 @@ namespace bgfx
 
 			for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 			{
-				if (0xff != _decl.m_attributes[attr])
+				if (UINT16_MAX != _decl.m_attributes[attr])
 				{
 					uint8_t num;
 					AttribType::Enum type;
