@@ -1738,6 +1738,8 @@ namespace bgfx
 
 #define DXBC_CHUNK_HEADER           BX_MAKEFOURCC('D', 'X', 'B', 'C')
 #define DXBC_CHUNK_SHADER           BX_MAKEFOURCC('S', 'H', 'D', 'R')
+#define DXBC_CHUNK_SHADER_EX        BX_MAKEFOURCC('S', 'H', 'E', 'X')
+
 #define DXBC_CHUNK_INPUT_SIGNATURE  BX_MAKEFOURCC('I', 'S', 'G', 'N')
 #define DXBC_CHUNK_OUTPUT_SIGNATURE BX_MAKEFOURCC('O', 'S', 'G', 'N')
 
@@ -1745,6 +1747,7 @@ namespace bgfx
 	{
 		int32_t size = 0;
 		size += bx::read(_reader, _dxbc.header);
+		_dxbc.shader.shex = false;
 
 		for (uint32_t ii = 0; ii < _dxbc.header.numChunks; ++ii)
 		{
@@ -1763,8 +1766,11 @@ namespace bgfx
 
 			switch (fourcc)
 			{
+			case DXBC_CHUNK_SHADER_EX:
+				_dxbc.shader.shex = true;
+				// fallthrough
+
 			case DXBC_CHUNK_SHADER:
-			case BX_MAKEFOURCC('S', 'H', 'E', 'X'):
 				size += read(_reader, _dxbc.shader);
 				break;
 
@@ -1839,7 +1845,7 @@ namespace bgfx
 		chunkSize[1] = write(_writer, _dxbc.outputSignature);
 
 		chunkOffset[2] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, DXBC_CHUNK_SHADER);
+		size += write(_writer, _dxbc.shader.shex ? DXBC_CHUNK_SHADER_EX : DXBC_CHUNK_SHADER);
 		size += write(_writer, UINT32_C(0) );
 		chunkSize[2] = write(_writer, _dxbc.shader);
 

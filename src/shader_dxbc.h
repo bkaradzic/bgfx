@@ -569,6 +569,7 @@ namespace bgfx
 	{
 		uint32_t version;
 		stl::vector<uint8_t> byteCode;
+		bool shex;
 	};
 
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader);
