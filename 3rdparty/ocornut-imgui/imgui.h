@@ -1,6 +1,8 @@
-// ImGui library v1.44 WIP
-// See .cpp file for documentation.
-// See ImGui::ShowTestWindow() for sample code.
+// ImGui library v1.44
+// Headers
+
+// See imgui.cpp file for documentation.
+// See ImGui::ShowTestWindow() in imgui_demo.cpp for demo code.
 // Read 'Programmer guide' in .cpp for notes on how to setup ImGui in your codebase.
 // Get latest version at https://github.com/ocornut/imgui
 
@@ -15,7 +17,7 @@
 #include <stdlib.h>         // NULL, malloc, free, qsort, atoi
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.44 WIP"
+#define IMGUI_VERSION       "1.44"
 
 // Define assertion handler.
 #ifndef IM_ASSERT
@@ -113,6 +115,7 @@ namespace ImGui
     IMGUI_API bool          BeginChild(ImGuiID id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags extra_flags = 0);                // "
     IMGUI_API void          EndChild();
     IMGUI_API ImVec2        GetContentRegionMax();                                              // window or current column boundaries, in windows coordinates
+    IMGUI_API ImVec2        GetContentRegionAvail();                                            // == GetContentRegionMax() - GetCursorPos()
     IMGUI_API ImVec2        GetWindowContentRegionMin();                                        // window boundaries, in windows coordinates
     IMGUI_API ImVec2        GetWindowContentRegionMax();
     IMGUI_API ImDrawList*   GetWindowDrawList();                                                // get rendering command-list if you want to append your own draw primitives
@@ -640,7 +643,7 @@ struct ImGuiStyle
     IMGUI_API ImGuiStyle();
 };
 
-// This is where your app communicate with ImGui. Call ImGui::GetIO() to access.
+// This is where your app communicate with ImGui. Access via ImGui::GetIO().
 // Read 'Programmer guide' section in .cpp file for general usage.
 struct ImGuiIO
 {
@@ -695,7 +698,7 @@ struct ImGuiIO
     //------------------------------------------------------------------
 
     ImVec2      MousePos;                   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
-    bool        MouseDown[5];               // Mouse buttons. ImGui itself only uses button 0 (left button). Others buttons allows to track if mouse is being used by your application + available to user as a convenience via IsMouse** API.
+    bool        MouseDown[5];               // Mouse buttons: left, right, middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are using right button). Others buttons allows us to track if the mouse is being used by your application + available to user as a convenience via IsMouse** API.
     float       MouseWheel;                 // Mouse wheel: 1 unit scrolls about 5 lines text. 
     bool        MouseDrawCursor;            // Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor).
     bool        KeyCtrl;                    // Keyboard modifier pressed: Control
@@ -716,8 +719,8 @@ struct ImGuiIO
     bool        WantCaptureKeyboard;        // Widget is active (= ImGui will use your keyboard input)
     float       Framerate;                  // Framerate estimation, in frame per second. Rolling average estimation based on IO.DeltaTime over 120 frames
     int         MetricsAllocs;              // Number of active memory allocations
-    int         MetricsRenderVertices;      // Vertices processed during last call to Render()
-    int         MetricsRenderIndices;       // 
+    int         MetricsRenderVertices;      // Vertices output during last call to Render()
+    int         MetricsRenderIndices;       // Indices output during last call to Render() = number of triangles * 3
     int         MetricsActiveWindows;       // Number of visible windows (exclude child windows)
 
     //------------------------------------------------------------------
@@ -932,7 +935,7 @@ struct ImGuiTextEditCallbackData
 };
 
 // ImColor() is just a helper that implicity converts to either ImU32 (packed 4x1 byte) or ImVec4 (4x1 float)
-// None of the ImGui API are using ImColor directly but you can use it as a convenience to pass colors in either formats.
+// None of the ImGui API are using ImColor directly but you can use it as a convenience to pass colors in either ImU32 or ImVec4 formats.
 struct ImColor
 {
     ImVec4              Value;
@@ -955,8 +958,8 @@ struct ImColor
 //    clipper.End();
 struct ImGuiListClipper
 {
-    float ItemsHeight;
-    int ItemsCount, DisplayStart, DisplayEnd;
+    float   ItemsHeight;
+    int     ItemsCount, DisplayStart, DisplayEnd;
 
     ImGuiListClipper()                         { ItemsHeight = 0.0f; ItemsCount = DisplayStart = DisplayEnd = -1; }
     ImGuiListClipper(int count, float height)  { ItemsCount = -1; Begin(count, height); }
@@ -1125,7 +1128,7 @@ struct ImFontConfig
     bool            FontDataOwnedByAtlas;       // true     // TTF data ownership taken by the container ImFontAtlas (will delete memory itself). Set to true 
     int             FontNo;                     // 0        // Index of font within TTF file
     float           SizePixels;                 //          // Size in pixels for rasterizer
-    int             OversampleH, OversampleV;   // 2, 2     // Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.
+    int             OversampleH, OversampleV;   // 3, 1     // Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.
     bool            PixelSnapH;                 // false    // Align every character to pixel boundary (if enabled, set OversampleH/V to 1)
     ImVec2          GlyphExtraSpacing;          // 0, 0     // Extra spacing (in pixels) between glyphs
     const ImWchar*  GlyphRanges;                //          // List of Unicode range (2 value per range, values are inclusive, zero-terminated list)
@@ -1155,7 +1158,8 @@ struct ImFontAtlas
     IMGUI_API ImFont*           AddFontDefault(const ImFontConfig* font_cfg = NULL);
     IMGUI_API ImFont*           AddFontFromFileTTF(const char* filename, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);
     IMGUI_API ImFont*           AddFontFromMemoryTTF(void* ttf_data, int ttf_size, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);                                        // Transfer ownership of 'ttf_data' to ImFontAtlas, will be deleted after Build()
-    IMGUI_API ImFont*           AddFontFromMemoryCompressedTTF(const void* compressed_ttf_data, int compressed_ttf_size, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);  // 'compressed_ttf_data' untouched and still owned by caller. Compress with binary_to_compressed_c.cpp
+    IMGUI_API ImFont*           AddFontFromMemoryCompressedTTF(const void* compressed_ttf_data, int compressed_ttf_size, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);  // 'compressed_ttf_data' still owned by caller. Compress with binary_to_compressed_c.cpp
+    IMGUI_API ImFont*           AddFontFromMemoryCompressedBase85TTF(const char* compressed_ttf_data_base85, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);              // 'compressed_ttf_data_base85' still owned by caller. Compress with binary_to_compressed_c.cpp with -base85 paramaeter
     IMGUI_API void              ClearTexData();             // Clear the CPU-side texture data. Saves RAM once the texture has been copied to graphics memory.
     IMGUI_API void              ClearInputData();           // Clear the input TTF data (inc sizes, glyph ranges)
     IMGUI_API void              ClearFonts();               // Clear the ImGui-side font data (glyphs storage, UV coordinates)

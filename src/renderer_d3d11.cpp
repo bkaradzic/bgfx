@@ -192,55 +192,55 @@ namespace bgfx { namespace d3d11
 
 	static const TextureFormatInfo s_textureFormat[] =
 	{
-		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC1_UNORM_SRGB		}, // BC1
-		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC2_UNORM_SRGB		}, // BC2
-		{ DXGI_FORMAT_BC3_UNORM,          DXGI_FORMAT_BC3_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC3_UNORM_SRGB		}, // BC3
-		{ DXGI_FORMAT_BC4_UNORM,          DXGI_FORMAT_BC4_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // BC4
-		{ DXGI_FORMAT_BC5_UNORM,          DXGI_FORMAT_BC5_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // BC5
-		{ DXGI_FORMAT_BC6H_SF16,          DXGI_FORMAT_BC6H_SF16,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // BC6H
-		{ DXGI_FORMAT_BC7_UNORM,          DXGI_FORMAT_BC7_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC7_UNORM_SRGB		}, // BC7
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // ETC1
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // ETC2
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // ETC2A
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // ETC2A1
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // PTC12
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // PTC14
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // PTC12A
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // PTC14A
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // PTC22
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // PTC24
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // Unknown
-		{ DXGI_FORMAT_R1_UNORM,           DXGI_FORMAT_R1_UNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R1
-		{ DXGI_FORMAT_R8_UNORM,           DXGI_FORMAT_R8_UNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R8
-		{ DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_UINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R16
-		{ DXGI_FORMAT_R16_FLOAT,          DXGI_FORMAT_R16_FLOAT,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R16F
-		{ DXGI_FORMAT_R32_UINT,           DXGI_FORMAT_R32_UINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R32
-		{ DXGI_FORMAT_R32_FLOAT,          DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R32F
-		{ DXGI_FORMAT_R8G8_UNORM,         DXGI_FORMAT_R8G8_UNORM,            DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RG8
-		{ DXGI_FORMAT_R16G16_UNORM,       DXGI_FORMAT_R16G16_UNORM,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RG16
-		{ DXGI_FORMAT_R16G16_FLOAT,       DXGI_FORMAT_R16G16_FLOAT,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RG16F
-		{ DXGI_FORMAT_R32G32_UINT,        DXGI_FORMAT_R32G32_UINT,           DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RG32
-		{ DXGI_FORMAT_R32G32_FLOAT,       DXGI_FORMAT_R32G32_FLOAT,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RG32F
-		{ DXGI_FORMAT_B8G8R8A8_UNORM,     DXGI_FORMAT_B8G8R8A8_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_B8G8R8A8_UNORM_SRGB	}, // BGRA8
+		{ DXGI_FORMAT_BC1_UNORM,          DXGI_FORMAT_BC1_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC1_UNORM_SRGB      }, // BC1
+		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC2_UNORM_SRGB      }, // BC2
+		{ DXGI_FORMAT_BC3_UNORM,          DXGI_FORMAT_BC3_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC3_UNORM_SRGB      }, // BC3
+		{ DXGI_FORMAT_BC4_UNORM,          DXGI_FORMAT_BC4_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // BC4
+		{ DXGI_FORMAT_BC5_UNORM,          DXGI_FORMAT_BC5_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // BC5
+		{ DXGI_FORMAT_BC6H_SF16,          DXGI_FORMAT_BC6H_SF16,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // BC6H
+		{ DXGI_FORMAT_BC7_UNORM,          DXGI_FORMAT_BC7_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC7_UNORM_SRGB      }, // BC7
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // ETC1
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // ETC2
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // ETC2A
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // ETC2A1
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // PTC12
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // PTC14
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // PTC12A
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // PTC14A
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // PTC22
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // PTC24
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // Unknown
+		{ DXGI_FORMAT_R1_UNORM,           DXGI_FORMAT_R1_UNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R1
+		{ DXGI_FORMAT_R8_UNORM,           DXGI_FORMAT_R8_UNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R8
+		{ DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_UINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R16
+		{ DXGI_FORMAT_R16_FLOAT,          DXGI_FORMAT_R16_FLOAT,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R16F
+		{ DXGI_FORMAT_R32_UINT,           DXGI_FORMAT_R32_UINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R32
+		{ DXGI_FORMAT_R32_FLOAT,          DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R32F
+		{ DXGI_FORMAT_R8G8_UNORM,         DXGI_FORMAT_R8G8_UNORM,            DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RG8
+		{ DXGI_FORMAT_R16G16_UNORM,       DXGI_FORMAT_R16G16_UNORM,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RG16
+		{ DXGI_FORMAT_R16G16_FLOAT,       DXGI_FORMAT_R16G16_FLOAT,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RG16F
+		{ DXGI_FORMAT_R32G32_UINT,        DXGI_FORMAT_R32G32_UINT,           DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RG32
+		{ DXGI_FORMAT_R32G32_FLOAT,       DXGI_FORMAT_R32G32_FLOAT,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RG32F
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,     DXGI_FORMAT_B8G8R8A8_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_B8G8R8A8_UNORM_SRGB }, // BGRA8
 		{ DXGI_FORMAT_R8G8B8A8_UNORM,     DXGI_FORMAT_R8G8B8A8_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_R8G8B8A8_UNORM_SRGB }, // RGBA8
-		{ DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM,    DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGBA16
-		{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT,    DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGBA16F
-		{ DXGI_FORMAT_R32G32B32A32_UINT,  DXGI_FORMAT_R32G32B32A32_UINT,     DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGBA32
-		{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT,    DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGBA32F
-		{ DXGI_FORMAT_B5G6R5_UNORM,       DXGI_FORMAT_B5G6R5_UNORM,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R5G6B5
-		{ DXGI_FORMAT_B4G4R4A4_UNORM,     DXGI_FORMAT_B4G4R4A4_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGBA4
-		{ DXGI_FORMAT_B5G5R5A1_UNORM,     DXGI_FORMAT_B5G5R5A1_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGB5A1
-		{ DXGI_FORMAT_R10G10B10A2_UNORM,  DXGI_FORMAT_R10G10B10A2_UNORM,     DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // RGB10A2
-		{ DXGI_FORMAT_R11G11B10_FLOAT,    DXGI_FORMAT_R11G11B10_FLOAT,       DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // R11G11B10F
-		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN				}, // UnknownDepth
-		{ DXGI_FORMAT_R16_TYPELESS,       DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_D16_UNORM,         DXGI_FORMAT_UNKNOWN				}, // D16
-		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN				}, // D24
-		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN				}, // D24S8
-		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN				}, // D32
-		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN				}, // D16F
-		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN				}, // D24F
-		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN				}, // D32F
-		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN				}, // D0S8
+		{ DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM,    DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGBA16
+		{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT,    DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGBA16F
+		{ DXGI_FORMAT_R32G32B32A32_UINT,  DXGI_FORMAT_R32G32B32A32_UINT,     DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGBA32
+		{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT,    DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGBA32F
+		{ DXGI_FORMAT_B5G6R5_UNORM,       DXGI_FORMAT_B5G6R5_UNORM,          DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R5G6B5
+		{ DXGI_FORMAT_B4G4R4A4_UNORM,     DXGI_FORMAT_B4G4R4A4_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGBA4
+		{ DXGI_FORMAT_B5G5R5A1_UNORM,     DXGI_FORMAT_B5G5R5A1_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGB5A1
+		{ DXGI_FORMAT_R10G10B10A2_UNORM,  DXGI_FORMAT_R10G10B10A2_UNORM,     DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // RGB10A2
+		{ DXGI_FORMAT_R11G11B10_FLOAT,    DXGI_FORMAT_R11G11B10_FLOAT,       DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // R11G11B10F
+		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN             }, // UnknownDepth
+		{ DXGI_FORMAT_R16_TYPELESS,       DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_D16_UNORM,         DXGI_FORMAT_UNKNOWN             }, // D16
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN             }, // D24
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN             }, // D24S8
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN             }, // D32
+		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN             }, // D16F
+		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN             }, // D24F
+		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN             }, // D32F
+		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN             }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
@@ -267,25 +267,31 @@ namespace bgfx { namespace d3d11
 
 	static const DXGI_FORMAT s_attribType[][4][2] =
 	{
-		{
+		{ // Uint8
 			{ DXGI_FORMAT_R8_UINT,            DXGI_FORMAT_R8_UNORM           },
 			{ DXGI_FORMAT_R8G8_UINT,          DXGI_FORMAT_R8G8_UNORM         },
 			{ DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_R8G8B8A8_UNORM     },
 			{ DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_R8G8B8A8_UNORM     },
 		},
-		{
+		{ // Uint10
+			{ DXGI_FORMAT_R10G10B10A2_UINT,   DXGI_FORMAT_R10G10B10A2_UNORM  },
+			{ DXGI_FORMAT_R10G10B10A2_UINT,   DXGI_FORMAT_R10G10B10A2_UNORM  },
+			{ DXGI_FORMAT_R10G10B10A2_UINT,   DXGI_FORMAT_R10G10B10A2_UNORM  },
+			{ DXGI_FORMAT_R10G10B10A2_UINT,   DXGI_FORMAT_R10G10B10A2_UNORM  },
+		},
+		{ // Int16
 			{ DXGI_FORMAT_R16_SINT,           DXGI_FORMAT_R16_SNORM          },
 			{ DXGI_FORMAT_R16G16_SINT,        DXGI_FORMAT_R16G16_SNORM       },
 			{ DXGI_FORMAT_R16G16B16A16_SINT,  DXGI_FORMAT_R16G16B16A16_SNORM },
 			{ DXGI_FORMAT_R16G16B16A16_SINT,  DXGI_FORMAT_R16G16B16A16_SNORM },
 		},
-		{
+		{ // Half
 			{ DXGI_FORMAT_R16_FLOAT,          DXGI_FORMAT_R16_FLOAT          },
 			{ DXGI_FORMAT_R16G16_FLOAT,       DXGI_FORMAT_R16G16_FLOAT       },
 			{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT },
 			{ DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT },
 		},
-		{
+		{ // Float
 			{ DXGI_FORMAT_R32_FLOAT,          DXGI_FORMAT_R32_FLOAT          },
 			{ DXGI_FORMAT_R32G32_FLOAT,       DXGI_FORMAT_R32G32_FLOAT       },
 			{ DXGI_FORMAT_R32G32B32_FLOAT,    DXGI_FORMAT_R32G32B32_FLOAT    },
@@ -300,7 +306,7 @@ namespace bgfx { namespace d3d11
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (0xff != _decl.m_attributes[attr])
+			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				memcpy(elem, &s_attrib[attr], sizeof(D3D11_INPUT_ELEMENT_DESC) );
 
@@ -742,152 +748,155 @@ namespace bgfx { namespace d3d11
 				errorState = 4;
 			}
 
-			IDXGIDevice*  device = NULL;
-			IDXGIAdapter* adapter = NULL;
-			hr = E_FAIL;
-			for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
 			{
-				hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
-				BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
-
-				if (SUCCEEDED(hr) )
+				IDXGIDevice*  device = NULL;
+				IDXGIAdapter* adapter = NULL;
+				hr = E_FAIL;
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
 				{
+					hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
+					BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
+
+					if (SUCCEEDED(hr) )
+					{
 #if BX_COMPILER_MSVC
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-					try
-					{
-						// QueryInterface above can succeed, but getting adapter call might crash on Win7.
-						hr = device->GetAdapter(&adapter);
-					}
-					catch (...)
-					{
-						BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_deviceIIDs)-1-ii);
-						DX_RELEASE(device, 0);
-						hr = E_FAIL;
-					}
+						try
+						{
+							// QueryInterface above can succeed, but getting adapter call might crash on Win7.
+							hr = device->GetAdapter(&adapter);
+						}
+						catch (...)
+						{
+							BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_deviceIIDs)-1-ii);
+							DX_RELEASE(device, 0);
+							hr = E_FAIL;
+						}
 BX_PRAGMA_DIAGNOSTIC_POP();
 #else
-					hr = device->GetAdapter(&adapter);
+						hr = device->GetAdapter(&adapter);
 #endif // BX_COMPILER_MSVC
+					}
 				}
-			}
-			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-			if (FAILED(hr) )
-			{
-				goto error;
-			}
 
-			// GPA increases device ref count.
-			// RenderDoc makes device ref count 0 here.
-			//
-			// This causes assert in debug. When debugger is present refcount
-			// checks are off.
-			IDXGIDevice* renderdoc;
-			hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
-			if (SUCCEEDED(hr) )
-			{
-				setGraphicsDebuggerPresent(true);
-				DX_RELEASE(renderdoc, 2);
-			}
-			else
-			{
-				setGraphicsDebuggerPresent(3 != getRefCount(device) );
-				DX_RELEASE(device, 2);
-			}
+				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+				if (FAILED(hr) )
+				{
+					goto error;
+				}
 
-			hr = adapter->GetDesc(&m_adapterDesc);
-			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-			if (FAILED(hr) )
-			{
-				DX_RELEASE(adapter, 2);
-				goto error;
-			}
+				// GPA increases device ref count.
+				// RenderDoc makes device ref count 0 here.
+				//
+				// This causes assert in debug. When debugger is present refcount
+				// checks are off.
+				IDXGIDevice* renderdoc;
+				hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
+				if (SUCCEEDED(hr) )
+				{
+					setGraphicsDebuggerPresent(true);
+					DX_RELEASE(renderdoc, 2);
+				}
+				else
+				{
+					setGraphicsDebuggerPresent(3 != getRefCount(device) );
+					DX_RELEASE(device, 2);
+				}
 
-			g_caps.vendorId = 0 == m_adapterDesc.VendorId
-				? BGFX_PCI_ID_SOFTWARE_RASTERIZER
-				: (uint16_t)m_adapterDesc.VendorId
-				;
-			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+				hr = adapter->GetDesc(&m_adapterDesc);
+				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+				if (FAILED(hr) )
+				{
+					DX_RELEASE(adapter, 2);
+					goto error;
+				}
 
-			if (NULL == g_platformData.backBuffer)
-			{
+				g_caps.vendorId = 0 == m_adapterDesc.VendorId
+					? BGFX_PCI_ID_SOFTWARE_RASTERIZER
+					: (uint16_t)m_adapterDesc.VendorId
+					;
+				g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+
+				if (NULL == g_platformData.backBuffer)
+				{
 #if BX_PLATFORM_WINRT
-				hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-				DX_RELEASE(adapter, 2);
-				if (FAILED(hr) )
-				{
-					goto error;
-				}
+					hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
+					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+					DX_RELEASE(adapter, 2);
+					if (FAILED(hr) )
+					{
+						goto error;
+					}
 
-				memset(&m_scd, 0, sizeof(m_scd) );
-				m_scd.Width  = BGFX_DEFAULT_WIDTH;
-				m_scd.Height = BGFX_DEFAULT_HEIGHT;
-				m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				m_scd.Stereo = false;
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.BufferCount = 2;
-				m_scd.Scaling     = DXGI_SCALING_NONE;
-				m_scd.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-				m_scd.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
+					memset(&m_scd, 0, sizeof(m_scd) );
+					m_scd.Width  = BGFX_DEFAULT_WIDTH;
+					m_scd.Height = BGFX_DEFAULT_HEIGHT;
+					m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+					m_scd.Stereo = false;
+					m_scd.SampleDesc.Count   = 1;
+					m_scd.SampleDesc.Quality = 0;
+					m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+					m_scd.BufferCount = 2;
+					m_scd.Scaling     = DXGI_SCALING_NONE;
+					m_scd.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+					m_scd.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
 
-				hr = m_factory->CreateSwapChainForCoreWindow(m_device
-					, (::IUnknown*)g_platformData.nwh
-					, &m_scd
-					, NULL
-					, &m_swapChain
-					);
+					hr = m_factory->CreateSwapChainForCoreWindow(m_device
+						, (::IUnknown*)g_platformData.nwh
+						, &m_scd
+						, NULL
+						, &m_swapChain
+						);
 #else
-				hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
-				DX_RELEASE(adapter, 2);
-				if (FAILED(hr) )
-				{
-					goto error;
-				}
+					hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
+					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
+					DX_RELEASE(adapter, 2);
+					if (FAILED(hr) )
+					{
+						goto error;
+					}
 
-				memset(&m_scd, 0, sizeof(m_scd) );
-				m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
-				m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
-				m_scd.BufferDesc.RefreshRate.Numerator   = 60;
-				m_scd.BufferDesc.RefreshRate.Denominator = 1;
-				m_scd.BufferDesc.Format  = DXGI_FORMAT_R8G8B8A8_UNORM;
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.BufferCount  = 1;
-				m_scd.OutputWindow = (HWND)g_platformData.nwh;
-				m_scd.Windowed     = true;
+					memset(&m_scd, 0, sizeof(m_scd) );
+					m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
+					m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
+					m_scd.BufferDesc.RefreshRate.Numerator   = 60;
+					m_scd.BufferDesc.RefreshRate.Denominator = 1;
+					m_scd.BufferDesc.Format  = DXGI_FORMAT_R8G8B8A8_UNORM;
+					m_scd.SampleDesc.Count   = 1;
+					m_scd.SampleDesc.Quality = 0;
+					m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+					m_scd.BufferCount  = 1;
+					m_scd.OutputWindow = (HWND)g_platformData.nwh;
+					m_scd.Windowed     = true;
 
-				hr = m_factory->CreateSwapChain(m_device
-					, &m_scd
-					, &m_swapChain
-					);
+					hr = m_factory->CreateSwapChain(m_device
+						, &m_scd
+						, &m_swapChain
+						);
 
-				DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh, 0
-					| DXGI_MWA_NO_WINDOW_CHANGES
-					| DXGI_MWA_NO_ALT_ENTER
-					) );
+					DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh, 0
+						| DXGI_MWA_NO_WINDOW_CHANGES
+						| DXGI_MWA_NO_ALT_ENTER
+						) );
 #endif // BX_PLATFORM_WINRT
-				BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
-				if (FAILED(hr) )
-				{
-					goto error;
-				}
+					BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
+					if (FAILED(hr) )
+					{
+						goto error;
+					}
 
-				errorState = 5;
-			}
-			else
-			{
-				memset(&m_scd, 0, sizeof(m_scd) );
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
-				m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
-				m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
+					errorState = 5;
+				}
+				else
+				{
+					memset(&m_scd, 0, sizeof(m_scd) );
+					m_scd.SampleDesc.Count   = 1;
+					m_scd.SampleDesc.Quality = 0;
+					setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+					m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
+					m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
+				}
 			}
 
 			m_numWindows = 1;
@@ -908,8 +917,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					D3D11_MESSAGE_CATEGORY catlist[] =
 					{
-						D3D11_MESSAGE_CATEGORY_STATE_SETTING,
-						D3D11_MESSAGE_CATEGORY_EXECUTION,
+						D3D11_MESSAGE_CATEGORY_STATE_CREATION,
 					};
 					filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 					filter.DenyList.pCategoryList = catlist;
@@ -930,6 +938,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				g_caps.supported |= (0
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
+					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_FRAGMENT_DEPTH
 					| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 					| BGFX_CAPS_SWAP_CHAIN
@@ -2039,13 +2048,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				VertexDecl decl;
 				memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
-				const uint8_t* attrMask = _program.m_vsh->m_attrMask;
+				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
-					uint8_t mask = attrMask[ii];
-					uint8_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 ? 0xff : attr == 0xff ? 0 : attr;
+					uint16_t mask = attrMask[ii];
+					uint16_t attr = (decl.m_attributes[ii] & mask);
+					decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 				}
 
 				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, decl);
@@ -3224,7 +3233,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (Attrib::Count != attr)
 			{
-				m_attrMask[attr] = 0xff;
+				m_attrMask[attr] = UINT16_MAX;
 			}
 		}
 

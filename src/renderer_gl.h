@@ -385,6 +385,10 @@ typedef uint64_t GLuint64;
 #	define GL_MAX_COLOR_ATTACHMENTS 0x8CDF
 #endif // GL_MAX_COLOR_ATTACHMENTS
 
+#ifndef GL_MAX_DRAW_BUFFERS
+#	define GL_MAX_DRAW_BUFFERS 0x8824
+#endif // GL_MAX_DRAW_BUFFERS
+
 #ifndef GL_QUERY_RESULT
 #	define GL_QUERY_RESULT 0x8866
 #endif // GL_QUERY_RESULT
@@ -621,6 +625,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_LOCATION
 #	define GL_LOCATION 0x930E
 #endif // GL_LOCATION
+
+#ifndef GL_UNSIGNED_INT_10_10_10_2
+#	define GL_UNSIGNED_INT_10_10_10_2 0x8DF6
+#endif // GL_UNSIGNED_INT_10_10_10_2
 
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242

@@ -381,6 +381,8 @@ namespace bgfx { namespace d3d9
 		IDirect3DSurface9* m_depthStencil;
 		IDirect3DSwapChain9* m_swapChain;
 		HWND m_hwnd;
+		uint32_t m_width;
+		uint32_t m_height;
 
 		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		TextureHandle m_depthHandle;

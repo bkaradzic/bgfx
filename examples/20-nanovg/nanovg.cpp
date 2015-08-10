@@ -1076,11 +1076,11 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 		nvgBeginPath(vg);
 		nvgFillColor(vg, nvgRGBA(255,192,0,255) );
 		nvgRoundedRect(vg
-			, roundf(bounds[0])-4.0f
-			, roundf(bounds[1])-2.0f
-			, roundf(bounds[2]-bounds[0])+8.0f
-			, roundf(bounds[3]-bounds[1])+4.0f
-			, (roundf(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
+			, bx::fround(bounds[0])-4.0f
+			, bx::fround(bounds[1])-2.0f
+			, bx::fround(bounds[2]-bounds[0])+8.0f
+			, bx::fround(bounds[3]-bounds[1])+4.0f
+			, (bx::fround(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
 			);
 		nvgFill(vg);
 
@@ -1098,10 +1098,10 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 	nvgBeginPath(vg);
 	nvgFillColor(vg, nvgRGBA(220,220,220,255) );
 	nvgRoundedRect(vg
-		, roundf(bounds[0]-2.0f)
-		, roundf(bounds[1]-2.0f)
-		, roundf(bounds[2]-bounds[0])+4.0f
-		, roundf(bounds[3]-bounds[1])+4.0f
+		, bx::fround(bounds[0]-2.0f)
+		, bx::fround(bounds[1]-2.0f)
+		, bx::fround(bounds[2]-bounds[0])+4.0f
+		, bx::fround(bounds[3]-bounds[1])+4.0f
 		, 3.0f
 		);
 	px = float( (int)( (bounds[2]+bounds[0])/2) );

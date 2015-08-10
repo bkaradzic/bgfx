@@ -120,8 +120,9 @@ namespace bgfx
 		enum Enum
 		{
 			Uint8,
+			Uint10, //!< Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
 			Int16,
-			Half, // Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+			Half,   //!< Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
 			Float,
 
 			Count
@@ -593,7 +594,7 @@ namespace bgfx
 		void decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const;
 
 		/// Returns true if VertexDecl contains attribute.
-		bool has(Attrib::Enum _attrib) const { return 0xff != m_attributes[_attrib]; }
+		bool has(Attrib::Enum _attrib) const { return UINT16_MAX != m_attributes[_attrib]; }
 
 		/// Returns relative attribute offset from the vertex.
 		uint16_t getOffset(Attrib::Enum _attrib) const { return m_offset[_attrib]; }
@@ -607,7 +608,7 @@ namespace bgfx
 		uint32_t m_hash;
 		uint16_t m_stride;
 		uint16_t m_offset[Attrib::Count];
-		uint8_t m_attributes[Attrib::Count];
+		uint16_t m_attributes[Attrib::Count];
 	};
 
 	/// Pack vec4 into vertex stream format.

@@ -380,72 +380,73 @@ namespace bgfx { namespace d3d9
 
 			errorState = 2;
 
-			m_adapter    = D3DADAPTER_DEFAULT;
-			m_deviceType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
-				? D3DDEVTYPE_REF
-				: D3DDEVTYPE_HAL
-				;
-
-			uint8_t numGPUs = uint8_t(bx::uint32_min(BX_COUNTOF(g_caps.gpu), m_d3d9->GetAdapterCount() ) );
-			for (uint32_t ii = 0; ii < numGPUs; ++ii)
 			{
-				D3DADAPTER_IDENTIFIER9 desc;
-				HRESULT hr = m_d3d9->GetAdapterIdentifier(ii, 0, &desc);
-				if (SUCCEEDED(hr) )
+				m_adapter    = D3DADAPTER_DEFAULT;
+				m_deviceType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
+					? D3DDEVTYPE_REF
+					: D3DDEVTYPE_HAL
+					;
+
+				uint8_t numGPUs = uint8_t(bx::uint32_min(BX_COUNTOF(g_caps.gpu), m_d3d9->GetAdapterCount() ) );
+				for (uint32_t ii = 0; ii < numGPUs; ++ii)
 				{
-					BX_TRACE("Adapter #%d", ii);
-					BX_TRACE("\tDriver: %s", desc.Driver);
-					BX_TRACE("\tDescription: %s", desc.Description);
-					BX_TRACE("\tDeviceName: %s", desc.DeviceName);
-					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-						, desc.VendorId
-						, desc.DeviceId
-						, desc.SubSysId
-						, desc.Revision
-						);
-
-					g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
-					g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
-
-					if (D3DADAPTER_DEFAULT == m_adapter)
+					D3DADAPTER_IDENTIFIER9 desc;
+					HRESULT hr = m_d3d9->GetAdapterIdentifier(ii, 0, &desc);
+					if (SUCCEEDED(hr) )
 					{
-						if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
-						&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
-						&&   (               0 == g_caps.deviceId || desc.DeviceId == g_caps.deviceId) )
-						{
-							m_adapter = ii;
-						}
+						BX_TRACE("Adapter #%d", ii);
+						BX_TRACE("\tDriver: %s", desc.Driver);
+						BX_TRACE("\tDescription: %s", desc.Description);
+						BX_TRACE("\tDeviceName: %s", desc.DeviceName);
+						BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+							, desc.VendorId
+							, desc.DeviceId
+							, desc.SubSysId
+							, desc.Revision
+							);
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-						&&  0 != strstr(desc.Description, "PerfHUD") )
+						g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
+						g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
+
+						if (D3DADAPTER_DEFAULT == m_adapter)
 						{
-							m_adapter = ii;
-							m_deviceType = D3DDEVTYPE_REF;
+							if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
+							&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
+							&&   (               0 == g_caps.deviceId || desc.DeviceId == g_caps.deviceId) )
+							{
+								m_adapter = ii;
+							}
+
+							if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
+							&&  0 != strstr(desc.Description, "PerfHUD") )
+							{
+								m_adapter = ii;
+								m_deviceType = D3DDEVTYPE_REF;
+							}
 						}
 					}
 				}
-			}
 
-			DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &m_identifier) );
-			m_amd    = m_identifier.VendorId == BGFX_PCI_ID_AMD;
-			m_nvidia = m_identifier.VendorId == BGFX_PCI_ID_NVIDIA;
-			g_caps.vendorId = 0 == m_identifier.VendorId
-				? BGFX_PCI_ID_SOFTWARE_RASTERIZER
-				: (uint16_t)m_identifier.VendorId
-				;
-			g_caps.deviceId = (uint16_t)m_identifier.DeviceId;
+				DX_CHECK(m_d3d9->GetAdapterIdentifier(m_adapter, 0, &m_identifier) );
+				m_amd    = m_identifier.VendorId == BGFX_PCI_ID_AMD;
+				m_nvidia = m_identifier.VendorId == BGFX_PCI_ID_NVIDIA;
+				g_caps.vendorId = 0 == m_identifier.VendorId
+					? BGFX_PCI_ID_SOFTWARE_RASTERIZER
+					: (uint16_t)m_identifier.VendorId
+					;
+				g_caps.deviceId = (uint16_t)m_identifier.DeviceId;
 
-			uint32_t behaviorFlags[] =
-			{
-				D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE | D3DCREATE_PUREDEVICE,
-				D3DCREATE_MIXED_VERTEXPROCESSING    | D3DCREATE_FPU_PRESERVE,
-				D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE,
-			};
+				uint32_t behaviorFlags[] =
+				{
+					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE | D3DCREATE_PUREDEVICE,
+					D3DCREATE_MIXED_VERTEXPROCESSING    | D3DCREATE_FPU_PRESERVE,
+					D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE,
+				};
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(behaviorFlags) && NULL == m_device; ++ii)
-			{
+				for (uint32_t ii = 0; ii < BX_COUNTOF(behaviorFlags) && NULL == m_device; ++ii)
+				{
 #if 0 // BGFX_CONFIG_RENDERER_DIRECT3D9EX
-				DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
+					DX_CHECK(m_d3d9->CreateDeviceEx(m_adapter
 						, m_deviceType
 						, g_platformHooks.nwh
 						, behaviorFlags[ii]
@@ -454,14 +455,15 @@ namespace bgfx { namespace d3d9
 						, &m_device
 						) );
 #else
-				DX_CHECK(m_d3d9->CreateDevice(m_adapter
-					, m_deviceType
-					, (HWND)g_platformData.nwh
-					, behaviorFlags[ii]
-					, &m_params
-					, &m_device
-					) );
+					DX_CHECK(m_d3d9->CreateDevice(m_adapter
+						, m_deviceType
+						, (HWND)g_platformData.nwh
+						, behaviorFlags[ii]
+						, &m_params
+						, &m_device
+						));
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D9EX
+				}
 			}
 
 			BX_WARN(NULL != m_device, "Unable to create Direct3D9 device.");
@@ -513,6 +515,7 @@ namespace bgfx { namespace d3d9
 								| BGFX_CAPS_TEXTURE_3D
 								| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 								| BGFX_CAPS_VERTEX_ATTRIB_HALF
+								| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 								| BGFX_CAPS_FRAGMENT_DEPTH
 								| BGFX_CAPS_SWAP_CHAIN
 								| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
@@ -597,19 +600,21 @@ namespace bgfx { namespace d3d9
 				}
 			}
 
-			uint32_t index = 1;
-			for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)
 			{
-				for (; *fmt != D3DFMT_UNKNOWN; ++fmt)
+				uint32_t index = 1;
+				for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)
 				{
-					if (SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, *fmt) ) )
+					for (; *fmt != D3DFMT_UNKNOWN; ++fmt)
 					{
-						s_colorFormat[index] = *fmt;
-						break;
+						if (SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, *fmt) ) )
+						{
+							s_colorFormat[index] = *fmt;
+							break;
+						}
 					}
-				}
 
-				for (; *fmt != D3DFMT_UNKNOWN; ++fmt);
+					for (; *fmt != D3DFMT_UNKNOWN; ++fmt);
+				}
 			}
 
 			m_fmtDepth = D3DFMT_D24S8;
@@ -2032,25 +2037,31 @@ namespace bgfx { namespace d3d9
 
 	static const uint8_t s_attribType[][4][2] =
 	{
-		{
+		{ // Uint8
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 		},
-		{
+		{ // Uint10
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+		},
+		{ // Int16
 			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
 			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
 			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
 			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
 		},
-		{
+		{ // Half
 			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
 			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
 			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
 			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
 		},
-		{
+		{ // Float
 			{ D3DDECLTYPE_FLOAT1,    D3DDECLTYPE_FLOAT1    },
 			{ D3DDECLTYPE_FLOAT2,    D3DDECLTYPE_FLOAT2    },
 			{ D3DDECLTYPE_FLOAT3,    D3DDECLTYPE_FLOAT3    },
@@ -2065,7 +2076,7 @@ namespace bgfx { namespace d3d9
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (0xff != _decl.m_attributes[attr])
+			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				uint8_t num;
 				AttribType::Enum type;
@@ -2807,10 +2818,13 @@ namespace bgfx { namespace d3d9
 
 		m_hwnd = (HWND)_nwh;
 
+		m_width  = bx::uint32_max(_width,  16);
+		m_height = bx::uint32_max(_height, 16);
+
 		D3DPRESENT_PARAMETERS params;
 		memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
-		params.BackBufferWidth  = bx::uint32_max(_width,  16);
-		params.BackBufferHeight = bx::uint32_max(_height, 16);
+		params.BackBufferWidth  = m_width;
+		params.BackBufferHeight = m_height;
 
 		DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&params, &m_swapChain) );
 		DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_color[0]) );
@@ -2908,7 +2922,8 @@ namespace bgfx { namespace d3d9
 	{
 		if (NULL != m_hwnd)
 		{
-			DX_RELEASE(m_color[0],  0);
+			DX_RELEASE(m_color[0], 0);
+			DX_RELEASE(m_depthStencil, 0);
 			DX_RELEASE(m_swapChain, 0);
 		}
 		else
@@ -2937,8 +2952,22 @@ namespace bgfx { namespace d3d9
 	{
 		if (NULL != m_hwnd)
 		{
-			DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&s_renderD3D9->m_params, &m_swapChain) );
+			D3DPRESENT_PARAMETERS params;
+			memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
+			params.BackBufferWidth  = m_width;
+			params.BackBufferHeight = m_height;
+
+			DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&params, &m_swapChain) );
 			DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_color[0]) );
+			DX_CHECK(s_renderD3D9->m_device->CreateDepthStencilSurface(params.BackBufferWidth
+					, params.BackBufferHeight
+					, params.AutoDepthStencilFormat
+					, params.MultiSampleType
+					, params.MultiSampleQuality
+					, FALSE
+					, &m_depthStencil
+					, NULL
+					) );
 		}
 		else
 		{
@@ -3041,6 +3070,7 @@ namespace bgfx { namespace d3d9
 	void TimerQueryD3D9::end()
 	{
 		Frame& frame = m_frame[m_control.m_current];
+		frame.m_disjoint->Issue(D3DISSUE_END);
 		frame.m_end->Issue(D3DISSUE_END);
 		frame.m_freq->Issue(D3DISSUE_END);
 		m_control.commit(1);

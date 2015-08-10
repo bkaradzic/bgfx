@@ -1,6 +1,8 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
+[Documentation](https://bkaradzic.github.io/bgfx/index.html)
+
 What is it?
 -----------
 
@@ -494,7 +496,7 @@ usually match submit order. bgfx provides way to enable sequential rendering for
 these cases (see `bgfx::setViewSeq`).
 
 Internally all low-level rendering draw calls are issued inside single function
-`Context::rendererSubmit`. This function exist inside each renderer backend
+`RendererContextI::submit`. This function exist inside each renderer backend
 implementation.
 
 More detailed description of sort-based draw call bucketing can be found at:  

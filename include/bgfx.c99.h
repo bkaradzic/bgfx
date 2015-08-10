@@ -66,6 +66,7 @@ typedef enum bgfx_attrib
 typedef enum bgfx_attrib_type
 {
     BGFX_ATTRIB_TYPE_UINT8,
+    BGFX_ATTRIB_TYPE_UINT10,
     BGFX_ATTRIB_TYPE_INT16,
     BGFX_ATTRIB_TYPE_HALF,
     BGFX_ATTRIB_TYPE_FLOAT,
@@ -236,7 +237,7 @@ typedef struct bgfx_vertex_decl
     uint32_t hash;
     uint16_t stride;
     uint16_t offset[BGFX_ATTRIB_COUNT];
-    uint8_t  attributes[BGFX_ATTRIB_COUNT];
+    uint16_t attributes[BGFX_ATTRIB_COUNT];
 
 } bgfx_vertex_decl_t;
 

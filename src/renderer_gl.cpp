@@ -81,10 +81,11 @@ namespace bgfx { namespace gl
 
 	static const GLenum s_attribType[] =
 	{
-		GL_UNSIGNED_BYTE,
-		GL_SHORT,
-		GL_HALF_FLOAT,
-		GL_FLOAT,
+		GL_UNSIGNED_BYTE,            // Uint8
+		GL_UNSIGNED_INT_10_10_10_2,  // Uint10
+		GL_SHORT,                    // Int16
+		GL_HALF_FLOAT,               // Half
+		GL_FLOAT,                    // Float
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
@@ -1051,17 +1052,17 @@ namespace bgfx { namespace gl
 		if (isDepth(_format) )
 		{
 			const ImageBlockInfo& info = getBlockInfo(_format);
-			if (0 < info.stencilBits)
-			{
-				attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-			}
-			else if (0 == info.depthBits)
+			if (0 == info.depthBits)
 			{
 				attachment = GL_STENCIL_ATTACHMENT;
 			}
-			else
+			else if (0 == info.stencilBits)
 			{
 				attachment = GL_DEPTH_ATTACHMENT;
+			}
+			else
+			{
+				attachment = GL_DEPTH_STENCIL_ATTACHMENT;
 			}
 		}
 		else
@@ -1198,6 +1199,8 @@ namespace bgfx { namespace gl
 				GL_GET(GL_MAX_TEXTURE_SIZE, 64);
 				GL_GET(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, 0);
 				GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
+				GL_GET(GL_MAX_COLOR_ATTACHMENTS, 1);
+				GL_GET(GL_MAX_DRAW_BUFFERS, 1);
 #undef GL_GET
 
 				BX_TRACE("      Vendor: %s", m_vendor);
@@ -1522,6 +1525,12 @@ namespace bgfx { namespace gl
 				? BGFX_CAPS_VERTEX_ATTRIB_HALF
 				: 0
 				;
+			g_caps.supported |= false
+				|| s_extension[Extension::ARB_vertex_type_2_10_10_10_rev].m_supported
+				|| s_extension[Extension::OES_vertex_type_10_10_10_2].m_supported
+				? BGFX_CAPS_VERTEX_ATTRIB_UINT10
+				: 0
+				;
 			g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::EXT_frag_depth].m_supported
 				? BGFX_CAPS_FRAGMENT_DEPTH
@@ -1570,7 +1579,9 @@ namespace bgfx { namespace gl
 			||  s_extension[Extension::EXT_draw_buffers  ].m_supported
 			||  s_extension[Extension::WEBGL_draw_buffers].m_supported)
 			{
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(glGet(GL_MAX_COLOR_ATTACHMENTS), BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(glGet(GL_MAX_DRAW_BUFFERS)
+						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS)
+						);
 			}
 
 			m_vaoSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
@@ -3448,7 +3459,7 @@ namespace bgfx { namespace gl
 
 			if (-1 != loc)
 			{
-				if (0xff != _vertexDecl.m_attributes[attr])
+				if (UINT16_MAX != _vertexDecl.m_attributes[attr])
 				{
 					GL_CHECK(glEnableVertexAttribArray(loc) );
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );

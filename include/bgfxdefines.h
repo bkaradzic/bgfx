@@ -344,16 +344,17 @@
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000000003) //!< All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000000004) //!< 3D textures are supported.
 #define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000000000008) //!< Vertex attribute half-float is supported.
-#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000000010) //!< Instancing is supported.
-#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000000000020) //!< Renderer is on separate thread.
-#define BGFX_CAPS_FRAGMENT_DEPTH         UINT64_C(0x0000000000000040) //!< Fragment depth is accessible in fragment shader.
-#define BGFX_CAPS_BLEND_INDEPENDENT      UINT64_C(0x0000000000000080) //!< Blend independent is supported.
-#define BGFX_CAPS_COMPUTE                UINT64_C(0x0000000000000100) //!< Compute shaders are supported.
-#define BGFX_CAPS_FRAGMENT_ORDERING      UINT64_C(0x0000000000000200) //!< Fragment ordering is available in fragment shader.
-#define BGFX_CAPS_SWAP_CHAIN             UINT64_C(0x0000000000000400) //!< Multiple windows are supported.
-#define BGFX_CAPS_HMD                    UINT64_C(0x0000000000000800) //!< Head Mounted Display is available.
-#define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000001000) //!< 32-bit indices are supported.
-#define BGFX_CAPS_DRAW_INDIRECT          UINT64_C(0x0000000000002000) //!< Draw indirect is supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_UINT10   UINT64_C(0x0000000000000010) //!< Vertex attribute 10_10_10_2 is supported.
+#define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000000020) //!< Instancing is supported.
+#define BGFX_CAPS_RENDERER_MULTITHREADED UINT64_C(0x0000000000000040) //!< Renderer is on separate thread.
+#define BGFX_CAPS_FRAGMENT_DEPTH         UINT64_C(0x0000000000000080) //!< Fragment depth is accessible in fragment shader.
+#define BGFX_CAPS_BLEND_INDEPENDENT      UINT64_C(0x0000000000000100) //!< Blend independent is supported.
+#define BGFX_CAPS_COMPUTE                UINT64_C(0x0000000000000200) //!< Compute shaders are supported.
+#define BGFX_CAPS_FRAGMENT_ORDERING      UINT64_C(0x0000000000000400) //!< Fragment ordering is available in fragment shader.
+#define BGFX_CAPS_SWAP_CHAIN             UINT64_C(0x0000000000000800) //!< Multiple windows are supported.
+#define BGFX_CAPS_HMD                    UINT64_C(0x0000000000001000) //!< Head Mounted Display is available.
+#define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000002000) //!< 32-bit indices are supported.
+#define BGFX_CAPS_DRAW_INDIRECT          UINT64_C(0x0000000000004000) //!< Draw indirect is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE        UINT8_C(0x00) //!<
