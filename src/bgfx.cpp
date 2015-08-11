@@ -2142,6 +2142,11 @@ again:
 
 		BX_TRACE("Shutdown complete.");
 
+		if (NULL != s_allocatorStub)
+		{
+			s_allocatorStub->checkLeaks();
+		}
+
 		if (NULL != s_callbackStub)
 		{
 			BX_DELETE(g_allocator, s_callbackStub);
@@ -2150,8 +2155,6 @@ again:
 
 		if (NULL != s_allocatorStub)
 		{
-			s_allocatorStub->checkLeaks();
-
 			bx::CrtAllocator allocator;
 			BX_DELETE(&allocator, s_allocatorStub);
 			s_allocatorStub = NULL;
