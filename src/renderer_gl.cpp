@@ -3185,8 +3185,12 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindFragDataLocation(m_id, 0, "bgfx_FragColor") );
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-		if (s_extension[Extension::ARB_program_interface_query].m_supported
-		||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
+		bool piqSupported = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) || (true
+			&& s_extension[Extension::ARB_program_interface_query].m_supported
+			&& s_extension[Extension::ARB_shader_storage_buffer_object].m_supported
+			);
+
+		if (piqSupported)
 		{
 			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_PROGRAM_INPUT,   GL_ACTIVE_RESOURCES, &activeAttribs ) );
 			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_UNIFORM,         GL_ACTIVE_RESOURCES, &activeUniforms) );
@@ -3223,8 +3227,6 @@ namespace bgfx { namespace gl
 		m_numPredefined = 0;
  		m_numSamplers = 0;
 
-		const bool piqSupported = s_extension[Extension::ARB_program_interface_query].m_supported;
-
 		BX_TRACE("Uniforms (%d):", activeUniforms);
 		for (int32_t ii = 0; ii < activeUniforms; ++ii)
 		{
@@ -3241,8 +3243,7 @@ namespace bgfx { namespace gl
 			GLint num;
 			GLint loc;
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
-			||  piqSupported)
+			if (piqSupported)
 			{
 				GL_CHECK(glGetProgramResourceiv(m_id
 					, GL_UNIFORM
@@ -3370,8 +3371,7 @@ namespace bgfx { namespace gl
 			m_constantBuffer->finish();
 		}
 
-		if (s_extension[Extension::ARB_program_interface_query].m_supported
-		||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
+		if (piqSupported)
 		{
 			struct VariableInfo
 			{
