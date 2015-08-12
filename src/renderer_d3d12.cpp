@@ -696,6 +696,7 @@ namespace bgfx { namespace d3d12
 						D3D12_MESSAGE_CATEGORY catlist[] =
 						{
 							D3D12_MESSAGE_CATEGORY_STATE_CREATION,
+							D3D12_MESSAGE_CATEGORY_EXECUTION,
 						};
 						filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 						filter.DenyList.pCategoryList = catlist;
@@ -1923,7 +1924,7 @@ data.NumQualityLevels = 0;
 
 		static void patchCb0(DxbcInstruction& _instruction, void* _userData)
 		{
-			union { void* ptr; uint32_t offset; } cast ={ _userData };
+			union { void* ptr; uint32_t offset; } cast = { _userData };
 
 			for (uint32_t ii = 0; ii < _instruction.numOperands; ++ii)
 			{
@@ -4070,15 +4071,15 @@ data.NumQualityLevels = 0;
 							}
 						}
 
-						uint16_t samplerStateIdx = getSamplerState(samplerFlags);
-						if (samplerStateIdx != currentSamplerStateIdx)
-						{
-							currentSamplerStateIdx = samplerStateIdx;
-							m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
-						}
-
 						if (srvHandle[0].ptr != 0)
 						{
+							uint16_t samplerStateIdx = getSamplerState(samplerFlags);
+							if (samplerStateIdx != currentSamplerStateIdx)
+							{
+								currentSamplerStateIdx = samplerStateIdx;
+								m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
+							}
+
 							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
 						}
 					}
@@ -4100,11 +4101,11 @@ data.NumQualityLevels = 0;
 					||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
 					||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 					{
-						currentState.m_vertexDecl             = draw.m_vertexDecl;
-						currentState.m_vertexBuffer           = draw.m_vertexBuffer;
-						currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
-						currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
-						currentState.m_instanceDataStride     = draw.m_instanceDataStride;
+						currentState.m_vertexDecl              = draw.m_vertexDecl;
+						currentState.m_vertexBuffer            = draw.m_vertexBuffer;
+						currentState.m_instanceDataBuffer.idx  = draw.m_instanceDataBuffer.idx;
+						currentState.m_instanceDataOffset      = draw.m_instanceDataOffset;
+						currentState.m_instanceDataStride      = draw.m_instanceDataStride;
 
 						D3D12_VERTEX_BUFFER_VIEW vbView[2];
 						uint32_t numVertexBuffers = 1;
