@@ -1,8 +1,8 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
-What is it?
------------
+[What is it?](https://bkaradzic.github.io/bgfx/overview.html)
+-------------------------------------------------------------
 
 Cross-platform, graphics API agnostic, "Bring Your Own Engine/Framework" style
 rendering library.
@@ -85,11 +85,20 @@ https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
 JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
 deployment model of web with the performance of native code and GPU acceleration.
 
-[Documentation](https://bkaradzic.github.io/bgfx/index.html)
-------------------------------------------------------------
+[Building](https://bkaradzic.github.io/bgfx/build.html)
+-------------------------------------------------------
 
-[License (BSD 2-clause)](https://github.com/bkaradzic/bgfx/blob/master/LICENSE)
---------------------------------------------------------------------------------
+[Examples](https://bkaradzic.github.io/bgfx/examples.html)
+----------------------------------------------------------
+
+[API Reference](https://bkaradzic.github.io/bgfx/bgfx.html)
+-----------------------------------------------------------
+
+[Tools](https://bkaradzic.github.io/bgfx/tools.html)
+----------------------------------------------------
+
+[License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
+-----------------------------------------------------------------------
 
 	Copyright 2010-2015 Branimir Karadzic. All rights reserved.
 	
