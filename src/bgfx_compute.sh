@@ -73,7 +73,7 @@ vec2 unpackHalf2x16(uint _x)
 #define __IMAGE_IMPL(_textureType, _storeComponents, _type, _loadComponents) \
 			_type imageLoad(Texture2D<_textureType> _image, ivec2 _uv) \
 			{ \
-				return _image[_uv]._loadComponents; \
+				return _image.mips[0][_uv]._loadComponents; \
 			} \
 			\
 			void imageStore(RWTexture2D<_textureType> _image, ivec2 _uv, _type _value) \
@@ -83,7 +83,7 @@ vec2 unpackHalf2x16(uint _x)
 			\
 			_type imageLoad(Texture3D<_textureType> _image, ivec3 _uv) \
 			{ \
-				return _image[_uv]._loadComponents; \
+				return _image.mips[0][_uv]._loadComponents; \
 			} \
 			\
 			void imageStore(RWTexture3D<_textureType> _image, ivec3 _uv, _type _value) \

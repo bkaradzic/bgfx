@@ -2691,7 +2691,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				m_currentProgram = &program;
 				deviceCtx->VSSetShader(program.m_vsh->m_vertexShader, NULL, 0);
-				deviceCtx->VSSetConstantBuffers(0, 0, NULL);
+				deviceCtx->VSSetConstantBuffers(0, 1, s_zero.m_buffer);
 				if (NULL != m_currentColor)
 				{
 					const ShaderD3D11* fsh = program.m_fsh;
