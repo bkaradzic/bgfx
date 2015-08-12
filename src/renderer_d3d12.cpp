@@ -433,7 +433,6 @@ namespace bgfx { namespace d3d12
 			, m_flags(BGFX_RESET_NONE)
 			, m_fsChanges(0)
 			, m_vsChanges(0)
-			, m_frame(0)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 		{
@@ -501,7 +500,7 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-			hr = CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&m_factory);
+			hr = CreateDXGIFactory1(__uuidof(m_factory), (void**)&m_factory);
 			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 
 			if (FAILED(hr) )
@@ -659,7 +658,7 @@ namespace bgfx { namespace d3d12
 					);
 			hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
 					, &m_scd
-					, &m_swapChain
+					, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
 					);
 			BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
 			if (FAILED(hr) )
@@ -1526,7 +1525,9 @@ namespace bgfx { namespace d3d12
 		void invalidateCache()
 		{
 			m_pipelineStateCache.invalidate();
+
 			m_samplerStateCache.invalidate();
+			m_samplerAllocator.reset();
 		}
 
 		void updateMsaa()
@@ -1571,19 +1572,25 @@ data.NumQualityLevels = 0;
 				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
-
-				m_scd.BufferDesc.Width = _resolution.m_width;
+				m_scd.BufferDesc.Width  = _resolution.m_width;
 				m_scd.BufferDesc.Height = _resolution.m_height;
 
 				preReset();
 
 				if (resize)
 				{
-					DX_CHECK(m_swapChain->ResizeBuffers(m_scd.BufferCount
+					uint32_t nodeMask[] = { 1, 1, 1, 1 };
+					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(nodeMask) );
+					IUnknown* presentQueue[] ={ m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue };
+					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
+
+					DX_CHECK(m_swapChain->ResizeBuffers1(m_scd.BufferCount
 							, m_scd.BufferDesc.Width
 							, m_scd.BufferDesc.Height
 							, m_scd.BufferDesc.Format
 							, m_scd.Flags
+							, nodeMask
+							, presentQueue
 							) );
 				}
 				else
@@ -1596,7 +1603,7 @@ data.NumQualityLevels = 0;
 					HRESULT hr;
 					hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
 							, &m_scd
-							, &m_swapChain
+							, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
 							);
 					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 				}
@@ -2408,9 +2415,9 @@ data.NumQualityLevels = 0;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
-		IDXGIFactory1* m_factory;
+		IDXGIFactory4* m_factory;
 
-		IDXGISwapChain* m_swapChain;
+		IDXGISwapChain3* m_swapChain;
 		int64_t m_presentElapsed;
 		uint16_t m_lost;
 		uint16_t m_numWindows;
@@ -2467,7 +2474,6 @@ data.NumQualityLevels = 0;
 		uint32_t m_vsChanges;
 
 		FrameBufferHandle m_fbh;
-		uint32_t m_frame;
 		uint32_t m_backBufferColorIdx;
 		bool m_rtMsaa;
 	};
@@ -2693,6 +2699,13 @@ data.NumQualityLevels = 0;
 	void DescriptorAllocator::free(uint16_t _idx)
 	{
 		m_handleAlloc->free(_idx);
+	}
+
+	void DescriptorAllocator::reset()
+	{
+		uint16_t max = m_handleAlloc->getMaxHandles();
+		bx::destroyHandleAlloc(g_allocator, m_handleAlloc);
+		m_handleAlloc = bx::createHandleAlloc(g_allocator, max);
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE DescriptorAllocator::get(uint16_t _idx)
@@ -3643,8 +3656,7 @@ data.NumQualityLevels = 0;
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
-		m_backBufferColorIdx = m_frame % m_scd.BufferCount;
-		m_frame++;
+		m_backBufferColorIdx = m_swapChain->GetCurrentBackBufferIndex();
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
 		const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);

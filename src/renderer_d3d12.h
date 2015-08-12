@@ -10,7 +10,7 @@
 
 #include <d3d12.h>
 #include <d3dx12.h>
-#include <dxgidebug.h>
+#include <dxgi1_4.h>
 
 #include "renderer.h"
 #include "renderer_d3d.h"
@@ -86,6 +86,7 @@ namespace bgfx { namespace d3d12
 		uint16_t alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc);
 		uint16_t alloc(const uint32_t* _flags, uint32_t _num = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
 		void free(uint16_t _handle);
+		void reset();
 
 		D3D12_GPU_DESCRIPTOR_HANDLE get(uint16_t _handle);
 
@@ -396,28 +397,48 @@ namespace bgfx { namespace d3d12
 			BX_CHECK(0 == m_control.available(), "");
 		}
 
+		bool tryFinish(uint64_t _waitFence)
+		{
+			if (0 < m_control.available() )
+			{
+				if (consume(0)
+				&& _waitFence <= m_completedFence)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		void release(ID3D12Resource* _ptr)
 		{
 			m_release[m_control.m_current].push_back(_ptr);
 		}
 
-		void consume()
+		bool consume(uint32_t _ms = INFINITE)
 		{
 			CommandList& commandList = m_commandList[m_control.m_read];
-			WaitForSingleObject(commandList.m_event, INFINITE);
-			CloseHandle(commandList.m_event);
-			commandList.m_event = NULL;
-			m_completedFence = m_fence->GetCompletedValue();
-			m_commandQueue->Wait(m_fence, m_completedFence);
-
-			ResourceArray& ra = m_release[m_control.m_read];
-			for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
+			if (WAIT_OBJECT_0 == WaitForSingleObject(commandList.m_event, _ms) )
 			{
-				DX_RELEASE(*it, 0);
-			}
-			ra.clear();
+				CloseHandle(commandList.m_event);
+				commandList.m_event = NULL;
+				m_completedFence = m_fence->GetCompletedValue();
+				m_commandQueue->Wait(m_fence, m_completedFence);
 
-			m_control.consume(1);
+				ResourceArray& ra = m_release[m_control.m_read];
+				for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
+				{
+					DX_RELEASE(*it, 0);
+				}
+				ra.clear();
+
+				m_control.consume(1);
+
+				return true;
+			}
+
+			return false;
 		}
 
 		struct CommandList
