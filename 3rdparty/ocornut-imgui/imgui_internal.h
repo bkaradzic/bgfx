@@ -1,4 +1,4 @@
-// ImGui library v1.44
+// ImGui library v1.45 WIP
 // Internals
 // You may use this file to debug, understand or extend ImGui features but we don't provide any guarantee of forward compatibility!
 
@@ -6,6 +6,10 @@
 //   #define IMGUI_DEFINE_MATH_OPERATORS
 
 #pragma once
+
+#ifndef IMGUI_VERSION
+#error Must include imgui.h before imgui_internal.h
+#endif
 
 #include <stdio.h>      // FILE*
 #include <math.h>       // sqrtf()
@@ -90,7 +94,7 @@ char*               ImStrdup(const char* str);
 int                 ImStrlenW(const ImWchar* str);
 const ImWchar*      ImStrbolW(const ImWchar* buf_mid_line, const ImWchar* buf_begin); // Find beginning-of-line
 const char*         ImStristr(const char* haystack, const char* needle, const char* needle_end);
-int                 ImFormatString(char* buf, int buf_size, const char* fmt, ...);
+int                 ImFormatString(char* buf, int buf_size, const char* fmt, ...) IM_PRINTFARGS(3);
 int                 ImFormatStringV(char* buf, int buf_size, const char* fmt, va_list args);
 
 // Helpers: Math

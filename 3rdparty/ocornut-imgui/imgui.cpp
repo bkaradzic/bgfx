@@ -1,4 +1,4 @@
-// ImGui library v1.44
+// ImGui library v1.45 WIP
 // Main code & documentation
 
 // See ImGui::ShowTestWindow() in imgui_demo.cpp for demo code.
@@ -458,7 +458,6 @@
  - input: rework IO to be able to pass actual events to fix temporal aliasing issues.
  - input: support track pad style scrolling & slider edit.
  - memory: add a way to discard allocs of unused/transient windows. with the current architecture new windows (including popup, opened combos, listbox) perform at least 3 allocs.
- - misc: mark printf compiler attributes on relevant functions
  - misc: provide a way to compile out the entire implementation while providing a dummy API (e.g. #define IMGUI_DUMMY_IMPL)
  - misc: double-clicking on title bar to minimize isn't consistent, perhaps move to single-click on left-most collapse icon?
  - style editor: have a more global HSV setter (e.g. alter hue on all elements). consider replacing active/hovered by offset in HSV space?
@@ -487,6 +486,7 @@
 #endif
 
 #ifdef _MSC_VER
+#pragma warning (disable: 4127) // condition expression is constant
 #pragma warning (disable: 4505) // unreferenced local function has been removed (stb stuff)
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
 #define snprintf _snprintf
@@ -726,7 +726,7 @@ void ImGuiIO::AddInputCharactersUTF8(const char* utf8_chars)
 #define IM_INT_MAX  (2147483647)
 
 // Play it nice with Windows users. Notepad in 2015 still doesn't display text data with Unix-style \n.
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define IM_NEWLINE "\r\n"
 #else
 #define IM_NEWLINE "\n"
@@ -2071,7 +2071,7 @@ static void LoadSettings()
         if (line_start[0] == '[' && line_end > line_start && line_end[-1] == ']')
         {
             char name[64];
-            ImFormatString(name, IM_ARRAYSIZE(name), "%.*s", line_end-line_start-2, line_start+1);
+            ImFormatString(name, IM_ARRAYSIZE(name), "%.*s", (int)(line_end-line_start-2), line_start+1);
             settings = FindWindowSettings(name);
             if (!settings)
                 settings = AddWindowSettings(name);
@@ -2181,6 +2181,12 @@ static void AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDr
         if (draw_list->CmdBuffer.back().ElemCount == 0)
             draw_list->CmdBuffer.pop_back();
         out_render_list.push_back(draw_list);
+
+        // Check that draw_list doesn't use more vertices than indexable (default ImDrawIdx = 2 bytes = 64K vertices)
+        // If this assert triggers because you are drawing lots of stuff manually, A) workaround by calling BeginChild()/EndChild() to put your draw commands in multiple draw lists, B) #define ImDrawIdx to a 'unsigned int' in imconfig.h and render accordingly.
+        const unsigned long long int max_vtx_idx = (unsigned long long int)1L << (sizeof(ImDrawIdx)*8);
+        IM_ASSERT((unsigned long long int)draw_list->_VtxCurrentIdx <= max_vtx_idx);
+
         GImGui->IO.MetricsRenderVertices += draw_list->VtxBuffer.Size;
         GImGui->IO.MetricsRenderIndices += draw_list->IdxBuffer.Size;
     }
@@ -2684,13 +2690,13 @@ static ImGuiWindow* FindHoveredWindow(ImVec2 pos, bool excluding_childs)
 // Test if mouse cursor is hovering given rectangle
 // NB- Rectangle is clipped by our current clip setting
 // NB- Expand the rectangle to be generous on imprecise inputs systems (g.Style.TouchExtraPadding)
-bool ImGui::IsMouseHoveringRect(const ImVec2& rect_min, const ImVec2& rect_max)
+bool ImGui::IsMouseHoveringRect(const ImVec2& pos_min, const ImVec2& pos_max)
 {
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
 
     // Clip
-    ImRect rect_clipped(rect_min, rect_max);
+    ImRect rect_clipped(pos_min, pos_max);
     rect_clipped.Clip(window->ClipRect);
 
     // Expand for touch input
@@ -4298,7 +4304,7 @@ const char* ImGui::GetStyleColName(ImGuiCol idx)
 bool ImGui::IsWindowHovered()
 {
     ImGuiState& g = *GImGui;
-    return g.HoveredWindow == g.CurrentWindow;
+    return g.HoveredWindow == g.CurrentWindow && IsWindowContentHoverable(g.HoveredRootWindow);
 }
 
 bool ImGui::IsWindowFocused()
@@ -4597,10 +4603,10 @@ float ImGui::GetCursorPosY()
     return ImGui::GetCursorPos().y;
 }
 
-void ImGui::SetCursorPos(const ImVec2& pos)
+void ImGui::SetCursorPos(const ImVec2& local_pos)
 {
     ImGuiWindow* window = GetCurrentWindow();
-    window->DC.CursorPos = window->Pos + pos;
+    window->DC.CursorPos = window->Pos + local_pos;
     window->DC.CursorMaxPos = ImMax(window->DC.CursorMaxPos, window->DC.CursorPos);
 }
 
@@ -8374,11 +8380,11 @@ void ImGui::EndGroup()
 }
 
 // Gets back to previous line and continue with horizontal layout
-//      pos_x == 0   : follow on previous item
-//      pos_x != 0   : align to specified column
+//      local_pos_x == 0   : follow on previous item
+//      local_pos_x != 0   : align to specified column
 //      spacing_w < 0   : use default spacing if column_x==0, no spacing if column_x!=0
 //      spacing_w >= 0  : enforce spacing
-void ImGui::SameLine(float pos_x, float spacing_w)
+void ImGui::SameLine(float local_pos_x, float spacing_w)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -8386,10 +8392,10 @@ void ImGui::SameLine(float pos_x, float spacing_w)
     
     ImGuiState& g = *GImGui;
     float x, y;
-    if (pos_x != 0.0f)
+    if (local_pos_x != 0.0f)
     {
         if (spacing_w < 0.0f) spacing_w = 0.0f;
-        x = window->Pos.x + pos_x + spacing_w;
+        x = window->Pos.x + local_pos_x + spacing_w;
         y = window->DC.CursorPosPrevLine.y;
     }
     else
@@ -8707,15 +8713,19 @@ void ImGui::Color(const char* prefix, unsigned int v)
 // PLATFORM DEPENDANT HELPERS
 //-----------------------------------------------------------------------------
 
-#if defined(_MSC_VER) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS)
-
-#ifndef _WINDOWS_
+#if defined(_WIN32) && !defined(_WINDOWS_) && (!defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS) || !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCS))
+#undef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
-#pragma comment(lib, "user32")
 
 // Win32 API clipboard implementation
+#if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS)
+
+#ifdef _MSC_VER
+#pragma comment(lib, "user32")
+#endif
+
 static const char* GetClipboardTextFn_DefaultImpl()
 {
     static char* buf_local = NULL;
@@ -8740,7 +8750,6 @@ static const char* GetClipboardTextFn_DefaultImpl()
     return buf_local;
 }
 
-// Win32 API clipboard implementation
 static void SetClipboardTextFn_DefaultImpl(const char* text)
 {
     if (!OpenClipboard(NULL))
@@ -8783,14 +8792,13 @@ static void SetClipboardTextFn_DefaultImpl(const char* text)
 
 #endif
 
-#if defined(_MSC_VER) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCS)
+// Win32 API IME support (for Asian languages, etc.)
+#if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCS)
 
-#ifndef _WINDOWS_
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-#include <Imm.h>
+#include <imm.h>
+#ifdef _MSC_VER
 #pragma comment(lib, "imm32")
+#endif
 
 static void ImeSetInputScreenPosFn_DefaultImpl(int x, int y)
 {
@@ -8881,7 +8889,7 @@ void ImGui::ShowMetricsWindow(bool* opened)
                 NodeDrawList(window->DrawList, "DrawList");
                 if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
                 if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
-                ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * sizeof(ImGuiStorage::Pair));
+                ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * (int)sizeof(ImGuiStorage::Pair));
                 ImGui::TreePop();
             }
         };
