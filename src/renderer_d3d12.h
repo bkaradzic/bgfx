@@ -47,7 +47,7 @@ namespace bgfx { namespace d3d12
 		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle);
 		void* alloc(D3D12_GPU_VIRTUAL_ADDRESS& gpuAddress, uint32_t _size);
 		void  alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture);
-		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture);
+		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture, uint8_t _mip);
 
 		void  alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct BufferD3D12& _buffer);
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct BufferD3D12& _buffer);
@@ -60,6 +60,7 @@ namespace bgfx { namespace d3d12
 	private:
 		ID3D12DescriptorHeap* m_heap;
 		ID3D12Resource* m_upload;
+		D3D12_GPU_VIRTUAL_ADDRESS m_gpuVA;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle;
 		uint32_t m_incrementSize;
@@ -132,6 +133,7 @@ namespace bgfx { namespace d3d12
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
 		ID3D12Resource* m_ptr;
+		D3D12_GPU_VIRTUAL_ADDRESS m_gpuVA;
 		D3D12_RESOURCE_STATES m_state;
 		uint32_t m_size;
 		uint16_t m_flags;

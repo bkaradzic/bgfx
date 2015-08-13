@@ -1413,7 +1413,7 @@ namespace bgfx { namespace d3d12
 			VertexBufferD3D12& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
 			const VertexDecl& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
 			D3D12_VERTEX_BUFFER_VIEW viewDesc;
-			viewDesc.BufferLocation = vb.m_ptr->GetGPUVirtualAddress();
+			viewDesc.BufferLocation = vb.m_gpuVA;
 			viewDesc.StrideInBytes  = vertexDecl.m_stride;
 			viewDesc.SizeInBytes    = vb.m_size;
 			m_commandList->IASetVertexBuffers(0, 1, &viewDesc);
@@ -1421,7 +1421,7 @@ namespace bgfx { namespace d3d12
 			const BufferD3D12& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
 			D3D12_INDEX_BUFFER_VIEW ibv;
 			ibv.Format         = DXGI_FORMAT_R16_UINT;
-			ibv.BufferLocation = ib.m_ptr->GetGPUVirtualAddress();
+			ibv.BufferLocation = ib.m_gpuVA;
 			ibv.SizeInBytes    = ib.m_size;
 			m_commandList->IASetIndexBuffer(&ibv);
 
@@ -2518,6 +2518,7 @@ data.NumQualityLevels = 0;
 				) );
 
 		m_upload = createCommittedResource(device, HeapProperty::Upload, desc.NumDescriptors * 1024);
+		m_gpuVA  = m_upload->GetGPUVirtualAddress();
 		m_upload->Map(0, NULL, (void**)&m_data);
 
 		reset(m_gpuHandle);
@@ -2541,7 +2542,7 @@ data.NumQualityLevels = 0;
 
 	void* ScratchBufferD3D12::alloc(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size)
 	{
-		_gpuAddress = m_upload->GetGPUVirtualAddress() + m_pos;
+		_gpuAddress = m_gpuVA + m_pos;
 		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
 		desc.BufferLocation = _gpuAddress;
 		desc.SizeInBytes    = _size;
@@ -2573,12 +2574,33 @@ data.NumQualityLevels = 0;
 		m_gpuHandle.ptr += m_incrementSize;
 	}
 
-	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, TextureD3D12& _texture)
+	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, TextureD3D12& _texture, uint8_t _mip)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC tmpUavd;
+		D3D12_UNORDERED_ACCESS_VIEW_DESC* uavd = &_texture.m_uavd;
+		if (0 != _mip)
+		{
+			memcpy(&tmpUavd, uavd, sizeof(tmpUavd) );
+			switch (_texture.m_uavd.ViewDimension)
+			{
+			default:
+			case D3D12_UAV_DIMENSION_TEXTURE2D:
+				uavd->Texture2D.MipSlice = _mip;
+				break;
+
+			case D3D12_UAV_DIMENSION_TEXTURE3D:
+				uavd->Texture3D.MipSlice = _mip;
+				break;
+			}
+
+			uavd = &tmpUavd;
+		}
+
 		device->CreateUnorderedAccessView(_texture.m_ptr
 			, NULL
-			, &_texture.m_uavd
+			, uavd
 			, m_cpuHandle
 			);
 		m_cpuHandle.ptr += m_incrementSize;
@@ -2811,7 +2833,8 @@ data.NumQualityLevels = 0;
 		ID3D12Device* device = s_renderD3D12->m_device;
 		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
 
-		m_ptr = createCommittedResource(device, HeapProperty::Default, _size, flags);
+		m_ptr   = createCommittedResource(device, HeapProperty::Default, _size, flags);
+		m_gpuVA = m_ptr->GetGPUVirtualAddress();
 		setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 		if (!m_dynamic)
@@ -3820,7 +3843,7 @@ data.NumQualityLevels = 0;
 
 									if (Access::Read != bind.m_un.m_compute.m_access)
 									{
-										scratchBuffer.allocUav(srvHandle[ii], texture);
+										scratchBuffer.allocUav(srvHandle[ii], texture, bind.m_un.m_compute.m_mip);
 									}
 									else
 									{
@@ -4109,14 +4132,14 @@ data.NumQualityLevels = 0;
 
 						D3D12_VERTEX_BUFFER_VIEW vbView[2];
 						uint32_t numVertexBuffers = 1;
-						vbView[0].BufferLocation = vb.m_ptr->GetGPUVirtualAddress();
+						vbView[0].BufferLocation = vb.m_gpuVA;
 						vbView[0].StrideInBytes  = vertexDecl.m_stride;
 						vbView[0].SizeInBytes    = vb.m_size;
 
 						if (isValid(draw.m_instanceDataBuffer) )
 						{
 							const VertexBufferD3D12& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-							vbView[1].BufferLocation = inst.m_ptr->GetGPUVirtualAddress() + draw.m_instanceDataOffset;
+							vbView[1].BufferLocation = inst.m_gpuVA + draw.m_instanceDataOffset;
 							vbView[1].StrideInBytes  = draw.m_instanceDataStride;
 							vbView[1].SizeInBytes    = draw.m_numInstances * draw.m_instanceDataStride;
 							++numVertexBuffers;
@@ -4144,7 +4167,7 @@ data.NumQualityLevels = 0;
 								? DXGI_FORMAT_R16_UINT
 								: DXGI_FORMAT_R32_UINT
 								;
-							ibv.BufferLocation = ib.m_ptr->GetGPUVirtualAddress();
+							ibv.BufferLocation = ib.m_gpuVA;
 							ibv.SizeInBytes    = ib.m_size;
 							m_commandList->IASetIndexBuffer(&ibv);
 						}
