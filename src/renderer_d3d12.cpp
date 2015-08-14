@@ -702,7 +702,7 @@ namespace bgfx { namespace d3d12
 						filter.DenyList.pCategoryList = catlist;
 						m_infoQueue->PushStorageFilter(&filter);
 
-						DX_RELEASE(m_infoQueue, 19);
+						DX_RELEASE_WARNONLY(m_infoQueue, 19);
 					}
 				}
 
@@ -3690,6 +3690,7 @@ data.NumQualityLevels = 0;
 		scratchBuffer.reset(gpuHandle);
 
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = {};
+		StateCacheLru<D3D12_GPU_DESCRIPTOR_HANDLE, 64> bindLru;
 
 		setResourceBarrier(m_commandList
 			, m_backBufferColor[m_backBufferColorIdx]
@@ -4069,41 +4070,51 @@ data.NumQualityLevels = 0;
 						; currentBindHash  = bindHash
 						)
 					{
-						D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-						uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+						D3D12_GPU_DESCRIPTOR_HANDLE* srv = bindLru.find(bindHash);
+						if (NULL == srv)
 						{
-							srvHandle[0].ptr = 0;
-							for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 							{
-								const Binding& sampler = draw.m_bind[stage];
-								if (invalidHandle != sampler.m_idx)
+								srvHandle[0].ptr = 0;
+								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 								{
-									TextureD3D12& texture = m_textures[sampler.m_idx];
-									scratchBuffer.alloc(srvHandle[stage], texture);
-									samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & sampler.m_un.m_draw.m_flags)
-										? sampler.m_un.m_draw.m_flags
-										: texture.m_flags
-										) & BGFX_TEXTURE_SAMPLER_BITS_MASK
-										;
+									const Binding& sampler = draw.m_bind[stage];
+									if (invalidHandle != sampler.m_idx)
+									{
+										TextureD3D12& texture = m_textures[sampler.m_idx];
+										scratchBuffer.alloc(srvHandle[stage], texture);
+										samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & sampler.m_un.m_draw.m_flags)
+											? sampler.m_un.m_draw.m_flags
+											: texture.m_flags
+											) & BGFX_TEXTURE_SAMPLER_BITS_MASK
+											;
+									}
+									else
+									{
+										memcpy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
+										samplerFlags[stage] = 0;
+									}
 								}
-								else
+							}
+
+							if (srvHandle[0].ptr != 0)
+							{
+								uint16_t samplerStateIdx = getSamplerState(samplerFlags);
+								if (samplerStateIdx != currentSamplerStateIdx)
 								{
-									memcpy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
-									samplerFlags[stage] = 0;
+									currentSamplerStateIdx = samplerStateIdx;
+									m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 								}
+
+								m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
+
+								bindLru.add(bindHash, srvHandle[0]);
 							}
 						}
-
-						if (srvHandle[0].ptr != 0)
+						else 
 						{
-							uint16_t samplerStateIdx = getSamplerState(samplerFlags);
-							if (samplerStateIdx != currentSamplerStateIdx)
-							{
-								currentSamplerStateIdx = samplerStateIdx;
-								m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
-							}
-
-							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
+							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, *srv);
 						}
 					}
 
@@ -4335,10 +4346,11 @@ data.NumQualityLevels = 0;
 
 				pos++;
 				tvm.printf(10, pos++, 0x8e, " State cache:                                ");
-				tvm.printf(10, pos++, 0x8e, " PSO    | Sampler | Queued                   ");
-				tvm.printf(10, pos++, 0x8e, " %6d |  %6d | %6d"
+				tvm.printf(10, pos++, 0x8e, " PSO    | Sampler | Bind   | Queued          ");
+				tvm.printf(10, pos++, 0x8e, " %6d |  %6d | %6d | %6d"
 					, m_pipelineStateCache.getCount()
 					, m_samplerStateCache.getCount()
+					, bindLru.getCount()
 					, m_cmd.m_control.available()
 					);
 				pos++;

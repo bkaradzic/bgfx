@@ -297,6 +297,7 @@ namespace bgfx { namespace d3d12
 		CommandQueue()
 			: m_control(BX_COUNTOF(m_commandList) )
 		{
+			BX_STATIC_ASSERT(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
 		}
 
 		void init(ID3D12Device* _device)
@@ -454,9 +455,9 @@ namespace bgfx { namespace d3d12
 		uint64_t m_currentFence;
 		uint64_t m_completedFence;
 		ID3D12Fence* m_fence;
-		CommandList m_commandList[4];
+		CommandList m_commandList[32];
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
-		ResourceArray m_release[4];
+		ResourceArray m_release[32];
 		bx::RingBufferControl m_control;
 	};
 

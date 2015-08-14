@@ -192,6 +192,69 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
+	template <typename Ty, uint16_t MaxHandleT>
+	class StateCacheLru
+	{
+	public:
+		void add(uint64_t _hash, Ty _value)
+		{
+			uint16_t handle = m_alloc.alloc();
+			if (UINT16_MAX == handle)
+			{
+				uint16_t back = m_alloc.getBack();
+				m_alloc.free(back);
+				HashMap::iterator it = m_hashMap.find(m_data[back].m_hash);
+				if (it != m_hashMap.end() )
+				{
+					m_hashMap.erase(it);
+				}
+
+				handle = m_alloc.alloc();
+			}
+
+			BX_CHECK(UINT16_MAX != handle, "Failed to find handle.");
+
+			Data& data = m_data[handle];
+			data.m_hash  = _hash;
+			data.m_value = _value;
+			m_hashMap.insert(stl::make_pair(_hash, handle) );
+		}
+
+		Ty* find(uint64_t _hash)
+		{
+			HashMap::iterator it = m_hashMap.find(_hash);
+			if (it != m_hashMap.end() )
+			{
+				return &m_data[it->second].m_value;
+			}
+
+			return NULL;
+		}
+
+		void invalidate()
+		{
+			m_hashMap.clear();
+			m_alloc.reset();
+		}
+
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size() );
+		}
+
+	private:
+		typedef stl::unordered_map<uint64_t, uint16_t> HashMap;
+		HashMap m_hashMap;
+		bx::HandleAllocLruT<MaxHandleT> m_alloc;
+		struct Data
+		{
+			uint64_t m_hash;
+			Ty m_value;
+		};
+
+		Data m_data[MaxHandleT];
+	};
+
 } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D_H_HEADER_GUARD
