@@ -584,6 +584,15 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		fs_font_distance_field_subpixel = bgfx::makeRef(fs_font_distance_field_subpixel_dx11, sizeof(fs_font_distance_field_subpixel_dx11) );
 		break;
 
+	case bgfx::RendererType::Metal:
+		vs_font_basic = bgfx::makeRef(vs_font_basic_mtl, sizeof(vs_font_basic_mtl) );
+		fs_font_basic = bgfx::makeRef(fs_font_basic_mtl, sizeof(fs_font_basic_mtl) );
+		vs_font_distance_field = bgfx::makeRef(vs_font_distance_field_mtl, sizeof(vs_font_distance_field_mtl) );
+		fs_font_distance_field = bgfx::makeRef(fs_font_distance_field_mtl, sizeof(fs_font_distance_field_mtl) );
+		vs_font_distance_field_subpixel = bgfx::makeRef(vs_font_distance_field_subpixel_mtl, sizeof(vs_font_distance_field_subpixel_mtl) );
+		fs_font_distance_field_subpixel = bgfx::makeRef(fs_font_distance_field_subpixel_mtl, sizeof(fs_font_distance_field_subpixel_mtl) );
+		break;
+			
 	default:
 		vs_font_basic = bgfx::makeRef(vs_font_basic_glsl, sizeof(vs_font_basic_glsl) );
 		fs_font_basic = bgfx::makeRef(fs_font_basic_glsl, sizeof(fs_font_basic_glsl) );
