@@ -532,6 +532,20 @@ struct Imgui
 			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_dx11, sizeof(fs_imgui_image_dx11) );
 			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_dx11, sizeof(fs_imgui_image_swizz_dx11) );
 			break;
+				
+		case bgfx::RendererType::Metal:
+			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_mtl, sizeof(vs_imgui_color_mtl) );
+			fs_imgui_color       = bgfx::makeRef(fs_imgui_color_mtl, sizeof(fs_imgui_color_mtl) );
+			vs_imgui_texture     = bgfx::makeRef(vs_imgui_texture_mtl, sizeof(vs_imgui_texture_mtl) );
+			fs_imgui_texture     = bgfx::makeRef(fs_imgui_texture_mtl, sizeof(fs_imgui_texture_mtl) );
+			vs_imgui_cubemap     = bgfx::makeRef(vs_imgui_cubemap_mtl, sizeof(vs_imgui_cubemap_mtl) );
+			fs_imgui_cubemap     = bgfx::makeRef(fs_imgui_cubemap_mtl, sizeof(fs_imgui_cubemap_mtl) );
+			vs_imgui_latlong     = bgfx::makeRef(vs_imgui_latlong_mtl, sizeof(vs_imgui_latlong_mtl) );
+			fs_imgui_latlong     = bgfx::makeRef(fs_imgui_latlong_mtl, sizeof(fs_imgui_latlong_mtl) );
+			vs_imgui_image       = bgfx::makeRef(vs_imgui_image_mtl, sizeof(vs_imgui_image_mtl) );
+			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_mtl, sizeof(fs_imgui_image_mtl) );
+			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_mtl, sizeof(fs_imgui_image_swizz_mtl) );
+			break;
 
 		default:
 			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_glsl, sizeof(vs_imgui_color_glsl) );

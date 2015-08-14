@@ -11,6 +11,12 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/CAEAGLLayer.h>
 
+#if __IPHONE_8_0 && !TARGET_IPHONE_SIMULATOR  // check if sdk/target supports metal
+#   import <Metal/Metal.h>
+#   import <QuartzCore/CAMetalLayer.h>
+//#   define HAS_METAL_SDK
+#endif
+
 #include <bgfxplatform.h>
 
 #include <bx/uint32_t.h>
@@ -140,6 +146,22 @@ namespace entry
 
 using namespace entry;
 
+#ifdef HAS_METAL_SDK
+static	id<MTLDevice>  m_device = NULL;
+#else
+static	void* m_device = NULL;
+#endif
+
+@interface ViewController : UIViewController
+@end
+@implementation ViewController
+- (BOOL)prefersStatusBarHidden
+{
+	return YES;
+}
+@end
+
+
 @interface View : UIView
 {
 	CADisplayLink* m_displayLink;
@@ -151,6 +173,19 @@ using namespace entry;
 
 + (Class)layerClass
 {
+#ifdef HAS_METAL_SDK
+	Class metalClass = NSClassFromString(@"CAMetalLayer");    //is metal runtime sdk available
+	if ( metalClass != nil)
+	{
+		m_device = MTLCreateSystemDefaultDevice(); // is metal supported on this device (is there a better way to do this - without creating device ?)
+		if (m_device)
+		{
+			[m_device retain];
+			return metalClass;
+		}
+	}
+#endif
+	
 	return [CAEAGLLayer class];
 }
 
@@ -162,10 +197,15 @@ using namespace entry;
 	{
 		return nil;
 	}
-
-	CAEAGLLayer* layer = (CAEAGLLayer*)self.layer;
-	bgfx::iosSetEaglLayer(layer);
-
+	
+	bgfx::PlatformData pd;
+	pd.ndt          = NULL;
+	pd.nwh          = self.layer;
+	pd.context		= m_device;
+	pd.backBuffer   = NULL;
+	pd.backBufferDS = NULL;
+	bgfx::setPlatformData(pd);
+	
 	return self;
 }
 
@@ -263,6 +303,13 @@ using namespace entry;
 	m_view = [ [View alloc] initWithFrame: rect];
 
 	[m_window addSubview: m_view];
+
+	UIViewController *viewController = [[ViewController alloc] init];
+	viewController.view = m_view;
+
+	[m_window setRootViewController:viewController];
+	[m_window makeKeyAndVisible];
+	
 	[m_window makeKeyAndVisible];
 
 	//float scaleFactor = [[UIScreen mainScreen] scale]; // should use this, but ui is too small on ipad retina

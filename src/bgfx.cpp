@@ -330,6 +330,10 @@ namespace bgfx
 			mem = makeRef(vs_debugfont_dx11, sizeof(vs_debugfont_dx11) );
 			break;
 
+		case RendererType::Metal:
+			mem = makeRef(vs_debugfont_mtl, sizeof(vs_debugfont_mtl) );
+			break;
+				
 		default:
 			mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
 			break;
@@ -348,6 +352,10 @@ namespace bgfx
 			mem = makeRef(fs_debugfont_dx11, sizeof(fs_debugfont_dx11) );
 			break;
 
+		case RendererType::Metal:
+			mem = makeRef(fs_debugfont_mtl, sizeof(fs_debugfont_mtl) );
+			break;
+				
 		default:
 			mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
 			break;
@@ -563,6 +571,27 @@ namespace bgfx
 					Mem(fs_clear7_glsl, sizeof(fs_clear7_glsl) ),
 				};
 
+				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				{
+					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
+				}
+			}
+			else if (RendererType::Metal == g_caps.rendererType)
+			{
+				vsh = createShader(makeRef(vs_clear_mtl, sizeof(vs_clear_mtl) ) );
+				
+				const Mem mem[] =
+				{
+					Mem(fs_clear0_mtl, sizeof(fs_clear0_mtl) ),
+					Mem(fs_clear1_mtl, sizeof(fs_clear1_mtl) ),
+					Mem(fs_clear2_mtl, sizeof(fs_clear2_mtl) ),
+					Mem(fs_clear3_mtl, sizeof(fs_clear3_mtl) ),
+					Mem(fs_clear4_mtl, sizeof(fs_clear4_mtl) ),
+					Mem(fs_clear5_mtl, sizeof(fs_clear5_mtl) ),
+					Mem(fs_clear6_mtl, sizeof(fs_clear6_mtl) ),
+					Mem(fs_clear7_mtl, sizeof(fs_clear7_mtl) ),
+				};
+				
 				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 				{
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
@@ -1497,9 +1526,21 @@ again:
 				}
 			}
 			else if (BX_ENABLED(0
+				|| BX_PLATFORM_IOS ) )
+			{
+				if (s_rendererCreator[RendererType::Metal].supported)
+				{
+					_type = RendererType::Metal;
+				}
+				else if (s_rendererCreator[RendererType::OpenGLES].supported)
+				{
+					_type = RendererType::OpenGLES;
+				}
+				
+			}
+			else if (BX_ENABLED(0
 				 ||  BX_PLATFORM_ANDROID
 				 ||  BX_PLATFORM_EMSCRIPTEN
-				 ||  BX_PLATFORM_IOS
 				 ||  BX_PLATFORM_NACL
 				 ||  BX_PLATFORM_RPI
 				 ) )
