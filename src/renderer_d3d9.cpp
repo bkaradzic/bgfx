@@ -526,7 +526,7 @@ namespace bgfx { namespace d3d9
 			m_caps.NumSimultaneousRTs = uint8_t(bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 			g_caps.maxFBAttachments   = uint8_t(m_caps.NumSimultaneousRTs);
 
-			m_caps.MaxAnisotropy = bx::uint32_min(m_caps.MaxAnisotropy, 1);
+			m_caps.MaxAnisotropy = bx::uint32_max(m_caps.MaxAnisotropy, 1);
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
