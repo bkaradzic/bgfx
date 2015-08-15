@@ -286,6 +286,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li>Direct3D 9</li>
 <li>Direct3D 11</li>
 <li>Direct3D 12 (WIP)</li>
+<li>Metal (WIP)</li>
 <li>OpenGL 2.1</li>
 <li>OpenGL 3.1+</li>
 <li>OpenGL ES 2</li>
@@ -364,7 +365,7 @@ GUI rendering, where draw order should usually match submit order. bgfx
 provides way to enable sequential rendering for these cases (see
 <code class="docutils literal"><span class="pre">bgfx::setViewSeq</span></code>).</p>
 <p>Internally all low-level rendering draw calls are issued inside single
-function <code class="docutils literal"><span class="pre">`RendererContextI::submit</span></code>. This function exist inside each
+function <code class="docutils literal"><span class="pre">RendererContextI::submit</span></code>. This function exist inside each
 renderer backend implementation.</p>
 <div class="line-block">
 <div class="line">More detailed description of sort-based draw call bucketing can be</div>
@@ -414,22 +415,26 @@ initialization. This allows frame capture at any time by pressing
 in GPA directory and add <code class="docutils literal"><span class="pre">examples-*</span></code> to the list.</p>
 <p>Download:
 <a class="reference external" href="https://software.intel.com/en-us/vcsource/tools/intel-gpa">IntelGPA</a></p>
-<p>Other debuggers:</p>
+<p>Other debuggers and profilers:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="19%" />
-<col width="25%" />
-<col width="10%" />
-<col width="12%" />
+<col width="16%" />
+<col width="21%" />
 <col width="9%" />
-<col width="12%" />
-<col width="14%" />
+<col width="10%" />
+<col width="8%" />
+<col width="9%" />
+<col width="8%" />
+<col width="10%" />
+<col width="10%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Name</th>
 <th class="head">OS</th>
 <th class="head">DX9</th>
 <th class="head">DX11</th>
+<th class="head">DX12</th>
+<th class="head">Metal</th>
 <th class="head">GL</th>
 <th class="head">GLES</th>
 <th class="head">Source</th>
@@ -438,67 +443,93 @@ in GPA directory and add <code class="docutils literal"><span class="pre">exampl
 <tbody valign="top">
 <tr class="row-even"><td>APITrace</td>
 <td>Linux/OSX/Win</td>
-<td>x</td>
-<td>x</td>
-<td>x</td>
-<td>x</td>
-<td>x</td>
+<td>✓</td>
+<td>✓</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
 </tr>
 <tr class="row-odd"><td>CodeXL</td>
 <td>Linux/Win</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
-<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>✓</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-even"><td>Dissector</td>
 <td>Win</td>
-<td>x</td>
+<td>✓</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
-<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>✓</td>
 </tr>
-<tr class="row-odd"><td>IntelGPA</td>
+<tr class="row-odd"><td>PerfStudio</td>
+<td>Win</td>
+<td>&nbsp;</td>
+<td>✓</td>
+<td>✓</td>
+<td>&nbsp;</td>
+<td>✓</td>
+<td>✓</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>IntelGPA</td>
 <td>Linux/OSX/Win</td>
-<td>x</td>
-<td>x</td>
+<td>✓</td>
+<td>✓</td>
 <td>&nbsp;</td>
-<td>x</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>✓</td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-even"><td>Nsight</td>
+<tr class="row-odd"><td>Nsight</td>
 <td>Win</td>
-<td>x</td>
-<td>x</td>
-<td>x</td>
+<td>✓</td>
+<td>✓</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>✓</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-odd"><td>PerfHUD</td>
+<tr class="row-even"><td>PerfHUD</td>
 <td>Win</td>
-<td>x</td>
-<td>x</td>
+<td>✓</td>
+<td>✓</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-even"><td>RenderDoc</td>
+<tr class="row-odd"><td>RenderDoc</td>
 <td>Win</td>
 <td>&nbsp;</td>
-<td>x</td>
-<td>x</td>
+<td>✓</td>
 <td>&nbsp;</td>
-<td>x</td>
+<td>&nbsp;</td>
+<td>✓</td>
+<td>&nbsp;</td>
+<td>✓</td>
 </tr>
-<tr class="row-odd"><td>vogl</td>
+<tr class="row-even"><td>vogl</td>
 <td>Linux</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
-<td>x</td>
 <td>&nbsp;</td>
-<td>x</td>
+<td>&nbsp;</td>
+<td>✓</td>
+<td>&nbsp;</td>
+<td>✓</td>
 </tr>
 </tbody>
 </table>
@@ -507,6 +538,7 @@ in GPA directory and add <code class="docutils literal"><span class="pre">exampl
 <li><a class="reference external" href="https://apitrace.github.io/">APITrace</a></li>
 <li><a class="reference external" href="http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/">CodeXL</a></li>
 <li><a class="reference external" href="https://github.com/imccown/Dissector">Dissector</a></li>
+<li><a class="reference external" href="http://developer.amd.com/tools-and-sdks/graphics-development/gpu-perfstudio/">GPU PerfStudio</a></li>
 <li><a class="reference external" href="https://developer.nvidia.com/nvidia-nsight-visual-studio-edition">Nsight</a></li>
 <li><a class="reference external" href="https://developer.nvidia.com/nvidia-perfhud">PerfHUD</a></li>
 <li><a class="reference external" href="https://github.com/ValveSoftware/vogl">vogl</a></li>
@@ -561,8 +593,6 @@ natively.</li>
 <li>texturec tool with support for all supported texture formats.</li>
 <li>Multiple vertex streams support.</li>
 <li>Animated mesh example.</li>
-<li>Metal renderer backend (you can follow progress
-<a class="reference external" href="https://github.com/attilaz/bgfx/tree/metal">here</a>).</li>
 <li>Vulkan renderer backend.</li>
 </ul>
 </div>
