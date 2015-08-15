@@ -568,18 +568,23 @@ int main(...
     bgfx::init();
 </pre></div>
 </div>
-<p><strong>NOTE</strong> You can use <code class="docutils literal"><span class="pre">--with-sdl</span></code> when runnning GENie to enable SDL2
-integration with examples:</p>
-<div class="highlight-python"><div class="highlight"><pre>genie --with-sdl vs2012
-</pre></div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can use <code class="docutils literal"><span class="pre">--with-sdl</span></code> when runnning GENie to enable SDL2 integration with examples:
+<code class="docutils literal"><span class="pre">genie</span> <span class="pre">--with-sdl</span> <span class="pre">vs2012</span></code></p>
 </div>
-<p><strong>NOTE</strong> <code class="docutils literal"><span class="pre">--with-glfw</span></code> is also available, but it&#8217;s just simple stub to
-be used to test GLFW integration API.</p>
-<p><strong>NOTE</strong> Special care is necessary to make custom windowing to work with
-multithreaded renderer. Each platform has rules about where renderer can
-be and how multithreading interacts with context/device. To disable
-multithreaded render use <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREDED=0</span></code> preprocessor
-define.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal"><span class="pre">--with-glfw</span></code> is also available, but it&#8217;s just simple stub to be used to test GLFW
+integration API.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Special care is necessary to make custom windowing to work with multithreaded renderer.
+Each platform has rules about where renderer can be and how multithreading interacts
+with context/device. To disable multithreaded render use <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREDED=0</span></code>
+preprocessor define.</p>
+</div>
 </div>
 <div class="section" id="todo">
 <h2>Todo<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h2>
