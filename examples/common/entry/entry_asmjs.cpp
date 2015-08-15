@@ -9,16 +9,23 @@
 
 #include <emscripten.h>
 
+extern "C" void entry_emscripten_yield()
+{
+//	emscripten_sleep(0);
+}
+
 namespace entry
 {
 	const Event* poll()
 	{
+		entry_emscripten_yield();
 		return NULL;
 	}
 
 	const Event* poll(WindowHandle _handle)
 	{
 		BX_UNUSED(_handle);
+		entry_emscripten_yield();
 		return NULL;
 	}
 
