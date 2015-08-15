@@ -1467,6 +1467,8 @@ namespace bgfx { namespace d3d12
 
 		void postReset()
 		{
+			memset(m_backBufferColorFence, 0, sizeof(m_backBufferColorFence) );
+
 			uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 			for (uint32_t ii = 0, num = m_scd.BufferCount; ii < num; ++ii)
@@ -2847,7 +2849,7 @@ data.NumQualityLevels = 0;
 	{
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
 		uint8_t* data;
-		DX_CHECK(staging->Map(0, nullptr, (void**)&data) );
+		DX_CHECK(staging->Map(0, NULL, (void**)&data) );
 		memcpy(data, _data, _size);
 		staging->Unmap(0, NULL);
 

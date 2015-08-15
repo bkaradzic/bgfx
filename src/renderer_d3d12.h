@@ -296,6 +296,7 @@ namespace bgfx { namespace d3d12
 	{
 		CommandQueue()
 			: m_control(BX_COUNTOF(m_commandList) )
+			, m_completedFence(0)
 		{
 			BX_STATIC_ASSERT(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
 		}
@@ -312,7 +313,8 @@ namespace bgfx { namespace d3d12
 					, (void**)&m_commandQueue
 					) );
 
-			m_currentFence = 0;
+			m_completedFence = 0;
+			m_currentFence   = 0;
 			DX_CHECK(_device->CreateFence(0
 					, D3D12_FENCE_FLAG_NONE
 					, __uuidof(ID3D12Fence)
