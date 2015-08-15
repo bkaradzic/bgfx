@@ -1,4 +1,4 @@
-// ImGui library v1.44
+// ImGui library v1.45 WIP
 // Drawing and font code
 
 // Contains implementation for
@@ -19,7 +19,7 @@
 #include <stdio.h>      // vsnprintf, sscanf, printf
 #include <new>          // new (ptr)
 #ifndef alloca
-#if defined(_MSC_VER) || defined(__MINGW32__) 
+#if _WIN32
 #include <malloc.h>     // alloca
 #else
 #include <alloca.h>     // alloca
@@ -30,6 +30,9 @@
 #pragma warning (disable: 4505) // unreferenced local function has been removed (stb stuff)
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
 #define snprintf _snprintf
+#endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-function"          // warning: 'xxxx' defined but not used
 #endif
 
 //-------------------------------------------------------------------------
