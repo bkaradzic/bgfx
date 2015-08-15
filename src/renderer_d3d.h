@@ -225,7 +225,9 @@ namespace bgfx
 			HashMap::iterator it = m_hashMap.find(_hash);
 			if (it != m_hashMap.end() )
 			{
-				return &m_data[it->second].m_value;
+				uint16_t handle = it->second;
+				m_alloc.touch(handle);
+				return &m_data[handle].m_value;
 			}
 
 			return NULL;

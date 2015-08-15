@@ -1467,6 +1467,8 @@ namespace bgfx { namespace d3d12
 
 		void postReset()
 		{
+			memset(m_backBufferColorFence, 0, sizeof(m_backBufferColorFence) );
+
 			uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 			for (uint32_t ii = 0, num = m_scd.BufferCount; ii < num; ++ii)
