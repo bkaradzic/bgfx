@@ -1151,13 +1151,21 @@ namespace bgfx { namespace gl
 		{
 			if (0 != m_control.available() )
 			{
-				GL_CHECK(glGetQueryObjectui64v(m_frame[m_control.m_read]
-						, GL_QUERY_RESULT
-						, &m_elapsed
+				GLint available;
+				GL_CHECK(glGetQueryObjectiv(m_frame[m_control.m_read]
+						, GL_QUERY_RESULT_AVAILABLE
+						, &available
 						) );
-				m_control.consume(1);
 
-				return true;
+				if (available)
+				{
+					GL_CHECK(glGetQueryObjectui64v(m_frame[m_control.m_read]
+							, GL_QUERY_RESULT
+							, &m_elapsed
+							) );
+					m_control.consume(1);
+					return true;
+				}
 			}
 
 			return false;
