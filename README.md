@@ -101,6 +101,8 @@ deployment model of web with the performance of native code and GPU acceleration
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
+<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+
 	Copyright 2010-2015 Branimir Karadzic. All rights reserved.
 	
 	https://github.com/bkaradzic/bgfx
