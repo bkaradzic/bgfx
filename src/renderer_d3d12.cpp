@@ -513,8 +513,8 @@ namespace bgfx { namespace d3d12
 			m_adapter = NULL;
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
 
-			IDXGIAdapter* adapter;
-			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, &adapter); ++ii)
+			IDXGIAdapter3* adapter;
+			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 			{
 				DXGI_ADAPTER_DESC desc;
 				hr = adapter->GetDesc(&desc);
@@ -579,11 +579,6 @@ namespace bgfx { namespace d3d12
 					);
 			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 
-			if (NULL != m_adapter)
-			{
-				DX_RELEASE(m_adapter, 2);
-			}
-
 			if (FAILED(hr) )
 			{
 				goto error;
@@ -593,7 +588,7 @@ namespace bgfx { namespace d3d12
 
 			memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 			luid = m_device->GetAdapterLuid();
-			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, &adapter); ++ii)
+			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 			{
 				adapter->GetDesc(&m_adapterDesc);
 				DX_RELEASE(adapter, 0);
@@ -968,6 +963,7 @@ namespace bgfx { namespace d3d12
 				m_cmd.shutdown();
 				DX_RELEASE(m_device, 0);
 			case 3:
+				DX_RELEASE(m_adapter, 2);
 				DX_RELEASE(m_factory, 0);
 #if USE_D3D12_DYNAMIC_LIB
 			case 2:
@@ -1027,6 +1023,7 @@ namespace bgfx { namespace d3d12
 			m_cmd.shutdown();
 
 			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_adapter, 0);
 			DX_RELEASE(m_factory, 0);
 
 #if USE_D3D12_DYNAMIC_LIB
@@ -2410,7 +2407,7 @@ data.NumQualityLevels = 0;
 		void* m_dxgidll;
 
 		D3D_DRIVER_TYPE m_driverType;
-		IDXGIAdapter* m_adapter;
+		IDXGIAdapter3* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
@@ -4311,7 +4308,7 @@ data.NumQualityLevels = 0;
 				const DXGI_ADAPTER_DESC& desc = m_adapterDesc;
 				char description[BX_COUNTOF(desc.Description)];
 				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-				tvm.printf(0, pos++, 0x0f, " Device: %s", description);
+				tvm.printf(0, pos++, 0x8f, " Device: %s", description);
 
 				char dedicatedVideo[16];
 				bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
@@ -4322,20 +4319,42 @@ data.NumQualityLevels = 0;
 				char sharedSystem[16];
 				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
 
-				tvm.printf(0, pos++, 0x0f, " Memory: %s (video), %s (system), %s (shared)"
+				tvm.printf(0, pos++, 0x8f, " Memory: %s (video), %s (system), %s (shared)"
 					, dedicatedVideo
 					, dedicatedSystem
 					, sharedSystem
 					);
 
+				DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
+				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo) );
+
+				char budget[16];
+				bx::prettify(budget, BX_COUNTOF(budget), memInfo.Budget);
+
+				char currentUsage[16];
+				bx::prettify(currentUsage, BX_COUNTOF(currentUsage), memInfo.CurrentUsage);
+
+				char availableForReservation[16];
+				bx::prettify(availableForReservation, BX_COUNTOF(currentUsage), memInfo.AvailableForReservation);
+
+				char currentReservation[16];
+				bx::prettify(currentReservation, BX_COUNTOF(currentReservation), memInfo.CurrentReservation);
+
+				tvm.printf(0, pos++, 0x8f, " Budget: %s, Usage: %s, AvailRes: %s, CurrRes: %s "
+					, budget
+					, currentUsage
+					, availableForReservation
+					, currentReservation
+					);
+
 				pos = 10;
-				tvm.printf(10, pos++, 0x8e, "       Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS"
+				tvm.printf(10, pos++, 0x8e, "       Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
 					, double(frameTime)*toMs
 					, double(min)*toMs
 					, double(max)*toMs
 					, freq/frameTime
 					);
-				tvm.printf(10, pos++, 0x8e, "     Present: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms]"
+				tvm.printf(10, pos++, 0x8e, "     Present: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] "
 					, double(m_presentElapsed)*toMs
 					, double(presentMin)*toMs
 					, double(presentMax)*toMs
@@ -4354,7 +4373,7 @@ data.NumQualityLevels = 0;
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms]"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] "
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
@@ -4363,7 +4382,7 @@ data.NumQualityLevels = 0;
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
-					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"
+					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d "
 						, s_primName[ii]
 						, statsNumPrimsRendered[ii]
 						, statsNumInstances[ii]
@@ -4376,14 +4395,14 @@ data.NumQualityLevels = 0;
 // 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
 // 				}
 
-				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", _render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", _render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "     Indices: %7d ", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d ", _render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d ", _render->m_iboffset);
 
 				pos++;
-				tvm.printf(10, pos++, 0x8e, " State cache:                                ");
-				tvm.printf(10, pos++, 0x8e, " PSO    | Sampler | Bind   | Queued          ");
-				tvm.printf(10, pos++, 0x8e, " %6d |  %6d | %6d | %6d"
+				tvm.printf(10, pos++, 0x8e, " State cache:                        ");
+				tvm.printf(10, pos++, 0x8e, " PSO    | Sampler | Bind   | Queued  ");
+				tvm.printf(10, pos++, 0x8e, " %6d |  %6d | %6d | %6d  "
 					, m_pipelineStateCache.getCount()
 					, m_samplerStateCache.getCount()
 					, bindLru.getCount()
@@ -4392,13 +4411,13 @@ data.NumQualityLevels = 0;
 				pos++;
 
 				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
+				tvm.printf(10, pos++, 0x8e, "     Capture: %7.4f [ms] ", captureMs);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = _render->m_waitSubmit < _render->m_waitRender;
 
-				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %3.4f [ms]", _render->m_waitSubmit*toMs);
-				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %3.4f [ms]", _render->m_waitRender*toMs);
+				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %7.4f [ms] ", _render->m_waitSubmit*toMs);
+				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %7.4f [ms] ", _render->m_waitRender*toMs);
 
 				min = frameTime;
 				max = frameTime;
