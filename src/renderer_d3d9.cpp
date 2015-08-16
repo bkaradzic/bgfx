@@ -3736,7 +3736,7 @@ namespace bgfx { namespace d3d9
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d)"
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
