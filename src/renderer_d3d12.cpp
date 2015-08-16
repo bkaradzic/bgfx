@@ -2589,7 +2589,8 @@ data.NumQualityLevels = 0;
 			{
 			default:
 			case D3D12_UAV_DIMENSION_TEXTURE2D:
-				uavd->Texture2D.MipSlice = _mip;
+				uavd->Texture2D.MipSlice   = _mip;
+				uavd->Texture2D.PlaneSlice = 0;
 				break;
 
 			case D3D12_UAV_DIMENSION_TEXTURE3D:
@@ -4111,7 +4112,7 @@ data.NumQualityLevels = 0;
 
 								m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
 
-								bindLru.add(bindHash, srvHandle[0]);
+								bindLru.add(bindHash, srvHandle[0], 0);
 							}
 						}
 						else 

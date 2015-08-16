@@ -2507,28 +2507,18 @@ again:
 	ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		ProgramHandle handle = s_ctx->createProgram(_vsh, _fsh);
-
-		if (_destroyShaders)
+		if (!isValid(_fsh) )
 		{
-			destroyShader(_vsh);
-			destroyShader(_fsh);
+			return createProgram(_vsh, _destroyShaders);
 		}
 
-		return handle;
+		return s_ctx->createProgram(_vsh, _fsh, _destroyShaders);
 	}
 
 	ProgramHandle createProgram(ShaderHandle _csh, bool _destroyShader)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		ProgramHandle handle = s_ctx->createProgram(_csh);
-
-		if (_destroyShader)
-		{
-			destroyShader(_csh);
-		}
-
-		return handle;
+		return s_ctx->createProgram(_csh, _destroyShader);
 	}
 
 	void destroyProgram(ProgramHandle _handle)
