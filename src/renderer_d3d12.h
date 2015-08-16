@@ -45,11 +45,13 @@ namespace bgfx { namespace d3d12
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
 		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle);
-		void* alloc(D3D12_GPU_VIRTUAL_ADDRESS& gpuAddress, uint32_t _size);
-		void  alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture);
-		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture, uint8_t _mip);
 
-		void  alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct BufferD3D12& _buffer);
+		void* allocCbv(D3D12_GPU_VIRTUAL_ADDRESS& gpuAddress, uint32_t _size);
+
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0);
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct BufferD3D12& _buffer);
+
+		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0);
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, struct BufferD3D12& _buffer);
 
 		ID3D12DescriptorHeap* getHeap()
@@ -243,6 +245,8 @@ namespace bgfx { namespace d3d12
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
 			, m_numMips(0)
 		{
+			memset(&m_srvd, 0, sizeof(m_srvd) );
+			memset(&m_uavd, 0, sizeof(m_uavd) );
 		}
 
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);

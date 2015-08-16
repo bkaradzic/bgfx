@@ -1407,7 +1407,7 @@ namespace bgfx { namespace d3d12
 			uint16_t samplerStateIdx = getSamplerState(samplerFlags);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle;
-			scratchBuffer.alloc(srvHandle, texture);
+			scratchBuffer.allocSrv(srvHandle, texture);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle);
 
 			VertexBufferD3D12& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
@@ -1646,7 +1646,7 @@ data.NumQualityLevels = 0;
 				+ (NULL != m_currentProgram->m_fsh ? m_currentProgram->m_fsh->m_size : 0)
 				, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT
 				);
-			uint8_t* data = (uint8_t*)m_scratchBuffer[m_backBufferColorIdx].alloc(_gpuAddress, total);
+			uint8_t* data = (uint8_t*)m_scratchBuffer[m_backBufferColorIdx].allocCbv(_gpuAddress, total);
 
 			{
 				uint32_t size = m_currentProgram->m_vsh->m_size;
@@ -1947,10 +1947,7 @@ data.NumQualityLevels = 0;
 		{
 			ProgramD3D12& program = m_program[_programIdx];
 
-			bx::HashMurmur2A murmur;
-			murmur.begin();
-			murmur.add(program.m_vsh->m_hash);
-			const uint32_t hash = murmur.end();
+			const uint32_t hash = program.m_vsh->m_hash;
 
 			ID3D12PipelineState* pso = m_pipelineStateCache.find(hash);
 
@@ -2542,7 +2539,7 @@ data.NumQualityLevels = 0;
 		gpuHandle = m_gpuHandle;
 	}
 
-	void* ScratchBufferD3D12::alloc(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size)
+	void* ScratchBufferD3D12::allocCbv(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size)
 	{
 		_gpuAddress = m_gpuVA + m_pos;
 		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
@@ -2563,11 +2560,43 @@ data.NumQualityLevels = 0;
 		return data;
 	}
 
-	void ScratchBufferD3D12::alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, TextureD3D12& _texture)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, TextureD3D12& _texture, uint8_t _mip)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC tmpSrvd;
+		D3D12_SHADER_RESOURCE_VIEW_DESC* srvd = &_texture.m_srvd;
+		if (0 != _mip)
+		{
+			memcpy(&tmpSrvd, srvd, sizeof(tmpSrvd) );
+			srvd = &tmpSrvd;
+
+			switch (_texture.m_srvd.ViewDimension)
+			{
+			default:
+			case D3D12_SRV_DIMENSION_TEXTURE2D:
+				srvd->Texture2D.MostDetailedMip = _mip;
+				srvd->Texture2D.MipLevels       = 1;
+				srvd->Texture2D.PlaneSlice      = 0;
+				srvd->Texture2D.ResourceMinLODClamp = 0;
+				break;
+
+			case D3D12_SRV_DIMENSION_TEXTURECUBE:
+				srvd->TextureCube.MostDetailedMip = _mip;
+				srvd->TextureCube.MipLevels       = 1;
+				srvd->TextureCube.ResourceMinLODClamp = 0;
+				break;
+
+			case D3D12_SRV_DIMENSION_TEXTURE3D:
+				srvd->Texture3D.MostDetailedMip = _mip;
+				srvd->Texture3D.MipLevels       = 1;
+				srvd->Texture3D.ResourceMinLODClamp = 0;
+				break;
+			}
+		}
+
 		device->CreateShaderResourceView(_texture.m_ptr
-			, &_texture.m_srvd
+			, srvd
 			, m_cpuHandle
 			);
 		m_cpuHandle.ptr += m_incrementSize;
@@ -2585,6 +2614,8 @@ data.NumQualityLevels = 0;
 		if (0 != _mip)
 		{
 			memcpy(&tmpUavd, uavd, sizeof(tmpUavd) );
+			uavd = &tmpUavd;
+
 			switch (_texture.m_uavd.ViewDimension)
 			{
 			default:
@@ -2597,8 +2628,6 @@ data.NumQualityLevels = 0;
 				uavd->Texture3D.MipSlice = _mip;
 				break;
 			}
-
-			uavd = &tmpUavd;
 		}
 
 		device->CreateUnorderedAccessView(_texture.m_ptr
@@ -2612,7 +2641,7 @@ data.NumQualityLevels = 0;
 		m_gpuHandle.ptr += m_incrementSize;
 	}
 
-	void ScratchBufferD3D12::alloc(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, BufferD3D12& _buffer)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, BufferD3D12& _buffer)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 		device->CreateShaderResourceView(_buffer.m_ptr
@@ -3259,7 +3288,7 @@ data.NumQualityLevels = 0;
 
 			if (computeWrite)
 			{
-				resourceDesc.Flags &= ~D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+				resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 			}
 
 			switch (m_type)
@@ -3825,10 +3854,12 @@ data.NumQualityLevels = 0;
 						}
 					}
 
-					if (programChanged)
+					ID3D12PipelineState* pso = getPipelineState(programIdx);
+					if (pso != currentPso)
 					{
-						ID3D12PipelineState* pso = getPipelineState(programIdx);
+						currentPso = pso;
 						m_commandList->SetPipelineState(pso);
+						currentBindHash = 0;
 					}
 
 					D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
@@ -3851,7 +3882,8 @@ data.NumQualityLevels = 0;
 									}
 									else
 									{
-										scratchBuffer.alloc(srvHandle[ii], texture);
+										scratchBuffer.allocSrv(srvHandle[ii], texture, bind.m_un.m_compute.m_mip);
+										samplerFlags[ii] = texture.m_flags;
 									}
 								}
 								break;
@@ -3870,7 +3902,7 @@ data.NumQualityLevels = 0;
 									}
 									else
 									{
-										scratchBuffer.alloc(srvHandle[ii], buffer);
+										scratchBuffer.allocSrv(srvHandle[ii], buffer);
 									}
 								}
 								break;
@@ -3879,7 +3911,7 @@ data.NumQualityLevels = 0;
 					}
 
 					uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS);
-					m_commandList->SetComputeRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx));
+					m_commandList->SetComputeRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 					m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, srvHandle[0]);
 					m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 					m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, srvHandle[0]);
@@ -4086,7 +4118,8 @@ data.NumQualityLevels = 0;
 									if (invalidHandle != sampler.m_idx)
 									{
 										TextureD3D12& texture = m_textures[sampler.m_idx];
-										scratchBuffer.alloc(srvHandle[stage], texture);
+										texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+										scratchBuffer.allocSrv(srvHandle[stage], texture);
 										samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & sampler.m_un.m_draw.m_flags)
 											? sampler.m_un.m_draw.m_flags
 											: texture.m_flags
