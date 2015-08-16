@@ -572,11 +572,23 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			hr = D3D12CreateDevice(m_adapter
-					, D3D_FEATURE_LEVEL_11_0
-					, __uuidof(ID3D12Device)
-					, (void**)&m_device
-					);
+			D3D_FEATURE_LEVEL featureLevel[] =
+			{
+				D3D_FEATURE_LEVEL_12_1,
+				D3D_FEATURE_LEVEL_12_0,
+				D3D_FEATURE_LEVEL_11_1,
+				D3D_FEATURE_LEVEL_11_0,
+			};
+
+			hr = E_FAIL;
+			for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr); ++ii)
+			{
+				hr = D3D12CreateDevice(m_adapter
+						, featureLevel[ii]
+						, __uuidof(ID3D12Device)
+						, (void**)&m_device
+						);
+			}
 			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 
 			if (FAILED(hr) )
@@ -591,12 +603,20 @@ namespace bgfx { namespace d3d12
 			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 			{
 				adapter->GetDesc(&m_adapterDesc);
-				DX_RELEASE(adapter, 0);
 				if (m_adapterDesc.AdapterLuid.LowPart  == luid.LowPart
 				&&  m_adapterDesc.AdapterLuid.HighPart == luid.HighPart)
 				{
+					if (NULL == m_adapter)
+					{
+						m_adapter = adapter;
+					}
+					else
+					{
+						DX_RELEASE(adapter, 0);
+					}
 					break;
 				}
+				DX_RELEASE(adapter, 0);
 			}
 
 			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
@@ -963,7 +983,7 @@ namespace bgfx { namespace d3d12
 				m_cmd.shutdown();
 				DX_RELEASE(m_device, 0);
 			case 3:
-				DX_RELEASE(m_adapter, 2);
+				DX_RELEASE(m_adapter, 0);
 				DX_RELEASE(m_factory, 0);
 #if USE_D3D12_DYNAMIC_LIB
 			case 2:
