@@ -101,7 +101,6 @@ namespace bgfx { namespace gl
 			NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
 
 			[pixelFormat release];
-//			[glView setWantsBestResolutionOpenGLSurface:YES];
 			[nsWindow setContentView:glView];
 
 			NSOpenGLContext* glContext = [glView openGLContext];
@@ -114,6 +113,8 @@ namespace bgfx { namespace gl
 			m_view    = glView;
 			m_context = glContext;
 		}
+
+//		float x = [nsWindow backingScaleFactor];
 
 		import();
 	}
@@ -134,6 +135,10 @@ namespace bgfx { namespace gl
 	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		BX_UNUSED(_width, _height);
+
+		bool hidpi = !!(_flags&BGFX_RESET_HIDPI);
+		NSOpenGLView* glView = (NSOpenGLView*)m_view;
+		[glView setWantsBestResolutionOpenGLSurface:hidpi];
 
 		bool vsync = !!(_flags&BGFX_RESET_VSYNC);
 		GLint interval = vsync ? 1 : 0;
