@@ -86,6 +86,13 @@ https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
 JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
 deployment model of web with the performance of native code and GPU acceleration.
 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=eyqk61Yw52E
+" target="_blank"><img src="http://img.youtube.com/vi/eyqk61Yw52E/0.jpg" 
+alt="LumixEngine" width="640" height="480" border="0" /></a>
+
+https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
+The main goal is performance and Unity-like usability.
+
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------
 
