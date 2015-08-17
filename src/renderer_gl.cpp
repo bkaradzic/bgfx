@@ -1632,14 +1632,17 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 				;
 
-			m_timerQuerySupport = 0
+			m_timerQuerySupport = false
 				|| s_extension[Extension::ANGLE_timer_query       ].m_supported
 				|| s_extension[Extension::ARB_timer_query         ].m_supported
 				|| s_extension[Extension::EXT_disjoint_timer_query].m_supported
 				|| s_extension[Extension::EXT_timer_query         ].m_supported
 				;
 
-			m_timerQuerySupport &= NULL != glGetQueryObjectui64v;
+			m_timerQuerySupport &= true
+				&& NULL != glGetQueryObjectiv
+				&& NULL != glGetQueryObjectui64v
+				;
 
 			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
