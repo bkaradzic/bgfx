@@ -1222,7 +1222,7 @@ namespace bgfx
 	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///     sampling.
 	///
-	/// @param[in] _mem Texture data.
+	/// @param[in] _mem Texture data. If `_mem` is non-NULL, created texutre will be immutable.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_2d`.
 	///
@@ -1260,7 +1260,7 @@ namespace bgfx
 	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///     sampling.
 	///
-	/// @param[in] _mem Texture data.
+	/// @param[in] _mem Texture data. If `_mem` is non-NULL, created texutre will be immutable.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_3d`.
 	///
@@ -1278,7 +1278,7 @@ namespace bgfx
 	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///     sampling.
 	///
-	/// @param[in] _mem Texture data.
+	/// @param[in] _mem Texture data. If `_mem` is non-NULL, created texutre will be immutable.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_cube`.
 	///
