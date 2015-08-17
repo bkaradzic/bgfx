@@ -192,6 +192,17 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
+	template<typename Ty>
+	inline void release(Ty)
+	{
+	}
+
+	template<>
+	inline void release<IUnknown*>(IUnknown* _ptr)
+	{
+		DX_RELEASE(_ptr, 0);
+	}
+
 	template <typename Ty, uint16_t MaxHandleT>
 	class StateCacheLru
 	{
@@ -234,7 +245,7 @@ namespace bgfx
 			if (it != m_hashMap.end() )
 			{
 				uint16_t handle = it->second;
-				m_alloc.free(_handle);
+				m_alloc.free(handle);
 				m_hashMap.erase(it);
 				release(m_data[handle].m_value);
 			}
@@ -253,7 +264,7 @@ namespace bgfx
 
 		void invalidateWithParent(uint16_t _parent)
 		{
-			for (uint32_t ii = 0; ii < m_alloc.getNumHandles();)
+			for (uint16_t ii = 0; ii < m_alloc.getNumHandles();)
 			{
 				uint16_t handle = m_alloc.getHandleAt(ii);
 				Data& data = m_data[handle];
@@ -274,7 +285,7 @@ namespace bgfx
 
 		void invalidate()
 		{
-			for (uint32_t ii = 0, num =  m_alloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t ii = 0, num = m_alloc.getNumHandles(); ii < num; ++ii)
 			{
 				uint16_t handle = m_alloc.getHandleAt(ii);
 				Data& data = m_data[handle];
@@ -288,17 +299,6 @@ namespace bgfx
 		uint32_t getCount() const
 		{
 			return uint32_t(m_hashMap.size() );
-		}
-
-		template<typename Ty>
-		void release(Ty)
-		{
-		}
-
-		template<>
-		void release<IUnknown*>(IUnknown* _ptr)
-		{
-			DX_RELEASE(_ptr, 0);
 		}
 
 	private:
