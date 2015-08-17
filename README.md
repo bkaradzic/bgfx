@@ -78,24 +78,22 @@ http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
 focusing on racing games.  
 ![ios](http://www.dogbytegames.com/bgfx/offroadlegends2_bgfx_ipad2.jpg)
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=p4LTM_QGK34
-" target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
-alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
-
 https://github.com/andr3wmac/Torque6 Torque 6 is an MIT licensed 3D engine
 loosely based on Torque2D. Being neither Torque2D or Torque3D it is the 6th
 derivative of the original Torque Engine.
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=p4LTM_QGK34
+" target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
+alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
 https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
 JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
 deployment model of web with the performance of native code and GPU acceleration.
 
+https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
+The main goal is performance and Unity-like usability.
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=eyqk61Yw52E
 " target="_blank"><img src="http://img.youtube.com/vi/eyqk61Yw52E/0.jpg" 
 alt="LumixEngine Terrain Editor" width="640" height="480" border="0" /></a>
-
-https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
-The main goal is performance and Unity-like usability.
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------
