@@ -1451,21 +1451,7 @@ namespace bgfx { namespace gl
 					setTextureFormat(TextureFormat::BGRA8, GL_RGBA, GL_BGRA, GL_UNSIGNED_BYTE);
 				}
 			}
-			
-#ifdef BGFX_CONFIG_RENDERER_OPENGLES
-			// on some older devices attempting glTexImage2D or glCompressedTexImage2D with unsupported compressed formats can crash
-			// so disable the format by setting to GL_ZERO
-			for (uint32_t ii = 0; ii < TextureFormat::Unknown; ++ii)
-			{
-				if ( !s_textureFormat[ ii ].m_supported )
-				{
-					s_textureFormat[ ii ].m_internalFmt = GL_ZERO;
-					s_textureFormat[ ii ].m_internalFmtSrgb = GL_ZERO;
-				}
-			}
-#endif
 
-			
 			if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 			||  !isTextureFormatValid(TextureFormat::R8) )
 			{
