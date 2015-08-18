@@ -2421,7 +2421,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					break;
 
 				case TextureD3D11::Texture3D:
-					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
 					desc.Texture3D.MipSlice    = _mip;
 					desc.Texture3D.FirstWSlice = 0;
 					desc.Texture3D.WSize       = 1;
