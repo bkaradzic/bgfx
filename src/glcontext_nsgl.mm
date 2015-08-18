@@ -114,8 +114,6 @@ namespace bgfx { namespace gl
 			m_context = glContext;
 		}
 
-//		float x = [nsWindow backingScaleFactor];
-
 		import();
 	}
 
@@ -147,9 +145,14 @@ namespace bgfx { namespace gl
 		[glContext update];
 	}
 
-	bool GlContext::isSwapChainSupported()
+	uint64_t GlContext::getCaps() const
 	{
-		return false;
+		NSWindow* nsWindow = (NSWindow*)g_platformData.nwh;
+		uint64_t caps = 1.0f < [nsWindow backingScaleFactor]
+			? BGFX_CAPS_HIDPI
+			: 0
+			;
+		return caps;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)

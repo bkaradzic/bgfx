@@ -1654,10 +1654,7 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
-			g_caps.supported |= GlContext::isSwapChainSupported()
-				? BGFX_CAPS_SWAP_CHAIN
-				: 0
-				;
+			g_caps.supported |= m_glctx.getCaps();
 
 			if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 			{

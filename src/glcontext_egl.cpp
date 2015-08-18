@@ -355,12 +355,15 @@ EGL_IMPORT
 		}
 	}
 
-	bool GlContext::isSwapChainSupported()
+	uint64_t GlContext::getCaps() const
 	{
 		return BX_ENABLED(0
 						| BX_PLATFORM_LINUX
 						| BX_PLATFORM_WINDOWS
-						);
+						)
+			? BGFX_CAPS_SWAP_CHAIN
+			: 0
+			;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)

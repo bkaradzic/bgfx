@@ -16,12 +16,12 @@ namespace bgfx { namespace gl
 #	include "glimports.h"
 
 	static void* s_opengles = NULL;
-	
+
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		s_opengles = bx::dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES");
 		BX_CHECK(NULL != s_opengles, "OpenGLES dynamic library is not found!");
-		
+
 		BX_UNUSED(_width, _height);
 		CAEAGLLayer* layer = (CAEAGLLayer*)g_platformData.nwh;
 		layer.opaque = true;
@@ -64,7 +64,7 @@ namespace bgfx { namespace gl
 			, "glCheckFramebufferStatus failed 0x%08x"
 			, glCheckFramebufferStatus(GL_FRAMEBUFFER)
 			);
-		
+
 		import();
 	}
 
@@ -90,7 +90,7 @@ namespace bgfx { namespace gl
 
 		EAGLContext* context = (EAGLContext*)m_context;
 		[context release];
-		
+
 		bx::dlclose(s_opengles);
 	}
 
@@ -144,9 +144,9 @@ namespace bgfx { namespace gl
 			);
 	}
 
-	bool GlContext::isSwapChainSupported()
+	uint64_t GlContext::getCaps() const
 	{
-		return false;
+		return 0;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)
