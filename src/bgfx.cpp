@@ -210,7 +210,7 @@ namespace bgfx
 #if BGFX_CONFIG_MEMORY_TRACKING
 		// BK - CallbackStub will be deleted after printing this info, so there is always one
 		// leak if CallbackStub is used.
-		BX_WARN( (NULL != s_callbackStub ? 1 : 0) == m_numBlocks
+		BX_WARN(uint32_t(NULL != s_callbackStub ? 1 : 0) == m_numBlocks
 			, "MEMORY LEAK: %d (max: %d)"
 			, m_numBlocks
 			, m_maxBlocks
