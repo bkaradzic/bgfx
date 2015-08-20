@@ -103,7 +103,7 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		void create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint32_t _maxDescriptors, uint16_t _numDescriptorsPerBlock = 1);
+		void create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock = 1);
 		void destroy();
 
 		uint16_t alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc);

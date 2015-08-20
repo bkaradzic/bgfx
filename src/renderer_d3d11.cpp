@@ -497,7 +497,18 @@ namespace bgfx { namespace d3d11
 
 		bool init()
 		{
-			uint32_t errorState = 0;
+			struct ErrorState
+			{
+				enum Enum
+				{
+					Default,
+					LoadedD3D11,
+					LoadedDXGI,
+					CreatedDXGIFactory,
+				};
+			};
+
+			ErrorState::Enum errorState = ErrorState::Default;
 
 			// Must be before device creation, and before RenderDoc.
 			m_ovr.init();
@@ -520,7 +531,7 @@ namespace bgfx { namespace d3d11
 				goto error;
 			}
 
-			errorState = 1;
+			errorState = ErrorState::LoadedD3D11;
 
 			m_d3d9dll = NULL;
 
@@ -556,7 +567,7 @@ namespace bgfx { namespace d3d11
 				goto error;
 			}
 
-			errorState = 2;
+			errorState = ErrorState::LoadedDXGI;
 
 			CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
 			BX_WARN(NULL != CreateDXGIFactory, "Function CreateDXGIFactory not found.");
@@ -597,7 +608,7 @@ namespace bgfx { namespace d3d11
 				goto error;
 			}
 
-			errorState = 3;
+			errorState = ErrorState::CreatedDXGIFactory;
 
 			m_device = (ID3D11Device*)g_platformData.context;
 
@@ -664,7 +675,7 @@ namespace bgfx { namespace d3d11
 				}
 				DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 
-				D3D_FEATURE_LEVEL features[] =
+				D3D_FEATURE_LEVEL featureLevel[] =
 				{
 					D3D_FEATURE_LEVEL_11_1,
 					D3D_FEATURE_LEVEL_11_0,
@@ -691,12 +702,16 @@ namespace bgfx { namespace d3d11
 							, m_driverType
 							, NULL
 							, flags
-							, &features[ii]
-							, BX_COUNTOF(features)-ii
+							, &featureLevel[ii]
+							, BX_COUNTOF(featureLevel)-ii
 							, D3D11_SDK_VERSION
 							, &m_device
 							, &m_featureLevel
 							, &m_deviceCtx
+							);
+						BX_WARN(FAILED(hr), "Direct3D11 device feature level %d.%d."
+							, (m_featureLevel >> 12) & 0xf
+							, (m_featureLevel >>  8) & 0xf
 							);
 						if (FAILED(hr)
 						&&  0 != (flags & D3D11_CREATE_DEVICE_DEBUG) )
@@ -729,8 +744,6 @@ namespace bgfx { namespace d3d11
 					goto error;
 				}
 
-				errorState = 4;
-
 				if (NULL != m_adapter)
 				{
 					DX_RELEASE(m_adapter, 2);
@@ -745,8 +758,6 @@ namespace bgfx { namespace d3d11
 				{
 					goto error;
 				}
-
-				errorState = 4;
 			}
 
 			{
@@ -886,8 +897,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						goto error;
 					}
-
-					errorState = 5;
 				}
 				else
 				{
@@ -1172,18 +1181,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		error:
 			switch (errorState)
 			{
-			default:
-			case 5:
+			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_swapChain, 0);
-
-			case 4:
 				DX_RELEASE(m_deviceCtx, 0);
 				DX_RELEASE(m_device, 0);
-
-			case 3:
 				DX_RELEASE(m_factory, 0);
 
-			case 2:
+			case ErrorState::LoadedDXGI:
 #if USE_D3D11_DYNAMIC_LIB
 				if (NULL != m_dxgidebugdll)
 				{
@@ -1201,13 +1205,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_dxgidll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			case 1:
+			case ErrorState::LoadedD3D11:
 #if USE_D3D11_DYNAMIC_LIB
 				bx::dlclose(m_d3d11dll);
 				m_d3d11dll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			case 0:
+			case ErrorState::Default:
 				unloadRenderDoc(m_renderdocdll);
 				m_ovr.shutdown();
 				break;
@@ -2724,8 +2728,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Int1,    I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,   F, float);
+				CASE_IMPLEMENT_UNIFORM(Int1, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4, F, float);
 				CASE_IMPLEMENT_UNIFORM(Mat4, F, float);
 
 				case UniformType::End:
@@ -2735,9 +2739,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _constantBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-
 #undef CASE_IMPLEMENT_UNIFORM
-
 			}
 		}
 

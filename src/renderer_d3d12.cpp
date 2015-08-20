@@ -461,7 +461,20 @@ namespace bgfx { namespace d3d12
 
 		bool init()
 		{
-			uint32_t errorState = 0;
+			struct ErrorState
+			{
+				enum Enum
+				{
+					Default,
+					LoadedKernel32,
+					LoadedD3D12,
+					LoadedDXGI,
+					CreatedDXGIFactory,
+					CreatedCommandQueue,
+				};
+			};
+
+			ErrorState::Enum errorState = ErrorState::Default;
 			LUID luid;
 
 			m_fbh.idx = invalidHandle;
@@ -483,7 +496,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 1;
+			errorState = ErrorState::LoadedKernel32;
 
 			m_d3d12dll = bx::dlopen("d3d12.dll");
 			BX_WARN(NULL != m_d3d12dll, "Failed to load d3d12.dll.");
@@ -492,7 +505,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 2;
+			errorState = ErrorState::LoadedD3D12;
 
 			D3D12CreateDevice = (PFN_D3D12_CREATE_DEVICE)bx::dlsym(m_d3d12dll, "D3D12CreateDevice");
 			BX_WARN(NULL != D3D12CreateDevice, "Function D3D12CreateDevice not found.");
@@ -518,8 +531,6 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 3;
-
 			CreateDXGIFactory1 = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory1");
 			BX_WARN(NULL != CreateDXGIFactory1, "Function CreateDXGIFactory1 not found.");
 
@@ -527,9 +538,9 @@ namespace bgfx { namespace d3d12
 			{
 				goto error;
 			}
-#else
-			errorState = 4;
 #endif // USE_D3D12_DYNAMIC_LIB
+
+			errorState = ErrorState::LoadedDXGI;
 
 			HRESULT hr;
 
@@ -541,7 +552,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 4;
+			errorState = ErrorState::CreatedDXGIFactory;
 
 			m_adapter = NULL;
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
@@ -608,23 +619,13 @@ namespace bgfx { namespace d3d12
 			}
 
 			{
-				static D3D_FEATURE_LEVEL featureLevel[] =
+				D3D_FEATURE_LEVEL featureLevel[] =
 				{
 					D3D_FEATURE_LEVEL_12_1,
 					D3D_FEATURE_LEVEL_12_0,
 					D3D_FEATURE_LEVEL_11_1,
 					D3D_FEATURE_LEVEL_11_0,
 				};
-
-				const char* featureLevelName[] =
-				{
-					"12.1",
-					"12.0",
-					"11.1",
-					"11.0",
-				};
-				BX_STATIC_ASSERT(BX_COUNTOF(featureLevel) == BX_COUNTOF(featureLevelName) );
-				BX_UNUSED(featureLevelName);
 
 				hr = E_FAIL;
 				for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr); ++ii)
@@ -634,7 +635,10 @@ namespace bgfx { namespace d3d12
 							, IID_ID3D12Device
 							, (void**)&m_device
 							);
-					BX_WARN(FAILED(hr), "Direct3D12 device feature level %s.", featureLevelName[ii]);
+					BX_WARN(FAILED(hr), "Direct3D12 device feature level %d.%d."
+						, (featureLevel[ii] >> 12) & 0xf
+						, (featureLevel[ii] >>  8) & 0xf
+						);
 				}
 				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 			}
@@ -643,8 +647,6 @@ namespace bgfx { namespace d3d12
 			{
 				goto error;
 			}
-
-			errorState = 5;
 
 			{
 				memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
@@ -703,6 +705,7 @@ namespace bgfx { namespace d3d12
 			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
 
 			m_cmd.init(m_device);
+			errorState = ErrorState::CreatedCommandQueue;
 
 			m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
 			m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
@@ -916,7 +919,7 @@ namespace bgfx { namespace d3d12
 	//								| BGFX_CAPS_SWAP_CHAIN
 									);
 				g_caps.maxTextureSize   = 16384;
-				g_caps.maxFBAttachments = bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
@@ -1031,22 +1034,21 @@ namespace bgfx { namespace d3d12
 		error:
 			switch (errorState)
 			{
-			default:
-			case 5:
+			case ErrorState::CreatedCommandQueue:
 				m_cmd.shutdown();
-				DX_RELEASE(m_device, 0);
-			case 4:
+			case ErrorState::CreatedDXGIFactory:
+				DX_RELEASE(m_device,  0);
 				DX_RELEASE(m_adapter, 0);
 				DX_RELEASE(m_factory, 0);
 #if USE_D3D12_DYNAMIC_LIB
-			case 3:
+			case ErrorState::LoadedDXGI:
 				bx::dlclose(m_dxgidll);
-			case 2:
+			case ErrorState::LoadedD3D12:
 				bx::dlclose(m_d3d12dll);
-			case 1:
+			case ErrorState::LoadedKernel32:
 				bx::dlclose(m_kernel32dll);
 #endif // USE_D3D12_DYNAMIC_LIB
-			case 0:
+			case ErrorState::Default:
 				break;
 			}
 
@@ -1688,7 +1690,7 @@ data.NumQualityLevels = 0;
 			}
 		}
 
-		void setShaderUniform(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
@@ -1702,12 +1704,12 @@ data.NumQualityLevels = 0;
 			}
 		}
 
-		void setShaderUniform4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4f(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void setShaderUniform4x4f(uint8_t _flags, uint16_t _regIndex, const void* _val, uint16_t _numRegs)
+		void setShaderUniform4x4f(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
@@ -1852,7 +1854,7 @@ data.NumQualityLevels = 0;
 				drt->BlendOpAlpha   = s_blendEquation[equA];
 			}
 
-			uint32_t writeMask = (_state & BGFX_STATE_ALPHA_WRITE)
+			uint8_t writeMask = (_state & BGFX_STATE_ALPHA_WRITE)
 					? D3D12_COLOR_WRITE_ENABLE_ALPHA
 					: 0
 					;
@@ -2329,11 +2331,11 @@ data.NumQualityLevels = 0;
 				case UniformType::_uniform: \
 				case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
 						{ \
-							setShaderUniform(type, loc, data, num); \
+							setShaderUniform(uint8_t(type), loc, data, num); \
 						} \
 						break;
 
-				switch ( (int32_t)type)
+				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
 				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT:
@@ -2354,7 +2356,7 @@ data.NumQualityLevels = 0;
 							 mtx.un.val[ 9] = value[7];
 							 mtx.un.val[10] = value[8];
 							 mtx.un.val[11] = 0.0f;
-							 setShaderUniform(type, loc, &mtx.un.val[0], 3);
+							 setShaderUniform(uint8_t(type), loc, &mtx.un.val[0], 3);
 						 }
 					}
 					break;
@@ -2742,7 +2744,7 @@ data.NumQualityLevels = 0;
 		m_gpuHandle.ptr += m_incrementSize;
 	}
 
-	void DescriptorAllocator::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint32_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
+	void DescriptorAllocator::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
 	{
 		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors);
 		m_numDescriptorsPerBlock = _numDescriptorsPerBlock;
@@ -3202,7 +3204,7 @@ data.NumQualityLevels = 0;
 					kind = "predefined";
 					m_predefined[m_numPredefined].m_loc   = regIndex;
 					m_predefined[m_numPredefined].m_count = regCount;
-					m_predefined[m_numPredefined].m_type  = predefined|fragmentBit;
+					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
 				else
@@ -3282,7 +3284,7 @@ data.NumQualityLevels = 0;
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
-			const uint32_t startLod = bx::uint32_min(_skip, numMips-1);
+			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
@@ -3316,7 +3318,7 @@ data.NumQualityLevels = 0;
 			}
 
 			m_numMips = numMips;
-			const uint32_t numSides = imageContainer.m_cubeMap ? 6 : 1;
+			const uint16_t numSides = imageContainer.m_cubeMap ? 6 : 1;
 
 			uint32_t numSrd = numMips*numSides;
 			D3D12_SUBRESOURCE_DATA* srd = (D3D12_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D12_SUBRESOURCE_DATA) );
@@ -3359,7 +3361,7 @@ data.NumQualityLevels = 0;
 				uint32_t height = textureHeight;
 				uint32_t depth  = imageContainer.m_depth;
 
-				for (uint32_t lod = 0; lod < numMips; ++lod)
+				for (uint8_t lod = 0; lod < numMips; ++lod)
 				{
 					width  = bx::uint32_max(blockWidth,  width);
 					height = bx::uint32_max(blockHeight, height);
@@ -4306,7 +4308,7 @@ data.NumQualityLevels = 0;
 							, draw.m_stencil
 							, declIdx
 							, programIdx
-							, draw.m_instanceDataStride/16
+							, uint8_t(draw.m_instanceDataStride/16)
 							);
 					if (pso != currentPso)
 					{

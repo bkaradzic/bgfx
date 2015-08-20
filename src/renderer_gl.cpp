@@ -2699,10 +2699,10 @@ namespace bgfx { namespace gl
 //					}
 //					break;
 
-					CASE_IMPLEMENT_UNIFORM(Int1, 1iv, I, int);
-					CASE_IMPLEMENT_UNIFORM(Vec4, 4fv, F, float);
-					CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
-					CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM(Int1, 1iv, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4, 4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
+				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
 
 				case UniformType::End:
 					break;

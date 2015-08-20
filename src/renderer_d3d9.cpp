@@ -293,7 +293,18 @@ namespace bgfx { namespace d3d9
 
 		bool init()
 		{
-			uint32_t errorState = 0;
+			struct ErrorState
+			{
+				enum Enum
+				{
+					Default,
+					LoadedD3D9,
+					CreatedD3D9,
+					CreatedDevice,
+				};
+			};
+
+			ErrorState::Enum errorState = ErrorState::Default;
 
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
@@ -332,7 +343,7 @@ namespace bgfx { namespace d3d9
 				goto error;
 			}
 
-			errorState = 1;
+			errorState = ErrorState::LoadedD3D9;
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
@@ -378,7 +389,7 @@ namespace bgfx { namespace d3d9
 				goto error;
 			}
 
-			errorState = 2;
+			errorState = ErrorState::CreatedD3D9;
 
 			{
 				m_adapter    = D3DADAPTER_DEFAULT;
@@ -473,7 +484,7 @@ namespace bgfx { namespace d3d9
 				goto error;
 			}
 
-			errorState = 3;
+			errorState = ErrorState::CreatedDevice;
 
 			m_numWindows = 1;
 
@@ -680,9 +691,7 @@ namespace bgfx { namespace d3d9
 		error:
 			switch (errorState)
 			{
-			default:
-
-			case 3:
+			case ErrorState::CreatedDevice:
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				if (NULL != m_d3d9ex)
 				{
@@ -695,7 +704,7 @@ namespace bgfx { namespace d3d9
 					DX_RELEASE(m_device, 0);
 				}
 
-			case 2:
+			case ErrorState::CreatedD3D9:
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				if (NULL != m_d3d9ex)
 				{
@@ -709,11 +718,11 @@ namespace bgfx { namespace d3d9
 				}
 
 #if BX_PLATFORM_WINDOWS
-			case 1:
+			case ErrorState::LoadedD3D9:
 				bx::dlclose(m_d3d9dll);
 #endif // BX_PLATFORM_WINDOWS
 
-			case 0:
+			case ErrorState::Default:
 				break;
 			}
 
@@ -1621,7 +1630,6 @@ namespace bgfx { namespace d3d9
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _constantBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-
 #undef CASE_IMPLEMENT_UNIFORM
 			}
 		}
