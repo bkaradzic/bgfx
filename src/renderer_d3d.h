@@ -272,7 +272,6 @@ namespace bgfx
 				if (data.m_parent == _parent)
 				{
 					m_alloc.free(handle);
-					Data& data = m_data[handle];
 					m_hashMap.erase(m_hashMap.find(data.m_hash) );
 					release(data.m_value);
 				}

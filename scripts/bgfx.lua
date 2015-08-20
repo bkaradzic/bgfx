@@ -35,6 +35,7 @@ function bgfxProject(_name, _kind, _defines)
 
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty"),
+			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 			path.join(BGFX_DIR, "../bx/include"),
 		}
 
@@ -74,11 +75,6 @@ function bgfxProject(_name, _kind, _defines)
 			links {
 				"EGL",
 				"GLESv2",
-			}
-
-		configuration { "vs2008" }
-			includedirs {
-				"$(DXSDK_DIR)/include",
 			}
 
 		configuration { "winphone8* or winstore8*"}

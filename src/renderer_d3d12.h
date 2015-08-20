@@ -8,7 +8,23 @@
 
 #define USE_D3D12_DYNAMIC_LIB 1
 
+#include <sal.h>
 #include <d3d12.h>
+
+#if defined(__MINGW32__) // BK - temp workaround for MinGW until I nuke d3dx12 usage.
+extern "C++" {
+__extension__ template<typename Ty>
+const GUID& __mingw_uuidof();
+
+template<>
+const GUID& __mingw_uuidof<ID3D12Device>()
+{
+	static const GUID IID_ID3D12Device = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
+	return IID_ID3D12Device;
+}
+}
+#endif // defined(__MINGW32__)
+
 #include <d3dx12.h>
 #include <dxgi1_4.h>
 
@@ -299,156 +315,21 @@ namespace bgfx { namespace d3d12
 	struct CommandQueue
 	{
 		CommandQueue()
-			: m_control(BX_COUNTOF(m_commandList) )
+			: m_currentFence(0)
 			, m_completedFence(0)
+			, m_control(BX_COUNTOF(m_commandList) )
 		{
 			BX_STATIC_ASSERT(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
 		}
 
-		void init(ID3D12Device* _device)
-		{
-			D3D12_COMMAND_QUEUE_DESC queueDesc;
-			queueDesc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
-			queueDesc.Priority = 0;
-			queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
-			queueDesc.NodeMask = 1;
-			DX_CHECK(_device->CreateCommandQueue(&queueDesc
-					, __uuidof(ID3D12CommandQueue)
-					, (void**)&m_commandQueue
-					) );
-
-			m_completedFence = 0;
-			m_currentFence   = 0;
-			DX_CHECK(_device->CreateFence(0
-					, D3D12_FENCE_FLAG_NONE
-					, __uuidof(ID3D12Fence)
-					, (void**)&m_fence
-					) );
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
-			{
-				DX_CHECK(_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT
-						, __uuidof(ID3D12CommandAllocator)
-						, (void**)&m_commandList[ii].m_commandAllocator
-						) );
-
-				DX_CHECK(_device->CreateCommandList(0
-						, D3D12_COMMAND_LIST_TYPE_DIRECT
-						, m_commandList[ii].m_commandAllocator
-						, NULL
-						, __uuidof(ID3D12GraphicsCommandList)
-						, (void**)&m_commandList[ii].m_commandList
-						) );
-
-				DX_CHECK(m_commandList[ii].m_commandList->Close() );
-			}
-		}
-
-		void shutdown()
-		{
-			finish(UINT64_MAX, true);
-
-			DX_RELEASE(m_fence, 0);
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
-			{
-				DX_RELEASE(m_commandList[ii].m_commandAllocator, 0);
-				DX_RELEASE(m_commandList[ii].m_commandList, 0);
-			}
-
-			DX_RELEASE(m_commandQueue, 0);
-		}
-
-		ID3D12GraphicsCommandList* alloc()
-		{
-			while (0 == m_control.reserve(1) )
-			{
-				consume();
-			}
-
-			CommandList& commandList = m_commandList[m_control.m_current];
-			DX_CHECK(commandList.m_commandAllocator->Reset() );
-			DX_CHECK(commandList.m_commandList->Reset(commandList.m_commandAllocator, NULL) );
-			return commandList.m_commandList;
-		}
-
-		uint64_t kick()
-		{
-			CommandList& commandList = m_commandList[m_control.m_current];
-			DX_CHECK(commandList.m_commandList->Close() );
-
-			ID3D12CommandList* commandLists[] = { commandList.m_commandList };
-			m_commandQueue->ExecuteCommandLists(BX_COUNTOF(commandLists), commandLists);
-
-			commandList.m_event = CreateEventExA(NULL, NULL, 0, EVENT_ALL_ACCESS);
-			const uint64_t fence = m_currentFence++;
-			m_commandQueue->Signal(m_fence, fence);
-			m_fence->SetEventOnCompletion(fence, commandList.m_event);
-
-			m_control.commit(1);
-
-			return fence;
-		}
-
-		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false)
-		{
-			while (0 < m_control.available() )
-			{
-				consume();
-
-				if (!_finishAll
-				&&  _waitFence <= m_completedFence)
-				{
-					return;
-				}
-			}
-
-			BX_CHECK(0 == m_control.available(), "");
-		}
-
-		bool tryFinish(uint64_t _waitFence)
-		{
-			if (0 < m_control.available() )
-			{
-				if (consume(0)
-				&& _waitFence <= m_completedFence)
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		void release(ID3D12Resource* _ptr)
-		{
-			m_release[m_control.m_current].push_back(_ptr);
-		}
-
-		bool consume(uint32_t _ms = INFINITE)
-		{
-			CommandList& commandList = m_commandList[m_control.m_read];
-			if (WAIT_OBJECT_0 == WaitForSingleObject(commandList.m_event, _ms) )
-			{
-				CloseHandle(commandList.m_event);
-				commandList.m_event = NULL;
-				m_completedFence = m_fence->GetCompletedValue();
-				m_commandQueue->Wait(m_fence, m_completedFence);
-
-				ResourceArray& ra = m_release[m_control.m_read];
-				for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
-				{
-					DX_RELEASE(*it, 0);
-				}
-				ra.clear();
-
-				m_control.consume(1);
-
-				return true;
-			}
-
-			return false;
-		}
+		void init(ID3D12Device* _device);
+		void shutdown();
+		ID3D12GraphicsCommandList* alloc();
+		uint64_t kick();
+		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false);
+		bool tryFinish(uint64_t _waitFence);
+		void release(ID3D12Resource* _ptr);
+		bool consume(uint32_t _ms = INFINITE);
 
 		struct CommandList
 		{

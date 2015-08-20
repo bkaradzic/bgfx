@@ -902,7 +902,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			m_numWindows = 1;
 
-#if !defined(__MINGW32__)
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&m_infoQueue);
@@ -927,7 +926,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					DX_RELEASE(m_infoQueue, 3);
 				}
 			}
-#endif // __MINGW__
+
 			{
 
 				UniformHandle handle = BGFX_INVALID_HANDLE;
@@ -2183,17 +2182,17 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						drt = &desc.RenderTarget[ii];
 						drt->BlendEnable = 0 != (rgba & 0x7ff);
 
-						const uint32_t src      = (rgba     ) & 0xf;
-						const uint32_t dst      = (rgba >> 4) & 0xf;
-						const uint32_t equation = (rgba >> 8) & 0x7;
+						const uint32_t src = (rgba     ) & 0xf;
+						const uint32_t dst = (rgba >> 4) & 0xf;
+						const uint32_t equ = (rgba >> 8) & 0x7;
 
 						drt->SrcBlend       = s_blendFactor[src][0];
 						drt->DestBlend      = s_blendFactor[dst][0];
-						drt->BlendOp        = s_blendEquation[equation];
+						drt->BlendOp        = s_blendEquation[equ];
 
 						drt->SrcBlendAlpha  = s_blendFactor[src][1];
 						drt->DestBlendAlpha = s_blendFactor[dst][1];
-						drt->BlendOpAlpha   = s_blendEquation[equation];
+						drt->BlendOpAlpha   = s_blendEquation[equ];
 
 						drt->RenderTargetWriteMask = writeMask;
 					}
@@ -3883,8 +3882,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 			Frame& frame = m_frame[m_control.m_read];
 
-			uint64_t end;
-			HRESULT hr = deviceCtx->GetData(frame.m_end, &end, sizeof(end), 0);
+			uint64_t finish;
+			HRESULT hr = deviceCtx->GetData(frame.m_end, &finish, sizeof(finish), 0);
 			if (S_OK == hr)
 			{
 				m_control.consume(1);
@@ -3902,7 +3901,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				deviceCtx->GetData(frame.m_start, &start, sizeof(start), 0);
 
 				m_frequency = disjoint.Frequency;
-				m_elapsed   = end - start;
+				m_elapsed   = finish - start;
 
 				return true;
 			}

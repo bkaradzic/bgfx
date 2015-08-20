@@ -345,6 +345,20 @@ namespace bgfx { namespace d3d12
 		_commandList->ResourceBarrier(1, &barrier);
 	}
 
+	static const GUID IID_ID3D12CommandAllocator    = { 0x6102dee4, 0xaf59, 0x4b09, { 0xb9, 0x99, 0xb4, 0x4d, 0x73, 0xf0, 0x9b, 0x24 } };
+	static const GUID IID_ID3D12CommandQueue        = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
+	static const GUID IID_ID3D12CommandSignature    = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
+	static const GUID IID_ID3D12Debug               = { 0x344488b7, 0x6846, 0x474b, { 0xb9, 0x89, 0xf0, 0x27, 0x44, 0x82, 0x45, 0xe0 } };
+	static const GUID IID_ID3D12DescriptorHeap      = { 0x8efb471d, 0x616c, 0x4f49, { 0x90, 0xf7, 0x12, 0x7b, 0xb7, 0x63, 0xfa, 0x51 } };
+	static const GUID IID_ID3D12Device              = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
+	static const GUID IID_ID3D12Fence               = { 0x0a753dcf, 0xc4d8, 0x4b91, { 0xad, 0xf6, 0xbe, 0x5a, 0x60, 0xd9, 0x5a, 0x76 } };
+	static const GUID IID_ID3D12GraphicsCommandList = { 0x5b160d0f, 0xac1b, 0x4185, { 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 } };
+	static const GUID IID_ID3D12InfoQueue           = { 0x0742a90b, 0xc387, 0x483f, { 0xb9, 0x46, 0x30, 0xa7, 0xe4, 0xe6, 0x14, 0x58 } };
+	static const GUID IID_ID3D12PipelineState       = { 0x765a30f3, 0xf624, 0x4c6f, { 0xa8, 0x28, 0xac, 0xe9, 0x48, 0x62, 0x24, 0x45 } };
+	static const GUID IID_ID3D12Resource            = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
+	static const GUID IID_ID3D12RootSignature       = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
+	static const GUID IID_IDXGIFactory4             = { 0x1bc6ea02, 0xef36, 0x464f, { 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a } };
+
 	struct HeapProperty
 	{
 		enum Enum
@@ -377,7 +391,7 @@ namespace bgfx { namespace d3d12
 				, _resourceDesc
 				, heapProperty.m_state
 				, _clearValue
-				, __uuidof(ID3D12Resource)
+				, IID_ID3D12Resource
 				, (void**)&resource
 				) );
 
@@ -424,6 +438,9 @@ namespace bgfx { namespace d3d12
 	static PFN_D3D12_GET_DEBUG_INTERFACE      D3D12GetDebugInterface;
 	static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE D3D12SerializeRootSignature;
 	static PFN_CREATE_DXGI_FACTORY            CreateDXGIFactory1;
+
+	typedef HANDLE  (WINAPI* PFN_CREATE_EVENT_EX_A)(LPSECURITY_ATTRIBUTES _attrs, LPCSTR _name, DWORD _flags, DWORD _access);
+	static PFN_CREATE_EVENT_EX_A CreateEventExA;
 #endif // USE_D3D12_DYNAMIC_LIB
 
 	struct RendererContextD3D12 : public RendererContextI
@@ -452,6 +469,19 @@ namespace bgfx { namespace d3d12
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
 #if USE_D3D12_DYNAMIC_LIB
+			void* kernel32 = bx::dlopen("kernel32.dll");
+			if (NULL == kernel32)
+			{
+				goto error;
+			}
+
+			CreateEventExA = (PFN_CREATE_EVENT_EX_A)bx::dlsym(kernel32, "CreateEventExA");
+			BX_WARN(NULL == CreateEventExA, "Function CreateEventExA not found.");
+			if (NULL == CreateEventExA)
+			{
+				goto error;
+			}
+
 			m_d3d12dll = bx::dlopen("d3d12.dll");
 			BX_WARN(NULL != m_d3d12dll, "Failed to load d3d12.dll.");
 			if (NULL == m_d3d12dll)
@@ -500,7 +530,7 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-			hr = CreateDXGIFactory1(__uuidof(m_factory), (void**)&m_factory);
+			hr = CreateDXGIFactory1(IID_IDXGIFactory4, (void**)&m_factory);
 			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 
 			if (FAILED(hr) )
@@ -564,7 +594,7 @@ namespace bgfx { namespace d3d12
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				ID3D12Debug* debug;
-				hr = D3D12GetDebugInterface(__uuidof(ID3D12Debug), (void**)&debug);
+				hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug);
 
 				if (SUCCEEDED(hr) )
 				{
@@ -572,7 +602,7 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			D3D_FEATURE_LEVEL featureLevel[] =
+			static D3D_FEATURE_LEVEL featureLevel[] =
 			{
 				D3D_FEATURE_LEVEL_12_1,
 				D3D_FEATURE_LEVEL_12_0,
@@ -585,7 +615,7 @@ namespace bgfx { namespace d3d12
 			{
 				hr = D3D12CreateDevice(m_adapter
 						, featureLevel[ii]
-						, __uuidof(ID3D12Device)
+						, IID_ID3D12Device
 						, (void**)&m_device
 						);
 			}
@@ -622,22 +652,24 @@ namespace bgfx { namespace d3d12
 			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
 			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
 
-			uint32_t numNodes = m_device->GetNodeCount();
-			BX_TRACE("D3D12 GPU Architecture (num nodes: %d):", numNodes);
-			for (uint32_t ii = 0; ii < numNodes; ++ii)
 			{
-				D3D12_FEATURE_DATA_ARCHITECTURE architecture;
-				architecture.NodeIndex = ii;
-				DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture) ) );
-				BX_TRACE("\tNode % 2d: TileBasedRenderer %d, UMA %d, CacheCoherentUMA %d"
-						, ii
-						, architecture.TileBasedRenderer
-						, architecture.UMA
-						, architecture.CacheCoherentUMA
-						);
-				if (0 == ii)
+				uint32_t numNodes = m_device->GetNodeCount();
+				BX_TRACE("D3D12 GPU Architecture (num nodes: %d):", numNodes);
+				for (uint32_t ii = 0; ii < numNodes; ++ii)
 				{
-					memcpy(&m_architecture, &architecture, sizeof(architecture) );
+					D3D12_FEATURE_DATA_ARCHITECTURE architecture;
+					architecture.NodeIndex = ii;
+					DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture) ) );
+					BX_TRACE("\tNode % 2d: TileBasedRenderer %d, UMA %d, CacheCoherentUMA %d"
+							, ii
+							, architecture.TileBasedRenderer
+							, architecture.UMA
+							, architecture.CacheCoherentUMA
+							);
+					if (0 == ii)
+					{
+						memcpy(&m_architecture, &architecture, sizeof(architecture) );
+					}
 				}
 			}
 
@@ -697,7 +729,7 @@ namespace bgfx { namespace d3d12
 
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
-					hr = m_device->QueryInterface(__uuidof(ID3D12InfoQueue), (void**)&m_infoQueue);
+					hr = m_device->QueryInterface(IID_ID3D12InfoQueue, (void**)&m_infoQueue);
 
 					if (SUCCEEDED(hr) )
 					{
@@ -730,7 +762,7 @@ namespace bgfx { namespace d3d12
 				rtvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 				rtvDescHeap.NodeMask = 1;
 				DX_CHECK(m_device->CreateDescriptorHeap(&rtvDescHeap
-						, __uuidof(ID3D12DescriptorHeap)
+						, IID_ID3D12DescriptorHeap
 						, (void**)&m_rtvDescriptorHeap
 						) );
 
@@ -743,7 +775,7 @@ namespace bgfx { namespace d3d12
 				dsvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 				dsvDescHeap.NodeMask = 1;
 				DX_CHECK(m_device->CreateDescriptorHeap(&dsvDescHeap
-						, __uuidof(ID3D12DescriptorHeap)
+						, IID_ID3D12DescriptorHeap
 						, (void**)&m_dsvDescriptorHeap
 						) );
 
@@ -795,7 +827,7 @@ namespace bgfx { namespace d3d12
 				DX_CHECK(m_device->CreateRootSignature(0
 						, outBlob->GetBufferPointer()
 						, outBlob->GetBufferSize()
-						, __uuidof(ID3D12RootSignature)
+						, IID_ID3D12RootSignature
 						, (void**)&m_rootSignature
 						) );
 
@@ -817,7 +849,7 @@ namespace bgfx { namespace d3d12
 
 				DX_CHECK(m_device->CreateCommandSignature(&drawCommandSignature
 						, m_rootSignature
-						, __uuidof(ID3D12CommandSignature)
+						, IID_ID3D12CommandSignature
 						, (void**)&m_commandSignature[0]
 						) );
 
@@ -840,7 +872,7 @@ namespace bgfx { namespace d3d12
 
 				DX_CHECK(m_device->CreateCommandSignature(&drawIndexedCommandSignature
 						, m_rootSignature
-						, __uuidof(ID3D12CommandSignature)
+						, IID_ID3D12CommandSignature
 						, (void**)&m_commandSignature[1]
 						) );
 
@@ -1493,7 +1525,7 @@ namespace bgfx { namespace d3d12
 				D3D12_CPU_DESCRIPTOR_HANDLE handle = m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 				handle.ptr += ii * rtvDescriptorSize;
 				DX_CHECK(m_swapChain->GetBuffer(ii
-						, __uuidof(ID3D12Resource)
+						, IID_ID3D12Resource
 						, (void**)&m_backBufferColor[ii]
 						) );
 				m_device->CreateRenderTargetView(m_backBufferColor[ii], NULL, handle);
@@ -1982,9 +2014,9 @@ data.NumQualityLevels = 0;
 			desc.CS.BytecodeLength  = program.m_vsh->m_code->size;
 
 			DX_CHECK(m_device->CreateComputePipelineState(&desc
-				,__uuidof(ID3D12PipelineState)
-				,(void**)&pso
-				));
+				, IID_ID3D12PipelineState
+				, (void**)&pso
+				) );
 			m_pipelineStateCache.add(hash, pso);
 
 			return pso;
@@ -2179,7 +2211,7 @@ data.NumQualityLevels = 0;
 					desc.CachedPSO.CachedBlobSizeInBytes = (size_t)reader.remaining();
 
 					HRESULT hr = m_device->CreateGraphicsPipelineState(&desc
-									, __uuidof(ID3D12PipelineState)
+									, IID_ID3D12PipelineState
 									, (void**)&pso
 									);
 					if (FAILED(hr) )
@@ -2193,7 +2225,7 @@ data.NumQualityLevels = 0;
 			if (NULL == pso)
 			{
 				DX_CHECK(m_device->CreateGraphicsPipelineState(&desc
-						, __uuidof(ID3D12PipelineState)
+						, IID_ID3D12PipelineState
 						, (void**)&pso
 						) );
 			}
@@ -2529,7 +2561,7 @@ data.NumQualityLevels = 0;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
-				, __uuidof(ID3D12DescriptorHeap)
+				, IID_ID3D12DescriptorHeap
 				, (void**)&m_heap
 				) );
 
@@ -2700,7 +2732,7 @@ data.NumQualityLevels = 0;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
-				, __uuidof(ID3D12DescriptorHeap)
+				, IID_ID3D12DescriptorHeap
 				, (void**)&m_heap
 				) );
 
@@ -2784,6 +2816,151 @@ data.NumQualityLevels = 0;
 	{
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = { m_gpuHandle.ptr + _idx * m_numDescriptorsPerBlock * m_incrementSize };
 		return gpuHandle;
+	}
+
+	void CommandQueue::init(ID3D12Device* _device)
+	{
+		D3D12_COMMAND_QUEUE_DESC queueDesc;
+		queueDesc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
+		queueDesc.Priority = 0;
+		queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
+		queueDesc.NodeMask = 1;
+		DX_CHECK(_device->CreateCommandQueue(&queueDesc
+				, IID_ID3D12CommandQueue
+				, (void**)&m_commandQueue
+				) );
+
+		m_completedFence = 0;
+		m_currentFence   = 0;
+		DX_CHECK(_device->CreateFence(0
+				, D3D12_FENCE_FLAG_NONE
+				, IID_ID3D12Fence
+				, (void**)&m_fence
+				) );
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
+		{
+			DX_CHECK(_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT
+					, IID_ID3D12CommandAllocator
+					, (void**)&m_commandList[ii].m_commandAllocator
+					) );
+
+			DX_CHECK(_device->CreateCommandList(0
+					, D3D12_COMMAND_LIST_TYPE_DIRECT
+					, m_commandList[ii].m_commandAllocator
+					, NULL
+					, IID_ID3D12GraphicsCommandList
+					, (void**)&m_commandList[ii].m_commandList
+					) );
+
+			DX_CHECK(m_commandList[ii].m_commandList->Close() );
+		}
+	}
+
+	void CommandQueue::shutdown()
+	{
+		finish(UINT64_MAX, true);
+
+		DX_RELEASE(m_fence, 0);
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
+		{
+			DX_RELEASE(m_commandList[ii].m_commandAllocator, 0);
+			DX_RELEASE(m_commandList[ii].m_commandList, 0);
+		}
+
+		DX_RELEASE(m_commandQueue, 0);
+	}
+
+	ID3D12GraphicsCommandList* CommandQueue::alloc()
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			consume();
+		}
+
+		CommandList& commandList = m_commandList[m_control.m_current];
+		DX_CHECK(commandList.m_commandAllocator->Reset() );
+		DX_CHECK(commandList.m_commandList->Reset(commandList.m_commandAllocator, NULL) );
+		return commandList.m_commandList;
+	}
+
+	uint64_t CommandQueue::kick()
+	{
+		CommandList& commandList = m_commandList[m_control.m_current];
+		DX_CHECK(commandList.m_commandList->Close() );
+
+		ID3D12CommandList* commandLists[] = { commandList.m_commandList };
+		m_commandQueue->ExecuteCommandLists(BX_COUNTOF(commandLists), commandLists);
+
+		commandList.m_event = CreateEventExA(NULL, NULL, 0, EVENT_ALL_ACCESS);
+		const uint64_t fence = m_currentFence++;
+		m_commandQueue->Signal(m_fence, fence);
+		m_fence->SetEventOnCompletion(fence, commandList.m_event);
+
+		m_control.commit(1);
+
+		return fence;
+	}
+
+	void CommandQueue::finish(uint64_t _waitFence, bool _finishAll)
+	{
+		while (0 < m_control.available() )
+		{
+			consume();
+
+			if (!_finishAll
+			&&  _waitFence <= m_completedFence)
+			{
+				return;
+			}
+		}
+
+		BX_CHECK(0 == m_control.available(), "");
+	}
+
+	bool CommandQueue::tryFinish(uint64_t _waitFence)
+	{
+		if (0 < m_control.available() )
+		{
+			if (consume(0)
+			&& _waitFence <= m_completedFence)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void CommandQueue::release(ID3D12Resource* _ptr)
+	{
+		m_release[m_control.m_current].push_back(_ptr);
+	}
+
+	bool CommandQueue::consume(uint32_t _ms)
+	{
+		CommandList& commandList = m_commandList[m_control.m_read];
+		if (WAIT_OBJECT_0 == WaitForSingleObject(commandList.m_event, _ms) )
+		{
+			CloseHandle(commandList.m_event);
+			commandList.m_event = NULL;
+			m_completedFence = m_fence->GetCompletedValue();
+			m_commandQueue->Wait(m_fence, m_completedFence);
+
+			ResourceArray& ra = m_release[m_control.m_read];
+			for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
+			{
+				DX_RELEASE(*it, 0);
+			}
+			ra.clear();
+
+			m_control.consume(1);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	struct UavFormat
@@ -4165,7 +4342,7 @@ data.NumQualityLevels = 0;
 								bindLru.add(bindHash, srvHandle[0], 0);
 							}
 						}
-						else 
+						else
 						{
 							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, *srv);
 						}
