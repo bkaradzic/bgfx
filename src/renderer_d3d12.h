@@ -19,13 +19,17 @@ const GUID& __mingw_uuidof();
 template<>
 const GUID& __mingw_uuidof<ID3D12Device>()
 {
-	static const GUID IID_ID3D12Device = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
-	return IID_ID3D12Device;
+	static const GUID IID_ID3D12Device0 = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
+	return IID_ID3D12Device0;
 }
 }
 #endif // defined(__MINGW32__)
 
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
 #include <d3dx12.h>
+BX_PRAGMA_DIAGNOSTIC_POP();
+
 #include <dxgi1_4.h>
 
 #include "renderer.h"

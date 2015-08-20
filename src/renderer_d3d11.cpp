@@ -3958,7 +3958,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
+		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
 

@@ -469,18 +469,21 @@ namespace bgfx { namespace d3d12
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
 #if USE_D3D12_DYNAMIC_LIB
-			void* kernel32 = bx::dlopen("kernel32.dll");
-			if (NULL == kernel32)
+			m_kernel32dll = bx::dlopen("kernel32.dll");
+			BX_WARN(NULL != m_kernel32dll, "Failed to load kernel32.dll.");
+			if (NULL == m_kernel32dll)
 			{
 				goto error;
 			}
 
-			CreateEventExA = (PFN_CREATE_EVENT_EX_A)bx::dlsym(kernel32, "CreateEventExA");
-			BX_WARN(NULL == CreateEventExA, "Function CreateEventExA not found.");
+			CreateEventExA = (PFN_CREATE_EVENT_EX_A)bx::dlsym(m_kernel32dll, "CreateEventExA");
+			BX_WARN(NULL != CreateEventExA, "Function CreateEventExA not found.");
 			if (NULL == CreateEventExA)
 			{
 				goto error;
 			}
+
+			errorState = 1;
 
 			m_d3d12dll = bx::dlopen("d3d12.dll");
 			BX_WARN(NULL != m_d3d12dll, "Failed to load d3d12.dll.");
@@ -489,7 +492,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 1;
+			errorState = 2;
 
 			D3D12CreateDevice = (PFN_D3D12_CREATE_DEVICE)bx::dlsym(m_d3d12dll, "D3D12CreateDevice");
 			BX_WARN(NULL != D3D12CreateDevice, "Function D3D12CreateDevice not found.");
@@ -515,7 +518,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 2;
+			errorState = 3;
 
 			CreateDXGIFactory1 = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory1");
 			BX_WARN(NULL != CreateDXGIFactory1, "Function CreateDXGIFactory1 not found.");
@@ -525,7 +528,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 #else
-			errorState = 2;
+			errorState = 4;
 #endif // USE_D3D12_DYNAMIC_LIB
 
 			HRESULT hr;
@@ -538,57 +541,59 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-			errorState = 3;
+			errorState = 4;
 
 			m_adapter = NULL;
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
 
-			IDXGIAdapter3* adapter;
-			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 			{
-				DXGI_ADAPTER_DESC desc;
-				hr = adapter->GetDesc(&desc);
-				if (SUCCEEDED(hr) )
+				IDXGIAdapter3* adapter;
+				for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 				{
-					BX_TRACE("Adapter #%d", ii);
-
-					char description[BX_COUNTOF(desc.Description)];
-					wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-					BX_TRACE("\tDescription: %s", description);
-					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-							, desc.VendorId
-							, desc.DeviceId
-							, desc.SubSysId
-							, desc.Revision
-							);
-					BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-							, desc.DedicatedVideoMemory
-							, desc.DedicatedSystemMemory
-							, desc.SharedSystemMemory
-							);
-
-					g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
-					g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
-					++g_caps.numGPUs;
-
-					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
-					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
-					&&   (0 == g_caps.deviceId                || desc.DeviceId == g_caps.deviceId) )
+					DXGI_ADAPTER_DESC desc;
+					hr = adapter->GetDesc(&desc);
+					if (SUCCEEDED(hr) )
 					{
-						m_adapter = adapter;
-						m_adapter->AddRef();
-						m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+						BX_TRACE("Adapter #%d", ii);
+
+						char description[BX_COUNTOF(desc.Description)];
+						wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
+						BX_TRACE("\tDescription: %s", description);
+						BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+								, desc.VendorId
+								, desc.DeviceId
+								, desc.SubSysId
+								, desc.Revision
+								);
+						BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
+								, desc.DedicatedVideoMemory
+								, desc.DedicatedSystemMemory
+								, desc.SharedSystemMemory
+								);
+
+						g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
+						g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
+						++g_caps.numGPUs;
+
+						if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
+						&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
+						&&   (0 == g_caps.deviceId                || desc.DeviceId == g_caps.deviceId) )
+						{
+							m_adapter = adapter;
+							m_adapter->AddRef();
+							m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+						}
+
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
+						&&  0 != strstr(description, "PerfHUD") )
+						{
+							m_adapter = adapter;
+							m_driverType = D3D_DRIVER_TYPE_REFERENCE;
+						}
 					}
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-					&&  0 != strstr(description, "PerfHUD") )
-					{
-						m_adapter = adapter;
-						m_driverType = D3D_DRIVER_TYPE_REFERENCE;
-					}
+					DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
 				}
-
-				DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
@@ -602,51 +607,67 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			static D3D_FEATURE_LEVEL featureLevel[] =
 			{
-				D3D_FEATURE_LEVEL_12_1,
-				D3D_FEATURE_LEVEL_12_0,
-				D3D_FEATURE_LEVEL_11_1,
-				D3D_FEATURE_LEVEL_11_0,
-			};
+				static D3D_FEATURE_LEVEL featureLevel[] =
+				{
+					D3D_FEATURE_LEVEL_12_1,
+					D3D_FEATURE_LEVEL_12_0,
+					D3D_FEATURE_LEVEL_11_1,
+					D3D_FEATURE_LEVEL_11_0,
+				};
 
-			hr = E_FAIL;
-			for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr); ++ii)
-			{
-				hr = D3D12CreateDevice(m_adapter
-						, featureLevel[ii]
-						, IID_ID3D12Device
-						, (void**)&m_device
-						);
+				const char* featureLevelName[] =
+				{
+					"12.1",
+					"12.0",
+					"11.1",
+					"11.0",
+				};
+				BX_STATIC_ASSERT(BX_COUNTOF(featureLevel) == BX_COUNTOF(featureLevelName) );
+				BX_UNUSED(featureLevelName);
+
+				hr = E_FAIL;
+				for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr); ++ii)
+				{
+					hr = D3D12CreateDevice(m_adapter
+							, featureLevel[ii]
+							, IID_ID3D12Device
+							, (void**)&m_device
+							);
+					BX_WARN(FAILED(hr), "Direct3D12 device feature level %s.", featureLevelName[ii]);
+				}
+				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 			}
-			BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 
 			if (FAILED(hr) )
 			{
 				goto error;
 			}
 
-			errorState = 4;
+			errorState = 5;
 
-			memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
-			luid = m_device->GetAdapterLuid();
-			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 			{
-				adapter->GetDesc(&m_adapterDesc);
-				if (m_adapterDesc.AdapterLuid.LowPart  == luid.LowPart
-				&&  m_adapterDesc.AdapterLuid.HighPart == luid.HighPart)
+				memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
+				luid = m_device->GetAdapterLuid();
+				IDXGIAdapter3* adapter;
+				for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 				{
-					if (NULL == m_adapter)
+					adapter->GetDesc(&m_adapterDesc);
+					if (m_adapterDesc.AdapterLuid.LowPart  == luid.LowPart
+					&&  m_adapterDesc.AdapterLuid.HighPart == luid.HighPart)
 					{
-						m_adapter = adapter;
+						if (NULL == m_adapter)
+						{
+							m_adapter = adapter;
+						}
+						else
+						{
+							DX_RELEASE(adapter, 0);
+						}
+						break;
 					}
-					else
-					{
-						DX_RELEASE(adapter, 0);
-					}
-					break;
+					DX_RELEASE(adapter, 0);
 				}
-				DX_RELEASE(adapter, 0);
 			}
 
 			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
@@ -749,7 +770,7 @@ namespace bgfx { namespace d3d12
 						filter.DenyList.pCategoryList = catlist;
 						m_infoQueue->PushStorageFilter(&filter);
 
-						DX_RELEASE_WARNONLY(m_infoQueue, 19);
+						DX_RELEASE_WARNONLY(m_infoQueue, 0);
 					}
 				}
 
@@ -1011,17 +1032,19 @@ namespace bgfx { namespace d3d12
 			switch (errorState)
 			{
 			default:
-			case 4:
+			case 5:
 				m_cmd.shutdown();
 				DX_RELEASE(m_device, 0);
-			case 3:
+			case 4:
 				DX_RELEASE(m_adapter, 0);
 				DX_RELEASE(m_factory, 0);
 #if USE_D3D12_DYNAMIC_LIB
-			case 2:
+			case 3:
 				bx::dlclose(m_dxgidll);
-			case 1:
+			case 2:
 				bx::dlclose(m_d3d12dll);
+			case 1:
+				bx::dlclose(m_kernel32dll);
 #endif // USE_D3D12_DYNAMIC_LIB
 			case 0:
 				break;
@@ -1079,8 +1102,9 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_factory, 0);
 
 #if USE_D3D12_DYNAMIC_LIB
-			bx::dlclose(m_d3d12dll);
 			bx::dlclose(m_dxgidll);
+			bx::dlclose(m_d3d12dll);
+			bx::dlclose(m_kernel32dll);
 #endif // USE_D3D12_DYNAMIC_LIB
 		}
 
@@ -1357,7 +1381,7 @@ namespace bgfx { namespace d3d12
 
 			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			D3D12_TEXTURE_COPY_LOCATION dst = { readback,   D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout };
-			D3D12_TEXTURE_COPY_LOCATION src = { backBuffer, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 }  };
+			D3D12_TEXTURE_COPY_LOCATION src = { backBuffer, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}     };
 			m_commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
 			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
 			finish();
@@ -2125,7 +2149,7 @@ data.NumQualityLevels = 0;
 				bx::seek(&wr, 0, bx::Whence::Begin);
 				union { uint32_t offset; void* ptr; } cast =
 				{
-					m_currentProgram->m_vsh->m_size/16
+					uint32_t(m_currentProgram->m_vsh->m_size)/16
 				};
 				filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 				write(&wr, dxbc);
@@ -2455,6 +2479,7 @@ data.NumQualityLevels = 0;
 			m_commandList = NULL;
 		}
 
+		void* m_kernel32dll;
 		void* m_d3d12dll;
 		void* m_dxgidll;
 
@@ -2988,7 +3013,7 @@ data.NumQualityLevels = 0;
 		m_size    = _size;
 		m_flags   = _flags;
 
-		const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE|BGFX_BUFFER_DRAW_INDIRECT));
+		const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE|BGFX_BUFFER_DRAW_INDIRECT) );
 //		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
 		const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
 		m_dynamic = NULL == _data || needUav;
@@ -3061,7 +3086,10 @@ data.NumQualityLevels = 0;
 
 		m_ptr   = createCommittedResource(device, HeapProperty::Default, _size, flags);
 		m_gpuVA = m_ptr->GetGPUVirtualAddress();
-		setState(commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+		setState(commandList, drawIndirect
+			? D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
+			: D3D12_RESOURCE_STATE_GENERIC_READ
+			);
 
 		if (!m_dynamic)
 		{
@@ -3646,8 +3674,9 @@ data.NumQualityLevels = 0;
 		box.front  = _z;
 		box.back   = _z+_depth;
 
-		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { subres } };
-		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout     };
+		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}     };
+		dst.SubresourceIndex = subres;
+		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout };
 		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, 0, &src, &box);
 
 		setState(_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -3889,8 +3918,8 @@ data.NumQualityLevels = 0;
 		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
 
-		const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(pt >> BGFX_STATE_PT_SHIFT);
+		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 
 		bool wasCompute = false;
@@ -3992,12 +4021,12 @@ data.NumQualityLevels = 0;
 					rc.bottom = viewScissorRect.m_y + viewScissorRect.m_height;
 					m_commandList->RSSetScissorRects(1, &rc);
 
-					Clear& clear = _render->m_clear[view];
-					if (BGFX_CLEAR_NONE != clear.m_flags)
+					Clear& clr = _render->m_clear[view];
+					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
 						Rect clearRect = rect;
 						clearRect.intersect(rect, viewScissorRect);
-						clearQuad(_clearQuad, clearRect, clear, _render->m_clearColor);
+						clearQuad(_clearQuad, clearRect, clr, _render->m_clearColor);
 					}
 
 					prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update.
@@ -4011,7 +4040,6 @@ data.NumQualityLevels = 0;
 					}
 					const RenderCompute& compute = renderItem.compute;
 
-					bool programChanged = false;
 					bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
 					rendererUpdateUniforms(this, _render->m_constantBuffer, compute.m_constBegin, compute.m_constEnd);
 
@@ -4021,9 +4049,6 @@ data.NumQualityLevels = 0;
 
 						ProgramD3D12& program = m_program[key.m_program];
 						m_currentProgram = &program;
-
-						programChanged =
-							constantsChanged = true;
 					}
 
 					if (invalidHandle != programIdx)
@@ -4140,6 +4165,7 @@ data.NumQualityLevels = 0;
 				{
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 					{
+						BX_UNUSED(s_viewNameW);
 // 						wchar_t* viewNameW = s_viewNameW[view];
 // 						viewNameW[3] = L' ';
 // 						PIX_ENDEVENT();
@@ -4206,12 +4232,12 @@ data.NumQualityLevels = 0;
 				{
 					blendFactor = draw.m_rgba;
 
-					float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-					blendFactor[0] = ( (draw.m_rgba>>24)     )/255.0f;
-					blendFactor[1] = ( (draw.m_rgba>>16)&0xff)/255.0f;
-					blendFactor[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
-					blendFactor[3] = ( (draw.m_rgba    )&0xff)/255.0f;
-					m_commandList->OMSetBlendFactor(blendFactor);
+					float bf[4];
+					bf[0] = ( (draw.m_rgba>>24)     )/255.0f;
+					bf[1] = ( (draw.m_rgba>>16)&0xff)/255.0f;
+					bf[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
+					bf[3] = ( (draw.m_rgba    )&0xff)/255.0f;
+					m_commandList->OMSetBlendFactor(bf);
 				}
 
 				if (BGFX_STATE_PT_MASK & changedFlags)
@@ -4227,8 +4253,6 @@ data.NumQualityLevels = 0;
 
 				if (isValid(draw.m_vertexBuffer) )
 				{
-					bool programChanged = false;
-
 					if (key.m_program != programIdx)
 					{
 						programIdx = key.m_program;
@@ -4242,9 +4266,6 @@ data.NumQualityLevels = 0;
 							ProgramD3D12& program = m_program[programIdx];
 							m_currentProgram = &program;
 						}
-
-						programChanged =
-							constantsChanged = true;
 					}
 
 					if (invalidHandle != programIdx)
