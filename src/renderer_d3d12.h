@@ -13,15 +13,15 @@
 
 #if defined(__MINGW32__) // BK - temp workaround for MinGW until I nuke d3dx12 usage.
 extern "C++" {
-__extension__ template<typename Ty>
-const GUID& __mingw_uuidof();
+	__extension__ template<typename Ty>
+	const GUID& __mingw_uuidof();
 
-template<>
-const GUID& __mingw_uuidof<ID3D12Device>()
-{
-	static const GUID IID_ID3D12Device0 = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
-	return IID_ID3D12Device0;
-}
+	template<>
+	const GUID& __mingw_uuidof<ID3D12Device>()
+	{
+		static const GUID IID_ID3D12Device0 = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
+		return IID_ID3D12Device0;
+	}
 }
 #endif // defined(__MINGW32__)
 
