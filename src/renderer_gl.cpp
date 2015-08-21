@@ -2828,7 +2828,7 @@ namespace bgfx { namespace gl
 					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
 					BX_CHECK(vertexDecl.m_stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", vertexDecl.m_stride, sizeof(Vertex) );
 
-					const float depth = _clear.m_depth;
+					const float depth = _clear.m_depth * 2.0f - 1.0f;
 
 					vertex->m_x = -1.0f;
 					vertex->m_y = -1.0f;
