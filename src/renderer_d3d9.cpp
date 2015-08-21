@@ -282,7 +282,8 @@ namespace bgfx { namespace d3d9
 			, m_initialized(false)
 			, m_amd(false)
 			, m_nvidia(false)
-			, m_instancing(false)
+			, m_instancingSupport(false)
+			, m_timerQuerySupport(false)
 			, m_rtMsaa(false)
 		{
 		}
@@ -551,7 +552,7 @@ namespace bgfx { namespace d3d9
 					BX_UNUSED(fourcc);
 				}
 
-				m_instancing = false
+				m_instancingSupport = false
 					|| s_extendedFormats[ExtendedFormat::Inst].m_supported
 					|| (m_caps.VertexShaderVersion >= D3DVS_VERSION(3, 0) )
 					;
@@ -571,7 +572,7 @@ namespace bgfx { namespace d3d9
 				s_textureFormat[TextureFormat::BC4].m_fmt = s_extendedFormats[ExtendedFormat::Ati1].m_supported ? D3DFMT_ATI1 : D3DFMT_UNKNOWN;
 				s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
 
-				g_caps.supported |= m_instancing ? BGFX_CAPS_INSTANCING : 0;
+				g_caps.supported |= m_instancingSupport ? BGFX_CAPS_INSTANCING : 0;
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
@@ -660,6 +661,18 @@ namespace bgfx { namespace d3d9
 
 			m_fmtDepth = D3DFMT_D24FS8;
 #endif // BX_PLATFORM_WINDOWS
+
+			{
+				IDirect3DQuery9* timerQueryTest[3] = {};
+				m_timerQuerySupport = true
+					&& SUCCEEDED(m_device->CreateQuery(D3DQUERYTYPE_TIMESTAMPDISJOINT, &timerQueryTest[0]) )
+					&& SUCCEEDED(m_device->CreateQuery(D3DQUERYTYPE_TIMESTAMP,         &timerQueryTest[1]) )
+					&& SUCCEEDED(m_device->CreateQuery(D3DQUERYTYPE_TIMESTAMPFREQ,     &timerQueryTest[2]) )
+					;
+				DX_RELEASE(timerQueryTest[0], 0);
+				DX_RELEASE(timerQueryTest[1], 0);
+				DX_RELEASE(timerQueryTest[2], 0);
+			}
 
 			{
 				IDirect3DSwapChain9* swapChain;
@@ -1344,7 +1357,10 @@ namespace bgfx { namespace d3d9
 			capturePreReset();
 
 			DX_RELEASE(m_flushQuery, 0);
-			m_gpuTimer.preReset();
+			if (m_timerQuerySupport)
+			{
+				m_gpuTimer.preReset();
+			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
@@ -1374,7 +1390,10 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(m_device->GetDepthStencilSurface(&m_backBufferDepthStencil) );
 
 			DX_CHECK(m_device->CreateQuery(D3DQUERYTYPE_EVENT, &m_flushQuery) );
-			m_gpuTimer.postReset();
+			if (m_timerQuerySupport)
+			{
+				m_gpuTimer.postReset();
+			}
 
 			capturePostReset();
 
@@ -1865,7 +1884,8 @@ namespace bgfx { namespace d3d9
 		bool m_initialized;
 		bool m_amd;
 		bool m_nvidia;
-		bool m_instancing;
+		bool m_instancingSupport;
+		bool m_timerQuerySupport;
 
 		D3DFORMAT m_fmtDepth;
 
@@ -3129,7 +3149,10 @@ namespace bgfx { namespace d3d9
 		int64_t captureElapsed = 0;
 
 		device->BeginScene();
-		m_gpuTimer.begin();
+		if (m_timerQuerySupport)
+		{
+			m_gpuTimer.begin();
+		}
 
 		if (0 < _render->m_iboffset)
 		{
@@ -3542,7 +3565,7 @@ namespace bgfx { namespace d3d9
 						DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
 
 						if (isValid(draw.m_instanceDataBuffer)
-						&&  m_instancing)
+						&&  m_instancingSupport)
 						{
 							const VertexBufferD3D9& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
 							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|draw.m_numInstances) );
@@ -3685,15 +3708,18 @@ namespace bgfx { namespace d3d9
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
 
-		m_gpuTimer.end();
-
-		while (m_gpuTimer.get() )
+		if (m_timerQuerySupport)
 		{
-			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			m_gpuTimer.end();
+
+			while (m_gpuTimer.get() )
+			{
+				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			}
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 		}
-		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
