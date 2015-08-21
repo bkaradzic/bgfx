@@ -2603,6 +2603,7 @@ namespace bgfx
 				sr.m_refCount = 1;
 				sr.m_hash     = iohash;
 				sr.m_num      = 0;
+				sr.m_owned    = false;
 				sr.m_uniforms = NULL;
 
 				UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
@@ -2682,6 +2683,16 @@ namespace bgfx
 			shaderDecRef(_handle);
 		}
 
+		void shaderTakeOwnership(ShaderHandle _handle)
+		{
+			ShaderRef& sr = m_shaderRef[_handle.idx];
+			if (!sr.m_owned)
+			{
+				sr.m_owned = true;
+				shaderDecRef(_handle);
+			}
+		}
+
 		void shaderIncRef(ShaderHandle _handle)
 		{
 			ShaderRef& sr = m_shaderRef[_handle.idx];
@@ -2712,7 +2723,7 @@ namespace bgfx
 			}
 		}
 
-		BGFX_API_FUNC(ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh) )
+		BGFX_API_FUNC(ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders) )
 		{
 			if (!isValid(_vsh)
 			||  !isValid(_fsh) )
@@ -2749,10 +2760,16 @@ namespace bgfx
 				cmdbuf.write(_fsh);
 			}
 
+			if (_destroyShaders)
+			{
+				shaderTakeOwnership(_vsh);
+				shaderTakeOwnership(_fsh);
+			}
+
 			return handle;
 		}
 
-		BGFX_API_FUNC(ProgramHandle createProgram(ShaderHandle _vsh) )
+		BGFX_API_FUNC(ProgramHandle createProgram(ShaderHandle _vsh, bool _destroyShader) )
 		{
 			if (!isValid(_vsh) )
 			{
@@ -2777,6 +2794,11 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_vsh);
 				cmdbuf.write(fsh);
+			}
+
+			if (_destroyShader)
+			{
+				shaderTakeOwnership(_vsh);
 			}
 
 			return handle;
@@ -3564,6 +3586,7 @@ namespace bgfx
 			uint32_t m_hash;
 			int16_t  m_refCount;
 			uint16_t m_num;
+			bool     m_owned;
 		};
 
 		struct ProgramRef

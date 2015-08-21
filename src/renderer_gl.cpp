@@ -978,7 +978,8 @@ namespace bgfx { namespace gl
 			? tfi.m_internalFmtSrgb
 			: tfi.m_internalFmt
 			;
-		if (GL_ZERO == internalFmt)
+		if (!s_textureFormat[_format].m_supported
+		||  GL_ZERO == internalFmt)
 		{
 			return false;
 		}
@@ -1284,6 +1285,13 @@ namespace bgfx { namespace gl
 
 			// Allow all texture filters.
 			memset(s_textureFilter, true, BX_COUNTOF(s_textureFilter) );
+			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			{
+				s_textureFormat[ii].m_supported = true
+					&& TextureFormat::Unknown != ii
+					&& TextureFormat::UnknownDepth != ii
+					;
+			}
 
 			bool bc123Supported = 0
 				|| s_extension[Extension::EXT_texture_compression_s3tc        ].m_supported
@@ -1632,14 +1640,17 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 				;
 
-			m_timerQuerySupport = 0
+			m_timerQuerySupport = false
 				|| s_extension[Extension::ANGLE_timer_query       ].m_supported
 				|| s_extension[Extension::ARB_timer_query         ].m_supported
 				|| s_extension[Extension::EXT_disjoint_timer_query].m_supported
 				|| s_extension[Extension::EXT_timer_query         ].m_supported
 				;
 
-			m_timerQuerySupport &= NULL != glGetQueryObjectui64v;
+			m_timerQuerySupport &= true
+				&& NULL != glGetQueryObjectiv
+				&& NULL != glGetQueryObjectui64v
+				;
 
 			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
@@ -1651,10 +1662,7 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
-			g_caps.supported |= GlContext::isSwapChainSupported()
-				? BGFX_CAPS_SWAP_CHAIN
-				: 0
-				;
+			g_caps.supported |= m_glctx.getCaps();
 
 			if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 			{
@@ -1764,7 +1772,7 @@ namespace bgfx { namespace gl
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			&&  m_timerQuerySupport)
 			{
-				m_queries.create();
+				m_gpuTimer.create();
 			}
 
 			// Init reserved part of view name.
@@ -1795,7 +1803,7 @@ namespace bgfx { namespace gl
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			&&  m_timerQuerySupport)
 			{
-				m_queries.destroy();
+				m_gpuTimer.destroy();
 			}
 
 			destroyMsaaFbo();
@@ -2691,10 +2699,10 @@ namespace bgfx { namespace gl
 //					}
 //					break;
 
-					CASE_IMPLEMENT_UNIFORM(Int1, 1iv, I, int);
-					CASE_IMPLEMENT_UNIFORM(Vec4, 4fv, F, float);
-					CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
-					CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM(Int1, 1iv, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4, 4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
+				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
 
 				case UniformType::End:
 					break;
@@ -2891,7 +2899,7 @@ namespace bgfx { namespace gl
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
-		QueriesGL m_queries;
+		TimerQueryGL m_gpuTimer;
 
 		VaoStateCache m_vaoStateCache;
 		SamplerStateCache m_samplerStateCache;
@@ -4840,7 +4848,7 @@ namespace bgfx { namespace gl
 
 		if (m_timerQuerySupport)
 		{
-			m_queries.begin(0, GL_TIME_ELAPSED);
+			m_gpuTimer.begin();
 		}
 
 		if (0 < _render->m_iboffset)
@@ -5810,13 +5818,21 @@ namespace bgfx { namespace gl
 		min = min > frameTime ? frameTime : min;
 		max = max < frameTime ? frameTime : max;
 
+		static uint32_t maxGpuLatency = 0;
+		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
 		uint64_t elapsedGl  = 0;
+
 		if (m_timerQuerySupport)
 		{
-			m_queries.end(GL_TIME_ELAPSED);
-			elapsedGl    = m_queries.getResult(0);
-			elapsedGpuMs = double(elapsedGl)/1e6;
+			m_gpuTimer.end();
+			while (m_gpuTimer.get() )
+			{
+				elapsedGl     = m_gpuTimer.m_elapsed;
+				elapsedGpuMs  = double(elapsedGl)/1e6;
+				maxGpuElapsed = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			}
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 		}
 
 		const int64_t timerFreq = bx::getHPFrequency();
@@ -5844,10 +5860,10 @@ namespace bgfx { namespace gl
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
 					, getRendererName()
 					);
-				tvm.printf(0, pos++, 0x0f, "      Vendor: %s", m_vendor);
-				tvm.printf(0, pos++, 0x0f, "    Renderer: %s", m_renderer);
-				tvm.printf(0, pos++, 0x0f, "     Version: %s", m_version);
-				tvm.printf(0, pos++, 0x0f, "GLSL version: %s", m_glslVersion);
+				tvm.printf(0, pos++, 0x8f, "       Vendor: %s ", m_vendor);
+				tvm.printf(0, pos++, 0x8f, "     Renderer: %s ", m_renderer);
+				tvm.printf(0, pos++, 0x8f, "      Version: %s ", m_version);
+				tvm.printf(0, pos++, 0x8f, " GLSL version: %s ", m_glslVersion);
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "      Frame CPU: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
@@ -5870,18 +5886,21 @@ namespace bgfx { namespace gl
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms]"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
 					, elapsedCpuMs
 					, elapsedCpuMs > elapsedGpuMs ? '>' : '<'
-					, elapsedGpuMs
+					, maxGpuElapsed
+					, maxGpuLatency
 					);
+				maxGpuLatency = 0;
+				maxGpuElapsed = 0.0;
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primInfo); ++ii)
 				{
-					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"
+					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d "
 						, s_primName[ii]
 						, statsNumPrimsRendered[ii]
 						, statsNumInstances[ii]
@@ -5894,9 +5913,9 @@ namespace bgfx { namespace gl
 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
 				}
 
-				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", _render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", _render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "     Indices: %7d ", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d ", _render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d ", _render->m_iboffset);
 
 				pos++;
 				tvm.printf(10, pos++, 0x8e, " State cache:     ");
@@ -5905,10 +5924,6 @@ namespace bgfx { namespace gl
 					, m_vaoStateCache.getCount()
 					, m_samplerStateCache.getCount()
 					);
-				pos++;
-
-				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "    Capture: %3.4f [ms]", captureMs);
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 				if (s_extension[Extension::ATI_meminfo].m_supported)
@@ -5923,7 +5938,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, rbfFree) );
 
 					pos++;
-					tvm.printf(10, pos++, 0x8c, " -------------|    free|  free b|     aux|  aux fb");
+					tvm.printf(10, pos++, 0x8c, " -------------|    free|  free b|     aux|  aux fb ");
 
 					char tmp0[16];
 					char tmp1[16];
@@ -5934,19 +5949,19 @@ namespace bgfx { namespace gl
 					bx::prettify(tmp1, BX_COUNTOF(tmp1), vboFree[1]);
 					bx::prettify(tmp2, BX_COUNTOF(tmp2), vboFree[2]);
 					bx::prettify(tmp3, BX_COUNTOF(tmp3), vboFree[3]);
-					tvm.printf(10, pos++, 0x8e, "           VBO: %10s, %10s, %10s, %10s", tmp0, tmp1, tmp2, tmp3);
+					tvm.printf(10, pos++, 0x8e, "           VBO: %10s, %10s, %10s, %10s ", tmp0, tmp1, tmp2, tmp3);
 
 					bx::prettify(tmp0, BX_COUNTOF(tmp0), texFree[0]);
 					bx::prettify(tmp1, BX_COUNTOF(tmp1), texFree[1]);
 					bx::prettify(tmp2, BX_COUNTOF(tmp2), texFree[2]);
 					bx::prettify(tmp3, BX_COUNTOF(tmp3), texFree[3]);
-					tvm.printf(10, pos++, 0x8e, "       Texture: %10s, %10s, %10s, %10s", tmp0, tmp1, tmp2, tmp3);
+					tvm.printf(10, pos++, 0x8e, "       Texture: %10s, %10s, %10s, %10s ", tmp0, tmp1, tmp2, tmp3);
 
 					bx::prettify(tmp0, BX_COUNTOF(tmp0), rbfFree[0]);
 					bx::prettify(tmp1, BX_COUNTOF(tmp1), rbfFree[1]);
 					bx::prettify(tmp2, BX_COUNTOF(tmp2), rbfFree[2]);
 					bx::prettify(tmp3, BX_COUNTOF(tmp3), rbfFree[3]);
-					tvm.printf(10, pos++, 0x8e, " Render Buffer: %10s, %10s, %10s, %10s", tmp0, tmp1, tmp2, tmp3);
+					tvm.printf(10, pos++, 0x8e, " Render Buffer: %10s, %10s, %10s, %10s ", tmp0, tmp1, tmp2, tmp3);
 				}
 				else if (s_extension[Extension::NVX_gpu_memory_info].m_supported)
 				{
@@ -5964,30 +5979,34 @@ namespace bgfx { namespace gl
 					GLint evictedMemory;
 					GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evictedMemory) );
 
-					pos += 2;
+					pos++;
 
 					char tmp0[16];
 					char tmp1[16];
 
 					bx::prettify(tmp0, BX_COUNTOF(tmp0), dedicated);
-					tvm.printf(10, pos++, 0x8e, " Dedicated: %10s", tmp0);
+					tvm.printf(10, pos++, 0x8e, " Dedicated: %10s ", tmp0);
 
 					bx::prettify(tmp0, BX_COUNTOF(tmp0), currAvail);
 					bx::prettify(tmp1, BX_COUNTOF(tmp1), totalAvail);
-					tvm.printf(10, pos++, 0x8e, " Available: %10s / %10s", tmp0, tmp1);
+					tvm.printf(10, pos++, 0x8e, " Available: %10s / %10s ", tmp0, tmp1);
 
 					bx::prettify(tmp0, BX_COUNTOF(tmp0), evictedCount);
 					bx::prettify(tmp1, BX_COUNTOF(tmp1), evictedMemory);
-					tvm.printf(10, pos++, 0x8e, "  Eviction: %10s / %10s", tmp0, tmp1);
+					tvm.printf(10, pos++, 0x8e, "  Eviction: %10s / %10s ", tmp0, tmp1);
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
+
+				pos++;
+				double captureMs = double(captureElapsed)*toMs;
+				tvm.printf(10, pos++, 0x8e, "    Capture: %7.4f [ms] ", captureMs);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = _render->m_waitSubmit < _render->m_waitRender;
 
 				pos++;
-				tvm.printf(10, pos++, attr[attrIndex&1], "Submit wait: %3.4f [ms]", double(_render->m_waitSubmit)*toMs);
-				tvm.printf(10, pos++, attr[(attrIndex+1)&1], "Render wait: %3.4f [ms]", double(_render->m_waitRender)*toMs);
+				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %7.4f [ms] ", double(_render->m_waitSubmit)*toMs);
+				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %7.4f [ms] ", double(_render->m_waitRender)*toMs);
 
 				min = frameTime;
 				max = frameTime;

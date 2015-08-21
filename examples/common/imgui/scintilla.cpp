@@ -5,8 +5,16 @@
 
 #if defined(SCI_NAMESPACE)
 
+#include <bx/bx.h>
+
 #include <algorithm>
 #include <map>
+
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <compat/ctype.h>
+#endif // BX_PLATFORM_EMSCRIPTEN
+
+#include <string>
 #include <vector>
 #include <string.h>
 
@@ -452,8 +460,6 @@ public:
 	Editor()
 		: m_width(0)
 		, m_height(0)
-		, m_wheelVRotation(0)
-		, m_wheelHRotation(0)
 		, m_searchResultIndication(0xff5A5A5A)
 		, m_filteredSearchResultIndication(0xff5a5a5a)
 		, m_occurrenceIndication(0xff5a5a5a)
@@ -806,8 +812,6 @@ public:
 private:
 	int m_width;
 	int m_height;
-	int m_wheelVRotation;
-	int m_wheelHRotation;
 	int m_lastFirstVisibleLine;
 
 	Scintilla::ColourDesired m_searchResultIndication;

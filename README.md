@@ -81,10 +81,19 @@ focusing on racing games.
 https://github.com/andr3wmac/Torque6 Torque 6 is an MIT licensed 3D engine
 loosely based on Torque2D. Being neither Torque2D or Torque3D it is the 6th
 derivative of the original Torque Engine.
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=p4LTM_QGK34
+" target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
+alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
 https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
 JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
 deployment model of web with the performance of native code and GPU acceleration.
+
+https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
+The main goal is performance and Unity-like usability.
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=eyqk61Yw52E
+" target="_blank"><img src="http://img.youtube.com/vi/eyqk61Yw52E/0.jpg" 
+alt="LumixEngine Terrain Editor" width="640" height="480" border="0" /></a>
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------
@@ -101,6 +110,10 @@ deployment model of web with the performance of native code and GPU acceleration
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
+<a href="http://opensource.org/licenses/BSD-2-Clause" target="_blank">
+<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+</a>
+
 	Copyright 2010-2015 Branimir Karadzic. All rights reserved.
 	
 	https://github.com/bkaradzic/bgfx
@@ -111,17 +124,17 @@ deployment model of web with the performance of native code and GPU acceleration
 	   1. Redistributions of source code must retain the above copyright notice,
 	      this list of conditions and the following disclaimer.
 	
-	   2. Redistributions in binary form must reproduce the above copyright notice,
-	      this list of conditions and the following disclaimer in the documentation
-	      and/or other materials provided with the distribution.
+	   2. Redistributions in binary form must reproduce the above copyright
+	      notice, this list of conditions and the following disclaimer in the
+	      documentation and/or other materials provided with the distribution.
 	
 	THIS SOFTWARE IS PROVIDED BY COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
 	EVENT SHALL COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-	INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-	LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-	OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-	ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+	ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

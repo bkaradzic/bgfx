@@ -71,25 +71,12 @@ vec2 unpackHalf2x16(uint _x)
 #define NUM_THREADS(_x, _y, _z) [numthreads(_x, _y, _z)]
 
 #define __IMAGE_IMPL(_textureType, _storeComponents, _type, _loadComponents) \
-			_type imageLoad(Texture2D<_textureType> _image, ivec2 _uv) \
-			{ \
-				return _image.mips[0][_uv]._loadComponents; \
-			} \
-			\
-			void imageStore(RWTexture2D<_textureType> _image, ivec2 _uv, _type _value) \
-			{ \
-				_image[_uv] = _value._storeComponents; \
-			} \
-			\
-			_type imageLoad(Texture3D<_textureType> _image, ivec3 _uv) \
-			{ \
-				return _image.mips[0][_uv]._loadComponents; \
-			} \
-			\
-			void imageStore(RWTexture3D<_textureType> _image, ivec3 _uv, _type _value) \
-			{ \
-				_image[_uv] = _value._storeComponents; \
-			}
+	_type imageLoad(  Texture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
+	_type imageLoad(  Texture3D<_textureType> _image, ivec3 _uvw)               { return _image[_uvw]._loadComponents;    } \
+	_type imageLoad(RWTexture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
+	_type imageLoad(RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { return _image[_uvw]._loadComponents;    } \
+	void imageStore(RWTexture2D<_textureType> _image, ivec2 _uv,  _type _value) { _image[_uv ] = _value._storeComponents; } \
+	void imageStore(RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { _image[_uvw] = _value._storeComponents; }
 
 __IMAGE_IMPL(float, x,    vec4,  xxxx)
 __IMAGE_IMPL(vec2,  xy,   vec4,  xyyy)
@@ -103,12 +90,6 @@ __IMAGE_IMPL(int,   x,    ivec4, xxxx)
 __IMAGE_IMPL(ivec2, xy,   ivec4, xyyy)
 __IMAGE_IMPL(ivec3, xyz,  ivec4, xyzz)
 __IMAGE_IMPL(ivec4, xyzw, ivec4, xyzw)
-
-uint4 imageLoad(RWTexture2D<uint> _image, ivec2 _uv)
-{
-	uint rr = _image[_uv.xy];
-	return uint4(rr, rr, rr, rr);
-}
 
 ivec2 imageSize(Texture2D _image)
 {

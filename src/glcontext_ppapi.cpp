@@ -153,9 +153,9 @@ namespace bgfx { namespace gl
 		s_ppapi.resize(_width, _height, _flags);
 	}
 
-	bool GlContext::isSwapChainSupported()
+	uint64_t GlContext::getCaps() const
 	{
-		return false;
+		return 0;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* /*_nwh*/)

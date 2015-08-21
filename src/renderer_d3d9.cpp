@@ -293,7 +293,18 @@ namespace bgfx { namespace d3d9
 
 		bool init()
 		{
-			uint32_t errorState = 0;
+			struct ErrorState
+			{
+				enum Enum
+				{
+					Default,
+					LoadedD3D9,
+					CreatedD3D9,
+					CreatedDevice,
+				};
+			};
+
+			ErrorState::Enum errorState = ErrorState::Default;
 
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
@@ -332,7 +343,7 @@ namespace bgfx { namespace d3d9
 				goto error;
 			}
 
-			errorState = 1;
+			errorState = ErrorState::LoadedD3D9;
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
@@ -378,7 +389,7 @@ namespace bgfx { namespace d3d9
 				goto error;
 			}
 
-			errorState = 2;
+			errorState = ErrorState::CreatedD3D9;
 
 			{
 				m_adapter    = D3DADAPTER_DEFAULT;
@@ -473,7 +484,7 @@ namespace bgfx { namespace d3d9
 				goto error;
 			}
 
-			errorState = 3;
+			errorState = ErrorState::CreatedDevice;
 
 			m_numWindows = 1;
 
@@ -680,9 +691,7 @@ namespace bgfx { namespace d3d9
 		error:
 			switch (errorState)
 			{
-			default:
-
-			case 3:
+			case ErrorState::CreatedDevice:
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				if (NULL != m_d3d9ex)
 				{
@@ -695,7 +704,7 @@ namespace bgfx { namespace d3d9
 					DX_RELEASE(m_device, 0);
 				}
 
-			case 2:
+			case ErrorState::CreatedD3D9:
 #if BGFX_CONFIG_RENDERER_DIRECT3D9EX
 				if (NULL != m_d3d9ex)
 				{
@@ -709,11 +718,11 @@ namespace bgfx { namespace d3d9
 				}
 
 #if BX_PLATFORM_WINDOWS
-			case 1:
+			case ErrorState::LoadedD3D9:
 				bx::dlclose(m_d3d9dll);
 #endif // BX_PLATFORM_WINDOWS
 
-			case 0:
+			case ErrorState::Default:
 				break;
 			}
 
@@ -1621,7 +1630,6 @@ namespace bgfx { namespace d3d9
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _constantBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-
 #undef CASE_IMPLEMENT_UNIFORM
 			}
 		}
@@ -3717,7 +3725,7 @@ namespace bgfx { namespace d3d9
 					);
 
 				const D3DADAPTER_IDENTIFIER9& identifier = m_identifier;
-				tvm.printf(0, pos++, 0x0f, " Device: %s (%s)", identifier.Description, identifier.Driver);
+				tvm.printf(0, pos++, 0x8f, " Device: %s (%s)", identifier.Description, identifier.Driver);
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "       Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
@@ -3736,7 +3744,7 @@ namespace bgfx { namespace d3d9
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d)"
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
@@ -3763,13 +3771,13 @@ namespace bgfx { namespace d3d9
 				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", _render->m_iboffset);
 
 				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
+				tvm.printf(10, pos++, 0x8e, "     Capture: %7.4f [ms]", captureMs);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = _render->m_waitSubmit < _render->m_waitRender;
 
-				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %3.4f [ms]", _render->m_waitSubmit*toMs);
-				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %3.4f [ms]", _render->m_waitRender*toMs);
+				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %7.4f [ms]", _render->m_waitSubmit*toMs);
+				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %7.4f [ms]", _render->m_waitRender*toMs);
 
 				min = frameTime;
 				max = frameTime;

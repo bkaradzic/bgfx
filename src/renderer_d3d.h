@@ -100,15 +100,15 @@ namespace bgfx
 	class StateCacheT
 	{
 	public:
-		void add(uint64_t _id, Ty* _item)
+		void add(uint64_t _key, Ty* _value)
 		{
-			invalidate(_id);
-			m_hashMap.insert(stl::make_pair(_id, _item) );
+			invalidate(_key);
+			m_hashMap.insert(stl::make_pair(_key, _value) );
 		}
 
-		Ty* find(uint64_t _id)
+		Ty* find(uint64_t _key)
 		{
-			typename HashMap::iterator it = m_hashMap.find(_id);
+			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
 				return it->second;
@@ -117,9 +117,9 @@ namespace bgfx
 			return NULL;
 		}
 
-		void invalidate(uint64_t _id)
+		void invalidate(uint64_t _key)
 		{
-			typename HashMap::iterator it = m_hashMap.find(_id);
+			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
 				DX_RELEASE_WARNONLY(it->second, 0);
@@ -151,15 +151,15 @@ namespace bgfx
 	class StateCache
 	{
 	public:
-		void add(uint64_t _id, uint16_t _item)
+		void add(uint64_t _key, uint16_t _value)
 		{
-			invalidate(_id);
-			m_hashMap.insert(stl::make_pair(_id, _item) );
+			invalidate(_key);
+			m_hashMap.insert(stl::make_pair(_key, _value) );
 		}
 
-		uint16_t find(uint64_t _id)
+		uint16_t find(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_id);
+			HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
 				return it->second;
@@ -168,9 +168,9 @@ namespace bgfx
 			return UINT16_MAX;
 		}
 
-		void invalidate(uint64_t _id)
+		void invalidate(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_id);
+			HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
 				m_hashMap.erase(it);
@@ -192,37 +192,43 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
+	template<typename Ty>
+	inline void release(Ty)
+	{
+	}
+
+	template<>
+	inline void release<IUnknown*>(IUnknown* _ptr)
+	{
+		DX_RELEASE(_ptr, 0);
+	}
+
 	template <typename Ty, uint16_t MaxHandleT>
 	class StateCacheLru
 	{
 	public:
-		void add(uint64_t _hash, Ty _value)
+		void add(uint64_t _key, Ty _value, uint16_t _parent)
 		{
 			uint16_t handle = m_alloc.alloc();
 			if (UINT16_MAX == handle)
 			{
 				uint16_t back = m_alloc.getBack();
-				m_alloc.free(back);
-				HashMap::iterator it = m_hashMap.find(m_data[back].m_hash);
-				if (it != m_hashMap.end() )
-				{
-					m_hashMap.erase(it);
-				}
-
+				invalidate(back);
 				handle = m_alloc.alloc();
 			}
 
 			BX_CHECK(UINT16_MAX != handle, "Failed to find handle.");
 
 			Data& data = m_data[handle];
-			data.m_hash  = _hash;
-			data.m_value = _value;
-			m_hashMap.insert(stl::make_pair(_hash, handle) );
+			data.m_hash   = _key;
+			data.m_value  = _value;
+			data.m_parent = _parent;
+			m_hashMap.insert(stl::make_pair(_key, handle) );
 		}
 
-		Ty* find(uint64_t _hash)
+		Ty* find(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_hash);
+			HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
 				uint16_t handle = it->second;
@@ -233,8 +239,58 @@ namespace bgfx
 			return NULL;
 		}
 
+		void invalidate(uint64_t _key)
+		{
+			HashMap::iterator it = m_hashMap.find(_key);
+			if (it != m_hashMap.end() )
+			{
+				uint16_t handle = it->second;
+				m_alloc.free(handle);
+				m_hashMap.erase(it);
+				release(m_data[handle].m_value);
+			}
+		}
+
+		void invalidate(uint16_t _handle)
+		{
+			if (m_alloc.isValid(_handle) )
+			{
+				m_alloc.free(_handle);
+				Data& data = m_data[_handle];
+				m_hashMap.erase(m_hashMap.find(data.m_hash) );
+				release(data.m_value);
+			}
+		}
+
+		void invalidateWithParent(uint16_t _parent)
+		{
+			for (uint16_t ii = 0; ii < m_alloc.getNumHandles();)
+			{
+				uint16_t handle = m_alloc.getHandleAt(ii);
+				Data& data = m_data[handle];
+
+				if (data.m_parent == _parent)
+				{
+					m_alloc.free(handle);
+					m_hashMap.erase(m_hashMap.find(data.m_hash) );
+					release(data.m_value);
+				}
+				else
+				{
+					++ii;
+				}
+			}
+		}
+
 		void invalidate()
 		{
+			for (uint16_t ii = 0, num = m_alloc.getNumHandles(); ii < num; ++ii)
+			{
+				uint16_t handle = m_alloc.getHandleAt(ii);
+				Data& data = m_data[handle];
+				release(data.m_value);
+			}
+
 			m_hashMap.clear();
 			m_alloc.reset();
 		}
@@ -252,6 +308,7 @@ namespace bgfx
 		{
 			uint64_t m_hash;
 			Ty m_value;
+			uint16_t m_parent;
 		};
 
 		Data m_data[MaxHandleT];

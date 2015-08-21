@@ -181,12 +181,7 @@ namespace bgfx
 			return bx::alignedRealloc(this, _ptr, _size, _align, _file, _line);
 		}
 
-		void checkLeaks()
-		{
-#if BGFX_CONFIG_MEMORY_TRACKING
-			BX_WARN(0 == m_numBlocks, "MEMORY LEAK: %d (max: %d)", m_numBlocks, m_maxBlocks);
-#endif // BGFX_CONFIG_MEMORY_TRACKING
-		}
+		void checkLeaks();
 
 	protected:
 #if BGFX_CONFIG_MEMORY_TRACKING
@@ -196,7 +191,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 	};
 
-	static CallbackStub* s_callbackStub = NULL;
+	static CallbackStub*  s_callbackStub  = NULL;
 	static AllocatorStub* s_allocatorStub = NULL;
 	static bool s_graphicsDebuggerPresent = false;
 
@@ -209,6 +204,19 @@ namespace bgfx
 	static Context* s_ctx = NULL;
 	static bool s_renderFrameCalled = false;
 	PlatformData g_platformData;
+
+	void AllocatorStub::checkLeaks()
+	{
+#if BGFX_CONFIG_MEMORY_TRACKING
+		// BK - CallbackStub will be deleted after printing this info, so there is always one
+		// leak if CallbackStub is used.
+		BX_WARN(uint32_t(NULL != s_callbackStub ? 1 : 0) == m_numBlocks
+			, "MEMORY LEAK: %d (max: %d)"
+			, m_numBlocks
+			, m_maxBlocks
+			);
+#endif // BGFX_CONFIG_MEMORY_TRACKING
+	}
 
 	void setPlatformData(const PlatformData& _pd)
 	{
@@ -333,7 +341,7 @@ namespace bgfx
 		case RendererType::Metal:
 			mem = makeRef(vs_debugfont_mtl, sizeof(vs_debugfont_mtl) );
 			break;
-				
+
 		default:
 			mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
 			break;
@@ -355,7 +363,7 @@ namespace bgfx
 		case RendererType::Metal:
 			mem = makeRef(fs_debugfont_mtl, sizeof(fs_debugfont_mtl) );
 			break;
-				
+
 		default:
 			mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
 			break;
@@ -579,7 +587,7 @@ namespace bgfx
 			else if (RendererType::Metal == g_caps.rendererType)
 			{
 				vsh = createShader(makeRef(vs_clear_mtl, sizeof(vs_clear_mtl) ) );
-				
+
 				const Mem mem[] =
 				{
 					Mem(fs_clear0_mtl, sizeof(fs_clear0_mtl) ),
@@ -591,7 +599,7 @@ namespace bgfx
 					Mem(fs_clear6_mtl, sizeof(fs_clear6_mtl) ),
 					Mem(fs_clear7_mtl, sizeof(fs_clear7_mtl) ),
 				};
-				
+
 				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
 				{
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
@@ -882,6 +890,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_HMD),
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
 		CAPS_FLAGS(BGFX_CAPS_DRAW_INDIRECT),
+		CAPS_FLAGS(BGFX_CAPS_HIDPI),
 #undef CAPS_FLAGS
 	};
 
@@ -1525,8 +1534,7 @@ again:
 					_type = RendererType::Null;
 				}
 			}
-			else if (BX_ENABLED(0
-				|| BX_PLATFORM_IOS ) )
+			else if (BX_ENABLED(BX_PLATFORM_IOS) )
 			{
 				if (s_rendererCreator[RendererType::Metal].supported)
 				{
@@ -1536,7 +1544,6 @@ again:
 				{
 					_type = RendererType::OpenGLES;
 				}
-				
 			}
 			else if (BX_ENABLED(0
 				 ||  BX_PLATFORM_ANDROID
@@ -2153,8 +2160,6 @@ again:
 
 			if (NULL != s_allocatorStub)
 			{
-//				s_allocatorStub->checkLeaks();
-
 				bx::CrtAllocator allocator;
 				BX_DELETE(&allocator, s_allocatorStub);
 				s_allocatorStub = NULL;
@@ -2507,28 +2512,18 @@ again:
 	ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		ProgramHandle handle = s_ctx->createProgram(_vsh, _fsh);
-
-		if (_destroyShaders)
+		if (!isValid(_fsh) )
 		{
-			destroyShader(_vsh);
-			destroyShader(_fsh);
+			return createProgram(_vsh, _destroyShaders);
 		}
 
-		return handle;
+		return s_ctx->createProgram(_vsh, _fsh, _destroyShaders);
 	}
 
 	ProgramHandle createProgram(ShaderHandle _csh, bool _destroyShader)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		ProgramHandle handle = s_ctx->createProgram(_csh);
-
-		if (_destroyShader)
-		{
-			destroyShader(_csh);
-		}
-
-		return handle;
+		return s_ctx->createProgram(_csh, _destroyShader);
 	}
 
 	void destroyProgram(ProgramHandle _handle)

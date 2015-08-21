@@ -497,7 +497,18 @@ namespace bgfx { namespace d3d11
 
 		bool init()
 		{
-			uint32_t errorState = 0;
+			struct ErrorState
+			{
+				enum Enum
+				{
+					Default,
+					LoadedD3D11,
+					LoadedDXGI,
+					CreatedDXGIFactory,
+				};
+			};
+
+			ErrorState::Enum errorState = ErrorState::Default;
 
 			// Must be before device creation, and before RenderDoc.
 			m_ovr.init();
@@ -520,7 +531,7 @@ namespace bgfx { namespace d3d11
 				goto error;
 			}
 
-			errorState = 1;
+			errorState = ErrorState::LoadedD3D11;
 
 			m_d3d9dll = NULL;
 
@@ -556,7 +567,7 @@ namespace bgfx { namespace d3d11
 				goto error;
 			}
 
-			errorState = 2;
+			errorState = ErrorState::LoadedDXGI;
 
 			CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
 			BX_WARN(NULL != CreateDXGIFactory, "Function CreateDXGIFactory not found.");
@@ -597,7 +608,7 @@ namespace bgfx { namespace d3d11
 				goto error;
 			}
 
-			errorState = 3;
+			errorState = ErrorState::CreatedDXGIFactory;
 
 			m_device = (ID3D11Device*)g_platformData.context;
 
@@ -664,7 +675,7 @@ namespace bgfx { namespace d3d11
 				}
 				DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 
-				D3D_FEATURE_LEVEL features[] =
+				D3D_FEATURE_LEVEL featureLevel[] =
 				{
 					D3D_FEATURE_LEVEL_11_1,
 					D3D_FEATURE_LEVEL_11_0,
@@ -691,12 +702,16 @@ namespace bgfx { namespace d3d11
 							, m_driverType
 							, NULL
 							, flags
-							, &features[ii]
-							, BX_COUNTOF(features)-ii
+							, &featureLevel[ii]
+							, BX_COUNTOF(featureLevel)-ii
 							, D3D11_SDK_VERSION
 							, &m_device
 							, &m_featureLevel
 							, &m_deviceCtx
+							);
+						BX_WARN(FAILED(hr), "Direct3D11 device feature level %d.%d."
+							, (m_featureLevel >> 12) & 0xf
+							, (m_featureLevel >>  8) & 0xf
 							);
 						if (FAILED(hr)
 						&&  0 != (flags & D3D11_CREATE_DEVICE_DEBUG) )
@@ -729,8 +744,6 @@ namespace bgfx { namespace d3d11
 					goto error;
 				}
 
-				errorState = 4;
-
 				if (NULL != m_adapter)
 				{
 					DX_RELEASE(m_adapter, 2);
@@ -745,8 +758,6 @@ namespace bgfx { namespace d3d11
 				{
 					goto error;
 				}
-
-				errorState = 4;
 			}
 
 			{
@@ -886,8 +897,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						goto error;
 					}
-
-					errorState = 5;
 				}
 				else
 				{
@@ -902,7 +911,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			m_numWindows = 1;
 
-#if !defined(__MINGW32__)
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&m_infoQueue);
@@ -927,7 +935,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					DX_RELEASE(m_infoQueue, 3);
 				}
 			}
-#endif // __MINGW__
+
 			{
 
 				UniformHandle handle = BGFX_INVALID_HANDLE;
@@ -1173,18 +1181,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		error:
 			switch (errorState)
 			{
-			default:
-			case 5:
+			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_swapChain, 0);
-
-			case 4:
 				DX_RELEASE(m_deviceCtx, 0);
 				DX_RELEASE(m_device, 0);
-
-			case 3:
 				DX_RELEASE(m_factory, 0);
 
-			case 2:
+			case ErrorState::LoadedDXGI:
 #if USE_D3D11_DYNAMIC_LIB
 				if (NULL != m_dxgidebugdll)
 				{
@@ -1202,13 +1205,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_dxgidll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			case 1:
+			case ErrorState::LoadedD3D11:
 #if USE_D3D11_DYNAMIC_LIB
 				bx::dlclose(m_d3d11dll);
 				m_d3d11dll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			case 0:
+			case ErrorState::Default:
 				unloadRenderDoc(m_renderdocdll);
 				m_ovr.shutdown();
 				break;
@@ -1777,6 +1780,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_depthStencilStateCache.invalidate();
 			m_rasterizerStateCache.invalidate();
 			m_samplerStateCache.invalidate();
+			m_srvUavLru.invalidate();
 		}
 
 		void invalidateCompute()
@@ -2182,17 +2186,17 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						drt = &desc.RenderTarget[ii];
 						drt->BlendEnable = 0 != (rgba & 0x7ff);
 
-						const uint32_t src      = (rgba     ) & 0xf;
-						const uint32_t dst      = (rgba >> 4) & 0xf;
-						const uint32_t equation = (rgba >> 8) & 0x7;
+						const uint32_t src = (rgba     ) & 0xf;
+						const uint32_t dst = (rgba >> 4) & 0xf;
+						const uint32_t equ = (rgba >> 8) & 0x7;
 
 						drt->SrcBlend       = s_blendFactor[src][0];
 						drt->DestBlend      = s_blendFactor[dst][0];
-						drt->BlendOp        = s_blendEquation[equation];
+						drt->BlendOp        = s_blendEquation[equ];
 
 						drt->SrcBlendAlpha  = s_blendFactor[src][1];
 						drt->DestBlendAlpha = s_blendFactor[dst][1];
-						drt->BlendOpAlpha   = s_blendEquation[equation];
+						drt->BlendOpAlpha   = s_blendEquation[equ];
 
 						drt->RenderTargetWriteMask = writeMask;
 					}
@@ -2392,6 +2396,101 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			m_textureStage.clear();
 			commitTextureStage();
+		}
+
+		ID3D11UnorderedAccessView* getCachedUav(TextureHandle _handle, uint8_t _mip)
+		{
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_handle);
+			murmur.add(_mip);
+			murmur.add(0);
+			uint32_t hash = murmur.end();
+
+			IUnknown** ptr = m_srvUavLru.find(hash);
+			ID3D11UnorderedAccessView* uav;
+			if (NULL == ptr)
+			{
+				TextureD3D11& texture = m_textures[_handle.idx];
+
+				D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+				desc.Format = s_textureFormat[texture.m_textureFormat].m_fmtSrv;
+				switch (texture.m_type)
+				{
+				case TextureD3D11::Texture2D:
+				case TextureD3D11::TextureCube:
+					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+					desc.Texture2D.MipSlice = _mip;
+					break;
+
+				case TextureD3D11::Texture3D:
+					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+					desc.Texture3D.MipSlice    = _mip;
+					desc.Texture3D.FirstWSlice = 0;
+					desc.Texture3D.WSize       = 1;
+					break;
+				}
+
+				DX_CHECK(m_device->CreateUnorderedAccessView(texture.m_ptr, &desc, &uav) );
+
+				m_srvUavLru.add(hash, uav, _handle.idx);
+			}
+			else
+			{
+				uav = static_cast<ID3D11UnorderedAccessView*>(*ptr);
+			}
+
+			return uav;
+		}
+
+		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _mip)
+		{
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_handle);
+			murmur.add(_mip);
+			murmur.add(0);
+			uint32_t hash = murmur.end();
+
+			IUnknown** ptr = m_srvUavLru.find(hash);
+			ID3D11ShaderResourceView* srv;
+			if (NULL == ptr)
+			{
+				TextureD3D11& texture = m_textures[_handle.idx];
+
+				D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+				desc.Format = s_textureFormat[texture.m_textureFormat].m_fmtSrv;
+				switch (texture.m_type)
+				{
+				case TextureD3D11::Texture2D:
+					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+					desc.Texture2D.MostDetailedMip = _mip;
+					desc.Texture2D.MipLevels       = 1;
+					break;
+
+				case TextureD3D11::TextureCube:
+					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+					desc.TextureCube.MostDetailedMip = _mip;
+					desc.TextureCube.MipLevels       = 1;
+					break;
+
+				case TextureD3D11::Texture3D:
+					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+					desc.Texture3D.MostDetailedMip = _mip;
+					desc.Texture3D.MipLevels       = 1;
+					break;
+				}
+
+				DX_CHECK(m_device->CreateShaderResourceView(texture.m_ptr, &desc, &srv) );
+
+				m_srvUavLru.add(hash, srv, _handle.idx);
+			}
+			else
+			{
+				srv = static_cast<ID3D11ShaderResourceView*>(*ptr);
+			}
+
+			return srv;
 		}
 
 		void ovrPostReset()
@@ -2629,8 +2728,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Int1,    I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,   F, float);
+				CASE_IMPLEMENT_UNIFORM(Int1, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4, F, float);
 				CASE_IMPLEMENT_UNIFORM(Mat4, F, float);
 
 				case UniformType::End:
@@ -2640,9 +2739,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _constantBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-
 #undef CASE_IMPLEMENT_UNIFORM
-
 			}
 		}
 
@@ -2838,6 +2935,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		StateCacheT<ID3D11InputLayout> m_inputLayoutCache;
 		StateCacheT<ID3D11RasterizerState> m_rasterizerStateCache;
 		StateCacheT<ID3D11SamplerState> m_samplerStateCache;
+		StateCacheLru<IUnknown*, 1024> m_srvUavLru;
 
 		TextVideoMem m_textVideoMem;
 
@@ -3307,7 +3405,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s%s."
-				, this - s_renderD3D11->m_textures
+				, getHandle()
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, textureWidth
@@ -3504,6 +3602,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void TextureD3D11::destroy()
 	{
+		s_renderD3D11->m_srvUavLru.invalidateWithParent(getHandle().idx);
 		DX_RELEASE(m_srv, 0);
 		DX_RELEASE(m_uav, 0);
 		DX_RELEASE(m_ptr, 0);
@@ -3558,6 +3657,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void TextureD3D11::resolve()
 	{
+	}
+
+	TextureHandle TextureD3D11::getHandle() const
+	{
+		TextureHandle handle = { (uint16_t)(this - s_renderD3D11->m_textures) };
+		return handle;
 	}
 
 	void FrameBufferD3D11::create(uint8_t _num, const TextureHandle* _handles)
@@ -3779,8 +3884,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 			Frame& frame = m_frame[m_control.m_read];
 
-			uint64_t end;
-			HRESULT hr = deviceCtx->GetData(frame.m_end, &end, sizeof(end), 0);
+			uint64_t finish;
+			HRESULT hr = deviceCtx->GetData(frame.m_end, &finish, sizeof(finish), 0);
 			if (S_OK == hr)
 			{
 				m_control.consume(1);
@@ -3798,7 +3903,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				deviceCtx->GetData(frame.m_start, &start, sizeof(start), 0);
 
 				m_frequency = disjoint.Frequency;
-				m_elapsed   = end - start;
+				m_elapsed   = finish - start;
 
 				return true;
 			}
@@ -3855,7 +3960,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
+		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
 
@@ -4074,14 +4179,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							{
 							case Binding::Image:
 								{
-									const TextureD3D11& texture = m_textures[bind.m_idx];
+									TextureD3D11& texture = m_textures[bind.m_idx];
 									if (Access::Read != bind.m_un.m_compute.m_access)
 									{
-										uav[ii] = texture.m_uav;
+										uav[ii] = 0 == bind.m_un.m_compute.m_mip
+											? texture.m_uav
+											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_un.m_compute.m_mip)
+											;
 									}
 									else
 									{
-										srv[ii]     = texture.m_srv;
+										srv[ii] = 0 == bind.m_un.m_compute.m_mip
+											? texture.m_srv
+											: s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_un.m_compute.m_mip)
+											;
 										sampler[ii] = texture.m_sampler;
 									}
 								}
@@ -4650,7 +4761,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				const DXGI_ADAPTER_DESC& desc = m_adapterDesc;
 				char description[BX_COUNTOF(desc.Description)];
 				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-				tvm.printf(0, pos++, 0x0f, " Device: %s", description);
+				tvm.printf(0, pos++, 0x8f, " Device: %s", description);
 
 				char dedicatedVideo[16];
 				bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
@@ -4661,7 +4772,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				char sharedSystem[16];
 				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
 
-				tvm.printf(0, pos++, 0x0f, " Memory: %s (video), %s (system), %s (shared)"
+				tvm.printf(0, pos++, 0x8f, " Memory: %s (video), %s (system), %s (shared)"
 					, dedicatedVideo
 					, dedicatedSystem
 					, sharedSystem
@@ -4688,7 +4799,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					);
 
 				double elapsedCpuMs = double(elapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
+				tvm.printf(10, pos++, 0x8e, "   Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
 					, _render->m_num
 					, statsKeyType[0]
 					, statsKeyType[1]
@@ -4733,13 +4844,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				pos++;
 
 				double captureMs = double(captureElapsed)*toMs;
-				tvm.printf(10, pos++, 0x8e, "     Capture: %3.4f [ms]", captureMs);
+				tvm.printf(10, pos++, 0x8e, "     Capture: %7.4f [ms] ", captureMs);
 
 				uint8_t attr[2] = { 0x89, 0x8a };
 				uint8_t attrIndex = _render->m_waitSubmit < _render->m_waitRender;
 
-				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %3.4f [ms]", _render->m_waitSubmit*toMs);
-				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %3.4f [ms]", _render->m_waitRender*toMs);
+				tvm.printf(10, pos++, attr[attrIndex&1], " Submit wait: %7.4f [ms] ", _render->m_waitSubmit*toMs);
+				tvm.printf(10, pos++, attr[(attrIndex+1)&1], " Render wait: %7.4f [ms] ", _render->m_waitRender*toMs);
 
 				min = frameTime;
 				max = frameTime;
