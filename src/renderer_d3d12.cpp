@@ -700,6 +700,7 @@ namespace bgfx { namespace d3d12
 			BX_TRACE("D3D12 options:")
 			BX_TRACE("\tTiledResourcesTier %d", m_options.TiledResourcesTier);
 			BX_TRACE("\tResourceBindingTier %d", m_options.ResourceBindingTier);
+			BX_TRACE("\tROVsSupported %d", m_options.ROVsSupported);
 			BX_TRACE("\tConservativeRasterizationTier %d", m_options.ConservativeRasterizationTier);
 			BX_TRACE("\tCrossNodeSharingTier %d", m_options.CrossNodeSharingTier);
 			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
@@ -915,8 +916,8 @@ namespace bgfx { namespace d3d12
 									| BGFX_CAPS_FRAGMENT_DEPTH
 									| BGFX_CAPS_BLEND_INDEPENDENT
 									| BGFX_CAPS_COMPUTE
-									| BGFX_CAPS_FRAGMENT_ORDERING
-	//								| BGFX_CAPS_SWAP_CHAIN
+									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
+//									| BGFX_CAPS_SWAP_CHAIN
 									);
 				g_caps.maxTextureSize   = 16384;
 				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
