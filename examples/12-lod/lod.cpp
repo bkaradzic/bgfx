@@ -71,16 +71,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	Mesh* meshTop[3] =
 	{
-		meshLoad("meshes/tree1b_lod0_1.bin"),
-		meshLoad("meshes/tree1b_lod1_1.bin"),
-		meshLoad("meshes/tree1b_lod2_1.bin"),
+		meshLoad(COMMON_RUNTIME "meshes/tree1b_lod0_1.bin"),
+		meshLoad(COMMON_RUNTIME "meshes/tree1b_lod1_1.bin"),
+		meshLoad(COMMON_RUNTIME "meshes/tree1b_lod2_1.bin"),
 	};
 
 	Mesh* meshTrunk[3] =
 	{
-		meshLoad("meshes/tree1b_lod0_2.bin"),
-		meshLoad("meshes/tree1b_lod1_2.bin"),
-		meshLoad("meshes/tree1b_lod2_2.bin"),
+		meshLoad(COMMON_RUNTIME "meshes/tree1b_lod0_2.bin"),
+		meshLoad(COMMON_RUNTIME "meshes/tree1b_lod1_2.bin"),
+		meshLoad(COMMON_RUNTIME "meshes/tree1b_lod2_2.bin"),
 	};
 
 	// Imgui.

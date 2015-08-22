@@ -262,7 +262,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::ProgramHandle programSky   = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
 
 	Mesh* meshBunny;
-	meshBunny = meshLoad("meshes/bunny.bin");
+	meshBunny = meshLoad(COMMON_RUNTIME "meshes/bunny.bin");
 
 	struct Settings
 	{

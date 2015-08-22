@@ -11,4 +11,12 @@
 
 #include "entry/entry.h"
 
+#ifndef COMMON_RUNTIME
+#	if BX_PLATFORM_EMSCRIPTEN
+#		define COMMON_RUNTIME "/examples/runtime/"
+#	else
+#		define COMMON_RUNTIME ""
+#	endif
+#endif
+
 #endif // COMMON_H_HEADER_GUARD

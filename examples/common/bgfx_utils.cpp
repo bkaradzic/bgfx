@@ -91,25 +91,25 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 {
 	char filePath[512];
 
-	const char* shaderPath = "shaders/dx9/";
+	const char* shaderPath = COMMON_RUNTIME "shaders/dx9/";
 
 	switch (bgfx::getRendererType() )
 	{
 	case bgfx::RendererType::Direct3D11:
 	case bgfx::RendererType::Direct3D12:
-		shaderPath = "shaders/dx11/";
+		shaderPath = COMMON_RUNTIME "shaders/dx11/";
 		break;
 
 	case bgfx::RendererType::OpenGL:
-		shaderPath = "shaders/glsl/";
+		shaderPath = COMMON_RUNTIME "shaders/glsl/";
 		break;
 
 	case bgfx::RendererType::Metal:
-		shaderPath = "shaders/metal/";
+		shaderPath = COMMON_RUNTIME "shaders/metal/";
 		break;
 			
 	case bgfx::RendererType::OpenGLES:
-		shaderPath = "shaders/gles/";
+		shaderPath = COMMON_RUNTIME "shaders/gles/";
 		break;
 
 	default:
@@ -153,7 +153,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 	char filePath[512] = { '\0' };
 	if (NULL == strchr(_name, '/') )
 	{
-		strcpy(filePath, "textures/");
+		strcpy(filePath, COMMON_RUNTIME "textures/");
 	}
 
 	strcat(filePath, _name);

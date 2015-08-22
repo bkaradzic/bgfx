@@ -32,7 +32,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create program from shaders.
 	bgfx::ProgramHandle program = loadProgram("vs_mesh", "fs_mesh");
 
-	Mesh* mesh = meshLoad("meshes/bunny.bin");
+	Mesh* mesh = meshLoad(COMMON_RUNTIME "meshes/bunny.bin");
 
 	int64_t timeOffset = bx::getHPCounter();
 
