@@ -2427,7 +2427,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
 					desc.Texture3D.MipSlice    = _mip;
 					desc.Texture3D.FirstWSlice = 0;
-					desc.Texture3D.WSize       = 1;
+					desc.Texture3D.WSize       = -1;
 					break;
 				}
 
