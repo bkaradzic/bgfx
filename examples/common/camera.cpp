@@ -53,7 +53,7 @@ static void cmd(const void* _userData)
 	cmdExec( (const char*)_userData);
 }
 
-static const InputBinding s_camBindings[] = 
+static const InputBinding s_camBindings[] =
 {
 	{ entry::Key::KeyW,             entry::Modifier::None, 0, cmd, "move forward"  },
 	{ entry::Key::GamepadUp,        entry::Modifier::None, 0, cmd, "move forward"  },
@@ -258,7 +258,7 @@ struct Camera
 		bx::mtxLookAt(_viewMtx, m_eye, m_at, m_up);
 	}
 
-	void setPosition(float* _pos)
+	void setPosition(const float* _pos)
 	{
 		memcpy(m_eye, _pos, sizeof(float)*3);
 	}
@@ -267,7 +267,7 @@ struct Camera
 	{
 		m_verticalAngle = _verticalAngle;
 	}
-	
+
 	void setHorizontalAngle(float _horizontalAngle)
 	{
 		m_horizontalAngle = _horizontalAngle;
@@ -303,7 +303,7 @@ void cameraDestroy()
 	s_camera = NULL;
 }
 
-void cameraSetPosition(float* _pos)
+void cameraSetPosition(const float* _pos)
 {
 	s_camera->setPosition(_pos);
 }
