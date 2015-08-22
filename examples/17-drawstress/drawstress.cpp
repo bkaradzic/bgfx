@@ -74,8 +74,6 @@ class DrawStress : public entry::AppI
 {
 	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
 	{
-		BX_UNUSED(_argc, _argv);
-
 		m_width  = 1280;
 		m_height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
@@ -171,8 +169,7 @@ class DrawStress : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		entry::MouseState mouseState;
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &mouseState) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
@@ -210,11 +207,11 @@ class DrawStress : public entry::AppI
 
 			float time = (float)( (now-m_timeOffset)/freq);
 
-			imguiBeginFrame(mouseState.m_mx
-					, mouseState.m_my
-					, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
-					| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-					, mouseState.m_mz
+			imguiBeginFrame(m_mouseState.m_mx
+					,  m_mouseState.m_my
+					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
+					,  m_mouseState.m_mz
 					, m_width
 					, m_height
 					);
@@ -315,6 +312,8 @@ class DrawStress : public entry::AppI
 
 		return false;
 	}
+
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
