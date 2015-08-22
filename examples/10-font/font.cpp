@@ -75,13 +75,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Load some TTF files.
 	const char* fontFilePath[7] =
 	{
-		"font/droidsans.ttf",
-		"font/chp-fire.ttf",
-		"font/bleeding_cowboys.ttf",
-		"font/mias_scribblings.ttf",
-		"font/ruritania.ttf",
-		"font/signika-regular.ttf",
-		"font/five_minutes.otf",
+		COMMON_RUNTIME "font/droidsans.ttf",
+		COMMON_RUNTIME "font/chp-fire.ttf",
+		COMMON_RUNTIME "font/bleeding_cowboys.ttf",
+		COMMON_RUNTIME "font/mias_scribblings.ttf",
+		COMMON_RUNTIME "font/ruritania.ttf",
+		COMMON_RUNTIME "font/signika-regular.ttf",
+		COMMON_RUNTIME "font/five_minutes.otf",
 	};
 
 	const uint32_t numFonts = BX_COUNTOF(fontFilePath);
@@ -103,13 +103,13 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		fontManager->destroyTtf(fontFiles[ii]);
 	}
 
-	TrueTypeHandle fontAwesomeTtf = loadTtf(fontManager, "font/fontawesome-webfont.ttf");
+	TrueTypeHandle fontAwesomeTtf = loadTtf(fontManager, COMMON_RUNTIME "font/fontawesome-webfont.ttf");
 
 	// This font doesn't have any preloaded glyph's but the truetype file
 	// is loaded so glyph will be generated as needed.
 	FontHandle fontAwesome72 = fontManager->createFontByPixelSize(fontAwesomeTtf, 0, 72);
 
-	TrueTypeHandle visitorTtf = loadTtf(fontManager, "font/visitor1.ttf");
+	TrueTypeHandle visitorTtf = loadTtf(fontManager, COMMON_RUNTIME "font/visitor1.ttf");
 
 	// This font doesn't have any preloaded glyph's but the truetype file
 	// is loaded so glyph will be generated as needed.

@@ -197,7 +197,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::UniformHandle u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Vec4);
 	bgfx::UniformHandle u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Vec4, 16);
 
-	Mesh* mesh = meshLoad("meshes/bunny.bin");
+	Mesh* mesh = meshLoad(COMMON_RUNTIME "meshes/bunny.bin");
 
 	bgfx::FrameBufferHandle fbh;
 	bgfx::TextureHandle fbtextures[] =

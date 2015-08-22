@@ -98,9 +98,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		.end();
 
 	// Meshes.
-	Mesh* bunny      = meshLoad("meshes/bunny.bin");
-	Mesh* cube       = meshLoad("meshes/cube.bin");
-	Mesh* hollowcube = meshLoad("meshes/hollowcube.bin");
+	Mesh* bunny      = meshLoad(COMMON_RUNTIME  "meshes/bunny.bin");
+	Mesh* cube       = meshLoad(COMMON_RUNTIME  "meshes/cube.bin");
+	Mesh* hollowcube = meshLoad(COMMON_RUNTIME  "meshes/hollowcube.bin");
 
 	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
