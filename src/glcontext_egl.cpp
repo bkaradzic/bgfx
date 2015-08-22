@@ -310,10 +310,6 @@ EGL_IMPORT
 			eglSwapInterval(m_display, 0);
 		}
 
-#	if BX_PLATFORM_EMSCRIPTEN
-		emscripten_set_canvas_size(_width, _height);
-#	endif // BX_PLATFORM_EMSCRIPTEN
-
 		import();
 	}
 
@@ -337,8 +333,6 @@ EGL_IMPORT
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
-		BX_UNUSED(_width, _height);
-
 #	if BX_PLATFORM_ANDROID
 		if (NULL != m_display)
 		{
@@ -346,7 +340,11 @@ EGL_IMPORT
 			eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
 			ANativeWindow_setBuffersGeometry( (ANativeWindow*)g_platformData.nwh, _width, _height, format);
 		}
-#	endif // BX_PLATFORM_ANDROID
+#	elif BX_PLATFORM_EMSCRIPTEN
+		emscripten_set_canvas_size(_width, _height);
+#	else
+		BX_UNUSED(_width, _height);
+#	endif // BX_PLATFORM_*
 
 		if (NULL != m_display)
 		{
