@@ -9,6 +9,10 @@
 
 #include <time.h>
 
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <emscripten.h>
+#endif // BX_PLATFORM_EMSCRIPTEN
+
 #include "entry_p.h"
 #include "cmd.h"
 #include "input.h"
@@ -303,6 +307,28 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		INPUT_BINDING_END
 	};
+
+#if BX_PLATFORM_EMSCRIPTEN
+	static AppI* s_app;
+	static void updateApp()
+	{
+		s_app->update();
+	}
+#endif // BX_PLATFORM_EMSCRIPTEN
+
+	int runApp(AppI* _app, int _argc, char** _argv)
+	{
+		_app->init(_argc, _argv);
+
+#if BX_PLATFORM_EMSCRIPTEN
+		s_app = _app;
+		emscripten_set_main_loop(&updateApp, -1, 1);
+#else
+		while (_app->update() );
+#endif // BX_PLATFORM_EMSCRIPTEN
+
+		return _app->shutdown();
+	}
 
 	int main(int _argc, char** _argv)
 	{

@@ -460,291 +460,318 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 	return num;
 }
 
-int _main_(int /*_argc*/, char** /*_argv*/)
-{
-	uint32_t width = 1280;
-	uint32_t height = 720;
-	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_VSYNC;
-
-	bgfx::init();
-	bgfx::reset(width, height, reset);
-
-	// Enable debug text.
-	bgfx::setDebug(debug);
-
-	// Set view 0 clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
-
-	// Create vertex stream declaration.
-	PosNormalColorVertex::init();
-
-	const bgfx::Memory* vs_metaballs;
-	const bgfx::Memory* fs_metaballs;
-
-	switch (bgfx::getRendererType() )
-	{
-	case bgfx::RendererType::Direct3D9:
-		vs_metaballs = bgfx::makeRef(vs_metaballs_dx9, sizeof(vs_metaballs_dx9) );
-		fs_metaballs = bgfx::makeRef(fs_metaballs_dx9, sizeof(fs_metaballs_dx9) );
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-	case bgfx::RendererType::Direct3D12:
-		vs_metaballs = bgfx::makeRef(vs_metaballs_dx11, sizeof(vs_metaballs_dx11) );
-		fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
-		break;
-
-	default:
-		vs_metaballs = bgfx::makeRef(vs_metaballs_glsl, sizeof(vs_metaballs_glsl) );
-		fs_metaballs = bgfx::makeRef(fs_metaballs_glsl, sizeof(fs_metaballs_glsl) );
-		break;
-	}
-
-	bgfx::ShaderHandle vsh = bgfx::createShader(vs_metaballs);
-	bgfx::ShaderHandle fsh = bgfx::createShader(fs_metaballs);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
-
 #define DIMS 32
 
-	Grid* grid = new Grid[DIMS*DIMS*DIMS];
-	const uint32_t ypitch = DIMS;
-	const uint32_t zpitch = DIMS*DIMS;
-	const float invdim = 1.0f/float(DIMS-1);
-
-	int64_t timeOffset = bx::getHPCounter();
-
-	while (!entry::processEvents(width, height, debug, reset) )
+class Metaballs : public entry::AppI
+{
+	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
 	{
-		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
+		m_width = 1280;
+		m_height = 720;
+		m_debug = BGFX_DEBUG_TEXT;
+		m_reset = BGFX_RESET_VSYNC;
 
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::touch(0);
+		bgfx::init();
+		bgfx::reset(m_width, m_height, m_reset);
 
-		int64_t now = bx::getHPCounter();
-		static int64_t last = now;
-		const int64_t frameTime = now - last;
-		last = now;
-		const double freq = double(bx::getHPFrequency() );
-		const double toMs = 1000.0/freq;
-		float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
+		// Enable debug text.
+		bgfx::setDebug(m_debug);
 
-		// Use debug font to print information about this example.
-		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/02-metaball");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering with transient buffers and embedding shaders.");
+		// Set view 0 clear state.
+		bgfx::setViewClear(0
+				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+				, 0x303030ff
+				, 1.0f
+				, 0
+				);
 
-		float at[3]  = { 0.0f, 0.0f,   0.0f };
-		float eye[3] = { 0.0f, 0.0f, -50.0f };
+		// Create vertex stream declaration.
+		PosNormalColorVertex::init();
 
-		// Set view and projection matrix for view 0.
-		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
+		const bgfx::Memory* vs_metaballs;
+		const bgfx::Memory* fs_metaballs;
+
+		switch (bgfx::getRendererType() )
 		{
-			float view[16];
-			bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+			case bgfx::RendererType::Direct3D9:
+				vs_metaballs = bgfx::makeRef(vs_metaballs_dx9, sizeof(vs_metaballs_dx9) );
+				fs_metaballs = bgfx::makeRef(fs_metaballs_dx9, sizeof(fs_metaballs_dx9) );
+				break;
 
-			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+			case bgfx::RendererType::Direct3D11:
+			case bgfx::RendererType::Direct3D12:
+				vs_metaballs = bgfx::makeRef(vs_metaballs_dx11, sizeof(vs_metaballs_dx11) );
+				fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
+				break;
 
-			bgfx::setViewTransform(0, view, proj);
-
-			// Set view 0 default viewport.
-			//
-			// Use HMD's width/height since HMD's internal frame buffer size
-			// might be much larger than window size.
-			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-		}
-		else
-		{
-			float view[16];
-			bx::mtxLookAt(view, eye, at);
-
-			float proj[16];
-			bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
-			bgfx::setViewTransform(0, view, proj);
-
-			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, width, height);
+			default:
+				vs_metaballs = bgfx::makeRef(vs_metaballs_glsl, sizeof(vs_metaballs_glsl) );
+				fs_metaballs = bgfx::makeRef(fs_metaballs_glsl, sizeof(fs_metaballs_glsl) );
+				break;
 		}
 
-		// Stats.
-		uint32_t numVertices = 0;
-		int64_t profUpdate = 0;
-		int64_t profNormal = 0;
-		int64_t profTriangulate = 0;
+		bgfx::ShaderHandle vsh = bgfx::createShader(vs_metaballs);
+		bgfx::ShaderHandle fsh = bgfx::createShader(fs_metaballs);
 
-		// Allocate 32K vertices in transient vertex buffer.
-		uint32_t maxVertices = (32<<10);
-		bgfx::TransientVertexBuffer tvb;
-		bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_decl);
+		// Create program from shaders.
+		m_program = bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 
-		const uint32_t numSpheres = 16;
-		float sphere[numSpheres][4];
-		for (uint32_t ii = 0; ii < numSpheres; ++ii)
-		{
-			sphere[ii][0] = sinf(time*(ii*0.21f)+ii*0.37f) * (DIMS * 0.5f - 8.0f);
-			sphere[ii][1] = sinf(time*(ii*0.37f)+ii*0.67f) * (DIMS * 0.5f - 8.0f);
-			sphere[ii][2] = cosf(time*(ii*0.11f)+ii*0.13f) * (DIMS * 0.5f - 8.0f);
-			sphere[ii][3] = 1.0f/(2.0f + (sinf(time*(ii*0.13f) )*0.5f+0.5f)*2.0f);
-		}
-
-		profUpdate = bx::getHPCounter();
-
-		for (uint32_t zz = 0; zz < DIMS; ++zz)
-		{
-			for (uint32_t yy = 0; yy < DIMS; ++yy)
-			{
-				uint32_t offset = (zz*DIMS+yy)*DIMS;
-
-				for (uint32_t xx = 0; xx < DIMS; ++xx)
-				{
-					uint32_t xoffset = offset + xx;
-
-					float dist = 0.0f;
-					float prod = 1.0f;
-					for (uint32_t ii = 0; ii < numSpheres; ++ii)
-					{
-						const float* pos = sphere[ii];
-						float dx = pos[0] - (-DIMS*0.5f + float(xx) );
-						float dy = pos[1] - (-DIMS*0.5f + float(yy) );
-						float dz = pos[2] - (-DIMS*0.5f + float(zz) );
-						float invr = pos[3];
-						float dot = dx*dx + dy*dy + dz*dz;
-						dot *= invr*invr;
-
-						dist *= dot;
-						dist += prod;
-						prod *= dot;
-					}
-
-					grid[xoffset].m_val = dist / prod - 1.0f;
-				}
-			}
-		}
-
-		profUpdate = bx::getHPCounter() - profUpdate;
-
-		profNormal = bx::getHPCounter();
-
-		for (uint32_t zz = 1; zz < DIMS-1; ++zz)
-		{
-			for (uint32_t yy = 1; yy < DIMS-1; ++yy)
-			{
-				uint32_t offset = (zz*DIMS+yy)*DIMS;
-
-				for (uint32_t xx = 1; xx < DIMS-1; ++xx)
-				{
-					uint32_t xoffset = offset + xx;
-
-					float normal[3] =
-					{
-						grid[xoffset-1     ].m_val - grid[xoffset+1     ].m_val,
-						grid[xoffset-ypitch].m_val - grid[xoffset+ypitch].m_val,
-						grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
-					};
-
-					bx::vec3Norm(grid[xoffset].m_normal, normal);
-				}
-			}
-		}
-
-		profNormal = bx::getHPCounter() - profNormal;
-
-		profTriangulate = bx::getHPCounter();
-
-		PosNormalColorVertex* vertex = (PosNormalColorVertex*)tvb.data;
-
-		for (uint32_t zz = 0; zz < DIMS-1 && numVertices+12 < maxVertices; ++zz)
-		{
-			float rgb[6];
-			rgb[2] = zz*invdim;
-			rgb[5] = (zz+1)*invdim;
-
-			for (uint32_t yy = 0; yy < DIMS-1 && numVertices+12 < maxVertices; ++yy)
-			{
-				uint32_t offset = (zz*DIMS+yy)*DIMS;
-
-				rgb[1] = yy*invdim;
-				rgb[4] = (yy+1)*invdim;
-
-				for (uint32_t xx = 0; xx < DIMS-1 && numVertices+12 < maxVertices; ++xx)
-				{
-					uint32_t xoffset = offset + xx;
-
-					rgb[0] = xx*invdim;
-					rgb[3] = (xx+1)*invdim;
-
-					float pos[3] =
-					{
-						-DIMS*0.5f + float(xx),
-						-DIMS*0.5f + float(yy),
-						-DIMS*0.5f + float(zz)
-					};
-
-					const Grid* val[8] = {
-						&grid[xoffset+zpitch+ypitch  ],
-						&grid[xoffset+zpitch+ypitch+1],
-						&grid[xoffset+ypitch+1       ],
-						&grid[xoffset+ypitch         ],
-						&grid[xoffset+zpitch         ],
-						&grid[xoffset+zpitch+1       ],
-						&grid[xoffset+1              ],
-						&grid[xoffset                ],
-					};
-
-					uint32_t num = triangulate( (uint8_t*)vertex, PosNormalColorVertex::ms_decl.getStride(), rgb, pos, val, 0.5f);
-					vertex += num;
-					numVertices += num;
-				}
-			}
-		}
-
-		profTriangulate = bx::getHPCounter() - profTriangulate;
-
-		float mtx[16];
-		bx::mtxRotateXY(mtx, time*0.67f, time);
-
-		// Set model matrix for rendering.
-		bgfx::setTransform(mtx);
-
-		// Set vertex and index buffer.
-		bgfx::setVertexBuffer(&tvb, 0, numVertices);
-
-		// Set render states.
-		bgfx::setState(BGFX_STATE_DEFAULT);
-
-		// Submit primitive for rendering to view 0.
-		bgfx::submit(0, program);
-
-		// Display stats.
-		bgfx::dbgTextPrintf(1, 4, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
-		bgfx::dbgTextPrintf(1, 5, 0x0f, "      Update: % 7.3f[ms]", double(profUpdate)*toMs);
-		bgfx::dbgTextPrintf(1, 6, 0x0f, "Calc normals: % 7.3f[ms]", double(profNormal)*toMs);
-		bgfx::dbgTextPrintf(1, 7, 0x0f, " Triangulate: % 7.3f[ms]", double(profTriangulate)*toMs);
-		bgfx::dbgTextPrintf(1, 8, 0x0f, "       Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-		// Advance to next frame. Rendering thread will be kicked to
-		// process submitted rendering primitives.
-		bgfx::frame();
+		m_grid = new Grid[DIMS*DIMS*DIMS];
+		m_timeOffset = bx::getHPCounter();
 	}
 
-	delete [] grid;
+	int shutdown() BX_OVERRIDE
+	{
+		delete [] m_grid;
 
-	// Cleanup.
-	bgfx::destroyProgram(program);
+		// Cleanup.
+		bgfx::destroyProgram(m_program);
 
-	// Shutdown bgfx.
-	bgfx::shutdown();
+		// Shutdown bgfx.
+		bgfx::shutdown();
 
-	return 0;
-}
+		return 0;
+	}
+
+	bool update() BX_OVERRIDE
+	{
+		const uint32_t ypitch = DIMS;
+		const uint32_t zpitch = DIMS*DIMS;
+		const float invdim = 1.0f/float(DIMS-1);
+
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset) )
+		{
+			// Set view 0 default viewport.
+			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+
+			// This dummy draw call is here to make sure that view 0 is cleared
+			// if no other draw calls are submitted to view 0.
+			bgfx::touch(0);
+
+			int64_t now = bx::getHPCounter();
+			static int64_t last = now;
+			const int64_t frameTime = now - last;
+			last = now;
+			const double freq = double(bx::getHPFrequency() );
+			const double toMs = 1000.0/freq;
+			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
+
+			// Use debug font to print information about this example.
+			bgfx::dbgTextClear();
+			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/02-metaball");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering with transient buffers and embedding shaders.");
+
+			float at[3]  = { 0.0f, 0.0f,   0.0f };
+			float eye[3] = { 0.0f, 0.0f, -50.0f };
+
+			// Set view and projection matrix for view 0.
+			const bgfx::HMD* hmd = bgfx::getHMD();
+			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
+			{
+				float view[16];
+				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+
+				float proj[16];
+				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+
+				bgfx::setViewTransform(0, view, proj);
+
+				// Set view 0 default viewport.
+				//
+				// Use HMD's width/height since HMD's internal frame buffer size
+				// might be much larger than window size.
+				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+			}
+			else
+			{
+				float view[16];
+				bx::mtxLookAt(view, eye, at);
+
+				float proj[16];
+				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+				bgfx::setViewTransform(0, view, proj);
+
+				// Set view 0 default viewport.
+				bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			}
+
+			// Stats.
+			uint32_t numVertices = 0;
+			int64_t profUpdate = 0;
+			int64_t profNormal = 0;
+			int64_t profTriangulate = 0;
+
+			// Allocate 32K vertices in transient vertex buffer.
+			uint32_t maxVertices = (32<<10);
+			bgfx::TransientVertexBuffer tvb;
+			bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_decl);
+
+			const uint32_t numSpheres = 16;
+			float sphere[numSpheres][4];
+			for (uint32_t ii = 0; ii < numSpheres; ++ii)
+			{
+				sphere[ii][0] = sinf(time*(ii*0.21f)+ii*0.37f) * (DIMS * 0.5f - 8.0f);
+				sphere[ii][1] = sinf(time*(ii*0.37f)+ii*0.67f) * (DIMS * 0.5f - 8.0f);
+				sphere[ii][2] = cosf(time*(ii*0.11f)+ii*0.13f) * (DIMS * 0.5f - 8.0f);
+				sphere[ii][3] = 1.0f/(2.0f + (sinf(time*(ii*0.13f) )*0.5f+0.5f)*2.0f);
+			}
+
+			profUpdate = bx::getHPCounter();
+
+			for (uint32_t zz = 0; zz < DIMS; ++zz)
+			{
+				for (uint32_t yy = 0; yy < DIMS; ++yy)
+				{
+					uint32_t offset = (zz*DIMS+yy)*DIMS;
+
+					for (uint32_t xx = 0; xx < DIMS; ++xx)
+					{
+						uint32_t xoffset = offset + xx;
+
+						float dist = 0.0f;
+						float prod = 1.0f;
+						for (uint32_t ii = 0; ii < numSpheres; ++ii)
+						{
+							const float* pos = sphere[ii];
+							float dx = pos[0] - (-DIMS*0.5f + float(xx) );
+							float dy = pos[1] - (-DIMS*0.5f + float(yy) );
+							float dz = pos[2] - (-DIMS*0.5f + float(zz) );
+							float invr = pos[3];
+							float dot = dx*dx + dy*dy + dz*dz;
+							dot *= invr*invr;
+
+							dist *= dot;
+							dist += prod;
+							prod *= dot;
+						}
+
+						m_grid[xoffset].m_val = dist / prod - 1.0f;
+					}
+				}
+			}
+
+			profUpdate = bx::getHPCounter() - profUpdate;
+
+			profNormal = bx::getHPCounter();
+
+			for (uint32_t zz = 1; zz < DIMS-1; ++zz)
+			{
+				for (uint32_t yy = 1; yy < DIMS-1; ++yy)
+				{
+					uint32_t offset = (zz*DIMS+yy)*DIMS;
+
+					for (uint32_t xx = 1; xx < DIMS-1; ++xx)
+					{
+						uint32_t xoffset = offset + xx;
+
+						Grid* grid = m_grid;
+						float normal[3] =
+						{
+							grid[xoffset-1     ].m_val - grid[xoffset+1     ].m_val,
+							grid[xoffset-ypitch].m_val - grid[xoffset+ypitch].m_val,
+							grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
+						};
+
+						bx::vec3Norm(grid[xoffset].m_normal, normal);
+					}
+				}
+			}
+
+			profNormal = bx::getHPCounter() - profNormal;
+
+			profTriangulate = bx::getHPCounter();
+
+			PosNormalColorVertex* vertex = (PosNormalColorVertex*)tvb.data;
+
+			for (uint32_t zz = 0; zz < DIMS-1 && numVertices+12 < maxVertices; ++zz)
+			{
+				float rgb[6];
+				rgb[2] = zz*invdim;
+				rgb[5] = (zz+1)*invdim;
+
+				for (uint32_t yy = 0; yy < DIMS-1 && numVertices+12 < maxVertices; ++yy)
+				{
+					uint32_t offset = (zz*DIMS+yy)*DIMS;
+
+					rgb[1] = yy*invdim;
+					rgb[4] = (yy+1)*invdim;
+
+					for (uint32_t xx = 0; xx < DIMS-1 && numVertices+12 < maxVertices; ++xx)
+					{
+						uint32_t xoffset = offset + xx;
+
+						rgb[0] = xx*invdim;
+						rgb[3] = (xx+1)*invdim;
+
+						float pos[3] =
+						{
+							-DIMS*0.5f + float(xx),
+							-DIMS*0.5f + float(yy),
+							-DIMS*0.5f + float(zz)
+						};
+
+						const Grid* grid = m_grid;
+						const Grid* val[8] = {
+							&grid[xoffset+zpitch+ypitch  ],
+							&grid[xoffset+zpitch+ypitch+1],
+							&grid[xoffset+ypitch+1       ],
+							&grid[xoffset+ypitch         ],
+							&grid[xoffset+zpitch         ],
+							&grid[xoffset+zpitch+1       ],
+							&grid[xoffset+1              ],
+							&grid[xoffset                ],
+						};
+
+						uint32_t num = triangulate( (uint8_t*)vertex, PosNormalColorVertex::ms_decl.getStride(), rgb, pos, val, 0.5f);
+						vertex += num;
+						numVertices += num;
+					}
+				}
+			}
+
+			profTriangulate = bx::getHPCounter() - profTriangulate;
+
+			float mtx[16];
+			bx::mtxRotateXY(mtx, time*0.67f, time);
+
+			// Set model matrix for rendering.
+			bgfx::setTransform(mtx);
+
+			// Set vertex and index buffer.
+			bgfx::setVertexBuffer(&tvb, 0, numVertices);
+
+			// Set render states.
+			bgfx::setState(BGFX_STATE_DEFAULT);
+
+			// Submit primitive for rendering to view 0.
+			bgfx::submit(0, m_program);
+
+			// Display stats.
+			bgfx::dbgTextPrintf(1, 4, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
+			bgfx::dbgTextPrintf(1, 5, 0x0f, "      Update: % 7.3f[ms]", double(profUpdate)*toMs);
+			bgfx::dbgTextPrintf(1, 6, 0x0f, "Calc normals: % 7.3f[ms]", double(profNormal)*toMs);
+			bgfx::dbgTextPrintf(1, 7, 0x0f, " Triangulate: % 7.3f[ms]", double(profTriangulate)*toMs);
+			bgfx::dbgTextPrintf(1, 8, 0x0f, "       Frame: % 7.3f[ms]", double(frameTime)*toMs);
+
+			// Advance to next frame. Rendering thread will be kicked to
+			// process submitted rendering primitives.
+			bgfx::frame();
+
+			return true;
+		}
+
+		return false;
+	}
+
+	uint32_t m_width;
+	uint32_t m_height;
+	uint32_t m_debug;
+	uint32_t m_reset;
+	bgfx::ProgramHandle m_program;
+
+	Grid* m_grid;
+	int64_t m_timeOffset;
+
+};
+
+ENTRY_IMPLEMENT_MAIN(Metaballs);

@@ -107,7 +107,7 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 	case bgfx::RendererType::Metal:
 		shaderPath = "shaders/metal/";
 		break;
-			
+
 	case bgfx::RendererType::OpenGLES:
 		shaderPath = "shaders/gles/";
 		break;
