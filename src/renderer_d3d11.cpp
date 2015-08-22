@@ -882,10 +882,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
                         IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
                         ISwapChainBackgroundPanelNative* panel = nullptr;
-                        nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
-
-                        hr = panel->SetSwapChain(m_swapChain);
+                        hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
                         BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+
+                        if (panel != nullptr)
+                        {
+                            hr = panel->SetSwapChain(m_swapChain);
+                            BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+
+                            panel->Release();
+                        }
                     }
 #else
 					hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
@@ -1943,10 +1949,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
                             IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
                             ISwapChainBackgroundPanelNative* panel = nullptr;
-                            nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
+                            hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
+                            BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
 
-                            hr = panel->SetSwapChain(m_swapChain);
-                            BX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+                            if (panel != nullptr)
+                            {
+                                hr = panel->SetSwapChain(m_swapChain);
+                                BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+
+                                panel->Release();
+                            }
                         }
 #else
 						HRESULT hr;
