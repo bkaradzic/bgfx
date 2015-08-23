@@ -4470,11 +4470,10 @@ data.NumQualityLevels = 0;
 						m_batch.flush(m_commandList);
 					}
 
-					for (uint32_t bindHash = bx::hashMurmur2A(draw.m_bind, sizeof(draw.m_bind) )
-						; currentBindHash != bindHash
-						; currentBindHash  = bindHash
-						)
+					if (currentBindHash != bindHash)
 					{
+						currentBindHash  = bindHash;
+
 						D3D12_GPU_DESCRIPTOR_HANDLE* srv = bindLru.find(bindHash);
 						if (NULL == srv)
 						{
