@@ -43,23 +43,6 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_primInfo) == BX_COUNTOF(s_primName)+1);
 
-	struct DrawIndirectCommand
-	{
-//		D3D12_GPU_VIRTUAL_ADDRESS srv;
-		D3D12_GPU_VIRTUAL_ADDRESS cbv;
-		D3D12_VERTEX_BUFFER_VIEW vbv;
-		D3D12_DRAW_ARGUMENTS draw;
-	};
-
-	struct DrawIndexedIndirectCommand
-	{
-//		D3D12_GPU_VIRTUAL_ADDRESS srv;
-		D3D12_GPU_VIRTUAL_ADDRESS cbv;
-		D3D12_VERTEX_BUFFER_VIEW vbv;
-		D3D12_INDEX_BUFFER_VIEW ibv;
-		D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
-	};
-
 	static const uint32_t s_checkMsaa[] =
 	{
 		0,
@@ -856,51 +839,6 @@ namespace bgfx { namespace d3d12
 						, (void**)&m_rootSignature
 						) );
 
-				D3D12_INDIRECT_ARGUMENT_DESC drawArgDesc[] =
-				{
-//					{ D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW, { Rdt::SRV } },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 0            },
-				};
-
-				D3D12_COMMAND_SIGNATURE_DESC drawCommandSignature =
-				{
-					sizeof(DrawIndirectCommand),
-					BX_COUNTOF(drawArgDesc),
-					drawArgDesc,
-					1,
-				};
-
-				DX_CHECK(m_device->CreateCommandSignature(&drawCommandSignature
-						, m_rootSignature
-						, IID_ID3D12CommandSignature
-						, (void**)&m_commandSignature[0]
-						) );
-
-				D3D12_INDIRECT_ARGUMENT_DESC drawIndexedArgDesc[] =
-				{
-//					{ D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW, { Rdt::SRV } },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    0            },
-					{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         0            },
-				};
-
-				D3D12_COMMAND_SIGNATURE_DESC drawIndexedCommandSignature =
-				{
-					sizeof(DrawIndexedIndirectCommand),
-					BX_COUNTOF(drawIndexedArgDesc),
-					drawIndexedArgDesc,
-					1,
-				};
-
-				DX_CHECK(m_device->CreateCommandSignature(&drawIndexedCommandSignature
-						, m_rootSignature
-						, IID_ID3D12CommandSignature
-						, (void**)&m_commandSignature[1]
-						) );
-
 				UniformHandle handle = BGFX_INVALID_HANDLE;
 				for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 				{
@@ -1029,6 +967,8 @@ namespace bgfx { namespace d3d12
 				}
 
 				postReset();
+
+				m_batch.create(4<<10);
 			}
 			return true;
 
@@ -1059,6 +999,8 @@ namespace bgfx { namespace d3d12
 		void shutdown()
 		{
 			preReset();
+
+			m_batch.destroy();
 
 			m_samplerAllocator.destroy();
 
@@ -1092,8 +1034,6 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
 
-			DX_RELEASE(m_commandSignature[0], 0);
-			DX_RELEASE(m_commandSignature[1], 0);
 			DX_RELEASE(m_rootSignature, 0);
 
 			DX_RELEASE(m_swapChain, 0);
@@ -2152,7 +2092,7 @@ data.NumQualityLevels = 0;
 				bx::seek(&wr, 0, bx::Whence::Begin);
 				union { uint32_t offset; void* ptr; } cast =
 				{
-					uint32_t(m_currentProgram->m_vsh->m_size)/16
+					uint32_t(program.m_vsh->m_size)/16
 				};
 				filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 				write(&wr, dxbc);
@@ -2514,12 +2454,12 @@ data.NumQualityLevels = 0;
 		ID3D12Resource* m_backBufferDepthStencil;
 
 		ScratchBufferD3D12 m_scratchBuffer[4];
-		DescriptorAllocator m_samplerAllocator;
+		DescriptorAllocatorD3D12 m_samplerAllocator;
 
 		ID3D12RootSignature* m_rootSignature;
-		ID3D12CommandSignature* m_commandSignature[2];
 
-		CommandQueue m_cmd;
+		CommandQueueD3D12 m_cmd;
+		BatchD3D12 m_batch;
 		ID3D12GraphicsCommandList* m_commandList;
 
 		Resolution m_resolution;
@@ -2745,7 +2685,7 @@ data.NumQualityLevels = 0;
 		m_gpuHandle.ptr += m_incrementSize;
 	}
 
-	void DescriptorAllocator::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
+	void DescriptorAllocatorD3D12::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
 	{
 		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors);
 		m_numDescriptorsPerBlock = _numDescriptorsPerBlock;
@@ -2768,14 +2708,14 @@ data.NumQualityLevels = 0;
 		m_gpuHandle = m_heap->GetGPUDescriptorHandleForHeapStart();
 	}
 
-	void DescriptorAllocator::destroy()
+	void DescriptorAllocatorD3D12::destroy()
 	{
 		bx::destroyHandleAlloc(g_allocator, m_handleAlloc);
 
 		DX_RELEASE(m_heap, 0);
 	}
 
-	uint16_t DescriptorAllocator::alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc)
+	uint16_t DescriptorAllocatorD3D12::alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc)
 	{
 		uint16_t idx = m_handleAlloc->alloc();
 
@@ -2790,7 +2730,7 @@ data.NumQualityLevels = 0;
 		return idx;
 	}
 
-	uint16_t DescriptorAllocator::alloc(const uint32_t* _flags, uint32_t _num)
+	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num)
 	{
 		uint16_t idx = m_handleAlloc->alloc();
 
@@ -2828,25 +2768,25 @@ data.NumQualityLevels = 0;
 		return idx;
 	}
 
-	void DescriptorAllocator::free(uint16_t _idx)
+	void DescriptorAllocatorD3D12::free(uint16_t _idx)
 	{
 		m_handleAlloc->free(_idx);
 	}
 
-	void DescriptorAllocator::reset()
+	void DescriptorAllocatorD3D12::reset()
 	{
 		uint16_t max = m_handleAlloc->getMaxHandles();
 		bx::destroyHandleAlloc(g_allocator, m_handleAlloc);
 		m_handleAlloc = bx::createHandleAlloc(g_allocator, max);
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DescriptorAllocator::get(uint16_t _idx)
+	D3D12_GPU_DESCRIPTOR_HANDLE DescriptorAllocatorD3D12::get(uint16_t _idx)
 	{
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = { m_gpuHandle.ptr + _idx * m_numDescriptorsPerBlock * m_incrementSize };
 		return gpuHandle;
 	}
 
-	void CommandQueue::init(ID3D12Device* _device)
+	void CommandQueueD3D12::init(ID3D12Device* _device)
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc;
 		queueDesc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -2885,7 +2825,7 @@ data.NumQualityLevels = 0;
 		}
 	}
 
-	void CommandQueue::shutdown()
+	void CommandQueueD3D12::shutdown()
 	{
 		finish(UINT64_MAX, true);
 
@@ -2900,7 +2840,7 @@ data.NumQualityLevels = 0;
 		DX_RELEASE(m_commandQueue, 0);
 	}
 
-	ID3D12GraphicsCommandList* CommandQueue::alloc()
+	ID3D12GraphicsCommandList* CommandQueueD3D12::alloc()
 	{
 		while (0 == m_control.reserve(1) )
 		{
@@ -2913,7 +2853,7 @@ data.NumQualityLevels = 0;
 		return commandList.m_commandList;
 	}
 
-	uint64_t CommandQueue::kick()
+	uint64_t CommandQueueD3D12::kick()
 	{
 		CommandList& commandList = m_commandList[m_control.m_current];
 		DX_CHECK(commandList.m_commandList->Close() );
@@ -2931,7 +2871,7 @@ data.NumQualityLevels = 0;
 		return fence;
 	}
 
-	void CommandQueue::finish(uint64_t _waitFence, bool _finishAll)
+	void CommandQueueD3D12::finish(uint64_t _waitFence, bool _finishAll)
 	{
 		while (0 < m_control.available() )
 		{
@@ -2947,7 +2887,7 @@ data.NumQualityLevels = 0;
 		BX_CHECK(0 == m_control.available(), "");
 	}
 
-	bool CommandQueue::tryFinish(uint64_t _waitFence)
+	bool CommandQueueD3D12::tryFinish(uint64_t _waitFence)
 	{
 		if (0 < m_control.available() )
 		{
@@ -2961,12 +2901,12 @@ data.NumQualityLevels = 0;
 		return false;
 	}
 
-	void CommandQueue::release(ID3D12Resource* _ptr)
+	void CommandQueueD3D12::release(ID3D12Resource* _ptr)
 	{
 		m_release[m_control.m_current].push_back(_ptr);
 	}
 
-	bool CommandQueue::consume(uint32_t _ms)
+	bool CommandQueueD3D12::consume(uint32_t _ms)
 	{
 		CommandList& commandList = m_commandList[m_control.m_read];
 		if (WAIT_OBJECT_0 == WaitForSingleObject(commandList.m_event, _ms) )
@@ -2991,6 +2931,306 @@ data.NumQualityLevels = 0;
 		return false;
 	}
 
+	void BatchD3D12::create(uint32_t _maxDrawPerBatch)
+	{
+		m_maxDrawPerBatch = _maxDrawPerBatch;
+		m_minIndirect     = 64;
+		m_flushPerBatch   = _maxDrawPerBatch;
+
+		ID3D12Device* device = s_renderD3D12->m_device;
+		ID3D12RootSignature* rootSignature = s_renderD3D12->m_rootSignature;
+
+		D3D12_INDIRECT_ARGUMENT_DESC drawArgDesc[] =
+		{
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   1            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 0            },
+		};
+
+		D3D12_COMMAND_SIGNATURE_DESC drawCommandSignature =
+		{
+			sizeof(DrawIndirectCommand),
+			BX_COUNTOF(drawArgDesc),
+			drawArgDesc,
+			1,
+		};
+
+		DX_CHECK(device->CreateCommandSignature(&drawCommandSignature
+				, rootSignature
+				, IID_ID3D12CommandSignature
+				, (void**)&m_commandSignature[Draw]
+				) );
+
+		D3D12_INDIRECT_ARGUMENT_DESC drawIndexedArgDesc[] =
+		{
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   1            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    0            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         0            },
+		};
+
+		D3D12_COMMAND_SIGNATURE_DESC drawIndexedCommandSignature =
+		{
+			sizeof(DrawIndexedIndirectCommand),
+			BX_COUNTOF(drawIndexedArgDesc),
+			drawIndexedArgDesc,
+			1,
+		};
+
+		DX_CHECK(device->CreateCommandSignature(&drawIndexedCommandSignature
+				, rootSignature
+				, IID_ID3D12CommandSignature
+				, (void**)&m_commandSignature[DrawIndexed]
+				) );
+
+		m_cmds[Draw       ] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
+		m_cmds[DrawIndexed] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_indirect); ++ii)
+		{
+			m_indirect[ii].create(m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand)
+				, NULL
+				, BGFX_BUFFER_DRAW_INDIRECT
+				, false
+				, sizeof(DrawIndexedIndirectCommand)
+				);
+		}
+	}
+
+	void BatchD3D12::destroy()
+	{
+		BX_FREE(g_allocator, m_cmds[0]);
+		BX_FREE(g_allocator, m_cmds[1]);
+
+		DX_RELEASE(m_commandSignature[0], 0);
+		DX_RELEASE(m_commandSignature[1], 0);
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_indirect); ++ii)
+		{
+			m_indirect[ii].destroy();
+		}
+	}
+
+	template<typename Ty>
+	Ty& BatchD3D12::getCmd(Enum _type)
+	{
+		uint32_t index = m_num[_type];
+		BX_CHECK(index < m_maxDrawPerBatch, "Memory corruption...");
+		m_num[_type]++;
+		Ty* cmd = &reinterpret_cast<Ty*>(m_cmds[_type])[index];
+		return *cmd;
+	}
+
+	uint32_t BatchD3D12::draw(ID3D12GraphicsCommandList* _commandList, D3D12_GPU_VIRTUAL_ADDRESS _cbv, const RenderDraw& _draw)
+	{
+		Enum type = Enum(!!isValid(_draw.m_indexBuffer) );
+
+		const VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[_draw.m_vertexBuffer.idx];
+		uint16_t declIdx = !isValid(vb.m_decl) ? _draw.m_vertexDecl.idx : vb.m_decl.idx;
+		const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[declIdx];
+		uint32_t numIndices = 0;
+
+		if (Draw == type)
+		{
+			const uint32_t numVertices = UINT32_MAX == _draw.m_numVertices
+				? vb.m_size / vertexDecl.m_stride
+				: _draw.m_numVertices
+				;
+
+			DrawIndirectCommand& cmd = getCmd<DrawIndirectCommand>(Draw);
+			cmd.cbv = _cbv;
+			cmd.vbv[0].BufferLocation = vb.m_gpuVA;
+			cmd.vbv[0].StrideInBytes  = vertexDecl.m_stride;
+			cmd.vbv[0].SizeInBytes    = vb.m_size;
+			if (isValid(_draw.m_instanceDataBuffer) )
+			{
+				const VertexBufferD3D12& inst = s_renderD3D12->m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
+				cmd.vbv[1].BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
+				cmd.vbv[1].StrideInBytes  = _draw.m_instanceDataStride;
+				cmd.vbv[1].SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
+			}
+			else
+			{
+				cmd.vbv[1].BufferLocation = 0;
+			}
+			cmd.draw.InstanceCount = _draw.m_numInstances;
+			cmd.draw.VertexCountPerInstance = numVertices;
+			cmd.draw.StartVertexLocation    = _draw.m_startVertex;
+			cmd.draw.StartInstanceLocation  = 0;
+		}
+		else
+		{
+			const BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
+			const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
+			const uint32_t indexSize = hasIndex16 ? 2 : 4;
+
+			numIndices = UINT32_MAX == _draw.m_numIndices
+				? ib.m_size / indexSize
+				: _draw.m_numIndices
+				;
+
+			DrawIndexedIndirectCommand& cmd = getCmd<DrawIndexedIndirectCommand>(DrawIndexed);
+			cmd.cbv = _cbv;
+			cmd.ibv.BufferLocation = ib.m_gpuVA;
+			cmd.ibv.SizeInBytes    = ib.m_size;
+			cmd.ibv.Format = hasIndex16
+				? DXGI_FORMAT_R16_UINT
+				: DXGI_FORMAT_R32_UINT
+				;
+			cmd.vbv[0].BufferLocation = vb.m_gpuVA;
+			cmd.vbv[0].StrideInBytes  = vertexDecl.m_stride;
+			cmd.vbv[0].SizeInBytes    = vb.m_size;
+			if (isValid(_draw.m_instanceDataBuffer) )
+			{
+				const VertexBufferD3D12& inst = s_renderD3D12->m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
+				cmd.vbv[1].BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
+				cmd.vbv[1].StrideInBytes  = _draw.m_instanceDataStride;
+				cmd.vbv[1].SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
+			}
+			else
+			{
+				cmd.vbv[1].BufferLocation = 0;
+			}
+			cmd.drawIndexed.IndexCountPerInstance = numIndices;
+			cmd.drawIndexed.InstanceCount = _draw.m_numInstances;
+			cmd.drawIndexed.StartIndexLocation = _draw.m_startIndex;
+			cmd.drawIndexed.BaseVertexLocation = _draw.m_startVertex;
+			cmd.drawIndexed.StartInstanceLocation = 0;
+		}
+
+		if (BX_UNLIKELY(m_flushPerBatch == m_num[type]) )
+		{
+			flush(_commandList, type);
+		}
+
+		return numIndices;
+	}
+
+	static const uint32_t s_indirectCommandSize[] =
+	{
+		sizeof(BatchD3D12::DrawIndirectCommand),
+		sizeof(BatchD3D12::DrawIndexedIndirectCommand),
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_indirectCommandSize) == BatchD3D12::Count);
+
+	void BatchD3D12::flush(ID3D12GraphicsCommandList* _commandList, Enum _type)
+	{
+		uint32_t num = m_num[_type];
+		if (0 != num)
+		{
+			m_num[_type] = 0;
+
+			if (m_minIndirect < num)
+			{
+				m_stats.m_numIndirect[_type]++;
+
+				BufferD3D12& indirect = m_indirect[m_currIndirect++];
+				m_currIndirect %= BX_COUNTOF(m_indirect);
+
+				indirect.update(_commandList, 0, num*s_indirectCommandSize[_type], m_cmds[_type]);
+
+				_commandList->ExecuteIndirect(m_commandSignature[_type]
+					, num
+					, indirect.m_ptr
+					, 0
+					, NULL
+					, 0
+					);
+			}
+			else
+			{
+				m_stats.m_numImmediate[_type]++;
+
+				if (Draw == _type)
+				{
+					const DrawIndirectCommand* cmds = reinterpret_cast<DrawIndirectCommand*>(m_cmds[_type]);
+
+					for (uint32_t ii = 0; ii < num; ++ii)
+					{
+						const DrawIndirectCommand& cmd = cmds[ii];
+						if (m_current.cbv != cmd.cbv)
+						{
+							m_current.cbv = cmd.cbv;
+							_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, cmd.cbv);
+						}
+
+						if (0 != memcmp(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) ) )
+						{
+							memcpy(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) );
+							_commandList->IASetVertexBuffers(0, 2, cmd.vbv);
+						}
+
+						_commandList->DrawInstanced(cmd.draw.VertexCountPerInstance
+							, cmd.draw.InstanceCount
+							, cmd.draw.StartVertexLocation
+							, cmd.draw.StartInstanceLocation
+							);
+					}
+				}
+				else
+				{
+					const DrawIndexedIndirectCommand* cmds = reinterpret_cast<DrawIndexedIndirectCommand*>(m_cmds[_type]);
+
+					for (uint32_t ii = 0; ii < num; ++ii)
+					{
+						const DrawIndexedIndirectCommand& cmd = cmds[ii];
+						if (m_current.cbv != cmd.cbv)
+						{
+							m_current.cbv = cmd.cbv;
+							_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, cmd.cbv);
+						}
+
+						if (0 != memcmp(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) ) )
+						{
+							memcpy(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) );
+							_commandList->IASetVertexBuffers(0
+								, 0 == cmd.vbv[1].BufferLocation ? 1 : 2
+								, cmd.vbv
+								);
+						}
+
+						if (0 != memcmp(&m_current.ibv, &cmd.ibv, sizeof(cmd.ibv) ) )
+						{
+							memcpy(&m_current.ibv, &cmd.ibv, sizeof(cmd.ibv) );
+							_commandList->IASetIndexBuffer(&cmd.ibv);
+						}
+
+						_commandList->DrawIndexedInstanced(cmd.drawIndexed.IndexCountPerInstance
+							, cmd.drawIndexed.InstanceCount
+							, cmd.drawIndexed.StartIndexLocation
+							, cmd.drawIndexed.BaseVertexLocation
+							, cmd.drawIndexed.StartInstanceLocation
+							);
+					}
+				}
+			}
+		}
+	}
+
+	void BatchD3D12::flush(ID3D12GraphicsCommandList* _commandList, bool _clean)
+	{
+		flush(_commandList, Draw);
+		flush(_commandList, DrawIndexed);
+
+		if (_clean)
+		{
+			memset(&m_current, 0, sizeof(m_current) );
+		}
+	}
+
+	void BatchD3D12::begin()
+	{
+		memset(&m_stats,   0, sizeof(m_stats) );
+		memset(&m_current, 0, sizeof(m_current) );
+	}
+	
+	void BatchD3D12::end(ID3D12GraphicsCommandList* _commandList)
+	{
+		flush(_commandList);
+	}
+	
 	struct UavFormat
 	{
 		DXGI_FORMAT format[3];
@@ -3911,7 +4151,6 @@ data.NumQualityLevels = 0;
 // 		bool scissorEnabled = false;
 // 		setDebugWireframe(wireframe);
 
-		uint16_t programIdx = invalidHandle;
 		uint16_t currentSamplerStateIdx = invalidHandle;
 		uint32_t currentBindHash = 0;
 		ID3D12PipelineState* currentPso = NULL;
@@ -3958,6 +4197,8 @@ data.NumQualityLevels = 0;
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
+			m_batch.begin();
+
 // 			uint8_t eye = 0;
 // 			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_rect[0];
@@ -3978,6 +4219,7 @@ data.NumQualityLevels = 0;
 
 				if (viewChanged)
 				{
+					m_batch.flush(m_commandList, true);
 					kick();
 
 					if (isCompute)
@@ -3996,7 +4238,6 @@ data.NumQualityLevels = 0;
 					m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
 
 					view = key.m_view;
-					programIdx = invalidHandle;
 					currentPso = NULL;
 
 					fbh = _render->m_fb[view];
@@ -4046,17 +4287,9 @@ data.NumQualityLevels = 0;
 					bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
 					rendererUpdateUniforms(this, _render->m_constantBuffer, compute.m_constBegin, compute.m_constEnd);
 
-					if (key.m_program != programIdx)
 					{
-						programIdx = key.m_program;
-
 						ProgramD3D12& program = m_program[key.m_program];
 						m_currentProgram = &program;
-					}
-
-					if (invalidHandle != programIdx)
-					{
-						ProgramD3D12& program = m_program[programIdx];
 
 						if (constantsChanged)
 						{
@@ -4076,7 +4309,7 @@ data.NumQualityLevels = 0;
 						}
 					}
 
-					ID3D12PipelineState* pso = getPipelineState(programIdx);
+					ID3D12PipelineState* pso = getPipelineState(key.m_program);
 					if (pso != currentPso)
 					{
 						currentPso = pso;
@@ -4135,8 +4368,8 @@ data.NumQualityLevels = 0;
 					uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS);
 					m_commandList->SetComputeRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 					m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, srvHandle[0]);
-					m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 					m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, srvHandle[0]);
+					m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
@@ -4177,7 +4410,6 @@ data.NumQualityLevels = 0;
 
 					wasCompute = false;
 
-					programIdx = invalidHandle;
 					m_currentProgram = NULL;
 					currentSamplerStateIdx = invalidHandle;
 
@@ -4217,112 +4449,15 @@ data.NumQualityLevels = 0;
 				bool constantsChanged = draw.m_constBegin < draw.m_constEnd;
 				rendererUpdateUniforms(this, _render->m_constantBuffer, draw.m_constBegin, draw.m_constEnd);
 
-				if (0 != changedStencil)
-				{
-					const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
-					const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
-					m_commandList->OMSetStencilRef(ref);
-				}
-
-				const uint64_t state = draw.m_flags;
-				bool hasFactor = 0
-					|| f0 == (state & f0)
-					|| f1 == (state & f1)
-					;
-
-				if (hasFactor
-				&&  blendFactor != draw.m_rgba)
-				{
-					blendFactor = draw.m_rgba;
-
-					float bf[4];
-					bf[0] = ( (draw.m_rgba>>24)     )/255.0f;
-					bf[1] = ( (draw.m_rgba>>16)&0xff)/255.0f;
-					bf[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
-					bf[3] = ( (draw.m_rgba    )&0xff)/255.0f;
-					m_commandList->OMSetBlendFactor(bf);
-				}
-
-				if (BGFX_STATE_PT_MASK & changedFlags)
-				{
-					const uint64_t pt = draw.m_flags&BGFX_STATE_PT_MASK;
-					primIndex = uint8_t(pt >> BGFX_STATE_PT_SHIFT);
-					if (prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
-					{
-						prim = s_primInfo[primIndex];
-						m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
-					}
-				}
-
 				if (isValid(draw.m_vertexBuffer) )
 				{
-					if (key.m_program != programIdx)
-					{
-						programIdx = key.m_program;
-
-						if (invalidHandle == programIdx)
-						{
-							m_currentProgram = NULL;
-						}
-						else
-						{
-							ProgramD3D12& program = m_program[programIdx];
-							m_currentProgram = &program;
-						}
-					}
-
-					if (invalidHandle != programIdx)
-					{
-						ProgramD3D12& program = m_program[programIdx];
-
-						if (constantsChanged)
-						{
-							ConstantBuffer* vcb = program.m_vsh->m_constantBuffer;
-							if (NULL != vcb)
-							{
-								commit(*vcb);
-							}
-
-							ConstantBuffer* fcb = program.m_fsh->m_constantBuffer;
-							if (NULL != fcb)
-							{
-								commit(*fcb);
-							}
-						}
-
-						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
-
-						constantsChanged |= program.m_numPredefined > 0;
-
-						if (constantsChanged)
-						{
-							commitShaderConstants(gpuAddress);
-						}
-					}
-
-					const VertexBufferD3D12& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
-					uint16_t declIdx = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
-					const VertexDecl& vertexDecl = m_vertexDecls[declIdx];
-
-					ID3D12PipelineState* pso =
-						getPipelineState(state
-							, draw.m_stencil
-							, declIdx
-							, programIdx
-							, uint8_t(draw.m_instanceDataStride/16)
-							);
-					if (pso != currentPso)
-					{
-						currentPso = pso;
-						m_commandList->SetPipelineState(pso);
-						currentBindHash = 0;
-					}
-
 					for (uint32_t bindHash = bx::hashMurmur2A(draw.m_bind, sizeof(draw.m_bind) )
 						; currentBindHash != bindHash
 						; currentBindHash  = bindHash
 						)
 					{
+						m_batch.flush(m_commandList);
+
 						D3D12_GPU_DESCRIPTOR_HANDLE* srv = bindLru.find(bindHash);
 						if (NULL == srv)
 						{
@@ -4372,120 +4507,107 @@ data.NumQualityLevels = 0;
 						}
 					}
 
-					if (constantsChanged)
+					if (0 != changedStencil)
 					{
-						m_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, gpuAddress);
+						m_batch.flush(m_commandList);
+
+						const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
+						const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+						m_commandList->OMSetStencilRef(ref);
 					}
 
-					uint32_t numVertices = draw.m_numVertices;
-					if (UINT32_MAX == numVertices)
+					const uint64_t state = draw.m_flags;
+					bool hasFactor = 0
+						|| f0 == (state & f0)
+						|| f1 == (state & f1)
+						;
+
+					if (hasFactor
+					&&  blendFactor != draw.m_rgba)
 					{
-						numVertices = vb.m_size / vertexDecl.m_stride;
+						m_batch.flush(m_commandList);
+
+						blendFactor = draw.m_rgba;
+
+						float bf[4];
+						bf[0] = ( (draw.m_rgba>>24)     )/255.0f;
+						bf[1] = ( (draw.m_rgba>>16)&0xff)/255.0f;
+						bf[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
+						bf[3] = ( (draw.m_rgba    )&0xff)/255.0f;
+						m_commandList->OMSetBlendFactor(bf);
 					}
 
-					if (currentState.m_vertexDecl.idx         != draw.m_vertexDecl.idx
-					||  currentState.m_vertexBuffer.idx       != draw.m_vertexBuffer.idx
-					||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-					||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-					||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
+					if (0 != (BGFX_STATE_PT_MASK & changedFlags)
+					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
 					{
-						currentState.m_vertexDecl              = draw.m_vertexDecl;
-						currentState.m_vertexBuffer            = draw.m_vertexBuffer;
-						currentState.m_instanceDataBuffer.idx  = draw.m_instanceDataBuffer.idx;
-						currentState.m_instanceDataOffset      = draw.m_instanceDataOffset;
-						currentState.m_instanceDataStride      = draw.m_instanceDataStride;
+						m_batch.flush(m_commandList);
 
-						D3D12_VERTEX_BUFFER_VIEW vbView[2];
-						uint32_t numVertexBuffers = 1;
-						vbView[0].BufferLocation = vb.m_gpuVA;
-						vbView[0].StrideInBytes  = vertexDecl.m_stride;
-						vbView[0].SizeInBytes    = vb.m_size;
-
-						if (isValid(draw.m_instanceDataBuffer) )
-						{
-							const VertexBufferD3D12& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-							vbView[1].BufferLocation = inst.m_gpuVA + draw.m_instanceDataOffset;
-							vbView[1].StrideInBytes  = draw.m_instanceDataStride;
-							vbView[1].SizeInBytes    = draw.m_numInstances * draw.m_instanceDataStride;
-							++numVertexBuffers;
-						}
-
-						m_commandList->IASetVertexBuffers(0, numVertexBuffers, vbView);
+						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+						prim = s_primInfo[primIndex];
+						m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
 					}
 
-					uint32_t numIndices        = 0;
-					uint32_t numPrimsSubmitted = 0;
-					uint32_t numInstances      = 0;
-					uint32_t numPrimsRendered  = 0;
+					const VertexBufferD3D12& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
+					uint16_t declIdx = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
 
-					if (isValid(draw.m_indexBuffer) )
-					{
-						const BufferD3D12& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-						const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-
-						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
-						{
-							currentState.m_indexBuffer = draw.m_indexBuffer;
-
-							D3D12_INDEX_BUFFER_VIEW ibv;
-							ibv.Format = hasIndex16
-								? DXGI_FORMAT_R16_UINT
-								: DXGI_FORMAT_R32_UINT
-								;
-							ibv.BufferLocation = ib.m_gpuVA;
-							ibv.SizeInBytes    = ib.m_size;
-							m_commandList->IASetIndexBuffer(&ibv);
-						}
-
-						if (UINT32_MAX == draw.m_numIndices)
-						{
-							const uint32_t indexSize = hasIndex16 ? 2 : 4;
-							numIndices        = ib.m_size / indexSize;
-							numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
-							numInstances      = draw.m_numInstances;
-							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
-
-							m_commandList->DrawIndexedInstanced(numIndices
-								, draw.m_numInstances
-								, draw.m_startIndex
-								, draw.m_startVertex
-								, 0
-								);
-						}
-						else if (prim.m_min <= draw.m_numIndices)
-						{
-							numIndices        = draw.m_numIndices;
-							numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
-							numInstances      = draw.m_numInstances;
-							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
-
-							m_commandList->DrawIndexedInstanced(numIndices
-								, draw.m_numInstances
-								, draw.m_startIndex
-								, draw.m_startVertex
-								, 0
-								);
-						}
-					}
-					else
-					{
-						numPrimsSubmitted = numVertices / prim.m_div - prim.m_sub;
-						numInstances      = draw.m_numInstances;
-						numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
-
-						m_commandList->DrawInstanced(numVertices
-							, draw.m_numInstances
-							, draw.m_startVertex
-							, 0
+					ID3D12PipelineState* pso =
+						getPipelineState(state
+							, draw.m_stencil
+							, declIdx
+							, key.m_program
+							, uint8_t(draw.m_instanceDataStride/16)
 							);
+					if (pso != currentPso)
+					{
+						m_batch.flush(m_commandList);
+
+						currentPso = pso;
+						m_commandList->SetPipelineState(pso);
 					}
+
+					{
+						ProgramD3D12& program = m_program[key.m_program];
+						m_currentProgram = &program;
+
+						if (constantsChanged)
+						{
+							ConstantBuffer* vcb = program.m_vsh->m_constantBuffer;
+							if (NULL != vcb)
+							{
+								commit(*vcb);
+							}
+
+							ConstantBuffer* fcb = program.m_fsh->m_constantBuffer;
+							if (NULL != fcb)
+							{
+								commit(*fcb);
+							}
+						}
+
+						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
+
+						constantsChanged |= program.m_numPredefined > 0;
+
+						if (constantsChanged)
+						{
+							commitShaderConstants(gpuAddress);
+						}
+					}
+
+					uint32_t numIndices = 0;
+					numIndices = m_batch.draw(m_commandList, gpuAddress, draw);
+					uint32_t numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
+					uint32_t numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
 					statsNumPrimsRendered[primIndex]  += numPrimsRendered;
-					statsNumInstances[primIndex]      += numInstances;
+					statsNumInstances[primIndex]      += draw.m_numInstances;
 					statsNumIndices                   += numIndices;
 				}
 			}
+
+			m_batch.end(m_commandList);
 		}
 
 		int64_t now = bx::getHPCounter();
@@ -4611,6 +4733,18 @@ data.NumQualityLevels = 0;
 						);
 				}
 
+				tvm.printf(10, pos++, 0x8e, "       Batch: %7dx%d indirect, %7d immediate "
+					, m_batch.m_stats.m_numIndirect[BatchD3D12::Draw]
+					, m_batch.m_maxDrawPerBatch
+					, m_batch.m_stats.m_numImmediate[BatchD3D12::Draw]
+					);
+
+				tvm.printf(10, pos++, 0x8e, "              %7dx%d indirect, %7d immediate "
+					, m_batch.m_stats.m_numIndirect[BatchD3D12::DrawIndexed]
+					, m_batch.m_maxDrawPerBatch
+					, m_batch.m_stats.m_numImmediate[BatchD3D12::DrawIndexed]
+					);
+
 // 				if (NULL != m_renderdocdll)
 // 				{
 // 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
@@ -4666,6 +4800,7 @@ data.NumQualityLevels = 0;
 			);
 		m_backBufferColorFence[m_backBufferColorIdx] = kick();
 	}
+
 } /* namespace d3d12 */ } // namespace bgfx
 
 #else
