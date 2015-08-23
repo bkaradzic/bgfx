@@ -2934,8 +2934,8 @@ data.NumQualityLevels = 0;
 	void BatchD3D12::create(uint32_t _maxDrawPerBatch)
 	{
 		m_maxDrawPerBatch = _maxDrawPerBatch;
-		m_minIndirect     = 64;
-		m_flushPerBatch   = _maxDrawPerBatch;
+		setSeqMode(false);
+		setIndirectMode(true);
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 		ID3D12RootSignature* rootSignature = s_renderD3D12->m_rootSignature;
@@ -4222,21 +4222,6 @@ data.NumQualityLevels = 0;
 					m_batch.flush(m_commandList, true);
 					kick();
 
-					if (isCompute)
-					{
-						m_commandList->SetComputeRootSignature(m_rootSignature);
-					}
-					else
-					{
-						m_commandList->SetGraphicsRootSignature(m_rootSignature);
-					}
-
-					ID3D12DescriptorHeap* heaps[] = {
-						m_samplerAllocator.getHeap(),
-						scratchBuffer.getHeap(),
-					};
-					m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
-
 					view = key.m_view;
 					currentPso = NULL;
 
@@ -4281,7 +4266,15 @@ data.NumQualityLevels = 0;
 					if (!wasCompute)
 					{
 						wasCompute = true;
+
+						m_commandList->SetComputeRootSignature(m_rootSignature);
+						ID3D12DescriptorHeap* heaps[] = {
+							m_samplerAllocator.getHeap(),
+							scratchBuffer.getHeap(),
+						};
+						m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
 					}
+
 					const RenderCompute& compute = renderItem.compute;
 
 					bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
@@ -4395,10 +4388,25 @@ data.NumQualityLevels = 0;
 					continue;
 				}
 
-				bool resetState = viewChanged || wasCompute;
+				const RenderDraw& draw = renderItem.draw;
 
-				if (wasCompute)
+				const uint64_t newFlags = draw.m_flags;
+				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
+				currentState.m_flags = newFlags;
+
+				const uint64_t newStencil = draw.m_stencil;
+				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
+				currentState.m_stencil = newStencil;
+
+				if (viewChanged
+				||  wasCompute)
 				{
+					if (wasCompute)
+					{
+						wasCompute = false;
+						kick();
+					}
+
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 					{
 						BX_UNUSED(s_viewNameW);
@@ -4407,8 +4415,6 @@ data.NumQualityLevels = 0;
 // 						PIX_ENDEVENT();
 // 						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
 					}
-
-					wasCompute = false;
 
 					m_currentProgram = NULL;
 					currentSamplerStateIdx = invalidHandle;
@@ -4420,21 +4426,6 @@ data.NumQualityLevels = 0;
 					};
 					m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
 
-//					invalidateCompute();
-				}
-
-				const RenderDraw& draw = renderItem.draw;
-
-				const uint64_t newFlags = draw.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
-				currentState.m_flags = newFlags;
-
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
-				currentState.m_stencil = newStencil;
-
-				if (resetState)
-				{
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
@@ -4451,13 +4442,39 @@ data.NumQualityLevels = 0;
 
 				if (isValid(draw.m_vertexBuffer) )
 				{
+					const uint64_t state = draw.m_flags;
+					bool hasFactor = 0
+						|| f0 == (state & f0)
+						|| f1 == (state & f1)
+						;
+
+					const VertexBufferD3D12& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
+					uint16_t declIdx = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
+
+					ID3D12PipelineState* pso =
+						getPipelineState(state
+							, draw.m_stencil
+							, declIdx
+							, key.m_program
+							, uint8_t(draw.m_instanceDataStride/16)
+							);
+
+					uint32_t bindHash = bx::hashMurmur2A(draw.m_bind, sizeof(draw.m_bind) );
+					if (currentBindHash != bindHash
+					||  0 != changedStencil
+					|| (hasFactor && blendFactor != draw.m_rgba)
+					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
+					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
+					||  pso != currentPso)
+					{
+						m_batch.flush(m_commandList);
+					}
+
 					for (uint32_t bindHash = bx::hashMurmur2A(draw.m_bind, sizeof(draw.m_bind) )
 						; currentBindHash != bindHash
 						; currentBindHash  = bindHash
 						)
 					{
-						m_batch.flush(m_commandList);
-
 						D3D12_GPU_DESCRIPTOR_HANDLE* srv = bindLru.find(bindHash);
 						if (NULL == srv)
 						{
@@ -4509,24 +4526,14 @@ data.NumQualityLevels = 0;
 
 					if (0 != changedStencil)
 					{
-						m_batch.flush(m_commandList);
-
 						const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
 						const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 						m_commandList->OMSetStencilRef(ref);
 					}
 
-					const uint64_t state = draw.m_flags;
-					bool hasFactor = 0
-						|| f0 == (state & f0)
-						|| f1 == (state & f1)
-						;
-
 					if (hasFactor
 					&&  blendFactor != draw.m_rgba)
 					{
-						m_batch.flush(m_commandList);
-
 						blendFactor = draw.m_rgba;
 
 						float bf[4];
@@ -4540,28 +4547,14 @@ data.NumQualityLevels = 0;
 					if (0 != (BGFX_STATE_PT_MASK & changedFlags)
 					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
 					{
-						m_batch.flush(m_commandList);
-
 						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 						prim = s_primInfo[primIndex];
 						m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
 					}
 
-					const VertexBufferD3D12& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
-					uint16_t declIdx = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
-
-					ID3D12PipelineState* pso =
-						getPipelineState(state
-							, draw.m_stencil
-							, declIdx
-							, key.m_program
-							, uint8_t(draw.m_instanceDataStride/16)
-							);
 					if (pso != currentPso)
 					{
-						m_batch.flush(m_commandList);
-
 						currentPso = pso;
 						m_commandList->SetPipelineState(pso);
 					}
@@ -4595,8 +4588,7 @@ data.NumQualityLevels = 0;
 						}
 					}
 
-					uint32_t numIndices = 0;
-					numIndices = m_batch.draw(m_commandList, gpuAddress, draw);
+					uint32_t numIndices        = m_batch.draw(m_commandList, gpuAddress, draw);
 					uint32_t numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
 					uint32_t numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 

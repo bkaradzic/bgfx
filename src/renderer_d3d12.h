@@ -394,6 +394,11 @@ namespace bgfx { namespace d3d12
 			m_flushPerBatch = _enabled ? 1 : m_maxDrawPerBatch;
 		}
 
+		void setIndirectMode(bool _enabled)
+		{
+			m_minIndirect = _enabled ? 64 : UINT32_MAX;
+		}
+
 		ID3D12CommandSignature* m_commandSignature[Count];
 		uint32_t m_num[Count];
 		void* m_cmds[Count];
