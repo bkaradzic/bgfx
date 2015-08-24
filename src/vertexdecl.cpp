@@ -111,10 +111,10 @@ namespace bgfx
 
 	VertexDecl& VertexDecl::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
 	{
-		const uint8_t encodedNorm = (_normalized&1)<<7;
-		const uint8_t encodedType = (_type&7)<<3;
-		const uint8_t encodedNum  = (_num-1)&3;
-		const uint8_t encodeAsInt = (_asInt&(!!"\x1\x1\x0\x0"[_type]) )<<8;
+		const uint16_t encodedNorm = (_normalized&1)<<7;
+		const uint16_t encodedType = (_type&7)<<3;
+		const uint16_t encodedNum  = (_num-1)&3;
+		const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x0\x0"[_type]) )<<8;
 		m_attributes[_attrib] = encodedNorm|encodedType|encodedNum|encodeAsInt;
 
 		m_offset[_attrib] = m_stride;

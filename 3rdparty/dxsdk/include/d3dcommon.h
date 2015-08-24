@@ -37,6 +37,57 @@
 #pragma once
 #endif
 
+#if _MSC_VER <= 1600
+#ifndef VS2008_SAL_COMPAT
+#define VS2008_SAL_COMPAT
+// BK - SAL compatibility for VS2008
+
+#define DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE) \
+			extern "C++" { \
+				inline ENUMTYPE operator |  (ENUMTYPE  _a, ENUMTYPE _b) { return  ENUMTYPE   ( ( (int)  _a) |  ( (int)_b) ); } \
+				inline ENUMTYPE operator |= (ENUMTYPE &_a, ENUMTYPE _b) { return (ENUMTYPE &)( ( (int &)_a) |= ( (int)_b) ); } \
+				inline ENUMTYPE operator &  (ENUMTYPE  _a, ENUMTYPE _b) { return  ENUMTYPE   ( ( (int)  _a) &  ( (int)_b) ); } \
+				inline ENUMTYPE operator &= (ENUMTYPE &_a, ENUMTYPE _b) { return (ENUMTYPE &)( ( (int &)_a) &= ( (int)_b) ); } \
+				inline ENUMTYPE operator ~  (ENUMTYPE  _a)              { return (ENUMTYPE)  (~( (int)  _a) );               } \
+				inline ENUMTYPE operator ^  (ENUMTYPE  _a, ENUMTYPE _b) { return  ENUMTYPE   ( ( (int)  _a) ^  ( (int)_b) ); } \
+				inline ENUMTYPE operator ^= (ENUMTYPE &_a, ENUMTYPE _b) { return (ENUMTYPE &)( ( (int &)_a) ^= ( (int)_b) ); } \
+			}
+
+#undef _Out_
+#define _Out_
+#undef _In_
+#define _In_
+#undef _Always_
+#define _Always_(annos)
+#define _In_reads_(size)
+#define _In_reads_opt_(size)
+#define _In_reads_bytes_(size)
+#define _In_reads_bytes_opt_(size)
+#define _Inout_updates_bytes_(size)
+#define _Out_writes_(size)
+#define _Out_writes_opt_(size)
+#define _Out_writes_to_opt_(size,count)
+#define _Out_writes_bytes_(size)
+#define _Out_writes_bytes_opt_(size)
+#define _Out_writes_bytes_to_(size,count)
+#define _Outptr_
+#define _Outptr_opt_result_maybenull_
+#define _Outptr_opt_result_bytebuffer_(size)
+#define _Outptr_result_maybenull_
+#define _Outptr_result_bytebuffer_(size)
+#define _Out_writes_all_opt_(size)
+#define _COM_Outptr_
+#define _COM_Outptr_opt_
+#define _COM_Outptr_opt_result_maybenull_
+#define _Field_size_(size)
+#define _Field_size_full_(size)
+#define _Field_size_opt_(size)
+#define _Field_size_bytes_full_(size)
+#define nullptr NULL
+
+#endif // BK - VS2008_SAL_COMPAT
+#endif //
+
 /* Forward Declarations */ 
 
 #ifndef __ID3D10Blob_FWD_DEFINED__

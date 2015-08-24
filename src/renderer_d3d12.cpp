@@ -4186,7 +4186,7 @@ data.NumQualityLevels = 0;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 		scratchBuffer.reset(gpuHandle);
 
-		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = {};
+		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = UINT64_C(0);
 		StateCacheLru<D3D12_GPU_DESCRIPTOR_HANDLE, 64> bindLru;
 
 		setResourceBarrier(m_commandList

@@ -2733,6 +2733,15 @@ namespace bgfx
 				return invalid;
 			}
 
+			ProgramHashMap::const_iterator it = m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx);
+			if (it != m_programHashMap.end() )
+			{
+				ProgramHandle handle = it->second;
+				ProgramRef& pr = m_programRef[handle.idx];
+				++pr.m_refCount;
+				return handle;
+			}
+
 			const ShaderRef& vsr = m_shaderRef[_vsh.idx];
 			const ShaderRef& fsr = m_shaderRef[_fsh.idx];
 			if (vsr.m_hash != fsr.m_hash)
@@ -2753,6 +2762,9 @@ namespace bgfx
 				ProgramRef& pr = m_programRef[handle.idx];
 				pr.m_vsh = _vsh;
 				pr.m_fsh = _fsh;
+				pr.m_refCount = 1;
+
+				m_programHashMap.insert(stl::make_pair(uint32_t(_fsh.idx<<16)|_vsh.idx, handle) );
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -2778,6 +2790,15 @@ namespace bgfx
 				return invalid;
 			}
 
+			ProgramHashMap::const_iterator it = m_programHashMap.find(_vsh.idx);
+			if (it != m_programHashMap.end() )
+			{
+				ProgramHandle handle = it->second;
+				ProgramRef& pr = m_programRef[handle.idx];
+				++pr.m_refCount;
+				return handle;
+			}
+
 			ProgramHandle handle;
 			handle.idx = m_programHandle.alloc();
 
@@ -2789,6 +2810,9 @@ namespace bgfx
 				pr.m_vsh = _vsh;
 				ShaderHandle fsh = BGFX_INVALID_HANDLE;
 				pr.m_fsh = fsh;
+				pr.m_refCount = 1;
+
+				m_programHashMap.insert(stl::make_pair(uint32_t(_vsh.idx), handle) );
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -2808,16 +2832,24 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE("destroyProgram", m_programHandle, _handle);
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyProgram);
-			cmdbuf.write(_handle);
-			m_submit->free(_handle);
-
-			const ProgramRef& pr = m_programRef[_handle.idx];
-			shaderDecRef(pr.m_vsh);
-
-			if (isValid(pr.m_fsh) )
+			ProgramRef& pr = m_programRef[_handle.idx];
+			int32_t refs = --pr.m_refCount;
+			if (0 == refs)
 			{
-				shaderDecRef(pr.m_fsh);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyProgram);
+				cmdbuf.write(_handle);
+				m_submit->free(_handle);
+
+				shaderDecRef(pr.m_vsh);
+				uint32_t hash = pr.m_vsh.idx;
+
+				if (isValid(pr.m_fsh) )
+				{
+					shaderDecRef(pr.m_fsh);
+					hash |= pr.m_fsh.idx << 16;
+				}
+
+				m_programHashMap.erase(m_programHashMap.find(hash) );
 			}
 		}
 
@@ -3593,6 +3625,7 @@ namespace bgfx
 		{
 			ShaderHandle m_vsh;
 			ShaderHandle m_fsh;
+			int16_t m_refCount;
 		};
 
 		struct UniformRef
@@ -3623,8 +3656,13 @@ namespace bgfx
 		typedef stl::unordered_map<stl::string, UniformHandle> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
 		UniformRef m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
+
 		ShaderRef m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
+
+		typedef stl::unordered_map<uint32_t, ProgramHandle> ProgramHashMap;
+		ProgramHashMap m_programHashMap;
 		ProgramRef m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
+
 		TextureRef m_textureRef[BGFX_CONFIG_MAX_TEXTURES];
 		FrameBufferRef m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		VertexDeclRef m_declRef;

@@ -62,7 +62,8 @@ namespace entry
 	};
 
 	struct Modifier
-	{		enum Enum
+	{
+		enum Enum
 		{
 			None       = 0,
 			LeftAlt    = 0x01,
@@ -182,6 +183,19 @@ namespace entry
 			GamepadBack,
 			GamepadStart,
 			GamepadGuide,
+
+			Count
+		};
+	};
+
+	struct Suspend
+	{
+		enum Enum
+		{
+			WillSuspend,
+			DidSuspend,
+			WillResume,
+			DidResume,
 
 			Count
 		};
