@@ -2812,6 +2812,8 @@ namespace bgfx
 				pr.m_fsh = fsh;
 				pr.m_refCount = 1;
 
+				m_programHashMap.insert(stl::make_pair(uint32_t(_vsh.idx), handle) );
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
 				cmdbuf.write(_vsh);
