@@ -686,7 +686,7 @@ namespace bgfx
 		"u_model",
 		"u_modelView",
 		"u_modelViewProj",
-		"u_alphaRef",
+		"u_alphaRef4",
 	};
 
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum)
