@@ -441,6 +441,67 @@ namespace bgfx { namespace d3d11
 		return false;
 	};
 
+	enum AGS_RETURN_CODE
+	{
+		AGS_SUCCESS,
+		AGS_INVALID_ARGS,
+		AGS_OUT_OF_MEMORY,
+		AGS_ERROR_MISSING_DLL,
+		AGS_ERROR_LEGACY_DRIVER,
+		AGS_EXTENSION_NOT_SUPPORTED,
+		AGS_ADL_FAILURE,
+	};
+
+	enum AGS_DRIVER_EXTENSION
+	{
+		AGS_EXTENSION_QUADLIST          = 1 << 0,
+		AGS_EXTENSION_UAV_OVERLAP       = 1 << 1,
+		AGS_EXTENSION_DEPTH_BOUNDS_TEST = 1 << 2,
+		AGS_EXTENSION_MULTIDRAWINDIRECT = 1 << 3,
+	};
+
+	struct AGSDriverVersionInfo
+	{
+		char strDriverVersion[256];
+		char strCatalystVersion[256];
+		char strCatalystWebLink[256];
+	};
+
+	struct AGSContext;
+
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_INIT)(AGSContext**);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_DEINIT)(AGSContext*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_GET_CROSSFIRE_GPU_COUNT)(AGSContext*, int32_t*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_GET_TOTAL_GPU_COUNT)(AGSContext*, int32_t*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_GET_GPU_MEMORY_SIZE)(AGSContext*, int32_t, int64_t*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_GET_DRIVER_VERSION_INFO)(AGSContext*, AGSDriverVersionInfo*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_DRIVER_EXTENSIONS_INIT)(AGSContext*, ID3D11Device*, uint32_t*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_DRIVER_EXTENSIONS_DEINIT)(AGSContext*);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INSTANCED_INDIRECT)(AGSContext*, uint32_t, ID3D11Buffer*, uint32_t, uint32_t);
+	typedef AGS_RETURN_CODE (__cdecl* PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INDEXED_INSTANCED_INDIRECT)(AGSContext*, uint32_t, ID3D11Buffer*, uint32_t, uint32_t);
+
+	static PFN_AGS_INIT   agsInit;
+	static PFN_AGS_DEINIT agsDeInit;
+	static PFN_AGS_GET_CROSSFIRE_GPU_COUNT  agsGetCrossfireGPUCount;
+	static PFN_AGS_GET_TOTAL_GPU_COUNT      agsGetTotalGPUCount;
+	static PFN_AGS_GET_GPU_MEMORY_SIZE      agsGetGPUMemorySize;
+	static PFN_AGS_GET_DRIVER_VERSION_INFO  agsGetDriverVersionInfo;
+	static PFN_AGS_DRIVER_EXTENSIONS_INIT   agsDriverExtensions_Init;
+	static PFN_AGS_DRIVER_EXTENSIONS_DEINIT agsDriverExtensions_DeInit;
+	static PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INSTANCED_INDIRECT         agsDriverExtensions_MultiDrawInstancedIndirect;
+	static PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INDEXED_INSTANCED_INDIRECT agsDriverExtensions_MultiDrawIndexedInstancedIndirect;
+
+	typedef void (* MultiDrawIndirectFn)(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+
+	void stubMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+	void stubMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+
+	void amdAgsMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+	void amdAgsMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+
+	static MultiDrawIndirectFn multiDrawInstancedIndirect;
+	static MultiDrawIndirectFn multiDrawIndexedInstancedIndirect;
+
 #if USE_D3D11_DYNAMIC_LIB
 	static PFN_D3D11_CREATE_DEVICE  D3D11CreateDevice;
 	static PFN_CREATE_DXGI_FACTORY  CreateDXGIFactory;
@@ -459,6 +520,8 @@ namespace bgfx { namespace d3d11
 			, m_dxgidll(NULL)
 			, m_dxgidebugdll(NULL)
 			, m_renderdocdll(NULL)
+			, m_agsdll(NULL)
+			, m_ags(NULL)
 			, m_driverType(D3D_DRIVER_TYPE_NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_adapter(NULL)
@@ -521,6 +584,88 @@ namespace bgfx { namespace d3d11
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
+
+			m_ags = NULL;
+			m_agsdll = bx::dlopen(
+#if BX_ARCH_32BIT
+						"amd_ags_x86.dll"
+#else
+						"amd_ags_x64.dll"
+#endif // BX_ARCH_32BIT
+						);
+			if (NULL != m_agsdll)
+			{
+				agsInit   = (PFN_AGS_INIT  )bx::dlsym(m_agsdll, "agsInit");
+				agsDeInit = (PFN_AGS_DEINIT)bx::dlsym(m_agsdll, "agsDeInit");
+				agsGetCrossfireGPUCount    = (PFN_AGS_GET_CROSSFIRE_GPU_COUNT )bx::dlsym(m_agsdll, "agsGetCrossfireGPUCount");
+				agsGetTotalGPUCount        = (PFN_AGS_GET_TOTAL_GPU_COUNT     )bx::dlsym(m_agsdll, "agsGetTotalGPUCount");
+				agsGetGPUMemorySize        = (PFN_AGS_GET_GPU_MEMORY_SIZE     )bx::dlsym(m_agsdll, "agsGetGPUMemorySize");
+				agsGetDriverVersionInfo    = (PFN_AGS_GET_DRIVER_VERSION_INFO )bx::dlsym(m_agsdll, "agsGetDriverVersionInfo");
+				agsDriverExtensions_Init   = (PFN_AGS_DRIVER_EXTENSIONS_INIT  )bx::dlsym(m_agsdll, "agsDriverExtensions_Init");
+				agsDriverExtensions_DeInit = (PFN_AGS_DRIVER_EXTENSIONS_DEINIT)bx::dlsym(m_agsdll, "agsDriverExtensions_DeInit");
+				agsDriverExtensions_MultiDrawInstancedIndirect        = (PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INSTANCED_INDIRECT        )bx::dlsym(m_agsdll, "agsDriverExtensions_MultiDrawInstancedIndirect");
+				agsDriverExtensions_MultiDrawIndexedInstancedIndirect = (PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INDEXED_INSTANCED_INDIRECT)bx::dlsym(m_agsdll, "agsDriverExtensions_MultiDrawIndexedInstancedIndirect");
+
+				bool agsSupported = true
+					&& NULL != agsInit
+					&& NULL != agsDeInit
+					&& NULL != agsGetCrossfireGPUCount
+					&& NULL != agsGetTotalGPUCount
+					&& NULL != agsGetGPUMemorySize
+					&& NULL != agsGetDriverVersionInfo
+					&& NULL != agsDriverExtensions_Init
+					&& NULL != agsDriverExtensions_DeInit
+					&& NULL != agsDriverExtensions_MultiDrawInstancedIndirect
+					&& NULL != agsDriverExtensions_MultiDrawIndexedInstancedIndirect
+					;
+				if (agsSupported)
+				{
+					AGS_RETURN_CODE result = agsInit(&m_ags);
+					agsSupported = AGS_SUCCESS == result;
+					if (agsSupported)
+					{
+						AGS_RETURN_CODE result;
+
+						AGSDriverVersionInfo vi;
+						result = agsGetDriverVersionInfo(m_ags, &vi);
+						BX_TRACE("      Driver version: %s", vi.strDriverVersion);
+						BX_TRACE("    Catalyst version: %s", vi.strCatalystVersion);
+
+						int32_t numCrossfireGPUs = 0;
+						result = agsGetCrossfireGPUCount(m_ags, &numCrossfireGPUs);
+						BX_TRACE("  Num crossfire GPUs: %d", numCrossfireGPUs);
+
+						int32_t numGPUs = 0;
+						result = agsGetTotalGPUCount(m_ags, &numGPUs);
+						BX_TRACE("            Num GPUs: %d", numGPUs);
+
+						for (int32_t ii = 0; ii < numGPUs; ++ii)
+						{
+							long long memSize;
+							result = agsGetGPUMemorySize(m_ags, ii, &memSize);
+							char memSizeStr[16];
+							bx::prettify(memSizeStr, BX_COUNTOF(memSizeStr), memSize);
+							BX_TRACE("     GPU #%d mem size: %s", ii, memSizeStr);
+						}
+					}
+				}
+
+				if (!agsSupported)
+				{
+					if (NULL != m_ags)
+					{
+						agsDeInit(m_ags);
+						m_ags = NULL;
+					}
+
+					bx::dlclose(m_agsdll);
+					m_agsdll = NULL;
+				}
+				else
+				{
+					BX_TRACE("AMD/AGS supported.");
+				}
+			}
 
 #if USE_D3D11_DYNAMIC_LIB
 			m_d3d11dll = bx::dlopen("d3d11.dll");
@@ -757,6 +902,32 @@ namespace bgfx { namespace d3d11
 				if (NULL == m_deviceCtx)
 				{
 					goto error;
+				}
+			}
+
+			multiDrawInstancedIndirect        = stubMultiDrawInstancedIndirect;
+			multiDrawIndexedInstancedIndirect = stubMultiDrawIndexedInstancedIndirect;
+			if (NULL != m_ags)
+			{
+				uint32_t flags;
+				AGS_RETURN_CODE result = agsDriverExtensions_Init(m_ags, m_device, &flags);
+				bool hasExtensions = AGS_SUCCESS == result;
+
+				if (hasExtensions
+				&&  0 != (flags & AGS_EXTENSION_MULTIDRAWINDIRECT) )
+				{
+					multiDrawInstancedIndirect        = amdAgsMultiDrawInstancedIndirect;
+					multiDrawIndexedInstancedIndirect = amdAgsMultiDrawIndexedInstancedIndirect;
+				}
+				else
+				{
+					if (hasExtensions)
+					{
+						agsDriverExtensions_DeInit(m_ags);
+					}
+
+					agsDeInit(m_ags);
+					m_ags = NULL;
 				}
 			}
 
@@ -1212,6 +1383,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::Default:
+				if (NULL != m_ags)
+				{
+					agsDeInit(m_ags);
+				}
+				bx::dlclose(m_agsdll);
+				m_agsdll = NULL;
 				unloadRenderDoc(m_renderdocdll);
 				m_ovr.shutdown();
 				break;
@@ -2875,6 +3052,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_dxgidebugdll;
 
 		void* m_renderdocdll;
+		void* m_agsdll;
+		AGSContext* m_ags;
+
 
 		D3D_DRIVER_TYPE   m_driverType;
 		D3D_FEATURE_LEVEL m_featureLevel;
@@ -2975,6 +3155,36 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		s_renderD3D11->shutdown();
 		BX_DELETE(g_allocator, s_renderD3D11);
 		s_renderD3D11 = NULL;
+	}
+
+	void stubMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		for (uint32_t ii = 0; ii < _numDrawIndirect; ++ii)
+		{
+			deviceCtx->DrawInstancedIndirect(_ptr, _offset);
+			_offset += _stride;
+		}
+	}
+
+	void stubMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		for (uint32_t ii = 0; ii < _numDrawIndirect; ++ii)
+		{
+			deviceCtx->DrawIndexedInstancedIndirect(_ptr, _offset);
+			_offset += _stride;
+		}
+	}
+
+	void amdAgsMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
+	{
+		agsDriverExtensions_MultiDrawInstancedIndirect(s_renderD3D11->m_ags, _numDrawIndirect, _ptr, _offset, _stride);
+	}
+
+	void amdAgsMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
+	{
+		agsDriverExtensions_MultiDrawIndexedInstancedIndirect(s_renderD3D11->m_ags, _numDrawIndirect, _ptr, _offset, _stride);
 	}
 
 	struct UavFormat
@@ -4567,12 +4777,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								: draw.m_numIndirect
 								;
 
-							uint32_t args = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
-							{
-								deviceCtx->DrawIndexedInstancedIndirect(ptr, args);
-								args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-							}
+							multiDrawIndexedInstancedIndirect(numDrawIndirect
+								, ptr
+								, draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								);
 						}
 						else
 						{
@@ -4581,12 +4790,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								: draw.m_numIndirect
 								;
 
-							uint32_t args = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
-							{
-								deviceCtx->DrawInstancedIndirect(ptr, args);
-								args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-							}
+							multiDrawInstancedIndirect(numDrawIndirect
+								, ptr
+								, draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								);
 						}
 					}
 					else
