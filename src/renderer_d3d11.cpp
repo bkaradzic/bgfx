@@ -697,7 +697,7 @@ namespace bgfx { namespace d3d11
 						| D3D11_CREATE_DEVICE_SINGLETHREADED
 						| D3D11_CREATE_DEVICE_BGRA_SUPPORT
 //						| D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
-| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
+						| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
 						;
 
 					hr = E_FAIL;
@@ -867,11 +867,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
                             , NULL
                             , &m_swapChain
                             );
-                        BX_FATAL(SUCCEEDED(hr), "Unable to create Direct3D11 swap chain.");
+                        BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
                     }
                     else
                     {
-                        BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), "Unable to set swap chain on panel.");
+                        BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
 
                         hr = m_factory->CreateSwapChainForComposition(
                             m_device,
@@ -883,12 +883,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
                         IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
                         ISwapChainBackgroundPanelNative* panel = nullptr;
                         hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
-                        BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+                        BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
 
                         if (panel != nullptr)
                         {
                             hr = panel->SetSwapChain(m_swapChain);
-                            BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
 
                             panel->Release();
                         }
@@ -1934,28 +1934,28 @@ BX_PRAGMA_DIAGNOSTIC_POP();
                             	, NULL
                             	, &m_swapChain
                             	);
-                            BX_FATAL(SUCCEEDED(hr), "Unable to create Direct3D11 swap chain.");
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
                         }
                         else
                         {
-                            BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), "Unable to set swap chain on panel.");
+                            BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), Fatal::UnableToInitialize, "Invalid native display type.");
 
                             hr = m_factory->CreateSwapChainForComposition(
                                 m_device,
                                 &m_scd,
                                 NULL,
                                 &m_swapChain);
-                            BX_FATAL(SUCCEEDED(hr), "Unable to create Direct3D11 swap chain.");
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
 
                             IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
                             ISwapChainBackgroundPanelNative* panel = nullptr;
                             hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
-                            BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
 
                             if (panel != nullptr)
                             {
                                 hr = panel->SetSwapChain(m_swapChain);
-                                BGFX_FATAL(SUCCEEDED(hr), "Unable to set swap chain on panel.");
+                                BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
 
                                 panel->Release();
                             }
