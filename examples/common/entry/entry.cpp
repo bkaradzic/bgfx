@@ -464,7 +464,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				case Event::Window:
 					break;
 
-				default:
+                case Event::Suspend:
+                    break;
+
+                    default:
 					break;
 				}
 			}

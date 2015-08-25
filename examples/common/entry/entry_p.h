@@ -75,6 +75,7 @@ namespace entry
 			Mouse,
 			Size,
 			Window,
+			Suspend,
 		};
 
 		Event(Enum _type)
@@ -152,6 +153,13 @@ namespace entry
 		ENTRY_IMPLEMENT_EVENT(WindowEvent, Event::Window);
 
 		void* m_nwh;
+	};
+
+	struct SuspendEvent : public Event
+	{
+		ENTRY_IMPLEMENT_EVENT(SuspendEvent, Event::Suspend);
+
+		Suspend::Enum m_state;
 	};
 
 	const Event* poll();
@@ -245,6 +253,13 @@ namespace entry
 		{
 			WindowEvent* ev = new WindowEvent(_handle);
 			ev->m_nwh = _nwh;
+			m_queue.push(ev);
+		}
+
+		void postSuspendEvent(WindowHandle _handle, Suspend::Enum _state)
+		{
+			SuspendEvent* ev = new SuspendEvent(_handle);
+			ev->m_state = _state;
 			m_queue.push(ev);
 		}
 

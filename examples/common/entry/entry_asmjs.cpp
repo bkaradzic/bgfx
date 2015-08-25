@@ -109,15 +109,20 @@ namespace entry
 
 			emscripten_request_fullscreen_strategy("#canvas", false, &fullscreenStrategy);
 
+			emscripten_set_focus_callback(NULL, this, true, focusCb);
+			emscripten_set_focusin_callback(NULL, this, true, focusCb);
+			emscripten_set_focusout_callback(NULL, this, true, focusCb);
+
 			int32_t result = main(_argc, _argv);
 			return result;
 		}
 
-		static EM_BOOL mouseCb(int eventType, const EmscriptenMouseEvent* mouseEvent, void* userData);
-		static EM_BOOL wheelCb(int eventType, const EmscriptenWheelEvent* wheelEvent, void* userData);
-		static EM_BOOL keyCb(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* userData);
-		static EM_BOOL resizeCb(int eventType, const EmscriptenUiEvent* uiEvent, void* userData);
-		static EM_BOOL canvasResizeCb(int eventType, const void* reserved, void *userData);
+		static EM_BOOL mouseCb(int eventType, const EmscriptenMouseEvent* event, void* userData);
+		static EM_BOOL wheelCb(int eventType, const EmscriptenWheelEvent* event, void* userData);
+		static EM_BOOL keyCb(int eventType, const EmscriptenKeyboardEvent* event, void* userData);
+		static EM_BOOL resizeCb(int eventType, const EmscriptenUiEvent* event, void* userData);
+		static EM_BOOL canvasResizeCb(int eventType, const void* reserved, void* userData);
+		static EM_BOOL focusCb(int eventType, const EmscriptenFocusEvent* event, void* userData);
 
 		EventQueue m_eventQueue;
 
@@ -284,15 +289,50 @@ namespace entry
 		return false;
 	}
 
-	EM_BOOL Context::resizeCb(int eventType, const EmscriptenUiEvent* event, void *userData)
+	EM_BOOL Context::resizeCb(int eventType, const EmscriptenUiEvent* event, void* userData)
 	{
 		BX_UNUSED(eventType, event, userData);
 		return false;
 	}
 
-	EM_BOOL Context::canvasResizeCb(int eventType, const void* reserved, void *userData)
+	EM_BOOL Context::canvasResizeCb(int eventType, const void* reserved, void* userData)
 	{
 		BX_UNUSED(eventType, reserved, userData);
+		return false;
+	}
+
+	EM_BOOL Context::focusCb(int eventType, const EmscriptenFocusEvent* event, void* userData)
+	{
+		printf("focusCb %d", eventType);
+		BX_UNUSED(event, userData);
+
+		if (event)
+		{
+			switch (eventType)
+			{
+				case EMSCRIPTEN_EVENT_BLUR:
+				{
+					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
+					return true;
+				}
+				case EMSCRIPTEN_EVENT_FOCUS:
+				{
+					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidResume);
+					return true;
+				}
+				case EMSCRIPTEN_EVENT_FOCUSIN:
+				{
+					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillResume);
+					return true;
+				}
+				case EMSCRIPTEN_EVENT_FOCUSOUT:
+				{
+					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillSuspend);
+					return true;
+				}
+			}
+		}
+
 		return false;
 	}
 

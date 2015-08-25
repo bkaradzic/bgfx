@@ -181,14 +181,22 @@ namespace entry
 					break;
 
 				case APP_CMD_GAINED_FOCUS:
+				{
 					// Command from main thread: the app's activity window has gained
 					// input focus.
+					WindowHandle defaultWindow = { 0 };
+					m_eventQueue.postSuspendEvent(defaultWindow, Suspend::WillResume);
 					break;
+				}
 
 				case APP_CMD_LOST_FOCUS:
+				{
 					// Command from main thread: the app's activity window has lost
 					// input focus.
+					WindowHandle defaultWindow = { 0 };
+					m_eventQueue.postSuspendEvent(defaultWindow, Suspend::WillSuspend);
 					break;
+				}
 
 				case APP_CMD_CONFIG_CHANGED:
 					// Command from main thread: the current device configuration has changed.
@@ -204,8 +212,12 @@ namespace entry
 					break;
 
 				case APP_CMD_RESUME:
+				{
 					// Command from main thread: the app's activity has been resumed.
+					WindowHandle defaultWindow = { 0 };
+					m_eventQueue.postSuspendEvent(defaultWindow, Suspend::DidResume);
 					break;
+				}
 
 				case APP_CMD_SAVE_STATE:
 					// Command from main thread: the app should generate a new saved state
@@ -216,8 +228,12 @@ namespace entry
 					break;
 
 				case APP_CMD_PAUSE:
+				{
 					// Command from main thread: the app's activity has been paused.
+					WindowHandle defaultWindow = { 0 };
+					m_eventQueue.postSuspendEvent(defaultWindow, Suspend::DidSuspend);
 					break;
+				}
 
 				case APP_CMD_STOP:
 					// Command from main thread: the app's activity has been stopped.
