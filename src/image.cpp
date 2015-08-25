@@ -12,13 +12,15 @@ namespace bgfx
 {
 	static const ImageBlockInfo s_imageBlockInfo[] =
 	{
-		//  +------------------ bits per pixel
-		//  |  +--------------- block width
-		//  |  |  +------------ block height
-		//  |  |  |   +-------- block size
-		//  |  |  |   |  +----- min blocks x
-		//  |  |  |   |  |  +-- min blocks y
-		//  |  |  |   |  |  |
+		//  +--------------------------- bits per pixel
+		//  |  +------------------------ block width
+		//  |  |  +--------------------- block height
+		//  |  |  |   +----------------- block size
+		//  |  |  |   |  +-------------- min blocks x
+		//  |  |  |   |  |  +----------- min blocks y
+		//  |  |  |   |  |  |   +------- depth bits
+		//  |  |  |   |  |  |   |  +---- stencil bits
+		//  |  |  |   |  |  |   |  |
 		{   4, 4, 4,  8, 1, 1,  0, 0 }, // BC1
 		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC2
 		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC3
