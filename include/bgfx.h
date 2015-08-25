@@ -249,7 +249,8 @@ namespace bgfx
 	BGFX_HANDLE(VertexDeclHandle);
 
 	/// Callback interface to implement application specific behavior.
-	/// Cached items are currently used only for OpenGL binary shaders.
+	/// Cached items are currently used for OpenGL and Direct3D 12 binary
+	/// shaders.
 	///
 	/// @remarks
 	///   'fatal' and 'trace' callbacks can be called from any thread. Other
