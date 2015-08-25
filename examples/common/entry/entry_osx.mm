@@ -39,6 +39,8 @@
 - (void)windowWillClose:(NSNotification*)notification;
 - (BOOL)windowShouldClose:(NSWindow*)window;
 - (void)windowDidResize:(NSNotification*)notification;
+- (void)windowDidBecomeKey:(NSNotification *)notification;
+- (void)windowDidResignKey:(NSNotification *)notification;
 
 @end
 
@@ -384,6 +386,18 @@ namespace entry
 			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 		}
 
+		void windowDidBecomeKey()
+		{
+            m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillResume);
+			m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidResume);
+		}
+
+		void windowDidResignKey()
+		{
+            m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillSuspend);
+			m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
+		}
+
 		int32_t run(int _argc, char** _argv)
 		{
 			[NSApplication sharedApplication];
@@ -721,6 +735,20 @@ namespace entry
 	BX_UNUSED(notification);
 	using namespace entry;
 	s_ctx.windowDidResize();
+}
+
+- (void)windowDidBecomeKey:(NSNotification*)notification
+{
+    BX_UNUSED(notification);
+    using namespace entry;
+    s_ctx.windowDidBecomeKey();
+}
+
+- (void)windowDidResignKey:(NSNotification*)notification
+{
+    BX_UNUSED(notification);
+    using namespace entry;
+    s_ctx.windowDidResignKey();
 }
 
 @end

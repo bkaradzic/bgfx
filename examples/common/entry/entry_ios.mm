@@ -323,22 +323,26 @@ static	void* m_device = NULL;
 - (void)applicationWillResignActive:(UIApplication *)application
 {
 	BX_UNUSED(application);
+	s_ctx->m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillSuspend);
 	[m_view stop];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
 	BX_UNUSED(application);
+	s_ctx->m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
 	BX_UNUSED(application);
+	s_ctx->m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillResume);
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
 	BX_UNUSED(application);
+	s_ctx->m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidResume);
 	[m_view start];
 }
 
