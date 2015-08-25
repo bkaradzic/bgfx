@@ -4577,6 +4577,12 @@ data.NumQualityLevels = 0;
 							}
 						}
 
+						if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)
+						{
+							uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
+							viewState.m_alphaRef = ref/255.0f;
+						}
+
 						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
 
 						constantsChanged |= program.m_numPredefined > 0;
