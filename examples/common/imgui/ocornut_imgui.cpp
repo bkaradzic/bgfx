@@ -235,6 +235,7 @@ struct OcornutImguiContext
 		io.MousePos = ImVec2( (float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 		io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
+		io.MouseDown[2] = 0 != (_button & IMGUI_MBUT_MIDDLE);
 		io.MouseWheel = (float)(_scroll - m_lastScroll);
 		m_lastScroll = _scroll;
 

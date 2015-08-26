@@ -29,8 +29,9 @@
 #include <bgfx.h>
 #include <ocornut-imgui/imgui.h>
 
-#define IMGUI_MBUT_LEFT  0x01
-#define IMGUI_MBUT_RIGHT 0x02
+#define IMGUI_MBUT_LEFT   0x01
+#define IMGUI_MBUT_RIGHT  0x02
+#define IMGUI_MBUT_MIDDLE 0x04
 
 /// For custom values, define these macros before including imgui.h
 
