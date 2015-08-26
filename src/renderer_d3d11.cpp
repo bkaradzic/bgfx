@@ -1402,6 +1402,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			preReset();
 			m_ovr.shutdown();
 
+			if (NULL != m_ags)
+			{
+				agsDeInit(m_ags);
+				m_ags = NULL;
+			}
+
+			bx::dlclose(m_agsdll);
+			m_agsdll = NULL;
+
 			m_deviceCtx->ClearState();
 
 			invalidateCache();
@@ -3892,16 +3901,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
 	{
-		BX_UNUSED(_depthFormat);
-
 		DXGI_SWAP_CHAIN_DESC scd;
 		memcpy(&scd, &s_renderD3D11->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
 		scd.BufferDesc.Width  = _width;
 		scd.BufferDesc.Height = _height;
 		scd.OutputWindow = (HWND)_nwh;
 
+		ID3D11Device* device = s_renderD3D11->m_device;
+
 		HRESULT hr;
-		hr = s_renderD3D11->m_factory->CreateSwapChain(s_renderD3D11->m_device
+		hr = s_renderD3D11->m_factory->CreateSwapChain(device
 			, &scd
 			, &m_swapChain
 			);
@@ -3909,10 +3918,31 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		ID3D11Resource* ptr;
 		DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&ptr) );
-		DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(ptr, NULL, &m_rtv[0]) );
+		DX_CHECK(device->CreateRenderTargetView(ptr, NULL, &m_rtv[0]) );
 		DX_RELEASE(ptr, 0);
+
+		DXGI_FORMAT fmtDsv = isDepth(_depthFormat)
+			? s_textureFormat[_depthFormat].m_fmtDsv
+			: DXGI_FORMAT_D24_UNORM_S8_UINT
+			;
+		D3D11_TEXTURE2D_DESC dsd;
+		dsd.Width  = scd.BufferDesc.Width;
+		dsd.Height = scd.BufferDesc.Height;
+		dsd.MipLevels  = 1;
+		dsd.ArraySize  = 1;
+		dsd.Format     = fmtDsv;
+		dsd.SampleDesc = scd.SampleDesc;
+		dsd.Usage      = D3D11_USAGE_DEFAULT;
+		dsd.BindFlags  = D3D11_BIND_DEPTH_STENCIL;
+		dsd.CPUAccessFlags = 0;
+		dsd.MiscFlags      = 0;
+
+		ID3D11Texture2D* depthStencil;
+		DX_CHECK(device->CreateTexture2D(&dsd, NULL, &depthStencil) );
+		DX_CHECK(device->CreateDepthStencilView(depthStencil, NULL, &m_dsv) );
+		DX_RELEASE(depthStencil, 0);
+
 		m_srv[0]   = NULL;
-		m_dsv      = NULL;
 		m_denseIdx = _denseIdx;
 		m_num      = 1;
 	}
