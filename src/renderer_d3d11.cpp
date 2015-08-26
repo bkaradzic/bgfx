@@ -1340,7 +1340,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						}
 					}
 				}
-	
+
 				//
 				updateMsaa();
 				postReset();
@@ -3948,11 +3948,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	uint16_t FrameBufferD3D11::destroy()
 	{
-		preReset();
+		preReset(true);
 
 		DX_RELEASE(m_swapChain, 0);
 
-		m_num = 0;
+		m_num   = 0;
 		m_numTh = 0;
 
 		uint16_t denseIdx = m_denseIdx;
@@ -3961,15 +3961,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return denseIdx;
 	}
 
-	void FrameBufferD3D11::preReset()
+	void FrameBufferD3D11::preReset(bool _force)
 	{
-		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		if (0 < m_numTh
+		||  _force)
 		{
-			DX_RELEASE(m_srv[ii], 0);
-			DX_RELEASE(m_rtv[ii], 0);
-		}
+			for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+			{
+				DX_RELEASE(m_srv[ii], 0);
+				DX_RELEASE(m_rtv[ii], 0);
+			}
 
-		DX_RELEASE(m_dsv, 0);
+			DX_RELEASE(m_dsv, 0);
+		}
 	}
 
 	void FrameBufferD3D11::postReset()

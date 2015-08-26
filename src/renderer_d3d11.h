@@ -256,7 +256,7 @@ namespace bgfx { namespace d3d11
 		void create(uint8_t _num, const TextureHandle* _handles);
 		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
 		uint16_t destroy();
-		void preReset();
+		void preReset(bool _force = false);
 		void postReset();
 		void resolve();
 		void clear(const Clear& _clear, const float _palette[][4]);
