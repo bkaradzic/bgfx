@@ -624,8 +624,6 @@ namespace bgfx { namespace d3d11
 					agsSupported = AGS_SUCCESS == result;
 					if (agsSupported)
 					{
-						AGS_RETURN_CODE result;
-
 						AGSDriverVersionInfo vi;
 						result = agsGetDriverVersionInfo(m_ags, &vi);
 						BX_TRACE("      Driver version: %s", vi.strDriverVersion);
@@ -643,13 +641,17 @@ namespace bgfx { namespace d3d11
 						{
 							long long memSize;
 							result = agsGetGPUMemorySize(m_ags, ii, &memSize);
-							char memSizeStr[16];
-							bx::prettify(memSizeStr, BX_COUNTOF(memSizeStr), memSize);
-							BX_TRACE("     GPU #%d mem size: %s", ii, memSizeStr);
+							if (AGS_SUCCESS == result)
+							{
+								char memSizeStr[16];
+								bx::prettify(memSizeStr, BX_COUNTOF(memSizeStr), memSize);
+								BX_TRACE("     GPU #%d mem size: %s", ii, memSizeStr);
+							}
 						}
 					}
 				}
 
+				BX_WARN(!agsSupported, "AMD/AGS supported.");
 				if (!agsSupported)
 				{
 					if (NULL != m_ags)
@@ -660,10 +662,6 @@ namespace bgfx { namespace d3d11
 
 					bx::dlclose(m_agsdll);
 					m_agsdll = NULL;
-				}
-				else
-				{
-					BX_TRACE("AMD/AGS supported.");
 				}
 			}
 
@@ -902,32 +900,6 @@ namespace bgfx { namespace d3d11
 				if (NULL == m_deviceCtx)
 				{
 					goto error;
-				}
-			}
-
-			multiDrawInstancedIndirect        = stubMultiDrawInstancedIndirect;
-			multiDrawIndexedInstancedIndirect = stubMultiDrawIndexedInstancedIndirect;
-			if (NULL != m_ags)
-			{
-				uint32_t flags;
-				AGS_RETURN_CODE result = agsDriverExtensions_Init(m_ags, m_device, &flags);
-				bool hasExtensions = AGS_SUCCESS == result;
-
-				if (hasExtensions
-				&&  0 != (flags & AGS_EXTENSION_MULTIDRAWINDIRECT) )
-				{
-					multiDrawInstancedIndirect        = amdAgsMultiDrawInstancedIndirect;
-					multiDrawIndexedInstancedIndirect = amdAgsMultiDrawIndexedInstancedIndirect;
-				}
-				else
-				{
-					if (hasExtensions)
-					{
-						agsDriverExtensions_DeInit(m_ags);
-					}
-
-					agsDeInit(m_ags);
-					m_ags = NULL;
 				}
 			}
 
@@ -1335,14 +1307,41 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 				}
 
-	#if !defined(__MINGW32__)
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 				&&  NULL != m_infoQueue)
 				{
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
 				}
-	#endif // !defined(__MINGW32__)
 
+				{ //
+					multiDrawInstancedIndirect        = stubMultiDrawInstancedIndirect;
+					multiDrawIndexedInstancedIndirect = stubMultiDrawIndexedInstancedIndirect;
+					if (NULL != m_ags)
+					{
+						uint32_t flags;
+						AGS_RETURN_CODE result = agsDriverExtensions_Init(m_ags, m_device, &flags);
+						bool hasExtensions = AGS_SUCCESS == result;
+
+						if (hasExtensions
+						&&  0 != (flags & AGS_EXTENSION_MULTIDRAWINDIRECT) )
+						{
+							multiDrawInstancedIndirect        = amdAgsMultiDrawInstancedIndirect;
+							multiDrawIndexedInstancedIndirect = amdAgsMultiDrawIndexedInstancedIndirect;
+						}
+						else
+						{
+							if (hasExtensions)
+							{
+								agsDriverExtensions_DeInit(m_ags);
+							}
+
+							agsDeInit(m_ags);
+							m_ags = NULL;
+						}
+					}
+				}
+	
+				//
 				updateMsaa();
 				postReset();
 			}

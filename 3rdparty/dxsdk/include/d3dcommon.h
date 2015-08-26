@@ -37,7 +37,7 @@
 #pragma once
 #endif
 
-#if _MSC_VER <= 1600
+#if defined(_MSC_VER) && _MSC_VER <= 1600
 #ifndef VS2008_SAL_COMPAT
 #define VS2008_SAL_COMPAT
 // BK - SAL compatibility for VS2008
