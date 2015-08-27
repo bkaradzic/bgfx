@@ -79,10 +79,10 @@
 
 	vec4 faceSelection;
 	vec3 pos = v_position.xyz;
-	faceSelection.x = dot(u_tetraNormalGreen,  pos);
-	faceSelection.y = dot(u_tetraNormalYellow, pos);
-	faceSelection.z = dot(u_tetraNormalBlue,   pos);
-	faceSelection.w = dot(u_tetraNormalRed,    pos);
+	faceSelection.x = dot(u_tetraNormalGreen.xyz,  pos);
+	faceSelection.y = dot(u_tetraNormalYellow.xyz, pos);
+	faceSelection.z = dot(u_tetraNormalBlue.xyz,   pos);
+	faceSelection.w = dot(u_tetraNormalRed.xyz,    pos);
 
 	vec4 shadowcoord;
 	float faceMax = max(max(faceSelection.x, faceSelection.y), max(faceSelection.z, faceSelection.w));

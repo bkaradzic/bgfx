@@ -44,7 +44,7 @@ public:
 		window->VisibilityChanged += ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &App::OnVisibilityChanged);
 		window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
 
-		bgfx::winrtSetWindow(reinterpret_cast<IUnknown*>(window));
+		bgfx::winrtSetWindow(reinterpret_cast<IUnknown*>(window) );
 	}
 
 	virtual void Load(String^ entryPoint)
@@ -62,8 +62,8 @@ public:
 
 		static const float dipsPerInch = 96.0f;
 		g_eventQueue.postSizeEvent(g_defaultWindow
-			, lround(floorf(bounds.Width * dpi / dipsPerInch + 0.5f))
-			, lround(floorf(bounds.Height * dpi / dipsPerInch + 0.5f))
+			, lround(floorf(bounds.Width * dpi / dipsPerInch + 0.5f) )
+			, lround(floorf(bounds.Height * dpi / dipsPerInch + 0.5f) )
 			);
 
 		while (!m_windowClosed)

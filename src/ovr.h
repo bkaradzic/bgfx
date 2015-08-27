@@ -13,7 +13,7 @@
 #	include <OVR_Version.h>
 
 #	define OVR_VERSION_(_a, _b, _c) (_a * 10000 + _b * 100 + _c)
-#	define OVR_VERSION     OVR_VERSION_(OVR_MAJOR_VERSION, OVR_MINOR_VERSION, OVR_BUILD_VERSION)
+#	define OVR_VERSION     OVR_VERSION_(OVR_PRODUCT_VERSION, OVR_MAJOR_VERSION, OVR_MINOR_VERSION)
 #	define OVR_VERSION_042 OVR_VERSION_(0, 4, 2)
 #	define OVR_VERSION_043 OVR_VERSION_(0, 4, 3)
 #	define OVR_VERSION_044 OVR_VERSION_(0, 4, 4)
@@ -51,12 +51,12 @@ namespace bgfx
 
 		bool isInitialized() const
 		{
-			return m_initialized;
+			return NULL != m_hmd;
 		}
 
 		bool isEnabled() const
 		{
-			return NULL != m_hmd;
+			return m_isenabled;
 		}
 
 		bool isDebug() const
@@ -67,6 +67,7 @@ namespace bgfx
 		void init();
 		void shutdown();
 
+		void getViewport(uint8_t _eye, Rect* _viewport);
 		bool postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug = false);
 		void postReset(const ovrTexture& _texture);
 		void preReset();
@@ -87,7 +88,7 @@ namespace bgfx
 		ovrTexture m_texture[2];
 		ovrSizei m_rtSize;
 		bool m_warning;
-		bool m_initialized;
+		bool m_isenabled;
 		bool m_debug;
 	};
 
@@ -107,14 +108,6 @@ namespace bgfx
 		{
 		}
 
-		void init()
-		{
-		}
-
-		void shutdown()
-		{
-		}
-
 		bool isInitialized() const
 		{
 			return false;
@@ -130,8 +123,25 @@ namespace bgfx
 			return false;
 		}
 
+		void init()
+		{
+		}
+
+		void shutdown()
+		{
+		}
+
+		void getViewport(uint8_t /*_eye*/, Rect* _viewport)
+		{
+			_viewport->m_x      = 0;
+			_viewport->m_y      = 0;
+			_viewport->m_width  = 0;
+			_viewport->m_height = 0;
+		}
+
 		bool swap(HMD& _hmd)
 		{
+			_hmd.flags = BGFX_HMD_NONE;
 			getEyePose(_hmd);
 			return false;
 		}

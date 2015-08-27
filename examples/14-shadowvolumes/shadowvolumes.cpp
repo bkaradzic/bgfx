@@ -116,8 +116,8 @@ static float s_texelHalf = 0.0f;
 
 static uint32_t s_viewMask = 0;
 
-static bgfx::UniformHandle u_texColor;
-static bgfx::UniformHandle u_texStencil;
+static bgfx::UniformHandle s_texColor;
+static bgfx::UniformHandle s_texStencil;
 static bgfx::FrameBufferHandle s_stencilFb;
 
 void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -250,17 +250,16 @@ struct Uniforms
 		m_virtualLightPos_extrusionDist[2] = 0.0f;
 		m_virtualLightPos_extrusionDist[3] = 100.0f;
 
-		u_params                        = bgfx::createUniform("u_params",                        bgfx::UniformType::Uniform4fv);
-		u_svparams                      = bgfx::createUniform("u_svparams",                      bgfx::UniformType::Uniform4fv);
-		u_ambient                       = bgfx::createUniform("u_ambient",                       bgfx::UniformType::Uniform4fv);
-		u_diffuse                       = bgfx::createUniform("u_diffuse",                       bgfx::UniformType::Uniform4fv);
-		u_specular_shininess            = bgfx::createUniform("u_specular_shininess",            bgfx::UniformType::Uniform4fv);
-		u_fog                           = bgfx::createUniform("u_fog",                           bgfx::UniformType::Uniform4fv);
-		u_color                         = bgfx::createUniform("u_color",                         bgfx::UniformType::Uniform4fv);
-		u_time                          = bgfx::createUniform("u_time",                          bgfx::UniformType::Uniform1f );
-		u_lightPosRadius                = bgfx::createUniform("u_lightPosRadius",                bgfx::UniformType::Uniform4fv);
-		u_lightRgbInnerR                = bgfx::createUniform("u_lightRgbInnerR",                bgfx::UniformType::Uniform4fv);
-		u_virtualLightPos_extrusionDist = bgfx::createUniform("u_virtualLightPos_extrusionDist", bgfx::UniformType::Uniform4fv);
+		u_params                        = bgfx::createUniform("u_params",                        bgfx::UniformType::Vec4);
+		u_svparams                      = bgfx::createUniform("u_svparams",                      bgfx::UniformType::Vec4);
+		u_ambient                       = bgfx::createUniform("u_ambient",                       bgfx::UniformType::Vec4);
+		u_diffuse                       = bgfx::createUniform("u_diffuse",                       bgfx::UniformType::Vec4);
+		u_specular_shininess            = bgfx::createUniform("u_specular_shininess",            bgfx::UniformType::Vec4);
+		u_fog                           = bgfx::createUniform("u_fog",                           bgfx::UniformType::Vec4);
+		u_color                         = bgfx::createUniform("u_color",                         bgfx::UniformType::Vec4);
+		u_lightPosRadius                = bgfx::createUniform("u_lightPosRadius",                bgfx::UniformType::Vec4);
+		u_lightRgbInnerR                = bgfx::createUniform("u_lightRgbInnerR",                bgfx::UniformType::Vec4);
+		u_virtualLightPos_extrusionDist = bgfx::createUniform("u_virtualLightPos_extrusionDist", bgfx::UniformType::Vec4);
 	}
 
 	//call this once at initialization
@@ -270,12 +269,6 @@ struct Uniforms
 		bgfx::setUniform(u_diffuse,            &m_diffuse);
 		bgfx::setUniform(u_specular_shininess, &m_specular_shininess);
 		bgfx::setUniform(u_fog,                &m_fog);
-	}
-
-	//call this once per frame
-	void submitPerFrameUniforms()
-	{
-		bgfx::setUniform(u_time, &m_time);
 	}
 
 	//call this before each draw call
@@ -298,7 +291,6 @@ struct Uniforms
 		bgfx::destroyUniform(u_specular_shininess);
 		bgfx::destroyUniform(u_fog);
 		bgfx::destroyUniform(u_color);
-		bgfx::destroyUniform(u_time);
 		bgfx::destroyUniform(u_lightPosRadius);
 		bgfx::destroyUniform(u_lightRgbInnerR);
 		bgfx::destroyUniform(u_virtualLightPos_extrusionDist);
@@ -351,7 +343,6 @@ struct Uniforms
 	bgfx::UniformHandle u_specular_shininess;
 	bgfx::UniformHandle u_fog;
 	bgfx::UniformHandle u_color;
-	bgfx::UniformHandle u_time;
 	bgfx::UniformHandle u_lightPosRadius;
 	bgfx::UniformHandle u_lightRgbInnerR;
 	bgfx::UniformHandle u_virtualLightPos_extrusionDist;
@@ -576,12 +567,18 @@ struct ClearValues
 	uint8_t  m_clearStencil;
 };
 
-void submit(uint8_t _id, int32_t _depth = 0)
+void submit(uint8_t _id, bgfx::ProgramHandle _handle, int32_t _depth = 0)
 {
-	bgfx::submit(_id, _depth);
+	bgfx::submit(_id, _handle, _depth);
 
 	// Keep track of submited view ids.
 	s_viewMask |= 1 << _id;
+}
+
+void touch(uint8_t _id)
+{
+	bgfx::ProgramHandle handle = BGFX_INVALID_HANDLE;
+	::submit(_id, handle);
 }
 
 struct Aabb
@@ -852,7 +849,7 @@ struct Group
 
 		//Init faces and edges.
 		m_faces.reserve(m_numIndices/3); //1 face = 3 indices
-		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge)); //1 triangle = 3 indices = 3 edges.
+		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge) ); //1 triangle = 3 indices = 3 edges.
 		m_edgePlanesUnalignedPtr = (Plane*)malloc(m_numIndices * sizeof(Plane) + 15);
 		m_edgePlanes = (Plane*)bx::alignPtr(m_edgePlanesUnalignedPtr, 0, 16);
 
@@ -919,7 +916,7 @@ struct Group
 				std::pair<uint16_t, uint16_t> keyInv = std::make_pair(ui1, ui0);
 
 				EdgeMap::iterator iter = edgeMap.find(keyInv);
-				if (iter != edgeMap.end())
+				if (iter != edgeMap.end() )
 				{
 					EdgeAndPlane& ep = iter->second;
 					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
@@ -944,8 +941,8 @@ struct Group
 			Edge* edge = &m_edges[m_numEdges];
 			Plane* plane = &m_edgePlanes[index];
 
-			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge));
-			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane));
+			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
+			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
 
 			m_numEdges++;
 			index += 2;
@@ -1170,10 +1167,6 @@ struct Model
 			// Set uniforms
 			s_uniforms.submitPerDrawUniforms();
 
-			// Set program
-			BX_CHECK(bgfx::invalidHandle != m_program, "Error, program is not set.");
-			bgfx::setProgram(m_program);
-
 			// Set transform
 			bgfx::setTransform(_mtx);
 
@@ -1184,15 +1177,16 @@ struct Model
 			// Set textures
 			if (bgfx::invalidHandle != m_texture.idx)
 			{
-				bgfx::setTexture(0, u_texColor, m_texture);
+				bgfx::setTexture(0, s_texColor, m_texture);
 			}
-			bgfx::setTexture(7, u_texStencil, s_stencilFb);
+			bgfx::setTexture(1, s_texStencil, s_stencilFb);
 
 			// Apply render state
 			::setRenderState(_renderState);
 
 			// Submit
-			::submit(_viewId);
+			BX_CHECK(bgfx::invalidHandle != m_program, "Error, program is not set.");
+			::submit(_viewId, m_program);
 		}
 	}
 
@@ -1556,7 +1550,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				const float4_t r1 = float4_mul(vY, ly);
 				const float4_t r2 = float4_mul(vZ, lz);
 
-				const float4_t dot = float4_add(r0, float4_add(r1, r2));
+				const float4_t dot = float4_add(r0, float4_add(r1, r2) );
 				const float4_t f = float4_add(dot, vW);
 
 				const float4_t zero = float4_zero();
@@ -1906,8 +1900,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	};
 	s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
-	u_texColor   = bgfx::createUniform("u_texColor",   bgfx::UniformType::Uniform1iv);
-	u_texStencil = bgfx::createUniform("u_texStencil", bgfx::UniformType::Uniform1iv);
+	s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
+	s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Int1);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_shadowvolume_texture_lightning", "fs_shadowvolume_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_shadowvolume_color_lightning",   "fs_shadowvolume_color_lightning"  );
@@ -2116,7 +2110,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 0.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float eye[3];
 			cameraGetPosition(eye);
@@ -2137,7 +2131,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, mouseState.m_my
 			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-			, 0
+			, mouseState.m_mz
 			, viewState.m_width
 			, viewState.m_height
 			);
@@ -2255,7 +2249,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_params.m_lightningPass   = 1.0f;
 		s_uniforms.m_params.m_texelHalf       = s_texelHalf;
 		s_uniforms.m_svparams.m_useStencilTex = float(settings_useStencilTexture);
-		s_uniforms.submitPerFrameUniforms();
 
 		//set picked bunny model
 		Model* bunnyModel = BunnyLowPoly == currentMesh ? &bunnyLowPolyModel : &bunnyHighPolyModel;
@@ -2539,7 +2532,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, clearValues.m_clearStencil
 				);
 
-		::submit(0);
+		::touch(0);
 
 		// Draw ambient only.
 		s_uniforms.m_params.m_ambientPass = 1.0f;
@@ -2721,30 +2714,27 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					const RenderState& renderStateCraftStencil = s_renderStates[renderStateIndex];
 
 					s_uniforms.submitPerDrawUniforms();
-					bgfx::setProgram(svProgs[programIndex][ShadowVolumePart::Side]);
 					bgfx::setTransform(shadowVolumeMtx);
 					bgfx::setVertexBuffer(shadowVolume.m_vbSides);
 					bgfx::setIndexBuffer(shadowVolume.m_ibSides);
-					::setRenderState(renderStateCraftStencil);
-					::submit(viewId);
+					setRenderState(renderStateCraftStencil);
+					::submit(viewId, svProgs[programIndex][ShadowVolumePart::Side]);
 
 					if (shadowVolume.m_cap)
 					{
 						s_uniforms.submitPerDrawUniforms();
-						bgfx::setProgram(svProgs[programIndex][ShadowVolumePart::Front]);
 						bgfx::setTransform(shadowVolumeMtx);
 						bgfx::setVertexBuffer(group.m_vbh);
 						bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
-						::setRenderState(renderStateCraftStencil);
-						::submit(viewId);
+						setRenderState(renderStateCraftStencil);
+						::submit(viewId, svProgs[programIndex][ShadowVolumePart::Front]);
 
 						s_uniforms.submitPerDrawUniforms();
-						bgfx::setProgram(svProgs[programIndex][ShadowVolumePart::Back]);
 						bgfx::setTransform(shadowVolumeMtx);
 						bgfx::setVertexBuffer(group.m_vbh);
 						bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
 						::setRenderState(renderStateCraftStencil);
-						::submit(viewId);
+						::submit(viewId, svProgs[programIndex][ShadowVolumePart::Back]);
 					}
 
 					if (settings_drawShadowVolumes)
@@ -2752,30 +2742,27 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						const RenderState& renderState = s_renderStates[RenderState::Custom_DrawShadowVolume_Lines];
 
 						s_uniforms.submitPerDrawUniforms();
-						bgfx::setProgram(svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Side]);
 						bgfx::setTransform(shadowVolumeMtx);
 						bgfx::setVertexBuffer(shadowVolume.m_vbSides);
 						bgfx::setIndexBuffer(shadowVolume.m_ibSides);
 						::setRenderState(renderState);
-						::submit(VIEWID_RANGE1_PASS3);
+						::submit(VIEWID_RANGE1_PASS3, svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Side]);
 
 						if (shadowVolume.m_cap)
 						{
 							s_uniforms.submitPerDrawUniforms();
-							bgfx::setProgram(svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Front]);
 							bgfx::setTransform(shadowVolumeMtx);
 							bgfx::setVertexBuffer(group.m_vbh);
 							bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
 							::setRenderState(renderState);
-							::submit(VIEWID_RANGE1_PASS3);
+							::submit(VIEWID_RANGE1_PASS3, svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Front]);
 
 							s_uniforms.submitPerDrawUniforms();
-							bgfx::setProgram(svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Back]);
 							bgfx::setTransform(shadowVolumeMtx);
 							bgfx::setVertexBuffer(group.m_vbh);
 							bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
 							::setRenderState(renderState);
-							::submit(VIEWID_RANGE1_PASS3);
+							::submit(VIEWID_RANGE1_PASS3, svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Back]);
 						}
 					}
 				}
@@ -2853,8 +2840,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	s_uniforms.destroy();
 
-	bgfx::destroyUniform(u_texColor);
-	bgfx::destroyUniform(u_texStencil);
+	bgfx::destroyUniform(s_texColor);
+	bgfx::destroyUniform(s_texStencil);
 	bgfx::destroyFrameBuffer(s_stencilFb);
 
 	bgfx::destroyTexture(figureTex);

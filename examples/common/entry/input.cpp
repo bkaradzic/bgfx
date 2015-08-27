@@ -7,6 +7,7 @@
 
 #include "entry_p.h"
 #include "input.h"
+#include "cmd.h"
 
 #include <bx/allocator.h>
 #include <bx/ringbuffer.h>
@@ -88,16 +89,34 @@ struct Keyboard
 		return state;
 	}
 
-	static void decodeKeyState(uint32_t _state, uint8_t& _modifiers, bool& _down)
+	static bool decodeKeyState(uint32_t _state, uint8_t& _modifiers)
 	{
 		_modifiers = (_state>>16)&0xff;
-		_down = 0 != ( (_state>>8)&0xff);
+		return 0 != ( (_state>> 8)&0xff);
 	}
 
 	void setKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 	{
 		m_key[_key] = encodeKeyState(_modifiers, _down);
 		m_once[_key] = false;
+	}
+
+	bool getKeyState(entry::Key::Enum _key, uint8_t* _modifiers)
+	{
+		uint8_t modifiers;
+		_modifiers = NULL == _modifiers ? &modifiers : _modifiers;
+
+		return decodeKeyState(m_key[_key], *_modifiers);
+	}
+
+	uint8_t getModifiersState()
+	{
+		uint8_t modifiers = 0;
+		for (uint32_t ii = 0; ii < entry::Key::Count; ++ii)
+		{
+			modifiers |= (m_key[ii]>>16)&0xff;
+		}
+		return modifiers;
 	}
 
 	void pushChar(uint8_t _len, const uint8_t _char[4])
@@ -195,8 +214,7 @@ struct Input
 		for (const InputBinding* binding = _bindings; binding->m_key != entry::Key::None; ++binding)
 		{
 			uint8_t modifiers;
-			bool down;
-			Keyboard::decodeKeyState(m_keyboard.m_key[binding->m_key], modifiers, down);
+			bool down =	Keyboard::decodeKeyState(m_keyboard.m_key[binding->m_key], modifiers);
 
 			if (binding->m_flags == 1)
 			{
@@ -205,7 +223,14 @@ struct Input
 					if (modifiers == binding->m_modifiers
 					&&  !m_keyboard.m_once[binding->m_key])
 					{
-						binding->m_fn(binding->m_userData);
+						if (NULL == binding->m_fn)
+						{
+							cmdExec( (const char*)binding->m_userData);
+						}
+						else
+						{
+							binding->m_fn(binding->m_userData);
+						}
 						m_keyboard.m_once[binding->m_key] = true;
 					}
 				}
@@ -219,7 +244,14 @@ struct Input
 				if (down
 				&&  modifiers == binding->m_modifiers)
 				{
-					binding->m_fn(binding->m_userData);
+					if (NULL == binding->m_fn)
+					{
+						cmdExec( (const char*)binding->m_userData);
+					}
+					else
+					{
+						binding->m_fn(binding->m_userData);
+					}
 				}
 			}
 		}
@@ -285,6 +317,16 @@ void inputSetMouseResolution(uint16_t _width, uint16_t _height)
 void inputSetKeyState(entry::Key::Enum _key, uint8_t _modifiers, bool _down)
 {
 	s_input->m_keyboard.setKeyState(_key, _modifiers, _down);
+}
+
+bool inputGetKeyState(entry::Key::Enum _key, uint8_t* _modifiers)
+{
+	return s_input->m_keyboard.getKeyState(_key, _modifiers);
+}
+
+uint8_t inputGetModifiersState()
+{
+	return s_input->m_keyboard.getModifiersState();
 }
 
 void inputChar(uint8_t _len, const uint8_t _char[4])

@@ -33,7 +33,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createIndexBuffer(IndexBufferHandle /*_handle*/, Memory* /*_mem*/, uint8_t /*_flags*/) BX_OVERRIDE
+		void createIndexBuffer(IndexBufferHandle /*_handle*/, Memory* /*_mem*/, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -49,7 +49,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint8_t /*_flags*/) BX_OVERRIDE
+		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -57,7 +57,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_size*/, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_size*/, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 
@@ -69,7 +69,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/, uint8_t /*_flags*/) BX_OVERRIDE
+		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/, uint16_t /*_flags*/) BX_OVERRIDE
 		{
 		}
 

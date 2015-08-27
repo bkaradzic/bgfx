@@ -95,11 +95,10 @@ void renderScreenSpaceQuad(uint32_t _view, bgfx::ProgramHandle _program, float _
 		indices[4] = 3;
 		indices[5] = 2;
 
-		bgfx::setProgram(_program);
 		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::setIndexBuffer(&tib);
 		bgfx::setVertexBuffer(&tvb);
-		bgfx::submit(_view);
+		bgfx::submit(_view, _program);
 	}
 }
 
@@ -124,7 +123,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		, 0
 		);
 
-	// Setup root path for binary shaders. Shader binaries are different 
+	// Setup root path for binary shaders. Shader binaries are different
 	// for each renderer.
 	switch (bgfx::getRendererType() )
 	{
@@ -140,9 +139,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create vertex stream declaration.
 	PosColorTexCoord0Vertex::init();
 
-	bgfx::UniformHandle u_time     = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
-	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
-	bgfx::UniformHandle u_lightDir = bgfx::createUniform("u_lightDir", bgfx::UniformType::Uniform3fv);
+	bgfx::UniformHandle u_mtx          = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
+	bgfx::UniformHandle u_lightDirTime = bgfx::createUniform("u_lightDirTime", bgfx::UniformType::Vec4);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle raymarching = loadProgram("vs_raymarching", "fs_raymarching");
@@ -159,7 +157,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to viewZ 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -176,7 +174,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
 		float eye[3] = { 0.0f, 0.0f, -15.0f };
-		
+
 		float view[16];
 		float proj[16];
 		bx::mtxLookAt(view, eye, at);
@@ -200,16 +198,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bx::mtxRotateXY(mtx
 			, time
 			, time*0.37f
-			); 
+			);
 
 		float mtxInv[16];
 		bx::mtxInverse(mtxInv, mtx);
 		float lightDirModel[4] = { -0.4f, -0.5f, -1.0f, 0.0f };
 		float lightDirModelN[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		bx::vec3Norm(lightDirModelN, lightDirModel);
-		float lightDir[4];
-		bx::vec4MulMtx(lightDir, lightDirModelN, mtxInv);
-		bgfx::setUniform(u_lightDir, lightDir);
+		float lightDirTime[4];
+		bx::vec4MulMtx(lightDirTime, lightDirModelN, mtxInv);
+		lightDirTime[3] = time;
+		bgfx::setUniform(u_lightDirTime, lightDirTime);
 
 		float mvp[16];
 		bx::mtxMul(mvp, mtx, vp);
@@ -218,11 +217,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bx::mtxInverse(invMvp, mvp);
 		bgfx::setUniform(u_mtx, invMvp);
 
-		bgfx::setUniform(u_time, &time);
-
 		renderScreenSpaceQuad(1, raymarching, 0.0f, 0.0f, 1280.0f, 720.0f);
 
-		// Advance to next frame. Rendering thread will be kicked to 
+		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
 		bgfx::frame();
 	}
@@ -230,9 +227,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Cleanup.
 	bgfx::destroyProgram(raymarching);
 
-	bgfx::destroyUniform(u_time);
 	bgfx::destroyUniform(u_mtx);
-	bgfx::destroyUniform(u_lightDir);
+	bgfx::destroyUniform(u_lightDirTime);
 
 	// Shutdown bgfx.
 	bgfx::shutdown();

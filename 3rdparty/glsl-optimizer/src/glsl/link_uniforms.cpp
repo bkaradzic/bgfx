@@ -256,7 +256,7 @@ namespace {
  *
  * As uniforms are added to the active set the number of active uniforms and
  * the storage requirements for those uniforms are accumulated.  The active
- * uniforms are added the the hash table supplied to the constructor.
+ * uniforms are added to the hash table supplied to the constructor.
  *
  * If the same uniform is added multiple times (i.e., once for each shader
  * target), it will only be accounted once.

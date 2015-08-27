@@ -7,13 +7,13 @@ $input v_k
 
 #include "../common/common.sh"
 
-uniform vec3 u_color;
-
 void main()
 {
 	float k = v_k;
 	if (!gl_FrontFacing)
+	{
 		k = -k;
+	}
 
 	gl_FragColor.xyzw =
 		vec4( float(abs(k - 1.0) < 0.0001)/255.0

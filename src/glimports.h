@@ -320,7 +320,9 @@ GL_IMPORT______(false, PFNGLGETSHADERIVPROC,                       glGetShaderiv
 GL_IMPORT______(false, PFNGLGETSHADERINFOLOGPROC,                  glGetShaderInfoLog);
 GL_IMPORT______(false, PFNGLGETSTRINGPROC,                         glGetString);
 GL_IMPORT______(false, PFNGLGETUNIFORMLOCATIONPROC,                glGetUniformLocation);
+#if BGFX_CONFIG_RENDERER_OPENGL || !(BGFX_CONFIG_RENDERER_OPENGLES < 30)
 GL_IMPORT______(true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer);
+#endif // !(BGFX_CONFIG_RENDERER_OPENGLES < 30)
 GL_IMPORT______(false, PFNGLLINKPROGRAMPROC,                       glLinkProgram);
 GL_IMPORT______(true,  PFNGLMEMORYBARRIERPROC,                     glMemoryBarrier);
 GL_IMPORT______(true,  PFNGLMULTIDRAWARRAYSINDIRECTPROC,           glMultiDrawArraysIndirect);
@@ -503,6 +505,7 @@ GL_IMPORT_NV___(true,  PFNGLGENQUERIESPROC,                        glGenQueries)
 GL_IMPORT_NV___(true,  PFNGLDELETEQUERIESPROC,                     glDeleteQueries);
 GL_IMPORT_NV___(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery);
 GL_IMPORT_NV___(true,  PFNGLENDQUERYPROC,                          glEndQuery);
+GL_IMPORT_NV___(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
 GL_IMPORT_NV___(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
 
 GL_IMPORT      (true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer, glDiscardFramebufferEXT);
@@ -565,6 +568,7 @@ GL_IMPORT______(true,  PFNGLGENQUERIESPROC,                        glGenQueries)
 GL_IMPORT______(true,  PFNGLDELETEQUERIESPROC,                     glDeleteQueries);
 GL_IMPORT______(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery);
 GL_IMPORT______(true,  PFNGLENDQUERYPROC,                          glEndQuery);
+GL_IMPORT______(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
 GL_IMPORT______(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
 
 GL_IMPORT______(true,  PFNGLDRAWARRAYSINDIRECTPROC,                glDrawArraysIndirect);

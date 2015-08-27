@@ -7,16 +7,16 @@ $input v_texcoord0
 
 #include "../common/common.sh"
 uniform vec4 u_color;
-SAMPLER2D(u_texColor, 0);
+SAMPLER2D(s_texColor, 0);
 
 void main()
 {
-	vec4 tcolor = toLinear(texture2D(u_texColor, v_texcoord0));
+	vec4 color = toLinear(texture2D(s_texColor, v_texcoord0) );
 
-	if (tcolor.x < 0.1) //OK for now.
+	if (color.x < 0.1)
 	{
 		discard;
 	}
 
-	gl_FragColor = toGamma(tcolor + u_color);
+	gl_FragColor = toGamma(color + u_color);
 }

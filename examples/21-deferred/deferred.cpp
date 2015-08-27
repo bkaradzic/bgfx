@@ -274,17 +274,17 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 	// Create texture sampler uniforms.
-	bgfx::UniformHandle s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Int1);
 
-	bgfx::UniformHandle s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Uniform1iv);
+	bgfx::UniformHandle s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Int1);
 
-	bgfx::UniformHandle u_mtx            = bgfx::createUniform("u_mtx",            bgfx::UniformType::Uniform4x4fv);
-	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Uniform4fv);
-	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Uniform4fv);
+	bgfx::UniformHandle u_mtx            = bgfx::createUniform("u_mtx",            bgfx::UniformType::Mat4);
+	bgfx::UniformHandle u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_lightRgbInnerR = bgfx::createUniform("u_lightRgbInnerR", bgfx::UniformType::Vec4);
 
 	// Create program from shaders.
 	bgfx::ProgramHandle geomProgram    = loadProgram("vs_deferred_geom",       "fs_deferred_geom");
@@ -363,7 +363,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
-			bgfx::submit(0);
+			bgfx::touch(0);
 		}
 		else
 		{
@@ -407,7 +407,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, mouseState.m_my
 				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
 				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-				, 0
+				, mouseState.m_mz
 				, width
 				, height
 				);
@@ -499,9 +499,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					// Set transform for draw call.
 					bgfx::setTransform(mtx);
 
-					// Set vertex and fragment shaders.
-					bgfx::setProgram(geomProgram);
-
 					// Set vertex and index buffer.
 					bgfx::setVertexBuffer(vbh);
 					bgfx::setIndexBuffer(ibh);
@@ -520,7 +517,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						);
 
 					// Submit primitive for rendering to view 0.
-					bgfx::submit(RENDER_PASS_GEOMETRY_ID);
+					bgfx::submit(RENDER_PASS_GEOMETRY_ID, geomProgram);
 				}
 			}
 
@@ -618,7 +615,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 							*indices++ = 3;
 							*indices++ = 0;
 
-							bgfx::setProgram(lineProgram);
 							bgfx::setVertexBuffer(&tvb);
 							bgfx::setIndexBuffer(&tib);
 							bgfx::setState(0
@@ -626,7 +622,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 								| BGFX_STATE_PT_LINES
 								| BGFX_STATE_BLEND_ALPHA
 								);
-							bgfx::submit(RENDER_PASS_DEBUG_LIGHTS_ID);
+							bgfx::submit(RENDER_PASS_DEBUG_LIGHTS_ID, lineProgram);
 						}
 					}
 
@@ -647,27 +643,25 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					bgfx::setScissor(uint16_t(x0), height-scissorHeight-uint16_t(y0), uint16_t(x1-x0), scissorHeight);
 					bgfx::setTexture(0, s_normal, gbuffer, 1);
 					bgfx::setTexture(1, s_depth,  gbuffer, 2);
-					bgfx::setProgram(lightProgram);
 					bgfx::setState(0
 						| BGFX_STATE_RGB_WRITE
 						| BGFX_STATE_ALPHA_WRITE
 						| BGFX_STATE_BLEND_ADD
 						);
 					screenSpaceQuad( (float)width, (float)height, texelHalf, s_originBottomLeft);
-					bgfx::submit(RENDER_PASS_LIGHT_ID);
+					bgfx::submit(RENDER_PASS_LIGHT_ID, lightProgram);
 				}
 			}
 
 			// Combine color and light buffers.
 			bgfx::setTexture(0, s_albedo, gbuffer,     0);
 			bgfx::setTexture(1, s_light,  lightBuffer, 0);
-			bgfx::setProgram(combineProgram);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
 				);
 			screenSpaceQuad( (float)width, (float)height, texelHalf, s_originBottomLeft);
-			bgfx::submit(RENDER_PASS_COMBINE_ID);
+			bgfx::submit(RENDER_PASS_COMBINE_ID, combineProgram);
 
 			if (showGBuffer)
 			{
@@ -684,12 +678,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						);
 
 					bgfx::setTransform(mtx);
-					bgfx::setProgram(debugProgram);
 					bgfx::setVertexBuffer(vbh);
 					bgfx::setIndexBuffer(ibh, 0, 6);
 					bgfx::setTexture(0, s_texColor, gbufferTex[ii]);
 					bgfx::setState(BGFX_STATE_RGB_WRITE);
-					bgfx::submit(RENDER_PASS_DEBUG_GBUFFER_ID);
+					bgfx::submit(RENDER_PASS_DEBUG_GBUFFER_ID, debugProgram);
 				}
 			}
 		}

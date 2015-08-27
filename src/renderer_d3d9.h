@@ -9,6 +9,7 @@
 #define BGFX_CONFIG_RENDERER_DIRECT3D9EX (BX_PLATFORM_WINDOWS && 0)
 
 #if BX_PLATFORM_WINDOWS
+#	include <sal.h>
 #	if !BGFX_CONFIG_RENDERER_DIRECT3D9EX
 //#		define D3D_DISABLE_9EX
 #	endif // !BGFX_CONFIG_RENDERER_DIRECT3D9EX
@@ -381,6 +382,8 @@ namespace bgfx { namespace d3d9
 		IDirect3DSurface9* m_depthStencil;
 		IDirect3DSwapChain9* m_swapChain;
 		HWND m_hwnd;
+		uint32_t m_width;
+		uint32_t m_height;
 
 		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		TextureHandle m_depthHandle;

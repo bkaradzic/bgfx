@@ -97,21 +97,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Preload glyphs and blit them to atlas.
 		fontManager->preloadGlyph(fonts[ii], L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
 
-		// You can unload the truetype files at this stage, but in that 
-		// case, the set of glyph's will be limited to the set of preloaded 
+		// You can unload the truetype files at this stage, but in that
+		// case, the set of glyph's will be limited to the set of preloaded
 		// glyph.
 		fontManager->destroyTtf(fontFiles[ii]);
 	}
 
 	TrueTypeHandle fontAwesomeTtf = loadTtf(fontManager, "font/fontawesome-webfont.ttf");
 
-	// This font doesn't have any preloaded glyph's but the truetype file 
+	// This font doesn't have any preloaded glyph's but the truetype file
 	// is loaded so glyph will be generated as needed.
 	FontHandle fontAwesome72 = fontManager->createFontByPixelSize(fontAwesomeTtf, 0, 72);
 
 	TrueTypeHandle visitorTtf = loadTtf(fontManager, "font/visitor1.ttf");
 
-	// This font doesn't have any preloaded glyph's but the truetype file 
+	// This font doesn't have any preloaded glyph's but the truetype file
 	// is loaded so glyph will be generated as needed.
 	FontHandle visitor10 = fontManager->createFontByPixelSize(visitorTtf, 0, 10);
 
@@ -119,7 +119,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	//a static text buffer content cannot be modified after its first submit.
 	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Static);
 
-	// The pen position represent the top left of the box of the first line 
+	// The pen position represent the top left of the box of the first line
 	// of text.
 	textBufferManager->setPenPosition(staticText, 24.0f, 100.0f);
 
@@ -168,7 +168,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	{
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -203,7 +203,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Setup a top-left ortho matrix for screen space drawing.
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float proj[16];
 			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);

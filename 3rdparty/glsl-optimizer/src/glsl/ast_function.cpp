@@ -1212,7 +1212,7 @@ emit_inline_matrix_constructor(const glsl_type *type, int ast_precision,
     *
     *  - Construct a matrix from an arbirary combination of vectors and
     *    scalars.  The components of the constructor parameters are assigned
-    *    to the matrix in colum-major order until the matrix is full.
+    *    to the matrix in column-major order until the matrix is full.
     *
     *  - Construct a matrix from a single matrix.  The source matrix is copied
     *    to the upper left portion of the constructed matrix, and the remaining

@@ -13,9 +13,9 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x1)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x3)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x3)
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
 
 long int fsize(FILE* _file)
 {
@@ -70,12 +70,7 @@ static const char* s_OES_texture_3D[] =
 const char* s_uniformTypeName[UniformType::Count] =
 {
 	"int",
-	"float",
 	NULL,
-	"int",
-	"float",
-	"vec2",
-	"vec3",
 	"vec4",
 	"mat3",
 	"mat4",
@@ -712,10 +707,11 @@ int main(int _argc, const char* _argv[])
 
 	bool raw = cmdLine.hasArg('\0', "raw");
 
-	uint32_t glsl = 0;
-	uint32_t essl = 0;
-	uint32_t hlsl = 2;
-	uint32_t d3d  = 11;
+	uint32_t glsl  = 0;
+	uint32_t essl  = 0;
+	uint32_t hlsl  = 2;
+	uint32_t d3d   = 11;
+	uint32_t metal = 0;
 	const char* profile = cmdLine.findOption('p', "profile");
 	if (NULL != profile)
 	{
@@ -735,6 +731,10 @@ int main(int _argc, const char* _argv[])
 		else if (0 == strncmp(&profile[1], "s_5", 3) )
 		{
 			hlsl = 5;
+		}
+		else if (0 == strcmp(profile, "metal") )
+		{
+			metal = 1;
 		}
 		else
 		{
@@ -801,6 +801,7 @@ int main(int _argc, const char* _argv[])
 //	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
+	preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_COMPUTE");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
 	preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
@@ -837,6 +838,9 @@ int main(int _argc, const char* _argv[])
 	{
 		preprocessor.setDefine("BX_PLATFORM_OSX=1");
 		preprocessor.setDefine(glslDefine);
+		char temp[256];
+		bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_METAL=%d", metal);
+		preprocessor.setDefine(temp);
 	}
 	else if (0 == bx::stricmp(platform, "windows") )
 	{
@@ -897,6 +901,10 @@ int main(int _argc, const char* _argv[])
 		&&  *parse != '\0')
 		{
 			preprocessor.addDependency(varyingdef);
+		}
+		else
+		{
+			fprintf(stderr, "ERROR: Failed to parse varying def file: \"%s\" No input/output semantics will be generated in the code!\n", varyingdef);
 		}
 
 		while (NULL != parse
@@ -1107,7 +1115,8 @@ int main(int _argc, const char* _argv[])
 			else
 			{
 				if (0 != glsl
-				||  0 != essl)
+				||  0 != essl
+				||  0 != metal)
 				{
 				}
 				else
@@ -1285,7 +1294,8 @@ int main(int _argc, const char* _argv[])
 			else
 			{
 				if (0 != glsl
-				||  0 != essl)
+				||  0 != essl
+				||  0 != metal)
 				{
 					if (120 == glsl
 					||  0   != essl)
@@ -1716,11 +1726,27 @@ int main(int _argc, const char* _argv[])
 							}
 
 							code += preprocessor.m_preprocessed;
-							compiled = compileGLSLShader(cmdLine, essl, code, writer);
+							compiled = compileGLSLShader(cmdLine
+									, essl
+									, code
+									, writer
+									);
+						}
+						else if (0 != metal)
+						{
+							compiled = compileGLSLShader(cmdLine
+									, BX_MAKEFOURCC('M', 'T', 'L', 0)
+									, preprocessor.m_preprocessed
+									, writer
+									);
 						}
 						else
 						{
-							compiled = compileHLSLShader(cmdLine, d3d, preprocessor.m_preprocessed, writer);
+							compiled = compileHLSLShader(cmdLine
+									, d3d
+									, preprocessor.m_preprocessed
+									, writer
+									);
 						}
 
 						writer->close();

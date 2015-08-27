@@ -1,0 +1,49 @@
+#version 300 es
+out mediump vec4 _fragData;
+uniform highp float _Speed;
+uniform highp vec4 _Time;
+in highp vec2 uv;
+void main ()
+{
+  mediump mat2 halfMatrix_1;
+  highp mat2 rotationMatrix_2;
+  highp float tmpvar_3;
+  highp float tmpvar_4;
+  tmpvar_4 = (_Speed * _Time.x);
+  tmpvar_3 = sin(tmpvar_4);
+  highp float tmpvar_5;
+  tmpvar_5 = cos(tmpvar_4);
+  highp mat2 tmpvar_6;
+  tmpvar_6[uint(0)].x = tmpvar_5;
+  tmpvar_6[uint(0)].y = tmpvar_3;
+  tmpvar_6[1u].x = -(tmpvar_3);
+  tmpvar_6[1u].y = tmpvar_5;
+  rotationMatrix_2 = (tmpvar_6 * 2.0);
+  rotationMatrix_2 = (rotationMatrix_2 - 1.0);
+  rotationMatrix_2 = (tmpvar_3 - rotationMatrix_2);
+  rotationMatrix_2 = (tmpvar_5 + rotationMatrix_2);
+  rotationMatrix_2 = (rotationMatrix_2 / tmpvar_3);
+  highp mat2 tmpvar_7;
+  tmpvar_7[uint(0)].x = tmpvar_5;
+  tmpvar_7[uint(0)].y = tmpvar_3;
+  tmpvar_7[1u].x = -(tmpvar_3);
+  tmpvar_7[1u].y = tmpvar_5;
+  halfMatrix_1 = tmpvar_7;
+  halfMatrix_1 = (halfMatrix_1 * 2.0);
+  halfMatrix_1 = (halfMatrix_1 - 1.0);
+  halfMatrix_1 = (tmpvar_3 - halfMatrix_1);
+  halfMatrix_1 = (tmpvar_5 + halfMatrix_1);
+  halfMatrix_1 = (halfMatrix_1 / tmpvar_3);
+  highp vec4 tmpvar_8;
+  tmpvar_8.xy = (rotationMatrix_2 * uv);
+  tmpvar_8.zw = (halfMatrix_1 * uv);
+  _fragData = tmpvar_8;
+}
+
+
+// stats: 17 alu 0 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _Speed (high float) 1x1 [-1]
+//  #1: _Time (high float) 4x1 [-1]

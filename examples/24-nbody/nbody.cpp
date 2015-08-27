@@ -161,7 +161,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::DynamicVertexBufferHandle prevPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 		bgfx::DynamicVertexBufferHandle prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
 
-		bgfx::UniformHandle u_params = bgfx::createUniform("u_params", bgfx::UniformType::Uniform4fv, 3);
+		bgfx::UniformHandle u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 3);
 
 		bgfx::ProgramHandle initInstancesProgram   = bgfx::createProgram(loadShader("cs_init_instances"), true);
 		bgfx::ProgramHandle updateInstancesProgram = bgfx::createProgram(loadShader("cs_update_instances"), true);
@@ -221,7 +221,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					, mouseState.m_my
 					, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
 					| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-					, 0
+					, mouseState.m_mz
 					, width
 					, height
 					);
@@ -294,7 +294,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 			// Set view and projection matrix for view 0.
 			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd)
+			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 			{
 				float viewHead[16];
 				float eye[3] = {};
@@ -324,9 +324,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				bgfx::setViewRect(0, 0, 0, width, height);
 			}
 
-			// Set vertex and fragment shaders.
-			bgfx::setProgram(particleProgram);
-
 			// Set vertex and index buffer.
 			bgfx::setVertexBuffer(vbh);
 			bgfx::setIndexBuffer(ibh);
@@ -342,11 +339,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			// Submit primitive for rendering to view 0.
 			if (useIndirect)
 			{
-				bgfx::submit(0, indirectBuffer, 0);
+				bgfx::submit(0, particleProgram, indirectBuffer, 0);
 			}
 			else
 			{
-				bgfx::submit(0);
+				bgfx::submit(0, particleProgram);
 			}
 
 			// Advance to next frame. Rendering thread will be kicked to
@@ -395,7 +392,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bool blink = uint32_t(time*3.0f)&1;
 			bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " Compute is not supported by GPU. ");
 
-			bgfx::submit(0);
+			bgfx::touch(0);
 			bgfx::frame();
 		}
 	}

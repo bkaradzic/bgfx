@@ -332,80 +332,91 @@ namespace entry
 			, m_exit(false)
 		{
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
-			s_translateKey[VK_ESCAPE]    = Key::Esc;
-			s_translateKey[VK_RETURN]    = Key::Return;
-			s_translateKey[VK_TAB]       = Key::Tab;
-			s_translateKey[VK_BACK]      = Key::Backspace;
-			s_translateKey[VK_SPACE]     = Key::Space;
-			s_translateKey[VK_UP]        = Key::Up;
-			s_translateKey[VK_DOWN]      = Key::Down;
-			s_translateKey[VK_LEFT]      = Key::Left;
-			s_translateKey[VK_RIGHT]     = Key::Right;
-			s_translateKey[VK_PRIOR]     = Key::PageUp;
-			s_translateKey[VK_NEXT]      = Key::PageUp;
-			s_translateKey[VK_HOME]      = Key::Home;
-			s_translateKey[VK_END]       = Key::End;
-			s_translateKey[VK_SNAPSHOT]  = Key::Print;
-			s_translateKey[VK_OEM_PLUS]  = Key::Plus;
-			s_translateKey[VK_OEM_MINUS] = Key::Minus;
-			s_translateKey[VK_F1]        = Key::F1;
-			s_translateKey[VK_F2]        = Key::F2;
-			s_translateKey[VK_F3]        = Key::F3;
-			s_translateKey[VK_F4]        = Key::F4;
-			s_translateKey[VK_F5]        = Key::F5;
-			s_translateKey[VK_F6]        = Key::F6;
-			s_translateKey[VK_F7]        = Key::F7;
-			s_translateKey[VK_F8]        = Key::F8;
-			s_translateKey[VK_F9]        = Key::F9;
-			s_translateKey[VK_F10]       = Key::F10;
-			s_translateKey[VK_F11]       = Key::F11;
-			s_translateKey[VK_F12]       = Key::F12;
-			s_translateKey[VK_NUMPAD0]   = Key::NumPad0;
-			s_translateKey[VK_NUMPAD1]   = Key::NumPad1;
-			s_translateKey[VK_NUMPAD2]   = Key::NumPad2;
-			s_translateKey[VK_NUMPAD3]   = Key::NumPad3;
-			s_translateKey[VK_NUMPAD4]   = Key::NumPad4;
-			s_translateKey[VK_NUMPAD5]   = Key::NumPad5;
-			s_translateKey[VK_NUMPAD6]   = Key::NumPad6;
-			s_translateKey[VK_NUMPAD7]   = Key::NumPad7;
-			s_translateKey[VK_NUMPAD8]   = Key::NumPad8;
-			s_translateKey[VK_NUMPAD9]   = Key::NumPad9;
-			s_translateKey[uint8_t('0')] = Key::Key0;
-			s_translateKey[uint8_t('1')] = Key::Key1;
-			s_translateKey[uint8_t('2')] = Key::Key2;
-			s_translateKey[uint8_t('3')] = Key::Key3;
-			s_translateKey[uint8_t('4')] = Key::Key4;
-			s_translateKey[uint8_t('5')] = Key::Key5;
-			s_translateKey[uint8_t('6')] = Key::Key6;
-			s_translateKey[uint8_t('7')] = Key::Key7;
-			s_translateKey[uint8_t('8')] = Key::Key8;
-			s_translateKey[uint8_t('9')] = Key::Key9;
-			s_translateKey[uint8_t('A')] = Key::KeyA;
-			s_translateKey[uint8_t('B')] = Key::KeyB;
-			s_translateKey[uint8_t('C')] = Key::KeyC;
-			s_translateKey[uint8_t('D')] = Key::KeyD;
-			s_translateKey[uint8_t('E')] = Key::KeyE;
-			s_translateKey[uint8_t('F')] = Key::KeyF;
-			s_translateKey[uint8_t('G')] = Key::KeyG;
-			s_translateKey[uint8_t('H')] = Key::KeyH;
-			s_translateKey[uint8_t('I')] = Key::KeyI;
-			s_translateKey[uint8_t('J')] = Key::KeyJ;
-			s_translateKey[uint8_t('K')] = Key::KeyK;
-			s_translateKey[uint8_t('L')] = Key::KeyL;
-			s_translateKey[uint8_t('M')] = Key::KeyM;
-			s_translateKey[uint8_t('N')] = Key::KeyN;
-			s_translateKey[uint8_t('O')] = Key::KeyO;
-			s_translateKey[uint8_t('P')] = Key::KeyP;
-			s_translateKey[uint8_t('Q')] = Key::KeyQ;
-			s_translateKey[uint8_t('R')] = Key::KeyR;
-			s_translateKey[uint8_t('S')] = Key::KeyS;
-			s_translateKey[uint8_t('T')] = Key::KeyT;
-			s_translateKey[uint8_t('U')] = Key::KeyU;
-			s_translateKey[uint8_t('V')] = Key::KeyV;
-			s_translateKey[uint8_t('W')] = Key::KeyW;
-			s_translateKey[uint8_t('X')] = Key::KeyX;
-			s_translateKey[uint8_t('Y')] = Key::KeyY;
-			s_translateKey[uint8_t('Z')] = Key::KeyZ;
+			s_translateKey[VK_ESCAPE]     = Key::Esc;
+			s_translateKey[VK_RETURN]     = Key::Return;
+			s_translateKey[VK_TAB]        = Key::Tab;
+			s_translateKey[VK_BACK]       = Key::Backspace;
+			s_translateKey[VK_SPACE]      = Key::Space;
+			s_translateKey[VK_UP]         = Key::Up;
+			s_translateKey[VK_DOWN]       = Key::Down;
+			s_translateKey[VK_LEFT]       = Key::Left;
+			s_translateKey[VK_RIGHT]      = Key::Right;
+			s_translateKey[VK_INSERT]     = Key::Insert;
+			s_translateKey[VK_DELETE]     = Key::Delete;
+			s_translateKey[VK_HOME]       = Key::Home;
+			s_translateKey[VK_END]        = Key::End;
+			s_translateKey[VK_PRIOR]      = Key::PageUp;
+			s_translateKey[VK_NEXT]       = Key::PageUp;
+			s_translateKey[VK_SNAPSHOT]   = Key::Print;
+			s_translateKey[VK_OEM_PLUS]   = Key::Plus;
+			s_translateKey[VK_OEM_MINUS]  = Key::Minus;
+			s_translateKey[VK_OEM_4]      = Key::LeftBracket;
+			s_translateKey[VK_OEM_6]      = Key::RightBracket;
+			s_translateKey[VK_OEM_1]      = Key::Semicolon;
+			s_translateKey[VK_OEM_7]      = Key::Quote;
+			s_translateKey[VK_OEM_COMMA]  = Key::Comma;
+			s_translateKey[VK_OEM_PERIOD] = Key::Period;
+			s_translateKey[VK_OEM_2]      = Key::Slash;
+			s_translateKey[VK_OEM_5]      = Key::Backslash;
+			s_translateKey[VK_OEM_3]      = Key::Tilde;
+			s_translateKey[VK_F1]         = Key::F1;
+			s_translateKey[VK_F2]         = Key::F2;
+			s_translateKey[VK_F3]         = Key::F3;
+			s_translateKey[VK_F4]         = Key::F4;
+			s_translateKey[VK_F5]         = Key::F5;
+			s_translateKey[VK_F6]         = Key::F6;
+			s_translateKey[VK_F7]         = Key::F7;
+			s_translateKey[VK_F8]         = Key::F8;
+			s_translateKey[VK_F9]         = Key::F9;
+			s_translateKey[VK_F10]        = Key::F10;
+			s_translateKey[VK_F11]        = Key::F11;
+			s_translateKey[VK_F12]        = Key::F12;
+			s_translateKey[VK_NUMPAD0]    = Key::NumPad0;
+			s_translateKey[VK_NUMPAD1]    = Key::NumPad1;
+			s_translateKey[VK_NUMPAD2]    = Key::NumPad2;
+			s_translateKey[VK_NUMPAD3]    = Key::NumPad3;
+			s_translateKey[VK_NUMPAD4]    = Key::NumPad4;
+			s_translateKey[VK_NUMPAD5]    = Key::NumPad5;
+			s_translateKey[VK_NUMPAD6]    = Key::NumPad6;
+			s_translateKey[VK_NUMPAD7]    = Key::NumPad7;
+			s_translateKey[VK_NUMPAD8]    = Key::NumPad8;
+			s_translateKey[VK_NUMPAD9]    = Key::NumPad9;
+			s_translateKey[uint8_t('0')]  = Key::Key0;
+			s_translateKey[uint8_t('1')]  = Key::Key1;
+			s_translateKey[uint8_t('2')]  = Key::Key2;
+			s_translateKey[uint8_t('3')]  = Key::Key3;
+			s_translateKey[uint8_t('4')]  = Key::Key4;
+			s_translateKey[uint8_t('5')]  = Key::Key5;
+			s_translateKey[uint8_t('6')]  = Key::Key6;
+			s_translateKey[uint8_t('7')]  = Key::Key7;
+			s_translateKey[uint8_t('8')]  = Key::Key8;
+			s_translateKey[uint8_t('9')]  = Key::Key9;
+			s_translateKey[uint8_t('A')]  = Key::KeyA;
+			s_translateKey[uint8_t('B')]  = Key::KeyB;
+			s_translateKey[uint8_t('C')]  = Key::KeyC;
+			s_translateKey[uint8_t('D')]  = Key::KeyD;
+			s_translateKey[uint8_t('E')]  = Key::KeyE;
+			s_translateKey[uint8_t('F')]  = Key::KeyF;
+			s_translateKey[uint8_t('G')]  = Key::KeyG;
+			s_translateKey[uint8_t('H')]  = Key::KeyH;
+			s_translateKey[uint8_t('I')]  = Key::KeyI;
+			s_translateKey[uint8_t('J')]  = Key::KeyJ;
+			s_translateKey[uint8_t('K')]  = Key::KeyK;
+			s_translateKey[uint8_t('L')]  = Key::KeyL;
+			s_translateKey[uint8_t('M')]  = Key::KeyM;
+			s_translateKey[uint8_t('N')]  = Key::KeyN;
+			s_translateKey[uint8_t('O')]  = Key::KeyO;
+			s_translateKey[uint8_t('P')]  = Key::KeyP;
+			s_translateKey[uint8_t('Q')]  = Key::KeyQ;
+			s_translateKey[uint8_t('R')]  = Key::KeyR;
+			s_translateKey[uint8_t('S')]  = Key::KeyS;
+			s_translateKey[uint8_t('T')]  = Key::KeyT;
+			s_translateKey[uint8_t('U')]  = Key::KeyU;
+			s_translateKey[uint8_t('V')]  = Key::KeyV;
+			s_translateKey[uint8_t('W')]  = Key::KeyW;
+			s_translateKey[uint8_t('X')]  = Key::KeyX;
+			s_translateKey[uint8_t('Y')]  = Key::KeyY;
+			s_translateKey[uint8_t('Z')]  = Key::KeyZ;
 		}
 
 		int32_t run(int _argc, char** _argv)
@@ -488,7 +499,7 @@ namespace entry
 
 			s_xinput.shutdown();
 
-			return 0;
+			return thread.getExitCode();
 		}
 
 		LRESULT process(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam)
@@ -1069,7 +1080,7 @@ namespace entry
 
 	void toggleFullscreen(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)

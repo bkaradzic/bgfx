@@ -160,7 +160,7 @@ public:
 	int		uses_texlodproj_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
 };
 
-static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
+void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
 {
 	static const char *precStrings[3] = {"lowp", "mediump", "highp"};
 	static const char *precNameStrings[3] = { "low_", "medium_", "high_" };
@@ -231,6 +231,10 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		}
 		if (state->ARB_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_ARB_shader_texture_lod : enable\n");
+		if (state->ARB_draw_instanced_enable)
+			str.asprintf_append ("#extension GL_ARB_draw_instanced : enable\n");
+		if (state->EXT_gpu_shader4_enable)
+			str.asprintf_append ("#extension GL_EXT_gpu_shader4 : enable\n");
 		if (state->EXT_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_texture_lod : enable\n");
 		if (state->OES_standard_derivatives_enable)
@@ -242,7 +246,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (state->es_shader && state->language_version < 300)
 		{
 			if (state->EXT_draw_buffers_enable)
-				str.asprintf_append ("#extension GL_EXT_draw_buffers : require\n");
+				str.asprintf_append ("#extension GL_EXT_draw_buffers : enable\n");
+			if (state->EXT_draw_instanced_enable)
+				str.asprintf_append ("#extension GL_EXT_draw_instanced : enable\n");
 		}
 		if (state->EXT_shader_framebuffer_fetch_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_framebuffer_fetch : enable\n");
@@ -283,7 +289,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	
 	delete ls;
 	
+#if 0 // BK - disable LOD workarounds.
 	print_texlod_workarounds(uses_texlod_impl, uses_texlodproj_impl, str);
+#endif // 0
 	
 	// Add the optimized glsl code
 	str.asprintf_append("%s", body.c_str());
@@ -822,6 +830,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	const bool is_proj = (uv_dim > sampler_uv_dim);
 	const bool is_lod = (ir->op == ir_txl);
 	
+#if 0 // BK - disable LOD workarounds.
 	if (is_lod && state->es_shader && state->language_version < 300 && state->stage == MESA_SHADER_FRAGMENT)
 	{
 		// Special workaround for GLES 2.0 LOD samplers to prevent a lot of debug spew.
@@ -850,6 +859,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		else
 			uses_texlod_impl |= (1 << position);
 	}
+#endif // 0
 
 	
     // texture function name

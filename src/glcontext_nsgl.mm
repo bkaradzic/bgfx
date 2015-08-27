@@ -101,7 +101,6 @@ namespace bgfx { namespace gl
 			NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
 
 			[pixelFormat release];
-//			[glView setWantsBestResolutionOpenGLSurface:YES];
 			[nsWindow setContentView:glView];
 
 			NSOpenGLContext* glContext = [glView openGLContext];
@@ -135,6 +134,10 @@ namespace bgfx { namespace gl
 	{
 		BX_UNUSED(_width, _height);
 
+		bool hidpi = !!(_flags&BGFX_RESET_HIDPI);
+		NSOpenGLView* glView = (NSOpenGLView*)m_view;
+		[glView setWantsBestResolutionOpenGLSurface:hidpi];
+
 		bool vsync = !!(_flags&BGFX_RESET_VSYNC);
 		GLint interval = vsync ? 1 : 0;
 		NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
@@ -142,9 +145,14 @@ namespace bgfx { namespace gl
 		[glContext update];
 	}
 
-	bool GlContext::isSwapChainSupported()
+	uint64_t GlContext::getCaps() const
 	{
-		return false;
+		NSWindow* nsWindow = (NSWindow*)g_platformData.nwh;
+		uint64_t caps = 1.0f < [nsWindow backingScaleFactor]
+			? BGFX_CAPS_HIDPI
+			: 0
+			;
+		return caps;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)
@@ -176,6 +184,8 @@ namespace bgfx { namespace gl
 	{
 		if (NULL == _swapChain)
 		{
+			NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
+			[glContext makeCurrentContext];
 		}
 		else
 		{

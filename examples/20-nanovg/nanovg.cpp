@@ -91,12 +91,12 @@ void drawWindow(struct NVGcontext* vg, const char* title, float x, float y, floa
 	// Window
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x,y, w,h, cornerRadius);
-	nvgFillColor(vg, nvgRGBA(28,30,34,192));
-	//	nvgFillColor(vg, nvgRGBA(0,0,0,128));
+	nvgFillColor(vg, nvgRGBA(28,30,34,192) );
+	//	nvgFillColor(vg, nvgRGBA(0,0,0,128) );
 	nvgFill(vg);
 
 	// Drop shadow
-	shadowPaint = nvgBoxGradient(vg, x,y+2, w,h, cornerRadius*2, 10, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
+	shadowPaint = nvgBoxGradient(vg, x,y+2, w,h, cornerRadius*2, 10, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, x-10,y-10, w+20,h+30);
 	nvgRoundedRect(vg, x,y, w,h, cornerRadius);
@@ -105,7 +105,7 @@ void drawWindow(struct NVGcontext* vg, const char* title, float x, float y, floa
 	nvgFill(vg);
 
 	// Header
-	headerPaint = nvgLinearGradient(vg, x,y,x,y+15, nvgRGBA(255,255,255,8), nvgRGBA(0,0,0,16));
+	headerPaint = nvgLinearGradient(vg, x,y,x,y+15, nvgRGBA(255,255,255,8), nvgRGBA(0,0,0,16) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+1,y+1, w-2,30, cornerRadius-1);
 	nvgFillPaint(vg, headerPaint);
@@ -113,7 +113,7 @@ void drawWindow(struct NVGcontext* vg, const char* title, float x, float y, floa
 	nvgBeginPath(vg);
 	nvgMoveTo(vg, x+0.5f, y+0.5f+30);
 	nvgLineTo(vg, x+0.5f+w-1, y+0.5f+30);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,32));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,32) );
 	nvgStroke(vg);
 
 	nvgFontSize(vg, 18.0f);
@@ -121,11 +121,11 @@ void drawWindow(struct NVGcontext* vg, const char* title, float x, float y, floa
 	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
 
 	nvgFontBlur(vg,2);
-	nvgFillColor(vg, nvgRGBA(0,0,0,128));
+	nvgFillColor(vg, nvgRGBA(0,0,0,128) );
 	nvgText(vg, x+w/2,y+16+1, title, NULL);
 
 	nvgFontBlur(vg,0);
-	nvgFillColor(vg, nvgRGBA(220,220,220,160));
+	nvgFillColor(vg, nvgRGBA(220,220,220,160) );
 	nvgText(vg, x+w/2,y+16, title, NULL);
 
 	nvgRestore(vg);
@@ -138,7 +138,7 @@ void drawSearchBox(struct NVGcontext* vg, const char* text, float x, float y, fl
 	float cornerRadius = h/2-1;
 
 	// Edit
-	bg = nvgBoxGradient(vg, x,y+1.5f, w,h, h/2,5, nvgRGBA(0,0,0,16), nvgRGBA(0,0,0,92));
+	bg = nvgBoxGradient(vg, x,y+1.5f, w,h, h/2,5, nvgRGBA(0,0,0,16), nvgRGBA(0,0,0,92) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x,y, w,h, cornerRadius);
 	nvgFillPaint(vg, bg);
@@ -146,25 +146,25 @@ void drawSearchBox(struct NVGcontext* vg, const char* text, float x, float y, fl
 
 	/*	nvgBeginPath(vg);
 		nvgRoundedRect(vg, x+0.5f,y+0.5f, w-1,h-1, cornerRadius-0.5f);
-		nvgStrokeColor(vg, nvgRGBA(0,0,0,48));
+		nvgStrokeColor(vg, nvgRGBA(0,0,0,48) );
 		nvgStroke(vg);*/
 
 	nvgFontSize(vg, h*1.3f);
 	nvgFontFace(vg, "icons");
-	nvgFillColor(vg, nvgRGBA(255,255,255,64));
+	nvgFillColor(vg, nvgRGBA(255,255,255,64) );
 	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+h*0.55f, y+h*0.55f, cpToUTF8(ICON_SEARCH,icon), NULL);
 
 	nvgFontSize(vg, 20.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,32));
+	nvgFillColor(vg, nvgRGBA(255,255,255,32) );
 
 	nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+h*1.05f,y+h*0.5f,text, NULL);
 
 	nvgFontSize(vg, h*1.3f);
 	nvgFontFace(vg, "icons");
-	nvgFillColor(vg, nvgRGBA(255,255,255,32));
+	nvgFillColor(vg, nvgRGBA(255,255,255,32) );
 	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+w-h*0.55f, y+h*0.55f, cpToUTF8(ICON_CIRCLED_CROSS,icon), NULL);
 }
@@ -175,7 +175,7 @@ void drawDropDown(struct NVGcontext* vg, const char* text, float x, float y, flo
 	char icon[8];
 	float cornerRadius = 4.0f;
 
-	bg = nvgLinearGradient(vg, x,y,x,y+h, nvgRGBA(255,255,255,16), nvgRGBA(0,0,0,16));
+	bg = nvgLinearGradient(vg, x,y,x,y+h, nvgRGBA(255,255,255,16), nvgRGBA(0,0,0,16) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+1,y+1, w-2,h-2, cornerRadius-1);
 	nvgFillPaint(vg, bg);
@@ -183,18 +183,18 @@ void drawDropDown(struct NVGcontext* vg, const char* text, float x, float y, flo
 
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+0.5f,y+0.5f, w-1,h-1, cornerRadius-0.5f);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,48));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,48) );
 	nvgStroke(vg);
 
 	nvgFontSize(vg, 20.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,160));
+	nvgFillColor(vg, nvgRGBA(255,255,255,160) );
 	nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+h*0.3f,y+h*0.5f,text, NULL);
 
 	nvgFontSize(vg, h*1.3f);
 	nvgFontFace(vg, "icons");
-	nvgFillColor(vg, nvgRGBA(255,255,255,64));
+	nvgFillColor(vg, nvgRGBA(255,255,255,64) );
 	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+w-h*0.5f, y+h*0.5f, cpToUTF8(ICON_CHEVRON_RIGHT,icon), NULL);
 }
@@ -205,7 +205,7 @@ void drawLabel(struct NVGcontext* vg, const char* text, float x, float y, float 
 
 	nvgFontSize(vg, 18.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,128));
+	nvgFillColor(vg, nvgRGBA(255,255,255,128) );
 
 	nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x,y+h*0.5f,text, NULL);
@@ -215,7 +215,7 @@ void drawEditBoxBase(struct NVGcontext* vg, float x, float y, float w, float h)
 {
 	struct NVGpaint bg;
 	// Edit
-	bg = nvgBoxGradient(vg, x+1,y+1+1.5f, w-2,h-2, 3,4, nvgRGBA(255,255,255,32), nvgRGBA(32,32,32,32));
+	bg = nvgBoxGradient(vg, x+1,y+1+1.5f, w-2,h-2, 3,4, nvgRGBA(255,255,255,32), nvgRGBA(32,32,32,32) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+1,y+1, w-2,h-2, 4-1);
 	nvgFillPaint(vg, bg);
@@ -223,7 +223,7 @@ void drawEditBoxBase(struct NVGcontext* vg, float x, float y, float w, float h)
 
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+0.5f,y+0.5f, w-1,h-1, 4-0.5f);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,48));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,48) );
 	nvgStroke(vg);
 }
 
@@ -233,7 +233,7 @@ void drawEditBox(struct NVGcontext* vg, const char* text, float x, float y, floa
 
 	nvgFontSize(vg, 20.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,64));
+	nvgFillColor(vg, nvgRGBA(255,255,255,64) );
 	nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+h*0.3f,y+h*0.5f,text, NULL);
 }
@@ -249,13 +249,13 @@ void drawEditBoxNum(struct NVGcontext* vg,
 
 	nvgFontSize(vg, 18.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,64));
+	nvgFillColor(vg, nvgRGBA(255,255,255,64) );
 	nvgTextAlign(vg,NVG_ALIGN_RIGHT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+w-h*0.3f,y+h*0.5f,units, NULL);
 
 	nvgFontSize(vg, 20.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,128));
+	nvgFillColor(vg, nvgRGBA(255,255,255,128) );
 	nvgTextAlign(vg,NVG_ALIGN_RIGHT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+w-uw-h*0.5f,y+h*0.5f,text, NULL);
 }
@@ -268,12 +268,12 @@ void drawCheckBox(struct NVGcontext* vg, const char* text, float x, float y, flo
 
 	nvgFontSize(vg, 18.0f);
 	nvgFontFace(vg, "sans");
-	nvgFillColor(vg, nvgRGBA(255,255,255,160));
+	nvgFillColor(vg, nvgRGBA(255,255,255,160) );
 
 	nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+28,y+h*0.5f,text, NULL);
 
-	bg = nvgBoxGradient(vg, x+1,y+(int)(h*0.5f)-9+1, 18,18, 3,3, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,92));
+	bg = nvgBoxGradient(vg, x+1,y+(int)(h*0.5f)-9+1, 18,18, 3,3, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,92) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+1,y+(int)(h*0.5f)-9, 18,18, 3);
 	nvgFillPaint(vg, bg);
@@ -281,7 +281,7 @@ void drawCheckBox(struct NVGcontext* vg, const char* text, float x, float y, flo
 
 	nvgFontSize(vg, 40);
 	nvgFontFace(vg, "icons");
-	nvgFillColor(vg, nvgRGBA(255,255,255,128));
+	nvgFillColor(vg, nvgRGBA(255,255,255,128) );
 	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
 	nvgText(vg, x+9+2, y+h*0.5f, cpToUTF8(ICON_CHECK,icon), NULL);
 }
@@ -293,10 +293,10 @@ void drawButton(struct NVGcontext* vg, int preicon, const char* text, float x, f
 	float cornerRadius = 4.0f;
 	float tw = 0, iw = 0;
 
-	bg = nvgLinearGradient(vg, x,y,x,y+h, nvgRGBA(255,255,255,isBlack(col)?16:32), nvgRGBA(0,0,0,isBlack(col)?16:32));
+	bg = nvgLinearGradient(vg, x,y,x,y+h, nvgRGBA(255,255,255,isBlack(col)?16:32), nvgRGBA(0,0,0,isBlack(col)?16:32) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+1,y+1, w-2,h-2, cornerRadius-1);
-	if (!isBlack(col)) {
+	if (!isBlack(col) ) {
 		nvgFillColor(vg, col);
 		nvgFill(vg);
 	}
@@ -305,7 +305,7 @@ void drawButton(struct NVGcontext* vg, int preicon, const char* text, float x, f
 
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+0.5f,y+0.5f, w-1,h-1, cornerRadius-0.5f);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,48));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,48) );
 	nvgStroke(vg);
 
 	nvgFontSize(vg, 20.0f);
@@ -321,7 +321,7 @@ void drawButton(struct NVGcontext* vg, int preicon, const char* text, float x, f
 	if (preicon != 0) {
 		nvgFontSize(vg, h*1.3f);
 		nvgFontFace(vg, "icons");
-		nvgFillColor(vg, nvgRGBA(255,255,255,96));
+		nvgFillColor(vg, nvgRGBA(255,255,255,96) );
 		nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
 		nvgText(vg, x+w*0.5f-tw*0.5f-iw*0.75f, y+h*0.5f, cpToUTF8(preicon,icon), NULL);
 	}
@@ -329,9 +329,9 @@ void drawButton(struct NVGcontext* vg, int preicon, const char* text, float x, f
 	nvgFontSize(vg, 20.0f);
 	nvgFontFace(vg, "sans-bold");
 	nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
-	nvgFillColor(vg, nvgRGBA(0,0,0,160));
+	nvgFillColor(vg, nvgRGBA(0,0,0,160) );
 	nvgText(vg, x+w*0.5f-tw*0.5f+iw*0.25f,y+h*0.5f-1,text, NULL);
-	nvgFillColor(vg, nvgRGBA(255,255,255,160));
+	nvgFillColor(vg, nvgRGBA(255,255,255,160) );
 	nvgText(vg, x+w*0.5f-tw*0.5f+iw*0.25f,y+h*0.5f,text, NULL);
 }
 
@@ -345,14 +345,14 @@ void drawSlider(struct NVGcontext* vg, float pos, float x, float y, float w, flo
 	//	nvgClearState(vg);
 
 	// Slot
-	bg = nvgBoxGradient(vg, x,cy-2+1, w,4, 2,2, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,128));
+	bg = nvgBoxGradient(vg, x,cy-2+1, w,4, 2,2, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,128) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x,cy-2, w,4, 2);
 	nvgFillPaint(vg, bg);
 	nvgFill(vg);
 
 	// Knob Shadow
-	bg = nvgRadialGradient(vg, x+(int)(pos*w),cy+1, kr-3,kr+3, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0));
+	bg = nvgRadialGradient(vg, x+(int)(pos*w),cy+1, kr-3,kr+3, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, x+(int)(pos*w)-kr-5,cy-kr-5,kr*2+5+5,kr*2+5+5+3);
 	nvgCircle(vg, x+(int)(pos*w),cy, kr);
@@ -361,17 +361,17 @@ void drawSlider(struct NVGcontext* vg, float pos, float x, float y, float w, flo
 	nvgFill(vg);
 
 	// Knob
-	knob = nvgLinearGradient(vg, x,cy-kr,x,cy+kr, nvgRGBA(255,255,255,16), nvgRGBA(0,0,0,16));
+	knob = nvgLinearGradient(vg, x,cy-kr,x,cy+kr, nvgRGBA(255,255,255,16), nvgRGBA(0,0,0,16) );
 	nvgBeginPath(vg);
 	nvgCircle(vg, x+(int)(pos*w),cy, kr-1);
-	nvgFillColor(vg, nvgRGBA(40,43,48,255));
+	nvgFillColor(vg, nvgRGBA(40,43,48,255) );
 	nvgFill(vg);
 	nvgFillPaint(vg, knob);
 	nvgFill(vg);
 
 	nvgBeginPath(vg);
 	nvgCircle(vg, x+(int)(pos*w),cy, kr-0.5f);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,92));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,92) );
 	nvgStroke(vg);
 
 	nvgRestore(vg);
@@ -390,14 +390,14 @@ void drawEyes(struct NVGcontext* vg, float x, float y, float w, float h, float m
 	float br = (ex < ey ? ex : ey) * 0.5f;
 	float blink = 1 - powf(sinf(t*0.5f),200)*0.8f;
 
-	bg = nvgLinearGradient(vg, x,y+h*0.5f,x+w*0.1f,y+h, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,16));
+	bg = nvgLinearGradient(vg, x,y+h*0.5f,x+w*0.1f,y+h, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,16) );
 	nvgBeginPath(vg);
 	nvgEllipse(vg, lx+3.0f,ly+16.0f, ex,ey);
 	nvgEllipse(vg, rx+3.0f,ry+16.0f, ex,ey);
 	nvgFillPaint(vg, bg);
 	nvgFill(vg);
 
-	bg = nvgLinearGradient(vg, x,y+h*0.25f,x+w*0.1f,y+h, nvgRGBA(220,220,220,255), nvgRGBA(128,128,128,255));
+	bg = nvgLinearGradient(vg, x,y+h*0.25f,x+w*0.1f,y+h, nvgRGBA(220,220,220,255), nvgRGBA(128,128,128,255) );
 	nvgBeginPath(vg);
 	nvgEllipse(vg, lx,ly, ex,ey);
 	nvgEllipse(vg, rx,ry, ex,ey);
@@ -414,7 +414,7 @@ void drawEyes(struct NVGcontext* vg, float x, float y, float w, float h, float m
 	dy *= ey*0.5f;
 	nvgBeginPath(vg);
 	nvgEllipse(vg, lx+dx,ly+dy+ey*0.25f*(1-blink), br,br*blink);
-	nvgFillColor(vg, nvgRGBA(32,32,32,255));
+	nvgFillColor(vg, nvgRGBA(32,32,32,255) );
 	nvgFill(vg);
 
 	dx = (mx - rx) / (ex * 10);
@@ -427,16 +427,16 @@ void drawEyes(struct NVGcontext* vg, float x, float y, float w, float h, float m
 	dy *= ey*0.5f;
 	nvgBeginPath(vg);
 	nvgEllipse(vg, rx+dx,ry+dy+ey*0.25f*(1-blink), br,br*blink);
-	nvgFillColor(vg, nvgRGBA(32,32,32,255));
+	nvgFillColor(vg, nvgRGBA(32,32,32,255) );
 	nvgFill(vg);
 
-	gloss = nvgRadialGradient(vg, lx-ex*0.25f,ly-ey*0.5f, ex*0.1f,ex*0.75f, nvgRGBA(255,255,255,128), nvgRGBA(255,255,255,0));
+	gloss = nvgRadialGradient(vg, lx-ex*0.25f,ly-ey*0.5f, ex*0.1f,ex*0.75f, nvgRGBA(255,255,255,128), nvgRGBA(255,255,255,0) );
 	nvgBeginPath(vg);
 	nvgEllipse(vg, lx,ly, ex,ey);
 	nvgFillPaint(vg, gloss);
 	nvgFill(vg);
 
-	gloss = nvgRadialGradient(vg, rx-ex*0.25f,ry-ey*0.5f, ex*0.1f,ex*0.75f, nvgRGBA(255,255,255,128), nvgRGBA(255,255,255,0));
+	gloss = nvgRadialGradient(vg, rx-ex*0.25f,ry-ey*0.5f, ex*0.1f,ex*0.75f, nvgRGBA(255,255,255,128), nvgRGBA(255,255,255,0) );
 	nvgBeginPath(vg);
 	nvgEllipse(vg, rx,ry, ex,ey);
 	nvgFillPaint(vg, gloss);
@@ -451,12 +451,12 @@ void drawGraph(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	float dx = w/5.0f;
 	int i;
 
-	samples[0] = (1+sinf(t*1.2345f+cosf(t*0.33457f)*0.44f))*0.5f;
-	samples[1] = (1+sinf(t*0.68363f+cosf(t*1.3f)*1.55f))*0.5f;
-	samples[2] = (1+sinf(t*1.1642f+cosf(t*0.33457f)*1.24f))*0.5f;
-	samples[3] = (1+sinf(t*0.56345f+cosf(t*1.63f)*0.14f))*0.5f;
-	samples[4] = (1+sinf(t*1.6245f+cosf(t*0.254f)*0.3f))*0.5f;
-	samples[5] = (1+sinf(t*0.345f+cosf(t*0.03f)*0.6f))*0.5f;
+	samples[0] = (1+sinf(t*1.2345f+cosf(t*0.33457f)*0.44f) )*0.5f;
+	samples[1] = (1+sinf(t*0.68363f+cosf(t*1.3f)*1.55f) )*0.5f;
+	samples[2] = (1+sinf(t*1.1642f+cosf(t*0.33457f)*1.24f) )*0.5f;
+	samples[3] = (1+sinf(t*0.56345f+cosf(t*1.63f)*0.14f) )*0.5f;
+	samples[4] = (1+sinf(t*1.6245f+cosf(t*0.254f)*0.3f) )*0.5f;
+	samples[5] = (1+sinf(t*0.345f+cosf(t*0.03f)*0.6f) )*0.5f;
 
 	for (i = 0; i < 6; i++) {
 		sx[i] = x+i*dx;
@@ -464,7 +464,7 @@ void drawGraph(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	}
 
 	// Graph background
-	bg = nvgLinearGradient(vg, x,y,x,y+h, nvgRGBA(0,160,192,0), nvgRGBA(0,160,192,64));
+	bg = nvgLinearGradient(vg, x,y,x,y+h, nvgRGBA(0,160,192,0), nvgRGBA(0,160,192,64) );
 	nvgBeginPath(vg);
 	nvgMoveTo(vg, sx[0], sy[0]);
 	for (i = 1; i < 6; i++)
@@ -479,7 +479,7 @@ void drawGraph(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	nvgMoveTo(vg, sx[0], sy[0]+2);
 	for (i = 1; i < 6; i++)
 		nvgBezierTo(vg, sx[i-1]+dx*0.5f,sy[i-1]+2, sx[i]-dx*0.5f,sy[i]+2, sx[i],sy[i]+2);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,32));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,32) );
 	nvgStrokeWidth(vg, 3.0f);
 	nvgStroke(vg);
 
@@ -487,13 +487,13 @@ void drawGraph(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	nvgMoveTo(vg, sx[0], sy[0]);
 	for (i = 1; i < 6; i++)
 		nvgBezierTo(vg, sx[i-1]+dx*0.5f,sy[i-1], sx[i]-dx*0.5f,sy[i], sx[i],sy[i]);
-	nvgStrokeColor(vg, nvgRGBA(0,160,192,255));
+	nvgStrokeColor(vg, nvgRGBA(0,160,192,255) );
 	nvgStrokeWidth(vg, 3.0f);
 	nvgStroke(vg);
 
 	// Graph sample pos
 	for (i = 0; i < 6; i++) {
-		bg = nvgRadialGradient(vg, sx[i],sy[i]+2, 3.0f,8.0f, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,0));
+		bg = nvgRadialGradient(vg, sx[i],sy[i]+2, 3.0f,8.0f, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,0) );
 		nvgBeginPath(vg);
 		nvgRect(vg, sx[i]-10, sy[i]-10+2, 20,20);
 		nvgFillPaint(vg, bg);
@@ -503,12 +503,12 @@ void drawGraph(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	nvgBeginPath(vg);
 	for (i = 0; i < 6; i++)
 		nvgCircle(vg, sx[i], sy[i], 4.0f);
-	nvgFillColor(vg, nvgRGBA(0,160,192,255));
+	nvgFillColor(vg, nvgRGBA(0,160,192,255) );
 	nvgFill(vg);
 	nvgBeginPath(vg);
 	for (i = 0; i < 6; i++)
 		nvgCircle(vg, sx[i], sy[i], 2.0f);
-	nvgFillColor(vg, nvgRGBA(220,220,220,255));
+	nvgFillColor(vg, nvgRGBA(220,220,220,255) );
 	nvgFill(vg);
 
 	nvgStrokeWidth(vg, 1.0f);
@@ -524,14 +524,14 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 	int imgw, imgh;
 	float stackh = (nimages/2) * (thumb+10) + 10;
 	int i;
-	float u = (1+cosf(t*0.5f))*0.5f;
+	float u = (1+cosf(t*0.5f) )*0.5f;
 	float scrollh;
 
 	nvgSave(vg);
 	//	nvgClearState(vg);
 
 	// Drop shadow
-	shadowPaint = nvgBoxGradient(vg, x,y+4, w,h, cornerRadius*2, 20, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
+	shadowPaint = nvgBoxGradient(vg, x,y+4, w,h, cornerRadius*2, 20, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, x-10,y-10, w+20,h+30);
 	nvgRoundedRect(vg, x,y, w,h, cornerRadius);
@@ -545,7 +545,7 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 	nvgMoveTo(vg, x-10,y+arry);
 	nvgLineTo(vg, x+1,y+arry-11);
 	nvgLineTo(vg, x+1,y+arry+11);
-	nvgFillColor(vg, nvgRGBA(200,200,200,255));
+	nvgFillColor(vg, nvgRGBA(200,200,200,255) );
 	nvgFill(vg);
 
 	nvgSave(vg);
@@ -576,7 +576,7 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 		nvgFillPaint(vg, imgPaint);
 		nvgFill(vg);
 
-		shadowPaint = nvgBoxGradient(vg, tx-1,ty, thumb+2,thumb+2, 5, 3, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
+		shadowPaint = nvgBoxGradient(vg, tx-1,ty, thumb+2,thumb+2, 5, 3, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0) );
 		nvgBeginPath(vg);
 		nvgRect(vg, tx-5,ty-5, thumb+10,thumb+10);
 		nvgRoundedRect(vg, tx,ty, thumb,thumb, 6);
@@ -587,38 +587,38 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 		nvgBeginPath(vg);
 		nvgRoundedRect(vg, tx+0.5f,ty+0.5f, thumb-1,thumb-1, 4-0.5f);
 		nvgStrokeWidth(vg,1.0f);
-		nvgStrokeColor(vg, nvgRGBA(255,255,255,192));
+		nvgStrokeColor(vg, nvgRGBA(255,255,255,192) );
 		nvgStroke(vg);
 	}
 	nvgRestore(vg);
 
 	// Hide fades
-	fadePaint = nvgLinearGradient(vg, x,y,x,y+6, nvgRGBA(200,200,200,255), nvgRGBA(200,200,200,0));
+	fadePaint = nvgLinearGradient(vg, x,y,x,y+6, nvgRGBA(200,200,200,255), nvgRGBA(200,200,200,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, x+4,y,w-8,6);
 	nvgFillPaint(vg, fadePaint);
 	nvgFill(vg);
 
-	fadePaint = nvgLinearGradient(vg, x,y+h,x,y+h-6, nvgRGBA(200,200,200,255), nvgRGBA(200,200,200,0));
+	fadePaint = nvgLinearGradient(vg, x,y+h,x,y+h-6, nvgRGBA(200,200,200,255), nvgRGBA(200,200,200,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, x+4,y+h-6,w-8,6);
 	nvgFillPaint(vg, fadePaint);
 	nvgFill(vg);
 
 	// Scroll bar
-	shadowPaint = nvgBoxGradient(vg, x+w-12+1,y+4+1, 8,h-8, 3,4, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,92));
+	shadowPaint = nvgBoxGradient(vg, x+w-12+1,y+4+1, 8,h-8, 3,4, nvgRGBA(0,0,0,32), nvgRGBA(0,0,0,92) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+w-12,y+4, 8,h-8, 3);
 	nvgFillPaint(vg, shadowPaint);
-	//	nvgFillColor(vg, nvgRGBA(255,0,0,128));
+	//	nvgFillColor(vg, nvgRGBA(255,0,0,128) );
 	nvgFill(vg);
 
 	scrollh = (h/stackh) * (h-8);
-	shadowPaint = nvgBoxGradient(vg, x+w-12-1,y+4+(h-8-scrollh)*u-1, 8,scrollh, 3,4, nvgRGBA(220,220,220,255), nvgRGBA(128,128,128,255));
+	shadowPaint = nvgBoxGradient(vg, x+w-12-1,y+4+(h-8-scrollh)*u-1, 8,scrollh, 3,4, nvgRGBA(220,220,220,255), nvgRGBA(128,128,128,255) );
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+w-12+1,y+4+1 + (h-8-scrollh)*u, 8-2,scrollh-2, 2);
 	nvgFillPaint(vg, shadowPaint);
-	//	nvgFillColor(vg, nvgRGBA(0,0,0,128));
+	//	nvgFillColor(vg, nvgRGBA(0,0,0,128) );
 	nvgFill(vg);
 
 	nvgRestore(vg);
@@ -635,7 +635,7 @@ void drawColorwheel(struct NVGcontext* vg, float x, float y, float w, float h, f
 
 	/*	nvgBeginPath(vg);
 		nvgRect(vg, x,y,w,h);
-		nvgFillColor(vg, nvgRGBA(255,0,0,128));
+		nvgFillColor(vg, nvgRGBA(255,0,0,128) );
 		nvgFill(vg);*/
 
 	cx = x + w*0.5f;
@@ -656,7 +656,7 @@ void drawColorwheel(struct NVGcontext* vg, float x, float y, float w, float h, f
 		ay = cy + sinf(a0) * (r0+r1)*0.5f;
 		bx = cx + cosf(a1) * (r0+r1)*0.5f;
 		by = cy + sinf(a1) * (r0+r1)*0.5f;
-		paint = nvgLinearGradient(vg, ax,ay, bx,by, nvgHSLA(a0/(NVG_PI*2),1.0f,0.55f,255), nvgHSLA(a1/(NVG_PI*2),1.0f,0.55f,255));
+		paint = nvgLinearGradient(vg, ax,ay, bx,by, nvgHSLA(a0/(NVG_PI*2),1.0f,0.55f,255), nvgHSLA(a1/(NVG_PI*2),1.0f,0.55f,255) );
 		nvgFillPaint(vg, paint);
 		nvgFill(vg);
 	}
@@ -664,7 +664,7 @@ void drawColorwheel(struct NVGcontext* vg, float x, float y, float w, float h, f
 	nvgBeginPath(vg);
 	nvgCircle(vg, cx,cy, r0-0.5f);
 	nvgCircle(vg, cx,cy, r1+0.5f);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,64));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,64) );
 	nvgStrokeWidth(vg, 1.0f);
 	nvgStroke(vg);
 
@@ -677,10 +677,10 @@ void drawColorwheel(struct NVGcontext* vg, float x, float y, float w, float h, f
 	nvgStrokeWidth(vg, 2.0f);
 	nvgBeginPath(vg);
 	nvgRect(vg, r0-1,-3,r1-r0+2,6);
-	nvgStrokeColor(vg, nvgRGBA(255,255,255,192));
+	nvgStrokeColor(vg, nvgRGBA(255,255,255,192) );
 	nvgStroke(vg);
 
-	paint = nvgBoxGradient(vg, r0-3,-5,r1-r0+6,10, 2,4, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
+	paint = nvgBoxGradient(vg, r0-3,-5,r1-r0+6,10, 2,4, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, r0-2-10,-4-10,r1-r0+4+20,8+20);
 	nvgRect(vg, r0-2,-4,r1-r0+4,8);
@@ -699,13 +699,13 @@ void drawColorwheel(struct NVGcontext* vg, float x, float y, float w, float h, f
 	nvgLineTo(vg, ax,ay);
 	nvgLineTo(vg, bx,by);
 	nvgClosePath(vg);
-	paint = nvgLinearGradient(vg, r,0, ax,ay, nvgHSLA(hue,1.0f,0.5f,255), nvgRGBA(255,255,255,255));
+	paint = nvgLinearGradient(vg, r,0, ax,ay, nvgHSLA(hue,1.0f,0.5f,255), nvgRGBA(255,255,255,255) );
 	nvgFillPaint(vg, paint);
 	nvgFill(vg);
-	paint = nvgLinearGradient(vg, (r+ax)*0.5f,(0+ay)*0.5f, bx,by, nvgRGBA(0,0,0,0), nvgRGBA(0,0,0,255));
+	paint = nvgLinearGradient(vg, (r+ax)*0.5f,(0+ay)*0.5f, bx,by, nvgRGBA(0,0,0,0), nvgRGBA(0,0,0,255) );
 	nvgFillPaint(vg, paint);
 	nvgFill(vg);
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,64));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,64) );
 	nvgStroke(vg);
 
 	// Select circle on triangle
@@ -714,10 +714,10 @@ void drawColorwheel(struct NVGcontext* vg, float x, float y, float w, float h, f
 	nvgStrokeWidth(vg, 2.0f);
 	nvgBeginPath(vg);
 	nvgCircle(vg, ax,ay,5);
-	nvgStrokeColor(vg, nvgRGBA(255,255,255,192));
+	nvgStrokeColor(vg, nvgRGBA(255,255,255,192) );
 	nvgStroke(vg);
 
-	paint = nvgRadialGradient(vg, ax,ay, 7,9, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0));
+	paint = nvgRadialGradient(vg, ax,ay, 7,9, nvgRGBA(0,0,0,64), nvgRGBA(0,0,0,0) );
 	nvgBeginPath(vg);
 	nvgRect(vg, ax-20,ay-20,40,40);
 	nvgCircle(vg, ax,ay,7);
@@ -760,7 +760,7 @@ void drawLines(struct NVGcontext* vg, float x, float y, float w, float h, float 
 			nvgLineJoin(vg, joins[j]);
 
 			nvgStrokeWidth(vg, s*0.3f);
-			nvgStrokeColor(vg, nvgRGBA(0,0,0,160));
+			nvgStrokeColor(vg, nvgRGBA(0,0,0,160) );
 			nvgBeginPath(vg);
 			nvgMoveTo(vg, fx+pts[0], fy+pts[1]);
 			nvgLineTo(vg, fx+pts[2], fy+pts[3]);
@@ -772,7 +772,7 @@ void drawLines(struct NVGcontext* vg, float x, float y, float w, float h, float 
 			nvgLineJoin(vg, NVG_BEVEL);
 
 			nvgStrokeWidth(vg, 1.0f);
-			nvgStrokeColor(vg, nvgRGBA(0,192,255,255));
+			nvgStrokeColor(vg, nvgRGBA(0,192,255,255) );
 			nvgBeginPath(vg);
 			nvgMoveTo(vg, fx+pts[0], fy+pts[1]);
 			nvgLineTo(vg, fx+pts[2], fy+pts[3]);
@@ -1029,11 +1029,11 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 			int hit = mx > x && mx < (x+width) && my >= y && my < (y+lineh);
 
 			nvgBeginPath(vg);
-			nvgFillColor(vg, nvgRGBA(255,255,255,hit?64:8));
+			nvgFillColor(vg, nvgRGBA(255,255,255,hit?64:8) );
 			nvgRect(vg, x, y, row->width, lineh);
 			nvgFill(vg);
 
-			nvgFillColor(vg, nvgRGBA(255,255,255,255));
+			nvgFillColor(vg, nvgRGBA(255,255,255,255) );
 			nvgText(vg, x, y, row->start, row->end);
 
 			if (hit) {
@@ -1049,7 +1049,7 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 					px = tgx;
 				}
 				nvgBeginPath(vg);
-				nvgFillColor(vg, nvgRGBA(255,192,0,255));
+				nvgFillColor(vg, nvgRGBA(255,192,0,255) );
 				nvgRect(vg, caretx, y, 1, lineh);
 				nvgFill(vg);
 
@@ -1074,17 +1074,17 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 		nvgTextBounds(vg, gx,gy, txt, NULL, bounds);
 
 		nvgBeginPath(vg);
-		nvgFillColor(vg, nvgRGBA(255,192,0,255));
+		nvgFillColor(vg, nvgRGBA(255,192,0,255) );
 		nvgRoundedRect(vg
-			, roundf(bounds[0])-4.0f
-			, roundf(bounds[1])-2.0f
-			, roundf(bounds[2]-bounds[0])+8.0f
-			, roundf(bounds[3]-bounds[1])+4.0f
-			, (roundf(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
+			, bx::fround(bounds[0])-4.0f
+			, bx::fround(bounds[1])-2.0f
+			, bx::fround(bounds[2]-bounds[0])+8.0f
+			, bx::fround(bounds[3]-bounds[1])+4.0f
+			, (bx::fround(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
 			);
 		nvgFill(vg);
 
-		nvgFillColor(vg, nvgRGBA(32,32,32,255));
+		nvgFillColor(vg, nvgRGBA(32,32,32,255) );
 		nvgText(vg, gx,gy, txt, NULL);
 	}
 
@@ -1096,21 +1096,21 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 
 	nvgTextBoxBounds(vg, x,y, 150, "Hover your mouse over the text to see calculated caret position.", NULL, bounds);
 	nvgBeginPath(vg);
-	nvgFillColor(vg, nvgRGBA(220,220,220,255));
+	nvgFillColor(vg, nvgRGBA(220,220,220,255) );
 	nvgRoundedRect(vg
-		, roundf(bounds[0]-2.0f)
-		, roundf(bounds[1]-2.0f)
-		, roundf(bounds[2]-bounds[0])+4.0f
-		, roundf(bounds[3]-bounds[1])+4.0f
+		, bx::fround(bounds[0]-2.0f)
+		, bx::fround(bounds[1]-2.0f)
+		, bx::fround(bounds[2]-bounds[0])+4.0f
+		, bx::fround(bounds[3]-bounds[1])+4.0f
 		, 3.0f
 		);
-	px = float( (int)((bounds[2]+bounds[0])/2) );
+	px = float( (int)( (bounds[2]+bounds[0])/2) );
 	nvgMoveTo(vg, px,bounds[1] - 10);
 	nvgLineTo(vg, px+7,bounds[1]+1);
 	nvgLineTo(vg, px-7,bounds[1]+1);
 	nvgFill(vg);
 
-	nvgFillColor(vg, nvgRGBA(0,0,0,220));
+	nvgFillColor(vg, nvgRGBA(0,0,0,220) );
 	nvgTextBox(vg, x,y, 150, "Hover your mouse over the text to see calculated caret position.", NULL);
 
 	nvgRestore(vg);
@@ -1120,7 +1120,7 @@ void drawWidths(struct NVGcontext* vg, float x, float y, float width)
 {
 	nvgSave(vg);
 
-	nvgStrokeColor(vg, nvgRGBA(0,0,0,255));
+	nvgStrokeColor(vg, nvgRGBA(0,0,0,255) );
 
 	for (uint32_t ii = 0; ii < 20; ++ii)
 	{
@@ -1179,7 +1179,7 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 	drawEditBox(vg, "Password", x,y, 280,28);
 	y += 38;
 	drawCheckBox(vg, "Remember me", x,y, 140,28);
-	drawButton(vg, ICON_LOGIN, "Sign in", x+138, y, 140, 28, nvgRGBA(0,96,128,255));
+	drawButton(vg, ICON_LOGIN, "Sign in", x+138, y, 140, 28, nvgRGBA(0,96,128,255) );
 	y += 45;
 
 	// Slider
@@ -1189,8 +1189,8 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 	drawSlider(vg, 0.4f, x,y, 170,28);
 	y += 55;
 
-	drawButton(vg, ICON_TRASH, "Delete", x, y, 160, 28, nvgRGBA(128,16,8,255));
-	drawButton(vg, 0, "Cancel", x+170, y, 110, 28, nvgRGBA(0,0,0,0));
+	drawButton(vg, ICON_TRASH, "Delete", x, y, 160, 28, nvgRGBA(128,16,8,255) );
+	drawButton(vg, 0, "Cancel", x+170, y, 110, 28, nvgRGBA(0,0,0,0) );
 
 	// Thumbnails box
 	drawThumbnails(vg, popx, popy-30, 160, 300, data->images, 12, t);
@@ -1247,7 +1247,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
-		bgfx::submit(0);
+		bgfx::touch(0);
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();

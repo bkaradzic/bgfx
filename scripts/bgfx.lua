@@ -35,6 +35,7 @@ function bgfxProject(_name, _kind, _defines)
 
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty"),
+			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 			path.join(BGFX_DIR, "../bx/include"),
 		}
 
@@ -76,19 +77,9 @@ function bgfxProject(_name, _kind, _defines)
 				"GLESv2",
 			}
 
-		configuration { "vs2008" }
-			includedirs {
-				"$(DXSDK_DIR)/include",
-			}
-
-		configuration { "winphone8*"}
+		configuration { "winphone8* or winstore8*"}
 			linkoptions {
 				"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
-			}
-
-		configuration { "xcode4 or osx or ios*" }
-			files {
-				path.join(BGFX_DIR, "src/**.mm"),
 			}
 
 		configuration { "osx" }
@@ -100,11 +91,6 @@ function bgfxProject(_name, _kind, _defines)
 			includedirs {
 				--nacl has GLES2 headers modified...
 				path.join(BGFX_DIR, "3rdparty/khronos"),
-			}
-
-		configuration { "x64", "vs* or mingw*" }
-			defines {
-				"_WIN32_WINNT=0x601",
 			}
 
 		configuration {}
@@ -139,11 +125,38 @@ function bgfxProject(_name, _kind, _defines)
 				path.join(BGFX_DIR, "src/renderer_null.cpp"),
 				path.join(BGFX_DIR, "src/renderer_gl.cpp"),
 				path.join(BGFX_DIR, "src/renderer_vk.cpp"),
+				path.join(BGFX_DIR, "src/shader_dx9bc.cpp"),
+				path.join(BGFX_DIR, "src/shader_dxbc.cpp"),
+				path.join(BGFX_DIR, "src/shader_spirv.cpp"),
 				path.join(BGFX_DIR, "src/vertexdecl.cpp"),
 			}
+
+			configuration { "xcode4 or osx or ios*" }
+				files {
+					path.join(BGFX_DIR, "src/amalgamated.mm"),
+				}
+
+				excludes {
+					path.join(BGFX_DIR, "src/glcontext_eagl.mm"),
+					path.join(BGFX_DIR, "src/glcontext_nsgl.mm"),
+					path.join(BGFX_DIR, "src/renderer_mtl.mm"),
+					path.join(BGFX_DIR, "src/amalgamated.cpp"),
+				}
+
+			configuration {}
+
 		else
+			configuration { "xcode4 or osx or ios*" }
+				files {
+					path.join(BGFX_DIR, "src/glcontext_eagl.mm"),
+					path.join(BGFX_DIR, "src/glcontext_nsgl.mm"),
+					path.join(BGFX_DIR, "src/renderer_mtl.mm"),
+				}
+
+			configuration {}
+
 			excludes {
-				path.join(BGFX_DIR, "src/amalgamated.cpp"),
+				path.join(BGFX_DIR, "src/amalgamated.**"),
 			}
 		end
 

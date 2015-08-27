@@ -29,7 +29,6 @@
 #include <bx/fpumath.h>
 #include <bx/handlealloc.h>
 
-#include "../entry/dbg.h"
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include "../nanovg/nanovg.h"
@@ -486,9 +485,9 @@ struct Imgui
 		PosUvVertex::init();
 		PosNormalVertex::init();
 
-		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Uniform4fv);
-		u_imageSwizzle    = bgfx::createUniform("u_swizzle",         bgfx::UniformType::Uniform4fv);
-		s_texColor        = bgfx::createUniform("s_texColor",        bgfx::UniformType::Uniform1i);
+		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
+		u_imageSwizzle    = bgfx::createUniform("u_swizzle",         bgfx::UniformType::Vec4);
+		s_texColor        = bgfx::createUniform("s_texColor",        bgfx::UniformType::Int1);
 
 		const bgfx::Memory* vs_imgui_color;
 		const bgfx::Memory* fs_imgui_color;
@@ -532,6 +531,20 @@ struct Imgui
 			vs_imgui_image       = bgfx::makeRef(vs_imgui_image_dx11, sizeof(vs_imgui_image_dx11) );
 			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_dx11, sizeof(fs_imgui_image_dx11) );
 			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_dx11, sizeof(fs_imgui_image_swizz_dx11) );
+			break;
+				
+		case bgfx::RendererType::Metal:
+			vs_imgui_color       = bgfx::makeRef(vs_imgui_color_mtl, sizeof(vs_imgui_color_mtl) );
+			fs_imgui_color       = bgfx::makeRef(fs_imgui_color_mtl, sizeof(fs_imgui_color_mtl) );
+			vs_imgui_texture     = bgfx::makeRef(vs_imgui_texture_mtl, sizeof(vs_imgui_texture_mtl) );
+			fs_imgui_texture     = bgfx::makeRef(fs_imgui_texture_mtl, sizeof(fs_imgui_texture_mtl) );
+			vs_imgui_cubemap     = bgfx::makeRef(vs_imgui_cubemap_mtl, sizeof(vs_imgui_cubemap_mtl) );
+			fs_imgui_cubemap     = bgfx::makeRef(fs_imgui_cubemap_mtl, sizeof(fs_imgui_cubemap_mtl) );
+			vs_imgui_latlong     = bgfx::makeRef(vs_imgui_latlong_mtl, sizeof(vs_imgui_latlong_mtl) );
+			fs_imgui_latlong     = bgfx::makeRef(fs_imgui_latlong_mtl, sizeof(fs_imgui_latlong_mtl) );
+			vs_imgui_image       = bgfx::makeRef(vs_imgui_image_mtl, sizeof(vs_imgui_image_mtl) );
+			fs_imgui_image       = bgfx::makeRef(fs_imgui_image_mtl, sizeof(fs_imgui_image_mtl) );
+			fs_imgui_image_swizz = bgfx::makeRef(fs_imgui_image_swizz_mtl, sizeof(fs_imgui_image_swizz_mtl) );
 			break;
 
 		default:
@@ -604,12 +617,11 @@ struct Imgui
 		bgfx::destroyUniform(u_imageSwizzle);
 		bgfx::destroyUniform(s_texColor);
 #if !USE_NANOVG_FONT
-		for (uint16_t ii = 0; ii < IMGUI_CONFIG_MAX_FONTS; ++ii)
+		for (uint16_t ii = 0, num = m_fontHandle.getNumHandles(); ii < num; ++ii)
 		{
-			if (bgfx::isValid(m_fonts[ii].m_texture) )
-			{
-				bgfx::destroyTexture(m_fonts[ii].m_texture);
-			}
+			uint16_t idx = m_fontHandle.getHandleAt(0);
+			bgfx::destroyTexture(m_fonts[idx].m_texture);
+			m_fontHandle.free(idx);
 		}
 #endif // !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_missingTexture);
@@ -772,7 +784,7 @@ struct Imgui
 			&& m_leftPressed)
 			{
 				// Toggle active input.
-				if (isActiveInputField(_id))
+				if (isActiveInputField(_id) )
 				{
 					clearActiveInputField();
 				}
@@ -825,7 +837,7 @@ struct Imgui
 		const int32_t mx = int32_t(float(_mx)*xscale);
 		const int32_t my = int32_t(float(_my)*yscale);
 
-		IMGUI_beginFrame(mx, my, _button, _width, _height, _inputChar, _view);
+		IMGUI_beginFrame(mx, my, _button, _scroll, _width, _height, _inputChar, _view);
 		nvgBeginFrameScaled(m_nvg, m_viewWidth, m_viewHeight, m_surfaceWidth, m_surfaceHeight, 1.0f);
 		nvgViewId(m_nvg, _view);
 
@@ -833,7 +845,7 @@ struct Imgui
 		bgfx::setViewSeq(_view, true);
 
 		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd)
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			m_viewWidth = _width / 2;
 			m_surfaceWidth = _surfaceWidth / 2;
@@ -1082,7 +1094,7 @@ struct Imgui
 		else
 		{
 			// Clear active if scroll is selected but not visible any more.
-			if (isActive(hid))
+			if (isActive(hid) )
 			{
 				clearActive();
 			}
@@ -1401,7 +1413,7 @@ struct Imgui
 		// Handle input.
 		if (isActiveInputField(id) )
 		{
-			const size_t cursor = size_t(strlen(_str));
+			const size_t cursor = size_t(strlen(_str) );
 
 			if (m_char == 0x08 || m_char == 0x7f) //backspace or delete
 			{
@@ -1424,7 +1436,7 @@ struct Imgui
 		if (drawLabel)
 		{
 			uint32_t numVertices = 0; //unused
-			const int32_t labelWidth = int32_t(getTextLength(m_fonts[m_currentFontIdx].m_cdata, _label, numVertices));
+			const int32_t labelWidth = int32_t(getTextLength(m_fonts[m_currentFontIdx].m_cdata, _label, numVertices) );
 			xx    += (labelWidth + 6);
 			width -= (labelWidth + 6);
 		}
@@ -1564,7 +1576,7 @@ struct Imgui
 							   , enabled?imguiRGBA(255,196,0,200):imguiRGBA(128,128,128,32)
 							   );
 			}
-			else if (isActive(id))
+			else if (isActive(id) )
 			{
 				drawRoundedRect( (float)buttonX
 							   , (float)yy
@@ -1634,9 +1646,8 @@ struct Imgui
 						   |BGFX_STATE_ALPHA_WRITE
 						   |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
-			bgfx::setProgram(m_imageProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_imageProgram);
 
 			return res;
 		}
@@ -1702,9 +1713,8 @@ struct Imgui
 						  |BGFX_STATE_ALPHA_WRITE
 						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
-			bgfx::setProgram(m_imageSwizzProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_imageSwizzProgram);
 
 			return res;
 		}
@@ -1763,9 +1773,8 @@ struct Imgui
 						  |BGFX_STATE_ALPHA_WRITE
 						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
-			bgfx::setProgram(m_latlongProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_latlongProgram);
 
 			return res;
 		}
@@ -1896,7 +1905,6 @@ struct Imgui
 
 			bgfx::setTransform(mtx);
 			bgfx::setTexture(0, s_texColor, _cubemap);
-			bgfx::setProgram(m_cubeMapProgram);
 			bgfx::setVertexBuffer(&tvb);
 			bgfx::setIndexBuffer(&tib);
 			bgfx::setState(BGFX_STATE_RGB_WRITE
@@ -1904,7 +1912,7 @@ struct Imgui
 						  |BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 						  );
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_cubeMapProgram);
 
 			return res;
 		}
@@ -2412,9 +2420,8 @@ struct Imgui
 				| BGFX_STATE_ALPHA_WRITE
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 				);
-			bgfx::setProgram(m_colorProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_colorProgram);
 		}
 	}
 
@@ -2718,9 +2725,8 @@ struct Imgui
 				| BGFX_STATE_ALPHA_WRITE
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 				);
-			bgfx::setProgram(m_textureProgram);
 			setCurrentScissor();
-			bgfx::submit(m_view);
+			bgfx::submit(m_view, m_textureProgram);
 		}
 #endif // USE_NANOVG_FONT
 	}

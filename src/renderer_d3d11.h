@@ -17,6 +17,7 @@ BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas" );
 BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wpragmas");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinition
+#include <sal.h>
 #define D3D11_NO_HELPERS
 #if BX_PLATFORM_WINRT
 #	include <d3d11_2.h>
@@ -38,46 +39,18 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	define D3DCOLOR_RGBA(_r, _g, _b, _a) D3DCOLOR_ARGB(_a, _r, _g, _b)
 #endif // D3DCOLOR_RGBA
 
-#ifndef DXGI_FORMAT_B4G4R4A4_UNORM
-// Win8 only BS
-// https://blogs.msdn.com/b/chuckw/archive/2012/11/14/directx-11-1-and-windows-7.aspx?Redirected=true
-// http://msdn.microsoft.com/en-us/library/windows/desktop/bb173059%28v=vs.85%29.aspx
-#	define DXGI_FORMAT_B4G4R4A4_UNORM DXGI_FORMAT(115)
-#endif // DXGI_FORMAT_B4G4R4A4_UNORM
+#define BGFX_D3D11_BLEND_STATE_MASK (0 \
+			| BGFX_STATE_BLEND_MASK \
+			| BGFX_STATE_BLEND_EQUATION_MASK \
+			| BGFX_STATE_BLEND_INDEPENDENT \
+			| BGFX_STATE_ALPHA_WRITE \
+			| BGFX_STATE_RGB_WRITE \
+			)
 
-#ifndef D3D_FEATURE_LEVEL_11_1
-#	define D3D_FEATURE_LEVEL_11_1 D3D_FEATURE_LEVEL(0xb100)
-#endif // D3D_FEATURE_LEVEL_11_1
-
-#if defined(__MINGW32__)
-// MinGW Linux/Wine missing defines...
-#	ifndef D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT
-#		define D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT 8
-#	endif // D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT
-
-#	ifndef D3D11_PS_CS_UAV_REGISTER_COUNT
-#		define D3D11_PS_CS_UAV_REGISTER_COUNT 8
-#	endif // D3D11_PS_CS_UAV_REGISTER_COUNT
-
-#	ifndef D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT
-#		define D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT 8
-#	endif
-
-#	ifndef D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT
-#		define D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT 8
-#	endif // D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT
-
-#	ifndef D3D11_APPEND_ALIGNED_ELEMENT
-#		define D3D11_APPEND_ALIGNED_ELEMENT UINT32_MAX
-#	endif // D3D11_APPEND_ALIGNED_ELEMENT
-
-#	ifndef D3D11_REQ_MAXANISOTROPY
-#		define	D3D11_REQ_MAXANISOTROPY	16
-#	endif // D3D11_REQ_MAXANISOTROPY
-
-typedef void ID3D11InfoQueue;
-
-#endif // __MINGW32__
+#define BGFX_D3D11_DEPTH_STENCIL_MASK (0 \
+			| BGFX_STATE_DEPTH_WRITE \
+			| BGFX_STATE_DEPTH_TEST_MASK \
+			)
 
 namespace bgfx { namespace d3d11
 {
@@ -182,7 +155,7 @@ namespace bgfx { namespace d3d11
 		ConstantBuffer* m_constantBuffer;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
-		uint8_t m_attrMask[Attrib::Count];
+		uint16_t m_attrMask[Attrib::Count];
 
 		uint32_t m_hash;
 
@@ -251,6 +224,7 @@ namespace bgfx { namespace d3d11
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
 		void resolve();
+		TextureHandle getHandle() const;
 
 		union
 		{

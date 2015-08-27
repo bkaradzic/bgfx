@@ -10,8 +10,8 @@ uniform vec4 u_params1;
 uniform vec4 u_params2;
 uniform vec4 u_color;
 
-uniform vec3 u_materialKa;
-uniform vec3 u_materialKd;
+uniform vec4 u_materialKa;
+uniform vec4 u_materialKd;
 uniform vec4 u_materialKs;
 uniform vec4 u_lightPosition;
 uniform vec4 u_lightAmbientPower;
@@ -23,10 +23,10 @@ uniform vec4 u_smSamplingParams;
 uniform vec4 u_csmFarDistances;
 
 #if SM_OMNI
-uniform vec3 u_tetraNormalGreen;
-uniform vec3 u_tetraNormalYellow;
-uniform vec3 u_tetraNormalBlue;
-uniform vec3 u_tetraNormalRed;
+uniform vec4 u_tetraNormalGreen;
+uniform vec4 u_tetraNormalYellow;
+uniform vec4 u_tetraNormalBlue;
+uniform vec4 u_tetraNormalRed;
 #endif
 
 SAMPLER2D(u_shadowMap0, 4);
@@ -45,8 +45,8 @@ Shader evalShader(float _diff, float _spec)
 {
 	Shader shader;
 
-	shader.ambi = u_lightAmbientPower.xyz  * u_lightAmbientPower.w  * u_materialKa;
-	shader.diff = u_lightDiffusePower.xyz  * u_lightDiffusePower.w  * u_materialKd     * _diff;
+	shader.ambi = u_lightAmbientPower.xyz  * u_lightAmbientPower.w  * u_materialKa.xyz;
+	shader.diff = u_lightDiffusePower.xyz  * u_lightDiffusePower.w  * u_materialKd.xyz * _diff;
 	shader.spec = u_lightSpecularPower.xyz * u_lightSpecularPower.w * u_materialKs.xyz * _spec;
 
 	return shader;

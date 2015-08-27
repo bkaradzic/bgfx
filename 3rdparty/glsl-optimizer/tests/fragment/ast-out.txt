@@ -5,7 +5,8 @@ void main ()
     discard;
   };
   a_2 = 4.0;
-  for (int i_1 = 0; i_1 < 10; i_1++, a_2 += 1.0) {
+  for (int i_1 = 0; i_1 < 10; i_1++) {
+    a_2 += 1.0;
   };
   while (true) {
     a_2 += 2.0;

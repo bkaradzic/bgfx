@@ -8,8 +8,6 @@ $output v_pos, v_view, v_normal, v_texcoord0
 
 #include "../common/common.sh"
 
-uniform float u_time;
-
 void main()
 {
 	vec3 pos = a_position;

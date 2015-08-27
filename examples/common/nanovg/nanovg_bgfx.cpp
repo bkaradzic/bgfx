@@ -188,7 +188,7 @@ namespace
 			tex = &gl->textures[gl->ntextures++];
 		}
 
-		memset(tex, 0, sizeof(*tex));
+		memset(tex, 0, sizeof(*tex) );
 
 		return tex;
 	}
@@ -218,7 +218,7 @@ namespace
 				{
 					bgfx::destroyTexture(gl->textures[ii].id);
 				}
-				memset(&gl->textures[ii], 0, sizeof(gl->textures[ii]));
+				memset(&gl->textures[ii], 0, sizeof(gl->textures[ii]) );
 				gl->textures[ii].id.idx = bgfx::invalidHandle;
 				return 1;
 			}
@@ -247,6 +247,11 @@ namespace
 			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_dx11, sizeof(fs_nanovg_fill_dx11) );
 			break;
 
+		case bgfx::RendererType::Metal:
+			vs_nanovg_fill = bgfx::makeRef(vs_nanovg_fill_mtl, sizeof(vs_nanovg_fill_mtl) );
+			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_mtl, sizeof(fs_nanovg_fill_mtl) );
+			break;
+				
 		default:
 			vs_nanovg_fill = bgfx::makeRef(vs_nanovg_fill_glsl, sizeof(vs_nanovg_fill_glsl) );
 			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_glsl, sizeof(fs_nanovg_fill_glsl) );
@@ -259,19 +264,19 @@ namespace
 						, true
 						);
 
-		gl->u_scissorMat      = bgfx::createUniform("u_scissorMat",      bgfx::UniformType::Uniform3x3fv);
-		gl->u_paintMat        = bgfx::createUniform("u_paintMat",        bgfx::UniformType::Uniform3x3fv);
-		gl->u_innerCol        = bgfx::createUniform("u_innerCol",        bgfx::UniformType::Uniform4fv);
-		gl->u_outerCol        = bgfx::createUniform("u_outerCol",        bgfx::UniformType::Uniform4fv);
-		gl->u_viewSize        = bgfx::createUniform("u_viewSize",        bgfx::UniformType::Uniform2fv);
-		gl->u_scissorExtScale = bgfx::createUniform("u_scissorExtScale", bgfx::UniformType::Uniform4fv);
-		gl->u_extentRadius    = bgfx::createUniform("u_extentRadius",    bgfx::UniformType::Uniform4fv);
-		gl->u_params          = bgfx::createUniform("u_params",          bgfx::UniformType::Uniform4fv);
-		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Uniform1i);
+		gl->u_scissorMat      = bgfx::createUniform("u_scissorMat",      bgfx::UniformType::Mat3);
+		gl->u_paintMat        = bgfx::createUniform("u_paintMat",        bgfx::UniformType::Mat3);
+		gl->u_innerCol        = bgfx::createUniform("u_innerCol",        bgfx::UniformType::Vec4);
+		gl->u_outerCol        = bgfx::createUniform("u_outerCol",        bgfx::UniformType::Vec4);
+		gl->u_viewSize        = bgfx::createUniform("u_viewSize",        bgfx::UniformType::Vec4);
+		gl->u_scissorExtScale = bgfx::createUniform("u_scissorExtScale", bgfx::UniformType::Vec4);
+		gl->u_extentRadius    = bgfx::createUniform("u_extentRadius",    bgfx::UniformType::Vec4);
+		gl->u_params          = bgfx::createUniform("u_params",          bgfx::UniformType::Vec4);
+		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Int1);
 
 		if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9)
 		{
-			gl->u_halfTexel   = bgfx::createUniform("u_halfTexel",       bgfx::UniformType::Uniform4fv);
+			gl->u_halfTexel   = bgfx::createUniform("u_halfTexel",       bgfx::UniformType::Vec4);
 		}
 		else
 		{
@@ -384,10 +389,10 @@ namespace
 		invdet = 1.0 / det;
 		inv[0] = (float)(t[3] * invdet);
 		inv[2] = (float)(-t[2] * invdet);
-		inv[4] = (float)(((double)t[2] * t[5] - (double)t[3] * t[4]) * invdet);
+		inv[4] = (float)( ((double)t[2] * t[5] - (double)t[3] * t[4]) * invdet);
 		inv[1] = (float)(-t[1] * invdet);
 		inv[3] = (float)(t[0] * invdet);
-		inv[5] = (float)(((double)t[1] * t[4] - (double)t[0] * t[5]) * invdet);
+		inv[5] = (float)( ((double)t[1] * t[4] - (double)t[0] * t[5]) * invdet);
 	}
 
 	static void glnvg__xformToMat3x4(float* m3, float* t)
@@ -412,7 +417,7 @@ namespace
 		struct GLNVGtexture* tex = NULL;
 		float invxform[6] = {};
 
-		memset(frag, 0, sizeof(*frag));
+		memset(frag, 0, sizeof(*frag) );
 
 		frag->innerCol = paint->innerColor;
 		frag->outerCol = paint->outerColor;
@@ -422,7 +427,7 @@ namespace
 
 		if (scissor->extent[0] < 0.5f || scissor->extent[1] < 0.5f)
 		{
-			memset(frag->scissorMat, 0, sizeof(frag->scissorMat));
+			memset(frag->scissorMat, 0, sizeof(frag->scissorMat) );
 			frag->scissorExt[0] = 1.0f;
 			frag->scissorExt[1] = 1.0f;
 			frag->scissorScale[0] = 1.0f;
@@ -437,7 +442,7 @@ namespace
 			frag->scissorScale[0] = sqrtf(scissor->xform[0]*scissor->xform[0] + scissor->xform[2]*scissor->xform[2]) / fringe;
 			frag->scissorScale[1] = sqrtf(scissor->xform[1]*scissor->xform[1] + scissor->xform[3]*scissor->xform[3]) / fringe;
 		}
-		memcpy(frag->extent, paint->extent, sizeof(frag->extent));
+		memcpy(frag->extent, paint->extent, sizeof(frag->extent) );
 		frag->strokeMult = (width*0.5f + fringe*0.5f) / fringe;
 
 		bgfx::TextureHandle invalid = BGFX_INVALID_HANDLE;
@@ -556,7 +561,6 @@ namespace
 		{
 			if (2 < paths[i].fillCount)
 			{
-				bgfx::setProgram(gl->prog);
 				bgfx::setState(0);
 				bgfx::setStencil(0
 					| BGFX_STENCIL_TEST_ALWAYS
@@ -574,7 +578,7 @@ namespace
 				bgfx::setVertexBuffer(&gl->tvb);
 				bgfx::setTexture(0, gl->s_tex, gl->th);
 				fan(paths[i].fillOffset, paths[i].fillCount);
-				bgfx::submit(gl->viewid);
+				bgfx::submit(gl->viewid, gl->prog);
 			}
 		}
 
@@ -586,7 +590,6 @@ namespace
 			// Draw fringes
 			for (i = 0; i < npaths; i++)
 			{
-				bgfx::setProgram(gl->prog);
 				bgfx::setState(gl->state
 					| BGFX_STATE_PT_TRISTRIP
 					);
@@ -599,12 +602,11 @@ namespace
 					);
 				bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
 				bgfx::setTexture(0, gl->s_tex, gl->th);
-				bgfx::submit(gl->viewid);
+				bgfx::submit(gl->viewid, gl->prog);
 			}
 		}
 
 		// Draw fill
-		bgfx::setProgram(gl->prog);
 		bgfx::setState(gl->state);
 		bgfx::setVertexBuffer(&gl->tvb, call->vertexOffset, call->vertexCount);
 		bgfx::setTexture(0, gl->s_tex, gl->th);
@@ -615,7 +617,7 @@ namespace
 				| BGFX_STENCIL_OP_FAIL_Z_ZERO
 				| BGFX_STENCIL_OP_PASS_Z_ZERO
 				);
-		bgfx::submit(gl->viewid);
+		bgfx::submit(gl->viewid, gl->prog);
 	}
 
 	static void glnvg__convexFill(struct GLNVGcontext* gl, struct GLNVGcall* call)
@@ -628,12 +630,11 @@ namespace
 		for (i = 0; i < npaths; i++)
 		{
 			if (paths[i].fillCount == 0) continue;
-			bgfx::setProgram(gl->prog);
 			bgfx::setState(gl->state);
 			bgfx::setVertexBuffer(&gl->tvb);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
 			fan(paths[i].fillOffset, paths[i].fillCount);
-			bgfx::submit(gl->viewid);
+			bgfx::submit(gl->viewid, gl->prog);
 		}
 
 		if (gl->edgeAntiAlias)
@@ -641,13 +642,12 @@ namespace
 			// Draw fringes
 			for (i = 0; i < npaths; i++)
 			{
-				bgfx::setProgram(gl->prog);
 				bgfx::setState(gl->state
 					| BGFX_STATE_PT_TRISTRIP
 					);
 				bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
 				bgfx::setTexture(0, gl->s_tex, gl->th);
-				bgfx::submit(gl->viewid);
+				bgfx::submit(gl->viewid, gl->prog);
 			}
 		}
 	}
@@ -662,14 +662,13 @@ namespace
 		// Draw Strokes
 		for (i = 0; i < npaths; i++)
 		{
-			bgfx::setProgram(gl->prog);
 			bgfx::setState(gl->state
 				| BGFX_STATE_PT_TRISTRIP
 				);
 			bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
-			bgfx::submit(gl->viewid);
+			bgfx::submit(gl->viewid, gl->prog);
 		}
 	}
 
@@ -679,11 +678,10 @@ namespace
 		{
 			nvgRenderSetUniforms(gl, call->uniformOffset, call->image);
 
-			bgfx::setProgram(gl->prog);
 			bgfx::setState(gl->state);
 			bgfx::setVertexBuffer(&gl->tvb, call->vertexOffset, call->vertexCount);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
-			bgfx::submit(gl->viewid);
+			bgfx::submit(gl->viewid, gl->prog);
 		}
 	}
 
@@ -779,7 +777,7 @@ namespace
 			gl->calls = (struct GLNVGcall*)realloc(gl->calls, sizeof(struct GLNVGcall) * gl->ccalls);
 		}
 		ret = &gl->calls[gl->ncalls++];
-		memset(ret, 0, sizeof(struct GLNVGcall));
+		memset(ret, 0, sizeof(struct GLNVGcall) );
 		return ret;
 	}
 
@@ -865,7 +863,7 @@ namespace
 		{
 			struct GLNVGpath* copy = &gl->paths[call->pathOffset + i];
 			const struct NVGpath* path = &paths[i];
-			memset(copy, 0, sizeof(struct GLNVGpath));
+			memset(copy, 0, sizeof(struct GLNVGpath) );
 			if (path->nfill > 0)
 			{
 				copy->fillOffset = offset;
@@ -901,7 +899,7 @@ namespace
 			call->uniformOffset = glnvg__allocFragUniforms(gl, 2);
 			// Simple shader for stencil
 			frag = nvg__fragUniformPtr(gl, call->uniformOffset);
-			memset(frag, 0, sizeof(*frag));
+			memset(frag, 0, sizeof(*frag) );
 			frag->type = NSVG_SHADER_SIMPLE;
 			// Fill shader
 			glnvg__convertPaint(gl, nvg__fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, fringe, fringe);
@@ -935,7 +933,7 @@ namespace
 		{
 			struct GLNVGpath* copy = &gl->paths[call->pathOffset + i];
 			const struct NVGpath* path = &paths[i];
-			memset(copy, 0, sizeof(struct GLNVGpath));
+			memset(copy, 0, sizeof(struct GLNVGpath) );
 			if (path->nstroke)
 			{
 				copy->strokeOffset = offset;
@@ -1018,11 +1016,11 @@ NVGcontext* nvgCreate(int edgeaa, unsigned char viewid)
 {
 	struct NVGparams params;
 	struct NVGcontext* ctx = NULL;
-	struct GLNVGcontext* gl = (struct GLNVGcontext*)malloc(sizeof(struct GLNVGcontext));
+	struct GLNVGcontext* gl = (struct GLNVGcontext*)malloc(sizeof(struct GLNVGcontext) );
 	if (gl == NULL) goto error;
-	memset(gl, 0, sizeof(struct GLNVGcontext));
+	memset(gl, 0, sizeof(struct GLNVGcontext) );
 
-	memset(&params, 0, sizeof(params));
+	memset(&params, 0, sizeof(params) );
 	params.renderCreate         = nvgRenderCreate;
 	params.renderCreateTexture  = nvgRenderCreateTexture;
 	params.renderDeleteTexture  = nvgRenderDeleteTexture;

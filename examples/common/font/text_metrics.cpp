@@ -158,7 +158,7 @@ void TextLineMetrics::getSubText(const char* _string, uint32_t _firstLine, uint3
 	uint32_t state = 0;
 	// y is bottom of a text line
 	uint32_t currentLine = 0;
-	while(*_string && (currentLine < _firstLine))
+	while(*_string && (currentLine < _firstLine) )
 	{
 		for (; *_string; ++_string)
 		{	

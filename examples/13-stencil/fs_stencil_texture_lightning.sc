@@ -10,8 +10,8 @@ $input v_normal, v_view, v_texcoord0
 #define MAX_NUM_LIGHTS 5
 
 uniform vec4 u_params;
-uniform vec3 u_ambient;
-uniform vec3 u_diffuse;
+uniform vec4 u_ambient;
+uniform vec4 u_diffuse;
 uniform vec4 u_color;
 uniform vec4 u_specular_shininess;
 uniform vec4 u_lightPosRadius[MAX_NUM_LIGHTS];
@@ -51,7 +51,7 @@ vec3 calcLight(int _idx, vec3 _view, vec3 _normal, vec3 _viewDir)
 
 	float dist = max(length(toLight), u_lightPosRadius[_idx].w);
 	float attn = 250.0 * pow(dist, -2.0);
-	vec3 rgb = (lc.y * u_diffuse + lc.z * u_specular) * u_lightRgbInnerR[_idx].rgb * attn;
+	vec3 rgb = (lc.y * u_diffuse.xyz + lc.z * u_specular) * u_lightRgbInnerR[_idx].rgb * attn;
 
 	return rgb;
 }
@@ -61,7 +61,7 @@ void main()
 	vec3 normal = normalize(v_normal);
 	vec3 viewDir = -normalize(v_view);
 
-	vec3 ambientColor = u_ambient * u_ambientPass;
+	vec3 ambientColor = u_ambient.xyz * u_ambientPass;
 
 	vec3 lightColor = vec3_splat(0.0);
 	for(int ii = 0; ii < MAX_NUM_LIGHTS; ++ii)

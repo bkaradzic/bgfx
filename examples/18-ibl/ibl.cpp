@@ -23,22 +23,20 @@ struct Uniforms
 		m_time = 0.0f;
 		bx::mtxIdentity(m_mtx);
 
-		u_time    = bgfx::createUniform("u_time",     bgfx::UniformType::Uniform1f);
-		u_mtx     = bgfx::createUniform("u_mtx",      bgfx::UniformType::Uniform4x4fv);
-		u_params  = bgfx::createUniform("u_params",   bgfx::UniformType::Uniform4fv);
-		u_flags   = bgfx::createUniform("u_flags",    bgfx::UniformType::Uniform4fv);
-		u_camPos  = bgfx::createUniform("u_camPos",   bgfx::UniformType::Uniform3fv);
-		u_rgbDiff = bgfx::createUniform("u_rgbDiff",  bgfx::UniformType::Uniform3fv);
-		u_rgbSpec = bgfx::createUniform("u_rgbSpec",  bgfx::UniformType::Uniform3fv);
+		u_mtx     = bgfx::createUniform("u_mtx",     bgfx::UniformType::Mat4);
+		u_params  = bgfx::createUniform("u_params",  bgfx::UniformType::Vec4);
+		u_flags   = bgfx::createUniform("u_flags",   bgfx::UniformType::Vec4);
+		u_camPos  = bgfx::createUniform("u_camPos",  bgfx::UniformType::Vec4);
+		u_rgbDiff = bgfx::createUniform("u_rgbDiff", bgfx::UniformType::Vec4);
+		u_rgbSpec = bgfx::createUniform("u_rgbSpec", bgfx::UniformType::Vec4);
 	}
 
 	// Call this once per frame.
 	void submitPerFrameUniforms()
 	{
-		bgfx::setUniform(u_time, &m_time);
-		bgfx::setUniform(u_mtx, m_mtx);
-		bgfx::setUniform(u_flags, m_flags);
-		bgfx::setUniform(u_camPos, m_camPos);
+		bgfx::setUniform(u_mtx,     m_mtx);
+		bgfx::setUniform(u_flags,   m_flags);
+		bgfx::setUniform(u_camPos,  m_camPosTime);
 		bgfx::setUniform(u_rgbDiff, m_rgbDiff);
 		bgfx::setUniform(u_rgbSpec, m_rgbSpec);
 	}
@@ -57,7 +55,6 @@ struct Uniforms
 		bgfx::destroyUniform(u_flags);
 		bgfx::destroyUniform(u_params);
 		bgfx::destroyUniform(u_mtx);
-		bgfx::destroyUniform(u_time);
 	}
 
 	union
@@ -67,7 +64,7 @@ struct Uniforms
 			float m_glossiness;
 			float m_exposure;
 			float m_diffspec;
-			float m_unused0;
+			float m_time;
 		};
 
 		float m_params[4];
@@ -86,13 +83,11 @@ struct Uniforms
 		float m_flags[4];
 	};
 
-	float m_time;
 	float m_mtx[16];
-	float m_camPos[3];
-	float m_rgbDiff[3];
-	float m_rgbSpec[3];
+	float m_camPosTime[4];
+	float m_rgbDiff[4];
+	float m_rgbSpec[4];
 
-	bgfx::UniformHandle u_time;
 	bgfx::UniformHandle u_mtx;
 	bgfx::UniformHandle u_params;
 	bgfx::UniformHandle u_flags;
@@ -256,17 +251,15 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	lightProbes[LightProbe::Grace ].load("grace");
 	LightProbe::Enum currentLightProbe = LightProbe::Wells;
 
-	bgfx::UniformHandle u_time   = bgfx::createUniform("u_time",   bgfx::UniformType::Uniform1f);
-	bgfx::UniformHandle u_mtx    = bgfx::createUniform("u_mtx",    bgfx::UniformType::Uniform4x4fv);
-	bgfx::UniformHandle u_params = bgfx::createUniform("u_params", bgfx::UniformType::Uniform4fv);
-	bgfx::UniformHandle u_flags  = bgfx::createUniform("u_flags",  bgfx::UniformType::Uniform4fv);
-	bgfx::UniformHandle u_camPos = bgfx::createUniform("u_camPos", bgfx::UniformType::Uniform3fv);
+	bgfx::UniformHandle u_mtx        = bgfx::createUniform("u_mtx",        bgfx::UniformType::Mat4);
+	bgfx::UniformHandle u_params     = bgfx::createUniform("u_params",     bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_flags      = bgfx::createUniform("u_flags",      bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_camPos     = bgfx::createUniform("u_camPos",     bgfx::UniformType::Vec4);
+	bgfx::UniformHandle s_texCube    = bgfx::createUniform("s_texCube",    bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_texCubeIrr = bgfx::createUniform("s_texCubeIrr", bgfx::UniformType::Int1);
 
-	bgfx::UniformHandle u_texCube    = bgfx::createUniform("u_texCube",    bgfx::UniformType::Uniform1i);
-	bgfx::UniformHandle u_texCubeIrr = bgfx::createUniform("u_texCubeIrr", bgfx::UniformType::Uniform1i);
-
-	bgfx::ProgramHandle programMesh = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
-	bgfx::ProgramHandle programSky  = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
+	bgfx::ProgramHandle programMesh  = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
+	bgfx::ProgramHandle programSky   = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
 
 	Mesh* meshBunny;
 	meshBunny = meshLoad("meshes/bunny.bin");
@@ -318,7 +311,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, mouseState.m_my
 			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-			, 0
+			, mouseState.m_mz
 			, width
 			, height
 			);
@@ -354,7 +347,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		{
 			settings.m_crossCubemapPreview = ImguiCubemap::Enum( (settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
 		}
-		imguiSlider("Texture LOD", lod, float(0.0f), 10.1f, 0.1f);
+		imguiSlider("Texture LOD", lod, 0.0f, 10.1f, 0.1f);
 
 		imguiEndScrollArea();
 
@@ -441,8 +434,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_flags[1] = float(settings.m_specular);
 		s_uniforms.m_flags[2] = float(settings.m_diffuseIbl);
 		s_uniforms.m_flags[3] = float(settings.m_specularIbl);
-		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float));
-		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float));
+		memcpy(s_uniforms.m_rgbDiff, settings.m_rgbDiff, 3*sizeof(float) );
+		memcpy(s_uniforms.m_rgbSpec, settings.m_rgbSpec, 3*sizeof(float) );
 
 		s_uniforms.submitPerFrameUniforms();
 
@@ -454,7 +447,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		const double toMs = 1000.0/freq;
 
 		time += (float)(frameTime*settings.m_speed/freq);
-		s_uniforms.m_time = time;
+		s_uniforms.m_camPosTime[3] = time;
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -478,7 +471,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewTransform(0, view, proj);
 
 		bx::mtxLookAt(view, eye, at);
-		memcpy(s_uniforms.m_camPos, eye, 3*sizeof(float));
+		memcpy(s_uniforms.m_camPosTime, eye, 3*sizeof(float) );
 		bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
 		bgfx::setViewTransform(1, view, proj);
 
@@ -486,12 +479,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		bgfx::setViewRect(1, 0, 0, width, height);
 
 		// View 0.
-		bgfx::setTexture(4, u_texCube, lightProbes[currentLightProbe].m_tex);
-		bgfx::setProgram(programSky);
+		bgfx::setTexture(0, s_texCube, lightProbes[currentLightProbe].m_tex);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, true);
 		s_uniforms.submitPerDrawUniforms();
-		bgfx::submit(0);
+		bgfx::submit(0, programSky);
 
 		// View 1.
 		float mtx[16];
@@ -507,8 +499,8 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				, 0.0f
 				);
 
-		bgfx::setTexture(4, u_texCube,    lightProbes[currentLightProbe].m_tex);
-		bgfx::setTexture(5, u_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
+		bgfx::setTexture(0, s_texCube,    lightProbes[currentLightProbe].m_tex);
+		bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
 		meshSubmit(meshBunny, 1, programMesh, mtx);
 
 		// Advance to next frame. Rendering thread will be kicked to
@@ -526,10 +518,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyUniform(u_flags);
 	bgfx::destroyUniform(u_params);
 	bgfx::destroyUniform(u_mtx);
-	bgfx::destroyUniform(u_time);
 
-	bgfx::destroyUniform(u_texCube);
-	bgfx::destroyUniform(u_texCubeIrr);
+	bgfx::destroyUniform(s_texCube);
+	bgfx::destroyUniform(s_texCubeIrr);
 
 	for (uint8_t ii = 0; ii < LightProbe::Count; ++ii)
 	{

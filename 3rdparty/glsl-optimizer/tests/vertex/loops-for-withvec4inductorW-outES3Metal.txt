@@ -49,7 +49,10 @@ int4 Temp_int_1_5;
   Temp_int_1_5.xyz = as_type<int3>((as_type<float4>(Temp_int_0_4).www * as_type<float4>(Temp_int_1_5).xyz));
   Temp_2_2.xyz = _mtl_u.glstate_lightmodel_ambient.xyz;
   Temp_int_0_4.w = 0;
-  for (; Temp_int_0_4.w < 4; Temp_int_0_4.w = (Temp_int_0_4.w + 1)) {
+  while (true) {
+    if ((Temp_int_0_4.w >= 4)) {
+      break;
+    };
     Temp_3_3.xyz = ((-(
       as_type<float4>(Temp_int_0_4)
     .xyz) * _mtl_u.unity_LightPosition[Temp_int_0_4.w].www) + _mtl_u.unity_LightPosition[Temp_int_0_4.w].xyz);
@@ -70,6 +73,7 @@ int4 Temp_int_1_5;
     Temp_2_2.w = max (Temp_2_2.w, 0.0);
     Temp_int_1_5.w = as_type<int>((as_type<float4>(Temp_int_1_5).w * Temp_2_2.w));
     Temp_2_2.xyz = ((_mtl_u.unity_LightColor[Temp_int_0_4.w].xyz * as_type<float4>(Temp_int_1_5).www) + Temp_2_2.xyz);
+    Temp_int_0_4.w = (Temp_int_0_4.w + 1);
   };
   _mtl_o.COLOR0.xyz = (Temp_2_2.xyz * _mtl_u._Color.xyz);
   _mtl_o.COLOR0.w = (_mtl_u._Color.w * _mtl_u._ReflectColor.w);

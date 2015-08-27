@@ -318,7 +318,7 @@ void Atlas::init()
 {
 	m_texelSize = float(UINT16_MAX) / float(m_textureSize);
 	float texelHalf = m_texelSize/2.0f;
-	switch (bgfx::getRendererType())
+	switch (bgfx::getRendererType() )
 	{
 	case bgfx::RendererType::Direct3D9:
 		m_texelOffset[0] = 0.0f;
@@ -405,42 +405,46 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 
 void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffer)
 {
-	const bgfx::Memory* mem = bgfx::alloc(_region.width * _region.height * 4);
-	memset(mem->data, 0, mem->size);
-	if (_region.getType() == AtlasRegion::TYPE_BGRA8)
+	uint32_t size = _region.width * _region.height * 4;
+	if (0 < size)
 	{
-		const uint8_t* inLineBuffer = _bitmapBuffer;
-		uint8_t* outLineBuffer = m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.y * m_textureSize) + _region.x) * 4);
-
-		for (int yy = 0; yy < _region.height; ++yy)
+		const bgfx::Memory* mem = bgfx::alloc(size);
+		memset(mem->data, 0, mem->size);
+		if (_region.getType() == AtlasRegion::TYPE_BGRA8)
 		{
-			memcpy(outLineBuffer, inLineBuffer, _region.width * 4);
-			inLineBuffer += _region.width * 4;
-			outLineBuffer += m_textureSize * 4;
-		}
+			const uint8_t* inLineBuffer = _bitmapBuffer;
+			uint8_t* outLineBuffer = m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.y * m_textureSize) + _region.x) * 4);
 
-		memcpy(mem->data, _bitmapBuffer, mem->size);
-	}
-	else
-	{
-		uint32_t layer = _region.getComponentIndex();
-		const uint8_t* inLineBuffer = _bitmapBuffer;
-		uint8_t* outLineBuffer = (m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.y * m_textureSize) + _region.x) * 4) );
-
-		for (int yy = 0; yy < _region.height; ++yy)
-		{
-			for (int xx = 0; xx < _region.width; ++xx)
+			for (int yy = 0; yy < _region.height; ++yy)
 			{
-				outLineBuffer[(xx * 4) + layer] = inLineBuffer[xx];
+				memcpy(outLineBuffer, inLineBuffer, _region.width * 4);
+				inLineBuffer += _region.width * 4;
+				outLineBuffer += m_textureSize * 4;
 			}
 
-			memcpy(mem->data + yy * _region.width * 4, outLineBuffer, _region.width * 4);
-			inLineBuffer += _region.width;
-			outLineBuffer += m_textureSize * 4;
+			memcpy(mem->data, _bitmapBuffer, mem->size);
 		}
-	}
+		else
+		{
+			uint32_t layer = _region.getComponentIndex();
+			const uint8_t* inLineBuffer = _bitmapBuffer;
+			uint8_t* outLineBuffer = (m_textureBuffer + _region.getFaceIndex() * (m_textureSize * m_textureSize * 4) + ( ( (_region.y * m_textureSize) + _region.x) * 4) );
 
-	bgfx::updateTextureCube(m_textureHandle, (uint8_t)_region.getFaceIndex(), 0, _region.x, _region.y, _region.width, _region.height, mem);
+			for (int yy = 0; yy < _region.height; ++yy)
+			{
+				for (int xx = 0; xx < _region.width; ++xx)
+				{
+					outLineBuffer[(xx * 4) + layer] = inLineBuffer[xx];
+				}
+
+				memcpy(mem->data + yy * _region.width * 4, outLineBuffer, _region.width * 4);
+				inLineBuffer += _region.width;
+				outLineBuffer += m_textureSize * 4;
+			}
+		}
+
+		bgfx::updateTextureCube(m_textureHandle, (uint8_t)_region.getFaceIndex(), 0, _region.x, _region.y, _region.width, _region.height, mem);
+	}
 }
 
 void Atlas::packFaceLayerUV(uint32_t _idx, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const

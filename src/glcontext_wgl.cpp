@@ -296,9 +296,9 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	bool GlContext::isSwapChainSupported()
+	uint64_t GlContext::getCaps() const
 	{
-		return true;
+		return BGFX_CAPS_SWAP_CHAIN;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)

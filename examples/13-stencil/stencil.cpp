@@ -149,7 +149,7 @@ static const uint16_t s_planeIndices[] =
 static bool s_flipV = false;
 static uint32_t s_viewMask = 0;
 static uint32_t s_clearMask = 0;
-static bgfx::UniformHandle u_texColor;
+static bgfx::UniformHandle s_texColor;
 
 inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
 {
@@ -316,14 +316,13 @@ struct Uniforms
 			m_lightRgbInnerR[ii][3] = 1.0f;
 		}
 
-		u_params             = bgfx::createUniform("u_params",              bgfx::UniformType::Uniform4fv);
-		u_ambient            = bgfx::createUniform("u_ambient",             bgfx::UniformType::Uniform4fv);
-		u_diffuse            = bgfx::createUniform("u_diffuse",             bgfx::UniformType::Uniform4fv);
-		u_specular_shininess = bgfx::createUniform("u_specular_shininess",  bgfx::UniformType::Uniform4fv);
-		u_color              = bgfx::createUniform("u_color",               bgfx::UniformType::Uniform4fv);
-		u_time               = bgfx::createUniform("u_time",                bgfx::UniformType::Uniform1f );
-		u_lightPosRadius     = bgfx::createUniform("u_lightPosRadius",      bgfx::UniformType::Uniform4fv, MAX_NUM_LIGHTS);
-		u_lightRgbInnerR     = bgfx::createUniform("u_lightRgbInnerR",      bgfx::UniformType::Uniform4fv, MAX_NUM_LIGHTS);
+		u_params             = bgfx::createUniform("u_params",              bgfx::UniformType::Vec4);
+		u_ambient            = bgfx::createUniform("u_ambient",             bgfx::UniformType::Vec4);
+		u_diffuse            = bgfx::createUniform("u_diffuse",             bgfx::UniformType::Vec4);
+		u_specular_shininess = bgfx::createUniform("u_specular_shininess",  bgfx::UniformType::Vec4);
+		u_color              = bgfx::createUniform("u_color",               bgfx::UniformType::Vec4);
+		u_lightPosRadius     = bgfx::createUniform("u_lightPosRadius",      bgfx::UniformType::Vec4, MAX_NUM_LIGHTS);
+		u_lightRgbInnerR     = bgfx::createUniform("u_lightRgbInnerR",      bgfx::UniformType::Vec4, MAX_NUM_LIGHTS);
 	}
 
 	//call this once at initialization
@@ -332,12 +331,6 @@ struct Uniforms
 		bgfx::setUniform(u_ambient,            &m_ambient);
 		bgfx::setUniform(u_diffuse,            &m_diffuse);
 		bgfx::setUniform(u_specular_shininess, &m_specular_shininess);
-	}
-
-	//call this once per frame
-	void submitPerFrameUniforms()
-	{
-		bgfx::setUniform(u_time, &m_time);
 	}
 
 	//call this before each draw call
@@ -356,7 +349,6 @@ struct Uniforms
 		bgfx::destroyUniform(u_diffuse);
 		bgfx::destroyUniform(u_specular_shininess);
 		bgfx::destroyUniform(u_color);
-		bgfx::destroyUniform(u_time);
 		bgfx::destroyUniform(u_lightPosRadius);
 		bgfx::destroyUniform(u_lightRgbInnerR);
 	}
@@ -399,7 +391,6 @@ struct Uniforms
 	bgfx::UniformHandle u_diffuse;
 	bgfx::UniformHandle u_specular_shininess;
 	bgfx::UniformHandle u_color;
-	bgfx::UniformHandle u_time;
 	bgfx::UniformHandle u_lightPosRadius;
 	bgfx::UniformHandle u_lightRgbInnerR;
 };
@@ -811,14 +802,13 @@ struct Mesh
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(_mtx);
-			bgfx::setProgram(_program);
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(group.m_vbh);
 
 			// Set texture
 			if (bgfx::invalidHandle != _texture.idx)
 			{
-				bgfx::setTexture(0, u_texColor, _texture);
+				bgfx::setTexture(0, s_texColor, _texture);
 			}
 
 			// Apply render state
@@ -826,7 +816,7 @@ struct Mesh
 			bgfx::setState(_renderState.m_state, _renderState.m_blendFactorRgba);
 
 			// Submit
-			bgfx::submit(_viewId);
+			bgfx::submit(_viewId, _program);
 
 			// Keep track of submited view ids
 			s_viewMask |= 1 << _viewId;
@@ -873,7 +863,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	s_uniforms.init();
 	s_uniforms.submitConstUniforms();
 
-	u_texColor = bgfx::createUniform("u_texColor", bgfx::UniformType::Uniform1iv);
+	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 
 	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_stencil_texture_lightning", "fs_stencil_texture_lightning");
 	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_stencil_color_lightning",   "fs_stencil_color_lightning"  );
@@ -915,7 +905,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		lightRgbInnerR[ii][2] = rgbInnerR[index][2];
 		lightRgbInnerR[ii][3] = rgbInnerR[index][3];
 	}
-	memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR, MAX_NUM_LIGHTS * 4*sizeof(float));
+	memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR, MAX_NUM_LIGHTS * 4*sizeof(float) );
 
 	// Set view and projection matrices.
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
@@ -954,7 +944,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			, mouseState.m_my
 			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT : 0)
-			, 0
+			, mouseState.m_mz
 			, viewState.m_width
 			, viewState.m_height
 			);
@@ -1001,7 +991,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		s_uniforms.m_params.m_lightCount      = settings_numLights;
 		s_uniforms.m_params.m_lightIndex      = 0.0f;
 		s_uniforms.m_color[3]                 = settings_reflectionValue;
-		s_uniforms.submitPerFrameUniforms();
 
 		// Time.
 		int64_t now = bx::getHPCounter();
@@ -1041,11 +1030,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		for (uint8_t ii = 0; ii < numLights; ++ii)
 		{
 			lightPosRadius[ii][0] = sinf( (lightTimeAccumulator*1.1f + ii*0.03f + ii*bx::piHalf*1.07f ) )*20.0f;
-			lightPosRadius[ii][1] = 8.0f + (1.0f - cosf( (lightTimeAccumulator*1.5f + ii*0.29f + bx::piHalf*1.49f ) ))*4.0f;
+			lightPosRadius[ii][1] = 8.0f + (1.0f - cosf( (lightTimeAccumulator*1.5f + ii*0.29f + bx::piHalf*1.49f ) ) )*4.0f;
 			lightPosRadius[ii][2] = cosf( (lightTimeAccumulator*1.3f + ii*0.13f + ii*bx::piHalf*1.79f ) )*20.0f;
 			lightPosRadius[ii][3] = radius;
 		}
-		memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float));
+		memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
 
 		// Floor position.
 		float floorMtx[16];
@@ -1120,7 +1109,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Make sure at the beginning everything gets cleared.
 		clearView(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, clearValues);
-		bgfx::submit(0);
+		bgfx::touch(0);
 		s_viewMask |= 1;
 
 		// Bunny and columns color.
@@ -1163,7 +1152,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 					bx::vec3MulMtx(reflectedLights[ii], lightPosRadius[ii], reflectMtx);
 					reflectedLights[ii][3] = lightPosRadius[ii][3];
 				}
-				memcpy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float));
+				memcpy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float) );
 
 				// Reflect and submit bunny.
 				float mtxReflectedBunny[16];
@@ -1187,7 +1176,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 				}
 
 				// Set lights back.
-				memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float));
+				memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
 				// Third pass - Blend plane.
 
 				// Floor.
@@ -1407,7 +1396,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::destroyProgram(programColorBlack);
 	bgfx::destroyProgram(programTexture);
 
-	bgfx::destroyUniform(u_texColor);
+	bgfx::destroyUniform(s_texColor);
 
 	s_uniforms.destroy();
 

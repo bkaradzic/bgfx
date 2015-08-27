@@ -15,9 +15,11 @@ $input v_color0, v_texcoord0
 #include "../common/common.sh"
 #include "iq_sdf.sh"
 
-uniform float u_time;
 uniform mat4 u_mtx;
-uniform vec3 u_lightDir;
+uniform vec4 u_lightDirTime;
+
+#define u_lightDir u_lightDirTime.xyz
+#define u_time     u_lightDirTime.w
 
 float sceneDist(vec3 _pos)
 {

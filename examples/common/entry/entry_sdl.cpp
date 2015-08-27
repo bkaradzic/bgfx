@@ -320,7 +320,7 @@ namespace entry
 			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, GamepadAxis::RightZ);
 		}
 
-		void run(int _argc, char** _argv)
+		int run(int _argc, char** _argv)
 		{
 			m_mte.m_argc = _argc;
 			m_mte.m_argv = _argv;
@@ -644,7 +644,7 @@ namespace entry
 									Msg* msg = (Msg*)uev.data2;
 									if (isValid(handle) )
 									{
-										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str());
+										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str() );
 									}
 									delete msg;
 								}
@@ -710,6 +710,8 @@ namespace entry
 
 			SDL_DestroyWindow(m_window[0]);
 			SDL_Quit();
+
+			return m_thread.getExitCode();
 		}
 
 		WindowHandle findHandle(uint32_t _windowId)
@@ -896,8 +898,7 @@ namespace entry
 int main(int _argc, char** _argv)
 {
 	using namespace entry;
-	s_ctx.run(_argc, _argv);
-	return 0;
+	return s_ctx.run(_argc, _argv);
 }
 
 #endif // ENTRY_CONFIG_USE_SDL

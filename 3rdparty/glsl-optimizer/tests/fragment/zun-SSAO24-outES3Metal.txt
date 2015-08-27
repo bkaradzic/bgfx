@@ -29,7 +29,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_9 = ((_RandomTexture.sample(_mtlsmp__RandomTexture, (float2)(_mtl_i.xlv_TEXCOORD1)).xyz * (half)2.0) - (half)1.0);
   randN_8 = tmpvar_9;
   float4 tmpvar_10;
-  tmpvar_10 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(_mtl_i.xlv_TEXCOORD0)));
+  tmpvar_10 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(_mtl_i.xlv_TEXCOORD0));
   float3 n_11;
   float3 tmpvar_12;
   tmpvar_12 = ((tmpvar_10.xyz * float3(3.5554, 3.5554, 0.0)) + float3(-1.7777, -1.7777, 1.0));
@@ -60,16 +60,14 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     };
     randomDir_14 = (randomDir_14 * -(tmpvar_18));
     randomDir_14 = half3(((float3)randomDir_14 + (viewNorm_7 * 0.3)));
-    float4 tmpvar_19;
-    tmpvar_19 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)((tmpvar_2 + ((float2)randomDir_14.xy * scale_5)))));
-    float tmpvar_20;
-    tmpvar_20 = clamp (((depth_6 - 
+    float tmpvar_19;
+    tmpvar_19 = clamp (((depth_6 - 
       ((float)randomDir_14.z * _mtl_u._Params.x)
     ) - (
-      dot (tmpvar_19.zw, float2(1.0, 0.00392157))
+      dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)((tmpvar_2 + ((float2)randomDir_14.xy * scale_5)))).zw, float2(1.0, 0.00392157))
      * _mtl_u._ProjectionParams.z)), 0.0, 1.0);
-    if ((tmpvar_20 > _mtl_u._Params.y)) {
-      occ_4 = (occ_4 + pow ((1.0 - tmpvar_20), _mtl_u._Params.z));
+    if ((tmpvar_19 > _mtl_u._Params.y)) {
+      occ_4 = (occ_4 + pow ((1.0 - tmpvar_19), _mtl_u._Params.z));
     };
   };
   occ_4 = (occ_4 / 8.0);

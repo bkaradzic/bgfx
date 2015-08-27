@@ -86,9 +86,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::setDebug(debug);
 
 	// Uniforms.
-	bgfx::UniformHandle u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Uniform1iv);
-	bgfx::UniformHandle u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Uniform4fv);
-	bgfx::UniformHandle u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Uniform4x4fv);
+	bgfx::UniformHandle u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Int1);
+	bgfx::UniformHandle u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Mat4);
 
 	// Vertex declarations.
 	bgfx::VertexDecl PosNormalDecl;
@@ -178,7 +178,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	state[1]->m_viewId  = RENDER_SCENE_PASS_ID;
 	state[1]->m_numTextures = 1;
 	state[1]->m_textures[0].m_flags = UINT32_MAX;
-	state[1]->m_textures[0].m_stage = 4;
+	state[1]->m_textures[0].m_stage = 0;
 	state[1]->m_textures[0].m_sampler = u_shadowMap;
 	state[1]->m_textures[0].m_texture = shadowMapTexture;
 
@@ -327,29 +327,31 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 						);
 			}
 			bgfx::setUniform(u_lightMtx, lightMtx);
-			bgfx::setProgram(st.m_program);
 			bgfx::setIndexBuffer(ibh);
 			bgfx::setVertexBuffer(vbh);
 			bgfx::setState(st.m_state);
-			bgfx::submit(st.m_viewId);
+			bgfx::submit(st.m_viewId, st.m_program);
 		}
 
 		// Bunny.
 		bx::mtxMul(lightMtx, mtxBunny, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
 		meshSubmit(bunny, &state[0], 1, mtxBunny);
+		bgfx::setUniform(u_lightMtx, lightMtx);
 		meshSubmit(bunny, &state[1], 1, mtxBunny);
 
 		// Hollow cube.
 		bx::mtxMul(lightMtx, mtxHollowcube, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
 		meshSubmit(hollowcube, &state[0], 1, mtxHollowcube);
+		bgfx::setUniform(u_lightMtx, lightMtx);
 		meshSubmit(hollowcube, &state[1], 1, mtxHollowcube);
 
 		// Cube.
 		bx::mtxMul(lightMtx, mtxCube, mtxShadow);
 		bgfx::setUniform(u_lightMtx, lightMtx);
 		meshSubmit(cube, &state[0], 1, mtxCube);
+		bgfx::setUniform(u_lightMtx, lightMtx);
 		meshSubmit(cube, &state[1], 1, mtxCube);
 
 		// Advance to next frame. Rendering thread will be kicked to
