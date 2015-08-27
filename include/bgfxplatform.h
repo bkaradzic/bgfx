@@ -182,6 +182,18 @@ namespace bgfx
 		setPlatformData(pd);
 	}
 
+    ///
+    inline void winrtSetPanel(::IUnknown* _window)
+    {
+        PlatformData pd;
+        pd.ndt          = reinterpret_cast<void*>(1);
+        pd.nwh          = _window;
+        pd.context      = NULL;
+        pd.backBuffer   = NULL;
+        pd.backBufferDS = NULL;
+        setPlatformData(pd);
+    }
+
 } // namespace bgfx
 
 #endif // BX_PLATFORM_
