@@ -4673,13 +4673,16 @@ namespace bgfx { namespace gl
 
 			m_num = uint8_t(colorIdx);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
 			{
 				if (0 == colorIdx)
 				{
-					// When only depth is attached disable draw buffer to avoid
-					// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
-					GL_CHECK(glDrawBuffer(GL_NONE) );
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					{
+						// When only depth is attached disable draw buffer to avoid
+						// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
+						GL_CHECK(glDrawBuffer(GL_NONE) );
+					}
 				}
 				else
 				{
