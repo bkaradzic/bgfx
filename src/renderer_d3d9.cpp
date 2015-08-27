@@ -209,19 +209,25 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
 		{ D3DFMT_L8            }, // R8
+		{ D3DFMT_UNKNOWN       }, // R8S
 		{ D3DFMT_G16R16        }, // R16
 		{ D3DFMT_R16F          }, // R16F
+		{ D3DFMT_UNKNOWN       }, // R16S
 		{ D3DFMT_UNKNOWN       }, // R32
 		{ D3DFMT_R32F          }, // R32F
 		{ D3DFMT_A8L8          }, // RG8
+		{ D3DFMT_UNKNOWN       }, // RG8S
 		{ D3DFMT_G16R16        }, // RG16
 		{ D3DFMT_G16R16F       }, // RG16F
+		{ D3DFMT_UNKNOWN       }, // RG16S
 		{ D3DFMT_UNKNOWN       }, // RG32
 		{ D3DFMT_G32R32F       }, // RG32F
 		{ D3DFMT_A8R8G8B8      }, // BGRA8
 		{ D3DFMT_UNKNOWN       }, // RGBA8
+		{ D3DFMT_UNKNOWN       }, // RGBA8S
 		{ D3DFMT_A16B16G16R16  }, // RGBA16
 		{ D3DFMT_A16B16G16R16F }, // RGBA16F
+		{ D3DFMT_UNKNOWN       }, // RGBA16S
 		{ D3DFMT_UNKNOWN       }, // RGBA32
 		{ D3DFMT_A32B32G32R32F }, // RGBA32F
 		{ D3DFMT_R5G6B5        }, // R5G6B5

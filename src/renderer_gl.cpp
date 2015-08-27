@@ -207,19 +207,25 @@ namespace bgfx { namespace gl
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                         false }, // Unknown
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                         false }, // R1
 		{ GL_R8,                                       GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_BYTE,                false }, // R8
+		{ GL_R8_SNORM,                                 GL_ZERO,                                       GL_RED,                                      GL_BYTE,                         false }, // R8S
 		{ GL_R16,                                      GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16
 		{ GL_R16F,                                     GL_ZERO,                                       GL_RED,                                      GL_HALF_FLOAT,                   false }, // R16F
+		{ GL_R16_SNORM,                                GL_ZERO,                                       GL_RED,                                      GL_SHORT,                        false }, // R16S
 		{ GL_R32UI,                                    GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_INT,                 false }, // R32
 		{ GL_R32F,                                     GL_ZERO,                                       GL_RED,                                      GL_FLOAT,                        false }, // R32F
 		{ GL_RG8,                                      GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false }, // RG8
+		{ GL_RG8_SNORM,                                GL_ZERO,                                       GL_RG,                                       GL_BYTE,                         false }, // RG8S
 		{ GL_RG16,                                     GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false }, // RG16
 		{ GL_RG16F,                                    GL_ZERO,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG16F
+		{ GL_RG16_SNORM,                               GL_ZERO,                                       GL_RG,                                       GL_SHORT,                        false }, // RG16S
 		{ GL_RG32UI,                                   GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_INT,                 false }, // RG32
 		{ GL_RG32F,                                    GL_ZERO,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG32F
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
-		{ GL_RGBA16,                                   GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA16
+		{ GL_RGBA8_SNORM,                              GL_ZERO,                                       GL_RGBA,                                     GL_BYTE,                         false }, // RGBA8S
+		{ GL_RGBA16,                                   GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_SHORT,               false }, // RGBA16
 		{ GL_RGBA16F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_HALF_FLOAT,                   false }, // RGBA16F
+		{ GL_RGBA16_SNORM,                             GL_ZERO,                                       GL_RGBA,                                     GL_SHORT,                        false }, // RGBA16S
 		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_INT,                 false }, // RGBA32
 		{ GL_RGBA32F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_FLOAT,                        false }, // RGBA32F
 		{ GL_RGB565,                                   GL_ZERO,                                       GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false }, // R5G6B5
@@ -263,19 +269,25 @@ namespace bgfx { namespace gl
 		GL_ZERO,               // Unknown
 		GL_ZERO,               // R1
 		GL_R8,                 // R8
+		GL_R8_SNORM,           // R8S
 		GL_R16,                // R16
 		GL_R16F,               // R16F
+		GL_R16_SNORM,          // R16S
 		GL_R32UI,              // R32
 		GL_R32F,               // R32F
 		GL_RG8,                // RG8
+		GL_RG8_SNORM,          // RG8S
 		GL_RG16,               // RG16
 		GL_RG16F,              // RG16F
+		GL_RG16_SNORM,         // RG16S
 		GL_RG32UI,             // RG32
 		GL_RG32F,              // RG32F
 		GL_RGBA8,              // BGRA8
 		GL_RGBA8,              // RGBA8
+		GL_RGBA8_SNORM,        // RGBA8S
 		GL_RGBA16,             // RGBA16
 		GL_RGBA16F,            // RGBA16F
+		GL_RGBA16_SNORM,       // RGBA16S
 		GL_RGBA32UI,           // RGBA32
 		GL_RGBA32F,            // RGBA32F
 		GL_RGB565,             // R5G6B5
@@ -317,19 +329,25 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // Unknown
 		GL_ZERO,           // R1
 		GL_R8,             // R8
+		GL_R8_SNORM,       // R8S
 		GL_R16,            // R16
 		GL_R16F,           // R16F
+		GL_R16_SNORM,      // R16S
 		GL_R32UI,          // R32
 		GL_R32F,           // R32F
 		GL_RG8,            // RG8
+		GL_RG8_SNORM,      // RG8S
 		GL_RG16,           // RG16
 		GL_RG16F,          // RG16F
+		GL_RG16_SNORM,     // RG16S
 		GL_RG32UI,         // RG32
 		GL_RG32F,          // RG32F
 		GL_RGBA8,          // BGRA8
 		GL_RGBA8,          // RGBA8
+		GL_RGBA8_SNORM,    // RGBA8S
 		GL_RGBA16,         // RGBA16
 		GL_RGBA16F,        // RGBA16F
+		GL_RGBA16_SNORM,   // RGBA16S
 		GL_RGBA32UI,       // RGBA32
 		GL_RGBA32F,        // RGBA32F
 		GL_RGB565,         // R5G6B5
@@ -453,6 +471,7 @@ namespace bgfx { namespace gl
 			EXT_texture_filter_anisotropic,
 			EXT_texture_format_BGRA8888,
 			EXT_texture_rg,
+			EXT_texture_snorm,
 			EXT_texture_sRGB,
 			EXT_texture_storage,
 			EXT_texture_swizzle,
@@ -647,6 +666,7 @@ namespace bgfx { namespace gl
 		{ "EXT_texture_filter_anisotropic",        false,                             true  },
 		{ "EXT_texture_format_BGRA8888",           false,                             true  },
 		{ "EXT_texture_rg",                        false,                             true  }, // GLES2 extension.
+		{ "EXT_texture_snorm",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_texture_sRGB",                      false,                             true  },
 		{ "EXT_texture_storage",                   false,                             true  },
 		{ "EXT_texture_swizzle",                   false,                             true  },
