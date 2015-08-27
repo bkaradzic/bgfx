@@ -377,6 +377,9 @@ namespace bgfx { namespace d3d12
 				, IID_ID3D12Resource
 				, (void**)&resource
 				) );
+		BX_WARN(NULL != resource, "CreateCommittedResource failed (size: %d). Out of memory?"
+			, _resourceDesc->Width
+			);
 
 		return resource;
 	}
@@ -4148,7 +4151,6 @@ data.NumQualityLevels = 0;
 		viewState.reset(_render, hmdEnabled);
 
 // 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
-// 		bool scissorEnabled = false;
 // 		setDebugWireframe(wireframe);
 
 		uint16_t currentSamplerStateIdx = invalidHandle;
@@ -4459,12 +4461,14 @@ data.NumQualityLevels = 0;
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
 
+					uint16_t scissor = draw.m_scissor;
 					uint32_t bindHash = bx::hashMurmur2A(draw.m_bind, sizeof(draw.m_bind) );
 					if (currentBindHash != bindHash
 					||  0 != changedStencil
 					|| (hasFactor && blendFactor != draw.m_rgba)
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
 					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
+					||  currentState.m_scissor != scissor
 					||  pso != currentPso)
 					{
 						m_batch.flush(m_commandList);
@@ -4550,6 +4554,35 @@ data.NumQualityLevels = 0;
 						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 						prim = s_primInfo[primIndex];
 						m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
+					}
+
+					if (currentState.m_scissor != scissor)
+					{
+						currentState.m_scissor = scissor;
+
+						if(UINT16_MAX == scissor)
+						{
+							if(viewHasScissor)
+							{
+								D3D12_RECT rc;
+								rc.left   = viewScissorRect.m_x;
+								rc.top    = viewScissorRect.m_y;
+								rc.right  = viewScissorRect.m_x + viewScissorRect.m_width;
+								rc.bottom = viewScissorRect.m_y + viewScissorRect.m_height;
+								m_commandList->RSSetScissorRects(1, &rc);
+							}
+						}
+						else
+						{
+							Rect scissorRect;
+							scissorRect.intersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							D3D12_RECT rc;
+							rc.left   = scissorRect.m_x;
+							rc.top    = scissorRect.m_y;
+							rc.right  = scissorRect.m_x + scissorRect.m_width;
+							rc.bottom = scissorRect.m_y + scissorRect.m_height;
+							m_commandList->RSSetScissorRects(1, &rc);
+						}
 					}
 
 					if (pso != currentPso)
