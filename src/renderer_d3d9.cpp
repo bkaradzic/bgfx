@@ -3792,9 +3792,10 @@ namespace bgfx { namespace d3d9
 						);
 				}
 
-				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", _render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", _render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "      Indices: %7d ", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d ", _render->m_constEnd);
+				tvm.printf(10, pos++, 0x8e, "     DVB size: %7d ", _render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "     DIB size: %7d ", _render->m_iboffset);
 
 				double captureMs = double(captureElapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, "     Capture: %7.4f [ms]", captureMs);

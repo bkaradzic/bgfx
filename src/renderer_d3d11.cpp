@@ -5068,9 +5068,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
 				}
 
-				tvm.printf(10, pos++, 0x8e, "     Indices: %7d", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d", _render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d", _render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "      Indices: %7d ", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d ", _render->m_constEnd);
+				tvm.printf(10, pos++, 0x8e, "     DVB size: %7d ", _render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "     DIB size: %7d ", _render->m_iboffset);
 
 				pos++;
 				tvm.printf(10, pos++, 0x8e, " State cache:                                ");

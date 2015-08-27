@@ -3228,12 +3228,12 @@ data.NumQualityLevels = 0;
 		memset(&m_stats,   0, sizeof(m_stats) );
 		memset(&m_current, 0, sizeof(m_current) );
 	}
-	
+
 	void BatchD3D12::end(ID3D12GraphicsCommandList* _commandList)
 	{
 		flush(_commandList);
 	}
-	
+
 	struct UavFormat
 	{
 		DXGI_FORMAT format[3];
@@ -4780,9 +4780,10 @@ data.NumQualityLevels = 0;
 // 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
 // 				}
 
-				tvm.printf(10, pos++, 0x8e, "     Indices: %7d ", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, "    DVB size: %7d ", _render->m_vboffset);
-				tvm.printf(10, pos++, 0x8e, "    DIB size: %7d ", _render->m_iboffset);
+				tvm.printf(10, pos++, 0x8e, "      Indices: %7d ", statsNumIndices);
+				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d ", _render->m_constEnd);
+				tvm.printf(10, pos++, 0x8e, "     DVB size: %7d ", _render->m_vboffset);
+				tvm.printf(10, pos++, 0x8e, "     DIB size: %7d ", _render->m_iboffset);
 
 				pos++;
 				tvm.printf(10, pos++, 0x8e, " State cache:                        ");
