@@ -233,6 +233,30 @@ typedef uint64_t GLuint64;
 #	define GL_UNSIGNED_INT_10F_11F_11F_REV 0x8C3B
 #endif // GL_UNSIGNED_INT_10F_11F_11F_REV
 
+#ifndef GL_R8_SNORM
+#	define GL_R8_SNORM 0x8F94
+#endif // GL_R8_SNORM
+
+#ifndef GL_RG8_SNORM
+#	define GL_RG8_SNORM 0x8F95
+#endif // GL_RG8_SNORM
+
+#ifndef GL_RGBA8_SNORM
+#	define GL_RGBA8_SNORM 0x8F97
+#endif // GL_RGBA8_SNORM
+
+#ifndef GL_R16_SNORM
+#	define GL_R16_SNORM 0x8F98
+#endif // GL_R16_SNORM
+
+#ifndef GL_RG16_SNORM
+#	define GL_RG16_SNORM 0x8F99
+#endif // GL_RG16_SNORM
+
+#ifndef GL_RGBA16_SNORM
+#	define GL_RGBA16_SNORM 0x8F9B
+#endif // GL_RGBA16_SNORM
+
 #ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 #	define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
 #endif // GL_COMPRESSED_RGB_S3TC_DXT1_EXT

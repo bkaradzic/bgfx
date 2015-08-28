@@ -61,16 +61,10 @@ project ("example-common")
 		}
 	end
 
-	configuration { "vs2008" }
-		includedirs {
-			"$(DXSDK_DIR)/include",
+	configuration { "osx or ios*" }
+		files {
+			path.join(BGFX_DIR, "examples/common/**.mm"),
 		}
-	if (_OPTIONS["vs"] == "vs2012-xp") or (_OPTIONS["vs"] == "vs2013-xp") then
-	configuration { "vs201*" }
-		includedirs {
-			"$(DXSDK_DIR)/include",
-		}
-	end
 
 	configuration { "winphone8* or winstore8*"}
 		linkoptions {
