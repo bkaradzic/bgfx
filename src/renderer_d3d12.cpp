@@ -1392,6 +1392,13 @@ namespace bgfx { namespace d3d12
 			vp.MaxDepth = 1.0f;
 			m_commandList->RSSetViewports(1, &vp);
 
+			D3D12_RECT rc;
+			rc.left   = 0;
+			rc.top    = 0;
+			rc.right  = width;
+			rc.bottom = height;
+			m_commandList->RSSetScissorRects(1, &rc);
+
 			const uint64_t state = 0
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
