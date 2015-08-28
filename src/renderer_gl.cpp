@@ -1027,17 +1027,20 @@ namespace bgfx { namespace gl
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
-		GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, s_imageFormat[_format], 16, 16) );
-
-		glBindImageTexture(0
-			, id
-			, 0
-			, GL_FALSE
-			, 0
-			, GL_READ_WRITE
-			, s_imageFormat[_format]
-			);
+		glTexStorage2D(GL_TEXTURE_2D, 1, s_imageFormat[_format], 16, 16);
 		GLenum err = glGetError();
+		if (0 == err)
+		{
+			glBindImageTexture(0
+				, id
+				, 0
+				, GL_FALSE
+				, 0
+				, GL_READ_WRITE
+				, s_imageFormat[_format]
+				);
+			err = glGetError();
+		}
 
 		GL_CHECK(glDeleteTextures(1, &id) );
 
@@ -1166,9 +1169,9 @@ namespace bgfx { namespace gl
 			// Must be after context is initialized?!
 			m_ovr.init();
 
-			m_vendor = getGLString(GL_VENDOR);
-			m_renderer = getGLString(GL_RENDERER);
-			m_version = getGLString(GL_VERSION);
+			m_vendor      = getGLString(GL_VENDOR);
+			m_renderer    = getGLString(GL_RENDERER);
+			m_version     = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
 
 			GLint numCmpFormats = 0;
@@ -1236,6 +1239,15 @@ namespace bgfx { namespace gl
 				^ (uint64_t(getGLStringHash(GL_RENDERER) )<<0 )
 				^ (uint64_t(getGLStringHash(GL_VERSION ) )<<16)
 				;
+
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
+			&&  0    == strcmp(m_vendor,  "Imagination Technologies")
+			&&  NULL != strstr(m_version, "(SDK 3.5@3510720)") )
+			{
+				// Skip initializing extensions that are broken in emulator.
+				s_extension[Extension::ARB_program_interface_query     ].m_initialize =
+				s_extension[Extension::ARB_shader_storage_buffer_object].m_initialize = false;
+			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
@@ -3213,10 +3225,10 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindFragDataLocation(m_id, 0, "bgfx_FragColor") );
 #endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
-		bool piqSupported = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) || (true
-			&& s_extension[Extension::ARB_program_interface_query].m_supported
+		bool piqSupported = true
+			&& s_extension[Extension::ARB_program_interface_query     ].m_supported
 			&& s_extension[Extension::ARB_shader_storage_buffer_object].m_supported
-			);
+			;
 
 		if (piqSupported)
 		{
@@ -5149,7 +5161,7 @@ namespace bgfx { namespace gl
 								uintptr_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 								for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 								{
-									GL_CHECK(glDispatchComputeIndirect(args) );
+									GL_CHECK(glDispatchComputeIndirect((GLintptr)args) );
 									args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 								}
 							}
