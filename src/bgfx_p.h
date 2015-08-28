@@ -1409,8 +1409,7 @@ namespace bgfx
 				: _flags
 				;
 
-			if (isValid(_sampler)
-			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )
+			if (isValid(_sampler) )
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);
@@ -1446,8 +1445,7 @@ namespace bgfx
 			bind.m_un.m_compute.m_access = uint8_t(_access);
 			bind.m_un.m_compute.m_mip    = _mip;
 
-			if (isValid(_sampler)
-			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) ) )
+			if (isValid(_sampler) )
 			{
 				uint32_t stage = _stage;
 				setUniform(_sampler, &stage);

@@ -138,40 +138,40 @@ namespace bgfx
 		// Availability depends on Caps (see: formats).
 		enum Enum
 		{
-			BC1,    // DXT1
-			BC2,    // DXT3
-			BC3,    // DXT5
-			BC4,    // LATC1/ATI1
-			BC5,    // LATC2/ATI2
-			BC6H,   // BC6H
-			BC7,    // BC7
-			ETC1,   // ETC1 RGB8
-			ETC2,   // ETC2 RGB8
-			ETC2A,  // ETC2 RGBA8
-			ETC2A1, // ETC2 RGB8A1
-			PTC12,  // PVRTC1 RGB 2BPP
-			PTC14,  // PVRTC1 RGB 4BPP
-			PTC12A, // PVRTC1 RGBA 2BPP
-			PTC14A, // PVRTC1 RGBA 4BPP
-			PTC22,  // PVRTC2 RGBA 2BPP
-			PTC24,  // PVRTC2 RGBA 4BPP
+			BC1,     // DXT1
+			BC2,     // DXT3
+			BC3,     // DXT5
+			BC4,     // LATC1/ATI1
+			BC5,     // LATC2/ATI2
+			BC6H,    // BC6H
+			BC7,     // BC7
+			ETC1,    // ETC1 RGB8
+			ETC2,    // ETC2 RGB8
+			ETC2A,   // ETC2 RGBA8
+			ETC2A1,  // ETC2 RGB8A1
+			PTC12,   // PVRTC1 RGB 2BPP
+			PTC14,   // PVRTC1 RGB 4BPP
+			PTC12A,  // PVRTC1 RGBA 2BPP
+			PTC14A,  // PVRTC1 RGBA 4BPP
+			PTC22,   // PVRTC2 RGBA 2BPP
+			PTC24,   // PVRTC2 RGBA 4BPP
 
 			Unknown, // compressed formats above
 
-			R1,
-			R8,
-			R8S,
-			R16,
-			R16F,
-			R16S,
-			R32,
-			R32F,
-			RG8,
-			RG8S,
-			RG16,
+			R1,      // Notation:
+			R8,      //
+			R8S,     // RGBA16S
+			R16U,    // ^   ^ ^
+			R16F,    // |   | +-- _ - Unorm
+			R16S,    // |   |     F - Float
+			R32U,    // |   |     S - Snorm
+			R32F,    // |   |     I - Int
+			RG8,     // |   |     U - Uint
+			RG8S,    // |   +---- Number of bits per texel
+			RG16,    // +-------- Components
 			RG16F,
 			RG16S,
-			RG32,
+			RG32U,
 			RG32F,
 			BGRA8,
 			RGBA8,
@@ -179,7 +179,7 @@ namespace bgfx
 			RGBA16,
 			RGBA16F,
 			RGBA16S,
-			RGBA32,
+			RGBA32U,
 			RGBA32F,
 			R5G6B5,
 			RGBA4,
