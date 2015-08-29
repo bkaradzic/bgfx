@@ -121,13 +121,37 @@ typedef uint64_t GLuint64;
 #	define GL_R8 0x8229
 #endif // GL_R8
 
+#ifndef GL_R8I
+#	define GL_R8I 0x8231
+#endif // GL_R8I
+
+#ifndef GL_R8UI
+#	define GL_R8UI 0x8232
+#endif // GL_R8UI
+
+#ifndef GL_R8_SNORM
+#	define GL_R8_SNORM 0x8F94
+#endif // GL_R8_SNORM
+
 #ifndef GL_R16
 #	define GL_R16 0x822A
 #endif // GL_R16
 
+#ifndef GL_R16I
+#	define GL_R16I 0x8233
+#endif // GL_R16I
+
+#ifndef GL_R16UI
+#	define GL_R16UI 0x8234
+#endif // GL_R16UI
+
 #ifndef GL_R16F
 #	define GL_R16F 0x822D
 #endif // GL_R16F
+
+#ifndef GL_R16_SNORM
+#	define GL_R16_SNORM 0x8F98
+#endif // GL_R16_SNORM
 
 #ifndef GL_R32UI
 #	define GL_R32UI 0x8236
@@ -141,6 +165,18 @@ typedef uint64_t GLuint64;
 #	define GL_RG8 0x822B
 #endif // GL_RG8
 
+#ifndef GL_RG8I
+#	define GL_RG8I 0x8237
+#endif // GL_RG8I
+
+#ifndef GL_RG8UI
+#	define GL_RG8UI 0x8238
+#endif // GL_RG8UI
+
+#ifndef GL_RG8_SNORM
+#	define GL_RG8_SNORM 0x8F95
+#endif // GL_RG8_SNORM
+
 #ifndef GL_RG16
 #	define GL_RG16 0x822C
 #endif // GL_RG16
@@ -153,9 +189,29 @@ typedef uint64_t GLuint64;
 #	define GL_RG16F 0x822F
 #endif // GL_RG16F
 
+#ifndef GL_RG16I
+#	define GL_RG16I 0x8239
+#endif // GL_RG16I
+
+#ifndef GL_RG16UI
+#	define GL_RG16UI 0x823A
+#endif // GL_RG16UI
+
+#ifndef GL_RG16_SNORM
+#	define GL_RG16_SNORM 0x8F99
+#endif // GL_RG16_SNORM
+
+#ifndef GL_R32I
+#	define GL_R32I 0x8235
+#endif // GL_R32I
+
 #ifndef GL_R32UI
 #	define GL_R32UI 0x8236
 #endif // GL_R32UI
+
+#ifndef GL_RG32I
+#	define GL_RG32I 0x823B
+#endif // GL_RG32I
 
 #ifndef GL_RG32UI
 #	define GL_RG32UI 0x823C
@@ -165,6 +221,30 @@ typedef uint64_t GLuint64;
 #	define GL_RG32F 0x8230
 #endif // GL_RG32F
 
+#ifndef GL_RGBA8I
+#	define GL_RGBA8I 0x8D8E
+#endif // GL_RGBA8I
+
+#ifndef GL_RGBA8UI
+#	define GL_RGBA8UI 0x8D7C
+#endif // GL_RGBA8UI
+
+#ifndef GL_RGBA8_SNORM
+#	define GL_RGBA8_SNORM 0x8F97
+#endif // GL_RGBA8_SNORM
+
+#ifndef GL_RGBA16I
+#	define GL_RGBA16I 0x8D88
+#endif // GL_RGBA16I
+
+#ifndef GL_RGBA16UI
+#	define GL_RGBA16UI 0x8D76
+#endif // GL_RGBA16UI
+
+#ifndef GL_RGBA16_SNORM
+#	define GL_RGBA16_SNORM 0x8F9B
+#endif // GL_RGBA16_SNORM
+
 #ifndef GL_RGBA32UI
 #	define GL_RGBA32UI 0x8D70
 #endif // GL_RGBA32UI
@@ -172,6 +252,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_RGBA32F
 #	define GL_RGBA32F 0x8814
 #endif // GL_RGBA32F
+
+#ifndef GL_RGBA32I
+#	define GL_RGBA32I 0x8D82
+#endif // GL_RGBA32I
 
 #ifndef GL_STENCIL_INDEX
 #	define GL_STENCIL_INDEX 0x1901
@@ -232,30 +316,6 @@ typedef uint64_t GLuint64;
 #ifndef GL_UNSIGNED_INT_10F_11F_11F_REV
 #	define GL_UNSIGNED_INT_10F_11F_11F_REV 0x8C3B
 #endif // GL_UNSIGNED_INT_10F_11F_11F_REV
-
-#ifndef GL_R8_SNORM
-#	define GL_R8_SNORM 0x8F94
-#endif // GL_R8_SNORM
-
-#ifndef GL_RG8_SNORM
-#	define GL_RG8_SNORM 0x8F95
-#endif // GL_RG8_SNORM
-
-#ifndef GL_RGBA8_SNORM
-#	define GL_RGBA8_SNORM 0x8F97
-#endif // GL_RGBA8_SNORM
-
-#ifndef GL_R16_SNORM
-#	define GL_R16_SNORM 0x8F98
-#endif // GL_R16_SNORM
-
-#ifndef GL_RG16_SNORM
-#	define GL_RG16_SNORM 0x8F99
-#endif // GL_RG16_SNORM
-
-#ifndef GL_RGBA16_SNORM
-#	define GL_RGBA16_SNORM 0x8F9B
-#endif // GL_RGBA16_SNORM
 
 #ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 #	define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
