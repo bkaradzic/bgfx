@@ -73,7 +73,7 @@ namespace bgfx
 		}
 
 		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw>
-		void setPredefined(RendererContext* _renderer, uint8_t view, uint8_t eye, Program& _program, Frame* _render, const Draw& _draw)
+		void setPredefined(RendererContext* _renderer, uint16_t view, uint8_t eye, Program& _program, Frame* _render, const Draw& _draw)
 		{
 			for (uint32_t ii = 0, num = _program.m_numPredefined; ii < num; ++ii)
 			{
