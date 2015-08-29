@@ -41,23 +41,35 @@ namespace bgfx
 		{   0, 0, 0,  0, 1, 1,  0, 0 }, // Unknown
 		{   1, 8, 1,  1, 1, 1,  0, 0 }, // R1
 		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8
+		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8I
+		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8U
 		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8S
+		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16
+		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16I
 		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16U
 		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16F
 		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16S
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // R32U
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // R32F
 		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8
+		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8I
+		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8U
 		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8S
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16
+		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16I
+		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16U
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16F
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16S
 		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RG32U
 		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RG32F
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // BGRA8
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8
+		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8I
+		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8U
 		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8S
 		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16
+		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16I
+		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16U
 		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16F
 		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16S
 		{ 128, 1, 1, 16, 1, 1,  0, 0 }, // RGBA32U
@@ -101,23 +113,35 @@ namespace bgfx
 		"<unknown>",  // Unknown
 		"R1",         // R1
 		"R8",         // R8
+		"R8I",        // R8I
+		"R8U",        // R8U
 		"R8S",        // R8S
+		"R16",        // R16
+		"R16I",       // R16I
 		"R16U",       // R16U
 		"R16F",       // R16F
 		"R16S",       // R16S
 		"R32U",       // R32U
 		"R32F",       // R32F
 		"RG8",        // RG8
+		"RG8I",       // RG8I
+		"RG8U",       // RG8U
 		"RG8S",       // RG8S
 		"RG16",       // RG16
+		"RG16I",      // RG16I
+		"RG16U",      // RG16U
 		"RG16F",      // RG16F
 		"RG16S",      // RG16S
 		"RG32",       // RG32U
 		"RG32F",      // RG32F
 		"BGRA8",      // BGRA8
 		"RGBA8",      // RGBA8
+		"RGBA8I",     // RGBA8I
+		"RGBA8U",     // RGBA8U
 		"RGBA8S",     // RGBA8S
 		"RGBA16",     // RGBA16
+		"RGBA16I",    // RGBA16I
+		"RGBA16U",    // RGBA16U
 		"RGBA16F",    // RGBA16F
 		"RGBA16S",    // RGBA16S
 		"RGBA32",     // RGBA32U
@@ -1398,7 +1422,7 @@ namespace bgfx
 
 		{ DDS_FORMAT_R1_UNORM,            TextureFormat::R1,         false },
 		{ DDS_FORMAT_R8_UNORM,            TextureFormat::R8,         false },
-		{ DDS_FORMAT_R16_UNORM,           TextureFormat::R16U,       false },
+		{ DDS_FORMAT_R16_UNORM,           TextureFormat::R16,        false },
 		{ DDS_FORMAT_R16_FLOAT,           TextureFormat::R16F,       false },
 		{ DDS_FORMAT_R32_UINT,            TextureFormat::R32U,       false },
 		{ DDS_FORMAT_R32_FLOAT,           TextureFormat::R32F,       false },

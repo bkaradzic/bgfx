@@ -160,23 +160,35 @@ namespace bgfx
 
 			R1,      // Notation:
 			R8,      //
-			R8S,     // RGBA16S
-			R16U,    // ^   ^ ^
-			R16F,    // |   | +-- _ - Unorm
-			R16S,    // |   |     F - Float
-			R32U,    // |   |     S - Snorm
-			R32F,    // |   |     I - Int
-			RG8,     // |   |     U - Uint
-			RG8S,    // |   +---- Number of bits per texel
-			RG16,    // +-------- Components
+			R8I,     // RGBA16S
+			R8U,     // ^   ^ ^
+			R8S,     // |   | +-- [ ]Unorm
+			R16,     // |   |     [F]loat
+			R16I,    // |   |     [S]norm
+			R16U,    // |   |     [I]nt
+			R16F,    // |   |     [U]int
+			R16S,    // |   +---- Number of bits per texel
+			R32U,    // +-------- Components
+			R32F,
+			RG8,
+			RG8I,
+			RG8U,
+			RG8S,
+			RG16,
+			RG16I,
+			RG16U,
 			RG16F,
 			RG16S,
 			RG32U,
 			RG32F,
 			BGRA8,
 			RGBA8,
+			RGBA8I,
+			RGBA8U,
 			RGBA8S,
 			RGBA16,
+			RGBA16I,
+			RGBA16U,
 			RGBA16F,
 			RGBA16S,
 			RGBA32U,

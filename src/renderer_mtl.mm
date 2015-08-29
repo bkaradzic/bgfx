@@ -265,26 +265,38 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // Unknown
 		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // R1
 		{ MTLPixelFormatR8Unorm,          MTLPixelFormatR8Unorm_sRGB         }, // R8
+		{ MTLPixelFormatR8Sint,           MTLPixelFormatInvalid              }, // R8I
+		{ MTLPixelFormatR8Uint,           MTLPixelFormatInvalid              }, // R8U
 		{ MTLPixelFormatR8Snorm,          MTLPixelFormatInvalid              }, // R8S
-		{ MTLPixelFormatR16Uint,          MTLPixelFormatInvalid              }, // R16
+		{ MTLPixelFormatR16Unorm,         MTLPixelFormatInvalid              }, // R16
+		{ MTLPixelFormatR16Sint,          MTLPixelFormatInvalid              }, // R16I
+		{ MTLPixelFormatR16Uint,          MTLPixelFormatInvalid              }, // R16U
 		{ MTLPixelFormatR16Float,         MTLPixelFormatInvalid              }, // R16F
 		{ MTLPixelFormatR16Snorm,         MTLPixelFormatInvalid              }, // R16S
-		{ MTLPixelFormatR32Uint,          MTLPixelFormatInvalid              }, // R32
+		{ MTLPixelFormatR32Uint,          MTLPixelFormatInvalid              }, // R32U
 		{ MTLPixelFormatR32Float,         MTLPixelFormatInvalid              }, // R32F
 		{ MTLPixelFormatRG8Unorm,         MTLPixelFormatRG8Unorm_sRGB        }, // RG8
+		{ MTLPixelFormatRG8Sint,          MTLPixelFormatInvalid              }, // RG8I
+		{ MTLPixelFormatRG8Uint,          MTLPixelFormatInvalid              }, // RG8U
 		{ MTLPixelFormatRG8Snorm,         MTLPixelFormatInvalid              }, // RG8S
 		{ MTLPixelFormatRG16Unorm,        MTLPixelFormatInvalid              }, // RG16
+		{ MTLPixelFormatRG16Sint,         MTLPixelFormatInvalid              }, // RG16I
+		{ MTLPixelFormatRG16Uint,         MTLPixelFormatInvalid              }, // RG16U
 		{ MTLPixelFormatRG16Float,        MTLPixelFormatInvalid              }, // RG16F
 		{ MTLPixelFormatRG16Snorm,        MTLPixelFormatInvalid              }, // RG16S
-		{ MTLPixelFormatRG32Uint,         MTLPixelFormatInvalid              }, // RG32
+		{ MTLPixelFormatRG32Uint,         MTLPixelFormatInvalid              }, // RG32U
 		{ MTLPixelFormatRG32Float,        MTLPixelFormatInvalid              }, // RG32F
 		{ MTLPixelFormatBGRA8Unorm,       MTLPixelFormatBGRA8Unorm_sRGB      }, // BGRA8
 		{ MTLPixelFormatRGBA8Unorm,       MTLPixelFormatRGBA8Unorm_sRGB      }, // RGBA8
+		{ MTLPixelFormatRGBA8Sint,        MTLPixelFormatInvalid              }, // RGBA8I
+		{ MTLPixelFormatRGBA8Uint,        MTLPixelFormatInvalid              }, // RGBA8U
 		{ MTLPixelFormatRGBA8Snorm,       MTLPixelFormatInvalid              }, // RGBA8S
 		{ MTLPixelFormatRGBA16Unorm,      MTLPixelFormatInvalid              }, // RGBA16
+		{ MTLPixelFormatRGBA16Sint,       MTLPixelFormatInvalid              }, // RGBA16I
+		{ MTLPixelFormatRGBA16Uint,       MTLPixelFormatInvalid              }, // RGBA16I
 		{ MTLPixelFormatRGBA16Float,      MTLPixelFormatInvalid              }, // RGBA16F
 		{ MTLPixelFormatRGBA16Snorm,      MTLPixelFormatInvalid              }, // RGBA16S
-		{ MTLPixelFormatRGBA32Uint,       MTLPixelFormatInvalid              }, // RGBA32
+		{ MTLPixelFormatRGBA32Uint,       MTLPixelFormatInvalid              }, // RGBA32U
 		{ MTLPixelFormatRGBA32Float,      MTLPixelFormatInvalid              }, // RGBA32F
 		{ MTLPixelFormatB5G6R5Unorm,      MTLPixelFormatInvalid              }, // R5G6B5
 		{ MTLPixelFormatABGR4Unorm,       MTLPixelFormatInvalid              }, // RGBA4

@@ -209,23 +209,35 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
 		{ D3DFMT_L8            }, // R8
+		{ D3DFMT_UNKNOWN       }, // R8I
+		{ D3DFMT_UNKNOWN       }, // R8U
 		{ D3DFMT_UNKNOWN       }, // R8S
-		{ D3DFMT_G16R16        }, // R16U
+		{ D3DFMT_L16           }, // R16
+		{ D3DFMT_UNKNOWN       }, // R16I
+		{ D3DFMT_UNKNOWN       }, // R16U
 		{ D3DFMT_R16F          }, // R16F
 		{ D3DFMT_UNKNOWN       }, // R16S
 		{ D3DFMT_UNKNOWN       }, // R32U
 		{ D3DFMT_R32F          }, // R32F
 		{ D3DFMT_A8L8          }, // RG8
+		{ D3DFMT_UNKNOWN       }, // RG8I
+		{ D3DFMT_UNKNOWN       }, // RG8U
 		{ D3DFMT_UNKNOWN       }, // RG8S
 		{ D3DFMT_G16R16        }, // RG16
+		{ D3DFMT_UNKNOWN       }, // RG16I
+		{ D3DFMT_UNKNOWN       }, // RG16U
 		{ D3DFMT_G16R16F       }, // RG16F
 		{ D3DFMT_UNKNOWN       }, // RG16S
 		{ D3DFMT_UNKNOWN       }, // RG32U
 		{ D3DFMT_G32R32F       }, // RG32F
 		{ D3DFMT_A8R8G8B8      }, // BGRA8
 		{ D3DFMT_UNKNOWN       }, // RGBA8
+		{ D3DFMT_UNKNOWN       }, // RGBA8I
+		{ D3DFMT_UNKNOWN       }, // RGBA8U
 		{ D3DFMT_UNKNOWN       }, // RGBA8S
 		{ D3DFMT_A16B16G16R16  }, // RGBA16
+		{ D3DFMT_UNKNOWN       }, // RGBA16I
+		{ D3DFMT_UNKNOWN       }, // RGBA16U
 		{ D3DFMT_A16B16G16R16F }, // RGBA16F
 		{ D3DFMT_UNKNOWN       }, // RGBA16S
 		{ D3DFMT_UNKNOWN       }, // RGBA32U

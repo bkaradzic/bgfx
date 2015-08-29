@@ -207,23 +207,35 @@ namespace bgfx { namespace gl
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                         false }, // Unknown
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                         false }, // R1
 		{ GL_R8,                                       GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_BYTE,                false }, // R8
+		{ GL_R8I,                                      GL_ZERO,                                       GL_RED,                                      GL_BYTE,                         false }, // R8S
+		{ GL_R8UI,                                     GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_BYTE,                false }, // R8S
 		{ GL_R8_SNORM,                                 GL_ZERO,                                       GL_RED,                                      GL_BYTE,                         false }, // R8S
-		{ GL_R16,                                      GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16U
+		{ GL_R16,                                      GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16
+		{ GL_R16I,                                     GL_ZERO,                                       GL_RED,                                      GL_SHORT,                        false }, // R16I
+		{ GL_R16UI,                                    GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16U
 		{ GL_R16F,                                     GL_ZERO,                                       GL_RED,                                      GL_HALF_FLOAT,                   false }, // R16F
 		{ GL_R16_SNORM,                                GL_ZERO,                                       GL_RED,                                      GL_SHORT,                        false }, // R16S
 		{ GL_R32UI,                                    GL_ZERO,                                       GL_RED,                                      GL_UNSIGNED_INT,                 false }, // R32U
 		{ GL_R32F,                                     GL_ZERO,                                       GL_RED,                                      GL_FLOAT,                        false }, // R32F
 		{ GL_RG8,                                      GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false }, // RG8
+		{ GL_RG8I,                                     GL_ZERO,                                       GL_RG,                                       GL_BYTE,                         false }, // RG8I
+		{ GL_RG8UI,                                    GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false }, // RG8U
 		{ GL_RG8_SNORM,                                GL_ZERO,                                       GL_RG,                                       GL_BYTE,                         false }, // RG8S
 		{ GL_RG16,                                     GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false }, // RG16
+		{ GL_RG16I,                                    GL_ZERO,                                       GL_RG,                                       GL_SHORT,                        false }, // RG16
+		{ GL_RG16UI,                                   GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false }, // RG16
 		{ GL_RG16F,                                    GL_ZERO,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG16F
 		{ GL_RG16_SNORM,                               GL_ZERO,                                       GL_RG,                                       GL_SHORT,                        false }, // RG16S
 		{ GL_RG32UI,                                   GL_ZERO,                                       GL_RG,                                       GL_UNSIGNED_INT,                 false }, // RG32U
 		{ GL_RG32F,                                    GL_ZERO,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG32F
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
+		{ GL_RGBA8I,                                   GL_ZERO,                                       GL_RGBA,                                     GL_BYTE,                         false }, // RGBA8I
+		{ GL_RGBA8UI,                                  GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8U
 		{ GL_RGBA8_SNORM,                              GL_ZERO,                                       GL_RGBA,                                     GL_BYTE,                         false }, // RGBA8S
 		{ GL_RGBA16,                                   GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_SHORT,               false }, // RGBA16
+		{ GL_RGBA16I,                                  GL_ZERO,                                       GL_RGBA,                                     GL_SHORT,                        false }, // RGBA16I
+		{ GL_RGBA16UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_SHORT,               false }, // RGBA16U
 		{ GL_RGBA16F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_HALF_FLOAT,                   false }, // RGBA16F
 		{ GL_RGBA16_SNORM,                             GL_ZERO,                                       GL_RGBA,                                     GL_SHORT,                        false }, // RGBA16S
 		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_INT,                 false }, // RGBA32U
@@ -269,23 +281,35 @@ namespace bgfx { namespace gl
 		GL_ZERO,               // Unknown
 		GL_ZERO,               // R1
 		GL_R8,                 // R8
+		GL_R8I,                // R8I
+		GL_R8UI,               // R8U
 		GL_R8_SNORM,           // R8S
-		GL_R16,                // R16U
+		GL_R16,                // R16
+		GL_R16I,               // R16I
+		GL_R16UI,              // R16U
 		GL_R16F,               // R16F
 		GL_R16_SNORM,          // R16S
 		GL_R32UI,              // R32U
 		GL_R32F,               // R32F
 		GL_RG8,                // RG8
+		GL_RG8I,               // RG8I
+		GL_RG8UI,              // RG8U
 		GL_RG8_SNORM,          // RG8S
 		GL_RG16,               // RG16
+		GL_RG16I,              // RG16I
+		GL_RG16UI,             // RG16U
 		GL_RG16F,              // RG16F
 		GL_RG16_SNORM,         // RG16S
 		GL_RG32UI,             // RG32U
 		GL_RG32F,              // RG32F
 		GL_RGBA8,              // BGRA8
 		GL_RGBA8,              // RGBA8
+		GL_RGBA8I,             // RGBA8I
+		GL_RGBA8UI,            // RGBA8UI
 		GL_RGBA8_SNORM,        // RGBA8S
 		GL_RGBA16,             // RGBA16
+		GL_RGBA16I,            // RGBA16I
+		GL_RGBA16UI,           // RGBA16U
 		GL_RGBA16F,            // RGBA16F
 		GL_RGBA16_SNORM,       // RGBA16S
 		GL_RGBA32UI,           // RGBA32U
@@ -329,23 +353,35 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // Unknown
 		GL_ZERO,           // R1
 		GL_R8,             // R8
+		GL_R8I,            // R8I
+		GL_R8UI,           // R8UI
 		GL_R8_SNORM,       // R8S
-		GL_R16,            // R16U
+		GL_R16,            // R16
+		GL_R16I,           // R16I
+		GL_R16UI,          // R16U
 		GL_R16F,           // R16F
 		GL_R16_SNORM,      // R16S
 		GL_R32UI,          // R32U
 		GL_R32F,           // R32F
 		GL_RG8,            // RG8
+		GL_RG8I,           // RG8I
+		GL_RG8UI,          // RG8U
 		GL_RG8_SNORM,      // RG8S
 		GL_RG16,           // RG16
+		GL_RG16I,          // RG16I
+		GL_RG16UI,         // RG16U
 		GL_RG16F,          // RG16F
 		GL_RG16_SNORM,     // RG16S
 		GL_RG32UI,         // RG32U
 		GL_RG32F,          // RG32F
 		GL_RGBA8,          // BGRA8
 		GL_RGBA8,          // RGBA8
+		GL_RGBA8I,         // RGBA8I
+		GL_RGBA8UI,        // RGBA8UI
 		GL_RGBA8_SNORM,    // RGBA8S
 		GL_RGBA16,         // RGBA16
+		GL_RGBA16I,        // RGBA16I
+		GL_RGBA16UI,       // RGBA16U
 		GL_RGBA16F,        // RGBA16F
 		GL_RGBA16_SNORM,   // RGBA16S
 		GL_RGBA32UI,       // RGBA32U
@@ -1451,9 +1487,10 @@ namespace bgfx { namespace gl
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
+				setTextureFormat(TextureFormat::R16I,    GL_R16I,     GL_RED_INTEGER,  GL_SHORT);
 				setTextureFormat(TextureFormat::R16U,    GL_R16UI,    GL_RED_INTEGER,  GL_UNSIGNED_SHORT);
-				setTextureFormat(TextureFormat::RG16,    GL_RG16UI,   GL_RG_INTEGER,   GL_UNSIGNED_SHORT);
-				setTextureFormat(TextureFormat::RGBA16,  GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
+//				setTextureFormat(TextureFormat::RG16,    GL_RG16UI,   GL_RG_INTEGER,   GL_UNSIGNED_SHORT);
+//				setTextureFormat(TextureFormat::RGBA16,  GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
 				setTextureFormat(TextureFormat::R32U,    GL_R32UI,    GL_RED_INTEGER,  GL_UNSIGNED_INT);
 				setTextureFormat(TextureFormat::RG32U,   GL_RG32UI,   GL_RG_INTEGER,   GL_UNSIGNED_INT);
 				setTextureFormat(TextureFormat::RGBA32U, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
