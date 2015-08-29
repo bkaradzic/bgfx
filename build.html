@@ -98,8 +98,8 @@
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Building</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#getting-source">Getting source</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-source">Getting Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#android">Android</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#linux">Linux</a></li>
@@ -115,8 +115,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#amalgamated-build">Amalgamated build</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#oculusvr-integration">OculusVR integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#amalgamated-build">Amalgamated Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oculusvr-integration">OculusVR Integration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
@@ -282,14 +282,14 @@
 <p><a class="reference external" href="https://github.com/bkaradzic/bx">https://github.com/bkaradzic/bx</a></p>
 </div>
 <div class="section" id="getting-source">
-<h2>Getting source<a class="headerlink" href="#getting-source" title="Permalink to this headline">¶</a></h2>
+<h2>Getting Source<a class="headerlink" href="#getting-source" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python"><div class="highlight"><pre>git clone git://github.com/bkaradzic/bx.git
 git clone git://github.com/bkaradzic/bgfx.git
 </pre></div>
 </div>
 </div>
 <div class="section" id="quick-start">
-<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
 <p>These are step for users who use Windows with Visual Studio.</p>
 <p>Enter bgfx directory:</p>
 <div class="highlight-python"><div class="highlight"><pre>cd bgfx
@@ -352,24 +352,10 @@ setx ANDROID_NDK_X86 &lt;path to AndroidNDK directory&gt;\toolchains\x86-4.7\pre
 <li><a class="reference external" href="http://gnuwin32.sourceforge.net/packages/libintl.htm">http://gnuwin32.sourceforge.net/packages/libintl.htm</a></li>
 </ul>
 </div></blockquote>
-<p>When building on Windows, you have to set DXSDK_DIR environment
-variable to point to DirectX SDK directory.</p>
-<div class="highlight-python"><div class="highlight"><pre>setx DXSDK_DIR &lt;path to DirectX SDK directory&gt;
-</pre></div>
-</div>
 <p>If you&#8217;re building with Visual Studio 2008, you&#8217;ll need TR1 support
 from:
 <a class="reference external" href="https://www.microsoft.com/en-us/download/details.aspx?id=6922">Visual C++ 2008 Feature Pack
 Release</a></p>
-<p>If you&#8217;re building with MinGW/TDM compiler on Windows make DirectX SDK
-directory link to directory without spaces in the path.</p>
-<div class="highlight-python"><div class="highlight"><pre>mklink /D c:\dxsdk &lt;path to DirectX SDK directory&gt;
-setx DXSDK_DIR c:\dxsdk
-</pre></div>
-</div>
-<p>Apply this
-<a class="reference external" href="https://github.com/bkaradzic/bx/blob/master/include/compat/mingw/dxsdk.patch">patch</a>
-to DXSDK from June 2010 to be able to use it with MinGW/TDM.</p>
 </div>
 </div>
 <div class="section" id="build">
@@ -440,7 +426,7 @@ configuration file, it has to be set manually for each example project:</p>
 </div>
 </div>
 <div class="section" id="amalgamated-build">
-<h2>Amalgamated build<a class="headerlink" href="#amalgamated-build" title="Permalink to this headline">¶</a></h2>
+<h2>Amalgamated Build<a class="headerlink" href="#amalgamated-build" title="Permalink to this headline">¶</a></h2>
 <p>For ease of integration to other build system bgfx library can be built
 with single .cpp file. It&#8217;s only necessary to build
 <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp">src/amalgamated.cpp</a>
@@ -449,7 +435,7 @@ with single .cpp file. It&#8217;s only necessary to build
 instead) inside different build system.</p>
 </div>
 <div class="section" id="oculusvr-integration">
-<h2>OculusVR integration<a class="headerlink" href="#oculusvr-integration" title="Permalink to this headline">¶</a></h2>
+<h2>OculusVR Integration<a class="headerlink" href="#oculusvr-integration" title="Permalink to this headline">¶</a></h2>
 <p>OculusVR support is currently experimental, and only DX11 is tested. To
 build with OculusVR HMD support enabled you must set <code class="docutils literal"><span class="pre">OVR_DIR</span></code>
 enviroment variable:</p>
