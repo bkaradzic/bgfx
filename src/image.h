@@ -38,6 +38,20 @@ namespace bgfx
 		const uint8_t* m_data;
 	};
 
+	struct EncodingType
+	{
+		enum Enum
+		{
+			Unorm,
+			Int,
+			Uint,
+			Float,
+			Snorm,
+
+			Count
+		};
+	};
+
 	struct ImageBlockInfo
 	{
 		uint8_t bitsPerPixel;
@@ -48,6 +62,7 @@ namespace bgfx
 		uint8_t minBlockY;
 		uint8_t depthBits;
 		uint8_t stencilBits;
+		uint8_t encoding;
 	};
 
 	///

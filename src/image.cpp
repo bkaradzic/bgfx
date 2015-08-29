@@ -12,82 +12,83 @@ namespace bgfx
 {
 	static const ImageBlockInfo s_imageBlockInfo[] =
 	{
-		//  +--------------------------- bits per pixel
-		//  |  +------------------------ block width
-		//  |  |  +--------------------- block height
-		//  |  |  |   +----------------- block size
-		//  |  |  |   |  +-------------- min blocks x
-		//  |  |  |   |  |  +----------- min blocks y
-		//  |  |  |   |  |  |   +------- depth bits
-		//  |  |  |   |  |  |   |  +---- stencil bits
-		//  |  |  |   |  |  |   |  |
-		{   4, 4, 4,  8, 1, 1,  0, 0 }, // BC1
-		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC2
-		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC3
-		{   4, 4, 4,  8, 1, 1,  0, 0 }, // BC4
-		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC5
-		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC6H
-		{   8, 4, 4, 16, 1, 1,  0, 0 }, // BC7
-		{   4, 4, 4,  8, 1, 1,  0, 0 }, // ETC1
-		{   4, 4, 4,  8, 1, 1,  0, 0 }, // ETC2
-		{   8, 4, 4, 16, 1, 1,  0, 0 }, // ETC2A
-		{   4, 4, 4,  8, 1, 1,  0, 0 }, // ETC2A1
-		{   2, 8, 4,  8, 2, 2,  0, 0 }, // PTC12
-		{   4, 4, 4,  8, 2, 2,  0, 0 }, // PTC14
-		{   2, 8, 4,  8, 2, 2,  0, 0 }, // PTC12A
-		{   4, 4, 4,  8, 2, 2,  0, 0 }, // PTC14A
-		{   2, 8, 4,  8, 2, 2,  0, 0 }, // PTC22
-		{   4, 4, 4,  8, 2, 2,  0, 0 }, // PTC24
-		{   0, 0, 0,  0, 1, 1,  0, 0 }, // Unknown
-		{   1, 8, 1,  1, 1, 1,  0, 0 }, // R1
-		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8
-		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8I
-		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8U
-		{   8, 1, 1,  1, 1, 1,  0, 0 }, // R8S
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16I
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16U
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16F
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R16S
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // R32U
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // R32F
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8I
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8U
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RG8S
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16I
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16U
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16F
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RG16S
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RG32U
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RG32F
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // BGRA8
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8I
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8U
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGBA8S
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16I
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16U
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16F
-		{  64, 1, 1,  8, 1, 1,  0, 0 }, // RGBA16S
-		{ 128, 1, 1, 16, 1, 1,  0, 0 }, // RGBA32U
-		{ 128, 1, 1, 16, 1, 1,  0, 0 }, // RGBA32F
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // R5G6B5
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RGBA4
-		{  16, 1, 1,  2, 1, 1,  0, 0 }, // RGB5A1
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // RGB10A2
-		{  32, 1, 1,  4, 1, 1,  0, 0 }, // R11G11B10F
-		{   0, 0, 0,  0, 1, 1,  0, 0 }, // UnknownDepth
-		{  16, 1, 1,  2, 1, 1, 16, 0 }, // D16
-		{  24, 1, 1,  3, 1, 1, 24, 0 }, // D24
-		{  32, 1, 1,  4, 1, 1, 24, 8 }, // D24S8
-		{  32, 1, 1,  4, 1, 1, 32, 0 }, // D32
-		{  16, 1, 1,  2, 1, 1, 16, 0 }, // D16F
-		{  24, 1, 1,  3, 1, 1, 24, 0 }, // D24F
-		{  32, 1, 1,  4, 1, 1, 32, 0 }, // D32F
-		{   8, 1, 1,  1, 1, 1,  0, 8 }, // D0S8
+		//  +------------------------------- bits per pixel
+		//  |  +---------------------------- block width
+		//  |  |  +------------------------- block height
+		//  |  |  |   +--------------------- block size
+		//  |  |  |   |  +------------------ min blocks x
+		//  |  |  |   |  |  +--------------- min blocks y
+		//  |  |  |   |  |  |   +----------- depth bits
+		//  |  |  |   |  |  |   |  +-------- stencil bits
+		//  |  |  |   |  |  |   |  |  +----- encoding type
+		//  |  |  |   |  |  |   |  |  |
+		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC1
+		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC2
+		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC3
+		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC4
+		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC5
+		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC6H
+		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC7
+		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC1
+		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC2
+		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC2A
+		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC2A1
+		{   2, 8, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC12
+		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC14
+		{   2, 8, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC12A
+		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC14A
+		{   2, 8, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC22
+		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC24
+		{   0, 0, 0,  0, 0, 0,  0, 0, uint8_t(EncodingType::Count) }, // Unknown
+		{   1, 8, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R1
+		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R8
+		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R8I
+		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R8U
+		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // R8S
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R16
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R16I
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R16U
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // R16F
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // R16S
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R32U
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // R32F
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RG8
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG8I
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG8U
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RG8S
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RG16
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG16I
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG16U
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG16F
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RG16S
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG32U
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG32F
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BGRA8
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA8
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA8I
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA8U
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGBA8S
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA16
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA16I
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA16U
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGBA16F
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGBA16S
+		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA32U
+		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGBA32F
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R5G6B5
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA4
+		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB5A1
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB10A2
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R11G11B10F
+		{   0, 0, 0,  0, 0, 0,  0, 0, uint8_t(EncodingType::Count) }, // UnknownDepth
+		{  16, 1, 1,  2, 1, 1, 16, 0, uint8_t(EncodingType::Unorm) }, // D16
+		{  24, 1, 1,  3, 1, 1, 24, 0, uint8_t(EncodingType::Unorm) }, // D24
+		{  32, 1, 1,  4, 1, 1, 24, 8, uint8_t(EncodingType::Unorm) }, // D24S8
+		{  32, 1, 1,  4, 1, 1, 32, 0, uint8_t(EncodingType::Unorm) }, // D32
+		{  16, 1, 1,  2, 1, 1, 16, 0, uint8_t(EncodingType::Unorm) }, // D16F
+		{  24, 1, 1,  3, 1, 1, 24, 0, uint8_t(EncodingType::Unorm) }, // D24F
+		{  32, 1, 1,  4, 1, 1, 32, 0, uint8_t(EncodingType::Unorm) }, // D32F
+		{   8, 1, 1,  1, 1, 1,  0, 8, uint8_t(EncodingType::Unorm) }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_imageBlockInfo) );
 
