@@ -2069,7 +2069,7 @@ namespace bgfx { namespace mtl
 
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
-		uint8_t view = 0xff;
+		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 		//ASK: why should we use this? It changes topology, so possible renders a big mess, doesn't it?
@@ -2120,7 +2120,7 @@ namespace bgfx { namespace mtl
 						restartState = 2;
 						item = restartItem;
 						restartItem = numItems;
-						view = 0xff;
+						view = UINT16_MAX;
 						continue;
 					}
 

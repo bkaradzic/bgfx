@@ -4182,7 +4182,7 @@ data.NumQualityLevels = 0;
 		uint32_t currentBindHash = 0;
 		ID3D12PipelineState* currentPso = NULL;
 		SortKey key;
-		uint8_t view = 0xff;
+		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		float alphaRef = 0.0f;
 		uint32_t blendFactor = 0;
@@ -4322,8 +4322,9 @@ data.NumQualityLevels = 0;
 
 						viewState.setPredefined<4>(this, view, 0, program, _render, compute);
 
-						if (constantsChanged
-						||  program.m_numPredefined > 0)
+						constantsChanged |= program.m_numPredefined > 0;
+
+						if (constantsChanged)
 						{
 							commitShaderConstants(gpuAddress);
 						}
@@ -4512,14 +4513,14 @@ data.NumQualityLevels = 0;
 								srvHandle[0].ptr = 0;
 								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 								{
-									const Binding& sampler = draw.m_bind[stage];
-									if (invalidHandle != sampler.m_idx)
+									const Binding& bind = draw.m_bind[stage];
+									if (invalidHandle != bind.m_idx)
 									{
-										TextureD3D12& texture = m_textures[sampler.m_idx];
+										TextureD3D12& texture = m_textures[bind.m_idx];
 										texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 										scratchBuffer.allocSrv(srvHandle[stage], texture);
-										samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & sampler.m_un.m_draw.m_flags)
-											? sampler.m_un.m_draw.m_flags
+										samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & bind.m_un.m_draw.m_flags)
+											? bind.m_un.m_draw.m_flags
 											: texture.m_flags
 											) & BGFX_TEXTURE_SAMPLER_BITS_MASK
 											;

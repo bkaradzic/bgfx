@@ -1402,9 +1402,10 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
-			Binding& sampler = m_draw.m_bind[_stage];
-			sampler.m_idx    = _handle.idx;
-			sampler.m_un.m_draw.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS)
+			Binding& bind = m_draw.m_bind[_stage];
+			bind.m_idx    = _handle.idx;
+			bind.m_type   = Binding::Texture;
+			bind.m_un.m_draw.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS)
 				? BGFX_SAMPLER_DEFAULT_FLAGS
 				: _flags
 				;
