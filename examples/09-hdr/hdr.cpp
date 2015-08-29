@@ -309,12 +309,12 @@ class HDR : public entry::AppI
 			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 3, &m_scrollArea);
 			imguiSeparatorLine();
 
-			imguiSlider("m_speed", m_speed, 0.0f, 1.0f, 0.01f);
+			imguiSlider("Speed", m_speed, 0.0f, 1.0f, 0.01f);
 			imguiSeparator();
 
-			imguiSlider("Middle gray",   m_middleGray, 0.1f, 1.0f, 0.01f);
-			imguiSlider("m_white point", m_white,      0.1f, 2.0f, 0.01f);
-			imguiSlider("m_threshold",   m_threshold,  0.1f, 2.0f, 0.01f);
+			imguiSlider("Middle gray", m_middleGray, 0.1f, 1.0f, 0.01f);
+			imguiSlider("White point", m_white,      0.1f, 2.0f, 0.01f);
+			imguiSlider("Threshold",   m_threshold,  0.1f, 2.0f, 0.01f);
 
 			imguiEndScrollArea();
 			imguiEndFrame();
