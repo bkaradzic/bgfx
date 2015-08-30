@@ -4310,7 +4310,6 @@ data.NumQualityLevels = 0;
 						m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
 					}
 
-#if 0
 					const RenderCompute& compute = renderItem.compute;
 
 					ID3D12PipelineState* pso = getPipelineState(key.m_program);
@@ -4437,7 +4436,7 @@ data.NumQualityLevels = 0;
 					{
 						m_commandList->Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
 					}
-#endif // 0
+
 					continue;
 				}
 
