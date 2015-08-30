@@ -1404,7 +1404,7 @@ namespace bgfx
 		{
 			Binding& bind = m_draw.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
-			bind.m_type   = Binding::Texture;
+			bind.m_type   = uint8_t(Binding::Texture);
 			bind.m_un.m_draw.m_flags = (_flags&BGFX_SAMPLER_DEFAULT_FLAGS)
 				? BGFX_SAMPLER_DEFAULT_FLAGS
 				: _flags
