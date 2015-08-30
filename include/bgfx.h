@@ -167,7 +167,7 @@ namespace bgfx
 			R16I,    // |   |     [S]norm
 			R16U,    // |   |     [I]nt
 			R16F,    // |   |     [U]int
-			R16S,    // |   +---- Number of bits per texel
+			R16S,    // |   +---- Number of bits per component
 			R32U,    // +-------- Components
 			R32F,
 			RG8,
