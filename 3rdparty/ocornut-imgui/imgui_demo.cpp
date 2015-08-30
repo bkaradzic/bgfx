@@ -827,7 +827,7 @@ void ImGui::ShowTestWindow(bool* opened)
 
         if (ImGui::TreeNode("Groups"))
         {
-            ImGui::TextWrapped("(Using ImGui::BeginGroup()/EndGroup() to layout items)");
+            ImGui::TextWrapped("(Using ImGui::BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundled the whole group so that you can use functions such as IsItemHovered() on it.)");
             ImGui::BeginGroup();
             {
                 ImGui::BeginGroup();
@@ -903,7 +903,7 @@ void ImGui::ShowTestWindow(bool* opened)
 
         if (ImGui::TreeNode("Scrolling"))
         {
-            ImGui::TextWrapped("Use SetScrollHere() or SetScrollFromPosY() to scroll to a given position.");
+            ImGui::TextWrapped("(Use SetScrollHere() or SetScrollFromPosY() to scroll to a given position.)");
             static bool track = true;
             static int track_line = 50, scroll_to_px = 200;
             ImGui::Checkbox("Track", &track);
@@ -1343,7 +1343,7 @@ void ImGui::ShowTestWindow(bool* opened)
 
             ImGui::Text("WantCaptureMouse: %s", io.WantCaptureMouse ? "true" : "false");
             ImGui::Text("WantCaptureKeyboard: %s", io.WantCaptureKeyboard ? "true" : "false");
-            ImGui::Text("WantInputCharacters: %s", io.WantInputCharacters ? "true" : "false");
+            ImGui::Text("WantTextInput: %s", io.WantTextInput ? "true" : "false");
 
             ImGui::Button("Hover me\nto enforce\ninputs capture");
             if (ImGui::IsItemHovered())
@@ -1392,6 +1392,10 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
     {
         ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
         ImGui::Checkbox("Anti-aliased shapes", &style.AntiAliasedShapes);
+        ImGui::PushItemWidth(100);
+        ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, FLT_MAX, NULL, 2.0f);
+        if (style.CurveTessellationTol < 0.0f) style.CurveTessellationTol = 0.10f;
+        ImGui::PopItemWidth();
         ImGui::TreePop();
     }
 
@@ -1641,6 +1645,9 @@ static void ShowExampleAppCustomRendering(bool* opened)
     if (canvas_size.y < 50.0f) canvas_size.y = 50.0f;
     draw_list->AddRectFilledMultiColor(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), ImColor(0,0,0), ImColor(255,0,0), ImColor(255,255,0), ImColor(0,255,0));
     draw_list->AddRect(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), ImColor(255,255,255));
+
+    draw_list->AddBezierCurve(ImVec2(canvas_pos.x+20,canvas_pos.y+20), ImVec2(canvas_pos.x+100,canvas_pos.y+20), ImVec2(canvas_pos.x+canvas_size.x-100,canvas_pos.y+canvas_size.y-20), ImVec2(canvas_pos.x+canvas_size.x-20,canvas_pos.y+canvas_size.y-20), ImColor(255,200,0), 5.0f);
+
     bool adding_preview = false;
     ImGui::InvisibleButton("canvas", canvas_size);
     if (ImGui::IsItemHovered())
@@ -1667,7 +1674,7 @@ static void ShowExampleAppCustomRendering(bool* opened)
     }
     draw_list->PushClipRect(ImVec4(canvas_pos.x, canvas_pos.y, canvas_pos.x+canvas_size.x, canvas_pos.y+canvas_size.y));      // clip lines within the canvas (if we resize it, etc.)
     for (int i = 0; i < points.Size - 1; i += 2)
-        draw_list->AddLine(ImVec2(canvas_pos.x + points[i].x, canvas_pos.y + points[i].y), ImVec2(canvas_pos.x + points[i+1].x, canvas_pos.y + points[i+1].y), 0xFF00FFFF);
+        draw_list->AddLine(ImVec2(canvas_pos.x + points[i].x, canvas_pos.y + points[i].y), ImVec2(canvas_pos.x + points[i+1].x, canvas_pos.y + points[i+1].y), 0xFF00FFFF, 2.0f);
     draw_list->PopClipRect();
     if (adding_preview)
         points.pop_back();

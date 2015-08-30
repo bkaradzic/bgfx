@@ -620,6 +620,7 @@ ImGuiStyle::ImGuiStyle()
     DisplaySafeAreaPadding  = ImVec2(4,4);      // If you cannot see the edge of your screen (e.g. on a TV) increase the safe area padding. Covers popups/tooltips as well regular windows.
     AntiAliasedLines        = true;             // Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.
     AntiAliasedShapes       = true;             // Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)
+    CurveTessellationTol    = 1.25f;            // Tessellation tolerance. Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality.
 
     Colors[ImGuiCol_Text]                   = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
     Colors[ImGuiCol_TextDisabled]           = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
@@ -678,6 +679,7 @@ ImGuiIO::ImGuiIO()
     LogFilename = "imgui_log.txt";
     Fonts = &GImDefaultFontAtlas;
     FontGlobalScale = 1.0f;
+    DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
     MousePos = ImVec2(-1,-1);
     MousePosPrev = ImVec2(-1,-1);
     MouseDoubleClickTime = 0.30f;
@@ -882,45 +884,45 @@ int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* 
     }
     if ((*str & 0xe0) == 0xc0)
     {
-        *out_char = 0;
+        *out_char = 0xFFFD; // will be invalid but not end of string
         if (in_text_end && in_text_end - (const char*)str < 2) return 0;
-        if (*str < 0xc2) return 0;
+        if (*str < 0xc2) return 2;
         c = (unsigned int)((*str++ & 0x1f) << 6);
-        if ((*str & 0xc0) != 0x80) return 0;
+        if ((*str & 0xc0) != 0x80) return 2;
         c += (*str++ & 0x3f);
         *out_char = c;
         return 2;
     }
     if ((*str & 0xf0) == 0xe0)
     {
-        *out_char = 0;
-        if (in_text_end && in_text_end - (const char*)str < 3) return 0;
-        if (*str == 0xe0 && (str[1] < 0xa0 || str[1] > 0xbf)) return 0;
-        if (*str == 0xed && str[1] > 0x9f) return 0; // str[1] < 0x80 is checked below
+        *out_char = 0xFFFD; // will be invalid but not end of string
+        if (in_text_end && in_text_end - (const char*)str < 3) return 0; 
+        if (*str == 0xe0 && (str[1] < 0xa0 || str[1] > 0xbf)) return 3;
+        if (*str == 0xed && str[1] > 0x9f) return 3; // str[1] < 0x80 is checked below
         c = (unsigned int)((*str++ & 0x0f) << 12);
-        if ((*str & 0xc0) != 0x80) return 0;
+        if ((*str & 0xc0) != 0x80) return 3;
         c += (unsigned int)((*str++ & 0x3f) << 6);
-        if ((*str & 0xc0) != 0x80) return 0;
+        if ((*str & 0xc0) != 0x80) return 3;
         c += (*str++ & 0x3f);
         *out_char = c;
         return 3;
     }
     if ((*str & 0xf8) == 0xf0)
     {
-        *out_char = 0;
+        *out_char = 0xFFFD; // will be invalid but not end of string
         if (in_text_end && in_text_end - (const char*)str < 4) return 0;
-        if (*str > 0xf4) return 0;
-        if (*str == 0xf0 && (str[1] < 0x90 || str[1] > 0xbf)) return 0;
-        if (*str == 0xf4 && str[1] > 0x8f) return 0; // str[1] < 0x80 is checked below
+        if (*str > 0xf4) return 4;
+        if (*str == 0xf0 && (str[1] < 0x90 || str[1] > 0xbf)) return 4;
+        if (*str == 0xf4 && str[1] > 0x8f) return 4; // str[1] < 0x80 is checked below
         c = (unsigned int)((*str++ & 0x07) << 18);
-        if ((*str & 0xc0) != 0x80) return 0;
+        if ((*str & 0xc0) != 0x80) return 4;
         c += (unsigned int)((*str++ & 0x3f) << 12);
-        if ((*str & 0xc0) != 0x80) return 0;
+        if ((*str & 0xc0) != 0x80) return 4;
         c += (unsigned int)((*str++ & 0x3f) << 6);
-        if ((*str & 0xc0) != 0x80) return 0;
+        if ((*str & 0xc0) != 0x80) return 4;
         c += (*str++ & 0x3f);
         // utf-8 encodings of values used in surrogate pairs are invalid
-        if ((c & 0xFFFFF800) == 0xD800) return 0;
+        if ((c & 0xFFFFF800) == 0xD800) return 4;
         *out_char = c;
         return 4;
     }
@@ -1037,6 +1039,12 @@ int ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_e
             bytes_count += ImTextCountUtf8BytesFromChar(c);
     }
     return bytes_count;
+}
+
+ImVec4 ImGui::ColorConvertU32ToFloat4(ImU32 in)
+{
+    float s = 1.0f/255.0f;
+    return ImVec4((in & 0xFF) * s, ((in >> 8) & 0xFF) * s, ((in >> 16) & 0xFF) * s, (in >> 24) * s);
 }
 
 ImU32 ImGui::ColorConvertFloat4ToU32(const ImVec4& in)
@@ -1783,6 +1791,7 @@ void ImGui::NewFrame()
     IM_ASSERT(g.IO.RenderDrawListsFn != NULL);       // Must be implemented
     IM_ASSERT(g.IO.Fonts->Fonts.Size > 0);           // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
     IM_ASSERT(g.IO.Fonts->Fonts[0]->IsLoaded());     // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
+	IM_ASSERT(g.Style.CurveTessellationTol > 0.0f);  // Invalid
 
     if (!g.Initialized)
     {
@@ -1903,7 +1912,7 @@ void ImGui::NewFrame()
     bool mouse_owned_by_application = mouse_earliest_button_down != -1 && !g.IO.MouseDownOwned[mouse_earliest_button_down];
     g.IO.WantCaptureMouse = (!mouse_owned_by_application && g.HoveredWindow != NULL) || (!mouse_owned_by_application && mouse_any_down) || (g.ActiveId != 0) || (!g.OpenedPopupStack.empty()) || (g.CaptureMouseNextFrame);
     g.IO.WantCaptureKeyboard = (g.ActiveId != 0) || (g.CaptureKeyboardNextFrame);
-    g.IO.WantInputCharacters = (g.ActiveId != 0 && g.InputTextState.Id == g.ActiveId);
+    g.IO.WantTextInput = (g.ActiveId != 0 && g.InputTextState.Id == g.ActiveId);
     g.MouseCursor = ImGuiMouseCursor_Arrow;
     g.CaptureMouseNextFrame = g.CaptureKeyboardNextFrame = false;
 
@@ -5074,13 +5083,14 @@ bool ImGui::SmallButton(const char* label)
 
 // Tip: use ImGui::PushID()/PopID() to push indices or pointers in the ID stack.
 // Then you can keep 'str_id' empty or the same for all your buttons (instead of creating a string based on a non-string id)
-bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size)
+bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
     const ImGuiID id = window->GetID(str_id);
+    ImVec2 size = CalcItemSize(size_arg, 0.0f, 0.0f);
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
     ItemSize(bb);
     if (!ItemAdd(bb, &id))
@@ -5294,24 +5304,13 @@ void ImGui::LogButtons()
         LogToClipboard(g.LogAutoExpandMaxDepth);
 }
 
-bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display_frame, bool default_open)
+bool ImGui::TreeNodeBehaviorIsOpened(ImGuiID id, ImGuiTreeNodeFlags flags)
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    if (window->SkipItems)
-        return false;
-
-    ImGuiState& g = *GImGui;
-    const ImGuiStyle& style = g.Style;
-
-    IM_ASSERT(str_id != NULL || label != NULL);
-    if (str_id == NULL)
-        str_id = label;
-    if (label == NULL)
-        label = str_id;
-    const ImGuiID id = window->GetID(str_id);
-
     // We only write to the tree storage if the user clicks (or explicitely use SetNextTreeNode*** functions)
+    ImGuiState& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
     ImGuiStorage* storage = window->DC.StateStorage;
+
     bool opened;
     if (g.SetNextTreeNodeOpenedCond != 0)
     {
@@ -5338,8 +5337,32 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
     }
     else
     {
-        opened = storage->GetInt(id, default_open) != 0;
+        opened = storage->GetInt(id, (flags & ImGuiTreeNodeFlags_DefaultOpen) ? 1 : 0) != 0;
     }
+
+    // When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like sensible behavior).
+    // NB- If we are above max depth we still allow manually opened nodes to be logged.
+    if (g.LogEnabled && !(flags & ImGuiTreeNodeFlags_NoAutoExpandOnLog) && window->DC.TreeDepth < g.LogAutoExpandMaxDepth)
+        opened = true;
+
+    return opened;
+}
+
+bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display_frame, bool default_open)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiState& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+
+    IM_ASSERT(str_id != NULL || label != NULL);
+    if (str_id == NULL)
+        str_id = label;
+    if (label == NULL)
+        label = str_id;
+    const ImGuiID id = window->GetID(str_id);
 
     // Framed header expand a little outside the default padding
     const ImVec2 window_padding = window->WindowPadding;
@@ -5354,24 +5377,22 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
         bb.Max.y += style.FramePadding.y * 2;
     }
 
-    // FIXME: we don't provide our width so that it doesn't get feed back into AutoFit. Should manage that better so we can still hover without extending ContentsSize
-    const ImRect text_bb(bb.Min, bb.Min + ImVec2(g.FontSize + style.FramePadding.x*2*2,0) + label_size);
+    const float collapser_width = g.FontSize + style.FramePadding.x*2;
+    const ImRect text_bb(bb.Min, bb.Min + ImVec2(collapser_width + style.FramePadding.x*2*0 + (label_size.x > 0.0f ? label_size.x : 0.0f), label_size.y));
     ItemSize(ImVec2(text_bb.GetSize().x, bb.GetSize().y), display_frame ? style.FramePadding.y : 0.0f);
 
-    // When logging is enabled, if automatically expand tree nodes (but *NOT* collapsing headers.. seems like sensible behavior).
-    // NB- If we are above max depth we still allow manually opened nodes to be logged.
-    if (g.LogEnabled && !display_frame && window->DC.TreeDepth < g.LogAutoExpandMaxDepth)
-        opened = true;
+    const ImRect interact_bb = display_frame ? bb : ImRect(text_bb.Min, text_bb.Max + ImVec2(style.FramePadding.x*2,0.0f)); // FIXME
+    bool opened = TreeNodeBehaviorIsOpened(id, (default_open ? ImGuiTreeNodeFlags_DefaultOpen : 0) | (display_frame ? ImGuiTreeNodeFlags_NoAutoExpandOnLog : 0));
 
-    if (!ItemAdd(bb, &id))
+    if (!ItemAdd(interact_bb, &id))
         return opened;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(display_frame ? bb : text_bb, id, &hovered, &held, false);
+    bool pressed = ButtonBehavior(interact_bb, id, &hovered, &held, false);
     if (pressed)
     {
         opened = !opened;
-        storage->SetInt(id, opened);
+        window->DC.StateStorage->SetInt(id, opened);
     }
 
     // Render
@@ -5387,7 +5408,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
             const char log_prefix[] = "\n##";
             LogRenderedText(bb.Min + style.FramePadding, log_prefix, log_prefix+3);
         }
-        RenderTextClipped(bb.Min + style.FramePadding + ImVec2(g.FontSize + style.FramePadding.x*2,0), bb.Max, label, NULL, &label_size);
+        RenderTextClipped(bb.Min + style.FramePadding + ImVec2(collapser_width,0), bb.Max, label, NULL, &label_size);
         if (g.LogEnabled)
         {
             const char log_suffix[] = "##";
@@ -5402,7 +5423,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
         RenderCollapseTriangle(bb.Min + ImVec2(style.FramePadding.x, g.FontSize*0.15f), opened, 0.70f, false);
         if (g.LogEnabled)
             LogRenderedText(bb.Min, ">");
-        RenderText(bb.Min + ImVec2(g.FontSize + style.FramePadding.x*2,0), label);
+        RenderText(bb.Min + ImVec2(collapser_width,0), label);
     }
 
     return opened;
