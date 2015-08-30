@@ -102,15 +102,18 @@ $(BUILD_INTERMEDIATE_DIR)/vs_%.bin : vs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
+	$(SILENT) $(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@).source -f $(<) --disasm --preprocess
 
 $(BUILD_INTERMEDIATE_DIR)/fs_%.bin : fs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
+	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@).source -f $(<) --disasm --preprocess
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 $(BUILD_INTERMEDIATE_DIR)/cs_%.bin : cs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(CS_FLAGS) --type compute --depends -o $(@) -f $(<) --disasm
+	$(SILENT) $(SHADERC) $(CS_FLAGS) --type compute --depends -o $(@).source -f $(<) --disasm --preprocess
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 .PHONY: all
