@@ -514,7 +514,7 @@ int main(int _argc, const char* _argv[])
 					index.m_normal = -1;
 					index.m_vertexIndex = -1;
 
-					char* vertex = argv[edge+1];
+					char* vertex   = argv[edge+1];
 					char* texcoord = strchr(vertex, '/');
 					if (NULL != texcoord)
 					{
@@ -942,14 +942,14 @@ int main(int _argc, const char* _argv[])
 			}
 		}
 
-		if (0 < numVertices)
+		prim.m_numVertices = numVertices - prim.m_startVertex;
+		if (0 < prim.m_numVertices)
 		{
-			prim.m_numVertices = numVertices - prim.m_startVertex;
 			prim.m_numIndices = numIndices - prim.m_startIndex;
 			prim.m_name = groupIt->m_name;
 			primitives.push_back(prim);
 			prim.m_startVertex = numVertices;
-			prim.m_startIndex = numIndices;
+			prim.m_startIndex  = numIndices;
 		}
 
 		BX_TRACE("%3d: s %5d, n %5d, %s\n"
