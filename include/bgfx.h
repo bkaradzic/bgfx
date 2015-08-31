@@ -49,7 +49,7 @@ namespace bgfx
 	///
 	struct RendererType
 	{
-		/// Renderer type enumeration.
+		/// Renderer types:
 		enum Enum
 		{
 			Null,         //!< No rendering.
@@ -71,6 +71,7 @@ namespace bgfx
 	///
 	struct Access
 	{
+		/// Access:
 		enum Enum
 		{
 			Read,
@@ -87,7 +88,7 @@ namespace bgfx
 	///
 	struct Attrib
 	{
-		/// Corresponds to vertex shader attribute.
+		/// Corresponds to vertex shader attribute. Attributes:
 		enum Enum
 		{
 			Position,  //!< a_position
@@ -117,13 +118,14 @@ namespace bgfx
 	///
 	struct AttribType
 	{
+		/// Attribute types:
 		enum Enum
 		{
-			Uint8,
-			Uint10, //!< Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
-			Int16,
-			Half,   //!< Availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
-			Float,
+			Uint8,  //!< Uint8
+			Uint10, //!< Uint10, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
+			Int16,  //!< Int16
+			Half,   //!< Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+			Float,  //!< Float
 
 			Count
 		};
@@ -131,44 +133,58 @@ namespace bgfx
 
 	/// Texture format enum.
 	///
+	/// Notation:
+	///
+	///       RGBA16S
+	///       ^   ^ ^
+	///       |   | +-- [ ]Unorm
+	///       |   |     [F]loat
+	///       |   |     [S]norm
+	///       |   |     [I]nt
+	///       |   |     [U]int
+	///       |   +---- Number of bits per component
+	///       +-------- Components
+	///
+	/// @attention Availability depends on Caps (see: formats).
+	///
 	/// @attention C99 equivalent is `bgfx_texture_format_t`.
 	///
 	struct TextureFormat
 	{
-		// Availability depends on Caps (see: formats).
+		/// Texture formats:
 		enum Enum
 		{
-			BC1,     // DXT1
-			BC2,     // DXT3
-			BC3,     // DXT5
-			BC4,     // LATC1/ATI1
-			BC5,     // LATC2/ATI2
-			BC6H,    // BC6H
-			BC7,     // BC7
-			ETC1,    // ETC1 RGB8
-			ETC2,    // ETC2 RGB8
-			ETC2A,   // ETC2 RGBA8
-			ETC2A1,  // ETC2 RGB8A1
-			PTC12,   // PVRTC1 RGB 2BPP
-			PTC14,   // PVRTC1 RGB 4BPP
-			PTC12A,  // PVRTC1 RGBA 2BPP
-			PTC14A,  // PVRTC1 RGBA 4BPP
-			PTC22,   // PVRTC2 RGBA 2BPP
-			PTC24,   // PVRTC2 RGBA 4BPP
+			BC1,          //!< DXT1
+			BC2,          //!< DXT3
+			BC3,          //!< DXT5
+			BC4,          //!< LATC1/ATI1
+			BC5,          //!< LATC2/ATI2
+			BC6H,         //!< BC6H
+			BC7,          //!< BC7
+			ETC1,         //!< ETC1 RGB8
+			ETC2,         //!< ETC2 RGB8
+			ETC2A,        //!< ETC2 RGBA8
+			ETC2A1,       //!< ETC2 RGB8A1
+			PTC12,        //!< PVRTC1 RGB 2BPP
+			PTC14,        //!< PVRTC1 RGB 4BPP
+			PTC12A,       //!< PVRTC1 RGBA 2BPP
+			PTC14A,       //!< PVRTC1 RGBA 4BPP
+			PTC22,        //!< PVRTC2 RGBA 2BPP
+			PTC24,        //!< PVRTC2 RGBA 4BPP
 
-			Unknown, // compressed formats above
+			Unknown,      // Compressed formats above.
 
-			R1,      // Notation:
-			A8,      //
-			R8,      // RGBA16S
-			R8I,     // ^   ^ ^
-			R8U,     // |   | +-- [ ]Unorm
-			R8S,     // |   |     [F]loat
-			R16,     // |   |     [S]norm
-			R16I,    // |   |     [I]nt
-			R16U,    // |   |     [U]int
-			R16F,    // |   +---- Number of bits per component
-			R16S,    // +-------- Components
+			R1,
+			A8,
+			R8,
+			R8I,
+			R8U,
+			R8S,
+			R16,
+			R16I,
+			R16U,
+			R16F,
+			R16S,
 			R32I,
 			R32U,
 			R32F,
@@ -203,7 +219,7 @@ namespace bgfx
 			RGB10A2,
 			R11G11B10F,
 
-			UnknownDepth, // depth formats below
+			UnknownDepth, // Depth formats below.
 
 			D16,
 			D24,
@@ -224,6 +240,7 @@ namespace bgfx
 	///
 	struct UniformType
 	{
+		/// Uniform types:
 		enum Enum
 		{
 			Int1,
@@ -243,6 +260,7 @@ namespace bgfx
 	///
 	struct BackbufferRatio
 	{
+		/// Backbuffer ratios:
 		enum Enum
 		{
 			Equal,
