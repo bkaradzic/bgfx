@@ -93,7 +93,10 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#todo">Todo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#getting-involved">Getting Involved</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#getting-involved">Getting Involved</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#repository-visualization">Repository visualization</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">Building</a><ul>
@@ -497,7 +500,7 @@
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb">
-<span id="bgfx::CallbackI::captureBegin__uint32_t.uint32_t.uint32_t.TextureFormat::Enum.b"></span>virtual <span class="target" id="project0structbgfx_1_1_callback_i_1afbf52f537e1bf54a4c20f6efb2654231"></span>void <code class="descname">captureBegin</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_pitch</em>, TextureFormat::Enum <em>_format</em>, bool <em>_yflip</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::CallbackI::captureBegin__uint32_t.uint32_t.uint32_t.TextureFormat::Enum.b"></span>virtual <span class="target" id="project0structbgfx_1_1_callback_i_1afbf52f537e1bf54a4c20f6efb2654231"></span>void <code class="descname">captureBegin</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_pitch</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, bool <em>_yflip</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called when capture begins. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -1446,6 +1449,17 @@ creating windows.</p>
 </div>
 <div class="section" id="views">
 <h2>Views<a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h2>
+<p>View is primary sorting mechanism in bgfx. View represent bucket of draw and compute calls. Compute
+and draw calls inside bucket are sorted in the way that all compute calls are executed before draw
+calls. Compute calls are always in order of submission, while draw calls are sorted by internal
+state if view is not in sequential mode. In the most of cases when z-buffer is used this change in
+order is not noticable to desired output. In cases where order has to be preserved (for example in
+rendering GUIs), view can be set to be in sequential order. Sequential order is less efficient,
+because it doesn&#8217;t allow state change optimization, and should be avoided when possible.</p>
+<p>By default views ids are sorted in ascending order. For dynamic renderers where order might not be
+known until the last moment, view ids can be remaped to arbitrary order by calling
+<cite>bgfx::setViewRemap</cite>.</p>
+<p>View state is preserved between multiple frames.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx11setViewNameE7uint8_tPKc">
 <span id="bgfx::setViewName__uint8_t.cCP"></span><span class="target" id="project0namespacebgfx_1ab0d0a3f61f5adc31ee7f59f2893cfcd9"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewName</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewNameE7uint8_tPKc" title="Permalink to this definition">¶</a></dt>
@@ -2340,7 +2354,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Images<a class="headerlink" href="#images" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
-<span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, Access::Enum <em>_access</em>, TextureFormat::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute image from texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2367,7 +2381,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
-<span id="bgfx::setImage__uint8_t.UniformHandle.FrameBufferHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1a66009acaf4cddffc483e7192367914db"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, Access::Enum <em>_access</em>, TextureFormat::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setImage__uint8_t.UniformHandle.FrameBufferHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1a66009acaf4cddffc483e7192367914db"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute image from frame buffer texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2461,6 +2475,17 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="resources">
 <h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="_CPPv2N4bgfx6MemoryE">
+<span id="bgfx::Memory"></span><span class="target" id="project0structbgfx_1_1_memory"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Memory</code><a class="headerlink" href="#_CPPv2N4bgfx6MemoryE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#project0structbgfx_1_1_memory"><span>Memory</span></a> obtained by calling <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span><span class="pre">bgfx::alloc</span></span></a></code>, <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1abef77615b85f71391e7eda16f24dc5b7"><span><span class="pre">bgfx::copy</span></span></a></code>, or <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1a8dc7bf9f26afcc6f61dc602dfed09044"><span><span class="pre">bgfx::makeRef</span></span></a></code>. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_memory_t</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx5allocE8uint32_t">
 <span id="bgfx::alloc__uint32_t"></span><span class="target" id="project0namespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<code class="descclassname">bgfx::</code><code class="descname">alloc</code><span class="sig-paren">(</span>uint32_t <em>_size</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5allocE8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -2490,17 +2515,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent are <code class="docutils literal"><span class="pre">bgfx_make_ref</span></code>, <code class="docutils literal"><span class="pre">bgfx_make_ref_release</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="_CPPv2N4bgfx6MemoryE">
-<span id="bgfx::Memory"></span><span class="target" id="project0structbgfx_1_1_memory"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Memory</code><a class="headerlink" href="#_CPPv2N4bgfx6MemoryE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#project0structbgfx_1_1_memory"><span>Memory</span></a> obtained by calling <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span><span class="pre">bgfx::alloc</span></span></a></code>, <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1abef77615b85f71391e7eda16f24dc5b7"><span><span class="pre">bgfx::copy</span></span></a></code>, or <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1a8dc7bf9f26afcc6f61dc602dfed09044"><span><span class="pre">bgfx::makeRef</span></span></a></code>. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_memory_t</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -3271,9 +3285,20 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="id4">
 <h3>Textures<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="_CPPv2N4bgfx13TextureFormatE">
+<span id="bgfx::TextureFormat"></span><span class="target" id="project0structbgfx_1_1_texture_format"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TextureFormat</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormatE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture format enum. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_texture_format_t</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE">
-<span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.uint8_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ab76d05a11b3698b0bd14a6c264e5b71d"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, uint8_t <em>_numMips</em>, TextureFormat::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.uint8_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ab76d05a11b3698b0bd14a6c264e5b71d"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate amount of memory required for texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3313,7 +3338,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTexture2D__uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1ac642640d2b73902d4b6c16f896e78a4c"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture2D__uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1ac642640d2b73902d4b6c16f896e78a4c"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create 2D texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3344,7 +3369,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumE7uint8_tN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createTexture2D__BackbufferRatio::Enum.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a5599540d0f695ba0404eea73973cd639"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, uint8_t <em>_numMips</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumE7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture2D__BackbufferRatio::Enum.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a5599540d0f695ba0404eea73973cd639"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumE7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3402,7 +3427,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTexture3D__uint16_t.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1afe302b53e800c5e5af34d4f6b942a8d1"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture3D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, uint8_t <em>_numMips</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture3D__uint16_t.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1afe302b53e800c5e5af34d4f6b942a8d1"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture3D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create 3D texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3468,7 +3493,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createTextureCubeE8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTextureCube__uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1a98f26a59b7e5d76dd041641fd3873c7b"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTextureCube</code><span class="sig-paren">(</span>uint16_t <em>_size</em>, uint8_t <em>_numMips</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createTextureCubeE8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTextureCube__uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1a98f26a59b7e5d76dd041641fd3873c7b"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTextureCube</code><span class="sig-paren">(</span>uint16_t <em>_size</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createTextureCubeE8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create Cube texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3562,7 +3587,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Frame Buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, TextureFormat::Enum <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3608,7 +3633,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE">
-<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, TextureFormat::Enum <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer for multiple window rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
