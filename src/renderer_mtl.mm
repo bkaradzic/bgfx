@@ -264,6 +264,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // PTC24
 		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // Unknown
 		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // R1
+		{ MTLPixelFormatA8Unorm,          MTLPixelFormatInvalid              }, // A8
 		{ MTLPixelFormatR8Unorm,          MTLPixelFormatR8Unorm_sRGB         }, // R8
 		{ MTLPixelFormatR8Sint,           MTLPixelFormatInvalid              }, // R8I
 		{ MTLPixelFormatR8Uint,           MTLPixelFormatInvalid              }, // R8U
@@ -273,6 +274,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatR16Uint,          MTLPixelFormatInvalid              }, // R16U
 		{ MTLPixelFormatR16Float,         MTLPixelFormatInvalid              }, // R16F
 		{ MTLPixelFormatR16Snorm,         MTLPixelFormatInvalid              }, // R16S
+		{ MTLPixelFormatR32Sint,          MTLPixelFormatInvalid              }, // R32I
 		{ MTLPixelFormatR32Uint,          MTLPixelFormatInvalid              }, // R32U
 		{ MTLPixelFormatR32Float,         MTLPixelFormatInvalid              }, // R32F
 		{ MTLPixelFormatRG8Unorm,         MTLPixelFormatRG8Unorm_sRGB        }, // RG8
@@ -284,6 +286,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRG16Uint,         MTLPixelFormatInvalid              }, // RG16U
 		{ MTLPixelFormatRG16Float,        MTLPixelFormatInvalid              }, // RG16F
 		{ MTLPixelFormatRG16Snorm,        MTLPixelFormatInvalid              }, // RG16S
+		{ MTLPixelFormatRG32Sint,         MTLPixelFormatInvalid              }, // RG32I
 		{ MTLPixelFormatRG32Uint,         MTLPixelFormatInvalid              }, // RG32U
 		{ MTLPixelFormatRG32Float,        MTLPixelFormatInvalid              }, // RG32F
 		{ MTLPixelFormatBGRA8Unorm,       MTLPixelFormatBGRA8Unorm_sRGB      }, // BGRA8
@@ -296,6 +299,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRGBA16Uint,       MTLPixelFormatInvalid              }, // RGBA16I
 		{ MTLPixelFormatRGBA16Float,      MTLPixelFormatInvalid              }, // RGBA16F
 		{ MTLPixelFormatRGBA16Snorm,      MTLPixelFormatInvalid              }, // RGBA16S
+		{ MTLPixelFormatRGBA32Sint,       MTLPixelFormatInvalid              }, // RGBA32I
 		{ MTLPixelFormatRGBA32Uint,       MTLPixelFormatInvalid              }, // RGBA32U
 		{ MTLPixelFormatRGBA32Float,      MTLPixelFormatInvalid              }, // RGBA32F
 		{ MTLPixelFormatB5G6R5Unorm,      MTLPixelFormatInvalid              }, // R5G6B5

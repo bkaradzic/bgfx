@@ -208,6 +208,7 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // PTC24
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
+		{ D3DFMT_A8            }, // A8
 		{ D3DFMT_L8            }, // R8
 		{ D3DFMT_UNKNOWN       }, // R8I
 		{ D3DFMT_UNKNOWN       }, // R8U
@@ -217,6 +218,7 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // R16U
 		{ D3DFMT_R16F          }, // R16F
 		{ D3DFMT_UNKNOWN       }, // R16S
+		{ D3DFMT_UNKNOWN       }, // R32I
 		{ D3DFMT_UNKNOWN       }, // R32U
 		{ D3DFMT_R32F          }, // R32F
 		{ D3DFMT_A8L8          }, // RG8
@@ -228,6 +230,7 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // RG16U
 		{ D3DFMT_G16R16F       }, // RG16F
 		{ D3DFMT_UNKNOWN       }, // RG16S
+		{ D3DFMT_UNKNOWN       }, // RG32I
 		{ D3DFMT_UNKNOWN       }, // RG32U
 		{ D3DFMT_G32R32F       }, // RG32F
 		{ D3DFMT_A8R8G8B8      }, // BGRA8
@@ -240,6 +243,7 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // RGBA16U
 		{ D3DFMT_A16B16G16R16F }, // RGBA16F
 		{ D3DFMT_UNKNOWN       }, // RGBA16S
+		{ D3DFMT_UNKNOWN       }, // RGBA32I
 		{ D3DFMT_UNKNOWN       }, // RGBA32U
 		{ D3DFMT_A32B32G32R32F }, // RGBA32F
 		{ D3DFMT_R5G6B5        }, // R5G6B5

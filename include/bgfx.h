@@ -159,16 +159,18 @@ namespace bgfx
 			Unknown, // compressed formats above
 
 			R1,      // Notation:
-			R8,      //
-			R8I,     // RGBA16S
-			R8U,     // ^   ^ ^
-			R8S,     // |   | +-- [ ]Unorm
-			R16,     // |   |     [F]loat
-			R16I,    // |   |     [S]norm
-			R16U,    // |   |     [I]nt
-			R16F,    // |   |     [U]int
-			R16S,    // |   +---- Number of bits per component
-			R32U,    // +-------- Components
+			A8,      //
+			R8,      // RGBA16S
+			R8I,     // ^   ^ ^
+			R8U,     // |   | +-- [ ]Unorm
+			R8S,     // |   |     [F]loat
+			R16,     // |   |     [S]norm
+			R16I,    // |   |     [I]nt
+			R16U,    // |   |     [U]int
+			R16F,    // |   +---- Number of bits per component
+			R16S,    // +-------- Components
+			R32I,
+			R32U,
 			R32F,
 			RG8,
 			RG8I,
@@ -179,6 +181,7 @@ namespace bgfx
 			RG16U,
 			RG16F,
 			RG16S,
+			RG32I,
 			RG32U,
 			RG32F,
 			BGRA8,
@@ -191,6 +194,7 @@ namespace bgfx
 			RGBA16U,
 			RGBA16F,
 			RGBA16S,
+			RGBA32I,
 			RGBA32U,
 			RGBA32F,
 			R5G6B5,

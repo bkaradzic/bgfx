@@ -41,6 +41,7 @@ namespace bgfx
 		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC24
 		{   0, 0, 0,  0, 0, 0,  0, 0, uint8_t(EncodingType::Count) }, // Unknown
 		{   1, 8, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R1
+		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // A8
 		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R8
 		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R8I
 		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R8U
@@ -50,6 +51,7 @@ namespace bgfx
 		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R16U
 		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // R16F
 		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // R16S
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R32I
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R32U
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // R32F
 		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RG8
@@ -61,6 +63,7 @@ namespace bgfx
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG16U
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG16F
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RG16S
+		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG32I
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG32U
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG32F
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BGRA8
@@ -73,6 +76,7 @@ namespace bgfx
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA16U
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGBA16F
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGBA16S
+		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA32I
 		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA32U
 		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGBA32F
 		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R5G6B5
@@ -113,6 +117,7 @@ namespace bgfx
 		"PTC24",      // PTC24
 		"<unknown>",  // Unknown
 		"R1",         // R1
+		"A8",         // A8
 		"R8",         // R8
 		"R8I",        // R8I
 		"R8U",        // R8U
@@ -122,6 +127,7 @@ namespace bgfx
 		"R16U",       // R16U
 		"R16F",       // R16F
 		"R16S",       // R16S
+		"R32I",       // R32I
 		"R32U",       // R32U
 		"R32F",       // R32F
 		"RG8",        // RG8
@@ -133,7 +139,8 @@ namespace bgfx
 		"RG16U",      // RG16U
 		"RG16F",      // RG16F
 		"RG16S",      // RG16S
-		"RG32",       // RG32U
+		"RG32I",      // RG32I
+		"RG32U",      // RG32U
 		"RG32F",      // RG32F
 		"BGRA8",      // BGRA8
 		"RGBA8",      // RGBA8
@@ -145,7 +152,8 @@ namespace bgfx
 		"RGBA16U",    // RGBA16U
 		"RGBA16F",    // RGBA16F
 		"RGBA16S",    // RGBA16S
-		"RGBA32",     // RGBA32U
+		"RGBA32I",    // RGBA32I
+		"RGBA32U",    // RGBA32U
 		"RGBA32F",    // RGBA32F
 		"R5G6B5",     // R5G6B5
 		"RGBA4",      // RGBA4
@@ -1552,7 +1560,7 @@ namespace bgfx
 		{
 			if ( (caps[1] & DDS_CUBEMAP_ALLFACES) != DDS_CUBEMAP_ALLFACES)
 			{
-				// parital cube map is not supported.
+				// partial cube map is not supported.
 				return false;
 			}
 		}
