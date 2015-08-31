@@ -498,7 +498,7 @@
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb">
-<span id="bgfx::CallbackI::captureBegin__uint32_t.uint32_t.uint32_t.TextureFormat::Enum.b"></span>virtual <span class="target" id="project0structbgfx_1_1_callback_i_1afbf52f537e1bf54a4c20f6efb2654231"></span>void <code class="descname">captureBegin</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_pitch</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, bool <em>_yflip</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::CallbackI::captureBegin__uint32_t.uint32_t.uint32_t.TextureFormat::Enum.b"></span>virtual <span class="target" id="project0structbgfx_1_1_callback_i_1afbf52f537e1bf54a4c20f6efb2654231"></span>void <code class="descname">captureBegin</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_pitch</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, bool <em>_yflip</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called when capture begins. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -819,7 +819,7 @@
 <dl class="type">
 <dt id="_CPPv2N4bgfx12RendererType4EnumE">
 <span id="bgfx::RendererType::Enum"></span><span class="target" id="project0structbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Renderer type enumeration. </p>
+<dd><p>Renderer types: </p>
 <p><em>Values:</em></p>
 <dl class="member">
 <dt id="_CPPv2N4bgfx12RendererType4NullE">
@@ -2352,7 +2352,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Images<a class="headerlink" href="#images" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
-<span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute image from texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2369,7 +2369,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -2379,7 +2379,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
-<span id="bgfx::setImage__uint8_t.UniformHandle.FrameBufferHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1a66009acaf4cddffc483e7192367914db"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setImage__uint8_t.UniformHandle.FrameBufferHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1a66009acaf4cddffc483e7192367914db"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute image from frame buffer texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2396,7 +2396,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -2626,7 +2626,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Uniforms<a class="headerlink" href="#uniforms" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t">
-<span id="bgfx::createUniform__cCP.UniformType::Enum.uint16_t"></span><span class="target" id="project0namespacebgfx_1a45614b96172b438fd644c858e2c434b2"></span>UniformHandle <code class="descclassname">bgfx::</code><code class="descname">createUniform</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_name</em>, <a class="reference internal" href="#_CPPv2N4bgfx11UniformTypeE" title="bgfx::UniformType">UniformType</a>::Enum <em>_type</em>, uint16_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createUniform__cCP.UniformType::Enum.uint16_t"></span><span class="target" id="project0namespacebgfx_1a45614b96172b438fd644c858e2c434b2"></span>UniformHandle <code class="descclassname">bgfx::</code><code class="descname">createUniform</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_name</em>, <a class="reference internal" href="#_CPPv2N4bgfx11UniformTypeE" title="bgfx::UniformType">UniformType</a>::<a class="reference internal" href="#_CPPv2N4bgfx11UniformType4EnumE" title="bgfx::UniformType::Enum">Enum</a> <em>_type</em>, uint16_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create shader uniform parameter. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -2689,6 +2689,46 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_uniform_type_t</span></code>. </dd>
 </dl>
 </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx11UniformType4EnumE">
+<span id="bgfx::UniformType::Enum"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniform types: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformType4Int1E">
+<span id="bgfx::UniformType::Int1"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79a173664bed3eef9991e511cb9815f4522"></span><code class="descname">Int1</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Int1E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformType3EndE">
+<span id="bgfx::UniformType::End"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79af032fc38d9876bbc4f4609116ced94c9"></span><code class="descname">End</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType3EndE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformType4Vec4E">
+<span id="bgfx::UniformType::Vec4"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79ad3a487a974362da30ed861d5e60134dd"></span><code class="descname">Vec4</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Vec4E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformType4Mat3E">
+<span id="bgfx::UniformType::Mat3"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79a4912934f4e16efd08a14a396fed267f2"></span><code class="descname">Mat3</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Mat3E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformType4Mat4E">
+<span id="bgfx::UniformType::Mat4"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79ac875f375dfc3adf73780a4114c6cc851"></span><code class="descname">Mat4</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Mat4E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformType5CountE">
+<span id="bgfx::UniformType::Count"></span><span class="target" id="project0structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79aa7cf5e8e3c979dcb60476fe4dc891dd1"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
 </dd></dl>
 
 </div>
@@ -2865,7 +2905,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="type">
 <dt id="_CPPv2N4bgfx6Attrib4EnumE">
 <span id="bgfx::Attrib::Enum"></span><span class="target" id="project0structbgfx_1_1_attrib_1a1c2416ba7a7a1bbd4d6e74bf57f03804"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx6Attrib4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Corresponds to vertex shader attribute. </p>
+<dd><p>Corresponds to vertex shader attribute. Attributes: </p>
 <p><em>Values:</em></p>
 <dl class="member">
 <dt id="_CPPv2N4bgfx6Attrib8PositionE">
@@ -3287,16 +3327,417 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt id="_CPPv2N4bgfx13TextureFormatE">
 <span id="bgfx::TextureFormat"></span><span class="target" id="project0structbgfx_1_1_texture_format"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TextureFormat</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormatE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Texture format enum. </p>
+<p>Notation: <div class="highlight-python"><div class="highlight"><pre>  RGBA16S
+  ^   ^ ^
+  |   | +-- [ ]Unorm
+  |   |     [F]loat
+  |   |     [S]norm
+  |   |     [I]nt
+  |   |     [U]int
+  |   +---- Number of bits per component
+  +-------- Components
+</pre></div>
+</div>
+</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_texture_format_t</span></code>. </dd>
+<dd><p class="first">Availability depends on <a class="reference internal" href="#project0structbgfx_1_1_caps"><span>Caps</span></a> (see: formats).</p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_texture_format_t</span></code>. </p>
+</dd>
 </dl>
 </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx13TextureFormat4EnumE">
+<span id="bgfx::TextureFormat::Enum"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture formats: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3BC1E">
+<span id="bgfx::TextureFormat::BC1"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aee125d92e0e80015bd586b5621cc3d83"></span><code class="descname">BC1</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3BC1E" title="Permalink to this definition">¶</a></dt>
+<dd><p>DXT1. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3BC2E">
+<span id="bgfx::TextureFormat::BC2"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4d77afc75cacfa609303940e1c9cddc2"></span><code class="descname">BC2</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3BC2E" title="Permalink to this definition">¶</a></dt>
+<dd><p>DXT3. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3BC3E">
+<span id="bgfx::TextureFormat::BC3"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a113e64fa135fca0459a7c2ea40425c4f"></span><code class="descname">BC3</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3BC3E" title="Permalink to this definition">¶</a></dt>
+<dd><p>DXT5. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3BC4E">
+<span id="bgfx::TextureFormat::BC4"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1937f7640ffa842f2c6678286c313e7a"></span><code class="descname">BC4</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3BC4E" title="Permalink to this definition">¶</a></dt>
+<dd><p>LATC1/ATI1. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3BC5E">
+<span id="bgfx::TextureFormat::BC5"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9696af3d8af5c8b8dcdb2bba18df54c8"></span><code class="descname">BC5</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3BC5E" title="Permalink to this definition">¶</a></dt>
+<dd><p>LATC2/ATI2. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4BC6HE">
+<span id="bgfx::TextureFormat::BC6H"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a3e149dd90ceda8997bcf54a97debd703"></span><code class="descname">BC6H</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4BC6HE" title="Permalink to this definition">¶</a></dt>
+<dd><p>BC6H. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3BC7E">
+<span id="bgfx::TextureFormat::BC7"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a880c61bb22f0950eec832c77e7667d96"></span><code class="descname">BC7</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3BC7E" title="Permalink to this definition">¶</a></dt>
+<dd><p>BC7. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4ETC1E">
+<span id="bgfx::TextureFormat::ETC1"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac789a4e13dc4efbb9239fa89f54b8205"></span><code class="descname">ETC1</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4ETC1E" title="Permalink to this definition">¶</a></dt>
+<dd><p>ETC1 RGB8. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4ETC2E">
+<span id="bgfx::TextureFormat::ETC2"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aba5a8c2a63daebe7f7b6e6530e384662"></span><code class="descname">ETC2</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4ETC2E" title="Permalink to this definition">¶</a></dt>
+<dd><p>ETC2 RGB8. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5ETC2AE">
+<span id="bgfx::TextureFormat::ETC2A"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aeae9b14b230f8576efb154b961836ca5"></span><code class="descname">ETC2A</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5ETC2AE" title="Permalink to this definition">¶</a></dt>
+<dd><p>ETC2 RGBA8. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6ETC2A1E">
+<span id="bgfx::TextureFormat::ETC2A1"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a971bf46d4c28a7b708a2c6df44593720"></span><code class="descname">ETC2A1</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6ETC2A1E" title="Permalink to this definition">¶</a></dt>
+<dd><p>ETC2 RGB8A1. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5PTC12E">
+<span id="bgfx::TextureFormat::PTC12"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6abf2b55f4dfd7effbfa64f27d9546512c"></span><code class="descname">PTC12</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5PTC12E" title="Permalink to this definition">¶</a></dt>
+<dd><p>PVRTC1 RGB 2BPP. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5PTC14E">
+<span id="bgfx::TextureFormat::PTC14"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1b68442c2e582657d2e9c5b2af7480c5"></span><code class="descname">PTC14</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5PTC14E" title="Permalink to this definition">¶</a></dt>
+<dd><p>PVRTC1 RGB 4BPP. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6PTC12AE">
+<span id="bgfx::TextureFormat::PTC12A"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a78128a646efda9393122f3a0cbb47ba7"></span><code class="descname">PTC12A</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6PTC12AE" title="Permalink to this definition">¶</a></dt>
+<dd><p>PVRTC1 RGBA 2BPP. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6PTC14AE">
+<span id="bgfx::TextureFormat::PTC14A"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a106b764dde7bcb1eb0c4ea6034ea3b24"></span><code class="descname">PTC14A</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6PTC14AE" title="Permalink to this definition">¶</a></dt>
+<dd><p>PVRTC1 RGBA 4BPP. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5PTC22E">
+<span id="bgfx::TextureFormat::PTC22"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a10791d050f8fc01881fb9ce4dfcdaa6d"></span><code class="descname">PTC22</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5PTC22E" title="Permalink to this definition">¶</a></dt>
+<dd><p>PVRTC2 RGBA 2BPP. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5PTC24E">
+<span id="bgfx::TextureFormat::PTC24"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab4e6bd17ebbcaa1085dd1285aa2c6e23"></span><code class="descname">PTC24</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5PTC24E" title="Permalink to this definition">¶</a></dt>
+<dd><p>PVRTC2 RGBA 4BPP. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7UnknownE">
+<span id="bgfx::TextureFormat::Unknown"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a2113f0ca58d6c12c10663c0ed360681e"></span><code class="descname">Unknown</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7UnknownE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat2R1E">
+<span id="bgfx::TextureFormat::R1"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab01e6044eaff1fe4451232325ad4f9a6"></span><code class="descname">R1</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat2R1E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat2A8E">
+<span id="bgfx::TextureFormat::A8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9b43602e80b02cddbaa066bddc137bc6"></span><code class="descname">A8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat2A8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat2R8E">
+<span id="bgfx::TextureFormat::R8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a366a4683758cef76e007f4f33801f7b2"></span><code class="descname">R8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat2R8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3R8IE">
+<span id="bgfx::TextureFormat::R8I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae777e9061538de54841dfd96cc4070c2"></span><code class="descname">R8I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3R8IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3R8UE">
+<span id="bgfx::TextureFormat::R8U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aecd6d1d295020dc61bad08ab39b609df"></span><code class="descname">R8U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3R8UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3R8SE">
+<span id="bgfx::TextureFormat::R8S"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a86b354d3bf6d634605f6d93fad966fd5"></span><code class="descname">R8S</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3R8SE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3R16E">
+<span id="bgfx::TextureFormat::R16"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9f2a1e70d71e48558cfae60650b5da1c"></span><code class="descname">R16</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3R16E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R16IE">
+<span id="bgfx::TextureFormat::R16I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4ea4bea5f457d7aaa855d253ae967538"></span><code class="descname">R16I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R16IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R16UE">
+<span id="bgfx::TextureFormat::R16U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6509456e2fb58fc523abd92bfa4f67ce"></span><code class="descname">R16U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R16UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R16FE">
+<span id="bgfx::TextureFormat::R16F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0808adf629c43dbaf932e62b48696b41"></span><code class="descname">R16F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R16FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R16SE">
+<span id="bgfx::TextureFormat::R16S"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aedfd375d04e3cd2a35992d35657def41"></span><code class="descname">R16S</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R16SE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R32IE">
+<span id="bgfx::TextureFormat::R32I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0cfc961a23995b91f1dfba97b4778fc9"></span><code class="descname">R32I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R32IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R32UE">
+<span id="bgfx::TextureFormat::R32U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a56674c00d24eff7b1b96005d66842fed"></span><code class="descname">R32U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R32UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4R32FE">
+<span id="bgfx::TextureFormat::R32F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6a20e5c95f27448745e6252fbaa63752"></span><code class="descname">R32F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4R32FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3RG8E">
+<span id="bgfx::TextureFormat::RG8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a044f11d086916dd993181a298b713fe5"></span><code class="descname">RG8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3RG8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4RG8IE">
+<span id="bgfx::TextureFormat::RG8I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac022360e199eafdc5965bb16d8e1596b"></span><code class="descname">RG8I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4RG8IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4RG8UE">
+<span id="bgfx::TextureFormat::RG8U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae6e1a34243df2512cde0d768fe27831d"></span><code class="descname">RG8U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4RG8UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4RG8SE">
+<span id="bgfx::TextureFormat::RG8S"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a30ffb32ec2a2f303f3f3c0618d3097b7"></span><code class="descname">RG8S</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4RG8SE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4RG16E">
+<span id="bgfx::TextureFormat::RG16"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6abd5c94677dbbcdb12c9137741f71f5a0"></span><code class="descname">RG16</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4RG16E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG16IE">
+<span id="bgfx::TextureFormat::RG16I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4d7378aee4f0c28a3e9dd49733cbc7d4"></span><code class="descname">RG16I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG16IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG16UE">
+<span id="bgfx::TextureFormat::RG16U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6add597603c407eea23cd3a076e2799a23"></span><code class="descname">RG16U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG16UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG16FE">
+<span id="bgfx::TextureFormat::RG16F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aa01f725e68722ccd7e8a842f697ef7b4"></span><code class="descname">RG16F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG16FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG16SE">
+<span id="bgfx::TextureFormat::RG16S"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ada99abb273ad49596e5645a870913203"></span><code class="descname">RG16S</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG16SE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG32IE">
+<span id="bgfx::TextureFormat::RG32I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1e9f0cde8652d9582ca00d3cf0522481"></span><code class="descname">RG32I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG32IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG32UE">
+<span id="bgfx::TextureFormat::RG32U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a10202973fabca8f138748e4829a5a454"></span><code class="descname">RG32U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG32UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RG32FE">
+<span id="bgfx::TextureFormat::RG32F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0570aa288a4cf06073ecfc272ff66bfa"></span><code class="descname">RG32F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RG32FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5BGRA8E">
+<span id="bgfx::TextureFormat::BGRA8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a8f9737f30497f922acb85eabfab5bd8b"></span><code class="descname">BGRA8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5BGRA8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RGBA8E">
+<span id="bgfx::TextureFormat::RGBA8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a76f725de734f6f57124bce94ecf6b857"></span><code class="descname">RGBA8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RGBA8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6RGBA8IE">
+<span id="bgfx::TextureFormat::RGBA8I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9d2eaf79b30d325f6c02d91c6c83fa9d"></span><code class="descname">RGBA8I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6RGBA8IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6RGBA8UE">
+<span id="bgfx::TextureFormat::RGBA8U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a58a5c9b3c280930e63443e58b8b54514"></span><code class="descname">RGBA8U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6RGBA8UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6RGBA8SE">
+<span id="bgfx::TextureFormat::RGBA8S"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1f654f103d5ed7c2e3254402c9b25b3e"></span><code class="descname">RGBA8S</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6RGBA8SE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6RGBA16E">
+<span id="bgfx::TextureFormat::RGBA16"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac84e3e8918ad3ae651fa77cf7c3d1a1f"></span><code class="descname">RGBA16</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6RGBA16E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA16IE">
+<span id="bgfx::TextureFormat::RGBA16I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac1ee33c840c8ca2bee1dcd21ab8fcf91"></span><code class="descname">RGBA16I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA16IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA16UE">
+<span id="bgfx::TextureFormat::RGBA16U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aa34499e3da11fe380fef67248d7b5ba6"></span><code class="descname">RGBA16U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA16UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA16FE">
+<span id="bgfx::TextureFormat::RGBA16F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6adadd1cd35bb81b2b43f396a5f5903ac4"></span><code class="descname">RGBA16F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA16FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA16SE">
+<span id="bgfx::TextureFormat::RGBA16S"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6001607ef039dd349cc48155438ab00f"></span><code class="descname">RGBA16S</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA16SE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA32IE">
+<span id="bgfx::TextureFormat::RGBA32I"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4b5db87abcf93819d12a7a0493bc0283"></span><code class="descname">RGBA32I</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA32IE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA32UE">
+<span id="bgfx::TextureFormat::RGBA32U"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6acf97df6b0145396940f5ea893fc3873b"></span><code class="descname">RGBA32U</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA32UE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGBA32FE">
+<span id="bgfx::TextureFormat::RGBA32F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ad21d8c3be31a08140a7abbafb1719166"></span><code class="descname">RGBA32F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGBA32FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6R5G6B5E">
+<span id="bgfx::TextureFormat::R5G6B5"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aec8537567352a4db4088e3e9f1cf978d"></span><code class="descname">R5G6B5</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6R5G6B5E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5RGBA4E">
+<span id="bgfx::TextureFormat::RGBA4"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4e9ceae8c33292ac988c494f79bccbe3"></span><code class="descname">RGBA4</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5RGBA4E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat6RGB5A1E">
+<span id="bgfx::TextureFormat::RGB5A1"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a38bfd7f727149e6458f39ade896d18a7"></span><code class="descname">RGB5A1</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat6RGB5A1E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGB10A2E">
+<span id="bgfx::TextureFormat::RGB10A2"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a7c125c1a4eceb2bbc6f7600bb7ccdf92"></span><code class="descname">RGB10A2</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGB10A2E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat10R11G11B10FE">
+<span id="bgfx::TextureFormat::R11G11B10F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aadba44b102107a20a1d10e4225c7483e"></span><code class="descname">R11G11B10F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat10R11G11B10FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat12UnknownDepthE">
+<span id="bgfx::TextureFormat::UnknownDepth"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aaffdadbf432e0a4ea3f20330d9e548c6"></span><code class="descname">UnknownDepth</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat12UnknownDepthE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3D16E">
+<span id="bgfx::TextureFormat::D16"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a086d2b11ba5e98dd6453f26a306366d0"></span><code class="descname">D16</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3D16E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3D24E">
+<span id="bgfx::TextureFormat::D24"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a27a39685dd5aaafcad65736692fa5eff"></span><code class="descname">D24</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3D24E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5D24S8E">
+<span id="bgfx::TextureFormat::D24S8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a21a275083cbc63cf567bbe435de52628"></span><code class="descname">D24S8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5D24S8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat3D32E">
+<span id="bgfx::TextureFormat::D32"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a993af3f99854f2b0b1d879f652da5ea3"></span><code class="descname">D32</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat3D32E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4D16FE">
+<span id="bgfx::TextureFormat::D16F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0322a3bb98e826a25a3f63d369eb341f"></span><code class="descname">D16F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4D16FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4D24FE">
+<span id="bgfx::TextureFormat::D24F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ad0e87f93c89a2d4661764eb56956b64e"></span><code class="descname">D24F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4D24FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4D32FE">
+<span id="bgfx::TextureFormat::D32F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6acb8eb8bd274644a29aac381ef53c5c69"></span><code class="descname">D32F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4D32FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat4D0S8E">
+<span id="bgfx::TextureFormat::D0S8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab21986c97b19c1b8d198c171f34e4471"></span><code class="descname">D0S8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat4D0S8E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat5CountE">
+<span id="bgfx::TextureFormat::Count"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a18ef8eeb88705ba0fcbbd0e83bd5c401"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE">
-<span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.uint8_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ab76d05a11b3698b0bd14a6c264e5b71d"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.uint8_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1ab76d05a11b3698b0bd14a6c264e5b71d"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tb7uint8_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate amount of memory required for texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3336,7 +3777,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTexture2D__uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1ac642640d2b73902d4b6c16f896e78a4c"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture2D__uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1ac642640d2b73902d4b6c16f896e78a4c"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create 2D texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3349,7 +3790,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_numMips</span></code> - <p>Number of mip-maps. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
@@ -3367,7 +3808,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumE7uint8_tN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createTexture2D__BackbufferRatio::Enum.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a5599540d0f695ba0404eea73973cd639"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumE7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture2D__BackbufferRatio::Enum.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a5599540d0f695ba0404eea73973cd639"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumE7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3378,7 +3819,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_numMips</span></code> - <p>Number of mip-maps. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
@@ -3425,7 +3866,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTexture3D__uint16_t.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1afe302b53e800c5e5af34d4f6b942a8d1"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture3D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture3D__uint16_t.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1afe302b53e800c5e5af34d4f6b942a8d1"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture3D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create 3D texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3440,7 +3881,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_numMips</span></code> - <p>Number of mip-maps. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
@@ -3491,7 +3932,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createTextureCubeE8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTextureCube__uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1a98f26a59b7e5d76dd041641fd3873c7b"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTextureCube</code><span class="sig-paren">(</span>uint16_t <em>_size</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createTextureCubeE8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTextureCube__uint16_t.uint8_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="project0namespacebgfx_1a98f26a59b7e5d76dd041641fd3873c7b"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTextureCube</code><span class="sig-paren">(</span>uint16_t <em>_size</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createTextureCubeE8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create Cube texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3502,7 +3943,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_numMips</span></code> - <p>Number of mip-maps. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
@@ -3585,7 +4026,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Frame Buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3594,7 +4035,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_ratio</span></code> - <p>Frame buffer size in respect to back-buffer size. See: <code class="docutils literal"><span class="pre">BackbufferRatio::Enum</span></code>. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><span class="pre">TextureFormat::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_textureFlags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
@@ -3631,7 +4072,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE">
-<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::Enum <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer for multiple window rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
